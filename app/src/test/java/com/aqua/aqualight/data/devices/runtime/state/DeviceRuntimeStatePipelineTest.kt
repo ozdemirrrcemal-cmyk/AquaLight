@@ -4,7 +4,14 @@ import com.aqua.aqualight.data.devices.contract.AqlWsContract
 import com.aqua.aqualight.data.devices.model.DeviceUid
 import com.aqua.aqualight.data.devices.runtime.core.DeviceRuntimeCommandOutcome
 import com.aqua.aqualight.data.devices.runtime.core.DeviceRuntimeConnectionGeneration
+import com.aqua.aqualight.data.devices.runtime.modules.network.DeviceNetworkClientState
+import com.aqua.aqualight.data.devices.runtime.modules.network.DeviceNetworkClientStatus
+import com.aqua.aqualight.data.devices.runtime.modules.network.DeviceNetworkDiscoveryStatus
+import com.aqua.aqualight.data.devices.runtime.modules.network.DeviceNetworkDisconnectReason
+import com.aqua.aqualight.data.devices.runtime.modules.network.DeviceNetworkRuntimeTransport
+import com.aqua.aqualight.data.devices.runtime.modules.network.DeviceNetworkSetupApStatus
 import com.aqua.aqualight.data.devices.runtime.modules.network.DeviceNetworkStatus
+import com.aqua.aqualight.data.devices.runtime.modules.network.DeviceNetworkWifiMode
 import com.aqua.aqualight.data.devices.runtime.ws.AqlWsIncomingMessage
 import java.util.concurrent.atomic.AtomicInteger
 import kotlinx.coroutines.test.advanceUntilIdle
@@ -12,6 +19,7 @@ import kotlinx.coroutines.test.runTest
 import org.json.JSONObject
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
+import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Test
@@ -29,9 +37,9 @@ class DeviceRuntimeStatePipelineTest {
         store.beginGeneration(DEVICE_B, otherGeneration, authenticated = true)
         store.reduce(DEVICE_A, firstGeneration) { state ->
             state.copy(
-                network = DeviceRuntimeValue<DeviceNetworkStatus>(
+                network = DeviceRuntimeValue(
                     phase = DeviceRuntimeFreshness.READY,
-                    value = null,
+                    value = networkStatus(),
                     sourceMessageId = "network-1"
                 )
             )
@@ -43,6 +51,7 @@ class DeviceRuntimeStatePipelineTest {
         val deviceB = requireNotNull(store.current(DEVICE_B))
         assertEquals(secondGeneration, deviceA.generation)
         assertEquals(DeviceRuntimeFreshness.STALE, deviceA.network.phase)
+        assertNotNull(deviceA.network.value)
         assertEquals("network-1", deviceA.network.sourceMessageId)
         assertFalse(deviceA.authenticated)
         assertEquals(otherGeneration, deviceB.generation)
@@ -109,7 +118,7 @@ class DeviceRuntimeStatePipelineTest {
         val current = requireNotNull(store.current(DEVICE_A))
         assertEquals(secondGeneration, current.generation)
         assertNull(current.protocolFault)
-        assertEquals(DeviceRuntimeFreshness.UNAVAILABLE, current.network.phase)
+        assertEquals(DeviceRuntimeFreshness.STALE, current.network.phase)
     }
 
     @Test
@@ -136,7 +145,9 @@ class DeviceRuntimeStatePipelineTest {
         runTest {
             val store = DeviceRuntimeStateStore()
             val generations = mutableMapOf<DeviceUid, DeviceRuntimeConnectionGeneration>()
-            val executions = mutableListOf<Triple<DeviceUid, DeviceRuntimeConnectionGeneration, DeviceRuntimeStateTarget>>()
+            val executions = mutableListOf<
+                Triple<DeviceUid, DeviceRuntimeConnectionGeneration, DeviceRuntimeStateTarget>
+                >()
             val generationA = DeviceRuntimeConnectionGeneration(1L)
             val generationB = DeviceRuntimeConnectionGeneration(2L)
 
@@ -204,6 +215,64 @@ class DeviceRuntimeStatePipelineTest {
                 .put("publishedAtMs", 10L)
                 .put("result", JSONObject().put("operation", "manualSet"))
         )
+
+    private fun networkStatus(): DeviceNetworkStatus = DeviceNetworkStatus(
+        ip = "192.168.1.44",
+        macAddress = "AA:BB:CC:DD:EE:FF",
+        wifiModeCode = 1,
+        wifiMode = DeviceNetworkWifiMode.CLIENT,
+        stationEnabled = true,
+        setupApEnabled = false,
+        clientConnected = true,
+        setupApActive = false,
+        uptimeMs = 10L,
+        client = DeviceNetworkClientStatus(
+            enabled = true,
+            configured = true,
+            ssid = "AquaLight Test",
+            bssidConfigured = false,
+            channel = 1,
+            connected = true,
+            state = DeviceNetworkClientState.GOT_IP,
+            wifiStatus = 3,
+            ip = "192.168.1.44",
+            gateway = "192.168.1.1",
+            subnet = "255.255.255.0",
+            dns = "192.168.1.1",
+            rssi = -50,
+            lastWifiEvent = 0,
+            lastDisconnectReason = 0,
+            lastDisconnectReasonName = DeviceNetworkDisconnectReason.NONE,
+            lastDisconnectAgeMs = 0L,
+            lastGotIpAgeMs = 0L,
+            nextRetryRemainingMs = 0L,
+            connectionInProgress = false
+        ),
+        setupAp = DeviceNetworkSetupApStatus(
+            enabled = false,
+            active = false,
+            ssid = "",
+            ip = "",
+            stationCount = 0
+        ),
+        discovery = DeviceNetworkDiscoveryStatus(
+            ready = true,
+            port = 10_888,
+            broadcastIp = "192.168.1.255",
+            currentIp = "192.168.1.44",
+            payloadSize = 300,
+            lastRefreshMs = 0L,
+            lastPacketRejectedMs = 0L,
+            rejectedPacketCount = 0L
+        ),
+        runtime = DeviceNetworkRuntimeTransport(
+            transport = "websocket",
+            wsPort = 80,
+            wsPath = "/aql/v1/ws",
+            wsProtocol = "aql.ws.v1",
+            wsProtocolVersion = 1
+        )
+    )
 
     private companion object {
         val DEVICE_A = DeviceUid("AQL-STATE-A")
