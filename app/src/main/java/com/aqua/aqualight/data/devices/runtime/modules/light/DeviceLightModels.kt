@@ -11,12 +11,14 @@ enum class DeviceLightRegime(
     OFF("Off");
 
     companion object {
-        fun fromWire(value: String): DeviceLightRegime {
-            return when (value.trim().lowercase()) {
-                "auto", "schedule", "program" -> AUTO
-                "on", "manual_on" -> ON
-                else -> OFF
-            }
+        private val exactValues = entries.associateBy(DeviceLightRegime::wireValue)
+
+        fun fromWireExact(value: String): DeviceLightRegime? = exactValues[value]
+
+        fun fromWire(value: String): DeviceLightRegime = when (value.trim().lowercase()) {
+            "auto", "schedule", "program" -> AUTO
+            "on", "manual_on" -> ON
+            else -> OFF
         }
     }
 }
@@ -68,7 +70,6 @@ data class DeviceLightChannelStatus(
 )
 
 data class DeviceLightProgramPointStatus(
-    val index: Int,
     val timeMs: Long,
     val time: String,
     val value: Double,
@@ -76,7 +77,6 @@ data class DeviceLightProgramPointStatus(
 )
 
 data class DeviceLightProgramStatus(
-    val listIndex: Int,
     val index: Int,
     val channelKey: String,
     val bound: Boolean,
@@ -113,26 +113,17 @@ data class DeviceLightManualChannelPayload(
     init {
         require(channelKey.isNotBlank()) { "channelKey must not be blank." }
         require(percent != null || value != null) { "manual channel requires percent or value." }
-
-        if (percent != null) {
-            require(percent in 0.0..100.0) { "percent must be between 0 and 100." }
-        }
-
-        if (value != null) {
-            require(value in 0.0..1.0) { "value must be between 0 and 1." }
-        }
+        if (percent != null) require(percent in 0.0..100.0)
+        if (value != null) require(value in 0.0..1.0)
     }
 
     fun toJson(): JSONObject {
-        val json = JSONObject()
-            .put(DeviceLightRuntimeContract.Field.CHANNEL_KEY, channelKey)
-
+        val json = JSONObject().put(DeviceLightRuntimeContract.Field.CHANNEL_KEY, channelKey)
         if (percent != null) {
             json.put(DeviceLightRuntimeContract.Field.PERCENT, percent)
         } else if (value != null) {
             json.put(DeviceLightRuntimeContract.Field.VALUE, value)
         }
-
         return json
     }
 }
@@ -143,37 +134,31 @@ data class DeviceLightManualSetPayload(
     val clear: Boolean = false
 ) {
     init {
-        require(channels.size <= DeviceLightRuntimeContract.Limit.MAX_MANUAL_CHANNELS) {
-            "Manual light supports at most ${DeviceLightRuntimeContract.Limit.MAX_MANUAL_CHANNELS} channels."
-        }
-
+        require(channels.size <= DeviceLightRuntimeContract.Limit.MAX_MANUAL_CHANNELS)
         if (!clear) {
-            require(channels.isNotEmpty()) { "manual.set requires channels when clear=false." }
+            require(channels.isNotEmpty())
             val duration = durationMs ?: DeviceLightRuntimeContract.Limit.DEFAULT_MANUAL_DURATION_MS
-            require(duration in DeviceLightRuntimeContract.Limit.MIN_MANUAL_DURATION_MS..DeviceLightRuntimeContract.Limit.MAX_MANUAL_DURATION_MS) {
-                "durationMs must be between ${DeviceLightRuntimeContract.Limit.MIN_MANUAL_DURATION_MS} and ${DeviceLightRuntimeContract.Limit.MAX_MANUAL_DURATION_MS}."
-            }
+            require(
+                duration in DeviceLightRuntimeContract.Limit.MIN_MANUAL_DURATION_MS..
+                    DeviceLightRuntimeContract.Limit.MAX_MANUAL_DURATION_MS
+            )
         }
     }
 
     fun toJson(): JSONObject {
-        val json = JSONObject()
-            .put(DeviceLightRuntimeContract.Field.CLEAR, clear)
-
+        val json = JSONObject().put(DeviceLightRuntimeContract.Field.CLEAR, clear)
         if (!clear) {
             json.put(
                 DeviceLightRuntimeContract.Field.DURATION_MS,
                 durationMs ?: DeviceLightRuntimeContract.Limit.DEFAULT_MANUAL_DURATION_MS
             )
         }
-
         if (channels.isNotEmpty()) {
             json.put(
                 DeviceLightRuntimeContract.Field.CHANNELS,
-                JSONArray(channels.map { it.toJson() })
+                JSONArray(channels.map(DeviceLightManualChannelPayload::toJson))
             )
         }
-
         return json
     }
 }
@@ -184,15 +169,13 @@ data class DeviceLightChannelRegimeSetPayload(
     val save: Boolean = true
 ) {
     init {
-        require(channelKey.isNotBlank()) { "channelKey must not be blank." }
+        require(channelKey.isNotBlank())
     }
 
-    fun toJson(): JSONObject {
-        return JSONObject()
-            .put(DeviceLightRuntimeContract.Field.CHANNEL_KEY, channelKey)
-            .put(DeviceLightRuntimeContract.Field.REGIME, regime.wireValue)
-            .put(DeviceLightRuntimeContract.Field.SAVE, save)
-    }
+    fun toJson(): JSONObject = JSONObject()
+        .put(DeviceLightRuntimeContract.Field.CHANNEL_KEY, channelKey)
+        .put(DeviceLightRuntimeContract.Field.REGIME, regime.wireValue)
+        .put(DeviceLightRuntimeContract.Field.SAVE, save)
 }
 
 data class DeviceLightProgramPointPayload(
@@ -202,37 +185,25 @@ data class DeviceLightProgramPointPayload(
     val value: Double? = null
 ) {
     init {
-        require(timeMs != null || !time.isNullOrBlank()) { "program point requires timeMs or time." }
-        require(percent != null || value != null) { "program point requires percent or value." }
-
-        if (timeMs != null) {
-            require(timeMs >= 0L) { "timeMs must be zero or greater." }
-        }
-
-        if (percent != null) {
-            require(percent in 0.0..100.0) { "percent must be between 0 and 100." }
-        }
-
-        if (value != null) {
-            require(value in 0.0..1.0) { "value must be between 0 and 1." }
-        }
+        require(timeMs != null || !time.isNullOrBlank())
+        require(percent != null || value != null)
+        if (timeMs != null) require(timeMs >= 0L)
+        if (percent != null) require(percent in 0.0..100.0)
+        if (value != null) require(value in 0.0..1.0)
     }
 
     fun toJson(): JSONObject {
         val json = JSONObject()
-
         if (timeMs != null) {
             json.put(DeviceLightRuntimeContract.Field.TIME_MS, timeMs)
         } else if (!time.isNullOrBlank()) {
             json.put(DeviceLightRuntimeContract.Field.TIME, time)
         }
-
         if (percent != null) {
             json.put(DeviceLightRuntimeContract.Field.PERCENT, percent)
         } else if (value != null) {
             json.put(DeviceLightRuntimeContract.Field.VALUE, value)
         }
-
         return json
     }
 }
@@ -244,27 +215,23 @@ data class DeviceLightProgramApplyPayload(
     val save: Boolean = true
 ) {
     init {
-        require(channelKey.isNotBlank()) { "channelKey must not be blank." }
-        require(points.isNotEmpty()) { "light program points must not be empty." }
-        require(points.size <= DeviceLightRuntimeContract.Limit.MAX_PROGRAM_POINTS) {
-            "Light program supports at most ${DeviceLightRuntimeContract.Limit.MAX_PROGRAM_POINTS} points."
-        }
-
-        if (programIndex != null) {
-            require(programIndex >= 0) { "programIndex must be zero or greater." }
-        }
+        require(channelKey.isNotBlank())
+        require(points.isNotEmpty())
+        require(points.size <= DeviceLightRuntimeContract.Limit.MAX_PROGRAM_POINTS)
+        if (programIndex != null) require(programIndex >= 0)
     }
 
     fun toJson(): JSONObject {
         val json = JSONObject()
             .put(DeviceLightRuntimeContract.Field.CHANNEL_KEY, channelKey)
-            .put(DeviceLightRuntimeContract.Field.POINTS, JSONArray(points.map { it.toJson() }))
+            .put(
+                DeviceLightRuntimeContract.Field.POINTS,
+                JSONArray(points.map(DeviceLightProgramPointPayload::toJson))
+            )
             .put(DeviceLightRuntimeContract.Field.SAVE, save)
-
         if (programIndex != null) {
             json.put(DeviceLightRuntimeContract.Field.PROGRAM_INDEX, programIndex)
         }
-
         return json
     }
 }
@@ -274,14 +241,12 @@ data class DeviceLightProgramDeletePayload(
     val save: Boolean = true
 ) {
     init {
-        require(programIndex >= 0) { "programIndex must be zero or greater." }
+        require(programIndex >= 0)
     }
 
-    fun toJson(): JSONObject {
-        return JSONObject()
-            .put(DeviceLightRuntimeContract.Field.PROGRAM_INDEX, programIndex)
-            .put(DeviceLightRuntimeContract.Field.SAVE, save)
-    }
+    fun toJson(): JSONObject = JSONObject()
+        .put(DeviceLightRuntimeContract.Field.PROGRAM_INDEX, programIndex)
+        .put(DeviceLightRuntimeContract.Field.SAVE, save)
 }
 
 data class DeviceLightCommandResult(
