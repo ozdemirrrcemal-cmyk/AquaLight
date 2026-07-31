@@ -1,6 +1,6 @@
 package com.aqua.aqualight.data.devices
 
-import com.aqua.aqualight.application.devices.DeviceFirmwareCommandResult
+import com.aqua.aqualight.application.devices.DeviceFirmwareOperationResult
 import com.aqua.aqualight.application.devices.DeviceFirmwareUpdateOperations
 import com.aqua.aqualight.application.devices.DeviceOtaState
 import com.aqua.aqualight.application.devices.PreparedDeviceFirmwareUpdate
@@ -56,12 +56,12 @@ internal class DefaultDeviceFirmwareUpdateOperations(
 
     override suspend fun startUpdate(
         plan: PreparedDeviceFirmwareUpdate
-    ): DeviceFirmwareCommandResult = coordinator.startUpdate(plan)
+    ): DeviceFirmwareOperationResult = coordinator.startUpdate(plan)
 
-    override suspend fun requestStatus(deviceUid: String): DeviceFirmwareCommandResult =
+    override suspend fun requestStatus(deviceUid: String): DeviceFirmwareOperationResult =
         coordinator.requestStatus(requireDeviceUid(deviceUid))
 
-    override suspend fun clearStatus(deviceUid: String): DeviceFirmwareCommandResult =
+    override suspend fun clearStatus(deviceUid: String): DeviceFirmwareOperationResult =
         coordinator.clearStatus(requireDeviceUid(deviceUid))
 
     override fun close() {
@@ -69,8 +69,8 @@ internal class DefaultDeviceFirmwareUpdateOperations(
     }
 
     private fun requireDeviceUid(value: String): DeviceUid {
-        val normalized = value.trim()
-        require(normalized.isNotBlank()) { "Device uid is missing." }
-        return DeviceUid(normalized)
+        require(value.isNotBlank()) { "Device uid is missing." }
+        require(value == value.trim()) { "Device uid must not contain surrounding whitespace." }
+        return DeviceUid(value)
     }
 }
