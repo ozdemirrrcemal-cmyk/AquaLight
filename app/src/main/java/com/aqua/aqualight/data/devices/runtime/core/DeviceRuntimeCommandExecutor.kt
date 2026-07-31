@@ -221,4 +221,10 @@ internal class DeviceRuntimeCommandExecutor(
     @Suppress("UNCHECKED_CAST")
     private fun <T> DeviceRuntimeCommandOutcome<Any?>.typed(): DeviceRuntimeCommandOutcome<T> =
         this as DeviceRuntimeCommandOutcome<T>
+
+    companion object {
+        const val DEFAULT_TIMEOUT_MILLIS = DEVICE_RUNTIME_DEFAULT_TIMEOUT_MILLIS
+        const val MIN_TIMEOUT_MILLIS = DEVICE_RUNTIME_MIN_TIMEOUT_MILLIS
+        const val MAX_TIMEOUT_MILLIS = DEVICE_RUNTIME_MAX_TIMEOUT_MILLIS
+    }
 }
