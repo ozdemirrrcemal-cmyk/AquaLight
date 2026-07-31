@@ -102,7 +102,9 @@ data class DeviceCoolingFanConfig(
     val displayName: String?
 ) {
     val normalizedFanKey: String = fanKey.trim().lowercase()
-    val normalizedDisplayName: String? = displayName?.trim()?.ifEmpty { null }
+    val normalizedDisplayName: String? = displayName
+        ?.trim()
+        ?.takeIf(String::isNotEmpty)
 
     init {
         require(normalizedFanKey.isNotEmpty() &&
