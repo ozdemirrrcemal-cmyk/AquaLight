@@ -31,9 +31,7 @@ class AqlDiscoveryParserContractTest {
 
     @Test
     fun `stale v2 documentation shape is not accepted as a runtime contract`() {
-        val invalid = parseInvalid(
-            validV1Json().put("schema", "aql.discovery.v2")
-        )
+        val invalid = parseInvalid(validV1Json().put("schema", "aql.discovery.v2"))
 
         assertEquals(AqlDiscoveryParser.ParseError.UNSUPPORTED_SCHEMA, invalid.error)
     }
@@ -119,7 +117,7 @@ class AqlDiscoveryParserContractTest {
     @Test
     fun `packet limit is measured in utf8 bytes rather than characters`() {
         val payload = validV1Json().apply {
-            getJSONObject("device").put("name", "ş".repeat(400))
+            getJSONObject("device").put("name", "ş".repeat(350))
         }.toString()
         assertTrue(payload.length < AqlDiscoveryContract.MAX_PACKET_SIZE_BYTES)
         assertTrue(
