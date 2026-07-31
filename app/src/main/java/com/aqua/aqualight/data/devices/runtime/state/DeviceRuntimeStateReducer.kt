@@ -8,7 +8,7 @@ import com.aqua.aqualight.data.devices.runtime.core.DeviceRuntimeCommandOutcome
 import com.aqua.aqualight.data.devices.runtime.core.DeviceRuntimeConnectionGeneration
 import com.aqua.aqualight.data.devices.runtime.modules.cooling.DeviceCoolingStatus
 import com.aqua.aqualight.data.devices.runtime.modules.dosing.DeviceDosingStatus
-import com.aqua.aqualight.data.devices.runtime.modules.firmware.DeviceFirmwareOtaClearResult
+import com.aqua.aqualight.data.devices.runtime.modules.firmware.DeviceFirmwareOtaClearTypedResult
 import com.aqua.aqualight.data.devices.runtime.modules.firmware.DeviceFirmwareOtaSnapshot
 import com.aqua.aqualight.data.devices.runtime.modules.firmware.DeviceFirmwareOtaStartAccepted
 import com.aqua.aqualight.data.devices.runtime.modules.firmware.DeviceFirmwareStatus
@@ -37,8 +37,8 @@ class DeviceRuntimeStateReducer(
         return store.reduce(deviceUid, generation) { state ->
             state.copy(
                 support = support,
-                metadata = ready(metadata, sourceMessageId = null),
-                device = ready(moduleStatus, sourceMessageId = null),
+                metadata = ready(metadata, null),
+                device = ready(moduleStatus, null),
                 security = state.security.availableWhen(support.security),
                 network = state.network.availableWhen(support.network),
                 time = state.time.availableWhen(support.time),
@@ -64,10 +64,7 @@ class DeviceRuntimeStateReducer(
         val target = refreshTarget(module, action) ?: return
         store.reduce(deviceUid, generation) { state ->
             state.updateTarget(target) { current ->
-                current.copy(
-                    phase = DeviceRuntimeFreshness.LOADING,
-                    fault = null
-                )
+                current.copy(phase = DeviceRuntimeFreshness.LOADING, fault = null)
             }
         }
     }
@@ -78,12 +75,7 @@ class DeviceRuntimeStateReducer(
             is DeviceRuntimeCommandOutcome.Success<*> -> reduceSuccess(outcome)
             is DeviceRuntimeCommandOutcome.NotConnected -> null
             is DeviceRuntimeCommandOutcome.UnsupportedByDevice -> {
-                val generation = store.current(outcome.deviceUid)?.generation ?: return null
-                refreshTarget(outcome.module, outcome.action)?.also { target ->
-                    store.reduce(outcome.deviceUid, generation) { state ->
-                        state.updateTarget(target) { DeviceRuntimeValue.unavailable() }
-                    }
-                }
+                reduceUnsupported(outcome.deviceUid, outcome.module, outcome.action)
                 null
             }
             is DeviceRuntimeCommandOutcome.NotAuthenticated -> {
@@ -228,21 +220,20 @@ class DeviceRuntimeStateReducer(
         outcome: DeviceRuntimeCommandOutcome.Success<*>
     ): DeviceRuntimeStateTarget? {
         val reduced = when (outcome.module) {
-            AqlWsContract.MODULE_SECURITY -> reduceSecuritySuccess(outcome)
-            AqlWsContract.MODULE_NETWORK -> reduceNetworkSuccess(outcome)
-            AqlWsContract.MODULE_TIME -> reduceTimeSuccess(outcome)
-            AqlWsContract.MODULE_LIGHT -> reduceLightSuccess(outcome)
-            AqlWsContract.MODULE_TIMER -> reduceTimerSuccess(outcome)
-            AqlWsContract.MODULE_DOSING -> reduceDosingSuccess(outcome)
-            AqlWsContract.MODULE_COOLING -> reduceCoolingSuccess(outcome)
-            AqlWsContract.MODULE_FIRMWARE -> reduceFirmwareSuccess(outcome)
+            AqlWsContract.MODULE_SECURITY -> reduceSecurity(outcome)
+            AqlWsContract.MODULE_NETWORK -> reduceNetwork(outcome)
+            AqlWsContract.MODULE_TIME -> reduceTime(outcome)
+            AqlWsContract.MODULE_LIGHT -> reduceLight(outcome)
+            AqlWsContract.MODULE_TIMER -> reduceTimer(outcome)
+            AqlWsContract.MODULE_DOSING -> reduceDosing(outcome)
+            AqlWsContract.MODULE_COOLING -> reduceCooling(outcome)
+            AqlWsContract.MODULE_FIRMWARE -> reduceFirmware(outcome)
             else -> false
         }
-        if (reduced) return null
-        return refreshTarget(outcome.module, outcome.action)
+        return if (reduced) null else refreshTarget(outcome.module, outcome.action)
     }
 
-    private fun reduceSecuritySuccess(outcome: DeviceRuntimeCommandOutcome.Success<*>): Boolean {
+    private fun reduceSecurity(outcome: DeviceRuntimeCommandOutcome.Success<*>): Boolean {
         if (outcome.action != AqlWsContract.ACTION_SECURITY_STATUS_GET) return false
         val value = outcome.value as? DeviceSecurityStatusResponse ?: return false
         return store.reduce(outcome.deviceUid, outcome.generation) { state ->
@@ -250,7 +241,7 @@ class DeviceRuntimeStateReducer(
         }
     }
 
-    private fun reduceNetworkSuccess(outcome: DeviceRuntimeCommandOutcome.Success<*>): Boolean {
+    private fun reduceNetwork(outcome: DeviceRuntimeCommandOutcome.Success<*>): Boolean {
         if (outcome.action != AqlWsContract.ACTION_NETWORK_STATUS_GET) return false
         val value = outcome.value as? DeviceNetworkStatus ?: return false
         return store.reduce(outcome.deviceUid, outcome.generation) { state ->
@@ -258,7 +249,7 @@ class DeviceRuntimeStateReducer(
         }
     }
 
-    private fun reduceTimeSuccess(outcome: DeviceRuntimeCommandOutcome.Success<*>): Boolean {
+    private fun reduceTime(outcome: DeviceRuntimeCommandOutcome.Success<*>): Boolean {
         if (outcome.action != AqlWsContract.ACTION_TIME_STATUS_GET) return false
         val value = outcome.value as? DeviceTimeStatus ?: return false
         return store.reduce(outcome.deviceUid, outcome.generation) { state ->
@@ -266,8 +257,8 @@ class DeviceRuntimeStateReducer(
         }
     }
 
-    private fun reduceLightSuccess(outcome: DeviceRuntimeCommandOutcome.Success<*>): Boolean {
-        return when (outcome.action) {
+    private fun reduceLight(outcome: DeviceRuntimeCommandOutcome.Success<*>): Boolean =
+        when (outcome.action) {
             AqlWsContract.ACTION_LIGHT_STATUS_GET -> {
                 val value = outcome.value as? DeviceLightStatus ?: return false
                 store.reduce(outcome.deviceUid, outcome.generation) { state ->
@@ -275,7 +266,8 @@ class DeviceRuntimeStateReducer(
                 }
             }
             AqlWsContract.ACTION_LIGHT_TEMPERATURE_PROTECTION_STATUS_GET -> {
-                val value = outcome.value as? DeviceLightTemperatureProtectionStatus ?: return false
+                val value = outcome.value as? DeviceLightTemperatureProtectionStatus
+                    ?: return false
                 store.reduce(outcome.deviceUid, outcome.generation) { state ->
                     state.copy(
                         lightTemperatureProtection = ready(value, outcome.messageId)
@@ -284,9 +276,8 @@ class DeviceRuntimeStateReducer(
             }
             else -> false
         }
-    }
 
-    private fun reduceTimerSuccess(outcome: DeviceRuntimeCommandOutcome.Success<*>): Boolean {
+    private fun reduceTimer(outcome: DeviceRuntimeCommandOutcome.Success<*>): Boolean {
         if (outcome.action != AqlWsContract.ACTION_TIMER_STATUS_GET) return false
         val value = outcome.value as? DeviceTimerStatus ?: return false
         return store.reduce(outcome.deviceUid, outcome.generation) { state ->
@@ -294,7 +285,7 @@ class DeviceRuntimeStateReducer(
         }
     }
 
-    private fun reduceDosingSuccess(outcome: DeviceRuntimeCommandOutcome.Success<*>): Boolean {
+    private fun reduceDosing(outcome: DeviceRuntimeCommandOutcome.Success<*>): Boolean {
         if (outcome.action != AqlWsContract.ACTION_DOSING_STATUS_GET) return false
         val value = outcome.value as? DeviceDosingStatus ?: return false
         return store.reduce(outcome.deviceUid, outcome.generation) { state ->
@@ -302,7 +293,7 @@ class DeviceRuntimeStateReducer(
         }
     }
 
-    private fun reduceCoolingSuccess(outcome: DeviceRuntimeCommandOutcome.Success<*>): Boolean {
+    private fun reduceCooling(outcome: DeviceRuntimeCommandOutcome.Success<*>): Boolean {
         if (outcome.action != AqlWsContract.ACTION_COOLING_STATUS_GET) return false
         val value = outcome.value as? DeviceCoolingStatus ?: return false
         return store.reduce(outcome.deviceUid, outcome.generation) { state ->
@@ -310,8 +301,8 @@ class DeviceRuntimeStateReducer(
         }
     }
 
-    private fun reduceFirmwareSuccess(outcome: DeviceRuntimeCommandOutcome.Success<*>): Boolean {
-        return when (outcome.action) {
+    private fun reduceFirmware(outcome: DeviceRuntimeCommandOutcome.Success<*>): Boolean =
+        when (outcome.action) {
             AqlWsContract.ACTION_FIRMWARE_STATUS_GET -> {
                 val value = outcome.value as? DeviceFirmwareStatus ?: return false
                 store.reduce(outcome.deviceUid, outcome.generation) { state ->
@@ -334,12 +325,19 @@ class DeviceRuntimeStateReducer(
                 }
             }
             AqlWsContract.ACTION_FIRMWARE_OTA_CLEAR -> {
-                val value = outcome.value as? DeviceFirmwareOtaClearResult ?: return false
+                val value = outcome.value as? DeviceFirmwareOtaClearTypedResult ?: return false
                 store.reduce(outcome.deviceUid, outcome.generation) { state ->
                     state.copy(ota = ready(value.ota, outcome.messageId))
                 }
             }
             else -> false
+        }
+
+    private fun reduceUnsupported(deviceUid: DeviceUid, module: String, action: String) {
+        val generation = store.current(deviceUid)?.generation ?: return
+        val target = refreshTarget(module, action) ?: return
+        store.reduce(deviceUid, generation) { state ->
+            state.updateTarget(target) { DeviceRuntimeValue.unavailable() }
         }
     }
 
@@ -354,7 +352,7 @@ class DeviceRuntimeStateReducer(
     ) {
         val target = refreshTarget(module, action) ?: return
         store.reduce(deviceUid, generation) { state ->
-            state.updateTarget(target) { current ->
+            val updated = state.updateTarget(target) { current ->
                 current.copy(
                     phase = DeviceRuntimeFreshness.ERROR,
                     fault = DeviceRuntimeModuleFault(
@@ -364,20 +362,19 @@ class DeviceRuntimeStateReducer(
                         reason = reason
                     )
                 )
-            }.let { updated ->
-                if (!protocolFault) {
-                    updated
-                } else {
-                    updated.copy(
-                        protocolFault = DeviceRuntimeProtocolFault(
-                            module = module,
-                            action = action,
-                            reason = reason,
-                            receivedAtMillis = clockMillis(),
-                            receivedAtElapsedMillis = elapsedRealtimeMillis()
-                        )
+            }
+            if (!protocolFault) {
+                updated
+            } else {
+                updated.copy(
+                    protocolFault = DeviceRuntimeProtocolFault(
+                        module = module,
+                        action = action,
+                        reason = reason,
+                        receivedAtMillis = clockMillis(),
+                        receivedAtElapsedMillis = elapsedRealtimeMillis()
                     )
-                }
+                )
             }
         }
     }
