@@ -52,6 +52,9 @@ require_tokens(
     (
         "sealed interface DeviceOtaState",
         "data class DeviceFirmwareReleaseContent",
+        "data class DeviceFirmwareOperationResult",
+        "val successful: Boolean",
+        "val correlationId: String",
         "fun observe(deviceUid: String): StateFlow<DeviceOtaState>",
         "suspend fun checkAvailability(",
         "suspend fun startUpdate(",
@@ -61,12 +64,22 @@ require_tokens(
         "releaseContent: DeviceFirmwareReleaseContent",
     ),
 )
+forbid_tokens(
+    "contract",
+    (
+        "DeviceFirmwareCommandResult",
+        "val sent: Boolean",
+        "val messageId: String",
+        "typealias DeviceFirmwareCommandResult",
+    ),
+)
 require_tokens(
     "adapter",
     (
         "DeviceOtaCoordinator(",
         "coordinator.observe(",
         "coordinator.checkAvailability(",
+        "DeviceFirmwareOperationResult",
         "override suspend fun startUpdate(",
         "override suspend fun requestStatus(",
         "override suspend fun clearStatus(",
@@ -77,6 +90,14 @@ require_tokens(
     (
         "DeviceFirmwareRuntimeRepository(commandGateway)",
         "DeviceFirmwareUpdateRepository(firmware)",
+    ),
+)
+forbid_tokens(
+    "provider",
+    (
+        "AqlWsCommandClient",
+        "commandClientProvider",
+        "UNUSED_PARAMETER",
     ),
 )
 require_tokens(
@@ -141,6 +162,8 @@ require_tokens(
         "private val startLocks = ConcurrentHashMap<DeviceUid, Mutex>()",
         "startLock(deviceUid).withLock",
         "private suspend fun verifyInstalledVersion(",
+        "successful = true",
+        "correlationId = messageId",
     ),
 )
 forbid_tokens(
@@ -155,6 +178,10 @@ forbid_tokens(
         "parseOtaStatusResponseExact",
         "parseOtaProgressEventExact",
         "AqlWsCommandClient",
+        "DeviceFirmwareCommandResult",
+        "sent = true",
+        "sent = false",
+        "DeviceFirmwareOtaPhase.UNKNOWN",
     ),
 )
 require_tokens(
@@ -180,6 +207,17 @@ require_tokens(
         "data class DeviceFirmwareOtaStartRequestEcho",
         "data class DeviceFirmwareReleaseNotes",
         "sealed interface DeviceFirmwareAvailability",
+        "fun fromWireExact(value: String)",
+    ),
+)
+forbid_tokens(
+    "models",
+    (
+        "UNKNOWN(\"unknown\")",
+        "fun fromWire(value:",
+        "DeviceFirmwareOtaClearResult",
+        "DeviceFirmwareCommandResult",
+        "return trim().length",
     ),
 )
 require_tokens(
@@ -198,6 +236,14 @@ require_tokens(
         "artifact.product.line == artifact.compatibility.line",
     ),
 )
+
+legacy_files = (
+    SOURCE / "data/devices/runtime/ws/AqlWsCommandClient.kt",
+    SOURCE / "data/devices/runtime/modules/firmware/DeviceFirmwareStatusParser.kt",
+)
+for path in legacy_files:
+    if path.exists():
+        errors.append(f"{path.relative_to(ROOT)}: deleted legacy file must not return")
 
 if errors:
     print("Device OTA coordinator guard failed:", file=sys.stderr)
