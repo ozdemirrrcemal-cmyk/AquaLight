@@ -22,11 +22,11 @@ interface DeviceFirmwareUpdateOperations {
         applyNow: Boolean = true
     ): Result<PreparedDeviceFirmwareUpdate>
 
-    suspend fun startUpdate(plan: PreparedDeviceFirmwareUpdate): DeviceFirmwareCommandResult
+    suspend fun startUpdate(plan: PreparedDeviceFirmwareUpdate): DeviceFirmwareOperationResult
 
-    suspend fun requestStatus(deviceUid: String): DeviceFirmwareCommandResult
+    suspend fun requestStatus(deviceUid: String): DeviceFirmwareOperationResult
 
-    suspend fun clearStatus(deviceUid: String): DeviceFirmwareCommandResult
+    suspend fun clearStatus(deviceUid: String): DeviceFirmwareOperationResult
 
     fun close() = Unit
 }
@@ -157,11 +157,20 @@ data class PreparedDeviceFirmwareUpdate(
     val releaseContent: DeviceFirmwareReleaseContent = DeviceFirmwareReleaseContent.EMPTY
 )
 
-data class DeviceFirmwareCommandResult(
-    val sent: Boolean,
-    val messageId: String = "",
+data class DeviceFirmwareOperationResult(
+    val successful: Boolean,
+    val correlationId: String = "",
     val errorMessage: String = ""
 ) {
-    val isSuccess: Boolean
-        get() = sent && errorMessage.isBlank()
+    init {
+        require(successful || correlationId.isEmpty()) {
+            "Failed firmware operations must not expose a successful correlation id."
+        }
+        require(successful || errorMessage.isNotBlank()) {
+            "Failed firmware operations must provide a safe error message."
+        }
+        require(!successful || errorMessage.isEmpty()) {
+            "Successful firmware operations must not carry an error message."
+        }
+    }
 }
