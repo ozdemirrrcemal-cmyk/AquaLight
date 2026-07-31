@@ -1,0 +1,33 @@
+name: Temporary Source Export
+
+on:
+  pull_request:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  export-source:
+    runs-on: ubuntu-24.04
+    steps:
+      - name: Checkout source
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+
+      - name: Archive source tree
+        shell: bash
+        run: |
+          set -Eeuo pipefail
+          tar \
+            --exclude=.git \
+            --exclude='**/build' \
+            --exclude='.gradle' \
+            -czf "${RUNNER_TEMP}/aqualight-source.tar.gz" .
+
+      - name: Upload source archive
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+        with:
+          name: temporary-source-${{ github.event.pull_request.head.sha }}
+          path: ${{ runner.temp }}/aqualight-source.tar.gz
+          if-no-files-found: error
+          retention-days: 1
