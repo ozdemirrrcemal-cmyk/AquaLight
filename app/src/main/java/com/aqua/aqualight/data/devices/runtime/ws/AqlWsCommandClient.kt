@@ -33,12 +33,7 @@ class AqlWsCommandClient(
      * response instead of treating a queued WebSocket write as proof that the device is online.
      */
     fun requestNetworkStatus(): String? {
-        val message = AqlWsCommandFactory.networkStatus()
-        return if (wsClient.send(message)) {
-            message.id
-        } else {
-            null
-        }
+        return command(AqlWsCommandFactory.networkStatus())
     }
 
     fun timeStatus(): Boolean {
@@ -65,21 +60,25 @@ class AqlWsCommandClient(
         return wsClient.send(AqlWsCommandFactory.dosingStatus())
     }
 
+    /**
+     * Sends a fully constructed command whose id is known before subscription to the response
+     * stream. This closes the race between fast LAN responses and response correlation.
+     */
+    fun command(message: AqlWsOutgoingMessage.Command): String? {
+        return if (wsClient.send(message)) message.id else null
+    }
+
     fun command(
         module: String,
         action: String,
         data: JSONObject = JSONObject()
     ): String? {
-        val message = AqlWsCommandFactory.command(
-            module = module,
-            action = action,
-            data = data
+        return command(
+            AqlWsCommandFactory.command(
+                module = module,
+                action = action,
+                data = data
+            )
         )
-
-        return if (wsClient.send(message)) {
-            message.id
-        } else {
-            null
-        }
     }
 }
