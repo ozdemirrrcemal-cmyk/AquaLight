@@ -54,6 +54,10 @@ object DeviceRuntimeIdentityParser {
                 model = DeviceProductModel(data.requireExactString("model")),
                 brand = data.requireExactString("brand"),
                 displayName = data.requireExactString("displayName"),
+                customName = data.requireExactOptionalString("customName"),
+                effectiveDisplayName = data.requireExactString("effectiveDisplayName"),
+                nameEditable = data.requireExactBoolean("nameEditable"),
+                customNameMaxBytes = data.requireExactInt("customNameMaxBytes"),
                 skuId = DeviceSkuId(data.requireExactString("skuId")),
                 skuCode = DeviceSkuCode(data.requireExactString("skuCode")),
                 hardwareRevision = DeviceHardwareRevision(
@@ -83,7 +87,8 @@ object DeviceRuntimeIdentityParser {
     private val IDENTITY_KEYS = setOf(
         "productKey", "productId", "setupCode", "deviceUid", "shortId",
         "serialNumber", "firmwareSerial", "macAddress", "brand", "family",
-        "line", "model", "displayName", "skuId", "skuCode", "firmwareVersion",
+        "line", "model", "displayName", "customName", "effectiveDisplayName",
+        "nameEditable", "customNameMaxBytes", "skuId", "skuCode", "firmwareVersion",
         "hardwareRevision", "apiVersion", "protocolVersion", "runtime"
     )
     private val RUNTIME_KEYS = setOf(
@@ -180,10 +185,16 @@ private fun JSONObject.requireObject(key: String): JSONObject {
 }
 
 private fun JSONObject.requireExactString(key: String): String {
+    val value = requireExactOptionalString(key)
+    require(value.isNotEmpty()) { "$key must not be empty." }
+    return value
+}
+
+private fun JSONObject.requireExactOptionalString(key: String): String {
     require(has(key) && !isNull(key)) { "$key is required." }
     val value = get(key)
     require(value is String) { "$key must be a string." }
-    require(value.isNotEmpty()) { "$key must not be empty." }
+    if (value.isEmpty()) return value
     require(!value.first().isWhitespace() && !value.last().isWhitespace()) {
         "$key must not contain surrounding whitespace."
     }
