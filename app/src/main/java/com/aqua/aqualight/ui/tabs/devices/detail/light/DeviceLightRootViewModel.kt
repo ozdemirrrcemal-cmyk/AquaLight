@@ -27,9 +27,6 @@ class DeviceLightRootViewModel(
 
     private var boundDeviceUid: String = ""
     private var observeJob: Job? = null
-    private var pendingOtaStatusRequestId: String = ""
-    private var pendingOtaStartRequestId: String = ""
-    private var pendingOtaClearRequestId: String = ""
     private var otaTestOverlayText: AquaUiText? = null
     private var lastOtaPlan: PreparedDeviceFirmwareUpdate? = null
 
@@ -111,22 +108,23 @@ class DeviceLightRootViewModel(
             return
         }
 
-        val result = firmwareUpdateOperations.startUpdate(plan)
-        pendingOtaStartRequestId = result.messageId
-        if (result.isSuccess && pendingOtaStartRequestId.isNotBlank()) {
-            updateOtaTestText(
-                AquaUiText.Resource(
-                    R.string.device_ota_test_start_sent,
-                    listOf(pendingOtaStartRequestId, plan.targetVersion)
+        viewModelScope.launch {
+            val result = firmwareUpdateOperations.startUpdate(plan)
+            if (result.isSuccess && result.messageId.isNotBlank()) {
+                updateOtaTestText(
+                    AquaUiText.Resource(
+                        R.string.device_ota_test_start_sent,
+                        listOf(result.messageId, plan.targetVersion)
+                    )
                 )
-            )
-        } else {
-            updateOtaTestText(
-                errorText(
-                    R.string.device_ota_test_start_failed,
-                    result.errorMessage
+            } else {
+                updateOtaTestText(
+                    errorText(
+                        R.string.device_ota_test_start_failed,
+                        result.errorMessage
+                    )
                 )
-            )
+            }
         }
     }
 
@@ -137,22 +135,23 @@ class DeviceLightRootViewModel(
             return
         }
 
-        val result = firmwareUpdateOperations.requestStatus(deviceUid)
-        pendingOtaStatusRequestId = result.messageId
-        if (result.isSuccess && pendingOtaStatusRequestId.isNotBlank()) {
-            updateOtaTestText(
-                AquaUiText.Resource(
-                    R.string.device_ota_test_status_sent,
-                    listOf(pendingOtaStatusRequestId)
+        viewModelScope.launch {
+            val result = firmwareUpdateOperations.requestStatus(deviceUid)
+            if (result.isSuccess && result.messageId.isNotBlank()) {
+                updateOtaTestText(
+                    AquaUiText.Resource(
+                        R.string.device_ota_test_status_sent,
+                        listOf(result.messageId)
+                    )
                 )
-            )
-        } else {
-            updateOtaTestText(
-                errorText(
-                    R.string.device_ota_test_status_failed,
-                    result.errorMessage
+            } else {
+                updateOtaTestText(
+                    errorText(
+                        R.string.device_ota_test_status_failed,
+                        result.errorMessage
+                    )
                 )
-            )
+            }
         }
     }
 
@@ -163,22 +162,23 @@ class DeviceLightRootViewModel(
             return
         }
 
-        val result = firmwareUpdateOperations.clearStatus(deviceUid)
-        pendingOtaClearRequestId = result.messageId
-        if (result.isSuccess && pendingOtaClearRequestId.isNotBlank()) {
-            updateOtaTestText(
-                AquaUiText.Resource(
-                    R.string.device_ota_test_clear_sent,
-                    listOf(pendingOtaClearRequestId)
+        viewModelScope.launch {
+            val result = firmwareUpdateOperations.clearStatus(deviceUid)
+            if (result.isSuccess && result.messageId.isNotBlank()) {
+                updateOtaTestText(
+                    AquaUiText.Resource(
+                        R.string.device_ota_test_clear_sent,
+                        listOf(result.messageId)
+                    )
                 )
-            )
-        } else {
-            updateOtaTestText(
-                errorText(
-                    R.string.device_ota_test_clear_failed,
-                    result.errorMessage
+            } else {
+                updateOtaTestText(
+                    errorText(
+                        R.string.device_ota_test_clear_failed,
+                        result.errorMessage
+                    )
                 )
-            )
+            }
         }
     }
 
@@ -199,9 +199,6 @@ class DeviceLightRootViewModel(
     }
 
     private fun clearOtaTestState() {
-        pendingOtaStatusRequestId = ""
-        pendingOtaStartRequestId = ""
-        pendingOtaClearRequestId = ""
         lastOtaPlan = null
         otaTestOverlayText = null
     }
