@@ -117,7 +117,7 @@ data class DeviceRuntimeState(
 )
 
 /** Closed set of canonical runtime values that can be refreshed or faulted. */
-enum class DeviceRuntimeStateTarget {
+internal enum class DeviceRuntimeStateTarget {
     METADATA,
     SECURITY,
     NETWORK,
@@ -158,22 +158,6 @@ enum class DeviceRuntimeStateTarget {
         COOLING -> state.copy(cooling = state.cooling.loading())
         FIRMWARE -> state.copy(firmware = state.firmware.loading())
         OTA -> state.copy(ota = state.ota.loading())
-    }
-
-    fun markUnavailable(state: DeviceRuntimeState): DeviceRuntimeState = when (this) {
-        METADATA -> state.copy(metadata = DeviceRuntimeValue.unavailable())
-        SECURITY -> state.copy(security = DeviceRuntimeValue.unavailable())
-        NETWORK -> state.copy(network = DeviceRuntimeValue.unavailable())
-        TIME -> state.copy(time = DeviceRuntimeValue.unavailable())
-        LIGHT -> state.copy(light = DeviceRuntimeValue.unavailable())
-        LIGHT_TEMPERATURE_PROTECTION -> state.copy(
-            lightTemperatureProtection = DeviceRuntimeValue.unavailable()
-        )
-        TIMER -> state.copy(timer = DeviceRuntimeValue.unavailable())
-        DOSING -> state.copy(dosing = DeviceRuntimeValue.unavailable())
-        COOLING -> state.copy(cooling = DeviceRuntimeValue.unavailable())
-        FIRMWARE -> state.copy(firmware = DeviceRuntimeValue.unavailable())
-        OTA -> state.copy(ota = DeviceRuntimeValue.unavailable())
     }
 
     fun markError(
