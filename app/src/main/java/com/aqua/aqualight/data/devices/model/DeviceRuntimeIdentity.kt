@@ -77,11 +77,11 @@ data class DeviceRuntimeIdentity(
     /** Immutable commercial product display name. */
     val displayName: String,
     /** Owner-editable firmware name override; empty means cleared. */
-    val customName: String = "",
+    val customName: String,
     /** Firmware-resolved custom name or immutable product display name. */
-    val effectiveDisplayName: String = customName.ifEmpty { displayName },
-    val nameEditable: Boolean = true,
-    val customNameMaxBytes: Int = FIRMWARE_DEVICE_CUSTOM_NAME_MAX_BYTES,
+    val effectiveDisplayName: String,
+    val nameEditable: Boolean,
+    val customNameMaxBytes: Int,
     val skuId: DeviceSkuId,
     val skuCode: DeviceSkuCode,
     val hardwareRevision: DeviceHardwareRevision,
