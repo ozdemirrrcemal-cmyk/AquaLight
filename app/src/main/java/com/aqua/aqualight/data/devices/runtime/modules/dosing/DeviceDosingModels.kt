@@ -153,12 +153,41 @@ data class DeviceDosingChannelConfig(
     val regime: DeviceDosingRegime? = null,
     val dosing: DeviceDosingChannelDosingConfig? = null
 ) {
+    val normalizedChannelKey: String = channelKey.trim()
+    val normalizedDisplayName: String? = displayName?.trim()
+
+    init {
+        require(normalizedChannelKey.isNotEmpty() &&
+            normalizedChannelKey.none(Char::isISOControl)) {
+            "channelKey must identify a configured dosing channel."
+        }
+        require(displayName != null || regime != null || dosing != null) {
+            "A dosing channel update requires displayName, regime and/or dosing values."
+        }
+        normalizedDisplayName?.let { value ->
+            require(value.none(Char::isISOControl)) {
+                "displayName must not contain control characters."
+            }
+            require(
+                value.toByteArray(Charsets.UTF_8).size <=
+                    DeviceDosingRuntimeContract.Limit.DISPLAY_NAME_BYTES
+            ) {
+                "displayName must not exceed " +
+                    "${DeviceDosingRuntimeContract.Limit.DISPLAY_NAME_BYTES} UTF-8 bytes."
+            }
+        }
+    }
+
     fun toJson(): JSONObject {
         val json = JSONObject()
-            .put(DeviceDosingRuntimeContract.Field.CHANNEL_KEY, channelKey)
+            .put(DeviceDosingRuntimeContract.Field.CHANNEL_KEY, normalizedChannelKey)
 
         if (displayName != null) {
-            json.put(DeviceDosingRuntimeContract.Field.DISPLAY_NAME, displayName)
+            val value = normalizedDisplayName.orEmpty()
+            json.put(
+                DeviceDosingRuntimeContract.Field.DISPLAY_NAME,
+                if (value.isEmpty()) JSONObject.NULL else value
+            )
         }
 
         if (regime != null) {
@@ -190,7 +219,9 @@ data class DeviceDosingScheduleConfig(
         require(intervalOnMs >= 0L) { "intervalOnMs must be zero or greater." }
         require(intervalOffMs >= 0L) { "intervalOffMs must be zero or greater." }
         require(repeatCount >= 0) { "repeatCount must be zero or greater." }
-        require(amountMl > 0.0) { "amountMl must be greater than zero." }
+        require(amountMl.isFinite() && amountMl > 0.0) {
+            "amountMl must be a finite value greater than zero."
+        }
     }
 
     fun toJson(): JSONObject {
@@ -219,6 +250,12 @@ data class DeviceDosingConfigApplyPayload(
         require(schedules.size <= DeviceDosingRuntimeContract.Limit.MAX_SCHEDULES) {
             "Dosing supports at most ${DeviceDosingRuntimeContract.Limit.MAX_SCHEDULES} schedules."
         }
+        require(
+            channels.map(DeviceDosingChannelConfig::normalizedChannelKey).distinct().size ==
+                channels.size
+        ) {
+            "dosing.config.apply must not contain duplicate channelKey values."
+        }
     }
 
     fun toJson(): JSONObject {
@@ -246,9 +283,18 @@ data class DeviceDosingConfigApplyPayload(
 data class DeviceDosingChannelKeyPayload(
     val channelKey: String
 ) {
+    private val normalizedChannelKey = channelKey.trim()
+
+    init {
+        require(normalizedChannelKey.isNotEmpty() &&
+            normalizedChannelKey.none(Char::isISOControl)) {
+            "channelKey must identify a configured dosing channel."
+        }
+    }
+
     fun toJson(): JSONObject {
         return JSONObject()
-            .put(DeviceDosingRuntimeContract.Field.CHANNEL_KEY, channelKey)
+            .put(DeviceDosingRuntimeContract.Field.CHANNEL_KEY, normalizedChannelKey)
     }
 }
 
@@ -257,6 +303,7 @@ data class DeviceDosingCalibrationStartPayload(
     val durationMs: Long = DeviceDosingRuntimeContract.Limit.DEFAULT_CALIBRATION_DURATION_MS
 ) {
     init {
+        require(channelKey.trim().isNotEmpty()) { "channelKey is required." }
         require(durationMs in DeviceDosingRuntimeContract.Limit.MIN_CALIBRATION_DURATION_MS..DeviceDosingRuntimeContract.Limit.MAX_CALIBRATION_DURATION_MS) {
             "durationMs is outside firmware calibration range."
         }
@@ -264,7 +311,7 @@ data class DeviceDosingCalibrationStartPayload(
 
     fun toJson(): JSONObject {
         return JSONObject()
-            .put(DeviceDosingRuntimeContract.Field.CHANNEL_KEY, channelKey)
+            .put(DeviceDosingRuntimeContract.Field.CHANNEL_KEY, channelKey.trim())
             .put(DeviceDosingRuntimeContract.Field.DURATION_MS, durationMs)
     }
 }
@@ -274,14 +321,16 @@ data class DeviceDosingCalibrationFinishPayload(
     val measuredMl: Double
 ) {
     init {
-        require(measuredMl in DeviceDosingRuntimeContract.Limit.MIN_CALIBRATION_MEASURED_ML..DeviceDosingRuntimeContract.Limit.MAX_CALIBRATION_MEASURED_ML) {
+        require(channelKey.trim().isNotEmpty()) { "channelKey is required." }
+        require(measuredMl.isFinite() &&
+            measuredMl in DeviceDosingRuntimeContract.Limit.MIN_CALIBRATION_MEASURED_ML..DeviceDosingRuntimeContract.Limit.MAX_CALIBRATION_MEASURED_ML) {
             "measuredMl is outside firmware calibration range."
         }
     }
 
     fun toJson(): JSONObject {
         return JSONObject()
-            .put(DeviceDosingRuntimeContract.Field.CHANNEL_KEY, channelKey)
+            .put(DeviceDosingRuntimeContract.Field.CHANNEL_KEY, channelKey.trim())
             .put(DeviceDosingRuntimeContract.Field.MEASURED_ML, measuredMl)
     }
 }
@@ -292,14 +341,16 @@ data class DeviceDosingDoseNowPayload(
     val usePendingCalibration: Boolean = false
 ) {
     init {
-        require(amountMl > 0.0 && amountMl <= DeviceDosingRuntimeContract.Limit.MAX_MANUAL_DOSE_ML) {
+        require(channelKey.trim().isNotEmpty()) { "channelKey is required." }
+        require(amountMl.isFinite() && amountMl > 0.0 &&
+            amountMl <= DeviceDosingRuntimeContract.Limit.MAX_MANUAL_DOSE_ML) {
             "amountMl must be between 0 and ${DeviceDosingRuntimeContract.Limit.MAX_MANUAL_DOSE_ML}."
         }
     }
 
     fun toJson(): JSONObject {
         return JSONObject()
-            .put(DeviceDosingRuntimeContract.Field.CHANNEL_KEY, channelKey)
+            .put(DeviceDosingRuntimeContract.Field.CHANNEL_KEY, channelKey.trim())
             .put(DeviceDosingRuntimeContract.Field.AMOUNT_ML, amountMl)
             .put(DeviceDosingRuntimeContract.Field.USE_PENDING_CALIBRATION, usePendingCalibration)
     }
