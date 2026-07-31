@@ -54,8 +54,18 @@ class DeviceFirmwareUpdateStateCoverageTest {
 
         assertEquals(DeviceOtaState.Idle(DEVICE_UID), observed)
         assertTrue(availability is DeviceOtaState.UpdateAvailable)
-        assertTrue(DeviceFirmwareCommandResult(sent = true, messageId = "request-1").isSuccess)
-        assertFalse(DeviceFirmwareCommandResult(sent = false, errorMessage = "failed").isSuccess)
+        assertTrue(
+            DeviceFirmwareOperationResult(
+                successful = true,
+                correlationId = "request-1"
+            ).successful
+        )
+        assertFalse(
+            DeviceFirmwareOperationResult(
+                successful = false,
+                errorMessage = "failed"
+            ).successful
+        )
         operations.close()
     }
 
@@ -69,13 +79,13 @@ class DeviceFirmwareUpdateStateCoverageTest {
         ): Result<PreparedDeviceFirmwareUpdate> = Result.success(plan.copy(applyNow = applyNow))
 
         override suspend fun startUpdate(plan: PreparedDeviceFirmwareUpdate) =
-            DeviceFirmwareCommandResult(sent = true, messageId = "request-1")
+            DeviceFirmwareOperationResult(successful = true, correlationId = "request-1")
 
         override suspend fun requestStatus(deviceUid: String) =
-            DeviceFirmwareCommandResult(sent = true)
+            DeviceFirmwareOperationResult(successful = true, correlationId = "status-1")
 
         override suspend fun clearStatus(deviceUid: String) =
-            DeviceFirmwareCommandResult(sent = true)
+            DeviceFirmwareOperationResult(successful = true, correlationId = "clear-1")
     }
 
     private fun releaseContent() = DeviceFirmwareReleaseContent(
