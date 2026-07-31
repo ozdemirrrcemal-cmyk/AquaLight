@@ -5,7 +5,6 @@ import com.aqua.aqualight.data.devices.model.DeviceUid
 import com.aqua.aqualight.data.devices.repository.DeviceDiscoveryRepository
 import com.aqua.aqualight.data.devices.repository.DeviceRuntimeRepository
 import com.aqua.aqualight.data.devices.repository.reconnectAfterNetworkRestore
-import com.aqua.aqualight.data.devices.runtime.ws.AqlWsConnectionState
 import com.aqua.aqualight.data.devices.store.DeviceRegistryStore
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.atomic.AtomicBoolean
@@ -42,7 +41,8 @@ class DevicePresenceRuntimeMonitor(
         connectivityObserver?.currentLocalNetworkGeneration() ?: 0L
     )
     private val lastRuntimeProbeAtMillis = ConcurrentHashMap<DeviceUid, Long>()
-    private val lastLivenessProbeAtMillis = ConcurrentHashMap<DeviceUid, Long>()
+    private val livenessProbeCoordinator =
+        DeviceAuthenticatedLivenessProbeCoordinator(runtimeRepository)
     private val foregroundRefreshLock = Any()
 
     @Volatile
@@ -72,6 +72,7 @@ class DevicePresenceRuntimeMonitor(
                 presenceJob.cancel()
                 discoveryJob.cancel()
                 cancelForegroundRefresh()
+                livenessProbeCoordinator.reset()
                 runtimeScope = null
                 started.set(false)
             }
@@ -82,13 +83,14 @@ class DevicePresenceRuntimeMonitor(
         val changed = appForeground.getAndSet(isForeground) != isForeground
         if (!isForeground) {
             cancelForegroundRefresh()
+            livenessProbeCoordinator.reset()
             return
         }
 
         beginForegroundVerification()
         if (changed) {
             lastRuntimeProbeAtMillis.clear()
-            lastLivenessProbeAtMillis.clear()
+            livenessProbeCoordinator.reset()
         }
         scheduleForegroundRefresh()
     }
@@ -101,7 +103,7 @@ class DevicePresenceRuntimeMonitor(
         if (transitionedToUnavailable) {
             foregroundVerificationUntilMillis.set(0L)
             lastRuntimeProbeAtMillis.clear()
-            lastLivenessProbeAtMillis.clear()
+            livenessProbeCoordinator.reset()
             invalidateRuntimeProofsForLocalNetworkLoss()
             runtimeRepository?.disconnectForLocalNetworkLoss()
         }
@@ -206,7 +208,7 @@ class DevicePresenceRuntimeMonitor(
     private fun handleLocalNetworkPathChanged() {
         beginForegroundVerification()
         lastRuntimeProbeAtMillis.clear()
-        lastLivenessProbeAtMillis.clear()
+        livenessProbeCoordinator.reset()
         invalidateRuntimeProofsForLocalNetworkChange()
         runtimeRepository?.disconnectForLocalNetworkLoss()
     }
@@ -421,29 +423,17 @@ class DevicePresenceRuntimeMonitor(
     }
 
     private fun sendAuthenticatedLivenessProbe(force: Boolean = false) {
-        val runtime = runtimeRepository ?: return
+        val scope = runtimeScope ?: return
         val nowMillis = elapsedRealtimeMillis()
         registryStore.currentDevices().forEach { snapshot ->
-            val deviceUid = snapshot.deviceUid
-            val authenticated =
-                runtime.currentConnectionState(deviceUid) is AqlWsConnectionState.Authenticated
-            if (!authenticated) return@forEach
-
-            val lastProbeAt = lastLivenessProbeAtMillis[deviceUid]
-            if (
-                !force &&
-                lastProbeAt != null &&
-                nowMillis - lastProbeAt < AUTHENTICATED_LIVENESS_PROBE_INTERVAL_MS
-            ) {
-                return@forEach
-            }
-
-            val requestId = runtime.commandClient(deviceUid)?.requestNetworkStatus()
-            if (requestId.isNullOrBlank()) {
-                lastLivenessProbeAtMillis.remove(deviceUid)
-            } else {
-                lastLivenessProbeAtMillis[deviceUid] = nowMillis
-            }
+            livenessProbeCoordinator.request(
+                scope = scope,
+                deviceUid = snapshot.deviceUid,
+                nowMillis = nowMillis,
+                force = force,
+                minimumIntervalMillis = AUTHENTICATED_LIVENESS_PROBE_INTERVAL_MS,
+                timeoutMillis = AUTHENTICATED_LIVENESS_PROBE_TIMEOUT_MS
+            )
         }
     }
 
@@ -505,6 +495,7 @@ class DevicePresenceRuntimeMonitor(
         const val RUNTIME_PROBE_BACKOFF_MS = 15_000L
         const val OFFLINE_PROBE_BACKOFF_MS = 7_500L
         const val AUTHENTICATED_LIVENESS_PROBE_INTERVAL_MS = 8_000L
+        const val AUTHENTICATED_LIVENESS_PROBE_TIMEOUT_MS = 3_000L
         const val FOREGROUND_REVALIDATION_GRACE_MS = 3_000L
         const val NETWORK_RECOVERY_SETTLE_MS = 1_000L
         const val NETWORK_RECOVERY_RETRY_DELAY_MS = 6_000L
