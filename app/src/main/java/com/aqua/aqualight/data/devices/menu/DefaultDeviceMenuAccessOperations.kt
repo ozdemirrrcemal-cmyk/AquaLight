@@ -10,6 +10,7 @@ import com.aqua.aqualight.data.devices.model.DeviceUid
 import com.aqua.aqualight.data.devices.monitor.DeviceElapsedRealtimeClock
 import com.aqua.aqualight.data.devices.repository.DevicesRepository
 import com.aqua.aqualight.data.devices.repository.recordControlFailure
+import com.aqua.aqualight.data.devices.runtime.core.DeviceRuntimeCommandOutcome
 import com.aqua.aqualight.data.devices.runtime.ws.AqlWsConnectionState
 import com.aqua.aqualight.data.devices.runtime.ws.AqlWsEvent
 import com.aqua.aqualight.data.devices.runtime.ws.AqlWsIncomingMessage
@@ -77,7 +78,10 @@ internal class RepositoryDeviceMenuRuntimePort(
         devicesRepository.runtimeEvents()
 
     override suspend fun requestNetworkStatus(deviceUid: DeviceUid): String? =
-        devicesRepository.commandClient(deviceUid)?.requestNetworkStatus()
+        when (val outcome = devicesRepository.runtimeModules()?.network?.requestStatus(deviceUid)) {
+            is DeviceRuntimeCommandOutcome.Success -> outcome.messageId
+            else -> null
+        }
 
     override fun recordControlProof(deviceUid: DeviceUid): DeviceSnapshot? =
         devicesRepository.recordControlProof(deviceUid)
