@@ -37,7 +37,7 @@ class DeviceRuntimeModuleProvider(
     val firmwareUpdate: DeviceFirmwareUpdateRepository =
         DeviceFirmwareUpdateRepository(firmware)
     val timer: DeviceTimerRuntimeRepository =
-        DeviceTimerRuntimeRepository(commandClientProvider)
+        DeviceTimerRuntimeRepository(commandGateway)
     val cooling: DeviceCoolingRuntimeRepository =
         DeviceCoolingRuntimeRepository(commandClientProvider)
     val dosing: DeviceDosingRuntimeRepository =
