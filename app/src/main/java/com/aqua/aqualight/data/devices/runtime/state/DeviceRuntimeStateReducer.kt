@@ -66,7 +66,7 @@ class DeviceRuntimeStateReducer(
     }
 
     /** Returns the canonical status refresh required after a successful mutation, if any. */
-    fun commandCompleted(outcome: DeviceRuntimeCommandOutcome<*>): DeviceRuntimeStateTarget<*>? =
+    fun commandCompleted(outcome: DeviceRuntimeCommandOutcome<*>): DeviceRuntimeStateTarget? =
         when (outcome) {
             is DeviceRuntimeCommandOutcome.Success<*> -> reduceSuccess(outcome)
 
@@ -161,40 +161,40 @@ class DeviceRuntimeStateReducer(
         )
     }
 
-    fun refreshTarget(module: String, action: String): DeviceRuntimeStateTarget<*>? =
+    fun refreshTarget(module: String, action: String): DeviceRuntimeStateTarget? =
         when (module) {
-            AqlWsContract.MODULE_DEVICE -> DeviceRuntimeStateTarget.Metadata
+            AqlWsContract.MODULE_DEVICE -> DeviceRuntimeStateTarget.METADATA
             AqlWsContract.MODULE_SECURITY -> when (action) {
                 AqlWsContract.ACTION_SECURITY_UNPAIR,
                 AqlWsContract.ACTION_SECURITY_RESET -> null
-                else -> DeviceRuntimeStateTarget.Security
+                else -> DeviceRuntimeStateTarget.SECURITY
             }
-            AqlWsContract.MODULE_NETWORK -> DeviceRuntimeStateTarget.Network
-            AqlWsContract.MODULE_TIME -> DeviceRuntimeStateTarget.Time
+            AqlWsContract.MODULE_NETWORK -> DeviceRuntimeStateTarget.NETWORK
+            AqlWsContract.MODULE_TIME -> DeviceRuntimeStateTarget.TIME
             AqlWsContract.MODULE_LIGHT -> if (
                 action == AqlWsContract.ACTION_LIGHT_TEMPERATURE_PROTECTION_STATUS_GET ||
                 action == AqlWsContract.ACTION_LIGHT_TEMPERATURE_PROTECTION_SET
             ) {
-                DeviceRuntimeStateTarget.LightTemperatureProtection
+                DeviceRuntimeStateTarget.LIGHT_TEMPERATURE_PROTECTION
             } else {
-                DeviceRuntimeStateTarget.Light
+                DeviceRuntimeStateTarget.LIGHT
             }
-            AqlWsContract.MODULE_TIMER -> DeviceRuntimeStateTarget.Timer
-            AqlWsContract.MODULE_DOSING -> DeviceRuntimeStateTarget.Dosing
-            AqlWsContract.MODULE_COOLING -> DeviceRuntimeStateTarget.Cooling
+            AqlWsContract.MODULE_TIMER -> DeviceRuntimeStateTarget.TIMER
+            AqlWsContract.MODULE_DOSING -> DeviceRuntimeStateTarget.DOSING
+            AqlWsContract.MODULE_COOLING -> DeviceRuntimeStateTarget.COOLING
             AqlWsContract.MODULE_FIRMWARE -> if (
                 action == AqlWsContract.ACTION_FIRMWARE_STATUS_GET
             ) {
-                DeviceRuntimeStateTarget.Firmware
+                DeviceRuntimeStateTarget.FIRMWARE
             } else {
-                DeviceRuntimeStateTarget.Ota
+                DeviceRuntimeStateTarget.OTA
             }
             else -> null
         }
 
     private fun reduceSuccess(
         outcome: DeviceRuntimeCommandOutcome.Success<*>
-    ): DeviceRuntimeStateTarget<*>? {
+    ): DeviceRuntimeStateTarget? {
         val reduced = when (outcome.module) {
             AqlWsContract.MODULE_SECURITY -> reduceSecurity(outcome)
             AqlWsContract.MODULE_NETWORK -> reduceNetwork(outcome)
