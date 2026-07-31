@@ -3,6 +3,7 @@ package com.aqua.aqualight.data.devices.repository
 import com.aqua.aqualight.data.devices.contract.AqlCatalogKeySet
 import com.aqua.aqualight.data.devices.contract.parseAqlDeviceFeatureKeysExact
 import com.aqua.aqualight.data.devices.contract.parseAqlDeviceScreenKeysExact
+import com.aqua.aqualight.data.devices.model.DEVICE_CUSTOM_NAME_MAX_BYTES
 import com.aqua.aqualight.data.devices.model.DeviceApiVersion
 import com.aqua.aqualight.data.devices.model.DeviceCapabilitySet
 import com.aqua.aqualight.data.devices.model.DeviceFamily
@@ -43,6 +44,22 @@ object DeviceRuntimeIdentityParser {
         val family = requireNotNull(
             DeviceFamily.fromWireExact(data.requireExactString("family"))
         ) { "device.identity.get family is not an exact commercial family." }
+        val displayName = data.requireExactString("displayName")
+        val customName = data.requireExactOptionalString("customName")
+        val effectiveDisplayName = data.requireExactString("effectiveDisplayName")
+        val nameEditable = data.requireExactBoolean("nameEditable")
+        val customNameMaxBytes = data.requireExactInt("customNameMaxBytes")
+
+        require(nameEditable) { "device.identity.get must advertise editable device names." }
+        require(customNameMaxBytes == DEVICE_CUSTOM_NAME_MAX_BYTES) {
+            "device.identity.get customNameMaxBytes is incompatible."
+        }
+        require(customName.toByteArray(Charsets.UTF_8).size <= customNameMaxBytes) {
+            "device.identity.get customName exceeds its UTF-8 byte limit."
+        }
+        require(effectiveDisplayName == customName.ifBlank { displayName }) {
+            "device.identity.get effectiveDisplayName violates the fallback contract."
+        }
 
         ParsedDeviceRuntimeIdentity(
             identity = DeviceRuntimeIdentity(
@@ -53,7 +70,11 @@ object DeviceRuntimeIdentityParser {
                 line = DeviceProductLine(data.requireExactString("line")),
                 model = DeviceProductModel(data.requireExactString("model")),
                 brand = data.requireExactString("brand"),
-                displayName = data.requireExactString("displayName"),
+                displayName = displayName,
+                customName = customName,
+                effectiveDisplayName = effectiveDisplayName,
+                nameEditable = nameEditable,
+                customNameMaxBytes = customNameMaxBytes,
                 skuId = DeviceSkuId(data.requireExactString("skuId")),
                 skuCode = DeviceSkuCode(data.requireExactString("skuCode")),
                 hardwareRevision = DeviceHardwareRevision(
@@ -83,7 +104,8 @@ object DeviceRuntimeIdentityParser {
     private val IDENTITY_KEYS = setOf(
         "productKey", "productId", "setupCode", "deviceUid", "shortId",
         "serialNumber", "firmwareSerial", "macAddress", "brand", "family",
-        "line", "model", "displayName", "skuId", "skuCode", "firmwareVersion",
+        "line", "model", "displayName", "customName", "effectiveDisplayName",
+        "nameEditable", "customNameMaxBytes", "skuId", "skuCode", "firmwareVersion",
         "hardwareRevision", "apiVersion", "protocolVersion", "runtime"
     )
     private val RUNTIME_KEYS = setOf(
@@ -180,11 +202,16 @@ private fun JSONObject.requireObject(key: String): JSONObject {
 }
 
 private fun JSONObject.requireExactString(key: String): String {
+    val value = requireExactOptionalString(key)
+    require(value.isNotEmpty()) { "$key must not be empty." }
+    return value
+}
+
+private fun JSONObject.requireExactOptionalString(key: String): String {
     require(has(key) && !isNull(key)) { "$key is required." }
     val value = get(key)
     require(value is String) { "$key must be a string." }
-    require(value.isNotEmpty()) { "$key must not be empty." }
-    require(!value.first().isWhitespace() && !value.last().isWhitespace()) {
+    require(value.isEmpty() || (!value.first().isWhitespace() && !value.last().isWhitespace())) {
         "$key must not contain surrounding whitespace."
     }
     require(value.none(Char::isISOControl)) { "$key must not contain control characters." }
