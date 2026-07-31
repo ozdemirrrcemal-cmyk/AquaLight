@@ -1,5 +1,12 @@
 package com.aqua.aqualight.data.devices.runtime.modules.time
 
+import com.aqua.aqualight.data.devices.runtime.parsing.requireExactKeys
+import com.aqua.aqualight.data.devices.runtime.parsing.requiredBoolean
+import com.aqua.aqualight.data.devices.runtime.parsing.requiredInt
+import com.aqua.aqualight.data.devices.runtime.parsing.requiredNonNegativeLong
+import com.aqua.aqualight.data.devices.runtime.parsing.requiredObject
+import com.aqua.aqualight.data.devices.runtime.parsing.requiredString
+import com.aqua.aqualight.data.devices.runtime.parsing.requiredStringAllowEmpty
 import org.json.JSONObject
 
 object DeviceTimeStatusParser {
@@ -22,7 +29,7 @@ object DeviceTimeStatusParser {
             timezoneId = status.requiredStringAllowEmpty("timezoneId"),
             posixTimeZone = status.requiredStringAllowEmpty("posixTimeZone"),
             utcOffsetMinutes = status.requiredInt("utcOffsetMinutes").also {
-                require(it in -18 * 60..18 * 60)
+                require(it in MIN_UTC_OFFSET_MINUTES..MAX_UTC_OFFSET_MINUTES)
             },
             autoSyncNtpEnabled = status.requiredBoolean("autoSyncNtpEnabled"),
             autoSyncGadgetEnabled = status.requiredBoolean("autoSyncGadgetEnabled"),
@@ -32,13 +39,27 @@ object DeviceTimeStatusParser {
             lastSyncEpochMillis = status.requiredNonNegativeLong("lastSyncEpochMillis"),
             lastSyncUptimeMs = status.requiredNonNegativeLong("lastSyncUptimeMs"),
             parts = DeviceTimeParts(
-                year = parts.requiredInt("year").also { require(it in 0..9_999) },
-                month = parts.requiredInt("month").also { require(it in 0..12) },
-                day = parts.requiredInt("day").also { require(it in 0..31) },
-                weekday = parts.requiredInt("weekday").also { require(it in 0..7) },
-                hour = parts.requiredInt("hour").also { require(it in 0..23) },
-                minute = parts.requiredInt("minute").also { require(it in 0..59) },
-                second = parts.requiredInt("second").also { require(it in 0..60) }
+                year = parts.requiredInt("year").also {
+                    require(it in MIN_YEAR..MAX_YEAR)
+                },
+                month = parts.requiredInt("month").also {
+                    require(it in MIN_MONTH..MAX_MONTH)
+                },
+                day = parts.requiredInt("day").also {
+                    require(it in MIN_DAY..MAX_DAY)
+                },
+                weekday = parts.requiredInt("weekday").also {
+                    require(it in MIN_WEEKDAY..MAX_WEEKDAY)
+                },
+                hour = parts.requiredInt("hour").also {
+                    require(it in MIN_HOUR..MAX_HOUR)
+                },
+                minute = parts.requiredInt("minute").also {
+                    require(it in MIN_MINUTE..MAX_MINUTE)
+                },
+                second = parts.requiredInt("second").also {
+                    require(it in MIN_SECOND..MAX_SECOND)
+                }
             ),
             runtime = DeviceTimeRuntimeCapabilities(
                 module = runtime.requiredString("module").also {
@@ -66,45 +87,22 @@ object DeviceTimeStatusParser {
         "module", "readOnly", "supportsConfigApply", "supportsPhoneSync", "supportsNtpSync",
         "supportsRtcSet"
     )
-}
 
-private fun JSONObject.requireExactKeys(expected: Set<String>, label: String) {
-    val actual = buildSet {
-        val iterator = keys()
-        while (iterator.hasNext()) add(iterator.next())
-    }
-    require(actual == expected) { "$label keys differ from the firmware contract: $actual" }
-}
-
-private fun JSONObject.requiredObject(key: String): JSONObject =
-    get(key) as? JSONObject ?: error("$key must be an object.")
-
-private fun JSONObject.requiredString(key: String): String =
-    requiredStringAllowEmpty(key).also { require(it.isNotEmpty()) { "$key must not be empty." } }
-
-private fun JSONObject.requiredStringAllowEmpty(key: String): String {
-    val value = get(key) as? String ?: error("$key must be a string.")
-    require(value.none(Char::isISOControl))
-    require(value.isEmpty() || (!value.first().isWhitespace() && !value.last().isWhitespace()))
-    return value
-}
-
-private fun JSONObject.requiredBoolean(key: String): Boolean =
-    get(key) as? Boolean ?: error("$key must be a boolean.")
-
-private fun JSONObject.requiredInt(key: String): Int {
-    val number = get(key) as? Number ?: error("$key must be numeric.")
-    val doubleValue = number.toDouble()
-    val longValue = number.toLong()
-    require(doubleValue.isFinite() && doubleValue == longValue.toDouble())
-    require(longValue in Int.MIN_VALUE.toLong()..Int.MAX_VALUE.toLong())
-    return longValue.toInt()
-}
-
-private fun JSONObject.requiredNonNegativeLong(key: String): Long {
-    val number = get(key) as? Number ?: error("$key must be numeric.")
-    val doubleValue = number.toDouble()
-    val longValue = number.toLong()
-    require(doubleValue.isFinite() && doubleValue == longValue.toDouble() && longValue >= 0L)
-    return longValue
+    private const val MIN_UTC_OFFSET_MINUTES = -18 * MINUTES_PER_HOUR
+    private const val MAX_UTC_OFFSET_MINUTES = 18 * MINUTES_PER_HOUR
+    private const val MINUTES_PER_HOUR = 60
+    private const val MIN_YEAR = 0
+    private const val MAX_YEAR = 9_999
+    private const val MIN_MONTH = 0
+    private const val MAX_MONTH = 12
+    private const val MIN_DAY = 0
+    private const val MAX_DAY = 31
+    private const val MIN_WEEKDAY = 0
+    private const val MAX_WEEKDAY = 7
+    private const val MIN_HOUR = 0
+    private const val MAX_HOUR = 23
+    private const val MIN_MINUTE = 0
+    private const val MAX_MINUTE = 59
+    private const val MIN_SECOND = 0
+    private const val MAX_SECOND = 60
 }
