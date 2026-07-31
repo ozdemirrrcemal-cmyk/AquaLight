@@ -243,7 +243,7 @@ object DeviceLightStatusParser {
             invert = json.requiredBoolean("invert"),
             pwmResolutionBits = json.requiredNonNegativeInt("pwmResolutionBits"),
             pwmFrequencyHz = json.requiredNonNegativeInt("pwmFrequencyHz"),
-            color = json.requiredInt("color"),
+            color = json.requiredUnsigned32("color"),
             lumen = json.requiredFiniteDouble("lumen").also { require(it >= 0.0) },
             lux = json.requiredFiniteDouble("lux").also { require(it >= 0.0) },
             watt = json.requiredFiniteDouble("watt").also { require(it >= 0.0) },
