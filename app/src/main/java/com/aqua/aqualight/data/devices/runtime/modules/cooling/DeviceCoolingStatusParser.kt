@@ -3,124 +3,298 @@ package com.aqua.aqualight.data.devices.runtime.modules.cooling
 import org.json.JSONArray
 import org.json.JSONObject
 
+/** Strict mirror of `cooling.status.get.data`. */
 object DeviceCoolingStatusParser {
 
     fun parse(data: JSONObject): DeviceCoolingStatus {
         val status = data.optJSONObject("status") ?: data
+        status.requireExactKeys(STATUS_KEYS, "cooling.status.get.data")
+
+        val fanOutputCount = status.requireNonNegativeInt("fanOutputCount")
+        val ruleCount = status.requireNonNegativeInt("ruleCount")
+        val minTemperatureC = status.requireFiniteDouble("minTemperatureC")
+        val maxTemperatureC = status.requireFiniteDouble("maxTemperatureC")
+        require(minTemperatureC < maxTemperatureC) {
+            "cooling.status.get temperature range is invalid."
+        }
+
+        val fans = parseFans(status.requireArray("fans"))
+        val rules = parseRules(status.requireArray("rules"))
+        val runtime = parseRuntime(status.requireObject("runtime"))
+
+        require(fans.size == fanOutputCount) {
+            "cooling.status.get fanOutputCount does not match fans."
+        }
+        require(rules.size == ruleCount) {
+            "cooling.status.get ruleCount does not match rules."
+        }
+        require(fans.map(DeviceCoolingFanStatus::index).toSet().size == fans.size) {
+            "cooling.status.get contains duplicate fan indexes."
+        }
+        require(fans.map(DeviceCoolingFanStatus::key).toSet().size == fans.size) {
+            "cooling.status.get contains duplicate fan keys."
+        }
+        require(rules.map(DeviceCoolingRuleStatus::index).toSet().size == rules.size) {
+            "cooling.status.get contains duplicate rule indexes."
+        }
+        require(fans.all { fan ->
+            fan.editable.displayName == runtime.supportsFanDisplayName
+        }) {
+            "cooling status display-name editability disagrees with runtime capability."
+        }
 
         return DeviceCoolingStatus(
-            supported = status.optBoolean("supported", false),
-            fanSupported = status.optBoolean("fanSupported", false),
-            temperatureSupported = status.optBoolean("temperatureSupported", false),
-            fanOutputCount = status.optInt("fanOutputCount", 0),
-            ruleCount = status.optInt("ruleCount", 0),
-            mode = DeviceCoolingMode.fromWire(status.optString("mode", DeviceCoolingMode.OFF.wireValue)),
-            minTemperatureC = status.optDouble("minTemperatureC", 0.0),
-            maxTemperatureC = status.optDouble("maxTemperatureC", 0.0),
-            fixedSensorIndex = status.optInt("fixedSensorIndex", -1),
-            uptimeMs = status.optLong("uptimeMs", 0L),
-            fans = parseFans(status.optJSONArray("fans")),
-            rules = parseRules(status.optJSONArray("rules")),
-            runtime = parseRuntime(status.optJSONObject("runtime"))
+            supported = status.requireBoolean("supported"),
+            fanSupported = status.requireBoolean("fanSupported"),
+            temperatureSupported = status.requireBoolean("temperatureSupported"),
+            fanOutputCount = fanOutputCount,
+            ruleCount = ruleCount,
+            mode = requireNotNull(
+                DeviceCoolingMode.fromWireExact(status.requireText("mode"))
+            ) { "cooling.status.get mode is not an exact firmware value." },
+            minTemperatureC = minTemperatureC,
+            maxTemperatureC = maxTemperatureC,
+            fixedSensorIndex = status.requireInt("fixedSensorIndex"),
+            uptimeMs = status.requireNonNegativeLong("uptimeMs"),
+            fans = fans,
+            rules = rules,
+            runtime = runtime
         )
     }
 
-    private fun parseRuntime(runtime: JSONObject?): DeviceCoolingRuntimeCapabilities {
-        return DeviceCoolingRuntimeCapabilities(
-            module = runtime?.optString("module", DeviceCoolingRuntimeContract.MODULE)
-                ?: DeviceCoolingRuntimeContract.MODULE,
-            readOnly = runtime?.optBoolean("readOnly", false) ?: false,
-            supportsConfigApply = runtime?.optBoolean("supportsConfigApply", false) ?: false,
-            supportsModeSet = runtime?.optBoolean("supportsModeSet", false) ?: false,
-            supportsTemperatureRange = runtime?.optBoolean("supportsTemperatureRange", false) ?: false,
-            hardwareEditable = runtime?.optBoolean("hardwareEditable", false) ?: false,
-            fanMappingEditable = runtime?.optBoolean("fanMappingEditable", false) ?: false,
-            sensorMappingEditable = runtime?.optBoolean("sensorMappingEditable", false) ?: false,
-            event = runtime?.optString("event", "") ?: ""
-        )
+    fun parseExact(data: JSONObject): Result<DeviceCoolingStatus> = runCatching {
+        parse(data)
     }
 
-    private fun parseFans(fans: JSONArray?): List<DeviceCoolingFanStatus> {
-        if (fans == null) return emptyList()
+    private fun parseRuntime(runtime: JSONObject): DeviceCoolingRuntimeCapabilities {
+        runtime.requireExactKeys(RUNTIME_KEYS, "cooling.status.get.data.runtime")
+        val parsed = DeviceCoolingRuntimeCapabilities(
+            module = runtime.requireText("module"),
+            readOnly = runtime.requireBoolean("readOnly"),
+            supportsConfigApply = runtime.requireBoolean("supportsConfigApply"),
+            supportsModeSet = runtime.requireBoolean("supportsModeSet"),
+            supportsTemperatureRange = runtime.requireBoolean("supportsTemperatureRange"),
+            hardwareEditable = runtime.requireBoolean("hardwareEditable"),
+            fanMappingEditable = runtime.requireBoolean("fanMappingEditable"),
+            sensorMappingEditable = runtime.requireBoolean("sensorMappingEditable"),
+            event = runtime.requireText("event"),
+            supportsFanDisplayName = runtime.requireBoolean("supportsFanDisplayName")
+        )
 
-        return buildList {
-            for (index in 0 until fans.length()) {
-                val item = fans.optJSONObject(index) ?: continue
-                add(parseFan(item))
-            }
+        require(parsed.module == DeviceCoolingRuntimeContract.MODULE) {
+            "cooling runtime module is incompatible."
         }
+        require(!parsed.readOnly && parsed.supportsConfigApply && parsed.supportsModeSet &&
+            parsed.supportsTemperatureRange) {
+            "cooling runtime write capabilities are incompatible."
+        }
+        require(!parsed.hardwareEditable && !parsed.fanMappingEditable &&
+            !parsed.sensorMappingEditable) {
+            "cooling runtime exposes forbidden hardware editability."
+        }
+        require(parsed.event == STATUS_CHANGED_EVENT) {
+            "cooling runtime event is incompatible."
+        }
+        return parsed
     }
 
-    private fun parseFan(item: JSONObject): DeviceCoolingFanStatus {
-        val editable = item.optJSONObject("editable")
-
-        return DeviceCoolingFanStatus(
-            index = item.optInt("index", -1),
-            key = item.optString("key", ""),
-            name = item.optString("name", ""),
-            displayName = item.optString("displayName", item.optString("name", "")),
-            profileManaged = item.optBoolean("profileManaged", false),
-            mode = DeviceCoolingMode.fromWire(item.optString("regime", DeviceCoolingMode.OFF.wireValue)),
-            channelKind = item.optString("channelKind", ""),
-            gpio = item.optInt("gpio", -1),
-            ledcChannel = item.optInt("ledcChannel", -1),
-            group = item.optInt("group", -1),
-            valueNow = item.optDouble("valueNow", 0.0),
-            valueAuto = item.optDouble("valueAuto", 0.0),
-            valueManual = item.optDouble("valueManual", -1.0),
-            valueMin = item.optDouble("valueMin", 0.0),
-            valueMax = item.optDouble("valueMax", 1.0),
-            manualTimeoutMs = item.optLong("manualTimeoutMs", 0L),
-            percentNow = item.optDouble("percentNow", 0.0),
-            percentAuto = item.optDouble("percentAuto", 0.0),
-            percentManual = item.optDouble("percentManual", -100.0),
-            percentMin = item.optDouble("percentMin", 0.0),
-            percentMax = item.optDouble("percentMax", 100.0),
-            invert = item.optBoolean("invert", false),
-            pwmResolutionBits = item.optInt("pwmResolutionBits", 0),
-            pwmFrequencyHz = item.optInt("pwmFrequencyHz", 0),
-            editable = DeviceCoolingFanEditable(
-                hardware = editable?.optBoolean("hardware", false) ?: false,
-                displayName = editable?.optBoolean("displayName", false) ?: false,
-                hardwareCalibration = editable?.optBoolean("hardwareCalibration", false) ?: false
+    private fun parseFans(fans: JSONArray): List<DeviceCoolingFanStatus> = buildList {
+        repeat(fans.length()) { arrayIndex ->
+            val item = fans.requireObject(arrayIndex, "fans")
+            item.requireExactKeys(FAN_KEYS, "cooling.status.get.data.fans[$arrayIndex]")
+            val editable = item.requireObject("editable")
+            editable.requireExactKeys(
+                EDITABLE_KEYS,
+                "cooling.status.get.data.fans[$arrayIndex].editable"
             )
-        )
-    }
 
-    private fun parseRules(rules: JSONArray?): List<DeviceCoolingRuleStatus> {
-        if (rules == null) return emptyList()
-
-        return buildList {
-            for (index in 0 until rules.length()) {
-                val item = rules.optJSONObject(index) ?: continue
-                add(parseRule(item))
+            val mode = requireNotNull(
+                DeviceCoolingMode.fromWireExact(item.requireText("regime"))
+            ) { "cooling fan regime is not an exact firmware value." }
+            val channelKind = item.requireText("channelKind")
+            require(channelKind in CHANNEL_KINDS) {
+                "cooling fan channelKind is not an exact firmware value."
             }
+
+            add(
+                DeviceCoolingFanStatus(
+                    index = item.requireNonNegativeInt("index"),
+                    key = item.requireText("key"),
+                    name = item.requireText("name"),
+                    displayName = item.requireText("displayName"),
+                    profileManaged = item.requireBoolean("profileManaged"),
+                    mode = mode,
+                    channelKind = channelKind,
+                    gpio = item.requireInt("gpio"),
+                    ledcChannel = item.requireInt("ledcChannel"),
+                    group = item.requireInt("group"),
+                    valueNow = item.requireFiniteDouble("valueNow"),
+                    valueAuto = item.requireFiniteDouble("valueAuto"),
+                    valueManual = item.requireFiniteDouble("valueManual"),
+                    valueMin = item.requireFiniteDouble("valueMin"),
+                    valueMax = item.requireFiniteDouble("valueMax"),
+                    manualTimeoutMs = item.requireNonNegativeLong("manualTimeoutMs"),
+                    percentNow = item.requireFiniteDouble("percentNow"),
+                    percentAuto = item.requireFiniteDouble("percentAuto"),
+                    percentManual = item.requireFiniteDouble("percentManual"),
+                    percentMin = item.requireFiniteDouble("percentMin"),
+                    percentMax = item.requireFiniteDouble("percentMax"),
+                    invert = item.requireBoolean("invert"),
+                    pwmResolutionBits = item.requireNonNegativeInt("pwmResolutionBits"),
+                    pwmFrequencyHz = item.requireNonNegativeInt("pwmFrequencyHz"),
+                    editable = DeviceCoolingFanEditable(
+                        hardware = editable.requireBoolean("hardware"),
+                        displayName = editable.requireBoolean("displayName"),
+                        hardwareCalibration = editable.requireBoolean("hardwareCalibration")
+                    )
+                )
+            )
         }
     }
 
-    private fun parseRule(item: JSONObject): DeviceCoolingRuleStatus {
-        return DeviceCoolingRuleStatus(
-            index = item.optInt("index", -1),
-            name = item.optString("name", ""),
-            enabled = item.optBoolean("enabled", false),
-            fanIndex = item.optInt("fanIndex", -1),
-            channelKey = item.optString("channelKey", ""),
-            bound = item.optBoolean("bound", false),
-            minTemperatureC = item.optDouble("minTemperatureC", 0.0),
-            maxTemperatureC = item.optDouble("maxTemperatureC", 0.0),
-            group = item.optInt("group", -1),
-            sensorBindings = parseIntArray(item.optJSONArray("sensorBindings"))
-        )
+    private fun parseRules(rules: JSONArray): List<DeviceCoolingRuleStatus> = buildList {
+        repeat(rules.length()) { arrayIndex ->
+            val item = rules.requireObject(arrayIndex, "rules")
+            item.requireExactKeys(RULE_KEYS, "cooling.status.get.data.rules[$arrayIndex]")
+            val minTemperatureC = item.requireFiniteDouble("minTemperatureC")
+            val maxTemperatureC = item.requireFiniteDouble("maxTemperatureC")
+            require(minTemperatureC < maxTemperatureC) {
+                "cooling rule temperature range is invalid."
+            }
+
+            add(
+                DeviceCoolingRuleStatus(
+                    index = item.requireNonNegativeInt("index"),
+                    name = item.requireOptionalText("name"),
+                    enabled = item.requireBoolean("enabled"),
+                    fanIndex = item.requireInt("fanIndex"),
+                    channelKey = item.requireOptionalText("channelKey"),
+                    bound = item.requireBoolean("bound"),
+                    minTemperatureC = minTemperatureC,
+                    maxTemperatureC = maxTemperatureC,
+                    group = item.requireInt("group"),
+                    sensorBindings = item.requireIntArray("sensorBindings")
+                )
+            )
+        }
     }
 
-    private fun parseIntArray(values: JSONArray?): List<Int> {
-        if (values == null) return emptyList()
+    private const val STATUS_CHANGED_EVENT = "cooling.status.changed"
+    private val CHANNEL_KINDS = setOf("gpio", "digital", "none")
+    private val STATUS_KEYS = setOf(
+        "supported", "fanSupported", "temperatureSupported", "fanOutputCount",
+        "ruleCount", "mode", "minTemperatureC", "maxTemperatureC",
+        "fixedSensorIndex", "uptimeMs", "fans", "rules", "runtime"
+    )
+    private val RUNTIME_KEYS = setOf(
+        "module", "readOnly", "supportsConfigApply", "supportsModeSet",
+        "supportsTemperatureRange", "supportsFanDisplayName", "hardwareEditable",
+        "fanMappingEditable", "sensorMappingEditable", "event"
+    )
+    private val FAN_KEYS = setOf(
+        "index", "key", "name", "displayName", "profileManaged", "regime",
+        "channelKind", "gpio", "ledcChannel", "group", "valueNow", "valueAuto",
+        "valueManual", "valueMin", "valueMax", "manualTimeoutMs", "percentNow",
+        "percentAuto", "percentManual", "percentMin", "percentMax", "invert",
+        "pwmResolutionBits", "pwmFrequencyHz", "editable"
+    )
+    private val EDITABLE_KEYS = setOf("hardware", "displayName", "hardwareCalibration")
+    private val RULE_KEYS = setOf(
+        "index", "name", "enabled", "fanIndex", "channelKey", "bound",
+        "minTemperatureC", "maxTemperatureC", "group", "sensorBindings"
+    )
+}
 
-        val result = mutableListOf<Int>()
-        for (index in 0 until values.length()) {
-            val value = values.optInt(index, -1)
-            if (value >= 0) result.add(value)
+private fun JSONObject.requireExactKeys(expected: Set<String>, label: String) {
+    val actual = buildSet {
+        val iterator = keys()
+        while (iterator.hasNext()) add(iterator.next())
+    }
+    require(actual == expected) {
+        "$label keys differ from the firmware contract; expected=$expected actual=$actual"
+    }
+}
+
+private fun JSONObject.requireObject(key: String): JSONObject {
+    require(has(key) && !isNull(key)) { "$key is required." }
+    return get(key) as? JSONObject ?: error("$key must be a JSON object.")
+}
+
+private fun JSONObject.requireArray(key: String): JSONArray {
+    require(has(key) && !isNull(key)) { "$key is required." }
+    return get(key) as? JSONArray ?: error("$key must be a JSON array.")
+}
+
+private fun JSONArray.requireObject(index: Int, label: String): JSONObject {
+    return get(index) as? JSONObject ?: error("$label[$index] must be a JSON object.")
+}
+
+private fun JSONObject.requireText(key: String): String {
+    val value = requireOptionalText(key)
+    require(value.isNotEmpty()) { "$key must not be empty." }
+    return value
+}
+
+private fun JSONObject.requireOptionalText(key: String): String {
+    require(has(key) && !isNull(key)) { "$key is required." }
+    val value = get(key) as? String ?: error("$key must be a string.")
+    require(value.isEmpty() || (!value.first().isWhitespace() && !value.last().isWhitespace())) {
+        "$key must not contain surrounding whitespace."
+    }
+    require(value.none(Char::isISOControl)) { "$key must not contain control characters." }
+    return value
+}
+
+private fun JSONObject.requireBoolean(key: String): Boolean {
+    require(has(key) && !isNull(key)) { "$key is required." }
+    return get(key) as? Boolean ?: error("$key must be a boolean.")
+}
+
+private fun JSONObject.requireInt(key: String): Int {
+    val value = requireIntegralLong(key)
+    require(value in Int.MIN_VALUE.toLong()..Int.MAX_VALUE.toLong()) {
+        "$key is outside the supported integer range."
+    }
+    return value.toInt()
+}
+
+private fun JSONObject.requireNonNegativeInt(key: String): Int =
+    requireInt(key).also { value -> require(value >= 0) { "$key must not be negative." } }
+
+private fun JSONObject.requireNonNegativeLong(key: String): Long =
+    requireIntegralLong(key).also { value -> require(value >= 0L) { "$key must not be negative." } }
+
+private fun JSONObject.requireIntegralLong(key: String): Long {
+    require(has(key) && !isNull(key)) { "$key is required." }
+    val value = get(key) as? Number ?: error("$key must be an integer.")
+    val asLong = value.toLong()
+    require(value.toDouble().isFinite() && value.toDouble() == asLong.toDouble()) {
+        "$key must be an integer."
+    }
+    return asLong
+}
+
+private fun JSONObject.requireFiniteDouble(key: String): Double {
+    require(has(key) && !isNull(key)) { "$key is required." }
+    val value = get(key) as? Number ?: error("$key must be a number.")
+    return value.toDouble().also { parsed -> require(parsed.isFinite()) { "$key must be finite." } }
+}
+
+private fun JSONObject.requireIntArray(key: String): List<Int> {
+    val array = requireArray(key)
+    return buildList {
+        repeat(array.length()) { index ->
+            val raw = array.get(index) as? Number
+                ?: error("$key[$index] must be an integer.")
+            val asLong = raw.toLong()
+            require(raw.toDouble().isFinite() && raw.toDouble() == asLong.toDouble()) {
+                "$key[$index] must be an integer."
+            }
+            require(asLong in 0..Int.MAX_VALUE.toLong()) {
+                "$key[$index] is outside the supported sensor-index range."
+            }
+            add(asLong.toInt())
         }
-        return result
+        require(size == toSet().size) { "$key must not contain duplicate indexes." }
     }
 }
