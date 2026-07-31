@@ -14,10 +14,6 @@ object DeviceTimeStatusParser {
     fun parse(data: JSONObject): DeviceTimeStatus {
         val status = data.optJSONObject("status") ?: data
         status.requireExactKeys(STATUS_KEYS, "time status")
-        val parts = status.requiredObject("parts")
-        val runtime = status.requiredObject("runtime")
-        parts.requireExactKeys(PART_KEYS, "time status parts")
-        runtime.requireExactKeys(RUNTIME_KEYS, "time status runtime")
 
         return DeviceTimeStatus(
             timeSet = status.requiredBoolean("timeSet"),
@@ -38,39 +34,41 @@ object DeviceTimeStatusParser {
             lastSyncSource = status.requiredStringAllowEmpty("lastSyncSource"),
             lastSyncEpochMillis = status.requiredNonNegativeLong("lastSyncEpochMillis"),
             lastSyncUptimeMs = status.requiredNonNegativeLong("lastSyncUptimeMs"),
-            parts = DeviceTimeParts(
-                year = parts.requiredInt("year").also {
-                    require(it in MIN_YEAR..MAX_YEAR)
-                },
-                month = parts.requiredInt("month").also {
-                    require(it in MIN_MONTH..MAX_MONTH)
-                },
-                day = parts.requiredInt("day").also {
-                    require(it in MIN_DAY..MAX_DAY)
-                },
-                weekday = parts.requiredInt("weekday").also {
-                    require(it in MIN_WEEKDAY..MAX_WEEKDAY)
-                },
-                hour = parts.requiredInt("hour").also {
-                    require(it in MIN_HOUR..MAX_HOUR)
-                },
-                minute = parts.requiredInt("minute").also {
-                    require(it in MIN_MINUTE..MAX_MINUTE)
-                },
-                second = parts.requiredInt("second").also {
-                    require(it in MIN_SECOND..MAX_SECOND)
-                }
-            ),
-            runtime = DeviceTimeRuntimeCapabilities(
-                module = runtime.requiredString("module").also {
-                    require(it == DeviceTimeRuntimeContract.MODULE)
-                },
-                readOnly = runtime.requiredBoolean("readOnly"),
-                supportsConfigApply = runtime.requiredBoolean("supportsConfigApply"),
-                supportsPhoneSync = runtime.requiredBoolean("supportsPhoneSync"),
-                supportsNtpSync = runtime.requiredBoolean("supportsNtpSync"),
-                supportsRtcSet = runtime.requiredBoolean("supportsRtcSet")
-            )
+            parts = parseParts(status.requiredObject("parts")),
+            runtime = parseRuntime(status.requiredObject("runtime"))
+        )
+    }
+
+    private fun parseParts(parts: JSONObject): DeviceTimeParts {
+        parts.requireExactKeys(PART_KEYS, "time status parts")
+        return DeviceTimeParts(
+            year = parts.requiredInt("year").also { require(it in MIN_YEAR..MAX_YEAR) },
+            month = parts.requiredInt("month").also { require(it in MIN_MONTH..MAX_MONTH) },
+            day = parts.requiredInt("day").also { require(it in MIN_DAY..MAX_DAY) },
+            weekday = parts.requiredInt("weekday").also {
+                require(it in MIN_WEEKDAY..MAX_WEEKDAY)
+            },
+            hour = parts.requiredInt("hour").also { require(it in MIN_HOUR..MAX_HOUR) },
+            minute = parts.requiredInt("minute").also {
+                require(it in MIN_MINUTE..MAX_MINUTE)
+            },
+            second = parts.requiredInt("second").also {
+                require(it in MIN_SECOND..MAX_SECOND)
+            }
+        )
+    }
+
+    private fun parseRuntime(runtime: JSONObject): DeviceTimeRuntimeCapabilities {
+        runtime.requireExactKeys(RUNTIME_KEYS, "time status runtime")
+        return DeviceTimeRuntimeCapabilities(
+            module = runtime.requiredString("module").also {
+                require(it == DeviceTimeRuntimeContract.MODULE)
+            },
+            readOnly = runtime.requiredBoolean("readOnly"),
+            supportsConfigApply = runtime.requiredBoolean("supportsConfigApply"),
+            supportsPhoneSync = runtime.requiredBoolean("supportsPhoneSync"),
+            supportsNtpSync = runtime.requiredBoolean("supportsNtpSync"),
+            supportsRtcSet = runtime.requiredBoolean("supportsRtcSet")
         )
     }
 
