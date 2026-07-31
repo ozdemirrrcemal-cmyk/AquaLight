@@ -49,6 +49,7 @@ object DeviceDosingRuntimeContract {
 
     object Limit {
         const val MAX_SCHEDULES = 24
+        const val DISPLAY_NAME_BYTES = 32
         const val MAX_MANUAL_DOSE_ML = 1000.0
         const val MIN_CALIBRATION_MEASURED_ML = 0.05
         const val MAX_CALIBRATION_MEASURED_ML = 1000.0
