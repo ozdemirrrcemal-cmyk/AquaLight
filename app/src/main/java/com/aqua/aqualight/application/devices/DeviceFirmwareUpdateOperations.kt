@@ -22,11 +22,11 @@ interface DeviceFirmwareUpdateOperations {
         applyNow: Boolean = true
     ): Result<PreparedDeviceFirmwareUpdate>
 
-    fun startUpdate(plan: PreparedDeviceFirmwareUpdate): DeviceFirmwareCommandResult
+    suspend fun startUpdate(plan: PreparedDeviceFirmwareUpdate): DeviceFirmwareCommandResult
 
-    fun requestStatus(deviceUid: String): DeviceFirmwareCommandResult
+    suspend fun requestStatus(deviceUid: String): DeviceFirmwareCommandResult
 
-    fun clearStatus(deviceUid: String): DeviceFirmwareCommandResult
+    suspend fun clearStatus(deviceUid: String): DeviceFirmwareCommandResult
 
     fun close() = Unit
 }
