@@ -13,7 +13,6 @@ import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.awaitCancellation
-import kotlinx.coroutines.cancel
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
@@ -22,7 +21,7 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.withTimeoutOrNull
 import org.json.JSONObject
 
-@Suppress("TooManyFunctions")
+@Suppress("TooManyFunctions", "LargeClass")
 class DeviceRuntimeDataRepository(
     private val devicesRepository: DevicesRepository,
     private val stateStore: DeviceRuntimeStateStore = DeviceRuntimeStateStore(),
@@ -33,7 +32,7 @@ class DeviceRuntimeDataRepository(
         val deviceUid: DeviceUid,
         val module: String,
         val action: String,
-        val deferred: CompletableDeferred<AqlWsIncomingMessage>
+        val deferred: CompletableDeferred<DeviceRuntimeCommandOutcome>
     )
 
     private val lifecycleLock = Any()
@@ -42,6 +41,7 @@ class DeviceRuntimeDataRepository(
     private val bootstrappedGenerations = ConcurrentHashMap<DeviceUid, Long>()
     private val queuedRefreshTargets = mutableMapOf<DeviceUid, MutableSet<DeviceRuntimeRefreshTarget>>()
     private val refreshJobs = mutableMapOf<DeviceUid, Job>()
+    private val bootstrapJobs = mutableMapOf<DeviceUid, Job>()
 
     @Volatile
     private var startJob: Job? = null
@@ -79,8 +79,8 @@ class DeviceRuntimeDataRepository(
                         }
                     } finally {
                         activeScope = null
-                        cancelPending("runtime data repository stopped")
-                        cancelRefreshJobs()
+                        completeAllPending("runtime data repository stopped")
+                        cancelBackgroundJobs()
                     }
                 }.also { job ->
                     startJob = job
@@ -105,10 +105,18 @@ class DeviceRuntimeDataRepository(
         require(AqlWsContract.isAuthenticatedCommand(module, action)) {
             "Unregistered firmware command: $module.$action"
         }
+        if (startJob?.isActive != true) {
+            return DeviceRuntimeCommandOutcome.Cancelled(
+                deviceUid = deviceUid,
+                module = module,
+                action = action,
+                messageId = "",
+                reason = "Runtime data repository is not active."
+            )
+        }
 
         val client = devicesRepository.commandClient(deviceUid)
             ?: return DeviceRuntimeCommandOutcome.NotConnected(deviceUid, module, action)
-
         val command = AqlWsOutgoingMessage.Command(
             module = module,
             action = action,
@@ -127,6 +135,14 @@ class DeviceRuntimeDataRepository(
         if (!client.send(command)) {
             pendingRequests.remove(command.id, pending)
             pending.deferred.cancel()
+            stateStore.applyCommandFault(
+                deviceUid = deviceUid,
+                code = "send_failed",
+                message = "WebSocket command could not be queued.",
+                module = module,
+                action = action,
+                messageId = command.id
+            )
             return DeviceRuntimeCommandOutcome.SendFailed(
                 deviceUid = deviceUid,
                 module = module,
@@ -135,50 +151,35 @@ class DeviceRuntimeDataRepository(
             )
         }
 
-        val incoming = withTimeoutOrNull(timeoutMillis) {
-            pending.deferred.await()
-        }
-        pendingRequests.remove(command.id, pending)
-
-        return when (incoming) {
-            null -> DeviceRuntimeCommandOutcome.Timeout(
+        return try {
+            withTimeoutOrNull(timeoutMillis) {
+                pending.deferred.await()
+            } ?: DeviceRuntimeCommandOutcome.Timeout(
                 deviceUid = deviceUid,
                 module = module,
                 action = action,
                 messageId = command.id,
                 timeoutMillis = timeoutMillis
-            )
-            is AqlWsIncomingMessage.Response -> DeviceRuntimeCommandOutcome.Success(
-                deviceUid = deviceUid,
-                module = module,
-                action = action,
-                messageId = incoming.id,
-                statusCode = incoming.statusCode,
-                data = JSONObject(incoming.data.toString())
-            )
-            is AqlWsIncomingMessage.Error -> DeviceRuntimeCommandOutcome.FirmwareError(
-                deviceUid = deviceUid,
-                module = module,
-                action = action,
-                messageId = incoming.id,
-                statusCode = incoming.statusCode,
-                code = incoming.code,
-                message = incoming.message,
-                field = incoming.field
-            )
-            is AqlWsIncomingMessage.Event -> DeviceRuntimeCommandOutcome.Cancelled(
-                deviceUid = deviceUid,
-                module = module,
-                action = action,
-                messageId = command.id,
-                reason = "Unexpected event used as a command response."
-            )
+            ).also {
+                stateStore.applyCommandFault(
+                    deviceUid = deviceUid,
+                    code = "command_timeout",
+                    message = "Firmware did not answer within ${timeoutMillis}ms.",
+                    module = module,
+                    action = action,
+                    messageId = command.id
+                )
+            }
+        } finally {
+            pendingRequests.remove(command.id, pending)
+            pending.deferred.cancel()
         }
     }
 
-    suspend fun refreshAll(deviceUid: DeviceUid): Map<DeviceRuntimeRefreshTarget, DeviceRuntimeCommandOutcome> {
-        val snapshot = devicesRepository.currentDevice(deviceUid)
-            ?: return emptyMap()
+    suspend fun refreshAll(
+        deviceUid: DeviceUid
+    ): Map<DeviceRuntimeRefreshTarget, DeviceRuntimeCommandOutcome> {
+        val snapshot = devicesRepository.currentDevice(deviceUid) ?: return emptyMap()
         return refreshTargets(deviceUid, bootstrapTargets(snapshot))
     }
 
@@ -191,7 +192,10 @@ class DeviceRuntimeDataRepository(
         val events = devicesRepository.runtimeEvents() ?: return
         events.collect { event ->
             when (event) {
-                is AqlWsEvent.Authenticated -> stateStore.markAuthenticated(event.deviceUid)
+                is AqlWsEvent.Authenticated -> {
+                    stateStore.markAuthenticated(event.deviceUid)
+                    devicesRepository.currentDevice(event.deviceUid)?.let(::maybeBootstrap)
+                }
                 is AqlWsEvent.Message -> onMessage(event.deviceUid, event.parsed)
                 is AqlWsEvent.Closed -> onUnavailable(
                     event.deviceUid,
@@ -213,37 +217,41 @@ class DeviceRuntimeDataRepository(
             val present = snapshots.keys
             bootstrappedGenerations.keys
                 .filterNot(present::contains)
-                .forEach { deviceUid ->
-                    bootstrappedGenerations.remove(deviceUid)
-                    stateStore.retire(deviceUid)
-                }
+                .forEach(::retire)
+            snapshots.values.forEach(::maybeBootstrap)
+        }
+    }
 
-            snapshots.values.forEach { snapshot ->
-                if (!snapshot.hasValidatedRuntimeMetadata) return@forEach
-                if (!stateStore.current(snapshot.deviceUid).authenticated) return@forEach
-                val generation = snapshot.runtimeMetadataGeneration
-                if (bootstrappedGenerations[snapshot.deviceUid] == generation) return@forEach
+    private fun maybeBootstrap(snapshot: DeviceSnapshot) {
+        if (!snapshot.hasValidatedRuntimeMetadata) return
+        if (!stateStore.current(snapshot.deviceUid).authenticated) return
+        val generation = snapshot.runtimeMetadataGeneration
+        if (bootstrappedGenerations.put(snapshot.deviceUid, generation) == generation) return
 
-                bootstrappedGenerations[snapshot.deviceUid] = generation
-                val targets = bootstrapTargets(snapshot)
-                stateStore.beginBootstrap(snapshot.deviceUid, generation)
-                activeScope?.launch {
+        val targets = bootstrapTargets(snapshot)
+        stateStore.beginBootstrap(snapshot.deviceUid, generation, targets)
+        val scope = activeScope ?: return
+        synchronized(refreshLock) {
+            bootstrapJobs.remove(snapshot.deviceUid)?.cancel()
+            val job = scope.launch {
+                try {
                     refreshTargets(snapshot.deviceUid, targets)
+                } finally {
+                    synchronized(refreshLock) {
+                        if (bootstrapJobs[snapshot.deviceUid] == coroutineContext[Job]) {
+                            bootstrapJobs.remove(snapshot.deviceUid)
+                        }
+                    }
                 }
             }
+            bootstrapJobs[snapshot.deviceUid] = job
         }
     }
 
     private fun onMessage(deviceUid: DeviceUid, message: AqlWsIncomingMessage) {
-        if (message is AqlWsIncomingMessage.Response || message is AqlWsIncomingMessage.Error) {
-            val pending = pendingRequests[message.id]
-            if (pending != null && pending.deviceUid == deviceUid) {
-                pendingRequests.remove(message.id, pending)
-                pending.deferred.complete(message)
-            }
-        }
-
         val targets = stateStore.applyMessage(deviceUid, message)
+        completeCorrelatedRequest(deviceUid, message)
+
         val shouldAutoRefresh = message is AqlWsIncomingMessage.Event ||
             message is AqlWsIncomingMessage.Response && !isReadCommand(message.module, message.action)
         if (shouldAutoRefresh && targets.isNotEmpty()) {
@@ -251,11 +259,87 @@ class DeviceRuntimeDataRepository(
         }
     }
 
+    private fun completeCorrelatedRequest(
+        deviceUid: DeviceUid,
+        message: AqlWsIncomingMessage
+    ) {
+        if (message !is AqlWsIncomingMessage.Response && message !is AqlWsIncomingMessage.Error) {
+            return
+        }
+        val pending = pendingRequests[message.id] ?: return
+        val exactMatch = pending.deviceUid == deviceUid &&
+            pending.module == message.module &&
+            pending.action == message.action
+        val outcome = if (exactMatch) {
+            message.toCommandOutcome(deviceUid)
+        } else {
+            stateStore.applyCommandFault(
+                deviceUid = pending.deviceUid,
+                code = "correlation_mismatch",
+                message = "Firmware response id matched a different device/module/action.",
+                module = pending.module,
+                action = pending.action,
+                messageId = message.id
+            )
+            DeviceRuntimeCommandOutcome.FirmwareError(
+                deviceUid = pending.deviceUid,
+                module = pending.module,
+                action = pending.action,
+                messageId = message.id,
+                statusCode = 500,
+                code = "correlation_mismatch",
+                message = "Firmware response correlation did not match the request.",
+                field = "id"
+            )
+        }
+        if (pendingRequests.remove(message.id, pending)) {
+            pending.deferred.complete(outcome)
+        }
+    }
+
+    private fun AqlWsIncomingMessage.toCommandOutcome(
+        deviceUid: DeviceUid
+    ): DeviceRuntimeCommandOutcome = when (this) {
+        is AqlWsIncomingMessage.Response -> if (ok) {
+            DeviceRuntimeCommandOutcome.Success(
+                deviceUid = deviceUid,
+                module = module,
+                action = action,
+                messageId = id,
+                statusCode = statusCode,
+                data = JSONObject(data.toString())
+            )
+        } else {
+            DeviceRuntimeCommandOutcome.FirmwareError(
+                deviceUid = deviceUid,
+                module = module,
+                action = action,
+                messageId = id,
+                statusCode = statusCode,
+                code = "response_not_ok",
+                message = "Firmware returned a non-success response.",
+                field = ""
+            )
+        }
+        is AqlWsIncomingMessage.Error -> DeviceRuntimeCommandOutcome.FirmwareError(
+            deviceUid = deviceUid,
+            module = module,
+            action = action,
+            messageId = id,
+            statusCode = statusCode,
+            code = code,
+            message = message,
+            field = field
+        )
+        is AqlWsIncomingMessage.Event -> error("Events cannot complete command requests.")
+    }
+
     private fun onUnavailable(deviceUid: DeviceUid, code: String, message: String) {
         stateStore.applyTransportFault(deviceUid, code, message)
         bootstrappedGenerations.remove(deviceUid)
-        cancelPending(deviceUid, message)
+        completePending(deviceUid, message)
         synchronized(refreshLock) {
+            bootstrapJobs.remove(deviceUid)?.cancel()
             refreshJobs.remove(deviceUid)?.cancel()
             queuedRefreshTargets.remove(deviceUid)
         }
@@ -267,21 +351,22 @@ class DeviceRuntimeDataRepository(
     ) {
         val scope = activeScope ?: return
         synchronized(refreshLock) {
-            queuedRefreshTargets.getOrPut(deviceUid, ::linkedSetOf).addAll(targets)
+            queuedRefreshTargets.getOrPut(deviceUid) { linkedSetOf() }.addAll(targets)
             if (refreshJobs[deviceUid]?.isActive == true) return
             refreshJobs[deviceUid] = scope.launch {
-                delay(STATUS_REFRESH_DEBOUNCE_MS)
-                val pending = synchronized(refreshLock) {
-                    queuedRefreshTargets.remove(deviceUid).orEmpty().toSet()
-                }
+                var restart = false
                 try {
-                    refreshTargets(deviceUid, pending)
+                    delay(STATUS_REFRESH_DEBOUNCE_MS)
+                    val batch = synchronized(refreshLock) {
+                        queuedRefreshTargets.remove(deviceUid).orEmpty().toSet()
+                    }
+                    if (batch.isNotEmpty()) refreshTargets(deviceUid, batch)
                 } finally {
                     synchronized(refreshLock) {
                         refreshJobs.remove(deviceUid)
-                        val more = queuedRefreshTargets[deviceUid].orEmpty().isNotEmpty()
-                        if (more) scheduleRefresh(deviceUid, emptySet())
+                        restart = queuedRefreshTargets[deviceUid].orEmpty().isNotEmpty()
                     }
+                    if (restart) scheduleRefresh(deviceUid, emptySet())
                 }
             }
         }
@@ -290,10 +375,12 @@ class DeviceRuntimeDataRepository(
     private suspend fun refreshTargets(
         deviceUid: DeviceUid,
         targets: Set<DeviceRuntimeRefreshTarget>
-    ): Map<DeviceRuntimeRefreshTarget, DeviceRuntimeCommandOutcome> = coroutineScope {
-        targets.associateWith { target ->
-            executeRefresh(deviceUid, target)
+    ): Map<DeviceRuntimeRefreshTarget, DeviceRuntimeCommandOutcome> {
+        val outcomes = linkedMapOf<DeviceRuntimeRefreshTarget, DeviceRuntimeCommandOutcome>()
+        for (target in targets) {
+            outcomes[target] = executeRefresh(deviceUid, target)
         }
+        return outcomes
     }
 
     private suspend fun executeRefresh(
@@ -307,10 +394,9 @@ class DeviceRuntimeDataRepository(
     private fun bootstrapTargets(snapshot: DeviceSnapshot): Set<DeviceRuntimeRefreshTarget> = buildSet {
         add(DeviceRuntimeRefreshTarget.DEVICE)
         add(DeviceRuntimeRefreshTarget.SECURITY)
-        add(DeviceRuntimeRefreshTarget.NETWORK)
         add(DeviceRuntimeRefreshTarget.TIME)
-        add(DeviceRuntimeRefreshTarget.FIRMWARE)
-
+        if ("network" in snapshot.modules) add(DeviceRuntimeRefreshTarget.NETWORK)
+        if ("firmware" in snapshot.modules) add(DeviceRuntimeRefreshTarget.FIRMWARE)
         if (snapshot.capabilities.ota) add(DeviceRuntimeRefreshTarget.OTA)
         if (snapshot.capabilities.light) {
             add(DeviceRuntimeRefreshTarget.LIGHT)
@@ -366,27 +452,56 @@ class DeviceRuntimeDataRepository(
                 AqlWsContract.ACTION_DEVICE_CAPABILITIES_GET
             )
 
-    private fun cancelPending(deviceUid: DeviceUid, reason: String) {
+    private fun retire(deviceUid: DeviceUid) {
+        bootstrappedGenerations.remove(deviceUid)
+        completePending(deviceUid, "device retired")
+        synchronized(refreshLock) {
+            bootstrapJobs.remove(deviceUid)?.cancel()
+            refreshJobs.remove(deviceUid)?.cancel()
+            queuedRefreshTargets.remove(deviceUid)
+        }
+        stateStore.retire(deviceUid)
+    }
+
+    private fun completePending(deviceUid: DeviceUid, reason: String) {
         pendingRequests.entries
             .filter { (_, pending) -> pending.deviceUid == deviceUid }
             .forEach { (id, pending) ->
                 if (pendingRequests.remove(id, pending)) {
-                    pending.deferred.cancel(reason)
+                    pending.deferred.complete(
+                        DeviceRuntimeCommandOutcome.Cancelled(
+                            deviceUid = pending.deviceUid,
+                            module = pending.module,
+                            action = pending.action,
+                            messageId = id,
+                            reason = reason
+                        )
+                    )
                 }
             }
     }
 
-    private fun cancelPending(reason: String) {
+    private fun completeAllPending(reason: String) {
         pendingRequests.entries.forEach { (id, pending) ->
             if (pendingRequests.remove(id, pending)) {
-                pending.deferred.cancel(reason)
+                pending.deferred.complete(
+                    DeviceRuntimeCommandOutcome.Cancelled(
+                        deviceUid = pending.deviceUid,
+                        module = pending.module,
+                        action = pending.action,
+                        messageId = id,
+                        reason = reason
+                    )
+                )
             }
         }
     }
 
-    private fun cancelRefreshJobs() {
+    private fun cancelBackgroundJobs() {
         synchronized(refreshLock) {
-            refreshJobs.values.forEach(Job::cancel)
+            bootstrapJobs.values.forEach { it.cancel() }
+            refreshJobs.values.forEach { it.cancel() }
+            bootstrapJobs.clear()
             refreshJobs.clear()
             queuedRefreshTargets.clear()
         }
@@ -398,8 +513,8 @@ class DeviceRuntimeDataRepository(
         }
         job?.cancel()
         activeScope = null
-        cancelPending("runtime data repository closed")
-        cancelRefreshJobs()
+        completeAllPending("runtime data repository closed")
+        cancelBackgroundJobs()
         bootstrappedGenerations.clear()
         stateStore.clear()
     }
