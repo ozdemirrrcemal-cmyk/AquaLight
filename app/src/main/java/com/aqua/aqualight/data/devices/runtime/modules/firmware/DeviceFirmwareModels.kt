@@ -14,30 +14,15 @@ enum class DeviceFirmwareOtaPhase(
     WRITING("writing"),
     VERIFYING("verifying"),
     SUCCEEDED("succeeded"),
-    FAILED("failed"),
-    UNKNOWN("unknown");
+    FAILED("failed");
 
     val isTerminal: Boolean
         get() = this == SUCCEEDED || this == FAILED
 
     companion object {
-        private val exactValues = entries
-            .filterNot { phase -> phase == UNKNOWN }
-            .associateBy(DeviceFirmwareOtaPhase::wireValue)
+        private val exactValues = entries.associateBy(DeviceFirmwareOtaPhase::wireValue)
 
         fun fromWireExact(value: String): DeviceFirmwareOtaPhase? = exactValues[value]
-
-        fun fromWire(value: String?): DeviceFirmwareOtaPhase = when (value?.trim()) {
-            IDLE.wireValue -> IDLE
-            STARTING.wireValue -> STARTING
-            SAFE_MODE.wireValue -> SAFE_MODE
-            DOWNLOADING.wireValue -> DOWNLOADING
-            WRITING.wireValue -> WRITING
-            VERIFYING.wireValue -> VERIFYING
-            SUCCEEDED.wireValue -> SUCCEEDED
-            FAILED.wireValue -> FAILED
-            else -> UNKNOWN
-        }
     }
 }
 
@@ -143,19 +128,17 @@ data class DeviceFirmwareOtaStartPayload(
         require(!allowInsecureHttp) { "allowInsecureHttp must stay false in production Android." }
     }
 
-    fun toJson(): JSONObject {
-        return JSONObject()
-            .put(DeviceFirmwareRuntimeContract.Field.URL, url)
-            .put(DeviceFirmwareRuntimeContract.Field.VERSION, version)
-            .put(DeviceFirmwareRuntimeContract.Field.SHA256, sha256.lowercase())
-            .put(DeviceFirmwareRuntimeContract.Field.EXPECTED_SIZE, expectedSize)
-            .put(DeviceFirmwareRuntimeContract.Field.APPLY_NOW, applyNow)
-            .put(DeviceFirmwareRuntimeContract.Field.PRODUCT_KEY, productKey)
-            .put(DeviceFirmwareRuntimeContract.Field.PRODUCT_ID, productId)
-            .put(DeviceFirmwareRuntimeContract.Field.MODEL, model)
-            .put(DeviceFirmwareRuntimeContract.Field.HARDWARE_REVISION, hardwareRevision)
-            .put(DeviceFirmwareRuntimeContract.Field.ALLOW_INSECURE_HTTP, false)
-    }
+    fun toJson(): JSONObject = JSONObject()
+        .put(DeviceFirmwareRuntimeContract.Field.URL, url)
+        .put(DeviceFirmwareRuntimeContract.Field.VERSION, version)
+        .put(DeviceFirmwareRuntimeContract.Field.SHA256, sha256.lowercase())
+        .put(DeviceFirmwareRuntimeContract.Field.EXPECTED_SIZE, expectedSize)
+        .put(DeviceFirmwareRuntimeContract.Field.APPLY_NOW, applyNow)
+        .put(DeviceFirmwareRuntimeContract.Field.PRODUCT_KEY, productKey)
+        .put(DeviceFirmwareRuntimeContract.Field.PRODUCT_ID, productId)
+        .put(DeviceFirmwareRuntimeContract.Field.MODEL, model)
+        .put(DeviceFirmwareRuntimeContract.Field.HARDWARE_REVISION, hardwareRevision)
+        .put(DeviceFirmwareRuntimeContract.Field.ALLOW_INSECURE_HTTP, false)
 }
 
 data class DeviceFirmwareOtaStartRequestEcho(
@@ -175,23 +158,6 @@ data class DeviceFirmwareOtaStartAccepted(
     val request: DeviceFirmwareOtaStartRequestEcho?,
     val ota: DeviceFirmwareOtaSnapshot
 )
-
-data class DeviceFirmwareOtaClearResult(
-    val cleared: Boolean,
-    val previous: DeviceFirmwareOtaSnapshot,
-    val ota: DeviceFirmwareOtaSnapshot
-)
-
-data class DeviceFirmwareCommandResult(
-    val sent: Boolean,
-    val module: String = DeviceFirmwareRuntimeContract.MODULE,
-    val action: String,
-    val messageId: String = "",
-    val errorMessage: String = ""
-) {
-    val isSuccess: Boolean
-        get() = sent && errorMessage.isBlank()
-}
 
 data class DeviceFirmwareManifest(
     val schema: String,
@@ -358,7 +324,6 @@ data class DeviceFirmwareUpdatePlan(
     val releaseContent: DeviceFirmwareReleaseContent = DeviceFirmwareReleaseContent.EMPTY
 )
 
-internal fun String.isSha256Hex(): Boolean {
-    return trim().length == DeviceFirmwareRuntimeContract.Limit.SHA256_HEX_LENGTH &&
-        trim().matches(Regex("(?i)^[0-9a-f]+$"))
-}
+internal fun String.isSha256Hex(): Boolean =
+    length == DeviceFirmwareRuntimeContract.Limit.SHA256_HEX_LENGTH &&
+        matches(Regex("(?i)^[0-9a-f]+$"))
