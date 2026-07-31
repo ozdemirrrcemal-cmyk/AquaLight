@@ -41,5 +41,5 @@ class DeviceRuntimeModuleProvider(
     val cooling: DeviceCoolingRuntimeRepository =
         DeviceCoolingRuntimeRepository(commandClientProvider)
     val dosing: DeviceDosingRuntimeRepository =
-        DeviceDosingRuntimeRepository(commandClientProvider)
+        DeviceDosingRuntimeRepository(commandGateway)
 }
