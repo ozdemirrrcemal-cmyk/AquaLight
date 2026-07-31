@@ -130,7 +130,7 @@ data class DeviceLightManualChannelPayload(
     val channelKey: String,
     val percent: Double
 ) {
-    val canonicalChannelKey: String = canonicalLightChannelKey(channelKey)
+    val canonicalChannelKey: String = normalizeLightChannelKey(channelKey)
 
     init {
         requireFiniteRange(percent, 0.0, 100.0, "percent")
@@ -179,7 +179,7 @@ data class DeviceLightChannelRegimeSetPayload(
     val regime: DeviceLightRegime,
     val save: Boolean = true
 ) {
-    val canonicalChannelKey: String = canonicalLightChannelKey(channelKey)
+    val canonicalChannelKey: String = normalizeLightChannelKey(channelKey)
 
     fun toJson(): JSONObject = JSONObject()
         .put(DeviceLightRuntimeContract.Field.CHANNEL_KEY, canonicalChannelKey)
@@ -207,7 +207,7 @@ data class DeviceLightProgramApplyPayload(
     val programIndex: Int? = null,
     val save: Boolean = true
 ) {
-    val canonicalChannelKey: String = canonicalLightChannelKey(channelKey)
+    val canonicalChannelKey: String = normalizeLightChannelKey(channelKey)
 
     init {
         require(points.isNotEmpty())
@@ -291,8 +291,17 @@ data class DeviceLightProgramDeleteResult(
     val event: String
 )
 
+/** Firmware response keys must already be canonical; no response normalization is allowed. */
 internal fun canonicalLightChannelKey(raw: String): String {
-    val value = raw.trim().lowercase()
+    require(raw == raw.trim()) { "Firmware channelKey contains surrounding whitespace." }
+    require(raw == raw.lowercase()) { "Firmware channelKey is not canonical lowercase." }
+    return validateLightChannelKey(raw)
+}
+
+private fun normalizeLightChannelKey(raw: String): String =
+    validateLightChannelKey(raw.trim().lowercase())
+
+private fun validateLightChannelKey(value: String): String {
     require(value.isNotEmpty() && value != "-" && value != "none")
     require(value.none(Char::isISOControl))
     require(LIGHT_CHANNEL_KEY_REGEX.matches(value)) { "channelKey has an invalid wire format." }
