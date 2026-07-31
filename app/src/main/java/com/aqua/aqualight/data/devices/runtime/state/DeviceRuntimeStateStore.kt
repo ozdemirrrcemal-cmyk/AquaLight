@@ -11,7 +11,7 @@ import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.update
 
 /** Owner-scoped, in-memory source of truth for all per-device runtime module values. */
-class DeviceRuntimeStateStore {
+internal class DeviceRuntimeStateStore {
     private val _states = MutableStateFlow<Map<DeviceUid, DeviceRuntimeState>>(emptyMap())
 
     val states: StateFlow<Map<DeviceUid, DeviceRuntimeState>> = _states.asStateFlow()
@@ -83,7 +83,7 @@ class DeviceRuntimeStateStore {
         )
     }
 
-    internal fun reduce(
+    fun reduce(
         deviceUid: DeviceUid,
         generation: DeviceRuntimeConnectionGeneration,
         transform: (DeviceRuntimeState) -> DeviceRuntimeState
