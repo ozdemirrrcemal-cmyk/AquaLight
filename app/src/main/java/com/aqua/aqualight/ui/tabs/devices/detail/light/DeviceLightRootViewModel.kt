@@ -34,25 +34,24 @@ class DeviceLightRootViewModel(
         deviceUidText: String,
         fallbackTitle: String
     ) {
-        val deviceUid = deviceUidText.trim()
-        if (deviceUid.isBlank()) {
+        if (deviceUidText.isBlank() || deviceUidText != deviceUidText.trim()) {
             observeJob?.cancel()
             boundDeviceUid = ""
             _uiState.value = emptyState(fallbackTitle, "")
             return
         }
-        if (boundDeviceUid == deviceUid) return
+        if (boundDeviceUid == deviceUidText) return
 
-        boundDeviceUid = deviceUid
+        boundDeviceUid = deviceUidText
         observeJob?.cancel()
         clearOtaTestState()
-        _uiState.value = rootOperations.current(deviceUid)?.toLightRootUiState(fallbackTitle)
-            ?: emptyState(fallbackTitle, deviceUid)
-        rootOperations.connect(deviceUid)
+        _uiState.value = rootOperations.current(deviceUidText)?.toLightRootUiState(fallbackTitle)
+            ?: emptyState(fallbackTitle, deviceUidText)
+        rootOperations.connect(deviceUidText)
         observeJob = viewModelScope.launch {
-            rootOperations.observe(deviceUid).collect { snapshot ->
+            rootOperations.observe(deviceUidText).collect { snapshot ->
                 _uiState.value = snapshot?.toLightRootUiState(fallbackTitle)
-                    ?: emptyState(fallbackTitle, deviceUid)
+                    ?: emptyState(fallbackTitle, deviceUidText)
             }
         }
     }
@@ -110,11 +109,11 @@ class DeviceLightRootViewModel(
 
         viewModelScope.launch {
             val result = firmwareUpdateOperations.startUpdate(plan)
-            if (result.isSuccess && result.messageId.isNotBlank()) {
+            if (result.successful) {
                 updateOtaTestText(
                     AquaUiText.Resource(
                         R.string.device_ota_test_start_sent,
-                        listOf(result.messageId, plan.targetVersion)
+                        listOf(result.correlationId, plan.targetVersion)
                     )
                 )
             } else {
@@ -137,11 +136,11 @@ class DeviceLightRootViewModel(
 
         viewModelScope.launch {
             val result = firmwareUpdateOperations.requestStatus(deviceUid)
-            if (result.isSuccess && result.messageId.isNotBlank()) {
+            if (result.successful) {
                 updateOtaTestText(
                     AquaUiText.Resource(
                         R.string.device_ota_test_status_sent,
-                        listOf(result.messageId)
+                        listOf(result.correlationId)
                     )
                 )
             } else {
@@ -164,11 +163,11 @@ class DeviceLightRootViewModel(
 
         viewModelScope.launch {
             val result = firmwareUpdateOperations.clearStatus(deviceUid)
-            if (result.isSuccess && result.messageId.isNotBlank()) {
+            if (result.successful) {
                 updateOtaTestText(
                     AquaUiText.Resource(
                         R.string.device_ota_test_clear_sent,
-                        listOf(result.messageId)
+                        listOf(result.correlationId)
                     )
                 )
             } else {
@@ -257,21 +256,3 @@ class DeviceLightRootViewModel(
             "https://github.com/ozdemirrrcemal-cmyk/AquaLight-OTA-Releases/releases/download/v1.0.1/manifest-beta.json"
     }
 }
-
-data class DeviceLightRootUiState(
-    val title: String = "",
-    val deviceUid: String = "",
-    @StringRes val connectionStatusRes: Int = R.string.device_offline,
-    val ipText: String = "",
-    val firmwareText: String = "",
-    val modelText: String = "",
-    val channelCountText: String = "",
-    val featuresText: AquaUiText = AquaUiText.Resource(R.string.device_unknown),
-    val manualMenuText: AquaUiText = AquaUiText.Resource(
-        R.string.device_menu_light_manual_unavailable
-    ),
-    val programsMenuText: AquaUiText = AquaUiText.Resource(
-        R.string.device_menu_light_programs_unavailable
-    ),
-    val otaTestText: AquaUiText = AquaUiText.Resource(R.string.device_ota_test_locked_message)
-)
