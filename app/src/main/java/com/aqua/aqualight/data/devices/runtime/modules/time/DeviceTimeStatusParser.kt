@@ -88,9 +88,9 @@ object DeviceTimeStatusParser {
         "supportsRtcSet"
     )
 
+    private const val MINUTES_PER_HOUR = 60
     private const val MIN_UTC_OFFSET_MINUTES = -18 * MINUTES_PER_HOUR
     private const val MAX_UTC_OFFSET_MINUTES = 18 * MINUTES_PER_HOUR
-    private const val MINUTES_PER_HOUR = 60
     private const val MIN_YEAR = 0
     private const val MAX_YEAR = 9_999
     private const val MIN_MONTH = 0
