@@ -1,5 +1,6 @@
 package com.aqua.aqualight.data.devices.runtime.state
 
+import com.aqua.aqualight.data.devices.model.DeviceUid
 import java.util.concurrent.ConcurrentHashMap
 import kotlinx.coroutines.CompletableDeferred
 
@@ -32,7 +33,7 @@ internal class DeviceRuntimePendingRequestRegistry {
         pending: DeviceRuntimePendingRequest
     ): Boolean = requests.remove(messageId, pending)
 
-    fun cancelDevice(deviceUid: String, reason: String) {
+    fun cancelDevice(deviceUid: DeviceUid, reason: String) {
         cancelMatching(
             predicate = { pending -> pending.request.deviceUid == deviceUid },
             reason = reason
