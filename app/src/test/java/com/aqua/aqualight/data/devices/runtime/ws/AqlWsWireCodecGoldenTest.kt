@@ -2,6 +2,10 @@ package com.aqua.aqualight.data.devices.runtime.ws
 
 import com.aqua.aqualight.data.devices.contract.AqlWsContract
 import java.math.BigDecimal
+import java.nio.charset.StandardCharsets
+import java.util.Base64
+import javax.crypto.Mac
+import javax.crypto.spec.SecretKeySpec
 import org.json.JSONArray
 import org.json.JSONObject
 import org.junit.Assert.assertEquals
@@ -125,7 +129,7 @@ class AqlWsWireCodecGoldenTest {
         assertEquals(expectedPublic, AqlWsContract.publicCommandKeys())
         assertEquals(expectedAuthenticated, AqlWsContract.authenticatedCommandKeys())
         assertTrue(expectedPublic.isEmpty())
-        assertEquals(38, expectedAuthenticated.size)
+        assertEquals(41, expectedAuthenticated.size)
     }
 
     @Test
@@ -256,7 +260,10 @@ class AqlWsWireCodecGoldenTest {
                     AqlWsOutgoingMessage.Command(
                         module = AqlWsContract.MODULE_NETWORK,
                         action = AqlWsContract.ACTION_NETWORK_STATUS_GET,
-                        data = JSONObject().put("blob", "x".repeat(AqlWsContract.Limit.DATA_BYTES + 1))
+                        data = JSONObject().put(
+                            "blob",
+                            "x".repeat(AqlWsContract.Limit.DATA_BYTES + 1)
+                        )
                     ),
                     session
                 )
@@ -271,6 +278,172 @@ class AqlWsWireCodecGoldenTest {
                     session
                 )
             }
+        }
+    }
+
+    @Test
+    fun `firmware JSON depth key count and key byte limits are enforced on outgoing data`() {
+        val session = authenticatedSession()
+        session.use {
+            var overDepth = JSONObject().put("leaf", true)
+            repeat(AqlWsContract.Limit.JSON_DEPTH) {
+                overDepth = JSONObject().put("nested", overDepth)
+            }
+            assertProtocolError(AqlWsProtocolError.JSON_LIMIT_EXCEEDED) {
+                codec.encode(networkCommand(overDepth), session)
+            }
+
+            val tooManyKeys = JSONObject().apply {
+                repeat(AqlWsContract.Limit.JSON_KEYS + 1) { index ->
+                    put("key$index", index)
+                }
+            }
+            assertProtocolError(AqlWsProtocolError.JSON_LIMIT_EXCEEDED) {
+                codec.encode(networkCommand(tooManyKeys), session)
+            }
+
+            val oversizedKey = "ü".repeat(33)
+            assertTrue(oversizedKey.toByteArray(StandardCharsets.UTF_8).size > 64)
+            assertProtocolError(AqlWsProtocolError.JSON_LIMIT_EXCEEDED) {
+                codec.encode(
+                    networkCommand(JSONObject().put(oversizedKey, true)),
+                    session
+                )
+            }
+        }
+    }
+
+    @Test
+    fun `only confirmed active event routes are accepted`() {
+        val expectedDeviceUid = fixture.getJSONObject("testInputs").getString("deviceUid")
+
+        authenticatedSession().use { session ->
+            val active = signedDeviceEvent(
+                module = AqlWsContract.MODULE_FIRMWARE,
+                action = AqlWsContract.Event.OTA_PROGRESS,
+                dataBytes = "{\"progress\":42}".toByteArray(StandardCharsets.UTF_8)
+            )
+            val decoded = codec.decode(active.toString(), expectedDeviceUid, null, session)
+                as AqlWsDecodedFrame.Runtime
+            assertEquals(42, (decoded.message as AqlWsIncomingMessage.Event).data.getInt("progress"))
+        }
+
+        authenticatedSession().use { session ->
+            val declaredOnly = signedDeviceEvent(
+                module = AqlWsContract.MODULE_NETWORK,
+                action = "state.changed",
+                dataBytes = "{}".toByteArray(StandardCharsets.UTF_8)
+            )
+            assertProtocolError(AqlWsProtocolError.INVALID_FIELD) {
+                codec.decode(declaredOnly.toString(), expectedDeviceUid, null, session)
+            }
+        }
+    }
+
+    @Test
+    fun `malformed UTF-8 in authenticated data is rejected after MAC verification`() {
+        val expectedDeviceUid = fixture.getJSONObject("testInputs").getString("deviceUid")
+        val malformedUtf8 = byteArrayOf(0xC3.toByte(), 0x28)
+        authenticatedSession().use { session ->
+            val event = signedDeviceEvent(
+                module = AqlWsContract.MODULE_FIRMWARE,
+                action = AqlWsContract.Event.OTA_PROGRESS,
+                dataBytes = malformedUtf8
+            )
+            assertProtocolError(AqlWsProtocolError.INVALID_DATA) {
+                codec.decode(event.toString(), expectedDeviceUid, null, session)
+            }
+        }
+    }
+
+    private fun networkCommand(data: JSONObject): AqlWsOutgoingMessage.Command =
+        AqlWsOutgoingMessage.Command(
+            module = AqlWsContract.MODULE_NETWORK,
+            action = AqlWsContract.ACTION_NETWORK_STATUS_GET,
+            data = data
+        )
+
+    private fun signedDeviceEvent(
+        module: String,
+        action: String,
+        dataBytes: ByteArray,
+        sequence: Long = 1L
+    ): JSONObject {
+        val inputs = fixture.getJSONObject("testInputs")
+        val sessionId = inputs.getString("sessionId")
+        val id = "evt-wire-limit-$sequence"
+        val encodedData = Base64.getUrlEncoder().withoutPadding().encodeToString(dataBytes)
+        val mac = hmacSha256Hex(
+            key = fixture.getJSONObject("handshake")
+                .getString("expectedSessionKey")
+                .hexToBytes(),
+            bytes = canonical(
+                label = "message",
+                fields = listOf(
+                    "d2c",
+                    sessionId,
+                    sequence.toString(),
+                    id,
+                    AqlWsContract.TYPE_EVENT,
+                    module,
+                    action,
+                    encodedData,
+                    "",
+                    "",
+                    "",
+                    "",
+                    ""
+                )
+            )
+        )
+        return JSONObject()
+            .put("id", id)
+            .put("type", AqlWsContract.TYPE_EVENT)
+            .put("module", module)
+            .put("action", action)
+            .put("data", encodedData)
+            .put(
+                "security",
+                JSONObject()
+                    .put("sessionId", sessionId)
+                    .put("seq", sequence)
+                    .put("mac", mac)
+            )
+            .put(
+                "meta",
+                JSONObject(
+                    fixture.getJSONObject("runtime")
+                        .getJSONObject("deviceEvent")
+                        .getJSONObject("meta")
+                        .toString()
+                )
+            )
+    }
+
+    private fun canonical(label: String, fields: List<String>): ByteArray = buildString {
+        append("AQL-WS-V1\n")
+        append(label)
+        append('\n')
+        fields.forEach { value ->
+            append(value.toByteArray(StandardCharsets.UTF_8).size)
+            append(':')
+            append(value)
+            append('\n')
+        }
+    }.toByteArray(StandardCharsets.UTF_8)
+
+    private fun hmacSha256Hex(key: ByteArray, bytes: ByteArray): String {
+        val mac = Mac.getInstance("HmacSHA256")
+        mac.init(SecretKeySpec(key, "HmacSHA256"))
+        return mac.doFinal(bytes).joinToString(separator = "") { byte ->
+            "%02x".format(byte.toInt() and 0xff)
+        }
+    }
+
+    private fun String.hexToBytes(): ByteArray {
+        require(length % 2 == 0)
+        return ByteArray(length / 2) { index ->
+            substring(index * 2, index * 2 + 2).toInt(16).toByte()
         }
     }
 
@@ -335,7 +508,10 @@ class AqlWsWireCodecGoldenTest {
                 }
             }
             expected is Number && actual is Number ->
-                assertEquals(0, BigDecimal(expected.toString()).compareTo(BigDecimal(actual.toString())))
+                assertEquals(
+                    0,
+                    BigDecimal(expected.toString()).compareTo(BigDecimal(actual.toString()))
+                )
             else -> assertEquals(expected, actual)
         }
     }
