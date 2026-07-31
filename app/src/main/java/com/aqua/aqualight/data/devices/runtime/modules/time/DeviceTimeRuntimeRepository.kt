@@ -1,107 +1,114 @@
 package com.aqua.aqualight.data.devices.runtime.modules.time
 
+import com.aqua.aqualight.data.devices.contract.AqlWsContract
 import com.aqua.aqualight.data.devices.model.DeviceUid
-import com.aqua.aqualight.data.devices.runtime.ws.AqlWsCommandClient
+import com.aqua.aqualight.data.devices.runtime.core.DeviceRuntimeCommand
+import com.aqua.aqualight.data.devices.runtime.core.DeviceRuntimeCommandGateway
+import com.aqua.aqualight.data.devices.runtime.core.DeviceRuntimeCommandOutcome
+import com.aqua.aqualight.data.devices.runtime.ws.AqlWsIncomingMessage
 import org.json.JSONObject
 
 class DeviceTimeRuntimeRepository(
-    private val commandClientProvider: (DeviceUid) -> AqlWsCommandClient?
+    private val commandGateway: DeviceRuntimeCommandGateway
 ) {
-    fun requestStatus(
+    suspend fun requestStatus(
         deviceUid: DeviceUid
-    ): DeviceTimeCommandResult {
-        return send(
-            deviceUid = deviceUid,
-            action = DeviceTimeRuntimeContract.Action.STATUS_GET
-        )
-    }
+    ): DeviceRuntimeCommandOutcome<DeviceTimeStatus> =
+        commandGateway.execute(deviceUid, DeviceTimeStatusGetCommand)
 
-    fun applyConfig(
+    suspend fun applyConfig(
         deviceUid: DeviceUid,
         payload: DeviceTimeConfigApplyPayload = DeviceSystemTimePayloadFactory.configFromSystem()
-    ): DeviceTimeCommandResult {
-        return send(
-            deviceUid = deviceUid,
-            action = DeviceTimeRuntimeContract.Action.CONFIG_APPLY,
-            data = payload.toJson()
-        )
-    }
+    ): DeviceRuntimeCommandOutcome<DeviceTimeConfigApplyResult> =
+        commandGateway.execute(deviceUid, DeviceTimeConfigApplyCommand(payload))
 
-    fun syncPhoneNow(
+    suspend fun syncPhoneNow(
         deviceUid: DeviceUid,
         save: Boolean = true
-    ): DeviceTimeCommandResult {
-        return syncPhone(
-            deviceUid = deviceUid,
-            payload = DeviceSystemTimePayloadFactory.phoneSyncNow(save = save)
-        )
-    }
+    ): DeviceRuntimeCommandOutcome<DeviceTimeSyncResult> = syncPhone(
+        deviceUid = deviceUid,
+        payload = DeviceSystemTimePayloadFactory.phoneSyncNow(save = save)
+    )
 
-    fun syncPhone(
+    suspend fun syncPhone(
         deviceUid: DeviceUid,
         payload: DevicePhoneSyncPayload
-    ): DeviceTimeCommandResult {
-        return send(
-            deviceUid = deviceUid,
-            action = DeviceTimeRuntimeContract.Action.PHONE_SYNC,
-            data = payload.toJson()
-        )
-    }
+    ): DeviceRuntimeCommandOutcome<DeviceTimeSyncResult> =
+        commandGateway.execute(deviceUid, DeviceTimePhoneSyncCommand(payload))
 
-    fun syncNtp(
+    suspend fun syncNtp(
         deviceUid: DeviceUid
-    ): DeviceTimeCommandResult {
-        return send(
-            deviceUid = deviceUid,
-            action = DeviceTimeRuntimeContract.Action.NTP_SYNC
-        )
-    }
+    ): DeviceRuntimeCommandOutcome<DeviceTimeSyncResult> =
+        commandGateway.execute(deviceUid, DeviceTimeNtpSyncCommand)
 
-    fun setRtc(
+    suspend fun setRtc(
         deviceUid: DeviceUid,
-        payload: DeviceManualRtcPayload
-    ): DeviceTimeCommandResult {
-        return send(
-            deviceUid = deviceUid,
-            action = DeviceTimeRuntimeContract.Action.RTC_SET,
-            data = payload.toJson()
-        )
-    }
+        payload: DeviceRtcSetPayload
+    ): DeviceRuntimeCommandOutcome<DeviceTimeSyncResult> =
+        commandGateway.execute(deviceUid, DeviceTimeRtcSetCommand(payload))
+}
 
-    private fun send(
-        deviceUid: DeviceUid,
-        action: String,
-        data: JSONObject = JSONObject()
-    ): DeviceTimeCommandResult {
-        val commandClient = commandClientProvider(deviceUid)
+private data object DeviceTimeStatusGetCommand : DeviceRuntimeCommand<DeviceTimeStatus> {
+    override val module: String = AqlWsContract.MODULE_TIME
+    override val action: String = AqlWsContract.ACTION_TIME_STATUS_GET
+    override fun encodeData(): JSONObject = JSONObject()
 
-        if (commandClient == null) {
-            return DeviceTimeCommandResult(
-                sent = false,
-                action = action,
-                errorMessage = "No WebSocket command client for ${deviceUid.value}"
-            )
-        }
-
-        val messageId = commandClient.command(
-            module = DeviceTimeRuntimeContract.MODULE,
-            action = action,
-            data = data
-        )
-
-        return DeviceTimeCommandResult(
-            sent = messageId != null,
-            action = action,
-            messageId = messageId.orEmpty(),
-            errorMessage = if (messageId != null) "" else "WebSocket send failed"
-        )
-    }
-
-    companion object {
-        fun singleSession(
-            commandClient: AqlWsCommandClient
-        ): DeviceTimeRuntimeRepository {
-            return DeviceTimeRuntimeRepository { commandClient }
-        }
+    override fun parseSuccess(response: AqlWsIncomingMessage.Response): DeviceTimeStatus {
+        require(response.statusCode == HTTP_OK)
+        return DeviceTimeStatusParser.parse(response.data)
     }
 }
+
+private class DeviceTimeConfigApplyCommand(
+    private val payload: DeviceTimeConfigApplyPayload
+) : DeviceRuntimeCommand<DeviceTimeConfigApplyResult> {
+    override val module: String = AqlWsContract.MODULE_TIME
+    override val action: String = AqlWsContract.ACTION_TIME_CONFIG_APPLY
+    override fun encodeData(): JSONObject = payload.toJson()
+
+    override fun parseSuccess(
+        response: AqlWsIncomingMessage.Response
+    ): DeviceTimeConfigApplyResult {
+        require(response.statusCode == HTTP_OK)
+        return DeviceTimeStatusParser.parseConfigApply(response.data)
+    }
+}
+
+private class DeviceTimePhoneSyncCommand(
+    private val payload: DevicePhoneSyncPayload
+) : DeviceRuntimeCommand<DeviceTimeSyncResult> {
+    override val module: String = AqlWsContract.MODULE_TIME
+    override val action: String = AqlWsContract.ACTION_TIME_PHONE_SYNC
+    override fun encodeData(): JSONObject = payload.toJson()
+
+    override fun parseSuccess(response: AqlWsIncomingMessage.Response): DeviceTimeSyncResult {
+        require(response.statusCode == HTTP_OK)
+        return DeviceTimeStatusParser.parsePhoneSync(response.data)
+    }
+}
+
+private data object DeviceTimeNtpSyncCommand : DeviceRuntimeCommand<DeviceTimeSyncResult> {
+    override val module: String = AqlWsContract.MODULE_TIME
+    override val action: String = AqlWsContract.ACTION_TIME_NTP_SYNC
+    override fun encodeData(): JSONObject = JSONObject()
+
+    override fun parseSuccess(response: AqlWsIncomingMessage.Response): DeviceTimeSyncResult {
+        require(response.statusCode == HTTP_OK)
+        return DeviceTimeStatusParser.parseNtpSync(response.data)
+    }
+}
+
+private class DeviceTimeRtcSetCommand(
+    private val payload: DeviceRtcSetPayload
+) : DeviceRuntimeCommand<DeviceTimeSyncResult> {
+    override val module: String = AqlWsContract.MODULE_TIME
+    override val action: String = AqlWsContract.ACTION_TIME_RTC_SET
+    override fun encodeData(): JSONObject = payload.toJson()
+
+    override fun parseSuccess(response: AqlWsIncomingMessage.Response): DeviceTimeSyncResult {
+        require(response.statusCode == HTTP_OK)
+        return DeviceTimeStatusParser.parseRtcSet(response.data)
+    }
+}
+
+private const val HTTP_OK = 200
