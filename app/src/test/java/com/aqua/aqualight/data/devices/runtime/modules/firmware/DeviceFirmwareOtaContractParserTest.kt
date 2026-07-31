@@ -37,26 +37,72 @@ class DeviceFirmwareOtaContractParserTest {
     }
 
     @Test
-    fun `manifest parser keeps localized content inside signed payload`() {
+    fun `manifest parser keeps exact bilingual items inside signed payload`() {
         val parsed = DeviceFirmwareManifestParser.parse(manifestJson().toString()).getOrThrow()
 
-        assertEquals("en", parsed.releaseNotes.defaultLocale)
+        assertEquals("tr", parsed.releaseNotes.defaultLocale)
         assertEquals(
-            "Güvenli güncelleme",
-            parsed.releaseNotes.locales.getValue("tr-TR").title
+            listOf("Kalibrasyon kontrolleri geliştirildi."),
+            parsed.releaseNotes.locales.getValue("tr").changes
+        )
+        assertEquals(
+            listOf("Calibration checks were improved."),
+            parsed.releaseNotes.locales.getValue("en").changes
+        )
+        assertEquals(
+            "tr",
+            parsed.releaseNotes.resolve(listOf("tr-TR")).localeTag
         )
     }
 
     @Test
-    fun `manifest parser rejects incomplete localized content contract`() {
-        val invalid = manifestJson().apply {
+    fun `manifest parser rejects incomplete or unsigned-shape release notes`() {
+        val incomplete = manifestJson().apply {
             getJSONObject("releaseNotes")
-                .getJSONObject("locales")
-                .getJSONObject("tr-TR")
-                .remove("warnings")
+                .getJSONArray("items")
+                .getJSONObject(0)
+                .remove("en")
+        }
+        val legacyShape = manifestJson().apply {
+            put(
+                "releaseNotes",
+                JSONObject()
+                    .put("defaultLocale", "en")
+                    .put("mandatory", false)
+                    .put("locales", JSONObject())
+            )
         }
 
-        assertTrue(DeviceFirmwareManifestParser.parse(invalid.toString()).isFailure)
+        assertTrue(DeviceFirmwareManifestParser.parse(incomplete.toString()).isFailure)
+        assertTrue(DeviceFirmwareManifestParser.parse(legacyShape.toString()).isFailure)
+    }
+
+    @Test
+    fun `manifest parser enforces release-note item and text limits`() {
+        val tooMany = manifestJson().apply {
+            val items = getJSONObject("releaseNotes").getJSONArray("items")
+            repeat(DeviceFirmwareRuntimeContract.Limit.MAX_RELEASE_NOTE_ITEMS) {
+                items.put(
+                    JSONObject()
+                        .put("tr", "Türkçe $it")
+                        .put("en", "English $it")
+                )
+            }
+        }
+        val tooLong = manifestJson().apply {
+            getJSONObject("releaseNotes")
+                .getJSONArray("items")
+                .getJSONObject(0)
+                .put(
+                    "tr",
+                    "x".repeat(
+                        DeviceFirmwareRuntimeContract.Limit.MAX_RELEASE_NOTE_TEXT_LENGTH + 1
+                    )
+                )
+        }
+
+        assertTrue(DeviceFirmwareManifestParser.parse(tooMany.toString()).isFailure)
+        assertTrue(DeviceFirmwareManifestParser.parse(tooLong.toString()).isFailure)
     }
 
     private fun startAcceptedJson(): JSONObject = JSONObject()
@@ -133,16 +179,20 @@ class DeviceFirmwareOtaContractParserTest {
             .put("size", 1_048_576)
             .put("format", "bin")
             .put("otaSlotCompatible", true)
-        val localContent = JSONObject()
-            .put("title", "Safe update")
-            .put("summary", "Reliability improvements.")
-            .put("changes", JSONArray(listOf("Improved calibration checks.")))
-            .put("warnings", JSONArray())
-        val trContent = JSONObject()
-            .put("title", "Güvenli güncelleme")
-            .put("summary", "Güvenilirlik iyileştirmeleri.")
-            .put("changes", JSONArray(listOf("Kalibrasyon kontrolleri geliştirildi.")))
-            .put("warnings", JSONArray())
+        val releaseNotes = JSONObject()
+            .put(
+                "schema",
+                DeviceFirmwareRuntimeContract.Manifest.RELEASE_NOTES_SCHEMA
+            )
+            .put("defaultLocale", "tr")
+            .put(
+                "items",
+                JSONArray().put(
+                    JSONObject()
+                        .put("tr", "Kalibrasyon kontrolleri geliştirildi.")
+                        .put("en", "Calibration checks were improved.")
+                )
+            )
         return JSONObject()
             .put("schema", DeviceFirmwareRuntimeContract.Manifest.SCHEMA)
             .put("brand", "AquaLight")
@@ -151,16 +201,7 @@ class DeviceFirmwareOtaContractParserTest {
             .put("tag", "v2.0.0")
             .put("releaseRepo", DeviceFirmwareRuntimeContract.OFFICIAL_RELEASE_REPOSITORY)
             .put("generatedAt", "2026-07-30T00:00:00Z")
-            .put(
-                "releaseNotes",
-                JSONObject()
-                    .put("defaultLocale", "en")
-                    .put("mandatory", false)
-                    .put(
-                        "locales",
-                        JSONObject().put("en", localContent).put("tr-TR", trContent)
-                    )
-            )
+            .put("releaseNotes", releaseNotes)
             .put(
                 "artifacts",
                 JSONArray().put(
