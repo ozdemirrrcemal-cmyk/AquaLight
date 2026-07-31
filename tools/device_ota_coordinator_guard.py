@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Protect shared OTA state coordination, exact artifact selection and signed release content."""
+"""Protect typed OTA commands, exact parsing and reboot version verification."""
 from __future__ import annotations
 
 import sys
@@ -10,11 +10,13 @@ SOURCE = ROOT / "app/src/main/java/com/aqua/aqualight"
 FILES = {
     "contract": SOURCE / "application/devices/DeviceFirmwareUpdateOperations.kt",
     "adapter": SOURCE / "data/devices/DefaultDeviceFirmwareUpdateOperations.kt",
+    "provider": SOURCE / "data/devices/runtime/modules/DeviceRuntimeModuleProvider.kt",
     "coordinator": SOURCE / "data/devices/runtime/modules/firmware/DeviceOtaCoordinator.kt",
+    "runtime": SOURCE / "data/devices/runtime/modules/firmware/DeviceFirmwareRuntimeRepository.kt",
+    "commands": SOURCE / "data/devices/runtime/modules/firmware/DeviceFirmwareCommandParsers.kt",
     "planner": SOURCE / "data/devices/runtime/modules/firmware/DeviceFirmwareUpdatePlanner.kt",
     "models": SOURCE / "data/devices/runtime/modules/firmware/DeviceFirmwareModels.kt",
     "manifest": SOURCE / "data/devices/runtime/modules/firmware/DeviceFirmwareManifestParser.kt",
-    "status": SOURCE / "data/devices/runtime/modules/firmware/DeviceFirmwareStatusParser.kt",
 }
 
 errors: list[str] = []
@@ -52,6 +54,9 @@ require_tokens(
         "data class DeviceFirmwareReleaseContent",
         "fun observe(deviceUid: String): StateFlow<DeviceOtaState>",
         "suspend fun checkAvailability(",
+        "suspend fun startUpdate(",
+        "suspend fun requestStatus(",
+        "suspend fun clearStatus(",
         "runtimeMetadataGeneration: Long",
         "releaseContent: DeviceFirmwareReleaseContent",
     ),
@@ -62,26 +67,94 @@ require_tokens(
         "DeviceOtaCoordinator(",
         "coordinator.observe(",
         "coordinator.checkAvailability(",
-        "coordinator.startUpdate(plan)",
-        "coordinator.requestStatus(",
-        "coordinator.clearStatus(",
+        "override suspend fun startUpdate(",
+        "override suspend fun requestStatus(",
+        "override suspend fun clearStatus(",
+    ),
+)
+require_tokens(
+    "provider",
+    (
+        "DeviceFirmwareRuntimeRepository(commandGateway)",
+        "DeviceFirmwareUpdateRepository(firmware)",
+    ),
+)
+require_tokens(
+    "runtime",
+    (
+        "private val commandGateway: DeviceRuntimeCommandGateway",
+        "DeviceFirmwareStatusGetCommand",
+        "DeviceFirmwareOtaStatusCommand",
+        "DeviceFirmwareOtaStartCommand",
+        "DeviceFirmwareOtaClearCommand",
+        "DeviceFirmwareCommandParsers.parseFirmwareStatus",
+        "DeviceFirmwareCommandParsers.parseOtaStatus",
+        "DeviceFirmwareCommandParsers.parseOtaStart",
+        "DeviceFirmwareCommandParsers.parseOtaClear",
+        "require(response.statusCode == HTTP_ACCEPTED)",
+    ),
+)
+forbid_tokens(
+    "runtime",
+    (
+        "AqlWsCommandClient",
+        "commandClientProvider",
+        "DeviceFirmwareCommandResult",
+        ".command(",
+    ),
+)
+require_tokens(
+    "commands",
+    (
+        "fun parseFirmwareStatus(",
+        "fun parseOtaStatus(",
+        "fun parseOtaStart(",
+        "fun parseOtaClear(",
+        "fun parseOtaEvent(",
+        "OTA_CLEAR_PREVIOUS_KEYS",
+        "OTA_STAGED_EVENT_KEYS",
+        "OTA_TICK_EVENT_KEYS",
+        "keys differ from the firmware contract",
+    ),
+)
+forbid_tokens(
+    "commands",
+    (
+        "optString(",
+        "optBoolean(",
+        "optInt(",
+        "optLong(",
+        "optJSONObject(",
     ),
 )
 require_tokens(
     "coordinator",
     (
-        "runtimeEvents.collect(::processEvent)",
+        "runtimeEvents.collect { event -> processEvent(event) }",
         "An OTA operation is already active for this device.",
         "runtimeMetadataGeneration != selected.dataPlan.runtimeMetadataGeneration",
+        "DeviceFirmwareCommandParsers.parseOtaEvent",
+        "updater.requestFirmwareStatus(deviceUid)",
+        "Firmware rebooted with version",
+        "Firmware identity changed while verifying the installed OTA version.",
+        "DeviceOtaState.RestartRequired -> verifyInstalledVersion(",
+        "private val startLocks = ConcurrentHashMap<DeviceUid, Mutex>()",
+        "startLock(deviceUid).withLock",
+        "private suspend fun verifyInstalledVersion(",
+    ),
+)
+forbid_tokens(
+    "coordinator",
+    (
+        "PendingKind",
+        "PendingRequest",
+        "pendingRequests",
+        "processResponse(",
+        "processError(",
         "parseOtaStartAcceptedExact",
         "parseOtaStatusResponseExact",
         "parseOtaProgressEventExact",
-        "Firmware OTA request echo differs from the selected plan.",
-        "DeviceOtaState.Recovering",
-        "private val startLocks = ConcurrentHashMap<DeviceUid, Any>()",
-        "synchronized(startLock(deviceUid))",
-        "private fun startUpdateLocked(",
-        "startLocks.putIfAbsent(deviceUid, candidate)",
+        "AqlWsCommandClient",
     ),
 )
 require_tokens(
@@ -123,16 +196,6 @@ require_tokens(
         "json.requireExactKeys(ASSET_KEYS",
         "artifact.product.family == artifact.compatibility.family",
         "artifact.product.line == artifact.compatibility.line",
-    ),
-)
-require_tokens(
-    "status",
-    (
-        "parseOtaStartAcceptedExact",
-        "parseOtaStatusResponseExact",
-        "parseOtaProgressEventExact",
-        'model = json.requiredExactString("model")',
-        "OTA active flag differs from its exact phase.",
     ),
 )
 
