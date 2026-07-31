@@ -26,32 +26,33 @@ data class DeviceTimeConfigApplyPayload(
     val save: Boolean = true
 ) {
     init {
-        require(
-            timezoneId != null || posixTimeZone != null || utcOffsetMinutes != null ||
-                ntpEnabled != null || gadgetSyncEnabled != null ||
-                ntpServerPrimary != null || ntpServerSecondary != null
-        ) { "time.config.apply requires at least one canonical config field." }
-        timezoneId?.let { requireCanonicalText(it, "timezoneId", allowEmpty = false) }
-        posixTimeZone?.let { requireCanonicalText(it, "posixTimeZone", allowEmpty = true) }
-        utcOffsetMinutes?.let(::requireUtcOffset)
-        ntpServerPrimary?.let {
-            requireCanonicalText(it, "ntpServerPrimary", allowEmpty = true)
+        require(hasAnyConfigField()) {
+            "time.config.apply requires at least one canonical config field."
         }
-        ntpServerSecondary?.let {
-            requireCanonicalText(it, "ntpServerSecondary", allowEmpty = true)
-        }
+        validateConfigFields(
+            timezoneId,
+            posixTimeZone,
+            utcOffsetMinutes,
+            ntpServerPrimary,
+            ntpServerSecondary
+        )
     }
 
-    fun toJson(): JSONObject = JSONObject().apply {
-        timezoneId?.let { put(DeviceTimeRuntimeContract.Field.TIMEZONE_ID, it) }
-        posixTimeZone?.let { put(DeviceTimeRuntimeContract.Field.POSIX_TIME_ZONE, it) }
-        utcOffsetMinutes?.let { put(DeviceTimeRuntimeContract.Field.UTC_OFFSET_MINUTES, it) }
-        ntpEnabled?.let { put(DeviceTimeRuntimeContract.Field.NTP_ENABLED, it) }
-        gadgetSyncEnabled?.let { put(DeviceTimeRuntimeContract.Field.GADGET_SYNC_ENABLED, it) }
-        ntpServerPrimary?.let { put(DeviceTimeRuntimeContract.Field.NTP_SERVER_PRIMARY, it) }
-        ntpServerSecondary?.let { put(DeviceTimeRuntimeContract.Field.NTP_SERVER_SECONDARY, it) }
-        put(DeviceTimeRuntimeContract.Field.SAVE, save)
-    }
+    fun toJson(): JSONObject = JSONObject().applyConfigFields(
+        timezoneId = timezoneId,
+        posixTimeZone = posixTimeZone,
+        utcOffsetMinutes = utcOffsetMinutes,
+        ntpEnabled = ntpEnabled,
+        gadgetSyncEnabled = gadgetSyncEnabled,
+        ntpServerPrimary = ntpServerPrimary,
+        ntpServerSecondary = ntpServerSecondary,
+        save = save
+    )
+
+    private fun hasAnyConfigField(): Boolean =
+        timezoneId != null || posixTimeZone != null || utcOffsetMinutes != null ||
+            ntpEnabled != null || gadgetSyncEnabled != null ||
+            ntpServerPrimary != null || ntpServerSecondary != null
 }
 
 data class DevicePhoneSyncPayload(
@@ -67,34 +68,37 @@ data class DevicePhoneSyncPayload(
 ) {
     init {
         requireValidEpoch(epochMillis)
-        timezoneId?.let { requireCanonicalText(it, "timezoneId", allowEmpty = false) }
-        posixTimeZone?.let { requireCanonicalText(it, "posixTimeZone", allowEmpty = true) }
-        utcOffsetMinutes?.let(::requireUtcOffset)
-        ntpServerPrimary?.let {
-            requireCanonicalText(it, "ntpServerPrimary", allowEmpty = true)
-        }
-        ntpServerSecondary?.let {
-            requireCanonicalText(it, "ntpServerSecondary", allowEmpty = true)
-        }
+        validateConfigFields(
+            timezoneId,
+            posixTimeZone,
+            utcOffsetMinutes,
+            ntpServerPrimary,
+            ntpServerSecondary
+        )
     }
 
-    fun toJson(): JSONObject = JSONObject().apply {
-        put(DeviceTimeRuntimeContract.Field.EPOCH_MILLIS, epochMillis)
-        timezoneId?.let { put(DeviceTimeRuntimeContract.Field.TIMEZONE_ID, it) }
-        posixTimeZone?.let { put(DeviceTimeRuntimeContract.Field.POSIX_TIME_ZONE, it) }
-        utcOffsetMinutes?.let { put(DeviceTimeRuntimeContract.Field.UTC_OFFSET_MINUTES, it) }
-        ntpEnabled?.let { put(DeviceTimeRuntimeContract.Field.NTP_ENABLED, it) }
-        gadgetSyncEnabled?.let { put(DeviceTimeRuntimeContract.Field.GADGET_SYNC_ENABLED, it) }
-        ntpServerPrimary?.let { put(DeviceTimeRuntimeContract.Field.NTP_SERVER_PRIMARY, it) }
-        ntpServerSecondary?.let { put(DeviceTimeRuntimeContract.Field.NTP_SERVER_SECONDARY, it) }
-        put(DeviceTimeRuntimeContract.Field.SAVE, save)
-    }
+    fun toJson(): JSONObject = JSONObject()
+        .put(DeviceTimeRuntimeContract.Field.EPOCH_MILLIS, epochMillis)
+        .applyConfigFields(
+            timezoneId = timezoneId,
+            posixTimeZone = posixTimeZone,
+            utcOffsetMinutes = utcOffsetMinutes,
+            ntpEnabled = ntpEnabled,
+            gadgetSyncEnabled = gadgetSyncEnabled,
+            ntpServerPrimary = ntpServerPrimary,
+            ntpServerSecondary = ntpServerSecondary,
+            save = save
+        )
 }
 
 sealed interface DeviceRtcSetPayload {
     val timezoneId: String?
     val posixTimeZone: String?
     val utcOffsetMinutes: Int?
+    val ntpEnabled: Boolean?
+    val gadgetSyncEnabled: Boolean?
+    val ntpServerPrimary: String?
+    val ntpServerSecondary: String?
     val save: Boolean
     fun toJson(): JSONObject
 }
@@ -110,6 +114,10 @@ data class DeviceManualRtcPayload(
     override val timezoneId: String? = null,
     override val posixTimeZone: String? = null,
     override val utcOffsetMinutes: Int? = null,
+    override val ntpEnabled: Boolean? = null,
+    override val gadgetSyncEnabled: Boolean? = null,
+    override val ntpServerPrimary: String? = null,
+    override val ntpServerSecondary: String? = null,
     override val save: Boolean = true
 ) : DeviceRtcSetPayload {
     init {
@@ -120,7 +128,13 @@ data class DeviceManualRtcPayload(
         require(hour in 0..23)
         require(minute in 0..59)
         require(second in 0..59)
-        validateRtcConfig(timezoneId, posixTimeZone, utcOffsetMinutes)
+        validateConfigFields(
+            timezoneId,
+            posixTimeZone,
+            utcOffsetMinutes,
+            ntpServerPrimary,
+            ntpServerSecondary
+        )
     }
 
     override fun toJson(): JSONObject = JSONObject()
@@ -135,7 +149,16 @@ data class DeviceManualRtcPayload(
                 .put(DeviceTimeRuntimeContract.Field.MINUTE, minute)
                 .put(DeviceTimeRuntimeContract.Field.SECOND, second)
         )
-        .applyRtcConfig(timezoneId, posixTimeZone, utcOffsetMinutes, save)
+        .applyConfigFields(
+            timezoneId,
+            posixTimeZone,
+            utcOffsetMinutes,
+            ntpEnabled,
+            gadgetSyncEnabled,
+            ntpServerPrimary,
+            ntpServerSecondary,
+            save
+        )
 }
 
 data class DeviceEpochRtcPayload(
@@ -143,16 +166,35 @@ data class DeviceEpochRtcPayload(
     override val timezoneId: String? = null,
     override val posixTimeZone: String? = null,
     override val utcOffsetMinutes: Int? = null,
+    override val ntpEnabled: Boolean? = null,
+    override val gadgetSyncEnabled: Boolean? = null,
+    override val ntpServerPrimary: String? = null,
+    override val ntpServerSecondary: String? = null,
     override val save: Boolean = true
 ) : DeviceRtcSetPayload {
     init {
         requireValidEpoch(epochMillis)
-        validateRtcConfig(timezoneId, posixTimeZone, utcOffsetMinutes)
+        validateConfigFields(
+            timezoneId,
+            posixTimeZone,
+            utcOffsetMinutes,
+            ntpServerPrimary,
+            ntpServerSecondary
+        )
     }
 
     override fun toJson(): JSONObject = JSONObject()
         .put(DeviceTimeRuntimeContract.Field.EPOCH_MILLIS, epochMillis)
-        .applyRtcConfig(timezoneId, posixTimeZone, utcOffsetMinutes, save)
+        .applyConfigFields(
+            timezoneId,
+            posixTimeZone,
+            utcOffsetMinutes,
+            ntpEnabled,
+            gadgetSyncEnabled,
+            ntpServerPrimary,
+            ntpServerSecondary,
+            save
+        )
 }
 
 data class DeviceTimeParts(
@@ -213,26 +255,42 @@ data class DeviceTimeSyncResult(
     val status: DeviceTimeStatus
 )
 
-private fun JSONObject.applyRtcConfig(
+private fun JSONObject.applyConfigFields(
     timezoneId: String?,
     posixTimeZone: String?,
     utcOffsetMinutes: Int?,
+    ntpEnabled: Boolean?,
+    gadgetSyncEnabled: Boolean?,
+    ntpServerPrimary: String?,
+    ntpServerSecondary: String?,
     save: Boolean
 ): JSONObject = apply {
     timezoneId?.let { put(DeviceTimeRuntimeContract.Field.TIMEZONE_ID, it) }
     posixTimeZone?.let { put(DeviceTimeRuntimeContract.Field.POSIX_TIME_ZONE, it) }
     utcOffsetMinutes?.let { put(DeviceTimeRuntimeContract.Field.UTC_OFFSET_MINUTES, it) }
+    ntpEnabled?.let { put(DeviceTimeRuntimeContract.Field.NTP_ENABLED, it) }
+    gadgetSyncEnabled?.let { put(DeviceTimeRuntimeContract.Field.GADGET_SYNC_ENABLED, it) }
+    ntpServerPrimary?.let { put(DeviceTimeRuntimeContract.Field.NTP_SERVER_PRIMARY, it) }
+    ntpServerSecondary?.let { put(DeviceTimeRuntimeContract.Field.NTP_SERVER_SECONDARY, it) }
     put(DeviceTimeRuntimeContract.Field.SAVE, save)
 }
 
-private fun validateRtcConfig(
+private fun validateConfigFields(
     timezoneId: String?,
     posixTimeZone: String?,
-    utcOffsetMinutes: Int?
+    utcOffsetMinutes: Int?,
+    ntpServerPrimary: String?,
+    ntpServerSecondary: String?
 ) {
     timezoneId?.let { requireCanonicalText(it, "timezoneId", allowEmpty = false) }
     posixTimeZone?.let { requireCanonicalText(it, "posixTimeZone", allowEmpty = true) }
     utcOffsetMinutes?.let(::requireUtcOffset)
+    ntpServerPrimary?.let {
+        requireCanonicalText(it, "ntpServerPrimary", allowEmpty = true)
+    }
+    ntpServerSecondary?.let {
+        requireCanonicalText(it, "ntpServerSecondary", allowEmpty = true)
+    }
 }
 
 private fun requireValidEpoch(epochMillis: Long) {
