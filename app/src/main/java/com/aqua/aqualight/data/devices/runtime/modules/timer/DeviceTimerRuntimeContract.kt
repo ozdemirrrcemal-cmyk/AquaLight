@@ -1,17 +1,6 @@
 package com.aqua.aqualight.data.devices.runtime.modules.timer
 
-/**
- * Firmware verified Android mirror.
- *
- * Firmware:
- * AquaLight-Firmware / feature/ble-qr-wifi-provisioning
- *
- * module: timer
- * actions:
- * - status.get
- * - config.apply
- * - channel.set
- */
+/** Exact Android mirror of the authenticated firmware timer API. */
 object DeviceTimerRuntimeContract {
 
     const val MODULE = "timer"
@@ -43,7 +32,7 @@ object DeviceTimerRuntimeContract {
     }
 
     object Limit {
-        /** Firmware rejects timer schedules above this count. */
         const val MAX_SCHEDULES = 24
+        const val DISPLAY_NAME_BYTES = 32
     }
 }
