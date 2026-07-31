@@ -36,7 +36,7 @@ class DeviceRuntimeDataRepository(
         stateStore = stateStore,
         commandExecutor = commandExecutor,
         scopeProvider = { activeScope },
-        commandTimeoutMillis = commandTimeoutMillis
+        timing = DeviceRuntimeRefreshTiming(commandTimeoutMillis)
     )
 
     val states: StateFlow<Map<DeviceUid, DeviceRuntimeState>> = stateStore.states
