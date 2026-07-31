@@ -1,66 +1,103 @@
 package com.aqua.aqualight.data.devices.runtime.modules.time
 
 import com.aqua.aqualight.data.devices.model.DeviceUid
+import com.aqua.aqualight.data.devices.runtime.core.DeviceRuntimeCommandOutcome
+import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.CoroutineStart
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.launch
 
-/**
- * One app-session coordinator.
- *
- * It is called only after authenticated runtime metadata has been validated. The phone's current
- * epoch and timezone are applied to the live device session without writing persistent storage.
- * Provisioning owns persistent timezone setup, while firmware NTP keeps the clock corrected.
- */
+enum class DeviceTimeSyncScheduleResult {
+    SCHEDULED,
+    SKIPPED
+}
+
+/** One exact phone-time synchronization per authenticated device session. */
 class DeviceTimeSyncCoordinator internal constructor(
-    private val syncPhoneNow: (DeviceUid) -> DeviceTimeCommandResult
+    private val scope: CoroutineScope,
+    private val syncPhoneNow:
+        suspend (DeviceUid) -> DeviceRuntimeCommandOutcome<DeviceTimeSyncResult>
 ) {
-    constructor(repository: DeviceTimeRuntimeRepository) : this(
+    constructor(
+        scope: CoroutineScope,
+        repository: DeviceTimeRuntimeRepository
+    ) : this(
+        scope = scope,
         syncPhoneNow = { deviceUid ->
-            repository.syncPhoneNow(
-                deviceUid = deviceUid,
-                save = false
-            )
+            repository.syncPhoneNow(deviceUid = deviceUid, save = false)
         }
     )
 
     private val lock = Any()
-    private val syncedDeviceUids = mutableSetOf<String>()
-    private val syncingDeviceUids = mutableSetOf<String>()
+    private val sessionEpochs = mutableMapOf<String, Long>()
+    private val syncedEpochs = mutableMapOf<String, Long>()
+    private val jobs = mutableMapOf<String, Job>()
 
     fun syncPhoneNowIfNeeded(
         deviceUid: DeviceUid,
         force: Boolean = false
-    ): DeviceTimeCommandResult {
+    ): DeviceTimeSyncScheduleResult {
         val key = deviceUid.value
+        val epoch: Long
+        val job: Job
         synchronized(lock) {
-            if (key in syncingDeviceUids || (!force && key in syncedDeviceUids)) {
-                return skippedResult()
+            epoch = sessionEpochs.getOrPut(key) { FIRST_SESSION_EPOCH }
+            if (jobs[key]?.isActive == true || (!force && syncedEpochs[key] == epoch)) {
+                return DeviceTimeSyncScheduleResult.SKIPPED
             }
-            syncingDeviceUids += key
-        }
 
-        var result: DeviceTimeCommandResult? = null
-        try {
-            result = syncPhoneNow(deviceUid)
-            return checkNotNull(result)
-        } finally {
-            synchronized(lock) {
-                syncingDeviceUids -= key
-                if (result?.isSuccess == true) {
-                    syncedDeviceUids += key
+            job = scope.launch(start = CoroutineStart.LAZY) {
+                val success = try {
+                    val outcome = syncPhoneNow(deviceUid)
+                    outcome is DeviceRuntimeCommandOutcome.Success &&
+                        outcome.value.saved == false &&
+                        outcome.value.saveRequested == false
+                } catch (cancelled: CancellationException) {
+                    throw cancelled
+                } catch (_: Throwable) {
+                    false
+                }
+
+                synchronized(lock) {
+                    if (sessionEpochs[key] == epoch && jobs[key] === coroutineContext[Job]) {
+                        jobs.remove(key)
+                        if (success) syncedEpochs[key] = epoch
+                    }
                 }
             }
+            jobs[key] = job
         }
+
+        job.invokeOnCompletion {
+            synchronized(lock) {
+                if (jobs[key] === job) jobs.remove(key)
+            }
+        }
+        job.start()
+        return DeviceTimeSyncScheduleResult.SCHEDULED
     }
 
     fun clearSessionMemory(deviceUid: DeviceUid) {
-        synchronized(lock) {
-            syncedDeviceUids -= deviceUid.value
-            syncingDeviceUids -= deviceUid.value
+        val key = deviceUid.value
+        val job = synchronized(lock) {
+            val current = sessionEpochs[key] ?: FIRST_SESSION_EPOCH
+            sessionEpochs[key] = current + 1L
+            syncedEpochs.remove(key)
+            jobs.remove(key)
         }
+        job?.cancel()
     }
 
-    private fun skippedResult(): DeviceTimeCommandResult = DeviceTimeCommandResult(
-        sent = false,
-        skipped = true,
-        action = DeviceTimeRuntimeContract.Action.PHONE_SYNC
-    )
+    internal fun isSynchronized(deviceUid: DeviceUid): Boolean = synchronized(lock) {
+        syncedEpochs[deviceUid.value] == sessionEpochs[deviceUid.value]
+    }
+
+    internal fun isSyncing(deviceUid: DeviceUid): Boolean = synchronized(lock) {
+        jobs[deviceUid.value]?.isActive == true
+    }
+
+    private companion object {
+        const val FIRST_SESSION_EPOCH = 1L
+    }
 }
