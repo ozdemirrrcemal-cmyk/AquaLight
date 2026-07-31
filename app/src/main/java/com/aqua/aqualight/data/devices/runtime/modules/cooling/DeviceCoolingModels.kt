@@ -1,5 +1,6 @@
 package com.aqua.aqualight.data.devices.runtime.modules.cooling
 
+import org.json.JSONArray
 import org.json.JSONObject
 
 enum class DeviceCoolingMode(
@@ -95,15 +96,52 @@ data class DeviceCoolingStatus(
     val runtime: DeviceCoolingRuntimeCapabilities
 )
 
+/** One exact `cooling.config.apply.fans[]` item. Null/blank clears the override. */
+data class DeviceCoolingFanConfig(
+    val fanKey: String,
+    val displayName: String?
+) {
+    val normalizedFanKey: String = fanKey.trim().lowercase()
+    val normalizedDisplayName: String? = displayName?.trim()?.ifEmpty { null }
+
+    init {
+        require(normalizedFanKey.isNotEmpty() &&
+            normalizedFanKey.none(Char::isISOControl)) {
+            "fanKey must identify a configured cooling fan."
+        }
+        normalizedDisplayName?.let { value ->
+            require(value.none(Char::isISOControl)) {
+                "displayName must not contain control characters."
+            }
+            require(
+                value.toByteArray(Charsets.UTF_8).size <=
+                    DeviceCoolingRuntimeContract.Limit.DISPLAY_NAME_BYTES
+            ) {
+                "displayName must not exceed " +
+                    "${DeviceCoolingRuntimeContract.Limit.DISPLAY_NAME_BYTES} UTF-8 bytes."
+            }
+        }
+    }
+
+    fun toJson(): JSONObject = JSONObject()
+        .put(DeviceCoolingRuntimeContract.Field.FAN_KEY, normalizedFanKey)
+        .put(
+            DeviceCoolingRuntimeContract.Field.DISPLAY_NAME,
+            normalizedDisplayName ?: JSONObject.NULL
+        )
+}
+
 data class DeviceCoolingConfigApplyPayload(
     val mode: DeviceCoolingMode? = null,
     val minTemperatureC: Double? = null,
     val maxTemperatureC: Double? = null,
+    val fans: List<DeviceCoolingFanConfig> = emptyList(),
     val save: Boolean = true
 ) {
     init {
-        require(mode != null || minTemperatureC != null || maxTemperatureC != null) {
-            "cooling.config.apply requires mode and/or temperature range."
+        require(mode != null || minTemperatureC != null || maxTemperatureC != null ||
+            fans.isNotEmpty()) {
+            "cooling.config.apply requires mode, temperature range and/or fans."
         }
 
         if (minTemperatureC != null) {
@@ -123,6 +161,14 @@ data class DeviceCoolingConfigApplyPayload(
                 "maxTemperatureC must be greater than minTemperatureC."
             }
         }
+
+        require(fans.size <= DeviceCoolingRuntimeContract.Limit.MAX_FANS) {
+            "cooling.config.apply supports at most " +
+                "${DeviceCoolingRuntimeContract.Limit.MAX_FANS} fan items."
+        }
+        require(fans.map(DeviceCoolingFanConfig::normalizedFanKey).distinct().size == fans.size) {
+            "cooling.config.apply must not contain duplicate fanKey values."
+        }
     }
 
     fun toJson(): JSONObject {
@@ -139,6 +185,13 @@ data class DeviceCoolingConfigApplyPayload(
 
         if (maxTemperatureC != null) {
             json.put(DeviceCoolingRuntimeContract.Field.MAX_TEMPERATURE_C, maxTemperatureC)
+        }
+
+        if (fans.isNotEmpty()) {
+            json.put(
+                DeviceCoolingRuntimeContract.Field.FANS,
+                JSONArray(fans.map(DeviceCoolingFanConfig::toJson))
+            )
         }
 
         return json
