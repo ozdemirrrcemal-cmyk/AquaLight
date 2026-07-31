@@ -64,6 +64,10 @@ require_tokens(
         "val support: DeviceRuntimeSupport",
         "val firmware: DeviceRuntimeValue<DeviceFirmwareStatus>",
         "val ota: DeviceRuntimeValue<DeviceFirmwareOtaSnapshot>",
+        "enum class DeviceRuntimeStateTarget",
+        "fun isSupported(state: DeviceRuntimeState)",
+        "fun markLoading(state: DeviceRuntimeState)",
+        "fun markError(",
     ),
 )
 forbid_tokens(
@@ -73,6 +77,9 @@ forbid_tokens(
         "DeviceConnectionState",
         "DeviceRegistryStore",
         "JSONObject",
+        "DeviceRuntimeValue<Any?>",
+        "UNCHECKED_CAST",
+        "reflection",
     ),
 )
 require_tokens(
@@ -95,12 +102,23 @@ require_tokens(
         "fun commandCompleted(",
         "fun reduceOtaEvent(",
         "DeviceRuntimeCommandOutcome.ProtocolError",
-        "DeviceRuntimeFreshness.ERROR",
         "DeviceFirmwareOtaClearTypedResult",
         "return if (reduced) null else refreshTarget",
+        "target::markLoading",
+        "target.markError(state, fault)",
     ),
 )
-forbid_tokens("reducer", ("JSONObject", "DeviceOnlineState", "DeviceRegistryStore"))
+forbid_tokens(
+    "reducer",
+    (
+        "JSONObject",
+        "DeviceOnlineState",
+        "DeviceRegistryStore",
+        "DeviceRuntimeValue<Any?>",
+        "UNCHECKED_CAST",
+        "updateTarget(",
+    ),
+)
 require_tokens(
     "router",
     (
@@ -111,6 +129,7 @@ require_tokens(
         "DeviceRuntimeEventRoute.ProtocolFault",
     ),
 )
+forbid_tokens("router", ("data object Ignored", "DeviceRuntimeEventRoute.Ignored"))
 require_tokens(
     "refresh",
     (
@@ -121,16 +140,19 @@ require_tokens(
         "fun cancelGeneration(",
         "fun cancelDevice(",
         "generationProvider(deviceUid) != generation",
+        "target.isSupported(currentState)",
     ),
 )
 require_tokens(
     "repository",
     (
-        "val runtimeStateStore = DeviceRuntimeStateStore()",
+        "private val runtimeStateStore = DeviceRuntimeStateStore()",
         "val runtimeStates: StateFlow<Map<DeviceUid, DeviceRuntimeState>>",
         "private val runtimeStateReducer = DeviceRuntimeStateReducer(runtimeStateStore)",
         "private val runtimeMessageRouter = DeviceRuntimeMessageRouter(runtimeStateReducer)",
         "private val runtimeRefreshCoordinator = DeviceRuntimeRefreshCoordinator(",
+        "session?.authenticated == true",
+        "supportsCommand(deviceUid, command.module, command.action)",
         "runtimeStateReducer.commandCompleted(outcome)",
         "runtimeRefreshCoordinator.refreshBootstrap(",
         "runtimeStateStore.markGenerationStale(",
@@ -141,7 +163,9 @@ require_tokens(
 forbid_tokens(
     "repository",
     (
-        "DeviceRuntimeStateStore()\n    val runtimeStateStore",
+        "\n    val runtimeStateStore = DeviceRuntimeStateStore()",
+        "DeviceRuntimeStateTargetSupport",
+        "DeviceRuntimeEventRoute.Ignored",
         "runtimeStateStore.updateConnectionState",
     ),
 )
