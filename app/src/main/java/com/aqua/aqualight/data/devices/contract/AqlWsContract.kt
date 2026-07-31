@@ -1,15 +1,16 @@
 package com.aqua.aqualight.data.devices.contract
 
 /**
- * Authoritative Android mirror of the first commercial AquaLight WebSocket contract.
+ * Authoritative Android mirror of the commercial AquaLight WebSocket v1 contract.
  *
- * The application is unreleased, so this is its single v1 baseline. Runtime
- * credentials are used only as input to the HMAC handshake and are never
- * serialized to the wire.
+ * Runtime credentials are inputs to the mutual HMAC handshake only and are never
+ * serialized to the wire. The authenticated command matrix is mirrored byte-for-byte
+ * from the firmware golden fixture and fails closed on any unregistered command.
  */
 object AqlWsContract {
     const val SCHEMA = "aql.ws.v1"
     const val SCHEMA_VERSION = 1
+    const val DEFAULT_PORT = 80
     const val DEFAULT_PATH = "/aql/v1/ws"
     const val DEFAULT_PROTOCOL = SCHEMA
     const val PROTOCOL_VERSION = 1
@@ -41,6 +42,7 @@ object AqlWsContract {
     const val ACTION_DEVICE_IDENTITY_GET = "identity.get"
     const val ACTION_DEVICE_STATUS_GET = ACTION_STATUS_GET
     const val ACTION_DEVICE_CAPABILITIES_GET = "capabilities.get"
+    const val ACTION_DEVICE_NAME_SET = "name.set"
 
     const val ACTION_SECURITY_STATUS_GET = ACTION_STATUS_GET
     const val ACTION_SECURITY_PAIR = "pair"
@@ -65,6 +67,9 @@ object AqlWsContract {
     const val ACTION_LIGHT_CHANNEL_REGIME_SET = "channel.regime.set"
     const val ACTION_LIGHT_PROGRAM_APPLY = "program.apply"
     const val ACTION_LIGHT_PROGRAM_DELETE = "program.delete"
+    const val ACTION_LIGHT_TEMPERATURE_PROTECTION_STATUS_GET =
+        "temperature-protection.status.get"
+    const val ACTION_LIGHT_TEMPERATURE_PROTECTION_SET = "temperature-protection.set"
 
     const val ACTION_COOLING_STATUS_GET = ACTION_STATUS_GET
     const val ACTION_COOLING_CONFIG_APPLY = ACTION_CONFIG_APPLY
@@ -134,15 +139,13 @@ object AqlWsContract {
         const val MAX_SEQUENCE = 9_007_199_254_740_991L
     }
 
-    // The commercial WebSocket contract has no unauthenticated application
-    // command surface. Public onboarding metadata remains on the bounded UDP/BLE
-    // provisioning contracts.
     private val publicCommands = emptySet<String>()
 
     private val authenticatedCommands = setOf(
         commandKey(MODULE_DEVICE, ACTION_DEVICE_IDENTITY_GET),
         commandKey(MODULE_DEVICE, ACTION_DEVICE_STATUS_GET),
         commandKey(MODULE_DEVICE, ACTION_DEVICE_CAPABILITIES_GET),
+        commandKey(MODULE_DEVICE, ACTION_DEVICE_NAME_SET),
         commandKey(MODULE_SECURITY, ACTION_SECURITY_STATUS_GET),
         commandKey(MODULE_SECURITY, ACTION_SECURITY_PAIR),
         commandKey(MODULE_SECURITY, ACTION_SECURITY_UNPAIR),
@@ -162,6 +165,8 @@ object AqlWsContract {
         commandKey(MODULE_LIGHT, ACTION_LIGHT_CHANNEL_REGIME_SET),
         commandKey(MODULE_LIGHT, ACTION_LIGHT_PROGRAM_APPLY),
         commandKey(MODULE_LIGHT, ACTION_LIGHT_PROGRAM_DELETE),
+        commandKey(MODULE_LIGHT, ACTION_LIGHT_TEMPERATURE_PROTECTION_STATUS_GET),
+        commandKey(MODULE_LIGHT, ACTION_LIGHT_TEMPERATURE_PROTECTION_SET),
         commandKey(MODULE_COOLING, ACTION_COOLING_CONFIG_APPLY),
         commandKey(MODULE_COOLING, ACTION_COOLING_STATUS_GET),
         commandKey(MODULE_TIMER, ACTION_TIMER_STATUS_GET),
