@@ -5,6 +5,7 @@ import com.aqua.aqualight.data.devices.model.DeviceUid
 import com.aqua.aqualight.data.devices.runtime.core.DeviceRuntimeCommandGateway
 import com.aqua.aqualight.data.devices.runtime.core.DeviceRuntimeCommandOutcome
 import com.aqua.aqualight.data.devices.runtime.core.DeviceRuntimeConnectionGeneration
+import kotlinx.coroutines.CancellationException
 
 class DeviceSecurityRuntimeRepository(
     private val commandGateway: DeviceRuntimeCommandGateway,
@@ -47,6 +48,8 @@ class DeviceSecurityRuntimeRepository(
         return try {
             onOwnershipCredentialInvalidated(deviceUid, outcome.generation)
             outcome
+        } catch (cancelled: CancellationException) {
+            throw cancelled
         } catch (error: Throwable) {
             DeviceRuntimeCommandOutcome.LocalStateError(
                 deviceUid = deviceUid,
