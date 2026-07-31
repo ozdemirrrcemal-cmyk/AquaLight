@@ -3,8 +3,6 @@ package com.aqua.aqualight.data.devices.runtime.ws
 import com.aqua.aqualight.data.devices.contract.AqlWsContract
 import com.aqua.aqualight.data.devices.model.DeviceRuntimeEndpoint
 import com.aqua.aqualight.data.devices.model.DeviceUid
-import java.util.Collections
-import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.TimeUnit
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.CoroutineScope
@@ -86,10 +84,6 @@ class AqlWsClient(
     @Volatile
     private var closed: Boolean = false
 
-    private val pendingTokenInvalidationCommandIds = Collections.newSetFromMap(
-        ConcurrentHashMap<String, Boolean>()
-    )
-
     override fun connect(
         deviceUid: DeviceUid,
         endpoint: DeviceRuntimeEndpoint
@@ -152,11 +146,7 @@ class AqlWsClient(
             synchronized(lifecycleLock) {
                 if (closed || !canSendLocked(message)) return@synchronized SendResult.Rejected
                 val raw = wireCodec.encode(message, activeSecureSession)
-                val sent = activeSocket?.send(raw) == true
-                if (sent) {
-                    message.lifecycleInvalidatingCommandId()?.let(
-                        pendingTokenInvalidationCommandIds::add
-                    )
+                if (activeSocket?.send(raw) == true) {
                     SendResult.Sent
                 } else {
                     SendResult.SocketFailure
@@ -512,26 +502,9 @@ class AqlWsClient(
         deviceUid: DeviceUid,
         message: AqlWsIncomingMessage
     ) {
-        val shouldInvalidateToken = synchronized(lifecycleLock) {
+        synchronized(lifecycleLock) {
             if (!isCurrentConnectionLocked(webSocket, generation, deviceUid)) return
-            val invalidate = message is AqlWsIncomingMessage.Response &&
-                pendingTokenInvalidationCommandIds.remove(message.id) &&
-                message.ok
             publishEventLocked(AqlWsEvent.Message(deviceUid, message))
-            invalidate
-        }
-        if (shouldInvalidateToken) {
-            val scope = synchronized(lifecycleLock) {
-                if (isCurrentConnectionLocked(webSocket, generation, deviceUid)) {
-                    activeConnectionScope
-                } else {
-                    null
-                }
-            }
-            scope?.launch {
-                tokenProvider?.clearToken(deviceUid)
-                rejectAuthentication(webSocket, generation, deviceUid)
-            }
         }
     }
 
@@ -655,13 +628,6 @@ class AqlWsClient(
             _connectionState.value is AqlWsConnectionState.Authenticated
     }
 
-    private fun AqlWsOutgoingMessage.lifecycleInvalidatingCommandId(): String? =
-        (this as? AqlWsOutgoingMessage.Command)?.id?.takeIf { commandId ->
-            commandId.isNotBlank() &&
-                module == AqlWsContract.MODULE_SECURITY &&
-                action in TOKEN_INVALIDATING_SECURITY_ACTIONS
-        }
-
     private fun detachForTerminalCloseLocked(): DetachedConnection? {
         if (closed) return null
         closed = true
@@ -683,7 +649,6 @@ class AqlWsClient(
         pendingAuthentication = null
         activeSecureSession = null
         helloReceived = false
-        pendingTokenInvalidationCommandIds.clear()
         _connectionState.value = nextState
         return detached
     }
@@ -740,10 +705,6 @@ class AqlWsClient(
         private const val MISSING_CREDENTIAL_MESSAGE = "Device authentication is required."
         private const val MAX_CLOSE_REASON_CHARS = 96
         private const val DEFAULT_HANDSHAKE_TIMEOUT_MILLIS = 5_000L
-        private val TOKEN_INVALIDATING_SECURITY_ACTIONS = setOf(
-            AqlWsContract.ACTION_SECURITY_UNPAIR,
-            AqlWsContract.ACTION_SECURITY_RESET
-        )
 
         fun defaultOkHttpClient(): OkHttpClient = OkHttpClient.Builder()
             .connectTimeout(8, TimeUnit.SECONDS)
