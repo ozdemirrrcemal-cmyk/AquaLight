@@ -67,7 +67,7 @@
         "sessionId": "session-00000001",
         "serverNonce": "1111111111111111111111111111111111111111111111111111111111111111",
         "clientNonce": "2222222222222222222222222222222222222222222222222222222222222222",
-        "serverProof": "1654ac669403cf5545fdca2f4fc9febb621b3f910efd6aa796fb3693250e4c"
+        "serverProof": "1654ac669403cf5545fdca2f4fc9febb621b3f910efd6aaae796fb3693250e4c"
       },
       "meta": {
         "schema": "aql.ws.v1",
