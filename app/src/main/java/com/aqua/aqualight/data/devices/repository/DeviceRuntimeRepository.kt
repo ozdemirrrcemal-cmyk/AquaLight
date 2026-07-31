@@ -13,6 +13,7 @@ import com.aqua.aqualight.data.devices.model.DeviceSnapshot
 import com.aqua.aqualight.data.devices.model.DeviceUid
 import com.aqua.aqualight.data.devices.runtime.core.DeviceRuntimeCommand
 import com.aqua.aqualight.data.devices.runtime.core.DeviceRuntimeCommandExecutor
+import com.aqua.aqualight.data.devices.runtime.core.DeviceRuntimeCommandGateway
 import com.aqua.aqualight.data.devices.runtime.core.DeviceRuntimeCommandOutcome
 import com.aqua.aqualight.data.devices.runtime.core.DeviceRuntimeCommandSession
 import com.aqua.aqualight.data.devices.runtime.core.DeviceRuntimeConnectionGeneration
@@ -73,7 +74,7 @@ class DeviceRuntimeRepository(
         AqlWsClient(tokenProvider = provider)
     },
     private val dispatcher: CoroutineDispatcher = Dispatchers.IO
-) : AutoCloseable {
+) : AutoCloseable, DeviceRuntimeCommandGateway {
 
     private class RuntimeSession(
         val deviceUid: DeviceUid,
@@ -137,9 +138,11 @@ class DeviceRuntimeRepository(
         supportChecker = ::supportsCommand
     )
 
-    val runtimeModules: DeviceRuntimeModuleProvider = DeviceRuntimeModuleProvider { deviceUid ->
-        sessions[deviceUid]?.commandClient
-    }
+    val runtimeModules: DeviceRuntimeModuleProvider = DeviceRuntimeModuleProvider(
+        commandClientProvider = { deviceUid -> sessions[deviceUid]?.commandClient },
+        commandGateway = this,
+        onOwnershipCredentialInvalidated = ::invalidateOwnershipCredential
+    )
 
     private val timeSyncCoordinator = DeviceTimeSyncCoordinator(repository = runtimeModules.time)
 
@@ -244,15 +247,21 @@ class DeviceRuntimeRepository(
 
     internal fun pendingCommandCount(): Int = commandExecutor.pendingCount()
 
-    suspend fun <T> executeCommand(
+    override suspend fun <T> execute(
         deviceUid: DeviceUid,
         command: DeviceRuntimeCommand<T>,
-        timeoutMillis: Long = DeviceRuntimeCommandExecutor.DEFAULT_TIMEOUT_MILLIS
+        timeoutMillis: Long
     ): DeviceRuntimeCommandOutcome<T> = commandExecutor.execute(
         deviceUid = deviceUid,
         command = command,
         timeoutMillis = timeoutMillis
     )
+
+    suspend fun <T> executeCommand(
+        deviceUid: DeviceUid,
+        command: DeviceRuntimeCommand<T>,
+        timeoutMillis: Long = DeviceRuntimeCommandExecutor.DEFAULT_TIMEOUT_MILLIS
+    ): DeviceRuntimeCommandOutcome<T> = execute(deviceUid, command, timeoutMillis)
 
     internal fun isCurrentValidatedMetadata(snapshot: DeviceSnapshot): Boolean {
         val ready = metadataBootstrapCoordinator.currentState(snapshot.deviceUid) as?
@@ -331,6 +340,52 @@ class DeviceRuntimeRepository(
             ensureOpen()
             provider.clearToken(deviceUid)
             ensureOpen()
+        }
+    }
+
+    private suspend fun invalidateOwnershipCredential(
+        deviceUid: DeviceUid,
+        generation: DeviceRuntimeConnectionGeneration
+    ) {
+        val detached = synchronized(lifecycleLock) {
+            check(!closed) { "Device runtime repository is closed." }
+            val current = requireNotNull(sessions[deviceUid]) {
+                "The ownership-reset runtime session no longer exists."
+            }
+            check(current.generation == generation && isCurrentSession(current)) {
+                "Ownership-reset response belongs to a replaced runtime session."
+            }
+            sessions.remove(deviceUid)
+            if (lastActiveDeviceUid == deviceUid) lastActiveDeviceUid = null
+            current
+        }
+
+        commandExecutor.cancelGeneration(
+            deviceUid = deviceUid,
+            generation = generation,
+            reason = COMMAND_CANCELLED_OWNERSHIP_RESET
+        )
+        cancelMetadataTimeout(deviceUid)
+        metadataBootstrapCoordinator.clear(deviceUid)
+        timeSyncCoordinator.clearSessionMemory(deviceUid)
+        detached.close()
+
+        try {
+            val provider = requireNotNull(tokenProvider) {
+                "Runtime credential store is not configured."
+            }
+            tokenLifecycleMutex.withLock {
+                ensureOpen()
+                provider.clearToken(deviceUid)
+                ensureOpen()
+            }
+        } finally {
+            _connectionState.emit(
+                AqlWsConnectionState.AuthRequired(
+                    deviceUid = deviceUid,
+                    message = OWNERSHIP_REQUIRED_MESSAGE
+                )
+            )
         }
     }
 
@@ -653,9 +708,12 @@ class DeviceRuntimeRepository(
         private const val LOCAL_NETWORK_UNAVAILABLE_REASON = "local network unavailable"
         private const val METADATA_BOOTSTRAP_FAILED_REASON = "metadata bootstrap failed"
         private const val METADATA_BOOTSTRAP_TIMEOUT_MILLIS = 10_000L
+        private const val OWNERSHIP_REQUIRED_MESSAGE =
+            "Encrypted BLE ownership provisioning is required again."
         private const val COMMAND_CANCELLED_CONNECTION_REPLACED = "runtime connection replaced"
         private const val COMMAND_CANCELLED_NETWORK_ROUTE_CHANGED = "local network route changed"
         private const val COMMAND_CANCELLED_LOCAL_NETWORK_LOSS = "local network unavailable"
+        private const val COMMAND_CANCELLED_OWNERSHIP_RESET = "device ownership credential reset"
         private const val COMMAND_CANCELLED_DEVICE_RETIRED = "device runtime retired"
         private const val COMMAND_CANCELLED_DEVICE_CLOSED = "device runtime closed"
         private const val COMMAND_CANCELLED_REPOSITORY_CLOSED = "runtime repository closed"
