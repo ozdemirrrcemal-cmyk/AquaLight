@@ -74,7 +74,14 @@ data class DeviceRuntimeIdentity(
     val line: DeviceProductLine,
     val model: DeviceProductModel,
     val brand: String,
+    /** Immutable commercial product display name. */
     val displayName: String,
+    /** Owner-editable firmware name override; empty means cleared. */
+    val customName: String = "",
+    /** Firmware-resolved custom name or immutable product display name. */
+    val effectiveDisplayName: String = customName.ifEmpty { displayName },
+    val nameEditable: Boolean = true,
+    val customNameMaxBytes: Int = FIRMWARE_DEVICE_CUSTOM_NAME_MAX_BYTES,
     val skuId: DeviceSkuId,
     val skuCode: DeviceSkuCode,
     val hardwareRevision: DeviceHardwareRevision,
@@ -89,6 +96,17 @@ data class DeviceRuntimeIdentity(
         requireExactText(deviceUid.value, "deviceUid")
         requireExactText(brand, "brand")
         requireExactText(displayName, "displayName")
+        requireOptionalExactText(customName, "customName")
+        requireExactText(effectiveDisplayName, "effectiveDisplayName")
+        require(customNameMaxBytes == FIRMWARE_DEVICE_CUSTOM_NAME_MAX_BYTES) {
+            "customNameMaxBytes differs from the pinned firmware contract."
+        }
+        require(customName.toByteArray(Charsets.UTF_8).size <= customNameMaxBytes) {
+            "customName exceeds the firmware UTF-8 byte limit."
+        }
+        require(effectiveDisplayName == customName.ifEmpty { displayName }) {
+            "effectiveDisplayName does not match the firmware name policy."
+        }
     }
 
     val compatibilityIdentity: DeviceCompatibilityIdentity
@@ -161,6 +179,11 @@ private fun requireExact(value: String, field: String, pattern: Regex) {
 
 private fun requireExactText(value: String, field: String) {
     require(value.isNotEmpty()) { "$field must not be empty." }
+    requireOptionalExactText(value, field)
+}
+
+private fun requireOptionalExactText(value: String, field: String) {
+    if (value.isEmpty()) return
     require(!value.first().isWhitespace() && !value.last().isWhitespace()) {
         "$field must not contain surrounding whitespace."
     }
@@ -176,3 +199,4 @@ private const val AQUALIGHT_PRODUCT_ID_PREFIX = "com.aqualight."
 private const val SUPPORTED_DEVICE_API_VERSION = 1
 private const val RUNTIME_TRANSPORT = "websocket"
 private const val RUNTIME_WS_PORT = 80
+const val FIRMWARE_DEVICE_CUSTOM_NAME_MAX_BYTES = 64
