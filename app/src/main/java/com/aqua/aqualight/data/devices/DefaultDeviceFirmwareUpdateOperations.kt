@@ -54,14 +54,14 @@ internal class DefaultDeviceFirmwareUpdateOperations(
         }
     }
 
-    override fun startUpdate(
+    override suspend fun startUpdate(
         plan: PreparedDeviceFirmwareUpdate
     ): DeviceFirmwareCommandResult = coordinator.startUpdate(plan)
 
-    override fun requestStatus(deviceUid: String): DeviceFirmwareCommandResult =
+    override suspend fun requestStatus(deviceUid: String): DeviceFirmwareCommandResult =
         coordinator.requestStatus(requireDeviceUid(deviceUid))
 
-    override fun clearStatus(deviceUid: String): DeviceFirmwareCommandResult =
+    override suspend fun clearStatus(deviceUid: String): DeviceFirmwareCommandResult =
         coordinator.clearStatus(requireDeviceUid(deviceUid))
 
     override fun close() {
