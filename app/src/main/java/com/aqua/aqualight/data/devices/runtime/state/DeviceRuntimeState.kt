@@ -4,7 +4,6 @@ import com.aqua.aqualight.data.devices.model.DeviceUid
 import com.aqua.aqualight.data.devices.runtime.modules.cooling.DeviceCoolingStatus
 import com.aqua.aqualight.data.devices.runtime.modules.dosing.DeviceDosingStatus
 import com.aqua.aqualight.data.devices.runtime.modules.firmware.DeviceFirmwareOtaSnapshot
-import com.aqua.aqualight.data.devices.runtime.modules.firmware.DeviceFirmwareStatus
 import com.aqua.aqualight.data.devices.runtime.modules.light.DeviceLightStatus
 import com.aqua.aqualight.data.devices.runtime.modules.light.DeviceLightTemperatureProtectionStatus
 import com.aqua.aqualight.data.devices.runtime.modules.time.DeviceTimeStatus
@@ -91,7 +90,7 @@ data class DeviceRuntimeState(
     val security: DeviceRuntimeValue<DeviceRuntimeSecurityStatus> = DeviceRuntimeValue(),
     val network: DeviceRuntimeValue<DeviceRuntimeNetworkStatus> = DeviceRuntimeValue(),
     val time: DeviceRuntimeValue<DeviceTimeStatus> = DeviceRuntimeValue(),
-    val firmware: DeviceRuntimeValue<DeviceFirmwareStatus> = DeviceRuntimeValue(),
+    val firmware: DeviceRuntimeValue<DeviceRuntimeFirmwareStatus> = DeviceRuntimeValue(),
     val ota: DeviceRuntimeValue<DeviceFirmwareOtaSnapshot> = DeviceRuntimeValue(),
     val light: DeviceRuntimeValue<DeviceLightStatus> = DeviceRuntimeValue(),
     val lightTemperatureProtection:
