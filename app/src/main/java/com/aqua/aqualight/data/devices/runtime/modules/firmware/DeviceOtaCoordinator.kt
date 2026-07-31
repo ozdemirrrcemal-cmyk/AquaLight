@@ -1,11 +1,13 @@
 package com.aqua.aqualight.data.devices.runtime.modules.firmware
 
 import com.aqua.aqualight.application.devices.DeviceFirmwareCommandResult as AppCommandResult
+import com.aqua.aqualight.application.devices.DeviceFirmwareReleaseContent
 import com.aqua.aqualight.application.devices.DeviceOtaProgressPhase
 import com.aqua.aqualight.application.devices.DeviceOtaState
 import com.aqua.aqualight.application.devices.PreparedDeviceFirmwareUpdate
 import com.aqua.aqualight.data.devices.model.DeviceSnapshot
 import com.aqua.aqualight.data.devices.model.DeviceUid
+import com.aqua.aqualight.data.devices.runtime.core.DeviceRuntimeCommandOutcome
 import com.aqua.aqualight.data.devices.runtime.ws.AqlWsEvent
 import com.aqua.aqualight.data.devices.runtime.ws.AqlWsIncomingMessage
 import java.io.Closeable
@@ -19,7 +21,10 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
 
 /** One shared OTA state machine used by every family-specific Settings update screen. */
 @Suppress(
@@ -37,29 +42,21 @@ internal class DeviceOtaCoordinator(
     dispatcher: CoroutineDispatcher = Dispatchers.Default
 ) : Closeable {
 
-    private enum class PendingKind { START, STATUS, CLEAR }
-
     private data class SelectedPlan(
         val dataPlan: DeviceFirmwareUpdatePlan,
         val applicationPlan: PreparedDeviceFirmwareUpdate
     )
 
-    private data class PendingRequest(
-        val deviceUid: DeviceUid,
-        val kind: PendingKind,
-        val selectedPlan: SelectedPlan?
-    )
-
     private val scope = CoroutineScope(SupervisorJob() + dispatcher)
     private val states = ConcurrentHashMap<DeviceUid, MutableStateFlow<DeviceOtaState>>()
     private val selectedPlans = ConcurrentHashMap<DeviceUid, SelectedPlan>()
-    private val pendingRequests = ConcurrentHashMap<String, PendingRequest>()
-    private val startLocks = ConcurrentHashMap<DeviceUid, Any>()
+    private val startLocks = ConcurrentHashMap<DeviceUid, Mutex>()
+    private val versionVerificationLocks = ConcurrentHashMap<DeviceUid, Mutex>()
 
     init {
         if (runtimeEvents != null) {
             scope.launch {
-                runtimeEvents.collect(::processEvent)
+                runtimeEvents.collect { event -> processEvent(event) }
             }
         }
     }
@@ -133,16 +130,16 @@ internal class DeviceOtaCoordinator(
         }
     }
 
-    fun startUpdate(plan: PreparedDeviceFirmwareUpdate): AppCommandResult {
+    suspend fun startUpdate(plan: PreparedDeviceFirmwareUpdate): AppCommandResult {
         val deviceUid = runCatching { DeviceUid(plan.deviceUid) }.getOrElse { error ->
             return AppCommandResult(false, errorMessage = error.message.orEmpty())
         }
-        return synchronized(startLock(deviceUid)) {
+        return startLock(deviceUid).withLock {
             startUpdateLocked(deviceUid, plan)
         }
     }
 
-    private fun startUpdateLocked(
+    private suspend fun startUpdateLocked(
         deviceUid: DeviceUid,
         plan: PreparedDeviceFirmwareUpdate
     ): AppCommandResult {
@@ -157,8 +154,7 @@ internal class DeviceOtaCoordinator(
                 errorMessage = "OTA plan differs from the selected exact artifact."
             )
         }
-        val currentState = stateFlow(deviceUid).value
-        if (currentState.isActiveOtaState) {
+        if (stateFlow(deviceUid).value.isActiveOtaState) {
             return AppCommandResult(
                 false,
                 errorMessage = "An OTA operation is already active for this device."
@@ -181,62 +177,76 @@ internal class DeviceOtaCoordinator(
                 false,
                 errorMessage = "Firmware update runtime is not configured."
             )
-        val command = runCatching {
+
+        val outcome = runCatching {
             connectRuntime(deviceUid).getOrThrow()
             updater.startUpdate(selected.dataPlan)
         }.getOrElse { error ->
             return AppCommandResult(false, errorMessage = error.message.orEmpty())
         }
-        if (command.isSuccess && command.messageId.isNotBlank()) {
-            pendingRequests[command.messageId] = PendingRequest(
-                deviceUid = deviceUid,
-                kind = PendingKind.START,
-                selectedPlan = selected
-            )
-            stateFlow(deviceUid).value = DeviceOtaState.Starting(plan, command.messageId)
+
+        if (outcome is DeviceRuntimeCommandOutcome.Success) {
+            val echo = outcome.value.request
+            if (echo == null || !echo.matches(selected.dataPlan.payload)) {
+                fail(deviceUid, "Firmware OTA request echo differs from the selected plan.")
+                return AppCommandResult(
+                    sent = false,
+                    messageId = outcome.messageId,
+                    errorMessage = "Firmware OTA request echo differs from the selected plan."
+                )
+            }
+            stateFlow(deviceUid).value = DeviceOtaState.Starting(plan, outcome.messageId)
+            applySnapshot(deviceUid, outcome.value.ota, selected)
         }
-        return command.toApplicationResult()
+        return outcome.toApplicationResult()
     }
 
-    fun requestStatus(deviceUid: DeviceUid): AppCommandResult {
+    suspend fun requestStatus(deviceUid: DeviceUid): AppCommandResult {
         val updater = updaterProvider()
             ?: return AppCommandResult(false, errorMessage = "Firmware update runtime is not configured.")
-        val command = runCatching {
+        val outcome = runCatching {
             connectRuntime(deviceUid).getOrThrow()
             updater.requestOtaStatus(deviceUid)
         }.getOrElse { error ->
             return AppCommandResult(false, errorMessage = error.message.orEmpty())
         }
-        if (command.isSuccess && command.messageId.isNotBlank()) {
-            pendingRequests[command.messageId] = PendingRequest(
-                deviceUid = deviceUid,
-                kind = PendingKind.STATUS,
-                selectedPlan = selectedPlans[deviceUid]
-            )
+        if (outcome is DeviceRuntimeCommandOutcome.Success) {
+            val current = stateFlow(deviceUid).value
+            if (
+                outcome.value.phase == DeviceFirmwareOtaPhase.IDLE &&
+                current is DeviceOtaState.Recovering &&
+                current.targetVersion.isNotBlank()
+            ) {
+                verifyInstalledVersion(
+                    deviceUid = deviceUid,
+                    expectedVersion = current.targetVersion,
+                    releaseContent = selectedPlans[deviceUid]?.applicationPlan?.releaseContent
+                        ?: DeviceFirmwareReleaseContent.EMPTY
+                )
+            } else {
+                applySnapshot(deviceUid, outcome.value, selectedPlans[deviceUid])
+            }
         }
-        return command.toApplicationResult()
+        return outcome.toApplicationResult()
     }
 
-    fun clearStatus(deviceUid: DeviceUid): AppCommandResult {
+    suspend fun clearStatus(deviceUid: DeviceUid): AppCommandResult {
         val updater = updaterProvider()
             ?: return AppCommandResult(false, errorMessage = "Firmware update runtime is not configured.")
-        val command = runCatching {
+        val outcome = runCatching {
             connectRuntime(deviceUid).getOrThrow()
             updater.clearOtaStatus(deviceUid)
         }.getOrElse { error ->
             return AppCommandResult(false, errorMessage = error.message.orEmpty())
         }
-        if (command.isSuccess && command.messageId.isNotBlank()) {
-            pendingRequests[command.messageId] = PendingRequest(
-                deviceUid = deviceUid,
-                kind = PendingKind.CLEAR,
-                selectedPlan = selectedPlans[deviceUid]
-            )
+        if (outcome is DeviceRuntimeCommandOutcome.Success) {
+            selectedPlans.remove(deviceUid)
+            stateFlow(deviceUid).value = DeviceOtaState.Idle(deviceUid.value)
         }
-        return command.toApplicationResult()
+        return outcome.toApplicationResult()
     }
 
-    private fun processEvent(event: AqlWsEvent) {
+    private suspend fun processEvent(event: AqlWsEvent) {
         when (event) {
             is AqlWsEvent.Authenticated -> recoverAfterAuthentication(event.deviceUid)
             is AqlWsEvent.Message -> processMessage(event.deviceUid, event.parsed)
@@ -248,69 +258,9 @@ internal class DeviceOtaCoordinator(
 
     private fun processMessage(deviceUid: DeviceUid, message: AqlWsIncomingMessage) {
         if (message.module != DeviceFirmwareRuntimeContract.MODULE) return
-        when (message) {
-            is AqlWsIncomingMessage.Response -> processResponse(deviceUid, message)
-            is AqlWsIncomingMessage.Event -> processFirmwareEvent(deviceUid, message)
-            is AqlWsIncomingMessage.Error -> processError(deviceUid, message)
+        if (message is AqlWsIncomingMessage.Event) {
+            processFirmwareEvent(deviceUid, message)
         }
-    }
-
-    private fun processResponse(
-        deviceUid: DeviceUid,
-        response: AqlWsIncomingMessage.Response
-    ) {
-        val pending = pendingRequests.remove(response.id) ?: return
-        if (pending.deviceUid != deviceUid || !response.ok || response.statusCode !in 200..299) {
-            fail(deviceUid, "OTA response correlation or success status mismatch.")
-            return
-        }
-        val expectedAction = when (pending.kind) {
-            PendingKind.START -> DeviceFirmwareRuntimeContract.Action.OTA_START
-            PendingKind.STATUS -> DeviceFirmwareRuntimeContract.Action.OTA_STATUS
-            PendingKind.CLEAR -> DeviceFirmwareRuntimeContract.Action.OTA_CLEAR
-        }
-        if (response.action != expectedAction) {
-            fail(deviceUid, "OTA response action mismatch.")
-            return
-        }
-        when (pending.kind) {
-            PendingKind.START -> processStartAccepted(pending, response)
-            PendingKind.STATUS -> DeviceFirmwareStatusParser.parseOtaStatusResponseExact(response.data)
-                .fold(
-                    onSuccess = { snapshot -> applySnapshot(deviceUid, snapshot, pending.selectedPlan) },
-                    onFailure = { error -> fail(deviceUid, error.message.orEmpty()) }
-                )
-            PendingKind.CLEAR -> DeviceFirmwareStatusParser.parseOtaClearResultExact(response.data)
-                .fold(
-                    onSuccess = {
-                        selectedPlans.remove(deviceUid)
-                        stateFlow(deviceUid).value = DeviceOtaState.Idle(deviceUid.value)
-                    },
-                    onFailure = { error -> fail(deviceUid, error.message.orEmpty()) }
-                )
-        }
-    }
-
-    private fun processStartAccepted(
-        pending: PendingRequest,
-        response: AqlWsIncomingMessage.Response
-    ) {
-        val selected = pending.selectedPlan
-        if (selected == null) {
-            fail(pending.deviceUid, "OTA start response has no selected plan.")
-            return
-        }
-        DeviceFirmwareStatusParser.parseOtaStartAcceptedExact(response.data).fold(
-            onSuccess = { accepted ->
-                val echo = accepted.request
-                if (echo == null || !echo.matches(selected.dataPlan.payload)) {
-                    fail(pending.deviceUid, "Firmware OTA request echo differs from the selected plan.")
-                } else {
-                    applySnapshot(pending.deviceUid, accepted.ota, selected)
-                }
-            },
-            onFailure = { error -> fail(pending.deviceUid, error.message.orEmpty()) }
-        )
     }
 
     private fun processFirmwareEvent(
@@ -323,21 +273,10 @@ internal class DeviceOtaCoordinator(
         ) {
             return
         }
-        DeviceFirmwareStatusParser.parseOtaProgressEventExact(event.data).fold(
+        runCatching { DeviceFirmwareCommandParsers.parseOtaEvent(event.data) }.fold(
             onSuccess = { snapshot -> applySnapshot(deviceUid, snapshot, selectedPlans[deviceUid]) },
             onFailure = { error -> fail(deviceUid, error.message.orEmpty()) }
         )
-    }
-
-    private fun processError(deviceUid: DeviceUid, error: AqlWsIncomingMessage.Error) {
-        val pending = pendingRequests.remove(error.id) ?: return
-        if (pending.deviceUid == deviceUid) {
-            fail(
-                deviceUid = deviceUid,
-                message = error.message.ifBlank { "Firmware rejected the OTA command." },
-                field = error.field
-            )
-        }
     }
 
     private fun applySnapshot(
@@ -364,7 +303,7 @@ internal class DeviceOtaCoordinator(
             }
         }
         val releaseContent = selected?.applicationPlan?.releaseContent
-            ?: com.aqua.aqualight.application.devices.DeviceFirmwareReleaseContent.EMPTY
+            ?: DeviceFirmwareReleaseContent.EMPTY
         val targetVersion = snapshot.targetVersion.ifBlank { plan?.targetVersion.orEmpty() }
         stateFlow(deviceUid).value = when (snapshot.phase) {
             DeviceFirmwareOtaPhase.IDLE -> DeviceOtaState.Idle(deviceUid.value)
@@ -389,6 +328,7 @@ internal class DeviceOtaCoordinator(
                     releaseContent = releaseContent
                 )
             } else {
+                selectedPlans.remove(deviceUid)
                 DeviceOtaState.Succeeded(
                     deviceUid = deviceUid.value,
                     targetVersion = targetVersion,
@@ -409,9 +349,75 @@ internal class DeviceOtaCoordinator(
         }
     }
 
-    private fun recoverAfterAuthentication(deviceUid: DeviceUid) {
-        if (stateFlow(deviceUid).value.isActiveOtaState) {
-            requestStatus(deviceUid)
+    private suspend fun recoverAfterAuthentication(deviceUid: DeviceUid) {
+        when (val current = stateFlow(deviceUid).value) {
+            is DeviceOtaState.RestartRequired -> verifyInstalledVersion(
+                deviceUid = deviceUid,
+                expectedVersion = current.targetVersion,
+                releaseContent = current.releaseContent
+            )
+            is DeviceOtaState.Starting,
+            is DeviceOtaState.InProgress,
+            is DeviceOtaState.Recovering -> requestStatus(deviceUid)
+            else -> Unit
+        }
+    }
+
+    private suspend fun verifyInstalledVersion(
+        deviceUid: DeviceUid,
+        expectedVersion: String,
+        releaseContent: DeviceFirmwareReleaseContent
+    ) {
+        versionVerificationLock(deviceUid).withLock {
+            val current = stateFlow(deviceUid).value
+            val stillExpected = when (current) {
+                is DeviceOtaState.RestartRequired -> current.targetVersion == expectedVersion
+                is DeviceOtaState.Recovering -> current.targetVersion == expectedVersion
+                else -> false
+            }
+            if (!stillExpected) return@withLock
+
+            val updater = updaterProvider()
+            if (updater == null) {
+                fail(deviceUid, "Firmware update runtime is not configured.", recoverable = true)
+                return@withLock
+            }
+            val outcome = runCatching {
+                connectRuntime(deviceUid).getOrThrow()
+                updater.requestFirmwareStatus(deviceUid)
+            }.getOrElse { error ->
+                fail(deviceUid, error.message.orEmpty(), recoverable = true)
+                return@withLock
+            }
+            when (outcome) {
+                is DeviceRuntimeCommandOutcome.Success -> {
+                    val status = outcome.value
+                    val selected = selectedPlans[deviceUid]
+                    if (selected != null && !status.matches(selected.dataPlan)) {
+                        fail(
+                            deviceUid,
+                            "Firmware identity changed while verifying the installed OTA version."
+                        )
+                    } else if (status.version != expectedVersion) {
+                        fail(
+                            deviceUid,
+                            "Firmware rebooted with version ${status.version}; expected $expectedVersion."
+                        )
+                    } else {
+                        selectedPlans.remove(deviceUid)
+                        stateFlow(deviceUid).value = DeviceOtaState.Succeeded(
+                            deviceUid = deviceUid.value,
+                            targetVersion = expectedVersion,
+                            releaseContent = releaseContent
+                        )
+                    }
+                }
+                else -> fail(
+                    deviceUid = deviceUid,
+                    message = outcome.errorMessage(),
+                    recoverable = true
+                )
+            }
         }
     }
 
@@ -440,27 +446,33 @@ internal class DeviceOtaCoordinator(
         else -> null
     }
 
-    private fun fail(deviceUid: DeviceUid, message: String, field: String = "") {
+    private fun fail(
+        deviceUid: DeviceUid,
+        message: String,
+        field: String = "",
+        recoverable: Boolean = false
+    ) {
         stateFlow(deviceUid).value = DeviceOtaState.Failed(
             deviceUid = deviceUid.value,
             message = message.ifBlank { "OTA operation failed." },
             field = field,
-            recoverable = false
+            recoverable = recoverable
         )
     }
 
-    private fun startLock(deviceUid: DeviceUid): Any {
-        val candidate = Any()
-        return startLocks.putIfAbsent(deviceUid, candidate) ?: candidate
-    }
+    private fun startLock(deviceUid: DeviceUid): Mutex =
+        startLocks.getOrPut(deviceUid) { Mutex() }
+
+    private fun versionVerificationLock(deviceUid: DeviceUid): Mutex =
+        versionVerificationLocks.getOrPut(deviceUid) { Mutex() }
 
     private fun stateFlow(deviceUid: DeviceUid): MutableStateFlow<DeviceOtaState> =
         states.getOrPut(deviceUid) { MutableStateFlow(DeviceOtaState.Idle(deviceUid.value)) }
 
     override fun close() {
-        pendingRequests.clear()
         selectedPlans.clear()
         startLocks.clear()
+        versionVerificationLocks.clear()
         scope.cancel()
     }
 }
@@ -487,11 +499,31 @@ private fun DeviceFirmwareUpdatePlan.toApplicationPlan(): PreparedDeviceFirmware
         releaseContent = releaseContent
     )
 
-private fun DeviceFirmwareCommandResult.toApplicationResult(): AppCommandResult = AppCommandResult(
-    sent = sent,
-    messageId = messageId,
-    errorMessage = errorMessage
-)
+private fun DeviceRuntimeCommandOutcome<*>.toApplicationResult(): AppCommandResult =
+    when (this) {
+        is DeviceRuntimeCommandOutcome.Success -> AppCommandResult(
+            sent = true,
+            messageId = messageId
+        )
+        else -> AppCommandResult(
+            sent = false,
+            errorMessage = errorMessage()
+        )
+    }
+
+private fun DeviceRuntimeCommandOutcome<*>.errorMessage(): String = when (this) {
+    is DeviceRuntimeCommandOutcome.Success -> ""
+    is DeviceRuntimeCommandOutcome.NotConnected -> "Device runtime is not connected."
+    is DeviceRuntimeCommandOutcome.NotAuthenticated -> "Device runtime is not authenticated."
+    is DeviceRuntimeCommandOutcome.UnsupportedByDevice ->
+        "Firmware command is not supported by this device."
+    is DeviceRuntimeCommandOutcome.SendFailed -> "WebSocket send failed."
+    is DeviceRuntimeCommandOutcome.Timeout -> "Firmware command timed out."
+    is DeviceRuntimeCommandOutcome.FirmwareError -> message.ifBlank { code }
+    is DeviceRuntimeCommandOutcome.ProtocolError -> reason
+    is DeviceRuntimeCommandOutcome.LocalStateError -> reason
+    is DeviceRuntimeCommandOutcome.Cancelled -> reason.ifBlank { "Firmware command was cancelled." }
+}
 
 private fun DeviceFirmwareOtaStartRequestEcho.matches(
     payload: DeviceFirmwareOtaStartPayload
@@ -504,6 +536,12 @@ private fun DeviceFirmwareOtaStartRequestEcho.matches(
     productId == payload.productId &&
     model == payload.model &&
     hardwareRevision == payload.hardwareRevision
+
+private fun DeviceFirmwareStatus.matches(plan: DeviceFirmwareUpdatePlan): Boolean =
+    productKey == plan.productKey &&
+        productId == plan.productId &&
+        model == plan.model &&
+        hardwareRevision == plan.hardwareRevision
 
 private fun DeviceFirmwareOtaPhase.toApplicationPhase(): DeviceOtaProgressPhase = when (this) {
     DeviceFirmwareOtaPhase.STARTING -> DeviceOtaProgressPhase.STARTING
