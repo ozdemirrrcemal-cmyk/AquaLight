@@ -21,7 +21,7 @@ import com.aqua.aqualight.data.devices.runtime.modules.timer.DeviceTimerStatus
 
 /** Applies typed command/event values to exactly one device and connection generation. */
 @Suppress("TooManyFunctions", "CyclomaticComplexMethod", "LongMethod")
-class DeviceRuntimeStateReducer(
+internal class DeviceRuntimeStateReducer(
     private val store: DeviceRuntimeStateStore,
     private val clockMillis: () -> Long = System::currentTimeMillis,
     private val elapsedRealtimeMillis: () -> Long = { System.nanoTime() / 1_000_000L }
