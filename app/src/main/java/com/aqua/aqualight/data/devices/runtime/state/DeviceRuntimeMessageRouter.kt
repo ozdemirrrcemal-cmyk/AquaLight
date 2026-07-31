@@ -6,7 +6,7 @@ import com.aqua.aqualight.data.devices.runtime.modules.firmware.DeviceFirmwareOt
 import com.aqua.aqualight.data.devices.runtime.ws.AqlWsIncomingMessage
 import org.json.JSONObject
 
-sealed interface DeviceRuntimeEventRoute {
+internal sealed interface DeviceRuntimeEventRoute {
     data class Refresh(
         val target: DeviceRuntimeStateTarget,
         val sourceMessageId: String
@@ -21,7 +21,7 @@ sealed interface DeviceRuntimeEventRoute {
 }
 
 /** Routes only the exact active firmware event union to a typed reducer or refresh target. */
-class DeviceRuntimeMessageRouter(
+internal class DeviceRuntimeMessageRouter(
     private val reducer: DeviceRuntimeStateReducer
 ) {
     fun route(event: AqlWsIncomingMessage.Event): DeviceRuntimeEventRoute {
