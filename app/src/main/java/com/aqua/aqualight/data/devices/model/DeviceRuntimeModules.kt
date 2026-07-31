@@ -52,25 +52,36 @@ data class DeviceRuntimeModules(
     val usesInternalTimerEngine: Boolean get() = timerEngine
 }
 
-/** Complete authenticated `device.status.get` product envelope and module state. */
+/** Complete authenticated `device.status.get` product, device-name and module state. */
 data class DeviceRuntimeModuleStatus(
     val productKey: DeviceProductKey,
     val family: DeviceFamily,
     val model: DeviceProductModel,
+    /** Immutable product display name from `product.displayName`. */
     val displayName: String,
     val uptimeMs: Long,
-    val modules: DeviceRuntimeModules
+    val modules: DeviceRuntimeModules,
+    val customName: String = "",
+    val effectiveDisplayName: String = customName.ifBlank { displayName },
+    val nameEditable: Boolean = true,
+    val customNameMaxBytes: Int = DEVICE_CUSTOM_NAME_MAX_BYTES
 ) {
     init {
         require(family != DeviceFamily.UNKNOWN) {
             "Runtime module status must contain an exact commercial family."
         }
-        require(displayName.isNotEmpty()) { "Runtime module status displayName must not be empty." }
-        require(!displayName.first().isWhitespace() && !displayName.last().isWhitespace()) {
-            "Runtime module status displayName must not contain surrounding whitespace."
+        requireExactName(displayName, "displayName", allowEmpty = false)
+        requireExactName(customName, "customName", allowEmpty = true)
+        requireExactName(effectiveDisplayName, "effectiveDisplayName", allowEmpty = false)
+        require(nameEditable) { "Commercial firmware must advertise editable device names." }
+        require(customNameMaxBytes == DEVICE_CUSTOM_NAME_MAX_BYTES) {
+            "Runtime module status customNameMaxBytes is incompatible."
         }
-        require(displayName.none(Char::isISOControl)) {
-            "Runtime module status displayName must not contain control characters."
+        require(customName.toByteArray(Charsets.UTF_8).size <= customNameMaxBytes) {
+            "Runtime module status customName exceeds the UTF-8 byte limit."
+        }
+        require(effectiveDisplayName == customName.ifBlank { displayName }) {
+            "Runtime module status effectiveDisplayName violates the fallback contract."
         }
         require(uptimeMs >= 0L) { "Runtime module status uptimeMs must not be negative." }
     }
@@ -80,6 +91,18 @@ data class DeviceRuntimeModuleStatus(
         family != identity.family -> "family"
         model != identity.model -> "model"
         displayName != identity.displayName -> "displayName"
+        customName != identity.customName -> "customName"
+        effectiveDisplayName != identity.effectiveDisplayName -> "effectiveDisplayName"
+        nameEditable != identity.nameEditable -> "nameEditable"
+        customNameMaxBytes != identity.customNameMaxBytes -> "customNameMaxBytes"
         else -> null
     }
+}
+
+private fun requireExactName(value: String, field: String, allowEmpty: Boolean) {
+    require(allowEmpty || value.isNotEmpty()) { "$field must not be empty." }
+    require(value.isEmpty() || (!value.first().isWhitespace() && !value.last().isWhitespace())) {
+        "$field must not contain surrounding whitespace."
+    }
+    require(value.none(Char::isISOControl)) { "$field must not contain control characters." }
 }
