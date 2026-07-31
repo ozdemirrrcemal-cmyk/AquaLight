@@ -92,7 +92,7 @@ class DeviceRuntimeMetadataGenerationTest {
     }
 
     @Test
-    fun `status product envelope mismatch rejects generation in either arrival order`() {
+    fun `status product or device name mismatch rejects generation in either arrival order`() {
         val collecting = reducer.begin(deviceUid, null)
         val wrongStatus = moduleStatus().copy(model = DeviceProductModel("relay_pro_4"))
         val afterIdentity = reducer.accept(
@@ -110,36 +110,71 @@ class DeviceRuntimeMetadataGenerationTest {
         )
         assertEquals("model", rejected.state.failure.field)
         assertNull(rejected.state.publishedMetadata)
+
+        val next = reducer.begin(deviceUid, null)
+        val wrongName = moduleStatus().copy(
+            customName = "Other timer",
+            effectiveDisplayName = "Other timer"
+        )
+        val afterStatus = reducer.accept(
+            next,
+            DeviceRuntimeMetadataFragment.Modules(next.generation, wrongName)
+        )
+        val nameRejected = reducer.reduce(
+            afterStatus,
+            DeviceRuntimeMetadataFragment.Identity(next.generation, identityEnvelope())
+        ) as DeviceRuntimeMetadataReduction.Rejected
+        assertEquals("customName", nameRejected.state.failure.field)
     }
 
     @Test
     fun `exact parsers reject runtime mismatch unknown fields and type coercion`() {
-        assertEquals(identityEnvelope(), DeviceRuntimeIdentityParser.parse(deviceUid, identityJson()).getOrThrow())
-        assertEquals(capabilities(), DeviceRuntimeCapabilitiesParser.parse(capabilitiesJson()).getOrThrow())
+        assertEquals(
+            identityEnvelope(),
+            DeviceRuntimeIdentityParser.parse(deviceUid, identityJson()).getOrThrow()
+        )
+        assertEquals(
+            capabilities(),
+            DeviceRuntimeCapabilitiesParser.parse(capabilitiesJson()).getOrThrow()
+        )
+        assertEquals(
+            moduleStatus(),
+            DeviceRuntimeModulesParser.parseDeviceStatus(statusJson()).getOrThrow()
+        )
 
         val wrongPort = JSONObject(identityJson().toString()).apply {
             getJSONObject("runtime").put("wsPort", 81)
         }
         val wrongApi = JSONObject(identityJson().toString()).put("apiVersion", 2)
-        val unknownIdentity = JSONObject(identityJson().toString()).put("legacyModel", "relay_pro_2")
+        val wrongEffectiveName = JSONObject(identityJson().toString())
+            .put("effectiveDisplayName", "Wrong")
+        val unknownIdentity = JSONObject(identityJson().toString())
+            .put("legacyModel", "relay_pro_2")
         val coercedCapability = JSONObject(capabilitiesJson().toString()).apply {
             getJSONObject("capabilities").put("dosing", "false")
         }
         val unknownFeature = JSONObject(capabilitiesJson().toString()).apply {
             getJSONArray("supportedFeatures").put("TIMER_CONTROL_V2")
         }
+        val coercedStatus = JSONObject(statusJson().toString()).apply {
+            getJSONObject("device").put("editable", "true")
+        }
+        val unknownStatus = JSONObject(statusJson().toString()).put("legacy", true)
 
         assertTrue(DeviceRuntimeIdentityParser.parse(deviceUid, wrongPort).isFailure)
         assertTrue(DeviceRuntimeIdentityParser.parse(deviceUid, wrongApi).isFailure)
+        assertTrue(DeviceRuntimeIdentityParser.parse(deviceUid, wrongEffectiveName).isFailure)
         assertTrue(DeviceRuntimeIdentityParser.parse(deviceUid, unknownIdentity).isFailure)
         assertTrue(DeviceRuntimeCapabilitiesParser.parse(coercedCapability).isFailure)
         assertTrue(DeviceRuntimeCapabilitiesParser.parse(unknownFeature).isFailure)
+        assertTrue(DeviceRuntimeModulesParser.parseDeviceStatus(coercedStatus).isFailure)
+        assertTrue(DeviceRuntimeModulesParser.parseDeviceStatus(unknownStatus).isFailure)
     }
 
     @Test
-    fun `ready projection is atomic preserves owner fields and publishes generation`() {
+    fun `ready projection atomically replaces stale local name with authenticated firmware name`() {
         val provisional = DeviceSnapshot(
-            identity = DeviceIdentity(uid = deviceUid, customName = "My timer"),
+            identity = DeviceIdentity(uid = deviceUid, customName = "Stale local name"),
             product = DeviceProduct(),
             endpoint = DeviceRuntimeEndpoint(ip = "192.168.1.20")
         )
@@ -147,6 +182,8 @@ class DeviceRuntimeMetadataGenerationTest {
         val projected = DeviceRuntimeMetadataProjector.applyReady(provisional, ready)
 
         assertEquals("My timer", projected.identity.customName)
+        assertEquals("Relay Pro 2", projected.identity.displayName)
+        assertEquals("My timer", projected.identity.effectiveDisplayName)
         assertEquals("192.168.1.20", projected.endpoint.ip)
         assertEquals("TIMER_RELAY_PRO_2", projected.product.productKey)
         assertEquals(2, projected.limits.timerChannelCount)
@@ -199,6 +236,10 @@ class DeviceRuntimeMetadataGenerationTest {
         model = DeviceProductModel("relay_pro_2"),
         brand = "AquaLight",
         displayName = "Relay Pro 2",
+        customName = "My timer",
+        effectiveDisplayName = "My timer",
+        nameEditable = true,
+        customNameMaxBytes = 64,
         skuId = DeviceSkuId("com.aqualight.timer.relay_pro_2.global.black"),
         skuCode = DeviceSkuCode("AQL-T-RP2-GLB-BLK"),
         hardwareRevision = DeviceHardwareRevision("2.0"),
@@ -276,7 +317,11 @@ class DeviceRuntimeMetadataGenerationTest {
         model = identity().model,
         displayName = identity().displayName,
         uptimeMs = 123_456L,
-        modules = modules()
+        modules = modules(),
+        customName = identity().customName,
+        effectiveDisplayName = identity().effectiveDisplayName,
+        nameEditable = true,
+        customNameMaxBytes = 64
     )
 
     private fun identityJson(): JSONObject = JSONObject()
@@ -293,6 +338,10 @@ class DeviceRuntimeMetadataGenerationTest {
         .put("line", "relay_pro")
         .put("model", "relay_pro_2")
         .put("displayName", "Relay Pro 2")
+        .put("customName", "My timer")
+        .put("effectiveDisplayName", "My timer")
+        .put("nameEditable", true)
+        .put("customNameMaxBytes", 64)
         .put("skuId", "com.aqualight.timer.relay_pro_2.global.black")
         .put("skuCode", "AQL-T-RP2-GLB-BLK")
         .put("firmwareVersion", "6.0.0")
@@ -307,6 +356,50 @@ class DeviceRuntimeMetadataGenerationTest {
                 .put("wsPath", "/aql/v1/ws")
                 .put("wsPort", 80)
                 .put("wsProtocolVersion", 1)
+        )
+
+    private fun statusJson(): JSONObject = JSONObject()
+        .put("state", "booted")
+        .put("authenticated", true)
+        .put("uptimeMs", 123_456L)
+        .put(
+            "device",
+            JSONObject()
+                .put("productDisplayName", "Relay Pro 2")
+                .put("customName", "My timer")
+                .put("effectiveDisplayName", "My timer")
+                .put("editable", true)
+                .put("maxBytes", 64)
+        )
+        .put(
+            "product",
+            JSONObject()
+                .put("productKey", "TIMER_RELAY_PRO_2")
+                .put("family", "timer")
+                .put("model", "relay_pro_2")
+                .put("displayName", "Relay Pro 2")
+        )
+        .put(
+            "runtime",
+            JSONObject()
+                .put("transport", "websocket")
+                .put("wsSchema", "aql.ws.v1")
+                .put("wsPath", "/aql/v1/ws")
+                .put("wsPort", 80)
+        )
+        .put(
+            "modules",
+            JSONObject()
+                .put("light", false)
+                .put("cooling", false)
+                .put("temperature", false)
+                .put("timerApi", true)
+                .put("timerEngine", true)
+                .put("dosing", false)
+                .put("network", true)
+                .put("discovery", true)
+                .put("firmware", true)
+                .put("system", true)
         )
 
     private fun capabilitiesJson(): JSONObject = JSONObject()
