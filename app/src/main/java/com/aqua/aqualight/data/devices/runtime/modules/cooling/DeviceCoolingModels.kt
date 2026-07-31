@@ -11,6 +11,10 @@ enum class DeviceCoolingMode(
     OFF("Off");
 
     companion object {
+        private val exactValues = entries.associateBy(DeviceCoolingMode::wireValue)
+
+        fun fromWireExact(value: String): DeviceCoolingMode? = exactValues[value]
+
         fun fromWire(value: String): DeviceCoolingMode {
             return when (value.trim().lowercase()) {
                 "auto", "schedule", "program" -> AUTO
@@ -30,7 +34,8 @@ data class DeviceCoolingRuntimeCapabilities(
     val hardwareEditable: Boolean,
     val fanMappingEditable: Boolean,
     val sensorMappingEditable: Boolean,
-    val event: String
+    val event: String,
+    val supportsFanDisplayName: Boolean = false
 )
 
 data class DeviceCoolingFanEditable(
