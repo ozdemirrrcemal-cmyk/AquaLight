@@ -73,6 +73,16 @@ sealed interface DeviceRuntimeCommandOutcome<out T> {
         val reason: String
     ) : DeviceRuntimeCommandOutcome<Nothing>
 
+    /** Firmware succeeded, but Android could not durably apply the required local side effect. */
+    data class LocalStateError(
+        override val deviceUid: DeviceUid,
+        override val module: String,
+        override val action: String,
+        val messageId: String,
+        val generation: DeviceRuntimeConnectionGeneration,
+        val reason: String
+    ) : DeviceRuntimeCommandOutcome<Nothing>
+
     data class Cancelled(
         override val deviceUid: DeviceUid,
         override val module: String,
