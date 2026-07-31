@@ -202,6 +202,7 @@ internal class DeviceRuntimeCommandExecutor(
                 module = key.module,
                 action = key.action,
                 messageId = key.messageId,
+                generation = key.generation,
                 statusCode = response.statusCode,
                 value = pending.parseSuccess(response)
             )
