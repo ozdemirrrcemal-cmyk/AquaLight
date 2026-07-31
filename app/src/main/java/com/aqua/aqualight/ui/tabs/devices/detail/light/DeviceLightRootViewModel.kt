@@ -256,3 +256,21 @@ class DeviceLightRootViewModel(
             "https://github.com/ozdemirrrcemal-cmyk/AquaLight-OTA-Releases/releases/download/v1.0.1/manifest-beta.json"
     }
 }
+
+data class DeviceLightRootUiState(
+    val title: String = "",
+    val deviceUid: String = "",
+    @StringRes val connectionStatusRes: Int = R.string.device_offline,
+    val ipText: String = "",
+    val firmwareText: String = "",
+    val modelText: String = "",
+    val channelCountText: String = "",
+    val featuresText: AquaUiText = AquaUiText.Resource(R.string.device_unknown),
+    val manualMenuText: AquaUiText = AquaUiText.Resource(
+        R.string.device_menu_light_manual_unavailable
+    ),
+    val programsMenuText: AquaUiText = AquaUiText.Resource(
+        R.string.device_menu_light_programs_unavailable
+    ),
+    val otaTestText: AquaUiText = AquaUiText.Resource(R.string.device_ota_test_locked_message)
+)
