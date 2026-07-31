@@ -1,21 +1,6 @@
 package com.aqua.aqualight.data.devices.runtime.modules.time
 
-/**
- * Firmware verified Android mirror.
- *
- * Firmware:
- * AquaLight-Firmware / feature/ble-qr-wifi-provisioning
- *
- * module: time
- * actions:
- * - status.get
- * - config.apply
- * - phone.sync
- * - ntp.sync
- * - rtc.set
- */
 object DeviceTimeRuntimeContract {
-
     const val MODULE = "time"
 
     object Action {
@@ -26,12 +11,15 @@ object DeviceTimeRuntimeContract {
         const val RTC_SET = "rtc.set"
     }
 
+    object Event {
+        const val STATUS_CHANGED = "status.changed"
+    }
+
     object Field {
         const val EPOCH_MILLIS = "epochMillis"
         const val TIMEZONE_ID = "timezoneId"
         const val POSIX_TIME_ZONE = "posixTimeZone"
         const val UTC_OFFSET_MINUTES = "utcOffsetMinutes"
-        const val TIME_ZONE = "timeZone"
         const val NTP_ENABLED = "ntpEnabled"
         const val GADGET_SYNC_ENABLED = "gadgetSyncEnabled"
         const val NTP_SERVER_PRIMARY = "ntpServerPrimary"
@@ -50,5 +38,13 @@ object DeviceTimeRuntimeContract {
     object Default {
         const val PRIMARY_NTP_SERVER = "pool.ntp.org"
         const val SECONDARY_NTP_SERVER = "time.nist.gov"
+    }
+
+    object Limit {
+        const val MIN_UTC_OFFSET_MINUTES = -14 * 60
+        const val MAX_UTC_OFFSET_MINUTES = 14 * 60
+        const val MIN_EPOCH_MILLIS = 946_684_800_000L
+        const val MIN_MANUAL_YEAR = 1970
+        const val MAX_MANUAL_YEAR = 2225
     }
 }
