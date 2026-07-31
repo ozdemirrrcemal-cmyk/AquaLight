@@ -26,6 +26,7 @@ import com.aqua.aqualight.data.devices.runtime.state.DeviceRuntimeState
 import com.aqua.aqualight.data.devices.runtime.state.DeviceRuntimeStateReducer
 import com.aqua.aqualight.data.devices.runtime.state.DeviceRuntimeStateStore
 import com.aqua.aqualight.data.devices.runtime.state.DeviceRuntimeStateTarget
+import com.aqua.aqualight.data.devices.runtime.state.DeviceRuntimeSupport
 import com.aqua.aqualight.data.devices.runtime.ws.AqlPrivateLanEndpoint
 import com.aqua.aqualight.data.devices.runtime.ws.AqlWsClient
 import com.aqua.aqualight.data.devices.runtime.ws.AqlWsCommandClient
@@ -143,7 +144,7 @@ class DeviceRuntimeRepository(
 
     internal val metadataBootstrapCoordinator = DeviceRuntimeMetadataBootstrapCoordinator()
 
-    val runtimeStateStore = DeviceRuntimeStateStore()
+    private val runtimeStateStore = DeviceRuntimeStateStore()
     val runtimeStates: StateFlow<Map<DeviceUid, DeviceRuntimeState>> = runtimeStateStore.states
 
     private val runtimeStateReducer = DeviceRuntimeStateReducer(runtimeStateStore)
@@ -297,10 +298,14 @@ class DeviceRuntimeRepository(
         command: DeviceRuntimeCommand<T>,
         timeoutMillis: Long
     ): DeviceRuntimeCommandOutcome<T> {
-        currentConnectionGeneration(deviceUid)?.let { generation ->
+        val session = currentCommandSession(deviceUid)
+        if (
+            session?.authenticated == true &&
+            supportsCommand(deviceUid, command.module, command.action)
+        ) {
             runtimeStateReducer.commandStarted(
                 deviceUid = deviceUid,
-                generation = generation,
+                generation = session.generation,
                 module = command.module,
                 action = command.action
             )
@@ -540,7 +545,10 @@ class DeviceRuntimeRepository(
         return when (val validation = AqlCommercialDeviceCatalog.validate(state.metadata)) {
             is AqlCommercialCatalogValidation.Valid -> {
                 val generation = currentConnectionGeneration(state.deviceUid)
-                if (generation != null && runtimeStateReducer.publishMetadata(
+                val support = DeviceRuntimeSupport.from(state.metadata)
+                if (
+                    generation != null &&
+                    runtimeStateReducer.publishMetadata(
                         deviceUid = state.deviceUid,
                         generation = generation,
                         metadata = state.metadata,
@@ -550,7 +558,7 @@ class DeviceRuntimeRepository(
                     runtimeRefreshCoordinator.refreshBootstrap(
                         deviceUid = state.deviceUid,
                         generation = generation,
-                        support = DeviceRuntimeStateTargetSupport.from(state.metadata)
+                        support = support
                     )
                 }
                 timeSyncCoordinator.syncPhoneNowIfNeeded(state.deviceUid)
@@ -735,7 +743,8 @@ class DeviceRuntimeRepository(
             AqlWsContract.MODULE_LIGHT -> {
                 val metadata = ready?.metadata ?: return false
                 val supportsLight = metadata.modules.light
-                if (action == AqlWsContract.ACTION_LIGHT_TEMPERATURE_PROTECTION_STATUS_GET ||
+                if (
+                    action == AqlWsContract.ACTION_LIGHT_TEMPERATURE_PROTECTION_STATUS_GET ||
                     action == AqlWsContract.ACTION_LIGHT_TEMPERATURE_PROTECTION_SET
                 ) {
                     supportsLight &&
@@ -852,7 +861,6 @@ class DeviceRuntimeRepository(
                 )
                 session.wsClient.disconnect(reason = RUNTIME_EVENT_PROTOCOL_FAULT_REASON)
             }
-            DeviceRuntimeEventRoute.Ignored -> Unit
         }
     }
 
@@ -916,11 +924,6 @@ class DeviceRuntimeRepository(
                 tokenProvider = DeviceCredentialStore(context = context, ownerUid = ownerUid)
             )
     }
-}
-
-private object DeviceRuntimeStateTargetSupport {
-    fun from(metadata: com.aqua.aqualight.data.devices.model.DeviceRuntimeMetadata) =
-        com.aqua.aqualight.data.devices.runtime.state.DeviceRuntimeSupport.from(metadata)
 }
 
 private fun AqlWsConnectionState.isTerminalForPendingCommands(): Boolean = when (this) {
