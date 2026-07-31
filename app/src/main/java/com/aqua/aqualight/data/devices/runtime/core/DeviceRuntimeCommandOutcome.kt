@@ -12,6 +12,7 @@ sealed interface DeviceRuntimeCommandOutcome<out T> {
         override val module: String,
         override val action: String,
         val messageId: String,
+        val generation: DeviceRuntimeConnectionGeneration,
         val statusCode: Int,
         val value: T
     ) : DeviceRuntimeCommandOutcome<T>
