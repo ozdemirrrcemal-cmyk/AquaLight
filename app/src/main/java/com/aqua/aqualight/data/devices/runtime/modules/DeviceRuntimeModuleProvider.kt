@@ -13,11 +13,8 @@ import com.aqua.aqualight.data.devices.runtime.modules.network.DeviceNetworkRunt
 import com.aqua.aqualight.data.devices.runtime.modules.security.DeviceSecurityRuntimeRepository
 import com.aqua.aqualight.data.devices.runtime.modules.time.DeviceTimeRuntimeRepository
 import com.aqua.aqualight.data.devices.runtime.modules.timer.DeviceTimerRuntimeRepository
-import com.aqua.aqualight.data.devices.runtime.ws.AqlWsCommandClient
 
 class DeviceRuntimeModuleProvider(
-    @Suppress("UNUSED_PARAMETER")
-    commandClientProvider: (DeviceUid) -> AqlWsCommandClient?,
     commandGateway: DeviceRuntimeCommandGateway,
     onOwnershipCredentialInvalidated:
         suspend (DeviceUid, DeviceRuntimeConnectionGeneration) -> Unit
