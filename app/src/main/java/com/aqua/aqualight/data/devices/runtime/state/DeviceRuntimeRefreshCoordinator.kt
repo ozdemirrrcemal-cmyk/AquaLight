@@ -10,7 +10,7 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
 /** Device/generation/target-scoped refresh deduplication owned by the runtime repository. */
-class DeviceRuntimeRefreshCoordinator(
+internal class DeviceRuntimeRefreshCoordinator(
     private val scopeProvider: (DeviceUid) -> CoroutineScope?,
     private val generationProvider: (DeviceUid) -> DeviceRuntimeConnectionGeneration?,
     private val stateProvider: (DeviceUid) -> DeviceRuntimeState?,
