@@ -1,7 +1,7 @@
 package com.aqua.aqualight.ui.tabs.devices.detail
 
 import com.aqua.aqualight.R
-import com.aqua.aqualight.application.devices.DeviceFirmwareCommandResult
+import com.aqua.aqualight.application.devices.DeviceFirmwareOperationResult
 import com.aqua.aqualight.application.devices.DeviceFirmwareUpdateOperations
 import com.aqua.aqualight.application.devices.DeviceRootCapability
 import com.aqua.aqualight.application.devices.DeviceRootCatalogState
@@ -174,19 +174,28 @@ class DeviceRootViewModelBoundaryTest {
 
         override suspend fun startUpdate(
             plan: PreparedDeviceFirmwareUpdate
-        ): DeviceFirmwareCommandResult {
+        ): DeviceFirmwareOperationResult {
             startCalls += 1
-            return DeviceFirmwareCommandResult(sent = true, messageId = "start-message")
+            return DeviceFirmwareOperationResult(
+                successful = true,
+                correlationId = "start-message"
+            )
         }
 
-        override suspend fun requestStatus(deviceUid: String): DeviceFirmwareCommandResult {
+        override suspend fun requestStatus(deviceUid: String): DeviceFirmwareOperationResult {
             statusDeviceUid = deviceUid
-            return DeviceFirmwareCommandResult(sent = true, messageId = "status-message")
+            return DeviceFirmwareOperationResult(
+                successful = true,
+                correlationId = "status-message"
+            )
         }
 
-        override suspend fun clearStatus(deviceUid: String): DeviceFirmwareCommandResult {
+        override suspend fun clearStatus(deviceUid: String): DeviceFirmwareOperationResult {
             clearDeviceUid = deviceUid
-            return DeviceFirmwareCommandResult(sent = true, messageId = "clear-message")
+            return DeviceFirmwareOperationResult(
+                successful = true,
+                correlationId = "clear-message"
+            )
         }
 
         private fun preparedPlan() = PreparedDeviceFirmwareUpdate(
