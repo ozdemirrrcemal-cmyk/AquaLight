@@ -64,7 +64,7 @@ data class DeviceLightChannelStatus(
     val invert: Boolean,
     val pwmResolutionBits: Int,
     val pwmFrequencyHz: Int,
-    val color: Int,
+    val color: Long,
     val lumen: Double,
     val lux: Double,
     val watt: Double,
