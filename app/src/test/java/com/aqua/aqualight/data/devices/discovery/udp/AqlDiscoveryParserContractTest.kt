@@ -112,6 +112,17 @@ class AqlDiscoveryParserContractTest {
         )
     }
 
+    @Test
+    fun `network mode must match the firmware exact enum`() {
+        val parsed = AqlDiscoveryParser.parseDeviceAnnounce(
+            rawPayload = validV1Payload(10L)
+                .replace("\"mode\":\"sta\"", "\"mode\":\"station\""),
+            sourceIp = "192.168.1.44"
+        )
+
+        assertInvalid(parsed, AqlDiscoveryParser.ParseError.UNSUPPORTED_NETWORK_MODE)
+    }
+
     private fun assertInvalid(
         result: AqlDiscoveryParser.ParseResult,
         expected: AqlDiscoveryParser.ParseError
