@@ -4,6 +4,7 @@ import com.aqua.aqualight.data.devices.model.DeviceUid
 import com.aqua.aqualight.data.devices.runtime.core.DeviceRuntimeConnectionGeneration
 import java.util.concurrent.ConcurrentHashMap
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.CoroutineStart
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
@@ -74,7 +75,7 @@ class DeviceRuntimeRefreshCoordinator(
         val scope = scopeProvider(deviceUid) ?: return false
         val key = RefreshKey(deviceUid, generation, target)
 
-        val candidate = scope.launch {
+        val candidate = scope.launch(start = CoroutineStart.LAZY) {
             if (delayMillis > 0L) delay(delayMillis)
             if (generationProvider(deviceUid) != generation) return@launch
             if (!stateProvider(deviceUid).supports(target)) return@launch
@@ -86,6 +87,7 @@ class DeviceRuntimeRefreshCoordinator(
             return false
         }
         candidate.invokeOnCompletion { jobs.remove(key, candidate) }
+        candidate.start()
         return true
     }
 
