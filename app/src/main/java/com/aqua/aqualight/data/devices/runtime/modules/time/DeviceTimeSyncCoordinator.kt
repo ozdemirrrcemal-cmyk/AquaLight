@@ -3,9 +3,12 @@ package com.aqua.aqualight.data.devices.runtime.modules.time
 import com.aqua.aqualight.data.devices.model.DeviceUid
 import com.aqua.aqualight.data.devices.runtime.core.DeviceRuntimeCommandOutcome
 import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.CoroutineStart
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
+import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.launch
 
 enum class DeviceTimeSyncScheduleResult {
@@ -20,10 +23,10 @@ class DeviceTimeSyncCoordinator internal constructor(
         suspend (DeviceUid) -> DeviceRuntimeCommandOutcome<DeviceTimeSyncResult>
 ) {
     constructor(
-        scope: CoroutineScope,
-        repository: DeviceTimeRuntimeRepository
+        repository: DeviceTimeRuntimeRepository,
+        dispatcher: CoroutineDispatcher = Dispatchers.IO
     ) : this(
-        scope = scope,
+        scope = CoroutineScope(SupervisorJob() + dispatcher),
         syncPhoneNow = { deviceUid ->
             repository.syncPhoneNow(deviceUid = deviceUid, save = false)
         }
@@ -82,6 +85,7 @@ class DeviceTimeSyncCoordinator internal constructor(
         val key = deviceUid.value
         val job = synchronized(lock) {
             val current = sessionEpochs[key] ?: FIRST_SESSION_EPOCH
+            check(current < Long.MAX_VALUE) { "Time sync session epoch exhausted." }
             sessionEpochs[key] = current + 1L
             syncedEpochs.remove(key)
             jobs.remove(key)
