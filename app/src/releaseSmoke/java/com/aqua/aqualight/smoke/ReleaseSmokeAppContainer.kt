@@ -25,7 +25,6 @@ import com.aqua.aqualight.data.care.CareTaskDataStoreManager
 import com.aqua.aqualight.data.care.DefaultMaintenanceOperations
 import com.aqua.aqualight.data.care.integrity.restoreTaskSnapshotsForIntegrity
 import com.aqua.aqualight.data.care.integrity.snapshotTasksForIntegrity
-import com.aqua.aqualight.data.devices.DefaultDeviceFirmwareUpdateOperations
 import com.aqua.aqualight.data.devices.DefaultDeviceRootOperations
 import com.aqua.aqualight.data.devices.DefaultDeviceStatusOperations
 import com.aqua.aqualight.data.devices.DefaultOwnerDevicesOperations
@@ -211,9 +210,7 @@ private class ReleaseSmokeViewModelFactory(
 
             modelClass.isAssignableFrom(DeviceLightRootViewModel::class.java) ->
                 DeviceLightRootViewModel(
-                    rootOperations = DefaultDeviceRootOperations(devicesRepository),
-                    firmwareUpdateOperations =
-                        DefaultDeviceFirmwareUpdateOperations(devicesRepository)
+                    rootOperations = DefaultDeviceRootOperations(devicesRepository)
                 )
 
             modelClass.isAssignableFrom(DeviceCoolingRootViewModel::class.java) ->
