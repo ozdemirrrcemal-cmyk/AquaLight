@@ -12,7 +12,7 @@ import com.aqua.aqualight.data.devices.monitor.DeviceElapsedRealtimeClock
 import com.aqua.aqualight.data.devices.monitor.DevicePresenceRuntimeMonitor
 import com.aqua.aqualight.data.devices.monitor.DeviceStatusAggregator
 import com.aqua.aqualight.data.devices.runtime.modules.DeviceRuntimeModuleProvider
-import com.aqua.aqualight.data.devices.runtime.ws.AqlWsCommandClient
+import com.aqua.aqualight.data.devices.runtime.state.DeviceRuntimeState
 import com.aqua.aqualight.data.devices.runtime.ws.AqlWsConnectionState
 import com.aqua.aqualight.data.devices.runtime.ws.AqlWsEvent
 import com.aqua.aqualight.data.devices.runtime.ws.AqlWsIncomingMessage
@@ -28,6 +28,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.launch
 
 @Suppress("TooManyFunctions")
@@ -67,6 +68,12 @@ class DevicesRepository(
         registryStore.currentDevice(deviceUid)
 
     fun currentDevices(): List<DeviceSnapshot> = registryStore.currentDevices()
+
+    fun observeRuntimeState(deviceUid: DeviceUid): Flow<DeviceRuntimeState?> =
+        runtimeRepository?.observeRuntimeState(deviceUid) ?: flowOf(null)
+
+    fun currentRuntimeState(deviceUid: DeviceUid): DeviceRuntimeState? =
+        runtimeRepository?.currentRuntimeState(deviceUid)
 
     fun start(scope: CoroutineScope): Job {
         val activeJob = startJob
@@ -184,11 +191,6 @@ class DevicesRepository(
         invalidateRuntimeMetadata(deviceUid)
         runtime.reconnectAfterNetworkRestore(snapshot).getOrThrow()
     }
-
-    fun commandClient(): AqlWsCommandClient? = runtimeRepository?.commandClient()
-
-    fun commandClient(deviceUid: DeviceUid): AqlWsCommandClient? =
-        runtimeRepository?.commandClient(deviceUid)
 
     fun runtimeModules(): DeviceRuntimeModuleProvider? = runtimeRepository?.runtimeModules
 
