@@ -116,16 +116,105 @@ data class DeviceRuntimeState(
     val protocolFault: DeviceRuntimeProtocolFault? = null
 )
 
-enum class DeviceRuntimeStateTarget {
-    METADATA,
-    SECURITY,
-    NETWORK,
-    TIME,
-    LIGHT,
-    LIGHT_TEMPERATURE_PROTECTION,
-    TIMER,
-    DOSING,
-    COOLING,
-    FIRMWARE,
-    OTA
+/**
+ * A type-safe pointer to one runtime value inside [DeviceRuntimeState].
+ *
+ * Each target owns its exact getter and setter, so reducer operations never use `Any`, unchecked
+ * casts, reflection or string field names.
+ */
+sealed class DeviceRuntimeStateTarget<T>(
+    private val supportPredicate: (DeviceRuntimeState) -> Boolean,
+    private val read: (DeviceRuntimeState) -> DeviceRuntimeValue<T>,
+    private val write: (DeviceRuntimeState, DeviceRuntimeValue<T>) -> DeviceRuntimeState
+) {
+    fun isSupported(state: DeviceRuntimeState): Boolean = supportPredicate(state)
+
+    fun markLoading(state: DeviceRuntimeState): DeviceRuntimeState = write(
+        state,
+        read(state).copy(
+            phase = DeviceRuntimeFreshness.LOADING,
+            fault = null
+        )
+    )
+
+    fun markUnavailable(state: DeviceRuntimeState): DeviceRuntimeState =
+        write(state, DeviceRuntimeValue.unavailable())
+
+    fun markError(
+        state: DeviceRuntimeState,
+        fault: DeviceRuntimeModuleFault
+    ): DeviceRuntimeState = write(
+        state,
+        read(state).copy(
+            phase = DeviceRuntimeFreshness.ERROR,
+            fault = fault
+        )
+    )
+
+    data object Metadata : DeviceRuntimeStateTarget<DeviceRuntimeMetadata>(
+        supportPredicate = { state -> state.authenticated },
+        read = { state -> state.metadata },
+        write = { state, value -> state.copy(metadata = value) }
+    )
+
+    data object Security : DeviceRuntimeStateTarget<DeviceSecurityStatusResponse>(
+        supportPredicate = { state -> state.support.security },
+        read = { state -> state.security },
+        write = { state, value -> state.copy(security = value) }
+    )
+
+    data object Network : DeviceRuntimeStateTarget<DeviceNetworkStatus>(
+        supportPredicate = { state -> state.support.network },
+        read = { state -> state.network },
+        write = { state, value -> state.copy(network = value) }
+    )
+
+    data object Time : DeviceRuntimeStateTarget<DeviceTimeStatus>(
+        supportPredicate = { state -> state.support.time },
+        read = { state -> state.time },
+        write = { state, value -> state.copy(time = value) }
+    )
+
+    data object Light : DeviceRuntimeStateTarget<DeviceLightStatus>(
+        supportPredicate = { state -> state.support.light },
+        read = { state -> state.light },
+        write = { state, value -> state.copy(light = value) }
+    )
+
+    data object LightTemperatureProtection :
+        DeviceRuntimeStateTarget<DeviceLightTemperatureProtectionStatus>(
+            supportPredicate = { state -> state.support.lightTemperatureProtection },
+            read = { state -> state.lightTemperatureProtection },
+            write = { state, value -> state.copy(lightTemperatureProtection = value) }
+        )
+
+    data object Timer : DeviceRuntimeStateTarget<DeviceTimerStatus>(
+        supportPredicate = { state -> state.support.timer },
+        read = { state -> state.timer },
+        write = { state, value -> state.copy(timer = value) }
+    )
+
+    data object Dosing : DeviceRuntimeStateTarget<DeviceDosingStatus>(
+        supportPredicate = { state -> state.support.dosing },
+        read = { state -> state.dosing },
+        write = { state, value -> state.copy(dosing = value) }
+    )
+
+    data object Cooling : DeviceRuntimeStateTarget<DeviceCoolingStatus>(
+        supportPredicate = { state -> state.support.cooling },
+        read = { state -> state.cooling },
+        write = { state, value -> state.copy(cooling = value) }
+    )
+
+    data object Firmware : DeviceRuntimeStateTarget<DeviceFirmwareStatus>(
+        supportPredicate = { state -> state.support.firmware },
+        read = { state -> state.firmware },
+        write = { state, value -> state.copy(firmware = value) }
+    )
+
+    data object Ota : DeviceRuntimeStateTarget<DeviceFirmwareOtaSnapshot>(
+        supportPredicate = { state -> state.support.ota },
+        read = { state -> state.ota },
+        write = { state, value -> state.copy(ota = value) }
+    )
 }
