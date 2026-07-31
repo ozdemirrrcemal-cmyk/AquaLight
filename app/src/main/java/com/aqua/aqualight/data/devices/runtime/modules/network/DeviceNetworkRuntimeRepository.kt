@@ -2,8 +2,8 @@ package com.aqua.aqualight.data.devices.runtime.modules.network
 
 import com.aqua.aqualight.data.devices.contract.AqlWsContract
 import com.aqua.aqualight.data.devices.model.DeviceUid
+import com.aqua.aqualight.data.devices.runtime.core.DEVICE_RUNTIME_DEFAULT_TIMEOUT_MILLIS
 import com.aqua.aqualight.data.devices.runtime.core.DeviceRuntimeCommand
-import com.aqua.aqualight.data.devices.runtime.core.DeviceRuntimeCommandExecutor
 import com.aqua.aqualight.data.devices.runtime.core.DeviceRuntimeCommandGateway
 import com.aqua.aqualight.data.devices.runtime.core.DeviceRuntimeCommandOutcome
 import com.aqua.aqualight.data.devices.runtime.ws.AqlWsIncomingMessage
@@ -14,7 +14,7 @@ class DeviceNetworkRuntimeRepository(
 ) {
     suspend fun requestStatus(
         deviceUid: DeviceUid,
-        timeoutMillis: Long = DeviceRuntimeCommandExecutor.DEFAULT_TIMEOUT_MILLIS
+        timeoutMillis: Long = DEVICE_RUNTIME_DEFAULT_TIMEOUT_MILLIS
     ): DeviceRuntimeCommandOutcome<DeviceNetworkStatus> = commandGateway.execute(
         deviceUid = deviceUid,
         command = DeviceNetworkStatusGetCommand,
