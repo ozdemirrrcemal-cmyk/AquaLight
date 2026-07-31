@@ -7,7 +7,7 @@ object DeviceFirmwareOtaEventMapper {
     fun parse(message: AqlWsIncomingMessage?): DeviceFirmwareOtaSnapshot? {
         val event = message as? AqlWsIncomingMessage.Event
         return if (event != null && isOtaEvent(event)) {
-            DeviceFirmwareStatusParser.parseOtaProgressEvent(event.data)
+            runCatching { DeviceFirmwareCommandParsers.parseOtaEvent(event.data) }.getOrNull()
         } else {
             null
         }
