@@ -18,9 +18,9 @@ internal class DeviceRuntimeCommandExecutor(
     suspend fun <T> execute(
         deviceUid: DeviceUid,
         command: DeviceRuntimeCommand<T>,
-        timeoutMillis: Long = DEFAULT_TIMEOUT_MILLIS
+        timeoutMillis: Long = DEVICE_RUNTIME_DEFAULT_TIMEOUT_MILLIS
     ): DeviceRuntimeCommandOutcome<T> {
-        require(timeoutMillis in MIN_TIMEOUT_MILLIS..MAX_TIMEOUT_MILLIS) {
+        require(timeoutMillis in DEVICE_RUNTIME_MIN_TIMEOUT_MILLIS..DEVICE_RUNTIME_MAX_TIMEOUT_MILLIS) {
             "timeoutMillis is outside the supported runtime range."
         }
         require(AqlWsContract.isAuthenticatedCommand(command.module, command.action)) {
@@ -221,10 +221,4 @@ internal class DeviceRuntimeCommandExecutor(
     @Suppress("UNCHECKED_CAST")
     private fun <T> DeviceRuntimeCommandOutcome<Any?>.typed(): DeviceRuntimeCommandOutcome<T> =
         this as DeviceRuntimeCommandOutcome<T>
-
-    companion object {
-        const val DEFAULT_TIMEOUT_MILLIS = 8_000L
-        const val MIN_TIMEOUT_MILLIS = 1_000L
-        const val MAX_TIMEOUT_MILLIS = 30_000L
-    }
 }
