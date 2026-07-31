@@ -26,30 +26,20 @@ class DeviceRuntimeModuleProvider(
         onOwnershipCredentialInvalidated = onOwnershipCredentialInvalidated
     )
 
-    val network: DeviceNetworkRuntimeRepository =
-        DeviceNetworkRuntimeRepository(commandGateway)
-
-    val time: DeviceTimeRuntimeRepository =
-        DeviceTimeRuntimeRepository(commandGateway)
+    val network: DeviceNetworkRuntimeRepository = DeviceNetworkRuntimeRepository(commandGateway)
+    val time: DeviceTimeRuntimeRepository = DeviceTimeRuntimeRepository(commandGateway)
+    val light: DeviceLightRuntimeRepository = DeviceLightRuntimeRepository(commandGateway)
+    val lightTemperatureProtection: DeviceLightTemperatureProtectionRuntimeRepository =
+        DeviceLightTemperatureProtectionRuntimeRepository(commandGateway)
 
     val firmware: DeviceFirmwareRuntimeRepository =
         DeviceFirmwareRuntimeRepository(commandClientProvider)
-
     val firmwareUpdate: DeviceFirmwareUpdateRepository =
         DeviceFirmwareUpdateRepository(firmware)
-
     val timer: DeviceTimerRuntimeRepository =
         DeviceTimerRuntimeRepository(commandClientProvider)
-
     val cooling: DeviceCoolingRuntimeRepository =
         DeviceCoolingRuntimeRepository(commandClientProvider)
-
     val dosing: DeviceDosingRuntimeRepository =
         DeviceDosingRuntimeRepository(commandClientProvider)
-
-    val light: DeviceLightRuntimeRepository =
-        DeviceLightRuntimeRepository(commandClientProvider)
-
-    val lightTemperatureProtection: DeviceLightTemperatureProtectionRuntimeRepository =
-        DeviceLightTemperatureProtectionRuntimeRepository(commandClientProvider)
 }
