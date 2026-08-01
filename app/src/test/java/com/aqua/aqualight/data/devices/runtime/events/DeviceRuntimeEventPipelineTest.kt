@@ -25,6 +25,7 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.filterIsInstance
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.withTimeout
 import org.json.JSONObject
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
@@ -106,7 +107,9 @@ class DeviceRuntimeEventPipelineTest {
 
         transport.closeCurrent()
 
-        assertTrue(pipeline.states.value.isEmpty())
+        withTimeout(EVENT_PROPAGATION_TIMEOUT_MILLIS) {
+            pipeline.states.first { states -> states.isEmpty() }
+        }
         pipeline.shutdown()
         repository.close()
     }
@@ -188,6 +191,7 @@ class DeviceRuntimeEventPipelineTest {
     }
 
     private companion object {
+        const val EVENT_PROPAGATION_TIMEOUT_MILLIS = 1_000L
         val DEVICE_UID = DeviceUid("AQL-EVENT-PIPELINE")
     }
 }
