@@ -21,6 +21,7 @@ internal object DeviceLightChannelParser {
         label: String
     ): DeviceLightChannelStatus {
         data.requireLightKeys(keys, label)
+        val levels = parseLevels(data)
         val status = DeviceLightChannelStatus(
             index = data.requireLightInt(FIELD_INDEX, minimum = LIGHT_MIN_COUNT),
             key = data.requireLightText(FIELD_KEY),
@@ -36,40 +37,13 @@ internal object DeviceLightChannelParser {
             gpio = data.requireLightInt(FIELD_GPIO),
             ledcChannel = data.requireLightInt(FIELD_LEDC_CHANNEL),
             group = data.requireLightInt(FIELD_GROUP),
-            valueNow = data.requireLightDouble(
-                FIELD_VALUE_NOW,
-                LIGHT_NORMALIZED_MIN,
-                LIGHT_NORMALIZED_MAX
-            ),
-            valueAuto = data.requireLightDouble(
-                FIELD_VALUE_AUTO,
-                LIGHT_NORMALIZED_MIN,
-                LIGHT_NORMALIZED_MAX
-            ),
-            valueManual = data.requireLightDouble(
-                FIELD_VALUE_MANUAL,
-                LIGHT_MANUAL_INACTIVE_VALUE,
-                LIGHT_NORMALIZED_MAX
-            ),
-            manualTimeoutMs = data.requireLightLong(
-                FIELD_MANUAL_TIMEOUT_MS,
-                minimum = LIGHT_NON_NEGATIVE_LONG
-            ),
-            percentNow = data.requireLightDouble(
-                FIELD_PERCENT_NOW,
-                LIGHT_PERCENT_MIN,
-                LIGHT_PERCENT_MAX
-            ),
-            percentAuto = data.requireLightDouble(
-                FIELD_PERCENT_AUTO,
-                LIGHT_PERCENT_MIN,
-                LIGHT_PERCENT_MAX
-            ),
-            percentManual = data.requireLightDouble(
-                FIELD_PERCENT_MANUAL,
-                LIGHT_MANUAL_INACTIVE_PERCENT,
-                LIGHT_PERCENT_MAX
-            ),
+            valueNow = levels.valueNow,
+            valueAuto = levels.valueAuto,
+            valueManual = levels.valueManual,
+            manualTimeoutMs = levels.manualTimeoutMs,
+            percentNow = levels.percentNow,
+            percentAuto = levels.percentAuto,
+            percentManual = levels.percentManual,
             invert = data.requireLightBoolean(FIELD_INVERT),
             pwmResolutionBits = data.requireLightInt(
                 FIELD_PWM_RESOLUTION_BITS,
@@ -88,6 +62,9 @@ internal object DeviceLightChannelParser {
         validateChannel(status)
         return status
     }
+
+    private fun parseLevels(data: JSONObject): DeviceLightChannelLevels =
+        DeviceLightChannelLevels(data)
 
     private fun parseEditable(data: JSONObject): DeviceLightChannelEditable {
         data.requireLightKeys(EDITABLE_KEYS, "light channel editable")
@@ -108,6 +85,43 @@ internal object DeviceLightChannelParser {
                 status.percentManual,
                 status.valueManual * LIGHT_PERCENT_SCALE
             )
+        )
+    }
+
+    private class DeviceLightChannelLevels(data: JSONObject) {
+        val valueNow = data.requireLightDouble(
+            FIELD_VALUE_NOW,
+            LIGHT_NORMALIZED_MIN,
+            LIGHT_NORMALIZED_MAX
+        )
+        val valueAuto = data.requireLightDouble(
+            FIELD_VALUE_AUTO,
+            LIGHT_NORMALIZED_MIN,
+            LIGHT_NORMALIZED_MAX
+        )
+        val valueManual = data.requireLightDouble(
+            FIELD_VALUE_MANUAL,
+            LIGHT_MANUAL_INACTIVE_VALUE,
+            LIGHT_NORMALIZED_MAX
+        )
+        val manualTimeoutMs = data.requireLightLong(
+            FIELD_MANUAL_TIMEOUT_MS,
+            minimum = LIGHT_NON_NEGATIVE_LONG
+        )
+        val percentNow = data.requireLightDouble(
+            FIELD_PERCENT_NOW,
+            LIGHT_PERCENT_MIN,
+            LIGHT_PERCENT_MAX
+        )
+        val percentAuto = data.requireLightDouble(
+            FIELD_PERCENT_AUTO,
+            LIGHT_PERCENT_MIN,
+            LIGHT_PERCENT_MAX
+        )
+        val percentManual = data.requireLightDouble(
+            FIELD_PERCENT_MANUAL,
+            LIGHT_MANUAL_INACTIVE_PERCENT,
+            LIGHT_PERCENT_MAX
         )
     }
 
@@ -187,7 +201,10 @@ internal object DeviceLightProgramParser {
         label: String
     ): DeviceLightProgramStatus {
         data.requireLightKeys(expectedKeys, label)
-        val points = parsePoints(data.requireLightArray(FIELD_POINTS), pointsHaveIndexes)
+        val pointData = data.requireLightArray(FIELD_POINTS)
+        val points = List(pointData.length()) { position ->
+            parsePoint(pointData.requireLightObject(position), position, pointsHaveIndexes)
+        }
         val pointCount = data.requireLightInt(FIELD_POINT_COUNT, minimum = LIGHT_MIN_COUNT)
         require(pointCount == points.size) { "$label pointCount differs from points size." }
         return DeviceLightProgramStatus(
@@ -198,13 +215,6 @@ internal object DeviceLightProgramParser {
             pointCount = pointCount,
             points = points
         )
-    }
-
-    private fun parsePoints(
-        data: JSONArray,
-        haveIndexes: Boolean
-    ): List<DeviceLightProgramPointStatus> = List(data.length()) { position ->
-        parsePoint(data.requireLightObject(position), position, haveIndexes)
     }
 
     private fun parsePoint(
