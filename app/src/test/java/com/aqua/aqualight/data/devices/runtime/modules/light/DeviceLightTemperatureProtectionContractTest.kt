@@ -1,17 +1,12 @@
 package com.aqua.aqualight.data.devices.runtime.modules.light
 
-import com.aqua.aqualight.data.devices.model.DeviceRuntimeEndpoint
 import com.aqua.aqualight.data.devices.model.DeviceUid
-import com.aqua.aqualight.data.devices.runtime.ws.AqlWsCommandClient
-import com.aqua.aqualight.data.devices.runtime.ws.AqlWsConnectionState
-import com.aqua.aqualight.data.devices.runtime.ws.AqlWsEvent
-import com.aqua.aqualight.data.devices.runtime.ws.AqlWsOutgoingMessage
-import com.aqua.aqualight.data.devices.runtime.ws.AqlWsTransport
-import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.MutableSharedFlow
-import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.asStateFlow
+import com.aqua.aqualight.data.devices.runtime.core.DeviceRuntimeCommand
+import com.aqua.aqualight.data.devices.runtime.core.DeviceRuntimeCommandGateway
+import com.aqua.aqualight.data.devices.runtime.core.DeviceRuntimeCommandOutcome
+import com.aqua.aqualight.data.devices.runtime.core.DeviceRuntimeConnectionGeneration
+import com.aqua.aqualight.data.devices.runtime.ws.AqlWsIncomingMessage
+import kotlinx.coroutines.runBlocking
 import org.json.JSONObject
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
@@ -122,41 +117,42 @@ class DeviceLightTemperatureProtectionContractTest {
     }
 
     @Test
-    fun repositorySendsExactTemperatureProtectionActions() {
-        val transport = RecordingTransport()
-        val repository = DeviceLightTemperatureProtectionRuntimeRepository.singleSession(
-            AqlWsCommandClient(transport)
+    fun repositorySendsExactTemperatureProtectionActions() = runBlocking {
+        val gateway = ParsingGateway(
+            mutableMapOf(
+                DeviceLightRuntimeContract.Action.TEMPERATURE_PROTECTION_STATUS_GET to
+                    supportedStatus(),
+                DeviceLightRuntimeContract.Action.TEMPERATURE_PROTECTION_SET to
+                    setResult(saved = true, saveRequested = true)
+            )
         )
+        val repository = DeviceLightTemperatureProtectionRuntimeRepository(gateway)
         val deviceUid = DeviceUid("device-light-temperature")
 
-        assertTrue(repository.requestStatus(deviceUid).isSuccess)
-        assertTrue(
-            repository.setThreshold(
-                deviceUid = deviceUid,
-                payload = DeviceLightTemperatureProtectionSetPayload(
-                    thresholdC = 62.5,
-                    save = true
-                )
-            ).isSuccess
+        val status = repository.requestStatus(deviceUid)
+        val set = repository.setThreshold(
+            deviceUid = deviceUid,
+            payload = DeviceLightTemperatureProtectionSetPayload(
+                thresholdC = 62.5,
+                save = true
+            )
         )
 
-        val statusCommand = transport.messages[0] as AqlWsOutgoingMessage.Command
-        assertEquals(DeviceLightRuntimeContract.MODULE, statusCommand.module)
+        assertTrue(status is DeviceRuntimeCommandOutcome.Success)
+        assertTrue(set is DeviceRuntimeCommandOutcome.Success)
         assertEquals(
-            DeviceLightRuntimeContract.Action.TEMPERATURE_PROTECTION_STATUS_GET,
-            statusCommand.action
+            listOf(
+                DeviceLightRuntimeContract.Action.TEMPERATURE_PROTECTION_STATUS_GET,
+                DeviceLightRuntimeContract.Action.TEMPERATURE_PROTECTION_SET
+            ),
+            gateway.actions
         )
-        assertEquals(0, statusCommand.data.length())
-
-        val setCommand = transport.messages[1] as AqlWsOutgoingMessage.Command
-        assertEquals(DeviceLightRuntimeContract.MODULE, setCommand.module)
-        assertEquals(
-            DeviceLightRuntimeContract.Action.TEMPERATURE_PROTECTION_SET,
-            setCommand.action
-        )
-        assertEquals(setOf("thresholdC", "save"), setCommand.data.keySet())
-        assertEquals(62.5, setCommand.data.getDouble("thresholdC"), 0.0)
-        assertTrue(setCommand.data.getBoolean("save"))
+        assertEquals(0, gateway.payloads[0].length())
+        assertEquals(setOf("thresholdC", "save"), gateway.payloads[1].keySet())
+        assertEquals(62.5, gateway.payloads[1].getDouble("thresholdC"), 0.0)
+        assertTrue(gateway.payloads[1].getBoolean("save"))
+        assertEquals(60.0, repository.currentStatus(deviceUid)
+            ?.temperatureProtection?.thresholdC ?: Double.NaN, 0.0)
     }
 
     private fun supportedStatus(
@@ -210,35 +206,39 @@ class DeviceLightTemperatureProtectionContractTest {
         .put("supportsSet", supportsSet)
         .put("event", "light.status.changed")
 
-    private fun JSONObject.keySet(): Set<String> = buildSet {
-        val iterator = keys()
-        while (iterator.hasNext()) add(iterator.next())
-    }
+    private fun JSONObject.keySet(): Set<String> = keys().asSequence().toSet()
 
-    private class RecordingTransport : AqlWsTransport {
-        private val mutableConnectionState = MutableStateFlow<AqlWsConnectionState>(
-            AqlWsConnectionState.Disconnected
-        )
-        override val connectionState: StateFlow<AqlWsConnectionState> =
-            mutableConnectionState.asStateFlow()
-        override val events: Flow<AqlWsEvent> = MutableSharedFlow()
+    private class ParsingGateway(
+        private val responses: MutableMap<String, JSONObject>
+    ) : DeviceRuntimeCommandGateway {
+        val actions = mutableListOf<String>()
+        val payloads = mutableListOf<JSONObject>()
 
-        val messages = mutableListOf<AqlWsOutgoingMessage>()
-
-        override fun connect(
+        override suspend fun <T> execute(
             deviceUid: DeviceUid,
-            endpoint: DeviceRuntimeEndpoint
-        ): Result<Unit> = Result.success(Unit)
-
-        override fun send(message: AqlWsOutgoingMessage): Boolean {
-            messages += message
-            return true
+            command: DeviceRuntimeCommand<T>,
+            timeoutMillis: Long
+        ): DeviceRuntimeCommandOutcome<T> {
+            actions += command.action
+            payloads += command.encodeData()
+            val response = AqlWsIncomingMessage.Response(
+                id = "response-${actions.size}",
+                type = "res",
+                module = command.module,
+                action = command.action,
+                data = requireNotNull(responses[command.action]),
+                ok = true,
+                statusCode = 200
+            )
+            return DeviceRuntimeCommandOutcome.Success(
+                deviceUid = deviceUid,
+                module = command.module,
+                action = command.action,
+                messageId = response.id,
+                generation = DeviceRuntimeConnectionGeneration(1L),
+                statusCode = response.statusCode,
+                value = command.parseSuccess(response)
+            )
         }
-
-        override fun disconnect(code: Int, reason: String) {
-            mutableConnectionState.value = AqlWsConnectionState.Disconnected
-        }
-
-        override fun close() = Unit
     }
 }
