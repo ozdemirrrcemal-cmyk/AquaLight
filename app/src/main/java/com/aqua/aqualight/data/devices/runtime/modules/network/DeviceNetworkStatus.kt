@@ -1,11 +1,15 @@
 package com.aqua.aqualight.data.devices.runtime.modules.network
 
 data class DeviceNetworkStatus(
-    val connected: Boolean,
-    val mode: Int,
-    val rssi: Int,
-    val channel: Int,
-    val staHostname: String,
+    val ip: String,
+    val macAddress: String,
+    val wifiModeCode: Int,
+    val wifiMode: String,
+    val stationEnabled: Boolean,
+    val setupApEnabled: Boolean,
+    val clientConnected: Boolean,
+    val setupApActive: Boolean,
+    val uptimeMs: Long,
     val client: DeviceNetworkClientStatus,
     val setupAp: DeviceNetworkSetupApStatus,
     val discovery: DeviceNetworkDiscoveryStatus,
@@ -13,44 +17,51 @@ data class DeviceNetworkStatus(
 )
 
 data class DeviceNetworkClientStatus(
-    val connected: Boolean,
+    val enabled: Boolean,
     val configured: Boolean,
     val ssid: String,
+    val bssidConfigured: Boolean,
+    val channel: Int,
+    val connected: Boolean,
+    val state: String,
+    val wifiStatus: Int,
     val ip: String,
     val gateway: String,
     val subnet: String,
     val dns: String,
-    val mac: String,
-    val hostname: String,
-    val reconnectPolicy: String,
-    val disconnectEraseAffects: String,
-    val setupApFallback: Boolean
+    val rssi: Int,
+    val lastWifiEvent: Int,
+    val lastDisconnectReason: Int,
+    val lastDisconnectReasonName: String,
+    val lastDisconnectAgeMs: Long,
+    val lastGotIpAgeMs: Long,
+    val nextRetryRemainingMs: Long,
+    val connectionInProgress: Boolean
 )
 
 data class DeviceNetworkSetupApStatus(
+    val enabled: Boolean,
     val active: Boolean,
     val ssid: String,
     val ip: String,
-    val gateway: String,
-    val subnet: String,
-    val mac: String,
-    val passwordProtected: Boolean,
-    val passwordSource: String,
-    val provisioningContract: String,
-    val provisioningTransport: String
+    val stationCount: Int
 )
 
 data class DeviceNetworkDiscoveryStatus(
-    val udpBroadcast: Boolean,
-    val udpPort: Int,
-    val registeredOnly: Boolean,
-    val authenticatedWebSocketRequired: Boolean
+    val ready: Boolean,
+    val port: Int,
+    val broadcastIp: String,
+    val currentIp: String,
+    val payloadSize: Int,
+    val lastRefreshMs: Long,
+    val lastPacketRejectedMs: Long,
+    val rejectedPacketCount: Long
 )
 
 data class DeviceNetworkRuntimeStatus(
     val transport: String,
-    val wsPath: String,
     val wsPort: Int,
+    val wsPath: String,
     val wsProtocol: String,
     val wsProtocolVersion: Int
 )
