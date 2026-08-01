@@ -36,7 +36,11 @@ class DeviceLightRuntimeRepository internal constructor(
         jsonCommand(
             action = DeviceLightRuntimeContract.Action.MANUAL_SET,
             dataFactory = payload::toJson,
-            parser = DeviceLightMutationParser::parseManual
+            parser = { data ->
+                DeviceLightMutationParser.parseManual(data).also { result ->
+                    DeviceLightCommandValidation.validateManual(payload, result)
+                }
+            }
         )
     ).recordSuccess { result -> stateStore.recordManual(deviceUid, result) }
 
@@ -62,7 +66,11 @@ class DeviceLightRuntimeRepository internal constructor(
         jsonCommand(
             action = DeviceLightRuntimeContract.Action.CHANNEL_REGIME_SET,
             dataFactory = payload::toJson,
-            parser = DeviceLightMutationParser::parseChannelRegime
+            parser = { data ->
+                DeviceLightMutationParser.parseChannelRegime(data).also { result ->
+                    DeviceLightCommandValidation.validateChannelRegime(payload, result)
+                }
+            }
         )
     ).recordSuccess { result -> stateStore.recordChannelRegime(deviceUid, result) }
 
@@ -88,7 +96,11 @@ class DeviceLightRuntimeRepository internal constructor(
         jsonCommand(
             action = DeviceLightRuntimeContract.Action.PROGRAM_APPLY,
             dataFactory = payload::toJson,
-            parser = DeviceLightMutationParser::parseProgramApply
+            parser = { data ->
+                DeviceLightMutationParser.parseProgramApply(data).also { result ->
+                    DeviceLightCommandValidation.validateProgramApply(payload, result)
+                }
+            }
         )
     ).recordSuccess { result -> stateStore.recordProgramApply(deviceUid, result) }
 
@@ -100,7 +112,11 @@ class DeviceLightRuntimeRepository internal constructor(
         jsonCommand(
             action = DeviceLightRuntimeContract.Action.PROGRAM_DELETE,
             dataFactory = payload::toJson,
-            parser = DeviceLightMutationParser::parseProgramDelete
+            parser = { data ->
+                DeviceLightMutationParser.parseProgramDelete(data).also { result ->
+                    DeviceLightCommandValidation.validateProgramDelete(payload, result)
+                }
+            }
         )
     ).recordSuccess { result -> stateStore.recordProgramDelete(deviceUid, result) }
 
