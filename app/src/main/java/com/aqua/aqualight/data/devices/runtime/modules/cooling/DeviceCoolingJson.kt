@@ -16,9 +16,6 @@ internal fun JSONObject.requireCoolingObject(key: String): JSONObject =
 internal fun JSONObject.requireCoolingArray(key: String): JSONArray =
     get(key) as? JSONArray ?: error("$key must be a JSON array.")
 
-internal fun JSONArray.requireCoolingObject(index: Int): JSONObject =
-    get(index) as? JSONObject ?: error("[$index] must be a JSON object.")
-
 internal fun JSONObject.requireCoolingText(key: String): String {
     val value = get(key) as? String ?: error("$key must be a string.")
     require(value.isNotEmpty()) { "$key must not be empty." }
@@ -88,17 +85,4 @@ internal fun JSONObject.requireCoolingNullableDouble(
         require(parsed.isFinite()) { "$key must be finite." }
         require(parsed in minimum..maximum) { "$key is outside its supported range." }
     }
-}
-
-internal fun JSONArray.requireCoolingInt(index: Int, minimum: Int = Int.MIN_VALUE): Int {
-    val value = get(index) as? Number ?: error("[$index] must be an integer.")
-    val asDouble = value.toDouble()
-    val asLong = value.toLong()
-    require(asDouble.isFinite() && asDouble == asLong.toDouble()) {
-        "[$index] must be an integer."
-    }
-    require(asLong >= minimum.toLong() && asLong <= Int.MAX_VALUE.toLong()) {
-        "[$index] is outside its supported range."
-    }
-    return asLong.toInt()
 }
