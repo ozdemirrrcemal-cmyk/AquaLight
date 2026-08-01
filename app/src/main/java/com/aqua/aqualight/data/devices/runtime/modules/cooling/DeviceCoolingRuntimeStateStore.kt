@@ -78,11 +78,13 @@ internal class DeviceCoolingRuntimeStateStore {
         incoming: DeviceCoolingTemperatureSnapshot
     ): Boolean {
         val fixedSensorIndex = current.status?.fixedSensorIndex ?: current.config?.fixedSensorIndex
-        if (fixedSensorIndex != null && fixedSensorIndex != incoming.sensorIndex) return false
-
-        val previous = current.temperature ?: return true
-        return previous.sensorIndex == incoming.sensorIndex &&
-            isNewerCoolingSample(incoming.sampledAtMs, previous.sampledAtMs)
+        val matchesFixedSensor = fixedSensorIndex == null || fixedSensorIndex == incoming.sensorIndex
+        val previous = current.temperature
+        val isFreshSample = previous == null || (
+            previous.sensorIndex == incoming.sensorIndex &&
+                isNewerCoolingSample(incoming.sampledAtMs, previous.sampledAtMs)
+            )
+        return matchesFixedSensor && isFreshSample
     }
 
     private fun selectFreshestTemperature(
