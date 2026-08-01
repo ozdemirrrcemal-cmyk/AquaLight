@@ -6,11 +6,11 @@ Target: **41 authenticated commands / 0 public commands**
 
 ## Current position
 
-- Current stage: **03 — Typed event routing**
-- Active branch: `feat/ws-03-event-routing`
+- Current stage: **04 — Common device commands**
+- Active branch: `feat/device-04-common-commands`
 - Status: **IN PROGRESS**
-- Previous stage: **02 PASSED / PR #183 MERGED**
-- Next: Inventory firmware event contracts and add exact typed routing without changing provisioning, UDP discovery, WebSocket transport or crypto.
+- Previous stage: **03 PASSED / PR #184 MERGED**
+- Next: Align common device, security, network, time and firmware read paths with the correlated request broker and typed event pipeline.
 
 ## Fixed rules
 
@@ -59,24 +59,31 @@ Target: **41 authenticated commands / 0 public commands**
   - [x] Physical device test N/A: no production module command path, provisioning, UDP, transport or crypto behavior changed
   - [x] PR evidence recorded
 
-- [ ] **03** `feat/ws-03-event-routing` — **IN PROGRESS**
-  - [ ] Inventory all firmware-emitted events
-  - [ ] Add typed event contracts for every supported firmware event
-  - [ ] Route by exact device + connection generation + module + event identity
-  - [ ] Reject stale-generation events
-  - [ ] Preserve per-device/session isolation
-  - [ ] Apply deterministic module state reductions
-  - [ ] Preserve unmatched/legacy event visibility where required
+- [x] **03** `feat/ws-03-event-routing` — **MERGED / PR #184**
+  - [x] Inventoried all 11 firmware-emitted authenticated events
+  - [x] Added exact typed contracts for every supported firmware event
+  - [x] Routed by exact device + connection generation + module + event identity
+  - [x] Rejected stale-generation events
+  - [x] Preserved per-device/session isolation
+  - [x] Added deterministic per-device latest-state reductions
+  - [x] Preserved unmatched/legacy raw event visibility
+  - [x] Added unit and repository pipeline integration tests
+  - [x] Android CI, installable APK, Emulator API 27/36 and CodeQL passed
+  - [x] Zero critical/high CodeQL findings
+  - [x] Physical device test N/A: production module consumers, provisioning, UDP, transport and crypto unchanged
+  - [x] PR evidence recorded
+
+- [ ] **04** `feat/device-04-common-commands` — **IN PROGRESS**
+  - [ ] Device: identity/status/capabilities/name
+  - [ ] Security: status/pair/unpair/reset
+  - [ ] Network status
+  - [ ] Time: status/config/phone/NTP/RTC
+  - [ ] Firmware status and OTA status read-only
+  - [ ] Unpair/reset token and session lifecycle
+  - [ ] Integrate production common-command paths with correlated request broker
+  - [ ] Consume relevant typed events without regressing raw compatibility
   - [ ] Add unit and repository integration tests
   - [ ] Run relevant automatic and physical gates based on production behavior impact
-
-- [ ] **04** `feat/device-04-common-commands`
-  - Device: identity/status/capabilities/name
-  - Security: status/pair/unpair/reset
-  - Network status
-  - Time: status/config/phone/NTP/RTC
-  - Firmware status and OTA status read-only
-  - Unpair/reset token and session lifecycle
 
 - [ ] **05** `feat/light-05-runtime-alignment`
   - 7/7 light commands
@@ -145,3 +152,5 @@ Target: **41 authenticated commands / 0 public commands**
 | 2026-08-01 | Stage 02 broker implementation | READY FOR TEST | Run full automatic gate |
 | 2026-08-01 | Stage 02 correlated request broker | PASS / PR #183 MERGED | Start Stage 03 |
 | 2026-08-01 | Stage 03 event routing branch opened | IN PROGRESS | Inventory firmware event contracts |
+| 2026-08-01 | Stage 03 typed event routing | PASS / PR #184 MERGED | Start Stage 04 |
+| 2026-08-01 | Stage 04 common command branch opened | IN PROGRESS | Inventory firmware common-command payloads and current Android consumers |
