@@ -129,126 +129,146 @@ private class ReleaseSmokeViewModelFactory(
     private val appTextResolver = AndroidAppTextResolver(appContext)
 
     override fun <T : ViewModel> create(modelClass: Class<T>): T {
-        val viewModel: ViewModel = when {
-            modelClass.isAssignableFrom(SettingsViewModel::class.java) ->
-                SettingsViewModel(
-                    userProfileOperations = profileOperations,
-                    deviceStatusOperations = DefaultDeviceStatusOperations(devicesRepository)
-                )
-
-            modelClass.isAssignableFrom(DevicesViewModel::class.java) ->
-                DevicesViewModel(
-                    operations = DefaultOwnerDevicesOperations(
-                        devicesRepository = devicesRepository,
-                        assignmentRepository = assignmentRepository,
-                        deviceDataCleaner = OwnerDeviceDataCleaner.create(
-                            devicesRepository = devicesRepository,
-                            assignmentRepository = assignmentRepository
-                        )
-                    ),
-                    menuAccessOperations =
-                        DefaultDeviceMenuAccessOperations.create(devicesRepository),
-                    routeResolver = DeviceRouteResolver()
-                )
-
-            modelClass.isAssignableFrom(DeviceAddViewModel::class.java) ->
-                DeviceAddViewModel(
-                    discoveryOperations = DefaultProvisioningDiscoveryOperations.create(
-                        context = appContext,
-                        repository = devicesRepository
-                    ),
-                    textResolver = appTextResolver
-                )
-
-            modelClass.isAssignableFrom(DeviceQrScanViewModel::class.java) ->
-                DeviceQrScanViewModel(
-                    discoveryOperations = DefaultProvisioningDiscoveryOperations.create(
-                        context = appContext,
-                        repository = devicesRepository
-                    ),
-                    textResolver = appTextResolver
-                )
-
-            modelClass.isAssignableFrom(DeviceProvisioningProgressViewModel::class.java) ->
-                DeviceProvisioningProgressViewModel(
-                    operations = DefaultProvisioningProgressOperations(appContext),
-                    textResolver = appTextResolver
-                )
-
-            modelClass.isAssignableFrom(AquariumTankViewModel::class.java) ->
-                AquariumTankViewModel(
-                    operations = DefaultAquariumTankOperations(
-                        context = appContext,
-                        tankStore = tankStore,
-                        tankDataCleaner = OwnerTankDataCleaner(
-                            deleteTankRecords = tankStore::deleteTanks,
-                            snapshotCareTasksForTank = { tankId ->
-                                careTaskStore.snapshotTasksForIntegrity(tankId)
-                            },
-                            deleteCareTasksForTank = careTaskStore::deleteTasksForTank,
-                            restoreCareTasksForTank = { tankId, snapshots ->
-                                careTaskStore.restoreTaskSnapshotsForIntegrity(
-                                    tankId = tankId,
-                                    snapshots = snapshots
-                                )
-                            },
-                            removeDeviceAssignmentsForTank =
-                                assignmentRepository::removeAssignmentsForTank,
-                            cancelCareTaskReminder = notificationPreferences::cancelCareTask,
-                            reconcileCareReminders = notificationPreferences::reconcileOwner,
-                            ownerUidProvider = { SMOKE_OWNER_UID }
-                        ),
-                        notificationPreferences = notificationPreferences
-                    )
-                )
-
-            modelClass.isAssignableFrom(MaintenanceViewModel::class.java) ->
-                MaintenanceViewModel(
-                    operations = maintenanceOperations,
-                    textResolver = maintenanceTextResolver
-                )
-
-            modelClass.isAssignableFrom(DeviceLightRootViewModel::class.java) ->
-                DeviceLightRootViewModel(
-                    rootOperations = DefaultDeviceRootOperations(devicesRepository)
-                )
-
-            modelClass.isAssignableFrom(DeviceCoolingRootViewModel::class.java) ->
-                DeviceCoolingRootViewModel(DefaultDeviceRootOperations(devicesRepository))
-
-            modelClass.isAssignableFrom(DeviceTimerRootViewModel::class.java) ->
-                DeviceTimerRootViewModel(DefaultDeviceRootOperations(devicesRepository))
-
-            modelClass.isAssignableFrom(DeviceDosingRootViewModel::class.java) ->
-                DeviceDosingRootViewModel(DefaultDeviceRootOperations(devicesRepository))
-
-            modelClass.isAssignableFrom(DeviceRootOverviewViewModel::class.java) ->
-                DeviceRootOverviewViewModel(DefaultDeviceRootOperations(devicesRepository))
-
-            modelClass.isAssignableFrom(TankDetailDevicesViewModel::class.java) ->
-                TankDetailDevicesViewModel(
-                    assignmentOperations = DefaultTankDeviceAssignmentOperations(
-                        assignmentRepository = assignmentRepository,
-                        devicesRepository = devicesRepository
-                    ),
-                    menuAccessOperations =
-                        DefaultDeviceMenuAccessOperations.create(devicesRepository),
-                    routeResolver = DeviceRouteResolver()
-                )
-
-            modelClass.isAssignableFrom(TankDeviceSelectViewModel::class.java) ->
-                TankDeviceSelectViewModel(
-                    assignmentOperations = DefaultTankDeviceAssignmentOperations(
-                        assignmentRepository = assignmentRepository,
-                        devicesRepository = devicesRepository
-                    )
-                )
-
-            else -> error("Release smoke factory has no binding for ${modelClass.name}")
-        }
+        val viewModel = createPrimaryViewModel(modelClass)
+            ?: createDeviceRootViewModel(modelClass)
+            ?: createTankDeviceViewModel(modelClass)
+            ?: error("Release smoke factory has no binding for ${modelClass.name}")
 
         @Suppress("UNCHECKED_CAST")
         return viewModel as T
+    }
+
+    private fun createPrimaryViewModel(modelClass: Class<out ViewModel>): ViewModel? = when {
+        modelClass.isAssignableFrom(SettingsViewModel::class.java) ->
+            SettingsViewModel(
+                userProfileOperations = profileOperations,
+                deviceStatusOperations = DefaultDeviceStatusOperations(devicesRepository)
+            )
+
+        modelClass.isAssignableFrom(DevicesViewModel::class.java) -> createDevicesViewModel()
+
+        modelClass.isAssignableFrom(DeviceAddViewModel::class.java) ->
+            DeviceAddViewModel(
+                discoveryOperations = DefaultProvisioningDiscoveryOperations.create(
+                    context = appContext,
+                    repository = devicesRepository
+                ),
+                textResolver = appTextResolver
+            )
+
+        modelClass.isAssignableFrom(DeviceQrScanViewModel::class.java) ->
+            DeviceQrScanViewModel(
+                discoveryOperations = DefaultProvisioningDiscoveryOperations.create(
+                    context = appContext,
+                    repository = devicesRepository
+                ),
+                textResolver = appTextResolver
+            )
+
+        modelClass.isAssignableFrom(DeviceProvisioningProgressViewModel::class.java) ->
+            DeviceProvisioningProgressViewModel(
+                operations = DefaultProvisioningProgressOperations(appContext),
+                textResolver = appTextResolver
+            )
+
+        modelClass.isAssignableFrom(AquariumTankViewModel::class.java) ->
+            createAquariumTankViewModel()
+
+        modelClass.isAssignableFrom(MaintenanceViewModel::class.java) ->
+            MaintenanceViewModel(
+                operations = maintenanceOperations,
+                textResolver = maintenanceTextResolver
+            )
+
+        else -> null
+    }
+
+    private fun createDevicesViewModel(): DevicesViewModel =
+        DevicesViewModel(
+            operations = DefaultOwnerDevicesOperations(
+                devicesRepository = devicesRepository,
+                assignmentRepository = assignmentRepository,
+                deviceDataCleaner = OwnerDeviceDataCleaner.create(
+                    devicesRepository = devicesRepository,
+                    assignmentRepository = assignmentRepository
+                )
+            ),
+            menuAccessOperations = DefaultDeviceMenuAccessOperations.create(devicesRepository),
+            routeResolver = DeviceRouteResolver()
+        )
+
+    private fun createAquariumTankViewModel(): AquariumTankViewModel =
+        AquariumTankViewModel(
+            operations = DefaultAquariumTankOperations(
+                context = appContext,
+                tankStore = tankStore,
+                tankDataCleaner = OwnerTankDataCleaner(
+                    deleteTankRecords = tankStore::deleteTanks,
+                    snapshotCareTasksForTank = { tankId ->
+                        careTaskStore.snapshotTasksForIntegrity(tankId)
+                    },
+                    deleteCareTasksForTank = careTaskStore::deleteTasksForTank,
+                    restoreCareTasksForTank = { tankId, snapshots ->
+                        careTaskStore.restoreTaskSnapshotsForIntegrity(
+                            tankId = tankId,
+                            snapshots = snapshots
+                        )
+                    },
+                    removeDeviceAssignmentsForTank =
+                        assignmentRepository::removeAssignmentsForTank,
+                    cancelCareTaskReminder = notificationPreferences::cancelCareTask,
+                    reconcileCareReminders = notificationPreferences::reconcileOwner,
+                    ownerUidProvider = { SMOKE_OWNER_UID }
+                ),
+                notificationPreferences = notificationPreferences
+            )
+        )
+
+    private fun createDeviceRootViewModel(
+        modelClass: Class<out ViewModel>
+    ): ViewModel? = when {
+        modelClass.isAssignableFrom(DeviceLightRootViewModel::class.java) ->
+            DeviceLightRootViewModel(
+                rootOperations = DefaultDeviceRootOperations(devicesRepository)
+            )
+
+        modelClass.isAssignableFrom(DeviceCoolingRootViewModel::class.java) ->
+            DeviceCoolingRootViewModel(DefaultDeviceRootOperations(devicesRepository))
+
+        modelClass.isAssignableFrom(DeviceTimerRootViewModel::class.java) ->
+            DeviceTimerRootViewModel(DefaultDeviceRootOperations(devicesRepository))
+
+        modelClass.isAssignableFrom(DeviceDosingRootViewModel::class.java) ->
+            DeviceDosingRootViewModel(DefaultDeviceRootOperations(devicesRepository))
+
+        modelClass.isAssignableFrom(DeviceRootOverviewViewModel::class.java) ->
+            DeviceRootOverviewViewModel(DefaultDeviceRootOperations(devicesRepository))
+
+        else -> null
+    }
+
+    private fun createTankDeviceViewModel(
+        modelClass: Class<out ViewModel>
+    ): ViewModel? = when {
+        modelClass.isAssignableFrom(TankDetailDevicesViewModel::class.java) ->
+            TankDetailDevicesViewModel(
+                assignmentOperations = DefaultTankDeviceAssignmentOperations(
+                    assignmentRepository = assignmentRepository,
+                    devicesRepository = devicesRepository
+                ),
+                menuAccessOperations = DefaultDeviceMenuAccessOperations.create(devicesRepository),
+                routeResolver = DeviceRouteResolver()
+            )
+
+        modelClass.isAssignableFrom(TankDeviceSelectViewModel::class.java) ->
+            TankDeviceSelectViewModel(
+                assignmentOperations = DefaultTankDeviceAssignmentOperations(
+                    assignmentRepository = assignmentRepository,
+                    devicesRepository = devicesRepository
+                )
+            )
+
+        else -> null
     }
 
     private companion object {
