@@ -6,11 +6,11 @@ Target: **41 authenticated commands / 0 public commands**
 
 ## Current position
 
-- Current stage: **05 — Light runtime alignment**
-- Active branch: `feat/light-05-runtime-alignment`
+- Current stage: **06 — Cooling runtime alignment**
+- Active branch: `feat/cooling-06-runtime-alignment`
 - Status: **IN PROGRESS**
-- Previous stage: **04 PASSED / PR #185 MERGED**
-- Next: Align all seven Light commands, production consumers and `light.status.changed` handling with the correlated request broker and exact firmware contracts.
+- Previous stage: **05 PASSED / PR #186 MERGED**
+- Next: Align both Cooling commands, production consumers and `cooling.status.changed` handling with the correlated request broker and exact firmware contracts.
 
 ## Fixed rules
 
@@ -87,28 +87,35 @@ Target: **41 authenticated commands / 0 public commands**
   - [x] Current custom-name firmware interoperability and physical menu liveness passed
   - [x] PR evidence recorded
 
-- [ ] **05** `feat/light-05-runtime-alignment` — **IN PROGRESS**
-  - [ ] Inventory exact firmware request/response shapes for all 7 Light commands
-  - [ ] `light.status.get` exact typed status parser
-  - [ ] `light.manual.set` typed manual-level and clear outcomes
-  - [ ] `light.channel.regime.set` exact Auto/On/Off persistence outcome
-  - [ ] `light.program.apply` exact create/update outcome
-  - [ ] `light.program.delete` exact delete outcome
-  - [ ] `light.temperature-protection.status.get` exact typed status
-  - [ ] `light.temperature-protection.set` exact typed mutation outcome
-  - [ ] Move production Light consumers from send-success to correlated firmware success
-  - [ ] Integrate `light.status.changed` into deterministic current-state projection
-  - [ ] Reject unsupported Light operations using exact firmware capabilities/features
-  - [ ] Add unit, parser, repository and production-consumer tests
-  - [ ] Run automatic gates and targeted physical Light-device regression
+- [x] **05** `feat/light-05-runtime-alignment` — **MERGED / PR #186**
+  - [x] Inventoried exact firmware request/response shapes for all 7 Light commands
+  - [x] `light.status.get` exact typed status parser
+  - [x] `light.manual.set` typed manual-level and clear outcomes
+  - [x] `light.channel.regime.set` exact Auto/On/Off persistence outcome
+  - [x] `light.program.apply` exact create/update outcome
+  - [x] `light.program.delete` exact delete outcome
+  - [x] `light.temperature-protection.status.get` exact typed status
+  - [x] `light.temperature-protection.set` exact typed mutation outcome
+  - [x] Production Light consumers moved from send-success to correlated firmware success
+  - [x] `light.status.changed` integrated into deterministic current-state projection
+  - [x] Unsupported Light operations rejected using exact firmware capabilities/features
+  - [x] Unit, parser, repository and production-consumer tests added
+  - [x] Android CI, installable APK, Emulator API 27/36 and CodeQL passed
+  - [x] WRGB Pro Elite physical Light-device regression passed
+  - [x] PR evidence recorded
 
-- [ ] **06** `feat/cooling-06-runtime-alignment`
-  - 2/2 cooling commands
-  - Auto/On/Off
-  - Minimum/maximum temperature
-  - Supported fan display names
-  - Atomic config apply
-  - `cooling.status.changed`
+- [ ] **06** `feat/cooling-06-runtime-alignment` — **IN PROGRESS**
+  - [ ] Inventory exact firmware request/response shapes for both Cooling commands
+  - [ ] `cooling.status.get` exact typed status parser
+  - [ ] `cooling.config.set` exact atomic mutation outcome
+  - [ ] Model Auto / On / Off fan regimes without aliases or fallback values
+  - [ ] Validate minimum/maximum temperature bounds and ordering
+  - [ ] Preserve supported fan display names while keeping hardware fields read-only
+  - [ ] Move production Cooling consumers from send-success to correlated firmware success
+  - [ ] Integrate `cooling.status.changed` into deterministic device-scoped current-state projection
+  - [ ] Reject unsupported Cooling operations using exact firmware capabilities/features
+  - [ ] Add unit, parser, repository, event-reducer and production-consumer tests
+  - [ ] Run automatic gates and targeted physical Cooling-device regression
 
 - [ ] **07** `feat/timer-07-runtime-alignment`
   - 3/3 timer commands
@@ -165,3 +172,5 @@ Target: **41 authenticated commands / 0 public commands**
 | 2026-08-01 | Stage 04 common command branch opened | IN PROGRESS | Inventory firmware common-command payloads and current Android consumers |
 | 2026-08-01 | Stage 04 common runtime commands | PASS / PR #185 MERGED | Start Stage 05 |
 | 2026-08-01 | Stage 05 Light runtime branch opened | IN PROGRESS | Inventory all seven firmware Light contracts and Android consumers |
+| 2026-08-01 | Stage 05 Light runtime alignment | PASS / PR #186 MERGED | Start Stage 06 |
+| 2026-08-01 | Stage 06 Cooling runtime branch opened | IN PROGRESS | Inventory both firmware Cooling contracts and Android consumers |
