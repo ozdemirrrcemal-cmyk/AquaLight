@@ -1,6 +1,7 @@
 package com.aqua.aqualight.data.devices.runtime.modules.firmware
 
 import com.aqua.aqualight.data.devices.model.DeviceUid
+import com.aqua.aqualight.data.devices.runtime.core.DeviceRuntimeCommand
 import com.aqua.aqualight.data.devices.runtime.core.DeviceRuntimeCommandGateway
 import com.aqua.aqualight.data.devices.runtime.core.DeviceRuntimeCommandOutcome
 import com.aqua.aqualight.data.devices.runtime.modules.common.DeviceRuntimeJsonCommand
@@ -11,6 +12,12 @@ class DeviceFirmwareRuntimeRepository(
     private val gateway: DeviceRuntimeCommandGateway,
     private val commandClientProvider: (DeviceUid) -> AqlWsCommandClient?
 ) {
+    /** Source-compatible construction for the legacy OTA state machine and its tests. */
+    constructor(commandClientProvider: (DeviceUid) -> AqlWsCommandClient?) : this(
+        gateway = LegacyOnlyGateway,
+        commandClientProvider = commandClientProvider
+    )
+
     suspend fun requestStatus(
         deviceUid: DeviceUid
     ): DeviceRuntimeCommandOutcome<DeviceFirmwareStatus> = gateway.execute(
@@ -79,6 +86,18 @@ class DeviceFirmwareRuntimeRepository(
             action = action,
             messageId = messageId.orEmpty(),
             errorMessage = if (messageId != null) "" else "WebSocket send failed"
+        )
+    }
+
+    private object LegacyOnlyGateway : DeviceRuntimeCommandGateway {
+        override suspend fun <T> execute(
+            deviceUid: DeviceUid,
+            command: DeviceRuntimeCommand<T>,
+            timeoutMillis: Long
+        ): DeviceRuntimeCommandOutcome<T> = DeviceRuntimeCommandOutcome.NotConnected(
+            deviceUid = deviceUid,
+            module = command.module,
+            action = command.action
         )
     }
 }
