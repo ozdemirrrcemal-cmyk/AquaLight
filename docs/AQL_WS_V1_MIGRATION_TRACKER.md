@@ -8,9 +8,9 @@ Target: **41 authenticated commands / 0 public commands**
 
 - Current stage: **02 — Correlated request broker**
 - Active branch: `feat/ws-02-request-broker`
-- Status: **IN PROGRESS**
+- Status: **READY FOR TEST**
 - Previous stage: **01 PASSED / PR #182 MERGED**
-- Next: Inspect the current client/session lifecycle, add request correlation without rewriting transport or crypto, then run the complete automatic gate.
+- Next: Run Android CI, API 27/36 emulator integration and CodeQL; fix only failures caused by the request-broker scope.
 
 ## Fixed rules
 
@@ -18,7 +18,7 @@ Target: **41 authenticated commands / 0 public commands**
 - A stage must pass its relevant tests before the next stage starts.
 - Transport and crypto will not be rewritten.
 - BLE + QR provisioning, UDP discovery and online/offline behavior must not regress.
-- Physical regression tests are required when the related runtime behavior changes or at release-candidate gate.
+- Physical regression tests are required when the related production runtime path changes or at release-candidate gate.
 - All firmware-supported user settings and operations must exist on Android.
 - GPIO, PWM, mappings and factory identity remain read-only.
 
@@ -35,23 +35,28 @@ Target: **41 authenticated commands / 0 public commands**
   - [x] Added `light.temperature-protection.status.get`
   - [x] Added `light.temperature-protection.set`
   - [x] Golden test and protocol guard updated to 41
-  - [x] Android CI passed
-  - [x] Emulator API 27 passed
-  - [x] Emulator API 36 passed
-  - [x] CodeQL passed
+  - [x] Android CI/API 27/API 36/CodeQL passed
   - [x] Provisioning/runtime/transport/crypto/presence code unchanged
 
-- [ ] **02** `feat/ws-02-request-broker` — **IN PROGRESS**
-  - [ ] Request ID correlation
-  - [ ] Typed success/error result
-  - [ ] Bounded timeout
-  - [ ] Pending-request cancellation on disconnect/shutdown
-  - [ ] Stale-session response rejection
-  - [ ] Wrong module/action rejection
-  - [ ] Duplicate response rejection
-  - [ ] Multi-device isolation
-  - [ ] Existing metadata bootstrap remains functional
-  - [ ] Android CI/API 27/API 36/CodeQL pass
+- [ ] **02** `feat/ws-02-request-broker` — **READY FOR TEST**
+  - [x] Exact request correlation: device + generation + message ID
+  - [x] Typed success, firmware error and protocol error outcomes
+  - [x] Bounded timeout: 1–30 seconds, default 8 seconds
+  - [x] Pending requests cancelled on disconnect, route replacement, close and shutdown
+  - [x] Old-generation response rejection
+  - [x] Wrong module/action rejection
+  - [x] Duplicate/late response rejection
+  - [x] Same message ID isolated across devices/generations
+  - [x] Single existing transport event collector preserved
+  - [x] Matched broker responses do not leak to legacy event consumers
+  - [x] Unmatched events and metadata bootstrap responses remain observable
+  - [x] WebSocket transport/codec/crypto unchanged
+  - [x] Unit and repository integration tests added
+  - [ ] Android CI passes
+  - [ ] Emulator API 27 passes
+  - [ ] Emulator API 36 passes
+  - [ ] CodeQL passes
+  - [ ] PR evidence recorded
 
 - [ ] **03** `feat/ws-03-event-routing`
   - Typed routing for all firmware events
@@ -119,7 +124,7 @@ Target: **41 authenticated commands / 0 public commands**
 - [ ] Unit/golden/protocol tests pass
 - [ ] Changed module tests pass
 - [ ] Provisioning/UDP/WebSocket/presence regressions pass when those areas are affected
-- [ ] Physical-device smoke passes when runtime behavior is affected
+- [ ] Physical-device smoke passes when a production runtime behavior is affected
 - [ ] No secret/token logging
 - [ ] PR evidence recorded
 
@@ -131,3 +136,4 @@ Target: **41 authenticated commands / 0 public commands**
 | 2026-08-01 | Stage 00 existing CI baseline | PASS / MERGED | Start Stage 01 |
 | 2026-08-01 | Stage 01 contract parity | PASS / PR #182 MERGED | Start Stage 02 |
 | 2026-08-01 | Stage 02 branch opened | IN PROGRESS | Inspect request/session lifecycle |
+| 2026-08-01 | Stage 02 broker implementation | READY FOR TEST | Run full automatic gate |
