@@ -55,7 +55,11 @@ object DeviceCoolingStatusParser {
                 COOLING_UNAVAILABLE_INDEX,
                 DeviceCoolingRuntimeContract.Limit.MAX_SENSOR_INDEX
             ),
-            uptimeMs = data.requireCoolingLong("uptimeMs", minimum = COOLING_NON_NEGATIVE_LONG),
+            uptimeMs = data.requireCoolingLong(
+                "uptimeMs",
+                minimum = COOLING_NON_NEGATIVE_LONG,
+                maximum = COOLING_DEVICE_UPTIME_MAX_MS
+            ),
             temperature = DeviceCoolingTemperatureParser.parse(
                 data.requireCoolingObject("temperature")
             ),
