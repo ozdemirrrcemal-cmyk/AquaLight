@@ -378,7 +378,4 @@
         <item quantity="one">This removes the device from this app. The device will not enter setup mode. To pair it again, press the physical setup button.</item>
         <item quantity="other">This removes the selected devices from this app. Devices will not enter setup mode. To pair them again, press the physical setup button.</item>
     </plurals>
-
-    <string name="device_ota_test_panel_opened">OTA test panel opened</string>
-    <string name="device_ota_test_panel_hidden">OTA test panel hidden</string>
 </resources>
