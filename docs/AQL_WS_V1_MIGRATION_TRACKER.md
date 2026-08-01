@@ -6,11 +6,12 @@ Target: **41 authenticated commands / 0 public commands**
 
 ## Current position
 
-- Current stage: **00 — Baseline**
+- Current stage: **00 — Existing-system baseline**
 - Active branch: `test/ws-00-runtime-baseline`
+- Pull request: `#181`
 - Status: **IN PROGRESS**
 - Evidence: `docs/AQL_WS_V1_STAGE_00_BASELINE.md`
-- Next: Open the Stage 00 PR, collect Android CI/emulator results, then record physical-device provisioning and online/offline smoke tests.
+- Next: Run the repository's existing CI/emulator jobs, investigate only real build/test failures, then record physical-device provisioning and online/offline results.
 
 ## Fixed rules
 
@@ -18,16 +19,20 @@ Target: **41 authenticated commands / 0 public commands**
 - A stage must pass tests before the next stage starts.
 - Transport and crypto will not be rewritten.
 - BLE + QR provisioning, UDP discovery and online/offline behavior must not regress.
+- Stage 00 does not add a new architecture guard or alter runtime behavior.
 - All firmware-supported user settings and operations must exist on Android.
 - GPIO, PWM, mappings and factory identity remain read-only.
 
 ## Stage list
 
 - [ ] **00** `test/ws-00-runtime-baseline` — **IN PROGRESS**
-  - [x] Runtime/provisioning freeze guard added
-  - [x] Guard execution added to existing Python test discovery
   - [x] Baseline evidence/checklist file added
-  - [ ] Android CI and emulator results recorded
+  - [x] Accidental custom runtime guard removed
+  - [x] Accidental custom guard test removed
+  - [ ] Existing Android CI passes
+  - [ ] Existing unit/golden/protocol tests pass
+  - [ ] Emulator API 27 passes
+  - [ ] Emulator API 36 passes
   - [ ] Physical provisioning smoke recorded
   - [ ] UDP discovery smoke recorded
   - [ ] WebSocket auth/metadata smoke recorded
@@ -54,7 +59,7 @@ Target: **41 authenticated commands / 0 public commands**
   - Multi-device isolation
 
 - [ ] **03** `feat/ws-03-event-routing`
-  - Typed routing for all 11 firmware events
+  - Typed routing for all firmware events
   - Per-device/session isolation
   - Stale-event rejection
   - Module state updates
@@ -107,7 +112,7 @@ Target: **41 authenticated commands / 0 public commands**
 
 - [ ] **10** `test/ws-10-firmware-interoperability`
   - 41/41 command parity
-  - 11/11 event parity
+  - All firmware-event parity
   - All user-write fields covered
   - No hardware-owned editable fields
   - Golden fixtures byte-identical
@@ -133,4 +138,5 @@ Target: **41 authenticated commands / 0 public commands**
 | Date | Stage | Result | Next |
 |---|---|---|---|
 | 2026-08-01 | Tracker setup | PASS | Start Stage 00 baseline |
-| 2026-08-01 | Stage 00 baseline branch | IN PROGRESS | Run CI/emulator and physical smoke gates |
+| 2026-08-01 | Stage 00 first CI run | INVALID | Custom guard stopped CI before the real build |
+| 2026-08-01 | Stage 00 correction | IN PROGRESS | Guard/test removed; rerun existing CI only |
