@@ -5,4 +5,4 @@ interface DeviceSettingsOperations {
     suspend fun updateCustomName(deviceUid: String, customName: String): Result<Unit>
 }
 
-const val DEVICE_CUSTOM_NAME_MAX_LENGTH = 32
+const val DEVICE_CUSTOM_NAME_MAX_LENGTH = 64
