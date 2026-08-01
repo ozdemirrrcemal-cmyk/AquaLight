@@ -11,6 +11,9 @@ import com.aqua.aqualight.data.devices.monitor.DeviceConnectivityObserver
 import com.aqua.aqualight.data.devices.monitor.DeviceElapsedRealtimeClock
 import com.aqua.aqualight.data.devices.monitor.DevicePresenceRuntimeMonitor
 import com.aqua.aqualight.data.devices.monitor.DeviceStatusAggregator
+import com.aqua.aqualight.data.devices.runtime.events.DeviceRuntimeEventPayload
+import com.aqua.aqualight.data.devices.runtime.events.DeviceRuntimeEventPipeline
+import com.aqua.aqualight.data.devices.runtime.events.DeviceRuntimeTypedEvent
 import com.aqua.aqualight.data.devices.runtime.modules.DeviceRuntimeModuleProvider
 import com.aqua.aqualight.data.devices.runtime.ws.AqlWsCommandClient
 import com.aqua.aqualight.data.devices.runtime.ws.AqlWsConnectionState
@@ -103,6 +106,14 @@ class DevicesRepository(
                             runtime.events.collect(::applyRuntimeEvent)
                         }
                     }
+                    val typedEventPipeline = runtimeRepository?.let { runtime ->
+                        DeviceRuntimeEventPipeline(runtime, this)
+                    }
+                    val typedEventsJob = typedEventPipeline?.let { pipeline ->
+                        launch {
+                            pipeline.events.collect(::applyTypedRuntimeEvent)
+                        }
+                    }
                     val presenceMonitorJob = presenceRuntimeMonitor.start(this)
                     _ready.value = true
 
@@ -111,6 +122,8 @@ class DevicesRepository(
                     } finally {
                         _ready.value = false
                         presenceMonitorJob.cancel()
+                        typedEventsJob?.cancel()
+                        typedEventPipeline?.shutdown()
                         runtimeStateJob?.cancel()
                         runtimeEventsJob?.cancel()
                         collectorJob.cancel()
@@ -377,6 +390,28 @@ class DevicesRepository(
             is AqlWsEvent.Authenticated,
             is AqlWsEvent.Failure -> Unit
         }
+    }
+
+    private suspend fun applyTypedRuntimeEvent(event: DeviceRuntimeTypedEvent) {
+        if (event.type != DeviceRuntimeTypedEvent.Type.DEVICE_STATUS_CHANGED) return
+        val statusData = when (val payload = event.payload) {
+            is DeviceRuntimeEventPayload.CommandResult -> payload.result.optJSONObject("status")
+            is DeviceRuntimeEventPayload.Snapshot ->
+                payload.data.optJSONObject("status") ?: payload.data
+        } ?: return
+        val nameStatus = DeviceRuntimeNameStatusParser.parse(
+            statusData,
+            "device.status.changed.data.status"
+        ).getOrNull() ?: return
+        val updated = registryStore.updateSnapshot(event.deviceUid) { current ->
+            current.copy(
+                identity = current.identity.copy(
+                    displayName = nameStatus.productDisplayName,
+                    customName = nameStatus.customName
+                )
+            )
+        }
+        updated?.let { snapshot -> knownStore?.saveSnapshot(snapshot) }
     }
 
     private suspend fun applyRuntimeMetadataMessage(event: AqlWsEvent.Message) {
