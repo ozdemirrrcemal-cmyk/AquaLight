@@ -3,136 +3,169 @@ package com.aqua.aqualight.data.devices.runtime.modules.light
 import org.json.JSONArray
 import org.json.JSONObject
 
+/** Exact parser for the complete firmware `light.status.get.data` contract. */
 object DeviceLightStatusParser {
 
     fun parse(data: JSONObject): DeviceLightStatus {
-        val status = data.optJSONObject("status") ?: data
+        data.requireLightKeys(STATUS_KEYS, STATUS_LABEL)
+        val channels = parseChannels(data.requireLightArray(FIELD_CHANNELS))
+        val programs = parsePrograms(data.requireLightArray(FIELD_PROGRAMS))
+        val channelCount = data.requireLightInt(FIELD_CHANNEL_COUNT, minimum = LIGHT_MIN_COUNT)
+        val programCount = data.requireLightInt(FIELD_PROGRAM_COUNT, minimum = LIGHT_MIN_COUNT)
+        require(channelCount == channels.size) {
+            "$STATUS_LABEL channelCount differs from channels size."
+        }
+        require(programCount == programs.size) {
+            "$STATUS_LABEL programCount differs from programs size."
+        }
 
-        return DeviceLightStatus(
-            supported = status.optBoolean("supported", false),
-            manualSupported = status.optBoolean("manualSupported", false),
-            programSupported = status.optBoolean("programSupported", false),
-            presetsSupported = status.optBoolean("presetsSupported", false),
-            simulationSupported = status.optBoolean("simulationSupported", false),
-            channelCount = status.optInt("channelCount", 0),
-            programCount = status.optInt("programCount", 0),
-            liveEditEnabled = status.optBoolean("liveEditEnabled", false),
-            channelEdit = status.optInt("channelEdit", 0),
-            powerLimitW = status.optDouble("powerLimitW", 0.0),
-            lockLoop = status.optBoolean("lockLoop", false),
-            temperatureDownStepPercent = status.optDouble("temperatureDownStepPercent", 0.0),
-            temperatureRecoveryMs = status.optLong("temperatureRecoveryMs", 0L),
-            lightCorrectionFactor = status.optDouble("lightCorrectionFactor", 0.0),
-            uptimeMs = status.optLong("uptimeMs", 0L),
-            channels = parseChannels(status.optJSONArray("channels")),
-            programs = parsePrograms(status.optJSONArray("programs")),
-            runtime = parseRuntime(status.optJSONObject("runtime"))
+        val status = DeviceLightStatus(
+            supported = data.requireLightBoolean(FIELD_SUPPORTED),
+            manualSupported = data.requireLightBoolean(FIELD_MANUAL_SUPPORTED),
+            programSupported = data.requireLightBoolean(FIELD_PROGRAM_SUPPORTED),
+            presetsSupported = data.requireLightBoolean(FIELD_PRESETS_SUPPORTED),
+            simulationSupported = data.requireLightBoolean(FIELD_SIMULATION_SUPPORTED),
+            channelCount = channelCount,
+            programCount = programCount,
+            liveEditEnabled = data.requireLightBoolean(FIELD_LIVE_EDIT_ENABLED),
+            channelEdit = data.requireLightInt(FIELD_CHANNEL_EDIT),
+            powerLimitW = data.requireLightDouble(
+                FIELD_POWER_LIMIT_W,
+                minimum = LIGHT_NON_NEGATIVE_VALUE
+            ),
+            lockLoop = data.requireLightBoolean(FIELD_LOCK_LOOP),
+            temperatureDownStepPercent = data.requireLightDouble(
+                FIELD_TEMPERATURE_DOWN_STEP_PERCENT,
+                minimum = LIGHT_PERCENT_MIN,
+                maximum = LIGHT_PERCENT_MAX
+            ),
+            temperatureRecoveryMs = data.requireLightLong(
+                FIELD_TEMPERATURE_RECOVERY_MS,
+                minimum = LIGHT_NON_NEGATIVE_LONG
+            ),
+            lightCorrectionFactor = data.requireLightDouble(
+                FIELD_LIGHT_CORRECTION_FACTOR,
+                minimum = LIGHT_NON_NEGATIVE_VALUE
+            ),
+            uptimeMs = data.requireLightLong(
+                FIELD_UPTIME_MS,
+                minimum = LIGHT_NON_NEGATIVE_LONG
+            ),
+            channels = channels,
+            programs = programs,
+            runtime = parseRuntime(data.requireLightObject(FIELD_RUNTIME))
         )
+        validateStatus(status)
+        return status
     }
 
-    private fun parseRuntime(runtime: JSONObject?): DeviceLightRuntimeCapabilities {
+    private fun parseRuntime(data: JSONObject): DeviceLightRuntimeCapabilities {
+        data.requireLightKeys(RUNTIME_KEYS, "$STATUS_LABEL.runtime")
         return DeviceLightRuntimeCapabilities(
-            module = runtime?.optString("module", DeviceLightRuntimeContract.MODULE)
-                ?: DeviceLightRuntimeContract.MODULE,
-            readOnly = runtime?.optBoolean("readOnly", false) ?: false,
-            supportsManualSet = runtime?.optBoolean("supportsManualSet", false) ?: false,
-            supportsChannelRegimeSet = runtime?.optBoolean("supportsChannelRegimeSet", false) ?: false,
-            supportsProgramApply = runtime?.optBoolean("supportsProgramApply", false) ?: false,
-            supportsProgramDelete = runtime?.optBoolean("supportsProgramDelete", false) ?: false,
-            supportsLiveEdit = runtime?.optBoolean("supportsLiveEdit", false) ?: false,
-            event = runtime?.optString("event", "") ?: ""
+            module = data.requireLightText(FIELD_MODULE),
+            readOnly = data.requireLightBoolean(FIELD_READ_ONLY),
+            supportsManualSet = data.requireLightBoolean(FIELD_SUPPORTS_MANUAL_SET),
+            supportsChannelRegimeSet = data.requireLightBoolean(
+                FIELD_SUPPORTS_CHANNEL_REGIME_SET
+            ),
+            supportsProgramApply = data.requireLightBoolean(FIELD_SUPPORTS_PROGRAM_APPLY),
+            supportsProgramDelete = data.requireLightBoolean(FIELD_SUPPORTS_PROGRAM_DELETE),
+            supportsLiveEdit = data.requireLightBoolean(FIELD_SUPPORTS_LIVE_EDIT),
+            event = data.requireLightText(FIELD_EVENT)
         )
     }
 
-    private fun parseChannels(channels: JSONArray?): List<DeviceLightChannelStatus> {
-        if (channels == null) return emptyList()
-
-        return buildList {
-            for (index in 0 until channels.length()) {
-                val item = channels.optJSONObject(index) ?: continue
-                add(parseChannel(item))
+    private fun parseChannels(data: JSONArray): List<DeviceLightChannelStatus> =
+        List(data.length()) { index ->
+            DeviceLightChannelParser.parseStatus(data.requireLightObject(index))
+        }.also { channels ->
+            require(channels.map(DeviceLightChannelStatus::key).toSet().size == channels.size) {
+                "$STATUS_LABEL channels contain duplicate keys."
+            }
+            require(channels.map(DeviceLightChannelStatus::index).toSet().size == channels.size) {
+                "$STATUS_LABEL channels contain duplicate indexes."
             }
         }
-    }
 
-    private fun parseChannel(item: JSONObject): DeviceLightChannelStatus {
-        val editable = item.optJSONObject("editable")
-
-        return DeviceLightChannelStatus(
-            index = item.optInt("index", -1),
-            key = item.optString("key", ""),
-            name = item.optString("name", ""),
-            displayName = item.optString("displayName", item.optString("name", "")),
-            profileManaged = item.optBoolean("profileManaged", false),
-            regime = DeviceLightRegime.fromWire(item.optString("regime", DeviceLightRegime.OFF.wireValue)),
-            channelKind = item.optString("channelKind", ""),
-            gpio = item.optInt("gpio", -1),
-            ledcChannel = item.optInt("ledcChannel", -1),
-            group = item.optInt("group", -1),
-            valueNow = item.optDouble("valueNow", 0.0),
-            valueAuto = item.optDouble("valueAuto", 0.0),
-            valueManual = item.optDouble("valueManual", -1.0),
-            manualTimeoutMs = item.optLong("manualTimeoutMs", 0L),
-            percentNow = item.optDouble("percentNow", item.optDouble("valueNow", 0.0) * 100.0),
-            percentAuto = item.optDouble("percentAuto", item.optDouble("valueAuto", 0.0) * 100.0),
-            percentManual = item.optDouble("percentManual", item.optDouble("valueManual", -1.0) * 100.0),
-            invert = item.optBoolean("invert", false),
-            pwmResolutionBits = item.optInt("pwmResolutionBits", 0),
-            pwmFrequencyHz = item.optInt("pwmFrequencyHz", 0),
-            color = item.optInt("color", 0),
-            lumen = item.optDouble("lumen", 0.0),
-            lux = item.optDouble("lux", 0.0),
-            watt = item.optDouble("watt", 0.0),
-            editable = DeviceLightChannelEditable(
-                hardware = editable?.optBoolean("hardware", false) ?: false,
-                displayName = editable?.optBoolean("displayName", false) ?: false,
-                color = editable?.optBoolean("color", false) ?: false,
-                hardwareCalibration = editable?.optBoolean("hardwareCalibration", false) ?: false
+    private fun parsePrograms(data: JSONArray): List<DeviceLightProgramStatus> =
+        List(data.length()) { listIndex ->
+            DeviceLightProgramParser.parseStatus(
+                data = data.requireLightObject(listIndex),
+                listIndex = listIndex
             )
-        )
-    }
-
-    private fun parsePrograms(programs: JSONArray?): List<DeviceLightProgramStatus> {
-        if (programs == null) return emptyList()
-
-        return buildList {
-            for (listIndex in 0 until programs.length()) {
-                val item = programs.optJSONObject(listIndex) ?: continue
-                add(parseProgram(item, listIndex))
+        }.also { programs ->
+            require(programs.map(DeviceLightProgramStatus::index).toSet().size == programs.size) {
+                "$STATUS_LABEL programs contain duplicate indexes."
             }
         }
+
+    private fun validateStatus(status: DeviceLightStatus) {
+        require(status.runtime.module == DeviceLightRuntimeContract.MODULE)
+        require(!status.runtime.readOnly)
+        require(status.runtime.supportsManualSet == status.manualSupported)
+        require(status.runtime.supportsChannelRegimeSet)
+        require(status.runtime.supportsProgramApply == status.programSupported)
+        require(status.runtime.supportsProgramDelete == status.programSupported)
+        require(status.runtime.supportsLiveEdit == status.liveEditEnabled)
+        require(status.runtime.event == DeviceLightRuntimeContract.Event.STATUS_CHANGED)
     }
 
-    private fun parseProgram(
-        item: JSONObject,
-        fallbackListIndex: Int
-    ): DeviceLightProgramStatus {
-        return DeviceLightProgramStatus(
-            listIndex = item.optInt("listIndex", fallbackListIndex),
-            index = item.optInt("index", fallbackListIndex),
-            channelKey = item.optString("channelKey", ""),
-            bound = item.optBoolean("bound", false),
-            pointCount = item.optInt("pointCount", 0),
-            points = parseProgramPoints(item.optJSONArray("points"))
-        )
-    }
+    private const val STATUS_LABEL = "light.status.get.data"
+    private const val FIELD_SUPPORTED = "supported"
+    private const val FIELD_MANUAL_SUPPORTED = "manualSupported"
+    private const val FIELD_PROGRAM_SUPPORTED = "programSupported"
+    private const val FIELD_PRESETS_SUPPORTED = "presetsSupported"
+    private const val FIELD_SIMULATION_SUPPORTED = "simulationSupported"
+    private const val FIELD_CHANNEL_COUNT = "channelCount"
+    private const val FIELD_PROGRAM_COUNT = "programCount"
+    private const val FIELD_LIVE_EDIT_ENABLED = "liveEditEnabled"
+    private const val FIELD_CHANNEL_EDIT = "channelEdit"
+    private const val FIELD_POWER_LIMIT_W = "powerLimitW"
+    private const val FIELD_LOCK_LOOP = "lockLoop"
+    private const val FIELD_TEMPERATURE_DOWN_STEP_PERCENT = "temperatureDownStepPercent"
+    private const val FIELD_TEMPERATURE_RECOVERY_MS = "temperatureRecoveryMs"
+    private const val FIELD_LIGHT_CORRECTION_FACTOR = "lightCorrectionFactor"
+    private const val FIELD_UPTIME_MS = "uptimeMs"
+    private const val FIELD_CHANNELS = "channels"
+    private const val FIELD_PROGRAMS = "programs"
+    private const val FIELD_RUNTIME = "runtime"
+    private const val FIELD_MODULE = "module"
+    private const val FIELD_READ_ONLY = "readOnly"
+    private const val FIELD_SUPPORTS_MANUAL_SET = "supportsManualSet"
+    private const val FIELD_SUPPORTS_CHANNEL_REGIME_SET = "supportsChannelRegimeSet"
+    private const val FIELD_SUPPORTS_PROGRAM_APPLY = "supportsProgramApply"
+    private const val FIELD_SUPPORTS_PROGRAM_DELETE = "supportsProgramDelete"
+    private const val FIELD_SUPPORTS_LIVE_EDIT = "supportsLiveEdit"
+    private const val FIELD_EVENT = "event"
 
-    private fun parseProgramPoints(points: JSONArray?): List<DeviceLightProgramPointStatus> {
-        if (points == null) return emptyList()
-
-        return buildList {
-            for (index in 0 until points.length()) {
-                val item = points.optJSONObject(index) ?: continue
-                add(
-                    DeviceLightProgramPointStatus(
-                        index = item.optInt("index", index),
-                        timeMs = item.optLong("timeMs", 0L),
-                        time = item.optString("time", ""),
-                        value = item.optDouble("value", 0.0),
-                        percent = item.optDouble("percent", item.optDouble("value", 0.0) * 100.0)
-                    )
-                )
-            }
-        }
-    }
+    private val STATUS_KEYS = setOf(
+        FIELD_SUPPORTED,
+        FIELD_MANUAL_SUPPORTED,
+        FIELD_PROGRAM_SUPPORTED,
+        FIELD_PRESETS_SUPPORTED,
+        FIELD_SIMULATION_SUPPORTED,
+        FIELD_CHANNEL_COUNT,
+        FIELD_PROGRAM_COUNT,
+        FIELD_LIVE_EDIT_ENABLED,
+        FIELD_CHANNEL_EDIT,
+        FIELD_POWER_LIMIT_W,
+        FIELD_LOCK_LOOP,
+        FIELD_TEMPERATURE_DOWN_STEP_PERCENT,
+        FIELD_TEMPERATURE_RECOVERY_MS,
+        FIELD_LIGHT_CORRECTION_FACTOR,
+        FIELD_UPTIME_MS,
+        FIELD_CHANNELS,
+        FIELD_PROGRAMS,
+        FIELD_RUNTIME
+    )
+    private val RUNTIME_KEYS = setOf(
+        FIELD_MODULE,
+        FIELD_READ_ONLY,
+        FIELD_SUPPORTS_MANUAL_SET,
+        FIELD_SUPPORTS_CHANNEL_REGIME_SET,
+        FIELD_SUPPORTS_PROGRAM_APPLY,
+        FIELD_SUPPORTS_PROGRAM_DELETE,
+        FIELD_SUPPORTS_LIVE_EDIT,
+        FIELD_EVENT
+    )
 }

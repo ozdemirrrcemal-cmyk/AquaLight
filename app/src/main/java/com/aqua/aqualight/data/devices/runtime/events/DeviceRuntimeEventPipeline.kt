@@ -17,10 +17,10 @@ import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.launch
 
 /**
- * Opt-in typed event pipeline for module repositories.
+ * Typed event pipeline for module repositories.
  *
- * The existing raw repository event stream remains unchanged. Future module stages consume this
- * pipeline so event routing can be introduced without rewriting transport or legacy consumers.
+ * The raw repository event stream remains unchanged. Routed events are additionally offered to
+ * the relevant module state reducer after device and connection-generation validation.
  */
 class DeviceRuntimeEventPipeline(
     private val repository: DeviceRuntimeRepository,
@@ -64,6 +64,7 @@ class DeviceRuntimeEventPipeline(
 
     private suspend fun activateCurrent(deviceUid: DeviceUid) {
         currentGeneration(deviceUid)?.let { generation ->
+            repository.runtimeModules.clearRuntimeState(deviceUid)
             router.activate(deviceUid, generation)
         }
     }
@@ -72,19 +73,22 @@ class DeviceRuntimeEventPipeline(
         currentGeneration(deviceUid)?.let { generation ->
             router.deactivate(deviceUid, generation)
         }
+        repository.runtimeModules.clearRuntimeState(deviceUid)
     }
 
     private suspend fun routeMessage(event: AqlWsEvent.Message) {
         val message = event.parsed as? AqlWsIncomingMessage.Event ?: return
         val generation = currentGeneration(event.deviceUid) ?: return
         router.activate(event.deviceUid, generation)
-        _routingResults.emit(
-            router.route(
-                deviceUid = event.deviceUid,
-                generation = generation,
-                message = message
-            )
+        val result = router.route(
+            deviceUid = event.deviceUid,
+            generation = generation,
+            message = message
         )
+        if (result is DeviceRuntimeEventRoutingResult.Routed) {
+            repository.runtimeModules.acceptTypedRuntimeEvent(result.event)
+        }
+        _routingResults.emit(result)
     }
 
     private fun currentGeneration(deviceUid: DeviceUid): DeviceRuntimeConnectionGeneration? =

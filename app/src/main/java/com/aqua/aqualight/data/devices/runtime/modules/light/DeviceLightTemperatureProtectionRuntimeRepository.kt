@@ -1,55 +1,78 @@
 package com.aqua.aqualight.data.devices.runtime.modules.light
 
 import com.aqua.aqualight.data.devices.model.DeviceUid
-import com.aqua.aqualight.data.devices.runtime.ws.AqlWsCommandClient
-import org.json.JSONObject
+import com.aqua.aqualight.data.devices.runtime.core.DeviceRuntimeCommandGateway
+import com.aqua.aqualight.data.devices.runtime.core.DeviceRuntimeCommandOutcome
+import com.aqua.aqualight.data.devices.runtime.modules.common.DeviceRuntimeJsonCommand
+import kotlinx.coroutines.flow.StateFlow
 
-class DeviceLightTemperatureProtectionRuntimeRepository(
-    private val commandClientProvider: (DeviceUid) -> AqlWsCommandClient?
+class DeviceLightTemperatureProtectionRuntimeRepository internal constructor(
+    private val gateway: DeviceRuntimeCommandGateway,
+    private val stateStore: DeviceLightRuntimeStateStore
 ) {
-    fun requestStatus(deviceUid: DeviceUid): DeviceLightCommandResult = send(
-        deviceUid = deviceUid,
-        action = DeviceLightRuntimeContract.Action.TEMPERATURE_PROTECTION_STATUS_GET
+    constructor(gateway: DeviceRuntimeCommandGateway) : this(
+        gateway = gateway,
+        stateStore = DeviceLightRuntimeStateStore()
     )
 
-    fun setThreshold(
+    val states: StateFlow<Map<DeviceUid, DeviceLightTemperatureProtectionStatus>> =
+        stateStore.temperatureProtection
+
+    fun currentStatus(deviceUid: DeviceUid): DeviceLightTemperatureProtectionStatus? =
+        states.value[deviceUid]
+
+    suspend fun requestStatus(
+        deviceUid: DeviceUid
+    ): DeviceRuntimeCommandOutcome<DeviceLightTemperatureProtectionStatus> = gateway.execute(
+        deviceUid,
+        DeviceRuntimeJsonCommand(
+            module = DeviceLightRuntimeContract.MODULE,
+            action = DeviceLightRuntimeContract.Action.TEMPERATURE_PROTECTION_STATUS_GET,
+            successParser = { data ->
+                DeviceLightTemperatureProtectionParser.parseStatus(data).getOrThrow()
+            }
+        )
+    ).recordTemperatureSuccess { status ->
+        stateStore.recordTemperatureProtection(deviceUid, status)
+    }
+
+    suspend fun setThreshold(
         deviceUid: DeviceUid,
         payload: DeviceLightTemperatureProtectionSetPayload
-    ): DeviceLightCommandResult = send(
-        deviceUid = deviceUid,
-        action = DeviceLightRuntimeContract.Action.TEMPERATURE_PROTECTION_SET,
-        data = payload.toJson()
-    )
-
-    private fun send(
-        deviceUid: DeviceUid,
-        action: String,
-        data: JSONObject = JSONObject()
-    ): DeviceLightCommandResult {
-        val commandClient = commandClientProvider(deviceUid)
-            ?: return DeviceLightCommandResult(
-                sent = false,
-                action = action,
-                errorMessage = "No WebSocket command client for ${deviceUid.value}"
+    ): DeviceRuntimeCommandOutcome<DeviceLightTemperatureProtectionSetResult> {
+        val status = states.value[deviceUid]
+        if (status != null && (!status.supported || !status.runtime.supportsSet)) {
+            return DeviceRuntimeCommandOutcome.UnsupportedByDevice(
+                deviceUid = deviceUid,
+                module = DeviceLightRuntimeContract.MODULE,
+                action = DeviceLightRuntimeContract.Action.TEMPERATURE_PROTECTION_SET
             )
-
-        val messageId = commandClient.command(
-            module = DeviceLightRuntimeContract.MODULE,
-            action = action,
-            data = data
-        )
-        return DeviceLightCommandResult(
-            sent = messageId != null,
-            action = action,
-            messageId = messageId.orEmpty(),
-            errorMessage = if (messageId != null) "" else "WebSocket send failed"
-        )
+        }
+        return gateway.execute(
+            deviceUid,
+            DeviceRuntimeJsonCommand(
+                module = DeviceLightRuntimeContract.MODULE,
+                action = DeviceLightRuntimeContract.Action.TEMPERATURE_PROTECTION_SET,
+                dataFactory = payload::toJson,
+                successParser = { data ->
+                    DeviceLightTemperatureProtectionParser.parseSetResult(data).also { parsed ->
+                        parsed.onSuccess { result ->
+                            DeviceLightCommandValidation.validateTemperatureProtection(
+                                payload,
+                                result
+                            )
+                        }
+                    }.getOrThrow()
+                }
+            )
+        ).recordTemperatureSuccess { result ->
+            stateStore.recordTemperatureProtection(deviceUid, result.status)
+        }
     }
+}
 
-    companion object {
-        fun singleSession(
-            commandClient: AqlWsCommandClient
-        ): DeviceLightTemperatureProtectionRuntimeRepository =
-            DeviceLightTemperatureProtectionRuntimeRepository { commandClient }
-    }
+private fun <T> DeviceRuntimeCommandOutcome<T>.recordTemperatureSuccess(
+    recorder: (T) -> Unit
+): DeviceRuntimeCommandOutcome<T> = also { outcome ->
+    if (outcome is DeviceRuntimeCommandOutcome.Success) recorder(outcome.value)
 }
