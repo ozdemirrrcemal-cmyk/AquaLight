@@ -31,21 +31,27 @@ class DeviceLightRuntimeRepository internal constructor(
     suspend fun setManual(
         deviceUid: DeviceUid,
         payload: DeviceLightManualSetPayload
-    ): DeviceRuntimeCommandOutcome<DeviceLightManualMutationResult> = gateway.execute(
-        deviceUid,
-        jsonCommand(
-            action = DeviceLightRuntimeContract.Action.MANUAL_SET,
-            dataFactory = {
-                DeviceLightCommandValidation.validateManualRequest(payload)
-                payload.toJson()
-            },
-            parser = { data ->
-                DeviceLightMutationParser.parseManual(data).also { result ->
-                    DeviceLightCommandValidation.validateManual(payload, result)
+    ): DeviceRuntimeCommandOutcome<DeviceLightManualMutationResult> {
+        val status = states.value[deviceUid]
+        if (status != null && (!status.supported || !status.manualSupported)) {
+            return unsupported(deviceUid, DeviceLightRuntimeContract.Action.MANUAL_SET)
+        }
+        return gateway.execute(
+            deviceUid,
+            jsonCommand(
+                action = DeviceLightRuntimeContract.Action.MANUAL_SET,
+                dataFactory = {
+                    DeviceLightCommandValidation.validateManualRequest(payload)
+                    payload.toJson()
+                },
+                parser = { data ->
+                    DeviceLightMutationParser.parseManual(data).also { result ->
+                        DeviceLightCommandValidation.validateManual(payload, result)
+                    }
                 }
-            }
-        )
-    ).recordSuccess { result -> stateStore.recordManual(deviceUid, result) }
+            )
+        ).recordSuccess { result -> stateStore.recordManual(deviceUid, result) }
+    }
 
     suspend fun clearManual(
         deviceUid: DeviceUid,
@@ -64,21 +70,27 @@ class DeviceLightRuntimeRepository internal constructor(
     suspend fun setChannelRegime(
         deviceUid: DeviceUid,
         payload: DeviceLightChannelRegimeSetPayload
-    ): DeviceRuntimeCommandOutcome<DeviceLightChannelRegimeMutationResult> = gateway.execute(
-        deviceUid,
-        jsonCommand(
-            action = DeviceLightRuntimeContract.Action.CHANNEL_REGIME_SET,
-            dataFactory = {
-                DeviceLightCommandValidation.validateChannelRegimeRequest(payload)
-                payload.toJson()
-            },
-            parser = { data ->
-                DeviceLightMutationParser.parseChannelRegime(data).also { result ->
-                    DeviceLightCommandValidation.validateChannelRegime(payload, result)
+    ): DeviceRuntimeCommandOutcome<DeviceLightChannelRegimeMutationResult> {
+        val status = states.value[deviceUid]
+        if (status != null && (!status.supported || !status.runtime.supportsChannelRegimeSet)) {
+            return unsupported(deviceUid, DeviceLightRuntimeContract.Action.CHANNEL_REGIME_SET)
+        }
+        return gateway.execute(
+            deviceUid,
+            jsonCommand(
+                action = DeviceLightRuntimeContract.Action.CHANNEL_REGIME_SET,
+                dataFactory = {
+                    DeviceLightCommandValidation.validateChannelRegimeRequest(payload)
+                    payload.toJson()
+                },
+                parser = { data ->
+                    DeviceLightMutationParser.parseChannelRegime(data).also { result ->
+                        DeviceLightCommandValidation.validateChannelRegime(payload, result)
+                    }
                 }
-            }
-        )
-    ).recordSuccess { result -> stateStore.recordChannelRegime(deviceUid, result) }
+            )
+        ).recordSuccess { result -> stateStore.recordChannelRegime(deviceUid, result) }
+    }
 
     suspend fun setChannelRegime(
         deviceUid: DeviceUid,
@@ -97,37 +109,49 @@ class DeviceLightRuntimeRepository internal constructor(
     suspend fun applyProgram(
         deviceUid: DeviceUid,
         payload: DeviceLightProgramApplyPayload
-    ): DeviceRuntimeCommandOutcome<DeviceLightProgramApplyResult> = gateway.execute(
-        deviceUid,
-        jsonCommand(
-            action = DeviceLightRuntimeContract.Action.PROGRAM_APPLY,
-            dataFactory = {
-                DeviceLightCommandValidation.validateProgramRequest(payload)
-                payload.toJson()
-            },
-            parser = { data ->
-                DeviceLightMutationParser.parseProgramApply(data).also { result ->
-                    DeviceLightCommandValidation.validateProgramApply(payload, result)
+    ): DeviceRuntimeCommandOutcome<DeviceLightProgramApplyResult> {
+        val status = states.value[deviceUid]
+        if (status != null && (!status.supported || !status.programSupported)) {
+            return unsupported(deviceUid, DeviceLightRuntimeContract.Action.PROGRAM_APPLY)
+        }
+        return gateway.execute(
+            deviceUid,
+            jsonCommand(
+                action = DeviceLightRuntimeContract.Action.PROGRAM_APPLY,
+                dataFactory = {
+                    DeviceLightCommandValidation.validateProgramRequest(payload)
+                    payload.toJson()
+                },
+                parser = { data ->
+                    DeviceLightMutationParser.parseProgramApply(data).also { result ->
+                        DeviceLightCommandValidation.validateProgramApply(payload, result)
+                    }
                 }
-            }
-        )
-    ).recordSuccess { result -> stateStore.recordProgramApply(deviceUid, result) }
+            )
+        ).recordSuccess { result -> stateStore.recordProgramApply(deviceUid, result) }
+    }
 
     suspend fun deleteProgram(
         deviceUid: DeviceUid,
         payload: DeviceLightProgramDeletePayload
-    ): DeviceRuntimeCommandOutcome<DeviceLightProgramDeleteResult> = gateway.execute(
-        deviceUid,
-        jsonCommand(
-            action = DeviceLightRuntimeContract.Action.PROGRAM_DELETE,
-            dataFactory = payload::toJson,
-            parser = { data ->
-                DeviceLightMutationParser.parseProgramDelete(data).also { result ->
-                    DeviceLightCommandValidation.validateProgramDelete(payload, result)
+    ): DeviceRuntimeCommandOutcome<DeviceLightProgramDeleteResult> {
+        val status = states.value[deviceUid]
+        if (status != null && (!status.supported || !status.programSupported)) {
+            return unsupported(deviceUid, DeviceLightRuntimeContract.Action.PROGRAM_DELETE)
+        }
+        return gateway.execute(
+            deviceUid,
+            jsonCommand(
+                action = DeviceLightRuntimeContract.Action.PROGRAM_DELETE,
+                dataFactory = payload::toJson,
+                parser = { data ->
+                    DeviceLightMutationParser.parseProgramDelete(data).also { result ->
+                        DeviceLightCommandValidation.validateProgramDelete(payload, result)
+                    }
                 }
-            }
-        )
-    ).recordSuccess { result -> stateStore.recordProgramDelete(deviceUid, result) }
+            )
+        ).recordSuccess { result -> stateStore.recordProgramDelete(deviceUid, result) }
+    }
 
     suspend fun deleteProgram(
         deviceUid: DeviceUid,
@@ -151,6 +175,16 @@ class DeviceLightRuntimeRepository internal constructor(
         dataFactory = dataFactory,
         successParser = parser
     )
+
+    private fun unsupported(
+        deviceUid: DeviceUid,
+        action: String
+    ): DeviceRuntimeCommandOutcome.UnsupportedByDevice =
+        DeviceRuntimeCommandOutcome.UnsupportedByDevice(
+            deviceUid = deviceUid,
+            module = DeviceLightRuntimeContract.MODULE,
+            action = action
+        )
 }
 
 private fun <T> DeviceRuntimeCommandOutcome<T>.recordSuccess(
