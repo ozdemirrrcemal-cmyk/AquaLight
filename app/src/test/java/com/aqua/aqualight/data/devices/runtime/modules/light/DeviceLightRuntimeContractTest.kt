@@ -79,7 +79,7 @@ class DeviceLightRuntimeContractTest {
         assertEquals(setOf("clear", "durationMs", "channels"), gateway.payloads[1].keySet())
         assertEquals("On", gateway.payloads[2].getString("regime"))
         assertEquals(setOf("channelKey", "points", "save"), gateway.payloads[3].keySet())
-        assertEquals(1, repository.currentStatus(DEVICE_UID)?.programCount)
+        assertEquals(1, repository.states.value[DEVICE_UID]?.programCount)
     }
 
     @Test
@@ -87,7 +87,9 @@ class DeviceLightRuntimeContractTest {
         val gateway = QueueGateway(
             mutableMapOf(DeviceLightRuntimeContract.Action.STATUS_GET to statusJson())
         )
-        val repository = DeviceLightRuntimeRepository(gateway)
+        val stateStore = DeviceLightRuntimeStateStore()
+        val repository = DeviceLightRuntimeRepository(gateway, stateStore)
+        val reducer = DeviceLightTypedEventReducer(stateStore)
         repository.requestStatus(DEVICE_UID).requireSuccess()
 
         val event = DeviceRuntimeTypedEvent(
@@ -105,10 +107,10 @@ class DeviceLightRuntimeContractTest {
             )
         )
 
-        assertEquals(DeviceLightEventApplyResult.Applied, repository.applyTypedEvent(event))
-        assertEquals(DeviceLightEventApplyResult.Applied, repository.applyTypedEvent(event))
-        assertEquals(25.0, repository.currentStatus(DEVICE_UID)?.channels?.single()?.percentManual)
-        assertEquals(null, repository.currentStatus(DeviceUid("another-device")))
+        assertEquals(DeviceLightEventApplyResult.Applied, reducer.apply(event))
+        assertEquals(DeviceLightEventApplyResult.Applied, reducer.apply(event))
+        assertEquals(25.0, repository.states.value[DEVICE_UID]?.channels?.single()?.percentManual)
+        assertEquals(null, repository.states.value[DeviceUid("another-device")])
     }
 
     @Test
@@ -208,8 +210,7 @@ class DeviceLightRuntimeContractTest {
         .put("saved", false)
 
     private fun regimeResult(): JSONObject = JSONObject()
-        .put("operation", "channelRegimeSet")
-        .put("changed", true)
+        .put("operation", "channelRegimeSet")n        .put("changed", true)
         .put("saved", true)
         .put("saveRequested", true)
         .put("channelKey", "white")
