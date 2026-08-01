@@ -6,12 +6,6 @@ import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.withTimeoutOrNull
 import org.json.JSONObject
 
-internal class DeviceRuntimeExecutionContext(
-    val sessionProvider: (DeviceUid) -> DeviceRuntimeCommandSession?,
-    val supportChecker: (DeviceUid, String, String) -> Boolean,
-    val pendingRequests: DeviceRuntimePendingRequestRegistry
-)
-
 internal suspend fun <T> executeCorrelatedRuntimeRequest(
     deviceUid: DeviceUid,
     command: DeviceRuntimeCommand<T>,
