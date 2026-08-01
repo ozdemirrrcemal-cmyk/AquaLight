@@ -6,7 +6,10 @@ import org.json.JSONObject
 internal object DeviceCoolingRuntimeFixtures {
     fun status(
         temperatureC: Double? = 27.4,
-        fanDisplayNameEditable: Boolean = true
+        fanDisplayNameEditable: Boolean = true,
+        temperatureSensorIndex: Int = 0,
+        temperatureSampledAtMs: Long = 12_000L,
+        uptimeMs: Long = 12_000L
     ): JSONObject = JSONObject()
         .put("supported", true)
         .put("fanSupported", true)
@@ -17,7 +20,7 @@ internal object DeviceCoolingRuntimeFixtures {
         .put("minTemperatureC", 28.0)
         .put("maxTemperatureC", 35.0)
         .put("fixedSensorIndex", 0)
-        .put("uptimeMs", 12_000L)
+        .put("uptimeMs", uptimeMs)
         .put("fans", JSONArray().put(fan(fanDisplayNameEditable = fanDisplayNameEditable)))
         .put("rules", JSONArray().put(statusRule()))
         .put(
@@ -34,13 +37,24 @@ internal object DeviceCoolingRuntimeFixtures {
                 .put("sensorMappingEditable", false)
                 .put("event", "cooling.status.changed")
         )
-        .put("temperature", temperature(temperatureC))
+        .put(
+            "temperature",
+            temperature(
+                temperatureC = temperatureC,
+                sensorIndex = temperatureSensorIndex,
+                sampledAtMs = temperatureSampledAtMs
+            )
+        )
 
-    fun temperature(temperatureC: Double? = 27.4): JSONObject = JSONObject()
-        .put("sensorIndex", if (temperatureC == null) 0 else 0)
+    fun temperature(
+        temperatureC: Double? = 27.4,
+        sensorIndex: Int = 0,
+        sampledAtMs: Long = 12_000L
+    ): JSONObject = JSONObject()
+        .put("sensorIndex", sensorIndex)
         .put("readingValid", temperatureC != null)
         .put("temperatureC", temperatureC ?: JSONObject.NULL)
-        .put("sampledAtMs", 12_000L)
+        .put("sampledAtMs", sampledAtMs)
 
     fun configApply(
         mode: String = "On",
