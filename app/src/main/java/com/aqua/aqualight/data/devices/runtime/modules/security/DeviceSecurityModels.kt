@@ -40,7 +40,7 @@ data class DeviceSecurityCredentialStorage(
     val storedPlaintext: Boolean,
     val tokenFormat: String,
     val tokenHexLength: Int,
-    val tokenVersion: Int?,
+    val tokenVersion: Long?,
     val pairedAtMs: Long?,
     val lastRotatedAtMs: Long?,
     val provisioningTokenPending: Boolean?
