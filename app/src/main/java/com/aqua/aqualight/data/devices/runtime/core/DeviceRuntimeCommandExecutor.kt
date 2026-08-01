@@ -11,11 +11,16 @@ internal enum class DeviceRuntimeCompletionDisposition {
 }
 
 internal class DeviceRuntimeCommandExecutor(
-    private val sessionProvider: (DeviceUid) -> DeviceRuntimeCommandSession?,
-    private val supportChecker: (DeviceUid, String, String) -> Boolean,
+    sessionProvider: (DeviceUid) -> DeviceRuntimeCommandSession?,
+    supportChecker: (DeviceUid, String, String) -> Boolean,
     private val pendingRequests: DeviceRuntimePendingRequestRegistry =
         DeviceRuntimePendingRequestRegistry()
 ) {
+    private val executionContext = DeviceRuntimeExecutionContext(
+        sessionProvider = sessionProvider,
+        supportChecker = supportChecker,
+        pendingRequests = pendingRequests
+    )
 
     suspend fun <T> execute(
         deviceUid: DeviceUid,
@@ -32,9 +37,7 @@ internal class DeviceRuntimeCommandExecutor(
             deviceUid = deviceUid,
             command = command,
             timeoutMillis = timeoutMillis,
-            sessionProvider = sessionProvider,
-            supportChecker = supportChecker,
-            pendingRequests = pendingRequests
+            context = executionContext
         )
     }
 
