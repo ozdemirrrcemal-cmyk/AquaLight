@@ -5,8 +5,14 @@ internal object DeviceLightCommandValidation {
     fun validateManualRequest(request: DeviceLightManualSetPayload) {
         val requestedKeys = request.channels.map { channel ->
             requireExactChannelKey(channel.channelKey)
-            require((channel.percent == null) != (channel.value == null)) {
-                "Manual Light channel must use exactly one of percent or value."
+            if (request.clear) {
+                require(channel.percent == null && channel.value == null) {
+                    "Manual Light clear channel must contain only channelKey."
+                }
+            } else {
+                require((channel.percent == null) != (channel.value == null)) {
+                    "Manual Light channel must use exactly one of percent or value."
+                }
             }
             channel.channelKey
         }
