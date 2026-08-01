@@ -3,9 +3,9 @@ package com.aqua.aqualight.application.devices
 import kotlinx.coroutines.flow.Flow
 
 interface DeviceCoolingOperations {
-    fun observe(deviceUid: String): Flow<DeviceCoolingSnapshot?>
+    fun observeCooling(deviceUid: String): Flow<DeviceCoolingSnapshot?>
 
-    fun current(deviceUid: String): DeviceCoolingSnapshot?
+    fun currentCooling(deviceUid: String): DeviceCoolingSnapshot?
 
     suspend fun refresh(deviceUid: String): DeviceCoolingOperationResult
 
