@@ -38,11 +38,11 @@ internal class DefaultDeviceRootOperations(
         return devicesRepository.connectRuntime(DeviceUid(normalized))
     }
 
-    override fun observe(deviceUid: String): Flow<DeviceCoolingSnapshot?> =
-        coolingOperations.observe(deviceUid)
+    override fun observeCooling(deviceUid: String): Flow<DeviceCoolingSnapshot?> =
+        coolingOperations.observeCooling(deviceUid)
 
-    override fun current(deviceUid: String): DeviceCoolingSnapshot? =
-        coolingOperations.current(deviceUid)
+    override fun currentCooling(deviceUid: String): DeviceCoolingSnapshot? =
+        coolingOperations.currentCooling(deviceUid)
 
     override suspend fun refresh(deviceUid: String): DeviceCoolingOperationResult =
         coolingOperations.refresh(deviceUid)
