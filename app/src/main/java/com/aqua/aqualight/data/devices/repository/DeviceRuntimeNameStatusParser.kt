@@ -6,7 +6,7 @@ import org.json.JSONObject
 
 object DeviceRuntimeNameStatusParser {
     fun parse(source: JSONObject, label: String): Result<DeviceRuntimeNameStatus> = runCatching {
-        DeviceRuntimeJson.requireExactKeys(source, NAME_KEYS, label)
+        DeviceRuntimeJson.requireExactKeys(source, NESTED_NAME_KEYS, label)
         DeviceRuntimeNameStatus(
             productDisplayName = DeviceRuntimeJson.stringValue(
                 source,
@@ -25,13 +25,13 @@ object DeviceRuntimeNameStatusParser {
             ),
             nameEditable = DeviceRuntimeJson.booleanValue(
                 source,
-                FIELD_NAME_EDITABLE,
-                "$label.$FIELD_NAME_EDITABLE"
+                FIELD_EDITABLE,
+                "$label.$FIELD_EDITABLE"
             ),
             customNameMaxBytes = DeviceRuntimeJson.intValue(
                 source,
-                FIELD_CUSTOM_NAME_MAX_BYTES,
-                "$label.$FIELD_CUSTOM_NAME_MAX_BYTES"
+                FIELD_MAX_BYTES,
+                "$label.$FIELD_MAX_BYTES"
             )
         )
     }
@@ -71,15 +71,17 @@ object DeviceRuntimeNameStatusParser {
         const val FIELD_DISPLAY_NAME = "displayName"
         const val FIELD_CUSTOM_NAME = "customName"
         const val FIELD_EFFECTIVE_DISPLAY_NAME = "effectiveDisplayName"
+        const val FIELD_EDITABLE = "editable"
+        const val FIELD_MAX_BYTES = "maxBytes"
         const val FIELD_NAME_EDITABLE = "nameEditable"
         const val FIELD_CUSTOM_NAME_MAX_BYTES = "customNameMaxBytes"
 
-        val NAME_KEYS = setOf(
+        val NESTED_NAME_KEYS = setOf(
             FIELD_PRODUCT_DISPLAY_NAME,
             FIELD_CUSTOM_NAME,
             FIELD_EFFECTIVE_DISPLAY_NAME,
-            FIELD_NAME_EDITABLE,
-            FIELD_CUSTOM_NAME_MAX_BYTES
+            FIELD_EDITABLE,
+            FIELD_MAX_BYTES
         )
     }
 }
