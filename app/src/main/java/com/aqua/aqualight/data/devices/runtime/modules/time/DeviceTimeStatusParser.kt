@@ -13,7 +13,7 @@ object DeviceTimeStatusParser {
             posixTimeZone = status.optString("posixTimeZone", ""),
             utcOffsetMinutes = status.optInt(
                 "utcOffsetMinutes",
-                status.optInt("timeZone", 0) * 60
+                status.optInt("timeZone", DEFAULT_TIME_ZONE_HOURS) * MINUTES_PER_HOUR
             ),
             autoSyncNtpEnabled = status.optBoolean("autoSyncNtpEnabled", false),
             autoSyncGadgetEnabled = status.optBoolean("autoSyncGadgetEnabled", false),
@@ -80,14 +80,14 @@ object DeviceTimeStatusParser {
 
     private fun validateParts(data: JSONObject, timeSet: Boolean) {
         DeviceRuntimeJson.requireExactKeys(data, PART_KEYS, "$STATUS_LABEL.parts")
-        val year = DeviceRuntimeJson.intValue(data, "year")
-        require(year in if (timeSet) 2000..2199 else 1970..2199)
-        require(DeviceRuntimeJson.intValue(data, "month") in 1..12)
-        require(DeviceRuntimeJson.intValue(data, "day") in 1..31)
-        require(DeviceRuntimeJson.intValue(data, "weekday") in 1..7)
-        require(DeviceRuntimeJson.intValue(data, "hour") in 0..23)
-        require(DeviceRuntimeJson.intValue(data, "minute") in 0..59)
-        require(DeviceRuntimeJson.intValue(data, "second") in 0..59)
+        val minimumYear = if (timeSet) MIN_SYNCED_YEAR else MIN_UNSET_YEAR
+        require(DeviceRuntimeJson.intValue(data, "year") in minimumYear..MAX_YEAR)
+        require(DeviceRuntimeJson.intValue(data, "month") in MIN_MONTH..MAX_MONTH)
+        require(DeviceRuntimeJson.intValue(data, "day") in MIN_DAY..MAX_DAY)
+        require(DeviceRuntimeJson.intValue(data, "weekday") in MIN_WEEKDAY..MAX_WEEKDAY)
+        require(DeviceRuntimeJson.intValue(data, "hour") in MIN_HOUR..MAX_HOUR)
+        require(DeviceRuntimeJson.intValue(data, "minute") in MIN_MINUTE..MAX_MINUTE)
+        require(DeviceRuntimeJson.intValue(data, "second") in MIN_SECOND..MAX_SECOND)
     }
 
     private fun validateRuntime(data: JSONObject) {
@@ -132,6 +132,23 @@ object DeviceTimeStatusParser {
     private const val FIELD_EVENT = "event"
     private const val FIELD_STATUS = "status"
     private const val EVENT_TIME_STATUS_CHANGED = "time.status.changed"
+    private const val DEFAULT_TIME_ZONE_HOURS = 0
+    private const val MINUTES_PER_HOUR = 60
+    private const val MIN_UNSET_YEAR = 1970
+    private const val MIN_SYNCED_YEAR = 2000
+    private const val MAX_YEAR = 2199
+    private const val MIN_MONTH = 1
+    private const val MAX_MONTH = 12
+    private const val MIN_DAY = 1
+    private const val MAX_DAY = 31
+    private const val MIN_WEEKDAY = 1
+    private const val MAX_WEEKDAY = 7
+    private const val MIN_HOUR = 0
+    private const val MAX_HOUR = 23
+    private const val MIN_MINUTE = 0
+    private const val MAX_MINUTE = 59
+    private const val MIN_SECOND = 0
+    private const val MAX_SECOND = 59
 
     private val STATUS_KEYS = setOf(
         "timeSet", "timeString", "uptime", "uptimeMs", "millisStartDay", "timeZone",
