@@ -6,12 +6,11 @@ Target: **41 authenticated commands / 0 public commands**
 
 ## Current position
 
-- Current stage: **00 — Existing-system baseline**
-- Active branch: `test/ws-00-runtime-baseline`
-- Pull request: `#181`
-- Status: **PASSED / READY TO MERGE**
-- Evidence: `docs/AQL_WS_V1_STAGE_00_BASELINE.md`
-- Next: Merge PR #181 and open `chore/ws-01-contract-parity`.
+- Current stage: **01 — Firmware contract parity**
+- Active branch: `chore/ws-01-contract-parity`
+- Status: **IN PROGRESS**
+- Previous stage: **00 PASSED / PR #181 MERGED**
+- Next: Compare firmware golden fixture with Android contract, then implement only the `38 → 41` parity delta.
 
 ## Fixed rules
 
@@ -25,9 +24,8 @@ Target: **41 authenticated commands / 0 public commands**
 
 ## Stage list
 
-- [x] **00** `test/ws-00-runtime-baseline` — **PASSED**
+- [x] **00** `test/ws-00-runtime-baseline` — **MERGED**
   - [x] Runtime/provisioning code diff: none
-  - [x] Accidental custom guard/test removed
   - [x] Existing Android CI passed
   - [x] Existing unit/golden/protocol tests passed
   - [x] Lint/Detekt and coverage gates passed
@@ -37,13 +35,15 @@ Target: **41 authenticated commands / 0 public commands**
   - [x] CodeQL passed
   - [x] Physical rerun: N/A for documentation-only branch
 
-- [ ] **01** `chore/ws-01-contract-parity`
-  - Firmware golden fixture copied byte-identically
-  - Android command matrix `38 → 41`
-  - Add `device.name.set`
-  - Add `light.temperature-protection.status.get`
-  - Add `light.temperature-protection.set`
-  - Golden tests and protocol guard updated to 41
+- [ ] **01** `chore/ws-01-contract-parity` — **IN PROGRESS**
+  - [ ] Firmware golden fixture copied byte-identically
+  - [ ] Android command matrix `38 → 41`
+  - [ ] Add `device.name.set`
+  - [ ] Add `light.temperature-protection.status.get`
+  - [ ] Add `light.temperature-protection.set`
+  - [ ] Golden tests updated to 41
+  - [ ] Protocol guard updated to 41
+  - [ ] Provisioning/runtime code remains unchanged
 
 - [ ] **02** `feat/ws-02-request-broker`
   - Request ID correlation
@@ -129,4 +129,5 @@ Target: **41 authenticated commands / 0 public commands**
 |---|---|---|---|
 | 2026-08-01 | Tracker setup | PASS | Start Stage 00 baseline |
 | 2026-08-01 | Stage 00 first CI run | INVALID | Remove accidental custom guard/test |
-| 2026-08-01 | Stage 00 existing CI baseline | PASS | Merge PR #181 and start Stage 01 |
+| 2026-08-01 | Stage 00 existing CI baseline | PASS / MERGED | Start Stage 01 |
+| 2026-08-01 | Stage 01 branch opened | IN PROGRESS | Inspect firmware/Android contract delta |
