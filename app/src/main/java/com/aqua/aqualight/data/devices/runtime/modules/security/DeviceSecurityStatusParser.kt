@@ -137,18 +137,6 @@ internal object DeviceSecurityStatusParser {
         require(!status.paired || !status.dynamicPairingEnabled || status.storage.tokenVersion != null)
     }
 
-    private fun JSONObject.optionalLong(key: String, positive: Boolean): Long? =
-        if (has(key)) {
-            DeviceRuntimeJson.longValue(this, key).also { value ->
-                require(if (positive) value > 0L else value >= 0L)
-            }
-        } else {
-            null
-        }
-
-    private fun JSONObject.optionalBoolean(key: String): Boolean? =
-        if (has(key)) DeviceRuntimeJson.booleanValue(this, key) else null
-
     private const val STATUS_LABEL = "security.status.get.data"
     private const val FIELD_DYNAMIC_PAIRING_ENABLED = "dynamicPairingEnabled"
     private const val FIELD_PAIRED = "paired"
@@ -189,3 +177,15 @@ internal object DeviceSecurityStatusParser {
         "serialNumber"
     )
 }
+
+private fun JSONObject.optionalLong(key: String, positive: Boolean): Long? =
+    if (has(key)) {
+        DeviceRuntimeJson.longValue(this, key).also { value ->
+            require(if (positive) value > 0L else value >= 0L)
+        }
+    } else {
+        null
+    }
+
+private fun JSONObject.optionalBoolean(key: String): Boolean? =
+    if (has(key)) DeviceRuntimeJson.booleanValue(this, key) else null
