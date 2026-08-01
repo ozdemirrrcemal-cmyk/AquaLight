@@ -10,6 +10,7 @@ import com.aqua.aqualight.data.devices.repository.DevicesRepository
 import com.aqua.aqualight.data.devices.runtime.core.DeviceRuntimeCommandOutcome
 import com.aqua.aqualight.data.devices.runtime.modules.cooling.DeviceCoolingFanDisplayNamePayload
 import com.aqua.aqualight.data.devices.runtime.modules.cooling.DeviceCoolingMode
+import com.aqua.aqualight.data.devices.runtime.modules.cooling.DeviceCoolingRuntimeRepository
 import com.aqua.aqualight.data.devices.runtime.modules.cooling.DeviceCoolingRuntimeState
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flowOf
@@ -18,13 +19,13 @@ import kotlinx.coroutines.flow.map
 internal class DefaultDeviceCoolingOperations(
     private val devicesRepository: DevicesRepository
 ) : DeviceCoolingOperations {
-    override fun observe(deviceUid: String): Flow<DeviceCoolingSnapshot?> {
+    override fun observeCooling(deviceUid: String): Flow<DeviceCoolingSnapshot?> {
         val uid = deviceUid.toDeviceUidOrNull() ?: return flowOf(null)
         val cooling = devicesRepository.runtimeModules()?.cooling ?: return flowOf(null)
         return cooling.states.map { states -> states[uid]?.toApplicationSnapshot() }
     }
 
-    override fun current(deviceUid: String): DeviceCoolingSnapshot? {
+    override fun currentCooling(deviceUid: String): DeviceCoolingSnapshot? {
         val uid = deviceUid.toDeviceUidOrNull() ?: return null
         return devicesRepository.runtimeModules()?.cooling?.states?.value
             ?.get(uid)
@@ -66,10 +67,7 @@ internal class DefaultDeviceCoolingOperations(
 
     private suspend fun withCooling(
         deviceUid: String,
-        block: suspend (
-            DeviceUid,
-            com.aqua.aqualight.data.devices.runtime.modules.cooling.DeviceCoolingRuntimeRepository
-        ) -> DeviceRuntimeCommandOutcome<*>
+        block: suspend (DeviceUid, DeviceCoolingRuntimeRepository) -> DeviceRuntimeCommandOutcome<*>
     ): DeviceCoolingOperationResult {
         val uid = deviceUid.toDeviceUidOrNull()
             ?: return DeviceCoolingOperationResult.Failed("Device uid is missing.")
@@ -77,7 +75,7 @@ internal class DefaultDeviceCoolingOperations(
             ?: return DeviceCoolingOperationResult.NotConnected
         return runCatching { block(uid, cooling) }
             .fold(
-                onSuccess = DeviceRuntimeCommandOutcome<*>::toApplicationResult,
+                onSuccess = { outcome -> outcome.toApplicationResult() },
                 onFailure = { error ->
                     DeviceCoolingOperationResult.Failed(error.message.orEmpty())
                 }
