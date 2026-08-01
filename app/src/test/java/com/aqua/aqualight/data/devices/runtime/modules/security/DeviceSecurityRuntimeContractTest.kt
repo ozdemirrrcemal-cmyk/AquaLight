@@ -71,7 +71,7 @@ class DeviceSecurityRuntimeContractTest {
         assertTrue(failure.isFailure)
     }
 
-    private class SecurityGateway(
+    private inner class SecurityGateway(
         private val succeed: Boolean
     ) : DeviceRuntimeCommandGateway {
         override suspend fun <T> execute(
