@@ -6,26 +6,8 @@ import com.aqua.aqualight.data.devices.runtime.core.DeviceRuntimeJson
 import org.json.JSONObject
 
 internal object DeviceSecurityParser {
-    fun parseStatus(data: JSONObject, expectedDeviceUid: DeviceUid): DeviceSecurityStatus {
-        val dynamicPairing = DeviceRuntimeJson.booleanValue(data, FIELD_DYNAMIC_PAIRING_ENABLED)
-        val paired = DeviceRuntimeJson.booleanValue(data, FIELD_PAIRED)
-        DeviceRuntimeJson.requireExactKeys(
-            data,
-            expectedStatusKeys(dynamicPairing, paired),
-            STATUS_LABEL
-        )
-        return DeviceSecurityStatus(
-            tokenGateEnabled = DeviceRuntimeJson.booleanValue(data, "tokenGateEnabled"),
-            dynamicPairingEnabled = dynamicPairing,
-            paired = paired,
-            runtime = parseRuntimePolicy(data),
-            ownership = parseOwnershipPolicy(data),
-            storage = parseCredentialStorage(data),
-            deviceUid = DeviceUid(DeviceRuntimeJson.stringValue(data, "deviceUid")),
-            shortId = DeviceRuntimeJson.stringValue(data, "shortId"),
-            serialNumber = DeviceRuntimeJson.stringValue(data, "serialNumber")
-        ).also { status -> validateStatus(status, expectedDeviceUid) }
-    }
+    fun parseStatus(data: JSONObject, expectedDeviceUid: DeviceUid): DeviceSecurityStatus =
+        parseStatus(data, expectedDeviceUid, commandAliases = true)
 
     fun parsePair(data: JSONObject): DeviceSecurityPairResult {
         DeviceRuntimeJson.requireExactKeys(data, PAIR_KEYS, PAIR_LABEL)
@@ -62,8 +44,9 @@ internal object DeviceSecurityParser {
         val command = DeviceRuntimeJson.stringValue(data, "command")
         require(command == "${AqlWsContract.MODULE_SECURITY}.$expectedAction")
         val status = parseStatus(
-            DeviceRuntimeJson.objectValue(data, "status"),
-            expectedDeviceUid
+            data = DeviceRuntimeJson.objectValue(data, "status"),
+            expectedDeviceUid = expectedDeviceUid,
+            commandAliases = false
         )
         require(!status.paired)
         return DeviceSecurityRevocationResult(
@@ -72,6 +55,32 @@ internal object DeviceSecurityParser {
             message = DeviceRuntimeJson.stringValue(data, "message"),
             status = status
         )
+    }
+
+    private fun parseStatus(
+        data: JSONObject,
+        expectedDeviceUid: DeviceUid,
+        commandAliases: Boolean
+    ): DeviceSecurityStatus {
+        val dynamicPairing = DeviceRuntimeJson.booleanValue(data, FIELD_DYNAMIC_PAIRING_ENABLED)
+        val paired = DeviceRuntimeJson.booleanValue(data, FIELD_PAIRED)
+        DeviceRuntimeJson.requireExactKeys(
+            data,
+            expectedStatusKeys(dynamicPairing, paired, commandAliases),
+            STATUS_LABEL
+        )
+        if (commandAliases) validateCommandAliases(data)
+        return DeviceSecurityStatus(
+            tokenGateEnabled = DeviceRuntimeJson.booleanValue(data, "tokenGateEnabled"),
+            dynamicPairingEnabled = dynamicPairing,
+            paired = paired,
+            runtime = parseRuntimePolicy(data),
+            ownership = parseOwnershipPolicy(data),
+            storage = parseCredentialStorage(data),
+            deviceUid = DeviceUid(DeviceRuntimeJson.stringValue(data, "deviceUid")),
+            shortId = DeviceRuntimeJson.stringValue(data, "shortId"),
+            serialNumber = DeviceRuntimeJson.stringValue(data, "serialNumber")
+        ).also { status -> validateStatus(status, expectedDeviceUid) }
     }
 
     private fun parseRuntimePolicy(data: JSONObject): DeviceSecurityRuntimePolicy =
@@ -123,18 +132,28 @@ internal object DeviceSecurityParser {
             storedPlaintext = DeviceRuntimeJson.booleanValue(data, "tokenStoredPlaintext"),
             tokenFormat = DeviceRuntimeJson.stringValue(data, "tokenFormat"),
             tokenHexLength = DeviceRuntimeJson.intValue(data, "tokenHexLength"),
-            tokenVersion = data.optionalInt(FIELD_TOKEN_VERSION),
+            tokenVersion = data.optionalPositiveLong(FIELD_TOKEN_VERSION),
             pairedAtMs = data.optionalNonNegativeLong(FIELD_PAIRED_AT_MS),
             lastRotatedAtMs = data.optionalNonNegativeLong(FIELD_LAST_ROTATED_AT_MS),
             provisioningTokenPending = data.optionalBoolean(FIELD_PROVISIONING_TOKEN_PENDING)
         )
 
-    private fun expectedStatusKeys(dynamicPairing: Boolean, paired: Boolean): Set<String> =
-        buildSet {
-            addAll(BASE_STATUS_KEYS)
-            if (dynamicPairing) add(FIELD_PROVISIONING_TOKEN_PENDING)
-            if (dynamicPairing && paired) addAll(PAIRED_METADATA_KEYS)
-        }
+    private fun expectedStatusKeys(
+        dynamicPairing: Boolean,
+        paired: Boolean,
+        commandAliases: Boolean
+    ): Set<String> = buildSet {
+        addAll(BASE_STATUS_KEYS)
+        if (dynamicPairing) add(FIELD_PROVISIONING_TOKEN_PENDING)
+        if (dynamicPairing && paired) addAll(PAIRED_METADATA_KEYS)
+        if (commandAliases) addAll(STATUS_COMMAND_ALIAS_KEYS)
+    }
+
+    private fun validateCommandAliases(data: JSONObject) {
+        require(DeviceRuntimeJson.stringValue(data, "authMessageType") == AqlWsContract.TYPE_AUTH)
+        require(DeviceRuntimeJson.stringValue(data, "authScheme") == AqlWsContract.AUTH_SCHEME)
+        require(!DeviceRuntimeJson.booleanValue(data, "credentialSerialized"))
+    }
 
     private fun validateStatus(status: DeviceSecurityStatus, expectedDeviceUid: DeviceUid) {
         require(status.deviceUid == expectedDeviceUid)
@@ -170,8 +189,12 @@ internal object DeviceSecurityParser {
         require(!result.credentialSerializedOnWebSocket)
     }
 
-    private fun JSONObject.optionalInt(key: String): Int? =
-        if (has(key)) DeviceRuntimeJson.intValue(this, key) else null
+    private fun JSONObject.optionalPositiveLong(key: String): Long? =
+        if (has(key)) {
+            DeviceRuntimeJson.longValue(this, key).also { value -> require(value > 0L) }
+        } else {
+            null
+        }
 
     private fun JSONObject.optionalNonNegativeLong(key: String): Long? =
         if (has(key)) {
@@ -197,6 +220,11 @@ internal object DeviceSecurityParser {
         FIELD_TOKEN_VERSION,
         FIELD_PAIRED_AT_MS,
         FIELD_LAST_ROTATED_AT_MS
+    )
+    private val STATUS_COMMAND_ALIAS_KEYS = setOf(
+        "authMessageType",
+        "authScheme",
+        "credentialSerialized"
     )
     private val BASE_STATUS_KEYS = setOf(
         "tokenGateEnabled", FIELD_DYNAMIC_PAIRING_ENABLED, FIELD_PAIRED,
