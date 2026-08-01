@@ -1,144 +1,149 @@
 package com.aqua.aqualight.data.devices.runtime.modules.light
 
 import com.aqua.aqualight.data.devices.model.DeviceUid
-import com.aqua.aqualight.data.devices.runtime.ws.AqlWsCommandClient
-import org.json.JSONObject
+import com.aqua.aqualight.data.devices.runtime.core.DeviceRuntimeCommandGateway
+import com.aqua.aqualight.data.devices.runtime.core.DeviceRuntimeCommandOutcome
+import com.aqua.aqualight.data.devices.runtime.events.DeviceRuntimeTypedEvent
+import com.aqua.aqualight.data.devices.runtime.modules.common.DeviceRuntimeJsonCommand
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.StateFlow
 
-class DeviceLightRuntimeRepository(
-    private val commandClientProvider: (DeviceUid) -> AqlWsCommandClient?
+class DeviceLightRuntimeRepository internal constructor(
+    private val gateway: DeviceRuntimeCommandGateway,
+    private val stateStore: DeviceLightRuntimeStateStore
 ) {
-    fun requestStatus(deviceUid: DeviceUid): DeviceLightCommandResult {
-        return send(
-            deviceUid = deviceUid,
-            action = DeviceLightRuntimeContract.Action.STATUS_GET
-        )
-    }
+    constructor(gateway: DeviceRuntimeCommandGateway) : this(
+        gateway = gateway,
+        stateStore = DeviceLightRuntimeStateStore()
+    )
 
-    fun setManual(
+    val states: StateFlow<Map<DeviceUid, DeviceLightStatus>> = stateStore.statuses
+
+    fun observeStatus(deviceUid: DeviceUid): Flow<DeviceLightStatus?> =
+        stateStore.observeStatus(deviceUid)
+
+    fun currentStatus(deviceUid: DeviceUid): DeviceLightStatus? =
+        stateStore.currentStatus(deviceUid)
+
+    suspend fun requestStatus(
+        deviceUid: DeviceUid
+    ): DeviceRuntimeCommandOutcome<DeviceLightStatus> = gateway.execute(
+        deviceUid,
+        jsonCommand(
+            action = DeviceLightRuntimeContract.Action.STATUS_GET,
+            parser = DeviceLightStatusParser::parse
+        )
+    ).recordSuccess { status -> stateStore.recordStatus(deviceUid, status) }
+
+    suspend fun setManual(
         deviceUid: DeviceUid,
         payload: DeviceLightManualSetPayload
-    ): DeviceLightCommandResult {
-        return send(
-            deviceUid = deviceUid,
+    ): DeviceRuntimeCommandOutcome<DeviceLightManualMutationResult> = gateway.execute(
+        deviceUid,
+        jsonCommand(
             action = DeviceLightRuntimeContract.Action.MANUAL_SET,
-            data = payload.toJson()
+            dataFactory = payload::toJson,
+            parser = DeviceLightMutationParser::parseManual
         )
-    }
+    ).recordSuccess { result -> stateStore.recordManual(deviceUid, result) }
 
-    fun clearManual(
+    suspend fun clearManual(
         deviceUid: DeviceUid,
         channelKeys: List<String> = emptyList()
-    ): DeviceLightCommandResult {
-        return setManual(
-            deviceUid = deviceUid,
-            payload = DeviceLightManualSetPayload(
-                clear = true,
-                durationMs = null,
-                channels = channelKeys.map { key ->
-                    DeviceLightManualChannelPayload(
-                        channelKey = key,
-                        percent = 0.0
-                    )
-                }
-            )
+    ): DeviceRuntimeCommandOutcome<DeviceLightManualMutationResult> = setManual(
+        deviceUid = deviceUid,
+        payload = DeviceLightManualSetPayload(
+            clear = true,
+            durationMs = null,
+            channels = channelKeys.map { key ->
+                DeviceLightManualChannelPayload(channelKey = key, percent = 0.0)
+            }
         )
-    }
+    )
 
-    fun setChannelRegime(
+    suspend fun setChannelRegime(
         deviceUid: DeviceUid,
         payload: DeviceLightChannelRegimeSetPayload
-    ): DeviceLightCommandResult {
-        return send(
-            deviceUid = deviceUid,
+    ): DeviceRuntimeCommandOutcome<DeviceLightChannelRegimeMutationResult> = gateway.execute(
+        deviceUid,
+        jsonCommand(
             action = DeviceLightRuntimeContract.Action.CHANNEL_REGIME_SET,
-            data = payload.toJson()
+            dataFactory = payload::toJson,
+            parser = DeviceLightMutationParser::parseChannelRegime
         )
-    }
+    ).recordSuccess { result -> stateStore.recordChannelRegime(deviceUid, result) }
 
-    fun setChannelRegime(
+    suspend fun setChannelRegime(
         deviceUid: DeviceUid,
         channelKey: String,
         regime: DeviceLightRegime,
         save: Boolean = true
-    ): DeviceLightCommandResult {
-        return setChannelRegime(
-            deviceUid = deviceUid,
-            payload = DeviceLightChannelRegimeSetPayload(
-                channelKey = channelKey,
-                regime = regime,
-                save = save
-            )
+    ): DeviceRuntimeCommandOutcome<DeviceLightChannelRegimeMutationResult> = setChannelRegime(
+        deviceUid = deviceUid,
+        payload = DeviceLightChannelRegimeSetPayload(
+            channelKey = channelKey,
+            regime = regime,
+            save = save
         )
-    }
+    )
 
-    fun applyProgram(
+    suspend fun applyProgram(
         deviceUid: DeviceUid,
         payload: DeviceLightProgramApplyPayload
-    ): DeviceLightCommandResult {
-        return send(
-            deviceUid = deviceUid,
+    ): DeviceRuntimeCommandOutcome<DeviceLightProgramApplyResult> = gateway.execute(
+        deviceUid,
+        jsonCommand(
             action = DeviceLightRuntimeContract.Action.PROGRAM_APPLY,
-            data = payload.toJson()
+            dataFactory = payload::toJson,
+            parser = DeviceLightMutationParser::parseProgramApply
         )
-    }
+    ).recordSuccess { result -> stateStore.recordProgramApply(deviceUid, result) }
 
-    fun deleteProgram(
+    suspend fun deleteProgram(
         deviceUid: DeviceUid,
         payload: DeviceLightProgramDeletePayload
-    ): DeviceLightCommandResult {
-        return send(
-            deviceUid = deviceUid,
+    ): DeviceRuntimeCommandOutcome<DeviceLightProgramDeleteResult> = gateway.execute(
+        deviceUid,
+        jsonCommand(
             action = DeviceLightRuntimeContract.Action.PROGRAM_DELETE,
-            data = payload.toJson()
+            dataFactory = payload::toJson,
+            parser = DeviceLightMutationParser::parseProgramDelete
         )
-    }
+    ).recordSuccess { result -> stateStore.recordProgramDelete(deviceUid, result) }
 
-    fun deleteProgram(
+    suspend fun deleteProgram(
         deviceUid: DeviceUid,
         programIndex: Int,
         save: Boolean = true
-    ): DeviceLightCommandResult {
-        return deleteProgram(
-            deviceUid = deviceUid,
-            payload = DeviceLightProgramDeletePayload(
-                programIndex = programIndex,
-                save = save
-            )
+    ): DeviceRuntimeCommandOutcome<DeviceLightProgramDeleteResult> = deleteProgram(
+        deviceUid = deviceUid,
+        payload = DeviceLightProgramDeletePayload(
+            programIndex = programIndex,
+            save = save
         )
+    )
+
+    internal fun applyTypedEvent(event: DeviceRuntimeTypedEvent): DeviceLightEventApplyResult =
+        stateStore.applyTypedEvent(event)
+
+    internal fun clearState(deviceUid: DeviceUid) {
+        stateStore.clear(deviceUid)
     }
 
-    private fun send(
-        deviceUid: DeviceUid,
+    private fun <T> jsonCommand(
         action: String,
-        data: JSONObject = JSONObject()
-    ): DeviceLightCommandResult {
-        val commandClient = commandClientProvider(deviceUid)
+        dataFactory: () -> org.json.JSONObject = ::org.json.JSONObject,
+        parser: (org.json.JSONObject) -> T
+    ): DeviceRuntimeJsonCommand<T> = DeviceRuntimeJsonCommand(
+        module = DeviceLightRuntimeContract.MODULE,
+        action = action,
+        dataFactory = dataFactory,
+        successParser = parser
+    )
+}
 
-        if (commandClient == null) {
-            return DeviceLightCommandResult(
-                sent = false,
-                action = action,
-                errorMessage = "No WebSocket command client for ${deviceUid.value}"
-            )
-        }
-
-        val messageId = commandClient.command(
-            module = DeviceLightRuntimeContract.MODULE,
-            action = action,
-            data = data
-        )
-
-        return DeviceLightCommandResult(
-            sent = messageId != null,
-            action = action,
-            messageId = messageId.orEmpty(),
-            errorMessage = if (messageId != null) "" else "WebSocket send failed"
-        )
-    }
-
-    companion object {
-        fun singleSession(commandClient: AqlWsCommandClient): DeviceLightRuntimeRepository {
-            return DeviceLightRuntimeRepository { commandClient }
-        }
-    }
+private fun <T> DeviceRuntimeCommandOutcome<T>.recordSuccess(
+    recorder: (T) -> Unit
+): DeviceRuntimeCommandOutcome<T> = also { outcome ->
+    if (outcome is DeviceRuntimeCommandOutcome.Success) recorder(outcome.value)
 }
