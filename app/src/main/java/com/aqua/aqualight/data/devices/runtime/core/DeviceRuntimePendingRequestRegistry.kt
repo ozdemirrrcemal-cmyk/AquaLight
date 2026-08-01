@@ -8,7 +8,7 @@ import kotlinx.coroutines.CompletableDeferred
 
 internal class DeviceRuntimePendingRequestRegistry {
 
-    private data class LookupKey(
+    internal data class LookupKey(
         val deviceUid: DeviceUid,
         val generation: DeviceRuntimeConnectionGeneration,
         val messageId: String
@@ -20,7 +20,7 @@ internal class DeviceRuntimePendingRequestRegistry {
     ) {
         val deferred = CompletableDeferred<DeviceRuntimeCommandOutcome<Any?>>()
 
-        internal val lookupKey = LookupKey(
+        val lookupKey = LookupKey(
             deviceUid = key.deviceUid,
             generation = key.generation,
             messageId = key.messageId
