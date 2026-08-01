@@ -19,37 +19,40 @@ internal object DeviceCoolingTemperatureParser {
 
     fun parse(data: JSONObject): DeviceCoolingTemperatureSnapshot {
         data.requireCoolingKeys(KEYS, "cooling temperature")
-        val readingValid = data.requireCoolingBoolean("readingValid")
-        val temperatureC = data.requireCoolingNullableDouble(
-            "temperatureC",
-            COOLING_MIN_VALID_TEMPERATURE_C,
-            COOLING_MAX_VALID_TEMPERATURE_C
-        )
-        val snapshot = DeviceCoolingTemperatureSnapshot(
+        return readSnapshot(data).also(::validateSnapshot)
+    }
+
+    private fun readSnapshot(data: JSONObject): DeviceCoolingTemperatureSnapshot =
+        DeviceCoolingTemperatureSnapshot(
             sensorIndex = data.requireCoolingInt(
                 "sensorIndex",
                 COOLING_UNAVAILABLE_INDEX,
                 DeviceCoolingRuntimeContract.Limit.MAX_SENSOR_INDEX
             ),
-            readingValid = readingValid,
-            temperatureC = temperatureC,
+            readingValid = data.requireCoolingBoolean("readingValid"),
+            temperatureC = data.requireCoolingNullableDouble(
+                "temperatureC",
+                COOLING_MIN_VALID_TEMPERATURE_C,
+                COOLING_MAX_VALID_TEMPERATURE_C
+            ),
             sampledAtMs = data.requireCoolingLong(
                 "sampledAtMs",
                 minimum = COOLING_NON_NEGATIVE_LONG,
                 maximum = COOLING_DEVICE_UPTIME_MAX_MS
             )
         )
+
+    private fun validateSnapshot(snapshot: DeviceCoolingTemperatureSnapshot) {
         require(snapshot.readingValid == (snapshot.temperatureC != null)) {
             "temperatureC nullability differs from readingValid."
         }
-        if (snapshot.readingValid) {
-            val measuredTemperatureC = requireNotNull(snapshot.temperatureC)
-            require(measuredTemperatureC > COOLING_MIN_VALID_TEMPERATURE_C)
-            require(measuredTemperatureC < COOLING_MAX_VALID_TEMPERATURE_C)
-            require(snapshot.sensorIndex >= COOLING_MIN_INDEX)
-            require(snapshot.sampledAtMs > COOLING_NON_NEGATIVE_LONG)
-        }
-        return snapshot
+        if (!snapshot.readingValid) return
+
+        val measuredTemperatureC = requireNotNull(snapshot.temperatureC)
+        require(measuredTemperatureC > COOLING_MIN_VALID_TEMPERATURE_C)
+        require(measuredTemperatureC < COOLING_MAX_VALID_TEMPERATURE_C)
+        require(snapshot.sensorIndex >= COOLING_MIN_INDEX)
+        require(snapshot.sampledAtMs > COOLING_NON_NEGATIVE_LONG)
     }
 }
 
