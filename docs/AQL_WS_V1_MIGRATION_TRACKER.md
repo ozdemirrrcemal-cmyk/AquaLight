@@ -8,9 +8,9 @@ Target: **41 authenticated commands / 0 public commands**
 
 - Current stage: **06 — Cooling runtime alignment**
 - Active branch: `feat/cooling-06-runtime-alignment`
-- Status: **IN PROGRESS — LIVE TEMPERATURE CONTRACT VERIFICATION**
+- Status: **IN PROGRESS — RUNTIME LAYER VALIDATION**
 - Previous stage: **05 PASSED / PR #186 MERGED**
-- Next: Close the live temperature telemetry contract gap before implementing the two Cooling commands and production consumers.
+- Next: Validate and close the Cooling application/data runtime layer without binding data to layouts, ViewModels or presentation resources.
 
 ## Fixed rules
 
@@ -21,6 +21,7 @@ Target: **41 authenticated commands / 0 public commands**
 - Physical regression tests are required when the related production runtime path changes or at release-candidate gate.
 - All firmware-supported user settings and operations must exist on Android.
 - GPIO, PWM, mappings and factory identity remain read-only.
+- Runtime alignment stages prepare application/data contracts first; screen binding is performed only in the dedicated UI stage.
 
 ## Stage list
 
@@ -106,21 +107,28 @@ Target: **41 authenticated commands / 0 public commands**
 
 - [ ] **06** `feat/cooling-06-runtime-alignment` — **IN PROGRESS**
   - [x] Confirm both Cooling commands: `cooling.status.get`, `cooling.config.apply`
-  - [x] Confirm Cooling engine internally uses fixed temperature sensor #0
-  - [x] Confirm all Cooling-capable products expose one temperature sensor
-  - [x] Confirm current Cooling WS response has configuration thresholds but no live measured temperature
-  - [x] Confirm `temperature.changed` is declared/routed but not currently published by firmware
-  - [ ] Freeze minimal live temperature snapshot/event shape before Android implementation
-  - [ ] Add live fixed-sensor temperature to firmware WS contract and golden fixtures
-  - [ ] Publish validated `temperature.changed` telemetry without sentinel values
-  - [ ] `cooling.status.get` exact typed status parser
-  - [ ] `cooling.config.apply` exact atomic mutation outcome
-  - [ ] Auto/On/Off, min/max temperature and supported fan display-name writes
-  - [ ] Move production Cooling consumers from send-success to correlated firmware success
-  - [ ] Integrate `cooling.status.changed` and `temperature.changed` into device-scoped current state
-  - [ ] Reject unsupported Cooling operations using exact capabilities/features
-  - [ ] Add unit, parser, repository and production-consumer tests
-  - [ ] Run automatic gates and targeted physical Cooling-device regression
+  - [x] Align with firmware PR #26 / commit `38e8812c1bcecf948ebab85979bff21a24f4b79c`
+  - [x] Freeze exact four-field live temperature snapshot/event shape
+  - [x] Copy the live temperature golden fixture into Android protocol evidence
+  - [x] `cooling.status.get` exact typed status parser
+  - [x] `cooling.config.apply` exact atomic mutation outcome
+  - [x] Auto/On/Off, min/max temperature and supported fan display-name writes
+  - [x] Expose correlated Cooling operations through the application/data boundary
+  - [x] Integrate `cooling.status.changed` and `temperature.changed` into device-scoped runtime state
+  - [x] Clear Cooling runtime state on reconnect/generation changes
+  - [x] Reject unsupported Cooling operations using exact capabilities/features
+  - [x] Reject stale/duplicate events and older status responses
+  - [x] Clear stale valid temperature on completed invalid CRC/OneWire samples
+  - [x] Handle ESP32 32-bit `millis()` wraparound in freshness ordering
+  - [x] Keep GPIO, PWM, fan mapping, sensor mapping and calibration read-only
+  - [x] Add unit, parser, repository, capability and reducer tests
+  - [x] Keep Cooling layout, ViewModel, UI state and presentation strings unchanged
+  - [ ] Android CI
+  - [ ] Installable Debug APK
+  - [ ] Emulator API 27 / 36
+  - [ ] CodeQL Security Scan
+  - [ ] PR evidence recorded
+  - [x] Physical Cooling screen regression N/A: no production UI consumer is changed in this Stage
 
 - [ ] **07** `feat/timer-07-runtime-alignment`
   - 3/3 timer commands
@@ -180,3 +188,4 @@ Target: **41 authenticated commands / 0 public commands**
 | 2026-08-01 | Stage 05 Light runtime alignment | PASS / PR #186 MERGED | Start Stage 06 |
 | 2026-08-01 | Stage 06 Cooling runtime branch opened | IN PROGRESS | Verify live temperature telemetry before implementation |
 | 2026-08-01 | Stage 06 live temperature audit | CONTRACT GAP FOUND | Freeze and implement firmware telemetry contract first |
+| 2026-08-02 | Stage 06 UI scope correction | PASS | Keep layout, ViewModel and presentation resources unchanged; validate runtime layer only |
