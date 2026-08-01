@@ -35,7 +35,10 @@ class DeviceLightRuntimeRepository internal constructor(
         deviceUid,
         jsonCommand(
             action = DeviceLightRuntimeContract.Action.MANUAL_SET,
-            dataFactory = payload::toJson,
+            dataFactory = {
+                DeviceLightCommandValidation.validateManualRequest(payload)
+                payload.toJson()
+            },
             parser = { data ->
                 DeviceLightMutationParser.parseManual(data).also { result ->
                     DeviceLightCommandValidation.validateManual(payload, result)
@@ -65,7 +68,10 @@ class DeviceLightRuntimeRepository internal constructor(
         deviceUid,
         jsonCommand(
             action = DeviceLightRuntimeContract.Action.CHANNEL_REGIME_SET,
-            dataFactory = payload::toJson,
+            dataFactory = {
+                DeviceLightCommandValidation.validateChannelRegimeRequest(payload)
+                payload.toJson()
+            },
             parser = { data ->
                 DeviceLightMutationParser.parseChannelRegime(data).also { result ->
                     DeviceLightCommandValidation.validateChannelRegime(payload, result)
@@ -95,7 +101,10 @@ class DeviceLightRuntimeRepository internal constructor(
         deviceUid,
         jsonCommand(
             action = DeviceLightRuntimeContract.Action.PROGRAM_APPLY,
-            dataFactory = payload::toJson,
+            dataFactory = {
+                DeviceLightCommandValidation.validateProgramRequest(payload)
+                payload.toJson()
+            },
             parser = { data ->
                 DeviceLightMutationParser.parseProgramApply(data).also { result ->
                     DeviceLightCommandValidation.validateProgramApply(payload, result)
