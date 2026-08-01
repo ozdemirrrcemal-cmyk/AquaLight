@@ -106,10 +106,7 @@ class DeviceCoolingRuntimeContractTest {
 
     @Test
     fun `firmware telemetry fixture keeps exact field order and command count`() {
-        val fixture = JSONObject(
-            File("protocol/fixtures/aql_cooling_temperature_telemetry_v1.json")
-                .readText(Charsets.UTF_8)
-        )
+        val fixture = JSONObject(readFirmwareTelemetryFixture())
 
         assertEquals(41, fixture.getInt("commandCount"))
         assertEquals("temperature.changed", fixture.getString("event"))
@@ -120,4 +117,17 @@ class DeviceCoolingRuntimeContractTest {
             }
         )
     }
+}
+
+private const val FIRMWARE_TELEMETRY_FIXTURE =
+    "protocol/fixtures/aql_cooling_temperature_telemetry_v1.json"
+
+private fun readFirmwareTelemetryFixture(): String {
+    val workingDirectory = File(System.getProperty("user.dir")).canonicalFile
+    val fixture = generateSequence(workingDirectory) { directory -> directory.parentFile }
+        .map { directory -> directory.resolve(FIRMWARE_TELEMETRY_FIXTURE) }
+        .firstOrNull(File::isFile)
+    return requireNotNull(fixture) {
+        "Missing firmware telemetry fixture: $FIRMWARE_TELEMETRY_FIXTURE"
+    }.readText(Charsets.UTF_8)
 }
