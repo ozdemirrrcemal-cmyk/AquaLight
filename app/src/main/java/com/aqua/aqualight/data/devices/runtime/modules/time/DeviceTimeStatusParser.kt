@@ -33,8 +33,11 @@ object DeviceTimeStatusParser {
 
     fun parseExact(data: JSONObject): DeviceTimeStatus {
         DeviceRuntimeJson.requireExactKeys(data, STATUS_KEYS, STATUS_LABEL)
-        validateParts(DeviceRuntimeJson.objectValue(data, "parts"))
+        val timeSet = DeviceRuntimeJson.booleanValue(data, "timeSet")
+        validateParts(DeviceRuntimeJson.objectValue(data, "parts"), timeSet)
         validateRuntime(DeviceRuntimeJson.objectValue(data, "runtime"))
+        DeviceRuntimeJson.stringValue(data, "uptime")
+        DeviceRuntimeJson.intValue(data, "timeZone")
         val uptimeMs = DeviceRuntimeJson.longValue(data, "uptimeMs")
         val millisStartDay = DeviceRuntimeJson.longValue(data, "millisStartDay")
         val lastSyncEpochMillis = DeviceRuntimeJson.longValue(data, "lastSyncEpochMillis")
@@ -42,7 +45,7 @@ object DeviceTimeStatusParser {
         require(uptimeMs >= 0L && millisStartDay >= 0L)
         require(lastSyncEpochMillis >= 0L && lastSyncUptimeMs >= 0L)
         return DeviceTimeStatus(
-            timeSet = DeviceRuntimeJson.booleanValue(data, "timeSet"),
+            timeSet = timeSet,
             timeString = DeviceRuntimeJson.stringValue(data, "timeString"),
             timezoneId = DeviceRuntimeJson.stringValue(data, "timezoneId"),
             posixTimeZone = DeviceRuntimeJson.stringAllowEmpty(data, "posixTimeZone"),
@@ -54,7 +57,7 @@ object DeviceTimeStatusParser {
             ),
             ntpServerPrimary = DeviceRuntimeJson.stringValue(data, "ntpServerPrimary"),
             ntpServerSecondary = DeviceRuntimeJson.stringValue(data, "ntpServerSecondary"),
-            lastSyncSource = DeviceRuntimeJson.stringValue(data, "lastSyncSource"),
+            lastSyncSource = DeviceRuntimeJson.stringAllowEmpty(data, "lastSyncSource"),
             lastSyncEpochMillis = lastSyncEpochMillis,
             lastSyncUptimeMs = lastSyncUptimeMs
         )
@@ -75,9 +78,10 @@ object DeviceTimeStatusParser {
         ).also { result -> validateMutation(result, contract) }
     }
 
-    private fun validateParts(data: JSONObject) {
+    private fun validateParts(data: JSONObject, timeSet: Boolean) {
         DeviceRuntimeJson.requireExactKeys(data, PART_KEYS, "$STATUS_LABEL.parts")
-        require(DeviceRuntimeJson.intValue(data, "year") in 2000..2199)
+        val year = DeviceRuntimeJson.intValue(data, "year")
+        require(year in if (timeSet) 2000..2199 else 1970..2199)
         require(DeviceRuntimeJson.intValue(data, "month") in 1..12)
         require(DeviceRuntimeJson.intValue(data, "day") in 1..31)
         require(DeviceRuntimeJson.intValue(data, "weekday") in 1..7)
