@@ -62,7 +62,7 @@ class DeviceLightRuntimeRepository internal constructor(
             clear = true,
             durationMs = null,
             channels = channelKeys.map { key ->
-                DeviceLightManualChannelPayload(channelKey = key, percent = 0.0)
+                DeviceLightManualChannelPayload(channelKey = key)
             }
         )
     )
