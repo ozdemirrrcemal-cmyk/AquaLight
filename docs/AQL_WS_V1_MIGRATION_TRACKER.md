@@ -8,9 +8,9 @@ Target: **41 authenticated commands / 0 public commands**
 
 - Current stage: **06 — Cooling runtime alignment**
 - Active branch: `feat/cooling-06-runtime-alignment`
-- Status: **IN PROGRESS — RUNTIME LAYER VALIDATION**
+- Status: **PASSED — PR #187 READY FOR MERGE**
 - Previous stage: **05 PASSED / PR #186 MERGED**
-- Next: Validate and close the Cooling application/data runtime layer without binding data to layouts, ViewModels or presentation resources.
+- Next: Merge Stage 06, then open Stage 07 Timer runtime alignment from `integration/aql-ws-v1-commercial`.
 
 ## Fixed rules
 
@@ -105,7 +105,7 @@ Target: **41 authenticated commands / 0 public commands**
   - [x] WRGB Pro Elite physical Light regression passed
   - [x] PR evidence recorded
 
-- [ ] **06** `feat/cooling-06-runtime-alignment` — **IN PROGRESS**
+- [x] **06** `feat/cooling-06-runtime-alignment` — **PASSED / PR #187 READY FOR MERGE**
   - [x] Confirm both Cooling commands: `cooling.status.get`, `cooling.config.apply`
   - [x] Align with firmware PR #26 / commit `38e8812c1bcecf948ebab85979bff21a24f4b79c`
   - [x] Freeze exact four-field live temperature snapshot/event shape
@@ -113,7 +113,7 @@ Target: **41 authenticated commands / 0 public commands**
   - [x] `cooling.status.get` exact typed status parser
   - [x] `cooling.config.apply` exact atomic mutation outcome
   - [x] Auto/On/Off, min/max temperature and supported fan display-name writes
-  - [x] Expose correlated Cooling operations through the application/data boundary
+  - [x] Expose correlated Cooling repository and module provider in the data/runtime layer
   - [x] Integrate `cooling.status.changed` and `temperature.changed` into device-scoped runtime state
   - [x] Clear Cooling runtime state on reconnect/generation changes
   - [x] Reject unsupported Cooling operations using exact capabilities/features
@@ -123,11 +123,11 @@ Target: **41 authenticated commands / 0 public commands**
   - [x] Keep GPIO, PWM, fan mapping, sensor mapping and calibration read-only
   - [x] Add unit, parser, repository, capability and reducer tests
   - [x] Keep Cooling layout, ViewModel, UI state and presentation strings unchanged
-  - [ ] Android CI
-  - [ ] Installable Debug APK
-  - [ ] Emulator API 27 / 36
-  - [ ] CodeQL Security Scan
-  - [ ] PR evidence recorded
+  - [x] Android CI — run #2908
+  - [x] Installable Debug APK — run #200
+  - [x] Emulator API 27 / 36 — run #1032
+  - [x] CodeQL Security Scan — run #4693
+  - [x] PR evidence recorded on PR #187 for tested head `355b00b6ba9dc4e5e721dc8c30aa4b757a928092`
   - [x] Physical Cooling screen regression N/A: no production UI consumer is changed in this Stage
 
 - [ ] **07** `feat/timer-07-runtime-alignment`
@@ -189,3 +189,4 @@ Target: **41 authenticated commands / 0 public commands**
 | 2026-08-01 | Stage 06 Cooling runtime branch opened | IN PROGRESS | Verify live temperature telemetry before implementation |
 | 2026-08-01 | Stage 06 live temperature audit | CONTRACT GAP FOUND | Freeze and implement firmware telemetry contract first |
 | 2026-08-02 | Stage 06 UI scope correction | PASS | Keep layout, ViewModel and presentation resources unchanged; validate runtime layer only |
+| 2026-08-02 | Stage 06 Cooling runtime alignment | PASS / PR #187 READY FOR MERGE | Merge to integration and start Stage 07 |
