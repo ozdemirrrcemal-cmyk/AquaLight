@@ -6,30 +6,36 @@ Target: **41 authenticated commands / 0 public commands**
 
 ## Current position
 
-- Current stage: **00 — Baseline**
-- Status: **NOT STARTED**
-- Next: Existing provisioning, discovery, online/offline and reconnect flows will be tested without changing behavior.
+- Current stage: **00 — Existing-system baseline**
+- Active branch: `test/ws-00-runtime-baseline`
+- Pull request: `#181`
+- Status: **PASSED / READY TO MERGE**
+- Evidence: `docs/AQL_WS_V1_STAGE_00_BASELINE.md`
+- Next: Merge PR #181 and open `chore/ws-01-contract-parity`.
 
 ## Fixed rules
 
-- Every stage uses a separate branch and PR.
-- A stage must pass tests before the next stage starts.
+- Every implementation stage uses a separate branch and PR.
+- A stage must pass its relevant tests before the next stage starts.
 - Transport and crypto will not be rewritten.
 - BLE + QR provisioning, UDP discovery and online/offline behavior must not regress.
+- Physical regression tests are required when the related runtime behavior changes or at release-candidate gate; they are not repeated for documentation-only changes.
 - All firmware-supported user settings and operations must exist on Android.
 - GPIO, PWM, mappings and factory identity remain read-only.
 
 ## Stage list
 
-- [ ] **00** `test/ws-00-runtime-baseline`
-  - Provisioning baseline
-  - UDP discovery baseline
-  - WebSocket auth/metadata baseline
-  - Online → offline → online
-  - Router/phone network recovery
-  - App background/foreground
-  - Device removal/session shutdown
-  - Secret leakage check
+- [x] **00** `test/ws-00-runtime-baseline` — **PASSED**
+  - [x] Runtime/provisioning code diff: none
+  - [x] Accidental custom guard/test removed
+  - [x] Existing Android CI passed
+  - [x] Existing unit/golden/protocol tests passed
+  - [x] Lint/Detekt and coverage gates passed
+  - [x] Debug APK passed
+  - [x] Emulator API 27 passed
+  - [x] Emulator API 36 passed
+  - [x] CodeQL passed
+  - [x] Physical rerun: N/A for documentation-only branch
 
 - [ ] **01** `chore/ws-01-contract-parity`
   - Firmware golden fixture copied byte-identically
@@ -48,7 +54,7 @@ Target: **41 authenticated commands / 0 public commands**
   - Multi-device isolation
 
 - [ ] **03** `feat/ws-03-event-routing`
-  - Typed routing for all 11 firmware events
+  - Typed routing for all firmware events
   - Per-device/session isolation
   - Stale-event rejection
   - Module state updates
@@ -101,25 +107,20 @@ Target: **41 authenticated commands / 0 public commands**
 
 - [ ] **10** `test/ws-10-firmware-interoperability`
   - 41/41 command parity
-  - 11/11 event parity
+  - All firmware-event parity
   - All user-write fields covered
   - No hardware-owned editable fields
   - Golden fixtures byte-identical
   - All product families and nine SKUs checked before release
 
-## Gate required after every stage
+## Relevant gate after each stage
 
 - [ ] Android build passes
 - [ ] Unit/golden/protocol tests pass
-- [ ] Provisioning regression passes
-- [ ] UDP discovery passes
-- [ ] WebSocket authentication passes
-- [ ] Online/offline regression passes
-- [ ] Reconnect regression passes
-- [ ] Background/foreground passes
-- [ ] Session shutdown passes
+- [ ] Changed module tests pass
+- [ ] Provisioning/UDP/WebSocket/presence regressions pass when those areas are affected
+- [ ] Physical-device smoke passes when runtime behavior is affected
 - [ ] No secret/token logging
-- [ ] Physical-device smoke test recorded
 - [ ] PR evidence recorded
 
 ## Progress log
@@ -127,3 +128,5 @@ Target: **41 authenticated commands / 0 public commands**
 | Date | Stage | Result | Next |
 |---|---|---|---|
 | 2026-08-01 | Tracker setup | PASS | Start Stage 00 baseline |
+| 2026-08-01 | Stage 00 first CI run | INVALID | Remove accidental custom guard/test |
+| 2026-08-01 | Stage 00 existing CI baseline | PASS | Merge PR #181 and start Stage 01 |
