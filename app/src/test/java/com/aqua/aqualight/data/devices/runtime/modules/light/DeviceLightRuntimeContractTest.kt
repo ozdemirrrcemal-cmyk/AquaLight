@@ -66,6 +66,26 @@ class DeviceLightRuntimeContractTest {
     }
 
     @Test
+    fun `manual clear uses channel key only and omits duration`() = runBlocking {
+        val gateway = QueueGateway(
+            mutableMapOf(
+                DeviceLightRuntimeContract.Action.MANUAL_SET to
+                    DeviceLightRuntimeFixtures.manualClear()
+            )
+        )
+        val repository = DeviceLightRuntimeRepository(gateway)
+
+        repository.clearManual(DEVICE_UID, channelKeys = listOf("white")).requireSuccess()
+
+        val payload = gateway.payloads.single()
+        assertEquals(setOf("clear", "channels"), payload.keySet())
+        assertTrue(payload.getBoolean("clear"))
+        val channel = payload.getJSONArray("channels").getJSONObject(0)
+        assertEquals(setOf("channelKey"), channel.keySet())
+        assertEquals("white", channel.getString("channelKey"))
+    }
+
+    @Test
     fun `typed command event reduction is idempotent and device isolated`() = runBlocking {
         val gateway = QueueGateway(
             mutableMapOf(
