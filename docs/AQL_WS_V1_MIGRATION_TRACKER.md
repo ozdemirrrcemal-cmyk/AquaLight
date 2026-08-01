@@ -6,12 +6,11 @@ Target: **41 authenticated commands / 0 public commands**
 
 ## Current position
 
-- Current stage: **00 — Existing-system baseline**
-- Active branch: `test/ws-00-runtime-baseline`
-- Pull request: `#181`
-- Status: **PASSED / READY TO MERGE**
-- Evidence: `docs/AQL_WS_V1_STAGE_00_BASELINE.md`
-- Next: Merge PR #181 and open `chore/ws-01-contract-parity`.
+- Current stage: **01 — Firmware contract parity**
+- Active branch: `chore/ws-01-contract-parity`
+- Status: **READY FOR TEST**
+- Previous stage: **00 PASSED / PR #181 MERGED**
+- Next: Run existing Android CI, golden/protocol tests, emulator API 27/36 and CodeQL. Fix only failures caused by this five-file parity change.
 
 ## Fixed rules
 
@@ -19,15 +18,14 @@ Target: **41 authenticated commands / 0 public commands**
 - A stage must pass its relevant tests before the next stage starts.
 - Transport and crypto will not be rewritten.
 - BLE + QR provisioning, UDP discovery and online/offline behavior must not regress.
-- Physical regression tests are required when the related runtime behavior changes or at release-candidate gate; they are not repeated for documentation-only changes.
+- Physical regression tests are required when the related runtime behavior changes or at release-candidate gate; they are not repeated for documentation-only or contract-fixture-only changes.
 - All firmware-supported user settings and operations must exist on Android.
 - GPIO, PWM, mappings and factory identity remain read-only.
 
 ## Stage list
 
-- [x] **00** `test/ws-00-runtime-baseline` — **PASSED**
+- [x] **00** `test/ws-00-runtime-baseline` — **MERGED**
   - [x] Runtime/provisioning code diff: none
-  - [x] Accidental custom guard/test removed
   - [x] Existing Android CI passed
   - [x] Existing unit/golden/protocol tests passed
   - [x] Lint/Detekt and coverage gates passed
@@ -37,13 +35,21 @@ Target: **41 authenticated commands / 0 public commands**
   - [x] CodeQL passed
   - [x] Physical rerun: N/A for documentation-only branch
 
-- [ ] **01** `chore/ws-01-contract-parity`
-  - Firmware golden fixture copied byte-identically
-  - Android command matrix `38 → 41`
-  - Add `device.name.set`
-  - Add `light.temperature-protection.status.get`
-  - Add `light.temperature-protection.set`
-  - Golden tests and protocol guard updated to 41
+- [ ] **01** `chore/ws-01-contract-parity` — **READY FOR TEST**
+  - [x] Firmware golden fixture copied byte-identically
+  - [x] Android command matrix `38 → 41`
+  - [x] Added `device.name.set`
+  - [x] Added `light.temperature-protection.status.get`
+  - [x] Added `light.temperature-protection.set`
+  - [x] Golden test command count updated to 41
+  - [x] Protocol guard fixture SHA and count updated to firmware values
+  - [x] Public WebSocket command count remains 0
+  - [x] Provisioning/runtime/transport/crypto/presence code unchanged
+  - [ ] Android CI passes
+  - [ ] Emulator API 27 passes
+  - [ ] Emulator API 36 passes
+  - [ ] CodeQL passes
+  - [ ] PR evidence recorded
 
 - [ ] **02** `feat/ws-02-request-broker`
   - Request ID correlation
@@ -129,4 +135,6 @@ Target: **41 authenticated commands / 0 public commands**
 |---|---|---|---|
 | 2026-08-01 | Tracker setup | PASS | Start Stage 00 baseline |
 | 2026-08-01 | Stage 00 first CI run | INVALID | Remove accidental custom guard/test |
-| 2026-08-01 | Stage 00 existing CI baseline | PASS | Merge PR #181 and start Stage 01 |
+| 2026-08-01 | Stage 00 existing CI baseline | PASS / MERGED | Start Stage 01 |
+| 2026-08-01 | Stage 01 branch opened | IN PROGRESS | Inspect firmware/Android contract delta |
+| 2026-08-01 | Stage 01 parity implementation | READY FOR TEST | Run existing CI and protocol gates |
