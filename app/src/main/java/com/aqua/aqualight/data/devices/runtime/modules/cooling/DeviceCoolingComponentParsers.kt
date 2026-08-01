@@ -35,13 +35,17 @@ internal object DeviceCoolingTemperatureParser {
             temperatureC = temperatureC,
             sampledAtMs = data.requireCoolingLong(
                 "sampledAtMs",
-                minimum = COOLING_NON_NEGATIVE_LONG
+                minimum = COOLING_NON_NEGATIVE_LONG,
+                maximum = COOLING_DEVICE_UPTIME_MAX_MS
             )
         )
         require(snapshot.readingValid == (snapshot.temperatureC != null)) {
             "temperatureC nullability differs from readingValid."
         }
         if (snapshot.readingValid) {
+            val measuredTemperatureC = requireNotNull(snapshot.temperatureC)
+            require(measuredTemperatureC > COOLING_MIN_VALID_TEMPERATURE_C)
+            require(measuredTemperatureC < COOLING_MAX_VALID_TEMPERATURE_C)
             require(snapshot.sensorIndex >= COOLING_MIN_INDEX)
             require(snapshot.sampledAtMs > COOLING_NON_NEGATIVE_LONG)
         }
@@ -161,7 +165,8 @@ internal object DeviceCoolingFanParser {
             ),
             manualTimeoutMs = data.requireCoolingLong(
                 "manualTimeoutMs",
-                minimum = COOLING_NON_NEGATIVE_LONG
+                minimum = COOLING_NON_NEGATIVE_LONG,
+                maximum = COOLING_DEVICE_UPTIME_MAX_MS
             ),
             percentNow = data.requireCoolingDouble(
                 "percentNow",
