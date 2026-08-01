@@ -50,7 +50,11 @@ object DeviceRuntimeModulesParser {
                 discovery = modules.requireStatusBoolean("discovery"),
                 firmware = modules.requireStatusBoolean("firmware"),
                 system = modules.requireStatusBoolean("system")
-            )
+            ),
+            nameStatus = DeviceRuntimeNameStatusParser.parse(
+                data.requireStatusObject("device"),
+                "device.status.get.data.device"
+            ).getOrThrow()
         )
     }
 }
@@ -118,7 +122,9 @@ private fun JSONObject.requireExactRuntimeContract() {
 private const val BOOTED_STATE = "booted"
 private const val STATUS_TRANSPORT = "websocket"
 private const val STATUS_WS_PORT = 80
-private val STATUS_KEYS = setOf("state", "authenticated", "uptimeMs", "product", "runtime", "modules")
+private val STATUS_KEYS = setOf(
+    "state", "authenticated", "uptimeMs", "product", "runtime", "device", "modules"
+)
 private val PRODUCT_KEYS = setOf("productKey", "family", "model", "displayName")
 private val RUNTIME_KEYS = setOf("transport", "wsSchema", "wsPath", "wsPort")
 private val MODULE_KEYS = setOf(

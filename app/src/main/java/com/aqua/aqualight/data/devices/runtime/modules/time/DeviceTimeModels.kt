@@ -99,6 +99,16 @@ data class DeviceTimeStatus(
     val lastSyncUptimeMs: Long
 )
 
+data class DeviceTimeMutationResult(
+    val operation: String,
+    val changed: Boolean?,
+    val synced: Boolean?,
+    val saved: Boolean?,
+    val saveRequested: Boolean?,
+    val status: DeviceTimeStatus
+)
+
+/** Legacy fire-and-forget result retained only for the not-yet-migrated compatibility tests. */
 data class DeviceTimeCommandResult(
     val sent: Boolean,
     val skipped: Boolean = false,

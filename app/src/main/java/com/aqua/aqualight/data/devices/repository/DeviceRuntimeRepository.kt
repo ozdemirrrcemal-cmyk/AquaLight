@@ -129,6 +129,7 @@ class DeviceRuntimeRepository(
 
     private val lifecycleLock = Any()
     private val repositoryJob = SupervisorJob()
+    private val repositoryScope = CoroutineScope(repositoryJob + dispatcher)
     private val tokenLifecycleMutex = Mutex()
     private val sessions = ConcurrentHashMap<DeviceUid, RuntimeSession>()
     private val retiredDeviceUids = ConcurrentHashMap.newKeySet<DeviceUid>()
@@ -142,9 +143,11 @@ class DeviceRuntimeRepository(
         supportChecker = ::supportsCommand
     )
 
-    val runtimeModules: DeviceRuntimeModuleProvider = DeviceRuntimeModuleProvider { deviceUid ->
-        sessions[deviceUid]?.commandClient
-    }
+    val runtimeModules: DeviceRuntimeModuleProvider = DeviceRuntimeModuleProvider(
+        commandGateway = this,
+        commandClientProvider = { deviceUid -> sessions[deviceUid]?.commandClient },
+        revokeLocalCredential = ::revokeLocalCredentialAndSession
+    )
 
     private val timeSyncCoordinator = DeviceTimeSyncCoordinator(repository = runtimeModules.time)
 
@@ -345,6 +348,37 @@ class DeviceRuntimeRepository(
         }
     }
 
+    private suspend fun revokeLocalCredentialAndSession(deviceUid: DeviceUid): Result<Unit> {
+        val session = detachSessionWithoutRetirement(deviceUid)
+        commandExecutor.cancelDevice(deviceUid, COMMAND_CANCELLED_CREDENTIAL_REVOKED)
+        cancelMetadataTimeout(deviceUid)
+        metadataBootstrapCoordinator.clear(deviceUid)
+        timeSyncCoordinator.clearSessionMemory(deviceUid)
+
+        val tokenFailure = runCatching { clearToken(deviceUid) }.exceptionOrNull()
+        val sessionFailure = runCatching { session?.shutdown() }.exceptionOrNull()
+        return if (tokenFailure == null && sessionFailure == null) {
+            Result.success(Unit)
+        } else {
+            Result.failure(localCredentialTeardownFailure(tokenFailure, sessionFailure))
+        }
+    }
+
+    private fun localCredentialTeardownFailure(
+        tokenFailure: Throwable?,
+        sessionFailure: Throwable?
+    ): Throwable {
+        val primary = tokenFailure ?: checkNotNull(sessionFailure)
+        return IllegalStateException(
+            "Device credential was revoked, but local credential/session teardown failed.",
+            primary
+        ).also { failure ->
+            if (sessionFailure != null && sessionFailure !== primary) {
+                failure.addSuppressed(sessionFailure)
+            }
+        }
+    }
+
     suspend fun retire(deviceUid: DeviceUid) {
         val session = detachSessionForRetirement(deviceUid)
         commandExecutor.cancelDevice(deviceUid, COMMAND_CANCELLED_DEVICE_RETIRED)
@@ -419,7 +453,9 @@ class DeviceRuntimeRepository(
     ): DeviceRuntimeMetadataUpdate {
         return when (val validation = AqlCommercialDeviceCatalog.validate(state.metadata)) {
             is AqlCommercialCatalogValidation.Valid -> {
-                timeSyncCoordinator.syncPhoneNowIfNeeded(state.deviceUid)
+                repositoryScope.launch {
+                    timeSyncCoordinator.syncPhoneNowIfNeeded(state.deviceUid)
+                }
                 DeviceRuntimeMetadataUpdate.Ready(state)
             }
             is AqlCommercialCatalogValidation.Invalid -> {
@@ -497,6 +533,14 @@ class DeviceRuntimeRepository(
         synchronized(lifecycleLock) {
             if (closed) return@synchronized null
             retiredDeviceUids.add(deviceUid)
+            sessions.remove(deviceUid).also {
+                if (lastActiveDeviceUid == deviceUid) lastActiveDeviceUid = null
+            }
+        }
+
+    private fun detachSessionWithoutRetirement(deviceUid: DeviceUid): RuntimeSession? =
+        synchronized(lifecycleLock) {
+            if (closed) return@synchronized null
             sessions.remove(deviceUid).also {
                 if (lastActiveDeviceUid == deviceUid) lastActiveDeviceUid = null
             }
@@ -647,6 +691,7 @@ class DeviceRuntimeRepository(
         private const val COMMAND_CANCELLED_LOCAL_NETWORK_LOSS = "local network unavailable"
         private const val COMMAND_CANCELLED_DEVICE_RETIRED = "device runtime retired"
         private const val COMMAND_CANCELLED_DEVICE_CLOSED = "device runtime closed"
+        private const val COMMAND_CANCELLED_CREDENTIAL_REVOKED = "runtime credential revoked"
         private const val COMMAND_CANCELLED_REPOSITORY_CLOSED = "runtime repository closed"
         private const val COMMAND_CANCELLED_REPOSITORY_SHUTDOWN = "runtime repository shutdown"
         private const val COMMAND_CANCELLED_METADATA_FAILURE = "metadata bootstrap failed"

@@ -22,6 +22,7 @@ class DeviceRuntimeModulesParserTest {
             assertEquals(fixture.modules, parsed.modules)
             assertEquals(fixture.modules.timerApi, parsed.modules.exposesStandaloneTimerApi)
             assertEquals(fixture.modules.timerEngine, parsed.modules.usesInternalTimerEngine)
+            assertEquals(fixture.displayName, parsed.nameStatus.effectiveDisplayName)
         }
 
         val dosing = MODULE_FIXTURES.single { fixture -> fixture.family == DeviceFamily.DOSING }
@@ -93,7 +94,7 @@ class DeviceRuntimeModulesParserTest {
     }
 
     @Test
-    fun `requires exact commercial product envelope values`() {
+    fun `requires exact commercial product and name envelope values`() {
         val unknownFamily = validStatus(DEFAULT_FIXTURE).apply {
             getJSONObject("product").put("family", "LIGHT")
         }
@@ -103,10 +104,14 @@ class DeviceRuntimeModulesParserTest {
         val emptyDisplayName = validStatus(DEFAULT_FIXTURE).apply {
             getJSONObject("product").put("displayName", "")
         }
+        val mismatchedEffectiveName = validStatus(DEFAULT_FIXTURE).apply {
+            getJSONObject("device").put("effectiveDisplayName", "Different")
+        }
 
         assertTrue(DeviceRuntimeModulesParser.parseDeviceStatus(unknownFamily).isFailure)
         assertTrue(DeviceRuntimeModulesParser.parseDeviceStatus(paddedModel).isFailure)
         assertTrue(DeviceRuntimeModulesParser.parseDeviceStatus(emptyDisplayName).isFailure)
+        assertTrue(DeviceRuntimeModulesParser.parseDeviceStatus(mismatchedEffectiveName).isFailure)
     }
 
     private fun validStatus(fixture: ModuleFixture): JSONObject = JSONObject()
@@ -129,7 +134,15 @@ class DeviceRuntimeModulesParserTest {
                 .put("wsPath", AqlWsContract.DEFAULT_PATH)
                 .put("wsPort", WS_PORT)
         )
+        .put("device", nameStatusJson(fixture.displayName))
         .put("modules", fixture.modules.toJson())
+
+    private fun nameStatusJson(displayName: String): JSONObject = JSONObject()
+        .put("productDisplayName", displayName)
+        .put("customName", "")
+        .put("effectiveDisplayName", displayName)
+        .put("editable", true)
+        .put("maxBytes", CUSTOM_NAME_MAX_BYTES)
 
     private fun DeviceRuntimeModules.toJson(): JSONObject = JSONObject()
         .put("light", light)
@@ -154,6 +167,7 @@ class DeviceRuntimeModulesParserTest {
     private companion object {
         const val UPTIME_MS = 123_456L
         const val WS_PORT = 80
+        const val CUSTOM_NAME_MAX_BYTES = 64
 
         val DEFAULT_FIXTURE = ModuleFixture(
             productKey = "LIGHT_RGB_PRO_SLIM",

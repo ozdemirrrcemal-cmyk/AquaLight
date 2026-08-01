@@ -135,7 +135,9 @@ data class DeviceRuntimeIdentityEnvelope(
     val firmwareSerial: String,
     val macAddress: String,
     val setupCode: String,
-    val runtime: DeviceRuntimeTransportMetadata
+    val runtime: DeviceRuntimeTransportMetadata,
+    val nameStatus: DeviceRuntimeNameStatus =
+        DeviceRuntimeNameStatus.defaultFor(identity.displayName)
 ) {
     init {
         requireExactText(shortId, "shortId")
@@ -143,6 +145,9 @@ data class DeviceRuntimeIdentityEnvelope(
         requireExactText(firmwareSerial, "firmwareSerial")
         requireExactText(macAddress, "macAddress")
         requireExactText(setupCode, "setupCode")
+        require(nameStatus.productDisplayName == identity.displayName) {
+            "Runtime identity and name status product display names differ."
+        }
     }
 }
 

@@ -10,6 +10,7 @@ import com.aqua.aqualight.data.devices.model.DeviceUid
 import com.aqua.aqualight.data.devices.monitor.DeviceElapsedRealtimeClock
 import com.aqua.aqualight.data.devices.repository.DevicesRepository
 import com.aqua.aqualight.data.devices.repository.recordControlFailure
+import com.aqua.aqualight.data.devices.runtime.core.DeviceRuntimeCommandOutcome
 import com.aqua.aqualight.data.devices.runtime.ws.AqlWsConnectionState
 import com.aqua.aqualight.data.devices.runtime.ws.AqlWsEvent
 import com.aqua.aqualight.data.devices.runtime.ws.AqlWsIncomingMessage
@@ -76,8 +77,10 @@ internal class RepositoryDeviceMenuRuntimePort(
     override fun runtimeEvents(): Flow<AqlWsEvent>? =
         devicesRepository.runtimeEvents()
 
-    override suspend fun requestNetworkStatus(deviceUid: DeviceUid): String? =
-        devicesRepository.commandClient(deviceUid)?.requestNetworkStatus()
+    override suspend fun requestNetworkStatus(deviceUid: DeviceUid): String? {
+        val outcome = devicesRepository.runtimeModules()?.network?.requestStatus(deviceUid)
+        return (outcome as? DeviceRuntimeCommandOutcome.Success)?.messageId
+    }
 
     override fun recordControlProof(deviceUid: DeviceUid): DeviceSnapshot? =
         devicesRepository.recordControlProof(deviceUid)
@@ -362,34 +365,9 @@ internal class DefaultDeviceMenuAccessOperations(
 
     private suspend fun requestFreshRuntimeProof(
         deviceUid: DeviceUid
-    ): Boolean = coroutineScope {
-        val runtimeEvents = runtimePort.runtimeEvents()
-            ?: return@coroutineScope false
-        val expectedRequestId = CompletableDeferred<String>()
-        val proofSignal = async(start = CoroutineStart.UNDISPATCHED) {
-            withTimeoutOrNull(RUNTIME_PROBE_TIMEOUT_MS) {
-                runtimeEvents
-                    .filter { event ->
-                        DeviceMenuRuntimeProofPolicy.accepts(
-                            event = event,
-                            requestedDeviceUid = deviceUid,
-                            expectedRequestId = expectedRequestId.await()
-                        )
-                    }
-                    .first()
-            }
-        }
-
-        val requestId = runtimePort.requestNetworkStatus(deviceUid)
-        if (requestId.isNullOrBlank()) {
-            expectedRequestId.cancel()
-            proofSignal.cancel()
-            return@coroutineScope false
-        }
-
-        expectedRequestId.complete(requestId)
-        proofSignal.await() != null
-    }
+    ): Boolean = withTimeoutOrNull(RUNTIME_PROBE_TIMEOUT_MS) {
+        !runtimePort.requestNetworkStatus(deviceUid).isNullOrBlank()
+    } ?: false
 
     private fun fastFailureReason(
         snapshot: DeviceSnapshot

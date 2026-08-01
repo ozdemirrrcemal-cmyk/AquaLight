@@ -85,7 +85,7 @@ class DeviceMenuFailureWritebackTest {
 
         override fun runtimeEvents(): Flow<AqlWsEvent> = eventFlow
 
-        override suspend fun requestNetworkStatus(deviceUid: DeviceUid): String = "no-response"
+        override suspend fun requestNetworkStatus(deviceUid: DeviceUid): String? = null
 
         override fun recordControlProof(deviceUid: DeviceUid): DeviceSnapshot? = null
 
