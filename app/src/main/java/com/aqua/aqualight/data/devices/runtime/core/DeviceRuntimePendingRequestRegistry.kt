@@ -32,6 +32,9 @@ internal class DeviceRuntimePendingRequestRegistry {
     private val terminalKeys = HashSet<LookupKey>()
     private val terminalOrder = ArrayDeque<LookupKey>()
 
+    val size: Int
+        get() = byCorrelation.size
+
     fun register(
         key: DeviceRuntimeCorrelationKey,
         parseSuccess: (AqlWsIncomingMessage.Response) -> Any?
@@ -85,8 +88,6 @@ internal class DeviceRuntimePendingRequestRegistry {
     fun cancelAll(reason: String) {
         cancelMatching(reason) { true }
     }
-
-    fun size(): Int = byCorrelation.size
 
     private fun cancelMatching(
         reason: String,
