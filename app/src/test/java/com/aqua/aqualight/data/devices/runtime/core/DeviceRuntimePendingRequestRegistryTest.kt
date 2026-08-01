@@ -30,7 +30,7 @@ class DeviceRuntimePendingRequestRegistryTest {
             key(firstDevice, secondGeneration, SHARED_ID)
         ) { it.data }
 
-        assertEquals(3, registry.size())
+        assertEquals(3, registry.size)
         assertSame(first, registry.find(firstDevice, firstGeneration, SHARED_ID))
         assertSame(second, registry.find(secondDevice, firstGeneration, SHARED_ID))
         assertSame(third, registry.find(firstDevice, secondGeneration, SHARED_ID))
