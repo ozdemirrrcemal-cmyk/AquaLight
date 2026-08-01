@@ -5,6 +5,7 @@ package com.aqua.aqualight.data.devices.repository
 import com.aqua.aqualight.data.devices.discovery.udp.AqlDiscoveryRefreshSender
 import com.aqua.aqualight.data.devices.model.DeviceConnectionState
 import com.aqua.aqualight.data.devices.model.DeviceOnlineState
+import com.aqua.aqualight.data.devices.model.DeviceRuntimeNameStatus
 import com.aqua.aqualight.data.devices.model.DeviceSnapshot
 import com.aqua.aqualight.data.devices.model.DeviceUid
 import com.aqua.aqualight.data.devices.monitor.DeviceConnectivityObserver
@@ -81,14 +82,7 @@ class DevicesRepository(
             } else {
                 scope.launch {
                     _ready.value = false
-                    val knownDevices = filterIgnoredDevices(knownStore?.loadSnapshots().orEmpty())
-                        .map(DeviceRuntimeMetadataProjector::invalidate)
-                    if (knownDevices.isNotEmpty()) {
-                        knownDevices.forEach { snapshot ->
-                            runtimeRepository?.activate(snapshot.deviceUid)
-                        }
-                        registryStore.upsertAll(knownDevices)
-                    }
+                    restoreKnownDevices()
 
                     val scannerJob = discoveryRepository.start(this)
                     val collectorJob = launch {
@@ -137,6 +131,17 @@ class DevicesRepository(
                     }
                 }
             }
+        }
+    }
+
+    private suspend fun restoreKnownDevices() {
+        val knownDevices = filterIgnoredDevices(knownStore?.loadSnapshots().orEmpty())
+            .map(DeviceRuntimeMetadataProjector::invalidate)
+        if (knownDevices.isNotEmpty()) {
+            knownDevices.forEach { snapshot ->
+                runtimeRepository?.activate(snapshot.deviceUid)
+            }
+            registryStore.upsertAll(knownDevices)
         }
     }
 
@@ -393,26 +398,35 @@ class DevicesRepository(
     }
 
     private suspend fun applyTypedRuntimeEvent(event: DeviceRuntimeTypedEvent) {
-        if (event.type != DeviceRuntimeTypedEvent.Type.DEVICE_STATUS_CHANGED) return
-        val statusData = when (val payload = event.payload) {
-            is DeviceRuntimeEventPayload.CommandResult -> payload.result.optJSONObject("status")
-            is DeviceRuntimeEventPayload.Snapshot ->
-                payload.data.optJSONObject("status") ?: payload.data
-        } ?: return
-        val nameStatus = DeviceRuntimeNameStatusParser.parse(
-            statusData,
-            "device.status.changed.data.status"
-        ).getOrNull() ?: return
-        val updated = registryStore.updateSnapshot(event.deviceUid) { current ->
-            current.copy(
-                identity = current.identity.copy(
-                    displayName = nameStatus.productDisplayName,
-                    customName = nameStatus.customName
+        event.deviceNameStatusOrNull()?.let { nameStatus ->
+            val updated = registryStore.updateSnapshot(event.deviceUid) { current ->
+                current.copy(
+                    identity = current.identity.copy(
+                        displayName = nameStatus.productDisplayName,
+                        customName = nameStatus.customName
+                    )
                 )
-            )
+            }
+            updated?.let { snapshot -> knownStore?.saveSnapshot(snapshot) }
         }
-        updated?.let { snapshot -> knownStore?.saveSnapshot(snapshot) }
     }
+
+    private fun DeviceRuntimeTypedEvent.deviceNameStatusOrNull(): DeviceRuntimeNameStatus? =
+        takeIf { event -> event.type == DeviceRuntimeTypedEvent.Type.DEVICE_STATUS_CHANGED }
+            ?.let { event ->
+                when (val payload = event.payload) {
+                    is DeviceRuntimeEventPayload.CommandResult ->
+                        payload.result.optJSONObject("status")
+                    is DeviceRuntimeEventPayload.Snapshot ->
+                        payload.data.optJSONObject("status") ?: payload.data
+                }
+            }
+            ?.let { statusData ->
+                DeviceRuntimeNameStatusParser.parse(
+                    statusData,
+                    "device.status.changed.data.status"
+                ).getOrNull()
+            }
 
     private suspend fun applyRuntimeMetadataMessage(event: AqlWsEvent.Message) {
         val response = event.parsed as? AqlWsIncomingMessage.Response
