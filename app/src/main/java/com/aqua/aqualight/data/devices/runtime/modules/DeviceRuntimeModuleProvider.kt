@@ -11,6 +11,7 @@ import com.aqua.aqualight.data.devices.runtime.modules.firmware.DeviceFirmwareUp
 import com.aqua.aqualight.data.devices.runtime.modules.light.DeviceLightRuntimeRepository
 import com.aqua.aqualight.data.devices.runtime.modules.light.DeviceLightRuntimeStateStore
 import com.aqua.aqualight.data.devices.runtime.modules.light.DeviceLightTemperatureProtectionRuntimeRepository
+import com.aqua.aqualight.data.devices.runtime.modules.light.DeviceLightTypedEventReducer
 import com.aqua.aqualight.data.devices.runtime.modules.network.DeviceNetworkRuntimeRepository
 import com.aqua.aqualight.data.devices.runtime.modules.security.DeviceSecurityRuntimeRepository
 import com.aqua.aqualight.data.devices.runtime.modules.time.DeviceTimeRuntimeRepository
@@ -24,6 +25,7 @@ class DeviceRuntimeModuleProvider(
     revokeLocalCredential: suspend (DeviceUid) -> Result<Unit>
 ) {
     private val lightStateStore = DeviceLightRuntimeStateStore()
+    private val lightEventReducer = DeviceLightTypedEventReducer(lightStateStore)
 
     val device = DeviceCommonRuntimeRepository(commandGateway)
     val security = DeviceSecurityRuntimeRepository(commandGateway, revokeLocalCredential)
@@ -41,10 +43,10 @@ class DeviceRuntimeModuleProvider(
         DeviceLightTemperatureProtectionRuntimeRepository(commandGateway, lightStateStore)
 
     internal fun acceptTypedRuntimeEvent(event: DeviceRuntimeTypedEvent) {
-        light.applyTypedEvent(event)
+        lightEventReducer.apply(event)
     }
 
     internal fun clearRuntimeState(deviceUid: DeviceUid) {
-        light.clearState(deviceUid)
+        lightStateStore.clear(deviceUid)
     }
 }
