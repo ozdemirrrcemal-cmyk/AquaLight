@@ -6,11 +6,11 @@ Target: **41 authenticated commands / 0 public commands**
 
 ## Current position
 
-- Current stage: **04 — Common device commands**
-- Active branch: `feat/device-04-common-commands`
+- Current stage: **05 — Light runtime alignment**
+- Active branch: `feat/light-05-runtime-alignment`
 - Status: **IN PROGRESS**
-- Previous stage: **03 PASSED / PR #184 MERGED**
-- Next: Align common device, security, network, time and firmware read paths with the correlated request broker and typed event pipeline.
+- Previous stage: **04 PASSED / PR #185 MERGED**
+- Next: Align all seven Light commands, production consumers and `light.status.changed` handling with the correlated request broker and exact firmware contracts.
 
 ## Fixed rules
 
@@ -73,25 +73,34 @@ Target: **41 authenticated commands / 0 public commands**
   - [x] Physical device test N/A: production module consumers, provisioning, UDP, transport and crypto unchanged
   - [x] PR evidence recorded
 
-- [ ] **04** `feat/device-04-common-commands` — **IN PROGRESS**
-  - [ ] Device: identity/status/capabilities/name
-  - [ ] Security: status/pair/unpair/reset
-  - [ ] Network status
-  - [ ] Time: status/config/phone/NTP/RTC
-  - [ ] Firmware status and OTA status read-only
-  - [ ] Unpair/reset token and session lifecycle
-  - [ ] Integrate production common-command paths with correlated request broker
-  - [ ] Consume relevant typed events without regressing raw compatibility
-  - [ ] Add unit and repository integration tests
-  - [ ] Run relevant automatic and physical gates based on production behavior impact
+- [x] **04** `feat/device-04-common-commands` — **MERGED / PR #185**
+  - [x] Device identity/status/capabilities/name aligned
+  - [x] Security status/pair/unpair/reset aligned
+  - [x] Network status aligned
+  - [x] Time status/config/phone/NTP/RTC aligned
+  - [x] Firmware status and OTA status read-only aligned
+  - [x] Unpair/reset token and session lifecycle enforced
+  - [x] Production common-command paths moved to correlated request broker
+  - [x] Relevant typed events consumed without raw compatibility regression
+  - [x] Unit, golden and repository integration tests added
+  - [x] Android CI, installable APK, Emulator API 27/36 and CodeQL passed
+  - [x] Current custom-name firmware interoperability and physical menu liveness passed
+  - [x] PR evidence recorded
 
-- [ ] **05** `feat/light-05-runtime-alignment`
-  - 7/7 light commands
-  - Manual level and clear
-  - Channel Auto/On/Off
-  - Program create/update/delete
-  - Temperature protection status/set
-  - `light.status.changed`
+- [ ] **05** `feat/light-05-runtime-alignment` — **IN PROGRESS**
+  - [ ] Inventory exact firmware request/response shapes for all 7 Light commands
+  - [ ] `light.status.get` exact typed status parser
+  - [ ] `light.manual.set` typed manual-level and clear outcomes
+  - [ ] `light.channel.regime.set` exact Auto/On/Off persistence outcome
+  - [ ] `light.program.apply` exact create/update outcome
+  - [ ] `light.program.delete` exact delete outcome
+  - [ ] `light.temperature-protection.status.get` exact typed status
+  - [ ] `light.temperature-protection.set` exact typed mutation outcome
+  - [ ] Move production Light consumers from send-success to correlated firmware success
+  - [ ] Integrate `light.status.changed` into deterministic current-state projection
+  - [ ] Reject unsupported Light operations using exact firmware capabilities/features
+  - [ ] Add unit, parser, repository and production-consumer tests
+  - [ ] Run automatic gates and targeted physical Light-device regression
 
 - [ ] **06** `feat/cooling-06-runtime-alignment`
   - 2/2 cooling commands
@@ -154,3 +163,5 @@ Target: **41 authenticated commands / 0 public commands**
 | 2026-08-01 | Stage 03 event routing branch opened | IN PROGRESS | Inventory firmware event contracts |
 | 2026-08-01 | Stage 03 typed event routing | PASS / PR #184 MERGED | Start Stage 04 |
 | 2026-08-01 | Stage 04 common command branch opened | IN PROGRESS | Inventory firmware common-command payloads and current Android consumers |
+| 2026-08-01 | Stage 04 common runtime commands | PASS / PR #185 MERGED | Start Stage 05 |
+| 2026-08-01 | Stage 05 Light runtime branch opened | IN PROGRESS | Inventory all seven firmware Light contracts and Android consumers |
