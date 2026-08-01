@@ -55,17 +55,7 @@ internal class DeviceCoolingRuntimeStateStore {
         temperature: DeviceCoolingTemperatureSnapshot
     ): Boolean = synchronized(lock) {
         val current = _states.value[deviceUid] ?: DeviceCoolingRuntimeState()
-        val fixedSensorIndex = current.status?.fixedSensorIndex ?: current.config?.fixedSensorIndex
-        if (fixedSensorIndex != null && fixedSensorIndex != temperature.sensorIndex) {
-            return@synchronized false
-        }
-
-        current.temperature?.let { previous ->
-            if (previous.sensorIndex != temperature.sensorIndex) return@synchronized false
-            if (!isNewerCoolingSample(temperature.sampledAtMs, previous.sampledAtMs)) {
-                return@synchronized false
-            }
-        }
+        if (!acceptsTemperature(current, temperature)) return@synchronized false
 
         _states.value = _states.value + (
             deviceUid to current.copy(
@@ -81,6 +71,18 @@ internal class DeviceCoolingRuntimeStateStore {
             if (deviceUid !in _states.value) return
             _states.value = _states.value.toMutableMap().apply { remove(deviceUid) }.toMap()
         }
+    }
+
+    private fun acceptsTemperature(
+        current: DeviceCoolingRuntimeState,
+        incoming: DeviceCoolingTemperatureSnapshot
+    ): Boolean {
+        val fixedSensorIndex = current.status?.fixedSensorIndex ?: current.config?.fixedSensorIndex
+        if (fixedSensorIndex != null && fixedSensorIndex != incoming.sensorIndex) return false
+
+        val previous = current.temperature ?: return true
+        return previous.sensorIndex == incoming.sensorIndex &&
+            isNewerCoolingSample(incoming.sampledAtMs, previous.sampledAtMs)
     }
 
     private fun selectFreshestTemperature(
