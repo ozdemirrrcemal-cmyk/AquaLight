@@ -7,27 +7,39 @@ data class DeviceSecurityStatus(
     val tokenGateEnabled: Boolean,
     val dynamicPairingEnabled: Boolean,
     val paired: Boolean,
-    val runtimeTransport: String,
-    val runtimeAuthMessageType: String,
-    val runtimeAuthScheme: String,
-    val runtimeCredentialSerialized: Boolean,
-    val runtimeReplayProtection: String,
+    val runtime: DeviceSecurityRuntimePolicy,
+    val ownership: DeviceSecurityOwnershipPolicy,
+    val storage: DeviceSecurityCredentialStorage,
+    val deviceUid: DeviceUid,
+    val shortId: String,
+    val serialNumber: String
+)
+
+data class DeviceSecurityRuntimePolicy(
+    val transport: String,
+    val authMessageType: String,
+    val authScheme: String,
+    val credentialSerialized: Boolean,
+    val replayProtection: String,
+    val mutatingCommandsRequireAuth: Boolean
+)
+
+data class DeviceSecurityOwnershipPolicy(
     val initialOwnershipTransport: String,
     val firstTokenTransport: String,
     val webSocketPairingCommand: String,
     val webSocketPairingCommandAuth: String,
     val webSocketPairingPurpose: String,
     val publicFirstPairingSupported: Boolean,
-    val mutatingCommandsRequireAuth: Boolean,
-    val tokenReturnedByStatus: Boolean,
-    val tokenStorageBackend: String,
-    val tokenStorageFormat: String,
-    val tokenStoredPlaintext: Boolean,
+    val tokenReturnedByStatus: Boolean
+)
+
+data class DeviceSecurityCredentialStorage(
+    val backend: String,
+    val format: String,
+    val storedPlaintext: Boolean,
     val tokenFormat: String,
     val tokenHexLength: Int,
-    val deviceUid: DeviceUid,
-    val shortId: String,
-    val serialNumber: String,
     val tokenVersion: Int?,
     val pairedAtMs: Long?,
     val lastRotatedAtMs: Long?,
