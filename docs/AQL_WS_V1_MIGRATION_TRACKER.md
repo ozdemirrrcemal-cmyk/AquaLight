@@ -7,8 +7,10 @@ Target: **41 authenticated commands / 0 public commands**
 ## Current position
 
 - Current stage: **00 — Baseline**
-- Status: **NOT STARTED**
-- Next: Existing provisioning, discovery, online/offline and reconnect flows will be tested without changing behavior.
+- Active branch: `test/ws-00-runtime-baseline`
+- Status: **IN PROGRESS**
+- Evidence: `docs/AQL_WS_V1_STAGE_00_BASELINE.md`
+- Next: Open the Stage 00 PR, collect Android CI/emulator results, then record physical-device provisioning and online/offline smoke tests.
 
 ## Fixed rules
 
@@ -21,15 +23,19 @@ Target: **41 authenticated commands / 0 public commands**
 
 ## Stage list
 
-- [ ] **00** `test/ws-00-runtime-baseline`
-  - Provisioning baseline
-  - UDP discovery baseline
-  - WebSocket auth/metadata baseline
-  - Online → offline → online
-  - Router/phone network recovery
-  - App background/foreground
-  - Device removal/session shutdown
-  - Secret leakage check
+- [ ] **00** `test/ws-00-runtime-baseline` — **IN PROGRESS**
+  - [x] Runtime/provisioning freeze guard added
+  - [x] Guard execution added to existing Python test discovery
+  - [x] Baseline evidence/checklist file added
+  - [ ] Android CI and emulator results recorded
+  - [ ] Physical provisioning smoke recorded
+  - [ ] UDP discovery smoke recorded
+  - [ ] WebSocket auth/metadata smoke recorded
+  - [ ] Online → offline → online recorded
+  - [ ] Router/phone network recovery recorded
+  - [ ] App background/foreground recorded
+  - [ ] Device removal/session shutdown recorded
+  - [ ] Secret leakage check recorded
 
 - [ ] **01** `chore/ws-01-contract-parity`
   - Firmware golden fixture copied byte-identically
@@ -127,3 +133,4 @@ Target: **41 authenticated commands / 0 public commands**
 | Date | Stage | Result | Next |
 |---|---|---|---|
 | 2026-08-01 | Tracker setup | PASS | Start Stage 00 baseline |
+| 2026-08-01 | Stage 00 baseline branch | IN PROGRESS | Run CI/emulator and physical smoke gates |
