@@ -1,6 +1,7 @@
 package com.aqua.aqualight.data.devices.runtime.modules.time
 
 import com.aqua.aqualight.data.devices.model.DeviceUid
+import com.aqua.aqualight.data.devices.runtime.core.DeviceRuntimeCommandOutcome
 
 /**
  * One app-session coordinator.
@@ -10,7 +11,8 @@ import com.aqua.aqualight.data.devices.model.DeviceUid
  * Provisioning owns persistent timezone setup, while firmware NTP keeps the clock corrected.
  */
 class DeviceTimeSyncCoordinator internal constructor(
-    private val syncPhoneNow: (DeviceUid) -> DeviceTimeCommandResult
+    private val syncPhoneNow: suspend (DeviceUid) ->
+        DeviceRuntimeCommandOutcome<DeviceTimeMutationResult>
 ) {
     constructor(repository: DeviceTimeRuntimeRepository) : this(
         syncPhoneNow = { deviceUid ->
@@ -25,26 +27,26 @@ class DeviceTimeSyncCoordinator internal constructor(
     private val syncedDeviceUids = mutableSetOf<String>()
     private val syncingDeviceUids = mutableSetOf<String>()
 
-    fun syncPhoneNowIfNeeded(
+    suspend fun syncPhoneNowIfNeeded(
         deviceUid: DeviceUid,
         force: Boolean = false
-    ): DeviceTimeCommandResult {
+    ): DeviceTimeSyncDecision {
         val key = deviceUid.value
         synchronized(lock) {
             if (key in syncingDeviceUids || (!force && key in syncedDeviceUids)) {
-                return skippedResult()
+                return DeviceTimeSyncDecision.Skipped
             }
             syncingDeviceUids += key
         }
 
-        var result: DeviceTimeCommandResult? = null
+        var outcome: DeviceRuntimeCommandOutcome<DeviceTimeMutationResult>? = null
         try {
-            result = syncPhoneNow(deviceUid)
-            return checkNotNull(result)
+            outcome = syncPhoneNow(deviceUid)
+            return DeviceTimeSyncDecision.Attempted(checkNotNull(outcome))
         } finally {
             synchronized(lock) {
                 syncingDeviceUids -= key
-                if (result?.isSuccess == true) {
+                if (outcome is DeviceRuntimeCommandOutcome.Success) {
                     syncedDeviceUids += key
                 }
             }
@@ -57,10 +59,12 @@ class DeviceTimeSyncCoordinator internal constructor(
             syncingDeviceUids -= deviceUid.value
         }
     }
+}
 
-    private fun skippedResult(): DeviceTimeCommandResult = DeviceTimeCommandResult(
-        sent = false,
-        skipped = true,
-        action = DeviceTimeRuntimeContract.Action.PHONE_SYNC
-    )
+sealed interface DeviceTimeSyncDecision {
+    data object Skipped : DeviceTimeSyncDecision
+
+    data class Attempted(
+        val outcome: DeviceRuntimeCommandOutcome<DeviceTimeMutationResult>
+    ) : DeviceTimeSyncDecision
 }
