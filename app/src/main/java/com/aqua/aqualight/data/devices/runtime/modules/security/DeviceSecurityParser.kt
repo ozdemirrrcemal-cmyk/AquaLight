@@ -14,62 +14,17 @@ internal object DeviceSecurityParser {
             expectedStatusKeys(dynamicPairing, paired),
             STATUS_LABEL
         )
-        val status = DeviceSecurityStatus(
+        return DeviceSecurityStatus(
             tokenGateEnabled = DeviceRuntimeJson.booleanValue(data, "tokenGateEnabled"),
             dynamicPairingEnabled = dynamicPairing,
             paired = paired,
-            runtimeTransport = DeviceRuntimeJson.stringValue(data, "runtimeTransport"),
-            runtimeAuthMessageType = DeviceRuntimeJson.stringValue(data, "runtimeAuthMessageType"),
-            runtimeAuthScheme = DeviceRuntimeJson.stringValue(data, "runtimeAuthScheme"),
-            runtimeCredentialSerialized = DeviceRuntimeJson.booleanValue(
-                data,
-                "runtimeCredentialSerialized"
-            ),
-            runtimeReplayProtection = DeviceRuntimeJson.stringValue(
-                data,
-                "runtimeReplayProtection"
-            ),
-            initialOwnershipTransport = DeviceRuntimeJson.stringValue(
-                data,
-                "initialOwnershipTransport"
-            ),
-            firstTokenTransport = DeviceRuntimeJson.stringValue(data, "firstTokenTransport"),
-            webSocketPairingCommand = DeviceRuntimeJson.stringValue(
-                data,
-                "webSocketPairingCommand"
-            ),
-            webSocketPairingCommandAuth = DeviceRuntimeJson.stringValue(
-                data,
-                "webSocketPairingCommandAuth"
-            ),
-            webSocketPairingPurpose = DeviceRuntimeJson.stringValue(
-                data,
-                "webSocketPairingPurpose"
-            ),
-            publicFirstPairingSupported = DeviceRuntimeJson.booleanValue(
-                data,
-                "publicFirstPairingSupported"
-            ),
-            mutatingCommandsRequireAuth = DeviceRuntimeJson.booleanValue(
-                data,
-                "mutatingCommandsRequireAuth"
-            ),
-            tokenReturnedByStatus = DeviceRuntimeJson.booleanValue(data, "tokenReturnedByStatus"),
-            tokenStorageBackend = DeviceRuntimeJson.stringValue(data, "tokenStorageBackend"),
-            tokenStorageFormat = DeviceRuntimeJson.stringValue(data, "tokenStorageFormat"),
-            tokenStoredPlaintext = DeviceRuntimeJson.booleanValue(data, "tokenStoredPlaintext"),
-            tokenFormat = DeviceRuntimeJson.stringValue(data, "tokenFormat"),
-            tokenHexLength = DeviceRuntimeJson.intValue(data, "tokenHexLength"),
+            runtime = parseRuntimePolicy(data),
+            ownership = parseOwnershipPolicy(data),
+            storage = parseCredentialStorage(data),
             deviceUid = DeviceUid(DeviceRuntimeJson.stringValue(data, "deviceUid")),
             shortId = DeviceRuntimeJson.stringValue(data, "shortId"),
-            serialNumber = DeviceRuntimeJson.stringValue(data, "serialNumber"),
-            tokenVersion = data.optionalInt(FIELD_TOKEN_VERSION),
-            pairedAtMs = data.optionalNonNegativeLong(FIELD_PAIRED_AT_MS),
-            lastRotatedAtMs = data.optionalNonNegativeLong(FIELD_LAST_ROTATED_AT_MS),
-            provisioningTokenPending = data.optionalBoolean(FIELD_PROVISIONING_TOKEN_PENDING)
-        )
-        validateStatus(status, expectedDeviceUid)
-        return status
+            serialNumber = DeviceRuntimeJson.stringValue(data, "serialNumber")
+        ).also { status -> validateStatus(status, expectedDeviceUid) }
     }
 
     fun parsePair(data: JSONObject): DeviceSecurityPairResult {
@@ -90,16 +45,7 @@ internal object DeviceSecurityParser {
                 data,
                 "credentialSerializedOnWebSocket"
             )
-        ).also { result ->
-            require(result.paired)
-            require(!result.tokenReturned)
-            require(result.runtimeTransport == "websocket")
-            require(result.authMessageType == AqlWsContract.TYPE_AUTH)
-            require(result.authScheme == AqlWsContract.AUTH_SCHEME)
-            require(!result.credentialSerialized)
-            require(result.credentialRotationTransport == "ble_runtime_endpoint")
-            require(!result.credentialSerializedOnWebSocket)
-        }
+        ).also(::validatePair)
     }
 
     fun parseRevocation(
@@ -128,38 +74,100 @@ internal object DeviceSecurityParser {
         )
     }
 
+    private fun parseRuntimePolicy(data: JSONObject): DeviceSecurityRuntimePolicy =
+        DeviceSecurityRuntimePolicy(
+            transport = DeviceRuntimeJson.stringValue(data, "runtimeTransport"),
+            authMessageType = DeviceRuntimeJson.stringValue(data, "runtimeAuthMessageType"),
+            authScheme = DeviceRuntimeJson.stringValue(data, "runtimeAuthScheme"),
+            credentialSerialized = DeviceRuntimeJson.booleanValue(
+                data,
+                "runtimeCredentialSerialized"
+            ),
+            replayProtection = DeviceRuntimeJson.stringValue(data, "runtimeReplayProtection"),
+            mutatingCommandsRequireAuth = DeviceRuntimeJson.booleanValue(
+                data,
+                "mutatingCommandsRequireAuth"
+            )
+        )
+
+    private fun parseOwnershipPolicy(data: JSONObject): DeviceSecurityOwnershipPolicy =
+        DeviceSecurityOwnershipPolicy(
+            initialOwnershipTransport = DeviceRuntimeJson.stringValue(
+                data,
+                "initialOwnershipTransport"
+            ),
+            firstTokenTransport = DeviceRuntimeJson.stringValue(data, "firstTokenTransport"),
+            webSocketPairingCommand = DeviceRuntimeJson.stringValue(
+                data,
+                "webSocketPairingCommand"
+            ),
+            webSocketPairingCommandAuth = DeviceRuntimeJson.stringValue(
+                data,
+                "webSocketPairingCommandAuth"
+            ),
+            webSocketPairingPurpose = DeviceRuntimeJson.stringValue(
+                data,
+                "webSocketPairingPurpose"
+            ),
+            publicFirstPairingSupported = DeviceRuntimeJson.booleanValue(
+                data,
+                "publicFirstPairingSupported"
+            ),
+            tokenReturnedByStatus = DeviceRuntimeJson.booleanValue(data, "tokenReturnedByStatus")
+        )
+
+    private fun parseCredentialStorage(data: JSONObject): DeviceSecurityCredentialStorage =
+        DeviceSecurityCredentialStorage(
+            backend = DeviceRuntimeJson.stringValue(data, "tokenStorageBackend"),
+            format = DeviceRuntimeJson.stringValue(data, "tokenStorageFormat"),
+            storedPlaintext = DeviceRuntimeJson.booleanValue(data, "tokenStoredPlaintext"),
+            tokenFormat = DeviceRuntimeJson.stringValue(data, "tokenFormat"),
+            tokenHexLength = DeviceRuntimeJson.intValue(data, "tokenHexLength"),
+            tokenVersion = data.optionalInt(FIELD_TOKEN_VERSION),
+            pairedAtMs = data.optionalNonNegativeLong(FIELD_PAIRED_AT_MS),
+            lastRotatedAtMs = data.optionalNonNegativeLong(FIELD_LAST_ROTATED_AT_MS),
+            provisioningTokenPending = data.optionalBoolean(FIELD_PROVISIONING_TOKEN_PENDING)
+        )
+
     private fun expectedStatusKeys(dynamicPairing: Boolean, paired: Boolean): Set<String> =
         buildSet {
             addAll(BASE_STATUS_KEYS)
             if (dynamicPairing) add(FIELD_PROVISIONING_TOKEN_PENDING)
-            if (dynamicPairing && paired) {
-                add(FIELD_TOKEN_VERSION)
-                add(FIELD_PAIRED_AT_MS)
-                add(FIELD_LAST_ROTATED_AT_MS)
-            }
+            if (dynamicPairing && paired) addAll(PAIRED_METADATA_KEYS)
         }
 
     private fun validateStatus(status: DeviceSecurityStatus, expectedDeviceUid: DeviceUid) {
         require(status.deviceUid == expectedDeviceUid)
-        require(status.runtimeTransport == "websocket")
-        require(status.runtimeAuthMessageType == AqlWsContract.TYPE_AUTH)
-        require(status.runtimeAuthScheme == AqlWsContract.AUTH_SCHEME)
-        require(!status.runtimeCredentialSerialized)
-        require(status.runtimeReplayProtection == "session_nonce_and_monotonic_sequence")
-        require(status.initialOwnershipTransport == "ble_qr")
-        require(status.firstTokenTransport == "ble_runtime_endpoint")
-        require(status.webSocketPairingCommand == "security.pair")
-        require(status.webSocketPairingCommandAuth == "authenticated")
-        require(status.webSocketPairingPurpose == "ownership_status_only")
-        require(!status.publicFirstPairingSupported)
-        require(!status.tokenReturnedByStatus)
-        require(status.tokenStorageBackend == "NVS")
-        require(status.tokenStorageFormat == "sha256_hash")
-        require(!status.tokenStoredPlaintext)
-        require(status.tokenFormat == "64_hex")
-        require(status.tokenHexLength == 64)
-        require(!status.dynamicPairingEnabled || status.provisioningTokenPending != null)
-        require(!status.paired || !status.dynamicPairingEnabled || status.tokenVersion != null)
+        require(status.runtime.transport == "websocket")
+        require(status.runtime.authMessageType == AqlWsContract.TYPE_AUTH)
+        require(status.runtime.authScheme == AqlWsContract.AUTH_SCHEME)
+        require(!status.runtime.credentialSerialized)
+        require(status.runtime.replayProtection == "session_nonce_and_monotonic_sequence")
+        require(status.ownership.initialOwnershipTransport == "ble_qr")
+        require(status.ownership.firstTokenTransport == "ble_runtime_endpoint")
+        require(status.ownership.webSocketPairingCommand == "security.pair")
+        require(status.ownership.webSocketPairingCommandAuth == "authenticated")
+        require(status.ownership.webSocketPairingPurpose == "ownership_status_only")
+        require(!status.ownership.publicFirstPairingSupported)
+        require(!status.ownership.tokenReturnedByStatus)
+        require(status.storage.backend == "NVS")
+        require(status.storage.format == "sha256_hash")
+        require(!status.storage.storedPlaintext)
+        require(status.storage.tokenFormat == "64_hex")
+        require(status.storage.tokenHexLength == 64)
+        require(!status.dynamicPairingEnabled || status.storage.provisioningTokenPending != null)
+        require(!status.paired || !status.dynamicPairingEnabled || status.storage.tokenVersion != null)
+    }
+
+    private fun validatePair(result: DeviceSecurityPairResult) {
+        require(result.paired)
+        require(!result.tokenReturned)
+        require(result.runtimeTransport == "websocket")
+        require(result.authMessageType == AqlWsContract.TYPE_AUTH)
+        require(result.authScheme == AqlWsContract.AUTH_SCHEME)
+        require(!result.credentialSerialized)
+        require(result.credentialRotationTransport == "ble_runtime_endpoint")
+        require(!result.credentialSerializedOnWebSocket)
     }
 
     private fun JSONObject.optionalInt(key: String): Int? =
@@ -185,6 +193,11 @@ internal object DeviceSecurityParser {
     private const val FIELD_LAST_ROTATED_AT_MS = "lastRotatedAtMs"
     private const val FIELD_PROVISIONING_TOKEN_PENDING = "provisioningTokenPending"
 
+    private val PAIRED_METADATA_KEYS = setOf(
+        FIELD_TOKEN_VERSION,
+        FIELD_PAIRED_AT_MS,
+        FIELD_LAST_ROTATED_AT_MS
+    )
     private val BASE_STATUS_KEYS = setOf(
         "tokenGateEnabled", FIELD_DYNAMIC_PAIRING_ENABLED, FIELD_PAIRED,
         "runtimeTransport", "runtimeAuthMessageType", "runtimeAuthScheme",
