@@ -1,0 +1,99 @@
+package com.aqua.aqualight.data.devices.runtime.modules.cooling
+
+import java.nio.file.Files
+import java.nio.file.Path
+import org.json.JSONObject
+import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
+import org.junit.Assert.assertNull
+import org.junit.Assert.assertTrue
+import org.junit.Test
+
+class DeviceCoolingRuntimeContractTest {
+    @Test
+    fun `status parser accepts exact firmware status and temperature`() {
+        val status = DeviceCoolingStatusParser.parse(DeviceCoolingRuntimeFixtures.status())
+
+        assertEquals(DeviceCoolingMode.AUTO, status.mode)
+        assertEquals(1, status.fanOutputCount)
+        assertEquals(27.4, status.temperature.temperatureC!!, 0.0001)
+        assertTrue(status.temperature.readingValid)
+        assertEquals(listOf(0), status.rules.single().sensorBindings)
+        assertTrue(status.runtime.supportsFanDisplayName)
+    }
+
+    @Test
+    fun `temperature parser accepts exact nullable invalid snapshot`() {
+        val parsed = DeviceCoolingTemperatureParser.parse(
+            DeviceCoolingRuntimeFixtures.temperature(temperatureC = null)
+        )
+
+        assertFalse(parsed.readingValid)
+        assertNull(parsed.temperatureC)
+    }
+
+    @Test
+    fun `status parser rejects extra fields and mode aliases`() {
+        val extra = DeviceCoolingRuntimeFixtures.status().put("unexpected", true)
+        val alias = DeviceCoolingRuntimeFixtures.status().put("mode", "auto")
+
+        assertTrue(runCatching { DeviceCoolingStatusParser.parse(extra) }.isFailure)
+        assertTrue(runCatching { DeviceCoolingStatusParser.parse(alias) }.isFailure)
+    }
+
+    @Test
+    fun `temperature parser rejects validity and nullability mismatch`() {
+        val invalid = DeviceCoolingRuntimeFixtures.temperature(null)
+            .put("readingValid", true)
+
+        assertTrue(runCatching { DeviceCoolingTemperatureParser.parse(invalid) }.isFailure)
+    }
+
+    @Test
+    fun `config payload emits canonical exact fields`() {
+        val payload = DeviceCoolingConfigApplyPayload(
+            mode = DeviceCoolingMode.ON,
+            minTemperatureC = 29.0,
+            maxTemperatureC = 36.0,
+            fans = listOf(DeviceCoolingFanDisplayNamePayload(" FAN1 ", " Sol Fan ")),
+            save = true
+        ).toJson()
+
+        assertEquals(
+            setOf("mode", "minTemperatureC", "maxTemperatureC", "fans", "save"),
+            payload.keys().asSequence().toSet()
+        )
+        assertEquals("On", payload.getString("mode"))
+        val fan = payload.getJSONArray("fans").getJSONObject(0)
+        assertEquals(setOf("fanKey", "displayName"), fan.keys().asSequence().toSet())
+        assertEquals("fan1", fan.getString("fanKey"))
+        assertEquals("Sol Fan", fan.getString("displayName"))
+    }
+
+    @Test
+    fun `blank display name is encoded as JSON null`() {
+        val payload = DeviceCoolingConfigApplyPayload(
+            fans = listOf(DeviceCoolingFanDisplayNamePayload("fan1", "   "))
+        ).toJson()
+
+        assertTrue(payload.getJSONArray("fans").getJSONObject(0).isNull("displayName"))
+    }
+
+    @Test
+    fun `firmware telemetry fixture keeps exact field order and command count`() {
+        val fixture = JSONObject(
+            Files.readString(
+                Path.of("protocol/fixtures/aql_cooling_temperature_telemetry_v1.json")
+            )
+        )
+
+        assertEquals(41, fixture.getInt("commandCount"))
+        assertEquals("temperature.changed", fixture.getString("event"))
+        assertEquals(
+            listOf("sensorIndex", "readingValid", "temperatureC", "sampledAtMs"),
+            List(fixture.getJSONArray("exactFields").length()) { index ->
+                fixture.getJSONArray("exactFields").getString(index)
+            }
+        )
+    }
+}
