@@ -25,6 +25,12 @@ class DeviceCoolingRootViewModel(
     private val rootOperations: DeviceRootOperations,
     private val coolingOperations: DeviceCoolingOperations
 ) : ViewModel() {
+    constructor(operations: DeviceRootOperations) : this(
+        rootOperations = operations,
+        coolingOperations = requireNotNull(operations as? DeviceCoolingOperations) {
+            "Cooling root operations must implement DeviceCoolingOperations."
+        }
+    )
 
     private val _uiState = MutableStateFlow(DeviceCoolingRootUiState())
     val uiState: StateFlow<DeviceCoolingRootUiState> = _uiState.asStateFlow()
@@ -46,7 +52,7 @@ class DeviceCoolingRootViewModel(
         refreshJob?.cancel()
         _uiState.value = buildState(
             root = rootOperations.current(deviceUid),
-            cooling = coolingOperations.current(deviceUid),
+            cooling = coolingOperations.currentCooling(deviceUid),
             fallbackTitle = fallbackTitle,
             deviceUid = deviceUid
         )
@@ -54,7 +60,7 @@ class DeviceCoolingRootViewModel(
         observeJob = viewModelScope.launch {
             combine(
                 rootOperations.observe(deviceUid),
-                coolingOperations.observe(deviceUid)
+                coolingOperations.observeCooling(deviceUid)
             ) { root, cooling ->
                 buildState(root, cooling, fallbackTitle, deviceUid)
             }.collect { state -> _uiState.value = state }
