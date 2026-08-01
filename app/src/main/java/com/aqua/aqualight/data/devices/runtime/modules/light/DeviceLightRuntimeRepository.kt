@@ -3,9 +3,7 @@ package com.aqua.aqualight.data.devices.runtime.modules.light
 import com.aqua.aqualight.data.devices.model.DeviceUid
 import com.aqua.aqualight.data.devices.runtime.core.DeviceRuntimeCommandGateway
 import com.aqua.aqualight.data.devices.runtime.core.DeviceRuntimeCommandOutcome
-import com.aqua.aqualight.data.devices.runtime.events.DeviceRuntimeTypedEvent
 import com.aqua.aqualight.data.devices.runtime.modules.common.DeviceRuntimeJsonCommand
-import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.StateFlow
 import org.json.JSONObject
 
@@ -19,12 +17,6 @@ class DeviceLightRuntimeRepository internal constructor(
     )
 
     val states: StateFlow<Map<DeviceUid, DeviceLightStatus>> = stateStore.statuses
-
-    fun observeStatus(deviceUid: DeviceUid): Flow<DeviceLightStatus?> =
-        stateStore.observeStatus(deviceUid)
-
-    fun currentStatus(deviceUid: DeviceUid): DeviceLightStatus? =
-        stateStore.currentStatus(deviceUid)
 
     suspend fun requestStatus(
         deviceUid: DeviceUid
@@ -123,13 +115,6 @@ class DeviceLightRuntimeRepository internal constructor(
             save = save
         )
     )
-
-    internal fun applyTypedEvent(event: DeviceRuntimeTypedEvent): DeviceLightEventApplyResult =
-        stateStore.applyTypedEvent(event)
-
-    internal fun clearState(deviceUid: DeviceUid) {
-        stateStore.clear(deviceUid)
-    }
 
     private fun <T> jsonCommand(
         action: String,
