@@ -130,7 +130,7 @@ internal object DeviceCoolingFanParser {
         label: String
     ): DeviceCoolingFanStatus {
         data.requireCoolingKeys(expectedKeys, label)
-        val fan = DeviceCoolingFanStatus(
+        return DeviceCoolingFanStatus(
             index = data.requireCoolingInt("index", minimum = COOLING_MIN_INDEX),
             key = data.requireCoolingText("key"),
             name = data.requireCoolingText("name"),
@@ -141,75 +141,39 @@ internal object DeviceCoolingFanParser {
             gpio = data.requireCoolingInt("gpio"),
             ledcChannel = data.requireCoolingInt("ledcChannel"),
             group = data.requireCoolingInt("group"),
-            valueNow = data.requireCoolingDouble(
-                "valueNow",
-                COOLING_NORMALIZED_MIN,
-                COOLING_NORMALIZED_MAX
-            ),
-            valueAuto = data.requireCoolingDouble(
-                "valueAuto",
-                COOLING_NORMALIZED_MIN,
-                COOLING_NORMALIZED_MAX
-            ),
+            valueNow = data.requireNormalizedValue("valueNow"),
+            valueAuto = data.requireNormalizedValue("valueAuto"),
             valueManual = data.requireCoolingDouble(
-                "valueManual",
-                COOLING_MANUAL_INACTIVE_VALUE,
-                COOLING_NORMALIZED_MAX
+                "valueManual", COOLING_MANUAL_INACTIVE_VALUE, COOLING_NORMALIZED_MAX
             ),
-            valueMin = data.requireCoolingDouble(
-                "valueMin",
-                COOLING_NORMALIZED_MIN,
-                COOLING_NORMALIZED_MAX
-            ),
-            valueMax = data.requireCoolingDouble(
-                "valueMax",
-                COOLING_NORMALIZED_MIN,
-                COOLING_NORMALIZED_MAX
-            ),
-            manualTimeoutMs = data.requireCoolingLong(
-                "manualTimeoutMs",
-                minimum = COOLING_NON_NEGATIVE_LONG,
-                maximum = COOLING_DEVICE_UPTIME_MAX_MS
-            ),
-            percentNow = data.requireCoolingDouble(
-                "percentNow",
-                COOLING_PERCENT_MIN,
-                COOLING_PERCENT_MAX
-            ),
-            percentAuto = data.requireCoolingDouble(
-                "percentAuto",
-                COOLING_PERCENT_MIN,
-                COOLING_PERCENT_MAX
-            ),
+            valueMin = data.requireNormalizedValue("valueMin"),
+            valueMax = data.requireNormalizedValue("valueMax"),
+            manualTimeoutMs = data.requireDeviceUptime("manualTimeoutMs"),
+            percentNow = data.requirePercent("percentNow"),
+            percentAuto = data.requirePercent("percentAuto"),
             percentManual = data.requireCoolingDouble(
-                "percentManual",
-                COOLING_MANUAL_INACTIVE_PERCENT,
-                COOLING_PERCENT_MAX
+                "percentManual", COOLING_MANUAL_INACTIVE_PERCENT, COOLING_PERCENT_MAX
             ),
-            percentMin = data.requireCoolingDouble(
-                "percentMin",
-                COOLING_PERCENT_MIN,
-                COOLING_PERCENT_MAX
-            ),
-            percentMax = data.requireCoolingDouble(
-                "percentMax",
-                COOLING_PERCENT_MIN,
-                COOLING_PERCENT_MAX
-            ),
+            percentMin = data.requirePercent("percentMin"),
+            percentMax = data.requirePercent("percentMax"),
             invert = data.requireCoolingBoolean("invert"),
-            pwmResolutionBits = data.requireCoolingInt(
-                "pwmResolutionBits",
-                minimum = COOLING_MIN_COUNT
-            ),
-            pwmFrequencyHz = data.requireCoolingInt(
-                "pwmFrequencyHz",
-                minimum = COOLING_MIN_COUNT
-            ),
+            pwmResolutionBits = data.requirePositiveInt("pwmResolutionBits"),
+            pwmFrequencyHz = data.requirePositiveInt("pwmFrequencyHz"),
             editable = parseEditable(data.requireCoolingObject("editable"))
-        )
-        validate(fan)
-        return fan
+        ).also(::validate)
     }
+
+    private fun JSONObject.requireNormalizedValue(key: String): Double =
+        requireCoolingDouble(key, COOLING_NORMALIZED_MIN, COOLING_NORMALIZED_MAX)
+
+    private fun JSONObject.requireDeviceUptime(key: String): Long =
+        requireCoolingLong(key, COOLING_NON_NEGATIVE_LONG, COOLING_DEVICE_UPTIME_MAX_MS)
+
+    private fun JSONObject.requirePercent(key: String): Double =
+        requireCoolingDouble(key, COOLING_PERCENT_MIN, COOLING_PERCENT_MAX)
+
+    private fun JSONObject.requirePositiveInt(key: String): Int =
+        requireCoolingInt(key, minimum = COOLING_MIN_COUNT)
 
     private fun parseEditable(data: JSONObject): DeviceCoolingFanEditable {
         data.requireCoolingKeys(EDITABLE_KEYS, "cooling fan editable")
