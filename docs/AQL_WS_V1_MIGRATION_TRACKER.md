@@ -6,11 +6,11 @@ Target: **41 authenticated commands / 0 public commands**
 
 ## Current position
 
-- Current stage: **05 — Light runtime alignment**
-- Active branch: `feat/light-05-runtime-alignment`
-- Status: **IN PROGRESS**
-- Previous stage: **04 PASSED / PR #185 MERGED**
-- Next: Align all seven Light commands, production consumers and `light.status.changed` handling with the correlated request broker and exact firmware contracts.
+- Current stage: **06 — Cooling runtime alignment**
+- Active branch: `feat/cooling-06-runtime-alignment`
+- Status: **PASSED — PR #187 READY FOR MERGE**
+- Previous stage: **05 PASSED / PR #186 MERGED**
+- Next: Merge Stage 06, then open Stage 07 Timer runtime alignment from `integration/aql-ws-v1-commercial`.
 
 ## Fixed rules
 
@@ -21,6 +21,7 @@ Target: **41 authenticated commands / 0 public commands**
 - Physical regression tests are required when the related production runtime path changes or at release-candidate gate.
 - All firmware-supported user settings and operations must exist on Android.
 - GPIO, PWM, mappings and factory identity remain read-only.
+- Runtime alignment stages prepare application/data contracts first; screen binding is performed only in the dedicated UI stage.
 
 ## Stage list
 
@@ -60,8 +61,8 @@ Target: **41 authenticated commands / 0 public commands**
   - [x] PR evidence recorded
 
 - [x] **03** `feat/ws-03-event-routing` — **MERGED / PR #184**
-  - [x] Inventoried all 11 firmware-emitted authenticated events
-  - [x] Added exact typed contracts for every supported firmware event
+  - [x] Inventoried all 11 firmware-declared authenticated events
+  - [x] Added exact typed contracts for every declared firmware event
   - [x] Routed by exact device + connection generation + module + event identity
   - [x] Rejected stale-generation events
   - [x] Preserved per-device/session isolation
@@ -87,28 +88,47 @@ Target: **41 authenticated commands / 0 public commands**
   - [x] Current custom-name firmware interoperability and physical menu liveness passed
   - [x] PR evidence recorded
 
-- [ ] **05** `feat/light-05-runtime-alignment` — **IN PROGRESS**
-  - [ ] Inventory exact firmware request/response shapes for all 7 Light commands
-  - [ ] `light.status.get` exact typed status parser
-  - [ ] `light.manual.set` typed manual-level and clear outcomes
-  - [ ] `light.channel.regime.set` exact Auto/On/Off persistence outcome
-  - [ ] `light.program.apply` exact create/update outcome
-  - [ ] `light.program.delete` exact delete outcome
-  - [ ] `light.temperature-protection.status.get` exact typed status
-  - [ ] `light.temperature-protection.set` exact typed mutation outcome
-  - [ ] Move production Light consumers from send-success to correlated firmware success
-  - [ ] Integrate `light.status.changed` into deterministic current-state projection
-  - [ ] Reject unsupported Light operations using exact firmware capabilities/features
-  - [ ] Add unit, parser, repository and production-consumer tests
-  - [ ] Run automatic gates and targeted physical Light-device regression
+- [x] **05** `feat/light-05-runtime-alignment` — **MERGED / PR #186**
+  - [x] Inventoried exact firmware request/response shapes for all 7 Light commands
+  - [x] `light.status.get` exact typed status parser
+  - [x] `light.manual.set` typed manual-level and clear outcomes
+  - [x] `light.channel.regime.set` exact Auto/On/Off persistence outcome
+  - [x] `light.program.apply` exact create/update outcome
+  - [x] `light.program.delete` exact delete outcome
+  - [x] `light.temperature-protection.status.get` exact typed status
+  - [x] `light.temperature-protection.set` exact typed mutation outcome
+  - [x] Production Light consumers moved from send-success to correlated firmware success
+  - [x] `light.status.changed` integrated into deterministic current-state projection
+  - [x] Unsupported Light operations rejected using exact firmware capabilities/features
+  - [x] Unit, parser, repository and production-consumer tests added
+  - [x] Android CI, installable APK, Emulator API 27/36 and CodeQL passed
+  - [x] WRGB Pro Elite physical Light regression passed
+  - [x] PR evidence recorded
 
-- [ ] **06** `feat/cooling-06-runtime-alignment`
-  - 2/2 cooling commands
-  - Auto/On/Off
-  - Minimum/maximum temperature
-  - Supported fan display names
-  - Atomic config apply
-  - `cooling.status.changed`
+- [x] **06** `feat/cooling-06-runtime-alignment` — **PASSED / PR #187 READY FOR MERGE**
+  - [x] Confirm both Cooling commands: `cooling.status.get`, `cooling.config.apply`
+  - [x] Align with firmware PR #26 / commit `38e8812c1bcecf948ebab85979bff21a24f4b79c`
+  - [x] Freeze exact four-field live temperature snapshot/event shape
+  - [x] Copy the live temperature golden fixture into Android protocol evidence
+  - [x] `cooling.status.get` exact typed status parser
+  - [x] `cooling.config.apply` exact atomic mutation outcome
+  - [x] Auto/On/Off, min/max temperature and supported fan display-name writes
+  - [x] Expose correlated Cooling repository and module provider in the data/runtime layer
+  - [x] Integrate `cooling.status.changed` and `temperature.changed` into device-scoped runtime state
+  - [x] Clear Cooling runtime state on reconnect/generation changes
+  - [x] Reject unsupported Cooling operations using exact capabilities/features
+  - [x] Reject stale/duplicate events and older status responses
+  - [x] Clear stale valid temperature on completed invalid CRC/OneWire samples
+  - [x] Handle ESP32 32-bit `millis()` wraparound in freshness ordering
+  - [x] Keep GPIO, PWM, fan mapping, sensor mapping and calibration read-only
+  - [x] Add unit, parser, repository, capability and reducer tests
+  - [x] Keep Cooling layout, ViewModel, UI state and presentation strings unchanged
+  - [x] Android CI — run #2908
+  - [x] Installable Debug APK — run #200
+  - [x] Emulator API 27 / 36 — run #1032
+  - [x] CodeQL Security Scan — run #4693
+  - [x] PR evidence recorded on PR #187 for tested head `355b00b6ba9dc4e5e721dc8c30aa4b757a928092`
+  - [x] Physical Cooling screen regression N/A: no production UI consumer is changed in this Stage
 
 - [ ] **07** `feat/timer-07-runtime-alignment`
   - 3/3 timer commands
@@ -165,3 +185,8 @@ Target: **41 authenticated commands / 0 public commands**
 | 2026-08-01 | Stage 04 common command branch opened | IN PROGRESS | Inventory firmware common-command payloads and current Android consumers |
 | 2026-08-01 | Stage 04 common runtime commands | PASS / PR #185 MERGED | Start Stage 05 |
 | 2026-08-01 | Stage 05 Light runtime branch opened | IN PROGRESS | Inventory all seven firmware Light contracts and Android consumers |
+| 2026-08-01 | Stage 05 Light runtime alignment | PASS / PR #186 MERGED | Start Stage 06 |
+| 2026-08-01 | Stage 06 Cooling runtime branch opened | IN PROGRESS | Verify live temperature telemetry before implementation |
+| 2026-08-01 | Stage 06 live temperature audit | CONTRACT GAP FOUND | Freeze and implement firmware telemetry contract first |
+| 2026-08-02 | Stage 06 UI scope correction | PASS | Keep layout, ViewModel and presentation resources unchanged; validate runtime layer only |
+| 2026-08-02 | Stage 06 Cooling runtime alignment | PASS / PR #187 READY FOR MERGE | Merge to integration and start Stage 07 |
