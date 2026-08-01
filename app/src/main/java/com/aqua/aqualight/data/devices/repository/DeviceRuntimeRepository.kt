@@ -82,10 +82,14 @@ class DeviceRuntimeRepository(
         val commandClient: AqlWsCommandClient,
         val sessionJob: CompletableJob,
         val sessionScope: CoroutineScope,
-        @Volatile var generation: DeviceRuntimeConnectionGeneration,
-        @Volatile var connectionStarted: Boolean = false,
-        @Volatile var endpointUrl: String? = null
+        @Volatile var generation: DeviceRuntimeConnectionGeneration
     ) : AutoCloseable {
+        @Volatile
+        var connectionStarted: Boolean = false
+
+        @Volatile
+        var endpointUrl: String? = null
+
         private val closed = AtomicBoolean(false)
         private val collectorJobs = CopyOnWriteArrayList<Job>()
 
@@ -552,17 +556,19 @@ class DeviceRuntimeRepository(
             sessions[session.deviceUid] === session
     }
 
-    private fun currentCommandSession(deviceUid: DeviceUid): DeviceRuntimeCommandSession? {
-        val session = sessions[deviceUid] ?: return null
-        if (!isCurrentSession(session)) return null
-        return DeviceRuntimeCommandSession(
-            deviceUid = deviceUid,
-            generation = session.generation,
-            authenticated = session.wsClient.connectionState.value is
-                AqlWsConnectionState.Authenticated,
-            send = session.wsClient::send
-        )
-    }
+    private fun currentCommandSession(
+        deviceUid: DeviceUid
+    ): DeviceRuntimeCommandSession? = sessions[deviceUid]
+        ?.takeIf(::isCurrentSession)
+        ?.let { session ->
+            DeviceRuntimeCommandSession(
+                deviceUid = deviceUid,
+                generation = session.generation,
+                authenticated = session.wsClient.connectionState.value is
+                    AqlWsConnectionState.Authenticated,
+                send = session.wsClient::send
+            )
+        }
 
     private fun supportsCommand(
         deviceUid: DeviceUid,
