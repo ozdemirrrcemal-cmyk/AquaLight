@@ -7,6 +7,7 @@ import com.aqua.aqualight.data.devices.runtime.events.DeviceRuntimeTypedEvent
 import com.aqua.aqualight.data.devices.runtime.modules.common.DeviceRuntimeJsonCommand
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.StateFlow
+import org.json.JSONObject
 
 class DeviceLightRuntimeRepository internal constructor(
     private val gateway: DeviceRuntimeCommandGateway,
@@ -132,8 +133,8 @@ class DeviceLightRuntimeRepository internal constructor(
 
     private fun <T> jsonCommand(
         action: String,
-        dataFactory: () -> org.json.JSONObject = ::org.json.JSONObject,
-        parser: (org.json.JSONObject) -> T
+        dataFactory: () -> JSONObject = ::JSONObject,
+        parser: (JSONObject) -> T
     ): DeviceRuntimeJsonCommand<T> = DeviceRuntimeJsonCommand(
         module = DeviceLightRuntimeContract.MODULE,
         action = action,
