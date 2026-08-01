@@ -66,22 +66,20 @@ object DeviceRuntimeNameStatusParser {
         )
     }
 
-    private companion object {
-        const val FIELD_PRODUCT_DISPLAY_NAME = "productDisplayName"
-        const val FIELD_DISPLAY_NAME = "displayName"
-        const val FIELD_CUSTOM_NAME = "customName"
-        const val FIELD_EFFECTIVE_DISPLAY_NAME = "effectiveDisplayName"
-        const val FIELD_EDITABLE = "editable"
-        const val FIELD_MAX_BYTES = "maxBytes"
-        const val FIELD_NAME_EDITABLE = "nameEditable"
-        const val FIELD_CUSTOM_NAME_MAX_BYTES = "customNameMaxBytes"
+    private const val FIELD_PRODUCT_DISPLAY_NAME = "productDisplayName"
+    private const val FIELD_DISPLAY_NAME = "displayName"
+    private const val FIELD_CUSTOM_NAME = "customName"
+    private const val FIELD_EFFECTIVE_DISPLAY_NAME = "effectiveDisplayName"
+    private const val FIELD_EDITABLE = "editable"
+    private const val FIELD_MAX_BYTES = "maxBytes"
+    private const val FIELD_NAME_EDITABLE = "nameEditable"
+    private const val FIELD_CUSTOM_NAME_MAX_BYTES = "customNameMaxBytes"
 
-        val NESTED_NAME_KEYS = setOf(
-            FIELD_PRODUCT_DISPLAY_NAME,
-            FIELD_CUSTOM_NAME,
-            FIELD_EFFECTIVE_DISPLAY_NAME,
-            FIELD_EDITABLE,
-            FIELD_MAX_BYTES
-        )
-    }
+    private val NESTED_NAME_KEYS = setOf(
+        FIELD_PRODUCT_DISPLAY_NAME,
+        FIELD_CUSTOM_NAME,
+        FIELD_EFFECTIVE_DISPLAY_NAME,
+        FIELD_EDITABLE,
+        FIELD_MAX_BYTES
+    )
 }
