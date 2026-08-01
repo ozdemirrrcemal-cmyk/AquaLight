@@ -6,11 +6,11 @@ Target: **41 authenticated commands / 0 public commands**
 
 ## Current position
 
-- Current stage: **02 — Correlated request broker**
-- Active branch: `feat/ws-02-request-broker`
-- Status: **READY FOR TEST**
-- Previous stage: **01 PASSED / PR #182 MERGED**
-- Next: Run Android CI, API 27/36 emulator integration and CodeQL; fix only failures caused by the request-broker scope.
+- Current stage: **03 — Typed event routing**
+- Active branch: `feat/ws-03-event-routing`
+- Status: **IN PROGRESS**
+- Previous stage: **02 PASSED / PR #183 MERGED**
+- Next: Inventory firmware event contracts and add exact typed routing without changing provisioning, UDP discovery, WebSocket transport or crypto.
 
 ## Fixed rules
 
@@ -38,7 +38,7 @@ Target: **41 authenticated commands / 0 public commands**
   - [x] Android CI/API 27/API 36/CodeQL passed
   - [x] Provisioning/runtime/transport/crypto/presence code unchanged
 
-- [ ] **02** `feat/ws-02-request-broker` — **READY FOR TEST**
+- [x] **02** `feat/ws-02-request-broker` — **MERGED / PR #183**
   - [x] Exact request correlation: device + generation + message ID
   - [x] Typed success, firmware error and protocol error outcomes
   - [x] Bounded timeout: 1–30 seconds, default 8 seconds
@@ -52,17 +52,23 @@ Target: **41 authenticated commands / 0 public commands**
   - [x] Unmatched events and metadata bootstrap responses remain observable
   - [x] WebSocket transport/codec/crypto unchanged
   - [x] Unit and repository integration tests added
-  - [ ] Android CI passes
-  - [ ] Emulator API 27 passes
-  - [ ] Emulator API 36 passes
-  - [ ] CodeQL passes
-  - [ ] PR evidence recorded
+  - [x] Android CI passed
+  - [x] Emulator API 27 passed
+  - [x] Emulator API 36 passed
+  - [x] CodeQL passed
+  - [x] Physical device test N/A: no production module command path, provisioning, UDP, transport or crypto behavior changed
+  - [x] PR evidence recorded
 
-- [ ] **03** `feat/ws-03-event-routing`
-  - Typed routing for all firmware events
-  - Per-device/session isolation
-  - Stale-event rejection
-  - Module state updates
+- [ ] **03** `feat/ws-03-event-routing` — **IN PROGRESS**
+  - [ ] Inventory all firmware-emitted events
+  - [ ] Add typed event contracts for every supported firmware event
+  - [ ] Route by exact device + connection generation + module + event identity
+  - [ ] Reject stale-generation events
+  - [ ] Preserve per-device/session isolation
+  - [ ] Apply deterministic module state reductions
+  - [ ] Preserve unmatched/legacy event visibility where required
+  - [ ] Add unit and repository integration tests
+  - [ ] Run relevant automatic and physical gates based on production behavior impact
 
 - [ ] **04** `feat/device-04-common-commands`
   - Device: identity/status/capabilities/name
@@ -137,3 +143,5 @@ Target: **41 authenticated commands / 0 public commands**
 | 2026-08-01 | Stage 01 contract parity | PASS / PR #182 MERGED | Start Stage 02 |
 | 2026-08-01 | Stage 02 branch opened | IN PROGRESS | Inspect request/session lifecycle |
 | 2026-08-01 | Stage 02 broker implementation | READY FOR TEST | Run full automatic gate |
+| 2026-08-01 | Stage 02 correlated request broker | PASS / PR #183 MERGED | Start Stage 03 |
+| 2026-08-01 | Stage 03 event routing branch opened | IN PROGRESS | Inventory firmware event contracts |
