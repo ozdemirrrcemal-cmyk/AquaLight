@@ -49,6 +49,17 @@ internal object DeviceLightRuntimeFixtures {
         .put("affectedChannelCount", 1)
         .put("saved", false)
 
+    fun manualClear(): JSONObject = JSONObject()
+        .put("operation", "clearManual")
+        .put("manualActive", false)
+        .put("durationMs", 0L)
+        .put("runtimeTransport", "websocket")
+        .put("command", "light.manual.set")
+        .put("event", "light.status.changed")
+        .put("channels", JSONArray().put(channel(mutation = true)))
+        .put("affectedChannelCount", 1)
+        .put("saved", false)
+
     fun regime(): JSONObject = JSONObject()
         .put("operation", "channelRegimeSet")
         .put("changed", true)
