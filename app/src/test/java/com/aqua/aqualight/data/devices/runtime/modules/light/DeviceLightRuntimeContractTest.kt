@@ -167,8 +167,6 @@ class DeviceLightRuntimeContractTest {
             )
         )
 
-        fun JSONObject.keySet(): Set<String> = keys().asSequence().toSet()
-
         fun <T> DeviceRuntimeCommandOutcome<T>.requireSuccess(): T =
             (this as DeviceRuntimeCommandOutcome.Success).value
     }
