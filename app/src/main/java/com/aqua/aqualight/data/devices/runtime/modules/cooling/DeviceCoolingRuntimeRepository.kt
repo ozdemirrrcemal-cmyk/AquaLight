@@ -33,8 +33,8 @@ class DeviceCoolingRuntimeRepository internal constructor(
         payload: DeviceCoolingConfigApplyPayload
     ): DeviceRuntimeCommandOutcome<DeviceCoolingConfigApplyResult> {
         val status = states.value[deviceUid]?.status
-        unsupportedReason(payload, status)?.let {
-            return unsupported(deviceUid, DeviceCoolingRuntimeContract.Action.CONFIG_APPLY)
+        coolingUnsupportedReason(payload, status)?.let {
+            return coolingUnsupported(deviceUid, DeviceCoolingRuntimeContract.Action.CONFIG_APPLY)
         }
         return gateway.execute(
             deviceUid,
@@ -113,31 +113,31 @@ class DeviceCoolingRuntimeRepository internal constructor(
         dataFactory = dataFactory,
         successParser = parser
     )
-
-    private fun unsupportedReason(
-        payload: DeviceCoolingConfigApplyPayload,
-        status: DeviceCoolingStatus?
-    ): String? = when {
-        status == null -> null
-        !status.supported || !status.runtime.supportsConfigApply -> "Cooling is unsupported."
-        payload.mode != null && !status.runtime.supportsModeSet -> "Cooling mode is unsupported."
-        (payload.minTemperatureC != null || payload.maxTemperatureC != null) &&
-            !status.runtime.supportsTemperatureRange -> "Temperature range is unsupported."
-        payload.fans.isNotEmpty() && !status.runtime.supportsFanDisplayName ->
-            "Fan display names are unsupported."
-        else -> null
-    }
-
-    private fun unsupported(
-        deviceUid: DeviceUid,
-        action: String
-    ): DeviceRuntimeCommandOutcome.UnsupportedByDevice =
-        DeviceRuntimeCommandOutcome.UnsupportedByDevice(
-            deviceUid = deviceUid,
-            module = DeviceCoolingRuntimeContract.MODULE,
-            action = action
-        )
 }
+
+private fun coolingUnsupportedReason(
+    payload: DeviceCoolingConfigApplyPayload,
+    status: DeviceCoolingStatus?
+): String? = when {
+    status == null -> null
+    !status.supported || !status.runtime.supportsConfigApply -> "Cooling is unsupported."
+    payload.mode != null && !status.runtime.supportsModeSet -> "Cooling mode is unsupported."
+    (payload.minTemperatureC != null || payload.maxTemperatureC != null) &&
+        !status.runtime.supportsTemperatureRange -> "Temperature range is unsupported."
+    payload.fans.isNotEmpty() && !status.runtime.supportsFanDisplayName ->
+        "Fan display names are unsupported."
+    else -> null
+}
+
+private fun coolingUnsupported(
+    deviceUid: DeviceUid,
+    action: String
+): DeviceRuntimeCommandOutcome.UnsupportedByDevice =
+    DeviceRuntimeCommandOutcome.UnsupportedByDevice(
+        deviceUid = deviceUid,
+        module = DeviceCoolingRuntimeContract.MODULE,
+        action = action
+    )
 
 private fun <T> DeviceRuntimeCommandOutcome<T>.recordSuccess(
     recorder: (T) -> Unit
