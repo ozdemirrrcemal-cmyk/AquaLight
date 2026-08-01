@@ -39,22 +39,35 @@ class DeviceLightTemperatureProtectionRuntimeRepository internal constructor(
     suspend fun setThreshold(
         deviceUid: DeviceUid,
         payload: DeviceLightTemperatureProtectionSetPayload
-    ): DeviceRuntimeCommandOutcome<DeviceLightTemperatureProtectionSetResult> = gateway.execute(
-        deviceUid,
-        DeviceRuntimeJsonCommand(
-            module = DeviceLightRuntimeContract.MODULE,
-            action = DeviceLightRuntimeContract.Action.TEMPERATURE_PROTECTION_SET,
-            dataFactory = payload::toJson,
-            successParser = { data ->
-                DeviceLightTemperatureProtectionParser.parseSetResult(data).also { parsed ->
-                    parsed.onSuccess { result ->
-                        DeviceLightCommandValidation.validateTemperatureProtection(payload, result)
-                    }
-                }.getOrThrow()
-            }
-        )
-    ).recordTemperatureSuccess { result ->
-        stateStore.recordTemperatureProtection(deviceUid, result.status)
+    ): DeviceRuntimeCommandOutcome<DeviceLightTemperatureProtectionSetResult> {
+        val status = states.value[deviceUid]
+        if (status != null && (!status.supported || !status.runtime.supportsSet)) {
+            return DeviceRuntimeCommandOutcome.UnsupportedByDevice(
+                deviceUid = deviceUid,
+                module = DeviceLightRuntimeContract.MODULE,
+                action = DeviceLightRuntimeContract.Action.TEMPERATURE_PROTECTION_SET
+            )
+        }
+        return gateway.execute(
+            deviceUid,
+            DeviceRuntimeJsonCommand(
+                module = DeviceLightRuntimeContract.MODULE,
+                action = DeviceLightRuntimeContract.Action.TEMPERATURE_PROTECTION_SET,
+                dataFactory = payload::toJson,
+                successParser = { data ->
+                    DeviceLightTemperatureProtectionParser.parseSetResult(data).also { parsed ->
+                        parsed.onSuccess { result ->
+                            DeviceLightCommandValidation.validateTemperatureProtection(
+                                payload,
+                                result
+                            )
+                        }
+                    }.getOrThrow()
+                }
+            )
+        ).recordTemperatureSuccess { result ->
+            stateStore.recordTemperatureProtection(deviceUid, result.status)
+        }
     }
 }
 
