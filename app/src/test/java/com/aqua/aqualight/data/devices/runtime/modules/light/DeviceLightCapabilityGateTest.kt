@@ -36,17 +36,21 @@ class DeviceLightCapabilityGateTest {
     fun `ambiguous manual request is rejected before gateway send`() = runBlocking {
         val gateway = EncodingGateway()
         val repository = DeviceLightRuntimeRepository(gateway)
-        val request = DeviceLightManualSetPayload(
-            channels = listOf(
-                DeviceLightManualChannelPayload(
-                    channelKey = "white",
-                    percent = 25.0,
-                    value = 0.25
+
+        val failure = runCatching {
+            repository.setManual(
+                DEVICE_UID,
+                DeviceLightManualSetPayload(
+                    channels = listOf(
+                        DeviceLightManualChannelPayload(
+                            channelKey = "white",
+                            percent = 25.0,
+                            value = 0.25
+                        )
+                    )
                 )
             )
-        )
-
-        val failure = runCatching { repository.setManual(DEVICE_UID, request) }
+        }
 
         assertTrue(failure.isFailure)
         assertEquals(0, gateway.sent)
