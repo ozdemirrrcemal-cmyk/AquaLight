@@ -9,7 +9,7 @@ internal object DeviceCommonRuntimeParser {
         val changed = DeviceRuntimeJson.booleanValue(data, FIELD_CHANGED)
         val expectedKeys = if (changed) CHANGED_KEYS else UNCHANGED_KEYS
         DeviceRuntimeJson.requireExactKeys(data, expectedKeys, LABEL)
-        require(DeviceRuntimeJson.stringValue(data, FIELD_OPERATION) == OPERATION_NAME_SET)
+        require(DeviceRuntimeJson.stringValue(data, FIELD_OPERATION) == OPERATION_DEVICE_NAME_SET)
         if (changed) {
             require(DeviceRuntimeJson.stringValue(data, FIELD_EVENT) == EVENT_DEVICE_STATUS_CHANGED)
         }
@@ -34,7 +34,7 @@ internal object DeviceCommonRuntimeParser {
     private const val FIELD_SAVE_REQUESTED = "saveRequested"
     private const val FIELD_EVENT = "event"
     private const val FIELD_STATUS = "status"
-    private const val OPERATION_NAME_SET = "nameSet"
+    private const val OPERATION_DEVICE_NAME_SET = "deviceNameSet"
     private const val EVENT_DEVICE_STATUS_CHANGED = "device.status.changed"
 
     private val UNCHANGED_KEYS = setOf(
