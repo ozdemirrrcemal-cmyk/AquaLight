@@ -1,7 +1,6 @@
 package com.aqua.aqualight.data.devices.runtime.modules.cooling
 
-import java.nio.file.Files
-import java.nio.file.Path
+import java.io.File
 import org.json.JSONObject
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
@@ -108,9 +107,8 @@ class DeviceCoolingRuntimeContractTest {
     @Test
     fun `firmware telemetry fixture keeps exact field order and command count`() {
         val fixture = JSONObject(
-            Files.readString(
-                Path.of("protocol/fixtures/aql_cooling_temperature_telemetry_v1.json")
-            )
+            File("protocol/fixtures/aql_cooling_temperature_telemetry_v1.json")
+                .readText(Charsets.UTF_8)
         )
 
         assertEquals(41, fixture.getInt("commandCount"))
