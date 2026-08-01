@@ -18,6 +18,9 @@ class DeviceLightTemperatureProtectionRuntimeRepository internal constructor(
     val states: StateFlow<Map<DeviceUid, DeviceLightTemperatureProtectionStatus>> =
         stateStore.temperatureProtection
 
+    fun currentStatus(deviceUid: DeviceUid): DeviceLightTemperatureProtectionStatus? =
+        states.value[deviceUid]
+
     suspend fun requestStatus(
         deviceUid: DeviceUid
     ): DeviceRuntimeCommandOutcome<DeviceLightTemperatureProtectionStatus> = gateway.execute(
