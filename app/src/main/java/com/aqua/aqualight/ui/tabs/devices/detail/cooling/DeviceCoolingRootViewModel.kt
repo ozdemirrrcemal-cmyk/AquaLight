@@ -57,7 +57,7 @@ class DeviceCoolingRootViewModel(
                 coolingOperations.observe(deviceUid)
             ) { root, cooling ->
                 buildState(root, cooling, fallbackTitle, deviceUid)
-            }.collect(_uiState::value::set)
+            }.collect { state -> _uiState.value = state }
         }
         if (connected) {
             refreshJob = viewModelScope.launch {
