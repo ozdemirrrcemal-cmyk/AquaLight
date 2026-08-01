@@ -46,7 +46,11 @@ class DeviceLightTemperatureProtectionRuntimeRepository internal constructor(
             action = DeviceLightRuntimeContract.Action.TEMPERATURE_PROTECTION_SET,
             dataFactory = payload::toJson,
             successParser = { data ->
-                DeviceLightTemperatureProtectionParser.parseSetResult(data).getOrThrow()
+                DeviceLightTemperatureProtectionParser.parseSetResult(data).also { parsed ->
+                    parsed.onSuccess { result ->
+                        DeviceLightCommandValidation.validateTemperatureProtection(payload, result)
+                    }
+                }.getOrThrow()
             }
         )
     ).recordTemperatureSuccess { result ->
