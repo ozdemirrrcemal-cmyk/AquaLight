@@ -4,6 +4,8 @@ import com.aqua.aqualight.data.devices.model.DeviceUid
 import com.aqua.aqualight.data.devices.runtime.core.DeviceRuntimeCommandGateway
 import com.aqua.aqualight.data.devices.runtime.events.DeviceRuntimeTypedEvent
 import com.aqua.aqualight.data.devices.runtime.modules.cooling.DeviceCoolingRuntimeRepository
+import com.aqua.aqualight.data.devices.runtime.modules.cooling.DeviceCoolingRuntimeStateStore
+import com.aqua.aqualight.data.devices.runtime.modules.cooling.DeviceCoolingTypedEventReducer
 import com.aqua.aqualight.data.devices.runtime.modules.device.DeviceCommonRuntimeRepository
 import com.aqua.aqualight.data.devices.runtime.modules.dosing.DeviceDosingRuntimeRepository
 import com.aqua.aqualight.data.devices.runtime.modules.firmware.DeviceFirmwareRuntimeRepository
@@ -18,7 +20,7 @@ import com.aqua.aqualight.data.devices.runtime.modules.time.DeviceTimeRuntimeRep
 import com.aqua.aqualight.data.devices.runtime.modules.timer.DeviceTimerRuntimeRepository
 import com.aqua.aqualight.data.devices.runtime.ws.AqlWsCommandClient
 
-/** Common and Light modules use the correlated broker; later product stages retain legacy clients. */
+/** Common, Light and Cooling modules use the correlated broker. */
 class DeviceRuntimeModuleProvider(
     commandGateway: DeviceRuntimeCommandGateway,
     commandClientProvider: (DeviceUid) -> AqlWsCommandClient?,
@@ -26,6 +28,8 @@ class DeviceRuntimeModuleProvider(
 ) {
     private val lightStateStore = DeviceLightRuntimeStateStore()
     private val lightEventReducer = DeviceLightTypedEventReducer(lightStateStore)
+    private val coolingStateStore = DeviceCoolingRuntimeStateStore()
+    private val coolingEventReducer = DeviceCoolingTypedEventReducer(coolingStateStore)
 
     val device = DeviceCommonRuntimeRepository(commandGateway)
     val security = DeviceSecurityRuntimeRepository(commandGateway, revokeLocalCredential)
@@ -36,7 +40,7 @@ class DeviceRuntimeModuleProvider(
     val firmwareUpdate = DeviceFirmwareUpdateRepository(firmware)
 
     val timer = DeviceTimerRuntimeRepository(commandClientProvider)
-    val cooling = DeviceCoolingRuntimeRepository(commandClientProvider)
+    val cooling = DeviceCoolingRuntimeRepository(commandGateway, coolingStateStore)
     val dosing = DeviceDosingRuntimeRepository(commandClientProvider)
     val light = DeviceLightRuntimeRepository(commandGateway, lightStateStore)
     val lightTemperatureProtection =
@@ -44,9 +48,11 @@ class DeviceRuntimeModuleProvider(
 
     internal fun acceptTypedRuntimeEvent(event: DeviceRuntimeTypedEvent) {
         lightEventReducer.apply(event)
+        coolingEventReducer.apply(event)
     }
 
     internal fun clearRuntimeState(deviceUid: DeviceUid) {
         lightStateStore.clear(deviceUid)
+        coolingStateStore.clear(deviceUid)
     }
 }
