@@ -16,10 +16,10 @@ import org.junit.Test
 class DeviceSecurityRuntimeContractTest {
     @Test
     fun `status parser accepts exact firmware status without exposing credential`() {
-        val parsed = DeviceSecurityParser.parseStatus(pairedStatus(), DEVICE_UID)
+        val parsed = DeviceSecurityParser.parseStatus(pairedCommandStatus(), DEVICE_UID)
 
         assertTrue(parsed.paired)
-        assertEquals(7, parsed.storage.tokenVersion)
+        assertEquals(7L, parsed.storage.tokenVersion)
         assertTrue(!parsed.runtime.credentialSerialized)
         assertTrue(!parsed.ownership.tokenReturnedByStatus)
     }
@@ -97,7 +97,7 @@ class DeviceSecurityRuntimeContractTest {
                 type = "res",
                 module = command.module,
                 action = command.action,
-                data = revocation(command.action),
+                data = this@DeviceSecurityRuntimeContractTest.revocation(command.action),
                 ok = true,
                 statusCode = 200
             )
@@ -113,10 +113,13 @@ class DeviceSecurityRuntimeContractTest {
         }
     }
 
-    private fun pairedStatus(): JSONObject = baseStatus(paired = true)
+    private fun pairedCommandStatus(): JSONObject = baseStatus(paired = true)
         .put("tokenVersion", 7)
         .put("pairedAtMs", 10L)
         .put("lastRotatedAtMs", 20L)
+        .put("authMessageType", "auth")
+        .put("authScheme", "hmac-sha256")
+        .put("credentialSerialized", false)
 
     private fun revocation(action: String): JSONObject = JSONObject()
         .put("operation", action)
