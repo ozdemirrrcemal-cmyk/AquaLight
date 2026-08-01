@@ -4,7 +4,6 @@ import com.aqua.aqualight.data.devices.model.DeviceUid
 import com.aqua.aqualight.data.devices.runtime.core.DeviceRuntimeCommandGateway
 import com.aqua.aqualight.data.devices.runtime.core.DeviceRuntimeCommandOutcome
 import com.aqua.aqualight.data.devices.runtime.modules.common.DeviceRuntimeJsonCommand
-import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.StateFlow
 
 class DeviceLightTemperatureProtectionRuntimeRepository internal constructor(
@@ -18,14 +17,6 @@ class DeviceLightTemperatureProtectionRuntimeRepository internal constructor(
 
     val states: StateFlow<Map<DeviceUid, DeviceLightTemperatureProtectionStatus>> =
         stateStore.temperatureProtection
-
-    fun observeStatus(
-        deviceUid: DeviceUid
-    ): Flow<DeviceLightTemperatureProtectionStatus?> =
-        stateStore.observeTemperatureProtection(deviceUid)
-
-    fun currentStatus(deviceUid: DeviceUid): DeviceLightTemperatureProtectionStatus? =
-        stateStore.currentTemperatureProtection(deviceUid)
 
     suspend fun requestStatus(
         deviceUid: DeviceUid
