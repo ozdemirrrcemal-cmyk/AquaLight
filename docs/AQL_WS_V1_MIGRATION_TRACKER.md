@@ -8,9 +8,9 @@ Target: **41 authenticated commands / 0 public commands**
 
 - Current stage: **01 — Firmware contract parity**
 - Active branch: `chore/ws-01-contract-parity`
-- Status: **IN PROGRESS**
+- Status: **READY FOR TEST**
 - Previous stage: **00 PASSED / PR #181 MERGED**
-- Next: Compare firmware golden fixture with Android contract, then implement only the `38 → 41` parity delta.
+- Next: Run existing Android CI, golden/protocol tests, emulator API 27/36 and CodeQL. Fix only failures caused by this five-file parity change.
 
 ## Fixed rules
 
@@ -18,7 +18,7 @@ Target: **41 authenticated commands / 0 public commands**
 - A stage must pass its relevant tests before the next stage starts.
 - Transport and crypto will not be rewritten.
 - BLE + QR provisioning, UDP discovery and online/offline behavior must not regress.
-- Physical regression tests are required when the related runtime behavior changes or at release-candidate gate; they are not repeated for documentation-only changes.
+- Physical regression tests are required when the related runtime behavior changes or at release-candidate gate; they are not repeated for documentation-only or contract-fixture-only changes.
 - All firmware-supported user settings and operations must exist on Android.
 - GPIO, PWM, mappings and factory identity remain read-only.
 
@@ -35,15 +35,21 @@ Target: **41 authenticated commands / 0 public commands**
   - [x] CodeQL passed
   - [x] Physical rerun: N/A for documentation-only branch
 
-- [ ] **01** `chore/ws-01-contract-parity` — **IN PROGRESS**
-  - [ ] Firmware golden fixture copied byte-identically
-  - [ ] Android command matrix `38 → 41`
-  - [ ] Add `device.name.set`
-  - [ ] Add `light.temperature-protection.status.get`
-  - [ ] Add `light.temperature-protection.set`
-  - [ ] Golden tests updated to 41
-  - [ ] Protocol guard updated to 41
-  - [ ] Provisioning/runtime code remains unchanged
+- [ ] **01** `chore/ws-01-contract-parity` — **READY FOR TEST**
+  - [x] Firmware golden fixture copied byte-identically
+  - [x] Android command matrix `38 → 41`
+  - [x] Added `device.name.set`
+  - [x] Added `light.temperature-protection.status.get`
+  - [x] Added `light.temperature-protection.set`
+  - [x] Golden test command count updated to 41
+  - [x] Protocol guard fixture SHA and count updated to firmware values
+  - [x] Public WebSocket command count remains 0
+  - [x] Provisioning/runtime/transport/crypto/presence code unchanged
+  - [ ] Android CI passes
+  - [ ] Emulator API 27 passes
+  - [ ] Emulator API 36 passes
+  - [ ] CodeQL passes
+  - [ ] PR evidence recorded
 
 - [ ] **02** `feat/ws-02-request-broker`
   - Request ID correlation
@@ -131,3 +137,4 @@ Target: **41 authenticated commands / 0 public commands**
 | 2026-08-01 | Stage 00 first CI run | INVALID | Remove accidental custom guard/test |
 | 2026-08-01 | Stage 00 existing CI baseline | PASS / MERGED | Start Stage 01 |
 | 2026-08-01 | Stage 01 branch opened | IN PROGRESS | Inspect firmware/Android contract delta |
+| 2026-08-01 | Stage 01 parity implementation | READY FOR TEST | Run existing CI and protocol gates |
