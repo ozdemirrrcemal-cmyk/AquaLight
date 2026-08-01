@@ -15,11 +15,11 @@ import org.junit.Test
 
 class DeviceSecurityRuntimeContractTest {
     @Test
-    fun `status parser accepts command aliases but returns no credential`() {
+    fun `status parser accepts exact firmware status without exposing credential`() {
         val parsed = DeviceSecurityParser.parseStatus(pairedStatus(), DEVICE_UID)
 
         assertTrue(parsed.paired)
-        assertEquals(7L, parsed.storage.tokenVersion)
+        assertEquals(7, parsed.storage.tokenVersion)
         assertTrue(!parsed.runtime.credentialSerialized)
         assertTrue(!parsed.ownership.tokenReturnedByStatus)
     }
@@ -59,7 +59,7 @@ class DeviceSecurityRuntimeContractTest {
     }
 
     @Test
-    fun `revocation parser rejects status response aliases inside embedded status`() {
+    fun `revocation parser rejects response aliases inside embedded status`() {
         val invalid = revocation("unpair").apply {
             getJSONObject("status").put("authMessageType", "auth")
         }
@@ -114,12 +114,9 @@ class DeviceSecurityRuntimeContractTest {
     }
 
     private fun pairedStatus(): JSONObject = baseStatus(paired = true)
-        .put("tokenVersion", 7L)
+        .put("tokenVersion", 7)
         .put("pairedAtMs", 10L)
         .put("lastRotatedAtMs", 20L)
-        .put("authMessageType", "auth")
-        .put("authScheme", "hmac-sha256")
-        .put("credentialSerialized", false)
 
     private fun revocation(action: String): JSONObject = JSONObject()
         .put("operation", action)
