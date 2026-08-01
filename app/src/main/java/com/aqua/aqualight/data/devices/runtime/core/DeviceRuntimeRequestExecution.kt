@@ -6,27 +6,29 @@ import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.withTimeoutOrNull
 import org.json.JSONObject
 
+internal class DeviceRuntimeExecutionContext(
+    val sessionProvider: (DeviceUid) -> DeviceRuntimeCommandSession?,
+    val supportChecker: (DeviceUid, String, String) -> Boolean,
+    val pendingRequests: DeviceRuntimePendingRequestRegistry
+)
+
 internal suspend fun <T> executeCorrelatedRuntimeRequest(
     deviceUid: DeviceUid,
     command: DeviceRuntimeCommand<T>,
     timeoutMillis: Long,
-    sessionProvider: (DeviceUid) -> DeviceRuntimeCommandSession?,
-    supportChecker: (DeviceUid, String, String) -> Boolean,
-    pendingRequests: DeviceRuntimePendingRequestRegistry
+    context: DeviceRuntimeExecutionContext
 ): DeviceRuntimeCommandOutcome<T> = when (
     val preparation = prepareRuntimeRequest(
         deviceUid = deviceUid,
         command = command,
-        sessionProvider = sessionProvider,
-        supportChecker = supportChecker,
-        pendingRequests = pendingRequests
+        context = context
     )
 ) {
     is DeviceRuntimeRequestPreparation.Rejected -> preparation.outcome
     is DeviceRuntimeRequestPreparation.Ready -> sendAndAwaitRuntimeRequest(
         preparation = preparation,
         timeoutMillis = timeoutMillis,
-        pendingRequests = pendingRequests
+        pendingRequests = context.pendingRequests
     )
 }
 
@@ -45,11 +47,9 @@ private sealed interface DeviceRuntimeRequestPreparation<out T> {
 private fun <T> prepareRuntimeRequest(
     deviceUid: DeviceUid,
     command: DeviceRuntimeCommand<T>,
-    sessionProvider: (DeviceUid) -> DeviceRuntimeCommandSession?,
-    supportChecker: (DeviceUid, String, String) -> Boolean,
-    pendingRequests: DeviceRuntimePendingRequestRegistry
+    context: DeviceRuntimeExecutionContext
 ): DeviceRuntimeRequestPreparation<T> {
-    val session = sessionProvider(deviceUid)
+    val session = context.sessionProvider(deviceUid)
     return when {
         session == null -> DeviceRuntimeRequestPreparation.Rejected(
             DeviceRuntimeCommandOutcome.NotConnected(
@@ -66,7 +66,7 @@ private fun <T> prepareRuntimeRequest(
                 generation = session.generation
             )
         )
-        !supportChecker(deviceUid, command.module, command.action) ->
+        !context.supportChecker(deviceUid, command.module, command.action) ->
             DeviceRuntimeRequestPreparation.Rejected(
                 DeviceRuntimeCommandOutcome.UnsupportedByDevice(
                     deviceUid = deviceUid,
@@ -78,7 +78,7 @@ private fun <T> prepareRuntimeRequest(
             deviceUid = deviceUid,
             session = session,
             command = command,
-            pendingRequests = pendingRequests
+            pendingRequests = context.pendingRequests
         )
     }
 }
