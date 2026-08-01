@@ -72,6 +72,7 @@ class DeviceRuntimeMetadataLivePipelineTest {
 
         val projected = DeviceRuntimeMetadataProjector.applyReady(initial, ready)
         assertTrue(projected.hasValidatedRuntimeMetadata)
+        assertEquals(CUSTOM_NAME, projected.identity.customName)
         assertEquals(2, projected.limits.dosingChannelCount)
         assertFalse(projected.modules.contains("timerApi"))
         assertTrue(projected.modules.contains("timerEngine"))
@@ -146,7 +147,7 @@ class DeviceRuntimeMetadataLivePipelineTest {
     }
 
     private fun snapshot(): DeviceSnapshot = DeviceSnapshot(
-        identity = DeviceIdentity(uid = DEVICE_UID, customName = "My Dose Pro"),
+        identity = DeviceIdentity(uid = DEVICE_UID, customName = CUSTOM_NAME),
         product = DeviceProduct(),
         endpoint = DeviceRuntimeEndpoint(ip = "192.168.1.20", wsPort = 80)
     )
@@ -177,7 +178,11 @@ class DeviceRuntimeMetadataLivePipelineTest {
         .put("family", "dosing")
         .put("line", "dose_pro")
         .put("model", "dose_pro_2")
-        .put("displayName", "Dose Pro 2")
+        .put("displayName", PRODUCT_DISPLAY_NAME)
+        .put("customName", CUSTOM_NAME)
+        .put("effectiveDisplayName", CUSTOM_NAME)
+        .put("nameEditable", true)
+        .put("customNameMaxBytes", CUSTOM_NAME_MAX_BYTES)
         .put("skuId", "com.aqualight.dosing.dose_pro_2.global.black")
         .put("skuCode", "AQL-D-DP2-GLB-BLK")
         .put("firmwareVersion", "6.0.0")
@@ -260,7 +265,7 @@ class DeviceRuntimeMetadataLivePipelineTest {
                 .put("productKey", "DOSING_DOSE_PRO_2")
                 .put("family", "dosing")
                 .put("model", "dose_pro_2")
-                .put("displayName", "Dose Pro 2")
+                .put("displayName", PRODUCT_DISPLAY_NAME)
         )
         .put(
             "runtime",
@@ -269,6 +274,15 @@ class DeviceRuntimeMetadataLivePipelineTest {
                 .put("wsSchema", "aql.ws.v1")
                 .put("wsPath", "/aql/v1/ws")
                 .put("wsPort", 80)
+        )
+        .put(
+            "device",
+            JSONObject()
+                .put("productDisplayName", PRODUCT_DISPLAY_NAME)
+                .put("customName", CUSTOM_NAME)
+                .put("effectiveDisplayName", CUSTOM_NAME)
+                .put("editable", true)
+                .put("maxBytes", CUSTOM_NAME_MAX_BYTES)
         )
         .put(
             "modules",
@@ -336,5 +350,8 @@ class DeviceRuntimeMetadataLivePipelineTest {
     private companion object {
         val DEVICE_UID = DeviceUid("AQL-DP2-000001")
         val EXPECTED_ACTIONS = setOf("identity.get", "capabilities.get", "status.get")
+        const val PRODUCT_DISPLAY_NAME = "Dose Pro 2"
+        const val CUSTOM_NAME = "My Dose Pro"
+        const val CUSTOM_NAME_MAX_BYTES = 64
     }
 }
