@@ -81,7 +81,13 @@ class DeviceCoolingRootViewModel(
 
     private fun applyRefreshResult(result: DeviceCoolingOperationResult) {
         if (result is DeviceCoolingOperationResult.Failed) {
-            _uiState.value = _uiState.value.copy(runtimeError = result.reason)
+            _uiState.value = _uiState.value.copy(
+                runtimeError = result.reason,
+                secondarySectionPlaceholder = AquaUiText.Resource(
+                    R.string.device_cooling_runtime_error_value,
+                    listOf(result.reason)
+                )
+            )
         }
     }
 
@@ -125,16 +131,20 @@ class DeviceCoolingRootViewModel(
 
     private fun DeviceCoolingRootUiState.withCooling(
         cooling: DeviceCoolingSnapshot?
-    ): DeviceCoolingRootUiState = copy(
-        coolingMode = cooling?.mode,
-        minTemperatureC = cooling?.minTemperatureC,
-        maxTemperatureC = cooling?.maxTemperatureC,
-        temperatureSupported = cooling?.temperatureSupported == true,
-        temperatureReadingValid = cooling?.readingValid == true,
-        temperatureC = cooling?.temperatureC,
-        temperatureSampledAtMs = cooling?.sampledAtMs ?: 0L,
-        runtimeError = ""
-    )
+    ): DeviceCoolingRootUiState {
+        if (cooling == null) return this
+        return copy(
+            secondarySectionPlaceholder = cooling.toRuntimeSummary(),
+            coolingMode = cooling.mode,
+            minTemperatureC = cooling.minTemperatureC,
+            maxTemperatureC = cooling.maxTemperatureC,
+            temperatureSupported = cooling.temperatureSupported,
+            temperatureReadingValid = cooling.readingValid,
+            temperatureC = cooling.temperatureC,
+            temperatureSampledAtMs = cooling.sampledAtMs,
+            runtimeError = ""
+        )
+    }
 
     private companion object {
         val KIND = DeviceRootKind.COOLING
@@ -169,3 +179,36 @@ data class DeviceCoolingRootUiState(
     val temperatureSampledAtMs: Long = 0L,
     val runtimeError: String = ""
 )
+
+private fun DeviceCoolingSnapshot.toRuntimeSummary(): AquaUiText = AquaUiText.Joined(
+    parts = listOf(temperatureText(), modeText(), rangeText()),
+    separatorRes = R.string.device_cooling_runtime_line_separator
+)
+
+private fun DeviceCoolingSnapshot.temperatureText(): AquaUiText = when {
+    !temperatureSupported -> AquaUiText.Resource(
+        R.string.device_cooling_temperature_unsupported
+    )
+    readingValid && temperatureC != null -> AquaUiText.Resource(
+        R.string.device_cooling_temperature_value,
+        listOf(temperatureC)
+    )
+    else -> AquaUiText.Resource(R.string.device_cooling_temperature_unavailable)
+}
+
+private fun DeviceCoolingSnapshot.modeText(): AquaUiText = AquaUiText.Resource(
+    R.string.device_cooling_mode_value,
+    listOf(AquaUiText.Resource(mode.labelRes()))
+)
+
+private fun DeviceCoolingSnapshot.rangeText(): AquaUiText = AquaUiText.Resource(
+    R.string.device_cooling_range_value,
+    listOf(minTemperatureC, maxTemperatureC)
+)
+
+@StringRes
+private fun DeviceCoolingModeOption.labelRes(): Int = when (this) {
+    DeviceCoolingModeOption.AUTO -> R.string.device_cooling_mode_auto
+    DeviceCoolingModeOption.ON -> R.string.device_cooling_mode_on
+    DeviceCoolingModeOption.OFF -> R.string.device_cooling_mode_off
+}
