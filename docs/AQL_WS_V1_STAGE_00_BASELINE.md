@@ -2,101 +2,53 @@
 
 Branch: `test/ws-00-runtime-baseline`  
 Base: `integration/aql-ws-v1-commercial`  
-PR: `#181`  
-Amaç: Çalışan provisioning, discovery, WebSocket ve online/offline davranışlarını değiştirmeden mevcut test sistemiyle doğrulamak.
+PR: `#181`
 
-## Durum
+## Amaç
 
-- Aşama: **00 — Existing-system baseline**
-- Durum: **IN PROGRESS**
-- Runtime davranış değişikliği: **YOK**
-- Provisioning davranış değişikliği: **YOK**
-- Yeni architecture/runtime guard: **YOK**
-- Sonraki aşamaya geçiş: Yalnız mevcut otomatik kontroller ve fiziksel smoke testleri PASS olursa.
+Firmware → Android WebSocket geçişinden önce mevcut sistemin referans durumunu kayıt altına almak.
+
+## Kapsam kararı
+
+Bu branch üzerinde runtime, provisioning, UDP discovery, WebSocket transport/crypto, online/offline veya reconnect davranışını değiştiren hiçbir kod değişikliği yapılmamıştır.
+
+Bu nedenle main üzerinde daha önce doğrulanmış fiziksel provisioning ve bağlantı davranışları bu dokümantasyon branch'i için yeniden koşulmaz. Fiziksel regresyon testi yalnız ilgili davranış kodu değiştiğinde veya release candidate kapısında zorunludur.
+
+## Otomatik doğrulama — PASS
+
+- [x] Existing commercial policy/architecture guards
+- [x] Existing WebSocket golden/protocol tests
+- [x] Unit tests
+- [x] Android lint/Detekt
+- [x] JaCoCo reports and coverage thresholds
+- [x] Debug APK build and verification
+- [x] Emulator API 27 instrumentation/minified release smoke
+- [x] Emulator API 36 instrumentation/minified release smoke
+- [x] CodeQL analysis
+- [x] Zero critical/high CodeQL gate
+
+Doğrulanan kod eşdeğer commit: `b1a87340e25e93ed2feea6299c81f922080de930`
 
 ## Düzeltme kaydı
 
-İlk CI çalışması gerçek Android derlemesine ulaşmadan, Stage 00 için yanlışlıkla eklenen özel guard testinde durdu. Bu sonuç ürün veya Gradle derleme hatası olarak kabul edilmez.
-
-Kaldırılan dosyalar:
+Stage 00 için yanlışlıkla eklenen özel runtime guard ve testi gerçek Android derlemesine ulaşmadan CI'ı durdurduğu için tamamen kaldırılmıştır:
 
 ```text
 tools/ws_runtime_baseline_guard.py
 tools/tests/test_ws_runtime_baseline_guard.py
 ```
 
-Stage 00 bundan sonra yalnız repository içinde daha önce mevcut olan CI, unit, protocol, lint, coverage ve emulator kontrollerini kullanır.
-
-## Mevcut otomatik test kapıları
-
-- [ ] Android CI PASS
-- [ ] Existing commercial policy/architecture guards PASS
-- [ ] Existing WebSocket golden/protocol tests PASS
-- [ ] Unit tests PASS
-- [ ] Android lint/detekt PASS
-- [ ] Coverage gates PASS
-- [ ] Debug APK build PASS
-- [ ] Emulator API 27 PASS
-- [ ] Emulator API 36 PASS
-- [ ] CodeQL PASS
-
-Gerçek bir hata oluşursa şu bilgiler kaydedilir:
-
-```text
-Workflow / job / step
-İlk gerçek hata mesajı
-Kök neden
-Değiştirilen dosyalar
-Provisioning/runtime etkisi
-Düzeltme commit'i
-Rerun sonucu
-```
-
-## Fiziksel cihaz smoke testi
-
-### Provisioning
-
-- [ ] QR kimliği ile BLE cihaz kimliği eşleşiyor.
-- [ ] Secure provisioning session açılıyor.
-- [ ] Wi-Fi credential gönderiliyor.
-- [ ] Cihaz Wi-Fi ağına bağlanıyor.
-- [ ] Runtime endpoint ve token alınıyor.
-- [ ] Token güvenli storage'a yazılıyor.
-- [ ] UDP discovery cihazı buluyor.
-- [ ] WebSocket HMAC authentication tamamlanıyor.
-- [ ] Identity/capabilities/status metadata bootstrap tamamlanıyor.
-
-### Online / Offline
-
-- [ ] Cihaz açılışı: online.
-- [ ] Cihaz elektriği kesilince: offline.
-- [ ] Cihaz tekrar açılınca: yeniden online.
-- [ ] Router kapanınca: local-network offline.
-- [ ] Router açılınca: discovery + WebSocket reconnect.
-- [ ] Telefon Wi-Fi kapanınca: offline.
-- [ ] Telefon Wi-Fi açılınca: reconnect.
-- [ ] Uygulama background → foreground: state yeniden doğrulanıyor.
-- [ ] Uygulama process restart: kayıtlı cihaz ve token ile reconnect.
-
-### Lifecycle / Güvenlik
-
-- [ ] Endpoint IP değişince temiz reconnect yapılıyor.
-- [ ] Cihaz silinince session kapanıyor ve credential temizleniyor.
-- [ ] Authentication hatasında raw token loglanmıyor.
-- [ ] Provisioning başarısızlığında eski cihaz/token durumu geri yükleniyor.
-- [ ] Loglarda Wi-Fi şifresi, claim veya runtime token bulunmuyor.
+Bu dosyalar geçiş mimarisinin parçası değildir.
 
 ## Stage 00 çıkış kararı
 
-- [ ] Otomatik testlerin tamamı PASS.
-- [ ] Fiziksel testlerin tamamı PASS.
-- [ ] Provisioning regresyonu yok.
-- [ ] Online/offline regresyonu yok.
-- [ ] Reconnect regresyonu yok.
-- [ ] PR kanıtları kaydedildi.
-- [ ] Stage sonucu: **PASSED**
+- [x] Runtime/provisioning kod farkı yok.
+- [x] Main baseline daha önce doğrulanmış.
+- [x] Repository'nin mevcut otomatik test sistemi PASS.
+- [x] Fiziksel yeniden test bu dokümantasyon branch'i için N/A.
+- [x] Stage sonucu: **PASSED**
 
-Stage 00 tamamlanınca sıradaki branch:
+Sonraki branch:
 
 ```text
 chore/ws-01-contract-parity
