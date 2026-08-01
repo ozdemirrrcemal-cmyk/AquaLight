@@ -2,7 +2,6 @@ package com.aqua.aqualight.data.devices.runtime.modules.firmware
 
 import com.aqua.aqualight.data.devices.model.DeviceSnapshot
 import com.aqua.aqualight.data.devices.model.DeviceUid
-import com.aqua.aqualight.data.devices.runtime.core.DeviceRuntimeCommandOutcome
 
 /**
  * Shared production OTA data boundary.
@@ -64,14 +63,6 @@ class DeviceFirmwareUpdateRepository(
             }
         }
     }
-
-    suspend fun requestFirmwareStatus(
-        deviceUid: DeviceUid
-    ): DeviceRuntimeCommandOutcome<DeviceFirmwareStatus> = runtime.requestStatus(deviceUid)
-
-    suspend fun readOtaStatus(
-        deviceUid: DeviceUid
-    ): DeviceRuntimeCommandOutcome<DeviceFirmwareOtaSnapshot> = runtime.readOtaStatus(deviceUid)
 
     fun requestOtaStatus(deviceUid: DeviceUid): DeviceFirmwareCommandResult =
         runtime.requestOtaStatus(deviceUid)
