@@ -8,9 +8,9 @@ Target: **41 authenticated commands / 0 public commands**
 
 - Current stage: **06 — Cooling runtime alignment**
 - Active branch: `feat/cooling-06-runtime-alignment`
-- Status: **IN PROGRESS**
+- Status: **IN PROGRESS — LIVE TEMPERATURE CONTRACT VERIFICATION**
 - Previous stage: **05 PASSED / PR #186 MERGED**
-- Next: Align both Cooling commands, production consumers and `cooling.status.changed` handling with the correlated request broker and exact firmware contracts.
+- Next: Close the live temperature telemetry contract gap before implementing the two Cooling commands and production consumers.
 
 ## Fixed rules
 
@@ -60,8 +60,8 @@ Target: **41 authenticated commands / 0 public commands**
   - [x] PR evidence recorded
 
 - [x] **03** `feat/ws-03-event-routing` — **MERGED / PR #184**
-  - [x] Inventoried all 11 firmware-emitted authenticated events
-  - [x] Added exact typed contracts for every supported firmware event
+  - [x] Inventoried all 11 firmware-declared authenticated events
+  - [x] Added exact typed contracts for every declared firmware event
   - [x] Routed by exact device + connection generation + module + event identity
   - [x] Rejected stale-generation events
   - [x] Preserved per-device/session isolation
@@ -101,20 +101,25 @@ Target: **41 authenticated commands / 0 public commands**
   - [x] Unsupported Light operations rejected using exact firmware capabilities/features
   - [x] Unit, parser, repository and production-consumer tests added
   - [x] Android CI, installable APK, Emulator API 27/36 and CodeQL passed
-  - [x] WRGB Pro Elite physical Light-device regression passed
+  - [x] WRGB Pro Elite physical Light regression passed
   - [x] PR evidence recorded
 
 - [ ] **06** `feat/cooling-06-runtime-alignment` — **IN PROGRESS**
-  - [ ] Inventory exact firmware request/response shapes for both Cooling commands
+  - [x] Confirm both Cooling commands: `cooling.status.get`, `cooling.config.apply`
+  - [x] Confirm Cooling engine internally uses fixed temperature sensor #0
+  - [x] Confirm all Cooling-capable products expose one temperature sensor
+  - [x] Confirm current Cooling WS response has configuration thresholds but no live measured temperature
+  - [x] Confirm `temperature.changed` is declared/routed but not currently published by firmware
+  - [ ] Freeze minimal live temperature snapshot/event shape before Android implementation
+  - [ ] Add live fixed-sensor temperature to firmware WS contract and golden fixtures
+  - [ ] Publish validated `temperature.changed` telemetry without sentinel values
   - [ ] `cooling.status.get` exact typed status parser
-  - [ ] `cooling.config.set` exact atomic mutation outcome
-  - [ ] Model Auto / On / Off fan regimes without aliases or fallback values
-  - [ ] Validate minimum/maximum temperature bounds and ordering
-  - [ ] Preserve supported fan display names while keeping hardware fields read-only
+  - [ ] `cooling.config.apply` exact atomic mutation outcome
+  - [ ] Auto/On/Off, min/max temperature and supported fan display-name writes
   - [ ] Move production Cooling consumers from send-success to correlated firmware success
-  - [ ] Integrate `cooling.status.changed` into deterministic device-scoped current-state projection
-  - [ ] Reject unsupported Cooling operations using exact firmware capabilities/features
-  - [ ] Add unit, parser, repository, event-reducer and production-consumer tests
+  - [ ] Integrate `cooling.status.changed` and `temperature.changed` into device-scoped current state
+  - [ ] Reject unsupported Cooling operations using exact capabilities/features
+  - [ ] Add unit, parser, repository and production-consumer tests
   - [ ] Run automatic gates and targeted physical Cooling-device regression
 
 - [ ] **07** `feat/timer-07-runtime-alignment`
@@ -173,4 +178,5 @@ Target: **41 authenticated commands / 0 public commands**
 | 2026-08-01 | Stage 04 common runtime commands | PASS / PR #185 MERGED | Start Stage 05 |
 | 2026-08-01 | Stage 05 Light runtime branch opened | IN PROGRESS | Inventory all seven firmware Light contracts and Android consumers |
 | 2026-08-01 | Stage 05 Light runtime alignment | PASS / PR #186 MERGED | Start Stage 06 |
-| 2026-08-01 | Stage 06 Cooling runtime branch opened | IN PROGRESS | Inventory both firmware Cooling contracts and Android consumers |
+| 2026-08-01 | Stage 06 Cooling runtime branch opened | IN PROGRESS | Verify live temperature telemetry before implementation |
+| 2026-08-01 | Stage 06 live temperature audit | CONTRACT GAP FOUND | Freeze and implement firmware telemetry contract first |
