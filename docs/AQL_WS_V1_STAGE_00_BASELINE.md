@@ -2,49 +2,55 @@
 
 Branch: `test/ws-00-runtime-baseline`  
 Base: `integration/aql-ws-v1-commercial`  
-Amaç: Çalışan provisioning, discovery, WebSocket ve online/offline davranışlarını değiştirmeden koruma altına almak.
+PR: `#181`  
+Amaç: Çalışan provisioning, discovery, WebSocket ve online/offline davranışlarını değiştirmeden mevcut test sistemiyle doğrulamak.
 
 ## Durum
 
-- Aşama: **00 — Runtime Baseline**
+- Aşama: **00 — Existing-system baseline**
 - Durum: **IN PROGRESS**
 - Runtime davranış değişikliği: **YOK**
-- Sonraki aşamaya geçiş: Yalnız bütün otomatik kontroller ve fiziksel smoke testleri PASS olursa.
+- Provisioning davranış değişikliği: **YOK**
+- Yeni architecture/runtime guard: **YOK**
+- Sonraki aşamaya geçiş: Yalnız mevcut otomatik kontroller ve fiziksel smoke testleri PASS olursa.
 
-## Otomatik koruma kapsamı
+## Düzeltme kaydı
 
-- [x] Global cleartext kapalı.
-- [x] Yalnız `*.device.aql.local` WebSocket cleartext istisnası korunuyor.
-- [x] Runtime credential encrypted, owner-scoped storage içinde tutuluyor.
-- [x] Credential `stage → verify/connect → commit` akışı korunuyor.
-- [x] Provisioning rollback ve staged-token rollback akışı korunuyor.
-- [x] Private IPv4 → sentetik hostname → özel DNS sınırı korunuyor.
-- [x] WebSocket handshake timeout ve binary-frame reddi korunuyor.
-- [x] Authenticated metadata bootstrap korunuyor.
-- [x] Local-network loss sırasında runtime session kapatma korunuyor.
-- [x] Network restore sırasında device-scoped reconnect korunuyor.
-- [x] Authenticated `network.status.get` liveness probe korunuyor.
-- [x] Foreground revalidation ve stale-state koruması korunuyor.
-- [x] Credential/provisioning recovery test dosyaları mevcut.
-- [x] Golden WebSocket ve private-LAN endpoint testleri mevcut.
+İlk CI çalışması gerçek Android derlemesine ulaşmadan, Stage 00 için yanlışlıkla eklenen özel guard testinde durdu. Bu sonuç ürün veya Gradle derleme hatası olarak kabul edilmez.
 
-Otomatik guard:
+Kaldırılan dosyalar:
 
 ```text
-python3 tools/ws_runtime_baseline_guard.py
-python3 tools/provisioning_commit_recovery_guard.py
-python3 tools/ws_protocol_guard.py
+tools/ws_runtime_baseline_guard.py
+tools/tests/test_ws_runtime_baseline_guard.py
 ```
 
-## CI kanıtı
+Stage 00 bundan sonra yalnız repository içinde daha önce mevcut olan CI, unit, protocol, lint, coverage ve emulator kontrollerini kullanır.
+
+## Mevcut otomatik test kapıları
 
 - [ ] Android CI PASS
-- [ ] Unit/golden/protocol guard PASS
-- [ ] Lint/detekt/coverage PASS
+- [ ] Existing commercial policy/architecture guards PASS
+- [ ] Existing WebSocket golden/protocol tests PASS
+- [ ] Unit tests PASS
+- [ ] Android lint/detekt PASS
+- [ ] Coverage gates PASS
+- [ ] Debug APK build PASS
 - [ ] Emulator API 27 PASS
 - [ ] Emulator API 36 PASS
+- [ ] CodeQL PASS
 
-CI sonucu PR açıldıktan sonra bu bölüme commit/run bilgisiyle kaydedilecektir.
+Gerçek bir hata oluşursa şu bilgiler kaydedilir:
+
+```text
+Workflow / job / step
+İlk gerçek hata mesajı
+Kök neden
+Değiştirilen dosyalar
+Provisioning/runtime etkisi
+Düzeltme commit'i
+Rerun sonucu
+```
 
 ## Fiziksel cihaz smoke testi
 
