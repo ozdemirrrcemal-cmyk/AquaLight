@@ -125,8 +125,10 @@ class DeviceCoolingTypedEventReducerTest {
         reducer.apply(statusEvent(DEVICE_B))
         reducer.apply(temperatureEvent(DEVICE_A, 31.0, 20_000L))
 
-        assertEquals(31.0, store.states.value.getValue(DEVICE_A).temperature?.temperatureC!!, 0.0001)
-        assertEquals(27.4, store.states.value.getValue(DEVICE_B).temperature?.temperatureC!!, 0.0001)
+        val deviceATemperature = store.states.value.getValue(DEVICE_A).temperature?.temperatureC
+        val deviceBTemperature = store.states.value.getValue(DEVICE_B).temperature?.temperatureC
+        assertEquals(31.0, deviceATemperature!!, 0.0001)
+        assertEquals(27.4, deviceBTemperature!!, 0.0001)
     }
 
     @Test
