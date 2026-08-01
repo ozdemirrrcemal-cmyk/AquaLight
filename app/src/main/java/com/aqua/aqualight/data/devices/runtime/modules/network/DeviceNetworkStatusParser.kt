@@ -71,7 +71,7 @@ internal object DeviceNetworkStatusParser {
     private fun parseDiscovery(data: JSONObject): DeviceNetworkDiscoveryStatus {
         DeviceRuntimeJson.requireExactKeys(data, DISCOVERY_KEYS, "$ROOT_LABEL.discovery")
         val port = DeviceRuntimeJson.intValue(data, "port")
-        require(port in 0..65_535) { "network discovery port is invalid." }
+        require(port in MIN_PORT..MAX_PORT) { "network discovery port is invalid." }
         return DeviceNetworkDiscoveryStatus(
             ready = DeviceRuntimeJson.booleanValue(data, "ready"),
             port = port,
@@ -93,8 +93,8 @@ internal object DeviceNetworkStatusParser {
             wsProtocol = DeviceRuntimeJson.stringValue(data, "wsProtocol"),
             wsProtocolVersion = DeviceRuntimeJson.intValue(data, "wsProtocolVersion")
         ).also { runtime ->
-            require(runtime.transport == "websocket")
-            require(runtime.wsPort == 80)
+            require(runtime.transport == TRANSPORT_WEBSOCKET)
+            require(runtime.wsPort == WEBSOCKET_PORT)
             require(runtime.wsPath == AqlWsContract.DEFAULT_PATH)
             require(runtime.wsProtocol == AqlWsContract.SCHEMA)
             require(runtime.wsProtocolVersion == AqlWsContract.PROTOCOL_VERSION)
@@ -103,10 +103,11 @@ internal object DeviceNetworkStatusParser {
 
     private fun validateMode(status: DeviceNetworkStatus) {
         val expected = when (status.wifiModeCode) {
-            0 -> Mode("off", station = false, setupAp = false)
-            1 -> Mode("client", station = true, setupAp = false)
-            2 -> Mode("setup_ap", station = false, setupAp = true)
-            3 -> Mode("client_and_setup_ap", station = true, setupAp = true)
+            WIFI_MODE_OFF -> Mode("off", station = false, setupAp = false)
+            WIFI_MODE_CLIENT -> Mode("client", station = true, setupAp = false)
+            WIFI_MODE_SETUP_AP -> Mode("setup_ap", station = false, setupAp = true)
+            WIFI_MODE_CLIENT_AND_SETUP_AP ->
+                Mode("client_and_setup_ap", station = true, setupAp = true)
             else -> error("Unknown firmware Wi-Fi mode code: ${status.wifiModeCode}")
         }
         require(status.wifiMode == expected.name)
@@ -115,10 +116,14 @@ internal object DeviceNetworkStatusParser {
     }
 
     private fun nonNegativeInt(data: JSONObject, key: String): Int =
-        DeviceRuntimeJson.intValue(data, key).also { require(it >= 0) { "$key must not be negative." } }
+        DeviceRuntimeJson.intValue(data, key).also { value ->
+            require(value >= 0) { "$key must not be negative." }
+        }
 
     private fun nonNegativeLong(data: JSONObject, key: String): Long =
-        DeviceRuntimeJson.longValue(data, key).also { require(it >= 0L) { "$key must not be negative." } }
+        DeviceRuntimeJson.longValue(data, key).also { value ->
+            require(value >= 0L) { "$key must not be negative." }
+        }
 
     private data class Mode(
         val name: String,
@@ -127,6 +132,15 @@ internal object DeviceNetworkStatusParser {
     )
 
     private const val ROOT_LABEL = "network.status.get.data"
+    private const val MIN_PORT = 0
+    private const val MAX_PORT = 65_535
+    private const val WEBSOCKET_PORT = 80
+    private const val TRANSPORT_WEBSOCKET = "websocket"
+    private const val WIFI_MODE_OFF = 0
+    private const val WIFI_MODE_CLIENT = 1
+    private const val WIFI_MODE_SETUP_AP = 2
+    private const val WIFI_MODE_CLIENT_AND_SETUP_AP = 3
+
     private val ROOT_KEYS = setOf(
         "ip", "macAddress", "wifiModeCode", "wifiMode", "stationEnabled",
         "setupApEnabled", "clientConnected", "setupApActive", "uptimeMs",
