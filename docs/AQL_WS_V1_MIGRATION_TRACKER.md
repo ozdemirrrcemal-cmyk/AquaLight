@@ -6,11 +6,11 @@ Target: **41 authenticated commands / 0 public commands**
 
 ## Current position
 
-- Current stage: **01 — Firmware contract parity**
-- Active branch: `chore/ws-01-contract-parity`
-- Status: **READY FOR TEST**
-- Previous stage: **00 PASSED / PR #181 MERGED**
-- Next: Run existing Android CI, golden/protocol tests, emulator API 27/36 and CodeQL. Fix only failures caused by this five-file parity change.
+- Current stage: **02 — Correlated request broker**
+- Active branch: `feat/ws-02-request-broker`
+- Status: **IN PROGRESS**
+- Previous stage: **01 PASSED / PR #182 MERGED**
+- Next: Inspect the current client/session lifecycle, add request correlation without rewriting transport or crypto, then run the complete automatic gate.
 
 ## Fixed rules
 
@@ -18,46 +18,40 @@ Target: **41 authenticated commands / 0 public commands**
 - A stage must pass its relevant tests before the next stage starts.
 - Transport and crypto will not be rewritten.
 - BLE + QR provisioning, UDP discovery and online/offline behavior must not regress.
-- Physical regression tests are required when the related runtime behavior changes or at release-candidate gate; they are not repeated for documentation-only or contract-fixture-only changes.
+- Physical regression tests are required when the related runtime behavior changes or at release-candidate gate.
 - All firmware-supported user settings and operations must exist on Android.
 - GPIO, PWM, mappings and factory identity remain read-only.
 
 ## Stage list
 
 - [x] **00** `test/ws-00-runtime-baseline` — **MERGED**
+  - [x] Existing Android CI, API 27/36 emulator and CodeQL passed
   - [x] Runtime/provisioning code diff: none
-  - [x] Existing Android CI passed
-  - [x] Existing unit/golden/protocol tests passed
-  - [x] Lint/Detekt and coverage gates passed
-  - [x] Debug APK passed
-  - [x] Emulator API 27 passed
-  - [x] Emulator API 36 passed
-  - [x] CodeQL passed
-  - [x] Physical rerun: N/A for documentation-only branch
 
-- [ ] **01** `chore/ws-01-contract-parity` — **READY FOR TEST**
+- [x] **01** `chore/ws-01-contract-parity` — **MERGED / PR #182**
   - [x] Firmware golden fixture copied byte-identically
   - [x] Android command matrix `38 → 41`
   - [x] Added `device.name.set`
   - [x] Added `light.temperature-protection.status.get`
   - [x] Added `light.temperature-protection.set`
-  - [x] Golden test command count updated to 41
-  - [x] Protocol guard fixture SHA and count updated to firmware values
-  - [x] Public WebSocket command count remains 0
+  - [x] Golden test and protocol guard updated to 41
+  - [x] Android CI passed
+  - [x] Emulator API 27 passed
+  - [x] Emulator API 36 passed
+  - [x] CodeQL passed
   - [x] Provisioning/runtime/transport/crypto/presence code unchanged
-  - [ ] Android CI passes
-  - [ ] Emulator API 27 passes
-  - [ ] Emulator API 36 passes
-  - [ ] CodeQL passes
-  - [ ] PR evidence recorded
 
-- [ ] **02** `feat/ws-02-request-broker`
-  - Request ID correlation
-  - Typed success/error result
-  - Timeout
-  - Pending-request cancellation on disconnect
-  - Stale-session response rejection
-  - Multi-device isolation
+- [ ] **02** `feat/ws-02-request-broker` — **IN PROGRESS**
+  - [ ] Request ID correlation
+  - [ ] Typed success/error result
+  - [ ] Bounded timeout
+  - [ ] Pending-request cancellation on disconnect/shutdown
+  - [ ] Stale-session response rejection
+  - [ ] Wrong module/action rejection
+  - [ ] Duplicate response rejection
+  - [ ] Multi-device isolation
+  - [ ] Existing metadata bootstrap remains functional
+  - [ ] Android CI/API 27/API 36/CodeQL pass
 
 - [ ] **03** `feat/ws-03-event-routing`
   - Typed routing for all firmware events
@@ -134,7 +128,6 @@ Target: **41 authenticated commands / 0 public commands**
 | Date | Stage | Result | Next |
 |---|---|---|---|
 | 2026-08-01 | Tracker setup | PASS | Start Stage 00 baseline |
-| 2026-08-01 | Stage 00 first CI run | INVALID | Remove accidental custom guard/test |
 | 2026-08-01 | Stage 00 existing CI baseline | PASS / MERGED | Start Stage 01 |
-| 2026-08-01 | Stage 01 branch opened | IN PROGRESS | Inspect firmware/Android contract delta |
-| 2026-08-01 | Stage 01 parity implementation | READY FOR TEST | Run existing CI and protocol gates |
+| 2026-08-01 | Stage 01 contract parity | PASS / PR #182 MERGED | Start Stage 02 |
+| 2026-08-01 | Stage 02 branch opened | IN PROGRESS | Inspect request/session lifecycle |
