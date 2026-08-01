@@ -22,7 +22,7 @@ class DeviceFirmwareRuntimeRepository(
         )
     )
 
-    suspend fun requestOtaStatus(
+    suspend fun readOtaStatus(
         deviceUid: DeviceUid
     ): DeviceRuntimeCommandOutcome<DeviceFirmwareOtaSnapshot> = gateway.execute(
         deviceUid,
@@ -31,6 +31,11 @@ class DeviceFirmwareRuntimeRepository(
             action = DeviceFirmwareRuntimeContract.Action.OTA_STATUS,
             successParser = DeviceFirmwareReadParser::parseOtaStatus
         )
+    )
+
+    fun requestOtaStatus(deviceUid: DeviceUid): DeviceFirmwareCommandResult = sendLegacy(
+        deviceUid = deviceUid,
+        action = DeviceFirmwareRuntimeContract.Action.OTA_STATUS
     )
 
     fun startOta(
