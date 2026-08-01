@@ -23,13 +23,19 @@ class DeviceCoolingRuntimeContractTest {
     }
 
     @Test
-    fun `temperature parser accepts exact nullable invalid snapshot`() {
+    fun `temperature parser accepts completed invalid physical sample`() {
         val parsed = DeviceCoolingTemperatureParser.parse(
-            DeviceCoolingRuntimeFixtures.temperature(temperatureC = null)
+            DeviceCoolingRuntimeFixtures.temperature(
+                temperatureC = null,
+                sensorIndex = 0,
+                sampledAtMs = 12_000L
+            )
         )
 
         assertFalse(parsed.readingValid)
         assertNull(parsed.temperatureC)
+        assertEquals(0, parsed.sensorIndex)
+        assertEquals(12_000L, parsed.sampledAtMs)
     }
 
     @Test
@@ -47,6 +53,26 @@ class DeviceCoolingRuntimeContractTest {
             .put("readingValid", true)
 
         assertTrue(runCatching { DeviceCoolingTemperatureParser.parse(invalid) }.isFailure)
+    }
+
+    @Test
+    fun `temperature parser rejects firmware sentinel boundaries`() {
+        listOf(
+            COOLING_MIN_VALID_TEMPERATURE_C,
+            COOLING_MAX_VALID_TEMPERATURE_C
+        ).forEach { sentinel ->
+            val snapshot = DeviceCoolingRuntimeFixtures.temperature(temperatureC = sentinel)
+            assertTrue(runCatching { DeviceCoolingTemperatureParser.parse(snapshot) }.isFailure)
+        }
+    }
+
+    @Test
+    fun `temperature parser rejects uptime wider than firmware unsigned long`() {
+        val snapshot = DeviceCoolingRuntimeFixtures.temperature(
+            sampledAtMs = COOLING_DEVICE_UPTIME_MAX_MS + 1L
+        )
+
+        assertTrue(runCatching { DeviceCoolingTemperatureParser.parse(snapshot) }.isFailure)
     }
 
     @Test
