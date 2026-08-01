@@ -210,5 +210,3 @@ class DeviceLightTemperatureProtectionContractTest {
         }
     }
 }
-
-private fun JSONObject.keySet(): Set<String> = keys().asSequence().toSet()
