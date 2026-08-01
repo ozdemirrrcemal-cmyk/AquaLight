@@ -1,6 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-
     <style name="Widget.Aqua.Card" parent="Widget.MaterialComponents.CardView">
         <item name="cardBackgroundColor">@color/aqua_card_surface</item>
         <item name="cardCornerRadius">@dimen/aqua_size_18</item>
@@ -31,7 +30,7 @@
         <item name="strokeWidth">@dimen/aqua_size_1</item>
     </style>
 
-<style name="Widget.Aqua.Card.Device" parent="Widget.Aqua.Card">
+    <style name="Widget.Aqua.Card.Device" parent="Widget.Aqua.Card">
         <item name="cardBackgroundColor">@color/aqua_card_device_surface</item>
         <item name="cardCornerRadius">@dimen/aqua_size_24</item>
         <item name="cardElevation">@dimen/aqua_size_0</item>
@@ -47,7 +46,6 @@
         <item name="strokeWidth">@dimen/aqua_size_1</item>
     </style>
 
-
     <style name="Widget.Aqua.Card.Device.Section" parent="Widget.Aqua.Card">
         <item name="cardBackgroundColor">@color/aqua_card_device_section_surface</item>
         <item name="cardCornerRadius">@dimen/aqua_size_20</item>
@@ -55,13 +53,6 @@
         <item name="strokeColor">@color/aqua_card_device_section_outline</item>
         <item name="strokeWidth">@dimen/aqua_size_1</item>
     </style>
-
-    <style name="Widget.Aqua.Card.Device.Highlight" parent="Widget.Aqua.Card.Device.Section">
-        <item name="cardBackgroundColor">@color/aqua_card_device_highlight_surface</item>
-        <item name="strokeColor">@color/aqua_card_device_highlight_outline</item>
-        <item name="strokeWidth">@dimen/aqua_size_1</item>
-    </style>
-
 
     <style name="Widget.Aqua.Card.Form" parent="Widget.Aqua.Card">
         <item name="cardBackgroundColor">@color/aqua_card_form_surface</item>
@@ -79,7 +70,6 @@
         <item name="strokeWidth">@dimen/aqua_size_1</item>
     </style>
 
-
     <style name="Widget.Aqua.Card.IconAccent" parent="Widget.Aqua.Card">
         <item name="cardBackgroundColor">@color/aqua_card_icon_accent_surface</item>
         <item name="cardCornerRadius">@dimen/aqua_size_14</item>
@@ -87,7 +77,6 @@
         <item name="strokeColor">@color/aqua_card_icon_accent_outline</item>
         <item name="strokeWidth">@dimen/aqua_size_1</item>
     </style>
-
 
     <style name="Widget.Aqua.Card.PhotoOverlay" parent="Widget.Aqua.Card">
         <item name="cardBackgroundColor">@color/aqua_card_photo_overlay_surface</item>
@@ -97,8 +86,6 @@
         <item name="strokeWidth">@dimen/aqua_size_1</item>
     </style>
 
-
     <!-- Unique media/state cards keep their exact semantic attributes inline, while this style marks the shared Aqua component contract without injecting visual defaults. -->
     <style name="Widget.Aqua.Card.Inline" parent="Widget.MaterialComponents.CardView" />
-
 </resources>

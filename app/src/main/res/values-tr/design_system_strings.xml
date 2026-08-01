@@ -88,7 +88,6 @@
     <string name="device_menu_temperature_automation_description">Sıcaklığa dayalı soğutma otomasyonu.</string>
     <string name="device_menu_bullet_item">• %1$s\n  %2$s</string>
     <string name="device_menu_item_separator">\n\n</string>
-    <string name="device_menu_manual_preparing">Manuel kontrol hazırlanıyor.</string>
     <string name="device_menu_programs_preparing">Programlar hazırlanıyor.</string>
     <string name="device_menu_dosing_controls_preparing">Dozajlama kanalı kontrolleri hazırlanıyor.</string>
     <string name="device_menu_dosing_schedules_preparing">Dozajlama zamanlamaları hazırlanıyor.</string>
@@ -98,10 +97,7 @@
     <string name="device_menu_temperature_automation_preparing">Sıcaklık otomasyonu hazırlanıyor.</string>
     <string name="device_menu_controls_title">Kontroller</string>
     <string name="device_menu_controls_preparing">Kontroller hazırlanıyor.</string>
-    <string name="device_menu_light_manual_unavailable">Aygıt yazılımı henüz manuel aydınlatma kontrollerini sunmadı.</string>
-    <string name="device_menu_light_programs_unavailable">Aygıt yazılımı henüz aydınlatma programlarını, ön ayarları veya ayarları sunmadı.</string>
 
-    <string name="device_light_channels_label">Aydınlatma kanalları</string>
     <string name="device_dosing_channels_label">Dozajlama kanalları</string>
     <string name="device_fan_outputs_label">Fan çıkışları</string>
     <string name="device_feature_dosing">Dozajlama</string>
@@ -114,29 +110,6 @@
     <string name="device_feature_program">Program</string>
     <string name="device_feature_presets">Ön ayarlar</string>
     <string name="device_feature_simulation">Simülasyon</string>
-
-    <string name="device_ota_test_panel_title">Gizli OTA test paneli</string>
-    <string name="device_ota_test_panel_description">Geçici dahili panel. Göstermek veya gizlemek için Aygıt Yazılımı alanına uzun basın. OTA doğrulamasından sonra kaldırın.</string>
-    <string name="device_ota_test_check_beta_action">Beta sürümünü denetle</string>
-    <string name="device_ota_test_status_action">Durum</string>
-    <string name="device_ota_test_start_action">OTA başlat</string>
-    <string name="device_ota_test_clear_action">Temizle</string>
-    <string name="device_ota_test_locked_message">Gizli OTA test paneli. Kilidi açmak için Aygıt Yazılımı alanına uzun basın.</string>
-    <string name="device_ota_test_missing_uid">OTA testi başarısız: deviceUid eksik.</string>
-    <string name="device_ota_test_checking_manifest">İmzalı beta bildirimi denetleniyor...\nURL: %1$s</string>
-    <string name="device_ota_test_plan_failed">OTA test planı başarısız:\n%1$s</string>
-    <string name="device_ota_test_start_missing_uid">OTA başlatılamadı: deviceUid eksik.</string>
-    <string name="device_ota_test_plan_not_ready">Önce Beta Bildirimini Denetle işlemini çalıştırın. Hazır bir OTA planı yok.</string>
-    <string name="device_ota_test_start_sent">OTA başlatma komutu gönderildi.\nmessageId: %1$s\nhedef: %2$s\nAşağıdaki firmware.ota.progress olaylarını izleyin.</string>
-    <string name="device_ota_test_start_failed">OTA başlatma komutu gönderilemedi.\n%1$s</string>
-    <string name="device_ota_test_unknown_websocket_error">Bilinmeyen WebSocket gönderim hatası.</string>
-    <string name="device_ota_test_status_missing_uid">OTA durumu alınamadı: deviceUid eksik.</string>
-    <string name="device_ota_test_status_sent">OTA durum komutu gönderildi. messageId: %1$s</string>
-    <string name="device_ota_test_status_failed">OTA durum komutu gönderilemedi.\n%1$s</string>
-    <string name="device_ota_test_clear_missing_uid">OTA temizlenemedi: deviceUid eksik.</string>
-    <string name="device_ota_test_clear_sent">OTA temizleme komutu gönderildi. messageId: %1$s</string>
-    <string name="device_ota_test_clear_failed">OTA temizleme komutu gönderilemedi.\n%1$s</string>
-    <string name="device_ota_test_plan_summary">OTA beta bildirimi doğrulandı.\nBAŞLATMAYA HAZIR\nmevcut: %1$s\nhedef: %2$s\nkanal: %3$s\nortam: %4$s\nproductKey: %5$s\nproductId: %6$s\nhw: %7$s\ndosya: %8$s\nboyut: %9$d\nsha256: %10$s...</string>
 
     <string name="settings_active_devices_preview">3 Etkin Cihaz</string>
     <string name="settings_no_active_devices_summary">Etkin cihaz yok</string>

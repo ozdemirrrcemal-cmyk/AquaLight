@@ -381,6 +381,4 @@
         <item quantity="one">Bu işlem cihazı bu uygulamadan kaldırır. Cihaz kurulum moduna geçmez. Yeniden eşleştirmek için fiziksel kurulum düğmesine basın.</item>
         <item quantity="other">Bu işlem seçili cihazları bu uygulamadan kaldırır. Cihazlar kurulum moduna geçmez. Yeniden eşleştirmek için fiziksel kurulum düğmesine basın.</item>
     </plurals>
-    <string name="device_ota_test_panel_opened">OTA test paneli açıldı</string>
-    <string name="device_ota_test_panel_hidden">OTA test paneli gizlendi</string>
 </resources>

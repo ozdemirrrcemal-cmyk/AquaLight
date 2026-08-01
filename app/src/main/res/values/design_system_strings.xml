@@ -101,7 +101,6 @@
     <string name="device_menu_temperature_automation_description">Temperature-based cooling automation.</string>
     <string name="device_menu_bullet_item">• %1$s\n  %2$s</string>
     <string name="device_menu_item_separator">\n\n</string>
-    <string name="device_menu_manual_preparing">Manual control hazırlanıyor.</string>
     <string name="device_menu_programs_preparing">Programlar hazırlanıyor.</string>
     <string name="device_menu_dosing_controls_preparing">Dosing channel controls hazırlanıyor.</string>
     <string name="device_menu_dosing_schedules_preparing">Dosing schedules hazırlanıyor.</string>
@@ -111,11 +110,8 @@
     <string name="device_menu_temperature_automation_preparing">Temperature automation hazırlanıyor.</string>
     <string name="device_menu_controls_title">Controls</string>
     <string name="device_menu_controls_preparing">Controls hazırlanıyor.</string>
-    <string name="device_menu_light_manual_unavailable">Firmware has not exposed manual light controls yet.</string>
-    <string name="device_menu_light_programs_unavailable">Firmware has not exposed light programs, presets or settings yet.</string>
 
     <!-- Device information labels and capabilities -->
-    <string name="device_light_channels_label">Light channels</string>
     <string name="device_dosing_channels_label">Dosing channels</string>
     <string name="device_fan_outputs_label">Fan outputs</string>
     <string name="device_feature_dosing">Dosing</string>
@@ -129,30 +125,6 @@
     <string name="device_feature_program">Program</string>
     <string name="device_feature_presets">Presets</string>
     <string name="device_feature_simulation">Simulation</string>
-
-    <!-- Internal OTA validation panel; still user-visible while enabled -->
-    <string name="device_ota_test_panel_title">Hidden OTA test panel</string>
-    <string name="device_ota_test_panel_description">Temporary internal panel. Long press Firmware to show or hide. Remove after OTA validation.</string>
-    <string name="device_ota_test_check_beta_action">Check beta</string>
-    <string name="device_ota_test_status_action">Status</string>
-    <string name="device_ota_test_start_action">Start OTA</string>
-    <string name="device_ota_test_clear_action">Clear</string>
-    <string name="device_ota_test_locked_message">Hidden OTA test panel. Long press Firmware to unlock.</string>
-    <string name="device_ota_test_missing_uid">OTA test failed: deviceUid is missing.</string>
-    <string name="device_ota_test_checking_manifest">Checking signed beta manifest...\nURL: %1$s</string>
-    <string name="device_ota_test_plan_failed">OTA test plan failed:\n%1$s</string>
-    <string name="device_ota_test_start_missing_uid">OTA start failed: deviceUid is missing.</string>
-    <string name="device_ota_test_plan_not_ready">Run Check Beta Manifest first. No OTA plan is ready.</string>
-    <string name="device_ota_test_start_sent">OTA start command sent.\nmessageId: %1$s\ntarget: %2$s\nWatch firmware.ota.progress events below.</string>
-    <string name="device_ota_test_start_failed">OTA start command could not be sent.\n%1$s</string>
-    <string name="device_ota_test_unknown_websocket_error">Unknown WebSocket send error.</string>
-    <string name="device_ota_test_status_missing_uid">OTA status failed: deviceUid is missing.</string>
-    <string name="device_ota_test_status_sent">OTA status command sent. messageId: %1$s</string>
-    <string name="device_ota_test_status_failed">OTA status command could not be sent.\n%1$s</string>
-    <string name="device_ota_test_clear_missing_uid">OTA clear failed: deviceUid is missing.</string>
-    <string name="device_ota_test_clear_sent">OTA clear command sent. messageId: %1$s</string>
-    <string name="device_ota_test_clear_failed">OTA clear command could not be sent.\n%1$s</string>
-    <string name="device_ota_test_plan_summary">OTA beta manifest verified.\nREADY TO START\ncurrent: %1$s\ntarget: %2$s\nchannel: %3$s\nenv: %4$s\nproductKey: %5$s\nproductId: %6$s\nhw: %7$s\nfile: %8$s\nsize: %9$d\nsha256: %10$s...</string>
 
     <!-- Settings/address preview copy -->
     <string name="settings_active_devices_preview">3 Active Devices</string>

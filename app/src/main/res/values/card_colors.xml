@@ -24,10 +24,7 @@
     <!-- Device detail/root section cards -->
     <color name="aqua_card_device_section_surface">@color/aqua_palette_hex_101d2c</color>
     <color name="aqua_card_device_section_outline">@color/aqua_palette_hex_22354d</color>
-    <color name="aqua_card_device_highlight_surface">@color/aqua_palette_hex_101d2c</color>
-    <color name="aqua_card_device_highlight_outline">@color/aqua_palette_hex_22354d</color>
-
-<color name="aqua_card_danger_outline">@color/aqua_palette_hex_7a3344</color>
+    <color name="aqua_card_danger_outline">@color/aqua_palette_hex_7a3344</color>
 
     <!-- Tank / Aquarium cards -->
     <color name="aqua_card_metric_surface">@color/aqua_palette_hex_101d2c</color>
