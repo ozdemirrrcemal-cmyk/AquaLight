@@ -19,11 +19,20 @@ internal class DeviceCoolingRuntimeStateStore {
 
     fun recordStatus(deviceUid: DeviceUid, status: DeviceCoolingStatus) {
         synchronized(lock) {
+            val current = _states.value[deviceUid]
+            val currentTemperature = current
+                ?.temperature
+                ?.takeIf { snapshot -> snapshot.sensorIndex == status.fixedSensorIndex }
+            val selectedTemperature = selectFreshestTemperature(
+                current = currentTemperature,
+                incoming = status.temperature
+            )
+            val selectedStatus = status.copy(temperature = selectedTemperature)
             _states.value = _states.value + (
                 deviceUid to DeviceCoolingRuntimeState(
-                    status = status,
-                    config = status.toConfigSnapshot(),
-                    temperature = status.temperature
+                    status = selectedStatus,
+                    config = selectedStatus.toConfigSnapshot(),
+                    temperature = selectedTemperature
                 )
                 )
         }
@@ -50,6 +59,14 @@ internal class DeviceCoolingRuntimeStateStore {
         if (fixedSensorIndex != null && fixedSensorIndex != temperature.sensorIndex) {
             return@synchronized false
         }
+
+        current.temperature?.let { previous ->
+            if (previous.sensorIndex != temperature.sensorIndex) return@synchronized false
+            if (!isNewerCoolingSample(temperature.sampledAtMs, previous.sampledAtMs)) {
+                return@synchronized false
+            }
+        }
+
         _states.value = _states.value + (
             deviceUid to current.copy(
                 status = current.status?.copy(temperature = temperature),
@@ -64,6 +81,15 @@ internal class DeviceCoolingRuntimeStateStore {
             if (deviceUid !in _states.value) return
             _states.value = _states.value.toMutableMap().apply { remove(deviceUid) }.toMap()
         }
+    }
+
+    private fun selectFreshestTemperature(
+        current: DeviceCoolingTemperatureSnapshot?,
+        incoming: DeviceCoolingTemperatureSnapshot
+    ): DeviceCoolingTemperatureSnapshot = when {
+        current == null -> incoming
+        isNewerCoolingSample(incoming.sampledAtMs, current.sampledAtMs) -> incoming
+        else -> current
     }
 }
 
