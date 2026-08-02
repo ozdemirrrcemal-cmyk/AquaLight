@@ -18,6 +18,7 @@ import com.aqua.aqualight.data.devices.runtime.core.DeviceRuntimeCommandSession
 import com.aqua.aqualight.data.devices.runtime.core.DeviceRuntimeCompletionDisposition
 import com.aqua.aqualight.data.devices.runtime.core.DeviceRuntimeConnectionGeneration
 import com.aqua.aqualight.data.devices.runtime.modules.DeviceRuntimeModuleProvider
+import com.aqua.aqualight.data.devices.runtime.modules.dosing.DeviceDosingRuntimeAccess
 import com.aqua.aqualight.data.devices.runtime.modules.timer.DeviceTimerRuntimeAccess
 import com.aqua.aqualight.data.devices.runtime.modules.time.DeviceTimeSyncCoordinator
 import com.aqua.aqualight.data.devices.runtime.ws.AqlPrivateLanEndpoint
@@ -148,7 +149,8 @@ class DeviceRuntimeRepository(
         commandGateway = this,
         commandClientProvider = { deviceUid -> sessions[deviceUid]?.commandClient },
         revokeLocalCredential = ::revokeLocalCredentialAndSession,
-        timerAccessProvider = ::currentTimerRuntimeAccess
+        timerAccessProvider = ::currentTimerRuntimeAccess,
+        dosingAccessProvider = ::currentDosingRuntimeAccess
     )
 
     private val timeSyncCoordinator = DeviceTimeSyncCoordinator(repository = runtimeModules.time)
@@ -628,6 +630,12 @@ class DeviceRuntimeRepository(
 
     private fun currentTimerRuntimeAccess(deviceUid: DeviceUid): DeviceTimerRuntimeAccess =
         DeviceTimerRuntimeAccess.from(
+            (metadataBootstrapCoordinator.currentState(deviceUid) as?
+                DeviceRuntimeMetadataGenerationState.Ready)?.metadata
+        )
+
+    private fun currentDosingRuntimeAccess(deviceUid: DeviceUid): DeviceDosingRuntimeAccess =
+        DeviceDosingRuntimeAccess.from(
             (metadataBootstrapCoordinator.currentState(deviceUid) as?
                 DeviceRuntimeMetadataGenerationState.Ready)?.metadata
         )
