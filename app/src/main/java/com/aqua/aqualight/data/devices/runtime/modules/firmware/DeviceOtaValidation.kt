@@ -1,5 +1,8 @@
 package com.aqua.aqualight.data.devices.runtime.modules.firmware
 
+import com.aqua.aqualight.application.devices.DeviceFirmwareFailureKind
+import com.aqua.aqualight.application.devices.DeviceFirmwareFailureSource
+import com.aqua.aqualight.application.devices.DeviceFirmwareFailureStage
 import com.aqua.aqualight.application.devices.DeviceFirmwareReleaseContent
 import com.aqua.aqualight.application.devices.DeviceOtaProgressPhase
 import com.aqua.aqualight.application.devices.DeviceOtaState
@@ -113,14 +116,19 @@ internal object DeviceOtaStateMapper {
         )
         DeviceFirmwareOtaPhase.FAILED -> DeviceOtaState.Failed(
             deviceUid = deviceUid.value,
-            message = snapshot.lastError.ifBlank { "Firmware OTA failed." },
-            field = snapshot.lastErrorField,
-            recoverable = false
+            failure = DeviceFirmwareFailureMapper.fromSnapshot(snapshot)
         )
         DeviceFirmwareOtaPhase.UNKNOWN -> DeviceOtaState.Failed(
             deviceUid = deviceUid.value,
-            message = "Firmware reported an unknown OTA phase.",
-            recoverable = false
+            failure = DeviceFirmwareFailureMapper.local(
+                technicalMessage = "Firmware reported an unknown OTA phase.",
+                source = DeviceFirmwareFailureSource.FIRMWARE_STATUS,
+                stage = DeviceFirmwareFailureStage.STATUS,
+                code = "unknown_ota_phase",
+                firmwarePhase = snapshot.phaseRaw,
+                recoverable = false,
+                kind = DeviceFirmwareFailureKind.PROTOCOL
+            )
         )
     }
 
