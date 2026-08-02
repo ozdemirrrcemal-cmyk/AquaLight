@@ -15,10 +15,13 @@ experience merged by PR #193.
 
 1. All authenticated application commands use `DeviceRuntimeCommandGateway` and correlated
    firmware outcomes. A queued WebSocket write is never accepted as liveness or command success.
+   Menu and presence proof writes commit only while the outcome's originating connection generation
+   remains current and authenticated.
 2. Raw `AqlWsEvent` messages remain an internal transport primitive only. Module coordinators
    consume generation-validated typed events and a lifecycle-only projection.
-3. Time status accepts only the exact firmware schema. No alias, missing-field default, or
-   fire-and-forget result model is retained.
+3. Time status, firmware status and UDP discovery accept only their exact firmware schemas. No
+   alias, scalar coercion, casing/whitespace normalization, missing-field default or extra-key
+   compatibility path is retained.
 4. OTA progress is accepted only through the typed event router. The detached raw OTA mapper is
    removed rather than kept as a fallback.
 5. Repository build output, placeholder `.gitkeep` files in populated source directories, and
@@ -30,13 +33,15 @@ experience merged by PR #193.
 
 - remove the unused menu raw-event port and raw response proof policy;
 - migrate authenticated presence probes to correlated `network.status.get` outcomes;
+- bind menu and presence proof writes atomically to the originating connection generation;
+- cancel and deduplicate device-scoped liveness jobs on background and local-route changes;
 - remove the legacy `AqlWsCommandClient` and its repository accessors;
 - project authenticated/unavailable runtime lifecycle events without exposing wire messages;
-- remove permissive time parsing and the unused fire-and-forget result model;
+- remove permissive time and firmware-status parsing and enforce the exact UDP packet shape;
 - remove the detached OTA raw event mapper;
 - remove tracked Gradle state and obsolete source-directory placeholders;
 - align migration tracker state with PR #192 and PR #193;
-- add CI/release guard coverage that prevents each removed path from returning.
+- add CI/release guard coverage with explicit raw-event and transport boundary allowlists.
 
 ## Canonical physical signed-OTA release gate
 
@@ -48,6 +53,7 @@ artifact SHA-256, test timestamp, and redacted evidence references.
 - [ ] A signed OTA-capable device downloads and verifies the selected artifact.
 - [ ] Real byte/progress phases and the background notification agree.
 - [ ] Background navigation, restart, UDP rediscovery, authenticated reconnect, and recovery pass.
+- [ ] Menu/presence proof never survives a Wi-Fi route or WebSocket generation replacement.
 - [ ] The reported installed version equals the exact target; terminal and recoverable failures
       show the correct actions.
 
@@ -72,5 +78,7 @@ that the acceptance test runs against the exact release-candidate implementation
 - Debug/Staging/ReleaseSmoke/Release compile, unit, lint, and packaging gates pass in CI;
 - API 27 and API 36 instrumentation plus minified smoke pass;
 - the closure branch leaves no forbidden tracked artifact or obsolete compatibility symbol;
+- exact UDP/firmware parser and generation-bound proof regressions pass;
+- raw WebSocket event and transport consumers remain inside the explicit boundary allowlists;
 - PR evidence records the tested head SHA;
 - physical signed-OTA evidence is attached before commercial release approval.

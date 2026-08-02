@@ -90,20 +90,15 @@ class DeviceMenuNetworkRestoreTest {
 
         override suspend fun proveCurrentLiveness(deviceUid: DeviceUid): Boolean {
             requestNetworkStatusCalls += 1
-            return true
-        }
-
-        override fun recordControlProof(deviceUid: DeviceUid): DeviceSnapshot {
             recordControlProofCalls += 1
             val current = snapshotFlow.value
-            val updated = current.copy(
+            snapshotFlow.value = current.copy(
                 connectionState = current.connectionState.copy(
                     onlineState = DeviceOnlineState.AUTHENTICATED,
                     lastControlProofElapsedMillis = 1L
                 )
             )
-            snapshotFlow.value = updated
-            return updated
+            return true
         }
     }
 }

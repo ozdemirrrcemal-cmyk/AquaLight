@@ -16,81 +16,115 @@ import org.json.JSONException
 import org.json.JSONObject
 
 /**
- * Strict parser for the final AquaLight UDP discovery packet produced by
+ * Exact parser for the final AquaLight UDP discovery packet produced by
  * src/network/AqlDiscoveryService.hpp BuildDiscoveryJson().
  *
  * UDP discovery is only the LAN WebSocket endpoint handoff. Android accepts exactly one
- * unpublished commercial contract shape and rejects legacy/alternate packet layouts.
+ * unpublished commercial contract shape and rejects aliases, coercion, normalization,
+ * extra fields and legacy/alternate packet layouts.
  */
 object AqlDiscoveryParser {
 
+    @Suppress("ComplexCondition", "CyclomaticComplexMethod", "LongMethod", "ReturnCount")
     fun parseDeviceAnnounce(
         rawPayload: String,
         sourceIp: String = "",
         receivedAtMillis: Long = System.currentTimeMillis()
     ): ParseResult {
-        val payload = rawPayload.trim()
-        if (payload.isBlank()) return ParseResult.Invalid(ParseError.EMPTY_PAYLOAD)
-        if (payload.length > AqlDiscoveryContract.MAX_PACKET_SIZE_BYTES) {
+        if (rawPayload.isBlank()) return ParseResult.Invalid(ParseError.EMPTY_PAYLOAD)
+        if (rawPayload != rawPayload.trim()) {
+            return ParseResult.Invalid(ParseError.INVALID_CONTRACT_SHAPE)
+        }
+        if (rawPayload.toByteArray(Charsets.UTF_8).size >
+            AqlDiscoveryContract.MAX_PACKET_SIZE_BYTES
+        ) {
             return ParseResult.Invalid(ParseError.PACKET_TOO_LARGE)
         }
 
         val root = try {
-            JSONObject(payload)
+            JSONObject(rawPayload)
         } catch (_: JSONException) {
             return ParseResult.Invalid(ParseError.INVALID_JSON)
         }
 
-        if (root.stringOrBlank("schema") != AqlDiscoveryContract.SCHEMA) {
+        if (!root.hasExactKeys(ROOT_KEYS) || root.exactLongOrNull("sentAtMs") == null) {
+            return ParseResult.Invalid(ParseError.INVALID_CONTRACT_SHAPE)
+        }
+        if (root.exactStringOrNull("schema") != AqlDiscoveryContract.SCHEMA) {
             return ParseResult.Invalid(ParseError.UNSUPPORTED_SCHEMA)
         }
-
-        if (root.stringOrBlank("type") != AqlDiscoveryContract.TYPE_DEVICE_ANNOUNCE) {
+        if (root.exactStringOrNull("type") != AqlDiscoveryContract.TYPE_DEVICE_ANNOUNCE) {
             return ParseResult.Invalid(ParseError.UNSUPPORTED_MESSAGE_TYPE)
         }
-
-        if (root.intOrNull("version") != AqlDiscoveryContract.VERSION) {
+        if (root.exactIntOrNull("version") != AqlDiscoveryContract.VERSION) {
             return ParseResult.Invalid(ParseError.UNSUPPORTED_UDP_VERSION)
         }
 
-        val device = root.optJSONObject("device")
+        val device = root.exactObjectOrNull("device")
             ?: return ParseResult.Invalid(ParseError.MISSING_DEVICE)
-        val product = root.optJSONObject("product")
+        val product = root.exactObjectOrNull("product")
             ?: return ParseResult.Invalid(ParseError.MISSING_PRODUCT)
-        val network = root.optJSONObject("network")
+        val network = root.exactObjectOrNull("network")
             ?: return ParseResult.Invalid(ParseError.MISSING_NETWORK)
-        val runtime = root.optJSONObject("runtime")
+        val runtime = root.exactObjectOrNull("runtime")
             ?: return ParseResult.Invalid(ParseError.MISSING_RUNTIME)
+        if (
+            !device.hasExactKeys(DEVICE_KEYS) ||
+            !product.hasExactKeys(PRODUCT_KEYS) ||
+            !network.hasExactKeys(NETWORK_KEYS) ||
+            !runtime.hasExactKeys(RUNTIME_KEYS)
+        ) {
+            return ParseResult.Invalid(ParseError.INVALID_CONTRACT_SHAPE)
+        }
 
-        val deviceUid = device.stringOrBlank("uid")
+        val deviceUid = device.exactStringOrNull("uid")
+            ?: return ParseResult.Invalid(ParseError.INVALID_CONTRACT_SHAPE)
+        val shortId = device.exactStringOrNull("shortId")
+            ?: return ParseResult.Invalid(ParseError.INVALID_CONTRACT_SHAPE)
+        val deviceName = device.exactStringOrNull("name")
+            ?: return ParseResult.Invalid(ParseError.INVALID_CONTRACT_SHAPE)
         if (deviceUid.isBlank()) {
             return ParseResult.Invalid(ParseError.MISSING_DEVICE_UID)
         }
 
-        val familyRaw = product.stringOrBlank("family")
-        val family = DeviceFamily.fromWire(familyRaw)
-        if (family == DeviceFamily.UNKNOWN) {
-            return ParseResult.Invalid(ParseError.UNSUPPORTED_PRODUCT_FAMILY)
-        }
+        val familyRaw = product.exactStringOrNull("family")
+            ?: return ParseResult.Invalid(ParseError.INVALID_CONTRACT_SHAPE)
+        val family = DeviceFamily.fromWireExact(familyRaw)
+            ?: return ParseResult.Invalid(ParseError.UNSUPPORTED_PRODUCT_FAMILY)
+        val productModel = product.exactStringOrNull("model")
+            ?: return ParseResult.Invalid(ParseError.INVALID_CONTRACT_SHAPE)
+        val productName = product.exactStringOrNull("name")
+            ?: return ParseResult.Invalid(ParseError.INVALID_CONTRACT_SHAPE)
 
-        val runtimeTransport = runtime.stringOrBlank("transport")
+        val networkMode = network.exactStringOrNull("mode")
+            ?: return ParseResult.Invalid(ParseError.INVALID_CONTRACT_SHAPE)
+        val networkConnected = network.exactBooleanOrNull("connected")
+            ?: return ParseResult.Invalid(ParseError.INVALID_CONTRACT_SHAPE)
+
+        val runtimeTransport = runtime.exactStringOrNull("transport")
+            ?: return ParseResult.Invalid(ParseError.INVALID_CONTRACT_SHAPE)
         if (runtimeTransport != AqlDiscoveryContract.RUNTIME_TRANSPORT_WEBSOCKET) {
             return ParseResult.Invalid(ParseError.UNSUPPORTED_RUNTIME_TRANSPORT)
         }
 
-        val endpointIp = runtime.stringOrBlank("host")
-        val wsPort = runtime.intOrNull("port") ?: 0
-        val wsPath = runtime.stringOrBlank("path")
+        val endpointIp = runtime.exactStringOrNull("host")
+            ?: return ParseResult.Invalid(ParseError.INVALID_CONTRACT_SHAPE)
+        val wsPort = runtime.exactIntOrNull("port")
+            ?: return ParseResult.Invalid(ParseError.INVALID_CONTRACT_SHAPE)
+        val wsPath = runtime.exactStringOrNull("path")
+            ?: return ParseResult.Invalid(ParseError.INVALID_CONTRACT_SHAPE)
         if (endpointIp.isBlank() || wsPort <= 0 || wsPath.isBlank()) {
             return ParseResult.Invalid(ParseError.MISSING_RUNTIME_ENDPOINT)
         }
 
-        val wsProtocol = runtime.stringOrBlank("protocol")
+        val wsProtocol = runtime.exactStringOrNull("protocol")
+            ?: return ParseResult.Invalid(ParseError.INVALID_CONTRACT_SHAPE)
         if (wsProtocol != AqlWsContract.DEFAULT_PROTOCOL) {
             return ParseResult.Invalid(ParseError.UNSUPPORTED_WS_PROTOCOL)
         }
 
-        val wsProtocolVersion = runtime.intOrNull("protocolVersion") ?: 0
+        val wsProtocolVersion = runtime.exactIntOrNull("protocolVersion")
+            ?: return ParseResult.Invalid(ParseError.INVALID_CONTRACT_SHAPE)
         if (wsProtocolVersion != AqlWsContract.PROTOCOL_VERSION) {
             return ParseResult.Invalid(ParseError.UNSUPPORTED_WS_PROTOCOL_VERSION)
         }
@@ -98,20 +132,20 @@ object AqlDiscoveryParser {
         val snapshot = DeviceSnapshot(
             identity = DeviceIdentity(
                 uid = DeviceUid(deviceUid),
-                shortId = device.stringOrBlank("shortId"),
-                displayName = device.stringOrBlank("name"),
+                shortId = shortId,
+                displayName = deviceName,
                 customName = ""
             ),
             product = DeviceProduct(
                 family = family,
                 familyRaw = familyRaw,
-                model = product.stringOrBlank("model"),
-                displayName = product.stringOrBlank("name")
+                model = productModel,
+                displayName = productName
             ),
             endpoint = DeviceRuntimeEndpoint(
                 ip = endpointIp,
-                wifiMode = network.stringOrBlank("mode"),
-                wifiConnected = network.booleanOrNull("connected") == true,
+                wifiMode = networkMode,
+                wifiConnected = networkConnected,
                 setupApActive = false,
                 runtimeTransport = runtimeTransport,
                 wsPort = wsPort,
@@ -147,6 +181,7 @@ object AqlDiscoveryParser {
         EMPTY_PAYLOAD,
         PACKET_TOO_LARGE,
         INVALID_JSON,
+        INVALID_CONTRACT_SHAPE,
         UNSUPPORTED_SCHEMA,
         UNSUPPORTED_MESSAGE_TYPE,
         UNSUPPORTED_UDP_VERSION,
@@ -161,30 +196,48 @@ object AqlDiscoveryParser {
         UNSUPPORTED_WS_PROTOCOL_VERSION,
         MISSING_RUNTIME_ENDPOINT
     }
+
+    private val ROOT_KEYS = setOf(
+        "schema", "type", "version", "sentAtMs", "device", "product", "network", "runtime"
+    )
+    private val DEVICE_KEYS = setOf("uid", "shortId", "name")
+    private val PRODUCT_KEYS = setOf("family", "model", "name")
+    private val NETWORK_KEYS = setOf("mode", "connected")
+    private val RUNTIME_KEYS = setOf(
+        "transport", "host", "port", "path", "protocol", "protocolVersion"
+    )
 }
 
-private fun JSONObject.stringOrBlank(name: String): String =
-    when (val value = opt(name)) {
-        null, JSONObject.NULL -> ""
-        is String -> value.trim()
-        else -> value.toString().trim()
+private fun JSONObject.hasExactKeys(expected: Set<String>): Boolean {
+    val actual = buildSet {
+        val iterator = keys()
+        while (iterator.hasNext()) add(iterator.next())
     }
+    return actual == expected
+}
 
-private fun JSONObject.intOrNull(name: String): Int? =
-    when (val value = opt(name)) {
-        is Number -> value.toInt()
-        is String -> value.trim().toIntOrNull()
-        else -> null
-    }
+private fun JSONObject.exactObjectOrNull(name: String): JSONObject? =
+    opt(name) as? JSONObject
 
-private fun JSONObject.booleanOrNull(name: String): Boolean? =
-    when (val value = opt(name)) {
-        is Boolean -> value
-        is Number -> value.toInt() != 0
-        is String -> when (value.trim().lowercase()) {
-            "true", "1" -> true
-            "false", "0" -> false
-            else -> null
-        }
-        else -> null
-    }
+private fun JSONObject.exactStringOrNull(name: String): String? =
+    opt(name) as? String
+
+private fun JSONObject.exactBooleanOrNull(name: String): Boolean? =
+    opt(name) as? Boolean
+
+private fun JSONObject.exactIntOrNull(name: String): Int? {
+    val value = opt(name) as? Number ?: return null
+    val asDouble = value.toDouble()
+    val asLong = value.toLong()
+    val valid = asDouble.isFinite() &&
+        asDouble == asLong.toDouble() &&
+        asLong in Int.MIN_VALUE.toLong()..Int.MAX_VALUE.toLong()
+    return asLong.toInt().takeIf { valid }
+}
+
+private fun JSONObject.exactLongOrNull(name: String): Long? {
+    val value = opt(name) as? Number ?: return null
+    val asDouble = value.toDouble()
+    val asLong = value.toLong()
+    return asLong.takeIf { asDouble.isFinite() && asDouble == asLong.toDouble() }
+}

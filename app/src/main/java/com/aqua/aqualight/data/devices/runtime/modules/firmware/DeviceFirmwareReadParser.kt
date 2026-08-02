@@ -17,11 +17,73 @@ internal object DeviceFirmwareReadParser {
         validatePartition(DeviceRuntimeJson.objectValue(data, "partition"))
         validateOta(DeviceRuntimeJson.objectValue(data, "ota"))
         validateRuntime(DeviceRuntimeJson.objectValue(data, "runtime"))
-        return DeviceFirmwareStatusParser.parseFirmwareStatus(data)
+        return parseValidatedStatus(data)
     }
 
     fun parseOtaStatus(data: JSONObject): DeviceFirmwareOtaSnapshot =
         DeviceFirmwareStatusParser.parseOtaStatusResponseExact(data).getOrThrow()
+
+    /**
+     * Maps only the object that parseStatus has already validated against the exact firmware
+     * schema. No optional getter, alias, coercion or default-valued compatibility path exists.
+     */
+    private fun parseValidatedStatus(data: JSONObject): DeviceFirmwareStatus {
+        val product = data.getJSONObject("product")
+        val flash = data.getJSONObject("flash")
+        val partition = data.getJSONObject("partition")
+        val ota = data.getJSONObject("ota")
+        return DeviceFirmwareStatus(
+            version = data.getString("version"),
+            build = data.getString("build"),
+            hardwareRevision = data.getString("hardwareRevision"),
+            sdkVersion = data.getString("sdkVersion"),
+            uptimeMs = data.getLong("uptimeMs"),
+            productKey = product.getString("productKey"),
+            productId = product.getString("productId"),
+            family = product.getString("family"),
+            model = product.getString("model"),
+            displayName = product.getString("displayName"),
+            skuCode = product.getString("skuCode"),
+            flashChipSize = flash.getLong("chipSize"),
+            flashSketchSize = flash.getLong("sketchSize"),
+            flashFreeSketchSpace = flash.getLong("freeSketchSpace"),
+            partition = parseValidatedPartition(partition),
+            otaSupported = ota.getBoolean("supported"),
+            otaTransport = ota.getString("transport"),
+            otaBinaryTransfer = ota.getString("binaryTransfer"),
+            otaProgressEvent = ota.getString("progressEvent"),
+            otaCompletedEvent = ota.getString("completedEvent"),
+            otaStartCommand = ota.getString("startCommand"),
+            otaStatusCommand = ota.getString("statusCommand"),
+            ota = DeviceFirmwareStatusParser.parseOtaSnapshotExact(
+                ota.getJSONObject("status")
+            ).getOrThrow()
+        )
+    }
+
+    private fun parseValidatedPartition(data: JSONObject): DeviceFirmwarePartitionStatus =
+        DeviceFirmwarePartitionStatus(
+            running = parseValidatedPartitionInfo(data.getJSONObject("running")),
+            boot = parseValidatedPartitionInfo(data.getJSONObject("boot")),
+            nextUpdate = parseValidatedPartitionInfo(data.getJSONObject("nextUpdate")),
+            bootMatchesRunning = data.getBoolean("bootMatchesRunning"),
+            runningState = data.getString("runningState"),
+            runningStateCode = data.getInt("runningStateCode"),
+            stateReadOk = data.getBoolean("stateReadOk"),
+            stateReadError = data.getInt("stateReadError")
+        )
+
+    private fun parseValidatedPartitionInfo(data: JSONObject): DeviceFirmwarePartitionInfo {
+        if (!data.getBoolean("present")) return DeviceFirmwarePartitionInfo()
+        return DeviceFirmwarePartitionInfo(
+            present = true,
+            label = data.getString("label"),
+            address = data.getLong("address"),
+            size = data.getLong("size"),
+            type = data.getInt("type"),
+            subtype = data.getInt("subtype")
+        )
+    }
 
     private fun validateProduct(data: JSONObject) {
         DeviceRuntimeJson.requireExactKeys(data, PRODUCT_KEYS, "$ROOT_LABEL.product")

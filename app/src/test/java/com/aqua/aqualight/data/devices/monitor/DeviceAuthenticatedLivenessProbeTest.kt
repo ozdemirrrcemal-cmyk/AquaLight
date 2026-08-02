@@ -12,8 +12,8 @@ import org.junit.Test
 class DeviceAuthenticatedLivenessProbeTest {
 
     @Test
-    fun `records proof only after correlated firmware success`() = runTest {
-        val recorded = mutableListOf<DeviceUid>()
+    fun `records proof only after current generation firmware success`() = runTest {
+        val recorded = mutableListOf<Pair<DeviceUid, DeviceRuntimeConnectionGeneration>>()
         val probe = DeviceAuthenticatedLivenessProbe(
             requestStatus = {
                 DeviceRuntimeCommandOutcome.Success(
@@ -21,21 +21,53 @@ class DeviceAuthenticatedLivenessProbeTest {
                     module = "network",
                     action = "status.get",
                     messageId = "network-proof-1",
-                    generation = GENERATION,
+                    generation = CURRENT_GENERATION,
                     statusCode = 200,
                     value = Unit
                 )
             },
-            recordProof = recorded::add
+            recordProof = { deviceUid, generation ->
+                recorded += deviceUid to generation
+                true
+            }
         )
 
         assertTrue(probe.execute(DEVICE_UID))
-        assertEquals(listOf(DEVICE_UID), recorded)
+        assertEquals(listOf(DEVICE_UID to CURRENT_GENERATION), recorded)
     }
 
     @Test
-    fun `queued or timed out command never records liveness proof`() = runTest {
+    fun `successful response from a replaced generation never records proof`() = runTest {
         val recorded = mutableListOf<DeviceUid>()
+        val probe = DeviceAuthenticatedLivenessProbe(
+            requestStatus = {
+                DeviceRuntimeCommandOutcome.Success(
+                    deviceUid = DEVICE_UID,
+                    module = "network",
+                    action = "status.get",
+                    messageId = "network-proof-stale",
+                    generation = STALE_GENERATION,
+                    statusCode = 200,
+                    value = Unit
+                )
+            },
+            recordProof = { deviceUid, generation ->
+                if (generation == CURRENT_GENERATION) {
+                    recorded += deviceUid
+                    true
+                } else {
+                    false
+                }
+            }
+        )
+
+        assertFalse(probe.execute(DEVICE_UID))
+        assertTrue(recorded.isEmpty())
+    }
+
+    @Test
+    fun `queued or timed out command never attempts liveness proof write`() = runTest {
+        var writeAttempts = 0
         val probe = DeviceAuthenticatedLivenessProbe(
             requestStatus = {
                 DeviceRuntimeCommandOutcome.Timeout(
@@ -43,19 +75,23 @@ class DeviceAuthenticatedLivenessProbeTest {
                     module = "network",
                     action = "status.get",
                     messageId = "network-proof-2",
-                    generation = GENERATION,
+                    generation = CURRENT_GENERATION,
                     timeoutMillis = 8_000L
                 )
             },
-            recordProof = recorded::add
+            recordProof = { _, _ ->
+                writeAttempts += 1
+                true
+            }
         )
 
         assertFalse(probe.execute(DEVICE_UID))
-        assertTrue(recorded.isEmpty())
+        assertEquals(0, writeAttempts)
     }
 
     private companion object {
         val DEVICE_UID = DeviceUid("AQL-LIVENESS-PROBE")
-        val GENERATION = DeviceRuntimeConnectionGeneration(3L)
+        val STALE_GENERATION = DeviceRuntimeConnectionGeneration(3L)
+        val CURRENT_GENERATION = DeviceRuntimeConnectionGeneration(4L)
     }
 }

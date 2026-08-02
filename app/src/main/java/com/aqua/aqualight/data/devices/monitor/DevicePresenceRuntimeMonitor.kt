@@ -12,7 +12,6 @@ import java.util.concurrent.atomic.AtomicBoolean
 import java.util.concurrent.atomic.AtomicLong
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.CoroutineStart
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -44,12 +43,16 @@ class DevicePresenceRuntimeMonitor(
     )
     private val lastRuntimeProbeAtMillis = ConcurrentHashMap<DeviceUid, Long>()
     private val lastLivenessProbeAtMillis = ConcurrentHashMap<DeviceUid, Long>()
-    private val livenessProbeJobs = ConcurrentHashMap<DeviceUid, Job>()
+    private val livenessProbeScheduler = DeviceAuthenticatedLivenessProbeScheduler()
     private val foregroundRefreshLock = Any()
     private val authenticatedLivenessProbe = runtimeRepository?.let { runtime ->
         DeviceAuthenticatedLivenessProbe(
             requestStatus = runtime.runtimeModules.network::requestStatus,
-            recordProof = { deviceUid -> recordAuthenticatedLiveness(runtime, deviceUid) }
+            recordProof = { deviceUid, generation ->
+                runtime.runIfCurrentAuthenticatedGeneration(deviceUid, generation) {
+                    recordAuthenticatedLiveness(deviceUid)
+                }
+            }
         )
     }
 
@@ -453,7 +456,7 @@ class DevicePresenceRuntimeMonitor(
                 return@forEach
             }
 
-            if (livenessProbeJobs[deviceUid]?.isActive == true) return@forEach
+            if (livenessProbeScheduler.isActive(deviceUid)) return@forEach
             lastLivenessProbeAtMillis[deviceUid] = nowMillis
             launchLivenessProbe(scope, probe, deviceUid, nowMillis)
         }
@@ -465,25 +468,17 @@ class DevicePresenceRuntimeMonitor(
         deviceUid: DeviceUid,
         scheduledAtMillis: Long
     ) {
-        val candidate = scope.launch(start = CoroutineStart.LAZY) {
-            if (!probe.execute(deviceUid)) {
+        livenessProbeScheduler.schedule(
+            scope = scope,
+            deviceUid = deviceUid,
+            execute = { probe.execute(deviceUid) },
+            onRejected = {
                 lastLivenessProbeAtMillis.remove(deviceUid, scheduledAtMillis)
             }
-        }
-        val existing = livenessProbeJobs.putIfAbsent(deviceUid, candidate)
-        if (existing == null) {
-            candidate.invokeOnCompletion { livenessProbeJobs.remove(deviceUid, candidate) }
-            candidate.start()
-        } else {
-            candidate.cancel()
-        }
+        )
     }
 
-    private fun recordAuthenticatedLiveness(
-        runtime: DeviceRuntimeRepository,
-        deviceUid: DeviceUid
-    ) {
-        if (runtime.currentConnectionState(deviceUid) !is AqlWsConnectionState.Authenticated) return
+    private fun recordAuthenticatedLiveness(deviceUid: DeviceUid) {
         val nowWallMillis = System.currentTimeMillis()
         val nowElapsedMillis = elapsedRealtimeMillis()
         registryStore.updateConnectionState(deviceUid) { previous ->
@@ -499,8 +494,7 @@ class DevicePresenceRuntimeMonitor(
     }
 
     private fun cancelLivenessProbes() {
-        livenessProbeJobs.values.forEach(Job::cancel)
-        livenessProbeJobs.clear()
+        livenessProbeScheduler.cancelAll()
     }
 
     private fun shouldProbeRuntime(

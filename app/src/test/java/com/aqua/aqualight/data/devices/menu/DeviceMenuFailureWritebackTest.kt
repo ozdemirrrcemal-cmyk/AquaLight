@@ -82,8 +82,6 @@ class DeviceMenuFailureWritebackTest {
 
         override suspend fun proveCurrentLiveness(deviceUid: DeviceUid): Boolean = false
 
-        override fun recordControlProof(deviceUid: DeviceUid): DeviceSnapshot? = null
-
         override fun recordControlFailure(deviceUid: DeviceUid): DeviceSnapshot {
             controlFailureCalls += 1
             val current = snapshotFlow.value

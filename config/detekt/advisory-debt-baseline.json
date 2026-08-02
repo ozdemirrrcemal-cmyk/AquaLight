@@ -3,7 +3,7 @@
   "policyId": "aqualight-detekt-advisory-debt",
   "detektVersion": "1.23.8",
   "sourceCommit": "a48942a06391e5463e85f9f20e80543c1ef41e69",
-  "totalFindings": 1021,
+  "totalFindings": 1015,
   "fingerprints": [
     {
       "ruleId": "detekt.complexity.ComplexCondition",
@@ -93,12 +93,6 @@
       "ruleId": "detekt.complexity.CyclomaticComplexMethod",
       "path": "app/src/main/java/com/aqua/aqualight/data/devices/DeviceApplicationMapping.kt",
       "message": "The function rootMenuFeatures appears to be too complex based on Cyclomatic Complexity (complexity: 24). Defined complexity threshold for methods is set to '15'",
-      "count": 1
-    },
-    {
-      "ruleId": "detekt.complexity.CyclomaticComplexMethod",
-      "path": "app/src/main/java/com/aqua/aqualight/data/devices/discovery/udp/AqlDiscoveryParser.kt",
-      "message": "The function parseDeviceAnnounce appears to be too complex based on Cyclomatic Complexity (complexity: 21). Defined complexity threshold for methods is set to '15'",
       "count": 1
     },
     {
@@ -321,12 +315,6 @@
       "ruleId": "detekt.complexity.LongMethod",
       "path": "app/src/main/java/com/aqua/aqualight/data/care/smartcare/SmartCareTaskGenerator.kt",
       "message": "The function buildShortMessage is too long (60). The maximum length is 60.",
-      "count": 1
-    },
-    {
-      "ruleId": "detekt.complexity.LongMethod",
-      "path": "app/src/main/java/com/aqua/aqualight/data/devices/discovery/udp/AqlDiscoveryParser.kt",
-      "message": "The function parseDeviceAnnounce is too long (96). The maximum length is 60.",
       "count": 1
     },
     {
@@ -963,12 +951,6 @@
       "ruleId": "detekt.complexity.TooManyFunctions",
       "path": "app/src/main/java/com/aqua/aqualight/data/devices/runtime/ws/AqlWsClient.kt",
       "message": "Class 'AqlWsClient' with '26' functions detected. Defined threshold inside classes is set to '11'",
-      "count": 1
-    },
-    {
-      "ruleId": "detekt.complexity.TooManyFunctions",
-      "path": "app/src/main/java/com/aqua/aqualight/data/devices/runtime/ws/AqlWsCommandClient.kt",
-      "message": "Class 'AqlWsCommandClient' with '13' functions detected. Defined threshold inside classes is set to '11'",
       "count": 1
     },
     {
@@ -2497,12 +2479,6 @@
     },
     {
       "ruleId": "detekt.style.ReturnCount",
-      "path": "app/src/main/java/com/aqua/aqualight/data/devices/discovery/udp/AqlDiscoveryParser.kt",
-      "message": "Function parseDeviceAnnounce has 17 return statements which exceeds the limit of 2.",
-      "count": 1
-    },
-    {
-      "ruleId": "detekt.style.ReturnCount",
       "path": "app/src/main/java/com/aqua/aqualight/data/devices/menu/DefaultDeviceMenuAccessOperations.kt",
       "message": "Function accepts has 4 return statements which exceeds the limit of 2.",
       "count": 1
@@ -2715,12 +2691,6 @@
       "ruleId": "detekt.style.ReturnCount",
       "path": "app/src/main/java/com/aqua/aqualight/data/devices/repository/DevicesRepository.kt",
       "message": "Function connectRuntime has 3 return statements which exceeds the limit of 2.",
-      "count": 1
-    },
-    {
-      "ruleId": "detekt.style.ReturnCount",
-      "path": "app/src/main/java/com/aqua/aqualight/data/devices/runtime/modules/firmware/DeviceFirmwareOtaEventMapper.kt",
-      "message": "Function parse has 3 return statements which exceeds the limit of 2.",
       "count": 1
     },
     {
@@ -3063,12 +3033,6 @@
       "ruleId": "detekt.style.ThrowsCount",
       "path": "app/src/main/java/com/aqua/aqualight/ui/tabs/aquarium/detail/settings/TankSettingsOthersFragment.kt",
       "message": "Too many throw statements in the function deleteCurrentTank. The maximum number of allowed throw statements is 2.",
-      "count": 1
-    },
-    {
-      "ruleId": "detekt.style.UnusedParameter",
-      "path": "app/src/main/java/com/aqua/aqualight/data/devices/menu/DefaultDeviceMenuAccessOperations.kt",
-      "message": "Function parameter `fallbackSnapshot` is unused.",
       "count": 1
     },
     {

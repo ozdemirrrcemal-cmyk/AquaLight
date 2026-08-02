@@ -159,8 +159,11 @@ for token, reason in (
     ("class DefaultDeviceMenuAccessOperations", "menu access must implement the application contract"),
     ("DeviceMenuAuthenticationPolicy", "fresh authenticated sessions must be verified"),
     ("proveCurrentLiveness", "menu liveness must use the correlated command outcome"),
-    ("outcome is DeviceRuntimeCommandOutcome.Success", "queued writes must not prove liveness"),
-    ("recordControlProof", "successful liveness proof must update the canonical registry"),
+    (
+        "recordControlProofIfCurrentGeneration",
+        "menu proof must commit only for its originating connection generation",
+    ),
+    ("generation = success.generation", "the broker generation must guard the proof write"),
     ("MENU_ACCESS_BUDGET_MS", "interactive liveness verification must be bounded"),
     ("AUTHENTICATION_REQUIRED", "authentication failure must remain typed"),
     ("DEVICE_UNRESPONSIVE", "unresponsive target failure must remain typed"),

@@ -35,8 +35,10 @@ internal interface DeviceMenuRuntimePort {
     fun runtimeConnectionStates(): Flow<AqlWsConnectionState>?
     fun currentRuntimeConnectionState(deviceUid: DeviceUid): AqlWsConnectionState?
     fun connectRuntime(deviceUid: DeviceUid): Boolean
+
+    /** Returns true only after a current-generation proof is committed to the registry. */
     suspend fun proveCurrentLiveness(deviceUid: DeviceUid): Boolean
-    fun recordControlProof(deviceUid: DeviceUid): DeviceSnapshot?
+
     fun recordControlFailure(deviceUid: DeviceUid): DeviceSnapshot? = null
 }
 
@@ -72,11 +74,12 @@ internal class RepositoryDeviceMenuRuntimePort(
 
     override suspend fun proveCurrentLiveness(deviceUid: DeviceUid): Boolean {
         val outcome = devicesRepository.runtimeModules()?.network?.requestStatus(deviceUid)
-        return outcome is DeviceRuntimeCommandOutcome.Success
+        val success = outcome as? DeviceRuntimeCommandOutcome.Success<*> ?: return false
+        return devicesRepository.recordControlProofIfCurrentGeneration(
+            deviceUid = deviceUid,
+            generation = success.generation
+        ) != null
     }
-
-    override fun recordControlProof(deviceUid: DeviceUid): DeviceSnapshot? =
-        devicesRepository.recordControlProof(deviceUid)
 
     override fun recordControlFailure(deviceUid: DeviceUid): DeviceSnapshot? =
         devicesRepository.recordControlFailure(deviceUid)
@@ -234,10 +237,7 @@ internal class DefaultDeviceMenuAccessOperations(
                 DeviceMenuUnavailableReason.LOCAL_NETWORK_UNAVAILABLE
             )
             failureReason != null -> VerificationResult.Unavailable(failureReason)
-            else -> verifyRuntimeLiveSnapshot(
-                deviceUid = deviceUid,
-                fallbackSnapshot = runtimeSnapshot
-            )
+            else -> verifyRuntimeLiveSnapshot(deviceUid)
         }
     }
 
@@ -262,14 +262,10 @@ internal class DefaultDeviceMenuAccessOperations(
     }
 
     private suspend fun verifyRuntimeLiveSnapshot(
-        deviceUid: DeviceUid,
-        fallbackSnapshot: DeviceSnapshot
+        deviceUid: DeviceUid
     ): VerificationResult {
         return when (awaitAuthenticatedRuntime(deviceUid)) {
-            AuthenticationOutcome.Authenticated -> verifyAuthenticatedRuntime(
-                deviceUid = deviceUid,
-                fallbackSnapshot = fallbackSnapshot
-            )
+            AuthenticationOutcome.Authenticated -> verifyAuthenticatedRuntime(deviceUid)
             AuthenticationOutcome.AuthRequired -> VerificationResult.Unavailable(
                 DeviceMenuUnavailableReason.AUTHENTICATION_REQUIRED
             )
@@ -285,17 +281,14 @@ internal class DefaultDeviceMenuAccessOperations(
     }
 
     private suspend fun verifyAuthenticatedRuntime(
-        deviceUid: DeviceUid,
-        fallbackSnapshot: DeviceSnapshot
+        deviceUid: DeviceUid
     ): VerificationResult {
         val proofReceived = requestFreshRuntimeProof(deviceUid) || run {
             delay(RUNTIME_PROBE_RETRY_DELAY_MS)
             requestFreshRuntimeProof(deviceUid)
         }
         val canonicalSnapshot = if (proofReceived) {
-            runtimePort.recordControlProof(deviceUid)
-                ?: runtimePort.currentDevice(deviceUid)
-                ?: fallbackSnapshot
+            runtimePort.currentDevice(deviceUid)
         } else {
             null
         }

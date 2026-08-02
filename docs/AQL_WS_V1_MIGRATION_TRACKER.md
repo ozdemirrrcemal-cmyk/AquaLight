@@ -253,7 +253,13 @@ Target: **41 authenticated commands / 0 public commands**
   - [x] Remove detached raw OTA event mapping; consume only typed OTA events
   - [x] Remove `AqlWsCommandClient` and all direct fire-and-forget production accessors
   - [x] Move presence liveness to correlated `network.status.get` success
+  - [x] Bind menu and presence proof writes atomically to the originating connection generation
+  - [x] Cancel and deduplicate in-flight liveness probes across background and route changes
+  - [x] Remove the permissive firmware-status mapper and enforce exact UDP discovery shape
   - [x] Expose lifecycle-only runtime events to OTA without raw WebSocket message access
+  - [x] Enforce raw-event and transport boundary allowlists in the commercial-closure guard
+  - [x] Remove stale Detekt fingerprints and compatibility-era documentation/test terminology
+  - [x] Add generation, cancellation, parser-coercion and semantic-boundary regressions
   - [x] Add an executable commercial-closure guard and CI/release enforcement
   - [x] Repository tools suite (141/141) and all 29 architecture/protocol/OTA guards pass locally
   - [x] Detekt reports zero blocker and zero new advisory debt on the canonical CI runner

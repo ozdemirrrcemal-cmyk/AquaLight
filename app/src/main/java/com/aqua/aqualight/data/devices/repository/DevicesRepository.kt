@@ -12,6 +12,7 @@ import com.aqua.aqualight.data.devices.monitor.DeviceConnectivityObserver
 import com.aqua.aqualight.data.devices.monitor.DeviceElapsedRealtimeClock
 import com.aqua.aqualight.data.devices.monitor.DevicePresenceRuntimeMonitor
 import com.aqua.aqualight.data.devices.monitor.DeviceStatusAggregator
+import com.aqua.aqualight.data.devices.runtime.core.DeviceRuntimeConnectionGeneration
 import com.aqua.aqualight.data.devices.runtime.events.DeviceRuntimeEventPayload
 import com.aqua.aqualight.data.devices.runtime.events.DeviceRuntimeEventPipeline
 import com.aqua.aqualight.data.devices.runtime.events.DeviceRuntimeLifecycleEvent
@@ -253,6 +254,20 @@ class DevicesRepository(
 
     fun recordControlProof(deviceUid: DeviceUid): DeviceSnapshot? =
         recordRuntimeProof(deviceUid = deviceUid, isControlProof = true)
+
+    internal fun recordControlProofIfCurrentGeneration(
+        deviceUid: DeviceUid,
+        generation: DeviceRuntimeConnectionGeneration
+    ): DeviceSnapshot? {
+        var recordedSnapshot: DeviceSnapshot? = null
+        val accepted = runtimeRepository?.runIfCurrentAuthenticatedGeneration(
+            deviceUid = deviceUid,
+            generation = generation
+        ) {
+            recordedSnapshot = recordControlProof(deviceUid)
+        } ?: false
+        return recordedSnapshot.takeIf { accepted }
+    }
 
     suspend fun saveRuntimeToken(deviceUid: DeviceUid, token: String) {
         runtimeRepository?.saveToken(deviceUid, token)

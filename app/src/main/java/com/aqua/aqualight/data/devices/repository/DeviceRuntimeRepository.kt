@@ -252,6 +252,37 @@ class DeviceRuntimeRepository(
         ?.takeIf(::isCurrentSession)
         ?.generation
 
+    /**
+     * Commits a proof only while the authenticated session that produced it is still current.
+     *
+     * Lock order matches connect(): session first, lifecycle second. Holding both locks through
+     * [action] prevents a route replacement, retirement or generation change between validation
+     * and the canonical proof write.
+     */
+    internal fun runIfCurrentAuthenticatedGeneration(
+        deviceUid: DeviceUid,
+        generation: DeviceRuntimeConnectionGeneration,
+        action: () -> Unit
+    ): Boolean {
+        val session = sessions[deviceUid] ?: return false
+        return synchronized(session) {
+            synchronized(lifecycleLock) {
+                val currentSession = !closed &&
+                    deviceUid !in retiredDeviceUids &&
+                    sessions[deviceUid] === session
+                val currentGeneration = session.generation == generation
+                val authenticated =
+                    session.wsClient.connectionState.value is AqlWsConnectionState.Authenticated
+                if (currentSession && currentGeneration && authenticated) {
+                    action()
+                    true
+                } else {
+                    false
+                }
+            }
+        }
+    }
+
     internal fun pendingCommandCount(): Int = commandExecutor.pendingCount()
 
     override suspend fun <T> execute(

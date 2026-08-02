@@ -157,6 +157,59 @@ class DeviceRuntimeRepositoryLifecycleTest {
     }
 
     @Test
+    fun generationBoundProofRejectsUnauthenticatedAndReplacedSessions() {
+        val transports = CopyOnWriteArrayList<FakeWsTransport>()
+        val repository = repositoryWith(transports)
+        val target = snapshot("device-generation-proof")
+
+        repository.connect(target).getOrThrow()
+        val firstGeneration = checkNotNull(
+            repository.currentConnectionGeneration(target.deviceUid)
+        )
+        var proofWrites = 0
+
+        assertFalse(
+            repository.runIfCurrentAuthenticatedGeneration(
+                target.deviceUid,
+                firstGeneration
+            ) { proofWrites += 1 }
+        )
+
+        transports.single().authenticate(target.deviceUid)
+        assertTrue(
+            repository.runIfCurrentAuthenticatedGeneration(
+                target.deviceUid,
+                firstGeneration
+            ) { proofWrites += 1 }
+        )
+
+        repository.connect(
+            target.copy(endpoint = target.endpoint.copy(ip = "192.168.1.99"))
+        ).getOrThrow()
+        val secondGeneration = checkNotNull(
+            repository.currentConnectionGeneration(target.deviceUid)
+        )
+        assertFalse(firstGeneration == secondGeneration)
+
+        transports.single().authenticate(target.deviceUid)
+        assertFalse(
+            repository.runIfCurrentAuthenticatedGeneration(
+                target.deviceUid,
+                firstGeneration
+            ) { proofWrites += 1 }
+        )
+        assertTrue(
+            repository.runIfCurrentAuthenticatedGeneration(
+                target.deviceUid,
+                secondGeneration
+            ) { proofWrites += 1 }
+        )
+        assertEquals(2, proofWrites)
+
+        repository.close()
+    }
+
+    @Test
     fun synchronousEventDuringConnectIsNotLostBeforeCollectorsDispatch() {
         val dispatcher = PausedDispatcher()
         val transports = CopyOnWriteArrayList<FakeWsTransport>()
@@ -297,6 +350,14 @@ class DeviceRuntimeRepositoryLifecycleTest {
         override fun close() {
             closeCount.incrementAndGet()
             disconnect(code = 1000, reason = "closed")
+        }
+
+        fun authenticate(deviceUid: DeviceUid) {
+            _connectionState.value = AqlWsConnectionState.Authenticated(
+                deviceUid = deviceUid,
+                authenticatedAtMillis = 1L
+            )
+            _events.tryEmit(AqlWsEvent.Authenticated(deviceUid))
         }
 
         fun emit(event: AqlWsEvent) {

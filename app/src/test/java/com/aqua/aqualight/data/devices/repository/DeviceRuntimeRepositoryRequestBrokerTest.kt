@@ -34,7 +34,7 @@ import org.junit.Test
 class DeviceRuntimeRepositoryRequestBrokerTest {
 
     @Test
-    fun `exact response completes typed request and is not leaked to legacy event stream`() =
+    fun `exact response completes typed request and is not leaked outside transport routing`() =
         runBlocking {
             val transport = RecordingTransport()
             val repository = repository(transport)
@@ -100,7 +100,7 @@ class DeviceRuntimeRepositoryRequestBrokerTest {
     }
 
     @Test
-    fun `legacy metadata bootstrap responses remain unmatched and observable`() = runBlocking {
+    fun `metadata bootstrap responses remain unmatched and observable`() = runBlocking {
         val transport = RecordingTransport()
         val repository = repository(transport)
         repository.connect(snapshot()).getOrThrow()
