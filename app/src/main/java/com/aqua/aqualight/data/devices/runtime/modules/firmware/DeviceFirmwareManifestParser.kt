@@ -9,16 +9,17 @@ object DeviceFirmwareManifestParser {
     fun parse(raw: String): Result<DeviceFirmwareManifest> = runCatching {
         val root = JSONObject(raw)
         root.requireExactKeys(ROOT_KEYS, "manifest")
+        val version = root.requiredString("version")
         val manifest = DeviceFirmwareManifest(
             schema = root.requiredString("schema"),
             brand = root.requiredString("brand"),
             channel = root.requiredString("channel"),
-            version = root.requiredString("version"),
+            version = version,
             tag = root.requiredString("tag"),
             releaseRepo = root.requiredString("releaseRepo"),
             generatedAt = root.requiredString("generatedAt"),
             platform = parsePlatform(root.requiredObject("platform")),
-            artifacts = parseArtifacts(root.requiredArray("artifacts")),
+            artifacts = parseArtifacts(root.requiredArray("artifacts"), version),
             signature = parseSignature(root.requiredObject("signature")),
             releaseNotes = parseReleaseNotes(
                 root.requiredObject(DeviceFirmwareRuntimeContract.Manifest.RELEASE_NOTES)
@@ -128,11 +129,14 @@ object DeviceFirmwareManifestParser {
         )
     }
 
-    private fun parseArtifacts(array: JSONArray): List<DeviceFirmwareManifestArtifact> = buildList {
+    private fun parseArtifacts(
+        array: JSONArray,
+        manifestVersion: String
+    ): List<DeviceFirmwareManifestArtifact> = buildList {
         repeat(array.length()) { index ->
             val item = array.get(index) as? JSONObject
                 ?: error("OTA manifest artifact[$index] must be an object.")
-            val artifact = parseArtifact(item, index)
+            val artifact = parseArtifact(item, index, manifestVersion)
             validateArtifact(artifact)
             add(artifact)
         }
@@ -140,7 +144,8 @@ object DeviceFirmwareManifestParser {
 
     private fun parseArtifact(
         json: JSONObject,
-        index: Int
+        index: Int,
+        manifestVersion: String
     ): DeviceFirmwareManifestArtifact {
         val label = "artifact[$index]"
         json.requireExactKeys(ARTIFACT_KEYS, label)
@@ -153,7 +158,8 @@ object DeviceFirmwareManifestParser {
             ),
             firmware = parseFirmwareAsset(
                 json.requiredObject("firmware"),
-                "$label.firmware"
+                "$label.firmware",
+                manifestVersion
             ),
             factory = json.requiredNullableObject("factory")?.let { factory ->
                 parseFactoryAsset(factory, "$label.factory")
@@ -236,9 +242,14 @@ object DeviceFirmwareManifestParser {
 
     private fun parseFirmwareAsset(
         json: JSONObject,
-        label: String
+        label: String,
+        manifestVersion: String
     ): DeviceFirmwareAsset {
         json.requireExactKeys(FIRMWARE_ASSET_KEYS, label)
+        val assetVersion = json.requiredString("version")
+        require(assetVersion == manifestVersion) {
+            "OTA firmware version does not match the manifest version."
+        }
         return DeviceFirmwareAsset(
             filename = json.requiredString("filename"),
             url = json.requiredString("url"),
@@ -479,6 +490,7 @@ object DeviceFirmwareManifestParser {
         "hardwareRevision"
     )
     private val FIRMWARE_ASSET_KEYS = setOf(
+        "version",
         "filename",
         "url",
         "sha256",
