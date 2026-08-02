@@ -20,6 +20,7 @@ class DeviceFirmwareLiveManifestContractTest {
         assertNoUserDefinedDeviceName(verified.rawManifest)
 
         verified.manifest.artifacts.forEach { artifact ->
+            assertEquals(verified.manifest.version, artifact.firmware.version)
             val product = requireExactCatalogProduct(artifact)
             DeviceFirmwareManifestContractValidator.requireValid(
                 artifact = artifact,
@@ -35,8 +36,14 @@ class DeviceFirmwareLiveManifestContractTest {
 
         val publicKeyPem = System.getenv(ENV_PUBLIC_KEY_PEM).orEmpty()
         val expectedKeyId = System.getenv(ENV_KEY_ID).orEmpty()
-        assertTrue("OTA manifest public key is missing from the build environment.", publicKeyPem.isNotBlank())
-        assertTrue("OTA manifest key id is missing from the build environment.", expectedKeyId.isNotBlank())
+        assertTrue(
+            "OTA manifest public key is missing from the build environment.",
+            publicKeyPem.isNotBlank()
+        )
+        assertTrue(
+            "OTA manifest key id is missing from the build environment.",
+            expectedKeyId.isNotBlank()
+        )
 
         val rawManifest = File(manifestPath).readText(Charsets.UTF_8)
         assertTrue("Downloaded stable OTA manifest is empty.", rawManifest.isNotBlank())
