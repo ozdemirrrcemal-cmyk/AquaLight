@@ -251,7 +251,13 @@ abstract class DeviceFamilySettingsFragment : Fragment(R.layout.fragment_device_
                         R.string.device_settings_view_update_action
                     }
                 ),
-                statusText = getString(R.string.device_settings_update_check_failed_status),
+                statusText = getString(
+                    if (recoverable) {
+                        R.string.device_settings_update_check_failed_status
+                    } else {
+                        R.string.device_settings_update_needs_attention_status
+                    }
+                ),
                 enabled = true
             )
             DeviceSettingsUpdateActionState.Unsupported -> FirmwareActionPresentation(
