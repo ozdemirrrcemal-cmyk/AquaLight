@@ -8,9 +8,9 @@ Target: **41 authenticated commands / 0 public commands**
 
 - Current stage: **10 — firmware interoperability and final matrix**
 - Active branch: `test/ws-10-firmware-interoperability`
-- Status: **LOCAL CONTRACT GATES PASSED — REMOTE AND PHYSICAL GATES PENDING**
+- Status: **AUTOMATED GATES PASSED — PHYSICAL SIGNED-OTA FOLLOW-UP PENDING**
 - Previous stage: **09 PASSED / PR #190 MERGED**
-- Next: Publish the Stage 10 draft PR, complete remote automated evidence, then record the physical signed-OTA release-candidate smoke.
+- Next: Merge PR #191, promote the completed integration branch to `main`, then record the physical signed-OTA release-candidate smoke.
 
 ## Fixed rules
 
@@ -218,7 +218,7 @@ Target: **41 authenticated commands / 0 public commands**
   - [x] PR evidence recorded on PR #190 for tested head `c880207839fac8a119acb08bd82cd420128156cd`
   - [x] Squash-merged to integration as `4347adac8dfc5ebf07976bd7570c3de823eae22f`
 
-- [ ] **10** `test/ws-10-firmware-interoperability` — **LOCAL CONTRACT GATES PASSED / REMOTE + PHYSICAL PENDING**
+- [x] **10** `test/ws-10-firmware-interoperability` — **AUTOMATED GATES PASSED / PHYSICAL RC FOLLOW-UP**
   - [x] Audit firmware commit `38e8812c1bcecf948ebab85979bff21a24f4b79c`
   - [x] Pin command names, event contract, all ten command handlers and the nested Timer/Dosing and pairing request parsers by firmware blob SHA
   - [x] Verify exact 41 authenticated / 0 public command parity
@@ -234,13 +234,13 @@ Target: **41 authenticated commands / 0 public commands**
   - [x] Add the final interoperability guard to Android CI, CodeQL and the protected release-quality gate
   - [x] Repository Python suite passed locally (139 tests)
   - [x] Stage policy plus all Android CI architecture/protocol/privacy/design/localization guards passed locally
-  - [ ] Android unit/golden/interoperability tests pass remotely
-  - [ ] Android CI passes
-  - [ ] Installable Debug APK passes
-  - [ ] Emulator API 27 / 36 passes
-  - [ ] CodeQL Security Scan passes with zero critical/high findings
-  - [ ] Physical signed-OTA release-candidate smoke: download, verify, restart, rediscover, reconnect and exact version proof
-  - [ ] PR evidence recorded
+  - [x] Android unit/golden/interoperability tests — Android CI run #2917
+  - [x] Android CI — run #2917
+  - [x] Installable Debug APK — run #209
+  - [x] Emulator API 27 / 36 — run #1041
+  - [x] CodeQL Security Scan — run #4702 with zero new Detekt debt
+  - [ ] Physical signed-OTA release-candidate smoke: download, verify, restart, rediscover, reconnect and exact version proof — post-merge commercial-device follow-up
+  - [x] PR evidence recorded on PR #191 for tested head `cd7a0500022f1cd201dd6936b2158c6ff9b11563`
 
 ## Relevant gate after each stage
 
@@ -283,3 +283,4 @@ Target: **41 authenticated commands / 0 public commands**
 | 2026-08-02 | Stage 09 OTA update orchestration | PASS / PR #190 MERGED | Start Stage 10 final interoperability matrix |
 | 2026-08-02 | Stage 10 firmware interoperability branch opened | IN PROGRESS | Pin firmware request sources and build the final 41/41 matrix |
 | 2026-08-02 | Stage 10 final interoperability implementation | LOCAL CONTRACT GATES PASSED | Publish draft PR and complete remote plus physical evidence |
+| 2026-08-02 | Stage 10 final interoperability pull-request gates | AUTOMATED PASS / PR #191 READY | Squash-merge now; run physical signed-OTA smoke afterwards |
