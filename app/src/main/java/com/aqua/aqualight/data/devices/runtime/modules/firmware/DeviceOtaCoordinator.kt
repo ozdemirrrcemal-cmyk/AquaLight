@@ -59,6 +59,10 @@ internal class DeviceOtaCoordinator(
         val updater: DeviceFirmwareUpdateRepository
     )
 
+    private class AvailabilityFailure(
+        val failure: DeviceFirmwareFailure
+    ) : IllegalStateException(failure.technicalMessage)
+
     private class StartPreparationFailure(
         val failure: DeviceFirmwareFailure,
         val publishFailure: Boolean
@@ -108,13 +112,14 @@ internal class DeviceOtaCoordinator(
         }.onSuccess { availability ->
             state.value = availability
         }.onFailure { error ->
-            val failure = DeviceFirmwareFailureMapper.fromThrowable(
-                error = error,
-                source = DeviceFirmwareFailureSource.MANIFEST,
-                stage = DeviceFirmwareFailureStage.AVAILABILITY,
-                code = "availability_failed",
-                recoverable = true
-            )
+            val failure = (error as? AvailabilityFailure)?.failure
+                ?: DeviceFirmwareFailureMapper.fromThrowable(
+                    error = error,
+                    source = DeviceFirmwareFailureSource.ANDROID,
+                    stage = DeviceFirmwareFailureStage.AVAILABILITY,
+                    code = "availability_internal_error",
+                    recoverable = false
+                )
             state.value = DeviceOtaState.Failed(deviceUid.value, failure)
         }
     }
@@ -125,9 +130,27 @@ internal class DeviceOtaCoordinator(
         manifestUrl: String,
         applyNow: Boolean
     ): DeviceOtaState {
-        val snapshot = requireNotNull(initial) { "Device snapshot is not available." }
-        require(snapshot.hasValidatedRuntimeMetadata) {
-            "OTA requires current authenticated runtime metadata."
+        val snapshot = initial ?: rejectAvailability(
+            DeviceFirmwareFailureMapper.local(
+                technicalMessage = "Device snapshot is not available.",
+                source = DeviceFirmwareFailureSource.RUNTIME,
+                stage = DeviceFirmwareFailureStage.AVAILABILITY,
+                code = "device_snapshot_missing",
+                recoverable = true,
+                kind = DeviceFirmwareFailureKind.CONNECTION
+            )
+        )
+        if (!snapshot.hasValidatedRuntimeMetadata) {
+            rejectAvailability(
+                DeviceFirmwareFailureMapper.local(
+                    technicalMessage = "OTA requires current authenticated runtime metadata.",
+                    source = DeviceFirmwareFailureSource.RUNTIME,
+                    stage = DeviceFirmwareFailureStage.AVAILABILITY,
+                    code = "runtime_metadata_unvalidated",
+                    recoverable = true,
+                    kind = DeviceFirmwareFailureKind.AUTHENTICATION
+                )
+            )
         }
         if (!snapshot.capabilities.ota) {
             return DeviceOtaState.Unsupported(
@@ -135,23 +158,68 @@ internal class DeviceOtaCoordinator(
                 reason = "This exact device profile does not support OTA."
             )
         }
-        connectRuntime(deviceUid).getOrThrow()
-        val current = requireNotNull(snapshotProvider(deviceUid)) {
-            "Device snapshot disappeared during OTA availability check."
+        connectRuntime(deviceUid).exceptionOrNull()?.let { error ->
+            rejectAvailability(
+                DeviceFirmwareFailureMapper.fromThrowable(
+                    error = error,
+                    source = DeviceFirmwareFailureSource.RUNTIME,
+                    stage = DeviceFirmwareFailureStage.AVAILABILITY,
+                    code = "runtime_connect_failed",
+                    recoverable = true
+                )
+            )
         }
-        require(current.runtimeMetadataGeneration == snapshot.runtimeMetadataGeneration) {
-            "Runtime metadata changed during OTA availability check."
+        val current = snapshotProvider(deviceUid) ?: rejectAvailability(
+            DeviceFirmwareFailureMapper.local(
+                technicalMessage = "Device snapshot disappeared during OTA availability check.",
+                source = DeviceFirmwareFailureSource.RUNTIME,
+                stage = DeviceFirmwareFailureStage.AVAILABILITY,
+                code = "device_snapshot_disappeared",
+                recoverable = true,
+                kind = DeviceFirmwareFailureKind.CONNECTION
+            )
+        )
+        if (current.runtimeMetadataGeneration != snapshot.runtimeMetadataGeneration) {
+            rejectAvailability(
+                DeviceFirmwareFailureMapper.local(
+                    technicalMessage = "Runtime metadata changed during OTA availability check.",
+                    source = DeviceFirmwareFailureSource.RUNTIME,
+                    stage = DeviceFirmwareFailureStage.AVAILABILITY,
+                    code = "runtime_metadata_changed",
+                    recoverable = true,
+                    kind = DeviceFirmwareFailureKind.INVALID_REQUEST
+                )
+            )
         }
-        val updater = requireNotNull(updaterProvider()) {
-            "Firmware update runtime is not configured."
-        }
+        val updater = updaterProvider() ?: rejectAvailability(
+            DeviceFirmwareFailureMapper.local(
+                technicalMessage = "Firmware update runtime is not configured.",
+                source = DeviceFirmwareFailureSource.ANDROID,
+                stage = DeviceFirmwareFailureStage.AVAILABILITY,
+                code = "update_runtime_missing",
+                recoverable = false,
+                kind = DeviceFirmwareFailureKind.INTERNAL
+            )
+        )
         val availability = updater.fetchAndEvaluateUpdate(
             snapshot = current,
             manifestUrl = manifestUrl,
             applyNow = applyNow
-        ).getOrThrow()
+        ).getOrElse { error ->
+            rejectAvailability(
+                DeviceFirmwareFailureMapper.fromThrowable(
+                    error = error,
+                    source = DeviceFirmwareFailureSource.MANIFEST,
+                    stage = DeviceFirmwareFailureStage.AVAILABILITY,
+                    code = "manifest_evaluation_failed"
+                )
+            )
+        }
         return applyAvailability(deviceUid, availability)
     }
+
+    private fun rejectAvailability(failure: DeviceFirmwareFailure): Nothing =
+        throw AvailabilityFailure(failure)
 
     private fun applyAvailability(
         deviceUid: DeviceUid,
@@ -327,7 +395,13 @@ internal class DeviceOtaCoordinator(
                         plan = plan,
                         requestId = outcome.messageId
                     )
-                    applySnapshot(deviceUid, accepted.ota, active, outcome.generation)?.let { failure ->
+                    applySnapshot(
+                        deviceUid = deviceUid,
+                        snapshot = accepted.ota,
+                        selected = active,
+                        requestId = outcome.messageId,
+                        generation = outcome.generation
+                    )?.let { failure ->
                         AppCommandResult(
                             sent = true,
                             messageId = outcome.messageId,
@@ -386,7 +460,13 @@ internal class DeviceOtaCoordinator(
         is DeviceRuntimeCommandOutcome.Success -> {
             val selected = selectedPlans[deviceUid]?.copy(runtimeGeneration = outcome.generation)
             if (selected != null) selectedPlans[deviceUid] = selected
-            applySnapshot(deviceUid, outcome.value.ota, selected, outcome.generation)?.let { failure ->
+            applySnapshot(
+                deviceUid = deviceUid,
+                snapshot = outcome.value.ota,
+                selected = selected,
+                requestId = outcome.messageId,
+                generation = outcome.generation
+            )?.let { failure ->
                 AppCommandResult(
                     sent = true,
                     messageId = outcome.messageId,
@@ -489,7 +569,13 @@ internal class DeviceOtaCoordinator(
             selected == null || selected.runtimeGeneration != event.generation -> Unit
             else -> DeviceFirmwareStatusParser.parseOtaProgressEventExact(payload.data).fold(
                 onSuccess = { otaEvent ->
-                    applySnapshot(event.deviceUid, otaEvent.ota, selected, event.generation)
+                    applySnapshot(
+                        deviceUid = event.deviceUid,
+                        snapshot = otaEvent.ota,
+                        selected = selected,
+                        requestId = event.messageId,
+                        generation = event.generation
+                    )
                 },
                 onFailure = { error ->
                     fail(
@@ -517,6 +603,7 @@ internal class DeviceOtaCoordinator(
         deviceUid: DeviceUid,
         snapshot: DeviceFirmwareOtaSnapshot,
         selected: SelectedPlan?,
+        requestId: String,
         generation: DeviceRuntimeConnectionGeneration
     ): DeviceFirmwareFailure? {
         DeviceOtaValidator.snapshotAgainstPlan(snapshot, selected?.dataPlan)?.let { error ->
@@ -526,6 +613,7 @@ internal class DeviceOtaCoordinator(
                 stage = snapshot.failureStage(),
                 code = "snapshot_plan_mismatch",
                 httpStatus = snapshot.httpStatus,
+                requestId = requestId,
                 firmwarePhase = snapshot.phaseRaw,
                 recoverable = false
             )
@@ -553,7 +641,8 @@ internal class DeviceOtaCoordinator(
                 snapshot = snapshot,
                 deviceUid = deviceUid,
                 targetVersion = targetVersion,
-                releaseContent = releaseContent
+                releaseContent = releaseContent,
+                requestId = requestId
             )
         }
         verifyCurrentFirmwareIfReady(deviceUid, snapshot, activeSelection)
