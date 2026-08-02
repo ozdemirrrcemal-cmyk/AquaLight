@@ -194,7 +194,6 @@ class DeviceFirmwareUpdatePlanner(
         require(artifact.product.family == product.family.wireValue)
         require(artifact.product.line == product.line.value)
         require(artifact.product.model == product.model.value)
-        require(artifact.product.displayName == product.displayName)
         require(artifact.product.skuCode == product.skuCode.value)
         require(artifact.product.hardwareRevision == product.hardwareRevision.value)
         require(artifact.compatibility.family == product.family.wireValue)
