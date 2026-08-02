@@ -69,7 +69,7 @@ class DeviceOtaCoordinatorTest {
             assertEquals("2.0.0", availability.plan.targetVersion)
             assertEquals(
                 listOf("Kalibrasyon kontrolleri geliştirildi."),
-                availability.plan.releaseContent.changes
+                availability.plan.releaseContent.items
             )
 
             val startResult = coordinator.startUpdate(availability.plan)
