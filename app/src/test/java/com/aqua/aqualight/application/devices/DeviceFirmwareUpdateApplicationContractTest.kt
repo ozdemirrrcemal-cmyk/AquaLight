@@ -41,6 +41,7 @@ class DeviceFirmwareUpdateApplicationContractTest {
         operations.close()
 
         val releaseContent = plan.releaseContent
+        val failure = failure()
         assertTrue(releaseContent.isPresent)
         assertFalse(DeviceFirmwareReleaseContent.EMPTY.isPresent)
 
@@ -73,24 +74,39 @@ class DeviceFirmwareUpdateApplicationContractTest {
                 releaseContent = releaseContent
             ),
             DeviceOtaState.Succeeded(DEVICE_UID, plan.targetVersion, releaseContent),
-            DeviceOtaState.Failed(
-                DEVICE_UID,
-                message = "failed",
-                field = "ota",
-                recoverable = true
-            )
+            DeviceOtaState.Failed(DEVICE_UID, failure)
         )
 
         assertEquals(states.size, states.count { state -> state.deviceUid == DEVICE_UID })
         assertEquals(plan.targetVersion, (states[5] as DeviceOtaState.Starting).plan.targetVersion)
         assertEquals(500, (states[6] as DeviceOtaState.InProgress).progressPermille)
         assertTrue((states[8] as DeviceOtaState.RestartRequired).restartScheduled)
-        assertEquals("ota", (states[10] as DeviceOtaState.Failed).field)
+        assertEquals(failure, (states[10] as DeviceOtaState.Failed).failure)
 
         assertTrue(DeviceFirmwareCommandResult(sent = true, messageId = "ok").isSuccess)
         assertFalse(DeviceFirmwareCommandResult(sent = false).isSuccess)
-        assertFalse(DeviceFirmwareCommandResult(sent = true, errorMessage = "rejected").isSuccess)
+        assertFalse(
+            DeviceFirmwareCommandResult(
+                sent = true,
+                messageId = failure.requestId,
+                failure = failure
+            ).isSuccess
+        )
     }
+
+    private fun failure() = DeviceFirmwareFailure(
+        kind = DeviceFirmwareFailureKind.DOWNLOAD,
+        source = DeviceFirmwareFailureSource.FIRMWARE_STATUS,
+        stage = DeviceFirmwareFailureStage.TRANSFER,
+        technicalMessage = "download failed",
+        code = "firmware_ota_failed",
+        field = "download",
+        statusCode = 422,
+        httpStatus = 503,
+        requestId = "start-1",
+        firmwarePhase = "failed",
+        recoverable = true
+    )
 
     private fun preparedUpdate(): PreparedDeviceFirmwareUpdate = PreparedDeviceFirmwareUpdate(
         deviceUid = DEVICE_UID,
