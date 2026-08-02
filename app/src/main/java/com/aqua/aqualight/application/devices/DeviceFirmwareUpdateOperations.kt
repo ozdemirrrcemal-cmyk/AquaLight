@@ -54,6 +54,60 @@ enum class DeviceOtaProgressPhase {
     VERIFYING
 }
 
+enum class DeviceFirmwareFailureKind {
+    CONNECTION,
+    AUTHENTICATION,
+    UNSUPPORTED,
+    INVALID_REQUEST,
+    COMPATIBILITY,
+    DOWNLOAD,
+    STORAGE,
+    INTEGRITY,
+    TIMEOUT,
+    PROTOCOL,
+    CANCELLED,
+    INTERNAL
+}
+
+enum class DeviceFirmwareFailureSource {
+    ANDROID,
+    MANIFEST,
+    RUNTIME,
+    FIRMWARE_COMMAND,
+    FIRMWARE_STATUS
+}
+
+enum class DeviceFirmwareFailureStage {
+    AVAILABILITY,
+    PREPARATION,
+    START,
+    TRANSFER,
+    VERIFICATION,
+    RESTART_VERIFICATION,
+    STATUS,
+    CLEAR
+}
+
+data class DeviceFirmwareFailure(
+    val kind: DeviceFirmwareFailureKind,
+    val source: DeviceFirmwareFailureSource,
+    val stage: DeviceFirmwareFailureStage,
+    val technicalMessage: String,
+    val code: String = "",
+    val field: String = "",
+    val statusCode: Int = 0,
+    val httpStatus: Int = 0,
+    val requestId: String = "",
+    val firmwarePhase: String = "",
+    val recoverable: Boolean
+) {
+    init {
+        require(technicalMessage.isNotBlank()) { "OTA failure technicalMessage must not be blank." }
+        require(statusCode >= 0) { "OTA failure statusCode must not be negative." }
+        require(httpStatus >= 0) { "OTA failure httpStatus must not be negative." }
+    }
+}
+
 sealed interface DeviceOtaState {
     val deviceUid: String
 
@@ -122,9 +176,7 @@ sealed interface DeviceOtaState {
 
     data class Failed(
         override val deviceUid: String,
-        val message: String,
-        val field: String = "",
-        val recoverable: Boolean = false
+        val failure: DeviceFirmwareFailure
     ) : DeviceOtaState
 }
 
@@ -151,8 +203,8 @@ data class PreparedDeviceFirmwareUpdate(
 data class DeviceFirmwareCommandResult(
     val sent: Boolean,
     val messageId: String = "",
-    val errorMessage: String = ""
+    val failure: DeviceFirmwareFailure? = null
 ) {
     val isSuccess: Boolean
-        get() = sent && errorMessage.isBlank()
+        get() = sent && failure == null
 }
