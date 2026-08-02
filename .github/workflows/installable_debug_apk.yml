@@ -38,7 +38,7 @@ jobs:
       AQL_DEBUG_KEYSTORE_BASE64: ${{ secrets.AQL_DEBUG_KEYSTORE_BASE64 }}
       AQL_OTA_MANIFEST_PUBLIC_KEY_PEM: ${{ secrets.AQL_OTA_MANIFEST_PUBLIC_KEY_PEM }}
       AQL_OTA_MANIFEST_KEY_ID: ${{ secrets.AQL_OTA_MANIFEST_KEY_ID }}
-      AQL_OTA_RELEASES_API_URL: https://api.github.com/repos/ozdemirrrcemal-cmyk/AquaLight-OTA-Releases/releases?per_page=100
+      AQL_OTA_STABLE_MANIFEST_URL: https://github.com/ozdemirrrcemal-cmyk/AquaLight-OTA-Releases/releases/download/ota-stable/manifest-stable.json
 
     steps:
       - name: Checkout
@@ -106,13 +106,11 @@ jobs:
         shell: bash
         run: bash tools/provision_persistent_debug_keystore.sh
 
-      - name: Resolve and verify published stable OTA manifest with Android code
+      - name: Verify published ota-stable manifest with Android code
         shell: bash
         run: |
           set -Eeuo pipefail
-          releases_path="${RUNNER_TEMP}/ota-releases.json"
           manifest_path="${RUNNER_TEMP}/manifest-stable.json"
-
           curl \
             --fail \
             --location \
@@ -120,51 +118,7 @@ jobs:
             --retry-all-errors \
             --silent \
             --show-error \
-            --header 'Accept: application/vnd.github+json' \
-            "$AQL_OTA_RELEASES_API_URL" \
-            --output "$releases_path"
-
-          asset_url="$(python - "$releases_path" <<'PY'
-          import json
-          import sys
-
-          releases = json.load(open(sys.argv[1], encoding="utf-8"))
-          for release in releases:
-              if release.get("draft"):
-                  continue
-              for asset in release.get("assets", []):
-                  if asset.get("name") == "manifest-stable.json":
-                      print(
-                          "Resolved stable OTA manifest from "
-                          f"tag={release.get('tag_name')} "
-                          f"prerelease={release.get('prerelease')}",
-                          file=sys.stderr,
-                      )
-                      print(asset["browser_download_url"])
-                      raise SystemExit(0)
-
-          print("No published release contains manifest-stable.json.", file=sys.stderr)
-          for release in releases[:10]:
-              names = [asset.get("name", "") for asset in release.get("assets", [])]
-              print(
-                  f"tag={release.get('tag_name')} "
-                  f"draft={release.get('draft')} "
-                  f"prerelease={release.get('prerelease')} "
-                  f"assets={names}",
-                  file=sys.stderr,
-              )
-          raise SystemExit(1)
-          PY
-          )"
-
-          curl \
-            --fail \
-            --location \
-            --retry 3 \
-            --retry-all-errors \
-            --silent \
-            --show-error \
-            "$asset_url" \
+            "$AQL_OTA_STABLE_MANIFEST_URL" \
             --output "$manifest_path"
           test -s "$manifest_path"
 
