@@ -78,7 +78,7 @@ internal object DeviceFirmwareReadParser {
         )
         require(DeviceRuntimeJson.stringValue(data, "startCommand") == "firmware.ota.start")
         require(DeviceRuntimeJson.stringValue(data, "statusCommand") == "firmware.ota.status")
-        DeviceFirmwareStatusParser.parseOtaProgressEventExact(
+        DeviceFirmwareStatusParser.parseOtaSnapshotExact(
             DeviceRuntimeJson.objectValue(data, "status")
         ).getOrThrow()
     }

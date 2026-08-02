@@ -7,7 +7,7 @@ object DeviceFirmwareOtaEventMapper {
     fun parse(message: AqlWsIncomingMessage?): DeviceFirmwareOtaSnapshot? {
         val event = message as? AqlWsIncomingMessage.Event
         return if (event != null && isOtaEvent(event)) {
-            DeviceFirmwareStatusParser.parseOtaProgressEvent(event.data)
+            DeviceFirmwareStatusParser.parseOtaProgressEventExact(event.data).getOrNull()
         } else {
             null
         }
@@ -15,9 +15,9 @@ object DeviceFirmwareOtaEventMapper {
 
     fun isOtaEvent(message: AqlWsIncomingMessage?): Boolean {
         val event = message as? AqlWsIncomingMessage.Event
-        return event != null && (
+        return event?.module == DeviceFirmwareRuntimeContract.MODULE && (
             event.action == DeviceFirmwareRuntimeContract.Event.OTA_PROGRESS ||
                 event.action == DeviceFirmwareRuntimeContract.Event.OTA_COMPLETED
-            )
+        )
     }
 }

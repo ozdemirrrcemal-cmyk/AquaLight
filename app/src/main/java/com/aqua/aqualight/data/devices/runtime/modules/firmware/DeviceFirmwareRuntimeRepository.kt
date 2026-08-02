@@ -1,23 +1,13 @@
 package com.aqua.aqualight.data.devices.runtime.modules.firmware
 
 import com.aqua.aqualight.data.devices.model.DeviceUid
-import com.aqua.aqualight.data.devices.runtime.core.DeviceRuntimeCommand
 import com.aqua.aqualight.data.devices.runtime.core.DeviceRuntimeCommandGateway
 import com.aqua.aqualight.data.devices.runtime.core.DeviceRuntimeCommandOutcome
 import com.aqua.aqualight.data.devices.runtime.modules.common.DeviceRuntimeJsonCommand
-import com.aqua.aqualight.data.devices.runtime.ws.AqlWsCommandClient
-import org.json.JSONObject
 
 class DeviceFirmwareRuntimeRepository(
-    private val gateway: DeviceRuntimeCommandGateway,
-    private val commandClientProvider: (DeviceUid) -> AqlWsCommandClient?
+    private val gateway: DeviceRuntimeCommandGateway
 ) {
-    /** Source-compatible construction for the legacy OTA state machine and its tests. */
-    constructor(commandClientProvider: (DeviceUid) -> AqlWsCommandClient?) : this(
-        gateway = LegacyOnlyGateway,
-        commandClientProvider = commandClientProvider
-    )
-
     suspend fun requestStatus(
         deviceUid: DeviceUid
     ): DeviceRuntimeCommandOutcome<DeviceFirmwareStatus> = gateway.execute(
@@ -40,64 +30,39 @@ class DeviceFirmwareRuntimeRepository(
         )
     )
 
-    fun requestOtaStatus(deviceUid: DeviceUid): DeviceFirmwareCommandResult = sendLegacy(
-        deviceUid = deviceUid,
-        action = DeviceFirmwareRuntimeContract.Action.OTA_STATUS
-    )
-
-    fun startOta(
+    suspend fun startOta(
         deviceUid: DeviceUid,
         payload: DeviceFirmwareOtaStartPayload
-    ): DeviceFirmwareCommandResult = sendLegacy(
-        deviceUid = deviceUid,
-        action = DeviceFirmwareRuntimeContract.Action.OTA_START,
-        data = payload.toJson()
+    ): DeviceRuntimeCommandOutcome<DeviceFirmwareOtaStartAccepted> = gateway.execute(
+        deviceUid,
+        DeviceRuntimeJsonCommand(
+            module = DeviceFirmwareRuntimeContract.MODULE,
+            action = DeviceFirmwareRuntimeContract.Action.OTA_START,
+            dataFactory = payload::toJson,
+            successParser = { data ->
+                DeviceFirmwareStatusParser.parseOtaStartAcceptedExact(data).getOrThrow()
+            }
+        )
     )
 
-    fun startUpdate(plan: DeviceFirmwareUpdatePlan): DeviceFirmwareCommandResult =
+    suspend fun startUpdate(
+        plan: DeviceFirmwareUpdatePlan
+    ): DeviceRuntimeCommandOutcome<DeviceFirmwareOtaStartAccepted> =
         startOta(
             deviceUid = plan.deviceUid,
             payload = plan.payload
         )
 
-    fun clearOtaStatus(deviceUid: DeviceUid): DeviceFirmwareCommandResult = sendLegacy(
-        deviceUid = deviceUid,
-        action = DeviceFirmwareRuntimeContract.Action.OTA_CLEAR
-    )
-
-    private fun sendLegacy(
-        deviceUid: DeviceUid,
-        action: String,
-        data: JSONObject = JSONObject()
-    ): DeviceFirmwareCommandResult {
-        val commandClient = commandClientProvider(deviceUid)
-            ?: return DeviceFirmwareCommandResult(
-                sent = false,
-                action = action,
-                errorMessage = "No WebSocket command client for ${deviceUid.value}"
-            )
-        val messageId = commandClient.command(
+    suspend fun clearOtaStatus(
+        deviceUid: DeviceUid
+    ): DeviceRuntimeCommandOutcome<DeviceFirmwareOtaClearResult> = gateway.execute(
+        deviceUid,
+        DeviceRuntimeJsonCommand(
             module = DeviceFirmwareRuntimeContract.MODULE,
-            action = action,
-            data = data
+            action = DeviceFirmwareRuntimeContract.Action.OTA_CLEAR,
+            successParser = { data ->
+                DeviceFirmwareStatusParser.parseOtaClearResultExact(data).getOrThrow()
+            }
         )
-        return DeviceFirmwareCommandResult(
-            sent = messageId != null,
-            action = action,
-            messageId = messageId.orEmpty(),
-            errorMessage = if (messageId != null) "" else "WebSocket send failed"
-        )
-    }
-
-    private object LegacyOnlyGateway : DeviceRuntimeCommandGateway {
-        override suspend fun <T> execute(
-            deviceUid: DeviceUid,
-            command: DeviceRuntimeCommand<T>,
-            timeoutMillis: Long
-        ): DeviceRuntimeCommandOutcome<T> = DeviceRuntimeCommandOutcome.NotConnected(
-            deviceUid = deviceUid,
-            module = command.module,
-            action = command.action
-        )
-    }
+    )
 }

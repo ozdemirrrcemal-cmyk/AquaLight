@@ -17,8 +17,15 @@ internal class DefaultDeviceFirmwareUpdateOperations(
     private val coordinator = DeviceOtaCoordinator(
         snapshotProvider = devicesRepository::currentDevice,
         connectRuntime = devicesRepository::connectRuntime,
+        recoverRuntime = devicesRepository::replaceRuntimeAfterControlFailure,
+        refreshDiscovery = {
+            devicesRepository.refreshForegroundBurst()
+            Unit
+        },
         updaterProvider = { devicesRepository.runtimeModules()?.firmwareUpdate },
-        runtimeEvents = devicesRepository.runtimeEvents()
+        runtimeEvents = devicesRepository.runtimeEvents(),
+        runtimeTypedEvents = devicesRepository.typedRuntimeEvents(),
+        snapshotUpdates = devicesRepository.snapshots
     )
 
     override fun observe(deviceUid: String): StateFlow<DeviceOtaState> =
@@ -54,14 +61,14 @@ internal class DefaultDeviceFirmwareUpdateOperations(
         }
     }
 
-    override fun startUpdate(
+    override suspend fun startUpdate(
         plan: PreparedDeviceFirmwareUpdate
     ): DeviceFirmwareCommandResult = coordinator.startUpdate(plan)
 
-    override fun requestStatus(deviceUid: String): DeviceFirmwareCommandResult =
+    override suspend fun requestStatus(deviceUid: String): DeviceFirmwareCommandResult =
         coordinator.requestStatus(requireDeviceUid(deviceUid))
 
-    override fun clearStatus(deviceUid: String): DeviceFirmwareCommandResult =
+    override suspend fun clearStatus(deviceUid: String): DeviceFirmwareCommandResult =
         coordinator.clearStatus(requireDeviceUid(deviceUid))
 
     override fun close() {

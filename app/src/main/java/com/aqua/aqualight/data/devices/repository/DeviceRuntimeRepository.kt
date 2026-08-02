@@ -147,7 +147,6 @@ class DeviceRuntimeRepository(
 
     val runtimeModules: DeviceRuntimeModuleProvider = DeviceRuntimeModuleProvider(
         commandGateway = this,
-        commandClientProvider = { deviceUid -> sessions[deviceUid]?.commandClient },
         revokeLocalCredential = ::revokeLocalCredentialAndSession,
         timerAccessProvider = ::currentTimerRuntimeAccess,
         dosingAccessProvider = ::currentDosingRuntimeAccess
