@@ -1,6 +1,10 @@
 package com.aqua.aqualight.data.devices.runtime.modules.firmware
 
 import com.aqua.aqualight.application.devices.DeviceFirmwareCommandResult as AppCommandResult
+import com.aqua.aqualight.application.devices.DeviceFirmwareFailure
+import com.aqua.aqualight.application.devices.DeviceFirmwareFailureKind
+import com.aqua.aqualight.application.devices.DeviceFirmwareFailureSource
+import com.aqua.aqualight.application.devices.DeviceFirmwareFailureStage
 import com.aqua.aqualight.application.devices.DeviceFirmwareReleaseContent
 import com.aqua.aqualight.application.devices.DeviceOtaState
 import com.aqua.aqualight.application.devices.PreparedDeviceFirmwareUpdate
@@ -56,10 +60,9 @@ internal class DeviceOtaCoordinator(
     )
 
     private class StartPreparationFailure(
-        message: String,
-        val publishFailure: Boolean = false,
-        val recoverable: Boolean = false
-    ) : IllegalStateException(message)
+        val failure: DeviceFirmwareFailure,
+        val publishFailure: Boolean
+    ) : IllegalStateException(failure.technicalMessage)
 
     private val scope = CoroutineScope(SupervisorJob() + dispatcher)
     private val states = ConcurrentHashMap<DeviceUid, MutableStateFlow<DeviceOtaState>>()
@@ -105,11 +108,14 @@ internal class DeviceOtaCoordinator(
         }.onSuccess { availability ->
             state.value = availability
         }.onFailure { error ->
-            state.value = DeviceOtaState.Failed(
-                deviceUid = deviceUid.value,
-                message = error.message ?: error::class.java.simpleName,
+            val failure = DeviceFirmwareFailureMapper.fromThrowable(
+                error = error,
+                source = DeviceFirmwareFailureSource.MANIFEST,
+                stage = DeviceFirmwareFailureStage.AVAILABILITY,
+                code = "availability_failed",
                 recoverable = true
             )
+            state.value = DeviceOtaState.Failed(deviceUid.value, failure)
         }
     }
 
@@ -170,7 +176,15 @@ internal class DeviceOtaCoordinator(
 
     suspend fun startUpdate(plan: PreparedDeviceFirmwareUpdate): AppCommandResult {
         val deviceUid = runCatching { DeviceUid(plan.deviceUid) }.getOrElse { error ->
-            return AppCommandResult(false, errorMessage = error.message.orEmpty())
+            val failure = DeviceFirmwareFailureMapper.fromThrowable(
+                error = error,
+                source = DeviceFirmwareFailureSource.ANDROID,
+                stage = DeviceFirmwareFailureStage.PREPARATION,
+                code = "invalid_device_uid",
+                field = "deviceUid",
+                recoverable = false
+            )
+            return AppCommandResult(sent = false, failure = failure)
         }
         return startLock(deviceUid).withLock {
             startUpdateLocked(deviceUid, plan)
@@ -192,36 +206,94 @@ internal class DeviceOtaCoordinator(
         plan: PreparedDeviceFirmwareUpdate
     ): StartContext {
         val selected = selectedPlans[deviceUid] ?: rejectStart(
-            "No prepared OTA plan exists for this device."
+            DeviceFirmwareFailureMapper.local(
+                technicalMessage = "No prepared OTA plan exists for this device.",
+                source = DeviceFirmwareFailureSource.ANDROID,
+                stage = DeviceFirmwareFailureStage.PREPARATION,
+                code = "prepared_plan_missing",
+                field = "plan",
+                recoverable = false,
+                kind = DeviceFirmwareFailureKind.INVALID_REQUEST
+            )
         )
         if (selected.applicationPlan != plan) {
-            rejectStart("OTA plan differs from the selected exact artifact.")
+            rejectStart(
+                DeviceFirmwareFailureMapper.local(
+                    technicalMessage = "OTA plan differs from the selected exact artifact.",
+                    source = DeviceFirmwareFailureSource.ANDROID,
+                    stage = DeviceFirmwareFailureStage.PREPARATION,
+                    code = "prepared_plan_mismatch",
+                    field = "plan",
+                    recoverable = false,
+                    kind = DeviceFirmwareFailureKind.INVALID_REQUEST
+                )
+            )
         }
         if (hasActiveOperation(deviceUid)) {
-            rejectStart("An OTA operation is already active for this device.")
+            rejectStart(
+                DeviceFirmwareFailureMapper.local(
+                    technicalMessage = "An OTA operation is already active for this device.",
+                    source = DeviceFirmwareFailureSource.ANDROID,
+                    stage = DeviceFirmwareFailureStage.PREPARATION,
+                    code = "operation_already_active",
+                    field = "state",
+                    recoverable = true,
+                    kind = DeviceFirmwareFailureKind.INVALID_REQUEST
+                )
+            )
         }
-        val snapshot = snapshotProvider(deviceUid)
-            ?: rejectStart("Device snapshot is not available.")
+        val snapshot = snapshotProvider(deviceUid) ?: rejectStart(
+            DeviceFirmwareFailureMapper.local(
+                technicalMessage = "Device snapshot is not available.",
+                source = DeviceFirmwareFailureSource.RUNTIME,
+                stage = DeviceFirmwareFailureStage.PREPARATION,
+                code = "device_snapshot_missing",
+                recoverable = true,
+                kind = DeviceFirmwareFailureKind.CONNECTION
+            ),
+            publishFailure = true
+        )
         DeviceOtaValidator.planAgainstSnapshot(selected.dataPlan, snapshot)?.let { error ->
-            rejectStart(error, publishFailure = true, recoverable = true)
+            rejectStart(
+                DeviceFirmwareFailureMapper.local(
+                    technicalMessage = error,
+                    source = DeviceFirmwareFailureSource.ANDROID,
+                    stage = DeviceFirmwareFailureStage.PREPARATION,
+                    code = "prepared_plan_expired",
+                    recoverable = true
+                ),
+                publishFailure = true
+            )
         }
-        val updater = updaterProvider()
-            ?: rejectStart("Firmware update runtime is not configured.")
+        val updater = updaterProvider() ?: rejectStart(
+            DeviceFirmwareFailureMapper.local(
+                technicalMessage = "Firmware update runtime is not configured.",
+                source = DeviceFirmwareFailureSource.ANDROID,
+                stage = DeviceFirmwareFailureStage.PREPARATION,
+                code = "update_runtime_missing",
+                recoverable = false,
+                kind = DeviceFirmwareFailureKind.INTERNAL
+            )
+        )
         connectRuntime(deviceUid).exceptionOrNull()?.let { error ->
             rejectStart(
-                error.message.orEmpty(),
-                publishFailure = true,
-                recoverable = true
+                DeviceFirmwareFailureMapper.fromThrowable(
+                    error = error,
+                    source = DeviceFirmwareFailureSource.RUNTIME,
+                    stage = DeviceFirmwareFailureStage.PREPARATION,
+                    code = "runtime_connect_failed",
+                    recoverable = true
+                ),
+                publishFailure = true
             )
         }
         return StartContext(selected, updater)
     }
 
     private fun rejectStart(
-        message: String,
-        publishFailure: Boolean = false,
-        recoverable: Boolean = false
-    ): Nothing = throw StartPreparationFailure(message, publishFailure, recoverable)
+        failure: DeviceFirmwareFailure,
+        publishFailure: Boolean = false
+    ): Nothing = throw StartPreparationFailure(failure, publishFailure)
 
     private suspend fun dispatchStart(
         deviceUid: DeviceUid,
@@ -231,15 +303,23 @@ internal class DeviceOtaCoordinator(
         when (val outcome = context.updater.startUpdate(context.selected.dataPlan)) {
             is DeviceRuntimeCommandOutcome.Success -> {
                 val accepted = outcome.value
-                val echo = accepted.request
-                if (
-                    !accepted.accepted ||
-                    echo == null ||
-                    !echo.matches(context.selected.dataPlan.payload)
-                ) {
-                    val error = "Firmware OTA request echo differs from the selected plan."
-                    fail(deviceUid, error)
-                    AppCommandResult(false, outcome.messageId, error)
+                if (!accepted.accepted || !accepted.request.matches(context.selected.dataPlan.payload)) {
+                    val failure = DeviceFirmwareFailureMapper.local(
+                        technicalMessage =
+                            "Firmware OTA request echo differs from the selected plan.",
+                        source = DeviceFirmwareFailureSource.RUNTIME,
+                        stage = DeviceFirmwareFailureStage.START,
+                        code = "request_echo_mismatch",
+                        requestId = outcome.messageId,
+                        recoverable = false,
+                        kind = DeviceFirmwareFailureKind.PROTOCOL
+                    )
+                    fail(deviceUid, failure)
+                    AppCommandResult(
+                        sent = true,
+                        messageId = outcome.messageId,
+                        failure = failure
+                    )
                 } else {
                     val active = context.selected.copy(runtimeGeneration = outcome.generation)
                     selectedPlans[deviceUid] = active
@@ -247,66 +327,114 @@ internal class DeviceOtaCoordinator(
                         plan = plan,
                         requestId = outcome.messageId
                     )
-                    applySnapshot(deviceUid, accepted.ota, active, outcome.generation)?.let { error ->
-                        AppCommandResult(false, outcome.messageId, error)
+                    applySnapshot(deviceUid, accepted.ota, active, outcome.generation)?.let { failure ->
+                        AppCommandResult(
+                            sent = true,
+                            messageId = outcome.messageId,
+                            failure = failure
+                        )
                     } ?: outcome.toApplicationResult()
                 }
             }
-            else -> handleCommandFailure(deviceUid, outcome, preserveRecovery = false)
+            else -> handleCommandFailure(
+                deviceUid = deviceUid,
+                outcome = outcome,
+                stage = DeviceFirmwareFailureStage.START,
+                preserveRecovery = false
+            )
         }
 
     private fun handleStartPreparationFailure(
         deviceUid: DeviceUid,
         error: Throwable
     ): AppCommandResult {
-        val failure = error as? StartPreparationFailure
-        if (failure?.publishFailure == true) {
-            fail(deviceUid, error.message.orEmpty(), recoverable = failure.recoverable)
+        val failure = (error as? StartPreparationFailure)?.failure
+            ?: DeviceFirmwareFailureMapper.fromThrowable(
+                error = error,
+                source = DeviceFirmwareFailureSource.ANDROID,
+                stage = DeviceFirmwareFailureStage.PREPARATION,
+                code = "start_preparation_failed",
+                recoverable = false
+            )
+        if ((error as? StartPreparationFailure)?.publishFailure == true) {
+            fail(deviceUid, failure)
         }
-        return AppCommandResult(false, errorMessage = error.message.orEmpty())
+        return AppCommandResult(sent = false, failure = failure)
     }
 
     suspend fun requestStatus(deviceUid: DeviceUid): AppCommandResult =
         connectedUpdater(deviceUid).fold(
             onSuccess = { updater -> applyStatusOutcome(deviceUid, updater.requestOtaStatus(deviceUid)) },
-            onFailure = { error -> AppCommandResult(false, errorMessage = error.message.orEmpty()) }
+            onFailure = { error ->
+                AppCommandResult(
+                    sent = false,
+                    failure = DeviceFirmwareFailureMapper.fromThrowable(
+                        error = error,
+                        source = DeviceFirmwareFailureSource.RUNTIME,
+                        stage = DeviceFirmwareFailureStage.STATUS,
+                        code = "status_connection_failed",
+                        recoverable = true
+                    )
+                )
+            }
         )
 
     private fun applyStatusOutcome(
         deviceUid: DeviceUid,
-        outcome: DeviceRuntimeCommandOutcome<DeviceFirmwareOtaSnapshot>
+        outcome: DeviceRuntimeCommandOutcome<DeviceFirmwareOtaStatusResponse>
     ): AppCommandResult = when (outcome) {
-            is DeviceRuntimeCommandOutcome.Success -> {
-                val selected = selectedPlans[deviceUid]?.copy(runtimeGeneration = outcome.generation)
-                if (selected != null) selectedPlans[deviceUid] = selected
-                applySnapshot(deviceUid, outcome.value, selected, outcome.generation)?.let { error ->
-                    AppCommandResult(false, outcome.messageId, error)
-                } ?: outcome.toApplicationResult()
-            }
-            else -> handleCommandFailure(
-                deviceUid = deviceUid,
-                outcome = outcome,
-                preserveRecovery = stateFlow(deviceUid).value is DeviceOtaState.Recovering
-            )
+        is DeviceRuntimeCommandOutcome.Success -> {
+            val selected = selectedPlans[deviceUid]?.copy(runtimeGeneration = outcome.generation)
+            if (selected != null) selectedPlans[deviceUid] = selected
+            applySnapshot(deviceUid, outcome.value.ota, selected, outcome.generation)?.let { failure ->
+                AppCommandResult(
+                    sent = true,
+                    messageId = outcome.messageId,
+                    failure = failure
+                )
+            } ?: outcome.toApplicationResult()
         }
+        else -> handleCommandFailure(
+            deviceUid = deviceUid,
+            outcome = outcome,
+            stage = DeviceFirmwareFailureStage.STATUS,
+            preserveRecovery = stateFlow(deviceUid).value is DeviceOtaState.Recovering
+        )
+    }
 
     suspend fun clearStatus(deviceUid: DeviceUid): AppCommandResult =
         connectedUpdater(deviceUid).fold(
             onSuccess = { updater -> applyClearOutcome(deviceUid, updater.clearOtaStatus(deviceUid)) },
-            onFailure = { error -> AppCommandResult(false, errorMessage = error.message.orEmpty()) }
+            onFailure = { error ->
+                AppCommandResult(
+                    sent = false,
+                    failure = DeviceFirmwareFailureMapper.fromThrowable(
+                        error = error,
+                        source = DeviceFirmwareFailureSource.RUNTIME,
+                        stage = DeviceFirmwareFailureStage.CLEAR,
+                        code = "clear_connection_failed",
+                        recoverable = true
+                    )
+                )
+            }
         )
 
     private fun applyClearOutcome(
         deviceUid: DeviceUid,
         outcome: DeviceRuntimeCommandOutcome<DeviceFirmwareOtaClearResult>
     ): AppCommandResult = when (outcome) {
-            is DeviceRuntimeCommandOutcome.Success -> {
-                clearPlanState(deviceUid)
-                stateFlow(deviceUid).value = DeviceOtaState.Idle(deviceUid.value)
-                outcome.toApplicationResult()
-            }
-            else -> handleCommandFailure(deviceUid, outcome, preserveRecovery = false)
+        is DeviceRuntimeCommandOutcome.Success -> {
+            clearPlanState(deviceUid)
+            stateFlow(deviceUid).value = DeviceOtaState.Idle(deviceUid.value)
+            outcome.toApplicationResult()
         }
+        else -> handleCommandFailure(
+            deviceUid = deviceUid,
+            outcome = outcome,
+            stage = DeviceFirmwareFailureStage.CLEAR,
+            preserveRecovery = false
+        )
+    }
 
     private fun connectedUpdater(deviceUid: DeviceUid): Result<DeviceFirmwareUpdateRepository> =
         runCatching {
@@ -348,14 +476,33 @@ internal class DeviceOtaCoordinator(
         when {
             payload == null -> fail(
                 event.deviceUid,
-                "Firmware OTA event payload is not a snapshot."
+                DeviceFirmwareFailureMapper.local(
+                    technicalMessage = "Firmware OTA event payload is not a snapshot.",
+                    source = DeviceFirmwareFailureSource.RUNTIME,
+                    stage = DeviceFirmwareFailureStage.STATUS,
+                    code = "event_payload_invalid",
+                    requestId = event.messageId,
+                    recoverable = false,
+                    kind = DeviceFirmwareFailureKind.PROTOCOL
+                )
             )
             selected == null || selected.runtimeGeneration != event.generation -> Unit
             else -> DeviceFirmwareStatusParser.parseOtaProgressEventExact(payload.data).fold(
-                onSuccess = { snapshot ->
-                    applySnapshot(event.deviceUid, snapshot, selected, event.generation)
+                onSuccess = { otaEvent ->
+                    applySnapshot(event.deviceUid, otaEvent.ota, selected, event.generation)
                 },
-                onFailure = { error -> fail(event.deviceUid, error.message.orEmpty()) }
+                onFailure = { error ->
+                    fail(
+                        event.deviceUid,
+                        DeviceFirmwareFailureMapper.fromThrowable(
+                            error = error,
+                            source = DeviceFirmwareFailureSource.RUNTIME,
+                            stage = DeviceFirmwareFailureStage.STATUS,
+                            code = "event_contract_invalid",
+                            recoverable = false
+                        ).copy(requestId = event.messageId)
+                    )
+                }
             )
         }
     }
@@ -371,10 +518,19 @@ internal class DeviceOtaCoordinator(
         snapshot: DeviceFirmwareOtaSnapshot,
         selected: SelectedPlan?,
         generation: DeviceRuntimeConnectionGeneration
-    ): String? {
+    ): DeviceFirmwareFailure? {
         DeviceOtaValidator.snapshotAgainstPlan(snapshot, selected?.dataPlan)?.let { error ->
-            fail(deviceUid, error)
-            return error
+            val failure = DeviceFirmwareFailureMapper.local(
+                technicalMessage = error,
+                source = DeviceFirmwareFailureSource.RUNTIME,
+                stage = snapshot.failureStage(),
+                code = "snapshot_plan_mismatch",
+                httpStatus = snapshot.httpStatus,
+                firmwarePhase = snapshot.phaseRaw,
+                recoverable = false
+            )
+            fail(deviceUid, failure)
+            return failure
         }
         val activeSelection = selected?.copy(runtimeGeneration = generation)
         if (activeSelection != null) selectedPlans[deviceUid] = activeSelection
@@ -389,8 +545,6 @@ internal class DeviceOtaCoordinator(
             snapshot.phase == DeviceFirmwareOtaPhase.IDLE &&
                 activeSelection != null &&
                 state.value is DeviceOtaState.UpdateAvailable -> {
-                // A recovery status probe must preserve the exact signed plan selected immediately
-                // beforehand, while an idle snapshot from any other state stays fail-closed.
                 DeviceOtaState.UpdateAvailable(activeSelection.applicationPlan)
             }
             snapshot.phase == DeviceFirmwareOtaPhase.IDLE &&
@@ -496,8 +650,21 @@ internal class DeviceOtaCoordinator(
             snapshot.runtimeMetadataGeneration != selected.dataPlan.runtimeMetadataGeneration
         ) {
             val error = DeviceOtaValidator.installedFirmwareError(snapshot, selected.dataPlan)
-            if (error == null) completeInstalledFirmwareVerification(deviceUid, selected)
-            else fail(deviceUid, error)
+            if (error == null) {
+                completeInstalledFirmwareVerification(deviceUid, selected)
+            } else {
+                fail(
+                    deviceUid,
+                    DeviceFirmwareFailureMapper.local(
+                        technicalMessage = error,
+                        source = DeviceFirmwareFailureSource.ANDROID,
+                        stage = DeviceFirmwareFailureStage.RESTART_VERIFICATION,
+                        code = "installed_firmware_mismatch",
+                        recoverable = false,
+                        kind = DeviceFirmwareFailureKind.COMPATIBILITY
+                    )
+                )
+            }
         }
     }
 
@@ -518,18 +685,14 @@ internal class DeviceOtaCoordinator(
     private fun handleCommandFailure(
         deviceUid: DeviceUid,
         outcome: DeviceRuntimeCommandOutcome<*>,
+        stage: DeviceFirmwareFailureStage,
         preserveRecovery: Boolean
     ): AppCommandResult {
-        val error = outcome.errorDescription()
+        val failure = DeviceFirmwareFailureMapper.fromOutcome(outcome, stage)
         if (!(preserveRecovery && outcome.isTransientFailure)) {
-            fail(
-                deviceUid = deviceUid,
-                message = error,
-                field = (outcome as? DeviceRuntimeCommandOutcome.FirmwareError)?.field.orEmpty(),
-                recoverable = outcome.isTransientFailure
-            )
+            fail(deviceUid, failure)
         }
-        return outcome.toApplicationResult(error)
+        return outcome.toApplicationResult(failure)
     }
 
     private fun hasActiveOperation(deviceUid: DeviceUid): Boolean =
@@ -550,19 +713,12 @@ internal class DeviceOtaCoordinator(
         recoveryJobs.remove(deviceUid)?.cancel()
     }
 
-    private fun fail(
-        deviceUid: DeviceUid,
-        message: String,
-        field: String = "",
-        recoverable: Boolean = false
-    ) {
+    private fun fail(deviceUid: DeviceUid, failure: DeviceFirmwareFailure) {
         pendingVersionVerification.remove(deviceUid)
         recoveryJobs.remove(deviceUid)?.cancel()
         stateFlow(deviceUid).value = DeviceOtaState.Failed(
             deviceUid = deviceUid.value,
-            message = message.ifBlank { "OTA operation failed." },
-            field = field,
-            recoverable = recoverable
+            failure = failure
         )
     }
 
@@ -651,20 +807,8 @@ private val DeviceRuntimeCommandOutcome<*>.isTransientFailure: Boolean
         this is DeviceRuntimeCommandOutcome.Timeout ||
         this is DeviceRuntimeCommandOutcome.Cancelled
 
-private fun DeviceRuntimeCommandOutcome<*>.errorDescription(): String = when (this) {
-    is DeviceRuntimeCommandOutcome.Success<*> -> ""
-    is DeviceRuntimeCommandOutcome.NotConnected -> "Device runtime is not connected."
-    is DeviceRuntimeCommandOutcome.NotAuthenticated -> "Device runtime is not authenticated."
-    is DeviceRuntimeCommandOutcome.UnsupportedByDevice -> "Device does not support this OTA command."
-    is DeviceRuntimeCommandOutcome.SendFailed -> "OTA command could not be sent."
-    is DeviceRuntimeCommandOutcome.Timeout -> "OTA command timed out."
-    is DeviceRuntimeCommandOutcome.FirmwareError -> message.ifBlank { "Firmware rejected OTA." }
-    is DeviceRuntimeCommandOutcome.ProtocolError -> reason.ifBlank { "Invalid OTA response." }
-    is DeviceRuntimeCommandOutcome.Cancelled -> reason.ifBlank { "OTA command was cancelled." }
-}
-
 private fun DeviceRuntimeCommandOutcome<*>.toApplicationResult(
-    error: String = ""
+    failure: DeviceFirmwareFailure? = null
 ): AppCommandResult = when (this) {
     is DeviceRuntimeCommandOutcome.Success<*> -> AppCommandResult(
         sent = true,
@@ -673,32 +817,44 @@ private fun DeviceRuntimeCommandOutcome<*>.toApplicationResult(
     is DeviceRuntimeCommandOutcome.FirmwareError -> AppCommandResult(
         sent = true,
         messageId = messageId,
-        errorMessage = error
+        failure = requireNotNull(failure)
     )
     is DeviceRuntimeCommandOutcome.ProtocolError -> AppCommandResult(
         sent = messageId.isNotBlank(),
         messageId = messageId,
-        errorMessage = error
+        failure = requireNotNull(failure)
     )
     is DeviceRuntimeCommandOutcome.Timeout -> AppCommandResult(
         sent = true,
         messageId = messageId,
-        errorMessage = error
+        failure = requireNotNull(failure)
     )
     is DeviceRuntimeCommandOutcome.Cancelled -> AppCommandResult(
         sent = messageId.isNotBlank(),
         messageId = messageId,
-        errorMessage = error
+        failure = requireNotNull(failure)
     )
     is DeviceRuntimeCommandOutcome.SendFailed -> AppCommandResult(
         sent = false,
         messageId = messageId,
-        errorMessage = error
+        failure = requireNotNull(failure)
     )
     is DeviceRuntimeCommandOutcome.NotConnected,
     is DeviceRuntimeCommandOutcome.NotAuthenticated,
     is DeviceRuntimeCommandOutcome.UnsupportedByDevice -> AppCommandResult(
         sent = false,
-        errorMessage = error
+        failure = requireNotNull(failure)
     )
+}
+
+private fun DeviceFirmwareOtaSnapshot.failureStage(): DeviceFirmwareFailureStage = when (phase) {
+    DeviceFirmwareOtaPhase.STARTING -> DeviceFirmwareFailureStage.START
+    DeviceFirmwareOtaPhase.SAFE_MODE,
+    DeviceFirmwareOtaPhase.DOWNLOADING,
+    DeviceFirmwareOtaPhase.WRITING -> DeviceFirmwareFailureStage.TRANSFER
+    DeviceFirmwareOtaPhase.VERIFYING,
+    DeviceFirmwareOtaPhase.SUCCEEDED -> DeviceFirmwareFailureStage.VERIFICATION
+    DeviceFirmwareOtaPhase.IDLE,
+    DeviceFirmwareOtaPhase.FAILED,
+    DeviceFirmwareOtaPhase.UNKNOWN -> DeviceFirmwareFailureStage.STATUS
 }
