@@ -1,5 +1,8 @@
 package com.aqua.aqualight.data.devices.runtime.modules.firmware
 
+import com.aqua.aqualight.application.devices.DeviceFirmwareFailureKind
+import com.aqua.aqualight.application.devices.DeviceFirmwareFailureSource
+import com.aqua.aqualight.application.devices.DeviceFirmwareFailureStage
 import com.aqua.aqualight.application.devices.DeviceOtaState
 import com.aqua.aqualight.data.devices.catalog.AqlCommercialCatalogProduct
 import com.aqua.aqualight.data.devices.catalog.AqlCommercialDeviceCatalog
@@ -192,7 +195,7 @@ class DeviceOtaCoordinatorTest {
     }
 
     @Test
-    fun `reconnected old firmware fails final installed version proof`() = runTest {
+    fun `reconnected old firmware produces exact restart verification failure`() = runTest {
         val typedEvents = MutableSharedFlow<DeviceRuntimeTypedEvent>(extraBufferCapacity = 8)
         val snapshots = MutableStateFlow(mapOf(DEVICE_UID to product().toSnapshot()))
         val coordinator = DeviceOtaCoordinator(
@@ -231,9 +234,13 @@ class DeviceOtaCoordinatorTest {
         )
         runCurrent()
 
-        val failed = coordinator.observe(DEVICE_UID).value as DeviceOtaState.Failed
-        assertTrue(failed.message.contains("firmware version"))
-        assertFalse(failed.recoverable)
+        val failure = (coordinator.observe(DEVICE_UID).value as DeviceOtaState.Failed).failure
+        assertTrue(failure.technicalMessage.contains("firmware version"))
+        assertEquals(DeviceFirmwareFailureKind.COMPATIBILITY, failure.kind)
+        assertEquals(DeviceFirmwareFailureSource.ANDROID, failure.source)
+        assertEquals(DeviceFirmwareFailureStage.RESTART_VERIFICATION, failure.stage)
+        assertEquals("installed_firmware_mismatch", failure.code)
+        assertFalse(failure.recoverable)
         coordinator.close()
     }
 
@@ -255,8 +262,93 @@ class DeviceOtaCoordinatorTest {
         val result = coordinator.startUpdate(plan)
 
         assertFalse(result.isSuccess)
-        assertTrue(result.errorMessage.contains("generation changed"))
-        assertTrue(coordinator.observe(DEVICE_UID).value is DeviceOtaState.Failed)
+        val failure = requireNotNull(result.failure)
+        assertTrue(failure.technicalMessage.contains("generation changed"))
+        assertEquals("prepared_plan_expired", failure.code)
+        assertEquals(DeviceFirmwareFailureStage.PREPARATION, failure.stage)
+        assertTrue(failure.recoverable)
+        assertEquals(
+            failure,
+            (coordinator.observe(DEVICE_UID).value as DeviceOtaState.Failed).failure
+        )
+        coordinator.close()
+    }
+
+    @Test
+    fun `firmware command rejection preserves code field status and request id`() = runTest {
+        val gateway = RecordingGateway()
+        val coordinator = DeviceOtaCoordinator(
+            snapshotProvider = { product().toSnapshot() },
+            connectRuntime = { Result.success(Unit) },
+            updaterProvider = { updater(gateway) },
+            runtimeLifecycleEvents = null
+        )
+        val plan = (
+            coordinator.checkAvailability(DEVICE_UID, MANIFEST_URL, true).getOrThrow()
+                as DeviceOtaState.UpdateAvailable
+            ).plan
+        gateway.commandFailure = DeviceRuntimeCommandOutcome.FirmwareError(
+            deviceUid = DEVICE_UID,
+            module = DeviceFirmwareRuntimeContract.MODULE,
+            action = DeviceFirmwareRuntimeContract.Action.OTA_START,
+            messageId = "firmware-error-1",
+            generation = RUNTIME_GENERATION,
+            statusCode = 422,
+            code = "invalid_value",
+            field = "hardwareRevision",
+            message = "Command rejected."
+        )
+
+        val result = coordinator.startUpdate(plan)
+
+        assertFalse(result.isSuccess)
+        val failure = requireNotNull(result.failure)
+        assertEquals(DeviceFirmwareFailureKind.COMPATIBILITY, failure.kind)
+        assertEquals(DeviceFirmwareFailureSource.FIRMWARE_COMMAND, failure.source)
+        assertEquals(DeviceFirmwareFailureStage.START, failure.stage)
+        assertEquals("invalid_value", failure.code)
+        assertEquals("hardwareRevision", failure.field)
+        assertEquals(422, failure.statusCode)
+        assertEquals("firmware-error-1", failure.requestId)
+        assertEquals(failure, (coordinator.observe(DEVICE_UID).value as DeviceOtaState.Failed).failure)
+        coordinator.close()
+    }
+
+    @Test
+    fun `firmware failed snapshot preserves message field http and phase`() = runTest {
+        val typedEvents = MutableSharedFlow<DeviceRuntimeTypedEvent>(extraBufferCapacity = 8)
+        val coordinator = DeviceOtaCoordinator(
+            snapshotProvider = { product().toSnapshot() },
+            connectRuntime = { Result.success(Unit) },
+            updaterProvider = { updater(RecordingGateway()) },
+            runtimeLifecycleEvents = null,
+            runtimeTypedEvents = typedEvents,
+            dispatcher = StandardTestDispatcher(testScheduler)
+        )
+        runCurrent()
+        val plan = (
+            coordinator.checkAvailability(DEVICE_UID, MANIFEST_URL, true).getOrThrow()
+                as DeviceOtaState.UpdateAvailable
+            ).plan
+        coordinator.startUpdate(plan)
+        typedEvents.tryEmit(
+            otaEvent(
+                DeviceRuntimeTypedEvent.Type.FIRMWARE_OTA_COMPLETED,
+                "failed-download-1",
+                otaEventData("failed", active = false, progressPermille = 250)
+                    .put("httpStatus", 503)
+            )
+        )
+        runCurrent()
+
+        val failure = (coordinator.observe(DEVICE_UID).value as DeviceOtaState.Failed).failure
+        assertEquals(DeviceFirmwareFailureKind.DOWNLOAD, failure.kind)
+        assertEquals(DeviceFirmwareFailureSource.FIRMWARE_STATUS, failure.source)
+        assertEquals(DeviceFirmwareFailureStage.TRANSFER, failure.stage)
+        assertEquals("download failed", failure.technicalMessage)
+        assertEquals("download", failure.field)
+        assertEquals(503, failure.httpStatus)
+        assertEquals("failed", failure.firmwarePhase)
         coordinator.close()
     }
 
@@ -501,6 +593,7 @@ class DeviceOtaCoordinatorTest {
                         hardwareRevision = product.hardwareRevision.value
                     ),
                     firmware = DeviceFirmwareAsset(
+                        version = "2.0.0",
                         filename = otaFilename,
                         url = releaseUrl + otaFilename,
                         sha256 = "a".repeat(64),
@@ -575,13 +668,18 @@ class DeviceOtaCoordinatorTest {
         var statusData: JSONObject = otaStatusData(
             otaSnapshot("starting", active = true, progressPermille = 0)
         )
+        var commandFailure: DeviceRuntimeCommandOutcome<Nothing>? = null
 
+        @Suppress("UNCHECKED_CAST")
         override suspend fun <T> execute(
             deviceUid: DeviceUid,
             command: DeviceRuntimeCommand<T>,
             timeoutMillis: Long
         ): DeviceRuntimeCommandOutcome<T> {
             commands += RecordedCommand(command.action, command.encodeData())
+            commandFailure?.let { failure ->
+                return failure as DeviceRuntimeCommandOutcome<T>
+            }
             val data = when (command.action) {
                 DeviceFirmwareRuntimeContract.Action.OTA_START -> startData
                 DeviceFirmwareRuntimeContract.Action.OTA_STATUS -> statusData
