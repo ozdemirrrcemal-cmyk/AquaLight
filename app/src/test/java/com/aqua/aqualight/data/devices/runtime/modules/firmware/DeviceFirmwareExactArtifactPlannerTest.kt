@@ -55,10 +55,15 @@ class DeviceFirmwareExactArtifactPlannerTest {
     }
 
     @Test
-    fun `display name is descriptive metadata and not part of OTA identity`() {
+    fun `display names are descriptive metadata and not part of OTA identity`() {
         val snapshot = product(PRODUCT_KEY).toSnapshot()
         val original = planner.evaluateUpdate(snapshot, manifest()).getOrThrow()
             as DeviceFirmwareAvailability.UpdateAvailable
+        val reportedSnapshot = snapshot.copy(
+            product = snapshot.product.copy(
+                displayName = "AquaLight ${snapshot.product.displayName}"
+            )
+        )
         val renamedArtifact = artifact().let { artifact ->
             artifact.copy(
                 product = artifact.product.copy(
@@ -67,7 +72,7 @@ class DeviceFirmwareExactArtifactPlannerTest {
             )
         }
         val renamed = planner.evaluateUpdate(
-            snapshot,
+            reportedSnapshot,
             manifest(artifacts = listOf(renamedArtifact))
         ).getOrThrow() as DeviceFirmwareAvailability.UpdateAvailable
 
