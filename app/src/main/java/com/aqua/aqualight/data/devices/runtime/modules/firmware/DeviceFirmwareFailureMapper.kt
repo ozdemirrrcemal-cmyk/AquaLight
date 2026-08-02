@@ -135,13 +135,17 @@ internal object DeviceFirmwareFailureMapper {
         )
     }
 
-    fun fromSnapshot(snapshot: DeviceFirmwareOtaSnapshot): DeviceFirmwareFailure = local(
+    fun fromSnapshot(
+        snapshot: DeviceFirmwareOtaSnapshot,
+        requestId: String
+    ): DeviceFirmwareFailure = local(
         technicalMessage = snapshot.lastError.ifBlank { "Firmware OTA failed." },
         source = DeviceFirmwareFailureSource.FIRMWARE_STATUS,
         stage = snapshot.failureStage(),
         code = "firmware_ota_failed",
         field = snapshot.lastErrorField,
         httpStatus = snapshot.httpStatus,
+        requestId = requestId,
         firmwarePhase = snapshot.phaseRaw
     )
 
