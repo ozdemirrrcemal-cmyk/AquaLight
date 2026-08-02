@@ -8,9 +8,9 @@ Target: **41 authenticated commands / 0 public commands**
 
 - Current stage: **08 — Dosing runtime alignment**
 - Active branch: `feat/dosing-08-runtime-alignment`
-- Status: **IMPLEMENTED — LOCAL CONTRACT/GUARD GATES PASSED; ANDROID CI PENDING**
+- Status: **PASSED — PR #189 READY FOR MERGE APPROVAL**
 - Previous stage: **07 PASSED / PR #188 MERGED**
-- Next: Publish Stage 08 and complete the pull-request CI evidence before merge.
+- Next: Merge Stage 08 only after explicit approval, then open the Stage 09 branch.
 
 ## Fixed rules
 
@@ -179,11 +179,11 @@ Target: **41 authenticated commands / 0 public commands**
   - [x] Repository Python suite passed (138 tests) and all architecture/protocol/catalog guards passed locally
   - [x] Primary Detekt and zero-new-advisory-debt policy passed locally
   - [x] Keep Dosing screens, ViewModels, UI state and presentation resources unchanged
-  - [ ] Android CI
-  - [ ] Installable Debug APK
-  - [ ] Emulator API 27 / 36
-  - [ ] CodeQL Security Scan
-  - [ ] PR evidence recorded
+  - [x] Android CI — run #2912
+  - [x] Installable Debug APK — run #204
+  - [x] Emulator API 27 / 36 — run #1036
+  - [x] CodeQL Security Scan — run #4697
+  - [x] PR evidence recorded on PR #189 for tested head `63e0cfd3d30566cf6f6c9eedc0ff73f7365e6ef2`
   - [x] Physical Dosing screen regression N/A: no production UI consumer is changed in this Stage
 
 - [ ] **09** `feat/ota-09-update-orchestration`
@@ -234,3 +234,4 @@ Target: **41 authenticated commands / 0 public commands**
 | 2026-08-02 | Stage 07 Timer runtime alignment | PASS / PR #188 MERGED | Start Stage 08 |
 | 2026-08-02 | Stage 08 Dosing runtime branch opened | IN PROGRESS | Freeze all 11 firmware contracts |
 | 2026-08-02 | Stage 08 Dosing runtime implementation | LOCAL GATES PASSED | Publish branch and complete PR CI evidence |
+| 2026-08-02 | Stage 08 Dosing pull-request gates | PASS / PR #189 READY | Request explicit merge approval |
