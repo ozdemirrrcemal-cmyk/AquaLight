@@ -4,6 +4,7 @@ import com.aqua.aqualight.data.devices.contract.AqlWsContract
 import com.aqua.aqualight.data.devices.runtime.core.DeviceRuntimeJson
 import org.json.JSONObject
 
+@Suppress("TooManyFunctions")
 internal object DeviceFirmwareReadParser {
     fun parseStatus(data: JSONObject): DeviceFirmwareStatus {
         DeviceRuntimeJson.requireExactKeys(data, ROOT_KEYS, ROOT_LABEL)

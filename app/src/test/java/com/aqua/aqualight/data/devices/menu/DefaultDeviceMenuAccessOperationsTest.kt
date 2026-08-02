@@ -321,10 +321,10 @@ class DefaultDeviceMenuAccessOperationsTest {
         override suspend fun proveCurrentLiveness(deviceUid: DeviceUid): Boolean {
             requestNetworkStatusCalls += 1
             networkStatusRequestGate?.await()
-            if (!livenessProofSucceeds) return false
+            val current = snapshotFlow.value
+            if (!livenessProofSucceeds || current == null) return false
 
             recordControlProofCalls += 1
-            val current = snapshotFlow.value ?: return false
             snapshotFlow.value = current.copy(
                 connectionState = current.connectionState.copy(
                     onlineState = DeviceOnlineState.AUTHENTICATED,
