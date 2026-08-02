@@ -55,6 +55,58 @@ class DeviceFirmwareExactArtifactPlannerTest {
     }
 
     @Test
+    fun `display name is descriptive metadata and not part of OTA identity`() {
+        val snapshot = product(PRODUCT_KEY).toSnapshot()
+        val original = planner.evaluateUpdate(snapshot, manifest()).getOrThrow()
+            as DeviceFirmwareAvailability.UpdateAvailable
+        val renamedArtifact = artifact().let { artifact ->
+            artifact.copy(
+                product = artifact.product.copy(
+                    displayName = "AquaLight ${artifact.product.displayName}"
+                )
+            )
+        }
+        val renamed = planner.evaluateUpdate(
+            snapshot,
+            manifest(artifacts = listOf(renamedArtifact))
+        ).getOrThrow() as DeviceFirmwareAvailability.UpdateAvailable
+
+        assertEquals(original.plan, renamed.plan)
+    }
+
+    @Test
+    fun `every canonical product identity field must match exactly`() {
+        val snapshot = product(PRODUCT_KEY).toSnapshot()
+        val exactArtifact = artifact()
+
+        mismatchedManifestIdentities(exactArtifact.product).forEach { mismatch ->
+            val failure = planner.evaluateUpdate(
+                snapshot,
+                manifest(
+                    artifacts = listOf(
+                        exactArtifact.copy(product = mismatch.product)
+                    )
+                )
+            ).exceptionOrNull()
+
+            assertTrue(
+                "${mismatch.field} mismatch must be rejected.",
+                failure?.message.orEmpty().contains("product identity")
+            )
+        }
+    }
+
+    @Test
+    fun `release channel is exact and unsupported casing is rejected`() {
+        val failure = planner.evaluateUpdate(
+            product(PRODUCT_KEY).toSnapshot(),
+            manifest().copy(channel = "STABLE")
+        ).exceptionOrNull()
+
+        assertTrue(failure?.message.orEmpty().contains("release channel"))
+    }
+
+    @Test
     fun `duplicate exact artifacts fail closed instead of selecting first`() {
         val snapshot = product(PRODUCT_KEY).toSnapshot()
         val exact = artifact()
@@ -107,6 +159,20 @@ class DeviceFirmwareExactArtifactPlannerTest {
             availability.releaseContent.items
         )
     }
+
+    private fun mismatchedManifestIdentities(
+        product: DeviceFirmwareManifestProduct
+    ): List<IdentityMismatch> = listOf(
+        IdentityMismatch("productKey", product.copy(productKey = "${product.productKey}_OTHER")),
+        IdentityMismatch("productId", product.copy(productId = "${product.productId}_OTHER")),
+        IdentityMismatch("family", product.copy(family = "${product.family}_other")),
+        IdentityMismatch("line", product.copy(line = "${product.line}_other")),
+        IdentityMismatch("model", product.copy(model = "${product.model}_other")),
+        IdentityMismatch(
+            "hardwareRevision",
+            product.copy(hardwareRevision = "${product.hardwareRevision}_other")
+        )
+    )
 
     private fun product(productKey: String): AqlCommercialCatalogProduct =
         AqlCommercialDeviceCatalog.products.single { product ->
@@ -268,6 +334,11 @@ class DeviceFirmwareExactArtifactPlannerTest {
         keyId = "release-key-1",
         payloadHash = "b".repeat(64),
         value = "signed-value"
+    )
+
+    private data class IdentityMismatch(
+        val field: String,
+        val product: DeviceFirmwareManifestProduct
     )
 
     private companion object {
