@@ -91,6 +91,9 @@ class DeviceRuntimeRepository(
         @Volatile
         var endpointUrl: String? = null
 
+        @Volatile
+        var endpointAddressBytes: ByteArray? = null
+
         private val closed = AtomicBoolean(false)
         private val collectorJobs = CopyOnWriteArrayList<Job>()
 
@@ -191,8 +194,13 @@ class DeviceRuntimeRepository(
                     IllegalStateException("Device runtime session is no longer active.")
                 )
             }
-            val endpointUrl = AqlPrivateLanEndpoint.route(deviceUid, snapshot.endpoint)?.url
-            val endpointMatches = session.endpointUrl == endpointUrl
+            val endpointRoute = AqlPrivateLanEndpoint.route(deviceUid, snapshot.endpoint)
+            val endpointUrl = endpointRoute?.url
+            val endpointAddressMatches = when (val currentAddress = session.endpointAddressBytes) {
+                null -> endpointRoute?.addressBytes == null
+                else -> endpointRoute?.addressBytes?.let { currentAddress.contentEquals(it) } == true
+            }
+            val endpointMatches = session.endpointUrl == endpointUrl && endpointAddressMatches
             val currentState = session.wsClient.connectionState.value
             if (!RuntimeConnectionReusePolicy.shouldReconnect(currentState, deviceUid, endpointMatches)) {
                 return@synchronized ensureCurrentMetadataBootstrap(
@@ -214,6 +222,7 @@ class DeviceRuntimeRepository(
                 session.connectionStarted = true
             }
             session.endpointUrl = endpointUrl
+            session.endpointAddressBytes = endpointRoute?.addressBytes?.copyOf()
             session.wsClient.connect(deviceUid = deviceUid, endpoint = snapshot.endpoint)
         }
     }
