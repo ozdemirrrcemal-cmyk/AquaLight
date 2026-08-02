@@ -89,7 +89,7 @@ class DeviceFirmwareOtaContractParserTest {
         assertEquals("tr", parsed.releaseNotes.defaultLocale)
         assertEquals(
             listOf("Kalibrasyon kontrolleri geliştirildi."),
-            parsed.releaseNotes.resolve(listOf("tr-TR")).changes
+            parsed.releaseNotes.resolve(listOf("tr-TR")).items
         )
         assertFalse(manifestJson().has("deviceName"))
     }
