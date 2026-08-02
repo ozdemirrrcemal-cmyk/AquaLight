@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Protect shared OTA state coordination, exact artifact selection and signed release content."""
+"""Protect shared OTA state coordination and the exact signed release contract."""
 from __future__ import annotations
 
 import sys
@@ -52,10 +52,22 @@ require_tokens(
     (
         "sealed interface DeviceOtaState",
         "data class DeviceFirmwareReleaseContent",
+        "val items: List<String>",
         "fun observe(deviceUid: String): StateFlow<DeviceOtaState>",
         "suspend fun checkAvailability(",
         "runtimeMetadataGeneration: Long",
         "releaseContent: DeviceFirmwareReleaseContent",
+    ),
+)
+forbid_tokens(
+    "contract",
+    (
+        "val title: String",
+        "val summary: String",
+        "val changes: List<String>",
+        "val warnings: List<String>",
+        "val mandatory: Boolean",
+        "val displayName: String",
     ),
 )
 require_tokens(
@@ -140,33 +152,75 @@ require_tokens(
         "model = snapshot.product.model",
         "runtimeMetadataGeneration = snapshot.runtimeMetadataGeneration",
         "manifest.releaseNotes.resolve",
+        "artifact.product.capabilities == product.expectedManifestCapabilities()",
+        "artifact.product.limits == product.expectedManifestLimits()",
     ),
 )
-forbid_tokens("planner", ("compatibleArtifacts.first()", "compatible.first()"))
+forbid_tokens(
+    "planner",
+    (
+        "compatibleArtifacts.first()",
+        "compatible.first()",
+        "displayName = snapshot.title",
+    ),
+)
 require_tokens(
     "models",
     (
         "val model: String",
         ".put(DeviceFirmwareRuntimeContract.Field.MODEL, model)",
         "data class DeviceFirmwareOtaStartRequestEcho",
+        "data class DeviceFirmwareManifestPlatform",
+        "data class DeviceFirmwareReleaseNoteItem",
         "data class DeviceFirmwareReleaseNotes",
+        "data class DeviceFirmwareManifestCapabilities",
+        "data class DeviceFirmwareManifestLimits",
+        "data class DeviceFirmwareFactoryAsset",
         "sealed interface DeviceFirmwareAvailability",
+        "items = localizedItems",
+    ),
+)
+forbid_tokens(
+    "models",
+    (
+        "DeviceFirmwareLocalizedReleaseNotes",
+        "val mandatory: Boolean",
+        "val locales:",
     ),
 )
 require_tokens(
     "manifest",
     (
-        "root.requireKnownKeys(",
+        'root.requireExactKeys(ROOT_KEYS, "manifest")',
+        "parsePlatform",
         "parseReleaseNotes",
-        "releaseNotes.locales",
-        "requiredReleaseNoteArray",
+        "parseReleaseNoteItems",
+        "DeviceFirmwareRuntimeContract.Manifest.RELEASE_NOTES_SCHEMA",
+        "json.requireExactKeys(PLATFORM_KEYS",
+        "json.requireExactKeys(RELEASE_NOTES_KEYS",
+        "item.requireExactKeys(RELEASE_NOTE_ITEM_KEYS",
         "json.requireExactKeys(SIGNATURE_KEYS",
-        "json.requireKnownKeys(",
         "json.requireExactKeys(PRODUCT_KEYS",
+        "json.requireExactKeys(CAPABILITY_KEYS",
+        "json.requireExactKeys(LIMIT_KEYS",
         "json.requireExactKeys(COMPATIBILITY_KEYS",
-        "json.requireExactKeys(ASSET_KEYS",
+        "json.requireExactKeys(FIRMWARE_ASSET_KEYS",
+        "json.requireExactKeys(FACTORY_ASSET_KEYS",
         "artifact.product.family == artifact.compatibility.family",
         "artifact.product.line == artifact.compatibility.line",
+        "assetVersion == manifestVersion",
+        "requiredNullableObject(\"factory\")",
+    ),
+)
+forbid_tokens(
+    "manifest",
+    (
+        "root.requireKnownKeys(",
+        "json.requireKnownKeys(",
+        "releaseNotes.locales",
+        "requiredReleaseNoteArray",
+        "DeviceFirmwareLocalizedReleaseNotes",
+        "private val ASSET_KEYS =",
     ),
 )
 require_tokens(
