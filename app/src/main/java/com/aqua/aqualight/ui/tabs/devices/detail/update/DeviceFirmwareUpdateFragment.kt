@@ -25,6 +25,8 @@ import androidx.navigation.fragment.navArgs
 import androidx.transition.AutoTransition
 import androidx.transition.TransitionManager
 import com.aqua.aqualight.R
+import com.aqua.aqualight.application.devices.DeviceFirmwareFailure
+import com.aqua.aqualight.application.devices.DeviceFirmwareFailureKind
 import com.aqua.aqualight.application.devices.DeviceFirmwareReleaseContent
 import com.aqua.aqualight.application.devices.DeviceOtaProgressPhase
 import com.aqua.aqualight.composition.requireAppContainer
@@ -85,7 +87,7 @@ class DeviceFirmwareUpdateFragment : Fragment(R.layout.fragment_device_firmware_
             when (latestState.mode) {
                 DeviceFirmwareUpdateMode.AVAILABLE -> viewModel.installUpdate()
                 DeviceFirmwareUpdateMode.FAILED -> {
-                    if (latestState.failureRecoverable) viewModel.retry()
+                    if (latestState.failure?.recoverable == true) viewModel.retry()
                     else findNavController().navigateUp()
                 }
                 DeviceFirmwareUpdateMode.SUCCEEDED,
@@ -154,7 +156,7 @@ class DeviceFirmwareUpdateFragment : Fragment(R.layout.fragment_device_firmware_
         binding.progressTextGroup.isVisible = icon == null
 
         renderProgressIndicator(state, icon)
-        binding.tvUpdatePhase.setText(state.phaseTextRes())
+        binding.tvUpdatePhase.text = state.phaseText()
         binding.tvUpdateProgressDetail.apply {
             val detail = state.progressDetail()
             isVisible = detail.isNotBlank()
@@ -197,9 +199,7 @@ class DeviceFirmwareUpdateFragment : Fragment(R.layout.fragment_device_firmware_
             if (!indeterminate) {
                 binding.progressFirmwareUpdate.setProgressCompat(state.progressPercent, true)
             }
-            binding.progressFirmwareUpdate.contentDescription = getString(
-                state.phaseTextRes()
-            )
+            binding.progressFirmwareUpdate.contentDescription = state.phaseText()
         }
 
         if (state.mode.shouldPulse) startPulseAnimation() else stopPulseAnimation()
@@ -278,11 +278,12 @@ class DeviceFirmwareUpdateFragment : Fragment(R.layout.fragment_device_firmware_
     }
 
     private fun announceStateChange(state: DeviceFirmwareUpdateUiState) {
-        val key = "${state.mode}:${state.phase.orEmptyName()}"
+        val failureKey = state.failure?.run {
+            "$kind:$source:$stage:$code:$field:$statusCode:$httpStatus:$requestId:$firmwarePhase"
+        }.orEmpty()
+        val key = "${state.mode}:${state.phase.orEmptyName()}:$failureKey"
         if (lastAnnouncementKey.isNotBlank() && key != lastAnnouncementKey) {
-            binding.firmwareUpdateContent.announceForAccessibility(
-                getString(state.phaseTextRes())
-            )
+            binding.firmwareUpdateContent.announceForAccessibility(state.phaseText())
         }
         lastAnnouncementKey = key
     }
@@ -347,6 +348,8 @@ class DeviceFirmwareUpdateFragment : Fragment(R.layout.fragment_device_firmware_
     }
 
     private fun DeviceFirmwareUpdateUiState.progressDetail(): CharSequence = when {
+        mode == DeviceFirmwareUpdateMode.FAILED && failure != null ->
+            failure.diagnosticText()
         mode == DeviceFirmwareUpdateMode.IN_PROGRESS && contentLength > 0L -> getString(
             R.string.device_settings_update_progress_bytes,
             Formatter.formatShortFileSize(requireContext(), bytesWritten),
@@ -354,6 +357,58 @@ class DeviceFirmwareUpdateFragment : Fragment(R.layout.fragment_device_firmware_
         )
         mode.isActive -> getString(R.string.device_settings_update_progress_waiting)
         else -> ""
+    }
+
+    private fun DeviceFirmwareFailure.diagnosticText(): String {
+        val details = buildList {
+            add(technicalMessage)
+            if (code.isNotBlank()) add("code=$code")
+            if (field.isNotBlank()) add("field=$field")
+            if (statusCode > 0) add("status=$statusCode")
+            if (httpStatus > 0) add("http=$httpStatus")
+            if (requestId.isNotBlank()) add("request=$requestId")
+            if (firmwarePhase.isNotBlank()) add("phase=$firmwarePhase")
+            add("source=${source.name.lowercase()}")
+            add("stage=${stage.name.lowercase()}")
+        }.joinToString(" · ")
+        return getString(R.string.device_settings_update_failure_diagnostics, details)
+    }
+
+    private fun DeviceFirmwareUpdateUiState.phaseText(): CharSequence {
+        val currentFailure = failure
+        return if (mode == DeviceFirmwareUpdateMode.FAILED && currentFailure != null) {
+            getString(currentFailure.kind.userMessageRes())
+        } else {
+            getString(phaseTextRes())
+        }
+    }
+
+    @StringRes
+    private fun DeviceFirmwareFailureKind.userMessageRes(): Int = when (this) {
+        DeviceFirmwareFailureKind.CONNECTION ->
+            R.string.device_settings_update_failure_connection
+        DeviceFirmwareFailureKind.AUTHENTICATION ->
+            R.string.device_settings_update_failure_authentication
+        DeviceFirmwareFailureKind.UNSUPPORTED ->
+            R.string.device_settings_update_failure_unsupported
+        DeviceFirmwareFailureKind.INVALID_REQUEST ->
+            R.string.device_settings_update_failure_invalid_request
+        DeviceFirmwareFailureKind.COMPATIBILITY ->
+            R.string.device_settings_update_failure_compatibility
+        DeviceFirmwareFailureKind.DOWNLOAD ->
+            R.string.device_settings_update_failure_download
+        DeviceFirmwareFailureKind.STORAGE ->
+            R.string.device_settings_update_failure_storage
+        DeviceFirmwareFailureKind.INTEGRITY ->
+            R.string.device_settings_update_failure_integrity
+        DeviceFirmwareFailureKind.TIMEOUT ->
+            R.string.device_settings_update_failure_timeout
+        DeviceFirmwareFailureKind.PROTOCOL ->
+            R.string.device_settings_update_failure_protocol
+        DeviceFirmwareFailureKind.CANCELLED ->
+            R.string.device_settings_update_failure_cancelled
+        DeviceFirmwareFailureKind.INTERNAL ->
+            R.string.device_settings_update_failure_internal
     }
 
     @StringRes
@@ -382,11 +437,7 @@ class DeviceFirmwareUpdateFragment : Fragment(R.layout.fragment_device_firmware_
         DeviceFirmwareUpdateMode.RESTARTING -> R.string.device_settings_update_phase_restarting
         DeviceFirmwareUpdateMode.SUCCEEDED -> R.string.device_settings_update_phase_succeeded
         DeviceFirmwareUpdateMode.UP_TO_DATE -> R.string.device_settings_update_phase_up_to_date
-        DeviceFirmwareUpdateMode.FAILED -> if (failureRecoverable) {
-            R.string.device_settings_update_phase_failed_recoverable
-        } else {
-            R.string.device_settings_update_phase_failed_terminal
-        }
+        DeviceFirmwareUpdateMode.FAILED -> R.string.device_settings_update_failure_internal
         DeviceFirmwareUpdateMode.UNSUPPORTED -> R.string.device_settings_update_phase_unsupported
     }
 
@@ -448,7 +499,7 @@ class DeviceFirmwareUpdateFragment : Fragment(R.layout.fragment_device_firmware_
             enabled = true
         )
         DeviceFirmwareUpdateMode.FAILED -> ActionPresentation(
-            textRes = if (failureRecoverable) {
+            textRes = if (failure?.recoverable == true) {
                 R.string.device_settings_retry_update_action
             } else {
                 R.string.device_settings_update_close_action
