@@ -12,6 +12,7 @@ FILES = {
     "contract": SOURCE / "application/devices/DeviceFirmwareUpdateOperations.kt",
     "adapter": SOURCE / "data/devices/DefaultDeviceFirmwareUpdateOperations.kt",
     "coordinator": SOURCE / "data/devices/runtime/modules/firmware/DeviceOtaCoordinator.kt",
+    "failure_mapper": SOURCE / "data/devices/runtime/modules/firmware/DeviceFirmwareFailureMapper.kt",
     "runtime": SOURCE / "data/devices/runtime/modules/firmware/DeviceFirmwareRuntimeRepository.kt",
     "validation": SOURCE / "data/devices/runtime/modules/firmware/DeviceOtaValidation.kt",
     "planner": SOURCE / "data/devices/runtime/modules/firmware/DeviceFirmwareUpdatePlanner.kt",
@@ -55,7 +56,19 @@ require_tokens(
     (
         "sealed interface DeviceOtaState",
         "data class DeviceFirmwareReleaseContent",
-        "val items: List<String>",
+        "data class DeviceFirmwareFailure(",
+        "enum class DeviceFirmwareFailureKind",
+        "enum class DeviceFirmwareFailureSource",
+        "enum class DeviceFirmwareFailureStage",
+        "val technicalMessage: String",
+        "val statusCode: Int",
+        "val httpStatus: Int",
+        "val requestId: String",
+        "val firmwarePhase: String",
+        "data class Failed(",
+        "val failure: DeviceFirmwareFailure",
+        "data class DeviceFirmwareCommandResult(",
+        "val failure: DeviceFirmwareFailure?",
         "fun observe(deviceUid: String): StateFlow<DeviceOtaState>",
         "suspend fun checkAvailability(",
         "runtimeMetadataGeneration: Long",
@@ -65,6 +78,10 @@ require_tokens(
 forbid_tokens(
     "contract",
     (
+        "val errorMessage: String",
+        "val failureMessage: String",
+        "val failureRecoverable: Boolean",
+        "data class Failed(\n        override val deviceUid: String,\n        val message: String",
         "val title: String",
         "val summary: String",
         "val changes: List<String>",
@@ -82,6 +99,8 @@ require_tokens(
         "coordinator.startUpdate(plan)",
         "coordinator.requestStatus(",
         "coordinator.clearStatus(",
+        "state.failure.technicalMessage",
+        "failure.run",
         "recoverRuntime = devicesRepository::replaceRuntimeAfterControlFailure",
         "runtimeLifecycleEvents = devicesRepository.runtimeLifecycleEvents()",
         "runtimeTypedEvents = devicesRepository.typedRuntimeEvents()",
@@ -98,6 +117,11 @@ require_tokens(
         "parseOtaProgressEventExact",
         "selected.runtimeGeneration != event.generation",
         "Firmware OTA request echo differs from the selected plan.",
+        "DeviceFirmwareFailureMapper.fromOutcome",
+        "DeviceFirmwareFailureMapper.fromThrowable",
+        "DeviceFirmwareFailureMapper.local",
+        "DeviceOtaState.Failed(",
+        "failure = failure",
         "DeviceOtaState.Recovering",
         "private val startLocks = ConcurrentHashMap<DeviceUid, Mutex>()",
         "startLock(deviceUid).withLock",
@@ -110,6 +134,30 @@ require_tokens(
         "DeviceRuntimeLifecycleEvent.Unavailable",
     ),
 )
+forbid_tokens(
+    "coordinator",
+    (
+        "errorDescription()",
+        "errorMessage =",
+        "message = error",
+        "field = (outcome as?",
+    ),
+)
+require_tokens(
+    "failure_mapper",
+    (
+        "internal object DeviceFirmwareFailureMapper",
+        "fun fromThrowable(",
+        "fun local(",
+        "fun fromOutcome(",
+        "fun fromSnapshot(",
+        "DeviceRuntimeCommandOutcome.FirmwareError",
+        "statusCode = outcome.statusCode",
+        "requestId = outcome.messageId",
+        "httpStatus = snapshot.httpStatus",
+        "firmwarePhase = snapshot.phaseRaw",
+    ),
+)
 require_tokens(
     "runtime",
     (
@@ -117,6 +165,7 @@ require_tokens(
         "gateway.execute(",
         "suspend fun startOta(",
         "suspend fun readOtaStatus(",
+        "DeviceRuntimeCommandOutcome<DeviceFirmwareOtaStatusResponse>",
         "suspend fun clearOtaStatus(",
         "DeviceFirmwareStatusParser.parseOtaStartAcceptedExact",
         "DeviceFirmwareStatusParser.parseOtaClearResultExact",
@@ -141,6 +190,7 @@ require_tokens(
         "snapshot.bytesWritten != plan.firmware.size.toLong()",
         "snapshot.firmwareVersion != plan.targetVersion",
         "object DeviceOtaStateMapper",
+        "DeviceFirmwareFailureMapper.fromSnapshot(snapshot)",
     ),
 )
 require_tokens(
@@ -209,13 +259,19 @@ require_tokens(
     (
         "val model: String",
         ".put(DeviceFirmwareRuntimeContract.Field.MODEL, model)",
+        "data class DeviceFirmwareRuntimeInfo",
+        "val runtime: DeviceFirmwareRuntimeInfo",
         "data class DeviceFirmwareOtaStartRequestEcho",
+        "data class DeviceFirmwareOtaStatusResponse",
+        "data class DeviceFirmwareOtaEvent",
+        "data class DeviceFirmwareOtaClearPrevious",
         "data class DeviceFirmwareManifestPlatform",
         "data class DeviceFirmwareReleaseNoteItem",
         "data class DeviceFirmwareReleaseNotes",
         "data class DeviceFirmwareManifestCapabilities",
         "data class DeviceFirmwareManifestLimits",
         "data class DeviceFirmwareFactoryAsset",
+        "data class DeviceFirmwareAsset(\n    val version: String",
         "sealed interface DeviceFirmwareAvailability",
         "items = localizedItems",
     ),
@@ -226,6 +282,7 @@ forbid_tokens(
         "DeviceFirmwareLocalizedReleaseNotes",
         "val mandatory: Boolean",
         "val locales:",
+        "val request: DeviceFirmwareOtaStartRequestEcho?",
     ),
 )
 require_tokens(
@@ -248,7 +305,8 @@ require_tokens(
         "json.requireExactKeys(FACTORY_ASSET_KEYS",
         "artifact.product.family == artifact.compatibility.family",
         "artifact.product.line == artifact.compatibility.line",
-        "assetVersion == manifestVersion",
+        "version == manifestVersion",
+        "version = version",
         "requiredNullableObject(\"factory\")",
     ),
 )
@@ -268,8 +326,11 @@ require_tokens(
     (
         "parseOtaStartAcceptedExact",
         "parseOtaStatusResponseExact",
+        "DeviceFirmwareOtaStatusResponse(",
         "parseOtaProgressEventExact",
+        "DeviceFirmwareOtaEvent(",
         "parseOtaClearResultExact",
+        "DeviceFirmwareOtaClearPrevious(",
         "parseOtaSnapshotExact",
         'model = json.requiredExactString("model")',
         "OTA active flag differs from its exact phase.",
@@ -278,6 +339,7 @@ require_tokens(
 require_tokens(
     "live_manifest_test",
     (
+        "assertEquals(verified.manifest.version, artifact.firmware.version)",
         "DeviceFirmwareManifestContractValidator.requireValid(",
         "DeviceFirmwareProductIdentity.fromCompatibility(",
         "DeviceFirmwareProductIdentity.fromCatalog(product) == manifestIdentity",
