@@ -1,5 +1,6 @@
 package com.aqua.aqualight.data.devices.contract
 
+import com.aqua.aqualight.data.devices.catalog.AqlCommercialCatalogProduct
 import com.aqua.aqualight.data.devices.catalog.AqlCommercialDeviceCatalog
 import com.aqua.aqualight.data.devices.catalog.expectedRuntimeModules
 import com.aqua.aqualight.data.devices.model.DeviceFamily
@@ -199,139 +200,135 @@ class AqlFirmwareInteroperabilityTest {
 
         fixtureProducts.forEach { expected ->
             val product = actualProducts.getValue(expected.getString("productKey"))
-            val limits = expected.getJSONObject("limits")
             val profile = fixtureProfiles.getJSONObject(expected.getString("profile"))
-            val capabilities = profile.getJSONObject("capabilities")
 
-            assertEquals(expected.getString("productId"), product.productId.value)
-            assertEquals(expected.getString("family"), product.family.wireValue)
-            assertEquals(expected.getString("line"), product.line.value)
-            assertEquals(expected.getString("model"), product.model.value)
-            assertEquals(expected.getString("displayName"), product.displayName)
-            assertEquals(expected.getString("skuId"), product.skuId.value)
-            assertEquals(expected.getString("skuCode"), product.skuCode.value)
-            assertEquals(expected.getString("hardwareRevision"), product.hardwareRevision.value)
-            assertEquals(limits.getInt("lightChannelCount"), product.limits.lightChannelCount)
-            assertEquals(limits.getInt("fanOutputCount"), product.limits.fanOutputCount)
-            assertEquals(
-                limits.getInt("temperatureSensorCount"),
-                product.limits.temperatureSensorCount
-            )
-            assertEquals(limits.getInt("timerChannelCount"), product.limits.timerChannelCount)
-            assertEquals(limits.getInt("dosingChannelCount"), product.limits.dosingChannelCount)
-
-            assertEquals(capabilities.getBoolean("light"), product.profile.capabilities.light)
-            assertEquals(
-                capabilities.getBoolean("manualLight"),
-                product.profile.capabilities.manualLight
-            )
-            assertEquals(
-                capabilities.getBoolean("lightProgram"),
-                product.profile.capabilities.lightProgram
-            )
-            assertEquals(
-                capabilities.getBoolean("lightPresets"),
-                product.profile.capabilities.lightPresets
-            )
-            assertEquals(
-                capabilities.getBoolean("lightSimulation"),
-                product.profile.capabilities.lightSimulation
-            )
-            assertEquals(capabilities.getBoolean("fan"), product.profile.capabilities.fan)
-            assertEquals(capabilities.getBoolean("cooling"), product.profile.capabilities.cooling)
-            assertEquals(
-                capabilities.getBoolean("temperature"),
-                product.profile.capabilities.temperature
-            )
-            assertEquals(
-                capabilities.getBoolean("standaloneTimer"),
-                product.profile.capabilities.standaloneTimer
-            )
-            assertEquals(capabilities.getBoolean("dosing"), product.profile.capabilities.dosing)
-            assertEquals(capabilities.getBoolean("timeSync"), product.profile.capabilities.timeSync)
-            assertEquals(capabilities.getBoolean("ota"), product.profile.capabilities.ota)
-            assertEquals(
-                profile.getJSONArray("supportedFeatures").asStringSet(),
-                product.profile.supportedFeatures.mapTo(linkedSetOf()) { it.wireValue }
-            )
-            assertEquals(
-                profile.getJSONArray("supportedScreens").asStringSet(),
-                product.profile.supportedScreens.mapTo(linkedSetOf()) { it.wireValue }
-            )
-            assertEquals(
-                profile.getJSONArray("expectedMenuFeatures").asStringSet(),
-                product.profile.expectedMenuFeatureNames
-            )
-
-            val modules = product.expectedRuntimeModules()
-            assertEquals(product.family == DeviceFamily.LIGHT, modules.light)
-            assertEquals(product.profile.capabilities.cooling, modules.cooling)
-            assertEquals(product.profile.capabilities.temperature, modules.temperature)
-            assertEquals(product.family == DeviceFamily.TIMER, modules.timerApi)
-            assertEquals(
-                product.family == DeviceFamily.TIMER || product.family == DeviceFamily.DOSING,
-                modules.timerEngine
-            )
-            assertEquals(product.family == DeviceFamily.DOSING, modules.dosing)
-            assertTrue(modules.network)
-            assertTrue(modules.discovery)
-            assertTrue(modules.firmware)
-            assertTrue(modules.system)
+            assertProductIdentity(expected, product)
+            assertProductLimits(expected.getJSONObject("limits"), product)
+            assertProductCapabilities(profile.getJSONObject("capabilities"), product)
+            assertProductProfileSets(profile, product)
+            assertProductRuntimeModules(product)
         }
     }
 
-    private fun actualSerializerFields(): Map<String, Set<String>> {
-        val rtc = DeviceManualRtcPayload(
-            year = 2026,
-            month = 8,
-            day = 2,
-            weekday = 1,
-            hour = 12,
-            minute = 30,
-            second = 15,
-            timezoneId = "Europe/Istanbul",
-            posixTimeZone = "<+03>-3",
-            utcOffsetMinutes = 180
-        ).toJson()
-        val lightPercent = DeviceLightManualChannelPayload("red", percent = 50.0).toJson()
-        val lightValue = DeviceLightManualChannelPayload("green", value = 0.5).toJson()
-        val pointByMillis = DeviceLightProgramPointPayload(
-            timeMs = 0L,
-            percent = 50.0
-        ).toJson()
-        val pointByText = DeviceLightProgramPointPayload(
-            time = "12:00",
-            value = 0.5
-        ).toJson()
-        val coolingFan = DeviceCoolingFanDisplayNamePayload("fan-1", "Front fan")
-        val timerChannel = DeviceTimerChannelConfig(
-            channelKey = "relay-1",
-            displayName = "Filter",
-            regime = DeviceTimerRegime.AUTO
+    private fun assertProductIdentity(
+        expected: JSONObject,
+        product: AqlCommercialCatalogProduct
+    ) {
+        assertEquals(expected.getString("productId"), product.productId.value)
+        assertEquals(expected.getString("family"), product.family.wireValue)
+        assertEquals(expected.getString("line"), product.line.value)
+        assertEquals(expected.getString("model"), product.model.value)
+        assertEquals(expected.getString("displayName"), product.displayName)
+        assertEquals(expected.getString("skuId"), product.skuId.value)
+        assertEquals(expected.getString("skuCode"), product.skuCode.value)
+        assertEquals(expected.getString("hardwareRevision"), product.hardwareRevision.value)
+    }
+
+    private fun assertProductLimits(
+        expected: JSONObject,
+        product: AqlCommercialCatalogProduct
+    ) {
+        assertEquals(expected.getInt("lightChannelCount"), product.limits.lightChannelCount)
+        assertEquals(expected.getInt("fanOutputCount"), product.limits.fanOutputCount)
+        assertEquals(
+            expected.getInt("temperatureSensorCount"),
+            product.limits.temperatureSensorCount
         )
-        val timerSchedule = DeviceTimerScheduleConfig(
-            enabled = true,
-            name = "Day",
-            channelKey = "relay-1",
-            weekdays = WEEKDAYS,
-            startTimeMs = 1_000L,
-            intervalOnMs = 1_000L,
-            intervalOffMs = 1_000L,
-            repeatCount = 1
+        assertEquals(expected.getInt("timerChannelCount"), product.limits.timerChannelCount)
+        assertEquals(expected.getInt("dosingChannelCount"), product.limits.dosingChannelCount)
+    }
+
+    private fun assertProductCapabilities(
+        expected: JSONObject,
+        product: AqlCommercialCatalogProduct
+    ) {
+        val actual = product.profile.capabilities
+        assertEquals(expected.getBoolean("light"), actual.light)
+        assertEquals(expected.getBoolean("manualLight"), actual.manualLight)
+        assertEquals(expected.getBoolean("lightProgram"), actual.lightProgram)
+        assertEquals(expected.getBoolean("lightPresets"), actual.lightPresets)
+        assertEquals(expected.getBoolean("lightSimulation"), actual.lightSimulation)
+        assertEquals(expected.getBoolean("fan"), actual.fan)
+        assertEquals(expected.getBoolean("cooling"), actual.cooling)
+        assertEquals(expected.getBoolean("temperature"), actual.temperature)
+        assertEquals(expected.getBoolean("standaloneTimer"), actual.standaloneTimer)
+        assertEquals(expected.getBoolean("dosing"), actual.dosing)
+        assertEquals(expected.getBoolean("timeSync"), actual.timeSync)
+        assertEquals(expected.getBoolean("ota"), actual.ota)
+    }
+
+    private fun assertProductProfileSets(
+        expected: JSONObject,
+        product: AqlCommercialCatalogProduct
+    ) {
+        assertEquals(
+            expected.getJSONArray("supportedFeatures").asStringSet(),
+            product.profile.supportedFeatures.mapTo(linkedSetOf()) { it.wireValue }
         )
-        val dosingSettings = DeviceDosingChannelDosingConfig(
+        assertEquals(
+            expected.getJSONArray("supportedScreens").asStringSet(),
+            product.profile.supportedScreens.mapTo(linkedSetOf()) { it.wireValue }
+        )
+        assertEquals(
+            expected.getJSONArray("expectedMenuFeatures").asStringSet(),
+            product.profile.expectedMenuFeatureNames
+        )
+    }
+
+    private fun assertProductRuntimeModules(product: AqlCommercialCatalogProduct) {
+        val modules = product.expectedRuntimeModules()
+        assertEquals(product.family == DeviceFamily.LIGHT, modules.light)
+        assertEquals(product.profile.capabilities.cooling, modules.cooling)
+        assertEquals(product.profile.capabilities.temperature, modules.temperature)
+        assertEquals(product.family == DeviceFamily.TIMER, modules.timerApi)
+        assertEquals(
+            product.family == DeviceFamily.TIMER || product.family == DeviceFamily.DOSING,
+            modules.timerEngine
+        )
+        assertEquals(product.family == DeviceFamily.DOSING, modules.dosing)
+        assertTrue(modules.network)
+        assertTrue(modules.discovery)
+        assertTrue(modules.firmware)
+        assertTrue(modules.system)
+    }
+
+    private fun actualSerializerFields(): Map<String, Set<String>> =
+        linkedMapOf<String, Set<String>>().apply {
+            putAll(coolingSerializerFields())
+            putAll(dosingSerializerFields())
+            putAll(firmwareSerializerFields())
+            putAll(lightSerializerFields())
+            putAll(deviceAndTimeSerializerFields())
+            putAll(timerSerializerFields())
+        }
+
+    private fun coolingSerializerFields(): Map<String, Set<String>> {
+        val fan = DeviceCoolingFanDisplayNamePayload("fan-1", "Front fan")
+        return linkedMapOf(
+            "DeviceCoolingConfigApplyPayload" to DeviceCoolingConfigApplyPayload(
+                mode = DeviceCoolingMode.AUTO,
+                minTemperatureC = 24.0,
+                maxTemperatureC = 27.0,
+                fans = listOf(fan)
+            ).toJson().keySetExact(),
+            "DeviceCoolingFanDisplayNamePayload" to fan.toJson().keySetExact()
+        )
+    }
+
+    private fun dosingSerializerFields(): Map<String, Set<String>> {
+        val settings = DeviceDosingChannelDosingConfig(
             doseMsPerMl = 1_000L,
             lastCalibratedAt = 1L,
             reservoirTrackingEnabled = true,
             reservoirCapacityMl = 500.0
         )
-        val dosingChannel = DeviceDosingChannelConfig(
+        val channel = DeviceDosingChannelConfig(
             channelKey = "pump-1",
             displayName = "Macro",
             regime = DeviceDosingRegime.AUTO,
-            dosing = dosingSettings
+            dosing = settings
         )
-        val dosingSchedule = DeviceDosingScheduleConfig(
+        val schedule = DeviceDosingScheduleConfig(
             enabled = true,
             name = "Morning dose",
             channelKey = "pump-1",
@@ -344,32 +341,40 @@ class AqlFirmwareInteroperabilityTest {
         )
 
         return linkedMapOf(
-            "DeviceCoolingConfigApplyPayload" to DeviceCoolingConfigApplyPayload(
-                mode = DeviceCoolingMode.AUTO,
-                minTemperatureC = 24.0,
-                maxTemperatureC = 27.0,
-                fans = listOf(coolingFan)
-            ).toJson().keySetExact(),
-            "DeviceCoolingFanDisplayNamePayload" to coolingFan.toJson().keySetExact(),
             "DeviceDosingCalibrationFinishPayload" to
                 DeviceDosingCalibrationFinishPayload("pump-1", 10.0).toJson().keySetExact(),
             "DeviceDosingCalibrationStartPayload" to
                 DeviceDosingCalibrationStartPayload("pump-1").toJson().keySetExact(),
-            "DeviceDosingChannelConfig" to dosingChannel.toJson().keySetExact(),
-            "DeviceDosingChannelDosingConfig" to dosingSettings.toJson().keySetExact(),
+            "DeviceDosingChannelConfig" to channel.toJson().keySetExact(),
+            "DeviceDosingChannelDosingConfig" to settings.toJson().keySetExact(),
             "DeviceDosingChannelKeyPayload" to
                 DeviceDosingChannelKeyPayload("pump-1").toJson().keySetExact(),
             "DeviceDosingConfigApplyPayload" to DeviceDosingConfigApplyPayload(
-                channels = listOf(dosingChannel),
-                schedules = listOf(dosingSchedule)
+                channels = listOf(channel),
+                schedules = listOf(schedule)
             ).toJson().keySetExact(),
             "DeviceDosingDoseNowPayload" to
                 DeviceDosingDoseNowPayload("pump-1", 1.0, true).toJson().keySetExact(),
-            "DeviceDosingScheduleConfig" to dosingSchedule.toJson().keySetExact(),
-            "DeviceFirmwareOtaStartPayload" to otaStartPayload().keySetExact(),
-            "DeviceLightChannelRegimeSetPayload" to
-                DeviceLightChannelRegimeSetPayload("red", DeviceLightRegime.AUTO).toJson().keySetExact(),
-            "DeviceLightManualChannelPayload" to unionKeys(lightPercent, lightValue),
+            "DeviceDosingScheduleConfig" to schedule.toJson().keySetExact()
+        )
+    }
+
+    private fun firmwareSerializerFields(): Map<String, Set<String>> = linkedMapOf(
+        "DeviceFirmwareOtaStartPayload" to otaStartPayload().keySetExact()
+    )
+
+    private fun lightSerializerFields(): Map<String, Set<String>> {
+        val percent = DeviceLightManualChannelPayload("red", percent = 50.0).toJson()
+        val value = DeviceLightManualChannelPayload("green", value = 0.5).toJson()
+        val pointByMillis = DeviceLightProgramPointPayload(timeMs = 0L, percent = 50.0).toJson()
+        val pointByText = DeviceLightProgramPointPayload(time = "12:00", value = 0.5).toJson()
+
+        return linkedMapOf(
+            "DeviceLightChannelRegimeSetPayload" to DeviceLightChannelRegimeSetPayload(
+                "red",
+                DeviceLightRegime.AUTO
+            ).toJson().keySetExact(),
+            "DeviceLightManualChannelPayload" to unionKeys(percent, value),
             "DeviceLightManualSetPayload" to DeviceLightManualSetPayload(
                 channels = listOf(DeviceLightManualChannelPayload("red", percent = 50.0))
             ).toJson().keySetExact(),
@@ -382,7 +387,25 @@ class AqlFirmwareInteroperabilityTest {
                 DeviceLightProgramDeletePayload(0).toJson().keySetExact(),
             "DeviceLightProgramPointPayload" to unionKeys(pointByMillis, pointByText),
             "DeviceLightTemperatureProtectionSetPayload" to
-                DeviceLightTemperatureProtectionSetPayload(60.0).toJson().keySetExact(),
+                DeviceLightTemperatureProtectionSetPayload(60.0).toJson().keySetExact()
+        )
+    }
+
+    private fun deviceAndTimeSerializerFields(): Map<String, Set<String>> {
+        val rtc = DeviceManualRtcPayload(
+            year = 2026,
+            month = 8,
+            day = 2,
+            weekday = 1,
+            hour = 12,
+            minute = 30,
+            second = 15,
+            timezoneId = "Europe/Istanbul",
+            posixTimeZone = "<+03>-3",
+            utcOffsetMinutes = 180
+        ).toJson()
+
+        return linkedMapOf(
             "DeviceManualRtcPayload" to rtc.keySetExact(),
             "DeviceManualRtcPayload.parts" to rtc.getJSONObject("parts").keySetExact(),
             "DeviceNameSetRequest" to DeviceNameSetRequest("Display tank").toJson().keySetExact(),
@@ -396,15 +419,36 @@ class AqlFirmwareInteroperabilityTest {
                 timezoneId = "Europe/Istanbul",
                 posixTimeZone = "<+03>-3",
                 utcOffsetMinutes = 180
-            ).toJson().keySetExact(),
-            "DeviceTimerChannelConfig" to timerChannel.toJson().keySetExact(),
+            ).toJson().keySetExact()
+        )
+    }
+
+    private fun timerSerializerFields(): Map<String, Set<String>> {
+        val channel = DeviceTimerChannelConfig(
+            channelKey = "relay-1",
+            displayName = "Filter",
+            regime = DeviceTimerRegime.AUTO
+        )
+        val schedule = DeviceTimerScheduleConfig(
+            enabled = true,
+            name = "Day",
+            channelKey = "relay-1",
+            weekdays = WEEKDAYS,
+            startTimeMs = 1_000L,
+            intervalOnMs = 1_000L,
+            intervalOffMs = 1_000L,
+            repeatCount = 1
+        )
+
+        return linkedMapOf(
+            "DeviceTimerChannelConfig" to channel.toJson().keySetExact(),
             "DeviceTimerChannelSetPayload" to
                 DeviceTimerChannelSetPayload("relay-1", DeviceTimerRegime.AUTO).toJson().keySetExact(),
             "DeviceTimerConfigApplyPayload" to DeviceTimerConfigApplyPayload(
-                channels = listOf(timerChannel),
-                schedules = listOf(timerSchedule)
+                channels = listOf(channel),
+                schedules = listOf(schedule)
             ).toJson().keySetExact(),
-            "DeviceTimerScheduleConfig" to timerSchedule.toJson().keySetExact()
+            "DeviceTimerScheduleConfig" to schedule.toJson().keySetExact()
         )
     }
 
