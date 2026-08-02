@@ -159,6 +159,7 @@ android {
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
         buildConfigField "String", "AQL_OTA_MANIFEST_PUBLIC_KEY_PEM", aqlBuildConfigString(otaManifestPublicKeyPem)
         buildConfigField "String", "AQL_OTA_MANIFEST_KEY_ID", aqlBuildConfigString(otaManifestKeyId)
+        buildConfigField "String", "AQL_OTA_MANIFEST_URL", aqlBuildConfigString(stableOtaManifestUrl)
     }
 
     signingConfigs {
@@ -180,7 +181,6 @@ android {
             minifyEnabled true
             shrinkResources true
             proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
-            buildConfigField "String", "AQL_OTA_MANIFEST_URL", aqlBuildConfigString(stableOtaManifestUrl)
         }
 
         releaseSmoke {
@@ -191,7 +191,6 @@ android {
             minifyEnabled true
             shrinkResources true
             versionNameSuffix "-smoke"
-            buildConfigField "String", "AQL_OTA_MANIFEST_URL", aqlBuildConfigString(stableOtaManifestUrl)
         }
     }
 
