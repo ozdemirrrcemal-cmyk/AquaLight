@@ -109,6 +109,7 @@ require_tokens(
 require_tokens(
     "coordinator",
     (
+        "private class AvailabilityFailure(",
         "events.collect(::processLifecycleEvent)",
         "events.collect(::processTypedEvent)",
         "updates.collect(::processSnapshotUpdates)",
@@ -122,6 +123,9 @@ require_tokens(
         "DeviceFirmwareFailureMapper.local",
         "DeviceOtaState.Failed(",
         "failure = failure",
+        "requestId = outcome.messageId",
+        "requestId = event.messageId",
+        "requestId = requestId",
         "DeviceOtaState.Recovering",
         "private val startLocks = ConcurrentHashMap<DeviceUid, Mutex>()",
         "startLock(deviceUid).withLock",
@@ -151,10 +155,12 @@ require_tokens(
         "fun local(",
         "fun fromOutcome(",
         "fun fromSnapshot(",
+        "requestId: String",
         "DeviceRuntimeCommandOutcome.FirmwareError",
         "statusCode = outcome.statusCode",
         "requestId = outcome.messageId",
         "httpStatus = snapshot.httpStatus",
+        "requestId = requestId",
         "firmwarePhase = snapshot.phaseRaw",
     ),
 )
@@ -190,7 +196,8 @@ require_tokens(
         "snapshot.bytesWritten != plan.firmware.size.toLong()",
         "snapshot.firmwareVersion != plan.targetVersion",
         "object DeviceOtaStateMapper",
-        "DeviceFirmwareFailureMapper.fromSnapshot(snapshot)",
+        "requestId: String",
+        "DeviceFirmwareFailureMapper.fromSnapshot(snapshot, requestId)",
     ),
 )
 require_tokens(
