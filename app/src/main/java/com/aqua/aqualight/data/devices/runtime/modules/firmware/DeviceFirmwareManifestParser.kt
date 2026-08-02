@@ -336,7 +336,9 @@ object DeviceFirmwareManifestParser {
         require(url.startsWith(DeviceFirmwareRuntimeContract.OFFICIAL_RELEASE_URL_PREFIX)) {
             "$label URL must target the official AquaLight release repository."
         }
-        require(url.startsWith("https://")) { "$label URL must use HTTPS." }
+        require(url.startsWith("https://")) {
+            "$label URL must use the secure scheme."
+        }
     }
 
     private fun JSONObject.requiredObject(key: String): JSONObject {
