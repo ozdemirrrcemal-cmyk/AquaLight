@@ -1,7 +1,6 @@
 package com.aqua.aqualight.data.devices.runtime.modules.firmware
 
 import com.aqua.aqualight.data.devices.catalog.AqlCommercialCatalogProduct
-import com.aqua.aqualight.data.devices.catalog.AqlCommercialCatalogValidation
 import com.aqua.aqualight.data.devices.catalog.AqlCommercialDeviceCatalog
 import com.aqua.aqualight.data.devices.model.DeviceSnapshot
 import java.util.Locale
@@ -18,7 +17,7 @@ class DeviceFirmwareUpdatePlanner(
         manifest: DeviceFirmwareManifest,
         applyNow: Boolean = true
     ): Result<DeviceFirmwareAvailability> = runCatching {
-        val product = requireValidatedProduct(snapshot)
+        val product = requireExactCatalogProduct(snapshot)
         require(manifest.isSupportedSchema) {
             "Unsupported AquaLight OTA manifest."
         }
@@ -91,17 +90,23 @@ class DeviceFirmwareUpdatePlanner(
         }
     }
 
-    private fun requireValidatedProduct(snapshot: DeviceSnapshot): AqlCommercialCatalogProduct {
+    private fun requireExactCatalogProduct(
+        snapshot: DeviceSnapshot
+    ): AqlCommercialCatalogProduct {
         require(snapshot.hasValidatedRuntimeMetadata) {
             "OTA requires current authenticated runtime metadata."
         }
-        return when (val validation = AqlCommercialDeviceCatalog.validateSnapshot(snapshot)) {
-            is AqlCommercialCatalogValidation.Valid -> validation.product
-            is AqlCommercialCatalogValidation.Invalid -> error(
-                "OTA catalog validation failed: " +
-                    "${validation.failure.code}:${validation.failure.field}"
-            )
+        val deviceIdentity = DeviceFirmwareProductIdentity.fromSnapshot(snapshot.product)
+        require(deviceIdentity.isComplete) {
+            "OTA device product identity is incomplete."
         }
+        val matchingProducts = AqlCommercialDeviceCatalog.products.filter { product ->
+            DeviceFirmwareProductIdentity.fromCatalog(product) == deviceIdentity
+        }
+        require(matchingProducts.size == 1) {
+            "OTA device product identity must match exactly one Android catalog product."
+        }
+        return matchingProducts.single()
     }
 
     private fun exactSingleArtifact(
