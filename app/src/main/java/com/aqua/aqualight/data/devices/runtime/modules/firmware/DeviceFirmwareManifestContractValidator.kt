@@ -13,12 +13,14 @@ internal data class DeviceFirmwareProductIdentity(
     val hardwareRevision: String
 ) {
     val isComplete: Boolean
-        get() = productKey.isNotBlank() &&
-            productId.isNotBlank() &&
-            family.isNotBlank() &&
-            line.isNotBlank() &&
-            model.isNotBlank() &&
-            hardwareRevision.isNotBlank()
+        get() = listOf(
+            productKey,
+            productId,
+            family,
+            line,
+            model,
+            hardwareRevision
+        ).all { value -> value.isNotBlank() }
 
     companion object {
         fun fromCatalog(product: AqlCommercialCatalogProduct) =
