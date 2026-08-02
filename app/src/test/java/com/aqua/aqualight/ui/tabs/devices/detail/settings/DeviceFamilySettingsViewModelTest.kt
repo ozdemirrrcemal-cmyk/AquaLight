@@ -1,15 +1,19 @@
 package com.aqua.aqualight.ui.tabs.devices.detail.settings
 
-import com.aqua.aqualight.application.devices.DeviceRootCatalogState
 import com.aqua.aqualight.application.devices.DeviceFirmwareCommandResult
+import com.aqua.aqualight.application.devices.DeviceFirmwareFailure
+import com.aqua.aqualight.application.devices.DeviceFirmwareFailureKind
+import com.aqua.aqualight.application.devices.DeviceFirmwareFailureSource
+import com.aqua.aqualight.application.devices.DeviceFirmwareFailureStage
 import com.aqua.aqualight.application.devices.DeviceFirmwareReleaseContent
 import com.aqua.aqualight.application.devices.DeviceFirmwareUpdateOperations
 import com.aqua.aqualight.application.devices.DeviceOtaState
-import com.aqua.aqualight.application.devices.PreparedDeviceFirmwareUpdate
+import com.aqua.aqualight.application.devices.DeviceRootCatalogState
 import com.aqua.aqualight.application.devices.DeviceRootOperations
 import com.aqua.aqualight.application.devices.DeviceRootSnapshot
 import com.aqua.aqualight.application.devices.OwnerDeviceAvailability
 import com.aqua.aqualight.application.devices.OwnerDeviceFamily
+import com.aqua.aqualight.application.devices.PreparedDeviceFirmwareUpdate
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.Flow
@@ -20,6 +24,7 @@ import kotlinx.coroutines.test.UnconfinedTestDispatcher
 import kotlinx.coroutines.test.resetMain
 import kotlinx.coroutines.test.setMain
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertSame
 import org.junit.Rule
 import org.junit.Test
 import org.junit.rules.TestWatcher
@@ -94,6 +99,24 @@ class DeviceFamilySettingsViewModelTest {
         assertEquals(0, firmware.statusCalls)
     }
 
+    @Test
+    fun `settings action retains complete structured failure`() {
+        val failure = failure()
+        val firmware = FakeFirmwareOperations(preparedPlan())
+        val viewModel = DeviceFamilySettingsViewModel(
+            rootOperations = FakeDeviceRootOperations(validSnapshot()),
+            firmwareUpdateOperations = firmware,
+            manifestUrl = MANIFEST_URL
+        )
+        viewModel.bind(DEVICE_UID)
+
+        firmware.emit(DeviceOtaState.Failed(DEVICE_UID, failure))
+
+        val action = viewModel.uiState.value.updateActionState
+            as DeviceSettingsUpdateActionState.Failed
+        assertSame(failure, action.failure)
+    }
+
     private class FakeDeviceRootOperations(
         initialSnapshot: DeviceRootSnapshot?
     ) : DeviceRootOperations {
@@ -157,6 +180,10 @@ class DeviceFamilySettingsViewModelTest {
 
         override suspend fun clearStatus(deviceUid: String): DeviceFirmwareCommandResult =
             DeviceFirmwareCommandResult(sent = true)
+
+        fun emit(value: DeviceOtaState) {
+            state.value = value
+        }
     }
 
     class SettingsMainDispatcherRule(
@@ -174,6 +201,16 @@ class DeviceFamilySettingsViewModelTest {
     private companion object {
         const val DEVICE_UID = "device-wrgb-settings"
         const val MANIFEST_URL = "https://example.invalid/manifest-stable.json"
+
+        fun failure() = DeviceFirmwareFailure(
+            kind = DeviceFirmwareFailureKind.CONNECTION,
+            source = DeviceFirmwareFailureSource.RUNTIME,
+            stage = DeviceFirmwareFailureStage.STATUS,
+            technicalMessage = "runtime disconnected",
+            code = "runtime_not_connected",
+            requestId = "status-1",
+            recoverable = true
+        )
 
         fun preparedPlan() = PreparedDeviceFirmwareUpdate(
             deviceUid = DEVICE_UID,
