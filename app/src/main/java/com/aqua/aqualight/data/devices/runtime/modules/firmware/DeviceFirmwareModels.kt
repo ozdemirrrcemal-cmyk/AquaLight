@@ -359,7 +359,6 @@ data class DeviceFirmwareUpdatePlan(
     val productId: String,
     val model: String,
     val hardwareRevision: String,
-    val displayName: String,
     val firmware: DeviceFirmwareAsset,
     val payload: DeviceFirmwareOtaStartPayload,
     val runtimeMetadataGeneration: Long = 0L,
