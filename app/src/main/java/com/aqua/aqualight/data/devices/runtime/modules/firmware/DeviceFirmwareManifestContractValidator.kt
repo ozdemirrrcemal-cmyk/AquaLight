@@ -73,9 +73,8 @@ internal object DeviceFirmwareManifestContractValidator {
         product: AqlCommercialCatalogProduct
     ) {
         requireProductIdentityMatchesCatalog(artifact, product)
-        requireProductContractMatchesCatalog(artifact, product)
-        requireReleaseChannelMatchesContract(artifact, manifest, product)
         requireFirmwareIdentityMatchesManifest(artifact, manifest)
+        requireReleaseChannelMatchesContract(manifest)
     }
 
     private fun requireProductIdentityMatchesCatalog(
@@ -92,36 +91,7 @@ internal object DeviceFirmwareManifestContractValidator {
         ) {
             "OTA compatibility identity differs from the Android catalog."
         }
-        require(artifact.product.brand == DeviceFirmwareRuntimeContract.Manifest.BRAND) {
-            "OTA manifest product brand differs from the release contract."
-        }
-        require(artifact.product.skuCode == product.skuCode.value) {
-            "OTA manifest SKU code differs from the Android catalog."
-        }
-    }
-
-    private fun requireProductContractMatchesCatalog(
-        artifact: DeviceFirmwareManifestArtifact,
-        product: AqlCommercialCatalogProduct
-    ) {
-        require(artifact.product.capabilities == product.expectedManifestCapabilities()) {
-            "OTA manifest product capabilities differ from the commercial catalog."
-        }
-        require(artifact.product.limits == product.expectedManifestLimits()) {
-            "OTA manifest product limits differ from the commercial catalog."
-        }
-    }
-
-    private fun requireReleaseChannelMatchesContract(
-        artifact: DeviceFirmwareManifestArtifact,
-        manifest: DeviceFirmwareManifest,
-        product: AqlCommercialCatalogProduct
-    ) {
-        require(manifest.channel in SUPPORTED_CHANNELS) {
-            "OTA manifest release channel is not supported."
-        }
-        val expectedEnvironment = product.productKey.value.lowercase(Locale.ROOT)
-        require(artifact.env == expectedEnvironment) {
+        require(artifact.env == catalogIdentity.productKey.lowercase(Locale.ROOT)) {
             "OTA artifact environment does not match the exact catalog product."
         }
     }
@@ -158,30 +128,11 @@ internal object DeviceFirmwareManifestContractValidator {
         }
     }
 
-    private fun AqlCommercialCatalogProduct.expectedManifestCapabilities() =
-        DeviceFirmwareManifestCapabilities(
-            light = profile.capabilities.light,
-            manualLight = profile.capabilities.manualLight,
-            lightProgram = profile.capabilities.lightProgram,
-            lightPresets = profile.capabilities.lightPresets,
-            lightSimulation = profile.capabilities.lightSimulation,
-            fan = profile.capabilities.fan,
-            cooling = profile.capabilities.cooling,
-            temperature = profile.capabilities.temperature,
-            standaloneTimer = profile.capabilities.standaloneTimer,
-            dosing = profile.capabilities.dosing,
-            timeSync = profile.capabilities.timeSync,
-            ota = profile.capabilities.ota
-        )
-
-    private fun AqlCommercialCatalogProduct.expectedManifestLimits() =
-        DeviceFirmwareManifestLimits(
-            lightChannelCount = limits.lightChannelCount,
-            fanOutputCount = limits.fanOutputCount,
-            temperatureSensorCount = limits.temperatureSensorCount,
-            timerChannelCount = limits.timerChannelCount,
-            dosingChannelCount = limits.dosingChannelCount
-        )
+    private fun requireReleaseChannelMatchesContract(manifest: DeviceFirmwareManifest) {
+        require(manifest.channel in SUPPORTED_CHANNELS) {
+            "OTA manifest release channel is not supported."
+        }
+    }
 
     private val SUPPORTED_CHANNELS = setOf(
         DeviceFirmwareRuntimeContract.Manifest.STABLE_CHANNEL,
