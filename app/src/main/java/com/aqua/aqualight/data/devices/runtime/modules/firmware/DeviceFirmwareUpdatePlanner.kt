@@ -169,7 +169,6 @@ class DeviceFirmwareUpdatePlanner(
             productId = payload.productId,
             model = payload.model,
             hardwareRevision = payload.hardwareRevision,
-            displayName = artifact.product.displayName,
             firmware = artifact.firmware,
             payload = payload,
             runtimeMetadataGeneration = snapshot.runtimeMetadataGeneration,
