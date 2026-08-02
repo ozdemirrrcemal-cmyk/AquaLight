@@ -204,6 +204,7 @@ class DeviceFirmwareOtaContractParserTest {
             .put("model", "dose_pro_2")
             .put("hardwareRevision", "2.0")
         val firmware = JSONObject()
+            .put("version", "2.0.0")
             .put("filename", otaFilename)
             .put("url", releaseUrl + otaFilename)
             .put("sha256", "a".repeat(64))
