@@ -13,9 +13,9 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.cancel
+import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.distinctUntilChangedBy
 import kotlinx.coroutines.flow.map
-import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
 
 /** Shared OTA application adapter used by all family-specific Settings screens. */
@@ -73,7 +73,7 @@ internal class DefaultDeviceFirmwareUpdateOperations(
                 "Device is already up to date: ${state.currentVersion}."
             )
             is DeviceOtaState.Unsupported -> error(state.reason)
-            is DeviceOtaState.Failed -> error(state.message)
+            is DeviceOtaState.Failed -> error(state.failure.technicalMessage)
             else -> error("OTA availability did not produce a prepared update plan.")
         }
     }
@@ -135,7 +135,10 @@ private fun DeviceOtaState.notificationKey(): String? = when (this) {
         "recovering:$targetVersion:${progressPermille.toProgressPercent()}"
     is DeviceOtaState.RestartRequired -> "restart:$targetVersion:$restartScheduled"
     is DeviceOtaState.Succeeded -> "succeeded:$targetVersion"
-    is DeviceOtaState.Failed -> "failed:$field:$recoverable:$message"
+    is DeviceOtaState.Failed -> failure.run {
+        "failed:$kind:$source:$stage:$code:$field:$statusCode:$httpStatus:" +
+            "$requestId:$firmwarePhase:$recoverable:$technicalMessage"
+    }
     is DeviceOtaState.Idle,
     is DeviceOtaState.Checking,
     is DeviceOtaState.Unsupported,
