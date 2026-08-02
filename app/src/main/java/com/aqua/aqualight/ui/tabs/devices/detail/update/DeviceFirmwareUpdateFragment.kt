@@ -214,25 +214,22 @@ class DeviceFirmwareUpdateFragment : Fragment(R.layout.fragment_device_firmware_
 
         val content = state.releaseContent
         binding.tvReleaseTitle.apply {
-            isVisible = content.title.isNotBlank()
-            text = content.title
+            isVisible = false
+            text = ""
         }
-        binding.tvReleaseSummary.text = content.summary.ifBlank {
-            getString(R.string.device_settings_update_release_notes_fallback)
-        }
+        binding.tvReleaseSummary.text = getString(
+            R.string.device_settings_update_release_notes_fallback
+        )
         renderReleaseItems(
             container = binding.releaseChangesContainer,
-            items = content.changes,
+            items = content.items,
             iconRes = R.drawable.ic_check_24,
             iconColorRes = R.color.aqua_accent_positive,
             descriptionRes = R.string.device_settings_update_release_change_description
         )
-        binding.tvReleaseChangesHeading.isVisible = content.changes.isNotEmpty()
+        binding.tvReleaseChangesHeading.isVisible = content.items.isNotEmpty()
 
-        val warnings = buildList {
-            add(getString(R.string.device_settings_update_power_warning))
-            addAll(content.warnings)
-        }.distinct()
+        val warnings = listOf(getString(R.string.device_settings_update_power_warning))
         renderReleaseItems(
             container = binding.releaseWarningsContainer,
             items = warnings,
@@ -240,7 +237,7 @@ class DeviceFirmwareUpdateFragment : Fragment(R.layout.fragment_device_firmware_
             iconColorRes = R.color.aqua_content_warning,
             descriptionRes = R.string.device_settings_update_release_warning_description
         )
-        binding.tvReleaseWarningsHeading.isVisible = warnings.isNotEmpty()
+        binding.tvReleaseWarningsHeading.isVisible = true
     }
 
     private fun renderReleaseItems(
@@ -363,11 +360,7 @@ class DeviceFirmwareUpdateFragment : Fragment(R.layout.fragment_device_firmware_
     private fun DeviceFirmwareUpdateUiState.statusTextRes(): Int = when (mode) {
         DeviceFirmwareUpdateMode.LOADING,
         DeviceFirmwareUpdateMode.CHECKING -> R.string.device_settings_update_status_checking
-        DeviceFirmwareUpdateMode.AVAILABLE -> if (releaseContent.mandatory) {
-            R.string.device_settings_update_status_required
-        } else {
-            R.string.device_settings_update_status_available
-        }
+        DeviceFirmwareUpdateMode.AVAILABLE -> R.string.device_settings_update_status_available
         DeviceFirmwareUpdateMode.STARTING -> R.string.device_settings_update_status_preparing
         DeviceFirmwareUpdateMode.IN_PROGRESS -> R.string.device_settings_update_status_installing
         DeviceFirmwareUpdateMode.RECOVERING -> R.string.device_settings_update_status_recovering
