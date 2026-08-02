@@ -9,9 +9,10 @@ import org.junit.Test
 class DeviceFirmwareUpdateStateCoverageTest {
 
     @Test
-    fun `shared ota states retain exact device and release values`() {
+    fun `shared ota states retain exact device release and failure values`() {
         val content = releaseContent()
         val plan = preparedPlan(content)
+        val failure = failure()
         val states = listOf<DeviceOtaState>(
             DeviceOtaState.Idle(DEVICE_UID),
             DeviceOtaState.Checking(DEVICE_UID, "1.0.0"),
@@ -31,13 +32,14 @@ class DeviceFirmwareUpdateStateCoverageTest {
             DeviceOtaState.Recovering(DEVICE_UID, "2.0.0", 500),
             DeviceOtaState.RestartRequired(DEVICE_UID, "2.0.0", true, content),
             DeviceOtaState.Succeeded(DEVICE_UID, "2.0.0", content),
-            DeviceOtaState.Failed(DEVICE_UID, "failed", "sha256", true)
+            DeviceOtaState.Failed(DEVICE_UID, failure)
         )
 
         assertTrue(content.isPresent)
         assertTrue(states.all { state -> state.deviceUid == DEVICE_UID })
         assertEquals(DeviceOtaProgressPhase.WRITING, (states[6] as DeviceOtaState.InProgress).phase)
         assertEquals(listOf("OTA doğrulaması güçlendirildi."), content.items)
+        assertEquals(failure, (states.last() as DeviceOtaState.Failed).failure)
         assertFalse(DeviceFirmwareReleaseContent.EMPTY.isPresent)
     }
 
@@ -55,7 +57,7 @@ class DeviceFirmwareUpdateStateCoverageTest {
         assertEquals(DeviceOtaState.Idle(DEVICE_UID), observed)
         assertTrue(availability is DeviceOtaState.UpdateAvailable)
         assertTrue(DeviceFirmwareCommandResult(sent = true, messageId = "request-1").isSuccess)
-        assertFalse(DeviceFirmwareCommandResult(sent = false, errorMessage = "failed").isSuccess)
+        assertFalse(DeviceFirmwareCommandResult(sent = false, failure = failure()).isSuccess)
         operations.close()
     }
 
@@ -75,6 +77,19 @@ class DeviceFirmwareUpdateStateCoverageTest {
 
         override suspend fun clearStatus(deviceUid: String) = DeviceFirmwareCommandResult(sent = true)
     }
+
+    private fun failure() = DeviceFirmwareFailure(
+        kind = DeviceFirmwareFailureKind.INTEGRITY,
+        source = DeviceFirmwareFailureSource.FIRMWARE_STATUS,
+        stage = DeviceFirmwareFailureStage.VERIFICATION,
+        technicalMessage = "sha256 mismatch",
+        code = "firmware_ota_failed",
+        field = "sha256",
+        httpStatus = 200,
+        requestId = "request-1",
+        firmwarePhase = "failed",
+        recoverable = false
+    )
 
     private fun releaseContent() = DeviceFirmwareReleaseContent(
         localeTag = "tr",
