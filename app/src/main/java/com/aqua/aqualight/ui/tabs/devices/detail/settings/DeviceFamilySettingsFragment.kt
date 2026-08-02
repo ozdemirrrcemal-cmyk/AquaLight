@@ -2,7 +2,6 @@ package com.aqua.aqualight.ui.tabs.devices.detail.settings
 
 import android.os.Bundle
 import android.view.View
-import androidx.core.os.bundleOf
 import androidx.core.view.isInvisible
 import androidx.core.view.isVisible
 import androidx.fragment.app.Fragment
@@ -19,6 +18,7 @@ import com.aqua.aqualight.databinding.LayoutDeviceLightSettingsSectionBinding
 import com.aqua.aqualight.ui.common.bottomsheet.TextInputBottomSheet
 import com.aqua.aqualight.ui.common.header.AquaHeaderConfig
 import com.aqua.aqualight.ui.common.header.setupAquaHeader
+import com.aqua.aqualight.ui.navigation.AppRouteNavigator
 import kotlinx.coroutines.launch
 
 /**
@@ -152,9 +152,9 @@ abstract class DeviceFamilySettingsFragment : Fragment(R.layout.fragment_device_
     private fun openFirmwareUpdateScreen() {
         val navController = findNavController()
         if (navController.currentDestination?.id !in SETTINGS_DESTINATIONS) return
-        navController.navigate(
-            R.id.action_global_deviceFirmwareUpdateFragment,
-            bundleOf(DEVICE_UID_ARGUMENT to deviceUid)
+        AppRouteNavigator.openDeviceFirmwareUpdate(
+            navController = navController,
+            deviceUid = deviceUid
         )
     }
 
@@ -316,7 +316,6 @@ abstract class DeviceFamilySettingsFragment : Fragment(R.layout.fragment_device_
         const val COMPLETE_PROGRESS_PERMILLE = 1_000
         const val PERMILLE_PER_PERCENT = 10
         const val DEVICE_NAME_REQUEST_KEY = "device_settings_name_request"
-        const val DEVICE_UID_ARGUMENT = "deviceUid"
         val SETTINGS_DESTINATIONS = setOf(
             R.id.deviceLightSettingsFragment,
             R.id.deviceDosingSettingsFragment,
