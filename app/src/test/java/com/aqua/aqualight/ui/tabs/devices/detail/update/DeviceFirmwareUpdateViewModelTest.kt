@@ -167,7 +167,7 @@ class DeviceFirmwareUpdateViewModelTest {
         }
     }
 
-    private class UpdateMainDispatcherRule(
+    class UpdateMainDispatcherRule(
         private val dispatcher: TestDispatcher = UnconfinedTestDispatcher()
     ) : TestWatcher() {
         override fun starting(description: Description) {
