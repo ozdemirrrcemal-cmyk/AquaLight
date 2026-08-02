@@ -243,7 +243,7 @@ data class DeviceFirmwareReleaseNotes(
             .map { tag -> tag.substringBefore('-').lowercase(Locale.ROOT) }
             .firstOrNull(SUPPORTED_LOCALES::contains)
             ?: defaultLocale
-        val changes = items.map { item ->
+        val localizedItems = items.map { item ->
             when (locale) {
                 DeviceFirmwareRuntimeContract.Manifest.TURKISH -> item.tr
                 else -> item.en
@@ -251,11 +251,7 @@ data class DeviceFirmwareReleaseNotes(
         }
         return DeviceFirmwareReleaseContent(
             localeTag = locale,
-            title = "",
-            summary = "",
-            changes = changes,
-            warnings = emptyList(),
-            mandatory = false
+            items = localizedItems
         )
     }
 
