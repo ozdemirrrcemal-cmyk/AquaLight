@@ -123,7 +123,7 @@ abstract class DeviceFamilySettingsFragment : Fragment(R.layout.fragment_device_
                 DeviceSettingsUpdateActionState.Unsupported ->
                     viewModel.checkForUpdates()
                 is DeviceSettingsUpdateActionState.Failed -> {
-                    if (updateState.recoverable) viewModel.checkForUpdates()
+                    if (updateState.failure.recoverable) viewModel.checkForUpdates()
                     else openFirmwareUpdateScreen()
                 }
             }
@@ -239,14 +239,14 @@ abstract class DeviceFamilySettingsFragment : Fragment(R.layout.fragment_device_
             )
             is DeviceSettingsUpdateActionState.Failed -> FirmwareActionPresentation(
                 buttonText = getString(
-                    if (recoverable) {
+                    if (failure.recoverable) {
                         R.string.device_settings_retry_update_check_action
                     } else {
                         R.string.device_settings_view_update_action
                     }
                 ),
                 statusText = getString(
-                    if (recoverable) {
+                    if (failure.recoverable) {
                         R.string.device_settings_update_check_failed_status
                     } else {
                         R.string.device_settings_update_needs_attention_status
