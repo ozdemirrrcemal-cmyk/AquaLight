@@ -4,33 +4,6 @@ import com.aqua.aqualight.data.devices.runtime.core.DeviceRuntimeJson
 import org.json.JSONObject
 
 object DeviceTimeStatusParser {
-    fun parse(data: JSONObject): DeviceTimeStatus {
-        val status = data.optJSONObject(FIELD_STATUS) ?: data
-        return DeviceTimeStatus(
-            timeSet = status.optBoolean("timeSet", false),
-            timeString = status.optString("timeString", ""),
-            timezoneId = status.optString("timezoneId", ""),
-            posixTimeZone = status.optString("posixTimeZone", ""),
-            utcOffsetMinutes = status.optInt(
-                "utcOffsetMinutes",
-                status.optInt("timeZone", DEFAULT_TIME_ZONE_HOURS) * MINUTES_PER_HOUR
-            ),
-            autoSyncNtpEnabled = status.optBoolean("autoSyncNtpEnabled", false),
-            autoSyncGadgetEnabled = status.optBoolean("autoSyncGadgetEnabled", false),
-            ntpServerPrimary = status.optString(
-                "ntpServerPrimary",
-                DeviceTimeRuntimeContract.Default.PRIMARY_NTP_SERVER
-            ),
-            ntpServerSecondary = status.optString(
-                "ntpServerSecondary",
-                DeviceTimeRuntimeContract.Default.SECONDARY_NTP_SERVER
-            ),
-            lastSyncSource = status.optString("lastSyncSource", ""),
-            lastSyncEpochMillis = status.optLong("lastSyncEpochMillis", 0L),
-            lastSyncUptimeMs = status.optLong("lastSyncUptimeMs", 0L)
-        )
-    }
-
     fun parseExact(data: JSONObject): DeviceTimeStatus {
         DeviceRuntimeJson.requireExactKeys(data, STATUS_KEYS, STATUS_LABEL)
         val timeSet = DeviceRuntimeJson.booleanValue(data, "timeSet")
@@ -132,8 +105,6 @@ object DeviceTimeStatusParser {
     private const val FIELD_EVENT = "event"
     private const val FIELD_STATUS = "status"
     private const val EVENT_TIME_STATUS_CHANGED = "time.status.changed"
-    private const val DEFAULT_TIME_ZONE_HOURS = 0
-    private const val MINUTES_PER_HOUR = 60
     private const val MIN_UNSET_YEAR = 1970
     private const val MIN_SYNCED_YEAR = 2000
     private const val MAX_YEAR = 2199

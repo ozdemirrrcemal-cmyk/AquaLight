@@ -17,13 +17,13 @@ import com.aqua.aqualight.data.devices.runtime.core.DeviceRuntimeCommandOutcome
 import com.aqua.aqualight.data.devices.runtime.core.DeviceRuntimeCommandSession
 import com.aqua.aqualight.data.devices.runtime.core.DeviceRuntimeCompletionDisposition
 import com.aqua.aqualight.data.devices.runtime.core.DeviceRuntimeConnectionGeneration
+import com.aqua.aqualight.data.devices.runtime.events.DeviceRuntimeLifecycleEvent
 import com.aqua.aqualight.data.devices.runtime.modules.DeviceRuntimeModuleProvider
 import com.aqua.aqualight.data.devices.runtime.modules.dosing.DeviceDosingRuntimeAccess
 import com.aqua.aqualight.data.devices.runtime.modules.timer.DeviceTimerRuntimeAccess
 import com.aqua.aqualight.data.devices.runtime.modules.time.DeviceTimeSyncCoordinator
 import com.aqua.aqualight.data.devices.runtime.ws.AqlPrivateLanEndpoint
 import com.aqua.aqualight.data.devices.runtime.ws.AqlWsClient
-import com.aqua.aqualight.data.devices.runtime.ws.AqlWsCommandClient
 import com.aqua.aqualight.data.devices.runtime.ws.AqlWsConnectionState
 import com.aqua.aqualight.data.devices.runtime.ws.AqlWsEvent
 import com.aqua.aqualight.data.devices.runtime.ws.AqlWsIncomingMessage
@@ -81,7 +81,6 @@ class DeviceRuntimeRepository(
     private class RuntimeSession(
         val deviceUid: DeviceUid,
         val wsClient: AqlWsTransport,
-        val commandClient: AqlWsCommandClient,
         val sessionJob: CompletableJob,
         val sessionScope: CoroutineScope,
         @Volatile var generation: DeviceRuntimeConnectionGeneration
@@ -91,6 +90,9 @@ class DeviceRuntimeRepository(
 
         @Volatile
         var endpointUrl: String? = null
+
+        @Volatile
+        var endpointAddressBytes: ByteArray? = null
 
         private val closed = AtomicBoolean(false)
         private val collectorJobs = CopyOnWriteArrayList<Job>()
@@ -162,8 +164,11 @@ class DeviceRuntimeRepository(
     private val _events = MutableSharedFlow<AqlWsEvent>(extraBufferCapacity = EVENT_BUFFER_CAPACITY)
     val events: SharedFlow<AqlWsEvent> = _events.asSharedFlow()
 
-    @Volatile
-    private var lastActiveDeviceUid: DeviceUid? = null
+    private val _lifecycleEvents = MutableSharedFlow<DeviceRuntimeLifecycleEvent>(
+        extraBufferCapacity = EVENT_BUFFER_CAPACITY
+    )
+    val lifecycleEvents: SharedFlow<DeviceRuntimeLifecycleEvent> =
+        _lifecycleEvents.asSharedFlow()
 
     @Volatile
     private var closed: Boolean = false
@@ -179,7 +184,7 @@ class DeviceRuntimeRepository(
                 sessions[deviceUid] ?: createSession(deviceUid).also { created ->
                     sessions[deviceUid] = created
                     observeSession(created)
-                }.also { lastActiveDeviceUid = deviceUid }
+                }
             }
         }.getOrElse { return Result.failure(it) }
 
@@ -189,9 +194,13 @@ class DeviceRuntimeRepository(
                     IllegalStateException("Device runtime session is no longer active.")
                 )
             }
-            lastActiveDeviceUid = deviceUid
-            val endpointUrl = AqlPrivateLanEndpoint.route(deviceUid, snapshot.endpoint)?.url
-            val endpointMatches = session.endpointUrl == endpointUrl
+            val endpointRoute = AqlPrivateLanEndpoint.route(deviceUid, snapshot.endpoint)
+            val endpointUrl = endpointRoute?.url
+            val endpointAddressMatches = when (val currentAddress = session.endpointAddressBytes) {
+                null -> endpointRoute?.addressBytes == null
+                else -> endpointRoute?.addressBytes?.let { currentAddress.contentEquals(it) } == true
+            }
+            val endpointMatches = session.endpointUrl == endpointUrl && endpointAddressMatches
             val currentState = session.wsClient.connectionState.value
             if (!RuntimeConnectionReusePolicy.shouldReconnect(currentState, deviceUid, endpointMatches)) {
                 return@synchronized ensureCurrentMetadataBootstrap(
@@ -213,6 +222,7 @@ class DeviceRuntimeRepository(
                 session.connectionStarted = true
             }
             session.endpointUrl = endpointUrl
+            session.endpointAddressBytes = endpointRoute?.addressBytes?.copyOf()
             session.wsClient.connect(deviceUid = deviceUid, endpoint = snapshot.endpoint)
         }
     }
@@ -220,9 +230,7 @@ class DeviceRuntimeRepository(
     fun reconnectAfterNetworkRestore(snapshot: DeviceSnapshot): Result<Unit> {
         val detached = synchronized(lifecycleLock) {
             if (closed || snapshot.deviceUid in retiredDeviceUids) return@synchronized null
-            sessions.remove(snapshot.deviceUid).also {
-                if (lastActiveDeviceUid == snapshot.deviceUid) lastActiveDeviceUid = null
-            }
+            sessions.remove(snapshot.deviceUid)
         }
         cancelMetadataTimeout(snapshot.deviceUid)
         detached?.let { session ->
@@ -252,6 +260,37 @@ class DeviceRuntimeRepository(
     ): DeviceRuntimeConnectionGeneration? = sessions[deviceUid]
         ?.takeIf(::isCurrentSession)
         ?.generation
+
+    /**
+     * Commits a proof only while the authenticated session that produced it is still current.
+     *
+     * Lock order matches connect(): session first, lifecycle second. Holding both locks through
+     * [action] prevents a route replacement, retirement or generation change between validation
+     * and the canonical proof write.
+     */
+    internal fun runIfCurrentAuthenticatedGeneration(
+        deviceUid: DeviceUid,
+        generation: DeviceRuntimeConnectionGeneration,
+        action: () -> Unit
+    ): Boolean {
+        val session = sessions[deviceUid] ?: return false
+        return synchronized(session) {
+            synchronized(lifecycleLock) {
+                val currentSession = !closed &&
+                    deviceUid !in retiredDeviceUids &&
+                    sessions[deviceUid] === session
+                val currentGeneration = session.generation == generation
+                val authenticated =
+                    session.wsClient.connectionState.value is AqlWsConnectionState.Authenticated
+                if (currentSession && currentGeneration && authenticated) {
+                    action()
+                    true
+                } else {
+                    false
+                }
+            }
+        }
+    }
 
     internal fun pendingCommandCount(): Int = commandExecutor.pendingCount()
 
@@ -309,7 +348,6 @@ class DeviceRuntimeRepository(
     fun disconnectForLocalNetworkLoss() {
         val activeSessions = synchronized(lifecycleLock) {
             if (closed) return
-            lastActiveDeviceUid = null
             sessions.values.toList()
         }
         activeSessions.forEach { session ->
@@ -324,14 +362,6 @@ class DeviceRuntimeRepository(
             }
         }
     }
-
-    fun commandClient(): AqlWsCommandClient? {
-        val activeUid = lastActiveDeviceUid ?: return null
-        return sessions[activeUid]?.commandClient
-    }
-
-    fun commandClient(deviceUid: DeviceUid): AqlWsCommandClient? =
-        sessions[deviceUid]?.commandClient
 
     suspend fun saveToken(deviceUid: DeviceUid, token: String) {
         val provider = tokenProvider ?: return
@@ -536,23 +566,18 @@ class DeviceRuntimeRepository(
         synchronized(lifecycleLock) {
             if (closed) return@synchronized null
             retiredDeviceUids.add(deviceUid)
-            sessions.remove(deviceUid).also {
-                if (lastActiveDeviceUid == deviceUid) lastActiveDeviceUid = null
-            }
+            sessions.remove(deviceUid)
         }
 
     private fun detachSessionWithoutRetirement(deviceUid: DeviceUid): RuntimeSession? =
         synchronized(lifecycleLock) {
             if (closed) return@synchronized null
-            sessions.remove(deviceUid).also {
-                if (lastActiveDeviceUid == deviceUid) lastActiveDeviceUid = null
-            }
+            sessions.remove(deviceUid)
         }
 
     private fun beginRepositoryClose(): List<RuntimeSession>? = synchronized(lifecycleLock) {
         if (closed) return@synchronized null
         closed = true
-        lastActiveDeviceUid = null
         retiredDeviceUids.clear()
         sessions.values.toList().also { sessions.clear() }
     }
@@ -563,7 +588,6 @@ class DeviceRuntimeRepository(
         return RuntimeSession(
             deviceUid = deviceUid,
             wsClient = wsClient,
-            commandClient = AqlWsCommandClient(wsClient),
             sessionJob = sessionJob,
             sessionScope = CoroutineScope(sessionJob + dispatcher),
             generation = nextRuntimeGeneration()
@@ -591,7 +615,12 @@ class DeviceRuntimeRepository(
                 session.wsClient.events.collect { event ->
                     if (!isCurrentSession(session)) return@collect
                     val shouldPublish = handleAuthLifecycle(session, event)
-                    if (shouldPublish && isCurrentSession(session)) _events.emit(event)
+                    if (shouldPublish && isCurrentSession(session)) {
+                        _events.emit(event)
+                        event.toLifecycleEvent()?.let { lifecycle ->
+                            _lifecycleEvents.emit(lifecycle)
+                        }
+                    }
                 }
             }
         )
@@ -685,6 +714,14 @@ class DeviceRuntimeRepository(
             rejectActiveGeneration(event.deviceUid, "failure")
             true
         }
+    }
+
+    private fun AqlWsEvent.toLifecycleEvent(): DeviceRuntimeLifecycleEvent? = when (this) {
+        is AqlWsEvent.Authenticated -> DeviceRuntimeLifecycleEvent.Authenticated(deviceUid)
+        is AqlWsEvent.Closed,
+        is AqlWsEvent.Failure -> DeviceRuntimeLifecycleEvent.Unavailable(deviceUid)
+        is AqlWsEvent.Opened,
+        is AqlWsEvent.Message -> null
     }
 
     private fun sendAuthenticatedBootstrap(session: RuntimeSession): Boolean {

@@ -5,6 +5,7 @@ import com.aqua.aqualight.data.devices.model.DeviceProduct
 import com.aqua.aqualight.data.devices.model.DeviceRuntimeEndpoint
 import com.aqua.aqualight.data.devices.model.DeviceSnapshot
 import com.aqua.aqualight.data.devices.model.DeviceUid
+import com.aqua.aqualight.data.devices.runtime.events.DeviceRuntimeLifecycleEvent
 import com.aqua.aqualight.data.devices.runtime.ws.AqlWsConnectionState
 import com.aqua.aqualight.data.devices.runtime.ws.AqlWsEvent
 import com.aqua.aqualight.data.devices.runtime.ws.AqlWsOutgoingMessage
@@ -36,6 +37,31 @@ import org.junit.Assert.assertTrue
 import org.junit.Test
 
 class DeviceRuntimeRepositoryLifecycleTest {
+
+    @Test
+    fun lifecycleProjectionExposesNoRawWireMessages() {
+        val transports = CopyOnWriteArrayList<FakeWsTransport>()
+        val repository = repositoryWith(transports)
+        val target = snapshot("device-lifecycle-projection")
+        val observed = CopyOnWriteArrayList<DeviceRuntimeLifecycleEvent>()
+        val observerScope = CoroutineScope(SupervisorJob() + Dispatchers.Unconfined)
+        observerScope.launch { repository.lifecycleEvents.collect(observed::add) }
+
+        repository.connect(target).getOrThrow()
+        transports.single().emit(AqlWsEvent.Authenticated(target.deviceUid))
+        transports.single().emit(AqlWsEvent.Closed(target.deviceUid, 1006, "network changed"))
+
+        assertEquals(
+            listOf(
+                DeviceRuntimeLifecycleEvent.Authenticated(target.deviceUid),
+                DeviceRuntimeLifecycleEvent.Unavailable(target.deviceUid)
+            ),
+            observed
+        )
+
+        repository.close()
+        observerScope.cancel()
+    }
 
     @Test
     fun concurrentConnectForSameDeviceCreatesOneSessionAndOneCollectorPair() {
@@ -128,6 +154,59 @@ class DeviceRuntimeRepositoryLifecycleTest {
         assertEquals(2, transports.size)
 
         repository.shutdown()
+    }
+
+    @Test
+    fun generationBoundProofRejectsUnauthenticatedAndReplacedSessions() {
+        val transports = CopyOnWriteArrayList<FakeWsTransport>()
+        val repository = repositoryWith(transports)
+        val target = snapshot("device-generation-proof")
+
+        repository.connect(target).getOrThrow()
+        val firstGeneration = checkNotNull(
+            repository.currentConnectionGeneration(target.deviceUid)
+        )
+        var proofWrites = 0
+
+        assertFalse(
+            repository.runIfCurrentAuthenticatedGeneration(
+                target.deviceUid,
+                firstGeneration
+            ) { proofWrites += 1 }
+        )
+
+        transports.single().authenticate(target.deviceUid)
+        assertTrue(
+            repository.runIfCurrentAuthenticatedGeneration(
+                target.deviceUid,
+                firstGeneration
+            ) { proofWrites += 1 }
+        )
+
+        repository.connect(
+            target.copy(endpoint = target.endpoint.copy(ip = "192.168.1.99"))
+        ).getOrThrow()
+        val secondGeneration = checkNotNull(
+            repository.currentConnectionGeneration(target.deviceUid)
+        )
+        assertFalse(firstGeneration == secondGeneration)
+
+        transports.single().authenticate(target.deviceUid)
+        assertFalse(
+            repository.runIfCurrentAuthenticatedGeneration(
+                target.deviceUid,
+                firstGeneration
+            ) { proofWrites += 1 }
+        )
+        assertTrue(
+            repository.runIfCurrentAuthenticatedGeneration(
+                target.deviceUid,
+                secondGeneration
+            ) { proofWrites += 1 }
+        )
+        assertEquals(2, proofWrites)
+
+        repository.close()
     }
 
     @Test
@@ -271,6 +350,14 @@ class DeviceRuntimeRepositoryLifecycleTest {
         override fun close() {
             closeCount.incrementAndGet()
             disconnect(code = 1000, reason = "closed")
+        }
+
+        fun authenticate(deviceUid: DeviceUid) {
+            _connectionState.value = AqlWsConnectionState.Authenticated(
+                deviceUid = deviceUid,
+                authenticatedAtMillis = 1L
+            )
+            _events.tryEmit(AqlWsEvent.Authenticated(deviceUid))
         }
 
         fun emit(event: AqlWsEvent) {

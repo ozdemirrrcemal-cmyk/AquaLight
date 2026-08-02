@@ -36,7 +36,7 @@ internal class DefaultDeviceFirmwareUpdateOperations(
             Unit
         },
         updaterProvider = { devicesRepository.runtimeModules()?.firmwareUpdate },
-        runtimeEvents = devicesRepository.runtimeEvents(),
+        runtimeLifecycleEvents = devicesRepository.runtimeLifecycleEvents(),
         runtimeTypedEvents = devicesRepository.typedRuntimeEvents(),
         snapshotUpdates = devicesRepository.snapshots
     )

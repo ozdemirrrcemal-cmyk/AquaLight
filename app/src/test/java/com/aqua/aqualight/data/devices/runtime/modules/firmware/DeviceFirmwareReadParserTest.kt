@@ -16,6 +16,15 @@ class DeviceFirmwareReadParserTest {
     }
 
     @Test
+    fun `rejects coercible and extra firmware status fields`() {
+        val coercible = statusJson().put("uptimeMs", "10000")
+        val extra = statusJson().put("legacyVersion", "1.0.0")
+
+        assertTrue(runCatching { DeviceFirmwareReadParser.parseStatus(coercible) }.isFailure)
+        assertTrue(runCatching { DeviceFirmwareReadParser.parseStatus(extra) }.isFailure)
+    }
+
+    @Test
     fun `rejects writable runtime declaration`() {
         val invalid = statusJson().apply {
             getJSONObject("runtime").put("readOnly", false)

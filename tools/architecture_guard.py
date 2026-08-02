@@ -893,6 +893,10 @@ for token, reason in (
         "PR CI must prove automated accessibility policies",
     ),
     (
+        "python3 tools/ws_v1_commercial_closure_guard.py",
+        "PR CI must reject WS v1 migration residue and parallel runtime paths",
+    ),
+    (
         "websocket-account-cleanup-unit",
         "PR CI must prove WebSocket and account cleanup",
     ),
@@ -917,6 +921,10 @@ for token, reason in (
     (
         "verify_stage14_junit_evidence.py",
         "commercial release quality must materialize named behavior evidence",
+    ),
+    (
+        "ws_v1_commercial_closure_guard.py",
+        "commercial release quality must enforce WS v1 closure",
     ),
 ):
     require(release_quality_path, release_quality, token, reason)
@@ -1093,6 +1101,10 @@ pr_workflow_path = ".github/workflows/codeql.yml"
 pr_workflow = read(pr_workflow_path)
 for token, reason in (
     ("python3 tools/navigation_guard.py", "PR validation must enforce navigation contracts"),
+    (
+        "python3 tools/ws_v1_commercial_closure_guard.py",
+        "PR validation must enforce WS v1 commercial closure",
+    ),
     ("testReleaseUnitTest", "PR validation must compile and run Release unit tests"),
     ("lintRelease", "PR validation must run Release lint"),
     ("assembleRelease", "PR validation must exercise minification and release packaging"),

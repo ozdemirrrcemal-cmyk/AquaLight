@@ -107,16 +107,3 @@ data class DeviceTimeMutationResult(
     val saveRequested: Boolean?,
     val status: DeviceTimeStatus
 )
-
-/** Legacy fire-and-forget result retained only for the not-yet-migrated compatibility tests. */
-data class DeviceTimeCommandResult(
-    val sent: Boolean,
-    val skipped: Boolean = false,
-    val module: String = DeviceTimeRuntimeContract.MODULE,
-    val action: String,
-    val messageId: String = "",
-    val errorMessage: String = ""
-) {
-    val isSuccess: Boolean
-        get() = sent && errorMessage.isBlank()
-}

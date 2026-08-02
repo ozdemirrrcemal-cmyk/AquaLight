@@ -43,7 +43,18 @@ class DevicePresenceRuntimeMonitor(
     )
     private val lastRuntimeProbeAtMillis = ConcurrentHashMap<DeviceUid, Long>()
     private val lastLivenessProbeAtMillis = ConcurrentHashMap<DeviceUid, Long>()
+    private val livenessProbeScheduler = DeviceAuthenticatedLivenessProbeScheduler()
     private val foregroundRefreshLock = Any()
+    private val authenticatedLivenessProbe = runtimeRepository?.let { runtime ->
+        DeviceAuthenticatedLivenessProbe(
+            requestStatus = runtime.runtimeModules.network::requestStatus,
+            recordProof = { deviceUid, generation ->
+                runtime.runIfCurrentAuthenticatedGeneration(deviceUid, generation) {
+                    recordAuthenticatedLiveness(deviceUid)
+                }
+            }
+        )
+    }
 
     @Volatile
     private var runtimeScope: CoroutineScope? = null
@@ -72,6 +83,7 @@ class DevicePresenceRuntimeMonitor(
                 presenceJob.cancel()
                 discoveryJob.cancel()
                 cancelForegroundRefresh()
+                cancelLivenessProbes()
                 runtimeScope = null
                 started.set(false)
             }
@@ -82,6 +94,7 @@ class DevicePresenceRuntimeMonitor(
         val changed = appForeground.getAndSet(isForeground) != isForeground
         if (!isForeground) {
             cancelForegroundRefresh()
+            cancelLivenessProbes()
             return
         }
 
@@ -102,6 +115,7 @@ class DevicePresenceRuntimeMonitor(
             foregroundVerificationUntilMillis.set(0L)
             lastRuntimeProbeAtMillis.clear()
             lastLivenessProbeAtMillis.clear()
+            cancelLivenessProbes()
             invalidateRuntimeProofsForLocalNetworkLoss()
             runtimeRepository?.disconnectForLocalNetworkLoss()
         }
@@ -207,6 +221,7 @@ class DevicePresenceRuntimeMonitor(
         beginForegroundVerification()
         lastRuntimeProbeAtMillis.clear()
         lastLivenessProbeAtMillis.clear()
+        cancelLivenessProbes()
         invalidateRuntimeProofsForLocalNetworkChange()
         runtimeRepository?.disconnectForLocalNetworkLoss()
     }
@@ -421,7 +436,10 @@ class DevicePresenceRuntimeMonitor(
     }
 
     private fun sendAuthenticatedLivenessProbe(force: Boolean = false) {
-        val runtime = runtimeRepository ?: return
+        val runtime = runtimeRepository
+        val probe = authenticatedLivenessProbe
+        val scope = runtimeScope
+        if (runtime == null || probe == null || scope == null) return
         val nowMillis = elapsedRealtimeMillis()
         registryStore.currentDevices().forEach { snapshot ->
             val deviceUid = snapshot.deviceUid
@@ -438,13 +456,45 @@ class DevicePresenceRuntimeMonitor(
                 return@forEach
             }
 
-            val requestId = runtime.commandClient(deviceUid)?.requestNetworkStatus()
-            if (requestId.isNullOrBlank()) {
-                lastLivenessProbeAtMillis.remove(deviceUid)
-            } else {
-                lastLivenessProbeAtMillis[deviceUid] = nowMillis
-            }
+            if (livenessProbeScheduler.isActive(deviceUid)) return@forEach
+            lastLivenessProbeAtMillis[deviceUid] = nowMillis
+            launchLivenessProbe(scope, probe, deviceUid, nowMillis)
         }
+    }
+
+    private fun launchLivenessProbe(
+        scope: CoroutineScope,
+        probe: DeviceAuthenticatedLivenessProbe,
+        deviceUid: DeviceUid,
+        scheduledAtMillis: Long
+    ) {
+        livenessProbeScheduler.schedule(
+            scope = scope,
+            deviceUid = deviceUid,
+            execute = { probe.execute(deviceUid) },
+            onRejected = {
+                lastLivenessProbeAtMillis.remove(deviceUid, scheduledAtMillis)
+            }
+        )
+    }
+
+    private fun recordAuthenticatedLiveness(deviceUid: DeviceUid) {
+        val nowWallMillis = System.currentTimeMillis()
+        val nowElapsedMillis = elapsedRealtimeMillis()
+        registryStore.updateConnectionState(deviceUid) { previous ->
+            previous.copy(
+                onlineState = DeviceOnlineState.AUTHENTICATED,
+                lastRuntimeMessageAtMillis = nowWallMillis,
+                lastRuntimeMessageElapsedMillis = nowElapsedMillis,
+                lastControlProofAtMillis = nowWallMillis,
+                lastControlProofElapsedMillis = nowElapsedMillis,
+                lastErrorMessage = null
+            )
+        }
+    }
+
+    private fun cancelLivenessProbes() {
+        livenessProbeScheduler.cancelAll()
     }
 
     private fun shouldProbeRuntime(

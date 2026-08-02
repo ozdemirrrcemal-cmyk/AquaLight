@@ -27,7 +27,6 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
-import org.junit.Assert.assertNull
 import org.junit.Test
 
 class DeviceRuntimeProcessDeathContractTest {
@@ -67,8 +66,6 @@ class DeviceRuntimeProcessDeathContractTest {
 
             assertEquals(2, observedEvents.size)
             assertEquals(listOf(1, 1), transports.map { transport -> transport.closeCount.get() })
-            assertNull(repository.commandClient(first.deviceUid))
-            assertNull(repository.commandClient(second.deviceUid))
             assertFalse(repository.connect(first).isSuccess)
             assertFalse(
                 runCatching {

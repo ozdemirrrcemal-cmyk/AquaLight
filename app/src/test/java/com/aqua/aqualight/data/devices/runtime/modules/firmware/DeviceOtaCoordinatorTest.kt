@@ -14,8 +14,8 @@ import com.aqua.aqualight.data.devices.runtime.core.DeviceRuntimeCommandGateway
 import com.aqua.aqualight.data.devices.runtime.core.DeviceRuntimeCommandOutcome
 import com.aqua.aqualight.data.devices.runtime.core.DeviceRuntimeConnectionGeneration
 import com.aqua.aqualight.data.devices.runtime.events.DeviceRuntimeEventPayload
+import com.aqua.aqualight.data.devices.runtime.events.DeviceRuntimeLifecycleEvent
 import com.aqua.aqualight.data.devices.runtime.events.DeviceRuntimeTypedEvent
-import com.aqua.aqualight.data.devices.runtime.ws.AqlWsEvent
 import com.aqua.aqualight.data.devices.runtime.ws.AqlWsIncomingMessage
 import java.util.concurrent.CopyOnWriteArrayList
 import kotlinx.coroutines.flow.MutableSharedFlow
@@ -35,7 +35,9 @@ class DeviceOtaCoordinatorTest {
     @Test
     fun `correlated start typed progress restart recovery and version proof share one state`() =
         runTest {
-            val lifecycle = MutableSharedFlow<AqlWsEvent>(extraBufferCapacity = 16)
+            val lifecycle = MutableSharedFlow<DeviceRuntimeLifecycleEvent>(
+                extraBufferCapacity = 16
+            )
             val typedEvents = MutableSharedFlow<DeviceRuntimeTypedEvent>(extraBufferCapacity = 16)
             val snapshots = MutableStateFlow(mapOf(DEVICE_UID to product().toSnapshot()))
             val gateway = RecordingGateway()
@@ -45,7 +47,7 @@ class DeviceOtaCoordinatorTest {
                 snapshotProvider = { deviceUid -> snapshots.value[deviceUid] },
                 connectRuntime = { Result.success(Unit) },
                 updaterProvider = { updater(gateway) },
-                runtimeEvents = lifecycle,
+                runtimeLifecycleEvents = lifecycle,
                 runtimeTypedEvents = typedEvents,
                 snapshotUpdates = snapshots,
                 recoverRuntime = {
@@ -84,14 +86,14 @@ class DeviceOtaCoordinatorTest {
             val progress = coordinator.observe(DEVICE_UID).value as DeviceOtaState.InProgress
             assertEquals(500, progress.progressPermille)
 
-            lifecycle.tryEmit(AqlWsEvent.Closed(DEVICE_UID, 1006, "network changed"))
+            lifecycle.tryEmit(DeviceRuntimeLifecycleEvent.Unavailable(DEVICE_UID))
             runCurrent()
             assertTrue(coordinator.observe(DEVICE_UID).value is DeviceOtaState.Recovering)
 
             gateway.statusData = otaStatusData(
                 otaSnapshot("writing", active = true, progressPermille = 600)
             )
-            lifecycle.tryEmit(AqlWsEvent.Authenticated(DEVICE_UID))
+            lifecycle.tryEmit(DeviceRuntimeLifecycleEvent.Authenticated(DEVICE_UID))
             runCurrent()
             assertEquals(
                 600,
@@ -117,7 +119,7 @@ class DeviceOtaCoordinatorTest {
             assertEquals("2.0.0", completed.targetVersion)
             assertTrue(completed.restartScheduled)
 
-            lifecycle.tryEmit(AqlWsEvent.Closed(DEVICE_UID, 1001, "firmware restart"))
+            lifecycle.tryEmit(DeviceRuntimeLifecycleEvent.Unavailable(DEVICE_UID))
             runCurrent()
             assertTrue(coordinator.observe(DEVICE_UID).value is DeviceOtaState.Recovering)
 
@@ -136,7 +138,7 @@ class DeviceOtaCoordinatorTest {
 
     @Test
     fun `scheduled restart invokes UDP refresh and device scoped reconnect`() = runTest {
-        val lifecycle = MutableSharedFlow<AqlWsEvent>(extraBufferCapacity = 8)
+        val lifecycle = MutableSharedFlow<DeviceRuntimeLifecycleEvent>(extraBufferCapacity = 8)
         val typedEvents = MutableSharedFlow<DeviceRuntimeTypedEvent>(extraBufferCapacity = 8)
         val snapshots = MutableStateFlow(mapOf(DEVICE_UID to product().toSnapshot()))
         val gateway = RecordingGateway()
@@ -146,7 +148,7 @@ class DeviceOtaCoordinatorTest {
             snapshotProvider = { deviceUid -> snapshots.value[deviceUid] },
             connectRuntime = { Result.success(Unit) },
             updaterProvider = { updater(gateway) },
-            runtimeEvents = lifecycle,
+            runtimeLifecycleEvents = lifecycle,
             runtimeTypedEvents = typedEvents,
             snapshotUpdates = snapshots,
             recoverRuntime = {
@@ -194,7 +196,7 @@ class DeviceOtaCoordinatorTest {
             snapshotProvider = { deviceUid -> snapshots.value[deviceUid] },
             connectRuntime = { Result.success(Unit) },
             updaterProvider = { updater(RecordingGateway()) },
-            runtimeEvents = null,
+            runtimeLifecycleEvents = null,
             runtimeTypedEvents = typedEvents,
             snapshotUpdates = snapshots,
             dispatcher = StandardTestDispatcher(testScheduler),
@@ -239,7 +241,7 @@ class DeviceOtaCoordinatorTest {
             snapshotProvider = { snapshot },
             connectRuntime = { Result.success(Unit) },
             updaterProvider = { updater(RecordingGateway()) },
-            runtimeEvents = null
+            runtimeLifecycleEvents = null
         )
         val plan = (
             coordinator.checkAvailability(DEVICE_UID, MANIFEST_URL, true).getOrThrow()
@@ -266,7 +268,7 @@ class DeviceOtaCoordinatorTest {
             snapshotProvider = { product().toSnapshot() },
             connectRuntime = { Result.success(Unit) },
             updaterProvider = { updater(gateway) },
-            runtimeEvents = null
+            runtimeLifecycleEvents = null
         )
         val plan = (
             coordinator.checkAvailability(DEVICE_UID, MANIFEST_URL, true).getOrThrow()
@@ -295,7 +297,7 @@ class DeviceOtaCoordinatorTest {
             snapshotProvider = { product().toSnapshot() },
             connectRuntime = { Result.success(Unit) },
             updaterProvider = { updater(gateway) },
-            runtimeEvents = null
+            runtimeLifecycleEvents = null
         )
         val plan = (
             coordinator.checkAvailability(DEVICE_UID, MANIFEST_URL, true).getOrThrow()

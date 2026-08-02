@@ -3,7 +3,6 @@ package com.aqua.aqualight.data.devices.menu
 import com.aqua.aqualight.application.devices.DeviceMenuAccessOperations
 import com.aqua.aqualight.application.devices.DeviceMenuAccessResult
 import com.aqua.aqualight.application.devices.DeviceMenuUnavailableReason
-import com.aqua.aqualight.data.devices.contract.AqlWsContract
 import com.aqua.aqualight.data.devices.model.DeviceOnlineState
 import com.aqua.aqualight.data.devices.model.DeviceSnapshot
 import com.aqua.aqualight.data.devices.model.DeviceUid
@@ -12,8 +11,6 @@ import com.aqua.aqualight.data.devices.repository.DevicesRepository
 import com.aqua.aqualight.data.devices.repository.recordControlFailure
 import com.aqua.aqualight.data.devices.runtime.core.DeviceRuntimeCommandOutcome
 import com.aqua.aqualight.data.devices.runtime.ws.AqlWsConnectionState
-import com.aqua.aqualight.data.devices.runtime.ws.AqlWsEvent
-import com.aqua.aqualight.data.devices.runtime.ws.AqlWsIncomingMessage
 import com.aqua.aqualight.data.devices.toOwnerDeviceFamily
 import java.util.concurrent.ConcurrentHashMap
 import kotlinx.coroutines.CompletableDeferred
@@ -38,9 +35,10 @@ internal interface DeviceMenuRuntimePort {
     fun runtimeConnectionStates(): Flow<AqlWsConnectionState>?
     fun currentRuntimeConnectionState(deviceUid: DeviceUid): AqlWsConnectionState?
     fun connectRuntime(deviceUid: DeviceUid): Boolean
-    fun runtimeEvents(): Flow<AqlWsEvent>?
-    suspend fun requestNetworkStatus(deviceUid: DeviceUid): String?
-    fun recordControlProof(deviceUid: DeviceUid): DeviceSnapshot?
+
+    /** Returns true only after a current-generation proof is committed to the registry. */
+    suspend fun proveCurrentLiveness(deviceUid: DeviceUid): Boolean
+
     fun recordControlFailure(deviceUid: DeviceUid): DeviceSnapshot? = null
 }
 
@@ -74,16 +72,14 @@ internal class RepositoryDeviceMenuRuntimePort(
     override fun connectRuntime(deviceUid: DeviceUid): Boolean =
         devicesRepository.connectRuntime(deviceUid).isSuccess
 
-    override fun runtimeEvents(): Flow<AqlWsEvent>? =
-        devicesRepository.runtimeEvents()
-
-    override suspend fun requestNetworkStatus(deviceUid: DeviceUid): String? {
+    override suspend fun proveCurrentLiveness(deviceUid: DeviceUid): Boolean {
         val outcome = devicesRepository.runtimeModules()?.network?.requestStatus(deviceUid)
-        return (outcome as? DeviceRuntimeCommandOutcome.Success)?.messageId
+        val success = outcome as? DeviceRuntimeCommandOutcome.Success<*> ?: return false
+        return devicesRepository.recordControlProofIfCurrentGeneration(
+            deviceUid = deviceUid,
+            generation = success.generation
+        ) != null
     }
-
-    override fun recordControlProof(deviceUid: DeviceUid): DeviceSnapshot? =
-        devicesRepository.recordControlProof(deviceUid)
 
     override fun recordControlFailure(deviceUid: DeviceUid): DeviceSnapshot? =
         devicesRepository.recordControlFailure(deviceUid)
@@ -241,10 +237,7 @@ internal class DefaultDeviceMenuAccessOperations(
                 DeviceMenuUnavailableReason.LOCAL_NETWORK_UNAVAILABLE
             )
             failureReason != null -> VerificationResult.Unavailable(failureReason)
-            else -> verifyRuntimeLiveSnapshot(
-                deviceUid = deviceUid,
-                fallbackSnapshot = runtimeSnapshot
-            )
+            else -> verifyRuntimeLiveSnapshot(deviceUid)
         }
     }
 
@@ -269,14 +262,10 @@ internal class DefaultDeviceMenuAccessOperations(
     }
 
     private suspend fun verifyRuntimeLiveSnapshot(
-        deviceUid: DeviceUid,
-        fallbackSnapshot: DeviceSnapshot
+        deviceUid: DeviceUid
     ): VerificationResult {
         return when (awaitAuthenticatedRuntime(deviceUid)) {
-            AuthenticationOutcome.Authenticated -> verifyAuthenticatedRuntime(
-                deviceUid = deviceUid,
-                fallbackSnapshot = fallbackSnapshot
-            )
+            AuthenticationOutcome.Authenticated -> verifyAuthenticatedRuntime(deviceUid)
             AuthenticationOutcome.AuthRequired -> VerificationResult.Unavailable(
                 DeviceMenuUnavailableReason.AUTHENTICATION_REQUIRED
             )
@@ -292,17 +281,14 @@ internal class DefaultDeviceMenuAccessOperations(
     }
 
     private suspend fun verifyAuthenticatedRuntime(
-        deviceUid: DeviceUid,
-        fallbackSnapshot: DeviceSnapshot
+        deviceUid: DeviceUid
     ): VerificationResult {
         val proofReceived = requestFreshRuntimeProof(deviceUid) || run {
             delay(RUNTIME_PROBE_RETRY_DELAY_MS)
             requestFreshRuntimeProof(deviceUid)
         }
         val canonicalSnapshot = if (proofReceived) {
-            runtimePort.recordControlProof(deviceUid)
-                ?: runtimePort.currentDevice(deviceUid)
-                ?: fallbackSnapshot
+            runtimePort.currentDevice(deviceUid)
         } else {
             null
         }
@@ -366,7 +352,7 @@ internal class DefaultDeviceMenuAccessOperations(
     private suspend fun requestFreshRuntimeProof(
         deviceUid: DeviceUid
     ): Boolean = withTimeoutOrNull(RUNTIME_PROBE_TIMEOUT_MS) {
-        !runtimePort.requestNetworkStatus(deviceUid).isNullOrBlank()
+        runtimePort.proveCurrentLiveness(deviceUid)
     } ?: false
 
     private fun fastFailureReason(
@@ -492,30 +478,6 @@ internal object DeviceMenuAuthenticationPolicy {
             is AqlWsConnectionState.Connecting,
             is AqlWsConnectionState.Connected,
             null -> null
-        }
-    }
-}
-
-internal object DeviceMenuRuntimeProofPolicy {
-    fun accepts(
-        event: AqlWsEvent,
-        requestedDeviceUid: DeviceUid,
-        expectedRequestId: String
-    ): Boolean {
-        val response = (event as? AqlWsEvent.Message)
-            ?.parsed as? AqlWsIncomingMessage.Response
-
-        return when {
-            expectedRequestId.isBlank() -> false
-            event.deviceUid != requestedDeviceUid -> false
-            response == null -> false
-            response.id != expectedRequestId -> false
-            !response.ok -> false
-            response.module.isNotBlank() &&
-                response.module != AqlWsContract.MODULE_NETWORK -> false
-            response.action.isNotBlank() &&
-                response.action != AqlWsContract.ACTION_NETWORK_STATUS_GET -> false
-            else -> true
         }
     }
 }

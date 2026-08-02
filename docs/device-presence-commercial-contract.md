@@ -114,7 +114,8 @@ For one device and one canonical registry revision:
 - an Online card may open only through an authenticated session and a recent control proof;
 - fresh UDP without a usable WebSocket endpoint returns `CURRENT_LIVENESS_NOT_PROVEN` and never
   opens controls;
-- a newly successful menu proof is written to the canonical registry before navigation;
+- a newly successful menu proof is written to the canonical registry before navigation, only
+  while its originating WebSocket generation is still current and authenticated;
 - a menu may not render Online from a private transport state while its canonical card remains
   Offline;
 - a local-network failure returns immediately;
@@ -144,6 +145,7 @@ When the app enters foreground:
 When the app enters background:
 
 - high-frequency UDP refresh, runtime connection probe and application-liveness loops stop;
+- every in-flight authenticated liveness probe is cancelled and loses scheduler ownership;
 - cached timestamps are not treated as perpetual liveness;
 - the next foreground transition always revalidates the current local route and device proof.
 
@@ -212,7 +214,10 @@ acceptance evidence.
 - definitive Offline and AuthRequired states do not wait for timeout;
 - stalled authentication remains within the 2.5-second interaction budget;
 - fresh UDP without an authenticated runtime endpoint never authorizes menu access;
-- firmware responses that omit optional command metadata still correlate by device and request id;
+- exact firmware responses correlate by exact module, action, device generation and request id;
+- a successful response from a replaced generation cannot write menu or presence proof;
+- background and route changes cancel in-flight liveness probes without a stale proof write;
+- UDP discovery rejects extra keys, aliases, casing/whitespace normalization and scalar coercion;
 - contradictory metadata, stale ids, failed responses and wrong devices are rejected;
 - successful menu proof updates the canonical card state before route navigation;
 - foreground verification does not publish a transient false Offline state;
