@@ -6,11 +6,11 @@ Target: **41 authenticated commands / 0 public commands**
 
 ## Current position
 
-- Current stage: **10 — firmware interoperability and final matrix**
-- Active branch: `test/ws-10-firmware-interoperability`
-- Status: **AUTOMATED GATES PASSED — PHYSICAL SIGNED-OTA FOLLOW-UP PENDING**
-- Previous stage: **09 PASSED / PR #190 MERGED**
-- Next: Merge PR #191, promote the completed integration branch to `main`, then record the physical signed-OTA release-candidate smoke.
+- Current stage: **10 — COMPLETE / firmware interoperability and final matrix**
+- Active branch: `integration/aql-ws-v1-commercial`
+- Status: **STAGE 10 AUTOMATED PASS / PR #191 MERGED — PHYSICAL SIGNED-OTA FOLLOW-UP PENDING**
+- Completed sequence: **Stages 00–10 merged into integration**
+- Next: Promote the completed integration branch to `main`, then start `feat/ota-update-ui` from the exact promoted SHA.
 
 ## Fixed rules
 
@@ -218,7 +218,7 @@ Target: **41 authenticated commands / 0 public commands**
   - [x] PR evidence recorded on PR #190 for tested head `c880207839fac8a119acb08bd82cd420128156cd`
   - [x] Squash-merged to integration as `4347adac8dfc5ebf07976bd7570c3de823eae22f`
 
-- [x] **10** `test/ws-10-firmware-interoperability` — **AUTOMATED GATES PASSED / PHYSICAL RC FOLLOW-UP**
+- [x] **10** `test/ws-10-firmware-interoperability` — **MERGED / PR #191 / AUTOMATED GATES PASSED**
   - [x] Audit firmware commit `38e8812c1bcecf948ebab85979bff21a24f4b79c`
   - [x] Pin command names, event contract, all ten command handlers and the nested Timer/Dosing and pairing request parsers by firmware blob SHA
   - [x] Verify exact 41 authenticated / 0 public command parity
@@ -241,6 +241,7 @@ Target: **41 authenticated commands / 0 public commands**
   - [x] CodeQL Security Scan — run #4702 with zero new Detekt debt
   - [ ] Physical signed-OTA release-candidate smoke: download, verify, restart, rediscover, reconnect and exact version proof — post-merge commercial-device follow-up
   - [x] PR evidence recorded on PR #191 for tested head `cd7a0500022f1cd201dd6936b2158c6ff9b11563`
+  - [x] Squash-merged to integration as `8b0fbfc7fe85063f4e57a69b5e5b879768521f9a`
 
 ## Relevant gate after each stage
 
@@ -284,3 +285,4 @@ Target: **41 authenticated commands / 0 public commands**
 | 2026-08-02 | Stage 10 firmware interoperability branch opened | IN PROGRESS | Pin firmware request sources and build the final 41/41 matrix |
 | 2026-08-02 | Stage 10 final interoperability implementation | LOCAL CONTRACT GATES PASSED | Publish draft PR and complete remote plus physical evidence |
 | 2026-08-02 | Stage 10 final interoperability pull-request gates | AUTOMATED PASS / PR #191 READY | Squash-merge now; run physical signed-OTA smoke afterwards |
+| 2026-08-02 | Stage 10 firmware interoperability | AUTOMATED PASS / PR #191 MERGED | Promote completed integration branch to `main`; retain physical signed-OTA follow-up |
