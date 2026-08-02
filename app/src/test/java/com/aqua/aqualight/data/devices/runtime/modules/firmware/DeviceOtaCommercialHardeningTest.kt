@@ -43,9 +43,7 @@ class DeviceOtaCommercialHardeningTest {
             ).plan
         try {
             val successfulStarts = List(WORKER_COUNT) {
-                async {
-                    coordinator.startUpdate(plan).isSuccess
-                }
+                async { coordinator.startUpdate(plan).isSuccess }
             }.awaitAll().count { it }
 
             assertEquals(1, successfulStarts)
@@ -95,26 +93,43 @@ class DeviceOtaCommercialHardeningTest {
         val invalidManifests = listOf(
             manifestJson().put("legacyRoot", true),
             manifestJson().apply {
+                getJSONObject("platform").put("legacyPlatform", true)
+            },
+            manifestJson().apply {
                 artifactJson().put("legacyArtifact", true)
             },
             manifestJson().apply {
                 artifactJson().getJSONObject("product").put("legacyProduct", true)
             },
             manifestJson().apply {
-                artifactJson().getJSONObject("compatibility").put("legacyCompatibility", true)
+                artifactJson().getJSONObject("product")
+                    .getJSONObject("capabilities")
+                    .put("legacyCapability", true)
+            },
+            manifestJson().apply {
+                artifactJson().getJSONObject("product")
+                    .getJSONObject("limits")
+                    .put("legacyLimit", 1)
+            },
+            manifestJson().apply {
+                artifactJson().getJSONObject("compatibility")
+                    .put("legacyCompatibility", true)
             },
             manifestJson().apply {
                 artifactJson().getJSONObject("firmware").put("legacyFirmware", true)
             },
             manifestJson().apply {
-                getJSONObject("signature").put("legacySignature", true)
+                artifactJson().getJSONObject("factory").put("legacyFactory", true)
             },
             manifestJson().apply {
-                val firmware = artifactJson().getJSONObject("firmware")
-                artifactJson().put(
-                    "factory",
-                    JSONObject(firmware.toString()).put("legacyFactory", true)
-                )
+                getJSONObject("releaseNotes").put("mandatory", false)
+            },
+            manifestJson().apply {
+                getJSONObject("releaseNotes").getJSONArray("items").getJSONObject(0)
+                    .put("title", "legacy")
+            },
+            manifestJson().apply {
+                getJSONObject("signature").put("legacySignature", true)
             }
         )
 
@@ -147,7 +162,7 @@ class DeviceOtaCommercialHardeningTest {
     private fun AqlCommercialCatalogProduct.toSnapshot(): DeviceSnapshot = DeviceSnapshot(
         identity = DeviceIdentity(uid = DEVICE_UID, customName = "Salon Dozaj"),
         product = DeviceProduct(
-            brand = "AquaLight",
+            brand = DeviceFirmwareRuntimeContract.Manifest.BRAND,
             productId = productId.value,
             productKey = productKey.value,
             family = family,
@@ -198,22 +213,16 @@ class DeviceOtaCommercialHardeningTest {
         tag = RELEASE_TAG,
         releaseRepo = DeviceFirmwareRuntimeContract.OFFICIAL_RELEASE_REPOSITORY,
         generatedAt = GENERATED_AT,
+        platform = manifestPlatform(),
         artifacts = artifacts,
-        signature = DeviceFirmwareManifestSignature(
-            scheme = DeviceFirmwareRuntimeContract.Signature.SCHEME_ECDSA_P256_SHA256,
-            keyId = "release-key-1",
-            payloadHash = "b".repeat(64),
-            value = "signed-value"
-        ),
+        signature = manifestSignature(),
         releaseNotes = DeviceFirmwareReleaseNotes(
+            schema = DeviceFirmwareRuntimeContract.Manifest.RELEASE_NOTES_SCHEMA,
             defaultLocale = "en",
-            mandatory = false,
-            locales = mapOf(
-                "en" to DeviceFirmwareLocalizedReleaseNotes(
-                    title = "Dosing reliability",
-                    summary = "Safer dosing update.",
-                    changes = listOf("Calibration validation improved."),
-                    warnings = emptyList()
+            items = listOf(
+                DeviceFirmwareReleaseNoteItem(
+                    tr = "Kalibrasyon doğrulaması geliştirildi.",
+                    en = "Calibration validation improved."
                 )
             )
         )
@@ -221,20 +230,13 @@ class DeviceOtaCommercialHardeningTest {
 
     private fun artifact(): DeviceFirmwareManifestArtifact {
         val product = product()
-        val filename = "AquaLight-$ENVIRONMENT-$RELEASE_TAG-ota.bin"
+        val otaFilename = "AquaLight-$ENVIRONMENT-$RELEASE_TAG-ota.bin"
+        val factoryFilename = "AquaLight-$ENVIRONMENT-$RELEASE_TAG-factory.zip"
+        val releaseUrl = DeviceFirmwareRuntimeContract.OFFICIAL_RELEASE_URL_PREFIX +
+            "$RELEASE_TAG/"
         return DeviceFirmwareManifestArtifact(
             env = ENVIRONMENT,
-            product = DeviceFirmwareManifestProduct(
-                productKey = product.productKey.value,
-                productId = product.productId.value,
-                brand = DeviceFirmwareRuntimeContract.Manifest.BRAND,
-                family = product.family.wireValue,
-                line = product.line.value,
-                model = product.model.value,
-                displayName = product.displayName,
-                skuCode = product.skuCode.value,
-                hardwareRevision = product.hardwareRevision.value
-            ),
+            product = product.toManifestProduct(),
             compatibility = DeviceFirmwareCompatibility(
                 productKey = product.productKey.value,
                 productId = product.productId.value,
@@ -244,72 +246,88 @@ class DeviceOtaCommercialHardeningTest {
                 hardwareRevision = product.hardwareRevision.value
             ),
             firmware = DeviceFirmwareAsset(
-                filename = filename,
-                url = DeviceFirmwareRuntimeContract.OFFICIAL_RELEASE_URL_PREFIX +
-                    "$RELEASE_TAG/$filename",
+                filename = otaFilename,
+                url = releaseUrl + otaFilename,
                 sha256 = "a".repeat(64),
                 size = FIRMWARE_SIZE,
-                format = "bin",
+                format = DeviceFirmwareRuntimeContract.Manifest.FIRMWARE_FORMAT,
                 otaSlotCompatible = true
+            ),
+            factory = DeviceFirmwareFactoryAsset(
+                filename = factoryFilename,
+                url = releaseUrl + factoryFilename,
+                sha256 = "c".repeat(64),
+                size = FACTORY_SIZE
             )
         )
     }
 
-    private fun manifestJson(): JSONObject {
-        val artifact = artifact()
-        val releaseContent = JSONObject()
-            .put("title", "Safe update")
-            .put("summary", "Reliability improvements.")
-            .put("changes", JSONArray(listOf("Improved calibration checks.")))
-            .put("warnings", JSONArray())
+    private fun AqlCommercialCatalogProduct.toManifestProduct() =
+        DeviceFirmwareManifestProduct(
+            productKey = productKey.value,
+            productId = productId.value,
+            brand = DeviceFirmwareRuntimeContract.Manifest.BRAND,
+            family = family.wireValue,
+            line = line.value,
+            model = model.value,
+            displayName = displayName,
+            skuCode = skuCode.value,
+            hardwareRevision = hardwareRevision.value,
+            capabilities = DeviceFirmwareManifestCapabilities(
+                light = profile.capabilities.light,
+                manualLight = profile.capabilities.manualLight,
+                lightProgram = profile.capabilities.lightProgram,
+                lightPresets = profile.capabilities.lightPresets,
+                lightSimulation = profile.capabilities.lightSimulation,
+                fan = profile.capabilities.fan,
+                cooling = profile.capabilities.cooling,
+                temperature = profile.capabilities.temperature,
+                standaloneTimer = profile.capabilities.standaloneTimer,
+                dosing = profile.capabilities.dosing,
+                timeSync = profile.capabilities.timeSync,
+                ota = profile.capabilities.ota
+            ),
+            limits = DeviceFirmwareManifestLimits(
+                lightChannelCount = limits.lightChannelCount,
+                fanOutputCount = limits.fanOutputCount,
+                temperatureSensorCount = limits.temperatureSensorCount,
+                timerChannelCount = limits.timerChannelCount,
+                dosingChannelCount = limits.dosingChannelCount
+            )
+        )
 
-        return JSONObject()
-            .put("schema", DeviceFirmwareRuntimeContract.Manifest.SCHEMA)
-            .put("brand", DeviceFirmwareRuntimeContract.Manifest.BRAND)
-            .put("channel", DeviceFirmwareRuntimeContract.Manifest.STABLE_CHANNEL)
-            .put("version", TARGET_VERSION)
-            .put("tag", RELEASE_TAG)
-            .put("releaseRepo", DeviceFirmwareRuntimeContract.OFFICIAL_RELEASE_REPOSITORY)
-            .put("generatedAt", GENERATED_AT)
-            .put(
-                "releaseNotes",
-                JSONObject()
-                    .put("defaultLocale", "en")
-                    .put("mandatory", false)
-                    .put("locales", JSONObject().put("en", releaseContent))
-            )
-            .put("artifacts", JSONArray().put(artifact.toJson()))
-            .put(
-                "signature",
-                JSONObject()
-                    .put(
-                        "scheme",
-                        DeviceFirmwareRuntimeContract.Signature.SCHEME_ECDSA_P256_SHA256
+    private fun manifestJson(): JSONObject = JSONObject()
+        .put("schema", DeviceFirmwareRuntimeContract.Manifest.SCHEMA)
+        .put("brand", DeviceFirmwareRuntimeContract.Manifest.BRAND)
+        .put("channel", DeviceFirmwareRuntimeContract.Manifest.STABLE_CHANNEL)
+        .put("version", TARGET_VERSION)
+        .put("tag", RELEASE_TAG)
+        .put("releaseRepo", DeviceFirmwareRuntimeContract.OFFICIAL_RELEASE_REPOSITORY)
+        .put("generatedAt", GENERATED_AT)
+        .put("platform", manifestPlatform().toJson())
+        .put("artifacts", JSONArray().put(artifact().toJson()))
+        .put(
+            "releaseNotes",
+            JSONObject()
+                .put("schema", DeviceFirmwareRuntimeContract.Manifest.RELEASE_NOTES_SCHEMA)
+                .put("defaultLocale", "en")
+                .put(
+                    "items",
+                    JSONArray().put(
+                        JSONObject()
+                            .put("tr", "Kalibrasyon doğrulaması geliştirildi.")
+                            .put("en", "Calibration validation improved.")
                     )
-                    .put("keyId", "release-key-1")
-                    .put("payloadHash", "b".repeat(64))
-                    .put("value", "signed-value")
-            )
-    }
+                )
+        )
+        .put("signature", manifestSignature().toJson())
 
     private fun JSONObject.artifactJson(): JSONObject =
         getJSONArray("artifacts").getJSONObject(0)
 
     private fun DeviceFirmwareManifestArtifact.toJson(): JSONObject = JSONObject()
         .put("env", env)
-        .put(
-            "product",
-            JSONObject()
-                .put("productKey", product.productKey)
-                .put("productId", product.productId)
-                .put("brand", product.brand)
-                .put("family", product.family)
-                .put("line", product.line)
-                .put("model", product.model)
-                .put("displayName", product.displayName)
-                .put("skuCode", product.skuCode)
-                .put("hardwareRevision", product.hardwareRevision)
-        )
+        .put("product", product.toJson())
         .put(
             "compatibility",
             JSONObject()
@@ -330,6 +348,80 @@ class DeviceOtaCommercialHardeningTest {
                 .put("format", firmware.format)
                 .put("otaSlotCompatible", firmware.otaSlotCompatible)
         )
+        .put(
+            "factory",
+            factory?.let { asset ->
+                JSONObject()
+                    .put("filename", asset.filename)
+                    .put("url", asset.url)
+                    .put("sha256", asset.sha256)
+                    .put("size", asset.size)
+            } ?: JSONObject.NULL
+        )
+
+    private fun DeviceFirmwareManifestProduct.toJson(): JSONObject = JSONObject()
+        .put("productKey", productKey)
+        .put("productId", productId)
+        .put("brand", brand)
+        .put("family", family)
+        .put("line", line)
+        .put("model", model)
+        .put("displayName", displayName)
+        .put("skuCode", skuCode)
+        .put("hardwareRevision", hardwareRevision)
+        .put(
+            "capabilities",
+            JSONObject()
+                .put("light", capabilities.light)
+                .put("manualLight", capabilities.manualLight)
+                .put("lightProgram", capabilities.lightProgram)
+                .put("lightPresets", capabilities.lightPresets)
+                .put("lightSimulation", capabilities.lightSimulation)
+                .put("fan", capabilities.fan)
+                .put("cooling", capabilities.cooling)
+                .put("temperature", capabilities.temperature)
+                .put("standaloneTimer", capabilities.standaloneTimer)
+                .put("dosing", capabilities.dosing)
+                .put("timeSync", capabilities.timeSync)
+                .put("ota", capabilities.ota)
+        )
+        .put(
+            "limits",
+            JSONObject()
+                .put("lightChannelCount", limits.lightChannelCount)
+                .put("fanOutputCount", limits.fanOutputCount)
+                .put("temperatureSensorCount", limits.temperatureSensorCount)
+                .put("timerChannelCount", limits.timerChannelCount)
+                .put("dosingChannelCount", limits.dosingChannelCount)
+        )
+
+    private fun manifestPlatform() = DeviceFirmwareManifestPlatform(
+        framework = "arduino-esp32",
+        core = "3.3.9",
+        platform = "pioarduino/platform-espressif32#55.03.39",
+        partitionTable = DeviceFirmwareRuntimeContract.Manifest.PARTITION_TABLE,
+        normalOtaAssetType = DeviceFirmwareRuntimeContract.Manifest.NORMAL_OTA_ASSET_TYPE
+    )
+
+    private fun DeviceFirmwareManifestPlatform.toJson(): JSONObject = JSONObject()
+        .put("framework", framework)
+        .put("core", core)
+        .put("platform", platform)
+        .put("partitionTable", partitionTable)
+        .put("normalOtaAssetType", normalOtaAssetType)
+
+    private fun manifestSignature() = DeviceFirmwareManifestSignature(
+        scheme = DeviceFirmwareRuntimeContract.Signature.SCHEME_ECDSA_P256_SHA256,
+        keyId = "release-key-1",
+        payloadHash = "b".repeat(64),
+        value = "signed-value"
+    )
+
+    private fun DeviceFirmwareManifestSignature.toJson(): JSONObject = JSONObject()
+        .put("scheme", scheme)
+        .put("keyId", keyId)
+        .put("payloadHash", payloadHash)
+        .put("value", value)
 
     private class RecordingGateway(
         private val startDelayMillis: Long
@@ -421,6 +513,7 @@ class DeviceOtaCommercialHardeningTest {
         const val RELEASE_TAG = "v2.0.0"
         const val GENERATED_AT = "2026-07-30T00:00:00Z"
         const val FIRMWARE_SIZE = 1_048_576
+        const val FACTORY_SIZE = 2_097_152
         const val RUNTIME_GENERATION = 7L
         const val WORKER_COUNT = 8
         const val START_SEND_DELAY_MILLIS = 75L
