@@ -38,30 +38,6 @@ object DeviceFirmwareStatusParser {
         )
     }
 
-    fun parseOtaStatusResponse(data: JSONObject): DeviceFirmwareOtaSnapshot {
-        return parseOtaSnapshot(data.optJSONObject("ota") ?: data)
-    }
-
-    fun parseOtaProgressEvent(data: JSONObject): DeviceFirmwareOtaSnapshot {
-        return parseOtaSnapshot(data.optJSONObject("ota") ?: data)
-    }
-
-    fun parseOtaStartAccepted(data: JSONObject): DeviceFirmwareOtaStartAccepted {
-        return DeviceFirmwareOtaStartAccepted(
-            accepted = data.optBoolean("accepted", false),
-            request = data.optJSONObject("request")?.let(::parseRequestEchoPermissive),
-            ota = parseOtaSnapshot(data.optJSONObject("ota"))
-        )
-    }
-
-    fun parseOtaClearResult(data: JSONObject): DeviceFirmwareOtaClearResult {
-        return DeviceFirmwareOtaClearResult(
-            cleared = data.optBoolean("cleared", false),
-            previous = parseOtaSnapshot(data.optJSONObject("previous")),
-            ota = parseOtaSnapshot(data.optJSONObject("ota"))
-        )
-    }
-
     fun parseOtaStatusResponseExact(data: JSONObject): Result<DeviceFirmwareOtaSnapshot> =
         runCatching {
             data.requireExactKeys(OTA_STATUS_RESPONSE_KEYS, "firmware.ota.status.data")
@@ -77,7 +53,7 @@ object DeviceFirmwareStatusParser {
                 data.requiredExactString("completedEvent") ==
                     DeviceFirmwareRuntimeContract.Event.OTA_COMPLETED
             )
-            parseOtaSnapshotExact(data.requiredObject("ota"))
+            parseOtaSnapshotExactObject(data.requiredObject("ota"))
         }
 
     fun parseOtaStartAcceptedExact(data: JSONObject): Result<DeviceFirmwareOtaStartAccepted> =
@@ -100,7 +76,7 @@ object DeviceFirmwareStatusParser {
             DeviceFirmwareOtaStartAccepted(
                 accepted = true,
                 request = parseRequestEchoExact(data.requiredObject("request")),
-                ota = parseOtaSnapshotExact(data.requiredObject("ota"))
+                ota = parseOtaSnapshotExactObject(data.requiredObject("ota"))
             )
         }
 
@@ -111,16 +87,35 @@ object DeviceFirmwareStatusParser {
             require(data.requiredExactBoolean("cleared"))
             require(data.requiredExactString("runtimeTransport") == "websocket")
             require(data.requiredExactString("command") == "firmware.ota.clear")
+            val previous = parseOtaClearPreviousExact(data.requiredObject("previous"))
+            val ota = parseOtaSnapshotExactObject(data.requiredObject("ota"))
+            require(ota.phase == DeviceFirmwareOtaPhase.IDLE)
             DeviceFirmwareOtaClearResult(
                 cleared = true,
-                previous = parseOtaSnapshotExact(data.requiredObject("previous")),
-                ota = parseOtaSnapshotExact(data.requiredObject("ota"))
+                previous = previous,
+                ota = ota
             )
         }
 
+    fun parseOtaSnapshotExact(data: JSONObject): Result<DeviceFirmwareOtaSnapshot> =
+        runCatching { parseOtaSnapshotExactObject(data) }
+
     fun parseOtaProgressEventExact(data: JSONObject): Result<DeviceFirmwareOtaSnapshot> =
         runCatching {
-            parseOtaSnapshotExact(data.optJSONObject("ota") ?: data)
+            data.requireExactKeys(OTA_EVENT_KEYS, "firmware OTA event data")
+            require(data.requiredExactString("runtimeTransport") == "websocket")
+            require(data.requiredExactString("binaryTransfer") == "firmware-download")
+            val snapshot = parseOtaSnapshotFieldsExact(data)
+            require(data.requiredExactBoolean("completed") == snapshot.phase.isTerminal)
+            require(
+                data.requiredExactBoolean("success") ==
+                    (snapshot.phase == DeviceFirmwareOtaPhase.SUCCEEDED)
+            )
+            require(
+                data.requiredExactBoolean("failed") ==
+                    (snapshot.phase == DeviceFirmwareOtaPhase.FAILED)
+            )
+            snapshot
         }
 
     private fun parseRequestEchoExact(json: JSONObject): DeviceFirmwareOtaStartRequestEcho {
@@ -140,20 +135,6 @@ object DeviceFirmwareStatusParser {
             require(echo.expectedSize > 0)
             require(!echo.allowInsecureHttp)
         }
-    }
-
-    private fun parseRequestEchoPermissive(json: JSONObject): DeviceFirmwareOtaStartRequestEcho {
-        return DeviceFirmwareOtaStartRequestEcho(
-            urlScheme = json.optString("urlScheme", "").trim(),
-            version = json.optString("version", "").trim(),
-            expectedSize = json.optInt("expectedSize", 0),
-            applyNow = json.optBoolean("applyNow", true),
-            allowInsecureHttp = json.optBoolean("allowInsecureHttp", false),
-            productKey = json.optString("productKey", "").trim(),
-            productId = json.optString("productId", "").trim(),
-            model = json.optString("model", "").trim(),
-            hardwareRevision = json.optString("hardwareRevision", "").trim()
-        )
     }
 
     private fun parsePartitionStatus(json: JSONObject?): DeviceFirmwarePartitionStatus {
@@ -214,8 +195,12 @@ object DeviceFirmwareStatusParser {
         )
     }
 
-    private fun parseOtaSnapshotExact(source: JSONObject): DeviceFirmwareOtaSnapshot {
+    private fun parseOtaSnapshotExactObject(source: JSONObject): DeviceFirmwareOtaSnapshot {
         source.requireExactKeys(OTA_SNAPSHOT_KEYS, "firmware OTA snapshot")
+        return parseOtaSnapshotFieldsExact(source)
+    }
+
+    private fun parseOtaSnapshotFieldsExact(source: JSONObject): DeviceFirmwareOtaSnapshot {
         val phaseRaw = source.requiredExactString("phase")
         val phase = requireNotNull(DeviceFirmwareOtaPhase.fromWireExact(phaseRaw)) {
             "Unknown firmware OTA phase: $phaseRaw"
@@ -239,6 +224,11 @@ object DeviceFirmwareStatusParser {
         }
         require(bytesWritten >= 0L && contentLength >= 0L)
         require(contentLength == 0L || bytesWritten <= contentLength)
+        val startedAtMs = source.requiredExactLong("startedAtMs")
+        val finishedAtMs = source.requiredExactLong("finishedAtMs")
+        val httpStatus = source.requiredExactInt("httpStatus")
+        require(startedAtMs >= 0L && finishedAtMs >= 0L && httpStatus >= 0)
+        require(!phase.isTerminal || finishedAtMs > 0L)
         require(!allowInsecureHttp) { "Firmware reported insecure OTA transport." }
         require(urlScheme.isEmpty() || urlScheme == "https")
         require(sha256Expected.isEmpty() || sha256Expected.isSha256Hex())
@@ -268,8 +258,8 @@ object DeviceFirmwareStatusParser {
             restartRequired = restartRequired,
             restartScheduled = restartScheduled,
             allowInsecureHttp = false,
-            startedAtMs = source.requiredExactLong("startedAtMs"),
-            finishedAtMs = source.requiredExactLong("finishedAtMs"),
+            startedAtMs = startedAtMs,
+            finishedAtMs = finishedAtMs,
             bytesWritten = bytesWritten,
             contentLength = contentLength,
             progressPermille = progressPermille,
@@ -280,7 +270,32 @@ object DeviceFirmwareStatusParser {
             lastError = source.requiredStringAllowEmpty("lastError"),
             lastErrorField = source.requiredStringAllowEmpty("lastErrorField"),
             urlScheme = urlScheme,
-            httpStatus = source.requiredExactInt("httpStatus")
+            httpStatus = httpStatus
+        )
+    }
+
+    private fun parseOtaClearPreviousExact(source: JSONObject): DeviceFirmwareOtaSnapshot {
+        source.requireExactKeys(OTA_CLEAR_PREVIOUS_KEYS, "firmware.ota.clear.data.previous")
+        val phaseRaw = source.requiredExactString("phase")
+        val phase = requireNotNull(DeviceFirmwareOtaPhase.fromWireExact(phaseRaw)) {
+            "Unknown previous firmware OTA phase: $phaseRaw"
+        }
+        val restartRequired = source.requiredExactBoolean("restartRequired")
+        val restartScheduled = source.requiredExactBoolean("restartScheduled")
+        require(!restartRequired || phase == DeviceFirmwareOtaPhase.SUCCEEDED)
+        require(!restartScheduled || restartRequired)
+        return DeviceFirmwareOtaSnapshot(
+            phase = phase,
+            phaseRaw = phaseRaw,
+            active = false,
+            completed = phase.isTerminal,
+            success = phase == DeviceFirmwareOtaPhase.SUCCEEDED,
+            failed = phase == DeviceFirmwareOtaPhase.FAILED,
+            restartRequired = restartRequired,
+            restartScheduled = restartScheduled,
+            targetVersion = source.requiredStringAllowEmpty("targetVersion"),
+            lastError = source.requiredStringAllowEmpty("lastError"),
+            lastErrorField = source.requiredStringAllowEmpty("lastErrorField")
         )
     }
 
@@ -344,6 +359,10 @@ object DeviceFirmwareStatusParser {
     private val OTA_CLEAR_RESPONSE_KEYS = setOf(
         "operation", "cleared", "runtimeTransport", "command", "previous", "ota"
     )
+    private val OTA_CLEAR_PREVIOUS_KEYS = setOf(
+        "phase", "restartRequired", "restartScheduled", "targetVersion", "lastError",
+        "lastErrorField"
+    )
     private val OTA_REQUEST_ECHO_KEYS = setOf(
         "urlScheme", "version", "expectedSize", "applyNow", "allowInsecureHttp",
         "productKey", "productId", "model", "hardwareRevision"
@@ -353,5 +372,8 @@ object DeviceFirmwareStatusParser {
         "startedAtMs", "finishedAtMs", "bytesWritten", "contentLength", "progressPermille",
         "progressPercent", "targetVersion", "sha256Expected", "sha256Actual", "lastError",
         "lastErrorField", "urlScheme", "httpStatus"
+    )
+    private val OTA_EVENT_KEYS = OTA_SNAPSHOT_KEYS + setOf(
+        "completed", "success", "failed", "runtimeTransport", "binaryTransfer"
     )
 }

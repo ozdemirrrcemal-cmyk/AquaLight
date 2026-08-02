@@ -19,17 +19,17 @@ class DeviceFirmwareUpdateApplicationContractTest {
                 applyNow: Boolean
             ): Result<PreparedDeviceFirmwareUpdate> = Result.success(plan)
 
-            override fun startUpdate(
+            override suspend fun startUpdate(
                 plan: PreparedDeviceFirmwareUpdate
             ): DeviceFirmwareCommandResult = DeviceFirmwareCommandResult(
                 sent = true,
                 messageId = "start-1"
             )
 
-            override fun requestStatus(deviceUid: String): DeviceFirmwareCommandResult =
+            override suspend fun requestStatus(deviceUid: String): DeviceFirmwareCommandResult =
                 DeviceFirmwareCommandResult(sent = true, messageId = "status-1")
 
-            override fun clearStatus(deviceUid: String): DeviceFirmwareCommandResult =
+            override suspend fun clearStatus(deviceUid: String): DeviceFirmwareCommandResult =
                 DeviceFirmwareCommandResult(sent = true, messageId = "clear-1")
         }
 

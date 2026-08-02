@@ -30,10 +30,45 @@ class DeviceFirmwareOtaContractParserTest {
     }
 
     @Test
+    fun `progress parser accepts exact firmware event envelope`() {
+        val parsed = DeviceFirmwareStatusParser.parseOtaProgressEventExact(
+            otaEventJson().put("phase", "writing").put("active", true)
+        ).getOrThrow()
+
+        assertEquals(DeviceFirmwareOtaPhase.WRITING, parsed.phase)
+    }
+
+    @Test
     fun `progress parser rejects phase and active flag disagreement`() {
-        val invalid = otaSnapshot().put("phase", "downloading").put("active", false)
+        val invalid = otaEventJson().put("phase", "downloading").put("active", false)
 
         assertTrue(DeviceFirmwareStatusParser.parseOtaProgressEventExact(invalid).isFailure)
+    }
+
+    @Test
+    fun `clear parser accepts compact previous state emitted by firmware`() {
+        val parsed = DeviceFirmwareStatusParser.parseOtaClearResultExact(
+            JSONObject()
+                .put("operation", "otaClear")
+                .put("cleared", true)
+                .put("runtimeTransport", "websocket")
+                .put("command", "firmware.ota.clear")
+                .put(
+                    "previous",
+                    JSONObject()
+                        .put("phase", "failed")
+                        .put("restartRequired", false)
+                        .put("restartScheduled", false)
+                        .put("targetVersion", "2.0.0")
+                        .put("lastError", "download failed")
+                        .put("lastErrorField", "download")
+                )
+                .put("ota", otaSnapshot().put("targetVersion", "").put("sha256Expected", ""))
+        ).getOrThrow()
+
+        assertTrue(parsed.cleared)
+        assertEquals(DeviceFirmwareOtaPhase.FAILED, parsed.previous.phase)
+        assertEquals(DeviceFirmwareOtaPhase.IDLE, parsed.ota.phase)
     }
 
     @Test
@@ -102,6 +137,13 @@ class DeviceFirmwareOtaContractParserTest {
         .put("lastErrorField", "")
         .put("urlScheme", "https")
         .put("httpStatus", 0)
+
+    private fun otaEventJson(): JSONObject = otaSnapshot()
+        .put("completed", false)
+        .put("success", false)
+        .put("failed", false)
+        .put("runtimeTransport", "websocket")
+        .put("binaryTransfer", "firmware-download")
 
     private fun manifestJson(): JSONObject {
         val env = "dosing_dose_pro_2"

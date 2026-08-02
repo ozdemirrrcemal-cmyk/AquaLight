@@ -11,6 +11,9 @@ FILES = {
     "contract": SOURCE / "application/devices/DeviceFirmwareUpdateOperations.kt",
     "adapter": SOURCE / "data/devices/DefaultDeviceFirmwareUpdateOperations.kt",
     "coordinator": SOURCE / "data/devices/runtime/modules/firmware/DeviceOtaCoordinator.kt",
+    "runtime": SOURCE / "data/devices/runtime/modules/firmware/DeviceFirmwareRuntimeRepository.kt",
+    "raw_mapper": SOURCE / "data/devices/runtime/modules/firmware/DeviceFirmwareOtaEventMapper.kt",
+    "validation": SOURCE / "data/devices/runtime/modules/firmware/DeviceOtaValidation.kt",
     "planner": SOURCE / "data/devices/runtime/modules/firmware/DeviceFirmwareUpdatePlanner.kt",
     "models": SOURCE / "data/devices/runtime/modules/firmware/DeviceFirmwareModels.kt",
     "manifest": SOURCE / "data/devices/runtime/modules/firmware/DeviceFirmwareManifestParser.kt",
@@ -65,23 +68,63 @@ require_tokens(
         "coordinator.startUpdate(plan)",
         "coordinator.requestStatus(",
         "coordinator.clearStatus(",
+        "recoverRuntime = devicesRepository::replaceRuntimeAfterControlFailure",
+        "runtimeTypedEvents = devicesRepository.typedRuntimeEvents()",
     ),
 )
 require_tokens(
     "coordinator",
     (
-        "runtimeEvents.collect(::processEvent)",
+        "events.collect(::processLifecycleEvent)",
+        "events.collect(::processTypedEvent)",
+        "updates.collect(::processSnapshotUpdates)",
         "An OTA operation is already active for this device.",
         "runtimeMetadataGeneration != selected.dataPlan.runtimeMetadataGeneration",
-        "parseOtaStartAcceptedExact",
-        "parseOtaStatusResponseExact",
         "parseOtaProgressEventExact",
+        "selected.runtimeGeneration != event.generation",
         "Firmware OTA request echo differs from the selected plan.",
         "DeviceOtaState.Recovering",
-        "private val startLocks = ConcurrentHashMap<DeviceUid, Any>()",
-        "synchronized(startLock(deviceUid))",
-        "private fun startUpdateLocked(",
+        "private val startLocks = ConcurrentHashMap<DeviceUid, Mutex>()",
+        "startLock(deviceUid).withLock",
+        "private suspend fun startUpdateLocked(",
         "startLocks.putIfAbsent(deviceUid, candidate)",
+        "pendingVersionVerification",
+        "runCatching { refreshDiscovery() }",
+        "recoverRuntime(deviceUid)",
+    ),
+)
+require_tokens(
+    "runtime",
+    (
+        "private val gateway: DeviceRuntimeCommandGateway",
+        "gateway.execute(",
+        "suspend fun startOta(",
+        "suspend fun readOtaStatus(",
+        "suspend fun clearOtaStatus(",
+        "DeviceFirmwareStatusParser.parseOtaStartAcceptedExact",
+        "DeviceFirmwareStatusParser.parseOtaClearResultExact",
+    ),
+)
+forbid_tokens("runtime", ("AqlWsCommandClient", "sendLegacy", "LegacyOnlyGateway"))
+require_tokens(
+    "raw_mapper",
+    (
+        "event?.module == DeviceFirmwareRuntimeContract.MODULE",
+        "parseOtaProgressEventExact(event.data).getOrNull()",
+    ),
+)
+forbid_tokens("raw_mapper", ("parseOtaProgressEvent(event.data)",))
+require_tokens(
+    "validation",
+    (
+        "object DeviceOtaValidator",
+        "snapshot.targetVersion != plan.targetVersion",
+        "snapshot.sha256Expected.equals(plan.firmware.sha256",
+        "snapshot.contentLength != plan.firmware.size.toLong()",
+        "snapshot.sha256Actual.equals(plan.firmware.sha256",
+        "snapshot.bytesWritten != plan.firmware.size.toLong()",
+        "snapshot.firmwareVersion != plan.targetVersion",
+        "object DeviceOtaStateMapper",
     ),
 )
 require_tokens(
@@ -131,6 +174,8 @@ require_tokens(
         "parseOtaStartAcceptedExact",
         "parseOtaStatusResponseExact",
         "parseOtaProgressEventExact",
+        "parseOtaClearResultExact",
+        "parseOtaSnapshotExact",
         'model = json.requiredExactString("model")',
         "OTA active flag differs from its exact phase.",
     ),

@@ -28,6 +28,7 @@ import kotlinx.coroutines.Job
 import kotlinx.coroutines.awaitCancellation
 import kotlinx.coroutines.cancelAndJoin
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -45,6 +46,11 @@ class DevicesRepository(
     private val wallClockMillis: () -> Long = System::currentTimeMillis,
     private val elapsedRealtimeMillis: () -> Long = DeviceElapsedRealtimeClock::nowMillis
 ) {
+
+    private val _typedRuntimeEvents = MutableSharedFlow<DeviceRuntimeTypedEvent>(
+        extraBufferCapacity = TYPED_RUNTIME_EVENT_BUFFER_CAPACITY
+    )
+    private val typedRuntimeEvents: SharedFlow<DeviceRuntimeTypedEvent> = _typedRuntimeEvents
 
     private val presenceRuntimeMonitor = DevicePresenceRuntimeMonitor(
         discoveryRepository = discoveryRepository,
@@ -211,6 +217,8 @@ class DevicesRepository(
     fun runtimeModules(): DeviceRuntimeModuleProvider? = runtimeRepository?.runtimeModules
 
     fun runtimeEvents(): SharedFlow<AqlWsEvent>? = runtimeRepository?.events
+
+    fun typedRuntimeEvents(): SharedFlow<DeviceRuntimeTypedEvent> = typedRuntimeEvents
 
     fun runtimeConnectionStates(): SharedFlow<AqlWsConnectionState>? =
         runtimeRepository?.connectionState
@@ -409,6 +417,7 @@ class DevicesRepository(
             }
             updated?.let { snapshot -> knownStore?.saveSnapshot(snapshot) }
         }
+        _typedRuntimeEvents.emit(event)
     }
 
     private fun DeviceRuntimeTypedEvent.deviceNameStatusOrNull(): DeviceRuntimeNameStatus? =
@@ -600,6 +609,8 @@ class DevicesRepository(
         }
     }
 }
+
+private const val TYPED_RUNTIME_EVENT_BUFFER_CAPACITY = 256
 
 class DevicePersistenceTransactionException(
     message: String,

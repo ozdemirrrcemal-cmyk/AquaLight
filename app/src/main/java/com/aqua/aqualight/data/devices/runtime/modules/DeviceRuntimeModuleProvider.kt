@@ -24,12 +24,10 @@ import com.aqua.aqualight.data.devices.runtime.modules.timer.DeviceTimerRuntimeA
 import com.aqua.aqualight.data.devices.runtime.modules.timer.DeviceTimerRuntimeRepository
 import com.aqua.aqualight.data.devices.runtime.modules.timer.DeviceTimerRuntimeStateStore
 import com.aqua.aqualight.data.devices.runtime.modules.timer.DeviceTimerTypedEventReducer
-import com.aqua.aqualight.data.devices.runtime.ws.AqlWsCommandClient
 
-/** Common, Light, Cooling, Timer and Dosing modules use the correlated broker. */
+/** Every authenticated runtime module uses the same correlated command broker. */
 class DeviceRuntimeModuleProvider internal constructor(
     commandGateway: DeviceRuntimeCommandGateway,
-    commandClientProvider: (DeviceUid) -> AqlWsCommandClient?,
     revokeLocalCredential: suspend (DeviceUid) -> Result<Unit>,
     timerAccessProvider: (DeviceUid) -> DeviceTimerRuntimeAccess,
     dosingAccessProvider: (DeviceUid) -> DeviceDosingRuntimeAccess
@@ -54,7 +52,7 @@ class DeviceRuntimeModuleProvider internal constructor(
     val network = DeviceNetworkRuntimeRepository(commandGateway)
     val time = DeviceTimeRuntimeRepository(commandGateway)
 
-    val firmware = DeviceFirmwareRuntimeRepository(commandGateway, commandClientProvider)
+    val firmware = DeviceFirmwareRuntimeRepository(commandGateway)
     val firmwareUpdate = DeviceFirmwareUpdateRepository(firmware)
 
     val timer = DeviceTimerRuntimeRepository(commandGateway, timerStateStore, timerAccessProvider)

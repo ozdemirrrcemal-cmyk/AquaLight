@@ -6,11 +6,11 @@ Target: **41 authenticated commands / 0 public commands**
 
 ## Current position
 
-- Current stage: **08 — Dosing runtime alignment**
-- Active branch: `feat/dosing-08-runtime-alignment`
-- Status: **PASSED — PR #189 READY FOR MERGE APPROVAL**
-- Previous stage: **07 PASSED / PR #188 MERGED**
-- Next: Merge Stage 08 only after explicit approval, then open the Stage 09 branch.
+- Current stage: **09 — OTA update orchestration**
+- Active branch: `feat/ota-09-update-orchestration`
+- Status: **LOCAL AUTOMATED GATES PASSED — REMOTE/PHYSICAL EVIDENCE PENDING**
+- Previous stage: **08 PASSED / PR #189 MERGED**
+- Next: Publish the Stage 09 PR, complete remote CI and record a physical signed-OTA smoke before merge.
 
 ## Fixed rules
 
@@ -158,7 +158,7 @@ Target: **41 authenticated commands / 0 public commands**
   - [x] Physical Timer screen regression N/A: no production UI consumer is changed in this Stage
   - [x] Squash-merged to integration as `b01c4af07f9edbbbae85bf9e134d1509d10a7730`
 
-- [ ] **08** `feat/dosing-08-runtime-alignment`
+- [x] **08** `feat/dosing-08-runtime-alignment` — **MERGED / PR #189**
   - [x] Confirm and mirror all 11 authenticated Dosing commands from current firmware
   - [x] Audit exact firmware files `AqlDosingCommands.hpp` (`1d84bc0eaadb77f9041978c2ce46c7042c158009`) and `AqlTimerService.hpp` (`ca37e6722e4e9d214e5efd6fc089d5e64db2490a`)
   - [x] Add fail-closed parsers for the exact status and all 10 mutation result schemas
@@ -185,13 +185,37 @@ Target: **41 authenticated commands / 0 public commands**
   - [x] CodeQL Security Scan — run #4697
   - [x] PR evidence recorded on PR #189 for tested head `63e0cfd3d30566cf6f6c9eedc0ff73f7365e6ef2`
   - [x] Physical Dosing screen regression N/A: no production UI consumer is changed in this Stage
+  - [x] Squash-merged to integration as `fe2e7da20b7fb83dc6f4e5ea6e694979fe8f3da3`
 
 - [ ] **09** `feat/ota-09-update-orchestration`
-  - Manifest fetch/signature verification
-  - Product/hardware/version/SHA/size validation
-  - OTA start/progress/completed
-  - Restart, UDP rediscovery and WebSocket reconnect
-  - New firmware version verification
+  - [x] Audit current firmware commit `38e8812c1bcecf948ebab85979bff21a24f4b79c`
+  - [x] Freeze exact `AqlFirmwareCommands.hpp` (`8b1107d`) start/status/clear responses
+  - [x] Freeze exact `AqlOtaService.hpp` (`7150082`) lifecycle and restart semantics
+  - [x] Freeze exact `AqlRealtimeServer.cpp` (`a0caaeb`) progress/completed event payloads
+  - [x] Preserve fail-closed manifest fetch, ECDSA signature and signed payload-hash verification
+  - [x] Select exactly one artifact by channel, environment, product, family, line, model and hardware revision
+  - [x] Validate target version, HTTPS release URL, SHA-256 and binary size before dispatch
+  - [x] Move OTA start/status/clear from send-success to the correlated request broker
+  - [x] Parse exact start acceptance, status snapshot, compact clear-previous and cleared snapshot schemas
+  - [x] Consume exact typed `firmware.ota.progress`, `firmware.ota.completed` and `system.restarting` events
+  - [x] Reject stale-generation, wrong-device, unsolicited and malformed OTA events
+  - [x] Serialize concurrent starts per device and reject duplicate active operations
+  - [x] Validate firmware request echo and every active/terminal snapshot against the selected plan
+  - [x] Trigger UDP foreground rediscovery and device-scoped WebSocket runtime replacement after restart
+  - [x] Preserve restart recovery when the terminal event is missed and recover through correlated status
+  - [x] Require new authenticated metadata generation and exact product/hardware identity after restart
+  - [x] Verify the reconnected firmware version exactly equals the selected target before success
+  - [x] Keep Settings screens, ViewModels, UI state and presentation resources unchanged
+  - [x] OTA parser/planner/coordinator/application tests passed locally (26 tests)
+  - [x] Runtime module provider and application adapter wiring compiled independently
+  - [x] Repository Python suite passed (138 tests) and all architecture/protocol/catalog guards passed locally
+  - [x] Primary Detekt and zero-new-advisory-debt policy passed locally
+  - [ ] Android CI
+  - [ ] Installable Debug APK
+  - [ ] Emulator API 27 / 36
+  - [ ] CodeQL Security Scan
+  - [ ] Physical signed-OTA smoke: download, verify, restart, rediscover, reconnect and version proof
+  - [ ] PR evidence recorded
 
 - [ ] **10** `test/ws-10-firmware-interoperability`
   - 41/41 command parity
@@ -235,3 +259,6 @@ Target: **41 authenticated commands / 0 public commands**
 | 2026-08-02 | Stage 08 Dosing runtime branch opened | IN PROGRESS | Freeze all 11 firmware contracts |
 | 2026-08-02 | Stage 08 Dosing runtime implementation | LOCAL GATES PASSED | Publish branch and complete PR CI evidence |
 | 2026-08-02 | Stage 08 Dosing pull-request gates | PASS / PR #189 READY | Request explicit merge approval |
+| 2026-08-02 | Stage 08 Dosing runtime alignment | PASS / PR #189 MERGED | Start Stage 09 |
+| 2026-08-02 | Stage 09 OTA orchestration branch opened | IN PROGRESS | Freeze firmware OTA and restart contracts |
+| 2026-08-02 | Stage 09 OTA orchestration implementation | LOCAL GATES PASSED | Publish PR and complete remote/physical evidence |

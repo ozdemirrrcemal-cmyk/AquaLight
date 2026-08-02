@@ -12,6 +12,7 @@ FIRMWARE_CONTRACT = SOURCE / "application/devices/DeviceFirmwareUpdateOperations
 ROOT_ADAPTER = SOURCE / "data/devices/DefaultDeviceRootOperations.kt"
 FIRMWARE_ADAPTER = SOURCE / "data/devices/DefaultDeviceFirmwareUpdateOperations.kt"
 OTA_COORDINATOR = SOURCE / "data/devices/runtime/modules/firmware/DeviceOtaCoordinator.kt"
+OTA_VALIDATION = SOURCE / "data/devices/runtime/modules/firmware/DeviceOtaValidation.kt"
 MAPPING = SOURCE / "data/devices/DeviceRootSnapshotMapping.kt"
 CAPABILITY_MAPPING = SOURCE / "data/devices/DeviceRootCapabilityMapping.kt"
 MENU_RESOLVER = SOURCE / "data/devices/DeviceRootMenuFeatureResolver.kt"
@@ -44,6 +45,7 @@ firmware_contract = read(FIRMWARE_CONTRACT)
 root_adapter = read(ROOT_ADAPTER)
 firmware_adapter = read(FIRMWARE_ADAPTER)
 ota_coordinator = read(OTA_COORDINATOR)
+ota_validation = read(OTA_VALIDATION)
 mapping = read(MAPPING)
 capability_mapping = read(CAPABILITY_MAPPING)
 menu_resolver = read(MENU_RESOLVER)
@@ -79,7 +81,7 @@ for path, text, tokens in (
             "fun observe(deviceUid: String): StateFlow<DeviceOtaState>",
             "suspend fun checkAvailability",
             "suspend fun prepareUpdate",
-            "fun startUpdate",
+            "suspend fun startUpdate",
         ),
     ),
 ):
@@ -125,15 +127,23 @@ for token in (
     "class DeviceOtaCoordinator",
     "fun observe(deviceUid: DeviceUid)",
     "suspend fun checkAvailability(",
-    "fun startUpdate(plan: PreparedDeviceFirmwareUpdate)",
-    "runtimeEvents.collect(::processEvent)",
-    "parseOtaStartAcceptedExact",
-    "parseOtaStatusResponseExact",
+    "suspend fun startUpdate(plan: PreparedDeviceFirmwareUpdate)",
+    "events.collect(::processLifecycleEvent)",
+    "events.collect(::processTypedEvent)",
+    "updates.collect(::processSnapshotUpdates)",
     "parseOtaProgressEventExact",
     "runtimeMetadataGeneration != selected.dataPlan.runtimeMetadataGeneration",
 ):
     if token not in ota_coordinator:
         errors.append(f"{OTA_COORDINATOR.relative_to(ROOT)}: shared OTA coordinator token is missing: {token}")
+
+for token in (
+    "object DeviceOtaValidator",
+    "snapshot.firmwareVersion != plan.targetVersion",
+    "snapshot.sha256Actual.equals(plan.firmware.sha256",
+):
+    if token not in ota_validation:
+        errors.append(f"{OTA_VALIDATION.relative_to(ROOT)}: OTA validation token is missing: {token}")
 
 for token in (
     "fun DeviceSnapshot.toDeviceRootSnapshot",
