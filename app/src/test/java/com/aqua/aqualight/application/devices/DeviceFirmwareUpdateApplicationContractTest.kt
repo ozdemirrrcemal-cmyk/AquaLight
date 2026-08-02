@@ -102,7 +102,6 @@ class DeviceFirmwareUpdateApplicationContractTest {
         productId = "com.aqualight.dosing.dose_pro_2",
         model = "dose_pro_2",
         hardwareRevision = "2.0",
-        displayName = "Dose Pro 2",
         filename = "AquaLight-dosing_dose_pro_2-v2.0.0-ota.bin",
         downloadUrl = "https://example.invalid/ota.bin",
         sha256 = "a".repeat(64),
