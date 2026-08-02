@@ -79,16 +79,11 @@ class DeviceFamilySettingsViewModel(
         }
 
         updateCheckJob = viewModelScope.launch {
-            val availability = firmwareUpdateOperations.checkAvailability(
+            firmwareUpdateOperations.checkAvailability(
                 deviceUid = deviceUid,
                 manifestUrl = manifestUrl,
                 applyNow = true
-            ).getOrNull()
-            if (availability is DeviceOtaState.UpdateAvailable) {
-                // Re-selecting the signed plan before this status probe also recovers a transfer
-                // that continued while the Android process or update screen was absent.
-                firmwareUpdateOperations.requestStatus(deviceUid)
-            }
+            )
         }
     }
 
