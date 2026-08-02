@@ -59,9 +59,22 @@
     <string name="device_settings_update_phase_restarting">The device is restarting with the new software…</string>
     <string name="device_settings_update_phase_succeeded">The target version was verified after restart.</string>
     <string name="device_settings_update_phase_up_to_date">The latest compatible software is already installed.</string>
-    <string name="device_settings_update_phase_failed_recoverable">Check the connection and try again. The device can remain on its current software.</string>
-    <string name="device_settings_update_phase_failed_terminal">Keep the device powered on and check its connection before trying another update.</string>
     <string name="device_settings_update_phase_unsupported">No compatible signed update is available for this device profile.</string>
+
+    <string name="device_settings_update_failure_connection">The device connection was interrupted. Check Wi-Fi and try again.</string>
+    <string name="device_settings_update_failure_authentication">The secure device session expired. Reconnect and try again.</string>
+    <string name="device_settings_update_failure_unsupported">This device or firmware does not support the requested update operation.</string>
+    <string name="device_settings_update_failure_invalid_request">The prepared update request is no longer valid. Check for updates again.</string>
+    <string name="device_settings_update_failure_compatibility">This update does not match the device model, hardware revision, or installed version.</string>
+    <string name="device_settings_update_failure_download">The device could not download the firmware package. Check its internet connection and try again.</string>
+    <string name="device_settings_update_failure_storage">The device could not reserve or write the OTA partition.</string>
+    <string name="device_settings_update_failure_integrity">The downloaded firmware could not be verified. The package was not installed.</string>
+    <string name="device_settings_update_failure_timeout">The device did not respond before the update request timed out.</string>
+    <string name="device_settings_update_failure_protocol">The device response did not match the required OTA protocol.</string>
+    <string name="device_settings_update_failure_cancelled">The update request was cancelled before completion.</string>
+    <string name="device_settings_update_failure_internal">The update could not be completed because of an internal error.</string>
+    <string name="device_settings_update_failure_diagnostics">Technical details: %1$s</string>
+
     <string name="device_settings_update_progress_percent">%1$d%%</string>
     <string name="device_settings_update_progress_bytes">%1$s of %2$s</string>
     <string name="device_settings_update_progress_waiting">Waiting for device progress</string>
