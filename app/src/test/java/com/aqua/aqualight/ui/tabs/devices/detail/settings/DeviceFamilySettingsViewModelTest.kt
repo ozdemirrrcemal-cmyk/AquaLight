@@ -75,7 +75,7 @@ class DeviceFamilySettingsViewModelTest {
     }
 
     @Test
-    fun `checks signed availability and probes status without losing the selected plan`() {
+    fun `checks signed availability without probing runtime status from settings`() {
         val firmware = FakeFirmwareOperations(preparedPlan())
         val viewModel = DeviceFamilySettingsViewModel(
             rootOperations = FakeDeviceRootOperations(validSnapshot()),
@@ -91,7 +91,7 @@ class DeviceFamilySettingsViewModelTest {
             viewModel.uiState.value.updateActionState
         )
         assertEquals(1, firmware.checkCalls)
-        assertEquals(1, firmware.statusCalls)
+        assertEquals(0, firmware.statusCalls)
     }
 
     private class FakeDeviceRootOperations(
