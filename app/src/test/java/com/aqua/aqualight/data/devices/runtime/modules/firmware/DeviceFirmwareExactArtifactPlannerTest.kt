@@ -169,19 +169,7 @@ class DeviceFirmwareExactArtifactPlannerTest {
         val filename = "AquaLight-$env-v2.0.0-ota.bin"
         return DeviceFirmwareManifestArtifact(
             env = env,
-            product = DeviceFirmwareManifestProduct(
-                productKey = product.productKey.value,
-                productId = product.productId.value,
-                brand = "AquaLight",
-                family = product.family.wireValue,
-                line = product.line.value,
-                model = product.model.value,
-                displayName = product.displayName,
-                skuCode = product.skuCode.value,
-                hardwareRevision = product.hardwareRevision.value,
-                capabilities = product.profile.capabilities,
-                limits = product.limits
-            ),
+            product = product.toManifestProduct(),
             compatibility = DeviceFirmwareCompatibility(
                 productKey = product.productKey.value,
                 productId = product.productId.value,
@@ -232,6 +220,21 @@ class DeviceFirmwareExactArtifactPlannerTest {
             )
         )
     }
+
+    private fun AqlCommercialCatalogProduct.toManifestProduct() =
+        DeviceFirmwareManifestProduct(
+            productKey = productKey.value,
+            productId = productId.value,
+            brand = "AquaLight",
+            family = family.wireValue,
+            line = line.value,
+            model = model.value,
+            displayName = displayName,
+            skuCode = skuCode.value,
+            hardwareRevision = hardwareRevision.value,
+            capabilities = profile.capabilities,
+            limits = limits
+        )
 
     private companion object {
         val DEVICE_UID = DeviceUid("AQL-DP2-OTA-TEST")
