@@ -6,6 +6,8 @@ import unittest
 ROOT = Path(__file__).resolve().parents[2]
 APP_GRADLE = ROOT / "app/build.gradle"
 FIELD = 'buildConfigField "String", "AQL_OTA_MANIFEST_URL"'
+STABLE_PATH = "releases/download/ota-stable/manifest-stable.json"
+LEGACY_LATEST_PATH = "releases/latest/download/manifest-stable.json"
 
 
 def named_block(source: str, name: str) -> str:
@@ -25,7 +27,7 @@ def named_block(source: str, name: str) -> str:
 
 
 class OtaManifestBuildConfigTest(unittest.TestCase):
-    def test_stable_manifest_is_the_default_and_debug_is_the_only_override(self):
+    def test_fixed_stable_manifest_is_default_and_debug_is_only_override(self):
         source = APP_GRADLE.read_text(encoding="utf-8")
         default_config = named_block(source, "defaultConfig")
         debug = named_block(named_block(source, "buildTypes"), "debug")
@@ -40,7 +42,8 @@ class OtaManifestBuildConfigTest(unittest.TestCase):
         )
         self.assertEqual(2, source.count(FIELD))
         self.assertIn(".getOrElse(stableOtaManifestUrl)", source)
-        self.assertIn("releases/latest/download/manifest-stable.json", source)
+        self.assertIn(STABLE_PATH, source)
+        self.assertNotIn(LEGACY_LATEST_PATH, source)
 
 
 if __name__ == "__main__":
