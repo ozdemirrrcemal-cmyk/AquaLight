@@ -8,9 +8,9 @@ Target: **41 authenticated commands / 0 public commands**
 
 - Current stage: **07 — Timer runtime alignment**
 - Active branch: `feat/timer-07-runtime-alignment`
-- Status: **IMPLEMENTED — LOCAL GATES PASSED / PR PENDING**
+- Status: **PASSED — PR #188 READY FOR MERGE**
 - Previous stage: **06 PASSED / PR #187 MERGED**
-- Next: Open the Stage 07 PR against `integration/aql-ws-v1-commercial`, pass remote CI and merge before Stage 08.
+- Next: Merge Stage 07, then open Stage 08 Dosing runtime alignment from `integration/aql-ws-v1-commercial`.
 
 ## Fixed rules
 
@@ -130,7 +130,7 @@ Target: **41 authenticated commands / 0 public commands**
   - [x] PR evidence recorded on PR #187 for tested head `355b00b6ba9dc4e5e721dc8c30aa4b757a928092`
   - [x] Physical Cooling screen regression N/A: no production UI consumer is changed in this Stage
 
-- [ ] **07** `feat/timer-07-runtime-alignment` — **IMPLEMENTED / PR PENDING**
+- [x] **07** `feat/timer-07-runtime-alignment` — **PASSED / PR #188 READY FOR MERGE**
   - [x] Confirm and mirror all 3 Timer commands: `timer.status.get`, `timer.config.apply`, `timer.channel.set`
   - [x] Align with firmware PR #26 / commit `38e8812c1bcecf948ebab85979bff21a24f4b79c`
   - [x] Add fail-closed status, config-mutation and channel-mutation parsers with exact response keys and literals
@@ -150,8 +150,12 @@ Target: **41 authenticated commands / 0 public commands**
   - [x] WebSocket protocol, commercial catalog runtime and device catalog parity guards passed locally
   - [x] Primary Detekt and zero-new-advisory-debt checks passed locally for the Stage 07 change set
   - [x] Keep Timer layout, ViewModel, UI state and presentation resources unchanged
-  - [ ] Android CI / installable Debug APK / Emulator API 27 and 36 / CodeQL — pending PR
-  - [ ] PR evidence and physical-device disposition — pending PR
+  - [x] Android CI — run #2910
+  - [x] Installable Debug APK — run #202
+  - [x] Emulator API 27 / 36 — run #1034
+  - [x] CodeQL Security Scan — run #4695
+  - [x] PR evidence recorded on PR #188 for tested head `e6cfd0acb327f17a4b18912ce77a11a411e213a4`
+  - [x] Physical Timer screen regression N/A: no production UI consumer is changed in this Stage
 
 - [ ] **08** `feat/dosing-08-runtime-alignment`
   - 11/11 dosing commands
@@ -206,4 +210,4 @@ Target: **41 authenticated commands / 0 public commands**
 | 2026-08-01 | Stage 06 live temperature audit | CONTRACT GAP FOUND | Freeze and implement firmware telemetry contract first |
 | 2026-08-02 | Stage 06 UI scope correction | PASS | Keep layout, ViewModel and presentation resources unchanged; validate runtime layer only |
 | 2026-08-02 | Stage 06 Cooling runtime alignment | PASS / PR #187 MERGED | Start Stage 07 |
-| 2026-08-02 | Stage 07 Timer runtime alignment | LOCAL PASS / PR PENDING | Push tested implementation, open PR and run the remote gate |
+| 2026-08-02 | Stage 07 Timer runtime alignment | PASS / PR #188 READY FOR MERGE | Merge to integration and start Stage 08 |
