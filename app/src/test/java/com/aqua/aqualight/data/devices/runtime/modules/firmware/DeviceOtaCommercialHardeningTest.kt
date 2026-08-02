@@ -341,6 +341,7 @@ class DeviceOtaCommercialHardeningTest {
         .put(
             "firmware",
             JSONObject()
+                .put("version", TARGET_VERSION)
                 .put("filename", firmware.filename)
                 .put("url", firmware.url)
                 .put("sha256", firmware.sha256)
