@@ -2,6 +2,7 @@ package com.aqua.aqualight.ui.tabs.devices.detail.settings
 
 import android.os.Bundle
 import android.view.View
+import androidx.core.os.bundleOf
 import androidx.core.view.isInvisible
 import androidx.core.view.isVisible
 import androidx.fragment.app.Fragment
@@ -9,10 +10,7 @@ import androidx.fragment.app.viewModels
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.repeatOnLifecycle
-import androidx.navigation.NavDirections
 import androidx.navigation.fragment.findNavController
-import com.aqua.aqualight.NavAquariumDirections
-import com.aqua.aqualight.NavDevicesDirections
 import com.aqua.aqualight.R
 import com.aqua.aqualight.application.devices.DEVICE_CUSTOM_NAME_MAX_LENGTH
 import com.aqua.aqualight.composition.requireAppContainer
@@ -154,14 +152,10 @@ abstract class DeviceFamilySettingsFragment : Fragment(R.layout.fragment_device_
     private fun openFirmwareUpdateScreen() {
         val navController = findNavController()
         if (navController.currentDestination?.id !in SETTINGS_DESTINATIONS) return
-        val direction: NavDirections = when (navController.graph.id) {
-            R.id.nav_devices -> NavDevicesDirections
-                .actionGlobalDeviceFirmwareUpdateFragment(deviceUid)
-            R.id.nav_aquarium -> NavAquariumDirections
-                .actionGlobalDeviceFirmwareUpdateFragment(deviceUid)
-            else -> return
-        }
-        navController.navigate(direction)
+        navController.navigate(
+            R.id.action_global_deviceFirmwareUpdateFragment,
+            bundleOf(DEVICE_UID_ARGUMENT to deviceUid)
+        )
     }
 
     private fun observeSettings() {
@@ -322,6 +316,7 @@ abstract class DeviceFamilySettingsFragment : Fragment(R.layout.fragment_device_
         const val COMPLETE_PROGRESS_PERMILLE = 1_000
         const val PERMILLE_PER_PERCENT = 10
         const val DEVICE_NAME_REQUEST_KEY = "device_settings_name_request"
+        const val DEVICE_UID_ARGUMENT = "deviceUid"
         val SETTINGS_DESTINATIONS = setOf(
             R.id.deviceLightSettingsFragment,
             R.id.deviceDosingSettingsFragment,
