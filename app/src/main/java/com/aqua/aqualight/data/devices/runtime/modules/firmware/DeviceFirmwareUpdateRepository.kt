@@ -67,7 +67,8 @@ class DeviceFirmwareUpdateRepository(
 
     suspend fun requestOtaStatus(
         deviceUid: DeviceUid
-    ): DeviceRuntimeCommandOutcome<DeviceFirmwareOtaSnapshot> = runtime.readOtaStatus(deviceUid)
+    ): DeviceRuntimeCommandOutcome<DeviceFirmwareOtaStatusResponse> =
+        runtime.readOtaStatus(deviceUid)
 
     suspend fun startUpdate(
         plan: DeviceFirmwareUpdatePlan
