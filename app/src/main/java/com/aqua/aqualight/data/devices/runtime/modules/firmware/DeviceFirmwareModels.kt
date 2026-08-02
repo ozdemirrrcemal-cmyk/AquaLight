@@ -62,6 +62,13 @@ data class DeviceFirmwarePartitionStatus(
     val stateReadError: Int = 0
 )
 
+data class DeviceFirmwareRuntimeInfo(
+    val transport: String = "",
+    val wsSchema: String = "",
+    val wsProtocolVersion: Int = 0,
+    val readOnly: Boolean = false
+)
+
 data class DeviceFirmwareOtaSnapshot(
     val phase: DeviceFirmwareOtaPhase = DeviceFirmwareOtaPhase.IDLE,
     val phaseRaw: String = DeviceFirmwareOtaPhase.IDLE.wireValue,
@@ -110,7 +117,8 @@ data class DeviceFirmwareStatus(
     val otaCompletedEvent: String = "",
     val otaStartCommand: String = "",
     val otaStatusCommand: String = "",
-    val ota: DeviceFirmwareOtaSnapshot = DeviceFirmwareOtaSnapshot()
+    val ota: DeviceFirmwareOtaSnapshot = DeviceFirmwareOtaSnapshot(),
+    val runtime: DeviceFirmwareRuntimeInfo = DeviceFirmwareRuntimeInfo()
 )
 
 data class DeviceFirmwareOtaStartPayload(
@@ -172,14 +180,53 @@ data class DeviceFirmwareOtaStartRequestEcho(
 )
 
 data class DeviceFirmwareOtaStartAccepted(
+    val operation: String,
     val accepted: Boolean,
-    val request: DeviceFirmwareOtaStartRequestEcho?,
+    val runtimeTransport: String,
+    val command: String,
+    val binaryTransfer: String,
+    val event: String,
+    val progressEvent: String,
+    val completedEvent: String,
+    val request: DeviceFirmwareOtaStartRequestEcho,
     val ota: DeviceFirmwareOtaSnapshot
 )
 
+data class DeviceFirmwareOtaStatusResponse(
+    val operation: String,
+    val runtimeTransport: String,
+    val command: String,
+    val binaryTransfer: String,
+    val progressEvent: String,
+    val completedEvent: String,
+    val ota: DeviceFirmwareOtaSnapshot
+)
+
+data class DeviceFirmwareOtaEvent(
+    val completed: Boolean,
+    val success: Boolean,
+    val failed: Boolean,
+    val runtimeTransport: String,
+    val binaryTransfer: String,
+    val ota: DeviceFirmwareOtaSnapshot
+)
+
+data class DeviceFirmwareOtaClearPrevious(
+    val phase: DeviceFirmwareOtaPhase,
+    val phaseRaw: String,
+    val restartRequired: Boolean,
+    val restartScheduled: Boolean,
+    val targetVersion: String,
+    val lastError: String,
+    val lastErrorField: String
+)
+
 data class DeviceFirmwareOtaClearResult(
+    val operation: String,
     val cleared: Boolean,
-    val previous: DeviceFirmwareOtaSnapshot,
+    val runtimeTransport: String,
+    val command: String,
+    val previous: DeviceFirmwareOtaClearPrevious,
     val ota: DeviceFirmwareOtaSnapshot
 )
 
@@ -318,6 +365,7 @@ data class DeviceFirmwareCompatibility(
 )
 
 data class DeviceFirmwareAsset(
+    val version: String,
     val filename: String,
     val url: String,
     val sha256: String,
