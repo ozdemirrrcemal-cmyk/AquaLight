@@ -118,7 +118,7 @@ def stableOtaManifestUrl = providers
         .orElse(providers.environmentVariable("AQL_OTA_STABLE_MANIFEST_URL"))
         .getOrElse(
                 "https://github.com/ozdemirrrcemal-cmyk/AquaLight-OTA-Releases/" +
-                        "releases/latest/download/manifest-stable.json"
+                        "releases/download/ota-stable/manifest-stable.json"
         )
 
 // A beta asset is not published yet. Internal builds can opt in as soon as one exists;
