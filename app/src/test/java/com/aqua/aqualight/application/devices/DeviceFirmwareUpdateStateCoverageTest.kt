@@ -37,7 +37,7 @@ class DeviceFirmwareUpdateStateCoverageTest {
         assertTrue(content.isPresent)
         assertTrue(states.all { state -> state.deviceUid == DEVICE_UID })
         assertEquals(DeviceOtaProgressPhase.WRITING, (states[6] as DeviceOtaState.InProgress).phase)
-        assertEquals("Güvenli güncelleme", content.title)
+        assertEquals(listOf("OTA doğrulaması güçlendirildi."), content.items)
         assertFalse(DeviceFirmwareReleaseContent.EMPTY.isPresent)
     }
 
@@ -77,12 +77,8 @@ class DeviceFirmwareUpdateStateCoverageTest {
     }
 
     private fun releaseContent() = DeviceFirmwareReleaseContent(
-        localeTag = "tr-TR",
-        title = "Güvenli güncelleme",
-        summary = "Kararlılık iyileştirmeleri.",
-        changes = listOf("OTA doğrulaması güçlendirildi."),
-        warnings = listOf("Cihaz güncelleme sırasında yeniden başlar."),
-        mandatory = false
+        localeTag = "tr",
+        items = listOf("OTA doğrulaması güçlendirildi.")
     )
 
     private fun preparedPlan(content: DeviceFirmwareReleaseContent) = PreparedDeviceFirmwareUpdate(
