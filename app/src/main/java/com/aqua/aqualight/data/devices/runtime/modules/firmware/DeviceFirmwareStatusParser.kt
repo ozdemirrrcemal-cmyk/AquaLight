@@ -6,43 +6,60 @@ import org.json.JSONObject
 @Suppress("TooManyFunctions", "LongMethod", "MagicNumber")
 object DeviceFirmwareStatusParser {
 
-    fun parseOtaStatusResponseExact(data: JSONObject): Result<DeviceFirmwareOtaSnapshot> =
+    fun parseOtaStatusResponseExact(data: JSONObject): Result<DeviceFirmwareOtaStatusResponse> =
         runCatching {
             data.requireExactKeys(OTA_STATUS_RESPONSE_KEYS, "firmware.ota.status.data")
-            require(data.requiredExactString("operation") == "otaStatus")
-            require(data.requiredExactString("runtimeTransport") == "websocket")
-            require(data.requiredExactString("command") == "firmware.ota.status")
-            require(data.requiredExactString("binaryTransfer") == "firmware-download")
-            require(
-                data.requiredExactString("progressEvent") ==
-                    DeviceFirmwareRuntimeContract.Event.OTA_PROGRESS
+            val operation = data.requiredExactString("operation")
+            val runtimeTransport = data.requiredExactString("runtimeTransport")
+            val command = data.requiredExactString("command")
+            val binaryTransfer = data.requiredExactString("binaryTransfer")
+            val progressEvent = data.requiredExactString("progressEvent")
+            val completedEvent = data.requiredExactString("completedEvent")
+            require(operation == "otaStatus")
+            require(runtimeTransport == "websocket")
+            require(command == "firmware.ota.status")
+            require(binaryTransfer == "firmware-download")
+            require(progressEvent == DeviceFirmwareRuntimeContract.Event.OTA_PROGRESS)
+            require(completedEvent == DeviceFirmwareRuntimeContract.Event.OTA_COMPLETED)
+            DeviceFirmwareOtaStatusResponse(
+                operation = operation,
+                runtimeTransport = runtimeTransport,
+                command = command,
+                binaryTransfer = binaryTransfer,
+                progressEvent = progressEvent,
+                completedEvent = completedEvent,
+                ota = parseOtaSnapshotExactObject(data.requiredObject("ota"))
             )
-            require(
-                data.requiredExactString("completedEvent") ==
-                    DeviceFirmwareRuntimeContract.Event.OTA_COMPLETED
-            )
-            parseOtaSnapshotExactObject(data.requiredObject("ota"))
         }
 
     fun parseOtaStartAcceptedExact(data: JSONObject): Result<DeviceFirmwareOtaStartAccepted> =
         runCatching {
             data.requireExactKeys(OTA_START_RESPONSE_KEYS, "firmware.ota.start.data")
-            require(data.requiredExactString("operation") == "otaStart")
-            require(data.requiredExactBoolean("accepted"))
-            require(data.requiredExactString("runtimeTransport") == "websocket")
-            require(data.requiredExactString("command") == "firmware.ota.start")
-            require(data.requiredExactString("binaryTransfer") == "firmware-download")
-            require(data.requiredExactString("event") == DeviceFirmwareRuntimeContract.Event.OTA_PROGRESS)
-            require(
-                data.requiredExactString("progressEvent") ==
-                    DeviceFirmwareRuntimeContract.Event.OTA_PROGRESS
-            )
-            require(
-                data.requiredExactString("completedEvent") ==
-                    DeviceFirmwareRuntimeContract.Event.OTA_COMPLETED
-            )
+            val operation = data.requiredExactString("operation")
+            val accepted = data.requiredExactBoolean("accepted")
+            val runtimeTransport = data.requiredExactString("runtimeTransport")
+            val command = data.requiredExactString("command")
+            val binaryTransfer = data.requiredExactString("binaryTransfer")
+            val event = data.requiredExactString("event")
+            val progressEvent = data.requiredExactString("progressEvent")
+            val completedEvent = data.requiredExactString("completedEvent")
+            require(operation == "otaStart")
+            require(accepted)
+            require(runtimeTransport == "websocket")
+            require(command == "firmware.ota.start")
+            require(binaryTransfer == "firmware-download")
+            require(event == DeviceFirmwareRuntimeContract.Event.OTA_PROGRESS)
+            require(progressEvent == DeviceFirmwareRuntimeContract.Event.OTA_PROGRESS)
+            require(completedEvent == DeviceFirmwareRuntimeContract.Event.OTA_COMPLETED)
             DeviceFirmwareOtaStartAccepted(
-                accepted = true,
+                operation = operation,
+                accepted = accepted,
+                runtimeTransport = runtimeTransport,
+                command = command,
+                binaryTransfer = binaryTransfer,
+                event = event,
+                progressEvent = progressEvent,
+                completedEvent = completedEvent,
                 request = parseRequestEchoExact(data.requiredObject("request")),
                 ota = parseOtaSnapshotExactObject(data.requiredObject("ota"))
             )
@@ -51,15 +68,22 @@ object DeviceFirmwareStatusParser {
     fun parseOtaClearResultExact(data: JSONObject): Result<DeviceFirmwareOtaClearResult> =
         runCatching {
             data.requireExactKeys(OTA_CLEAR_RESPONSE_KEYS, "firmware.ota.clear.data")
-            require(data.requiredExactString("operation") == "otaClear")
-            require(data.requiredExactBoolean("cleared"))
-            require(data.requiredExactString("runtimeTransport") == "websocket")
-            require(data.requiredExactString("command") == "firmware.ota.clear")
+            val operation = data.requiredExactString("operation")
+            val cleared = data.requiredExactBoolean("cleared")
+            val runtimeTransport = data.requiredExactString("runtimeTransport")
+            val command = data.requiredExactString("command")
+            require(operation == "otaClear")
+            require(cleared)
+            require(runtimeTransport == "websocket")
+            require(command == "firmware.ota.clear")
             val previous = parseOtaClearPreviousExact(data.requiredObject("previous"))
             val ota = parseOtaSnapshotExactObject(data.requiredObject("ota"))
             require(ota.phase == DeviceFirmwareOtaPhase.IDLE)
             DeviceFirmwareOtaClearResult(
-                cleared = true,
+                operation = operation,
+                cleared = cleared,
+                runtimeTransport = runtimeTransport,
+                command = command,
                 previous = previous,
                 ota = ota
             )
@@ -68,22 +92,28 @@ object DeviceFirmwareStatusParser {
     fun parseOtaSnapshotExact(data: JSONObject): Result<DeviceFirmwareOtaSnapshot> =
         runCatching { parseOtaSnapshotExactObject(data) }
 
-    fun parseOtaProgressEventExact(data: JSONObject): Result<DeviceFirmwareOtaSnapshot> =
+    fun parseOtaProgressEventExact(data: JSONObject): Result<DeviceFirmwareOtaEvent> =
         runCatching {
             data.requireExactKeys(OTA_EVENT_KEYS, "firmware OTA event data")
-            require(data.requiredExactString("runtimeTransport") == "websocket")
-            require(data.requiredExactString("binaryTransfer") == "firmware-download")
+            val runtimeTransport = data.requiredExactString("runtimeTransport")
+            val binaryTransfer = data.requiredExactString("binaryTransfer")
+            require(runtimeTransport == "websocket")
+            require(binaryTransfer == "firmware-download")
             val snapshot = parseOtaSnapshotFieldsExact(data)
-            require(data.requiredExactBoolean("completed") == snapshot.phase.isTerminal)
-            require(
-                data.requiredExactBoolean("success") ==
-                    (snapshot.phase == DeviceFirmwareOtaPhase.SUCCEEDED)
+            val completed = data.requiredExactBoolean("completed")
+            val success = data.requiredExactBoolean("success")
+            val failed = data.requiredExactBoolean("failed")
+            require(completed == snapshot.phase.isTerminal)
+            require(success == (snapshot.phase == DeviceFirmwareOtaPhase.SUCCEEDED))
+            require(failed == (snapshot.phase == DeviceFirmwareOtaPhase.FAILED))
+            DeviceFirmwareOtaEvent(
+                completed = completed,
+                success = success,
+                failed = failed,
+                runtimeTransport = runtimeTransport,
+                binaryTransfer = binaryTransfer,
+                ota = snapshot
             )
-            require(
-                data.requiredExactBoolean("failed") ==
-                    (snapshot.phase == DeviceFirmwareOtaPhase.FAILED)
-            )
-            snapshot
         }
 
     private fun parseRequestEchoExact(json: JSONObject): DeviceFirmwareOtaStartRequestEcho {
@@ -184,7 +214,7 @@ object DeviceFirmwareStatusParser {
         )
     }
 
-    private fun parseOtaClearPreviousExact(source: JSONObject): DeviceFirmwareOtaSnapshot {
+    private fun parseOtaClearPreviousExact(source: JSONObject): DeviceFirmwareOtaClearPrevious {
         source.requireExactKeys(OTA_CLEAR_PREVIOUS_KEYS, "firmware.ota.clear.data.previous")
         val phaseRaw = source.requiredExactString("phase")
         val phase = requireNotNull(DeviceFirmwareOtaPhase.fromWireExact(phaseRaw)) {
@@ -194,13 +224,9 @@ object DeviceFirmwareStatusParser {
         val restartScheduled = source.requiredExactBoolean("restartScheduled")
         require(!restartRequired || phase == DeviceFirmwareOtaPhase.SUCCEEDED)
         require(!restartScheduled || restartRequired)
-        return DeviceFirmwareOtaSnapshot(
+        return DeviceFirmwareOtaClearPrevious(
             phase = phase,
             phaseRaw = phaseRaw,
-            active = false,
-            completed = phase.isTerminal,
-            success = phase == DeviceFirmwareOtaPhase.SUCCEEDED,
-            failed = phase == DeviceFirmwareOtaPhase.FAILED,
             restartRequired = restartRequired,
             restartScheduled = restartScheduled,
             targetVersion = source.requiredStringAllowEmpty("targetVersion"),
