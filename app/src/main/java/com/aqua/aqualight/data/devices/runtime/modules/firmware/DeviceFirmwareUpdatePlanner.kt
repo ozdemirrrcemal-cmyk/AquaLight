@@ -80,34 +80,14 @@ class DeviceFirmwareUpdatePlanner(
         snapshot: DeviceSnapshot,
         manifest: DeviceFirmwareManifest
     ): List<DeviceFirmwareManifestArtifact> {
-        val productKey = snapshot.product.productKey
-        val productId = snapshot.product.productId
-        val family = snapshot.product.family.wireValue
-        val line = snapshot.product.line
-        val model = snapshot.product.model
-        val hardwareRevision = snapshot.product.hardwareRevision
-        val environment = productKey.lowercase(Locale.ROOT)
+        val deviceIdentity = DeviceFirmwareProductIdentity.fromSnapshot(snapshot.product)
+        if (!deviceIdentity.isComplete) return emptyList()
 
-        if (
-            productKey.isBlank() ||
-            productId.isBlank() ||
-            family.isBlank() ||
-            line.isBlank() ||
-            model.isBlank() ||
-            hardwareRevision.isBlank() ||
-            environment.isBlank()
-        ) {
-            return emptyList()
-        }
-
+        val environment = deviceIdentity.productKey.lowercase(Locale.ROOT)
         return manifest.artifacts.filter { artifact ->
             artifact.env == environment &&
-                artifact.compatibility.productKey == productKey &&
-                artifact.compatibility.productId == productId &&
-                artifact.compatibility.family == family &&
-                artifact.compatibility.line == line &&
-                artifact.compatibility.model == model &&
-                artifact.compatibility.hardwareRevision == hardwareRevision
+                DeviceFirmwareProductIdentity.fromCompatibility(artifact.compatibility) ==
+                deviceIdentity
         }
     }
 
@@ -199,86 +179,12 @@ class DeviceFirmwareUpdatePlanner(
         manifest: DeviceFirmwareManifest,
         product: AqlCommercialCatalogProduct
     ) {
-        validateProductMetadata(artifact, product)
-        val expectedEnvironment = product.productKey.value.lowercase(Locale.ROOT)
-        require(artifact.env == expectedEnvironment) {
-            "OTA artifact environment does not match the exact catalog product."
-        }
-        require(manifest.tag.isNotBlank()) { "OTA manifest tag is missing." }
-        require(artifact.firmware.filename == "AquaLight-${artifact.env}-${manifest.tag}-ota.bin") {
-            "OTA artifact filename does not match env/tag contract."
-        }
-        require(artifact.firmware.url.endsWith("/${artifact.firmware.filename}")) {
-            "OTA artifact URL does not end with its filename."
-        }
-        require(artifact.firmware.url.contains("/releases/download/${manifest.tag}/")) {
-            "OTA artifact URL does not contain the manifest release tag."
-        }
-        require(
-            artifact.firmware.format == DeviceFirmwareRuntimeContract.Manifest.FIRMWARE_FORMAT
-        ) {
-            "OTA artifact format does not match the release pipeline contract."
-        }
-        require(artifact.firmware.otaSlotCompatible) {
-            "OTA artifact is not marked as OTA slot compatible."
-        }
-        artifact.factory?.let { factory ->
-            require(factory.filename == "AquaLight-${artifact.env}-${manifest.tag}-factory.zip") {
-                "Factory artifact filename does not match env/tag contract."
-            }
-            require(factory.url.endsWith("/${factory.filename}")) {
-                "Factory artifact URL does not end with its filename."
-            }
-        }
-    }
-
-    private fun validateProductMetadata(
-        artifact: DeviceFirmwareManifestArtifact,
-        product: AqlCommercialCatalogProduct
-    ) {
-        require(artifact.product.productKey == product.productKey.value)
-        require(artifact.product.productId == product.productId.value)
-        require(artifact.product.brand == DeviceFirmwareRuntimeContract.Manifest.BRAND)
-        require(artifact.product.family == product.family.wireValue)
-        require(artifact.product.line == product.line.value)
-        require(artifact.product.model == product.model.value)
-        require(artifact.product.displayName == product.displayName)
-        require(artifact.product.skuCode == product.skuCode.value)
-        require(artifact.product.hardwareRevision == product.hardwareRevision.value)
-        require(artifact.compatibility.family == product.family.wireValue)
-        require(artifact.compatibility.line == product.line.value)
-        require(artifact.product.capabilities == product.expectedManifestCapabilities()) {
-            "OTA manifest product capabilities differ from the commercial catalog."
-        }
-        require(artifact.product.limits == product.expectedManifestLimits()) {
-            "OTA manifest product limits differ from the commercial catalog."
-        }
-    }
-
-    private fun AqlCommercialCatalogProduct.expectedManifestCapabilities() =
-        DeviceFirmwareManifestCapabilities(
-            light = profile.capabilities.light,
-            manualLight = profile.capabilities.manualLight,
-            lightProgram = profile.capabilities.lightProgram,
-            lightPresets = profile.capabilities.lightPresets,
-            lightSimulation = profile.capabilities.lightSimulation,
-            fan = profile.capabilities.fan,
-            cooling = profile.capabilities.cooling,
-            temperature = profile.capabilities.temperature,
-            standaloneTimer = profile.capabilities.standaloneTimer,
-            dosing = profile.capabilities.dosing,
-            timeSync = profile.capabilities.timeSync,
-            ota = profile.capabilities.ota
+        DeviceFirmwareManifestContractValidator.requireValid(
+            artifact = artifact,
+            manifest = manifest,
+            product = product
         )
-
-    private fun AqlCommercialCatalogProduct.expectedManifestLimits() =
-        DeviceFirmwareManifestLimits(
-            lightChannelCount = limits.lightChannelCount,
-            fanOutputCount = limits.fanOutputCount,
-            temperatureSensorCount = limits.temperatureSensorCount,
-            timerChannelCount = limits.timerChannelCount,
-            dosingChannelCount = limits.dosingChannelCount
-        )
+    }
 
     private fun normalizedReleaseTag(version: String): String {
         val normalized = version
