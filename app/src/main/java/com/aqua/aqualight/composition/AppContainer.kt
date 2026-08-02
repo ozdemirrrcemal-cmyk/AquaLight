@@ -120,7 +120,10 @@ internal class DefaultAppContainer(
     private val ownerGraphResolver: OwnerDependencyGraphResolver by lazy(
         LazyThreadSafetyMode.SYNCHRONIZED
     ) {
-        ActiveOwnerDependencyGraphResolver(appContext)
+        ActiveOwnerDependencyGraphResolver(
+            context = appContext,
+            notificationDispatchUseCase = notificationDispatchUseCase
+        )
     }
 
     override val authenticatedOwnerIdentity: AuthenticatedOwnerIdentity by lazy(

@@ -385,12 +385,24 @@ internal class DeviceOtaCoordinator(
             activeSelection?.dataPlan?.targetVersion.orEmpty()
         }
         armRestartVerification(deviceUid, snapshot, activeSelection)
-        stateFlow(deviceUid).value = DeviceOtaStateMapper.map(
-            snapshot = snapshot,
-            deviceUid = deviceUid,
-            targetVersion = targetVersion,
-            releaseContent = releaseContent
-        )
+        val state = stateFlow(deviceUid)
+        state.value = when {
+            snapshot.phase == DeviceFirmwareOtaPhase.IDLE &&
+                activeSelection != null &&
+                state.value is DeviceOtaState.UpdateAvailable -> {
+                // A recovery status probe must preserve the exact signed plan selected immediately
+                // beforehand, while an idle snapshot from any other state stays fail-closed.
+                DeviceOtaState.UpdateAvailable(activeSelection.applicationPlan)
+            }
+            snapshot.phase == DeviceFirmwareOtaPhase.IDLE &&
+                state.value is DeviceOtaState.Starting -> state.value
+            else -> DeviceOtaStateMapper.map(
+                snapshot = snapshot,
+                deviceUid = deviceUid,
+                targetVersion = targetVersion,
+                releaseContent = releaseContent
+            )
+        }
         verifyCurrentFirmwareIfReady(deviceUid, snapshot, activeSelection)
         return null
     }

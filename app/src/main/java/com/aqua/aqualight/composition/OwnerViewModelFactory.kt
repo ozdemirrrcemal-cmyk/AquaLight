@@ -2,6 +2,7 @@ package com.aqua.aqualight.composition
 
 import android.content.Context
 import androidx.lifecycle.ViewModel
+import com.aqua.aqualight.BuildConfig
 import com.aqua.aqualight.application.notifications.NotificationPreferenceUseCase
 import com.aqua.aqualight.application.user.UserProfileOperations
 import com.aqua.aqualight.data.aquarium.DefaultAquariumTankOperations
@@ -36,6 +37,7 @@ import com.aqua.aqualight.ui.tabs.devices.detail.dosing.DeviceDosingRootViewMode
 import com.aqua.aqualight.ui.tabs.devices.detail.light.DeviceLightRootViewModel
 import com.aqua.aqualight.ui.tabs.devices.detail.settings.DeviceFamilySettingsViewModel
 import com.aqua.aqualight.ui.tabs.devices.detail.timer.DeviceTimerRootViewModel
+import com.aqua.aqualight.ui.tabs.devices.detail.update.DeviceFirmwareUpdateViewModel
 import com.aqua.aqualight.ui.tabs.devices.route.DeviceRouteResolver
 import com.aqua.aqualight.ui.tabs.maintenance.MaintenanceViewModel
 import com.aqua.aqualight.ui.tabs.settings.SettingsViewModel
@@ -197,7 +199,16 @@ internal class OwnerViewModelFactory(
 
             DeviceFamilySettingsViewModel::class.java ->
                 DeviceFamilySettingsViewModel(
-                    rootOperations = DefaultDeviceRootOperations(repository)
+                    rootOperations = DefaultDeviceRootOperations(repository),
+                    firmwareUpdateOperations = graph.firmwareUpdateOperations,
+                    manifestUrl = BuildConfig.AQL_OTA_MANIFEST_URL
+                )
+
+            DeviceFirmwareUpdateViewModel::class.java ->
+                DeviceFirmwareUpdateViewModel(
+                    rootOperations = DefaultDeviceRootOperations(repository),
+                    firmwareUpdateOperations = graph.firmwareUpdateOperations,
+                    manifestUrl = BuildConfig.AQL_OTA_MANIFEST_URL
                 )
 
             TankDetailDevicesViewModel::class.java ->
@@ -241,6 +252,7 @@ internal class OwnerViewModelFactory(
             DeviceDosingRootViewModel::class.java,
             DeviceRootOverviewViewModel::class.java,
             DeviceFamilySettingsViewModel::class.java,
+            DeviceFirmwareUpdateViewModel::class.java,
             TankDetailDevicesViewModel::class.java,
             TankDeviceSelectViewModel::class.java
         )

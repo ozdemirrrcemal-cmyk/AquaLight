@@ -2,12 +2,14 @@ package com.aqua.aqualight.ui.tabs.devices.detail.settings
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.aqua.aqualight.application.devices.DEVICE_FIRMWARE_MANIFEST_URL
+import com.aqua.aqualight.application.devices.DeviceFirmwareUpdateOperations
+import com.aqua.aqualight.application.devices.DeviceOtaState
 import com.aqua.aqualight.application.devices.DeviceRootCatalogState
 import com.aqua.aqualight.application.devices.DeviceRootOperations
 import com.aqua.aqualight.application.devices.DeviceRootSnapshot
 import com.aqua.aqualight.application.devices.OwnerDeviceFamily
 import kotlinx.coroutines.Job
-import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -17,11 +19,13 @@ import kotlinx.coroutines.launch
 /**
  * Presentation owner for the shared family Settings screen.
  *
- * Device-name persistence and firmware-update operations are intentionally not connected here.
- * They will be attached after their Android data contracts are completed and verified.
+ * Device-name persistence remains a separate follow-up. OTA availability and runtime progress use
+ * the owner-scoped commercial coordinator shared with the full-screen update destination.
  */
 class DeviceFamilySettingsViewModel(
-    private val rootOperations: DeviceRootOperations
+    private val rootOperations: DeviceRootOperations,
+    private val firmwareUpdateOperations: DeviceFirmwareUpdateOperations,
+    private val manifestUrl: String = DEVICE_FIRMWARE_MANIFEST_URL
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(DeviceFamilySettingsUiState())
@@ -29,7 +33,8 @@ class DeviceFamilySettingsViewModel(
 
     private var boundDeviceUid = ""
     private var observeDeviceJob: Job? = null
-    private var updatePreviewJob: Job? = null
+    private var observeFirmwareJob: Job? = null
+    private var updateCheckJob: Job? = null
     private var localDeviceNameOverride: String? = null
 
     fun bind(deviceUidText: String) {
@@ -52,6 +57,9 @@ class DeviceFamilySettingsViewModel(
                 applyDeviceSnapshot(deviceUid, snapshot)
             }
         }
+        observeFirmwareJob = viewModelScope.launch {
+            firmwareUpdateOperations.observe(deviceUid).collect(::applyFirmwareState)
+        }
     }
 
     /** Updates only the current screen preview. Persistence is connected in the later data phase. */
@@ -63,35 +71,59 @@ class DeviceFamilySettingsViewModel(
         _uiState.update { state -> state.copy(deviceName = normalized) }
     }
 
-    /**
-     * Runs the approved button interaction without touching OTA repositories or firmware commands.
-     * The data phase will replace this preview transition with verified availability results.
-     */
-    fun previewUpdateCheck() {
-        if (boundDeviceUid.isBlank() || updatePreviewJob?.isActive == true) return
-        if (_uiState.value.updateActionState is DeviceSettingsUpdateActionState.UpdateAvailable) return
+    fun checkForUpdates() {
+        val deviceUid = boundDeviceUid
+        if (deviceUid.isBlank() || updateCheckJob?.isActive == true) return
+        if (_uiState.value.updateActionState is DeviceSettingsUpdateActionState.UpdateInProgress) {
+            return
+        }
 
-        updatePreviewJob = viewModelScope.launch {
-            _uiState.update { state ->
-                state.copy(updateActionState = DeviceSettingsUpdateActionState.Checking)
-            }
-            delay(UPDATE_CHECK_PREVIEW_DURATION_MILLIS)
-            _uiState.update { state ->
-                if (state.updateActionState == DeviceSettingsUpdateActionState.Checking) {
-                    state.copy(updateActionState = DeviceSettingsUpdateActionState.UpToDate)
-                } else {
-                    state
-                }
-            }
-            delay(UP_TO_DATE_ACTION_DURATION_MILLIS)
-            _uiState.update { state ->
-                if (state.updateActionState == DeviceSettingsUpdateActionState.UpToDate) {
-                    state.copy(updateActionState = DeviceSettingsUpdateActionState.Idle)
-                } else {
-                    state
-                }
+        updateCheckJob = viewModelScope.launch {
+            val availability = firmwareUpdateOperations.checkAvailability(
+                deviceUid = deviceUid,
+                manifestUrl = manifestUrl,
+                applyNow = true
+            ).getOrNull()
+            if (availability is DeviceOtaState.UpdateAvailable) {
+                // Re-selecting the signed plan before this status probe also recovers a transfer
+                // that continued while the Android process or update screen was absent.
+                firmwareUpdateOperations.requestStatus(deviceUid)
             }
         }
+    }
+
+    private fun applyFirmwareState(state: DeviceOtaState) {
+        if (state.deviceUid != boundDeviceUid) return
+        val actionState = when (state) {
+            is DeviceOtaState.Idle -> DeviceSettingsUpdateActionState.Idle
+            is DeviceOtaState.Checking -> DeviceSettingsUpdateActionState.Checking
+            is DeviceOtaState.Unsupported -> DeviceSettingsUpdateActionState.Unsupported
+            is DeviceOtaState.UpToDate,
+            is DeviceOtaState.Succeeded -> DeviceSettingsUpdateActionState.UpToDate
+            is DeviceOtaState.UpdateAvailable -> DeviceSettingsUpdateActionState.UpdateAvailable(
+                state.plan.targetVersion
+            )
+            is DeviceOtaState.Starting -> DeviceSettingsUpdateActionState.UpdateInProgress(
+                version = state.plan.targetVersion,
+                progressPermille = 0
+            )
+            is DeviceOtaState.InProgress -> DeviceSettingsUpdateActionState.UpdateInProgress(
+                version = state.targetVersion,
+                progressPermille = state.progressPermille
+            )
+            is DeviceOtaState.Recovering -> DeviceSettingsUpdateActionState.UpdateInProgress(
+                version = state.targetVersion,
+                progressPermille = state.progressPermille
+            )
+            is DeviceOtaState.RestartRequired -> DeviceSettingsUpdateActionState.UpdateInProgress(
+                version = state.targetVersion,
+                progressPermille = COMPLETE_PROGRESS_PERMILLE
+            )
+            is DeviceOtaState.Failed -> DeviceSettingsUpdateActionState.Failed(
+                recoverable = state.recoverable
+            )
+        }
+        _uiState.update { current -> current.copy(updateActionState = actionState) }
     }
 
     private fun applyDeviceSnapshot(deviceUid: String, snapshot: DeviceRootSnapshot?) {
@@ -141,7 +173,8 @@ class DeviceFamilySettingsViewModel(
 
     private fun cancelBoundJobs() {
         observeDeviceJob?.cancel()
-        updatePreviewJob?.cancel()
+        observeFirmwareJob?.cancel()
+        updateCheckJob?.cancel()
     }
 
     override fun onCleared() {
@@ -150,8 +183,7 @@ class DeviceFamilySettingsViewModel(
     }
 
     private companion object {
-        const val UPDATE_CHECK_PREVIEW_DURATION_MILLIS = 700L
-        const val UP_TO_DATE_ACTION_DURATION_MILLIS = 3_000L
+        const val COMPLETE_PROGRESS_PERMILLE = 1_000
     }
 }
 
@@ -168,6 +200,17 @@ sealed interface DeviceSettingsUpdateActionState {
     data class UpdateAvailable(
         val version: String
     ) : DeviceSettingsUpdateActionState
+
+    data class UpdateInProgress(
+        val version: String,
+        val progressPermille: Int
+    ) : DeviceSettingsUpdateActionState
+
+    data class Failed(
+        val recoverable: Boolean
+    ) : DeviceSettingsUpdateActionState
+
+    data object Unsupported : DeviceSettingsUpdateActionState
 }
 
 data class DeviceFamilySettingsUiState(

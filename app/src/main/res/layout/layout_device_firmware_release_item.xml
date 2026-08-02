@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:gravity="top"
+    android:orientation="horizontal"
+    android:paddingTop="@dimen/aqua_size_5"
+    android:paddingBottom="@dimen/aqua_size_5">
+
+    <androidx.appcompat.widget.AppCompatImageView
+        android:id="@+id/ivReleaseItemIcon"
+        android:layout_width="@dimen/aqua_size_18"
+        android:layout_height="@dimen/aqua_size_18"
+        android:layout_marginTop="@dimen/aqua_size_1"
+        android:contentDescription="@null"
+        android:importantForAccessibility="no"
+        android:src="@drawable/ic_check_24"
+        tools:tint="@color/aqua_accent_positive" />
+
+    <TextView
+        android:id="@+id/tvReleaseItemText"
+        android:layout_width="@dimen/aqua_size_0"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="@dimen/aqua_size_10"
+        android:layout_weight="1"
+        android:textColor="@color/aqua_content_primary_soft"
+        android:textSize="@dimen/aqua_text_size_body"
+        tools:ignore="InefficientWeight"
+        tools:text="Improved update reliability and reconnect handling." />
+</LinearLayout>
