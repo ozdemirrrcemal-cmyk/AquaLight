@@ -16,10 +16,10 @@ object DeviceFirmwareRuntimeContract {
     const val OFFICIAL_RELEASE_URL_PREFIX =
         "https://github.com/$OFFICIAL_RELEASE_REPOSITORY/releases/download/"
 
-    const val STABLE_CHANNEL_TAG = "ota-stable"
     const val STABLE_MANIFEST_ASSET = "manifest-stable.json"
     const val STABLE_MANIFEST_URL =
-        "$OFFICIAL_RELEASE_URL_PREFIX$STABLE_CHANNEL_TAG/$STABLE_MANIFEST_ASSET"
+        "https://github.com/$OFFICIAL_RELEASE_REPOSITORY/releases/latest/download/" +
+            STABLE_MANIFEST_ASSET
 
     object Action {
         const val STATUS_GET = "status.get"
