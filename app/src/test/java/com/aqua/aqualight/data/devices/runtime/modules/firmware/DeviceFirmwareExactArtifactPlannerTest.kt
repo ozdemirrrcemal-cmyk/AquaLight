@@ -26,6 +26,7 @@ class DeviceFirmwareExactArtifactPlannerTest {
         val plan = availability.plan
 
         assertEquals(ENVIRONMENT, plan.env)
+        assertEquals(TARGET_VERSION, plan.firmware.version)
         assertEquals("dose_pro_2", plan.model)
         assertEquals("dose_pro_2", plan.payload.model)
         assertEquals(7L, plan.runtimeMetadataGeneration)
@@ -276,6 +277,7 @@ class DeviceFirmwareExactArtifactPlannerTest {
                 hardwareRevision = product.hardwareRevision.value
             ),
             firmware = DeviceFirmwareAsset(
+                version = TARGET_VERSION,
                 filename = otaFilename,
                 url = releaseUrl + otaFilename,
                 sha256 = "a".repeat(64),
