@@ -9,7 +9,7 @@ import org.junit.Test
 class DeviceFirmwareManifestUrlPolicyTest {
 
     @Test
-    fun `build application and runtime use the fixed stable channel manifest`() {
+    fun `build application and runtime use the published latest stable manifest`() {
         val stable = DeviceFirmwareRuntimeContract.STABLE_MANIFEST_URL
 
         assertEquals(stable, BuildConfig.AQL_OTA_MANIFEST_URL)
@@ -19,23 +19,32 @@ class DeviceFirmwareManifestUrlPolicyTest {
     }
 
     @Test
-    fun `rejects latest versioned lookalike insecure and decorated URLs`() {
-        val latest =
-            "https://github.com/ozdemirrrcemal-cmyk/AquaLight-OTA-Releases/" +
-                "releases/latest/download/manifest-stable.json"
+    fun `rejects unpublished pointer versioned lookalike insecure and decorated URLs`() {
+        val unpublishedPointer =
+            DeviceFirmwareRuntimeContract.OFFICIAL_RELEASE_URL_PREFIX +
+                "ota-stable/manifest-stable.json"
         val versioned = DeviceFirmwareRuntimeContract.OFFICIAL_RELEASE_URL_PREFIX +
             "v6.0.0/manifest-stable.json"
         val lookalike =
-            "https://github.com/example/AquaLight-OTA-Releases/releases/download/" +
-                "ota-stable/manifest-stable.json"
+            "https://github.com/example/AquaLight-OTA-Releases/releases/latest/download/" +
+                "manifest-stable.json"
         val insecure = DeviceFirmwareRuntimeContract.STABLE_MANIFEST_URL
             .replace("https://", "http://")
         val query = DeviceFirmwareRuntimeContract.STABLE_MANIFEST_URL + "?cache=false"
         val fragment = DeviceFirmwareRuntimeContract.STABLE_MANIFEST_URL + "#manifest"
-        val otherAsset = DeviceFirmwareRuntimeContract.OFFICIAL_RELEASE_URL_PREFIX +
-            "ota-stable/manifest-beta.json"
+        val otherAsset =
+            "https://github.com/ozdemirrrcemal-cmyk/AquaLight-OTA-Releases/" +
+                "releases/latest/download/manifest-beta.json"
 
-        listOf(latest, versioned, lookalike, insecure, query, fragment, otherAsset).forEach { url ->
+        listOf(
+            unpublishedPointer,
+            versioned,
+            lookalike,
+            insecure,
+            query,
+            fragment,
+            otherAsset
+        ).forEach { url ->
             assertThrows(IllegalArgumentException::class.java) {
                 requireOfficialFirmwareManifestUrl(url)
             }
