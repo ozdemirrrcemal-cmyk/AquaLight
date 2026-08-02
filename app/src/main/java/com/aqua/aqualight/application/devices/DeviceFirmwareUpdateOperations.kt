@@ -146,7 +146,6 @@ data class PreparedDeviceFirmwareUpdate(
     val productId: String,
     val model: String,
     val hardwareRevision: String,
-    val displayName: String,
     val filename: String,
     val downloadUrl: String,
     val sha256: String,
