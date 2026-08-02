@@ -21,7 +21,7 @@ internal object DeviceFirmwareReadParser {
         return parseValidatedStatus(data)
     }
 
-    fun parseOtaStatus(data: JSONObject): DeviceFirmwareOtaSnapshot =
+    fun parseOtaStatus(data: JSONObject): DeviceFirmwareOtaStatusResponse =
         DeviceFirmwareStatusParser.parseOtaStatusResponseExact(data).getOrThrow()
 
     /**
@@ -33,6 +33,7 @@ internal object DeviceFirmwareReadParser {
         val flash = data.getJSONObject("flash")
         val partition = data.getJSONObject("partition")
         val ota = data.getJSONObject("ota")
+        val runtime = data.getJSONObject("runtime")
         return DeviceFirmwareStatus(
             version = data.getString("version"),
             build = data.getString("build"),
@@ -58,7 +59,13 @@ internal object DeviceFirmwareReadParser {
             otaStatusCommand = ota.getString("statusCommand"),
             ota = DeviceFirmwareStatusParser.parseOtaSnapshotExact(
                 ota.getJSONObject("status")
-            ).getOrThrow()
+            ).getOrThrow(),
+            runtime = DeviceFirmwareRuntimeInfo(
+                transport = runtime.getString("transport"),
+                wsSchema = runtime.getString("wsSchema"),
+                wsProtocolVersion = runtime.getInt("wsProtocolVersion"),
+                readOnly = runtime.getBoolean("readOnly")
+            )
         )
     }
 
