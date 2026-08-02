@@ -19,6 +19,7 @@
     <string name="device_settings_update_in_progress_status">%1$s yükleniyor · %2$d%%</string>
     <string name="device_settings_retry_update_check_action">Tekrar dene</string>
     <string name="device_settings_update_check_failed_status">Güncelleme denetimi tamamlanamadı.</string>
+    <string name="device_settings_update_needs_attention_status">Yazılım güncellemesi ilgi bekliyor.</string>
     <string name="device_settings_update_unsupported_status">Bu cihaz yazılım güncellemelerini desteklemiyor.</string>
 
     <string name="device_settings_change_name_title">Cihaz adını değiştir</string>
@@ -30,7 +31,6 @@
     <string name="device_settings_update_device_fallback">AquaLight cihazı</string>
     <string name="device_settings_update_status_checking">Güncellemeler denetleniyor</string>
     <string name="device_settings_update_status_available">Güncelleme mevcut</string>
-    <string name="device_settings_update_status_required">Zorunlu güncelleme</string>
     <string name="device_settings_update_status_preparing">Güncelleme hazırlanıyor</string>
     <string name="device_settings_update_status_installing">Güncelleme sürüyor</string>
     <string name="device_settings_update_status_recovering">Yeniden bağlanılıyor</string>
