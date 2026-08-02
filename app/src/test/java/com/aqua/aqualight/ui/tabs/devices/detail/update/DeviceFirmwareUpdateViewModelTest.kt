@@ -1,6 +1,10 @@
 package com.aqua.aqualight.ui.tabs.devices.detail.update
 
 import com.aqua.aqualight.application.devices.DeviceFirmwareCommandResult
+import com.aqua.aqualight.application.devices.DeviceFirmwareFailure
+import com.aqua.aqualight.application.devices.DeviceFirmwareFailureKind
+import com.aqua.aqualight.application.devices.DeviceFirmwareFailureSource
+import com.aqua.aqualight.application.devices.DeviceFirmwareFailureStage
 import com.aqua.aqualight.application.devices.DeviceFirmwareReleaseContent
 import com.aqua.aqualight.application.devices.DeviceFirmwareUpdateOperations
 import com.aqua.aqualight.application.devices.DeviceOtaProgressPhase
@@ -21,6 +25,7 @@ import kotlinx.coroutines.test.UnconfinedTestDispatcher
 import kotlinx.coroutines.test.resetMain
 import kotlinx.coroutines.test.setMain
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertSame
 import org.junit.Assert.assertTrue
 import org.junit.Rule
 import org.junit.Test
@@ -108,6 +113,30 @@ class DeviceFirmwareUpdateViewModelTest {
         assertTrue(viewModel.uiState.value.mode.isActive)
     }
 
+    @Test
+    fun `structured command failure reaches ui without losing diagnostics`() {
+        val plan = preparedPlan()
+        val failure = failure()
+        val firmware = FakeFirmwareOperations(plan).apply {
+            startResult = DeviceFirmwareCommandResult(
+                sent = true,
+                messageId = failure.requestId,
+                failure = failure
+            )
+        }
+        val viewModel = DeviceFirmwareUpdateViewModel(
+            rootOperations = FakeRootOperations(deviceSnapshot()),
+            firmwareUpdateOperations = firmware,
+            manifestUrl = MANIFEST_URL
+        )
+        viewModel.bind(DEVICE_UID)
+
+        viewModel.installUpdate()
+
+        assertEquals(DeviceFirmwareUpdateMode.FAILED, viewModel.uiState.value.mode)
+        assertSame(failure, viewModel.uiState.value.failure)
+    }
+
     private class FakeRootOperations(
         snapshot: DeviceRootSnapshot
     ) : DeviceRootOperations {
@@ -127,6 +156,7 @@ class DeviceFirmwareUpdateViewModelTest {
         val startedPlans = mutableListOf<PreparedDeviceFirmwareUpdate>()
         var checkCalls = 0
         var statusCalls = 0
+        var startResult = DeviceFirmwareCommandResult(sent = true, messageId = "start-1")
 
         override fun observe(deviceUid: String): StateFlow<DeviceOtaState> = state
 
@@ -153,8 +183,8 @@ class DeviceFirmwareUpdateViewModelTest {
             plan: PreparedDeviceFirmwareUpdate
         ): DeviceFirmwareCommandResult {
             startedPlans += plan
-            state.value = DeviceOtaState.Starting(plan, "start-1")
-            return DeviceFirmwareCommandResult(sent = true, messageId = "start-1")
+            if (startResult.isSuccess) state.value = DeviceOtaState.Starting(plan, "start-1")
+            return startResult
         }
 
         override suspend fun requestStatus(deviceUid: String): DeviceFirmwareCommandResult {
@@ -185,6 +215,20 @@ class DeviceFirmwareUpdateViewModelTest {
     private companion object {
         const val DEVICE_UID = "AQL-DP4-UPDATE-UI"
         const val MANIFEST_URL = "https://example.invalid/manifest-stable.json"
+
+        fun failure() = DeviceFirmwareFailure(
+            kind = DeviceFirmwareFailureKind.DOWNLOAD,
+            source = DeviceFirmwareFailureSource.FIRMWARE_STATUS,
+            stage = DeviceFirmwareFailureStage.TRANSFER,
+            technicalMessage = "download failed",
+            code = "firmware_ota_failed",
+            field = "download",
+            statusCode = 422,
+            httpStatus = 503,
+            requestId = "start-1",
+            firmwarePhase = "failed",
+            recoverable = true
+        )
 
         fun releaseContent() = DeviceFirmwareReleaseContent(
             localeTag = "tr",
