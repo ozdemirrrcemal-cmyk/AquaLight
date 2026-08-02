@@ -3,6 +3,7 @@ package com.aqua.aqualight.ui.tabs.devices.detail.update
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.aqua.aqualight.application.devices.DEVICE_FIRMWARE_MANIFEST_URL
+import com.aqua.aqualight.application.devices.DeviceFirmwareFailure
 import com.aqua.aqualight.application.devices.DeviceFirmwareReleaseContent
 import com.aqua.aqualight.application.devices.DeviceFirmwareUpdateOperations
 import com.aqua.aqualight.application.devices.DeviceOtaProgressPhase
@@ -69,7 +70,9 @@ class DeviceFirmwareUpdateViewModel(
         operationJob = viewModelScope.launch {
             val result = firmwareUpdateOperations.startUpdate(plan)
             if (!result.isSuccess && _uiState.value.mode == DeviceFirmwareUpdateMode.AVAILABLE) {
-                publishLocalFailure(result.errorMessage, recoverable = true)
+                publishLocalFailure(requireNotNull(result.failure) {
+                    "Failed OTA command result must contain structured failure details."
+                })
             }
         }
     }
@@ -116,12 +119,11 @@ class DeviceFirmwareUpdateViewModel(
         _uiState.update { current -> stateMapper.map(state, current) }
     }
 
-    private fun publishLocalFailure(message: String, recoverable: Boolean) {
+    private fun publishLocalFailure(failure: DeviceFirmwareFailure) {
         _uiState.update { current ->
             current.copy(
                 mode = DeviceFirmwareUpdateMode.FAILED,
-                failureMessage = message,
-                failureRecoverable = recoverable
+                failure = failure
             )
         }
     }
@@ -136,7 +138,6 @@ class DeviceFirmwareUpdateViewModel(
         cancelBoundJobs()
         super.onCleared()
     }
-
 }
 
 private class DeviceFirmwareUpdateStateMapper {
@@ -158,8 +159,7 @@ private class DeviceFirmwareUpdateStateMapper {
         val common = current.copy(
             deviceUid = state.deviceUid,
             releaseContent = retainedReleaseContent,
-            failureMessage = "",
-            failureRecoverable = false
+            failure = null
         )
         return when (state) {
             is DeviceOtaState.Idle -> common.copy(mode = DeviceFirmwareUpdateMode.LOADING)
@@ -168,8 +168,7 @@ private class DeviceFirmwareUpdateStateMapper {
                 currentVersion = state.currentVersion.ifBlank { common.currentVersion }
             )
             is DeviceOtaState.Unsupported -> common.copy(
-                mode = DeviceFirmwareUpdateMode.UNSUPPORTED,
-                failureMessage = state.reason
+                mode = DeviceFirmwareUpdateMode.UNSUPPORTED
             )
             is DeviceOtaState.UpToDate -> common.copy(
                 mode = DeviceFirmwareUpdateMode.UP_TO_DATE,
@@ -223,8 +222,7 @@ private class DeviceFirmwareUpdateStateMapper {
         is DeviceOtaState.Failed -> common.copy(
             mode = DeviceFirmwareUpdateMode.FAILED,
             phase = null,
-            failureMessage = state.message,
-            failureRecoverable = state.recoverable
+            failure = state.failure
         )
         else -> error("OTA execution state mapping is incomplete: ${state::class.simpleName}.")
     }
@@ -297,8 +295,7 @@ data class DeviceFirmwareUpdateUiState(
     val progressPermille: Int = 0,
     val bytesWritten: Long = 0L,
     val contentLength: Long = 0L,
-    val failureMessage: String = "",
-    val failureRecoverable: Boolean = false
+    val failure: DeviceFirmwareFailure? = null
 ) {
     val progressPercent: Int
         get() = progressPermille.coerceIn(
