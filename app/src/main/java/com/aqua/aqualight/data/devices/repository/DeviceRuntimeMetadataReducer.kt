@@ -82,7 +82,7 @@ class DeviceRuntimeMetadataReducer {
         deviceUid: DeviceUid,
         incoming: DeviceRuntimeIdentityEnvelope
     ): FragmentMerge {
-        val statusMismatch = moduleStatus?.mismatchField(incoming.identity)
+        val statusMismatch = moduleStatus?.mismatchField(incoming)
         return when {
             incoming.identity.deviceUid != deviceUid -> FragmentMerge.Conflict(
                 DeviceRuntimeMetadataFailureCode.DEVICE_UID_MISMATCH,
@@ -116,7 +116,7 @@ class DeviceRuntimeMetadataReducer {
     private fun Fragments.mergeModuleStatus(
         incoming: DeviceRuntimeModuleStatus
     ): FragmentMerge {
-        val identityMismatch = identity?.identity?.let(incoming::mismatchField)
+        val identityMismatch = identity?.let(incoming::mismatchField)
         return when {
             identityMismatch != null -> FragmentMerge.Conflict(
                 DeviceRuntimeMetadataFailureCode.STATUS_IDENTITY_MISMATCH,

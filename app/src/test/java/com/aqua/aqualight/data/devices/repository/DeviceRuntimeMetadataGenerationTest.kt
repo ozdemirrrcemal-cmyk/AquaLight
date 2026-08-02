@@ -25,6 +25,7 @@ import com.aqua.aqualight.data.devices.model.DeviceRuntimeMetadataGenerationStat
 import com.aqua.aqualight.data.devices.model.DeviceRuntimeMetadataReduction
 import com.aqua.aqualight.data.devices.model.DeviceRuntimeModuleStatus
 import com.aqua.aqualight.data.devices.model.DeviceRuntimeModules
+import com.aqua.aqualight.data.devices.model.DeviceRuntimeNameStatus
 import com.aqua.aqualight.data.devices.model.DeviceRuntimeTransportMetadata
 import com.aqua.aqualight.data.devices.model.DeviceSkuCode
 import com.aqua.aqualight.data.devices.model.DeviceSkuId
@@ -114,14 +115,23 @@ class DeviceRuntimeMetadataGenerationTest {
 
     @Test
     fun `exact parsers reject runtime mismatch unknown fields and type coercion`() {
-        assertEquals(identityEnvelope(), DeviceRuntimeIdentityParser.parse(deviceUid, identityJson()).getOrThrow())
-        assertEquals(capabilities(), DeviceRuntimeCapabilitiesParser.parse(capabilitiesJson()).getOrThrow())
+        assertEquals(
+            identityEnvelope(),
+            DeviceRuntimeIdentityParser.parse(deviceUid, identityJson()).getOrThrow()
+        )
+        assertEquals(
+            capabilities(),
+            DeviceRuntimeCapabilitiesParser.parse(capabilitiesJson()).getOrThrow()
+        )
 
         val wrongPort = JSONObject(identityJson().toString()).apply {
             getJSONObject("runtime").put("wsPort", 81)
         }
         val wrongApi = JSONObject(identityJson().toString()).put("apiVersion", 2)
-        val unknownIdentity = JSONObject(identityJson().toString()).put("legacyModel", "relay_pro_2")
+        val unknownIdentity = JSONObject(identityJson().toString()).put(
+            "legacyModel",
+            "relay_pro_2"
+        )
         val coercedCapability = JSONObject(capabilitiesJson().toString()).apply {
             getJSONObject("capabilities").put("dosing", "false")
         }
@@ -137,16 +147,16 @@ class DeviceRuntimeMetadataGenerationTest {
     }
 
     @Test
-    fun `ready projection is atomic preserves owner fields and publishes generation`() {
+    fun `ready projection atomically replaces stale local name with firmware name`() {
         val provisional = DeviceSnapshot(
-            identity = DeviceIdentity(uid = deviceUid, customName = "My timer"),
+            identity = DeviceIdentity(uid = deviceUid, customName = "Stale local name"),
             product = DeviceProduct(),
             endpoint = DeviceRuntimeEndpoint(ip = "192.168.1.20")
         )
         val ready = readyState(reducer.begin(deviceUid, null))
         val projected = DeviceRuntimeMetadataProjector.applyReady(provisional, ready)
 
-        assertEquals("My timer", projected.identity.customName)
+        assertEquals(CUSTOM_NAME, projected.identity.customName)
         assertEquals("192.168.1.20", projected.endpoint.ip)
         assertEquals("TIMER_RELAY_PRO_2", projected.product.productKey)
         assertEquals(2, projected.limits.timerChannelCount)
@@ -159,7 +169,7 @@ class DeviceRuntimeMetadataGenerationTest {
         assertFalse(invalidated.hasValidatedRuntimeMetadata)
         assertTrue(invalidated.supportedFeatures.isEmpty())
         assertTrue(invalidated.modules.isEmpty())
-        assertEquals("My timer", invalidated.identity.customName)
+        assertEquals(CUSTOM_NAME, invalidated.identity.customName)
     }
 
     private fun readyState(
@@ -198,7 +208,7 @@ class DeviceRuntimeMetadataGenerationTest {
         line = DeviceProductLine("relay_pro"),
         model = DeviceProductModel("relay_pro_2"),
         brand = "AquaLight",
-        displayName = "Relay Pro 2",
+        displayName = PRODUCT_DISPLAY_NAME,
         skuId = DeviceSkuId("com.aqualight.timer.relay_pro_2.global.black"),
         skuCode = DeviceSkuCode("AQL-T-RP2-GLB-BLK"),
         hardwareRevision = DeviceHardwareRevision("2.0"),
@@ -220,7 +230,16 @@ class DeviceRuntimeMetadataGenerationTest {
             wsPath = "/aql/v1/ws",
             wsPort = 80,
             wsProtocolVersion = 1
-        )
+        ),
+        nameStatus = nameStatus()
+    )
+
+    private fun nameStatus(): DeviceRuntimeNameStatus = DeviceRuntimeNameStatus(
+        productDisplayName = PRODUCT_DISPLAY_NAME,
+        customName = CUSTOM_NAME,
+        effectiveDisplayName = CUSTOM_NAME,
+        nameEditable = true,
+        customNameMaxBytes = CUSTOM_NAME_MAX_BYTES
     )
 
     private fun capabilities(): DeviceRuntimeCapabilities = DeviceRuntimeCapabilities(
@@ -276,7 +295,8 @@ class DeviceRuntimeMetadataGenerationTest {
         model = identity().model,
         displayName = identity().displayName,
         uptimeMs = 123_456L,
-        modules = modules()
+        modules = modules(),
+        nameStatus = nameStatus()
     )
 
     private fun identityJson(): JSONObject = JSONObject()
@@ -292,7 +312,11 @@ class DeviceRuntimeMetadataGenerationTest {
         .put("family", "timer")
         .put("line", "relay_pro")
         .put("model", "relay_pro_2")
-        .put("displayName", "Relay Pro 2")
+        .put("displayName", PRODUCT_DISPLAY_NAME)
+        .put("customName", CUSTOM_NAME)
+        .put("effectiveDisplayName", CUSTOM_NAME)
+        .put("nameEditable", true)
+        .put("customNameMaxBytes", CUSTOM_NAME_MAX_BYTES)
         .put("skuId", "com.aqualight.timer.relay_pro_2.global.black")
         .put("skuCode", "AQL-T-RP2-GLB-BLK")
         .put("firmwareVersion", "6.0.0")
@@ -343,4 +367,10 @@ class DeviceRuntimeMetadataGenerationTest {
             "supportedScreens",
             JSONArray(capabilities().supportedScreens.map { it.wireValue })
         )
+
+    private companion object {
+        const val PRODUCT_DISPLAY_NAME = "Relay Pro 2"
+        const val CUSTOM_NAME = "My timer"
+        const val CUSTOM_NAME_MAX_BYTES = 64
+    }
 }

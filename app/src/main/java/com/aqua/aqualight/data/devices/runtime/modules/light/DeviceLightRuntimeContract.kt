@@ -17,18 +17,28 @@ object DeviceLightRuntimeContract {
     object Field {
         const val CHANNEL_KEY = "channelKey"
         const val CHANNELS = "channels"
+        const val CHANNEL = "channel"
         const val CLEAR = "clear"
         const val DURATION_MS = "durationMs"
         const val PERCENT = "percent"
         const val VALUE = "value"
         const val REGIME = "regime"
         const val SAVE = "save"
+        const val MANUAL_ACTIVE = "manualActive"
+        const val AFFECTED_CHANNEL_COUNT = "affectedChannelCount"
 
         const val PROGRAM_INDEX = "programIndex"
+        const val PROGRAM_COUNT = "programCount"
+        const val PROGRAM = "program"
         const val INDEX = "index"
         const val POINTS = "points"
         const val TIME_MS = "timeMs"
         const val TIME = "time"
+        const val CREATED = "created"
+        const val DELETED = "deleted"
+        const val CHANNEL_LIST_INDEX = "channelListIndex"
+        const val DELETED_LIST_INDEX = "deletedListIndex"
+        const val DELETED_POINT_COUNT = "deletedPointCount"
 
         const val SUPPORTED = "supported"
         const val ACTIVE = "active"
@@ -53,10 +63,19 @@ object DeviceLightRuntimeContract {
     }
 
     object Operation {
+        const val MANUAL_STATE = "manualState"
+        const val CLEAR_MANUAL = "clearManual"
+        const val CHANNEL_REGIME_SET = "channelRegimeSet"
+        const val PROGRAM_APPLY = "programApply"
+        const val PROGRAM_DELETE = "programDelete"
         const val TEMPERATURE_PROTECTION_SET = "temperatureProtectionSet"
     }
 
     object QualifiedCommand {
+        const val MANUAL_SET = "light.manual.set"
+        const val CHANNEL_REGIME_SET = "light.channel.regime.set"
+        const val PROGRAM_APPLY = "light.program.apply"
+        const val PROGRAM_DELETE = "light.program.delete"
         const val TEMPERATURE_PROTECTION_SET = "light.temperature-protection.set"
     }
 

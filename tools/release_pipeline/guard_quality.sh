@@ -62,6 +62,7 @@ for guard in \
   provisioning_commit_recovery_guard.py \
   navigation_guard.py \
   ws_protocol_guard.py \
+  firmware_interoperability_guard.py \
   permission_architecture_guard.py \
   notification_reminder_architecture_guard.py \
   process_safe_feedback_guard.py \

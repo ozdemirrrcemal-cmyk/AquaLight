@@ -182,17 +182,6 @@ data class DeviceFirmwareOtaClearResult(
     val ota: DeviceFirmwareOtaSnapshot
 )
 
-data class DeviceFirmwareCommandResult(
-    val sent: Boolean,
-    val module: String = DeviceFirmwareRuntimeContract.MODULE,
-    val action: String,
-    val messageId: String = "",
-    val errorMessage: String = ""
-) {
-    val isSuccess: Boolean
-        get() = sent && errorMessage.isBlank()
-}
-
 data class DeviceFirmwareManifest(
     val schema: String,
     val brand: String,

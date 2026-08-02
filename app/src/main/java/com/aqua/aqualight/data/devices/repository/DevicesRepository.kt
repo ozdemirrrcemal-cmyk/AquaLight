@@ -5,12 +5,16 @@ package com.aqua.aqualight.data.devices.repository
 import com.aqua.aqualight.data.devices.discovery.udp.AqlDiscoveryRefreshSender
 import com.aqua.aqualight.data.devices.model.DeviceConnectionState
 import com.aqua.aqualight.data.devices.model.DeviceOnlineState
+import com.aqua.aqualight.data.devices.model.DeviceRuntimeNameStatus
 import com.aqua.aqualight.data.devices.model.DeviceSnapshot
 import com.aqua.aqualight.data.devices.model.DeviceUid
 import com.aqua.aqualight.data.devices.monitor.DeviceConnectivityObserver
 import com.aqua.aqualight.data.devices.monitor.DeviceElapsedRealtimeClock
 import com.aqua.aqualight.data.devices.monitor.DevicePresenceRuntimeMonitor
 import com.aqua.aqualight.data.devices.monitor.DeviceStatusAggregator
+import com.aqua.aqualight.data.devices.runtime.events.DeviceRuntimeEventPayload
+import com.aqua.aqualight.data.devices.runtime.events.DeviceRuntimeEventPipeline
+import com.aqua.aqualight.data.devices.runtime.events.DeviceRuntimeTypedEvent
 import com.aqua.aqualight.data.devices.runtime.modules.DeviceRuntimeModuleProvider
 import com.aqua.aqualight.data.devices.runtime.ws.AqlWsCommandClient
 import com.aqua.aqualight.data.devices.runtime.ws.AqlWsConnectionState
@@ -24,6 +28,7 @@ import kotlinx.coroutines.Job
 import kotlinx.coroutines.awaitCancellation
 import kotlinx.coroutines.cancelAndJoin
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -41,6 +46,11 @@ class DevicesRepository(
     private val wallClockMillis: () -> Long = System::currentTimeMillis,
     private val elapsedRealtimeMillis: () -> Long = DeviceElapsedRealtimeClock::nowMillis
 ) {
+
+    private val _typedRuntimeEvents = MutableSharedFlow<DeviceRuntimeTypedEvent>(
+        extraBufferCapacity = TYPED_RUNTIME_EVENT_BUFFER_CAPACITY
+    )
+    private val typedRuntimeEvents: SharedFlow<DeviceRuntimeTypedEvent> = _typedRuntimeEvents
 
     private val presenceRuntimeMonitor = DevicePresenceRuntimeMonitor(
         discoveryRepository = discoveryRepository,
@@ -78,14 +88,7 @@ class DevicesRepository(
             } else {
                 scope.launch {
                     _ready.value = false
-                    val knownDevices = filterIgnoredDevices(knownStore?.loadSnapshots().orEmpty())
-                        .map(DeviceRuntimeMetadataProjector::invalidate)
-                    if (knownDevices.isNotEmpty()) {
-                        knownDevices.forEach { snapshot ->
-                            runtimeRepository?.activate(snapshot.deviceUid)
-                        }
-                        registryStore.upsertAll(knownDevices)
-                    }
+                    restoreKnownDevices()
 
                     val scannerJob = discoveryRepository.start(this)
                     val collectorJob = launch {
@@ -103,6 +106,14 @@ class DevicesRepository(
                             runtime.events.collect(::applyRuntimeEvent)
                         }
                     }
+                    val typedEventPipeline = runtimeRepository?.let { runtime ->
+                        DeviceRuntimeEventPipeline(runtime, this)
+                    }
+                    val typedEventsJob = typedEventPipeline?.let { pipeline ->
+                        launch {
+                            pipeline.events.collect(::applyTypedRuntimeEvent)
+                        }
+                    }
                     val presenceMonitorJob = presenceRuntimeMonitor.start(this)
                     _ready.value = true
 
@@ -111,6 +122,8 @@ class DevicesRepository(
                     } finally {
                         _ready.value = false
                         presenceMonitorJob.cancel()
+                        typedEventsJob?.cancel()
+                        typedEventPipeline?.shutdown()
                         runtimeStateJob?.cancel()
                         runtimeEventsJob?.cancel()
                         collectorJob.cancel()
@@ -124,6 +137,17 @@ class DevicesRepository(
                     }
                 }
             }
+        }
+    }
+
+    private suspend fun restoreKnownDevices() {
+        val knownDevices = filterIgnoredDevices(knownStore?.loadSnapshots().orEmpty())
+            .map(DeviceRuntimeMetadataProjector::invalidate)
+        if (knownDevices.isNotEmpty()) {
+            knownDevices.forEach { snapshot ->
+                runtimeRepository?.activate(snapshot.deviceUid)
+            }
+            registryStore.upsertAll(knownDevices)
         }
     }
 
@@ -193,6 +217,8 @@ class DevicesRepository(
     fun runtimeModules(): DeviceRuntimeModuleProvider? = runtimeRepository?.runtimeModules
 
     fun runtimeEvents(): SharedFlow<AqlWsEvent>? = runtimeRepository?.events
+
+    fun typedRuntimeEvents(): SharedFlow<DeviceRuntimeTypedEvent> = typedRuntimeEvents
 
     fun runtimeConnectionStates(): SharedFlow<AqlWsConnectionState>? =
         runtimeRepository?.connectionState
@@ -379,6 +405,38 @@ class DevicesRepository(
         }
     }
 
+    private suspend fun applyTypedRuntimeEvent(event: DeviceRuntimeTypedEvent) {
+        event.deviceNameStatusOrNull()?.let { nameStatus ->
+            val updated = registryStore.updateSnapshot(event.deviceUid) { current ->
+                current.copy(
+                    identity = current.identity.copy(
+                        displayName = nameStatus.productDisplayName,
+                        customName = nameStatus.customName
+                    )
+                )
+            }
+            updated?.let { snapshot -> knownStore?.saveSnapshot(snapshot) }
+        }
+        _typedRuntimeEvents.emit(event)
+    }
+
+    private fun DeviceRuntimeTypedEvent.deviceNameStatusOrNull(): DeviceRuntimeNameStatus? =
+        takeIf { event -> event.type == DeviceRuntimeTypedEvent.Type.DEVICE_STATUS_CHANGED }
+            ?.let { event ->
+                when (val payload = event.payload) {
+                    is DeviceRuntimeEventPayload.CommandResult ->
+                        payload.result.optJSONObject("status")
+                    is DeviceRuntimeEventPayload.Snapshot ->
+                        payload.data.optJSONObject("status") ?: payload.data
+                }
+            }
+            ?.let { statusData ->
+                DeviceRuntimeNameStatusParser.parse(
+                    statusData,
+                    "device.status.changed.data.status"
+                ).getOrNull()
+            }
+
     private suspend fun applyRuntimeMetadataMessage(event: AqlWsEvent.Message) {
         val response = event.parsed as? AqlWsIncomingMessage.Response
         val update = response?.let { message ->
@@ -551,6 +609,8 @@ class DevicesRepository(
         }
     }
 }
+
+private const val TYPED_RUNTIME_EVENT_BUFFER_CAPACITY = 256
 
 class DevicePersistenceTransactionException(
     message: String,

@@ -59,7 +59,8 @@ data class DeviceRuntimeModuleStatus(
     val model: DeviceProductModel,
     val displayName: String,
     val uptimeMs: Long,
-    val modules: DeviceRuntimeModules
+    val modules: DeviceRuntimeModules,
+    val nameStatus: DeviceRuntimeNameStatus = DeviceRuntimeNameStatus.defaultFor(displayName)
 ) {
     init {
         require(family != DeviceFamily.UNKNOWN) {
@@ -73,6 +74,9 @@ data class DeviceRuntimeModuleStatus(
             "Runtime module status displayName must not contain control characters."
         }
         require(uptimeMs >= 0L) { "Runtime module status uptimeMs must not be negative." }
+        require(nameStatus.productDisplayName == displayName) {
+            "Runtime status product display names differ."
+        }
     }
 
     fun mismatchField(identity: DeviceRuntimeIdentity): String? = when {
@@ -82,4 +86,17 @@ data class DeviceRuntimeModuleStatus(
         displayName != identity.displayName -> "displayName"
         else -> null
     }
+
+    fun mismatchField(envelope: DeviceRuntimeIdentityEnvelope): String? =
+        mismatchField(envelope.identity) ?: when {
+            nameStatus.productDisplayName != envelope.nameStatus.productDisplayName ->
+                "device.productDisplayName"
+            nameStatus.customName != envelope.nameStatus.customName -> "device.customName"
+            nameStatus.effectiveDisplayName != envelope.nameStatus.effectiveDisplayName ->
+                "device.effectiveDisplayName"
+            nameStatus.nameEditable != envelope.nameStatus.nameEditable -> "device.nameEditable"
+            nameStatus.customNameMaxBytes != envelope.nameStatus.customNameMaxBytes ->
+                "device.customNameMaxBytes"
+            else -> null
+        }
 }

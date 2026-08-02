@@ -1,107 +1,78 @@
 package com.aqua.aqualight.data.devices.runtime.modules.time
 
 import com.aqua.aqualight.data.devices.model.DeviceUid
-import com.aqua.aqualight.data.devices.runtime.ws.AqlWsCommandClient
+import com.aqua.aqualight.data.devices.runtime.core.DeviceRuntimeCommandGateway
+import com.aqua.aqualight.data.devices.runtime.core.DeviceRuntimeCommandOutcome
+import com.aqua.aqualight.data.devices.runtime.modules.common.DeviceRuntimeJsonCommand
 import org.json.JSONObject
 
 class DeviceTimeRuntimeRepository(
-    private val commandClientProvider: (DeviceUid) -> AqlWsCommandClient?
+    private val gateway: DeviceRuntimeCommandGateway
 ) {
-    fun requestStatus(
+    suspend fun requestStatus(
         deviceUid: DeviceUid
-    ): DeviceTimeCommandResult {
-        return send(
-            deviceUid = deviceUid,
-            action = DeviceTimeRuntimeContract.Action.STATUS_GET
+    ): DeviceRuntimeCommandOutcome<DeviceTimeStatus> = gateway.execute(
+        deviceUid,
+        DeviceRuntimeJsonCommand(
+            module = DeviceTimeRuntimeContract.MODULE,
+            action = DeviceTimeRuntimeContract.Action.STATUS_GET,
+            successParser = DeviceTimeStatusParser::parseExact
         )
-    }
+    )
 
-    fun applyConfig(
+    suspend fun applyConfig(
         deviceUid: DeviceUid,
         payload: DeviceTimeConfigApplyPayload = DeviceSystemTimePayloadFactory.configFromSystem()
-    ): DeviceTimeCommandResult {
-        return send(
-            deviceUid = deviceUid,
-            action = DeviceTimeRuntimeContract.Action.CONFIG_APPLY,
-            data = payload.toJson()
-        )
-    }
+    ): DeviceRuntimeCommandOutcome<DeviceTimeMutationResult> = executeMutation(
+        deviceUid = deviceUid,
+        action = DeviceTimeRuntimeContract.Action.CONFIG_APPLY,
+        dataFactory = payload::toJson
+    )
 
-    fun syncPhoneNow(
+    suspend fun syncPhoneNow(
         deviceUid: DeviceUid,
         save: Boolean = true
-    ): DeviceTimeCommandResult {
-        return syncPhone(
-            deviceUid = deviceUid,
-            payload = DeviceSystemTimePayloadFactory.phoneSyncNow(save = save)
-        )
-    }
+    ): DeviceRuntimeCommandOutcome<DeviceTimeMutationResult> = syncPhone(
+        deviceUid = deviceUid,
+        payload = DeviceSystemTimePayloadFactory.phoneSyncNow(save = save)
+    )
 
-    fun syncPhone(
+    suspend fun syncPhone(
         deviceUid: DeviceUid,
         payload: DevicePhoneSyncPayload
-    ): DeviceTimeCommandResult {
-        return send(
-            deviceUid = deviceUid,
-            action = DeviceTimeRuntimeContract.Action.PHONE_SYNC,
-            data = payload.toJson()
-        )
-    }
+    ): DeviceRuntimeCommandOutcome<DeviceTimeMutationResult> = executeMutation(
+        deviceUid = deviceUid,
+        action = DeviceTimeRuntimeContract.Action.PHONE_SYNC,
+        dataFactory = payload::toJson
+    )
 
-    fun syncNtp(
+    suspend fun syncNtp(
         deviceUid: DeviceUid
-    ): DeviceTimeCommandResult {
-        return send(
-            deviceUid = deviceUid,
-            action = DeviceTimeRuntimeContract.Action.NTP_SYNC
-        )
-    }
+    ): DeviceRuntimeCommandOutcome<DeviceTimeMutationResult> = executeMutation(
+        deviceUid = deviceUid,
+        action = DeviceTimeRuntimeContract.Action.NTP_SYNC
+    )
 
-    fun setRtc(
+    suspend fun setRtc(
         deviceUid: DeviceUid,
         payload: DeviceManualRtcPayload
-    ): DeviceTimeCommandResult {
-        return send(
-            deviceUid = deviceUid,
-            action = DeviceTimeRuntimeContract.Action.RTC_SET,
-            data = payload.toJson()
-        )
-    }
+    ): DeviceRuntimeCommandOutcome<DeviceTimeMutationResult> = executeMutation(
+        deviceUid = deviceUid,
+        action = DeviceTimeRuntimeContract.Action.RTC_SET,
+        dataFactory = payload::toJson
+    )
 
-    private fun send(
+    private suspend fun executeMutation(
         deviceUid: DeviceUid,
         action: String,
-        data: JSONObject = JSONObject()
-    ): DeviceTimeCommandResult {
-        val commandClient = commandClientProvider(deviceUid)
-
-        if (commandClient == null) {
-            return DeviceTimeCommandResult(
-                sent = false,
-                action = action,
-                errorMessage = "No WebSocket command client for ${deviceUid.value}"
-            )
-        }
-
-        val messageId = commandClient.command(
+        dataFactory: () -> JSONObject = ::JSONObject
+    ): DeviceRuntimeCommandOutcome<DeviceTimeMutationResult> = gateway.execute(
+        deviceUid,
+        DeviceRuntimeJsonCommand(
             module = DeviceTimeRuntimeContract.MODULE,
             action = action,
-            data = data
+            dataFactory = dataFactory,
+            successParser = { data -> DeviceTimeStatusParser.parseMutation(data, action) }
         )
-
-        return DeviceTimeCommandResult(
-            sent = messageId != null,
-            action = action,
-            messageId = messageId.orEmpty(),
-            errorMessage = if (messageId != null) "" else "WebSocket send failed"
-        )
-    }
-
-    companion object {
-        fun singleSession(
-            commandClient: AqlWsCommandClient
-        ): DeviceTimeRuntimeRepository {
-            return DeviceTimeRuntimeRepository { commandClient }
-        }
-    }
+    )
 }

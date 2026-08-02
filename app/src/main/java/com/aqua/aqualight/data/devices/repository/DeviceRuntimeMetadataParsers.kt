@@ -44,27 +44,29 @@ object DeviceRuntimeIdentityParser {
             DeviceFamily.fromWireExact(data.requireExactString("family"))
         ) { "device.identity.get family is not an exact commercial family." }
 
-        ParsedDeviceRuntimeIdentity(
-            identity = DeviceRuntimeIdentity(
-                deviceUid = reportedDeviceUid,
-                productKey = DeviceProductKey(data.requireExactString("productKey")),
-                productId = DeviceProductId(data.requireExactString("productId")),
-                family = family,
-                line = DeviceProductLine(data.requireExactString("line")),
-                model = DeviceProductModel(data.requireExactString("model")),
-                brand = data.requireExactString("brand"),
-                displayName = data.requireExactString("displayName"),
-                skuId = DeviceSkuId(data.requireExactString("skuId")),
-                skuCode = DeviceSkuCode(data.requireExactString("skuCode")),
-                hardwareRevision = DeviceHardwareRevision(
-                    data.requireExactString("hardwareRevision")
-                ),
-                firmwareVersion = DeviceFirmwareVersion(
-                    data.requireExactString("firmwareVersion")
-                ),
-                apiVersion = DeviceApiVersion(data.requireExactInt("apiVersion")),
-                protocolVersion = DeviceProtocolVersion(data.requireExactInt("protocolVersion"))
+        val identity = DeviceRuntimeIdentity(
+            deviceUid = reportedDeviceUid,
+            productKey = DeviceProductKey(data.requireExactString("productKey")),
+            productId = DeviceProductId(data.requireExactString("productId")),
+            family = family,
+            line = DeviceProductLine(data.requireExactString("line")),
+            model = DeviceProductModel(data.requireExactString("model")),
+            brand = data.requireExactString("brand"),
+            displayName = data.requireExactString("displayName"),
+            skuId = DeviceSkuId(data.requireExactString("skuId")),
+            skuCode = DeviceSkuCode(data.requireExactString("skuCode")),
+            hardwareRevision = DeviceHardwareRevision(
+                data.requireExactString("hardwareRevision")
             ),
+            firmwareVersion = DeviceFirmwareVersion(
+                data.requireExactString("firmwareVersion")
+            ),
+            apiVersion = DeviceApiVersion(data.requireExactInt("apiVersion")),
+            protocolVersion = DeviceProtocolVersion(data.requireExactInt("protocolVersion"))
+        )
+
+        ParsedDeviceRuntimeIdentity(
+            identity = identity,
             shortId = data.requireExactString("shortId"),
             serialNumber = data.requireExactString("serialNumber"),
             firmwareSerial = data.requireExactString("firmwareSerial"),
@@ -76,14 +78,19 @@ object DeviceRuntimeIdentityParser {
                 wsPath = runtime.requireExactString("wsPath"),
                 wsPort = runtime.requireExactInt("wsPort"),
                 wsProtocolVersion = runtime.requireExactInt("wsProtocolVersion")
-            )
+            ),
+            nameStatus = DeviceRuntimeNameStatusParser.parseFlat(
+                data,
+                "device.identity.get.data"
+            ).getOrThrow()
         )
     }
 
     private val IDENTITY_KEYS = setOf(
         "productKey", "productId", "setupCode", "deviceUid", "shortId",
         "serialNumber", "firmwareSerial", "macAddress", "brand", "family",
-        "line", "model", "displayName", "skuId", "skuCode", "firmwareVersion",
+        "line", "model", "displayName", "customName", "effectiveDisplayName",
+        "nameEditable", "customNameMaxBytes", "skuId", "skuCode", "firmwareVersion",
         "hardwareRevision", "apiVersion", "protocolVersion", "runtime"
     )
     private val RUNTIME_KEYS = setOf(
