@@ -11,13 +11,20 @@ import org.junit.Test
 class DeviceFirmwareOtaContractParserTest {
 
     @Test
-    fun `start acceptance requires and parses exact model echo`() {
+    fun `start acceptance retains the complete exact firmware envelope`() {
         val parsed = DeviceFirmwareStatusParser.parseOtaStartAcceptedExact(
             startAcceptedJson()
         ).getOrThrow()
 
+        assertEquals("otaStart", parsed.operation)
         assertTrue(parsed.accepted)
-        assertEquals("dose_pro_2", parsed.request?.model)
+        assertEquals("websocket", parsed.runtimeTransport)
+        assertEquals("firmware.ota.start", parsed.command)
+        assertEquals("firmware-download", parsed.binaryTransfer)
+        assertEquals(DeviceFirmwareRuntimeContract.Event.OTA_PROGRESS, parsed.event)
+        assertEquals(DeviceFirmwareRuntimeContract.Event.OTA_PROGRESS, parsed.progressEvent)
+        assertEquals(DeviceFirmwareRuntimeContract.Event.OTA_COMPLETED, parsed.completedEvent)
+        assertEquals("dose_pro_2", parsed.request.model)
         assertEquals(DeviceFirmwareOtaPhase.STARTING, parsed.ota.phase)
     }
 
@@ -31,12 +38,32 @@ class DeviceFirmwareOtaContractParserTest {
     }
 
     @Test
-    fun `progress parser accepts exact firmware event envelope`() {
+    fun `status parser retains exact command metadata and snapshot`() {
+        val parsed = DeviceFirmwareStatusParser.parseOtaStatusResponseExact(
+            otaStatusJson()
+        ).getOrThrow()
+
+        assertEquals("otaStatus", parsed.operation)
+        assertEquals("websocket", parsed.runtimeTransport)
+        assertEquals("firmware.ota.status", parsed.command)
+        assertEquals("firmware-download", parsed.binaryTransfer)
+        assertEquals(DeviceFirmwareRuntimeContract.Event.OTA_PROGRESS, parsed.progressEvent)
+        assertEquals(DeviceFirmwareRuntimeContract.Event.OTA_COMPLETED, parsed.completedEvent)
+        assertEquals(DeviceFirmwareOtaPhase.IDLE, parsed.ota.phase)
+    }
+
+    @Test
+    fun `progress parser retains exact firmware event envelope`() {
         val parsed = DeviceFirmwareStatusParser.parseOtaProgressEventExact(
             otaEventJson().put("phase", "writing").put("active", true)
         ).getOrThrow()
 
-        assertEquals(DeviceFirmwareOtaPhase.WRITING, parsed.phase)
+        assertFalse(parsed.completed)
+        assertFalse(parsed.success)
+        assertFalse(parsed.failed)
+        assertEquals("websocket", parsed.runtimeTransport)
+        assertEquals("firmware-download", parsed.binaryTransfer)
+        assertEquals(DeviceFirmwareOtaPhase.WRITING, parsed.ota.phase)
     }
 
     @Test
@@ -47,7 +74,7 @@ class DeviceFirmwareOtaContractParserTest {
     }
 
     @Test
-    fun `clear parser accepts compact previous state emitted by firmware`() {
+    fun `clear parser retains exact compact previous state`() {
         val parsed = DeviceFirmwareStatusParser.parseOtaClearResultExact(
             JSONObject()
                 .put("operation", "otaClear")
@@ -67,24 +94,32 @@ class DeviceFirmwareOtaContractParserTest {
                 .put("ota", otaSnapshot().put("targetVersion", "").put("sha256Expected", ""))
         ).getOrThrow()
 
+        assertEquals("otaClear", parsed.operation)
         assertTrue(parsed.cleared)
+        assertEquals("websocket", parsed.runtimeTransport)
+        assertEquals("firmware.ota.clear", parsed.command)
         assertEquals(DeviceFirmwareOtaPhase.FAILED, parsed.previous.phase)
+        assertEquals("failed", parsed.previous.phaseRaw)
+        assertEquals("download failed", parsed.previous.lastError)
+        assertEquals("download", parsed.previous.lastErrorField)
         assertEquals(DeviceFirmwareOtaPhase.IDLE, parsed.ota.phase)
     }
 
     @Test
-    fun `manifest parser accepts the exact firmware release pipeline document`() {
+    fun `manifest parser retains the exact firmware release pipeline document`() {
         val parsed = DeviceFirmwareManifestParser.parse(manifestJson().toString()).getOrThrow()
+        val artifact = parsed.artifacts.single()
 
         assertEquals(
             DeviceFirmwareRuntimeContract.Manifest.PARTITION_TABLE,
             parsed.platform.partitionTable
         )
-        assertTrue(parsed.artifacts.single().product.capabilities.ota)
-        assertEquals(2, parsed.artifacts.single().product.limits.dosingChannelCount)
+        assertTrue(artifact.product.capabilities.ota)
+        assertEquals(2, artifact.product.limits.dosingChannelCount)
+        assertEquals("2.0.0", artifact.firmware.version)
         assertEquals(
             "AquaLight-dosing_dose_pro_2-v2.0.0-factory.zip",
-            parsed.artifacts.single().factory?.filename
+            artifact.factory?.filename
         )
         assertEquals("tr", parsed.releaseNotes.defaultLocale)
         assertEquals(
@@ -150,6 +185,15 @@ class DeviceFirmwareOtaContractParserTest {
                 .put("hardwareRevision", "2.0")
         )
         .put("ota", otaSnapshot().put("phase", "starting").put("active", true))
+
+    private fun otaStatusJson(): JSONObject = JSONObject()
+        .put("operation", "otaStatus")
+        .put("runtimeTransport", "websocket")
+        .put("command", "firmware.ota.status")
+        .put("binaryTransfer", "firmware-download")
+        .put("progressEvent", DeviceFirmwareRuntimeContract.Event.OTA_PROGRESS)
+        .put("completedEvent", DeviceFirmwareRuntimeContract.Event.OTA_COMPLETED)
+        .put("ota", otaSnapshot())
 
     private fun otaSnapshot(): JSONObject = JSONObject()
         .put("phase", "idle")
@@ -225,14 +269,17 @@ class DeviceFirmwareOtaContractParserTest {
             .put("releaseRepo", DeviceFirmwareRuntimeContract.OFFICIAL_RELEASE_REPOSITORY)
             .put("generatedAt", "2026-07-30T00:00:00+00:00")
             .put("platform", platformJson())
-            .put("artifacts", JSONArray().put(
-                JSONObject()
-                    .put("env", env)
-                    .put("product", product)
-                    .put("compatibility", compatibility)
-                    .put("firmware", firmware)
-                    .put("factory", factory)
-            ))
+            .put(
+                "artifacts",
+                JSONArray().put(
+                    JSONObject()
+                        .put("env", env)
+                        .put("product", product)
+                        .put("compatibility", compatibility)
+                        .put("firmware", firmware)
+                        .put("factory", factory)
+                )
+            )
             .put(
                 "releaseNotes",
                 JSONObject()
