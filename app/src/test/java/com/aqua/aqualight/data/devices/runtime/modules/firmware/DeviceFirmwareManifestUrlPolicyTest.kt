@@ -7,34 +7,34 @@ import org.junit.Test
 class DeviceFirmwareManifestUrlPolicyTest {
 
     @Test
-    fun `accepts only versioned or latest assets from the official release repository`() {
-        val versioned = DeviceFirmwareRuntimeContract.OFFICIAL_RELEASE_URL_PREFIX +
-            "v2.0.0/manifest-stable.json"
-        val latest = DeviceFirmwareRuntimeContract.OFFICIAL_LATEST_RELEASE_URL_PREFIX +
-            "manifest-stable.json"
+    fun `accepts only the fixed stable channel manifest`() {
+        val stable = DeviceFirmwareRuntimeContract.STABLE_MANIFEST_URL
 
-        assertEquals(versioned, requireOfficialFirmwareManifestUrl(versioned))
-        assertEquals(latest, requireOfficialFirmwareManifestUrl("  $latest  "))
+        assertEquals(stable, requireOfficialFirmwareManifestUrl(stable))
+        assertEquals(stable, requireOfficialFirmwareManifestUrl("  $stable  "))
     }
 
     @Test
-    fun `rejects lookalike repositories insecure transport and non-json assets`() {
+    fun `rejects latest versioned lookalike insecure and decorated URLs`() {
+        val latest =
+            "https://github.com/ozdemirrrcemal-cmyk/AquaLight-OTA-Releases/" +
+                "releases/latest/download/manifest-stable.json"
+        val versioned = DeviceFirmwareRuntimeContract.OFFICIAL_RELEASE_URL_PREFIX +
+            "v6.0.0/manifest-stable.json"
         val lookalike =
-            "https://github.com/example/AquaLight-OTA-Releases/releases/latest/download/" +
-                "manifest-stable.json"
-        val insecure = DeviceFirmwareRuntimeContract.OFFICIAL_LATEST_RELEASE_URL_PREFIX
-            .replace("https://", "http://") + "manifest-stable.json"
-        val binary = DeviceFirmwareRuntimeContract.OFFICIAL_LATEST_RELEASE_URL_PREFIX +
-            "firmware.bin"
+            "https://github.com/example/AquaLight-OTA-Releases/releases/download/" +
+                "ota-stable/manifest-stable.json"
+        val insecure = DeviceFirmwareRuntimeContract.STABLE_MANIFEST_URL
+            .replace("https://", "http://")
+        val query = DeviceFirmwareRuntimeContract.STABLE_MANIFEST_URL + "?cache=false"
+        val fragment = DeviceFirmwareRuntimeContract.STABLE_MANIFEST_URL + "#manifest"
+        val otherAsset = DeviceFirmwareRuntimeContract.OFFICIAL_RELEASE_URL_PREFIX +
+            "ota-stable/manifest-beta.json"
 
-        assertThrows(IllegalArgumentException::class.java) {
-            requireOfficialFirmwareManifestUrl(lookalike)
-        }
-        assertThrows(IllegalArgumentException::class.java) {
-            requireOfficialFirmwareManifestUrl(insecure)
-        }
-        assertThrows(IllegalArgumentException::class.java) {
-            requireOfficialFirmwareManifestUrl(binary)
+        listOf(latest, versioned, lookalike, insecure, query, fragment, otherAsset).forEach { url ->
+            assertThrows(IllegalArgumentException::class.java) {
+                requireOfficialFirmwareManifestUrl(url)
+            }
         }
     }
 }
