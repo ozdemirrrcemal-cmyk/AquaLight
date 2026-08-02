@@ -19,6 +19,7 @@
     <string name="device_settings_update_in_progress_status">Installing %1$s · %2$d%%</string>
     <string name="device_settings_retry_update_check_action">Try again</string>
     <string name="device_settings_update_check_failed_status">The update check could not be completed.</string>
+    <string name="device_settings_update_needs_attention_status">The software update needs attention.</string>
     <string name="device_settings_update_unsupported_status">This device does not support software updates.</string>
 
     <string name="device_settings_change_name_title">Change device name</string>
@@ -30,7 +31,6 @@
     <string name="device_settings_update_device_fallback">AquaLight device</string>
     <string name="device_settings_update_status_checking">Checking for updates</string>
     <string name="device_settings_update_status_available">Update available</string>
-    <string name="device_settings_update_status_required">Required update</string>
     <string name="device_settings_update_status_preparing">Preparing update</string>
     <string name="device_settings_update_status_installing">Update in progress</string>
     <string name="device_settings_update_status_recovering">Reconnecting</string>
