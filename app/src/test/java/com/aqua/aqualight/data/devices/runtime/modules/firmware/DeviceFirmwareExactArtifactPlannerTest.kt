@@ -50,10 +50,7 @@ class DeviceFirmwareExactArtifactPlannerTest {
             manifest()
         ).getOrThrow() as DeviceFirmwareAvailability.UpdateAvailable
 
-        assertEquals(product.displayName, unnamed.plan.displayName)
-        assertEquals(unnamed.plan.displayName, renamed.plan.displayName)
-        assertEquals(unnamed.plan.payload, renamed.plan.payload)
-        assertEquals(unnamed.plan.firmware, renamed.plan.firmware)
+        assertEquals(unnamed.plan, renamed.plan)
         assertTrue(!unnamed.plan.payload.toJson().has("deviceName"))
     }
 
