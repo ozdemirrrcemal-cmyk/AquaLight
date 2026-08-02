@@ -10,7 +10,7 @@ object DeviceFirmwareManifestParser {
         val root = JSONObject(raw)
         root.requireExactKeys(ROOT_KEYS, "manifest")
         val version = root.requiredString("version")
-        val manifest = DeviceFirmwareManifest(
+        DeviceFirmwareManifest(
             schema = root.requiredString("schema"),
             brand = root.requiredString("brand"),
             channel = root.requiredString("channel"),
@@ -24,8 +24,10 @@ object DeviceFirmwareManifestParser {
             releaseNotes = parseReleaseNotes(
                 root.requiredObject(DeviceFirmwareRuntimeContract.Manifest.RELEASE_NOTES)
             )
-        )
+        ).also(::validateManifest)
+    }
 
+    private fun validateManifest(manifest: DeviceFirmwareManifest) {
         require(manifest.isSupportedSchema) {
             "Unsupported OTA manifest schema, brand or release repository."
         }
@@ -47,7 +49,6 @@ object DeviceFirmwareManifestParser {
         require(manifest.signature.value.isNotBlank()) {
             "OTA manifest signature value is missing."
         }
-        manifest
     }
 
     private fun parsePlatform(json: JSONObject): DeviceFirmwareManifestPlatform {
@@ -73,52 +74,6 @@ object DeviceFirmwareManifestParser {
         }
     }
 
-    private fun parseReleaseNotes(json: JSONObject): DeviceFirmwareReleaseNotes {
-        json.requireExactKeys(RELEASE_NOTES_KEYS, "releaseNotes")
-        val schema = json.requiredString("schema")
-        require(schema == DeviceFirmwareRuntimeContract.Manifest.RELEASE_NOTES_SCHEMA) {
-            "Unsupported OTA release-notes schema: $schema"
-        }
-        val defaultLocale = json.requiredString(
-            DeviceFirmwareRuntimeContract.Manifest.DEFAULT_LOCALE
-        )
-        require(defaultLocale in SUPPORTED_RELEASE_NOTE_LOCALES) {
-            "OTA release notes defaultLocale must be tr or en."
-        }
-        val items = parseReleaseNoteItems(
-            json.requiredArray(DeviceFirmwareRuntimeContract.Manifest.ITEMS)
-        )
-        require(items.isNotEmpty()) { "OTA release notes must contain at least one item." }
-        return DeviceFirmwareReleaseNotes(
-            schema = schema,
-            defaultLocale = defaultLocale,
-            items = items
-        )
-    }
-
-    private fun parseReleaseNoteItems(array: JSONArray): List<DeviceFirmwareReleaseNoteItem> {
-        require(array.length() <= DeviceFirmwareRuntimeContract.Limit.MAX_RELEASE_NOTE_ITEMS) {
-            "OTA release notes contain too many items."
-        }
-        return buildList {
-            repeat(array.length()) { index ->
-                val item = array.get(index) as? JSONObject
-                    ?: error("OTA release note item[$index] must be an object.")
-                item.requireExactKeys(RELEASE_NOTE_ITEM_KEYS, "releaseNotes.items[$index]")
-                add(
-                    DeviceFirmwareReleaseNoteItem(
-                        tr = item.requiredReleaseNoteText(
-                            DeviceFirmwareRuntimeContract.Manifest.TURKISH
-                        ),
-                        en = item.requiredReleaseNoteText(
-                            DeviceFirmwareRuntimeContract.Manifest.ENGLISH
-                        )
-                    )
-                )
-            }
-        }
-    }
-
     private fun parseSignature(json: JSONObject): DeviceFirmwareManifestSignature {
         json.requireExactKeys(SIGNATURE_KEYS, "signature")
         return DeviceFirmwareManifestSignature(
@@ -129,17 +84,49 @@ object DeviceFirmwareManifestParser {
         )
     }
 
+    private fun parseReleaseNotes(json: JSONObject): DeviceFirmwareReleaseNotes {
+        json.requireExactKeys(RELEASE_NOTES_KEYS, "releaseNotes")
+        val schema = json.requiredString("schema")
+        val defaultLocale = json.requiredString(
+            DeviceFirmwareRuntimeContract.Manifest.DEFAULT_LOCALE
+        )
+        require(schema == DeviceFirmwareRuntimeContract.Manifest.RELEASE_NOTES_SCHEMA) {
+            "Unsupported OTA release-notes schema: $schema"
+        }
+        require(defaultLocale in SUPPORTED_RELEASE_NOTE_LOCALES) {
+            "OTA release notes defaultLocale must be tr or en."
+        }
+        return DeviceFirmwareReleaseNotes(
+            schema = schema,
+            defaultLocale = defaultLocale,
+            items = parseReleaseNoteItems(
+                json.requiredArray(DeviceFirmwareRuntimeContract.Manifest.ITEMS)
+            )
+        )
+    }
+
+    private fun parseReleaseNoteItems(array: JSONArray): List<DeviceFirmwareReleaseNoteItem> {
+        require(array.length() in 1..DeviceFirmwareRuntimeContract.Limit.MAX_RELEASE_NOTE_ITEMS) {
+            "OTA release notes must contain a supported number of items."
+        }
+        return List(array.length()) { index ->
+            val item = array.get(index) as? JSONObject
+                ?: error("OTA release note item[$index] must be an object.")
+            item.requireExactKeys(RELEASE_NOTE_ITEM_KEYS, "releaseNotes.items[$index]")
+            DeviceFirmwareReleaseNoteItem(
+                tr = item.requiredReleaseNoteText(DeviceFirmwareRuntimeContract.Manifest.TURKISH),
+                en = item.requiredReleaseNoteText(DeviceFirmwareRuntimeContract.Manifest.ENGLISH)
+            )
+        }
+    }
+
     private fun parseArtifacts(
         array: JSONArray,
         manifestVersion: String
-    ): List<DeviceFirmwareManifestArtifact> = buildList {
-        repeat(array.length()) { index ->
-            val item = array.get(index) as? JSONObject
-                ?: error("OTA manifest artifact[$index] must be an object.")
-            val artifact = parseArtifact(item, index, manifestVersion)
-            validateArtifact(artifact)
-            add(artifact)
-        }
+    ): List<DeviceFirmwareManifestArtifact> = List(array.length()) { index ->
+        val json = array.get(index) as? JSONObject
+            ?: error("OTA manifest artifact[$index] must be an object.")
+        parseArtifact(json, index, manifestVersion).also(::validateArtifact)
     }
 
     private fun parseArtifact(
@@ -246,11 +233,12 @@ object DeviceFirmwareManifestParser {
         manifestVersion: String
     ): DeviceFirmwareAsset {
         json.requireExactKeys(FIRMWARE_ASSET_KEYS, label)
-        val assetVersion = json.requiredString("version")
-        require(assetVersion == manifestVersion) {
+        val version = json.requiredString("version")
+        require(version == manifestVersion) {
             "OTA firmware version does not match the manifest version."
         }
         return DeviceFirmwareAsset(
+            version = version,
             filename = json.requiredString("filename"),
             url = json.requiredString("url"),
             sha256 = json.requiredString("sha256").lowercase(),
@@ -301,6 +289,7 @@ object DeviceFirmwareManifestParser {
     }
 
     private fun validateFirmwareAsset(asset: DeviceFirmwareAsset) {
+        require(asset.version.isNotBlank()) { "OTA firmware version is missing." }
         requireOfficialAssetUrl(asset.url, "OTA firmware")
         require(asset.filename.endsWith("-ota.bin")) {
             "OTA firmware filename must end with -ota.bin."
@@ -380,8 +369,7 @@ object DeviceFirmwareManifestParser {
             ?: error("OTA manifest field '$key' must be a boolean.")
     }
 
-    private fun JSONObject.requiredPositiveInt(key: String): Int =
-        requiredInt(key, minimum = 1)
+    private fun JSONObject.requiredPositiveInt(key: String): Int = requiredInt(key, minimum = 1)
 
     private fun JSONObject.requiredNonNegativeInt(key: String): Int =
         requiredInt(key, minimum = 0)
@@ -422,88 +410,36 @@ object DeviceFirmwareManifestParser {
     }
 
     private val ROOT_KEYS = setOf(
-        "schema",
-        "brand",
-        "channel",
-        "version",
-        "tag",
-        "releaseRepo",
-        "generatedAt",
-        "platform",
-        "artifacts",
-        DeviceFirmwareRuntimeContract.Manifest.RELEASE_NOTES,
+        "schema", "brand", "channel", "version", "tag", "releaseRepo", "generatedAt",
+        "platform", "artifacts", DeviceFirmwareRuntimeContract.Manifest.RELEASE_NOTES,
         "signature"
     )
     private val PLATFORM_KEYS = setOf(
-        "framework",
-        "core",
-        "platform",
-        "partitionTable",
-        "normalOtaAssetType"
+        "framework", "core", "platform", "partitionTable", "normalOtaAssetType"
     )
     private val SIGNATURE_KEYS = setOf("scheme", "keyId", "payloadHash", "value")
-    private val ARTIFACT_KEYS = setOf(
-        "env",
-        "product",
-        "compatibility",
-        "firmware",
-        "factory"
-    )
+    private val ARTIFACT_KEYS = setOf("env", "product", "compatibility", "firmware", "factory")
     private val PRODUCT_KEYS = setOf(
-        "productKey",
-        "productId",
-        "brand",
-        "family",
-        "line",
-        "model",
-        "displayName",
-        "skuCode",
-        "hardwareRevision",
-        "capabilities",
-        "limits"
+        "productKey", "productId", "brand", "family", "line", "model", "displayName",
+        "skuCode", "hardwareRevision", "capabilities", "limits"
     )
     private val CAPABILITY_KEYS = setOf(
-        "light",
-        "manualLight",
-        "lightProgram",
-        "lightPresets",
-        "lightSimulation",
-        "fan",
-        "cooling",
-        "temperature",
-        "standaloneTimer",
-        "dosing",
-        "timeSync",
-        "ota"
+        "light", "manualLight", "lightProgram", "lightPresets", "lightSimulation", "fan",
+        "cooling", "temperature", "standaloneTimer", "dosing", "timeSync", "ota"
     )
     private val LIMIT_KEYS = setOf(
-        "lightChannelCount",
-        "fanOutputCount",
-        "temperatureSensorCount",
-        "timerChannelCount",
+        "lightChannelCount", "fanOutputCount", "temperatureSensorCount", "timerChannelCount",
         "dosingChannelCount"
     )
     private val COMPATIBILITY_KEYS = setOf(
-        "productKey",
-        "productId",
-        "family",
-        "line",
-        "model",
-        "hardwareRevision"
+        "productKey", "productId", "family", "line", "model", "hardwareRevision"
     )
     private val FIRMWARE_ASSET_KEYS = setOf(
-        "version",
-        "filename",
-        "url",
-        "sha256",
-        "size",
-        "format",
-        "otaSlotCompatible"
+        "version", "filename", "url", "sha256", "size", "format", "otaSlotCompatible"
     )
     private val FACTORY_ASSET_KEYS = setOf("filename", "url", "sha256", "size")
     private val RELEASE_NOTES_KEYS = setOf(
-        "schema",
-        DeviceFirmwareRuntimeContract.Manifest.DEFAULT_LOCALE,
+        "schema", DeviceFirmwareRuntimeContract.Manifest.DEFAULT_LOCALE,
         DeviceFirmwareRuntimeContract.Manifest.ITEMS
     )
     private val RELEASE_NOTE_ITEM_KEYS = setOf(
