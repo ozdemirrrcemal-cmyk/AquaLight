@@ -33,15 +33,8 @@ open class DeviceFirmwareManifestHttpSource(
 
 internal fun requireOfficialFirmwareManifestUrl(url: String): String {
     val sourceUrl = url.trim()
-    require(sourceUrl.startsWith("https://")) { "Manifest URL must use HTTPS." }
-    require(
-        sourceUrl.startsWith(DeviceFirmwareRuntimeContract.OFFICIAL_RELEASE_URL_PREFIX) ||
-            sourceUrl.startsWith(
-                DeviceFirmwareRuntimeContract.OFFICIAL_LATEST_RELEASE_URL_PREFIX
-            )
-    ) {
-        "Manifest URL must use the AquaLight release source."
+    require(sourceUrl == DeviceFirmwareRuntimeContract.STABLE_MANIFEST_URL) {
+        "Manifest URL must be the AquaLight stable channel manifest."
     }
-    require(sourceUrl.endsWith(".json")) { "Manifest URL must be a JSON asset." }
     return sourceUrl
 }
