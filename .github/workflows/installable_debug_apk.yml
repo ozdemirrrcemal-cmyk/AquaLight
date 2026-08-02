@@ -38,6 +38,7 @@ jobs:
       AQL_DEBUG_KEYSTORE_BASE64: ${{ secrets.AQL_DEBUG_KEYSTORE_BASE64 }}
       AQL_OTA_MANIFEST_PUBLIC_KEY_PEM: ${{ secrets.AQL_OTA_MANIFEST_PUBLIC_KEY_PEM }}
       AQL_OTA_MANIFEST_KEY_ID: ${{ secrets.AQL_OTA_MANIFEST_KEY_ID }}
+      AQL_OTA_STABLE_MANIFEST_URL: https://github.com/ozdemirrrcemal-cmyk/AquaLight-OTA-Releases/releases/latest/download/manifest-stable.json
 
     steps:
       - name: Checkout
@@ -83,7 +84,9 @@ jobs:
           set -Eeuo pipefail
           for name in \
             AQL_FIREBASE_DEBUG_CONFIG_BASE64 \
-            AQL_DEBUG_KEYSTORE_BASE64; do
+            AQL_DEBUG_KEYSTORE_BASE64 \
+            AQL_OTA_MANIFEST_PUBLIC_KEY_PEM \
+            AQL_OTA_MANIFEST_KEY_ID; do
             value="${!name:-}"
             if [[ -z "${value//[[:space:]]/}" ]]; then
               echo "Required protected input is missing: ${name}" >&2
@@ -102,6 +105,28 @@ jobs:
       - name: Provision persistent debug signing key
         shell: bash
         run: bash tools/provision_persistent_debug_keystore.sh
+
+      - name: Verify published stable OTA manifest with Android code
+        shell: bash
+        run: |
+          set -Eeuo pipefail
+          manifest_path="${RUNNER_TEMP}/manifest-stable.json"
+          curl \
+            --fail \
+            --location \
+            --retry 3 \
+            --retry-all-errors \
+            --silent \
+            --show-error \
+            "$AQL_OTA_STABLE_MANIFEST_URL" \
+            --output "$manifest_path"
+          test -s "$manifest_path"
+          AQL_LIVE_OTA_MANIFEST_PATH="$manifest_path" \
+            ./gradlew \
+              :app:testDebugUnitTest \
+              --tests '*DeviceFirmwareLiveManifestContractTest' \
+              --stacktrace \
+              --no-daemon
 
       - name: Build installable Debug APK
         run: ./gradlew :app:assembleDebug --stacktrace --no-daemon
