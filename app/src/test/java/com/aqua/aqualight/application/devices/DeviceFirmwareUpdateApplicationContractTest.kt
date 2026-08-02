@@ -110,12 +110,8 @@ class DeviceFirmwareUpdateApplicationContractTest {
         runtimeMetadataGeneration = 7L,
         manifestTag = "v2.0.0",
         releaseContent = DeviceFirmwareReleaseContent(
-            localeTag = "tr-TR",
-            title = "Güvenli güncelleme",
-            summary = "Dozaj güvenilirliği geliştirildi.",
-            changes = listOf("Kalibrasyon kontrolleri geliştirildi."),
-            warnings = listOf("Güncelleme sırasında cihazı kapatmayın."),
-            mandatory = false
+            localeTag = "tr",
+            items = listOf("Kalibrasyon kontrolleri geliştirildi.")
         )
     )
 
