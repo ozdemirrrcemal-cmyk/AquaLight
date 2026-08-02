@@ -1,5 +1,7 @@
 package com.aqua.aqualight.data.devices.runtime.modules.firmware
 
+import com.aqua.aqualight.BuildConfig
+import com.aqua.aqualight.application.devices.DEVICE_FIRMWARE_MANIFEST_URL
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertThrows
 import org.junit.Test
@@ -7,9 +9,11 @@ import org.junit.Test
 class DeviceFirmwareManifestUrlPolicyTest {
 
     @Test
-    fun `accepts only the fixed stable channel manifest`() {
+    fun `build application and runtime use the fixed stable channel manifest`() {
         val stable = DeviceFirmwareRuntimeContract.STABLE_MANIFEST_URL
 
+        assertEquals(stable, BuildConfig.AQL_OTA_MANIFEST_URL)
+        assertEquals(stable, DEVICE_FIRMWARE_MANIFEST_URL)
         assertEquals(stable, requireOfficialFirmwareManifestUrl(stable))
         assertEquals(stable, requireOfficialFirmwareManifestUrl("  $stable  "))
     }
