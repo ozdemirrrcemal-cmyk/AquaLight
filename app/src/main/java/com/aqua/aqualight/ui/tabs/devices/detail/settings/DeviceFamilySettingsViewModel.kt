@@ -3,6 +3,7 @@ package com.aqua.aqualight.ui.tabs.devices.detail.settings
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.aqua.aqualight.application.devices.DEVICE_FIRMWARE_MANIFEST_URL
+import com.aqua.aqualight.application.devices.DeviceFirmwareFailure
 import com.aqua.aqualight.application.devices.DeviceFirmwareUpdateOperations
 import com.aqua.aqualight.application.devices.DeviceOtaState
 import com.aqua.aqualight.application.devices.DeviceRootCatalogState
@@ -114,9 +115,7 @@ class DeviceFamilySettingsViewModel(
                 version = state.targetVersion,
                 progressPermille = COMPLETE_PROGRESS_PERMILLE
             )
-            is DeviceOtaState.Failed -> DeviceSettingsUpdateActionState.Failed(
-                recoverable = state.recoverable
-            )
+            is DeviceOtaState.Failed -> DeviceSettingsUpdateActionState.Failed(state.failure)
         }
         _uiState.update { current -> current.copy(updateActionState = actionState) }
     }
@@ -202,7 +201,7 @@ sealed interface DeviceSettingsUpdateActionState {
     ) : DeviceSettingsUpdateActionState
 
     data class Failed(
-        val recoverable: Boolean
+        val failure: DeviceFirmwareFailure
     ) : DeviceSettingsUpdateActionState
 
     data object Unsupported : DeviceSettingsUpdateActionState
