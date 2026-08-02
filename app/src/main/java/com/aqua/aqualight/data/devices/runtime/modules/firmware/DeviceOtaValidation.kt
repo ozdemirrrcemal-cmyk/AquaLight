@@ -97,7 +97,8 @@ internal object DeviceOtaStateMapper {
         snapshot: DeviceFirmwareOtaSnapshot,
         deviceUid: DeviceUid,
         targetVersion: String,
-        releaseContent: DeviceFirmwareReleaseContent
+        releaseContent: DeviceFirmwareReleaseContent,
+        requestId: String
     ): DeviceOtaState = when (snapshot.phase) {
         DeviceFirmwareOtaPhase.IDLE -> DeviceOtaState.Idle(deviceUid.value)
         DeviceFirmwareOtaPhase.STARTING,
@@ -116,7 +117,7 @@ internal object DeviceOtaStateMapper {
         )
         DeviceFirmwareOtaPhase.FAILED -> DeviceOtaState.Failed(
             deviceUid = deviceUid.value,
-            failure = DeviceFirmwareFailureMapper.fromSnapshot(snapshot)
+            failure = DeviceFirmwareFailureMapper.fromSnapshot(snapshot, requestId)
         )
         DeviceFirmwareOtaPhase.UNKNOWN -> DeviceOtaState.Failed(
             deviceUid = deviceUid.value,
@@ -125,6 +126,7 @@ internal object DeviceOtaStateMapper {
                 source = DeviceFirmwareFailureSource.FIRMWARE_STATUS,
                 stage = DeviceFirmwareFailureStage.STATUS,
                 code = "unknown_ota_phase",
+                requestId = requestId,
                 firmwarePhase = snapshot.phaseRaw,
                 recoverable = false,
                 kind = DeviceFirmwareFailureKind.PROTOCOL
