@@ -67,7 +67,10 @@ class DeviceOtaCoordinatorTest {
                 applyNow = true
             ).getOrThrow() as DeviceOtaState.UpdateAvailable
             assertEquals("2.0.0", availability.plan.targetVersion)
-            assertEquals("Güvenli güncelleme", availability.plan.releaseContent.title)
+            assertEquals(
+                listOf("Dozaj güvenilirliği geliştirildi."),
+                availability.plan.releaseContent.changes
+            )
 
             val startResult = coordinator.startUpdate(availability.plan)
             assertTrue(startResult.isSuccess)
@@ -311,10 +314,39 @@ class DeviceOtaCoordinatorTest {
         coordinator.close()
     }
 
-    private fun updater(gateway: RecordingGateway): DeviceFirmwareUpdateRepository {
+    @Test
+    fun `catalog without this product resolves up to date instead of recoverable failure`() =
+        runTest {
+            val unrelatedManifest = manifest().let { current ->
+                current.copy(
+                    artifacts = current.artifacts.map { artifact ->
+                        artifact.copy(env = "dosing_dose_pro_4")
+                    }
+                )
+            }
+            val coordinator = DeviceOtaCoordinator(
+                snapshotProvider = { product().toSnapshot() },
+                connectRuntime = { Result.success(Unit) },
+                updaterProvider = { updater(RecordingGateway(), unrelatedManifest) },
+                runtimeLifecycleEvents = null
+            )
+
+            val result = coordinator.checkAvailability(DEVICE_UID, MANIFEST_URL, true)
+                .getOrThrow() as DeviceOtaState.UpToDate
+
+            assertEquals("1.0.0", result.currentVersion)
+            assertEquals("1.0.0", result.latestVersion)
+            assertTrue(result.releaseContent.changes.isEmpty())
+            coordinator.close()
+        }
+
+    private fun updater(
+        gateway: RecordingGateway,
+        catalogManifest: DeviceFirmwareManifest = manifest()
+    ): DeviceFirmwareUpdateRepository {
         val source = object : DeviceFirmwareManifestHttpSource() {
             override suspend fun load(url: String): Result<DeviceFirmwareManifest> =
-                Result.success(manifest())
+                Result.success(catalogManifest)
         }
         return DeviceFirmwareUpdateRepository(
             runtime = DeviceFirmwareRuntimeRepository(gateway),
@@ -470,8 +502,6 @@ class DeviceOtaCoordinatorTest {
             schema = DeviceFirmwareRuntimeContract.Manifest.SCHEMA,
             brand = "AquaLight",
             channel = "stable",
-            version = "2.0.0",
-            tag = "v2.0.0",
             releaseRepo = DeviceFirmwareRuntimeContract.OFFICIAL_RELEASE_REPOSITORY,
             generatedAt = "2026-07-30T00:00:00Z",
             artifacts = listOf(
@@ -486,7 +516,9 @@ class DeviceOtaCoordinatorTest {
                         model = product.model.value,
                         displayName = product.displayName,
                         skuCode = product.skuCode.value,
-                        hardwareRevision = product.hardwareRevision.value
+                        hardwareRevision = product.hardwareRevision.value,
+                        capabilities = product.profile.capabilities,
+                        limits = product.limits
                     ),
                     compatibility = DeviceFirmwareCompatibility(
                         productKey = product.productKey.value,
@@ -496,13 +528,45 @@ class DeviceOtaCoordinatorTest {
                         model = product.model.value,
                         hardwareRevision = product.hardwareRevision.value
                     ),
+                    platform = DeviceFirmwarePlatform(
+                        framework = DeviceFirmwareRuntimeContract.Manifest.PLATFORM_FRAMEWORK,
+                        core = "3.3.9",
+                        platform = "pioarduino/platform-espressif32#55.03.39",
+                        partitionTable =
+                            DeviceFirmwareRuntimeContract.Manifest.PLATFORM_PARTITION_TABLE,
+                        normalOtaAssetType =
+                            DeviceFirmwareRuntimeContract.Manifest.PLATFORM_OTA_ASSET_TYPE
+                    ),
+                    release = DeviceFirmwareRelease(
+                        version = "2.0.0",
+                        tag = "v2.0.0",
+                        generatedAt = "2026-07-30T00:00:00Z",
+                        releaseNotes = DeviceFirmwareReleaseNotes(
+                            defaultLocale = "tr",
+                            mandatory = false,
+                            locales = mapOf(
+                                "tr" to DeviceFirmwareLocalizedReleaseNotes(
+                                    title = "",
+                                    summary = "",
+                                    changes = listOf("Dozaj güvenilirliği geliştirildi."),
+                                    warnings = emptyList()
+                                ),
+                                "en" to DeviceFirmwareLocalizedReleaseNotes(
+                                    title = "",
+                                    summary = "",
+                                    changes = listOf("Dosing reliability was improved."),
+                                    warnings = emptyList()
+                                )
+                            )
+                        )
+                    ),
                     firmware = DeviceFirmwareAsset(
                         filename = filename,
                         url = DeviceFirmwareRuntimeContract.OFFICIAL_RELEASE_URL_PREFIX +
                             "v2.0.0/$filename",
                         sha256 = "a".repeat(64),
                         size = FIRMWARE_SIZE,
-                        format = "bin",
+                        format = DeviceFirmwareRuntimeContract.Manifest.FIRMWARE_FORMAT,
                         otaSlotCompatible = true
                     )
                 )
@@ -512,18 +576,6 @@ class DeviceOtaCoordinatorTest {
                 keyId = "release-key-1",
                 payloadHash = "b".repeat(64),
                 value = "signed-value"
-            ),
-            releaseNotes = DeviceFirmwareReleaseNotes(
-                defaultLocale = "tr-TR",
-                mandatory = false,
-                locales = mapOf(
-                    "tr-TR" to DeviceFirmwareLocalizedReleaseNotes(
-                        title = "Güvenli güncelleme",
-                        summary = "Dozaj güvenilirliği geliştirildi.",
-                        changes = listOf("Kalibrasyon kontrolleri geliştirildi."),
-                        warnings = emptyList()
-                    )
-                )
             )
         )
     }

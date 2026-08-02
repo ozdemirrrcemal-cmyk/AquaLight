@@ -1,6 +1,8 @@
 package com.aqua.aqualight.data.devices.runtime.modules.firmware
 
 import com.aqua.aqualight.application.devices.DeviceFirmwareReleaseContent
+import com.aqua.aqualight.data.devices.model.DeviceCapabilitySet
+import com.aqua.aqualight.data.devices.model.DeviceLimitSet
 import com.aqua.aqualight.data.devices.model.DeviceUid
 import org.json.JSONObject
 
@@ -186,13 +188,10 @@ data class DeviceFirmwareManifest(
     val schema: String,
     val brand: String,
     val channel: String,
-    val version: String,
-    val tag: String,
     val releaseRepo: String,
     val generatedAt: String,
     val artifacts: List<DeviceFirmwareManifestArtifact>,
-    val signature: DeviceFirmwareManifestSignature,
-    val releaseNotes: DeviceFirmwareReleaseNotes = DeviceFirmwareReleaseNotes.EMPTY
+    val signature: DeviceFirmwareManifestSignature
 ) {
     val isSupportedSchema: Boolean
         get() = schema == DeviceFirmwareRuntimeContract.Manifest.SCHEMA &&
@@ -283,8 +282,10 @@ data class DeviceFirmwareManifestArtifact(
     val env: String,
     val product: DeviceFirmwareManifestProduct,
     val compatibility: DeviceFirmwareCompatibility,
+    val platform: DeviceFirmwarePlatform,
+    val release: DeviceFirmwareRelease,
     val firmware: DeviceFirmwareAsset,
-    val factory: DeviceFirmwareAsset? = null
+    val factory: DeviceFirmwareFactoryAsset? = null
 )
 
 data class DeviceFirmwareManifestProduct(
@@ -296,7 +297,9 @@ data class DeviceFirmwareManifestProduct(
     val model: String,
     val displayName: String,
     val skuCode: String,
-    val hardwareRevision: String
+    val hardwareRevision: String,
+    val capabilities: DeviceCapabilitySet,
+    val limits: DeviceLimitSet
 )
 
 data class DeviceFirmwareCompatibility(
@@ -308,6 +311,21 @@ data class DeviceFirmwareCompatibility(
     val hardwareRevision: String
 )
 
+data class DeviceFirmwarePlatform(
+    val framework: String,
+    val core: String,
+    val platform: String,
+    val partitionTable: String,
+    val normalOtaAssetType: String
+)
+
+data class DeviceFirmwareRelease(
+    val version: String,
+    val tag: String,
+    val generatedAt: String,
+    val releaseNotes: DeviceFirmwareReleaseNotes
+)
+
 data class DeviceFirmwareAsset(
     val filename: String,
     val url: String,
@@ -317,7 +335,18 @@ data class DeviceFirmwareAsset(
     val otaSlotCompatible: Boolean = false
 )
 
+data class DeviceFirmwareFactoryAsset(
+    val filename: String,
+    val url: String,
+    val sha256: String,
+    val size: Int
+)
+
 sealed interface DeviceFirmwareAvailability {
+    data class NoUpdateAvailable(
+        val currentVersion: String
+    ) : DeviceFirmwareAvailability
+
     data class UpToDate(
         val currentVersion: String,
         val latestVersion: String,

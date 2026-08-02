@@ -31,21 +31,19 @@ class DeviceFirmwareUpdatePlanner(
             require(currentVersion.isNotBlank()) {
                 "Current firmware version is not known."
             }
-            require(manifest.version.isNotBlank()) {
-                "Manifest firmware version is missing."
-            }
-            require(manifest.tag == normalizedReleaseTag(manifest.version)) {
-                "OTA manifest tag does not match its firmware version."
-            }
 
-            val artifact = exactSingleArtifact(snapshot, manifest)
-            validateArtifactAgainstManifest(artifact, manifest, product)
-            val releaseContent = manifest.releaseNotes.resolve(preferredLocaleTags())
+            val artifact = exactSingleArtifactOrNull(snapshot, manifest)
+                ?: return@runCatching DeviceFirmwareAvailability.NoUpdateAvailable(
+                    currentVersion = currentVersion
+                )
+            validateArtifactAgainstCatalog(artifact, product)
+            val targetVersion = artifact.release.version
+            val releaseContent = artifact.release.releaseNotes.resolve(preferredLocaleTags())
 
-            if (DeviceFirmwareVersionComparator.compare(manifest.version, currentVersion) <= 0) {
+            if (DeviceFirmwareVersionComparator.compare(targetVersion, currentVersion) <= 0) {
                 DeviceFirmwareAvailability.UpToDate(
                     currentVersion = currentVersion,
-                    latestVersion = manifest.version,
+                    latestVersion = targetVersion,
                     releaseContent = releaseContent
                 )
             } else {
@@ -69,6 +67,9 @@ class DeviceFirmwareUpdatePlanner(
     ): Result<DeviceFirmwareUpdatePlan> = evaluateUpdate(snapshot, manifest, applyNow).mapCatching {
         availability ->
         when (availability) {
+            is DeviceFirmwareAvailability.NoUpdateAvailable -> error(
+                "No compatible OTA artifact is published for this exact device."
+            )
             is DeviceFirmwareAvailability.UpdateAvailable -> availability.plan
             is DeviceFirmwareAvailability.UpToDate -> error(
                 "No newer compatible OTA artifact found. " +
@@ -125,16 +126,12 @@ class DeviceFirmwareUpdatePlanner(
         }
     }
 
-    private fun exactSingleArtifact(
+    private fun exactSingleArtifactOrNull(
         snapshot: DeviceSnapshot,
         manifest: DeviceFirmwareManifest
-    ): DeviceFirmwareManifestArtifact {
+    ): DeviceFirmwareManifestArtifact? {
         val compatible = compatibleArtifacts(snapshot, manifest)
-        require(compatible.isNotEmpty()) {
-            "No compatible OTA artifact found for " +
-                "${snapshot.product.productKey}/${snapshot.product.model}/" +
-                "hw ${snapshot.product.hardwareRevision}."
-        }
+        if (compatible.isEmpty()) return null
         require(compatible.size == 1) {
             "Ambiguous OTA manifest: ${compatible.size} artifacts match the exact device identity."
         }
@@ -150,7 +147,7 @@ class DeviceFirmwareUpdatePlanner(
     ): DeviceFirmwareUpdatePlan {
         val payload = DeviceFirmwareOtaStartPayload(
             url = artifact.firmware.url,
-            version = manifest.version,
+            version = artifact.release.version,
             sha256 = artifact.firmware.sha256,
             expectedSize = artifact.firmware.size,
             productKey = snapshot.product.productKey,
@@ -174,14 +171,13 @@ class DeviceFirmwareUpdatePlanner(
             firmware = artifact.firmware,
             payload = payload,
             runtimeMetadataGeneration = snapshot.runtimeMetadataGeneration,
-            manifestTag = manifest.tag,
+            manifestTag = artifact.release.tag,
             releaseContent = releaseContent
         )
     }
 
-    private fun validateArtifactAgainstManifest(
+    private fun validateArtifactAgainstCatalog(
         artifact: DeviceFirmwareManifestArtifact,
-        manifest: DeviceFirmwareManifest,
         product: AqlCommercialCatalogProduct
     ) {
         val expectedEnvironment = product.productKey.value.lowercase(Locale.ROOT)
@@ -197,30 +193,31 @@ class DeviceFirmwareUpdatePlanner(
         require(artifact.product.displayName == product.displayName)
         require(artifact.product.skuCode == product.skuCode.value)
         require(artifact.product.hardwareRevision == product.hardwareRevision.value)
+        require(artifact.product.capabilities == product.profile.capabilities)
+        require(artifact.product.limits == product.limits)
         require(artifact.compatibility.family == product.family.wireValue)
         require(artifact.compatibility.line == product.line.value)
-        require(manifest.tag.isNotBlank()) { "OTA manifest tag is missing." }
-        require(artifact.firmware.filename == "AquaLight-${artifact.env}-${manifest.tag}-ota.bin") {
+        require(artifact.release.tag == "v${artifact.release.version}") {
+            "OTA artifact release tag does not match its version."
+        }
+        require(
+            artifact.firmware.filename ==
+                "AquaLight-${artifact.env}-${artifact.release.tag}-ota.bin"
+        ) {
             "OTA artifact filename does not match env/tag contract."
         }
         require(artifact.firmware.url.endsWith("/${artifact.firmware.filename}")) {
             "OTA artifact URL does not end with its filename."
         }
-        require(artifact.firmware.url.contains("/releases/download/${manifest.tag}/")) {
-            "OTA artifact URL does not contain the manifest release tag."
+        require(artifact.firmware.url.contains("/releases/download/${artifact.release.tag}/")) {
+            "OTA artifact URL does not contain its immutable release tag."
         }
+        require(
+            artifact.firmware.format == DeviceFirmwareRuntimeContract.Manifest.FIRMWARE_FORMAT
+        )
         require(artifact.firmware.otaSlotCompatible) {
             "OTA artifact is not marked as OTA slot compatible."
         }
-    }
-
-    private fun normalizedReleaseTag(version: String): String {
-        val normalized = version
-            .substringBefore('-')
-            .substringBefore('+')
-            .removePrefix("v")
-        require(normalized.isNotBlank()) { "OTA version cannot produce a release tag." }
-        return "v$normalized"
     }
 }
 

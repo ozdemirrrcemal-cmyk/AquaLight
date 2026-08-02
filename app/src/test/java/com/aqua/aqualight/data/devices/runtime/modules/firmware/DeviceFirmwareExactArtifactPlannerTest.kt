@@ -8,6 +8,7 @@ import com.aqua.aqualight.data.devices.model.DeviceLimits
 import com.aqua.aqualight.data.devices.model.DeviceProduct
 import com.aqua.aqualight.data.devices.model.DeviceSnapshot
 import com.aqua.aqualight.data.devices.model.DeviceUid
+import java.util.Locale
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.Test
@@ -30,8 +31,8 @@ class DeviceFirmwareExactArtifactPlannerTest {
         assertEquals("dose_pro_2", plan.payload.model)
         assertEquals(7L, plan.runtimeMetadataGeneration)
         assertEquals("v2.0.0", plan.manifestTag)
-        assertEquals("tr-TR", plan.releaseContent.localeTag)
-        assertEquals("Dozaj güvenilirliği", plan.releaseContent.title)
+        assertEquals("tr", plan.releaseContent.localeTag)
+        assertEquals("", plan.releaseContent.title)
         assertEquals(listOf("Kalibrasyon doğrulaması geliştirildi."), plan.releaseContent.changes)
         assertEquals("dose_pro_2", plan.payload.toJson().getString("model"))
     }
@@ -48,18 +49,19 @@ class DeviceFirmwareExactArtifactPlannerTest {
     }
 
     @Test
-    fun `zero compatible artifacts fail closed`() {
+    fun `zero compatible artifacts mean no update is published for this product`() {
         val snapshot = product("DOSING_DOSE_PRO_2").toSnapshot()
-        val other = artifact().copy(
-            compatibility = artifact().compatibility.copy(model = "dose_pro_4")
-        )
+        val other = artifact("DOSING_DOSE_PRO_4")
 
-        val failure = planner.evaluateUpdate(
+        val availability = planner.evaluateUpdate(
             snapshot,
             manifest(artifacts = listOf(other))
-        ).exceptionOrNull()
+        ).getOrThrow()
 
-        assertTrue(failure?.message.orEmpty().contains("No compatible OTA artifact"))
+        assertEquals(
+            DeviceFirmwareAvailability.NoUpdateAvailable("1.0.0"),
+            availability
+        )
     }
 
     @Test
@@ -67,12 +69,12 @@ class DeviceFirmwareExactArtifactPlannerTest {
         val snapshot = product("DOSING_DOSE_PRO_2").toSnapshot()
         val wrongEnv = artifact().copy(env = "dosing_dose_pro_4")
 
-        val failure = planner.evaluateUpdate(
+        val availability = planner.evaluateUpdate(
             snapshot,
             manifest(artifacts = listOf(wrongEnv))
-        ).exceptionOrNull()
+        ).getOrThrow()
 
-        assertTrue(failure?.message.orEmpty().contains("No compatible OTA artifact"))
+        assertTrue(availability is DeviceFirmwareAvailability.NoUpdateAvailable)
     }
 
     @Test
@@ -84,7 +86,10 @@ class DeviceFirmwareExactArtifactPlannerTest {
             as DeviceFirmwareAvailability.UpToDate
 
         assertEquals("2.0.0", availability.currentVersion)
-        assertEquals("Dozaj güvenilirliği", availability.releaseContent.title)
+        assertEquals(
+            listOf("Kalibrasyon doğrulaması geliştirildi."),
+            availability.releaseContent.changes
+        )
     }
 
     private fun product(productKey: String): AqlCommercialCatalogProduct =
@@ -145,8 +150,6 @@ class DeviceFirmwareExactArtifactPlannerTest {
         schema = DeviceFirmwareRuntimeContract.Manifest.SCHEMA,
         brand = DeviceFirmwareRuntimeContract.Manifest.BRAND,
         channel = DeviceFirmwareRuntimeContract.Manifest.STABLE_CHANNEL,
-        version = "2.0.0",
-        tag = "v2.0.0",
         releaseRepo = DeviceFirmwareRuntimeContract.OFFICIAL_RELEASE_REPOSITORY,
         generatedAt = "2026-07-30T00:00:00Z",
         artifacts = artifacts,
@@ -155,30 +158,14 @@ class DeviceFirmwareExactArtifactPlannerTest {
             keyId = "release-key-1",
             payloadHash = "b".repeat(64),
             value = "signed-value"
-        ),
-        releaseNotes = DeviceFirmwareReleaseNotes(
-            defaultLocale = "en",
-            mandatory = false,
-            locales = linkedMapOf(
-                "en" to DeviceFirmwareLocalizedReleaseNotes(
-                    title = "Dosing reliability",
-                    summary = "Safer dosing update.",
-                    changes = listOf("Calibration validation improved."),
-                    warnings = emptyList()
-                ),
-                "tr-TR" to DeviceFirmwareLocalizedReleaseNotes(
-                    title = "Dozaj güvenilirliği",
-                    summary = "Daha güvenli dozaj güncellemesi.",
-                    changes = listOf("Kalibrasyon doğrulaması geliştirildi."),
-                    warnings = emptyList()
-                )
-            )
         )
     )
 
-    private fun artifact(): DeviceFirmwareManifestArtifact {
-        val product = product("DOSING_DOSE_PRO_2")
-        val env = "dosing_dose_pro_2"
+    private fun artifact(
+        productKey: String = "DOSING_DOSE_PRO_2"
+    ): DeviceFirmwareManifestArtifact {
+        val product = product(productKey)
+        val env = product.productKey.value.lowercase(Locale.ROOT)
         val filename = "AquaLight-$env-v2.0.0-ota.bin"
         return DeviceFirmwareManifestArtifact(
             env = env,
@@ -191,7 +178,9 @@ class DeviceFirmwareExactArtifactPlannerTest {
                 model = product.model.value,
                 displayName = product.displayName,
                 skuCode = product.skuCode.value,
-                hardwareRevision = product.hardwareRevision.value
+                hardwareRevision = product.hardwareRevision.value,
+                capabilities = product.profile.capabilities,
+                limits = product.limits
             ),
             compatibility = DeviceFirmwareCompatibility(
                 productKey = product.productKey.value,
@@ -201,13 +190,44 @@ class DeviceFirmwareExactArtifactPlannerTest {
                 model = product.model.value,
                 hardwareRevision = product.hardwareRevision.value
             ),
+            platform = DeviceFirmwarePlatform(
+                framework = DeviceFirmwareRuntimeContract.Manifest.PLATFORM_FRAMEWORK,
+                core = "3.3.9",
+                platform = "pioarduino/platform-espressif32#55.03.39",
+                partitionTable = DeviceFirmwareRuntimeContract.Manifest.PLATFORM_PARTITION_TABLE,
+                normalOtaAssetType =
+                    DeviceFirmwareRuntimeContract.Manifest.PLATFORM_OTA_ASSET_TYPE
+            ),
+            release = DeviceFirmwareRelease(
+                version = "2.0.0",
+                tag = "v2.0.0",
+                generatedAt = "2026-07-30T00:00:00Z",
+                releaseNotes = DeviceFirmwareReleaseNotes(
+                    defaultLocale = "tr",
+                    mandatory = false,
+                    locales = linkedMapOf(
+                        "tr" to DeviceFirmwareLocalizedReleaseNotes(
+                            title = "",
+                            summary = "",
+                            changes = listOf("Kalibrasyon doğrulaması geliştirildi."),
+                            warnings = emptyList()
+                        ),
+                        "en" to DeviceFirmwareLocalizedReleaseNotes(
+                            title = "",
+                            summary = "",
+                            changes = listOf("Calibration validation improved."),
+                            warnings = emptyList()
+                        )
+                    )
+                )
+            ),
             firmware = DeviceFirmwareAsset(
                 filename = filename,
                 url = DeviceFirmwareRuntimeContract.OFFICIAL_RELEASE_URL_PREFIX +
                     "v2.0.0/$filename",
                 sha256 = "a".repeat(64),
                 size = 1_048_576,
-                format = "bin",
+                format = DeviceFirmwareRuntimeContract.Manifest.FIRMWARE_FORMAT,
                 otaSlotCompatible = true
             )
         )

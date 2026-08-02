@@ -194,8 +194,6 @@ class DeviceOtaCommercialHardeningTest {
         schema = DeviceFirmwareRuntimeContract.Manifest.SCHEMA,
         brand = DeviceFirmwareRuntimeContract.Manifest.BRAND,
         channel = DeviceFirmwareRuntimeContract.Manifest.STABLE_CHANNEL,
-        version = TARGET_VERSION,
-        tag = RELEASE_TAG,
         releaseRepo = DeviceFirmwareRuntimeContract.OFFICIAL_RELEASE_REPOSITORY,
         generatedAt = GENERATED_AT,
         artifacts = artifacts,
@@ -204,18 +202,6 @@ class DeviceOtaCommercialHardeningTest {
             keyId = "release-key-1",
             payloadHash = "b".repeat(64),
             value = "signed-value"
-        ),
-        releaseNotes = DeviceFirmwareReleaseNotes(
-            defaultLocale = "en",
-            mandatory = false,
-            locales = mapOf(
-                "en" to DeviceFirmwareLocalizedReleaseNotes(
-                    title = "Dosing reliability",
-                    summary = "Safer dosing update.",
-                    changes = listOf("Calibration validation improved."),
-                    warnings = emptyList()
-                )
-            )
         )
     )
 
@@ -233,7 +219,9 @@ class DeviceOtaCommercialHardeningTest {
                 model = product.model.value,
                 displayName = product.displayName,
                 skuCode = product.skuCode.value,
-                hardwareRevision = product.hardwareRevision.value
+                hardwareRevision = product.hardwareRevision.value,
+                capabilities = product.profile.capabilities,
+                limits = product.limits
             ),
             compatibility = DeviceFirmwareCompatibility(
                 productKey = product.productKey.value,
@@ -243,13 +231,44 @@ class DeviceOtaCommercialHardeningTest {
                 model = product.model.value,
                 hardwareRevision = product.hardwareRevision.value
             ),
+            platform = DeviceFirmwarePlatform(
+                framework = DeviceFirmwareRuntimeContract.Manifest.PLATFORM_FRAMEWORK,
+                core = "3.3.9",
+                platform = "pioarduino/platform-espressif32#55.03.39",
+                partitionTable = DeviceFirmwareRuntimeContract.Manifest.PLATFORM_PARTITION_TABLE,
+                normalOtaAssetType =
+                    DeviceFirmwareRuntimeContract.Manifest.PLATFORM_OTA_ASSET_TYPE
+            ),
+            release = DeviceFirmwareRelease(
+                version = TARGET_VERSION,
+                tag = RELEASE_TAG,
+                generatedAt = GENERATED_AT,
+                releaseNotes = DeviceFirmwareReleaseNotes(
+                    defaultLocale = "en",
+                    mandatory = false,
+                    locales = mapOf(
+                        "tr" to DeviceFirmwareLocalizedReleaseNotes(
+                            title = "",
+                            summary = "",
+                            changes = listOf("Kalibrasyon doğrulaması geliştirildi."),
+                            warnings = emptyList()
+                        ),
+                        "en" to DeviceFirmwareLocalizedReleaseNotes(
+                            title = "",
+                            summary = "",
+                            changes = listOf("Calibration validation improved."),
+                            warnings = emptyList()
+                        )
+                    )
+                )
+            ),
             firmware = DeviceFirmwareAsset(
                 filename = filename,
                 url = DeviceFirmwareRuntimeContract.OFFICIAL_RELEASE_URL_PREFIX +
                     "$RELEASE_TAG/$filename",
                 sha256 = "a".repeat(64),
                 size = FIRMWARE_SIZE,
-                format = "bin",
+                format = DeviceFirmwareRuntimeContract.Manifest.FIRMWARE_FORMAT,
                 otaSlotCompatible = true
             )
         )
@@ -257,27 +276,13 @@ class DeviceOtaCommercialHardeningTest {
 
     private fun manifestJson(): JSONObject {
         val artifact = artifact()
-        val releaseContent = JSONObject()
-            .put("title", "Safe update")
-            .put("summary", "Reliability improvements.")
-            .put("changes", JSONArray(listOf("Improved calibration checks.")))
-            .put("warnings", JSONArray())
 
         return JSONObject()
             .put("schema", DeviceFirmwareRuntimeContract.Manifest.SCHEMA)
             .put("brand", DeviceFirmwareRuntimeContract.Manifest.BRAND)
             .put("channel", DeviceFirmwareRuntimeContract.Manifest.STABLE_CHANNEL)
-            .put("version", TARGET_VERSION)
-            .put("tag", RELEASE_TAG)
             .put("releaseRepo", DeviceFirmwareRuntimeContract.OFFICIAL_RELEASE_REPOSITORY)
             .put("generatedAt", GENERATED_AT)
-            .put(
-                "releaseNotes",
-                JSONObject()
-                    .put("defaultLocale", "en")
-                    .put("mandatory", false)
-                    .put("locales", JSONObject().put("en", releaseContent))
-            )
             .put("artifacts", JSONArray().put(artifact.toJson()))
             .put(
                 "signature",
@@ -309,6 +314,31 @@ class DeviceOtaCommercialHardeningTest {
                 .put("displayName", product.displayName)
                 .put("skuCode", product.skuCode)
                 .put("hardwareRevision", product.hardwareRevision)
+                .put(
+                    "capabilities",
+                    JSONObject()
+                        .put("light", product.capabilities.light)
+                        .put("manualLight", product.capabilities.manualLight)
+                        .put("lightProgram", product.capabilities.lightProgram)
+                        .put("lightPresets", product.capabilities.lightPresets)
+                        .put("lightSimulation", product.capabilities.lightSimulation)
+                        .put("fan", product.capabilities.fan)
+                        .put("cooling", product.capabilities.cooling)
+                        .put("temperature", product.capabilities.temperature)
+                        .put("standaloneTimer", product.capabilities.standaloneTimer)
+                        .put("dosing", product.capabilities.dosing)
+                        .put("timeSync", product.capabilities.timeSync)
+                        .put("ota", product.capabilities.ota)
+                )
+                .put(
+                    "limits",
+                    JSONObject()
+                        .put("lightChannelCount", product.limits.lightChannelCount)
+                        .put("fanOutputCount", product.limits.fanOutputCount)
+                        .put("temperatureSensorCount", product.limits.temperatureSensorCount)
+                        .put("timerChannelCount", product.limits.timerChannelCount)
+                        .put("dosingChannelCount", product.limits.dosingChannelCount)
+                )
         )
         .put(
             "compatibility",
@@ -321,6 +351,39 @@ class DeviceOtaCommercialHardeningTest {
                 .put("hardwareRevision", compatibility.hardwareRevision)
         )
         .put(
+            "platform",
+            JSONObject()
+                .put("framework", platform.framework)
+                .put("core", platform.core)
+                .put("platform", platform.platform)
+                .put("partitionTable", platform.partitionTable)
+                .put("normalOtaAssetType", platform.normalOtaAssetType)
+        )
+        .put(
+            "release",
+            JSONObject()
+                .put("version", release.version)
+                .put("tag", release.tag)
+                .put("generatedAt", release.generatedAt)
+                .put(
+                    "releaseNotes",
+                    JSONObject()
+                        .put(
+                            "schema",
+                            DeviceFirmwareRuntimeContract.Manifest.RELEASE_NOTES_SCHEMA
+                        )
+                        .put("defaultLocale", release.releaseNotes.defaultLocale)
+                        .put(
+                            "items",
+                            JSONArray().put(
+                                JSONObject()
+                                    .put("tr", "Kalibrasyon doğrulaması geliştirildi.")
+                                    .put("en", "Calibration validation improved.")
+                            )
+                        )
+                )
+        )
+        .put(
             "firmware",
             JSONObject()
                 .put("filename", firmware.filename)
@@ -330,6 +393,7 @@ class DeviceOtaCommercialHardeningTest {
                 .put("format", firmware.format)
                 .put("otaSlotCompatible", firmware.otaSlotCompatible)
         )
+        .put("factory", JSONObject.NULL)
 
     private class RecordingGateway(
         private val startDelayMillis: Long
