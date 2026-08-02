@@ -7,6 +7,7 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
 SOURCE = ROOT / "app/src/main/java/com/aqua/aqualight"
+TEST_SOURCE = ROOT / "app/src/test/java/com/aqua/aqualight"
 FILES = {
     "contract": SOURCE / "application/devices/DeviceFirmwareUpdateOperations.kt",
     "adapter": SOURCE / "data/devices/DefaultDeviceFirmwareUpdateOperations.kt",
@@ -14,9 +15,11 @@ FILES = {
     "runtime": SOURCE / "data/devices/runtime/modules/firmware/DeviceFirmwareRuntimeRepository.kt",
     "validation": SOURCE / "data/devices/runtime/modules/firmware/DeviceOtaValidation.kt",
     "planner": SOURCE / "data/devices/runtime/modules/firmware/DeviceFirmwareUpdatePlanner.kt",
+    "manifest_contract": SOURCE / "data/devices/runtime/modules/firmware/DeviceFirmwareManifestContractValidator.kt",
     "models": SOURCE / "data/devices/runtime/modules/firmware/DeviceFirmwareModels.kt",
     "manifest": SOURCE / "data/devices/runtime/modules/firmware/DeviceFirmwareManifestParser.kt",
     "status": SOURCE / "data/devices/runtime/modules/firmware/DeviceFirmwareStatusParser.kt",
+    "live_manifest_test": TEST_SOURCE / "data/devices/runtime/modules/firmware/DeviceFirmwareLiveManifestContractTest.kt",
 }
 
 errors: list[str] = []
@@ -147,13 +150,13 @@ require_tokens(
         "compatible.size == 1",
         "return compatible.single()",
         "artifact.env == environment",
-        "artifact.compatibility.family == family",
-        "artifact.compatibility.line == line",
+        "DeviceFirmwareProductIdentity.fromSnapshot(snapshot.product)",
+        "DeviceFirmwareProductIdentity.fromCompatibility(artifact.compatibility) ==",
+        "DeviceFirmwareProductIdentity.fromCatalog(product) == deviceIdentity",
         "model = snapshot.product.model",
         "runtimeMetadataGeneration = snapshot.runtimeMetadataGeneration",
         "manifest.releaseNotes.resolve",
-        "artifact.product.capabilities == product.expectedManifestCapabilities()",
-        "artifact.product.limits == product.expectedManifestLimits()",
+        "DeviceFirmwareManifestContractValidator.requireValid(",
     ),
 )
 forbid_tokens(
@@ -162,6 +165,43 @@ forbid_tokens(
         "compatibleArtifacts.first()",
         "compatible.first()",
         "displayName = snapshot.title",
+        "artifact.compatibility.family == family",
+        "artifact.compatibility.line == line",
+        "artifact.product.displayName",
+        "artifact.product.capabilities",
+        "artifact.product.limits",
+    ),
+)
+require_tokens(
+    "manifest_contract",
+    (
+        "internal data class DeviceFirmwareProductIdentity(",
+        "val productKey: String",
+        "val productId: String",
+        "val family: String",
+        "val line: String",
+        "val model: String",
+        "val hardwareRevision: String",
+        "DeviceFirmwareProductIdentity.fromManifest(artifact.product) == catalogIdentity",
+        "DeviceFirmwareProductIdentity.fromCompatibility(artifact.compatibility) ==",
+        "requireProductIdentityMatchesCatalog(artifact, product)",
+        "requireFirmwareIdentityMatchesManifest(artifact, manifest)",
+        "requireReleaseChannelMatchesContract(manifest)",
+    ),
+)
+forbid_tokens(
+    "manifest_contract",
+    (
+        "artifact.product.displayName",
+        "artifact.product.brand",
+        "artifact.product.skuCode",
+        "artifact.product.capabilities",
+        "artifact.product.limits",
+        "expectedManifestCapabilities",
+        "expectedManifestLimits",
+        "requireProductContractMatchesCatalog",
+        "alias",
+        "fallback",
     ),
 )
 require_tokens(
@@ -233,6 +273,25 @@ require_tokens(
         "parseOtaSnapshotExact",
         'model = json.requiredExactString("model")',
         "OTA active flag differs from its exact phase.",
+    ),
+)
+require_tokens(
+    "live_manifest_test",
+    (
+        "DeviceFirmwareManifestContractValidator.requireValid(",
+        "DeviceFirmwareProductIdentity.fromCompatibility(",
+        "DeviceFirmwareProductIdentity.fromCatalog(product) == manifestIdentity",
+    ),
+)
+forbid_tokens(
+    "live_manifest_test",
+    (
+        "artifact.product.displayName",
+        "assertEquals(product.displayName",
+        "assertEquals(product.brand",
+        "assertEquals(product.skuCode",
+        "assertEquals(product.capabilities",
+        "assertEquals(product.limits",
     ),
 )
 
