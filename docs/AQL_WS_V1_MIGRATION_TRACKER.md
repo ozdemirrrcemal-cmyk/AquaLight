@@ -6,11 +6,11 @@ Target: **41 authenticated commands / 0 public commands**
 
 ## Current position
 
-- Current stage: **07 — Timer runtime alignment**
-- Active branch: `feat/timer-07-runtime-alignment`
-- Status: **PASSED — PR #188 READY FOR MERGE**
-- Previous stage: **06 PASSED / PR #187 MERGED**
-- Next: Merge Stage 07, then open Stage 08 Dosing runtime alignment from `integration/aql-ws-v1-commercial`.
+- Current stage: **08 — Dosing runtime alignment**
+- Active branch: `feat/dosing-08-runtime-alignment`
+- Status: **PASSED — PR #189 READY FOR MERGE APPROVAL**
+- Previous stage: **07 PASSED / PR #188 MERGED**
+- Next: Merge Stage 08 only after explicit approval, then open the Stage 09 branch.
 
 ## Fixed rules
 
@@ -130,7 +130,7 @@ Target: **41 authenticated commands / 0 public commands**
   - [x] PR evidence recorded on PR #187 for tested head `355b00b6ba9dc4e5e721dc8c30aa4b757a928092`
   - [x] Physical Cooling screen regression N/A: no production UI consumer is changed in this Stage
 
-- [x] **07** `feat/timer-07-runtime-alignment` — **PASSED / PR #188 READY FOR MERGE**
+- [x] **07** `feat/timer-07-runtime-alignment` — **MERGED / PR #188**
   - [x] Confirm and mirror all 3 Timer commands: `timer.status.get`, `timer.config.apply`, `timer.channel.set`
   - [x] Align with firmware PR #26 / commit `38e8812c1bcecf948ebab85979bff21a24f4b79c`
   - [x] Add fail-closed status, config-mutation and channel-mutation parsers with exact response keys and literals
@@ -156,14 +156,35 @@ Target: **41 authenticated commands / 0 public commands**
   - [x] CodeQL Security Scan — run #4695
   - [x] PR evidence recorded on PR #188 for tested head `e6cfd0acb327f17a4b18912ce77a11a411e213a4`
   - [x] Physical Timer screen regression N/A: no production UI consumer is changed in this Stage
+  - [x] Squash-merged to integration as `b01c4af07f9edbbbae85bf9e134d1509d10a7730`
 
 - [ ] **08** `feat/dosing-08-runtime-alignment`
-  - 11/11 dosing commands
-  - Prime and manual dose
-  - Full calibration workflow
-  - Reservoir refill/tracking
-  - Schedule/config
-  - `dosing.status.changed`
+  - [x] Confirm and mirror all 11 authenticated Dosing commands from current firmware
+  - [x] Audit exact firmware files `AqlDosingCommands.hpp` (`1d84bc0eaadb77f9041978c2ce46c7042c158009`) and `AqlTimerService.hpp` (`ca37e6722e4e9d214e5efd6fc089d5e64db2490a`)
+  - [x] Add fail-closed parsers for the exact status and all 10 mutation result schemas
+  - [x] Move production Dosing commands from send-success to the correlated request broker
+  - [x] Support prime start/stop and calibrated manual dose start/stop
+  - [x] Support calibration start, finish, confirm and cancel with pending/persisted semantics
+  - [x] Support reservoir refill/tracking with exact before/after/capacity/persistence echoes
+  - [x] Support channel display name, regime, dosing calibration and reservoir config writes
+  - [x] Model schedule create/update/delete as full-list replacement, including empty delete-all
+  - [x] Expose device-scoped Dosing status/config/mutation state through the runtime provider
+  - [x] Reduce `dosing.status.changed` snapshot and command-result events deterministically
+  - [x] Reject stale/duplicate status snapshots and handle ESP32 32-bit `millis()` wraparound
+  - [x] Clear Dosing runtime state on reconnect/generation changes
+  - [x] Gate each operation using exact family, capabilities, limits, features, screens and modules
+  - [x] Prevent standalone Timer products from exposing or reducing the Dosing API
+  - [x] Keep GPIO, LEDC/PWM, channel mapping and hardware calibration fields read-only
+  - [x] Add parser, mutation, capability, repository and typed-event reducer tests (29 local Dosing contract tests passed)
+  - [x] Repository Python suite passed (138 tests) and all architecture/protocol/catalog guards passed locally
+  - [x] Primary Detekt and zero-new-advisory-debt policy passed locally
+  - [x] Keep Dosing screens, ViewModels, UI state and presentation resources unchanged
+  - [x] Android CI — run #2912
+  - [x] Installable Debug APK — run #204
+  - [x] Emulator API 27 / 36 — run #1036
+  - [x] CodeQL Security Scan — run #4697
+  - [x] PR evidence recorded on PR #189 for tested head `63e0cfd3d30566cf6f6c9eedc0ff73f7365e6ef2`
+  - [x] Physical Dosing screen regression N/A: no production UI consumer is changed in this Stage
 
 - [ ] **09** `feat/ota-09-update-orchestration`
   - Manifest fetch/signature verification
@@ -210,4 +231,7 @@ Target: **41 authenticated commands / 0 public commands**
 | 2026-08-01 | Stage 06 live temperature audit | CONTRACT GAP FOUND | Freeze and implement firmware telemetry contract first |
 | 2026-08-02 | Stage 06 UI scope correction | PASS | Keep layout, ViewModel and presentation resources unchanged; validate runtime layer only |
 | 2026-08-02 | Stage 06 Cooling runtime alignment | PASS / PR #187 MERGED | Start Stage 07 |
-| 2026-08-02 | Stage 07 Timer runtime alignment | PASS / PR #188 READY FOR MERGE | Merge to integration and start Stage 08 |
+| 2026-08-02 | Stage 07 Timer runtime alignment | PASS / PR #188 MERGED | Start Stage 08 |
+| 2026-08-02 | Stage 08 Dosing runtime branch opened | IN PROGRESS | Freeze all 11 firmware contracts |
+| 2026-08-02 | Stage 08 Dosing runtime implementation | LOCAL GATES PASSED | Publish branch and complete PR CI evidence |
+| 2026-08-02 | Stage 08 Dosing pull-request gates | PASS / PR #189 READY | Request explicit merge approval |
