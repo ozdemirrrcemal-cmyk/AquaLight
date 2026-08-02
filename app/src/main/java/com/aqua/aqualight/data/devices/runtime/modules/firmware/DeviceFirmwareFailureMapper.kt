@@ -159,7 +159,7 @@ internal object DeviceFirmwareFailureMapper {
                 "unsupported" in normalizedMessage -> DeviceFirmwareFailureKind.UNSUPPORTED
             normalizedField in IDENTITY_FIELDS ||
                 normalizedField == "version" ||
-                IDENTITY_TERMS.any(normalizedMessage::contains) ->
+                IDENTITY_TERMS.any { term -> normalizedMessage.contains(term) } ->
                 DeviceFirmwareFailureKind.COMPATIBILITY
             normalizedField == "sha256" ||
                 "sha256" in normalizedMessage ||
