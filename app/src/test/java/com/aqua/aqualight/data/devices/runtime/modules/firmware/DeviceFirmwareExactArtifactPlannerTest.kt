@@ -33,7 +33,7 @@ class DeviceFirmwareExactArtifactPlannerTest {
         assertEquals("tr", plan.releaseContent.localeTag)
         assertEquals(
             listOf("Kalibrasyon doğrulaması geliştirildi."),
-            plan.releaseContent.changes
+            plan.releaseContent.items
         )
         assertEquals("dose_pro_2", plan.payload.toJson().getString("model"))
     }
@@ -104,7 +104,7 @@ class DeviceFirmwareExactArtifactPlannerTest {
         assertEquals(TARGET_VERSION, availability.currentVersion)
         assertEquals(
             listOf("Kalibrasyon doğrulaması geliştirildi."),
-            availability.releaseContent.changes
+            availability.releaseContent.items
         )
     }
 
