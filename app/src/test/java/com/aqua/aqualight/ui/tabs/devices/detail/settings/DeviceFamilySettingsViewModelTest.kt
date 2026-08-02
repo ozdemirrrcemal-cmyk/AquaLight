@@ -1,6 +1,11 @@
 package com.aqua.aqualight.ui.tabs.devices.detail.settings
 
 import com.aqua.aqualight.application.devices.DeviceRootCatalogState
+import com.aqua.aqualight.application.devices.DeviceFirmwareCommandResult
+import com.aqua.aqualight.application.devices.DeviceFirmwareReleaseContent
+import com.aqua.aqualight.application.devices.DeviceFirmwareUpdateOperations
+import com.aqua.aqualight.application.devices.DeviceOtaState
+import com.aqua.aqualight.application.devices.PreparedDeviceFirmwareUpdate
 import com.aqua.aqualight.application.devices.DeviceRootOperations
 import com.aqua.aqualight.application.devices.DeviceRootSnapshot
 import com.aqua.aqualight.application.devices.OwnerDeviceAvailability
@@ -9,6 +14,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.test.TestDispatcher
 import kotlinx.coroutines.test.UnconfinedTestDispatcher
 import kotlinx.coroutines.test.resetMain
@@ -28,7 +34,7 @@ class DeviceFamilySettingsViewModelTest {
     @Test
     fun `retains verified hardware revision through transient invalid snapshots`() {
         val operations = FakeDeviceRootOperations(invalidSnapshot())
-        val viewModel = DeviceFamilySettingsViewModel(operations)
+        val viewModel = DeviceFamilySettingsViewModel(operations, FakeFirmwareOperations())
 
         viewModel.bind(DEVICE_UID)
 
@@ -58,7 +64,7 @@ class DeviceFamilySettingsViewModelTest {
     @Test
     fun `keeps device name editing inside presentation state`() {
         val operations = FakeDeviceRootOperations(validSnapshot())
-        val viewModel = DeviceFamilySettingsViewModel(operations)
+        val viewModel = DeviceFamilySettingsViewModel(operations, FakeFirmwareOperations())
 
         viewModel.bind(DEVICE_UID)
         viewModel.previewDeviceName("  Display aquarium  ")
@@ -66,6 +72,26 @@ class DeviceFamilySettingsViewModelTest {
 
         assertEquals("Display aquarium", viewModel.uiState.value.deviceName)
         assertEquals(1, operations.connectCalls)
+    }
+
+    @Test
+    fun `checks signed availability and probes status without losing the selected plan`() {
+        val firmware = FakeFirmwareOperations(preparedPlan())
+        val viewModel = DeviceFamilySettingsViewModel(
+            rootOperations = FakeDeviceRootOperations(validSnapshot()),
+            firmwareUpdateOperations = firmware,
+            manifestUrl = MANIFEST_URL
+        )
+
+        viewModel.bind(DEVICE_UID)
+        viewModel.checkForUpdates()
+
+        assertEquals(
+            DeviceSettingsUpdateActionState.UpdateAvailable("2.0.0"),
+            viewModel.uiState.value.updateActionState
+        )
+        assertEquals(1, firmware.checkCalls)
+        assertEquals(1, firmware.statusCalls)
     }
 
     private class FakeDeviceRootOperations(
@@ -88,6 +114,51 @@ class DeviceFamilySettingsViewModelTest {
         }
     }
 
+    private class FakeFirmwareOperations(
+        private val plan: PreparedDeviceFirmwareUpdate? = null
+    ) : DeviceFirmwareUpdateOperations {
+        private val state = MutableStateFlow<DeviceOtaState>(DeviceOtaState.Idle(DEVICE_UID))
+        var checkCalls = 0
+        var statusCalls = 0
+
+        override fun observe(deviceUid: String): StateFlow<DeviceOtaState> = state
+
+        override suspend fun checkAvailability(
+            deviceUid: String,
+            manifestUrl: String,
+            applyNow: Boolean
+        ): Result<DeviceOtaState> {
+            checkCalls += 1
+            val result = plan?.let { selected -> DeviceOtaState.UpdateAvailable(selected) }
+                ?: DeviceOtaState.UpToDate(
+                    deviceUid,
+                    "1.2.3",
+                    "1.2.3",
+                    DeviceFirmwareReleaseContent.EMPTY
+                )
+            state.value = result
+            return Result.success(result)
+        }
+
+        override suspend fun prepareUpdate(
+            deviceUid: String,
+            manifestUrl: String,
+            applyNow: Boolean
+        ): Result<PreparedDeviceFirmwareUpdate> = Result.success(requireNotNull(plan))
+
+        override suspend fun startUpdate(
+            plan: PreparedDeviceFirmwareUpdate
+        ): DeviceFirmwareCommandResult = DeviceFirmwareCommandResult(sent = true)
+
+        override suspend fun requestStatus(deviceUid: String): DeviceFirmwareCommandResult {
+            statusCalls += 1
+            return DeviceFirmwareCommandResult(sent = true)
+        }
+
+        override suspend fun clearStatus(deviceUid: String): DeviceFirmwareCommandResult =
+            DeviceFirmwareCommandResult(sent = true)
+    }
+
     class SettingsMainDispatcherRule(
         private val dispatcher: TestDispatcher = UnconfinedTestDispatcher()
     ) : TestWatcher() {
@@ -102,6 +173,25 @@ class DeviceFamilySettingsViewModelTest {
 
     private companion object {
         const val DEVICE_UID = "device-wrgb-settings"
+        const val MANIFEST_URL = "https://example.invalid/manifest-stable.json"
+
+        fun preparedPlan() = PreparedDeviceFirmwareUpdate(
+            deviceUid = DEVICE_UID,
+            currentVersion = "1.2.3",
+            targetVersion = "2.0.0",
+            channel = "stable",
+            environment = "light_wrgb_pro_elite",
+            productKey = "LIGHT_WRGB_PRO_ELITE",
+            productId = "com.aqualight.light.wrgb_pro_elite",
+            model = "wrgb_pro_elite_120",
+            hardwareRevision = "2.0",
+            displayName = "WRGB Pro Elite 120",
+            filename = "AquaLight-light_wrgb_pro_elite-v2.0.0-ota.bin",
+            downloadUrl = "https://example.invalid/firmware.bin",
+            sha256 = "a".repeat(64),
+            sizeBytes = 1_048_576,
+            applyNow = true
+        )
 
         fun invalidSnapshot() = DeviceRootSnapshot(
             deviceUid = DEVICE_UID,

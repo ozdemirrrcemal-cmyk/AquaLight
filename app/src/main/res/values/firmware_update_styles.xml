@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <style
+        name="Widget.Aqua.FirmwareUpdate.Progress"
+        parent="Widget.MaterialComponents.CircularProgressIndicator">
+        <item name="indicatorColor">@color/aqua_accent_primary</item>
+        <item name="indicatorSize">@dimen/aqua_size_160</item>
+        <item name="trackColor">@color/aqua_progress_bar_progress_background_tint</item>
+        <item name="trackThickness">@dimen/aqua_size_8</item>
+    </style>
+</resources>

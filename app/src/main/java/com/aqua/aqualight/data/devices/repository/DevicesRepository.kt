@@ -23,6 +23,7 @@ import com.aqua.aqualight.data.devices.runtime.ws.AqlWsIncomingMessage
 import com.aqua.aqualight.data.devices.store.DeviceKnownStore
 import com.aqua.aqualight.data.devices.store.DeviceRegistryStore
 import com.aqua.aqualight.data.devices.store.DeviceSnapshotMerger
+import java.util.concurrent.ConcurrentHashMap
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.awaitCancellation
@@ -46,6 +47,8 @@ class DevicesRepository(
     private val wallClockMillis: () -> Long = System::currentTimeMillis,
     private val elapsedRealtimeMillis: () -> Long = DeviceElapsedRealtimeClock::nowMillis
 ) {
+
+    private val ownerScopedResources = ConcurrentHashMap.newKeySet<AutoCloseable>()
 
     private val _typedRuntimeEvents = MutableSharedFlow<DeviceRuntimeTypedEvent>(
         extraBufferCapacity = TYPED_RUNTIME_EVENT_BUFFER_CAPACITY
@@ -155,16 +158,42 @@ class DevicesRepository(
         val job = detachStartJob()
         _ready.value = false
         job?.cancel()
-        runtimeRepository?.close()
-        registryStore.clear()
+        try {
+            closeOwnerScopedResources()
+        } finally {
+            runtimeRepository?.close()
+            registryStore.clear()
+        }
     }
 
     suspend fun shutdown() {
         val job = detachStartJob()
         _ready.value = false
         job?.cancelAndJoin()
-        runtimeRepository?.shutdown()
-        registryStore.clear()
+        try {
+            closeOwnerScopedResources()
+        } finally {
+            runtimeRepository?.shutdown()
+            registryStore.clear()
+        }
+    }
+
+    /** Closes owner-scoped adapters before their repository/runtime identity is retired. */
+    internal fun registerOwnerScopedResource(resource: AutoCloseable) {
+        ownerScopedResources += resource
+    }
+
+    private fun closeOwnerScopedResources() {
+        val resources = ownerScopedResources.toList()
+        ownerScopedResources.removeAll(resources.toSet())
+        var firstFailure: Throwable? = null
+        resources.forEach { resource ->
+            runCatching(resource::close).exceptionOrNull()?.let { error ->
+                if (firstFailure == null) firstFailure = error
+                else firstFailure?.addSuppressed(error)
+            }
+        }
+        firstFailure?.let { throw it }
     }
 
     private fun detachStartJob(): Job? = synchronized(this) {

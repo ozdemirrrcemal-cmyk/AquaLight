@@ -16,6 +16,10 @@
     <string name="device_settings_firmware_up_to_date">Cihaz yazılımı güncel</string>
     <string name="device_settings_update_available_status">%1$s sürümü kullanılabilir</string>
     <string name="device_settings_view_update_action">Güncellemeyi görüntüle</string>
+    <string name="device_settings_update_in_progress_status">%1$s yükleniyor · %2$d%%</string>
+    <string name="device_settings_retry_update_check_action">Tekrar dene</string>
+    <string name="device_settings_update_check_failed_status">Güncelleme denetimi tamamlanamadı.</string>
+    <string name="device_settings_update_unsupported_status">Bu cihaz yazılım güncellemelerini desteklemiyor.</string>
 
     <string name="device_settings_change_name_title">Cihaz adını değiştir</string>
     <string name="device_settings_save_action">Kaydet</string>
@@ -23,6 +27,63 @@
     <string name="device_settings_device_name_required">Bir cihaz adı girin.</string>
 
     <string name="device_settings_firmware_update_title">Yazılım Güncellemesi</string>
+    <string name="device_settings_update_device_fallback">AquaLight cihazı</string>
+    <string name="device_settings_update_status_checking">Güncellemeler denetleniyor</string>
+    <string name="device_settings_update_status_available">Güncelleme mevcut</string>
+    <string name="device_settings_update_status_required">Zorunlu güncelleme</string>
+    <string name="device_settings_update_status_preparing">Güncelleme hazırlanıyor</string>
+    <string name="device_settings_update_status_installing">Güncelleme sürüyor</string>
+    <string name="device_settings_update_status_recovering">Yeniden bağlanılıyor</string>
+    <string name="device_settings_update_status_restarting">Cihaz yeniden başlatılıyor</string>
+    <string name="device_settings_update_status_succeeded">Güncelleme tamamlandı</string>
+    <string name="device_settings_update_status_up_to_date">Yazılım güncel</string>
+    <string name="device_settings_update_status_failed">Güncelleme başarısız</string>
+    <string name="device_settings_update_status_unsupported">Güncelleme kullanılamıyor</string>
+
+    <string name="device_settings_update_installed_version_label">Yüklü sürüm</string>
+    <string name="device_settings_update_target_version_label">Kullanılabilir sürüm</string>
+    <string name="device_settings_update_release_notes_heading">Sürüm notları</string>
+    <string name="device_settings_update_changes_heading">Yenilikler</string>
+    <string name="device_settings_update_warnings_heading">Güncellemeden önce</string>
+    <string name="device_settings_update_release_notes_fallback">Bu sürüm güvenilirlik, uyumluluk ve güvenlik iyileştirmeleri içerir.</string>
+    <string name="device_settings_update_power_warning">Güncelleme tamamlanana kadar cihazın gücünü ve bağlantısını kesmeyin.</string>
+
+    <string name="device_settings_update_phase_checking">En yeni imzalı sürüm doğrulanıyor…</string>
+    <string name="device_settings_update_phase_ready">Yüklemeye hazır</string>
+    <string name="device_settings_update_phase_starting">Güvenli aktarım hazırlanıyor…</string>
+    <string name="device_settings_update_phase_safe_mode">Cihaz güvenli modda hazırlanıyor…</string>
+    <string name="device_settings_update_phase_downloading">Doğrulanmış yazılım indiriliyor…</string>
+    <string name="device_settings_update_phase_writing">Cihaz yazılımı yükleniyor…</string>
+    <string name="device_settings_update_phase_verifying">Yüklenen imaj doğrulanıyor…</string>
+    <string name="device_settings_update_phase_recovering">Cihazın güvenli biçimde yeniden bağlanması bekleniyor…</string>
+    <string name="device_settings_update_phase_restarting">Cihaz yeni yazılımla yeniden başlatılıyor…</string>
+    <string name="device_settings_update_phase_succeeded">Hedef sürüm yeniden başlatma sonrasında doğrulandı.</string>
+    <string name="device_settings_update_phase_up_to_date">En yeni uyumlu yazılım zaten yüklü.</string>
+    <string name="device_settings_update_phase_failed_recoverable">Bağlantıyı kontrol edip tekrar deneyin. Cihaz mevcut yazılımında kalabilir.</string>
+    <string name="device_settings_update_phase_failed_terminal">Cihazı açık tutun ve yeni bir güncelleme denemesinden önce bağlantısını kontrol edin.</string>
+    <string name="device_settings_update_phase_unsupported">Bu cihaz profili için uyumlu, imzalı bir güncelleme bulunamadı.</string>
+    <string name="device_settings_update_progress_percent">%1$d%%</string>
+    <string name="device_settings_update_progress_bytes">%1$s / %2$s</string>
+    <string name="device_settings_update_progress_waiting">Cihaz ilerlemesi bekleniyor</string>
+
+    <string name="device_settings_install_update_action">Güncellemeyi yükle</string>
+    <string name="device_settings_retry_update_action">Tekrar dene</string>
+    <string name="device_settings_update_done_action">Tamam</string>
+    <string name="device_settings_update_close_action">Kapat</string>
+    <string name="device_settings_update_active_action">Güncelleme sürüyor</string>
+    <string name="device_settings_update_action_loading">Hazırlanıyor…</string>
+    <string name="device_settings_update_release_change_description">Sürüm yeniliği: %1$s</string>
+    <string name="device_settings_update_release_warning_description">Güncelleme uyarısı: %1$s</string>
+
+    <string name="device_settings_update_notification_available_title">Yazılım güncellemesi mevcut</string>
+    <string name="device_settings_update_notification_available_message">%1$s, %2$s sürümüne güncellenebilir.</string>
+    <string name="device_settings_update_notification_progress_title">%1$s güncelleniyor</string>
+    <string name="device_settings_update_notification_progress_message">%1$s · %2$d%%</string>
+    <string name="device_settings_update_notification_restart_message">%1$s sürümü için yeniden başlatılıyor ve doğrulanıyor…</string>
+    <string name="device_settings_update_notification_success_title">Yazılım güncellemesi tamamlandı</string>
+    <string name="device_settings_update_notification_success_message">%1$s artık %2$s sürümünü kullanıyor.</string>
+    <string name="device_settings_update_notification_failure_title">Yazılım güncellemesi ilgi bekliyor</string>
+    <string name="device_settings_update_notification_failure_message">%1$s güncellemesini incelemek için AquaLight’ı açın.</string>
 
     <string name="device_settings_light_protection_section">Işık koruması</string>
     <string name="device_settings_light_cooling_auto_off_label">Soğutmayı otomatik kapat</string>

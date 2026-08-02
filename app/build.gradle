@@ -113,6 +113,21 @@ def otaManifestKeyId = providers
         .orElse(providers.environmentVariable("AQL_OTA_MANIFEST_KEY_ID"))
         .getOrElse("aql-ota-manifest-2026-01")
 
+def stableOtaManifestUrl = providers
+        .gradleProperty("AQL_OTA_STABLE_MANIFEST_URL")
+        .orElse(providers.environmentVariable("AQL_OTA_STABLE_MANIFEST_URL"))
+        .getOrElse(
+                "https://github.com/ozdemirrrcemal-cmyk/AquaLight-OTA-Releases/" +
+                        "releases/latest/download/manifest-stable.json"
+        )
+
+// A beta asset is not published yet. Internal builds can opt in as soon as one exists;
+// otherwise they deliberately use the same verified stable manifest instead of a dead URL.
+def debugOtaManifestUrl = providers
+        .gradleProperty("AQL_OTA_DEBUG_MANIFEST_URL")
+        .orElse(providers.environmentVariable("AQL_OTA_DEBUG_MANIFEST_URL"))
+        .getOrElse(stableOtaManifestUrl)
+
 def lintBaselineFile = layout.projectDirectory.file("lint-baseline.xml")
 def finalLintModeValue = providers
         .gradleProperty("AQL_FINAL_LINT")
@@ -156,11 +171,16 @@ android {
     }
 
     buildTypes {
+        debug {
+            buildConfigField "String", "AQL_OTA_MANIFEST_URL", aqlBuildConfigString(debugOtaManifestUrl)
+        }
+
         release {
             signingConfig signingConfigs.release
             minifyEnabled true
             shrinkResources true
             proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
+            buildConfigField "String", "AQL_OTA_MANIFEST_URL", aqlBuildConfigString(stableOtaManifestUrl)
         }
 
         releaseSmoke {
@@ -171,6 +191,7 @@ android {
             minifyEnabled true
             shrinkResources true
             versionNameSuffix "-smoke"
+            buildConfigField "String", "AQL_OTA_MANIFEST_URL", aqlBuildConfigString(stableOtaManifestUrl)
         }
     }
 

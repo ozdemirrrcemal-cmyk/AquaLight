@@ -115,13 +115,19 @@ abstract class DeviceFamilySettingsFragment : Fragment(R.layout.fragment_device_
             openDeviceNameEditor()
         }
         binding.btnCheckForUpdates.setOnClickListener {
-            when (latestState.updateActionState) {
-                is DeviceSettingsUpdateActionState.UpdateAvailable ->
+            when (val updateState = latestState.updateActionState) {
+                is DeviceSettingsUpdateActionState.UpdateAvailable,
+                is DeviceSettingsUpdateActionState.UpdateInProgress ->
                     openFirmwareUpdateScreen()
                 DeviceSettingsUpdateActionState.Checking -> Unit
                 DeviceSettingsUpdateActionState.Idle,
-                DeviceSettingsUpdateActionState.UpToDate ->
-                    viewModel.previewUpdateCheck()
+                DeviceSettingsUpdateActionState.UpToDate,
+                DeviceSettingsUpdateActionState.Unsupported ->
+                    viewModel.checkForUpdates()
+                is DeviceSettingsUpdateActionState.Failed -> {
+                    if (updateState.recoverable) viewModel.checkForUpdates()
+                    else openFirmwareUpdateScreen()
+                }
             }
         }
     }
@@ -188,7 +194,22 @@ abstract class DeviceFamilySettingsFragment : Fragment(R.layout.fragment_device_
     }
 
     private fun renderUpdateAction(state: DeviceSettingsUpdateActionState) {
-        val presentation = when (state) {
+        val presentation = state.toFirmwareActionPresentation()
+
+        binding.progressCheckForUpdates.isVisible = presentation.showProgress
+        binding.btnCheckForUpdates.apply {
+            isEnabled = presentation.enabled
+            text = if (presentation.showProgress) "" else presentation.buttonText
+            contentDescription = presentation.buttonText
+        }
+        binding.tvFirmwareUpdateStatus.apply {
+            isVisible = !presentation.statusText.isNullOrBlank()
+            text = presentation.statusText
+        }
+    }
+
+    private fun DeviceSettingsUpdateActionState.toFirmwareActionPresentation(): FirmwareActionPresentation =
+        when (this) {
             DeviceSettingsUpdateActionState.Idle -> FirmwareActionPresentation(
                 buttonText = getString(R.string.device_settings_check_updates_action),
                 enabled = true
@@ -206,23 +227,39 @@ abstract class DeviceFamilySettingsFragment : Fragment(R.layout.fragment_device_
                 buttonText = getString(R.string.device_settings_view_update_action),
                 statusText = getString(
                     R.string.device_settings_update_available_status,
-                    state.version
+                    version
                 ),
                 enabled = true
             )
+            is DeviceSettingsUpdateActionState.UpdateInProgress -> FirmwareActionPresentation(
+                buttonText = getString(R.string.device_settings_view_update_action),
+                statusText = getString(
+                    R.string.device_settings_update_in_progress_status,
+                    version,
+                    progressPermille.coerceIn(
+                        0,
+                        COMPLETE_PROGRESS_PERMILLE
+                    ) / PERMILLE_PER_PERCENT
+                ),
+                enabled = true
+            )
+            is DeviceSettingsUpdateActionState.Failed -> FirmwareActionPresentation(
+                buttonText = getString(
+                    if (recoverable) {
+                        R.string.device_settings_retry_update_check_action
+                    } else {
+                        R.string.device_settings_view_update_action
+                    }
+                ),
+                statusText = getString(R.string.device_settings_update_check_failed_status),
+                enabled = true
+            )
+            DeviceSettingsUpdateActionState.Unsupported -> FirmwareActionPresentation(
+                buttonText = getString(R.string.device_settings_check_updates_action),
+                statusText = getString(R.string.device_settings_update_unsupported_status),
+                enabled = false
+            )
         }
-
-        binding.progressCheckForUpdates.isVisible = presentation.showProgress
-        binding.btnCheckForUpdates.apply {
-            isEnabled = presentation.enabled
-            text = if (presentation.showProgress) "" else presentation.buttonText
-            contentDescription = presentation.buttonText
-        }
-        binding.tvFirmwareUpdateStatus.apply {
-            isVisible = !presentation.statusText.isNullOrBlank()
-            text = presentation.statusText
-        }
-    }
 
     private fun renderLightInventory(
         show: Boolean,
@@ -276,6 +313,8 @@ abstract class DeviceFamilySettingsFragment : Fragment(R.layout.fragment_device_
     )
 
     private companion object {
+        const val COMPLETE_PROGRESS_PERMILLE = 1_000
+        const val PERMILLE_PER_PERCENT = 10
         const val DEVICE_NAME_REQUEST_KEY = "device_settings_name_request"
         val SETTINGS_DESTINATIONS = setOf(
             R.id.deviceLightSettingsFragment,

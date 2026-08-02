@@ -2,21 +2,25 @@ package com.aqua.aqualight.composition
 
 import android.content.Context
 import com.aqua.aqualight.application.auth.AuthenticatedOwnerIdentity
+import com.aqua.aqualight.application.devices.DeviceFirmwareUpdateOperations
 import com.aqua.aqualight.application.devices.provisioning.ProvisioningDraftOperations
 import com.aqua.aqualight.application.devices.provisioning.ProvisioningDraftRequest
 import com.aqua.aqualight.application.devices.provisioning.ProvisioningDraftSession
+import com.aqua.aqualight.application.notifications.NotificationDispatchUseCase
 import com.aqua.aqualight.data.aquarium.devices.TankDeviceAssignmentRepository
 import com.aqua.aqualight.data.aquarium.devices.TankDeviceAssignmentRepositoryProvider
 import com.aqua.aqualight.data.aquarium.store.AquariumTankDataStoreManager
 import com.aqua.aqualight.data.auth.OwnerSessionCoordinator
 import com.aqua.aqualight.data.auth.OwnerSessionStateMachine
 import com.aqua.aqualight.data.care.CareTaskDataStoreManager
+import com.aqua.aqualight.data.devices.DefaultDeviceFirmwareUpdateOperations
 import com.aqua.aqualight.data.devices.provisioning.repository.DefaultProvisioningDraftOperations
 import com.aqua.aqualight.data.devices.provisioning.store.AqlProvisioningDraftStore
 import com.aqua.aqualight.data.devices.provisioning.store.AqlProvisioningQrSecretStore
 import com.aqua.aqualight.data.devices.repository.DevicesRepository
 import com.aqua.aqualight.data.devices.repository.DevicesRepositoryProvider
 import com.aqua.aqualight.data.user.UserDataScope
+import com.aqua.aqualight.platform.notifications.AndroidDeviceFirmwareUpdateNotificationPublisher
 
 /**
  * Immutable dependency snapshot for one committed authenticated-owner session.
@@ -30,6 +34,7 @@ internal data class OwnerDependencyGraph(
     val ownerUid: String,
     val sessionGeneration: Long,
     val devicesRepository: DevicesRepository,
+    val firmwareUpdateOperations: DeviceFirmwareUpdateOperations,
     val assignmentRepository: TankDeviceAssignmentRepository,
     val aquariumTankStore: AquariumTankDataStoreManager,
     val careTaskStore: CareTaskDataStoreManager,
@@ -54,7 +59,8 @@ internal fun requireActiveOwnerGeneration(
 }
 
 internal class ActiveOwnerDependencyGraphResolver(
-    context: Context
+    context: Context,
+    private val notificationDispatchUseCase: NotificationDispatchUseCase
 ) : OwnerDependencyGraphResolver {
 
     private val appContext = context.applicationContext
@@ -64,6 +70,14 @@ internal class ActiveOwnerDependencyGraphResolver(
     private var cachedGraph: OwnerDependencyGraph? = null
 
     override fun requireActive(): OwnerDependencyGraph {
+        val dependencies = resolveActiveDependencies()
+        cachedGraph?.takeIf { graph -> graph.matches(dependencies) }?.let { graph ->
+            return graph
+        }
+        return synchronized(this) { requireSynchronizedGraph(dependencies) }
+    }
+
+    private fun resolveActiveDependencies(): ActiveOwnerDependencies {
         val ownerUid = UserDataScope.requireCurrentUid()
         val initialGeneration = requireActiveOwnerGeneration(
             ownerUid = ownerUid,
@@ -86,75 +100,99 @@ internal class ActiveOwnerDependencyGraphResolver(
         check(confirmedGeneration == initialGeneration) {
             "Authenticated owner session changed while resolving dependencies."
         }
+        return ActiveOwnerDependencies(
+            ownerUid = ownerUid,
+            sessionGeneration = confirmedGeneration,
+            devicesRepository = devicesRepository,
+            assignmentRepository = assignmentRepository
+        )
+    }
 
-        cachedGraph?.takeIf { graph ->
-            graph.ownerUid == ownerUid &&
-                graph.sessionGeneration == confirmedGeneration &&
-                graph.devicesRepository === devicesRepository &&
-                graph.assignmentRepository === assignmentRepository
-        }?.let { graph ->
+    private fun requireSynchronizedGraph(
+        dependencies: ActiveOwnerDependencies
+    ): OwnerDependencyGraph {
+        val synchronizedGeneration = requireActiveOwnerGeneration(
+            ownerUid = dependencies.ownerUid,
+            snapshot = sessionCoordinator.snapshot()
+        )
+        check(synchronizedGeneration == dependencies.sessionGeneration) {
+            "Authenticated owner session changed while composing dependencies."
+        }
+
+        cachedGraph?.takeIf { graph -> graph.matches(dependencies) }?.let { graph ->
             return graph
         }
+        validateRepositoryIdentities(dependencies)
+        return composeGraph(dependencies).also { graph -> cachedGraph = graph }
+    }
 
-        return synchronized(this) {
-            val synchronizedGeneration = requireActiveOwnerGeneration(
-                ownerUid = ownerUid,
-                snapshot = sessionCoordinator.snapshot()
-            )
-            check(synchronizedGeneration == confirmedGeneration) {
-                "Authenticated owner session changed while composing dependencies."
-            }
-
-            val synchronizedGraph = cachedGraph
-            if (
-                synchronizedGraph?.ownerUid == ownerUid &&
-                synchronizedGraph.sessionGeneration == synchronizedGeneration &&
-                synchronizedGraph.devicesRepository === devicesRepository &&
-                synchronizedGraph.assignmentRepository === assignmentRepository
-            ) {
-                synchronizedGraph
-            } else {
-                check(DevicesRepositoryProvider.currentOwnerUid() == ownerUid) {
-                    "Device repository owner changed while resolving dependencies."
-                }
-                check(TankDeviceAssignmentRepositoryProvider.currentOwnerUid() == ownerUid) {
-                    "Assignment repository owner changed while resolving dependencies."
-                }
-                check(DevicesRepositoryProvider.currentRepository(ownerUid) === devicesRepository) {
-                    "Device repository identity changed while resolving dependencies."
-                }
-                check(
-                    TankDeviceAssignmentRepositoryProvider.currentRepository(ownerUid) ===
-                        assignmentRepository
-                ) {
-                    "Assignment repository identity changed while resolving dependencies."
-                }
-
-                val ownerUidProvider = { ownerUid }
-                OwnerDependencyGraph(
-                    ownerUid = ownerUid,
-                    sessionGeneration = synchronizedGeneration,
-                    devicesRepository = devicesRepository,
-                    assignmentRepository = assignmentRepository,
-                    aquariumTankStore = AquariumTankDataStoreManager(appContext),
-                    careTaskStore = CareTaskDataStoreManager.create(appContext),
-                    provisioningDraftOperations = DefaultProvisioningDraftOperations(
-                        draftStore = AqlProvisioningDraftStore(
-                            context = appContext,
-                            ownerUidProvider = ownerUidProvider
-                        ),
-                        qrSecretStore = AqlProvisioningQrSecretStore(
-                            context = appContext,
-                            ownerUidProvider = ownerUidProvider
-                        )
-                    )
-                ).also { graph ->
-                    cachedGraph = graph
-                }
-            }
+    private fun validateRepositoryIdentities(dependencies: ActiveOwnerDependencies) {
+        check(DevicesRepositoryProvider.currentOwnerUid() == dependencies.ownerUid) {
+            "Device repository owner changed while resolving dependencies."
+        }
+        check(TankDeviceAssignmentRepositoryProvider.currentOwnerUid() == dependencies.ownerUid) {
+            "Assignment repository owner changed while resolving dependencies."
+        }
+        check(
+            DevicesRepositoryProvider.currentRepository(dependencies.ownerUid) ===
+                dependencies.devicesRepository
+        ) {
+            "Device repository identity changed while resolving dependencies."
+        }
+        check(
+            TankDeviceAssignmentRepositoryProvider.currentRepository(dependencies.ownerUid) ===
+                dependencies.assignmentRepository
+        ) {
+            "Assignment repository identity changed while resolving dependencies."
         }
     }
+
+    private fun composeGraph(dependencies: ActiveOwnerDependencies): OwnerDependencyGraph {
+        val ownerUidProvider = { dependencies.ownerUid }
+        val notificationPublisher = AndroidDeviceFirmwareUpdateNotificationPublisher(
+            context = appContext,
+            ownerUid = dependencies.ownerUid,
+            dispatchUseCase = notificationDispatchUseCase
+        )
+        val firmwareUpdateOperations = DefaultDeviceFirmwareUpdateOperations(
+            devicesRepository = dependencies.devicesRepository,
+            statePublisher = notificationPublisher::publish
+        ).also(dependencies.devicesRepository::registerOwnerScopedResource)
+        return OwnerDependencyGraph(
+            ownerUid = dependencies.ownerUid,
+            sessionGeneration = dependencies.sessionGeneration,
+            devicesRepository = dependencies.devicesRepository,
+            firmwareUpdateOperations = firmwareUpdateOperations,
+            assignmentRepository = dependencies.assignmentRepository,
+            aquariumTankStore = AquariumTankDataStoreManager(appContext),
+            careTaskStore = CareTaskDataStoreManager.create(appContext),
+            provisioningDraftOperations = DefaultProvisioningDraftOperations(
+                draftStore = AqlProvisioningDraftStore(
+                    context = appContext,
+                    ownerUidProvider = ownerUidProvider
+                ),
+                qrSecretStore = AqlProvisioningQrSecretStore(
+                    context = appContext,
+                    ownerUidProvider = ownerUidProvider
+                )
+            )
+        )
+    }
 }
+
+private data class ActiveOwnerDependencies(
+    val ownerUid: String,
+    val sessionGeneration: Long,
+    val devicesRepository: DevicesRepository,
+    val assignmentRepository: TankDeviceAssignmentRepository
+)
+
+private fun OwnerDependencyGraph.matches(dependencies: ActiveOwnerDependencies): Boolean = listOf(
+    ownerUid == dependencies.ownerUid,
+    sessionGeneration == dependencies.sessionGeneration,
+    devicesRepository === dependencies.devicesRepository,
+    assignmentRepository === dependencies.assignmentRepository
+).all { matches -> matches }
 
 /** Resolves owner identity through the same committed-session barrier as owner services. */
 internal class ResolvingAuthenticatedOwnerIdentity(

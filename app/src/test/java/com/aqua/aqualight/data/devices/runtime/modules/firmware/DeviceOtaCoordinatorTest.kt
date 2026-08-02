@@ -255,6 +255,60 @@ class DeviceOtaCoordinatorTest {
         coordinator.close()
     }
 
+    @Test
+    fun `idle recovery status preserves the exact prepared update plan`() = runTest {
+        val gateway = RecordingGateway().apply {
+            statusData = otaStatusData(
+                otaSnapshot("idle", active = false, progressPermille = 0)
+            )
+        }
+        val coordinator = DeviceOtaCoordinator(
+            snapshotProvider = { product().toSnapshot() },
+            connectRuntime = { Result.success(Unit) },
+            updaterProvider = { updater(gateway) },
+            runtimeEvents = null
+        )
+        val plan = (
+            coordinator.checkAvailability(DEVICE_UID, MANIFEST_URL, true).getOrThrow()
+                as DeviceOtaState.UpdateAvailable
+            ).plan
+
+        val result = coordinator.requestStatus(DEVICE_UID)
+
+        assertTrue(result.isSuccess)
+        assertEquals(
+            DeviceOtaState.UpdateAvailable(plan),
+            coordinator.observe(DEVICE_UID).value
+        )
+        coordinator.close()
+    }
+
+    @Test
+    fun `idle start acknowledgement cannot re-enable the install action`() = runTest {
+        val gateway = RecordingGateway().apply {
+            startData = startAcceptedData().put(
+                "ota",
+                otaSnapshot("idle", active = false, progressPermille = 0)
+            )
+        }
+        val coordinator = DeviceOtaCoordinator(
+            snapshotProvider = { product().toSnapshot() },
+            connectRuntime = { Result.success(Unit) },
+            updaterProvider = { updater(gateway) },
+            runtimeEvents = null
+        )
+        val plan = (
+            coordinator.checkAvailability(DEVICE_UID, MANIFEST_URL, true).getOrThrow()
+                as DeviceOtaState.UpdateAvailable
+            ).plan
+
+        val result = coordinator.startUpdate(plan)
+
+        assertTrue(result.isSuccess)
+        assertTrue(coordinator.observe(DEVICE_UID).value is DeviceOtaState.Starting)
+        coordinator.close()
+    }
+
     private fun updater(gateway: RecordingGateway): DeviceFirmwareUpdateRepository {
         val source = object : DeviceFirmwareManifestHttpSource() {
             override suspend fun load(url: String): Result<DeviceFirmwareManifest> =

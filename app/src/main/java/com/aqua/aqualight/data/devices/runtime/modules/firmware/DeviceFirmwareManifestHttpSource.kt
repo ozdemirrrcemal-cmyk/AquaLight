@@ -12,12 +12,7 @@ open class DeviceFirmwareManifestHttpSource(
 ) {
     open suspend fun load(url: String): Result<DeviceFirmwareManifest> {
         return runCatching {
-            val sourceUrl = url.trim()
-            require(sourceUrl.startsWith("https://")) { "Manifest URL must use HTTPS." }
-            require(sourceUrl.startsWith(DeviceFirmwareRuntimeContract.OFFICIAL_RELEASE_URL_PREFIX)) {
-                "Manifest URL must use the AquaLight release source."
-            }
-            require(sourceUrl.endsWith(".json")) { "Manifest URL must be a JSON asset." }
+            val sourceUrl = requireOfficialFirmwareManifestUrl(url)
 
             val text = withContext(Dispatchers.IO) {
                 val request = Request.Builder()
@@ -34,4 +29,19 @@ open class DeviceFirmwareManifestHttpSource(
             signatureVerifier.verifyAndParse(text).getOrThrow()
         }
     }
+}
+
+internal fun requireOfficialFirmwareManifestUrl(url: String): String {
+    val sourceUrl = url.trim()
+    require(sourceUrl.startsWith("https://")) { "Manifest URL must use HTTPS." }
+    require(
+        sourceUrl.startsWith(DeviceFirmwareRuntimeContract.OFFICIAL_RELEASE_URL_PREFIX) ||
+            sourceUrl.startsWith(
+                DeviceFirmwareRuntimeContract.OFFICIAL_LATEST_RELEASE_URL_PREFIX
+            )
+    ) {
+        "Manifest URL must use the AquaLight release source."
+    }
+    require(sourceUrl.endsWith(".json")) { "Manifest URL must be a JSON asset." }
+    return sourceUrl
 }

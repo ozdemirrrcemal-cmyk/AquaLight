@@ -16,6 +16,10 @@
     <string name="device_settings_firmware_up_to_date">Device software is up to date</string>
     <string name="device_settings_update_available_status">Version %1$s is available</string>
     <string name="device_settings_view_update_action">View update</string>
+    <string name="device_settings_update_in_progress_status">Installing %1$s · %2$d%%</string>
+    <string name="device_settings_retry_update_check_action">Try again</string>
+    <string name="device_settings_update_check_failed_status">The update check could not be completed.</string>
+    <string name="device_settings_update_unsupported_status">This device does not support software updates.</string>
 
     <string name="device_settings_change_name_title">Change device name</string>
     <string name="device_settings_save_action">Save</string>
@@ -23,6 +27,63 @@
     <string name="device_settings_device_name_required">Enter a device name.</string>
 
     <string name="device_settings_firmware_update_title">Software Update</string>
+    <string name="device_settings_update_device_fallback">AquaLight device</string>
+    <string name="device_settings_update_status_checking">Checking for updates</string>
+    <string name="device_settings_update_status_available">Update available</string>
+    <string name="device_settings_update_status_required">Required update</string>
+    <string name="device_settings_update_status_preparing">Preparing update</string>
+    <string name="device_settings_update_status_installing">Update in progress</string>
+    <string name="device_settings_update_status_recovering">Reconnecting</string>
+    <string name="device_settings_update_status_restarting">Restarting device</string>
+    <string name="device_settings_update_status_succeeded">Update complete</string>
+    <string name="device_settings_update_status_up_to_date">Software is up to date</string>
+    <string name="device_settings_update_status_failed">Update failed</string>
+    <string name="device_settings_update_status_unsupported">Update unavailable</string>
+
+    <string name="device_settings_update_installed_version_label">Installed version</string>
+    <string name="device_settings_update_target_version_label">Available version</string>
+    <string name="device_settings_update_release_notes_heading">Release notes</string>
+    <string name="device_settings_update_changes_heading">What’s new</string>
+    <string name="device_settings_update_warnings_heading">Before you update</string>
+    <string name="device_settings_update_release_notes_fallback">This release includes reliability, compatibility and security improvements.</string>
+    <string name="device_settings_update_power_warning">Keep the device powered and connected until the update is complete.</string>
+
+    <string name="device_settings_update_phase_checking">Verifying the latest signed release…</string>
+    <string name="device_settings_update_phase_ready">Ready to install</string>
+    <string name="device_settings_update_phase_starting">Preparing the secure transfer…</string>
+    <string name="device_settings_update_phase_safe_mode">Preparing the device in safe mode…</string>
+    <string name="device_settings_update_phase_downloading">Downloading verified firmware…</string>
+    <string name="device_settings_update_phase_writing">Installing device software…</string>
+    <string name="device_settings_update_phase_verifying">Verifying the installed image…</string>
+    <string name="device_settings_update_phase_recovering">Waiting for the device to reconnect securely…</string>
+    <string name="device_settings_update_phase_restarting">The device is restarting with the new software…</string>
+    <string name="device_settings_update_phase_succeeded">The target version was verified after restart.</string>
+    <string name="device_settings_update_phase_up_to_date">The latest compatible software is already installed.</string>
+    <string name="device_settings_update_phase_failed_recoverable">Check the connection and try again. The device can remain on its current software.</string>
+    <string name="device_settings_update_phase_failed_terminal">Keep the device powered on and check its connection before trying another update.</string>
+    <string name="device_settings_update_phase_unsupported">No compatible signed update is available for this device profile.</string>
+    <string name="device_settings_update_progress_percent">%1$d%%</string>
+    <string name="device_settings_update_progress_bytes">%1$s of %2$s</string>
+    <string name="device_settings_update_progress_waiting">Waiting for device progress</string>
+
+    <string name="device_settings_install_update_action">Install update</string>
+    <string name="device_settings_retry_update_action">Try again</string>
+    <string name="device_settings_update_done_action">Done</string>
+    <string name="device_settings_update_close_action">Close</string>
+    <string name="device_settings_update_active_action">Update in progress</string>
+    <string name="device_settings_update_action_loading">Preparing…</string>
+    <string name="device_settings_update_release_change_description">Release change: %1$s</string>
+    <string name="device_settings_update_release_warning_description">Update warning: %1$s</string>
+
+    <string name="device_settings_update_notification_available_title">Software update available</string>
+    <string name="device_settings_update_notification_available_message">%1$s can be updated to %2$s.</string>
+    <string name="device_settings_update_notification_progress_title">Updating %1$s</string>
+    <string name="device_settings_update_notification_progress_message">%1$s · %2$d%%</string>
+    <string name="device_settings_update_notification_restart_message">Restarting and verifying version %1$s…</string>
+    <string name="device_settings_update_notification_success_title">Software update complete</string>
+    <string name="device_settings_update_notification_success_message">%1$s is now running version %2$s.</string>
+    <string name="device_settings_update_notification_failure_title">Software update needs attention</string>
+    <string name="device_settings_update_notification_failure_message">Open AquaLight to review the update for %1$s.</string>
 
     <string name="device_settings_light_protection_section">Light protection</string>
     <string name="device_settings_light_cooling_auto_off_label">Cooling Auto Off</string>
