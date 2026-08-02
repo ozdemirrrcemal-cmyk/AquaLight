@@ -21,7 +21,7 @@ class DeviceFirmwareRuntimeRepository(
 
     suspend fun readOtaStatus(
         deviceUid: DeviceUid
-    ): DeviceRuntimeCommandOutcome<DeviceFirmwareOtaSnapshot> = gateway.execute(
+    ): DeviceRuntimeCommandOutcome<DeviceFirmwareOtaStatusResponse> = gateway.execute(
         deviceUid,
         DeviceRuntimeJsonCommand(
             module = DeviceFirmwareRuntimeContract.MODULE,
