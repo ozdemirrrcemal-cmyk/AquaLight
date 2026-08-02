@@ -10,13 +10,9 @@ import com.aqua.aqualight.data.devices.model.DeviceRuntimeEndpoint
 import com.aqua.aqualight.data.devices.model.DeviceSnapshot
 import com.aqua.aqualight.data.devices.model.DeviceUid
 import com.aqua.aqualight.data.devices.runtime.ws.AqlWsConnectionState
-import com.aqua.aqualight.data.devices.runtime.ws.AqlWsEvent
-import com.aqua.aqualight.data.devices.runtime.ws.AqlWsIncomingMessage
 import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.test.runTest
-import org.json.JSONObject
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.Test
@@ -59,10 +55,6 @@ class DeviceMenuNetworkRestoreTest {
         snapshot: DeviceSnapshot
     ) : DeviceMenuRuntimePort {
         private val snapshotFlow = MutableStateFlow(snapshot)
-        private val eventFlow = MutableSharedFlow<AqlWsEvent>(
-            replay = 1,
-            extraBufferCapacity = 1
-        )
         private val authenticatedState = AqlWsConnectionState.Authenticated(
             deviceUid = snapshot.deviceUid,
             authenticatedAtMillis = 100L
@@ -96,25 +88,9 @@ class DeviceMenuNetworkRestoreTest {
 
         override fun connectRuntime(deviceUid: DeviceUid): Boolean = true
 
-        override fun runtimeEvents(): Flow<AqlWsEvent> = eventFlow
-
-        override suspend fun requestNetworkStatus(deviceUid: DeviceUid): String {
+        override suspend fun proveCurrentLiveness(deviceUid: DeviceUid): Boolean {
             requestNetworkStatusCalls += 1
-            eventFlow.emit(
-                AqlWsEvent.Message(
-                    deviceUid = deviceUid,
-                    parsed = AqlWsIncomingMessage.Response(
-                        id = REQUEST_ID,
-                        type = "response",
-                        module = "",
-                        action = "",
-                        data = JSONObject(),
-                        ok = true,
-                        statusCode = 200
-                    )
-                )
-            )
-            return REQUEST_ID
+            return true
         }
 
         override fun recordControlProof(deviceUid: DeviceUid): DeviceSnapshot {
@@ -129,9 +105,5 @@ class DeviceMenuNetworkRestoreTest {
             snapshotFlow.value = updated
             return updated
         }
-    }
-
-    private companion object {
-        const val REQUEST_ID = "network-restore-proof"
     }
 }

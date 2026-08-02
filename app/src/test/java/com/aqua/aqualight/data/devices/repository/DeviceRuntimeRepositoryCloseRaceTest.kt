@@ -66,7 +66,6 @@ class DeviceRuntimeRepositoryCloseRaceTest {
             assertTrue(shutdownDone.await(5, TimeUnit.SECONDS))
             assertTrue(connectResult.get().isSuccess)
             assertEquals(1, transport.closeCount.get())
-            assertNull(repository.commandClient())
             assertNull(repository.currentConnectionState(snapshot.deviceUid))
             assertFalse(repository.connect(snapshot).isSuccess)
         } finally {

@@ -110,6 +110,7 @@ jobs:
           python3 tools/navigation_guard.py
           python3 tools/ws_protocol_guard.py
           python3 tools/firmware_interoperability_guard.py
+          python3 tools/ws_v1_commercial_closure_guard.py
           python3 tools/permission_architecture_guard.py
           python3 tools/notification_reminder_architecture_guard.py
           python3 tools/process_safe_feedback_guard.py

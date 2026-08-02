@@ -5,6 +5,7 @@ import com.aqua.aqualight.data.devices.model.DeviceProduct
 import com.aqua.aqualight.data.devices.model.DeviceRuntimeEndpoint
 import com.aqua.aqualight.data.devices.model.DeviceSnapshot
 import com.aqua.aqualight.data.devices.model.DeviceUid
+import com.aqua.aqualight.data.devices.runtime.events.DeviceRuntimeLifecycleEvent
 import com.aqua.aqualight.data.devices.runtime.ws.AqlWsConnectionState
 import com.aqua.aqualight.data.devices.runtime.ws.AqlWsEvent
 import com.aqua.aqualight.data.devices.runtime.ws.AqlWsOutgoingMessage
@@ -36,6 +37,31 @@ import org.junit.Assert.assertTrue
 import org.junit.Test
 
 class DeviceRuntimeRepositoryLifecycleTest {
+
+    @Test
+    fun lifecycleProjectionExposesNoRawWireMessages() {
+        val transports = CopyOnWriteArrayList<FakeWsTransport>()
+        val repository = repositoryWith(transports)
+        val target = snapshot("device-lifecycle-projection")
+        val observed = CopyOnWriteArrayList<DeviceRuntimeLifecycleEvent>()
+        val observerScope = CoroutineScope(SupervisorJob() + Dispatchers.Unconfined)
+        observerScope.launch { repository.lifecycleEvents.collect(observed::add) }
+
+        repository.connect(target).getOrThrow()
+        transports.single().emit(AqlWsEvent.Authenticated(target.deviceUid))
+        transports.single().emit(AqlWsEvent.Closed(target.deviceUid, 1006, "network changed"))
+
+        assertEquals(
+            listOf(
+                DeviceRuntimeLifecycleEvent.Authenticated(target.deviceUid),
+                DeviceRuntimeLifecycleEvent.Unavailable(target.deviceUid)
+            ),
+            observed
+        )
+
+        repository.close()
+        observerScope.cancel()
+    }
 
     @Test
     fun concurrentConnectForSameDeviceCreatesOneSessionAndOneCollectorPair() {

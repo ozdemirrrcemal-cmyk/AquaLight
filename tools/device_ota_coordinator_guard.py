@@ -12,7 +12,6 @@ FILES = {
     "adapter": SOURCE / "data/devices/DefaultDeviceFirmwareUpdateOperations.kt",
     "coordinator": SOURCE / "data/devices/runtime/modules/firmware/DeviceOtaCoordinator.kt",
     "runtime": SOURCE / "data/devices/runtime/modules/firmware/DeviceFirmwareRuntimeRepository.kt",
-    "raw_mapper": SOURCE / "data/devices/runtime/modules/firmware/DeviceFirmwareOtaEventMapper.kt",
     "validation": SOURCE / "data/devices/runtime/modules/firmware/DeviceOtaValidation.kt",
     "planner": SOURCE / "data/devices/runtime/modules/firmware/DeviceFirmwareUpdatePlanner.kt",
     "models": SOURCE / "data/devices/runtime/modules/firmware/DeviceFirmwareModels.kt",
@@ -69,6 +68,7 @@ require_tokens(
         "coordinator.requestStatus(",
         "coordinator.clearStatus(",
         "recoverRuntime = devicesRepository::replaceRuntimeAfterControlFailure",
+        "runtimeLifecycleEvents = devicesRepository.runtimeLifecycleEvents()",
         "runtimeTypedEvents = devicesRepository.typedRuntimeEvents()",
     ),
 )
@@ -91,6 +91,8 @@ require_tokens(
         "pendingVersionVerification",
         "runCatching { refreshDiscovery() }",
         "recoverRuntime(deviceUid)",
+        "DeviceRuntimeLifecycleEvent.Authenticated",
+        "DeviceRuntimeLifecycleEvent.Unavailable",
     ),
 )
 require_tokens(
@@ -106,14 +108,13 @@ require_tokens(
     ),
 )
 forbid_tokens("runtime", ("AqlWsCommandClient", "sendLegacy", "LegacyOnlyGateway"))
-require_tokens(
-    "raw_mapper",
-    (
-        "event?.module == DeviceFirmwareRuntimeContract.MODULE",
-        "parseOtaProgressEventExact(event.data).getOrNull()",
-    ),
+obsolete_raw_mapper = (
+    SOURCE / "data/devices/runtime/modules/firmware/DeviceFirmwareOtaEventMapper.kt"
 )
-forbid_tokens("raw_mapper", ("parseOtaProgressEvent(event.data)",))
+if obsolete_raw_mapper.exists():
+    errors.append(
+        f"obsolete raw OTA mapper remains: {obsolete_raw_mapper.relative_to(ROOT)}"
+    )
 require_tokens(
     "validation",
     (

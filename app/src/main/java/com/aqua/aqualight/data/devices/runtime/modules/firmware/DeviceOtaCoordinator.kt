@@ -9,8 +9,8 @@ import com.aqua.aqualight.data.devices.model.DeviceUid
 import com.aqua.aqualight.data.devices.runtime.core.DeviceRuntimeCommandOutcome
 import com.aqua.aqualight.data.devices.runtime.core.DeviceRuntimeConnectionGeneration
 import com.aqua.aqualight.data.devices.runtime.events.DeviceRuntimeEventPayload
+import com.aqua.aqualight.data.devices.runtime.events.DeviceRuntimeLifecycleEvent
 import com.aqua.aqualight.data.devices.runtime.events.DeviceRuntimeTypedEvent
-import com.aqua.aqualight.data.devices.runtime.ws.AqlWsEvent
 import java.io.Closeable
 import java.util.concurrent.ConcurrentHashMap
 import kotlinx.coroutines.CoroutineDispatcher
@@ -34,7 +34,7 @@ internal class DeviceOtaCoordinator(
     private val snapshotProvider: (DeviceUid) -> DeviceSnapshot?,
     private val connectRuntime: (DeviceUid) -> Result<Unit>,
     private val updaterProvider: () -> DeviceFirmwareUpdateRepository?,
-    runtimeEvents: SharedFlow<AqlWsEvent>?,
+    runtimeLifecycleEvents: SharedFlow<DeviceRuntimeLifecycleEvent>?,
     runtimeTypedEvents: SharedFlow<DeviceRuntimeTypedEvent>? = null,
     snapshotUpdates: StateFlow<Map<DeviceUid, DeviceSnapshot>>? = null,
     private val recoverRuntime: (DeviceUid) -> Result<Unit> = connectRuntime,
@@ -71,7 +71,7 @@ internal class DeviceOtaCoordinator(
     init {
         require(restartWaitMillis >= 0L)
         require(discoverySettleMillis >= 0L)
-        runtimeEvents?.let { events ->
+        runtimeLifecycleEvents?.let { events ->
             scope.launch { events.collect(::processLifecycleEvent) }
         }
         runtimeTypedEvents?.let { events ->
@@ -317,13 +317,12 @@ internal class DeviceOtaCoordinator(
             updater
         }
 
-    private fun processLifecycleEvent(event: AqlWsEvent) {
+    private fun processLifecycleEvent(event: DeviceRuntimeLifecycleEvent) {
         when (event) {
-            is AqlWsEvent.Authenticated -> recoverAfterAuthentication(event.deviceUid)
-            is AqlWsEvent.Closed -> markRuntimeUnavailable(event.deviceUid)
-            is AqlWsEvent.Failure -> markRuntimeUnavailable(event.deviceUid)
-            is AqlWsEvent.Opened,
-            is AqlWsEvent.Message -> Unit
+            is DeviceRuntimeLifecycleEvent.Authenticated ->
+                recoverAfterAuthentication(event.deviceUid)
+            is DeviceRuntimeLifecycleEvent.Unavailable ->
+                markRuntimeUnavailable(event.deviceUid)
         }
     }
 

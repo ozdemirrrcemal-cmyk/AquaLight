@@ -2,7 +2,6 @@ package com.aqua.aqualight.data.devices.menu
 
 import com.aqua.aqualight.application.devices.DeviceMenuAccessResult
 import com.aqua.aqualight.application.devices.DeviceMenuUnavailableReason
-import com.aqua.aqualight.data.devices.contract.AqlWsContract
 import com.aqua.aqualight.data.devices.model.DeviceConnectionState
 import com.aqua.aqualight.data.devices.model.DeviceFamily
 import com.aqua.aqualight.data.devices.model.DeviceIdentity
@@ -12,19 +11,14 @@ import com.aqua.aqualight.data.devices.model.DeviceRuntimeEndpoint
 import com.aqua.aqualight.data.devices.model.DeviceSnapshot
 import com.aqua.aqualight.data.devices.model.DeviceUid
 import com.aqua.aqualight.data.devices.runtime.ws.AqlWsConnectionState
-import com.aqua.aqualight.data.devices.runtime.ws.AqlWsEvent
-import com.aqua.aqualight.data.devices.runtime.ws.AqlWsIncomingMessage
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.async
 import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.test.advanceUntilIdle
 import kotlinx.coroutines.test.runCurrent
 import kotlinx.coroutines.test.runTest
-import org.json.JSONObject
 import org.junit.Assert.assertEquals
-import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
 import org.junit.Test
 
@@ -77,11 +71,7 @@ class DefaultDeviceMenuAccessOperationsTest {
                 deviceUid = runtimeSnapshot.deviceUid,
                 authenticatedAtMillis = 100L
             )
-            responseOnNetworkStatusRequest = successfulResponse(
-                id = REQUEST_ID,
-                module = "",
-                action = ""
-            )
+            livenessProofSucceeds = true
         }
         val operations = DefaultDeviceMenuAccessOperations(
             runtimePort = port,
@@ -135,7 +125,7 @@ class DefaultDeviceMenuAccessOperationsTest {
     }
 
     @Test
-    fun `matching successful runtime response records canonical proof before opening`() = runTest {
+    fun `correlated successful runtime response records canonical proof before opening`() = runTest {
         val snapshot = snapshot(
             state = DeviceConnectionState(onlineState = DeviceOnlineState.CONNECTING_WS)
         )
@@ -145,11 +135,7 @@ class DefaultDeviceMenuAccessOperationsTest {
         )
         val port = FakeDeviceMenuRuntimePort(snapshot = snapshot).apply {
             currentRuntimeState = authenticated
-            responseOnNetworkStatusRequest = successfulResponse(
-                id = REQUEST_ID,
-                module = "",
-                action = ""
-            )
+            livenessProofSucceeds = true
         }
         val operations = DefaultDeviceMenuAccessOperations(
             runtimePort = port,
@@ -175,11 +161,7 @@ class DefaultDeviceMenuAccessOperationsTest {
                 deviceUid = snapshot.deviceUid,
                 authenticatedAtMillis = 100L
             )
-            responseOnNetworkStatusRequest = successfulResponse(
-                id = REQUEST_ID,
-                module = "",
-                action = ""
-            )
+            livenessProofSucceeds = true
             networkStatusRequestGate = requestGate
         }
         val operations = DefaultDeviceMenuAccessOperations(
@@ -258,42 +240,6 @@ class DefaultDeviceMenuAccessOperationsTest {
         assertEquals(0, port.currentDeviceCalls)
     }
 
-    @Test
-    fun `runtime proof accepts omitted command metadata but rejects contradictions`() {
-        val deviceUid = DeviceUid("device-proof")
-        val compatible = AqlWsEvent.Message(
-            deviceUid = deviceUid,
-            parsed = successfulResponse(
-                id = REQUEST_ID,
-                module = "",
-                action = ""
-            )
-        )
-        val contradictory = AqlWsEvent.Message(
-            deviceUid = deviceUid,
-            parsed = successfulResponse(
-                id = REQUEST_ID,
-                module = AqlWsContract.MODULE_NETWORK,
-                action = "unexpected.action"
-            )
-        )
-
-        assertTrue(
-            DeviceMenuRuntimeProofPolicy.accepts(
-                event = compatible,
-                requestedDeviceUid = deviceUid,
-                expectedRequestId = REQUEST_ID
-            )
-        )
-        assertFalse(
-            DeviceMenuRuntimeProofPolicy.accepts(
-                event = contradictory,
-                requestedDeviceUid = deviceUid,
-                expectedRequestId = REQUEST_ID
-            )
-        )
-    }
-
     private fun snapshot(
         state: DeviceConnectionState = DeviceConnectionState(),
         withRuntimeEndpoint: Boolean = true
@@ -324,11 +270,6 @@ class DefaultDeviceMenuAccessOperationsTest {
         private val connectionStateFlow = MutableStateFlow<AqlWsConnectionState>(
             AqlWsConnectionState.Disconnected
         )
-        private val eventFlow = MutableSharedFlow<AqlWsEvent>(
-            replay = 1,
-            extraBufferCapacity = 8
-        )
-
         var currentRuntimeState: AqlWsConnectionState? = null
             set(value) {
                 field = value
@@ -336,7 +277,7 @@ class DefaultDeviceMenuAccessOperationsTest {
             }
         var connectSucceeds: Boolean = true
         var snapshotAfterRefresh: DeviceSnapshot? = null
-        var responseOnNetworkStatusRequest: AqlWsIncomingMessage.Response? = null
+        var livenessProofSucceeds: Boolean = true
         var networkStatusRequestGate: CompletableDeferred<Unit>? = null
 
         var currentDeviceCalls = 0
@@ -377,19 +318,10 @@ class DefaultDeviceMenuAccessOperationsTest {
             return connectSucceeds
         }
 
-        override fun runtimeEvents(): Flow<AqlWsEvent> = eventFlow
-
-        override suspend fun requestNetworkStatus(deviceUid: DeviceUid): String? {
+        override suspend fun proveCurrentLiveness(deviceUid: DeviceUid): Boolean {
             requestNetworkStatusCalls += 1
             networkStatusRequestGate?.await()
-            val response = responseOnNetworkStatusRequest ?: return REQUEST_ID
-            eventFlow.tryEmit(
-                AqlWsEvent.Message(
-                    deviceUid = deviceUid,
-                    parsed = response
-                )
-            )
-            return REQUEST_ID
+            return livenessProofSucceeds
         }
 
         override fun recordControlProof(deviceUid: DeviceUid): DeviceSnapshot? {
@@ -406,23 +338,4 @@ class DefaultDeviceMenuAccessOperationsTest {
         }
     }
 
-    private companion object {
-        const val REQUEST_ID = "request-network-status"
-
-        fun successfulResponse(
-            id: String,
-            module: String,
-            action: String
-        ): AqlWsIncomingMessage.Response {
-            return AqlWsIncomingMessage.Response(
-                id = id,
-                type = "response",
-                module = module,
-                action = action,
-                data = JSONObject(),
-                ok = true,
-                statusCode = 200
-            )
-        }
-    }
 }

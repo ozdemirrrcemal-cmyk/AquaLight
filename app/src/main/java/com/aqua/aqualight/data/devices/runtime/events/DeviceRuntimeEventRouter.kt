@@ -12,10 +12,7 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 
-/**
- * Routes authenticated firmware events without consuming or rewriting the legacy raw event flow.
- * State is isolated by device and connection generation.
- */
+/** Routes internal wire events into device- and generation-isolated typed runtime state. */
 class DeviceRuntimeEventRouter(
     eventBufferCapacity: Int = DEFAULT_EVENT_BUFFER_CAPACITY
 ) {

@@ -19,8 +19,8 @@ import kotlinx.coroutines.launch
 /**
  * Typed event pipeline for module repositories.
  *
- * The raw repository event stream remains unchanged. Routed events are additionally offered to
- * the relevant module state reducer after device and connection-generation validation.
+ * Wire events remain inside the data runtime. Only validated typed events are offered to module
+ * reducers and higher-level runtime coordinators.
  */
 class DeviceRuntimeEventPipeline(
     private val repository: DeviceRuntimeRepository,

@@ -1,16 +1,17 @@
 # AquaLight WS v1 Migration Tracker
 
-Branch: `integration/aql-ws-v1-commercial`  
-Firmware source: `AquaLight-Firmware`  
+Promoted branch: `integration/aql-ws-v1-commercial` → `main` via PR #192
+Firmware source: `AquaLight-Firmware`
 Target: **41 authenticated commands / 0 public commands**
 
 ## Current position
 
-- Current stage: **10 — COMPLETE / firmware interoperability and final matrix**
-- Active branch: `integration/aql-ws-v1-commercial`
-- Status: **STAGE 10 AUTOMATED PASS / PR #191 MERGED — PHYSICAL SIGNED-OTA FOLLOW-UP PENDING**
-- Completed sequence: **Stages 00–10 merged into integration**
-- Next: Promote the completed integration branch to `main`, then start `feat/ota-update-ui` from the exact promoted SHA.
+- Current stage: **11 — WS v1 commercial cleanup and closure**
+- Active branch: `chore/ws-v1-commercial-closure`
+- Status: **IMPLEMENTATION IN PROGRESS — PHYSICAL SIGNED-OTA RELEASE GATE PENDING**
+- Completed sequence: **Stages 00–10 and OTA UI PR #193 merged into `main`**
+- Next: Complete Stage 11 automated gates and PR evidence, then close the canonical physical
+  signed-OTA release gate before commercial release approval.
 
 ## Fixed rules
 
@@ -49,7 +50,7 @@ Target: **41 authenticated commands / 0 public commands**
   - [x] Duplicate/late response rejection
   - [x] Same message ID isolated across devices/generations
   - [x] Single existing transport event collector preserved
-  - [x] Matched broker responses do not leak to legacy event consumers
+  - [x] Matched broker responses do not re-enter the internal wire-event pipeline
   - [x] Unmatched events and metadata bootstrap responses remain observable
   - [x] WebSocket transport/codec/crypto unchanged
   - [x] Unit and repository integration tests added
@@ -67,7 +68,7 @@ Target: **41 authenticated commands / 0 public commands**
   - [x] Rejected stale-generation events
   - [x] Preserved per-device/session isolation
   - [x] Added deterministic per-device latest-state reductions
-  - [x] Preserved unmatched/legacy raw event visibility
+  - [x] Kept unmatched wire events internal to the repository/router boundary
   - [x] Added unit and repository pipeline integration tests
   - [x] Android CI, installable APK, Emulator API 27/36 and CodeQL passed
   - [x] Zero critical/high CodeQL findings
@@ -82,7 +83,7 @@ Target: **41 authenticated commands / 0 public commands**
   - [x] Firmware status and OTA status read-only aligned
   - [x] Unpair/reset token and session lifecycle enforced
   - [x] Production common-command paths moved to correlated request broker
-  - [x] Relevant typed events consumed without raw compatibility regression
+  - [x] Relevant typed events consumed without a parallel raw-message module path
   - [x] Unit, golden and repository integration tests added
   - [x] Android CI, installable APK, Emulator API 27/36 and CodeQL passed
   - [x] Current custom-name firmware interoperability and physical menu liveness passed
@@ -214,7 +215,7 @@ Target: **41 authenticated commands / 0 public commands**
   - [x] Installable Debug APK — run #206
   - [x] Emulator API 27 / 36 — run #1038
   - [x] CodeQL Security Scan — run #4699
-  - [ ] Physical signed-OTA smoke: download, verify, restart, rediscover, reconnect and version proof — carried into the Stage 10 final physical gate
+  - [x] Physical signed-OTA acceptance transferred without inference to the canonical Stage 11 manual release gate
   - [x] PR evidence recorded on PR #190 for tested head `c880207839fac8a119acb08bd82cd420128156cd`
   - [x] Squash-merged to integration as `4347adac8dfc5ebf07976bd7570c3de823eae22f`
 
@@ -239,19 +240,36 @@ Target: **41 authenticated commands / 0 public commands**
   - [x] Installable Debug APK — run #209
   - [x] Emulator API 27 / 36 — run #1041
   - [x] CodeQL Security Scan — run #4702 with zero new Detekt debt
-  - [ ] Physical signed-OTA release-candidate smoke: download, verify, restart, rediscover, reconnect and exact version proof — post-merge commercial-device follow-up
+  - [x] Physical signed-OTA acceptance transferred without inference to the canonical Stage 11 manual release gate
   - [x] PR evidence recorded on PR #191 for tested head `cd7a0500022f1cd201dd6936b2158c6ff9b11563`
   - [x] Squash-merged to integration as `8b0fbfc7fe85063f4e57a69b5e5b879768521f9a`
 
-## Relevant gate after each stage
+- [ ] **11** `chore/ws-v1-commercial-closure` — **IN PROGRESS**
+  - [x] Merge OTA update experience PR #193 into `main` as `b11bef019a4b93a5c1c34539705512758d1f29a6`
+  - [x] Replace the Settings preview update flow with the real signed OTA presentation/runtime path
+  - [x] Remove tracked Gradle state and obsolete `.gitkeep` placeholders from populated modules
+  - [x] Remove unused menu raw-event proof policy and its compatibility-only tests
+  - [x] Remove permissive time parsing and the unused fire-and-forget time result model
+  - [x] Remove detached raw OTA event mapping; consume only typed OTA events
+  - [x] Remove `AqlWsCommandClient` and all direct fire-and-forget production accessors
+  - [x] Move presence liveness to correlated `network.status.get` success
+  - [x] Expose lifecycle-only runtime events to OTA without raw WebSocket message access
+  - [x] Add an executable commercial-closure guard and CI/release enforcement
+  - [x] Repository tools suite (141/141) and all 29 architecture/protocol/OTA guards pass locally
+  - [ ] Detekt reports zero blocker and zero new advisory debt
+  - [ ] Android CI, CodeQL, dependency integrity, installable APK and API 27/36 emulator pass
+  - [ ] Canonical physical signed-OTA release gate in `AQL_WS_V1_COMMERCIAL_CLOSURE.md`
+  - [ ] PR evidence records the tested Stage 11 head
 
-- [ ] Android build passes
-- [ ] Unit/golden/protocol tests pass
-- [ ] Changed module tests pass
-- [ ] Provisioning/UDP/WebSocket/presence regressions pass when those areas are affected
-- [ ] Physical-device smoke passes when a production runtime behavior is affected
-- [ ] No secret/token logging
-- [ ] PR evidence recorded
+## Final migration gate status
+
+- [x] Stages 00–10 and OTA UI Android builds passed on their recorded tested heads
+- [x] Unit, golden, protocol and firmware-interoperability tests passed on recorded tested heads
+- [x] Changed module tests passed on recorded tested heads
+- [x] Provisioning, UDP, WebSocket and presence regressions passed where affected
+- [ ] Canonical physical signed-OTA commercial-device gate passes
+- [x] No secret/token logging detected by the recorded automated gates
+- [ ] Stage 11 tested-head and PR evidence recorded
 
 ## Progress log
 
@@ -286,3 +304,7 @@ Target: **41 authenticated commands / 0 public commands**
 | 2026-08-02 | Stage 10 final interoperability implementation | LOCAL CONTRACT GATES PASSED | Publish draft PR and complete remote plus physical evidence |
 | 2026-08-02 | Stage 10 final interoperability pull-request gates | AUTOMATED PASS / PR #191 READY | Squash-merge now; run physical signed-OTA smoke afterwards |
 | 2026-08-02 | Stage 10 firmware interoperability | AUTOMATED PASS / PR #191 MERGED | Promote completed integration branch to `main`; retain physical signed-OTA follow-up |
+| 2026-08-02 | WS v1 integration promotion | PASS / PR #192 MERGED | Build OTA UI from promoted `main` |
+| 2026-08-02 | Commercial OTA update experience | AUTOMATED PASS / PR #193 MERGED | Start Stage 11 cleanup and closure |
+| 2026-08-02 | Stage 11 closure branch opened | IN PROGRESS | Remove compatibility residue and add permanent guards |
+| 2026-08-02 | Stage 11 local contract and hygiene gates | PASS / 141 TESTS / 29 GUARDS / 0 BLOCKERS | Publish draft PR and complete Android/Detekt CI evidence |

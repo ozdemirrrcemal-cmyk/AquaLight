@@ -29,7 +29,6 @@ DEVICES_TEST = ROOT / "app/src/test/java/com/aqua/aqualight/ui/tabs/devices/Devi
 STATUS_TEST = ROOT / "app/src/test/java/com/aqua/aqualight/ui/tabs/settings/device/DeviceStatusViewModelBoundaryTest.kt"
 SETTINGS_TEST = ROOT / "app/src/test/java/com/aqua/aqualight/ui/tabs/settings/SettingsViewModelBoundaryTest.kt"
 AUTH_POLICY_TEST = ROOT / "app/src/test/java/com/aqua/aqualight/data/devices/menu/DeviceMenuAuthenticationPolicyTest.kt"
-PROOF_POLICY_TEST = ROOT / "app/src/test/java/com/aqua/aqualight/data/devices/menu/DeviceMenuRuntimeProofPolicyTest.kt"
 MENU_ACCESS_TEST = ROOT / "app/src/test/java/com/aqua/aqualight/data/devices/menu/DefaultDeviceMenuAccessOperationsTest.kt"
 DISCOVERY_CONTRACT_TEST = ROOT / "app/src/test/java/com/aqua/aqualight/data/devices/discovery/udp/AqlDiscoveryParserContractTest.kt"
 SEQUENCE = ROOT / "docs/commercial-architecture-closure-record.md"
@@ -65,7 +64,6 @@ devices_test = read(DEVICES_TEST)
 status_test = read(STATUS_TEST)
 settings_test = read(SETTINGS_TEST)
 auth_policy_test = read(AUTH_POLICY_TEST)
-proof_policy_test = read(PROOF_POLICY_TEST)
 menu_access_test = read(MENU_ACCESS_TEST)
 discovery_contract_test = read(DISCOVERY_CONTRACT_TEST)
 sequence = read(SEQUENCE)
@@ -160,8 +158,8 @@ for token, reason in (
     ("class RepositoryDeviceMenuRuntimePort", "repository access needs a concrete adapter"),
     ("class DefaultDeviceMenuAccessOperations", "menu access must implement the application contract"),
     ("DeviceMenuAuthenticationPolicy", "fresh authenticated sessions must be verified"),
-    ("DeviceMenuRuntimeProofPolicy", "command responses must prove current liveness"),
-    ("expectedRequestId", "runtime proof must correlate request ids"),
+    ("proveCurrentLiveness", "menu liveness must use the correlated command outcome"),
+    ("outcome is DeviceRuntimeCommandOutcome.Success", "queued writes must not prove liveness"),
     ("recordControlProof", "successful liveness proof must update the canonical registry"),
     ("MENU_ACCESS_BUDGET_MS", "interactive liveness verification must be bounded"),
     ("AUTHENTICATION_REQUIRED", "authentication failure must remain typed"),
@@ -364,7 +362,11 @@ for path, text, required_tokens in (
 
 for path, text, token in (
     (AUTH_POLICY_TEST, auth_policy_test, "fresh authentication for requested device opens menu"),
-    (PROOF_POLICY_TEST, proof_policy_test, "matching successful network status response proves current liveness"),
+    (
+        MENU_ACCESS_TEST,
+        menu_access_test,
+        "correlated successful runtime response records canonical proof before opening",
+    ),
 ):
     if token not in text:
         errors.append(f"{path.relative_to(ROOT)}: migrated menu policy coverage is missing: {token}")

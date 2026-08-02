@@ -14,9 +14,9 @@ import com.aqua.aqualight.data.devices.monitor.DevicePresenceRuntimeMonitor
 import com.aqua.aqualight.data.devices.monitor.DeviceStatusAggregator
 import com.aqua.aqualight.data.devices.runtime.events.DeviceRuntimeEventPayload
 import com.aqua.aqualight.data.devices.runtime.events.DeviceRuntimeEventPipeline
+import com.aqua.aqualight.data.devices.runtime.events.DeviceRuntimeLifecycleEvent
 import com.aqua.aqualight.data.devices.runtime.events.DeviceRuntimeTypedEvent
 import com.aqua.aqualight.data.devices.runtime.modules.DeviceRuntimeModuleProvider
-import com.aqua.aqualight.data.devices.runtime.ws.AqlWsCommandClient
 import com.aqua.aqualight.data.devices.runtime.ws.AqlWsConnectionState
 import com.aqua.aqualight.data.devices.runtime.ws.AqlWsEvent
 import com.aqua.aqualight.data.devices.runtime.ws.AqlWsIncomingMessage
@@ -238,14 +238,10 @@ class DevicesRepository(
         runtime.reconnectAfterNetworkRestore(snapshot).getOrThrow()
     }
 
-    fun commandClient(): AqlWsCommandClient? = runtimeRepository?.commandClient()
-
-    fun commandClient(deviceUid: DeviceUid): AqlWsCommandClient? =
-        runtimeRepository?.commandClient(deviceUid)
-
     fun runtimeModules(): DeviceRuntimeModuleProvider? = runtimeRepository?.runtimeModules
 
-    fun runtimeEvents(): SharedFlow<AqlWsEvent>? = runtimeRepository?.events
+    fun runtimeLifecycleEvents(): SharedFlow<DeviceRuntimeLifecycleEvent>? =
+        runtimeRepository?.lifecycleEvents
 
     fun typedRuntimeEvents(): SharedFlow<DeviceRuntimeTypedEvent> = typedRuntimeEvents
 

@@ -35,7 +35,7 @@ class DeviceOtaCommercialHardeningTest {
             snapshotProvider = { product().toSnapshot() },
             connectRuntime = { Result.success(Unit) },
             updaterProvider = { updater(gateway) },
-            runtimeEvents = null
+            runtimeLifecycleEvents = null
         )
         val plan = (
             coordinator.checkAvailability(DEVICE_UID, MANIFEST_URL, applyNow = true).getOrThrow()

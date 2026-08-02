@@ -22,7 +22,6 @@ import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.asStateFlow
-import kotlinx.coroutines.flow.filterIsInstance
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withTimeout
@@ -34,7 +33,7 @@ import org.junit.Test
 class DeviceRuntimeEventPipelineTest {
 
     @Test
-    fun `typed pipeline routes event while legacy raw event remains observable`() = runBlocking {
+    fun `typed pipeline routes an internal wire event exactly once`() = runBlocking {
         val transport = RecordingTransport()
         val repository = repository(transport)
         val pipeline = DeviceRuntimeEventPipeline(repository, this)
@@ -44,11 +43,6 @@ class DeviceRuntimeEventPipelineTest {
         val typed = async(start = CoroutineStart.UNDISPATCHED) { pipeline.events.first() }
         val routing = async(start = CoroutineStart.UNDISPATCHED) {
             pipeline.routingResults.first()
-        }
-        val raw = async(start = CoroutineStart.UNDISPATCHED) {
-            repository.events.filterIsInstance<AqlWsEvent.Message>().first { event ->
-                event.parsed is AqlWsIncomingMessage.Event
-            }
         }
         val rawEvent = AqlWsEvent.Message(
             deviceUid = DEVICE_UID,
@@ -63,7 +57,6 @@ class DeviceRuntimeEventPipelineTest {
 
         transport.emit(rawEvent)
 
-        assertEquals(rawEvent, raw.await())
         assertEquals(
             DeviceRuntimeTypedEvent.Type.NETWORK_STATE_CHANGED,
             typed.await().type
