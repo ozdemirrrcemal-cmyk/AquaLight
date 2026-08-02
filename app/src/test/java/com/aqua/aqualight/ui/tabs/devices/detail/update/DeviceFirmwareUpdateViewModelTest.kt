@@ -202,7 +202,6 @@ class DeviceFirmwareUpdateViewModelTest {
             productId = "com.aqualight.dosing.dose_pro_4",
             model = "dose_pro_4",
             hardwareRevision = "2.0",
-            displayName = "Dose Pro 4",
             filename = "AquaLight-dosing_dose_pro_4-v2.0.0-ota.bin",
             downloadUrl = "https://example.invalid/AquaLight-ota.bin",
             sha256 = "a".repeat(64),
