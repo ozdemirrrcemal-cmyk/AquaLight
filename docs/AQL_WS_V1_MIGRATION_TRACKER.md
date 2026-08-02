@@ -6,11 +6,11 @@ Target: **41 authenticated commands / 0 public commands**
 
 ## Current position
 
-- Current stage: **06 — Cooling runtime alignment**
-- Active branch: `feat/cooling-06-runtime-alignment`
-- Status: **PASSED — PR #187 READY FOR MERGE**
-- Previous stage: **05 PASSED / PR #186 MERGED**
-- Next: Merge Stage 06, then open Stage 07 Timer runtime alignment from `integration/aql-ws-v1-commercial`.
+- Current stage: **07 — Timer runtime alignment**
+- Active branch: `feat/timer-07-runtime-alignment`
+- Status: **PASSED — PR #188 READY FOR MERGE**
+- Previous stage: **06 PASSED / PR #187 MERGED**
+- Next: Merge Stage 07, then open Stage 08 Dosing runtime alignment from `integration/aql-ws-v1-commercial`.
 
 ## Fixed rules
 
@@ -105,7 +105,7 @@ Target: **41 authenticated commands / 0 public commands**
   - [x] WRGB Pro Elite physical Light regression passed
   - [x] PR evidence recorded
 
-- [x] **06** `feat/cooling-06-runtime-alignment` — **PASSED / PR #187 READY FOR MERGE**
+- [x] **06** `feat/cooling-06-runtime-alignment` — **MERGED / PR #187**
   - [x] Confirm both Cooling commands: `cooling.status.get`, `cooling.config.apply`
   - [x] Align with firmware PR #26 / commit `38e8812c1bcecf948ebab85979bff21a24f4b79c`
   - [x] Freeze exact four-field live temperature snapshot/event shape
@@ -130,12 +130,32 @@ Target: **41 authenticated commands / 0 public commands**
   - [x] PR evidence recorded on PR #187 for tested head `355b00b6ba9dc4e5e721dc8c30aa4b757a928092`
   - [x] Physical Cooling screen regression N/A: no production UI consumer is changed in this Stage
 
-- [ ] **07** `feat/timer-07-runtime-alignment`
-  - 3/3 timer commands
-  - Channel state/name
-  - Schedule create/update/delete
-  - `timer.status.changed`
-  - Dosing products must not expose timer API
+- [x] **07** `feat/timer-07-runtime-alignment` — **PASSED / PR #188 READY FOR MERGE**
+  - [x] Confirm and mirror all 3 Timer commands: `timer.status.get`, `timer.config.apply`, `timer.channel.set`
+  - [x] Align with firmware PR #26 / commit `38e8812c1bcecf948ebab85979bff21a24f4b79c`
+  - [x] Add fail-closed status, config-mutation and channel-mutation parsers with exact response keys and literals
+  - [x] Support exact Auto/On/Off channel state and clearable channel display-name overrides
+  - [x] Model schedule create/update/delete as firmware-compatible full-list replacement, including an empty delete-all payload
+  - [x] Reject invalid weekday, interval, repeat, channel-binding, derived-time and standalone `amountMl` values
+  - [x] Move production Timer commands from send-success to the correlated request broker
+  - [x] Expose device-scoped Timer status/config state through the runtime module provider
+  - [x] Reduce `timer.status.changed` snapshot and command-result events deterministically
+  - [x] Reject stale/duplicate status snapshots and handle ESP32 32-bit `millis()` wraparound
+  - [x] Clear Timer runtime state on reconnect/generation changes
+  - [x] Gate Timer access using exact family, capability, limit, feature, screen and module metadata
+  - [x] Require Timer status/config channel counts to match authenticated product metadata
+  - [x] Prevent dosing products with the internal timer engine from exposing or reducing the standalone Timer API
+  - [x] Keep GPIO, LEDC/PWM, mapping and hardware calibration fields read-only
+  - [x] Add parser, mutation, capability, repository and typed-event reducer tests (25 local Timer contract tests passed)
+  - [x] WebSocket protocol, commercial catalog runtime and device catalog parity guards passed locally
+  - [x] Primary Detekt and zero-new-advisory-debt checks passed locally for the Stage 07 change set
+  - [x] Keep Timer layout, ViewModel, UI state and presentation resources unchanged
+  - [x] Android CI — run #2910
+  - [x] Installable Debug APK — run #202
+  - [x] Emulator API 27 / 36 — run #1034
+  - [x] CodeQL Security Scan — run #4695
+  - [x] PR evidence recorded on PR #188 for tested head `e6cfd0acb327f17a4b18912ce77a11a411e213a4`
+  - [x] Physical Timer screen regression N/A: no production UI consumer is changed in this Stage
 
 - [ ] **08** `feat/dosing-08-runtime-alignment`
   - 11/11 dosing commands
@@ -189,4 +209,5 @@ Target: **41 authenticated commands / 0 public commands**
 | 2026-08-01 | Stage 06 Cooling runtime branch opened | IN PROGRESS | Verify live temperature telemetry before implementation |
 | 2026-08-01 | Stage 06 live temperature audit | CONTRACT GAP FOUND | Freeze and implement firmware telemetry contract first |
 | 2026-08-02 | Stage 06 UI scope correction | PASS | Keep layout, ViewModel and presentation resources unchanged; validate runtime layer only |
-| 2026-08-02 | Stage 06 Cooling runtime alignment | PASS / PR #187 READY FOR MERGE | Merge to integration and start Stage 07 |
+| 2026-08-02 | Stage 06 Cooling runtime alignment | PASS / PR #187 MERGED | Start Stage 07 |
+| 2026-08-02 | Stage 07 Timer runtime alignment | PASS / PR #188 READY FOR MERGE | Merge to integration and start Stage 08 |
