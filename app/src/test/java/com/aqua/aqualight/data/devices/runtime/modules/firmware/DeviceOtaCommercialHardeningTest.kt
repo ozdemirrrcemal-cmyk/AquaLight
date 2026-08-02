@@ -83,6 +83,7 @@ class DeviceOtaCommercialHardeningTest {
 
         assertEquals(listOf(exact), matching)
         assertEquals(exact.env, availability.plan.env)
+        assertEquals(TARGET_VERSION, availability.plan.firmware.version)
         assertEquals(exact.firmware.sha256, availability.plan.firmware.sha256)
     }
 
@@ -246,6 +247,7 @@ class DeviceOtaCommercialHardeningTest {
                 hardwareRevision = product.hardwareRevision.value
             ),
             firmware = DeviceFirmwareAsset(
+                version = TARGET_VERSION,
                 filename = otaFilename,
                 url = releaseUrl + otaFilename,
                 sha256 = "a".repeat(64),
@@ -341,7 +343,7 @@ class DeviceOtaCommercialHardeningTest {
         .put(
             "firmware",
             JSONObject()
-                .put("version", TARGET_VERSION)
+                .put("version", firmware.version)
                 .put("filename", firmware.filename)
                 .put("url", firmware.url)
                 .put("sha256", firmware.sha256)
