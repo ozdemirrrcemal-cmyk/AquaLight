@@ -8,9 +8,9 @@ Target: **41 authenticated commands / 0 public commands**
 
 - Current stage: **09 — OTA update orchestration**
 - Active branch: `feat/ota-09-update-orchestration`
-- Status: **LOCAL AUTOMATED GATES PASSED — REMOTE/PHYSICAL EVIDENCE PENDING**
+- Status: **REMOTE AUTOMATED GATES PASSED — MERGE APPROVED / PHYSICAL FOLLOW-UP PENDING**
 - Previous stage: **08 PASSED / PR #189 MERGED**
-- Next: Publish the Stage 09 PR, complete remote CI and record a physical signed-OTA smoke before merge.
+- Next: Squash-merge PR #190 without waiting for the documentation-only rerun; record the physical signed-OTA smoke after merge.
 
 ## Fixed rules
 
@@ -187,7 +187,7 @@ Target: **41 authenticated commands / 0 public commands**
   - [x] Physical Dosing screen regression N/A: no production UI consumer is changed in this Stage
   - [x] Squash-merged to integration as `fe2e7da20b7fb83dc6f4e5ea6e694979fe8f3da3`
 
-- [ ] **09** `feat/ota-09-update-orchestration`
+- [x] **09** `feat/ota-09-update-orchestration` — **READY TO MERGE / PR #190**
   - [x] Audit current firmware commit `38e8812c1bcecf948ebab85979bff21a24f4b79c`
   - [x] Freeze exact `AqlFirmwareCommands.hpp` (`8b1107d`) start/status/clear responses
   - [x] Freeze exact `AqlOtaService.hpp` (`7150082`) lifecycle and restart semantics
@@ -210,12 +210,12 @@ Target: **41 authenticated commands / 0 public commands**
   - [x] Runtime module provider and application adapter wiring compiled independently
   - [x] Repository Python suite passed (138 tests) and all architecture/protocol/catalog guards passed locally
   - [x] Primary Detekt and zero-new-advisory-debt policy passed locally
-  - [ ] Android CI
-  - [ ] Installable Debug APK
-  - [ ] Emulator API 27 / 36
-  - [ ] CodeQL Security Scan
-  - [ ] Physical signed-OTA smoke: download, verify, restart, rediscover, reconnect and version proof
-  - [ ] PR evidence recorded
+  - [x] Android CI — run #2914
+  - [x] Installable Debug APK — run #206
+  - [x] Emulator API 27 / 36 — run #1038
+  - [x] CodeQL Security Scan — run #4699
+  - [ ] Physical signed-OTA smoke: download, verify, restart, rediscover, reconnect and version proof — explicitly deferred as a post-merge physical follow-up
+  - [x] PR evidence recorded on PR #190 for tested head `c880207839fac8a119acb08bd82cd420128156cd`
 
 - [ ] **10** `test/ws-10-firmware-interoperability`
   - 41/41 command parity
@@ -261,4 +261,5 @@ Target: **41 authenticated commands / 0 public commands**
 | 2026-08-02 | Stage 08 Dosing pull-request gates | PASS / PR #189 READY | Request explicit merge approval |
 | 2026-08-02 | Stage 08 Dosing runtime alignment | PASS / PR #189 MERGED | Start Stage 09 |
 | 2026-08-02 | Stage 09 OTA orchestration branch opened | IN PROGRESS | Freeze firmware OTA and restart contracts |
-| 2026-08-02 | Stage 09 OTA orchestration implementation | LOCAL GATES PASSED | Publish PR and complete remote/physical evidence |
+| 2026-08-02 | Stage 09 OTA orchestration implementation | LOCAL GATES PASSED | Publish PR and complete remote evidence |
+| 2026-08-02 | Stage 09 OTA orchestration pull-request gates | PASS / PR #190 READY | Squash-merge now; run physical signed-OTA smoke afterwards |
