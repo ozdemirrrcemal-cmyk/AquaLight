@@ -38,6 +38,18 @@ def require_tokens(label: str, tokens: tuple[str, ...]) -> None:
             errors.append(f"{label} token is missing: {token}")
 
 
+def require_any_token(
+    label: str,
+    description: str,
+    tokens: tuple[str, ...],
+) -> None:
+    source = sources[label]
+    if not any(token in source for token in tokens):
+        errors.append(
+            f"{label} is missing a strict {description}; expected one of: {tokens}"
+        )
+
+
 def forbid_tokens(label: str, tokens: tuple[str, ...]) -> None:
     source = sources[label]
     for token in tokens:
@@ -164,9 +176,16 @@ require_tokens(
         "json.requireKnownKeys(",
         "json.requireExactKeys(PRODUCT_KEYS",
         "json.requireExactKeys(COMPATIBILITY_KEYS",
-        "json.requireExactKeys(ASSET_KEYS",
         "artifact.product.family == artifact.compatibility.family",
         "artifact.product.line == artifact.compatibility.line",
+    ),
+)
+require_any_token(
+    "manifest",
+    "firmware asset key boundary",
+    (
+        "json.requireExactKeys(ASSET_KEYS",
+        "required = ASSET_KEYS,\n                optional = FIRMWARE_ASSET_OPTIONAL_KEYS",
     ),
 )
 require_tokens(
