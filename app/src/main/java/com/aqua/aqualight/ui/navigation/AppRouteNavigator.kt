@@ -62,24 +62,27 @@ object AppRouteNavigator {
         navController: NavController,
         deviceUid: String
     ): Boolean {
-        val normalizedDeviceUid = deviceUid.trim()
-        if (normalizedDeviceUid.isBlank()) return false
-
-        val hierarchyIds = navController.currentDestination
+        val graph = navController.currentDestination
             ?.hierarchy
             ?.map { destination -> destination.id }
             ?.toSet()
-            ?: return false
-        val graph = resolveDeviceFirmwareUpdateGraph(hierarchyIds) ?: return false
-        val directions: NavDirections = when (graph) {
-            DeviceFirmwareUpdateGraph.DEVICES -> NavDevicesDirections
-                .actionGlobalDeviceFirmwareUpdateFragment(normalizedDeviceUid)
-            DeviceFirmwareUpdateGraph.AQUARIUM -> NavAquariumDirections
-                .actionGlobalDeviceFirmwareUpdateFragment(normalizedDeviceUid)
+            ?.let(::resolveDeviceFirmwareUpdateGraph)
+        val directions: NavDirections? = if (deviceUid.isBlank()) {
+            null
+        } else {
+            when (graph) {
+                DeviceFirmwareUpdateGraph.DEVICES -> NavDevicesDirections
+                    .actionGlobalDeviceFirmwareUpdateFragment(deviceUid)
+                DeviceFirmwareUpdateGraph.AQUARIUM -> NavAquariumDirections
+                    .actionGlobalDeviceFirmwareUpdateFragment(deviceUid)
+                null -> null
+            }
         }
 
-        navController.navigate(directions)
-        return true
+        directions?.let { route ->
+            navController.navigate(route)
+        }
+        return directions != null
     }
 
     private fun standardRouteOptions() = navOptions {
