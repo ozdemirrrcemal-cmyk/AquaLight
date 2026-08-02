@@ -201,5 +201,5 @@ object AqlWsContract {
     fun authenticatedCommandKeys(): Set<String> = authenticatedCommands.toSet()
 
     private fun commandKey(module: String, action: String): String =
-        "${module.trim()}.${action.trim()}"
+        "$module.$action"
 }

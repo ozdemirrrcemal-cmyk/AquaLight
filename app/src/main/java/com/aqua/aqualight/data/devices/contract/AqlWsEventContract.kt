@@ -33,7 +33,7 @@ object AqlWsEventContract {
     )
 
     fun isRegisteredEvent(module: String, action: String): Boolean =
-        Definition(module.trim(), action.trim()) in registeredEvents
+        Definition(module, action) in registeredEvents
 
     fun definitions(): Set<Definition> = registeredEvents.toSet()
 

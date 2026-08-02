@@ -6,11 +6,11 @@ Target: **41 authenticated commands / 0 public commands**
 
 ## Current position
 
-- Current stage: **09 — OTA update orchestration**
-- Active branch: `feat/ota-09-update-orchestration`
-- Status: **REMOTE AUTOMATED GATES PASSED — MERGE APPROVED / PHYSICAL FOLLOW-UP PENDING**
-- Previous stage: **08 PASSED / PR #189 MERGED**
-- Next: Squash-merge PR #190 without waiting for the documentation-only rerun; record the physical signed-OTA smoke after merge.
+- Current stage: **10 — firmware interoperability and final matrix**
+- Active branch: `test/ws-10-firmware-interoperability`
+- Status: **AUTOMATED GATES PASSED — PHYSICAL SIGNED-OTA FOLLOW-UP PENDING**
+- Previous stage: **09 PASSED / PR #190 MERGED**
+- Next: Merge PR #191, promote the completed integration branch to `main`, then record the physical signed-OTA release-candidate smoke.
 
 ## Fixed rules
 
@@ -187,7 +187,7 @@ Target: **41 authenticated commands / 0 public commands**
   - [x] Physical Dosing screen regression N/A: no production UI consumer is changed in this Stage
   - [x] Squash-merged to integration as `fe2e7da20b7fb83dc6f4e5ea6e694979fe8f3da3`
 
-- [x] **09** `feat/ota-09-update-orchestration` — **READY TO MERGE / PR #190**
+- [x] **09** `feat/ota-09-update-orchestration` — **MERGED / PR #190**
   - [x] Audit current firmware commit `38e8812c1bcecf948ebab85979bff21a24f4b79c`
   - [x] Freeze exact `AqlFirmwareCommands.hpp` (`8b1107d`) start/status/clear responses
   - [x] Freeze exact `AqlOtaService.hpp` (`7150082`) lifecycle and restart semantics
@@ -214,16 +214,33 @@ Target: **41 authenticated commands / 0 public commands**
   - [x] Installable Debug APK — run #206
   - [x] Emulator API 27 / 36 — run #1038
   - [x] CodeQL Security Scan — run #4699
-  - [ ] Physical signed-OTA smoke: download, verify, restart, rediscover, reconnect and version proof — explicitly deferred as a post-merge physical follow-up
+  - [ ] Physical signed-OTA smoke: download, verify, restart, rediscover, reconnect and version proof — carried into the Stage 10 final physical gate
   - [x] PR evidence recorded on PR #190 for tested head `c880207839fac8a119acb08bd82cd420128156cd`
+  - [x] Squash-merged to integration as `4347adac8dfc5ebf07976bd7570c3de823eae22f`
 
-- [ ] **10** `test/ws-10-firmware-interoperability`
-  - 41/41 command parity
-  - All firmware-event parity
-  - All user-write fields covered
-  - No hardware-owned editable fields
-  - Golden fixtures byte-identical
-  - All product families and nine SKUs checked before release
+- [x] **10** `test/ws-10-firmware-interoperability` — **AUTOMATED GATES PASSED / PHYSICAL RC FOLLOW-UP**
+  - [x] Audit firmware commit `38e8812c1bcecf948ebab85979bff21a24f4b79c`
+  - [x] Pin command names, event contract, all ten command handlers and the nested Timer/Dosing and pairing request parsers by firmware blob SHA
+  - [x] Verify exact 41 authenticated / 0 public command parity
+  - [x] Classify all 41 commands as 18 payloadless and 23 payload-bearing commands
+  - [x] Cover every payload-bearing command with its exact Android request serializer
+  - [x] Verify exact 11/11 firmware-event parity against the typed Android event enum
+  - [x] Reject whitespace- and case-normalized command/event identities fail-closed
+  - [x] Verify all runtime serializer key sets against the pinned request-field matrix
+  - [x] Keep GPIO, PWM/LEDC, mappings, polarity, grouping, factory calibration and profile-managed fields non-editable
+  - [x] Keep immutable product identity non-editable except the exact OTA compatibility echo allowlist
+  - [x] Verify WebSocket and Cooling telemetry golden fixtures byte-identically against firmware blobs
+  - [x] Verify the firmware-exported product catalog checksum, all four families and all nine commercial SKUs
+  - [x] Add the final interoperability guard to Android CI, CodeQL and the protected release-quality gate
+  - [x] Repository Python suite passed locally (139 tests)
+  - [x] Stage policy plus all Android CI architecture/protocol/privacy/design/localization guards passed locally
+  - [x] Android unit/golden/interoperability tests — Android CI run #2917
+  - [x] Android CI — run #2917
+  - [x] Installable Debug APK — run #209
+  - [x] Emulator API 27 / 36 — run #1041
+  - [x] CodeQL Security Scan — run #4702 with zero new Detekt debt
+  - [ ] Physical signed-OTA release-candidate smoke: download, verify, restart, rediscover, reconnect and exact version proof — post-merge commercial-device follow-up
+  - [x] PR evidence recorded on PR #191 for tested head `cd7a0500022f1cd201dd6936b2158c6ff9b11563`
 
 ## Relevant gate after each stage
 
@@ -263,3 +280,7 @@ Target: **41 authenticated commands / 0 public commands**
 | 2026-08-02 | Stage 09 OTA orchestration branch opened | IN PROGRESS | Freeze firmware OTA and restart contracts |
 | 2026-08-02 | Stage 09 OTA orchestration implementation | LOCAL GATES PASSED | Publish PR and complete remote evidence |
 | 2026-08-02 | Stage 09 OTA orchestration pull-request gates | PASS / PR #190 READY | Squash-merge now; run physical signed-OTA smoke afterwards |
+| 2026-08-02 | Stage 09 OTA update orchestration | PASS / PR #190 MERGED | Start Stage 10 final interoperability matrix |
+| 2026-08-02 | Stage 10 firmware interoperability branch opened | IN PROGRESS | Pin firmware request sources and build the final 41/41 matrix |
+| 2026-08-02 | Stage 10 final interoperability implementation | LOCAL CONTRACT GATES PASSED | Publish draft PR and complete remote plus physical evidence |
+| 2026-08-02 | Stage 10 final interoperability pull-request gates | AUTOMATED PASS / PR #191 READY | Squash-merge now; run physical signed-OTA smoke afterwards |
