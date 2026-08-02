@@ -8,10 +8,10 @@ Target: **41 authenticated commands / 0 public commands**
 
 - Current stage: **11 — WS v1 commercial cleanup and closure**
 - Active branch: `chore/ws-v1-commercial-closure`
-- Status: **IMPLEMENTATION IN PROGRESS — PHYSICAL SIGNED-OTA RELEASE GATE PENDING**
+- Status: **AUTOMATED CLOSURE GATES PASSED — PHYSICAL SIGNED-OTA RELEASE GATE PENDING**
 - Completed sequence: **Stages 00–10 and OTA UI PR #193 merged into `main`**
-- Next: Complete Stage 11 automated gates and PR evidence, then close the canonical physical
-  signed-OTA release gate before commercial release approval.
+- Next: Review and merge PR #194, then close the canonical physical signed-OTA release gate
+  before commercial release approval.
 
 ## Fixed rules
 
@@ -244,7 +244,7 @@ Target: **41 authenticated commands / 0 public commands**
   - [x] PR evidence recorded on PR #191 for tested head `cd7a0500022f1cd201dd6936b2158c6ff9b11563`
   - [x] Squash-merged to integration as `8b0fbfc7fe85063f4e57a69b5e5b879768521f9a`
 
-- [ ] **11** `chore/ws-v1-commercial-closure` — **IN PROGRESS**
+- [ ] **11** `chore/ws-v1-commercial-closure` — **AUTOMATED GATES PASSED / PR #194**
   - [x] Merge OTA update experience PR #193 into `main` as `b11bef019a4b93a5c1c34539705512758d1f29a6`
   - [x] Replace the Settings preview update flow with the real signed OTA presentation/runtime path
   - [x] Remove tracked Gradle state and obsolete `.gitkeep` placeholders from populated modules
@@ -256,10 +256,11 @@ Target: **41 authenticated commands / 0 public commands**
   - [x] Expose lifecycle-only runtime events to OTA without raw WebSocket message access
   - [x] Add an executable commercial-closure guard and CI/release enforcement
   - [x] Repository tools suite (141/141) and all 29 architecture/protocol/OTA guards pass locally
-  - [ ] Detekt reports zero blocker and zero new advisory debt
-  - [ ] Android CI, CodeQL, dependency integrity, installable APK and API 27/36 emulator pass
+  - [x] Detekt reports zero blocker and zero new advisory debt on the canonical CI runner
+  - [x] Android CI #2925, CodeQL #4710, installable APK #216 and API 27/36 emulator #1047 pass
+  - [x] Dependency integrity is unchanged and correctly not triggered by its path filter
   - [ ] Canonical physical signed-OTA release gate in `AQL_WS_V1_COMMERCIAL_CLOSURE.md`
-  - [ ] PR evidence records the tested Stage 11 head
+  - [x] PR #194 evidence records tested implementation head `43eb1c6481530d384b814c2c7a21617aa6df7ac2`
 
 ## Final migration gate status
 
@@ -269,7 +270,7 @@ Target: **41 authenticated commands / 0 public commands**
 - [x] Provisioning, UDP, WebSocket and presence regressions passed where affected
 - [ ] Canonical physical signed-OTA commercial-device gate passes
 - [x] No secret/token logging detected by the recorded automated gates
-- [ ] Stage 11 tested-head and PR evidence recorded
+- [x] Stage 11 tested-head and PR evidence recorded
 
 ## Progress log
 
@@ -308,3 +309,4 @@ Target: **41 authenticated commands / 0 public commands**
 | 2026-08-02 | Commercial OTA update experience | AUTOMATED PASS / PR #193 MERGED | Start Stage 11 cleanup and closure |
 | 2026-08-02 | Stage 11 closure branch opened | IN PROGRESS | Remove compatibility residue and add permanent guards |
 | 2026-08-02 | Stage 11 local contract and hygiene gates | PASS / 141 TESTS / 29 GUARDS / 0 BLOCKERS | Publish draft PR and complete Android/Detekt CI evidence |
+| 2026-08-02 | Stage 11 automated closure gates | PASS / PR #194 / HEAD `43eb1c64` | Review and merge code cleanup; physical signed-OTA remains a release gate |

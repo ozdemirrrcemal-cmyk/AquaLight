@@ -54,6 +54,17 @@ artifact SHA-256, test timestamp, and redacted evidence references.
 The release is blocked while any item above is open. The code migration may merge independently so
 that the acceptance test runs against the exact release-candidate implementation.
 
+## Automated gate evidence
+
+- Tested implementation head: `43eb1c6481530d384b814c2c7a21617aa6df7ac2`
+- Tested source tree: `08008db21f0d406345593a1a0aa37c48ff3ff862`
+- Android CI: #2925
+- Installable Debug APK: #216
+- CodeQL Security Scan: #4710
+- Android Emulator Integration Tests: #1047 (API 27 and API 36)
+- Firebase Repository Configuration Guard: #217
+- Dependency integrity: not triggered because no dependency input or lock contract changed
+
 ## Definition of done
 
 - all repository Python tests and architecture/protocol/OTA guards pass;
