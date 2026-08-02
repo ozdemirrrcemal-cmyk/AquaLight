@@ -592,7 +592,6 @@ private fun DeviceFirmwareUpdatePlan.toApplicationPlan(): PreparedDeviceFirmware
         productId = productId,
         model = model,
         hardwareRevision = hardwareRevision,
-        displayName = displayName,
         filename = firmware.filename,
         downloadUrl = firmware.url,
         sha256 = firmware.sha256,

@@ -185,7 +185,6 @@ class DeviceFamilySettingsViewModelTest {
             productId = "com.aqualight.light.wrgb_pro_elite",
             model = "wrgb_pro_elite_120",
             hardwareRevision = "2.0",
-            displayName = "WRGB Pro Elite 120",
             filename = "AquaLight-light_wrgb_pro_elite-v2.0.0-ota.bin",
             downloadUrl = "https://example.invalid/firmware.bin",
             sha256 = "a".repeat(64),

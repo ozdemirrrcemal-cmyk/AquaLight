@@ -252,7 +252,6 @@ private class DeviceFirmwareUpdateStateMapper {
         mode: DeviceFirmwareUpdateMode
     ): DeviceFirmwareUpdateUiState = copy(
         mode = mode,
-        deviceName = plan.displayName.ifBlank { deviceName },
         currentVersion = plan.currentVersion,
         targetVersion = plan.targetVersion,
         releaseContent = plan.releaseContent,

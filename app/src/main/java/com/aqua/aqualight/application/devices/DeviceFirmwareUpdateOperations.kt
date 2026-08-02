@@ -33,23 +33,15 @@ interface DeviceFirmwareUpdateOperations {
 
 data class DeviceFirmwareReleaseContent(
     val localeTag: String,
-    val title: String,
-    val summary: String,
-    val changes: List<String>,
-    val warnings: List<String>,
-    val mandatory: Boolean
+    val items: List<String>
 ) {
     val isPresent: Boolean
-        get() = title.isNotBlank() || summary.isNotBlank() || changes.isNotEmpty() || warnings.isNotEmpty()
+        get() = items.isNotEmpty()
 
     companion object {
         val EMPTY = DeviceFirmwareReleaseContent(
             localeTag = "",
-            title = "",
-            summary = "",
-            changes = emptyList(),
-            warnings = emptyList(),
-            mandatory = false
+            items = emptyList()
         )
     }
 }
@@ -146,7 +138,6 @@ data class PreparedDeviceFirmwareUpdate(
     val productId: String,
     val model: String,
     val hardwareRevision: String,
-    val displayName: String,
     val filename: String,
     val downloadUrl: String,
     val sha256: String,

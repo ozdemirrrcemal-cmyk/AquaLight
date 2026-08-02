@@ -2,6 +2,7 @@ package com.aqua.aqualight.data.devices.runtime.modules.firmware
 
 import com.aqua.aqualight.application.devices.DeviceFirmwareReleaseContent
 import com.aqua.aqualight.data.devices.model.DeviceUid
+import java.util.Locale
 import org.json.JSONObject
 
 enum class DeviceFirmwareOtaPhase(
@@ -190,15 +191,24 @@ data class DeviceFirmwareManifest(
     val tag: String,
     val releaseRepo: String,
     val generatedAt: String,
+    val platform: DeviceFirmwareManifestPlatform,
     val artifacts: List<DeviceFirmwareManifestArtifact>,
     val signature: DeviceFirmwareManifestSignature,
-    val releaseNotes: DeviceFirmwareReleaseNotes = DeviceFirmwareReleaseNotes.EMPTY
+    val releaseNotes: DeviceFirmwareReleaseNotes
 ) {
     val isSupportedSchema: Boolean
         get() = schema == DeviceFirmwareRuntimeContract.Manifest.SCHEMA &&
             brand == DeviceFirmwareRuntimeContract.Manifest.BRAND &&
             releaseRepo == DeviceFirmwareRuntimeContract.OFFICIAL_RELEASE_REPOSITORY
 }
+
+data class DeviceFirmwareManifestPlatform(
+    val framework: String,
+    val core: String,
+    val platform: String,
+    val partitionTable: String,
+    val normalOtaAssetType: String
+)
 
 data class DeviceFirmwareManifestSignature(
     val scheme: String,
@@ -207,74 +217,48 @@ data class DeviceFirmwareManifestSignature(
     val value: String
 )
 
-data class DeviceFirmwareLocalizedReleaseNotes(
-    val title: String,
-    val summary: String,
-    val changes: List<String>,
-    val warnings: List<String>
+data class DeviceFirmwareReleaseNoteItem(
+    val tr: String,
+    val en: String
 )
 
 data class DeviceFirmwareReleaseNotes(
+    val schema: String,
     val defaultLocale: String,
-    val mandatory: Boolean,
-    val locales: Map<String, DeviceFirmwareLocalizedReleaseNotes>
+    val items: List<DeviceFirmwareReleaseNoteItem>
 ) {
     init {
-        if (locales.isNotEmpty()) {
-            require(defaultLocale in locales) {
-                "OTA release notes defaultLocale must exist in locales."
-            }
-        } else {
-            require(defaultLocale.isEmpty()) {
-                "Empty OTA release notes must not declare a default locale."
-            }
+        require(schema == DeviceFirmwareRuntimeContract.Manifest.RELEASE_NOTES_SCHEMA) {
+            "Unsupported OTA release-notes schema."
         }
+        require(defaultLocale in SUPPORTED_LOCALES) {
+            "OTA release notes defaultLocale must be tr or en."
+        }
+        require(items.isNotEmpty()) { "OTA release notes must contain at least one item." }
     }
 
     fun resolve(preferredLocaleTags: List<String>): DeviceFirmwareReleaseContent {
-        if (locales.isEmpty()) return DeviceFirmwareReleaseContent.EMPTY
-
-        val exact = preferredLocaleTags.firstNotNullOfOrNull(locales::get)
-        val languageMatch = preferredLocaleTags.firstNotNullOfOrNull { preferred ->
-            val language = preferred.substringBefore('-')
-            locales.entries.firstOrNull { (locale, _) ->
-                locale == language || locale.startsWith("$language-")
-            }?.value?.let { notes -> localeFor(notes) to notes }
-        }
-        val selectedLocale: String
-        val selectedNotes: DeviceFirmwareLocalizedReleaseNotes
-        when {
-            exact != null -> {
-                selectedLocale = locales.entries.single { (_, notes) -> notes === exact }.key
-                selectedNotes = exact
-            }
-            languageMatch != null -> {
-                selectedLocale = languageMatch.first
-                selectedNotes = languageMatch.second
-            }
-            else -> {
-                selectedLocale = defaultLocale
-                selectedNotes = checkNotNull(locales[defaultLocale])
+        val locale = preferredLocaleTags
+            .asSequence()
+            .map { tag -> tag.substringBefore('-').lowercase(Locale.ROOT) }
+            .firstOrNull(SUPPORTED_LOCALES::contains)
+            ?: defaultLocale
+        val localizedItems = items.map { item ->
+            when (locale) {
+                DeviceFirmwareRuntimeContract.Manifest.TURKISH -> item.tr
+                else -> item.en
             }
         }
         return DeviceFirmwareReleaseContent(
-            localeTag = selectedLocale,
-            title = selectedNotes.title,
-            summary = selectedNotes.summary,
-            changes = selectedNotes.changes,
-            warnings = selectedNotes.warnings,
-            mandatory = mandatory
+            localeTag = locale,
+            items = localizedItems
         )
     }
 
-    private fun localeFor(notes: DeviceFirmwareLocalizedReleaseNotes): String =
-        locales.entries.single { (_, candidate) -> candidate === notes }.key
-
-    companion object {
-        val EMPTY = DeviceFirmwareReleaseNotes(
-            defaultLocale = "",
-            mandatory = false,
-            locales = emptyMap()
+    private companion object {
+        val SUPPORTED_LOCALES = setOf(
+            DeviceFirmwareRuntimeContract.Manifest.TURKISH,
+            DeviceFirmwareRuntimeContract.Manifest.ENGLISH
         )
     }
 }
@@ -284,7 +268,7 @@ data class DeviceFirmwareManifestArtifact(
     val product: DeviceFirmwareManifestProduct,
     val compatibility: DeviceFirmwareCompatibility,
     val firmware: DeviceFirmwareAsset,
-    val factory: DeviceFirmwareAsset? = null
+    val factory: DeviceFirmwareFactoryAsset?
 )
 
 data class DeviceFirmwareManifestProduct(
@@ -296,7 +280,32 @@ data class DeviceFirmwareManifestProduct(
     val model: String,
     val displayName: String,
     val skuCode: String,
-    val hardwareRevision: String
+    val hardwareRevision: String,
+    val capabilities: DeviceFirmwareManifestCapabilities,
+    val limits: DeviceFirmwareManifestLimits
+)
+
+data class DeviceFirmwareManifestCapabilities(
+    val light: Boolean,
+    val manualLight: Boolean,
+    val lightProgram: Boolean,
+    val lightPresets: Boolean,
+    val lightSimulation: Boolean,
+    val fan: Boolean,
+    val cooling: Boolean,
+    val temperature: Boolean,
+    val standaloneTimer: Boolean,
+    val dosing: Boolean,
+    val timeSync: Boolean,
+    val ota: Boolean
+)
+
+data class DeviceFirmwareManifestLimits(
+    val lightChannelCount: Int,
+    val fanOutputCount: Int,
+    val temperatureSensorCount: Int,
+    val timerChannelCount: Int,
+    val dosingChannelCount: Int
 )
 
 data class DeviceFirmwareCompatibility(
@@ -313,8 +322,15 @@ data class DeviceFirmwareAsset(
     val url: String,
     val sha256: String,
     val size: Int,
-    val format: String = "",
-    val otaSlotCompatible: Boolean = false
+    val format: String,
+    val otaSlotCompatible: Boolean
+)
+
+data class DeviceFirmwareFactoryAsset(
+    val filename: String,
+    val url: String,
+    val sha256: String,
+    val size: Int
 )
 
 sealed interface DeviceFirmwareAvailability {
@@ -339,7 +355,6 @@ data class DeviceFirmwareUpdatePlan(
     val productId: String,
     val model: String,
     val hardwareRevision: String,
-    val displayName: String,
     val firmware: DeviceFirmwareAsset,
     val payload: DeviceFirmwareOtaStartPayload,
     val runtimeMetadataGeneration: Long = 0L,

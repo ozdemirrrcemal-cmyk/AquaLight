@@ -46,7 +46,10 @@ class DeviceFirmwareUpdateViewModelTest {
 
         assertEquals(DeviceFirmwareUpdateMode.AVAILABLE, viewModel.uiState.value.mode)
         assertEquals("2.0.0", viewModel.uiState.value.targetVersion)
-        assertEquals("Güvenli güncelleme", viewModel.uiState.value.releaseContent.title)
+        assertEquals(
+            listOf("Kalibrasyon doğrulaması geliştirildi."),
+            viewModel.uiState.value.releaseContent.items
+        )
         assertEquals(1, firmware.checkCalls)
         assertEquals(1, firmware.statusCalls)
     }
@@ -78,7 +81,7 @@ class DeviceFirmwareUpdateViewModelTest {
 
         firmware.emit(DeviceOtaState.Recovering(DEVICE_UID, "2.0.0", 543))
         assertEquals(DeviceFirmwareUpdateMode.RECOVERING, viewModel.uiState.value.mode)
-        assertEquals("Güvenli güncelleme", viewModel.uiState.value.releaseContent.title)
+        assertEquals(plan.releaseContent.items, viewModel.uiState.value.releaseContent.items)
         assertEquals(54, viewModel.uiState.value.progressPercent)
 
         firmware.emit(DeviceOtaState.Succeeded(DEVICE_UID, "2.0.0", plan.releaseContent))
@@ -184,12 +187,8 @@ class DeviceFirmwareUpdateViewModelTest {
         const val MANIFEST_URL = "https://example.invalid/manifest-stable.json"
 
         fun releaseContent() = DeviceFirmwareReleaseContent(
-            localeTag = "tr-TR",
-            title = "Güvenli güncelleme",
-            summary = "Dozaj güvenilirliği geliştirildi.",
-            changes = listOf("Kalibrasyon doğrulaması geliştirildi."),
-            warnings = listOf("Güncelleme sırasında cihazı kapatmayın."),
-            mandatory = false
+            localeTag = "tr",
+            items = listOf("Kalibrasyon doğrulaması geliştirildi.")
         )
 
         fun preparedPlan() = PreparedDeviceFirmwareUpdate(
@@ -202,7 +201,6 @@ class DeviceFirmwareUpdateViewModelTest {
             productId = "com.aqualight.dosing.dose_pro_4",
             model = "dose_pro_4",
             hardwareRevision = "2.0",
-            displayName = "Dose Pro 4",
             filename = "AquaLight-dosing_dose_pro_4-v2.0.0-ota.bin",
             downloadUrl = "https://example.invalid/AquaLight-ota.bin",
             sha256 = "a".repeat(64),

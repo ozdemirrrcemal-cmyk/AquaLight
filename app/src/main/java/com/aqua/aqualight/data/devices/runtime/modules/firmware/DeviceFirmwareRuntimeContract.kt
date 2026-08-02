@@ -1,7 +1,7 @@
 package com.aqua.aqualight.data.devices.runtime.modules.firmware
 
 /**
- * Production Android mirror of the firmware WebSocket OTA contract.
+ * Production Android mirror of the firmware WebSocket and signed release contracts.
  *
  * OTA is device firmware level logic. Product screens may expose family-specific update entry
  * points, but matching, validation, state coordination and progress parsing stay in this module.
@@ -38,13 +38,14 @@ object DeviceFirmwareRuntimeContract {
         const val BETA_CHANNEL = "beta"
         const val DEV_CHANNEL = "dev"
         const val RELEASE_NOTES = "releaseNotes"
+        const val RELEASE_NOTES_SCHEMA = "aql.ota.release-notes.v1"
         const val DEFAULT_LOCALE = "defaultLocale"
-        const val MANDATORY = "mandatory"
-        const val LOCALES = "locales"
-        const val TITLE = "title"
-        const val SUMMARY = "summary"
-        const val CHANGES = "changes"
-        const val WARNINGS = "warnings"
+        const val ITEMS = "items"
+        const val TURKISH = "tr"
+        const val ENGLISH = "en"
+        const val PARTITION_TABLE = "aql_ota_16mb"
+        const val NORMAL_OTA_ASSET_TYPE = "firmware.bin"
+        const val FIRMWARE_FORMAT = "esp32-app-bin"
     }
 
     object Signature {
@@ -68,7 +69,7 @@ object DeviceFirmwareRuntimeContract {
     object Limit {
         const val SHA256_HEX_LENGTH = 64
         const val MAX_URL_LENGTH = 300
-        const val MAX_RELEASE_NOTE_ITEMS = 50
-        const val MAX_RELEASE_NOTE_TEXT_LENGTH = 2_000
+        const val MAX_RELEASE_NOTE_ITEMS = 20
+        const val MAX_RELEASE_NOTE_TEXT_LENGTH = 500
     }
 }

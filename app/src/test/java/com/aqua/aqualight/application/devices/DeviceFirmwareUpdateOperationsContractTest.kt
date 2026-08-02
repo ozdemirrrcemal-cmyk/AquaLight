@@ -26,12 +26,8 @@ class DeviceFirmwareUpdateOperationsContractTest {
     @Test
     fun `release content and terminal availability states retain exact values`() {
         val content = DeviceFirmwareReleaseContent(
-            localeTag = "tr-TR",
-            title = "Güvenli güncelleme",
-            summary = "Kararlılık iyileştirmeleri.",
-            changes = listOf("Kalibrasyon doğrulaması geliştirildi."),
-            warnings = listOf("Cihaz yeniden başlatılır."),
-            mandatory = true
+            localeTag = "tr",
+            items = listOf("Kalibrasyon doğrulaması geliştirildi.")
         )
 
         assertTrue(content.isPresent)
@@ -57,7 +53,6 @@ class DeviceFirmwareUpdateOperationsContractTest {
         productId = "com.aqualight.dosing.dose_pro_2",
         model = "dose_pro_2",
         hardwareRevision = "2.0",
-        displayName = "Dose Pro 2",
         filename = "AquaLight-dosing_dose_pro_2-v2.0.0-ota.bin",
         downloadUrl = "https://example.invalid/firmware.bin",
         sha256 = "a".repeat(64),
