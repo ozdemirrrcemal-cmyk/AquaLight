@@ -26,12 +26,8 @@ class DeviceFirmwareUpdateOperationsContractTest {
     @Test
     fun `release content and terminal availability states retain exact values`() {
         val content = DeviceFirmwareReleaseContent(
-            localeTag = "tr-TR",
-            title = "Güvenli güncelleme",
-            summary = "Kararlılık iyileştirmeleri.",
-            changes = listOf("Kalibrasyon doğrulaması geliştirildi."),
-            warnings = listOf("Cihaz yeniden başlatılır."),
-            mandatory = true
+            localeTag = "tr",
+            items = listOf("Kalibrasyon doğrulaması geliştirildi.")
         )
 
         assertTrue(content.isPresent)
