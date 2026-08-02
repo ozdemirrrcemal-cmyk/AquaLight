@@ -59,9 +59,22 @@
     <string name="device_settings_update_phase_restarting">Cihaz yeni yazılımla yeniden başlatılıyor…</string>
     <string name="device_settings_update_phase_succeeded">Hedef sürüm yeniden başlatma sonrasında doğrulandı.</string>
     <string name="device_settings_update_phase_up_to_date">En yeni uyumlu yazılım zaten yüklü.</string>
-    <string name="device_settings_update_phase_failed_recoverable">Bağlantıyı kontrol edip tekrar deneyin. Cihaz mevcut yazılımında kalabilir.</string>
-    <string name="device_settings_update_phase_failed_terminal">Cihazı açık tutun ve yeni bir güncelleme denemesinden önce bağlantısını kontrol edin.</string>
     <string name="device_settings_update_phase_unsupported">Bu cihaz profili için uyumlu, imzalı bir güncelleme bulunamadı.</string>
+
+    <string name="device_settings_update_failure_connection">Cihaz bağlantısı kesildi. Wi-Fi bağlantısını kontrol edip tekrar deneyin.</string>
+    <string name="device_settings_update_failure_authentication">Cihazın güvenli oturumu sona erdi. Yeniden bağlanıp tekrar deneyin.</string>
+    <string name="device_settings_update_failure_unsupported">Cihaz veya yüklü yazılım istenen güncelleme işlemini desteklemiyor.</string>
+    <string name="device_settings_update_failure_invalid_request">Hazırlanan güncelleme isteği artık geçerli değil. Güncellemeleri yeniden denetleyin.</string>
+    <string name="device_settings_update_failure_compatibility">Bu güncelleme cihaz modeli, donanım revizyonu veya yüklü sürümle eşleşmiyor.</string>
+    <string name="device_settings_update_failure_download">Cihaz yazılım paketini indiremedi. İnternet bağlantısını kontrol edip tekrar deneyin.</string>
+    <string name="device_settings_update_failure_storage">Cihaz OTA bölümünü ayıramadı veya yazamadı.</string>
+    <string name="device_settings_update_failure_integrity">İndirilen yazılım doğrulanamadı. Paket cihaza yüklenmedi.</string>
+    <string name="device_settings_update_failure_timeout">Güncelleme isteği zaman aşımına uğramadan önce cihaz yanıt vermedi.</string>
+    <string name="device_settings_update_failure_protocol">Cihaz yanıtı gerekli OTA protokolüyle eşleşmedi.</string>
+    <string name="device_settings_update_failure_cancelled">Güncelleme isteği tamamlanmadan iptal edildi.</string>
+    <string name="device_settings_update_failure_internal">Dahili bir hata nedeniyle güncelleme tamamlanamadı.</string>
+    <string name="device_settings_update_failure_diagnostics">Teknik ayrıntılar: %1$s</string>
+
     <string name="device_settings_update_progress_percent">%1$d%%</string>
     <string name="device_settings_update_progress_bytes">%1$s / %2$s</string>
     <string name="device_settings_update_progress_waiting">Cihaz ilerlemesi bekleniyor</string>
