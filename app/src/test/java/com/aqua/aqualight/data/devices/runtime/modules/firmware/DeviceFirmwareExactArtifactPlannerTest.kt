@@ -19,26 +19,47 @@ class DeviceFirmwareExactArtifactPlannerTest {
     }
 
     @Test
-    fun `exactly one artifact produces model-complete plan and localized signed content`() {
-        val snapshot = product("DOSING_DOSE_PRO_2").toSnapshot()
+    fun `exact release artifact produces model-complete plan and localized content`() {
+        val snapshot = product(PRODUCT_KEY).toSnapshot()
         val availability = planner.evaluateUpdate(snapshot, manifest()).getOrThrow()
             as DeviceFirmwareAvailability.UpdateAvailable
         val plan = availability.plan
 
-        assertEquals("dosing_dose_pro_2", plan.env)
+        assertEquals(ENVIRONMENT, plan.env)
         assertEquals("dose_pro_2", plan.model)
         assertEquals("dose_pro_2", plan.payload.model)
         assertEquals(7L, plan.runtimeMetadataGeneration)
-        assertEquals("v2.0.0", plan.manifestTag)
-        assertEquals("tr-TR", plan.releaseContent.localeTag)
-        assertEquals("Dozaj güvenilirliği", plan.releaseContent.title)
-        assertEquals(listOf("Kalibrasyon doğrulaması geliştirildi."), plan.releaseContent.changes)
+        assertEquals(RELEASE_TAG, plan.manifestTag)
+        assertEquals("tr", plan.releaseContent.localeTag)
+        assertEquals(
+            listOf("Kalibrasyon doğrulaması geliştirildi."),
+            plan.releaseContent.changes
+        )
         assertEquals("dose_pro_2", plan.payload.toJson().getString("model"))
     }
 
     @Test
+    fun `user defined device name is not part of OTA selection or payload`() {
+        val product = product(PRODUCT_KEY)
+        val unnamed = planner.evaluateUpdate(
+            product.toSnapshot(customName = ""),
+            manifest()
+        ).getOrThrow() as DeviceFirmwareAvailability.UpdateAvailable
+        val renamed = planner.evaluateUpdate(
+            product.toSnapshot(customName = "Salon Dozaj"),
+            manifest()
+        ).getOrThrow() as DeviceFirmwareAvailability.UpdateAvailable
+
+        assertEquals(product.displayName, unnamed.plan.displayName)
+        assertEquals(unnamed.plan.displayName, renamed.plan.displayName)
+        assertEquals(unnamed.plan.payload, renamed.plan.payload)
+        assertEquals(unnamed.plan.firmware, renamed.plan.firmware)
+        assertTrue(!unnamed.plan.payload.toJson().has("deviceName"))
+    }
+
+    @Test
     fun `duplicate exact artifacts fail closed instead of selecting first`() {
-        val snapshot = product("DOSING_DOSE_PRO_2").toSnapshot()
+        val snapshot = product(PRODUCT_KEY).toSnapshot()
         val exact = artifact()
         val duplicate = manifest(artifacts = listOf(exact, exact.copy()))
 
@@ -49,7 +70,7 @@ class DeviceFirmwareExactArtifactPlannerTest {
 
     @Test
     fun `zero compatible artifacts fail closed`() {
-        val snapshot = product("DOSING_DOSE_PRO_2").toSnapshot()
+        val snapshot = product(PRODUCT_KEY).toSnapshot()
         val other = artifact().copy(
             compatibility = artifact().compatibility.copy(model = "dose_pro_4")
         )
@@ -64,7 +85,7 @@ class DeviceFirmwareExactArtifactPlannerTest {
 
     @Test
     fun `matching identity with wrong environment is rejected`() {
-        val snapshot = product("DOSING_DOSE_PRO_2").toSnapshot()
+        val snapshot = product(PRODUCT_KEY).toSnapshot()
         val wrongEnv = artifact().copy(env = "dosing_dose_pro_4")
 
         val failure = planner.evaluateUpdate(
@@ -76,15 +97,18 @@ class DeviceFirmwareExactArtifactPlannerTest {
     }
 
     @Test
-    fun `same version resolves up to date while preserving release content`() {
-        val snapshot = product("DOSING_DOSE_PRO_2").toSnapshot().copy(
-            firmwareVersion = "2.0.0"
+    fun `same version resolves up to date while preserving release items`() {
+        val snapshot = product(PRODUCT_KEY).toSnapshot().copy(
+            firmwareVersion = TARGET_VERSION
         )
         val availability = planner.evaluateUpdate(snapshot, manifest()).getOrThrow()
             as DeviceFirmwareAvailability.UpToDate
 
-        assertEquals("2.0.0", availability.currentVersion)
-        assertEquals("Dozaj güvenilirliği", availability.releaseContent.title)
+        assertEquals(TARGET_VERSION, availability.currentVersion)
+        assertEquals(
+            listOf("Kalibrasyon doğrulaması geliştirildi."),
+            availability.releaseContent.changes
+        )
     }
 
     private fun product(productKey: String): AqlCommercialCatalogProduct =
@@ -92,13 +116,15 @@ class DeviceFirmwareExactArtifactPlannerTest {
             product.productKey.value == productKey
         }
 
-    private fun AqlCommercialCatalogProduct.toSnapshot(): DeviceSnapshot = DeviceSnapshot(
+    private fun AqlCommercialCatalogProduct.toSnapshot(
+        customName: String = "Salon Dozaj"
+    ): DeviceSnapshot = DeviceSnapshot(
         identity = DeviceIdentity(
             uid = DEVICE_UID,
-            customName = "Salon Dozaj"
+            customName = customName
         ),
         product = DeviceProduct(
-            brand = "AquaLight",
+            brand = DeviceFirmwareRuntimeContract.Manifest.BRAND,
             productId = productId.value,
             productKey = productKey.value,
             family = family,
@@ -110,7 +136,7 @@ class DeviceFirmwareExactArtifactPlannerTest {
             skuCode = skuCode.value,
             hardwareRevision = hardwareRevision.value
         ),
-        firmwareVersion = "1.0.0",
+        firmwareVersion = CURRENT_VERSION,
         apiVersion = "1",
         protocolVersion = "1",
         capabilities = DeviceCapabilities(
@@ -145,54 +171,34 @@ class DeviceFirmwareExactArtifactPlannerTest {
         schema = DeviceFirmwareRuntimeContract.Manifest.SCHEMA,
         brand = DeviceFirmwareRuntimeContract.Manifest.BRAND,
         channel = DeviceFirmwareRuntimeContract.Manifest.STABLE_CHANNEL,
-        version = "2.0.0",
-        tag = "v2.0.0",
+        version = TARGET_VERSION,
+        tag = RELEASE_TAG,
         releaseRepo = DeviceFirmwareRuntimeContract.OFFICIAL_RELEASE_REPOSITORY,
-        generatedAt = "2026-07-30T00:00:00Z",
+        generatedAt = GENERATED_AT,
+        platform = manifestPlatform(),
         artifacts = artifacts,
-        signature = DeviceFirmwareManifestSignature(
-            scheme = DeviceFirmwareRuntimeContract.Signature.SCHEME_ECDSA_P256_SHA256,
-            keyId = "release-key-1",
-            payloadHash = "b".repeat(64),
-            value = "signed-value"
-        ),
+        signature = manifestSignature(),
         releaseNotes = DeviceFirmwareReleaseNotes(
-            defaultLocale = "en",
-            mandatory = false,
-            locales = linkedMapOf(
-                "en" to DeviceFirmwareLocalizedReleaseNotes(
-                    title = "Dosing reliability",
-                    summary = "Safer dosing update.",
-                    changes = listOf("Calibration validation improved."),
-                    warnings = emptyList()
-                ),
-                "tr-TR" to DeviceFirmwareLocalizedReleaseNotes(
-                    title = "Dozaj güvenilirliği",
-                    summary = "Daha güvenli dozaj güncellemesi.",
-                    changes = listOf("Kalibrasyon doğrulaması geliştirildi."),
-                    warnings = emptyList()
+            schema = DeviceFirmwareRuntimeContract.Manifest.RELEASE_NOTES_SCHEMA,
+            defaultLocale = "tr",
+            items = listOf(
+                DeviceFirmwareReleaseNoteItem(
+                    tr = "Kalibrasyon doğrulaması geliştirildi.",
+                    en = "Calibration validation improved."
                 )
             )
         )
     )
 
     private fun artifact(): DeviceFirmwareManifestArtifact {
-        val product = product("DOSING_DOSE_PRO_2")
-        val env = "dosing_dose_pro_2"
-        val filename = "AquaLight-$env-v2.0.0-ota.bin"
+        val product = product(PRODUCT_KEY)
+        val otaFilename = "AquaLight-$ENVIRONMENT-$RELEASE_TAG-ota.bin"
+        val factoryFilename = "AquaLight-$ENVIRONMENT-$RELEASE_TAG-factory.zip"
+        val releaseUrl = DeviceFirmwareRuntimeContract.OFFICIAL_RELEASE_URL_PREFIX +
+            "$RELEASE_TAG/"
         return DeviceFirmwareManifestArtifact(
-            env = env,
-            product = DeviceFirmwareManifestProduct(
-                productKey = product.productKey.value,
-                productId = product.productId.value,
-                brand = "AquaLight",
-                family = product.family.wireValue,
-                line = product.line.value,
-                model = product.model.value,
-                displayName = product.displayName,
-                skuCode = product.skuCode.value,
-                hardwareRevision = product.hardwareRevision.value
-            ),
+            env = ENVIRONMENT,
+            product = product.toManifestProduct(),
             compatibility = DeviceFirmwareCompatibility(
                 productKey = product.productKey.value,
                 productId = product.productId.value,
@@ -202,18 +208,80 @@ class DeviceFirmwareExactArtifactPlannerTest {
                 hardwareRevision = product.hardwareRevision.value
             ),
             firmware = DeviceFirmwareAsset(
-                filename = filename,
-                url = DeviceFirmwareRuntimeContract.OFFICIAL_RELEASE_URL_PREFIX +
-                    "v2.0.0/$filename",
+                filename = otaFilename,
+                url = releaseUrl + otaFilename,
                 sha256 = "a".repeat(64),
-                size = 1_048_576,
-                format = "bin",
+                size = FIRMWARE_SIZE,
+                format = DeviceFirmwareRuntimeContract.Manifest.FIRMWARE_FORMAT,
                 otaSlotCompatible = true
+            ),
+            factory = DeviceFirmwareFactoryAsset(
+                filename = factoryFilename,
+                url = releaseUrl + factoryFilename,
+                sha256 = "c".repeat(64),
+                size = FACTORY_SIZE
             )
         )
     }
 
+    private fun AqlCommercialCatalogProduct.toManifestProduct() =
+        DeviceFirmwareManifestProduct(
+            productKey = productKey.value,
+            productId = productId.value,
+            brand = DeviceFirmwareRuntimeContract.Manifest.BRAND,
+            family = family.wireValue,
+            line = line.value,
+            model = model.value,
+            displayName = displayName,
+            skuCode = skuCode.value,
+            hardwareRevision = hardwareRevision.value,
+            capabilities = DeviceFirmwareManifestCapabilities(
+                light = profile.capabilities.light,
+                manualLight = profile.capabilities.manualLight,
+                lightProgram = profile.capabilities.lightProgram,
+                lightPresets = profile.capabilities.lightPresets,
+                lightSimulation = profile.capabilities.lightSimulation,
+                fan = profile.capabilities.fan,
+                cooling = profile.capabilities.cooling,
+                temperature = profile.capabilities.temperature,
+                standaloneTimer = profile.capabilities.standaloneTimer,
+                dosing = profile.capabilities.dosing,
+                timeSync = profile.capabilities.timeSync,
+                ota = profile.capabilities.ota
+            ),
+            limits = DeviceFirmwareManifestLimits(
+                lightChannelCount = limits.lightChannelCount,
+                fanOutputCount = limits.fanOutputCount,
+                temperatureSensorCount = limits.temperatureSensorCount,
+                timerChannelCount = limits.timerChannelCount,
+                dosingChannelCount = limits.dosingChannelCount
+            )
+        )
+
+    private fun manifestPlatform() = DeviceFirmwareManifestPlatform(
+        framework = "arduino-esp32",
+        core = "3.3.9",
+        platform = "pioarduino/platform-espressif32#55.03.39",
+        partitionTable = DeviceFirmwareRuntimeContract.Manifest.PARTITION_TABLE,
+        normalOtaAssetType = DeviceFirmwareRuntimeContract.Manifest.NORMAL_OTA_ASSET_TYPE
+    )
+
+    private fun manifestSignature() = DeviceFirmwareManifestSignature(
+        scheme = DeviceFirmwareRuntimeContract.Signature.SCHEME_ECDSA_P256_SHA256,
+        keyId = "release-key-1",
+        payloadHash = "b".repeat(64),
+        value = "signed-value"
+    )
+
     private companion object {
         val DEVICE_UID = DeviceUid("AQL-DP2-OTA-TEST")
+        const val PRODUCT_KEY = "DOSING_DOSE_PRO_2"
+        const val ENVIRONMENT = "dosing_dose_pro_2"
+        const val CURRENT_VERSION = "1.0.0"
+        const val TARGET_VERSION = "2.0.0"
+        const val RELEASE_TAG = "v2.0.0"
+        const val GENERATED_AT = "2026-07-30T00:00:00Z"
+        const val FIRMWARE_SIZE = 1_048_576
+        const val FACTORY_SIZE = 2_097_152
     }
 }
