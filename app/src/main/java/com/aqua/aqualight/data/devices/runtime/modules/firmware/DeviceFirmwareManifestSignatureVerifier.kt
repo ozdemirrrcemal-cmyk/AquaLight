@@ -1,12 +1,12 @@
 package com.aqua.aqualight.data.devices.runtime.modules.firmware
 
-import android.util.Base64
 import com.aqua.aqualight.BuildConfig
 import java.nio.charset.StandardCharsets
 import java.security.KeyFactory
 import java.security.MessageDigest
 import java.security.Signature
 import java.security.spec.X509EncodedKeySpec
+import java.util.Base64
 import org.json.JSONArray
 import org.json.JSONObject
 
@@ -49,7 +49,7 @@ class DeviceFirmwareManifestSignatureVerifier(
         verifier.initVerify(publicKey)
         verifier.update(payload)
 
-        val signatureBytes = Base64.decode(signature.value, Base64.DEFAULT)
+        val signatureBytes = Base64.getDecoder().decode(signature.value)
         require(verifier.verify(signatureBytes)) {
             "OTA manifest signature verification failed."
         }
@@ -124,7 +124,7 @@ class DeviceFirmwareManifestSignatureVerifier(
                 .replace("\r", "")
                 .trim()
 
-            val bytes = Base64.decode(base64, Base64.DEFAULT)
+            val bytes = Base64.getDecoder().decode(base64)
             return KeyFactory
                 .getInstance("EC")
                 .generatePublic(X509EncodedKeySpec(bytes))
