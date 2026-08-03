@@ -88,6 +88,11 @@ private fun <T> createReadyRuntimeRequest(
         action = command.action,
         data = JSONObject(command.encodeData().toString())
     )
+    DeviceRuntimeOtaDiagnostics.recordOutgoing(
+        deviceUid = deviceUid,
+        generation = session.generation,
+        message = message
+    )
     val key = DeviceRuntimeCorrelationKey(
         deviceUid = deviceUid,
         generation = session.generation,
