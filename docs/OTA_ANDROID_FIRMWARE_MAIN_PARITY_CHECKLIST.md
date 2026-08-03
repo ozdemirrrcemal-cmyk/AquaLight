@@ -11,32 +11,33 @@ Deleted branches, superseded branches, local-only commits, and legacy contracts 
 
 ## Confirmed Android defects and contract gaps
 
-- [ ] **OTA-001 — Separate WebSocket action names from fully qualified firmware event names.** Android currently reuses `ota.progress` / `ota.completed` both as top-level event actions and as response payload values. Firmware response payloads emit `firmware.ota.progress` / `firmware.ota.completed`.
-- [ ] **OTA-002 — Align `firmware.status.get` OTA metadata parsing.** Validate `progressEvent` and `completedEvent` against the fully qualified firmware names.
-- [ ] **OTA-003 — Align `firmware.ota.status` response parsing.** Validate `progressEvent` and `completedEvent` against the fully qualified firmware names.
-- [ ] **OTA-004 — Align `firmware.ota.start` acceptance parsing.** Validate `event`, `progressEvent`, and `completedEvent` against the fully qualified firmware names without changing top-level WebSocket routing.
-- [ ] **OTA-005 — Correct regression fixtures that encode the Android-invented short payload names.** Status and OTA-start parser tests must use the exact values emitted by firmware `main`.
-- [ ] **OTA-006 — Accept signed firmware transport error codes in OTA snapshots.** Firmware stores the signed `HTTPClient::GET()` result in `httpStatus`; transport failures may be negative and are valid diagnostics, not protocol corruption.
-- [ ] **OTA-007 — Classify non-positive OTA HTTP diagnostics as retryable transport/download failures.** Preserve negative firmware diagnostics through the typed failure model.
-- [ ] **OTA-008 — Remove the Android-only `finishedAtMs > 0` terminal-state assumption.** Firmware owns the monotonic millisecond value and zero is representable at the wire level.
-- [ ] **OTA-009 — Match firmware release-note control-character validation.** The signed firmware pipeline rejects C0 controls (`code < 32`); Android must not reject otherwise valid signed C1/DEL characters through a broader `isISOControl` rule.
-- [ ] **OTA-010 — Add an executable OTA response-payload parity fixture.** Cover command metadata names, full event names, snapshot fields, event-only fields, phase values, request fields, and signed `httpStatus` semantics.
-- [ ] **OTA-011 — Extend the interoperability guard to fail closed on OTA payload contract drift.** Existing command/event registry pins do not inspect `event`, `progressEvent`, or `completedEvent` response values.
-- [ ] **OTA-012 — Add parser regression coverage for negative `httpStatus`, terminal timestamp zero, and exact full event names.**
+- [x] **OTA-001 — Separate WebSocket action names from fully qualified firmware event names.** Android previously reused `ota.progress` / `ota.completed` both as top-level event actions and as response payload values. Firmware response payloads emit `firmware.ota.progress` / `firmware.ota.completed`.
+- [x] **OTA-002 — Align `firmware.status.get` OTA metadata parsing.** Validate `progressEvent` and `completedEvent` against the fully qualified firmware names.
+- [x] **OTA-003 — Align `firmware.ota.status` response parsing.** Validate `progressEvent` and `completedEvent` against the fully qualified firmware names.
+- [x] **OTA-004 — Align `firmware.ota.start` acceptance parsing.** Validate `event`, `progressEvent`, and `completedEvent` against the fully qualified firmware names without changing top-level WebSocket routing.
+- [x] **OTA-005 — Correct regression fixtures that encoded the Android-invented short payload names.** Status and OTA-start parser tests now use the exact values emitted by firmware `main`.
+- [x] **OTA-006 — Accept signed firmware transport error codes in OTA snapshots.** Firmware stores the signed `HTTPClient::GET()` result in `httpStatus`; transport failures may be negative and are valid diagnostics, not protocol corruption.
+- [x] **OTA-007 — Classify non-positive OTA HTTP diagnostics as retryable transport/download failures.** Preserve negative firmware diagnostics through the typed failure model.
+- [x] **OTA-008 — Remove the Android-only `finishedAtMs > 0` terminal-state assumption.** Firmware owns the monotonic millisecond value and zero is representable at the wire level.
+- [x] **OTA-009 — Match firmware release-note control-character validation.** The signed firmware pipeline rejects C0 controls; Android no longer rejects otherwise valid signed C1/DEL characters through a broader `isISOControl` rule.
+- [x] **OTA-010 — Add an executable OTA response-payload parity fixture.** Cover command metadata names, full event names, snapshot fields, event-only fields, phase values, request fields, and signed `httpStatus` semantics.
+- [x] **OTA-011 — Extend the interoperability guard to fail closed on OTA payload contract drift.** Existing command/event registry pins did not inspect `event`, `progressEvent`, or `completedEvent` response values.
+- [x] **OTA-012 — Add parser regression coverage for negative `httpStatus`, terminal timestamp zero, and exact full event names.**
+- [x] **OTA-013 — Keep a newly prepared signed update available when the recovery probe returns an old terminal `failed` snapshot.** A historical device failure has no request correlation to the new installation attempt and must not replace `UpdateAvailable` with `DOWNLOAD_FAILED`. Active and succeeded snapshots continue through normal recovery handling.
 
 ## Verified compatible surfaces
 
-- [ ] `firmware.ota.start` request fields remain exactly: `url`, `version`, `sha256`, `expectedSize`, `applyNow`, `productKey`, `productId`, `model`, `hardwareRevision`, `allowInsecureHttp`.
-- [ ] Top-level authenticated event routing remains `module=firmware`, `action=ota.progress|ota.completed`.
-- [ ] OTA snapshot keys remain exactly aligned with firmware.
-- [ ] OTA event-only keys remain exactly aligned with firmware.
-- [ ] OTA phase wire values remain exactly aligned with firmware.
-- [ ] Final signed manifest root, platform, release-notes, artifact, product, compatibility, firmware, factory, and signature structures remain exactly aligned.
-- [ ] Android continues to use the emitted `binaryTransfer=firmware-download` value. Firmware's separate stale `WS_OTA_BINARY_TRANSPORT="url-download"` constant is not an Android defect and is not normalized on Android.
+- [x] `firmware.ota.start` request fields remain exactly: `url`, `version`, `sha256`, `expectedSize`, `applyNow`, `productKey`, `productId`, `model`, `hardwareRevision`, `allowInsecureHttp`.
+- [x] Top-level authenticated event routing remains `module=firmware`, `action=ota.progress|ota.completed`.
+- [x] OTA snapshot keys remain exactly aligned with firmware.
+- [x] OTA event-only keys remain exactly aligned with firmware.
+- [x] OTA phase wire values remain exactly aligned with firmware.
+- [x] Final signed manifest root, platform, release-notes, artifact, product, compatibility, firmware, factory, and signature structures remain exactly aligned.
+- [x] Android continues to use the emitted `binaryTransfer=firmware-download` value. Firmware's separate stale `WS_OTA_BINARY_TRANSPORT="url-download"` constant is not normalized on Android.
 
 ## Completion gate
 
-- [ ] All checklist items are implemented on this branch.
-- [ ] Focused OTA parser/model/failure tests pass.
-- [ ] Interoperability guard passes with the new OTA payload matrix.
-- [ ] No fallback aliases, permissive legacy schema, or raw diagnostic text are introduced into the user interface.
+- [x] All identified checklist items are implemented on this branch.
+- [ ] Focused OTA parser/model/failure/coordinator tests pass on the latest head.
+- [ ] Interoperability and OTA payload parity guards pass on the latest head.
+- [x] No fallback aliases, permissive legacy schema, or raw diagnostic text are introduced into the user interface.
