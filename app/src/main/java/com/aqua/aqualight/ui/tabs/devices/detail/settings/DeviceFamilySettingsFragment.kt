@@ -2,13 +2,16 @@ package com.aqua.aqualight.ui.tabs.devices.detail.settings
 
 import android.os.Bundle
 import android.view.View
+import android.view.ViewGroup
 import androidx.core.view.isInvisible
 import androidx.core.view.isVisible
+import androidx.core.view.updateLayoutParams
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.viewModels
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.repeatOnLifecycle
+import androidx.navigation.NavDestination
 import androidx.navigation.NavDestination.Companion.hierarchy
 import androidx.navigation.NavDirections
 import androidx.navigation.fragment.findNavController
@@ -52,6 +55,11 @@ abstract class DeviceFamilySettingsFragment : Fragment(R.layout.fragment_device_
         }
 
         _binding = FragmentDeviceFamilySettingsBinding.bind(view)
+        // ViewStub transfers its own layout params to the inflated card, so section spacing belongs
+        // on the stub and uses the same centralized token as the preceding Settings card.
+        binding.lightSettingsSectionStub.updateLayoutParams<ViewGroup.MarginLayoutParams> {
+            topMargin = resources.getDimensionPixelSize(R.dimen.aqua_size_14)
+        }
         setupHeader()
         applyStaticCopy()
         setupDeviceNameResult()
@@ -155,22 +163,26 @@ abstract class DeviceFamilySettingsFragment : Fragment(R.layout.fragment_device_
 
     private fun openFirmwareUpdateScreen() {
         val navController = findNavController()
-        val destination = navController.currentDestination ?: return
-        if (destination.id !in SETTINGS_DESTINATIONS) return
+        val direction = navController.currentDestination
+            ?.takeIf { destination -> destination.id in SETTINGS_DESTINATIONS }
+            ?.let(::firmwareUpdateDirection)
+            ?: return
+        navController.navigate(direction)
+    }
 
+    private fun firmwareUpdateDirection(destination: NavDestination): NavDirections? {
         val ownerGraphId = destination.hierarchy
             .map { node -> node.id }
             .firstOrNull { graphId ->
                 graphId == R.id.nav_devices || graphId == R.id.nav_aquarium
             }
-        val direction: NavDirections = when (ownerGraphId) {
+        return when (ownerGraphId) {
             R.id.nav_devices -> NavDevicesDirections
                 .actionGlobalDeviceFirmwareUpdateFragment(deviceUid)
             R.id.nav_aquarium -> NavAquariumDirections
                 .actionGlobalDeviceFirmwareUpdateFragment(deviceUid)
-            else -> return
+            else -> null
         }
-        navController.navigate(direction)
     }
 
     private fun observeSettings() {
