@@ -317,6 +317,121 @@ class DeviceOtaCoordinatorTest {
     }
 
     @Test
+    fun `historical terminal status preserves the prepared update and install action`() = runTest {
+        val gateway = RecordingGateway().apply {
+            statusData = otaStatusData(
+                otaSnapshot("failed", active = false, progressPermille = 0)
+                    .put("targetVersion", "1.9.9")
+                    .put("sha256Expected", "c".repeat(64))
+            )
+        }
+        val coordinator = DeviceOtaCoordinator(
+            snapshotProvider = { snapshot() },
+            connectRuntime = { Result.success(Unit) },
+            updaterProvider = { updater(gateway) },
+            runtimeLifecycleEvents = null
+        )
+        val plan = (
+            coordinator.checkAvailability(DEVICE_UID, MANIFEST_URL, true).getOrThrow()
+                as DeviceOtaState.UpdateAvailable
+            ).plan
+
+        val statusResult = coordinator.requestStatus(DEVICE_UID)
+
+        assertTrue(statusResult.isSuccess)
+        assertEquals(DeviceOtaState.UpdateAvailable(plan), coordinator.observe(DEVICE_UID).value)
+        val startResult = coordinator.startUpdate(plan)
+        assertTrue(startResult.isSuccess)
+        assertTrue(coordinator.observe(DEVICE_UID).value is DeviceOtaState.InProgress)
+        coordinator.close()
+    }
+
+    @Test
+    fun `active recovery status still rejects another artifact`() = runTest {
+        val gateway = RecordingGateway().apply {
+            statusData = otaStatusData(
+                otaSnapshot("writing", active = true, progressPermille = 500)
+                    .put("targetVersion", "1.9.9")
+            )
+        }
+        val coordinator = DeviceOtaCoordinator(
+            snapshotProvider = { snapshot() },
+            connectRuntime = { Result.success(Unit) },
+            updaterProvider = { updater(gateway) },
+            runtimeLifecycleEvents = null
+        )
+        coordinator.checkAvailability(DEVICE_UID, MANIFEST_URL, true).getOrThrow()
+
+        val statusResult = coordinator.requestStatus(DEVICE_UID)
+
+        assertFalse(statusResult.isSuccess)
+        assertEquals(DeviceOtaFailureReason.PROTOCOL_MISMATCH, statusResult.failure?.reason)
+        assertTrue(coordinator.observe(DEVICE_UID).value is DeviceOtaState.Failed)
+        coordinator.close()
+    }
+
+    @Test
+    fun `active recovery status binds later typed progress`() = runTest {
+        val typedEvents = MutableSharedFlow<DeviceRuntimeTypedEvent>(extraBufferCapacity = 8)
+        val gateway = RecordingGateway().apply {
+            statusData = otaStatusData(
+                otaSnapshot("writing", active = true, progressPermille = 400)
+            )
+        }
+        val coordinator = DeviceOtaCoordinator(
+            snapshotProvider = { snapshot() },
+            connectRuntime = { Result.success(Unit) },
+            updaterProvider = { updater(gateway) },
+            runtimeLifecycleEvents = null,
+            runtimeTypedEvents = typedEvents,
+            dispatcher = StandardTestDispatcher(testScheduler)
+        )
+        runCurrent()
+        coordinator.checkAvailability(DEVICE_UID, MANIFEST_URL, true).getOrThrow()
+        assertTrue(coordinator.requestStatus(DEVICE_UID).isSuccess)
+
+        typedEvents.tryEmit(
+            otaEvent(
+                DeviceRuntimeTypedEvent.Type.FIRMWARE_OTA_PROGRESS,
+                "recovered-progress",
+                otaEventData("writing", active = true, progressPermille = 600)
+            )
+        )
+        runCurrent()
+
+        val progress = coordinator.observe(DEVICE_UID).value as DeviceOtaState.InProgress
+        assertEquals(600, progress.progressPermille)
+        coordinator.close()
+    }
+
+    @Test
+    fun `terminal status after accepted start remains the current firmware failure`() = runTest {
+        val gateway = RecordingGateway()
+        val coordinator = DeviceOtaCoordinator(
+            snapshotProvider = { snapshot() },
+            connectRuntime = { Result.success(Unit) },
+            updaterProvider = { updater(gateway) },
+            runtimeLifecycleEvents = null
+        )
+        val plan = (
+            coordinator.checkAvailability(DEVICE_UID, MANIFEST_URL, true).getOrThrow()
+                as DeviceOtaState.UpdateAvailable
+            ).plan
+        assertTrue(coordinator.startUpdate(plan).isSuccess)
+        gateway.statusData = otaStatusData(
+            otaSnapshot("failed", active = false, progressPermille = 0)
+        )
+
+        val statusResult = coordinator.requestStatus(DEVICE_UID)
+
+        assertTrue(statusResult.isSuccess)
+        val failed = coordinator.observe(DEVICE_UID).value as DeviceOtaState.Failed
+        assertEquals(DeviceOtaFailureReason.DOWNLOAD_FAILED, failed.failure.reason)
+        assertEquals("download failed", failed.failure.diagnosticMessage)
+        coordinator.close()
+    }
+
+    @Test
     fun `idle start acknowledgement cannot re-enable the install action`() = runTest {
         val gateway = RecordingGateway().apply {
             startData = startAcceptedData().put(

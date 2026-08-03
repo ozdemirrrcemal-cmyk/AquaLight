@@ -304,8 +304,7 @@ internal class DeviceOtaCoordinator(
         outcome: DeviceRuntimeCommandOutcome<DeviceFirmwareOtaSnapshot>
     ): AppCommandResult = when (outcome) {
         is DeviceRuntimeCommandOutcome.Success -> {
-            val selected = selectedPlans[deviceUid]?.copy(runtimeGeneration = outcome.generation)
-            if (selected != null) selectedPlans[deviceUid] = selected
+            val selected = selectedPlans[deviceUid]
             applySnapshot(deviceUid, outcome.value, selected, outcome.generation)?.let { failure ->
                 AppCommandResult(
                     sent = false,
@@ -422,12 +421,27 @@ internal class DeviceOtaCoordinator(
         selected: SelectedPlan?,
         generation: DeviceRuntimeConnectionGeneration
     ): DeviceOtaFailure? {
+        val state = stateFlow(deviceUid)
+        return if (shouldPreservePreparedPlan(snapshot, selected, state.value)) {
+            null
+        } else {
+            applyCorrelatedSnapshot(deviceUid, snapshot, selected, generation, state)
+        }
+    }
+
+    private fun applyCorrelatedSnapshot(
+        deviceUid: DeviceUid,
+        snapshot: DeviceFirmwareOtaSnapshot,
+        selected: SelectedPlan?,
+        generation: DeviceRuntimeConnectionGeneration,
+        state: MutableStateFlow<DeviceOtaState>
+    ): DeviceOtaFailure? {
         DeviceOtaValidator.snapshotAgainstPlan(snapshot, selected?.dataPlan)?.let { error ->
             val failure = DeviceOtaFailureMapper.protocol(error)
             fail(deviceUid, failure)
             return failure
         }
-        val activeSelection = selected?.copy(runtimeGeneration = generation)
+        val activeSelection = correlateSelection(selected, snapshot, generation)
         if (activeSelection != null) selectedPlans[deviceUid] = activeSelection
         val releaseContent = activeSelection?.applicationPlan?.releaseContent
             ?: DeviceFirmwareReleaseContent.EMPTY
@@ -435,7 +449,6 @@ internal class DeviceOtaCoordinator(
             activeSelection?.dataPlan?.targetVersion.orEmpty()
         }
         armRestartVerification(deviceUid, snapshot, activeSelection)
-        val state = stateFlow(deviceUid)
         state.value = when {
             snapshot.phase == DeviceFirmwareOtaPhase.IDLE &&
                 activeSelection != null &&
@@ -455,6 +468,25 @@ internal class DeviceOtaCoordinator(
         }
         verifyCurrentFirmwareIfReady(deviceUid, snapshot, activeSelection)
         return null
+    }
+    private fun shouldPreservePreparedPlan(
+        snapshot: DeviceFirmwareOtaSnapshot,
+        selected: SelectedPlan?,
+        currentState: DeviceOtaState
+    ): Boolean {
+        if (currentState !is DeviceOtaState.UpdateAvailable || selected == null) return false
+        return snapshot.phase.isTerminal && selected.runtimeGeneration == null
+    }
+
+    private fun correlateSelection(
+        selected: SelectedPlan?,
+        snapshot: DeviceFirmwareOtaSnapshot,
+        generation: DeviceRuntimeConnectionGeneration
+    ): SelectedPlan? = when {
+        selected == null -> null
+        selected.runtimeGeneration != null || snapshot.active ->
+            selected.copy(runtimeGeneration = generation)
+        else -> selected
     }
 
     private fun armRestartVerification(
