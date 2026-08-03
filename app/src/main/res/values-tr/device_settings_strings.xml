@@ -18,8 +18,21 @@
     <string name="device_settings_view_update_action">Güncellemeyi görüntüle</string>
     <string name="device_settings_update_in_progress_status">%1$s yükleniyor · %2$d%%</string>
     <string name="device_settings_retry_update_check_action">Tekrar dene</string>
-    <string name="device_settings_update_check_failed_status">Güncelleme denetimi tamamlanamadı.</string>
     <string name="device_settings_update_unsupported_status">Bu cihaz yazılım güncellemelerini desteklemiyor.</string>
+    <string name="device_settings_update_error_check_failed">Güncelleme bilgileri doğrulanamadı. İnternet bağlantınızı kontrol edip tekrar deneyin.</string>
+    <string name="device_settings_update_error_connection">Uygulama cihazla bağlantı kuramadı. Cihazı açık ve aynı ağda tutup tekrar deneyin.</string>
+    <string name="device_settings_update_error_authentication">Cihazla güvenli oturum kurulamadı. Cihaza yeniden bağlanıp tekrar deneyin.</string>
+    <string name="device_settings_update_error_device_busy">Cihaz şu anda başka bir güncelleme işlemi yürütüyor. İşlem tamamlandıktan sonra tekrar deneyin.</string>
+    <string name="device_settings_update_error_release_unavailable">Seçilen yazılım paketi resmî yayın hizmetinde bulunamadı.</string>
+    <string name="device_settings_update_error_incompatible_firmware">Bulunan yazılım bu cihaz modeli veya donanım revizyonuyla uyumlu değil.</string>
+    <string name="device_settings_update_error_insufficient_space">Yazılım paketi cihazın güncelleme bölümüne sığmıyor.</string>
+    <string name="device_settings_update_error_download_failed">Cihaz yazılımı indiremedi. Ağ bağlantısını kontrol edip tekrar deneyin.</string>
+    <string name="device_settings_update_error_integrity_check">İndirilen yazılımın bütünlüğü doğrulanamadı. Güncelleme uygulanmadı.</string>
+    <string name="device_settings_update_error_safe_mode">Cihaz güncelleme için güvenli moda geçemedi. Cihazı açık tutup tekrar deneyin.</string>
+    <string name="device_settings_update_error_flash_write">Cihaz yazılımı dahili belleğe yazamadı. Cihazı kapatmayın ve destek alın.</string>
+    <string name="device_settings_update_error_security_validation">Güvenli yazılım bağlantısı doğrulanamadı. Güncelleme uygulanmadı.</string>
+    <string name="device_settings_update_error_protocol_mismatch">Uygulama ile cihazın güncelleme protokolü uyuşmuyor. Tekrar denemeden önce uygulamayı güncelleyin.</string>
+    <string name="device_settings_update_error_device_internal">Cihaz güncellemeyi tamamlayamadı. Cihazı açık tutup tekrar deneyin; sorun sürerse destek alın.</string>
 
     <string name="device_settings_change_name_title">Cihaz adını değiştir</string>
     <string name="device_settings_save_action">Kaydet</string>
