@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="device_settings_update_debug_copy_diagnostic_action">Copy diagnostic details</string>
+    <string name="device_settings_update_debug_diagnostic_hint">Debug build: copy the redacted OTA request, response and parser result, then share it for analysis.</string>
+    <string name="device_settings_update_debug_diagnostic_copied">OTA diagnostic details copied.</string>
+</resources>
