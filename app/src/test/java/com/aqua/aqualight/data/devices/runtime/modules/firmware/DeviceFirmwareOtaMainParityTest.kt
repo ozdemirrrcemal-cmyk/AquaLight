@@ -46,7 +46,7 @@ class DeviceFirmwareOtaMainParityTest {
     }
 
     @Test
-    fun `negative firmware http diagnostic maps to retryable download failure`() {
+    fun `connection refused diagnostic maps to exact retryable download failure`() {
         val failure = DeviceOtaFailureMapper.snapshot(
             DeviceFirmwareOtaSnapshot(
                 phase = DeviceFirmwareOtaPhase.FAILED,
@@ -61,7 +61,7 @@ class DeviceFirmwareOtaMainParityTest {
             )
         )
 
-        assertEquals(DeviceOtaFailureReason.DOWNLOAD_FAILED, failure.reason)
+        assertEquals(DeviceOtaFailureReason.DOWNLOAD_CONNECTION_FAILED, failure.reason)
         assertTrue(failure.recoverable)
         assertEquals(-1, failure.httpStatus)
     }
