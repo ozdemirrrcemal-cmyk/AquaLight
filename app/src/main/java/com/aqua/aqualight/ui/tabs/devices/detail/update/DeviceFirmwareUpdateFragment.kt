@@ -32,6 +32,7 @@ import com.aqua.aqualight.databinding.FragmentDeviceFirmwareUpdateBinding
 import com.aqua.aqualight.databinding.LayoutDeviceFirmwareReleaseItemBinding
 import com.aqua.aqualight.ui.common.header.AquaHeaderConfig
 import com.aqua.aqualight.ui.common.header.setupAquaHeader
+import com.aqua.aqualight.ui.tabs.devices.detail.common.DeviceRootPresentationMapper
 import kotlinx.coroutines.launch
 
 /** Central full-screen software update route backed by the owner-scoped OTA coordinator. */
@@ -85,7 +86,7 @@ class DeviceFirmwareUpdateFragment : Fragment(R.layout.fragment_device_firmware_
             when (latestState.mode) {
                 DeviceFirmwareUpdateMode.AVAILABLE -> viewModel.installUpdate()
                 DeviceFirmwareUpdateMode.FAILED -> {
-                    if (latestState.failureRecoverable) viewModel.retry()
+                    if (latestState.failure?.recoverable == true) viewModel.retry()
                     else findNavController().navigateUp()
                 }
                 DeviceFirmwareUpdateMode.SUCCEEDED,
@@ -281,10 +282,11 @@ class DeviceFirmwareUpdateFragment : Fragment(R.layout.fragment_device_firmware_
     }
 
     private fun announceStateChange(state: DeviceFirmwareUpdateUiState) {
-        val key = "${state.mode}:${state.phase.orEmptyName()}"
+        val key = "${state.mode}:${state.phase.orEmptyName()}:${state.failure?.reason.orEmptyName()}"
         if (lastAnnouncementKey.isNotBlank() && key != lastAnnouncementKey) {
+            val detail = state.progressDetail()
             binding.firmwareUpdateContent.announceForAccessibility(
-                getString(state.phaseTextRes())
+                detail.ifBlank { getString(state.phaseTextRes()) }
             )
         }
         lastAnnouncementKey = key
@@ -350,6 +352,9 @@ class DeviceFirmwareUpdateFragment : Fragment(R.layout.fragment_device_firmware_
     }
 
     private fun DeviceFirmwareUpdateUiState.progressDetail(): CharSequence = when {
+        failure != null -> getString(
+            DeviceRootPresentationMapper.otaFailureMessageRes(failure.reason)
+        )
         mode == DeviceFirmwareUpdateMode.IN_PROGRESS && contentLength > 0L -> getString(
             R.string.device_settings_update_progress_bytes,
             Formatter.formatShortFileSize(requireContext(), bytesWritten),
@@ -389,7 +394,7 @@ class DeviceFirmwareUpdateFragment : Fragment(R.layout.fragment_device_firmware_
         DeviceFirmwareUpdateMode.RESTARTING -> R.string.device_settings_update_phase_restarting
         DeviceFirmwareUpdateMode.SUCCEEDED -> R.string.device_settings_update_phase_succeeded
         DeviceFirmwareUpdateMode.UP_TO_DATE -> R.string.device_settings_update_phase_up_to_date
-        DeviceFirmwareUpdateMode.FAILED -> if (failureRecoverable) {
+        DeviceFirmwareUpdateMode.FAILED -> if (failure?.recoverable == true) {
             R.string.device_settings_update_phase_failed_recoverable
         } else {
             R.string.device_settings_update_phase_failed_terminal
@@ -455,7 +460,7 @@ class DeviceFirmwareUpdateFragment : Fragment(R.layout.fragment_device_firmware_
             enabled = true
         )
         DeviceFirmwareUpdateMode.FAILED -> ActionPresentation(
-            textRes = if (failureRecoverable) {
+            textRes = if (failure?.recoverable == true) {
                 R.string.device_settings_retry_update_action
             } else {
                 R.string.device_settings_update_close_action
@@ -469,6 +474,8 @@ class DeviceFirmwareUpdateFragment : Fragment(R.layout.fragment_device_firmware_
     }
 
     private fun DeviceOtaProgressPhase?.orEmptyName(): String = this?.name.orEmpty()
+
+    private fun Enum<*>?.orEmptyName(): String = this?.name.orEmpty()
 
     override fun onDestroyView() {
         stopPulseAnimation()
