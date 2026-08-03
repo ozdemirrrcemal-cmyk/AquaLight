@@ -427,40 +427,40 @@ internal class DeviceOtaCoordinator(
             val prepared = selected.copy(runtimeGeneration = generation)
             selectedPlans[deviceUid] = prepared
             state.value = DeviceOtaState.UpdateAvailable(prepared.applicationPlan)
-            return null
-        }
-        DeviceOtaValidator.snapshotAgainstPlan(snapshot, selected?.dataPlan)?.let { error ->
-            val failure = DeviceOtaFailureMapper.protocol(error)
-            fail(deviceUid, failure)
-            return failure
-        }
-        val activeSelection = selected?.copy(runtimeGeneration = generation)
-        if (activeSelection != null) selectedPlans[deviceUid] = activeSelection
-        val releaseContent = activeSelection?.applicationPlan?.releaseContent
-            ?: DeviceFirmwareReleaseContent.EMPTY
-        val targetVersion = snapshot.targetVersion.ifBlank {
-            activeSelection?.dataPlan?.targetVersion.orEmpty()
-        }
-        armRestartVerification(deviceUid, snapshot, activeSelection)
-        state.value = when {
-            snapshot.phase == DeviceFirmwareOtaPhase.IDLE &&
-                activeSelection != null &&
-                state.value is DeviceOtaState.UpdateAvailable -> {
-                // A recovery status probe preserves the exact signed plan selected immediately
-                // beforehand. A historical failed terminal status is handled above for the same
-                // reason: it has no correlation to the newly prepared installation attempt.
-                DeviceOtaState.UpdateAvailable(activeSelection.applicationPlan)
+        } else {
+            DeviceOtaValidator.snapshotAgainstPlan(snapshot, selected?.dataPlan)?.let { error ->
+                val failure = DeviceOtaFailureMapper.protocol(error)
+                fail(deviceUid, failure)
+                return failure
             }
-            snapshot.phase == DeviceFirmwareOtaPhase.IDLE &&
-                state.value is DeviceOtaState.Starting -> state.value
-            else -> DeviceOtaStateMapper.map(
-                snapshot = snapshot,
-                deviceUid = deviceUid,
-                targetVersion = targetVersion,
-                releaseContent = releaseContent
-            )
+            val activeSelection = selected?.copy(runtimeGeneration = generation)
+            if (activeSelection != null) selectedPlans[deviceUid] = activeSelection
+            val releaseContent = activeSelection?.applicationPlan?.releaseContent
+                ?: DeviceFirmwareReleaseContent.EMPTY
+            val targetVersion = snapshot.targetVersion.ifBlank {
+                activeSelection?.dataPlan?.targetVersion.orEmpty()
+            }
+            armRestartVerification(deviceUid, snapshot, activeSelection)
+            state.value = when {
+                snapshot.phase == DeviceFirmwareOtaPhase.IDLE &&
+                    activeSelection != null &&
+                    state.value is DeviceOtaState.UpdateAvailable -> {
+                    // A recovery status probe preserves the exact signed plan selected immediately
+                    // beforehand. A historical failed terminal status is handled above for the same
+                    // reason: it has no correlation to the newly prepared installation attempt.
+                    DeviceOtaState.UpdateAvailable(activeSelection.applicationPlan)
+                }
+                snapshot.phase == DeviceFirmwareOtaPhase.IDLE &&
+                    state.value is DeviceOtaState.Starting -> state.value
+                else -> DeviceOtaStateMapper.map(
+                    snapshot = snapshot,
+                    deviceUid = deviceUid,
+                    targetVersion = targetVersion,
+                    releaseContent = releaseContent
+                )
+            }
+            verifyCurrentFirmwareIfReady(deviceUid, snapshot, activeSelection)
         }
-        verifyCurrentFirmwareIfReady(deviceUid, snapshot, activeSelection)
         return null
     }
 
