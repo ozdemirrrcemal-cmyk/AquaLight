@@ -1,8 +1,5 @@
 package com.aqua.aqualight.data.devices.runtime.modules.firmware
 
-import com.aqua.aqualight.application.devices.DeviceFirmwareFailureKind
-import com.aqua.aqualight.application.devices.DeviceFirmwareFailureSource
-import com.aqua.aqualight.application.devices.DeviceFirmwareFailureStage
 import com.aqua.aqualight.application.devices.DeviceFirmwareReleaseContent
 import com.aqua.aqualight.application.devices.DeviceOtaProgressPhase
 import com.aqua.aqualight.application.devices.DeviceOtaState
@@ -119,19 +116,6 @@ internal object DeviceOtaStateMapper {
             deviceUid = deviceUid.value,
             failure = DeviceFirmwareFailureMapper.fromSnapshot(snapshot, requestId)
         )
-        DeviceFirmwareOtaPhase.UNKNOWN -> DeviceOtaState.Failed(
-            deviceUid = deviceUid.value,
-            failure = DeviceFirmwareFailureMapper.local(
-                technicalMessage = "Firmware reported an unknown OTA phase.",
-                source = DeviceFirmwareFailureSource.FIRMWARE_STATUS,
-                stage = DeviceFirmwareFailureStage.STATUS,
-                code = "unknown_ota_phase",
-                requestId = requestId,
-                firmwarePhase = snapshot.phaseRaw,
-                recoverable = false,
-                kind = DeviceFirmwareFailureKind.PROTOCOL
-            )
-        )
     }
 
     private fun DeviceFirmwareOtaSnapshot.inProgressState(
@@ -173,6 +157,10 @@ internal object DeviceOtaStateMapper {
         DeviceFirmwareOtaPhase.DOWNLOADING -> DeviceOtaProgressPhase.DOWNLOADING
         DeviceFirmwareOtaPhase.WRITING -> DeviceOtaProgressPhase.WRITING
         DeviceFirmwareOtaPhase.VERIFYING -> DeviceOtaProgressPhase.VERIFYING
-        else -> error("Terminal/unknown OTA phase cannot map to progress.")
+        DeviceFirmwareOtaPhase.IDLE,
+        DeviceFirmwareOtaPhase.SUCCEEDED,
+        DeviceFirmwareOtaPhase.FAILED -> error(
+            "Non-progress OTA phase cannot map to application progress."
+        )
     }
 }
