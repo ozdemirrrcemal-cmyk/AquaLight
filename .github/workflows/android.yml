@@ -234,6 +234,17 @@ jobs:
             app/build/reports/detekt/**
           if-no-files-found: warn
 
+      - name: Download stable OTA manifest fixture
+        shell: bash
+        run: |
+          set -Eeuo pipefail
+          manifest_path="${RUNNER_TEMP}/manifest-stable.json"
+          curl --fail --location --retry 3 --retry-all-errors \
+            --output "$manifest_path" \
+            "https://github.com/ozdemirrrcemal-cmyk/AquaLight-OTA-Releases/releases/latest/download/manifest-stable.json"
+          test -s "$manifest_path"
+          echo "AQL_LIVE_OTA_MANIFEST_PATH=$manifest_path" >> "$GITHUB_ENV"
+
       - name: Run non-production unit tests with JaCoCo coverage
         run: |
           ./gradlew \
