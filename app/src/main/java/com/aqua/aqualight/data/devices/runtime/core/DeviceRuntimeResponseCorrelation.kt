@@ -9,6 +9,7 @@ internal fun completeCorrelatedRuntimeReply(
     message: AqlWsIncomingMessage,
     pendingRequests: DeviceRuntimePendingRequestRegistry
 ): DeviceRuntimeCompletionDisposition {
+    DeviceRuntimeOtaDiagnostics.recordIncoming(deviceUid, generation, message)
     val pending = pendingRequests.find(deviceUid, generation, message.id)
     return when {
         pending == null -> terminalOrUnmatched(
@@ -105,10 +106,24 @@ private fun parseRuntimeSuccess(
         statusCode = response.statusCode,
         value = pending.parseSuccess(response)
     )
-} catch (_: Throwable) {
+} catch (error: Throwable) {
+    val key = pending.key
+    DeviceRuntimeOtaDiagnostics.recordParserFailure(
+        deviceUid = key.deviceUid,
+        generation = key.generation,
+        messageId = key.messageId,
+        error = error
+    )
     protocolError(
         pending,
-        "Successful firmware response did not match the typed command contract."
+        buildString {
+            append("Successful firmware response did not match the typed command contract")
+            error.message?.takeIf(String::isNotBlank)?.let { message ->
+                append(": ")
+                append(message.take(MAX_PROTOCOL_DIAGNOSTIC_CHARS))
+            }
+            append('.')
+        }
     )
 }
 
@@ -126,3 +141,5 @@ private fun protocolError(
         reason = reason
     )
 }
+
+private const val MAX_PROTOCOL_DIAGNOSTIC_CHARS = 480
