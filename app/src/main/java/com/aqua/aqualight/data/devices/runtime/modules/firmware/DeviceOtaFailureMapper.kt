@@ -136,7 +136,7 @@ private object DeviceOtaHttpFailureClassifier {
     fun map(diagnostics: DeviceOtaFailureDiagnostics): DeviceOtaFailure {
         val status = diagnostics.httpStatus
         val releaseMissing = status == HTTP_NOT_FOUND
-        val retryable = status == 0 ||
+        val retryable = status <= 0 ||
             status == HTTP_REQUEST_TIMEOUT ||
             status == HTTP_TOO_MANY_REQUESTS ||
             status >= HTTP_SERVER_ERROR_START
