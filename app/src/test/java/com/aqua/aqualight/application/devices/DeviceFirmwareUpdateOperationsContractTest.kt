@@ -37,11 +37,11 @@ class DeviceFirmwareUpdateOperationsContractTest {
         assertTrue(content.isPresent)
         assertFalse(DeviceFirmwareReleaseContent.EMPTY.isPresent)
 
-        val unsupported = DeviceOtaState.Unsupported("device-1", "OTA desteklenmiyor.")
+        val unsupported = DeviceOtaState.Unsupported("device-1")
         val upToDate = DeviceOtaState.UpToDate("device-1", "2.0.0", "2.0.0", content)
         val succeeded = DeviceOtaState.Succeeded("device-1", "2.0.0", content)
 
-        assertEquals("OTA desteklenmiyor.", unsupported.reason)
+        assertEquals("device-1", unsupported.deviceUid)
         assertSame(content, upToDate.releaseContent)
         assertEquals("2.0.0", succeeded.targetVersion)
         assertSame(content, succeeded.releaseContent)
