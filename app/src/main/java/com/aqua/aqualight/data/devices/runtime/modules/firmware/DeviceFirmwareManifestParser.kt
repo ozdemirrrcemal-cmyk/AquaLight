@@ -361,7 +361,7 @@ object DeviceFirmwareManifestParser {
         require(!value.first().isWhitespace() && !value.last().isWhitespace()) {
             "OTA release note '$key' must not contain surrounding whitespace."
         }
-        require(value.none { character -> character.code < 32 }) {
+        require(value.none { character -> character < ' ' }) {
             "OTA release note '$key' must not contain C0 control characters."
         }
         require(value.length <= DeviceFirmwareRuntimeContract.Limit.MAX_RELEASE_NOTE_TEXT_LENGTH) {
