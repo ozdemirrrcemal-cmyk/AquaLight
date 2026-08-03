@@ -205,6 +205,20 @@ data class DeviceFirmwareCommandResult(
     val messageId: String = "",
     val failure: DeviceFirmwareFailure? = null
 ) {
+    init {
+        require(sent || failure != null) {
+            "An unsent OTA command result must contain structured failure details."
+        }
+        require(
+            failure == null ||
+                messageId.isBlank() ||
+                failure.requestId.isBlank() ||
+                messageId == failure.requestId
+        ) {
+            "OTA command result messageId must match its failure requestId."
+        }
+    }
+
     val isSuccess: Boolean
         get() = sent && failure == null
 }
