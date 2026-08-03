@@ -1,9 +1,8 @@
 package com.aqua.aqualight.data.devices.runtime.modules.firmware
 
 import com.aqua.aqualight.application.devices.DeviceOtaState
-import com.aqua.aqualight.data.devices.catalog.AqlCommercialCatalogProduct
-import com.aqua.aqualight.data.devices.catalog.AqlCommercialDeviceCatalog
 import com.aqua.aqualight.data.devices.model.DeviceCapabilities
+import com.aqua.aqualight.data.devices.model.DeviceFamily
 import com.aqua.aqualight.data.devices.model.DeviceIdentity
 import com.aqua.aqualight.data.devices.model.DeviceLimits
 import com.aqua.aqualight.data.devices.model.DeviceProduct
@@ -32,7 +31,7 @@ class DeviceOtaCommercialHardeningTest {
     fun `concurrent start requests dispatch exactly one ota command per device`() = runTest {
         val gateway = RecordingGateway(startDelayMillis = START_SEND_DELAY_MILLIS)
         val coordinator = DeviceOtaCoordinator(
-            snapshotProvider = { product().toSnapshot() },
+            snapshotProvider = { snapshot() },
             connectRuntime = { Result.success(Unit) },
             updaterProvider = { updater(gateway) },
             runtimeLifecycleEvents = null
@@ -43,9 +42,7 @@ class DeviceOtaCommercialHardeningTest {
             ).plan
         try {
             val successfulStarts = List(WORKER_COUNT) {
-                async {
-                    coordinator.startUpdate(plan).isSuccess
-                }
+                async { coordinator.startUpdate(plan).isSuccess }
             }.awaitAll().count { it }
 
             assertEquals(1, successfulStarts)
@@ -64,23 +61,18 @@ class DeviceOtaCommercialHardeningTest {
     @Test
     fun `exact artifact predicate ignores nonmatching environment family and line`() {
         val exact = artifact()
-        val manifest = manifest(
+        val releaseManifest = manifest(
             artifacts = listOf(
                 exact,
                 exact.copy(env = "dosing_dose_pro_4"),
-                exact.copy(
-                    compatibility = exact.compatibility.copy(family = "timer")
-                ),
-                exact.copy(
-                    compatibility = exact.compatibility.copy(line = "legacy_dose")
-                )
+                exact.copy(compatibility = exact.compatibility.copy(family = "timer")),
+                exact.copy(compatibility = exact.compatibility.copy(line = "legacy_dose"))
             )
         )
         val planner = DeviceFirmwareUpdatePlanner { listOf("en") }
-        val snapshot = product().toSnapshot()
 
-        val matching = planner.compatibleArtifacts(snapshot, manifest)
-        val availability = planner.evaluateUpdate(snapshot, manifest).getOrThrow()
+        val matching = planner.compatibleArtifacts(snapshot(), releaseManifest)
+        val availability = planner.evaluateUpdate(snapshot(), releaseManifest).getOrThrow()
             as DeviceFirmwareAvailability.UpdateAvailable
 
         assertEquals(listOf(exact), matching)
@@ -94,11 +86,20 @@ class DeviceOtaCommercialHardeningTest {
 
         val invalidManifests = listOf(
             manifestJson().put("legacyRoot", true),
-            manifestJson().apply {
-                artifactJson().put("legacyArtifact", true)
-            },
+            manifestJson().apply { getJSONObject("platform").put("legacyPlatform", true) },
+            manifestJson().apply { artifactJson().put("legacyArtifact", true) },
             manifestJson().apply {
                 artifactJson().getJSONObject("product").put("legacyProduct", true)
+            },
+            manifestJson().apply {
+                artifactJson().getJSONObject("product")
+                    .getJSONObject("capabilities")
+                    .put("legacyCapability", true)
+            },
+            manifestJson().apply {
+                artifactJson().getJSONObject("product")
+                    .getJSONObject("limits")
+                    .put("legacyLimit", 1)
             },
             manifestJson().apply {
                 artifactJson().getJSONObject("compatibility").put("legacyCompatibility", true)
@@ -107,14 +108,13 @@ class DeviceOtaCommercialHardeningTest {
                 artifactJson().getJSONObject("firmware").put("legacyFirmware", true)
             },
             manifestJson().apply {
-                getJSONObject("signature").put("legacySignature", true)
+                getJSONObject("releaseNotes")
+                    .getJSONArray("items")
+                    .getJSONObject(0)
+                    .put("de", "Nicht unterstützt")
             },
             manifestJson().apply {
-                val firmware = artifactJson().getJSONObject("firmware")
-                artifactJson().put(
-                    "factory",
-                    JSONObject(firmware.toString()).put("legacyFactory", true)
-                )
+                getJSONObject("signature").put("legacySignature", true)
             }
         )
 
@@ -127,64 +127,36 @@ class DeviceOtaCommercialHardeningTest {
     }
 
     private fun updater(gateway: RecordingGateway): DeviceFirmwareUpdateRepository {
-        val runtime = DeviceFirmwareRuntimeRepository(gateway)
         val source = object : DeviceFirmwareManifestHttpSource() {
             override suspend fun load(url: String): Result<DeviceFirmwareManifest> =
                 Result.success(manifest())
         }
         return DeviceFirmwareUpdateRepository(
-            runtime = runtime,
+            runtime = DeviceFirmwareRuntimeRepository(gateway),
             manifestSource = source,
             planner = DeviceFirmwareUpdatePlanner { listOf("en") }
         )
     }
 
-    private fun product(): AqlCommercialCatalogProduct =
-        AqlCommercialDeviceCatalog.products.single { product ->
-            product.productKey.value == PRODUCT_KEY
-        }
-
-    private fun AqlCommercialCatalogProduct.toSnapshot(): DeviceSnapshot = DeviceSnapshot(
-        identity = DeviceIdentity(uid = DEVICE_UID, customName = "Salon Dozaj"),
+    private fun snapshot(): DeviceSnapshot = DeviceSnapshot(
+        identity = DeviceIdentity(uid = DEVICE_UID, customName = ""),
         product = DeviceProduct(
             brand = "AquaLight",
-            productId = productId.value,
-            productKey = productKey.value,
-            family = family,
-            familyRaw = family.wireValue,
-            line = line.value,
-            model = model.value,
-            displayName = displayName,
-            skuId = skuId.value,
-            skuCode = skuCode.value,
-            hardwareRevision = hardwareRevision.value
+            productId = PRODUCT_ID,
+            productKey = PRODUCT_KEY,
+            family = DeviceFamily.DOSING,
+            familyRaw = "dosing",
+            line = "dose_pro",
+            model = "dose_pro_2",
+            displayName = "Dose Pro 2",
+            skuCode = "AQL-D-DP2-GLB-BLK",
+            hardwareRevision = "2.0"
         ),
         firmwareVersion = CURRENT_VERSION,
         apiVersion = "1",
         protocolVersion = "1",
-        capabilities = DeviceCapabilities(
-            light = profile.capabilities.light,
-            manualLight = profile.capabilities.manualLight,
-            lightProgram = profile.capabilities.lightProgram,
-            lightPresets = profile.capabilities.lightPresets,
-            lightSimulation = profile.capabilities.lightSimulation,
-            fan = profile.capabilities.fan,
-            cooling = profile.capabilities.cooling,
-            temperature = profile.capabilities.temperature,
-            standaloneTimer = profile.capabilities.standaloneTimer,
-            dosing = profile.capabilities.dosing,
-            timeSync = profile.capabilities.timeSync,
-            ota = profile.capabilities.ota
-        ),
-        limits = DeviceLimits(
-            lightChannelCount = limits.lightChannelCount,
-            fanOutputCount = limits.fanOutputCount,
-            temperatureSensorCount = limits.temperatureSensorCount,
-            timerChannelCount = limits.timerChannelCount,
-            dosingChannelCount = limits.dosingChannelCount
-        ),
-        supportedFeatures = profile.supportedFeatures.map { feature -> feature.wireValue },
-        supportedScreens = profile.supportedScreens.map { screen -> screen.wireValue },
+        capabilities = DOSING_CAPABILITIES,
+        limits = DOSING_LIMITS,
         runtimeMetadataGeneration = RUNTIME_GENERATION
     )
 
@@ -198,97 +170,107 @@ class DeviceOtaCommercialHardeningTest {
         tag = RELEASE_TAG,
         releaseRepo = DeviceFirmwareRuntimeContract.OFFICIAL_RELEASE_REPOSITORY,
         generatedAt = GENERATED_AT,
+        platform = OFFICIAL_PLATFORM,
+        releaseNotes = DeviceFirmwareReleaseNotes(
+            schema = DeviceFirmwareRuntimeContract.ReleaseNotes.SCHEMA,
+            defaultLocale = DeviceFirmwareRuntimeContract.ReleaseNotes.DEFAULT_LOCALE,
+            items = listOf(
+                DeviceFirmwareReleaseNoteItem(
+                    tr = "Kalibrasyon doğrulaması geliştirildi.",
+                    en = "Calibration validation improved."
+                )
+            )
+        ),
         artifacts = artifacts,
         signature = DeviceFirmwareManifestSignature(
             scheme = DeviceFirmwareRuntimeContract.Signature.SCHEME_ECDSA_P256_SHA256,
             keyId = "release-key-1",
             payloadHash = "b".repeat(64),
             value = "signed-value"
-        ),
-        releaseNotes = DeviceFirmwareReleaseNotes(
-            defaultLocale = "en",
-            mandatory = false,
-            locales = mapOf(
-                "en" to DeviceFirmwareLocalizedReleaseNotes(
-                    title = "Dosing reliability",
-                    summary = "Safer dosing update.",
-                    changes = listOf("Calibration validation improved."),
-                    warnings = emptyList()
-                )
-            )
         )
     )
 
     private fun artifact(): DeviceFirmwareManifestArtifact {
-        val product = product()
         val filename = "AquaLight-$ENVIRONMENT-$RELEASE_TAG-ota.bin"
         return DeviceFirmwareManifestArtifact(
             env = ENVIRONMENT,
             product = DeviceFirmwareManifestProduct(
-                productKey = product.productKey.value,
-                productId = product.productId.value,
+                productKey = PRODUCT_KEY,
+                productId = PRODUCT_ID,
                 brand = DeviceFirmwareRuntimeContract.Manifest.BRAND,
-                family = product.family.wireValue,
-                line = product.line.value,
-                model = product.model.value,
-                displayName = product.displayName,
-                skuCode = product.skuCode.value,
-                hardwareRevision = product.hardwareRevision.value
+                family = "dosing",
+                line = "dose_pro",
+                model = "dose_pro_2",
+                displayName = "AquaLight Dose Pro 2",
+                skuCode = "AQL-D-DP2-GLB-BLK",
+                hardwareRevision = "2.0",
+                capabilities = DOSING_CAPABILITIES,
+                limits = DOSING_LIMITS
             ),
             compatibility = DeviceFirmwareCompatibility(
-                productKey = product.productKey.value,
-                productId = product.productId.value,
-                family = product.family.wireValue,
-                line = product.line.value,
-                model = product.model.value,
-                hardwareRevision = product.hardwareRevision.value
+                productKey = PRODUCT_KEY,
+                productId = PRODUCT_ID,
+                family = "dosing",
+                line = "dose_pro",
+                model = "dose_pro_2",
+                hardwareRevision = "2.0"
             ),
             firmware = DeviceFirmwareAsset(
+                version = TARGET_VERSION,
                 filename = filename,
                 url = DeviceFirmwareRuntimeContract.OFFICIAL_RELEASE_URL_PREFIX +
                     "$RELEASE_TAG/$filename",
                 sha256 = "a".repeat(64),
                 size = FIRMWARE_SIZE,
-                format = "bin",
+                format = DeviceFirmwareRuntimeContract.Manifest.FIRMWARE_FORMAT,
                 otaSlotCompatible = true
-            )
+            ),
+            factory = null
         )
     }
 
     private fun manifestJson(): JSONObject {
-        val artifact = artifact()
-        val releaseContent = JSONObject()
-            .put("title", "Safe update")
-            .put("summary", "Reliability improvements.")
-            .put("changes", JSONArray(listOf("Improved calibration checks.")))
-            .put("warnings", JSONArray())
-
+        val releaseManifest = manifest()
+        val releaseArtifact = releaseManifest.artifacts.single()
         return JSONObject()
-            .put("schema", DeviceFirmwareRuntimeContract.Manifest.SCHEMA)
-            .put("brand", DeviceFirmwareRuntimeContract.Manifest.BRAND)
-            .put("channel", DeviceFirmwareRuntimeContract.Manifest.STABLE_CHANNEL)
-            .put("version", TARGET_VERSION)
-            .put("tag", RELEASE_TAG)
-            .put("releaseRepo", DeviceFirmwareRuntimeContract.OFFICIAL_RELEASE_REPOSITORY)
-            .put("generatedAt", GENERATED_AT)
+            .put("schema", releaseManifest.schema)
+            .put("brand", releaseManifest.brand)
+            .put("channel", releaseManifest.channel)
+            .put("version", releaseManifest.version)
+            .put("tag", releaseManifest.tag)
+            .put("releaseRepo", releaseManifest.releaseRepo)
+            .put("generatedAt", releaseManifest.generatedAt)
+            .put(
+                "platform",
+                JSONObject()
+                    .put("framework", releaseManifest.platform.framework)
+                    .put("core", releaseManifest.platform.core)
+                    .put("platform", releaseManifest.platform.platform)
+                    .put("partitionTable", releaseManifest.platform.partitionTable)
+                    .put("normalOtaAssetType", releaseManifest.platform.normalOtaAssetType)
+            )
             .put(
                 "releaseNotes",
                 JSONObject()
-                    .put("defaultLocale", "en")
-                    .put("mandatory", false)
-                    .put("locales", JSONObject().put("en", releaseContent))
+                    .put("schema", releaseManifest.releaseNotes.schema)
+                    .put("defaultLocale", releaseManifest.releaseNotes.defaultLocale)
+                    .put(
+                        "items",
+                        JSONArray().put(
+                            JSONObject()
+                                .put("tr", releaseManifest.releaseNotes.items.single().tr)
+                                .put("en", releaseManifest.releaseNotes.items.single().en)
+                        )
+                    )
             )
-            .put("artifacts", JSONArray().put(artifact.toJson()))
+            .put("artifacts", JSONArray().put(releaseArtifact.toJson()))
             .put(
                 "signature",
                 JSONObject()
-                    .put(
-                        "scheme",
-                        DeviceFirmwareRuntimeContract.Signature.SCHEME_ECDSA_P256_SHA256
-                    )
-                    .put("keyId", "release-key-1")
-                    .put("payloadHash", "b".repeat(64))
-                    .put("value", "signed-value")
+                    .put("scheme", releaseManifest.signature.scheme)
+                    .put("keyId", releaseManifest.signature.keyId)
+                    .put("payloadHash", releaseManifest.signature.payloadHash)
+                    .put("value", releaseManifest.signature.value)
             )
     }
 
@@ -309,6 +291,8 @@ class DeviceOtaCommercialHardeningTest {
                 .put("displayName", product.displayName)
                 .put("skuCode", product.skuCode)
                 .put("hardwareRevision", product.hardwareRevision)
+                .put("capabilities", product.capabilities.toJson())
+                .put("limits", product.limits.toJson())
         )
         .put(
             "compatibility",
@@ -323,6 +307,7 @@ class DeviceOtaCommercialHardeningTest {
         .put(
             "firmware",
             JSONObject()
+                .put("version", firmware.version)
                 .put("filename", firmware.filename)
                 .put("url", firmware.url)
                 .put("sha256", firmware.sha256)
@@ -330,6 +315,28 @@ class DeviceOtaCommercialHardeningTest {
                 .put("format", firmware.format)
                 .put("otaSlotCompatible", firmware.otaSlotCompatible)
         )
+        .put("factory", JSONObject.NULL)
+
+    private fun DeviceCapabilities.toJson(): JSONObject = JSONObject()
+        .put("light", light)
+        .put("manualLight", manualLight)
+        .put("lightProgram", lightProgram)
+        .put("lightPresets", lightPresets)
+        .put("lightSimulation", lightSimulation)
+        .put("fan", fan)
+        .put("cooling", cooling)
+        .put("temperature", temperature)
+        .put("standaloneTimer", standaloneTimer)
+        .put("dosing", dosing)
+        .put("timeSync", timeSync)
+        .put("ota", ota)
+
+    private fun DeviceLimits.toJson(): JSONObject = JSONObject()
+        .put("lightChannelCount", lightChannelCount)
+        .put("fanOutputCount", fanOutputCount)
+        .put("temperatureSensorCount", temperatureSensorCount)
+        .put("timerChannelCount", timerChannelCount)
+        .put("dosingChannelCount", dosingChannelCount)
 
     private class RecordingGateway(
         private val startDelayMillis: Long
@@ -385,7 +392,7 @@ class DeviceOtaCommercialHardeningTest {
                     .put("applyNow", true)
                     .put("allowInsecureHttp", false)
                     .put("productKey", PRODUCT_KEY)
-                    .put("productId", "com.aqualight.dosing.dose_pro_2")
+                    .put("productId", PRODUCT_ID)
                     .put("model", "dose_pro_2")
                     .put("hardwareRevision", "2.0")
             )
@@ -415,16 +422,26 @@ class DeviceOtaCommercialHardeningTest {
     private companion object {
         val DEVICE_UID = DeviceUid("AQL-DP2-OTA-HARDENING")
         const val PRODUCT_KEY = "DOSING_DOSE_PRO_2"
+        const val PRODUCT_ID = "com.aqualight.dosing.dose_pro_2"
         const val ENVIRONMENT = "dosing_dose_pro_2"
         const val CURRENT_VERSION = "1.0.0"
         const val TARGET_VERSION = "2.0.0"
         const val RELEASE_TAG = "v2.0.0"
-        const val GENERATED_AT = "2026-07-30T00:00:00Z"
+        const val GENERATED_AT = "2026-08-03T00:00:00+00:00"
         const val FIRMWARE_SIZE = 1_048_576
         const val RUNTIME_GENERATION = 7L
         const val WORKER_COUNT = 8
         const val START_SEND_DELAY_MILLIS = 75L
         const val MANIFEST_URL =
             "https://github.com/ozdemirrrcemal-cmyk/AquaLight-OTA-Releases/releases/download/v2.0.0/manifest-stable.json"
+        val DOSING_CAPABILITIES = DeviceCapabilities(dosing = true, timeSync = true, ota = true)
+        val DOSING_LIMITS = DeviceLimits(dosingChannelCount = 2)
+        val OFFICIAL_PLATFORM = DeviceFirmwareManifestPlatform(
+            framework = DeviceFirmwareRuntimeContract.Manifest.PLATFORM_FRAMEWORK,
+            core = DeviceFirmwareRuntimeContract.Manifest.PLATFORM_CORE,
+            platform = DeviceFirmwareRuntimeContract.Manifest.PLATFORM_PACKAGE,
+            partitionTable = DeviceFirmwareRuntimeContract.Manifest.PARTITION_TABLE,
+            normalOtaAssetType = DeviceFirmwareRuntimeContract.Manifest.NORMAL_OTA_ASSET_TYPE
+        )
     }
 }

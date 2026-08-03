@@ -1,10 +1,10 @@
 package com.aqua.aqualight.data.devices.runtime.modules.firmware
 
 /**
- * Production Android mirror of the firmware WebSocket OTA contract.
+ * Exact Android mirror of the firmware WebSocket OTA and published manifest contracts.
  *
- * OTA is device firmware level logic. Product screens may expose family-specific update entry
- * points, but matching, validation, state coordination and progress parsing stay in this module.
+ * The values in this file follow AquaLight-Firmware/main. Product identity and OTA artifact
+ * selection must never depend on an owner-defined device name.
  */
 object DeviceFirmwareRuntimeContract {
 
@@ -37,14 +37,20 @@ object DeviceFirmwareRuntimeContract {
         const val STABLE_CHANNEL = "stable"
         const val BETA_CHANNEL = "beta"
         const val DEV_CHANNEL = "dev"
-        const val RELEASE_NOTES = "releaseNotes"
-        const val DEFAULT_LOCALE = "defaultLocale"
-        const val MANDATORY = "mandatory"
-        const val LOCALES = "locales"
-        const val TITLE = "title"
-        const val SUMMARY = "summary"
-        const val CHANGES = "changes"
-        const val WARNINGS = "warnings"
+        const val FIRMWARE_FORMAT = "esp32-app-bin"
+
+        const val PLATFORM_FRAMEWORK = "arduino-esp32"
+        const val PLATFORM_CORE = "3.3.9"
+        const val PLATFORM_PACKAGE = "pioarduino/platform-espressif32#55.03.39"
+        const val PARTITION_TABLE = "aql_ota_16mb"
+        const val NORMAL_OTA_ASSET_TYPE = "firmware.bin"
+    }
+
+    object ReleaseNotes {
+        const val SCHEMA = "aql.ota.release-notes.v1"
+        const val DEFAULT_LOCALE = "tr"
+        const val TURKISH = "tr"
+        const val ENGLISH = "en"
     }
 
     object Signature {
@@ -68,7 +74,7 @@ object DeviceFirmwareRuntimeContract {
     object Limit {
         const val SHA256_HEX_LENGTH = 64
         const val MAX_URL_LENGTH = 300
-        const val MAX_RELEASE_NOTE_ITEMS = 50
-        const val MAX_RELEASE_NOTE_TEXT_LENGTH = 2_000
+        const val MAX_RELEASE_NOTE_ITEMS = 20
+        const val MAX_RELEASE_NOTE_TEXT_LENGTH = 500
     }
 }
