@@ -1,0 +1,113 @@
+{
+  "fixtureVersion": 1,
+  "schema": "aql.android-firmware.ota-payload.v1",
+  "firmware": {
+    "repository": "ozdemirrrcemal-cmyk/AquaLight-Firmware",
+    "branch": "main",
+    "commit": "38e8812c1bcecf948ebab85979bff21a24f4b79c",
+    "commandSource": "src/api/v1/commands/AqlFirmwareCommands.hpp",
+    "eventSource": "src/server/AqlRealtimeServer.cpp",
+    "otaServiceSource": "src/modules/firmware/AqlOtaService.hpp"
+  },
+  "eventNames": {
+    "progress": "firmware.ota.progress",
+    "completed": "firmware.ota.completed"
+  },
+  "eventEnvelopeActions": {
+    "progress": "ota.progress",
+    "completed": "ota.completed"
+  },
+  "commandResponseMetadata": {
+    "firmware.status.get": {
+      "progressEvent": "firmware.ota.progress",
+      "completedEvent": "firmware.ota.completed"
+    },
+    "firmware.ota.status": {
+      "progressEvent": "firmware.ota.progress",
+      "completedEvent": "firmware.ota.completed"
+    },
+    "firmware.ota.start": {
+      "event": "firmware.ota.progress",
+      "progressEvent": "firmware.ota.progress",
+      "completedEvent": "firmware.ota.completed"
+    }
+  },
+  "otaStartRequestFields": [
+    "url",
+    "version",
+    "sha256",
+    "expectedSize",
+    "applyNow",
+    "productKey",
+    "productId",
+    "model",
+    "hardwareRevision",
+    "allowInsecureHttp"
+  ],
+  "otaStartResponseFields": [
+    "operation",
+    "accepted",
+    "runtimeTransport",
+    "command",
+    "binaryTransfer",
+    "event",
+    "progressEvent",
+    "completedEvent",
+    "request",
+    "ota"
+  ],
+  "otaStatusResponseFields": [
+    "operation",
+    "runtimeTransport",
+    "command",
+    "binaryTransfer",
+    "progressEvent",
+    "completedEvent",
+    "ota"
+  ],
+  "otaSnapshotFields": [
+    "phase",
+    "active",
+    "restartRequired",
+    "restartScheduled",
+    "allowInsecureHttp",
+    "startedAtMs",
+    "finishedAtMs",
+    "bytesWritten",
+    "contentLength",
+    "progressPermille",
+    "progressPercent",
+    "targetVersion",
+    "sha256Expected",
+    "sha256Actual",
+    "lastError",
+    "lastErrorField",
+    "urlScheme",
+    "httpStatus"
+  ],
+  "otaEventAdditionalFields": [
+    "completed",
+    "success",
+    "failed",
+    "runtimeTransport",
+    "binaryTransfer"
+  ],
+  "phases": [
+    "idle",
+    "starting",
+    "safeMode",
+    "downloading",
+    "writing",
+    "verifying",
+    "succeeded",
+    "failed"
+  ],
+  "wireSemantics": {
+    "runtimeTransport": "websocket",
+    "binaryTransfer": "firmware-download",
+    "httpStatus": "signed-int",
+    "nonPositiveHttpStatusIsTransportDiagnostic": true,
+    "finishedAtMsMayBeZero": true,
+    "releaseNoteRejectedControlRange": "U+0000..U+001F"
+  }
+}
