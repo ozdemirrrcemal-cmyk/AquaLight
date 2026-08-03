@@ -1,0 +1,26 @@
+name: Remove extra OTA branch
+
+on:
+  pull_request:
+    branches:
+      - main
+
+permissions:
+  contents: write
+
+jobs:
+  cleanup:
+    if: github.event.pull_request.head.ref == 'fix/android-ota-stale-terminal-status'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Delete extra branch and restore clean head
+        shell: bash
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          set -u
+          remote="https://x-access-token:${GITHUB_TOKEN}@github.com/${GITHUB_REPOSITORY}.git"
+          delete_status=0
+          git push "$remote" --delete fix/android-ota-status-ownership || delete_status=$?
+          git push "$remote" b938981f59a69fa05a4a9497730d0ee629bf74f4:refs/heads/fix/android-ota-stale-terminal-status --force
+          exit "$delete_status"
