@@ -288,7 +288,7 @@ def verify_wire_semantics(
         "OTA fixture release-note character policy drifted",
     )
     require(
-        "character.code < 32" in release_note_validator,
+        "character < ' '" in release_note_validator,
         "Release-note parser does not mirror firmware C0 policy",
     )
     require(
