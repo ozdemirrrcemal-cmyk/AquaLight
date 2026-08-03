@@ -153,7 +153,7 @@ class DeviceFirmwareUpdateFragment : Fragment(R.layout.fragment_device_firmware_
                 setIconTint(this, presentation.colorRes)
             }
         }
-        binding.progressTextGroup.isVisible = icon == null
+        binding.progressTextGroup.isVisible = icon == null || state.mode in TEXT_WITH_ICON_MODES
 
         renderProgressIndicator(state, icon)
         binding.tvUpdatePhase.text = state.phaseText()
@@ -538,6 +538,10 @@ class DeviceFirmwareUpdateFragment : Fragment(R.layout.fragment_device_firmware_
         const val SUCCESS_ICON_START_SCALE = 0.72f
         const val PULSE_DURATION_MILLIS = 900L
         const val PULSE_SCALE = 1.035f
+        val TEXT_WITH_ICON_MODES = setOf(
+            DeviceFirmwareUpdateMode.FAILED,
+            DeviceFirmwareUpdateMode.UNSUPPORTED
+        )
         val RELEASE_CONTENT_MODES = setOf(
             DeviceFirmwareUpdateMode.AVAILABLE,
             DeviceFirmwareUpdateMode.STARTING,
