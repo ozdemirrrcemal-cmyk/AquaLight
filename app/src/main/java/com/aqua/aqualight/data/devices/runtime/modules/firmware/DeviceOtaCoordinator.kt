@@ -422,6 +422,13 @@ internal class DeviceOtaCoordinator(
         selected: SelectedPlan?,
         generation: DeviceRuntimeConnectionGeneration
     ): DeviceOtaFailure? {
+        val state = stateFlow(deviceUid)
+        if (state.value.preservesPreparedUpdateFor(snapshot) && selected != null) {
+            val prepared = selected.copy(runtimeGeneration = generation)
+            selectedPlans[deviceUid] = prepared
+            state.value = DeviceOtaState.UpdateAvailable(prepared.applicationPlan)
+            return null
+        }
         DeviceOtaValidator.snapshotAgainstPlan(snapshot, selected?.dataPlan)?.let { error ->
             val failure = DeviceOtaFailureMapper.protocol(error)
             fail(deviceUid, failure)
@@ -435,13 +442,13 @@ internal class DeviceOtaCoordinator(
             activeSelection?.dataPlan?.targetVersion.orEmpty()
         }
         armRestartVerification(deviceUid, snapshot, activeSelection)
-        val state = stateFlow(deviceUid)
         state.value = when {
             snapshot.phase == DeviceFirmwareOtaPhase.IDLE &&
                 activeSelection != null &&
                 state.value is DeviceOtaState.UpdateAvailable -> {
                 // A recovery status probe preserves the exact signed plan selected immediately
-                // beforehand. Its transport failure is non-destructive for availability as well.
+                // beforehand. A historical failed terminal status is handled above for the same
+                // reason: it has no correlation to the newly prepared installation attempt.
                 DeviceOtaState.UpdateAvailable(activeSelection.applicationPlan)
             }
             snapshot.phase == DeviceFirmwareOtaPhase.IDLE &&
@@ -656,6 +663,11 @@ private fun DeviceFirmwareOtaStartRequestEcho.matches(
     productId == payload.productId &&
     model == payload.model &&
     hardwareRevision == payload.hardwareRevision
+
+internal fun DeviceOtaState.preservesPreparedUpdateFor(
+    snapshot: DeviceFirmwareOtaSnapshot
+): Boolean = this is DeviceOtaState.UpdateAvailable &&
+    snapshot.phase == DeviceFirmwareOtaPhase.FAILED
 
 private val DeviceOtaState.isActiveOtaState: Boolean
     get() = this is DeviceOtaState.Starting ||
