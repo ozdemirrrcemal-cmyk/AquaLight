@@ -12,10 +12,16 @@ class DeviceFirmwareUpdateStateCoverageTest {
     fun `shared ota states retain exact device and release values`() {
         val content = releaseContent()
         val plan = preparedPlan(content)
+        val failure = DeviceOtaFailure(
+            reason = DeviceOtaFailureReason.INTEGRITY_CHECK_FAILED,
+            recoverable = false,
+            field = "sha256",
+            diagnosticMessage = "downloaded firmware SHA256 does not match manifest"
+        )
         val states = listOf<DeviceOtaState>(
             DeviceOtaState.Idle(DEVICE_UID),
             DeviceOtaState.Checking(DEVICE_UID, "1.0.0"),
-            DeviceOtaState.Unsupported(DEVICE_UID, "OTA unavailable"),
+            DeviceOtaState.Unsupported(DEVICE_UID),
             DeviceOtaState.UpToDate(DEVICE_UID, "2.0.0", "2.0.0", content),
             DeviceOtaState.UpdateAvailable(plan),
             DeviceOtaState.Starting(plan, "request-1"),
@@ -31,13 +37,17 @@ class DeviceFirmwareUpdateStateCoverageTest {
             DeviceOtaState.Recovering(DEVICE_UID, "2.0.0", 500),
             DeviceOtaState.RestartRequired(DEVICE_UID, "2.0.0", true, content),
             DeviceOtaState.Succeeded(DEVICE_UID, "2.0.0", content),
-            DeviceOtaState.Failed(DEVICE_UID, "failed", "sha256", true)
+            DeviceOtaState.Failed(DEVICE_UID, failure)
         )
 
         assertTrue(content.isPresent)
         assertTrue(states.all { state -> state.deviceUid == DEVICE_UID })
         assertEquals(DeviceOtaProgressPhase.WRITING, (states[6] as DeviceOtaState.InProgress).phase)
         assertEquals("Güvenli güncelleme", content.title)
+        assertEquals(
+            DeviceOtaFailureReason.INTEGRITY_CHECK_FAILED,
+            (states[10] as DeviceOtaState.Failed).failure.reason
+        )
         assertFalse(DeviceFirmwareReleaseContent.EMPTY.isPresent)
     }
 
@@ -55,7 +65,15 @@ class DeviceFirmwareUpdateStateCoverageTest {
         assertEquals(DeviceOtaState.Idle(DEVICE_UID), observed)
         assertTrue(availability is DeviceOtaState.UpdateAvailable)
         assertTrue(DeviceFirmwareCommandResult(sent = true, messageId = "request-1").isSuccess)
-        assertFalse(DeviceFirmwareCommandResult(sent = false, errorMessage = "failed").isSuccess)
+        assertFalse(
+            DeviceFirmwareCommandResult(
+                sent = false,
+                failure = DeviceOtaFailure(
+                    reason = DeviceOtaFailureReason.CONNECTION,
+                    recoverable = true
+                )
+            ).isSuccess
+        )
         operations.close()
     }
 
