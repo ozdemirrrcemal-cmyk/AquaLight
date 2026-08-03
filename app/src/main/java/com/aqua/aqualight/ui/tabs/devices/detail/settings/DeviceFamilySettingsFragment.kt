@@ -9,6 +9,7 @@ import androidx.fragment.app.viewModels
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.repeatOnLifecycle
+import androidx.navigation.NavDestination.Companion.hierarchy
 import androidx.navigation.NavDirections
 import androidx.navigation.fragment.findNavController
 import com.aqua.aqualight.NavAquariumDirections
@@ -154,8 +155,15 @@ abstract class DeviceFamilySettingsFragment : Fragment(R.layout.fragment_device_
 
     private fun openFirmwareUpdateScreen() {
         val navController = findNavController()
-        if (navController.currentDestination?.id !in SETTINGS_DESTINATIONS) return
-        val direction: NavDirections = when (navController.graph.id) {
+        val destination = navController.currentDestination ?: return
+        if (destination.id !in SETTINGS_DESTINATIONS) return
+
+        val ownerGraphId = destination.hierarchy
+            .map { node -> node.id }
+            .firstOrNull { graphId ->
+                graphId == R.id.nav_devices || graphId == R.id.nav_aquarium
+            }
+        val direction: NavDirections = when (ownerGraphId) {
             R.id.nav_devices -> NavDevicesDirections
                 .actionGlobalDeviceFirmwareUpdateFragment(deviceUid)
             R.id.nav_aquarium -> NavAquariumDirections
