@@ -23,7 +23,9 @@ Deleted branches, superseded branches, local-only commits, and legacy contracts 
 - [x] **OTA-010 — Add an executable OTA response-payload parity fixture.** Cover command metadata names, full event names, snapshot fields, event-only fields, phase values, request fields, and signed `httpStatus` semantics.
 - [x] **OTA-011 — Extend the interoperability guard to fail closed on OTA payload contract drift.** Existing command/event registry pins did not inspect `event`, `progressEvent`, or `completedEvent` response values.
 - [x] **OTA-012 — Add parser regression coverage for negative `httpStatus`, terminal timestamp zero, and exact full event names.**
-- [x] **OTA-013 — Keep a newly prepared signed update available when the recovery probe returns an old terminal `failed` snapshot.** A historical device failure has no request correlation to the new installation attempt and must not replace `UpdateAvailable` with `DOWNLOAD_FAILED`. Active and succeeded snapshots continue through normal recovery handling.
+- [x] **OTA-013 — Keep a newly prepared signed update available when the recovery probe returns an old terminal `failed` snapshot.** A historical device failure has no request correlation to the new installation attempt and must not replace `UpdateAvailable` with a stale error. Active and succeeded snapshots continue through normal recovery handling.
+- [x] **OTA-014 — Preserve the exact post-start firmware download failure class.** Android now distinguishes ESP32 HTTPClient diagnostics (`-1` through `-11`), HTTP redirects, access denial, missing release assets, rate limiting, server failures, URL-open failures, interrupted streams and size mismatches instead of collapsing all of them into `DOWNLOAD_FAILED`.
+- [x] **OTA-015 — Remove false generic network claims from the failure screen.** The headline now states that OTA stopped safely, while the detail line renders the specific structured firmware cause and recovery guidance.
 
 ## Verified compatible surfaces
 
@@ -40,4 +42,5 @@ Deleted branches, superseded branches, local-only commits, and legacy contracts 
 - [x] All identified checklist items are implemented on this branch.
 - [ ] Focused OTA parser/model/failure/coordinator tests pass on the latest head.
 - [ ] Interoperability and OTA payload parity guards pass on the latest head.
-- [x] No fallback aliases, permissive legacy schema, or raw diagnostic text are introduced into the user interface.
+- [x] No fallback aliases or permissive legacy schema are introduced.
+- [x] User-facing failure copy is localized from structured authenticated firmware diagnostics rather than guessing every OTA failure is a network outage.
