@@ -1,5 +1,6 @@
 package com.aqua.aqualight.data.devices.runtime.modules.firmware
 
+import com.aqua.aqualight.application.devices.DeviceOtaFailureReason
 import com.aqua.aqualight.application.devices.DeviceOtaState
 import com.aqua.aqualight.data.devices.model.DeviceCapabilities
 import com.aqua.aqualight.data.devices.model.DeviceFamily
@@ -231,8 +232,9 @@ class DeviceOtaCoordinatorTest {
         runCurrent()
 
         val failed = coordinator.observe(DEVICE_UID).value as DeviceOtaState.Failed
-        assertTrue(failed.message.contains("firmware version"))
-        assertFalse(failed.recoverable)
+        assertTrue(failed.failure.diagnosticMessage.contains("firmware version"))
+        assertEquals(DeviceOtaFailureReason.INCOMPATIBLE_FIRMWARE, failed.failure.reason)
+        assertFalse(failed.failure.recoverable)
         coordinator.close()
     }
 
@@ -254,7 +256,8 @@ class DeviceOtaCoordinatorTest {
         val result = coordinator.startUpdate(plan)
 
         assertFalse(result.isSuccess)
-        assertTrue(result.errorMessage.contains("generation changed"))
+        assertTrue(result.failure?.diagnosticMessage.orEmpty().contains("generation changed"))
+        assertEquals(DeviceOtaFailureReason.CHECK_FAILED, result.failure?.reason)
         assertTrue(coordinator.observe(DEVICE_UID).value is DeviceOtaState.Failed)
         coordinator.close()
     }
@@ -280,6 +283,32 @@ class DeviceOtaCoordinatorTest {
         val result = coordinator.requestStatus(DEVICE_UID)
 
         assertTrue(result.isSuccess)
+        assertEquals(
+            DeviceOtaState.UpdateAvailable(plan),
+            coordinator.observe(DEVICE_UID).value
+        )
+        coordinator.close()
+    }
+
+    @Test
+    fun `failed recovery status probe preserves signed update availability`() = runTest {
+        val gateway = RecordingGateway()
+        val coordinator = DeviceOtaCoordinator(
+            snapshotProvider = { snapshot() },
+            connectRuntime = { Result.success(Unit) },
+            updaterProvider = { updater(gateway) },
+            runtimeLifecycleEvents = null
+        )
+        val plan = (
+            coordinator.checkAvailability(DEVICE_UID, MANIFEST_URL, true).getOrThrow()
+                as DeviceOtaState.UpdateAvailable
+            ).plan
+        gateway.statusData = JSONObject()
+
+        val result = coordinator.requestStatus(DEVICE_UID)
+
+        assertFalse(result.isSuccess)
+        assertEquals(DeviceOtaFailureReason.PROTOCOL_MISMATCH, result.failure?.reason)
         assertEquals(
             DeviceOtaState.UpdateAvailable(plan),
             coordinator.observe(DEVICE_UID).value
@@ -411,7 +440,7 @@ class DeviceOtaCoordinatorTest {
         .put("sha256Expected", "a".repeat(64))
         .put("sha256Actual", if (phase == "succeeded") "a".repeat(64) else "")
         .put("lastError", if (phase == "failed") "download failed" else "")
-        .put("lastErrorField", if (phase == "failed") "download" else "")
+        .put("lastErrorField", if (phase == "failed") "stream" else "")
         .put("urlScheme", "https")
         .put("httpStatus", 200)
 
