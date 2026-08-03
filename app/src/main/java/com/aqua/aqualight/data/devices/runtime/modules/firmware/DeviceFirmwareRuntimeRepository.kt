@@ -40,7 +40,11 @@ class DeviceFirmwareRuntimeRepository(
             action = DeviceFirmwareRuntimeContract.Action.OTA_START,
             dataFactory = payload::toJson,
             successParser = { data ->
-                DeviceFirmwareStatusParser.parseOtaStartAcceptedExact(data).getOrThrow()
+                val compatibleData = DeviceFirmwareOtaStartCompatibility
+                    .normalizeAcceptedResponse(data, payload)
+                DeviceFirmwareStatusParser
+                    .parseOtaStartAcceptedExact(compatibleData)
+                    .getOrThrow()
             }
         )
     )
