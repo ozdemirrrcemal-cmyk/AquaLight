@@ -136,9 +136,9 @@ object DeviceFirmwareStatusParser {
         require(contentLength == 0L || bytesWritten <= contentLength)
         val startedAtMs = source.requiredExactLong("startedAtMs")
         val finishedAtMs = source.requiredExactLong("finishedAtMs")
+        // Firmware stores the signed HTTPClient result. Negative values are transport diagnostics.
         val httpStatus = source.requiredExactInt("httpStatus")
-        require(startedAtMs >= 0L && finishedAtMs >= 0L && httpStatus >= 0)
-        require(!phase.isTerminal || finishedAtMs > 0L)
+        require(startedAtMs >= 0L && finishedAtMs >= 0L)
         require(!allowInsecureHttp) { "Firmware reported insecure OTA transport." }
         require(urlScheme.isEmpty() || urlScheme == "https")
         require(sha256Expected.isEmpty() || sha256Expected.isSha256Hex())
