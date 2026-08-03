@@ -84,7 +84,7 @@ class DeviceFirmwareUpdateApplicationContractTest {
         assertEquals(failure, (states[10] as DeviceOtaState.Failed).failure)
 
         assertTrue(DeviceFirmwareCommandResult(sent = true, messageId = "ok").isSuccess)
-        assertFalse(DeviceFirmwareCommandResult(sent = false).isSuccess)
+        assertFalse(DeviceFirmwareCommandResult(sent = false, failure = failure).isSuccess)
         assertFalse(
             DeviceFirmwareCommandResult(
                 sent = true,
