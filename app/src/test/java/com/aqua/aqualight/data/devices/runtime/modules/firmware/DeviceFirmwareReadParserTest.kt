@@ -7,12 +7,16 @@ import org.junit.Test
 
 class DeviceFirmwareReadParserTest {
     @Test
-    fun `parses exact read only firmware status`() {
+    fun `parses and retains exact read only firmware status`() {
         val parsed = DeviceFirmwareReadParser.parseStatus(statusJson())
 
         assertEquals("1.0.0", parsed.version)
         assertEquals("light_prime", parsed.model)
         assertEquals(DeviceFirmwareOtaPhase.IDLE, parsed.ota.phase)
+        assertEquals("websocket", parsed.runtime.transport)
+        assertEquals("aql.ws.v1", parsed.runtime.wsSchema)
+        assertEquals(1, parsed.runtime.wsProtocolVersion)
+        assertTrue(parsed.runtime.readOnly)
     }
 
     @Test
