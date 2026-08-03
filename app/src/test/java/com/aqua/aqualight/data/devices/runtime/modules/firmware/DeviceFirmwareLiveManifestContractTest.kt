@@ -3,12 +3,12 @@ package com.aqua.aqualight.data.devices.runtime.modules.firmware
 import com.aqua.aqualight.data.devices.catalog.AqlCommercialCatalogProduct
 import com.aqua.aqualight.data.devices.catalog.AqlCommercialDeviceCatalog
 import java.io.File
+import java.net.URI
 import org.json.JSONArray
 import org.json.JSONObject
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
-import org.junit.Assume.assumeTrue
 import org.junit.Test
 
 class DeviceFirmwareLiveManifestContractTest {
@@ -31,9 +31,6 @@ class DeviceFirmwareLiveManifestContractTest {
     }
 
     private fun loadVerifiedManifest(): VerifiedManifest {
-        val manifestPath = System.getenv(ENV_MANIFEST_PATH).orEmpty()
-        assumeTrue("Live OTA manifest path is not configured.", manifestPath.isNotBlank())
-
         val publicKeyPem = System.getenv(ENV_PUBLIC_KEY_PEM).orEmpty()
         val expectedKeyId = System.getenv(ENV_KEY_ID).orEmpty()
         assertTrue(
@@ -45,13 +42,29 @@ class DeviceFirmwareLiveManifestContractTest {
             expectedKeyId.isNotBlank()
         )
 
-        val rawManifest = File(manifestPath).readText(Charsets.UTF_8)
-        assertTrue("Downloaded stable OTA manifest is empty.", rawManifest.isNotBlank())
+        val rawManifest = readPublishedManifest()
+        assertTrue("Published stable OTA manifest is empty.", rawManifest.isNotBlank())
         val manifest = DeviceFirmwareManifestSignatureVerifier(
             publicKeyPem = publicKeyPem,
             expectedKeyId = expectedKeyId
         ).verifyAndParse(rawManifest).getOrThrow()
         return VerifiedManifest(rawManifest = rawManifest, manifest = manifest)
+    }
+
+    private fun readPublishedManifest(): String {
+        val manifestPath = System.getenv(ENV_MANIFEST_PATH).orEmpty()
+        if (manifestPath.isNotBlank()) return File(manifestPath).readText(Charsets.UTF_8)
+
+        val connection = URI(DeviceFirmwareRuntimeContract.STABLE_MANIFEST_URL)
+            .toURL()
+            .openConnection()
+            .apply {
+                connectTimeout = NETWORK_TIMEOUT_MS
+                readTimeout = NETWORK_TIMEOUT_MS
+            }
+        return connection.getInputStream().bufferedReader(Charsets.UTF_8).use { reader ->
+            reader.readText()
+        }
     }
 
     private fun assertManifestHeader(manifest: DeviceFirmwareManifest) {
@@ -113,5 +126,6 @@ class DeviceFirmwareLiveManifestContractTest {
         const val ENV_MANIFEST_PATH = "AQL_LIVE_OTA_MANIFEST_PATH"
         const val ENV_PUBLIC_KEY_PEM = "AQL_OTA_MANIFEST_PUBLIC_KEY_PEM"
         const val ENV_KEY_ID = "AQL_OTA_MANIFEST_KEY_ID"
+        const val NETWORK_TIMEOUT_MS = 20_000
     }
 }
