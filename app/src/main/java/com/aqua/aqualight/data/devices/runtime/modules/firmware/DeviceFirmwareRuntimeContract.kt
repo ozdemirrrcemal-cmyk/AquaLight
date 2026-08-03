@@ -26,9 +26,10 @@ object DeviceFirmwareRuntimeContract {
         const val OTA_CLEAR = "ota.clear"
     }
 
+    /** Fully qualified event names carried inside firmware status/start payload fields. */
     object Event {
-        const val OTA_PROGRESS = "ota.progress"
-        const val OTA_COMPLETED = "ota.completed"
+        const val OTA_PROGRESS = "firmware.ota.progress"
+        const val OTA_COMPLETED = "firmware.ota.completed"
     }
 
     object ErrorCode {
