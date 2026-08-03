@@ -944,6 +944,5 @@ private fun DeviceFirmwareOtaSnapshot.failureStage(): DeviceFirmwareFailureStage
     DeviceFirmwareOtaPhase.VERIFYING,
     DeviceFirmwareOtaPhase.SUCCEEDED -> DeviceFirmwareFailureStage.VERIFICATION
     DeviceFirmwareOtaPhase.IDLE,
-    DeviceFirmwareOtaPhase.FAILED,
-    DeviceFirmwareOtaPhase.UNKNOWN -> DeviceFirmwareFailureStage.STATUS
+    DeviceFirmwareOtaPhase.FAILED -> DeviceFirmwareFailureStage.STATUS
 }
