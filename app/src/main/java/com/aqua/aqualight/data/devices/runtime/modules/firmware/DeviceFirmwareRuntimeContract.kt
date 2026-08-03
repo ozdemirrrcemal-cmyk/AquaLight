@@ -31,6 +31,41 @@ object DeviceFirmwareRuntimeContract {
         const val OTA_COMPLETED = "ota.completed"
     }
 
+    object ErrorCode {
+        const val BAD_REQUEST = "BAD_REQUEST"
+        const val INVALID_VALUE = "INVALID_VALUE"
+        const val MISSING_FIELD = "MISSING_FIELD"
+        const val NOT_FOUND = "NOT_FOUND"
+        const val MODULE_NOT_AVAILABLE = "MODULE_NOT_AVAILABLE"
+        const val FEATURE_NOT_AVAILABLE = "FEATURE_NOT_AVAILABLE"
+        const val DEVICE_BUSY = "DEVICE_BUSY"
+        const val STORAGE_ERROR = "STORAGE_ERROR"
+        const val HARDWARE_ERROR = "HARDWARE_ERROR"
+        const val UNAUTHORIZED = "UNAUTHORIZED"
+        const val INTERNAL_ERROR = "INTERNAL_ERROR"
+    }
+
+    object ErrorField {
+        const val OTA = "ota"
+        const val STATE = "state"
+        const val WIFI = "wifi"
+        const val URL = "url"
+        const val VERSION = "version"
+        const val SHA256 = "sha256"
+        const val EXPECTED_SIZE = "expectedSize"
+        const val PRODUCT_KEY = "productKey"
+        const val PRODUCT_ID = "productId"
+        const val MODEL = "model"
+        const val HARDWARE_REVISION = "hardwareRevision"
+        const val SIZE = "size"
+        const val TASK = "task"
+        const val SAFE_MODE = "safeMode"
+        const val TLS = "tls"
+        const val HTTP_STATUS = "httpStatus"
+        const val FLASH = "flash"
+        const val STREAM = "stream"
+    }
+
     object Manifest {
         const val SCHEMA = "aql.ota.manifest.v1"
         const val BRAND = "AquaLight"
