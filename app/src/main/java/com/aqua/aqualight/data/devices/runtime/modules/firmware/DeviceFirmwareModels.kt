@@ -15,30 +15,15 @@ enum class DeviceFirmwareOtaPhase(
     WRITING("writing"),
     VERIFYING("verifying"),
     SUCCEEDED("succeeded"),
-    FAILED("failed"),
-    UNKNOWN("unknown");
+    FAILED("failed");
 
     val isTerminal: Boolean
         get() = this == SUCCEEDED || this == FAILED
 
     companion object {
-        private val exactValues = entries
-            .filterNot { phase -> phase == UNKNOWN }
-            .associateBy(DeviceFirmwareOtaPhase::wireValue)
+        private val exactValues = entries.associateBy(DeviceFirmwareOtaPhase::wireValue)
 
         fun fromWireExact(value: String): DeviceFirmwareOtaPhase? = exactValues[value]
-
-        fun fromWire(value: String?): DeviceFirmwareOtaPhase = when (value?.trim()) {
-            IDLE.wireValue -> IDLE
-            STARTING.wireValue -> STARTING
-            SAFE_MODE.wireValue -> SAFE_MODE
-            DOWNLOADING.wireValue -> DOWNLOADING
-            WRITING.wireValue -> WRITING
-            VERIFYING.wireValue -> VERIFYING
-            SUCCEEDED.wireValue -> SUCCEEDED
-            FAILED.wireValue -> FAILED
-            else -> UNKNOWN
-        }
     }
 }
 
