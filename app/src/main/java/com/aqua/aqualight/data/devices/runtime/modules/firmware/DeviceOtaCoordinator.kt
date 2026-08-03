@@ -282,7 +282,8 @@ private class DeviceOtaPlanStore {
     fun hasPendingVerification(deviceUid: DeviceUid): Boolean =
         pendingVersionVerification.containsKey(deviceUid)
 
-    fun pendingDeviceUids(): List<DeviceUid> = pendingVersionVerification.keys.toList()
+    val pendingDeviceUids: List<DeviceUid>
+        get() = pendingVersionVerification.keys.toList()
 
     fun clear(deviceUid: DeviceUid) {
         removeSelected(deviceUid)
@@ -400,7 +401,7 @@ private class DeviceOtaAvailabilityController(
     ): DeviceOtaState {
         val snapshot = requireInitialSnapshot(initial)
         validateRuntimeMetadata(snapshot)
-        if (!snapshot.capabilities.ota) return unsupported(deviceUid)
+        if (!snapshot.capabilities.ota) return unsupportedOtaState(deviceUid)
         connectRuntime(deviceUid)
         val current = requireCurrentSnapshot(deviceUid)
         validateMetadataGeneration(snapshot, current)
@@ -435,12 +436,6 @@ private class DeviceOtaAvailabilityController(
             )
         }
     }
-
-    private fun unsupported(deviceUid: DeviceUid): DeviceOtaState.Unsupported =
-        DeviceOtaState.Unsupported(
-            deviceUid = deviceUid.value,
-            reason = "This exact device profile does not support OTA."
-        )
 
     private fun connectRuntime(deviceUid: DeviceUid) {
         runtime.connectRuntime(deviceUid).exceptionOrNull()?.let { error ->
@@ -767,11 +762,6 @@ private class DeviceOtaStartController(
         }
         return AppCommandResult(sent = false, failure = failure)
     }
-
-    private fun rejectStart(
-        failure: DeviceFirmwareFailure,
-        publishFailure: Boolean = false
-    ): Nothing = throw StartPreparationFailure(failure, publishFailure)
 }
 
 private class DeviceOtaCommandController(
@@ -895,11 +885,6 @@ private class DeviceOtaSnapshotController(
         }
         val activeSelection = selected?.copy(runtimeGeneration = generation)
         if (activeSelection != null) planStore.select(deviceUid, activeSelection)
-        val releaseContent = activeSelection?.applicationPlan?.releaseContent
-            ?: DeviceFirmwareReleaseContent.EMPTY
-        val targetVersion = snapshot.targetVersion.ifBlank {
-            activeSelection?.dataPlan?.targetVersion.orEmpty()
-        }
         recoveryController.armRestartVerification(deviceUid, snapshot, activeSelection)
         stateStore.set(
             deviceUid,
@@ -907,8 +892,6 @@ private class DeviceOtaSnapshotController(
                 deviceUid = deviceUid,
                 snapshot = snapshot,
                 activeSelection = activeSelection,
-                targetVersion = targetVersion,
-                releaseContent = releaseContent,
                 requestId = requestId
             )
         )
@@ -939,11 +922,14 @@ private class DeviceOtaSnapshotController(
         deviceUid: DeviceUid,
         snapshot: DeviceFirmwareOtaSnapshot,
         activeSelection: SelectedPlan?,
-        targetVersion: String,
-        releaseContent: DeviceFirmwareReleaseContent,
         requestId: String
     ): DeviceOtaState {
         val current = stateStore.current(deviceUid)
+        val releaseContent = activeSelection?.applicationPlan?.releaseContent
+            ?: DeviceFirmwareReleaseContent.EMPTY
+        val targetVersion = snapshot.targetVersion.ifBlank {
+            activeSelection?.dataPlan?.targetVersion.orEmpty()
+        }
         return when {
             snapshot.phase == DeviceFirmwareOtaPhase.IDLE &&
                 activeSelection != null &&
@@ -1049,7 +1035,7 @@ private class DeviceOtaRecoveryController(
     }
 
     fun processSnapshotUpdates(snapshots: Map<DeviceUid, DeviceSnapshot>) {
-        planStore.pendingDeviceUids().forEach { deviceUid ->
+        planStore.pendingDeviceUids.forEach { deviceUid ->
             snapshots[deviceUid]?.let { snapshot -> verifyInstalledFirmware(deviceUid, snapshot) }
         }
     }
@@ -1177,6 +1163,17 @@ private class DeviceOtaRecoveryController(
 
 private fun rejectAvailability(failure: DeviceFirmwareFailure): Nothing =
     throw AvailabilityFailure(failure)
+
+private fun unsupportedOtaState(deviceUid: DeviceUid): DeviceOtaState.Unsupported =
+    DeviceOtaState.Unsupported(
+        deviceUid = deviceUid.value,
+        reason = "This exact device profile does not support OTA."
+    )
+
+private fun rejectStart(
+    failure: DeviceFirmwareFailure,
+    publishFailure: Boolean = false
+): Nothing = throw StartPreparationFailure(failure, publishFailure)
 
 private fun Throwable.toAvailabilityFailure(): DeviceFirmwareFailure =
     (this as? AvailabilityFailure)?.failure
