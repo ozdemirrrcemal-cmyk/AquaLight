@@ -15,13 +15,11 @@ class DeviceFirmwareManifestSignatureVerifier(
     private val expectedKeyId: String = BuildConfig.AQL_OTA_MANIFEST_KEY_ID
 ) {
 
-    fun verifyAndParse(rawManifest: String): Result<DeviceFirmwareManifest> {
-        return runCatching {
-            val root = JSONObject(rawManifest)
-            val manifest = DeviceFirmwareManifestParser.parse(rawManifest).getOrThrow()
-            verify(root = root, signature = manifest.signature)
-            manifest
-        }
+    fun verifyAndParse(rawManifest: String): Result<DeviceFirmwareManifest> = runCatching {
+        val root = JSONObject(rawManifest)
+        val manifest = DeviceFirmwareManifestParser.parse(rawManifest).getOrThrow()
+        verify(root = root, signature = manifest.signature)
+        manifest
     }
 
     fun verify(
@@ -31,7 +29,10 @@ class DeviceFirmwareManifestSignatureVerifier(
         require(signature.scheme == DeviceFirmwareRuntimeContract.Signature.SCHEME_ECDSA_P256_SHA256) {
             "Unsupported OTA manifest signature scheme: ${signature.scheme}"
         }
-        require(expectedKeyId.isBlank() || signature.keyId == expectedKeyId) {
+        require(expectedKeyId.isNotBlank()) {
+            "OTA manifest signature keyId is not configured in this Android build."
+        }
+        require(signature.keyId == expectedKeyId) {
             "OTA manifest signature keyId mismatch."
         }
         require(publicKeyPem.isNotBlank()) {

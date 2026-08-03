@@ -2,13 +2,17 @@ package com.aqua.aqualight.ui.tabs.devices.detail.settings
 
 import android.os.Bundle
 import android.view.View
+import android.view.ViewGroup
 import androidx.core.view.isInvisible
 import androidx.core.view.isVisible
+import androidx.core.view.updateLayoutParams
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.viewModels
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.repeatOnLifecycle
+import androidx.navigation.NavDestination
+import androidx.navigation.NavDestination.Companion.hierarchy
 import androidx.navigation.NavDirections
 import androidx.navigation.fragment.findNavController
 import com.aqua.aqualight.NavAquariumDirections
@@ -21,6 +25,7 @@ import com.aqua.aqualight.databinding.LayoutDeviceLightSettingsSectionBinding
 import com.aqua.aqualight.ui.common.bottomsheet.TextInputBottomSheet
 import com.aqua.aqualight.ui.common.header.AquaHeaderConfig
 import com.aqua.aqualight.ui.common.header.setupAquaHeader
+import com.aqua.aqualight.ui.tabs.devices.detail.common.DeviceRootPresentationMapper
 import kotlinx.coroutines.launch
 
 /**
@@ -50,6 +55,11 @@ abstract class DeviceFamilySettingsFragment : Fragment(R.layout.fragment_device_
         }
 
         _binding = FragmentDeviceFamilySettingsBinding.bind(view)
+        // ViewStub transfers its own layout params to the inflated card, so section spacing belongs
+        // on the stub and uses the same centralized token as the preceding Settings card.
+        binding.lightSettingsSectionStub.updateLayoutParams<ViewGroup.MarginLayoutParams> {
+            topMargin = resources.getDimensionPixelSize(R.dimen.aqua_size_14)
+        }
         setupHeader()
         applyStaticCopy()
         setupDeviceNameResult()
@@ -125,7 +135,7 @@ abstract class DeviceFamilySettingsFragment : Fragment(R.layout.fragment_device_
                 DeviceSettingsUpdateActionState.Unsupported ->
                     viewModel.checkForUpdates()
                 is DeviceSettingsUpdateActionState.Failed -> {
-                    if (updateState.recoverable) viewModel.checkForUpdates()
+                    if (updateState.failure.recoverable) viewModel.checkForUpdates()
                     else openFirmwareUpdateScreen()
                 }
             }
@@ -153,15 +163,26 @@ abstract class DeviceFamilySettingsFragment : Fragment(R.layout.fragment_device_
 
     private fun openFirmwareUpdateScreen() {
         val navController = findNavController()
-        if (navController.currentDestination?.id !in SETTINGS_DESTINATIONS) return
-        val direction: NavDirections = when (navController.graph.id) {
+        val direction = navController.currentDestination
+            ?.takeIf { destination -> destination.id in SETTINGS_DESTINATIONS }
+            ?.let(::firmwareUpdateDirection)
+            ?: return
+        navController.navigate(direction)
+    }
+
+    private fun firmwareUpdateDirection(destination: NavDestination): NavDirections? {
+        val ownerGraphId = destination.hierarchy
+            .map { node -> node.id }
+            .firstOrNull { graphId ->
+                graphId == R.id.nav_devices || graphId == R.id.nav_aquarium
+            }
+        return when (ownerGraphId) {
             R.id.nav_devices -> NavDevicesDirections
                 .actionGlobalDeviceFirmwareUpdateFragment(deviceUid)
             R.id.nav_aquarium -> NavAquariumDirections
                 .actionGlobalDeviceFirmwareUpdateFragment(deviceUid)
-            else -> return
+            else -> null
         }
-        navController.navigate(direction)
     }
 
     private fun observeSettings() {
@@ -245,13 +266,15 @@ abstract class DeviceFamilySettingsFragment : Fragment(R.layout.fragment_device_
             )
             is DeviceSettingsUpdateActionState.Failed -> FirmwareActionPresentation(
                 buttonText = getString(
-                    if (recoverable) {
+                    if (failure.recoverable) {
                         R.string.device_settings_retry_update_check_action
                     } else {
                         R.string.device_settings_view_update_action
                     }
                 ),
-                statusText = getString(R.string.device_settings_update_check_failed_status),
+                statusText = getString(
+                    DeviceRootPresentationMapper.otaFailureMessageRes(failure.reason)
+                ),
                 enabled = true
             )
             DeviceSettingsUpdateActionState.Unsupported -> FirmwareActionPresentation(

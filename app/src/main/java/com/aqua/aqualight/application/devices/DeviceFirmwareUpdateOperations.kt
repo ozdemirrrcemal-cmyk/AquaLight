@@ -62,6 +62,40 @@ enum class DeviceOtaProgressPhase {
     VERIFYING
 }
 
+/** Stable user-facing OTA failure categories derived from the exact firmware contract. */
+enum class DeviceOtaFailureReason {
+    CHECK_FAILED,
+    CONNECTION,
+    AUTHENTICATION,
+    DEVICE_BUSY,
+    UNSUPPORTED,
+    RELEASE_UNAVAILABLE,
+    INCOMPATIBLE_FIRMWARE,
+    INSUFFICIENT_SPACE,
+    DOWNLOAD_FAILED,
+    INTEGRITY_CHECK_FAILED,
+    SAFE_MODE_FAILED,
+    FLASH_WRITE_FAILED,
+    SECURITY_VALIDATION_FAILED,
+    PROTOCOL_MISMATCH,
+    DEVICE_INTERNAL
+}
+
+/**
+ * Typed OTA failure retained across application and presentation layers.
+ *
+ * Firmware diagnostics remain available for support and tests, while UI code renders only the
+ * stable [reason] through localized resources.
+ */
+data class DeviceOtaFailure(
+    val reason: DeviceOtaFailureReason,
+    val recoverable: Boolean,
+    val code: String = "",
+    val field: String = "",
+    val httpStatus: Int = 0,
+    val diagnosticMessage: String = ""
+)
+
 sealed interface DeviceOtaState {
     val deviceUid: String
 
@@ -75,8 +109,7 @@ sealed interface DeviceOtaState {
     ) : DeviceOtaState
 
     data class Unsupported(
-        override val deviceUid: String,
-        val reason: String
+        override val deviceUid: String
     ) : DeviceOtaState
 
     data class UpToDate(
@@ -130,9 +163,7 @@ sealed interface DeviceOtaState {
 
     data class Failed(
         override val deviceUid: String,
-        val message: String,
-        val field: String = "",
-        val recoverable: Boolean = false
+        val failure: DeviceOtaFailure
     ) : DeviceOtaState
 }
 
@@ -160,8 +191,8 @@ data class PreparedDeviceFirmwareUpdate(
 data class DeviceFirmwareCommandResult(
     val sent: Boolean,
     val messageId: String = "",
-    val errorMessage: String = ""
+    val failure: DeviceOtaFailure? = null
 ) {
     val isSuccess: Boolean
-        get() = sent && errorMessage.isBlank()
+        get() = sent && failure == null
 }

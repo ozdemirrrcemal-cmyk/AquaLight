@@ -18,8 +18,21 @@
     <string name="device_settings_view_update_action">View update</string>
     <string name="device_settings_update_in_progress_status">Installing %1$s · %2$d%%</string>
     <string name="device_settings_retry_update_check_action">Try again</string>
-    <string name="device_settings_update_check_failed_status">The update check could not be completed.</string>
     <string name="device_settings_update_unsupported_status">This device does not support software updates.</string>
+    <string name="device_settings_update_error_check_failed">Update information could not be verified. Check the internet connection and try again.</string>
+    <string name="device_settings_update_error_connection">The app could not connect to the device. Keep it powered on and on the same network, then try again.</string>
+    <string name="device_settings_update_error_authentication">A secure session with the device could not be established. Reconnect to the device and try again.</string>
+    <string name="device_settings_update_error_device_busy">The device is already handling an update operation. Try again after it finishes.</string>
+    <string name="device_settings_update_error_release_unavailable">The selected firmware package is not available from the official release service.</string>
+    <string name="device_settings_update_error_incompatible_firmware">The available firmware is not compatible with this device model or hardware revision.</string>
+    <string name="device_settings_update_error_insufficient_space">The firmware package does not fit in the device update partition.</string>
+    <string name="device_settings_update_error_download_failed">The device could not download the firmware. Check its network connection and try again.</string>
+    <string name="device_settings_update_error_integrity_check">The downloaded firmware failed integrity verification. The update was not applied.</string>
+    <string name="device_settings_update_error_safe_mode">The device could not enter update safe mode. Keep it powered on and try again.</string>
+    <string name="device_settings_update_error_flash_write">The device could not write the firmware to internal storage. Keep it powered on and contact support.</string>
+    <string name="device_settings_update_error_security_validation">The secure firmware connection could not be verified. The update was not applied.</string>
+    <string name="device_settings_update_error_protocol_mismatch">The app and device do not agree on the update protocol. Update the app before trying again.</string>
+    <string name="device_settings_update_error_device_internal">The device could not complete the update. Keep it powered on and try again; contact support if it continues.</string>
 
     <string name="device_settings_change_name_title">Change device name</string>
     <string name="device_settings_save_action">Save</string>

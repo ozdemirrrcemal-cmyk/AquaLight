@@ -113,14 +113,13 @@ internal object DeviceOtaStateMapper {
         )
         DeviceFirmwareOtaPhase.FAILED -> DeviceOtaState.Failed(
             deviceUid = deviceUid.value,
-            message = snapshot.lastError.ifBlank { "Firmware OTA failed." },
-            field = snapshot.lastErrorField,
-            recoverable = false
+            failure = DeviceOtaFailureMapper.snapshot(snapshot)
         )
         DeviceFirmwareOtaPhase.UNKNOWN -> DeviceOtaState.Failed(
             deviceUid = deviceUid.value,
-            message = "Firmware reported an unknown OTA phase.",
-            recoverable = false
+            failure = DeviceOtaFailureMapper.protocol(
+                "Firmware reported an unknown OTA phase."
+            )
         )
     }
 

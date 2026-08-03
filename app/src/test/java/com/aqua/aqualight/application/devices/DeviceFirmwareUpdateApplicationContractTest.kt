@@ -44,10 +44,17 @@ class DeviceFirmwareUpdateApplicationContractTest {
         assertTrue(releaseContent.isPresent)
         assertFalse(DeviceFirmwareReleaseContent.EMPTY.isPresent)
 
+        val failure = DeviceOtaFailure(
+            reason = DeviceOtaFailureReason.CONNECTION,
+            recoverable = true,
+            code = "INVALID_VALUE",
+            field = "wifi",
+            diagnosticMessage = "Wi-Fi client connection is required before OTA download"
+        )
         val states: List<DeviceOtaState> = listOf(
             DeviceOtaState.Idle(DEVICE_UID),
             DeviceOtaState.Checking(DEVICE_UID, plan.currentVersion),
-            DeviceOtaState.Unsupported(DEVICE_UID, "unsupported"),
+            DeviceOtaState.Unsupported(DEVICE_UID),
             DeviceOtaState.UpToDate(
                 DEVICE_UID,
                 plan.currentVersion,
@@ -73,23 +80,28 @@ class DeviceFirmwareUpdateApplicationContractTest {
                 releaseContent = releaseContent
             ),
             DeviceOtaState.Succeeded(DEVICE_UID, plan.targetVersion, releaseContent),
-            DeviceOtaState.Failed(
-                DEVICE_UID,
-                message = "failed",
-                field = "ota",
-                recoverable = true
-            )
+            DeviceOtaState.Failed(DEVICE_UID, failure)
         )
 
         assertEquals(states.size, states.count { state -> state.deviceUid == DEVICE_UID })
         assertEquals(plan.targetVersion, (states[5] as DeviceOtaState.Starting).plan.targetVersion)
         assertEquals(500, (states[6] as DeviceOtaState.InProgress).progressPermille)
         assertTrue((states[8] as DeviceOtaState.RestartRequired).restartScheduled)
-        assertEquals("ota", (states[10] as DeviceOtaState.Failed).field)
+        assertEquals("wifi", (states[10] as DeviceOtaState.Failed).failure.field)
 
         assertTrue(DeviceFirmwareCommandResult(sent = true, messageId = "ok").isSuccess)
-        assertFalse(DeviceFirmwareCommandResult(sent = false).isSuccess)
-        assertFalse(DeviceFirmwareCommandResult(sent = true, errorMessage = "rejected").isSuccess)
+        assertFalse(
+            DeviceFirmwareCommandResult(
+                sent = false,
+                failure = failure
+            ).isSuccess
+        )
+        assertFalse(
+            DeviceFirmwareCommandResult(
+                sent = true,
+                failure = failure
+            ).isSuccess
+        )
     }
 
     private fun preparedUpdate(): PreparedDeviceFirmwareUpdate = PreparedDeviceFirmwareUpdate(

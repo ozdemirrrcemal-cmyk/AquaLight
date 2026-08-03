@@ -3,6 +3,8 @@ package com.aqua.aqualight.ui.tabs.devices.detail.update
 import com.aqua.aqualight.application.devices.DeviceFirmwareCommandResult
 import com.aqua.aqualight.application.devices.DeviceFirmwareReleaseContent
 import com.aqua.aqualight.application.devices.DeviceFirmwareUpdateOperations
+import com.aqua.aqualight.application.devices.DeviceOtaFailure
+import com.aqua.aqualight.application.devices.DeviceOtaFailureReason
 import com.aqua.aqualight.application.devices.DeviceOtaProgressPhase
 import com.aqua.aqualight.application.devices.DeviceOtaState
 import com.aqua.aqualight.application.devices.DeviceRootCatalogState
@@ -21,6 +23,7 @@ import kotlinx.coroutines.test.UnconfinedTestDispatcher
 import kotlinx.coroutines.test.resetMain
 import kotlinx.coroutines.test.setMain
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
 import org.junit.Rule
 import org.junit.Test
@@ -85,6 +88,29 @@ class DeviceFirmwareUpdateViewModelTest {
         assertEquals(DeviceFirmwareUpdateMode.SUCCEEDED, viewModel.uiState.value.mode)
         assertEquals(100, viewModel.uiState.value.progressPercent)
         assertEquals("2.0.0", viewModel.uiState.value.currentVersion)
+    }
+
+    @Test
+    fun `typed firmware failure is retained for localized presentation`() {
+        val firmware = FakeFirmwareOperations(preparedPlan())
+        val viewModel = DeviceFirmwareUpdateViewModel(
+            rootOperations = FakeRootOperations(deviceSnapshot()),
+            firmwareUpdateOperations = firmware,
+            manifestUrl = MANIFEST_URL
+        )
+        viewModel.bind(DEVICE_UID)
+        val failure = DeviceOtaFailure(
+            reason = DeviceOtaFailureReason.INTEGRITY_CHECK_FAILED,
+            recoverable = false,
+            field = "sha256",
+            diagnosticMessage = "downloaded firmware SHA256 does not match manifest"
+        )
+
+        firmware.emit(DeviceOtaState.Failed(DEVICE_UID, failure))
+
+        assertEquals(DeviceFirmwareUpdateMode.FAILED, viewModel.uiState.value.mode)
+        assertEquals(failure, viewModel.uiState.value.failure)
+        assertFalse(viewModel.uiState.value.failure?.recoverable ?: true)
     }
 
     @Test
