@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="device_settings_update_debug_copy_diagnostic_action">Teşhis bilgisini kopyala</string>
+    <string name="device_settings_update_debug_diagnostic_hint">Debug sürümü: maskelenmiş OTA isteğini, cevabını ve parser sonucunu kopyalayıp inceleme için paylaşın.</string>
+    <string name="device_settings_update_debug_diagnostic_copied">OTA teşhis bilgisi panoya kopyalandı.</string>
+</resources>
