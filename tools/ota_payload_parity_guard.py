@@ -244,6 +244,50 @@ def verify_phase_matrix(fixture: dict[str, Any], models: str) -> None:
     require(phases == fixture["phases"], "OTA phase wire matrix drifted")
 
 
+def verify_download_diagnostic_mapping(failure_mapper: str) -> None:
+    signed_http_client_codes = {
+        "HTTPC_ERROR_CONNECTION_REFUSED": -1,
+        "HTTPC_ERROR_SEND_HEADER_FAILED": -2,
+        "HTTPC_ERROR_SEND_PAYLOAD_FAILED": -3,
+        "HTTPC_ERROR_NOT_CONNECTED": -4,
+        "HTTPC_ERROR_CONNECTION_LOST": -5,
+        "HTTPC_ERROR_NO_STREAM": -6,
+        "HTTPC_ERROR_NO_HTTP_SERVER": -7,
+        "HTTPC_ERROR_TOO_LESS_RAM": -8,
+        "HTTPC_ERROR_ENCODING": -9,
+        "HTTPC_ERROR_STREAM_WRITE": -10,
+        "HTTPC_ERROR_READ_TIMEOUT": -11,
+    }
+    for name, value in signed_http_client_codes.items():
+        require(
+            re.search(rf"{name}\s*=\s*{value}\b", failure_mapper) is not None,
+            f"Android OTA failure mapper lost signed firmware diagnostic {name}={value}",
+        )
+
+    required_reasons = {
+        "DOWNLOAD_CONNECTION_FAILED",
+        "DOWNLOAD_SEND_FAILED",
+        "DOWNLOAD_CONNECTION_LOST",
+        "DOWNLOAD_STREAM_UNAVAILABLE",
+        "DOWNLOAD_SERVER_NO_RESPONSE",
+        "DOWNLOAD_DEVICE_MEMORY_LOW",
+        "DOWNLOAD_ENCODING_UNSUPPORTED",
+        "DOWNLOAD_STREAM_WRITE_FAILED",
+        "DOWNLOAD_TIMEOUT",
+        "DOWNLOAD_URL_OPEN_FAILED",
+        "DOWNLOAD_STREAM_INTERRUPTED",
+        "DOWNLOAD_SIZE_MISMATCH",
+        "RELEASE_UNAVAILABLE",
+        "RELEASE_ACCESS_DENIED",
+        "RELEASE_RATE_LIMITED",
+        "RELEASE_REDIRECT_FAILED",
+        "RELEASE_REQUEST_REJECTED",
+        "RELEASE_SERVER_UNAVAILABLE",
+    }
+    for reason in required_reasons:
+        require(reason in failure_mapper, f"Android OTA failure mapper lost exact reason {reason}")
+
+
 def verify_wire_semantics(
     fixture: dict[str, Any],
     status_parser: str,
@@ -266,10 +310,7 @@ def verify_wire_semantics(
         "OTA fixture must declare signed httpStatus",
     )
     require("httpStatus >= 0" not in status_parser, "Android rejects signed HTTP diagnostics")
-    require(
-        "status <= 0" in failure_mapper,
-        "Non-positive HTTP diagnostics must remain retryable transport failures",
-    )
+    verify_download_diagnostic_mapping(failure_mapper)
     require(
         semantics.get("finishedAtMsMayBeZero") is True,
         "OTA fixture must preserve zero terminal timestamp semantics",
