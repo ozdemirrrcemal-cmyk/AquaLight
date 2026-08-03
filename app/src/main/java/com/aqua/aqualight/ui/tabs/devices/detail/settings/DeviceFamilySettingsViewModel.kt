@@ -4,6 +4,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.aqua.aqualight.application.devices.DEVICE_FIRMWARE_MANIFEST_URL
 import com.aqua.aqualight.application.devices.DeviceFirmwareUpdateOperations
+import com.aqua.aqualight.application.devices.DeviceOtaFailure
 import com.aqua.aqualight.application.devices.DeviceOtaState
 import com.aqua.aqualight.application.devices.DeviceRootCatalogState
 import com.aqua.aqualight.application.devices.DeviceRootOperations
@@ -85,8 +86,8 @@ class DeviceFamilySettingsViewModel(
                 applyNow = true
             ).getOrNull()
             if (availability is DeviceOtaState.UpdateAvailable) {
-                // Re-selecting the signed plan before this status probe also recovers a transfer
-                // that continued while the Android process or update screen was absent.
+                // The status probe can recover a transfer that continued without Android. The
+                // coordinator keeps this signed availability state if that probe itself fails.
                 firmwareUpdateOperations.requestStatus(deviceUid)
             }
         }
@@ -119,9 +120,7 @@ class DeviceFamilySettingsViewModel(
                 version = state.targetVersion,
                 progressPermille = COMPLETE_PROGRESS_PERMILLE
             )
-            is DeviceOtaState.Failed -> DeviceSettingsUpdateActionState.Failed(
-                recoverable = state.recoverable
-            )
+            is DeviceOtaState.Failed -> DeviceSettingsUpdateActionState.Failed(state.failure)
         }
         _uiState.update { current -> current.copy(updateActionState = actionState) }
     }
@@ -207,7 +206,7 @@ sealed interface DeviceSettingsUpdateActionState {
     ) : DeviceSettingsUpdateActionState
 
     data class Failed(
-        val recoverable: Boolean
+        val failure: DeviceOtaFailure
     ) : DeviceSettingsUpdateActionState
 
     data object Unsupported : DeviceSettingsUpdateActionState
