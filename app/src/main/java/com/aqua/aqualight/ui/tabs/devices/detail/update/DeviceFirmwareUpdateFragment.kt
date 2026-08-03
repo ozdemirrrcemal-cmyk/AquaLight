@@ -3,11 +3,15 @@ package com.aqua.aqualight.ui.tabs.devices.detail.update
 import android.animation.AnimatorSet
 import android.animation.ObjectAnimator
 import android.animation.ValueAnimator
+import android.content.ClipData
+import android.content.ClipboardManager
+import android.content.Context
 import android.content.res.ColorStateList
 import android.os.Bundle
 import android.text.format.Formatter
 import android.view.LayoutInflater
 import android.view.View
+import android.widget.Toast
 import androidx.annotation.ColorRes
 import androidx.annotation.DrawableRes
 import androidx.annotation.StringRes
@@ -24,10 +28,12 @@ import androidx.navigation.fragment.findNavController
 import androidx.navigation.fragment.navArgs
 import androidx.transition.AutoTransition
 import androidx.transition.TransitionManager
+import com.aqua.aqualight.BuildConfig
 import com.aqua.aqualight.R
 import com.aqua.aqualight.application.devices.DeviceFirmwareReleaseContent
 import com.aqua.aqualight.application.devices.DeviceOtaProgressPhase
 import com.aqua.aqualight.composition.requireAppContainer
+import com.aqua.aqualight.data.devices.runtime.core.DeviceRuntimeOtaDiagnostics
 import com.aqua.aqualight.databinding.FragmentDeviceFirmwareUpdateBinding
 import com.aqua.aqualight.databinding.LayoutDeviceFirmwareReleaseItemBinding
 import com.aqua.aqualight.ui.common.header.AquaHeaderConfig
@@ -85,9 +91,10 @@ class DeviceFirmwareUpdateFragment : Fragment(R.layout.fragment_device_firmware_
         binding.btnUpdateAction.setOnClickListener {
             when (latestState.mode) {
                 DeviceFirmwareUpdateMode.AVAILABLE -> viewModel.installUpdate()
-                DeviceFirmwareUpdateMode.FAILED -> {
-                    if (latestState.failure?.recoverable == true) viewModel.retry()
-                    else findNavController().navigateUp()
+                DeviceFirmwareUpdateMode.FAILED -> when {
+                    latestState.hasDebugDiagnostic -> copyDebugDiagnostic()
+                    latestState.failure?.recoverable == true -> viewModel.retry()
+                    else -> findNavController().navigateUp()
                 }
                 DeviceFirmwareUpdateMode.SUCCEEDED,
                 DeviceFirmwareUpdateMode.UP_TO_DATE,
@@ -277,9 +284,68 @@ class DeviceFirmwareUpdateFragment : Fragment(R.layout.fragment_device_firmware_
             text = if (presentation.loading) "" else getString(presentation.textRes)
             contentDescription = getString(presentation.textRes)
         }
-        binding.tvUpdateActionHint.isVisible = state.mode == DeviceFirmwareUpdateMode.AVAILABLE ||
-            state.mode.isActive
+        binding.tvUpdateActionHint.apply {
+            isVisible = state.mode == DeviceFirmwareUpdateMode.AVAILABLE ||
+                state.mode.isActive ||
+                state.hasDebugDiagnostic
+            setText(
+                if (state.hasDebugDiagnostic) {
+                    R.string.device_settings_update_debug_diagnostic_hint
+                } else {
+                    R.string.device_settings_update_power_warning
+                }
+            )
+        }
     }
+
+    private fun copyDebugDiagnostic() {
+        val report = latestState.debugDiagnosticReport()
+        if (report.isBlank()) return
+        val clipboard = requireContext().getSystemService(Context.CLIPBOARD_SERVICE)
+            as ClipboardManager
+        clipboard.setPrimaryClip(
+            ClipData.newPlainText(DEBUG_DIAGNOSTIC_CLIP_LABEL, report)
+        )
+        Toast.makeText(
+            requireContext(),
+            R.string.device_settings_update_debug_diagnostic_copied,
+            Toast.LENGTH_LONG
+        ).show()
+    }
+
+    private fun DeviceFirmwareUpdateUiState.debugDiagnosticReport(): String {
+        if (!hasDebugDiagnostic) return ""
+        val currentFailure = requireNotNull(failure)
+        val runtimeReport = DeviceRuntimeOtaDiagnostics.report(deviceUid)
+        return buildString {
+            appendLine("AquaLight Android OTA diagnostic")
+            appendLine("appVersion=${BuildConfig.VERSION_NAME}")
+            appendLine("deviceUid=$deviceUid")
+            appendLine("mode=$mode")
+            appendLine("currentVersion=$currentVersion")
+            appendLine("targetVersion=$targetVersion")
+            appendLine("reason=${currentFailure.reason}")
+            appendLine("recoverable=${currentFailure.recoverable}")
+            appendLine("code=${currentFailure.code.ifBlank { "<empty>" }}")
+            appendLine("field=${currentFailure.field.ifBlank { "<empty>" }}")
+            appendLine("httpStatus=${currentFailure.httpStatus}")
+            appendLine(
+                "diagnosticMessage=${currentFailure.diagnosticMessage.ifBlank { "<empty>" }}"
+            )
+            if (runtimeReport.isNotBlank()) {
+                appendLine()
+                append(runtimeReport)
+            } else {
+                appendLine()
+                append("runtimeReport=<missing>")
+            }
+        }.trimEnd()
+    }
+
+    private val DeviceFirmwareUpdateUiState.hasDebugDiagnostic: Boolean
+        get() = BuildConfig.DEBUG &&
+            mode == DeviceFirmwareUpdateMode.FAILED &&
+            failure != null
 
     private fun announceStateChange(state: DeviceFirmwareUpdateUiState) {
         val key = "${state.mode}:${state.phase.orEmptyName()}:${state.failure?.reason.orEmptyName()}"
@@ -460,10 +526,10 @@ class DeviceFirmwareUpdateFragment : Fragment(R.layout.fragment_device_firmware_
             enabled = true
         )
         DeviceFirmwareUpdateMode.FAILED -> ActionPresentation(
-            textRes = if (failure?.recoverable == true) {
-                R.string.device_settings_retry_update_action
-            } else {
-                R.string.device_settings_update_close_action
+            textRes = when {
+                hasDebugDiagnostic -> R.string.device_settings_update_debug_copy_diagnostic_action
+                failure?.recoverable == true -> R.string.device_settings_retry_update_action
+                else -> R.string.device_settings_update_close_action
             },
             enabled = true
         )
@@ -496,6 +562,7 @@ class DeviceFirmwareUpdateFragment : Fragment(R.layout.fragment_device_firmware_
     )
 
     private companion object {
+        const val DEBUG_DIAGNOSTIC_CLIP_LABEL = "AquaLight OTA diagnostic"
         const val STATE_TRANSITION_DURATION_MILLIS = 180L
         const val SUCCESS_ANIMATION_DURATION_MILLIS = 420L
         const val SUCCESS_ICON_START_SCALE = 0.72f
