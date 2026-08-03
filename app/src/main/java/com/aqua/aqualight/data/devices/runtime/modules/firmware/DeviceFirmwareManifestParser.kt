@@ -213,6 +213,15 @@ object DeviceFirmwareManifestParser {
         manifest: DeviceFirmwareManifest,
         artifact: DeviceFirmwareManifestArtifact
     ) {
+        validateArtifactIdentity(manifest, artifact)
+        validateFirmwareAsset(manifest, artifact)
+        validateFactoryAsset(manifest, artifact)
+    }
+
+    private fun validateArtifactIdentity(
+        manifest: DeviceFirmwareManifest,
+        artifact: DeviceFirmwareManifestArtifact
+    ) {
         require(ENVIRONMENT_PATTERN.matches(artifact.env)) {
             "Invalid OTA manifest environment: ${artifact.env}"
         }
@@ -243,17 +252,18 @@ object DeviceFirmwareManifestParser {
         require(artifact.product.capabilities.ota) {
             "Manifest product must declare OTA capability for ${artifact.env}."
         }
+    }
 
-        val expectedFirmwareName = "AquaLight-${artifact.env}-${manifest.tag}-ota.bin"
-        validatePublishedAsset(
-            filename = artifact.firmware.filename,
-            url = artifact.firmware.url,
-            sha256 = artifact.firmware.sha256,
-            size = artifact.firmware.size,
-            expectedFilename = expectedFirmwareName,
+    private fun validateFirmwareAsset(
+        manifest: DeviceFirmwareManifest,
+        artifact: DeviceFirmwareManifestArtifact
+    ) {
+        val expected = PublishedAssetExpectation(
+            filename = "AquaLight-${artifact.env}-${manifest.tag}-ota.bin",
             tag = manifest.tag,
             label = "firmware"
         )
+        validatePublishedAsset(artifact.firmware.asPublishedAsset(), expected)
         require(artifact.firmware.version == manifest.version) {
             "OTA firmware version differs from manifest version for ${artifact.env}."
         }
@@ -263,43 +273,57 @@ object DeviceFirmwareManifestParser {
         require(artifact.firmware.otaSlotCompatible) {
             "OTA firmware must be OTA-slot compatible."
         }
+    }
 
-        artifact.factory?.let { factory ->
-            validatePublishedAsset(
-                filename = factory.filename,
-                url = factory.url,
-                sha256 = factory.sha256,
-                size = factory.size,
-                expectedFilename = "AquaLight-${artifact.env}-${manifest.tag}-factory.zip",
-                tag = manifest.tag,
-                label = "factory"
-            )
-        }
+    private fun validateFactoryAsset(
+        manifest: DeviceFirmwareManifest,
+        artifact: DeviceFirmwareManifestArtifact
+    ) {
+        val factory = artifact.factory ?: return
+        val expected = PublishedAssetExpectation(
+            filename = "AquaLight-${artifact.env}-${manifest.tag}-factory.zip",
+            tag = manifest.tag,
+            label = "factory"
+        )
+        validatePublishedAsset(factory.asPublishedAsset(), expected)
     }
 
     private fun validatePublishedAsset(
-        filename: String,
-        url: String,
-        sha256: String,
-        size: Int,
-        expectedFilename: String,
-        tag: String,
-        label: String
+        asset: PublishedAsset,
+        expected: PublishedAssetExpectation
     ) {
-        require(filename == expectedFilename) {
-            "OTA $label filename differs from firmware release naming."
+        require(asset.filename == expected.filename) {
+            "OTA ${expected.label} filename differs from firmware release naming."
         }
         val expectedUrl = DeviceFirmwareRuntimeContract.OFFICIAL_RELEASE_URL_PREFIX +
-            "$tag/$expectedFilename"
-        require(url == expectedUrl) {
-            "OTA $label URL differs from the official release artifact URL."
+            "${expected.tag}/${expected.filename}"
+        require(asset.url == expectedUrl) {
+            "OTA ${expected.label} URL differs from the official release artifact URL."
         }
-        require(url.length <= DeviceFirmwareRuntimeContract.Limit.MAX_URL_LENGTH) {
-            "OTA $label URL exceeds the firmware limit."
+        require(asset.url.length <= DeviceFirmwareRuntimeContract.Limit.MAX_URL_LENGTH) {
+            "OTA ${expected.label} URL exceeds the firmware limit."
         }
-        require(sha256.isSha256Hex()) { "OTA $label sha256 must be 64 hex characters." }
-        require(size > 0) { "OTA $label size must be greater than zero." }
+        require(asset.sha256.isSha256Hex()) {
+            "OTA ${expected.label} sha256 must be 64 hex characters."
+        }
+        require(asset.size > 0) {
+            "OTA ${expected.label} size must be greater than zero."
+        }
     }
+
+    private fun DeviceFirmwareAsset.asPublishedAsset(): PublishedAsset = PublishedAsset(
+        filename = filename,
+        url = url,
+        sha256 = sha256,
+        size = size
+    )
+
+    private fun DeviceFirmwareFactoryAsset.asPublishedAsset(): PublishedAsset = PublishedAsset(
+        filename = filename,
+        url = url,
+        sha256 = sha256,
+        size = size
+    )
 
     private fun JSONObject.requiredObject(key: String): JSONObject {
         require(has(key) && !isNull(key)) { "OTA manifest object '$key' is missing." }
@@ -366,11 +390,14 @@ object DeviceFirmwareManifestParser {
     private inline fun <T> JSONArray.mapObjects(
         label: String,
         transform: (JSONObject, Int) -> T
-    ): List<T> = buildList {
-        repeat(length()) { index ->
-            val item = get(index) as? JSONObject
-                ?: error("OTA manifest $label[$index] must be an object.")
-            add(transform(item, index))
+    ): List<T> {
+        val source = this
+        return buildList {
+            repeat(source.length()) { index ->
+                val item = source.get(index) as? JSONObject
+                    ?: error("OTA manifest $label[$index] must be an object.")
+                add(transform(item, index))
+            }
         }
     }
 
@@ -386,6 +413,19 @@ object DeviceFirmwareManifestParser {
                 "missing=${missing.sorted()} unknown=${unknown.sorted()}"
         }
     }
+
+    private data class PublishedAsset(
+        val filename: String,
+        val url: String,
+        val sha256: String,
+        val size: Int
+    )
+
+    private data class PublishedAssetExpectation(
+        val filename: String,
+        val tag: String,
+        val label: String
+    )
 
     private val ROOT_KEYS = setOf(
         "schema",
