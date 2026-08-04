@@ -76,13 +76,13 @@ class DeviceFamilySettingsViewModel(
     }
 
     /** Updates only the bounded Settings preview; firmware read/write is connected later. */
-    fun previewTemperatureProtectionThreshold(value: String) {
-        val threshold = LightTemperatureProtectionUiContract.parseAllowedThreshold(value) ?: return
+    fun previewTemperatureProtectionThreshold(value: Double) {
+        if (!LightTemperatureProtectionUiContract.isAllowedThreshold(value)) return
         if (!_uiState.value.showLightProtectionInventory) return
 
-        localTemperatureProtectionThresholdOverride = threshold
+        localTemperatureProtectionThresholdOverride = value
         _uiState.update { state ->
-            state.copy(temperatureProtectionThresholdC = threshold)
+            state.copy(temperatureProtectionThresholdC = value)
         }
     }
 
