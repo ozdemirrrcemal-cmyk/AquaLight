@@ -18,12 +18,17 @@ class ValueStepperBottomSheet : BottomSheetDialogFragment(
     private var resultSent = false
     private var currentValue: Int? = null
 
+    @Suppress("LongMethod")
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
         val args = requireArguments()
         val initialValue = args.getInt(ARG_INITIAL_VALUE)
+        val restoredValue = savedInstanceState
+            ?.takeIf { state -> state.containsKey(STATE_CURRENT_VALUE) }
+            ?.getInt(STATE_CURRENT_VALUE)
+            ?: initialValue
         val state = BoundedIntStepperState(
-            initialValue = savedInstanceState?.getInt(STATE_CURRENT_VALUE) ?: initialValue,
+            initialValue = restoredValue,
             minimumValue = args.getInt(ARG_MINIMUM_VALUE),
             maximumValue = args.getInt(ARG_MAXIMUM_VALUE),
             step = args.getInt(ARG_STEP)
@@ -60,7 +65,11 @@ class ValueStepperBottomSheet : BottomSheetDialogFragment(
 
         fun render() {
             currentValue = state.value
-            valueText.text = "${state.value}$unitSuffix"
+            valueText.text = getString(
+                R.string.value_stepper_value_format,
+                state.value,
+                unitSuffix
+            )
             incrementButton.isEnabled = state.canIncrement
             decrementButton.isEnabled = state.canDecrement
             saveButton.isEnabled = state.value != initialValue
@@ -163,39 +172,5 @@ class ValueStepperBottomSheet : BottomSheetDialogFragment(
                 )
             }.show(fragmentManager, tag)
         }
-    }
-}
-
-internal class BoundedIntStepperState(
-    initialValue: Int,
-    private val minimumValue: Int,
-    private val maximumValue: Int,
-    private val step: Int
-) {
-    init {
-        require(minimumValue <= maximumValue) {
-            "minimumValue must not exceed maximumValue."
-        }
-        require(initialValue in minimumValue..maximumValue) {
-            "initialValue must be inside the allowed range."
-        }
-        require(step > 0) { "step must be positive." }
-    }
-
-    var value: Int = initialValue
-        private set
-
-    val canIncrement: Boolean
-        get() = value < maximumValue
-
-    val canDecrement: Boolean
-        get() = value > minimumValue
-
-    fun increment() {
-        value = (value + step).coerceAtMost(maximumValue)
-    }
-
-    fun decrement() {
-        value = (value - step).coerceAtLeast(minimumValue)
     }
 }
