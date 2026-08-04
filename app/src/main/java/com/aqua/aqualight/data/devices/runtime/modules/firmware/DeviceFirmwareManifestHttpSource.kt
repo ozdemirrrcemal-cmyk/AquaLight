@@ -72,18 +72,24 @@ internal fun requireOfficialFirmwareChannelManifestUrl(
     require(segments.size == EXPECTED_PATH_SEGMENT_COUNT) {
         "Manifest URL path must identify one exact AquaLight product channel."
     }
-    require(segments[0] == OFFICIAL_OWNER && segments[1] == OFFICIAL_REPOSITORY) {
+    require(
+        segments[OWNER_SEGMENT_INDEX] == OFFICIAL_OWNER &&
+            segments[REPOSITORY_SEGMENT_INDEX] == OFFICIAL_REPOSITORY
+    ) {
         "Manifest URL repository is not the official AquaLight OTA repository."
     }
-    require(segments[2] == OFFICIAL_BRANCH && segments[3] == CHANNELS_DIRECTORY) {
+    require(
+        segments[BRANCH_SEGMENT_INDEX] == OFFICIAL_BRANCH &&
+            segments[CHANNELS_DIRECTORY_SEGMENT_INDEX] == CHANNELS_DIRECTORY
+    ) {
         "Manifest URL must use the official product channel namespace."
     }
 
     val channel = DeviceFirmwareChannel.values().singleOrNull { candidate ->
-        candidate.wireValue == segments[4]
+        candidate.wireValue == segments[CHANNEL_SEGMENT_INDEX]
     } ?: throw IllegalArgumentException("Manifest URL contains an unsupported OTA channel.")
 
-    val filename = segments[5]
+    val filename = segments[FILENAME_SEGMENT_INDEX]
     require(filename.endsWith(JSON_SUFFIX)) { "Manifest URL must be a JSON asset." }
     val environment = filename.removeSuffix(JSON_SUFFIX)
     require(ENVIRONMENT_PATTERN.matches(environment)) {
@@ -111,5 +117,11 @@ private const val OFFICIAL_BRANCH = "main"
 private const val CHANNELS_DIRECTORY = "channels"
 private const val HTTPS_PORT = 443
 private const val EXPECTED_PATH_SEGMENT_COUNT = 6
+private const val OWNER_SEGMENT_INDEX = 0
+private const val REPOSITORY_SEGMENT_INDEX = 1
+private const val BRANCH_SEGMENT_INDEX = 2
+private const val CHANNELS_DIRECTORY_SEGMENT_INDEX = 3
+private const val CHANNEL_SEGMENT_INDEX = 4
+private const val FILENAME_SEGMENT_INDEX = 5
 private const val JSON_SUFFIX = ".json"
 private val ENVIRONMENT_PATTERN = Regex("^[a-z0-9]+(?:_[a-z0-9]+)*$")
