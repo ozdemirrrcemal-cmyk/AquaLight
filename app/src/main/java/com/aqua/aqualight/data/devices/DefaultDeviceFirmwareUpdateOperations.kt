@@ -1,11 +1,13 @@
 package com.aqua.aqualight.data.devices
 
+import com.aqua.aqualight.application.devices.DeviceFirmwareChannel
 import com.aqua.aqualight.application.devices.DeviceFirmwareCommandResult
 import com.aqua.aqualight.application.devices.DeviceFirmwareUpdateOperations
 import com.aqua.aqualight.application.devices.DeviceOtaState
 import com.aqua.aqualight.application.devices.PreparedDeviceFirmwareUpdate
 import com.aqua.aqualight.data.devices.model.DeviceUid
 import com.aqua.aqualight.data.devices.repository.DevicesRepository
+import com.aqua.aqualight.data.devices.runtime.modules.firmware.DeviceFirmwareChannelManifestResolver
 import com.aqua.aqualight.data.devices.runtime.modules.firmware.DeviceOtaCoordinator
 import java.util.concurrent.ConcurrentHashMap
 import kotlinx.coroutines.CoroutineScope
@@ -21,7 +23,9 @@ import kotlinx.coroutines.launch
 /** Shared OTA application adapter used by all family-specific Settings screens. */
 internal class DefaultDeviceFirmwareUpdateOperations(
     private val devicesRepository: DevicesRepository,
-    private val statePublisher: suspend (DeviceOtaState, String) -> Unit = { _, _ -> }
+    private val statePublisher: suspend (DeviceOtaState, String) -> Unit = { _, _ -> },
+    private val channelManifestResolver: DeviceFirmwareChannelManifestResolver =
+        DeviceFirmwareChannelManifestResolver()
 ) : DeviceFirmwareUpdateOperations, AutoCloseable {
 
     private val publisherScope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
@@ -50,21 +54,28 @@ internal class DefaultDeviceFirmwareUpdateOperations(
 
     override suspend fun checkAvailability(
         deviceUid: String,
-        manifestUrl: String,
+        channel: DeviceFirmwareChannel,
         applyNow: Boolean
-    ): Result<DeviceOtaState> = coordinator.checkAvailability(
-        deviceUid = requireDeviceUid(deviceUid),
-        manifestUrl = manifestUrl,
-        applyNow = applyNow
-    )
+    ): Result<DeviceOtaState> {
+        val uid = requireDeviceUid(deviceUid)
+        val snapshot = requireNotNull(devicesRepository.currentDevice(uid)) {
+            "Device snapshot is not available."
+        }
+        val manifestUrl = channelManifestResolver.resolve(snapshot, channel)
+        return coordinator.checkAvailability(
+            deviceUid = uid,
+            manifestUrl = manifestUrl,
+            applyNow = applyNow
+        )
+    }
 
     override suspend fun prepareUpdate(
         deviceUid: String,
-        manifestUrl: String,
+        channel: DeviceFirmwareChannel,
         applyNow: Boolean
     ): Result<PreparedDeviceFirmwareUpdate> = checkAvailability(
         deviceUid = deviceUid,
-        manifestUrl = manifestUrl,
+        channel = channel,
         applyNow = applyNow
     ).mapCatching { state ->
         when (state) {
