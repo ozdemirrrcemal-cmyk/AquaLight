@@ -20,8 +20,8 @@ class DeviceFirmwareUpdatePlanner(
         require(manifest.platform == OFFICIAL_PLATFORM) {
             "OTA manifest platform differs from AquaLight-Firmware/main."
         }
-        require(manifest.tag == "v${manifest.version}") {
-            "OTA manifest tag does not match its exact firmware version."
+        require(manifest.artifacts.size == 1) {
+            "A product OTA channel manifest must contain exactly one artifact."
         }
 
         val currentVersion = snapshot.firmwareVersion
@@ -210,8 +210,14 @@ class DeviceFirmwareUpdatePlanner(
         require(artifact.firmware.version == manifest.version) {
             "OTA artifact firmware.version differs from the manifest version."
         }
-        require(artifact.firmware.filename == "AquaLight-${artifact.env}-${manifest.tag}-ota.bin") {
-            "OTA artifact filename does not match env/tag contract."
+
+        val expectedTag = "${artifact.env}-v${manifest.version}"
+        require(manifest.tag == expectedTag) {
+            "OTA manifest tag does not match its product environment and firmware version."
+        }
+        val expectedFilename = "AquaLight-${artifact.env}-v${manifest.version}-ota.bin"
+        require(artifact.firmware.filename == expectedFilename) {
+            "OTA artifact filename does not match env/version contract."
         }
         require(
             artifact.firmware.url == DeviceFirmwareRuntimeContract.OFFICIAL_RELEASE_URL_PREFIX +
