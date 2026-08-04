@@ -18,7 +18,7 @@ class DeviceFirmwareExactArtifactPlannerTest {
     }
 
     @Test
-    fun `exact firmware manifest produces plan without requiring a custom device name`() {
+    fun `exact product channel manifest produces plan without requiring a custom device name`() {
         val snapshot = snapshot(customName = "")
         val availability = planner.evaluateUpdate(snapshot, manifest()).getOrThrow()
             as DeviceFirmwareAvailability.UpdateAvailable
@@ -29,7 +29,7 @@ class DeviceFirmwareExactArtifactPlannerTest {
         assertEquals("dose_pro_2", plan.payload.model)
         assertEquals("2.0.0", plan.payload.version)
         assertEquals(7L, plan.runtimeMetadataGeneration)
-        assertEquals("v2.0.0", plan.manifestTag)
+        assertEquals("dosing_dose_pro_2-v2.0.0", plan.manifestTag)
         assertEquals("tr", plan.releaseContent.localeTag)
         assertEquals(listOf("Kalibrasyon doğrulaması geliştirildi."), plan.releaseContent.changes)
         assertEquals("Dose Pro 2", plan.displayName)
@@ -51,14 +51,14 @@ class DeviceFirmwareExactArtifactPlannerTest {
     }
 
     @Test
-    fun `duplicate exact artifacts fail closed instead of selecting first`() {
+    fun `product channel manifest rejects multiple artifacts`() {
         val exact = artifact()
         val failure = planner.evaluateUpdate(
             snapshot(),
             manifest(artifacts = listOf(exact, exact.copy()))
         ).exceptionOrNull()
 
-        assertTrue(failure?.message.orEmpty().contains("Ambiguous OTA manifest"))
+        assertTrue(failure?.message.orEmpty().contains("exactly one artifact"))
     }
 
     @Test
@@ -103,6 +103,16 @@ class DeviceFirmwareExactArtifactPlannerTest {
         ).exceptionOrNull()
 
         assertTrue(failure?.message.orEmpty().contains("capabilities differ"))
+    }
+
+    @Test
+    fun `global version-only release tag is rejected`() {
+        val failure = planner.evaluateUpdate(
+            snapshot(),
+            manifest().copy(tag = "v2.0.0")
+        ).exceptionOrNull()
+
+        assertTrue(failure?.message.orEmpty().contains("product environment"))
     }
 
     @Test
@@ -151,7 +161,7 @@ class DeviceFirmwareExactArtifactPlannerTest {
         brand = DeviceFirmwareRuntimeContract.Manifest.BRAND,
         channel = DeviceFirmwareRuntimeContract.Manifest.STABLE_CHANNEL,
         version = "2.0.0",
-        tag = "v2.0.0",
+        tag = "dosing_dose_pro_2-v2.0.0",
         releaseRepo = DeviceFirmwareRuntimeContract.OFFICIAL_RELEASE_REPOSITORY,
         generatedAt = "2026-08-03T00:00:00+00:00",
         platform = OFFICIAL_PLATFORM,
@@ -176,6 +186,7 @@ class DeviceFirmwareExactArtifactPlannerTest {
 
     private fun artifact(): DeviceFirmwareManifestArtifact {
         val env = "dosing_dose_pro_2"
+        val releaseTag = "$env-v2.0.0"
         val filename = "AquaLight-$env-v2.0.0-ota.bin"
         return DeviceFirmwareManifestArtifact(
             env = env,
@@ -204,7 +215,7 @@ class DeviceFirmwareExactArtifactPlannerTest {
                 version = "2.0.0",
                 filename = filename,
                 url = DeviceFirmwareRuntimeContract.OFFICIAL_RELEASE_URL_PREFIX +
-                    "v2.0.0/$filename",
+                    "$releaseTag/$filename",
                 sha256 = "a".repeat(64),
                 size = 1_048_576,
                 format = DeviceFirmwareRuntimeContract.Manifest.FIRMWARE_FORMAT,
