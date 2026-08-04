@@ -1,5 +1,6 @@
 package com.aqua.aqualight.data.devices.runtime.modules.firmware
 
+import com.aqua.aqualight.application.devices.DeviceFirmwareChannel
 import com.aqua.aqualight.application.devices.DeviceFirmwareCommandResult as AppCommandResult
 import com.aqua.aqualight.application.devices.DeviceFirmwareReleaseContent
 import com.aqua.aqualight.application.devices.DeviceOtaFailure
@@ -86,7 +87,7 @@ internal class DeviceOtaCoordinator(
 
     suspend fun checkAvailability(
         deviceUid: DeviceUid,
-        manifestUrl: String,
+        channel: DeviceFirmwareChannel,
         applyNow: Boolean
     ): Result<DeviceOtaState> {
         val state = stateFlow(deviceUid)
@@ -95,13 +96,12 @@ internal class DeviceOtaCoordinator(
                 IllegalStateException("An OTA operation is already active for this device.")
             )
         }
-        val initial = snapshotProvider(deviceUid)
         state.value = DeviceOtaState.Checking(
             deviceUid = deviceUid.value,
-            currentVersion = initial?.firmwareVersion.orEmpty()
+            currentVersion = snapshotProvider(deviceUid)?.firmwareVersion.orEmpty()
         )
         return runCatching {
-            resolveAvailability(deviceUid, initial, manifestUrl, applyNow)
+            resolveAvailability(deviceUid, channel, applyNow)
         }.onSuccess { availability ->
             state.value = availability
         }.onFailure { error ->
@@ -114,32 +114,37 @@ internal class DeviceOtaCoordinator(
 
     private suspend fun resolveAvailability(
         deviceUid: DeviceUid,
-        initial: DeviceSnapshot?,
-        manifestUrl: String,
+        channel: DeviceFirmwareChannel,
         applyNow: Boolean
     ): DeviceOtaState {
-        val snapshot = requireNotNull(initial) { "Device snapshot is not available." }
+        connectRuntime(deviceUid).getOrThrow()
+        val snapshot = requireNotNull(snapshotProvider(deviceUid)) {
+            "Device snapshot is not available after authenticated runtime connection."
+        }
         require(snapshot.hasValidatedRuntimeMetadata) {
             "OTA requires current authenticated runtime metadata."
         }
         if (!snapshot.capabilities.ota) {
             return DeviceOtaState.Unsupported(deviceUid.value)
         }
-        connectRuntime(deviceUid).getOrThrow()
-        val current = requireNotNull(snapshotProvider(deviceUid)) {
-            "Device snapshot disappeared during OTA availability check."
-        }
-        require(current.runtimeMetadataGeneration == snapshot.runtimeMetadataGeneration) {
-            "Runtime metadata changed during OTA availability check."
-        }
+        val metadataGeneration = snapshot.runtimeMetadataGeneration
         val updater = requireNotNull(updaterProvider()) {
             "Firmware update runtime is not configured."
         }
         val availability = updater.fetchAndEvaluateUpdate(
-            snapshot = current,
-            manifestUrl = manifestUrl,
+            snapshot = snapshot,
+            channel = channel,
             applyNow = applyNow
         ).getOrThrow()
+        val current = requireNotNull(snapshotProvider(deviceUid)) {
+            "Device snapshot disappeared during OTA availability check."
+        }
+        require(current.hasValidatedRuntimeMetadata) {
+            "Runtime metadata became unauthenticated during OTA availability check."
+        }
+        require(current.runtimeMetadataGeneration == metadataGeneration) {
+            "Runtime metadata changed during OTA availability check."
+        }
         return applyAvailability(deviceUid, availability)
     }
 
@@ -658,7 +663,6 @@ private fun DeviceFirmwareOtaStartRequestEcho.matches(
     version == payload.version &&
     expectedSize == payload.expectedSize &&
     applyNow == payload.applyNow &&
-    !allowInsecureHttp &&
     productKey == payload.productKey &&
     productId == payload.productId &&
     model == payload.model &&

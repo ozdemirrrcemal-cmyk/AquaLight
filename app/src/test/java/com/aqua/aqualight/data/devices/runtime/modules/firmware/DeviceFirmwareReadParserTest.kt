@@ -107,7 +107,6 @@ class DeviceFirmwareReadParserTest {
         .put("active", false)
         .put("restartRequired", false)
         .put("restartScheduled", false)
-        .put("allowInsecureHttp", false)
         .put("startedAtMs", 0L)
         .put("finishedAtMs", 0L)
         .put("bytesWritten", 0L)

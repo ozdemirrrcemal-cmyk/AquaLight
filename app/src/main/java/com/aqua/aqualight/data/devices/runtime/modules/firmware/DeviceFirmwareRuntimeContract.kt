@@ -3,7 +3,7 @@ package com.aqua.aqualight.data.devices.runtime.modules.firmware
 /**
  * Exact Android mirror of the firmware WebSocket OTA and published manifest contracts.
  *
- * The values in this file follow AquaLight-Firmware/main. Product identity and OTA artifact
+ * The values in this file follow AquaLight-Firmware/31ef35fa5428ea36d8c3d10c083942b016071c35. Product identity and OTA artifact
  * selection must never depend on an owner-defined device name.
  */
 object DeviceFirmwareRuntimeContract {
@@ -110,7 +110,6 @@ object DeviceFirmwareRuntimeContract {
         const val PRODUCT_ID = "productId"
         const val MODEL = "model"
         const val HARDWARE_REVISION = "hardwareRevision"
-        const val ALLOW_INSECURE_HTTP = "allowInsecureHttp"
     }
 
     object Limit {

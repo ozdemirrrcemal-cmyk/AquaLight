@@ -184,6 +184,9 @@ object DeviceFirmwareManifestParser {
         require(manifest.isSupportedSchema) {
             "Unsupported OTA manifest schema, brand or release repository."
         }
+        require(manifest.version.isExactFirmwareVersion()) {
+            "OTA manifest version must use exact X.Y.Z format."
+        }
         require(manifest.channel in SUPPORTED_CHANNELS) {
             "Unsupported OTA manifest channel: ${manifest.channel}"
         }
@@ -264,6 +267,9 @@ object DeviceFirmwareManifestParser {
             label = "firmware"
         )
         validatePublishedAsset(artifact.firmware.asPublishedAsset(), expected)
+        require(artifact.firmware.version.isExactFirmwareVersion()) {
+            "OTA firmware version must use exact X.Y.Z format."
+        }
         require(artifact.firmware.version == manifest.version) {
             "OTA firmware version differs from manifest version for ${artifact.env}."
         }

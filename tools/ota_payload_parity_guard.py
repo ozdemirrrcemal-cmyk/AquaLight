@@ -45,8 +45,8 @@ MANIFEST_PARSER_PATH = (
 )
 
 EXPECTED_FIRMWARE_REPOSITORY = "ozdemirrrcemal-cmyk/AquaLight-Firmware"
-EXPECTED_FIRMWARE_BRANCH = "main"
-EXPECTED_FIRMWARE_COMMIT = "38e8812c1bcecf948ebab85979bff21a24f4b79c"
+EXPECTED_FIRMWARE_BRANCH = "agent/product-scoped-ota-channels"
+EXPECTED_FIRMWARE_COMMIT = "31ef35fa5428ea36d8c3d10c083942b016071c35"
 
 
 class GuardFailure(AssertionError):
@@ -133,11 +133,11 @@ def verify_fixture_pins(fixture: dict[str, Any]) -> None:
     )
     require(
         firmware.get("branch") == EXPECTED_FIRMWARE_BRANCH,
-        "OTA fixture must remain pinned to firmware main",
+        "OTA fixture must remain pinned to the verified firmware contract branch",
     )
     require(
         firmware.get("commit") == EXPECTED_FIRMWARE_COMMIT,
-        "OTA fixture firmware main commit drifted",
+        "OTA fixture verified firmware commit drifted",
     )
 
 

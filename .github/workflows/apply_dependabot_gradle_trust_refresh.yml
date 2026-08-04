@@ -1,193 +1,300 @@
-name: Apply Android OTA Commercial Hardening
+name: Apply Dependabot Gradle Trust Refresh
 
 on:
-  pull_request:
-    branches:
-      - main
+  workflow_run:
+    workflows:
+      - Dependabot Gradle Trust Refresh
     types:
-      - opened
-      - reopened
-      - synchronize
-    paths:
-      - ".android-ota-hardening/**"
-      - "scripts/aql_bootstrap_android_ota_hardening.py"
-      - ".github/workflows/apply-android-ota-hardening.yml"
-      - ".github/workflows/apply_dependabot_gradle_trust_refresh.yml"
+      - completed
 
 permissions:
+  actions: write
   contents: write
+  pull-requests: read
 
 concurrency:
-  group: apply-android-ota-hardening-${{ github.event.pull_request.number }}
-  cancel-in-progress: true
+  group: apply-dependabot-gradle-trust-${{ github.event.workflow_run.id }}
+  cancel-in-progress: false
 
 jobs:
   apply:
     if: >-
-      github.actor != 'github-actions[bot]' &&
-      github.event.pull_request.head.repo.full_name == github.repository &&
-      github.event.pull_request.head.ref == 'agent/product-scoped-ota-client'
+      github.event.workflow_run.conclusion == 'success' &&
+      github.event.workflow_run.event == 'pull_request' &&
+      github.event.workflow_run.head_repository.full_name == github.repository
     runs-on: ubuntu-latest
-    timeout-minutes: 90
-
-    env:
-      AQL_FIREBASE_DEBUG_CONFIG_BASE64: ${{ secrets.AQL_FIREBASE_DEBUG_CONFIG_BASE64 }}
-      AQL_FIREBASE_STAGING_CONFIG_BASE64: ${{ secrets.AQL_FIREBASE_STAGING_CONFIG_BASE64 }}
-      AQL_FIREBASE_RELEASE_SMOKE_CONFIG_BASE64: ${{ secrets.AQL_FIREBASE_RELEASE_SMOKE_CONFIG_BASE64 }}
-      AQL_OTA_MANIFEST_PUBLIC_KEY_PEM: ${{ secrets.AQL_OTA_MANIFEST_PUBLIC_KEY_PEM }}
-      AQL_OTA_MANIFEST_KEY_ID: ${{ secrets.AQL_OTA_MANIFEST_KEY_ID }}
+    timeout-minutes: 15
 
     steps:
-      - name: Checkout exact Android hardening branch
-        uses: actions/checkout@v4
+      - name: Download generated trust state
+        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
         with:
-          ref: agent/product-scoped-ota-client
-          fetch-depth: 0
+          name: dependabot-gradle-trust-${{ github.event.workflow_run.id }}
+          path: incoming
+          repository: ${{ github.repository }}
+          run-id: ${{ github.event.workflow_run.id }}
+          github-token: ${{ github.token }}
 
-      - name: Install JDK 17
-        uses: actions/setup-java@v4
-        with:
-          distribution: temurin
-          java-version: '17'
-          cache: gradle
-
-      - name: Set up Python
-        uses: actions/setup-python@v5
-        with:
-          python-version: '3.12'
-
-      - name: Apply staged Android OTA hardening
-        run: python scripts/aql_bootstrap_android_ota_hardening.py
-
-      - name: Close Android OTA repository visibility and update typed-channel test
+      - name: Validate and commit trust state
+        id: apply
+        env:
+          GH_TOKEN: ${{ github.token }}
+          REPOSITORY: ${{ github.repository }}
+          SOURCE_RUN_ID: ${{ github.event.workflow_run.id }}
         shell: bash
         run: |
-          set -euo pipefail
-          python - <<'PY'
+          set -Eeuo pipefail
+
+          python3 - <<'PY'
+          import json
+          import os
+          import re
+          import urllib.error
+          import urllib.parse
+          import urllib.request
+          import xml.etree.ElementTree as ET
           from pathlib import Path
 
-          repository = Path(
-              "app/src/main/java/com/aqua/aqualight/data/devices/runtime/modules/firmware/"
-              "DeviceFirmwareUpdateRepository.kt"
-          )
-          source = repository.read_text(encoding="utf-8")
-          marker = "class DeviceFirmwareUpdateRepository("
-          replacement = "internal class DeviceFirmwareUpdateRepository("
-          if source.count(marker) != 1:
-              raise SystemExit("Android OTA repository declaration is not unique")
-          repository.write_text(source.replace(marker, replacement), encoding="utf-8")
+          repository = os.environ["REPOSITORY"]
+          source_run_id = int(os.environ["SOURCE_RUN_ID"])
+          token = os.environ["GH_TOKEN"]
+          api_root = "https://api.github.com"
+          artifact_root = Path("incoming")
+          output_path = Path(os.environ["GITHUB_OUTPUT"])
 
-          provider = Path(
-              "app/src/main/java/com/aqua/aqualight/data/devices/runtime/modules/"
-              "DeviceRuntimeModuleProvider.kt"
-          )
-          source = provider.read_text(encoding="utf-8")
-          marker = "    val firmwareUpdate = DeviceFirmwareUpdateRepository(firmware)"
-          replacement = "    internal val firmwareUpdate = DeviceFirmwareUpdateRepository(firmware)"
-          if source.count(marker) != 1:
-              raise SystemExit("Android OTA provider property declaration is not unique")
-          provider.write_text(source.replace(marker, replacement), encoding="utf-8")
-
-          coordinator_test = Path(
-              "app/src/test/java/com/aqua/aqualight/data/devices/runtime/modules/firmware/"
-              "DeviceOtaCoordinatorTest.kt"
-          )
-          source = coordinator_test.read_text(encoding="utf-8")
-          import_marker = "import com.aqua.aqualight.application.devices.DeviceOtaFailureReason\n"
-          if "import com.aqua.aqualight.application.devices.DeviceFirmwareChannel\n" not in source:
-              if source.count(import_marker) != 1:
-                  raise SystemExit("DeviceOtaCoordinatorTest import marker is not unique")
-              source = source.replace(
-                  import_marker,
-                  "import com.aqua.aqualight.application.devices.DeviceFirmwareChannel\n" + import_marker,
-              )
-          call_marker = "                MANIFEST_URL,\n                applyNow = true"
-          call_replacement = "                DeviceFirmwareChannel.STABLE,\n                applyNow = true"
-          if source.count(call_marker) != 1:
-              raise SystemExit("DeviceOtaCoordinatorTest legacy manifest URL call is not unique")
-          coordinator_test.write_text(
-              source.replace(call_marker, call_replacement),
-              encoding="utf-8",
-          )
-          PY
-
-      - name: Pin guards to verified firmware contract
-        shell: bash
-        run: |
-          set -euo pipefail
-          python - <<'PY'
-          from pathlib import Path
-
-          final_commit = "31ef35fa5428ea36d8c3d10c083942b016071c35"
-          final_branch = "agent/product-scoped-ota-channels"
-          final_command_blob = "c498261682bcd513c2d90c2f521949d3efdd47fb"
-          old_commit = "38e8812c1bcecf948ebab85979bff21a24f4b79c"
-          old_command_blob = "8b1107d159ca3ff026754c8a06bd1e75fb608c37"
-
-          interoperability = Path("tools/firmware_interoperability_guard.py")
-          text = interoperability.read_text(encoding="utf-8")
-          if text.count(old_commit) != 1:
-              raise SystemExit("Firmware interoperability commit pin is not unique")
-          if text.count(old_command_blob) != 1:
-              raise SystemExit("Firmware command blob pin is not unique")
-          text = text.replace(old_commit, final_commit)
-          text = text.replace(old_command_blob, final_command_blob)
-          interoperability.write_text(text, encoding="utf-8")
-
-          parity = Path("tools/ota_payload_parity_guard.py")
-          text = parity.read_text(encoding="utf-8")
-          if text.count('EXPECTED_FIRMWARE_BRANCH = "main"') != 1:
-              raise SystemExit("OTA parity branch pin is not unique")
-          if text.count(old_commit) != 1:
-              raise SystemExit("OTA parity commit pin is not unique")
-          text = text.replace(
-              'EXPECTED_FIRMWARE_BRANCH = "main"',
-              f'EXPECTED_FIRMWARE_BRANCH = "{final_branch}"',
-          )
-          text = text.replace(old_commit, final_commit)
-          text = text.replace(
-              "OTA fixture must remain pinned to firmware main",
-              "OTA fixture must remain pinned to the verified firmware contract branch",
-          )
-          text = text.replace(
-              "OTA fixture firmware main commit drifted",
-              "OTA fixture verified firmware commit drifted",
-          )
-          parity.write_text(text, encoding="utf-8")
-          PY
-
-      - name: Validate Android OTA architecture guards
-        run: |
-          set -euo pipefail
-          python -m py_compile \
-            tools/product_scoped_ota_client_guard.py \
-            tools/firmware_interoperability_guard.py \
-            tools/ota_payload_parity_guard.py
-          python tools/product_scoped_ota_client_guard.py
-          python tools/device_ota_coordinator_guard.py
-          python -m unittest discover -s tools/tests -p 'test_*.py'
-
-      - name: Run debug unit tests
-        run: |
-          chmod +x ./gradlew
-          ./gradlew --no-daemon testDebugUnitTest --stacktrace
-
-      - name: Restore workflows and commit hardened Android contract
-        shell: bash
-        run: |
-          set -euo pipefail
-          git checkout origin/main -- .github/workflows/apply_dependabot_gradle_trust_refresh.yml
-          rm -f .github/workflows/apply-android-ota-hardening.yml
-          rm -rf .android-ota-hardening
-          rm -f scripts/aql_bootstrap_android_ota_hardening.py
-          rm -f scripts/aql_apply_android_ota_hardening.py
-
-          git config user.name "AquaLight Android OTA Hardening Bot"
-          git config user.email "android-ota-hardening@aqualight.local"
-          git add -A
-          git diff --cached --quiet && {
-            echo "Android OTA hardening produced no changes." >&2
-            exit 1
+          expected_artifact_files = {
+              "app/gradle.lockfile",
+              "gradle/verification-metadata.xml",
+              "metadata.json",
           }
-          git commit -m "Harden Android product-scoped OTA contract"
-          git push origin HEAD:agent/product-scoped-ota-client
+          actual_artifact_files = {
+              path.relative_to(artifact_root).as_posix()
+              for path in artifact_root.rglob("*")
+              if path.is_file()
+          }
+          if actual_artifact_files != expected_artifact_files:
+              raise SystemExit(
+                  "Unexpected trust artifact files: "
+                  + ", ".join(sorted(actual_artifact_files))
+              )
+          for path in artifact_root.rglob("*"):
+              if path.is_symlink():
+                  raise SystemExit(f"Symlinks are forbidden in trust artifacts: {path}")
+
+          def api(method: str, path: str, payload=None):
+              data = None
+              headers = {
+                  "Accept": "application/vnd.github+json",
+                  "Authorization": f"Bearer {token}",
+                  "X-GitHub-Api-Version": "2022-11-28",
+                  "User-Agent": "AquaLight-Dependabot-Trust-Refresh",
+              }
+              if payload is not None:
+                  data = json.dumps(payload).encode("utf-8")
+                  headers["Content-Type"] = "application/json"
+              request = urllib.request.Request(
+                  api_root + path,
+                  data=data,
+                  headers=headers,
+                  method=method,
+              )
+              try:
+                  with urllib.request.urlopen(request, timeout=30) as response:
+                      body = response.read()
+              except urllib.error.HTTPError as error:
+                  detail = error.read().decode("utf-8", errors="replace")
+                  raise SystemExit(
+                      f"GitHub API {method} {path} failed: {error.code}: {detail}"
+                  ) from error
+              return json.loads(body) if body else None
+
+          metadata = json.loads(
+              (artifact_root / "metadata.json").read_text(encoding="utf-8")
+          )
+          if set(metadata) != {
+              "pull_request",
+              "head_ref",
+              "head_sha",
+              "source_run_id",
+          }:
+              raise SystemExit("Trust artifact metadata fields are invalid.")
+          if int(metadata["source_run_id"]) != source_run_id:
+              raise SystemExit("Trust artifact source run does not match workflow_run.")
+
+          pr_number = int(metadata["pull_request"])
+          head_ref = str(metadata["head_ref"])
+          expected_head_sha = str(metadata["head_sha"])
+          if not re.fullmatch(r"[0-9a-f]{40}", expected_head_sha):
+              raise SystemExit("Dependabot head SHA is invalid.")
+          if not re.fullmatch(r"dependabot/gradle/[A-Za-z0-9._/-]+", head_ref):
+              raise SystemExit("Only canonical Dependabot Gradle branches may be updated.")
+          if ".." in head_ref or head_ref.endswith("/"):
+              raise SystemExit("Dependabot branch name is invalid.")
+
+          pull = api("GET", f"/repos/{repository}/pulls/{pr_number}")
+          if pull.get("state") != "open":
+              raise SystemExit("Dependabot pull request is no longer open.")
+          if pull.get("user", {}).get("login") != "dependabot[bot]":
+              raise SystemExit("Pull request author is not Dependabot.")
+          if pull.get("base", {}).get("ref") != "main":
+              raise SystemExit("Dependabot pull request does not target main.")
+          if pull.get("head", {}).get("repo", {}).get("full_name") != repository:
+              raise SystemExit("Dependabot pull request head is not in this repository.")
+          if pull.get("head", {}).get("ref") != head_ref:
+              raise SystemExit("Dependabot branch changed after trust generation.")
+          if pull.get("head", {}).get("sha") != expected_head_sha:
+              raise SystemExit("Dependabot head moved after trust generation; refusing stale data.")
+
+          allowed_pr_files = {
+              "app/build.gradle",
+              "build.gradle",
+              "settings.gradle",
+              "gradle.properties",
+              "gradle/libs.versions.toml",
+              "app/gradle.lockfile",
+              "gradle/verification-metadata.xml",
+          }
+          dependency_manifests = {
+              "app/build.gradle",
+              "build.gradle",
+              "settings.gradle",
+              "gradle.properties",
+              "gradle/libs.versions.toml",
+          }
+          pr_files = set()
+          page = 1
+          while True:
+              items = api(
+                  "GET",
+                  f"/repos/{repository}/pulls/{pr_number}/files"
+                  f"?per_page=100&page={page}",
+              )
+              if not items:
+                  break
+              pr_files.update(str(item["filename"]) for item in items)
+              if len(items) < 100:
+                  break
+              page += 1
+          unexpected_pr_files = sorted(pr_files - allowed_pr_files)
+          if unexpected_pr_files:
+              raise SystemExit(
+                  "Refusing Dependabot PR with unexpected files: "
+                  + ", ".join(unexpected_pr_files)
+              )
+          if not pr_files.intersection(dependency_manifests):
+              raise SystemExit("Dependabot PR has no approved dependency manifest change.")
+
+          lock_path = artifact_root / "app/gradle.lockfile"
+          verification_path = artifact_root / "gradle/verification-metadata.xml"
+          if not (100 < lock_path.stat().st_size < 5_000_000):
+              raise SystemExit("Generated Gradle lockfile size is invalid.")
+          if not (100 < verification_path.stat().st_size < 25_000_000):
+              raise SystemExit("Generated verification metadata size is invalid.")
+
+          lock_text = lock_path.read_text(encoding="utf-8")
+          if "\x00" in lock_text:
+              raise SystemExit("Generated Gradle lockfile contains a NUL byte.")
+          if not lock_text.startswith(
+              "# This is a Gradle generated file for dependency locking."
+          ):
+              raise SystemExit("Generated Gradle lockfile header is invalid.")
+          for line_number, line in enumerate(lock_text.splitlines(), start=1):
+              if not line or line.startswith("#"):
+                  continue
+              if "=" not in line:
+                  raise SystemExit(
+                      f"Generated Gradle lockfile line {line_number} is malformed."
+                  )
+
+          verification_tree = ET.parse(verification_path)
+          if not verification_tree.getroot().tag.endswith("verification-metadata"):
+              raise SystemExit("Generated verification metadata root is invalid.")
+
+          current_commit = api(
+              "GET",
+              f"/repos/{repository}/git/commits/{expected_head_sha}",
+          )
+          current_tree_sha = current_commit["tree"]["sha"]
+
+          tree_entries = []
+          for repository_path, artifact_path in (
+              ("app/gradle.lockfile", lock_path),
+              ("gradle/verification-metadata.xml", verification_path),
+          ):
+              blob = api(
+                  "POST",
+                  f"/repos/{repository}/git/blobs",
+                  {
+                      "content": artifact_path.read_text(encoding="utf-8"),
+                      "encoding": "utf-8",
+                  },
+              )
+              tree_entries.append(
+                  {
+                      "path": repository_path,
+                      "mode": "100644",
+                      "type": "blob",
+                      "sha": blob["sha"],
+                  }
+              )
+
+          new_tree = api(
+              "POST",
+              f"/repos/{repository}/git/trees",
+              {"base_tree": current_tree_sha, "tree": tree_entries},
+          )
+
+          final_head_sha = expected_head_sha
+          changed = new_tree["sha"] != current_tree_sha
+          if changed:
+              commit = api(
+                  "POST",
+                  f"/repos/{repository}/git/commits",
+                  {
+                      "message": "build(deps): refresh Gradle trust state [skip ci]",
+                      "tree": new_tree["sha"],
+                      "parents": [expected_head_sha],
+                  },
+              )
+              final_head_sha = commit["sha"]
+              encoded_ref = urllib.parse.quote(head_ref, safe="/")
+              api(
+                  "PATCH",
+                  f"/repos/{repository}/git/refs/heads/{encoded_ref}",
+                  {"sha": final_head_sha, "force": False},
+              )
+              print(
+                  "Committed regenerated Gradle locks and verification metadata "
+                  f"to {head_ref} at {final_head_sha}."
+              )
+          else:
+              print("Dependabot Gradle trust state is already current.")
+
+          with output_path.open("a", encoding="utf-8") as handle:
+              handle.write(f"changed={'true' if changed else 'false'}\n")
+              handle.write(f"head-ref={head_ref}\n")
+              handle.write(f"head-sha={final_head_sha}\n")
+              handle.write(f"pr-number={pr_number}\n")
+          PY
+
+      - name: Dispatch trusted validation workflows
+        env:
+          GH_TOKEN: ${{ github.token }}
+          HEAD_REF: ${{ steps.apply.outputs.head-ref }}
+        shell: bash
+        run: |
+          set -Eeuo pipefail
+          workflows=(
+            android.yml
+            codeql.yml
+            dependency_integrity.yml
+            android_emulator_tests.yml
+          )
+          for workflow in "${workflows[@]}"; do
+            jq -n --arg ref "$HEAD_REF" '{ref: $ref}' \
+              | gh api \
+                  --method POST \
+                  "repos/${GITHUB_REPOSITORY}/actions/workflows/${workflow}/dispatches" \
+                  --input -
+            echo "Dispatched ${workflow} on ${HEAD_REF}."
+          done

@@ -93,15 +93,14 @@ object DeviceFirmwareStatusParser {
             version = json.requiredExactString("version"),
             expectedSize = json.requiredExactInt("expectedSize"),
             applyNow = json.requiredExactBoolean("applyNow"),
-            allowInsecureHttp = json.requiredExactBoolean("allowInsecureHttp"),
             productKey = json.requiredExactString("productKey"),
             productId = json.requiredExactString("productId"),
             model = json.requiredExactString("model"),
             hardwareRevision = json.requiredExactString("hardwareRevision")
         ).also { echo ->
             require(echo.urlScheme == "https")
+            require(echo.version.isExactFirmwareVersion())
             require(echo.expectedSize > 0)
-            require(!echo.allowInsecureHttp)
         }
     }
 
@@ -122,7 +121,6 @@ object DeviceFirmwareStatusParser {
         val contentLength = source.requiredExactLong("contentLength")
         val restartRequired = source.requiredExactBoolean("restartRequired")
         val restartScheduled = source.requiredExactBoolean("restartScheduled")
-        val allowInsecureHttp = source.requiredExactBoolean("allowInsecureHttp")
         val targetVersion = source.requiredStringAllowEmpty("targetVersion")
         val sha256Expected = source.requiredStringAllowEmpty("sha256Expected")
         val sha256Actual = source.requiredStringAllowEmpty("sha256Actual")
@@ -139,7 +137,6 @@ object DeviceFirmwareStatusParser {
         // Firmware stores the signed HTTPClient result. Negative values are transport diagnostics.
         val httpStatus = source.requiredExactInt("httpStatus")
         require(startedAtMs >= 0L && finishedAtMs >= 0L)
-        require(!allowInsecureHttp) { "Firmware reported insecure OTA transport." }
         require(urlScheme.isEmpty() || urlScheme == "https")
         require(sha256Expected.isEmpty() || sha256Expected.isSha256Hex())
         require(sha256Actual.isEmpty() || sha256Actual.isSha256Hex())
@@ -155,7 +152,9 @@ object DeviceFirmwareStatusParser {
         require(!restartRequired || phase == DeviceFirmwareOtaPhase.SUCCEEDED)
         require(!restartScheduled || restartRequired)
         if (active || phase.isTerminal) {
-            require(targetVersion.isNotBlank()) { "Active/terminal OTA targetVersion is missing." }
+            require(targetVersion.isExactFirmwareVersion()) {
+                "Active/terminal OTA targetVersion must use exact X.Y.Z format."
+            }
         }
 
         return DeviceFirmwareOtaSnapshot(
@@ -167,7 +166,6 @@ object DeviceFirmwareStatusParser {
             failed = phase == DeviceFirmwareOtaPhase.FAILED,
             restartRequired = restartRequired,
             restartScheduled = restartScheduled,
-            allowInsecureHttp = false,
             startedAtMs = startedAtMs,
             finishedAtMs = finishedAtMs,
             bytesWritten = bytesWritten,
@@ -274,11 +272,11 @@ object DeviceFirmwareStatusParser {
         "lastErrorField"
     )
     private val OTA_REQUEST_ECHO_KEYS = setOf(
-        "urlScheme", "version", "expectedSize", "applyNow", "allowInsecureHttp",
+        "urlScheme", "version", "expectedSize", "applyNow",
         "productKey", "productId", "model", "hardwareRevision"
     )
     private val OTA_SNAPSHOT_KEYS = setOf(
-        "phase", "active", "restartRequired", "restartScheduled", "allowInsecureHttp",
+        "phase", "active", "restartRequired", "restartScheduled",
         "startedAtMs", "finishedAtMs", "bytesWritten", "contentLength", "progressPermille",
         "progressPercent", "targetVersion", "sha256Expected", "sha256Actual", "lastError",
         "lastErrorField", "urlScheme", "httpStatus"

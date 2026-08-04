@@ -1,5 +1,6 @@
 package com.aqua.aqualight.data.devices.runtime.modules.firmware
 
+import com.aqua.aqualight.application.devices.DeviceFirmwareChannel
 import com.aqua.aqualight.application.devices.DeviceOtaState
 import com.aqua.aqualight.data.devices.model.DeviceCapabilities
 import com.aqua.aqualight.data.devices.model.DeviceFamily
@@ -37,7 +38,7 @@ class DeviceOtaCommercialHardeningTest {
             runtimeLifecycleEvents = null
         )
         val plan = (
-            coordinator.checkAvailability(DEVICE_UID, MANIFEST_URL, applyNow = true).getOrThrow()
+            coordinator.checkAvailability(DEVICE_UID, DeviceFirmwareChannel.STABLE, applyNow = true).getOrThrow()
                 as DeviceOtaState.UpdateAvailable
             ).plan
         try {
@@ -388,7 +389,6 @@ class DeviceOtaCommercialHardeningTest {
                     .put("version", TARGET_VERSION)
                     .put("expectedSize", FIRMWARE_SIZE)
                     .put("applyNow", true)
-                    .put("allowInsecureHttp", false)
                     .put("productKey", PRODUCT_KEY)
                     .put("productId", PRODUCT_ID)
                     .put("model", "dose_pro_2")
@@ -401,7 +401,6 @@ class DeviceOtaCommercialHardeningTest {
             .put("active", true)
             .put("restartRequired", false)
             .put("restartScheduled", false)
-            .put("allowInsecureHttp", false)
             .put("startedAtMs", 1L)
             .put("finishedAtMs", 0L)
             .put("bytesWritten", 0L)

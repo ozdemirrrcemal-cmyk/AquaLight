@@ -9,7 +9,9 @@ internal object DeviceFirmwareReadParser {
     fun parseStatus(data: JSONObject): DeviceFirmwareStatus {
         DeviceRuntimeJson.requireExactKeys(data, ROOT_KEYS, ROOT_LABEL)
         require(DeviceRuntimeJson.longValue(data, "uptimeMs") >= 0L)
-        DeviceRuntimeJson.stringValue(data, "version")
+        require(DeviceRuntimeJson.stringValue(data, "version").isExactFirmwareVersion()) {
+            "Firmware status version must use exact X.Y.Z format."
+        }
         DeviceRuntimeJson.stringValue(data, "build")
         DeviceRuntimeJson.stringValue(data, "hardwareRevision")
         DeviceRuntimeJson.stringValue(data, "sdkVersion")

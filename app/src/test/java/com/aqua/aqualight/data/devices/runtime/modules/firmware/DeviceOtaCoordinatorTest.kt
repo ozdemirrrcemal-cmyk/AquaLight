@@ -1,5 +1,6 @@
 package com.aqua.aqualight.data.devices.runtime.modules.firmware
 
+import com.aqua.aqualight.application.devices.DeviceFirmwareChannel
 import com.aqua.aqualight.application.devices.DeviceOtaFailureReason
 import com.aqua.aqualight.application.devices.DeviceOtaState
 import com.aqua.aqualight.data.devices.model.DeviceCapabilities
@@ -63,7 +64,7 @@ class DeviceOtaCoordinatorTest {
 
             val availability = coordinator.checkAvailability(
                 DEVICE_UID,
-                MANIFEST_URL,
+                DeviceFirmwareChannel.STABLE,
                 applyNow = true
             ).getOrThrow() as DeviceOtaState.UpdateAvailable
             assertEquals(TARGET_VERSION, availability.plan.targetVersion)
@@ -165,7 +166,7 @@ class DeviceOtaCoordinatorTest {
         )
         runCurrent()
         val plan = (
-            coordinator.checkAvailability(DEVICE_UID, MANIFEST_URL, true).getOrThrow()
+            coordinator.checkAvailability(DEVICE_UID, DeviceFirmwareChannel.STABLE, true).getOrThrow()
                 as DeviceOtaState.UpdateAvailable
             ).plan
         coordinator.startUpdate(plan)
@@ -207,7 +208,7 @@ class DeviceOtaCoordinatorTest {
         )
         runCurrent()
         val plan = (
-            coordinator.checkAvailability(DEVICE_UID, MANIFEST_URL, true).getOrThrow()
+            coordinator.checkAvailability(DEVICE_UID, DeviceFirmwareChannel.STABLE, true).getOrThrow()
                 as DeviceOtaState.UpdateAvailable
             ).plan
         coordinator.startUpdate(plan)
@@ -248,7 +249,7 @@ class DeviceOtaCoordinatorTest {
             runtimeLifecycleEvents = null
         )
         val plan = (
-            coordinator.checkAvailability(DEVICE_UID, MANIFEST_URL, true).getOrThrow()
+            coordinator.checkAvailability(DEVICE_UID, DeviceFirmwareChannel.STABLE, true).getOrThrow()
                 as DeviceOtaState.UpdateAvailable
             ).plan
 
@@ -276,7 +277,7 @@ class DeviceOtaCoordinatorTest {
             runtimeLifecycleEvents = null
         )
         val plan = (
-            coordinator.checkAvailability(DEVICE_UID, MANIFEST_URL, true).getOrThrow()
+            coordinator.checkAvailability(DEVICE_UID, DeviceFirmwareChannel.STABLE, true).getOrThrow()
                 as DeviceOtaState.UpdateAvailable
             ).plan
 
@@ -300,7 +301,7 @@ class DeviceOtaCoordinatorTest {
             runtimeLifecycleEvents = null
         )
         val plan = (
-            coordinator.checkAvailability(DEVICE_UID, MANIFEST_URL, true).getOrThrow()
+            coordinator.checkAvailability(DEVICE_UID, DeviceFirmwareChannel.STABLE, true).getOrThrow()
                 as DeviceOtaState.UpdateAvailable
             ).plan
         gateway.statusData = JSONObject()
@@ -331,7 +332,7 @@ class DeviceOtaCoordinatorTest {
             runtimeLifecycleEvents = null
         )
         val plan = (
-            coordinator.checkAvailability(DEVICE_UID, MANIFEST_URL, true).getOrThrow()
+            coordinator.checkAvailability(DEVICE_UID, DeviceFirmwareChannel.STABLE, true).getOrThrow()
                 as DeviceOtaState.UpdateAvailable
             ).plan
 
@@ -382,7 +383,6 @@ class DeviceOtaCoordinatorTest {
                 .put("version", TARGET_VERSION)
                 .put("expectedSize", FIRMWARE_SIZE)
                 .put("applyNow", true)
-                .put("allowInsecureHttp", false)
                 .put("productKey", PRODUCT_KEY)
                 .put("productId", PRODUCT_ID)
                 .put("model", "dose_pro_2")
@@ -429,7 +429,6 @@ class DeviceOtaCoordinatorTest {
         .put("active", active)
         .put("restartRequired", restartRequired)
         .put("restartScheduled", restartScheduled)
-        .put("allowInsecureHttp", false)
         .put("startedAtMs", 1L)
         .put("finishedAtMs", if (phase == "succeeded" || phase == "failed") 2L else 0L)
         .put("bytesWritten", FIRMWARE_SIZE.toLong() * progressPermille / 1_000L)

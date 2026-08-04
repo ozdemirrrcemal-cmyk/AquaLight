@@ -33,7 +33,7 @@ INTEROPERABILITY_TEST_PATH = (
 )
 
 FIRMWARE_REPOSITORY = "ozdemirrrcemal-cmyk/AquaLight-Firmware"
-FIRMWARE_COMMIT = "38e8812c1bcecf948ebab85979bff21a24f4b79c"
+FIRMWARE_COMMIT = "31ef35fa5428ea36d8c3d10c083942b016071c35"
 COMMAND_NAMES_BLOB = "3f93db851c8c6c31bec2284bc295fabde0d87220"
 EVENT_CONTRACT_BLOB = "f71cbe76679fd425d6697c89800975e00e9edee5"
 PRODUCT_CATALOG_EXPORT_COMMIT = "cf2222e58e6c69a729071a5d1205497b3fceaa70"
@@ -66,7 +66,7 @@ REQUEST_CONTRACT_BLOBS = {
         "1d84bc0eaadb77f9041978c2ce46c7042c158009"
     ),
     "src/api/v1/commands/AqlFirmwareCommands.hpp": (
-        "8b1107d159ca3ff026754c8a06bd1e75fb608c37"
+        "c498261682bcd513c2d90c2f521949d3efdd47fb"
     ),
     "src/modules/timer/AqlTimerService.hpp": (
         "ca37e6722e4e9d214e5efd6fc089d5e64db2490a"

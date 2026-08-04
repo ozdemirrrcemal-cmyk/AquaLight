@@ -73,7 +73,6 @@ data class DeviceFirmwareOtaSnapshot(
     val failed: Boolean = false,
     val restartRequired: Boolean = false,
     val restartScheduled: Boolean = false,
-    val allowInsecureHttp: Boolean = false,
     val startedAtMs: Long = 0L,
     val finishedAtMs: Long = 0L,
     val bytesWritten: Long = 0L,
@@ -124,8 +123,7 @@ data class DeviceFirmwareOtaStartPayload(
     val productId: String,
     val model: String,
     val hardwareRevision: String,
-    val applyNow: Boolean = true,
-    val allowInsecureHttp: Boolean = false
+    val applyNow: Boolean = true
 ) {
     init {
         require(url.isNotBlank()) { "OTA url must not be blank." }
@@ -136,14 +134,13 @@ data class DeviceFirmwareOtaStartPayload(
             "OTA url must target official AquaLight release repository."
         }
         require(url.startsWith("https://")) { "OTA url must use HTTPS." }
-        require(version.isNotBlank()) { "OTA version must not be blank." }
+        require(version.isExactFirmwareVersion()) { "OTA version must use exact X.Y.Z format." }
         require(sha256.isSha256Hex()) { "sha256 must be 64 hex characters." }
         require(expectedSize > 0) { "expectedSize must be greater than zero." }
         require(productKey.isNotBlank()) { "productKey must not be blank." }
         require(productId.isNotBlank()) { "productId must not be blank." }
         require(model.isNotBlank()) { "model must not be blank." }
         require(hardwareRevision.isNotBlank()) { "hardwareRevision must not be blank." }
-        require(!allowInsecureHttp) { "allowInsecureHttp must stay false in production Android." }
     }
 
     fun toJson(): JSONObject {
@@ -157,7 +154,6 @@ data class DeviceFirmwareOtaStartPayload(
             .put(DeviceFirmwareRuntimeContract.Field.PRODUCT_ID, productId)
             .put(DeviceFirmwareRuntimeContract.Field.MODEL, model)
             .put(DeviceFirmwareRuntimeContract.Field.HARDWARE_REVISION, hardwareRevision)
-            .put(DeviceFirmwareRuntimeContract.Field.ALLOW_INSECURE_HTTP, false)
     }
 }
 
@@ -166,7 +162,6 @@ data class DeviceFirmwareOtaStartRequestEcho(
     val version: String,
     val expectedSize: Int,
     val applyNow: Boolean,
-    val allowInsecureHttp: Boolean,
     val productKey: String,
     val productId: String,
     val model: String,
@@ -347,6 +342,21 @@ data class DeviceFirmwareUpdatePlan(
     val manifestTag: String = "",
     val releaseContent: DeviceFirmwareReleaseContent = DeviceFirmwareReleaseContent.EMPTY
 )
+
+internal fun String.isExactFirmwareVersion(): Boolean =
+    exactFirmwareVersionPartsOrNull() != null
+
+internal fun String.exactFirmwareVersionPartsOrNull(): List<Long>? {
+    if (!EXACT_FIRMWARE_VERSION_PATTERN.matches(this)) return null
+    val values = split('.').map { part ->
+        part.toLongOrNull()?.takeIf { value -> value <= UINT32_MAX } ?: return null
+    }
+    return values.takeIf { it.size == EXACT_FIRMWARE_VERSION_PART_COUNT }
+}
+
+private val EXACT_FIRMWARE_VERSION_PATTERN = Regex("^[0-9]+\\.[0-9]+\\.[0-9]+$")
+private const val EXACT_FIRMWARE_VERSION_PART_COUNT = 3
+private const val UINT32_MAX = 4_294_967_295L
 
 internal fun String.isSha256Hex(): Boolean {
     return trim().length == DeviceFirmwareRuntimeContract.Limit.SHA256_HEX_LENGTH &&

@@ -1,5 +1,6 @@
 package com.aqua.aqualight.application.devices
 
+import com.aqua.aqualight.application.devices.DeviceFirmwareChannel
 import kotlinx.coroutines.test.runTest
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse

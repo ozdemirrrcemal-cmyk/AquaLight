@@ -2,15 +2,45 @@
   "schemaVersion": 1,
   "metricUnit": "percent",
   "packages": {
-    "com.aqua.aqualight.application.aquarium": {"line": 90, "branch": 40},
-    "com.aqua.aqualight.application.care": {"line": 95, "branch": 90},
-    "com.aqua.aqualight.application.devices": {"line": 95, "branch": 25},
-    "com.aqua.aqualight.application.devices.provisioning": {"line": 95, "branch": 90},
-    "com.aqua.aqualight.application.feedback": {"line": 90, "branch": 65},
-    "com.aqua.aqualight.application.notifications": {"line": 85, "branch": 65},
-    "com.aqua.aqualight.data.aquarium.delete": {"line": 60, "branch": 40},
-    "com.aqua.aqualight.data.devices.remove": {"line": 60, "branch": 60},
-    "com.aqua.aqualight.data.devices.runtime.ws": {"line": 70, "branch": 40},
-    "com.aqua.aqualight.data.recovery": {"line": 55, "branch": 40}
+    "com.aqua.aqualight.application.aquarium": {
+      "line": 90,
+      "branch": 40
+    },
+    "com.aqua.aqualight.application.care": {
+      "line": 95,
+      "branch": 90
+    },
+    "com.aqua.aqualight.application.devices": {
+      "line": 95,
+      "branch": 25
+    },
+    "com.aqua.aqualight.application.devices.provisioning": {
+      "line": 95,
+      "branch": 90
+    },
+    "com.aqua.aqualight.application.feedback": {
+      "line": 90,
+      "branch": 65
+    },
+    "com.aqua.aqualight.application.notifications": {
+      "line": 85,
+      "branch": 65
+    },
+    "com.aqua.aqualight.data.aquarium.delete": {
+      "line": 60,
+      "branch": 40
+    },
+    "com.aqua.aqualight.data.devices.remove": {
+      "line": 60,
+      "branch": 60
+    },
+    "com.aqua.aqualight.data.devices.runtime.ws": {
+      "line": 70,
+      "branch": 40
+    },
+    "com.aqua.aqualight.data.recovery": {
+      "line": 55,
+      "branch": 40
+    }
   }
 }

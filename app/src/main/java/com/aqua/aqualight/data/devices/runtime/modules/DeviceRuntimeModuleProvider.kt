@@ -53,7 +53,7 @@ class DeviceRuntimeModuleProvider internal constructor(
     val time = DeviceTimeRuntimeRepository(commandGateway)
 
     val firmware = DeviceFirmwareRuntimeRepository(commandGateway)
-    val firmwareUpdate = DeviceFirmwareUpdateRepository(firmware)
+    internal val firmwareUpdate = DeviceFirmwareUpdateRepository(firmware)
 
     val timer = DeviceTimerRuntimeRepository(commandGateway, timerStateStore, timerAccessProvider)
     val cooling = DeviceCoolingRuntimeRepository(commandGateway, coolingStateStore)

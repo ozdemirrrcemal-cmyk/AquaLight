@@ -157,8 +157,6 @@ class AqlFirmwareInteroperabilityTest {
                 )
             }
         }
-
-        assertFalse(otaStartPayload().getBoolean("allowInsecureHttp"))
     }
 
     @Test

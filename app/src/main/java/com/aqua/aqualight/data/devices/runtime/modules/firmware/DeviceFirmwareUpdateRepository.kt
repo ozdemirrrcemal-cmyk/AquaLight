@@ -1,5 +1,6 @@
 package com.aqua.aqualight.data.devices.runtime.modules.firmware
 
+import com.aqua.aqualight.application.devices.DeviceFirmwareChannel
 import com.aqua.aqualight.data.devices.model.DeviceSnapshot
 import com.aqua.aqualight.data.devices.model.DeviceUid
 import com.aqua.aqualight.data.devices.runtime.core.DeviceRuntimeCommandOutcome
@@ -8,18 +9,25 @@ import com.aqua.aqualight.data.devices.runtime.core.DeviceRuntimeCommandOutcome
  * Shared production OTA data boundary.
  *
  * Family-specific Settings screens must use the common application coordinator built on this
- * repository. Product matching and OTA safety never belong to presentation code.
+ * repository. Product matching, channel resolution and OTA safety never belong to presentation
+ * code or caller-provided URLs.
  */
-class DeviceFirmwareUpdateRepository(
+internal class DeviceFirmwareUpdateRepository(
     private val runtime: DeviceFirmwareRuntimeRepository,
     private val manifestSource: DeviceFirmwareManifestHttpSource = DeviceFirmwareManifestHttpSource(),
     private val planner: DeviceFirmwareUpdatePlanner = DeviceFirmwareUpdatePlanner(),
     private val signatureVerifier: DeviceFirmwareManifestSignatureVerifier =
-        DeviceFirmwareManifestSignatureVerifier()
+        DeviceFirmwareManifestSignatureVerifier(),
+    private val channelManifestResolver: DeviceFirmwareChannelManifestResolver =
+        DeviceFirmwareChannelManifestResolver()
 ) {
 
-    suspend fun fetchManifest(manifestUrl: String): Result<DeviceFirmwareManifest> {
-        return manifestSource.load(manifestUrl)
+    suspend fun fetchManifest(
+        snapshot: DeviceSnapshot,
+        channel: DeviceFirmwareChannel
+    ): Result<DeviceFirmwareManifest> = runCatching {
+        val location = channelManifestResolver.resolve(snapshot, channel)
+        manifestSource.load(location).getOrThrow()
     }
 
     fun parseManifest(rawManifest: String): Result<DeviceFirmwareManifest> {
@@ -40,28 +48,21 @@ class DeviceFirmwareUpdateRepository(
 
     suspend fun fetchAndEvaluateUpdate(
         snapshot: DeviceSnapshot,
-        manifestUrl: String,
+        channel: DeviceFirmwareChannel,
         applyNow: Boolean = true
-    ): Result<DeviceFirmwareAvailability> {
-        return runCatching {
-            val manifest = fetchManifest(manifestUrl).getOrThrow()
-            evaluateUpdate(snapshot, manifest, applyNow).getOrThrow()
-        }
+    ): Result<DeviceFirmwareAvailability> = runCatching {
+        val manifest = fetchManifest(snapshot, channel).getOrThrow()
+        evaluateUpdate(snapshot, manifest, applyNow).getOrThrow()
     }
 
     suspend fun fetchAndPlanUpdate(
         snapshot: DeviceSnapshot,
-        manifestUrl: String,
+        channel: DeviceFirmwareChannel,
         applyNow: Boolean = true
-    ): Result<DeviceFirmwareUpdatePlan> {
-        return runCatching {
-            val availability = fetchAndEvaluateUpdate(snapshot, manifestUrl, applyNow).getOrThrow()
-            when (availability) {
-                is DeviceFirmwareAvailability.UpdateAvailable -> availability.plan
-                is DeviceFirmwareAvailability.UpToDate -> error(
-                    "No newer compatible OTA artifact found."
-                )
-            }
+    ): Result<DeviceFirmwareUpdatePlan> = runCatching {
+        when (val availability = fetchAndEvaluateUpdate(snapshot, channel, applyNow).getOrThrow()) {
+            is DeviceFirmwareAvailability.UpdateAvailable -> availability.plan
+            is DeviceFirmwareAvailability.UpToDate -> error("No newer compatible OTA artifact found.")
         }
     }
 
@@ -71,13 +72,10 @@ class DeviceFirmwareUpdateRepository(
 
     suspend fun startUpdate(
         plan: DeviceFirmwareUpdatePlan
-    ): DeviceRuntimeCommandOutcome<DeviceFirmwareOtaStartAccepted> {
-        return runtime.startUpdate(plan)
-    }
+    ): DeviceRuntimeCommandOutcome<DeviceFirmwareOtaStartAccepted> = runtime.startUpdate(plan)
 
     suspend fun clearOtaStatus(
         deviceUid: DeviceUid
-    ): DeviceRuntimeCommandOutcome<DeviceFirmwareOtaClearResult> {
-        return runtime.clearOtaStatus(deviceUid)
-    }
+    ): DeviceRuntimeCommandOutcome<DeviceFirmwareOtaClearResult> =
+        runtime.clearOtaStatus(deviceUid)
 }

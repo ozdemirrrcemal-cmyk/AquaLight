@@ -25,7 +25,9 @@ class DeviceFirmwareUpdatePlanner(
         }
 
         val currentVersion = snapshot.firmwareVersion
-        require(currentVersion.isNotBlank()) { "Current firmware version is not known." }
+        require(currentVersion.isExactFirmwareVersion()) {
+            "Current firmware version must use exact X.Y.Z format."
+        }
 
         val artifact = exactSingleArtifact(snapshot, manifest)
         validateArtifactAgainstSnapshot(artifact, manifest, snapshot)
@@ -154,8 +156,7 @@ class DeviceFirmwareUpdatePlanner(
             productId = snapshot.product.productId,
             model = snapshot.product.model,
             hardwareRevision = snapshot.product.hardwareRevision,
-            applyNow = applyNow,
-            allowInsecureHttp = false
+            applyNow = applyNow
         )
         return DeviceFirmwareUpdatePlan(
             deviceUid = snapshot.deviceUid,
@@ -257,35 +258,15 @@ object DeviceFirmwareVersionComparator {
         left: String,
         right: String
     ): Int {
-        val leftParts = left.versionPartsOrNull()
-            ?: error("Invalid firmware version: $left")
-        val rightParts = right.versionPartsOrNull()
-            ?: error("Invalid firmware version: $right")
+        val leftParts = left.exactFirmwareVersionPartsOrNull()
+            ?: error("Invalid exact X.Y.Z firmware version: $left")
+        val rightParts = right.exactFirmwareVersionPartsOrNull()
+            ?: error("Invalid exact X.Y.Z firmware version: $right")
 
-        val size = maxOf(leftParts.size, rightParts.size)
-        for (index in 0 until size) {
-            val leftPart = leftParts.getOrElse(index) { 0 }
-            val rightPart = rightParts.getOrElse(index) { 0 }
-            if (leftPart != rightPart) {
-                return leftPart.compareTo(rightPart)
-            }
+        for (index in leftParts.indices) {
+            val comparison = leftParts[index].compareTo(rightParts[index])
+            if (comparison != 0) return comparison
         }
         return 0
-    }
-
-    private fun String.versionPartsOrNull(): List<Int>? {
-        val normalized = trim()
-            .removePrefix("v")
-            .substringBefore("-")
-            .substringBefore("+")
-
-        val parts = normalized.split(".")
-        if (parts.isEmpty()) return null
-
-        val numbers = parts.map { part ->
-            part.toIntOrNull() ?: return null
-        }
-
-        return numbers.takeIf { values -> values.isNotEmpty() }
     }
 }

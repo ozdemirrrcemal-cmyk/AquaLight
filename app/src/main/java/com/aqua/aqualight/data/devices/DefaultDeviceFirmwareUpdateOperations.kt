@@ -7,7 +7,6 @@ import com.aqua.aqualight.application.devices.DeviceOtaState
 import com.aqua.aqualight.application.devices.PreparedDeviceFirmwareUpdate
 import com.aqua.aqualight.data.devices.model.DeviceUid
 import com.aqua.aqualight.data.devices.repository.DevicesRepository
-import com.aqua.aqualight.data.devices.runtime.modules.firmware.DeviceFirmwareChannelManifestResolver
 import com.aqua.aqualight.data.devices.runtime.modules.firmware.DeviceOtaCoordinator
 import java.util.concurrent.ConcurrentHashMap
 import kotlinx.coroutines.CoroutineScope
@@ -23,9 +22,7 @@ import kotlinx.coroutines.launch
 /** Shared OTA application adapter used by all family-specific Settings screens. */
 internal class DefaultDeviceFirmwareUpdateOperations(
     private val devicesRepository: DevicesRepository,
-    private val statePublisher: suspend (DeviceOtaState, String) -> Unit = { _, _ -> },
-    private val channelManifestResolver: DeviceFirmwareChannelManifestResolver =
-        DeviceFirmwareChannelManifestResolver()
+    private val statePublisher: suspend (DeviceOtaState, String) -> Unit = { _, _ -> }
 ) : DeviceFirmwareUpdateOperations, AutoCloseable {
 
     private val publisherScope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
@@ -57,14 +54,9 @@ internal class DefaultDeviceFirmwareUpdateOperations(
         channel: DeviceFirmwareChannel,
         applyNow: Boolean
     ): Result<DeviceOtaState> {
-        val uid = requireDeviceUid(deviceUid)
-        val snapshot = requireNotNull(devicesRepository.currentDevice(uid)) {
-            "Device snapshot is not available."
-        }
-        val manifestUrl = channelManifestResolver.resolve(snapshot, channel)
         return coordinator.checkAvailability(
-            deviceUid = uid,
-            manifestUrl = manifestUrl,
+            deviceUid = requireDeviceUid(deviceUid),
+            channel = channel,
             applyNow = applyNow
         )
     }

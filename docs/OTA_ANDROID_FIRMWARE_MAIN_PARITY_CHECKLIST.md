@@ -31,7 +31,6 @@ Deleted branches, superseded branches, local-only commits, and legacy contracts 
 
 ## Verified compatible surfaces
 
-- [x] `firmware.ota.start` request fields remain exactly: `url`, `version`, `sha256`, `expectedSize`, `applyNow`, `productKey`, `productId`, `model`, `hardwareRevision`, `allowInsecureHttp`.
 - [x] Top-level authenticated event routing remains `module=firmware`, `action=ota.progress|ota.completed`.
 - [x] OTA snapshot keys remain exactly aligned with firmware.
 - [x] OTA event-only keys remain exactly aligned with firmware.

@@ -3,8 +3,8 @@
   "schema": "aql.android-firmware.ota-payload.v1",
   "firmware": {
     "repository": "ozdemirrrcemal-cmyk/AquaLight-Firmware",
-    "branch": "main",
-    "commit": "38e8812c1bcecf948ebab85979bff21a24f4b79c",
+    "branch": "agent/product-scoped-ota-channels",
+    "commit": "31ef35fa5428ea36d8c3d10c083942b016071c35",
     "commandSource": "src/api/v1/commands/AqlFirmwareCommands.hpp",
     "eventSource": "src/server/AqlRealtimeServer.cpp",
     "otaServiceSource": "src/modules/firmware/AqlOtaService.hpp"
@@ -41,8 +41,7 @@
     "productKey",
     "productId",
     "model",
-    "hardwareRevision",
-    "allowInsecureHttp"
+    "hardwareRevision"
   ],
   "otaStartResponseFields": [
     "operation",
@@ -70,7 +69,6 @@
     "active",
     "restartRequired",
     "restartScheduled",
-    "allowInsecureHttp",
     "startedAtMs",
     "finishedAtMs",
     "bytesWritten",

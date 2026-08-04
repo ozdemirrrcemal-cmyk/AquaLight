@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Protect product-scoped OTA channel resolution and the UI/data ownership boundary."""
+"""Protect the final authenticated, typed product-scoped OTA client boundary."""
 from __future__ import annotations
 
 from pathlib import Path
@@ -14,11 +14,15 @@ OWNER_FACTORY = SOURCE / "composition/OwnerViewModelFactory.kt"
 UI_UPDATE = SOURCE / "ui/tabs/devices/detail/update/DeviceFirmwareUpdateViewModel.kt"
 UI_SETTINGS = SOURCE / "ui/tabs/devices/detail/settings/DeviceFamilySettingsViewModel.kt"
 ADAPTER = SOURCE / "data/devices/DefaultDeviceFirmwareUpdateOperations.kt"
+COORDINATOR = SOURCE / "data/devices/runtime/modules/firmware/DeviceOtaCoordinator.kt"
+REPOSITORY = SOURCE / "data/devices/runtime/modules/firmware/DeviceFirmwareUpdateRepository.kt"
 RESOLVER = SOURCE / "data/devices/runtime/modules/firmware/DeviceFirmwareChannelManifestResolver.kt"
 HTTP_SOURCE = SOURCE / "data/devices/runtime/modules/firmware/DeviceFirmwareManifestHttpSource.kt"
-RUNTIME_CONTRACT = SOURCE / "data/devices/runtime/modules/firmware/DeviceFirmwareRuntimeContract.kt"
+MODELS = SOURCE / "data/devices/runtime/modules/firmware/DeviceFirmwareModels.kt"
+STATUS_PARSER = SOURCE / "data/devices/runtime/modules/firmware/DeviceFirmwareStatusParser.kt"
 PLANNER = SOURCE / "data/devices/runtime/modules/firmware/DeviceFirmwareUpdatePlanner.kt"
 LEGACY_CONFIG = SOURCE / "application/devices/DeviceFirmwareManifestConfig.kt"
+LEGACY_INSECURE_FIELD = "allow" + "InsecureHttp"
 
 errors: list[str] = []
 
@@ -30,120 +34,97 @@ def read(path: Path) -> str:
     return path.read_text(encoding="utf-8", errors="ignore")
 
 
-app_gradle = read(APP_GRADLE)
-application = read(APPLICATION)
-owner_factory = read(OWNER_FACTORY)
-ui_update = read(UI_UPDATE)
-ui_settings = read(UI_SETTINGS)
-adapter = read(ADAPTER)
-resolver = read(RESOLVER)
-http_source = read(HTTP_SOURCE)
-runtime_contract = read(RUNTIME_CONTRACT)
-planner = read(PLANNER)
+texts = {path: read(path) for path in (
+    APP_GRADLE, APPLICATION, OWNER_FACTORY, UI_UPDATE, UI_SETTINGS, ADAPTER,
+    COORDINATOR, REPOSITORY, RESOLVER, HTTP_SOURCE, MODELS, STATUS_PARSER, PLANNER,
+)}
 
 if LEGACY_CONFIG.exists():
-    errors.append(
-        f"{LEGACY_CONFIG.relative_to(ROOT)}: global manifest URL configuration is forbidden"
-    )
+    errors.append(f"{LEGACY_CONFIG.relative_to(ROOT)}: global manifest URL configuration is forbidden")
 
-for path, text in (
-    (APP_GRADLE, app_gradle),
-    (APPLICATION, application),
-    (OWNER_FACTORY, owner_factory),
-    (UI_UPDATE, ui_update),
-    (UI_SETTINGS, ui_settings),
-):
+for path in (APP_GRADLE, APPLICATION, OWNER_FACTORY, UI_UPDATE, UI_SETTINGS):
+    text = texts[path]
     for forbidden in (
-        "manifestUrl",
-        "ManifestUrl",
-        "DEVICE_FIRMWARE_MANIFEST_URL",
-        "AQL_OTA_MANIFEST_URL",
-        "AQL_OTA_STABLE_MANIFEST_URL",
-        "AQL_OTA_DEBUG_MANIFEST_URL",
-        "OFFICIAL_CHANNEL_MANIFEST_URL_PREFIX",
-        "raw.githubusercontent.com",
-        "releases/latest/download",
+        "manifestUrl", "ManifestUrl", "DEVICE_FIRMWARE_MANIFEST_URL",
+        "AQL_OTA_MANIFEST_URL", "AQL_OTA_STABLE_MANIFEST_URL",
+        "AQL_OTA_DEBUG_MANIFEST_URL", "OFFICIAL_CHANNEL_MANIFEST_URL_PREFIX",
+        "raw.githubusercontent.com", "releases/latest/download",
     ):
         if forbidden in text:
-            errors.append(
-                f"{path.relative_to(ROOT)}: OTA source ownership leaked outside data layer: {forbidden}"
-            )
+            errors.append(f"{path.relative_to(ROOT)}: OTA source ownership leaked: {forbidden}")
+
+for path in (ADAPTER, COORDINATOR, REPOSITORY):
+    if "manifestUrl" in texts[path]:
+        errors.append(f"{path.relative_to(ROOT)}: raw manifest URL API is forbidden")
 
 for token in (
-    "enum class DeviceFirmwareChannel",
-    'STABLE("stable")',
-    'BETA("beta")',
-    'DEV("dev")',
+    "enum class DeviceFirmwareChannel", 'STABLE("stable")', 'BETA("beta")', 'DEV("dev")',
     "channel: DeviceFirmwareChannel = DeviceFirmwareChannel.STABLE",
 ):
-    if token not in application:
-        errors.append(
-            f"{APPLICATION.relative_to(ROOT)}: typed OTA channel contract is missing: {token}"
-        )
+    if token not in texts[APPLICATION]:
+        errors.append(f"{APPLICATION.relative_to(ROOT)}: typed channel contract missing: {token}")
 
 for token in (
-    "DeviceFirmwareChannelManifestResolver",
+    "coordinator.checkAvailability", "channel = channel",
+):
+    if token not in texts[ADAPTER]:
+        errors.append(f"{ADAPTER.relative_to(ROOT)}: typed coordinator call missing: {token}")
+for forbidden in ("DeviceFirmwareChannelManifestResolver", "currentDevice(uid)"):
+    if forbidden in texts[ADAPTER]:
+        errors.append(f"{ADAPTER.relative_to(ROOT)}: channel/snapshot resolution escaped coordinator: {forbidden}")
+
+for token in (
+    "channel: DeviceFirmwareChannel", "connectRuntime(deviceUid).getOrThrow()",
+    "snapshot.hasValidatedRuntimeMetadata", "runtimeMetadataGeneration == metadataGeneration",
+):
+    if token not in texts[COORDINATOR]:
+        errors.append(f"{COORDINATOR.relative_to(ROOT)}: authenticated typed state boundary missing: {token}")
+
+for token in (
     "channelManifestResolver.resolve(snapshot, channel)",
-    "coordinator.checkAvailability",
+    "fetchManifest(snapshot, channel)",
+    "channel: DeviceFirmwareChannel",
 ):
-    if token not in adapter:
-        errors.append(f"{ADAPTER.relative_to(ROOT)}: data-owned channel resolution is missing: {token}")
+    if token not in texts[REPOSITORY]:
+        errors.append(f"{REPOSITORY.relative_to(ROOT)}: data-owned channel resolution missing: {token}")
 
 for token in (
-    "snapshot.hasValidatedRuntimeMetadata",
-    "snapshot.product.productKey",
-    "lowercase(Locale.ROOT)",
-    "OFFICIAL_CHANNEL_MANIFEST_URL_PREFIX",
+    "snapshot.hasValidatedRuntimeMetadata", "snapshot.product.productKey",
+    "lowercase(Locale.ROOT)", "OFFICIAL_CHANNEL_MANIFEST_URL_PREFIX",
 ):
-    if token not in resolver:
-        errors.append(f"{RESOLVER.relative_to(ROOT)}: authenticated channel resolver token is missing: {token}")
-
-for forbidden in (
-    "snapshot.title",
-    "customName",
-    "snapshot.product.model",
-    "snapshot.product.displayName",
-):
-    if forbidden in resolver:
-        errors.append(f"{RESOLVER.relative_to(ROOT)}: mutable/display identity is forbidden: {forbidden}")
+    if token not in texts[RESOLVER]:
+        errors.append(f"{RESOLVER.relative_to(ROOT)}: authenticated resolver token missing: {token}")
 
 for token in (
-    "raw.githubusercontent.com",
-    "main/channels/",
+    "raw.githubusercontent.com", "main/channels/",
     "Signed OTA manifest channel differs from its official channel path.",
     "Signed OTA manifest product differs from its official channel path.",
-    "manifest.artifacts.size == 1",
 ):
-    if token not in http_source and token not in runtime_contract:
-        errors.append(f"Product channel HTTP contract token is missing: {token}")
+    if token not in texts[HTTP_SOURCE] and token not in read(SOURCE / "data/devices/runtime/modules/firmware/DeviceFirmwareRuntimeContract.kt"):
+        errors.append(f"Product channel HTTP contract token missing: {token}")
 
 for token in (
-    "A product OTA channel manifest must contain exactly one artifact.",
-    'val expectedTag = "${artifact.env}-v${manifest.version}"',
-    'val expectedFilename = "AquaLight-${artifact.env}-v${manifest.version}-ota.bin"',
-    "No compatible OTA artifact found",
+    "isExactFirmwareVersion", "exactFirmwareVersionPartsOrNull",
+    "Invalid exact X.Y.Z firmware version",
 ):
-    if token not in planner:
-        errors.append(f"{PLANNER.relative_to(ROOT)}: fail-closed product planner token is missing: {token}")
+    if token not in texts[MODELS] and token not in texts[PLANNER]:
+        errors.append(f"Strict firmware version contract missing: {token}")
 
-main_sources = list(SOURCE.rglob("*.kt"))
-for path in main_sources:
-    text = path.read_text(encoding="utf-8", errors="ignore")
+for source_path in SOURCE.rglob("*.kt"):
+    source_text = source_path.read_text(encoding="utf-8", errors="ignore")
+    if LEGACY_INSECURE_FIELD in source_text:
+        errors.append(f"{source_path.relative_to(ROOT)}: removed insecure transport field remains")
     for forbidden in (
-        "OFFICIAL_LATEST_RELEASE_URL_PREFIX",
-        "releases/latest/download/manifest-",
-        "manifest-stable.json",
-        "manifest-beta.json",
-        "manifest-dev.json",
+        "OFFICIAL_LATEST_RELEASE_URL_PREFIX", "releases/latest/download/manifest-",
+        "manifest-stable.json", "manifest-beta.json", "manifest-dev.json",
     ):
-        if forbidden in text:
-            errors.append(f"{path.relative_to(ROOT)}: global/latest OTA source is forbidden: {forbidden}")
+        if forbidden in source_text:
+            errors.append(f"{source_path.relative_to(ROOT)}: global/latest OTA source remains: {forbidden}")
 
 for path in (UI_UPDATE, UI_SETTINGS):
-    text = path.read_text(encoding="utf-8", errors="ignore")
-    constructor = re.search(r"class\s+\w+ViewModel\s*\((.*?)\)\s*:\s*ViewModel", text, re.DOTALL)
+    constructor = re.search(r"class\s+\w+ViewModel\s*\((.*?)\)\s*:\s*ViewModel", texts[path], re.DOTALL)
     if constructor and re.search(r"String\s*=.*manifest", constructor.group(1), re.IGNORECASE):
-        errors.append(f"{path.relative_to(ROOT)}: ViewModel constructor contains an OTA source string")
+        errors.append(f"{path.relative_to(ROOT)}: ViewModel constructor contains OTA source string")
 
 if errors:
     print("Product-scoped OTA client guard failed:", file=sys.stderr)

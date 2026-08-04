@@ -61,7 +61,7 @@ internal object DeviceOtaValidator {
             "Firmware OTA expected SHA256 differs from the selected artifact."
         snapshot.contentLength != plan.firmware.size.toLong() ->
             "Firmware OTA content length differs from the selected artifact."
-        snapshot.allowInsecureHttp || snapshot.urlScheme != "https" ->
+        snapshot.urlScheme != "https" ->
             "Firmware OTA transport differs from the secure selected artifact."
         else -> null
     }
