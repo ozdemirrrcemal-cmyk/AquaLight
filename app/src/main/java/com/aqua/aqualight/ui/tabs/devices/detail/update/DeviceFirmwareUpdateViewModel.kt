@@ -2,7 +2,6 @@ package com.aqua.aqualight.ui.tabs.devices.detail.update
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.aqua.aqualight.application.devices.DEVICE_FIRMWARE_MANIFEST_URL
 import com.aqua.aqualight.application.devices.DeviceFirmwareReleaseContent
 import com.aqua.aqualight.application.devices.DeviceFirmwareUpdateOperations
 import com.aqua.aqualight.application.devices.DeviceOtaFailure
@@ -22,8 +21,7 @@ import kotlinx.coroutines.launch
 /** Presentation owner for the commercial, full-screen OTA experience. */
 class DeviceFirmwareUpdateViewModel(
     private val rootOperations: DeviceRootOperations,
-    private val firmwareUpdateOperations: DeviceFirmwareUpdateOperations,
-    private val manifestUrl: String = DEVICE_FIRMWARE_MANIFEST_URL
+    private val firmwareUpdateOperations: DeviceFirmwareUpdateOperations
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(DeviceFirmwareUpdateUiState())
@@ -94,7 +92,6 @@ class DeviceFirmwareUpdateViewModel(
         operationJob = viewModelScope.launch {
             val availability = firmwareUpdateOperations.checkAvailability(
                 deviceUid = deviceUid,
-                manifestUrl = manifestUrl,
                 applyNow = true
             ).getOrNull()
             if (availability is DeviceOtaState.UpdateAvailable) {
