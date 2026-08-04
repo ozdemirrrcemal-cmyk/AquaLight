@@ -3,6 +3,7 @@
     <string name="value_stepper_plus_symbol" translatable="false">+</string>
     <string name="value_stepper_minus_symbol" translatable="false">−</string>
     <string name="value_stepper_degree_symbol" translatable="false">°</string>
+    <string name="value_stepper_value_format" translatable="false">%1$d%2$s</string>
     <string name="value_stepper_increase_description">Increase value</string>
     <string name="value_stepper_decrease_description">Decrease value</string>
 </resources>
