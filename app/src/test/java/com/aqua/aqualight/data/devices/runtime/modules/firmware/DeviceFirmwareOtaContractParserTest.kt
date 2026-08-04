@@ -189,13 +189,14 @@ class DeviceFirmwareOtaContractParserTest {
 
     private fun manifestJson(): JSONObject {
         val env = "dosing_dose_pro_2"
-        val filename = "AquaLight-$env-v2.0.0-ota.bin"
+        val tag = "$env-v2.0.0"
+        val filename = "AquaLight-$tag-ota.bin"
         return JSONObject()
             .put("schema", DeviceFirmwareRuntimeContract.Manifest.SCHEMA)
             .put("brand", DeviceFirmwareRuntimeContract.Manifest.BRAND)
             .put("channel", DeviceFirmwareRuntimeContract.Manifest.STABLE_CHANNEL)
             .put("version", "2.0.0")
-            .put("tag", "v2.0.0")
+            .put("tag", tag)
             .put("releaseRepo", DeviceFirmwareRuntimeContract.OFFICIAL_RELEASE_REPOSITORY)
             .put("generatedAt", "2026-08-03T00:00:00+00:00")
             .put("platform", platformJson())
@@ -228,7 +229,7 @@ class DeviceFirmwareOtaContractParserTest {
                                 .put(
                                     "url",
                                     DeviceFirmwareRuntimeContract.OFFICIAL_RELEASE_URL_PREFIX +
-                                        "v2.0.0/$filename"
+                                        "$tag/$filename"
                                 )
                                 .put("sha256", "a".repeat(64))
                                 .put("size", 1_048_576)
