@@ -1,6 +1,5 @@
 package com.aqua.aqualight.ui.tabs.devices.detail.settings
 
-import java.math.BigDecimal
 import java.text.NumberFormat
 import java.util.Locale
 
@@ -14,17 +13,10 @@ internal object LightTemperatureProtectionUiContract {
     const val DEFAULT_THRESHOLD_C = 60.0
     const val MINIMUM_THRESHOLD_C = 50.0
     const val MAXIMUM_THRESHOLD_C = 70.0
-
-    fun parseAllowedThreshold(value: String): Double? {
-        val parsed = value.trim().replace(',', '.').toDoubleOrNull() ?: return null
-        return parsed.takeIf(::isAllowedThreshold)
-    }
+    const val THRESHOLD_STEP_C = 1.0
 
     fun isAllowedThreshold(value: Double): Boolean =
         value.isFinite() && value in MINIMUM_THRESHOLD_C..MAXIMUM_THRESHOLD_C
-
-    fun formatInput(value: Double): String =
-        BigDecimal.valueOf(value).stripTrailingZeros().toPlainString()
 
     fun formatDisplay(value: Double, locale: Locale = Locale.getDefault()): String =
         NumberFormat.getNumberInstance(locale).apply {
