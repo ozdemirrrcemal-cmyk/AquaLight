@@ -35,7 +35,8 @@
             style="@style/TextAppearance.Aqua.BottomSheet.Title"
             android:layout_width="@dimen/aqua_size_0"
             android:layout_height="match_parent"
-            android:layout_marginHorizontal="@dimen/aqua_size_16"
+            android:layout_marginStart="@dimen/aqua_size_16"
+            android:layout_marginEnd="@dimen/aqua_size_16"
             android:layout_weight="1"
             android:gravity="center" />
 
