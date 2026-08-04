@@ -1,15 +1,16 @@
 package com.aqua.aqualight.ui.tabs.devices.detail.settings
 
-import com.aqua.aqualight.application.devices.DeviceRootCatalogState
+import com.aqua.aqualight.application.devices.DeviceFirmwareChannel
 import com.aqua.aqualight.application.devices.DeviceFirmwareCommandResult
 import com.aqua.aqualight.application.devices.DeviceFirmwareReleaseContent
 import com.aqua.aqualight.application.devices.DeviceFirmwareUpdateOperations
 import com.aqua.aqualight.application.devices.DeviceOtaState
-import com.aqua.aqualight.application.devices.PreparedDeviceFirmwareUpdate
+import com.aqua.aqualight.application.devices.DeviceRootCatalogState
 import com.aqua.aqualight.application.devices.DeviceRootOperations
 import com.aqua.aqualight.application.devices.DeviceRootSnapshot
 import com.aqua.aqualight.application.devices.OwnerDeviceAvailability
 import com.aqua.aqualight.application.devices.OwnerDeviceFamily
+import com.aqua.aqualight.application.devices.PreparedDeviceFirmwareUpdate
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.Flow
@@ -79,8 +80,7 @@ class DeviceFamilySettingsViewModelTest {
         val firmware = FakeFirmwareOperations(preparedPlan())
         val viewModel = DeviceFamilySettingsViewModel(
             rootOperations = FakeDeviceRootOperations(validSnapshot()),
-            firmwareUpdateOperations = firmware,
-            manifestUrl = MANIFEST_URL
+            firmwareUpdateOperations = firmware
         )
 
         viewModel.bind(DEVICE_UID)
@@ -92,6 +92,7 @@ class DeviceFamilySettingsViewModelTest {
         )
         assertEquals(1, firmware.checkCalls)
         assertEquals(1, firmware.statusCalls)
+        assertEquals(listOf(DeviceFirmwareChannel.STABLE), firmware.checkedChannels)
     }
 
     private class FakeDeviceRootOperations(
@@ -118,6 +119,7 @@ class DeviceFamilySettingsViewModelTest {
         private val plan: PreparedDeviceFirmwareUpdate? = null
     ) : DeviceFirmwareUpdateOperations {
         private val state = MutableStateFlow<DeviceOtaState>(DeviceOtaState.Idle(DEVICE_UID))
+        val checkedChannels = mutableListOf<DeviceFirmwareChannel>()
         var checkCalls = 0
         var statusCalls = 0
 
@@ -125,10 +127,11 @@ class DeviceFamilySettingsViewModelTest {
 
         override suspend fun checkAvailability(
             deviceUid: String,
-            manifestUrl: String,
+            channel: DeviceFirmwareChannel,
             applyNow: Boolean
         ): Result<DeviceOtaState> {
             checkCalls += 1
+            checkedChannels += channel
             val result = plan?.let { selected -> DeviceOtaState.UpdateAvailable(selected) }
                 ?: DeviceOtaState.UpToDate(
                     deviceUid,
@@ -142,7 +145,7 @@ class DeviceFamilySettingsViewModelTest {
 
         override suspend fun prepareUpdate(
             deviceUid: String,
-            manifestUrl: String,
+            channel: DeviceFirmwareChannel,
             applyNow: Boolean
         ): Result<PreparedDeviceFirmwareUpdate> = Result.success(requireNotNull(plan))
 
@@ -173,7 +176,6 @@ class DeviceFamilySettingsViewModelTest {
 
     private companion object {
         const val DEVICE_UID = "device-wrgb-settings"
-        const val MANIFEST_URL = "https://example.invalid/manifest-stable.json"
 
         fun preparedPlan() = PreparedDeviceFirmwareUpdate(
             deviceUid = DEVICE_UID,
@@ -190,7 +192,8 @@ class DeviceFamilySettingsViewModelTest {
             downloadUrl = "https://example.invalid/firmware.bin",
             sha256 = "a".repeat(64),
             sizeBytes = 1_048_576,
-            applyNow = true
+            applyNow = true,
+            manifestTag = "light_wrgb_pro_elite-v2.0.0"
         )
 
         fun invalidSnapshot() = DeviceRootSnapshot(
