@@ -1,11 +1,13 @@
 # Android ↔ Firmware `main` OTA Parity Checklist
 
-## Scope pin
+## Scope and payload pin
 
-This checklist compares only these authoritative branch heads:
+The OTA payload contract was extracted from these authoritative revisions:
 
-- Android: `ozdemirrrcemal-cmyk/AquaLight@main` — `6b8118d85c17f2c8f5bb4723679d52f930f9ce80`
-- Firmware: `ozdemirrrcemal-cmyk/AquaLight-Firmware@main` — `38e8812c1bcecf948ebab85979bff21a24f4b79c`
+- Android baseline: `ozdemirrrcemal-cmyk/AquaLight@main` — `6b8118d85c17f2c8f5bb4723679d52f930f9ce80`
+- Firmware payload baseline: `ozdemirrrcemal-cmyk/AquaLight-Firmware@main` — `38e8812c1bcecf948ebab85979bff21a24f4b79c`
+
+Firmware `main` subsequently advanced to `37dc7a4176e3550e05fc5efcb1bf8e26f60b9ec5` through the OTA TLS trust hardening merge. That merge changed only the TLS trust bundle, its policy/guard, and firmware CI; the OTA command, event, snapshot, manifest, and failure payload sources pinned by this checklist remain unchanged.
 
 Deleted branches, superseded branches, local-only commits, and legacy contracts are explicitly out of scope.
 
@@ -40,7 +42,8 @@ Deleted branches, superseded branches, local-only commits, and legacy contracts 
 ## Completion gate
 
 - [x] All identified checklist items are implemented on this branch.
-- [ ] Focused OTA parser/model/failure/coordinator tests pass on the latest head.
-- [ ] Interoperability and OTA payload parity guards pass on the latest head.
+- [x] Focused OTA parser/model/failure/coordinator tests pass on head `29ce882f44a2bda4e388238d17f16c2b348cf5f2`.
+- [x] Interoperability and OTA payload parity guards pass on the same head.
+- [x] Android CI, API 27/API 36 emulator integration, installable Debug APK, and CodeQL workflows all completed successfully.
 - [x] No fallback aliases or permissive legacy schema are introduced.
 - [x] User-facing failure copy is localized from structured authenticated firmware diagnostics rather than guessing every OTA failure is a network outage.
