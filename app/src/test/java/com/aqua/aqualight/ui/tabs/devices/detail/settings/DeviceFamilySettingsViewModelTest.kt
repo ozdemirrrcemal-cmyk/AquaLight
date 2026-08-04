@@ -75,6 +75,23 @@ class DeviceFamilySettingsViewModelTest {
     }
 
     @Test
+    fun `keeps temperature threshold previews inside firmware bounds`() {
+        val viewModel = DeviceFamilySettingsViewModel(
+            FakeDeviceRootOperations(validSnapshot()),
+            FakeFirmwareOperations()
+        )
+
+        viewModel.bind(DEVICE_UID)
+        viewModel.previewTemperatureProtectionThreshold(70)
+        viewModel.previewTemperatureProtectionThreshold(71)
+        assertEquals(70, viewModel.uiState.value.temperatureProtectionThresholdC)
+
+        viewModel.previewTemperatureProtectionThreshold(50)
+        viewModel.previewTemperatureProtectionThreshold(49)
+        assertEquals(50, viewModel.uiState.value.temperatureProtectionThresholdC)
+    }
+
+    @Test
     fun `checks signed availability and probes status without losing the selected plan`() {
         val firmware = FakeFirmwareOperations(preparedPlan())
         val viewModel = DeviceFamilySettingsViewModel(
