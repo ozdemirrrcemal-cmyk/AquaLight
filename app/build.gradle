@@ -113,21 +113,6 @@ def otaManifestKeyId = providers
         .orElse(providers.environmentVariable("AQL_OTA_MANIFEST_KEY_ID"))
         .getOrElse("aql-ota-manifest-2026-01")
 
-def stableOtaManifestUrl = providers
-        .gradleProperty("AQL_OTA_STABLE_MANIFEST_URL")
-        .orElse(providers.environmentVariable("AQL_OTA_STABLE_MANIFEST_URL"))
-        .getOrElse(
-                "https://github.com/ozdemirrrcemal-cmyk/AquaLight-OTA-Releases/" +
-                        "releases/latest/download/manifest-stable.json"
-        )
-
-// A beta asset is not published yet. Internal builds can opt in as soon as one exists;
-// otherwise they deliberately use the same verified stable manifest instead of a dead URL.
-def debugOtaManifestUrl = providers
-        .gradleProperty("AQL_OTA_DEBUG_MANIFEST_URL")
-        .orElse(providers.environmentVariable("AQL_OTA_DEBUG_MANIFEST_URL"))
-        .getOrElse(stableOtaManifestUrl)
-
 def lintBaselineFile = layout.projectDirectory.file("lint-baseline.xml")
 def finalLintModeValue = providers
         .gradleProperty("AQL_FINAL_LINT")
@@ -159,7 +144,6 @@ android {
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
         buildConfigField "String", "AQL_OTA_MANIFEST_PUBLIC_KEY_PEM", aqlBuildConfigString(otaManifestPublicKeyPem)
         buildConfigField "String", "AQL_OTA_MANIFEST_KEY_ID", aqlBuildConfigString(otaManifestKeyId)
-        buildConfigField "String", "AQL_OTA_MANIFEST_URL", aqlBuildConfigString(stableOtaManifestUrl)
     }
 
     signingConfigs {
@@ -172,10 +156,6 @@ android {
     }
 
     buildTypes {
-        debug {
-            buildConfigField "String", "AQL_OTA_MANIFEST_URL", aqlBuildConfigString(debugOtaManifestUrl)
-        }
-
         release {
             signingConfig signingConfigs.release
             minifyEnabled true
@@ -211,7 +191,7 @@ android {
             ]
         }
     }
-   	
+
     lint {
         if (!finalLintMode) {
             baseline = lintBaselineFile.asFile
@@ -259,7 +239,6 @@ dependencies {
     implementation "androidx.core:core-splashscreen:1.2.0"
     implementation "androidx.webkit:webkit:1.14.0"
 
-
     // Jetpack Compose - dosing device UI
     implementation platform("androidx.compose:compose-bom:2026.06.00")
     implementation "androidx.compose.ui:ui"
@@ -276,11 +255,11 @@ dependencies {
     // Media3 (ExoPlayer’ın yeni paketi)
     implementation "androidx.media3:media3-exoplayer:1.8.0"
     implementation "androidx.media3:media3-ui:1.8.0"
-   	
-   	// İmageCrop
-   	implementation 'com.github.yalantis:ucrop:2.2.11'
-   	
-   	implementation "com.google.code.gson:gson:2.13.2"
+
+    // İmageCrop
+    implementation 'com.github.yalantis:ucrop:2.2.11'
+
+    implementation "com.google.code.gson:gson:2.13.2"
 
     // WebSocket runtime
     implementation "com.squareup.okhttp3:okhttp:5.4.0"
@@ -291,30 +270,30 @@ dependencies {
     implementation "androidx.camera:camera-lifecycle:1.6.1"
     implementation "androidx.camera:camera-view:1.6.1"
     implementation "com.google.mlkit:barcode-scanning:17.3.0"
-   	
-   	// Lottie animasyon için
+
+    // Lottie animasyon için
     implementation "com.airbnb.android:lottie:6.7.1"
-   	
-   	// Charts - MPAndroidChart
+
+    // Charts - MPAndroidChart
     implementation "com.github.PhilJay:MPAndroidChart:v3.1.0"
 
     // BlurView
     implementation "com.github.Dimezis:BlurView:version-2.0.6"
-   	
-   	// libphonenumber
-   	implementation "com.googlecode.libphonenumber:libphonenumber:9.0.18"
-   	
+
+    // libphonenumber
+    implementation "com.googlecode.libphonenumber:libphonenumber:9.0.18"
+
     // Lifecycle
     implementation "androidx.lifecycle:lifecycle-livedata-ktx:2.10.0"
     implementation "androidx.lifecycle:lifecycle-process:2.10.0"
     implementation "androidx.lifecycle:lifecycle-runtime-ktx:2.10.0"
     implementation "androidx.lifecycle:lifecycle-viewmodel-ktx:2.10.0"
-   	
-   	// WorkManager
+
+    // WorkManager
     implementation "androidx.work:work-runtime-ktx:2.11.2"
 
-   	// Country Code
-   	implementation "com.hbb20:ccp:2.7.3"
+    // Country Code
+    implementation "com.hbb20:ccp:2.7.3"
 
     // Image loading - Coil 3
     implementation "io.coil-kt.coil3:coil-android:3.3.0"
@@ -329,7 +308,7 @@ dependencies {
     // DataStore Proto
     implementation "androidx.datastore:datastore:1.1.3"
     implementation "com.google.protobuf:protobuf-javalite:3.25.3"
-   	implementation "androidx.datastore:datastore-preferences:1.1.1"
+    implementation "androidx.datastore:datastore-preferences:1.1.1"
 
     // Security
     implementation "androidx.security:security-crypto:1.1.0"
