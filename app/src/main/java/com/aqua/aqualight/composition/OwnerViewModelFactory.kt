@@ -2,7 +2,6 @@ package com.aqua.aqualight.composition
 
 import android.content.Context
 import androidx.lifecycle.ViewModel
-import com.aqua.aqualight.BuildConfig
 import com.aqua.aqualight.application.notifications.NotificationPreferenceUseCase
 import com.aqua.aqualight.application.user.UserProfileOperations
 import com.aqua.aqualight.data.aquarium.DefaultAquariumTankOperations
@@ -200,15 +199,13 @@ internal class OwnerViewModelFactory(
             DeviceFamilySettingsViewModel::class.java ->
                 DeviceFamilySettingsViewModel(
                     rootOperations = DefaultDeviceRootOperations(repository),
-                    firmwareUpdateOperations = graph.firmwareUpdateOperations,
-                    manifestUrl = BuildConfig.AQL_OTA_MANIFEST_URL
+                    firmwareUpdateOperations = graph.firmwareUpdateOperations
                 )
 
             DeviceFirmwareUpdateViewModel::class.java ->
                 DeviceFirmwareUpdateViewModel(
                     rootOperations = DefaultDeviceRootOperations(repository),
-                    firmwareUpdateOperations = graph.firmwareUpdateOperations,
-                    manifestUrl = BuildConfig.AQL_OTA_MANIFEST_URL
+                    firmwareUpdateOperations = graph.firmwareUpdateOperations
                 )
 
             TankDetailDevicesViewModel::class.java ->
