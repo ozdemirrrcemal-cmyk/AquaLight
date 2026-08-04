@@ -105,7 +105,10 @@ object DeviceFirmwareManifestParser {
             displayName = json.requiredString("displayName"),
             skuCode = json.requiredString("skuCode"),
             hardwareRevision = json.requiredString("hardwareRevision"),
-            capabilities = parseCapabilities(json.requiredObject("capabilities"), "$label.capabilities"),
+            capabilities = parseCapabilities(
+                json.requiredObject("capabilities"),
+                "$label.capabilities"
+            ),
             limits = parseLimits(json.requiredObject("limits"), "$label.limits")
         )
     }
@@ -184,18 +187,15 @@ object DeviceFirmwareManifestParser {
         require(manifest.channel in SUPPORTED_CHANNELS) {
             "Unsupported OTA manifest channel: ${manifest.channel}"
         }
-        require(manifest.tag == "v${manifest.version}") {
-            "OTA manifest tag must be the exact v-prefixed version."
-        }
         require(manifest.platform == OFFICIAL_PLATFORM) {
             "OTA manifest platform differs from AquaLight-Firmware/main."
         }
-        require(manifest.artifacts.isNotEmpty()) {
-            "OTA manifest does not contain any artifacts."
+        require(manifest.artifacts.size == 1) {
+            "A product OTA channel manifest must contain exactly one artifact."
         }
-        require(manifest.artifacts.map(DeviceFirmwareManifestArtifact::env).distinct().size ==
-            manifest.artifacts.size) {
-            "OTA manifest environments must be unique."
+        val artifact = manifest.artifacts.single()
+        require(manifest.tag == "${artifact.env}-v${manifest.version}") {
+            "OTA manifest tag must identify its product environment and version."
         }
         require(
             manifest.signature.scheme ==
@@ -206,7 +206,7 @@ object DeviceFirmwareManifestParser {
         require(manifest.signature.payloadHash.isSha256Hex()) {
             "OTA manifest signature payloadHash must be 64 hex characters."
         }
-        manifest.artifacts.forEach { artifact -> validateArtifact(manifest, artifact) }
+        validateArtifact(manifest, artifact)
     }
 
     private fun validateArtifact(
@@ -259,7 +259,7 @@ object DeviceFirmwareManifestParser {
         artifact: DeviceFirmwareManifestArtifact
     ) {
         val expected = PublishedAssetExpectation(
-            filename = "AquaLight-${artifact.env}-${manifest.tag}-ota.bin",
+            filename = "AquaLight-${manifest.tag}-ota.bin",
             tag = manifest.tag,
             label = "firmware"
         )
@@ -281,7 +281,7 @@ object DeviceFirmwareManifestParser {
     ) {
         val factory = artifact.factory ?: return
         val expected = PublishedAssetExpectation(
-            filename = "AquaLight-${artifact.env}-${manifest.tag}-factory.zip",
+            filename = "AquaLight-${manifest.tag}-factory.zip",
             tag = manifest.tag,
             label = "factory"
         )
@@ -333,7 +333,8 @@ object DeviceFirmwareManifestParser {
     private fun JSONObject.requiredNullableObject(key: String): JSONObject? {
         require(has(key)) { "OTA manifest field '$key' is missing." }
         if (isNull(key)) return null
-        return get(key) as? JSONObject ?: error("OTA manifest field '$key' must be an object or null.")
+        return get(key) as? JSONObject
+            ?: error("OTA manifest field '$key' must be an object or null.")
     }
 
     private fun JSONObject.requiredArray(key: String): JSONArray {
