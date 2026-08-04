@@ -8,7 +8,9 @@ import sys
 
 ROOT = Path(__file__).resolve().parents[1]
 SOURCE = ROOT / "app/src/main/java/com/aqua/aqualight"
+APP_GRADLE = ROOT / "app/build.gradle"
 APPLICATION = SOURCE / "application/devices/DeviceFirmwareUpdateOperations.kt"
+OWNER_FACTORY = SOURCE / "composition/OwnerViewModelFactory.kt"
 UI_UPDATE = SOURCE / "ui/tabs/devices/detail/update/DeviceFirmwareUpdateViewModel.kt"
 UI_SETTINGS = SOURCE / "ui/tabs/devices/detail/settings/DeviceFamilySettingsViewModel.kt"
 ADAPTER = SOURCE / "data/devices/DefaultDeviceFirmwareUpdateOperations.kt"
@@ -28,7 +30,9 @@ def read(path: Path) -> str:
     return path.read_text(encoding="utf-8", errors="ignore")
 
 
+app_gradle = read(APP_GRADLE)
 application = read(APPLICATION)
+owner_factory = read(OWNER_FACTORY)
 ui_update = read(UI_UPDATE)
 ui_settings = read(UI_SETTINGS)
 adapter = read(ADAPTER)
@@ -43,7 +47,9 @@ if LEGACY_CONFIG.exists():
     )
 
 for path, text in (
+    (APP_GRADLE, app_gradle),
     (APPLICATION, application),
+    (OWNER_FACTORY, owner_factory),
     (UI_UPDATE, ui_update),
     (UI_SETTINGS, ui_settings),
 ):
@@ -51,6 +57,9 @@ for path, text in (
         "manifestUrl",
         "ManifestUrl",
         "DEVICE_FIRMWARE_MANIFEST_URL",
+        "AQL_OTA_MANIFEST_URL",
+        "AQL_OTA_STABLE_MANIFEST_URL",
+        "AQL_OTA_DEBUG_MANIFEST_URL",
         "OFFICIAL_CHANNEL_MANIFEST_URL_PREFIX",
         "raw.githubusercontent.com",
         "releases/latest/download",
