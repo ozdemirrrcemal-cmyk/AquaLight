@@ -116,9 +116,10 @@
     <string name="device_settings_update_notification_failure_message">Open AquaLight to review the update for %1$s.</string>
 
     <string name="device_settings_light_protection_section">Light protection</string>
-    <string name="device_settings_light_cooling_auto_off_label">Cooling Auto Off</string>
-    <string name="device_settings_light_over_temperature_protection_label">Over-temperature protection</string>
+    <string name="device_settings_light_current_temperature_label">Current temperature</string>
+    <string name="device_settings_light_temperature_unavailable_value">— °C</string>
+    <string name="device_settings_light_temperature_value">%1$d °C</string>
     <string name="device_settings_light_temperature_threshold_label">Temperature protection threshold</string>
     <string name="device_settings_light_edit_temperature_threshold_description">Edit temperature protection threshold</string>
-    <string name="device_settings_light_temperature_threshold_pending_value">— °C</string>
+    <string name="device_settings_light_temperature_protection_title">Temperature protection</string>
 </resources>
