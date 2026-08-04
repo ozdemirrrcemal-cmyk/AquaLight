@@ -1,0 +1,70 @@
+name: Apply Android OTA Commercial Hardening
+
+on:
+  push:
+    branches:
+      - agent/product-scoped-ota-client
+  pull_request:
+    branches:
+      - main
+    types:
+      - opened
+      - reopened
+      - synchronize
+
+permissions:
+  contents: write
+
+jobs:
+  apply:
+    if: >-
+      github.actor != 'github-actions[bot]' &&
+      (github.event_name == 'push' || github.head_ref == 'agent/product-scoped-ota-client')
+    runs-on: ubuntu-latest
+    timeout-minutes: 90
+
+    steps:
+      - name: Checkout exact Android hardening branch
+        uses: actions/checkout@v4
+        with:
+          ref: agent/product-scoped-ota-client
+          fetch-depth: 0
+
+      - name: Set up JDK 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Apply staged Android OTA hardening
+        run: python scripts/aql_bootstrap_android_ota_hardening.py
+
+      - name: Validate Android OTA architecture guards
+        run: |
+          set -euo pipefail
+          python -m py_compile tools/product_scoped_ota_client_guard.py
+          python tools/product_scoped_ota_client_guard.py
+          python tools/device_ota_coordinator_guard.py
+          python -m unittest discover -s tools/tests -p 'test_*.py'
+
+      - name: Run debug unit tests
+        run: ./gradlew --no-daemon testDebugUnitTest --stacktrace
+
+      - name: Commit hardened Android OTA contract
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name "AquaLight Android OTA Hardening Bot"
+          git config user.email "android-ota-hardening@aqualight.local"
+          git add -A
+          git diff --cached --quiet && {
+            echo "Android OTA hardening produced no changes." >&2
+            exit 1
+          }
+          git commit -m "Harden Android product-scoped OTA contract"
+          git push origin HEAD:agent/product-scoped-ota-client
