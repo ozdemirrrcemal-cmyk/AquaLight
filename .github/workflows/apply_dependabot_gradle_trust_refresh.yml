@@ -19,7 +19,7 @@ permissions:
 
 concurrency:
   group: apply-android-ota-hardening-${{ github.event.pull_request.number }}
-  cancel-in-progress: false
+  cancel-in-progress: true
 
 jobs:
   apply:
@@ -52,10 +52,58 @@ jobs:
       - name: Apply staged Android OTA hardening
         run: python scripts/aql_bootstrap_android_ota_hardening.py
 
+      - name: Pin guards to verified firmware contract
+        shell: bash
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          from pathlib import Path
+
+          final_commit = "31ef35fa5428ea36d8c3d10c083942b016071c35"
+          final_branch = "agent/product-scoped-ota-channels"
+          final_command_blob = "c498261682bcd513c2d90c2f521949d3efdd47fb"
+          old_commit = "38e8812c1bcecf948ebab85979bff21a24f4b79c"
+          old_command_blob = "8b1107d159ca3ff026754c8a06bd1e75fb608c37"
+
+          interoperability = Path("tools/firmware_interoperability_guard.py")
+          text = interoperability.read_text(encoding="utf-8")
+          if text.count(old_commit) != 1:
+              raise SystemExit("Firmware interoperability commit pin is not unique")
+          if text.count(old_command_blob) != 1:
+              raise SystemExit("Firmware command blob pin is not unique")
+          text = text.replace(old_commit, final_commit)
+          text = text.replace(old_command_blob, final_command_blob)
+          interoperability.write_text(text, encoding="utf-8")
+
+          parity = Path("tools/ota_payload_parity_guard.py")
+          text = parity.read_text(encoding="utf-8")
+          if text.count('EXPECTED_FIRMWARE_BRANCH = "main"') != 1:
+              raise SystemExit("OTA parity branch pin is not unique")
+          if text.count(old_commit) != 1:
+              raise SystemExit("OTA parity commit pin is not unique")
+          text = text.replace(
+              'EXPECTED_FIRMWARE_BRANCH = "main"',
+              f'EXPECTED_FIRMWARE_BRANCH = "{final_branch}"',
+          )
+          text = text.replace(old_commit, final_commit)
+          text = text.replace(
+              "OTA fixture must remain pinned to firmware main",
+              "OTA fixture must remain pinned to the verified firmware contract branch",
+          )
+          text = text.replace(
+              "OTA fixture firmware main commit drifted",
+              "OTA fixture verified firmware commit drifted",
+          )
+          parity.write_text(text, encoding="utf-8")
+          PY
+
       - name: Validate Android OTA architecture guards
         run: |
           set -euo pipefail
-          python -m py_compile tools/product_scoped_ota_client_guard.py
+          python -m py_compile \
+            tools/product_scoped_ota_client_guard.py \
+            tools/firmware_interoperability_guard.py \
+            tools/ota_payload_parity_guard.py
           python tools/product_scoped_ota_client_guard.py
           python tools/device_ota_coordinator_guard.py
           python -m unittest discover -s tools/tests -p 'test_*.py'
