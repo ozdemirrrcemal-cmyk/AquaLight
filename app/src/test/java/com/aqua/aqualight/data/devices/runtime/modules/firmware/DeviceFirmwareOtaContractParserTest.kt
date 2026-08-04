@@ -11,9 +11,9 @@ import org.junit.Test
 class DeviceFirmwareOtaContractParserTest {
 
     @Test
-    fun `firmware publisher v2 fixture parses without compatibility normalization`() {
+    fun `firmware publisher v1 fixture parses without compatibility normalization`() {
         val raw = checkNotNull(
-            javaClass.getResource("/ota/firmware-channel-manifest-v2.json")
+            javaClass.getResource("/ota/firmware-channel-manifest-v1.json")
         ).readText()
 
         val manifest = DeviceFirmwareManifestParser.parse(raw).getOrThrow()
@@ -34,7 +34,7 @@ class DeviceFirmwareOtaContractParserTest {
     @Test
     fun `android canonical payload matches firmware python signer bytes`() {
         val raw = checkNotNull(
-            javaClass.getResource("/ota/firmware-channel-manifest-v2.json")
+            javaClass.getResource("/ota/firmware-channel-manifest-v1.json")
         ).readText()
         val payload = DeviceFirmwareManifestSignatureVerifier.canonicalManifestPayload(
             JSONObject(raw)
@@ -234,15 +234,12 @@ class DeviceFirmwareOtaContractParserTest {
             .put("hardwareRevision", "2.0")
         val platform = JSONObject()
             .put("framework", DeviceFirmwareRuntimeContract.Manifest.PLATFORM_FRAMEWORK)
-            .put("core", "3.3.9")
-            .put("platform", "pioarduino/platform-espressif32#55.03.39")
-            .put(
-                "partitionTable",
-                DeviceFirmwareRuntimeContract.Manifest.PLATFORM_PARTITION_TABLE
-            )
+            .put("core", DeviceFirmwareRuntimeContract.Manifest.PLATFORM_CORE)
+            .put("platform", DeviceFirmwareRuntimeContract.Manifest.PLATFORM_PACKAGE)
+            .put("partitionTable", DeviceFirmwareRuntimeContract.Manifest.PARTITION_TABLE)
             .put(
                 "normalOtaAssetType",
-                DeviceFirmwareRuntimeContract.Manifest.PLATFORM_OTA_ASSET_TYPE
+                DeviceFirmwareRuntimeContract.Manifest.NORMAL_OTA_ASSET_TYPE
             )
         val release = JSONObject()
             .put("version", "2.0.0")
@@ -309,6 +306,6 @@ class DeviceFirmwareOtaContractParserTest {
 
     private companion object {
         const val FIRMWARE_PYTHON_PAYLOAD_HASH =
-            "acb62ebf6bb7e90bde2ff1afae183b2622a95da9c95b3c752c6179ccae3b1fe6"
+            "1c3c1ad92750ca9736ac20a53e42835e9c3dc1613dbab24ff3e7fcaa5e0150f9"
     }
 }

@@ -74,7 +74,13 @@ class DeviceFirmwareOtaMainParityTest {
         )
 
         assertTrue(parsed.isSuccess)
-        assertEquals(signedButNonC0Text, parsed.getOrThrow().releaseNotes.items.single().tr)
+        assertEquals(
+            signedButNonC0Text,
+            parsed.getOrThrow()
+                .artifacts.single()
+                .release.releaseNotes.locales.getValue("tr")
+                .changes.single()
+        )
 
         val c0Text = "Geçersiz\u001Fsürüm"
         assertFalse(DeviceFirmwareManifestParser.parse(manifestJson(c0Text).toString()).isSuccess)
@@ -152,36 +158,8 @@ class DeviceFirmwareOtaMainParityTest {
             .put("schema", DeviceFirmwareRuntimeContract.Manifest.SCHEMA)
             .put("brand", DeviceFirmwareRuntimeContract.Manifest.BRAND)
             .put("channel", DeviceFirmwareRuntimeContract.Manifest.STABLE_CHANNEL)
-            .put("version", "2.0.0")
-            .put("tag", tag)
             .put("releaseRepo", DeviceFirmwareRuntimeContract.OFFICIAL_RELEASE_REPOSITORY)
-            .put("generatedAt", "2026-08-04T00:00:00+00:00")
-            .put(
-                "platform",
-                JSONObject()
-                    .put("framework", DeviceFirmwareRuntimeContract.Manifest.PLATFORM_FRAMEWORK)
-                    .put("core", DeviceFirmwareRuntimeContract.Manifest.PLATFORM_CORE)
-                    .put("platform", DeviceFirmwareRuntimeContract.Manifest.PLATFORM_PACKAGE)
-                    .put("partitionTable", DeviceFirmwareRuntimeContract.Manifest.PARTITION_TABLE)
-                    .put(
-                        "normalOtaAssetType",
-                        DeviceFirmwareRuntimeContract.Manifest.NORMAL_OTA_ASSET_TYPE
-                    )
-            )
-            .put(
-                "releaseNotes",
-                JSONObject()
-                    .put("schema", DeviceFirmwareRuntimeContract.ReleaseNotes.SCHEMA)
-                    .put("defaultLocale", DeviceFirmwareRuntimeContract.ReleaseNotes.DEFAULT_LOCALE)
-                    .put(
-                        "items",
-                        JSONArray().put(
-                            JSONObject()
-                                .put("tr", releaseNote)
-                                .put("en", "Safe release")
-                        )
-                    )
-            )
+            .put("generatedAt", "2026-08-04T00:00:00Z")
             .put(
                 "artifacts",
                 JSONArray().put(
@@ -190,9 +168,56 @@ class DeviceFirmwareOtaMainParityTest {
                         .put("product", productJson())
                         .put("compatibility", compatibilityJson())
                         .put(
-                            "firmware",
+                            "platform",
+                            JSONObject()
+                                .put(
+                                    "framework",
+                                    DeviceFirmwareRuntimeContract.Manifest.PLATFORM_FRAMEWORK
+                                )
+                                .put("core", DeviceFirmwareRuntimeContract.Manifest.PLATFORM_CORE)
+                                .put(
+                                    "platform",
+                                    DeviceFirmwareRuntimeContract.Manifest.PLATFORM_PACKAGE
+                                )
+                                .put(
+                                    "partitionTable",
+                                    DeviceFirmwareRuntimeContract.Manifest.PARTITION_TABLE
+                                )
+                                .put(
+                                    "normalOtaAssetType",
+                                    DeviceFirmwareRuntimeContract.Manifest.NORMAL_OTA_ASSET_TYPE
+                                )
+                        )
+                        .put(
+                            "release",
                             JSONObject()
                                 .put("version", "2.0.0")
+                                .put("tag", tag)
+                                .put("generatedAt", "2026-08-04T00:00:00Z")
+                                .put(
+                                    "releaseNotes",
+                                    JSONObject()
+                                        .put(
+                                            "schema",
+                                            DeviceFirmwareRuntimeContract.ReleaseNotes.SCHEMA
+                                        )
+                                        .put(
+                                            "defaultLocale",
+                                            DeviceFirmwareRuntimeContract.ReleaseNotes.DEFAULT_LOCALE
+                                        )
+                                        .put(
+                                            "items",
+                                            JSONArray().put(
+                                                JSONObject()
+                                                    .put("tr", releaseNote)
+                                                    .put("en", "Safe release")
+                                            )
+                                        )
+                                )
+                        )
+                        .put(
+                            "firmware",
+                            JSONObject()
                                 .put("filename", filename)
                                 .put(
                                     "url",

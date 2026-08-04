@@ -1,80 +1,76 @@
 package com.aqua.aqualight.data.devices.runtime.modules.firmware
 
-import com.aqua.aqualight.data.devices.model.DeviceCapabilities
-import com.aqua.aqualight.data.devices.model.DeviceLimits
+import com.aqua.aqualight.data.devices.model.DeviceCapabilitySet
+import com.aqua.aqualight.data.devices.model.DeviceLimitSet
+import java.time.Instant
 import java.util.Locale
 import org.json.JSONArray
 import org.json.JSONObject
 
+/** Exact parser for the signed, product-scoped OTA channel manifest emitted by firmware CI. */
 @Suppress("TooManyFunctions")
 object DeviceFirmwareManifestParser {
 
     fun parse(raw: String): Result<DeviceFirmwareManifest> = runCatching {
-        require(raw.isNotBlank()) { "OTA manifest must not be blank." }
         val root = JSONObject(raw)
         root.requireExactKeys(ROOT_KEYS, "manifest")
         val manifest = DeviceFirmwareManifest(
             schema = root.requiredString("schema"),
             brand = root.requiredString("brand"),
             channel = root.requiredString("channel"),
-            version = root.requiredString("version"),
-            tag = root.requiredString("tag"),
             releaseRepo = root.requiredString("releaseRepo"),
-            generatedAt = root.requiredString("generatedAt"),
-            platform = parsePlatform(root.requiredObject("platform")),
-            releaseNotes = parseReleaseNotes(root.requiredObject("releaseNotes")),
+            generatedAt = root.requiredInstant("generatedAt"),
             artifacts = parseArtifacts(root.requiredArray("artifacts")),
             signature = parseSignature(root.requiredObject("signature"))
         )
-        validateManifest(manifest)
+
+        require(manifest.isSupportedSchema) {
+            "Unsupported OTA manifest schema, brand or release repository."
+        }
+        require(manifest.channel in SUPPORTED_CHANNELS) {
+            "Unsupported OTA manifest channel: ${manifest.channel}"
+        }
+        require(manifest.artifacts.isNotEmpty()) {
+            "OTA channel manifest does not contain any artifacts."
+        }
+        require(
+            manifest.artifacts
+                .map(DeviceFirmwareManifestArtifact::compatibility)
+                .distinct()
+                .size == manifest.artifacts.size
+        ) {
+            "OTA channel manifest contains duplicate compatibility identities."
+        }
+        require(
+            manifest.signature.scheme ==
+                DeviceFirmwareRuntimeContract.Signature.SCHEME_ECDSA_P256_SHA256
+        ) {
+            "Unsupported OTA manifest signature scheme: ${manifest.signature.scheme}"
+        }
+        require(manifest.signature.payloadHash.isSha256Hex()) {
+            "OTA manifest signature payloadHash must be 64 hex characters."
+        }
+        require(manifest.signature.value.isNotBlank()) {
+            "OTA manifest signature value is missing."
+        }
+
         manifest
     }
 
-    private fun parsePlatform(json: JSONObject): DeviceFirmwareManifestPlatform {
-        json.requireExactKeys(PLATFORM_KEYS, "platform")
-        return DeviceFirmwareManifestPlatform(
-            framework = json.requiredString("framework"),
-            core = json.requiredString("core"),
-            platform = json.requiredString("platform"),
-            partitionTable = json.requiredString("partitionTable"),
-            normalOtaAssetType = json.requiredString("normalOtaAssetType")
-        )
-    }
-
-    private fun parseReleaseNotes(json: JSONObject): DeviceFirmwareReleaseNotes {
-        json.requireExactKeys(RELEASE_NOTES_KEYS, "releaseNotes")
-        val items = json.requiredArray("items").mapObjects("releaseNotes.items") { item, index ->
-            item.requireExactKeys(RELEASE_NOTE_ITEM_KEYS, "releaseNotes.items[$index]")
-            DeviceFirmwareReleaseNoteItem(
-                tr = item.requiredReleaseNoteText("tr"),
-                en = item.requiredReleaseNoteText("en")
-            )
-        }
-        return DeviceFirmwareReleaseNotes(
-            schema = json.requiredString("schema"),
-            defaultLocale = json.requiredString("defaultLocale"),
-            items = items
-        )
-    }
-
-    private fun parseSignature(json: JSONObject): DeviceFirmwareManifestSignature {
-        json.requireExactKeys(SIGNATURE_KEYS, "signature")
-        return DeviceFirmwareManifestSignature(
-            scheme = json.requiredString("scheme"),
-            keyId = json.requiredString("keyId"),
-            payloadHash = json.requiredString("payloadHash").lowercase(Locale.ROOT),
-            value = json.requiredString("value")
-        )
-    }
-
     private fun parseArtifacts(array: JSONArray): List<DeviceFirmwareManifestArtifact> =
-        array.mapObjects("artifacts") { json, index -> parseArtifact(json, index) }
+        buildList {
+            repeat(array.length()) { index ->
+                val item = array.get(index) as? JSONObject
+                    ?: error("OTA manifest artifact[$index] must be an object.")
+                add(parseArtifact(item, index).also(::validateArtifact))
+            }
+        }
 
     private fun parseArtifact(
         json: JSONObject,
         index: Int
     ): DeviceFirmwareManifestArtifact {
-        val label = "artifacts[$index]"
+        val label = "artifact[$index]"
         json.requireExactKeys(ARTIFACT_KEYS, label)
         return DeviceFirmwareManifestArtifact(
             env = json.requiredString("env"),
@@ -83,6 +79,8 @@ object DeviceFirmwareManifestParser {
                 json.requiredObject("compatibility"),
                 "$label.compatibility"
             ),
+            platform = parsePlatform(json.requiredObject("platform"), "$label.platform"),
+            release = parseRelease(json.requiredObject("release"), "$label.release"),
             firmware = parseFirmware(json.requiredObject("firmware"), "$label.firmware"),
             factory = json.requiredNullableObject("factory")?.let { factory ->
                 parseFactory(factory, "$label.factory")
@@ -105,14 +103,20 @@ object DeviceFirmwareManifestParser {
             displayName = json.requiredString("displayName"),
             skuCode = json.requiredString("skuCode"),
             hardwareRevision = json.requiredString("hardwareRevision"),
-            capabilities = parseCapabilities(json.requiredObject("capabilities"), "$label.capabilities"),
+            capabilities = parseCapabilities(
+                json.requiredObject("capabilities"),
+                "$label.capabilities"
+            ),
             limits = parseLimits(json.requiredObject("limits"), "$label.limits")
         )
     }
 
-    private fun parseCapabilities(json: JSONObject, label: String): DeviceCapabilities {
+    private fun parseCapabilities(
+        json: JSONObject,
+        label: String
+    ): DeviceCapabilitySet {
         json.requireExactKeys(CAPABILITY_KEYS, label)
-        return DeviceCapabilities(
+        return DeviceCapabilitySet(
             light = json.requiredBoolean("light"),
             manualLight = json.requiredBoolean("manualLight"),
             lightProgram = json.requiredBoolean("lightProgram"),
@@ -128,9 +132,12 @@ object DeviceFirmwareManifestParser {
         )
     }
 
-    private fun parseLimits(json: JSONObject, label: String): DeviceLimits {
+    private fun parseLimits(
+        json: JSONObject,
+        label: String
+    ): DeviceLimitSet {
         json.requireExactKeys(LIMIT_KEYS, label)
-        return DeviceLimits(
+        return DeviceLimitSet(
             lightChannelCount = json.requiredNonNegativeInt("lightChannelCount"),
             fanOutputCount = json.requiredNonNegativeInt("fanOutputCount"),
             temperatureSensorCount = json.requiredNonNegativeInt("temperatureSensorCount"),
@@ -154,10 +161,86 @@ object DeviceFirmwareManifestParser {
         )
     }
 
-    private fun parseFirmware(json: JSONObject, label: String): DeviceFirmwareAsset {
+    private fun parsePlatform(
+        json: JSONObject,
+        label: String
+    ): DeviceFirmwarePlatform {
+        json.requireExactKeys(PLATFORM_KEYS, label)
+        return DeviceFirmwarePlatform(
+            framework = json.requiredString("framework"),
+            core = json.requiredString("core"),
+            platform = json.requiredString("platform"),
+            partitionTable = json.requiredString("partitionTable"),
+            normalOtaAssetType = json.requiredString("normalOtaAssetType")
+        )
+    }
+
+    private fun parseRelease(
+        json: JSONObject,
+        label: String
+    ): DeviceFirmwareRelease {
+        json.requireExactKeys(RELEASE_KEYS, label)
+        return DeviceFirmwareRelease(
+            version = json.requiredString("version"),
+            tag = json.requiredString("tag"),
+            generatedAt = json.requiredInstant("generatedAt"),
+            releaseNotes = parseReleaseNotes(
+                json.requiredObject(DeviceFirmwareRuntimeContract.Manifest.RELEASE_NOTES),
+                "$label.releaseNotes"
+            )
+        )
+    }
+
+    private fun parseReleaseNotes(
+        json: JSONObject,
+        label: String
+    ): DeviceFirmwareReleaseNotes {
+        json.requireExactKeys(RELEASE_NOTES_KEYS, label)
+        require(
+            json.requiredString("schema") ==
+                DeviceFirmwareRuntimeContract.Manifest.RELEASE_NOTES_SCHEMA
+        ) {
+            "Unsupported OTA release-notes schema."
+        }
+        val defaultLocale = json.requiredLocaleTag(
+            DeviceFirmwareRuntimeContract.Manifest.DEFAULT_LOCALE_FIELD
+        )
+        require(defaultLocale in RELEASE_NOTE_LOCALES) {
+            "OTA release notes defaultLocale is unsupported: $defaultLocale"
+        }
+        val items = json.requiredArray(DeviceFirmwareRuntimeContract.Manifest.ITEMS)
+        require(items.length() in 1..DeviceFirmwareRuntimeContract.Limit.MAX_RELEASE_NOTE_ITEMS) {
+            "OTA release notes must contain a supported number of items."
+        }
+        val localizedItems = RELEASE_NOTE_LOCALES.associateWith { mutableListOf<String>() }
+        repeat(items.length()) { index ->
+            val item = items.get(index) as? JSONObject
+                ?: error("OTA release note item[$index] must be an object.")
+            item.requireExactKeys(RELEASE_NOTE_ITEM_KEYS, "$label.items[$index]")
+            RELEASE_NOTE_LOCALES.forEach { locale ->
+                localizedItems.getValue(locale).add(item.requiredReleaseNoteText(locale))
+            }
+        }
+        return DeviceFirmwareReleaseNotes(
+            defaultLocale = defaultLocale,
+            mandatory = false,
+            locales = localizedItems.mapValues { (_, changes) ->
+                DeviceFirmwareLocalizedReleaseNotes(
+                    title = "",
+                    summary = "",
+                    changes = changes,
+                    warnings = emptyList()
+                )
+            }
+        )
+    }
+
+    private fun parseFirmware(
+        json: JSONObject,
+        label: String
+    ): DeviceFirmwareAsset {
         json.requireExactKeys(FIRMWARE_KEYS, label)
         return DeviceFirmwareAsset(
-            version = json.requiredString("version"),
             filename = json.requiredString("filename"),
             url = json.requiredString("url"),
             sha256 = json.requiredString("sha256").lowercase(Locale.ROOT),
@@ -167,7 +250,10 @@ object DeviceFirmwareManifestParser {
         )
     }
 
-    private fun parseFactory(json: JSONObject, label: String): DeviceFirmwareFactoryAsset {
+    private fun parseFactory(
+        json: JSONObject,
+        label: String
+    ): DeviceFirmwareFactoryAsset {
         json.requireExactKeys(FACTORY_KEYS, label)
         return DeviceFirmwareFactoryAsset(
             filename = json.requiredString("filename"),
@@ -177,153 +263,107 @@ object DeviceFirmwareManifestParser {
         )
     }
 
-    private fun validateManifest(manifest: DeviceFirmwareManifest) {
-        require(manifest.isSupportedSchema) {
-            "Unsupported OTA manifest schema, brand or release repository."
-        }
-        require(manifest.channel in SUPPORTED_CHANNELS) {
-            "Unsupported OTA manifest channel: ${manifest.channel}"
-        }
-        require(manifest.tag == "v${manifest.version}") {
-            "OTA manifest tag must be the exact v-prefixed version."
-        }
-        require(manifest.platform == OFFICIAL_PLATFORM) {
-            "OTA manifest platform differs from AquaLight-Firmware/main."
-        }
-        require(manifest.artifacts.isNotEmpty()) {
-            "OTA manifest does not contain any artifacts."
-        }
-        require(manifest.artifacts.map(DeviceFirmwareManifestArtifact::env).distinct().size ==
-            manifest.artifacts.size) {
-            "OTA manifest environments must be unique."
-        }
-        require(
-            manifest.signature.scheme ==
-                DeviceFirmwareRuntimeContract.Signature.SCHEME_ECDSA_P256_SHA256
-        ) {
-            "Unsupported OTA manifest signature scheme: ${manifest.signature.scheme}"
-        }
-        require(manifest.signature.payloadHash.isSha256Hex()) {
-            "OTA manifest signature payloadHash must be 64 hex characters."
-        }
-        manifest.artifacts.forEach { artifact -> validateArtifact(manifest, artifact) }
+    private fun parseSignature(json: JSONObject): DeviceFirmwareManifestSignature {
+        json.requireExactKeys(SIGNATURE_KEYS, "signature")
+        return DeviceFirmwareManifestSignature(
+            scheme = json.requiredString("scheme"),
+            keyId = json.requiredString("keyId"),
+            payloadHash = json.requiredString("payloadHash").lowercase(Locale.ROOT),
+            value = json.requiredString("value")
+        )
     }
 
-    private fun validateArtifact(
-        manifest: DeviceFirmwareManifest,
-        artifact: DeviceFirmwareManifestArtifact
-    ) {
-        validateArtifactIdentity(manifest, artifact)
-        validateFirmwareAsset(manifest, artifact)
-        validateFactoryAsset(manifest, artifact)
-    }
-
-    private fun validateArtifactIdentity(
-        manifest: DeviceFirmwareManifest,
-        artifact: DeviceFirmwareManifestArtifact
-    ) {
+    private fun validateArtifact(artifact: DeviceFirmwareManifestArtifact) {
+        validateIdentity(artifact)
         require(ENVIRONMENT_PATTERN.matches(artifact.env)) {
-            "Invalid OTA manifest environment: ${artifact.env}"
+            "OTA artifact environment is invalid: ${artifact.env}"
         }
         require(artifact.env == artifact.product.productKey.lowercase(Locale.ROOT)) {
-            "OTA environment must equal lowercase productKey for ${artifact.env}."
+            "OTA artifact environment does not match lowercase productKey."
         }
-        require(artifact.product.productKey == artifact.compatibility.productKey) {
-            "Manifest productKey mismatch for ${artifact.env}."
+        require(artifact.product.brand == DeviceFirmwareRuntimeContract.Manifest.BRAND) {
+            "OTA artifact product brand is unsupported."
         }
-        require(artifact.product.productId == artifact.compatibility.productId) {
-            "Manifest productId mismatch for ${artifact.env}."
-        }
-        require(artifact.product.family == artifact.compatibility.family) {
-            "Manifest family mismatch for ${artifact.env}."
-        }
-        require(artifact.product.line == artifact.compatibility.line) {
-            "Manifest line mismatch for ${artifact.env}."
-        }
-        require(artifact.product.model == artifact.compatibility.model) {
-            "Manifest model mismatch for ${artifact.env}."
-        }
-        require(artifact.product.hardwareRevision == artifact.compatibility.hardwareRevision) {
-            "Manifest hardwareRevision mismatch for ${artifact.env}."
-        }
-        require(artifact.product.brand == manifest.brand) {
-            "Manifest product brand mismatch for ${artifact.env}."
-        }
-        require(artifact.product.capabilities.ota) {
-            "Manifest product must declare OTA capability for ${artifact.env}."
+        validatePlatform(artifact.platform)
+        validateRelease(artifact.release)
+        validateFirmwareAsset(artifact)
+        artifact.factory?.let { factory -> validateFactoryAsset(artifact, factory) }
+    }
+
+    private fun validateIdentity(artifact: DeviceFirmwareManifestArtifact) {
+        val product = artifact.product
+        val compatibility = artifact.compatibility
+        require(product.productKey == compatibility.productKey) { "Manifest productKey mismatch." }
+        require(product.productId == compatibility.productId) { "Manifest productId mismatch." }
+        require(product.family == compatibility.family) { "Manifest family mismatch." }
+        require(product.line == compatibility.line) { "Manifest line mismatch." }
+        require(product.model == compatibility.model) { "Manifest model mismatch." }
+        require(product.hardwareRevision == compatibility.hardwareRevision) {
+            "Manifest hardwareRevision mismatch."
         }
     }
 
-    private fun validateFirmwareAsset(
-        manifest: DeviceFirmwareManifest,
-        artifact: DeviceFirmwareManifestArtifact
-    ) {
-        val expected = PublishedAssetExpectation(
-            filename = "AquaLight-${artifact.env}-${manifest.tag}-ota.bin",
-            tag = manifest.tag,
-            label = "firmware"
+    private fun validatePlatform(platform: DeviceFirmwarePlatform) {
+        require(platform.framework == DeviceFirmwareRuntimeContract.Manifest.PLATFORM_FRAMEWORK)
+        require(platform.core == DeviceFirmwareRuntimeContract.Manifest.PLATFORM_CORE)
+        require(platform.platform == DeviceFirmwareRuntimeContract.Manifest.PLATFORM_PACKAGE)
+        require(platform.partitionTable == DeviceFirmwareRuntimeContract.Manifest.PARTITION_TABLE)
+        require(
+            platform.normalOtaAssetType ==
+                DeviceFirmwareRuntimeContract.Manifest.NORMAL_OTA_ASSET_TYPE
         )
-        validatePublishedAsset(artifact.firmware.asPublishedAsset(), expected)
-        require(artifact.firmware.version == manifest.version) {
-            "OTA firmware version differs from manifest version for ${artifact.env}."
+    }
+
+    private fun validateRelease(release: DeviceFirmwareRelease) {
+        require(VERSION_PATTERN.matches(release.version)) {
+            "OTA artifact release version is invalid: ${release.version}"
         }
-        require(artifact.firmware.format == DeviceFirmwareRuntimeContract.Manifest.FIRMWARE_FORMAT) {
-            "OTA firmware format differs from firmware release contract."
+        require(release.tag == "v${release.version}") {
+            "OTA artifact release tag does not match its version."
         }
-        require(artifact.firmware.otaSlotCompatible) {
-            "OTA firmware must be OTA-slot compatible."
+    }
+
+    private fun validateFirmwareAsset(artifact: DeviceFirmwareManifestArtifact) {
+        val firmware = artifact.firmware
+        val expectedFilename = "AquaLight-${artifact.env}-${artifact.release.tag}-ota.bin"
+        require(firmware.filename == expectedFilename) {
+            "OTA firmware filename does not match env/release contract."
+        }
+        require(
+            firmware.url == DeviceFirmwareRuntimeContract.OFFICIAL_RELEASE_URL_PREFIX +
+                "${artifact.release.tag}/$expectedFilename"
+        ) {
+            "OTA firmware URL does not match the immutable release asset."
+        }
+        require(firmware.sha256.isSha256Hex()) {
+            "OTA firmware sha256 must be 64 hex characters."
+        }
+        require(firmware.format == DeviceFirmwareRuntimeContract.Manifest.FIRMWARE_FORMAT) {
+            "OTA firmware format is unsupported: ${firmware.format}"
+        }
+        require(firmware.otaSlotCompatible) {
+            "OTA firmware is not marked as OTA slot compatible."
         }
     }
 
     private fun validateFactoryAsset(
-        manifest: DeviceFirmwareManifest,
-        artifact: DeviceFirmwareManifestArtifact
+        artifact: DeviceFirmwareManifestArtifact,
+        factory: DeviceFirmwareFactoryAsset
     ) {
-        val factory = artifact.factory ?: return
-        val expected = PublishedAssetExpectation(
-            filename = "AquaLight-${artifact.env}-${manifest.tag}-factory.zip",
-            tag = manifest.tag,
-            label = "factory"
-        )
-        validatePublishedAsset(factory.asPublishedAsset(), expected)
-    }
-
-    private fun validatePublishedAsset(
-        asset: PublishedAsset,
-        expected: PublishedAssetExpectation
-    ) {
-        require(asset.filename == expected.filename) {
-            "OTA ${expected.label} filename differs from firmware release naming."
+        val expectedFilename = "AquaLight-${artifact.env}-${artifact.release.tag}-factory.zip"
+        require(factory.filename == expectedFilename) {
+            "OTA factory filename does not match env/release contract."
         }
-        val expectedUrl = DeviceFirmwareRuntimeContract.OFFICIAL_RELEASE_URL_PREFIX +
-            "${expected.tag}/${expected.filename}"
-        require(asset.url == expectedUrl) {
-            "OTA ${expected.label} URL differs from the official release artifact URL."
+        require(
+            factory.url == DeviceFirmwareRuntimeContract.OFFICIAL_RELEASE_URL_PREFIX +
+                "${artifact.release.tag}/$expectedFilename"
+        ) {
+            "OTA factory URL does not match the immutable release asset."
         }
-        require(asset.url.length <= DeviceFirmwareRuntimeContract.Limit.MAX_URL_LENGTH) {
-            "OTA ${expected.label} URL exceeds the firmware limit."
-        }
-        require(asset.sha256.isSha256Hex()) {
-            "OTA ${expected.label} sha256 must be 64 hex characters."
-        }
-        require(asset.size > 0) {
-            "OTA ${expected.label} size must be greater than zero."
+        require(factory.sha256.isSha256Hex()) {
+            "OTA factory sha256 must be 64 hex characters."
         }
     }
-
-    private fun DeviceFirmwareAsset.asPublishedAsset(): PublishedAsset = PublishedAsset(
-        filename = filename,
-        url = url,
-        sha256 = sha256,
-        size = size
-    )
-
-    private fun DeviceFirmwareFactoryAsset.asPublishedAsset(): PublishedAsset = PublishedAsset(
-        filename = filename,
-        url = url,
-        sha256 = sha256,
-        size = size
-    )
 
     private fun JSONObject.requiredObject(key: String): JSONObject {
         require(has(key) && !isNull(key)) { "OTA manifest object '$key' is missing." }
@@ -331,9 +371,9 @@ object DeviceFirmwareManifestParser {
     }
 
     private fun JSONObject.requiredNullableObject(key: String): JSONObject? {
-        require(has(key)) { "OTA manifest field '$key' is missing." }
+        require(has(key)) { "OTA manifest nullable object '$key' is missing." }
         if (isNull(key)) return null
-        return get(key) as? JSONObject ?: error("OTA manifest field '$key' must be an object or null.")
+        return get(key) as? JSONObject ?: error("OTA manifest field '$key' must be an object.")
     }
 
     private fun JSONObject.requiredArray(key: String): JSONArray {
@@ -344,7 +384,7 @@ object DeviceFirmwareManifestParser {
     private fun JSONObject.requiredString(key: String): String {
         require(has(key) && !isNull(key)) { "OTA manifest field '$key' is missing." }
         val value = get(key) as? String ?: error("OTA manifest field '$key' must be a string.")
-        require(value.isNotEmpty()) { "OTA manifest field '$key' must not be empty." }
+        require(value.isNotEmpty()) { "OTA manifest field '$key' is missing." }
         require(!value.first().isWhitespace() && !value.last().isWhitespace()) {
             "OTA manifest field '$key' must not contain surrounding whitespace."
         }
@@ -352,6 +392,51 @@ object DeviceFirmwareManifestParser {
             "OTA manifest field '$key' must not contain control characters."
         }
         return value
+    }
+
+    private fun JSONObject.requiredInstant(key: String): String {
+        val value = requiredString(key)
+        runCatching { Instant.parse(value) }.getOrElse {
+            error("OTA manifest field '$key' must be an ISO-8601 instant.")
+        }
+        return value
+    }
+
+    private fun JSONObject.requiredBoolean(key: String): Boolean {
+        require(has(key) && !isNull(key)) { "OTA manifest field '$key' is missing." }
+        return get(key) as? Boolean ?: error("OTA manifest field '$key' must be a boolean.")
+    }
+
+    private fun JSONObject.requiredPositiveInt(key: String): Int = requiredIntInRange(
+        key = key,
+        range = 1..Int.MAX_VALUE
+    )
+
+    private fun JSONObject.requiredNonNegativeInt(key: String): Int = requiredIntInRange(
+        key = key,
+        range = 0..Int.MAX_VALUE
+    )
+
+    private fun JSONObject.requiredIntInRange(key: String, range: IntRange): Int {
+        require(has(key) && !isNull(key)) { "OTA manifest field '$key' is missing." }
+        val value = get(key) as? Number
+            ?: error("OTA manifest field '$key' must be an integer.")
+        val asLong = value.toLong()
+        require(value.toDouble().isFinite() && value.toDouble() == asLong.toDouble()) {
+            "OTA manifest field '$key' must be an integer."
+        }
+        require(asLong in range.first.toLong()..range.last.toLong()) {
+            "OTA manifest field '$key' is outside the supported range."
+        }
+        return asLong.toInt()
+    }
+
+    private fun JSONObject.requiredLocaleTag(key: String): String {
+        val localeTag = requiredString(key)
+        require(LOCALE_TAG_PATTERN.matches(localeTag)) {
+            "OTA manifest field '$key' must use an exact locale tag."
+        }
+        return localeTag
     }
 
     private fun JSONObject.requiredReleaseNoteText(key: String): String {
@@ -365,48 +450,9 @@ object DeviceFirmwareManifestParser {
             "OTA release note '$key' must not contain C0 control characters."
         }
         require(value.length <= DeviceFirmwareRuntimeContract.Limit.MAX_RELEASE_NOTE_TEXT_LENGTH) {
-            "OTA release note '$key' exceeds the firmware length limit."
+            "OTA release note '$key' exceeds the supported length."
         }
         return value
-    }
-
-    private fun JSONObject.requiredBoolean(key: String): Boolean {
-        require(has(key) && !isNull(key)) { "OTA manifest field '$key' is missing." }
-        return get(key) as? Boolean ?: error("OTA manifest field '$key' must be a boolean.")
-    }
-
-    private fun JSONObject.requiredPositiveInt(key: String): Int =
-        requiredInteger(key, minimum = 1)
-
-    private fun JSONObject.requiredNonNegativeInt(key: String): Int =
-        requiredInteger(key, minimum = 0)
-
-    private fun JSONObject.requiredInteger(key: String, minimum: Int): Int {
-        require(has(key) && !isNull(key)) { "OTA manifest field '$key' is missing." }
-        val value = get(key) as? Number
-            ?: error("OTA manifest field '$key' must be an integer.")
-        val asLong = value.toLong()
-        require(value.toDouble().isFinite() && value.toDouble() == asLong.toDouble()) {
-            "OTA manifest field '$key' must be an integer."
-        }
-        require(asLong in minimum.toLong()..Int.MAX_VALUE.toLong()) {
-            "OTA manifest field '$key' is outside Android/firmware supported range."
-        }
-        return asLong.toInt()
-    }
-
-    private inline fun <T> JSONArray.mapObjects(
-        label: String,
-        transform: (JSONObject, Int) -> T
-    ): List<T> {
-        val source = this
-        return buildList {
-            repeat(source.length()) { index ->
-                val item = source.get(index) as? JSONObject
-                    ?: error("OTA manifest $label[$index] must be an object.")
-                add(transform(item, index))
-            }
-        }
     }
 
     private fun JSONObject.requireExactKeys(expected: Set<String>, label: String) {
@@ -422,78 +468,40 @@ object DeviceFirmwareManifestParser {
         }
     }
 
-    private data class PublishedAsset(
-        val filename: String,
-        val url: String,
-        val sha256: String,
-        val size: Int
-    )
-
-    private data class PublishedAssetExpectation(
-        val filename: String,
-        val tag: String,
-        val label: String
-    )
-
     private val ROOT_KEYS = setOf(
-        "schema",
-        "brand",
-        "channel",
-        "version",
-        "tag",
-        "releaseRepo",
-        "generatedAt",
-        "platform",
-        "releaseNotes",
-        "artifacts",
-        "signature"
+        "schema", "brand", "channel", "releaseRepo", "generatedAt", "artifacts", "signature"
     )
-    private val PLATFORM_KEYS = setOf(
-        "framework", "core", "platform", "partitionTable", "normalOtaAssetType"
-    )
-    private val RELEASE_NOTES_KEYS = setOf("schema", "defaultLocale", "items")
-    private val RELEASE_NOTE_ITEM_KEYS = setOf("tr", "en")
     private val SIGNATURE_KEYS = setOf("scheme", "keyId", "payloadHash", "value")
-    private val ARTIFACT_KEYS = setOf("env", "product", "compatibility", "firmware", "factory")
+    private val ARTIFACT_KEYS = setOf(
+        "env", "product", "compatibility", "platform", "release", "firmware", "factory"
+    )
     private val PRODUCT_KEYS = setOf(
-        "productKey",
-        "productId",
-        "brand",
-        "family",
-        "line",
-        "model",
-        "displayName",
-        "skuCode",
-        "hardwareRevision",
-        "capabilities",
-        "limits"
+        "productKey", "productId", "brand", "family", "line", "model", "displayName",
+        "skuCode", "hardwareRevision", "capabilities", "limits"
     )
     private val CAPABILITY_KEYS = setOf(
-        "light",
-        "manualLight",
-        "lightProgram",
-        "lightPresets",
-        "lightSimulation",
-        "fan",
-        "cooling",
-        "temperature",
-        "standaloneTimer",
-        "dosing",
-        "timeSync",
-        "ota"
+        "light", "manualLight", "lightProgram", "lightPresets", "lightSimulation", "fan",
+        "cooling", "temperature", "standaloneTimer", "dosing", "timeSync", "ota"
     )
     private val LIMIT_KEYS = setOf(
-        "lightChannelCount",
-        "fanOutputCount",
-        "temperatureSensorCount",
-        "timerChannelCount",
+        "lightChannelCount", "fanOutputCount", "temperatureSensorCount", "timerChannelCount",
         "dosingChannelCount"
     )
     private val COMPATIBILITY_KEYS = setOf(
         "productKey", "productId", "family", "line", "model", "hardwareRevision"
     )
+    private val PLATFORM_KEYS = setOf(
+        "framework", "core", "platform", "partitionTable", "normalOtaAssetType"
+    )
+    private val RELEASE_KEYS = setOf("version", "tag", "generatedAt", "releaseNotes")
+    private val RELEASE_NOTES_KEYS = setOf("schema", "defaultLocale", "items")
+    private val RELEASE_NOTE_ITEM_KEYS = setOf("tr", "en")
+    private val RELEASE_NOTE_LOCALES = listOf(
+        DeviceFirmwareRuntimeContract.Manifest.TURKISH_LOCALE,
+        DeviceFirmwareRuntimeContract.Manifest.ENGLISH_LOCALE
+    )
     private val FIRMWARE_KEYS = setOf(
-        "version", "filename", "url", "sha256", "size", "format", "otaSlotCompatible"
+        "filename", "url", "sha256", "size", "format", "otaSlotCompatible"
     )
     private val FACTORY_KEYS = setOf("filename", "url", "sha256", "size")
     private val SUPPORTED_CHANNELS = setOf(
@@ -501,12 +509,10 @@ object DeviceFirmwareManifestParser {
         DeviceFirmwareRuntimeContract.Manifest.BETA_CHANNEL,
         DeviceFirmwareRuntimeContract.Manifest.DEV_CHANNEL
     )
-    private val OFFICIAL_PLATFORM = DeviceFirmwareManifestPlatform(
-        framework = DeviceFirmwareRuntimeContract.Manifest.PLATFORM_FRAMEWORK,
-        core = DeviceFirmwareRuntimeContract.Manifest.PLATFORM_CORE,
-        platform = DeviceFirmwareRuntimeContract.Manifest.PLATFORM_PACKAGE,
-        partitionTable = DeviceFirmwareRuntimeContract.Manifest.PARTITION_TABLE,
-        normalOtaAssetType = DeviceFirmwareRuntimeContract.Manifest.NORMAL_OTA_ASSET_TYPE
-    )
     private val ENVIRONMENT_PATTERN = Regex("^[a-z0-9_]+$")
+    private val VERSION_PATTERN = Regex(
+        "^(0|[1-9][0-9]*)\\.(0|[1-9][0-9]*)\\.(0|[1-9][0-9]*)" +
+            "(?:[-.][A-Za-z0-9._-]+)?$"
+    )
+    private val LOCALE_TAG_PATTERN = Regex("^[a-z]{2,3}(?:-[A-Z]{2})?$")
 }

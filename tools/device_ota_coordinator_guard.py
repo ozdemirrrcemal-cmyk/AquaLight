@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Protect shared OTA state coordination, exact artifact selection and signed release content."""
+"""Protect shared OTA coordination and the sole cumulative manifest-v1 contract."""
 from __future__ import annotations
 
 import sys
@@ -94,6 +94,8 @@ require_tokens(
         "recoverRuntime(deviceUid)",
         "DeviceRuntimeLifecycleEvent.Authenticated",
         "DeviceRuntimeLifecycleEvent.Unavailable",
+        "DeviceFirmwareAvailability.NoUpdateAvailable",
+        "preservesPreparedUpdateFor(snapshot)",
     ),
 )
 require_tokens(
@@ -109,13 +111,9 @@ require_tokens(
     ),
 )
 forbid_tokens("runtime", ("AqlWsCommandClient", "sendLegacy", "LegacyOnlyGateway"))
-obsolete_raw_mapper = (
-    SOURCE / "data/devices/runtime/modules/firmware/DeviceFirmwareOtaEventMapper.kt"
-)
+obsolete_raw_mapper = SOURCE / "data/devices/runtime/modules/firmware/DeviceFirmwareOtaEventMapper.kt"
 if obsolete_raw_mapper.exists():
-    errors.append(
-        f"obsolete raw OTA mapper remains: {obsolete_raw_mapper.relative_to(ROOT)}"
-    )
+    errors.append(f"obsolete raw OTA mapper remains: {obsolete_raw_mapper.relative_to(ROOT)}")
 require_tokens(
     "validation",
     (
@@ -164,11 +162,14 @@ require_tokens(
 require_tokens(
     "manifestContract",
     (
-        'const val SCHEMA = "aql.ota.manifest.v2"',
+        'const val SCHEMA = "aql.ota.manifest.v1"',
         'const val RELEASE_NOTES_SCHEMA = "aql.ota.release-notes.v1"',
         'const val FIRMWARE_FORMAT = "esp32-app-bin"',
+        'const val OTA_PROGRESS = "firmware.ota.progress"',
+        'const val OTA_COMPLETED = "firmware.ota.completed"',
     ),
 )
+forbid_tokens("manifestContract", ("aql.ota.manifest.v2",))
 require_tokens(
     "manifest",
     (
@@ -186,9 +187,9 @@ require_tokens(
         'json.requiredNullableObject("factory")',
         "product.family == compatibility.family",
         "product.line == compatibility.line",
-        "OTA channel manifest contains duplicate product environments.",
         "OTA channel manifest contains duplicate compatibility identities.",
         "OTA firmware URL does not match the immutable release asset.",
+        "character < ' '",
     ),
 )
 forbid_tokens(
@@ -198,6 +199,8 @@ forbid_tokens(
         "json.requireKnownKeys(",
         "ROOT_OPTIONAL_KEYS",
         "ARTIFACT_OPTIONAL_KEYS",
+        "aql.ota.manifest.v2",
+        "OTA channel manifest contains duplicate product environments.",
     ),
 )
 require_tokens(
@@ -210,6 +213,7 @@ require_tokens(
         "parseOtaSnapshotExact",
         'model = json.requiredExactString("model")',
         "OTA active flag differs from its exact phase.",
+        "httpStatus = source.requiredExactInt",
     ),
 )
 

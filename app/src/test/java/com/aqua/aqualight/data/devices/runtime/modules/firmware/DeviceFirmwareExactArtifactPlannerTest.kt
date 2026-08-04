@@ -65,7 +65,7 @@ class DeviceFirmwareExactArtifactPlannerTest {
     }
 
     @Test
-    fun `matching identity with wrong environment is rejected`() {
+    fun `matching identity with wrong environment is treated as not published`() {
         val snapshot = product("DOSING_DOSE_PRO_2").toSnapshot()
         val wrongEnv = artifact().copy(env = "dosing_dose_pro_4")
 
@@ -180,11 +180,10 @@ class DeviceFirmwareExactArtifactPlannerTest {
             ),
             platform = DeviceFirmwarePlatform(
                 framework = DeviceFirmwareRuntimeContract.Manifest.PLATFORM_FRAMEWORK,
-                core = "3.3.9",
-                platform = "pioarduino/platform-espressif32#55.03.39",
-                partitionTable = DeviceFirmwareRuntimeContract.Manifest.PLATFORM_PARTITION_TABLE,
-                normalOtaAssetType =
-                    DeviceFirmwareRuntimeContract.Manifest.PLATFORM_OTA_ASSET_TYPE
+                core = DeviceFirmwareRuntimeContract.Manifest.PLATFORM_CORE,
+                platform = DeviceFirmwareRuntimeContract.Manifest.PLATFORM_PACKAGE,
+                partitionTable = DeviceFirmwareRuntimeContract.Manifest.PARTITION_TABLE,
+                normalOtaAssetType = DeviceFirmwareRuntimeContract.Manifest.NORMAL_OTA_ASSET_TYPE
             ),
             release = DeviceFirmwareRelease(
                 version = "2.0.0",

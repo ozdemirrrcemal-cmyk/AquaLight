@@ -3,8 +3,7 @@ package com.aqua.aqualight.data.devices.runtime.modules.firmware
 /**
  * Exact Android mirror of the firmware WebSocket OTA and published manifest contracts.
  *
- * The values in this file follow AquaLight-Firmware/main. Product identity and OTA artifact
- * selection must never depend on an owner-defined device name.
+ * Product identity and OTA artifact selection never depend on an owner-defined device name.
  */
 object DeviceFirmwareRuntimeContract {
 
@@ -26,13 +25,7 @@ object DeviceFirmwareRuntimeContract {
         const val OTA_CLEAR = "ota.clear"
     }
 
-    /**
-     * Fully qualified names written inside firmware command-response payloads.
-     *
-     * These are deliberately different from the top-level WebSocket event actions registered in
-     * AqlWsEventContract (`ota.progress` and `ota.completed`). Firmware publishes the qualified
-     * name to its event bus and the WebSocket layer splits it into module + action for the envelope.
-     */
+    /** Fully qualified names inside firmware command-response payloads. */
     object Event {
         const val OTA_PROGRESS = "firmware.ota.progress"
         const val OTA_COMPLETED = "firmware.ota.completed"
@@ -79,13 +72,25 @@ object DeviceFirmwareRuntimeContract {
         const val STABLE_CHANNEL = "stable"
         const val BETA_CHANNEL = "beta"
         const val DEV_CHANNEL = "dev"
-        const val FIRMWARE_FORMAT = "esp32-app-bin"
 
+        const val RELEASE = "release"
+        const val RELEASE_NOTES = "releaseNotes"
+        const val RELEASE_NOTES_SCHEMA = "aql.ota.release-notes.v1"
+        const val DEFAULT_LOCALE_FIELD = "defaultLocale"
+        const val ITEMS = "items"
+        const val TURKISH_LOCALE = "tr"
+        const val ENGLISH_LOCALE = "en"
+
+        const val FIRMWARE_FORMAT = "esp32-app-bin"
         const val PLATFORM_FRAMEWORK = "arduino-esp32"
         const val PLATFORM_CORE = "3.3.9"
         const val PLATFORM_PACKAGE = "pioarduino/platform-espressif32#55.03.39"
         const val PARTITION_TABLE = "aql_ota_16mb"
         const val NORMAL_OTA_ASSET_TYPE = "firmware.bin"
+
+        // Descriptive platform-field names retained as the same compile-time source of truth.
+        const val PLATFORM_PARTITION_TABLE = PARTITION_TABLE
+        const val PLATFORM_OTA_ASSET_TYPE = NORMAL_OTA_ASSET_TYPE
     }
 
     object ReleaseNotes {
