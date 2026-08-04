@@ -10,15 +10,15 @@ interface DeviceFirmwareUpdateOperations {
 
     suspend fun checkAvailability(
         deviceUid: String,
-        manifestUrl: String,
+        channel: DeviceFirmwareChannel = DeviceFirmwareChannel.STABLE,
         applyNow: Boolean = true
-    ): Result<DeviceOtaState> = prepareUpdate(deviceUid, manifestUrl, applyNow).map { plan ->
+    ): Result<DeviceOtaState> = prepareUpdate(deviceUid, channel, applyNow).map { plan ->
         DeviceOtaState.UpdateAvailable(plan)
     }
 
     suspend fun prepareUpdate(
         deviceUid: String,
-        manifestUrl: String,
+        channel: DeviceFirmwareChannel = DeviceFirmwareChannel.STABLE,
         applyNow: Boolean = true
     ): Result<PreparedDeviceFirmwareUpdate>
 
@@ -29,6 +29,14 @@ interface DeviceFirmwareUpdateOperations {
     suspend fun clearStatus(deviceUid: String): DeviceFirmwareCommandResult
 
     fun close() = Unit
+}
+
+enum class DeviceFirmwareChannel(
+    val wireValue: String
+) {
+    STABLE("stable"),
+    BETA("beta"),
+    DEV("dev")
 }
 
 data class DeviceFirmwareReleaseContent(
