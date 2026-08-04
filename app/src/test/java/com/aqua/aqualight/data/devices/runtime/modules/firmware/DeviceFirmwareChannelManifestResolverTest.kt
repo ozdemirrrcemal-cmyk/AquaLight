@@ -16,27 +16,29 @@ import org.junit.Test
 class DeviceFirmwareChannelManifestResolverTest {
 
     private val resolver = DeviceFirmwareChannelManifestResolver()
+    private val wrgbProduct = ProductFixture(
+        productKey = "LIGHT_WRGB_PRO_ELITE",
+        productId = "com.aqualight.light.wrgb_pro_elite",
+        family = DeviceFamily.LIGHT,
+        line = "wrgb_pro_elite",
+        model = "wrgb_pro_elite_120"
+    )
+    private val dosePro4Product = ProductFixture(
+        productKey = "DOSING_DOSE_PRO_4",
+        productId = "com.aqualight.dosing.dose_pro_4",
+        family = DeviceFamily.DOSING,
+        line = "dose_pro",
+        model = "dose_pro_4"
+    )
 
     @Test
     fun `resolves isolated product channels from authenticated productKey`() {
         val wrgb = resolver.resolve(
-            snapshot(
-                productKey = "LIGHT_WRGB_PRO_ELITE",
-                productId = "com.aqualight.light.wrgb_pro_elite",
-                family = DeviceFamily.LIGHT,
-                line = "wrgb_pro_elite",
-                model = "wrgb_pro_elite_120"
-            ),
+            snapshot(product = wrgbProduct),
             DeviceFirmwareChannel.STABLE
         )
         val dosePro4 = resolver.resolve(
-            snapshot(
-                productKey = "DOSING_DOSE_PRO_4",
-                productId = "com.aqualight.dosing.dose_pro_4",
-                family = DeviceFamily.DOSING,
-                line = "dose_pro",
-                model = "dose_pro_4"
-            ),
+            snapshot(product = dosePro4Product),
             DeviceFirmwareChannel.STABLE
         )
 
@@ -67,7 +69,9 @@ class DeviceFirmwareChannelManifestResolverTest {
     @Test
     fun `rejects unauthenticated metadata and unsafe product keys`() {
         val unauthenticated = snapshot().copy(runtimeMetadataGeneration = 0L)
-        val unsafe = snapshot(productKey = "LIGHT/WRGB")
+        val unsafe = snapshot(
+            product = wrgbProduct.copy(productKey = "LIGHT/WRGB")
+        )
 
         assertThrows(IllegalArgumentException::class.java) {
             resolver.resolve(unauthenticated, DeviceFirmwareChannel.STABLE)
@@ -79,11 +83,7 @@ class DeviceFirmwareChannelManifestResolverTest {
 
     private fun snapshot(
         customName: String = "",
-        productKey: String = "LIGHT_WRGB_PRO_ELITE",
-        productId: String = "com.aqualight.light.wrgb_pro_elite",
-        family: DeviceFamily = DeviceFamily.LIGHT,
-        line: String = "wrgb_pro_elite",
-        model: String = "wrgb_pro_elite_120"
+        product: ProductFixture = wrgbProduct
     ): DeviceSnapshot = DeviceSnapshot(
         identity = DeviceIdentity(
             uid = DeviceUid("AQL-CHANNEL-TEST"),
@@ -91,13 +91,13 @@ class DeviceFirmwareChannelManifestResolverTest {
         ),
         product = DeviceProduct(
             brand = "AquaLight",
-            productId = productId,
-            productKey = productKey,
-            family = family,
-            familyRaw = family.wireValue,
-            line = line,
-            model = model,
-            displayName = model,
+            productId = product.productId,
+            productKey = product.productKey,
+            family = product.family,
+            familyRaw = product.family.wireValue,
+            line = product.line,
+            model = product.model,
+            displayName = product.model,
             skuCode = "AQL-CHANNEL-TEST",
             hardwareRevision = "2.0"
         ),
@@ -107,5 +107,13 @@ class DeviceFirmwareChannelManifestResolverTest {
         capabilities = DeviceCapabilities(ota = true),
         limits = DeviceLimits(),
         runtimeMetadataGeneration = 7L
+    )
+
+    private data class ProductFixture(
+        val productKey: String,
+        val productId: String,
+        val family: DeviceFamily,
+        val line: String,
+        val model: String
     )
 }
