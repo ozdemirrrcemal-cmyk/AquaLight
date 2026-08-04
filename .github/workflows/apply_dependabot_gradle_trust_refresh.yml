@@ -66,16 +66,27 @@ jobs:
           python - <<'PY'
           from pathlib import Path
 
-          path = Path(
+          repository = Path(
               "app/src/main/java/com/aqua/aqualight/data/devices/runtime/modules/firmware/"
               "DeviceFirmwareUpdateRepository.kt"
           )
-          source = path.read_text(encoding="utf-8")
+          source = repository.read_text(encoding="utf-8")
           marker = "class DeviceFirmwareUpdateRepository("
           replacement = "internal class DeviceFirmwareUpdateRepository("
           if source.count(marker) != 1:
               raise SystemExit("Android OTA repository declaration is not unique")
-          path.write_text(source.replace(marker, replacement), encoding="utf-8")
+          repository.write_text(source.replace(marker, replacement), encoding="utf-8")
+
+          provider = Path(
+              "app/src/main/java/com/aqua/aqualight/data/devices/runtime/modules/"
+              "DeviceRuntimeModuleProvider.kt"
+          )
+          source = provider.read_text(encoding="utf-8")
+          marker = "    val firmwareUpdate = DeviceFirmwareUpdateRepository(firmware)"
+          replacement = "    internal val firmwareUpdate = DeviceFirmwareUpdateRepository(firmware)"
+          if source.count(marker) != 1:
+              raise SystemExit("Android OTA provider property declaration is not unique")
+          provider.write_text(source.replace(marker, replacement), encoding="utf-8")
           PY
 
       - name: Pin guards to verified firmware contract
