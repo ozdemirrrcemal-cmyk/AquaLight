@@ -121,11 +121,5 @@
     <string name="device_settings_light_temperature_value">%1$s °C</string>
     <string name="device_settings_light_temperature_threshold_label">Sıcaklık koruma eşiği</string>
     <string name="device_settings_light_edit_temperature_threshold_description">Sıcaklık koruma eşiğini düzenle</string>
-    <string name="device_settings_change_light_temperature_threshold_title">Sıcaklık koruma eşiğini değiştir</string>
-    <string name="device_settings_light_temperature_threshold_hint">%1$d ile %2$d °C arasında bir değer girin</string>
-    <string name="device_settings_light_temperature_threshold_allowed_range_label">İzin verilen aralık</string>
-    <string name="device_settings_light_temperature_threshold_allowed_range_value">%1$d–%2$d °C</string>
-    <string name="device_settings_light_temperature_threshold_required">Bir sıcaklık koruma eşiği girin.</string>
-    <string name="device_settings_light_temperature_threshold_invalid_number">Geçerli bir sıcaklık değeri girin.</string>
-    <string name="device_settings_light_temperature_threshold_out_of_range">Sıcaklık %1$d ile %2$d °C arasında olmalıdır.</string>
+    <string name="device_settings_light_temperature_protection_title">Sıcaklık koruması</string>
 </resources>
