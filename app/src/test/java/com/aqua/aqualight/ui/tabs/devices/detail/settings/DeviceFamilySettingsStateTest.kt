@@ -42,7 +42,14 @@ class DeviceFamilySettingsStateTest {
 
     @Test
     fun `creates Light protection inventory only for exact supported WRGB contract`() {
-        assertTrue(wrgbSnapshot().toDeviceFamilySettingsUiState().showLightProtectionInventory)
+        val wrgbState = wrgbSnapshot().toDeviceFamilySettingsUiState()
+
+        assertTrue(wrgbState.showLightProtectionInventory)
+        assertEquals(
+            LightTemperatureProtectionUiContract.DEFAULT_THRESHOLD_C,
+            wrgbState.temperatureProtectionThresholdC,
+            0.0
+        )
 
         val rgbSlim = wrgbSnapshot().copy(
             model = "rgb_pro_slim",
