@@ -232,8 +232,8 @@ class DeviceOtaCoordinatorTest {
         runCurrent()
 
         val failed = coordinator.observe(DEVICE_UID).value as DeviceOtaState.Failed
-        assertTrue(failed.message.contains("firmware version"))
-        assertFalse(failed.recoverable)
+        assertTrue(failed.failure.diagnosticMessage.contains("firmware version"))
+        assertFalse(failed.failure.recoverable)
         coordinator.close()
     }
 
@@ -255,7 +255,9 @@ class DeviceOtaCoordinatorTest {
         val result = coordinator.startUpdate(plan)
 
         assertFalse(result.isSuccess)
-        assertTrue(result.errorMessage.contains("generation changed"))
+        assertTrue(
+            result.failure?.diagnosticMessage.orEmpty().contains("generation changed")
+        )
         assertTrue(coordinator.observe(DEVICE_UID).value is DeviceOtaState.Failed)
         coordinator.close()
     }
