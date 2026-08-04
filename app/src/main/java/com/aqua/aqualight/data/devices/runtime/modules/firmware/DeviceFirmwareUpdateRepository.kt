@@ -57,6 +57,9 @@ class DeviceFirmwareUpdateRepository(
         return runCatching {
             val availability = fetchAndEvaluateUpdate(snapshot, manifestUrl, applyNow).getOrThrow()
             when (availability) {
+                is DeviceFirmwareAvailability.NoUpdateAvailable -> error(
+                    "No compatible OTA artifact is published for this exact device."
+                )
                 is DeviceFirmwareAvailability.UpdateAvailable -> availability.plan
                 is DeviceFirmwareAvailability.UpToDate -> error(
                     "No newer compatible OTA artifact found."

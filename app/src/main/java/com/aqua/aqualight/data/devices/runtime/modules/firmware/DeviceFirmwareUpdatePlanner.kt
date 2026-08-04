@@ -1,5 +1,8 @@
 package com.aqua.aqualight.data.devices.runtime.modules.firmware
 
+import com.aqua.aqualight.data.devices.catalog.AqlCommercialCatalogProduct
+import com.aqua.aqualight.data.devices.catalog.AqlCommercialCatalogValidation
+import com.aqua.aqualight.data.devices.catalog.AqlCommercialDeviceCatalog
 import com.aqua.aqualight.data.devices.model.DeviceSnapshot
 import java.util.Locale
 
@@ -14,39 +17,46 @@ class DeviceFirmwareUpdatePlanner(
         snapshot: DeviceSnapshot,
         manifest: DeviceFirmwareManifest,
         applyNow: Boolean = true
-    ): Result<DeviceFirmwareAvailability> = runCatching {
-        requireValidatedSnapshot(snapshot)
-        require(manifest.isSupportedSchema) { "Unsupported AquaLight OTA manifest." }
-        require(manifest.platform == OFFICIAL_PLATFORM) {
-            "OTA manifest platform differs from AquaLight-Firmware/main."
-        }
-        require(manifest.tag == "v${manifest.version}") {
-            "OTA manifest tag does not match its exact firmware version."
-        }
+    ): Result<DeviceFirmwareAvailability> {
+        return runCatching {
+            val product = requireValidatedProduct(snapshot)
+            require(manifest.isSupportedSchema) {
+                "Unsupported AquaLight OTA manifest."
+            }
+            require(product.profile.capabilities.ota) {
+                "Device catalog does not authorize OTA."
+            }
 
-        val currentVersion = snapshot.firmwareVersion
-        require(currentVersion.isNotBlank()) { "Current firmware version is not known." }
+            val currentVersion = snapshot.firmwareVersion
+            require(currentVersion.isNotBlank()) {
+                "Current firmware version is not known."
+            }
 
-        val artifact = exactSingleArtifact(snapshot, manifest)
-        validateArtifactAgainstSnapshot(artifact, manifest, snapshot)
-        val releaseContent = manifest.releaseNotes.resolve(preferredLocaleTags())
-
-        if (DeviceFirmwareVersionComparator.compare(artifact.firmware.version, currentVersion) <= 0) {
-            DeviceFirmwareAvailability.UpToDate(
-                currentVersion = currentVersion,
-                latestVersion = artifact.firmware.version,
-                releaseContent = releaseContent
-            )
-        } else {
-            DeviceFirmwareAvailability.UpdateAvailable(
-                createPlan(
-                    snapshot = snapshot,
-                    manifest = manifest,
-                    artifact = artifact,
-                    releaseContent = releaseContent,
-                    applyNow = applyNow
+            val artifact = exactSingleArtifactOrNull(snapshot, manifest)
+                ?: return@runCatching DeviceFirmwareAvailability.NoUpdateAvailable(
+                    currentVersion = currentVersion
                 )
-            )
+            validateArtifactAgainstCatalog(artifact, product)
+            val targetVersion = artifact.release.version
+            val releaseContent = artifact.release.releaseNotes.resolve(preferredLocaleTags())
+
+            if (DeviceFirmwareVersionComparator.compare(targetVersion, currentVersion) <= 0) {
+                DeviceFirmwareAvailability.UpToDate(
+                    currentVersion = currentVersion,
+                    latestVersion = targetVersion,
+                    releaseContent = releaseContent
+                )
+            } else {
+                DeviceFirmwareAvailability.UpdateAvailable(
+                    createPlan(
+                        snapshot = snapshot,
+                        manifest = manifest,
+                        artifact = artifact,
+                        releaseContent = releaseContent,
+                        applyNow = applyNow
+                    )
+                )
+            }
         }
     }
 
@@ -57,6 +67,9 @@ class DeviceFirmwareUpdatePlanner(
     ): Result<DeviceFirmwareUpdatePlan> = evaluateUpdate(snapshot, manifest, applyNow).mapCatching {
         availability ->
         when (availability) {
+            is DeviceFirmwareAvailability.NoUpdateAvailable -> error(
+                "No compatible OTA artifact is published for this exact device."
+            )
             is DeviceFirmwareAvailability.UpdateAvailable -> availability.plan
             is DeviceFirmwareAvailability.UpToDate -> error(
                 "No newer compatible OTA artifact found. " +
@@ -100,38 +113,25 @@ class DeviceFirmwareUpdatePlanner(
         }
     }
 
-    private fun requireValidatedSnapshot(snapshot: DeviceSnapshot) {
+    private fun requireValidatedProduct(snapshot: DeviceSnapshot): AqlCommercialCatalogProduct {
         require(snapshot.hasValidatedRuntimeMetadata) {
             "OTA requires current authenticated runtime metadata."
         }
-        require(snapshot.capabilities.ota) { "Authenticated firmware metadata does not authorize OTA." }
-        require(snapshot.product.brand == DeviceFirmwareRuntimeContract.Manifest.BRAND) {
-            "Authenticated product brand is not AquaLight."
-        }
-        require(snapshot.product.productKey.isNotBlank()) { "Authenticated productKey is missing." }
-        require(snapshot.product.productId.isNotBlank()) { "Authenticated productId is missing." }
-        require(snapshot.product.family.wireValue.isNotBlank()) { "Authenticated family is missing." }
-        require(snapshot.product.line.isNotBlank()) { "Authenticated product line is missing." }
-        require(snapshot.product.model.isNotBlank()) { "Authenticated product model is missing." }
-        require(snapshot.product.displayName.isNotBlank()) {
-            "Authenticated immutable product displayName is missing."
-        }
-        require(snapshot.product.skuCode.isNotBlank()) { "Authenticated product skuCode is missing." }
-        require(snapshot.product.hardwareRevision.isNotBlank()) {
-            "Authenticated hardwareRevision is missing."
+        return when (val validation = AqlCommercialDeviceCatalog.validateSnapshot(snapshot)) {
+            is AqlCommercialCatalogValidation.Valid -> validation.product
+            is AqlCommercialCatalogValidation.Invalid -> error(
+                "OTA catalog validation failed: " +
+                    "${validation.failure.code}:${validation.failure.field}"
+            )
         }
     }
 
-    private fun exactSingleArtifact(
+    private fun exactSingleArtifactOrNull(
         snapshot: DeviceSnapshot,
         manifest: DeviceFirmwareManifest
-    ): DeviceFirmwareManifestArtifact {
+    ): DeviceFirmwareManifestArtifact? {
         val compatible = compatibleArtifacts(snapshot, manifest)
-        require(compatible.isNotEmpty()) {
-            "No compatible OTA artifact found for " +
-                "${snapshot.product.productKey}/${snapshot.product.model}/" +
-                "hw ${snapshot.product.hardwareRevision}."
-        }
+        if (compatible.isEmpty()) return null
         require(compatible.size == 1) {
             "Ambiguous OTA manifest: ${compatible.size} artifacts match the exact device identity."
         }
@@ -147,7 +147,7 @@ class DeviceFirmwareUpdatePlanner(
     ): DeviceFirmwareUpdatePlan {
         val payload = DeviceFirmwareOtaStartPayload(
             url = artifact.firmware.url,
-            version = artifact.firmware.version,
+            version = artifact.release.version,
             sha256 = artifact.firmware.sha256,
             expectedSize = artifact.firmware.size,
             productKey = snapshot.product.productKey,
@@ -171,77 +171,53 @@ class DeviceFirmwareUpdatePlanner(
             firmware = artifact.firmware,
             payload = payload,
             runtimeMetadataGeneration = snapshot.runtimeMetadataGeneration,
-            manifestTag = manifest.tag,
+            manifestTag = artifact.release.tag,
             releaseContent = releaseContent
         )
     }
 
-    private fun validateArtifactAgainstSnapshot(
+    private fun validateArtifactAgainstCatalog(
         artifact: DeviceFirmwareManifestArtifact,
-        manifest: DeviceFirmwareManifest,
-        snapshot: DeviceSnapshot
+        product: AqlCommercialCatalogProduct
     ) {
-        val product = snapshot.product
-        val expectedEnvironment = product.productKey.lowercase(Locale.ROOT)
+        val expectedEnvironment = product.productKey.value.lowercase(Locale.ROOT)
         require(artifact.env == expectedEnvironment) {
-            "OTA artifact environment does not match authenticated productKey."
+            "OTA artifact environment does not match the exact catalog product."
         }
-        require(artifact.product.productKey == product.productKey)
-        require(artifact.product.productId == product.productId)
-        require(artifact.product.brand == product.brand)
+        require(artifact.product.productKey == product.productKey.value)
+        require(artifact.product.productId == product.productId.value)
+        require(artifact.product.brand == DeviceFirmwareRuntimeContract.Manifest.BRAND)
         require(artifact.product.family == product.family.wireValue)
-        require(artifact.product.line == product.line)
-        require(artifact.product.model == product.model)
-        require(artifact.product.displayName == releaseDisplayName(product.brand, product.displayName))
-        require(artifact.product.skuCode == product.skuCode)
-        require(artifact.product.hardwareRevision == product.hardwareRevision)
-        require(artifact.product.capabilities == snapshot.capabilities) {
-            "OTA manifest capabilities differ from authenticated firmware metadata."
-        }
-        require(artifact.product.limits == snapshot.limits) {
-            "OTA manifest limits differ from authenticated firmware metadata."
-        }
-        require(artifact.compatibility.productKey == product.productKey)
-        require(artifact.compatibility.productId == product.productId)
+        require(artifact.product.line == product.line.value)
+        require(artifact.product.model == product.model.value)
+        require(artifact.product.displayName == product.displayName)
+        require(artifact.product.skuCode == product.skuCode.value)
+        require(artifact.product.hardwareRevision == product.hardwareRevision.value)
+        require(artifact.product.capabilities == product.profile.capabilities)
+        require(artifact.product.limits == product.limits)
         require(artifact.compatibility.family == product.family.wireValue)
-        require(artifact.compatibility.line == product.line)
-        require(artifact.compatibility.model == product.model)
-        require(artifact.compatibility.hardwareRevision == product.hardwareRevision)
-        require(artifact.firmware.version == manifest.version) {
-            "OTA artifact firmware.version differs from the manifest version."
-        }
-        require(artifact.firmware.filename == "AquaLight-${artifact.env}-${manifest.tag}-ota.bin") {
-            "OTA artifact filename does not match env/tag contract."
+        require(artifact.compatibility.line == product.line.value)
+        require(artifact.release.tag == "v${artifact.release.version}") {
+            "OTA artifact release tag does not match its version."
         }
         require(
-            artifact.firmware.url == DeviceFirmwareRuntimeContract.OFFICIAL_RELEASE_URL_PREFIX +
-                "${manifest.tag}/${artifact.firmware.filename}"
+            artifact.firmware.filename ==
+                "AquaLight-${artifact.env}-${artifact.release.tag}-ota.bin"
         ) {
-            "OTA artifact URL differs from the exact official release URL."
+            "OTA artifact filename does not match env/tag contract."
+        }
+        require(artifact.firmware.url.endsWith("/${artifact.firmware.filename}")) {
+            "OTA artifact URL does not end with its filename."
+        }
+        require(artifact.firmware.url.contains("/releases/download/${artifact.release.tag}/")) {
+            "OTA artifact URL does not contain its immutable release tag."
         }
         require(
             artifact.firmware.format == DeviceFirmwareRuntimeContract.Manifest.FIRMWARE_FORMAT
-        ) {
-            "OTA artifact format differs from firmware manifest contract."
-        }
+        )
         require(artifact.firmware.otaSlotCompatible) {
             "OTA artifact is not marked as OTA slot compatible."
         }
-    }
-
-    private fun releaseDisplayName(brand: String, displayName: String): String {
-        val prefix = "$brand "
-        return if (displayName.startsWith(prefix)) displayName else prefix + displayName
-    }
-
-    private companion object {
-        val OFFICIAL_PLATFORM = DeviceFirmwareManifestPlatform(
-            framework = DeviceFirmwareRuntimeContract.Manifest.PLATFORM_FRAMEWORK,
-            core = DeviceFirmwareRuntimeContract.Manifest.PLATFORM_CORE,
-            platform = DeviceFirmwareRuntimeContract.Manifest.PLATFORM_PACKAGE,
-            partitionTable = DeviceFirmwareRuntimeContract.Manifest.PARTITION_TABLE,
-            normalOtaAssetType = DeviceFirmwareRuntimeContract.Manifest.NORMAL_OTA_ASSET_TYPE
-        )
     }
 }
 

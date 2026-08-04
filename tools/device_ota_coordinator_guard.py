@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Protect shared OTA state coordination and the exact firmware-owned release contract."""
+"""Protect shared OTA state coordination, exact artifact selection and signed release content."""
 from __future__ import annotations
 
 import sys
@@ -15,6 +15,7 @@ FILES = {
     "validation": SOURCE / "data/devices/runtime/modules/firmware/DeviceOtaValidation.kt",
     "planner": SOURCE / "data/devices/runtime/modules/firmware/DeviceFirmwareUpdatePlanner.kt",
     "models": SOURCE / "data/devices/runtime/modules/firmware/DeviceFirmwareModels.kt",
+    "manifestContract": SOURCE / "data/devices/runtime/modules/firmware/DeviceFirmwareRuntimeContract.kt",
     "manifest": SOURCE / "data/devices/runtime/modules/firmware/DeviceFirmwareManifestParser.kt",
     "status": SOURCE / "data/devices/runtime/modules/firmware/DeviceFirmwareStatusParser.kt",
 }
@@ -108,9 +109,13 @@ require_tokens(
     ),
 )
 forbid_tokens("runtime", ("AqlWsCommandClient", "sendLegacy", "LegacyOnlyGateway"))
-obsolete_raw_mapper = SOURCE / "data/devices/runtime/modules/firmware/DeviceFirmwareOtaEventMapper.kt"
+obsolete_raw_mapper = (
+    SOURCE / "data/devices/runtime/modules/firmware/DeviceFirmwareOtaEventMapper.kt"
+)
 if obsolete_raw_mapper.exists():
-    errors.append(f"obsolete raw OTA mapper remains: {obsolete_raw_mapper.relative_to(ROOT)}")
+    errors.append(
+        f"obsolete raw OTA mapper remains: {obsolete_raw_mapper.relative_to(ROOT)}"
+    )
 require_tokens(
     "validation",
     (
@@ -128,72 +133,71 @@ require_tokens(
     "planner",
     (
         "fun evaluateUpdate(",
-        "requireValidatedSnapshot(snapshot)",
-        'manifest.tag == "v${manifest.version}"',
         "compatible.size == 1",
+        "if (compatible.isEmpty()) return null",
         "return compatible.single()",
         "artifact.env == environment",
         "artifact.compatibility.family == family",
         "artifact.compatibility.line == line",
-        "artifact.product.capabilities == snapshot.capabilities",
-        "artifact.product.limits == snapshot.limits",
-        "version = artifact.firmware.version",
         "model = snapshot.product.model",
         "runtimeMetadataGeneration = snapshot.runtimeMetadataGeneration",
-        "manifest.releaseNotes.resolve",
+        "DeviceFirmwareAvailability.NoUpdateAvailable",
+        "artifact.release.releaseNotes.resolve",
+        "artifact.product.capabilities == product.profile.capabilities",
+        "artifact.product.limits == product.limits",
     ),
 )
-forbid_tokens(
-    "planner",
-    (
-        "compatibleArtifacts.first()",
-        "compatible.first()",
-        "AqlCommercialDeviceCatalog",
-        "AqlCommercialCatalogValidation",
-        "requireValidatedProduct",
-    ),
-)
+forbid_tokens("planner", ("compatibleArtifacts.first()", "compatible.first()"))
 require_tokens(
     "models",
     (
         "val model: String",
         ".put(DeviceFirmwareRuntimeContract.Field.MODEL, model)",
         "data class DeviceFirmwareOtaStartRequestEcho",
-        "data class DeviceFirmwareManifestPlatform",
-        "data class DeviceFirmwareReleaseNoteItem",
         "data class DeviceFirmwareReleaseNotes",
-        "val capabilities: DeviceCapabilities",
-        "val limits: DeviceLimits",
-        "val version: String",
-        "data class DeviceFirmwareFactoryAsset",
         "sealed interface DeviceFirmwareAvailability",
+        "data class NoUpdateAvailable(",
+        "val release: DeviceFirmwareRelease",
+        "val factory: DeviceFirmwareFactoryAsset?",
+    ),
+)
+require_tokens(
+    "manifestContract",
+    (
+        'const val SCHEMA = "aql.ota.manifest.v2"',
+        'const val RELEASE_NOTES_SCHEMA = "aql.ota.release-notes.v1"',
+        'const val FIRMWARE_FORMAT = "esp32-app-bin"',
     ),
 )
 require_tokens(
     "manifest",
     (
-        "root.requireExactKeys(ROOT_KEYS, \"manifest\")",
-        "parsePlatform",
+        'root.requireExactKeys(ROOT_KEYS, "manifest")',
         "parseReleaseNotes",
-        "DeviceFirmwareReleaseNoteItem(",
-        "parseCapabilities",
-        "parseLimits",
-        "requiredNullableObject(\"factory\")",
-        "json.requireExactKeys(FIRMWARE_KEYS, label)",
-        "json.requireExactKeys(FACTORY_KEYS, label)",
-        "artifact.product.family == artifact.compatibility.family",
-        "artifact.product.line == artifact.compatibility.line",
-        "artifact.firmware.version == manifest.version",
-        "DeviceFirmwareRuntimeContract.Manifest.FIRMWARE_FORMAT",
+        "json.requireExactKeys(PRODUCT_KEYS",
+        "json.requireExactKeys(CAPABILITY_KEYS",
+        "json.requireExactKeys(LIMIT_KEYS",
+        "json.requireExactKeys(COMPATIBILITY_KEYS",
+        "json.requireExactKeys(PLATFORM_KEYS",
+        "json.requireExactKeys(RELEASE_KEYS",
+        "json.requireExactKeys(RELEASE_NOTES_KEYS",
+        "json.requireExactKeys(FIRMWARE_KEYS",
+        "json.requireExactKeys(FACTORY_KEYS",
+        'json.requiredNullableObject("factory")',
+        "product.family == compatibility.family",
+        "product.line == compatibility.line",
+        "OTA channel manifest contains duplicate product environments.",
+        "OTA channel manifest contains duplicate compatibility identities.",
+        "OTA firmware URL does not match the immutable release asset.",
     ),
 )
 forbid_tokens(
     "manifest",
     (
-        "releaseNotes.locales",
-        "DeviceFirmwareLocalizedReleaseNotes",
-        "mandatory =",
-        "parseAsset(",
+        "root.requireKnownKeys(",
+        "json.requireKnownKeys(",
+        "ROOT_OPTIONAL_KEYS",
+        "ARTIFACT_OPTIONAL_KEYS",
     ),
 )
 require_tokens(

@@ -1,14 +1,51 @@
 package com.aqua.aqualight.data.devices.runtime.modules.firmware
 
+import java.security.MessageDigest
 import org.json.JSONArray
 import org.json.JSONObject
 import org.junit.Assert.assertEquals
-import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Test
 
 @Suppress("LongMethod")
 class DeviceFirmwareOtaContractParserTest {
+
+    @Test
+    fun `firmware publisher v2 fixture parses without compatibility normalization`() {
+        val raw = checkNotNull(
+            javaClass.getResource("/ota/firmware-channel-manifest-v2.json")
+        ).readText()
+
+        val manifest = DeviceFirmwareManifestParser.parse(raw).getOrThrow()
+        val artifact = manifest.artifacts.single()
+
+        assertEquals("light_wrgb_pro_elite", artifact.env)
+        assertEquals("1.0.1", artifact.release.version)
+        assertEquals("WRGB Pro Elite 120", artifact.product.displayName)
+        assertEquals(4, artifact.product.limits.lightChannelCount)
+        assertTrue(artifact.product.capabilities.ota)
+        assertEquals("esp32-app-bin", artifact.firmware.format)
+        assertEquals(
+            "AquaLight-light_wrgb_pro_elite-v1.0.1-factory.zip",
+            artifact.factory?.filename
+        )
+    }
+
+    @Test
+    fun `android canonical payload matches firmware python signer bytes`() {
+        val raw = checkNotNull(
+            javaClass.getResource("/ota/firmware-channel-manifest-v2.json")
+        ).readText()
+        val payload = DeviceFirmwareManifestSignatureVerifier.canonicalManifestPayload(
+            JSONObject(raw)
+        )
+        val digest = MessageDigest.getInstance("SHA-256").digest(payload)
+            .joinToString(separator = "") { value ->
+                "%02x".format(value.toInt() and 0xff)
+            }
+
+        assertEquals(FIRMWARE_PYTHON_PAYLOAD_HASH, digest)
+    }
 
     @Test
     fun `start acceptance requires and parses exact model echo`() {
@@ -73,64 +110,27 @@ class DeviceFirmwareOtaContractParserTest {
     }
 
     @Test
-    fun `manifest parser mirrors exact firmware main release contract`() {
+    fun `manifest parser keeps localized content inside signed payload`() {
         val parsed = DeviceFirmwareManifestParser.parse(manifestJson().toString()).getOrThrow()
-        val artifact = parsed.artifacts.single()
 
-        assertEquals(DeviceFirmwareRuntimeContract.Manifest.PLATFORM_CORE, parsed.platform.core)
-        assertEquals(DeviceFirmwareRuntimeContract.ReleaseNotes.SCHEMA, parsed.releaseNotes.schema)
-        assertEquals("tr", parsed.releaseNotes.defaultLocale)
-        assertEquals("Güvenli güncelleme", parsed.releaseNotes.items.single().tr)
-        assertEquals("Safe update", parsed.releaseNotes.items.single().en)
-        assertEquals("2.0.0", artifact.firmware.version)
-        assertEquals(DeviceFirmwareRuntimeContract.Manifest.FIRMWARE_FORMAT, artifact.firmware.format)
-        assertTrue(artifact.product.capabilities.dosing)
-        assertEquals(2, artifact.product.limits.dosingChannelCount)
-        assertNull(artifact.factory)
+        val releaseNotes = parsed.artifacts.single().release.releaseNotes
+        assertEquals("tr", releaseNotes.defaultLocale)
+        assertEquals(
+            listOf("Kalibrasyon kontrolleri geliştirildi."),
+            releaseNotes.locales.getValue("tr").changes
+        )
     }
 
     @Test
-    fun `manifest parser rejects Android invented localized object contract`() {
+    fun `manifest parser rejects incomplete localized content contract`() {
         val invalid = manifestJson().apply {
-            put(
-                "releaseNotes",
-                JSONObject()
-                    .put("defaultLocale", "tr-TR")
-                    .put("mandatory", false)
-                    .put("locales", JSONObject())
-            )
-        }
-
-        assertTrue(DeviceFirmwareManifestParser.parse(invalid.toString()).isFailure)
-    }
-
-    @Test
-    fun `manifest parser rejects omitted firmware owned product capabilities`() {
-        val invalid = manifestJson().apply {
-            artifactJson().getJSONObject("product").remove("capabilities")
-        }
-
-        assertTrue(DeviceFirmwareManifestParser.parse(invalid.toString()).isFailure)
-    }
-
-    @Test
-    fun `manifest parser rejects factory encoded as OTA firmware asset`() {
-        val invalid = manifestJson().apply {
-            artifactJson().put(
-                "factory",
-                JSONObject()
-                    .put("version", "2.0.0")
-                    .put("filename", "AquaLight-dosing_dose_pro_2-v2.0.0-factory.zip")
-                    .put(
-                        "url",
-                        DeviceFirmwareRuntimeContract.OFFICIAL_RELEASE_URL_PREFIX +
-                            "v2.0.0/AquaLight-dosing_dose_pro_2-v2.0.0-factory.zip"
-                    )
-                    .put("sha256", "c".repeat(64))
-                    .put("size", 2_048)
-                    .put("format", "esp32-app-bin")
-                    .put("otaSlotCompatible", false)
-            )
+            getJSONArray("artifacts")
+                .getJSONObject(0)
+                .getJSONObject("release")
+                .getJSONObject("releaseNotes")
+                .getJSONArray("items")
+                .getJSONObject(0)
+                .remove("en")
         }
 
         assertTrue(DeviceFirmwareManifestParser.parse(invalid.toString()).isFailure)
@@ -190,54 +190,107 @@ class DeviceFirmwareOtaContractParserTest {
     private fun manifestJson(): JSONObject {
         val env = "dosing_dose_pro_2"
         val filename = "AquaLight-$env-v2.0.0-ota.bin"
-        return JSONObject()
-            .put("schema", DeviceFirmwareRuntimeContract.Manifest.SCHEMA)
-            .put("brand", DeviceFirmwareRuntimeContract.Manifest.BRAND)
-            .put("channel", DeviceFirmwareRuntimeContract.Manifest.STABLE_CHANNEL)
+        val product = JSONObject()
+            .put("productKey", "DOSING_DOSE_PRO_2")
+            .put("productId", "com.aqualight.dosing.dose_pro_2")
+            .put("brand", "AquaLight")
+            .put("family", "dosing")
+            .put("line", "dose_pro")
+            .put("model", "dose_pro_2")
+            .put("displayName", "Dose Pro 2")
+            .put("skuCode", "AQL-D-DP2-GLB-BLK")
+            .put("hardwareRevision", "2.0")
+            .put(
+                "capabilities",
+                JSONObject()
+                    .put("light", false)
+                    .put("manualLight", false)
+                    .put("lightProgram", false)
+                    .put("lightPresets", false)
+                    .put("lightSimulation", false)
+                    .put("fan", false)
+                    .put("cooling", false)
+                    .put("temperature", false)
+                    .put("standaloneTimer", false)
+                    .put("dosing", true)
+                    .put("timeSync", true)
+                    .put("ota", true)
+            )
+            .put(
+                "limits",
+                JSONObject()
+                    .put("lightChannelCount", 0)
+                    .put("fanOutputCount", 0)
+                    .put("temperatureSensorCount", 0)
+                    .put("timerChannelCount", 0)
+                    .put("dosingChannelCount", 2)
+            )
+        val compatibility = JSONObject()
+            .put("productKey", "DOSING_DOSE_PRO_2")
+            .put("productId", "com.aqualight.dosing.dose_pro_2")
+            .put("family", "dosing")
+            .put("line", "dose_pro")
+            .put("model", "dose_pro_2")
+            .put("hardwareRevision", "2.0")
+        val platform = JSONObject()
+            .put("framework", DeviceFirmwareRuntimeContract.Manifest.PLATFORM_FRAMEWORK)
+            .put("core", "3.3.9")
+            .put("platform", "pioarduino/platform-espressif32#55.03.39")
+            .put(
+                "partitionTable",
+                DeviceFirmwareRuntimeContract.Manifest.PLATFORM_PARTITION_TABLE
+            )
+            .put(
+                "normalOtaAssetType",
+                DeviceFirmwareRuntimeContract.Manifest.PLATFORM_OTA_ASSET_TYPE
+            )
+        val release = JSONObject()
             .put("version", "2.0.0")
             .put("tag", "v2.0.0")
-            .put("releaseRepo", DeviceFirmwareRuntimeContract.OFFICIAL_RELEASE_REPOSITORY)
-            .put("generatedAt", "2026-08-03T00:00:00+00:00")
-            .put("platform", platformJson())
+            .put("generatedAt", "2026-07-30T00:00:00Z")
             .put(
                 "releaseNotes",
                 JSONObject()
-                    .put("schema", DeviceFirmwareRuntimeContract.ReleaseNotes.SCHEMA)
-                    .put("defaultLocale", DeviceFirmwareRuntimeContract.ReleaseNotes.DEFAULT_LOCALE)
+                    .put(
+                        "schema",
+                        DeviceFirmwareRuntimeContract.Manifest.RELEASE_NOTES_SCHEMA
+                    )
+                    .put("defaultLocale", "tr")
                     .put(
                         "items",
                         JSONArray().put(
                             JSONObject()
-                                .put("tr", "Güvenli güncelleme")
-                                .put("en", "Safe update")
+                                .put("tr", "Kalibrasyon kontrolleri geliştirildi.")
+                                .put("en", "Calibration checks were improved.")
                         )
                     )
             )
+        val firmware = JSONObject()
+            .put("filename", filename)
+            .put(
+                "url",
+                DeviceFirmwareRuntimeContract.OFFICIAL_RELEASE_URL_PREFIX + "v2.0.0/$filename"
+            )
+            .put("sha256", "a".repeat(64))
+            .put("size", 1_048_576)
+            .put("format", DeviceFirmwareRuntimeContract.Manifest.FIRMWARE_FORMAT)
+            .put("otaSlotCompatible", true)
+        return JSONObject()
+            .put("schema", DeviceFirmwareRuntimeContract.Manifest.SCHEMA)
+            .put("brand", "AquaLight")
+            .put("channel", "stable")
+            .put("releaseRepo", DeviceFirmwareRuntimeContract.OFFICIAL_RELEASE_REPOSITORY)
+            .put("generatedAt", "2026-07-30T00:00:00Z")
             .put(
                 "artifacts",
                 JSONArray().put(
                     JSONObject()
                         .put("env", env)
-                        .put("product", productJson())
-                        .put("compatibility", compatibilityJson())
-                        .put(
-                            "firmware",
-                            JSONObject()
-                                .put("version", "2.0.0")
-                                .put("filename", filename)
-                                .put(
-                                    "url",
-                                    DeviceFirmwareRuntimeContract.OFFICIAL_RELEASE_URL_PREFIX +
-                                        "v2.0.0/$filename"
-                                )
-                                .put("sha256", "a".repeat(64))
-                                .put("size", 1_048_576)
-                                .put(
-                                    "format",
-                                    DeviceFirmwareRuntimeContract.Manifest.FIRMWARE_FORMAT
-                                )
-                                .put("otaSlotCompatible", true)
-                        )
+                        .put("product", product)
+                        .put("compatibility", compatibility)
+                        .put("platform", platform)
+                        .put("release", release)
+                        .put("firmware", firmware)
                         .put("factory", JSONObject.NULL)
                 )
             )
@@ -254,55 +307,8 @@ class DeviceFirmwareOtaContractParserTest {
             )
     }
 
-    private fun JSONObject.artifactJson(): JSONObject =
-        getJSONArray("artifacts").getJSONObject(0)
-
-    private fun platformJson(): JSONObject = JSONObject()
-        .put("framework", DeviceFirmwareRuntimeContract.Manifest.PLATFORM_FRAMEWORK)
-        .put("core", DeviceFirmwareRuntimeContract.Manifest.PLATFORM_CORE)
-        .put("platform", DeviceFirmwareRuntimeContract.Manifest.PLATFORM_PACKAGE)
-        .put("partitionTable", DeviceFirmwareRuntimeContract.Manifest.PARTITION_TABLE)
-        .put("normalOtaAssetType", DeviceFirmwareRuntimeContract.Manifest.NORMAL_OTA_ASSET_TYPE)
-
-    private fun productJson(): JSONObject = JSONObject()
-        .put("productKey", "DOSING_DOSE_PRO_2")
-        .put("productId", "com.aqualight.dosing.dose_pro_2")
-        .put("brand", "AquaLight")
-        .put("family", "dosing")
-        .put("line", "dose_pro")
-        .put("model", "dose_pro_2")
-        .put("displayName", "AquaLight Dose Pro 2")
-        .put("skuCode", "AQL-D-DP2-GLB-BLK")
-        .put("hardwareRevision", "2.0")
-        .put("capabilities", capabilitiesJson())
-        .put("limits", limitsJson())
-
-    private fun compatibilityJson(): JSONObject = JSONObject()
-        .put("productKey", "DOSING_DOSE_PRO_2")
-        .put("productId", "com.aqualight.dosing.dose_pro_2")
-        .put("family", "dosing")
-        .put("line", "dose_pro")
-        .put("model", "dose_pro_2")
-        .put("hardwareRevision", "2.0")
-
-    private fun capabilitiesJson(): JSONObject = JSONObject()
-        .put("light", false)
-        .put("manualLight", false)
-        .put("lightProgram", false)
-        .put("lightPresets", false)
-        .put("lightSimulation", false)
-        .put("fan", false)
-        .put("cooling", false)
-        .put("temperature", false)
-        .put("standaloneTimer", false)
-        .put("dosing", true)
-        .put("timeSync", true)
-        .put("ota", true)
-
-    private fun limitsJson(): JSONObject = JSONObject()
-        .put("lightChannelCount", 0)
-        .put("fanOutputCount", 0)
-        .put("temperatureSensorCount", 0)
-        .put("timerChannelCount", 0)
-        .put("dosingChannelCount", 2)
+    private companion object {
+        const val FIRMWARE_PYTHON_PAYLOAD_HASH =
+            "acb62ebf6bb7e90bde2ff1afae183b2622a95da9c95b3c752c6179ccae3b1fe6"
+    }
 }

@@ -1,9 +1,9 @@
 package com.aqua.aqualight.data.devices.runtime.modules.firmware
 
-import com.aqua.aqualight.application.devices.DeviceOtaFailureReason
 import com.aqua.aqualight.application.devices.DeviceOtaState
+import com.aqua.aqualight.data.devices.catalog.AqlCommercialCatalogProduct
+import com.aqua.aqualight.data.devices.catalog.AqlCommercialDeviceCatalog
 import com.aqua.aqualight.data.devices.model.DeviceCapabilities
-import com.aqua.aqualight.data.devices.model.DeviceFamily
 import com.aqua.aqualight.data.devices.model.DeviceIdentity
 import com.aqua.aqualight.data.devices.model.DeviceLimits
 import com.aqua.aqualight.data.devices.model.DeviceProduct
@@ -39,7 +39,7 @@ class DeviceOtaCoordinatorTest {
                 extraBufferCapacity = 16
             )
             val typedEvents = MutableSharedFlow<DeviceRuntimeTypedEvent>(extraBufferCapacity = 16)
-            val snapshots = MutableStateFlow(mapOf(DEVICE_UID to snapshot()))
+            val snapshots = MutableStateFlow(mapOf(DEVICE_UID to product().toSnapshot()))
             val gateway = RecordingGateway()
             var discoveryRefreshes = 0
             var reconnects = 0
@@ -68,7 +68,7 @@ class DeviceOtaCoordinatorTest {
             ).getOrThrow() as DeviceOtaState.UpdateAvailable
             assertEquals("2.0.0", availability.plan.targetVersion)
             assertEquals(
-                listOf("Kalibrasyon kontrolleri geliştirildi."),
+                listOf("Dozaj güvenilirliği geliştirildi."),
                 availability.plan.releaseContent.changes
             )
 
@@ -127,7 +127,7 @@ class DeviceOtaCoordinatorTest {
             assertTrue(coordinator.observe(DEVICE_UID).value is DeviceOtaState.Recovering)
 
             snapshots.value = mapOf(
-                DEVICE_UID to snapshot().copy(
+                DEVICE_UID to product().toSnapshot().copy(
                     firmwareVersion = "2.0.0",
                     runtimeMetadataGeneration = 8L
                 )
@@ -143,7 +143,7 @@ class DeviceOtaCoordinatorTest {
     fun `scheduled restart invokes UDP refresh and device scoped reconnect`() = runTest {
         val lifecycle = MutableSharedFlow<DeviceRuntimeLifecycleEvent>(extraBufferCapacity = 8)
         val typedEvents = MutableSharedFlow<DeviceRuntimeTypedEvent>(extraBufferCapacity = 8)
-        val snapshots = MutableStateFlow(mapOf(DEVICE_UID to snapshot()))
+        val snapshots = MutableStateFlow(mapOf(DEVICE_UID to product().toSnapshot()))
         val gateway = RecordingGateway()
         var discoveryRefreshes = 0
         var reconnects = 0
@@ -194,7 +194,7 @@ class DeviceOtaCoordinatorTest {
     @Test
     fun `reconnected old firmware fails final installed version proof`() = runTest {
         val typedEvents = MutableSharedFlow<DeviceRuntimeTypedEvent>(extraBufferCapacity = 8)
-        val snapshots = MutableStateFlow(mapOf(DEVICE_UID to snapshot()))
+        val snapshots = MutableStateFlow(mapOf(DEVICE_UID to product().toSnapshot()))
         val coordinator = DeviceOtaCoordinator(
             snapshotProvider = { deviceUid -> snapshots.value[deviceUid] },
             connectRuntime = { Result.success(Unit) },
@@ -227,22 +227,21 @@ class DeviceOtaCoordinatorTest {
         runCurrent()
 
         snapshots.value = mapOf(
-            DEVICE_UID to snapshot().copy(runtimeMetadataGeneration = 8L)
+            DEVICE_UID to product().toSnapshot().copy(runtimeMetadataGeneration = 8L)
         )
         runCurrent()
 
         val failed = coordinator.observe(DEVICE_UID).value as DeviceOtaState.Failed
-        assertTrue(failed.failure.diagnosticMessage.contains("firmware version"))
-        assertEquals(DeviceOtaFailureReason.INCOMPATIBLE_FIRMWARE, failed.failure.reason)
-        assertFalse(failed.failure.recoverable)
+        assertTrue(failed.message.contains("firmware version"))
+        assertFalse(failed.recoverable)
         coordinator.close()
     }
 
     @Test
     fun `metadata generation change expires a prepared plan before start`() = runTest {
-        var currentSnapshot = snapshot()
+        var snapshot = product().toSnapshot()
         val coordinator = DeviceOtaCoordinator(
-            snapshotProvider = { currentSnapshot },
+            snapshotProvider = { snapshot },
             connectRuntime = { Result.success(Unit) },
             updaterProvider = { updater(RecordingGateway()) },
             runtimeLifecycleEvents = null
@@ -252,12 +251,11 @@ class DeviceOtaCoordinatorTest {
                 as DeviceOtaState.UpdateAvailable
             ).plan
 
-        currentSnapshot = currentSnapshot.copy(runtimeMetadataGeneration = 8L)
+        snapshot = snapshot.copy(runtimeMetadataGeneration = 8L)
         val result = coordinator.startUpdate(plan)
 
         assertFalse(result.isSuccess)
-        assertTrue(result.failure?.diagnosticMessage.orEmpty().contains("generation changed"))
-        assertEquals(DeviceOtaFailureReason.CHECK_FAILED, result.failure?.reason)
+        assertTrue(result.errorMessage.contains("generation changed"))
         assertTrue(coordinator.observe(DEVICE_UID).value is DeviceOtaState.Failed)
         coordinator.close()
     }
@@ -270,7 +268,7 @@ class DeviceOtaCoordinatorTest {
             )
         }
         val coordinator = DeviceOtaCoordinator(
-            snapshotProvider = { snapshot() },
+            snapshotProvider = { product().toSnapshot() },
             connectRuntime = { Result.success(Unit) },
             updaterProvider = { updater(gateway) },
             runtimeLifecycleEvents = null
@@ -283,32 +281,6 @@ class DeviceOtaCoordinatorTest {
         val result = coordinator.requestStatus(DEVICE_UID)
 
         assertTrue(result.isSuccess)
-        assertEquals(
-            DeviceOtaState.UpdateAvailable(plan),
-            coordinator.observe(DEVICE_UID).value
-        )
-        coordinator.close()
-    }
-
-    @Test
-    fun `failed recovery status probe preserves signed update availability`() = runTest {
-        val gateway = RecordingGateway()
-        val coordinator = DeviceOtaCoordinator(
-            snapshotProvider = { snapshot() },
-            connectRuntime = { Result.success(Unit) },
-            updaterProvider = { updater(gateway) },
-            runtimeLifecycleEvents = null
-        )
-        val plan = (
-            coordinator.checkAvailability(DEVICE_UID, MANIFEST_URL, true).getOrThrow()
-                as DeviceOtaState.UpdateAvailable
-            ).plan
-        gateway.statusData = JSONObject()
-
-        val result = coordinator.requestStatus(DEVICE_UID)
-
-        assertFalse(result.isSuccess)
-        assertEquals(DeviceOtaFailureReason.PROTOCOL_MISMATCH, result.failure?.reason)
         assertEquals(
             DeviceOtaState.UpdateAvailable(plan),
             coordinator.observe(DEVICE_UID).value
@@ -325,7 +297,7 @@ class DeviceOtaCoordinatorTest {
             )
         }
         val coordinator = DeviceOtaCoordinator(
-            snapshotProvider = { snapshot() },
+            snapshotProvider = { product().toSnapshot() },
             connectRuntime = { Result.success(Unit) },
             updaterProvider = { updater(gateway) },
             runtimeLifecycleEvents = null
@@ -342,10 +314,39 @@ class DeviceOtaCoordinatorTest {
         coordinator.close()
     }
 
-    private fun updater(gateway: RecordingGateway): DeviceFirmwareUpdateRepository {
+    @Test
+    fun `catalog without this product resolves up to date instead of recoverable failure`() =
+        runTest {
+            val unrelatedManifest = manifest().let { current ->
+                current.copy(
+                    artifacts = current.artifacts.map { artifact ->
+                        artifact.copy(env = "dosing_dose_pro_4")
+                    }
+                )
+            }
+            val coordinator = DeviceOtaCoordinator(
+                snapshotProvider = { product().toSnapshot() },
+                connectRuntime = { Result.success(Unit) },
+                updaterProvider = { updater(RecordingGateway(), unrelatedManifest) },
+                runtimeLifecycleEvents = null
+            )
+
+            val result = coordinator.checkAvailability(DEVICE_UID, MANIFEST_URL, true)
+                .getOrThrow() as DeviceOtaState.UpToDate
+
+            assertEquals("1.0.0", result.currentVersion)
+            assertEquals("1.0.0", result.latestVersion)
+            assertTrue(result.releaseContent.changes.isEmpty())
+            coordinator.close()
+        }
+
+    private fun updater(
+        gateway: RecordingGateway,
+        catalogManifest: DeviceFirmwareManifest = manifest()
+    ): DeviceFirmwareUpdateRepository {
         val source = object : DeviceFirmwareManifestHttpSource() {
             override suspend fun load(url: String): Result<DeviceFirmwareManifest> =
-                Result.success(manifest())
+                Result.success(catalogManifest)
         }
         return DeviceFirmwareUpdateRepository(
             runtime = DeviceFirmwareRuntimeRepository(gateway),
@@ -383,8 +384,8 @@ class DeviceOtaCoordinatorTest {
                 .put("expectedSize", FIRMWARE_SIZE)
                 .put("applyNow", true)
                 .put("allowInsecureHttp", false)
-                .put("productKey", PRODUCT_KEY)
-                .put("productId", PRODUCT_ID)
+                .put("productKey", "DOSING_DOSE_PRO_2")
+                .put("productId", "com.aqualight.dosing.dose_pro_2")
                 .put("model", "dose_pro_2")
                 .put("hardwareRevision", "2.0")
         )
@@ -440,80 +441,126 @@ class DeviceOtaCoordinatorTest {
         .put("sha256Expected", "a".repeat(64))
         .put("sha256Actual", if (phase == "succeeded") "a".repeat(64) else "")
         .put("lastError", if (phase == "failed") "download failed" else "")
-        .put("lastErrorField", if (phase == "failed") "stream" else "")
+        .put("lastErrorField", if (phase == "failed") "download" else "")
         .put("urlScheme", "https")
         .put("httpStatus", 200)
 
-    private fun snapshot(): DeviceSnapshot = DeviceSnapshot(
-        identity = DeviceIdentity(uid = DEVICE_UID, customName = ""),
+    private fun product(): AqlCommercialCatalogProduct =
+        AqlCommercialDeviceCatalog.products.single { product ->
+            product.productKey.value == "DOSING_DOSE_PRO_2"
+        }
+
+    private fun AqlCommercialCatalogProduct.toSnapshot(): DeviceSnapshot = DeviceSnapshot(
+        identity = DeviceIdentity(uid = DEVICE_UID, customName = "Salon Dozaj"),
         product = DeviceProduct(
             brand = "AquaLight",
-            productId = PRODUCT_ID,
-            productKey = PRODUCT_KEY,
-            family = DeviceFamily.DOSING,
-            familyRaw = "dosing",
-            line = "dose_pro",
-            model = "dose_pro_2",
-            displayName = "Dose Pro 2",
-            skuCode = "AQL-D-DP2-GLB-BLK",
-            hardwareRevision = "2.0"
+            productId = productId.value,
+            productKey = productKey.value,
+            family = family,
+            familyRaw = family.wireValue,
+            line = line.value,
+            model = model.value,
+            displayName = displayName,
+            skuId = skuId.value,
+            skuCode = skuCode.value,
+            hardwareRevision = hardwareRevision.value
         ),
         firmwareVersion = "1.0.0",
         apiVersion = "1",
         protocolVersion = "1",
-        capabilities = DOSING_CAPABILITIES,
-        limits = DOSING_LIMITS,
+        capabilities = DeviceCapabilities(
+            light = profile.capabilities.light,
+            manualLight = profile.capabilities.manualLight,
+            lightProgram = profile.capabilities.lightProgram,
+            lightPresets = profile.capabilities.lightPresets,
+            lightSimulation = profile.capabilities.lightSimulation,
+            fan = profile.capabilities.fan,
+            cooling = profile.capabilities.cooling,
+            temperature = profile.capabilities.temperature,
+            standaloneTimer = profile.capabilities.standaloneTimer,
+            dosing = profile.capabilities.dosing,
+            timeSync = profile.capabilities.timeSync,
+            ota = profile.capabilities.ota
+        ),
+        limits = DeviceLimits(
+            lightChannelCount = limits.lightChannelCount,
+            fanOutputCount = limits.fanOutputCount,
+            temperatureSensorCount = limits.temperatureSensorCount,
+            timerChannelCount = limits.timerChannelCount,
+            dosingChannelCount = limits.dosingChannelCount
+        ),
+        supportedFeatures = profile.supportedFeatures.map { it.wireValue },
+        supportedScreens = profile.supportedScreens.map { it.wireValue },
         runtimeMetadataGeneration = 7L
     )
 
     private fun manifest(): DeviceFirmwareManifest {
+        val product = product()
         val env = "dosing_dose_pro_2"
         val filename = "AquaLight-$env-v2.0.0-ota.bin"
         return DeviceFirmwareManifest(
             schema = DeviceFirmwareRuntimeContract.Manifest.SCHEMA,
-            brand = DeviceFirmwareRuntimeContract.Manifest.BRAND,
-            channel = DeviceFirmwareRuntimeContract.Manifest.STABLE_CHANNEL,
-            version = "2.0.0",
-            tag = "v2.0.0",
+            brand = "AquaLight",
+            channel = "stable",
             releaseRepo = DeviceFirmwareRuntimeContract.OFFICIAL_RELEASE_REPOSITORY,
-            generatedAt = "2026-08-03T00:00:00+00:00",
-            platform = OFFICIAL_PLATFORM,
-            releaseNotes = DeviceFirmwareReleaseNotes(
-                schema = DeviceFirmwareRuntimeContract.ReleaseNotes.SCHEMA,
-                defaultLocale = DeviceFirmwareRuntimeContract.ReleaseNotes.DEFAULT_LOCALE,
-                items = listOf(
-                    DeviceFirmwareReleaseNoteItem(
-                        tr = "Kalibrasyon kontrolleri geliştirildi.",
-                        en = "Calibration checks improved."
-                    )
-                )
-            ),
+            generatedAt = "2026-07-30T00:00:00Z",
             artifacts = listOf(
                 DeviceFirmwareManifestArtifact(
                     env = env,
                     product = DeviceFirmwareManifestProduct(
-                        productKey = PRODUCT_KEY,
-                        productId = PRODUCT_ID,
+                        productKey = product.productKey.value,
+                        productId = product.productId.value,
                         brand = "AquaLight",
-                        family = "dosing",
-                        line = "dose_pro",
-                        model = "dose_pro_2",
-                        displayName = "AquaLight Dose Pro 2",
-                        skuCode = "AQL-D-DP2-GLB-BLK",
-                        hardwareRevision = "2.0",
-                        capabilities = DOSING_CAPABILITIES,
-                        limits = DOSING_LIMITS
+                        family = product.family.wireValue,
+                        line = product.line.value,
+                        model = product.model.value,
+                        displayName = product.displayName,
+                        skuCode = product.skuCode.value,
+                        hardwareRevision = product.hardwareRevision.value,
+                        capabilities = product.profile.capabilities,
+                        limits = product.limits
                     ),
                     compatibility = DeviceFirmwareCompatibility(
-                        productKey = PRODUCT_KEY,
-                        productId = PRODUCT_ID,
-                        family = "dosing",
-                        line = "dose_pro",
-                        model = "dose_pro_2",
-                        hardwareRevision = "2.0"
+                        productKey = product.productKey.value,
+                        productId = product.productId.value,
+                        family = product.family.wireValue,
+                        line = product.line.value,
+                        model = product.model.value,
+                        hardwareRevision = product.hardwareRevision.value
+                    ),
+                    platform = DeviceFirmwarePlatform(
+                        framework = DeviceFirmwareRuntimeContract.Manifest.PLATFORM_FRAMEWORK,
+                        core = "3.3.9",
+                        platform = "pioarduino/platform-espressif32#55.03.39",
+                        partitionTable =
+                            DeviceFirmwareRuntimeContract.Manifest.PLATFORM_PARTITION_TABLE,
+                        normalOtaAssetType =
+                            DeviceFirmwareRuntimeContract.Manifest.PLATFORM_OTA_ASSET_TYPE
+                    ),
+                    release = DeviceFirmwareRelease(
+                        version = "2.0.0",
+                        tag = "v2.0.0",
+                        generatedAt = "2026-07-30T00:00:00Z",
+                        releaseNotes = DeviceFirmwareReleaseNotes(
+                            defaultLocale = "tr",
+                            mandatory = false,
+                            locales = mapOf(
+                                "tr" to DeviceFirmwareLocalizedReleaseNotes(
+                                    title = "",
+                                    summary = "",
+                                    changes = listOf("Dozaj güvenilirliği geliştirildi."),
+                                    warnings = emptyList()
+                                ),
+                                "en" to DeviceFirmwareLocalizedReleaseNotes(
+                                    title = "",
+                                    summary = "",
+                                    changes = listOf("Dosing reliability was improved."),
+                                    warnings = emptyList()
+                                )
+                            )
+                        )
                     ),
                     firmware = DeviceFirmwareAsset(
-                        version = "2.0.0",
                         filename = filename,
                         url = DeviceFirmwareRuntimeContract.OFFICIAL_RELEASE_URL_PREFIX +
                             "v2.0.0/$filename",
@@ -521,8 +568,7 @@ class DeviceOtaCoordinatorTest {
                         size = FIRMWARE_SIZE,
                         format = DeviceFirmwareRuntimeContract.Manifest.FIRMWARE_FORMAT,
                         otaSlotCompatible = true
-                    ),
-                    factory = null
+                    )
                 )
             ),
             signature = DeviceFirmwareManifestSignature(
@@ -605,19 +651,8 @@ class DeviceOtaCoordinatorTest {
     private companion object {
         val DEVICE_UID = DeviceUid("AQL-DP2-OTA-COORDINATOR")
         val RUNTIME_GENERATION = DeviceRuntimeConnectionGeneration(7L)
-        const val PRODUCT_KEY = "DOSING_DOSE_PRO_2"
-        const val PRODUCT_ID = "com.aqualight.dosing.dose_pro_2"
         const val FIRMWARE_SIZE = 1_048_576
         const val MANIFEST_URL =
             "https://github.com/ozdemirrrcemal-cmyk/AquaLight-OTA-Releases/releases/download/v2.0.0/manifest-stable.json"
-        val DOSING_CAPABILITIES = DeviceCapabilities(dosing = true, timeSync = true, ota = true)
-        val DOSING_LIMITS = DeviceLimits(dosingChannelCount = 2)
-        val OFFICIAL_PLATFORM = DeviceFirmwareManifestPlatform(
-            framework = DeviceFirmwareRuntimeContract.Manifest.PLATFORM_FRAMEWORK,
-            core = DeviceFirmwareRuntimeContract.Manifest.PLATFORM_CORE,
-            platform = DeviceFirmwareRuntimeContract.Manifest.PLATFORM_PACKAGE,
-            partitionTable = DeviceFirmwareRuntimeContract.Manifest.PARTITION_TABLE,
-            normalOtaAssetType = DeviceFirmwareRuntimeContract.Manifest.NORMAL_OTA_ASSET_TYPE
-        )
     }
 }
