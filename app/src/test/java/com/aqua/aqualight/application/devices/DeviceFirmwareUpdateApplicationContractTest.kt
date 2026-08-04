@@ -12,12 +12,16 @@ class DeviceFirmwareUpdateApplicationContractTest {
     @Test
     fun `shared ota application contract exposes every family screen state`() = runTest {
         val plan = preparedUpdate()
+        var requestedChannel: DeviceFirmwareChannel? = null
         val operations = object : DeviceFirmwareUpdateOperations {
             override suspend fun prepareUpdate(
                 deviceUid: String,
-                manifestUrl: String,
+                channel: DeviceFirmwareChannel,
                 applyNow: Boolean
-            ): Result<PreparedDeviceFirmwareUpdate> = Result.success(plan)
+            ): Result<PreparedDeviceFirmwareUpdate> {
+                requestedChannel = channel
+                return Result.success(plan)
+            }
 
             override suspend fun startUpdate(
                 plan: PreparedDeviceFirmwareUpdate
@@ -36,8 +40,13 @@ class DeviceFirmwareUpdateApplicationContractTest {
         assertEquals(DeviceOtaState.Idle(DEVICE_UID), operations.observe(DEVICE_UID).value)
         assertEquals(
             DeviceOtaState.UpdateAvailable(plan),
-            operations.checkAvailability(DEVICE_UID, MANIFEST_URL, applyNow = false).getOrThrow()
+            operations.checkAvailability(
+                DEVICE_UID,
+                channel = DeviceFirmwareChannel.STABLE,
+                applyNow = false
+            ).getOrThrow()
         )
+        assertEquals(DeviceFirmwareChannel.STABLE, requestedChannel)
         operations.close()
 
         val releaseContent = plan.releaseContent
@@ -121,7 +130,7 @@ class DeviceFirmwareUpdateApplicationContractTest {
         sizeBytes = 1_024,
         applyNow = false,
         runtimeMetadataGeneration = 7L,
-        manifestTag = "v2.0.0",
+        manifestTag = "dosing_dose_pro_2-v2.0.0",
         releaseContent = DeviceFirmwareReleaseContent(
             localeTag = "tr-TR",
             title = "Güvenli güncelleme",
@@ -134,6 +143,5 @@ class DeviceFirmwareUpdateApplicationContractTest {
 
     private companion object {
         const val DEVICE_UID = "AQL-DP2-OTA-CONTRACT"
-        const val MANIFEST_URL = "https://example.invalid/manifest.json"
     }
 }
