@@ -23,6 +23,7 @@ import com.aqua.aqualight.composition.requireAppContainer
 import com.aqua.aqualight.databinding.FragmentDeviceFamilySettingsBinding
 import com.aqua.aqualight.databinding.LayoutDeviceLightSettingsSectionBinding
 import com.aqua.aqualight.ui.common.bottomsheet.TextInputBottomSheet
+import com.aqua.aqualight.ui.common.bottomsheet.ValueStepperBottomSheet
 import com.aqua.aqualight.ui.common.header.AquaHeaderConfig
 import com.aqua.aqualight.ui.common.header.setupAquaHeader
 import com.aqua.aqualight.ui.tabs.devices.detail.common.DeviceRootPresentationMapper
@@ -63,6 +64,7 @@ abstract class DeviceFamilySettingsFragment : Fragment(R.layout.fragment_device_
         setupHeader()
         applyStaticCopy()
         setupDeviceNameResult()
+        setupTemperatureProtectionThresholdResult()
         setupActions()
         observeSettings()
         viewModel.bind(deviceUid)
@@ -120,6 +122,26 @@ abstract class DeviceFamilySettingsFragment : Fragment(R.layout.fragment_device_
         }
     }
 
+    private fun setupTemperatureProtectionThresholdResult() {
+        childFragmentManager.setFragmentResultListener(
+            TEMPERATURE_PROTECTION_THRESHOLD_REQUEST_KEY,
+            viewLifecycleOwner
+        ) { _, result ->
+            if (
+                result.getString(ValueStepperBottomSheet.RESULT_KEY) !=
+                ValueStepperBottomSheet.RESULT_SAVED
+            ) {
+                return@setFragmentResultListener
+            }
+            if (result.getString(ValueStepperBottomSheet.RESULT_PAYLOAD_ID) != deviceUid) {
+                return@setFragmentResultListener
+            }
+            viewModel.previewTemperatureProtectionThreshold(
+                result.getInt(ValueStepperBottomSheet.RESULT_VALUE)
+            )
+        }
+    }
+
     private fun setupActions() {
         binding.deviceNameRow.setOnClickListener {
             openDeviceNameEditor()
@@ -158,6 +180,24 @@ abstract class DeviceFamilySettingsFragment : Fragment(R.layout.fragment_device_
             maxLength = DEVICE_CUSTOM_NAME_MAX_LENGTH,
             disableSaveWhenUnchanged = true,
             requestFocus = true
+        )
+    }
+
+    private fun openTemperatureProtectionThresholdEditor() {
+        ValueStepperBottomSheet.show(
+            fragmentManager = childFragmentManager,
+            title = getString(R.string.device_settings_light_temperature_protection_title),
+            initialValue = latestState.temperatureProtectionThresholdC,
+            minimumValue = LightTemperatureProtectionUiContract.MINIMUM_THRESHOLD_C,
+            maximumValue = LightTemperatureProtectionUiContract.MAXIMUM_THRESHOLD_C,
+            step = LightTemperatureProtectionUiContract.THRESHOLD_STEP_C,
+            unitSuffix = getString(R.string.value_stepper_degree_symbol),
+            saveText = getString(R.string.device_settings_save_action),
+            cancelText = getString(R.string.device_settings_cancel_action),
+            incrementDescription = getString(R.string.value_stepper_increase_description),
+            decrementDescription = getString(R.string.value_stepper_decrease_description),
+            requestKey = TEMPERATURE_PROTECTION_THRESHOLD_REQUEST_KEY,
+            payloadId = deviceUid
         )
     }
 
@@ -208,10 +248,7 @@ abstract class DeviceFamilySettingsFragment : Fragment(R.layout.fragment_device_
         binding.tvFirmwareVersionValue.text = state.firmwareVersion.ifBlank { unavailable }
 
         renderUpdateAction(state.updateActionState)
-        renderLightInventory(
-            show = state.showLightProtectionInventory,
-            unavailable = unavailable
-        )
+        renderLightInventory(state)
     }
 
     private fun renderUpdateAction(state: DeviceSettingsUpdateActionState) {
@@ -284,11 +321,8 @@ abstract class DeviceFamilySettingsFragment : Fragment(R.layout.fragment_device_
             )
         }
 
-    private fun renderLightInventory(
-        show: Boolean,
-        unavailable: String
-    ) {
-        if (!show) {
+    private fun renderLightInventory(state: DeviceFamilySettingsUiState) {
+        if (!state.showLightProtectionInventory) {
             lightSectionBinding?.root?.isVisible = false
             return
         }
@@ -300,25 +334,27 @@ abstract class DeviceFamilySettingsFragment : Fragment(R.layout.fragment_device_
             inflated.tvLightProtectionSectionTitle.setText(
                 R.string.device_settings_light_protection_section
             )
-            inflated.tvCoolingAutoOffLabel.setText(
-                R.string.device_settings_light_cooling_auto_off_label
-            )
-            inflated.tvOverTemperatureProtectionLabel.setText(
-                R.string.device_settings_light_over_temperature_protection_label
+            inflated.tvCurrentTemperatureLabel.setText(
+                R.string.device_settings_light_current_temperature_label
             )
             inflated.tvTemperatureProtectionThresholdLabel.setText(
                 R.string.device_settings_light_temperature_threshold_label
             )
-            inflated.btnEditTemperatureProtectionThreshold.contentDescription = getString(
+            inflated.temperatureProtectionThresholdRow.contentDescription = getString(
                 R.string.device_settings_light_edit_temperature_threshold_description
             )
+            inflated.temperatureProtectionThresholdRow.setOnClickListener {
+                openTemperatureProtectionThresholdEditor()
+            }
         }
 
         section.root.isVisible = true
-        section.tvCoolingAutoOffValue.text = unavailable
-        section.tvOverTemperatureProtectionValue.text = unavailable
-        section.tvTemperatureProtectionThresholdValue.setText(
-            R.string.device_settings_light_temperature_threshold_pending_value
+        section.tvCurrentTemperatureValue.setText(
+            R.string.device_settings_light_temperature_unavailable_value
+        )
+        section.tvTemperatureProtectionThresholdValue.text = getString(
+            R.string.device_settings_light_temperature_value,
+            state.temperatureProtectionThresholdC
         )
     }
 
@@ -339,6 +375,8 @@ abstract class DeviceFamilySettingsFragment : Fragment(R.layout.fragment_device_
         const val COMPLETE_PROGRESS_PERMILLE = 1_000
         const val PERMILLE_PER_PERCENT = 10
         const val DEVICE_NAME_REQUEST_KEY = "device_settings_name_request"
+        const val TEMPERATURE_PROTECTION_THRESHOLD_REQUEST_KEY =
+            "device_settings_temperature_protection_threshold_request"
         val SETTINGS_DESTINATIONS = setOf(
             R.id.deviceLightSettingsFragment,
             R.id.deviceDosingSettingsFragment,
