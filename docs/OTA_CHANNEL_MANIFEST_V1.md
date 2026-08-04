@@ -61,17 +61,19 @@ hardwareRevision
 
 Zero exact matches is normal: the channel has no published update for this device. Android reports the currently installed version as up to date instead of showing a catalog-validation error.
 
-More than one exact match is ambiguous and fails closed.
+More than one exact match, a duplicate product environment, or a duplicate exact identity is ambiguous and fails closed.
 
 ## Authenticity and integrity
 
 Before planning an update, Android verifies the canonical payload hash and ECDSA P-256 signature. It then validates exact root and nested keys, commercial catalog identity, capabilities, limits, platform values, release tag/version, immutable GitHub URL, SHA-256, size, format, and OTA-slot compatibility.
 
+Every artifact must explicitly authorize OTA and the selected firmware URL must remain within the ESP32 production limit of 300 characters. The same rules are enforced by firmware publication before signing and again when a signed previous catalog is reused.
+
 The ESP32 continues to validate the exact start-request identity, HTTPS/TLS connection, expected size, SHA-256, flash operation, restart, and installed target version.
 
 ## Publication behavior
 
-Firmware release tooling verifies the previous signed channel catalog, replaces only the selected exact product identity, preserves unrelated products, rejects duplicate identities and non-increasing versions, signs tag and channel manifests independently, and never deletes or rewrites an existing release.
+Firmware release tooling verifies the previous signed channel catalog, replaces only the selected exact product identity, preserves unrelated products, rejects duplicate identities, duplicate environments, device-limit violations and non-increasing versions, signs tag and channel manifests independently, and never deletes or rewrites an existing release.
 
 ## Golden fixture
 
