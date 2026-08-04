@@ -52,18 +52,19 @@ class DeviceFirmwareUpdateStateCoverageTest {
     }
 
     @Test
-    fun `default application boundary maps prepared plan and exposes idle state`() = runTest {
+    fun `default application boundary maps typed channel plan and exposes idle state`() = runTest {
         val operations = FakeFirmwareUpdateOperations(preparedPlan(releaseContent()))
 
         val observed = operations.observe(DEVICE_UID).value
         val availability = operations.checkAvailability(
             deviceUid = DEVICE_UID,
-            manifestUrl = MANIFEST_URL,
+            channel = DeviceFirmwareChannel.DEV,
             applyNow = false
         ).getOrThrow()
 
         assertEquals(DeviceOtaState.Idle(DEVICE_UID), observed)
         assertTrue(availability is DeviceOtaState.UpdateAvailable)
+        assertEquals(DeviceFirmwareChannel.DEV, operations.lastChannel)
         assertTrue(DeviceFirmwareCommandResult(sent = true, messageId = "request-1").isSuccess)
         assertFalse(
             DeviceFirmwareCommandResult(
@@ -80,11 +81,21 @@ class DeviceFirmwareUpdateStateCoverageTest {
     private class FakeFirmwareUpdateOperations(
         private val plan: PreparedDeviceFirmwareUpdate
     ) : DeviceFirmwareUpdateOperations {
+        var lastChannel: DeviceFirmwareChannel? = null
+
         override suspend fun prepareUpdate(
             deviceUid: String,
-            manifestUrl: String,
+            channel: DeviceFirmwareChannel,
             applyNow: Boolean
-        ): Result<PreparedDeviceFirmwareUpdate> = Result.success(plan.copy(applyNow = applyNow))
+        ): Result<PreparedDeviceFirmwareUpdate> {
+            lastChannel = channel
+            return Result.success(
+                plan.copy(
+                    channel = channel.wireValue,
+                    applyNow = applyNow
+                )
+            )
+        }
 
         override suspend fun startUpdate(plan: PreparedDeviceFirmwareUpdate) =
             DeviceFirmwareCommandResult(sent = true, messageId = "request-1")
@@ -120,12 +131,11 @@ class DeviceFirmwareUpdateStateCoverageTest {
         sizeBytes = 1_024,
         applyNow = true,
         runtimeMetadataGeneration = 7,
-        manifestTag = "v2.0.0",
+        manifestTag = "dosing_dose_pro_2-v2.0.0",
         releaseContent = content
     )
 
     private companion object {
         const val DEVICE_UID = "AQL-DP2-OTA-COVERAGE"
-        const val MANIFEST_URL = "https://example.invalid/manifest.json"
     }
 }
