@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+
+    <style name="Widget.Aqua.BottomSheet.Stepper.Surface" parent="">
+        <item name="android:layout_width">match_parent</item>
+        <item name="android:layout_height">@dimen/aqua_size_96</item>
+        <item name="android:background">@drawable/bg_aqua_selection_row_compact</item>
+        <item name="android:gravity">center_vertical</item>
+        <item name="android:orientation">horizontal</item>
+        <item name="android:paddingStart">@dimen/aqua_size_12</item>
+        <item name="android:paddingEnd">@dimen/aqua_size_12</item>
+    </style>
+
+    <style name="Widget.Aqua.BottomSheet.Button.Stepper"
+        parent="Widget.MaterialComponents.Button">
+        <item name="android:minWidth">@dimen/aqua_size_0</item>
+        <item name="android:minHeight">@dimen/aqua_size_0</item>
+        <item name="android:paddingStart">@dimen/aqua_size_0</item>
+        <item name="android:paddingTop">@dimen/aqua_size_0</item>
+        <item name="android:paddingEnd">@dimen/aqua_size_0</item>
+        <item name="android:paddingBottom">@dimen/aqua_size_0</item>
+        <item name="android:insetTop">@dimen/aqua_size_0</item>
+        <item name="android:insetBottom">@dimen/aqua_size_0</item>
+        <item name="android:gravity">center</item>
+        <item name="backgroundTint">@color/aqua_bottom_sheet_neutral</item>
+        <item name="iconTint">@color/aqua_bottom_sheet_text_primary</item>
+        <item name="iconSize">@dimen/aqua_size_24</item>
+        <item name="iconPadding">@dimen/aqua_size_0</item>
+        <item name="iconGravity">textStart</item>
+        <item name="cornerRadius">@dimen/aqua_size_18</item>
+        <item name="rippleColor">@color/aqua_button_ripple</item>
+        <item name="elevation">@dimen/aqua_size_0</item>
+        <item name="strokeWidth">@dimen/aqua_size_0</item>
+    </style>
+
+    <style name="TextAppearance.Aqua.BottomSheet.StepperValue"
+        parent="TextAppearance.Material3.HeadlineMedium">
+        <item name="fontFamily">@font/inter_semibold</item>
+        <item name="android:fontFamily">@font/inter_semibold</item>
+        <item name="android:textColor">@color/aqua_bottom_sheet_text_primary</item>
+        <item name="android:textSize">@dimen/aqua_text_size_display</item>
+        <item name="android:includeFontPadding">false</item>
+    </style>
+
+</resources>

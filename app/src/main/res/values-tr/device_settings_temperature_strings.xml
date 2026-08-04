@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="device_settings_light_current_temperature_label">Anlık sıcaklık</string>
+    <string name="device_settings_light_temperature_value_format">%1$d °C</string>
+    <string name="device_settings_light_temperature_threshold_editor_helper">%1$d °C ile %2$d °C arasında bir değer seçin.</string>
+    <string name="device_settings_light_temperature_decrease_description">Sıcaklığı azalt</string>
+    <string name="device_settings_light_temperature_increase_description">Sıcaklığı artır</string>
+    <string name="device_settings_light_temperature_loading_value">Yükleniyor…</string>
+    <string name="device_settings_light_retry_temperature_protection_action">Yeniden dene</string>
+    <string name="device_settings_light_retry_temperature_protection_description">Sıcaklık korumasını yeniden yükle</string>
+</resources>

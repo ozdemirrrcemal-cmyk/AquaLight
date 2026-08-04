@@ -21,15 +21,19 @@ internal class DefaultDeviceRootOperations(
 
     override fun current(deviceUid: String): DeviceRootSnapshot? {
         val normalized = deviceUid.trim()
-        if (normalized.isBlank()) return null
-        return devicesRepository.currentDevice(DeviceUid(normalized))?.toDeviceRootSnapshot()
+        return if (normalized.isBlank()) {
+            null
+        } else {
+            devicesRepository.currentDevice(DeviceUid(normalized))?.toDeviceRootSnapshot()
+        }
     }
 
     override fun connect(deviceUid: String): Result<Unit> {
         val normalized = deviceUid.trim()
-        if (normalized.isBlank()) {
-            return Result.failure(IllegalArgumentException("Device uid is missing."))
+        return if (normalized.isBlank()) {
+            Result.failure(IllegalArgumentException("Device uid is missing."))
+        } else {
+            devicesRepository.connectRuntime(DeviceUid(normalized))
         }
-        return devicesRepository.connectRuntime(DeviceUid(normalized))
     }
 }
