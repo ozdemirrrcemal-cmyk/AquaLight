@@ -3,6 +3,7 @@ package com.aqua.aqualight.ui.common.bottomsheet
 import android.content.DialogInterface
 import android.os.Bundle
 import android.text.InputFilter
+import android.text.InputType
 import android.view.View
 import android.view.WindowManager
 import androidx.core.os.bundleOf
@@ -37,12 +38,25 @@ class TextInputBottomSheet : BottomSheetDialogFragment(
         val initialValue = args.getString(ARG_INITIAL_VALUE).orEmpty()
         val required = args.getBoolean(ARG_REQUIRED)
         val disableSaveWhenUnchanged = args.getBoolean(ARG_DISABLE_SAVE_WHEN_UNCHANGED)
+        val inputMode = args.getString(ARG_INPUT_MODE)
+            ?.let { storedMode ->
+                runCatching { InputMode.valueOf(storedMode) }.getOrDefault(InputMode.TEXT)
+            }
+            ?: InputMode.TEXT
+        val numericMinimum = args.getDouble(ARG_NUMERIC_MINIMUM, Double.NaN)
+        val numericMaximum = args.getDouble(ARG_NUMERIC_MAXIMUM, Double.NaN)
+        val hasNumericRange = numericMinimum.isFinite() && numericMaximum.isFinite()
 
         view.findViewById<android.widget.TextView>(R.id.tvTextInputTitle).text =
             args.getString(ARG_TITLE).orEmpty()
         view.findViewById<android.widget.TextView>(R.id.tvTextInputLabel).text =
             args.getString(ARG_LABEL).orEmpty()
         inputLayout.hint = args.getString(ARG_HINT).orEmpty()
+        input.inputType = when (inputMode) {
+            InputMode.TEXT -> InputType.TYPE_CLASS_TEXT
+            InputMode.DECIMAL_NUMBER ->
+                InputType.TYPE_CLASS_NUMBER or InputType.TYPE_NUMBER_FLAG_DECIMAL
+        }
         input.setText(initialValue)
         input.setSelection(input.text?.length ?: 0)
         args.getInt(ARG_MAX_LENGTH)
@@ -58,6 +72,16 @@ class TextInputBottomSheet : BottomSheetDialogFragment(
         secondaryLabel.text = args.getString(ARG_SECONDARY_LABEL).orEmpty()
         secondaryValue.text = secondaryText
 
+        fun numericValidationError(value: String): String? {
+            if (inputMode != InputMode.DECIMAL_NUMBER || value.isBlank()) return null
+            val parsed = value.replace(',', '.').toDoubleOrNull()
+                ?: return args.getString(ARG_INVALID_NUMBER_MESSAGE).orEmpty()
+            if (hasNumericRange && parsed !in numericMinimum..numericMaximum) {
+                return args.getString(ARG_OUT_OF_RANGE_MESSAGE).orEmpty()
+            }
+            return null
+        }
+
         view.findViewById<MaterialButton>(R.id.btnTextInputCancel).apply {
             text = args.getString(ARG_CANCEL_TEXT).orEmpty()
             setOnClickListener {
@@ -72,6 +96,10 @@ class TextInputBottomSheet : BottomSheetDialogFragment(
                 val value = input.text?.toString()?.trim().orEmpty()
                 if (required && value.isBlank()) {
                     inputLayout.error = args.getString(ARG_REQUIRED_MESSAGE).orEmpty()
+                    return@setOnClickListener
+                }
+                numericValidationError(value)?.let { validationError ->
+                    inputLayout.error = validationError
                     return@setOnClickListener
                 }
                 inputLayout.error = null
@@ -123,6 +151,11 @@ class TextInputBottomSheet : BottomSheetDialogFragment(
         )
     }
 
+    enum class InputMode {
+        TEXT,
+        DECIMAL_NUMBER
+    }
+
     companion object {
         const val RESULT_KEY = "text_input_result"
         const val RESULT_VALUE = "text_input_value"
@@ -146,6 +179,11 @@ class TextInputBottomSheet : BottomSheetDialogFragment(
         private const val ARG_DISABLE_SAVE_WHEN_UNCHANGED =
             "arg_disable_save_when_unchanged"
         private const val ARG_REQUEST_FOCUS = "arg_request_focus"
+        private const val ARG_INPUT_MODE = "arg_input_mode"
+        private const val ARG_NUMERIC_MINIMUM = "arg_numeric_minimum"
+        private const val ARG_NUMERIC_MAXIMUM = "arg_numeric_maximum"
+        private const val ARG_INVALID_NUMBER_MESSAGE = "arg_invalid_number_message"
+        private const val ARG_OUT_OF_RANGE_MESSAGE = "arg_out_of_range_message"
         private const val TAG_PREFIX = "TextInputBottomSheet:"
 
         @Suppress("LongParameterList")
@@ -165,7 +203,12 @@ class TextInputBottomSheet : BottomSheetDialogFragment(
             payloadId: String = "",
             maxLength: Int = 0,
             disableSaveWhenUnchanged: Boolean = false,
-            requestFocus: Boolean = false
+            requestFocus: Boolean = false,
+            inputMode: InputMode = InputMode.TEXT,
+            numericMinimum: Double? = null,
+            numericMaximum: Double? = null,
+            invalidNumberMessage: String = "",
+            outOfRangeMessage: String = ""
         ) {
             val tag = TAG_PREFIX + requestKey
             if (fragmentManager.findFragmentByTag(tag) != null || fragmentManager.isStateSaved) return
@@ -185,7 +228,12 @@ class TextInputBottomSheet : BottomSheetDialogFragment(
                     ARG_PAYLOAD_ID to payloadId,
                     ARG_MAX_LENGTH to maxLength,
                     ARG_DISABLE_SAVE_WHEN_UNCHANGED to disableSaveWhenUnchanged,
-                    ARG_REQUEST_FOCUS to requestFocus
+                    ARG_REQUEST_FOCUS to requestFocus,
+                    ARG_INPUT_MODE to inputMode.name,
+                    ARG_NUMERIC_MINIMUM to (numericMinimum ?: Double.NaN),
+                    ARG_NUMERIC_MAXIMUM to (numericMaximum ?: Double.NaN),
+                    ARG_INVALID_NUMBER_MESSAGE to invalidNumberMessage,
+                    ARG_OUT_OF_RANGE_MESSAGE to outOfRangeMessage
                 )
             }.show(fragmentManager, tag)
         }
