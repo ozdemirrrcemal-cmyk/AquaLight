@@ -52,9 +52,8 @@ class TextInputBottomSheet : BottomSheetDialogFragment(
         view.findViewById<android.widget.TextView>(R.id.tvTextInputLabel).text =
             args.getString(ARG_LABEL).orEmpty()
         inputLayout.hint = args.getString(ARG_HINT).orEmpty()
-        input.inputType = when (inputMode) {
-            InputMode.TEXT -> InputType.TYPE_CLASS_TEXT
-            InputMode.DECIMAL_NUMBER ->
+        if (inputMode == InputMode.DECIMAL_NUMBER) {
+            input.inputType =
                 InputType.TYPE_CLASS_NUMBER or InputType.TYPE_NUMBER_FLAG_DECIMAL
         }
         input.setText(initialValue)
