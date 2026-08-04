@@ -23,6 +23,7 @@ import com.aqua.aqualight.composition.requireAppContainer
 import com.aqua.aqualight.databinding.FragmentDeviceFamilySettingsBinding
 import com.aqua.aqualight.databinding.LayoutDeviceLightSettingsSectionBinding
 import com.aqua.aqualight.ui.common.bottomsheet.TextInputBottomSheet
+import com.aqua.aqualight.ui.common.bottomsheet.ValueStepperBottomSheet
 import com.aqua.aqualight.ui.common.header.AquaHeaderConfig
 import com.aqua.aqualight.ui.common.header.setupAquaHeader
 import com.aqua.aqualight.ui.tabs.devices.detail.common.DeviceRootPresentationMapper
@@ -127,17 +128,21 @@ abstract class DeviceFamilySettingsFragment : Fragment(R.layout.fragment_device_
             viewLifecycleOwner
         ) { _, result ->
             if (
-                result.getString(TextInputBottomSheet.RESULT_KEY) !=
-                TextInputBottomSheet.RESULT_SAVED
+                result.getString(ValueStepperBottomSheet.RESULT_KEY) !=
+                ValueStepperBottomSheet.RESULT_SAVED
             ) {
                 return@setFragmentResultListener
             }
-            if (result.getString(TextInputBottomSheet.RESULT_PAYLOAD_ID) != deviceUid) {
+            if (result.getString(ValueStepperBottomSheet.RESULT_PAYLOAD_ID) != deviceUid) {
                 return@setFragmentResultListener
             }
-            viewModel.previewTemperatureProtectionThreshold(
-                result.getString(TextInputBottomSheet.RESULT_VALUE).orEmpty()
+            val threshold = result.getDouble(
+                ValueStepperBottomSheet.RESULT_VALUE,
+                Double.NaN
             )
+            if (threshold.isFinite()) {
+                viewModel.previewTemperatureProtectionThreshold(threshold)
+            }
         }
     }
 
@@ -183,51 +188,22 @@ abstract class DeviceFamilySettingsFragment : Fragment(R.layout.fragment_device_
     }
 
     private fun openTemperatureProtectionThresholdEditor() {
-        val minimumC = LightTemperatureProtectionUiContract.MINIMUM_THRESHOLD_C.toInt()
-        val maximumC = LightTemperatureProtectionUiContract.MAXIMUM_THRESHOLD_C.toInt()
-        TextInputBottomSheet.show(
+        ValueStepperBottomSheet.show(
             fragmentManager = childFragmentManager,
             title = getString(
-                R.string.device_settings_change_light_temperature_threshold_title
+                R.string.device_settings_light_temperature_protection_title
             ),
-            label = getString(R.string.device_settings_light_temperature_threshold_label),
-            hint = getString(
-                R.string.device_settings_light_temperature_threshold_hint,
-                minimumC,
-                maximumC
-            ),
-            initialValue = LightTemperatureProtectionUiContract.formatInput(
-                latestState.temperatureProtectionThresholdC
-            ),
-            secondaryLabel = getString(
-                R.string.device_settings_light_temperature_threshold_allowed_range_label
-            ),
-            secondaryValue = getString(
-                R.string.device_settings_light_temperature_threshold_allowed_range_value,
-                minimumC,
-                maximumC
-            ),
+            initialValue = latestState.temperatureProtectionThresholdC,
+            minimumValue = LightTemperatureProtectionUiContract.MINIMUM_THRESHOLD_C,
+            maximumValue = LightTemperatureProtectionUiContract.MAXIMUM_THRESHOLD_C,
+            step = LightTemperatureProtectionUiContract.THRESHOLD_STEP_C,
+            unitSuffix = getString(R.string.common_degree_symbol),
             saveText = getString(R.string.device_settings_save_action),
             cancelText = getString(R.string.device_settings_cancel_action),
-            required = true,
-            requiredMessage = getString(
-                R.string.device_settings_light_temperature_threshold_required
-            ),
+            incrementDescription = getString(R.string.common_increment_value_description),
+            decrementDescription = getString(R.string.common_decrement_value_description),
             requestKey = TEMPERATURE_PROTECTION_THRESHOLD_REQUEST_KEY,
-            payloadId = deviceUid,
-            disableSaveWhenUnchanged = true,
-            requestFocus = true,
-            inputMode = TextInputBottomSheet.InputMode.DECIMAL_NUMBER,
-            numericMinimum = LightTemperatureProtectionUiContract.MINIMUM_THRESHOLD_C,
-            numericMaximum = LightTemperatureProtectionUiContract.MAXIMUM_THRESHOLD_C,
-            invalidNumberMessage = getString(
-                R.string.device_settings_light_temperature_threshold_invalid_number
-            ),
-            outOfRangeMessage = getString(
-                R.string.device_settings_light_temperature_threshold_out_of_range,
-                minimumC,
-                maximumC
-            )
+            payloadId = deviceUid
         )
     }
 
