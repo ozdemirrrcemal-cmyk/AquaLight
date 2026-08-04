@@ -121,11 +121,5 @@
     <string name="device_settings_light_temperature_value">%1$s °C</string>
     <string name="device_settings_light_temperature_threshold_label">Temperature protection threshold</string>
     <string name="device_settings_light_edit_temperature_threshold_description">Edit temperature protection threshold</string>
-    <string name="device_settings_change_light_temperature_threshold_title">Change temperature protection threshold</string>
-    <string name="device_settings_light_temperature_threshold_hint">Enter a value from %1$d to %2$d °C</string>
-    <string name="device_settings_light_temperature_threshold_allowed_range_label">Allowed range</string>
-    <string name="device_settings_light_temperature_threshold_allowed_range_value">%1$d–%2$d °C</string>
-    <string name="device_settings_light_temperature_threshold_required">Enter a temperature threshold.</string>
-    <string name="device_settings_light_temperature_threshold_invalid_number">Enter a valid temperature.</string>
-    <string name="device_settings_light_temperature_threshold_out_of_range">Temperature must be between %1$d and %2$d °C.</string>
+    <string name="device_settings_light_temperature_protection_title">Temperature protection</string>
 </resources>
