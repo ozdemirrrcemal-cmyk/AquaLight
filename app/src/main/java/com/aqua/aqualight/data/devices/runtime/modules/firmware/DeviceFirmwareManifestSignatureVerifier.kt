@@ -18,6 +18,7 @@ class DeviceFirmwareManifestSignatureVerifier(
     fun verifyAndParse(rawManifest: String): Result<DeviceFirmwareManifest> = runCatching {
         val root = JSONObject(rawManifest)
         val manifest = DeviceFirmwareManifestParser.parse(rawManifest).getOrThrow()
+        DeviceFirmwareManifestContractValidator.validate(manifest)
         verify(root = root, signature = manifest.signature)
         manifest
     }
