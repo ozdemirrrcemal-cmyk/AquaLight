@@ -129,7 +129,8 @@ require_tokens(
     (
         "fun evaluateUpdate(",
         "requireValidatedSnapshot(snapshot)",
-        'manifest.tag == "v${manifest.version}"',
+        'val expectedTag = "${artifact.env}-v${manifest.version}"',
+        "require(manifest.tag == expectedTag)",
         "compatible.size == 1",
         "return compatible.single()",
         "artifact.env == environment",
