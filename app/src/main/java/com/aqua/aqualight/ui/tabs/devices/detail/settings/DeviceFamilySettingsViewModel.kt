@@ -20,8 +20,9 @@ import kotlinx.coroutines.launch
 /**
  * Presentation owner for the shared family Settings screen.
  *
- * Device-name persistence remains a separate follow-up. OTA availability and runtime progress use
- * the owner-scoped commercial coordinator shared with the full-screen update destination.
+ * Device-name and thermal-threshold persistence remain separate data-stage follow-ups. OTA
+ * availability and runtime progress use the owner-scoped commercial coordinator shared with the
+ * full-screen update destination.
  */
 class DeviceFamilySettingsViewModel(
     private val rootOperations: DeviceRootOperations,
@@ -37,6 +38,7 @@ class DeviceFamilySettingsViewModel(
     private var observeFirmwareJob: Job? = null
     private var updateCheckJob: Job? = null
     private var localDeviceNameOverride: String? = null
+    private var localTemperatureProtectionThresholdOverride: Double? = null
 
     fun bind(deviceUidText: String) {
         val deviceUid = deviceUidText.trim()
@@ -49,6 +51,7 @@ class DeviceFamilySettingsViewModel(
         boundDeviceUid = deviceUid
         cancelBoundJobs()
         localDeviceNameOverride = null
+        localTemperatureProtectionThresholdOverride = null
         _uiState.value = rootOperations.current(deviceUid)
             .toInitialDeviceFamilySettingsUiState(deviceUid)
         rootOperations.connect(deviceUid)
@@ -70,6 +73,17 @@ class DeviceFamilySettingsViewModel(
 
         localDeviceNameOverride = normalized
         _uiState.update { state -> state.copy(deviceName = normalized) }
+    }
+
+    /** Updates only the bounded Settings preview; firmware read/write is connected later. */
+    fun previewTemperatureProtectionThreshold(value: String) {
+        val threshold = LightTemperatureProtectionUiContract.parseAllowedThreshold(value) ?: return
+        if (!_uiState.value.showLightProtectionInventory) return
+
+        localTemperatureProtectionThresholdOverride = threshold
+        _uiState.update { state ->
+            state.copy(temperatureProtectionThresholdC = threshold)
+        }
     }
 
     fun checkForUpdates() {
@@ -135,6 +149,9 @@ class DeviceFamilySettingsViewModel(
         val deviceState = snapshot.toDeviceFamilySettingsUiState()
         _uiState.value = deviceState.copy(
             deviceName = localDeviceNameOverride ?: deviceState.deviceName,
+            temperatureProtectionThresholdC =
+                localTemperatureProtectionThresholdOverride
+                    ?: deviceState.temperatureProtectionThresholdC,
             updateActionState = previous.updateActionState,
             informationLoadState = DeviceSettingsInformationLoadState.READY
         )
@@ -167,6 +184,7 @@ class DeviceFamilySettingsViewModel(
         cancelBoundJobs()
         boundDeviceUid = ""
         localDeviceNameOverride = null
+        localTemperatureProtectionThresholdOverride = null
         _uiState.value = DeviceFamilySettingsUiState()
     }
 
@@ -219,6 +237,8 @@ data class DeviceFamilySettingsUiState(
     val firmwareVersion: String = "",
     val family: OwnerDeviceFamily = OwnerDeviceFamily.UNKNOWN,
     val showLightProtectionInventory: Boolean = false,
+    val temperatureProtectionThresholdC: Double =
+        LightTemperatureProtectionUiContract.DEFAULT_THRESHOLD_C,
     val informationLoadState: DeviceSettingsInformationLoadState =
         DeviceSettingsInformationLoadState.LOADING,
     val updateActionState: DeviceSettingsUpdateActionState =
