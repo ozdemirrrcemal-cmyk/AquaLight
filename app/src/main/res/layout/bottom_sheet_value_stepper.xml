@@ -1,0 +1,76 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/valueStepperSheetRoot"
+    style="@style/Widget.Aqua.BottomSheet.Root">
+
+    <View style="@style/Widget.Aqua.BottomSheet.Handle" />
+
+    <TextView
+        android:id="@+id/tvValueStepperTitle"
+        style="@style/TextAppearance.Aqua.BottomSheet.Title"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="@dimen/aqua_size_18"
+        android:gravity="center" />
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="@dimen/aqua_size_64"
+        android:layout_marginTop="@dimen/aqua_size_26"
+        android:gravity="center_vertical"
+        android:orientation="horizontal">
+
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/btnValueStepperIncrement"
+            style="@style/Widget.Aqua.BottomSheet.Button.Neutral"
+            android:layout_width="@dimen/aqua_size_64"
+            android:layout_height="@dimen/aqua_size_54"
+            android:minWidth="@dimen/aqua_size_0"
+            android:padding="@dimen/aqua_size_0"
+            android:text="@string/value_stepper_plus_symbol"
+            android:textSize="@dimen/aqua_text_size_section_title" />
+
+        <TextView
+            android:id="@+id/tvValueStepperValue"
+            style="@style/TextAppearance.Aqua.BottomSheet.Title"
+            android:layout_width="@dimen/aqua_size_0"
+            android:layout_height="match_parent"
+            android:layout_marginHorizontal="@dimen/aqua_size_16"
+            android:layout_weight="1"
+            android:gravity="center" />
+
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/btnValueStepperDecrement"
+            style="@style/Widget.Aqua.BottomSheet.Button.Neutral"
+            android:layout_width="@dimen/aqua_size_64"
+            android:layout_height="@dimen/aqua_size_54"
+            android:minWidth="@dimen/aqua_size_0"
+            android:padding="@dimen/aqua_size_0"
+            android:text="@string/value_stepper_minus_symbol"
+            android:textSize="@dimen/aqua_text_size_section_title" />
+    </LinearLayout>
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="@dimen/aqua_size_54"
+        android:layout_marginTop="@dimen/aqua_size_26"
+        android:orientation="horizontal">
+
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/btnValueStepperCancel"
+            style="@style/Widget.Aqua.BottomSheet.Button.Neutral"
+            android:layout_width="@dimen/aqua_size_0"
+            android:layout_height="match_parent"
+            android:layout_marginEnd="@dimen/aqua_size_8"
+            android:layout_weight="1" />
+
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/btnValueStepperSave"
+            style="@style/Widget.Aqua.BottomSheet.Button.Primary"
+            android:layout_width="@dimen/aqua_size_0"
+            android:layout_height="match_parent"
+            android:layout_marginStart="@dimen/aqua_size_8"
+            android:layout_weight="1" />
+    </LinearLayout>
+
+</LinearLayout>
