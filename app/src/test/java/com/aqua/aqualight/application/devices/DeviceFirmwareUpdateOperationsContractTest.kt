@@ -17,10 +17,24 @@ class DeviceFirmwareUpdateOperationsContractTest {
         assertEquals(DeviceOtaState.Idle("device-1"), operations.observe("device-1").value)
         assertEquals(
             DeviceOtaState.UpdateAvailable(plan),
-            operations.checkAvailability("device-1", "https://example.invalid/manifest.json")
-                .getOrThrow()
+            operations.checkAvailability("device-1").getOrThrow()
         )
+        assertEquals(DeviceFirmwareChannel.STABLE, operations.lastPreparedChannel)
         operations.close()
+    }
+
+    @Test
+    fun `application boundary exposes typed isolated channels instead of URLs`() = runTest {
+        val operations = FakeFirmwareOperations(preparedPlan())
+
+        operations.checkAvailability(
+            deviceUid = "device-1",
+            channel = DeviceFirmwareChannel.BETA,
+            applyNow = false
+        ).getOrThrow()
+
+        assertEquals(DeviceFirmwareChannel.BETA, operations.lastPreparedChannel)
+        assertFalse(operations.lastApplyNow)
     }
 
     @Test
@@ -62,17 +76,25 @@ class DeviceFirmwareUpdateOperationsContractTest {
         downloadUrl = "https://example.invalid/firmware.bin",
         sha256 = "a".repeat(64),
         sizeBytes = 1_048_576,
-        applyNow = true
+        applyNow = true,
+        manifestTag = "dosing_dose_pro_2-v2.0.0"
     )
 
     private class FakeFirmwareOperations(
         private val plan: PreparedDeviceFirmwareUpdate
     ) : DeviceFirmwareUpdateOperations {
+        var lastPreparedChannel: DeviceFirmwareChannel? = null
+        var lastApplyNow: Boolean = true
+
         override suspend fun prepareUpdate(
             deviceUid: String,
-            manifestUrl: String,
+            channel: DeviceFirmwareChannel,
             applyNow: Boolean
-        ): Result<PreparedDeviceFirmwareUpdate> = Result.success(plan)
+        ): Result<PreparedDeviceFirmwareUpdate> {
+            lastPreparedChannel = channel
+            lastApplyNow = applyNow
+            return Result.success(plan)
+        }
 
         override suspend fun startUpdate(plan: PreparedDeviceFirmwareUpdate) =
             DeviceFirmwareCommandResult(sent = true)
