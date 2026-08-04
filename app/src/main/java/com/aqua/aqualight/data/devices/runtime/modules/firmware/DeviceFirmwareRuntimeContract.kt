@@ -26,9 +26,16 @@ object DeviceFirmwareRuntimeContract {
         const val OTA_CLEAR = "ota.clear"
     }
 
+    /**
+     * Fully qualified names written inside firmware command-response payloads.
+     *
+     * These are deliberately different from the top-level WebSocket event actions registered in
+     * AqlWsEventContract (`ota.progress` and `ota.completed`). Firmware publishes the qualified
+     * name to its event bus and the WebSocket layer splits it into module + action for the envelope.
+     */
     object Event {
-        const val OTA_PROGRESS = "ota.progress"
-        const val OTA_COMPLETED = "ota.completed"
+        const val OTA_PROGRESS = "firmware.ota.progress"
+        const val OTA_COMPLETED = "firmware.ota.completed"
     }
 
     object ErrorCode {

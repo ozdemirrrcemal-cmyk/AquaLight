@@ -5,6 +5,7 @@ import com.aqua.aqualight.application.devices.DeviceOtaFailureReason
 import org.junit.Assert.assertEquals
 import org.junit.Test
 
+@Suppress("LongMethod")
 class DeviceRootPresentationMapperTest {
 
     @Test
@@ -22,10 +23,44 @@ class DeviceRootPresentationMapperTest {
                 R.string.device_settings_update_unsupported_status,
             DeviceOtaFailureReason.RELEASE_UNAVAILABLE to
                 R.string.device_settings_update_error_release_unavailable,
+            DeviceOtaFailureReason.RELEASE_ACCESS_DENIED to
+                R.string.device_settings_update_error_release_access_denied,
+            DeviceOtaFailureReason.RELEASE_RATE_LIMITED to
+                R.string.device_settings_update_error_release_rate_limited,
+            DeviceOtaFailureReason.RELEASE_REDIRECT_FAILED to
+                R.string.device_settings_update_error_release_redirect_failed,
+            DeviceOtaFailureReason.RELEASE_REQUEST_REJECTED to
+                R.string.device_settings_update_error_release_request_rejected,
+            DeviceOtaFailureReason.RELEASE_SERVER_UNAVAILABLE to
+                R.string.device_settings_update_error_release_server_unavailable,
             DeviceOtaFailureReason.INCOMPATIBLE_FIRMWARE to
                 R.string.device_settings_update_error_incompatible_firmware,
             DeviceOtaFailureReason.INSUFFICIENT_SPACE to
                 R.string.device_settings_update_error_insufficient_space,
+            DeviceOtaFailureReason.DOWNLOAD_CONNECTION_FAILED to
+                R.string.device_settings_update_error_download_connection_failed,
+            DeviceOtaFailureReason.DOWNLOAD_SEND_FAILED to
+                R.string.device_settings_update_error_download_send_failed,
+            DeviceOtaFailureReason.DOWNLOAD_CONNECTION_LOST to
+                R.string.device_settings_update_error_download_connection_lost,
+            DeviceOtaFailureReason.DOWNLOAD_STREAM_UNAVAILABLE to
+                R.string.device_settings_update_error_download_stream_unavailable,
+            DeviceOtaFailureReason.DOWNLOAD_SERVER_NO_RESPONSE to
+                R.string.device_settings_update_error_download_server_no_response,
+            DeviceOtaFailureReason.DOWNLOAD_DEVICE_MEMORY_LOW to
+                R.string.device_settings_update_error_download_device_memory_low,
+            DeviceOtaFailureReason.DOWNLOAD_ENCODING_UNSUPPORTED to
+                R.string.device_settings_update_error_download_encoding_unsupported,
+            DeviceOtaFailureReason.DOWNLOAD_STREAM_WRITE_FAILED to
+                R.string.device_settings_update_error_download_stream_write_failed,
+            DeviceOtaFailureReason.DOWNLOAD_TIMEOUT to
+                R.string.device_settings_update_error_download_timeout,
+            DeviceOtaFailureReason.DOWNLOAD_URL_OPEN_FAILED to
+                R.string.device_settings_update_error_download_url_open_failed,
+            DeviceOtaFailureReason.DOWNLOAD_STREAM_INTERRUPTED to
+                R.string.device_settings_update_error_download_stream_interrupted,
+            DeviceOtaFailureReason.DOWNLOAD_SIZE_MISMATCH to
+                R.string.device_settings_update_error_download_size_mismatch,
             DeviceOtaFailureReason.DOWNLOAD_FAILED to
                 R.string.device_settings_update_error_download_failed,
             DeviceOtaFailureReason.INTEGRITY_CHECK_FAILED to

@@ -13,6 +13,8 @@ class DeviceFirmwareReadParserTest {
         assertEquals("1.0.0", parsed.version)
         assertEquals("light_prime", parsed.model)
         assertEquals(DeviceFirmwareOtaPhase.IDLE, parsed.ota.phase)
+        assertEquals(DeviceFirmwareRuntimeContract.Event.OTA_PROGRESS, parsed.otaProgressEvent)
+        assertEquals(DeviceFirmwareRuntimeContract.Event.OTA_COMPLETED, parsed.otaCompletedEvent)
     }
 
     @Test
@@ -28,6 +30,17 @@ class DeviceFirmwareReadParserTest {
     fun `rejects writable runtime declaration`() {
         val invalid = statusJson().apply {
             getJSONObject("runtime").put("readOnly", false)
+        }
+
+        assertTrue(runCatching { DeviceFirmwareReadParser.parseStatus(invalid) }.isFailure)
+    }
+
+    @Test
+    fun `rejects short Android action names inside firmware status payload`() {
+        val invalid = statusJson().apply {
+            getJSONObject("ota")
+                .put("progressEvent", "ota.progress")
+                .put("completedEvent", "ota.completed")
         }
 
         assertTrue(runCatching { DeviceFirmwareReadParser.parseStatus(invalid) }.isFailure)
@@ -74,8 +87,8 @@ class DeviceFirmwareReadParserTest {
                 .put("supported", true)
                 .put("transport", "websocket-control")
                 .put("binaryTransfer", "firmware-download")
-                .put("progressEvent", "ota.progress")
-                .put("completedEvent", "ota.completed")
+                .put("progressEvent", DeviceFirmwareRuntimeContract.Event.OTA_PROGRESS)
+                .put("completedEvent", DeviceFirmwareRuntimeContract.Event.OTA_COMPLETED)
                 .put("startCommand", "firmware.ota.start")
                 .put("statusCommand", "firmware.ota.status")
                 .put("status", idleOta())

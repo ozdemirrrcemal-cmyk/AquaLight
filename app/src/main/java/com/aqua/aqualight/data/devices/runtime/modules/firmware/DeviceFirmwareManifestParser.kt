@@ -355,7 +355,15 @@ object DeviceFirmwareManifestParser {
     }
 
     private fun JSONObject.requiredReleaseNoteText(key: String): String {
-        val value = requiredString(key)
+        require(has(key) && !isNull(key)) { "OTA release note '$key' is missing." }
+        val value = get(key) as? String ?: error("OTA release note '$key' must be a string.")
+        require(value.isNotEmpty()) { "OTA release note '$key' must not be empty." }
+        require(!value.first().isWhitespace() && !value.last().isWhitespace()) {
+            "OTA release note '$key' must not contain surrounding whitespace."
+        }
+        require(value.none { character -> character < ' ' }) {
+            "OTA release note '$key' must not contain C0 control characters."
+        }
         require(value.length <= DeviceFirmwareRuntimeContract.Limit.MAX_RELEASE_NOTE_TEXT_LENGTH) {
             "OTA release note '$key' exceeds the firmware length limit."
         }
