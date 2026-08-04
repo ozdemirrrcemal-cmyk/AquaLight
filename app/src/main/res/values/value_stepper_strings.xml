@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="common_plus_symbol" translatable="false">+</string>
+    <string name="common_minus_symbol" translatable="false">−</string>
+    <string name="common_degree_symbol" translatable="false">°</string>
+    <string name="common_increment_value_description">Increase value</string>
+    <string name="common_decrement_value_description">Decrease value</string>
+</resources>
