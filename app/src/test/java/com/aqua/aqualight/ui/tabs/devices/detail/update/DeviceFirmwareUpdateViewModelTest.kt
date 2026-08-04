@@ -1,5 +1,6 @@
 package com.aqua.aqualight.ui.tabs.devices.detail.update
 
+import com.aqua.aqualight.application.devices.DeviceFirmwareChannel
 import com.aqua.aqualight.application.devices.DeviceFirmwareCommandResult
 import com.aqua.aqualight.application.devices.DeviceFirmwareReleaseContent
 import com.aqua.aqualight.application.devices.DeviceFirmwareUpdateOperations
@@ -41,8 +42,7 @@ class DeviceFirmwareUpdateViewModelTest {
         val firmware = FakeFirmwareOperations(preparedPlan())
         val viewModel = DeviceFirmwareUpdateViewModel(
             rootOperations = FakeRootOperations(deviceSnapshot()),
-            firmwareUpdateOperations = firmware,
-            manifestUrl = MANIFEST_URL
+            firmwareUpdateOperations = firmware
         )
 
         viewModel.bind(DEVICE_UID)
@@ -52,6 +52,7 @@ class DeviceFirmwareUpdateViewModelTest {
         assertEquals("Güvenli güncelleme", viewModel.uiState.value.releaseContent.title)
         assertEquals(1, firmware.checkCalls)
         assertEquals(1, firmware.statusCalls)
+        assertEquals(listOf(DeviceFirmwareChannel.STABLE), firmware.checkedChannels)
     }
 
     @Test
@@ -60,8 +61,7 @@ class DeviceFirmwareUpdateViewModelTest {
         val firmware = FakeFirmwareOperations(plan)
         val viewModel = DeviceFirmwareUpdateViewModel(
             rootOperations = FakeRootOperations(deviceSnapshot()),
-            firmwareUpdateOperations = firmware,
-            manifestUrl = MANIFEST_URL
+            firmwareUpdateOperations = firmware
         )
         viewModel.bind(DEVICE_UID)
 
@@ -95,8 +95,7 @@ class DeviceFirmwareUpdateViewModelTest {
         val firmware = FakeFirmwareOperations(preparedPlan())
         val viewModel = DeviceFirmwareUpdateViewModel(
             rootOperations = FakeRootOperations(deviceSnapshot()),
-            firmwareUpdateOperations = firmware,
-            manifestUrl = MANIFEST_URL
+            firmwareUpdateOperations = firmware
         )
         viewModel.bind(DEVICE_UID)
         val failure = DeviceOtaFailure(
@@ -119,8 +118,7 @@ class DeviceFirmwareUpdateViewModelTest {
         val firmware = FakeFirmwareOperations(plan)
         val viewModel = DeviceFirmwareUpdateViewModel(
             rootOperations = FakeRootOperations(deviceSnapshot()),
-            firmwareUpdateOperations = firmware,
-            manifestUrl = MANIFEST_URL
+            firmwareUpdateOperations = firmware
         )
         viewModel.bind(DEVICE_UID)
 
@@ -148,6 +146,7 @@ class DeviceFirmwareUpdateViewModelTest {
     ) : DeviceFirmwareUpdateOperations {
         private val state = MutableStateFlow<DeviceOtaState>(DeviceOtaState.Idle(DEVICE_UID))
         val startedPlans = mutableListOf<PreparedDeviceFirmwareUpdate>()
+        val checkedChannels = mutableListOf<DeviceFirmwareChannel>()
         var checkCalls = 0
         var statusCalls = 0
 
@@ -155,10 +154,11 @@ class DeviceFirmwareUpdateViewModelTest {
 
         override suspend fun checkAvailability(
             deviceUid: String,
-            manifestUrl: String,
+            channel: DeviceFirmwareChannel,
             applyNow: Boolean
         ): Result<DeviceOtaState> {
             checkCalls += 1
+            checkedChannels += channel
             state.value = DeviceOtaState.Checking(deviceUid, plan.currentVersion)
             return DeviceOtaState.UpdateAvailable(plan).let { available ->
                 state.value = available
@@ -168,7 +168,7 @@ class DeviceFirmwareUpdateViewModelTest {
 
         override suspend fun prepareUpdate(
             deviceUid: String,
-            manifestUrl: String,
+            channel: DeviceFirmwareChannel,
             applyNow: Boolean
         ): Result<PreparedDeviceFirmwareUpdate> = Result.success(plan)
 
@@ -207,7 +207,6 @@ class DeviceFirmwareUpdateViewModelTest {
 
     private companion object {
         const val DEVICE_UID = "AQL-DP4-UPDATE-UI"
-        const val MANIFEST_URL = "https://example.invalid/manifest-stable.json"
 
         fun releaseContent() = DeviceFirmwareReleaseContent(
             localeTag = "tr-TR",
@@ -235,7 +234,7 @@ class DeviceFirmwareUpdateViewModelTest {
             sizeBytes = 1_000_000,
             applyNow = true,
             runtimeMetadataGeneration = 7L,
-            manifestTag = "v2.0.0",
+            manifestTag = "dosing_dose_pro_4-v2.0.0",
             releaseContent = releaseContent()
         )
 
