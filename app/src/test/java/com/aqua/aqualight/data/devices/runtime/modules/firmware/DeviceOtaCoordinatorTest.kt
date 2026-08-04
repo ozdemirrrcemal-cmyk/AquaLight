@@ -66,7 +66,7 @@ class DeviceOtaCoordinatorTest {
                 MANIFEST_URL,
                 applyNow = true
             ).getOrThrow() as DeviceOtaState.UpdateAvailable
-            assertEquals("2.0.0", availability.plan.targetVersion)
+            assertEquals(TARGET_VERSION, availability.plan.targetVersion)
             assertEquals(
                 listOf("Kalibrasyon kontrolleri geliştirildi."),
                 availability.plan.releaseContent.changes
@@ -119,7 +119,7 @@ class DeviceOtaCoordinatorTest {
             )
             runCurrent()
             val completed = coordinator.observe(DEVICE_UID).value as DeviceOtaState.RestartRequired
-            assertEquals("2.0.0", completed.targetVersion)
+            assertEquals(TARGET_VERSION, completed.targetVersion)
             assertTrue(completed.restartScheduled)
 
             lifecycle.tryEmit(DeviceRuntimeLifecycleEvent.Unavailable(DEVICE_UID))
@@ -128,7 +128,7 @@ class DeviceOtaCoordinatorTest {
 
             snapshots.value = mapOf(
                 DEVICE_UID to snapshot().copy(
-                    firmwareVersion = "2.0.0",
+                    firmwareVersion = TARGET_VERSION,
                     runtimeMetadataGeneration = 8L
                 )
             )
@@ -379,7 +379,7 @@ class DeviceOtaCoordinatorTest {
             "request",
             JSONObject()
                 .put("urlScheme", "https")
-                .put("version", "2.0.0")
+                .put("version", TARGET_VERSION)
                 .put("expectedSize", FIRMWARE_SIZE)
                 .put("applyNow", true)
                 .put("allowInsecureHttp", false)
@@ -436,7 +436,7 @@ class DeviceOtaCoordinatorTest {
         .put("contentLength", FIRMWARE_SIZE.toLong())
         .put("progressPermille", progressPermille)
         .put("progressPercent", progressPermille / 10.0)
-        .put("targetVersion", "2.0.0")
+        .put("targetVersion", TARGET_VERSION)
         .put("sha256Expected", "a".repeat(64))
         .put("sha256Actual", if (phase == "succeeded") "a".repeat(64) else "")
         .put("lastError", if (phase == "failed") "download failed" else "")
@@ -467,14 +467,13 @@ class DeviceOtaCoordinatorTest {
     )
 
     private fun manifest(): DeviceFirmwareManifest {
-        val env = "dosing_dose_pro_2"
-        val filename = "AquaLight-$env-v2.0.0-ota.bin"
+        val filename = "AquaLight-$RELEASE_TAG-ota.bin"
         return DeviceFirmwareManifest(
             schema = DeviceFirmwareRuntimeContract.Manifest.SCHEMA,
             brand = DeviceFirmwareRuntimeContract.Manifest.BRAND,
             channel = DeviceFirmwareRuntimeContract.Manifest.STABLE_CHANNEL,
-            version = "2.0.0",
-            tag = "v2.0.0",
+            version = TARGET_VERSION,
+            tag = RELEASE_TAG,
             releaseRepo = DeviceFirmwareRuntimeContract.OFFICIAL_RELEASE_REPOSITORY,
             generatedAt = "2026-08-03T00:00:00+00:00",
             platform = OFFICIAL_PLATFORM,
@@ -490,7 +489,7 @@ class DeviceOtaCoordinatorTest {
             ),
             artifacts = listOf(
                 DeviceFirmwareManifestArtifact(
-                    env = env,
+                    env = ENVIRONMENT,
                     product = DeviceFirmwareManifestProduct(
                         productKey = PRODUCT_KEY,
                         productId = PRODUCT_ID,
@@ -513,10 +512,10 @@ class DeviceOtaCoordinatorTest {
                         hardwareRevision = "2.0"
                     ),
                     firmware = DeviceFirmwareAsset(
-                        version = "2.0.0",
+                        version = TARGET_VERSION,
                         filename = filename,
                         url = DeviceFirmwareRuntimeContract.OFFICIAL_RELEASE_URL_PREFIX +
-                            "v2.0.0/$filename",
+                            "$RELEASE_TAG/$filename",
                         sha256 = "a".repeat(64),
                         size = FIRMWARE_SIZE,
                         format = DeviceFirmwareRuntimeContract.Manifest.FIRMWARE_FORMAT,
@@ -607,9 +606,13 @@ class DeviceOtaCoordinatorTest {
         val RUNTIME_GENERATION = DeviceRuntimeConnectionGeneration(7L)
         const val PRODUCT_KEY = "DOSING_DOSE_PRO_2"
         const val PRODUCT_ID = "com.aqualight.dosing.dose_pro_2"
+        const val ENVIRONMENT = "dosing_dose_pro_2"
+        const val TARGET_VERSION = "2.0.0"
+        const val RELEASE_TAG = "dosing_dose_pro_2-v2.0.0"
         const val FIRMWARE_SIZE = 1_048_576
         const val MANIFEST_URL =
-            "https://github.com/ozdemirrrcemal-cmyk/AquaLight-OTA-Releases/releases/download/v2.0.0/manifest-stable.json"
+            "https://raw.githubusercontent.com/ozdemirrrcemal-cmyk/AquaLight-OTA-Releases/" +
+                "main/channels/stable/dosing_dose_pro_2.json"
         val DOSING_CAPABILITIES = DeviceCapabilities(dosing = true, timeSync = true, ota = true)
         val DOSING_LIMITS = DeviceLimits(dosingChannelCount = 2)
         val OFFICIAL_PLATFORM = DeviceFirmwareManifestPlatform(
