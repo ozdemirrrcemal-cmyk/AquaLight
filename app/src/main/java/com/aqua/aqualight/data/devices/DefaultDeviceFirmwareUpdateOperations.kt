@@ -59,7 +59,7 @@ internal class DefaultDeviceFirmwareUpdateOperations(
         applyNow: Boolean
     ): Result<DeviceOtaState> {
         val uid = requireDeviceUid(deviceUid)
-        return availabilityLock(uid).withLock {
+        return availabilityLocks.computeIfAbsent(uid) { Mutex() }.withLock {
             val currentState = coordinator.observe(uid).value
             if (!availabilityRefreshPolicy.shouldRefresh(uid, currentState)) {
                 return@withLock Result.success(currentState)
@@ -79,7 +79,7 @@ internal class DefaultDeviceFirmwareUpdateOperations(
         applyNow: Boolean
     ): Result<DeviceOtaState> {
         val uid = requireDeviceUid(deviceUid)
-        return availabilityLock(uid).withLock {
+        return availabilityLocks.computeIfAbsent(uid) { Mutex() }.withLock {
             availabilityRefreshPolicy.recordAttempt(uid)
             coordinator.checkAvailability(
                 deviceUid = uid,
@@ -149,9 +149,6 @@ internal class DefaultDeviceFirmwareUpdateOperations(
         }
     }
 
-    private fun availabilityLock(deviceUid: DeviceUid): Mutex =
-        availabilityLocks.computeIfAbsent(deviceUid) { Mutex() }
-
     private fun requireDeviceUid(value: String): DeviceUid {
         val normalized = value.trim()
         require(normalized.isNotBlank()) { "Device uid is missing." }
@@ -171,9 +168,9 @@ internal class DeviceFirmwareAvailabilityRefreshPolicy(
     private val lastAttemptAtMillis = ConcurrentHashMap<DeviceUid, Long>()
 
     fun shouldRefresh(deviceUid: DeviceUid, state: DeviceOtaState): Boolean {
-        if (!state.allowsPassiveAvailabilityRefresh()) return false
-        val lastAttempt = lastAttemptAtMillis[deviceUid] ?: return true
-        return nowMillis() - lastAttempt >= freshnessMillis
+        val lastAttempt = lastAttemptAtMillis[deviceUid]
+        val stale = lastAttempt == null || nowMillis() - lastAttempt >= freshnessMillis
+        return state.allowsPassiveAvailabilityRefresh() && stale
     }
 
     fun recordAttempt(deviceUid: DeviceUid) {
