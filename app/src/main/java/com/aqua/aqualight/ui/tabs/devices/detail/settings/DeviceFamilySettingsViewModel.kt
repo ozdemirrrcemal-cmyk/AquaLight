@@ -24,6 +24,8 @@ import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 
+internal const val DEVICE_SETTINGS_UPDATE_CHECK_DEBOUNCE_MILLIS = 1_000L
+
 /**
  * Presentation owner for the shared family Settings screen.
  *
@@ -54,6 +56,7 @@ class DeviceFamilySettingsViewModel(
     private var thresholdUpdateJob: Job? = null
     private var updateCheckJob: Job? = null
     private var lastDeviceAvailability: OwnerDeviceAvailability? = null
+    private var automaticUpdateCheckDeviceUid = ""
 
     fun bind(deviceUidText: String) {
         val deviceUid = deviceUidText.trim()
@@ -79,8 +82,10 @@ class DeviceFamilySettingsViewModel(
                 applyDeviceSnapshot(deviceUid, snapshot)
             }
         }
+        val firmwareStates = firmwareUpdateOperations.observe(deviceUid)
+        applyFirmwareState(firmwareStates.value)
         observeFirmwareJob = viewModelScope.launch {
-            firmwareUpdateOperations.observe(deviceUid).collect(::applyFirmwareState)
+            firmwareStates.collect(::applyFirmwareState)
         }
         observeLightProtectionJob = viewModelScope.launch {
             settingsOperations.observeLightProtection(deviceUid).collect { snapshot ->
@@ -88,6 +93,7 @@ class DeviceFamilySettingsViewModel(
             }
         }
         requestLightProtectionRefreshIfNeeded(deviceUid)
+        requestAutomaticUpdateCheck(deviceUid)
     }
 
     fun updateDeviceName(value: String) {
@@ -215,9 +221,35 @@ class DeviceFamilySettingsViewModel(
 
     fun checkForUpdates() {
         val deviceUid = boundDeviceUid
-        if (deviceUid.isBlank() || updateCheckJob?.isActive == true) return
-        if (_uiState.value.updateActionState is DeviceSettingsUpdateActionState.UpdateInProgress) {
+        if (
+            isDeviceSettingsUpdateCheckDebounced(
+                lastCheckedAtMillis = _uiState.value.lastUpdateCheckAtMillis,
+                nowMillis = nowMillis()
+            )
+        ) {
             return
+        }
+        startUpdateCheck(deviceUid)
+    }
+
+    private fun requestAutomaticUpdateCheck(deviceUid: String) {
+        if (automaticUpdateCheckDeviceUid == deviceUid) return
+        automaticUpdateCheckDeviceUid = deviceUid
+        if (_uiState.value.updateActionState.allowsAutomaticUpdateCheck()) {
+            startUpdateCheck(deviceUid)
+        }
+    }
+
+    private fun startUpdateCheck(deviceUid: String) {
+        if (deviceUid.isBlank() || updateCheckJob?.isActive == true) return
+        when (val state = _uiState.value.updateActionState) {
+            DeviceSettingsUpdateActionState.Checking,
+            is DeviceSettingsUpdateActionState.UpdateInProgress,
+            DeviceSettingsUpdateActionState.Unsupported -> return
+            is DeviceSettingsUpdateActionState.Failed -> if (!state.failure.recoverable) return
+            DeviceSettingsUpdateActionState.Idle,
+            DeviceSettingsUpdateActionState.UpToDate,
+            is DeviceSettingsUpdateActionState.UpdateAvailable -> Unit
         }
 
         updateCheckJob = viewModelScope.launch {
@@ -403,6 +435,7 @@ class DeviceFamilySettingsViewModel(
         cancelBoundJobs()
         boundDeviceUid = ""
         lastDeviceAvailability = null
+        automaticUpdateCheckDeviceUid = ""
         _uiState.value = DeviceFamilySettingsUiState()
     }
 
@@ -499,6 +532,25 @@ data class DeviceFamilySettingsUiState(
     val updateActionState: DeviceSettingsUpdateActionState =
         DeviceSettingsUpdateActionState.Idle
 )
+
+internal fun DeviceSettingsUpdateActionState.allowsAutomaticUpdateCheck(): Boolean = when (this) {
+    DeviceSettingsUpdateActionState.Idle,
+    DeviceSettingsUpdateActionState.UpToDate -> true
+    DeviceSettingsUpdateActionState.Checking,
+    is DeviceSettingsUpdateActionState.UpdateAvailable,
+    is DeviceSettingsUpdateActionState.UpdateInProgress,
+    is DeviceSettingsUpdateActionState.Failed,
+    DeviceSettingsUpdateActionState.Unsupported -> false
+}
+
+internal fun isDeviceSettingsUpdateCheckDebounced(
+    lastCheckedAtMillis: Long?,
+    nowMillis: Long
+): Boolean {
+    val lastChecked = lastCheckedAtMillis ?: return false
+    val elapsedMillis = nowMillis - lastChecked
+    return elapsedMillis in 0 until DEVICE_SETTINGS_UPDATE_CHECK_DEBOUNCE_MILLIS
+}
 
 internal fun DeviceRootSnapshot.toDeviceFamilySettingsUiState(): DeviceFamilySettingsUiState =
     DeviceFamilySettingsUiState(
