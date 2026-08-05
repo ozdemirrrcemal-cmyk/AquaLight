@@ -1,9 +1,11 @@
-package com.aqua.aqualight.ui.tabs.devices.detail.update
+package com.aqua.aqualight.ui.tabs.devices.detail.update.presentation.mapper
 
 import com.aqua.aqualight.R
 import com.aqua.aqualight.application.devices.DeviceFirmwareReleaseContent
 import com.aqua.aqualight.application.devices.DeviceOtaFailure
 import com.aqua.aqualight.application.devices.DeviceOtaFailureReason
+import com.aqua.aqualight.ui.tabs.devices.detail.update.DeviceFirmwareUpdateMode
+import com.aqua.aqualight.ui.tabs.devices.detail.update.DeviceFirmwareUpdateUiState
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNotEquals
 import org.junit.Test

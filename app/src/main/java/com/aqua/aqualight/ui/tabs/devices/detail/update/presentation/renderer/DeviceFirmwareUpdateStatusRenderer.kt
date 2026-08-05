@@ -1,4 +1,4 @@
-package com.aqua.aqualight.ui.tabs.devices.detail.update
+package com.aqua.aqualight.ui.tabs.devices.detail.update.presentation.renderer
 
 import android.content.res.ColorStateList
 import androidx.annotation.ColorRes
@@ -10,6 +10,11 @@ import androidx.core.widget.ImageViewCompat
 import androidx.fragment.app.Fragment
 import com.aqua.aqualight.R
 import com.aqua.aqualight.databinding.FragmentDeviceFirmwareUpdateBinding
+import com.aqua.aqualight.ui.tabs.devices.detail.update.DeviceFirmwareUpdateUiState
+import com.aqua.aqualight.ui.tabs.devices.detail.update.controller.DeviceFirmwareUpdateMotionController
+import com.aqua.aqualight.ui.tabs.devices.detail.update.presentation.mapper.DeviceFirmwareUpdateHeroPresentationMapper
+import com.aqua.aqualight.ui.tabs.devices.detail.update.presentation.mapper.DeviceFirmwareUpdateProgressPresentationMapper
+import com.aqua.aqualight.ui.tabs.devices.detail.update.presentation.mapper.DeviceFirmwareUpdateText
 
 /** Renders hero, primary action and accessibility announcements. */
 internal class DeviceFirmwareUpdateStatusRenderer(

@@ -1,4 +1,4 @@
-package com.aqua.aqualight.ui.tabs.devices.detail.update
+package com.aqua.aqualight.ui.tabs.devices.detail.update.controller
 
 import android.animation.AnimatorSet
 import android.animation.ObjectAnimator
@@ -8,6 +8,9 @@ import android.view.animation.DecelerateInterpolator
 import androidx.fragment.app.Fragment
 import com.aqua.aqualight.R
 import com.aqua.aqualight.databinding.FragmentDeviceFirmwareUpdateBinding
+import com.aqua.aqualight.ui.tabs.devices.detail.update.DeviceFirmwareUpdateMode
+import com.aqua.aqualight.ui.tabs.devices.detail.update.DeviceFirmwareUpdateUiState
+import com.aqua.aqualight.ui.tabs.devices.detail.update.presentation.mapper.DeviceFirmwareUpdateProgressPresentationMapper
 
 /** Owns view-lifecycle animations and respects the system animator setting. */
 internal class DeviceFirmwareUpdateMotionController(

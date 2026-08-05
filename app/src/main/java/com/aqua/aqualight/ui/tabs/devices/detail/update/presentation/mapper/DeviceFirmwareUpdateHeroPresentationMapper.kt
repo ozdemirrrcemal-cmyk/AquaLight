@@ -1,10 +1,12 @@
-package com.aqua.aqualight.ui.tabs.devices.detail.update
+package com.aqua.aqualight.ui.tabs.devices.detail.update.presentation.mapper
 
 import androidx.annotation.ColorRes
 import androidx.annotation.DrawableRes
 import androidx.annotation.StringRes
 import com.aqua.aqualight.R
 import com.aqua.aqualight.ui.tabs.devices.detail.common.DeviceRootPresentationMapper
+import com.aqua.aqualight.ui.tabs.devices.detail.update.DeviceFirmwareUpdateMode
+import com.aqua.aqualight.ui.tabs.devices.detail.update.DeviceFirmwareUpdateUiState
 
 internal data class DeviceFirmwareUpdateText(
     @StringRes val stringRes: Int,

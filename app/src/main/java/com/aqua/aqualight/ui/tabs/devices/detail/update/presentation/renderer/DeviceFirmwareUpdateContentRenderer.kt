@@ -1,4 +1,4 @@
-package com.aqua.aqualight.ui.tabs.devices.detail.update
+package com.aqua.aqualight.ui.tabs.devices.detail.update.presentation.renderer
 
 import android.content.res.ColorStateList
 import android.text.format.Formatter
@@ -16,6 +16,12 @@ import com.aqua.aqualight.application.devices.DeviceFirmwareReleaseContent
 import com.aqua.aqualight.databinding.FragmentDeviceFirmwareUpdateBinding
 import com.aqua.aqualight.databinding.LayoutDeviceFirmwareReleaseItemBinding
 import com.aqua.aqualight.ui.tabs.devices.detail.common.DeviceRootPresentationMapper
+import com.aqua.aqualight.ui.tabs.devices.detail.update.DeviceFirmwareUpdateMode
+import com.aqua.aqualight.ui.tabs.devices.detail.update.DeviceFirmwareUpdateUiState
+import com.aqua.aqualight.ui.tabs.devices.detail.update.controller.DeviceFirmwareUpdateMotionController
+import com.aqua.aqualight.ui.tabs.devices.detail.update.presentation.mapper.DeviceFirmwareUpdateHeroPresentationMapper
+import com.aqua.aqualight.ui.tabs.devices.detail.update.presentation.mapper.DeviceFirmwareUpdateIconPresentation
+import com.aqua.aqualight.ui.tabs.devices.detail.update.presentation.mapper.DeviceFirmwareUpdateProgressPresentationMapper
 
 /** Renders progress, verified release content and operational requirements. */
 @Suppress("TooManyFunctions")

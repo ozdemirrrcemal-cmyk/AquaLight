@@ -5,6 +5,9 @@ import androidx.fragment.app.Fragment
 import androidx.transition.AutoTransition
 import androidx.transition.TransitionManager
 import com.aqua.aqualight.databinding.FragmentDeviceFirmwareUpdateBinding
+import com.aqua.aqualight.ui.tabs.devices.detail.update.controller.DeviceFirmwareUpdateMotionController
+import com.aqua.aqualight.ui.tabs.devices.detail.update.presentation.renderer.DeviceFirmwareUpdateContentRenderer
+import com.aqua.aqualight.ui.tabs.devices.detail.update.presentation.renderer.DeviceFirmwareUpdateStatusRenderer
 
 /** Coordinates focused view renderers for the firmware update screen. */
 internal class DeviceFirmwareUpdateScreenRenderer(

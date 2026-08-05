@@ -1,8 +1,10 @@
-package com.aqua.aqualight.ui.tabs.devices.detail.update
+package com.aqua.aqualight.ui.tabs.devices.detail.update.presentation.mapper
 
 import androidx.annotation.StringRes
 import com.aqua.aqualight.R
 import com.aqua.aqualight.application.devices.DeviceOtaProgressPhase
+import com.aqua.aqualight.ui.tabs.devices.detail.update.DeviceFirmwareUpdateMode
+import com.aqua.aqualight.ui.tabs.devices.detail.update.DeviceFirmwareUpdateUiState
 
 internal data class DeviceFirmwareUpdateActionPresentation(
     @StringRes val textRes: Int,
