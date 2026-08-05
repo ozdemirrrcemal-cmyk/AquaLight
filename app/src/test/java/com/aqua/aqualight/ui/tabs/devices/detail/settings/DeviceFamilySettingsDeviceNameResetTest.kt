@@ -165,7 +165,7 @@ class DeviceFamilySettingsDeviceNameResetTest {
             DeviceFirmwareCommandResult(sent = true)
     }
 
-    private class DeviceNameResetMainDispatcherRule(
+    class DeviceNameResetMainDispatcherRule(
         private val dispatcher: TestDispatcher = UnconfinedTestDispatcher()
     ) : TestWatcher() {
         override fun starting(description: Description) {
