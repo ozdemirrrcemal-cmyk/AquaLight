@@ -17,7 +17,7 @@ object DeviceSnapshotMerger {
         if (previous == null) return incoming
 
         return incoming.copy(
-            identity = mergeIdentity(previous.identity, incoming.identity),
+            identity = mergeIdentity(previous, incoming),
             product = mergeProduct(previous.product, incoming.product),
             firmwareVersion = incoming.firmwareVersion.ifBlank { previous.firmwareVersion },
             firmwareBuild = incoming.firmwareBuild.ifBlank { previous.firmwareBuild },
@@ -41,20 +41,44 @@ object DeviceSnapshotMerger {
         )
     }
 
-    private fun mergeIdentity(previous: DeviceIdentity, incoming: DeviceIdentity): DeviceIdentity =
-        incoming.copy(
-            shortId = incoming.shortId.ifBlank { previous.shortId },
-            chipId = incoming.chipId.ifBlank { previous.chipId },
-            espChipId = incoming.espChipId.ifBlank { previous.espChipId },
-            efuseMac = incoming.efuseMac.ifBlank { previous.efuseMac },
-            macAddress = incoming.macAddress.ifBlank { previous.macAddress },
-            serialNumber = incoming.serialNumber.ifBlank { previous.serialNumber },
-            firmwareSerial = incoming.firmwareSerial.ifBlank { previous.firmwareSerial },
-            displayName = incoming.displayName.ifBlank { previous.displayName },
-            customName = incoming.customName.ifBlank { previous.customName },
-            setupCode = incoming.setupCode.ifBlank { previous.setupCode },
-            setupSsid = incoming.setupSsid.ifBlank { previous.setupSsid }
+    private fun mergeIdentity(
+        previous: DeviceSnapshot,
+        incoming: DeviceSnapshot
+    ): DeviceIdentity {
+        val previousIdentity = previous.identity
+        val incomingIdentity = incoming.identity
+        return incomingIdentity.copy(
+            shortId = incomingIdentity.shortId.ifBlank { previousIdentity.shortId },
+            chipId = incomingIdentity.chipId.ifBlank { previousIdentity.chipId },
+            espChipId = incomingIdentity.espChipId.ifBlank { previousIdentity.espChipId },
+            efuseMac = incomingIdentity.efuseMac.ifBlank { previousIdentity.efuseMac },
+            macAddress = incomingIdentity.macAddress.ifBlank { previousIdentity.macAddress },
+            serialNumber = incomingIdentity.serialNumber.ifBlank { previousIdentity.serialNumber },
+            firmwareSerial = incomingIdentity.firmwareSerial.ifBlank {
+                previousIdentity.firmwareSerial
+            },
+            displayName = incomingIdentity.displayName.ifBlank { previousIdentity.displayName },
+            customName = mergeCustomName(previous, incoming),
+            setupCode = incomingIdentity.setupCode.ifBlank { previousIdentity.setupCode },
+            setupSsid = incomingIdentity.setupSsid.ifBlank { previousIdentity.setupSsid }
         )
+    }
+
+    /**
+     * An authenticated runtime generation owns the device-name contract, including an intentionally
+     * empty custom name. Lower-trust discovery snapshots must not resurrect a stale custom name after
+     * firmware has confirmed a reset. When neither side has authenticated proof, the legacy
+     * fill-missing behavior remains unchanged.
+     */
+    private fun mergeCustomName(previous: DeviceSnapshot, incoming: DeviceSnapshot): String = when {
+        incoming.hasValidatedRuntimeMetadata &&
+            incoming.runtimeMetadataGeneration >= previous.runtimeMetadataGeneration ->
+            incoming.identity.customName
+        previous.hasValidatedRuntimeMetadata &&
+            previous.runtimeMetadataGeneration > incoming.runtimeMetadataGeneration ->
+            previous.identity.customName
+        else -> incoming.identity.customName.ifBlank { previous.identity.customName }
+    }
 
     private fun mergeProduct(previous: DeviceProduct, incoming: DeviceProduct): DeviceProduct {
         val familyRaw = incoming.familyRaw.ifBlank { previous.familyRaw }

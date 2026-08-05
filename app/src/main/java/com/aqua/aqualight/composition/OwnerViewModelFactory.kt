@@ -11,6 +11,7 @@ import com.aqua.aqualight.data.aquarium.devices.DefaultTankDeviceAssignmentOpera
 import com.aqua.aqualight.data.care.DefaultMaintenanceOperations
 import com.aqua.aqualight.data.care.integrity.restoreTaskSnapshotsForIntegrity
 import com.aqua.aqualight.data.care.integrity.snapshotTasksForIntegrity
+import com.aqua.aqualight.data.devices.DefaultDeviceFamilySettingsOperations
 import com.aqua.aqualight.data.devices.DefaultDeviceRootOperations
 import com.aqua.aqualight.data.devices.DefaultDeviceStatusOperations
 import com.aqua.aqualight.data.devices.DefaultOwnerDevicesOperations
@@ -199,7 +200,7 @@ internal class OwnerViewModelFactory(
 
             DeviceFamilySettingsViewModel::class.java ->
                 DeviceFamilySettingsViewModel(
-                    rootOperations = DefaultDeviceRootOperations(repository),
+                    settingsOperations = DefaultDeviceFamilySettingsOperations(repository),
                     firmwareUpdateOperations = graph.firmwareUpdateOperations,
                     manifestUrl = BuildConfig.AQL_OTA_MANIFEST_URL
                 )

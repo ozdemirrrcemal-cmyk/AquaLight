@@ -3,6 +3,7 @@ package com.aqua.aqualight.ui.tabs.devices.detail.settings
 import android.os.Bundle
 import android.view.View
 import android.view.ViewGroup
+import androidx.annotation.StringRes
 import androidx.core.view.isInvisible
 import androidx.core.view.isVisible
 import androidx.core.view.updateLayoutParams
@@ -22,10 +23,14 @@ import com.aqua.aqualight.application.devices.DEVICE_CUSTOM_NAME_MAX_LENGTH
 import com.aqua.aqualight.composition.requireAppContainer
 import com.aqua.aqualight.databinding.FragmentDeviceFamilySettingsBinding
 import com.aqua.aqualight.databinding.LayoutDeviceLightSettingsSectionBinding
+import com.aqua.aqualight.i18n.LocaleFormatter
+import com.aqua.aqualight.ui.common.bottomsheet.IntegerStepperBottomSheet
 import com.aqua.aqualight.ui.common.bottomsheet.TextInputBottomSheet
 import com.aqua.aqualight.ui.common.header.AquaHeaderConfig
 import com.aqua.aqualight.ui.common.header.setupAquaHeader
 import com.aqua.aqualight.ui.tabs.devices.detail.common.DeviceRootPresentationMapper
+import com.aqua.aqualight.utils.DialogManager
+import com.aqua.aqualight.utils.DialogType
 import kotlinx.coroutines.launch
 
 /**
@@ -63,6 +68,7 @@ abstract class DeviceFamilySettingsFragment : Fragment(R.layout.fragment_device_
         setupHeader()
         applyStaticCopy()
         setupDeviceNameResult()
+        setupTemperatureThresholdResult()
         setupActions()
         observeSettings()
         viewModel.bind(deviceUid)
@@ -106,16 +112,41 @@ abstract class DeviceFamilySettingsFragment : Fragment(R.layout.fragment_device_
             viewLifecycleOwner
         ) { _, result ->
             if (
-                result.getString(TextInputBottomSheet.RESULT_KEY) !=
-                TextInputBottomSheet.RESULT_SAVED
+                !isSavedSettingsEditorResult(
+                    result = result.getString(TextInputBottomSheet.RESULT_KEY),
+                    payloadId = result.getString(TextInputBottomSheet.RESULT_PAYLOAD_ID),
+                    expectedPayloadId = deviceUid,
+                    savedResult = TextInputBottomSheet.RESULT_SAVED
+                )
             ) {
                 return@setFragmentResultListener
             }
-            if (result.getString(TextInputBottomSheet.RESULT_PAYLOAD_ID) != deviceUid) {
+            val customName = result.getString(TextInputBottomSheet.RESULT_VALUE).orEmpty()
+            if (customName.isBlank()) {
+                viewModel.resetDeviceNameToDefault()
+            } else {
+                viewModel.updateDeviceName(customName)
+            }
+        }
+    }
+
+    private fun setupTemperatureThresholdResult() {
+        childFragmentManager.setFragmentResultListener(
+            TEMPERATURE_THRESHOLD_REQUEST_KEY,
+            viewLifecycleOwner
+        ) { _, result ->
+            if (
+                !isSavedSettingsEditorResult(
+                    result = result.getString(IntegerStepperBottomSheet.RESULT_KEY),
+                    payloadId = result.getString(IntegerStepperBottomSheet.RESULT_PAYLOAD_ID),
+                    expectedPayloadId = deviceUid,
+                    savedResult = IntegerStepperBottomSheet.RESULT_SAVED
+                )
+            ) {
                 return@setFragmentResultListener
             }
-            viewModel.previewDeviceName(
-                result.getString(TextInputBottomSheet.RESULT_VALUE).orEmpty()
+            viewModel.updateTemperatureProtectionThreshold(
+                result.getInt(IntegerStepperBottomSheet.RESULT_VALUE)
             )
         }
     }
@@ -143,6 +174,9 @@ abstract class DeviceFamilySettingsFragment : Fragment(R.layout.fragment_device_
     }
 
     private fun openDeviceNameEditor() {
+        if (latestState.deviceNameSaving) return
+        val canUseDefaultName = latestState.hasCustomDeviceName &&
+            latestState.productDisplayName.isNotBlank()
         TextInputBottomSheet.show(
             fragmentManager = childFragmentManager,
             title = getString(R.string.device_settings_change_name_title),
@@ -157,7 +191,49 @@ abstract class DeviceFamilySettingsFragment : Fragment(R.layout.fragment_device_
             payloadId = deviceUid,
             maxLength = DEVICE_CUSTOM_NAME_MAX_LENGTH,
             disableSaveWhenUnchanged = true,
-            requestFocus = true
+            requestFocus = true,
+            presetActionText = if (canUseDefaultName) {
+                getString(R.string.device_settings_use_default_name_action)
+            } else {
+                ""
+            },
+            presetDisplayValue = latestState.productDisplayName,
+            presetResultValue = ""
+        )
+    }
+
+    private fun openTemperatureThresholdEditor() {
+        val editor = latestState.lightProtection.editor ?: return
+        if (latestState.lightProtection.updateInProgress) return
+
+        IntegerStepperBottomSheet.show(
+            fragmentManager = childFragmentManager,
+            title = getString(
+                R.string.device_settings_light_temperature_threshold_label
+            ),
+            helperText = getString(
+                R.string.device_settings_light_temperature_threshold_editor_helper,
+                editor.minimumCelsius,
+                editor.maximumCelsius
+            ),
+            valueFormat = getString(
+                R.string.device_settings_light_temperature_value_format
+            ),
+            initialValue = editor.currentCelsius,
+            minValue = editor.minimumCelsius,
+            maxValue = editor.maximumCelsius,
+            step = editor.stepCelsius,
+            saveText = getString(R.string.device_settings_save_action),
+            cancelText = getString(R.string.device_settings_cancel_action),
+            decreaseContentDescription = getString(
+                R.string.device_settings_light_temperature_decrease_description
+            ),
+            increaseContentDescription = getString(
+                R.string.device_settings_light_temperature_increase_description
+            ),
+            requestKey = TEMPERATURE_THRESHOLD_REQUEST_KEY,
+            payloadId = deviceUid,
+            disableSaveWhenUnchanged = true
         )
     }
 
@@ -188,7 +264,12 @@ abstract class DeviceFamilySettingsFragment : Fragment(R.layout.fragment_device_
     private fun observeSettings() {
         viewLifecycleOwner.lifecycleScope.launch {
             viewLifecycleOwner.repeatOnLifecycle(Lifecycle.State.STARTED) {
-                viewModel.uiState.collect(::renderState)
+                launch {
+                    viewModel.uiState.collect(::renderState)
+                }
+                launch {
+                    viewModel.events.collect(::handleEvent)
+                }
             }
         }
     }
@@ -199,6 +280,14 @@ abstract class DeviceFamilySettingsFragment : Fragment(R.layout.fragment_device_
         val unavailable = getString(R.string.common_not_available_em_dash)
 
         binding.tvDeviceNameValue.text = state.deviceName.ifBlank { unavailable }
+        binding.deviceNameRow.isEnabled = !state.deviceNameSaving
+        binding.tvEditDeviceNameAction.setText(
+            if (state.deviceNameSaving) {
+                R.string.device_settings_saving_action
+            } else {
+                R.string.device_settings_edit_action
+            }
+        )
         binding.tvSerialNumberValue.text = state.serialNumber.ifBlank { unavailable }
         binding.tvHardwareRevisionValue.apply {
             text = state.hardwareRevision.ifBlank { unavailable }
@@ -210,7 +299,7 @@ abstract class DeviceFamilySettingsFragment : Fragment(R.layout.fragment_device_
         renderUpdateAction(state.updateActionState)
         renderLightInventory(
             show = state.showLightProtectionInventory,
-            unavailable = unavailable
+            state = state.lightProtection
         )
     }
 
@@ -229,64 +318,64 @@ abstract class DeviceFamilySettingsFragment : Fragment(R.layout.fragment_device_
         }
     }
 
-    private fun DeviceSettingsUpdateActionState.toFirmwareActionPresentation(): FirmwareActionPresentation =
-        when (this) {
-            DeviceSettingsUpdateActionState.Idle -> FirmwareActionPresentation(
-                buttonText = getString(R.string.device_settings_check_updates_action),
-                enabled = true
-            )
-            DeviceSettingsUpdateActionState.Checking -> FirmwareActionPresentation(
-                buttonText = getString(R.string.device_settings_checking_updates),
-                enabled = false,
-                showProgress = true
-            )
-            DeviceSettingsUpdateActionState.UpToDate -> FirmwareActionPresentation(
-                buttonText = getString(R.string.device_settings_firmware_up_to_date),
-                enabled = false
-            )
-            is DeviceSettingsUpdateActionState.UpdateAvailable -> FirmwareActionPresentation(
-                buttonText = getString(R.string.device_settings_view_update_action),
-                statusText = getString(
-                    R.string.device_settings_update_available_status,
-                    version
-                ),
-                enabled = true
-            )
-            is DeviceSettingsUpdateActionState.UpdateInProgress -> FirmwareActionPresentation(
-                buttonText = getString(R.string.device_settings_view_update_action),
-                statusText = getString(
-                    R.string.device_settings_update_in_progress_status,
-                    version,
-                    progressPermille.coerceIn(
-                        0,
-                        COMPLETE_PROGRESS_PERMILLE
-                    ) / PERMILLE_PER_PERCENT
-                ),
-                enabled = true
-            )
-            is DeviceSettingsUpdateActionState.Failed -> FirmwareActionPresentation(
-                buttonText = getString(
-                    if (failure.recoverable) {
-                        R.string.device_settings_retry_update_check_action
-                    } else {
-                        R.string.device_settings_view_update_action
-                    }
-                ),
-                statusText = getString(
-                    DeviceRootPresentationMapper.otaFailureMessageRes(failure.reason)
-                ),
-                enabled = true
-            )
-            DeviceSettingsUpdateActionState.Unsupported -> FirmwareActionPresentation(
-                buttonText = getString(R.string.device_settings_check_updates_action),
-                statusText = getString(R.string.device_settings_update_unsupported_status),
-                enabled = false
-            )
-        }
+    private fun DeviceSettingsUpdateActionState.toFirmwareActionPresentation():
+        FirmwareActionPresentation = when (this) {
+        DeviceSettingsUpdateActionState.Idle -> FirmwareActionPresentation(
+            buttonText = getString(R.string.device_settings_check_updates_action),
+            enabled = true
+        )
+        DeviceSettingsUpdateActionState.Checking -> FirmwareActionPresentation(
+            buttonText = getString(R.string.device_settings_checking_updates),
+            enabled = false,
+            showProgress = true
+        )
+        DeviceSettingsUpdateActionState.UpToDate -> FirmwareActionPresentation(
+            buttonText = getString(R.string.device_settings_firmware_up_to_date),
+            enabled = false
+        )
+        is DeviceSettingsUpdateActionState.UpdateAvailable -> FirmwareActionPresentation(
+            buttonText = getString(R.string.device_settings_view_update_action),
+            statusText = getString(
+                R.string.device_settings_update_available_status,
+                version
+            ),
+            enabled = true
+        )
+        is DeviceSettingsUpdateActionState.UpdateInProgress -> FirmwareActionPresentation(
+            buttonText = getString(R.string.device_settings_view_update_action),
+            statusText = getString(
+                R.string.device_settings_update_in_progress_status,
+                version,
+                progressPermille.coerceIn(
+                    0,
+                    COMPLETE_PROGRESS_PERMILLE
+                ) / PERMILLE_PER_PERCENT
+            ),
+            enabled = true
+        )
+        is DeviceSettingsUpdateActionState.Failed -> FirmwareActionPresentation(
+            buttonText = getString(
+                if (failure.recoverable) {
+                    R.string.device_settings_retry_update_check_action
+                } else {
+                    R.string.device_settings_view_update_action
+                }
+            ),
+            statusText = getString(
+                DeviceRootPresentationMapper.otaFailureMessageRes(failure.reason)
+            ),
+            enabled = true
+        )
+        DeviceSettingsUpdateActionState.Unsupported -> FirmwareActionPresentation(
+            buttonText = getString(R.string.device_settings_check_updates_action),
+            statusText = getString(R.string.device_settings_update_unsupported_status),
+            enabled = false
+        )
+    }
 
     private fun renderLightInventory(
         show: Boolean,
-        unavailable: String
+        state: DeviceLightProtectionUiState
     ) {
         if (!show) {
             lightSectionBinding?.root?.isVisible = false
@@ -300,25 +389,112 @@ abstract class DeviceFamilySettingsFragment : Fragment(R.layout.fragment_device_
             inflated.tvLightProtectionSectionTitle.setText(
                 R.string.device_settings_light_protection_section
             )
-            inflated.tvCoolingAutoOffLabel.setText(
-                R.string.device_settings_light_cooling_auto_off_label
-            )
-            inflated.tvOverTemperatureProtectionLabel.setText(
-                R.string.device_settings_light_over_temperature_protection_label
+            inflated.tvCurrentTemperatureLabel.setText(
+                R.string.device_settings_light_current_temperature_label
             )
             inflated.tvTemperatureProtectionThresholdLabel.setText(
                 R.string.device_settings_light_temperature_threshold_label
             )
-            inflated.btnEditTemperatureProtectionThreshold.contentDescription = getString(
-                R.string.device_settings_light_edit_temperature_threshold_description
-            )
+            inflated.temperatureProtectionThresholdRow.setOnClickListener {
+                if (
+                    latestState.lightProtection.loadState ==
+                    DeviceLightProtectionLoadState.FAILED
+                ) {
+                    viewModel.retryLightProtection()
+                } else {
+                    openTemperatureThresholdEditor()
+                }
+            }
         }
 
         section.root.isVisible = true
-        section.tvCoolingAutoOffValue.text = unavailable
-        section.tvOverTemperatureProtectionValue.text = unavailable
-        section.tvTemperatureProtectionThresholdValue.setText(
-            R.string.device_settings_light_temperature_threshold_pending_value
+        renderLightTemperatureValues(section, state)
+    }
+
+    private fun renderLightTemperatureValues(
+        section: LayoutDeviceLightSettingsSectionBinding,
+        state: DeviceLightProtectionUiState
+    ) {
+        val presentation = state.toLightTemperatureActionPresentation()
+        section.tvCurrentTemperatureValue.text = lightTemperatureValueText(
+            value = state.currentTemperatureCelsius,
+            loadState = state.loadState
+        )
+        section.tvTemperatureProtectionThresholdValue.text = lightTemperatureValueText(
+            value = state.thresholdCelsius,
+            loadState = state.loadState
+        )
+        section.temperatureProtectionThresholdRow.apply {
+            isEnabled = presentation.enabled
+            contentDescription = getString(presentation.contentDescriptionRes)
+        }
+        section.tvEditTemperatureProtectionThresholdAction.apply {
+            setText(presentation.actionTextRes)
+            isEnabled = presentation.enabled
+        }
+    }
+
+    private fun lightTemperatureValueText(
+        value: Double?,
+        loadState: DeviceLightProtectionLoadState
+    ): CharSequence = when {
+        value != null -> temperatureText(value)
+        loadState == DeviceLightProtectionLoadState.LOADING ->
+            getString(R.string.device_settings_light_temperature_loading_value)
+        else -> getString(R.string.common_not_available_em_dash)
+    }
+
+    private fun DeviceLightProtectionUiState.toLightTemperatureActionPresentation():
+        LightTemperatureActionPresentation {
+        val retryEnabled = loadState == DeviceLightProtectionLoadState.FAILED &&
+            !updateInProgress
+        val editorEnabled = editor != null && !updateInProgress
+        val actionTextRes = when {
+            updateInProgress -> R.string.device_settings_saving_action
+            retryEnabled -> R.string.device_settings_light_retry_temperature_protection_action
+            else -> R.string.device_settings_edit_action
+        }
+        val contentDescriptionRes = if (retryEnabled) {
+            R.string.device_settings_light_retry_temperature_protection_description
+        } else {
+            R.string.device_settings_light_edit_temperature_threshold_description
+        }
+        return LightTemperatureActionPresentation(
+            enabled = retryEnabled || editorEnabled,
+            actionTextRes = actionTextRes,
+            contentDescriptionRes = contentDescriptionRes
+        )
+    }
+
+    private fun temperatureText(value: Double): String {
+        val localizedValue = LocaleFormatter.formatDecimal(
+            context = requireContext(),
+            value = value,
+            maximumFractionDigits = 1
+        )
+        return getString(
+            R.string.device_settings_light_temperature_reading_format,
+            localizedValue
+        )
+    }
+
+    private fun handleEvent(event: DeviceFamilySettingsEvent) {
+        when (event) {
+            DeviceFamilySettingsEvent.DeviceNameUpdateFailed -> showSaveFailure(
+                R.string.device_settings_device_name_save_failed_message
+            )
+            DeviceFamilySettingsEvent.TemperatureProtectionUpdateFailed -> showSaveFailure(
+                R.string.device_settings_temperature_threshold_save_failed_message
+            )
+        }
+    }
+
+    private fun showSaveFailure(@StringRes messageRes: Int) {
+        DialogManager.showInfoDialog(
+            context = requireContext(),
+            type = DialogType.ERROR,
+            title = getString(R.string.device_settings_save_failed_title),
+            message = getString(messageRes)
         )
     }
 
@@ -335,10 +511,18 @@ abstract class DeviceFamilySettingsFragment : Fragment(R.layout.fragment_device_
         val showProgress: Boolean = false
     )
 
+    private data class LightTemperatureActionPresentation(
+        val enabled: Boolean,
+        @StringRes val actionTextRes: Int,
+        @StringRes val contentDescriptionRes: Int
+    )
+
     private companion object {
         const val COMPLETE_PROGRESS_PERMILLE = 1_000
         const val PERMILLE_PER_PERCENT = 10
         const val DEVICE_NAME_REQUEST_KEY = "device_settings_name_request"
+        const val TEMPERATURE_THRESHOLD_REQUEST_KEY =
+            "device_settings_temperature_threshold_request"
         val SETTINGS_DESTINATIONS = setOf(
             R.id.deviceLightSettingsFragment,
             R.id.deviceDosingSettingsFragment,
@@ -347,3 +531,10 @@ abstract class DeviceFamilySettingsFragment : Fragment(R.layout.fragment_device_
         )
     }
 }
+
+internal fun isSavedSettingsEditorResult(
+    result: String?,
+    payloadId: String?,
+    expectedPayloadId: String,
+    savedResult: String
+): Boolean = result == savedResult && payloadId == expectedPayloadId

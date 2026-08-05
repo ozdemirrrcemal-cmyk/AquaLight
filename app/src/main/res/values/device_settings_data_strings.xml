@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="device_settings_saving_action">Saving…</string>
+    <string name="device_settings_save_failed_title">Changes could not be saved</string>
+    <string name="device_settings_device_name_save_failed_message">The device name could not be saved. Keep the device powered on and connected, then try again.</string>
+    <string name="device_settings_use_default_name_action">Use default name</string>
+    <string name="device_settings_temperature_threshold_save_failed_message">The temperature protection threshold could not be saved. Keep the device powered on and connected, then try again.</string>
+    <string name="device_settings_light_temperature_reading_format">%1$s °C</string>
+</resources>

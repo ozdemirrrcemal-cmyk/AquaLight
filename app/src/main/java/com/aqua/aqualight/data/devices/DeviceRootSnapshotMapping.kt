@@ -44,7 +44,9 @@ private fun DeviceSnapshot.toValidatedDeviceRootSnapshot(
         supportedFeatures = product.profile.supportedFeatures.map { it.wireValue },
         supportedScreens = product.profile.supportedScreens.map { it.wireValue },
         menuFeatures = menuFeatures,
-        allowedRoutes = DeviceRootRoutePolicy.allowedRoutes(product)
+        allowedRoutes = DeviceRootRoutePolicy.allowedRoutes(product),
+        productDisplayName = product.displayName,
+        hasCustomName = identity.customName.isNotBlank()
     )
 }
 
@@ -55,7 +57,9 @@ private fun DeviceSnapshot.toInvalidDeviceRootSnapshot(): DeviceRootSnapshot = D
     catalogState = DeviceRootCatalogState.INVALID,
     serialNumber = identity.serialNumber,
     ipAddress = endpoint.ip.trim(),
-    firmwareLabel = firmwareLabel()
+    firmwareLabel = firmwareLabel(),
+    productDisplayName = identity.displayName,
+    hasCustomName = identity.customName.isNotBlank()
 )
 
 private fun DeviceSnapshot.firmwareLabel(): String = listOf(
