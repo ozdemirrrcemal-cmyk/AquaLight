@@ -53,6 +53,7 @@ class DeviceFamilySettingsViewModel(
     private var thresholdUpdateJob: Job? = null
     private var updateCheckJob: Job? = null
     private var lastDeviceAvailability: OwnerDeviceAvailability? = null
+    private var automaticFirmwareCheckPending = false
 
     fun bind(deviceUidText: String) {
         val deviceUid = deviceUidText.trim()
@@ -64,6 +65,7 @@ class DeviceFamilySettingsViewModel(
 
         boundDeviceUid = deviceUid
         cancelBoundJobs()
+        automaticFirmwareCheckPending = true
         val currentSnapshot = settingsOperations.current(deviceUid)
         lastDeviceAvailability = currentSnapshot?.availability
         _uiState.value = currentSnapshot
@@ -89,7 +91,7 @@ class DeviceFamilySettingsViewModel(
             }
         }
         requestLightProtectionRefreshIfNeeded(deviceUid)
-        startFirmwareAvailabilityCheck(deviceUid = deviceUid, automatic = true)
+        startAutomaticFirmwareAvailabilityCheckIfReady(deviceUid, currentSnapshot)
     }
 
     fun updateDeviceName(value: String) {
@@ -236,6 +238,19 @@ class DeviceFamilySettingsViewModel(
                 }
             }
         }
+    }
+
+    private fun startAutomaticFirmwareAvailabilityCheckIfReady(
+        deviceUid: String,
+        snapshot: DeviceRootSnapshot?
+    ) {
+        val canStart = automaticFirmwareCheckPending &&
+            boundDeviceUid == deviceUid &&
+            snapshot?.catalogState == DeviceRootCatalogState.VALID
+        if (!canStart) return
+
+        automaticFirmwareCheckPending = false
+        startFirmwareAvailabilityCheck(deviceUid = deviceUid, automatic = true)
     }
 
     private fun startFirmwareAvailabilityCheck(
@@ -388,6 +403,7 @@ class DeviceFamilySettingsViewModel(
             )
         }
 
+        startAutomaticFirmwareAvailabilityCheckIfReady(deviceUid, snapshot)
         if (becameReachable) {
             requestLightProtectionRefreshIfNeeded(deviceUid, force = true)
         }
@@ -437,6 +453,7 @@ class DeviceFamilySettingsViewModel(
         cancelBoundJobs()
         boundDeviceUid = ""
         lastDeviceAvailability = null
+        automaticFirmwareCheckPending = false
         _uiState.value = DeviceFamilySettingsUiState()
     }
 
