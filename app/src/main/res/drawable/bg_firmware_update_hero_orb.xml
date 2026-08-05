@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<shape
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    android:shape="oval">
+    <gradient
+        android:angle="270"
+        android:endColor="@color/aqua_surface_deep"
+        android:startColor="@color/aqua_surface_action"
+        android:type="linear" />
+    <stroke
+        android:width="@dimen/aqua_firmware_update_hero_stroke_width"
+        android:color="@color/aqua_accent_primary" />
+</shape>

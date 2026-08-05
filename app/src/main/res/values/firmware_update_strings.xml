@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="device_settings_update_for_device">For %1$s</string>
+
+    <string name="device_settings_update_hero_title_checking">Checking for an update</string>
+    <string name="device_settings_update_hero_title_available">A new software version is ready</string>
+    <string name="device_settings_update_hero_title_required">A required software update is ready</string>
+    <string name="device_settings_update_hero_title_starting">Preparing your device</string>
+    <string name="device_settings_update_hero_title_installing">Installing the update</string>
+    <string name="device_settings_update_hero_title_recovering">Reconnecting securely</string>
+    <string name="device_settings_update_hero_title_restarting">Restarting your device</string>
+    <string name="device_settings_update_hero_title_succeeded">Update installed successfully</string>
+    <string name="device_settings_update_hero_title_up_to_date">Your device is up to date</string>
+    <string name="device_settings_update_hero_title_failed">The update needs attention</string>
+    <string name="device_settings_update_hero_title_unsupported">No compatible update is available</string>
+
+    <string name="device_settings_update_hero_summary_checking">AquaLight is verifying the signed release and its compatibility with this device.</string>
+    <string name="device_settings_update_hero_summary_available_version">Version %1$s is ready to install. Review the verified release information below before continuing.</string>
+    <string name="device_settings_update_hero_summary_available">A compatible signed update is ready to install. Review the verified release information below before continuing.</string>
+    <string name="device_settings_update_hero_summary_required_version">Version %1$s is required for this device. Review the verified release information before installing it.</string>
+    <string name="device_settings_update_hero_summary_starting">A secure update session is being prepared. Keep the device powered and connected.</string>
+    <string name="device_settings_update_hero_summary_installing">The verified package is being transferred and installed. Do not interrupt device power.</string>
+    <string name="device_settings_update_hero_summary_recovering">The device is reconnecting after the update step. This can take a moment.</string>
+    <string name="device_settings_update_hero_summary_restarting">The device is restarting and will reconnect automatically after verification.</string>
+    <string name="device_settings_update_hero_summary_succeeded_version">Version %1$s was installed and verified successfully.</string>
+    <string name="device_settings_update_hero_summary_succeeded">The new software was installed and verified successfully.</string>
+    <string name="device_settings_update_hero_summary_up_to_date_version">Version %1$s is the latest compatible signed release for this device.</string>
+    <string name="device_settings_update_hero_summary_up_to_date">The latest compatible signed release is already installed.</string>
+    <string name="device_settings_update_hero_summary_unsupported">AquaLight could not find a compatible signed release for this device profile.</string>
+
+    <string name="device_settings_update_release_warnings_heading">Release-specific notes</string>
+    <string name="device_settings_update_release_details_unavailable_title">Detailed release notes were not provided</string>
+    <string name="device_settings_update_release_details_unavailable_message">This signed firmware does not include descriptive release notes. Only verified information supplied with the release is shown.</string>
+
+    <string name="device_settings_update_requirements_heading">Before installation</string>
+    <string name="device_settings_update_requirements_summary">Keep the update environment stable until installation and verification finish.</string>
+    <string name="device_settings_update_requirement_network">Keep the device’s network connection stable while the package is downloaded.</string>
+    <string name="device_settings_update_requirement_restart">The device may restart and reconnect automatically during verification.</string>
+    <string name="device_settings_update_requirement_signed_package">AquaLight installs only the signed package selected for this device.</string>
+    <string name="device_settings_update_requirement_description">Update requirement: %1$s</string>
+
+    <string name="device_settings_update_now_action">Update now</string>
+    <string name="device_settings_update_action_hint_available">The update starts immediately and may restart the device.</string>
+    <string name="device_settings_update_action_hint_active">Keep the device powered and connected until verification is complete.</string>
+</resources>

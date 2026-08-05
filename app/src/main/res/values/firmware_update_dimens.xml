@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <dimen name="aqua_firmware_update_card_corner_radius">20dp</dimen>
+    <dimen name="aqua_firmware_update_hero_stroke_width">1dp</dimen>
+    <dimen name="aqua_firmware_update_hero_padding">22dp</dimen>
+    <dimen name="aqua_firmware_update_hero_icon_container_size">112dp</dimen>
+    <dimen name="aqua_firmware_update_hero_icon_size">52dp</dimen>
+    <dimen name="aqua_firmware_update_hero_entrance_translation">12dp</dimen>
+    <dimen name="aqua_firmware_update_version_panel_padding">14dp</dimen>
+    <dimen name="aqua_firmware_update_version_panel_radius">14dp</dimen>
+    <dimen name="aqua_firmware_update_section_padding">18dp</dimen>
+    <dimen name="aqua_firmware_update_card_spacing">14dp</dimen>
+    <dimen name="aqua_firmware_update_action_elevation">12dp</dimen>
+</resources>

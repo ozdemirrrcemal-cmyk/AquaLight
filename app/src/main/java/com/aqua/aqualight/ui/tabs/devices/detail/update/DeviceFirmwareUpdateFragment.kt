@@ -8,6 +8,7 @@ import android.os.Bundle
 import android.text.format.Formatter
 import android.view.LayoutInflater
 import android.view.View
+import android.view.animation.DecelerateInterpolator
 import androidx.annotation.ColorRes
 import androidx.annotation.DrawableRes
 import androidx.annotation.StringRes
@@ -49,6 +50,7 @@ class DeviceFirmwareUpdateFragment : Fragment(R.layout.fragment_device_firmware_
     private var latestState = DeviceFirmwareUpdateUiState()
     private var pulseAnimator: AnimatorSet? = null
     private var renderedReleaseContent: DeviceFirmwareReleaseContent? = null
+    private var requirementsRendered = false
     private var lastTransitionMode: DeviceFirmwareUpdateMode? = null
     private var lastAnnouncementKey = ""
     private var animatedSuccessKey = ""
@@ -107,7 +109,8 @@ class DeviceFirmwareUpdateFragment : Fragment(R.layout.fragment_device_firmware_
 
     private fun renderState(state: DeviceFirmwareUpdateUiState) {
         if (_binding == null) return
-        if (lastTransitionMode != state.mode && ValueAnimator.areAnimatorsEnabled()) {
+        val modeChanged = lastTransitionMode != state.mode
+        if (modeChanged && ValueAnimator.areAnimatorsEnabled()) {
             TransitionManager.beginDelayedTransition(
                 binding.firmwareUpdateContent,
                 AutoTransition().setDuration(STATE_TRANSITION_DURATION_MILLIS)
@@ -116,24 +119,100 @@ class DeviceFirmwareUpdateFragment : Fragment(R.layout.fragment_device_firmware_
         latestState = state
         lastTransitionMode = state.mode
 
-        renderStatusCard(state)
+        renderHero(state, modeChanged)
         renderProgress(state)
         renderReleaseNotes(state)
+        renderRequirements(state)
         renderAction(state)
         announceStateChange(state)
     }
 
-    private fun renderStatusCard(state: DeviceFirmwareUpdateUiState) {
+    private fun renderHero(
+        state: DeviceFirmwareUpdateUiState,
+        modeChanged: Boolean
+    ) {
         val unavailable = getString(R.string.common_not_available_em_dash)
-        binding.tvUpdateDeviceName.text = state.deviceName.ifBlank {
+        val deviceName = state.deviceName.ifBlank {
             getString(R.string.device_settings_update_device_fallback)
         }
-        binding.tvInstalledVersion.text = state.currentVersion.ifBlank { unavailable }
-        binding.tvTargetVersion.text = state.targetVersion.ifBlank { unavailable }
+        val icon = state.heroIcon()
+
         binding.tvUpdateStatusBadge.apply {
             setText(state.statusTextRes())
             setTextColor(ContextCompat.getColor(requireContext(), state.statusColorRes()))
+            backgroundTintList = ColorStateList.valueOf(
+                ContextCompat.getColor(requireContext(), state.statusBadgeBackgroundColorRes())
+            )
         }
+        binding.ivUpdateHeroIcon.apply {
+            setImageResource(icon.drawableRes)
+            setIconTint(this, icon.colorRes)
+        }
+        binding.tvUpdateHeroTitle.setText(state.heroTitleRes())
+        binding.tvUpdateHeroSummary.text = state.heroSummary()
+        binding.tvUpdateDeviceName.text = getString(
+            R.string.device_settings_update_for_device,
+            deviceName
+        )
+
+        binding.tvInstalledVersion.text = state.currentVersion.ifBlank { unavailable }
+        binding.tvTargetVersion.text = state.targetVersion.ifBlank { unavailable }
+        binding.targetVersionGroup.isVisible = state.targetVersion.isNotBlank()
+        binding.ivVersionArrow.isVisible = state.currentVersion.isNotBlank() &&
+            state.targetVersion.isNotBlank()
+
+        if (modeChanged) animateHeroEntrance()
+    }
+
+    private fun animateHeroEntrance() {
+        if (!ValueAnimator.areAnimatorsEnabled()) return
+        val translation = resources.getDimension(
+            R.dimen.aqua_firmware_update_hero_entrance_translation
+        )
+        binding.updateHeroIconContainer.animate().cancel()
+        binding.tvUpdateHeroTitle.animate().cancel()
+        binding.tvUpdateHeroSummary.animate().cancel()
+
+        binding.updateHeroIconContainer.apply {
+            alpha = HERO_START_ALPHA
+            scaleX = HERO_START_SCALE
+            scaleY = HERO_START_SCALE
+            translationY = translation
+            animate()
+                .alpha(1f)
+                .scaleX(1f)
+                .scaleY(1f)
+                .translationY(0f)
+                .setDuration(HERO_ANIMATION_DURATION_MILLIS)
+                .setInterpolator(DecelerateInterpolator())
+                .start()
+        }
+        animateHeroText(
+            view = binding.tvUpdateHeroTitle,
+            translation = translation,
+            delayMillis = HERO_TITLE_ANIMATION_DELAY_MILLIS
+        )
+        animateHeroText(
+            view = binding.tvUpdateHeroSummary,
+            translation = translation,
+            delayMillis = HERO_SUMMARY_ANIMATION_DELAY_MILLIS
+        )
+    }
+
+    private fun animateHeroText(
+        view: View,
+        translation: Float,
+        delayMillis: Long
+    ) {
+        view.alpha = HERO_START_ALPHA
+        view.translationY = translation
+        view.animate()
+            .alpha(1f)
+            .translationY(0f)
+            .setStartDelay(delayMillis)
+            .setDuration(HERO_ANIMATION_DURATION_MILLIS)
+            .setInterpolator(DecelerateInterpolator())
+            .start()
     }
 
     private fun renderProgress(state: DeviceFirmwareUpdateUiState) {
@@ -207,19 +286,28 @@ class DeviceFirmwareUpdateFragment : Fragment(R.layout.fragment_device_firmware_
     }
 
     private fun renderReleaseNotes(state: DeviceFirmwareUpdateUiState) {
-        val shouldShow = state.mode in RELEASE_CONTENT_MODES &&
-            (state.releaseContent.isPresent || state.targetVersion.isNotBlank())
-        binding.releaseNotesCard.isVisible = shouldShow
-        if (!shouldShow || renderedReleaseContent == state.releaseContent) return
-        renderedReleaseContent = state.releaseContent
-
+        val eligible = state.mode in RELEASE_CONTENT_MODES
         val content = state.releaseContent
+        val showReleaseContent = eligible && content.isPresent
+        val showUnavailableNotice = eligible && !content.isPresent &&
+            state.targetVersion.isNotBlank()
+
+        binding.releaseNotesCard.isVisible = showReleaseContent
+        binding.releaseNotesUnavailableCard.isVisible = showUnavailableNotice
+        if (!showReleaseContent) {
+            renderedReleaseContent = null
+            return
+        }
+        if (renderedReleaseContent == content) return
+        renderedReleaseContent = content
+
         binding.tvReleaseTitle.apply {
             isVisible = content.title.isNotBlank()
             text = content.title
         }
-        binding.tvReleaseSummary.text = content.summary.ifBlank {
-            getString(R.string.device_settings_update_release_notes_fallback)
+        binding.tvReleaseSummary.apply {
+            isVisible = content.summary.isNotBlank()
+            text = content.summary
         }
         renderReleaseItems(
             container = binding.releaseChangesContainer,
@@ -230,18 +318,34 @@ class DeviceFirmwareUpdateFragment : Fragment(R.layout.fragment_device_firmware_
         )
         binding.tvReleaseChangesHeading.isVisible = content.changes.isNotEmpty()
 
-        val warnings = buildList {
-            add(getString(R.string.device_settings_update_power_warning))
-            addAll(content.warnings)
-        }.distinct()
         renderReleaseItems(
             container = binding.releaseWarningsContainer,
-            items = warnings,
+            items = content.warnings,
             iconRes = R.drawable.ic_warning,
             iconColorRes = R.color.aqua_content_warning,
             descriptionRes = R.string.device_settings_update_release_warning_description
         )
-        binding.tvReleaseWarningsHeading.isVisible = warnings.isNotEmpty()
+        binding.tvReleaseWarningsHeading.isVisible = content.warnings.isNotEmpty()
+    }
+
+    private fun renderRequirements(state: DeviceFirmwareUpdateUiState) {
+        val shouldShow = state.mode == DeviceFirmwareUpdateMode.AVAILABLE || state.mode.isActive
+        binding.updateRequirementsCard.isVisible = shouldShow
+        if (!shouldShow || requirementsRendered) return
+
+        renderReleaseItems(
+            container = binding.updateRequirementsContainer,
+            items = listOf(
+                getString(R.string.device_settings_update_power_warning),
+                getString(R.string.device_settings_update_requirement_network),
+                getString(R.string.device_settings_update_requirement_restart),
+                getString(R.string.device_settings_update_requirement_signed_package)
+            ),
+            iconRes = R.drawable.ic_check_24,
+            iconColorRes = R.color.aqua_accent_positive,
+            descriptionRes = R.string.device_settings_update_requirement_description
+        )
+        requirementsRendered = true
     }
 
     private fun renderReleaseItems(
@@ -277,8 +381,16 @@ class DeviceFirmwareUpdateFragment : Fragment(R.layout.fragment_device_firmware_
             text = if (presentation.loading) "" else getString(presentation.textRes)
             contentDescription = getString(presentation.textRes)
         }
-        binding.tvUpdateActionHint.isVisible = state.mode == DeviceFirmwareUpdateMode.AVAILABLE ||
-            state.mode.isActive
+        binding.tvUpdateActionHint.apply {
+            val hintRes = when {
+                state.mode == DeviceFirmwareUpdateMode.AVAILABLE ->
+                    R.string.device_settings_update_action_hint_available
+                state.mode.isActive -> R.string.device_settings_update_action_hint_active
+                else -> null
+            }
+            isVisible = hintRes != null
+            if (hintRes != null) setText(hintRes)
+        }
     }
 
     private fun announceStateChange(state: DeviceFirmwareUpdateUiState) {
@@ -351,6 +463,60 @@ class DeviceFirmwareUpdateFragment : Fragment(R.layout.fragment_device_firmware_
         )
     }
 
+    private fun DeviceFirmwareUpdateUiState.heroSummary(): CharSequence = when (mode) {
+        DeviceFirmwareUpdateMode.LOADING,
+        DeviceFirmwareUpdateMode.CHECKING -> getString(
+            R.string.device_settings_update_hero_summary_checking
+        )
+        DeviceFirmwareUpdateMode.AVAILABLE -> when {
+            releaseContent.mandatory && targetVersion.isNotBlank() -> getString(
+                R.string.device_settings_update_hero_summary_required_version,
+                targetVersion
+            )
+            targetVersion.isNotBlank() -> getString(
+                R.string.device_settings_update_hero_summary_available_version,
+                targetVersion
+            )
+            else -> getString(R.string.device_settings_update_hero_summary_available)
+        }
+        DeviceFirmwareUpdateMode.STARTING -> getString(
+            R.string.device_settings_update_hero_summary_starting
+        )
+        DeviceFirmwareUpdateMode.IN_PROGRESS -> getString(
+            R.string.device_settings_update_hero_summary_installing
+        )
+        DeviceFirmwareUpdateMode.RECOVERING -> getString(
+            R.string.device_settings_update_hero_summary_recovering
+        )
+        DeviceFirmwareUpdateMode.RESTARTING -> getString(
+            R.string.device_settings_update_hero_summary_restarting
+        )
+        DeviceFirmwareUpdateMode.SUCCEEDED -> if (targetVersion.isBlank()) {
+            getString(R.string.device_settings_update_hero_summary_succeeded)
+        } else {
+            getString(
+                R.string.device_settings_update_hero_summary_succeeded_version,
+                targetVersion
+            )
+        }
+        DeviceFirmwareUpdateMode.UP_TO_DATE -> if (currentVersion.isBlank()) {
+            getString(R.string.device_settings_update_hero_summary_up_to_date)
+        } else {
+            getString(
+                R.string.device_settings_update_hero_summary_up_to_date_version,
+                currentVersion
+            )
+        }
+        DeviceFirmwareUpdateMode.FAILED -> failure?.let { failure ->
+            getString(DeviceRootPresentationMapper.otaFailureMessageRes(failure.reason))
+        }.orEmpty().ifBlank {
+            getString(R.string.device_settings_update_phase_failed_terminal)
+        }
+        DeviceFirmwareUpdateMode.UNSUPPORTED -> getString(
+            R.string.device_settings_update_hero_summary_unsupported
+        )
+    }
+
     private fun DeviceFirmwareUpdateUiState.progressDetail(): CharSequence = when {
         failure != null -> getString(
             DeviceRootPresentationMapper.otaFailureMessageRes(failure.reason)
@@ -362,6 +528,25 @@ class DeviceFirmwareUpdateFragment : Fragment(R.layout.fragment_device_firmware_
         )
         mode.isActive -> getString(R.string.device_settings_update_progress_waiting)
         else -> ""
+    }
+
+    @StringRes
+    private fun DeviceFirmwareUpdateUiState.heroTitleRes(): Int = when (mode) {
+        DeviceFirmwareUpdateMode.LOADING,
+        DeviceFirmwareUpdateMode.CHECKING -> R.string.device_settings_update_hero_title_checking
+        DeviceFirmwareUpdateMode.AVAILABLE -> if (releaseContent.mandatory) {
+            R.string.device_settings_update_hero_title_required
+        } else {
+            R.string.device_settings_update_hero_title_available
+        }
+        DeviceFirmwareUpdateMode.STARTING -> R.string.device_settings_update_hero_title_starting
+        DeviceFirmwareUpdateMode.IN_PROGRESS -> R.string.device_settings_update_hero_title_installing
+        DeviceFirmwareUpdateMode.RECOVERING -> R.string.device_settings_update_hero_title_recovering
+        DeviceFirmwareUpdateMode.RESTARTING -> R.string.device_settings_update_hero_title_restarting
+        DeviceFirmwareUpdateMode.SUCCEEDED -> R.string.device_settings_update_hero_title_succeeded
+        DeviceFirmwareUpdateMode.UP_TO_DATE -> R.string.device_settings_update_hero_title_up_to_date
+        DeviceFirmwareUpdateMode.FAILED -> R.string.device_settings_update_hero_title_failed
+        DeviceFirmwareUpdateMode.UNSUPPORTED -> R.string.device_settings_update_hero_title_unsupported
     }
 
     @StringRes
@@ -416,7 +601,49 @@ class DeviceFirmwareUpdateFragment : Fragment(R.layout.fragment_device_firmware_
     private fun DeviceFirmwareUpdateUiState.statusColorRes(): Int = when (mode) {
         DeviceFirmwareUpdateMode.FAILED -> R.color.aqua_status_danger
         DeviceFirmwareUpdateMode.UNSUPPORTED -> R.color.aqua_content_warning
-        else -> R.color.aqua_accent_positive
+        DeviceFirmwareUpdateMode.AVAILABLE -> if (releaseContent.mandatory) {
+            R.color.aqua_content_warning
+        } else {
+            R.color.aqua_accent_positive
+        }
+        DeviceFirmwareUpdateMode.SUCCEEDED,
+        DeviceFirmwareUpdateMode.UP_TO_DATE -> R.color.aqua_status_success
+        else -> R.color.aqua_accent_primary
+    }
+
+    @ColorRes
+    private fun DeviceFirmwareUpdateUiState.statusBadgeBackgroundColorRes(): Int = when (mode) {
+        DeviceFirmwareUpdateMode.FAILED -> R.color.aqua_aquarium_fragment_button_outline
+        DeviceFirmwareUpdateMode.UNSUPPORTED ->
+            R.color.aqua_bg_maintenance_profile_percent_warning_fill
+        DeviceFirmwareUpdateMode.AVAILABLE -> if (releaseContent.mandatory) {
+            R.color.aqua_bg_maintenance_profile_percent_warning_fill
+        } else {
+            R.color.aqua_surface_positive
+        }
+        DeviceFirmwareUpdateMode.SUCCEEDED,
+        DeviceFirmwareUpdateMode.UP_TO_DATE -> R.color.aqua_surface_positive
+        else -> R.color.aqua_surface_action
+    }
+
+    private fun DeviceFirmwareUpdateUiState.heroIcon(): StateIconPresentation = when (mode) {
+        DeviceFirmwareUpdateMode.SUCCEEDED,
+        DeviceFirmwareUpdateMode.UP_TO_DATE -> StateIconPresentation(
+            R.drawable.ic_check_24,
+            R.color.aqua_status_success
+        )
+        DeviceFirmwareUpdateMode.FAILED -> StateIconPresentation(
+            R.drawable.ic_error,
+            R.color.aqua_status_danger
+        )
+        DeviceFirmwareUpdateMode.UNSUPPORTED -> StateIconPresentation(
+            R.drawable.ic_warning,
+            R.color.aqua_content_warning
+        )
+        else -> StateIconPresentation(
+            R.drawable.ic_firmware_update,
+            R.color.aqua_accent_primary
+        )
     }
 
     private fun DeviceFirmwareUpdateUiState.stateIcon(): StateIconPresentation? = when (mode) {
@@ -444,7 +671,7 @@ class DeviceFirmwareUpdateFragment : Fragment(R.layout.fragment_device_firmware_
             loading = true
         )
         DeviceFirmwareUpdateMode.AVAILABLE -> ActionPresentation(
-            R.string.device_settings_install_update_action,
+            R.string.device_settings_update_now_action,
             enabled = true
         )
         DeviceFirmwareUpdateMode.STARTING,
@@ -480,6 +707,11 @@ class DeviceFirmwareUpdateFragment : Fragment(R.layout.fragment_device_firmware_
     override fun onDestroyView() {
         stopPulseAnimation()
         binding.ivUpdateStateIcon.animate().cancel()
+        binding.updateHeroIconContainer.animate().cancel()
+        binding.tvUpdateHeroTitle.animate().cancel()
+        binding.tvUpdateHeroSummary.animate().cancel()
+        renderedReleaseContent = null
+        requirementsRendered = false
         _binding = null
         super.onDestroyView()
     }
@@ -497,6 +729,11 @@ class DeviceFirmwareUpdateFragment : Fragment(R.layout.fragment_device_firmware_
 
     private companion object {
         const val STATE_TRANSITION_DURATION_MILLIS = 180L
+        const val HERO_ANIMATION_DURATION_MILLIS = 420L
+        const val HERO_TITLE_ANIMATION_DELAY_MILLIS = 70L
+        const val HERO_SUMMARY_ANIMATION_DELAY_MILLIS = 120L
+        const val HERO_START_ALPHA = 0f
+        const val HERO_START_SCALE = 0.82f
         const val SUCCESS_ANIMATION_DURATION_MILLIS = 420L
         const val SUCCESS_ICON_START_SCALE = 0.72f
         const val PULSE_DURATION_MILLIS = 900L
@@ -508,6 +745,7 @@ class DeviceFirmwareUpdateFragment : Fragment(R.layout.fragment_device_firmware_
             DeviceFirmwareUpdateMode.RECOVERING,
             DeviceFirmwareUpdateMode.RESTARTING,
             DeviceFirmwareUpdateMode.SUCCEEDED,
+            DeviceFirmwareUpdateMode.UP_TO_DATE,
             DeviceFirmwareUpdateMode.FAILED
         )
     }
