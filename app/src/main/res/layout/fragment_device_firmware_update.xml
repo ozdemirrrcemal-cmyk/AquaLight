@@ -39,197 +39,117 @@
             android:paddingEnd="@dimen/aqua_size_16"
             android:paddingBottom="@dimen/aqua_size_24">
 
-            <com.google.android.material.card.MaterialCardView
-                android:id="@+id/updateStatusCard"
-                style="@style/Widget.Aqua.Card.Device.Section"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content">
-
-                <LinearLayout
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:orientation="vertical"
-                    android:padding="@dimen/aqua_size_18">
-
-                    <TextView
-                        android:id="@+id/tvUpdateStatusBadge"
-                        style="@style/Widget.Aqua.Chip.Status.Candidate"
-                        android:text="@string/device_settings_update_status_checking"
-                        tools:text="Update available" />
-
-                    <TextView
-                        android:id="@+id/tvUpdateDeviceName"
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:layout_marginTop="@dimen/aqua_size_14"
-                        android:textColor="@color/white"
-                        android:textSize="@dimen/aqua_text_size_title_large"
-                        android:textStyle="bold"
-                        tools:text="Dose Pro 4" />
-
-                    <LinearLayout
-                        android:id="@+id/updateVersionsRow"
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:layout_marginTop="@dimen/aqua_size_18"
-                        android:baselineAligned="false"
-                        android:orientation="horizontal">
-
-                        <LinearLayout
-                            android:layout_width="@dimen/aqua_size_0"
-                            android:layout_height="wrap_content"
-                            android:layout_weight="1"
-                            android:orientation="vertical"
-                            tools:ignore="InefficientWeight">
-
-                            <TextView
-                                android:layout_width="match_parent"
-                                android:layout_height="wrap_content"
-                                android:text="@string/device_settings_update_installed_version_label"
-                                android:textColor="@color/aqua_content_secondary"
-                                android:textSize="@dimen/aqua_text_size_caption" />
-
-                            <TextView
-                                android:id="@+id/tvInstalledVersion"
-                                android:layout_width="match_parent"
-                                android:layout_height="wrap_content"
-                                android:layout_marginTop="@dimen/aqua_size_4"
-                                android:textColor="@color/aqua_content_primary_soft"
-                                android:textSize="@dimen/aqua_text_size_body_xlarge"
-                                android:textStyle="bold"
-                                tools:text="1.0.0" />
-                        </LinearLayout>
-
-                        <View
-                            android:layout_width="@dimen/aqua_size_1"
-                            android:layout_height="@dimen/aqua_size_40"
-                            android:layout_marginStart="@dimen/aqua_size_14"
-                            android:layout_marginEnd="@dimen/aqua_size_14"
-                            android:background="@color/aqua_card_divider" />
-
-                        <LinearLayout
-                            android:layout_width="@dimen/aqua_size_0"
-                            android:layout_height="wrap_content"
-                            android:layout_weight="1"
-                            android:orientation="vertical"
-                            tools:ignore="InefficientWeight">
-
-                            <TextView
-                                android:layout_width="match_parent"
-                                android:layout_height="wrap_content"
-                                android:text="@string/device_settings_update_target_version_label"
-                                android:textColor="@color/aqua_content_secondary"
-                                android:textSize="@dimen/aqua_text_size_caption" />
-
-                            <TextView
-                                android:id="@+id/tvTargetVersion"
-                                android:layout_width="match_parent"
-                                android:layout_height="wrap_content"
-                                android:layout_marginTop="@dimen/aqua_size_4"
-                                android:textColor="@color/aqua_accent_positive"
-                                android:textSize="@dimen/aqua_text_size_body_xlarge"
-                                android:textStyle="bold"
-                                tools:text="1.0.1" />
-                        </LinearLayout>
-                    </LinearLayout>
-                </LinearLayout>
-            </com.google.android.material.card.MaterialCardView>
-
-            <com.google.android.material.card.MaterialCardView
-                android:id="@+id/updateProgressCard"
-                style="@style/Widget.Aqua.Card.Device.Section"
+            <LinearLayout
+                android:id="@+id/updateDetailsContainer"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="@dimen/aqua_size_14">
+                android:orientation="vertical"
+                android:visibility="gone"
+                tools:visibility="visible">
 
-                <LinearLayout
+                <com.google.android.material.card.MaterialCardView
+                    style="@style/Widget.Aqua.Card.Device.Section"
                     android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:gravity="center_horizontal"
-                    android:orientation="vertical"
-                    android:padding="@dimen/aqua_size_20">
+                    android:layout_height="wrap_content">
 
-                    <FrameLayout
-                        android:id="@+id/updateProgressHero"
-                        android:layout_width="@dimen/aqua_size_176"
-                        android:layout_height="@dimen/aqua_size_176">
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:orientation="vertical"
+                        android:padding="@dimen/aqua_size_18">
 
-                        <com.google.android.material.progressindicator.CircularProgressIndicator
-                            android:id="@+id/progressFirmwareUpdate"
-                            style="@style/Widget.Aqua.FirmwareUpdate.Progress"
-                            android:layout_width="@dimen/aqua_size_160"
-                            android:layout_height="@dimen/aqua_size_160"
-                            android:layout_gravity="center"
-                            android:indeterminate="true" />
+                        <TextView
+                            android:id="@+id/tvUpdateStatusBadge"
+                            style="@style/Widget.Aqua.Chip.Status.Candidate"
+                            android:text="@string/device_settings_update_status_available"
+                            tools:text="Güncelleme hazır" />
+
+                        <TextView
+                            android:id="@+id/tvUpdateDeviceName"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:layout_marginTop="@dimen/aqua_size_16"
+                            android:textColor="@color/white"
+                            android:textSize="@dimen/aqua_text_size_title_large"
+                            android:textStyle="bold"
+                            tools:text="WRGB Pro Elite 120" />
 
                         <LinearLayout
-                            android:id="@+id/progressTextGroup"
-                            android:layout_width="wrap_content"
+                            android:layout_width="match_parent"
                             android:layout_height="wrap_content"
-                            android:layout_gravity="center"
-                            android:gravity="center"
-                            android:orientation="vertical">
+                            android:layout_marginTop="@dimen/aqua_size_18"
+                            android:baselineAligned="false"
+                            android:orientation="horizontal">
 
-                            <TextView
-                                android:id="@+id/tvUpdateProgressPercent"
-                                android:layout_width="wrap_content"
+                            <LinearLayout
+                                android:layout_width="@dimen/aqua_size_0"
                                 android:layout_height="wrap_content"
-                                android:accessibilityLiveRegion="polite"
-                                android:textColor="@color/white"
-                                android:textSize="@dimen/aqua_text_size_display"
-                                android:textStyle="bold"
-                                tools:text="64%" />
+                                android:layout_weight="1"
+                                android:orientation="vertical"
+                                tools:ignore="InefficientWeight">
 
-                            <TextView
-                                android:id="@+id/tvUpdateProgressCaption"
-                                android:layout_width="wrap_content"
+                                <TextView
+                                    android:layout_width="match_parent"
+                                    android:layout_height="wrap_content"
+                                    android:text="@string/device_settings_update_installed_version_label"
+                                    android:textColor="@color/aqua_content_secondary"
+                                    android:textSize="@dimen/aqua_text_size_caption" />
+
+                                <TextView
+                                    android:id="@+id/tvInstalledVersion"
+                                    android:layout_width="match_parent"
+                                    android:layout_height="wrap_content"
+                                    android:layout_marginTop="@dimen/aqua_size_4"
+                                    android:textColor="@color/aqua_content_primary_soft"
+                                    android:textSize="@dimen/aqua_text_size_body_xlarge"
+                                    android:textStyle="bold"
+                                    tools:text="1.0.1" />
+                            </LinearLayout>
+
+                            <View
+                                android:layout_width="@dimen/aqua_size_1"
+                                android:layout_height="@dimen/aqua_size_40"
+                                android:layout_marginStart="@dimen/aqua_size_14"
+                                android:layout_marginEnd="@dimen/aqua_size_14"
+                                android:background="@color/aqua_card_divider" />
+
+                            <LinearLayout
+                                android:layout_width="@dimen/aqua_size_0"
                                 android:layout_height="wrap_content"
-                                android:layout_marginTop="@dimen/aqua_size_2"
-                                android:textColor="@color/aqua_content_secondary"
-                                android:textSize="@dimen/aqua_text_size_caption"
-                                tools:text="Installing" />
+                                android:layout_weight="1"
+                                android:orientation="vertical"
+                                tools:ignore="InefficientWeight">
+
+                                <TextView
+                                    android:layout_width="match_parent"
+                                    android:layout_height="wrap_content"
+                                    android:text="@string/device_settings_update_target_version_label"
+                                    android:textColor="@color/aqua_content_secondary"
+                                    android:textSize="@dimen/aqua_text_size_caption" />
+
+                                <TextView
+                                    android:id="@+id/tvTargetVersion"
+                                    android:layout_width="match_parent"
+                                    android:layout_height="wrap_content"
+                                    android:layout_marginTop="@dimen/aqua_size_4"
+                                    android:textColor="@color/aqua_accent_positive"
+                                    android:textSize="@dimen/aqua_text_size_body_xlarge"
+                                    android:textStyle="bold"
+                                    tools:text="1.1.0" />
+                            </LinearLayout>
                         </LinearLayout>
-
-                        <androidx.appcompat.widget.AppCompatImageView
-                            android:id="@+id/ivUpdateStateIcon"
-                            android:layout_width="@dimen/aqua_size_56"
-                            android:layout_height="@dimen/aqua_size_56"
-                            android:layout_gravity="center"
-                            android:contentDescription="@null"
-                            android:visibility="gone"
-                            tools:src="@drawable/ic_check_24"
-                            tools:tint="@color/aqua_status_success"
-                            tools:visibility="visible" />
-                    </FrameLayout>
-
-                    <TextView
-                        android:id="@+id/tvUpdatePhase"
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:gravity="center"
-                        android:textColor="@color/white"
-                        android:textSize="@dimen/aqua_text_size_title_small"
-                        android:textStyle="bold"
-                        tools:text="Installing device software…" />
-
-                    <TextView
-                        android:id="@+id/tvUpdateProgressDetail"
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:layout_marginTop="@dimen/aqua_size_8"
-                        android:gravity="center"
-                        android:textColor="@color/aqua_content_secondary"
-                        android:textSize="@dimen/aqua_text_size_body_small"
-                        tools:text="640 KB of 1 MB" />
-                </LinearLayout>
-            </com.google.android.material.card.MaterialCardView>
+                    </LinearLayout>
+                </com.google.android.material.card.MaterialCardView>
+            </LinearLayout>
 
             <com.google.android.material.card.MaterialCardView
                 android:id="@+id/releaseNotesCard"
                 style="@style/Widget.Aqua.Card.Device.Section"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="@dimen/aqua_size_14">
+                android:layout_marginTop="@dimen/aqua_size_14"
+                android:visibility="gone"
+                tools:visibility="visible">
 
                 <LinearLayout
                     android:layout_width="match_parent"
@@ -253,7 +173,7 @@
                         android:textColor="@color/aqua_content_primary_soft"
                         android:textSize="@dimen/aqua_text_size_body_xlarge"
                         android:textStyle="bold"
-                        tools:text="More reliable dosing" />
+                        tools:text="Bağlantı ve kararlılık iyileştirmeleri" />
 
                     <TextView
                         android:id="@+id/tvReleaseSummary"
@@ -262,7 +182,7 @@
                         android:layout_marginTop="@dimen/aqua_size_8"
                         android:textColor="@color/aqua_content_secondary"
                         android:textSize="@dimen/aqua_text_size_body"
-                        tools:text="This release improves calibration and reconnect reliability." />
+                        tools:text="Bu sürüm bağlantı güvenilirliğini ve çalışma kararlılığını geliştirir." />
 
                     <TextView
                         android:id="@+id/tvReleaseChangesHeading"
@@ -297,6 +217,383 @@
                         android:layout_height="wrap_content"
                         android:layout_marginTop="@dimen/aqua_size_6"
                         android:orientation="vertical" />
+                </LinearLayout>
+            </com.google.android.material.card.MaterialCardView>
+
+            <com.google.android.material.card.MaterialCardView
+                android:id="@+id/updateRequirementsCard"
+                style="@style/Widget.Aqua.Card.Device.Section"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="@dimen/aqua_size_14"
+                android:visibility="gone"
+                tools:visibility="visible">
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical"
+                    android:padding="@dimen/aqua_size_18">
+
+                    <TextView
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:text="@string/device_settings_update_warnings_heading"
+                        android:textColor="@color/white"
+                        android:textSize="@dimen/aqua_text_size_title_small"
+                        android:textStyle="bold" />
+
+                    <TextView
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="@dimen/aqua_size_10"
+                        android:text="@string/device_settings_update_power_warning"
+                        android:textColor="@color/aqua_content_secondary"
+                        android:textSize="@dimen/aqua_text_size_body" />
+                </LinearLayout>
+            </com.google.android.material.card.MaterialCardView>
+
+            <com.google.android.material.card.MaterialCardView
+                android:id="@+id/updateProgressCard"
+                style="@style/Widget.Aqua.Card.Device.Section"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:visibility="gone"
+                tools:visibility="visible">
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:gravity="center_horizontal"
+                    android:orientation="vertical"
+                    android:padding="@dimen/aqua_size_20">
+
+                    <FrameLayout
+                        android:layout_width="@dimen/aqua_size_176"
+                        android:layout_height="@dimen/aqua_size_176">
+
+                        <com.google.android.material.progressindicator.CircularProgressIndicator
+                            android:id="@+id/progressFirmwareUpdate"
+                            style="@style/Widget.Aqua.FirmwareUpdate.Progress"
+                            android:layout_width="@dimen/aqua_size_160"
+                            android:layout_height="@dimen/aqua_size_160"
+                            android:layout_gravity="center"
+                            android:indeterminate="true" />
+
+                        <LinearLayout
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_gravity="center"
+                            android:gravity="center"
+                            android:orientation="vertical">
+
+                            <TextView
+                                android:id="@+id/tvUpdateProgressPercent"
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:accessibilityLiveRegion="polite"
+                                android:textColor="@color/white"
+                                android:textSize="@dimen/aqua_text_size_display"
+                                android:textStyle="bold"
+                                tools:text="65%" />
+
+                            <TextView
+                                android:id="@+id/tvUpdateProgressCaption"
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:layout_marginTop="@dimen/aqua_size_2"
+                                android:textColor="@color/aqua_content_secondary"
+                                android:textSize="@dimen/aqua_text_size_caption"
+                                tools:text="Güncelleme sürüyor" />
+                        </LinearLayout>
+                    </FrameLayout>
+
+                    <TextView
+                        android:id="@+id/tvUpdatePhase"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:gravity="center"
+                        android:textColor="@color/white"
+                        android:textSize="@dimen/aqua_text_size_title_small"
+                        android:textStyle="bold"
+                        tools:text="Cihaz yazılımı yükleniyor…" />
+
+                    <TextView
+                        android:id="@+id/tvUpdateProgressDetail"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="@dimen/aqua_size_8"
+                        android:gravity="center"
+                        android:textColor="@color/aqua_content_secondary"
+                        android:textSize="@dimen/aqua_text_size_body_small"
+                        tools:text="640 KB / 1 MB" />
+                </LinearLayout>
+            </com.google.android.material.card.MaterialCardView>
+
+            <com.google.android.material.card.MaterialCardView
+                android:id="@+id/updateTimelineCard"
+                style="@style/Widget.Aqua.Card.Device.Section"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="@dimen/aqua_size_14"
+                android:visibility="gone"
+                tools:visibility="visible">
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical"
+                    android:padding="@dimen/aqua_size_18">
+
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:gravity="center_vertical"
+                        android:orientation="horizontal">
+
+                        <TextView
+                            android:id="@+id/tvStepPrepareIcon"
+                            android:layout_width="@dimen/aqua_size_28"
+                            android:layout_height="wrap_content"
+                            android:gravity="center"
+                            android:textColor="@color/aqua_accent_primary"
+                            android:textSize="@dimen/aqua_text_size_title_small"
+                            tools:text="•" />
+
+                        <TextView
+                            android:id="@+id/tvStepPrepareTitle"
+                            android:layout_width="@dimen/aqua_size_0"
+                            android:layout_height="wrap_content"
+                            android:layout_marginStart="@dimen/aqua_size_10"
+                            android:layout_weight="1"
+                            android:text="@string/device_settings_update_phase_starting"
+                            android:textColor="@color/aqua_content_primary_soft"
+                            android:textSize="@dimen/aqua_text_size_body" />
+                    </LinearLayout>
+
+                    <include
+                        layout="@layout/layout_device_firmware_timeline_divider"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content" />
+
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:gravity="center_vertical"
+                        android:orientation="horizontal">
+
+                        <TextView
+                            android:id="@+id/tvStepDownloadIcon"
+                            android:layout_width="@dimen/aqua_size_28"
+                            android:layout_height="wrap_content"
+                            android:gravity="center"
+                            android:textColor="@color/aqua_content_secondary"
+                            android:textSize="@dimen/aqua_text_size_title_small"
+                            tools:text="○" />
+
+                        <TextView
+                            android:id="@+id/tvStepDownloadTitle"
+                            android:layout_width="@dimen/aqua_size_0"
+                            android:layout_height="wrap_content"
+                            android:layout_marginStart="@dimen/aqua_size_10"
+                            android:layout_weight="1"
+                            android:text="@string/device_settings_update_phase_downloading"
+                            android:textColor="@color/aqua_content_secondary"
+                            android:textSize="@dimen/aqua_text_size_body" />
+                    </LinearLayout>
+
+                    <include
+                        layout="@layout/layout_device_firmware_timeline_divider"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content" />
+
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:gravity="center_vertical"
+                        android:orientation="horizontal">
+
+                        <TextView
+                            android:id="@+id/tvStepInstallIcon"
+                            android:layout_width="@dimen/aqua_size_28"
+                            android:layout_height="wrap_content"
+                            android:gravity="center"
+                            android:textColor="@color/aqua_content_secondary"
+                            android:textSize="@dimen/aqua_text_size_title_small"
+                            tools:text="○" />
+
+                        <TextView
+                            android:id="@+id/tvStepInstallTitle"
+                            android:layout_width="@dimen/aqua_size_0"
+                            android:layout_height="wrap_content"
+                            android:layout_marginStart="@dimen/aqua_size_10"
+                            android:layout_weight="1"
+                            android:text="@string/device_settings_update_phase_writing"
+                            android:textColor="@color/aqua_content_secondary"
+                            android:textSize="@dimen/aqua_text_size_body" />
+                    </LinearLayout>
+
+                    <include
+                        layout="@layout/layout_device_firmware_timeline_divider"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content" />
+
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:gravity="center_vertical"
+                        android:orientation="horizontal">
+
+                        <TextView
+                            android:id="@+id/tvStepVerifyIcon"
+                            android:layout_width="@dimen/aqua_size_28"
+                            android:layout_height="wrap_content"
+                            android:gravity="center"
+                            android:textColor="@color/aqua_content_secondary"
+                            android:textSize="@dimen/aqua_text_size_title_small"
+                            tools:text="○" />
+
+                        <TextView
+                            android:id="@+id/tvStepVerifyTitle"
+                            android:layout_width="@dimen/aqua_size_0"
+                            android:layout_height="wrap_content"
+                            android:layout_marginStart="@dimen/aqua_size_10"
+                            android:layout_weight="1"
+                            android:text="@string/device_settings_update_phase_verifying"
+                            android:textColor="@color/aqua_content_secondary"
+                            android:textSize="@dimen/aqua_text_size_body" />
+                    </LinearLayout>
+
+                    <include
+                        layout="@layout/layout_device_firmware_timeline_divider"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content" />
+
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:gravity="center_vertical"
+                        android:orientation="horizontal">
+
+                        <TextView
+                            android:id="@+id/tvStepRestartIcon"
+                            android:layout_width="@dimen/aqua_size_28"
+                            android:layout_height="wrap_content"
+                            android:gravity="center"
+                            android:textColor="@color/aqua_content_secondary"
+                            android:textSize="@dimen/aqua_text_size_title_small"
+                            tools:text="○" />
+
+                        <TextView
+                            android:id="@+id/tvStepRestartTitle"
+                            android:layout_width="@dimen/aqua_size_0"
+                            android:layout_height="wrap_content"
+                            android:layout_marginStart="@dimen/aqua_size_10"
+                            android:layout_weight="1"
+                            android:text="@string/device_settings_update_phase_restarting"
+                            android:textColor="@color/aqua_content_secondary"
+                            android:textSize="@dimen/aqua_text_size_body" />
+                    </LinearLayout>
+                </LinearLayout>
+            </com.google.android.material.card.MaterialCardView>
+
+            <com.google.android.material.card.MaterialCardView
+                android:id="@+id/updateCompletionCard"
+                style="@style/Widget.Aqua.Card.Device.Section"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:visibility="gone"
+                tools:visibility="visible">
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:gravity="center_horizontal"
+                    android:orientation="vertical"
+                    android:padding="@dimen/aqua_size_24">
+
+                    <androidx.appcompat.widget.AppCompatImageView
+                        android:id="@+id/ivUpdateCompleteIcon"
+                        android:layout_width="@dimen/aqua_size_80"
+                        android:layout_height="@dimen/aqua_size_80"
+                        android:contentDescription="@null"
+                        android:src="@drawable/ic_check_24" />
+
+                    <TextView
+                        android:id="@+id/tvUpdateCompleteTitle"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="@dimen/aqua_size_18"
+                        android:gravity="center"
+                        android:textColor="@color/white"
+                        android:textSize="@dimen/aqua_text_size_title_large"
+                        android:textStyle="bold"
+                        tools:text="Güncelleme tamamlandı" />
+
+                    <TextView
+                        android:id="@+id/tvUpdateCompleteBody"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="@dimen/aqua_size_10"
+                        android:gravity="center"
+                        android:textColor="@color/aqua_content_secondary"
+                        android:textSize="@dimen/aqua_text_size_body"
+                        tools:text="Hedef sürüm yeniden başlatma sonrasında doğrulandı." />
+
+                    <TextView
+                        android:id="@+id/tvUpdateCompleteVersion"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="@dimen/aqua_size_16"
+                        android:textColor="@color/aqua_accent_positive"
+                        android:textSize="@dimen/aqua_text_size_body_xlarge"
+                        android:textStyle="bold"
+                        tools:text="1.1.0" />
+                </LinearLayout>
+            </com.google.android.material.card.MaterialCardView>
+
+            <com.google.android.material.card.MaterialCardView
+                android:id="@+id/updateFailureCard"
+                style="@style/Widget.Aqua.Card.Device.Section"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:visibility="gone"
+                tools:visibility="visible">
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:gravity="center_horizontal"
+                    android:orientation="vertical"
+                    android:padding="@dimen/aqua_size_24">
+
+                    <androidx.appcompat.widget.AppCompatImageView
+                        android:id="@+id/ivUpdateFailureIcon"
+                        android:layout_width="@dimen/aqua_size_64"
+                        android:layout_height="@dimen/aqua_size_64"
+                        android:contentDescription="@null"
+                        android:src="@drawable/ic_error" />
+
+                    <TextView
+                        android:id="@+id/tvUpdateFailureTitle"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="@dimen/aqua_size_18"
+                        android:gravity="center"
+                        android:textColor="@color/white"
+                        android:textSize="@dimen/aqua_text_size_title_large"
+                        android:textStyle="bold"
+                        tools:text="Güncelleme başarısız" />
+
+                    <TextView
+                        android:id="@+id/tvUpdateFailureBody"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="@dimen/aqua_size_10"
+                        android:gravity="center"
+                        android:textColor="@color/aqua_content_secondary"
+                        android:textSize="@dimen/aqua_text_size_body"
+                        tools:text="Bağlantıyı kontrol edip tekrar deneyin." />
                 </LinearLayout>
             </com.google.android.material.card.MaterialCardView>
         </LinearLayout>

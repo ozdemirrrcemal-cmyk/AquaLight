@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<View xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="@dimen/aqua_size_1"
+    android:layout_marginStart="@dimen/aqua_size_38"
+    android:layout_marginTop="@dimen/aqua_size_10"
+    android:layout_marginBottom="@dimen/aqua_size_10"
+    android:background="@color/aqua_card_divider" />
