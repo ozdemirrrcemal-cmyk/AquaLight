@@ -7,6 +7,7 @@ import com.aqua.aqualight.application.devices.PreparedDeviceFirmwareUpdate
 import com.aqua.aqualight.data.devices.model.DeviceUid
 import com.aqua.aqualight.data.devices.repository.DevicesRepository
 import com.aqua.aqualight.data.devices.runtime.modules.firmware.DeviceOtaCoordinator
+import java.util.concurrent.CancellationException
 import java.util.concurrent.ConcurrentHashMap
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -64,12 +65,13 @@ internal class DefaultDeviceFirmwareUpdateOperations(
             if (!availabilityRefreshPolicy.shouldRefresh(uid, currentState)) {
                 return@withLock Result.success(currentState)
             }
-            availabilityRefreshPolicy.recordAttempt(uid)
             coordinator.checkAvailability(
                 deviceUid = uid,
                 manifestUrl = manifestUrl,
                 applyNow = applyNow
-            )
+            ).rethrowFatalOrCancellation().also { result ->
+                availabilityRefreshPolicy.recordResult(uid, result)
+            }
         }
     }
 
@@ -80,12 +82,13 @@ internal class DefaultDeviceFirmwareUpdateOperations(
     ): Result<DeviceOtaState> {
         val uid = requireDeviceUid(deviceUid)
         return availabilityLocks.computeIfAbsent(uid) { Mutex() }.withLock {
-            availabilityRefreshPolicy.recordAttempt(uid)
             coordinator.checkAvailability(
                 deviceUid = uid,
                 manifestUrl = manifestUrl,
                 applyNow = applyNow
-            )
+            ).rethrowFatalOrCancellation().also { result ->
+                availabilityRefreshPolicy.recordResult(uid, result)
+            }
         }
     }
 
@@ -97,19 +100,7 @@ internal class DefaultDeviceFirmwareUpdateOperations(
         deviceUid = deviceUid,
         manifestUrl = manifestUrl,
         applyNow = applyNow
-    ).mapCatching { state ->
-        when (state) {
-            is DeviceOtaState.UpdateAvailable -> state.plan
-            is DeviceOtaState.UpToDate -> error(
-                "Device is already up to date: ${state.currentVersion}."
-            )
-            is DeviceOtaState.Unsupported -> error("OTA is unsupported for this device.")
-            is DeviceOtaState.Failed -> error(
-                state.failure.diagnosticMessage.ifBlank { state.failure.reason.name }
-            )
-            else -> error("OTA availability did not produce a prepared update plan.")
-        }
-    }
+    ).toPreparedUpdateResult()
 
     override suspend fun startUpdate(
         plan: PreparedDeviceFirmwareUpdate
@@ -161,30 +152,89 @@ internal class DefaultDeviceFirmwareUpdateOperations(
     )
 }
 
+internal fun <T> Result<T>.rethrowFatalOrCancellation(): Result<T> {
+    val error = exceptionOrNull()
+    when {
+        error is CancellationException -> throw error
+        error != null && error !is Exception -> throw error
+    }
+    return this
+}
+
+internal fun Result<DeviceOtaState>.toPreparedUpdateResult():
+    Result<PreparedDeviceFirmwareUpdate> = fold(
+    onSuccess = { state ->
+        when (state) {
+            is DeviceOtaState.UpdateAvailable -> Result.success(state.plan)
+            is DeviceOtaState.UpToDate -> Result.failure(
+                IllegalStateException(
+                    "Device is already up to date: ${state.currentVersion}."
+                )
+            )
+            is DeviceOtaState.Unsupported -> Result.failure(
+                IllegalStateException("OTA is unsupported for this device.")
+            )
+            is DeviceOtaState.Failed -> Result.failure(
+                IllegalStateException(
+                    state.failure.diagnosticMessage.ifBlank { state.failure.reason.name }
+                )
+            )
+            else -> Result.failure(
+                IllegalStateException(
+                    "OTA availability did not produce a prepared update plan."
+                )
+            )
+        }
+    },
+    onFailure = { error -> Result.failure(error) }
+)
+
 internal class DeviceFirmwareAvailabilityRefreshPolicy(
     private val nowMillis: () -> Long = System::currentTimeMillis,
-    private val freshnessMillis: Long = DEVICE_FIRMWARE_AVAILABILITY_FRESHNESS_MILLIS
+    private val freshnessMillis: Long = DEVICE_FIRMWARE_AVAILABILITY_FRESHNESS_MILLIS,
+    private val failureRetryMillis: Long =
+        DEVICE_FIRMWARE_AVAILABILITY_FAILURE_RETRY_MILLIS
 ) {
-    private val lastAttemptAtMillis = ConcurrentHashMap<DeviceUid, Long>()
+    private data class RefreshRecord(
+        val completedAtMillis: Long,
+        val freshnessMillis: Long
+    )
+
+    private val refreshRecords = ConcurrentHashMap<DeviceUid, RefreshRecord>()
+
+    init {
+        require(freshnessMillis >= 0L)
+        require(failureRetryMillis >= 0L)
+    }
 
     fun shouldRefresh(deviceUid: DeviceUid, state: DeviceOtaState): Boolean {
-        val lastAttempt = lastAttemptAtMillis[deviceUid]
-        val stale = lastAttempt == null || nowMillis() - lastAttempt >= freshnessMillis
+        val record = refreshRecords[deviceUid]
+        val stale = record == null ||
+            nowMillis() - record.completedAtMillis >= record.freshnessMillis
         return state.allowsPassiveAvailabilityRefresh() && stale
     }
 
-    fun recordAttempt(deviceUid: DeviceUid) {
-        lastAttemptAtMillis[deviceUid] = nowMillis()
+    fun recordResult(deviceUid: DeviceUid, result: Result<DeviceOtaState>) {
+        val resultFreshnessMillis = if (result.isSuccess) {
+            freshnessMillis
+        } else {
+            failureRetryMillis
+        }
+        refreshRecords[deviceUid] = RefreshRecord(
+            completedAtMillis = nowMillis(),
+            freshnessMillis = resultFreshnessMillis
+        )
     }
 
     fun clear() {
-        lastAttemptAtMillis.clear()
+        refreshRecords.clear()
     }
 }
 
 private fun DeviceOtaState.allowsPassiveAvailabilityRefresh(): Boolean = when (this) {
     is DeviceOtaState.Idle,
     is DeviceOtaState.UpToDate -> true
+    is DeviceOtaState.Failed -> failure.recoverable
     is DeviceOtaState.Checking,
     is DeviceOtaState.Unsupported,
     is DeviceOtaState.UpdateAvailable,
@@ -192,8 +242,7 @@ private fun DeviceOtaState.allowsPassiveAvailabilityRefresh(): Boolean = when (t
     is DeviceOtaState.InProgress,
     is DeviceOtaState.Recovering,
     is DeviceOtaState.RestartRequired,
-    is DeviceOtaState.Succeeded,
-    is DeviceOtaState.Failed -> false
+    is DeviceOtaState.Succeeded -> false
 }
 
 private fun DeviceOtaState.notificationKey(): String? = when (this) {
@@ -218,5 +267,6 @@ private fun Int.toProgressPercent(): Int =
     coerceIn(0, COMPLETE_PROGRESS_PERMILLE) / PERMILLE_PER_PERCENT
 
 internal const val DEVICE_FIRMWARE_AVAILABILITY_FRESHNESS_MILLIS = 15L * 60L * 1_000L
+internal const val DEVICE_FIRMWARE_AVAILABILITY_FAILURE_RETRY_MILLIS = 30L * 1_000L
 private const val COMPLETE_PROGRESS_PERMILLE = 1_000
 private const val PERMILLE_PER_PERCENT = 10
