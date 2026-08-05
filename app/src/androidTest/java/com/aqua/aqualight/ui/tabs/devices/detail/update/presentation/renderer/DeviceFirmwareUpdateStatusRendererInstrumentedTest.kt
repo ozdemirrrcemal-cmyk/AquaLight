@@ -25,7 +25,7 @@ import org.junit.runner.RunWith
 class DeviceFirmwareUpdateStatusRendererInstrumentedTest {
 
     @Test
-    fun `hero transition clears stale target version views`() = withRenderer { fixture ->
+    fun heroTransitionClearsStaleTargetVersionViews() = withRenderer { fixture ->
         fixture.renderer.renderHero(availableState(), modeChanged = false)
 
         assertTrue(fixture.binding.targetVersionGroup.isVisible)
@@ -49,7 +49,7 @@ class DeviceFirmwareUpdateStatusRendererInstrumentedTest {
     }
 
     @Test
-    fun `available action replaces loading state completely`() = withRenderer { fixture ->
+    fun availableActionReplacesLoadingStateCompletely() = withRenderer { fixture ->
         fixture.renderer.renderAction(
             DeviceFirmwareUpdateUiState(mode = DeviceFirmwareUpdateMode.LOADING)
         )
@@ -77,7 +77,7 @@ class DeviceFirmwareUpdateStatusRendererInstrumentedTest {
     }
 
     @Test
-    fun `terminal failure replaces recoverable retry action`() = withRenderer { fixture ->
+    fun terminalFailureReplacesRecoverableRetryAction() = withRenderer { fixture ->
         fixture.renderer.renderAction(failedState(recoverable = true))
 
         assertEquals(
