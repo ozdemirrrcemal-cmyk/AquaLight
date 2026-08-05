@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="@dimen/aqua_size_24"
+    android:height="@dimen/aqua_size_24"
+    android:viewportWidth="24"
+    android:viewportHeight="24">
+
+    <path
+        android:fillColor="@color/aqua_content_on_dark"
+        android:fillType="evenOdd"
+        android:pathData="M12,3A9,9 0,1 1,12,21A9,9 0,1 1,12,3ZM12,5A7,7 0,1 0,12,19A7,7 0,1 0,12,5Z" />
+
+</vector>

@@ -14,6 +14,7 @@ import androidx.appcompat.widget.AppCompatImageView
 import androidx.core.content.ContextCompat
 import androidx.core.view.isVisible
 import androidx.core.widget.ImageViewCompat
+import androidx.core.widget.TextViewCompat
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.viewModels
 import androidx.lifecycle.Lifecycle
@@ -48,8 +49,8 @@ class DeviceFirmwareUpdateFragment : Fragment(R.layout.fragment_device_firmware_
     private var latestState = DeviceFirmwareUpdateUiState()
     private var renderedReleaseContent: DeviceFirmwareReleaseContent? = null
     private var lastTransitionMode: DeviceFirmwareUpdateMode? = null
-    private var lastAnnouncementKey = ""
-    private var animatedSuccessKey = ""
+    private var lastAnnouncementKey: String? = null
+    private var animatedSuccessKey: String? = null
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
@@ -178,7 +179,7 @@ class DeviceFirmwareUpdateFragment : Fragment(R.layout.fragment_device_firmware_
         binding.tvUpdatePhase.setText(state.phaseTextRes())
         binding.tvUpdateProgressDetail.apply {
             val detail = state.progressDetail()
-            isVisible = detail.isNotBlank()
+            isVisible = !detail.isNullOrBlank()
             text = detail
         }
         binding.progressFirmwareUpdate.contentDescription = getString(state.phaseTextRes())
@@ -226,13 +227,12 @@ class DeviceFirmwareUpdateFragment : Fragment(R.layout.fragment_device_firmware_
         activeStep: TimelineStep
     ) {
         val status = timelineStatus(step, activeStep)
-        iconView.text = when (status) {
-            TimelineStatus.COMPLETE -> "✓"
-            TimelineStatus.ACTIVE -> "•"
-            TimelineStatus.PENDING -> "○"
-        }
         val color = ContextCompat.getColor(requireContext(), status.colorRes())
-        iconView.setTextColor(color)
+        iconView.apply {
+            text = null
+            setCompoundDrawablesRelativeWithIntrinsicBounds(status.iconRes(), 0, 0, 0)
+            TextViewCompat.setCompoundDrawableTintList(this, ColorStateList.valueOf(color))
+        }
         titleView.setTextColor(color)
         titleView.alpha = if (status == TimelineStatus.PENDING) PENDING_STEP_ALPHA else 1f
     }
@@ -244,6 +244,13 @@ class DeviceFirmwareUpdateFragment : Fragment(R.layout.fragment_device_firmware_
         step.ordinal < activeStep.ordinal -> TimelineStatus.COMPLETE
         step == activeStep -> TimelineStatus.ACTIVE
         else -> TimelineStatus.PENDING
+    }
+
+    @DrawableRes
+    private fun TimelineStatus.iconRes(): Int = when (this) {
+        TimelineStatus.COMPLETE -> R.drawable.ic_check_24
+        TimelineStatus.ACTIVE -> R.drawable.ic_update_timeline_active_24
+        TimelineStatus.PENDING -> R.drawable.ic_update_timeline_pending_24
     }
 
     @ColorRes
@@ -348,7 +355,7 @@ class DeviceFirmwareUpdateFragment : Fragment(R.layout.fragment_device_firmware_
         binding.progressUpdateAction.isVisible = presentation.loading
         binding.btnUpdateAction.apply {
             isEnabled = presentation.enabled
-            text = if (presentation.loading) "" else getString(presentation.textRes)
+            text = if (presentation.loading) null else getString(presentation.textRes)
             contentDescription = getString(presentation.textRes)
         }
         binding.tvUpdateActionHint.isVisible =
@@ -358,10 +365,10 @@ class DeviceFirmwareUpdateFragment : Fragment(R.layout.fragment_device_firmware_
     private fun announceStateChange(state: DeviceFirmwareUpdateUiState) {
         val key = "${state.mode}:${state.phase?.name.orEmpty()}:" +
             state.failure?.reason?.name.orEmpty()
-        if (lastAnnouncementKey.isNotBlank() && key != lastAnnouncementKey) {
-            binding.firmwareUpdateContent.announceForAccessibility(
-                state.progressDetail().ifBlank { getString(state.phaseTextRes()) }
-            )
+        if (lastAnnouncementKey != null && key != lastAnnouncementKey) {
+            val announcement = state.progressDetail().takeUnless { it.isNullOrBlank() }
+                ?: getString(state.phaseTextRes())
+            binding.firmwareUpdateContent.announceForAccessibility(announcement)
         }
         lastAnnouncementKey = key
     }
@@ -399,7 +406,7 @@ class DeviceFirmwareUpdateFragment : Fragment(R.layout.fragment_device_firmware_
         else -> TimelineStep.PREPARE
     }
 
-    private fun DeviceFirmwareUpdateUiState.progressDetail(): String = when {
+    private fun DeviceFirmwareUpdateUiState.progressDetail(): CharSequence? = when {
         failure != null -> getString(
             DeviceRootPresentationMapper.otaFailureMessageRes(failure.reason)
         )
@@ -409,7 +416,7 @@ class DeviceFirmwareUpdateFragment : Fragment(R.layout.fragment_device_firmware_
             Formatter.formatShortFileSize(requireContext(), contentLength)
         )
         mode.isActive -> getString(R.string.device_settings_update_progress_waiting)
-        else -> ""
+        else -> null
     }
 
     @StringRes
