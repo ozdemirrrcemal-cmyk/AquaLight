@@ -54,6 +54,15 @@
         <item name="strokeWidth">@dimen/aqua_size_1</item>
     </style>
 
+    <style name="Widget.Aqua.Card.Device.UpdateRow" parent="Widget.Aqua.Card.Device.Section">
+        <item name="cardBackgroundColor">@color/aqua_card_device_section_surface</item>
+        <item name="cardCornerRadius">@dimen/aqua_device_settings_update_row_radius</item>
+        <item name="cardElevation">@dimen/aqua_size_0</item>
+        <item name="rippleColor">@color/aqua_card_device_ripple</item>
+        <item name="strokeColor">@color/aqua_card_device_section_outline</item>
+        <item name="strokeWidth">@dimen/aqua_device_settings_update_row_stroke_width</item>
+    </style>
+
     <style name="Widget.Aqua.Card.Form" parent="Widget.Aqua.Card">
         <item name="cardBackgroundColor">@color/aqua_card_form_surface</item>
         <item name="cardCornerRadius">@dimen/aqua_size_22</item>

@@ -17,15 +17,20 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.distinctUntilChangedBy
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
 
 /** Shared OTA application adapter used by all family-specific Settings screens. */
 internal class DefaultDeviceFirmwareUpdateOperations(
     private val devicesRepository: DevicesRepository,
-    private val statePublisher: suspend (DeviceOtaState, String) -> Unit = { _, _ -> }
+    private val statePublisher: suspend (DeviceOtaState, String) -> Unit = { _, _ -> },
+    private val availabilityRefreshPolicy: DeviceFirmwareAvailabilityRefreshPolicy =
+        DeviceFirmwareAvailabilityRefreshPolicy()
 ) : DeviceFirmwareUpdateOperations, AutoCloseable {
 
     private val publisherScope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
     private val publisherJobs = ConcurrentHashMap<DeviceUid, Job>()
+    private val availabilityLocks = ConcurrentHashMap<DeviceUid, Mutex>()
 
     private val coordinator = DeviceOtaCoordinator(
         snapshotProvider = devicesRepository::currentDevice,
@@ -48,15 +53,41 @@ internal class DefaultDeviceFirmwareUpdateOperations(
         return states
     }
 
+    override suspend fun refreshAvailabilityIfStale(
+        deviceUid: String,
+        manifestUrl: String,
+        applyNow: Boolean
+    ): Result<DeviceOtaState> {
+        val uid = requireDeviceUid(deviceUid)
+        return availabilityLock(uid).withLock {
+            val currentState = coordinator.observe(uid).value
+            if (!availabilityRefreshPolicy.shouldRefresh(uid, currentState)) {
+                return@withLock Result.success(currentState)
+            }
+            availabilityRefreshPolicy.recordAttempt(uid)
+            coordinator.checkAvailability(
+                deviceUid = uid,
+                manifestUrl = manifestUrl,
+                applyNow = applyNow
+            )
+        }
+    }
+
     override suspend fun checkAvailability(
         deviceUid: String,
         manifestUrl: String,
         applyNow: Boolean
-    ): Result<DeviceOtaState> = coordinator.checkAvailability(
-        deviceUid = requireDeviceUid(deviceUid),
-        manifestUrl = manifestUrl,
-        applyNow = applyNow
-    )
+    ): Result<DeviceOtaState> {
+        val uid = requireDeviceUid(deviceUid)
+        return availabilityLock(uid).withLock {
+            availabilityRefreshPolicy.recordAttempt(uid)
+            coordinator.checkAvailability(
+                deviceUid = uid,
+                manifestUrl = manifestUrl,
+                applyNow = applyNow
+            )
+        }
+    }
 
     override suspend fun prepareUpdate(
         deviceUid: String,
@@ -93,6 +124,8 @@ internal class DefaultDeviceFirmwareUpdateOperations(
     override fun close() {
         publisherJobs.values.forEach { job -> job.cancel() }
         publisherJobs.clear()
+        availabilityLocks.clear()
+        availabilityRefreshPolicy.clear()
         publisherScope.cancel()
         coordinator.close()
     }
@@ -116,6 +149,9 @@ internal class DefaultDeviceFirmwareUpdateOperations(
         }
     }
 
+    private fun availabilityLock(deviceUid: DeviceUid): Mutex =
+        availabilityLocks.computeIfAbsent(deviceUid) { Mutex() }
+
     private fun requireDeviceUid(value: String): DeviceUid {
         val normalized = value.trim()
         require(normalized.isNotBlank()) { "Device uid is missing." }
@@ -126,6 +162,41 @@ internal class DefaultDeviceFirmwareUpdateOperations(
         val key: String?,
         val state: DeviceOtaState
     )
+}
+
+internal class DeviceFirmwareAvailabilityRefreshPolicy(
+    private val nowMillis: () -> Long = System::currentTimeMillis,
+    private val freshnessMillis: Long = DEVICE_FIRMWARE_AVAILABILITY_FRESHNESS_MILLIS
+) {
+    private val lastAttemptAtMillis = ConcurrentHashMap<DeviceUid, Long>()
+
+    fun shouldRefresh(deviceUid: DeviceUid, state: DeviceOtaState): Boolean {
+        if (!state.allowsPassiveAvailabilityRefresh()) return false
+        val lastAttempt = lastAttemptAtMillis[deviceUid] ?: return true
+        return nowMillis() - lastAttempt >= freshnessMillis
+    }
+
+    fun recordAttempt(deviceUid: DeviceUid) {
+        lastAttemptAtMillis[deviceUid] = nowMillis()
+    }
+
+    fun clear() {
+        lastAttemptAtMillis.clear()
+    }
+}
+
+private fun DeviceOtaState.allowsPassiveAvailabilityRefresh(): Boolean = when (this) {
+    is DeviceOtaState.Idle,
+    is DeviceOtaState.UpToDate -> true
+    is DeviceOtaState.Checking,
+    is DeviceOtaState.Unsupported,
+    is DeviceOtaState.UpdateAvailable,
+    is DeviceOtaState.Starting,
+    is DeviceOtaState.InProgress,
+    is DeviceOtaState.Recovering,
+    is DeviceOtaState.RestartRequired,
+    is DeviceOtaState.Succeeded,
+    is DeviceOtaState.Failed -> false
 }
 
 private fun DeviceOtaState.notificationKey(): String? = when (this) {
@@ -149,5 +220,6 @@ private fun DeviceOtaState.notificationKey(): String? = when (this) {
 private fun Int.toProgressPercent(): Int =
     coerceIn(0, COMPLETE_PROGRESS_PERMILLE) / PERMILLE_PER_PERCENT
 
+internal const val DEVICE_FIRMWARE_AVAILABILITY_FRESHNESS_MILLIS = 15L * 60L * 1_000L
 private const val COMPLETE_PROGRESS_PERMILLE = 1_000
 private const val PERMILLE_PER_PERCENT = 10

@@ -78,8 +78,10 @@ class DeviceFamilySettingsViewModel(
                 applyDeviceSnapshot(deviceUid, snapshot)
             }
         }
+        val firmwareStates = firmwareUpdateOperations.observe(deviceUid)
+        applyFirmwareState(firmwareStates.value)
         observeFirmwareJob = viewModelScope.launch {
-            firmwareUpdateOperations.observe(deviceUid).collect(::applyFirmwareState)
+            firmwareStates.collect(::applyFirmwareState)
         }
         observeLightProtectionJob = viewModelScope.launch {
             settingsOperations.observeLightProtection(deviceUid).collect { snapshot ->
@@ -87,6 +89,7 @@ class DeviceFamilySettingsViewModel(
             }
         }
         requestLightProtectionRefreshIfNeeded(deviceUid)
+        startFirmwareAvailabilityCheck(deviceUid = deviceUid, automatic = true)
     }
 
     fun updateDeviceName(value: String) {
@@ -213,19 +216,57 @@ class DeviceFamilySettingsViewModel(
     }
 
     fun checkForUpdates() {
-        val deviceUid = boundDeviceUid
-        if (deviceUid.isBlank() || updateCheckJob?.isActive == true) return
-        if (_uiState.value.updateActionState is DeviceSettingsUpdateActionState.UpdateInProgress) {
-            return
+        startFirmwareAvailabilityCheck(deviceUid = boundDeviceUid, automatic = false)
+    }
+
+    fun onFirmwareUpdateAction() {
+        when (val state = _uiState.value.updateActionState) {
+            DeviceSettingsUpdateActionState.Idle,
+            DeviceSettingsUpdateActionState.UpToDate -> checkForUpdates()
+            DeviceSettingsUpdateActionState.Checking,
+            DeviceSettingsUpdateActionState.Unsupported -> Unit
+            is DeviceSettingsUpdateActionState.UpdateAvailable,
+            is DeviceSettingsUpdateActionState.UpdateInProgress ->
+                eventChannel.trySend(DeviceFamilySettingsEvent.OpenFirmwareUpdate)
+            is DeviceSettingsUpdateActionState.Failed -> {
+                if (state.failure.recoverable) {
+                    checkForUpdates()
+                } else {
+                    eventChannel.trySend(DeviceFamilySettingsEvent.OpenFirmwareUpdate)
+                }
+            }
         }
+    }
+
+    private fun startFirmwareAvailabilityCheck(
+        deviceUid: String,
+        automatic: Boolean
+    ) {
+        if (deviceUid.isBlank() || updateCheckJob?.isActive == true) return
+        val previousActionState = _uiState.value.updateActionState
+        if (!previousActionState.allowsAvailabilityCheck(automatic)) return
 
         updateCheckJob = viewModelScope.launch {
-            val availability = firmwareUpdateOperations.checkAvailability(
-                deviceUid = deviceUid,
-                manifestUrl = manifestUrl,
-                applyNow = true
-            ).getOrNull()
-            if (availability is DeviceOtaState.UpdateAvailable) {
+            val result = if (automatic) {
+                firmwareUpdateOperations.refreshAvailabilityIfStale(
+                    deviceUid = deviceUid,
+                    manifestUrl = manifestUrl,
+                    applyNow = true
+                )
+            } else {
+                firmwareUpdateOperations.checkAvailability(
+                    deviceUid = deviceUid,
+                    manifestUrl = manifestUrl,
+                    applyNow = true
+                )
+            }
+            if (boundDeviceUid != deviceUid) return@launch
+
+            val availability = result.getOrNull()
+            if (
+                availability is DeviceOtaState.UpdateAvailable &&
+                previousActionState !is DeviceSettingsUpdateActionState.UpdateAvailable
+            ) {
                 firmwareUpdateOperations.requestStatus(deviceUid)
             }
         }
@@ -425,6 +466,7 @@ class DeviceFamilySettingsViewModel(
 sealed interface DeviceFamilySettingsEvent {
     data object DeviceNameUpdateFailed : DeviceFamilySettingsEvent
     data object TemperatureProtectionUpdateFailed : DeviceFamilySettingsEvent
+    data object OpenFirmwareUpdate : DeviceFamilySettingsEvent
 }
 
 enum class DeviceSettingsInformationLoadState {
@@ -458,6 +500,18 @@ sealed interface DeviceSettingsUpdateActionState {
     ) : DeviceSettingsUpdateActionState
 
     data object Unsupported : DeviceSettingsUpdateActionState
+}
+
+private fun DeviceSettingsUpdateActionState.allowsAvailabilityCheck(
+    automatic: Boolean
+): Boolean = when (this) {
+    DeviceSettingsUpdateActionState.Idle,
+    DeviceSettingsUpdateActionState.UpToDate -> true
+    is DeviceSettingsUpdateActionState.Failed -> !automatic && failure.recoverable
+    DeviceSettingsUpdateActionState.Checking,
+    is DeviceSettingsUpdateActionState.UpdateAvailable,
+    is DeviceSettingsUpdateActionState.UpdateInProgress,
+    DeviceSettingsUpdateActionState.Unsupported -> false
 }
 
 data class DeviceTemperatureProtectionEditorUiState(

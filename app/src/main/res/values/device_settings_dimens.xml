@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <dimen name="aqua_device_settings_update_row_margin_top">18dp</dimen>
+    <dimen name="aqua_device_settings_update_row_min_height">76dp</dimen>
+    <dimen name="aqua_device_settings_update_row_radius">16dp</dimen>
+    <dimen name="aqua_device_settings_update_row_stroke_width">1dp</dimen>
+    <dimen name="aqua_device_settings_update_row_padding_horizontal">16dp</dimen>
+    <dimen name="aqua_device_settings_update_row_padding_vertical">14dp</dimen>
+    <dimen name="aqua_device_settings_update_row_text_spacing">4dp</dimen>
+    <dimen name="aqua_device_settings_update_row_trailing_margin_start">12dp</dimen>
+    <dimen name="aqua_device_settings_update_row_arrow_size">20dp</dimen>
+    <dimen name="aqua_device_settings_update_row_progress_size">20dp</dimen>
+    <dimen name="aqua_device_settings_update_row_progress_track_thickness">2dp</dimen>
+</resources>
