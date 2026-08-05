@@ -343,10 +343,7 @@ abstract class DeviceFamilySettingsFragment : Fragment(R.layout.fragment_device_
         )
         is DeviceSettingsUpdateActionState.UpdateAvailable -> FirmwareActionPresentation(
             titleText = getString(R.string.device_settings_update_status_available),
-            subtitleText = getString(
-                R.string.device_settings_update_available_status,
-                version
-            ),
+            subtitleText = getString(R.string.device_settings_update_available_status, version),
             enabled = true,
             opensDetails = true,
             strokeColorRes = R.color.aqua_accent_primary
@@ -356,10 +353,8 @@ abstract class DeviceFamilySettingsFragment : Fragment(R.layout.fragment_device_
             subtitleText = getString(
                 R.string.device_settings_update_in_progress_status,
                 version,
-                progressPermille.coerceIn(
-                    0,
-                    COMPLETE_PROGRESS_PERMILLE
-                ) / PERMILLE_PER_PERCENT
+                progressPermille.coerceIn(0, COMPLETE_PROGRESS_PERMILLE) /
+                    PERMILLE_PER_PERCENT
             ),
             enabled = true,
             opensDetails = true,
