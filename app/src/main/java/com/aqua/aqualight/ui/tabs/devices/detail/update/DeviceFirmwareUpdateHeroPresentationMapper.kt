@@ -8,7 +8,7 @@ import com.aqua.aqualight.ui.tabs.devices.detail.common.DeviceRootPresentationMa
 
 internal data class DeviceFirmwareUpdateText(
     @StringRes val stringRes: Int,
-    val formatArgs: List<Any> = emptyList()
+    val formatArg: Any? = null
 )
 
 internal data class DeviceFirmwareUpdateIconPresentation(
@@ -67,7 +67,11 @@ internal object DeviceFirmwareUpdateHeroPresentationMapper {
             DeviceFirmwareUpdateMode.AVAILABLE -> availableSummary(state)
             DeviceFirmwareUpdateMode.SUCCEEDED -> succeededSummary(state.targetVersion)
             DeviceFirmwareUpdateMode.UP_TO_DATE -> upToDateSummary(state.currentVersion)
-            DeviceFirmwareUpdateMode.FAILED -> failureSummary(state)
+            DeviceFirmwareUpdateMode.FAILED -> DeviceFirmwareUpdateText(
+                state.failure?.let { failure ->
+                    DeviceRootPresentationMapper.otaFailureMessageRes(failure.reason)
+                } ?: R.string.device_settings_update_phase_failed_terminal
+            )
             else -> DeviceFirmwareUpdateText(STATIC_SUMMARY_RES.getValue(state.mode))
         }
 
@@ -76,11 +80,11 @@ internal object DeviceFirmwareUpdateHeroPresentationMapper {
             state.releaseContent.mandatory && state.targetVersion.isNotBlank() ->
                 DeviceFirmwareUpdateText(
                     R.string.device_settings_update_hero_summary_required_version,
-                    listOf(state.targetVersion)
+                    state.targetVersion
                 )
             state.targetVersion.isNotBlank() -> DeviceFirmwareUpdateText(
                 R.string.device_settings_update_hero_summary_available_version,
-                listOf(state.targetVersion)
+                state.targetVersion
             )
             else -> DeviceFirmwareUpdateText(
                 R.string.device_settings_update_hero_summary_available
@@ -93,7 +97,7 @@ internal object DeviceFirmwareUpdateHeroPresentationMapper {
         } else {
             DeviceFirmwareUpdateText(
                 R.string.device_settings_update_hero_summary_succeeded_version,
-                listOf(targetVersion)
+                targetVersion
             )
         }
 
@@ -103,16 +107,9 @@ internal object DeviceFirmwareUpdateHeroPresentationMapper {
         } else {
             DeviceFirmwareUpdateText(
                 R.string.device_settings_update_hero_summary_up_to_date_version,
-                listOf(currentVersion)
+                currentVersion
             )
         }
-
-    private fun failureSummary(state: DeviceFirmwareUpdateUiState): DeviceFirmwareUpdateText =
-        DeviceFirmwareUpdateText(
-            state.failure?.let { failure ->
-                DeviceRootPresentationMapper.otaFailureMessageRes(failure.reason)
-            } ?: R.string.device_settings_update_phase_failed_terminal
-        )
 
     @ColorRes
     private fun statusColorRes(state: DeviceFirmwareUpdateUiState): Int = when (state.mode) {

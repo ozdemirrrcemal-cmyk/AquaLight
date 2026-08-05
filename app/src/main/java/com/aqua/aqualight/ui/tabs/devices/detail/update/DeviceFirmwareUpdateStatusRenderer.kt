@@ -80,7 +80,9 @@ internal class DeviceFirmwareUpdateStatusRenderer(
     }
 
     private fun resolve(text: DeviceFirmwareUpdateText): String =
-        string(text.stringRes, *text.formatArgs.toTypedArray())
+        text.formatArg?.let { formatArg ->
+            string(text.stringRes, formatArg)
+        } ?: string(text.stringRes)
 
     private fun setIconTint(view: AppCompatImageView, @ColorRes colorRes: Int) {
         ImageViewCompat.setImageTintList(
@@ -91,8 +93,11 @@ internal class DeviceFirmwareUpdateStatusRenderer(
 
     private fun Enum<*>?.orEmptyName(): String = this?.name.orEmpty()
 
-    private fun string(@StringRes stringRes: Int, vararg args: Any): String =
-        fragment.getString(stringRes, *args)
+    private fun string(@StringRes stringRes: Int): String =
+        fragment.getString(stringRes)
+
+    private fun string(@StringRes stringRes: Int, formatArg: Any): String =
+        fragment.getString(stringRes, formatArg)
 
     private fun color(@ColorRes colorRes: Int): Int =
         ContextCompat.getColor(fragment.requireContext(), colorRes)
