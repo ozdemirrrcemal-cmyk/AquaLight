@@ -35,7 +35,8 @@ import kotlinx.coroutines.launch
 class DeviceFamilySettingsViewModel(
     private val settingsOperations: DeviceFamilySettingsOperations,
     private val firmwareUpdateOperations: DeviceFirmwareUpdateOperations,
-    private val manifestUrl: String = DEVICE_FIRMWARE_MANIFEST_URL
+    private val manifestUrl: String = DEVICE_FIRMWARE_MANIFEST_URL,
+    private val nowMillis: () -> Long = System::currentTimeMillis
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(DeviceFamilySettingsUiState())
@@ -220,12 +221,17 @@ class DeviceFamilySettingsViewModel(
         }
 
         updateCheckJob = viewModelScope.launch {
-            val availability = firmwareUpdateOperations.checkAvailability(
+            val result = firmwareUpdateOperations.checkAvailability(
                 deviceUid = deviceUid,
                 manifestUrl = manifestUrl,
                 applyNow = true
-            ).getOrNull()
-            if (availability is DeviceOtaState.UpdateAvailable) {
+            )
+            if (boundDeviceUid != deviceUid) return@launch
+
+            _uiState.update { current ->
+                current.copy(lastUpdateCheckAtMillis = nowMillis())
+            }
+            if (result.getOrNull() is DeviceOtaState.UpdateAvailable) {
                 firmwareUpdateOperations.requestStatus(deviceUid)
             }
         }
@@ -342,8 +348,9 @@ class DeviceFamilySettingsViewModel(
                 showLightProtectionInventory = previous.showLightProtectionInventory,
                 deviceNameSaving = previous.deviceNameSaving,
                 lightProtection = previous.lightProtection,
-                updateActionState = previous.updateActionState,
-                informationLoadState = DeviceSettingsInformationLoadState.READY
+                informationLoadState = DeviceSettingsInformationLoadState.READY,
+                lastUpdateCheckAtMillis = previous.lastUpdateCheckAtMillis,
+                updateActionState = previous.updateActionState
             )
         }
 
@@ -488,6 +495,7 @@ data class DeviceFamilySettingsUiState(
     val lightProtection: DeviceLightProtectionUiState = DeviceLightProtectionUiState(),
     val informationLoadState: DeviceSettingsInformationLoadState =
         DeviceSettingsInformationLoadState.LOADING,
+    val lastUpdateCheckAtMillis: Long? = null,
     val updateActionState: DeviceSettingsUpdateActionState =
         DeviceSettingsUpdateActionState.Idle
 )
