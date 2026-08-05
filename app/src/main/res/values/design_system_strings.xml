@@ -4,7 +4,6 @@
     <string name="common_confirm_action_title">Confirm action</string>
     <string name="common_confirm_action_message">Are you sure you want to continue?</string>
     <string name="common_clear_search_description">Clear search</string>
-    <string name="common_edit_action">Edit</string>
     <string name="common_not_available_symbol" translatable="false">-</string>
     <string name="common_not_available_double_symbol" translatable="false">--</string>
     <string name="common_not_available_em_dash" translatable="false">—</string>

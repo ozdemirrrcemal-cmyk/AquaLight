@@ -41,41 +41,86 @@
 
             <com.google.android.material.card.MaterialCardView
                 android:id="@+id/updateStatusCard"
-                style="@style/Widget.Aqua.Card.Device.Section"
+                style="@style/Widget.Aqua.Card.FirmwareUpdate.Hero"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content">
 
                 <LinearLayout
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
+                    android:gravity="center_horizontal"
                     android:orientation="vertical"
-                    android:padding="@dimen/aqua_size_18">
+                    android:padding="@dimen/aqua_firmware_update_hero_padding">
 
                     <TextView
                         android:id="@+id/tvUpdateStatusBadge"
                         style="@style/Widget.Aqua.Chip.Status.Candidate"
+                        android:layout_gravity="center_horizontal"
                         android:text="@string/device_settings_update_status_checking"
                         tools:text="Update available" />
+
+                    <FrameLayout
+                        android:id="@+id/updateHeroIconContainer"
+                        android:layout_width="@dimen/aqua_firmware_update_hero_icon_container_size"
+                        android:layout_height="@dimen/aqua_firmware_update_hero_icon_container_size"
+                        android:layout_marginTop="@dimen/aqua_size_20"
+                        android:background="@drawable/bg_firmware_update_hero_orb"
+                        android:importantForAccessibility="no">
+
+                        <androidx.appcompat.widget.AppCompatImageView
+                            android:id="@+id/ivUpdateHeroIcon"
+                            android:layout_width="@dimen/aqua_firmware_update_hero_icon_size"
+                            android:layout_height="@dimen/aqua_firmware_update_hero_icon_size"
+                            android:layout_gravity="center"
+                            android:contentDescription="@null"
+                            android:importantForAccessibility="no"
+                            android:src="@drawable/ic_firmware_update"
+                            app:tint="@color/aqua_accent_primary" />
+                    </FrameLayout>
+
+                    <TextView
+                        android:id="@+id/tvUpdateHeroTitle"
+                        style="@style/TextAppearance.Aqua.FirmwareUpdate.HeroTitle"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="@dimen/aqua_size_18"
+                        android:accessibilityLiveRegion="polite"
+                        android:gravity="center"
+                        tools:text="A new software version is ready" />
+
+                    <TextView
+                        android:id="@+id/tvUpdateHeroSummary"
+                        style="@style/TextAppearance.Aqua.FirmwareUpdate.HeroSummary"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="@dimen/aqua_size_8"
+                        android:gravity="center"
+                        tools:text="Version 1.1.0 is ready to install. Review the verified release information below before continuing." />
 
                     <TextView
                         android:id="@+id/tvUpdateDeviceName"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
                         android:layout_marginTop="@dimen/aqua_size_14"
-                        android:textColor="@color/white"
-                        android:textSize="@dimen/aqua_text_size_title_large"
+                        android:gravity="center"
+                        android:textColor="@color/aqua_content_tertiary"
+                        android:textSize="@dimen/aqua_text_size_body_small"
                         android:textStyle="bold"
-                        tools:text="Dose Pro 4" />
+                        tools:text="For WRGB Pro Elite 120" />
 
                     <LinearLayout
                         android:id="@+id/updateVersionsRow"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:layout_marginTop="@dimen/aqua_size_18"
+                        android:layout_marginTop="@dimen/aqua_size_20"
+                        android:background="@drawable/bg_firmware_update_version_panel"
                         android:baselineAligned="false"
-                        android:orientation="horizontal">
+                        android:gravity="center_vertical"
+                        android:orientation="horizontal"
+                        android:padding="@dimen/aqua_firmware_update_version_panel_padding">
 
                         <LinearLayout
+                            android:id="@+id/installedVersionGroup"
                             android:layout_width="@dimen/aqua_size_0"
                             android:layout_height="wrap_content"
                             android:layout_weight="1"
@@ -97,17 +142,22 @@
                                 android:textColor="@color/aqua_content_primary_soft"
                                 android:textSize="@dimen/aqua_text_size_body_xlarge"
                                 android:textStyle="bold"
-                                tools:text="1.0.0" />
+                                tools:text="1.0.1" />
                         </LinearLayout>
 
-                        <View
-                            android:layout_width="@dimen/aqua_size_1"
-                            android:layout_height="@dimen/aqua_size_40"
-                            android:layout_marginStart="@dimen/aqua_size_14"
-                            android:layout_marginEnd="@dimen/aqua_size_14"
-                            android:background="@color/aqua_card_divider" />
+                        <androidx.appcompat.widget.AppCompatImageView
+                            android:id="@+id/ivVersionArrow"
+                            android:layout_width="@dimen/aqua_size_20"
+                            android:layout_height="@dimen/aqua_size_20"
+                            android:layout_marginStart="@dimen/aqua_size_12"
+                            android:layout_marginEnd="@dimen/aqua_size_12"
+                            android:contentDescription="@null"
+                            android:importantForAccessibility="no"
+                            android:src="@drawable/ic_arrow_right"
+                            app:tint="@color/aqua_accent_primary" />
 
                         <LinearLayout
+                            android:id="@+id/targetVersionGroup"
                             android:layout_width="@dimen/aqua_size_0"
                             android:layout_height="wrap_content"
                             android:layout_weight="1"
@@ -129,7 +179,7 @@
                                 android:textColor="@color/aqua_accent_positive"
                                 android:textSize="@dimen/aqua_text_size_body_xlarge"
                                 android:textStyle="bold"
-                                tools:text="1.0.1" />
+                                tools:text="1.1.0" />
                         </LinearLayout>
                     </LinearLayout>
                 </LinearLayout>
@@ -137,17 +187,17 @@
 
             <com.google.android.material.card.MaterialCardView
                 android:id="@+id/updateProgressCard"
-                style="@style/Widget.Aqua.Card.Device.Section"
+                style="@style/Widget.Aqua.Card.FirmwareUpdate.Content"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="@dimen/aqua_size_14">
+                android:layout_marginTop="@dimen/aqua_firmware_update_card_spacing">
 
                 <LinearLayout
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:gravity="center_horizontal"
                     android:orientation="vertical"
-                    android:padding="@dimen/aqua_size_20">
+                    android:padding="@dimen/aqua_firmware_update_section_padding">
 
                     <FrameLayout
                         android:id="@+id/updateProgressHero"
@@ -196,6 +246,7 @@
                             android:layout_height="@dimen/aqua_size_56"
                             android:layout_gravity="center"
                             android:contentDescription="@null"
+                            android:importantForAccessibility="no"
                             android:visibility="gone"
                             tools:src="@drawable/ic_check_24"
                             tools:tint="@color/aqua_status_success"
@@ -204,12 +255,10 @@
 
                     <TextView
                         android:id="@+id/tvUpdatePhase"
+                        style="@style/TextAppearance.Aqua.FirmwareUpdate.SectionTitle"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
                         android:gravity="center"
-                        android:textColor="@color/white"
-                        android:textSize="@dimen/aqua_text_size_title_small"
-                        android:textStyle="bold"
                         tools:text="Installing device software…" />
 
                     <TextView
@@ -226,24 +275,24 @@
 
             <com.google.android.material.card.MaterialCardView
                 android:id="@+id/releaseNotesCard"
-                style="@style/Widget.Aqua.Card.Device.Section"
+                style="@style/Widget.Aqua.Card.FirmwareUpdate.Content"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="@dimen/aqua_size_14">
+                android:layout_marginTop="@dimen/aqua_firmware_update_card_spacing"
+                android:visibility="gone"
+                tools:visibility="visible">
 
                 <LinearLayout
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:orientation="vertical"
-                    android:padding="@dimen/aqua_size_18">
+                    android:padding="@dimen/aqua_firmware_update_section_padding">
 
                     <TextView
+                        style="@style/TextAppearance.Aqua.FirmwareUpdate.SectionTitle"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:text="@string/device_settings_update_release_notes_heading"
-                        android:textColor="@color/white"
-                        android:textSize="@dimen/aqua_text_size_title_small"
-                        android:textStyle="bold" />
+                        android:text="@string/device_settings_update_release_notes_heading" />
 
                     <TextView
                         android:id="@+id/tvReleaseTitle"
@@ -253,7 +302,7 @@
                         android:textColor="@color/aqua_content_primary_soft"
                         android:textSize="@dimen/aqua_text_size_body_xlarge"
                         android:textStyle="bold"
-                        tools:text="More reliable dosing" />
+                        tools:text="More reliable device control" />
 
                     <TextView
                         android:id="@+id/tvReleaseSummary"
@@ -262,17 +311,15 @@
                         android:layout_marginTop="@dimen/aqua_size_8"
                         android:textColor="@color/aqua_content_secondary"
                         android:textSize="@dimen/aqua_text_size_body"
-                        tools:text="This release improves calibration and reconnect reliability." />
+                        tools:text="This release improves reconnect reliability and device stability." />
 
                     <TextView
                         android:id="@+id/tvReleaseChangesHeading"
+                        style="@style/TextAppearance.Aqua.FirmwareUpdate.SubsectionTitle"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
                         android:layout_marginTop="@dimen/aqua_size_18"
-                        android:text="@string/device_settings_update_changes_heading"
-                        android:textColor="@color/aqua_content_primary_soft"
-                        android:textSize="@dimen/aqua_text_size_body_large"
-                        android:textStyle="bold" />
+                        android:text="@string/device_settings_update_changes_heading" />
 
                     <LinearLayout
                         android:id="@+id/releaseChangesContainer"
@@ -283,19 +330,104 @@
 
                     <TextView
                         android:id="@+id/tvReleaseWarningsHeading"
+                        style="@style/TextAppearance.Aqua.FirmwareUpdate.WarningTitle"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
                         android:layout_marginTop="@dimen/aqua_size_18"
-                        android:text="@string/device_settings_update_warnings_heading"
-                        android:textColor="@color/aqua_content_warning"
-                        android:textSize="@dimen/aqua_text_size_body_large"
-                        android:textStyle="bold" />
+                        android:text="@string/device_settings_update_release_warnings_heading" />
 
                     <LinearLayout
                         android:id="@+id/releaseWarningsContainer"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
                         android:layout_marginTop="@dimen/aqua_size_6"
+                        android:orientation="vertical" />
+                </LinearLayout>
+            </com.google.android.material.card.MaterialCardView>
+
+            <com.google.android.material.card.MaterialCardView
+                android:id="@+id/releaseNotesUnavailableCard"
+                style="@style/Widget.Aqua.Card.FirmwareUpdate.Content"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="@dimen/aqua_firmware_update_card_spacing"
+                android:visibility="gone"
+                tools:visibility="visible">
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:gravity="top"
+                    android:orientation="horizontal"
+                    android:padding="@dimen/aqua_firmware_update_section_padding">
+
+                    <androidx.appcompat.widget.AppCompatImageView
+                        android:layout_width="@dimen/aqua_size_24"
+                        android:layout_height="@dimen/aqua_size_24"
+                        android:contentDescription="@null"
+                        android:importantForAccessibility="no"
+                        android:src="@drawable/ic_info"
+                        app:tint="@color/aqua_accent_primary" />
+
+                    <LinearLayout
+                        android:layout_width="@dimen/aqua_size_0"
+                        android:layout_height="wrap_content"
+                        android:layout_marginStart="@dimen/aqua_size_12"
+                        android:layout_weight="1"
+                        android:orientation="vertical"
+                        tools:ignore="InefficientWeight">
+
+                        <TextView
+                            style="@style/TextAppearance.Aqua.FirmwareUpdate.SubsectionTitle"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:text="@string/device_settings_update_release_details_unavailable_title" />
+
+                        <TextView
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:layout_marginTop="@dimen/aqua_size_6"
+                            android:text="@string/device_settings_update_release_details_unavailable_message"
+                            android:textColor="@color/aqua_content_secondary"
+                            android:textSize="@dimen/aqua_text_size_body" />
+                    </LinearLayout>
+                </LinearLayout>
+            </com.google.android.material.card.MaterialCardView>
+
+            <com.google.android.material.card.MaterialCardView
+                android:id="@+id/updateRequirementsCard"
+                style="@style/Widget.Aqua.Card.FirmwareUpdate.Content"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="@dimen/aqua_firmware_update_card_spacing"
+                android:visibility="gone"
+                tools:visibility="visible">
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical"
+                    android:padding="@dimen/aqua_firmware_update_section_padding">
+
+                    <TextView
+                        style="@style/TextAppearance.Aqua.FirmwareUpdate.SectionTitle"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:text="@string/device_settings_update_requirements_heading" />
+
+                    <TextView
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="@dimen/aqua_size_8"
+                        android:text="@string/device_settings_update_requirements_summary"
+                        android:textColor="@color/aqua_content_secondary"
+                        android:textSize="@dimen/aqua_text_size_body" />
+
+                    <LinearLayout
+                        android:id="@+id/updateRequirementsContainer"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="@dimen/aqua_size_10"
                         android:orientation="vertical" />
                 </LinearLayout>
             </com.google.android.material.card.MaterialCardView>
@@ -307,6 +439,7 @@
         android:layout_width="@dimen/aqua_size_0"
         android:layout_height="wrap_content"
         android:background="@color/background_color"
+        android:elevation="@dimen/aqua_firmware_update_action_elevation"
         android:orientation="vertical"
         android:paddingStart="@dimen/aqua_size_16"
         android:paddingTop="@dimen/aqua_size_10"
@@ -322,7 +455,7 @@
             android:layout_height="wrap_content"
             android:layout_marginBottom="@dimen/aqua_size_10"
             android:gravity="center"
-            android:text="@string/device_settings_update_power_warning"
+            android:text="@string/device_settings_update_action_hint_available"
             android:textColor="@color/aqua_content_secondary"
             android:textSize="@dimen/aqua_text_size_caption" />
 

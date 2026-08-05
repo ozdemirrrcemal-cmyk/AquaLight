@@ -98,15 +98,15 @@
                                 tools:text="WRGB Pro Elite 120" />
                         </LinearLayout>
 
-                        <TextView
-                            android:id="@+id/tvEditDeviceNameAction"
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
+                        <ImageView
+                            android:id="@+id/ivDeviceNameArrow"
+                            android:layout_width="@dimen/aqua_size_24"
+                            android:layout_height="@dimen/aqua_size_24"
                             android:layout_marginStart="@dimen/aqua_size_12"
-                            android:text="@string/common_edit_action"
-                            android:textColor="@color/aqua_content_secondary"
-                            android:textSize="@dimen/aqua_text_size_caption_plus"
-                            android:textStyle="bold" />
+                            android:contentDescription="@null"
+                            android:importantForAccessibility="no"
+                            android:src="@drawable/ic_arrow_right"
+                            app:tint="@color/aqua_content_secondary" />
                     </LinearLayout>
 
                     <LinearLayout
@@ -187,7 +187,7 @@
                         android:layout_marginTop="@dimen/aqua_size_16"
                         android:textColor="@color/aqua_content_secondary"
                         android:textSize="@dimen/aqua_text_size_caption"
-                        tools:text="Installed software version" />
+                        tools:text="Installed firmware version" />
 
                     <TextView
                         android:id="@+id/tvFirmwareVersionValue"
@@ -196,44 +196,81 @@
                         android:layout_marginTop="@dimen/aqua_size_4"
                         android:textColor="@color/aqua_content_primary_soft"
                         android:textSize="@dimen/aqua_text_size_body_large"
-                        tools:text="1.0.0 / build 20260730" />
+                        tools:text="1.0.3" />
 
-                    <TextView
-                        android:id="@+id/tvFirmwareUpdateStatus"
+                    <com.google.android.material.card.MaterialCardView
+                        android:id="@+id/cardFirmwareUpdateAction"
+                        style="@style/Widget.Aqua.Card.Device.UpdateRow"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:layout_marginTop="@dimen/aqua_size_8"
-                        android:textColor="@color/aqua_content_secondary"
-                        android:textSize="@dimen/aqua_text_size_caption"
-                        android:visibility="gone"
-                        tools:text="Version 1.1.0 is available"
-                        tools:visibility="visible" />
+                        android:layout_marginTop="@dimen/aqua_device_settings_update_row_margin_top"
+                        android:clickable="true"
+                        android:focusable="true"
+                        android:importantForAccessibility="yes"
+                        android:minHeight="@dimen/aqua_device_settings_update_row_min_height">
 
-                    <FrameLayout
-                        android:id="@+id/firmwareUpdateActionContainer"
-                        android:layout_width="match_parent"
-                        android:layout_height="@dimen/aqua_button_height"
-                        android:layout_marginTop="@dimen/aqua_size_18">
-
-                        <com.google.android.material.button.MaterialButton
-                            android:id="@+id/btnCheckForUpdates"
-                            style="@style/Widget.Aqua.Button.Primary"
+                        <LinearLayout
                             android:layout_width="match_parent"
-                            android:layout_height="match_parent"
-                            tools:text="Check for updates" />
+                            android:layout_height="wrap_content"
+                            android:gravity="center_vertical"
+                            android:orientation="horizontal"
+                            android:paddingStart="@dimen/aqua_device_settings_update_row_padding_horizontal"
+                            android:paddingTop="@dimen/aqua_device_settings_update_row_padding_vertical"
+                            android:paddingEnd="@dimen/aqua_device_settings_update_row_padding_horizontal"
+                            android:paddingBottom="@dimen/aqua_device_settings_update_row_padding_vertical">
 
-                        <com.google.android.material.progressindicator.CircularProgressIndicator
-                            android:id="@+id/progressCheckForUpdates"
-                            android:layout_width="@dimen/aqua_size_24"
-                            android:layout_height="@dimen/aqua_size_24"
-                            android:layout_gravity="center"
-                            android:indeterminate="true"
-                            android:visibility="gone"
-                            app:indicatorColor="@color/white"
-                            app:indicatorSize="@dimen/aqua_size_24"
-                            app:trackThickness="@dimen/aqua_size_2"
-                            tools:visibility="visible" />
-                    </FrameLayout>
+                            <LinearLayout
+                                android:layout_width="@dimen/aqua_size_0"
+                                android:layout_height="wrap_content"
+                                android:layout_weight="1"
+                                android:orientation="vertical"
+                                tools:ignore="InefficientWeight">
+
+                                <TextView
+                                    android:id="@+id/tvFirmwareUpdateActionTitle"
+                                    android:layout_width="match_parent"
+                                    android:layout_height="wrap_content"
+                                    android:importantForAccessibility="no"
+                                    android:textAppearance="@style/TextAppearance.Aqua.DeviceSettings.UpdateRowTitle"
+                                    tools:text="Update available" />
+
+                                <TextView
+                                    android:id="@+id/tvFirmwareUpdateActionSubtitle"
+                                    android:layout_width="match_parent"
+                                    android:layout_height="wrap_content"
+                                    android:layout_marginTop="@dimen/aqua_device_settings_update_row_text_spacing"
+                                    android:importantForAccessibility="no"
+                                    android:textAppearance="@style/TextAppearance.Aqua.DeviceSettings.UpdateRowSubtitle"
+                                    tools:text="Firmware 1.1.0 is ready" />
+                            </LinearLayout>
+
+                            <com.google.android.material.progressindicator.CircularProgressIndicator
+                                android:id="@+id/progressCheckForUpdates"
+                                android:layout_width="@dimen/aqua_device_settings_update_row_progress_size"
+                                android:layout_height="@dimen/aqua_device_settings_update_row_progress_size"
+                                android:layout_marginStart="@dimen/aqua_device_settings_update_row_trailing_margin_start"
+                                android:importantForAccessibility="no"
+                                android:indeterminate="true"
+                                android:visibility="gone"
+                                app:indicatorColor="@color/aqua_accent_primary"
+                                app:indicatorSize="@dimen/aqua_device_settings_update_row_progress_size"
+                                app:trackColor="@color/aqua_card_device_section_outline"
+                                app:trackThickness="@dimen/aqua_device_settings_update_row_progress_track_thickness"
+                                tools:visibility="visible" />
+
+                            <ImageView
+                                android:id="@+id/ivFirmwareUpdateArrow"
+                                android:layout_width="@dimen/aqua_device_settings_update_row_arrow_size"
+                                android:layout_height="@dimen/aqua_device_settings_update_row_arrow_size"
+                                android:layout_marginStart="@dimen/aqua_device_settings_update_row_trailing_margin_start"
+                                android:contentDescription="@null"
+                                android:importantForAccessibility="no"
+                                android:src="@drawable/ic_arrow_right"
+                                android:visibility="gone"
+                                app:tint="@color/aqua_content_secondary"
+                                tools:visibility="visible" />
+                        </LinearLayout>
+                    </com.google.android.material.card.MaterialCardView>
                 </LinearLayout>
             </com.google.android.material.card.MaterialCardView>
 

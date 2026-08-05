@@ -1,6 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="device_settings_saving_action">Kaydediliyor…</string>
     <string name="device_settings_save_failed_title">Değişiklikler kaydedilemedi</string>
     <string name="device_settings_device_name_save_failed_message">Cihaz adı kaydedilemedi. Cihazı açık ve bağlı tutup tekrar deneyin.</string>
     <string name="device_settings_use_default_name_action">Varsayılan adı kullan</string>

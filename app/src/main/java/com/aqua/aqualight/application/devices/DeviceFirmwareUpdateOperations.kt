@@ -8,6 +8,18 @@ interface DeviceFirmwareUpdateOperations {
     fun observe(deviceUid: String): StateFlow<DeviceOtaState> =
         MutableStateFlow(DeviceOtaState.Idle(deviceUid))
 
+    /**
+     * Refreshes availability only when the application-owned freshness policy allows it.
+     *
+     * The default keeps test and alternative implementations source compatible. Production
+     * implementations own throttling, concurrency and freshness decisions outside presentation.
+     */
+    suspend fun refreshAvailabilityIfStale(
+        deviceUid: String,
+        manifestUrl: String,
+        applyNow: Boolean = true
+    ): Result<DeviceOtaState> = Result.success(observe(deviceUid).value)
+
     suspend fun checkAvailability(
         deviceUid: String,
         manifestUrl: String,

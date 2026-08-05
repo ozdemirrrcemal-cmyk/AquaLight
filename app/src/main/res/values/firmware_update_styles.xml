@@ -1,11 +1,62 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <style
+        name="Widget.Aqua.Card.FirmwareUpdate.Hero"
+        parent="Widget.Aqua.Card.Device.Section">
+        <item name="cardCornerRadius">@dimen/aqua_firmware_update_card_corner_radius</item>
+        <item name="strokeColor">@color/aqua_accent_primary</item>
+        <item name="strokeWidth">@dimen/aqua_firmware_update_hero_stroke_width</item>
+    </style>
+
+    <style
+        name="Widget.Aqua.Card.FirmwareUpdate.Content"
+        parent="Widget.Aqua.Card.Device.Section">
+        <item name="cardCornerRadius">@dimen/aqua_firmware_update_card_corner_radius</item>
+    </style>
+
+    <style
         name="Widget.Aqua.FirmwareUpdate.Progress"
         parent="Widget.MaterialComponents.CircularProgressIndicator">
         <item name="indicatorColor">@color/aqua_accent_primary</item>
         <item name="indicatorSize">@dimen/aqua_size_160</item>
         <item name="trackColor">@color/aqua_progress_bar_progress_background_tint</item>
         <item name="trackThickness">@dimen/aqua_size_8</item>
+    </style>
+
+    <style
+        name="TextAppearance.Aqua.FirmwareUpdate.HeroTitle"
+        parent="TextAppearance.MaterialComponents.Headline6">
+        <item name="android:textColor">@color/white</item>
+        <item name="android:textSize">@dimen/aqua_text_size_title_large</item>
+        <item name="android:textStyle">bold</item>
+    </style>
+
+    <style
+        name="TextAppearance.Aqua.FirmwareUpdate.HeroSummary"
+        parent="TextAppearance.MaterialComponents.Body1">
+        <item name="android:textColor">@color/aqua_content_secondary</item>
+        <item name="android:textSize">@dimen/aqua_text_size_body</item>
+    </style>
+
+    <style
+        name="TextAppearance.Aqua.FirmwareUpdate.SectionTitle"
+        parent="TextAppearance.MaterialComponents.Subtitle1">
+        <item name="android:textColor">@color/white</item>
+        <item name="android:textSize">@dimen/aqua_text_size_title_small</item>
+        <item name="android:textStyle">bold</item>
+    </style>
+
+    <style
+        name="TextAppearance.Aqua.FirmwareUpdate.SubsectionTitle"
+        parent="TextAppearance.MaterialComponents.Subtitle2">
+        <item name="android:textColor">@color/aqua_content_primary_soft</item>
+        <item name="android:textSize">@dimen/aqua_text_size_body_large</item>
+        <item name="android:textStyle">bold</item>
+    </style>
+
+    <style
+        name="TextAppearance.Aqua.FirmwareUpdate.WarningTitle"
+        parent="TextAppearance.Aqua.FirmwareUpdate.SubsectionTitle">
+        <item name="android:textColor">@color/aqua_content_warning</item>
     </style>
 </resources>
