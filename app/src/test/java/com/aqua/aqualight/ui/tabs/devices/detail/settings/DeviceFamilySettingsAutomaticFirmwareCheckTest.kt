@@ -58,9 +58,47 @@ class DeviceFamilySettingsAutomaticFirmwareCheckTest {
         }
     }
 
-    private class FakeSettingsOperations : DeviceFamilySettingsOperations {
-        private val devices = MutableStateFlow(validSnapshot())
+    @Test
+    fun `automatic check waits for a catalog validated device and runs only once`() = runTest {
+        Dispatchers.setMain(UnconfinedTestDispatcher(testScheduler))
+        try {
+            val settings = FakeSettingsOperations(
+                initialSnapshot = validSnapshot().copy(
+                    catalogState = DeviceRootCatalogState.INVALID
+                )
+            )
+            val firmware = FakeFirmwareOperations()
+            val viewModel = DeviceFamilySettingsViewModel(
+                settingsOperations = settings,
+                firmwareUpdateOperations = firmware,
+                manifestUrl = MANIFEST_URL
+            )
+
+            viewModel.bind(DEVICE_UID)
+            assertEquals(0, firmware.automaticCheckCalls)
+
+            settings.emit(validSnapshot())
+            settings.emit(
+                validSnapshot().copy(catalogState = DeviceRootCatalogState.INVALID)
+            )
+            settings.emit(validSnapshot())
+
+            assertEquals(1, firmware.automaticCheckCalls)
+            assertEquals(1, firmware.statusCalls)
+        } finally {
+            Dispatchers.resetMain()
+        }
+    }
+
+    private class FakeSettingsOperations(
+        initialSnapshot: DeviceRootSnapshot = validSnapshot()
+    ) : DeviceFamilySettingsOperations {
+        private val devices = MutableStateFlow(initialSnapshot)
         private val lightProtection = MutableStateFlow(DeviceLightProtectionSnapshot())
+
+        fun emit(snapshot: DeviceRootSnapshot) {
+            devices.value = snapshot
+        }
 
         override fun observe(deviceUid: String): Flow<DeviceRootSnapshot?> = devices
 
