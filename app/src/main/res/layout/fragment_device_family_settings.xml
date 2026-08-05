@@ -98,15 +98,15 @@
                                 tools:text="WRGB Pro Elite 120" />
                         </LinearLayout>
 
-                        <TextView
-                            android:id="@+id/tvEditDeviceNameAction"
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
+                        <ImageView
+                            android:id="@+id/ivDeviceNameArrow"
+                            android:layout_width="@dimen/aqua_size_24"
+                            android:layout_height="@dimen/aqua_size_24"
                             android:layout_marginStart="@dimen/aqua_size_12"
-                            android:text="@string/common_edit_action"
-                            android:textColor="@color/aqua_content_secondary"
-                            android:textSize="@dimen/aqua_text_size_caption_plus"
-                            android:textStyle="bold" />
+                            android:contentDescription="@null"
+                            android:importantForAccessibility="no"
+                            android:src="@drawable/ic_arrow_right"
+                            app:tint="@color/aqua_content_secondary" />
                     </LinearLayout>
 
                     <LinearLayout
