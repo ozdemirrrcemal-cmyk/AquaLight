@@ -5,6 +5,7 @@ import android.os.Bundle
 import android.text.InputFilter
 import android.view.View
 import android.view.WindowManager
+import android.widget.TextView
 import androidx.core.os.bundleOf
 import androidx.core.view.isVisible
 import androidx.core.widget.doAfterTextChanged
@@ -22,20 +23,12 @@ class TextInputBottomSheet : BottomSheetDialogFragment(
 
     private var resultSent = false
     private var presetSelected = false
+    private var applyingPreset = false
 
-    @Suppress("LongMethod")
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
         val args = requireArguments()
-        val inputLayout = view.findViewById<TextInputLayout>(R.id.textInputLayout)
-        val input = view.findViewById<TextInputEditText>(R.id.etTextInputValue)
-        val presetButton = view.findViewById<MaterialButton>(R.id.btnTextInputPreset)
-        val secondaryLabel = view.findViewById<android.widget.TextView>(
-            R.id.tvTextInputSecondaryLabel
-        )
-        val secondaryValue = view.findViewById<android.widget.TextView>(
-            R.id.tvTextInputSecondaryValue
-        )
+        val views = bindContent(view, args, savedInstanceState)
         val initialValue = args.getString(ARG_INITIAL_VALUE).orEmpty()
         val required = args.getBoolean(ARG_REQUIRED)
         val disableSaveWhenUnchanged = args.getBoolean(ARG_DISABLE_SAVE_WHEN_UNCHANGED)
@@ -43,29 +36,73 @@ class TextInputBottomSheet : BottomSheetDialogFragment(
         val presetDisplayValue = args.getString(ARG_PRESET_DISPLAY_VALUE).orEmpty()
         val presetResultValue = args.getString(ARG_PRESET_RESULT_VALUE).orEmpty()
         val showPreset = presetActionText.isNotBlank() && presetDisplayValue.isNotBlank()
-        presetSelected = savedInstanceState?.getBoolean(STATE_PRESET_SELECTED) == true && showPreset
-        var applyingPreset = false
+        val refreshSaveEnabled = {
+            updateSaveEnabled(
+                views = views,
+                required = required,
+                disableSaveWhenUnchanged = disableSaveWhenUnchanged,
+                initialValue = initialValue
+            )
+        }
 
-        view.findViewById<android.widget.TextView>(R.id.tvTextInputTitle).text =
+        bindCancelAction(view, args)
+        bindSaveAction(views, args, required, presetResultValue)
+        bindPresetAndInputActions(
+            views = views,
+            showPreset = showPreset,
+            presetActionText = presetActionText,
+            presetDisplayValue = presetDisplayValue,
+            refreshSaveEnabled = refreshSaveEnabled
+        )
+        refreshSaveEnabled()
+        requestFocusIfNeeded(
+            input = views.input,
+            shouldRequestFocus = args.getBoolean(ARG_REQUEST_FOCUS)
+        )
+    }
+
+    private fun bindContent(
+        view: View,
+        args: Bundle,
+        savedInstanceState: Bundle?
+    ): TextInputViews {
+        val views = TextInputViews(
+            inputLayout = view.findViewById(R.id.textInputLayout),
+            input = view.findViewById(R.id.etTextInputValue),
+            presetButton = view.findViewById(R.id.btnTextInputPreset),
+            secondaryLabel = view.findViewById(R.id.tvTextInputSecondaryLabel),
+            secondaryValue = view.findViewById(R.id.tvTextInputSecondaryValue),
+            saveButton = view.findViewById(R.id.btnTextInputSave)
+        )
+        val initialValue = args.getString(ARG_INITIAL_VALUE).orEmpty()
+        val presetActionText = args.getString(ARG_PRESET_ACTION_TEXT).orEmpty()
+        val presetDisplayValue = args.getString(ARG_PRESET_DISPLAY_VALUE).orEmpty()
+        val showPreset = presetActionText.isNotBlank() && presetDisplayValue.isNotBlank()
+        presetSelected = savedInstanceState?.getBoolean(STATE_PRESET_SELECTED) == true && showPreset
+
+        view.findViewById<TextView>(R.id.tvTextInputTitle).text =
             args.getString(ARG_TITLE).orEmpty()
-        view.findViewById<android.widget.TextView>(R.id.tvTextInputLabel).text =
+        view.findViewById<TextView>(R.id.tvTextInputLabel).text =
             args.getString(ARG_LABEL).orEmpty()
-        inputLayout.hint = args.getString(ARG_HINT).orEmpty()
-        input.setText(if (presetSelected) presetDisplayValue else initialValue)
-        input.setSelection(input.text?.length ?: 0)
+        views.inputLayout.hint = args.getString(ARG_HINT).orEmpty()
+        views.input.setText(if (presetSelected) presetDisplayValue else initialValue)
+        views.input.setSelection(views.input.text?.length ?: 0)
         args.getInt(ARG_MAX_LENGTH)
             .takeIf { maxLength -> maxLength > 0 }
             ?.let { maxLength ->
-                input.filters = input.filters + InputFilter.LengthFilter(maxLength)
+                views.input.filters = views.input.filters + InputFilter.LengthFilter(maxLength)
             }
 
         val secondaryText = args.getString(ARG_SECONDARY_VALUE).orEmpty()
         val showSecondary = secondaryText.isNotBlank()
-        secondaryLabel.isVisible = showSecondary
-        secondaryValue.isVisible = showSecondary
-        secondaryLabel.text = args.getString(ARG_SECONDARY_LABEL).orEmpty()
-        secondaryValue.text = secondaryText
+        views.secondaryLabel.isVisible = showSecondary
+        views.secondaryValue.isVisible = showSecondary
+        views.secondaryLabel.text = args.getString(ARG_SECONDARY_LABEL).orEmpty()
+        views.secondaryValue.text = secondaryText
+        return views
+    }
 
+    private fun bindCancelAction(view: View, args: Bundle) {
         view.findViewById<MaterialButton>(R.id.btnTextInputCancel).apply {
             text = args.getString(ARG_CANCEL_TEXT).orEmpty()
             setOnClickListener {
@@ -73,16 +110,23 @@ class TextInputBottomSheet : BottomSheetDialogFragment(
                 dismiss()
             }
         }
+    }
 
-        val saveButton = view.findViewById<MaterialButton>(R.id.btnTextInputSave).apply {
+    private fun bindSaveAction(
+        views: TextInputViews,
+        args: Bundle,
+        required: Boolean,
+        presetResultValue: String
+    ) {
+        views.saveButton.apply {
             text = args.getString(ARG_SAVE_TEXT).orEmpty()
             setOnClickListener {
-                val displayedValue = input.text?.toString()?.trim().orEmpty()
+                val displayedValue = views.input.text?.toString()?.trim().orEmpty()
                 if (required && displayedValue.isBlank()) {
-                    inputLayout.error = args.getString(ARG_REQUIRED_MESSAGE).orEmpty()
+                    views.inputLayout.error = args.getString(ARG_REQUIRED_MESSAGE).orEmpty()
                     return@setOnClickListener
                 }
-                inputLayout.error = null
+                views.inputLayout.error = null
                 publish(
                     RESULT_SAVED,
                     resolveTextInputResultValue(
@@ -94,48 +138,64 @@ class TextInputBottomSheet : BottomSheetDialogFragment(
                 dismiss()
             }
         }
+    }
 
-        fun updateSaveEnabled() {
-            val displayedValue = input.text?.toString()?.trim().orEmpty()
-            val hasRequiredValue = !required || displayedValue.isNotBlank()
-            val hasChanged = !disableSaveWhenUnchanged ||
-                presetSelected ||
-                displayedValue != initialValue.trim()
-            saveButton.isEnabled = hasRequiredValue && hasChanged
-        }
-
-        presetButton.apply {
+    private fun bindPresetAndInputActions(
+        views: TextInputViews,
+        showPreset: Boolean,
+        presetActionText: String,
+        presetDisplayValue: String,
+        refreshSaveEnabled: () -> Unit
+    ) {
+        views.presetButton.apply {
             isVisible = showPreset
             text = presetActionText
             setOnClickListener {
                 presetSelected = true
                 applyingPreset = true
-                input.setText(presetDisplayValue)
-                input.setSelection(input.text?.length ?: 0)
+                views.input.setText(presetDisplayValue)
+                views.input.setSelection(views.input.text?.length ?: 0)
                 applyingPreset = false
-                inputLayout.error = null
-                updateSaveEnabled()
+                views.inputLayout.error = null
+                refreshSaveEnabled()
             }
         }
 
-        input.doAfterTextChanged { editable ->
+        views.input.doAfterTextChanged { editable ->
             val displayedValue = editable?.toString()?.trim().orEmpty()
             if (!applyingPreset && presetSelected && displayedValue != presetDisplayValue) {
                 presetSelected = false
             }
-            inputLayout.error = null
-            updateSaveEnabled()
+            views.inputLayout.error = null
+            refreshSaveEnabled()
         }
-        updateSaveEnabled()
+    }
 
-        if (args.getBoolean(ARG_REQUEST_FOCUS)) {
-            input.post {
-                if (!isAdded) return@post
-                input.requestFocus()
-                dialog?.window?.setSoftInputMode(
-                    WindowManager.LayoutParams.SOFT_INPUT_STATE_ALWAYS_VISIBLE
-                )
-            }
+    private fun updateSaveEnabled(
+        views: TextInputViews,
+        required: Boolean,
+        disableSaveWhenUnchanged: Boolean,
+        initialValue: String
+    ) {
+        val displayedValue = views.input.text?.toString()?.trim().orEmpty()
+        val hasRequiredValue = !required || displayedValue.isNotBlank()
+        val hasChanged = !disableSaveWhenUnchanged ||
+            presetSelected ||
+            displayedValue != initialValue.trim()
+        views.saveButton.isEnabled = hasRequiredValue && hasChanged
+    }
+
+    private fun requestFocusIfNeeded(
+        input: TextInputEditText,
+        shouldRequestFocus: Boolean
+    ) {
+        if (!shouldRequestFocus) return
+        input.post {
+            if (!isAdded) return@post
+            input.requestFocus()
+            dialog?.window?.setSoftInputMode(
+                WindowManager.LayoutParams.SOFT_INPUT_STATE_ALWAYS_VISIBLE
+            )
         }
     }
 
@@ -162,6 +222,15 @@ class TextInputBottomSheet : BottomSheetDialogFragment(
             )
         )
     }
+
+    private data class TextInputViews(
+        val inputLayout: TextInputLayout,
+        val input: TextInputEditText,
+        val presetButton: MaterialButton,
+        val secondaryLabel: TextView,
+        val secondaryValue: TextView,
+        val saveButton: MaterialButton
+    )
 
     companion object {
         const val RESULT_KEY = "text_input_result"
