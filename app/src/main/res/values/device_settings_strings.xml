@@ -11,11 +11,13 @@
 
     <string name="device_settings_software_section">Software</string>
     <string name="device_settings_firmware_version_label">Installed firmware version</string>
-    <string name="device_settings_check_updates_action">Check for updates</string>
+    <string name="device_settings_update_card_title">Software update</string>
+    <string name="device_settings_update_card_summary">Check availability and follow installation progress.</string>
+    <string name="device_settings_check_updates_action">Check now</string>
     <string name="device_settings_checking_updates">Checking for updates…</string>
-    <string name="device_settings_firmware_up_to_date">Device software is up to date</string>
-    <string name="device_settings_update_available_status">Version %1$s is available</string>
-    <string name="device_settings_view_update_action">View update</string>
+    <string name="device_settings_firmware_up_to_date">Up to date</string>
+    <string name="device_settings_update_available_status">Version %1$s is ready to install</string>
+    <string name="device_settings_view_update_action">Review update</string>
     <string name="device_settings_update_in_progress_status">Installing %1$s · %2$d%%</string>
     <string name="device_settings_retry_update_check_action">Try again</string>
     <string name="device_settings_update_unsupported_status">This device does not support software updates.</string>
@@ -59,7 +61,7 @@
     <string name="device_settings_firmware_update_title">Software Update</string>
     <string name="device_settings_update_device_fallback">AquaLight device</string>
     <string name="device_settings_update_status_checking">Checking for updates</string>
-    <string name="device_settings_update_status_available">Update available</string>
+    <string name="device_settings_update_status_available">Update ready</string>
     <string name="device_settings_update_status_required">Required update</string>
     <string name="device_settings_update_status_preparing">Preparing update</string>
     <string name="device_settings_update_status_installing">Update in progress</string>
@@ -96,7 +98,7 @@
     <string name="device_settings_update_progress_bytes">%1$s of %2$s</string>
     <string name="device_settings_update_progress_waiting">Waiting for device progress</string>
 
-    <string name="device_settings_install_update_action">Install update</string>
+    <string name="device_settings_install_update_action">Install now</string>
     <string name="device_settings_retry_update_action">Try again</string>
     <string name="device_settings_update_done_action">Done</string>
     <string name="device_settings_update_close_action">Close</string>
@@ -105,8 +107,8 @@
     <string name="device_settings_update_release_change_description">Release change: %1$s</string>
     <string name="device_settings_update_release_warning_description">Update warning: %1$s</string>
 
-    <string name="device_settings_update_notification_available_title">Software update available</string>
-    <string name="device_settings_update_notification_available_message">%1$s can be updated to %2$s.</string>
+    <string name="device_settings_update_notification_available_title">Software update ready</string>
+    <string name="device_settings_update_notification_available_message">%1$s is ready to update to %2$s.</string>
     <string name="device_settings_update_notification_progress_title">Updating %1$s</string>
     <string name="device_settings_update_notification_progress_message">%1$s · %2$d%%</string>
     <string name="device_settings_update_notification_restart_message">Restarting and verifying version %1$s…</string>
