@@ -86,15 +86,15 @@
                     tools:text="60 °C" />
             </LinearLayout>
 
-            <TextView
-                android:id="@+id/tvEditTemperatureProtectionThresholdAction"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
+            <ImageView
+                android:id="@+id/ivTemperatureProtectionThresholdArrow"
+                android:layout_width="@dimen/aqua_size_24"
+                android:layout_height="@dimen/aqua_size_24"
                 android:layout_marginStart="@dimen/aqua_size_12"
-                android:textColor="@color/aqua_content_secondary"
-                android:textSize="@dimen/aqua_text_size_caption_plus"
-                android:textStyle="bold"
-                tools:text="Edit" />
+                android:contentDescription="@null"
+                android:importantForAccessibility="no"
+                android:src="@drawable/ic_arrow_right"
+                app:tint="@color/aqua_content_secondary" />
         </LinearLayout>
     </LinearLayout>
 </com.google.android.material.card.MaterialCardView>
