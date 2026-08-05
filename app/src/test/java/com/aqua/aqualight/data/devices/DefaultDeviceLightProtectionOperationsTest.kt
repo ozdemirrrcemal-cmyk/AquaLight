@@ -1,6 +1,7 @@
 package com.aqua.aqualight.data.devices
 
 import com.aqua.aqualight.application.devices.DeviceLightProtectionThresholdPolicy
+import com.aqua.aqualight.data.devices.model.DeviceUid
 import com.aqua.aqualight.data.devices.runtime.modules.cooling.DeviceCoolingRuntimeState
 import com.aqua.aqualight.data.devices.runtime.modules.cooling.DeviceCoolingTemperatureSnapshot
 import com.aqua.aqualight.data.devices.runtime.modules.light.DeviceLightTemperatureProtectionRuntimeCapabilities
@@ -81,6 +82,30 @@ class DefaultDeviceLightProtectionOperationsTest {
         assertNull(snapshot.currentTemperatureCelsius)
         assertNull(snapshot.thresholdCelsius)
         assertNull(snapshot.thresholdPolicy)
+    }
+
+    @Test
+    fun `preserves validated capability through transient catalog snapshots`() {
+        val resolver = DeviceLightProtectionAvailabilityResolver()
+        val uid = DeviceUid("light-settings-device")
+
+        assertFalse(resolver.resolve(uid, declaredAvailability = null))
+        assertTrue(resolver.resolve(uid, declaredAvailability = true))
+        assertTrue(resolver.resolve(uid, declaredAvailability = null))
+        assertFalse(resolver.resolve(uid, declaredAvailability = false))
+        assertFalse(resolver.resolve(uid, declaredAvailability = null))
+    }
+
+    @Test
+    fun `keeps resolved capabilities isolated by device identity`() {
+        val resolver = DeviceLightProtectionAvailabilityResolver()
+        val lightUid = DeviceUid("light-device")
+        val dosingUid = DeviceUid("dosing-device")
+
+        assertTrue(resolver.resolve(lightUid, declaredAvailability = true))
+        assertFalse(resolver.resolve(dosingUid, declaredAvailability = false))
+        assertTrue(resolver.resolve(lightUid, declaredAvailability = null))
+        assertFalse(resolver.resolve(dosingUid, declaredAvailability = null))
     }
 
     @Test
