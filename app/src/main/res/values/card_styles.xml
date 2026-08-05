@@ -54,6 +54,8 @@
         <item name="strokeWidth">@dimen/aqua_size_1</item>
     </style>
 
+    <style name="Widget.Aqua.Card.Device.Status" parent="Widget.Aqua.Card.Metric" />
+
     <style name="Widget.Aqua.Card.Form" parent="Widget.Aqua.Card">
         <item name="cardBackgroundColor">@color/aqua_card_form_surface</item>
         <item name="cardCornerRadius">@dimen/aqua_size_22</item>

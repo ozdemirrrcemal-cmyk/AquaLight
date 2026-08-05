@@ -84,6 +84,15 @@
         <item name="android:insetBottom">@dimen/aqua_size_0</item>
     </style>
 
+    <style name="Widget.Aqua.Button.StatusAction.Compact" parent="Widget.Aqua.Button.Secondary">
+        <item name="android:minWidth">@dimen/aqua_size_0</item>
+        <item name="android:minHeight">@dimen/aqua_size_40</item>
+        <item name="android:paddingStart">@dimen/aqua_size_12</item>
+        <item name="android:paddingEnd">@dimen/aqua_size_12</item>
+        <item name="android:textSize">@dimen/aqua_text_size_caption_plus</item>
+        <item name="cornerRadius">@dimen/aqua_size_17</item>
+    </style>
+
     <style name="Widget.Aqua.Button.Auth.Primary" parent="Widget.Aqua.Button">
         <item name="backgroundTint">@color/aqua_button_auth_primary_container</item>
         <item name="android:textColor">@color/aqua_button_auth_primary_content</item>

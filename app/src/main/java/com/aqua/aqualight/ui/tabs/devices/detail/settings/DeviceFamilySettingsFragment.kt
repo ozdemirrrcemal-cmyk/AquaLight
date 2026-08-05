@@ -1,12 +1,17 @@
 package com.aqua.aqualight.ui.tabs.devices.detail.settings
 
+import android.content.res.ColorStateList
 import android.os.Bundle
 import android.view.View
 import android.view.ViewGroup
+import androidx.annotation.ColorRes
+import androidx.annotation.DrawableRes
 import androidx.annotation.StringRes
+import androidx.core.content.ContextCompat
 import androidx.core.view.isInvisible
 import androidx.core.view.isVisible
 import androidx.core.view.updateLayoutParams
+import androidx.core.widget.ImageViewCompat
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.viewModels
 import androidx.lifecycle.Lifecycle
@@ -103,7 +108,6 @@ abstract class DeviceFamilySettingsFragment : Fragment(R.layout.fragment_device_
         binding.tvFirmwareVersionLabel.setText(
             R.string.device_settings_firmware_version_label
         )
-        binding.btnCheckForUpdates.setText(R.string.device_settings_check_updates_action)
     }
 
     private fun setupDeviceNameResult() {
@@ -155,19 +159,27 @@ abstract class DeviceFamilySettingsFragment : Fragment(R.layout.fragment_device_
         binding.deviceNameRow.setOnClickListener {
             openDeviceNameEditor()
         }
-        binding.btnCheckForUpdates.setOnClickListener {
-            when (val updateState = latestState.updateActionState) {
-                is DeviceSettingsUpdateActionState.UpdateAvailable,
-                is DeviceSettingsUpdateActionState.UpdateInProgress ->
-                    openFirmwareUpdateScreen()
-                DeviceSettingsUpdateActionState.Checking -> Unit
-                DeviceSettingsUpdateActionState.Idle,
-                DeviceSettingsUpdateActionState.UpToDate,
-                DeviceSettingsUpdateActionState.Unsupported ->
+        binding.btnFirmwareStatusAction.setOnClickListener {
+            handleFirmwareUpdateAction()
+        }
+        binding.btnFirmwarePrimaryAction.setOnClickListener {
+            handleFirmwareUpdateAction()
+        }
+    }
+
+    private fun handleFirmwareUpdateAction() {
+        when (val updateState = latestState.updateActionState) {
+            is DeviceSettingsUpdateActionState.UpdateAvailable,
+            is DeviceSettingsUpdateActionState.UpdateInProgress -> openFirmwareUpdateScreen()
+            DeviceSettingsUpdateActionState.Checking,
+            DeviceSettingsUpdateActionState.Unsupported -> Unit
+            DeviceSettingsUpdateActionState.Idle,
+            DeviceSettingsUpdateActionState.UpToDate -> viewModel.checkForUpdates()
+            is DeviceSettingsUpdateActionState.Failed -> {
+                if (updateState.failure.recoverable) {
                     viewModel.checkForUpdates()
-                is DeviceSettingsUpdateActionState.Failed -> {
-                    if (updateState.failure.recoverable) viewModel.checkForUpdates()
-                    else openFirmwareUpdateScreen()
+                } else {
+                    openFirmwareUpdateScreen()
                 }
             }
         }
@@ -306,72 +318,123 @@ abstract class DeviceFamilySettingsFragment : Fragment(R.layout.fragment_device_
     private fun renderUpdateAction(state: DeviceSettingsUpdateActionState) {
         val presentation = state.toFirmwareActionPresentation()
 
-        binding.progressCheckForUpdates.isVisible = presentation.showProgress
-        binding.btnCheckForUpdates.apply {
-            isEnabled = presentation.enabled
-            text = if (presentation.showProgress) "" else presentation.buttonText
-            contentDescription = presentation.buttonText
+        binding.progressFirmwareUpdateStatus.apply {
+            isVisible = presentation.showProgress
+            contentDescription = presentation.title
         }
-        binding.tvFirmwareUpdateStatus.apply {
-            isVisible = !presentation.statusText.isNullOrBlank()
-            text = presentation.statusText
+        binding.ivFirmwareUpdateStatus.apply {
+            isVisible = !presentation.showProgress
+            setImageResource(presentation.iconRes)
+            ImageViewCompat.setImageTintList(
+                this,
+                ColorStateList.valueOf(
+                    ContextCompat.getColor(requireContext(), presentation.iconColorRes)
+                )
+            )
+        }
+        binding.tvFirmwareUpdateStatusTitle.text = presentation.title
+        binding.tvFirmwareUpdateStatusDetail.text = presentation.detail
+        binding.btnFirmwareStatusAction.apply {
+            isVisible = presentation.inlineActionText != null
+            isEnabled = presentation.inlineActionText != null
+            text = presentation.inlineActionText.orEmpty()
+            contentDescription = presentation.inlineActionText.orEmpty()
+        }
+        binding.btnFirmwarePrimaryAction.apply {
+            isVisible = presentation.primaryActionText != null
+            isEnabled = presentation.primaryActionText != null
+            text = presentation.primaryActionText.orEmpty()
+            contentDescription = presentation.primaryActionText.orEmpty()
         }
     }
 
     private fun DeviceSettingsUpdateActionState.toFirmwareActionPresentation():
         FirmwareActionPresentation = when (this) {
         DeviceSettingsUpdateActionState.Idle -> FirmwareActionPresentation(
-            buttonText = getString(R.string.device_settings_check_updates_action),
-            enabled = true
+            title = getString(R.string.device_settings_firmware_status_idle_title),
+            detail = getString(R.string.device_settings_firmware_status_idle_detail),
+            iconRes = R.drawable.ic_info,
+            iconColorRes = R.color.aqua_accent_primary,
+            inlineActionText = getString(
+                R.string.device_settings_firmware_check_now_action
+            )
         )
         DeviceSettingsUpdateActionState.Checking -> FirmwareActionPresentation(
-            buttonText = getString(R.string.device_settings_checking_updates),
-            enabled = false,
+            title = getString(R.string.device_settings_firmware_status_checking_title),
+            detail = getString(R.string.device_settings_update_phase_checking),
+            iconRes = R.drawable.ic_info,
+            iconColorRes = R.color.aqua_accent_primary,
             showProgress = true
         )
         DeviceSettingsUpdateActionState.UpToDate -> FirmwareActionPresentation(
-            buttonText = getString(R.string.device_settings_firmware_up_to_date),
-            enabled = false
+            title = getString(R.string.device_settings_update_status_up_to_date),
+            detail = getString(R.string.device_settings_update_phase_up_to_date),
+            iconRes = R.drawable.ic_check_24,
+            iconColorRes = R.color.aqua_status_success,
+            inlineActionText = getString(
+                R.string.device_settings_firmware_check_again_action
+            )
         )
         is DeviceSettingsUpdateActionState.UpdateAvailable -> FirmwareActionPresentation(
-            buttonText = getString(R.string.device_settings_view_update_action),
-            statusText = getString(
-                R.string.device_settings_update_available_status,
+            title = getString(R.string.device_settings_firmware_status_available_title),
+            detail = getString(
+                R.string.device_settings_firmware_status_available_detail,
                 version
             ),
-            enabled = true
+            iconRes = R.drawable.ic_info,
+            iconColorRes = R.color.aqua_accent_primary,
+            primaryActionText = getString(
+                R.string.device_settings_firmware_view_update_action
+            )
         )
         is DeviceSettingsUpdateActionState.UpdateInProgress -> FirmwareActionPresentation(
-            buttonText = getString(R.string.device_settings_view_update_action),
-            statusText = getString(
-                R.string.device_settings_update_in_progress_status,
+            title = getString(R.string.device_settings_update_status_installing),
+            detail = getString(
+                R.string.device_settings_firmware_status_in_progress_detail,
                 version,
                 progressPermille.coerceIn(
                     0,
                     COMPLETE_PROGRESS_PERMILLE
                 ) / PERMILLE_PER_PERCENT
             ),
-            enabled = true
+            iconRes = R.drawable.ic_info,
+            iconColorRes = R.color.aqua_accent_primary,
+            showProgress = true,
+            primaryActionText = getString(
+                R.string.device_settings_firmware_view_progress_action
+            )
         )
-        is DeviceSettingsUpdateActionState.Failed -> FirmwareActionPresentation(
-            buttonText = getString(
-                if (failure.recoverable) {
-                    R.string.device_settings_retry_update_check_action
-                } else {
-                    R.string.device_settings_view_update_action
-                }
-            ),
-            statusText = getString(
-                DeviceRootPresentationMapper.otaFailureMessageRes(failure.reason)
-            ),
-            enabled = true
-        )
+        is DeviceSettingsUpdateActionState.Failed -> failurePresentation()
         DeviceSettingsUpdateActionState.Unsupported -> FirmwareActionPresentation(
-            buttonText = getString(R.string.device_settings_check_updates_action),
-            statusText = getString(R.string.device_settings_update_unsupported_status),
-            enabled = false
+            title = getString(R.string.device_settings_firmware_status_unsupported_title),
+            detail = getString(R.string.device_settings_firmware_status_unsupported_detail),
+            iconRes = R.drawable.ic_warning,
+            iconColorRes = R.color.aqua_content_warning
         )
     }
+
+    private fun DeviceSettingsUpdateActionState.Failed.failurePresentation():
+        FirmwareActionPresentation = FirmwareActionPresentation(
+        title = getString(
+            if (failure.recoverable) {
+                R.string.device_settings_firmware_status_check_failed_title
+            } else {
+                R.string.device_settings_firmware_status_attention_title
+            }
+        ),
+        detail = getString(
+            DeviceRootPresentationMapper.otaFailureMessageRes(failure.reason)
+        ),
+        iconRes = R.drawable.ic_error,
+        iconColorRes = R.color.aqua_status_danger,
+        inlineActionText = getString(
+            if (failure.recoverable) {
+                R.string.device_settings_retry_update_action
+            } else {
+                R.string.device_settings_firmware_view_details_action
+            }
+        )
+    )
 
     private fun renderLightInventory(
         show: Boolean,
@@ -505,11 +568,20 @@ abstract class DeviceFamilySettingsFragment : Fragment(R.layout.fragment_device_
     }
 
     private data class FirmwareActionPresentation(
-        val buttonText: CharSequence,
-        val statusText: CharSequence? = null,
-        val enabled: Boolean,
-        val showProgress: Boolean = false
-    )
+        val title: CharSequence,
+        val detail: CharSequence,
+        @DrawableRes val iconRes: Int,
+        @ColorRes val iconColorRes: Int,
+        val showProgress: Boolean = false,
+        val inlineActionText: CharSequence? = null,
+        val primaryActionText: CharSequence? = null
+    ) {
+        init {
+            require(inlineActionText == null || primaryActionText == null) {
+                "Firmware status must expose at most one action."
+            }
+        }
+    }
 
     private data class LightTemperatureActionPresentation(
         val enabled: Boolean,
