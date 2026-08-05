@@ -15,6 +15,7 @@ import com.aqua.aqualight.data.devices.runtime.modules.DeviceRuntimeModuleProvid
 import com.aqua.aqualight.data.devices.runtime.modules.cooling.DeviceCoolingRuntimeState
 import com.aqua.aqualight.data.devices.runtime.modules.light.DeviceLightTemperatureProtectionSetPayload
 import com.aqua.aqualight.data.devices.runtime.modules.light.DeviceLightTemperatureProtectionStatus
+import java.util.concurrent.ConcurrentHashMap
 import kotlin.math.abs
 import kotlin.math.roundToInt
 import kotlinx.coroutines.delay
@@ -26,7 +27,9 @@ import kotlinx.coroutines.flow.map
 
 /** Owner-scoped adapter that keeps catalog, runtime and firmware contracts out of presentation. */
 internal class DefaultDeviceLightProtectionOperations(
-    private val devicesRepository: DevicesRepository
+    private val devicesRepository: DevicesRepository,
+    private val availabilityResolver: DeviceLightProtectionAvailabilityResolver =
+        DeviceLightProtectionAvailabilityResolver()
 ) : DeviceLightProtectionOperations {
 
     override fun observeLightProtection(
@@ -38,16 +41,22 @@ internal class DefaultDeviceLightProtectionOperations(
             uid == null -> flowOf(DeviceLightProtectionSnapshot())
             modules == null -> devicesRepository.observeDevice(uid).map { device ->
                 DeviceLightProtectionSnapshot(
-                    available = device.supportsLightProtectionSettings()
+                    available = availabilityResolver.resolve(
+                        deviceUid = uid,
+                        declaredAvailability = device.lightProtectionAvailabilityOrNull()
+                    )
                 )
-            }
+            }.distinctUntilChanged()
             else -> combine(
                 devicesRepository.observeDevice(uid),
                 modules.cooling.states,
                 modules.lightTemperatureProtection.states
             ) { device, coolingStates, protectionStates ->
                 toDeviceLightProtectionSnapshot(
-                    available = device.supportsLightProtectionSettings(),
+                    available = availabilityResolver.resolve(
+                        deviceUid = uid,
+                        declaredAvailability = device.lightProtectionAvailabilityOrNull()
+                    ),
                     coolingState = coolingStates[uid],
                     protectionStatus = protectionStates[uid]
                 )
@@ -61,13 +70,17 @@ internal class DefaultDeviceLightProtectionOperations(
         val uid = deviceUid.toDeviceUidOrNull()
         val modules = devicesRepository.runtimeModules()
         val device = uid?.let(devicesRepository::currentDevice)
-        return if (uid == null || modules == null) {
-            DeviceLightProtectionSnapshot(
-                available = device.supportsLightProtectionSettings()
+        val available = uid?.let { resolvedUid ->
+            availabilityResolver.resolve(
+                deviceUid = resolvedUid,
+                declaredAvailability = device.lightProtectionAvailabilityOrNull()
             )
+        } == true
+        return if (uid == null || modules == null) {
+            DeviceLightProtectionSnapshot(available = available)
         } else {
             toDeviceLightProtectionSnapshot(
-                available = device.supportsLightProtectionSettings(),
+                available = available,
                 coolingState = modules.cooling.states.value[uid],
                 protectionStatus = modules.lightTemperatureProtection.currentStatus(uid)
             )
@@ -77,7 +90,13 @@ internal class DefaultDeviceLightProtectionOperations(
     override suspend fun refreshLightProtection(deviceUid: String): Result<Unit> = runCatching {
         val uid = requireRegisteredDeviceUid(deviceUid)
         val modules = requireRuntimeModules()
-        check(devicesRepository.currentDevice(uid).supportsLightProtectionSettings()) {
+        check(
+            availabilityResolver.resolve(
+                deviceUid = uid,
+                declaredAvailability = devicesRepository.currentDevice(uid)
+                    .lightProtectionAvailabilityOrNull()
+            )
+        ) {
             "Temperature protection is not available for this device."
         }
         devicesRepository.connectRuntime(uid).getOrThrow()
@@ -100,7 +119,13 @@ internal class DefaultDeviceLightProtectionOperations(
     ): Result<Unit> = runCatching {
         val uid = requireRegisteredDeviceUid(deviceUid)
         val modules = requireRuntimeModules()
-        check(devicesRepository.currentDevice(uid).supportsLightProtectionSettings()) {
+        check(
+            availabilityResolver.resolve(
+                deviceUid = uid,
+                declaredAvailability = devicesRepository.currentDevice(uid)
+                    .lightProtectionAvailabilityOrNull()
+            )
+        ) {
             "Temperature protection is not available for this device."
         }
         val currentStatus = checkNotNull(
@@ -159,6 +184,27 @@ internal class DefaultDeviceLightProtectionOperations(
     }
 }
 
+/**
+ * Keeps a catalog-validated capability stable across transient discovery snapshots.
+ *
+ * A null declaration means that the current snapshot cannot be validated, not that the product
+ * lost a hardware capability. A later valid product declaration remains authoritative and can
+ * still replace the cached value for the same device identity.
+ */
+internal class DeviceLightProtectionAvailabilityResolver {
+    private val lastResolvedAvailability = ConcurrentHashMap<DeviceUid, Boolean>()
+
+    fun resolve(
+        deviceUid: DeviceUid,
+        declaredAvailability: Boolean?
+    ): Boolean {
+        if (declaredAvailability != null) {
+            lastResolvedAvailability[deviceUid] = declaredAvailability
+        }
+        return declaredAvailability ?: lastResolvedAvailability[deviceUid] ?: false
+    }
+}
+
 internal fun toDeviceLightProtectionSnapshot(
     available: Boolean,
     coolingState: DeviceCoolingRuntimeState?,
@@ -181,11 +227,10 @@ internal fun toDeviceLightProtectionSnapshot(
     )
 }
 
-private fun DeviceSnapshot?.supportsLightProtectionSettings(): Boolean {
+private fun DeviceSnapshot?.lightProtectionAvailabilityOrNull(): Boolean? {
     val validation = this?.let(AqlCommercialDeviceCatalog::validateSnapshot)
-    val product = (validation as? AqlCommercialCatalogValidation.Valid)?.product
-    return product != null &&
-        product.limits.temperatureSensorCount > 0 &&
+    val product = (validation as? AqlCommercialCatalogValidation.Valid)?.product ?: return null
+    return product.limits.temperatureSensorCount > 0 &&
         AqlDeviceFeatureKey.LIGHT_TEMPERATURE_PROTECTION in
         product.profile.supportedFeatures &&
         AqlDeviceScreenKey.LIGHT_TEMPERATURE_PROTECTION in
