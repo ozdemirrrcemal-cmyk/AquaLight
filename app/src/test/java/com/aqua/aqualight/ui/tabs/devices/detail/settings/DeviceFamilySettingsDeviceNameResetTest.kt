@@ -33,7 +33,7 @@ import org.junit.runner.Description
 class DeviceFamilySettingsDeviceNameResetTest {
 
     @get:Rule
-    val mainDispatcherRule = DeviceNameResetMainDispatcherRule()
+    val mainDispatcherRule: TestWatcher = DeviceNameResetMainDispatcherRule()
 
     @Test
     fun `resets custom name to the firmware product display name`() {
@@ -165,7 +165,7 @@ class DeviceFamilySettingsDeviceNameResetTest {
             DeviceFirmwareCommandResult(sent = true)
     }
 
-    class DeviceNameResetMainDispatcherRule(
+    private class DeviceNameResetMainDispatcherRule(
         private val dispatcher: TestDispatcher = UnconfinedTestDispatcher()
     ) : TestWatcher() {
         override fun starting(description: Description) {
