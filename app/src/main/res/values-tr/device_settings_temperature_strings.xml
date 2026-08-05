@@ -6,6 +6,5 @@
     <string name="device_settings_light_temperature_decrease_description">Sıcaklığı azalt</string>
     <string name="device_settings_light_temperature_increase_description">Sıcaklığı artır</string>
     <string name="device_settings_light_temperature_loading_value">Yükleniyor…</string>
-    <string name="device_settings_light_retry_temperature_protection_action">Yeniden dene</string>
     <string name="device_settings_light_retry_temperature_protection_description">Sıcaklık korumasını yeniden yükle</string>
 </resources>

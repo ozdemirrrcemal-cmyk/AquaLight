@@ -4,7 +4,6 @@
 
     <string name="device_settings_device_information_section">Device information</string>
     <string name="device_settings_device_name_label">Device name</string>
-    <string name="device_settings_edit_action">Edit</string>
     <string name="device_settings_edit_device_name_description">Edit device name</string>
     <string name="device_settings_serial_number_label">Serial number</string>
     <string name="device_settings_hardware_revision_label">Hardware revision</string>
@@ -78,8 +77,6 @@
     <string name="device_settings_update_target_version_label">Available version</string>
     <string name="device_settings_update_release_notes_heading">Release notes</string>
     <string name="device_settings_update_changes_heading">What’s new</string>
-    <string name="device_settings_update_warnings_heading">Before you update</string>
-    <string name="device_settings_update_release_notes_fallback">This release includes reliability, compatibility and security improvements.</string>
     <string name="device_settings_update_power_warning">Keep the device powered and connected until the update is complete.</string>
 
     <string name="device_settings_update_phase_checking">Verifying the latest signed release…</string>
@@ -100,7 +97,6 @@
     <string name="device_settings_update_progress_bytes">%1$s of %2$s</string>
     <string name="device_settings_update_progress_waiting">Waiting for device progress</string>
 
-    <string name="device_settings_install_update_action">Install update</string>
     <string name="device_settings_retry_update_action">Try again</string>
     <string name="device_settings_update_done_action">Done</string>
     <string name="device_settings_update_close_action">Close</string>

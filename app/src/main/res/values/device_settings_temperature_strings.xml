@@ -6,6 +6,5 @@
     <string name="device_settings_light_temperature_decrease_description">Decrease temperature</string>
     <string name="device_settings_light_temperature_increase_description">Increase temperature</string>
     <string name="device_settings_light_temperature_loading_value">Loading…</string>
-    <string name="device_settings_light_retry_temperature_protection_action">Try again</string>
     <string name="device_settings_light_retry_temperature_protection_description">Retry loading temperature protection</string>
 </resources>
