@@ -93,7 +93,6 @@ abstract class DeviceFamilySettingsFragment : Fragment(R.layout.fragment_device_
             R.string.device_settings_device_information_section
         )
         binding.tvDeviceNameLabel.setText(R.string.device_settings_device_name_label)
-        binding.tvEditDeviceNameAction.setText(R.string.device_settings_edit_action)
         binding.deviceNameRow.contentDescription = getString(
             R.string.device_settings_edit_device_name_description
         )
@@ -269,13 +268,7 @@ abstract class DeviceFamilySettingsFragment : Fragment(R.layout.fragment_device_
 
         binding.tvDeviceNameValue.text = state.deviceName.ifBlank { unavailable }
         binding.deviceNameRow.isEnabled = !state.deviceNameSaving
-        binding.tvEditDeviceNameAction.setText(
-            if (state.deviceNameSaving) {
-                R.string.device_settings_saving_action
-            } else {
-                R.string.device_settings_edit_action
-            }
-        )
+        binding.ivDeviceNameArrow.isInvisible = state.deviceNameSaving
         binding.tvSerialNumberValue.text = state.serialNumber.ifBlank { unavailable }
         binding.tvHardwareRevisionValue.apply {
             text = state.hardwareRevision.ifBlank { unavailable }
@@ -452,10 +445,7 @@ abstract class DeviceFamilySettingsFragment : Fragment(R.layout.fragment_device_
             isEnabled = presentation.enabled
             contentDescription = getString(presentation.contentDescriptionRes)
         }
-        section.tvEditTemperatureProtectionThresholdAction.apply {
-            setText(presentation.actionTextRes)
-            isEnabled = presentation.enabled
-        }
+        section.ivTemperatureProtectionThresholdArrow.isInvisible = !presentation.enabled
     }
 
     private fun lightTemperatureValueText(
@@ -473,11 +463,6 @@ abstract class DeviceFamilySettingsFragment : Fragment(R.layout.fragment_device_
         val retryEnabled = loadState == DeviceLightProtectionLoadState.FAILED &&
             !updateInProgress
         val editorEnabled = editor != null && !updateInProgress
-        val actionTextRes = when {
-            updateInProgress -> R.string.device_settings_saving_action
-            retryEnabled -> R.string.device_settings_light_retry_temperature_protection_action
-            else -> R.string.device_settings_edit_action
-        }
         val contentDescriptionRes = if (retryEnabled) {
             R.string.device_settings_light_retry_temperature_protection_description
         } else {
@@ -485,7 +470,6 @@ abstract class DeviceFamilySettingsFragment : Fragment(R.layout.fragment_device_
         }
         return LightTemperatureActionPresentation(
             enabled = retryEnabled || editorEnabled,
-            actionTextRes = actionTextRes,
             contentDescriptionRes = contentDescriptionRes
         )
     }
@@ -540,7 +524,6 @@ abstract class DeviceFamilySettingsFragment : Fragment(R.layout.fragment_device_
 
     private data class LightTemperatureActionPresentation(
         val enabled: Boolean,
-        @StringRes val actionTextRes: Int,
         @StringRes val contentDescriptionRes: Int
     )
 
