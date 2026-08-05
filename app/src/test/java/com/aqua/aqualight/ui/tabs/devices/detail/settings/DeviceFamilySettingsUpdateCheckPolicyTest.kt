@@ -53,5 +53,11 @@ class DeviceFamilySettingsUpdateCheckPolicyTest {
                 nowMillis = checkedAt
             )
         )
+        assertFalse(
+            isDeviceSettingsUpdateCheckDebounced(
+                lastCheckedAtMillis = checkedAt,
+                nowMillis = checkedAt - 1L
+            )
+        )
     }
 }
