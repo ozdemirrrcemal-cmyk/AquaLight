@@ -118,7 +118,7 @@ private val OTA_FAILURE_MESSAGE_RESOURCES = mapOf(
     DeviceOtaFailureReason.DEVICE_BUSY to
         R.string.device_settings_update_error_device_busy,
     DeviceOtaFailureReason.UNSUPPORTED to
-        R.string.device_settings_update_unsupported_status,
+        R.string.device_settings_firmware_status_unsupported_detail,
     DeviceOtaFailureReason.RELEASE_UNAVAILABLE to
         R.string.device_settings_update_error_release_unavailable,
     DeviceOtaFailureReason.RELEASE_ACCESS_DENIED to
