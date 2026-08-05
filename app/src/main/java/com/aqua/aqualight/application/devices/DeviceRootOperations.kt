@@ -42,7 +42,9 @@ data class DeviceRootSnapshot(
     val supportedFeatures: List<String> = emptyList(),
     val supportedScreens: List<String> = emptyList(),
     val menuFeatures: Set<DeviceRootMenuFeature> = emptySet(),
-    val allowedRoutes: Set<DeviceRootRoute> = emptySet()
+    val allowedRoutes: Set<DeviceRootRoute> = emptySet(),
+    val productDisplayName: String = "",
+    val hasCustomName: Boolean = false
 )
 
 enum class DeviceRootCapability {

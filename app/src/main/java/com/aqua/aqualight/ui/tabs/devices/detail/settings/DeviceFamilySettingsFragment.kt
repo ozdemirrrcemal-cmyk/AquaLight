@@ -121,9 +121,12 @@ abstract class DeviceFamilySettingsFragment : Fragment(R.layout.fragment_device_
             ) {
                 return@setFragmentResultListener
             }
-            viewModel.updateDeviceName(
-                result.getString(TextInputBottomSheet.RESULT_VALUE).orEmpty()
-            )
+            val customName = result.getString(TextInputBottomSheet.RESULT_VALUE).orEmpty()
+            if (customName.isBlank()) {
+                viewModel.resetDeviceNameToDefault()
+            } else {
+                viewModel.updateDeviceName(customName)
+            }
         }
     }
 
@@ -172,6 +175,8 @@ abstract class DeviceFamilySettingsFragment : Fragment(R.layout.fragment_device_
 
     private fun openDeviceNameEditor() {
         if (latestState.deviceNameSaving) return
+        val canUseDefaultName = latestState.hasCustomDeviceName &&
+            latestState.productDisplayName.isNotBlank()
         TextInputBottomSheet.show(
             fragmentManager = childFragmentManager,
             title = getString(R.string.device_settings_change_name_title),
@@ -186,7 +191,14 @@ abstract class DeviceFamilySettingsFragment : Fragment(R.layout.fragment_device_
             payloadId = deviceUid,
             maxLength = DEVICE_CUSTOM_NAME_MAX_LENGTH,
             disableSaveWhenUnchanged = true,
-            requestFocus = true
+            requestFocus = true,
+            presetActionText = if (canUseDefaultName) {
+                getString(R.string.device_settings_use_default_name_action)
+            } else {
+                ""
+            },
+            presetDisplayValue = latestState.productDisplayName,
+            presetResultValue = ""
         )
     }
 

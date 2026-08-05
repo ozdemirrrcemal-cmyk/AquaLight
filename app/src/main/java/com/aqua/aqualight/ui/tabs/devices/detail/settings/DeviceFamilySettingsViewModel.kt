@@ -99,14 +99,54 @@ class DeviceFamilySettingsViewModel(
             deviceNameUpdateJob?.isActive != true
         if (!canStart) return
 
+        startDeviceNameUpdate(
+            deviceUid = deviceUid,
+            customName = normalized,
+            displayNameOnSuccess = normalized,
+            hasCustomNameOnSuccess = true
+        )
+    }
+
+    fun resetDeviceNameToDefault() {
+        val deviceUid = boundDeviceUid
+        val current = _uiState.value
+        val canStart = deviceUid.isNotBlank() &&
+            current.hasCustomDeviceName &&
+            current.productDisplayName.isNotBlank() &&
+            deviceNameUpdateJob?.isActive != true
+        if (!canStart) return
+
+        startDeviceNameUpdate(
+            deviceUid = deviceUid,
+            customName = "",
+            displayNameOnSuccess = current.productDisplayName,
+            hasCustomNameOnSuccess = false
+        )
+    }
+
+    private fun startDeviceNameUpdate(
+        deviceUid: String,
+        customName: String,
+        displayNameOnSuccess: String,
+        hasCustomNameOnSuccess: Boolean
+    ) {
         _uiState.update { state -> state.copy(deviceNameSaving = true) }
         deviceNameUpdateJob = viewModelScope.launch {
-            val result = settingsOperations.updateCustomName(deviceUid, normalized)
+            val result = settingsOperations.updateCustomName(deviceUid, customName)
             if (boundDeviceUid != deviceUid) return@launch
 
             _uiState.update { state ->
                 state.copy(
-                    deviceName = if (result.isSuccess) normalized else state.deviceName,
+                    deviceName = if (result.isSuccess) {
+                        displayNameOnSuccess
+                    } else {
+                        state.deviceName
+                    },
+                    hasCustomDeviceName = if (result.isSuccess) {
+                        hasCustomNameOnSuccess
+                    } else {
+                        state.hasCustomDeviceName
+                    },
                     deviceNameSaving = false
                 )
             }
@@ -326,8 +366,17 @@ class DeviceFamilySettingsViewModel(
         snapshot: DeviceRootSnapshot?
     ) {
         _uiState.update { current ->
+            val nameSnapshot = snapshot?.takeIf { it.productDisplayName.isNotBlank() }
             current.copy(
-                deviceName = current.deviceName.ifBlank { snapshot?.title.orEmpty() },
+                deviceName = when {
+                    nameSnapshot != null -> nameSnapshot.title
+                    current.deviceName.isNotBlank() -> current.deviceName
+                    else -> snapshot?.title.orEmpty()
+                },
+                productDisplayName = nameSnapshot?.productDisplayName
+                    ?: current.productDisplayName,
+                hasCustomDeviceName = nameSnapshot?.hasCustomName
+                    ?: current.hasCustomDeviceName,
                 serialNumber = current.serialNumber.ifBlank {
                     snapshot?.serialNumber?.ifBlank { deviceUid } ?: deviceUid
                 },
@@ -428,6 +477,8 @@ data class DeviceLightProtectionUiState(
 
 data class DeviceFamilySettingsUiState(
     val deviceName: String = "",
+    val productDisplayName: String = "",
+    val hasCustomDeviceName: Boolean = false,
     val serialNumber: String = "",
     val hardwareRevision: String = "",
     val firmwareVersion: String = "",
@@ -444,6 +495,8 @@ data class DeviceFamilySettingsUiState(
 internal fun DeviceRootSnapshot.toDeviceFamilySettingsUiState(): DeviceFamilySettingsUiState =
     DeviceFamilySettingsUiState(
         deviceName = title,
+        productDisplayName = productDisplayName,
+        hasCustomDeviceName = hasCustomName,
         serialNumber = serialNumber.ifBlank { deviceUid },
         hardwareRevision = hardwareRevision,
         firmwareVersion = firmwareLabel,

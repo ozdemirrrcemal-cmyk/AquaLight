@@ -21,6 +21,7 @@ class TextInputBottomSheet : BottomSheetDialogFragment(
 ) {
 
     private var resultSent = false
+    private var presetSelected = false
 
     @Suppress("LongMethod")
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
@@ -28,6 +29,7 @@ class TextInputBottomSheet : BottomSheetDialogFragment(
         val args = requireArguments()
         val inputLayout = view.findViewById<TextInputLayout>(R.id.textInputLayout)
         val input = view.findViewById<TextInputEditText>(R.id.etTextInputValue)
+        val presetButton = view.findViewById<MaterialButton>(R.id.btnTextInputPreset)
         val secondaryLabel = view.findViewById<android.widget.TextView>(
             R.id.tvTextInputSecondaryLabel
         )
@@ -37,13 +39,19 @@ class TextInputBottomSheet : BottomSheetDialogFragment(
         val initialValue = args.getString(ARG_INITIAL_VALUE).orEmpty()
         val required = args.getBoolean(ARG_REQUIRED)
         val disableSaveWhenUnchanged = args.getBoolean(ARG_DISABLE_SAVE_WHEN_UNCHANGED)
+        val presetActionText = args.getString(ARG_PRESET_ACTION_TEXT).orEmpty()
+        val presetDisplayValue = args.getString(ARG_PRESET_DISPLAY_VALUE).orEmpty()
+        val presetResultValue = args.getString(ARG_PRESET_RESULT_VALUE).orEmpty()
+        val showPreset = presetActionText.isNotBlank() && presetDisplayValue.isNotBlank()
+        presetSelected = savedInstanceState?.getBoolean(STATE_PRESET_SELECTED) == true && showPreset
+        var applyingPreset = false
 
         view.findViewById<android.widget.TextView>(R.id.tvTextInputTitle).text =
             args.getString(ARG_TITLE).orEmpty()
         view.findViewById<android.widget.TextView>(R.id.tvTextInputLabel).text =
             args.getString(ARG_LABEL).orEmpty()
         inputLayout.hint = args.getString(ARG_HINT).orEmpty()
-        input.setText(initialValue)
+        input.setText(if (presetSelected) presetDisplayValue else initialValue)
         input.setSelection(input.text?.length ?: 0)
         args.getInt(ARG_MAX_LENGTH)
             .takeIf { maxLength -> maxLength > 0 }
@@ -69,25 +77,52 @@ class TextInputBottomSheet : BottomSheetDialogFragment(
         val saveButton = view.findViewById<MaterialButton>(R.id.btnTextInputSave).apply {
             text = args.getString(ARG_SAVE_TEXT).orEmpty()
             setOnClickListener {
-                val value = input.text?.toString()?.trim().orEmpty()
-                if (required && value.isBlank()) {
+                val displayedValue = input.text?.toString()?.trim().orEmpty()
+                if (required && displayedValue.isBlank()) {
                     inputLayout.error = args.getString(ARG_REQUIRED_MESSAGE).orEmpty()
                     return@setOnClickListener
                 }
                 inputLayout.error = null
-                publish(RESULT_SAVED, value)
+                publish(
+                    RESULT_SAVED,
+                    resolveTextInputResultValue(
+                        typedValue = displayedValue,
+                        presetSelected = presetSelected,
+                        presetResultValue = presetResultValue
+                    )
+                )
                 dismiss()
             }
         }
 
         fun updateSaveEnabled() {
-            val value = input.text?.toString()?.trim().orEmpty()
-            val hasRequiredValue = !required || value.isNotBlank()
-            val hasChanged = !disableSaveWhenUnchanged || value != initialValue.trim()
+            val displayedValue = input.text?.toString()?.trim().orEmpty()
+            val hasRequiredValue = !required || displayedValue.isNotBlank()
+            val hasChanged = !disableSaveWhenUnchanged ||
+                presetSelected ||
+                displayedValue != initialValue.trim()
             saveButton.isEnabled = hasRequiredValue && hasChanged
         }
 
-        input.doAfterTextChanged {
+        presetButton.apply {
+            isVisible = showPreset
+            text = presetActionText
+            setOnClickListener {
+                presetSelected = true
+                applyingPreset = true
+                input.setText(presetDisplayValue)
+                input.setSelection(input.text?.length ?: 0)
+                applyingPreset = false
+                inputLayout.error = null
+                updateSaveEnabled()
+            }
+        }
+
+        input.doAfterTextChanged { editable ->
+            val displayedValue = editable?.toString()?.trim().orEmpty()
+            if (!applyingPreset && presetSelected && displayedValue != presetDisplayValue) {
+                presetSelected = false
+            }
             inputLayout.error = null
             updateSaveEnabled()
         }
@@ -102,6 +137,11 @@ class TextInputBottomSheet : BottomSheetDialogFragment(
                 )
             }
         }
+    }
+
+    override fun onSaveInstanceState(outState: Bundle) {
+        outState.putBoolean(STATE_PRESET_SELECTED, presetSelected)
+        super.onSaveInstanceState(outState)
     }
 
     override fun onCancel(dialog: DialogInterface) {
@@ -146,6 +186,10 @@ class TextInputBottomSheet : BottomSheetDialogFragment(
         private const val ARG_DISABLE_SAVE_WHEN_UNCHANGED =
             "arg_disable_save_when_unchanged"
         private const val ARG_REQUEST_FOCUS = "arg_request_focus"
+        private const val ARG_PRESET_ACTION_TEXT = "arg_preset_action_text"
+        private const val ARG_PRESET_DISPLAY_VALUE = "arg_preset_display_value"
+        private const val ARG_PRESET_RESULT_VALUE = "arg_preset_result_value"
+        private const val STATE_PRESET_SELECTED = "state_preset_selected"
         private const val TAG_PREFIX = "TextInputBottomSheet:"
 
         @Suppress("LongParameterList")
@@ -165,7 +209,10 @@ class TextInputBottomSheet : BottomSheetDialogFragment(
             payloadId: String = "",
             maxLength: Int = 0,
             disableSaveWhenUnchanged: Boolean = false,
-            requestFocus: Boolean = false
+            requestFocus: Boolean = false,
+            presetActionText: String = "",
+            presetDisplayValue: String = "",
+            presetResultValue: String = ""
         ) {
             val tag = TAG_PREFIX + requestKey
             if (fragmentManager.findFragmentByTag(tag) != null || fragmentManager.isStateSaved) return
@@ -185,9 +232,18 @@ class TextInputBottomSheet : BottomSheetDialogFragment(
                     ARG_PAYLOAD_ID to payloadId,
                     ARG_MAX_LENGTH to maxLength,
                     ARG_DISABLE_SAVE_WHEN_UNCHANGED to disableSaveWhenUnchanged,
-                    ARG_REQUEST_FOCUS to requestFocus
+                    ARG_REQUEST_FOCUS to requestFocus,
+                    ARG_PRESET_ACTION_TEXT to presetActionText,
+                    ARG_PRESET_DISPLAY_VALUE to presetDisplayValue,
+                    ARG_PRESET_RESULT_VALUE to presetResultValue
                 )
             }.show(fragmentManager, tag)
         }
     }
 }
+
+internal fun resolveTextInputResultValue(
+    typedValue: String,
+    presetSelected: Boolean,
+    presetResultValue: String
+): String = if (presetSelected) presetResultValue else typedValue.trim()
