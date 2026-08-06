@@ -1,3 +1,5 @@
+@file:Suppress("TooManyFunctions")
+
 package com.aqua.aqualight.platform.notifications
 
 import android.content.Context
@@ -6,6 +8,8 @@ import com.aqua.aqualight.application.notifications.NotificationDispatchResult
 import com.aqua.aqualight.application.notifications.NotificationDispatchUseCase
 import com.aqua.aqualight.data.devices.runtime.modules.firmware.DeviceFirmwareAvailabilityHint
 import com.aqua.aqualight.data.notifications.DeviceUpdateNotificationLedger
+import com.aqua.aqualight.data.user.UserDataScope
+import java.util.concurrent.CancellationException
 import java.util.concurrent.ConcurrentHashMap
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
@@ -23,6 +27,11 @@ internal interface DeviceFirmwareUpdateNotificationOperations {
     ): Boolean
 
     suspend fun clearAvailability(ownerUid: String, deviceUid: String)
+
+    suspend fun clearDeletedDevices(
+        ownerUid: String,
+        deviceUids: Set<String>
+    ): Set<String>
 
     suspend fun reconcileDevices(ownerUid: String, currentDeviceUids: Set<String>)
 
@@ -47,9 +56,10 @@ internal class AndroidDeviceFirmwareUpdateNotificationPublisher(
         deviceName: String
     ) {
         val owner = requireOwnerUid(ownerUid)
-        val notification = notificationFactory.fromOtaState(owner, state, deviceName) ?: return
-        withDeviceLock(owner, state.deviceUid) {
-            dispatchUseCase.dispatchDeviceUpdate(notification)
+        val notification = notificationFactory.fromOtaState(owner, state, deviceName)
+        when {
+            notification != null -> dispatchOtaState(owner, state, notification)
+            state.clearsAvailability() -> clearAvailability(owner, state.deviceUid)
         }
     }
 
@@ -67,11 +77,73 @@ internal class AndroidDeviceFirmwareUpdateNotificationPublisher(
             hint.deviceUid,
             hint.targetVersion
         )
-        val eligible = !operationActive && !alreadyAnnounced
-        if (eligible) {
-            dispatchAvailability(owner, hint)
-        } else {
+        if (operationActive || alreadyAnnounced) {
             false
+        } else {
+            dispatchAvailability(owner, hint)
+        }
+    }
+
+    override suspend fun clearAvailability(ownerUid: String, deviceUid: String) {
+        withDeviceLock(ownerUid, deviceUid) {
+            val owner = requireOwnerUid(ownerUid)
+            if (!renderer.isDeviceUpdateOperationNotificationActive(owner, deviceUid)) {
+                clearRemovedDeviceLocked(owner, deviceUid)
+            }
+        }
+    }
+
+    @Suppress("TooGenericExceptionCaught")
+    override suspend fun clearDeletedDevices(
+        ownerUid: String,
+        deviceUids: Set<String>
+    ): Set<String> {
+        val owner = requireOwnerUid(ownerUid)
+        val failed = linkedSetOf<String>()
+        deviceUids.map(String::trim)
+            .filter(String::isNotBlank)
+            .forEach { deviceUid ->
+                try {
+                    clearRemovedDevice(owner, deviceUid)
+                } catch (error: CancellationException) {
+                    throw error
+                } catch (error: Exception) {
+                    failed += deviceUid
+                }
+            }
+        return failed
+    }
+
+    override suspend fun reconcileDevices(
+        ownerUid: String,
+        currentDeviceUids: Set<String>
+    ) {
+        val owner = requireOwnerUid(ownerUid)
+        val current = currentDeviceUids.map(String::trim)
+            .filterTo(mutableSetOf(), String::isNotBlank)
+        val removedDeviceUids = ledger.trackedDeviceUids(owner) - current
+        removedDeviceUids.forEach { deviceUid ->
+            clearRemovedDevice(owner, deviceUid)
+        }
+    }
+
+    override suspend fun clearOwner(ownerUid: String) {
+        val owner = requireOwnerUid(ownerUid)
+        renderer.cancelOwner(owner)
+        ledger.clearOwner(owner)
+        deviceLocks.keys.removeAll { identity -> identity.ownerUid == owner }
+    }
+
+    private suspend fun dispatchOtaState(
+        ownerUid: String,
+        state: DeviceOtaState,
+        notification: com.aqua.aqualight.application.notifications.DeviceUpdateNotification
+    ) {
+        withDeviceLock(ownerUid, state.deviceUid) {
+            val result = dispatchUseCase.dispatchDeviceUpdate(notification)
+            if (result == NotificationDispatchResult.POSTED) {
+                ledger.trackDevice(ownerUid, state.deviceUid)
+            }
         }
     }
 
@@ -88,39 +160,15 @@ internal class AndroidDeviceFirmwareUpdateNotificationPublisher(
         return posted
     }
 
-    override suspend fun clearAvailability(ownerUid: String, deviceUid: String) {
-        withDeviceLock(ownerUid, deviceUid) {
-            val owner = requireOwnerUid(ownerUid)
-            if (renderer.isDeviceUpdateOperationNotificationActive(owner, deviceUid)) {
-                return@withDeviceLock
-            }
-            renderer.cancelDeviceUpdate(owner, deviceUid)
-            ledger.clearDevice(owner, deviceUid)
-        }
-    }
-
-    override suspend fun reconcileDevices(
-        ownerUid: String,
-        currentDeviceUids: Set<String>
-    ) {
-        val owner = requireOwnerUid(ownerUid)
-        val removedDeviceUids = ledger.trackedDeviceUids(owner) - currentDeviceUids
-        removedDeviceUids.forEach { deviceUid ->
-            clearRemovedDevice(owner, deviceUid)
-        }
-    }
-
-    override suspend fun clearOwner(ownerUid: String) {
-        val owner = requireOwnerUid(ownerUid)
-        renderer.cancelOwner(owner)
-        ledger.clearOwner(owner)
-    }
-
     private suspend fun clearRemovedDevice(ownerUid: String, deviceUid: String) {
         withDeviceLock(ownerUid, deviceUid) {
-            renderer.cancelDeviceUpdate(ownerUid, deviceUid)
-            ledger.clearDevice(ownerUid, deviceUid)
+            clearRemovedDeviceLocked(ownerUid, deviceUid)
         }
+    }
+
+    private suspend fun clearRemovedDeviceLocked(ownerUid: String, deviceUid: String) {
+        renderer.cancelDeviceUpdate(ownerUid, deviceUid)
+        ledger.clearDevice(ownerUid, deviceUid)
     }
 
     private suspend fun <T> withDeviceLock(
@@ -137,7 +185,7 @@ internal class AndroidDeviceFirmwareUpdateNotificationPublisher(
     }
 
     private fun requireOwnerUid(ownerUid: String): String {
-        return ownerUid.trim().also { normalized ->
+        return UserDataScope.normalizeOwnerUid(ownerUid).also { normalized ->
             require(normalized.isNotBlank()) { "ownerUid must not be blank" }
         }
     }
@@ -152,4 +200,11 @@ internal class AndroidDeviceFirmwareUpdateNotificationPublisher(
         val ownerUid: String,
         val deviceUid: String
     )
+}
+
+private fun DeviceOtaState.clearsAvailability(): Boolean = when (this) {
+    is DeviceOtaState.Idle,
+    is DeviceOtaState.Unsupported,
+    is DeviceOtaState.UpToDate -> true
+    else -> false
 }
