@@ -1,3 +1,5 @@
+@file:Suppress("LongParameterList")
+
 package com.aqua.aqualight.data.devices.update
 
 import android.content.Context
