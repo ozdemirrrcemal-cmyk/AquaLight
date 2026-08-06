@@ -3,6 +3,7 @@ package com.aqua.aqualight.composition
 import android.content.Context
 import com.aqua.aqualight.application.auth.AuthenticatedOwnerIdentity
 import com.aqua.aqualight.application.devices.DeviceFirmwareUpdateOperations
+import com.aqua.aqualight.application.devices.OwnerDevicesOperations
 import com.aqua.aqualight.application.devices.provisioning.ProvisioningDraftOperations
 import com.aqua.aqualight.application.devices.provisioning.ProvisioningDraftRequest
 import com.aqua.aqualight.application.devices.provisioning.ProvisioningDraftSession
@@ -13,26 +14,22 @@ import com.aqua.aqualight.data.auth.OwnerSessionCoordinator
 import com.aqua.aqualight.data.auth.OwnerSessionStateMachine
 import com.aqua.aqualight.data.care.CareTaskDataStoreManager
 import com.aqua.aqualight.data.devices.DefaultDeviceFirmwareUpdateOperations
+import com.aqua.aqualight.data.devices.DefaultOwnerDevicesOperations
 import com.aqua.aqualight.data.devices.provisioning.repository.DefaultProvisioningDraftOperations
 import com.aqua.aqualight.data.devices.provisioning.store.AqlProvisioningDraftStore
 import com.aqua.aqualight.data.devices.provisioning.store.AqlProvisioningQrSecretStore
+import com.aqua.aqualight.data.devices.remove.OwnerDeviceDataCleaner
 import com.aqua.aqualight.data.devices.repository.DevicesRepository
 import com.aqua.aqualight.data.devices.repository.DevicesRepositoryProvider
 import com.aqua.aqualight.data.user.UserDataScope
 import com.aqua.aqualight.platform.notifications.DeviceFirmwareUpdateNotificationOperations
 
-/**
- * Immutable dependency snapshot for one committed authenticated-owner session.
- *
- * This graph never opens runtime repositories. OwnerSessionCoordinator remains
- * the only authority allowed to create/start them. The resolver accepts only a
- * committed session whose two repository identities are already bound to the
- * same owner; pending transitions fail closed before any ViewModel is built.
- */
+/** Immutable dependency snapshot for one committed authenticated-owner session. */
 internal data class OwnerDependencyGraph(
     val ownerUid: String,
     val sessionGeneration: Long,
     val devicesRepository: DevicesRepository,
+    val ownerDevicesOperations: OwnerDevicesOperations,
     val firmwareUpdateOperations: DeviceFirmwareUpdateOperations,
     val assignmentRepository: TankDeviceAssignmentRepository,
     val aquariumTankStore: AquariumTankDataStoreManager,
@@ -146,23 +143,16 @@ internal class ActiveOwnerDependencyGraphResolver(
         }
     }
 
-    private fun composeGraph(dependencies: ActiveOwnerDependencies): OwnerDependencyGraph {
+    private fun composeGraph(
+        dependencies: ActiveOwnerDependencies
+    ): OwnerDependencyGraph {
         val ownerUidProvider = { dependencies.ownerUid }
-        val firmwareUpdateOperations = DefaultDeviceFirmwareUpdateOperations(
-            devicesRepository = dependencies.devicesRepository,
-            statePublisher = { state, deviceName ->
-                deviceFirmwareNotifications.publishOtaState(
-                    ownerUid = dependencies.ownerUid,
-                    state = state,
-                    deviceName = deviceName
-                )
-            }
-        ).also(dependencies.devicesRepository::registerOwnerScopedResource)
         return OwnerDependencyGraph(
             ownerUid = dependencies.ownerUid,
             sessionGeneration = dependencies.sessionGeneration,
             devicesRepository = dependencies.devicesRepository,
-            firmwareUpdateOperations = firmwareUpdateOperations,
+            ownerDevicesOperations = createOwnerDevicesOperations(dependencies),
+            firmwareUpdateOperations = createFirmwareUpdateOperations(dependencies),
             assignmentRepository = dependencies.assignmentRepository,
             aquariumTankStore = AquariumTankDataStoreManager(appContext),
             careTaskStore = CareTaskDataStoreManager.create(appContext),
@@ -177,6 +167,41 @@ internal class ActiveOwnerDependencyGraphResolver(
                 )
             )
         )
+    }
+
+    private fun createOwnerDevicesOperations(
+        dependencies: ActiveOwnerDependencies
+    ): OwnerDevicesOperations {
+        val cleaner = OwnerDeviceDataCleaner.create(
+            devicesRepository = dependencies.devicesRepository,
+            assignmentRepository = dependencies.assignmentRepository
+        )
+        return DefaultOwnerDevicesOperations(
+            devicesRepository = dependencies.devicesRepository,
+            assignmentRepository = dependencies.assignmentRepository,
+            deviceDataCleaner = cleaner,
+            cleanupDeletedDeviceNotifications = { deviceUids ->
+                deviceFirmwareNotifications.clearDeletedDevices(
+                    ownerUid = dependencies.ownerUid,
+                    deviceUids = deviceUids
+                )
+            }
+        )
+    }
+
+    private fun createFirmwareUpdateOperations(
+        dependencies: ActiveOwnerDependencies
+    ): DeviceFirmwareUpdateOperations {
+        return DefaultDeviceFirmwareUpdateOperations(
+            devicesRepository = dependencies.devicesRepository,
+            statePublisher = { state, deviceName ->
+                deviceFirmwareNotifications.publishOtaState(
+                    ownerUid = dependencies.ownerUid,
+                    state = state,
+                    deviceName = deviceName
+                )
+            }
+        ).also(dependencies.devicesRepository::registerOwnerScopedResource)
     }
 }
 
@@ -203,10 +228,7 @@ internal class ResolvingAuthenticatedOwnerIdentity(
     }
 }
 
-/**
- * Process-owned facade that resolves the authenticated owner at operation time.
- * It never retains a dependency from a previous account.
- */
+/** Process-owned facade that resolves the authenticated owner at operation time. */
 internal class ResolvingProvisioningDraftOperations(
     private val ownerGraphResolver: OwnerDependencyGraphResolver
 ) : ProvisioningDraftOperations {
