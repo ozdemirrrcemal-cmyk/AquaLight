@@ -1,3 +1,5 @@
+@file:Suppress("ReturnCount", "TooManyFunctions")
+
 package com.aqua.aqualight.ui.main
 
 import android.content.Intent
@@ -19,12 +21,7 @@ import com.aqua.aqualight.ui.navigation.DeviceFirmwareNotificationRoutePolicy
 import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.launch
 
-/**
- * Owns MainActivity's transient navigation chrome and deferred notification route state.
- *
- * Authentication remains owned by AppSessionCoordinator; this class only consumes a current
- * snapshot when deciding whether navigation UI or an owner-bound notification route is safe.
- */
+/** Owns MainActivity navigation chrome and deferred owner-bound notification routes. */
 internal class MainNavigationCoordinator(
     private val host: BaseActivity,
     private val binding: ActivityMainBinding,
@@ -57,9 +54,7 @@ internal class MainNavigationCoordinator(
             MainActivity.EXTRA_OPEN_CARE_TASK_ID,
             -1L
         ) ?: -1L
-        if (taskId <= 0L) {
-            return
-        }
+        if (taskId <= 0L) return
 
         clearPendingNotifications()
         pendingCareTaskId = taskId
@@ -80,91 +75,60 @@ internal class MainNavigationCoordinator(
             restoreSettingsExtra,
             false
         ) == true
-
-        if (!shouldRestore || !sessionSnapshot().isAuthenticated) {
-            return
-        }
+        if (!shouldRestore || !sessionSnapshot().isAuthenticated) return
 
         host.intent?.removeExtra(restoreSettingsExtra)
-
         binding.root.post {
             val currentDestination = navController.currentDestination
-            val restored = if (currentDestination?.id == R.id.settingsFragment) {
-                true
-            } else {
+            val restored = currentDestination?.id == R.id.settingsFragment ||
                 runCatching {
-                    navController.popBackStack(
-                        R.id.settingsFragment,
-                        false
-                    )
+                    navController.popBackStack(R.id.settingsFragment, false)
                 }.getOrDefault(false)
-            }
-
-            if (!restored) {
-                selectBottomNavItemSafely(R.id.nav_settings)
-            }
-
+            if (!restored) selectBottomNavItemSafely(R.id.nav_settings)
             syncBottomBarState(navController.currentDestination)
         }
     }
 
     fun consumePendingNotificationIfPossible() {
-        if (consumePendingFirmwareUpdateIfPossible()) {
-            return
+        if (!consumePendingFirmwareUpdateIfPossible()) {
+            consumePendingCareTaskIfPossible()
         }
-        consumePendingCareTaskIfPossible()
     }
 
     fun setupBottomBarIfNeeded() {
-        if (bottomBarSetup || navController.currentDestination == null) {
-            return
-        }
+        if (bottomBarSetup || navController.currentDestination == null) return
 
         bottomBarSetup = true
         binding.bottomNav.setupWithNavController(navController)
-
-        exitFromTopLevelBackCallback =
-            object : OnBackPressedCallback(false) {
-
-                override fun handleOnBackPressed() {
-                    host.finish()
-                }
+        exitFromTopLevelBackCallback = object : OnBackPressedCallback(false) {
+            override fun handleOnBackPressed() {
+                host.finish()
             }
-
+        }
         host.onBackPressedDispatcher.addCallback(
             host,
             requireNotNull(exitFromTopLevelBackCallback)
         )
-
         navController.addOnDestinationChangedListener { _, destination, _ ->
             syncBottomBarState(destination)
         }
         observeBottomBarBackStack()
         syncBottomBarState(navController.currentDestination)
-
         binding.root.post {
             syncBottomBarState(navController.currentDestination)
         }
     }
 
     fun syncBottomBarState(destination: NavDestination?) {
-        val shouldShowBottomBar =
-            sessionSnapshot().isAuthenticated &&
-                AppDestinationContract.shouldShowBottomBar(destination)
-
+        val shouldShowBottomBar = sessionSnapshot().isAuthenticated &&
+            AppDestinationContract.shouldShowBottomBar(destination)
         binding.bottomNav.isVisible = shouldShowBottomBar
-
         if (shouldShowBottomBar) {
             binding.bottomNav.alpha = 1f
             binding.bottomNav.bringToFront()
         }
-
-        exitFromTopLevelBackCallback?.isEnabled =
-            shouldShowBottomBar &&
-                destination?.id?.let(
-                    AppDestinationContract::isTopLevelDestination
-                ) == true
-
+        exitFromTopLevelBackCallback?.isEnabled = shouldShowBottomBar &&
+            destination?.id?.let(AppDestinationContract::isTopLevelDestination) == true
         if (AppDestinationContract.isInsideAppGraph(destination)) {
             consumePendingNotificationIfPossible()
         }
@@ -172,9 +136,7 @@ internal class MainNavigationCoordinator(
 
     private fun observeBottomBarBackStack() {
         host.lifecycleScope.launch {
-            host.repeatOnLifecycle(
-                Lifecycle.State.STARTED
-            ) {
+            host.repeatOnLifecycle(Lifecycle.State.STARTED) {
                 navController.currentBackStackEntryFlow.collect { backStackEntry ->
                     syncBottomBarState(backStackEntry.destination)
                 }
@@ -184,9 +146,7 @@ internal class MainNavigationCoordinator(
 
     private fun consumePendingFirmwareUpdateIfPossible(): Boolean {
         val deviceUid = pendingFirmwareDeviceUid
-        if (deviceUid.isBlank()) {
-            return false
-        }
+        if (deviceUid.isBlank()) return false
 
         val ownerUid = pendingFirmwareOwnerUid
         val session = sessionSnapshot()
@@ -212,7 +172,6 @@ internal class MainNavigationCoordinator(
         val taskId = pendingCareTaskId
         val ownerUid = pendingCareTaskOwnerUid
         val session = sessionSnapshot()
-
         when {
             taskId <= 0L || !session.isAuthenticated -> Unit
             !CareTaskNotificationRoutePolicy.canOpen(
@@ -224,7 +183,6 @@ internal class MainNavigationCoordinator(
                 clearPendingCareTask()
                 clearConsumedNotificationExtras(host.intent)
             }
-
             !AppDestinationContract.isInsideAppGraph(navController.currentDestination) -> Unit
             else -> openPendingCareTask(taskId, ownerUid)
         }
@@ -234,10 +192,7 @@ internal class MainNavigationCoordinator(
         clearPendingFirmwareUpdate()
         binding.navHost.post {
             runCatching {
-                AppRouteNavigator.openDeviceFirmwareUpdate(
-                    navController = navController,
-                    deviceUid = deviceUid
-                )
+                AppRouteNavigator.openDeviceFirmwareUpdate(navController, deviceUid)
             }.onSuccess {
                 clearConsumedNotificationExtras(host.intent)
             }.onFailure {
@@ -251,10 +206,7 @@ internal class MainNavigationCoordinator(
         clearPendingCareTask()
         binding.navHost.post {
             runCatching {
-                AppRouteNavigator.openTaskDetail(
-                    navController = navController,
-                    taskId = taskId
-                )
+                AppRouteNavigator.openTaskDetail(navController, taskId)
             }.onSuccess {
                 clearConsumedNotificationExtras(host.intent)
             }.onFailure {
@@ -282,17 +234,12 @@ internal class MainNavigationCoordinator(
     }
 
     private fun selectBottomNavItemSafely(itemId: Int) {
-        if (
-            navController.currentDestination == null ||
-            binding.bottomNav.menu.findItem(itemId) == null
-        ) {
-            return
-        }
+        val destinationReady = navController.currentDestination != null
+        val itemExists = binding.bottomNav.menu.findItem(itemId) != null
+        if (!destinationReady || !itemExists) return
 
         binding.bottomNav.post {
-            runCatching {
-                binding.bottomNav.selectedItemId = itemId
-            }
+            runCatching { binding.bottomNav.selectedItemId = itemId }
         }
     }
 }
