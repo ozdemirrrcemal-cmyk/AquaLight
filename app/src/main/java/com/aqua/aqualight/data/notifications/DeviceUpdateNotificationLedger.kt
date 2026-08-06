@@ -1,12 +1,21 @@
 package com.aqua.aqualight.data.notifications
 
 import android.content.Context
+import androidx.datastore.core.handlers.ReplaceFileCorruptionHandler
 import androidx.datastore.preferences.core.edit
+import androidx.datastore.preferences.core.emptyPreferences
 import androidx.datastore.preferences.preferencesDataStore
+import com.aqua.aqualight.data.recovery.LocalDataRecoveryTracker
 import kotlinx.coroutines.flow.first
 
 private val Context.deviceUpdateNotificationLedgerDataStore by preferencesDataStore(
-    name = "device_update_notification_ledger"
+    name = "device_update_notification_ledger",
+    corruptionHandler = ReplaceFileCorruptionHandler {
+        LocalDataRecoveryTracker.markRecovered(
+            LocalDataRecoveryTracker.Area.NOTIFICATION_PREFERENCES
+        )
+        emptyPreferences()
+    }
 )
 
 /** Persistent owner/device/target ledger for background firmware availability alerts. */
