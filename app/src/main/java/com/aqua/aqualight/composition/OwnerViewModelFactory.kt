@@ -14,7 +14,6 @@ import com.aqua.aqualight.data.care.integrity.snapshotTasksForIntegrity
 import com.aqua.aqualight.data.devices.DefaultDeviceFamilySettingsOperations
 import com.aqua.aqualight.data.devices.DefaultDeviceRootOperations
 import com.aqua.aqualight.data.devices.DefaultDeviceStatusOperations
-import com.aqua.aqualight.data.devices.DefaultOwnerDevicesOperations
 import com.aqua.aqualight.data.devices.menu.DefaultDeviceMenuAccessOperations
 import com.aqua.aqualight.data.devices.provisioning.DefaultProvisioningDiscoveryOperations
 import com.aqua.aqualight.data.devices.provisioning.DefaultProvisioningProgressOperations
@@ -22,7 +21,6 @@ import com.aqua.aqualight.data.devices.provisioning.ble.DefaultBleProvisioningSc
 import com.aqua.aqualight.data.devices.provisioning.qr.AqlProvisioningQrParser
 import com.aqua.aqualight.data.devices.provisioning.store.AqlProvisioningDraftStore
 import com.aqua.aqualight.data.devices.provisioning.store.AqlProvisioningQrSecretStore
-import com.aqua.aqualight.data.devices.remove.OwnerDeviceDataCleaner
 import com.aqua.aqualight.platform.text.AndroidAppTextResolver
 import com.aqua.aqualight.platform.text.AndroidMaintenanceTextResolver
 import com.aqua.aqualight.ui.tabs.aquarium.AquariumTankViewModel
@@ -90,14 +88,7 @@ internal class OwnerViewModelFactory(
 
             DevicesViewModel::class.java ->
                 DevicesViewModel(
-                    operations = DefaultOwnerDevicesOperations(
-                        devicesRepository = repository,
-                        assignmentRepository = assignments,
-                        deviceDataCleaner = OwnerDeviceDataCleaner.create(
-                            devicesRepository = repository,
-                            assignmentRepository = assignments
-                        )
-                    ),
+                    operations = graph.ownerDevicesOperations,
                     menuAccessOperations = DefaultDeviceMenuAccessOperations.create(repository),
                     routeResolver = DeviceRouteResolver()
                 )
