@@ -1,3 +1,5 @@
+@file:Suppress("TooManyFunctions")
+
 package com.aqua.aqualight.data.devices.update
 
 import android.content.Context
@@ -8,7 +10,9 @@ import androidx.work.BackoffPolicy
 import androidx.work.Constraints
 import androidx.work.CoroutineWorker
 import androidx.work.ExistingPeriodicWorkPolicy
+import androidx.work.ExistingWorkPolicy
 import androidx.work.NetworkType
+import androidx.work.OneTimeWorkRequestBuilder
 import androidx.work.PeriodicWorkRequestBuilder
 import androidx.work.WorkManager
 import androidx.work.WorkerParameters
@@ -18,7 +22,7 @@ import com.aqua.aqualight.data.notifications.NotificationPlatform
 import java.io.IOException
 import java.util.concurrent.TimeUnit
 
-/** Periodic, runtime-free firmware discovery for a previously authenticated owner. */
+/** Periodic, runtime-free firmware discovery for one authenticated owner. */
 class DeviceFirmwareAvailabilityWorker(
     appContext: Context,
     workerParams: WorkerParameters
@@ -66,7 +70,7 @@ class DeviceFirmwareAvailabilityWorker(
     }
 
     private fun retryOrFinish(): Result {
-        return if (runAttemptCount < MAX_RETRY_ATTEMPTS) {
+        return if (runAttemptCount + 1 < MAX_ATTEMPTS) {
             Result.retry()
         } else {
             Result.success()
@@ -76,35 +80,45 @@ class DeviceFirmwareAvailabilityWorker(
     companion object {
         internal const val KEY_OWNER_UID = "owner_uid"
         private const val TAG = "FirmwareAvailability"
-        private const val WORK_NAME_PREFIX = "device_firmware_availability_owner_"
-        private const val REPEAT_INTERVAL_HOURS = 6L
-        private const val RETRY_BACKOFF_MINUTES = 30L
-        private const val MAX_RETRY_ATTEMPTS = 3
+        private const val PERIODIC_WORK_PREFIX = "device_firmware_availability_periodic_owner_"
+        private const val IMMEDIATE_WORK_PREFIX = "device_firmware_availability_immediate_owner_"
+        private const val REPEAT_INTERVAL_HOURS = 24L
+        private const val BACKOFF_SECONDS = 30L
+        private const val MAX_ATTEMPTS = 3
 
         fun schedule(context: Context, ownerUid: String) {
-            val normalizedOwnerUid = ownerUid.trim()
-            if (normalizedOwnerUid.isBlank()) return
+            val owner = ownerUid.trim()
+            if (owner.isBlank()) return
 
-            val request = periodicRequest(normalizedOwnerUid)
-            WorkManager.getInstance(context.applicationContext).enqueueUniquePeriodicWork(
-                workName(normalizedOwnerUid),
-                ExistingPeriodicWorkPolicy.UPDATE,
-                request
+            enqueuePeriodic(context.applicationContext, owner)
+            enqueueImmediate(context.applicationContext, owner)
+        }
+
+        fun enqueueImmediate(context: Context, ownerUid: String) {
+            val owner = ownerUid.trim()
+            if (owner.isBlank()) return
+
+            WorkManager.getInstance(context.applicationContext).enqueueUniqueWork(
+                immediateWorkName(owner),
+                ExistingWorkPolicy.KEEP,
+                immediateRequest(owner)
             )
         }
 
         fun cancel(context: Context, ownerUid: String?) {
-            ownerUid
-                ?.trim()
-                ?.takeIf(String::isNotBlank)
-                ?.let { normalizedOwnerUid ->
-                    WorkManager.getInstance(context.applicationContext)
-                        .cancelUniqueWork(workName(normalizedOwnerUid))
-                }
+            val owner = ownerUid?.trim()?.takeIf(String::isNotBlank) ?: return
+            WorkManager.getInstance(context.applicationContext).apply {
+                cancelUniqueWork(periodicWorkName(owner))
+                cancelUniqueWork(immediateWorkName(owner))
+            }
         }
 
-        internal fun workName(ownerUid: String): String {
-            return WORK_NAME_PREFIX + ownerUid
+        private fun enqueuePeriodic(context: Context, ownerUid: String) {
+            WorkManager.getInstance(context).enqueueUniquePeriodicWork(
+                periodicWorkName(ownerUid),
+                ExistingPeriodicWorkPolicy.UPDATE,
+                periodicRequest(ownerUid)
+            )
         }
 
         private fun periodicRequest(ownerUid: String) =
@@ -116,10 +130,20 @@ class DeviceFirmwareAvailabilityWorker(
                 .setConstraints(networkConstraints())
                 .setBackoffCriteria(
                     BackoffPolicy.EXPONENTIAL,
-                    RETRY_BACKOFF_MINUTES,
-                    TimeUnit.MINUTES
+                    BACKOFF_SECONDS,
+                    TimeUnit.SECONDS
                 )
-                .addTag(workName(ownerUid))
+                .build()
+
+        private fun immediateRequest(ownerUid: String) =
+            OneTimeWorkRequestBuilder<DeviceFirmwareAvailabilityWorker>()
+                .setInputData(workDataOf(KEY_OWNER_UID to ownerUid))
+                .setConstraints(networkConstraints())
+                .setBackoffCriteria(
+                    BackoffPolicy.EXPONENTIAL,
+                    BACKOFF_SECONDS,
+                    TimeUnit.SECONDS
+                )
                 .build()
 
         private fun networkConstraints(): Constraints {
@@ -127,6 +151,14 @@ class DeviceFirmwareAvailabilityWorker(
                 .setRequiredNetworkType(NetworkType.CONNECTED)
                 .setRequiresBatteryNotLow(true)
                 .build()
+        }
+
+        internal fun periodicWorkName(ownerUid: String): String {
+            return PERIODIC_WORK_PREFIX + ownerUid
+        }
+
+        internal fun immediateWorkName(ownerUid: String): String {
+            return IMMEDIATE_WORK_PREFIX + ownerUid
         }
     }
 }
