@@ -87,14 +87,9 @@ object SessionBoundServiceManager {
             }
         }
 
-        // Cancel background discovery before removing the live runtime barrier. A running
-        // CoroutineWorker is also owner-checked and cancellation-cooperative.
         runStep(StopStep.DEVICE_UPDATE_CHECKS) {
             DeviceFirmwareAvailabilityWorker.cancel(appContext, ownerUid)
         }
-
-        // Stop runtime collectors, sockets and owner token access before clearing
-        // other owner-bound repositories or scheduling state.
         runStep(StopStep.DEVICES_REPOSITORY) {
             DevicesRepositoryProvider.clear(expectedOwnerUid = expectedOwnerUid)
         }
@@ -112,7 +107,7 @@ object SessionBoundServiceManager {
             }
             if (cancelNotifications) {
                 runStep(StopStep.NOTIFICATIONS) {
-                    platform.renderer.cancelOwner(ownerUid)
+                    platform.deviceFirmwareUpdates.clearOwner(ownerUid)
                 }
             }
         }
