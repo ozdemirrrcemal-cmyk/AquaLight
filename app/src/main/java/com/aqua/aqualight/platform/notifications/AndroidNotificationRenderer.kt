@@ -134,7 +134,6 @@ class AndroidNotificationRenderer(
             ownerUid = notification.ownerUid,
             entityId = entityId,
             intent = deviceUpdateLaunchIntent(
-                category = category,
                 ownerUid = notification.ownerUid,
                 deviceUid = entityId
             )
@@ -224,6 +223,21 @@ class AndroidNotificationRenderer(
         return active.flags and Notification.FLAG_ONGOING_EVENT != 0
     }
 
+    internal fun deviceUpdateLaunchIntent(
+        ownerUid: String,
+        deviceUid: String
+    ): Intent {
+        val normalizedOwner = requireOwnerUid(ownerUid)
+        val normalizedDevice = requireDeviceUid(deviceUid)
+        return genericLaunchIntent(
+            NotificationCategory.DEVICE_UPDATES,
+            normalizedOwner,
+            normalizedDevice
+        ).apply {
+            putExtra(MainActivity.EXTRA_OPEN_DEVICE_FIRMWARE_UID, normalizedDevice)
+        }
+    }
+
     override fun cancelOwner(ownerUid: String) {
         val normalizedOwner = requireOwnerUid(ownerUid)
         val notificationManager = manager ?: return
@@ -273,16 +287,6 @@ class AndroidNotificationRenderer(
             data = NotificationIdentity.contentData(category, ownerUid, entityId)
             putExtra(MainActivity.EXTRA_START_IN_APP, true)
             putExtra(MainActivity.EXTRA_OWNER_UID, ownerUid)
-        }
-    }
-
-    private fun deviceUpdateLaunchIntent(
-        category: NotificationCategory,
-        ownerUid: String,
-        deviceUid: String
-    ): Intent {
-        return genericLaunchIntent(category, ownerUid, deviceUid).apply {
-            putExtra(MainActivity.EXTRA_OPEN_DEVICE_FIRMWARE_UID, deviceUid)
         }
     }
 
