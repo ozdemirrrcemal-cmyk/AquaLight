@@ -44,7 +44,8 @@ enum class OwnerDeviceAvailability {
 
 data class DeleteOwnerDevicesResult(
     val succeededDeviceUids: Set<String>,
-    val failedDeviceUids: Set<String>
+    val failedDeviceUids: Set<String>,
+    val notificationCleanupPendingDeviceUids: Set<String> = emptySet()
 ) {
     val requestedCount: Int
         get() = succeededDeviceUids.size + failedDeviceUids.size
