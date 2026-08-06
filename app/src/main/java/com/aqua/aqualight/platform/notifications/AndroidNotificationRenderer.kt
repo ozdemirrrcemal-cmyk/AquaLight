@@ -29,19 +29,13 @@ import com.aqua.aqualight.ui.main.MainActivity
 import java.util.concurrent.ConcurrentHashMap
 
 /** The only Android platform adapter allowed to build, post, update or cancel notifications. */
+@Suppress("TooManyFunctions")
 class AndroidNotificationRenderer(
     context: Context
 ) : NotificationRenderer {
 
     private val appContext = context.applicationContext
     private val manager = appContext.getSystemService(NotificationManager::class.java)
-
-    /**
-     * Binder delivery to NotificationManager is asynchronous. Keeping same-process
-     * identities lets logout/account switching issue deterministic tagged cancels even
-     * when Android has not exposed a just-posted notification through activeNotifications yet.
-     * After process recreation, Android's active list remains the recovery authority.
-     */
     private val postedNotifications = ConcurrentHashMap.newKeySet<PostedNotification>()
 
     @SuppressLint("MissingPermission")
@@ -61,7 +55,6 @@ class AndroidNotificationRenderer(
             putExtra(MainActivity.EXTRA_OPEN_CARE_TASK_ID, notification.taskId)
             putExtra(MainActivity.EXTRA_OWNER_UID, notification.ownerUid)
         }
-
         val builder = baseBuilder(
             category = category,
             title = notification.title,
@@ -73,13 +66,9 @@ class AndroidNotificationRenderer(
                 launchIntent
             )
         )
-
-        val typeUi = CareTaskTypeCatalog.get(
-            CareTaskType.valueOf(notification.kind.name)
-        )
+        val typeUi = CareTaskTypeCatalog.get(CareTaskType.valueOf(notification.kind.name))
         createLargeIconBitmap(typeUi.iconRes, typeUi.accentColorRes)
             ?.let(builder::setLargeIcon)
-
         notify(
             category = category,
             ownerUid = notification.ownerUid,
@@ -93,11 +82,7 @@ class AndroidNotificationRenderer(
     override fun renderDeviceAlert(notification: DeviceAlertNotification) {
         val category = NotificationCategory.DEVICE_ALERTS
         val entityId = requireDeviceUid(notification.deviceUid)
-        val launchIntent = genericLaunchIntent(
-            category,
-            notification.ownerUid,
-            entityId
-        )
+        val launchIntent = genericLaunchIntent(category, notification.ownerUid, entityId)
         val rendered = baseBuilder(
             category = category,
             title = notification.title,
@@ -111,7 +96,6 @@ class AndroidNotificationRenderer(
         ).setPriority(NotificationCompat.PRIORITY_HIGH)
             .setCategory(NotificationCompat.CATEGORY_ERROR)
             .build()
-
         notify(
             category,
             notification.ownerUid,
@@ -126,17 +110,15 @@ class AndroidNotificationRenderer(
         val category = NotificationCategory.DEVICE_UPDATES
         val entityId = requireDeviceUid(notification.deviceUid)
         notification.progressPercent?.let { progress ->
-            require(progress in 0..100) { "progressPercent must be 0..100" }
+            require(progress in MIN_PROGRESS..MAX_PROGRESS) {
+                "progressPercent must be 0..100"
+            }
         }
-
         val pendingIntent = contentIntent(
             category = category,
             ownerUid = notification.ownerUid,
             entityId = entityId,
-            intent = deviceUpdateLaunchIntent(
-                ownerUid = notification.ownerUid,
-                deviceUid = entityId
-            )
+            intent = deviceUpdateLaunchIntent(notification.ownerUid, entityId)
         )
         val builder = baseBuilder(
             category = category,
@@ -145,24 +127,14 @@ class AndroidNotificationRenderer(
             contentIntent = pendingIntent
         ).setOnlyAlertOnce(true)
             .setOngoing(notification.ongoing)
-            .setCategory(
-                if (notification.progressPercent != null || notification.ongoing) {
-                    NotificationCompat.CATEGORY_PROGRESS
-                } else {
-                    NotificationCompat.CATEGORY_RECOMMENDATION
-                }
-            )
-
+            .setCategory(deviceUpdateCategory(notification))
         notification.progressPercent?.let { progress ->
-            builder.setProgress(100, progress, false)
+            builder.setProgress(MAX_PROGRESS, progress, false)
         }
         notification.actionLabel
             ?.trim()
             ?.takeIf(String::isNotBlank)
-            ?.let { actionLabel ->
-                builder.addAction(0, actionLabel, pendingIntent)
-            }
-
+            ?.let { actionLabel -> builder.addAction(0, actionLabel, pendingIntent) }
         notify(
             category,
             notification.ownerUid,
@@ -199,15 +171,8 @@ class AndroidNotificationRenderer(
             normalizedOwner,
             entityId
         )
-        val identity = PostedNotification(
-            ownerUid = normalizedOwner,
-            tag = tag,
-            id = DEVICE_UPDATE_NOTIFICATION_ID
-        )
-        if (identity in postedNotifications) {
-            return true
-        }
-        return activeDeviceUpdateNotification(tag) != null
+        val identity = PostedNotification(normalizedOwner, tag, DEVICE_UPDATE_NOTIFICATION_ID)
+        return identity in postedNotifications || activeDeviceUpdateNotification(tag) != null
     }
 
     fun isDeviceUpdateOperationNotificationActive(
@@ -241,14 +206,12 @@ class AndroidNotificationRenderer(
     override fun cancelOwner(ownerUid: String) {
         val normalizedOwner = requireOwnerUid(ownerUid)
         val notificationManager = manager ?: return
-
         postedNotifications
             .filter { posted -> posted.ownerUid == normalizedOwner }
             .forEach { posted ->
                 postedNotifications.remove(posted)
                 notificationManager.cancel(posted.tag, posted.id)
             }
-
         val prefix = NotificationIdentity.ownerTagPrefix(normalizedOwner)
         notificationManager.activeNotifications
             .filter { notification -> notification.tag?.startsWith(prefix) == true }
@@ -337,12 +300,19 @@ class AndroidNotificationRenderer(
         manager?.cancel(tag, id)
     }
 
+    private fun deviceUpdateCategory(notification: DeviceUpdateNotification): String {
+        return if (notification.progressPercent != null || notification.ongoing) {
+            NotificationCompat.CATEGORY_PROGRESS
+        } else {
+            NotificationCompat.CATEGORY_RECOMMENDATION
+        }
+    }
+
     private fun createLargeIconBitmap(
         @DrawableRes iconRes: Int,
         @ColorRes colorRes: Int
     ): Bitmap? {
         if (iconRes == 0) return null
-
         val size = appContext.resources.getDimensionPixelOffset(R.dimen.aqua_size_48)
         val iconSize = appContext.resources.getDimensionPixelOffset(R.dimen.aqua_size_25)
         val bitmap = Bitmap.createBitmap(size, size, Bitmap.Config.ARGB_8888)
@@ -352,7 +322,6 @@ class AndroidNotificationRenderer(
             color = ContextCompat.getColor(appContext, colorRes)
         }
         canvas.drawCircle(size / 2f, size / 2f, size / 2f, paint)
-
         val drawable = ContextCompat.getDrawable(appContext, iconRes) ?: return bitmap
         val wrapped = DrawableCompat.wrap(drawable.mutate())
         DrawableCompat.setTint(
@@ -384,9 +353,11 @@ class AndroidNotificationRenderer(
         val id: Int
     )
 
-    companion object {
-        private const val CARE_NOTIFICATION_ID = 1
-        private const val DEVICE_ALERT_NOTIFICATION_ID = 2
-        private const val DEVICE_UPDATE_NOTIFICATION_ID = 3
+    private companion object {
+        const val CARE_NOTIFICATION_ID = 1
+        const val DEVICE_ALERT_NOTIFICATION_ID = 2
+        const val DEVICE_UPDATE_NOTIFICATION_ID = 3
+        const val MIN_PROGRESS = 0
+        const val MAX_PROGRESS = 100
     }
 }
