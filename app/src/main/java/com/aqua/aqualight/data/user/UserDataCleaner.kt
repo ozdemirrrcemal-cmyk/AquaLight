@@ -12,7 +12,6 @@ import com.aqua.aqualight.data.devices.provisioning.store.AqlProvisioningQrSecre
 import com.aqua.aqualight.data.devices.provisioning.store.ProvisioningCommitRecoveryStore
 import com.aqua.aqualight.data.devices.store.DeviceCredentialStore
 import com.aqua.aqualight.data.devices.store.DeviceKnownStore
-import com.aqua.aqualight.data.notifications.DeviceUpdateNotificationLedger
 import com.aqua.aqualight.data.notifications.NotificationPlatform
 import com.aqua.aqualight.platform.media.AppMediaStorage
 import java.io.File
@@ -29,7 +28,6 @@ class UserDataCleaner private constructor(
         DEVICE_ASSIGNMENTS,
         PROVISIONING_SESSIONS,
         KNOWN_DEVICES,
-        DEVICE_UPDATE_NOTIFICATION_LEDGER,
         DEVICE_CREDENTIALS,
         APP_OWNED_FILES,
         USER_PREFERENCES
@@ -130,11 +128,6 @@ class UserDataCleaner private constructor(
                 context = appContext,
                 ownerUid = targetOwnerUid
             ).clearOwnerData()
-        }
-
-        runStep(Step.DEVICE_UPDATE_NOTIFICATION_LEDGER) {
-            DeviceUpdateNotificationLedger.create(appContext)
-                .clearOwner(targetOwnerUid)
         }
 
         runStep(Step.DEVICE_CREDENTIALS) {
