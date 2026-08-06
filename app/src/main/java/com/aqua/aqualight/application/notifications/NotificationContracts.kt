@@ -84,7 +84,8 @@ data class DeviceUpdateNotification(
     val title: String,
     val message: String,
     val progressPercent: Int? = null,
-    val ongoing: Boolean = false
+    val ongoing: Boolean = false,
+    val actionLabel: String? = null
 )
 
 enum class NotificationDispatchResult {

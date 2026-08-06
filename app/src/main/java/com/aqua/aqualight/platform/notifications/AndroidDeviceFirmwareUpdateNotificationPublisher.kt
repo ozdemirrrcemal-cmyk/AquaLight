@@ -5,38 +5,69 @@ import com.aqua.aqualight.R
 import com.aqua.aqualight.application.devices.DeviceOtaProgressPhase
 import com.aqua.aqualight.application.devices.DeviceOtaState
 import com.aqua.aqualight.application.notifications.DeviceUpdateNotification
+import com.aqua.aqualight.application.notifications.NotificationDispatchResult
 import com.aqua.aqualight.application.notifications.NotificationDispatchUseCase
+import com.aqua.aqualight.data.devices.runtime.modules.firmware.DeviceFirmwareAvailabilityHint
+import com.aqua.aqualight.data.notifications.DeviceUpdateNotificationLedger
 
 /** Localized device-update notification projection for the owner-scoped OTA state machine. */
 internal class AndroidDeviceFirmwareUpdateNotificationPublisher(
     context: Context,
     private val ownerUid: String,
-    private val dispatchUseCase: NotificationDispatchUseCase
+    private val dispatchUseCase: NotificationDispatchUseCase,
+    private val ledger: DeviceUpdateNotificationLedger =
+        DeviceUpdateNotificationLedger.create(context)
 ) {
     private val appContext = context.applicationContext
 
+    /**
+     * Active OTA state notifications remain driven by the live coordinator. Availability alerts are
+     * deliberately excluded here so manual and foreground checks never create a system alert.
+     */
     suspend fun publish(state: DeviceOtaState, deviceName: String) {
-        val normalizedName = deviceName.trim().ifBlank {
-            appContext.getString(R.string.device_settings_update_device_fallback)
-        }
+        val normalizedName = normalizeDeviceName(deviceName)
         state.toNotification(normalizedName)?.let { notification ->
             dispatchUseCase.dispatchDeviceUpdate(notification)
         }
     }
 
+    /** Posts a background-discovered update once for each owner/device/target version. */
+    suspend fun publishAvailabilityHint(
+        hint: DeviceFirmwareAvailabilityHint.UpdateAvailable
+    ): Boolean {
+        if (
+            ledger.isAnnounced(
+                ownerUid = ownerUid,
+                deviceUid = hint.deviceUid,
+                targetVersion = hint.targetVersion
+            )
+        ) {
+            return false
+        }
+
+        val result = dispatchUseCase.dispatchDeviceUpdate(
+            availableNotification(
+                deviceUid = hint.deviceUid,
+                deviceName = normalizeDeviceName(hint.deviceName),
+                currentVersion = hint.currentVersion,
+                targetVersion = hint.targetVersion
+            )
+        )
+        if (result == NotificationDispatchResult.POSTED) {
+            ledger.markAnnounced(
+                ownerUid = ownerUid,
+                deviceUid = hint.deviceUid,
+                targetVersion = hint.targetVersion
+            )
+            return true
+        }
+        return false
+    }
+
     private fun DeviceOtaState.toNotification(
         deviceName: String
     ): DeviceUpdateNotification? = when (this) {
-        is DeviceOtaState.UpdateAvailable -> DeviceUpdateNotification(
-            ownerUid = ownerUid,
-            deviceUid = deviceUid,
-            title = text(R.string.device_settings_update_notification_available_title),
-            message = text(
-                R.string.device_settings_update_notification_available_message,
-                deviceName,
-                plan.targetVersion
-            )
-        )
+        is DeviceOtaState.UpdateAvailable -> null
         is DeviceOtaState.Starting -> progressNotification(
             deviceName = deviceName,
             targetVersion = plan.targetVersion,
@@ -62,6 +93,34 @@ internal class AndroidDeviceFirmwareUpdateNotificationPublisher(
         is DeviceOtaState.Checking,
         is DeviceOtaState.Unsupported,
         is DeviceOtaState.UpToDate -> null
+    }
+
+    private fun availableNotification(
+        deviceUid: String,
+        deviceName: String,
+        currentVersion: String,
+        targetVersion: String
+    ): DeviceUpdateNotification {
+        require(currentVersion.isNotBlank()) {
+            "Current OTA notification version is missing."
+        }
+        require(targetVersion.isNotBlank()) {
+            "Target OTA notification version is missing."
+        }
+        return DeviceUpdateNotification(
+            ownerUid = ownerUid,
+            deviceUid = deviceUid,
+            title = text(
+                R.string.device_update_background_notification_title,
+                deviceName
+            ),
+            message = text(
+                R.string.device_update_background_notification_versions,
+                currentVersion,
+                targetVersion
+            ),
+            actionLabel = text(R.string.device_update_background_notification_action)
+        )
     }
 
     private fun DeviceOtaState.RestartRequired.restartNotification(
@@ -121,7 +180,15 @@ internal class AndroidDeviceFirmwareUpdateNotificationPublisher(
         progressPercent = progressPercent,
         ongoing = true
     ).also {
-        require(targetVersion.isNotBlank()) { "OTA notification target version is missing." }
+        require(targetVersion.isNotBlank()) {
+            "OTA notification target version is missing."
+        }
+    }
+
+    private fun normalizeDeviceName(deviceName: String): String {
+        return deviceName.trim().ifBlank {
+            appContext.getString(R.string.device_settings_update_device_fallback)
+        }
     }
 
     private fun text(resourceId: Int, vararg args: Any): String =
