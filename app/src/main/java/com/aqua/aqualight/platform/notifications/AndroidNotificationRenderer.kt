@@ -9,8 +9,8 @@ import android.content.Intent
 import android.graphics.Bitmap
 import android.graphics.Canvas
 import android.graphics.Paint
-import androidx.annotation.DrawableRes
 import androidx.annotation.ColorRes
+import androidx.annotation.DrawableRes
 import androidx.core.app.NotificationCompat
 import androidx.core.content.ContextCompat
 import androidx.core.graphics.drawable.DrawableCompat
@@ -128,7 +128,13 @@ class AndroidNotificationRenderer(
         notification.progressPercent?.let { progress ->
             require(progress in 0..100) { "progressPercent must be 0..100" }
         }
-
+        val launchIntent = genericLaunchIntent(
+            category,
+            notification.ownerUid,
+            entityId
+        ).apply {
+            putExtra(MainActivity.EXTRA_OPEN_DEVICE_FIRMWARE_UPDATE_UID, entityId)
+        }
         val builder = baseBuilder(
             category = category,
             title = notification.title,
@@ -137,7 +143,7 @@ class AndroidNotificationRenderer(
                 category,
                 notification.ownerUid,
                 entityId,
-                genericLaunchIntent(category, notification.ownerUid, entityId)
+                launchIntent
             )
         ).setOnlyAlertOnce(true)
             .setOngoing(notification.ongoing)
@@ -165,6 +171,21 @@ class AndroidNotificationRenderer(
         )
         postedNotifications.remove(PostedNotification(ownerUid, tag, CARE_NOTIFICATION_ID))
         manager?.cancel(tag, CARE_NOTIFICATION_ID)
+    }
+
+    override fun cancelDeviceUpdate(ownerUid: String, deviceUid: String) {
+        val normalizedOwner = ownerUid.trim()
+        require(normalizedOwner.isNotBlank()) { "ownerUid must not be blank" }
+        val entityId = requireDeviceUid(deviceUid)
+        val tag = NotificationIdentity.tag(
+            NotificationCategory.DEVICE_UPDATES,
+            normalizedOwner,
+            entityId
+        )
+        postedNotifications.remove(
+            PostedNotification(normalizedOwner, tag, DEVICE_UPDATE_NOTIFICATION_ID)
+        )
+        manager?.cancel(tag, DEVICE_UPDATE_NOTIFICATION_ID)
     }
 
     override fun cancelOwner(ownerUid: String) {
@@ -269,18 +290,15 @@ class AndroidNotificationRenderer(
 
         val drawable = ContextCompat.getDrawable(appContext, iconRes) ?: return bitmap
         val wrapped = DrawableCompat.wrap(drawable.mutate())
-        DrawableCompat.setTint(wrapped, ContextCompat.getColor(appContext, R.color.aqua_content_on_dark))
+        DrawableCompat.setTint(
+            wrapped,
+            ContextCompat.getColor(appContext, R.color.aqua_content_on_dark)
+        )
         val left = (size - iconSize) / 2
         val top = (size - iconSize) / 2
         wrapped.setBounds(left, top, left + iconSize, top + iconSize)
         wrapped.draw(canvas)
         return bitmap
-    }
-
-    private fun requireDeviceUid(deviceUid: String): String {
-        return deviceUid.trim().also { normalized ->
-            require(normalized.isNotBlank()) { "deviceUid must not be blank" }
-        }
     }
 
     private data class PostedNotification(
@@ -293,5 +311,11 @@ class AndroidNotificationRenderer(
         private const val CARE_NOTIFICATION_ID = 1
         private const val DEVICE_ALERT_NOTIFICATION_ID = 2
         private const val DEVICE_UPDATE_NOTIFICATION_ID = 3
+    }
+}
+
+private fun requireDeviceUid(deviceUid: String): String {
+    return deviceUid.trim().also { normalized ->
+        require(normalized.isNotBlank()) { "deviceUid must not be blank" }
     }
 }

@@ -21,43 +21,67 @@ import kotlinx.coroutines.launch
 /**
  * Owns MainActivity's transient navigation chrome and deferred notification route state.
  *
- * Authentication remains owned by AppSessionCoordinator; this class only consumes a current
- * snapshot when deciding whether navigation UI or an owner-bound care-task route is safe to show.
+ * Authentication remains owned by AppSessionCoordinator; this class consumes only the committed
+ * session snapshot and application-owned route policies before opening owner-bound destinations.
  */
+@Suppress("TooManyFunctions", "LongParameterList")
 internal class MainNavigationCoordinator(
     private val host: BaseActivity,
     private val binding: ActivityMainBinding,
     private val navController: NavController,
     private val restoreSettingsExtra: String,
-    private val sessionSnapshot: () -> MainNavigationSessionSnapshot
+    private val sessionSnapshot: () -> MainNavigationSessionSnapshot,
+    private val canOpenDeviceFirmwareUpdate: (String, String) -> Boolean = { _, _ -> false }
 ) {
     private var pendingCareTaskId: Long = -1L
     private var pendingCareTaskOwnerUid: String = ""
+    private var pendingFirmwareDeviceUid: String = ""
+    private var pendingFirmwareOwnerUid: String = ""
     private var bottomBarSetup: Boolean = false
     private var exitFromTopLevelBackCallback: OnBackPressedCallback? = null
 
-    fun captureCareTaskIntent(intent: Intent?) {
+    fun captureNotificationIntent(intent: Intent?) {
+        val ownerUid = intent?.getStringExtra(MainActivity.EXTRA_OWNER_UID).orEmpty()
         val taskId = intent?.getLongExtra(
             MainActivity.EXTRA_OPEN_CARE_TASK_ID,
             -1L
         ) ?: -1L
+        val firmwareDeviceUid = intent?.getStringExtra(
+            MainActivity.EXTRA_OPEN_DEVICE_FIRMWARE_UPDATE_UID
+        ).orEmpty()
 
-        if (taskId <= 0L) {
-            return
+        if (taskId > 0L) {
+            pendingCareTaskId = taskId
+            pendingCareTaskOwnerUid = ownerUid
+        }
+        if (firmwareDeviceUid.isNotBlank()) {
+            pendingFirmwareDeviceUid = firmwareDeviceUid.trim()
+            pendingFirmwareOwnerUid = ownerUid
         }
 
-        pendingCareTaskId = taskId
-        pendingCareTaskOwnerUid = intent?.getStringExtra(
-            MainActivity.EXTRA_OWNER_UID
-        ).orEmpty()
         intent?.removeExtra(MainActivity.EXTRA_OPEN_CARE_TASK_ID)
+        intent?.removeExtra(MainActivity.EXTRA_OPEN_DEVICE_FIRMWARE_UPDATE_UID)
         intent?.removeExtra(MainActivity.EXTRA_START_IN_APP)
         intent?.removeExtra(MainActivity.EXTRA_OWNER_UID)
+    }
+
+    fun captureCareTaskIntent(intent: Intent?) {
+        captureNotificationIntent(intent)
+    }
+
+    fun clearPendingNotifications() {
+        clearPendingCareTask()
+        clearPendingFirmwareUpdate()
     }
 
     fun clearPendingCareTask() {
         pendingCareTaskId = -1L
         pendingCareTaskOwnerUid = ""
+    }
+
+    private fun clearPendingFirmwareUpdate() {
+        pendingFirmwareDeviceUid = ""
+        pendingFirmwareOwnerUid = ""
     }
 
     fun restoreSettingsRootAfterThemeChangeIfNeeded() {
@@ -93,6 +117,11 @@ internal class MainNavigationCoordinator(
         }
     }
 
+    fun consumePendingNotificationsIfPossible() {
+        consumePendingCareTaskIfPossible()
+        consumePendingFirmwareUpdateIfPossible()
+    }
+
     fun consumePendingCareTaskIfPossible() {
         val taskId = pendingCareTaskId
         val ownerUid = pendingCareTaskOwnerUid
@@ -109,6 +138,20 @@ internal class MainNavigationCoordinator(
 
             !AppDestinationContract.isInsideAppGraph(navController.currentDestination) -> Unit
             else -> openPendingCareTask(taskId, ownerUid)
+        }
+    }
+
+    private fun consumePendingFirmwareUpdateIfPossible() {
+        val deviceUid = pendingFirmwareDeviceUid
+        val ownerUid = pendingFirmwareOwnerUid
+        val session = sessionSnapshot()
+
+        when {
+            deviceUid.isBlank() || !session.isAuthenticated -> Unit
+            ownerUid != session.activeOwnerUid -> clearPendingFirmwareUpdate()
+            !canOpenDeviceFirmwareUpdate(ownerUid, deviceUid) -> clearPendingFirmwareUpdate()
+            !AppDestinationContract.isInsideAppGraph(navController.currentDestination) -> Unit
+            else -> openPendingFirmwareUpdate(deviceUid, ownerUid)
         }
     }
 
@@ -163,7 +206,7 @@ internal class MainNavigationCoordinator(
                 ) == true
 
         if (AppDestinationContract.isInsideAppGraph(destination)) {
-            consumePendingCareTaskIfPossible()
+            consumePendingNotificationsIfPossible()
         }
     }
 
@@ -190,6 +233,36 @@ internal class MainNavigationCoordinator(
             }.onFailure {
                 pendingCareTaskId = taskId
                 pendingCareTaskOwnerUid = ownerUid
+            }
+        }
+    }
+
+    private fun openPendingFirmwareUpdate(deviceUid: String, ownerUid: String) {
+        clearPendingFirmwareUpdate()
+        val devicesItem = binding.bottomNav.menu.findItem(R.id.nav_devices)
+        if (devicesItem == null) {
+            pendingFirmwareDeviceUid = deviceUid
+            pendingFirmwareOwnerUid = ownerUid
+            return
+        }
+
+        binding.bottomNav.post {
+            runCatching {
+                binding.bottomNav.selectedItemId = R.id.nav_devices
+                binding.navHost.post {
+                    runCatching {
+                        AppRouteNavigator.openDeviceFirmwareUpdate(
+                            navController = navController,
+                            deviceUid = deviceUid
+                        )
+                    }.onFailure {
+                        pendingFirmwareDeviceUid = deviceUid
+                        pendingFirmwareOwnerUid = ownerUid
+                    }
+                }
+            }.onFailure {
+                pendingFirmwareDeviceUid = deviceUid
+                pendingFirmwareOwnerUid = ownerUid
             }
         }
     }

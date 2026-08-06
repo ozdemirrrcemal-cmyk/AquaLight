@@ -40,6 +40,12 @@ interface DeviceFirmwareUpdateOperations {
 
     suspend fun clearStatus(deviceUid: String): DeviceFirmwareCommandResult
 
+    /**
+     * Releases every per-device OTA/notification resource after a committed device deletion.
+     * The default preserves source compatibility for test and alternative implementations.
+     */
+    suspend fun releaseDevice(deviceUid: String) = Unit
+
     fun close() = Unit
 }
 

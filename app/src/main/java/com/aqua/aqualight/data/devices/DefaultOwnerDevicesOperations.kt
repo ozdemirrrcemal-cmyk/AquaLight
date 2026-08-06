@@ -15,7 +15,8 @@ import kotlinx.coroutines.flow.combine
 internal class DefaultOwnerDevicesOperations(
     private val devicesRepository: DevicesRepository,
     assignmentRepository: TankDeviceAssignmentRepository,
-    private val deviceDataCleaner: OwnerDeviceDataCleaner
+    private val deviceDataCleaner: OwnerDeviceDataCleaner,
+    private val afterDeviceDeleted: suspend (String) -> Unit = {}
 ) : OwnerDevicesOperations {
 
     override val devices: Flow<List<OwnerDeviceListItem>> = combine(
@@ -46,6 +47,15 @@ internal class DefaultOwnerDevicesOperations(
             .toSet()
 
         val result = deviceDataCleaner.deleteDevices(normalizedDeviceUids)
+        result.succeededDeviceUids
+            .sortedBy { deviceUid -> deviceUid.value }
+            .forEach { deviceUid ->
+                // Domain deletion is already committed. Notification/OTA cleanup is idempotent and
+                // startup reconciliation remains the safety net if this derived cleanup fails.
+                runCatching { afterDeviceDeleted(deviceUid.value) }
+                    .rethrowFatalOrCancellation()
+            }
+
         return DeleteOwnerDevicesResult(
             succeededDeviceUids = result.succeededDeviceUids
                 .mapTo(linkedSetOf()) { deviceUid -> deviceUid.value },

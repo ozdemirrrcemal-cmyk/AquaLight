@@ -7,6 +7,8 @@ import com.aqua.aqualight.application.auth.AccountSecurityOperations
 import com.aqua.aqualight.application.auth.AuthOperations
 import com.aqua.aqualight.application.auth.AuthenticatedOwnerIdentity
 import com.aqua.aqualight.application.auth.SessionExitOperations
+import com.aqua.aqualight.application.devices.DeviceFirmwareBackgroundOperations
+import com.aqua.aqualight.application.devices.DeviceFirmwareNotificationRouteOperations
 import com.aqua.aqualight.application.devices.provisioning.ProvisioningDraftOperations
 import com.aqua.aqualight.application.feedback.FeedbackSubmissionUseCase
 import com.aqua.aqualight.application.notifications.NotificationDispatchUseCase
@@ -45,6 +47,10 @@ interface AppContainer {
     val userSettingsOperations: UserSettingsOperations
     val notificationPreferenceUseCase: NotificationPreferenceUseCase
     val notificationDispatchUseCase: NotificationDispatchUseCase
+    val deviceFirmwareBackgroundOperations: DeviceFirmwareBackgroundOperations
+        get() = DeviceFirmwareBackgroundOperations.NoOp
+    val deviceFirmwareNotificationRouteOperations: DeviceFirmwareNotificationRouteOperations
+        get() = DeviceFirmwareNotificationRouteOperations.DenyAll
     val authenticatedOwnerIdentity: AuthenticatedOwnerIdentity
     val userProfileOperations: UserProfileOperations
     val feedbackSubmissionOperations: FeedbackSubmissionUseCase
@@ -85,16 +91,22 @@ internal class DefaultAppContainer(
         )
     }
 
+    private val notificationPlatform: NotificationPlatform by lazy(
+        LazyThreadSafetyMode.SYNCHRONIZED
+    ) {
+        NotificationPlatform.get(appContext)
+    }
+
     override val notificationPreferenceUseCase: NotificationPreferenceUseCase by lazy(
         LazyThreadSafetyMode.SYNCHRONIZED
     ) {
-        NotificationPlatform.get(appContext).preferenceUseCase
+        notificationPlatform.preferenceUseCase
     }
 
     override val notificationDispatchUseCase: NotificationDispatchUseCase by lazy(
         LazyThreadSafetyMode.SYNCHRONIZED
     ) {
-        NotificationPlatform.get(appContext).dispatchUseCase
+        notificationPlatform.dispatchUseCase
     }
 
     override val userProfileOperations: UserProfileOperations by lazy(
@@ -122,8 +134,22 @@ internal class DefaultAppContainer(
     ) {
         ActiveOwnerDependencyGraphResolver(
             context = appContext,
-            notificationDispatchUseCase = notificationDispatchUseCase
+            notificationDispatchUseCase = notificationDispatchUseCase,
+            notificationLifecycleUseCase = notificationPlatform.lifecycleUseCase
         )
+    }
+
+    override val deviceFirmwareBackgroundOperations: DeviceFirmwareBackgroundOperations by lazy(
+        LazyThreadSafetyMode.SYNCHRONIZED
+    ) {
+        ResolvingDeviceFirmwareBackgroundOperations(ownerGraphResolver)
+    }
+
+    override val deviceFirmwareNotificationRouteOperations:
+        DeviceFirmwareNotificationRouteOperations by lazy(
+        LazyThreadSafetyMode.SYNCHRONIZED
+    ) {
+        ResolvingDeviceFirmwareNotificationRouteOperations(ownerGraphResolver)
     }
 
     override val authenticatedOwnerIdentity: AuthenticatedOwnerIdentity by lazy(

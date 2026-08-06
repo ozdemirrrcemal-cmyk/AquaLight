@@ -12,6 +12,7 @@ import com.aqua.aqualight.data.devices.provisioning.store.AqlProvisioningQrSecre
 import com.aqua.aqualight.data.devices.provisioning.store.ProvisioningCommitRecoveryStore
 import com.aqua.aqualight.data.devices.store.DeviceCredentialStore
 import com.aqua.aqualight.data.devices.store.DeviceKnownStore
+import com.aqua.aqualight.data.notifications.DeviceUpdateNotificationLedger
 import com.aqua.aqualight.data.notifications.NotificationPlatform
 import com.aqua.aqualight.platform.media.AppMediaStorage
 import java.io.File
@@ -24,6 +25,7 @@ class UserDataCleaner private constructor(
     enum class Step {
         SESSION_BOUND_SERVICES,
         CARE_TASKS,
+        DEVICE_UPDATE_NOTIFICATIONS,
         AQUARIUM_TANKS,
         DEVICE_ASSIGNMENTS,
         PROVISIONING_SESSIONS,
@@ -64,95 +66,52 @@ class UserDataCleaner private constructor(
         val issues = mutableListOf<CleanupIssue>()
         val tankDataStoreManager = AquariumTankDataStoreManager(appContext)
         val userPreferencesManager = UserPreferencesManager.create(appContext)
-
-        fun recordIssue(step: Step, error: Throwable) {
-            error.throwIfCancellation()
-            issues += CleanupIssue(step = step, error = error)
-        }
-
-        val tankPhotoUris = runCatching {
-            tankDataStoreManager.tanksSnapshotForOwner(targetOwnerUid)
-                .mapNotNull { tank -> tank.photoUri }
-        }.getOrElse { error ->
-            recordIssue(Step.AQUARIUM_TANKS, error)
-            emptyList()
-        }
-
-        val profilePhotoUri = runCatching {
-            userPreferencesManager.profilePhotoUrlForOwner(targetOwnerUid)
-        }.getOrElse { error ->
-            recordIssue(Step.USER_PREFERENCES, error)
-            ""
-        }
-
-        suspend fun runStep(step: Step, block: suspend () -> Unit) {
-            runCatching { block() }.onFailure { error ->
-                recordIssue(step, error)
-            }
-        }
+        val mediaState = captureMediaCleanupState(
+            ownerUid = targetOwnerUid,
+            tankManager = tankDataStoreManager,
+            preferencesManager = userPreferencesManager,
+            issues = issues
+        )
 
         if (stopSessionBoundServices) {
-            runStep(Step.SESSION_BOUND_SERVICES) {
-                val stopResult = SessionBoundServiceManager.stop(
+            runCleanupStep(issues, Step.SESSION_BOUND_SERVICES) {
+                SessionBoundServiceManager.stop(
                     context = appContext,
                     cancelNotifications = true,
                     expectedOwnerUid = targetOwnerUid
-                )
-                stopResult.exceptionOrNull()?.let { error -> throw error }
+                ).exceptionOrNull()?.let { error -> throw error }
             }
         }
-
-        runStep(Step.CARE_TASKS) {
-            NotificationPlatform.get(appContext)
-                .preferenceUseCase
-                .cancelOwner(targetOwnerUid)
-            CareTaskDataStoreManager.create(appContext)
-                .clearAllTasks(ownerUid = targetOwnerUid)
+        runCleanupStep(issues, Step.CARE_TASKS) {
+            NotificationPlatform.get(appContext).preferenceUseCase.cancelOwner(targetOwnerUid)
+            CareTaskDataStoreManager.create(appContext).clearAllTasks(targetOwnerUid)
         }
-
-        runStep(Step.AQUARIUM_TANKS) {
+        runCleanupStep(issues, Step.DEVICE_UPDATE_NOTIFICATIONS) {
+            DeviceUpdateNotificationLedger.create(appContext).clearOwner(targetOwnerUid)
+        }
+        runCleanupStep(issues, Step.AQUARIUM_TANKS) {
             tankDataStoreManager.clearAllTanks(ownerUid = targetOwnerUid)
         }
-
-        runStep(Step.DEVICE_ASSIGNMENTS) {
-            TankDeviceAssignmentStore.get(appContext)
-                .clearOwnerAssignments(ownerUid = targetOwnerUid)
+        runCleanupStep(issues, Step.DEVICE_ASSIGNMENTS) {
+            TankDeviceAssignmentStore.get(appContext).clearOwnerAssignments(targetOwnerUid)
         }
-
-        runStep(Step.PROVISIONING_SESSIONS) {
+        runCleanupStep(issues, Step.PROVISIONING_SESSIONS) {
             clearProvisioningData(targetOwnerUid)
         }
-
-        runStep(Step.KNOWN_DEVICES) {
-            DeviceKnownStore(
-                context = appContext,
-                ownerUid = targetOwnerUid
-            ).clearOwnerData()
+        runCleanupStep(issues, Step.KNOWN_DEVICES) {
+            DeviceKnownStore(appContext, targetOwnerUid).clearOwnerData()
         }
-
-        runStep(Step.DEVICE_CREDENTIALS) {
-            DeviceCredentialStore(
-                context = appContext,
-                ownerUid = targetOwnerUid
-            ).clearOwner()
+        runCleanupStep(issues, Step.DEVICE_CREDENTIALS) {
+            DeviceCredentialStore(appContext, targetOwnerUid).clearOwner()
         }
-
-        runStep(Step.APP_OWNED_FILES) {
-            clearAppOwnedUserFiles(
-                ownerUid = targetOwnerUid,
-                profilePhotoUri = profilePhotoUri,
-                tankPhotoUris = tankPhotoUris
-            )
+        runCleanupStep(issues, Step.APP_OWNED_FILES) {
+            clearAppOwnedUserFiles(targetOwnerUid, mediaState.profilePhotoUri, mediaState.tankPhotoUris)
         }
-
         if (clearUserPreferences) {
-            runStep(Step.USER_PREFERENCES) {
-                userPreferencesManager.clearUserDataForOwner(
-                    ownerUid = targetOwnerUid
-                )
+            runCleanupStep(issues, Step.USER_PREFERENCES) {
+                userPreferencesManager.clearUserDataForOwner(targetOwnerUid)
             }
         }
-
         return CleanupResult(issues = issues.toList())
     }
 
@@ -161,7 +120,7 @@ class UserDataCleaner private constructor(
 
         suspend fun attempt(block: suspend () -> Unit) {
             runCatching { block() }.onFailure { error ->
-                error.throwIfCancellation()
+                error.throwIfCleanupCancellation()
                 failures += error
             }
         }
@@ -200,10 +159,6 @@ class UserDataCleaner private constructor(
         val explicitOwnerUid = UserDataScope.normalizeOwnerUid(this)
         if (explicitOwnerUid.isNotBlank()) return explicitOwnerUid
         return UserDataScope.currentUid()
-    }
-
-    private fun Throwable.throwIfCancellation() {
-        if (this is CancellationException) throw this
     }
 
     private fun clearAppOwnedUserFiles(
@@ -258,4 +213,47 @@ class UserDataCleaner private constructor(
                 canonicalFile.path.startsWith(canonicalRoot.path + File.separator)
         }
     }
+}
+
+private data class MediaCleanupState(
+    val profilePhotoUri: String,
+    val tankPhotoUris: List<String>
+)
+
+private suspend fun captureMediaCleanupState(
+    ownerUid: String,
+    tankManager: AquariumTankDataStoreManager,
+    preferencesManager: UserPreferencesManager,
+    issues: MutableList<UserDataCleaner.CleanupIssue>
+): MediaCleanupState {
+    val tankPhotoUris = runCatching {
+        tankManager.tanksSnapshotForOwner(ownerUid).mapNotNull { tank -> tank.photoUri }
+    }.getOrElse { error ->
+        error.throwIfCleanupCancellation()
+        issues += UserDataCleaner.CleanupIssue(UserDataCleaner.Step.AQUARIUM_TANKS, error)
+        emptyList()
+    }
+    val profilePhotoUri = runCatching {
+        preferencesManager.profilePhotoUrlForOwner(ownerUid)
+    }.getOrElse { error ->
+        error.throwIfCleanupCancellation()
+        issues += UserDataCleaner.CleanupIssue(UserDataCleaner.Step.USER_PREFERENCES, error)
+        ""
+    }
+    return MediaCleanupState(profilePhotoUri, tankPhotoUris)
+}
+
+private suspend fun runCleanupStep(
+    issues: MutableList<UserDataCleaner.CleanupIssue>,
+    step: UserDataCleaner.Step,
+    block: suspend () -> Unit
+) {
+    runCatching { block() }.onFailure { error ->
+        error.throwIfCleanupCancellation()
+        issues += UserDataCleaner.CleanupIssue(step, error)
+    }
+}
+
+private fun Throwable.throwIfCleanupCancellation() {
+    if (this is CancellationException) throw this
 }

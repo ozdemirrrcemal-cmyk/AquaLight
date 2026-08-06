@@ -4,6 +4,7 @@ import android.content.Context
 import com.aqua.aqualight.data.aquarium.devices.TankDeviceAssignmentRepositoryProvider
 import com.aqua.aqualight.data.care.reminder.CareReminderReconcileWorker
 import com.aqua.aqualight.data.care.smartcare.SmartCareDailyWorker
+import com.aqua.aqualight.data.devices.notification.DeviceFirmwareAvailabilityWorker
 import com.aqua.aqualight.data.devices.provisioning.repository.AqlProvisioningHandoffSaver
 import com.aqua.aqualight.data.devices.repository.DevicesRepositoryProvider
 import com.aqua.aqualight.data.notifications.NotificationPlatform
@@ -15,6 +16,7 @@ object SessionBoundServiceManager {
 
     enum class StopStep {
         PROVISIONING_TRANSACTIONS,
+        FIRMWARE_AVAILABILITY,
         DEVICES_REPOSITORY,
         ASSIGNMENT_REPOSITORY,
         SMART_CARE,
@@ -54,6 +56,7 @@ object SessionBoundServiceManager {
         val appContext = context.applicationContext
         SmartCareDailyWorker.schedule(appContext, normalizedOwnerUid)
         CareReminderReconcileWorker.enqueue(appContext, normalizedOwnerUid)
+        DeviceFirmwareAvailabilityWorker.schedule(appContext, normalizedOwnerUid)
     }
 
     suspend fun stop(
@@ -82,6 +85,11 @@ object SessionBoundServiceManager {
                     .rollbackPendingRegistrationsForOwner(ownerUid)
                     .getOrThrow()
             }
+        }
+
+        // Prevent future owner work before retiring the repository and its shared OTA coordinator.
+        runStep(StopStep.FIRMWARE_AVAILABILITY) {
+            DeviceFirmwareAvailabilityWorker.cancel(appContext, ownerUid)
         }
 
         // Stop runtime collectors, sockets and owner token access before clearing

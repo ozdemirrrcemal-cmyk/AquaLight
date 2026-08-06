@@ -2,11 +2,14 @@ package com.aqua.aqualight.composition
 
 import android.content.Context
 import com.aqua.aqualight.application.auth.AuthenticatedOwnerIdentity
+import com.aqua.aqualight.application.devices.DeviceFirmwareBackgroundOperations
+import com.aqua.aqualight.application.devices.DeviceFirmwareNotificationRouteOperations
 import com.aqua.aqualight.application.devices.DeviceFirmwareUpdateOperations
 import com.aqua.aqualight.application.devices.provisioning.ProvisioningDraftOperations
 import com.aqua.aqualight.application.devices.provisioning.ProvisioningDraftRequest
 import com.aqua.aqualight.application.devices.provisioning.ProvisioningDraftSession
 import com.aqua.aqualight.application.notifications.NotificationDispatchUseCase
+import com.aqua.aqualight.application.notifications.NotificationLifecycleUseCase
 import com.aqua.aqualight.data.aquarium.devices.TankDeviceAssignmentRepository
 import com.aqua.aqualight.data.aquarium.devices.TankDeviceAssignmentRepositoryProvider
 import com.aqua.aqualight.data.aquarium.store.AquariumTankDataStoreManager
@@ -14,11 +17,13 @@ import com.aqua.aqualight.data.auth.OwnerSessionCoordinator
 import com.aqua.aqualight.data.auth.OwnerSessionStateMachine
 import com.aqua.aqualight.data.care.CareTaskDataStoreManager
 import com.aqua.aqualight.data.devices.DefaultDeviceFirmwareUpdateOperations
+import com.aqua.aqualight.data.devices.model.DeviceUid
 import com.aqua.aqualight.data.devices.provisioning.repository.DefaultProvisioningDraftOperations
 import com.aqua.aqualight.data.devices.provisioning.store.AqlProvisioningDraftStore
 import com.aqua.aqualight.data.devices.provisioning.store.AqlProvisioningQrSecretStore
 import com.aqua.aqualight.data.devices.repository.DevicesRepository
 import com.aqua.aqualight.data.devices.repository.DevicesRepositoryProvider
+import com.aqua.aqualight.data.notifications.DeviceUpdateNotificationLedger
 import com.aqua.aqualight.data.user.UserDataScope
 import com.aqua.aqualight.platform.notifications.AndroidDeviceFirmwareUpdateNotificationPublisher
 
@@ -35,6 +40,7 @@ internal data class OwnerDependencyGraph(
     val sessionGeneration: Long,
     val devicesRepository: DevicesRepository,
     val firmwareUpdateOperations: DeviceFirmwareUpdateOperations,
+    val firmwareBackgroundOperations: DeviceFirmwareBackgroundOperations,
     val assignmentRepository: TankDeviceAssignmentRepository,
     val aquariumTankStore: AquariumTankDataStoreManager,
     val careTaskStore: CareTaskDataStoreManager,
@@ -60,7 +66,8 @@ internal fun requireActiveOwnerGeneration(
 
 internal class ActiveOwnerDependencyGraphResolver(
     context: Context,
-    private val notificationDispatchUseCase: NotificationDispatchUseCase
+    private val notificationDispatchUseCase: NotificationDispatchUseCase,
+    private val notificationLifecycleUseCase: NotificationLifecycleUseCase
 ) : OwnerDependencyGraphResolver {
 
     private val appContext = context.applicationContext
@@ -149,20 +156,44 @@ internal class ActiveOwnerDependencyGraphResolver(
 
     private fun composeGraph(dependencies: ActiveOwnerDependencies): OwnerDependencyGraph {
         val ownerUidProvider = { dependencies.ownerUid }
+        val ownerIsActive = {
+            val snapshot = sessionCoordinator.snapshot()
+            snapshot.activeOwnerUid == dependencies.ownerUid &&
+                snapshot.pendingOwnerUid == null &&
+                snapshot.generation == dependencies.sessionGeneration &&
+                DevicesRepositoryProvider.currentRepository(dependencies.ownerUid) ===
+                dependencies.devicesRepository
+        }
+        val notificationLedger = DeviceUpdateNotificationLedger.create(appContext)
         val notificationPublisher = AndroidDeviceFirmwareUpdateNotificationPublisher(
             context = appContext,
             ownerUid = dependencies.ownerUid,
-            dispatchUseCase = notificationDispatchUseCase
+            dispatchUseCase = notificationDispatchUseCase,
+            ledger = notificationLedger,
+            cancelDeviceUpdate = notificationLifecycleUseCase::cancelDeviceUpdate,
+            ownerIsActive = ownerIsActive,
+            deviceIsOwned = { deviceUid ->
+                ownerIsActive() &&
+                    runCatching { DeviceUid(deviceUid) }.getOrNull()?.let(
+                        dependencies.devicesRepository::currentDevice
+                    ) != null
+            }
         )
         val firmwareUpdateOperations = DefaultDeviceFirmwareUpdateOperations(
             devicesRepository = dependencies.devicesRepository,
-            statePublisher = notificationPublisher::publish
+            ownerUid = dependencies.ownerUid,
+            statePublisher = notificationPublisher::publish,
+            dismissNotificationState = notificationPublisher::dismissDevice,
+            releaseNotificationState = notificationPublisher::clearDevice,
+            notificationLedger = notificationLedger,
+            ownerIsActive = ownerIsActive
         ).also(dependencies.devicesRepository::registerOwnerScopedResource)
         return OwnerDependencyGraph(
             ownerUid = dependencies.ownerUid,
             sessionGeneration = dependencies.sessionGeneration,
             devicesRepository = dependencies.devicesRepository,
             firmwareUpdateOperations = firmwareUpdateOperations,
+            firmwareBackgroundOperations = firmwareUpdateOperations,
             assignmentRepository = dependencies.assignmentRepository,
             aquariumTankStore = AquariumTankDataStoreManager(appContext),
             careTaskStore = CareTaskDataStoreManager.create(appContext),
@@ -200,6 +231,40 @@ internal class ResolvingAuthenticatedOwnerIdentity(
 ) : AuthenticatedOwnerIdentity {
     override fun requireOwnerUid(): String {
         return ownerGraphResolver.requireActive().ownerUid
+    }
+}
+
+/** Process-owned firmware background facade that never opens a second owner graph. */
+internal class ResolvingDeviceFirmwareBackgroundOperations(
+    private val ownerGraphResolver: OwnerDependencyGraphResolver
+) : DeviceFirmwareBackgroundOperations {
+    override suspend fun refreshRegisteredDevices(
+        manifestUrl: String,
+        applyNow: Boolean
+    ) = ownerGraphResolver
+        .requireActive()
+        .firmwareBackgroundOperations
+        .refreshRegisteredDevices(manifestUrl, applyNow)
+
+    override suspend fun reconcileNotificationState() {
+        ownerGraphResolver.requireActive().firmwareBackgroundOperations.reconcileNotificationState()
+    }
+}
+
+/** Owner-safe firmware notification route validation over the committed graph. */
+internal class ResolvingDeviceFirmwareNotificationRouteOperations(
+    private val ownerGraphResolver: OwnerDependencyGraphResolver
+) : DeviceFirmwareNotificationRouteOperations {
+    override fun canOpen(notificationOwnerUid: String, deviceUid: String): Boolean {
+        val owner = UserDataScope.normalizeOwnerUid(notificationOwnerUid)
+        val device = deviceUid.trim()
+        if (owner.isBlank() || device.isBlank()) return false
+
+        return runCatching {
+            val graph = ownerGraphResolver.requireActive()
+            val snapshot = graph.devicesRepository.currentDevice(DeviceUid(device))
+            graph.ownerUid == owner && snapshot?.capabilities?.ota == true
+        }.getOrDefault(false)
     }
 }
 

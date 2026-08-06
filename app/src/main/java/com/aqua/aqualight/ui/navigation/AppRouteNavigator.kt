@@ -4,6 +4,7 @@ import android.net.Uri
 import androidx.navigation.NavController
 import androidx.navigation.NavDeepLinkRequest
 import androidx.navigation.navOptions
+import com.aqua.aqualight.NavDevicesDirections
 import com.aqua.aqualight.R
 import com.aqua.aqualight.ui.tabs.aquarium.navigation.AquariumTabArgs
 
@@ -49,6 +50,21 @@ object AppRouteNavigator {
                     .appendPath(PATH_CARE_TASK)
                     .appendPath(taskId.toString())
                     .build()
+            ),
+            standardRouteOptions()
+        )
+    }
+
+    fun openDeviceFirmwareUpdate(
+        navController: NavController,
+        deviceUid: String
+    ) {
+        val normalizedDeviceUid = deviceUid.trim()
+        if (normalizedDeviceUid.isBlank()) return
+
+        navController.navigate(
+            NavDevicesDirections.actionGlobalDeviceFirmwareUpdateFragment(
+                normalizedDeviceUid
             ),
             standardRouteOptions()
         )

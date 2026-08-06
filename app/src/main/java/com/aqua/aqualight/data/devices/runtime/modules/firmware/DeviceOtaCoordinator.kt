@@ -597,6 +597,15 @@ internal class DeviceOtaCoordinator(
     private fun stateFlow(deviceUid: DeviceUid): MutableStateFlow<DeviceOtaState> =
         states.getOrPut(deviceUid) { MutableStateFlow(DeviceOtaState.Idle(deviceUid.value)) }
 
+    /** Drops all state that belongs only to one deleted device without touching other devices. */
+    fun releaseDevice(deviceUid: DeviceUid) {
+        recoveryJobs.remove(deviceUid)?.cancel()
+        selectedPlans.remove(deviceUid)
+        pendingVersionVerification.remove(deviceUid)
+        startLocks.remove(deviceUid)
+        states.remove(deviceUid)
+    }
+
     private fun clearPlanState(deviceUid: DeviceUid) {
         selectedPlans.remove(deviceUid)
         pendingVersionVerification.remove(deviceUid)
@@ -621,6 +630,7 @@ internal class DeviceOtaCoordinator(
         selectedPlans.clear()
         pendingVersionVerification.clear()
         startLocks.clear()
+        states.clear()
         scope.cancel()
     }
 

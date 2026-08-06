@@ -117,6 +117,7 @@ interface NotificationRenderer {
     fun renderDeviceAlert(notification: DeviceAlertNotification)
     fun renderDeviceUpdate(notification: DeviceUpdateNotification)
     fun cancelCareReminder(ownerUid: String, taskId: Long)
+    fun cancelDeviceUpdate(ownerUid: String, deviceUid: String) = Unit
     fun cancelOwner(ownerUid: String)
 }
 
@@ -174,6 +175,15 @@ class NotificationDispatchUseCase(
 
         render()
         return NotificationDispatchResult.POSTED
+    }
+}
+
+/** Central lifecycle boundary for targeted visible-notification cancellation. */
+class NotificationLifecycleUseCase(
+    private val renderer: NotificationRenderer
+) {
+    fun cancelDeviceUpdate(ownerUid: String, deviceUid: String) {
+        renderer.cancelDeviceUpdate(ownerUid, deviceUid)
     }
 }
 

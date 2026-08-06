@@ -96,7 +96,8 @@ internal class OwnerViewModelFactory(
                         deviceDataCleaner = OwnerDeviceDataCleaner.create(
                             devicesRepository = repository,
                             assignmentRepository = assignments
-                        )
+                        ),
+                        afterDeviceDeleted = graph.firmwareUpdateOperations::releaseDevice
                     ),
                     menuAccessOperations = DefaultDeviceMenuAccessOperations.create(repository),
                     routeResolver = DeviceRouteResolver()

@@ -1,0 +1,22 @@
+syntax = "proto3";
+
+option java_package = "com.aqua.aqualight.data.notifications";
+option java_multiple_files = true;
+
+message DeviceUpdateNotificationRecord {
+  string device_uid = 1;
+  string target_version = 2;
+  string delivery_key = 3;
+  int64 delivered_at_epoch_millis = 4;
+  bool resolved = 5;
+}
+
+message OwnerDeviceUpdateNotificationState {
+  string owner_uid = 1;
+  repeated DeviceUpdateNotificationRecord records = 2;
+}
+
+message DeviceUpdateNotificationStateStore {
+  uint32 schema_version = 1;
+  repeated OwnerDeviceUpdateNotificationState owner_states = 2;
+}

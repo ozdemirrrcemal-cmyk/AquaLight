@@ -2,6 +2,7 @@ package com.aqua.aqualight.data.notifications
 
 import android.content.Context
 import com.aqua.aqualight.application.notifications.NotificationDispatchUseCase
+import com.aqua.aqualight.application.notifications.NotificationLifecycleUseCase
 import com.aqua.aqualight.application.notifications.NotificationPreferenceUseCase
 import com.aqua.aqualight.platform.notifications.AndroidNotificationRenderer
 
@@ -22,6 +23,7 @@ class NotificationPlatform private constructor(context: Context) {
         permissionPolicy = permissionPolicy,
         renderer = renderer
     )
+    val lifecycleUseCase = NotificationLifecycleUseCase(renderer)
     val preferenceUseCase = NotificationPreferenceUseCase(
         repository = repository,
         permissionPolicy = permissionPolicy,
