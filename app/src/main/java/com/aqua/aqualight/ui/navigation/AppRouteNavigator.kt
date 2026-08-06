@@ -1,6 +1,7 @@
 package com.aqua.aqualight.ui.navigation
 
 import android.net.Uri
+import androidx.core.os.bundleOf
 import androidx.navigation.NavController
 import androidx.navigation.NavDeepLinkRequest
 import androidx.navigation.navOptions
@@ -54,6 +55,22 @@ object AppRouteNavigator {
         )
     }
 
+    fun openDeviceFirmwareUpdate(
+        navController: NavController,
+        deviceUid: String
+    ) {
+        val normalizedDeviceUid = deviceUid.trim()
+        if (normalizedDeviceUid.isBlank()) {
+            return
+        }
+
+        navController.navigate(
+            R.id.action_global_openDeviceFirmwareUpdate,
+            bundleOf(ARG_DEVICE_UID to normalizedDeviceUid),
+            standardRouteOptions()
+        )
+    }
+
     private fun standardRouteOptions() = navOptions {
         anim {
             enter = R.anim.nav_slide_in_right
@@ -77,6 +94,7 @@ object AppRouteNavigator {
     private const val PATH_TANK = "tank"
     private const val PATH_SETTINGS = "settings"
     private const val PATH_CARE_TASK = "care-task"
+    private const val ARG_DEVICE_UID = "deviceUid"
 
     private const val QUERY_START_TAB = "startTab"
 }
