@@ -33,21 +33,26 @@ class DeviceFirmwareAvailabilityWorker(
         if (ownerUid.isBlank()) return Result.success()
 
         return try {
-            mapOutcome(createRunner().execute(ownerUid))
+            val allowForeground = inputData.getBoolean(KEY_ALLOW_FOREGROUND, false)
+            mapOutcome(createRunner(allowForeground).execute(ownerUid))
         } catch (error: IOException) {
             Log.w(TAG, "Firmware availability storage read failed; retrying.", error)
             retryOrFinish()
         }
     }
 
-    private fun createRunner(): DeviceFirmwareAvailabilityCheckRunner {
+    private fun createRunner(
+        allowForeground: Boolean
+    ): DeviceFirmwareAvailabilityCheckRunner {
         val platform = NotificationPlatform.get(applicationContext)
         return DeviceFirmwareAvailabilityCheckRunner(
             context = applicationContext,
             ownerProvider = FirebaseAuthenticatedOwnerProvider.create(applicationContext),
             preferenceUseCase = platform.preferenceUseCase,
             notifications = platform.deviceFirmwareUpdates,
-            isProcessForeground = ::isProcessForeground
+            isProcessForeground = {
+                !allowForeground && isProcessForeground()
+            }
         )
     }
 
@@ -79,6 +84,7 @@ class DeviceFirmwareAvailabilityWorker(
 
     companion object {
         internal const val KEY_OWNER_UID = "owner_uid"
+        internal const val KEY_ALLOW_FOREGROUND = "allow_foreground"
         private const val TAG = "FirmwareAvailability"
         private const val PERIODIC_WORK_PREFIX = "device_firmware_availability_periodic_owner_"
         private const val IMMEDIATE_WORK_PREFIX = "device_firmware_availability_immediate_owner_"
@@ -95,13 +101,20 @@ class DeviceFirmwareAvailabilityWorker(
         }
 
         fun enqueueImmediate(context: Context, ownerUid: String) {
-            val owner = ownerUid.trim()
-            if (owner.isBlank()) return
+            enqueueOneTime(
+                context = context,
+                ownerUid = ownerUid,
+                allowForeground = false,
+                policy = ExistingWorkPolicy.KEEP
+            )
+        }
 
-            WorkManager.getInstance(context.applicationContext).enqueueUniqueWork(
-                immediateWorkName(owner),
-                ExistingWorkPolicy.KEEP,
-                immediateRequest(owner)
+        fun enqueueAuthenticated(context: Context, ownerUid: String) {
+            enqueueOneTime(
+                context = context,
+                ownerUid = ownerUid,
+                allowForeground = true,
+                policy = ExistingWorkPolicy.REPLACE
             )
         }
 
@@ -111,6 +124,22 @@ class DeviceFirmwareAvailabilityWorker(
                 cancelUniqueWork(periodicWorkName(owner))
                 cancelUniqueWork(immediateWorkName(owner))
             }
+        }
+
+        private fun enqueueOneTime(
+            context: Context,
+            ownerUid: String,
+            allowForeground: Boolean,
+            policy: ExistingWorkPolicy
+        ) {
+            val owner = ownerUid.trim()
+            if (owner.isBlank()) return
+
+            WorkManager.getInstance(context.applicationContext).enqueueUniqueWork(
+                immediateWorkName(owner),
+                policy,
+                immediateRequest(owner, allowForeground)
+            )
         }
 
         private fun enqueuePeriodic(context: Context, ownerUid: String) {
@@ -135,16 +164,23 @@ class DeviceFirmwareAvailabilityWorker(
                 )
                 .build()
 
-        private fun immediateRequest(ownerUid: String) =
-            OneTimeWorkRequestBuilder<DeviceFirmwareAvailabilityWorker>()
-                .setInputData(workDataOf(KEY_OWNER_UID to ownerUid))
-                .setConstraints(networkConstraints())
-                .setBackoffCriteria(
-                    BackoffPolicy.EXPONENTIAL,
-                    BACKOFF_SECONDS,
-                    TimeUnit.SECONDS
+        private fun immediateRequest(
+            ownerUid: String,
+            allowForeground: Boolean
+        ) = OneTimeWorkRequestBuilder<DeviceFirmwareAvailabilityWorker>()
+            .setInputData(
+                workDataOf(
+                    KEY_OWNER_UID to ownerUid,
+                    KEY_ALLOW_FOREGROUND to allowForeground
                 )
-                .build()
+            )
+            .setConstraints(networkConstraints())
+            .setBackoffCriteria(
+                BackoffPolicy.EXPONENTIAL,
+                BACKOFF_SECONDS,
+                TimeUnit.SECONDS
+            )
+            .build()
 
         private fun networkConstraints(): Constraints {
             return Constraints.Builder()
