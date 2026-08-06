@@ -3,6 +3,7 @@
 package com.aqua.aqualight.platform.notifications
 
 import android.content.Context
+import android.util.Log
 import com.aqua.aqualight.application.devices.DeviceOtaState
 import com.aqua.aqualight.application.notifications.NotificationDispatchResult
 import com.aqua.aqualight.application.notifications.NotificationDispatchUseCase
@@ -108,6 +109,11 @@ internal class AndroidDeviceFirmwareUpdateNotificationPublisher(
                 } catch (error: CancellationException) {
                     throw error
                 } catch (error: Exception) {
+                    Log.w(
+                        TAG,
+                        "Device update notification cleanup failed; reconciliation remains pending.",
+                        error
+                    )
                     failed += deviceUid
                 }
             }
@@ -200,6 +206,10 @@ internal class AndroidDeviceFirmwareUpdateNotificationPublisher(
         val ownerUid: String,
         val deviceUid: String
     )
+
+    private companion object {
+        const val TAG = "DeviceUpdateNotify"
+    }
 }
 
 private fun DeviceOtaState.clearsAvailability(): Boolean = when (this) {
