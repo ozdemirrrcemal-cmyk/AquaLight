@@ -105,8 +105,6 @@
     <string name="device_settings_update_release_change_description">Sürüm yeniliği: %1$s</string>
     <string name="device_settings_update_release_warning_description">Güncelleme uyarısı: %1$s</string>
 
-    <string name="device_settings_update_notification_available_title">Yazılım güncellemesi mevcut</string>
-    <string name="device_settings_update_notification_available_message">%1$s, %2$s sürümüne güncellenebilir.</string>
     <string name="device_settings_update_notification_progress_title">%1$s güncelleniyor</string>
     <string name="device_settings_update_notification_progress_message">%1$s · %2$d%%</string>
     <string name="device_settings_update_notification_restart_message">%1$s sürümü için yeniden başlatılıyor ve doğrulanıyor…</string>
