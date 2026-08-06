@@ -33,6 +33,20 @@ class DeviceUpdateNotificationLedgerInstrumentedTest {
     }
 
     @Test
+    fun activeIdentityTracksDeviceWithoutAnnouncingTarget() = runBlocking {
+        val ledger = DeviceUpdateNotificationLedger.create(context)
+        val ownerUid = "ledger-owner-active-${UUID.randomUUID()}"
+        val deviceUid = "ledger-device-active"
+        ledger.clearOwner(ownerUid)
+
+        ledger.trackDevice(ownerUid, deviceUid)
+
+        assertEquals(setOf(deviceUid), ledger.trackedDeviceUids(ownerUid))
+        assertFalse(ledger.isAnnounced(ownerUid, deviceUid, "1.5.0"))
+        ledger.clearOwner(ownerUid)
+    }
+
+    @Test
     fun everyAnnouncedTargetRemainsDeduplicatedAcrossRecreation() = runBlocking {
         val ledger = DeviceUpdateNotificationLedger.create(context)
         val ownerUid = "ledger-owner-history-${UUID.randomUUID()}"
