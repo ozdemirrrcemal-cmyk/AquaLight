@@ -36,17 +36,10 @@ class AndroidDeviceFirmwareUpdateNotificationPublisherInstrumentedTest {
     fun backgroundHintPostsOnceForOwnerDeviceAndTargetVersion() = runBlocking {
         val fixture = createFixture()
         try {
-            val hint = DeviceFirmwareAvailabilityHint.UpdateAvailable(
-                deviceUid = fixture.deviceUid,
-                deviceName = "Aqua Light",
-                currentVersion = "1.4.0",
-                targetVersion = "1.5.0"
-            )
-
+            val hint = fixture.updateAvailableHint()
             assertTrue(fixture.publisher.publishAvailabilityHint(fixture.ownerUid, hint))
             assertFalse(fixture.publisher.publishAvailabilityHint(fixture.ownerUid, hint))
             val notification = fixture.awaitNotification()
-
             assertEquals(
                 context.getString(
                     R.string.device_update_background_notification_title,
@@ -72,8 +65,34 @@ class AndroidDeviceFirmwareUpdateNotificationPublisherInstrumentedTest {
                 state = DeviceOtaState.UpdateAvailable(preparedPlan(fixture.deviceUid)),
                 deviceName = "Aqua Light"
             )
-
             assertTrue(fixture.activeNotification() == null)
+        } finally {
+            fixture.cleanup()
+        }
+    }
+
+    @Test
+    fun upToDateStateCancelsStaleAvailabilityNotification() = runBlocking {
+        val fixture = createFixture()
+        try {
+            assertTrue(
+                fixture.publisher.publishAvailabilityHint(
+                    fixture.ownerUid,
+                    fixture.updateAvailableHint()
+                )
+            )
+            fixture.awaitNotification()
+            fixture.publisher.publishOtaState(
+                ownerUid = fixture.ownerUid,
+                state = DeviceOtaState.UpToDate(
+                    deviceUid = fixture.deviceUid,
+                    currentVersion = "1.5.0",
+                    latestVersion = "1.5.0",
+                    releaseContent = DeviceFirmwareReleaseContent.EMPTY
+                ),
+                deviceName = "Aqua Light"
+            )
+            fixture.awaitNoNotification()
         } finally {
             fixture.cleanup()
         }
@@ -89,14 +108,13 @@ class AndroidDeviceFirmwareUpdateNotificationPublisherInstrumentedTest {
         OwnerNotificationPreferences.create(context).setEnabled(ownerUid, true)
         ledger.clearOwner(ownerUid)
         platform.renderer.cancelDeviceUpdate(ownerUid, deviceUid)
-        return PublisherFixture(ownerUid, deviceUid, platform, ledger)
+        return PublisherFixture(ownerUid, deviceUid, platform)
     }
 
     private inner class PublisherFixture(
         val ownerUid: String,
         val deviceUid: String,
-        val platform: NotificationPlatform,
-        private val ledger: DeviceUpdateNotificationLedger
+        val platform: NotificationPlatform
     ) {
         val publisher = platform.deviceFirmwareUpdates
         private val manager = context.getSystemService(NotificationManager::class.java)
@@ -104,6 +122,13 @@ class AndroidDeviceFirmwareUpdateNotificationPublisherInstrumentedTest {
             NotificationCategory.DEVICE_UPDATES,
             ownerUid,
             deviceUid
+        )
+
+        fun updateAvailableHint() = DeviceFirmwareAvailabilityHint.UpdateAvailable(
+            deviceUid = deviceUid,
+            deviceName = "Aqua Light",
+            currentVersion = "1.4.0",
+            targetVersion = "1.5.0"
         )
 
         fun activeNotification(): Notification? {
@@ -117,9 +142,12 @@ class AndroidDeviceFirmwareUpdateNotificationPublisherInstrumentedTest {
             return requireNotNull(activeNotification())
         }
 
+        fun awaitNoNotification() {
+            assertTrue(awaitNotificationState { activeNotification() == null })
+        }
+
         suspend fun cleanup() {
-            platform.renderer.cancelOwner(ownerUid)
-            ledger.clearOwner(ownerUid)
+            publisher.clearOwner(ownerUid)
         }
     }
 
