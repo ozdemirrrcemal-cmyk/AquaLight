@@ -1,144 +1,155 @@
 package com.aqua.aqualight.platform.notifications
 
 import android.content.Context
-import com.aqua.aqualight.R
-import com.aqua.aqualight.application.devices.DeviceOtaProgressPhase
 import com.aqua.aqualight.application.devices.DeviceOtaState
-import com.aqua.aqualight.application.notifications.DeviceUpdateNotification
+import com.aqua.aqualight.application.notifications.NotificationDispatchResult
 import com.aqua.aqualight.application.notifications.NotificationDispatchUseCase
+import com.aqua.aqualight.data.devices.runtime.modules.firmware.DeviceFirmwareAvailabilityHint
+import com.aqua.aqualight.data.notifications.DeviceUpdateNotificationLedger
+import java.util.concurrent.ConcurrentHashMap
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
 
-/** Localized device-update notification projection for the owner-scoped OTA state machine. */
+internal interface DeviceFirmwareUpdateNotificationOperations {
+    suspend fun publishOtaState(
+        ownerUid: String,
+        state: DeviceOtaState,
+        deviceName: String
+    )
+
+    suspend fun publishAvailabilityHint(
+        ownerUid: String,
+        hint: DeviceFirmwareAvailabilityHint.UpdateAvailable
+    ): Boolean
+
+    suspend fun clearAvailability(ownerUid: String, deviceUid: String)
+
+    suspend fun reconcileDevices(ownerUid: String, currentDeviceUids: Set<String>)
+
+    suspend fun clearOwner(ownerUid: String)
+}
+
+/** Central device-update notification coordinator shared by foreground and background flows. */
 internal class AndroidDeviceFirmwareUpdateNotificationPublisher(
     context: Context,
-    private val ownerUid: String,
-    private val dispatchUseCase: NotificationDispatchUseCase
-) {
-    private val appContext = context.applicationContext
+    private val dispatchUseCase: NotificationDispatchUseCase,
+    private val renderer: AndroidNotificationRenderer,
+    private val ledger: DeviceUpdateNotificationLedger,
+    private val notificationFactory: DeviceFirmwareUpdateNotificationFactory =
+        DeviceFirmwareUpdateNotificationFactory(context)
+) : DeviceFirmwareUpdateNotificationOperations {
 
-    suspend fun publish(state: DeviceOtaState, deviceName: String) {
-        val normalizedName = deviceName.trim().ifBlank {
-            appContext.getString(R.string.device_settings_update_device_fallback)
-        }
-        state.toNotification(normalizedName)?.let { notification ->
+    private val deviceLocks = ConcurrentHashMap<DeviceIdentity, Mutex>()
+
+    override suspend fun publishOtaState(
+        ownerUid: String,
+        state: DeviceOtaState,
+        deviceName: String
+    ) {
+        val owner = requireOwnerUid(ownerUid)
+        val notification = notificationFactory.fromOtaState(owner, state, deviceName) ?: return
+        withDeviceLock(owner, state.deviceUid) {
             dispatchUseCase.dispatchDeviceUpdate(notification)
         }
     }
 
-    private fun DeviceOtaState.toNotification(
-        deviceName: String
-    ): DeviceUpdateNotification? = when (this) {
-        is DeviceOtaState.UpdateAvailable -> DeviceUpdateNotification(
-            ownerUid = ownerUid,
-            deviceUid = deviceUid,
-            title = text(R.string.device_settings_update_notification_available_title),
-            message = text(
-                R.string.device_settings_update_notification_available_message,
-                deviceName,
-                plan.targetVersion
-            )
+    override suspend fun publishAvailabilityHint(
+        ownerUid: String,
+        hint: DeviceFirmwareAvailabilityHint.UpdateAvailable
+    ): Boolean = withDeviceLock(ownerUid, hint.deviceUid) {
+        val owner = requireOwnerUid(ownerUid)
+        val operationActive = renderer.isDeviceUpdateOperationNotificationActive(
+            owner,
+            hint.deviceUid
         )
-        is DeviceOtaState.Starting -> progressNotification(
-            deviceName = deviceName,
-            targetVersion = plan.targetVersion,
-            phaseLabel = text(R.string.device_settings_update_status_preparing),
-            progressPercent = 0
+        val alreadyAnnounced = ledger.isAnnounced(
+            owner,
+            hint.deviceUid,
+            hint.targetVersion
         )
-        is DeviceOtaState.InProgress -> progressNotification(
-            deviceName = deviceName,
-            targetVersion = targetVersion,
-            phaseLabel = text(phase.notificationTextRes()),
-            progressPercent = progressPermille.toProgressPercent()
-        )
-        is DeviceOtaState.Recovering -> progressNotification(
-            deviceName = deviceName,
-            targetVersion = targetVersion,
-            phaseLabel = text(R.string.device_settings_update_status_recovering),
-            progressPercent = progressPermille.toProgressPercent()
-        )
-        is DeviceOtaState.RestartRequired -> restartNotification(deviceName)
-        is DeviceOtaState.Succeeded -> successNotification(deviceName)
-        is DeviceOtaState.Failed -> failureNotification(deviceName)
-        is DeviceOtaState.Idle,
-        is DeviceOtaState.Checking,
-        is DeviceOtaState.Unsupported,
-        is DeviceOtaState.UpToDate -> null
+        val eligible = !operationActive && !alreadyAnnounced
+        if (eligible) {
+            dispatchAvailability(owner, hint)
+        } else {
+            false
+        }
     }
 
-    private fun DeviceOtaState.RestartRequired.restartNotification(
-        deviceName: String
-    ): DeviceUpdateNotification = DeviceUpdateNotification(
-        ownerUid = ownerUid,
-        deviceUid = deviceUid,
-        title = text(R.string.device_settings_update_notification_progress_title, deviceName),
-        message = text(
-            R.string.device_settings_update_notification_restart_message,
-            targetVersion
-        ),
-        progressPercent = COMPLETE_PROGRESS_PERCENT,
-        ongoing = true
-    )
-
-    private fun DeviceOtaState.Succeeded.successNotification(
-        deviceName: String
-    ): DeviceUpdateNotification = DeviceUpdateNotification(
-        ownerUid = ownerUid,
-        deviceUid = deviceUid,
-        title = text(R.string.device_settings_update_notification_success_title),
-        message = text(
-            R.string.device_settings_update_notification_success_message,
-            deviceName,
-            targetVersion
-        ),
-        progressPercent = COMPLETE_PROGRESS_PERCENT
-    )
-
-    private fun DeviceOtaState.Failed.failureNotification(
-        deviceName: String
-    ): DeviceUpdateNotification = DeviceUpdateNotification(
-        ownerUid = ownerUid,
-        deviceUid = deviceUid,
-        title = text(R.string.device_settings_update_notification_failure_title),
-        message = text(
-            R.string.device_settings_update_notification_failure_message,
-            deviceName
-        )
-    )
-
-    private fun DeviceOtaState.progressNotification(
-        deviceName: String,
-        targetVersion: String,
-        phaseLabel: String,
-        progressPercent: Int
-    ): DeviceUpdateNotification = DeviceUpdateNotification(
-        ownerUid = ownerUid,
-        deviceUid = deviceUid,
-        title = text(R.string.device_settings_update_notification_progress_title, deviceName),
-        message = text(
-            R.string.device_settings_update_notification_progress_message,
-            phaseLabel,
-            progressPercent
-        ),
-        progressPercent = progressPercent,
-        ongoing = true
-    ).also {
-        require(targetVersion.isNotBlank()) { "OTA notification target version is missing." }
+    private suspend fun dispatchAvailability(
+        ownerUid: String,
+        hint: DeviceFirmwareAvailabilityHint.UpdateAvailable
+    ): Boolean {
+        val notification = notificationFactory.availability(ownerUid, hint)
+        val result = dispatchUseCase.dispatchDeviceUpdate(notification)
+        val posted = result == NotificationDispatchResult.POSTED
+        if (posted) {
+            ledger.markAnnounced(ownerUid, hint.deviceUid, hint.targetVersion)
+        }
+        return posted
     }
 
-    private fun text(resourceId: Int, vararg args: Any): String =
-        appContext.getString(resourceId, *args)
+    override suspend fun clearAvailability(ownerUid: String, deviceUid: String) {
+        withDeviceLock(ownerUid, deviceUid) {
+            val owner = requireOwnerUid(ownerUid)
+            if (renderer.isDeviceUpdateOperationNotificationActive(owner, deviceUid)) {
+                return@withDeviceLock
+            }
+            renderer.cancelDeviceUpdate(owner, deviceUid)
+            ledger.clearDevice(owner, deviceUid)
+        }
+    }
+
+    override suspend fun reconcileDevices(
+        ownerUid: String,
+        currentDeviceUids: Set<String>
+    ) {
+        val owner = requireOwnerUid(ownerUid)
+        val removedDeviceUids = ledger.trackedDeviceUids(owner) - currentDeviceUids
+        removedDeviceUids.forEach { deviceUid ->
+            clearRemovedDevice(owner, deviceUid)
+        }
+    }
+
+    override suspend fun clearOwner(ownerUid: String) {
+        val owner = requireOwnerUid(ownerUid)
+        renderer.cancelOwner(owner)
+        ledger.clearOwner(owner)
+    }
+
+    private suspend fun clearRemovedDevice(ownerUid: String, deviceUid: String) {
+        withDeviceLock(ownerUid, deviceUid) {
+            renderer.cancelDeviceUpdate(ownerUid, deviceUid)
+            ledger.clearDevice(ownerUid, deviceUid)
+        }
+    }
+
+    private suspend fun <T> withDeviceLock(
+        ownerUid: String,
+        deviceUid: String,
+        block: suspend () -> T
+    ): T {
+        val identity = DeviceIdentity(
+            ownerUid = requireOwnerUid(ownerUid),
+            deviceUid = requireDeviceUid(deviceUid)
+        )
+        val lock = deviceLocks.computeIfAbsent(identity) { Mutex() }
+        return lock.withLock { block() }
+    }
+
+    private fun requireOwnerUid(ownerUid: String): String {
+        return ownerUid.trim().also { normalized ->
+            require(normalized.isNotBlank()) { "ownerUid must not be blank" }
+        }
+    }
+
+    private fun requireDeviceUid(deviceUid: String): String {
+        return deviceUid.trim().also { normalized ->
+            require(normalized.isNotBlank()) { "deviceUid must not be blank" }
+        }
+    }
+
+    private data class DeviceIdentity(
+        val ownerUid: String,
+        val deviceUid: String
+    )
 }
-
-private fun DeviceOtaProgressPhase.notificationTextRes(): Int = when (this) {
-    DeviceOtaProgressPhase.STARTING -> R.string.device_settings_update_status_preparing
-    DeviceOtaProgressPhase.SAFE_MODE -> R.string.device_settings_update_phase_safe_mode
-    DeviceOtaProgressPhase.DOWNLOADING -> R.string.device_settings_update_phase_downloading
-    DeviceOtaProgressPhase.WRITING -> R.string.device_settings_update_phase_writing
-    DeviceOtaProgressPhase.VERIFYING -> R.string.device_settings_update_phase_verifying
-}
-
-private fun Int.toProgressPercent(): Int =
-    coerceIn(0, COMPLETE_PROGRESS_PERMILLE) / PERMILLE_PER_PERCENT
-
-private const val COMPLETE_PROGRESS_PERMILLE = 1_000
-private const val PERMILLE_PER_PERCENT = 10
-private const val COMPLETE_PROGRESS_PERCENT = 100

@@ -54,6 +54,29 @@ object AppRouteNavigator {
         )
     }
 
+    fun openDeviceFirmwareUpdate(
+        navController: NavController,
+        deviceUid: String
+    ) {
+        val normalizedDeviceUid = deviceUid.trim()
+        if (normalizedDeviceUid.isBlank()) {
+            return
+        }
+
+        navController.navigate(
+            deepLinkRequest(
+                uri = Uri.Builder()
+                    .scheme(SCHEME)
+                    .authority(AUTHORITY)
+                    .appendPath(PATH_DEVICE)
+                    .appendPath(normalizedDeviceUid)
+                    .appendPath(PATH_FIRMWARE_UPDATE)
+                    .build()
+            ),
+            standardRouteOptions()
+        )
+    }
+
     private fun standardRouteOptions() = navOptions {
         anim {
             enter = R.anim.nav_slide_in_right
@@ -77,6 +100,8 @@ object AppRouteNavigator {
     private const val PATH_TANK = "tank"
     private const val PATH_SETTINGS = "settings"
     private const val PATH_CARE_TASK = "care-task"
+    private const val PATH_DEVICE = "device"
+    private const val PATH_FIRMWARE_UPDATE = "firmware-update"
 
     private const val QUERY_START_TAB = "startTab"
 }

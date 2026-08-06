@@ -286,6 +286,8 @@
         <argument
             android:name="deviceUid"
             app:argType="string" />
+        <deepLink
+            app:uri="aqualight://app/device/{deviceUid}/firmware-update" />
     </fragment>
 
     <fragment

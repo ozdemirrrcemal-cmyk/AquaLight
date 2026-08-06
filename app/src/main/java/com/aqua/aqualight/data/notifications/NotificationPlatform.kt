@@ -3,12 +3,15 @@ package com.aqua.aqualight.data.notifications
 import android.content.Context
 import com.aqua.aqualight.application.notifications.NotificationDispatchUseCase
 import com.aqua.aqualight.application.notifications.NotificationPreferenceUseCase
+import com.aqua.aqualight.platform.notifications.AndroidDeviceFirmwareUpdateNotificationPublisher
 import com.aqua.aqualight.platform.notifications.AndroidNotificationRenderer
+import com.aqua.aqualight.platform.notifications.DeviceFirmwareUpdateNotificationOperations
 
 /** Process-scoped composition for the central notification platform. */
 class NotificationPlatform private constructor(context: Context) {
     private val appContext = context.applicationContext
     private val repository = OwnerNotificationPreferences.create(appContext)
+    private val deviceUpdateLedger = DeviceUpdateNotificationLedger.create(appContext)
 
     val permissionPolicy = AndroidNotificationPermissionPolicy(appContext)
     val renderer = AndroidNotificationRenderer(appContext)
@@ -28,6 +31,13 @@ class NotificationPlatform private constructor(context: Context) {
         scheduler = scheduler,
         renderer = renderer
     )
+    internal val deviceFirmwareUpdates: DeviceFirmwareUpdateNotificationOperations =
+        AndroidDeviceFirmwareUpdateNotificationPublisher(
+            context = appContext,
+            dispatchUseCase = dispatchUseCase,
+            renderer = renderer,
+            ledger = deviceUpdateLedger
+        )
 
     companion object {
         @Volatile

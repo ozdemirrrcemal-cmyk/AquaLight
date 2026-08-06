@@ -6,7 +6,6 @@ import com.aqua.aqualight.application.devices.DeviceFirmwareUpdateOperations
 import com.aqua.aqualight.application.devices.provisioning.ProvisioningDraftOperations
 import com.aqua.aqualight.application.devices.provisioning.ProvisioningDraftRequest
 import com.aqua.aqualight.application.devices.provisioning.ProvisioningDraftSession
-import com.aqua.aqualight.application.notifications.NotificationDispatchUseCase
 import com.aqua.aqualight.data.aquarium.devices.TankDeviceAssignmentRepository
 import com.aqua.aqualight.data.aquarium.devices.TankDeviceAssignmentRepositoryProvider
 import com.aqua.aqualight.data.aquarium.store.AquariumTankDataStoreManager
@@ -20,7 +19,7 @@ import com.aqua.aqualight.data.devices.provisioning.store.AqlProvisioningQrSecre
 import com.aqua.aqualight.data.devices.repository.DevicesRepository
 import com.aqua.aqualight.data.devices.repository.DevicesRepositoryProvider
 import com.aqua.aqualight.data.user.UserDataScope
-import com.aqua.aqualight.platform.notifications.AndroidDeviceFirmwareUpdateNotificationPublisher
+import com.aqua.aqualight.platform.notifications.DeviceFirmwareUpdateNotificationOperations
 
 /**
  * Immutable dependency snapshot for one committed authenticated-owner session.
@@ -60,7 +59,7 @@ internal fun requireActiveOwnerGeneration(
 
 internal class ActiveOwnerDependencyGraphResolver(
     context: Context,
-    private val notificationDispatchUseCase: NotificationDispatchUseCase
+    private val deviceFirmwareNotifications: DeviceFirmwareUpdateNotificationOperations
 ) : OwnerDependencyGraphResolver {
 
     private val appContext = context.applicationContext
@@ -149,14 +148,15 @@ internal class ActiveOwnerDependencyGraphResolver(
 
     private fun composeGraph(dependencies: ActiveOwnerDependencies): OwnerDependencyGraph {
         val ownerUidProvider = { dependencies.ownerUid }
-        val notificationPublisher = AndroidDeviceFirmwareUpdateNotificationPublisher(
-            context = appContext,
-            ownerUid = dependencies.ownerUid,
-            dispatchUseCase = notificationDispatchUseCase
-        )
         val firmwareUpdateOperations = DefaultDeviceFirmwareUpdateOperations(
             devicesRepository = dependencies.devicesRepository,
-            statePublisher = notificationPublisher::publish
+            statePublisher = { state, deviceName ->
+                deviceFirmwareNotifications.publishOtaState(
+                    ownerUid = dependencies.ownerUid,
+                    state = state,
+                    deviceName = deviceName
+                )
+            }
         ).also(dependencies.devicesRepository::registerOwnerScopedResource)
         return OwnerDependencyGraph(
             ownerUid = dependencies.ownerUid,

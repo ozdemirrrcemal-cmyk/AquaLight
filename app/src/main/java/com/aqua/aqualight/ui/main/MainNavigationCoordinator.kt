@@ -15,6 +15,7 @@ import com.aqua.aqualight.databinding.ActivityMainBinding
 import com.aqua.aqualight.ui.navigation.AppDestinationContract
 import com.aqua.aqualight.ui.navigation.AppRouteNavigator
 import com.aqua.aqualight.ui.navigation.CareTaskNotificationRoutePolicy
+import com.aqua.aqualight.ui.navigation.DeviceFirmwareNotificationRoutePolicy
 import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.launch
 
@@ -22,7 +23,7 @@ import kotlinx.coroutines.launch
  * Owns MainActivity's transient navigation chrome and deferred notification route state.
  *
  * Authentication remains owned by AppSessionCoordinator; this class only consumes a current
- * snapshot when deciding whether navigation UI or an owner-bound care-task route is safe to show.
+ * snapshot when deciding whether navigation UI or an owner-bound notification route is safe.
  */
 internal class MainNavigationCoordinator(
     private val host: BaseActivity,
@@ -33,31 +34,45 @@ internal class MainNavigationCoordinator(
 ) {
     private var pendingCareTaskId: Long = -1L
     private var pendingCareTaskOwnerUid: String = ""
+    private var pendingFirmwareDeviceUid: String = ""
+    private var pendingFirmwareOwnerUid: String = ""
     private var bottomBarSetup: Boolean = false
     private var exitFromTopLevelBackCallback: OnBackPressedCallback? = null
 
-    fun captureCareTaskIntent(intent: Intent?) {
+    fun captureNotificationIntent(intent: Intent?) {
+        val firmwareDeviceUid = intent
+            ?.getStringExtra(MainActivity.EXTRA_OPEN_DEVICE_FIRMWARE_UID)
+            .orEmpty()
+            .trim()
+        if (firmwareDeviceUid.isNotBlank()) {
+            clearPendingNotifications()
+            pendingFirmwareDeviceUid = firmwareDeviceUid
+            pendingFirmwareOwnerUid = intent
+                ?.getStringExtra(MainActivity.EXTRA_OWNER_UID)
+                .orEmpty()
+            return
+        }
+
         val taskId = intent?.getLongExtra(
             MainActivity.EXTRA_OPEN_CARE_TASK_ID,
             -1L
         ) ?: -1L
-
         if (taskId <= 0L) {
             return
         }
 
+        clearPendingNotifications()
         pendingCareTaskId = taskId
-        pendingCareTaskOwnerUid = intent?.getStringExtra(
-            MainActivity.EXTRA_OWNER_UID
-        ).orEmpty()
-        intent?.removeExtra(MainActivity.EXTRA_OPEN_CARE_TASK_ID)
-        intent?.removeExtra(MainActivity.EXTRA_START_IN_APP)
-        intent?.removeExtra(MainActivity.EXTRA_OWNER_UID)
+        pendingCareTaskOwnerUid = intent
+            ?.getStringExtra(MainActivity.EXTRA_OWNER_UID)
+            .orEmpty()
     }
 
-    fun clearPendingCareTask() {
+    fun clearPendingNotifications() {
         pendingCareTaskId = -1L
         pendingCareTaskOwnerUid = ""
+        pendingFirmwareDeviceUid = ""
+        pendingFirmwareOwnerUid = ""
     }
 
     fun restoreSettingsRootAfterThemeChangeIfNeeded() {
@@ -93,23 +108,11 @@ internal class MainNavigationCoordinator(
         }
     }
 
-    fun consumePendingCareTaskIfPossible() {
-        val taskId = pendingCareTaskId
-        val ownerUid = pendingCareTaskOwnerUid
-        val session = sessionSnapshot()
-
-        when {
-            taskId <= 0L || !session.isAuthenticated -> Unit
-            !CareTaskNotificationRoutePolicy.canOpen(
-                taskId = taskId,
-                notificationOwnerUid = ownerUid,
-                activeOwnerUid = session.activeOwnerUid,
-                isAuthenticated = true
-            ) -> clearPendingCareTask()
-
-            !AppDestinationContract.isInsideAppGraph(navController.currentDestination) -> Unit
-            else -> openPendingCareTask(taskId, ownerUid)
+    fun consumePendingNotificationIfPossible() {
+        if (consumePendingFirmwareUpdateIfPossible()) {
+            return
         }
+        consumePendingCareTaskIfPossible()
     }
 
     fun setupBottomBarIfNeeded() {
@@ -163,7 +166,7 @@ internal class MainNavigationCoordinator(
                 ) == true
 
         if (AppDestinationContract.isInsideAppGraph(destination)) {
-            consumePendingCareTaskIfPossible()
+            consumePendingNotificationIfPossible()
         }
     }
 
@@ -179,6 +182,71 @@ internal class MainNavigationCoordinator(
         }
     }
 
+    private fun consumePendingFirmwareUpdateIfPossible(): Boolean {
+        val deviceUid = pendingFirmwareDeviceUid
+        if (deviceUid.isBlank()) {
+            return false
+        }
+
+        val ownerUid = pendingFirmwareOwnerUid
+        val session = sessionSnapshot()
+        when {
+            !session.isAuthenticated -> return true
+            !DeviceFirmwareNotificationRoutePolicy.canOpen(
+                deviceUid = deviceUid,
+                notificationOwnerUid = ownerUid,
+                activeOwnerUid = session.activeOwnerUid,
+                isAuthenticated = true
+            ) -> {
+                clearPendingFirmwareUpdate()
+                clearConsumedNotificationExtras(host.intent)
+                return false
+            }
+            !AppDestinationContract.isInsideAppGraph(navController.currentDestination) -> return true
+            else -> openPendingFirmwareUpdate(deviceUid, ownerUid)
+        }
+        return true
+    }
+
+    private fun consumePendingCareTaskIfPossible() {
+        val taskId = pendingCareTaskId
+        val ownerUid = pendingCareTaskOwnerUid
+        val session = sessionSnapshot()
+
+        when {
+            taskId <= 0L || !session.isAuthenticated -> Unit
+            !CareTaskNotificationRoutePolicy.canOpen(
+                taskId = taskId,
+                notificationOwnerUid = ownerUid,
+                activeOwnerUid = session.activeOwnerUid,
+                isAuthenticated = true
+            ) -> {
+                clearPendingCareTask()
+                clearConsumedNotificationExtras(host.intent)
+            }
+
+            !AppDestinationContract.isInsideAppGraph(navController.currentDestination) -> Unit
+            else -> openPendingCareTask(taskId, ownerUid)
+        }
+    }
+
+    private fun openPendingFirmwareUpdate(deviceUid: String, ownerUid: String) {
+        clearPendingFirmwareUpdate()
+        binding.navHost.post {
+            runCatching {
+                AppRouteNavigator.openDeviceFirmwareUpdate(
+                    navController = navController,
+                    deviceUid = deviceUid
+                )
+            }.onSuccess {
+                clearConsumedNotificationExtras(host.intent)
+            }.onFailure {
+                pendingFirmwareDeviceUid = deviceUid
+                pendingFirmwareOwnerUid = ownerUid
+            }
+        }
+    }
+
     private fun openPendingCareTask(taskId: Long, ownerUid: String) {
         clearPendingCareTask()
         binding.navHost.post {
@@ -187,11 +255,30 @@ internal class MainNavigationCoordinator(
                     navController = navController,
                     taskId = taskId
                 )
+            }.onSuccess {
+                clearConsumedNotificationExtras(host.intent)
             }.onFailure {
                 pendingCareTaskId = taskId
                 pendingCareTaskOwnerUid = ownerUid
             }
         }
+    }
+
+    private fun clearPendingFirmwareUpdate() {
+        pendingFirmwareDeviceUid = ""
+        pendingFirmwareOwnerUid = ""
+    }
+
+    private fun clearPendingCareTask() {
+        pendingCareTaskId = -1L
+        pendingCareTaskOwnerUid = ""
+    }
+
+    private fun clearConsumedNotificationExtras(intent: Intent?) {
+        intent?.removeExtra(MainActivity.EXTRA_OPEN_CARE_TASK_ID)
+        intent?.removeExtra(MainActivity.EXTRA_OPEN_DEVICE_FIRMWARE_UID)
+        intent?.removeExtra(MainActivity.EXTRA_START_IN_APP)
+        intent?.removeExtra(MainActivity.EXTRA_OWNER_UID)
     }
 
     private fun selectBottomNavItemSafely(itemId: Int) {

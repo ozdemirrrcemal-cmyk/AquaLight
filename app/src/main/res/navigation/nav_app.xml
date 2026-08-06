@@ -1,7 +1,11 @@
 <?xml version='1.0' encoding='utf-8'?>
-<navigation xmlns:android="http://schemas.android.com/apk/res/android" xmlns:app="http://schemas.android.com/apk/res-auto" android:id="@+id/nav_app" app:startDestination="@id/nav_aquarium">
-  <include app:graph="@navigation/nav_aquarium"/>
-  <include app:graph="@navigation/nav_maintenance"/>
-  <include app:graph="@navigation/nav_devices"/>
-  <include app:graph="@navigation/nav_settings"/>
+<navigation xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:id="@+id/nav_app"
+    app:startDestination="@id/nav_aquarium">
+
+    <include app:graph="@navigation/nav_aquarium" />
+    <include app:graph="@navigation/nav_maintenance" />
+    <include app:graph="@navigation/nav_devices" />
+    <include app:graph="@navigation/nav_settings" />
 </navigation>

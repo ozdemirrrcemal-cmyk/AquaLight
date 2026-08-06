@@ -19,6 +19,9 @@ paths = {
     "owner_identity": SOURCE_ROOT / "application/auth/AuthenticatedOwnerIdentity.kt",
     "assignment_provider": SOURCE_ROOT / "data/aquarium/devices/TankDeviceAssignmentRepositoryProvider.kt",
     "devices_provider": SOURCE_ROOT / "data/devices/repository/DevicesRepositoryProvider.kt",
+    "notification_platform": SOURCE_ROOT / "data/notifications/NotificationPlatform.kt",
+    "device_update_worker": SOURCE_ROOT / "data/devices/update/DeviceFirmwareAvailabilityWorker.kt",
+    "device_update_publisher": SOURCE_ROOT / "platform/notifications/AndroidDeviceFirmwareUpdateNotificationPublisher.kt",
     "aqua_app": SOURCE_ROOT / "app/AquaApp.kt",
     "auth_factory": SOURCE_ROOT / "ui/auth/viewmodel/AuthViewModelFactory.kt",
     "factory_test": ROOT / "app/src/test/java/com/aqua/aqualight/composition/AquaViewModelFactoryTest.kt",
@@ -58,8 +61,11 @@ require(
     "container",
     "interface AppContainer",
     "internal class DefaultAppContainer",
+    "private val notificationPlatform by lazy(",
     "ActiveOwnerDependencyGraphResolver(",
-    "notificationDispatchUseCase = notificationDispatchUseCase",
+    "deviceFirmwareNotifications = notificationPlatform.deviceFirmwareUpdates",
+    "notificationPlatform.preferenceUseCase",
+    "notificationPlatform.dispatchUseCase",
     "ResolvingAuthenticatedOwnerIdentity(ownerGraphResolver)",
     "ResolvingProvisioningDraftOperations(ownerGraphResolver)",
     "val authenticatedOwnerIdentity: AuthenticatedOwnerIdentity",
@@ -123,6 +129,8 @@ require(
     "internal fun requireActiveOwnerGeneration(",
     "snapshot.activeOwnerUid == ownerUid",
     "snapshot.pendingOwnerUid == null",
+    "DeviceFirmwareUpdateNotificationOperations",
+    "deviceFirmwareNotifications: DeviceFirmwareUpdateNotificationOperations",
     "OwnerSessionCoordinator.create(appContext)",
     "DevicesRepositoryProvider.currentRepository(ownerUid)",
     "TankDeviceAssignmentRepositoryProvider.currentRepository(ownerUid)",
@@ -134,8 +142,8 @@ require(
     "DevicesRepositoryProvider.currentRepository(dependencies.ownerUid) ===",
     "dependencies.devicesRepository",
     "assignmentRepository",
-    "AndroidDeviceFirmwareUpdateNotificationPublisher(",
-    "statePublisher = notificationPublisher::publish",
+    "statePublisher = { state, deviceName ->",
+    "deviceFirmwareNotifications.publishOtaState(",
     "registerOwnerScopedResource",
     "ownerUidProvider = ownerUidProvider",
     "class ResolvingAuthenticatedOwnerIdentity",
@@ -146,6 +154,39 @@ forbid(
     "owner_graph",
     "DevicesRepositoryProvider.get(",
     "TankDeviceAssignmentRepositoryProvider.get(",
+    "AndroidDeviceFirmwareUpdateNotificationPublisher(",
+)
+
+require(
+    "notification_platform",
+    "class NotificationPlatform private constructor",
+    "DeviceUpdateNotificationLedger.create(appContext)",
+    "internal val deviceFirmwareUpdates: DeviceFirmwareUpdateNotificationOperations",
+    "AndroidDeviceFirmwareUpdateNotificationPublisher(",
+    "dispatchUseCase = dispatchUseCase",
+    "renderer = renderer",
+    "ledger = deviceUpdateLedger",
+)
+require(
+    "device_update_publisher",
+    "internal interface DeviceFirmwareUpdateNotificationOperations",
+    "publishOtaState(",
+    "publishAvailabilityHint(",
+    "clearAvailability(ownerUid: String, deviceUid: String)",
+    "reconcileDevices(ownerUid: String, currentDeviceUids: Set<String>)",
+    "ConcurrentHashMap<DeviceIdentity, Mutex>()",
+    "withDeviceLock(ownerUid, hint.deviceUid)",
+)
+forbid(
+    "device_update_worker",
+    "AndroidDeviceFirmwareUpdateNotificationPublisher",
+    "DeviceUpdateNotificationLedger",
+    "platform.renderer",
+)
+require(
+    "device_update_worker",
+    "DeviceFirmwareAvailabilityCheckRunner(",
+    "notifications = platform.deviceFirmwareUpdates",
 )
 
 require(

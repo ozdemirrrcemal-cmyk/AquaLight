@@ -6,6 +6,7 @@ import com.aqua.aqualight.data.care.reminder.CareReminderReconcileWorker
 import com.aqua.aqualight.data.care.smartcare.SmartCareDailyWorker
 import com.aqua.aqualight.data.devices.provisioning.repository.AqlProvisioningHandoffSaver
 import com.aqua.aqualight.data.devices.repository.DevicesRepositoryProvider
+import com.aqua.aqualight.data.devices.update.DeviceFirmwareAvailabilityWorker
 import com.aqua.aqualight.data.notifications.NotificationPlatform
 import com.aqua.aqualight.data.user.UserDataScope
 import java.util.concurrent.CancellationException
@@ -15,6 +16,7 @@ object SessionBoundServiceManager {
 
     enum class StopStep {
         PROVISIONING_TRANSACTIONS,
+        DEVICE_UPDATE_CHECKS,
         DEVICES_REPOSITORY,
         ASSIGNMENT_REPOSITORY,
         SMART_CARE,
@@ -53,6 +55,7 @@ object SessionBoundServiceManager {
 
         val appContext = context.applicationContext
         SmartCareDailyWorker.schedule(appContext, normalizedOwnerUid)
+        DeviceFirmwareAvailabilityWorker.schedule(appContext, normalizedOwnerUid)
         CareReminderReconcileWorker.enqueue(appContext, normalizedOwnerUid)
     }
 
@@ -82,6 +85,12 @@ object SessionBoundServiceManager {
                     .rollbackPendingRegistrationsForOwner(ownerUid)
                     .getOrThrow()
             }
+        }
+
+        // Cancel background discovery before removing the live runtime barrier. A running
+        // CoroutineWorker is also owner-checked and cancellation-cooperative.
+        runStep(StopStep.DEVICE_UPDATE_CHECKS) {
+            DeviceFirmwareAvailabilityWorker.cancel(appContext, ownerUid)
         }
 
         // Stop runtime collectors, sockets and owner token access before clearing
