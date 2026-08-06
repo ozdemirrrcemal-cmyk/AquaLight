@@ -182,9 +182,13 @@ class AndroidNotificationRenderer(
             normalizedOwner,
             entityId
         )
-        postedNotifications.remove(
-            PostedNotification(normalizedOwner, tag, DEVICE_UPDATE_NOTIFICATION_ID)
-        )
+        postedNotifications
+            .firstOrNull { posted ->
+                posted.ownerUid == normalizedOwner &&
+                    posted.tag == tag &&
+                    posted.id == DEVICE_UPDATE_NOTIFICATION_ID
+            }
+            ?.let { posted -> postedNotifications.remove(posted) }
         manager?.cancel(tag, DEVICE_UPDATE_NOTIFICATION_ID)
     }
 
