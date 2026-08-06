@@ -19,12 +19,7 @@ class DeviceUpdateNotificationLedger private constructor(
         deviceUid: String,
         targetVersion: String
     ): Boolean {
-        val record = DeviceUpdateNotificationRecord(
-            deviceUid = DeviceUpdateNotificationLedgerCodec.normalizeDeviceUid(deviceUid),
-            targetVersion = DeviceUpdateNotificationLedgerCodec.normalizeTargetVersion(
-                targetVersion
-            )
-        )
+        val record = normalizedRecord(deviceUid, targetVersion)
         return record in records(ownerUid)
     }
 
@@ -33,20 +28,14 @@ class DeviceUpdateNotificationLedger private constructor(
         deviceUid: String,
         targetVersion: String
     ) {
-        val key = DeviceUpdateNotificationLedgerCodec.ownerKey(ownerUid)
-        val record = DeviceUpdateNotificationRecord(
-            deviceUid = DeviceUpdateNotificationLedgerCodec.normalizeDeviceUid(deviceUid),
-            targetVersion = DeviceUpdateNotificationLedgerCodec.normalizeTargetVersion(
-                targetVersion
-            )
+        addRecord(ownerUid, normalizedRecord(deviceUid, targetVersion))
+    }
+
+    suspend fun trackDevice(ownerUid: String, deviceUid: String) {
+        addRecord(
+            ownerUid = ownerUid,
+            record = normalizedRecord(deviceUid, ACTIVE_NOTIFICATION_MARKER)
         )
-        context.deviceUpdateNotificationLedgerDataStore.edit { preferences ->
-            val retained = decodeRecords(preferences[key]).toMutableSet()
-            retained += record
-            preferences[key] = retained.mapTo(mutableSetOf()) {
-                DeviceUpdateNotificationLedgerCodec.encode(it)
-            }
-        }
     }
 
     suspend fun trackedDeviceUids(ownerUid: String): Set<String> {
@@ -76,10 +65,36 @@ class DeviceUpdateNotificationLedger private constructor(
         }
     }
 
+    private suspend fun addRecord(
+        ownerUid: String,
+        record: DeviceUpdateNotificationRecord
+    ) {
+        val key = DeviceUpdateNotificationLedgerCodec.ownerKey(ownerUid)
+        context.deviceUpdateNotificationLedgerDataStore.edit { preferences ->
+            val retained = decodeRecords(preferences[key]).toMutableSet()
+            retained += record
+            preferences[key] = retained.mapTo(mutableSetOf()) {
+                DeviceUpdateNotificationLedgerCodec.encode(it)
+            }
+        }
+    }
+
     private suspend fun records(ownerUid: String): Set<DeviceUpdateNotificationRecord> {
         val key = DeviceUpdateNotificationLedgerCodec.ownerKey(ownerUid)
         val preferences = context.deviceUpdateNotificationLedgerDataStore.data.first()
         return decodeRecords(preferences[key])
+    }
+
+    private fun normalizedRecord(
+        deviceUid: String,
+        targetVersion: String
+    ): DeviceUpdateNotificationRecord {
+        return DeviceUpdateNotificationRecord(
+            deviceUid = DeviceUpdateNotificationLedgerCodec.normalizeDeviceUid(deviceUid),
+            targetVersion = DeviceUpdateNotificationLedgerCodec.normalizeTargetVersion(
+                targetVersion
+            )
+        )
     }
 
     private fun decodeRecords(values: Set<String>?): Set<DeviceUpdateNotificationRecord> {
@@ -89,6 +104,8 @@ class DeviceUpdateNotificationLedger private constructor(
     }
 
     companion object {
+        private const val ACTIVE_NOTIFICATION_MARKER = "__active_notification__"
+
         fun create(context: Context): DeviceUpdateNotificationLedger {
             return DeviceUpdateNotificationLedger(context.applicationContext)
         }
