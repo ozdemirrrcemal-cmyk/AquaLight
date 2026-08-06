@@ -1,6 +1,8 @@
 package com.aqua.aqualight.data.devices.update
 
 import android.content.Context
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.ProcessLifecycleOwner
 import androidx.work.BackoffPolicy
 import androidx.work.Constraints
 import androidx.work.CoroutineWorker
@@ -13,7 +15,6 @@ import androidx.work.workDataOf
 import com.aqua.aqualight.application.devices.DEVICE_FIRMWARE_MANIFEST_URL
 import com.aqua.aqualight.application.notifications.NotificationCategory
 import com.aqua.aqualight.data.auth.FirebaseAuthenticatedOwnerProvider
-import com.aqua.aqualight.data.devices.repository.DevicesRepositoryProvider
 import com.aqua.aqualight.data.devices.runtime.modules.firmware.DeviceFirmwareAvailabilityHint
 import com.aqua.aqualight.data.devices.runtime.modules.firmware.DeviceFirmwareBackgroundAvailabilityProbe
 import com.aqua.aqualight.data.devices.store.DeviceKnownStore
@@ -43,9 +44,7 @@ class DeviceFirmwareAvailabilityWorker(
             return Result.success()
         }
 
-        // A live owner repository means foreground/runtime notification ownership is active.
-        // Skipping avoids replacing an in-progress OTA notification with a durable snapshot hint.
-        if (DevicesRepositoryProvider.currentOwnerUid() == ownerUid) {
+        if (isProcessForeground()) {
             return Result.success()
         }
 
@@ -90,7 +89,7 @@ class DeviceFirmwareAvailabilityWorker(
         snapshots.forEach { snapshot ->
             if (
                 ownerProvider.currentOwnerUid() != ownerUid ||
-                DevicesRepositoryProvider.currentOwnerUid() == ownerUid
+                isProcessForeground()
             ) {
                 return Result.success()
             }
@@ -128,6 +127,11 @@ class DeviceFirmwareAvailabilityWorker(
     ) {
         platform.renderer.cancelDeviceUpdate(ownerUid, deviceUid)
         ledger.clearDevice(ownerUid, deviceUid)
+    }
+
+    private fun isProcessForeground(): Boolean {
+        return ProcessLifecycleOwner.get().lifecycle.currentState
+            .isAtLeast(Lifecycle.State.STARTED)
     }
 
     private fun retryOrFinish(): Result {
