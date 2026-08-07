@@ -8,6 +8,7 @@ import com.aqua.aqualight.application.user.UserProfileOperations
 import com.aqua.aqualight.data.aquarium.DefaultAquariumTankOperations
 import com.aqua.aqualight.data.aquarium.delete.OwnerTankDataCleaner
 import com.aqua.aqualight.data.aquarium.devices.DefaultTankDeviceAssignmentOperations
+import com.aqua.aqualight.data.aquarium.devices.TankDeviceAssignmentRepository
 import com.aqua.aqualight.data.care.DefaultMaintenanceOperations
 import com.aqua.aqualight.data.care.integrity.restoreTaskSnapshotsForIntegrity
 import com.aqua.aqualight.data.care.integrity.snapshotTasksForIntegrity
@@ -23,6 +24,7 @@ import com.aqua.aqualight.data.devices.provisioning.qr.AqlProvisioningQrParser
 import com.aqua.aqualight.data.devices.provisioning.store.AqlProvisioningDraftStore
 import com.aqua.aqualight.data.devices.provisioning.store.AqlProvisioningQrSecretStore
 import com.aqua.aqualight.data.devices.remove.OwnerDeviceDataCleaner
+import com.aqua.aqualight.data.devices.repository.DevicesRepository
 import com.aqua.aqualight.platform.text.AndroidAppTextResolver
 import com.aqua.aqualight.platform.text.AndroidMaintenanceTextResolver
 import com.aqua.aqualight.ui.tabs.aquarium.AquariumTankViewModel
@@ -90,14 +92,7 @@ internal class OwnerViewModelFactory(
 
             DevicesViewModel::class.java ->
                 DevicesViewModel(
-                    operations = DefaultOwnerDevicesOperations(
-                        devicesRepository = repository,
-                        assignmentRepository = assignments,
-                        deviceDataCleaner = OwnerDeviceDataCleaner.create(
-                            devicesRepository = repository,
-                            assignmentRepository = assignments
-                        )
-                    ),
+                    operations = createOwnerDevicesOperations(graph, repository, assignments),
                     menuAccessOperations = DefaultDeviceMenuAccessOperations.create(repository),
                     routeResolver = DeviceRouteResolver()
                 )
@@ -235,6 +230,27 @@ internal class OwnerViewModelFactory(
 
         @Suppress("UNCHECKED_CAST")
         return viewModel as T
+    }
+
+    private fun createOwnerDevicesOperations(
+        graph: OwnerDependencyGraph,
+        repository: DevicesRepository,
+        assignments: TankDeviceAssignmentRepository
+    ): DefaultOwnerDevicesOperations {
+        return DefaultOwnerDevicesOperations(
+            devicesRepository = repository,
+            assignmentRepository = assignments,
+            deviceDataCleaner = OwnerDeviceDataCleaner.create(
+                devicesRepository = repository,
+                assignmentRepository = assignments
+            ),
+            cleanupDeletedDeviceNotifications = { deviceUids ->
+                graph.deviceFirmwareNotifications.clearDeletedDevices(
+                    ownerUid = graph.ownerUid,
+                    deviceUids = deviceUids
+                )
+            }
+        )
     }
 
     private companion object {

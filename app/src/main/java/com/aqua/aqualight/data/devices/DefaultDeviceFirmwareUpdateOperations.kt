@@ -249,9 +249,9 @@ private fun DeviceOtaState.notificationKey(): String? = when (this) {
     is DeviceOtaState.UpdateAvailable -> "available:${plan.targetVersion}"
     is DeviceOtaState.Starting -> "starting:${plan.targetVersion}"
     is DeviceOtaState.InProgress ->
-        "progress:$targetVersion:$phase:${progressPermille.toProgressPercent()}"
+        "progress:$targetVersion:$phase:${progressPermille.toNotificationProgressPercent()}"
     is DeviceOtaState.Recovering ->
-        "recovering:$targetVersion:${progressPermille.toProgressPercent()}"
+        "recovering:$targetVersion:${progressPermille.toNotificationProgressPercent()}"
     is DeviceOtaState.RestartRequired -> "restart:$targetVersion:$restartScheduled"
     is DeviceOtaState.Succeeded -> "succeeded:$targetVersion"
     is DeviceOtaState.Failed -> with(failure) {
@@ -263,10 +263,18 @@ private fun DeviceOtaState.notificationKey(): String? = when (this) {
     is DeviceOtaState.UpToDate -> null
 }
 
-private fun Int.toProgressPercent(): Int =
-    coerceIn(0, COMPLETE_PROGRESS_PERMILLE) / PERMILLE_PER_PERCENT
+private fun Int.toNotificationProgressPercent(): Int {
+    val percent = coerceIn(0, COMPLETE_PROGRESS_PERMILLE) / PERMILLE_PER_PERCENT
+    return if (percent >= COMPLETE_PROGRESS_PERCENT) {
+        COMPLETE_PROGRESS_PERCENT
+    } else {
+        percent / PROGRESS_NOTIFICATION_STEP_PERCENT * PROGRESS_NOTIFICATION_STEP_PERCENT
+    }
+}
 
 internal const val DEVICE_FIRMWARE_AVAILABILITY_FRESHNESS_MILLIS = 15L * 60L * 1_000L
 internal const val DEVICE_FIRMWARE_AVAILABILITY_FAILURE_RETRY_MILLIS = 30L * 1_000L
 private const val COMPLETE_PROGRESS_PERMILLE = 1_000
 private const val PERMILLE_PER_PERCENT = 10
+private const val COMPLETE_PROGRESS_PERCENT = 100
+private const val PROGRESS_NOTIFICATION_STEP_PERCENT = 5

@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="device_update_background_notification_title">%1$s için yazılım güncellemesi mevcut</string>
+    <string name="device_update_background_notification_versions">Yüklü: %1$s · Kullanılabilir: %2$s</string>
+    <string name="device_update_background_notification_action">Güncelle</string>
+</resources>

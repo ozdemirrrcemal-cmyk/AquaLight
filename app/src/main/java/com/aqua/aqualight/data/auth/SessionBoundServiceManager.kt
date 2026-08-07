@@ -6,6 +6,7 @@ import com.aqua.aqualight.data.care.reminder.CareReminderReconcileWorker
 import com.aqua.aqualight.data.care.smartcare.SmartCareDailyWorker
 import com.aqua.aqualight.data.devices.provisioning.repository.AqlProvisioningHandoffSaver
 import com.aqua.aqualight.data.devices.repository.DevicesRepositoryProvider
+import com.aqua.aqualight.data.devices.update.DeviceFirmwareAvailabilityEventTrigger
 import com.aqua.aqualight.data.notifications.NotificationPlatform
 import com.aqua.aqualight.data.user.UserDataScope
 import java.util.concurrent.CancellationException
@@ -16,6 +17,7 @@ object SessionBoundServiceManager {
     enum class StopStep {
         PROVISIONING_TRANSACTIONS,
         DEVICES_REPOSITORY,
+        DEVICE_UPDATE_CHECKS,
         ASSIGNMENT_REPOSITORY,
         SMART_CARE,
         NOTIFICATION_SCHEDULES,
@@ -47,12 +49,16 @@ object SessionBoundServiceManager {
         ) { issue -> issue.step.name }
     )
 
-    fun start(context: Context, ownerUid: String) {
+    suspend fun start(context: Context, ownerUid: String) {
         val normalizedOwnerUid = UserDataScope.normalizeOwnerUid(ownerUid)
         if (normalizedOwnerUid.isBlank()) return
 
         val appContext = context.applicationContext
+        val notificationPlatform = NotificationPlatform.get(appContext)
+        installDeviceUpdateTrigger(appContext, normalizedOwnerUid)
         SmartCareDailyWorker.schedule(appContext, normalizedOwnerUid)
+        notificationPlatform.deviceUpdateWorkCoordinator
+            .reconcileOwner(normalizedOwnerUid)
         CareReminderReconcileWorker.enqueue(appContext, normalizedOwnerUid)
     }
 
@@ -75,6 +81,7 @@ object SessionBoundServiceManager {
             ?.trim()
             ?.takeIf(String::isNotBlank)
             ?: DevicesRepositoryProvider.currentOwnerUid()
+        val notificationPlatform = NotificationPlatform.get(appContext)
 
         if (ownerUid != null) {
             runStep(StopStep.PROVISIONING_TRANSACTIONS) {
@@ -83,11 +90,13 @@ object SessionBoundServiceManager {
                     .getOrThrow()
             }
         }
-
-        // Stop runtime collectors, sockets and owner token access before clearing
-        // other owner-bound repositories or scheduling state.
         runStep(StopStep.DEVICES_REPOSITORY) {
             DevicesRepositoryProvider.clear(expectedOwnerUid = expectedOwnerUid)
+        }
+        if (ownerUid != null) {
+            runStep(StopStep.DEVICE_UPDATE_CHECKS) {
+                notificationPlatform.deviceUpdateWorkCoordinator.cancelOwner(ownerUid)
+            }
         }
         runStep(StopStep.ASSIGNMENT_REPOSITORY) {
             TankDeviceAssignmentRepositoryProvider.clear(expectedOwnerUid = expectedOwnerUid)
@@ -97,17 +106,30 @@ object SessionBoundServiceManager {
         }
 
         if (ownerUid != null) {
-            val platform = NotificationPlatform.get(appContext)
             runStep(StopStep.NOTIFICATION_SCHEDULES) {
-                platform.scheduler.cancelOwner(ownerUid)
+                notificationPlatform.scheduler.cancelOwner(ownerUid)
             }
             if (cancelNotifications) {
                 runStep(StopStep.NOTIFICATIONS) {
-                    platform.renderer.cancelOwner(ownerUid)
+                    notificationPlatform.deviceFirmwareUpdates.clearOwner(ownerUid)
                 }
             }
         }
 
         return StopResult(issues.toList())
+    }
+
+    private fun installDeviceUpdateTrigger(context: Context, ownerUid: String) {
+        val repository = checkNotNull(
+            DevicesRepositoryProvider.currentRepository(ownerUid)
+        ) {
+            "Authenticated owner device runtime is not active."
+        }
+        DeviceFirmwareAvailabilityEventTrigger(
+            context = context,
+            ownerUid = ownerUid,
+            lifecycleEvents = repository.runtimeLifecycleEvents(),
+            snapshots = repository.snapshots
+        ).also(repository::registerOwnerScopedResource)
     }
 }

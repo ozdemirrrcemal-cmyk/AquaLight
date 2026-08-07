@@ -84,7 +84,8 @@ data class DeviceUpdateNotification(
     val title: String,
     val message: String,
     val progressPercent: Int? = null,
-    val ongoing: Boolean = false
+    val ongoing: Boolean = false,
+    val actionLabel: String? = null
 )
 
 enum class NotificationDispatchResult {
@@ -110,6 +111,11 @@ interface NotificationScheduler {
     suspend fun cancelCareTask(ownerUid: String, taskId: Long)
     suspend fun reconcileOwner(ownerUid: String)
     suspend fun cancelOwner(ownerUid: String)
+}
+
+interface DeviceUpdateNotificationWorkCoordinator {
+    suspend fun reconcileOwner(ownerUid: String)
+    fun cancelOwner(ownerUid: String)
 }
 
 interface NotificationRenderer {
@@ -181,6 +187,7 @@ class NotificationPreferenceUseCase(
     private val repository: NotificationPreferenceRepository,
     private val permissionPolicy: NotificationPermissionPolicy,
     private val scheduler: NotificationScheduler,
+    private val deviceUpdateWorkCoordinator: DeviceUpdateNotificationWorkCoordinator,
     private val renderer: NotificationRenderer
 ) {
     fun observe(ownerUid: String): Flow<Boolean> = repository.enabledFlow(ownerUid)
@@ -203,8 +210,10 @@ class NotificationPreferenceUseCase(
         repository.setEnabled(ownerUid, enabled)
         if (enabled) {
             permissionPolicy.ensureChannels()
+            deviceUpdateWorkCoordinator.reconcileOwner(ownerUid)
             scheduler.reconcileOwner(ownerUid)
         } else {
+            deviceUpdateWorkCoordinator.cancelOwner(ownerUid)
             scheduler.cancelOwner(ownerUid)
             renderer.cancelOwner(ownerUid)
         }
@@ -229,12 +238,14 @@ class NotificationPreferenceUseCase(
             permissionPolicy.ensureChannels()
             scheduler.reconcileOwner(ownerUid)
         } else {
+            deviceUpdateWorkCoordinator.cancelOwner(ownerUid)
             scheduler.cancelOwner(ownerUid)
             renderer.cancelOwner(ownerUid)
         }
     }
 
     suspend fun cancelOwner(ownerUid: String) {
+        deviceUpdateWorkCoordinator.cancelOwner(ownerUid)
         scheduler.cancelOwner(ownerUid)
         renderer.cancelOwner(ownerUid)
     }

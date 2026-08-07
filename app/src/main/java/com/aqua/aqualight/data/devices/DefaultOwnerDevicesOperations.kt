@@ -15,7 +15,10 @@ import kotlinx.coroutines.flow.combine
 internal class DefaultOwnerDevicesOperations(
     private val devicesRepository: DevicesRepository,
     assignmentRepository: TankDeviceAssignmentRepository,
-    private val deviceDataCleaner: OwnerDeviceDataCleaner
+    private val deviceDataCleaner: OwnerDeviceDataCleaner,
+    private val cleanupDeletedDeviceNotifications: suspend (Set<String>) -> Set<String> = {
+        emptySet()
+    }
 ) : OwnerDevicesOperations {
 
     override val devices: Flow<List<OwnerDeviceListItem>> = combine(
@@ -46,11 +49,20 @@ internal class DefaultOwnerDevicesOperations(
             .toSet()
 
         val result = deviceDataCleaner.deleteDevices(normalizedDeviceUids)
+        val succeeded = result.succeededDeviceUids
+            .mapTo(linkedSetOf()) { deviceUid -> deviceUid.value }
+        val failed = result.failures
+            .mapTo(linkedSetOf()) { failure -> failure.deviceUid.value }
+        val cleanupPending = if (succeeded.isEmpty()) {
+            emptySet()
+        } else {
+            cleanupDeletedDeviceNotifications(succeeded)
+        }
+
         return DeleteOwnerDevicesResult(
-            succeededDeviceUids = result.succeededDeviceUids
-                .mapTo(linkedSetOf()) { deviceUid -> deviceUid.value },
-            failedDeviceUids = result.failures
-                .mapTo(linkedSetOf()) { failure -> failure.deviceUid.value }
+            succeededDeviceUids = succeeded,
+            failedDeviceUids = failed,
+            notificationCleanupPendingDeviceUids = cleanupPending
         )
     }
 }

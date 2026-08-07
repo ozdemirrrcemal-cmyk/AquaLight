@@ -1,3 +1,5 @@
+@file:Suppress("ReturnCount", "TooManyFunctions")
+
 package com.aqua.aqualight.ui.main
 
 import android.content.Intent
@@ -10,6 +12,8 @@ import androidx.navigation.NavController
 import androidx.navigation.NavDestination
 import androidx.navigation.ui.setupWithNavController
 import com.aqua.aqualight.R
+import com.aqua.aqualight.application.devices.DeviceFirmwareNotificationRouteDecision
+import com.aqua.aqualight.application.devices.DeviceFirmwareNotificationRouteOperations
 import com.aqua.aqualight.base.BaseActivity
 import com.aqua.aqualight.databinding.ActivityMainBinding
 import com.aqua.aqualight.ui.navigation.AppDestinationContract
@@ -18,46 +22,58 @@ import com.aqua.aqualight.ui.navigation.CareTaskNotificationRoutePolicy
 import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.launch
 
-/**
- * Owns MainActivity's transient navigation chrome and deferred notification route state.
- *
- * Authentication remains owned by AppSessionCoordinator; this class only consumes a current
- * snapshot when deciding whether navigation UI or an owner-bound care-task route is safe to show.
- */
+/** Owns MainActivity navigation chrome and deferred owner-bound notification routes. */
 internal class MainNavigationCoordinator(
     private val host: BaseActivity,
     private val binding: ActivityMainBinding,
     private val navController: NavController,
     private val restoreSettingsExtra: String,
-    private val sessionSnapshot: () -> MainNavigationSessionSnapshot
+    private val sessionSnapshot: () -> MainNavigationSessionSnapshot,
+    deviceFirmwareRouteOperations: DeviceFirmwareNotificationRouteOperations
 ) {
+    private val firmwareRouteGate = DeviceFirmwareNotificationRouteGate(
+        sessionSnapshot = sessionSnapshot,
+        routeOperations = deviceFirmwareRouteOperations
+    )
     private var pendingCareTaskId: Long = -1L
     private var pendingCareTaskOwnerUid: String = ""
+    private var pendingFirmwareDeviceUid: String = ""
+    private var pendingFirmwareOwnerUid: String = ""
+    private var nextFirmwareNavigationAttempt: Long = 0L
+    private var activeFirmwareNavigationAttempt: Long? = null
     private var bottomBarSetup: Boolean = false
     private var exitFromTopLevelBackCallback: OnBackPressedCallback? = null
 
-    fun captureCareTaskIntent(intent: Intent?) {
+    fun captureNotificationIntent(intent: Intent?) {
+        val firmwareDeviceUid = intent
+            ?.getStringExtra(MainActivity.EXTRA_OPEN_DEVICE_FIRMWARE_UID)
+            .orEmpty()
+            .trim()
+        if (firmwareDeviceUid.isNotBlank()) {
+            clearPendingNotifications()
+            pendingFirmwareDeviceUid = firmwareDeviceUid
+            pendingFirmwareOwnerUid = intent
+                ?.getStringExtra(MainActivity.EXTRA_OWNER_UID)
+                .orEmpty()
+            return
+        }
+
         val taskId = intent?.getLongExtra(
             MainActivity.EXTRA_OPEN_CARE_TASK_ID,
             -1L
         ) ?: -1L
+        if (taskId <= 0L) return
 
-        if (taskId <= 0L) {
-            return
-        }
-
+        clearPendingNotifications()
         pendingCareTaskId = taskId
-        pendingCareTaskOwnerUid = intent?.getStringExtra(
-            MainActivity.EXTRA_OWNER_UID
-        ).orEmpty()
-        intent?.removeExtra(MainActivity.EXTRA_OPEN_CARE_TASK_ID)
-        intent?.removeExtra(MainActivity.EXTRA_START_IN_APP)
-        intent?.removeExtra(MainActivity.EXTRA_OWNER_UID)
+        pendingCareTaskOwnerUid = intent
+            ?.getStringExtra(MainActivity.EXTRA_OWNER_UID)
+            .orEmpty()
     }
 
-    fun clearPendingCareTask() {
-        pendingCareTaskId = -1L
-        pendingCareTaskOwnerUid = ""
+    fun clearPendingNotifications() {
+        clearPendingCareTask()
+        clearPendingFirmwareUpdate()
     }
 
     fun restoreSettingsRootAfterThemeChangeIfNeeded() {
@@ -65,39 +81,102 @@ internal class MainNavigationCoordinator(
             restoreSettingsExtra,
             false
         ) == true
-
-        if (!shouldRestore || !sessionSnapshot().isAuthenticated) {
-            return
-        }
+        if (!shouldRestore || !sessionSnapshot().isAuthenticated) return
 
         host.intent?.removeExtra(restoreSettingsExtra)
-
         binding.root.post {
             val currentDestination = navController.currentDestination
-            val restored = if (currentDestination?.id == R.id.settingsFragment) {
-                true
-            } else {
+            val restored = currentDestination?.id == R.id.settingsFragment ||
                 runCatching {
-                    navController.popBackStack(
-                        R.id.settingsFragment,
-                        false
-                    )
+                    navController.popBackStack(R.id.settingsFragment, false)
                 }.getOrDefault(false)
-            }
-
-            if (!restored) {
-                selectBottomNavItemSafely(R.id.nav_settings)
-            }
-
+            if (!restored) selectBottomNavItemSafely(R.id.nav_settings)
             syncBottomBarState(navController.currentDestination)
         }
     }
 
-    fun consumePendingCareTaskIfPossible() {
+    fun consumePendingNotificationIfPossible() {
+        if (!consumePendingFirmwareUpdateIfPossible()) {
+            consumePendingCareTaskIfPossible()
+        }
+    }
+
+    fun setupBottomBarIfNeeded() {
+        if (bottomBarSetup || navController.currentDestination == null) return
+
+        bottomBarSetup = true
+        binding.bottomNav.setupWithNavController(navController)
+        exitFromTopLevelBackCallback = object : OnBackPressedCallback(false) {
+            override fun handleOnBackPressed() {
+                host.finish()
+            }
+        }
+        host.onBackPressedDispatcher.addCallback(
+            host,
+            requireNotNull(exitFromTopLevelBackCallback)
+        )
+        navController.addOnDestinationChangedListener { _, destination, _ ->
+            syncBottomBarState(destination)
+        }
+        observeBottomBarBackStack()
+        syncBottomBarState(navController.currentDestination)
+        binding.root.post {
+            syncBottomBarState(navController.currentDestination)
+        }
+    }
+
+    fun syncBottomBarState(destination: NavDestination?) {
+        val shouldShowBottomBar = sessionSnapshot().isAuthenticated &&
+            AppDestinationContract.shouldShowBottomBar(destination)
+        binding.bottomNav.isVisible = shouldShowBottomBar
+        if (shouldShowBottomBar) {
+            binding.bottomNav.alpha = 1f
+            binding.bottomNav.bringToFront()
+        }
+        exitFromTopLevelBackCallback?.isEnabled = shouldShowBottomBar &&
+            destination?.id?.let(AppDestinationContract::isTopLevelDestination) == true
+        if (AppDestinationContract.isInsideAppGraph(destination)) {
+            consumePendingNotificationIfPossible()
+        }
+    }
+
+    private fun observeBottomBarBackStack() {
+        host.lifecycleScope.launch {
+            host.repeatOnLifecycle(Lifecycle.State.STARTED) {
+                navController.currentBackStackEntryFlow.collect { backStackEntry ->
+                    syncBottomBarState(backStackEntry.destination)
+                }
+            }
+        }
+    }
+
+    private fun consumePendingFirmwareUpdateIfPossible(): Boolean {
+        val deviceUid = pendingFirmwareDeviceUid
+        if (deviceUid.isBlank()) return false
+
+        val ownerUid = pendingFirmwareOwnerUid
+        return when (firmwareRouteGate.evaluate(deviceUid, ownerUid)) {
+            DeviceFirmwareNotificationRouteDecision.DEFER -> true
+            DeviceFirmwareNotificationRouteDecision.REJECT -> {
+                rejectPendingFirmwareUpdate()
+                false
+            }
+            DeviceFirmwareNotificationRouteDecision.OPEN -> {
+                if (AppDestinationContract.isInsideAppGraph(
+                        navController.currentDestination
+                    )
+                ) {
+                    openPendingFirmwareUpdate(deviceUid, ownerUid)
+                }
+                true
+            }
+        }
+    }
+
+    private fun consumePendingCareTaskIfPossible() {
         val taskId = pendingCareTaskId
         val ownerUid = pendingCareTaskOwnerUid
         val session = sessionSnapshot()
-
         when {
             taskId <= 0L || !session.isAuthenticated -> Unit
             !CareTaskNotificationRoutePolicy.canOpen(
@@ -105,76 +184,54 @@ internal class MainNavigationCoordinator(
                 notificationOwnerUid = ownerUid,
                 activeOwnerUid = session.activeOwnerUid,
                 isAuthenticated = true
-            ) -> clearPendingCareTask()
-
+            ) -> {
+                clearPendingCareTask()
+                clearConsumedNotificationExtras(host.intent)
+            }
             !AppDestinationContract.isInsideAppGraph(navController.currentDestination) -> Unit
             else -> openPendingCareTask(taskId, ownerUid)
         }
     }
 
-    fun setupBottomBarIfNeeded() {
-        if (bottomBarSetup || navController.currentDestination == null) {
-            return
+    private fun openPendingFirmwareUpdate(deviceUid: String, ownerUid: String) {
+        if (activeFirmwareNavigationAttempt != null) return
+
+        nextFirmwareNavigationAttempt += 1L
+        val attempt = nextFirmwareNavigationAttempt
+        activeFirmwareNavigationAttempt = attempt
+        binding.navHost.post {
+            if (!isCurrentFirmwareAttempt(attempt, deviceUid, ownerUid)) {
+                return@post
+            }
+            when (firmwareRouteGate.evaluate(deviceUid, ownerUid)) {
+                DeviceFirmwareNotificationRouteDecision.DEFER ->
+                    activeFirmwareNavigationAttempt = null
+                DeviceFirmwareNotificationRouteDecision.REJECT ->
+                    rejectPendingFirmwareUpdate()
+                DeviceFirmwareNotificationRouteDecision.OPEN ->
+                    navigateToFirmwareUpdate(attempt, deviceUid, ownerUid)
+            }
         }
+    }
 
-        bottomBarSetup = true
-        binding.bottomNav.setupWithNavController(navController)
-
-        exitFromTopLevelBackCallback =
-            object : OnBackPressedCallback(false) {
-
-                override fun handleOnBackPressed() {
-                    host.finish()
+    private fun navigateToFirmwareUpdate(
+        attempt: Long,
+        deviceUid: String,
+        ownerUid: String
+    ) {
+        runCatching {
+            AppRouteNavigator.openDeviceFirmwareUpdate(navController, deviceUid)
+        }.onSuccess {
+            if (activeFirmwareNavigationAttempt == attempt) {
+                clearPendingFirmwareUpdate()
+                clearConsumedNotificationExtras(host.intent)
+                host.lifecycleScope.launch {
+                    firmwareRouteGate.acknowledgeOpened(deviceUid, ownerUid)
                 }
             }
-
-        host.onBackPressedDispatcher.addCallback(
-            host,
-            requireNotNull(exitFromTopLevelBackCallback)
-        )
-
-        navController.addOnDestinationChangedListener { _, destination, _ ->
-            syncBottomBarState(destination)
-        }
-        observeBottomBarBackStack()
-        syncBottomBarState(navController.currentDestination)
-
-        binding.root.post {
-            syncBottomBarState(navController.currentDestination)
-        }
-    }
-
-    fun syncBottomBarState(destination: NavDestination?) {
-        val shouldShowBottomBar =
-            sessionSnapshot().isAuthenticated &&
-                AppDestinationContract.shouldShowBottomBar(destination)
-
-        binding.bottomNav.isVisible = shouldShowBottomBar
-
-        if (shouldShowBottomBar) {
-            binding.bottomNav.alpha = 1f
-            binding.bottomNav.bringToFront()
-        }
-
-        exitFromTopLevelBackCallback?.isEnabled =
-            shouldShowBottomBar &&
-                destination?.id?.let(
-                    AppDestinationContract::isTopLevelDestination
-                ) == true
-
-        if (AppDestinationContract.isInsideAppGraph(destination)) {
-            consumePendingCareTaskIfPossible()
-        }
-    }
-
-    private fun observeBottomBarBackStack() {
-        host.lifecycleScope.launch {
-            host.repeatOnLifecycle(
-                Lifecycle.State.STARTED
-            ) {
-                navController.currentBackStackEntryFlow.collect { backStackEntry ->
-                    syncBottomBarState(backStackEntry.destination)
-                }
+        }.onFailure {
+            if (activeFirmwareNavigationAttempt == attempt) {
+                activeFirmwareNavigationAttempt = null
             }
         }
     }
@@ -183,10 +240,9 @@ internal class MainNavigationCoordinator(
         clearPendingCareTask()
         binding.navHost.post {
             runCatching {
-                AppRouteNavigator.openTaskDetail(
-                    navController = navController,
-                    taskId = taskId
-                )
+                AppRouteNavigator.openTaskDetail(navController, taskId)
+            }.onSuccess {
+                clearConsumedNotificationExtras(host.intent)
             }.onFailure {
                 pendingCareTaskId = taskId
                 pendingCareTaskOwnerUid = ownerUid
@@ -194,18 +250,46 @@ internal class MainNavigationCoordinator(
         }
     }
 
+    private fun isCurrentFirmwareAttempt(
+        attempt: Long,
+        deviceUid: String,
+        ownerUid: String
+    ): Boolean {
+        return activeFirmwareNavigationAttempt == attempt &&
+            pendingFirmwareDeviceUid == deviceUid &&
+            pendingFirmwareOwnerUid.trim() == ownerUid.trim()
+    }
+
+    private fun rejectPendingFirmwareUpdate() {
+        clearPendingFirmwareUpdate()
+        clearConsumedNotificationExtras(host.intent)
+    }
+
+    private fun clearPendingFirmwareUpdate() {
+        pendingFirmwareDeviceUid = ""
+        pendingFirmwareOwnerUid = ""
+        activeFirmwareNavigationAttempt = null
+    }
+
+    private fun clearPendingCareTask() {
+        pendingCareTaskId = -1L
+        pendingCareTaskOwnerUid = ""
+    }
+
+    private fun clearConsumedNotificationExtras(intent: Intent?) {
+        intent?.removeExtra(MainActivity.EXTRA_OPEN_CARE_TASK_ID)
+        intent?.removeExtra(MainActivity.EXTRA_OPEN_DEVICE_FIRMWARE_UID)
+        intent?.removeExtra(MainActivity.EXTRA_START_IN_APP)
+        intent?.removeExtra(MainActivity.EXTRA_OWNER_UID)
+    }
+
     private fun selectBottomNavItemSafely(itemId: Int) {
-        if (
-            navController.currentDestination == null ||
-            binding.bottomNav.menu.findItem(itemId) == null
-        ) {
-            return
-        }
+        val destinationReady = navController.currentDestination != null
+        val itemExists = binding.bottomNav.menu.findItem(itemId) != null
+        if (!destinationReady || !itemExists) return
 
         binding.bottomNav.post {
-            runCatching {
-                binding.bottomNav.selectedItemId = itemId
-            }
+            runCatching { binding.bottomNav.selectedItemId = itemId }
         }
     }
 }

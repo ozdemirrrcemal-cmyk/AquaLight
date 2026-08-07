@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="device_update_background_notification_title">Software update available for %1$s</string>
+    <string name="device_update_background_notification_versions">Installed: %1$s · Available: %2$s</string>
+    <string name="device_update_background_notification_action">Update</string>
+</resources>

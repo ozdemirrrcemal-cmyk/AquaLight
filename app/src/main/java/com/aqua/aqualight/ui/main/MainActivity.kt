@@ -10,6 +10,7 @@ import androidx.navigation.NavController
 import androidx.navigation.fragment.NavHostFragment
 import com.aqua.aqualight.R
 import com.aqua.aqualight.base.BaseActivity
+import com.aqua.aqualight.composition.requireAppContainer
 import com.aqua.aqualight.data.auth.AppSessionCoordinator
 import com.aqua.aqualight.data.recovery.LocalDataRecoveryTracker
 import com.aqua.aqualight.databinding.ActivityMainBinding
@@ -25,6 +26,7 @@ class MainActivity : BaseActivity() {
         @Deprecated("Startup graph selection is owned by AppSessionCoordinator.")
         const val EXTRA_START_IN_APP = "EXTRA_START_IN_APP"
         const val EXTRA_OPEN_CARE_TASK_ID = "EXTRA_OPEN_CARE_TASK_ID"
+        const val EXTRA_OPEN_DEVICE_FIRMWARE_UID = "EXTRA_OPEN_DEVICE_FIRMWARE_UID"
         const val EXTRA_OWNER_UID = "EXTRA_OWNER_UID"
         private const val EXTRA_RESTORE_SETTINGS_ROOT_AFTER_THEME_CHANGE =
             "EXTRA_RESTORE_SETTINGS_ROOT_AFTER_THEME_CHANGE"
@@ -70,9 +72,11 @@ class MainActivity : BaseActivity() {
                     isAuthenticated = isAuthenticated,
                     activeOwnerUid = activeOwnerUid
                 )
-            }
+            },
+            deviceFirmwareRouteOperations =
+                requireAppContainer().deviceFirmwareNotificationRouteOperations
         )
-        navigationCoordinator.captureCareTaskIntent(intent)
+        navigationCoordinator.captureNotificationIntent(intent)
         observeSessionState()
         appSessionCoordinator.start()
     }
@@ -83,9 +87,9 @@ class MainActivity : BaseActivity() {
         super.onNewIntent(intent)
 
         setIntent(intent)
-        navigationCoordinator.captureCareTaskIntent(intent)
+        navigationCoordinator.captureNotificationIntent(intent)
         appSessionCoordinator.requestReconcile()
-        navigationCoordinator.consumePendingCareTaskIfPossible()
+        navigationCoordinator.consumePendingNotificationIfPossible()
     }
 
     override fun onPostResume() {
@@ -110,9 +114,10 @@ class MainActivity : BaseActivity() {
         isAuthenticated = false
         activeOwnerUid = ""
         renderedSessionKey = null
-        navigationCoordinator.clearPendingCareTask()
+        navigationCoordinator.clearPendingNotifications()
 
         intent?.removeExtra(EXTRA_OPEN_CARE_TASK_ID)
+        intent?.removeExtra(EXTRA_OPEN_DEVICE_FIRMWARE_UID)
         intent?.removeExtra(EXTRA_START_IN_APP)
         intent?.removeExtra(EXTRA_OWNER_UID)
         intent?.removeExtra(EXTRA_RESTORE_SETTINGS_ROOT_AFTER_THEME_CHANGE)
@@ -167,7 +172,7 @@ class MainActivity : BaseActivity() {
                 binding.navHost.isVisible = true
                 showLocalDataRecoveryIfNeeded()
                 navigationCoordinator.restoreSettingsRootAfterThemeChangeIfNeeded()
-                navigationCoordinator.consumePendingCareTaskIfPossible()
+                navigationCoordinator.consumePendingNotificationIfPossible()
                 navigationCoordinator.syncBottomBarState(navController.currentDestination)
             }
 
