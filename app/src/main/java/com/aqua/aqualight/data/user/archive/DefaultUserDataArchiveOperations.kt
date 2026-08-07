@@ -15,7 +15,6 @@ import kotlinx.coroutines.sync.withLock
 
 /** Single owner-scoped coordinator for backup, restore and portable data export. */
 internal class DefaultUserDataArchiveOperations(
-    private val ownerUid: String,
     private val sourceAppVersion: String,
     private val snapshotCollector: UserDataArchiveSnapshotCollector,
     private val restorer: UserDataBackupRestorer,
