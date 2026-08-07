@@ -91,19 +91,16 @@ class OwnerSessionCoordinator private constructor(
                     previousOwnerUid = transition.previousOwnerUid,
                     targetOwnerUid = normalizedOwnerUid
                 )
-            } catch (error: Throwable) {
+            } catch (error: TimeoutCancellationException) {
                 stateMachine.abort(transition)
-                if (
-                    error is CancellationException &&
-                    error !is TimeoutCancellationException
-                ) {
-                    throw error
-                }
                 return@withLock OpenResult.Failure(
                     ownerUid = normalizedOwnerUid,
                     generation = transition.generation,
                     error = error
                 )
+            } catch (error: CancellationException) {
+                stateMachine.abort(transition)
+                throw error
             }
             if (previousStopError != null) {
                 stateMachine.abort(transition)
