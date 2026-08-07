@@ -22,7 +22,9 @@ import com.aqua.aqualight.data.devices.runtime.modules.firmware.DeviceFirmwareAv
 import com.aqua.aqualight.data.devices.runtime.modules.firmware.DeviceFirmwareManifest
 import com.aqua.aqualight.data.devices.runtime.modules.firmware.DeviceFirmwareManifestPlatform
 import com.aqua.aqualight.data.devices.runtime.modules.firmware.DeviceFirmwareManifestSignature
+import com.aqua.aqualight.data.devices.runtime.modules.firmware.DeviceFirmwareReleaseNoteItem
 import com.aqua.aqualight.data.devices.runtime.modules.firmware.DeviceFirmwareReleaseNotes
+import com.aqua.aqualight.data.devices.runtime.modules.firmware.DeviceFirmwareRuntimeContract
 import com.aqua.aqualight.platform.notifications.DeviceFirmwareUpdateNotificationOperations
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -221,7 +223,17 @@ class DeviceFirmwareAvailabilityCheckRunnerTest {
                 releaseRepo = "test",
                 generatedAt = "2026-08-07T00:00:00Z",
                 platform = DeviceFirmwareManifestPlatform("", "", "", "", ""),
-                releaseNotes = DeviceFirmwareReleaseNotes("", "", emptyList()),
+                releaseNotes = DeviceFirmwareReleaseNotes(
+                    schema = DeviceFirmwareRuntimeContract.ReleaseNotes.SCHEMA,
+                    defaultLocale =
+                        DeviceFirmwareRuntimeContract.ReleaseNotes.DEFAULT_LOCALE,
+                    items = listOf(
+                        DeviceFirmwareReleaseNoteItem(
+                            tr = "Test sürüm notu",
+                            en = "Test release note"
+                        )
+                    )
+                ),
                 artifacts = emptyList(),
                 signature = DeviceFirmwareManifestSignature("", "", "", "")
             )
