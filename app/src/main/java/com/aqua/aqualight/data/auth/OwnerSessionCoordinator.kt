@@ -225,15 +225,17 @@ private class OwnerSessionOpenFlow(
         }
     }
 
-    private suspend fun prepareOwnerRuntime(ownerUid: String): PreparedOwnerRuntime {
+    private suspend fun prepareOwnerRuntime(
+        normalizedOwnerUid: String
+    ): PreparedOwnerRuntime {
         AqlProvisioningHandoffSaver(appContext)
-            .rollbackPendingRegistrationsForOwner(ownerUid)
+            .rollbackPendingRegistrationsForOwner(normalizedOwnerUid)
             .getOrThrow()
-        ProvisioningCommitRecoveryStore(appContext).recoverOwner(ownerUid)
+        ProvisioningCommitRecoveryStore(appContext).recoverOwner(normalizedOwnerUid)
 
         val credentialStore = DeviceCredentialStore(
             context = appContext,
-            ownerUid = ownerUid
+            ownerUid = normalizedOwnerUid
         )
         credentialStore.discardStagedTokens()
         val repository = DevicesRepositoryProvider.get(appContext)
@@ -246,7 +248,7 @@ private class OwnerSessionOpenFlow(
         return PreparedOwnerRuntime(removedCredentialCount)
     }
 
-    private suspend fun repairOwnerData(ownerUid: String): OwnerRepairCounts {
+    private suspend fun repairOwnerData(normalizedOwnerUid: String): OwnerRepairCounts {
         val assignmentCount = when (
             val repairResult = TankDeviceAssignmentRepositoryProvider
                 .get(appContext)
@@ -257,11 +259,11 @@ private class OwnerSessionOpenFlow(
         }
         val tankCareRecovery = TankCareIntegrityRecovery
             .create(appContext)
-            .recover(ownerUid)
+            .recover(normalizedOwnerUid)
         val careTaskCount = tankCareRecovery.removedTaskCount +
             CareTaskDataStoreManager
                 .create(appContext)
-                .repairOrphanedTankTasks(ownerUid)
+                .repairOrphanedTankTasks(normalizedOwnerUid)
         return OwnerRepairCounts(assignmentCount, careTaskCount)
     }
 
