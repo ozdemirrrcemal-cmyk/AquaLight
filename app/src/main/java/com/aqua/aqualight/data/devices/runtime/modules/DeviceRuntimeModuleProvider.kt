@@ -12,6 +12,7 @@ import com.aqua.aqualight.data.devices.runtime.modules.dosing.DeviceDosingRuntim
 import com.aqua.aqualight.data.devices.runtime.modules.dosing.DeviceDosingRuntimeStateStore
 import com.aqua.aqualight.data.devices.runtime.modules.dosing.DeviceDosingTypedEventReducer
 import com.aqua.aqualight.data.devices.runtime.modules.firmware.DeviceFirmwareRuntimeRepository
+import com.aqua.aqualight.data.devices.runtime.modules.firmware.DeviceFirmwareUpdatePlanner
 import com.aqua.aqualight.data.devices.runtime.modules.firmware.DeviceFirmwareUpdateRepository
 import com.aqua.aqualight.data.devices.runtime.modules.light.DeviceLightRuntimeRepository
 import com.aqua.aqualight.data.devices.runtime.modules.light.DeviceLightRuntimeStateStore
@@ -24,6 +25,7 @@ import com.aqua.aqualight.data.devices.runtime.modules.timer.DeviceTimerRuntimeA
 import com.aqua.aqualight.data.devices.runtime.modules.timer.DeviceTimerRuntimeRepository
 import com.aqua.aqualight.data.devices.runtime.modules.timer.DeviceTimerRuntimeStateStore
 import com.aqua.aqualight.data.devices.runtime.modules.timer.DeviceTimerTypedEventReducer
+import com.aqua.aqualight.i18n.AppLanguageController
 
 /** Every authenticated runtime module uses the same correlated command broker. */
 class DeviceRuntimeModuleProvider internal constructor(
@@ -53,7 +55,12 @@ class DeviceRuntimeModuleProvider internal constructor(
     val time = DeviceTimeRuntimeRepository(commandGateway)
 
     val firmware = DeviceFirmwareRuntimeRepository(commandGateway)
-    val firmwareUpdate = DeviceFirmwareUpdateRepository(firmware)
+    val firmwareUpdate = DeviceFirmwareUpdateRepository(
+        runtime = firmware,
+        planner = DeviceFirmwareUpdatePlanner {
+            listOf(AppLanguageController.current())
+        }
+    )
 
     val timer = DeviceTimerRuntimeRepository(commandGateway, timerStateStore, timerAccessProvider)
     val cooling = DeviceCoolingRuntimeRepository(commandGateway, coolingStateStore)

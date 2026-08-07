@@ -7,6 +7,8 @@ import com.aqua.aqualight.application.devices.PreparedDeviceFirmwareUpdate
 import com.aqua.aqualight.data.devices.model.DeviceUid
 import com.aqua.aqualight.data.devices.repository.DevicesRepository
 import com.aqua.aqualight.data.devices.runtime.modules.firmware.DeviceOtaCoordinator
+import com.aqua.aqualight.i18n.AppLanguageController
+import java.util.Locale
 import java.util.concurrent.CancellationException
 import java.util.concurrent.ConcurrentHashMap
 import kotlinx.coroutines.CoroutineScope
@@ -62,7 +64,13 @@ internal class DefaultDeviceFirmwareUpdateOperations(
         val uid = requireDeviceUid(deviceUid)
         return availabilityLocks.computeIfAbsent(uid) { Mutex() }.withLock {
             val currentState = coordinator.observe(uid).value
-            if (!availabilityRefreshPolicy.shouldRefresh(uid, currentState)) {
+            if (
+                !availabilityRefreshPolicy.shouldRefresh(
+                    deviceUid = uid,
+                    state = currentState,
+                    preferredLocaleTag = AppLanguageController.current()
+                )
+            ) {
                 return@withLock Result.success(currentState)
             }
             coordinator.checkAvailability(
@@ -207,7 +215,14 @@ internal class DeviceFirmwareAvailabilityRefreshPolicy(
         require(failureRetryMillis >= 0L)
     }
 
-    fun shouldRefresh(deviceUid: DeviceUid, state: DeviceOtaState): Boolean {
+    fun shouldRefresh(
+        deviceUid: DeviceUid,
+        state: DeviceOtaState,
+        preferredLocaleTag: String? = null
+    ): Boolean {
+        if (state.requiresReleaseContentRelocalization(preferredLocaleTag)) {
+            return true
+        }
         val record = refreshRecords[deviceUid]
         val stale = record == null ||
             nowMillis() - record.completedAtMillis >= record.freshnessMillis
@@ -229,6 +244,28 @@ internal class DeviceFirmwareAvailabilityRefreshPolicy(
     fun clear() {
         refreshRecords.clear()
     }
+}
+
+private fun DeviceOtaState.requiresReleaseContentRelocalization(
+    preferredLocaleTag: String?
+): Boolean {
+    val preferredLocale = preferredLocaleTag.releaseLocaleOrNull() ?: return false
+    val currentLocale = when (this) {
+        is DeviceOtaState.UpToDate -> releaseContent.localeTag
+        is DeviceOtaState.UpdateAvailable -> plan.releaseContent.localeTag
+        else -> return false
+    }.releaseLocaleOrNull() ?: return false
+
+    return currentLocale != preferredLocale
+}
+
+private fun String?.releaseLocaleOrNull(): String? {
+    val normalized = this
+        ?.trim()
+        ?.lowercase(Locale.ROOT)
+        ?.substringBefore('-')
+        .orEmpty()
+    return normalized.takeIf(String::isNotBlank)
 }
 
 private fun DeviceOtaState.allowsPassiveAvailabilityRefresh(): Boolean = when (this) {
