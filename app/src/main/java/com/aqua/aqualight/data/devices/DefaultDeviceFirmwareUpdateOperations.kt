@@ -249,14 +249,16 @@ internal class DeviceFirmwareAvailabilityRefreshPolicy(
 private fun DeviceOtaState.requiresReleaseContentRelocalization(
     preferredLocaleTag: String?
 ): Boolean {
-    val preferredLocale = preferredLocaleTag.releaseLocaleOrNull() ?: return false
+    val preferredLocale = preferredLocaleTag.releaseLocaleOrNull()
     val currentLocale = when (this) {
         is DeviceOtaState.UpToDate -> releaseContent.localeTag
         is DeviceOtaState.UpdateAvailable -> plan.releaseContent.localeTag
-        else -> return false
-    }.releaseLocaleOrNull() ?: return false
+        else -> null
+    }.releaseLocaleOrNull()
 
-    return currentLocale != preferredLocale
+    return preferredLocale != null &&
+        currentLocale != null &&
+        currentLocale != preferredLocale
 }
 
 private fun String?.releaseLocaleOrNull(): String? {
