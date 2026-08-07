@@ -25,15 +25,17 @@ internal class ResolvingDeviceFirmwareNotificationRouteOperations(
     override suspend fun dismissOpenedAvailability(ownerUid: String, deviceUid: String) {
         val normalizedOwnerUid = ownerUid.trim()
         val normalizedDeviceUid = deviceUid.trim()
-        if (normalizedOwnerUid.isBlank() || normalizedDeviceUid.isBlank()) return
-
-        val graph = activeGraphOrNull() ?: return
-        if (graph.ownerUid != normalizedOwnerUid) return
-
-        graph.deviceFirmwareNotifications.dismissAvailability(
-            ownerUid = normalizedOwnerUid,
-            deviceUid = normalizedDeviceUid
-        )
+        val identifiersValid = normalizedOwnerUid.isNotBlank() &&
+            normalizedDeviceUid.isNotBlank()
+        if (identifiersValid) {
+            val graph = activeGraphOrNull()
+            if (graph?.ownerUid == normalizedOwnerUid) {
+                graph.deviceFirmwareNotifications.dismissAvailability(
+                    ownerUid = normalizedOwnerUid,
+                    deviceUid = normalizedDeviceUid
+                )
+            }
+        }
     }
 
     private fun evaluateActiveGraph(
