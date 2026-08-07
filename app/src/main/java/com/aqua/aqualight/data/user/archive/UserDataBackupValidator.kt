@@ -9,6 +9,7 @@ internal object UserDataBackupLimits {
     const val MANIFEST_ENTRY = "manifest.json"
     const val MEDIA_PREFIX = "media/tanks/"
     const val MAX_ARCHIVE_BYTES = 64 * 1024 * 1024
+    const val MAX_UNCOMPRESSED_ARCHIVE_BYTES = 64 * 1024 * 1024
     const val MAX_MEDIA_ENTRY_BYTES = 8 * 1024 * 1024
     const val MAX_MANIFEST_BYTES = 4 * 1024 * 1024
     const val MAX_ZIP_ENTRIES = 256
