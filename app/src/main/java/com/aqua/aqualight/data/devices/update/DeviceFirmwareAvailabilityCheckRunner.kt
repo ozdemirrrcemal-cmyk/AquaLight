@@ -18,11 +18,17 @@ internal class DeviceFirmwareAvailabilityCheckRunner(
     private val notifications: DeviceFirmwareUpdateNotificationOperations,
     private val snapshotReader: DeviceFirmwareAvailabilitySnapshotReader,
     private val manifestLoader: suspend (String) -> Result<DeviceFirmwareManifest>,
-    private val hintEvaluator: (
+    hintEvaluator: (
         DeviceSnapshot,
         DeviceFirmwareManifest
     ) -> Result<DeviceFirmwareAvailabilityHint>
 ) {
+
+    private val evaluator = DeviceFirmwareAvailabilityEvaluator(
+        ownerProvider = ownerProvider,
+        notifications = notifications,
+        hintEvaluator = hintEvaluator
+    )
 
     suspend fun execute(ownerUid: String): DeviceFirmwareAvailabilityCheckOutcome {
         val owner = ownerUid.trim()
@@ -60,7 +66,7 @@ internal class DeviceFirmwareAvailabilityCheckRunner(
         } else {
             when (snapshotResult) {
                 DeviceFirmwareAvailabilitySnapshotResult.Retryable ->
-                    retry(DeviceFirmwareAvailabilityFailureStage.SNAPSHOT_SOURCE)
+                    retryOutcome(DeviceFirmwareAvailabilityFailureStage.SNAPSHOT_SOURCE)
                 is DeviceFirmwareAvailabilitySnapshotResult.Ready ->
                     reconcileAndEvaluate(ownerUid, snapshotResult)
             }
@@ -108,70 +114,9 @@ internal class DeviceFirmwareAvailabilityCheckRunner(
     ): DeviceFirmwareAvailabilityCheckOutcome {
         val manifest = manifestLoader(DEVICE_FIRMWARE_MANIFEST_URL).getOrNull()
         return if (manifest == null) {
-            retry(DeviceFirmwareAvailabilityFailureStage.MANIFEST)
+            retryOutcome(DeviceFirmwareAvailabilityFailureStage.MANIFEST)
         } else {
-            evaluateDevices(ownerUid, snapshots, manifest)
-        }
-    }
-
-    private suspend fun evaluateDevices(
-        ownerUid: String,
-        snapshots: List<DeviceSnapshot>,
-        manifest: DeviceFirmwareManifest
-    ): DeviceFirmwareAvailabilityCheckOutcome {
-        var ownerActive = isOwnerActive(ownerUid)
-        var evaluationFailed = false
-        for (snapshot in snapshots) {
-            if (ownerActive) {
-                evaluationFailed = !evaluateDevice(ownerUid, snapshot, manifest) ||
-                    evaluationFailed
-                ownerActive = isOwnerActive(ownerUid)
-            }
-        }
-        return when {
-            !ownerActive -> DeviceFirmwareAvailabilityCheckOutcome.OwnerChanged
-            evaluationFailed ->
-                retry(DeviceFirmwareAvailabilityFailureStage.DEVICE_EVALUATION)
-            else -> DeviceFirmwareAvailabilityCheckOutcome.Completed
-        }
-    }
-
-    private suspend fun evaluateDevice(
-        ownerUid: String,
-        snapshot: DeviceSnapshot,
-        manifest: DeviceFirmwareManifest
-    ): Boolean {
-        return if (!snapshot.capabilities.ota) {
-            notifications.clearAvailability(ownerUid, snapshot.deviceUid.value)
-            true
-        } else {
-            evaluateHint(ownerUid, snapshot, manifest)
-        }
-    }
-
-    private suspend fun evaluateHint(
-        ownerUid: String,
-        snapshot: DeviceSnapshot,
-        manifest: DeviceFirmwareManifest
-    ): Boolean {
-        val hint = hintEvaluator(snapshot, manifest).getOrNull()
-        if (hint != null && isOwnerActive(ownerUid)) {
-            applyHint(ownerUid, hint)
-        }
-        return hint != null
-    }
-
-    private suspend fun applyHint(
-        ownerUid: String,
-        hint: DeviceFirmwareAvailabilityHint
-    ) {
-        when (hint) {
-            is DeviceFirmwareAvailabilityHint.UpdateAvailable -> {
-                notifications.publishAvailabilityHint(ownerUid, hint)
-            }
-            is DeviceFirmwareAvailabilityHint.UpToDate -> {
-                notifications.clearAvailability(ownerUid, hint.deviceUid)
-            }
+            evaluator.evaluate(ownerUid, snapshots, manifest)
         }
     }
 
@@ -184,7 +129,7 @@ internal class DeviceFirmwareAvailabilityCheckRunner(
                 else DeviceFirmwareAvailabilityCheckOutcome.OwnerChanged
             }
             is OwnerTokenValidationResult.TransientFailure ->
-                retry(DeviceFirmwareAvailabilityFailureStage.OWNER_VALIDATION)
+                retryOutcome(DeviceFirmwareAvailabilityFailureStage.OWNER_VALIDATION)
             OwnerTokenValidationResult.Unauthenticated,
             is OwnerTokenValidationResult.Revoked ->
                 DeviceFirmwareAvailabilityCheckOutcome.OwnerChanged
@@ -199,12 +144,6 @@ internal class DeviceFirmwareAvailabilityCheckRunner(
 
     private fun isOwnerActive(ownerUid: String): Boolean {
         return ownerProvider.currentOwnerUid() == ownerUid
-    }
-
-    private fun retry(
-        stage: DeviceFirmwareAvailabilityFailureStage
-    ): DeviceFirmwareAvailabilityCheckOutcome.RetryableFailure {
-        return DeviceFirmwareAvailabilityCheckOutcome.RetryableFailure(stage)
     }
 }
 
@@ -223,4 +162,10 @@ internal enum class DeviceFirmwareAvailabilityFailureStage {
     SNAPSHOT_SOURCE,
     MANIFEST,
     DEVICE_EVALUATION
+}
+
+internal fun retryOutcome(
+    stage: DeviceFirmwareAvailabilityFailureStage
+): DeviceFirmwareAvailabilityCheckOutcome.RetryableFailure {
+    return DeviceFirmwareAvailabilityCheckOutcome.RetryableFailure(stage)
 }

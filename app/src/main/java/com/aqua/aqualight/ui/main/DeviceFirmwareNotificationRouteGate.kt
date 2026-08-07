@@ -15,18 +15,15 @@ internal class DeviceFirmwareNotificationRouteGate(
         notificationOwnerUid: String
     ): DeviceFirmwareNotificationRouteDecision {
         val session = sessionSnapshot()
-        if (!session.isAuthenticated) {
-            return DeviceFirmwareNotificationRouteDecision.DEFER
-        }
-        if (!DeviceFirmwareNotificationRoutePolicy.canOpen(
+        return when {
+            !session.isAuthenticated -> DeviceFirmwareNotificationRouteDecision.DEFER
+            !DeviceFirmwareNotificationRoutePolicy.canOpen(
                 deviceUid = deviceUid,
                 notificationOwnerUid = notificationOwnerUid,
                 activeOwnerUid = session.activeOwnerUid,
                 isAuthenticated = true
-            )
-        ) {
-            return DeviceFirmwareNotificationRouteDecision.REJECT
+            ) -> DeviceFirmwareNotificationRouteDecision.REJECT
+            else -> routeOperations.evaluate(deviceUid)
         }
-        return routeOperations.evaluate(deviceUid)
     }
 }
