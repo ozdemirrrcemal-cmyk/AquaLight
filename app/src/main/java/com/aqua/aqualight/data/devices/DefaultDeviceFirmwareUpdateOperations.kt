@@ -1,5 +1,6 @@
 package com.aqua.aqualight.data.devices
 
+import com.aqua.aqualight.application.devices.DEVICE_FIRMWARE_MANIFEST_URL
 import com.aqua.aqualight.application.devices.DeviceFirmwareCommandResult
 import com.aqua.aqualight.application.devices.DeviceFirmwareUpdateOperations
 import com.aqua.aqualight.application.devices.DeviceOtaState
@@ -18,6 +19,7 @@ import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.distinctUntilChangedBy
+import kotlinx.coroutines.flow.drop
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.Mutex
@@ -31,7 +33,7 @@ internal class DefaultDeviceFirmwareUpdateOperations(
         DeviceFirmwareAvailabilityRefreshPolicy()
 ) : DeviceFirmwareUpdateOperations, AutoCloseable {
 
-    private val publisherScope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
+    private val operationsScope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
     private val publisherJobs = ConcurrentHashMap<DeviceUid, Job>()
     private val availabilityLocks = ConcurrentHashMap<DeviceUid, Mutex>()
 
@@ -49,10 +51,37 @@ internal class DefaultDeviceFirmwareUpdateOperations(
         snapshotUpdates = devicesRepository.snapshots
     )
 
+    private val localeRefreshJob = operationsScope.launch {
+        AppLanguageController.languageChanges
+            .drop(1)
+            .collect {
+                publisherJobs.keys.toList().forEach { deviceUid ->
+                    refreshAvailabilityIfStale(
+                        deviceUid = deviceUid.value,
+                        manifestUrl = DEVICE_FIRMWARE_MANIFEST_URL,
+                        applyNow = true
+                    )
+                }
+            }
+    }
+
     override fun observe(deviceUid: String): StateFlow<DeviceOtaState> {
         val uid = requireDeviceUid(deviceUid)
         val states = coordinator.observe(uid)
         observeForNotifications(uid, states)
+        if (
+            states.value.requiresReleaseContentRelocalization(
+                AppLanguageController.current()
+            )
+        ) {
+            operationsScope.launch {
+                refreshAvailabilityIfStale(
+                    deviceUid = uid.value,
+                    manifestUrl = DEVICE_FIRMWARE_MANIFEST_URL,
+                    applyNow = true
+                )
+            }
+        }
         return states
     }
 
@@ -121,11 +150,12 @@ internal class DefaultDeviceFirmwareUpdateOperations(
         coordinator.clearStatus(requireDeviceUid(deviceUid))
 
     override fun close() {
+        localeRefreshJob.cancel()
         publisherJobs.values.forEach { job -> job.cancel() }
         publisherJobs.clear()
         availabilityLocks.clear()
         availabilityRefreshPolicy.clear()
-        publisherScope.cancel()
+        operationsScope.cancel()
         coordinator.close()
     }
 
@@ -134,7 +164,7 @@ internal class DefaultDeviceFirmwareUpdateOperations(
         states: StateFlow<DeviceOtaState>
     ) {
         publisherJobs.computeIfAbsent(deviceUid) {
-            publisherScope.launch {
+            operationsScope.launch {
                 states
                     .map { state -> NotificationEmission(state.notificationKey(), state) }
                     .distinctUntilChangedBy(NotificationEmission::key)
