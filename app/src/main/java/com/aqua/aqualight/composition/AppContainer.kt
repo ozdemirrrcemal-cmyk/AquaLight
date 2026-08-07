@@ -91,7 +91,12 @@ internal class DefaultAppContainer(
     ) {
         DefaultUserSettingsOperations(
             preferences = userPreferencesManager,
-            startupAppearanceCache = startupAppearanceCache
+            startupAppearanceCache = startupAppearanceCache,
+            reconcileDeviceUpdateWork = {
+                notificationPlatform.deviceUpdateWorkCoordinator.reconcileOwner(
+                    authenticatedOwnerIdentity.requireOwnerUid()
+                )
+            }
         )
     }
 

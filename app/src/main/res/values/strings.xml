@@ -185,9 +185,9 @@
     <string name="settings_notifications_section_description">Notifications settings card: enable or disable app notifications.</string>
     <string name="settings_notifications_title">Notifications</string>
     <string name="settings_notifications_subtitle">Receive alerts, tips and important notices.</string>
-    <string name="settings_autoupdate_section_description">Auto update settings card: control automatic update checks.</string>
-    <string name="settings_autoupdate_title">Auto updates</string>
-    <string name="settings_autoupdate_subtitle">Automatically check for updates in the background.</string>
+    <string name="settings_autoupdate_section_description">Device update settings card: automatically check connected AquaLight devices for software updates in the background.</string>
+    <string name="settings_autoupdate_title">Automatically check device updates</string>
+    <string name="settings_autoupdate_subtitle">Checks connected AquaLight devices for new software in the background and notifies you when an update is available.</string>
     <string name="settings_theme_section_description">Theme mode settings card: change the appearance of the app.</string>
     <string name="settings_theme_title">Theme</string>
     <string name="settings_theme_summary_light">Light theme</string>

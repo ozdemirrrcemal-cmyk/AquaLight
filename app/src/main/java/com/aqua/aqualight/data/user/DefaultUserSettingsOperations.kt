@@ -13,7 +13,8 @@ import kotlinx.coroutines.withContext
 /** Existing non-notification settings behavior wired behind the application contract. */
 class DefaultUserSettingsOperations(
     private val preferences: UserPreferencesManager,
-    private val startupAppearanceCache: StartupAppearanceCache
+    private val startupAppearanceCache: StartupAppearanceCache,
+    private val reconcileDeviceUpdateWork: suspend () -> Unit = {}
 ) : UserSettingsOperations {
 
     override val themeMode: Flow<String> = preferences.themeMode
@@ -54,5 +55,6 @@ class DefaultUserSettingsOperations(
 
     override suspend fun updateAutoUpdateEnabled(enabled: Boolean) {
         preferences.updateAutoUpdateEnabled(enabled)
+        reconcileDeviceUpdateWork()
     }
 }

@@ -6,6 +6,7 @@ import com.aqua.aqualight.application.notifications.NotificationDispatchUseCase
 import com.aqua.aqualight.application.notifications.NotificationPreferenceUseCase
 import com.aqua.aqualight.data.devices.update.DefaultDeviceUpdateNotificationWorkCoordinator
 import com.aqua.aqualight.data.devices.update.DeviceFirmwareAvailabilityTrustStore
+import com.aqua.aqualight.data.user.UserPreferencesManager
 import com.aqua.aqualight.platform.notifications.AndroidDeviceFirmwareUpdateNotificationPublisher
 import com.aqua.aqualight.platform.notifications.AndroidNotificationRenderer
 import com.aqua.aqualight.platform.notifications.DeviceFirmwareUpdateNotificationOperations
@@ -14,6 +15,7 @@ import com.aqua.aqualight.platform.notifications.DeviceFirmwareUpdateNotificatio
 class NotificationPlatform private constructor(context: Context) {
     private val appContext = context.applicationContext
     private val repository = OwnerNotificationPreferences.create(appContext)
+    private val userPreferences = UserPreferencesManager.create(appContext)
     private val deviceUpdateLedger = DeviceUpdateNotificationLedger.create(appContext)
     internal val deviceUpdateTrust =
         DeviceFirmwareAvailabilityTrustStore.create(appContext)
@@ -28,7 +30,8 @@ class NotificationPlatform private constructor(context: Context) {
     internal val deviceUpdateWorkCoordinator: DeviceUpdateNotificationWorkCoordinator =
         DefaultDeviceUpdateNotificationWorkCoordinator.create(
             context = appContext,
-            preferences = repository
+            notificationPreferences = repository,
+            userPreferences = userPreferences
         )
     val dispatchUseCase = NotificationDispatchUseCase(
         repository = repository,
