@@ -185,7 +185,6 @@ internal class ActiveOwnerDependencyGraphResolver(
             aquariumTankStore = aquariumTankStore,
             careTaskStore = careTaskStore,
             userDataArchiveOperations = DefaultUserDataArchiveOperations(
-                ownerUid = dependencies.ownerUid,
                 sourceAppVersion = BuildConfig.VERSION_NAME,
                 snapshotCollector = snapshotCollector,
                 restorer = restorer
