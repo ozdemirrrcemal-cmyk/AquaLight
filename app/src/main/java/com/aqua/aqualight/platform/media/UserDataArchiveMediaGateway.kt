@@ -19,12 +19,12 @@ internal class UserDataArchiveMediaGateway(
             context = appContext,
             uriString = uriString,
             expectedScope = AppMediaScope.TANK
-        ) ?: return null
-        if (!source.isFile || source.length() !in 1L..MAX_TANK_PHOTO_BYTES.toLong()) {
-            return null
-        }
-        return runCatching { source.readBytes() }
-            .getOrNull()
+        )
+        return source
+            ?.takeIf { file ->
+                file.isFile && file.length() in 1L..MAX_TANK_PHOTO_BYTES.toLong()
+            }
+            ?.let { file -> runCatching(file::readBytes).getOrNull() }
             ?.takeIf(::isSupportedImage)
     }
 
@@ -54,6 +54,7 @@ internal class UserDataArchiveMediaGateway(
             "The temporary tank-photo file is unavailable."
         }
 
+        var promoted = false
         return try {
             temporaryFile.writeBytes(bytes)
             requireNotNull(
@@ -66,10 +67,9 @@ internal class UserDataArchiveMediaGateway(
                 )
             ) {
                 "The restored tank photo could not be promoted."
-            }.toString()
-        } catch (error: Throwable) {
-            temporaryFile.delete()
-            throw error
+            }.toString().also { promoted = true }
+        } finally {
+            if (!promoted) temporaryFile.delete()
         }
     }
 

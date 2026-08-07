@@ -9,11 +9,15 @@ import com.aqua.aqualight.data.user.UserPreferencesManager
 import com.aqua.aqualight.platform.media.UserDataArchiveMediaGateway
 import kotlinx.coroutines.flow.first
 
+internal data class UserDataArchiveDataSources(
+    val aquariumStore: AquariumTankDataStoreManager,
+    val careTaskStore: CareTaskDataStoreManager,
+    val assignmentRepository: TankDeviceAssignmentRepository
+)
+
 internal class UserDataArchiveSnapshotCollector(
     private val ownerUid: String,
-    private val aquariumStore: AquariumTankDataStoreManager,
-    private val careTaskStore: CareTaskDataStoreManager,
-    private val assignmentRepository: TankDeviceAssignmentRepository,
+    private val dataSources: UserDataArchiveDataSources,
     private val devicesRepository: DevicesRepository,
     private val preferences: UserPreferencesManager,
     private val mediaGateway: UserDataArchiveMediaGateway
@@ -21,9 +25,9 @@ internal class UserDataArchiveSnapshotCollector(
 
     suspend fun collectAquariumData(): UserDataAquariumSnapshot {
         requireOwner()
-        val tanks = aquariumStore.tanksSnapshotForOwner(ownerUid)
+        val tanks = dataSources.aquariumStore.tanksSnapshotForOwner(ownerUid)
         val tankIds = tanks.mapTo(mutableSetOf()) { tank -> tank.id }
-        val tasks = careTaskStore.tasksFlow.first()
+        val tasks = dataSources.careTaskStore.tasksFlow.first()
             .filter { task -> task.tankId in tankIds }
             .map { task -> task.toArchiveCareTask() }
         val assignments = collectAssignments(tankIds)
@@ -92,7 +96,7 @@ internal class UserDataArchiveSnapshotCollector(
         val currentDeviceUids = devicesRepository.currentDevices()
             .map { snapshot -> snapshot.deviceUid }
         return currentDeviceUids.mapNotNull { deviceUid ->
-            assignmentRepository.assignmentForDevice(deviceUid)
+            dataSources.assignmentRepository.assignmentForDevice(deviceUid)
                 ?.takeIf { assignment -> assignment.tankId in tankIds }
                 ?.toArchiveAssignment()
         }

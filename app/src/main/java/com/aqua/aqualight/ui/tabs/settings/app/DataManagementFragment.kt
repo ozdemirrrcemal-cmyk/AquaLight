@@ -34,7 +34,7 @@ class DataManagementFragment : Fragment(R.layout.fragment_data_management) {
         UserDataCreateDocumentContract()
     ) { documentHandle ->
         if (documentHandle == null) {
-            viewModel.cancelDocumentSelection()
+            viewModel.cancelPendingOperation()
         } else {
             viewModel.writePendingDocument(documentHandle)
         }
@@ -44,7 +44,7 @@ class DataManagementFragment : Fragment(R.layout.fragment_data_management) {
         UserDataOpenBackupDocumentContract()
     ) { documentHandle ->
         if (documentHandle == null) {
-            viewModel.cancelDocumentSelection()
+            viewModel.cancelPendingOperation()
         } else {
             viewModel.inspectRestoreDocument(documentHandle)
         }
@@ -53,20 +53,14 @@ class DataManagementFragment : Fragment(R.layout.fragment_data_management) {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
         _binding = FragmentDataManagementBinding.bind(view)
-        setupHeader()
-        setupClicks()
+        binding.appHeader.setupAquaHeader(fragment = this)
+        with(binding) {
+            cardCreateBackup.setOnClickListener { viewModel.requestBackup() }
+            cardRestoreBackup.setOnClickListener { viewModel.requestRestoreDocument() }
+            cardExportData.setOnClickListener { viewModel.requestPortableExport() }
+        }
         setupFeedbackResultListener()
         observeViewModel()
-    }
-
-    private fun setupHeader() {
-        binding.appHeader.setupAquaHeader(fragment = this)
-    }
-
-    private fun setupClicks() = with(binding) {
-        cardCreateBackup.setOnClickListener { viewModel.requestBackup() }
-        cardRestoreBackup.setOnClickListener { viewModel.requestRestoreDocument() }
-        cardExportData.setOnClickListener { viewModel.requestPortableExport() }
     }
 
     private fun setupFeedbackResultListener() {
@@ -80,7 +74,7 @@ class DataManagementFragment : Fragment(R.layout.fragment_data_management) {
             ) {
                 viewModel.confirmRestore()
             } else {
-                viewModel.cancelRestorePreview()
+                viewModel.cancelPendingOperation()
             }
         }
     }

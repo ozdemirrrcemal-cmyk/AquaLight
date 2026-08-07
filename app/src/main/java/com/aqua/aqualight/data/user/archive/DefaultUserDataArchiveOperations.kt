@@ -102,14 +102,14 @@ internal class DefaultUserDataArchiveOperations(
 
     private suspend fun <T> operationResult(block: suspend () -> T): Result<T> {
         return withContext(dispatcher) {
-            try {
-                Result.success(block())
-            } catch (cancellation: CancellationException) {
-                throw cancellation
-            } catch (error: Throwable) {
-                Result.failure(error)
-            }
+            runCatching { block() }.rethrowCancellation()
         }
+    }
+
+    private fun <T> Result<T>.rethrowCancellation(): Result<T> {
+        val failure = exceptionOrNull()
+        if (failure is CancellationException) throw failure
+        return this
     }
 
     private fun datedFileName(prefix: String, timeMillis: Long, extension: String): String {

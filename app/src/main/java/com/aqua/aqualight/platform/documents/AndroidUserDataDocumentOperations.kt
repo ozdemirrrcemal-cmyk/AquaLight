@@ -70,12 +70,9 @@ internal class AndroidUserDataDocumentOperations(
     }
 
     private inline fun <T> operationResult(block: () -> T): Result<T> {
-        return try {
-            Result.success(block())
-        } catch (cancellation: CancellationException) {
-            throw cancellation
-        } catch (error: Throwable) {
-            Result.failure(error)
+        return runCatching(block).also { result ->
+            val failure = result.exceptionOrNull()
+            if (failure is CancellationException) throw failure
         }
     }
 

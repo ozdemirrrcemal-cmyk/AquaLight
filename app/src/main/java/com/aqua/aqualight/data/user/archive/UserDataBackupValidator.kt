@@ -97,25 +97,13 @@ internal class UserDataBackupValidator {
         require(aquarium.createdAtMillis > 0L) {
             "Backup aquarium creation time is invalid."
         }
-        validateItemCountAndIds(aquarium.plants.map(ArchivePlant::id))
-        validateItemCountAndIds(aquarium.materials.map(ArchiveMaterial::id))
-        validateItemCountAndIds(aquarium.livestock.map(ArchiveLivestock::id))
+        validateArchiveItemIds(aquarium.plants.map(ArchivePlant::id))
+        validateArchiveItemIds(aquarium.materials.map(ArchiveMaterial::id))
+        validateArchiveItemIds(aquarium.livestock.map(ArchiveLivestock::id))
         aquarium.livestock.forEach { livestock ->
             require(livestock.quantity > 0) {
                 "Backup livestock quantity is invalid."
             }
-        }
-    }
-
-    private fun validateItemCountAndIds(ids: List<Long>) {
-        require(ids.size <= UserDataBackupLimits.MAX_ITEMS_PER_AQUARIUM) {
-            "Backup aquarium contains too many inventory items."
-        }
-        require(ids.all { id -> id > 0L }) {
-            "Backup aquarium contains an invalid inventory id."
-        }
-        require(ids.distinct().size == ids.size) {
-            "Backup aquarium contains duplicate inventory ids."
         }
     }
 
@@ -142,15 +130,9 @@ internal class UserDataBackupValidator {
         require(task.createdAtMillis > 0L && task.updatedAtMillis > 0L) {
             "Backup care task timestamps are invalid."
         }
-        enumValue<CareTaskType>(task.type, "type")
-        enumValue<CareTaskSource>(task.source, "source")
-        enumValue<CareTaskStatus>(task.status, "status")
-    }
-
-    private inline fun <reified T : Enum<T>> enumValue(value: String, field: String) {
-        runCatching { enumValueOf<T>(value) }.getOrElse { error ->
-            throw IllegalArgumentException("Backup care task $field is invalid.", error)
-        }
+        requireArchiveEnumValue<CareTaskType>(task.type, "type")
+        requireArchiveEnumValue<CareTaskSource>(task.source, "source")
+        requireArchiveEnumValue<CareTaskStatus>(task.status, "status")
     }
 
     private fun validateAssignments(
@@ -218,10 +200,33 @@ internal class UserDataBackupValidator {
     }
 }
 
+private fun validateArchiveItemIds(ids: List<Long>) {
+    require(ids.size <= UserDataBackupLimits.MAX_ITEMS_PER_AQUARIUM) {
+        "Backup aquarium contains too many inventory items."
+    }
+    require(ids.all { id -> id > 0L }) {
+        "Backup aquarium contains an invalid inventory id."
+    }
+    require(ids.distinct().size == ids.size) {
+        "Backup aquarium contains duplicate inventory ids."
+    }
+}
+
+private inline fun <reified T : Enum<T>> requireArchiveEnumValue(value: String, field: String) {
+    runCatching { enumValueOf<T>(value) }.getOrElse { error ->
+        throw IllegalArgumentException("Backup care task $field is invalid.", error)
+    }
+}
+
 internal fun sha256(bytes: ByteArray): String {
     return MessageDigest.getInstance("SHA-256")
         .digest(bytes)
         .joinToString(separator = "") { byte ->
-            (byte.toInt() and 0xff).toString(16).padStart(2, '0')
+            (byte.toInt() and UNSIGNED_BYTE_MASK)
+                .toString(HEX_RADIX)
+                .padStart(2, '0')
         }
 }
+
+private const val UNSIGNED_BYTE_MASK = 0xFF
+private const val HEX_RADIX = 16

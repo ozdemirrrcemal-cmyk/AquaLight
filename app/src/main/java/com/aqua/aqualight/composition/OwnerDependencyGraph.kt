@@ -24,6 +24,7 @@ import com.aqua.aqualight.data.devices.repository.DevicesRepositoryProvider
 import com.aqua.aqualight.data.user.UserDataScope
 import com.aqua.aqualight.data.user.UserPreferencesManager
 import com.aqua.aqualight.data.user.archive.DefaultUserDataArchiveOperations
+import com.aqua.aqualight.data.user.archive.UserDataArchiveDataSources
 import com.aqua.aqualight.data.user.archive.UserDataArchiveSnapshotCollector
 import com.aqua.aqualight.data.user.archive.UserDataBackupRestorer
 import com.aqua.aqualight.platform.media.UserDataArchiveMediaGateway
@@ -157,21 +158,22 @@ internal class ActiveOwnerDependencyGraphResolver(
         val ownerUidProvider = { dependencies.ownerUid }
         val aquariumTankStore = AquariumTankDataStoreManager(appContext)
         val careTaskStore = CareTaskDataStoreManager.create(appContext)
+        val archiveDataSources = UserDataArchiveDataSources(
+            aquariumStore = aquariumTankStore,
+            careTaskStore = careTaskStore,
+            assignmentRepository = dependencies.assignmentRepository
+        )
         val mediaGateway = UserDataArchiveMediaGateway(appContext)
         val snapshotCollector = UserDataArchiveSnapshotCollector(
             ownerUid = dependencies.ownerUid,
-            aquariumStore = aquariumTankStore,
-            careTaskStore = careTaskStore,
-            assignmentRepository = dependencies.assignmentRepository,
+            dataSources = archiveDataSources,
             devicesRepository = dependencies.devicesRepository,
             preferences = userPreferencesManager,
             mediaGateway = mediaGateway
         )
         val restorer = UserDataBackupRestorer(
             ownerUid = dependencies.ownerUid,
-            aquariumStore = aquariumTankStore,
-            careTaskStore = careTaskStore,
-            assignmentRepository = dependencies.assignmentRepository,
+            dataSources = archiveDataSources,
             mediaGateway = mediaGateway,
             reconcileCareReminders = notificationPreferenceUseCase::reconcileOwner
         )

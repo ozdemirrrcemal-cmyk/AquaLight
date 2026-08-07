@@ -43,8 +43,9 @@ class DataManagementViewModel(
         eventChannel.trySend(DataManagementEvent.OpenBackupDocument)
     }
 
-    fun cancelDocumentSelection() {
+    fun cancelPendingOperation() {
         pendingWrite = null
+        pendingRestore = null
         finishOperation()
     }
 
@@ -107,10 +108,6 @@ class DataManagementViewModel(
                 }
             )
         }
-    }
-
-    fun cancelRestorePreview() {
-        pendingRestore = null
     }
 
     override fun onCleared() {
