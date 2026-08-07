@@ -304,9 +304,15 @@ internal class UserDataRestoreProvenanceStore(
     }
 }
 
+private const val MAX_RESTORE_OWNER_UID_CHARS = 128
+
 internal fun canonicalRestoreOwnerUid(ownerUid: String): String {
     val canonical = ownerUid.trim()
-    require(canonical.isNotBlank() && canonical == ownerUid && canonical.length <= 128) {
+    require(
+        canonical.isNotBlank() &&
+            canonical == ownerUid &&
+            canonical.length <= MAX_RESTORE_OWNER_UID_CHARS
+    ) {
         "Restore owner uid must be canonical and non-blank."
     }
     return canonical

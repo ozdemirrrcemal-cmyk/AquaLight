@@ -46,8 +46,23 @@ internal class UserDataRestoreRecovery(
         pending: PendingUserDataRestore
     ): Result {
         val failures = mutableListOf<Throwable>()
-        var removedAssignments = 0
+        val removedAssignments = rollbackAssignments(pending, failures)
+        val removedTasks = rollbackTasks(pending, failures)
+        val newTankIds = rollbackTanks(ownerUid, pending, failures)
+        finishRollback(ownerUid, failures)
+        return Result(
+            rolledBackTankCount = newTankIds.size,
+            rolledBackTaskCount = removedTasks,
+            rolledBackAssignmentCount = removedAssignments,
+            clearedCommittedTransaction = false
+        )
+    }
 
+    private suspend fun rollbackAssignments(
+        pending: PendingUserDataRestore,
+        failures: MutableList<Throwable>
+    ): Int {
+        var removed = 0
         pending.plannedAssignments.asReversed().forEach { assignment ->
             val result = runCatching {
                 dataSources.assignments.removeDeviceFromTank(
@@ -59,7 +74,7 @@ internal class UserDataRestoreRecovery(
                 null
             }
             when (result) {
-                TankDeviceRemovalResult.Removed -> removedAssignments += 1
+                TankDeviceRemovalResult.Removed -> removed += 1
                 is TankDeviceRemovalResult.Failure -> failures += result.error
                 TankDeviceRemovalResult.InvalidRequest -> failures += IllegalStateException(
                     "Restore journal contains an invalid device assignment."
@@ -68,7 +83,13 @@ internal class UserDataRestoreRecovery(
                 null -> Unit
             }
         }
+        return removed
+    }
 
+    private suspend fun rollbackTasks(
+        pending: PendingUserDataRestore,
+        failures: MutableList<Throwable>
+    ): Int {
         val tasksBefore = runCatching { dataSources.careTasks.snapshot() }
             .getOrElse { error ->
                 failures += error
@@ -78,8 +99,14 @@ internal class UserDataRestoreRecovery(
             runCatching { dataSources.careTasks.deleteTask(taskId) }
                 .onFailure { error -> failures += error }
         }
-        val removedTasks = tasksBefore.count { task -> task.id in pending.plannedTaskIds }
+        return tasksBefore.count { task -> task.id in pending.plannedTaskIds }
+    }
 
+    private suspend fun rollbackTanks(
+        ownerUid: String,
+        pending: PendingUserDataRestore,
+        failures: MutableList<Throwable>
+    ): List<Long> {
         val tanksBefore = runCatching { dataSources.tanks.snapshotForOwner(ownerUid) }
             .getOrElse { error ->
                 failures += error
@@ -92,26 +119,24 @@ internal class UserDataRestoreRecovery(
             runCatching { dataSources.tanks.deleteTanks(newTankIds) }
                 .onFailure { error -> failures += error }
         }
+        return newTankIds
+    }
 
-        if (failures.isEmpty()) {
-            val currentTanks = dataSources.tanks.snapshotForOwner(ownerUid)
-            val currentTasks = dataSources.careTasks.snapshot()
-            provenance.reconcile(ownerUid, currentTanks, currentTasks)
-            transactions.clearOwner(ownerUid)
-        } else {
+    private suspend fun finishRollback(
+        ownerUid: String,
+        failures: List<Throwable>
+    ) {
+        if (failures.isNotEmpty()) {
             val combined = IllegalStateException(
                 "Interrupted user-data restore could not be fully recovered."
             )
             failures.forEach(combined::addSuppressed)
             throw combined
         }
-
-        return Result(
-            rolledBackTankCount = newTankIds.size,
-            rolledBackTaskCount = removedTasks,
-            rolledBackAssignmentCount = removedAssignments,
-            clearedCommittedTransaction = false
-        )
+        val currentTanks = dataSources.tanks.snapshotForOwner(ownerUid)
+        val currentTasks = dataSources.careTasks.snapshot()
+        provenance.reconcile(ownerUid, currentTanks, currentTasks)
+        transactions.clearOwner(ownerUid)
     }
 
     companion object {

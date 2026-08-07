@@ -43,7 +43,7 @@ internal class UserDataBackupRestorer(
         get() = runtime.provenance
 
     suspend fun restore(backup: DecodedUserDataBackup): UserDataRestoreResult {
-        requireOwner()
+        requireRestoreOwner(ownerUid)
         runtime.recovery.recover(ownerUid)
 
         val existingAquariums = dataSources.tanks.snapshotForOwner(ownerUid)
@@ -92,7 +92,7 @@ internal class UserDataBackupRestorer(
         val assignments = restoreAssignments(backup, aquariums.tankIdMap)
 
         provenance.record(ownerUid, provenanceBatch)
-        requireOwner()
+        requireRestoreOwner(ownerUid)
         val reminderWarning = reconcileRemindersWithWarning()
         transactions.markCommitted(ownerUid)
         runCatching { transactions.clearOwner(ownerUid) }
@@ -114,7 +114,7 @@ internal class UserDataBackupRestorer(
         val tankIdMap = linkedMapOf<Long, Long>()
         var restoredCount = 0
         backup.manifest.aquariums.forEach { archived ->
-            requireOwner()
+            requireRestoreOwner(ownerUid)
             val existing = deduplicator.takeMatchingAquarium(archived)
             val local = existing ?: createAquarium(archived, backup).also {
                 restoredCount += 1
@@ -180,7 +180,7 @@ internal class UserDataBackupRestorer(
         val plans = mutableListOf<CareTaskRestorePlan>()
 
         backup.manifest.careTasks.forEach { archived ->
-            requireOwner()
+            requireRestoreOwner(ownerUid)
             val restoredTankId = requireNotNull(tankIdMap[archived.tankId]) {
                 "Validated backup care task lost its aquarium mapping."
             }
@@ -199,7 +199,7 @@ internal class UserDataBackupRestorer(
 
         transactions.planTasks(ownerUid, plans.map { plan -> plan.task.id })
         plans.forEach { plan ->
-            requireOwner()
+            requireRestoreOwner(ownerUid)
             dataSources.careTasks.addTask(plan.task)
             provenanceBatch.rememberCareTask(plan.archived, plan.task)
         }
@@ -221,7 +221,7 @@ internal class UserDataBackupRestorer(
         var restored = 0
         var skipped = planning.skipped
         planning.plans.forEach { plan ->
-            requireOwner()
+            requireRestoreOwner(ownerUid)
             when (
                 val result = dataSources.assignments.assignDeviceToTank(
                     plan.tankId,
@@ -249,7 +249,7 @@ internal class UserDataBackupRestorer(
         val plans = mutableListOf<AssignmentRestorePlan>()
         var skipped = 0
         backup.manifest.deviceAssignments.forEach { archived ->
-            requireOwner()
+            requireRestoreOwner(ownerUid)
             val restoredTankId = requireNotNull(tankIdMap[archived.tankId]) {
                 "Validated backup assignment lost its aquarium mapping."
             }
@@ -278,11 +278,11 @@ internal class UserDataBackupRestorer(
         rollbackFailure?.let(originalError::addSuppressed)
         return originalError
     }
+}
 
-    private fun requireOwner() {
-        check(UserDataScope.requireCurrentUid() == ownerUid) {
-            "Authenticated owner changed during backup restore."
-        }
+private fun requireRestoreOwner(ownerUid: String) {
+    check(UserDataScope.requireCurrentUid() == ownerUid) {
+        "Authenticated owner changed during backup restore."
     }
 }
 

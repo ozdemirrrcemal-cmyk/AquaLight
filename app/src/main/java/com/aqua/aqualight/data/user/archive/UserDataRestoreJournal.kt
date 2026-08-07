@@ -113,7 +113,7 @@ internal class UserDataRestoreJournal(
         synchronized(lock) {
             check(
                 preferences.edit()
-                    .remove(preferenceKey(owner))
+                    .remove(UserDataRestoreJournalCodec.preferenceKey(owner))
                     .commit()
             ) { "User-data restore journal could not be cleared." }
         }
@@ -130,8 +130,11 @@ internal class UserDataRestoreJournal(
     }
 
     private fun read(owner: String): PendingUserDataRestore? {
-        val encoded = preferences.getString(preferenceKey(owner), null) ?: return null
-        return runCatching { decode(encoded, owner) }
+        val encoded = preferences.getString(
+            UserDataRestoreJournalCodec.preferenceKey(owner),
+            null
+        ) ?: return null
+        return runCatching { UserDataRestoreJournalCodec.decode(encoded, owner) }
             .getOrElse { error ->
                 throw IllegalStateException(
                     "User-data restore journal is corrupt for the active owner.",
@@ -143,12 +146,31 @@ internal class UserDataRestoreJournal(
     private fun persist(transaction: PendingUserDataRestore) {
         check(
             preferences.edit()
-                .putString(preferenceKey(transaction.ownerUid), encode(transaction))
+                .putString(
+                    UserDataRestoreJournalCodec.preferenceKey(transaction.ownerUid),
+                    UserDataRestoreJournalCodec.encode(transaction)
+                )
                 .commit()
         ) { "User-data restore journal could not be committed." }
     }
 
-    private fun encode(transaction: PendingUserDataRestore): String {
+    private companion object {
+        const val PREFERENCES_NAME = "user_data_restore_journal_v1"
+        val lock = Any()
+    }
+}
+
+private object UserDataRestoreJournalCodec {
+    private const val KEY_PREFIX = "owner."
+    private const val FORMAT_VERSION = 1
+
+    fun preferenceKey(owner: String): String {
+        val token = Base64.getUrlEncoder().withoutPadding()
+            .encodeToString(owner.toByteArray(Charsets.UTF_8))
+        return KEY_PREFIX + token
+    }
+
+    fun encode(transaction: PendingUserDataRestore): String {
         val tankIds = JSONArray()
         transaction.existingTankIds.sorted().forEach { tankId ->
             tankIds.put(tankId)
@@ -175,7 +197,7 @@ internal class UserDataRestoreJournal(
             .toString()
     }
 
-    private fun decode(encoded: String, expectedOwner: String): PendingUserDataRestore {
+    fun decode(encoded: String, expectedOwner: String): PendingUserDataRestore {
         val root = JSONObject(encoded)
         require(root.getInt("version") == FORMAT_VERSION)
         val owner = canonicalRestoreOwnerUid(root.getString("ownerUid"))
@@ -220,18 +242,5 @@ internal class UserDataRestoreJournal(
             plannedTaskIds = plannedTaskIds.toList(),
             plannedAssignments = plannedAssignments.toList()
         )
-    }
-
-    private fun preferenceKey(owner: String): String {
-        val token = Base64.getUrlEncoder().withoutPadding()
-            .encodeToString(owner.toByteArray(Charsets.UTF_8))
-        return KEY_PREFIX + token
-    }
-
-    private companion object {
-        const val PREFERENCES_NAME = "user_data_restore_journal_v1"
-        const val KEY_PREFIX = "owner."
-        const val FORMAT_VERSION = 1
-        val lock = Any()
     }
 }
