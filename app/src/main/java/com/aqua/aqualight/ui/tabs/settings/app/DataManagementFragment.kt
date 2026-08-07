@@ -31,6 +31,20 @@ class DataManagementFragment : Fragment(R.layout.fragment_data_management) {
         requireContext().requireAppContainer().defaultViewModelFactory
     }
 
+    private val showInfo: (Int, Int, FeedbackBottomSheet.FeedbackTone) -> Unit =
+        { title, message, tone ->
+            FeedbackBottomSheet.show(
+                fragmentManager = childFragmentManager,
+                title = getString(title),
+                message = getString(message),
+                primaryText = getString(R.string.ok),
+                cancelText = null,
+                tone = tone,
+                requestKey = RESULT_INFO_REQUEST_KEY,
+                actionId = ACTION_DISMISS_INFO
+            )
+        }
+
     private val createDocumentLauncher = registerForActivityResult(
         UserDataCreateDocumentContract()
     ) { documentHandle ->
@@ -137,15 +151,15 @@ class DataManagementFragment : Fragment(R.layout.fragment_data_management) {
     private fun showOperationSuccess(action: DataManagementAction) {
         when (action) {
             DataManagementAction.BACKUP -> showInfo(
-                title = R.string.data_management_backup_success_title,
-                message = R.string.data_management_backup_success_message,
-                tone = FeedbackBottomSheet.FeedbackTone.SUCCESS
+                R.string.data_management_backup_success_title,
+                R.string.data_management_backup_success_message,
+                FeedbackBottomSheet.FeedbackTone.SUCCESS
             )
 
             DataManagementAction.EXPORT -> showInfo(
-                title = R.string.data_management_export_success_title,
-                message = R.string.data_management_export_success_message,
-                tone = FeedbackBottomSheet.FeedbackTone.SUCCESS
+                R.string.data_management_export_success_title,
+                R.string.data_management_export_success_message,
+                FeedbackBottomSheet.FeedbackTone.SUCCESS
             )
 
             DataManagementAction.RESTORE -> Unit
@@ -165,18 +179,18 @@ class DataManagementFragment : Fragment(R.layout.fragment_data_management) {
                     R.string.data_management_export_error_message
         }
         showInfo(
-            title = resources.first,
-            message = resources.second,
-            tone = FeedbackBottomSheet.FeedbackTone.ERROR
+            resources.first,
+            resources.second,
+            FeedbackBottomSheet.FeedbackTone.ERROR
         )
     }
 
     private fun showRestoreSuccess(result: UserDataRestoreResult) {
         if (result.reminderReconciliationWarning) {
             showInfo(
-                title = R.string.data_management_restore_warning_title,
-                message = R.string.data_management_restore_warning_message,
-                tone = FeedbackBottomSheet.FeedbackTone.WARNING
+                R.string.data_management_restore_warning_title,
+                R.string.data_management_restore_warning_message,
+                FeedbackBottomSheet.FeedbackTone.WARNING
             )
             return
         }
@@ -187,8 +201,8 @@ class DataManagementFragment : Fragment(R.layout.fragment_data_management) {
             primaryText = getString(R.string.ok),
             cancelText = null,
             tone = FeedbackBottomSheet.FeedbackTone.SUCCESS,
-            requestKey = DATA_MANAGEMENT_INFO_REQUEST_KEY,
-            actionId = DATA_MANAGEMENT_DISMISS_INFO_ACTION
+            requestKey = RESULT_INFO_REQUEST_KEY,
+            actionId = ACTION_DISMISS_INFO
         )
     }
 
@@ -200,25 +214,10 @@ class DataManagementFragment : Fragment(R.layout.fragment_data_management) {
 
     private companion object {
         const val RESTORE_CONFIRM_REQUEST_KEY = "data_management_restore_confirm"
+        const val RESULT_INFO_REQUEST_KEY = "data_management_info"
         const val ACTION_CONFIRM_RESTORE = "confirm_restore"
+        const val ACTION_DISMISS_INFO = "dismiss_info"
     }
-}
-
-private fun DataManagementFragment.showInfo(
-    title: Int,
-    message: Int,
-    tone: FeedbackBottomSheet.FeedbackTone
-) {
-    FeedbackBottomSheet.show(
-        fragmentManager = childFragmentManager,
-        title = getString(title),
-        message = getString(message),
-        primaryText = getString(R.string.ok),
-        cancelText = null,
-        tone = tone,
-        requestKey = DATA_MANAGEMENT_INFO_REQUEST_KEY,
-        actionId = DATA_MANAGEMENT_DISMISS_INFO_ACTION
-    )
 }
 
 private fun Resources.restoreSuccessMessage(result: UserDataRestoreResult): String {
@@ -246,6 +245,3 @@ private fun Resources.restoreSuccessMessage(result: UserDataRestoreResult): Stri
         )
     )
 }
-
-private const val DATA_MANAGEMENT_INFO_REQUEST_KEY = "data_management_info"
-private const val DATA_MANAGEMENT_DISMISS_INFO_ACTION = "dismiss_info"
