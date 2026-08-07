@@ -13,6 +13,8 @@ import com.aqua.aqualight.data.devices.provisioning.store.ProvisioningCommitReco
 import com.aqua.aqualight.data.devices.store.DeviceCredentialStore
 import com.aqua.aqualight.data.devices.store.DeviceKnownStore
 import com.aqua.aqualight.data.notifications.NotificationPlatform
+import com.aqua.aqualight.data.user.archive.UserDataRestoreJournal
+import com.aqua.aqualight.data.user.archive.UserDataRestoreProvenanceStore
 import com.aqua.aqualight.platform.media.AppMediaStorage
 import java.io.File
 import java.util.concurrent.CancellationException
@@ -220,7 +222,24 @@ class UserDataCleaner private constructor(
             }
 
         AppMediaStorage.discardPendingMediaForOwner(appContext, ownerUid)
+        clearRestoreState(ownerUid)
         File(appContext.cacheDir, "image_processing").deleteRecursively()
+    }
+
+    private fun clearRestoreState(ownerUid: String) {
+        val failures = listOfNotNull(
+            runCatching { UserDataRestoreJournal(appContext).clearOwner(ownerUid) }
+                .exceptionOrNull(),
+            runCatching { UserDataRestoreProvenanceStore(appContext).clearOwner(ownerUid) }
+                .exceptionOrNull()
+        )
+        if (failures.isNotEmpty()) {
+            val combined = IllegalStateException(
+                "User-data restore metadata could not be completely cleared."
+            )
+            failures.forEach(combined::addSuppressed)
+            throw combined
+        }
     }
 
     private fun deleteAppOwnedUri(value: String) {

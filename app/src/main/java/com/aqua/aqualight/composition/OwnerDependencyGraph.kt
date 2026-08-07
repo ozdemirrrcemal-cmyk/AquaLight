@@ -172,6 +172,7 @@ internal class ActiveOwnerDependencyGraphResolver(
             mediaGateway = mediaGateway
         )
         val restorer = UserDataBackupRestorer(
+            context = appContext,
             ownerUid = dependencies.ownerUid,
             dataSources = archiveDataSources,
             mediaGateway = mediaGateway,

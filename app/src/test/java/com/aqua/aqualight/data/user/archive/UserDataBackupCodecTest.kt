@@ -80,6 +80,31 @@ class UserDataBackupCodecTest {
     }
 
     @Test
+    fun `decoder enforces the aggregate uncompressed archive limit`() {
+        val photo = ByteArray(64) { index -> index.toByte() }
+        val manifest = manifest(
+            photo = ArchiveMediaReference(
+                entryName = "media/tanks/7.jpg",
+                byteSize = photo.size,
+                sha256 = sha256(photo)
+            )
+        )
+        val manifestJson = Gson().toJson(manifest)
+        val aggregateSize = manifestJson.toByteArray(StandardCharsets.UTF_8).size + photo.size
+        val constrainedCodec = UserDataBackupCodec(
+            maxUncompressedArchiveBytes = aggregateSize - 1
+        )
+        val encoded = rawZip(
+            manifestJson = manifestJson,
+            extraEntries = mapOf("media/tanks/7.jpg" to photo)
+        )
+
+        assertThrows(IllegalArgumentException::class.java) {
+            constrainedCodec.decode(encoded)
+        }
+    }
+
+    @Test
     fun `backup manifest is owner neutral`() {
         val fields = ArchiveAquarium::class.java.declaredFields.map { field -> field.name }
         val assignmentFields = ArchiveDeviceAssignment::class.java.declaredFields

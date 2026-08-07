@@ -11,8 +11,16 @@ import java.util.zip.ZipOutputStream
 
 internal class UserDataBackupCodec(
     private val gson: Gson = GsonBuilder().disableHtmlEscaping().create(),
-    private val validator: UserDataBackupValidator = UserDataBackupValidator()
+    private val validator: UserDataBackupValidator = UserDataBackupValidator(),
+    private val maxUncompressedArchiveBytes: Int =
+        UserDataBackupLimits.MAX_UNCOMPRESSED_ARCHIVE_BYTES
 ) {
+
+    init {
+        require(maxUncompressedArchiveBytes > 0) {
+            "Uncompressed archive limit must be positive."
+        }
+    }
 
     fun encode(
         manifest: UserDataBackupManifest,
@@ -68,14 +76,29 @@ internal class UserDataBackupCodec(
         var manifestJson: String? = null
         val media = linkedMapOf<String, ByteArray>()
         var entryCount = 0
+        var totalUncompressedBytes = 0
 
         ZipInputStream(ByteArrayInputStream(content)).use { zip ->
             while (true) {
                 val entry = zip.nextEntry ?: break
                 entryCount = validateEntryCount(entryCount + 1)
                 if (!entry.isDirectory) {
-                    val parsed = readArchiveEntry(zip, entry.name, manifestJson, media)
+                    val remaining = maxUncompressedArchiveBytes - totalUncompressedBytes
+                    require(remaining > 0) {
+                        "Backup exceeds the supported uncompressed archive size."
+                    }
+                    val parsed = readArchiveEntry(
+                        zip = zip,
+                        entryName = entry.name,
+                        currentManifestJson = manifestJson,
+                        media = media,
+                        remainingArchiveBytes = remaining
+                    )
                     manifestJson = parsed.manifestJson
+                    totalUncompressedBytes += parsed.uncompressedBytes
+                    require(totalUncompressedBytes <= maxUncompressedArchiveBytes) {
+                        "Backup exceeds the supported uncompressed archive size."
+                    }
                 }
                 zip.closeEntry()
             }
@@ -90,7 +113,8 @@ internal class UserDataBackupCodec(
         zip: ZipInputStream,
         entryName: String,
         currentManifestJson: String?,
-        media: MutableMap<String, ByteArray>
+        media: MutableMap<String, ByteArray>,
+        remainingArchiveBytes: Int
     ): ArchiveEntryResult {
         validator.requireSafeEntryName(entryName)
         return when {
@@ -98,8 +122,17 @@ internal class UserDataBackupCodec(
                 require(currentManifestJson == null) {
                     "Backup contains more than one manifest."
                 }
-                val bytes = readLimited(zip, UserDataBackupLimits.MAX_MANIFEST_BYTES)
-                ArchiveEntryResult(bytes.toString(StandardCharsets.UTF_8))
+                val bytes = readLimited(
+                    input = zip,
+                    maximumBytes = minOf(
+                        UserDataBackupLimits.MAX_MANIFEST_BYTES,
+                        remainingArchiveBytes
+                    )
+                )
+                ArchiveEntryResult(
+                    manifestJson = bytes.toString(StandardCharsets.UTF_8),
+                    uncompressedBytes = bytes.size
+                )
             }
 
             entryName.startsWith(UserDataBackupLimits.MEDIA_PREFIX) -> {
@@ -107,8 +140,18 @@ internal class UserDataBackupCodec(
                 require(media[entryName] == null) {
                     "Backup contains a duplicate media entry."
                 }
-                media[entryName] = readLimited(zip, UserDataBackupLimits.MAX_MEDIA_ENTRY_BYTES)
-                ArchiveEntryResult(currentManifestJson)
+                val bytes = readLimited(
+                    input = zip,
+                    maximumBytes = minOf(
+                        UserDataBackupLimits.MAX_MEDIA_ENTRY_BYTES,
+                        remainingArchiveBytes
+                    )
+                )
+                media[entryName] = bytes
+                ArchiveEntryResult(
+                    manifestJson = currentManifestJson,
+                    uncompressedBytes = bytes.size
+                )
             }
 
             else -> error("Backup contains an unsupported archive entry.")
@@ -158,6 +201,7 @@ internal class UserDataBackupCodec(
     )
 
     private data class ArchiveEntryResult(
-        val manifestJson: String?
+        val manifestJson: String?,
+        val uncompressedBytes: Int
     )
 }

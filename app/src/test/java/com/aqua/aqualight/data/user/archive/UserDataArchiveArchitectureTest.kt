@@ -88,18 +88,29 @@ class UserDataArchiveArchitectureTest {
     }
 
     @Test
-    fun `archive operations are composed only through the owner graph`() {
+    fun `archive operations are composed and recovered through central owner boundaries`() {
         val graph = source(
             "app/src/main/java/com/aqua/aqualight/composition/OwnerDependencyGraph.kt"
         )
         val factory = source(
             "app/src/main/java/com/aqua/aqualight/composition/OwnerViewModelFactory.kt"
         )
+        val sessionServices = source(
+            "app/src/main/java/com/aqua/aqualight/data/auth/SessionBoundServiceManager.kt"
+        )
+        val cleaner = source(
+            "app/src/main/java/com/aqua/aqualight/data/user/UserDataCleaner.kt"
+        )
 
         assertTrue(graph.contains("val userDataArchiveOperations: UserDataArchiveOperations"))
         assertTrue(graph.contains("DefaultUserDataArchiveOperations("))
+        assertTrue(graph.contains("context = appContext"))
         assertTrue(factory.contains("DataManagementViewModel::class.java"))
         assertTrue(factory.contains("archiveOperations = graph.userDataArchiveOperations"))
+        assertTrue(sessionServices.contains("UserDataRestoreRecovery.create"))
+        assertTrue(sessionServices.contains(".recover(normalizedOwnerUid)"))
+        assertTrue(cleaner.contains("UserDataRestoreJournal(appContext).clearOwner(ownerUid)"))
+        assertTrue(cleaner.contains("UserDataRestoreProvenanceStore(appContext).clearOwner(ownerUid)"))
     }
 
     private fun source(relativePath: String): String {

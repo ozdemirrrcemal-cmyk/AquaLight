@@ -8,13 +8,21 @@ internal class UserDataRestoreDeduplicator(
     existingAquariums: List<SavedAquariumTank>,
     existingCareTasks: List<CareTask>,
     private val ownerUid: String,
-    private val snapshotTankPhoto: (String?) -> ByteArray?
+    private val snapshotTankPhoto: (String?) -> ByteArray?,
+    private val provenance: UserDataRestoreProvenanceSnapshot =
+        UserDataRestoreProvenanceSnapshot.Empty
 ) {
     private val unmatchedAquariums = existingAquariums.toMutableList()
     private val unmatchedCareTasks = existingCareTasks.toMutableList()
 
     fun takeMatchingAquarium(archived: ArchiveAquarium): SavedAquariumTank? {
-        val match = unmatchedAquariums.firstOrNull { tank ->
+        val provenanceMatch = provenance.aquarium(archived)?.let { record ->
+            unmatchedAquariums.firstOrNull { tank ->
+                tank.id == record.localTankId &&
+                    tank.createdAtMillis == record.localCreatedAtMillis
+            }
+        }
+        val match = provenanceMatch ?: unmatchedAquariums.firstOrNull { tank ->
             tank.id == archived.id && tank.createdAtMillis == archived.createdAtMillis
         } ?: unmatchedAquariums.firstOrNull { tank ->
             tank.matchesArchivedContent(archived)
@@ -27,7 +35,15 @@ internal class UserDataRestoreDeduplicator(
         archived: ArchiveCareTask,
         restoredTankId: Long
     ): CareTask? {
-        val match = unmatchedCareTasks.firstOrNull { task ->
+        val provenanceMatch = provenance.careTask(archived)?.let { record ->
+            unmatchedCareTasks.firstOrNull { task ->
+                task.id == record.localTaskId &&
+                    task.tankId == restoredTankId &&
+                    task.tankId == record.localTankId &&
+                    task.createdAtMillis == record.localCreatedAtMillis
+            }
+        }
+        val match = provenanceMatch ?: unmatchedCareTasks.firstOrNull { task ->
             task.tankId == restoredTankId &&
                 task.id == archived.id &&
                 task.createdAtMillis == archived.createdAtMillis
