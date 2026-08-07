@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Ayarlar / veri yönetimi -->
+    <string name="screen_title_data_management">Veriler ve Yedekleme</string>
+    <string name="data_management_backup_title">Yedek oluştur</string>
+    <string name="data_management_backup_subtitle">Akvaryumlarınızı, bakım kayıtlarınızı ve uygun cihaz ilişkilerini AquaLight yedeğine kaydedin.</string>
+    <string name="data_management_backup_card_description">Akvaryum verilerinizin AquaLight yedeğini oluşturun.</string>
+    <string name="data_management_restore_title">Yedekten geri yükle</string>
+    <string name="data_management_restore_subtitle">Bir AquaLight yedeğini inceleyin ve mevcut akvaryumlarınızı silmeden verilerini ekleyin.</string>
+    <string name="data_management_restore_card_description">Bir AquaLight yedeği seçin ve geri yükleyin.</string>
+    <string name="data_management_export_title">Verilerimi dışa aktar</string>
+    <string name="data_management_export_subtitle">Profilinizin, seçili uygulama tercihlerinizin, kullanım sayaçlarınızın ve akvaryum verilerinizin okunabilir JSON kopyasını oluşturun.</string>
+    <string name="data_management_export_card_description">AquaLight verilerinizin okunabilir bir kopyasını dışa aktarın.</string>
+    <string name="data_management_arrow_description">Veri işlemini aç</string>
+    <string name="data_management_info">Yedekler hiçbir zaman şifreleri, kimlik doğrulama bilgilerini, cihaz güvenlik sırlarını veya etkin cihaz oturumlarını içermez. Geri yükleme, doğrulanmış verileri oturum açmış mevcut hesaba ekler ve cihaz sahipliğini hiçbir zaman aktarmaz.</string>
+    <string name="data_management_restore_preview_title">Yedeği incele</string>
+    <string name="data_management_restore_preview_message">Oluşturulma: %1$s\nAquaLight sürümü: %2$s\nAkvaryum: %3$d\nBakım kaydı: %4$d\nUygun cihaz ilişkisi: %5$d\nArşivlenen fotoğraf: %6$d\n\nGeri yükleme bu kayıtları mevcut verilerinize ekler. Mevcut akvaryumlar silinmez.</string>
+    <string name="data_management_restore_confirm">Geri yükle</string>
+    <string name="data_management_backup_success_title">Yedek kaydedildi</string>
+    <string name="data_management_backup_success_message">AquaLight yedeğiniz başarıyla kaydedildi.</string>
+    <string name="data_management_export_success_title">Veriler dışa aktarıldı</string>
+    <string name="data_management_export_success_message">Okunabilir AquaLight veri dışa aktarımınız başarıyla kaydedildi.</string>
+    <string name="data_management_restore_success_title">Yedek geri yüklendi</string>
+    <string name="data_management_restore_success_message">%1$d akvaryum, %2$d bakım kaydı ve %3$d cihaz ilişkisi geri yüklendi. Kullanılamayan veya zaten atanmış %4$d cihaz ilişkisi atlandı.</string>
+    <string name="data_management_restore_warning_title">Veriler hatırlatıcı uyarısıyla geri yüklendi</string>
+    <string name="data_management_restore_warning_message">Verileriniz geri yüklendi ancak bakım hatırlatıcıları tamamen uzlaştırılamadı. Geri yüklenen hatırlatıcılara güvenmeden önce uygulamayı yeniden açın veya bildirim ayarlarını kontrol edin.</string>
+    <string name="data_management_backup_error_title">Yedekleme başarısız</string>
+    <string name="data_management_backup_error_message">AquaLight yedeği oluşturamadı veya kaydedemedi. Mevcut verileriniz değiştirilmedi.</string>
+    <string name="data_management_restore_error_title">Geri yükleme başarısız</string>
+    <string name="data_management_restore_error_message">Seçilen yedek doğrulanamadı veya geri yüklenemedi. AquaLight bu geri yükleme denemesinde oluşturulan kayıtları geri aldı.</string>
+    <string name="data_management_export_error_title">Dışa aktarma başarısız</string>
+    <string name="data_management_export_error_message">AquaLight veri dışa aktarımınızı oluşturamadı veya kaydedemedi. Mevcut verileriniz değiştirilmedi.</string>
+</resources>
