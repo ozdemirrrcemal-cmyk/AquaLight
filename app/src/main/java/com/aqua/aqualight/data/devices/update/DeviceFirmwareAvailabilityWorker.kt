@@ -91,14 +91,6 @@ class DeviceFirmwareAvailabilityWorker(
             enqueueImmediate(context.applicationContext, owner)
         }
 
-        fun enqueueImmediate(context: Context, ownerUid: String) {
-            enqueueOneTime(
-                context = context,
-                ownerUid = ownerUid,
-                policy = ExistingWorkPolicy.KEEP
-            )
-        }
-
         fun cancel(context: Context, ownerUid: String?) {
             val owner = ownerUid?.trim()?.takeIf(String::isNotBlank) ?: return
             WorkManager.getInstance(context.applicationContext).apply {
@@ -107,18 +99,11 @@ class DeviceFirmwareAvailabilityWorker(
             }
         }
 
-        private fun enqueueOneTime(
-            context: Context,
-            ownerUid: String,
-            policy: ExistingWorkPolicy
-        ) {
-            val owner = ownerUid.trim()
-            if (owner.isBlank()) return
-
-            WorkManager.getInstance(context.applicationContext).enqueueUniqueWork(
-                immediateWorkName(owner),
-                policy,
-                immediateRequest(owner)
+        private fun enqueueImmediate(context: Context, ownerUid: String) {
+            WorkManager.getInstance(context).enqueueUniqueWork(
+                immediateWorkName(ownerUid),
+                ExistingWorkPolicy.REPLACE,
+                immediateRequest(ownerUid)
             )
         }
 

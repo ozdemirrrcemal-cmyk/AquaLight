@@ -106,6 +106,8 @@ class DeviceUpdateNotificationAcceptanceTest(unittest.TestCase):
 
         self.assertNotIn("ProcessLifecycleOwner", worker)
         self.assertNotIn("KEY_ALLOW_FOREGROUND", worker)
+        self.assertNotIn("ExistingWorkPolicy.KEEP", worker)
+        self.assertIn("ExistingWorkPolicy.REPLACE", worker)
         self.assertIn("deviceUpdateWorkCoordinator.cancelOwner(ownerUid)", contract)
 
     def test_firmware_route_is_revalidated_before_navigation(self) -> None:

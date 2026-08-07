@@ -86,10 +86,25 @@ class OwnerSessionCoordinator private constructor(
             }
 
             val transition = stateMachine.begin(normalizedOwnerUid)
-            val previousStopError = stopPreviousOwnerIfRequired(
-                previousOwnerUid = transition.previousOwnerUid,
-                targetOwnerUid = normalizedOwnerUid
-            )
+            val previousStopError = try {
+                stopPreviousOwnerIfRequired(
+                    previousOwnerUid = transition.previousOwnerUid,
+                    targetOwnerUid = normalizedOwnerUid
+                )
+            } catch (error: Throwable) {
+                stateMachine.abort(transition)
+                if (
+                    error is CancellationException &&
+                    error !is TimeoutCancellationException
+                ) {
+                    throw error
+                }
+                return@withLock OpenResult.Failure(
+                    ownerUid = normalizedOwnerUid,
+                    generation = transition.generation,
+                    error = error
+                )
+            }
             if (previousStopError != null) {
                 stateMachine.abort(transition)
                 return@withLock OpenResult.Failure(
