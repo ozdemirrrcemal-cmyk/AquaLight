@@ -31,6 +31,10 @@ internal interface DeviceFirmwareUpdateNotificationOperations {
 
     suspend fun clearAvailability(ownerUid: String, deviceUid: String)
 
+    suspend fun cancelUntrustedAvailability(ownerUid: String, deviceUid: String) {
+        clearAvailability(ownerUid, deviceUid)
+    }
+
     suspend fun clearDeletedDevices(
         ownerUid: String,
         deviceUids: Set<String>
@@ -93,6 +97,18 @@ internal class AndroidDeviceFirmwareUpdateNotificationPublisher(
             val owner = requireOwnerUid(ownerUid)
             if (!renderer.isDeviceUpdateOperationNotificationActive(owner, deviceUid)) {
                 clearAvailabilityLocked(owner, deviceUid)
+            }
+        }
+    }
+
+    override suspend fun cancelUntrustedAvailability(
+        ownerUid: String,
+        deviceUid: String
+    ) {
+        withDeviceLock(ownerUid, deviceUid) {
+            val owner = requireOwnerUid(ownerUid)
+            if (!renderer.isDeviceUpdateOperationNotificationActive(owner, deviceUid)) {
+                renderer.cancelDeviceUpdate(owner, deviceUid)
             }
         }
     }

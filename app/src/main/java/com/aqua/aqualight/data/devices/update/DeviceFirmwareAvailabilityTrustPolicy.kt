@@ -65,8 +65,10 @@ internal class DeviceFirmwareAvailabilityTrustPolicy(
         val digest = MessageDigest.getInstance("SHA-256")
             .digest(canonical.toByteArray(StandardCharsets.UTF_8))
         return digest.joinToString(separator = "") { byte ->
-            val value = byte.toInt() and 0xff
-            "${HEX_DIGITS[value ushr 4]}${HEX_DIGITS[value and 0x0f]}"
+            val value = byte.toInt() and UNSIGNED_BYTE_MASK
+            val high = HEX_DIGITS[value ushr HIGH_NIBBLE_SHIFT]
+            val low = HEX_DIGITS[value and LOW_NIBBLE_MASK]
+            "$high$low"
         }
     }
 
@@ -79,6 +81,9 @@ internal class DeviceFirmwareAvailabilityTrustPolicy(
     private companion object {
         const val DEFAULT_MAX_AGE_MILLIS = 15L * 60L * 1_000L
         const val DEFAULT_MAX_FUTURE_SKEW_MILLIS = 60L * 1_000L
+        const val UNSIGNED_BYTE_MASK = 0xff
+        const val HIGH_NIBBLE_SHIFT = 4
+        const val LOW_NIBBLE_MASK = 0x0f
         const val HEX_DIGITS = "0123456789abcdef"
     }
 }

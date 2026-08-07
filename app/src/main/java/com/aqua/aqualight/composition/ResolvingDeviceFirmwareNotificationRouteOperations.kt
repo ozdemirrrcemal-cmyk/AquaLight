@@ -15,22 +15,31 @@ internal class ResolvingDeviceFirmwareNotificationRouteOperations(
         deviceUid: String
     ): DeviceFirmwareNotificationRouteDecision {
         val normalizedDeviceUid = deviceUid.trim()
-        if (normalizedDeviceUid.isBlank()) {
-            return DeviceFirmwareNotificationRouteDecision.REJECT
+        return if (normalizedDeviceUid.isBlank()) {
+            DeviceFirmwareNotificationRouteDecision.REJECT
+        } else {
+            evaluateActiveGraph(normalizedDeviceUid)
         }
-        val graph = try {
+    }
+
+    private fun evaluateActiveGraph(
+        deviceUid: String
+    ): DeviceFirmwareNotificationRouteDecision {
+        val graph: OwnerDependencyGraph? = try {
             ownerGraphResolver.requireActive()
         } catch (error: IllegalStateException) {
             Log.d(TAG, "Firmware notification route is waiting for owner graph.", error)
-            return DeviceFirmwareNotificationRouteDecision.DEFER
+            null
         }
-        val repository = graph.devicesRepository
-        val snapshot = repository.currentDevice(DeviceUid(normalizedDeviceUid))
-        return DeviceFirmwareNotificationDestinationPolicy.evaluate(
-            repositoryReady = repository.ready.value,
-            deviceExists = snapshot != null,
-            otaSupported = snapshot?.capabilities?.ota == true
-        )
+        return graph?.let { activeGraph ->
+            val repository = activeGraph.devicesRepository
+            val snapshot = repository.currentDevice(DeviceUid(deviceUid))
+            DeviceFirmwareNotificationDestinationPolicy.evaluate(
+                repositoryReady = repository.ready.value,
+                deviceExists = snapshot != null,
+                otaSupported = snapshot?.capabilities?.ota == true
+            )
+        } ?: DeviceFirmwareNotificationRouteDecision.DEFER
     }
 
     private companion object {
