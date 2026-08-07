@@ -39,7 +39,7 @@ class DataManagementViewModel(
     }
 
     fun requestRestoreDocument() {
-        if (!beginOperation()) return
+        if (!_uiState.beginOperation()) return
         eventChannel.trySend(DataManagementEvent.OpenBackupDocument)
     }
 
@@ -94,7 +94,7 @@ class DataManagementViewModel(
 
     fun confirmRestore() {
         val content = pendingRestore ?: return
-        if (!beginOperation()) return
+        if (!_uiState.beginOperation()) return
         viewModelScope.launch {
             val result = archiveOperations.restoreBackup(content)
             pendingRestore = null
@@ -119,7 +119,7 @@ class DataManagementViewModel(
         action: DataManagementAction,
         creator: suspend () -> Result<UserDataArchiveArtifact>
     ) {
-        if (!beginOperation()) return
+        if (!_uiState.beginOperation()) return
         viewModelScope.launch {
             val artifact = creator().getOrNull()
             if (artifact == null) {
@@ -137,18 +137,17 @@ class DataManagementViewModel(
         }
     }
 
-    private fun beginOperation(): Boolean {
-        if (_uiState.value.busy) return false
-        _uiState.update { state -> state.copy(busy = true) }
-        return true
-    }
-
     private data class PendingWrite(
         val action: DataManagementAction,
         val artifact: UserDataArchiveArtifact
     )
 }
 
+private fun MutableStateFlow<DataManagementUiState>.beginOperation(): Boolean {
+    if (value.busy) return false
+    update { state -> state.copy(busy = true) }
+    return true
+}
 
 private fun MutableStateFlow<DataManagementUiState>.finishOperation() {
     update { state -> state.copy(busy = false) }

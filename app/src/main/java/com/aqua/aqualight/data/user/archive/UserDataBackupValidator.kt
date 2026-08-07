@@ -44,30 +44,6 @@ internal class UserDataBackupValidator {
         requireValidArchiveMediaEntryName(entryName)
     }
 
-    private fun validateEnvelope(manifest: UserDataBackupManifest) {
-        require(manifest.format == USER_DATA_BACKUP_FORMAT) {
-            "Unsupported backup format."
-        }
-        require(manifest.schemaVersion == USER_DATA_BACKUP_SCHEMA_VERSION) {
-            "Unsupported backup schema version."
-        }
-        require(manifest.createdAtMillis > 0L) {
-            "Backup creation time is invalid."
-        }
-        require(manifest.sourceAppVersion.isNotBlank()) {
-            "Backup source application version is missing."
-        }
-        require(manifest.aquariums.size <= UserDataBackupLimits.MAX_AQUARIUMS) {
-            "Backup contains too many aquariums."
-        }
-        require(manifest.careTasks.size <= UserDataBackupLimits.MAX_CARE_TASKS) {
-            "Backup contains too many care tasks."
-        }
-        require(manifest.deviceAssignments.size <= UserDataBackupLimits.MAX_DEVICE_ASSIGNMENTS) {
-            "Backup contains too many device assignments."
-        }
-    }
-
     private fun validateAquariums(aquariums: List<ArchiveAquarium>): Set<Long> {
         val tankIds = aquariums.map(ArchiveAquarium::id)
         require(tankIds.all { tankId -> tankId > 0L }) {
@@ -166,7 +142,30 @@ internal class UserDataBackupValidator {
             "Backup contains unreferenced or missing media entries."
         }
     }
+}
 
+private fun validateEnvelope(manifest: UserDataBackupManifest) {
+    require(manifest.format == USER_DATA_BACKUP_FORMAT) {
+        "Unsupported backup format."
+    }
+    require(manifest.schemaVersion == USER_DATA_BACKUP_SCHEMA_VERSION) {
+        "Unsupported backup schema version."
+    }
+    require(manifest.createdAtMillis > 0L) {
+        "Backup creation time is invalid."
+    }
+    require(manifest.sourceAppVersion.isNotBlank()) {
+        "Backup source application version is missing."
+    }
+    require(manifest.aquariums.size <= UserDataBackupLimits.MAX_AQUARIUMS) {
+        "Backup contains too many aquariums."
+    }
+    require(manifest.careTasks.size <= UserDataBackupLimits.MAX_CARE_TASKS) {
+        "Backup contains too many care tasks."
+    }
+    require(manifest.deviceAssignments.size <= UserDataBackupLimits.MAX_DEVICE_ASSIGNMENTS) {
+        "Backup contains too many device assignments."
+    }
 }
 
 private fun requireSafeArchiveEntryName(entryName: String) {

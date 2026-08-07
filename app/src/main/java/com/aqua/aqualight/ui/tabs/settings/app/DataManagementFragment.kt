@@ -187,25 +187,8 @@ class DataManagementFragment : Fragment(R.layout.fragment_data_management) {
             primaryText = getString(R.string.ok),
             cancelText = null,
             tone = FeedbackBottomSheet.FeedbackTone.SUCCESS,
-            requestKey = RESULT_INFO_REQUEST_KEY,
-            actionId = ACTION_DISMISS_INFO
-        )
-    }
-
-    private fun showInfo(
-        title: Int,
-        message: Int,
-        tone: FeedbackBottomSheet.FeedbackTone
-    ) {
-        FeedbackBottomSheet.show(
-            fragmentManager = childFragmentManager,
-            title = getString(title),
-            message = getString(message),
-            primaryText = getString(R.string.ok),
-            cancelText = null,
-            tone = tone,
-            requestKey = RESULT_INFO_REQUEST_KEY,
-            actionId = ACTION_DISMISS_INFO
+            requestKey = DATA_MANAGEMENT_INFO_REQUEST_KEY,
+            actionId = DATA_MANAGEMENT_DISMISS_INFO_ACTION
         )
     }
 
@@ -217,10 +200,25 @@ class DataManagementFragment : Fragment(R.layout.fragment_data_management) {
 
     private companion object {
         const val RESTORE_CONFIRM_REQUEST_KEY = "data_management_restore_confirm"
-        const val RESULT_INFO_REQUEST_KEY = "data_management_info"
         const val ACTION_CONFIRM_RESTORE = "confirm_restore"
-        const val ACTION_DISMISS_INFO = "dismiss_info"
     }
+}
+
+private fun DataManagementFragment.showInfo(
+    title: Int,
+    message: Int,
+    tone: FeedbackBottomSheet.FeedbackTone
+) {
+    FeedbackBottomSheet.show(
+        fragmentManager = childFragmentManager,
+        title = getString(title),
+        message = getString(message),
+        primaryText = getString(R.string.ok),
+        cancelText = null,
+        tone = tone,
+        requestKey = DATA_MANAGEMENT_INFO_REQUEST_KEY,
+        actionId = DATA_MANAGEMENT_DISMISS_INFO_ACTION
+    )
 }
 
 private fun Resources.restoreSuccessMessage(result: UserDataRestoreResult): String {
@@ -248,3 +246,6 @@ private fun Resources.restoreSuccessMessage(result: UserDataRestoreResult): Stri
         )
     )
 }
+
+private const val DATA_MANAGEMENT_INFO_REQUEST_KEY = "data_management_info"
+private const val DATA_MANAGEMENT_DISMISS_INFO_ACTION = "dismiss_info"
