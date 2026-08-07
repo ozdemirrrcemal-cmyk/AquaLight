@@ -1,5 +1,6 @@
 package com.aqua.aqualight.data.devices
 
+import com.aqua.aqualight.application.devices.DEVICE_FIRMWARE_MANIFEST_URL
 import com.aqua.aqualight.application.devices.DeviceFirmwareCommandResult
 import com.aqua.aqualight.application.devices.DeviceFirmwareUpdateOperations
 import com.aqua.aqualight.application.devices.DeviceOtaState
@@ -7,6 +8,8 @@ import com.aqua.aqualight.application.devices.PreparedDeviceFirmwareUpdate
 import com.aqua.aqualight.data.devices.model.DeviceUid
 import com.aqua.aqualight.data.devices.repository.DevicesRepository
 import com.aqua.aqualight.data.devices.runtime.modules.firmware.DeviceOtaCoordinator
+import com.aqua.aqualight.i18n.AppLanguageController
+import java.util.Locale
 import java.util.concurrent.CancellationException
 import java.util.concurrent.ConcurrentHashMap
 import kotlinx.coroutines.CoroutineScope
@@ -16,6 +19,7 @@ import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.distinctUntilChangedBy
+import kotlinx.coroutines.flow.drop
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.Mutex
@@ -29,7 +33,7 @@ internal class DefaultDeviceFirmwareUpdateOperations(
         DeviceFirmwareAvailabilityRefreshPolicy()
 ) : DeviceFirmwareUpdateOperations, AutoCloseable {
 
-    private val publisherScope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
+    private val operationsScope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
     private val publisherJobs = ConcurrentHashMap<DeviceUid, Job>()
     private val availabilityLocks = ConcurrentHashMap<DeviceUid, Mutex>()
 
@@ -47,10 +51,37 @@ internal class DefaultDeviceFirmwareUpdateOperations(
         snapshotUpdates = devicesRepository.snapshots
     )
 
+    private val localeRefreshJob = operationsScope.launch {
+        AppLanguageController.languageChanges
+            .drop(1)
+            .collect {
+                publisherJobs.keys.toList().forEach { deviceUid ->
+                    refreshAvailabilityIfStale(
+                        deviceUid = deviceUid.value,
+                        manifestUrl = DEVICE_FIRMWARE_MANIFEST_URL,
+                        applyNow = true
+                    )
+                }
+            }
+    }
+
     override fun observe(deviceUid: String): StateFlow<DeviceOtaState> {
         val uid = requireDeviceUid(deviceUid)
         val states = coordinator.observe(uid)
         observeForNotifications(uid, states)
+        if (
+            states.value.requiresReleaseContentRelocalization(
+                AppLanguageController.current()
+            )
+        ) {
+            operationsScope.launch {
+                refreshAvailabilityIfStale(
+                    deviceUid = uid.value,
+                    manifestUrl = DEVICE_FIRMWARE_MANIFEST_URL,
+                    applyNow = true
+                )
+            }
+        }
         return states
     }
 
@@ -62,7 +93,13 @@ internal class DefaultDeviceFirmwareUpdateOperations(
         val uid = requireDeviceUid(deviceUid)
         return availabilityLocks.computeIfAbsent(uid) { Mutex() }.withLock {
             val currentState = coordinator.observe(uid).value
-            if (!availabilityRefreshPolicy.shouldRefresh(uid, currentState)) {
+            if (
+                !availabilityRefreshPolicy.shouldRefresh(
+                    deviceUid = uid,
+                    state = currentState,
+                    preferredLocaleTag = AppLanguageController.current()
+                )
+            ) {
                 return@withLock Result.success(currentState)
             }
             coordinator.checkAvailability(
@@ -113,11 +150,12 @@ internal class DefaultDeviceFirmwareUpdateOperations(
         coordinator.clearStatus(requireDeviceUid(deviceUid))
 
     override fun close() {
+        localeRefreshJob.cancel()
         publisherJobs.values.forEach { job -> job.cancel() }
         publisherJobs.clear()
         availabilityLocks.clear()
         availabilityRefreshPolicy.clear()
-        publisherScope.cancel()
+        operationsScope.cancel()
         coordinator.close()
     }
 
@@ -126,7 +164,7 @@ internal class DefaultDeviceFirmwareUpdateOperations(
         states: StateFlow<DeviceOtaState>
     ) {
         publisherJobs.computeIfAbsent(deviceUid) {
-            publisherScope.launch {
+            operationsScope.launch {
                 states
                     .map { state -> NotificationEmission(state.notificationKey(), state) }
                     .distinctUntilChangedBy(NotificationEmission::key)
@@ -207,7 +245,14 @@ internal class DeviceFirmwareAvailabilityRefreshPolicy(
         require(failureRetryMillis >= 0L)
     }
 
-    fun shouldRefresh(deviceUid: DeviceUid, state: DeviceOtaState): Boolean {
+    fun shouldRefresh(
+        deviceUid: DeviceUid,
+        state: DeviceOtaState,
+        preferredLocaleTag: String? = null
+    ): Boolean {
+        if (state.requiresReleaseContentRelocalization(preferredLocaleTag)) {
+            return true
+        }
         val record = refreshRecords[deviceUid]
         val stale = record == null ||
             nowMillis() - record.completedAtMillis >= record.freshnessMillis
@@ -229,6 +274,30 @@ internal class DeviceFirmwareAvailabilityRefreshPolicy(
     fun clear() {
         refreshRecords.clear()
     }
+}
+
+private fun DeviceOtaState.requiresReleaseContentRelocalization(
+    preferredLocaleTag: String?
+): Boolean {
+    val preferredLocale = preferredLocaleTag.releaseLocaleOrNull()
+    val currentLocale = when (this) {
+        is DeviceOtaState.UpToDate -> releaseContent.localeTag
+        is DeviceOtaState.UpdateAvailable -> plan.releaseContent.localeTag
+        else -> null
+    }.releaseLocaleOrNull()
+
+    return preferredLocale != null &&
+        currentLocale != null &&
+        currentLocale != preferredLocale
+}
+
+private fun String?.releaseLocaleOrNull(): String? {
+    val normalized = this
+        ?.trim()
+        ?.lowercase(Locale.ROOT)
+        ?.substringBefore('-')
+        .orEmpty()
+    return normalized.takeIf(String::isNotBlank)
 }
 
 private fun DeviceOtaState.allowsPassiveAvailabilityRefresh(): Boolean = when (this) {

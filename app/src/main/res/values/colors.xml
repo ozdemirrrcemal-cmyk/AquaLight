@@ -47,11 +47,6 @@
     <color name="dialog_icon_error">@color/aqua_palette_hex_f44336</color>
     <color name="dialog_icon_info">@color/aqua_palette_hex_2196f3</color>
 
-    <!-- 🎨 Theme option icons -->
-    <color name="theme_option_light_icon">@color/aqua_palette_hex_f2c94c</color>
-    <color name="theme_option_dark_icon">@color/aqua_palette_hex_9b7cff</color>
-    <color name="theme_option_system_icon">@color/aqua_palette_hex_2196f3</color>
-
     <!-- Auth metin & border (base) -->
 <!-- 🧾 Settings ekranı (LIGHT) -->
     <color name="settings_divider">@color/aqua_palette_hex_2d3f66</color>

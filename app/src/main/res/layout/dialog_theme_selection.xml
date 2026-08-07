@@ -34,8 +34,7 @@
                 android:layout_width="@dimen/aqua_size_22"
                 android:layout_height="@dimen/aqua_size_22"
                 android:layout_marginEnd="@dimen/aqua_size_14"
-                android:src="@drawable/ic_theme_light"
-                app:tint="@color/theme_option_light_icon" />
+                android:src="@drawable/ic_theme_light" />
 
             <TextView
                 android:id="@+id/tvLight"
@@ -71,8 +70,7 @@
                 android:layout_width="@dimen/aqua_size_22"
                 android:layout_height="@dimen/aqua_size_22"
                 android:layout_marginEnd="@dimen/aqua_size_14"
-                android:src="@drawable/ic_theme_dark"
-                app:tint="@color/theme_option_dark_icon" />
+                android:src="@drawable/ic_theme_dark" />
 
             <TextView
                 android:id="@+id/tvDark"
@@ -107,8 +105,7 @@
                 android:layout_width="@dimen/aqua_size_22"
                 android:layout_height="@dimen/aqua_size_22"
                 android:layout_marginEnd="@dimen/aqua_size_14"
-                android:src="@drawable/ic_theme_system"
-                app:tint="@color/theme_option_system_icon" />
+                android:src="@drawable/ic_theme_system" />
 
             <TextView
                 android:id="@+id/tvSystem"

@@ -184,9 +184,9 @@
     <string name="settings_notifications_section_description">Bildirim ayarları kartı: uygulama bildirimlerini etkinleştirin veya devre dışı bırakın.</string>
     <string name="settings_notifications_title">Bildirimler</string>
     <string name="settings_notifications_subtitle">Uyarıları, ipuçlarını ve önemli bildirimleri alın.</string>
-    <string name="settings_autoupdate_section_description">Otomatik güncelleme ayarları kartı: otomatik güncelleme denetimlerini yönetin.</string>
-    <string name="settings_autoupdate_title">Otomatik güncellemeler</string>
-    <string name="settings_autoupdate_subtitle">Arka planda güncellemeleri otomatik olarak denetleyin.</string>
+    <string name="settings_autoupdate_section_description">Cihaz güncelleme ayarları kartı: bağlı AquaLight cihazlarında yazılım güncellemelerini arka planda otomatik denetleyin.</string>
+    <string name="settings_autoupdate_title">Cihaz güncellemelerini otomatik denetle</string>
+    <string name="settings_autoupdate_subtitle">Bağlı AquaLight cihazlarında yeni yazılımları arka planda denetler ve güncelleme bulunduğunda bildirim gönderir.</string>
     <string name="settings_theme_section_description">Tema modu ayarları kartı: uygulamanın görünümünü değiştirin.</string>
     <string name="settings_theme_title">Tema</string>
     <string name="settings_theme_summary_light">Açık tema</string>

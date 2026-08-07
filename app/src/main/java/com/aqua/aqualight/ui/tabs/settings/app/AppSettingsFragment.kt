@@ -46,6 +46,7 @@ class AppSettingsFragment : Fragment(R.layout.fragment_app_settings) {
         }
     }
 
+    private val autoUpdateSwitchInteractionGate = AutoUpdateSwitchInteractionGate()
     private var changingNotificationSwitchProgrammatically = false
     private var notificationSnapshot: NotificationPreferenceSnapshot? = null
     private var preciseReminderAccessGranted = false
@@ -115,8 +116,10 @@ class AppSettingsFragment : Fragment(R.layout.fragment_app_settings) {
         }
 
         switchAutoUpdate.setOnCheckedChangeListener { _, enabled ->
-            viewLifecycleOwner.lifecycleScope.launch {
-                settingsOperations.updateAutoUpdateEnabled(enabled)
+            autoUpdateSwitchInteractionGate.onCheckedChanged(enabled) { userEnabled ->
+                viewLifecycleOwner.lifecycleScope.launch {
+                    settingsOperations.updateAutoUpdateEnabled(userEnabled)
+                }
             }
         }
 
@@ -268,7 +271,9 @@ class AppSettingsFragment : Fragment(R.layout.fragment_app_settings) {
     private fun observeAutoUpdateState() {
         viewLifecycleOwner.lifecycleScope.launchWhenStarted {
             settingsOperations.autoUpdateEnabled.collectLatest { enabled ->
-                binding.switchAutoUpdate.isChecked = enabled
+                autoUpdateSwitchInteractionGate.restoreState(enabled) { restoredEnabled ->
+                    binding.switchAutoUpdate.isChecked = restoredEnabled
+                }
             }
         }
     }
@@ -280,5 +285,25 @@ class AppSettingsFragment : Fragment(R.layout.fragment_app_settings) {
 
     private companion object {
         const val ACTION_ENABLE_NOTIFICATIONS = "enable_notifications"
+    }
+}
+
+/** Separates persisted switch restoration from genuine user toggles. */
+internal class AutoUpdateSwitchInteractionGate {
+    private var restoringState = false
+
+    fun onCheckedChanged(enabled: Boolean, onUserChange: (Boolean) -> Unit) {
+        if (!restoringState) {
+            onUserChange(enabled)
+        }
+    }
+
+    fun restoreState(enabled: Boolean, applyCheckedState: (Boolean) -> Unit) {
+        restoringState = true
+        try {
+            applyCheckedState(enabled)
+        } finally {
+            restoringState = false
+        }
     }
 }

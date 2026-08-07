@@ -7,10 +7,11 @@ import org.junit.Test
 class DefaultDeviceUpdateNotificationWorkCoordinatorTest {
 
     @Test
-    fun enabledOwnerSchedulesImmediateAndPeriodicWork() = runTest {
+    fun notificationsAndAutomaticChecksEnabledSchedulesWork() = runTest {
         val events = mutableListOf<String>()
         val coordinator = coordinator(
-            enabled = true,
+            notificationsEnabled = true,
+            automaticChecksEnabled = true,
             events = events
         )
 
@@ -20,10 +21,11 @@ class DefaultDeviceUpdateNotificationWorkCoordinatorTest {
     }
 
     @Test
-    fun disabledOwnerCancelsExistingWork() = runTest {
+    fun notificationsDisabledCancelsWorkEvenWhenAutomaticChecksEnabled() = runTest {
         val events = mutableListOf<String>()
         val coordinator = coordinator(
-            enabled = false,
+            notificationsEnabled = false,
+            automaticChecksEnabled = true,
             events = events
         )
 
@@ -33,12 +35,31 @@ class DefaultDeviceUpdateNotificationWorkCoordinatorTest {
     }
 
     @Test
-    fun explicitOwnerCancellationDoesNotReadPreference() {
+    fun automaticChecksDisabledCancelsWorkEvenWhenNotificationsEnabled() = runTest {
         val events = mutableListOf<String>()
-        var preferenceReads = 0
+        val coordinator = coordinator(
+            notificationsEnabled = true,
+            automaticChecksEnabled = false,
+            events = events
+        )
+
+        coordinator.reconcileOwner("owner-a")
+
+        assertEquals(listOf("cancel:owner-a"), events)
+    }
+
+    @Test
+    fun explicitOwnerCancellationDoesNotReadPolicy() {
+        val events = mutableListOf<String>()
+        var notificationPreferenceReads = 0
+        var automaticCheckPreferenceReads = 0
         val coordinator = DefaultDeviceUpdateNotificationWorkCoordinator(
-            isEnabled = {
-                preferenceReads += 1
+            areNotificationsEnabled = {
+                notificationPreferenceReads += 1
+                true
+            },
+            isAutomaticCheckEnabled = {
+                automaticCheckPreferenceReads += 1
                 true
             },
             scheduleWork = { ownerUid -> events += "schedule:$ownerUid" },
@@ -47,16 +68,19 @@ class DefaultDeviceUpdateNotificationWorkCoordinatorTest {
 
         coordinator.cancelOwner("owner-a")
 
-        assertEquals(0, preferenceReads)
+        assertEquals(0, notificationPreferenceReads)
+        assertEquals(0, automaticCheckPreferenceReads)
         assertEquals(listOf("cancel:owner-a"), events)
     }
 
     private fun coordinator(
-        enabled: Boolean,
+        notificationsEnabled: Boolean,
+        automaticChecksEnabled: Boolean,
         events: MutableList<String>
     ): DefaultDeviceUpdateNotificationWorkCoordinator {
         return DefaultDeviceUpdateNotificationWorkCoordinator(
-            isEnabled = { enabled },
+            areNotificationsEnabled = { notificationsEnabled },
+            isAutomaticCheckEnabled = { automaticChecksEnabled },
             scheduleWork = { ownerUid -> events += "schedule:$ownerUid" },
             cancelWork = { ownerUid -> events += "cancel:$ownerUid" }
         )
