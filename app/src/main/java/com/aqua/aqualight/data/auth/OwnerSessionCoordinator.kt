@@ -61,11 +61,11 @@ class OwnerSessionCoordinator private constructor(
     }
 
     suspend fun open(ownerUid: String): OpenResult {
-        val owner = ownerUid.trim().also { normalized ->
+        val normalizedOwnerUid = ownerUid.trim().also { normalized ->
             require(normalized.isNotBlank()) { "ownerUid must not be blank" }
         }
         return transitionMutex.withLock {
-            OwnerSessionOpenFlow(appContext, stateMachine).open(owner)
+            OwnerSessionOpenFlow(appContext, stateMachine).open(normalizedOwnerUid)
         }
     }
 
@@ -130,7 +130,10 @@ private class OwnerSessionOpenFlow(
                 TankDeviceAssignmentRepositoryProvider.currentOwnerUid() == ownerUid
         return if (snapshot.activeOwnerUid == ownerUid && providersAlreadyBound) {
             runCatching { AppMediaRecoveryManager(appContext).reconcileOwner(ownerUid) }
-            OwnerOpenResult.AlreadyActive(ownerUid, snapshot.generation)
+            OwnerSessionCoordinator.OpenResult.AlreadyActive(
+                ownerUid = ownerUid,
+                generation = snapshot.generation
+            )
         } else {
             null
         }
@@ -147,15 +150,16 @@ private class OwnerSessionOpenFlow(
             throw error
         }
         val blockingResult = when {
-            previousStopError != null -> OwnerOpenResult.Failure(
+            previousStopError != null -> OwnerSessionCoordinator.OpenResult.Failure(
                 ownerUid = ownerUid,
                 generation = transition.generation,
                 error = previousStopError
             )
-            UserDataScope.currentUid() != ownerUid -> OwnerOpenResult.Superseded(
-                ownerUid = ownerUid,
-                generation = transition.generation
-            )
+            UserDataScope.currentUid() != ownerUid ->
+                OwnerSessionCoordinator.OpenResult.Superseded(
+                    ownerUid = ownerUid,
+                    generation = transition.generation
+                )
             else -> null
         }
         if (blockingResult != null) {
@@ -184,17 +188,20 @@ private class OwnerSessionOpenFlow(
         ownerUid: String,
         transition: OwnerSessionStateMachine.Transition
     ): OwnerOpenResult {
-        return try {
-            activateOwner(ownerUid, transition)
-        } catch (error: TimeoutCancellationException) {
+        val result = runCatching { activateOwner(ownerUid, transition) }
+        val error = result.exceptionOrNull()
+        if (error != null) {
             abortTransition(transition)
-            OwnerOpenResult.Failure(ownerUid, transition.generation, error)
-        } catch (error: CancellationException) {
-            abortTransition(transition)
-            throw error
-        } catch (error: Throwable) {
-            abortTransition(transition)
-            OwnerOpenResult.Failure(ownerUid, transition.generation, error)
+        }
+        return when {
+            result.isSuccess -> result.getOrThrow()
+            error is CancellationException && error !is TimeoutCancellationException ->
+                throw error
+            else -> OwnerSessionCoordinator.OpenResult.Failure(
+                ownerUid = ownerUid,
+                generation = transition.generation,
+                error = requireNotNull(error)
+            )
         }
     }
 
@@ -205,13 +212,16 @@ private class OwnerSessionOpenFlow(
         val runtime = prepareOwnerRuntime(ownerUid)
         return if (!stateMachine.isCurrent(transition)) {
             abortTransition(transition)
-            OwnerOpenResult.Superseded(ownerUid, transition.generation)
+            OwnerSessionCoordinator.OpenResult.Superseded(
+                ownerUid = ownerUid,
+                generation = transition.generation
+            )
         } else {
             val repairs = repairOwnerData(ownerUid)
             runCatching { AppMediaRecoveryManager(appContext).reconcileOwner(ownerUid) }
             SessionBoundServiceManager.start(appContext, ownerUid)
             if (stateMachine.commit(transition)) {
-                OwnerOpenResult.Active(
+                OwnerSessionCoordinator.OpenResult.Active(
                     ownerUid = ownerUid,
                     generation = transition.generation,
                     repairedAssignmentCount = repairs.assignmentCount,
@@ -220,7 +230,10 @@ private class OwnerSessionOpenFlow(
                 )
             } else {
                 abortTransition(transition)
-                OwnerOpenResult.Superseded(ownerUid, transition.generation)
+                OwnerSessionCoordinator.OpenResult.Superseded(
+                    ownerUid = ownerUid,
+                    generation = transition.generation
+                )
             }
         }
     }
@@ -248,7 +261,9 @@ private class OwnerSessionOpenFlow(
         return PreparedOwnerRuntime(removedCredentialCount)
     }
 
-    private suspend fun repairOwnerData(normalizedOwnerUid: String): OwnerRepairCounts {
+    private suspend fun repairOwnerData(
+        normalizedOwnerUid: String
+    ): OwnerRepairCounts {
         val assignmentCount = when (
             val repairResult = TankDeviceAssignmentRepositoryProvider
                 .get(appContext)
