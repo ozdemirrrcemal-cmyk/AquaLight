@@ -124,6 +124,34 @@ class DeviceUpdateNotificationAcceptanceTest(unittest.TestCase):
         self.assertIn("ownerChangeBetweenChecksRejectsStaleIntent", gate_test)
         self.assertIn("deviceDeletionBetweenChecksRejectsStaleIntent", gate_test)
 
+    def test_successful_firmware_navigation_dismisses_visible_availability_centrally(self) -> None:
+        coordinator = read(
+            "app/src/main/java/com/aqua/aqualight/ui/main/"
+            "MainNavigationCoordinator.kt"
+        )
+        route_operations = read(
+            "app/src/main/java/com/aqua/aqualight/composition/"
+            "ResolvingDeviceFirmwareNotificationRouteOperations.kt"
+        )
+        publisher = read(
+            "app/src/main/java/com/aqua/aqualight/platform/notifications/"
+            "AndroidDeviceFirmwareUpdateNotificationPublisher.kt"
+        )
+        publisher_test = read(
+            "app/src/androidTest/java/com/aqua/aqualight/platform/notifications/"
+            "AndroidDeviceFirmwareUpdateNotificationPublisherInstrumentedTest.kt"
+        )
+
+        self.assertIn("firmwareRouteGate.acknowledgeOpened(deviceUid, ownerUid)", coordinator)
+        self.assertIn("dismissOpenedAvailability", route_operations)
+        self.assertIn("deviceFirmwareNotifications.dismissAvailability", route_operations)
+        self.assertIn("override suspend fun dismissAvailability", publisher)
+        self.assertIn(
+            "openingAvailabilityDismissesVisibleNotificationButPreservesTargetDedup",
+            publisher_test,
+        )
+        self.assertIn("dismissAvailabilityDoesNotCancelActiveUpdateOperation", publisher_test)
+
     def test_acceptance_scenarios_have_executable_regressions(self) -> None:
         runner_test = read(
             "app/src/test/java/com/aqua/aqualight/data/devices/update/"

@@ -209,18 +209,25 @@ internal class MainNavigationCoordinator(
                 DeviceFirmwareNotificationRouteDecision.REJECT ->
                     rejectPendingFirmwareUpdate()
                 DeviceFirmwareNotificationRouteDecision.OPEN ->
-                    navigateToFirmwareUpdate(attempt, deviceUid)
+                    navigateToFirmwareUpdate(attempt, deviceUid, ownerUid)
             }
         }
     }
 
-    private fun navigateToFirmwareUpdate(attempt: Long, deviceUid: String) {
+    private fun navigateToFirmwareUpdate(
+        attempt: Long,
+        deviceUid: String,
+        ownerUid: String
+    ) {
         runCatching {
             AppRouteNavigator.openDeviceFirmwareUpdate(navController, deviceUid)
         }.onSuccess {
             if (activeFirmwareNavigationAttempt == attempt) {
                 clearPendingFirmwareUpdate()
                 clearConsumedNotificationExtras(host.intent)
+                host.lifecycleScope.launch {
+                    firmwareRouteGate.acknowledgeOpened(deviceUid, ownerUid)
+                }
             }
         }.onFailure {
             if (activeFirmwareNavigationAttempt == attempt) {

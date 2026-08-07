@@ -8,6 +8,8 @@ enum class DeviceFirmwareNotificationRouteDecision {
 
 fun interface DeviceFirmwareNotificationRouteOperations {
     fun evaluate(deviceUid: String): DeviceFirmwareNotificationRouteDecision
+
+    suspend fun dismissOpenedAvailability(ownerUid: String, deviceUid: String) = Unit
 }
 
 object DeviceFirmwareNotificationDestinationPolicy {

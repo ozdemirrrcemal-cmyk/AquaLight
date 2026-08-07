@@ -26,4 +26,18 @@ internal class DeviceFirmwareNotificationRouteGate(
             else -> routeOperations.evaluate(deviceUid)
         }
     }
+
+    suspend fun acknowledgeOpened(
+        deviceUid: String,
+        notificationOwnerUid: String
+    ) {
+        val normalizedDeviceUid = deviceUid.trim()
+        val normalizedOwnerUid = notificationOwnerUid.trim()
+        if (normalizedDeviceUid.isBlank() || normalizedOwnerUid.isBlank()) return
+
+        routeOperations.dismissOpenedAvailability(
+            ownerUid = normalizedOwnerUid,
+            deviceUid = normalizedDeviceUid
+        )
+    }
 }

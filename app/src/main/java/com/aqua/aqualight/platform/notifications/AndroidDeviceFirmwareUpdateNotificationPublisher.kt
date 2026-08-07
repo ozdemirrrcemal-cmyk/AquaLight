@@ -31,6 +31,10 @@ internal interface DeviceFirmwareUpdateNotificationOperations {
 
     suspend fun clearAvailability(ownerUid: String, deviceUid: String)
 
+    suspend fun dismissAvailability(ownerUid: String, deviceUid: String) {
+        cancelUntrustedAvailability(ownerUid, deviceUid)
+    }
+
     suspend fun cancelUntrustedAvailability(ownerUid: String, deviceUid: String) {
         clearAvailability(ownerUid, deviceUid)
     }
@@ -101,16 +105,15 @@ internal class AndroidDeviceFirmwareUpdateNotificationPublisher(
         }
     }
 
+    override suspend fun dismissAvailability(ownerUid: String, deviceUid: String) {
+        cancelVisibleAvailability(ownerUid, deviceUid)
+    }
+
     override suspend fun cancelUntrustedAvailability(
         ownerUid: String,
         deviceUid: String
     ) {
-        withDeviceLock(ownerUid, deviceUid) {
-            val owner = requireOwnerUid(ownerUid)
-            if (!renderer.isDeviceUpdateOperationNotificationActive(owner, deviceUid)) {
-                renderer.cancelDeviceUpdate(owner, deviceUid)
-            }
-        }
+        cancelVisibleAvailability(ownerUid, deviceUid)
     }
 
     @Suppress("TooGenericExceptionCaught")
@@ -185,6 +188,15 @@ internal class AndroidDeviceFirmwareUpdateNotificationPublisher(
             ledger.markAnnounced(ownerUid, hint.deviceUid, hint.targetVersion)
         }
         return posted
+    }
+
+    private suspend fun cancelVisibleAvailability(ownerUid: String, deviceUid: String) {
+        withDeviceLock(ownerUid, deviceUid) {
+            val owner = requireOwnerUid(ownerUid)
+            if (!renderer.isDeviceUpdateOperationNotificationActive(owner, deviceUid)) {
+                renderer.cancelDeviceUpdate(owner, deviceUid)
+            }
+        }
     }
 
     private suspend fun clearRemovedDevice(ownerUid: String, deviceUid: String) {

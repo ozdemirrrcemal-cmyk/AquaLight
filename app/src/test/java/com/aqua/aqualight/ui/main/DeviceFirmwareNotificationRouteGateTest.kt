@@ -2,6 +2,7 @@ package com.aqua.aqualight.ui.main
 
 import com.aqua.aqualight.application.devices.DeviceFirmwareNotificationRouteDecision
 import com.aqua.aqualight.application.devices.DeviceFirmwareNotificationRouteOperations
+import kotlinx.coroutines.test.runTest
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.Test
@@ -76,6 +77,16 @@ class DeviceFirmwareNotificationRouteGateTest {
         assertTrue(operations.evaluatedDeviceUids.isEmpty())
     }
 
+    @Test
+    fun successfulNavigationAcknowledgementDismissesExactAvailability() = runTest {
+        val operations = FakeRouteOperations()
+        val gate = gate({ authenticated(OWNER_A) }, operations)
+
+        gate.acknowledgeOpened(" $DEVICE_UID ", " $OWNER_A ")
+
+        assertEquals(listOf("$OWNER_A:$DEVICE_UID"), operations.dismissedAvailability)
+    }
+
     private fun gate(
         sessionSnapshot: () -> MainNavigationSessionSnapshot,
         operations: FakeRouteOperations
@@ -98,10 +109,15 @@ class DeviceFirmwareNotificationRouteGateTest {
             DeviceFirmwareNotificationRouteDecision.OPEN
     ) : DeviceFirmwareNotificationRouteOperations {
         val evaluatedDeviceUids = mutableListOf<String>()
+        val dismissedAvailability = mutableListOf<String>()
 
         override fun evaluate(deviceUid: String): DeviceFirmwareNotificationRouteDecision {
             evaluatedDeviceUids += deviceUid
             return decision
+        }
+
+        override suspend fun dismissOpenedAvailability(ownerUid: String, deviceUid: String) {
+            dismissedAvailability += "$ownerUid:$deviceUid"
         }
     }
 

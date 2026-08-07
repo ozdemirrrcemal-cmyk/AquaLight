@@ -57,6 +57,45 @@ class AndroidDeviceFirmwareUpdateNotificationPublisherInstrumentedTest {
     }
 
     @Test
+    fun openingAvailabilityDismissesVisibleNotificationButPreservesTargetDedup() = runBlocking {
+        val fixture = createFixture()
+        try {
+            val hint = fixture.updateAvailableHint()
+            assertTrue(fixture.publisher.publishAvailabilityHint(fixture.ownerUid, hint))
+            fixture.awaitNotification()
+
+            fixture.publisher.dismissAvailability(fixture.ownerUid, fixture.deviceUid)
+
+            fixture.awaitNoNotification()
+            assertFalse(fixture.publisher.publishAvailabilityHint(fixture.ownerUid, hint))
+        } finally {
+            fixture.cleanup()
+        }
+    }
+
+    @Test
+    fun dismissAvailabilityDoesNotCancelActiveUpdateOperation() = runBlocking {
+        val fixture = createFixture()
+        try {
+            fixture.publisher.publishOtaState(
+                ownerUid = fixture.ownerUid,
+                state = DeviceOtaState.Starting(
+                    plan = preparedPlan(fixture.deviceUid),
+                    requestId = "request-1"
+                ),
+                deviceName = "Aqua Light"
+            )
+            fixture.awaitNotification()
+
+            fixture.publisher.dismissAvailability(fixture.ownerUid, fixture.deviceUid)
+
+            assertTrue(fixture.activeNotification() != null)
+        } finally {
+            fixture.cleanup()
+        }
+    }
+
+    @Test
     fun liveAvailabilityStateDoesNotCreateSystemAlert() = runBlocking {
         val fixture = createFixture()
         try {
