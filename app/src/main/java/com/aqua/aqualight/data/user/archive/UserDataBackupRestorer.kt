@@ -23,12 +23,18 @@ internal class UserDataBackupRestorer(
         requireOwner()
         val rollback = RestoreRollbackState()
         val attempt = runCatching {
-            val tankIdMap = restoreAquariums(backup, rollback)
-            restoreCareTasks(backup, tankIdMap, rollback)
+            val deduplicator = UserDataRestoreDeduplicator(
+                existingAquariums = dataSources.aquariumStore.tanksSnapshotForOwner(ownerUid),
+                existingCareTasks = dataSources.careTaskStore.tasksFlow.first(),
+                ownerUid = ownerUid,
+                snapshotTankPhoto = mediaGateway::snapshotTankPhoto
+            )
+            val tankIdMap = restoreAquariums(backup, rollback, deduplicator)
+            restoreCareTasks(backup, tankIdMap, rollback, deduplicator)
             val assignmentResult = restoreAssignments(backup, tankIdMap, rollback)
             requireOwner()
             UserDataRestoreResult(
-                restoredAquariumCount = tankIdMap.size,
+                restoredAquariumCount = rollback.createdTankIds.size,
                 restoredCareTaskCount = rollback.createdTaskIds.size,
                 restoredDeviceAssignmentCount = assignmentResult.restored,
                 skippedDeviceAssignmentCount = assignmentResult.skipped,
@@ -44,33 +50,44 @@ internal class UserDataBackupRestorer(
 
     private suspend fun restoreAquariums(
         backup: DecodedUserDataBackup,
-        rollback: RestoreRollbackState
+        rollback: RestoreRollbackState,
+        deduplicator: UserDataRestoreDeduplicator
     ): Map<Long, Long> {
         val tankIdMap = linkedMapOf<Long, Long>()
         backup.manifest.aquariums.forEach { archived ->
             requireOwner()
-            val photoUri = archived.photo?.let { reference ->
-                val bytes = requireNotNull(backup.mediaByEntryName[reference.entryName])
-                mediaGateway.prepareRestoredTankPhoto(
-                    ownerUid = ownerUid,
-                    ownerToken = "restore_${archived.id}",
-                    bytes = bytes
-                )
-            }
-            var tankCreated = false
-            val newTankId = try {
-                dataSources.aquariumStore
-                    .addTankFromDraft(archived.toTankDraft(photoUri))
-                    .also { tankCreated = true }
-            } finally {
-                if (!tankCreated) mediaGateway.rollback(photoUri)
-            }
-            rollback.createdTankIds += newTankId
-            tankIdMap[archived.id] = newTankId
-            restoreAquariumDetails(archived, newTankId)
-            mediaGateway.commit(photoUri)
+            val restoredTankId = deduplicator.takeMatchingAquarium(archived)?.id
+                ?: createAquarium(archived, backup, rollback)
+            tankIdMap[archived.id] = restoredTankId
         }
         return tankIdMap.toMap()
+    }
+
+    private suspend fun createAquarium(
+        archived: ArchiveAquarium,
+        backup: DecodedUserDataBackup,
+        rollback: RestoreRollbackState
+    ): Long {
+        val photoUri = archived.photo?.let { reference ->
+            val bytes = requireNotNull(backup.mediaByEntryName[reference.entryName])
+            mediaGateway.prepareRestoredTankPhoto(
+                ownerUid = ownerUid,
+                ownerToken = "restore_${archived.id}",
+                bytes = bytes
+            )
+        }
+        var tankCreated = false
+        val newTankId = try {
+            dataSources.aquariumStore
+                .addTankFromDraft(archived.toTankDraft(photoUri))
+                .also { tankCreated = true }
+        } finally {
+            if (!tankCreated) mediaGateway.rollback(photoUri)
+        }
+        rollback.createdTankIds += newTankId
+        restoreAquariumDetails(archived, newTankId)
+        mediaGateway.commit(photoUri)
+        return newTankId
     }
 
     private suspend fun restoreAquariumDetails(
@@ -87,7 +104,8 @@ internal class UserDataBackupRestorer(
     private suspend fun restoreCareTasks(
         backup: DecodedUserDataBackup,
         tankIdMap: Map<Long, Long>,
-        rollback: RestoreRollbackState
+        rollback: RestoreRollbackState,
+        deduplicator: UserDataRestoreDeduplicator
     ) {
         val existingTaskIds = dataSources.careTaskStore.tasksFlow.first()
             .mapTo(mutableSetOf()) { task -> task.id }
@@ -97,6 +115,9 @@ internal class UserDataBackupRestorer(
             requireOwner()
             val restoredTankId = requireNotNull(tankIdMap[archived.tankId]) {
                 "Validated backup care task lost its aquarium mapping."
+            }
+            if (deduplicator.takeMatchingCareTask(archived, restoredTankId) != null) {
+                return@forEach
             }
             val restoredTaskId = allocator.allocate(archived.id)
             dataSources.careTaskStore.addTask(
@@ -134,7 +155,7 @@ internal class UserDataBackupRestorer(
                     restored += 1
                 }
 
-                is TankDeviceAssignmentResult.AlreadyAssigned -> restored += 1
+                is TankDeviceAssignmentResult.AlreadyAssigned -> skipped += 1
                 is TankDeviceAssignmentResult.Conflict,
                 TankDeviceAssignmentResult.DeviceNotFound -> skipped += 1
                 TankDeviceAssignmentResult.TankNotFound,
