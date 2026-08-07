@@ -1,5 +1,6 @@
 package com.aqua.aqualight.ui.tabs.settings.app
 
+import android.content.res.Resources
 import android.os.Bundle
 import android.view.View
 import androidx.fragment.app.Fragment
@@ -182,13 +183,7 @@ class DataManagementFragment : Fragment(R.layout.fragment_data_management) {
         FeedbackBottomSheet.show(
             fragmentManager = childFragmentManager,
             title = getString(R.string.data_management_restore_success_title),
-            message = getString(
-                R.string.data_management_restore_success_message,
-                result.restoredAquariumCount,
-                result.restoredCareTaskCount,
-                result.restoredDeviceAssignmentCount,
-                result.skippedDeviceAssignmentCount
-            ),
+            message = resources.restoreSuccessMessage(result),
             primaryText = getString(R.string.ok),
             cancelText = null,
             tone = FeedbackBottomSheet.FeedbackTone.SUCCESS,
@@ -226,4 +221,30 @@ class DataManagementFragment : Fragment(R.layout.fragment_data_management) {
         const val ACTION_CONFIRM_RESTORE = "confirm_restore"
         const val ACTION_DISMISS_INFO = "dismiss_info"
     }
+}
+
+private fun Resources.restoreSuccessMessage(result: UserDataRestoreResult): String {
+    return getString(
+        R.string.data_management_restore_success_message,
+        getQuantityString(
+            R.plurals.data_management_restore_success_aquariums,
+            result.restoredAquariumCount,
+            result.restoredAquariumCount
+        ),
+        getQuantityString(
+            R.plurals.data_management_restore_success_care_records,
+            result.restoredCareTaskCount,
+            result.restoredCareTaskCount
+        ),
+        getQuantityString(
+            R.plurals.data_management_restore_success_device_assignments,
+            result.restoredDeviceAssignmentCount,
+            result.restoredDeviceAssignmentCount
+        ),
+        getQuantityString(
+            R.plurals.data_management_restore_success_skipped_assignments,
+            result.skippedDeviceAssignmentCount,
+            result.skippedDeviceAssignmentCount
+        )
+    )
 }

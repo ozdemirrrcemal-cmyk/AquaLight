@@ -21,7 +21,23 @@
     <string name="data_management_export_success_title">Veriler dışa aktarıldı</string>
     <string name="data_management_export_success_message">Okunabilir AquaLight veri dışa aktarımınız başarıyla kaydedildi.</string>
     <string name="data_management_restore_success_title">Yedek geri yüklendi</string>
-    <string name="data_management_restore_success_message">%1$d akvaryum, %2$d bakım kaydı ve %3$d cihaz ilişkisi geri yüklendi. Kullanılamayan veya zaten atanmış %4$d cihaz ilişkisi atlandı.</string>
+    <string name="data_management_restore_success_message">%1$s, %2$s ve %3$s geri yüklendi. %4$s</string>
+    <plurals name="data_management_restore_success_aquariums">
+        <item quantity="one">%d akvaryum</item>
+        <item quantity="other">%d akvaryum</item>
+    </plurals>
+    <plurals name="data_management_restore_success_care_records">
+        <item quantity="one">%d bakım kaydı</item>
+        <item quantity="other">%d bakım kaydı</item>
+    </plurals>
+    <plurals name="data_management_restore_success_device_assignments">
+        <item quantity="one">%d cihaz ilişkisi</item>
+        <item quantity="other">%d cihaz ilişkisi</item>
+    </plurals>
+    <plurals name="data_management_restore_success_skipped_assignments">
+        <item quantity="one">Kullanılamayan veya zaten atanmış %d cihaz ilişkisi atlandı.</item>
+        <item quantity="other">Kullanılamayan veya zaten atanmış %d cihaz ilişkisi atlandı.</item>
+    </plurals>
     <string name="data_management_restore_warning_title">Veriler hatırlatıcı uyarısıyla geri yüklendi</string>
     <string name="data_management_restore_warning_message">Verileriniz geri yüklendi ancak bakım hatırlatıcıları tamamen uzlaştırılamadı. Geri yüklenen hatırlatıcılara güvenmeden önce uygulamayı yeniden açın veya bildirim ayarlarını kontrol edin.</string>
     <string name="data_management_backup_error_title">Yedekleme başarısız</string>

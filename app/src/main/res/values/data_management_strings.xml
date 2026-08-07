@@ -21,7 +21,23 @@
     <string name="data_management_export_success_title">Data exported</string>
     <string name="data_management_export_success_message">Your readable AquaLight data export was saved successfully.</string>
     <string name="data_management_restore_success_title">Backup restored</string>
-    <string name="data_management_restore_success_message">Restored %1$d aquariums, %2$d care records and %3$d device assignments. %4$d device assignments were skipped because they were unavailable or already assigned.</string>
+    <string name="data_management_restore_success_message">Restored %1$s, %2$s and %3$s. %4$s</string>
+    <plurals name="data_management_restore_success_aquariums">
+        <item quantity="one">%d aquarium</item>
+        <item quantity="other">%d aquariums</item>
+    </plurals>
+    <plurals name="data_management_restore_success_care_records">
+        <item quantity="one">%d care record</item>
+        <item quantity="other">%d care records</item>
+    </plurals>
+    <plurals name="data_management_restore_success_device_assignments">
+        <item quantity="one">%d device assignment</item>
+        <item quantity="other">%d device assignments</item>
+    </plurals>
+    <plurals name="data_management_restore_success_skipped_assignments">
+        <item quantity="one">%d device assignment was skipped because it was unavailable or already assigned.</item>
+        <item quantity="other">%d device assignments were skipped because they were unavailable or already assigned.</item>
+    </plurals>
     <string name="data_management_restore_warning_title">Data restored with a reminder warning</string>
     <string name="data_management_restore_warning_message">Your data was restored, but care reminders could not be fully reconciled. Open the app again or review notification settings before relying on restored reminders.</string>
     <string name="data_management_backup_error_title">Backup failed</string>

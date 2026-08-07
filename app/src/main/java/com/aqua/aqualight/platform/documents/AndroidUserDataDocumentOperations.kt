@@ -2,6 +2,7 @@ package com.aqua.aqualight.platform.documents
 
 import android.content.Context
 import android.net.Uri
+import androidx.core.net.toUri
 import com.aqua.aqualight.application.user.UserDataDocumentOperations
 import java.io.ByteArrayOutputStream
 import java.util.concurrent.CancellationException
@@ -62,7 +63,7 @@ internal class AndroidUserDataDocumentOperations(
     }
 
     private fun requireContentUri(documentHandle: String): Uri {
-        val uri = Uri.parse(documentHandle.trim())
+        val uri = documentHandle.trim().toUri()
         require(uri.scheme == "content") {
             "Only Storage Access Framework content documents are supported."
         }
