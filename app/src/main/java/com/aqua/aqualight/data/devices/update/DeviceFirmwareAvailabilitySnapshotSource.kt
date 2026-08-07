@@ -4,6 +4,7 @@ import android.content.Context
 import com.aqua.aqualight.data.devices.model.DeviceSnapshot
 import com.aqua.aqualight.data.devices.repository.DevicesRepositoryProvider
 import com.aqua.aqualight.data.devices.store.DeviceKnownStore
+import com.aqua.aqualight.data.notifications.NotificationPlatform
 
 internal sealed interface DeviceFirmwareAvailabilitySnapshotResult {
     data class Ready(
@@ -50,13 +51,19 @@ internal class DeviceFirmwareAvailabilitySnapshotSource(
         }
         val eligible = mutableListOf<DeviceSnapshot>()
         state.snapshots.forEach { snapshot ->
-            if (trust.recordValidated(ownerUid, snapshot)) {
+            if (isEligible(ownerUid, snapshot)) {
                 eligible += snapshot
-            } else {
-                trust.clearDevice(ownerUid, snapshot.deviceUid.value)
             }
         }
         return readyResult(state.snapshots, eligible)
+    }
+
+    private suspend fun isEligible(
+        ownerUid: String,
+        snapshot: DeviceSnapshot
+    ): Boolean {
+        return trust.recordValidated(ownerUid, snapshot) ||
+            trust.isFresh(ownerUid, snapshot)
     }
 
     private suspend fun loadDurable(
@@ -88,8 +95,9 @@ internal class DeviceFirmwareAvailabilitySnapshotSource(
     companion object {
         fun create(context: Context): DeviceFirmwareAvailabilitySnapshotSource {
             val appContext = context.applicationContext
+            val platform = NotificationPlatform.get(appContext)
             return DeviceFirmwareAvailabilitySnapshotSource(
-                trust = DeviceFirmwareAvailabilityTrustStore.create(appContext),
+                trust = platform.deviceUpdateTrust,
                 activeStateProvider = ::activeOwnerDeviceSnapshotState,
                 durableSnapshotLoader = { ownerUid ->
                     DeviceKnownStore(appContext, ownerUid).loadSnapshots()

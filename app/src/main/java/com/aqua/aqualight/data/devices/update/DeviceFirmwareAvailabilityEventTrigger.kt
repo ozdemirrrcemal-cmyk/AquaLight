@@ -5,6 +5,7 @@ import com.aqua.aqualight.data.devices.model.DeviceSnapshot
 import com.aqua.aqualight.data.devices.model.DeviceUid
 import com.aqua.aqualight.data.devices.repository.DevicesRepositoryProvider
 import com.aqua.aqualight.data.devices.runtime.events.DeviceRuntimeLifecycleEvent
+import com.aqua.aqualight.data.notifications.NotificationPlatform
 import java.util.concurrent.ConcurrentHashMap
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.CoroutineScope
@@ -20,20 +21,16 @@ internal data class DeviceFirmwareAvailabilityEventTriggerDependencies(
     val trust: DeviceFirmwareAvailabilityTrust,
     val policy: DeviceFirmwareAvailabilityTrustPolicy,
     val dispatcher: CoroutineDispatcher,
-    val enqueueCheck: (Context, String) -> Unit
+    val reconcileOwner: suspend (String) -> Unit
 ) {
     companion object {
         fun create(context: Context): DeviceFirmwareAvailabilityEventTriggerDependencies {
+            val platform = NotificationPlatform.get(context.applicationContext)
             return DeviceFirmwareAvailabilityEventTriggerDependencies(
-                trust = DeviceFirmwareAvailabilityTrustStore.create(context),
+                trust = platform.deviceUpdateTrust,
                 policy = DeviceFirmwareAvailabilityTrustPolicy(),
                 dispatcher = Dispatchers.Default,
-                enqueueCheck = { appContext, ownerUid ->
-                    DeviceFirmwareAvailabilityWorker.enqueueValidated(
-                        appContext,
-                        ownerUid
-                    )
-                }
+                reconcileOwner = platform.deviceUpdateWorkCoordinator::reconcileOwner
             )
         }
     }
@@ -50,12 +47,11 @@ internal class DeviceFirmwareAvailabilityEventTrigger(
         DeviceFirmwareAvailabilityEventTriggerDependencies.create(context)
 ) : AutoCloseable {
 
-    private val appContext = context.applicationContext
     private val ownerUid =
         DeviceFirmwareAvailabilityTrustCodec.normalizeOwnerUid(ownerUid)
     private val trust = dependencies.trust
     private val policy = dependencies.policy
-    private val enqueueCheck = dependencies.enqueueCheck
+    private val reconcileOwner = dependencies.reconcileOwner
     private val scope = CoroutineScope(SupervisorJob() + dependencies.dispatcher)
     private val triggeredFingerprints = ConcurrentHashMap<String, String>()
 
@@ -68,18 +64,18 @@ internal class DeviceFirmwareAvailabilityEventTrigger(
         val deviceUid = snapshot.deviceUid.value
         if (!trust.recordValidated(ownerUid, snapshot)) {
             triggeredFingerprints.remove(deviceUid)
-            trust.clearDevice(ownerUid, deviceUid)
             return
         }
         val fingerprint = policy.fingerprint(snapshot)
         if (triggeredFingerprints.put(deviceUid, fingerprint) != fingerprint) {
-            enqueueCheck(appContext, ownerUid)
+            reconcileOwner(ownerUid)
         }
     }
 
     internal suspend fun acceptUnavailable(deviceUid: DeviceUid) {
         triggeredFingerprints.remove(deviceUid.value)
         trust.clearDevice(ownerUid, deviceUid.value)
+        reconcileOwner(ownerUid)
     }
 
     override fun close() {

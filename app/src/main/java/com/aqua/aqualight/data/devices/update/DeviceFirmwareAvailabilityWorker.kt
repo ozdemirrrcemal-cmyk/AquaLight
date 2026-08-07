@@ -99,14 +99,6 @@ class DeviceFirmwareAvailabilityWorker(
             )
         }
 
-        fun enqueueValidated(context: Context, ownerUid: String) {
-            enqueueOneTime(
-                context = context,
-                ownerUid = ownerUid,
-                policy = ExistingWorkPolicy.REPLACE
-            )
-        }
-
         fun cancel(context: Context, ownerUid: String?) {
             val owner = ownerUid?.trim()?.takeIf(String::isNotBlank) ?: return
             WorkManager.getInstance(context.applicationContext).apply {

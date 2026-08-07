@@ -8,6 +8,7 @@ import com.aqua.aqualight.data.devices.model.DeviceUid
 import kotlinx.coroutines.test.runTest
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertSame
+import org.junit.Assert.assertTrue
 import org.junit.Test
 
 class DeviceFirmwareAvailabilitySnapshotSourceTest {
@@ -33,22 +34,36 @@ class DeviceFirmwareAvailabilitySnapshotSourceTest {
     }
 
     @Test
-    fun activeRepositoryUsesOnlyLiveValidatedSnapshots() = runTest {
-        val trust = FakeTrust(validatedDeviceUids = setOf("trusted"))
+    fun activeRepositoryUsesLiveOrFreshPersistedProof() = runTest {
+        val trust = FakeTrust(
+            validatedDeviceUids = setOf("live"),
+            freshDeviceUids = setOf("reconnecting")
+        )
         val source = source(
             trust = trust,
             activeState = ActiveOwnerDeviceSnapshotState(
                 ready = true,
-                snapshots = listOf(snapshot("trusted"), snapshot("untrusted"))
+                snapshots = listOf(
+                    snapshot("live"),
+                    snapshot("reconnecting"),
+                    snapshot("stale")
+                )
             )
         )
 
         val result = source.load(OWNER_UID)
             as DeviceFirmwareAvailabilitySnapshotResult.Ready
 
-        assertEquals(setOf("trusted", "untrusted"), result.currentDeviceUids)
-        assertEquals(listOf("trusted"), result.eligibleSnapshots.map { it.deviceUid.value })
-        assertEquals(listOf("untrusted"), trust.clearedDeviceUids)
+        assertEquals(
+            setOf("live", "reconnecting", "stale"),
+            result.currentDeviceUids
+        )
+        assertEquals(
+            listOf("live", "reconnecting"),
+            result.eligibleSnapshots.deviceUids()
+        )
+        assertEquals(listOf("reconnecting", "stale"), trust.freshChecks)
+        assertTrue(trust.clearedDeviceUids.isEmpty())
     }
 
     @Test
@@ -66,7 +81,7 @@ class DeviceFirmwareAvailabilitySnapshotSourceTest {
             as DeviceFirmwareAvailabilitySnapshotResult.Ready
 
         assertEquals(setOf("fresh", "stale"), result.currentDeviceUids)
-        assertEquals(listOf("fresh"), result.eligibleSnapshots.map { it.deviceUid.value })
+        assertEquals(listOf("fresh"), result.eligibleSnapshots.deviceUids())
     }
 
     private fun source(
@@ -94,6 +109,7 @@ class DeviceFirmwareAvailabilitySnapshotSourceTest {
         private val validatedDeviceUids: Set<String> = emptySet(),
         private val freshDeviceUids: Set<String> = emptySet()
     ) : DeviceFirmwareAvailabilityTrust {
+        val freshChecks = mutableListOf<String>()
         val clearedDeviceUids = mutableListOf<String>()
 
         override suspend fun recordValidated(
@@ -104,7 +120,10 @@ class DeviceFirmwareAvailabilitySnapshotSourceTest {
         override suspend fun isFresh(
             ownerUid: String,
             snapshot: DeviceSnapshot
-        ): Boolean = snapshot.deviceUid.value in freshDeviceUids
+        ): Boolean {
+            freshChecks += snapshot.deviceUid.value
+            return snapshot.deviceUid.value in freshDeviceUids
+        }
 
         override suspend fun trackedDeviceUids(ownerUid: String): Set<String> = emptySet()
 
@@ -118,4 +137,8 @@ class DeviceFirmwareAvailabilitySnapshotSourceTest {
     private companion object {
         const val OWNER_UID = "owner-a"
     }
+}
+
+private fun List<DeviceSnapshot>.deviceUids(): List<String> {
+    return map { snapshot -> snapshot.deviceUid.value }
 }

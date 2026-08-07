@@ -18,7 +18,6 @@ import com.aqua.aqualight.data.devices.provisioning.store.AqlProvisioningDraftSt
 import com.aqua.aqualight.data.devices.provisioning.store.AqlProvisioningQrSecretStore
 import com.aqua.aqualight.data.devices.repository.DevicesRepository
 import com.aqua.aqualight.data.devices.repository.DevicesRepositoryProvider
-import com.aqua.aqualight.data.devices.update.DeviceFirmwareAvailabilityEventTrigger
 import com.aqua.aqualight.data.user.UserDataScope
 import com.aqua.aqualight.platform.notifications.DeviceFirmwareUpdateNotificationOperations
 
@@ -144,7 +143,6 @@ internal class ActiveOwnerDependencyGraphResolver(
     private fun composeGraph(
         dependencies: ActiveOwnerDependencies
     ): OwnerDependencyGraph {
-        installAvailabilityTrigger(dependencies)
         val ownerUidProvider = { dependencies.ownerUid }
         return OwnerDependencyGraph(
             ownerUid = dependencies.ownerUid,
@@ -166,14 +164,6 @@ internal class ActiveOwnerDependencyGraphResolver(
                 )
             )
         )
-    }
-
-    private fun installAvailabilityTrigger(dependencies: ActiveOwnerDependencies) {
-        DeviceFirmwareAvailabilityEventTrigger(
-            context = appContext,
-            ownerUid = dependencies.ownerUid,
-            lifecycleEvents = dependencies.devicesRepository.runtimeLifecycleEvents()
-        ).also(dependencies.devicesRepository::registerOwnerScopedResource)
     }
 
     private fun createFirmwareUpdateOperations(

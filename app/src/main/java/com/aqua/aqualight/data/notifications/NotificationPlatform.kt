@@ -15,7 +15,7 @@ class NotificationPlatform private constructor(context: Context) {
     private val appContext = context.applicationContext
     private val repository = OwnerNotificationPreferences.create(appContext)
     private val deviceUpdateLedger = DeviceUpdateNotificationLedger.create(appContext)
-    private val deviceUpdateTrust =
+    internal val deviceUpdateTrust =
         DeviceFirmwareAvailabilityTrustStore.create(appContext)
 
     val permissionPolicy = AndroidNotificationPermissionPolicy(appContext)

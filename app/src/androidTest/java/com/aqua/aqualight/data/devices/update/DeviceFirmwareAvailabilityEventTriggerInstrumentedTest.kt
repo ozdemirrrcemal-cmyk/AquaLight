@@ -22,10 +22,10 @@ class DeviceFirmwareAvailabilityEventTriggerInstrumentedTest {
     private val context = ApplicationProvider.getApplicationContext<Context>()
 
     @Test
-    fun validatedSnapshotEnqueuesOnceUntilRuntimeBecomesUnavailable() = runBlocking {
+    fun validatedSnapshotReconcilesUntilRuntimeBecomesUnavailable() = runBlocking {
         val trust = FakeTrust()
-        val enqueuedOwners = mutableListOf<String>()
-        val trigger = trigger(trust, enqueuedOwners)
+        val reconciledOwners = mutableListOf<String>()
+        val trigger = trigger(trust, reconciledOwners)
         val snapshot = liveSnapshot()
 
         trigger.acceptSnapshot(snapshot)
@@ -33,29 +33,32 @@ class DeviceFirmwareAvailabilityEventTriggerInstrumentedTest {
         trigger.acceptUnavailable(snapshot.deviceUid)
         trigger.acceptSnapshot(snapshot)
 
-        assertEquals(listOf(OWNER_UID, OWNER_UID), enqueuedOwners)
+        assertEquals(
+            listOf(OWNER_UID, OWNER_UID, OWNER_UID),
+            reconciledOwners
+        )
         assertEquals(listOf(DEVICE_UID.value), trust.clearedDeviceUids)
         trigger.close()
     }
 
     @Test
-    fun unvalidatedSnapshotClearsTrustAndDoesNotEnqueue() = runBlocking {
+    fun unvalidatedSnapshotPreservesProcessTrustAndDoesNotReconcile() = runBlocking {
         val trust = FakeTrust()
-        val enqueuedOwners = mutableListOf<String>()
-        val trigger = trigger(trust, enqueuedOwners)
+        val reconciledOwners = mutableListOf<String>()
+        val trigger = trigger(trust, reconciledOwners)
 
         trigger.acceptSnapshot(
             liveSnapshot().copy(runtimeMetadataGeneration = 0L)
         )
 
-        assertEquals(emptyList<String>(), enqueuedOwners)
-        assertEquals(listOf(DEVICE_UID.value), trust.clearedDeviceUids)
+        assertEquals(emptyList<String>(), reconciledOwners)
+        assertEquals(emptyList<String>(), trust.clearedDeviceUids)
         trigger.close()
     }
 
     private fun trigger(
         trust: FakeTrust,
-        enqueuedOwners: MutableList<String>
+        reconciledOwners: MutableList<String>
     ): DeviceFirmwareAvailabilityEventTrigger {
         return DeviceFirmwareAvailabilityEventTrigger(
             context = context,
@@ -68,7 +71,7 @@ class DeviceFirmwareAvailabilityEventTriggerInstrumentedTest {
                     nowMillis = { NOW_MILLIS }
                 ),
                 dispatcher = Dispatchers.Unconfined,
-                enqueueCheck = { _, ownerUid -> enqueuedOwners += ownerUid }
+                reconcileOwner = { ownerUid -> reconciledOwners += ownerUid }
             )
         )
     }

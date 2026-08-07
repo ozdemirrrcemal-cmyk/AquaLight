@@ -6,6 +6,7 @@ import com.aqua.aqualight.data.care.reminder.CareReminderReconcileWorker
 import com.aqua.aqualight.data.care.smartcare.SmartCareDailyWorker
 import com.aqua.aqualight.data.devices.provisioning.repository.AqlProvisioningHandoffSaver
 import com.aqua.aqualight.data.devices.repository.DevicesRepositoryProvider
+import com.aqua.aqualight.data.devices.update.DeviceFirmwareAvailabilityEventTrigger
 import com.aqua.aqualight.data.notifications.NotificationPlatform
 import com.aqua.aqualight.data.user.UserDataScope
 import java.util.concurrent.CancellationException
@@ -15,8 +16,8 @@ object SessionBoundServiceManager {
 
     enum class StopStep {
         PROVISIONING_TRANSACTIONS,
-        DEVICE_UPDATE_CHECKS,
         DEVICES_REPOSITORY,
+        DEVICE_UPDATE_CHECKS,
         ASSIGNMENT_REPOSITORY,
         SMART_CARE,
         NOTIFICATION_SCHEDULES,
@@ -54,6 +55,7 @@ object SessionBoundServiceManager {
 
         val appContext = context.applicationContext
         val notificationPlatform = NotificationPlatform.get(appContext)
+        installDeviceUpdateTrigger(appContext, normalizedOwnerUid)
         SmartCareDailyWorker.schedule(appContext, normalizedOwnerUid)
         notificationPlatform.deviceUpdateWorkCoordinator
             .reconcileOwner(normalizedOwnerUid)
@@ -87,13 +89,14 @@ object SessionBoundServiceManager {
                     .rollbackPendingRegistrationsForOwner(ownerUid)
                     .getOrThrow()
             }
+        }
+        runStep(StopStep.DEVICES_REPOSITORY) {
+            DevicesRepositoryProvider.clear(expectedOwnerUid = expectedOwnerUid)
+        }
+        if (ownerUid != null) {
             runStep(StopStep.DEVICE_UPDATE_CHECKS) {
                 notificationPlatform.deviceUpdateWorkCoordinator.cancelOwner(ownerUid)
             }
-        }
-
-        runStep(StopStep.DEVICES_REPOSITORY) {
-            DevicesRepositoryProvider.clear(expectedOwnerUid = expectedOwnerUid)
         }
         runStep(StopStep.ASSIGNMENT_REPOSITORY) {
             TankDeviceAssignmentRepositoryProvider.clear(expectedOwnerUid = expectedOwnerUid)
@@ -114,5 +117,19 @@ object SessionBoundServiceManager {
         }
 
         return StopResult(issues.toList())
+    }
+
+    private fun installDeviceUpdateTrigger(context: Context, ownerUid: String) {
+        val repository = checkNotNull(
+            DevicesRepositoryProvider.currentRepository(ownerUid)
+        ) {
+            "Authenticated owner device runtime is not active."
+        }
+        DeviceFirmwareAvailabilityEventTrigger(
+            context = context,
+            ownerUid = ownerUid,
+            lifecycleEvents = repository.runtimeLifecycleEvents(),
+            snapshots = repository.snapshots
+        ).also(repository::registerOwnerScopedResource)
     }
 }

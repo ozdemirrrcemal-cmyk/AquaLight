@@ -86,12 +86,17 @@ class OwnerSessionCoordinator private constructor(
             }
 
             val transition = stateMachine.begin(normalizedOwnerUid)
-            val previousOwnerUid = transition.previousOwnerUid
-
-            if (previousOwnerUid != null && previousOwnerUid != normalizedOwnerUid) {
-                // Runtime/socket/token teardown is the first and awaited owner-switch barrier.
-                DevicesRepositoryProvider.clear(expectedOwnerUid = previousOwnerUid)
-                TankDeviceAssignmentRepositoryProvider.clear(expectedOwnerUid = previousOwnerUid)
+            val previousStopError = stopPreviousOwnerIfRequired(
+                previousOwnerUid = transition.previousOwnerUid,
+                targetOwnerUid = normalizedOwnerUid
+            )
+            if (previousStopError != null) {
+                stateMachine.abort(transition)
+                return@withLock OpenResult.Failure(
+                    ownerUid = normalizedOwnerUid,
+                    generation = transition.generation,
+                    error = previousStopError
+                )
             }
 
             if (UserDataScope.currentUid() != normalizedOwnerUid) {
@@ -231,12 +236,29 @@ class OwnerSessionCoordinator private constructor(
 
     fun snapshot(): OwnerSessionStateMachine.Snapshot = stateMachine.snapshot()
 
+    private suspend fun stopPreviousOwnerIfRequired(
+        previousOwnerUid: String?,
+        targetOwnerUid: String
+    ): Throwable? {
+        if (previousOwnerUid == null || previousOwnerUid == targetOwnerUid) {
+            return null
+        }
+        return SessionBoundServiceManager.stop(
+            context = appContext,
+            cancelNotifications = true,
+            expectedOwnerUid = previousOwnerUid
+        ).exceptionOrNull()
+    }
+
     private suspend fun clearTransitionProviders(
         transition: OwnerSessionStateMachine.Transition
     ) {
         val ownerUid = transition.targetOwnerUid ?: return
-        DevicesRepositoryProvider.clear(expectedOwnerUid = ownerUid)
-        TankDeviceAssignmentRepositoryProvider.clear(expectedOwnerUid = ownerUid)
+        SessionBoundServiceManager.stop(
+            context = appContext,
+            cancelNotifications = true,
+            expectedOwnerUid = ownerUid
+        )
     }
 
     companion object {
