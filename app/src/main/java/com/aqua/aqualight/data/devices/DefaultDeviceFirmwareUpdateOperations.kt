@@ -19,12 +19,15 @@ import kotlinx.coroutines.Job
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.cancelAndJoin
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.distinctUntilChangedBy
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
+import kotlinx.coroutines.withTimeoutOrNull
 
 /** Shared OTA application adapter used by all family-specific Settings screens and owner work. */
 @Suppress("TooManyFunctions", "LongParameterList")
@@ -146,55 +149,95 @@ internal class DefaultDeviceFirmwareUpdateOperations(
         if (!ownerIsActive()) return@runCatching emptyBackgroundResult()
 
         reconcileNotificationState()
-        val snapshots = devicesRepository.currentDevices()
-            .sortedBy { snapshot -> snapshot.deviceUid.value }
-        var eligible = 0
-        var updates = 0
-        var upToDate = 0
-        var skipped = 0
-        var failed = 0
+        val liveRefresh = refreshLiveBackgroundSnapshots()
+        if (!ownerIsActive()) return@runCatching emptyBackgroundResult()
+        refreshBackgroundSnapshots(liveRefresh, manifestUrl, applyNow)
+    }.rethrowFatalOrCancellation()
 
+    private suspend fun refreshBackgroundSnapshots(
+        liveRefresh: BackgroundSnapshotRefresh,
+        manifestUrl: String,
+        applyNow: Boolean
+    ): DeviceFirmwareBackgroundRefreshResult {
+        val snapshots = liveRefresh.snapshots.sortedBy { snapshot -> snapshot.deviceUid.value }
+        val counts = BackgroundRefreshCounts()
         for (snapshot in snapshots) {
-            if (!ownerIsActive()) return@runCatching emptyBackgroundResult()
-            when (refreshRegisteredDevice(snapshot, manifestUrl, applyNow)) {
-                BackgroundRefreshOutcome.PRECHECK_SKIPPED -> skipped += 1
-                BackgroundRefreshOutcome.UPDATE_AVAILABLE -> {
-                    eligible += 1
-                    updates += 1
-                }
-                BackgroundRefreshOutcome.UP_TO_DATE -> {
-                    eligible += 1
-                    upToDate += 1
-                }
-                BackgroundRefreshOutcome.UNSUPPORTED -> {
-                    eligible += 1
-                    skipped += 1
-                }
-                BackgroundRefreshOutcome.UNCHANGED -> eligible += 1
-                BackgroundRefreshOutcome.FAILED -> {
-                    eligible += 1
-                    failed += 1
+            if (!ownerIsActive()) return emptyBackgroundResult()
+            counts.record(
+                refreshRegisteredDevice(
+                    snapshot = snapshot,
+                    liveDeviceUids = liveRefresh.liveDeviceUids,
+                    manifestUrl = manifestUrl,
+                    applyNow = applyNow
+                )
+            )
+        }
+        return counts.toResult(snapshots.size)
+    }
+
+    private suspend fun refreshLiveBackgroundSnapshots(): BackgroundSnapshotRefresh {
+        val initial = devicesRepository.currentDevices()
+        if (initial.isEmpty() || !devicesRepository.isLocalNetworkAvailable()) {
+            return BackgroundSnapshotRefresh(initial, emptySet())
+        }
+
+        val refreshStartedAtMillis = System.currentTimeMillis()
+        runCatching { devicesRepository.refreshForegroundBurst() }
+            .rethrowFatalOrCancellation()
+            .getOrNull()
+        delay(BACKGROUND_DISCOVERY_SETTLE_MILLIS)
+
+        val liveDeviceUids = devicesRepository.currentDevices()
+            .asSequence()
+            .filter { snapshot -> snapshot.lastSeenAtMillis >= refreshStartedAtMillis }
+            .filter { snapshot -> snapshot.endpoint.hasWebSocketEndpoint }
+            .mapTo(linkedSetOf()) { snapshot -> snapshot.deviceUid }
+
+        liveDeviceUids.forEach { deviceUid ->
+            devicesRepository.connectRuntime(deviceUid)
+                .rethrowFatalOrCancellation()
+                .getOrNull()
+        }
+        awaitLiveRuntimeMetadata(liveDeviceUids)
+        return BackgroundSnapshotRefresh(
+            snapshots = devicesRepository.currentDevices(),
+            liveDeviceUids = liveDeviceUids
+        )
+    }
+
+    private suspend fun awaitLiveRuntimeMetadata(liveDeviceUids: Set<DeviceUid>) {
+        if (liveDeviceUids.isEmpty()) return
+        withTimeoutOrNull(BACKGROUND_RUNTIME_METADATA_TIMEOUT_MILLIS) {
+            devicesRepository.snapshots.first { snapshots ->
+                liveDeviceUids.all { deviceUid ->
+                    snapshots[deviceUid]?.hasValidatedRuntimeMetadata == true ||
+                        deviceUid !in snapshots
                 }
             }
         }
-
-        DeviceFirmwareBackgroundRefreshResult(
-            inspectedDeviceCount = snapshots.size,
-            eligibleDeviceCount = eligible,
-            updateAvailableCount = updates,
-            upToDateCount = upToDate,
-            skippedDeviceCount = skipped,
-            failedDeviceCount = failed
-        )
-    }.rethrowFatalOrCancellation()
+    }
 
     private suspend fun refreshRegisteredDevice(
         snapshot: DeviceSnapshot,
+        liveDeviceUids: Set<DeviceUid>,
         manifestUrl: String,
         applyNow: Boolean
     ): BackgroundRefreshOutcome {
-        if (!snapshot.capabilities.ota || !snapshot.hasValidatedRuntimeMetadata) {
-            return BackgroundRefreshOutcome.PRECHECK_SKIPPED
+        val precheck = DeviceFirmwareBackgroundProbePolicy.decide(
+            freshlyDiscovered = snapshot.deviceUid in liveDeviceUids,
+            hasValidatedRuntimeMetadata = snapshot.hasValidatedRuntimeMetadata,
+            supportsOta = snapshot.capabilities.ota
+        )
+        if (precheck != DeviceFirmwareBackgroundProbePolicy.Decision.ELIGIBLE) {
+            return when (precheck) {
+                DeviceFirmwareBackgroundProbePolicy.Decision.METADATA_UNVALIDATED ->
+                    BackgroundRefreshOutcome.LIVE_VALIDATION_FAILED
+                DeviceFirmwareBackgroundProbePolicy.Decision.NOT_LIVE,
+                DeviceFirmwareBackgroundProbePolicy.Decision.OTA_UNSUPPORTED ->
+                    BackgroundRefreshOutcome.PRECHECK_SKIPPED
+                DeviceFirmwareBackgroundProbePolicy.Decision.ELIGIBLE ->
+                    error("Eligible background device escaped the precheck gate.")
+            }
         }
 
         val uid = snapshot.deviceUid
@@ -291,11 +334,58 @@ internal class DefaultDeviceFirmwareUpdateOperations(
 
     private enum class BackgroundRefreshOutcome {
         PRECHECK_SKIPPED,
+        LIVE_VALIDATION_FAILED,
         UPDATE_AVAILABLE,
         UP_TO_DATE,
         UNSUPPORTED,
         UNCHANGED,
         FAILED
+    }
+
+    private data class BackgroundSnapshotRefresh(
+        val snapshots: List<DeviceSnapshot>,
+        val liveDeviceUids: Set<DeviceUid>
+    )
+
+    private class BackgroundRefreshCounts {
+        private var eligible = 0
+        private var updates = 0
+        private var upToDate = 0
+        private var skipped = 0
+        private var failed = 0
+
+        fun record(outcome: BackgroundRefreshOutcome) {
+            when (outcome) {
+                BackgroundRefreshOutcome.PRECHECK_SKIPPED -> skipped += 1
+                BackgroundRefreshOutcome.LIVE_VALIDATION_FAILED -> failed += 1
+                BackgroundRefreshOutcome.UPDATE_AVAILABLE -> {
+                    eligible += 1
+                    updates += 1
+                }
+                BackgroundRefreshOutcome.UP_TO_DATE -> {
+                    eligible += 1
+                    upToDate += 1
+                }
+                BackgroundRefreshOutcome.UNSUPPORTED -> {
+                    eligible += 1
+                    skipped += 1
+                }
+                BackgroundRefreshOutcome.UNCHANGED -> eligible += 1
+                BackgroundRefreshOutcome.FAILED -> {
+                    eligible += 1
+                    failed += 1
+                }
+            }
+        }
+
+        fun toResult(inspected: Int) = DeviceFirmwareBackgroundRefreshResult(
+            inspectedDeviceCount = inspected,
+            eligibleDeviceCount = eligible,
+            updateAvailableCount = updates,
+            upToDateCount = upToDate,
+            skippedDeviceCount = skipped,
+            failedDeviceCount = failed
+        )
     }
 
     private data class NotificationEmission(
@@ -453,5 +543,7 @@ private fun emptyBackgroundResult() = DeviceFirmwareBackgroundRefreshResult(
 
 internal const val DEVICE_FIRMWARE_AVAILABILITY_FRESHNESS_MILLIS = 15L * 60L * 1_000L
 internal const val DEVICE_FIRMWARE_AVAILABILITY_FAILURE_RETRY_MILLIS = 30L * 1_000L
+private const val BACKGROUND_DISCOVERY_SETTLE_MILLIS = 750L
+private const val BACKGROUND_RUNTIME_METADATA_TIMEOUT_MILLIS = 8_000L
 private const val COMPLETE_PROGRESS_PERMILLE = 1_000
 private const val PERMILLE_PER_PERCENT = 10

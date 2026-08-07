@@ -149,6 +149,90 @@ for background_path in background_paths:
         "background maintenance must use the lightweight owner provider",
     )
 
+firmware_worker_path = (
+    "app/src/main/java/com/aqua/aqualight/data/devices/notification/"
+    "DeviceFirmwareAvailabilityWorker.kt"
+)
+firmware_worker = read(firmware_worker_path)
+for token, reason in (
+    ("KEY_OWNER_UID", "firmware work must carry an immutable owner UID"),
+    ("FirebaseAuthenticatedOwnerProvider", "firmware work must revalidate the authenticated owner"),
+    ("OwnerBackgroundRuntimeLease", "firmware cold-start runtime access must use the bounded lease"),
+    ("notificationPreferenceUseCase.observe", "firmware work must re-check the central owner preference"),
+):
+    require(firmware_worker_path, firmware_worker, token, reason)
+for token in (
+    "import com.aqua.aqualight.data.auth.AuthSessionManager",
+    "import com.aqua.aqualight.data.auth.OwnerRuntimeSession",
+    "import com.aqua.aqualight.data.auth.OwnerSessionCoordinator",
+    "import com.aqua.aqualight.data.devices.repository.DevicesRepositoryProvider",
+    "import com.aqua.aqualight.data.devices.repository.DeviceRuntimeRepository",
+    "import com.aqua.aqualight.data.devices.discovery.",
+    "import com.aqua.aqualight.data.devices.runtime.ws.AqlWsClient",
+    "NotificationManager",
+    "NotificationCompat.Builder",
+):
+    forbid(
+        firmware_worker_path,
+        firmware_worker,
+        token,
+        "firmware worker must stay behind the bounded runtime and central notification boundaries",
+    )
+
+background_lease_path = (
+    "app/src/main/java/com/aqua/aqualight/data/auth/OwnerBackgroundRuntimeLease.kt"
+)
+background_lease = read(background_lease_path)
+for token, reason in (
+    ("class OwnerBackgroundRuntimeLease", "firmware background runtime needs an explicit boundary"),
+    ("UserDataScope.withOwnerUid", "background runtime must pin the immutable owner"),
+    ("acquireBackgroundLease", "background runtime must be acquired by the session coordinator"),
+    ("NonCancellable", "lease release must survive worker cancellation"),
+    ("releaseBackgroundLease", "background runtime ownership must be released deterministically"),
+):
+    require(background_lease_path, background_lease, token, reason)
+for token in (
+    "DevicesRepositoryProvider",
+    "DeviceRuntimeRepository",
+    "AqlWsClient",
+):
+    forbid(
+        background_lease_path,
+        background_lease,
+        token,
+        "bounded lease must not construct a parallel device runtime",
+    )
+
+owner_coordinator_path = (
+    "app/src/main/java/com/aqua/aqualight/data/auth/OwnerSessionCoordinator.kt"
+)
+owner_coordinator = read(owner_coordinator_path)
+for token, reason in (
+    ("backgroundLeaseMutex", "foreground and background runtime ownership must be serialized"),
+    ("OwnerRuntimeOpenMode.withBackgroundOpen", "cold background open must suppress foreground services"),
+    ("backgroundLeases.promote", "foreground open must revoke background close authority"),
+):
+    require(owner_coordinator_path, owner_coordinator, token, reason)
+
+open_mode_path = "app/src/main/java/com/aqua/aqualight/data/auth/OwnerRuntimeOpenMode.kt"
+open_mode = read(open_mode_path)
+for token, reason in (
+    ("ThreadLocal<Boolean?>", "background open mode must be coroutine-local"),
+    ("asContextElement", "background open mode must survive dispatcher switches"),
+):
+    require(open_mode_path, open_mode, token, reason)
+
+session_manager_path = (
+    "app/src/main/java/com/aqua/aqualight/data/auth/SessionBoundServiceManager.kt"
+)
+session_manager = read(session_manager_path)
+for token, reason in (
+    ("OwnerRuntimeOpenMode.isBackgroundOpen()", "background lease must not start foreground services"),
+    ("reconcileBackgroundWork", "firmware work lifecycle must follow the central notification preference"),
+    ("cancelBackgroundWork", "session teardown must cancel firmware work centrally"),
+):
+    require(session_manager_path, session_manager, token, reason)
+
 smart_worker_path = background_paths[0]
 smart_worker = read(smart_worker_path)
 for token, reason in (
@@ -194,7 +278,7 @@ for token in ("goAsync()", "CareTaskDataStoreManager", "UserDataScope.withOwnerU
 delivery_worker_path = background_paths[3]
 delivery_worker = read(delivery_worker_path)
 for token, reason in (
-    ("NotificationPlatform.get", "delivery must use the central notification composition"),
+    ("NotificationPlatform.get", "delivery must use central notification composition"),
     ("preferenceUseCase.snapshot", "delivery must re-check owner preference and Android readiness"),
     ("dispatchUseCase.dispatchCareReminder", "final visible delivery must use the central dispatch use-case"),
     ("CareReminderDeliveryPolicy.shouldDeliver(ownerTask, tank)", "delivery must revalidate persisted task and tank state"),

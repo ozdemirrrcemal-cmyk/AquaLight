@@ -4,7 +4,6 @@ import android.content.Context
 import com.aqua.aqualight.data.aquarium.devices.TankDeviceAssignmentRepositoryProvider
 import com.aqua.aqualight.data.care.reminder.CareReminderReconcileWorker
 import com.aqua.aqualight.data.care.smartcare.SmartCareDailyWorker
-import com.aqua.aqualight.data.devices.notification.DeviceFirmwareAvailabilityWorker
 import com.aqua.aqualight.data.devices.provisioning.repository.AqlProvisioningHandoffSaver
 import com.aqua.aqualight.data.devices.repository.DevicesRepositoryProvider
 import com.aqua.aqualight.data.notifications.NotificationPlatform
@@ -49,14 +48,22 @@ object SessionBoundServiceManager {
         ) { issue -> issue.step.name }
     )
 
-    fun start(context: Context, ownerUid: String) {
+    suspend fun start(
+        context: Context,
+        ownerUid: String,
+        enqueueFirmwareImmediate: Boolean = true
+    ) {
         val normalizedOwnerUid = UserDataScope.normalizeOwnerUid(ownerUid)
-        if (normalizedOwnerUid.isBlank()) return
+        if (normalizedOwnerUid.isBlank() || OwnerRuntimeOpenMode.isBackgroundOpen()) return
 
         val appContext = context.applicationContext
         SmartCareDailyWorker.schedule(appContext, normalizedOwnerUid)
         CareReminderReconcileWorker.enqueue(appContext, normalizedOwnerUid)
-        DeviceFirmwareAvailabilityWorker.schedule(appContext, normalizedOwnerUid)
+        reconcileFirmwareAvailability(
+            context = appContext,
+            ownerUid = normalizedOwnerUid,
+            enqueueImmediate = enqueueFirmwareImmediate
+        )
     }
 
     suspend fun stop(
@@ -89,7 +96,11 @@ object SessionBoundServiceManager {
 
         // Prevent future owner work before retiring the repository and its shared OTA coordinator.
         runStep(StopStep.FIRMWARE_AVAILABILITY) {
-            DeviceFirmwareAvailabilityWorker.cancel(appContext, ownerUid)
+            ownerUid?.let { activeOwnerUid ->
+                NotificationPlatform.get(appContext)
+                    .preferenceUseCase
+                    .cancelBackgroundWork(activeOwnerUid)
+            }
         }
 
         // Stop runtime collectors, sockets and owner token access before clearing
@@ -117,5 +128,21 @@ object SessionBoundServiceManager {
         }
 
         return StopResult(issues.toList())
+    }
+
+    private suspend fun reconcileFirmwareAvailability(
+        context: Context,
+        ownerUid: String,
+        enqueueImmediate: Boolean
+    ) {
+        val preferenceUseCase = NotificationPlatform.get(context).preferenceUseCase
+        val failure = runCatching {
+            preferenceUseCase.reconcileBackgroundWork(
+                ownerUid = ownerUid,
+                enqueueImmediate = enqueueImmediate
+            )
+        }.exceptionOrNull()
+        if (failure is CancellationException) throw failure
+        if (failure != null) preferenceUseCase.cancelBackgroundWork(ownerUid)
     }
 }

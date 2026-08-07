@@ -121,6 +121,22 @@ interface NotificationRenderer {
     fun cancelOwner(ownerUid: String)
 }
 
+/**
+ * Central lifecycle hook for notification-driven background work.
+ *
+ * Implementations may schedule or cancel owner-scoped work, but visible notification delivery still
+ * belongs exclusively to [NotificationDispatchUseCase] and [NotificationRenderer].
+ */
+interface NotificationBackgroundWorkController {
+    fun scheduleOwner(ownerUid: String, enqueueImmediate: Boolean = true)
+    fun cancelOwner(ownerUid: String)
+
+    object NoOp : NotificationBackgroundWorkController {
+        override fun scheduleOwner(ownerUid: String, enqueueImmediate: Boolean) = Unit
+        override fun cancelOwner(ownerUid: String) = Unit
+    }
+}
+
 class NotificationDispatchUseCase(
     private val repository: NotificationPreferenceRepository,
     private val permissionPolicy: NotificationPermissionPolicy,
@@ -191,7 +207,9 @@ class NotificationPreferenceUseCase(
     private val repository: NotificationPreferenceRepository,
     private val permissionPolicy: NotificationPermissionPolicy,
     private val scheduler: NotificationScheduler,
-    private val renderer: NotificationRenderer
+    private val renderer: NotificationRenderer,
+    private val backgroundWork: NotificationBackgroundWorkController =
+        NotificationBackgroundWorkController.NoOp
 ) {
     fun observe(ownerUid: String): Flow<Boolean> = repository.enabledFlow(ownerUid)
 
@@ -214,7 +232,9 @@ class NotificationPreferenceUseCase(
         if (enabled) {
             permissionPolicy.ensureChannels()
             scheduler.reconcileOwner(ownerUid)
+            backgroundWork.scheduleOwner(ownerUid)
         } else {
+            backgroundWork.cancelOwner(ownerUid)
             scheduler.cancelOwner(ownerUid)
             renderer.cancelOwner(ownerUid)
         }
@@ -244,7 +264,23 @@ class NotificationPreferenceUseCase(
         }
     }
 
+    suspend fun reconcileBackgroundWork(
+        ownerUid: String,
+        enqueueImmediate: Boolean = true
+    ) {
+        if (repository.isEnabled(ownerUid)) {
+            backgroundWork.scheduleOwner(ownerUid, enqueueImmediate)
+        } else {
+            backgroundWork.cancelOwner(ownerUid)
+        }
+    }
+
+    fun cancelBackgroundWork(ownerUid: String) {
+        backgroundWork.cancelOwner(ownerUid)
+    }
+
     suspend fun cancelOwner(ownerUid: String) {
+        backgroundWork.cancelOwner(ownerUid)
         scheduler.cancelOwner(ownerUid)
         renderer.cancelOwner(ownerUid)
     }

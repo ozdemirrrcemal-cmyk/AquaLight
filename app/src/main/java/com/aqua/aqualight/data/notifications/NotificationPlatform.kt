@@ -4,12 +4,14 @@ import android.content.Context
 import com.aqua.aqualight.application.notifications.NotificationDispatchUseCase
 import com.aqua.aqualight.application.notifications.NotificationLifecycleUseCase
 import com.aqua.aqualight.application.notifications.NotificationPreferenceUseCase
+import com.aqua.aqualight.data.devices.notification.DeviceFirmwareNotificationBackgroundWorkController
 import com.aqua.aqualight.platform.notifications.AndroidNotificationRenderer
 
 /** Process-scoped composition for the central notification platform. */
 class NotificationPlatform private constructor(context: Context) {
     private val appContext = context.applicationContext
     private val repository = OwnerNotificationPreferences.create(appContext)
+    private val backgroundWork = DeviceFirmwareNotificationBackgroundWorkController(appContext)
 
     val permissionPolicy = AndroidNotificationPermissionPolicy(appContext)
     val renderer = AndroidNotificationRenderer(appContext)
@@ -28,7 +30,8 @@ class NotificationPlatform private constructor(context: Context) {
         repository = repository,
         permissionPolicy = permissionPolicy,
         scheduler = scheduler,
-        renderer = renderer
+        renderer = renderer,
+        backgroundWork = backgroundWork
     )
 
     companion object {

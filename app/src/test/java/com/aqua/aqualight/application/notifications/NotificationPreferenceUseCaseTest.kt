@@ -18,13 +18,18 @@ class NotificationPreferenceUseCaseTest {
 
         assertTrue(fixture.repository.isEnabled("owner-a"))
         assertEquals(
-            listOf("preference:true", "ensure-channels", "reconcile:owner-a"),
+            listOf(
+                "preference:true",
+                "ensure-channels",
+                "reconcile:owner-a",
+                "background-schedule:owner-a:true"
+            ),
             fixture.events
         )
     }
 
     @Test
-    fun disablingCancelsOnlyRequestedOwnerSchedulesAndVisibleNotifications() = runTest {
+    fun disablingCancelsBackgroundSchedulesAndVisibleNotificationsForRequestedOwner() = runTest {
         val fixture = Fixture(initialEnabled = true)
 
         fixture.useCase.setEnabled("owner-a", false)
@@ -33,11 +38,42 @@ class NotificationPreferenceUseCaseTest {
         assertEquals(
             listOf(
                 "preference:false",
+                "background-cancel:owner-a",
                 "cancel-owner-schedules:owner-a",
                 "cancel-owner-visible:owner-a"
             ),
             fixture.events
         )
+    }
+
+    @Test
+    fun disabledPreferenceCannotBeResurrectedByBackgroundReconciliation() = runTest {
+        val fixture = Fixture(initialEnabled = false)
+
+        fixture.useCase.reconcileBackgroundWork("owner-a")
+
+        assertEquals(listOf("background-cancel:owner-a"), fixture.events)
+    }
+
+    @Test
+    fun activeSessionCanRefreshPeriodicWorkWithoutReplacingCurrentImmediateWork() = runTest {
+        val fixture = Fixture(initialEnabled = true)
+
+        fixture.useCase.reconcileBackgroundWork(
+            ownerUid = "owner-a",
+            enqueueImmediate = false
+        )
+
+        assertEquals(listOf("background-schedule:owner-a:false"), fixture.events)
+    }
+
+    @Test
+    fun careReconciliationDoesNotScheduleFirmwareBackgroundWork() = runTest {
+        val fixture = Fixture(initialEnabled = true)
+
+        fixture.useCase.reconcileOwner("owner-a")
+
+        assertEquals(listOf("ensure-channels", "reconcile:owner-a"), fixture.events)
     }
 
     @Test
@@ -89,11 +125,13 @@ class NotificationPreferenceUseCaseTest {
         val policy = FakePolicy(events)
         private val scheduler = FakeScheduler(events)
         private val renderer = FakeRenderer(events)
+        private val backgroundWork = FakeBackgroundWork(events)
         val useCase = NotificationPreferenceUseCase(
             repository = repository,
             permissionPolicy = policy,
             scheduler = scheduler,
-            renderer = renderer
+            renderer = renderer,
+            backgroundWork = backgroundWork
         )
     }
 
@@ -168,6 +206,18 @@ class NotificationPreferenceUseCaseTest {
 
         override fun cancelOwner(ownerUid: String) {
             events += "cancel-owner-visible:$ownerUid"
+        }
+    }
+
+    private class FakeBackgroundWork(
+        private val events: MutableList<String>
+    ) : NotificationBackgroundWorkController {
+        override fun scheduleOwner(ownerUid: String, enqueueImmediate: Boolean) {
+            events += "background-schedule:$ownerUid:$enqueueImmediate"
+        }
+
+        override fun cancelOwner(ownerUid: String) {
+            events += "background-cancel:$ownerUid"
         }
     }
 

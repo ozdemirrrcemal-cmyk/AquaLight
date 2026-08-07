@@ -16,16 +16,19 @@ import androidx.work.workDataOf
 import com.aqua.aqualight.BuildConfig
 import com.aqua.aqualight.composition.requireAppContainer
 import com.aqua.aqualight.data.auth.FirebaseAuthenticatedOwnerProvider
-import com.aqua.aqualight.data.auth.OwnerSessionCoordinator
+import com.aqua.aqualight.data.auth.OwnerBackgroundRuntimeLease
 import com.aqua.aqualight.data.user.UserDataScope
 import java.util.concurrent.TimeUnit
 import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.flow.first
 
 /**
  * Owner-scoped best-effort firmware availability check.
  *
- * This worker never opens owner runtime or posts Android notifications directly. It consumes only an
- * already committed owner graph and delegates delivery to the existing central dispatch path.
+ * Process-death recovery is bounded by [OwnerBackgroundRuntimeLease], which delegates to the same
+ * owner session coordinator and repository/OTA graph as the foreground. This worker never opens a
+ * parallel runtime and never posts Android notifications directly; visible delivery stays on the
+ * central notification dispatch path.
  */
 @Suppress(
     "TooManyFunctions",
@@ -45,23 +48,21 @@ class DeviceFirmwareAvailabilityWorker(
         val ownerProvider = FirebaseAuthenticatedOwnerProvider.create(applicationContext)
         if (ownerProvider.currentOwnerUid() != ownerUid) return Result.success()
 
-        val session = OwnerSessionCoordinator.create(applicationContext).snapshot()
-        if (session.activeOwnerUid != ownerUid || session.pendingOwnerUid != null) {
-            return retryOrFinish()
+        val appContainer = applicationContext.requireAppContainer()
+        if (!appContainer.notificationPreferenceUseCase.observe(ownerUid).first()) {
+            return Result.success()
         }
 
         return try {
-            UserDataScope.withOwnerUid(ownerUid) {
-                val finalSession = OwnerSessionCoordinator.create(applicationContext).snapshot()
+            OwnerBackgroundRuntimeLease.create(applicationContext).withOwner(ownerUid) {
                 if (
                     ownerProvider.currentOwnerUid() != ownerUid ||
-                    finalSession.activeOwnerUid != ownerUid ||
-                    finalSession.pendingOwnerUid != null
+                    !appContainer.notificationPreferenceUseCase.observe(ownerUid).first()
                 ) {
-                    return@withOwnerUid Result.success()
+                    return@withOwner Result.success()
                 }
-                val refresh = applicationContext.requireAppContainer()
-                    .deviceFirmwareBackgroundOperations
+
+                val refresh = appContainer.deviceFirmwareBackgroundOperations
                     .refreshRegisteredDevices(
                         manifestUrl = BuildConfig.AQL_OTA_MANIFEST_URL,
                         applyNow = true
@@ -96,12 +97,15 @@ class DeviceFirmwareAvailabilityWorker(
             .setRequiredNetworkType(NetworkType.CONNECTED)
             .build()
 
-        fun schedule(context: Context, ownerUid: String) {
+        fun schedule(
+            context: Context,
+            ownerUid: String,
+            enqueueImmediate: Boolean = true
+        ) {
             val owner = UserDataScope.normalizeOwnerUid(ownerUid)
             if (owner.isBlank()) return
 
             val appContext = context.applicationContext
-            val workManager = WorkManager.getInstance(appContext)
             val periodic = PeriodicWorkRequestBuilder<DeviceFirmwareAvailabilityWorker>(
                 PERIODIC_HOURS,
                 TimeUnit.HOURS,
@@ -118,12 +122,12 @@ class DeviceFirmwareAvailabilityWorker(
                 )
                 .build()
 
-            workManager.enqueueUniquePeriodicWork(
+            WorkManager.getInstance(appContext).enqueueUniquePeriodicWork(
                 periodicWorkName(owner),
                 ExistingPeriodicWorkPolicy.UPDATE,
                 periodic
             )
-            enqueueNow(appContext, owner)
+            if (enqueueImmediate) enqueueNow(appContext, owner)
         }
 
         fun enqueueNow(context: Context, ownerUid: String) {
