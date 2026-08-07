@@ -49,10 +49,14 @@ internal class UserDataRestoreDeduplicator(
     private fun SavedAquariumTank.matchesArchivedPhoto(
         reference: ArchiveMediaReference?
     ): Boolean {
-        if (reference == null) return photoUri.isNullOrBlank()
-        val bytes = snapshotTankPhoto(photoUri) ?: return false
-        return bytes.size == reference.byteSize &&
-            sha256(bytes).equals(reference.sha256, ignoreCase = true)
+        return if (reference == null) {
+            photoUri.isNullOrBlank()
+        } else {
+            val bytes = snapshotTankPhoto(photoUri)
+            bytes != null &&
+                bytes.size == reference.byteSize &&
+                sha256(bytes).equals(reference.sha256, ignoreCase = true)
+        }
     }
 
     private fun CareTask.matchesArchivedOrigin(
