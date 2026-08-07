@@ -82,17 +82,17 @@ class DataManagementFragment : Fragment(R.layout.fragment_data_management) {
     private fun observeViewModel() {
         viewLifecycleOwner.lifecycleScope.launch {
             viewLifecycleOwner.repeatOnLifecycle(Lifecycle.State.STARTED) {
-                launch { viewModel.uiState.collect(::renderState) }
+                launch {
+                    viewModel.uiState.collect { state ->
+                        setFragmentGlobalLoading(state.busy)
+                        binding.cardCreateBackup.isEnabled = !state.busy
+                        binding.cardRestoreBackup.isEnabled = !state.busy
+                        binding.cardExportData.isEnabled = !state.busy
+                    }
+                }
                 launch { viewModel.events.collect(::handleEvent) }
             }
         }
-    }
-
-    private fun renderState(state: DataManagementUiState) {
-        setFragmentGlobalLoading(state.busy)
-        binding.cardCreateBackup.isEnabled = !state.busy
-        binding.cardRestoreBackup.isEnabled = !state.busy
-        binding.cardExportData.isEnabled = !state.busy
     }
 
     private fun handleEvent(event: DataManagementEvent) {

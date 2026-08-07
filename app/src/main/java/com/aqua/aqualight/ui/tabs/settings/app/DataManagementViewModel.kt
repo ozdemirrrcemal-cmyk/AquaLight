@@ -46,12 +46,12 @@ class DataManagementViewModel(
     fun cancelPendingOperation() {
         pendingWrite = null
         pendingRestore = null
-        finishOperation()
+        _uiState.finishOperation()
     }
 
     fun writePendingDocument(documentHandle: String) {
         val pending = pendingWrite ?: run {
-            finishOperation()
+            _uiState.finishOperation()
             return
         }
         viewModelScope.launch {
@@ -60,7 +60,7 @@ class DataManagementViewModel(
                 content = pending.artifact.content
             )
             pendingWrite = null
-            finishOperation()
+            _uiState.finishOperation()
             eventChannel.trySend(
                 if (result.isSuccess) {
                     DataManagementEvent.OperationSucceeded(pending.action)
@@ -79,7 +79,7 @@ class DataManagementViewModel(
             val inspection = inspectionResult?.getOrNull()
             if (content == null || inspection == null) {
                 pendingRestore = null
-                finishOperation()
+                _uiState.finishOperation()
                 eventChannel.trySend(
                     DataManagementEvent.OperationFailed(DataManagementAction.RESTORE)
                 )
@@ -87,7 +87,7 @@ class DataManagementViewModel(
             }
 
             pendingRestore = content
-            finishOperation()
+            _uiState.finishOperation()
             eventChannel.trySend(DataManagementEvent.ShowRestorePreview(inspection))
         }
     }
@@ -98,7 +98,7 @@ class DataManagementViewModel(
         viewModelScope.launch {
             val result = archiveOperations.restoreBackup(content)
             pendingRestore = null
-            finishOperation()
+            _uiState.finishOperation()
             val restored = result.getOrNull()
             eventChannel.trySend(
                 if (restored != null) {
@@ -123,7 +123,7 @@ class DataManagementViewModel(
         viewModelScope.launch {
             val artifact = creator().getOrNull()
             if (artifact == null) {
-                finishOperation()
+                _uiState.finishOperation()
                 eventChannel.trySend(DataManagementEvent.OperationFailed(action))
                 return@launch
             }
@@ -143,14 +143,15 @@ class DataManagementViewModel(
         return true
     }
 
-    private fun finishOperation() {
-        _uiState.update { state -> state.copy(busy = false) }
-    }
-
     private data class PendingWrite(
         val action: DataManagementAction,
         val artifact: UserDataArchiveArtifact
     )
+}
+
+
+private fun MutableStateFlow<DataManagementUiState>.finishOperation() {
+    update { state -> state.copy(busy = false) }
 }
 
 data class DataManagementUiState(

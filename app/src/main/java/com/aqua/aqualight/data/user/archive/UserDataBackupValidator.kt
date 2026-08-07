@@ -37,17 +37,11 @@ internal class UserDataBackupValidator {
     }
 
     fun requireSafeEntryName(entryName: String) {
-        require(entryName.isNotBlank())
-        require(!entryName.startsWith('/'))
-        require('\\' !in entryName)
-        require(entryName.split('/').none { segment -> segment == ".." || segment.isBlank() })
+        requireSafeArchiveEntryName(entryName)
     }
 
     fun requireValidMediaEntryName(entryName: String) {
-        requireSafeEntryName(entryName)
-        require(UserDataBackupLimits.mediaEntryPattern.matches(entryName)) {
-            "Backup media entry name is invalid."
-        }
+        requireValidArchiveMediaEntryName(entryName)
     }
 
     private fun validateEnvelope(manifest: UserDataBackupManifest) {
@@ -173,30 +167,45 @@ internal class UserDataBackupValidator {
         }
     }
 
-    private fun validateMediaReference(
-        reference: ArchiveMediaReference,
-        tankId: Long,
-        mediaByEntryName: Map<String, ByteArray>
-    ) {
-        requireValidMediaEntryName(reference.entryName)
-        require(reference.entryName == "${UserDataBackupLimits.MEDIA_PREFIX}$tankId.jpg") {
-            "Backup aquarium photo entry does not match its aquarium."
-        }
-        require(reference.byteSize in 1..UserDataBackupLimits.MAX_MEDIA_ENTRY_BYTES) {
-            "Backup aquarium photo size is invalid."
-        }
-        require(UserDataBackupLimits.sha256Pattern.matches(reference.sha256)) {
-            "Backup aquarium photo digest is invalid."
-        }
-        val bytes = requireNotNull(mediaByEntryName[reference.entryName]) {
-            "Backup aquarium photo is missing."
-        }
-        require(bytes.size == reference.byteSize) {
-            "Backup aquarium photo size does not match its manifest."
-        }
-        require(sha256(bytes).equals(reference.sha256, ignoreCase = true)) {
-            "Backup aquarium photo integrity check failed."
-        }
+}
+
+private fun requireSafeArchiveEntryName(entryName: String) {
+    require(entryName.isNotBlank())
+    require(!entryName.startsWith('/'))
+    require('\\' !in entryName)
+    require(entryName.split('/').none { segment -> segment == ".." || segment.isBlank() })
+}
+
+private fun requireValidArchiveMediaEntryName(entryName: String) {
+    requireSafeArchiveEntryName(entryName)
+    require(UserDataBackupLimits.mediaEntryPattern.matches(entryName)) {
+        "Backup media entry name is invalid."
+    }
+}
+
+private fun validateMediaReference(
+    reference: ArchiveMediaReference,
+    tankId: Long,
+    mediaByEntryName: Map<String, ByteArray>
+) {
+    requireValidArchiveMediaEntryName(reference.entryName)
+    require(reference.entryName == "${UserDataBackupLimits.MEDIA_PREFIX}$tankId.jpg") {
+        "Backup aquarium photo entry does not match its aquarium."
+    }
+    require(reference.byteSize in 1..UserDataBackupLimits.MAX_MEDIA_ENTRY_BYTES) {
+        "Backup aquarium photo size is invalid."
+    }
+    require(UserDataBackupLimits.sha256Pattern.matches(reference.sha256)) {
+        "Backup aquarium photo digest is invalid."
+    }
+    val bytes = requireNotNull(mediaByEntryName[reference.entryName]) {
+        "Backup aquarium photo is missing."
+    }
+    require(bytes.size == reference.byteSize) {
+        "Backup aquarium photo size does not match its manifest."
+    }
+    require(sha256(bytes).equals(reference.sha256, ignoreCase = true)) {
+        "Backup aquarium photo integrity check failed."
     }
 }
 
