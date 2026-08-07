@@ -5,7 +5,6 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="@color/background_color"
     tools:context=".ui.tabs.settings.app.DataManagementFragment">
 
     <include
@@ -21,6 +20,7 @@
         android:id="@+id/scrollContainer"
         android:layout_width="@dimen/aqua_size_0"
         android:layout_height="@dimen/aqua_size_0"
+        android:background="@color/background_color"
         android:fillViewport="true"
         android:scrollbars="none"
         app:layout_constraintBottom_toBottomOf="parent"
@@ -47,18 +47,19 @@
                 android:contentDescription="@string/data_management_backup_card_description"
                 android:focusable="true">
 
-                <LinearLayout
+                <androidx.constraintlayout.widget.ConstraintLayout
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:gravity="center_vertical"
-                    android:orientation="horizontal"
                     android:padding="@dimen/aqua_size_12">
 
                     <LinearLayout
                         android:layout_width="@dimen/aqua_size_0"
                         android:layout_height="wrap_content"
-                        android:layout_weight="1"
-                        android:orientation="vertical">
+                        android:orientation="vertical"
+                        app:layout_constraintBottom_toBottomOf="parent"
+                        app:layout_constraintEnd_toStartOf="@id/backupArrow"
+                        app:layout_constraintStart_toStartOf="parent"
+                        app:layout_constraintTop_toTopOf="parent">
 
                         <TextView
                             android:layout_width="wrap_content"
@@ -77,12 +78,16 @@
                     </LinearLayout>
 
                     <ImageView
+                        android:id="@+id/backupArrow"
                         android:layout_width="@dimen/aqua_size_24"
                         android:layout_height="@dimen/aqua_size_24"
                         android:contentDescription="@string/data_management_arrow_description"
                         android:src="@drawable/ic_arrow_right"
+                        app:layout_constraintBottom_toBottomOf="parent"
+                        app:layout_constraintEnd_toEndOf="parent"
+                        app:layout_constraintTop_toTopOf="parent"
                         app:tint="@color/aqua_card_text_secondary" />
-                </LinearLayout>
+                </androidx.constraintlayout.widget.ConstraintLayout>
             </com.google.android.material.card.MaterialCardView>
 
             <com.google.android.material.card.MaterialCardView
@@ -95,18 +100,19 @@
                 android:contentDescription="@string/data_management_restore_card_description"
                 android:focusable="true">
 
-                <LinearLayout
+                <androidx.constraintlayout.widget.ConstraintLayout
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:gravity="center_vertical"
-                    android:orientation="horizontal"
                     android:padding="@dimen/aqua_size_12">
 
                     <LinearLayout
                         android:layout_width="@dimen/aqua_size_0"
                         android:layout_height="wrap_content"
-                        android:layout_weight="1"
-                        android:orientation="vertical">
+                        android:orientation="vertical"
+                        app:layout_constraintBottom_toBottomOf="parent"
+                        app:layout_constraintEnd_toStartOf="@id/restoreArrow"
+                        app:layout_constraintStart_toStartOf="parent"
+                        app:layout_constraintTop_toTopOf="parent">
 
                         <TextView
                             android:layout_width="wrap_content"
@@ -125,12 +131,16 @@
                     </LinearLayout>
 
                     <ImageView
+                        android:id="@+id/restoreArrow"
                         android:layout_width="@dimen/aqua_size_24"
                         android:layout_height="@dimen/aqua_size_24"
                         android:contentDescription="@string/data_management_arrow_description"
                         android:src="@drawable/ic_arrow_right"
+                        app:layout_constraintBottom_toBottomOf="parent"
+                        app:layout_constraintEnd_toEndOf="parent"
+                        app:layout_constraintTop_toTopOf="parent"
                         app:tint="@color/aqua_card_text_secondary" />
-                </LinearLayout>
+                </androidx.constraintlayout.widget.ConstraintLayout>
             </com.google.android.material.card.MaterialCardView>
 
             <com.google.android.material.card.MaterialCardView
@@ -143,18 +153,19 @@
                 android:contentDescription="@string/data_management_export_card_description"
                 android:focusable="true">
 
-                <LinearLayout
+                <androidx.constraintlayout.widget.ConstraintLayout
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:gravity="center_vertical"
-                    android:orientation="horizontal"
                     android:padding="@dimen/aqua_size_12">
 
                     <LinearLayout
                         android:layout_width="@dimen/aqua_size_0"
                         android:layout_height="wrap_content"
-                        android:layout_weight="1"
-                        android:orientation="vertical">
+                        android:orientation="vertical"
+                        app:layout_constraintBottom_toBottomOf="parent"
+                        app:layout_constraintEnd_toStartOf="@id/exportArrow"
+                        app:layout_constraintStart_toStartOf="parent"
+                        app:layout_constraintTop_toTopOf="parent">
 
                         <TextView
                             android:layout_width="wrap_content"
@@ -173,12 +184,16 @@
                     </LinearLayout>
 
                     <ImageView
+                        android:id="@+id/exportArrow"
                         android:layout_width="@dimen/aqua_size_24"
                         android:layout_height="@dimen/aqua_size_24"
                         android:contentDescription="@string/data_management_arrow_description"
                         android:src="@drawable/ic_arrow_right"
+                        app:layout_constraintBottom_toBottomOf="parent"
+                        app:layout_constraintEnd_toEndOf="parent"
+                        app:layout_constraintTop_toTopOf="parent"
                         app:tint="@color/aqua_card_text_secondary" />
-                </LinearLayout>
+                </androidx.constraintlayout.widget.ConstraintLayout>
             </com.google.android.material.card.MaterialCardView>
 
             <TextView
