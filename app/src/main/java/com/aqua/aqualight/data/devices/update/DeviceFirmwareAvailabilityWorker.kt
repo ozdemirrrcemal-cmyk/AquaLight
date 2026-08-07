@@ -4,8 +4,6 @@ package com.aqua.aqualight.data.devices.update
 
 import android.content.Context
 import android.util.Log
-import androidx.lifecycle.Lifecycle
-import androidx.lifecycle.ProcessLifecycleOwner
 import androidx.work.BackoffPolicy
 import androidx.work.Constraints
 import androidx.work.CoroutineWorker
@@ -18,11 +16,12 @@ import androidx.work.WorkManager
 import androidx.work.WorkerParameters
 import androidx.work.workDataOf
 import com.aqua.aqualight.data.auth.FirebaseAuthenticatedOwnerProvider
+import com.aqua.aqualight.data.devices.runtime.modules.firmware.DeviceFirmwareBackgroundAvailabilityProbe
 import com.aqua.aqualight.data.notifications.NotificationPlatform
 import java.io.IOException
 import java.util.concurrent.TimeUnit
 
-/** Periodic, runtime-free firmware discovery for one authenticated owner. */
+/** Owner-scoped firmware discovery with central dispatch and bounded retries. */
 class DeviceFirmwareAvailabilityWorker(
     appContext: Context,
     workerParams: WorkerParameters
@@ -33,26 +32,23 @@ class DeviceFirmwareAvailabilityWorker(
         if (ownerUid.isBlank()) return Result.success()
 
         return try {
-            val allowForeground = inputData.getBoolean(KEY_ALLOW_FOREGROUND, false)
-            mapOutcome(createRunner(allowForeground).execute(ownerUid))
+            mapOutcome(createRunner().execute(ownerUid))
         } catch (error: IOException) {
             Log.w(TAG, "Firmware availability storage read failed; retrying.", error)
             retryOrFinish()
         }
     }
 
-    private fun createRunner(
-        allowForeground: Boolean
-    ): DeviceFirmwareAvailabilityCheckRunner {
+    private fun createRunner(): DeviceFirmwareAvailabilityCheckRunner {
         val platform = NotificationPlatform.get(applicationContext)
+        val probe = DeviceFirmwareBackgroundAvailabilityProbe()
         return DeviceFirmwareAvailabilityCheckRunner(
-            context = applicationContext,
             ownerProvider = FirebaseAuthenticatedOwnerProvider.create(applicationContext),
             preferenceUseCase = platform.preferenceUseCase,
             notifications = platform.deviceFirmwareUpdates,
-            isProcessForeground = {
-                !allowForeground && isProcessForeground()
-            }
+            snapshotReader = DeviceFirmwareAvailabilitySnapshotSource.create(applicationContext),
+            manifestLoader = probe::loadManifest,
+            hintEvaluator = probe::evaluate
         )
     }
 
@@ -60,18 +56,12 @@ class DeviceFirmwareAvailabilityWorker(
         return when (outcome) {
             DeviceFirmwareAvailabilityCheckOutcome.Completed,
             DeviceFirmwareAvailabilityCheckOutcome.OwnerChanged,
-            DeviceFirmwareAvailabilityCheckOutcome.Foreground,
             DeviceFirmwareAvailabilityCheckOutcome.NotificationsUnavailable -> Result.success()
             is DeviceFirmwareAvailabilityCheckOutcome.RetryableFailure -> {
                 Log.w(TAG, "Firmware availability retry requested at ${outcome.stage}.")
                 retryOrFinish()
             }
         }
-    }
-
-    private fun isProcessForeground(): Boolean {
-        return ProcessLifecycleOwner.get().lifecycle.currentState
-            .isAtLeast(Lifecycle.State.STARTED)
     }
 
     private fun retryOrFinish(): Result {
@@ -84,10 +74,11 @@ class DeviceFirmwareAvailabilityWorker(
 
     companion object {
         internal const val KEY_OWNER_UID = "owner_uid"
-        internal const val KEY_ALLOW_FOREGROUND = "allow_foreground"
         private const val TAG = "FirmwareAvailability"
-        private const val PERIODIC_WORK_PREFIX = "device_firmware_availability_periodic_owner_"
-        private const val IMMEDIATE_WORK_PREFIX = "device_firmware_availability_immediate_owner_"
+        private const val PERIODIC_WORK_PREFIX =
+            "device_firmware_availability_periodic_owner_"
+        private const val IMMEDIATE_WORK_PREFIX =
+            "device_firmware_availability_immediate_owner_"
         private const val REPEAT_INTERVAL_HOURS = 24L
         private const val BACKOFF_SECONDS = 30L
         private const val MAX_ATTEMPTS = 3
@@ -104,16 +95,14 @@ class DeviceFirmwareAvailabilityWorker(
             enqueueOneTime(
                 context = context,
                 ownerUid = ownerUid,
-                allowForeground = false,
                 policy = ExistingWorkPolicy.KEEP
             )
         }
 
-        fun enqueueAuthenticated(context: Context, ownerUid: String) {
+        fun enqueueValidated(context: Context, ownerUid: String) {
             enqueueOneTime(
                 context = context,
                 ownerUid = ownerUid,
-                allowForeground = true,
                 policy = ExistingWorkPolicy.REPLACE
             )
         }
@@ -129,7 +118,6 @@ class DeviceFirmwareAvailabilityWorker(
         private fun enqueueOneTime(
             context: Context,
             ownerUid: String,
-            allowForeground: Boolean,
             policy: ExistingWorkPolicy
         ) {
             val owner = ownerUid.trim()
@@ -138,7 +126,7 @@ class DeviceFirmwareAvailabilityWorker(
             WorkManager.getInstance(context.applicationContext).enqueueUniqueWork(
                 immediateWorkName(owner),
                 policy,
-                immediateRequest(owner, allowForeground)
+                immediateRequest(owner)
             )
         }
 
@@ -164,23 +152,16 @@ class DeviceFirmwareAvailabilityWorker(
                 )
                 .build()
 
-        private fun immediateRequest(
-            ownerUid: String,
-            allowForeground: Boolean
-        ) = OneTimeWorkRequestBuilder<DeviceFirmwareAvailabilityWorker>()
-            .setInputData(
-                workDataOf(
-                    KEY_OWNER_UID to ownerUid,
-                    KEY_ALLOW_FOREGROUND to allowForeground
+        private fun immediateRequest(ownerUid: String) =
+            OneTimeWorkRequestBuilder<DeviceFirmwareAvailabilityWorker>()
+                .setInputData(workDataOf(KEY_OWNER_UID to ownerUid))
+                .setConstraints(networkConstraints())
+                .setBackoffCriteria(
+                    BackoffPolicy.EXPONENTIAL,
+                    BACKOFF_SECONDS,
+                    TimeUnit.SECONDS
                 )
-            )
-            .setConstraints(networkConstraints())
-            .setBackoffCriteria(
-                BackoffPolicy.EXPONENTIAL,
-                BACKOFF_SECONDS,
-                TimeUnit.SECONDS
-            )
-            .build()
+                .build()
 
         private fun networkConstraints(): Constraints {
             return Constraints.Builder()

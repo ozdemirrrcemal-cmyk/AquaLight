@@ -6,7 +6,6 @@ import com.aqua.aqualight.data.care.reminder.CareReminderReconcileWorker
 import com.aqua.aqualight.data.care.smartcare.SmartCareDailyWorker
 import com.aqua.aqualight.data.devices.provisioning.repository.AqlProvisioningHandoffSaver
 import com.aqua.aqualight.data.devices.repository.DevicesRepositoryProvider
-import com.aqua.aqualight.data.devices.update.DeviceFirmwareAvailabilityWorker
 import com.aqua.aqualight.data.notifications.NotificationPlatform
 import com.aqua.aqualight.data.user.UserDataScope
 import java.util.concurrent.CancellationException
@@ -49,13 +48,15 @@ object SessionBoundServiceManager {
         ) { issue -> issue.step.name }
     )
 
-    fun start(context: Context, ownerUid: String) {
+    suspend fun start(context: Context, ownerUid: String) {
         val normalizedOwnerUid = UserDataScope.normalizeOwnerUid(ownerUid)
         if (normalizedOwnerUid.isBlank()) return
 
         val appContext = context.applicationContext
+        val notificationPlatform = NotificationPlatform.get(appContext)
         SmartCareDailyWorker.schedule(appContext, normalizedOwnerUid)
-        DeviceFirmwareAvailabilityWorker.schedule(appContext, normalizedOwnerUid)
+        notificationPlatform.deviceUpdateWorkCoordinator
+            .reconcileOwner(normalizedOwnerUid)
         CareReminderReconcileWorker.enqueue(appContext, normalizedOwnerUid)
     }
 
@@ -78,6 +79,7 @@ object SessionBoundServiceManager {
             ?.trim()
             ?.takeIf(String::isNotBlank)
             ?: DevicesRepositoryProvider.currentOwnerUid()
+        val notificationPlatform = NotificationPlatform.get(appContext)
 
         if (ownerUid != null) {
             runStep(StopStep.PROVISIONING_TRANSACTIONS) {
@@ -85,11 +87,11 @@ object SessionBoundServiceManager {
                     .rollbackPendingRegistrationsForOwner(ownerUid)
                     .getOrThrow()
             }
+            runStep(StopStep.DEVICE_UPDATE_CHECKS) {
+                notificationPlatform.deviceUpdateWorkCoordinator.cancelOwner(ownerUid)
+            }
         }
 
-        runStep(StopStep.DEVICE_UPDATE_CHECKS) {
-            DeviceFirmwareAvailabilityWorker.cancel(appContext, ownerUid)
-        }
         runStep(StopStep.DEVICES_REPOSITORY) {
             DevicesRepositoryProvider.clear(expectedOwnerUid = expectedOwnerUid)
         }
@@ -101,13 +103,12 @@ object SessionBoundServiceManager {
         }
 
         if (ownerUid != null) {
-            val platform = NotificationPlatform.get(appContext)
             runStep(StopStep.NOTIFICATION_SCHEDULES) {
-                platform.scheduler.cancelOwner(ownerUid)
+                notificationPlatform.scheduler.cancelOwner(ownerUid)
             }
             if (cancelNotifications) {
                 runStep(StopStep.NOTIFICATIONS) {
-                    platform.deviceFirmwareUpdates.clearOwner(ownerUid)
+                    notificationPlatform.deviceFirmwareUpdates.clearOwner(ownerUid)
                 }
             }
         }

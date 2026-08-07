@@ -98,6 +98,28 @@ class AndroidDeviceFirmwareUpdateNotificationPublisherInstrumentedTest {
         }
     }
 
+    @Test
+    fun successfulDeviceDeletionCancelsOnlyDeletedDeviceNotification() = runBlocking {
+        val fixture = createFixture()
+        try {
+            fixture.publisher.publishAvailabilityHint(
+                fixture.ownerUid,
+                fixture.updateAvailableHint()
+            )
+            fixture.awaitNotification()
+
+            val failed = fixture.publisher.clearDeletedDevices(
+                fixture.ownerUid,
+                setOf(fixture.deviceUid)
+            )
+
+            assertTrue(failed.isEmpty())
+            fixture.awaitNoNotification()
+        } finally {
+            fixture.cleanup()
+        }
+    }
+
     private suspend fun createFixture(): PublisherFixture {
         grantNotificationPermissionWhenRequired()
         val suffix = UUID.randomUUID().toString()

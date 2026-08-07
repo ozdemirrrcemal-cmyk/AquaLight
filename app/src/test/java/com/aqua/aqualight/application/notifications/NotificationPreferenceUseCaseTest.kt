@@ -11,20 +11,25 @@ import org.junit.Test
 class NotificationPreferenceUseCaseTest {
 
     @Test
-    fun enablingCommitsOwnerPreferenceThenEnsuresChannelsAndReconciles() = runTest {
+    fun enablingCommitsPreferenceBeforeDeviceAndCareReconciliation() = runTest {
         val fixture = Fixture(initialEnabled = false)
 
         fixture.useCase.setEnabled("owner-a", true)
 
         assertTrue(fixture.repository.isEnabled("owner-a"))
         assertEquals(
-            listOf("preference:true", "ensure-channels", "reconcile:owner-a"),
+            listOf(
+                "preference:true",
+                "ensure-channels",
+                "reconcile-device-update-work:owner-a",
+                "reconcile:owner-a"
+            ),
             fixture.events
         )
     }
 
     @Test
-    fun disablingCancelsOnlyRequestedOwnerSchedulesAndVisibleNotifications() = runTest {
+    fun disablingCancelsDeviceWorkSchedulesAndVisibleNotifications() = runTest {
         val fixture = Fixture(initialEnabled = true)
 
         fixture.useCase.setEnabled("owner-a", false)
@@ -33,6 +38,7 @@ class NotificationPreferenceUseCaseTest {
         assertEquals(
             listOf(
                 "preference:false",
+                "cancel-device-update-work:owner-a",
                 "cancel-owner-schedules:owner-a",
                 "cancel-owner-visible:owner-a"
             ),
@@ -72,6 +78,34 @@ class NotificationPreferenceUseCaseTest {
     }
 
     @Test
+    fun enabledCareReconciliationDoesNotRescheduleFirmwareDiscovery() = runTest {
+        val fixture = Fixture(initialEnabled = true)
+
+        fixture.useCase.reconcileOwner("owner-a")
+
+        assertEquals(
+            listOf("ensure-channels", "reconcile:owner-a"),
+            fixture.events
+        )
+    }
+
+    @Test
+    fun disabledReconciliationCancelsFirmwareWorkAndVisibleState() = runTest {
+        val fixture = Fixture(initialEnabled = false)
+
+        fixture.useCase.reconcileOwner("owner-a")
+
+        assertEquals(
+            listOf(
+                "cancel-device-update-work:owner-a",
+                "cancel-owner-schedules:owner-a",
+                "cancel-owner-visible:owner-a"
+            ),
+            fixture.events
+        )
+    }
+
+    @Test
     fun schedulingWhilePreferenceDisabledCancelsAlarmAndVisibleReminder() = runTest {
         val fixture = Fixture(initialEnabled = false)
 
@@ -83,16 +117,34 @@ class NotificationPreferenceUseCaseTest {
         )
     }
 
+    @Test
+    fun ownerCancellationStopsDeviceWorkBeforeOtherNotificationState() = runTest {
+        val fixture = Fixture(initialEnabled = true)
+
+        fixture.useCase.cancelOwner("owner-a")
+
+        assertEquals(
+            listOf(
+                "cancel-device-update-work:owner-a",
+                "cancel-owner-schedules:owner-a",
+                "cancel-owner-visible:owner-a"
+            ),
+            fixture.events
+        )
+    }
+
     private class Fixture(initialEnabled: Boolean) {
         val events = mutableListOf<String>()
         val repository = FakeRepository(initialEnabled, events)
         val policy = FakePolicy(events)
         private val scheduler = FakeScheduler(events)
+        private val deviceWork = FakeDeviceUpdateWorkCoordinator(events)
         private val renderer = FakeRenderer(events)
         val useCase = NotificationPreferenceUseCase(
             repository = repository,
             permissionPolicy = policy,
             scheduler = scheduler,
+            deviceUpdateWorkCoordinator = deviceWork,
             renderer = renderer
         )
     }
@@ -152,6 +204,18 @@ class NotificationPreferenceUseCaseTest {
 
         override suspend fun cancelOwner(ownerUid: String) {
             events += "cancel-owner-schedules:$ownerUid"
+        }
+    }
+
+    private class FakeDeviceUpdateWorkCoordinator(
+        private val events: MutableList<String>
+    ) : DeviceUpdateNotificationWorkCoordinator {
+        override suspend fun reconcileOwner(ownerUid: String) {
+            events += "reconcile-device-update-work:$ownerUid"
+        }
+
+        override fun cancelOwner(ownerUid: String) {
+            events += "cancel-device-update-work:$ownerUid"
         }
     }
 

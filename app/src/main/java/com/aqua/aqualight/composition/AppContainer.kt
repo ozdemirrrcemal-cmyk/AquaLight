@@ -7,6 +7,8 @@ import com.aqua.aqualight.application.auth.AccountSecurityOperations
 import com.aqua.aqualight.application.auth.AuthOperations
 import com.aqua.aqualight.application.auth.AuthenticatedOwnerIdentity
 import com.aqua.aqualight.application.auth.SessionExitOperations
+import com.aqua.aqualight.application.devices.DeviceFirmwareNotificationRouteDecision
+import com.aqua.aqualight.application.devices.DeviceFirmwareNotificationRouteOperations
 import com.aqua.aqualight.application.devices.provisioning.ProvisioningDraftOperations
 import com.aqua.aqualight.application.feedback.FeedbackSubmissionUseCase
 import com.aqua.aqualight.application.notifications.NotificationDispatchUseCase
@@ -45,6 +47,11 @@ interface AppContainer {
     val userSettingsOperations: UserSettingsOperations
     val notificationPreferenceUseCase: NotificationPreferenceUseCase
     val notificationDispatchUseCase: NotificationDispatchUseCase
+    val deviceFirmwareNotificationRouteOperations:
+        DeviceFirmwareNotificationRouteOperations
+        get() = DeviceFirmwareNotificationRouteOperations {
+            DeviceFirmwareNotificationRouteDecision.DEFER
+        }
     val authenticatedOwnerIdentity: AuthenticatedOwnerIdentity
     val userProfileOperations: UserProfileOperations
     val feedbackSubmissionOperations: FeedbackSubmissionUseCase
@@ -127,6 +134,13 @@ internal class DefaultAppContainer(
             context = appContext,
             deviceFirmwareNotifications = notificationPlatform.deviceFirmwareUpdates
         )
+    }
+
+    override val deviceFirmwareNotificationRouteOperations:
+        DeviceFirmwareNotificationRouteOperations by lazy(
+        LazyThreadSafetyMode.SYNCHRONIZED
+    ) {
+        ResolvingDeviceFirmwareNotificationRouteOperations(ownerGraphResolver)
     }
 
     override val authenticatedOwnerIdentity: AuthenticatedOwnerIdentity by lazy(

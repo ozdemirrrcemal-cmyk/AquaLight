@@ -2,69 +2,82 @@
 
 package com.aqua.aqualight.data.devices.update
 
-import android.content.Context
 import com.aqua.aqualight.application.devices.DEVICE_FIRMWARE_MANIFEST_URL
 import com.aqua.aqualight.application.notifications.NotificationCategory
 import com.aqua.aqualight.application.notifications.NotificationPreferenceUseCase
 import com.aqua.aqualight.data.auth.AuthenticatedOwnerProvider
+import com.aqua.aqualight.data.auth.OwnerTokenValidationResult
 import com.aqua.aqualight.data.devices.model.DeviceSnapshot
 import com.aqua.aqualight.data.devices.runtime.modules.firmware.DeviceFirmwareAvailabilityHint
-import com.aqua.aqualight.data.devices.runtime.modules.firmware.DeviceFirmwareBackgroundAvailabilityProbe
 import com.aqua.aqualight.data.devices.runtime.modules.firmware.DeviceFirmwareManifest
-import com.aqua.aqualight.data.devices.store.DeviceKnownStore
 import com.aqua.aqualight.platform.notifications.DeviceFirmwareUpdateNotificationOperations
 
 internal class DeviceFirmwareAvailabilityCheckRunner(
-    context: Context,
     private val ownerProvider: AuthenticatedOwnerProvider,
     private val preferenceUseCase: NotificationPreferenceUseCase,
     private val notifications: DeviceFirmwareUpdateNotificationOperations,
-    private val isProcessForeground: () -> Boolean,
-    private val probe: DeviceFirmwareBackgroundAvailabilityProbe =
-        DeviceFirmwareBackgroundAvailabilityProbe(),
-    private val snapshotLoader: suspend (String) -> List<DeviceSnapshot> = { ownerUid ->
-        DeviceKnownStore(context.applicationContext, ownerUid).loadSnapshots()
-    }
+    private val snapshotReader: DeviceFirmwareAvailabilitySnapshotReader,
+    private val manifestLoader: suspend (String) -> Result<DeviceFirmwareManifest>,
+    private val hintEvaluator: (
+        DeviceSnapshot,
+        DeviceFirmwareManifest
+    ) -> Result<DeviceFirmwareAvailabilityHint>
 ) {
 
     suspend fun execute(ownerUid: String): DeviceFirmwareAvailabilityCheckOutcome {
         val owner = ownerUid.trim()
-        return when {
-            owner.isBlank() -> DeviceFirmwareAvailabilityCheckOutcome.Completed
-            !isOwnerActive(owner) -> DeviceFirmwareAvailabilityCheckOutcome.OwnerChanged
-            isProcessForeground() -> DeviceFirmwareAvailabilityCheckOutcome.Foreground
-            !canDeliver(owner) -> {
-                DeviceFirmwareAvailabilityCheckOutcome.NotificationsUnavailable
-            }
-            else -> executeEligible(owner)
+        if (owner.isBlank()) {
+            return DeviceFirmwareAvailabilityCheckOutcome.Completed
         }
+        if (!isOwnerActive(owner)) {
+            return DeviceFirmwareAvailabilityCheckOutcome.OwnerChanged
+        }
+        validateOwner(owner)?.let { outcome -> return outcome }
+        if (!isOwnerActive(owner)) {
+            return DeviceFirmwareAvailabilityCheckOutcome.OwnerChanged
+        }
+        if (!canDeliver(owner)) {
+            return DeviceFirmwareAvailabilityCheckOutcome.NotificationsUnavailable
+        }
+        return loadAndEvaluate(owner)
     }
 
-    private suspend fun executeEligible(
+    private suspend fun loadAndEvaluate(
         ownerUid: String
     ): DeviceFirmwareAvailabilityCheckOutcome {
-        val snapshots = snapshotLoader(ownerUid)
-        val interruption = interruptionOutcome(ownerUid)
-        return interruption ?: reconcileAndEvaluate(ownerUid, snapshots)
+        val snapshotResult = snapshotReader.load(ownerUid)
+        if (!isOwnerActive(ownerUid)) {
+            return DeviceFirmwareAvailabilityCheckOutcome.OwnerChanged
+        }
+        return when (snapshotResult) {
+            DeviceFirmwareAvailabilitySnapshotResult.Retryable ->
+                retry(DeviceFirmwareAvailabilityFailureStage.SNAPSHOT_SOURCE)
+            is DeviceFirmwareAvailabilitySnapshotResult.Ready ->
+                reconcileAndEvaluate(ownerUid, snapshotResult)
+        }
     }
 
     private suspend fun reconcileAndEvaluate(
         ownerUid: String,
-        snapshots: List<DeviceSnapshot>
+        snapshotResult: DeviceFirmwareAvailabilitySnapshotResult.Ready
     ): DeviceFirmwareAvailabilityCheckOutcome {
-        notifications.reconcileDevices(ownerUid, snapshots.deviceUids())
-        if (snapshots.isEmpty()) {
+        notifications.reconcileDevices(
+            ownerUid,
+            snapshotResult.currentDeviceUids
+        )
+        if (!isOwnerActive(ownerUid)) {
+            return DeviceFirmwareAvailabilityCheckOutcome.OwnerChanged
+        }
+        if (snapshotResult.eligibleSnapshots.isEmpty()) {
             return DeviceFirmwareAvailabilityCheckOutcome.Completed
         }
-
-        val manifest = probe.loadManifest(DEVICE_FIRMWARE_MANIFEST_URL).getOrNull()
-        return if (manifest == null) {
-            DeviceFirmwareAvailabilityCheckOutcome.RetryableFailure(
-                DeviceFirmwareAvailabilityFailureStage.MANIFEST
-            )
-        } else {
-            evaluateDevices(ownerUid, snapshots, manifest)
-        }
+        val manifest = manifestLoader(DEVICE_FIRMWARE_MANIFEST_URL).getOrNull()
+            ?: return retry(DeviceFirmwareAvailabilityFailureStage.MANIFEST)
+        return evaluateDevices(
+            ownerUid,
+            snapshotResult.eligibleSnapshots,
+            manifest
+        )
     }
 
     private suspend fun evaluateDevices(
@@ -72,19 +85,20 @@ internal class DeviceFirmwareAvailabilityCheckRunner(
         snapshots: List<DeviceSnapshot>,
         manifest: DeviceFirmwareManifest
     ): DeviceFirmwareAvailabilityCheckOutcome {
-        var interrupted: DeviceFirmwareAvailabilityCheckOutcome? = null
         var evaluationFailed = false
         for (snapshot in snapshots) {
-            interrupted = interruptionOutcome(ownerUid)
-            if (interrupted != null) break
+            if (!isOwnerActive(ownerUid)) {
+                return DeviceFirmwareAvailabilityCheckOutcome.OwnerChanged
+            }
             if (!evaluateDevice(ownerUid, snapshot, manifest)) {
                 evaluationFailed = true
             }
+            if (!isOwnerActive(ownerUid)) {
+                return DeviceFirmwareAvailabilityCheckOutcome.OwnerChanged
+            }
         }
-        return interrupted ?: if (evaluationFailed) {
-            DeviceFirmwareAvailabilityCheckOutcome.RetryableFailure(
-                DeviceFirmwareAvailabilityFailureStage.DEVICE_EVALUATION
-            )
+        return if (evaluationFailed) {
+            retry(DeviceFirmwareAvailabilityFailureStage.DEVICE_EVALUATION)
         } else {
             DeviceFirmwareAvailabilityCheckOutcome.Completed
         }
@@ -95,25 +109,16 @@ internal class DeviceFirmwareAvailabilityCheckRunner(
         snapshot: DeviceSnapshot,
         manifest: DeviceFirmwareManifest
     ): Boolean {
-        val deviceUid = snapshot.deviceUid.value
-        return if (!snapshot.capabilities.ota) {
-            notifications.clearAvailability(ownerUid, deviceUid)
-            true
-        } else {
-            evaluateSupportedDevice(ownerUid, snapshot, manifest)
+        if (!snapshot.capabilities.ota) {
+            notifications.clearAvailability(ownerUid, snapshot.deviceUid.value)
+            return true
         }
-    }
-
-    private suspend fun evaluateSupportedDevice(
-        ownerUid: String,
-        snapshot: DeviceSnapshot,
-        manifest: DeviceFirmwareManifest
-    ): Boolean {
-        val hint = probe.evaluate(snapshot, manifest).getOrNull()
-        if (hint != null) {
-            applyHint(ownerUid, hint)
+        val hint = hintEvaluator(snapshot, manifest).getOrNull() ?: return false
+        if (!isOwnerActive(ownerUid)) {
+            return true
         }
-        return hint != null
+        applyHint(ownerUid, hint)
+        return true
     }
 
     private suspend fun applyHint(
@@ -130,29 +135,42 @@ internal class DeviceFirmwareAvailabilityCheckRunner(
         }
     }
 
+    private suspend fun validateOwner(
+        ownerUid: String
+    ): DeviceFirmwareAvailabilityCheckOutcome? {
+        return when (val result = ownerProvider.validateCurrentOwner()) {
+            is OwnerTokenValidationResult.Valid -> {
+                if (result.ownerUid == ownerUid) null
+                else DeviceFirmwareAvailabilityCheckOutcome.OwnerChanged
+            }
+            is OwnerTokenValidationResult.TransientFailure ->
+                retry(DeviceFirmwareAvailabilityFailureStage.OWNER_VALIDATION)
+            OwnerTokenValidationResult.Unauthenticated,
+            is OwnerTokenValidationResult.Revoked ->
+                DeviceFirmwareAvailabilityCheckOutcome.OwnerChanged
+        }
+    }
+
     private suspend fun canDeliver(ownerUid: String): Boolean {
         val preference = preferenceUseCase.snapshot(ownerUid)
         return preference.ownerPreferenceEnabled &&
             preference.readiness(NotificationCategory.DEVICE_UPDATES).canDeliver
     }
 
-    private fun interruptionOutcome(
-        ownerUid: String
-    ): DeviceFirmwareAvailabilityCheckOutcome? = when {
-        !isOwnerActive(ownerUid) -> DeviceFirmwareAvailabilityCheckOutcome.OwnerChanged
-        isProcessForeground() -> DeviceFirmwareAvailabilityCheckOutcome.Foreground
-        else -> null
-    }
-
     private fun isOwnerActive(ownerUid: String): Boolean {
         return ownerProvider.currentOwnerUid() == ownerUid
+    }
+
+    private fun retry(
+        stage: DeviceFirmwareAvailabilityFailureStage
+    ): DeviceFirmwareAvailabilityCheckOutcome.RetryableFailure {
+        return DeviceFirmwareAvailabilityCheckOutcome.RetryableFailure(stage)
     }
 }
 
 internal sealed interface DeviceFirmwareAvailabilityCheckOutcome {
     data object Completed : DeviceFirmwareAvailabilityCheckOutcome
     data object OwnerChanged : DeviceFirmwareAvailabilityCheckOutcome
-    data object Foreground : DeviceFirmwareAvailabilityCheckOutcome
     data object NotificationsUnavailable : DeviceFirmwareAvailabilityCheckOutcome
 
     data class RetryableFailure(
@@ -161,10 +179,8 @@ internal sealed interface DeviceFirmwareAvailabilityCheckOutcome {
 }
 
 internal enum class DeviceFirmwareAvailabilityFailureStage {
+    OWNER_VALIDATION,
+    SNAPSHOT_SOURCE,
     MANIFEST,
     DEVICE_EVALUATION
-}
-
-private fun List<DeviceSnapshot>.deviceUids(): Set<String> {
-    return mapTo(mutableSetOf()) { snapshot -> snapshot.deviceUid.value }
 }

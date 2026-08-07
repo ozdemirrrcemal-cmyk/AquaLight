@@ -5,9 +5,11 @@ package com.aqua.aqualight.platform.notifications
 import android.content.Context
 import android.util.Log
 import com.aqua.aqualight.application.devices.DeviceOtaState
+import com.aqua.aqualight.application.notifications.DeviceUpdateNotification
 import com.aqua.aqualight.application.notifications.NotificationDispatchResult
 import com.aqua.aqualight.application.notifications.NotificationDispatchUseCase
 import com.aqua.aqualight.data.devices.runtime.modules.firmware.DeviceFirmwareAvailabilityHint
+import com.aqua.aqualight.data.devices.update.DeviceFirmwareAvailabilityTrust
 import com.aqua.aqualight.data.notifications.DeviceUpdateNotificationLedger
 import com.aqua.aqualight.data.user.UserDataScope
 import java.util.concurrent.CancellationException
@@ -45,6 +47,7 @@ internal class AndroidDeviceFirmwareUpdateNotificationPublisher(
     private val dispatchUseCase: NotificationDispatchUseCase,
     private val renderer: AndroidNotificationRenderer,
     private val ledger: DeviceUpdateNotificationLedger,
+    private val trust: DeviceFirmwareAvailabilityTrust,
     private val notificationFactory: DeviceFirmwareUpdateNotificationFactory =
         DeviceFirmwareUpdateNotificationFactory(context)
 ) : DeviceFirmwareUpdateNotificationOperations {
@@ -89,7 +92,7 @@ internal class AndroidDeviceFirmwareUpdateNotificationPublisher(
         withDeviceLock(ownerUid, deviceUid) {
             val owner = requireOwnerUid(ownerUid)
             if (!renderer.isDeviceUpdateOperationNotificationActive(owner, deviceUid)) {
-                clearRemovedDeviceLocked(owner, deviceUid)
+                clearAvailabilityLocked(owner, deviceUid)
             }
         }
     }
@@ -127,8 +130,9 @@ internal class AndroidDeviceFirmwareUpdateNotificationPublisher(
         val owner = requireOwnerUid(ownerUid)
         val current = currentDeviceUids.map(String::trim)
             .filterTo(mutableSetOf(), String::isNotBlank)
-        val removedDeviceUids = ledger.trackedDeviceUids(owner) - current
-        removedDeviceUids.forEach { deviceUid ->
+        val tracked = ledger.trackedDeviceUids(owner) +
+            trust.trackedDeviceUids(owner)
+        (tracked - current).forEach { deviceUid ->
             clearRemovedDevice(owner, deviceUid)
         }
     }
@@ -137,13 +141,14 @@ internal class AndroidDeviceFirmwareUpdateNotificationPublisher(
         val owner = requireOwnerUid(ownerUid)
         renderer.cancelOwner(owner)
         ledger.clearOwner(owner)
+        trust.clearOwner(owner)
         deviceLocks.keys.removeAll { identity -> identity.ownerUid == owner }
     }
 
     private suspend fun dispatchOtaState(
         ownerUid: String,
         state: DeviceOtaState,
-        notification: com.aqua.aqualight.application.notifications.DeviceUpdateNotification
+        notification: DeviceUpdateNotification
     ) {
         withDeviceLock(ownerUid, state.deviceUid) {
             val result = dispatchUseCase.dispatchDeviceUpdate(notification)
@@ -168,11 +173,15 @@ internal class AndroidDeviceFirmwareUpdateNotificationPublisher(
 
     private suspend fun clearRemovedDevice(ownerUid: String, deviceUid: String) {
         withDeviceLock(ownerUid, deviceUid) {
-            clearRemovedDeviceLocked(ownerUid, deviceUid)
+            clearAvailabilityLocked(ownerUid, deviceUid)
+            trust.clearDevice(ownerUid, deviceUid)
         }
     }
 
-    private suspend fun clearRemovedDeviceLocked(ownerUid: String, deviceUid: String) {
+    private suspend fun clearAvailabilityLocked(
+        ownerUid: String,
+        deviceUid: String
+    ) {
         renderer.cancelDeviceUpdate(ownerUid, deviceUid)
         ledger.clearDevice(ownerUid, deviceUid)
     }

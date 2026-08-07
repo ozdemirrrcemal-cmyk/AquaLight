@@ -12,6 +12,8 @@ import androidx.navigation.NavController
 import androidx.navigation.NavDestination
 import androidx.navigation.ui.setupWithNavController
 import com.aqua.aqualight.R
+import com.aqua.aqualight.application.devices.DeviceFirmwareNotificationRouteDecision
+import com.aqua.aqualight.application.devices.DeviceFirmwareNotificationRouteOperations
 import com.aqua.aqualight.base.BaseActivity
 import com.aqua.aqualight.databinding.ActivityMainBinding
 import com.aqua.aqualight.ui.navigation.AppDestinationContract
@@ -27,7 +29,9 @@ internal class MainNavigationCoordinator(
     private val binding: ActivityMainBinding,
     private val navController: NavController,
     private val restoreSettingsExtra: String,
-    private val sessionSnapshot: () -> MainNavigationSessionSnapshot
+    private val sessionSnapshot: () -> MainNavigationSessionSnapshot,
+    private val deviceFirmwareRouteOperations:
+        DeviceFirmwareNotificationRouteOperations
 ) {
     private var pendingCareTaskId: Long = -1L
     private var pendingCareTaskOwnerUid: String = ""
@@ -150,22 +154,36 @@ internal class MainNavigationCoordinator(
 
         val ownerUid = pendingFirmwareOwnerUid
         val session = sessionSnapshot()
-        when {
-            !session.isAuthenticated -> return true
-            !DeviceFirmwareNotificationRoutePolicy.canOpen(
+        if (!session.isAuthenticated) return true
+        if (!DeviceFirmwareNotificationRoutePolicy.canOpen(
                 deviceUid = deviceUid,
                 notificationOwnerUid = ownerUid,
                 activeOwnerUid = session.activeOwnerUid,
                 isAuthenticated = true
-            ) -> {
-                clearPendingFirmwareUpdate()
-                clearConsumedNotificationExtras(host.intent)
-                return false
-            }
-            !AppDestinationContract.isInsideAppGraph(navController.currentDestination) -> return true
-            else -> openPendingFirmwareUpdate(deviceUid, ownerUid)
+            )
+        ) {
+            rejectPendingFirmwareUpdate()
+            return false
         }
-        return true
+
+        return when (deviceFirmwareRouteOperations.evaluate(deviceUid)) {
+            DeviceFirmwareNotificationRouteDecision.DEFER -> true
+            DeviceFirmwareNotificationRouteDecision.REJECT -> {
+                rejectPendingFirmwareUpdate()
+                false
+            }
+            DeviceFirmwareNotificationRouteDecision.OPEN -> {
+                if (!AppDestinationContract.isInsideAppGraph(
+                        navController.currentDestination
+                    )
+                ) {
+                    true
+                } else {
+                    openPendingFirmwareUpdate(deviceUid, ownerUid)
+                    true
+                }
+            }
+        }
     }
 
     private fun consumePendingCareTaskIfPossible() {
@@ -214,6 +232,11 @@ internal class MainNavigationCoordinator(
                 pendingCareTaskOwnerUid = ownerUid
             }
         }
+    }
+
+    private fun rejectPendingFirmwareUpdate() {
+        clearPendingFirmwareUpdate()
+        clearConsumedNotificationExtras(host.intent)
     }
 
     private fun clearPendingFirmwareUpdate() {

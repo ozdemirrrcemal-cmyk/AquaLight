@@ -10,6 +10,7 @@ import androidx.navigation.NavController
 import androidx.navigation.fragment.NavHostFragment
 import com.aqua.aqualight.R
 import com.aqua.aqualight.base.BaseActivity
+import com.aqua.aqualight.composition.requireAppContainer
 import com.aqua.aqualight.data.auth.AppSessionCoordinator
 import com.aqua.aqualight.data.recovery.LocalDataRecoveryTracker
 import com.aqua.aqualight.databinding.ActivityMainBinding
@@ -71,7 +72,9 @@ class MainActivity : BaseActivity() {
                     isAuthenticated = isAuthenticated,
                     activeOwnerUid = activeOwnerUid
                 )
-            }
+            },
+            deviceFirmwareRouteOperations =
+                requireAppContainer().deviceFirmwareNotificationRouteOperations
         )
         navigationCoordinator.captureNotificationIntent(intent)
         observeSessionState()
