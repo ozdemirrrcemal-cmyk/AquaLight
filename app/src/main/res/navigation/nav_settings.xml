@@ -27,6 +27,7 @@
   <fragment android:id="@+id/legalCenterFragment" android:name="com.aqua.aqualight.ui.tabs.settings.legal.LegalCenterFragment" android:label="@string/screen_title_legal_center" tools:layout="@layout/fragment_legal_center">
     <action android:id="@+id/action_legalCenterFragment_to_privacyFragment" app:destination="@id/privacyFragment" app:enterAnim="@anim/nav_slide_in_right" app:exitAnim="@anim/nav_slide_out_left" app:popEnterAnim="@anim/nav_slide_in_left" app:popExitAnim="@anim/nav_slide_out_right"/>
     <action android:id="@+id/action_legalCenterFragment_to_termsOfUseFragment" app:destination="@id/termsOfUseFragment" app:enterAnim="@anim/nav_slide_in_right" app:exitAnim="@anim/nav_slide_out_left" app:popEnterAnim="@anim/nav_slide_in_left" app:popExitAnim="@anim/nav_slide_out_right"/>
+    <action android:id="@+id/action_legalCenterFragment_to_thirdPartyLicensesFragment" app:destination="@id/thirdPartyLicensesFragment" app:enterAnim="@anim/nav_slide_in_right" app:exitAnim="@anim/nav_slide_out_left" app:popEnterAnim="@anim/nav_slide_in_left" app:popExitAnim="@anim/nav_slide_out_right"/>
   </fragment>
   <fragment android:id="@+id/privacyFragment" android:name="com.aqua.aqualight.ui.tabs.settings.legal.PrivacyFragment" android:label="@string/screen_title_privacy" tools:layout="@layout/fragment_legal_document"/>
   <fragment android:id="@+id/feedbackFragment" android:name="com.aqua.aqualight.ui.tabs.settings.feedback.FeedbackFragment" android:label="@string/screen_title_feedback" tools:layout="@layout/fragment_feedback">
@@ -49,9 +50,7 @@
   </fragment>
   <!-- 🌐 Language / About / Legal -->
   <fragment android:id="@+id/languageSettingsFragment" android:name="com.aqua.aqualight.ui.tabs.settings.app.LanguageSettingsFragment" android:label="@string/screen_title_language" tools:layout="@layout/fragment_language_settings"/>
-  <fragment android:id="@+id/aboutAppFragment" android:name="com.aqua.aqualight.ui.tabs.settings.app.AboutAppFragment" android:label="@string/screen_title_about" tools:layout="@layout/fragment_about_app">
-    <action android:id="@+id/action_aboutAppFragment_to_openSourceLicensesFragment" app:destination="@id/openSourceLicensesFragment" app:enterAnim="@anim/nav_slide_in_right" app:exitAnim="@anim/nav_slide_out_left" app:popEnterAnim="@anim/nav_slide_in_left" app:popExitAnim="@anim/nav_slide_out_right"/>
-  </fragment>
+  <fragment android:id="@+id/aboutAppFragment" android:name="com.aqua.aqualight.ui.tabs.settings.app.AboutAppFragment" android:label="@string/screen_title_about" tools:layout="@layout/fragment_about_app"/>
   <fragment android:id="@+id/termsOfUseFragment" android:name="com.aqua.aqualight.ui.tabs.settings.legal.TermsOfUseFragment" android:label="@string/screen_title_terms_of_use" tools:layout="@layout/fragment_legal_document"/>
-  <fragment android:id="@+id/openSourceLicensesFragment" android:name="com.aqua.aqualight.ui.tabs.settings.app.OpenSourceLicensesFragment" android:label="@string/screen_title_open_source_licenses" tools:layout="@layout/fragment_legal_document"/>
+  <fragment android:id="@+id/thirdPartyLicensesFragment" android:name="com.aqua.aqualight.ui.tabs.settings.legal.ThirdPartyLicensesFragment" android:label="@string/legal_third_party_licenses_title" tools:layout="@layout/fragment_legal_document"/>
 </navigation>

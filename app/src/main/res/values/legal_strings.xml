@@ -2,7 +2,9 @@
 <resources>
     <string name="legal_privacy_title">Privacy Notice</string>
     <string name="legal_terms_title">Terms of Use</string>
-    <string name="legal_center_description">Review AquaLight’s privacy notice and terms of use.</string>
+    <string name="legal_third_party_licenses_title">Third-Party Software Licenses</string>
+    <string name="legal_center_description">Review AquaLight’s privacy notice, terms of use, and third-party software licenses.</string>
     <string name="legal_center_privacy_desc">Open the Privacy Notice</string>
     <string name="legal_center_terms_desc">Open the Terms of Use</string>
+    <string name="legal_center_third_party_licenses_desc">Open Third-Party Software Licenses</string>
 </resources>

@@ -17,7 +17,6 @@
     app:layout_constraintStart_toStartOf="parent"
     app:layout_constraintEnd_toEndOf="parent" />
 
-    <!-- 🔹 İçerik -->
     <ScrollView
         android:id="@+id/scrollContent"
         android:layout_width="@dimen/aqua_size_0"
@@ -39,7 +38,6 @@
             android:paddingTop="@dimen/aqua_size_16"
             android:paddingBottom="@dimen/aqua_size_16">
 
-            <!-- 🟦 Uygulama başlık / logo kartı -->
             <com.google.android.material.card.MaterialCardView
                 android:id="@+id/cardAppHeader"
                 android:layout_width="match_parent"
@@ -100,7 +98,6 @@
                 </LinearLayout>
             </com.google.android.material.card.MaterialCardView>
 
-            <!-- 📄 AquaLight hakkında -->
             <com.google.android.material.card.MaterialCardView
                 android:id="@+id/cardAbout"
                 android:layout_width="match_parent"
@@ -136,12 +133,11 @@
                 </LinearLayout>
             </com.google.android.material.card.MaterialCardView>
 
-            <!-- 🔧 Sistem ve ortam bilgisi -->
             <com.google.android.material.card.MaterialCardView
                 android:id="@+id/cardSystemInfo"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginBottom="@dimen/aqua_size_12"
+                android:layout_marginBottom="@dimen/aqua_size_16"
                 style="@style/Widget.Aqua.Card">
 
                 <LinearLayout
@@ -161,7 +157,6 @@
                         android:textStyle="bold"
                         android:layout_marginBottom="@dimen/aqua_size_8" />
 
-                    <!-- Versiyon -->
                     <LinearLayout
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
@@ -187,7 +182,6 @@
                             android:textSize="@dimen/aqua_text_size_body" />
                     </LinearLayout>
 
-                    <!-- Build -->
                     <LinearLayout
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
@@ -213,7 +207,6 @@
                             android:textSize="@dimen/aqua_text_size_body" />
                     </LinearLayout>
 
-                    <!-- Cihaz -->
                     <LinearLayout
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
@@ -239,7 +232,6 @@
                             android:textSize="@dimen/aqua_text_size_body" />
                     </LinearLayout>
 
-                    <!-- Android -->
                     <LinearLayout
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
@@ -266,59 +258,6 @@
                 </LinearLayout>
             </com.google.android.material.card.MaterialCardView>
 
-            <!-- 📦 Open-source licenses -->
-            <com.google.android.material.card.MaterialCardView
-                android:id="@+id/cardLicenses"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginBottom="@dimen/aqua_size_16"
-                style="@style/Widget.Aqua.Card">
-
-                <LinearLayout
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:orientation="vertical"
-                    android:padding="@dimen/aqua_size_16"
-                    android:contentDescription="@string/about_app_licenses_card_desc">
-
-                    <TextView
-                        android:id="@+id/tvLicensesTitle"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:text="@string/about_app_licenses_title"
-                        android:textColor="@color/aqua_card_text_primary"
-                        android:textSize="@dimen/aqua_text_size_body"
-                        android:textStyle="bold"
-                        android:layout_marginBottom="@dimen/aqua_size_8" />
-
-                    <LinearLayout
-                        android:id="@+id/rowLicenses"
-                        android:layout_width="match_parent"
-                        android:layout_height="@dimen/aqua_size_48"
-                        android:gravity="center_vertical"
-                        android:clickable="true"
-                        android:focusable="true"
-                        android:background="?android:attr/selectableItemBackground">
-
-                        <TextView
-                            android:layout_width="@dimen/aqua_size_0"
-                            android:layout_height="wrap_content"
-                            android:layout_weight="1"
-                            android:text="@string/about_app_licenses"
-                            android:textColor="@color/aqua_card_text_secondary"
-                            android:textSize="@dimen/aqua_text_size_body_small" />
-
-                        <ImageView
-                            android:layout_width="@dimen/aqua_size_20"
-                            android:layout_height="@dimen/aqua_size_20"
-                            android:src="@drawable/ic_arrow_right"
-                            app:tint="@color/aqua_card_text_secondary"
-                            android:contentDescription="@string/about_app_row_arrow_desc" />
-                    </LinearLayout>
-                </LinearLayout>
-            </com.google.android.material.card.MaterialCardView>
-
-            <!-- ⓒ Footer -->
             <TextView
                 android:id="@+id/tvFooter"
                 android:layout_width="match_parent"
