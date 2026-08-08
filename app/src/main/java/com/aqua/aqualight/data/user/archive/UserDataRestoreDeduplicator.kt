@@ -2,13 +2,14 @@ package com.aqua.aqualight.data.user.archive
 
 import com.aqua.aqualight.data.aquarium.model.SavedAquariumTank
 import com.aqua.aqualight.data.care.model.CareTask
+import com.aqua.aqualight.platform.media.UserDataArchiveMediaFingerprint
 
 /** Matches backup records to current owner data so restore can be safely repeated. */
 internal class UserDataRestoreDeduplicator(
     existingAquariums: List<SavedAquariumTank>,
     existingCareTasks: List<CareTask>,
     private val ownerUid: String,
-    private val snapshotTankPhoto: (String?) -> ByteArray?,
+    private val snapshotTankPhoto: (String?) -> UserDataArchiveMediaFingerprint?,
     private val provenance: UserDataRestoreProvenanceSnapshot =
         UserDataRestoreProvenanceSnapshot.Empty
 ) {
@@ -68,10 +69,10 @@ internal class UserDataRestoreDeduplicator(
         return if (reference == null) {
             photoUri.isNullOrBlank()
         } else {
-            val bytes = snapshotTankPhoto(photoUri)
-            bytes != null &&
-                bytes.size == reference.byteSize &&
-                sha256(bytes).equals(reference.sha256, ignoreCase = true)
+            val fingerprint = snapshotTankPhoto(photoUri)
+            fingerprint != null &&
+                fingerprint.byteSize == reference.byteSize &&
+                fingerprint.sha256.equals(reference.sha256, ignoreCase = true)
         }
     }
 

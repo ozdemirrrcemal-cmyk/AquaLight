@@ -1,5 +1,7 @@
 package com.aqua.aqualight.data.user.archive
 
+import java.io.File
+
 internal const val USER_DATA_BACKUP_FORMAT = "aqualight-user-backup"
 internal const val USER_DATA_BACKUP_SCHEMA_VERSION = 1
 internal const val USER_DATA_EXPORT_FORMAT = "aqualight-portable-data-export"
@@ -101,7 +103,7 @@ internal data class ArchiveDeviceAssignment(
 
 internal data class DecodedUserDataBackup(
     val manifest: UserDataBackupManifest,
-    val mediaByEntryName: Map<String, ByteArray>
+    val mediaByEntryName: Map<String, File>
 )
 
 internal data class PortableUserDataExport(

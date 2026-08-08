@@ -4,8 +4,8 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.aqua.aqualight.application.user.UserDataArchiveArtifact
 import com.aqua.aqualight.application.user.UserDataArchiveOperations
+import com.aqua.aqualight.application.user.UserDataBackupCandidate
 import com.aqua.aqualight.application.user.UserDataBackupInspection
-import com.aqua.aqualight.application.user.UserDataDocumentOperations
 import com.aqua.aqualight.application.user.UserDataRestoreResult
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.Flow
@@ -17,8 +17,7 @@ import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 
 class DataManagementViewModel(
-    private val archiveOperations: UserDataArchiveOperations,
-    private val documentOperations: UserDataDocumentOperations
+    private val archiveOperations: UserDataArchiveOperations
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(DataManagementUiState())
@@ -28,7 +27,7 @@ class DataManagementViewModel(
     val events: Flow<DataManagementEvent> = eventChannel.receiveAsFlow()
 
     private var pendingWrite: PendingWrite? = null
-    private var pendingRestore: ByteArray? = null
+    private var pendingRestore: UserDataBackupCandidate? = null
 
     private val beginOperation: () -> Boolean = {
         if (_uiState.value.busy) {
@@ -49,12 +48,13 @@ class DataManagementViewModel(
 
     fun requestRestoreDocument() {
         if (!beginOperation()) return
+        discardPendingRestore()
         eventChannel.trySend(DataManagementEvent.OpenBackupDocument)
     }
 
     fun cancelPendingOperation() {
-        pendingWrite = null
-        pendingRestore = null
+        discardPendingWrite()
+        discardPendingRestore()
         _uiState.finishOperation()
     }
 
@@ -64,11 +64,12 @@ class DataManagementViewModel(
             return
         }
         viewModelScope.launch {
-            val result = documentOperations.write(
-                documentHandle = documentHandle,
-                content = pending.artifact.content
+            val result = archiveOperations.saveArtifact(
+                artifactHandle = pending.artifact.handle,
+                documentHandle = documentHandle
             )
-            pendingWrite = null
+            if (pendingWrite === pending) pendingWrite = null
+            archiveOperations.discard(pending.artifact.handle)
             _uiState.finishOperation()
             eventChannel.trySend(
                 if (result.isSuccess) {
@@ -82,12 +83,9 @@ class DataManagementViewModel(
 
     fun inspectRestoreDocument(documentHandle: String) {
         viewModelScope.launch {
-            val contentResult = documentOperations.read(documentHandle)
-            val content = contentResult.getOrNull()
-            val inspectionResult = content?.let { bytes -> archiveOperations.inspectBackup(bytes) }
-            val inspection = inspectionResult?.getOrNull()
-            if (content == null || inspection == null) {
-                pendingRestore = null
+            val candidate = archiveOperations.inspectBackupDocument(documentHandle).getOrNull()
+            if (candidate == null) {
+                discardPendingRestore()
                 _uiState.finishOperation()
                 eventChannel.trySend(
                     DataManagementEvent.OperationFailed(DataManagementAction.RESTORE)
@@ -95,18 +93,20 @@ class DataManagementViewModel(
                 return@launch
             }
 
-            pendingRestore = content
+            discardPendingRestore()
+            pendingRestore = candidate
             _uiState.finishOperation()
-            eventChannel.trySend(DataManagementEvent.ShowRestorePreview(inspection))
+            eventChannel.trySend(DataManagementEvent.ShowRestorePreview(candidate.inspection))
         }
     }
 
     fun confirmRestore() {
-        val content = pendingRestore ?: return
+        val candidate = pendingRestore ?: return
         if (!beginOperation()) return
         viewModelScope.launch {
-            val result = archiveOperations.restoreBackup(content)
-            pendingRestore = null
+            val result = archiveOperations.restoreBackup(candidate.handle)
+            if (pendingRestore === candidate) pendingRestore = null
+            archiveOperations.discard(candidate.handle)
             _uiState.finishOperation()
             val restored = result.getOrNull()
             eventChannel.trySend(
@@ -120,6 +120,8 @@ class DataManagementViewModel(
     }
 
     override fun onCleared() {
+        discardPendingWrite()
+        discardPendingRestore()
         eventChannel.close()
         super.onCleared()
     }
@@ -129,6 +131,8 @@ class DataManagementViewModel(
         creator: suspend () -> Result<UserDataArchiveArtifact>
     ) {
         if (!beginOperation()) return
+        discardPendingWrite()
+        discardPendingRestore()
         viewModelScope.launch {
             val artifact = creator().getOrNull()
             if (artifact == null) {
@@ -144,6 +148,16 @@ class DataManagementViewModel(
                 )
             )
         }
+    }
+
+    private fun discardPendingWrite() {
+        pendingWrite?.artifact?.handle?.let(archiveOperations::discard)
+        pendingWrite = null
+    }
+
+    private fun discardPendingRestore() {
+        pendingRestore?.handle?.let(archiveOperations::discard)
+        pendingRestore = null
     }
 
     private data class PendingWrite(

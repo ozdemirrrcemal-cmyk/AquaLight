@@ -5,6 +5,7 @@ import com.aqua.aqualight.data.care.model.CareTask
 import com.aqua.aqualight.data.care.model.CareTaskSource
 import com.aqua.aqualight.data.care.model.CareTaskStatus
 import com.aqua.aqualight.data.care.model.CareTaskType
+import com.aqua.aqualight.platform.media.UserDataArchiveMediaFingerprint
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNull
 import org.junit.Test
@@ -45,11 +46,17 @@ class UserDataRestoreDeduplicatorTest {
             createdAtMillis = 2_000L,
             photoUri = "current-photo"
         )
+        val differentPhoto = "different-photo".toByteArray()
         val deduplicator = UserDataRestoreDeduplicator(
             existingAquariums = listOf(current),
             existingCareTasks = emptyList(),
             ownerUid = OWNER_UID,
-            snapshotTankPhoto = { "different-photo".toByteArray() }
+            snapshotTankPhoto = {
+                UserDataArchiveMediaFingerprint(
+                    byteSize = differentPhoto.size,
+                    sha256 = sha256(differentPhoto)
+                )
+            }
         )
 
         assertNull(deduplicator.takeMatchingAquarium(archived))

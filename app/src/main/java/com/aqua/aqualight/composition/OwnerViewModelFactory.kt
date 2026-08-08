@@ -25,7 +25,6 @@ import com.aqua.aqualight.data.devices.provisioning.store.AqlProvisioningDraftSt
 import com.aqua.aqualight.data.devices.provisioning.store.AqlProvisioningQrSecretStore
 import com.aqua.aqualight.data.devices.remove.OwnerDeviceDataCleaner
 import com.aqua.aqualight.data.devices.repository.DevicesRepository
-import com.aqua.aqualight.platform.documents.AndroidUserDataDocumentOperations
 import com.aqua.aqualight.platform.text.AndroidAppTextResolver
 import com.aqua.aqualight.platform.text.AndroidMaintenanceTextResolver
 import com.aqua.aqualight.ui.tabs.aquarium.AquariumTankViewModel
@@ -88,8 +87,7 @@ internal class OwnerViewModelFactory(
 
             DataManagementViewModel::class.java ->
                 DataManagementViewModel(
-                    archiveOperations = graph.userDataArchiveOperations,
-                    documentOperations = AndroidUserDataDocumentOperations(appContext)
+                    archiveOperations = graph.userDataArchiveOperations
                 )
 
             DeviceStatusViewModel::class.java ->

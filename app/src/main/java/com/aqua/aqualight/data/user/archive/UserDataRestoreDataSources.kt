@@ -9,7 +9,9 @@ import com.aqua.aqualight.data.aquarium.model.SavedAquariumTank
 import com.aqua.aqualight.data.aquarium.model.TankDraft
 import com.aqua.aqualight.data.care.model.CareTask
 import com.aqua.aqualight.data.devices.model.DeviceUid
+import com.aqua.aqualight.platform.media.UserDataArchiveMediaFingerprint
 import com.aqua.aqualight.platform.media.UserDataArchiveMediaGateway
+import java.io.File
 import kotlinx.coroutines.NonCancellable
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.withContext
@@ -188,15 +190,15 @@ private fun UserDataRestoreDataSources.trackCreatedMutations(
 
 /** Restore-only media boundary; presentation never receives paths, streams or Android URIs. */
 internal data class UserDataRestoreMediaOperations(
-    val snapshotTankPhoto: (String?) -> ByteArray?,
-    val prepareRestoredTankPhoto: (String, String, ByteArray) -> String,
+    val snapshotTankPhoto: (String?) -> UserDataArchiveMediaFingerprint?,
+    val prepareRestoredTankPhoto: (String, String, File) -> String,
     val commit: (String?) -> Unit,
     val rollback: (String?) -> Unit
 ) {
     companion object {
         fun from(mediaGateway: UserDataArchiveMediaGateway): UserDataRestoreMediaOperations {
             return UserDataRestoreMediaOperations(
-                snapshotTankPhoto = mediaGateway::snapshotTankPhoto,
+                snapshotTankPhoto = mediaGateway::fingerprintTankPhoto,
                 prepareRestoredTankPhoto = mediaGateway::prepareRestoredTankPhoto,
                 commit = mediaGateway::commit,
                 rollback = mediaGateway::rollback

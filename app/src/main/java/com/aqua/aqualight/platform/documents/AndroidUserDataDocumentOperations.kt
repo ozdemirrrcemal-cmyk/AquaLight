@@ -3,51 +3,57 @@ package com.aqua.aqualight.platform.documents
 import android.content.Context
 import android.net.Uri
 import androidx.core.net.toUri
-import com.aqua.aqualight.application.user.UserDataDocumentOperations
-import java.io.ByteArrayOutputStream
+import java.io.File
+import java.io.InputStream
+import java.io.OutputStream
 import java.util.concurrent.CancellationException
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 
-/** Central Storage Access Framework boundary for backup and export documents. */
+/** Central Storage Access Framework boundary that streams backup/export documents to private staging. */
 internal class AndroidUserDataDocumentOperations(
     context: Context
-) : UserDataDocumentOperations {
+) {
     private val appContext = context.applicationContext
 
-    override suspend fun read(documentHandle: String): Result<ByteArray> =
-        withContext(Dispatchers.IO) {
-            operationResult {
-                val uri = requireContentUri(documentHandle)
-                val input = requireNotNull(appContext.contentResolver.openInputStream(uri)) {
-                    "Selected document could not be opened."
-                }
-                input.use { stream ->
-                    val output = ByteArrayOutputStream()
-                    val buffer = ByteArray(BUFFER_SIZE)
-                    var total = 0
-                    while (true) {
-                        val read = stream.read(buffer)
-                        if (read < 0) break
-                        total += read
-                        require(total <= MAX_DOCUMENT_BYTES) {
-                            "Selected document exceeds the supported size."
-                        }
-                        output.write(buffer, 0, read)
-                    }
-                    output.toByteArray()
-                }
-            }
-        }
-
-    override suspend fun write(
+    suspend fun importDocument(
         documentHandle: String,
-        content: ByteArray
+        destination: File
     ): Result<Unit> = withContext(Dispatchers.IO) {
         operationResult {
-            require(content.isNotEmpty()) { "Document content is empty." }
-            require(content.size <= MAX_DOCUMENT_BYTES) {
-                "Document content exceeds the supported size."
+            val uri = requireContentUri(documentHandle)
+            val input = requireNotNull(appContext.contentResolver.openInputStream(uri)) {
+                "Selected document could not be opened."
+            }
+            destination.parentFile?.let { parent ->
+                check(parent.isDirectory || parent.mkdirs()) {
+                    "Document staging directory could not be created."
+                }
+            }
+            var completed = false
+            try {
+                input.use { source ->
+                    destination.outputStream().buffered().use { target ->
+                        copyLimited(source, target, MAX_DOCUMENT_BYTES)
+                    }
+                }
+                require(destination.length() in 1L..MAX_DOCUMENT_BYTES.toLong()) {
+                    "Selected document size is invalid."
+                }
+                completed = true
+            } finally {
+                if (!completed) destination.delete()
+            }
+        }
+    }
+
+    suspend fun exportDocument(
+        documentHandle: String,
+        source: File
+    ): Result<Unit> = withContext(Dispatchers.IO) {
+        operationResult {
+            require(source.isFile && source.length() in 1L..MAX_DOCUMENT_BYTES.toLong()) {
+                "Document content size is invalid."
             }
             val uri = requireContentUri(documentHandle)
             val output = requireNotNull(
@@ -55,9 +61,11 @@ internal class AndroidUserDataDocumentOperations(
             ) {
                 "Selected document could not be opened for writing."
             }
-            output.use { stream ->
-                stream.write(content)
-                stream.flush()
+            source.inputStream().buffered().use { input ->
+                output.buffered().use { target ->
+                    copyLimited(input, target, MAX_DOCUMENT_BYTES)
+                    target.flush()
+                }
             }
         }
     }
@@ -68,6 +76,24 @@ internal class AndroidUserDataDocumentOperations(
             "Only Storage Access Framework content documents are supported."
         }
         return uri
+    }
+
+    private fun copyLimited(
+        input: InputStream,
+        output: OutputStream,
+        maximumBytes: Int
+    ) {
+        val buffer = ByteArray(BUFFER_SIZE)
+        var total = 0L
+        while (true) {
+            val read = input.read(buffer)
+            if (read < 0) break
+            total += read
+            require(total <= maximumBytes.toLong()) {
+                "Document exceeds the supported size."
+            }
+            output.write(buffer, 0, read)
+        }
     }
 
     private inline fun <T> operationResult(block: () -> T): Result<T> {

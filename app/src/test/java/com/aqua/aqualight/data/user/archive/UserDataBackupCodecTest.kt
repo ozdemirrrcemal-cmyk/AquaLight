@@ -1,8 +1,9 @@
 package com.aqua.aqualight.data.user.archive
 
 import com.google.gson.Gson
-import java.io.ByteArrayOutputStream
+import java.io.File
 import java.nio.charset.StandardCharsets
+import java.nio.file.Files
 import java.util.zip.ZipEntry
 import java.util.zip.ZipOutputStream
 import org.junit.Assert.assertArrayEquals
@@ -18,7 +19,9 @@ class UserDataBackupCodecTest {
 
     @Test
     fun `backup codec round trips a validated manifest and media`() {
+        val root = tempDirectory()
         val photo = "image-bytes".toByteArray()
+        val photoFile = File(root, "photo.jpg").apply { writeBytes(photo) }
         val manifest = manifest(
             photo = ArchiveMediaReference(
                 entryName = "media/tanks/7.jpg",
@@ -26,15 +29,21 @@ class UserDataBackupCodecTest {
                 sha256 = sha256(photo)
             )
         )
+        val encoded = File(root, "backup.aqlbackup")
+        val decodedMedia = File(root, "decoded")
 
-        val encoded = codec.encode(
+        codec.encode(
             manifest = manifest,
-            mediaByEntryName = mapOf("media/tanks/7.jpg" to photo)
+            mediaByEntryName = mapOf("media/tanks/7.jpg" to photoFile),
+            destination = encoded
         )
-        val decoded = codec.decode(encoded)
+        val decoded = codec.decode(encoded, decodedMedia)
 
         assertEquals(manifest, decoded.manifest)
-        assertArrayEquals(photo, decoded.mediaByEntryName.getValue("media/tanks/7.jpg"))
+        assertArrayEquals(
+            photo,
+            decoded.mediaByEntryName.getValue("media/tanks/7.jpg").readBytes()
+        )
     }
 
     @Test
@@ -43,7 +52,7 @@ class UserDataBackupCodecTest {
         val encoded = rawZip(Gson().toJson(invalid))
 
         assertThrows(IllegalArgumentException::class.java) {
-            codec.decode(encoded)
+            codec.decode(encoded, File(encoded.parentFile, "decoded-invalid-schema"))
         }
     }
 
@@ -55,7 +64,7 @@ class UserDataBackupCodecTest {
         )
 
         assertThrows(IllegalArgumentException::class.java) {
-            codec.decode(encoded)
+            codec.decode(encoded, File(encoded.parentFile, "decoded-traversal"))
         }
     }
 
@@ -75,7 +84,7 @@ class UserDataBackupCodecTest {
         )
 
         assertThrows(IllegalArgumentException::class.java) {
-            codec.decode(encoded)
+            codec.decode(encoded, File(encoded.parentFile, "decoded-mismatch"))
         }
     }
 
@@ -100,7 +109,7 @@ class UserDataBackupCodecTest {
         )
 
         assertThrows(IllegalArgumentException::class.java) {
-            constrainedCodec.decode(encoded)
+            constrainedCodec.decode(encoded, File(encoded.parentFile, "decoded-aggregate"))
         }
     }
 
@@ -151,9 +160,10 @@ class UserDataBackupCodecTest {
     private fun rawZip(
         manifestJson: String,
         extraEntries: Map<String, ByteArray> = emptyMap()
-    ): ByteArray {
-        val output = ByteArrayOutputStream()
-        ZipOutputStream(output).use { zip ->
+    ): File {
+        val root = tempDirectory()
+        val output = File(root, "raw.aqlbackup")
+        ZipOutputStream(output.outputStream()).use { zip ->
             zip.putNextEntry(ZipEntry(UserDataBackupLimits.MANIFEST_ENTRY))
             zip.write(manifestJson.toByteArray(StandardCharsets.UTF_8))
             zip.closeEntry()
@@ -163,6 +173,12 @@ class UserDataBackupCodecTest {
                 zip.closeEntry()
             }
         }
-        return output.toByteArray()
+        return output
+    }
+
+    private fun tempDirectory(): File {
+        return Files.createTempDirectory("aql-user-data-codec-").toFile().apply {
+            deleteOnExit()
+        }
     }
 }

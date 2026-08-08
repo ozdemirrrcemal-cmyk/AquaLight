@@ -3,6 +3,7 @@ package com.aqua.aqualight.data.user.archive
 import com.aqua.aqualight.data.care.model.CareTaskSource
 import com.aqua.aqualight.data.care.model.CareTaskStatus
 import com.aqua.aqualight.data.care.model.CareTaskType
+import java.io.File
 import java.security.MessageDigest
 
 internal object UserDataBackupLimits {
@@ -27,7 +28,7 @@ internal class UserDataBackupValidator {
 
     fun validate(
         manifest: UserDataBackupManifest,
-        mediaByEntryName: Map<String, ByteArray>
+        mediaByEntryName: Map<String, File>
     ) {
         validateEnvelope(manifest)
         val tankIds = validateAquariums(manifest.aquariums)
@@ -114,7 +115,10 @@ internal class UserDataBackupValidator {
             require(assignment.tankId in tankIds) {
                 "Backup device assignment references an unknown aquarium."
             }
-            require(assignment.deviceUid.isNotBlank() && assignment.deviceUid == assignment.deviceUid.trim()) {
+            require(
+                assignment.deviceUid.isNotBlank() &&
+                    assignment.deviceUid == assignment.deviceUid.trim()
+            ) {
                 "Backup device assignment device id is invalid."
             }
             require(assignment.assignedAtMillis > 0L) {
@@ -128,7 +132,7 @@ internal class UserDataBackupValidator {
 
     private fun validateMedia(
         aquariums: List<ArchiveAquarium>,
-        mediaByEntryName: Map<String, ByteArray>
+        mediaByEntryName: Map<String, File>
     ) {
         val referenced = aquariums.mapNotNull { aquarium ->
             aquarium.photo?.also { reference ->
@@ -185,7 +189,7 @@ private fun requireValidArchiveMediaEntryName(entryName: String) {
 private fun validateMediaReference(
     reference: ArchiveMediaReference,
     tankId: Long,
-    mediaByEntryName: Map<String, ByteArray>
+    mediaByEntryName: Map<String, File>
 ) {
     requireValidArchiveMediaEntryName(reference.entryName)
     require(reference.entryName == "${UserDataBackupLimits.MEDIA_PREFIX}$tankId.jpg") {
@@ -197,13 +201,13 @@ private fun validateMediaReference(
     require(UserDataBackupLimits.sha256Pattern.matches(reference.sha256)) {
         "Backup aquarium photo digest is invalid."
     }
-    val bytes = requireNotNull(mediaByEntryName[reference.entryName]) {
+    val file = requireNotNull(mediaByEntryName[reference.entryName]) {
         "Backup aquarium photo is missing."
     }
-    require(bytes.size == reference.byteSize) {
+    require(file.isFile && file.length() == reference.byteSize.toLong()) {
         "Backup aquarium photo size does not match its manifest."
     }
-    require(sha256(bytes).equals(reference.sha256, ignoreCase = true)) {
+    require(sha256(file).equals(reference.sha256, ignoreCase = true)) {
         "Backup aquarium photo integrity check failed."
     }
 }
@@ -229,11 +233,29 @@ private inline fun <reified T : Enum<T>> requireArchiveEnumValue(value: String, 
 internal fun sha256(bytes: ByteArray): String {
     return MessageDigest.getInstance("SHA-256")
         .digest(bytes)
-        .joinToString(separator = "") { byte ->
-            (byte.toInt() and UNSIGNED_BYTE_MASK)
-                .toString(HEX_RADIX)
-                .padStart(2, '0')
+        .toHexString()
+}
+
+internal fun sha256(file: File): String {
+    require(file.isFile) { "SHA-256 source file is unavailable." }
+    val digest = MessageDigest.getInstance("SHA-256")
+    file.inputStream().buffered().use { input ->
+        val buffer = ByteArray(UserDataBackupLimits.BUFFER_SIZE)
+        while (true) {
+            val read = input.read(buffer)
+            if (read < 0) break
+            digest.update(buffer, 0, read)
         }
+    }
+    return digest.digest().toHexString()
+}
+
+private fun ByteArray.toHexString(): String {
+    return joinToString(separator = "") { byte ->
+        (byte.toInt() and UNSIGNED_BYTE_MASK)
+            .toString(HEX_RADIX)
+            .padStart(2, '0')
+    }
 }
 
 private const val UNSIGNED_BYTE_MASK = 0xFF

@@ -26,7 +26,9 @@ import com.aqua.aqualight.data.user.UserPreferencesManager
 import com.aqua.aqualight.data.user.archive.DefaultUserDataArchiveOperations
 import com.aqua.aqualight.data.user.archive.UserDataArchiveDataSources
 import com.aqua.aqualight.data.user.archive.UserDataArchiveSnapshotCollector
+import com.aqua.aqualight.data.user.archive.UserDataArchiveStaging
 import com.aqua.aqualight.data.user.archive.UserDataBackupRestorer
+import com.aqua.aqualight.platform.documents.AndroidUserDataDocumentOperations
 import com.aqua.aqualight.platform.media.UserDataArchiveMediaGateway
 import com.aqua.aqualight.platform.notifications.DeviceFirmwareUpdateNotificationOperations
 
@@ -190,7 +192,9 @@ internal class ActiveOwnerDependencyGraphResolver(
             userDataArchiveOperations = DefaultUserDataArchiveOperations(
                 sourceAppVersion = BuildConfig.VERSION_NAME,
                 snapshotCollector = snapshotCollector,
-                restorer = restorer
+                restorer = restorer,
+                staging = UserDataArchiveStaging(appContext),
+                documentOperations = AndroidUserDataDocumentOperations(appContext)
             ),
             provisioningDraftOperations = DefaultProvisioningDraftOperations(
                 draftStore = AqlProvisioningDraftStore(

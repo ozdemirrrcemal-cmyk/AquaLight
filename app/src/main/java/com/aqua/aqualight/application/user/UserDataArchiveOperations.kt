@@ -4,17 +4,30 @@ package com.aqua.aqualight.application.user
 interface UserDataArchiveOperations {
     suspend fun createBackup(): Result<UserDataArchiveArtifact>
 
-    suspend fun inspectBackup(content: ByteArray): Result<UserDataBackupInspection>
+    suspend fun saveArtifact(
+        artifactHandle: String,
+        documentHandle: String
+    ): Result<Unit>
 
-    suspend fun restoreBackup(content: ByteArray): Result<UserDataRestoreResult>
+    suspend fun inspectBackupDocument(documentHandle: String): Result<UserDataBackupCandidate>
+
+    suspend fun restoreBackup(restoreHandle: String): Result<UserDataRestoreResult>
 
     suspend fun createPortableExport(): Result<UserDataArchiveArtifact>
+
+    /** Releases one opaque app-owned staging handle after save, restore or cancellation. */
+    fun discard(handle: String)
 }
 
 data class UserDataArchiveArtifact(
+    val handle: String,
     val suggestedFileName: String,
-    val mimeType: String,
-    val content: ByteArray
+    val mimeType: String
+)
+
+data class UserDataBackupCandidate(
+    val handle: String,
+    val inspection: UserDataBackupInspection
 )
 
 data class UserDataBackupInspection(
@@ -33,10 +46,3 @@ data class UserDataRestoreResult(
     val skippedDeviceAssignmentCount: Int,
     val reminderReconciliationWarning: Boolean
 )
-
-/** Opaque document-handle I/O used by the UI without exposing ContentResolver or streams. */
-interface UserDataDocumentOperations {
-    suspend fun read(documentHandle: String): Result<ByteArray>
-
-    suspend fun write(documentHandle: String, content: ByteArray): Result<Unit>
-}

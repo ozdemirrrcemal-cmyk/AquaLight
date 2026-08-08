@@ -7,6 +7,7 @@ import com.aqua.aqualight.data.devices.repository.DevicesRepository
 import com.aqua.aqualight.data.user.UserDataScope
 import com.aqua.aqualight.data.user.UserPreferencesManager
 import com.aqua.aqualight.platform.media.UserDataArchiveMediaGateway
+import java.io.File
 import kotlinx.coroutines.flow.first
 
 internal data class UserDataArchiveDataSources(
@@ -23,24 +24,42 @@ internal class UserDataArchiveSnapshotCollector(
     private val mediaGateway: UserDataArchiveMediaGateway
 ) {
 
-    suspend fun collectAquariumData(): UserDataAquariumSnapshot {
+    suspend fun collectAquariumData(
+        mediaDirectory: File? = null
+    ): UserDataAquariumSnapshot {
         requireOwner()
+        if (mediaDirectory != null) {
+            require(mediaDirectory.isDirectory || mediaDirectory.mkdirs()) {
+                "Backup media staging directory could not be created."
+            }
+            require(mediaDirectory.listFiles().isNullOrEmpty()) {
+                "Backup media staging directory must be empty."
+            }
+        }
         val tanks = dataSources.aquariumStore.tanksSnapshotForOwner(ownerUid)
         val tankIds = tanks.mapTo(mutableSetOf()) { tank -> tank.id }
         val tasks = dataSources.careTaskStore.tasksFlow.first()
             .filter { task -> task.tankId in tankIds }
             .map { task -> task.toArchiveCareTask() }
         val assignments = collectAssignments(tankIds)
-        val media = linkedMapOf<String, ByteArray>()
+        val media = linkedMapOf<String, File>()
+        var archivedPhotoCount = 0
         val aquariums = tanks.map { tank ->
-            val photoReference = mediaGateway.snapshotTankPhoto(tank.photoUri)?.let { bytes ->
+            val photoReference = if (mediaDirectory == null) {
+                if (mediaGateway.canSnapshotTankPhoto(tank.photoUri)) archivedPhotoCount += 1
+                null
+            } else {
                 val entryName = "${UserDataBackupLimits.MEDIA_PREFIX}${tank.id}.jpg"
-                media[entryName] = bytes
-                ArchiveMediaReference(
-                    entryName = entryName,
-                    byteSize = bytes.size,
-                    sha256 = sha256(bytes)
-                )
+                val destination = File(mediaDirectory, "tank_${tank.id}.media")
+                mediaGateway.snapshotTankPhoto(tank.photoUri, destination)?.let { staged ->
+                    archivedPhotoCount += 1
+                    media[entryName] = staged
+                    ArchiveMediaReference(
+                        entryName = entryName,
+                        byteSize = staged.length().toInt(),
+                        sha256 = sha256(staged)
+                    )
+                }
             }
             tank.toArchiveAquarium(photoReference)
         }
@@ -49,7 +68,8 @@ internal class UserDataArchiveSnapshotCollector(
             aquariums = aquariums,
             careTasks = tasks,
             deviceAssignments = assignments,
-            mediaByEntryName = media.toMap()
+            mediaByEntryName = media.toMap(),
+            archivedPhotoCount = archivedPhotoCount
         )
     }
 
@@ -113,7 +133,8 @@ internal data class UserDataAquariumSnapshot(
     val aquariums: List<ArchiveAquarium>,
     val careTasks: List<ArchiveCareTask>,
     val deviceAssignments: List<ArchiveDeviceAssignment>,
-    val mediaByEntryName: Map<String, ByteArray>
+    val mediaByEntryName: Map<String, File>,
+    val archivedPhotoCount: Int
 )
 
 internal data class PortableProfileSnapshot(
