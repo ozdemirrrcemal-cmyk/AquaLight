@@ -5,7 +5,7 @@ import com.aqua.aqualight.application.devices.DeviceOtaState
 import com.aqua.aqualight.data.devices.runtime.modules.firmware.DeviceFirmwareVersionComparator
 
 /** Pure current-state policy used immediately before opening a firmware notification route. */
-internal object DeviceFirmwareNotificationActionabilityPolicy {
+object DeviceFirmwareNotificationActionabilityPolicy {
 
     fun availability(
         currentVersion: String,
