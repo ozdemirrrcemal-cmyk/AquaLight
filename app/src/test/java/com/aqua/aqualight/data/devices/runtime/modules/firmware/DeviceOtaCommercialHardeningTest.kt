@@ -59,25 +59,19 @@ class DeviceOtaCommercialHardeningTest {
     }
 
     @Test
-    fun `exact artifact predicate ignores nonmatching environment family and line`() {
+    fun `multi product manifest fails closed before artifact selection`() {
         val exact = artifact()
         val releaseManifest = manifest(
             artifacts = listOf(
                 exact,
-                exact.copy(env = "dosing_dose_pro_4"),
-                exact.copy(compatibility = exact.compatibility.copy(family = "timer")),
-                exact.copy(compatibility = exact.compatibility.copy(line = "legacy_dose"))
+                exact.copy(env = "dosing_dose_pro_4")
             )
         )
         val planner = DeviceFirmwareUpdatePlanner { listOf("en") }
 
-        val matching = planner.compatibleArtifacts(snapshot(), releaseManifest)
-        val availability = planner.evaluateUpdate(snapshot(), releaseManifest).getOrThrow()
-            as DeviceFirmwareAvailability.UpdateAvailable
+        val failure = planner.evaluateUpdate(snapshot(), releaseManifest).exceptionOrNull()
 
-        assertEquals(listOf(exact), matching)
-        assertEquals(exact.env, availability.plan.env)
-        assertEquals(exact.firmware.sha256, availability.plan.firmware.sha256)
+        assertTrue(failure?.message.orEmpty().contains("exactly one artifact"))
     }
 
     @Test

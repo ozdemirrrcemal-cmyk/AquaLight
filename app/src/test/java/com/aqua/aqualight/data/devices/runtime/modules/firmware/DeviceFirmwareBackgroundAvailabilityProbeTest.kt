@@ -55,11 +55,14 @@ class DeviceFirmwareBackgroundAvailabilityProbeTest {
 
     @Test
     fun nonmatchingEnvironmentProducesUpToDateHint() {
-        val wrongEnv = artifact().copy(env = "dosing_dose_pro_4")
+        val wrongEnv = dosePro4Artifact()
 
         val hint = probe.evaluate(
             snapshot(),
-            manifest(artifacts = listOf(wrongEnv))
+            manifest(
+                tag = "dosing_dose_pro_4-v2.0.0",
+                artifacts = listOf(wrongEnv)
+            )
         ).getOrThrow() as DeviceFirmwareAvailabilityHint.UpToDate
 
         assertEquals("1.0.0", hint.currentVersion)
@@ -115,13 +118,14 @@ class DeviceFirmwareBackgroundAvailabilityProbeTest {
     )
 
     private fun manifest(
+        tag: String = "dosing_dose_pro_2-v2.0.0",
         artifacts: List<DeviceFirmwareManifestArtifact> = listOf(artifact())
     ) = DeviceFirmwareManifest(
         schema = DeviceFirmwareRuntimeContract.Manifest.SCHEMA,
         brand = DeviceFirmwareRuntimeContract.Manifest.BRAND,
         channel = DeviceFirmwareRuntimeContract.Manifest.STABLE_CHANNEL,
         version = "2.0.0",
-        tag = "dosing_dose_pro_2-v2.0.0",
+        tag = tag,
         releaseRepo = DeviceFirmwareRuntimeContract.OFFICIAL_RELEASE_REPOSITORY,
         generatedAt = "2026-08-06T00:00:00+00:00",
         platform = OFFICIAL_PLATFORM,
@@ -181,6 +185,34 @@ class DeviceFirmwareBackgroundAvailabilityProbeTest {
                 otaSlotCompatible = true
             ),
             factory = null
+        )
+    }
+
+    private fun dosePro4Artifact(): DeviceFirmwareManifestArtifact {
+        val exact = artifact()
+        val environment = "dosing_dose_pro_4"
+        val tag = "$environment-v2.0.0"
+        val filename = "AquaLight-$tag-ota.bin"
+        return exact.copy(
+            env = environment,
+            product = exact.product.copy(
+                productKey = "DOSING_DOSE_PRO_4",
+                productId = "com.aqualight.dosing.dose_pro_4",
+                model = "dose_pro_4",
+                displayName = "AquaLight Dose Pro 4",
+                skuCode = "AQL-D-DP4-GLB-BLK",
+                limits = DeviceLimits(dosingChannelCount = 4)
+            ),
+            compatibility = exact.compatibility.copy(
+                productKey = "DOSING_DOSE_PRO_4",
+                productId = "com.aqualight.dosing.dose_pro_4",
+                model = "dose_pro_4"
+            ),
+            firmware = exact.firmware.copy(
+                filename = filename,
+                url = DeviceFirmwareRuntimeContract.OFFICIAL_RELEASE_URL_PREFIX +
+                    "$tag/$filename"
+            )
         )
     }
 

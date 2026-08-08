@@ -29,7 +29,7 @@ class DeviceFirmwareExactArtifactPlannerTest {
         assertEquals("dose_pro_2", plan.payload.model)
         assertEquals("2.0.0", plan.payload.version)
         assertEquals(7L, plan.runtimeMetadataGeneration)
-        assertEquals("v2.0.0", plan.manifestTag)
+        assertEquals("dosing_dose_pro_2-v2.0.0", plan.manifestTag)
         assertEquals("tr", plan.releaseContent.localeTag)
         assertEquals(listOf("Kalibrasyon doğrulaması geliştirildi."), plan.releaseContent.changes)
         assertEquals("Dose Pro 2", plan.displayName)
@@ -80,11 +80,14 @@ class DeviceFirmwareExactArtifactPlannerTest {
 
     @Test
     fun `nonmatching environment resolves as no published update`() {
-        val wrongEnv = artifact().copy(env = "dosing_dose_pro_4")
+        val wrongEnv = dosePro4Artifact()
 
         val availability = planner.evaluateUpdate(
             snapshot(),
-            manifest(artifacts = listOf(wrongEnv))
+            manifest(
+                tag = "dosing_dose_pro_4-v2.0.0",
+                artifacts = listOf(wrongEnv)
+            )
         ).getOrThrow() as DeviceFirmwareAvailability.UpToDate
 
         assertEquals("1.0.0", availability.currentVersion)
@@ -148,13 +151,14 @@ class DeviceFirmwareExactArtifactPlannerTest {
     )
 
     private fun manifest(
+        tag: String = "dosing_dose_pro_2-v2.0.0",
         artifacts: List<DeviceFirmwareManifestArtifact> = listOf(artifact())
     ) = DeviceFirmwareManifest(
         schema = DeviceFirmwareRuntimeContract.Manifest.SCHEMA,
         brand = DeviceFirmwareRuntimeContract.Manifest.BRAND,
         channel = DeviceFirmwareRuntimeContract.Manifest.STABLE_CHANNEL,
         version = "2.0.0",
-        tag = "dosing_dose_pro_2-v2.0.0",
+        tag = tag,
         releaseRepo = DeviceFirmwareRuntimeContract.OFFICIAL_RELEASE_REPOSITORY,
         generatedAt = "2026-08-03T00:00:00+00:00",
         platform = OFFICIAL_PLATFORM,
@@ -214,6 +218,34 @@ class DeviceFirmwareExactArtifactPlannerTest {
                 otaSlotCompatible = true
             ),
             factory = null
+        )
+    }
+
+    private fun dosePro4Artifact(): DeviceFirmwareManifestArtifact {
+        val exact = artifact()
+        val environment = "dosing_dose_pro_4"
+        val tag = "$environment-v2.0.0"
+        val filename = "AquaLight-$tag-ota.bin"
+        return exact.copy(
+            env = environment,
+            product = exact.product.copy(
+                productKey = "DOSING_DOSE_PRO_4",
+                productId = "com.aqualight.dosing.dose_pro_4",
+                model = "dose_pro_4",
+                displayName = "AquaLight Dose Pro 4",
+                skuCode = "AQL-D-DP4-GLB-BLK",
+                limits = DeviceLimits(dosingChannelCount = 4)
+            ),
+            compatibility = exact.compatibility.copy(
+                productKey = "DOSING_DOSE_PRO_4",
+                productId = "com.aqualight.dosing.dose_pro_4",
+                model = "dose_pro_4"
+            ),
+            firmware = exact.firmware.copy(
+                filename = filename,
+                url = DeviceFirmwareRuntimeContract.OFFICIAL_RELEASE_URL_PREFIX +
+                    "$tag/$filename"
+            )
         )
     }
 
