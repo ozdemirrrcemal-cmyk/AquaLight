@@ -70,7 +70,7 @@
     <string name="reset_failed_title">Sıfırlama Başarısız</string>
     <string name="reset_error_message">Sıfırlama e-postası gönderilirken hata oluştu. Lütfen daha sonra yeniden deneyin.</string>
     <string name="register_hint_email">E-posta adresi</string>
-    <string name="register_email_desc">Kayıt için e-posta alanı</string>
+    <string name="register_email_field_desc">Kayıt için e-posta alanı</string>
     <string name="register_hint_password">Şifre</string>
     <string name="register_password_field_desc">Kayıt için şifre alanı</string>
     <string name="register_hint_password_repeat">Şifreyi tekrarlayın</string>
