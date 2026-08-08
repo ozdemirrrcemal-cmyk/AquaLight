@@ -7,6 +7,7 @@ import com.aqua.aqualight.data.auth.AuthenticatedOwnerState
 import com.aqua.aqualight.data.auth.OwnerTokenValidationResult
 import com.aqua.aqualight.data.devices.model.DeviceCapabilities
 import com.aqua.aqualight.data.devices.model.DeviceIdentity
+import com.aqua.aqualight.data.devices.model.DeviceProduct
 import com.aqua.aqualight.data.devices.model.DeviceSnapshot
 import com.aqua.aqualight.data.devices.model.DeviceUid
 import com.aqua.aqualight.data.devices.runtime.modules.firmware.DeviceFirmwareAvailabilityHint
@@ -138,6 +139,7 @@ class DeviceFirmwareAvailabilityEvaluatorTest {
 
         fun snapshot() = DeviceSnapshot(
             identity = DeviceIdentity(uid = DeviceUid(DEVICE_UID)),
+            product = DeviceProduct(displayName = "Dose Pro 4"),
             firmwareVersion = "1.0.0",
             capabilities = DeviceCapabilities(ota = true)
         )
