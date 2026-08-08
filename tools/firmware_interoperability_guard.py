@@ -88,7 +88,7 @@ EXPECTED_FIXTURES = {
         True,
     ),
     "aql_product_catalog_v1.json": (
-        "87e27dd22078620ef59db4effab82b8e4e87cec95eea23ae5be8d4b3d697a1b3",
+        "333a3192c5212c277bced7a891f8e492511b8804a4484412c17a7124b8752716",
         None,
         False,
     ),

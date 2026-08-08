@@ -5,8 +5,7 @@
     "repository": "ozdemirrrcemal-cmyk/AquaLight-Firmware",
     "commit": "cf2222e58e6c69a729071a5d1205497b3fceaa70",
     "catalogPath": "src/product/AqlProductCatalog.hpp",
-    "exporterPath": "tools/aql_export_product_catalog.cpp",
-    "otaManifestSchema": "aql.ota.manifest.v1"
+    "exporterPath": "tools/aql_export_product_catalog.cpp"
   },
   "profiles": {
     "lightWrgbProElite": {
