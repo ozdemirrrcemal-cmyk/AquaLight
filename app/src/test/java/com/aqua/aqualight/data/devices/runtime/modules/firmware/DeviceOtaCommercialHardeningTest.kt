@@ -427,8 +427,9 @@ class DeviceOtaCommercialHardeningTest {
         const val WORKER_COUNT = 8
         const val START_SEND_DELAY_MILLIS = 75L
         const val MANIFEST_URL =
-            "https://github.com/ozdemirrrcemal-cmyk/AquaLight-OTA-Releases/" +
-                "releases/download/stable-dosing_dose_pro_2/manifest-stable.json"
+            "https://raw.githubusercontent.com/ozdemirrrcemal-cmyk/" +
+                "AquaLight-OTA-Releases/main/channels/stable/" +
+                "dosing_dose_pro_2/manifest-stable.json"
         val DOSING_CAPABILITIES = DeviceCapabilities(dosing = true, timeSync = true, ota = true)
         val DOSING_LIMITS = DeviceLimits(dosingChannelCount = 2)
         val OFFICIAL_PLATFORM = DeviceFirmwareManifestPlatform(

@@ -35,8 +35,9 @@ class DeviceFirmwareUpdateRepositoryAvailabilityTest {
         assertEquals("1.0.0", availability.latestVersion)
         assertTrue(!availability.releaseContent.isPresent)
         assertEquals(
-            "https://github.com/ozdemirrrcemal-cmyk/AquaLight-OTA-Releases/" +
-                "releases/download/stable-dosing_dose_pro_4/manifest-stable.json",
+            "https://raw.githubusercontent.com/ozdemirrrcemal-cmyk/" +
+                "AquaLight-OTA-Releases/main/channels/stable/" +
+                "dosing_dose_pro_4/manifest-stable.json",
             requestedUrl
         )
     }

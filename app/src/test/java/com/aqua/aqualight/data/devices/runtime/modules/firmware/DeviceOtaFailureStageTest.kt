@@ -61,7 +61,8 @@ class DeviceOtaFailureStageTest {
     private companion object {
         val DEVICE_UID = DeviceUid("AQL-DP4-FAILURE-STAGE")
         const val MANIFEST_URL =
-            "https://github.com/ozdemirrrcemal-cmyk/AquaLight-OTA-Releases/" +
-                "releases/download/stable-dosing_dose_pro_4/manifest-stable.json"
+            "https://raw.githubusercontent.com/ozdemirrrcemal-cmyk/" +
+                "AquaLight-OTA-Releases/main/channels/stable/" +
+                "dosing_dose_pro_4/manifest-stable.json"
     }
 }

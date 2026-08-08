@@ -114,9 +114,12 @@ def otaManifestKeyId = providers
         .getOrElse("aql-ota-manifest-2026-01")
 
 def requireProductScopedManifestTemplate = { String label, String value ->
-    if (value.count("{env}") != 1 || value.contains("/releases/latest/")) {
+    def officialChannelPattern = ~'^https://raw\\.githubusercontent\\.com/' +
+            'ozdemirrrcemal-cmyk/AquaLight-OTA-Releases/main/channels/' +
+            '(stable|beta|dev)/\\{env\\}/manifest-\\1\\.json$'
+    if (value.count("{env}") != 1 || !(value ==~ officialChannelPattern)) {
         throw new GradleException(
-                "${label} must contain exactly one {env} placeholder and cannot use releases/latest."
+                "${label} must be an exact product-scoped channel file with one {env} placeholder."
         )
     }
     value
@@ -128,8 +131,9 @@ def stableOtaManifestUrl = requireProductScopedManifestTemplate(
         .gradleProperty("AQL_OTA_STABLE_MANIFEST_URL")
         .orElse(providers.environmentVariable("AQL_OTA_STABLE_MANIFEST_URL"))
         .getOrElse(
-                "https://github.com/ozdemirrrcemal-cmyk/AquaLight-OTA-Releases/" +
-                        "releases/download/stable-{env}/manifest-stable.json"
+                "https://raw.githubusercontent.com/ozdemirrrcemal-cmyk/" +
+                        "AquaLight-OTA-Releases/main/channels/stable/" +
+                        "{env}/manifest-stable.json"
         )
 )
 

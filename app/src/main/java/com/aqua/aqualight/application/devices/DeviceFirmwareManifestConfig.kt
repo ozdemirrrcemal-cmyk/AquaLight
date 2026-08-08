@@ -23,8 +23,8 @@ val DEVICE_FIRMWARE_PRODUCT_ENVIRONMENTS: Set<String> = setOf(
  * Dosing release therefore cannot become the manifest source for a Timer device.
  */
 const val DEVICE_FIRMWARE_MANIFEST_URL =
-    "https://github.com/ozdemirrrcemal-cmyk/AquaLight-OTA-Releases/" +
-        "releases/download/stable-{env}/manifest-stable.json"
+    "https://raw.githubusercontent.com/ozdemirrrcemal-cmyk/AquaLight-OTA-Releases/" +
+        "main/channels/stable/{env}/manifest-stable.json"
 
 object DeviceFirmwareManifestUrlResolver {
     fun resolve(template: String, productKey: String): String {
@@ -66,8 +66,9 @@ object DeviceFirmwareManifestUrlResolver {
     private fun isExactProductManifestUrl(url: String, environment: String): Boolean {
         val escapedEnvironment = Regex.escape(environment)
         val channel = Regex(
-            "^https://github\\.com/ozdemirrrcemal-cmyk/AquaLight-OTA-Releases/" +
-                "releases/download/(stable|beta|dev)-$escapedEnvironment/" +
+            "^https://raw\\.githubusercontent\\.com/ozdemirrrcemal-cmyk/" +
+                "AquaLight-OTA-Releases/main/channels/(stable|beta|dev)/" +
+                "$escapedEnvironment/" +
                 "manifest-\\1\\.json$"
         )
         val immutable = Regex(

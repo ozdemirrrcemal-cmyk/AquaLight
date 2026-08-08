@@ -137,10 +137,12 @@ class DeviceFirmwareAvailabilityCheckRunnerTest {
         assertEquals(DeviceFirmwareAvailabilityCheckOutcome.Completed, outcome)
         assertEquals(
             listOf(
-                "https://github.com/ozdemirrrcemal-cmyk/AquaLight-OTA-Releases/" +
-                    "releases/download/stable-timer_relay_pro_2/manifest-stable.json",
-                "https://github.com/ozdemirrrcemal-cmyk/AquaLight-OTA-Releases/" +
-                    "releases/download/stable-dosing_dose_pro_2/manifest-stable.json"
+                "https://raw.githubusercontent.com/ozdemirrrcemal-cmyk/" +
+                    "AquaLight-OTA-Releases/main/channels/stable/" +
+                    "timer_relay_pro_2/manifest-stable.json",
+                "https://raw.githubusercontent.com/ozdemirrrcemal-cmyk/" +
+                    "AquaLight-OTA-Releases/main/channels/stable/" +
+                    "dosing_dose_pro_2/manifest-stable.json"
             ),
             requestedUrls
         )

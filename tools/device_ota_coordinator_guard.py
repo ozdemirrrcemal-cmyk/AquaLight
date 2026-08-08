@@ -56,7 +56,9 @@ require_tokens(
     "runtime_contract",
     (
         'const val SCHEMA = "aql.ota.product-manifest.v1"',
-        '"a96fb256302072204e9ebb1c402c2bf20391f5f5"',
+        '"90919c12ee269c20cff8affa4b417393126fabb6"',
+        "OFFICIAL_CHANNEL_MANIFEST_URL_PREFIX",
+        "raw.githubusercontent.com/$OFFICIAL_RELEASE_REPOSITORY/main/channels/",
     ),
 )
 forbid_tokens(
@@ -204,6 +206,7 @@ require_tokens(
         "DEVICE_FIRMWARE_PRODUCT_ENVIRONMENTS",
         "requireFirmwareManifestMatchesUrl(sourceUrl, manifest)",
         "OTA channel manifest URL and signed manifest product differ.",
+        "OFFICIAL_CHANNEL_MANIFEST_URL_PREFIX",
     ),
 )
 forbid_tokens(

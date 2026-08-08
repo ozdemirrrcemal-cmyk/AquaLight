@@ -59,14 +59,14 @@ internal fun requireFirmwareManifestMatchesUrl(
     manifest: DeviceFirmwareManifest
 ): DeviceFirmwareManifest {
     val sourceUrl = requireOfficialFirmwareManifestUrl(url)
-    val releasePath = sourceUrl.removePrefix(
-        DeviceFirmwareRuntimeContract.OFFICIAL_RELEASE_URL_PREFIX
-    )
     val artifactEnvironment = manifest.artifacts.singleOrNull()?.env
         ?: throw IllegalArgumentException(
             "Product-scoped OTA manifest must contain exactly one artifact."
         )
-    val channelMatch = PRODUCT_CHANNEL_MANIFEST_PATH.matchEntire(releasePath)
+    val channelPath = sourceUrl.removePrefix(
+        DeviceFirmwareRuntimeContract.OFFICIAL_CHANNEL_MANIFEST_URL_PREFIX
+    ).takeIf { it != sourceUrl }
+    val channelMatch = channelPath?.let(PRODUCT_CHANNEL_MANIFEST_PATH::matchEntire)
     if (channelMatch != null) {
         require(channelMatch.groupValues[1] == manifest.channel) {
             "OTA channel manifest URL and signed manifest channel differ."
@@ -77,6 +77,9 @@ internal fun requireFirmwareManifestMatchesUrl(
         return manifest
     }
 
+    val releasePath = sourceUrl.removePrefix(
+        DeviceFirmwareRuntimeContract.OFFICIAL_RELEASE_URL_PREFIX
+    )
     val immutableMatch = requireNotNull(PRODUCT_VERSION_MANIFEST_PATH.matchEntire(releasePath)) {
         "OTA immutable manifest URL is malformed."
     }
@@ -93,14 +96,31 @@ internal fun requireOfficialFirmwareManifestUrl(url: String): String {
     val sourceUrl = url.trim()
     require(sourceUrl == url) { "Manifest URL must not contain surrounding whitespace." }
     require(sourceUrl.startsWith("https://")) { "Manifest URL must use HTTPS." }
-    require(sourceUrl.startsWith(DeviceFirmwareRuntimeContract.OFFICIAL_RELEASE_URL_PREFIX)) {
-        "Manifest URL must use the AquaLight release source."
-    }
-    val releasePath = sourceUrl.removePrefix(
+    val isChannelManifest = sourceUrl.startsWith(
+        DeviceFirmwareRuntimeContract.OFFICIAL_CHANNEL_MANIFEST_URL_PREFIX
+    )
+    val isImmutableManifest = sourceUrl.startsWith(
         DeviceFirmwareRuntimeContract.OFFICIAL_RELEASE_URL_PREFIX
     )
-    val channelMatch = PRODUCT_CHANNEL_MANIFEST_PATH.matchEntire(releasePath)
-    val immutableMatch = PRODUCT_VERSION_MANIFEST_PATH.matchEntire(releasePath)
+    require(isChannelManifest || isImmutableManifest) {
+        "Manifest URL must use an official AquaLight OTA source."
+    }
+    val channelMatch = if (isChannelManifest) {
+        PRODUCT_CHANNEL_MANIFEST_PATH.matchEntire(
+            sourceUrl.removePrefix(
+                DeviceFirmwareRuntimeContract.OFFICIAL_CHANNEL_MANIFEST_URL_PREFIX
+            )
+        )
+    } else {
+        null
+    }
+    val immutableMatch = if (isImmutableManifest) {
+        PRODUCT_VERSION_MANIFEST_PATH.matchEntire(
+            sourceUrl.removePrefix(DeviceFirmwareRuntimeContract.OFFICIAL_RELEASE_URL_PREFIX)
+        )
+    } else {
+        null
+    }
     val environment = channelMatch?.groupValues?.get(2)
         ?: immutableMatch?.groupValues?.get(1)
     require(
@@ -113,7 +133,7 @@ internal fun requireOfficialFirmwareManifestUrl(url: String): String {
 }
 
 private val PRODUCT_CHANNEL_MANIFEST_PATH = Regex(
-    "^(stable|beta|dev)-([a-z0-9_]+)/manifest-\\1\\.json$"
+    "^(stable|beta|dev)/([a-z0-9_]+)/manifest-\\1\\.json$"
 )
 
 private val PRODUCT_VERSION_MANIFEST_PATH = Regex(

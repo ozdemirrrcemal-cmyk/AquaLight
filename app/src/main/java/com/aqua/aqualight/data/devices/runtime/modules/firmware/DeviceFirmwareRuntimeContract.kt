@@ -15,10 +15,13 @@ object DeviceFirmwareRuntimeContract {
 
     /** Coordinated AquaLight-Firmware commit for the first production exact-product contract. */
     const val FIRMWARE_PRODUCT_RELEASE_CONTRACT_COMMIT =
-        "a96fb256302072204e9ebb1c402c2bf20391f5f5"
+        "90919c12ee269c20cff8affa4b417393126fabb6"
 
     const val OFFICIAL_RELEASE_URL_PREFIX =
         "https://github.com/$OFFICIAL_RELEASE_REPOSITORY/releases/download/"
+
+    const val OFFICIAL_CHANNEL_MANIFEST_URL_PREFIX =
+        "https://raw.githubusercontent.com/$OFFICIAL_RELEASE_REPOSITORY/main/channels/"
 
     object Action {
         const val STATUS_GET = "status.get"

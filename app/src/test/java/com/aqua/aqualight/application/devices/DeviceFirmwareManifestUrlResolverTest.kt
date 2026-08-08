@@ -34,7 +34,11 @@ class DeviceFirmwareManifestUrlResolverTest {
             productKeys.map { it.lowercase() }.toSet()
         )
         resolved.forEach { (productKey, url) ->
-            assertTrue(url.contains("stable-${productKey.lowercase()}"))
+            assertTrue(
+                url.contains(
+                    "/channels/stable/${productKey.lowercase()}/manifest-stable.json"
+                )
+            )
         }
     }
 
@@ -49,8 +53,8 @@ class DeviceFirmwareManifestUrlResolverTest {
             "DOSING_DOSE_PRO_4"
         )
 
-        assertTrue(dosePro2.contains("stable-dosing_dose_pro_2"))
-        assertTrue(dosePro4.contains("stable-dosing_dose_pro_4"))
+        assertTrue(dosePro2.contains("/channels/stable/dosing_dose_pro_2/"))
+        assertTrue(dosePro4.contains("/channels/stable/dosing_dose_pro_4/"))
         assertTrue(dosePro2 != dosePro4)
     }
 

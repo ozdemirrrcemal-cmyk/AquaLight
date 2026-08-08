@@ -27,14 +27,15 @@ class DeviceFirmwareProductIsolationMatrixTest {
         for (releaseProduct in products) {
             val manifest = manifest(releaseProduct)
             val releaseEnvironment = releaseProduct.productKey.value.lowercase()
-            val channelUrl = DeviceFirmwareRuntimeContract.OFFICIAL_RELEASE_URL_PREFIX +
-                "stable-$releaseEnvironment/manifest-stable.json"
+            val channelUrl =
+                DeviceFirmwareRuntimeContract.OFFICIAL_CHANNEL_MANIFEST_URL_PREFIX +
+                    "stable/$releaseEnvironment/manifest-stable.json"
             assertEquals(manifest, requireFirmwareManifestMatchesUrl(channelUrl, manifest))
             val otherEnvironment = environments.first { it != releaseEnvironment }
             assertThrows(IllegalArgumentException::class.java) {
                 requireFirmwareManifestMatchesUrl(
-                    DeviceFirmwareRuntimeContract.OFFICIAL_RELEASE_URL_PREFIX +
-                        "stable-$otherEnvironment/manifest-stable.json",
+                    DeviceFirmwareRuntimeContract.OFFICIAL_CHANNEL_MANIFEST_URL_PREFIX +
+                        "stable/$otherEnvironment/manifest-stable.json",
                     manifest
                 )
             }
