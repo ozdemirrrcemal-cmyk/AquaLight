@@ -297,11 +297,11 @@ class TankDeviceAssignmentRepository(
             }
         }
     }
+}
 
-    private fun Throwable.throwIfCancellation() {
-        if (this is CancellationException) {
-            throw this
-        }
+private fun Throwable.throwIfCancellation() {
+    if (this is CancellationException) {
+        throw this
     }
 }
 
