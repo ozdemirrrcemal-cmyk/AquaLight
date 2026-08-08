@@ -1,7 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <!-- Settings / data management -->
-    <string name="screen_title_data_management">Data &amp; Backup</string>
     <string name="data_management_backup_title">Create backup</string>
     <string name="data_management_backup_subtitle">Save your aquariums, care records and eligible device assignments in an AquaLight backup.</string>
     <string name="data_management_backup_card_description">Create an AquaLight backup of your aquarium data.</string>

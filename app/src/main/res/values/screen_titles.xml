@@ -13,6 +13,7 @@
     <string name="screen_title_user_address">User Address</string>
     <string name="screen_title_device_status">Device Status</string>
     <string name="screen_title_app_settings">App Settings</string>
+    <string name="screen_title_data_management">Data &amp; Backup</string>
     <string name="screen_title_usage">Usage</string>
     <string name="screen_title_privacy">Privacy</string>
     <string name="screen_title_legal_center">Privacy &amp; Legal</string>

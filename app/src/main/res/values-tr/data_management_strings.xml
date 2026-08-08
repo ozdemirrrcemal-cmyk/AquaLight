@@ -1,7 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <!-- Ayarlar / veri yönetimi -->
-    <string name="screen_title_data_management">Veriler ve Yedekleme</string>
     <string name="data_management_backup_title">Yedek oluştur</string>
     <string name="data_management_backup_subtitle">Akvaryumlarınızı, bakım kayıtlarınızı ve uygun cihaz ilişkilerini AquaLight yedeğine kaydedin.</string>
     <string name="data_management_backup_card_description">Akvaryum verilerinizin AquaLight yedeğini oluşturun.</string>
