@@ -14,7 +14,7 @@ object AppProcessForegroundState {
 
     fun isForeground(): Boolean = foreground
 
-    internal fun update(isForeground: Boolean) {
+    fun update(isForeground: Boolean) {
         foreground = isForeground
     }
 }
