@@ -128,8 +128,8 @@
     <string name="settings_legal_desc">Open privacy and legal documents</string>
     <string name="settings_about">About</string>
     <string name="settings_about_desc">View app details and open-source licenses</string>
-    <string name="settings_logout">Log out</string>
-    <string name="settings_logout_desc">Sign out of your account</string>
+    <string name="settings_logout">Account &amp; Security</string>
+    <string name="settings_logout_desc">Open account and security settings</string>
     <string name="edit_profile_camera_icon_desc">Change profile photo</string>
     <string name="edit_profile_choose_source_title">Select photo source</string>
     <string name="edit_profile_error_title">Error</string>
