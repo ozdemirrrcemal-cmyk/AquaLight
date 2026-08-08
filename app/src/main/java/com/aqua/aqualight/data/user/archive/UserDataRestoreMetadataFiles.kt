@@ -52,12 +52,14 @@ internal class UserDataRestoreMetadataFiles(
         ensureDirectory()
         val atomicFile = AtomicFile(ownerFile(owner))
         val output = atomicFile.startWrite()
-        try {
+        val writeResult = runCatching {
             output.write(bytes)
             atomicFile.finishWrite(output)
-        } catch (error: Throwable) {
+        }
+        val failure = writeResult.exceptionOrNull()
+        if (failure != null) {
             atomicFile.failWrite(output)
-            throw error
+            throw failure
         }
     }
 
