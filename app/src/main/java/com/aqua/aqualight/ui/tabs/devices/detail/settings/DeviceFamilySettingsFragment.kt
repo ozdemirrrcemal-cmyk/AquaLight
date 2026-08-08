@@ -355,7 +355,7 @@ abstract class DeviceFamilySettingsFragment : Fragment(R.layout.fragment_device_
         )
         is DeviceSettingsUpdateActionState.Failed -> FirmwareActionPresentation(
             titleText = getString(
-                if (failure.recoverable) {
+                if (failure.canRetryAvailabilityCheck) {
                     R.string.device_settings_retry_update_check_action
                 } else {
                     R.string.device_settings_update_needs_attention_title
@@ -365,7 +365,7 @@ abstract class DeviceFamilySettingsFragment : Fragment(R.layout.fragment_device_
                 DeviceRootPresentationMapper.otaFailureMessageRes(failure.reason)
             ),
             enabled = true,
-            opensDetails = !failure.recoverable,
+            opensDetails = !failure.canRetryAvailabilityCheck,
             strokeColorRes = R.color.aqua_status_danger
         )
         DeviceSettingsUpdateActionState.Unsupported -> FirmwareActionPresentation(

@@ -306,7 +306,8 @@ private fun String?.releaseLocaleOrNull(): String? {
 private fun DeviceOtaState.allowsPassiveAvailabilityRefresh(): Boolean = when (this) {
     is DeviceOtaState.Idle,
     is DeviceOtaState.UpToDate -> true
-    is DeviceOtaState.Failed -> failure.recoverable
+    is DeviceOtaState.Failed ->
+        failure.stage == DeviceOtaFailureStage.AVAILABILITY_CHECK && failure.recoverable
     is DeviceOtaState.Checking,
     is DeviceOtaState.Unsupported,
     is DeviceOtaState.UpdateAvailable,
