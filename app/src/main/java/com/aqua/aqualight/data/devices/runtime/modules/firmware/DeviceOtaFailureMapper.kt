@@ -2,24 +2,27 @@ package com.aqua.aqualight.data.devices.runtime.modules.firmware
 
 import com.aqua.aqualight.application.devices.DeviceOtaFailure
 import com.aqua.aqualight.application.devices.DeviceOtaFailureReason
+import com.aqua.aqualight.application.devices.DeviceOtaFailureStage
 import com.aqua.aqualight.data.devices.runtime.core.DeviceRuntimeCommandOutcome
 import java.io.IOException
 
 internal object DeviceOtaFailureMapper {
 
-    fun availability(error: Throwable): DeviceOtaFailure = if (error.hasIoCause()) {
-        simpleFailure(
-            reason = DeviceOtaFailureReason.CONNECTION,
-            recoverable = true,
-            message = error.message.orEmpty()
-        )
-    } else {
-        simpleFailure(
-            reason = DeviceOtaFailureReason.CHECK_FAILED,
-            recoverable = true,
-            message = error.message.orEmpty()
-        )
-    }
+    fun availability(error: Throwable): DeviceOtaFailure = (
+        if (error.hasIoCause()) {
+            simpleFailure(
+                reason = DeviceOtaFailureReason.CONNECTION,
+                recoverable = true,
+                message = error.message.orEmpty()
+            )
+        } else {
+            simpleFailure(
+                reason = DeviceOtaFailureReason.CHECK_FAILED,
+                recoverable = true,
+                message = error.message.orEmpty()
+            )
+        }
+        ).copy(stage = DeviceOtaFailureStage.AVAILABILITY_CHECK)
 
     fun command(outcome: DeviceRuntimeCommandOutcome<*>): DeviceOtaFailure = when (outcome) {
         is DeviceRuntimeCommandOutcome.NotConnected,

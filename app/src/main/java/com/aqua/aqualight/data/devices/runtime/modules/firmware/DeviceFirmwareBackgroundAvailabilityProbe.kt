@@ -28,16 +28,19 @@ class DeviceFirmwareBackgroundAvailabilityProbe(
         validateManifest(manifest)
 
         val compatibleArtifacts = planner.compatibleArtifacts(snapshot, manifest)
-        require(compatibleArtifacts.isNotEmpty()) {
-            "No compatible OTA artifact found for durable device metadata."
-        }
-        require(compatibleArtifacts.size == 1) {
+        require(compatibleArtifacts.size <= 1) {
             "Ambiguous OTA manifest: ${compatibleArtifacts.size} artifacts match durable metadata."
         }
 
-        val artifact = compatibleArtifacts.single()
-        validateArtifact(snapshot, manifest, artifact)
         val currentVersion = snapshot.firmwareVersion
+        val artifact = compatibleArtifacts.singleOrNull()
+            ?: return@runCatching DeviceFirmwareAvailabilityHint.UpToDate(
+                deviceUid = snapshot.deviceUid.value,
+                deviceName = snapshot.title,
+                currentVersion = currentVersion,
+                targetVersion = currentVersion
+            )
+        validateArtifact(snapshot, manifest, artifact)
         val targetVersion = artifact.firmware.version
 
         if (DeviceFirmwareVersionComparator.compare(targetVersion, currentVersion) <= 0) {

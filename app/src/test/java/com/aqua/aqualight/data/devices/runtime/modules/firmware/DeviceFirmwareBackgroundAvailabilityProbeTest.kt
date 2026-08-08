@@ -38,6 +38,34 @@ class DeviceFirmwareBackgroundAvailabilityProbeTest {
     }
 
     @Test
+    fun missingIdentityArtifactProducesUpToDateHint() {
+        val exact = artifact()
+        val other = exact.copy(
+            compatibility = exact.compatibility.copy(model = "dose_pro_4")
+        )
+
+        val hint = probe.evaluate(
+            snapshot(),
+            manifest(artifacts = listOf(other))
+        ).getOrThrow() as DeviceFirmwareAvailabilityHint.UpToDate
+
+        assertEquals("1.0.0", hint.currentVersion)
+        assertEquals("1.0.0", hint.targetVersion)
+    }
+
+    @Test
+    fun matchingIdentityWithWrongEnvironmentFailsClosed() {
+        val wrongEnv = artifact().copy(env = "dosing_dose_pro_4")
+
+        val failure = probe.evaluate(
+            snapshot(),
+            manifest(artifacts = listOf(wrongEnv))
+        ).exceptionOrNull()
+
+        assertTrue(failure?.message.orEmpty().contains("dosing_dose_pro_2"))
+    }
+
+    @Test
     fun staticCapabilityDriftFailsClosed() {
         val exact = artifact()
         val drifted = exact.copy(

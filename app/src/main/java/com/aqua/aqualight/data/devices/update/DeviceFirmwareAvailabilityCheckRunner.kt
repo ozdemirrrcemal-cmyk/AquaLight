@@ -10,6 +10,7 @@ import com.aqua.aqualight.data.auth.OwnerTokenValidationResult
 import com.aqua.aqualight.data.devices.model.DeviceSnapshot
 import com.aqua.aqualight.data.devices.runtime.modules.firmware.DeviceFirmwareAvailabilityHint
 import com.aqua.aqualight.data.devices.runtime.modules.firmware.DeviceFirmwareManifest
+import com.aqua.aqualight.data.devices.runtime.modules.firmware.DeviceFirmwareManifestNotPublishedException
 import com.aqua.aqualight.platform.notifications.DeviceFirmwareUpdateNotificationOperations
 
 internal class DeviceFirmwareAvailabilityCheckRunner(
@@ -112,11 +113,32 @@ internal class DeviceFirmwareAvailabilityCheckRunner(
         ownerUid: String,
         snapshots: List<DeviceSnapshot>
     ): DeviceFirmwareAvailabilityCheckOutcome {
-        val manifest = manifestLoader(DEVICE_FIRMWARE_MANIFEST_URL).getOrNull()
-        return if (manifest == null) {
-            retryOutcome(DeviceFirmwareAvailabilityFailureStage.MANIFEST)
+        return manifestLoader(DEVICE_FIRMWARE_MANIFEST_URL).fold(
+            onSuccess = { manifest -> evaluator.evaluate(ownerUid, snapshots, manifest) },
+            onFailure = { error ->
+                if (error is DeviceFirmwareManifestNotPublishedException) {
+                    clearUnpublishedAvailability(ownerUid, snapshots)
+                } else {
+                    retryOutcome(DeviceFirmwareAvailabilityFailureStage.MANIFEST)
+                }
+            }
+        )
+    }
+
+    private suspend fun clearUnpublishedAvailability(
+        ownerUid: String,
+        snapshots: List<DeviceSnapshot>
+    ): DeviceFirmwareAvailabilityCheckOutcome {
+        for (snapshot in snapshots) {
+            if (!isOwnerActive(ownerUid)) {
+                return DeviceFirmwareAvailabilityCheckOutcome.OwnerChanged
+            }
+            notifications.clearAvailability(ownerUid, snapshot.deviceUid.value)
+        }
+        return if (isOwnerActive(ownerUid)) {
+            DeviceFirmwareAvailabilityCheckOutcome.Completed
         } else {
-            evaluator.evaluate(ownerUid, snapshots, manifest)
+            DeviceFirmwareAvailabilityCheckOutcome.OwnerChanged
         }
     }
 
