@@ -5,6 +5,7 @@ import com.aqua.aqualight.application.devices.DeviceFirmwareReleaseContent
 import com.aqua.aqualight.application.devices.DeviceOtaFailure
 import com.aqua.aqualight.application.devices.DeviceOtaFailureReason
 import com.aqua.aqualight.application.devices.DeviceOtaFailureStage
+import com.aqua.aqualight.ui.tabs.devices.detail.common.DeviceRootPresentationMapper
 import com.aqua.aqualight.ui.tabs.devices.detail.update.DeviceFirmwareUpdateMode
 import com.aqua.aqualight.ui.tabs.devices.detail.update.DeviceFirmwareUpdateUiState
 import org.junit.Assert.assertEquals
@@ -104,10 +105,7 @@ class DeviceFirmwareUpdateHeroPresentationMapperTest {
         )
 
         assertEquals(R.string.device_settings_update_hero_title_failed, presentation.titleRes)
-        assertEquals(
-            DeviceFirmwareUpdateText(R.string.device_settings_update_error_connection),
-            presentation.summary
-        )
+        assertEquals(connectionFailureText(), presentation.summary)
         assertEquals(R.string.device_settings_update_status_failed, presentation.statusTextRes)
         assertEquals(R.color.aqua_status_danger, presentation.statusColorRes)
         assertEquals(
@@ -139,10 +137,7 @@ class DeviceFirmwareUpdateHeroPresentationMapperTest {
             R.string.device_settings_update_hero_title_check_failed,
             presentation.titleRes
         )
-        assertEquals(
-            DeviceFirmwareUpdateText(R.string.device_settings_update_error_connection),
-            presentation.summary
-        )
+        assertEquals(connectionFailureText(), presentation.summary)
         assertEquals(
             R.string.device_settings_update_status_check_failed,
             presentation.statusTextRes
@@ -189,6 +184,12 @@ private fun mapState(
         mode = mode,
         currentVersion = currentVersion,
         targetVersion = targetVersion
+    )
+)
+
+private fun connectionFailureText() = DeviceFirmwareUpdateText(
+    DeviceRootPresentationMapper.otaFailureMessageRes(
+        DeviceOtaFailureReason.CONNECTION
     )
 )
 
