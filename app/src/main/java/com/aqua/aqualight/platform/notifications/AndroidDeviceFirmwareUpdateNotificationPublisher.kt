@@ -1,4 +1,4 @@
-@file:Suppress("TooManyFunctions")
+@file:Suppress("TooManyFunctions", "LongParameterList")
 
 package com.aqua.aqualight.platform.notifications
 
