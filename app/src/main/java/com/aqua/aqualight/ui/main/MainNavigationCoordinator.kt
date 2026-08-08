@@ -14,10 +14,14 @@ import androidx.navigation.ui.setupWithNavController
 import com.aqua.aqualight.R
 import com.aqua.aqualight.application.devices.DeviceFirmwareNotificationRouteDecision
 import com.aqua.aqualight.application.devices.DeviceFirmwareNotificationRouteOperations
+import com.aqua.aqualight.application.devices.DeviceFirmwareNotificationRouteRequest
+import com.aqua.aqualight.application.notifications.DeviceFirmwareNotificationIntentContract
+import com.aqua.aqualight.application.notifications.DeviceFirmwareNotificationKind
 import com.aqua.aqualight.base.BaseActivity
 import com.aqua.aqualight.databinding.ActivityMainBinding
 import com.aqua.aqualight.ui.navigation.AppDestinationContract
 import com.aqua.aqualight.ui.navigation.AppRouteNavigator
+import com.aqua.aqualight.ui.navigation.AppRouteOpenResult
 import com.aqua.aqualight.ui.navigation.CareTaskNotificationRoutePolicy
 import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.launch
@@ -39,6 +43,8 @@ internal class MainNavigationCoordinator(
     private var pendingCareTaskOwnerUid: String = ""
     private var pendingFirmwareDeviceUid: String = ""
     private var pendingFirmwareOwnerUid: String = ""
+    private var pendingFirmwareKind: DeviceFirmwareNotificationKind? = null
+    private var pendingFirmwareTargetVersion: String = ""
     private var nextFirmwareNavigationAttempt: Long = 0L
     private var activeFirmwareNavigationAttempt: Long? = null
     private var bottomBarSetup: Boolean = false
@@ -51,10 +57,27 @@ internal class MainNavigationCoordinator(
             .trim()
         if (firmwareDeviceUid.isNotBlank()) {
             clearPendingNotifications()
-            pendingFirmwareDeviceUid = firmwareDeviceUid
-            pendingFirmwareOwnerUid = intent
-                ?.getStringExtra(MainActivity.EXTRA_OWNER_UID)
+            val kind = DeviceFirmwareNotificationIntentContract.parseKind(
+                intent?.getStringExtra(DeviceFirmwareNotificationIntentContract.EXTRA_KIND)
+            )
+            val targetVersion = intent
+                ?.getStringExtra(
+                    DeviceFirmwareNotificationIntentContract.EXTRA_TARGET_VERSION
+                )
                 .orEmpty()
+                .trim()
+            val validRequest = kind != null &&
+                (kind != DeviceFirmwareNotificationKind.AVAILABILITY || targetVersion.isNotBlank())
+            if (validRequest) {
+                pendingFirmwareDeviceUid = firmwareDeviceUid
+                pendingFirmwareOwnerUid = intent
+                    ?.getStringExtra(MainActivity.EXTRA_OWNER_UID)
+                    .orEmpty()
+                pendingFirmwareKind = kind
+                pendingFirmwareTargetVersion = targetVersion
+            } else {
+                clearConsumedNotificationExtras(intent)
+            }
             return
         }
 
@@ -151,11 +174,9 @@ internal class MainNavigationCoordinator(
     }
 
     private fun consumePendingFirmwareUpdateIfPossible(): Boolean {
-        val deviceUid = pendingFirmwareDeviceUid
-        if (deviceUid.isBlank()) return false
-
+        val request = pendingFirmwareRequest() ?: return false
         val ownerUid = pendingFirmwareOwnerUid
-        return when (firmwareRouteGate.evaluate(deviceUid, ownerUid)) {
+        return when (firmwareRouteGate.evaluate(request, ownerUid)) {
             DeviceFirmwareNotificationRouteDecision.DEFER -> true
             DeviceFirmwareNotificationRouteDecision.REJECT -> {
                 rejectPendingFirmwareUpdate()
@@ -166,7 +187,7 @@ internal class MainNavigationCoordinator(
                         navController.currentDestination
                     )
                 ) {
-                    openPendingFirmwareUpdate(deviceUid, ownerUid)
+                    openPendingFirmwareUpdate(request, ownerUid)
                 }
                 true
             }
@@ -193,46 +214,63 @@ internal class MainNavigationCoordinator(
         }
     }
 
-    private fun openPendingFirmwareUpdate(deviceUid: String, ownerUid: String) {
+    private fun openPendingFirmwareUpdate(
+        request: DeviceFirmwareNotificationRouteRequest,
+        ownerUid: String
+    ) {
         if (activeFirmwareNavigationAttempt != null) return
 
         nextFirmwareNavigationAttempt += 1L
         val attempt = nextFirmwareNavigationAttempt
         activeFirmwareNavigationAttempt = attempt
         binding.navHost.post {
-            if (!isCurrentFirmwareAttempt(attempt, deviceUid, ownerUid)) {
+            if (!isCurrentFirmwareAttempt(attempt, request, ownerUid)) {
                 return@post
             }
-            when (firmwareRouteGate.evaluate(deviceUid, ownerUid)) {
+            when (firmwareRouteGate.evaluate(request, ownerUid)) {
                 DeviceFirmwareNotificationRouteDecision.DEFER ->
                     activeFirmwareNavigationAttempt = null
                 DeviceFirmwareNotificationRouteDecision.REJECT ->
                     rejectPendingFirmwareUpdate()
                 DeviceFirmwareNotificationRouteDecision.OPEN ->
-                    navigateToFirmwareUpdate(attempt, deviceUid, ownerUid)
+                    navigateToFirmwareUpdate(attempt, request, ownerUid)
             }
         }
     }
 
     private fun navigateToFirmwareUpdate(
         attempt: Long,
-        deviceUid: String,
+        request: DeviceFirmwareNotificationRouteRequest,
         ownerUid: String
     ) {
         runCatching {
-            AppRouteNavigator.openDeviceFirmwareUpdate(navController, deviceUid)
-        }.onSuccess {
-            if (activeFirmwareNavigationAttempt == attempt) {
-                clearPendingFirmwareUpdate()
-                clearConsumedNotificationExtras(host.intent)
-                host.lifecycleScope.launch {
-                    firmwareRouteGate.acknowledgeOpened(deviceUid, ownerUid)
-                }
+            AppRouteNavigator.openDeviceFirmwareUpdate(navController, request.deviceUid)
+        }.onSuccess { result ->
+            when (result) {
+                AppRouteOpenResult.OPENED,
+                AppRouteOpenResult.ALREADY_OPEN ->
+                    completeFirmwareNavigation(attempt, request, ownerUid)
+                AppRouteOpenResult.REJECTED ->
+                    rejectPendingFirmwareUpdate()
             }
         }.onFailure {
             if (activeFirmwareNavigationAttempt == attempt) {
                 activeFirmwareNavigationAttempt = null
             }
+        }
+    }
+
+    private fun completeFirmwareNavigation(
+        attempt: Long,
+        request: DeviceFirmwareNotificationRouteRequest,
+        ownerUid: String
+    ) {
+        if (activeFirmwareNavigationAttempt != attempt) return
+
+        clearPendingFirmwareUpdate()
+        clearConsumedNotificationExtras(host.intent)
+        host.lifecycleScope.launch {
+            firmwareRouteGate.acknowledgeOpened(request, ownerUid)
         }
     }
 
@@ -252,12 +290,25 @@ internal class MainNavigationCoordinator(
 
     private fun isCurrentFirmwareAttempt(
         attempt: Long,
-        deviceUid: String,
+        request: DeviceFirmwareNotificationRouteRequest,
         ownerUid: String
     ): Boolean {
         return activeFirmwareNavigationAttempt == attempt &&
-            pendingFirmwareDeviceUid == deviceUid &&
+            pendingFirmwareDeviceUid == request.deviceUid &&
+            pendingFirmwareKind == request.kind &&
+            pendingFirmwareTargetVersion == request.targetVersion &&
             pendingFirmwareOwnerUid.trim() == ownerUid.trim()
+    }
+
+    private fun pendingFirmwareRequest(): DeviceFirmwareNotificationRouteRequest? {
+        val kind = pendingFirmwareKind ?: return null
+        val deviceUid = pendingFirmwareDeviceUid.trim()
+        if (deviceUid.isBlank()) return null
+        return DeviceFirmwareNotificationRouteRequest(
+            deviceUid = deviceUid,
+            kind = kind,
+            targetVersion = pendingFirmwareTargetVersion.trim()
+        )
     }
 
     private fun rejectPendingFirmwareUpdate() {
@@ -268,6 +319,8 @@ internal class MainNavigationCoordinator(
     private fun clearPendingFirmwareUpdate() {
         pendingFirmwareDeviceUid = ""
         pendingFirmwareOwnerUid = ""
+        pendingFirmwareKind = null
+        pendingFirmwareTargetVersion = ""
         activeFirmwareNavigationAttempt = null
     }
 
@@ -281,6 +334,8 @@ internal class MainNavigationCoordinator(
         intent?.removeExtra(MainActivity.EXTRA_OPEN_DEVICE_FIRMWARE_UID)
         intent?.removeExtra(MainActivity.EXTRA_START_IN_APP)
         intent?.removeExtra(MainActivity.EXTRA_OWNER_UID)
+        intent?.removeExtra(DeviceFirmwareNotificationIntentContract.EXTRA_KIND)
+        intent?.removeExtra(DeviceFirmwareNotificationIntentContract.EXTRA_TARGET_VERSION)
     }
 
     private fun selectBottomNavItemSafely(itemId: Int) {

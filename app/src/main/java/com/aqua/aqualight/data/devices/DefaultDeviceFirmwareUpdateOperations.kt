@@ -3,6 +3,7 @@ package com.aqua.aqualight.data.devices
 import com.aqua.aqualight.application.devices.DEVICE_FIRMWARE_MANIFEST_URL
 import com.aqua.aqualight.application.devices.DeviceFirmwareCommandResult
 import com.aqua.aqualight.application.devices.DeviceFirmwareUpdateOperations
+import com.aqua.aqualight.application.devices.DeviceOtaFailureStage
 import com.aqua.aqualight.application.devices.DeviceOtaState
 import com.aqua.aqualight.application.devices.PreparedDeviceFirmwareUpdate
 import com.aqua.aqualight.data.devices.model.DeviceUid
@@ -20,7 +21,7 @@ import kotlinx.coroutines.cancel
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.distinctUntilChangedBy
 import kotlinx.coroutines.flow.drop
-import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.mapNotNull
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
@@ -166,13 +167,15 @@ internal class DefaultDeviceFirmwareUpdateOperations(
         publisherJobs.computeIfAbsent(deviceUid) {
             operationsScope.launch {
                 states
-                    .map { state -> NotificationEmission(state.notificationKey(), state) }
+                    .mapNotNull { state ->
+                        state.notificationKey()?.let { key ->
+                            NotificationEmission(key, state)
+                        }
+                    }
                     .distinctUntilChangedBy(NotificationEmission::key)
                     .collect { emission ->
-                        if (emission.key != null) {
-                            val deviceName = devicesRepository.currentDevice(deviceUid)?.title.orEmpty()
-                            statePublisher(emission.state, deviceName)
-                        }
+                        val deviceName = devicesRepository.currentDevice(deviceUid)?.title.orEmpty()
+                        statePublisher(emission.state, deviceName)
                     }
             }
         }
@@ -185,7 +188,7 @@ internal class DefaultDeviceFirmwareUpdateOperations(
     }
 
     private data class NotificationEmission(
-        val key: String?,
+        val key: String,
         val state: DeviceOtaState
     )
 }
@@ -303,7 +306,8 @@ private fun String?.releaseLocaleOrNull(): String? {
 private fun DeviceOtaState.allowsPassiveAvailabilityRefresh(): Boolean = when (this) {
     is DeviceOtaState.Idle,
     is DeviceOtaState.UpToDate -> true
-    is DeviceOtaState.Failed -> failure.recoverable
+    is DeviceOtaState.Failed ->
+        failure.stage == DeviceOtaFailureStage.AVAILABILITY_CHECK && failure.recoverable
     is DeviceOtaState.Checking,
     is DeviceOtaState.Unsupported,
     is DeviceOtaState.UpdateAvailable,
@@ -315,7 +319,6 @@ private fun DeviceOtaState.allowsPassiveAvailabilityRefresh(): Boolean = when (t
 }
 
 private fun DeviceOtaState.notificationKey(): String? = when (this) {
-    is DeviceOtaState.UpdateAvailable -> "available:${plan.targetVersion}"
     is DeviceOtaState.Starting -> "starting:${plan.targetVersion}"
     is DeviceOtaState.InProgress ->
         "progress:$targetVersion:$phase:${progressPermille.toNotificationProgressPercent()}"
@@ -323,13 +326,20 @@ private fun DeviceOtaState.notificationKey(): String? = when (this) {
         "recovering:$targetVersion:${progressPermille.toNotificationProgressPercent()}"
     is DeviceOtaState.RestartRequired -> "restart:$targetVersion:$restartScheduled"
     is DeviceOtaState.Succeeded -> "succeeded:$targetVersion"
-    is DeviceOtaState.Failed -> with(failure) {
-        "failed:$reason:$code:$field:$httpStatus:$recoverable"
+    is DeviceOtaState.Failed -> if (
+        failure.stage == DeviceOtaFailureStage.UPDATE_EXECUTION
+    ) {
+        with(failure) {
+            "failed:$stage:$reason:$code:$field:$httpStatus:$recoverable"
+        }
+    } else {
+        null
     }
     is DeviceOtaState.Idle,
     is DeviceOtaState.Checking,
     is DeviceOtaState.Unsupported,
-    is DeviceOtaState.UpToDate -> null
+    is DeviceOtaState.UpToDate,
+    is DeviceOtaState.UpdateAvailable -> null
 }
 
 private fun Int.toNotificationProgressPercent(): Int {

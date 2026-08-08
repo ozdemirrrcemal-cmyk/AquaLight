@@ -2,23 +2,31 @@ package com.aqua.aqualight.data.devices.runtime.modules.firmware
 
 import com.aqua.aqualight.application.devices.DeviceOtaFailure
 import com.aqua.aqualight.application.devices.DeviceOtaFailureReason
+import com.aqua.aqualight.application.devices.DeviceOtaFailureStage
 import com.aqua.aqualight.data.devices.runtime.core.DeviceRuntimeCommandOutcome
 import java.io.IOException
 
 internal object DeviceOtaFailureMapper {
 
-    fun availability(error: Throwable): DeviceOtaFailure = if (error.hasIoCause()) {
-        simpleFailure(
-            reason = DeviceOtaFailureReason.CONNECTION,
-            recoverable = true,
-            message = error.message.orEmpty()
-        )
-    } else {
-        simpleFailure(
-            reason = DeviceOtaFailureReason.CHECK_FAILED,
-            recoverable = true,
-            message = error.message.orEmpty()
-        )
+    fun availability(error: Throwable): DeviceOtaFailure {
+        val manifestHttpFailure = error.findManifestHttpFailure()
+        val failure = when {
+            manifestHttpFailure != null -> DeviceManifestHttpFailureClassifier.map(
+                manifestHttpFailure,
+                error.message.orEmpty()
+            )
+            error.hasIoCause() -> simpleFailure(
+                reason = DeviceOtaFailureReason.CONNECTION,
+                recoverable = true,
+                message = error.message.orEmpty()
+            )
+            else -> simpleFailure(
+                reason = DeviceOtaFailureReason.CHECK_FAILED,
+                recoverable = true,
+                message = error.message.orEmpty()
+            )
+        }
+        return failure.copy(stage = DeviceOtaFailureStage.AVAILABILITY_CHECK)
     }
 
     fun command(outcome: DeviceRuntimeCommandOutcome<*>): DeviceOtaFailure = when (outcome) {
@@ -153,6 +161,44 @@ private object DeviceOtaSnapshotFailureClassifier {
     }
 }
 
+private object DeviceManifestHttpFailureClassifier {
+
+    fun map(
+        error: DeviceFirmwareManifestHttpException,
+        message: String
+    ): DeviceOtaFailure {
+        val disposition = when (error.statusCode) {
+            HTTP_UNAUTHORIZED,
+            HTTP_FORBIDDEN -> RELEASE_ACCESS_DENIED
+            HTTP_NOT_FOUND -> RELEASE_UNAVAILABLE
+            HTTP_REQUEST_TIMEOUT -> CONNECTION
+            HTTP_TOO_MANY_REQUESTS -> RELEASE_RATE_LIMITED
+            in HTTP_REDIRECT_START..HTTP_REDIRECT_END -> RELEASE_REDIRECT_FAILED
+            in HTTP_CLIENT_ERROR_START..HTTP_CLIENT_ERROR_END -> RELEASE_REQUEST_REJECTED
+            in HTTP_SERVER_ERROR_START..HTTP_SERVER_ERROR_END -> RELEASE_SERVER_UNAVAILABLE
+            else -> CONNECTION
+        }
+        return disposition.toFailure(
+            DeviceOtaFailureDiagnostics(
+                httpStatus = error.statusCode,
+                message = message
+            )
+        )
+    }
+
+    private const val HTTP_REDIRECT_START = 300
+    private const val HTTP_REDIRECT_END = 399
+    private const val HTTP_CLIENT_ERROR_START = 400
+    private const val HTTP_UNAUTHORIZED = 401
+    private const val HTTP_FORBIDDEN = 403
+    private const val HTTP_NOT_FOUND = 404
+    private const val HTTP_REQUEST_TIMEOUT = 408
+    private const val HTTP_TOO_MANY_REQUESTS = 429
+    private const val HTTP_CLIENT_ERROR_END = 499
+    private const val HTTP_SERVER_ERROR_START = 500
+    private const val HTTP_SERVER_ERROR_END = 599
+}
+
 private object DeviceOtaHttpFailureClassifier {
 
     fun map(diagnostics: DeviceOtaFailureDiagnostics): DeviceOtaFailure =
@@ -256,6 +302,11 @@ private fun DeviceFirmwareOtaSnapshot.toDiagnostics() = DeviceOtaFailureDiagnost
     httpStatus = httpStatus,
     message = lastError
 )
+
+private fun Throwable.findManifestHttpFailure(): DeviceFirmwareManifestHttpException? =
+    generateSequence(this) { current -> current.cause }
+        .filterIsInstance<DeviceFirmwareManifestHttpException>()
+        .firstOrNull()
 
 private fun Throwable.hasIoCause(): Boolean =
     generateSequence(this) { current -> current.cause }.any { cause -> cause is IOException }

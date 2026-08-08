@@ -49,7 +49,7 @@ interface AppContainer {
     val notificationDispatchUseCase: NotificationDispatchUseCase
     val deviceFirmwareNotificationRouteOperations:
         DeviceFirmwareNotificationRouteOperations
-        get() = DeviceFirmwareNotificationRouteOperations {
+        get() = DeviceFirmwareNotificationRouteOperations { _ ->
             DeviceFirmwareNotificationRouteDecision.DEFER
         }
     val authenticatedOwnerIdentity: AuthenticatedOwnerIdentity

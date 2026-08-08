@@ -74,6 +74,12 @@ enum class DeviceOtaProgressPhase {
     VERIFYING
 }
 
+/** Identifies whether a failure happened before or after an OTA installation was started. */
+enum class DeviceOtaFailureStage {
+    AVAILABILITY_CHECK,
+    UPDATE_EXECUTION
+}
+
 /** Stable user-facing OTA failure categories derived from the exact firmware contract. */
 enum class DeviceOtaFailureReason {
     CHECK_FAILED,
@@ -114,7 +120,8 @@ enum class DeviceOtaFailureReason {
  * Typed OTA failure retained across application and presentation layers.
  *
  * Firmware diagnostics remain available for support and tests, while UI code renders only the
- * stable [reason] through localized resources.
+ * stable [reason] through localized resources. [stage] prevents an availability-check failure
+ * from being presented or notified as an interrupted installation.
  */
 data class DeviceOtaFailure(
     val reason: DeviceOtaFailureReason,
@@ -122,7 +129,14 @@ data class DeviceOtaFailure(
     val code: String = "",
     val field: String = "",
     val httpStatus: Int = 0,
-    val diagnosticMessage: String = ""
+    val diagnosticMessage: String = "",
+    val stage: DeviceOtaFailureStage = if (
+        reason == DeviceOtaFailureReason.CHECK_FAILED
+    ) {
+        DeviceOtaFailureStage.AVAILABILITY_CHECK
+    } else {
+        DeviceOtaFailureStage.UPDATE_EXECUTION
+    }
 )
 
 sealed interface DeviceOtaState {

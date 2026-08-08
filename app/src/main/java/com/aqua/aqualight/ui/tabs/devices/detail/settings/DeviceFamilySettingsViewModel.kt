@@ -8,6 +8,7 @@ import com.aqua.aqualight.application.devices.DeviceFirmwareUpdateOperations
 import com.aqua.aqualight.application.devices.DeviceLightProtectionSnapshot
 import com.aqua.aqualight.application.devices.DeviceLightProtectionThresholdPolicy
 import com.aqua.aqualight.application.devices.DeviceOtaFailure
+import com.aqua.aqualight.application.devices.DeviceOtaFailureStage
 import com.aqua.aqualight.application.devices.DeviceOtaState
 import com.aqua.aqualight.application.devices.DeviceRootCatalogState
 import com.aqua.aqualight.application.devices.DeviceRootSnapshot
@@ -231,7 +232,7 @@ class DeviceFamilySettingsViewModel(
             is DeviceSettingsUpdateActionState.UpdateInProgress ->
                 eventChannel.trySend(DeviceFamilySettingsEvent.OpenFirmwareUpdate)
             is DeviceSettingsUpdateActionState.Failed -> {
-                if (state.failure.recoverable) {
+                if (state.failure.canRetryAvailabilityCheck) {
                     checkForUpdates()
                 } else {
                     eventChannel.trySend(DeviceFamilySettingsEvent.OpenFirmwareUpdate)
@@ -519,12 +520,16 @@ sealed interface DeviceSettingsUpdateActionState {
     data object Unsupported : DeviceSettingsUpdateActionState
 }
 
+internal val DeviceOtaFailure.canRetryAvailabilityCheck: Boolean
+    get() = stage == DeviceOtaFailureStage.AVAILABILITY_CHECK && recoverable
+
 private fun DeviceSettingsUpdateActionState.allowsAvailabilityCheck(
     automatic: Boolean
 ): Boolean = when (this) {
     DeviceSettingsUpdateActionState.Idle,
     DeviceSettingsUpdateActionState.UpToDate -> true
-    is DeviceSettingsUpdateActionState.Failed -> !automatic && failure.recoverable
+    is DeviceSettingsUpdateActionState.Failed ->
+        !automatic && failure.canRetryAvailabilityCheck
     DeviceSettingsUpdateActionState.Checking,
     is DeviceSettingsUpdateActionState.UpdateAvailable,
     is DeviceSettingsUpdateActionState.UpdateInProgress,

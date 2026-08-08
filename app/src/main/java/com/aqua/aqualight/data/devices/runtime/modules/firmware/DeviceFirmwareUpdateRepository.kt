@@ -1,5 +1,6 @@
 package com.aqua.aqualight.data.devices.runtime.modules.firmware
 
+import com.aqua.aqualight.application.devices.DeviceFirmwareReleaseContent
 import com.aqua.aqualight.data.devices.model.DeviceSnapshot
 import com.aqua.aqualight.data.devices.model.DeviceUid
 import com.aqua.aqualight.data.devices.runtime.core.DeviceRuntimeCommandOutcome
@@ -43,10 +44,15 @@ class DeviceFirmwareUpdateRepository(
         manifestUrl: String,
         applyNow: Boolean = true
     ): Result<DeviceFirmwareAvailability> {
-        return runCatching {
-            val manifest = fetchManifest(manifestUrl).getOrThrow()
-            evaluateUpdate(snapshot, manifest, applyNow).getOrThrow()
+        val manifestResult = fetchManifest(manifestUrl)
+        val manifest = manifestResult.getOrElse { error ->
+            return if (error is DeviceFirmwareManifestNotPublishedException) {
+                noPublishedRelease(snapshot)
+            } else {
+                Result.failure(error)
+            }
         }
+        return evaluateUpdate(snapshot, manifest, applyNow)
     }
 
     suspend fun fetchAndPlanUpdate(
@@ -79,5 +85,17 @@ class DeviceFirmwareUpdateRepository(
         deviceUid: DeviceUid
     ): DeviceRuntimeCommandOutcome<DeviceFirmwareOtaClearResult> {
         return runtime.clearOtaStatus(deviceUid)
+    }
+
+    private fun noPublishedRelease(
+        snapshot: DeviceSnapshot
+    ): Result<DeviceFirmwareAvailability> = runCatching {
+        val currentVersion = snapshot.firmwareVersion.trim()
+        require(currentVersion.isNotBlank()) { "Current firmware version is not known." }
+        DeviceFirmwareAvailability.UpToDate(
+            currentVersion = currentVersion,
+            latestVersion = currentVersion,
+            releaseContent = DeviceFirmwareReleaseContent.EMPTY
+        )
     }
 }

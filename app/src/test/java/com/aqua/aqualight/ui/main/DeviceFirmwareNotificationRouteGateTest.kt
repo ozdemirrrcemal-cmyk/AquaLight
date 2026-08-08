@@ -2,6 +2,8 @@ package com.aqua.aqualight.ui.main
 
 import com.aqua.aqualight.application.devices.DeviceFirmwareNotificationRouteDecision
 import com.aqua.aqualight.application.devices.DeviceFirmwareNotificationRouteOperations
+import com.aqua.aqualight.application.devices.DeviceFirmwareNotificationRouteRequest
+import com.aqua.aqualight.application.notifications.DeviceFirmwareNotificationKind
 import kotlinx.coroutines.test.runTest
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
@@ -17,13 +19,13 @@ class DeviceFirmwareNotificationRouteGateTest {
 
         assertEquals(
             DeviceFirmwareNotificationRouteDecision.OPEN,
-            gate.evaluate(DEVICE_UID, OWNER_A)
+            gate.evaluate(availabilityRequest(), OWNER_A)
         )
         session = authenticated(OWNER_B)
 
         assertEquals(
             DeviceFirmwareNotificationRouteDecision.REJECT,
-            gate.evaluate(DEVICE_UID, OWNER_A)
+            gate.evaluate(availabilityRequest(), OWNER_A)
         )
     }
 
@@ -34,13 +36,13 @@ class DeviceFirmwareNotificationRouteGateTest {
 
         assertEquals(
             DeviceFirmwareNotificationRouteDecision.OPEN,
-            gate.evaluate(DEVICE_UID, OWNER_A)
+            gate.evaluate(availabilityRequest(), OWNER_A)
         )
         operations.decision = DeviceFirmwareNotificationRouteDecision.REJECT
 
         assertEquals(
             DeviceFirmwareNotificationRouteDecision.REJECT,
-            gate.evaluate(DEVICE_UID, OWNER_A)
+            gate.evaluate(availabilityRequest(), OWNER_A)
         )
     }
 
@@ -53,7 +55,7 @@ class DeviceFirmwareNotificationRouteGateTest {
 
         assertEquals(
             DeviceFirmwareNotificationRouteDecision.DEFER,
-            gate.evaluate(DEVICE_UID, OWNER_A)
+            gate.evaluate(availabilityRequest(), OWNER_A)
         )
     }
 
@@ -72,19 +74,38 @@ class DeviceFirmwareNotificationRouteGateTest {
 
         assertEquals(
             DeviceFirmwareNotificationRouteDecision.DEFER,
-            gate.evaluate(DEVICE_UID, OWNER_A)
+            gate.evaluate(availabilityRequest(), OWNER_A)
         )
-        assertTrue(operations.evaluatedDeviceUids.isEmpty())
+        assertTrue(operations.evaluatedRequests.isEmpty())
     }
 
     @Test
-    fun successfulNavigationAcknowledgementDismissesExactAvailability() = runTest {
+    fun successfulAvailabilityNavigationAcknowledgesExactAvailability() = runTest {
         val operations = FakeRouteOperations()
         val gate = gate({ authenticated(OWNER_A) }, operations)
 
-        gate.acknowledgeOpened(" $DEVICE_UID ", " $OWNER_A ")
+        gate.acknowledgeOpened(
+            availabilityRequest(deviceUid = " $DEVICE_UID "),
+            " $OWNER_A "
+        )
 
         assertEquals(listOf("$OWNER_A:$DEVICE_UID"), operations.dismissedAvailability)
+    }
+
+    @Test
+    fun operationNavigationDoesNotDismissAvailabilityLedger() = runTest {
+        val operations = FakeRouteOperations()
+        val gate = gate({ authenticated(OWNER_A) }, operations)
+
+        gate.acknowledgeOpened(
+            DeviceFirmwareNotificationRouteRequest(
+                deviceUid = DEVICE_UID,
+                kind = DeviceFirmwareNotificationKind.OPERATION
+            ),
+            OWNER_A
+        )
+
+        assertTrue(operations.dismissedAvailability.isEmpty())
     }
 
     private fun gate(
@@ -104,15 +125,25 @@ class DeviceFirmwareNotificationRouteGateTest {
         )
     }
 
+    private fun availabilityRequest(
+        deviceUid: String = DEVICE_UID
+    ) = DeviceFirmwareNotificationRouteRequest(
+        deviceUid = deviceUid,
+        kind = DeviceFirmwareNotificationKind.AVAILABILITY,
+        targetVersion = TARGET_VERSION
+    )
+
     private class FakeRouteOperations(
         var decision: DeviceFirmwareNotificationRouteDecision =
             DeviceFirmwareNotificationRouteDecision.OPEN
     ) : DeviceFirmwareNotificationRouteOperations {
-        val evaluatedDeviceUids = mutableListOf<String>()
+        val evaluatedRequests = mutableListOf<DeviceFirmwareNotificationRouteRequest>()
         val dismissedAvailability = mutableListOf<String>()
 
-        override fun evaluate(deviceUid: String): DeviceFirmwareNotificationRouteDecision {
-            evaluatedDeviceUids += deviceUid
+        override fun evaluate(
+            request: DeviceFirmwareNotificationRouteRequest
+        ): DeviceFirmwareNotificationRouteDecision {
+            evaluatedRequests += request
             return decision
         }
 
@@ -125,5 +156,6 @@ class DeviceFirmwareNotificationRouteGateTest {
         const val OWNER_A = "owner-a"
         const val OWNER_B = "owner-b"
         const val DEVICE_UID = "device-a"
+        const val TARGET_VERSION = "1.1.0"
     }
 }

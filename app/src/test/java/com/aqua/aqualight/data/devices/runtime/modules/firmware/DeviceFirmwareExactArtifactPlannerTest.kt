@@ -62,30 +62,33 @@ class DeviceFirmwareExactArtifactPlannerTest {
     }
 
     @Test
-    fun `zero compatible artifacts fail closed`() {
+    fun `zero identity-compatible artifacts resolve as no published update`() {
         val exact = artifact()
         val other = exact.copy(
             compatibility = exact.compatibility.copy(model = "dose_pro_4")
         )
 
-        val failure = planner.evaluateUpdate(
+        val availability = planner.evaluateUpdate(
             snapshot(),
             manifest(artifacts = listOf(other))
-        ).exceptionOrNull()
+        ).getOrThrow() as DeviceFirmwareAvailability.UpToDate
 
-        assertTrue(failure?.message.orEmpty().contains("No compatible OTA artifact"))
+        assertEquals("1.0.0", availability.currentVersion)
+        assertEquals("1.0.0", availability.latestVersion)
+        assertTrue(!availability.releaseContent.isPresent)
     }
 
     @Test
-    fun `matching identity with wrong environment is rejected`() {
+    fun `nonmatching environment resolves as no published update`() {
         val wrongEnv = artifact().copy(env = "dosing_dose_pro_4")
 
-        val failure = planner.evaluateUpdate(
+        val availability = planner.evaluateUpdate(
             snapshot(),
             manifest(artifacts = listOf(wrongEnv))
-        ).exceptionOrNull()
+        ).getOrThrow() as DeviceFirmwareAvailability.UpToDate
 
-        assertTrue(failure?.message.orEmpty().contains("No compatible OTA artifact"))
+        assertEquals("1.0.0", availability.currentVersion)
+        assertEquals("1.0.0", availability.latestVersion)
     }
 
     @Test

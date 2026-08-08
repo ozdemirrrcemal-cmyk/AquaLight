@@ -3,6 +3,7 @@ package com.aqua.aqualight.data.devices
 import com.aqua.aqualight.application.devices.DeviceFirmwareReleaseContent
 import com.aqua.aqualight.application.devices.DeviceOtaFailure
 import com.aqua.aqualight.application.devices.DeviceOtaFailureReason
+import com.aqua.aqualight.application.devices.DeviceOtaFailureStage
 import com.aqua.aqualight.application.devices.DeviceOtaState
 import com.aqua.aqualight.application.devices.PreparedDeviceFirmwareUpdate
 import com.aqua.aqualight.data.devices.model.DeviceUid
@@ -51,7 +52,8 @@ class DeviceFirmwareAvailabilityRefreshPolicyTest {
             deviceUid = deviceUid.value,
             failure = DeviceOtaFailure(
                 reason = DeviceOtaFailureReason.CONNECTION,
-                recoverable = true
+                recoverable = true,
+                stage = DeviceOtaFailureStage.AVAILABILITY_CHECK
             )
         )
 

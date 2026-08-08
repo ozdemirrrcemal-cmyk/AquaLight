@@ -78,6 +78,16 @@ data class DeviceAlertNotification(
     val message: String
 )
 
+enum class DeviceFirmwareNotificationKind {
+    AVAILABILITY,
+    OPERATION
+}
+
+data class DeviceFirmwareNotificationRoute(
+    val kind: DeviceFirmwareNotificationKind,
+    val targetVersion: String = ""
+)
+
 data class DeviceUpdateNotification(
     val ownerUid: String,
     val deviceUid: String,
@@ -85,7 +95,10 @@ data class DeviceUpdateNotification(
     val message: String,
     val progressPercent: Int? = null,
     val ongoing: Boolean = false,
-    val actionLabel: String? = null
+    val actionLabel: String? = null,
+    val route: DeviceFirmwareNotificationRoute = DeviceFirmwareNotificationRoute(
+        DeviceFirmwareNotificationKind.OPERATION
+    )
 )
 
 enum class NotificationDispatchResult {
@@ -174,12 +187,12 @@ class NotificationDispatchUseCase(
         }
 
         permissionPolicy.ensureChannels()
-        if (!permissionPolicy.evaluate(category).canDeliver) {
-            return NotificationDispatchResult.SYSTEM_BLOCKED
+        return if (!permissionPolicy.evaluate(category).canDeliver) {
+            NotificationDispatchResult.SYSTEM_BLOCKED
+        } else {
+            render()
+            NotificationDispatchResult.POSTED
         }
-
-        render()
-        return NotificationDispatchResult.POSTED
     }
 }
 

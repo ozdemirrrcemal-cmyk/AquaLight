@@ -17,6 +17,9 @@ import androidx.core.graphics.drawable.DrawableCompat
 import com.aqua.aqualight.R
 import com.aqua.aqualight.application.notifications.CareReminderNotification
 import com.aqua.aqualight.application.notifications.DeviceAlertNotification
+import com.aqua.aqualight.application.notifications.DeviceFirmwareNotificationIntentContract
+import com.aqua.aqualight.application.notifications.DeviceFirmwareNotificationKind
+import com.aqua.aqualight.application.notifications.DeviceFirmwareNotificationRoute
 import com.aqua.aqualight.application.notifications.DeviceUpdateNotification
 import com.aqua.aqualight.application.notifications.NotificationCategory
 import com.aqua.aqualight.application.notifications.NotificationRenderer
@@ -118,7 +121,11 @@ class AndroidNotificationRenderer(
             category = category,
             ownerUid = notification.ownerUid,
             entityId = entityId,
-            intent = deviceUpdateLaunchIntent(notification.ownerUid, entityId)
+            intent = deviceUpdateLaunchIntent(
+                notification.ownerUid,
+                entityId,
+                notification.route
+            )
         )
         val builder = baseBuilder(
             category = category,
@@ -190,7 +197,10 @@ class AndroidNotificationRenderer(
 
     internal fun deviceUpdateLaunchIntent(
         ownerUid: String,
-        deviceUid: String
+        deviceUid: String,
+        route: DeviceFirmwareNotificationRoute = DeviceFirmwareNotificationRoute(
+            DeviceFirmwareNotificationKind.OPERATION
+        )
     ): Intent {
         val normalizedOwner = requireOwnerUid(ownerUid)
         val normalizedDevice = requireDeviceUid(deviceUid)
@@ -200,6 +210,14 @@ class AndroidNotificationRenderer(
             normalizedDevice
         ).apply {
             putExtra(MainActivity.EXTRA_OPEN_DEVICE_FIRMWARE_UID, normalizedDevice)
+            putExtra(
+                DeviceFirmwareNotificationIntentContract.EXTRA_KIND,
+                route.kind.name
+            )
+            putExtra(
+                DeviceFirmwareNotificationIntentContract.EXTRA_TARGET_VERSION,
+                route.targetVersion.trim()
+            )
         }
     }
 

@@ -4,6 +4,10 @@ import android.util.Log
 import com.aqua.aqualight.application.devices.DeviceFirmwareNotificationDestinationPolicy
 import com.aqua.aqualight.application.devices.DeviceFirmwareNotificationRouteDecision
 import com.aqua.aqualight.application.devices.DeviceFirmwareNotificationRouteOperations
+import com.aqua.aqualight.application.devices.DeviceFirmwareNotificationRouteRequest
+import com.aqua.aqualight.application.notifications.DeviceFirmwareNotificationKind
+import com.aqua.aqualight.data.devices.DeviceFirmwareNotificationActionabilityPolicy
+import com.aqua.aqualight.data.devices.model.DeviceSnapshot
 import com.aqua.aqualight.data.devices.model.DeviceUid
 
 /** Resolves notification routes only through the committed authenticated-owner graph. */
@@ -12,13 +16,13 @@ internal class ResolvingDeviceFirmwareNotificationRouteOperations(
 ) : DeviceFirmwareNotificationRouteOperations {
 
     override fun evaluate(
-        deviceUid: String
+        request: DeviceFirmwareNotificationRouteRequest
     ): DeviceFirmwareNotificationRouteDecision {
-        val normalizedDeviceUid = deviceUid.trim()
+        val normalizedDeviceUid = request.deviceUid.trim()
         return if (normalizedDeviceUid.isBlank()) {
             DeviceFirmwareNotificationRouteDecision.REJECT
         } else {
-            evaluateActiveGraph(normalizedDeviceUid)
+            evaluateActiveGraph(request.copy(deviceUid = normalizedDeviceUid))
         }
     }
 
@@ -39,17 +43,36 @@ internal class ResolvingDeviceFirmwareNotificationRouteOperations(
     }
 
     private fun evaluateActiveGraph(
-        deviceUid: String
+        request: DeviceFirmwareNotificationRouteRequest
     ): DeviceFirmwareNotificationRouteDecision {
         return activeGraphOrNull()?.let { activeGraph ->
             val repository = activeGraph.devicesRepository
-            val snapshot = repository.currentDevice(DeviceUid(deviceUid))
+            val snapshot = repository.currentDevice(DeviceUid(request.deviceUid))
             DeviceFirmwareNotificationDestinationPolicy.evaluate(
                 repositoryReady = repository.ready.value,
                 deviceExists = snapshot != null,
-                otaSupported = snapshot?.capabilities?.ota == true
+                otaSupported = snapshot?.capabilities?.ota == true,
+                actionable = snapshot?.let { current ->
+                    request.isActionable(activeGraph, current)
+                } == true
             )
         } ?: DeviceFirmwareNotificationRouteDecision.DEFER
+    }
+
+    private fun DeviceFirmwareNotificationRouteRequest.isActionable(
+        activeGraph: OwnerDependencyGraph,
+        snapshot: DeviceSnapshot
+    ): Boolean = when (kind) {
+        DeviceFirmwareNotificationKind.AVAILABILITY ->
+            DeviceFirmwareNotificationActionabilityPolicy.availability(
+                currentVersion = snapshot.firmwareVersion,
+                targetVersion = targetVersion
+            )
+        DeviceFirmwareNotificationKind.OPERATION ->
+            DeviceFirmwareNotificationActionabilityPolicy.operation(
+                state = activeGraph.firmwareUpdateOperations.observe(deviceUid).value,
+                expectedTargetVersion = targetVersion
+            )
     }
 
     private fun activeGraphOrNull(): OwnerDependencyGraph? {

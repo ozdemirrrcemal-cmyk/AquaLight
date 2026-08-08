@@ -3,6 +3,7 @@
     <string name="device_settings_update_for_device">For %1$s</string>
 
     <string name="device_settings_update_hero_title_checking">Checking for an update</string>
+    <string name="device_settings_update_hero_title_check_failed">Software update could not be checked</string>
     <string name="device_settings_update_hero_title_available">A new software version is ready</string>
     <string name="device_settings_update_hero_title_required">A required software update is ready</string>
     <string name="device_settings_update_hero_title_starting">Preparing your device</string>
@@ -27,6 +28,9 @@
     <string name="device_settings_update_hero_summary_up_to_date_version">Version %1$s is the latest compatible signed release for this device.</string>
     <string name="device_settings_update_hero_summary_up_to_date">The latest compatible signed release is already installed.</string>
     <string name="device_settings_update_hero_summary_unsupported">AquaLight could not find a compatible signed release for this device profile.</string>
+
+    <string name="device_settings_update_status_check_failed">Update check failed</string>
+    <string name="device_settings_update_phase_check_failed">AquaLight could not verify update information. Resolve the issue below and try again.</string>
 
     <string name="device_settings_update_release_warnings_heading">Release-specific notes</string>
     <string name="device_settings_update_release_details_unavailable_title">Detailed release notes were not provided</string>

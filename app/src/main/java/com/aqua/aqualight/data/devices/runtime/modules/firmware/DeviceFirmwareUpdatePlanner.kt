@@ -1,5 +1,6 @@
 package com.aqua.aqualight.data.devices.runtime.modules.firmware
 
+import com.aqua.aqualight.application.devices.DeviceFirmwareReleaseContent
 import com.aqua.aqualight.data.devices.model.DeviceSnapshot
 import java.util.Locale
 
@@ -27,7 +28,12 @@ class DeviceFirmwareUpdatePlanner(
         val currentVersion = snapshot.firmwareVersion
         require(currentVersion.isNotBlank()) { "Current firmware version is not known." }
 
-        val artifact = exactSingleArtifact(snapshot, manifest)
+        val artifact = exactSingleArtifactOrNull(snapshot, manifest)
+            ?: return@runCatching DeviceFirmwareAvailability.UpToDate(
+                currentVersion = currentVersion,
+                latestVersion = currentVersion,
+                releaseContent = DeviceFirmwareReleaseContent.EMPTY
+            )
         validateArtifactAgainstSnapshot(artifact, manifest, snapshot)
         val releaseContent = manifest.releaseNotes.resolve(preferredLocaleTags())
 
@@ -122,27 +128,22 @@ class DeviceFirmwareUpdatePlanner(
         }
     }
 
-    private fun exactSingleArtifact(
+    private fun exactSingleArtifactOrNull(
         snapshot: DeviceSnapshot,
         manifest: DeviceFirmwareManifest
-    ): DeviceFirmwareManifestArtifact {
+    ): DeviceFirmwareManifestArtifact? {
         val compatible = compatibleArtifacts(snapshot, manifest)
-        require(compatible.isNotEmpty()) {
-            "No compatible OTA artifact found for " +
-                "${snapshot.product.productKey}/${snapshot.product.model}/" +
-                "hw ${snapshot.product.hardwareRevision}."
-        }
-        require(compatible.size == 1) {
+        require(compatible.size <= 1) {
             "Ambiguous OTA manifest: ${compatible.size} artifacts match the exact device identity."
         }
-        return compatible.single()
+        return compatible.singleOrNull()
     }
 
     private fun createPlan(
         snapshot: DeviceSnapshot,
         manifest: DeviceFirmwareManifest,
         artifact: DeviceFirmwareManifestArtifact,
-        releaseContent: com.aqua.aqualight.application.devices.DeviceFirmwareReleaseContent,
+        releaseContent: DeviceFirmwareReleaseContent,
         applyNow: Boolean
     ): DeviceFirmwareUpdatePlan {
         val payload = DeviceFirmwareOtaStartPayload(
