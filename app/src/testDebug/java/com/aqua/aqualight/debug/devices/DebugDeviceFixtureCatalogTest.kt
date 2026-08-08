@@ -5,7 +5,7 @@ import com.aqua.aqualight.application.devices.DeviceMenuAccessResult
 import com.aqua.aqualight.application.devices.DeviceMenuUnavailableReason
 import com.aqua.aqualight.application.devices.DeviceRootCatalogState
 import com.aqua.aqualight.application.devices.OwnerDeviceAvailability
-import com.aqua.aqualight.data.devices.model.DeviceFamily
+import com.aqua.aqualight.data.devices.catalog.AqlCommercialDeviceCatalog
 import kotlinx.coroutines.test.runTest
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
@@ -16,18 +16,17 @@ import org.junit.Test
 class DebugDeviceFixtureCatalogTest {
 
     @Test
-    fun fixturesRemainCatalogValidatedForEverySupportedFamily() {
+    fun fixturesCoverEveryCommercialProductExactlyOnce() {
         val fixtures = DebugDeviceFixtureCatalog()
+        val expectedProductKeys = AqlCommercialDeviceCatalog.products
+            .map { product -> product.productKey.value }
+        val actualProductKeys = fixtures.snapshots
+            .map { snapshot -> snapshot.product.productKey }
 
-        assertEquals(
-            setOf(
-                DeviceFamily.LIGHT,
-                DeviceFamily.TIMER,
-                DeviceFamily.DOSING,
-                DeviceFamily.COOLING
-            ),
-            fixtures.snapshots.map { snapshot -> snapshot.product.family }.toSet()
-        )
+        assertEquals(9, expectedProductKeys.size)
+        assertEquals(expectedProductKeys, actualProductKeys)
+        assertEquals(expectedProductKeys.toSet().size, actualProductKeys.toSet().size)
+
         fixtures.snapshots.forEach { snapshot ->
             assertTrue(snapshot.runtimeMetadataGeneration > 0L)
             val root = requireNotNull(fixtures.rootSnapshot(snapshot.deviceUid.value))
@@ -40,7 +39,7 @@ class DebugDeviceFixtureCatalogTest {
     fun fixtureCardsAreClearlyMarkedAndReachable() {
         val items = DebugDeviceFixtureCatalog().listItems()
 
-        assertEquals(4, items.size)
+        assertEquals(9, items.size)
         items.forEach { item ->
             assertTrue(item.deviceUid.startsWith("DEBUG-FIXTURE-"))
             assertTrue(item.displayName.endsWith("[TEST]"))
