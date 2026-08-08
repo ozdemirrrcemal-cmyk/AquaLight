@@ -11,65 +11,76 @@
 
 - [x] Create a dedicated branch from the recorded `main` baseline.
 - [x] Keep every remediation change isolated from `main` until review and CI completion.
-- [ ] Update this checklist in every implementation commit and check only the items verified by that commit.
-- [ ] Record each implementation commit SHA and its test/guard evidence below.
-- [ ] Do not check a phase complete until its focused tests and relevant architecture guards pass.
+- [x] Record every logical implementation commit and its DUN scope before PR validation.
+- [ ] Check a DUN item only after its implementation, focused tests, and relevant architecture guards pass.
 - [ ] Do not merge until the final completion gate is fully checked.
 
 Checkboxes mean:
 
-- `[ ]` not yet verified;
-- `[x]` implemented and verified on the recorded commit.
+- `[ ]` not yet fully verified;
+- `[x]` implemented and verified on the recorded commit/branch head.
 
-## Planned commit sequence
+## Implementation commit sequence
 
 ### Commit 1 — Normalize firmware availability semantics
 
-- [ ] Commit complete.
-- Planned checklist scope: `DUN-001` through `DUN-003`.
-- Target commit message: `Normalize firmware availability semantics`
-- Commit SHA: _pending_
-- Verification evidence: _pending_
+- [x] Implementation committed.
+- [ ] Validation complete.
+- Checklist scope: `DUN-001` through `DUN-003`.
+- Commit: `2266a2f3d45389f1e05031fbc4210f0f75f7300f`
+- Message: `Normalize firmware availability semantics`
+- Evidence added: typed availability/execution failure stage, typed unpublished-manifest HTTP result, foreground/background no-artifact semantics, planner/repository/probe regressions.
+- Remaining gate: PR unit tests, guards, Detekt, Android build, and instrumentation.
 
-### Commit 2 — Separate availability and execution failures
+### Commit 2 — Correct firmware availability presentation
 
-- [ ] Commit complete.
-- Planned checklist scope: `DUN-004` and `DUN-005`.
-- Target commit message: `Separate availability and execution failures`
-- Commit SHA: _pending_
-- Verification evidence: _pending_
+- [x] Implementation committed.
+- [ ] Validation complete.
+- Checklist scope: `DUN-004` and `DUN-005`.
+- Commit: `cf4bc619beefc374953aee3858c0163ca9f6241a`
+- Message: `Correct firmware availability presentation`
+- Evidence added: stage-aware full-screen hero/progress copy, English/Turkish localized resources, presentation mapper regressions.
+- Remaining gate: PR unit tests, resource validation, Detekt, and Android build.
 
 ### Commit 3 — Harden central firmware notification emission
 
-- [ ] Commit complete.
-- Planned checklist scope: `DUN-006` through `DUN-008`.
-- Target commit message: `Harden central firmware notification emission`
-- Commit SHA: _pending_
-- Verification evidence: _pending_
+- [x] Implementation committed.
+- [ ] Validation complete.
+- Checklist scope: `DUN-006` through `DUN-008`.
+- Commit: `f4cda2e3f9da45827712047af39f10a8a9cc2464`
+- Message: `Harden central firmware notification emission`
+- Evidence added: central process-foreground authority, availability-failure suppression, foreground availability suppression, execution-only failure notifications, retry-safe semantic emission, instrumentation regressions.
+- Remaining gate: PR unit/instrumentation tests, notification architecture guards, Detekt, and Android build.
 
 ### Commit 4 — Revalidate firmware notification routes
 
-- [ ] Commit complete.
-- Planned checklist scope: `DUN-009` and `DUN-010`.
-- Target commit message: `Revalidate firmware notification routes`
-- Commit SHA: _pending_
-- Verification evidence: _pending_
+- [x] Implementation committed.
+- [ ] Validation complete.
+- Checklist scope: `DUN-009` and `DUN-010`.
+- Commit: `8506c9fe43affb9154cc23f71d2b277ec79aefe5`
+- Message: `Revalidate firmware notification routes`
+- Evidence added: availability/operation notification kind, target-version metadata, fail-closed intent parsing, owner/device/OTA/actionability revalidation, route gate and intent regressions.
+- Remaining gate: PR unit/instrumentation tests, route architecture guards, Detekt, and Android build.
 
 ### Commit 5 — Make firmware deep-link navigation idempotent
 
-- [ ] Commit complete.
-- Planned checklist scope: `DUN-011` and `DUN-012`.
-- Target commit message: `Make firmware deep-link navigation idempotent`
-- Commit SHA: _pending_
-- Verification evidence: _pending_
+- [x] Implementation committed.
+- [ ] Validation complete.
+- Checklist scope: `DUN-011` and `DUN-012`.
+- Commit: `d055d642a77981583126726fa0840549fc41d21d`
+- Message: `Make firmware deep-link navigation idempotent`
+- Evidence added: current destination/device identity policy, `launchSingleTop`, already-open consume result, semantic acknowledgement isolation, repeated-route regression.
+- Remaining gate: PR navigation tests, Android build/instrumentation, and manual one-Back acceptance.
 
 ### Commit 6 — Add end-to-end regression coverage
 
-- [ ] Commit complete.
-- Planned checklist scope: `DUN-013` through `DUN-015` and the final acceptance matrix.
-- Target commit message: `Add end-to-end device update regression coverage`
-- Commit SHA: _pending_
-- Verification evidence: _pending_
+- [x] Implementation committed.
+- [ ] Validation complete.
+- Checklist scope: `DUN-013` through `DUN-015` and the automated acceptance matrix.
+- Commit: `aaf232ab2bbc43b00b771de1a3ffeb94667dd96b`
+- Message: `Add end-to-end device update regression coverage`
+- Evidence added: Dose Pro 4 no-artifact/no-release tests, real transport-failure test, background parity tests, stale route tests, five-retry/five-route coverage, strengthened OTA and notification acceptance guards.
+- Remaining gate: full PR CI, Android instrumentation, debug APK installation, and manual hardware acceptance.
 
 ## Master remediation checklist
 
@@ -130,12 +141,40 @@ Checkboxes mean:
 
 ## Progress log
 
-Append one entry per implementation commit in this format:
-
 ```text
-Commit: <sha> — <message>
-Checked: <DUN IDs and phase>
-Tests: <commands/suites and result>
-Guards: <commands/suites and result>
-Notes: <remaining risk or follow-up>
+Commit: 2266a2f3d45389f1e05031fbc4210f0f75f7300f — Normalize firmware availability semantics
+Scope: DUN-001, DUN-002, DUN-003
+Tests added/updated: failure-stage, planner no-artifact, background probe, manifest HTTP, repository no-release
+Guards: validation pending on PR CI
+Notes: hard-failure behavior retained for ambiguous/malformed/incompatible release data
+
+Commit: cf4bc619beefc374953aee3858c0163ca9f6241a — Correct firmware availability presentation
+Scope: DUN-004, DUN-005
+Tests added/updated: hero and progress presentation mappers
+Guards: validation pending on PR CI
+Notes: no-release reuses neutral UpToDate presentation; availability failure has separate check-failed copy
+
+Commit: f4cda2e3f9da45827712047af39f10a8a9cc2464 — Harden central firmware notification emission
+Scope: DUN-006, DUN-007, DUN-008
+Tests added/updated: process lifecycle, central notification policy instrumentation
+Guards: validation pending on PR CI
+Notes: real OTA operation progress/failure notifications remain centralized and enabled
+
+Commit: 8506c9fe43affb9154cc23f71d2b277ec79aefe5 — Revalidate firmware notification routes
+Scope: DUN-009, DUN-010
+Tests added/updated: intent contract, renderer intent, destination policy, route gate, actionability policy
+Guards: validation pending on PR CI
+Notes: missing/unknown semantic route metadata fails closed
+
+Commit: d055d642a77981583126726fa0840549fc41d21d — Make firmware deep-link navigation idempotent
+Scope: DUN-011, DUN-012
+Tests added/updated: repeated same-device route idempotency
+Guards: validation pending on PR CI
+Notes: manual one-Back behavior remains an acceptance item until emulator/device verification
+
+Commit: aaf232ab2bbc43b00b771de1a3ffeb94667dd96b — Add end-to-end device update regression coverage
+Scope: DUN-013, DUN-014, DUN-015
+Tests added/updated: Dose Pro 4 no artifact/no release, background parity, transport failure, stale route, five retries/routes
+Guards: OTA coordinator and device-update notification acceptance guards strengthened; execution pending on PR CI
+Notes: full Android build/instrumentation intentionally deferred to one PR validation gate
 ```
