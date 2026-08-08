@@ -111,6 +111,8 @@ fun DosingPumpDevice(
             pumpHeads.size == DOSING_PRO_4_PUMP_COUNT
     )
 
+    val isDosingPro2 = pumpHeads.size == DOSING_PRO_2_PUMP_COUNT
+
     Box(
         modifier = modifier
             .shadow(
@@ -143,7 +145,7 @@ fun DosingPumpDevice(
                 )
                 .padding(DEVICE_INNER_INSET)
         ) {
-            Box(
+            BoxWithConstraints(
                 modifier = Modifier
                     .fillMaxWidth()
                     .background(
@@ -155,20 +157,36 @@ fun DosingPumpDevice(
                         color = DosingPumpPalette.metalHighlight,
                         shape = DEVICE_DECK_SHAPE
                     )
-                    .padding(DEVICE_DECK_INSET)
+                    .padding(DEVICE_DECK_INSET),
+                contentAlignment = Alignment.Center
             ) {
+                val pro2PumpHeadSize = if (isDosingPro2) {
+                    minOf(
+                        DOSING_PRO_2_PUMP_HEAD_MAX_SIZE,
+                        (maxWidth - PUMP_SPACING) / DOSING_PRO_2_PUMP_COUNT.toFloat()
+                    )
+                } else {
+                    0.dp
+                }
+
                 Row(
-                    modifier = Modifier.fillMaxWidth(),
+                    modifier = if (isDosingPro2) Modifier else Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.spacedBy(PUMP_SPACING),
                     verticalAlignment = Alignment.CenterVertically
                 ) {
                     pumpHeads.forEach { pumpHead ->
+                        val pumpModifier = if (isDosingPro2) {
+                            Modifier.size(pro2PumpHeadSize)
+                        } else {
+                            Modifier
+                                .weight(NORMAL_SCALE)
+                                .aspectRatio(NORMAL_SCALE)
+                        }
+
                         DosingPumpHead(
                             pumpHead = pumpHead,
                             onClick = { onPumpClick(pumpHead.channelNumber) },
-                            modifier = Modifier
-                                .weight(NORMAL_SCALE)
-                                .aspectRatio(NORMAL_SCALE)
+                            modifier = pumpModifier
                         )
                     }
                 }
@@ -470,7 +488,8 @@ private const val ERROR_PULSE_DURATION_MS = 720
 
 private val SCREEN_HORIZONTAL_PADDING = 16.dp
 private val SCREEN_TOP_PADDING = 12.dp
-private val DOSING_PRO_2_MAX_WIDTH = 320.dp
+private val DOSING_PRO_2_MAX_WIDTH = 360.dp
+private val DOSING_PRO_2_PUMP_HEAD_MAX_SIZE = 104.dp
 private val DOSING_PRO_4_MAX_WIDTH = 760.dp
 private val DEVICE_OUTER_SHAPE = RoundedCornerShape(30.dp)
 private val DEVICE_INNER_SHAPE = RoundedCornerShape(24.dp)
