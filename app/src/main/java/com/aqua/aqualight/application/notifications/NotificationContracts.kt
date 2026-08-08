@@ -187,12 +187,12 @@ class NotificationDispatchUseCase(
         }
 
         permissionPolicy.ensureChannels()
-        if (!permissionPolicy.evaluate(category).canDeliver) {
-            return NotificationDispatchResult.SYSTEM_BLOCKED
+        return if (!permissionPolicy.evaluate(category).canDeliver) {
+            NotificationDispatchResult.SYSTEM_BLOCKED
+        } else {
+            render()
+            NotificationDispatchResult.POSTED
         }
-
-        render()
-        return NotificationDispatchResult.POSTED
     }
 }
 
