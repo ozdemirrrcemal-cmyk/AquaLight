@@ -22,7 +22,6 @@
     <string name="screen_title_language">Dil</string>
     <string name="screen_title_about">Hakkında</string>
     <string name="screen_title_terms_of_use">Kullanım Koşulları</string>
-    <string name="screen_title_open_source_licenses">Açık Kaynak Lisansları</string>
 
     <!-- Catalog picker -->
     <string name="screen_title_material_picker">Malzeme Seçici</string>
