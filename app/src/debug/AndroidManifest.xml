@@ -5,5 +5,11 @@
             android:name="com.aqua.aqualight.ui.common.feedback.Stage8DialogTestActivity"
             android:exported="false"
             android:theme="@style/AppTheme" />
+
+        <provider
+            android:name="com.aqua.aqualight.debug.devices.InstallableDebugFixtureBootstrapProvider"
+            android:authorities="${applicationId}.installable-debug-fixture"
+            android:exported="false"
+            android:initOrder="100" />
     </application>
 </manifest>
