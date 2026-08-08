@@ -3,7 +3,6 @@ package com.aqua.aqualight.data.user.archive
 import android.content.Context
 import com.aqua.aqualight.data.aquarium.model.SavedAquariumTank
 import com.aqua.aqualight.data.care.model.CareTask
-import java.util.Base64
 import org.json.JSONArray
 import org.json.JSONObject
 
@@ -111,10 +110,7 @@ internal class UserDataRestoreProvenanceStore(
     context: Context
 ) : UserDataRestoreProvenance {
 
-    private val preferences = context.applicationContext.getSharedPreferences(
-        PREFERENCES_NAME,
-        Context.MODE_PRIVATE
-    )
+    private val files = UserDataRestoreMetadataFiles(context, PROVENANCE_NAMESPACE)
 
     override fun snapshot(ownerUid: String): UserDataRestoreProvenanceSnapshot {
         val owner = canonicalRestoreOwnerUid(ownerUid)
@@ -167,16 +163,12 @@ internal class UserDataRestoreProvenanceStore(
     override fun clearOwner(ownerUid: String) {
         val owner = canonicalRestoreOwnerUid(ownerUid)
         synchronized(lock) {
-            val committed = preferences.edit()
-                .remove(preferenceKey(owner))
-                .commit()
-            check(committed) { "Restore provenance could not be cleared." }
+            files.delete(owner)
         }
     }
 
     private fun readSnapshot(owner: String): UserDataRestoreProvenanceSnapshot {
-        val encoded = preferences.getString(preferenceKey(owner), null)
-            ?: return UserDataRestoreProvenanceSnapshot.Empty
+        val encoded = files.read(owner) ?: return UserDataRestoreProvenanceSnapshot.Empty
         return runCatching { decodeSnapshot(encoded, owner) }
             .getOrElse { error ->
                 throw IllegalStateException(
@@ -187,13 +179,11 @@ internal class UserDataRestoreProvenanceStore(
     }
 
     private fun persist(owner: String, snapshot: UserDataRestoreProvenanceSnapshot) {
-        val editor = preferences.edit()
         if (snapshot.tanks.isEmpty() && snapshot.careTasks.isEmpty()) {
-            editor.remove(preferenceKey(owner))
+            files.delete(owner)
         } else {
-            editor.putString(preferenceKey(owner), encodeSnapshot(owner, snapshot))
+            files.write(owner, encodeSnapshot(owner, snapshot))
         }
-        check(editor.commit()) { "Restore provenance could not be committed." }
     }
 
     private fun encodeSnapshot(
@@ -290,15 +280,8 @@ internal class UserDataRestoreProvenanceStore(
         return item.getLong(name).also { value -> require(value > 0L) }
     }
 
-    private fun preferenceKey(owner: String): String {
-        val token = Base64.getUrlEncoder().withoutPadding()
-            .encodeToString(owner.toByteArray(Charsets.UTF_8))
-        return KEY_PREFIX + token
-    }
-
     private companion object {
-        const val PREFERENCES_NAME = "user_data_restore_provenance_v1"
-        const val KEY_PREFIX = "owner."
+        const val PROVENANCE_NAMESPACE = "provenance"
         const val FORMAT_VERSION = 1
         val lock = Any()
     }

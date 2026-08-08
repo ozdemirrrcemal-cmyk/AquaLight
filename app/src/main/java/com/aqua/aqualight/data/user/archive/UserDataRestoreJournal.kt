@@ -2,7 +2,6 @@ package com.aqua.aqualight.data.user.archive
 
 import android.content.Context
 import com.aqua.aqualight.data.devices.model.DeviceUid
-import java.util.Base64
 import org.json.JSONArray
 import org.json.JSONObject
 
@@ -46,10 +45,7 @@ internal class UserDataRestoreJournal(
     context: Context
 ) : UserDataRestoreTransactions {
 
-    private val preferences = context.applicationContext.getSharedPreferences(
-        PREFERENCES_NAME,
-        Context.MODE_PRIVATE
-    )
+    private val files = UserDataRestoreMetadataFiles(context, JOURNAL_NAMESPACE)
 
     override fun pending(ownerUid: String): PendingUserDataRestore? {
         val owner = canonicalRestoreOwnerUid(ownerUid)
@@ -111,11 +107,7 @@ internal class UserDataRestoreJournal(
     override fun clearOwner(ownerUid: String) {
         val owner = canonicalRestoreOwnerUid(ownerUid)
         synchronized(lock) {
-            check(
-                preferences.edit()
-                    .remove(UserDataRestoreJournalCodec.preferenceKey(owner))
-                    .commit()
-            ) { "User-data restore journal could not be cleared." }
+            files.delete(owner)
         }
     }
 
@@ -130,10 +122,7 @@ internal class UserDataRestoreJournal(
     }
 
     private fun read(owner: String): PendingUserDataRestore? {
-        val encoded = preferences.getString(
-            UserDataRestoreJournalCodec.preferenceKey(owner),
-            null
-        ) ?: return null
+        val encoded = files.read(owner) ?: return null
         return runCatching { UserDataRestoreJournalCodec.decode(encoded, owner) }
             .getOrElse { error ->
                 throw IllegalStateException(
@@ -144,31 +133,20 @@ internal class UserDataRestoreJournal(
     }
 
     private fun persist(transaction: PendingUserDataRestore) {
-        check(
-            preferences.edit()
-                .putString(
-                    UserDataRestoreJournalCodec.preferenceKey(transaction.ownerUid),
-                    UserDataRestoreJournalCodec.encode(transaction)
-                )
-                .commit()
-        ) { "User-data restore journal could not be committed." }
+        files.write(
+            transaction.ownerUid,
+            UserDataRestoreJournalCodec.encode(transaction)
+        )
     }
 
     private companion object {
-        const val PREFERENCES_NAME = "user_data_restore_journal_v1"
+        const val JOURNAL_NAMESPACE = "journal"
         val lock = Any()
     }
 }
 
 private object UserDataRestoreJournalCodec {
-    private const val KEY_PREFIX = "owner."
     private const val FORMAT_VERSION = 1
-
-    fun preferenceKey(owner: String): String {
-        val token = Base64.getUrlEncoder().withoutPadding()
-            .encodeToString(owner.toByteArray(Charsets.UTF_8))
-        return KEY_PREFIX + token
-    }
 
     fun encode(transaction: PendingUserDataRestore): String {
         val tankIds = JSONArray()
