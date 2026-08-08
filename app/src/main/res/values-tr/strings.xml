@@ -70,7 +70,7 @@
     <string name="reset_failed_title">Sıfırlama Başarısız</string>
     <string name="reset_error_message">Sıfırlama e-postası gönderilirken hata oluştu. Lütfen daha sonra yeniden deneyin.</string>
     <string name="register_hint_email">E-posta adresi</string>
-    <string name="register_email_field_desc">Kayıt için e-posta alanı</string>
+    <string name="register_email_desc">Kayıt için e-posta alanı</string>
     <string name="register_hint_password">Şifre</string>
     <string name="register_password_field_desc">Kayıt için şifre alanı</string>
     <string name="register_hint_password_repeat">Şifreyi tekrarlayın</string>
@@ -126,7 +126,7 @@
     <string name="settings_legal">Gizlilik ve yasal</string>
     <string name="settings_legal_desc">Gizlilik ve yasal belgeleri açın</string>
     <string name="settings_about">Hakkında</string>
-    <string name="settings_about_desc">Uygulama bilgilerini ve açık kaynak lisanslarını görüntüleyin</string>
+    <string name="settings_about_desc">Uygulama bilgilerini görüntüleyin</string>
     <string name="settings_logout">Hesap ve Güvenlik</string>
     <string name="settings_logout_desc">Hesap ve güvenlik ayarlarını açın</string>
     <string name="edit_profile_camera_icon_desc">Profil fotoğrafını değiştir</string>
@@ -337,10 +337,6 @@
     <string name="about_app_build_label">Derleme numarası</string>
     <string name="about_app_device_label">Cihaz</string>
     <string name="about_app_android_label">Android sürümü</string>
-    <string name="about_app_licenses_card_desc">Açık kaynak lisans bilgileri.</string>
-    <string name="about_app_licenses_title">Açık kaynak</string>
-    <string name="about_app_licenses">Açık kaynak lisansları</string>
-    <string name="about_app_row_arrow_desc">Ayrıntıları aç</string>
     <string name="about_app_footer_format">© %1$d AquaLight. Tüm hakları saklıdır.</string>
     <string name="re_auth_session_expired">Oturumunuzun süresi doldu. Lütfen hesabınızı yeniden doğrulayın.</string>
     <string name="re_auth_delete_failed_message">Hesap silinemedi. Lütfen yeniden deneyin.</string>
