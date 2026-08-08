@@ -25,6 +25,7 @@ import com.aqua.aqualight.data.user.UserDataScope
 import com.aqua.aqualight.data.user.UserPreferencesManager
 import com.aqua.aqualight.data.user.archive.DefaultUserDataArchiveOperations
 import com.aqua.aqualight.data.user.archive.UserDataArchiveDataSources
+import com.aqua.aqualight.data.user.archive.UserDataArchiveRuntimeDependencies
 import com.aqua.aqualight.data.user.archive.UserDataArchiveSnapshotCollector
 import com.aqua.aqualight.data.user.archive.UserDataArchiveStaging
 import com.aqua.aqualight.data.user.archive.UserDataBackupRestorer
@@ -193,8 +194,10 @@ internal class ActiveOwnerDependencyGraphResolver(
                 sourceAppVersion = BuildConfig.VERSION_NAME,
                 snapshotCollector = snapshotCollector,
                 restorer = restorer,
-                staging = UserDataArchiveStaging(appContext),
-                documentOperations = AndroidUserDataDocumentOperations(appContext)
+                runtime = UserDataArchiveRuntimeDependencies(
+                    staging = UserDataArchiveStaging(appContext),
+                    documents = AndroidUserDataDocumentOperations(appContext)
+                )
             ),
             provisioningDraftOperations = DefaultProvisioningDraftOperations(
                 draftStore = AqlProvisioningDraftStore(

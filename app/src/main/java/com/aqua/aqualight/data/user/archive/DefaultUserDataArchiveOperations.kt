@@ -15,15 +15,19 @@ import kotlinx.coroutines.withContext
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 
+internal data class UserDataArchiveRuntimeDependencies(
+    val staging: UserDataArchiveStaging,
+    val documents: AndroidUserDataDocumentOperations,
+    val codec: UserDataBackupCodec = UserDataBackupCodec(),
+    val nowMillis: () -> Long = System::currentTimeMillis
+)
+
 /** Single owner-scoped coordinator for backup, restore, document streaming and portable export. */
 internal class DefaultUserDataArchiveOperations(
     private val sourceAppVersion: String,
     private val snapshotCollector: UserDataArchiveSnapshotCollector,
     private val restorer: UserDataBackupRestorer,
-    private val staging: UserDataArchiveStaging,
-    private val documentOperations: AndroidUserDataDocumentOperations,
-    private val codec: UserDataBackupCodec = UserDataBackupCodec(),
-    private val nowMillis: () -> Long = System::currentTimeMillis
+    private val runtime: UserDataArchiveRuntimeDependencies
 ) : UserDataArchiveOperations {
 
     private val mutationMutex = Mutex()
@@ -36,9 +40,9 @@ internal class DefaultUserDataArchiveOperations(
                     extension = "aqlbackup",
                     mimeType = USER_DATA_BACKUP_MIME_TYPE
                 ) { handle, destination ->
-                    val mediaDirectory = staging.createScratchDirectory(handle)
+                    val mediaDirectory = runtime.staging.createScratchDirectory(handle)
                     try {
-                        val createdAt = nowMillis()
+                        val createdAt = runtime.nowMillis()
                         val snapshot = snapshotCollector.collectAquariumData(mediaDirectory)
                         val manifest = UserDataBackupManifest(
                             format = USER_DATA_BACKUP_FORMAT,
@@ -49,10 +53,10 @@ internal class DefaultUserDataArchiveOperations(
                             careTasks = snapshot.careTasks,
                             deviceAssignments = snapshot.deviceAssignments
                         )
-                        codec.encode(manifest, snapshot.mediaByEntryName, destination)
+                        runtime.codec.encode(manifest, snapshot.mediaByEntryName, destination)
                         createdAt
                     } finally {
-                        staging.discardScratch(mediaDirectory)
+                        runtime.staging.discardScratch(mediaDirectory)
                     }
                 }
             }
@@ -62,17 +66,17 @@ internal class DefaultUserDataArchiveOperations(
         artifactHandle: String,
         documentHandle: String
     ): Result<Unit> = operationResult {
-        val source = staging.payload(artifactHandle)
-        documentOperations.exportDocument(documentHandle, source).getOrThrow()
+        val source = runtime.staging.payload(artifactHandle)
+        runtime.documents.exportDocument(documentHandle, source).getOrThrow()
     }
 
     override suspend fun inspectBackupDocument(
         documentHandle: String
     ): Result<UserDataBackupCandidate> = operationResult {
-        val session = staging.createSession()
+        val session = runtime.staging.createSession()
         var retainSession = false
         try {
-            documentOperations.importDocument(documentHandle, session.payload).getOrThrow()
+            runtime.documents.importDocument(documentHandle, session.payload).getOrThrow()
             val inspection = withDecodedBackup(session.handle) { backup ->
                 val manifest = backup.manifest
                 UserDataBackupInspection(
@@ -89,7 +93,7 @@ internal class DefaultUserDataArchiveOperations(
                 inspection = inspection
             ).also { retainSession = true }
         } finally {
-            if (!retainSession) staging.discard(session.handle)
+            if (!retainSession) runtime.staging.discard(session.handle)
         }
     }
 
@@ -108,7 +112,7 @@ internal class DefaultUserDataArchiveOperations(
                     extension = "json",
                     mimeType = USER_DATA_EXPORT_MIME_TYPE
                 ) { _, destination ->
-                    val exportedAt = nowMillis()
+                    val exportedAt = runtime.nowMillis()
                     val aquarium = snapshotCollector.collectAquariumData()
                     val profile = snapshotCollector.collectPortableProfile()
                     val export = PortableUserDataExport(
@@ -126,14 +130,14 @@ internal class DefaultUserDataArchiveOperations(
                             archivedPhotoCount = aquarium.archivedPhotoCount
                         )
                     )
-                    codec.encodePortableExport(export, destination)
+                    runtime.codec.encodePortableExport(export, destination)
                     exportedAt
                 }
             }
         }
 
     override fun discard(handle: String) {
-        staging.discard(handle)
+        runtime.staging.discard(handle)
     }
 
     private suspend fun createStagedArtifact(
@@ -142,7 +146,7 @@ internal class DefaultUserDataArchiveOperations(
         mimeType: String,
         writer: suspend (String, File) -> Long
     ): UserDataArchiveArtifact {
-        val session = staging.createSession()
+        val session = runtime.staging.createSession()
         var retainSession = false
         try {
             val createdAt = writer(session.handle, session.payload)
@@ -152,7 +156,7 @@ internal class DefaultUserDataArchiveOperations(
                 mimeType = mimeType
             ).also { retainSession = true }
         } finally {
-            if (!retainSession) staging.discard(session.handle)
+            if (!retainSession) runtime.staging.discard(session.handle)
         }
     }
 
@@ -160,20 +164,20 @@ internal class DefaultUserDataArchiveOperations(
         handle: String,
         block: suspend (DecodedUserDataBackup) -> T
     ): T {
-        val scratch = staging.createScratchDirectory(handle)
+        val scratch = runtime.staging.createScratchDirectory(handle)
         return try {
             val mediaDirectory = File(scratch, "media")
-            val decoded = codec.decode(staging.payload(handle), mediaDirectory)
+            val decoded = runtime.codec.decode(runtime.staging.payload(handle), mediaDirectory)
             block(decoded)
         } finally {
-            staging.discardScratch(scratch)
+            runtime.staging.discardScratch(scratch)
         }
     }
 
     private suspend fun <T> operationResult(block: suspend () -> T): Result<T> {
         return withContext(Dispatchers.IO) {
             runCatching {
-                staging.cleanupExpired()
+                runtime.staging.cleanupExpired()
                 block()
             }.rethrowCancellation()
         }
