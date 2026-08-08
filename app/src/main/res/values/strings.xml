@@ -127,7 +127,7 @@
     <string name="settings_legal">Privacy &amp; legal</string>
     <string name="settings_legal_desc">Open privacy and legal documents</string>
     <string name="settings_about">About</string>
-    <string name="settings_about_desc">View app details and open-source licenses</string>
+    <string name="settings_about_desc">View app details</string>
     <string name="settings_logout">Account &amp; Security</string>
     <string name="settings_logout_desc">Open account and security settings</string>
     <string name="edit_profile_camera_icon_desc">Change profile photo</string>
@@ -328,10 +328,6 @@
     <string name="about_app_build_label">Build number</string>
     <string name="about_app_device_label">Device</string>
     <string name="about_app_android_label">Android version</string>
-    <string name="about_app_licenses_card_desc">Open-source license information.</string>
-    <string name="about_app_licenses_title">Open source</string>
-    <string name="about_app_licenses">Open\u2011source licenses</string>
-    <string name="about_app_row_arrow_desc">Open details</string>
     <string name="about_app_footer_format">© %1$d AquaLight. All rights reserved.</string>
     <string name="re_auth_session_expired">Your session has expired. Please verify your account again.</string>
     <string name="re_auth_delete_failed_message">Failed to delete account. Please try again.</string>
