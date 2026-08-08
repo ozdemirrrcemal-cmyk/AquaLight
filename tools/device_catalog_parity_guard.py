@@ -15,7 +15,7 @@ CONTRACT_PATH = ROOT / "app/src/main/java/com/aqua/aqualight/data/devices/contra
 MAPPING_PATH = ROOT / "app/src/main/java/com/aqua/aqualight/data/devices/DeviceApplicationMapping.kt"
 RESOLVER_PATH = ROOT / "app/src/main/java/com/aqua/aqualight/data/devices/DeviceRootMenuFeatureResolver.kt"
 
-FIXTURE_SHA256 = "87e27dd22078620ef59db4effab82b8e4e87cec95eea23ae5be8d4b3d697a1b3"
+FIXTURE_SHA256 = "333a3192c5212c277bced7a891f8e492511b8804a4484412c17a7124b8752716"
 FIRMWARE_MERGE_COMMIT = "cf2222e58e6c69a729071a5d1205497b3fceaa70"
 
 CAPABILITY_KEYS = {
@@ -150,8 +150,8 @@ if isinstance(source, dict):
         "firmware exporter path drifted",
     )
     require(
-        source.get("otaManifestSchema") == "aql.ota.manifest.v1",
-        "OTA manifest schema drifted",
+        "otaManifestSchema" not in source,
+        "product catalog metadata must not own the independent OTA manifest schema",
     )
 
 feature_values = enum_wire_values(contract_text, "AqlDeviceFeatureKey")

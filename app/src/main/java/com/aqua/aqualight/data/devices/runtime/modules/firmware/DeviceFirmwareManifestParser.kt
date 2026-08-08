@@ -184,14 +184,14 @@ object DeviceFirmwareManifestParser {
         require(manifest.channel in SUPPORTED_CHANNELS) {
             "Unsupported OTA manifest channel: ${manifest.channel}"
         }
-        require(manifest.tag == "v${manifest.version}") {
-            "OTA manifest tag must be the exact v-prefixed version."
-        }
         require(manifest.platform == OFFICIAL_PLATFORM) {
             "OTA manifest platform differs from AquaLight-Firmware/main."
         }
-        require(manifest.artifacts.isNotEmpty()) {
-            "OTA manifest does not contain any artifacts."
+        require(manifest.artifacts.size == 1) {
+            "Product-scoped OTA manifest must contain exactly one artifact."
+        }
+        require(manifest.hasExpectedReleaseTag()) {
+            "OTA manifest tag must be <env>-v<version> for its single product."
         }
         require(manifest.artifacts.map(DeviceFirmwareManifestArtifact::env).distinct().size ==
             manifest.artifacts.size) {
@@ -259,7 +259,7 @@ object DeviceFirmwareManifestParser {
         artifact: DeviceFirmwareManifestArtifact
     ) {
         val expected = PublishedAssetExpectation(
-            filename = "AquaLight-${artifact.env}-${manifest.tag}-ota.bin",
+            filename = manifest.expectedFirmwareFilename(artifact),
             tag = manifest.tag,
             label = "firmware"
         )
@@ -281,7 +281,7 @@ object DeviceFirmwareManifestParser {
     ) {
         val factory = artifact.factory ?: return
         val expected = PublishedAssetExpectation(
-            filename = "AquaLight-${artifact.env}-${manifest.tag}-factory.zip",
+            filename = manifest.expectedFactoryFilename(artifact),
             tag = manifest.tag,
             label = "factory"
         )

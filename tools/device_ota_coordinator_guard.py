@@ -9,6 +9,7 @@ ROOT = Path(__file__).resolve().parents[1]
 SOURCE = ROOT / "app/src/main/java/com/aqua/aqualight"
 FILES = {
     "contract": SOURCE / "application/devices/DeviceFirmwareUpdateOperations.kt",
+    "runtime_contract": SOURCE / "data/devices/runtime/modules/firmware/DeviceFirmwareRuntimeContract.kt",
     "adapter": SOURCE / "data/devices/DefaultDeviceFirmwareUpdateOperations.kt",
     "coordinator": SOURCE / "data/devices/runtime/modules/firmware/DeviceOtaCoordinator.kt",
     "runtime": SOURCE / "data/devices/runtime/modules/firmware/DeviceFirmwareRuntimeRepository.kt",
@@ -16,6 +17,7 @@ FILES = {
     "planner": SOURCE / "data/devices/runtime/modules/firmware/DeviceFirmwareUpdatePlanner.kt",
     "repository": SOURCE / "data/devices/runtime/modules/firmware/DeviceFirmwareUpdateRepository.kt",
     "manifest_source": SOURCE / "data/devices/runtime/modules/firmware/DeviceFirmwareManifestHttpSource.kt",
+    "manifest_identity": SOURCE / "data/devices/runtime/modules/firmware/DeviceFirmwareManifestReleaseIdentity.kt",
     "background_probe": SOURCE / "data/devices/runtime/modules/firmware/DeviceFirmwareBackgroundAvailabilityProbe.kt",
     "models": SOURCE / "data/devices/runtime/modules/firmware/DeviceFirmwareModels.kt",
     "manifest": SOURCE / "data/devices/runtime/modules/firmware/DeviceFirmwareManifestParser.kt",
@@ -49,6 +51,23 @@ def forbid_tokens(label: str, tokens: tuple[str, ...]) -> None:
 
 
 sources = {label: read(label) for label in FILES}
+
+require_tokens(
+    "runtime_contract",
+    (
+        'const val SCHEMA = "aql.ota.product-manifest.v1"',
+        '"90919c12ee269c20cff8affa4b417393126fabb6"',
+        "OFFICIAL_CHANNEL_MANIFEST_URL_PREFIX",
+        "raw.githubusercontent.com/$OFFICIAL_RELEASE_REPOSITORY/main/channels/",
+    ),
+)
+forbid_tokens(
+    "runtime_contract",
+    (
+        "aql.ota.manifest.v1",
+        "aql.ota.product-manifest.v2",
+    ),
+)
 
 require_tokens(
     "contract",
@@ -137,7 +156,8 @@ require_tokens(
     (
         "fun evaluateUpdate(",
         "requireValidatedSnapshot(snapshot)",
-        'manifest.tag == "v${manifest.version}"',
+        "manifest.hasExpectedReleaseTag()",
+        "Product-scoped OTA manifest must contain exactly one artifact.",
         "compatible.size <= 1",
         "return compatible.singleOrNull()",
         "latestVersion = currentVersion",
@@ -169,7 +189,7 @@ require_tokens(
         "DeviceFirmwareManifestNotPublishedException",
         "noPublishedRelease(snapshot)",
         "latestVersion = currentVersion",
-        "Result.failure(error)",
+        "throw error",
     ),
 )
 require_tokens(
@@ -181,6 +201,12 @@ require_tokens(
         "throw DeviceFirmwareManifestNotPublishedException",
         "throw DeviceFirmwareManifestHttpException",
         "signatureVerifier.verifyAndParse(text)",
+        "PRODUCT_CHANNEL_MANIFEST_PATH",
+        "PRODUCT_VERSION_MANIFEST_PATH",
+        "DEVICE_FIRMWARE_PRODUCT_ENVIRONMENTS",
+        "requireFirmwareManifestMatchesUrl(sourceUrl, manifest)",
+        "OTA channel manifest URL and signed manifest product differ.",
+        "OFFICIAL_CHANNEL_MANIFEST_URL_PREFIX",
     ),
 )
 forbid_tokens(
@@ -188,6 +214,16 @@ forbid_tokens(
     (
         'error.message.contains("404")',
         'message.contains("not found")',
+        "OFFICIAL_LATEST_RELEASE_URL_PREFIX",
+        "releases/latest/download",
+    ),
+)
+require_tokens(
+    "manifest_identity",
+    (
+        'tag == "$environment-v$version"',
+        '"AquaLight-${artifact.env}-v$version-ota.bin"',
+        '"AquaLight-${artifact.env}-v$version-factory.zip"',
     ),
 )
 require_tokens(

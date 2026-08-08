@@ -474,7 +474,7 @@ class DeviceOtaCoordinatorTest {
             brand = DeviceFirmwareRuntimeContract.Manifest.BRAND,
             channel = DeviceFirmwareRuntimeContract.Manifest.STABLE_CHANNEL,
             version = "2.0.0",
-            tag = "v2.0.0",
+            tag = "dosing_dose_pro_2-v2.0.0",
             releaseRepo = DeviceFirmwareRuntimeContract.OFFICIAL_RELEASE_REPOSITORY,
             generatedAt = "2026-08-03T00:00:00+00:00",
             platform = OFFICIAL_PLATFORM,
@@ -516,7 +516,7 @@ class DeviceOtaCoordinatorTest {
                         version = "2.0.0",
                         filename = filename,
                         url = DeviceFirmwareRuntimeContract.OFFICIAL_RELEASE_URL_PREFIX +
-                            "v2.0.0/$filename",
+                            "dosing_dose_pro_2-v2.0.0/$filename",
                         sha256 = "a".repeat(64),
                         size = FIRMWARE_SIZE,
                         format = DeviceFirmwareRuntimeContract.Manifest.FIRMWARE_FORMAT,
@@ -609,7 +609,9 @@ class DeviceOtaCoordinatorTest {
         const val PRODUCT_ID = "com.aqualight.dosing.dose_pro_2"
         const val FIRMWARE_SIZE = 1_048_576
         const val MANIFEST_URL =
-            "https://github.com/ozdemirrrcemal-cmyk/AquaLight-OTA-Releases/releases/download/v2.0.0/manifest-stable.json"
+            "https://raw.githubusercontent.com/ozdemirrrcemal-cmyk/" +
+                "AquaLight-OTA-Releases/main/channels/stable/" +
+                "dosing_dose_pro_2/manifest-stable.json"
         val DOSING_CAPABILITIES = DeviceCapabilities(dosing = true, timeSync = true, ota = true)
         val DOSING_LIMITS = DeviceLimits(dosingChannelCount = 2)
         val OFFICIAL_PLATFORM = DeviceFirmwareManifestPlatform(

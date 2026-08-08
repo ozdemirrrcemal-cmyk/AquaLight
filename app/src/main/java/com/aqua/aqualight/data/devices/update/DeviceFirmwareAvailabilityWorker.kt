@@ -15,6 +15,7 @@ import androidx.work.PeriodicWorkRequestBuilder
 import androidx.work.WorkManager
 import androidx.work.WorkerParameters
 import androidx.work.workDataOf
+import com.aqua.aqualight.BuildConfig
 import com.aqua.aqualight.data.auth.FirebaseAuthenticatedOwnerProvider
 import com.aqua.aqualight.data.devices.runtime.modules.firmware.DeviceFirmwareBackgroundAvailabilityProbe
 import com.aqua.aqualight.data.notifications.NotificationPlatform
@@ -48,6 +49,7 @@ class DeviceFirmwareAvailabilityWorker(
             notifications = platform.deviceFirmwareUpdates,
             snapshotReader = DeviceFirmwareAvailabilitySnapshotSource.create(applicationContext),
             manifestLoader = probe::loadManifest,
+            manifestUrlTemplate = BuildConfig.AQL_OTA_MANIFEST_URL,
             hintEvaluator = probe::evaluate
         )
     }

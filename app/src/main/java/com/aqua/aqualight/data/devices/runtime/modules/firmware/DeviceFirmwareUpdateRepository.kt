@@ -1,6 +1,7 @@
 package com.aqua.aqualight.data.devices.runtime.modules.firmware
 
 import com.aqua.aqualight.application.devices.DeviceFirmwareReleaseContent
+import com.aqua.aqualight.application.devices.DeviceFirmwareManifestUrlResolver
 import com.aqua.aqualight.data.devices.model.DeviceSnapshot
 import com.aqua.aqualight.data.devices.model.DeviceUid
 import com.aqua.aqualight.data.devices.runtime.core.DeviceRuntimeCommandOutcome
@@ -43,16 +44,25 @@ class DeviceFirmwareUpdateRepository(
         snapshot: DeviceSnapshot,
         manifestUrl: String,
         applyNow: Boolean = true
-    ): Result<DeviceFirmwareAvailability> {
-        val manifestResult = fetchManifest(manifestUrl)
-        val manifest = manifestResult.getOrElse { error ->
-            return if (error is DeviceFirmwareManifestNotPublishedException) {
-                noPublishedRelease(snapshot)
-            } else {
-                Result.failure(error)
+    ): Result<DeviceFirmwareAvailability> = runCatching {
+        val resolvedManifestUrl =
+            DeviceFirmwareManifestUrlResolver.resolve(
+                template = manifestUrl,
+                productKey = snapshot.product.productKey
+            )
+        val manifestResult = fetchManifest(resolvedManifestUrl)
+        manifestResult.fold(
+            onSuccess = { manifest ->
+                evaluateUpdate(snapshot, manifest, applyNow).getOrThrow()
+            },
+            onFailure = { error ->
+                if (error is DeviceFirmwareManifestNotPublishedException) {
+                    noPublishedRelease(snapshot).getOrThrow()
+                } else {
+                    throw error
+                }
             }
-        }
-        return evaluateUpdate(snapshot, manifest, applyNow)
+        )
     }
 
     suspend fun fetchAndPlanUpdate(

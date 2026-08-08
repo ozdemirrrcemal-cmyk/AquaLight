@@ -3,6 +3,7 @@
 package com.aqua.aqualight.data.devices.update
 
 import com.aqua.aqualight.application.devices.DEVICE_FIRMWARE_MANIFEST_URL
+import com.aqua.aqualight.application.devices.DeviceFirmwareManifestUrlResolver
 import com.aqua.aqualight.application.notifications.NotificationCategory
 import com.aqua.aqualight.application.notifications.NotificationPreferenceUseCase
 import com.aqua.aqualight.data.auth.AuthenticatedOwnerProvider
@@ -19,6 +20,13 @@ internal class DeviceFirmwareAvailabilityCheckRunner(
     private val notifications: DeviceFirmwareUpdateNotificationOperations,
     private val snapshotReader: DeviceFirmwareAvailabilitySnapshotReader,
     private val manifestLoader: suspend (String) -> Result<DeviceFirmwareManifest>,
+    private val manifestUrlTemplate: String = DEVICE_FIRMWARE_MANIFEST_URL,
+    private val manifestUrlResolver: (DeviceSnapshot) -> String = { snapshot ->
+        DeviceFirmwareManifestUrlResolver.resolve(
+            template = manifestUrlTemplate,
+            productKey = snapshot.product.productKey
+        )
+    },
     hintEvaluator: (
         DeviceSnapshot,
         DeviceFirmwareManifest
@@ -113,16 +121,51 @@ internal class DeviceFirmwareAvailabilityCheckRunner(
         ownerUid: String,
         snapshots: List<DeviceSnapshot>
     ): DeviceFirmwareAvailabilityCheckOutcome {
-        return manifestLoader(DEVICE_FIRMWARE_MANIFEST_URL).fold(
-            onSuccess = { manifest -> evaluator.evaluate(ownerUid, snapshots, manifest) },
-            onFailure = { error ->
-                if (error is DeviceFirmwareManifestNotPublishedException) {
-                    clearUnpublishedAvailability(ownerUid, snapshots)
-                } else {
-                    retryOutcome(DeviceFirmwareAvailabilityFailureStage.MANIFEST)
+        val snapshotsByManifest = runCatching {
+            snapshots.groupBy(manifestUrlResolver)
+        }.getOrElse {
+            return retryOutcome(DeviceFirmwareAvailabilityFailureStage.MANIFEST)
+        }
+        var aggregateOutcome: DeviceFirmwareAvailabilityCheckOutcome =
+            DeviceFirmwareAvailabilityCheckOutcome.Completed
+
+        for ((manifestUrl, productSnapshots) in snapshotsByManifest) {
+            val outcome = if (!isOwnerActive(ownerUid)) {
+                DeviceFirmwareAvailabilityCheckOutcome.OwnerChanged
+            } else {
+                manifestLoader(manifestUrl).fold(
+                    onSuccess = { manifest ->
+                        evaluator.evaluate(ownerUid, productSnapshots, manifest)
+                    },
+                    onFailure = { error ->
+                        if (error is DeviceFirmwareManifestNotPublishedException) {
+                            clearUnpublishedAvailability(ownerUid, productSnapshots)
+                        } else {
+                            retryOutcome(DeviceFirmwareAvailabilityFailureStage.MANIFEST)
+                        }
+                    }
+                )
+            }
+            when (outcome) {
+                DeviceFirmwareAvailabilityCheckOutcome.Completed -> Unit
+                DeviceFirmwareAvailabilityCheckOutcome.OwnerChanged,
+                DeviceFirmwareAvailabilityCheckOutcome.NotificationsUnavailable -> {
+                    aggregateOutcome = outcome
+                }
+                is DeviceFirmwareAvailabilityCheckOutcome.RetryableFailure -> {
+                    if (aggregateOutcome !is DeviceFirmwareAvailabilityCheckOutcome.RetryableFailure) {
+                        aggregateOutcome = outcome
+                    }
                 }
             }
-        )
+            if (
+                outcome === DeviceFirmwareAvailabilityCheckOutcome.OwnerChanged ||
+                outcome === DeviceFirmwareAvailabilityCheckOutcome.NotificationsUnavailable
+            ) {
+                break
+            }
+        }
+        return aggregateOutcome
     }
 
     private suspend fun clearUnpublishedAvailability(

@@ -454,7 +454,8 @@ class AqlFirmwareInteroperabilityTest {
 
     private fun otaStartPayload(): JSONObject = DeviceFirmwareOtaStartPayload(
         url = "https://github.com/ozdemirrrcemal-cmyk/AquaLight-OTA-Releases/" +
-            "releases/download/v6.0.1/firmware.bin",
+            "releases/download/dosing_dose_pro_2-v6.0.1/" +
+            "AquaLight-dosing_dose_pro_2-v6.0.1-ota.bin",
         version = "6.0.1",
         sha256 = "ab".repeat(32),
         expectedSize = 1_024,

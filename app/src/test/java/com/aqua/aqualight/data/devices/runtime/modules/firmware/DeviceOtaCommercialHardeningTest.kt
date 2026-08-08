@@ -59,25 +59,19 @@ class DeviceOtaCommercialHardeningTest {
     }
 
     @Test
-    fun `exact artifact predicate ignores nonmatching environment family and line`() {
+    fun `multi product manifest fails closed before artifact selection`() {
         val exact = artifact()
         val releaseManifest = manifest(
             artifacts = listOf(
                 exact,
-                exact.copy(env = "dosing_dose_pro_4"),
-                exact.copy(compatibility = exact.compatibility.copy(family = "timer")),
-                exact.copy(compatibility = exact.compatibility.copy(line = "legacy_dose"))
+                exact.copy(env = "dosing_dose_pro_4")
             )
         )
         val planner = DeviceFirmwareUpdatePlanner { listOf("en") }
 
-        val matching = planner.compatibleArtifacts(snapshot(), releaseManifest)
-        val availability = planner.evaluateUpdate(snapshot(), releaseManifest).getOrThrow()
-            as DeviceFirmwareAvailability.UpdateAvailable
+        val failure = planner.evaluateUpdate(snapshot(), releaseManifest).exceptionOrNull()
 
-        assertEquals(listOf(exact), matching)
-        assertEquals(exact.env, availability.plan.env)
-        assertEquals(exact.firmware.sha256, availability.plan.firmware.sha256)
+        assertTrue(failure?.message.orEmpty().contains("exactly one artifact"))
     }
 
     @Test
@@ -191,7 +185,7 @@ class DeviceOtaCommercialHardeningTest {
     )
 
     private fun artifact(): DeviceFirmwareManifestArtifact {
-        val filename = "AquaLight-$ENVIRONMENT-$RELEASE_TAG-ota.bin"
+        val filename = "AquaLight-$RELEASE_TAG-ota.bin"
         return DeviceFirmwareManifestArtifact(
             env = ENVIRONMENT,
             product = DeviceFirmwareManifestProduct(
@@ -426,14 +420,16 @@ class DeviceOtaCommercialHardeningTest {
         const val ENVIRONMENT = "dosing_dose_pro_2"
         const val CURRENT_VERSION = "1.0.0"
         const val TARGET_VERSION = "2.0.0"
-        const val RELEASE_TAG = "v2.0.0"
+        const val RELEASE_TAG = "dosing_dose_pro_2-v2.0.0"
         const val GENERATED_AT = "2026-08-03T00:00:00+00:00"
         const val FIRMWARE_SIZE = 1_048_576
         const val RUNTIME_GENERATION = 7L
         const val WORKER_COUNT = 8
         const val START_SEND_DELAY_MILLIS = 75L
         const val MANIFEST_URL =
-            "https://github.com/ozdemirrrcemal-cmyk/AquaLight-OTA-Releases/releases/download/v2.0.0/manifest-stable.json"
+            "https://raw.githubusercontent.com/ozdemirrrcemal-cmyk/" +
+                "AquaLight-OTA-Releases/main/channels/stable/" +
+                "dosing_dose_pro_2/manifest-stable.json"
         val DOSING_CAPABILITIES = DeviceCapabilities(dosing = true, timeSync = true, ota = true)
         val DOSING_LIMITS = DeviceLimits(dosingChannelCount = 2)
         val OFFICIAL_PLATFORM = DeviceFirmwareManifestPlatform(

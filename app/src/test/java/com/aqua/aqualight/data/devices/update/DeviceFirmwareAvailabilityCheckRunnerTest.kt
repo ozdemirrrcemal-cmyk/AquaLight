@@ -1,5 +1,7 @@
 package com.aqua.aqualight.data.devices.update
 
+import com.aqua.aqualight.application.devices.DEVICE_FIRMWARE_MANIFEST_URL
+import com.aqua.aqualight.application.devices.DeviceFirmwareManifestUrlResolver
 import com.aqua.aqualight.application.notifications.DeviceUpdateNotificationWorkCoordinator
 import com.aqua.aqualight.application.notifications.NotificationCategory
 import com.aqua.aqualight.application.notifications.NotificationChannelState
@@ -20,6 +22,7 @@ import com.aqua.aqualight.data.devices.model.DeviceSnapshot
 import com.aqua.aqualight.data.devices.model.DeviceUid
 import com.aqua.aqualight.data.devices.runtime.modules.firmware.DeviceFirmwareAvailabilityHint
 import com.aqua.aqualight.data.devices.runtime.modules.firmware.DeviceFirmwareManifest
+import com.aqua.aqualight.data.devices.runtime.modules.firmware.DeviceFirmwareManifestNotPublishedException
 import com.aqua.aqualight.data.devices.runtime.modules.firmware.DeviceFirmwareManifestPlatform
 import com.aqua.aqualight.data.devices.runtime.modules.firmware.DeviceFirmwareManifestSignature
 import com.aqua.aqualight.data.devices.runtime.modules.firmware.DeviceFirmwareReleaseNoteItem
@@ -103,6 +106,86 @@ class DeviceFirmwareAvailabilityCheckRunnerTest {
         )
     }
 
+    @Test
+    fun timerAndDosingSnapshotsLoadIndependentProductManifests() = runTest {
+        val notifications = FakeNotifications()
+        val requestedUrls = mutableListOf<String>()
+        val timer = snapshot("timer-device", "TIMER_RELAY_PRO_2")
+        val dosing = snapshot("dosing-device", "DOSING_DOSE_PRO_2")
+        val runner = runner(
+            notifications = notifications,
+            snapshotReader = DeviceFirmwareAvailabilitySnapshotReader {
+                DeviceFirmwareAvailabilitySnapshotResult.Ready(
+                    currentDeviceUids = setOf(timer.deviceUid.value, dosing.deviceUid.value),
+                    eligibleSnapshots = listOf(timer, dosing)
+                )
+            },
+            manifestLoader = { url ->
+                requestedUrls += url
+                Result.success(manifest())
+            },
+            manifestUrlResolver = { device ->
+                DeviceFirmwareManifestUrlResolver.resolve(
+                    DEVICE_FIRMWARE_MANIFEST_URL,
+                    device.product.productKey
+                )
+            }
+        )
+
+        val outcome = runner.execute(OWNER_UID)
+
+        assertEquals(DeviceFirmwareAvailabilityCheckOutcome.Completed, outcome)
+        assertEquals(
+            listOf(
+                "https://raw.githubusercontent.com/ozdemirrrcemal-cmyk/" +
+                    "AquaLight-OTA-Releases/main/channels/stable/" +
+                    "timer_relay_pro_2/manifest-stable.json",
+                "https://raw.githubusercontent.com/ozdemirrrcemal-cmyk/" +
+                    "AquaLight-OTA-Releases/main/channels/stable/" +
+                    "dosing_dose_pro_2/manifest-stable.json"
+            ),
+            requestedUrls
+        )
+        assertTrue(notifications.events.contains("publish:timer-device:2.0.0"))
+        assertTrue(notifications.events.contains("publish:dosing-device:2.0.0"))
+    }
+
+    @Test
+    fun unpublishedTimerChannelDoesNotBlockDosingAvailability() = runTest {
+        val notifications = FakeNotifications()
+        val timer = snapshot("timer-device", "TIMER_RELAY_PRO_2")
+        val dosing = snapshot("dosing-device", "DOSING_DOSE_PRO_2")
+        val runner = runner(
+            notifications = notifications,
+            snapshotReader = DeviceFirmwareAvailabilitySnapshotReader {
+                DeviceFirmwareAvailabilitySnapshotResult.Ready(
+                    currentDeviceUids = setOf(timer.deviceUid.value, dosing.deviceUid.value),
+                    eligibleSnapshots = listOf(timer, dosing)
+                )
+            },
+            manifestLoader = { url ->
+                if (url.contains("timer_relay_pro_2")) {
+                    Result.failure(DeviceFirmwareManifestNotPublishedException(404))
+                } else {
+                    Result.success(manifest())
+                }
+            },
+            manifestUrlResolver = { device ->
+                DeviceFirmwareManifestUrlResolver.resolve(
+                    DEVICE_FIRMWARE_MANIFEST_URL,
+                    device.product.productKey
+                )
+            }
+        )
+
+        val outcome = runner.execute(OWNER_UID)
+
+        assertEquals(DeviceFirmwareAvailabilityCheckOutcome.Completed, outcome)
+        assertTrue(notifications.events.contains("clear:timer-device"))
+        assertTrue(notifications.events.contains("publish:dosing-device:2.0.0"))
+        assertTrue(!notifications.events.contains("publish:timer-device:2.0.0"))
+    }
+
     private fun runner(
         ownerProvider: FakeOwnerProvider = FakeOwnerProvider(),
         notifications: FakeNotifications = FakeNotifications(),
@@ -110,7 +193,8 @@ class DeviceFirmwareAvailabilityCheckRunnerTest {
             DeviceFirmwareAvailabilitySnapshotReader { readyResult() },
         manifestLoader: suspend (String) -> Result<DeviceFirmwareManifest> = {
             Result.success(manifest())
-        }
+        },
+        manifestUrlResolver: (DeviceSnapshot) -> String = { "manifest:test" }
     ): DeviceFirmwareAvailabilityCheckRunner {
         return DeviceFirmwareAvailabilityCheckRunner(
             ownerProvider = ownerProvider,
@@ -118,6 +202,7 @@ class DeviceFirmwareAvailabilityCheckRunnerTest {
             notifications = notifications,
             snapshotReader = snapshotReader,
             manifestLoader = manifestLoader,
+            manifestUrlResolver = manifestUrlResolver,
             hintEvaluator = { snapshot, _ ->
                 Result.success(
                     DeviceFirmwareAvailabilityHint.UpdateAvailable(
@@ -201,17 +286,19 @@ class DeviceFirmwareAvailabilityCheckRunnerTest {
         const val OWNER_UID = "owner-a"
 
         fun readyResult(): DeviceFirmwareAvailabilitySnapshotResult.Ready {
-            val snapshot = DeviceSnapshot(
-                identity = DeviceIdentity(uid = DeviceUid("device-a")),
-                product = DeviceProduct(),
-                firmwareVersion = "1.0.0",
-                capabilities = DeviceCapabilities(ota = true)
-            )
+            val snapshot = snapshot("device-a", "TEST_PRODUCT")
             return DeviceFirmwareAvailabilitySnapshotResult.Ready(
                 currentDeviceUids = setOf(snapshot.deviceUid.value),
                 eligibleSnapshots = listOf(snapshot)
             )
         }
+
+        fun snapshot(uid: String, productKey: String): DeviceSnapshot = DeviceSnapshot(
+            identity = DeviceIdentity(uid = DeviceUid(uid)),
+            product = DeviceProduct(productKey = productKey),
+            firmwareVersion = "1.0.0",
+            capabilities = DeviceCapabilities(ota = true)
+        )
 
         fun manifest(): DeviceFirmwareManifest {
             return DeviceFirmwareManifest(
@@ -219,7 +306,7 @@ class DeviceFirmwareAvailabilityCheckRunnerTest {
                 brand = "AquaLight",
                 channel = "stable",
                 version = "2.0.0",
-                tag = "v2.0.0",
+                tag = "dosing_dose_pro_2-v2.0.0",
                 releaseRepo = "test",
                 generatedAt = "2026-08-07T00:00:00Z",
                 platform = DeviceFirmwareManifestPlatform("", "", "", "", ""),

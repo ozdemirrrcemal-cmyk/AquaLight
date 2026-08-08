@@ -166,18 +166,25 @@ class AndroidDeviceFirmwareUpdateNotificationPublisherInstrumentedTest {
         val deviceUid = "publisher-device-$suffix"
         val platform = NotificationPlatform.get(context)
         val ledger = DeviceUpdateNotificationLedger.create(context)
+        val publisher = AndroidDeviceFirmwareUpdateNotificationPublisher(
+            context = context,
+            dispatchUseCase = platform.dispatchUseCase,
+            renderer = platform.renderer,
+            ledger = ledger,
+            trust = platform.deviceUpdateTrust,
+            isAppForeground = { false }
+        )
         OwnerNotificationPreferences.create(context).setEnabled(ownerUid, true)
         ledger.clearOwner(ownerUid)
         platform.renderer.cancelDeviceUpdate(ownerUid, deviceUid)
-        return PublisherFixture(ownerUid, deviceUid, platform)
+        return PublisherFixture(ownerUid, deviceUid, publisher)
     }
 
     private inner class PublisherFixture(
         val ownerUid: String,
         val deviceUid: String,
-        val platform: NotificationPlatform
+        val publisher: DeviceFirmwareUpdateNotificationOperations
     ) {
-        val publisher = platform.deviceFirmwareUpdates
         private val manager = context.getSystemService(NotificationManager::class.java)
         private val tag = NotificationIdentity.tag(
             NotificationCategory.DEVICE_UPDATES,

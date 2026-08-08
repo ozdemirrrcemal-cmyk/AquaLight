@@ -60,7 +60,7 @@ class DosePro4NoPublishedArtifactRegressionTest {
     )
 
     private fun dosePro2Artifact(): DeviceFirmwareManifestArtifact {
-        val filename = "AquaLight-$DOSE_PRO_2_ENV-$RELEASE_TAG-ota.bin"
+        val filename = "AquaLight-$RELEASE_TAG-ota.bin"
         return DeviceFirmwareManifestArtifact(
             env = DOSE_PRO_2_ENV,
             product = dosePro2Product(),
@@ -141,7 +141,7 @@ class DosePro4NoPublishedArtifactRegressionTest {
         const val HARDWARE_REVISION = "2.0"
         const val CURRENT_VERSION = "1.0.0"
         const val RELEASE_VERSION = "1.1.0"
-        const val RELEASE_TAG = "v1.1.0"
+        const val RELEASE_TAG = "dosing_dose_pro_2-v1.1.0"
         const val DOSE_PRO_2_ENV = "dosing_dose_pro_2"
         const val DOSE_PRO_2_PRODUCT_KEY = "DOSING_DOSE_PRO_2"
         const val DOSE_PRO_2_PRODUCT_ID = "com.aqualight.dosing.dose_pro_2"

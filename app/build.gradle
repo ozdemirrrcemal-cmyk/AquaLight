@@ -113,20 +113,41 @@ def otaManifestKeyId = providers
         .orElse(providers.environmentVariable("AQL_OTA_MANIFEST_KEY_ID"))
         .getOrElse("aql-ota-manifest-2026-01")
 
-def stableOtaManifestUrl = providers
+def requireProductScopedManifestTemplate = { String label, String value ->
+    def officialChannelPattern = java.util.regex.Pattern.compile(
+            '^https://raw\\.githubusercontent\\.com/' +
+                    'ozdemirrrcemal-cmyk/AquaLight-OTA-Releases/main/channels/' +
+                    '(stable|beta|dev)/\\{env\\}/manifest-\\1\\.json$'
+    )
+    if (value.count("{env}") != 1 || !(value ==~ officialChannelPattern)) {
+        throw new GradleException(
+                "${label} must be an exact product-scoped channel file with one {env} placeholder."
+        )
+    }
+    value
+}
+
+def stableOtaManifestUrl = requireProductScopedManifestTemplate(
+        "AQL_OTA_STABLE_MANIFEST_URL",
+        providers
         .gradleProperty("AQL_OTA_STABLE_MANIFEST_URL")
         .orElse(providers.environmentVariable("AQL_OTA_STABLE_MANIFEST_URL"))
         .getOrElse(
-                "https://github.com/ozdemirrrcemal-cmyk/AquaLight-OTA-Releases/" +
-                        "releases/latest/download/manifest-stable.json"
+                "https://raw.githubusercontent.com/ozdemirrrcemal-cmyk/" +
+                        "AquaLight-OTA-Releases/main/channels/stable/" +
+                        "{env}/manifest-stable.json"
         )
+)
 
 // A beta asset is not published yet. Internal builds can opt in as soon as one exists;
 // otherwise they deliberately use the same verified stable manifest instead of a dead URL.
-def debugOtaManifestUrl = providers
+def debugOtaManifestUrl = requireProductScopedManifestTemplate(
+        "AQL_OTA_DEBUG_MANIFEST_URL",
+        providers
         .gradleProperty("AQL_OTA_DEBUG_MANIFEST_URL")
         .orElse(providers.environmentVariable("AQL_OTA_DEBUG_MANIFEST_URL"))
         .getOrElse(stableOtaManifestUrl)
+)
 
 def lintBaselineFile = layout.projectDirectory.file("lint-baseline.xml")
 def finalLintModeValue = providers

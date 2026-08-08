@@ -146,8 +146,8 @@ class DeviceFirmwareOtaMainParityTest {
 
     private fun manifestJson(releaseNote: String): JSONObject {
         val env = "dosing_dose_pro_2"
-        val tag = "v2.0.0"
-        val filename = "AquaLight-$env-$tag-ota.bin"
+        val tag = "$env-v2.0.0"
+        val filename = "AquaLight-$tag-ota.bin"
         return JSONObject()
             .put("schema", DeviceFirmwareRuntimeContract.Manifest.SCHEMA)
             .put("brand", DeviceFirmwareRuntimeContract.Manifest.BRAND)

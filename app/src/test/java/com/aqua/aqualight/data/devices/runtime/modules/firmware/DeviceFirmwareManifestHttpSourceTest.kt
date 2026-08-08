@@ -13,7 +13,7 @@ import org.junit.Test
 class DeviceFirmwareManifestHttpSourceTest {
 
     @Test
-    fun `missing latest manifest is typed as not published`() = runTest {
+    fun `missing product channel manifest is typed as not published`() = runTest {
         val failure = sourceReturning(404).load(MANIFEST_URL).exceptionOrNull()
 
         assertTrue(failure is DeviceFirmwareManifestNotPublishedException)
@@ -58,7 +58,8 @@ class DeviceFirmwareManifestHttpSourceTest {
 
     private companion object {
         const val MANIFEST_URL =
-            "https://github.com/ozdemirrrcemal-cmyk/AquaLight-OTA-Releases/" +
-                "releases/latest/download/manifest-stable.json"
+            "https://raw.githubusercontent.com/ozdemirrrcemal-cmyk/" +
+                "AquaLight-OTA-Releases/main/channels/stable/" +
+                "dosing_dose_pro_2/manifest-stable.json"
     }
 }
