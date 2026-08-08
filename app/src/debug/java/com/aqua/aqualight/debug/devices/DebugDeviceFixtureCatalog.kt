@@ -7,7 +7,6 @@ import com.aqua.aqualight.data.devices.catalog.AqlCommercialCatalogProduct
 import com.aqua.aqualight.data.devices.catalog.AqlCommercialDeviceCatalog
 import com.aqua.aqualight.data.devices.model.DeviceCapabilities
 import com.aqua.aqualight.data.devices.model.DeviceConnectionState
-import com.aqua.aqualight.data.devices.model.DeviceFamily
 import com.aqua.aqualight.data.devices.model.DeviceIdentity
 import com.aqua.aqualight.data.devices.model.DeviceLimits
 import com.aqua.aqualight.data.devices.model.DeviceOnlineState
@@ -21,24 +20,22 @@ import com.aqua.aqualight.data.devices.toOwnerDeviceListItem
 /**
  * Installable-Debug-only device fixtures.
  *
- * Product identity, capabilities, limits, features, screens and menu routes always originate from
- * the production commercial catalog. The fixture only supplies the physical-device facts that are
- * unavailable during UI work: identity, endpoint, liveness and validated runtime generation.
+ * There is exactly one fixture for every production commercial catalog product. Product identity,
+ * capabilities, limits, features, screens and menu routes always originate from that catalog. The
+ * fixture supplies only physical-device facts unavailable during UI work: identity, endpoint,
+ * liveness and validated runtime generation.
  */
 internal class DebugDeviceFixtureCatalog {
 
-    val snapshots: List<DeviceSnapshot> = FIXTURE_FAMILIES.mapIndexed { index, family ->
-        val product = requireNotNull(
-            AqlCommercialDeviceCatalog.products.firstOrNull { candidate -> candidate.family == family }
-        ) {
-            "Commercial catalog has no product for debug fixture family $family."
-        }
-        product.toFixtureSnapshot(index)
-    }
+    val snapshots: List<DeviceSnapshot> = AqlCommercialDeviceCatalog.products
+        .mapIndexed { index, product -> product.toFixtureSnapshot(index) }
 
     private val snapshotsByUid = snapshots.associateBy { snapshot -> snapshot.deviceUid.value }
 
     init {
+        check(snapshots.size == AqlCommercialDeviceCatalog.products.size) {
+            "Debug fixture catalog must cover every commercial product."
+        }
         snapshots.forEach { snapshot ->
             check(snapshot.toDeviceRootSnapshot().catalogState == DeviceRootCatalogState.VALID) {
                 "Debug fixture must remain valid against the production commercial catalog: " +
@@ -62,14 +59,15 @@ internal class DebugDeviceFixtureCatalog {
 
     private fun AqlCommercialCatalogProduct.toFixtureSnapshot(index: Int): DeviceSnapshot {
         val capabilities = profile.capabilities
-        val deviceUid = DeviceUid("DEBUG-FIXTURE-${family.name}-001")
+        val fixtureSuffix = productKey.value
+        val deviceUid = DeviceUid("DEBUG-FIXTURE-$fixtureSuffix")
         val now = System.currentTimeMillis()
 
         return DeviceSnapshot(
             identity = DeviceIdentity(
                 uid = deviceUid,
                 shortId = "DBG-${index + 1}",
-                serialNumber = "DEBUG-${family.name}-001",
+                serialNumber = "DEBUG-$fixtureSuffix",
                 displayName = displayName,
                 customName = "Test $displayName"
             ),
@@ -129,15 +127,6 @@ internal class DebugDeviceFixtureCatalog {
                 lastControlProofAtMillis = now
             ),
             lastSeenAtMillis = now
-        )
-    }
-
-    private companion object {
-        val FIXTURE_FAMILIES = listOf(
-            DeviceFamily.LIGHT,
-            DeviceFamily.TIMER,
-            DeviceFamily.DOSING,
-            DeviceFamily.COOLING
         )
     }
 }
