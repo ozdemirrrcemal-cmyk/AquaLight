@@ -78,6 +78,16 @@ data class DeviceAlertNotification(
     val message: String
 )
 
+enum class DeviceFirmwareNotificationKind {
+    AVAILABILITY,
+    OPERATION
+}
+
+data class DeviceFirmwareNotificationRoute(
+    val kind: DeviceFirmwareNotificationKind,
+    val targetVersion: String = ""
+)
+
 data class DeviceUpdateNotification(
     val ownerUid: String,
     val deviceUid: String,
@@ -85,7 +95,10 @@ data class DeviceUpdateNotification(
     val message: String,
     val progressPercent: Int? = null,
     val ongoing: Boolean = false,
-    val actionLabel: String? = null
+    val actionLabel: String? = null,
+    val route: DeviceFirmwareNotificationRoute = DeviceFirmwareNotificationRoute(
+        DeviceFirmwareNotificationKind.OPERATION
+    )
 )
 
 enum class NotificationDispatchResult {

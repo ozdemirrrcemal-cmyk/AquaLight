@@ -7,6 +7,8 @@ import com.aqua.aqualight.R
 import com.aqua.aqualight.application.devices.DeviceOtaFailureStage
 import com.aqua.aqualight.application.devices.DeviceOtaProgressPhase
 import com.aqua.aqualight.application.devices.DeviceOtaState
+import com.aqua.aqualight.application.notifications.DeviceFirmwareNotificationKind
+import com.aqua.aqualight.application.notifications.DeviceFirmwareNotificationRoute
 import com.aqua.aqualight.application.notifications.DeviceUpdateNotification
 import com.aqua.aqualight.data.devices.runtime.modules.firmware.DeviceFirmwareAvailabilityHint
 
@@ -85,7 +87,11 @@ internal class DeviceFirmwareUpdateNotificationFactory(context: Context) {
                 hint.currentVersion,
                 hint.targetVersion
             ),
-            actionLabel = text(R.string.device_update_background_notification_action)
+            actionLabel = text(R.string.device_update_background_notification_action),
+            route = DeviceFirmwareNotificationRoute(
+                kind = DeviceFirmwareNotificationKind.AVAILABILITY,
+                targetVersion = hint.targetVersion
+            )
         )
     }
 
@@ -102,7 +108,8 @@ internal class DeviceFirmwareUpdateNotificationFactory(context: Context) {
             state.targetVersion
         ),
         progressPercent = COMPLETE_PROGRESS_PERCENT,
-        ongoing = true
+        ongoing = true,
+        route = operationRoute(state.targetVersion)
     )
 
     private fun success(
@@ -118,7 +125,8 @@ internal class DeviceFirmwareUpdateNotificationFactory(context: Context) {
             deviceName,
             state.targetVersion
         ),
-        progressPercent = COMPLETE_PROGRESS_PERCENT
+        progressPercent = COMPLETE_PROGRESS_PERCENT,
+        route = operationRoute(state.targetVersion)
     )
 
     private fun failure(
@@ -132,7 +140,8 @@ internal class DeviceFirmwareUpdateNotificationFactory(context: Context) {
         message = text(
             R.string.device_settings_update_notification_failure_message,
             deviceName
-        )
+        ),
+        route = operationRoute()
     )
 
     private fun progress(
@@ -159,9 +168,16 @@ internal class DeviceFirmwareUpdateNotificationFactory(context: Context) {
                 progressPercent
             ),
             progressPercent = progressPercent,
-            ongoing = true
+            ongoing = true,
+            route = operationRoute(targetVersion)
         )
     }
+
+    private fun operationRoute(targetVersion: String = "") =
+        DeviceFirmwareNotificationRoute(
+            kind = DeviceFirmwareNotificationKind.OPERATION,
+            targetVersion = targetVersion
+        )
 
     private fun normalizeDeviceName(deviceName: String): String {
         return deviceName.trim().ifBlank {

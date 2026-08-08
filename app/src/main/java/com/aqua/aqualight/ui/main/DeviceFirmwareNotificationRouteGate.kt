@@ -2,6 +2,8 @@ package com.aqua.aqualight.ui.main
 
 import com.aqua.aqualight.application.devices.DeviceFirmwareNotificationRouteDecision
 import com.aqua.aqualight.application.devices.DeviceFirmwareNotificationRouteOperations
+import com.aqua.aqualight.application.devices.DeviceFirmwareNotificationRouteRequest
+import com.aqua.aqualight.application.notifications.DeviceFirmwareNotificationKind
 import com.aqua.aqualight.ui.navigation.DeviceFirmwareNotificationRoutePolicy
 
 /** Revalidates owner and device eligibility immediately before firmware navigation. */
@@ -11,27 +13,29 @@ internal class DeviceFirmwareNotificationRouteGate(
 ) {
 
     fun evaluate(
-        deviceUid: String,
+        request: DeviceFirmwareNotificationRouteRequest,
         notificationOwnerUid: String
     ): DeviceFirmwareNotificationRouteDecision {
         val session = sessionSnapshot()
         return when {
             !session.isAuthenticated -> DeviceFirmwareNotificationRouteDecision.DEFER
             !DeviceFirmwareNotificationRoutePolicy.canOpen(
-                deviceUid = deviceUid,
+                deviceUid = request.deviceUid,
                 notificationOwnerUid = notificationOwnerUid,
                 activeOwnerUid = session.activeOwnerUid,
                 isAuthenticated = true
             ) -> DeviceFirmwareNotificationRouteDecision.REJECT
-            else -> routeOperations.evaluate(deviceUid)
+            else -> routeOperations.evaluate(request)
         }
     }
 
     suspend fun acknowledgeOpened(
-        deviceUid: String,
+        request: DeviceFirmwareNotificationRouteRequest,
         notificationOwnerUid: String
     ) {
-        val normalizedDeviceUid = deviceUid.trim()
+        if (request.kind != DeviceFirmwareNotificationKind.AVAILABILITY) return
+
+        val normalizedDeviceUid = request.deviceUid.trim()
         val normalizedOwnerUid = notificationOwnerUid.trim()
         if (normalizedDeviceUid.isBlank() || normalizedOwnerUid.isBlank()) return
 

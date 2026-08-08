@@ -11,7 +11,8 @@ class DeviceFirmwareNotificationDestinationPolicyTest {
             expected = DeviceFirmwareNotificationRouteDecision.DEFER,
             repositoryReady = false,
             deviceExists = false,
-            otaSupported = false
+            otaSupported = false,
+            actionable = false
         )
     }
 
@@ -21,7 +22,8 @@ class DeviceFirmwareNotificationDestinationPolicyTest {
             expected = DeviceFirmwareNotificationRouteDecision.REJECT,
             repositoryReady = true,
             deviceExists = false,
-            otaSupported = false
+            otaSupported = false,
+            actionable = false
         )
     }
 
@@ -31,17 +33,30 @@ class DeviceFirmwareNotificationDestinationPolicyTest {
             expected = DeviceFirmwareNotificationRouteDecision.REJECT,
             repositoryReady = true,
             deviceExists = true,
-            otaSupported = false
+            otaSupported = false,
+            actionable = false
         )
     }
 
     @Test
-    fun registeredOtaDeviceCanOpenFirmwareScreen() {
+    fun staleNonActionableFirmwareIntentIsRejected() {
+        assertDecision(
+            expected = DeviceFirmwareNotificationRouteDecision.REJECT,
+            repositoryReady = true,
+            deviceExists = true,
+            otaSupported = true,
+            actionable = false
+        )
+    }
+
+    @Test
+    fun registeredActionableOtaDeviceCanOpenFirmwareScreen() {
         assertDecision(
             expected = DeviceFirmwareNotificationRouteDecision.OPEN,
             repositoryReady = true,
             deviceExists = true,
-            otaSupported = true
+            otaSupported = true,
+            actionable = true
         )
     }
 
@@ -49,14 +64,16 @@ class DeviceFirmwareNotificationDestinationPolicyTest {
         expected: DeviceFirmwareNotificationRouteDecision,
         repositoryReady: Boolean,
         deviceExists: Boolean,
-        otaSupported: Boolean
+        otaSupported: Boolean,
+        actionable: Boolean
     ) {
         assertEquals(
             expected,
             DeviceFirmwareNotificationDestinationPolicy.evaluate(
                 repositoryReady = repositoryReady,
                 deviceExists = deviceExists,
-                otaSupported = otaSupported
+                otaSupported = otaSupported,
+                actionable = actionable
             )
         )
     }
