@@ -10,7 +10,9 @@ import com.aqua.aqualight.data.aquarium.model.TankDraft
 import com.aqua.aqualight.data.care.model.CareTask
 import com.aqua.aqualight.data.devices.model.DeviceUid
 import com.aqua.aqualight.platform.media.UserDataArchiveMediaGateway
+import kotlinx.coroutines.NonCancellable
 import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.withContext
 
 /** Narrow restore-only adapters around AquaLight's authoritative owner-scoped stores. */
 internal data class UserDataRestoreDataSources(
@@ -76,6 +78,114 @@ internal data class UserDataRestoreDataSources(
     }
 }
 
+private fun UserDataRestoreDataSources.trackCreatedMutations(
+    transactions: UserDataRestoreTransactions
+): UserDataRestoreDataSources {
+    val rawTanks = tanks
+    val rawCareTasks = careTasks
+    val rawAssignments = assignments
+    return copy(
+        tanks = rawTanks.copy(
+            addFromDraft = { ownerUid, draft ->
+                val tank = rawTanks.addFromDraft(ownerUid, draft)
+                val failure = runCatching {
+                    transactions.recordCreatedTank(
+                        ownerUid,
+                        RestoreCreatedTank(
+                            tankId = tank.id,
+                            createdAtMillis = tank.createdAtMillis
+                        )
+                    )
+                }.exceptionOrNull()
+                if (failure != null) {
+                    withContext(NonCancellable) {
+                        runCatching { rawTanks.deleteTanks(listOf(tank.id)) }
+                            .exceptionOrNull()
+                            ?.let(failure::addSuppressed)
+                    }
+                    throw failure
+                }
+                tank
+            }
+        ),
+        careTasks = rawCareTasks.copy(
+            addTask = { task ->
+                rawCareTasks.addTask(task)
+                val failure = runCatching {
+                    transactions.recordCreatedTask(
+                        task.ownerUid,
+                        RestoreCreatedTask(
+                            taskId = task.id,
+                            tankId = task.tankId,
+                            createdAtMillis = task.createdAtMillis
+                        )
+                    )
+                }.exceptionOrNull()
+                if (failure != null) {
+                    withContext(NonCancellable) {
+                        runCatching { rawCareTasks.deleteTask(task.id) }
+                            .exceptionOrNull()
+                            ?.let(failure::addSuppressed)
+                    }
+                    throw failure
+                }
+            }
+        ),
+        assignments = rawAssignments.copy(
+            assignDeviceToTank = { tankId, deviceUid ->
+                when (val result = rawAssignments.assignDeviceToTank(tankId, deviceUid)) {
+                    is TankDeviceAssignmentResult.Assigned -> {
+                        val assignment = result.assignment
+                        val failure = runCatching {
+                            transactions.recordCreatedAssignment(
+                                assignment.ownerUid,
+                                RestoreCreatedAssignment(
+                                    tankId = assignment.tankId,
+                                    deviceUid = assignment.deviceUid,
+                                    assignedAtMillis = assignment.assignedAtMillis
+                                )
+                            )
+                        }.exceptionOrNull()
+                        if (failure == null) {
+                            result
+                        } else {
+                            withContext(NonCancellable) {
+                                val current = runCatching {
+                                    rawAssignments.assignmentForDevice(assignment.deviceUid)
+                                }.getOrNull()
+                                if (
+                                    current?.tankId == assignment.tankId &&
+                                    current.assignedAtMillis == assignment.assignedAtMillis
+                                ) {
+                                    when (
+                                        val cleanup = rawAssignments.removeDeviceFromTank(
+                                            assignment.tankId,
+                                            assignment.deviceUid
+                                        )
+                                    ) {
+                                        is TankDeviceRemovalResult.Failure ->
+                                            failure.addSuppressed(cleanup.error)
+                                        TankDeviceRemovalResult.InvalidRequest ->
+                                            failure.addSuppressed(
+                                                IllegalStateException(
+                                                    "Restore assignment compensation was invalid."
+                                                )
+                                            )
+                                        TankDeviceRemovalResult.Removed,
+                                        TankDeviceRemovalResult.NotAssigned -> Unit
+                                    }
+                                }
+                            }
+                            TankDeviceAssignmentResult.Failure(failure)
+                        }
+                    }
+                    else -> result
+                }
+            }
+        )
+    )
+}
+
 /** Restore-only media boundary; presentation never receives paths, streams or Android URIs. */
 internal data class UserDataRestoreMediaOperations(
     val snapshotTankPhoto: (String?) -> ByteArray?,
@@ -114,7 +224,7 @@ internal data class UserDataRestoreRuntime(
             val transactions = UserDataRestoreJournal(appContext)
             val provenance = UserDataRestoreProvenanceStore(appContext)
             return UserDataRestoreRuntime(
-                dataSources = restoreDataSources,
+                dataSources = restoreDataSources.trackCreatedMutations(transactions),
                 mediaOperations = UserDataRestoreMediaOperations.from(mediaGateway),
                 transactions = transactions,
                 provenance = provenance,

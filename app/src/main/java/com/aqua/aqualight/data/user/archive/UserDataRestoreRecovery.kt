@@ -36,19 +36,135 @@ internal class UserDataRestoreRecovery(
                 Result(0, 0, 0, true)
             }
             else -> withContext(NonCancellable) {
-                rollbackActive(owner, pending)
+                if (pending.exactMutationTracking) {
+                    rollbackExact(owner, pending)
+                } else {
+                    rollbackLegacy(owner, pending)
+                }
             }
         }
     }
 
-    private suspend fun rollbackActive(
+    private suspend fun rollbackExact(
         ownerUid: String,
         pending: PendingUserDataRestore
     ): Result {
         val failures = mutableListOf<Throwable>()
-        val removedAssignments = rollbackAssignments(pending, failures)
-        val removedTasks = rollbackTasks(pending, failures)
-        val newTankIds = rollbackTanks(ownerUid, pending, failures)
+        val removedAssignments = rollbackExactAssignments(pending, failures)
+        val removedTasks = rollbackExactTasks(pending, failures)
+        val removedTanks = rollbackExactTanks(ownerUid, pending, failures)
+        finishRollback(ownerUid, failures)
+        return Result(
+            rolledBackTankCount = removedTanks,
+            rolledBackTaskCount = removedTasks,
+            rolledBackAssignmentCount = removedAssignments,
+            clearedCommittedTransaction = false
+        )
+    }
+
+    private suspend fun rollbackExactAssignments(
+        pending: PendingUserDataRestore,
+        failures: MutableList<Throwable>
+    ): Int {
+        var removed = 0
+        pending.createdAssignments.asReversed().forEach { expected ->
+            val current = runCatching {
+                dataSources.assignments.assignmentForDevice(expected.deviceUid)
+            }.getOrElse { error ->
+                failures += error
+                null
+            }
+            if (
+                current == null ||
+                current.tankId != expected.tankId ||
+                current.assignedAtMillis != expected.assignedAtMillis
+            ) {
+                return@forEach
+            }
+            val result = runCatching {
+                dataSources.assignments.removeDeviceFromTank(
+                    expected.tankId,
+                    expected.deviceUid
+                )
+            }.getOrElse { error ->
+                failures += error
+                null
+            }
+            when (result) {
+                TankDeviceRemovalResult.Removed -> removed += 1
+                is TankDeviceRemovalResult.Failure -> failures += result.error
+                TankDeviceRemovalResult.InvalidRequest -> failures += IllegalStateException(
+                    "Restore journal contains an invalid device assignment."
+                )
+                TankDeviceRemovalResult.NotAssigned,
+                null -> Unit
+            }
+        }
+        return removed
+    }
+
+    private suspend fun rollbackExactTasks(
+        pending: PendingUserDataRestore,
+        failures: MutableList<Throwable>
+    ): Int {
+        val tasksBefore = runCatching { dataSources.careTasks.snapshot() }
+            .getOrElse { error ->
+                failures += error
+                return 0
+            }
+        val tasksById = tasksBefore.associateBy { task -> task.id }
+        var removed = 0
+        pending.createdTasks.asReversed().forEach { expected ->
+            val current = tasksById[expected.taskId]
+            if (
+                current == null ||
+                current.tankId != expected.tankId ||
+                current.createdAtMillis != expected.createdAtMillis
+            ) {
+                return@forEach
+            }
+            runCatching { dataSources.careTasks.deleteTask(expected.taskId) }
+                .onSuccess { removed += 1 }
+                .onFailure { error -> failures += error }
+        }
+        return removed
+    }
+
+    private suspend fun rollbackExactTanks(
+        ownerUid: String,
+        pending: PendingUserDataRestore,
+        failures: MutableList<Throwable>
+    ): Int {
+        val tanksBefore = runCatching { dataSources.tanks.snapshotForOwner(ownerUid) }
+            .getOrElse { error ->
+                failures += error
+                return 0
+            }
+        val tanksById = tanksBefore.associateBy { tank -> tank.id }
+        val idsToDelete = pending.createdTanks.mapNotNull { expected ->
+            val current = tanksById[expected.tankId]
+            expected.tankId.takeIf {
+                current != null && current.createdAtMillis == expected.createdAtMillis
+            }
+        }
+        if (idsToDelete.isEmpty()) return 0
+        return runCatching {
+            dataSources.tanks.deleteTanks(idsToDelete)
+            idsToDelete.size
+        }.getOrElse { error ->
+            failures += error
+            0
+        }
+    }
+
+    private suspend fun rollbackLegacy(
+        ownerUid: String,
+        pending: PendingUserDataRestore
+    ): Result {
+        val failures = mutableListOf<Throwable>()
+        val removedAssignments = rollbackLegacyAssignments(pending, failures)
+        val removedTasks = rollbackLegacyTasks(pending, failures)
+        val newTankIds = rollbackLegacyTanks(ownerUid, pending, failures)
         finishRollback(ownerUid, failures)
         return Result(
             rolledBackTankCount = newTankIds.size,
@@ -58,7 +174,7 @@ internal class UserDataRestoreRecovery(
         )
     }
 
-    private suspend fun rollbackAssignments(
+    private suspend fun rollbackLegacyAssignments(
         pending: PendingUserDataRestore,
         failures: MutableList<Throwable>
     ): Int {
@@ -86,7 +202,7 @@ internal class UserDataRestoreRecovery(
         return removed
     }
 
-    private suspend fun rollbackTasks(
+    private suspend fun rollbackLegacyTasks(
         pending: PendingUserDataRestore,
         failures: MutableList<Throwable>
     ): Int {
@@ -102,7 +218,7 @@ internal class UserDataRestoreRecovery(
         return tasksBefore.count { task -> task.id in pending.plannedTaskIds }
     }
 
-    private suspend fun rollbackTanks(
+    private suspend fun rollbackLegacyTanks(
         ownerUid: String,
         pending: PendingUserDataRestore,
         failures: MutableList<Throwable>

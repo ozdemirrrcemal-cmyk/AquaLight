@@ -99,7 +99,10 @@ internal class UserDataRestoreMetadataFiles(
 
     private companion object {
         const val ROOT_DIRECTORY = "user_data_restore"
-        const val MAX_METADATA_BYTES = 1024 * 1024
+        // Restore provenance is a denormalized identity index. Keep its durable envelope
+        // explicitly above the maximum accepted manifest so every validator-approved
+        // 10k-task backup can persist recovery/provenance metadata without contradiction.
+        const val MAX_METADATA_BYTES = UserDataBackupLimits.MAX_MANIFEST_BYTES * 2
         const val BUFFER_SIZE = 8 * 1024
         val NAMESPACE_PATTERN = Regex("[a-z][a-z0-9_]{0,63}")
     }

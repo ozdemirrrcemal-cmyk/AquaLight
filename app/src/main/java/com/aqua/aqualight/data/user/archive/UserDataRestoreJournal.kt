@@ -15,12 +15,33 @@ internal data class RestorePlannedAssignment(
     val deviceUid: DeviceUid
 )
 
+internal data class RestoreCreatedTank(
+    val tankId: Long,
+    val createdAtMillis: Long
+)
+
+internal data class RestoreCreatedTask(
+    val taskId: Long,
+    val tankId: Long,
+    val createdAtMillis: Long
+)
+
+internal data class RestoreCreatedAssignment(
+    val tankId: Long,
+    val deviceUid: DeviceUid,
+    val assignedAtMillis: Long
+)
+
 internal data class PendingUserDataRestore(
     val ownerUid: String,
     val state: UserDataRestoreTransactionState,
     val existingTankIds: Set<Long>,
     val plannedTaskIds: List<Long>,
-    val plannedAssignments: List<RestorePlannedAssignment>
+    val plannedAssignments: List<RestorePlannedAssignment>,
+    val createdTanks: List<RestoreCreatedTank> = emptyList(),
+    val createdTasks: List<RestoreCreatedTask> = emptyList(),
+    val createdAssignments: List<RestoreCreatedAssignment> = emptyList(),
+    val exactMutationTracking: Boolean = false
 )
 
 internal interface UserDataRestoreTransactions {
@@ -34,6 +55,12 @@ internal interface UserDataRestoreTransactions {
         ownerUid: String,
         assignments: Collection<RestorePlannedAssignment>
     )
+
+    fun recordCreatedTank(ownerUid: String, tank: RestoreCreatedTank) = Unit
+
+    fun recordCreatedTask(ownerUid: String, task: RestoreCreatedTask) = Unit
+
+    fun recordCreatedAssignment(ownerUid: String, assignment: RestoreCreatedAssignment) = Unit
 
     fun markCommitted(ownerUid: String)
 
@@ -63,36 +90,81 @@ internal class UserDataRestoreJournal(
                 PendingUserDataRestore(
                     ownerUid = owner,
                     state = UserDataRestoreTransactionState.ACTIVE,
-                    existingTankIds = existingTankIds.toSet(),
+                    existingTankIds = emptySet(),
                     plannedTaskIds = emptyList(),
-                    plannedAssignments = emptyList()
+                    plannedAssignments = emptyList(),
+                    exactMutationTracking = true
                 )
             )
         }
     }
 
     override fun planTasks(ownerUid: String, taskIds: Collection<Long>) {
-        val owner = canonicalRestoreOwnerUid(ownerUid)
-        val normalized = taskIds.distinct()
-        require(normalized.all { taskId -> taskId > 0L })
-        synchronized(lock) {
-            val current = requireActive(owner)
-            persist(current.copy(plannedTaskIds = normalized))
-        }
+        canonicalRestoreOwnerUid(ownerUid)
+        require(taskIds.all { taskId -> taskId > 0L })
     }
 
     override fun planAssignments(
         ownerUid: String,
         assignments: Collection<RestorePlannedAssignment>
     ) {
-        val owner = canonicalRestoreOwnerUid(ownerUid)
-        val normalized = assignments.distinct()
-        require(normalized.all { assignment ->
+        canonicalRestoreOwnerUid(ownerUid)
+        require(assignments.all { assignment ->
             assignment.tankId > 0L && assignment.deviceUid.value.isNotBlank()
         })
+    }
+
+    override fun recordCreatedTank(ownerUid: String, tank: RestoreCreatedTank) {
+        val owner = canonicalRestoreOwnerUid(ownerUid)
+        require(tank.tankId > 0L && tank.createdAtMillis > 0L)
         synchronized(lock) {
             val current = requireActive(owner)
-            persist(current.copy(plannedAssignments = normalized))
+            val existing = current.createdTanks.firstOrNull { item -> item.tankId == tank.tankId }
+            check(existing == null || existing == tank) {
+                "Restore journal tank identity changed."
+            }
+            if (existing == null) {
+                persist(current.copy(createdTanks = current.createdTanks + tank))
+            }
+        }
+    }
+
+    override fun recordCreatedTask(ownerUid: String, task: RestoreCreatedTask) {
+        val owner = canonicalRestoreOwnerUid(ownerUid)
+        require(task.taskId > 0L && task.tankId > 0L && task.createdAtMillis > 0L)
+        synchronized(lock) {
+            val current = requireActive(owner)
+            val existing = current.createdTasks.firstOrNull { item -> item.taskId == task.taskId }
+            check(existing == null || existing == task) {
+                "Restore journal care-task identity changed."
+            }
+            if (existing == null) {
+                persist(current.copy(createdTasks = current.createdTasks + task))
+            }
+        }
+    }
+
+    override fun recordCreatedAssignment(
+        ownerUid: String,
+        assignment: RestoreCreatedAssignment
+    ) {
+        val owner = canonicalRestoreOwnerUid(ownerUid)
+        require(
+            assignment.tankId > 0L &&
+                assignment.deviceUid.value.isNotBlank() &&
+                assignment.assignedAtMillis > 0L
+        )
+        synchronized(lock) {
+            val current = requireActive(owner)
+            val existing = current.createdAssignments.firstOrNull { item ->
+                item.deviceUid == assignment.deviceUid
+            }
+            check(existing == null || existing == assignment) {
+                "Restore journal device-assignment identity changed."
+            }
+            if (existing == null) {
+                persist(current.copy(createdAssignments = current.createdAssignments + assignment))
+            }
         }
     }
 
@@ -146,79 +218,129 @@ internal class UserDataRestoreJournal(
 }
 
 private object UserDataRestoreJournalCodec {
-    private const val FORMAT_VERSION = 1
+    private const val FORMAT_VERSION = 2
+    private const val LEGACY_FORMAT_VERSION = 1
 
     fun encode(transaction: PendingUserDataRestore): String {
-        val tankIds = JSONArray()
-        transaction.existingTankIds.sorted().forEach { tankId ->
-            tankIds.put(tankId)
+        val tanks = JSONArray()
+        transaction.createdTanks.forEach { tank ->
+            tanks.put(
+                JSONObject()
+                    .put("tankId", tank.tankId)
+                    .put("createdAtMillis", tank.createdAtMillis)
+            )
         }
-        val taskIds = JSONArray()
-        transaction.plannedTaskIds.forEach { taskId ->
-            taskIds.put(taskId)
+        val tasks = JSONArray()
+        transaction.createdTasks.forEach { task ->
+            tasks.put(
+                JSONObject()
+                    .put("taskId", task.taskId)
+                    .put("tankId", task.tankId)
+                    .put("createdAtMillis", task.createdAtMillis)
+            )
         }
         val assignments = JSONArray()
-        transaction.plannedAssignments.forEach { assignment ->
+        transaction.createdAssignments.forEach { assignment ->
             assignments.put(
                 JSONObject()
                     .put("tankId", assignment.tankId)
                     .put("deviceUid", assignment.deviceUid.value)
+                    .put("assignedAtMillis", assignment.assignedAtMillis)
             )
         }
         return JSONObject()
             .put("version", FORMAT_VERSION)
             .put("ownerUid", transaction.ownerUid)
             .put("state", transaction.state.name)
-            .put("existingTankIds", tankIds)
-            .put("plannedTaskIds", taskIds)
-            .put("plannedAssignments", assignments)
+            .put("createdTanks", tanks)
+            .put("createdTasks", tasks)
+            .put("createdAssignments", assignments)
             .toString()
     }
 
     fun decode(encoded: String, expectedOwner: String): PendingUserDataRestore {
         val root = JSONObject(encoded)
-        require(root.getInt("version") == FORMAT_VERSION)
+        val version = root.getInt("version")
         val owner = canonicalRestoreOwnerUid(root.getString("ownerUid"))
         require(owner == expectedOwner)
         val state = UserDataRestoreTransactionState.valueOf(root.getString("state"))
+        return when (version) {
+            FORMAT_VERSION -> decodeCurrent(root, owner, state)
+            LEGACY_FORMAT_VERSION -> PendingUserDataRestore(
+                ownerUid = owner,
+                state = state,
+                existingTankIds = emptySet(),
+                plannedTaskIds = emptyList(),
+                plannedAssignments = emptyList(),
+                exactMutationTracking = true
+            )
+            else -> error("Unsupported user-data restore journal version.")
+        }
+    }
 
-        val existingTankIds = linkedSetOf<Long>()
-        val tankArray = root.getJSONArray("existingTankIds")
+    private fun decodeCurrent(
+        root: JSONObject,
+        owner: String,
+        state: UserDataRestoreTransactionState
+    ): PendingUserDataRestore {
+        val createdTanks = mutableListOf<RestoreCreatedTank>()
+        val tankArray = root.getJSONArray("createdTanks")
         for (index in 0 until tankArray.length()) {
-            val tankId = tankArray.getLong(index)
-            require(tankId > 0L && existingTankIds.add(tankId))
+            val item = tankArray.getJSONObject(index)
+            val tank = RestoreCreatedTank(
+                tankId = positiveLong(item, "tankId"),
+                createdAtMillis = positiveLong(item, "createdAtMillis")
+            )
+            require(createdTanks.none { existing -> existing.tankId == tank.tankId })
+            createdTanks += tank
         }
 
-        val plannedTaskIds = mutableListOf<Long>()
-        val taskArray = root.getJSONArray("plannedTaskIds")
+        val createdTasks = mutableListOf<RestoreCreatedTask>()
+        val taskArray = root.getJSONArray("createdTasks")
         for (index in 0 until taskArray.length()) {
-            val taskId = taskArray.getLong(index)
-            require(taskId > 0L && taskId !in plannedTaskIds)
-            plannedTaskIds += taskId
+            val item = taskArray.getJSONObject(index)
+            val task = RestoreCreatedTask(
+                taskId = positiveLong(item, "taskId"),
+                tankId = positiveLong(item, "tankId"),
+                createdAtMillis = positiveLong(item, "createdAtMillis")
+            )
+            require(createdTasks.none { existing -> existing.taskId == task.taskId })
+            createdTasks += task
         }
 
-        val plannedAssignments = mutableListOf<RestorePlannedAssignment>()
-        val assignmentArray = root.getJSONArray("plannedAssignments")
+        val createdAssignments = mutableListOf<RestoreCreatedAssignment>()
+        val assignmentArray = root.getJSONArray("createdAssignments")
         for (index in 0 until assignmentArray.length()) {
             val item = assignmentArray.getJSONObject(index)
-            val assignment = RestorePlannedAssignment(
-                tankId = item.getLong("tankId").also { value -> require(value > 0L) },
+            val assignment = RestoreCreatedAssignment(
+                tankId = positiveLong(item, "tankId"),
                 deviceUid = DeviceUid(
-                    item.getString("deviceUid").trim().also { value ->
-                        require(value.isNotBlank())
-                    }
-                )
+                    item.getString("deviceUid").trim().also { value -> require(value.isNotBlank()) }
+                ),
+                assignedAtMillis = positiveLong(item, "assignedAtMillis")
             )
-            require(assignment !in plannedAssignments)
-            plannedAssignments += assignment
+            require(
+                createdAssignments.none { existing ->
+                    existing.deviceUid == assignment.deviceUid
+                }
+            )
+            createdAssignments += assignment
         }
 
         return PendingUserDataRestore(
             ownerUid = owner,
             state = state,
-            existingTankIds = existingTankIds,
-            plannedTaskIds = plannedTaskIds.toList(),
-            plannedAssignments = plannedAssignments.toList()
+            existingTankIds = emptySet(),
+            plannedTaskIds = emptyList(),
+            plannedAssignments = emptyList(),
+            createdTanks = createdTanks.toList(),
+            createdTasks = createdTasks.toList(),
+            createdAssignments = createdAssignments.toList(),
+            exactMutationTracking = true
         )
+    }
+
+    private fun positiveLong(item: JSONObject, name: String): Long {
+        return item.getLong(name).also { value -> require(value > 0L) }
     }
 }
