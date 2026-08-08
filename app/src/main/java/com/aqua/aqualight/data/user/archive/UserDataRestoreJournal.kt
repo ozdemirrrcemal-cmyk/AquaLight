@@ -72,21 +72,21 @@ internal class UserDataRestoreJournal(
     context: Context
 ) : UserDataRestoreTransactions {
 
-    private val files = UserDataRestoreMetadataFiles(context, JOURNAL_NAMESPACE)
+    private val storage = UserDataRestoreJournalStorage(context)
 
     override fun pending(ownerUid: String): PendingUserDataRestore? {
         val owner = canonicalRestoreOwnerUid(ownerUid)
-        return synchronized(lock) { read(owner) }
+        return synchronized(lock) { storage.read(owner) }
     }
 
     override fun begin(ownerUid: String, existingTankIds: Set<Long>) {
         val owner = canonicalRestoreOwnerUid(ownerUid)
         require(existingTankIds.all { tankId -> tankId > 0L })
         synchronized(lock) {
-            check(read(owner) == null) {
+            check(storage.read(owner) == null) {
                 "A user-data restore transaction is already pending."
             }
-            persist(
+            storage.persist(
                 PendingUserDataRestore(
                     ownerUid = owner,
                     state = UserDataRestoreTransactionState.ACTIVE,
@@ -124,7 +124,7 @@ internal class UserDataRestoreJournal(
                 "Restore journal tank identity changed."
             }
             if (existing == null) {
-                persist(current.copy(createdTanks = current.createdTanks + tank))
+                storage.persist(current.copy(createdTanks = current.createdTanks + tank))
             }
         }
     }
@@ -139,7 +139,7 @@ internal class UserDataRestoreJournal(
                 "Restore journal care-task identity changed."
             }
             if (existing == null) {
-                persist(current.copy(createdTasks = current.createdTasks + task))
+                storage.persist(current.copy(createdTasks = current.createdTasks + task))
             }
         }
     }
@@ -163,7 +163,9 @@ internal class UserDataRestoreJournal(
                 "Restore journal device-assignment identity changed."
             }
             if (existing == null) {
-                persist(current.copy(createdAssignments = current.createdAssignments + assignment))
+                storage.persist(
+                    current.copy(createdAssignments = current.createdAssignments + assignment)
+                )
             }
         }
     }
@@ -172,19 +174,19 @@ internal class UserDataRestoreJournal(
         val owner = canonicalRestoreOwnerUid(ownerUid)
         synchronized(lock) {
             val current = requireActive(owner)
-            persist(current.copy(state = UserDataRestoreTransactionState.COMMITTED))
+            storage.persist(current.copy(state = UserDataRestoreTransactionState.COMMITTED))
         }
     }
 
     override fun clearOwner(ownerUid: String) {
         val owner = canonicalRestoreOwnerUid(ownerUid)
         synchronized(lock) {
-            files.delete(owner)
+            storage.delete(owner)
         }
     }
 
     private fun requireActive(owner: String): PendingUserDataRestore {
-        val current = requireNotNull(read(owner)) {
+        val current = requireNotNull(storage.read(owner)) {
             "No user-data restore transaction is pending."
         }
         check(current.state == UserDataRestoreTransactionState.ACTIVE) {
@@ -193,7 +195,15 @@ internal class UserDataRestoreJournal(
         return current
     }
 
-    private fun read(owner: String): PendingUserDataRestore? {
+    private companion object {
+        val lock = Any()
+    }
+}
+
+private class UserDataRestoreJournalStorage(context: Context) {
+    private val files = UserDataRestoreMetadataFiles(context, JOURNAL_NAMESPACE)
+
+    fun read(owner: String): PendingUserDataRestore? {
         val encoded = files.read(owner) ?: return null
         return runCatching { UserDataRestoreJournalCodec.decode(encoded, owner) }
             .getOrElse { error ->
@@ -204,16 +214,19 @@ internal class UserDataRestoreJournal(
             }
     }
 
-    private fun persist(transaction: PendingUserDataRestore) {
+    fun persist(transaction: PendingUserDataRestore) {
         files.write(
             transaction.ownerUid,
             UserDataRestoreJournalCodec.encode(transaction)
         )
     }
 
+    fun delete(owner: String) {
+        files.delete(owner)
+    }
+
     private companion object {
         const val JOURNAL_NAMESPACE = "journal"
-        val lock = Any()
     }
 }
 

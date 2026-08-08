@@ -10,7 +10,6 @@ import java.io.File
 import java.time.Instant
 import java.time.ZoneOffset
 import java.util.concurrent.CancellationException
-import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import kotlinx.coroutines.sync.Mutex
@@ -24,8 +23,7 @@ internal class DefaultUserDataArchiveOperations(
     private val staging: UserDataArchiveStaging,
     private val documentOperations: AndroidUserDataDocumentOperations,
     private val codec: UserDataBackupCodec = UserDataBackupCodec(),
-    private val nowMillis: () -> Long = System::currentTimeMillis,
-    private val dispatcher: CoroutineDispatcher = Dispatchers.IO
+    private val nowMillis: () -> Long = System::currentTimeMillis
 ) : UserDataArchiveOperations {
 
     private val mutationMutex = Mutex()
@@ -72,6 +70,7 @@ internal class DefaultUserDataArchiveOperations(
         documentHandle: String
     ): Result<UserDataBackupCandidate> = operationResult {
         val session = staging.createSession()
+        var retainSession = false
         try {
             documentOperations.importDocument(documentHandle, session.payload).getOrThrow()
             val inspection = withDecodedBackup(session.handle) { backup ->
@@ -88,10 +87,9 @@ internal class DefaultUserDataArchiveOperations(
             UserDataBackupCandidate(
                 handle = session.handle,
                 inspection = inspection
-            )
-        } catch (error: Throwable) {
-            staging.discard(session.handle)
-            throw error
+            ).also { retainSession = true }
+        } finally {
+            if (!retainSession) staging.discard(session.handle)
         }
     }
 
@@ -145,16 +143,16 @@ internal class DefaultUserDataArchiveOperations(
         writer: suspend (String, File) -> Long
     ): UserDataArchiveArtifact {
         val session = staging.createSession()
-        return try {
+        var retainSession = false
+        try {
             val createdAt = writer(session.handle, session.payload)
-            UserDataArchiveArtifact(
+            return UserDataArchiveArtifact(
                 handle = session.handle,
                 suggestedFileName = datedFileName(prefix, createdAt, extension),
                 mimeType = mimeType
-            )
-        } catch (error: Throwable) {
-            staging.discard(session.handle)
-            throw error
+            ).also { retainSession = true }
+        } finally {
+            if (!retainSession) staging.discard(session.handle)
         }
     }
 
@@ -173,24 +171,24 @@ internal class DefaultUserDataArchiveOperations(
     }
 
     private suspend fun <T> operationResult(block: suspend () -> T): Result<T> {
-        return withContext(dispatcher) {
+        return withContext(Dispatchers.IO) {
             runCatching {
                 staging.cleanupExpired()
                 block()
             }.rethrowCancellation()
         }
     }
+}
 
-    private fun <T> Result<T>.rethrowCancellation(): Result<T> {
-        val failure = exceptionOrNull()
-        if (failure is CancellationException) throw failure
-        return this
-    }
+private fun <T> Result<T>.rethrowCancellation(): Result<T> {
+    val failure = exceptionOrNull()
+    if (failure is CancellationException) throw failure
+    return this
+}
 
-    private fun datedFileName(prefix: String, timeMillis: Long, extension: String): String {
-        val date = Instant.ofEpochMilli(timeMillis)
-            .atZone(ZoneOffset.UTC)
-            .toLocalDate()
-        return "$prefix-$date.$extension"
-    }
+private fun datedFileName(prefix: String, timeMillis: Long, extension: String): String {
+    val date = Instant.ofEpochMilli(timeMillis)
+        .atZone(ZoneOffset.UTC)
+        .toLocalDate()
+    return "$prefix-$date.$extension"
 }

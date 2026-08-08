@@ -48,13 +48,16 @@ class DataManagementViewModel(
 
     fun requestRestoreDocument() {
         if (!beginOperation()) return
-        discardPendingRestore()
+        archiveOperations.discardPending(pendingRestore)
+        pendingRestore = null
         eventChannel.trySend(DataManagementEvent.OpenBackupDocument)
     }
 
     fun cancelPendingOperation() {
-        discardPendingWrite()
-        discardPendingRestore()
+        archiveOperations.discardPending(pendingWrite)
+        archiveOperations.discardPending(pendingRestore)
+        pendingWrite = null
+        pendingRestore = null
         _uiState.finishOperation()
     }
 
@@ -85,7 +88,8 @@ class DataManagementViewModel(
         viewModelScope.launch {
             val candidate = archiveOperations.inspectBackupDocument(documentHandle).getOrNull()
             if (candidate == null) {
-                discardPendingRestore()
+                archiveOperations.discardPending(pendingRestore)
+                pendingRestore = null
                 _uiState.finishOperation()
                 eventChannel.trySend(
                     DataManagementEvent.OperationFailed(DataManagementAction.RESTORE)
@@ -93,7 +97,7 @@ class DataManagementViewModel(
                 return@launch
             }
 
-            discardPendingRestore()
+            archiveOperations.discardPending(pendingRestore)
             pendingRestore = candidate
             _uiState.finishOperation()
             eventChannel.trySend(DataManagementEvent.ShowRestorePreview(candidate.inspection))
@@ -120,8 +124,10 @@ class DataManagementViewModel(
     }
 
     override fun onCleared() {
-        discardPendingWrite()
-        discardPendingRestore()
+        archiveOperations.discardPending(pendingWrite)
+        archiveOperations.discardPending(pendingRestore)
+        pendingWrite = null
+        pendingRestore = null
         eventChannel.close()
         super.onCleared()
     }
@@ -131,8 +137,10 @@ class DataManagementViewModel(
         creator: suspend () -> Result<UserDataArchiveArtifact>
     ) {
         if (!beginOperation()) return
-        discardPendingWrite()
-        discardPendingRestore()
+        archiveOperations.discardPending(pendingWrite)
+        archiveOperations.discardPending(pendingRestore)
+        pendingWrite = null
+        pendingRestore = null
         viewModelScope.launch {
             val artifact = creator().getOrNull()
             if (artifact == null) {
@@ -149,22 +157,20 @@ class DataManagementViewModel(
             )
         }
     }
-
-    private fun discardPendingWrite() {
-        pendingWrite?.artifact?.handle?.let(archiveOperations::discard)
-        pendingWrite = null
-    }
-
-    private fun discardPendingRestore() {
-        pendingRestore?.handle?.let(archiveOperations::discard)
-        pendingRestore = null
-    }
-
-    private data class PendingWrite(
-        val action: DataManagementAction,
-        val artifact: UserDataArchiveArtifact
-    )
 }
+
+private fun UserDataArchiveOperations.discardPending(pending: PendingWrite?) {
+    pending?.artifact?.handle?.let { handle -> discard(handle) }
+}
+
+private fun UserDataArchiveOperations.discardPending(candidate: UserDataBackupCandidate?) {
+    candidate?.handle?.let { handle -> discard(handle) }
+}
+
+private data class PendingWrite(
+    val action: DataManagementAction,
+    val artifact: UserDataArchiveArtifact
+)
 
 private fun MutableStateFlow<DataManagementUiState>.finishOperation() {
     update { state -> state.copy(busy = false) }

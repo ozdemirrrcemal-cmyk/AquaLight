@@ -138,7 +138,7 @@ internal class UserDataRestoreRecovery(
         val tanksBefore = runCatching { dataSources.tanks.snapshotForOwner(ownerUid) }
             .getOrElse { error ->
                 failures += error
-                return 0
+                emptyList()
             }
         val tanksById = tanksBefore.associateBy { tank -> tank.id }
         val idsToDelete = pending.createdTanks.mapNotNull { expected ->
@@ -147,13 +147,16 @@ internal class UserDataRestoreRecovery(
                 current != null && current.createdAtMillis == expected.createdAtMillis
             }
         }
-        if (idsToDelete.isEmpty()) return 0
-        return runCatching {
-            dataSources.tanks.deleteTanks(idsToDelete)
-            idsToDelete.size
-        }.getOrElse { error ->
-            failures += error
+        return if (idsToDelete.isEmpty()) {
             0
+        } else {
+            runCatching {
+                dataSources.tanks.deleteTanks(idsToDelete)
+                idsToDelete.size
+            }.getOrElse { error ->
+                failures += error
+                0
+            }
         }
     }
 

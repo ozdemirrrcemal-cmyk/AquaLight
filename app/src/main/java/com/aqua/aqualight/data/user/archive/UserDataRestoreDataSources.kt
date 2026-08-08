@@ -83,109 +83,148 @@ internal data class UserDataRestoreDataSources(
 private fun UserDataRestoreDataSources.trackCreatedMutations(
     transactions: UserDataRestoreTransactions
 ): UserDataRestoreDataSources {
-    val rawTanks = tanks
-    val rawCareTasks = careTasks
-    val rawAssignments = assignments
     return copy(
-        tanks = rawTanks.copy(
-            addFromDraft = { ownerUid, draft ->
-                val tank = rawTanks.addFromDraft(ownerUid, draft)
-                val failure = runCatching {
-                    transactions.recordCreatedTank(
-                        ownerUid,
-                        RestoreCreatedTank(
-                            tankId = tank.id,
-                            createdAtMillis = tank.createdAtMillis
-                        )
-                    )
-                }.exceptionOrNull()
-                if (failure != null) {
-                    withContext(NonCancellable) {
-                        runCatching { rawTanks.deleteTanks(listOf(tank.id)) }
-                            .exceptionOrNull()
-                            ?.let(failure::addSuppressed)
-                    }
-                    throw failure
-                }
-                tank
-            }
-        ),
-        careTasks = rawCareTasks.copy(
-            addTask = { task ->
-                rawCareTasks.addTask(task)
-                val failure = runCatching {
-                    transactions.recordCreatedTask(
-                        task.ownerUid,
-                        RestoreCreatedTask(
-                            taskId = task.id,
-                            tankId = task.tankId,
-                            createdAtMillis = task.createdAtMillis
-                        )
-                    )
-                }.exceptionOrNull()
-                if (failure != null) {
-                    withContext(NonCancellable) {
-                        runCatching { rawCareTasks.deleteTask(task.id) }
-                            .exceptionOrNull()
-                            ?.let(failure::addSuppressed)
-                    }
-                    throw failure
-                }
-            }
-        ),
-        assignments = rawAssignments.copy(
-            assignDeviceToTank = { tankId, deviceUid ->
-                when (val result = rawAssignments.assignDeviceToTank(tankId, deviceUid)) {
-                    is TankDeviceAssignmentResult.Assigned -> {
-                        val assignment = result.assignment
-                        val failure = runCatching {
-                            transactions.recordCreatedAssignment(
-                                assignment.ownerUid,
-                                RestoreCreatedAssignment(
-                                    tankId = assignment.tankId,
-                                    deviceUid = assignment.deviceUid,
-                                    assignedAtMillis = assignment.assignedAtMillis
-                                )
-                            )
-                        }.exceptionOrNull()
-                        if (failure == null) {
-                            result
-                        } else {
-                            withContext(NonCancellable) {
-                                val current = runCatching {
-                                    rawAssignments.assignmentForDevice(assignment.deviceUid)
-                                }.getOrNull()
-                                if (
-                                    current?.tankId == assignment.tankId &&
-                                    current.assignedAtMillis == assignment.assignedAtMillis
-                                ) {
-                                    when (
-                                        val cleanup = rawAssignments.removeDeviceFromTank(
-                                            assignment.tankId,
-                                            assignment.deviceUid
-                                        )
-                                    ) {
-                                        is TankDeviceRemovalResult.Failure ->
-                                            failure.addSuppressed(cleanup.error)
-                                        TankDeviceRemovalResult.InvalidRequest ->
-                                            failure.addSuppressed(
-                                                IllegalStateException(
-                                                    "Restore assignment compensation was invalid."
-                                                )
-                                            )
-                                        TankDeviceRemovalResult.Removed,
-                                        TankDeviceRemovalResult.NotAssigned -> Unit
-                                    }
-                                }
-                            }
-                            TankDeviceAssignmentResult.Failure(failure)
-                        }
-                    }
-                    else -> result
-                }
-            }
-        )
+        tanks = tanks.trackCreatedTanks(transactions),
+        careTasks = careTasks.trackCreatedTasks(transactions),
+        assignments = assignments.trackCreatedAssignments(transactions)
     )
+}
+
+private fun UserDataRestoreDataSources.TankDataSource.trackCreatedTanks(
+    transactions: UserDataRestoreTransactions
+): UserDataRestoreDataSources.TankDataSource {
+    val raw = this
+    return copy(
+        addFromDraft = { ownerUid, draft ->
+            val tank = raw.addFromDraft(ownerUid, draft)
+            val failure = runCatching {
+                transactions.recordCreatedTank(
+                    ownerUid,
+                    RestoreCreatedTank(
+                        tankId = tank.id,
+                        createdAtMillis = tank.createdAtMillis
+                    )
+                )
+            }.exceptionOrNull()
+            if (failure != null) {
+                compensateCreatedTank(raw, tank.id, failure)
+                throw failure
+            }
+            tank
+        }
+    )
+}
+
+private suspend fun compensateCreatedTank(
+    raw: UserDataRestoreDataSources.TankDataSource,
+    tankId: Long,
+    failure: Throwable
+) {
+    withContext(NonCancellable) {
+        runCatching { raw.deleteTanks(listOf(tankId)) }
+            .exceptionOrNull()
+            ?.let(failure::addSuppressed)
+    }
+}
+
+private fun UserDataRestoreDataSources.CareTaskDataSource.trackCreatedTasks(
+    transactions: UserDataRestoreTransactions
+): UserDataRestoreDataSources.CareTaskDataSource {
+    val raw = this
+    return copy(
+        addTask = { task ->
+            raw.addTask(task)
+            val failure = runCatching {
+                transactions.recordCreatedTask(
+                    task.ownerUid,
+                    RestoreCreatedTask(
+                        taskId = task.id,
+                        tankId = task.tankId,
+                        createdAtMillis = task.createdAtMillis
+                    )
+                )
+            }.exceptionOrNull()
+            if (failure != null) {
+                compensateCreatedTask(raw, task.id, failure)
+                throw failure
+            }
+        }
+    )
+}
+
+private suspend fun compensateCreatedTask(
+    raw: UserDataRestoreDataSources.CareTaskDataSource,
+    taskId: Long,
+    failure: Throwable
+) {
+    withContext(NonCancellable) {
+        runCatching { raw.deleteTask(taskId) }
+            .exceptionOrNull()
+            ?.let(failure::addSuppressed)
+    }
+}
+
+private fun UserDataRestoreDataSources.AssignmentDataSource.trackCreatedAssignments(
+    transactions: UserDataRestoreTransactions
+): UserDataRestoreDataSources.AssignmentDataSource {
+    val raw = this
+    return copy(
+        assignDeviceToTank = { tankId, deviceUid ->
+            when (val result = raw.assignDeviceToTank(tankId, deviceUid)) {
+                is TankDeviceAssignmentResult.Assigned ->
+                    raw.recordAssignmentOrCompensate(result, transactions)
+                else -> result
+            }
+        }
+    )
+}
+
+private suspend fun UserDataRestoreDataSources.AssignmentDataSource.recordAssignmentOrCompensate(
+    result: TankDeviceAssignmentResult.Assigned,
+    transactions: UserDataRestoreTransactions
+): TankDeviceAssignmentResult {
+    val assignment = result.assignment
+    val failure = runCatching {
+        transactions.recordCreatedAssignment(
+            assignment.ownerUid,
+            RestoreCreatedAssignment(
+                tankId = assignment.tankId,
+                deviceUid = assignment.deviceUid,
+                assignedAtMillis = assignment.assignedAtMillis
+            )
+        )
+    }.exceptionOrNull()
+    return if (failure == null) {
+        result
+    } else {
+        compensateCreatedAssignment(assignment, failure)
+        TankDeviceAssignmentResult.Failure(failure)
+    }
+}
+
+private suspend fun UserDataRestoreDataSources.AssignmentDataSource.compensateCreatedAssignment(
+    assignment: TankDeviceAssignment,
+    failure: Throwable
+) {
+    withContext(NonCancellable) {
+        val current = runCatching {
+            assignmentForDevice(assignment.deviceUid)
+        }.getOrNull()
+        val matchesRestoreMutation =
+            current != null &&
+                current.tankId == assignment.tankId &&
+                current.assignedAtMillis == assignment.assignedAtMillis
+        if (matchesRestoreMutation) {
+            when (val cleanup = removeDeviceFromTank(assignment.tankId, assignment.deviceUid)) {
+                is TankDeviceRemovalResult.Failure -> failure.addSuppressed(cleanup.error)
+                TankDeviceRemovalResult.InvalidRequest -> failure.addSuppressed(
+                    IllegalStateException("Restore assignment compensation was invalid.")
+                )
+                TankDeviceRemovalResult.Removed,
+                TankDeviceRemovalResult.NotAssigned -> Unit
+            }
+        }
+    }
 }
 
 /** Restore-only media boundary; presentation never receives paths, streams or Android URIs. */

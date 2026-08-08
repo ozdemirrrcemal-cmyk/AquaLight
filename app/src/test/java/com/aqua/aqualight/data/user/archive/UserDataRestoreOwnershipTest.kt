@@ -52,6 +52,27 @@ class UserDataRestoreOwnershipTest {
 
     @Test
     fun `exact recovery preserves task and assignment whose identity changed`() = runBlocking {
+        val scenario = changedIdentityScenario()
+
+        withOwner {
+            val result = scenario.harness.recovery.recover(RestoreFixture.OWNER_UID)
+
+            assertEquals(1, result.rolledBackTankCount)
+            assertEquals(0, result.rolledBackTaskCount)
+            assertEquals(0, result.rolledBackAssignmentCount)
+            assertEquals("Independent replacement", scenario.harness.tasks.single().title)
+            assertEquals(
+                scenario.preexistingTankId,
+                scenario.harness.assignments.getValue(scenario.deviceUid).tankId
+            )
+            assertTrue(
+                scenario.harness.tanks.any { tank -> tank.id == scenario.preexistingTankId }
+            )
+            assertNull(scenario.harness.transactions.pending(RestoreFixture.OWNER_UID))
+        }
+    }
+
+    private fun changedIdentityScenario(): ChangedIdentityScenario {
         val preexisting = RestoreFixture.createSavedTank(
             id = RestoreFixture.PREEXISTING_TANK_ID,
             name = "Existing",
@@ -80,40 +101,29 @@ class UserDataRestoreOwnershipTest {
             deviceUid = deviceUid,
             assignedAtMillis = RestoreFixture.ASSIGNED_AT_MILLIS + 1
         )
-        val harness = ExactRecoveryHarness(
-            tanks = mutableListOf(preexisting, restored),
-            tasks = mutableListOf(replacementTask),
-            assignments = linkedMapOf(deviceUid to replacementAssignment),
-            pending = exactPending(
-                tanks = listOf(RestoreCreatedTank(restored.id, restored.createdAtMillis)),
-                tasks = listOf(
-                    RestoreCreatedTask(
-                        taskId = originalTask.id,
-                        tankId = originalTask.tankId,
-                        createdAtMillis = originalTask.createdAtMillis
-                    )
-                ),
-                assignments = listOf(
-                    RestoreCreatedAssignment(
-                        tankId = restored.id,
-                        deviceUid = deviceUid,
-                        assignedAtMillis = RestoreFixture.ASSIGNED_AT_MILLIS
-                    )
+        val pending = exactPending(
+            tanks = listOf(RestoreCreatedTank(restored.id, restored.createdAtMillis)),
+            tasks = listOf(
+                RestoreCreatedTask(originalTask.id, originalTask.tankId, originalTask.createdAtMillis)
+            ),
+            assignments = listOf(
+                RestoreCreatedAssignment(
+                    tankId = restored.id,
+                    deviceUid = deviceUid,
+                    assignedAtMillis = RestoreFixture.ASSIGNED_AT_MILLIS
                 )
             )
         )
-
-        withOwner {
-            val result = harness.recovery.recover(RestoreFixture.OWNER_UID)
-
-            assertEquals(1, result.rolledBackTankCount)
-            assertEquals(0, result.rolledBackTaskCount)
-            assertEquals(0, result.rolledBackAssignmentCount)
-            assertEquals("Independent replacement", harness.tasks.single().title)
-            assertEquals(preexisting.id, harness.assignments.getValue(deviceUid).tankId)
-            assertTrue(harness.tanks.any { tank -> tank.id == preexisting.id })
-            assertNull(harness.transactions.pending(RestoreFixture.OWNER_UID))
-        }
+        return ChangedIdentityScenario(
+            harness = ExactRecoveryHarness(
+                tanks = mutableListOf(preexisting, restored),
+                tasks = mutableListOf(replacementTask),
+                assignments = linkedMapOf(deviceUid to replacementAssignment),
+                pending = pending
+            ),
+            deviceUid = deviceUid,
+            preexistingTankId = preexisting.id
+        )
     }
 
     private suspend fun <T> withOwner(block: suspend () -> T): T {
@@ -137,6 +147,12 @@ class UserDataRestoreOwnershipTest {
             exactMutationTracking = true
         )
     }
+
+    private data class ChangedIdentityScenario(
+        val harness: ExactRecoveryHarness,
+        val deviceUid: DeviceUid,
+        val preexistingTankId: Long
+    )
 }
 
 private class ExactRecoveryHarness(

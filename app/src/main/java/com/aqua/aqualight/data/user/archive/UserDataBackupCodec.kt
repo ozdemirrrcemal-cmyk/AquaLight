@@ -32,32 +32,14 @@ internal class UserDataBackupCodec(
         destination: File
     ) {
         validator.validate(manifest, mediaByEntryName)
-        destination.parentFile?.let { parent ->
-            check(parent.isDirectory || parent.mkdirs()) {
-                "Backup staging directory could not be created."
-            }
+        requireStagingDirectory(destination, "Backup staging directory could not be created.")
+        val manifestBytes = gson.toJson(manifest).toByteArray(StandardCharsets.UTF_8)
+        require(manifestBytes.size <= UserDataBackupLimits.MAX_MANIFEST_BYTES) {
+            "Backup manifest exceeds the supported size."
         }
         var completed = false
         try {
-            val rawOutput = destination.outputStream().buffered()
-            LimitedOutputStream(rawOutput, UserDataBackupLimits.MAX_ARCHIVE_BYTES.toLong()).use {
-                limitedOutput ->
-                ZipOutputStream(limitedOutput).use { zip ->
-                    val manifestBytes = gson.toJson(manifest).toByteArray(StandardCharsets.UTF_8)
-                    require(manifestBytes.size <= UserDataBackupLimits.MAX_MANIFEST_BYTES) {
-                        "Backup manifest exceeds the supported size."
-                    }
-                    writeBytesEntry(
-                        zip = zip,
-                        entryName = UserDataBackupLimits.MANIFEST_ENTRY,
-                        content = manifestBytes
-                    )
-                    mediaByEntryName.toSortedMap().forEach { (entryName, file) ->
-                        validator.requireValidMediaEntryName(entryName)
-                        writeFileEntry(zip, entryName, file)
-                    }
-                }
-            }
+            writeBackupArchive(destination, manifestBytes, mediaByEntryName, validator)
             require(destination.length() in 1L..UserDataBackupLimits.MAX_ARCHIVE_BYTES.toLong()) {
                 "Backup archive size is invalid."
             }
@@ -96,25 +78,10 @@ internal class UserDataBackupCodec(
         require(export.format == USER_DATA_EXPORT_FORMAT)
         require(export.schemaVersion == USER_DATA_EXPORT_SCHEMA_VERSION)
         require(export.exportedAtMillis > 0L)
-        destination.parentFile?.let { parent ->
-            check(parent.isDirectory || parent.mkdirs()) {
-                "Export staging directory could not be created."
-            }
-        }
+        requireStagingDirectory(destination, "Export staging directory could not be created.")
         var completed = false
         try {
-            val rawOutput = destination.outputStream().buffered()
-            LimitedOutputStream(rawOutput, UserDataBackupLimits.MAX_ARCHIVE_BYTES.toLong()).use {
-                limitedOutput ->
-                OutputStreamWriter(limitedOutput, StandardCharsets.UTF_8).use { writer ->
-                    GsonBuilder()
-                        .setPrettyPrinting()
-                        .disableHtmlEscaping()
-                        .create()
-                        .toJson(export, writer)
-                    writer.flush()
-                }
-            }
+            writePortableExport(export, destination)
             require(destination.length() in 1L..UserDataBackupLimits.MAX_ARCHIVE_BYTES.toLong()) {
                 "Portable export size is invalid."
             }
@@ -144,12 +111,14 @@ internal class UserDataBackupCodec(
                     "Backup exceeds the supported uncompressed archive size."
                 }
                 val parsed = readArchiveEntry(
-                    zip = zip,
-                    entryName = entry.name,
-                    currentManifestJson = manifestJson,
-                    media = media,
-                    mediaDirectory = mediaDirectory,
-                    remainingArchiveBytes = remaining
+                    zip,
+                    ArchiveEntryRequest(
+                        entryName = entry.name,
+                        currentManifestJson = manifestJson,
+                        media = media,
+                        mediaDirectory = mediaDirectory,
+                        remainingArchiveBytes = remaining
+                    )
                 )
                 manifestJson = parsed.manifestJson
                 totalUncompressedBytes += parsed.uncompressedBytes
@@ -167,22 +136,18 @@ internal class UserDataBackupCodec(
 
     private fun readArchiveEntry(
         zip: ZipInputStream,
-        entryName: String,
-        currentManifestJson: String?,
-        media: MutableMap<String, File>,
-        mediaDirectory: File,
-        remainingArchiveBytes: Long
+        request: ArchiveEntryRequest
     ): ArchiveEntryResult {
         return when {
-            entryName == UserDataBackupLimits.MANIFEST_ENTRY -> {
-                require(currentManifestJson == null) {
+            request.entryName == UserDataBackupLimits.MANIFEST_ENTRY -> {
+                require(request.currentManifestJson == null) {
                     "Backup contains more than one manifest."
                 }
                 val bytes = readLimited(
                     input = zip,
                     maximumBytes = minOf(
                         UserDataBackupLimits.MAX_MANIFEST_BYTES.toLong(),
-                        remainingArchiveBytes
+                        request.remainingArchiveBytes
                     )
                 )
                 ArchiveEntryResult(
@@ -191,13 +156,16 @@ internal class UserDataBackupCodec(
                 )
             }
 
-            entryName.startsWith(UserDataBackupLimits.MEDIA_PREFIX) -> {
-                validator.requireValidMediaEntryName(entryName)
-                require(media[entryName] == null) {
+            request.entryName.startsWith(UserDataBackupLimits.MEDIA_PREFIX) -> {
+                validator.requireValidMediaEntryName(request.entryName)
+                require(request.media[request.entryName] == null) {
                     "Backup contains a duplicate media entry."
                 }
-                val target = File(mediaDirectory, entryName.substringAfterLast('/'))
-                require(target.parentFile == mediaDirectory) {
+                val target = File(
+                    request.mediaDirectory,
+                    request.entryName.substringAfterLast('/')
+                )
+                require(target.parentFile == request.mediaDirectory) {
                     "Backup media staging path is invalid."
                 }
                 val count = copyLimitedToFile(
@@ -205,12 +173,12 @@ internal class UserDataBackupCodec(
                     target = target,
                     maximumBytes = minOf(
                         UserDataBackupLimits.MAX_MEDIA_ENTRY_BYTES.toLong(),
-                        remainingArchiveBytes
+                        request.remainingArchiveBytes
                     )
                 )
-                media[entryName] = target
+                request.media[request.entryName] = target
                 ArchiveEntryResult(
-                    manifestJson = currentManifestJson,
+                    manifestJson = request.currentManifestJson,
                     uncompressedBytes = count
                 )
             }
@@ -237,17 +205,7 @@ internal class UserDataBackupCodec(
     private fun readLimited(input: InputStream, maximumBytes: Long): ByteArray {
         require(maximumBytes > 0L)
         val output = ByteArrayOutputStream()
-        val buffer = ByteArray(UserDataBackupLimits.BUFFER_SIZE)
-        var total = 0L
-        while (true) {
-            val read = input.read(buffer)
-            if (read < 0) break
-            total += read
-            require(total <= maximumBytes) {
-                "Backup archive entry exceeds its supported size."
-            }
-            output.write(buffer, 0, read)
-        }
+        copyLimited(input, output, maximumBytes)
         return output.toByteArray()
     }
 
@@ -258,56 +216,16 @@ internal class UserDataBackupCodec(
     ): Long {
         require(maximumBytes > 0L)
         var completed = false
-        var total = 0L
-        try {
-            target.outputStream().buffered().use { output ->
-                val buffer = ByteArray(UserDataBackupLimits.BUFFER_SIZE)
-                while (true) {
-                    val read = input.read(buffer)
-                    if (read < 0) break
-                    total += read
-                    require(total <= maximumBytes) {
-                        "Backup archive entry exceeds its supported size."
-                    }
-                    output.write(buffer, 0, read)
-                }
+        return try {
+            val total = target.outputStream().buffered().use { output ->
+                copyLimited(input, output, maximumBytes)
             }
             require(total > 0L) { "Backup media entry is empty." }
             completed = true
-            return total
+            total
         } finally {
             if (!completed) target.delete()
         }
-    }
-
-    private fun writeBytesEntry(
-        zip: ZipOutputStream,
-        entryName: String,
-        content: ByteArray
-    ) {
-        zip.putNextEntry(ZipEntry(entryName))
-        zip.write(content)
-        zip.closeEntry()
-    }
-
-    private fun writeFileEntry(
-        zip: ZipOutputStream,
-        entryName: String,
-        source: File
-    ) {
-        require(source.isFile && source.length() in 1L..UserDataBackupLimits.MAX_MEDIA_ENTRY_BYTES.toLong()) {
-            "Backup media source size is invalid."
-        }
-        zip.putNextEntry(ZipEntry(entryName))
-        source.inputStream().buffered().use { input ->
-            val buffer = ByteArray(UserDataBackupLimits.BUFFER_SIZE)
-            while (true) {
-                val read = input.read(buffer)
-                if (read < 0) break
-                zip.write(buffer, 0, read)
-            }
-        }
-        zip.closeEntry()
     }
 
     private data class ArchiveEntries(
@@ -315,10 +233,110 @@ internal class UserDataBackupCodec(
         val media: Map<String, File>
     )
 
+    private data class ArchiveEntryRequest(
+        val entryName: String,
+        val currentManifestJson: String?,
+        val media: MutableMap<String, File>,
+        val mediaDirectory: File,
+        val remainingArchiveBytes: Long
+    )
+
     private data class ArchiveEntryResult(
         val manifestJson: String?,
         val uncompressedBytes: Long
     )
+}
+
+private fun requireStagingDirectory(destination: File, failureMessage: String) {
+    destination.parentFile?.let { parent ->
+        check(parent.isDirectory || parent.mkdirs()) { failureMessage }
+    }
+}
+
+private fun writeBackupArchive(
+    destination: File,
+    manifestBytes: ByteArray,
+    mediaByEntryName: Map<String, File>,
+    validator: UserDataBackupValidator
+) {
+    val rawOutput = destination.outputStream().buffered()
+    LimitedOutputStream(rawOutput, UserDataBackupLimits.MAX_ARCHIVE_BYTES.toLong()).use {
+        limitedOutput -> writeBackupZip(limitedOutput, manifestBytes, mediaByEntryName, validator)
+    }
+}
+
+private fun writeBackupZip(
+    output: OutputStream,
+    manifestBytes: ByteArray,
+    mediaByEntryName: Map<String, File>,
+    validator: UserDataBackupValidator
+) {
+    ZipOutputStream(output).use { zip ->
+        writeBytesEntry(zip, UserDataBackupLimits.MANIFEST_ENTRY, manifestBytes)
+        mediaByEntryName.toSortedMap().forEach { (entryName, file) ->
+            validator.requireValidMediaEntryName(entryName)
+            writeFileEntry(zip, entryName, file)
+        }
+    }
+}
+
+private fun writePortableExport(export: PortableUserDataExport, destination: File) {
+    val rawOutput = destination.outputStream().buffered()
+    LimitedOutputStream(rawOutput, UserDataBackupLimits.MAX_ARCHIVE_BYTES.toLong()).use {
+        limitedOutput ->
+        OutputStreamWriter(limitedOutput, StandardCharsets.UTF_8).use { writer ->
+            GsonBuilder()
+                .setPrettyPrinting()
+                .disableHtmlEscaping()
+                .create()
+                .toJson(export, writer)
+            writer.flush()
+        }
+    }
+}
+
+private fun writeBytesEntry(
+    zip: ZipOutputStream,
+    entryName: String,
+    content: ByteArray
+) {
+    zip.putNextEntry(ZipEntry(entryName))
+    zip.write(content)
+    zip.closeEntry()
+}
+
+private fun writeFileEntry(
+    zip: ZipOutputStream,
+    entryName: String,
+    source: File
+) {
+    require(source.isFile && source.length() in 1L..UserDataBackupLimits.MAX_MEDIA_ENTRY_BYTES.toLong()) {
+        "Backup media source size is invalid."
+    }
+    zip.putNextEntry(ZipEntry(entryName))
+    source.inputStream().buffered().use { input ->
+        input.copyTo(zip, bufferSize = UserDataBackupLimits.BUFFER_SIZE)
+    }
+    zip.closeEntry()
+}
+
+private fun copyLimited(
+    input: InputStream,
+    output: OutputStream,
+    maximumBytes: Long
+): Long {
+    val buffer = ByteArray(UserDataBackupLimits.BUFFER_SIZE)
+    var total = 0L
+    while (true) {
+        val read = input.read(buffer)
+        if (read < 0) break
+        total += read
+        require(total <= maximumBytes) {
+            "Backup archive entry exceeds its supported size."
+        }
+        output.write(buffer, 0, read)
+    }
+    return total
 }
 
 private class LimitedOutputStream(
