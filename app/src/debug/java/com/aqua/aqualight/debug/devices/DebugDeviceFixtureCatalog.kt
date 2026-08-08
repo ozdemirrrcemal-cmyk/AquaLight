@@ -58,75 +58,90 @@ internal class DebugDeviceFixtureCatalog {
     }
 
     private fun AqlCommercialCatalogProduct.toFixtureSnapshot(index: Int): DeviceSnapshot {
-        val capabilities = profile.capabilities
-        val fixtureSuffix = productKey.value
-        val deviceUid = DeviceUid("DEBUG-FIXTURE-$fixtureSuffix")
+        val deviceUid = DeviceUid("DEBUG-FIXTURE-${productKey.value}")
         val now = System.currentTimeMillis()
-
         return DeviceSnapshot(
-            identity = DeviceIdentity(
-                uid = deviceUid,
-                shortId = "DBG-${index + 1}",
-                serialNumber = "DEBUG-$fixtureSuffix",
-                displayName = displayName,
-                customName = "Test $displayName"
-            ),
-            product = DeviceProduct(
-                brand = "AquaLight",
-                productId = productId.value,
-                productKey = productKey.value,
-                family = family,
-                familyRaw = family.wireValue,
-                line = line.value,
-                model = model.value,
-                displayName = displayName,
-                skuId = skuId.value,
-                skuCode = skuCode.value,
-                hardwareRevision = hardwareRevision.value
-            ),
+            identity = toFixtureIdentity(deviceUid, index),
+            product = toFixtureProduct(),
             firmwareVersion = "1.0.0-debug",
             firmwareBuild = "fixture",
             apiVersion = "1",
             protocolVersion = "1",
-            endpoint = DeviceRuntimeEndpoint(
-                ip = "192.168.254.${100 + index}",
-                wifiMode = "STA",
-                wifiConnected = true,
-                wsPort = 81
-            ),
-            capabilities = DeviceCapabilities(
-                light = capabilities.light,
-                manualLight = capabilities.manualLight,
-                lightProgram = capabilities.lightProgram,
-                lightPresets = capabilities.lightPresets,
-                lightSimulation = capabilities.lightSimulation,
-                fan = capabilities.fan,
-                cooling = capabilities.cooling,
-                temperature = capabilities.temperature,
-                standaloneTimer = capabilities.standaloneTimer,
-                dosing = capabilities.dosing,
-                timeSync = capabilities.timeSync,
-                ota = capabilities.ota
-            ),
-            limits = DeviceLimits(
-                lightChannelCount = limits.lightChannelCount,
-                fanOutputCount = limits.fanOutputCount,
-                temperatureSensorCount = limits.temperatureSensorCount,
-                timerChannelCount = limits.timerChannelCount,
-                dosingChannelCount = limits.dosingChannelCount
-            ),
+            endpoint = fixtureEndpoint(index),
+            capabilities = toFixtureCapabilities(),
+            limits = toFixtureLimits(),
             supportedFeatures = profile.supportedFeatures.map { feature -> feature.wireValue },
             supportedScreens = profile.supportedScreens.map { screen -> screen.wireValue },
             runtimeMetadataGeneration = 1L,
-            connectionState = DeviceConnectionState(
-                onlineState = DeviceOnlineState.AUTHENTICATED,
-                lastUdpSeenAtMillis = now,
-                lastWsConnectedAtMillis = now,
-                lastAuthenticatedAtMillis = now,
-                lastRuntimeMessageAtMillis = now,
-                lastControlProofAtMillis = now
-            ),
+            connectionState = fixtureConnectionState(now),
             lastSeenAtMillis = now
         )
     }
+
+    private fun AqlCommercialCatalogProduct.toFixtureIdentity(
+        deviceUid: DeviceUid,
+        index: Int
+    ): DeviceIdentity = DeviceIdentity(
+        uid = deviceUid,
+        shortId = "DBG-${index + 1}",
+        serialNumber = "DEBUG-${productKey.value}",
+        displayName = displayName,
+        customName = "Test $displayName"
+    )
+
+    private fun AqlCommercialCatalogProduct.toFixtureProduct(): DeviceProduct = DeviceProduct(
+        brand = "AquaLight",
+        productId = productId.value,
+        productKey = productKey.value,
+        family = family,
+        familyRaw = family.wireValue,
+        line = line.value,
+        model = model.value,
+        displayName = displayName,
+        skuId = skuId.value,
+        skuCode = skuCode.value,
+        hardwareRevision = hardwareRevision.value
+    )
+
+    private fun AqlCommercialCatalogProduct.toFixtureCapabilities(): DeviceCapabilities {
+        val values = profile.capabilities
+        return DeviceCapabilities(
+            light = values.light,
+            manualLight = values.manualLight,
+            lightProgram = values.lightProgram,
+            lightPresets = values.lightPresets,
+            lightSimulation = values.lightSimulation,
+            fan = values.fan,
+            cooling = values.cooling,
+            temperature = values.temperature,
+            standaloneTimer = values.standaloneTimer,
+            dosing = values.dosing,
+            timeSync = values.timeSync,
+            ota = values.ota
+        )
+    }
+
+    private fun AqlCommercialCatalogProduct.toFixtureLimits(): DeviceLimits = DeviceLimits(
+        lightChannelCount = limits.lightChannelCount,
+        fanOutputCount = limits.fanOutputCount,
+        temperatureSensorCount = limits.temperatureSensorCount,
+        timerChannelCount = limits.timerChannelCount,
+        dosingChannelCount = limits.dosingChannelCount
+    )
+
+    private fun fixtureEndpoint(index: Int): DeviceRuntimeEndpoint = DeviceRuntimeEndpoint(
+        ip = "192.168.254.${100 + index}",
+        wifiMode = "STA",
+        wifiConnected = true,
+        wsPort = 81
+    )
+
+    private fun fixtureConnectionState(now: Long): DeviceConnectionState = DeviceConnectionState(
+        onlineState = DeviceOnlineState.AUTHENTICATED,
+        lastUdpSeenAtMillis = now,
+        lastWsConnectedAtMillis = now,
+        lastAuthenticatedAtMillis = now,
+        lastRuntimeMessageAtMillis = now,
+        lastControlProofAtMillis = now
+    )
 }
