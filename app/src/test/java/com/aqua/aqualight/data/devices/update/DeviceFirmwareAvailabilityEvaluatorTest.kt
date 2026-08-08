@@ -14,6 +14,7 @@ import com.aqua.aqualight.data.devices.runtime.modules.firmware.DeviceFirmwareAv
 import com.aqua.aqualight.data.devices.runtime.modules.firmware.DeviceFirmwareManifest
 import com.aqua.aqualight.data.devices.runtime.modules.firmware.DeviceFirmwareManifestPlatform
 import com.aqua.aqualight.data.devices.runtime.modules.firmware.DeviceFirmwareManifestSignature
+import com.aqua.aqualight.data.devices.runtime.modules.firmware.DeviceFirmwareReleaseNoteItem
 import com.aqua.aqualight.data.devices.runtime.modules.firmware.DeviceFirmwareReleaseNotes
 import com.aqua.aqualight.data.devices.runtime.modules.firmware.DeviceFirmwareRuntimeContract
 import com.aqua.aqualight.platform.notifications.DeviceFirmwareUpdateNotificationOperations
@@ -156,7 +157,12 @@ class DeviceFirmwareAvailabilityEvaluatorTest {
             releaseNotes = DeviceFirmwareReleaseNotes(
                 schema = DeviceFirmwareRuntimeContract.ReleaseNotes.SCHEMA,
                 defaultLocale = DeviceFirmwareRuntimeContract.ReleaseNotes.DEFAULT_LOCALE,
-                items = emptyList()
+                items = listOf(
+                    DeviceFirmwareReleaseNoteItem(
+                        tr = "Güncelleme kullanılabilir.",
+                        en = "Update available."
+                    )
+                )
             ),
             artifacts = emptyList(),
             signature = DeviceFirmwareManifestSignature("", "", "", "")
