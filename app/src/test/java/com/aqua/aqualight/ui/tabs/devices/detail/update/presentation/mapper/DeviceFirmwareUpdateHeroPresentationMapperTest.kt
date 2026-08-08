@@ -4,6 +4,7 @@ import com.aqua.aqualight.R
 import com.aqua.aqualight.application.devices.DeviceFirmwareReleaseContent
 import com.aqua.aqualight.application.devices.DeviceOtaFailure
 import com.aqua.aqualight.application.devices.DeviceOtaFailureReason
+import com.aqua.aqualight.application.devices.DeviceOtaFailureStage
 import com.aqua.aqualight.ui.tabs.devices.detail.update.DeviceFirmwareUpdateMode
 import com.aqua.aqualight.ui.tabs.devices.detail.update.DeviceFirmwareUpdateUiState
 import org.junit.Assert.assertEquals
@@ -93,16 +94,13 @@ class DeviceFirmwareUpdateHeroPresentationMapperTest {
     }
 
     @Test
-    fun `failure reason maps localized copy and danger treatment`() {
+    fun `execution failure retains installation attention copy`() {
         val failure = DeviceOtaFailure(
             reason = DeviceOtaFailureReason.CONNECTION,
             recoverable = true
         )
         val presentation = DeviceFirmwareUpdateHeroPresentationMapper.map(
-            DeviceFirmwareUpdateUiState(
-                mode = DeviceFirmwareUpdateMode.FAILED,
-                failure = failure
-            )
+            failedState(failure)
         )
 
         assertEquals(R.string.device_settings_update_hero_title_failed, presentation.titleRes)
@@ -122,6 +120,32 @@ class DeviceFirmwareUpdateHeroPresentationMapperTest {
                 R.color.aqua_status_danger
             ),
             presentation.icon
+        )
+    }
+
+    @Test
+    fun `availability failure uses check-specific title and status`() {
+        val presentation = DeviceFirmwareUpdateHeroPresentationMapper.map(
+            failedState(
+                DeviceOtaFailure(
+                    reason = DeviceOtaFailureReason.CONNECTION,
+                    recoverable = true,
+                    stage = DeviceOtaFailureStage.AVAILABILITY_CHECK
+                )
+            )
+        )
+
+        assertEquals(
+            R.string.device_settings_update_hero_title_check_failed,
+            presentation.titleRes
+        )
+        assertEquals(
+            DeviceFirmwareUpdateText(R.string.device_settings_update_error_connection),
+            presentation.summary
+        )
+        assertEquals(
+            R.string.device_settings_update_status_check_failed,
+            presentation.statusTextRes
         )
     }
 
@@ -149,6 +173,12 @@ private fun updateState(
     targetVersion = targetVersion,
     releaseContent = DeviceFirmwareReleaseContent.EMPTY.copy(mandatory = mandatory)
 )
+
+private fun failedState(failure: DeviceOtaFailure): DeviceFirmwareUpdateUiState =
+    DeviceFirmwareUpdateUiState(
+        mode = DeviceFirmwareUpdateMode.FAILED,
+        failure = failure
+    )
 
 private fun mapState(
     mode: DeviceFirmwareUpdateMode,

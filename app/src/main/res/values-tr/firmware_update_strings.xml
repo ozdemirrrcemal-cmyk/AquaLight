@@ -3,6 +3,7 @@
     <string name="device_settings_update_for_device">%1$s için</string>
 
     <string name="device_settings_update_hero_title_checking">Güncelleme denetleniyor</string>
+    <string name="device_settings_update_hero_title_check_failed">Yazılım güncellemesi denetlenemedi</string>
     <string name="device_settings_update_hero_title_available">Yeni bir yazılım sürümü hazır</string>
     <string name="device_settings_update_hero_title_required">Zorunlu yazılım güncellemesi hazır</string>
     <string name="device_settings_update_hero_title_starting">Cihazınız hazırlanıyor</string>
@@ -27,6 +28,9 @@
     <string name="device_settings_update_hero_summary_up_to_date_version">%1$s sürümü bu cihaz için en yeni uyumlu ve imzalı sürümdür.</string>
     <string name="device_settings_update_hero_summary_up_to_date">En yeni uyumlu ve imzalı sürüm zaten yüklü.</string>
     <string name="device_settings_update_hero_summary_unsupported">AquaLight bu cihaz profili için uyumlu ve imzalı bir sürüm bulamadı.</string>
+
+    <string name="device_settings_update_status_check_failed">Güncelleme denetlenemedi</string>
+    <string name="device_settings_update_phase_check_failed">AquaLight güncelleme bilgilerini doğrulayamadı. Aşağıdaki sorunu giderip tekrar deneyin.</string>
 
     <string name="device_settings_update_release_warnings_heading">Sürüme özel notlar</string>
     <string name="device_settings_update_release_details_unavailable_title">Ayrıntılı sürüm notları sağlanmadı</string>

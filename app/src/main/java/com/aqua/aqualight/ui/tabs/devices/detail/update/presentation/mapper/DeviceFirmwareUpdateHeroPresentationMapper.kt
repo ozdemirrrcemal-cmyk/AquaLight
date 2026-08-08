@@ -4,6 +4,7 @@ import androidx.annotation.ColorRes
 import androidx.annotation.DrawableRes
 import androidx.annotation.StringRes
 import com.aqua.aqualight.R
+import com.aqua.aqualight.application.devices.DeviceOtaFailureStage
 import com.aqua.aqualight.ui.tabs.devices.detail.common.DeviceRootPresentationMapper
 import com.aqua.aqualight.ui.tabs.devices.detail.update.DeviceFirmwareUpdateMode
 import com.aqua.aqualight.ui.tabs.devices.detail.update.DeviceFirmwareUpdateUiState
@@ -41,28 +42,32 @@ internal object DeviceFirmwareUpdateHeroPresentationMapper {
         )
 
     @StringRes
-    fun statusTextRes(state: DeviceFirmwareUpdateUiState): Int =
-        if (state.mode == DeviceFirmwareUpdateMode.AVAILABLE) {
+    fun statusTextRes(state: DeviceFirmwareUpdateUiState): Int = when {
+        state.isAvailabilityCheckFailure ->
+            R.string.device_settings_update_status_check_failed
+        state.mode == DeviceFirmwareUpdateMode.AVAILABLE -> {
             if (state.releaseContent.mandatory) {
                 R.string.device_settings_update_status_required
             } else {
                 R.string.device_settings_update_status_available
             }
-        } else {
-            STATUS_TEXT_RES.getValue(state.mode)
         }
+        else -> STATUS_TEXT_RES.getValue(state.mode)
+    }
 
     @StringRes
-    private fun titleRes(state: DeviceFirmwareUpdateUiState): Int =
-        if (state.mode == DeviceFirmwareUpdateMode.AVAILABLE) {
+    private fun titleRes(state: DeviceFirmwareUpdateUiState): Int = when {
+        state.isAvailabilityCheckFailure ->
+            R.string.device_settings_update_hero_title_check_failed
+        state.mode == DeviceFirmwareUpdateMode.AVAILABLE -> {
             if (state.releaseContent.mandatory) {
                 R.string.device_settings_update_hero_title_required
             } else {
                 R.string.device_settings_update_hero_title_available
             }
-        } else {
-            HERO_TITLE_RES.getValue(state.mode)
         }
+        else -> HERO_TITLE_RES.getValue(state.mode)
+    }
 
     private fun summary(state: DeviceFirmwareUpdateUiState): DeviceFirmwareUpdateText =
         when (state.mode) {
@@ -200,3 +205,7 @@ internal object DeviceFirmwareUpdateHeroPresentationMapper {
         DeviceFirmwareUpdateMode.UNSUPPORTED to R.string.device_settings_update_status_unsupported
     )
 }
+
+private val DeviceFirmwareUpdateUiState.isAvailabilityCheckFailure: Boolean
+    get() = mode == DeviceFirmwareUpdateMode.FAILED &&
+        failure?.stage == DeviceOtaFailureStage.AVAILABILITY_CHECK

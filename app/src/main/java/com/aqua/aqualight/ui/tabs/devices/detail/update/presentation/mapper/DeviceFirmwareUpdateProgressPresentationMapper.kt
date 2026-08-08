@@ -2,6 +2,7 @@ package com.aqua.aqualight.ui.tabs.devices.detail.update.presentation.mapper
 
 import androidx.annotation.StringRes
 import com.aqua.aqualight.R
+import com.aqua.aqualight.application.devices.DeviceOtaFailureStage
 import com.aqua.aqualight.application.devices.DeviceOtaProgressPhase
 import com.aqua.aqualight.ui.tabs.devices.detail.update.DeviceFirmwareUpdateMode
 import com.aqua.aqualight.ui.tabs.devices.detail.update.DeviceFirmwareUpdateUiState
@@ -26,10 +27,12 @@ internal object DeviceFirmwareUpdateProgressPresentationMapper {
         DeviceFirmwareUpdateMode.RESTARTING -> R.string.device_settings_update_phase_restarting
         DeviceFirmwareUpdateMode.SUCCEEDED -> R.string.device_settings_update_phase_succeeded
         DeviceFirmwareUpdateMode.UP_TO_DATE -> R.string.device_settings_update_phase_up_to_date
-        DeviceFirmwareUpdateMode.FAILED -> if (state.failure?.recoverable == true) {
-            R.string.device_settings_update_phase_failed_recoverable
-        } else {
-            R.string.device_settings_update_phase_failed_terminal
+        DeviceFirmwareUpdateMode.FAILED -> when {
+            state.failure?.stage == DeviceOtaFailureStage.AVAILABILITY_CHECK ->
+                R.string.device_settings_update_phase_check_failed
+            state.failure?.recoverable == true ->
+                R.string.device_settings_update_phase_failed_recoverable
+            else -> R.string.device_settings_update_phase_failed_terminal
         }
         DeviceFirmwareUpdateMode.UNSUPPORTED -> R.string.device_settings_update_phase_unsupported
     }
