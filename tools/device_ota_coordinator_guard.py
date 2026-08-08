@@ -180,7 +180,7 @@ require_tokens(
         "DeviceFirmwareManifestNotPublishedException",
         "noPublishedRelease(snapshot)",
         "latestVersion = currentVersion",
-        "Result.failure(error)",
+        "throw error",
     ),
 )
 require_tokens(

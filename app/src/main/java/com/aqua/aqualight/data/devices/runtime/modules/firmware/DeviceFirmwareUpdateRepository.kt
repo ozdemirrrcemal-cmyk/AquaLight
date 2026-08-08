@@ -44,22 +44,25 @@ class DeviceFirmwareUpdateRepository(
         snapshot: DeviceSnapshot,
         manifestUrl: String,
         applyNow: Boolean = true
-    ): Result<DeviceFirmwareAvailability> {
-        val resolvedManifestUrl = runCatching {
+    ): Result<DeviceFirmwareAvailability> = runCatching {
+        val resolvedManifestUrl =
             DeviceFirmwareManifestUrlResolver.resolve(
                 template = manifestUrl,
                 productKey = snapshot.product.productKey
             )
-        }.getOrElse { error -> return Result.failure(error) }
         val manifestResult = fetchManifest(resolvedManifestUrl)
-        val manifest = manifestResult.getOrElse { error ->
-            return if (error is DeviceFirmwareManifestNotPublishedException) {
-                noPublishedRelease(snapshot)
-            } else {
-                Result.failure(error)
+        manifestResult.fold(
+            onSuccess = { manifest ->
+                evaluateUpdate(snapshot, manifest, applyNow).getOrThrow()
+            },
+            onFailure = { error ->
+                if (error is DeviceFirmwareManifestNotPublishedException) {
+                    noPublishedRelease(snapshot).getOrThrow()
+                } else {
+                    throw error
+                }
             }
-        }
-        return evaluateUpdate(snapshot, manifest, applyNow)
+        )
     }
 
     suspend fun fetchAndPlanUpdate(

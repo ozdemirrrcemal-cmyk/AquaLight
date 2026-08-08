@@ -59,8 +59,6 @@ class DeviceFirmwareProductIsolationMatrixTest {
         val environment = product.productKey.value.lowercase()
         val tag = "$environment-v$TARGET_VERSION"
         val filename = "AquaLight-$tag-ota.bin"
-        val capabilities = product.capabilities()
-        val limits = product.limits()
         return DeviceFirmwareManifest(
             schema = DeviceFirmwareRuntimeContract.Manifest.SCHEMA,
             brand = DeviceFirmwareRuntimeContract.Manifest.BRAND,
@@ -75,43 +73,7 @@ class DeviceFirmwareProductIsolationMatrixTest {
                 defaultLocale = DeviceFirmwareRuntimeContract.ReleaseNotes.DEFAULT_LOCALE,
                 items = listOf(DeviceFirmwareReleaseNoteItem("Ürün güncellemesi.", "Product update."))
             ),
-            artifacts = listOf(
-                DeviceFirmwareManifestArtifact(
-                    env = environment,
-                    product = DeviceFirmwareManifestProduct(
-                        productKey = product.productKey.value,
-                        productId = product.productId.value,
-                        brand = DeviceFirmwareRuntimeContract.Manifest.BRAND,
-                        family = product.family.wireValue,
-                        line = product.line.value,
-                        model = product.model.value,
-                        displayName = "AquaLight ${product.displayName}",
-                        skuCode = product.skuCode.value,
-                        hardwareRevision = product.hardwareRevision.value,
-                        capabilities = capabilities,
-                        limits = limits
-                    ),
-                    compatibility = DeviceFirmwareCompatibility(
-                        productKey = product.productKey.value,
-                        productId = product.productId.value,
-                        family = product.family.wireValue,
-                        line = product.line.value,
-                        model = product.model.value,
-                        hardwareRevision = product.hardwareRevision.value
-                    ),
-                    firmware = DeviceFirmwareAsset(
-                        version = TARGET_VERSION,
-                        filename = filename,
-                        url = DeviceFirmwareRuntimeContract.OFFICIAL_RELEASE_URL_PREFIX +
-                            "$tag/$filename",
-                        sha256 = "a".repeat(64),
-                        size = 1_048_576,
-                        format = DeviceFirmwareRuntimeContract.Manifest.FIRMWARE_FORMAT,
-                        otaSlotCompatible = true
-                    ),
-                    factory = null
-                )
-            ),
+            artifacts = listOf(artifact(product, environment, tag, filename)),
             signature = DeviceFirmwareManifestSignature(
                 scheme = DeviceFirmwareRuntimeContract.Signature.SCHEME_ECDSA_P256_SHA256,
                 keyId = "release-key-1",
@@ -120,6 +82,46 @@ class DeviceFirmwareProductIsolationMatrixTest {
             )
         )
     }
+
+    private fun artifact(
+        product: AqlCommercialCatalogProduct,
+        environment: String,
+        tag: String,
+        filename: String
+    ): DeviceFirmwareManifestArtifact = DeviceFirmwareManifestArtifact(
+        env = environment,
+        product = DeviceFirmwareManifestProduct(
+            productKey = product.productKey.value,
+            productId = product.productId.value,
+            brand = DeviceFirmwareRuntimeContract.Manifest.BRAND,
+            family = product.family.wireValue,
+            line = product.line.value,
+            model = product.model.value,
+            displayName = "AquaLight ${product.displayName}",
+            skuCode = product.skuCode.value,
+            hardwareRevision = product.hardwareRevision.value,
+            capabilities = product.capabilities(),
+            limits = product.limits()
+        ),
+        compatibility = DeviceFirmwareCompatibility(
+            productKey = product.productKey.value,
+            productId = product.productId.value,
+            family = product.family.wireValue,
+            line = product.line.value,
+            model = product.model.value,
+            hardwareRevision = product.hardwareRevision.value
+        ),
+        firmware = DeviceFirmwareAsset(
+            version = TARGET_VERSION,
+            filename = filename,
+            url = DeviceFirmwareRuntimeContract.OFFICIAL_RELEASE_URL_PREFIX + "$tag/$filename",
+            sha256 = "a".repeat(64),
+            size = 1_048_576,
+            format = DeviceFirmwareRuntimeContract.Manifest.FIRMWARE_FORMAT,
+            otaSlotCompatible = true
+        ),
+        factory = null
+    )
 
     private fun snapshot(product: AqlCommercialCatalogProduct): DeviceSnapshot = DeviceSnapshot(
         identity = DeviceIdentity(uid = DeviceUid("AQL-${product.productKey.value}")),

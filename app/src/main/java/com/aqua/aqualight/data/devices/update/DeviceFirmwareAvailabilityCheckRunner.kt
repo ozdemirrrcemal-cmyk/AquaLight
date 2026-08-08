@@ -126,35 +126,46 @@ internal class DeviceFirmwareAvailabilityCheckRunner(
         }.getOrElse {
             return retryOutcome(DeviceFirmwareAvailabilityFailureStage.MANIFEST)
         }
-        var retryableStage: DeviceFirmwareAvailabilityFailureStage? = null
+        var aggregateOutcome: DeviceFirmwareAvailabilityCheckOutcome =
+            DeviceFirmwareAvailabilityCheckOutcome.Completed
 
         for ((manifestUrl, productSnapshots) in snapshotsByManifest) {
-            if (!isOwnerActive(ownerUid)) {
-                return DeviceFirmwareAvailabilityCheckOutcome.OwnerChanged
-            }
-            val outcome = manifestLoader(manifestUrl).fold(
-                onSuccess = { manifest ->
-                    evaluator.evaluate(ownerUid, productSnapshots, manifest)
-                },
-                onFailure = { error ->
-                    if (error is DeviceFirmwareManifestNotPublishedException) {
-                        clearUnpublishedAvailability(ownerUid, productSnapshots)
-                    } else {
-                        retryOutcome(DeviceFirmwareAvailabilityFailureStage.MANIFEST)
+            val outcome = if (!isOwnerActive(ownerUid)) {
+                DeviceFirmwareAvailabilityCheckOutcome.OwnerChanged
+            } else {
+                manifestLoader(manifestUrl).fold(
+                    onSuccess = { manifest ->
+                        evaluator.evaluate(ownerUid, productSnapshots, manifest)
+                    },
+                    onFailure = { error ->
+                        if (error is DeviceFirmwareManifestNotPublishedException) {
+                            clearUnpublishedAvailability(ownerUid, productSnapshots)
+                        } else {
+                            retryOutcome(DeviceFirmwareAvailabilityFailureStage.MANIFEST)
+                        }
                     }
-                }
-            )
+                )
+            }
             when (outcome) {
                 DeviceFirmwareAvailabilityCheckOutcome.Completed -> Unit
-                DeviceFirmwareAvailabilityCheckOutcome.OwnerChanged -> return outcome
-                DeviceFirmwareAvailabilityCheckOutcome.NotificationsUnavailable -> return outcome
+                DeviceFirmwareAvailabilityCheckOutcome.OwnerChanged,
+                DeviceFirmwareAvailabilityCheckOutcome.NotificationsUnavailable -> {
+                    aggregateOutcome = outcome
+                }
                 is DeviceFirmwareAvailabilityCheckOutcome.RetryableFailure -> {
-                    retryableStage = retryableStage ?: outcome.stage
+                    if (aggregateOutcome !is DeviceFirmwareAvailabilityCheckOutcome.RetryableFailure) {
+                        aggregateOutcome = outcome
+                    }
                 }
             }
+            if (
+                outcome === DeviceFirmwareAvailabilityCheckOutcome.OwnerChanged ||
+                outcome === DeviceFirmwareAvailabilityCheckOutcome.NotificationsUnavailable
+            ) {
+                break
+            }
         }
-        return retryableStage?.let(::retryOutcome)
-            ?: DeviceFirmwareAvailabilityCheckOutcome.Completed
+        return aggregateOutcome
     }
 
     private suspend fun clearUnpublishedAvailability(
