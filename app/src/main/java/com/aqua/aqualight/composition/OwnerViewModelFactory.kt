@@ -44,6 +44,7 @@ import com.aqua.aqualight.ui.tabs.devices.detail.update.DeviceFirmwareUpdateView
 import com.aqua.aqualight.ui.tabs.devices.route.DeviceRouteResolver
 import com.aqua.aqualight.ui.tabs.maintenance.MaintenanceViewModel
 import com.aqua.aqualight.ui.tabs.settings.SettingsViewModel
+import com.aqua.aqualight.ui.tabs.settings.app.DataManagementViewModel
 import com.aqua.aqualight.ui.tabs.settings.device.DeviceStatusViewModel
 import com.aqua.aqualight.ui.tabs.settings.device.SystemDeviceStatusClock
 
@@ -82,6 +83,11 @@ internal class OwnerViewModelFactory(
                 SettingsViewModel(
                     userProfileOperations = userProfileOperations,
                     deviceStatusOperations = DefaultDeviceStatusOperations(repository)
+                )
+
+            DataManagementViewModel::class.java ->
+                DataManagementViewModel(
+                    archiveOperations = graph.userDataArchiveOperations
                 )
 
             DeviceStatusViewModel::class.java ->
@@ -256,6 +262,7 @@ internal class OwnerViewModelFactory(
     private companion object {
         val OWNER_BINDINGS: Set<Class<out ViewModel>> = setOf(
             SettingsViewModel::class.java,
+            DataManagementViewModel::class.java,
             DeviceStatusViewModel::class.java,
             DevicesViewModel::class.java,
             DeviceAddViewModel::class.java,

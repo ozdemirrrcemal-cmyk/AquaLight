@@ -1,0 +1,48 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Settings / data management -->
+    <string name="data_management_backup_title">Create backup</string>
+    <string name="data_management_backup_subtitle">Save your aquariums, care records and eligible device assignments in an AquaLight backup.</string>
+    <string name="data_management_backup_card_description">Create an AquaLight backup of your aquarium data.</string>
+    <string name="data_management_restore_title">Restore from backup</string>
+    <string name="data_management_restore_subtitle">Review an AquaLight backup and add its data without deleting your current aquariums.</string>
+    <string name="data_management_restore_card_description">Choose and restore an AquaLight backup.</string>
+    <string name="data_management_export_title">Export my data</string>
+    <string name="data_management_export_subtitle">Create a readable JSON copy of your profile, selected app preferences, usage counters and aquarium data.</string>
+    <string name="data_management_export_card_description">Export a readable copy of your AquaLight data.</string>
+    <string name="data_management_arrow_description">Open data action</string>
+    <string name="data_management_info">Backups never include passwords, authentication credentials, device security secrets or active device sessions. Restoring adds validated data to the currently signed-in account and never transfers device ownership.</string>
+    <string name="data_management_restore_preview_title">Review backup</string>
+    <string name="data_management_restore_preview_message">Created: %1$s\nAquaLight version: %2$s\nAquariums: %3$d\nCare records: %4$d\nEligible device assignments: %5$d\nArchived photos: %6$d\n\nRestore adds these records to your current data. Existing aquariums are not deleted.</string>
+    <string name="data_management_restore_confirm">Restore</string>
+    <string name="data_management_backup_success_title">Backup saved</string>
+    <string name="data_management_backup_success_message">Your AquaLight backup was saved successfully.</string>
+    <string name="data_management_export_success_title">Data exported</string>
+    <string name="data_management_export_success_message">Your readable AquaLight data export was saved successfully.</string>
+    <string name="data_management_restore_success_title">Backup restored</string>
+    <string name="data_management_restore_success_message">Restored %1$s, %2$s and %3$s. %4$s</string>
+    <plurals name="data_management_restore_success_aquariums">
+        <item quantity="one">%d aquarium</item>
+        <item quantity="other">%d aquariums</item>
+    </plurals>
+    <plurals name="data_management_restore_success_care_records">
+        <item quantity="one">%d care record</item>
+        <item quantity="other">%d care records</item>
+    </plurals>
+    <plurals name="data_management_restore_success_device_assignments">
+        <item quantity="one">%d device assignment</item>
+        <item quantity="other">%d device assignments</item>
+    </plurals>
+    <plurals name="data_management_restore_success_skipped_assignments">
+        <item quantity="one">%d device assignment was skipped because it was unavailable or already assigned.</item>
+        <item quantity="other">%d device assignments were skipped because they were unavailable or already assigned.</item>
+    </plurals>
+    <string name="data_management_restore_warning_title">Data restored with a reminder warning</string>
+    <string name="data_management_restore_warning_message">Your data was restored, but care reminders could not be fully reconciled. Open the app again or review notification settings before relying on restored reminders.</string>
+    <string name="data_management_backup_error_title">Backup failed</string>
+    <string name="data_management_backup_error_message">AquaLight could not create or save the backup. Your existing data was not changed.</string>
+    <string name="data_management_restore_error_title">Restore failed</string>
+    <string name="data_management_restore_error_message">The selected backup could not be validated or restored. AquaLight rolled back records created by this restore attempt.</string>
+    <string name="data_management_export_error_title">Export failed</string>
+    <string name="data_management_export_error_message">AquaLight could not create or save your data export. Your existing data was not changed.</string>
+</resources>

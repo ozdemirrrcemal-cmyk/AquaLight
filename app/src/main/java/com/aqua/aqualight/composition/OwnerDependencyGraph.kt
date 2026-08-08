@@ -1,11 +1,14 @@
 package com.aqua.aqualight.composition
 
 import android.content.Context
+import com.aqua.aqualight.BuildConfig
 import com.aqua.aqualight.application.auth.AuthenticatedOwnerIdentity
 import com.aqua.aqualight.application.devices.DeviceFirmwareUpdateOperations
 import com.aqua.aqualight.application.devices.provisioning.ProvisioningDraftOperations
 import com.aqua.aqualight.application.devices.provisioning.ProvisioningDraftRequest
 import com.aqua.aqualight.application.devices.provisioning.ProvisioningDraftSession
+import com.aqua.aqualight.application.notifications.NotificationPreferenceUseCase
+import com.aqua.aqualight.application.user.UserDataArchiveOperations
 import com.aqua.aqualight.data.aquarium.devices.TankDeviceAssignmentRepository
 import com.aqua.aqualight.data.aquarium.devices.TankDeviceAssignmentRepositoryProvider
 import com.aqua.aqualight.data.aquarium.store.AquariumTankDataStoreManager
@@ -19,6 +22,15 @@ import com.aqua.aqualight.data.devices.provisioning.store.AqlProvisioningQrSecre
 import com.aqua.aqualight.data.devices.repository.DevicesRepository
 import com.aqua.aqualight.data.devices.repository.DevicesRepositoryProvider
 import com.aqua.aqualight.data.user.UserDataScope
+import com.aqua.aqualight.data.user.UserPreferencesManager
+import com.aqua.aqualight.data.user.archive.DefaultUserDataArchiveOperations
+import com.aqua.aqualight.data.user.archive.UserDataArchiveDataSources
+import com.aqua.aqualight.data.user.archive.UserDataArchiveRuntimeDependencies
+import com.aqua.aqualight.data.user.archive.UserDataArchiveSnapshotCollector
+import com.aqua.aqualight.data.user.archive.UserDataArchiveStaging
+import com.aqua.aqualight.data.user.archive.UserDataBackupRestorer
+import com.aqua.aqualight.platform.documents.AndroidUserDataDocumentOperations
+import com.aqua.aqualight.platform.media.UserDataArchiveMediaGateway
 import com.aqua.aqualight.platform.notifications.DeviceFirmwareUpdateNotificationOperations
 
 /** Immutable dependency snapshot for one committed authenticated-owner session. */
@@ -31,6 +43,7 @@ internal data class OwnerDependencyGraph(
     val assignmentRepository: TankDeviceAssignmentRepository,
     val aquariumTankStore: AquariumTankDataStoreManager,
     val careTaskStore: CareTaskDataStoreManager,
+    val userDataArchiveOperations: UserDataArchiveOperations,
     val provisioningDraftOperations: ProvisioningDraftOperations
 )
 
@@ -53,7 +66,9 @@ internal fun requireActiveOwnerGeneration(
 
 internal class ActiveOwnerDependencyGraphResolver(
     context: Context,
-    private val deviceFirmwareNotifications: DeviceFirmwareUpdateNotificationOperations
+    private val deviceFirmwareNotifications: DeviceFirmwareUpdateNotificationOperations,
+    private val notificationPreferenceUseCase: NotificationPreferenceUseCase,
+    private val userPreferencesManager: UserPreferencesManager
 ) : OwnerDependencyGraphResolver {
 
     private val appContext = context.applicationContext
@@ -144,6 +159,27 @@ internal class ActiveOwnerDependencyGraphResolver(
         dependencies: ActiveOwnerDependencies
     ): OwnerDependencyGraph {
         val ownerUidProvider = { dependencies.ownerUid }
+        val aquariumTankStore = AquariumTankDataStoreManager(appContext)
+        val careTaskStore = CareTaskDataStoreManager.create(appContext)
+        val archiveDataSources = UserDataArchiveDataSources(
+            aquariumStore = aquariumTankStore,
+            careTaskStore = careTaskStore,
+            assignmentRepository = dependencies.assignmentRepository
+        )
+        val mediaGateway = UserDataArchiveMediaGateway(appContext)
+        val snapshotCollector = UserDataArchiveSnapshotCollector(
+            ownerUid = dependencies.ownerUid,
+            dataSources = archiveDataSources,
+            preferences = userPreferencesManager,
+            mediaGateway = mediaGateway
+        )
+        val restorer = UserDataBackupRestorer(
+            context = appContext,
+            ownerUid = dependencies.ownerUid,
+            dataSources = archiveDataSources,
+            mediaGateway = mediaGateway,
+            reconcileCareReminders = notificationPreferenceUseCase::reconcileOwner
+        )
         return OwnerDependencyGraph(
             ownerUid = dependencies.ownerUid,
             sessionGeneration = dependencies.sessionGeneration,
@@ -151,8 +187,17 @@ internal class ActiveOwnerDependencyGraphResolver(
             firmwareUpdateOperations = createFirmwareUpdateOperations(dependencies),
             deviceFirmwareNotifications = deviceFirmwareNotifications,
             assignmentRepository = dependencies.assignmentRepository,
-            aquariumTankStore = AquariumTankDataStoreManager(appContext),
-            careTaskStore = CareTaskDataStoreManager.create(appContext),
+            aquariumTankStore = aquariumTankStore,
+            careTaskStore = careTaskStore,
+            userDataArchiveOperations = DefaultUserDataArchiveOperations(
+                sourceAppVersion = BuildConfig.VERSION_NAME,
+                snapshotCollector = snapshotCollector,
+                restorer = restorer,
+                runtime = UserDataArchiveRuntimeDependencies(
+                    staging = UserDataArchiveStaging(appContext),
+                    documents = AndroidUserDataDocumentOperations(appContext)
+                )
+            ),
             provisioningDraftOperations = DefaultProvisioningDraftOperations(
                 draftStore = AqlProvisioningDraftStore(
                     context = appContext,

@@ -14,7 +14,7 @@
     <string name="screen_title_privacy">Gizlilik</string>
     <string name="screen_title_legal_center">Gizlilik ve Yasal</string>
     <string name="screen_title_feedback">Geri Bildirim</string>
-    <string name="screen_title_logout">Çıkış Yap</string>
+    <string name="screen_title_logout">Hesap ve Güvenlik</string>
     <string name="screen_title_change_password">Şifreyi Değiştir</string>
     <string name="screen_title_change_email">E-postayı Değiştir</string>
     <string name="screen_title_security_settings">Güvenlik Ayarları</string>

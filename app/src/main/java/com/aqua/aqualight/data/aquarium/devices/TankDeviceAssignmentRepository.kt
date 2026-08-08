@@ -110,6 +110,19 @@ class TankDeviceAssignmentRepository(
         }
     }
 
+    suspend fun assignmentsSnapshotForTanks(
+        tankIds: Set<Long>
+    ): List<TankDeviceAssignment> {
+        if (tankIds.isEmpty()) return emptyList()
+        val assignmentsByDevice = ownerAssignments.first().associateBy { assignment ->
+            assignment.deviceUid
+        }
+        return devicesRepository.currentDevices().mapNotNull { snapshot ->
+            assignmentsByDevice[snapshot.deviceUid]
+                ?.takeIf { assignment -> assignment.tankId in tankIds }
+        }
+    }
+
     suspend fun assignDeviceToTank(
         tankId: Long,
         deviceUid: DeviceUid
@@ -284,11 +297,11 @@ class TankDeviceAssignmentRepository(
             }
         }
     }
+}
 
-    private fun Throwable.throwIfCancellation() {
-        if (this is CancellationException) {
-            throw this
-        }
+private fun Throwable.throwIfCancellation() {
+    if (this is CancellationException) {
+        throw this
     }
 }
 

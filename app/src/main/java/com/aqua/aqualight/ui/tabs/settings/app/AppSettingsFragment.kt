@@ -129,6 +129,11 @@ class AppSettingsFragment : Fragment(R.layout.fragment_app_settings) {
                 AppSettingsFragmentDirections.actionAppSettingsFragmentToLanguageSettingsFragment()
             )
         }
+        cardBackupRestore.setOnClickListener {
+            safeNavigate(
+                AppSettingsFragmentDirections.actionAppSettingsFragmentToDataManagementFragment()
+            )
+        }
     }
 
     private fun refreshNotificationState() {

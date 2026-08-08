@@ -127,8 +127,8 @@
     <string name="settings_legal_desc">Gizlilik ve yasal belgeleri açın</string>
     <string name="settings_about">Hakkında</string>
     <string name="settings_about_desc">Uygulama bilgilerini ve açık kaynak lisanslarını görüntüleyin</string>
-    <string name="settings_logout">Çıkış yap</string>
-    <string name="settings_logout_desc">Hesabınızdan çıkış yapın</string>
+    <string name="settings_logout">Hesap ve Güvenlik</string>
+    <string name="settings_logout_desc">Hesap ve güvenlik ayarlarını açın</string>
     <string name="edit_profile_camera_icon_desc">Profil fotoğrafını değiştir</string>
     <string name="edit_profile_choose_source_title">Fotoğraf kaynağını seçin</string>
     <string name="edit_profile_error_title">Hata</string>

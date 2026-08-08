@@ -137,7 +137,9 @@ internal class DefaultAppContainer(
     ) {
         ActiveOwnerDependencyGraphResolver(
             context = appContext,
-            deviceFirmwareNotifications = notificationPlatform.deviceFirmwareUpdates
+            deviceFirmwareNotifications = notificationPlatform.deviceFirmwareUpdates,
+            notificationPreferenceUseCase = notificationPreferenceUseCase,
+            userPreferencesManager = userPreferencesManager
         )
     }
 
