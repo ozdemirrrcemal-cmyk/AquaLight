@@ -112,7 +112,12 @@ class DosePro4NoPublishedArtifactRegressionTest {
             releaseNotes = DeviceFirmwareReleaseNotes(
                 schema = DeviceFirmwareRuntimeContract.ReleaseNotes.SCHEMA,
                 defaultLocale = DeviceFirmwareRuntimeContract.ReleaseNotes.DEFAULT_LOCALE,
-                items = emptyList()
+                items = listOf(
+                    DeviceFirmwareReleaseNoteItem(
+                        tr = "Dose Pro 2 güncellemesi.",
+                        en = "Dose Pro 2 update."
+                    )
+                )
             ),
             artifacts = listOf(artifact),
             signature = DeviceFirmwareManifestSignature(
