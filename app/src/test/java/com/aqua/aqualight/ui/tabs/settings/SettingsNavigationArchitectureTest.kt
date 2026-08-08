@@ -29,8 +29,10 @@ class SettingsNavigationArchitectureTest {
         assertTrue(navigation.contains("@+id/legalCenterFragment"))
         assertTrue(navigation.contains("settings.legal.PrivacyFragment"))
         assertTrue(navigation.contains("settings.legal.TermsOfUseFragment"))
+        assertTrue(navigation.contains("settings.legal.ThirdPartyLicensesFragment"))
         assertTrue(navigation.contains("action_legalCenterFragment_to_privacyFragment"))
         assertTrue(navigation.contains("action_legalCenterFragment_to_termsOfUseFragment"))
+        assertTrue(navigation.contains("action_legalCenterFragment_to_thirdPartyLicensesFragment"))
     }
 
     @Test
@@ -49,10 +51,11 @@ class SettingsNavigationArchitectureTest {
         assertFalse(appSettingsSource.contains("actionAppSettingsFragmentToAboutAppFragment"))
         assertFalse(aboutLayout.contains("@+id/rowPrivacy"))
         assertFalse(aboutLayout.contains("@+id/rowTerms"))
-        assertTrue(aboutLayout.contains("@+id/rowLicenses"))
-        assertTrue(aboutSource.contains("actionAboutAppFragmentToOpenSourceLicensesFragment"))
+        assertFalse(aboutLayout.contains("@+id/rowLicenses"))
+        assertFalse(aboutSource.contains("actionAboutAppFragmentToOpenSourceLicensesFragment"))
         assertTrue(legalLayout.contains("@+id/rowPrivacyNotice"))
         assertTrue(legalLayout.contains("@+id/rowTermsOfUse"))
+        assertTrue(legalLayout.contains("@+id/rowThirdPartyLicenses"))
     }
 
     @Test
