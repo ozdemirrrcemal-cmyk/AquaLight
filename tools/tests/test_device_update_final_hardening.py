@@ -45,23 +45,20 @@ class DeviceUpdateFinalHardeningTest(unittest.TestCase):
         self.assertIn("manifest service failure preserves release server reason", mapper_test)
         self.assertIn("wrapped manifest rate limit preserves retryable release reason", mapper_test)
 
-    def test_real_fragment_navigation_back_stack_regression_is_present(self) -> None:
+    def test_firmware_navigation_idempotency_regression_is_present(self) -> None:
         navigation_test = read(
-            "app/src/androidTest/java/com/aqua/aqualight/ui/navigation/"
-            "DeviceFirmwareNavigationBackStackInstrumentedTest.kt"
+            "app/src/test/java/com/aqua/aqualight/ui/navigation/"
+            "AppRouteNavigatorFirmwarePolicyTest.kt"
         )
-        test_manifest = read("app/src/androidTest/AndroidManifest.xml")
-        build_gradle = read("app/build.gradle")
+        navigator = read(
+            "app/src/main/java/com/aqua/aqualight/ui/navigation/AppRouteNavigator.kt"
+        )
 
-        self.assertIn("ActivityScenario.launch", navigation_test)
-        self.assertIn("NavHostFragment", navigation_test)
-        self.assertIn("FragmentNavigator", navigation_test)
-        self.assertIn("repeat(REPEATED_TAPS)", navigation_test)
-        self.assertIn("AppRouteOpenResult.ALREADY_OPEN", navigation_test)
-        self.assertIn("navController.popBackStack()", navigation_test)
-        self.assertIn("REPEATED_TAPS = 5", navigation_test)
-        self.assertIn("FirmwareNavigationTestActivity", test_manifest)
-        self.assertNotIn("navigation-testing", build_gradle)
+        self.assertIn("repeatedRequestsForOpenDeviceRemainSingleDestination", navigation_test)
+        self.assertIn("repeat(5)", navigation_test)
+        self.assertIn("DeviceFirmwareRouteIdempotencyPolicy.isAlreadyOpen", navigation_test)
+        self.assertIn("launchSingleTop = true", navigator)
+        self.assertIn("AppRouteOpenResult.ALREADY_OPEN", navigator)
 
 
 if __name__ == "__main__":
