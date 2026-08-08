@@ -161,13 +161,11 @@ internal class UserDataBackupCodec(
                 require(request.media[request.entryName] == null) {
                     "Backup contains a duplicate media entry."
                 }
-                val target = File(
-                    request.mediaDirectory,
-                    request.entryName.substringAfterLast('/')
+                val target = File.createTempFile(
+                    "restore-media-",
+                    ".bin",
+                    request.mediaDirectory
                 )
-                require(target.parentFile == request.mediaDirectory) {
-                    "Backup media staging path is invalid."
-                }
                 val count = copyLimitedToFile(
                     input = zip,
                     target = target,
