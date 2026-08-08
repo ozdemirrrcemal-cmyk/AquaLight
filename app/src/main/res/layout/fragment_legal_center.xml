@@ -141,7 +141,8 @@
                             android:layout_weight="1"
                             android:text="@string/legal_third_party_licenses_title"
                             android:textColor="@color/aqua_card_text_secondary"
-                            android:textSize="@dimen/aqua_text_size_body" />
+                            android:textSize="@dimen/aqua_text_size_body"
+                            tools:ignore="InefficientWeight" />
 
                         <ImageView
                             android:layout_width="@dimen/aqua_size_20"
