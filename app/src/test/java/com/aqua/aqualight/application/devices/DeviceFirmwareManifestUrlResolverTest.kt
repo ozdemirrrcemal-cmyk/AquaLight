@@ -84,7 +84,7 @@ class DeviceFirmwareManifestUrlResolverTest {
     }
 
     @Test
-    fun `accepts an explicit v2 manifest only for its exact product`() {
+    fun `accepts an explicit product manifest only for its exact product`() {
         val explicit =
             "https://github.com/ozdemirrrcemal-cmyk/AquaLight-OTA-Releases/" +
                 "releases/download/dosing_dose_pro_2-v1.0.2/" +

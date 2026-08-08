@@ -13,9 +13,9 @@ object DeviceFirmwareRuntimeContract {
     const val OFFICIAL_RELEASE_REPOSITORY =
         "ozdemirrrcemal-cmyk/AquaLight-OTA-Releases"
 
-    /** Coordinated AquaLight-Firmware commit that introduces the v2 exact-product contract. */
+    /** Coordinated AquaLight-Firmware commit for the first production exact-product contract. */
     const val FIRMWARE_PRODUCT_RELEASE_CONTRACT_COMMIT =
-        "2962bd133ffbde8ffb06617cc7ade68607e999c0"
+        "a96fb256302072204e9ebb1c402c2bf20391f5f5"
 
     const val OFFICIAL_RELEASE_URL_PREFIX =
         "https://github.com/$OFFICIAL_RELEASE_REPOSITORY/releases/download/"
@@ -75,7 +75,7 @@ object DeviceFirmwareRuntimeContract {
     }
 
     object Manifest {
-        const val SCHEMA = "aql.ota.product-manifest.v2"
+        const val SCHEMA = "aql.ota.product-manifest.v1"
         const val BRAND = "AquaLight"
         const val STABLE_CHANNEL = "stable"
         const val BETA_CHANNEL = "beta"

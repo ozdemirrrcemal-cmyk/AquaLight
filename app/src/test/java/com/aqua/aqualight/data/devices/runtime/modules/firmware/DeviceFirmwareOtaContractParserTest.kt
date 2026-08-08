@@ -111,12 +111,19 @@ class DeviceFirmwareOtaContractParserTest {
     }
 
     @Test
-    fun `manifest parser has no v1 global or family release compatibility`() {
-        val legacySchema = manifestJson().put("schema", "aql.ota.manifest.v1")
+    fun `manifest parser rejects pre-production schemas and non-product tags`() {
+        val preReleaseGlobalSchema = manifestJson().put("schema", "aql.ota.manifest.v1")
+        val abandonedProductV2Schema =
+            manifestJson().put("schema", "aql.ota.product-manifest.v2")
         val globalTag = manifestJson().put("tag", "v2.0.0")
         val familyTag = manifestJson().put("tag", "dosing-v2.0.0")
 
-        assertTrue(DeviceFirmwareManifestParser.parse(legacySchema.toString()).isFailure)
+        assertTrue(
+            DeviceFirmwareManifestParser.parse(preReleaseGlobalSchema.toString()).isFailure
+        )
+        assertTrue(
+            DeviceFirmwareManifestParser.parse(abandonedProductV2Schema.toString()).isFailure
+        )
         assertTrue(DeviceFirmwareManifestParser.parse(globalTag.toString()).isFailure)
         assertTrue(DeviceFirmwareManifestParser.parse(familyTag.toString()).isFailure)
     }

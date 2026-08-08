@@ -55,8 +55,15 @@ sources = {label: read(label) for label in FILES}
 require_tokens(
     "runtime_contract",
     (
-        'const val SCHEMA = "aql.ota.product-manifest.v2"',
-        '"2962bd133ffbde8ffb06617cc7ade68607e999c0"',
+        'const val SCHEMA = "aql.ota.product-manifest.v1"',
+        '"a96fb256302072204e9ebb1c402c2bf20391f5f5"',
+    ),
+)
+forbid_tokens(
+    "runtime_contract",
+    (
+        "aql.ota.manifest.v1",
+        "aql.ota.product-manifest.v2",
     ),
 )
 
