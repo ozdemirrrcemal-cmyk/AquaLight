@@ -79,15 +79,16 @@ class DeviceFirmwareExactArtifactPlannerTest {
     }
 
     @Test
-    fun `matching identity with wrong environment is rejected`() {
+    fun `nonmatching environment resolves as no published update`() {
         val wrongEnv = artifact().copy(env = "dosing_dose_pro_4")
 
-        val failure = planner.evaluateUpdate(
+        val availability = planner.evaluateUpdate(
             snapshot(),
             manifest(artifacts = listOf(wrongEnv))
-        ).exceptionOrNull()
+        ).getOrThrow() as DeviceFirmwareAvailability.UpToDate
 
-        assertTrue(failure?.message.orEmpty().contains("environment does not match"))
+        assertEquals("1.0.0", availability.currentVersion)
+        assertEquals("1.0.0", availability.latestVersion)
     }
 
     @Test
