@@ -130,7 +130,13 @@ data class DeviceOtaFailure(
     val field: String = "",
     val httpStatus: Int = 0,
     val diagnosticMessage: String = "",
-    val stage: DeviceOtaFailureStage = DeviceOtaFailureStage.UPDATE_EXECUTION
+    val stage: DeviceOtaFailureStage = if (
+        reason == DeviceOtaFailureReason.CHECK_FAILED
+    ) {
+        DeviceOtaFailureStage.AVAILABILITY_CHECK
+    } else {
+        DeviceOtaFailureStage.UPDATE_EXECUTION
+    }
 )
 
 sealed interface DeviceOtaState {

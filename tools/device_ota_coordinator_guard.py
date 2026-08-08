@@ -14,6 +14,9 @@ FILES = {
     "runtime": SOURCE / "data/devices/runtime/modules/firmware/DeviceFirmwareRuntimeRepository.kt",
     "validation": SOURCE / "data/devices/runtime/modules/firmware/DeviceOtaValidation.kt",
     "planner": SOURCE / "data/devices/runtime/modules/firmware/DeviceFirmwareUpdatePlanner.kt",
+    "repository": SOURCE / "data/devices/runtime/modules/firmware/DeviceFirmwareUpdateRepository.kt",
+    "manifest_source": SOURCE / "data/devices/runtime/modules/firmware/DeviceFirmwareManifestHttpSource.kt",
+    "background_probe": SOURCE / "data/devices/runtime/modules/firmware/DeviceFirmwareBackgroundAvailabilityProbe.kt",
     "models": SOURCE / "data/devices/runtime/modules/firmware/DeviceFirmwareModels.kt",
     "manifest": SOURCE / "data/devices/runtime/modules/firmware/DeviceFirmwareManifestParser.kt",
     "status": SOURCE / "data/devices/runtime/modules/firmware/DeviceFirmwareStatusParser.kt",
@@ -52,6 +55,9 @@ require_tokens(
     (
         "sealed interface DeviceOtaState",
         "data class DeviceFirmwareReleaseContent",
+        "enum class DeviceOtaFailureStage",
+        "AVAILABILITY_CHECK",
+        "UPDATE_EXECUTION",
         "fun observe(deviceUid: String): StateFlow<DeviceOtaState>",
         "suspend fun checkAvailability(",
         "runtimeMetadataGeneration: Long",
@@ -70,6 +76,8 @@ require_tokens(
         "recoverRuntime = devicesRepository::replaceRuntimeAfterControlFailure",
         "runtimeLifecycleEvents = devicesRepository.runtimeLifecycleEvents()",
         "runtimeTypedEvents = devicesRepository.typedRuntimeEvents()",
+        ".mapNotNull { state ->",
+        "failure.stage == DeviceOtaFailureStage.UPDATE_EXECUTION",
     ),
 )
 require_tokens(
@@ -130,9 +138,10 @@ require_tokens(
         "fun evaluateUpdate(",
         "requireValidatedSnapshot(snapshot)",
         'manifest.tag == "v${manifest.version}"',
-        "compatible.size == 1",
-        "return compatible.single()",
-        "artifact.env == environment",
+        "compatible.size <= 1",
+        "return compatible.singleOrNull()",
+        "latestVersion = currentVersion",
+        "artifact.env == expectedEnvironment",
         "artifact.compatibility.family == family",
         "artifact.compatibility.line == line",
         "artifact.product.capabilities == snapshot.capabilities",
@@ -151,6 +160,43 @@ forbid_tokens(
         "AqlCommercialDeviceCatalog",
         "AqlCommercialCatalogValidation",
         "requireValidatedProduct",
+        'require(compatible.isNotEmpty()) {\n            "No compatible OTA artifact found',
+    ),
+)
+require_tokens(
+    "repository",
+    (
+        "DeviceFirmwareManifestNotPublishedException",
+        "noPublishedRelease(snapshot)",
+        "latestVersion = currentVersion",
+        "Result.failure(error)",
+    ),
+)
+require_tokens(
+    "manifest_source",
+    (
+        "class DeviceFirmwareManifestNotPublishedException",
+        "class DeviceFirmwareManifestHttpException",
+        "value.code == HTTP_NOT_FOUND",
+        "throw DeviceFirmwareManifestNotPublishedException",
+        "throw DeviceFirmwareManifestHttpException",
+        "signatureVerifier.verifyAndParse(text)",
+    ),
+)
+forbid_tokens(
+    "manifest_source",
+    (
+        'error.message.contains("404")',
+        'message.contains("not found")',
+    ),
+)
+require_tokens(
+    "background_probe",
+    (
+        "compatibleArtifacts.size <= 1",
+        "compatibleArtifacts.singleOrNull()",
+        "targetVersion = currentVersion",
+        "validateArtifact(snapshot, manifest, artifact)",
     ),
 )
 require_tokens(

@@ -33,21 +33,23 @@ class DeviceFirmwareNotificationPolicyInstrumentedTest {
     private val context = ApplicationProvider.getApplicationContext<Context>()
 
     @Test
-    fun availabilityCheckFailureNeverCreatesSystemNotification() = runBlocking {
+    fun fiveIdenticalAvailabilityFailuresNeverCreateNotificationSpam() = runBlocking {
         val fixture = createFixture()
         try {
-            fixture.publisher.publishOtaState(
-                ownerUid = fixture.ownerUid,
-                state = DeviceOtaState.Failed(
-                    deviceUid = fixture.deviceUid,
-                    failure = DeviceOtaFailure(
-                        reason = DeviceOtaFailureReason.CONNECTION,
-                        recoverable = true,
-                        stage = DeviceOtaFailureStage.AVAILABILITY_CHECK
-                    )
-                ),
-                deviceName = "Dose Pro 4"
-            )
+            repeat(5) {
+                fixture.publisher.publishOtaState(
+                    ownerUid = fixture.ownerUid,
+                    state = DeviceOtaState.Failed(
+                        deviceUid = fixture.deviceUid,
+                        failure = DeviceOtaFailure(
+                            reason = DeviceOtaFailureReason.CONNECTION,
+                            recoverable = true,
+                            stage = DeviceOtaFailureStage.AVAILABILITY_CHECK
+                        )
+                    ),
+                    deviceName = "Dose Pro 4"
+                )
+            }
 
             fixture.awaitNoNotification()
         } finally {

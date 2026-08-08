@@ -8,14 +8,16 @@ import org.junit.Test
 class AppRouteNavigatorFirmwarePolicyTest {
 
     @Test
-    fun sameFirmwareDestinationAndDeviceIsAlreadyOpen() {
-        assertTrue(
-            AppRouteNavigator.DeviceFirmwareRouteIdempotencyPolicy.isAlreadyOpen(
-                currentDestinationId = R.id.deviceFirmwareUpdateFragment,
-                currentDeviceUid = DEVICE_UID,
-                requestedDeviceUid = DEVICE_UID
+    fun repeatedRequestsForOpenDeviceRemainSingleDestination() {
+        repeat(5) {
+            assertTrue(
+                AppRouteNavigator.DeviceFirmwareRouteIdempotencyPolicy.isAlreadyOpen(
+                    currentDestinationId = R.id.deviceFirmwareUpdateFragment,
+                    currentDeviceUid = DEVICE_UID,
+                    requestedDeviceUid = DEVICE_UID
+                )
             )
-        )
+        }
     }
 
     @Test

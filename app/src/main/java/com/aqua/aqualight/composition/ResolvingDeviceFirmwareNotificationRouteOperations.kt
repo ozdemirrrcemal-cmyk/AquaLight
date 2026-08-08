@@ -5,12 +5,10 @@ import com.aqua.aqualight.application.devices.DeviceFirmwareNotificationDestinat
 import com.aqua.aqualight.application.devices.DeviceFirmwareNotificationRouteDecision
 import com.aqua.aqualight.application.devices.DeviceFirmwareNotificationRouteOperations
 import com.aqua.aqualight.application.devices.DeviceFirmwareNotificationRouteRequest
-import com.aqua.aqualight.application.devices.DeviceOtaFailureStage
-import com.aqua.aqualight.application.devices.DeviceOtaState
 import com.aqua.aqualight.application.notifications.DeviceFirmwareNotificationKind
+import com.aqua.aqualight.data.devices.DeviceFirmwareNotificationActionabilityPolicy
 import com.aqua.aqualight.data.devices.model.DeviceSnapshot
 import com.aqua.aqualight.data.devices.model.DeviceUid
-import com.aqua.aqualight.data.devices.runtime.modules.firmware.DeviceFirmwareVersionComparator
 
 /** Resolves notification routes only through the committed authenticated-owner graph. */
 internal class ResolvingDeviceFirmwareNotificationRouteOperations(
@@ -66,63 +64,15 @@ internal class ResolvingDeviceFirmwareNotificationRouteOperations(
         snapshot: DeviceSnapshot
     ): Boolean = when (kind) {
         DeviceFirmwareNotificationKind.AVAILABILITY ->
-            isAvailabilityActionable(snapshot, targetVersion)
-        DeviceFirmwareNotificationKind.OPERATION -> {
-            val state = activeGraph.firmwareUpdateOperations
-                .observe(deviceUid)
-                .value
-            isOperationActionable(state, targetVersion)
-        }
-    }
-
-    private fun isAvailabilityActionable(
-        snapshot: DeviceSnapshot,
-        targetVersion: String
-    ): Boolean {
-        val currentVersion = snapshot.firmwareVersion.trim()
-        val target = targetVersion.trim()
-        if (currentVersion.isBlank() || target.isBlank()) return false
-        return runCatching {
-            DeviceFirmwareVersionComparator.compare(target, currentVersion) > 0
-        }.getOrDefault(false)
-    }
-
-    private fun isOperationActionable(
-        state: DeviceOtaState,
-        expectedTargetVersion: String
-    ): Boolean = when (state) {
-        is DeviceOtaState.Starting -> targetMatches(
-            expectedTargetVersion,
-            state.plan.targetVersion
-        )
-        is DeviceOtaState.InProgress -> targetMatches(
-            expectedTargetVersion,
-            state.targetVersion
-        )
-        is DeviceOtaState.Recovering -> targetMatches(
-            expectedTargetVersion,
-            state.targetVersion
-        )
-        is DeviceOtaState.RestartRequired -> targetMatches(
-            expectedTargetVersion,
-            state.targetVersion
-        )
-        is DeviceOtaState.Succeeded -> targetMatches(
-            expectedTargetVersion,
-            state.targetVersion
-        )
-        is DeviceOtaState.Failed ->
-            state.failure.stage == DeviceOtaFailureStage.UPDATE_EXECUTION
-        is DeviceOtaState.Idle,
-        is DeviceOtaState.Checking,
-        is DeviceOtaState.Unsupported,
-        is DeviceOtaState.UpToDate,
-        is DeviceOtaState.UpdateAvailable -> false
-    }
-
-    private fun targetMatches(expected: String, actual: String): Boolean {
-        val normalizedExpected = expected.trim()
-        return normalizedExpected.isBlank() || normalizedExpected == actual.trim()
+            DeviceFirmwareNotificationActionabilityPolicy.availability(
+                currentVersion = snapshot.firmwareVersion,
+                targetVersion = targetVersion
+            )
+        DeviceFirmwareNotificationKind.OPERATION ->
+            DeviceFirmwareNotificationActionabilityPolicy.operation(
+                state = activeGraph.firmwareUpdateOperations.observe(deviceUid).value,
+                expectedTargetVersion = targetVersion
+            )
     }
 
     private fun activeGraphOrNull(): OwnerDependencyGraph? {
