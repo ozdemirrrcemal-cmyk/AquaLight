@@ -114,7 +114,7 @@ def otaManifestKeyId = providers
         .getOrElse("aql-ota-manifest-2026-01")
 
 def requireProductScopedManifestTemplate = { String label, String value ->
-    def officialChannelPattern = ~(
+    def officialChannelPattern = java.util.regex.Pattern.compile(
             '^https://raw\\.githubusercontent\\.com/' +
                     'ozdemirrrcemal-cmyk/AquaLight-OTA-Releases/main/channels/' +
                     '(stable|beta|dev)/\\{env\\}/manifest-\\1\\.json$'
