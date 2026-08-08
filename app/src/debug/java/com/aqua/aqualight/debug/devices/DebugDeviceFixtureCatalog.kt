@@ -128,20 +128,20 @@ internal class DebugDeviceFixtureCatalog {
         timerChannelCount = limits.timerChannelCount,
         dosingChannelCount = limits.dosingChannelCount
     )
-
-    private fun fixtureEndpoint(index: Int): DeviceRuntimeEndpoint = DeviceRuntimeEndpoint(
-        ip = "192.168.254.${100 + index}",
-        wifiMode = "STA",
-        wifiConnected = true,
-        wsPort = 81
-    )
-
-    private fun fixtureConnectionState(now: Long): DeviceConnectionState = DeviceConnectionState(
-        onlineState = DeviceOnlineState.AUTHENTICATED,
-        lastUdpSeenAtMillis = now,
-        lastWsConnectedAtMillis = now,
-        lastAuthenticatedAtMillis = now,
-        lastRuntimeMessageAtMillis = now,
-        lastControlProofAtMillis = now
-    )
 }
+
+private fun fixtureEndpoint(index: Int): DeviceRuntimeEndpoint = DeviceRuntimeEndpoint(
+    ip = "192.168.254.${100 + index}",
+    wifiMode = "STA",
+    wifiConnected = true,
+    wsPort = 81
+)
+
+private fun fixtureConnectionState(now: Long): DeviceConnectionState = DeviceConnectionState(
+    onlineState = DeviceOnlineState.AUTHENTICATED,
+    lastUdpSeenAtMillis = now,
+    lastWsConnectedAtMillis = now,
+    lastAuthenticatedAtMillis = now,
+    lastRuntimeMessageAtMillis = now,
+    lastControlProofAtMillis = now
+)
