@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!--
+      Disabled in ordinary Debug builds. The Installable Debug APK workflow flips this
+      debug-only resource to true in its ephemeral workspace before assembleDebug.
+      Release variants never compile this source set.
+    -->
+    <bool name="installable_debug_device_fixture_enabled">false</bool>
+</resources>
