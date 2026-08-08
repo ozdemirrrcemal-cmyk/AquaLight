@@ -21,6 +21,7 @@ import com.aqua.aqualight.base.BaseActivity
 import com.aqua.aqualight.databinding.ActivityMainBinding
 import com.aqua.aqualight.ui.navigation.AppDestinationContract
 import com.aqua.aqualight.ui.navigation.AppRouteNavigator
+import com.aqua.aqualight.ui.navigation.AppRouteOpenResult
 import com.aqua.aqualight.ui.navigation.CareTaskNotificationRoutePolicy
 import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.launch
@@ -244,18 +245,32 @@ internal class MainNavigationCoordinator(
     ) {
         runCatching {
             AppRouteNavigator.openDeviceFirmwareUpdate(navController, request.deviceUid)
-        }.onSuccess {
-            if (activeFirmwareNavigationAttempt == attempt) {
-                clearPendingFirmwareUpdate()
-                clearConsumedNotificationExtras(host.intent)
-                host.lifecycleScope.launch {
-                    firmwareRouteGate.acknowledgeOpened(request, ownerUid)
-                }
+        }.onSuccess { result ->
+            when (result) {
+                AppRouteOpenResult.OPENED,
+                AppRouteOpenResult.ALREADY_OPEN ->
+                    completeFirmwareNavigation(attempt, request, ownerUid)
+                AppRouteOpenResult.REJECTED ->
+                    rejectPendingFirmwareUpdate()
             }
         }.onFailure {
             if (activeFirmwareNavigationAttempt == attempt) {
                 activeFirmwareNavigationAttempt = null
             }
+        }
+    }
+
+    private fun completeFirmwareNavigation(
+        attempt: Long,
+        request: DeviceFirmwareNotificationRouteRequest,
+        ownerUid: String
+    ) {
+        if (activeFirmwareNavigationAttempt != attempt) return
+
+        clearPendingFirmwareUpdate()
+        clearConsumedNotificationExtras(host.intent)
+        host.lifecycleScope.launch {
+            firmwareRouteGate.acknowledgeOpened(request, ownerUid)
         }
     }
 
