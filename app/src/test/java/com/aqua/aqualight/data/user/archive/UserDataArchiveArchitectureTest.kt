@@ -51,12 +51,16 @@ class UserDataArchiveArchitectureTest {
     }
 
     @Test
-    fun `data management copy is centralized for English and Turkish`() {
+    fun `data management copy and screen title stay centralized for English and Turkish`() {
         val english = source("app/src/main/res/values/data_management_strings.xml")
         val turkish = source("app/src/main/res/values-tr/data_management_strings.xml")
+        val englishTitles = source("app/src/main/res/values/screen_titles.xml")
+        val turkishTitles = source("app/src/main/res/values-tr/screen_titles.xml")
         val layout = source("app/src/main/res/layout/fragment_data_management.xml")
 
-        REQUIRED_STRING_NAMES.forEach { resourceName ->
+        assertTrue(englishTitles.contains("name=\"screen_title_data_management\""))
+        assertTrue(turkishTitles.contains("name=\"screen_title_data_management\""))
+        REQUIRED_FEATURE_STRING_NAMES.forEach { resourceName ->
             assertTrue(english.contains("name=\"$resourceName\""))
             assertTrue(turkish.contains("name=\"$resourceName\""))
             if (resourceName.endsWith("_title") || resourceName.endsWith("_subtitle")) {
@@ -148,8 +152,7 @@ class UserDataArchiveArchitectureTest {
             "DeviceRuntimeRepository"
         )
 
-        val REQUIRED_STRING_NAMES = listOf(
-            "screen_title_data_management",
+        val REQUIRED_FEATURE_STRING_NAMES = listOf(
             "data_management_backup_title",
             "data_management_backup_subtitle",
             "data_management_restore_title",
