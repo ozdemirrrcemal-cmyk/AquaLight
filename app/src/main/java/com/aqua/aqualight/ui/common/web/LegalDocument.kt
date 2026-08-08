@@ -19,10 +19,10 @@ enum class LegalDocument(
         englishAsset = "terms_of_use_en.html",
         turkishAsset = "terms_of_use_tr.html"
     ),
-    OPEN_SOURCE_LICENSES(
-        titleRes = R.string.screen_title_open_source_licenses,
+    THIRD_PARTY_LICENSES(
+        titleRes = R.string.legal_third_party_licenses_title,
         englishAsset = "open_source_licenses_en.html",
-        turkishAsset = "open_source_licenses_en.html"
+        turkishAsset = "open_source_licenses_tr.html"
     );
 
     fun assetFor(languageTag: String): String {

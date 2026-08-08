@@ -46,6 +46,8 @@ class SettingsFragment : Fragment(R.layout.fragment_settings) {
         )
 
         _binding = FragmentSettingsBinding.bind(view)
+        binding.rowAbout.contentDescription =
+            getString(R.string.settings_about_desc_app_only)
 
         observeUiState()
         setupClickListeners()

@@ -4,8 +4,6 @@ import android.os.Build
 import android.os.Bundle
 import android.view.View
 import androidx.fragment.app.Fragment
-import androidx.navigation.NavDirections
-import androidx.navigation.fragment.findNavController
 import com.aqua.aqualight.R
 import com.aqua.aqualight.databinding.FragmentAboutAppBinding
 import com.aqua.aqualight.ui.common.header.setupAquaHeader
@@ -30,7 +28,6 @@ class AboutAppFragment : Fragment(R.layout.fragment_about_app) {
 
         setupHeader()
         bindStaticInfo()
-        setupLicensesClick()
     }
 
     private fun setupHeader() {
@@ -98,29 +95,6 @@ class AboutAppFragment : Fragment(R.layout.fragment_about_app) {
                 R.string.about_app_footer_format,
                 Calendar.getInstance().get(Calendar.YEAR)
             )
-    }
-
-    private fun setupLicensesClick() =
-        with(binding) {
-            rowLicenses.setOnClickListener {
-                safeNavigate(
-                    AboutAppFragmentDirections.actionAboutAppFragmentToOpenSourceLicensesFragment()
-                )
-            }
-        }
-
-    private fun safeNavigate(directions: NavDirections) {
-        val navController = runCatching {
-            findNavController()
-        }.getOrNull() ?: return
-
-        if (navController.currentDestination?.id != R.id.aboutAppFragment) {
-            return
-        }
-
-        runCatching {
-            navController.navigate(directions)
-        }
     }
 
     override fun onDestroyView() {

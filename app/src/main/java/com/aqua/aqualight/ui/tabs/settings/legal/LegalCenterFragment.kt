@@ -31,6 +31,12 @@ class LegalCenterFragment : Fragment(R.layout.fragment_legal_center) {
                 LegalCenterFragmentDirections.actionLegalCenterFragmentToTermsOfUseFragment()
             )
         }
+
+        binding.rowThirdPartyLicenses.setOnClickListener {
+            safeNavigate(
+                LegalCenterFragmentDirections.actionLegalCenterFragmentToThirdPartyLicensesFragment()
+            )
+        }
     }
 
     private fun safeNavigate(directions: NavDirections) {

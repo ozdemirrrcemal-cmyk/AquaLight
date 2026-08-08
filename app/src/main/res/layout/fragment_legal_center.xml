@@ -117,6 +117,39 @@
                             android:src="@drawable/ic_arrow_right"
                             app:tint="@color/aqua_card_text_secondary" />
                     </LinearLayout>
+
+                    <View
+                        android:layout_width="match_parent"
+                        android:layout_height="@dimen/aqua_size_1"
+                        android:background="@color/aqua_card_divider" />
+
+                    <LinearLayout
+                        android:id="@+id/rowThirdPartyLicenses"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:minHeight="@dimen/aqua_size_56"
+                        android:background="?android:attr/selectableItemBackground"
+                        android:clickable="true"
+                        android:contentDescription="@string/legal_center_third_party_licenses_desc"
+                        android:focusable="true"
+                        android:gravity="center_vertical"
+                        android:paddingHorizontal="@dimen/aqua_size_16">
+
+                        <TextView
+                            android:layout_width="@dimen/aqua_size_0"
+                            android:layout_height="wrap_content"
+                            android:layout_weight="1"
+                            android:text="@string/legal_third_party_licenses_title"
+                            android:textColor="@color/aqua_card_text_secondary"
+                            android:textSize="@dimen/aqua_text_size_body" />
+
+                        <ImageView
+                            android:layout_width="@dimen/aqua_size_20"
+                            android:layout_height="@dimen/aqua_size_20"
+                            android:contentDescription="@string/settings_arrow_desc"
+                            android:src="@drawable/ic_arrow_right"
+                            app:tint="@color/aqua_card_text_secondary" />
+                    </LinearLayout>
                 </LinearLayout>
             </com.google.android.material.card.MaterialCardView>
         </LinearLayout>
