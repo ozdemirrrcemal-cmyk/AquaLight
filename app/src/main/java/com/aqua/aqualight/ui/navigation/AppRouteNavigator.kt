@@ -65,34 +65,31 @@ object AppRouteNavigator {
         deviceUid: String
     ): AppRouteOpenResult {
         val normalizedDeviceUid = deviceUid.trim()
-        if (normalizedDeviceUid.isBlank()) {
-            return AppRouteOpenResult.REJECTED
-        }
-        if (
+        return when {
+            normalizedDeviceUid.isBlank() -> AppRouteOpenResult.REJECTED
             DeviceFirmwareRouteIdempotencyPolicy.isAlreadyOpen(
                 currentDestinationId = navController.currentDestination?.id,
                 currentDeviceUid = navController.currentBackStackEntry
                     ?.arguments
                     ?.getString(ARG_DEVICE_UID),
                 requestedDeviceUid = normalizedDeviceUid
-            )
-        ) {
-            return AppRouteOpenResult.ALREADY_OPEN
+            ) -> AppRouteOpenResult.ALREADY_OPEN
+            else -> {
+                navController.navigate(
+                    deepLinkRequest(
+                        uri = Uri.Builder()
+                            .scheme(SCHEME)
+                            .authority(AUTHORITY)
+                            .appendPath(PATH_DEVICE)
+                            .appendPath(normalizedDeviceUid)
+                            .appendPath(PATH_FIRMWARE_UPDATE)
+                            .build()
+                    ),
+                    firmwareRouteOptions()
+                )
+                AppRouteOpenResult.OPENED
+            }
         }
-
-        navController.navigate(
-            deepLinkRequest(
-                uri = Uri.Builder()
-                    .scheme(SCHEME)
-                    .authority(AUTHORITY)
-                    .appendPath(PATH_DEVICE)
-                    .appendPath(normalizedDeviceUid)
-                    .appendPath(PATH_FIRMWARE_UPDATE)
-                    .build()
-            ),
-            firmwareRouteOptions()
-        )
-        return AppRouteOpenResult.OPENED
     }
 
     private fun standardRouteOptions() = navOptions {
@@ -130,6 +127,7 @@ object AppRouteNavigator {
     private const val PATH_CARE_TASK = "care-task"
     private const val PATH_DEVICE = "device"
     private const val PATH_FIRMWARE_UPDATE = "firmware-update"
+    private const val QUERY_START_TAB = "startTab"
     private const val ARG_DEVICE_UID = "deviceUid"
 
     private val firmwareDestinationId = R.id.deviceFirmwareUpdateFragment
