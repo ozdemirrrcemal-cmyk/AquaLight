@@ -1,5 +1,6 @@
 package com.aqua.aqualight.data.devices.runtime.modules.firmware
 
+import com.aqua.aqualight.application.devices.DEVICE_FIRMWARE_MANIFEST_URL
 import com.aqua.aqualight.data.devices.model.DeviceCapabilities
 import com.aqua.aqualight.data.devices.model.DeviceFamily
 import com.aqua.aqualight.data.devices.model.DeviceIdentity
@@ -18,9 +19,11 @@ import org.junit.Test
 class DeviceFirmwareUpdateRepositoryAvailabilityTest {
 
     @Test
-    fun `unpublished latest manifest resolves to installed version as no update`() = runTest {
+    fun `unpublished product channel resolves to installed version as no update`() = runTest {
+        var requestedUrl = ""
         val repository = repositoryWith(
-            DeviceFirmwareManifestNotPublishedException(statusCode = 404)
+            DeviceFirmwareManifestNotPublishedException(statusCode = 404),
+            onLoad = { requestedUrl = it }
         )
 
         val availability = repository.fetchAndEvaluateUpdate(
@@ -31,6 +34,11 @@ class DeviceFirmwareUpdateRepositoryAvailabilityTest {
         assertEquals("1.0.0", availability.currentVersion)
         assertEquals("1.0.0", availability.latestVersion)
         assertTrue(!availability.releaseContent.isPresent)
+        assertEquals(
+            "https://github.com/ozdemirrrcemal-cmyk/AquaLight-OTA-Releases/" +
+                "releases/download/stable-dosing_dose_pro_4/manifest-stable.json",
+            requestedUrl
+        )
     }
 
     @Test
@@ -46,7 +54,10 @@ class DeviceFirmwareUpdateRepositoryAvailabilityTest {
         assertEquals("offline", result.exceptionOrNull()?.message)
     }
 
-    private fun repositoryWith(failure: Throwable): DeviceFirmwareUpdateRepository {
+    private fun repositoryWith(
+        failure: Throwable,
+        onLoad: (String) -> Unit = {}
+    ): DeviceFirmwareUpdateRepository {
         val runtime = DeviceFirmwareRuntimeRepository(
             object : DeviceRuntimeCommandGateway {
                 override suspend fun <T> execute(
@@ -59,8 +70,10 @@ class DeviceFirmwareUpdateRepositoryAvailabilityTest {
             }
         )
         val source = object : DeviceFirmwareManifestHttpSource() {
-            override suspend fun load(url: String): Result<DeviceFirmwareManifest> =
-                Result.failure(failure)
+            override suspend fun load(url: String): Result<DeviceFirmwareManifest> {
+                onLoad(url)
+                return Result.failure(failure)
+            }
         }
         return DeviceFirmwareUpdateRepository(
             runtime = runtime,
@@ -93,8 +106,6 @@ class DeviceFirmwareUpdateRepositoryAvailabilityTest {
 
     private companion object {
         const val DEVICE_UID = "AQL-DP4-NO-RELEASE"
-        const val MANIFEST_URL =
-            "https://github.com/ozdemirrrcemal-cmyk/AquaLight-OTA-Releases/" +
-                "releases/latest/download/manifest-stable.json"
+        const val MANIFEST_URL = DEVICE_FIRMWARE_MANIFEST_URL
     }
 }

@@ -150,7 +150,7 @@ class DeviceFirmwareAvailabilityEvaluatorTest {
             brand = DeviceFirmwareRuntimeContract.Manifest.BRAND,
             channel = DeviceFirmwareRuntimeContract.Manifest.STABLE_CHANNEL,
             version = "1.1.0",
-            tag = "v1.1.0",
+            tag = "dosing_dose_pro_4-v1.1.0",
             releaseRepo = DeviceFirmwareRuntimeContract.OFFICIAL_RELEASE_REPOSITORY,
             generatedAt = "2026-08-08T00:00:00Z",
             platform = DeviceFirmwareManifestPlatform("", "", "", "", ""),

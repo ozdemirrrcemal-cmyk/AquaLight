@@ -70,12 +70,13 @@ class DeviceOtaPreparedAvailabilityPolicyTest {
         displayName = "WRGB Pro Elite 120",
         filename = "AquaLight-light_wrgb_pro_elite-v1.0.1-ota.bin",
         downloadUrl = DeviceFirmwareRuntimeContract.OFFICIAL_RELEASE_URL_PREFIX +
-            "v1.0.1/AquaLight-light_wrgb_pro_elite-v1.0.1-ota.bin",
+            "light_wrgb_pro_elite-v1.0.1/" +
+            "AquaLight-light_wrgb_pro_elite-v1.0.1-ota.bin",
         sha256 = "a".repeat(DeviceFirmwareRuntimeContract.Limit.SHA256_HEX_LENGTH),
         sizeBytes = 1_048_576,
         applyNow = true,
         runtimeMetadataGeneration = 7L,
-        manifestTag = "v1.0.1"
+        manifestTag = "light_wrgb_pro_elite-v1.0.1"
     )
 
     private companion object {

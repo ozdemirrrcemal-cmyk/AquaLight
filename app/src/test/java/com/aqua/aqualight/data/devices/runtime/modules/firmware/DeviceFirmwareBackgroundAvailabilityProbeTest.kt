@@ -91,7 +91,7 @@ class DeviceFirmwareBackgroundAvailabilityProbeTest {
             manifest(artifacts = listOf(exact, exact.copy()))
         ).exceptionOrNull()
 
-        assertTrue(failure?.message.orEmpty().contains("Ambiguous OTA manifest"))
+        assertTrue(failure?.message.orEmpty().contains("exactly one artifact"))
     }
 
     private fun snapshot(): DeviceSnapshot = DeviceSnapshot(
@@ -121,7 +121,7 @@ class DeviceFirmwareBackgroundAvailabilityProbeTest {
         brand = DeviceFirmwareRuntimeContract.Manifest.BRAND,
         channel = DeviceFirmwareRuntimeContract.Manifest.STABLE_CHANNEL,
         version = "2.0.0",
-        tag = "v2.0.0",
+        tag = "dosing_dose_pro_2-v2.0.0",
         releaseRepo = DeviceFirmwareRuntimeContract.OFFICIAL_RELEASE_REPOSITORY,
         generatedAt = "2026-08-06T00:00:00+00:00",
         platform = OFFICIAL_PLATFORM,
@@ -174,7 +174,7 @@ class DeviceFirmwareBackgroundAvailabilityProbeTest {
                 version = "2.0.0",
                 filename = filename,
                 url = DeviceFirmwareRuntimeContract.OFFICIAL_RELEASE_URL_PREFIX +
-                    "v2.0.0/$filename",
+                    "dosing_dose_pro_2-v2.0.0/$filename",
                 sha256 = "a".repeat(64),
                 size = 1_048_576,
                 format = DeviceFirmwareRuntimeContract.Manifest.FIRMWARE_FORMAT,

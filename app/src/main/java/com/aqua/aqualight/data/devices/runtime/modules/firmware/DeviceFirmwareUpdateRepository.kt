@@ -1,6 +1,7 @@
 package com.aqua.aqualight.data.devices.runtime.modules.firmware
 
 import com.aqua.aqualight.application.devices.DeviceFirmwareReleaseContent
+import com.aqua.aqualight.application.devices.DeviceFirmwareManifestUrlResolver
 import com.aqua.aqualight.data.devices.model.DeviceSnapshot
 import com.aqua.aqualight.data.devices.model.DeviceUid
 import com.aqua.aqualight.data.devices.runtime.core.DeviceRuntimeCommandOutcome
@@ -44,7 +45,13 @@ class DeviceFirmwareUpdateRepository(
         manifestUrl: String,
         applyNow: Boolean = true
     ): Result<DeviceFirmwareAvailability> {
-        val manifestResult = fetchManifest(manifestUrl)
+        val resolvedManifestUrl = runCatching {
+            DeviceFirmwareManifestUrlResolver.resolve(
+                template = manifestUrl,
+                productKey = snapshot.product.productKey
+            )
+        }.getOrElse { error -> return Result.failure(error) }
+        val manifestResult = fetchManifest(resolvedManifestUrl)
         val manifest = manifestResult.getOrElse { error ->
             return if (error is DeviceFirmwareManifestNotPublishedException) {
                 noPublishedRelease(snapshot)

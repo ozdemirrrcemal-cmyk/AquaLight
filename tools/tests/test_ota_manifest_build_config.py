@@ -40,7 +40,12 @@ class OtaManifestBuildConfigTest(unittest.TestCase):
         )
         self.assertEqual(2, source.count(FIELD))
         self.assertIn(".getOrElse(stableOtaManifestUrl)", source)
-        self.assertIn("releases/latest/download/manifest-stable.json", source)
+        self.assertIn(
+            "releases/download/stable-{env}/manifest-stable.json",
+            source,
+        )
+        self.assertIn("requireProductScopedManifestTemplate", source)
+        self.assertIn("cannot use releases/latest", source)
 
 
 if __name__ == "__main__":

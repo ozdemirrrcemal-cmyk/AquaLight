@@ -91,7 +91,7 @@ class DeviceUpdateNotificationAcceptanceTest(unittest.TestCase):
         )
         self.assertLess(
             runner.index("cancelUntrustedAvailability(ownerUid, snapshotResult)"),
-            runner.index("manifestLoader(DEVICE_FIRMWARE_MANIFEST_URL)"),
+            runner.index("snapshots.groupBy(manifestUrlResolver)"),
         )
 
     def test_foreground_and_preference_lifecycle_cannot_leave_orphan_work(self) -> None:
@@ -272,8 +272,9 @@ class DeviceUpdateNotificationAcceptanceTest(unittest.TestCase):
         )
 
         self.assertIn("ownerChangeAfterSnapshotLoadFailsClosed", runner_test)
+        self.assertIn("unpublishedTimerChannelDoesNotBlockDosingAvailability", runner_test)
         self.assertIn("dose pro 4 without a published artifact", no_artifact_test)
-        self.assertIn("unpublished latest manifest resolves", no_release_test)
+        self.assertIn("unpublished product channel resolves", no_release_test)
         self.assertIn("real transport failure remains", no_release_test)
         self.assertIn("fiveIdenticalAvailabilityFailuresNeverCreateNotificationSpam", policy_test)
         self.assertIn("executionFailureCreatesOperationFailureNotification", policy_test)

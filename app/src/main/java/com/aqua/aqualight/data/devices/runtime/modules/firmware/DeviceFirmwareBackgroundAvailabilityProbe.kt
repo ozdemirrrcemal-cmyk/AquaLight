@@ -88,8 +88,11 @@ class DeviceFirmwareBackgroundAvailabilityProbe(
         require(manifest.platform == OFFICIAL_PLATFORM) {
             "OTA manifest platform differs from AquaLight-Firmware/main."
         }
-        require(manifest.tag == "v${manifest.version}") {
-            "OTA manifest tag does not match its exact firmware version."
+        require(manifest.artifacts.size == 1) {
+            "Product-scoped OTA manifest must contain exactly one artifact."
+        }
+        require(manifest.hasExpectedReleaseTag()) {
+            "OTA manifest tag must be <env>-v<version> for its single product."
         }
     }
 
@@ -130,8 +133,7 @@ class DeviceFirmwareBackgroundAvailabilityProbe(
         require(artifact.compatibility.hardwareRevision == product.hardwareRevision)
         require(artifact.firmware.version == manifest.version)
         require(
-            artifact.firmware.filename ==
-                "AquaLight-${artifact.env}-${manifest.tag}-ota.bin"
+            artifact.firmware.filename == manifest.expectedFirmwareFilename(artifact)
         )
         require(
             artifact.firmware.url == DeviceFirmwareRuntimeContract.OFFICIAL_RELEASE_URL_PREFIX +

@@ -7,34 +7,52 @@ import org.junit.Test
 class DeviceFirmwareManifestUrlPolicyTest {
 
     @Test
-    fun `accepts only versioned or latest assets from the official release repository`() {
-        val versioned = DeviceFirmwareRuntimeContract.OFFICIAL_RELEASE_URL_PREFIX +
-            "v2.0.0/manifest-stable.json"
-        val latest = DeviceFirmwareRuntimeContract.OFFICIAL_LATEST_RELEASE_URL_PREFIX +
-            "manifest-stable.json"
+    fun `accepts only exact product channel and immutable manifest assets`() {
+        val channel = DeviceFirmwareRuntimeContract.OFFICIAL_RELEASE_URL_PREFIX +
+            "stable-dosing_dose_pro_2/manifest-stable.json"
+        val immutable = DeviceFirmwareRuntimeContract.OFFICIAL_RELEASE_URL_PREFIX +
+            "dosing_dose_pro_4-v2.0.0/manifest-dosing_dose_pro_4-v2.0.0.json"
 
-        assertEquals(versioned, requireOfficialFirmwareManifestUrl(versioned))
-        assertEquals(latest, requireOfficialFirmwareManifestUrl("  $latest  "))
+        assertEquals(channel, requireOfficialFirmwareManifestUrl(channel))
+        assertEquals(immutable, requireOfficialFirmwareManifestUrl(immutable))
     }
 
     @Test
-    fun `rejects lookalike repositories insecure transport and non-json assets`() {
+    fun `rejects global family unknown and non manifest release paths`() {
         val lookalike =
             "https://github.com/example/AquaLight-OTA-Releases/releases/latest/download/" +
                 "manifest-stable.json"
-        val insecure = DeviceFirmwareRuntimeContract.OFFICIAL_LATEST_RELEASE_URL_PREFIX
-            .replace("https://", "http://") + "manifest-stable.json"
-        val binary = DeviceFirmwareRuntimeContract.OFFICIAL_LATEST_RELEASE_URL_PREFIX +
-            "firmware.bin"
+        val globalLatest = DeviceFirmwareRuntimeContract.OFFICIAL_RELEASE_URL_PREFIX
+            .replace("releases/download/", "releases/latest/download/") +
+            "manifest-stable.json"
+        val globalVersion = DeviceFirmwareRuntimeContract.OFFICIAL_RELEASE_URL_PREFIX +
+            "v2.0.0/manifest-v2.0.0.json"
+        val family = DeviceFirmwareRuntimeContract.OFFICIAL_RELEASE_URL_PREFIX +
+            "stable-dosing/manifest-stable.json"
+        val unknown = DeviceFirmwareRuntimeContract.OFFICIAL_RELEASE_URL_PREFIX +
+            "stable-dosing_dose_pro_8/manifest-stable.json"
+        val insecure = (DeviceFirmwareRuntimeContract.OFFICIAL_RELEASE_URL_PREFIX +
+            "stable-dosing_dose_pro_2/manifest-stable.json").replace("https://", "http://")
+        val binary = DeviceFirmwareRuntimeContract.OFFICIAL_RELEASE_URL_PREFIX +
+            "dosing_dose_pro_2-v2.0.0/AquaLight-dosing_dose_pro_2-v2.0.0-ota.bin"
+        val whitespace = " " + DeviceFirmwareRuntimeContract.OFFICIAL_RELEASE_URL_PREFIX +
+            "stable-dosing_dose_pro_2/manifest-stable.json"
 
-        assertThrows(IllegalArgumentException::class.java) {
-            requireOfficialFirmwareManifestUrl(lookalike)
-        }
-        assertThrows(IllegalArgumentException::class.java) {
-            requireOfficialFirmwareManifestUrl(insecure)
-        }
-        assertThrows(IllegalArgumentException::class.java) {
-            requireOfficialFirmwareManifestUrl(binary)
+        for (
+            url in listOf(
+                lookalike,
+                globalLatest,
+                globalVersion,
+                family,
+                unknown,
+                insecure,
+                binary,
+                whitespace
+            )
+        ) {
+            assertThrows(IllegalArgumentException::class.java) {
+                requireOfficialFirmwareManifestUrl(url)
+            }
         }
     }
 }
