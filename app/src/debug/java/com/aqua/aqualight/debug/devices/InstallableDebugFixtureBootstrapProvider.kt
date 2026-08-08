@@ -21,16 +21,17 @@ import com.aqua.aqualight.ui.splash.SplashActivity
 class InstallableDebugFixtureBootstrapProvider : ContentProvider() {
 
     override fun onCreate(): Boolean {
-        val providerContext = context ?: return true
-        val enabled = providerContext.resources.getBoolean(
+        val providerContext = context
+        val enabled = providerContext?.resources?.getBoolean(
             R.bool.installable_debug_device_fixture_enabled
-        )
-        if (!enabled) return true
+        ) == true
+        val application = providerContext?.applicationContext as? AquaApp
 
-        val application = providerContext.applicationContext as? AquaApp ?: return true
-        application.registerActivityLifecycleCallbacks(
-            FixtureCompositionInstaller(application)
-        )
+        if (enabled && application != null) {
+            application.registerActivityLifecycleCallbacks(
+                FixtureCompositionInstaller(application)
+            )
+        }
         return true
     }
 
