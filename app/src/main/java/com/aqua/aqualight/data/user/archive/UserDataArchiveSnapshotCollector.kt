@@ -3,7 +3,6 @@ package com.aqua.aqualight.data.user.archive
 import com.aqua.aqualight.data.aquarium.devices.TankDeviceAssignmentRepository
 import com.aqua.aqualight.data.aquarium.store.AquariumTankDataStoreManager
 import com.aqua.aqualight.data.care.CareTaskDataStoreManager
-import com.aqua.aqualight.data.devices.repository.DevicesRepository
 import com.aqua.aqualight.data.user.UserDataScope
 import com.aqua.aqualight.data.user.UserPreferencesManager
 import com.aqua.aqualight.platform.media.UserDataArchiveMediaGateway
@@ -19,7 +18,6 @@ internal data class UserDataArchiveDataSources(
 internal class UserDataArchiveSnapshotCollector(
     private val ownerUid: String,
     private val dataSources: UserDataArchiveDataSources,
-    private val devicesRepository: DevicesRepository,
     private val preferences: UserPreferencesManager,
     private val mediaGateway: UserDataArchiveMediaGateway
 ) {
@@ -113,13 +111,9 @@ internal class UserDataArchiveSnapshotCollector(
     }
 
     private suspend fun collectAssignments(tankIds: Set<Long>): List<ArchiveDeviceAssignment> {
-        val currentDeviceUids = devicesRepository.currentDevices()
-            .map { snapshot -> snapshot.deviceUid }
-        return currentDeviceUids.mapNotNull { deviceUid ->
-            dataSources.assignmentRepository.assignmentForDevice(deviceUid)
-                ?.takeIf { assignment -> assignment.tankId in tankIds }
-                ?.toArchiveAssignment()
-        }
+        return dataSources.assignmentRepository
+            .assignmentsSnapshotForTanks(tankIds)
+            .map { assignment -> assignment.toArchiveAssignment() }
     }
 
     private fun requireOwner() {

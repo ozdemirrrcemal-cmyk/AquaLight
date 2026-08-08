@@ -170,7 +170,6 @@ internal class ActiveOwnerDependencyGraphResolver(
         val snapshotCollector = UserDataArchiveSnapshotCollector(
             ownerUid = dependencies.ownerUid,
             dataSources = archiveDataSources,
-            devicesRepository = dependencies.devicesRepository,
             preferences = userPreferencesManager,
             mediaGateway = mediaGateway
         )
