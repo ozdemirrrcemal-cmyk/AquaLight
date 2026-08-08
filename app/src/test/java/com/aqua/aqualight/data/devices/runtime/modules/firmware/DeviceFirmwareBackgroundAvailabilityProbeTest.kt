@@ -54,15 +54,16 @@ class DeviceFirmwareBackgroundAvailabilityProbeTest {
     }
 
     @Test
-    fun matchingIdentityWithWrongEnvironmentFailsClosed() {
+    fun nonmatchingEnvironmentProducesUpToDateHint() {
         val wrongEnv = artifact().copy(env = "dosing_dose_pro_4")
 
-        val failure = probe.evaluate(
+        val hint = probe.evaluate(
             snapshot(),
             manifest(artifacts = listOf(wrongEnv))
-        ).exceptionOrNull()
+        ).getOrThrow() as DeviceFirmwareAvailabilityHint.UpToDate
 
-        assertTrue(failure?.message.orEmpty().contains("dosing_dose_pro_2"))
+        assertEquals("1.0.0", hint.currentVersion)
+        assertEquals("1.0.0", hint.targetVersion)
     }
 
     @Test
