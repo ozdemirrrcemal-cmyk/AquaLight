@@ -2,6 +2,7 @@ package com.aqua.aqualight.data.auth
 
 import androidx.lifecycle.DefaultLifecycleObserver
 import androidx.lifecycle.LifecycleOwner
+import com.aqua.aqualight.application.notifications.AppProcessForegroundState
 
 /**
  * Converts Android's process lifecycle into the one foreground boundary used by device presence.
@@ -14,11 +15,13 @@ internal class AppProcessLifecycleObserver(
 ) : DefaultLifecycleObserver {
 
     override fun onStart(owner: LifecycleOwner) {
+        AppProcessForegroundState.update(true)
         controller.enterForeground()
     }
 
     override fun onStop(owner: LifecycleOwner) {
         controller.leaveForeground()
+        AppProcessForegroundState.update(false)
     }
 }
 

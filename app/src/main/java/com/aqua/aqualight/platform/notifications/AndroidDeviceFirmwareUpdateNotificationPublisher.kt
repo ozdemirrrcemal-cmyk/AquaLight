@@ -5,6 +5,7 @@ package com.aqua.aqualight.platform.notifications
 import android.content.Context
 import android.util.Log
 import com.aqua.aqualight.application.devices.DeviceOtaState
+import com.aqua.aqualight.application.notifications.AppProcessForegroundState
 import com.aqua.aqualight.application.notifications.DeviceUpdateNotification
 import com.aqua.aqualight.application.notifications.NotificationDispatchResult
 import com.aqua.aqualight.application.notifications.NotificationDispatchUseCase
@@ -57,7 +58,8 @@ internal class AndroidDeviceFirmwareUpdateNotificationPublisher(
     private val ledger: DeviceUpdateNotificationLedger,
     private val trust: DeviceFirmwareAvailabilityTrust,
     private val notificationFactory: DeviceFirmwareUpdateNotificationFactory =
-        DeviceFirmwareUpdateNotificationFactory(context)
+        DeviceFirmwareUpdateNotificationFactory(context),
+    private val isAppForeground: () -> Boolean = AppProcessForegroundState::isForeground
 ) : DeviceFirmwareUpdateNotificationOperations {
 
     private val deviceLocks = ConcurrentHashMap<DeviceIdentity, Mutex>()
@@ -84,15 +86,22 @@ internal class AndroidDeviceFirmwareUpdateNotificationPublisher(
             owner,
             hint.deviceUid
         )
-        val alreadyAnnounced = ledger.isAnnounced(
-            owner,
-            hint.deviceUid,
-            hint.targetVersion
-        )
-        if (operationActive || alreadyAnnounced) {
+        if (isAppForeground()) {
+            if (!operationActive) {
+                renderer.cancelDeviceUpdate(owner, hint.deviceUid)
+            }
             false
         } else {
-            dispatchAvailability(owner, hint)
+            val alreadyAnnounced = ledger.isAnnounced(
+                owner,
+                hint.deviceUid,
+                hint.targetVersion
+            )
+            if (operationActive || alreadyAnnounced) {
+                false
+            } else {
+                dispatchAvailability(owner, hint)
+            }
         }
     }
 

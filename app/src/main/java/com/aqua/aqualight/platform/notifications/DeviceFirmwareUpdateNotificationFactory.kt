@@ -4,6 +4,7 @@ package com.aqua.aqualight.platform.notifications
 
 import android.content.Context
 import com.aqua.aqualight.R
+import com.aqua.aqualight.application.devices.DeviceOtaFailureStage
 import com.aqua.aqualight.application.devices.DeviceOtaProgressPhase
 import com.aqua.aqualight.application.devices.DeviceOtaState
 import com.aqua.aqualight.application.notifications.DeviceUpdateNotification
@@ -48,7 +49,13 @@ internal class DeviceFirmwareUpdateNotificationFactory(context: Context) {
             )
             is DeviceOtaState.RestartRequired -> restart(ownerUid, state, normalizedName)
             is DeviceOtaState.Succeeded -> success(ownerUid, state, normalizedName)
-            is DeviceOtaState.Failed -> failure(ownerUid, state, normalizedName)
+            is DeviceOtaState.Failed -> if (
+                state.failure.stage == DeviceOtaFailureStage.UPDATE_EXECUTION
+            ) {
+                failure(ownerUid, state, normalizedName)
+            } else {
+                null
+            }
             is DeviceOtaState.Idle,
             is DeviceOtaState.Checking,
             is DeviceOtaState.Unsupported,
