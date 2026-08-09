@@ -30,7 +30,7 @@ internal class DebugFixtureDosingChannelNavigationOperations(
         slotId: String
     ): DeviceDosingChannelNavigationTarget? {
         val normalizedSlotId = slotId.trim()
-        val slot = fixture
+        return fixture
             .takeIf { root ->
                 root.catalogState == DeviceRootCatalogState.VALID &&
                     root.family == OwnerDeviceFamily.DOSING
@@ -38,17 +38,18 @@ internal class DebugFixtureDosingChannelNavigationOperations(
             ?.channelSlots
             ?.dosingChannels
             ?.singleOrNull { channel -> channel.id.value == normalizedSlotId }
-            ?: return null
-        val destination = DeviceDosingChannelDestinationPolicy.resolve(
-            calibrated = false,
-            allowedRoutes = fixture.allowedRoutes
-        ) ?: return null
-
-        return DeviceDosingChannelNavigationTarget(
-            deviceUid = fixture.deviceUid,
-            slotId = slot.id.value,
-            channelTitle = slot.defaultDisplayName,
-            destination = destination
-        )
+            ?.let { slot ->
+                DeviceDosingChannelDestinationPolicy.resolve(
+                    calibrated = false,
+                    allowedRoutes = fixture.allowedRoutes
+                )?.let { destination ->
+                    DeviceDosingChannelNavigationTarget(
+                        deviceUid = fixture.deviceUid,
+                        slotId = slot.id.value,
+                        channelTitle = slot.defaultDisplayName,
+                        destination = destination
+                    )
+                }
+            }
     }
 }
