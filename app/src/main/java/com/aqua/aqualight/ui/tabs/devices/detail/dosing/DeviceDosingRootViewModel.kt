@@ -34,6 +34,8 @@ class DeviceDosingRootViewModel(
     )
     val navigationEvents: Flow<DeviceDosingChannelNavigationTarget> =
         navigationEventChannel.receiveAsFlow()
+    private val navigationFailureEventChannel = Channel<Unit>(capacity = Channel.BUFFERED)
+    val navigationFailureEvents: Flow<Unit> = navigationFailureEventChannel.receiveAsFlow()
 
     private var boundDeviceUid: String = ""
     private var observeJob: Job? = null
@@ -73,12 +75,17 @@ class DeviceDosingRootViewModel(
 
         channelNavigationJob?.cancel()
         channelNavigationJob = viewModelScope.launch {
-            channelNavigationOperations.resolve(
+            val target = channelNavigationOperations.resolve(
                 deviceUid = requestedDeviceUid,
                 slotId = requestedSlotId
             )
-                ?.takeIf { boundDeviceUid == requestedDeviceUid }
-                ?.let { target -> navigationEventChannel.send(target) }
+            if (boundDeviceUid != requestedDeviceUid) return@launch
+
+            if (target == null) {
+                navigationFailureEventChannel.send(Unit)
+            } else {
+                navigationEventChannel.send(target)
+            }
         }
     }
 

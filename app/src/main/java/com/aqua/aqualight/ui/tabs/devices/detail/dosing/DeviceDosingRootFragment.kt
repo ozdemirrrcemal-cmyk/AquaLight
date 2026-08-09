@@ -13,6 +13,7 @@ import androidx.lifecycle.repeatOnLifecycle
 import androidx.navigation.fragment.findNavController
 import androidx.navigation.fragment.navArgs
 import com.aqua.aqualight.R
+import com.aqua.aqualight.base.BaseActivity
 import com.aqua.aqualight.composition.requireAppContainer
 import com.aqua.aqualight.databinding.FragmentDeviceDosingRootBinding
 import com.aqua.aqualight.ui.common.header.AquaHeaderAction
@@ -40,6 +41,7 @@ class DeviceDosingRootFragment : Fragment(R.layout.fragment_device_dosing_root) 
         setupPumpContent()
         observeHeaderTitle()
         observeChannelNavigation()
+        observeChannelNavigationFailures()
 
         viewModel.bind(
             deviceUidText = args.deviceUid,
@@ -100,6 +102,19 @@ class DeviceDosingRootFragment : Fragment(R.layout.fragment_device_dosing_root) 
                     AppRouteNavigator.openDosingChannel(
                         navController = findNavController(),
                         target = target
+                    )
+                }
+            }
+        }
+    }
+
+    private fun observeChannelNavigationFailures() {
+        viewLifecycleOwner.lifecycleScope.launch {
+            viewLifecycleOwner.repeatOnLifecycle(Lifecycle.State.STARTED) {
+                viewModel.navigationFailureEvents.collect {
+                    (activity as? BaseActivity)?.showSnackBar(
+                        message = getString(R.string.device_dosing_channel_open_failed),
+                        type = BaseActivity.SnackType.ERROR
                     )
                 }
             }

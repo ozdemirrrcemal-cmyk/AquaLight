@@ -14,6 +14,9 @@ import com.aqua.aqualight.data.devices.model.DeviceUid
 import com.aqua.aqualight.data.devices.repository.DevicesRepository
 import com.aqua.aqualight.data.devices.runtime.core.DeviceRuntimeCommandOutcome
 import com.aqua.aqualight.data.devices.runtime.modules.dosing.DeviceDosingStatus
+import kotlinx.coroutines.flow.filterNotNull
+import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.withTimeoutOrNull
 
 /** Resolves navigation only after a fresh authenticated Dosing status response. */
 internal class DefaultDeviceDosingChannelNavigationOperations(
@@ -62,7 +65,10 @@ internal class DefaultDeviceDosingChannelNavigationOperations(
         is DeviceRuntimeCommandOutcome.Success -> outcome.value.toNavigationTarget(context)
         is DeviceRuntimeCommandOutcome.NotConnected,
         is DeviceRuntimeCommandOutcome.NotAuthenticated,
-        is DeviceRuntimeCommandOutcome.UnsupportedByDevice -> retryAfterRuntimeRecovery(context)
+        is DeviceRuntimeCommandOutcome.UnsupportedByDevice,
+        is DeviceRuntimeCommandOutcome.SendFailed,
+        is DeviceRuntimeCommandOutcome.Timeout,
+        is DeviceRuntimeCommandOutcome.Cancelled -> retryAfterRuntimeRecovery(context)
         else -> null
     }
 
@@ -137,18 +143,52 @@ private class RepositoryDeviceDosingChannelNavigationRuntimePort(
     private val menuAccessOperations: DeviceMenuAccessOperations
 ) : DeviceDosingChannelNavigationRuntimePort {
 
-    override suspend fun prepareRuntime(deviceUid: DeviceUid): Boolean =
-        when (val access = menuAccessOperations.resolve(deviceUid.value)) {
+    override suspend fun prepareRuntime(deviceUid: DeviceUid): Boolean {
+        if (devicesRepository.replaceRuntimeAfterControlFailure(deviceUid).isFailure) {
+            return false
+        }
+
+        val accessAvailable = when (val access = menuAccessOperations.resolve(deviceUid.value)) {
             is DeviceMenuAccessResult.Available ->
                 access.deviceUid == deviceUid.value && access.family == OwnerDeviceFamily.DOSING
             is DeviceMenuAccessResult.Unavailable -> false
         }
+        return accessAvailable && awaitValidatedRuntimeMetadata(
+            deviceUid = deviceUid,
+            timeoutMillis = RECOVERY_METADATA_WAIT_MILLIS
+        )
+    }
 
     override fun currentRootSnapshot(deviceUid: DeviceUid): DeviceRootSnapshot? =
         devicesRepository.currentDevice(deviceUid)?.toDeviceRootSnapshot()
 
     override suspend fun requestStatus(
         deviceUid: DeviceUid
-    ): DeviceRuntimeCommandOutcome<DeviceDosingStatus>? =
-        devicesRepository.runtimeModules()?.dosing?.requestStatus(deviceUid)
+    ): DeviceRuntimeCommandOutcome<DeviceDosingStatus>? {
+        val dosing = devicesRepository.runtimeModules()?.dosing ?: return null
+        awaitValidatedRuntimeMetadata(
+            deviceUid = deviceUid,
+            timeoutMillis = CURRENT_METADATA_WAIT_MILLIS
+        )
+        return dosing.requestStatus(deviceUid)
+    }
+
+    private suspend fun awaitValidatedRuntimeMetadata(
+        deviceUid: DeviceUid,
+        timeoutMillis: Long
+    ): Boolean {
+        if (devicesRepository.currentDevice(deviceUid)?.hasValidatedRuntimeMetadata == true) {
+            return true
+        }
+        return withTimeoutOrNull(timeoutMillis) {
+            devicesRepository.observeDevice(deviceUid)
+                .filterNotNull()
+                .first { snapshot -> snapshot.hasValidatedRuntimeMetadata }
+        } != null
+    }
+
+    private companion object {
+        const val CURRENT_METADATA_WAIT_MILLIS = 2_000L
+        const val RECOVERY_METADATA_WAIT_MILLIS = 10_000L
+    }
 }
