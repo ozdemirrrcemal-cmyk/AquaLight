@@ -13,8 +13,8 @@
     <fragment
         android:id="@+id/deviceDosingChannelCalibrationFragment"
         android:name="com.aqua.aqualight.ui.tabs.devices.detail.dosing.channel.calibration.DeviceDosingChannelCalibrationFragment"
-        android:label="@string/device_family_dosing"
-        tools:layout="@layout/fragment_device_dosing_channel_destination">
+        android:label="@string/device_menu_calibration_title"
+        tools:layout="@layout/fragment_device_dosing_channel_calibration">
         <argument
             android:name="deviceUid"
             app:argType="string" />
@@ -32,7 +32,7 @@
         android:id="@+id/deviceDosingChannelDetailFragment"
         android:name="com.aqua.aqualight.ui.tabs.devices.detail.dosing.channel.detail.DeviceDosingChannelDetailFragment"
         android:label="@string/device_family_dosing"
-        tools:layout="@layout/fragment_device_dosing_channel_destination">
+        tools:layout="@layout/fragment_device_dosing_channel_detail">
         <argument
             android:name="deviceUid"
             app:argType="string" />

@@ -1,13 +1,12 @@
 package com.aqua.aqualight.ui.tabs.devices.detail.dosing.channel.calibration
 
-import androidx.navigation.fragment.navArgs
+import com.aqua.aqualight.R
 import com.aqua.aqualight.ui.tabs.devices.detail.dosing.channel.DeviceDosingChannelDestinationFragment
 
-/** Existing empty calibration destination for one centrally identified Dosing channel. */
-class DeviceDosingChannelCalibrationFragment : DeviceDosingChannelDestinationFragment() {
+/** Calibration destination for one centrally identified, uncalibrated Dosing channel. */
+class DeviceDosingChannelCalibrationFragment :
+    DeviceDosingChannelDestinationFragment(R.layout.fragment_device_dosing_channel_calibration) {
 
-    private val args: DeviceDosingChannelCalibrationFragmentArgs by navArgs()
-
-    override val channelTitle: String
-        get() = args.channelTitle
+    override val destinationTitle: String
+        get() = getString(R.string.device_menu_calibration_title)
 }

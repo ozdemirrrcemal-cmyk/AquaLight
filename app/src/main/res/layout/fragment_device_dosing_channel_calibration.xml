@@ -5,7 +5,8 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    tools:context=".ui.tabs.devices.detail.dosing.channel.detail.DeviceDosingChannelDetailFragment">
+    android:background="@color/background_color"
+    tools:context=".ui.tabs.devices.detail.dosing.channel.calibration.DeviceDosingChannelCalibrationFragment">
 
     <include
         android:id="@+id/appHeader"
@@ -17,7 +18,7 @@
         app:layout_constraintTop_toTopOf="parent" />
 
     <FrameLayout
-        android:id="@+id/channelContent"
+        android:id="@+id/calibrationContent"
         android:layout_width="@dimen/aqua_size_0"
         android:layout_height="@dimen/aqua_size_0"
         app:layout_constraintBottom_toBottomOf="parent"
