@@ -30,15 +30,9 @@ internal class DefaultDeviceDosingChannelNavigationOperations(
     override suspend fun resolve(
         deviceUid: String,
         slotId: String
-    ): DeviceDosingChannelNavigationTarget? {
-        val request = navigationRequest(deviceUid, slotId)
-        return if (request == null || !runtimePort.prepareRuntime(request.uid)) {
-            null
-        } else {
-            navigationContext(request)
-                ?.let { context -> requestTarget(context) }
-        }
-    }
+    ): DeviceDosingChannelNavigationTarget? = navigationRequest(deviceUid, slotId)
+        ?.let(::navigationContext)
+        ?.let { context -> requestTarget(context) }
 
     private fun navigationRequest(
         deviceUid: String,
@@ -62,9 +56,26 @@ internal class DefaultDeviceDosingChannelNavigationOperations(
 
     private suspend fun requestTarget(
         context: DosingChannelNavigationContext
-    ): DeviceDosingChannelNavigationTarget? = runtimePort
-        .requestStatus(context.uid)
-        ?.toNavigationTarget(context)
+    ): DeviceDosingChannelNavigationTarget? = when (
+        val outcome = runtimePort.requestStatus(context.uid)
+    ) {
+        is DeviceRuntimeCommandOutcome.Success -> outcome.value.toNavigationTarget(context)
+        is DeviceRuntimeCommandOutcome.NotConnected,
+        is DeviceRuntimeCommandOutcome.NotAuthenticated,
+        is DeviceRuntimeCommandOutcome.UnsupportedByDevice -> retryAfterRuntimeRecovery(context)
+        else -> null
+    }
+
+    private suspend fun retryAfterRuntimeRecovery(
+        context: DosingChannelNavigationContext
+    ): DeviceDosingChannelNavigationTarget? = if (runtimePort.prepareRuntime(context.uid)) {
+        when (val retry = runtimePort.requestStatus(context.uid)) {
+            is DeviceRuntimeCommandOutcome.Success -> retry.value.toNavigationTarget(context)
+            else -> null
+        }
+    } else {
+        null
+    }
 
     private fun DeviceRootSnapshot.authorizedDosingSlot(slotId: String) =
         takeIf { snapshot ->
@@ -116,7 +127,9 @@ internal class DefaultDeviceDosingChannelNavigationOperations(
 internal interface DeviceDosingChannelNavigationRuntimePort {
     suspend fun prepareRuntime(deviceUid: DeviceUid): Boolean
     fun currentRootSnapshot(deviceUid: DeviceUid): DeviceRootSnapshot?
-    suspend fun requestStatus(deviceUid: DeviceUid): DeviceDosingStatus?
+    suspend fun requestStatus(
+        deviceUid: DeviceUid
+    ): DeviceRuntimeCommandOutcome<DeviceDosingStatus>?
 }
 
 private class RepositoryDeviceDosingChannelNavigationRuntimePort(
@@ -134,11 +147,8 @@ private class RepositoryDeviceDosingChannelNavigationRuntimePort(
     override fun currentRootSnapshot(deviceUid: DeviceUid): DeviceRootSnapshot? =
         devicesRepository.currentDevice(deviceUid)?.toDeviceRootSnapshot()
 
-    override suspend fun requestStatus(deviceUid: DeviceUid): DeviceDosingStatus? {
-        val runtime = devicesRepository.runtimeModules()?.dosing
-        return when (val outcome = runtime?.requestStatus(deviceUid)) {
-            is DeviceRuntimeCommandOutcome.Success -> outcome.value
-            else -> null
-        }
-    }
+    override suspend fun requestStatus(
+        deviceUid: DeviceUid
+    ): DeviceRuntimeCommandOutcome<DeviceDosingStatus>? =
+        devicesRepository.runtimeModules()?.dosing?.requestStatus(deviceUid)
 }
