@@ -15,7 +15,6 @@ import com.aqua.aqualight.application.devices.DeviceDosingChannelSlot
 data class DosingChannelCardUiState(
     val slotId: String,
     val channelNumber: Int,
-    val wireKey: String,
     val displayName: String,
     val visualState: DosingChannelVisualState = DosingChannelVisualState.NOT_CONFIGURED,
     val scheduleDays: DosingScheduleDaysUiState = DosingScheduleDaysUiState(),
@@ -84,7 +83,6 @@ internal fun DeviceDosingChannelSlot.toInitialDosingChannelCardUiState(): Dosing
     DosingChannelCardUiState(
         slotId = id.value,
         channelNumber = index.position,
-        wireKey = wireKey.value,
         displayName = defaultDisplayName
     )
 
