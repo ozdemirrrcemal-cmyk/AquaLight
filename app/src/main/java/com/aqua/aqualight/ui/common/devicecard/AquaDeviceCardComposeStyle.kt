@@ -72,9 +72,9 @@ fun aquaDeviceCardColors(): AquaDeviceCardColors = AquaDeviceCardColors(
     mediaOutline = colorResource(R.color.aqua_card_device_media_outline),
     primaryText = colorResource(R.color.aqua_card_text_primary),
     secondaryText = colorResource(R.color.aqua_card_text_secondary),
-    accent = colorResource(R.color.aqua_accent),
-    warning = colorResource(R.color.dialog_icon_warning),
-    danger = colorResource(R.color.dialog_icon_error)
+    accent = colorResource(R.color.aqua_card_state_active),
+    warning = colorResource(R.color.aqua_card_state_warning),
+    danger = colorResource(R.color.aqua_card_state_danger)
 )
 
 fun aquaDeviceCardTypography(colors: AquaDeviceCardColors): AquaDeviceCardTypography =
