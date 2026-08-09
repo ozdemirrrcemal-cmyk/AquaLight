@@ -4,6 +4,7 @@ import androidx.annotation.StringRes
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.aqua.aqualight.R
+import com.aqua.aqualight.application.devices.DeviceRootCatalogState
 import com.aqua.aqualight.application.devices.DeviceRootOperations
 import com.aqua.aqualight.application.devices.DeviceRootSnapshot
 import com.aqua.aqualight.ui.common.text.AquaUiText
@@ -56,7 +57,7 @@ class DeviceDosingRootViewModel(
         title = title,
         deviceUid = deviceUid,
         connectionStatusRes = R.string.device_offline,
-        pumpCount = resolveDosingPumpCount(channelCount = 0, modelLabel = title),
+        pumpCount = UNKNOWN_DOSING_PUMP_COUNT,
         primaryCountLabelRes = KIND.primaryCountLabelRes,
         primarySectionTitleRes = KIND.primarySectionTitleRes,
         primarySectionPlaceholder = AquaUiText.Resource(KIND.primarySectionPlaceholderRes),
@@ -66,7 +67,16 @@ class DeviceDosingRootViewModel(
 
     private fun DeviceRootSnapshot.toRootUiState(fallbackTitle: String): DeviceDosingRootUiState {
         val menuSections = DeviceRootMenuMapper.overview(kind = KIND, snapshot = this)
-        val resolvedModelLabel = modelLabel.ifBlank { title.ifBlank { fallbackTitle } }
+        val catalogChannels = if (catalogState == DeviceRootCatalogState.VALID) {
+            channelSlots.dosingChannels
+        } else {
+            emptyList()
+        }
+        val exactChannelCount = when {
+            catalogChannels.isNotEmpty() -> catalogChannels.size
+            catalogState == DeviceRootCatalogState.VALID -> dosingChannelCount
+            else -> UNKNOWN_DOSING_PUMP_COUNT
+        }
         return DeviceDosingRootUiState(
             title = title.ifBlank { fallbackTitle },
             deviceUid = deviceUid,
@@ -74,12 +84,12 @@ class DeviceDosingRootViewModel(
             ipText = ipAddress,
             firmwareText = firmwareLabel,
             modelText = modelLabel,
-            pumpCount = resolveDosingPumpCount(
-                channelCount = dosingChannelCount,
-                modelLabel = resolvedModelLabel
-            ),
+            pumpCount = resolveDosingPumpCount(exactChannelCount),
+            channels = catalogChannels.map { slot ->
+                slot.toInitialDosingChannelCardUiState()
+            },
             primaryCountLabelRes = KIND.primaryCountLabelRes,
-            primaryCountText = dosingChannelCount.takeIf { it > 0 }?.toString().orEmpty(),
+            primaryCountText = exactChannelCount.takeIf { it > 0 }?.toString().orEmpty(),
             featuresText = DeviceRootPresentationMapper.overviewFeatureText(this, KIND),
             primarySectionTitleRes = KIND.primarySectionTitleRes,
             primarySectionPlaceholder = menuSections.primaryText(KIND.primarySectionPlaceholderRes),
@@ -100,7 +110,8 @@ data class DeviceDosingRootUiState(
     val ipText: String = "",
     val firmwareText: String = "",
     val modelText: String = "",
-    val pumpCount: Int = DEFAULT_DOSING_PUMP_COUNT,
+    val pumpCount: Int = UNKNOWN_DOSING_PUMP_COUNT,
+    val channels: List<DosingChannelCardUiState> = emptyList(),
     @StringRes val primaryCountLabelRes: Int = R.string.device_dosing_channels_label,
     val primaryCountText: String = "",
     val featuresText: AquaUiText = AquaUiText.Resource(R.string.device_unknown),
@@ -114,22 +125,12 @@ data class DeviceDosingRootUiState(
     )
 )
 
-internal fun resolveDosingPumpCount(
-    channelCount: Int,
-    modelLabel: String
-): Int {
-    return when {
-        channelCount == DOSING_PRO_2_CHANNEL_COUNT -> DOSING_PRO_2_CHANNEL_COUNT
-        channelCount == DOSING_PRO_4_CHANNEL_COUNT -> DOSING_PRO_4_CHANNEL_COUNT
-        DOSING_PRO_2_MODEL_PATTERN.containsMatchIn(modelLabel) -> DOSING_PRO_2_CHANNEL_COUNT
-        else -> DOSING_PRO_4_CHANNEL_COUNT
-    }
+internal fun resolveDosingPumpCount(channelCount: Int): Int = when (channelCount) {
+    DOSING_PRO_2_CHANNEL_COUNT -> DOSING_PRO_2_CHANNEL_COUNT
+    DOSING_PRO_4_CHANNEL_COUNT -> DOSING_PRO_4_CHANNEL_COUNT
+    else -> UNKNOWN_DOSING_PUMP_COUNT
 }
 
 private const val DOSING_PRO_2_CHANNEL_COUNT = 2
 private const val DOSING_PRO_4_CHANNEL_COUNT = 4
-private const val DEFAULT_DOSING_PUMP_COUNT = DOSING_PRO_4_CHANNEL_COUNT
-private val DOSING_PRO_2_MODEL_PATTERN = Regex(
-    pattern = "(?:dose|dosing)[\\s_-]*pro[\\s_-]*2",
-    option = RegexOption.IGNORE_CASE
-)
+private const val UNKNOWN_DOSING_PUMP_COUNT = 0
