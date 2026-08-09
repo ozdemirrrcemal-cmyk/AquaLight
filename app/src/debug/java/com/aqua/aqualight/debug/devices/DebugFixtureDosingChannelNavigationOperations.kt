@@ -6,6 +6,8 @@ import com.aqua.aqualight.application.devices.DeviceDosingChannelNavigationTarge
 import com.aqua.aqualight.application.devices.DeviceRootCatalogState
 import com.aqua.aqualight.application.devices.DeviceRootSnapshot
 import com.aqua.aqualight.application.devices.OwnerDeviceFamily
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.flowOf
 
 /** Resolves known fixture channels without weakening the production runtime-backed boundary. */
 internal class DebugFixtureDosingChannelNavigationOperations(
@@ -24,6 +26,27 @@ internal class DebugFixtureDosingChannelNavigationOperations(
             resolveFixture(fixture, slotId)
         }
     }
+
+    override fun observeTargets(
+        deviceUid: String
+    ): Flow<List<DeviceDosingChannelNavigationTarget>> {
+        val fixture = fixtures.rootSnapshot(deviceUid)
+        return if (fixture == null) {
+            delegate.observeTargets(deviceUid)
+        } else {
+            flowOf(fixture.dosingTargets())
+        }
+    }
+
+    override suspend fun refreshTargets(deviceUid: String): Boolean =
+        fixtures.rootSnapshot(deviceUid) != null || delegate.refreshTargets(deviceUid)
+
+    override suspend fun resolveCurrent(
+        deviceUid: String,
+        slotId: String
+    ): DeviceDosingChannelNavigationTarget? = fixtures.rootSnapshot(deviceUid)
+        ?.let { fixture -> resolveFixture(fixture, slotId) }
+        ?: delegate.resolveCurrent(deviceUid, slotId)
 
     private fun resolveFixture(
         fixture: DeviceRootSnapshot,
@@ -52,4 +75,7 @@ internal class DebugFixtureDosingChannelNavigationOperations(
                 }
             }
     }
+
+    private fun DeviceRootSnapshot.dosingTargets(): List<DeviceDosingChannelNavigationTarget> =
+        channelSlots.dosingChannels.mapNotNull { slot -> resolveFixture(this, slot.id.value) }
 }

@@ -38,7 +38,12 @@ class DeviceDosingRootViewModel(
     val navigationFailureEvents: Flow<Unit> = navigationFailureEventChannel.receiveAsFlow()
 
     private var boundDeviceUid: String = ""
+    private var fallbackTitle: String = ""
+    private var latestRootSnapshot: DeviceRootSnapshot? = null
+    private var channelTargets: Map<String, DeviceDosingChannelNavigationTarget> = emptyMap()
     private var observeJob: Job? = null
+    private var channelStateJob: Job? = null
+    private var channelRefreshJob: Job? = null
     private var channelNavigationJob: Job? = null
 
     fun bind(
@@ -48,23 +53,42 @@ class DeviceDosingRootViewModel(
         val deviceUid = deviceUidText.trim()
         if (deviceUid.isBlank()) {
             observeJob?.cancel()
+            channelStateJob?.cancel()
+            channelRefreshJob?.cancel()
             channelNavigationJob?.cancel()
             boundDeviceUid = ""
+            latestRootSnapshot = null
+            channelTargets = emptyMap()
             _uiState.value = emptyState(fallbackTitle, "")
             return
         }
         if (boundDeviceUid == deviceUid) return
 
         boundDeviceUid = deviceUid
+        this.fallbackTitle = fallbackTitle
+        latestRootSnapshot = operations.current(deviceUid)
+        channelTargets = emptyMap()
         observeJob?.cancel()
-        _uiState.value = operations.current(deviceUid)?.toRootUiState(fallbackTitle)
-            ?: emptyState(fallbackTitle, deviceUid)
+        channelStateJob?.cancel()
+        channelRefreshJob?.cancel()
+        renderBoundState()
         operations.connect(deviceUid)
         observeJob = viewModelScope.launch {
             operations.observe(deviceUid).collect { snapshot ->
-                _uiState.value = snapshot?.toRootUiState(fallbackTitle)
-                    ?: emptyState(fallbackTitle, deviceUid)
+                if (boundDeviceUid != deviceUid) return@collect
+                latestRootSnapshot = snapshot
+                renderBoundState()
             }
+        }
+        channelStateJob = viewModelScope.launch {
+            channelNavigationOperations.observeTargets(deviceUid).collect { targets ->
+                if (boundDeviceUid != deviceUid) return@collect
+                channelTargets = targets.associateBy(DeviceDosingChannelNavigationTarget::slotId)
+                renderBoundState()
+            }
+        }
+        channelRefreshJob = viewModelScope.launch {
+            channelNavigationOperations.refreshTargets(deviceUid)
         }
     }
 
@@ -75,7 +99,7 @@ class DeviceDosingRootViewModel(
 
         channelNavigationJob?.cancel()
         channelNavigationJob = viewModelScope.launch {
-            val target = channelNavigationOperations.resolve(
+            val target = channelNavigationOperations.resolveCurrent(
                 deviceUid = requestedDeviceUid,
                 slotId = requestedSlotId
             )
@@ -87,6 +111,14 @@ class DeviceDosingRootViewModel(
                 navigationEventChannel.send(target)
             }
         }
+    }
+
+    private fun renderBoundState() {
+        val deviceUid = boundDeviceUid
+        _uiState.value = latestRootSnapshot?.toRootUiState(
+            fallbackTitle = fallbackTitle,
+            targets = channelTargets
+        ) ?: emptyState(fallbackTitle, deviceUid)
     }
 
     private fun emptyState(title: String, deviceUid: String) = DeviceDosingRootUiState(
@@ -101,7 +133,10 @@ class DeviceDosingRootViewModel(
         secondarySectionPlaceholder = AquaUiText.Resource(KIND.secondarySectionPlaceholderRes)
     )
 
-    private fun DeviceRootSnapshot.toRootUiState(fallbackTitle: String): DeviceDosingRootUiState {
+    private fun DeviceRootSnapshot.toRootUiState(
+        fallbackTitle: String,
+        targets: Map<String, DeviceDosingChannelNavigationTarget>
+    ): DeviceDosingRootUiState {
         val menuSections = DeviceRootMenuMapper.overview(kind = KIND, snapshot = this)
         val catalogChannels = if (catalogState == DeviceRootCatalogState.VALID) {
             channelSlots.dosingChannels
@@ -118,7 +153,7 @@ class DeviceDosingRootViewModel(
             modelText = modelLabel,
             pumpCount = resolveDosingPumpCount(exactChannelCount),
             channels = catalogChannels.map { slot ->
-                slot.toInitialDosingChannelCardUiState()
+                slot.toInitialDosingChannelCardUiState(targets[slot.id.value])
             },
             primaryCountLabelRes = KIND.primaryCountLabelRes,
             primaryCountText = exactChannelCount.takeIf { it > 0 }?.toString().orEmpty(),

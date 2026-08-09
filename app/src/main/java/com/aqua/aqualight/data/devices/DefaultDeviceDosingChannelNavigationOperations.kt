@@ -14,11 +14,15 @@ import com.aqua.aqualight.data.devices.model.DeviceUid
 import com.aqua.aqualight.data.devices.repository.DevicesRepository
 import com.aqua.aqualight.data.devices.runtime.core.DeviceRuntimeCommandOutcome
 import com.aqua.aqualight.data.devices.runtime.modules.dosing.DeviceDosingStatus
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.flow.flowOf
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.withTimeoutOrNull
 
-/** Resolves navigation only after a fresh authenticated Dosing status response. */
+/** Projects central Dosing runtime state into authorized channel navigation targets. */
 internal class DefaultDeviceDosingChannelNavigationOperations(
     private val runtimePort: DeviceDosingChannelNavigationRuntimePort
 ) : DeviceDosingChannelNavigationOperations {
@@ -36,6 +40,46 @@ internal class DefaultDeviceDosingChannelNavigationOperations(
     ): DeviceDosingChannelNavigationTarget? = navigationRequest(deviceUid, slotId)
         ?.let(::navigationContext)
         ?.let { context -> requestTarget(context) }
+
+    override fun observeTargets(
+        deviceUid: String
+    ): Flow<List<DeviceDosingChannelNavigationTarget>> {
+        val uid = deviceUid.trim().takeIf(String::isNotBlank)?.let(::DeviceUid)
+            ?: return flowOf(emptyList())
+        return runtimePort.observeStatus(uid)
+            .map { status -> status?.toNavigationTargets(uid).orEmpty() }
+            .distinctUntilChanged()
+    }
+
+    override suspend fun refreshTargets(deviceUid: String): Boolean {
+        val uid = deviceUid.trim().takeIf(String::isNotBlank)?.let(::DeviceUid)
+            ?: return false
+        return runtimePort.requestStatus(uid) is DeviceRuntimeCommandOutcome.Success
+    }
+
+    override suspend fun resolveCurrent(
+        deviceUid: String,
+        slotId: String
+    ): DeviceDosingChannelNavigationTarget? = navigationRequest(deviceUid, slotId)
+        ?.let(::navigationContext)
+        ?.let { context ->
+            val status = runtimePort.currentStatus(context.uid)
+            if (status != null) {
+                status.toNavigationTarget(context)
+            } else {
+                DeviceDosingChannelDestinationPolicy.resolve(
+                    calibrated = false,
+                    allowedRoutes = context.root.allowedRoutes
+                )?.let { destination ->
+                    DeviceDosingChannelNavigationTarget(
+                        deviceUid = context.uid.value,
+                        slotId = context.slot.id.value,
+                        channelTitle = context.slot.defaultDisplayName,
+                        destination = destination
+                    )
+                }
+            }
+        }
 
     private fun navigationRequest(
         deviceUid: String,
@@ -118,6 +162,20 @@ internal class DefaultDeviceDosingChannelNavigationOperations(
             }
         }
 
+    private fun DeviceDosingStatus.toNavigationTargets(
+        uid: DeviceUid
+    ): List<DeviceDosingChannelNavigationTarget> {
+        val root = runtimePort.currentRootSnapshot(uid)
+            ?.takeIf { snapshot ->
+                snapshot.catalogState == DeviceRootCatalogState.VALID &&
+                    snapshot.family == OwnerDeviceFamily.DOSING
+            }
+            ?: return emptyList()
+        return root.channelSlots.dosingChannels.mapNotNull { slot ->
+            toNavigationTarget(DosingChannelNavigationContext(uid, root, slot))
+        }
+    }
+
     private data class DosingChannelNavigationRequest(
         val uid: DeviceUid,
         val slotId: String
@@ -133,6 +191,8 @@ internal class DefaultDeviceDosingChannelNavigationOperations(
 internal interface DeviceDosingChannelNavigationRuntimePort {
     suspend fun prepareRuntime(deviceUid: DeviceUid): Boolean
     fun currentRootSnapshot(deviceUid: DeviceUid): DeviceRootSnapshot?
+    fun observeStatus(deviceUid: DeviceUid): Flow<DeviceDosingStatus?> = flowOf(null)
+    fun currentStatus(deviceUid: DeviceUid): DeviceDosingStatus? = null
     suspend fun requestStatus(
         deviceUid: DeviceUid
     ): DeviceRuntimeCommandOutcome<DeviceDosingStatus>?
@@ -161,6 +221,15 @@ private class RepositoryDeviceDosingChannelNavigationRuntimePort(
 
     override fun currentRootSnapshot(deviceUid: DeviceUid): DeviceRootSnapshot? =
         devicesRepository.currentDevice(deviceUid)?.toDeviceRootSnapshot()
+
+    override fun observeStatus(deviceUid: DeviceUid): Flow<DeviceDosingStatus?> =
+        devicesRepository.runtimeModules()?.dosing?.states
+            ?.map { states -> states[deviceUid]?.status }
+            ?.distinctUntilChanged()
+            ?: flowOf(null)
+
+    override fun currentStatus(deviceUid: DeviceUid): DeviceDosingStatus? =
+        devicesRepository.runtimeModules()?.dosing?.states?.value?.get(deviceUid)?.status
 
     override suspend fun requestStatus(
         deviceUid: DeviceUid

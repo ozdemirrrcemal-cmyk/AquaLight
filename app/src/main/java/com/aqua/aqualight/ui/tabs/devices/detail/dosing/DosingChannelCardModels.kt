@@ -3,6 +3,8 @@ package com.aqua.aqualight.ui.tabs.devices.detail.dosing
 import androidx.annotation.StringRes
 import androidx.compose.runtime.Immutable
 import com.aqua.aqualight.R
+import com.aqua.aqualight.application.devices.DeviceDosingChannelDestination
+import com.aqua.aqualight.application.devices.DeviceDosingChannelNavigationTarget
 import com.aqua.aqualight.application.devices.DeviceDosingChannelSlot
 
 /**
@@ -79,11 +81,18 @@ enum class DosingDoseProgressVisualState {
 }
 
 /** Initial presentation comes only from the validated commercial channel-slot catalog. */
-internal fun DeviceDosingChannelSlot.toInitialDosingChannelCardUiState(): DosingChannelCardUiState =
+internal fun DeviceDosingChannelSlot.toInitialDosingChannelCardUiState(
+    target: DeviceDosingChannelNavigationTarget? = null
+): DosingChannelCardUiState =
     DosingChannelCardUiState(
         slotId = id.value,
         channelNumber = index.position,
-        displayName = defaultDisplayName
+        displayName = target?.channelTitle?.ifBlank { defaultDisplayName } ?: defaultDisplayName,
+        visualState = when (target?.destination) {
+            DeviceDosingChannelDestination.DETAIL -> DosingChannelVisualState.READY
+            DeviceDosingChannelDestination.CALIBRATION,
+            null -> DosingChannelVisualState.NOT_CONFIGURED
+        }
     )
 
 private val ALL_DOSING_WEEKDAYS = listOf(
