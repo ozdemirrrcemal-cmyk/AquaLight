@@ -5,4 +5,17 @@
     <string name="device_dosing_pump_state_error">Error</string>
     <string name="device_dosing_pump_channel_content_description">Dosing channel %1$d, %2$s</string>
     <string name="device_dosing_open_settings_description">Open device settings</string>
+
+    <string name="device_dosing_channel_status_setup_required">Setup required</string>
+    <string name="device_dosing_channel_status_ready">Ready</string>
+    <string name="device_dosing_channel_status_scheduled">Scheduled</string>
+    <string name="device_dosing_channel_status_dosing">Dosing</string>
+    <string name="device_dosing_channel_status_attention">Needs attention</string>
+    <string name="device_dosing_channel_daily_dose_format">%1$.2f ml/day</string>
+    <string name="device_dosing_channel_calibration_required">Calibration required</string>
+    <string name="device_dosing_channel_calibrated">Calibrated</string>
+    <string name="device_dosing_channel_not_configured">Not configured</string>
+    <string name="device_dosing_channel_configured">Configured</string>
+    <string name="device_dosing_channel_timeline_description">24-hour dosing schedule</string>
+    <string name="device_dosing_channel_card_content_description">Dosing channel %1$d, %2$s, %3$s</string>
 </resources>
