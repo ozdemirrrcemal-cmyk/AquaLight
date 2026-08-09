@@ -108,7 +108,6 @@ sealed interface DosingCalibrationAction {
     data object ConfirmCalibration : DosingCalibrationAction
     data object Recalibrate : DosingCalibrationAction
     data object Exit : DosingCalibrationAction
-    data object DismissError : DosingCalibrationAction
 }
 
 sealed interface DosingCalibrationEvent {
