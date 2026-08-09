@@ -57,41 +57,6 @@ enum class DosingPumpVisualState(
 }
 
 @Composable
-fun DeviceDosingPumpScreen(
-    pumpCount: Int,
-    modifier: Modifier = Modifier,
-    pumpStates: List<DosingPumpVisualState> = emptyList(),
-    onPumpClick: (Int) -> Unit = {}
-) {
-    val supportedPumpCount = normalizeDosingPumpCount(pumpCount)
-    val pumpHeads = List(supportedPumpCount) { index ->
-        DosingPumpHeadUiState(
-            channelNumber = index + 1,
-            visualState = pumpStates.getOrElse(index) { DosingPumpVisualState.IDLE }
-        )
-    }
-
-    BoxWithConstraints(
-        modifier = modifier
-            .fillMaxSize()
-            .padding(horizontal = SCREEN_HORIZONTAL_PADDING)
-            .padding(top = SCREEN_TOP_PADDING),
-        contentAlignment = Alignment.TopCenter
-    ) {
-        val maximumDeviceWidth = if (supportedPumpCount == DOSING_PRO_2_PUMP_COUNT) {
-            DOSING_PRO_2_MAX_WIDTH
-        } else {
-            DOSING_PRO_4_MAX_WIDTH
-        }
-        DosingPumpDevice(
-            pumpHeads = pumpHeads,
-            onPumpClick = onPumpClick,
-            modifier = Modifier.width(minOf(maxWidth, maximumDeviceWidth))
-        )
-    }
-}
-
-@Composable
 fun DosingPumpDevice(
     pumpHeads: List<DosingPumpHeadUiState>,
     onPumpClick: (Int) -> Unit,
@@ -339,13 +304,6 @@ private fun PumpIndicator(
     }
 }
 
-internal fun normalizeDosingPumpCount(pumpCount: Int): Int =
-    if (pumpCount == DOSING_PRO_2_PUMP_COUNT) {
-        DOSING_PRO_2_PUMP_COUNT
-    } else {
-        DOSING_PRO_4_PUMP_COUNT
-    }
-
 private const val DOSING_PRO_2_PUMP_COUNT = 2
 private const val DOSING_PRO_4_PUMP_COUNT = 4
 private const val NORMAL_SCALE = 1f
@@ -358,8 +316,6 @@ private const val HUB_SIZE_RATIO = 0.42f
 private const val INDICATOR_CANVAS_RATIO = 0.82f
 private const val RUNNING_PULSE_DURATION_MS = 1_450
 private const val ERROR_PULSE_DURATION_MS = 720
-private const val SCREEN_HORIZONTAL_PADDING_DP = 16
-private const val SCREEN_TOP_PADDING_DP = 12
 private const val DOSING_PRO_2_MAX_WIDTH_DP = 360
 private const val DOSING_PRO_2_PUMP_HEAD_MAX_SIZE_DP = 104
 private const val DOSING_PRO_4_MAX_WIDTH_DP = 760
@@ -378,8 +334,6 @@ private const val DEVICE_DECK_INSET_DP = 9
 private const val PUMP_FRAME_INSET_DP = 7
 private const val PUMP_SPACING_DP = 8
 private const val PREVIEW_BACKGROUND_COLOR = 0xFF080A0D
-private val SCREEN_HORIZONTAL_PADDING = SCREEN_HORIZONTAL_PADDING_DP.dp
-private val SCREEN_TOP_PADDING = SCREEN_TOP_PADDING_DP.dp
 private val DOSING_PRO_2_MAX_WIDTH = DOSING_PRO_2_MAX_WIDTH_DP.dp
 private val DOSING_PRO_2_PUMP_HEAD_MAX_SIZE = DOSING_PRO_2_PUMP_HEAD_MAX_SIZE_DP.dp
 private val DOSING_PRO_4_MAX_WIDTH = DOSING_PRO_4_MAX_WIDTH_DP.dp
@@ -401,25 +355,27 @@ private val PUMP_SPACING = PUMP_SPACING_DP.dp
 @Preview(name = "Dosing Pro 4", showBackground = true, backgroundColor = PREVIEW_BACKGROUND_COLOR)
 @Composable
 private fun DosingPro4Preview() {
-    DeviceDosingPumpScreen(
-        pumpCount = DOSING_PRO_4_PUMP_COUNT,
-        pumpStates = listOf(
-            DosingPumpVisualState.IDLE,
-            DosingPumpVisualState.RUNNING,
-            DosingPumpVisualState.ERROR,
-            DosingPumpVisualState.IDLE
-        )
+    DosingPumpDevice(
+        pumpHeads = listOf(
+            DosingPumpHeadUiState(1, DosingPumpVisualState.IDLE),
+            DosingPumpHeadUiState(2, DosingPumpVisualState.RUNNING),
+            DosingPumpHeadUiState(3, DosingPumpVisualState.ERROR),
+            DosingPumpHeadUiState(4, DosingPumpVisualState.IDLE)
+        ),
+        onPumpClick = {},
+        modifier = Modifier.width(DOSING_PRO_4_MAX_WIDTH)
     )
 }
 
 @Preview(name = "Dosing Pro 2", showBackground = true, backgroundColor = PREVIEW_BACKGROUND_COLOR)
 @Composable
 private fun DosingPro2Preview() {
-    DeviceDosingPumpScreen(
-        pumpCount = DOSING_PRO_2_PUMP_COUNT,
-        pumpStates = listOf(
-            DosingPumpVisualState.RUNNING,
-            DosingPumpVisualState.ERROR
-        )
+    DosingPumpDevice(
+        pumpHeads = listOf(
+            DosingPumpHeadUiState(1, DosingPumpVisualState.RUNNING),
+            DosingPumpHeadUiState(2, DosingPumpVisualState.ERROR)
+        ),
+        onPumpClick = {},
+        modifier = Modifier.width(DOSING_PRO_2_MAX_WIDTH)
     )
 }
