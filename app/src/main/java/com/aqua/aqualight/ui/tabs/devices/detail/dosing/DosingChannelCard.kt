@@ -1,4 +1,4 @@
-@file:Suppress("FunctionNaming")
+@file:Suppress("FunctionNaming", "MagicNumber", "TooManyFunctions")
 
 package com.aqua.aqualight.ui.tabs.devices.detail.dosing
 
