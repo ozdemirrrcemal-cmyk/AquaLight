@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="device_dosing_pump_state_idle">Hazır</string>
+    <string name="device_dosing_pump_state_selected">Seçili</string>
     <string name="device_dosing_pump_state_running">Çalışıyor</string>
     <string name="device_dosing_pump_state_error">Hata</string>
     <string name="device_dosing_pump_channel_content_description">Dozaj kanalı %1$d, %2$s</string>
@@ -27,4 +28,42 @@
     <string name="device_dosing_channel_dose_progress_value_format">%1$.2f ml</string>
     <string name="device_dosing_channel_dose_scale_value_format">%1$.2f</string>
     <string name="device_dosing_channel_card_content_description">Dozaj kanalı %1$d, %2$s, %3$s</string>
+
+    <string name="device_dosing_calibration_title">Kalibrasyon</string>
+    <string name="device_dosing_calibration_loading">Kalibrasyon hazırlanıyor…</string>
+    <string name="device_dosing_calibration_step_format">Adım %1$d / %2$d</string>
+    <string name="device_dosing_calibration_name_title">Dozaj sıvısını adlandırın</string>
+    <string name="device_dosing_calibration_name_description">Kalibrasyondan önce seçili kanal için anlaşılır bir sıvı adı belirleyin.</string>
+    <string name="device_dosing_calibration_prime_title">Dozaj hattını doldurun</string>
+    <string name="device_dosing_calibration_prime_description">Giriş hortumunu dozaj sıvısına yerleştirin ve sıvı, görünür hava boşluğu olmadan çıkışa ulaşana kadar doldurma kontrolünü basılı tutun.</string>
+    <string name="device_dosing_calibration_dose_title">Kalibrasyon dozunu çalıştırın</string>
+    <string name="device_dosing_calibration_dose_description">Çıkış hortumunu ölçüm silindirinin üzerine yerleştirin. AquaLight, seçili pompayı firmware tarafından belirlenen kalibrasyon süresi boyunca çalıştırır.</string>
+    <string name="device_dosing_calibration_measure_title">Ölçülen hacmi girin</string>
+    <string name="device_dosing_calibration_measure_description">Silindiri düz bir yüzeyde tutun, menisküsün alt noktasını okuyun ve ölçülen hacmi girin.</string>
+    <string name="device_dosing_calibration_verify_title">Yeni kalibrasyonu doğrulayın</string>
+    <string name="device_dosing_calibration_verify_description">Bir test hacmi seçin. AquaLight, yeni kalibrasyonu henüz kaydetmeden bekleyen kalibrasyon değeriyle test dozunu verir.</string>
+    <string name="device_dosing_calibration_confirm_title">Doğrulama sonucunu kontrol edin</string>
+    <string name="device_dosing_calibration_confirm_description">Ölçülen test hacmi hedefle eşleştiyse kalibrasyonu onaylayın. Eşleşmediyse yeniden kalibre edin.</string>
+    <string name="device_dosing_calibration_liquid_name_label">Dozaj sıvısı</string>
+    <string name="device_dosing_calibration_liquid_name_placeholder">Sıvı adı girin</string>
+    <string name="device_dosing_calibration_measured_volume_label">Ölçülen hacim</string>
+    <string name="device_dosing_calibration_verification_volume_label">Doğrulama dozu</string>
+    <string name="device_dosing_calibration_volume_placeholder">0.00</string>
+    <string name="device_dosing_calibration_ml_suffix">ml</string>
+    <string name="device_dosing_calibration_continue">Devam et</string>
+    <string name="device_dosing_calibration_hold_to_prime">Hattı doldurmak için basılı tutun</string>
+    <string name="device_dosing_calibration_priming_active">Hat dolduruluyor… durdurmak için bırakın</string>
+    <string name="device_dosing_calibration_start_dose">Kalibrasyon dozunu başlat</string>
+    <string name="device_dosing_calibration_dose_running">Kalibrasyon dozu veriliyor…</string>
+    <string name="device_dosing_calibration_calculate">Kalibrasyonu hesapla</string>
+    <string name="device_dosing_calibration_run_verification">Doğrulama dozunu çalıştır</string>
+    <string name="device_dosing_calibration_verification_running">Doğrulama dozu veriliyor…</string>
+    <string name="device_dosing_calibration_confirm_action">Kalibrasyon doğru</string>
+    <string name="device_dosing_calibration_recalibrate_action">Yeniden kalibre et</string>
+    <string name="device_dosing_calibration_error_unavailable">Bu kanal için kalibrasyon kullanılamıyor.</string>
+    <string name="device_dosing_calibration_error_connection">Cihaz kalibrasyon için hazırlanamadı. Bağlantıyı kontrol edip tekrar deneyin.</string>
+    <string name="device_dosing_calibration_error_name_required">Dozaj sıvısı için bir ad girin.</string>
+    <string name="device_dosing_calibration_error_command">Cihaz bu kalibrasyon işlemini tamamlayamadı. Tekrar deneyin.</string>
+    <string name="device_dosing_calibration_error_measurement">Cihazın desteklediği aralıkta bir ölçüm hacmi girin.</string>
+    <string name="device_dosing_calibration_error_verification_volume">Cihazın desteklediği aralıkta pozitif bir doğrulama hacmi girin.</string>
 </resources>
