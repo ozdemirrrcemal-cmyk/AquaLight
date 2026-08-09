@@ -1,7 +1,6 @@
 package com.aqua.aqualight.ui.tabs.devices.detail.dosing.calibration
 
 import androidx.compose.ui.geometry.Offset
-import androidx.compose.ui.geometry.Rect
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
@@ -278,7 +277,8 @@ internal fun DrawScope.drawFallingDrops(
         val startY = size.height * DROP_START_Y_RATIO
         val endY = size.height * DROP_END_Y_RATIO
         val y = startY + (endY - startY) * progress
-        val radius = size.minDimension * DROP_RADIUS_RATIO * (DROP_MIN_SCALE + progress * DROP_SCALE_RANGE)
+        val radius = size.minDimension * DROP_RADIUS_RATIO *
+            (DROP_MIN_SCALE + progress * DROP_SCALE_RANGE)
         drawCircle(
             color = colors.accent.copy(alpha = DROP_ALPHA),
             radius = radius,
@@ -287,42 +287,10 @@ internal fun DrawScope.drawFallingDrops(
     }
 }
 
-internal fun DrawScope.drawCalibrationSuccessSeal(colors: DosingCalibrationArtColors) {
-    val center = Offset(size.width * SUCCESS_CENTER_X_RATIO, size.height * SUCCESS_CENTER_Y_RATIO)
-    val radius = size.minDimension * SUCCESS_RADIUS_RATIO
-    val strokeWidth = size.minDimension * SUCCESS_STROKE_RATIO
-    drawCircle(
-        color = colors.accent.copy(alpha = SUCCESS_GLOW_ALPHA),
-        radius = radius * SUCCESS_GLOW_RADIUS_RATIO,
-        center = center
-    )
-    drawCircle(
-        color = colors.accent.copy(alpha = SUCCESS_RING_ALPHA),
-        radius = radius,
-        center = center,
-        style = Stroke(width = strokeWidth)
-    )
-    val checkPath = Path().apply {
-        moveTo(center.x - radius * SUCCESS_CHECK_LEFT_X_RATIO, center.y)
-        lineTo(
-            center.x - radius * SUCCESS_CHECK_MIDDLE_X_RATIO,
-            center.y + radius * SUCCESS_CHECK_MIDDLE_Y_RATIO
-        )
-        lineTo(
-            center.x + radius * SUCCESS_CHECK_RIGHT_X_RATIO,
-            center.y - radius * SUCCESS_CHECK_RIGHT_Y_RATIO
-        )
-    }
-    drawPath(
-        path = checkPath,
-        color = colors.accent,
-        style = Stroke(width = strokeWidth, cap = StrokeCap.Round)
-    )
-}
-
 internal fun calibrationVolumeFraction(volumeMl: Double?): Float {
     if (volumeMl == null || !volumeMl.isFinite() || volumeMl <= 0.0) return 0f
-    val visualScaleMl = ceil(volumeMl * VOLUME_SCALE_HEADROOM).coerceAtLeast(MIN_VISUAL_SCALE_ML)
+    val visualScaleMl = ceil(volumeMl * VOLUME_SCALE_HEADROOM)
+        .coerceAtLeast(MIN_VISUAL_SCALE_ML)
     return (volumeMl / visualScaleMl).toFloat().coerceIn(0f, 1f)
 }
 
@@ -420,17 +388,5 @@ private const val DROP_RADIUS_RATIO = 0.012f
 private const val DROP_MIN_SCALE = 0.72f
 private const val DROP_SCALE_RANGE = 0.28f
 private const val DROP_ALPHA = 0.92f
-private const val SUCCESS_CENTER_X_RATIO = 0.52f
-private const val SUCCESS_CENTER_Y_RATIO = 0.48f
-private const val SUCCESS_RADIUS_RATIO = 0.16f
-private const val SUCCESS_STROKE_RATIO = 0.018f
-private const val SUCCESS_GLOW_ALPHA = 0.10f
-private const val SUCCESS_GLOW_RADIUS_RATIO = 1.35f
-private const val SUCCESS_RING_ALPHA = 0.74f
-private const val SUCCESS_CHECK_LEFT_X_RATIO = 0.48f
-private const val SUCCESS_CHECK_MIDDLE_X_RATIO = 0.12f
-private const val SUCCESS_CHECK_MIDDLE_Y_RATIO = 0.34f
-private const val SUCCESS_CHECK_RIGHT_X_RATIO = 0.54f
-private const val SUCCESS_CHECK_RIGHT_Y_RATIO = 0.44f
 private const val VOLUME_SCALE_HEADROOM = 1.25
 private const val MIN_VISUAL_SCALE_ML = 1.0
