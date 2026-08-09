@@ -109,7 +109,7 @@ fun DosingPumpDevice(
 @Composable
 private fun DosingPumpDeck(
     pumpHeads: List<DosingPumpHeadUiState>,
-    onPumpClick: (Int) -> Unit
+    onPumpClick: ((Int) -> Unit)?
 ) {
     val isDosingPro2 = pumpHeads.size == DOSING_PRO_2_PUMP_COUNT
 
