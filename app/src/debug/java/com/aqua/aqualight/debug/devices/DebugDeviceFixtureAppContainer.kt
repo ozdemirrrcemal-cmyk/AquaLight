@@ -124,8 +124,10 @@ private class DebugDeviceFixtureViewModelFactory(
     private fun createDosingViewModel(graph: OwnerDependencyGraph): DeviceDosingRootViewModel =
         DeviceDosingRootViewModel(
             operations = rootOperations(graph),
-            channelNavigationOperations =
-                DefaultDeviceDosingChannelNavigationOperations(graph.devicesRepository)
+            channelNavigationOperations = DebugFixtureDosingChannelNavigationOperations(
+                delegate = DefaultDeviceDosingChannelNavigationOperations(graph.devicesRepository),
+                fixtures = fixtures
+            )
         )
 
     private fun rootOperations(graph: OwnerDependencyGraph) = DebugFixtureDeviceRootOperations(
