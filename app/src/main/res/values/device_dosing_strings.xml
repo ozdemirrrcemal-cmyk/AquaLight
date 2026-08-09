@@ -11,6 +11,8 @@
     <string name="device_dosing_channel_status_dosing">Dosing</string>
     <string name="device_dosing_channel_status_attention">Needs attention</string>
     <string name="device_dosing_channel_not_configured">Not configured</string>
+    <string name="device_dosing_channel_empty_title">Set up dosing</string>
+    <string name="device_dosing_channel_empty_description">Set a daily dose and schedule before using this channel.</string>
     <string name="device_dosing_channel_daily_dose_format">%1$.2f ml</string>
     <string name="device_dosing_channel_every_day">Every day</string>
     <string name="device_dosing_channel_no_days_selected">No days selected</string>

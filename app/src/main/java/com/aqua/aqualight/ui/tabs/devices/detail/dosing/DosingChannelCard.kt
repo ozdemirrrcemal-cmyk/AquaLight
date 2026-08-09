@@ -61,16 +61,23 @@ internal fun DosingChannelCard(
                 typography = typography,
                 statusLabel = statusLabel
             )
-            DosingChannelSummary(
-                state = state,
-                colors = colors,
-                typography = typography
-            )
-            DosingDoseProgressBar(
-                state = state.doseProgress,
-                colors = colors,
-                typography = typography
-            )
+            if (state.visualState == DosingChannelVisualState.NOT_CONFIGURED) {
+                DosingChannelEmptyState(
+                    colors = colors,
+                    typography = typography
+                )
+            } else {
+                DosingChannelSummary(
+                    state = state,
+                    colors = colors,
+                    typography = typography
+                )
+                DosingDoseProgressBar(
+                    state = state.doseProgress,
+                    colors = colors,
+                    typography = typography
+                )
+            }
         }
     }
 }
@@ -168,6 +175,60 @@ private fun DosingStatusPill(
 }
 
 @Composable
+private fun DosingChannelEmptyState(
+    colors: AquaDeviceCardColors,
+    typography: AquaDeviceCardTypography
+) {
+    val iconShape = RoundedCornerShape(EMPTY_STATE_ICON_CORNER_RADIUS)
+
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(vertical = EMPTY_STATE_VERTICAL_PADDING),
+        horizontalArrangement = Arrangement.spacedBy(EMPTY_STATE_CONTENT_GAP),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        Box(
+            modifier = Modifier
+                .size(EMPTY_STATE_ICON_CONTAINER_SIZE)
+                .clip(iconShape)
+                .background(colors.mediaSurface)
+                .background(colors.accent.copy(alpha = EMPTY_STATE_ICON_BACKGROUND_ALPHA))
+                .border(
+                    width = AquaDeviceCardGeometry.outlineWidth,
+                    color = colors.accent.copy(alpha = EMPTY_STATE_ICON_OUTLINE_ALPHA),
+                    shape = iconShape
+                ),
+            contentAlignment = Alignment.Center
+        ) {
+            DosingEmptyStateGlyph(
+                tint = colors.accent,
+                badgeSurface = colors.mediaSurface,
+                modifier = Modifier.size(EMPTY_STATE_GLYPH_SIZE)
+            )
+        }
+
+        Column(
+            modifier = Modifier.weight(1f),
+            verticalArrangement = Arrangement.spacedBy(EMPTY_STATE_TEXT_GAP)
+        ) {
+            BasicText(
+                text = stringResource(R.string.device_dosing_channel_empty_title),
+                style = typography.body.copy(color = colors.primaryText),
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis
+            )
+            BasicText(
+                text = stringResource(R.string.device_dosing_channel_empty_description),
+                style = typography.caption.copy(color = colors.secondaryText),
+                maxLines = EMPTY_STATE_DESCRIPTION_MAX_LINES,
+                overflow = TextOverflow.Ellipsis
+            )
+        }
+    }
+}
+
+@Composable
 private fun DosingChannelSummary(
     state: DosingChannelCardUiState,
     colors: AquaDeviceCardColors,
@@ -257,11 +318,26 @@ private fun DosingChannelVisualState.statusColor(colors: AquaDeviceCardColors): 
 private const val DAY_SEPARATOR = " · "
 private const val STATUS_BACKGROUND_ALPHA = 0.10f
 private const val STATUS_OUTLINE_ALPHA = 0.38f
+private const val EMPTY_STATE_ICON_BACKGROUND_ALPHA = 0.08f
+private const val EMPTY_STATE_ICON_OUTLINE_ALPHA = 0.28f
+private const val EMPTY_STATE_DESCRIPTION_MAX_LINES = 2
 private const val CHANNEL_CARD_MIN_HEIGHT_DP = 104
 private const val SUMMARY_GAP_DP = 18
 private const val SUMMARY_ICON_GAP_DP = 6
 private const val SUMMARY_ICON_SIZE_DP = 16
+private const val EMPTY_STATE_VERTICAL_PADDING_DP = 4
+private const val EMPTY_STATE_CONTENT_GAP_DP = 12
+private const val EMPTY_STATE_TEXT_GAP_DP = 2
+private const val EMPTY_STATE_ICON_CONTAINER_SIZE_DP = 44
+private const val EMPTY_STATE_ICON_CORNER_RADIUS_DP = 14
+private const val EMPTY_STATE_GLYPH_SIZE_DP = 28
 private val CHANNEL_CARD_MIN_HEIGHT = CHANNEL_CARD_MIN_HEIGHT_DP.dp
 private val SUMMARY_GAP = SUMMARY_GAP_DP.dp
 private val SUMMARY_ICON_GAP = SUMMARY_ICON_GAP_DP.dp
 private val SUMMARY_ICON_SIZE = SUMMARY_ICON_SIZE_DP.dp
+private val EMPTY_STATE_VERTICAL_PADDING = EMPTY_STATE_VERTICAL_PADDING_DP.dp
+private val EMPTY_STATE_CONTENT_GAP = EMPTY_STATE_CONTENT_GAP_DP.dp
+private val EMPTY_STATE_TEXT_GAP = EMPTY_STATE_TEXT_GAP_DP.dp
+private val EMPTY_STATE_ICON_CONTAINER_SIZE = EMPTY_STATE_ICON_CONTAINER_SIZE_DP.dp
+private val EMPTY_STATE_ICON_CORNER_RADIUS = EMPTY_STATE_ICON_CORNER_RADIUS_DP.dp
+private val EMPTY_STATE_GLYPH_SIZE = EMPTY_STATE_GLYPH_SIZE_DP.dp

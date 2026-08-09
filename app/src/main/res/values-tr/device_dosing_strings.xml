@@ -11,6 +11,8 @@
     <string name="device_dosing_channel_status_dosing">Dozaj yapılıyor</string>
     <string name="device_dosing_channel_status_attention">Kontrol gerekli</string>
     <string name="device_dosing_channel_not_configured">Yapılandırılmadı</string>
+    <string name="device_dosing_channel_empty_title">Dozajı yapılandır</string>
+    <string name="device_dosing_channel_empty_description">Bu kanalı kullanmadan önce günlük doz ve program belirleyin.</string>
     <string name="device_dosing_channel_daily_dose_format">%1$.2f ml</string>
     <string name="device_dosing_channel_every_day">Her gün</string>
     <string name="device_dosing_channel_no_days_selected">Gün seçilmedi</string>

@@ -47,7 +47,7 @@ enum class DosingWeekday(
 
 @Immutable
 data class DosingScheduleDaysUiState(
-    val selectedDays: List<DosingWeekday> = ALL_DOSING_WEEKDAYS
+    val selectedDays: List<DosingWeekday> = emptyList()
 ) {
     init {
         require(selectedDays.distinct().size == selectedDays.size) {

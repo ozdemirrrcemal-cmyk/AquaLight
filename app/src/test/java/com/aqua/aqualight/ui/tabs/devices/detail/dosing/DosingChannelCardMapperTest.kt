@@ -4,13 +4,14 @@ import com.aqua.aqualight.application.devices.DeviceChannelWireKey
 import com.aqua.aqualight.application.devices.DeviceDosingChannelSlot
 import com.aqua.aqualight.application.devices.DeviceSlotIndex
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
 import org.junit.Test
 
 class DosingChannelCardMapperTest {
 
     @Test
-    fun `initial card identity and empty dosing summary come from exact catalog slot`() {
+    fun `initial card identity preserves an unconfigured presentation without schedule placeholders`() {
         val slot = DeviceDosingChannelSlot(
             index = DeviceSlotIndex(1),
             wireKey = DeviceChannelWireKey("channel2"),
@@ -25,8 +26,8 @@ class DosingChannelCardMapperTest {
         assertEquals("channel2", state.wireKey)
         assertEquals("Channel 2", state.displayName)
         assertEquals(DosingChannelVisualState.NOT_CONFIGURED, state.visualState)
-        assertTrue(state.scheduleDays.isEveryDay)
-        assertEquals(7, state.scheduleDays.selectedDays.size)
+        assertFalse(state.scheduleDays.isEveryDay)
+        assertTrue(state.scheduleDays.selectedDays.isEmpty())
         assertEquals(0.0, state.doseProgress.dailyDoseMl, 0.0)
         assertEquals(0.0, state.doseProgress.deliveredTodayMl, 0.0)
         assertTrue(state.doseProgress.doseMilestonesMl.isEmpty())

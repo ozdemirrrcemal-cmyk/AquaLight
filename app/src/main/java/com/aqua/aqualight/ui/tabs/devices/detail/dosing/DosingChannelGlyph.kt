@@ -22,9 +22,23 @@ internal fun DosingSummaryGlyph(
 ) {
     Canvas(modifier = modifier) {
         when (icon) {
-            DosingSummaryIcon.DOSE -> drawProfessionalDoseGlyph(tint)
+            DosingSummaryIcon.DOSE -> drawDoseGlyph(tint)
             DosingSummaryIcon.DAYS -> drawScheduleDaysGlyph(tint)
         }
+    }
+}
+
+@Composable
+internal fun DosingEmptyStateGlyph(
+    tint: Color,
+    badgeSurface: Color,
+    modifier: Modifier = Modifier
+) {
+    Canvas(modifier = modifier) {
+        drawEmptyStateDoseGlyph(
+            color = tint,
+            badgeSurface = badgeSurface
+        )
     }
 }
 
@@ -33,38 +47,9 @@ internal enum class DosingSummaryIcon {
     DAYS
 }
 
-private fun DrawScope.drawProfessionalDoseGlyph(color: Color) {
-    val path = Path().apply {
-        moveTo(size.width * DOSE_CENTER_X, size.height * DOSE_TOP_Y)
-        cubicTo(
-            size.width * DOSE_RIGHT_UPPER_X,
-            size.height * DOSE_UPPER_CONTROL_Y,
-            size.width * DOSE_RIGHT_X,
-            size.height * DOSE_MIDDLE_CONTROL_Y,
-            size.width * DOSE_RIGHT_X,
-            size.height * DOSE_BODY_Y
-        )
-        cubicTo(
-            size.width * DOSE_RIGHT_X,
-            size.height * DOSE_BOTTOM_CONTROL_Y,
-            size.width * DOSE_LEFT_X,
-            size.height * DOSE_BOTTOM_CONTROL_Y,
-            size.width * DOSE_LEFT_X,
-            size.height * DOSE_BODY_Y
-        )
-        cubicTo(
-            size.width * DOSE_LEFT_X,
-            size.height * DOSE_MIDDLE_CONTROL_Y,
-            size.width * DOSE_LEFT_UPPER_X,
-            size.height * DOSE_UPPER_CONTROL_Y,
-            size.width * DOSE_CENTER_X,
-            size.height * DOSE_TOP_Y
-        )
-        close()
-    }
-
+private fun DrawScope.drawDoseGlyph(color: Color) {
     drawPath(
-        path = path,
+        path = dosingDropPath(),
         color = color,
         style = Stroke(
             width = DOSE_GLYPH_STROKE.toPx(),
@@ -79,6 +64,75 @@ private fun DrawScope.drawProfessionalDoseGlyph(color: Color) {
             x = size.width * DOSE_HIGHLIGHT_X,
             y = size.height * DOSE_HIGHLIGHT_Y
         )
+    )
+}
+
+private fun DrawScope.dosingDropPath(): Path = Path().apply {
+    moveTo(size.width * DOSE_CENTER_X, size.height * DOSE_TOP_Y)
+    cubicTo(
+        size.width * DOSE_RIGHT_UPPER_X,
+        size.height * DOSE_UPPER_CONTROL_Y,
+        size.width * DOSE_RIGHT_X,
+        size.height * DOSE_MIDDLE_CONTROL_Y,
+        size.width * DOSE_RIGHT_X,
+        size.height * DOSE_BODY_Y
+    )
+    cubicTo(
+        size.width * DOSE_RIGHT_X,
+        size.height * DOSE_BOTTOM_CONTROL_Y,
+        size.width * DOSE_LEFT_X,
+        size.height * DOSE_BOTTOM_CONTROL_Y,
+        size.width * DOSE_LEFT_X,
+        size.height * DOSE_BODY_Y
+    )
+    cubicTo(
+        size.width * DOSE_LEFT_X,
+        size.height * DOSE_MIDDLE_CONTROL_Y,
+        size.width * DOSE_LEFT_UPPER_X,
+        size.height * DOSE_UPPER_CONTROL_Y,
+        size.width * DOSE_CENTER_X,
+        size.height * DOSE_TOP_Y
+    )
+    close()
+}
+
+private fun DrawScope.drawEmptyStateDoseGlyph(
+    color: Color,
+    badgeSurface: Color
+) {
+    drawDoseGlyph(color)
+
+    val badgeCenter = Offset(
+        x = size.width * EMPTY_BADGE_CENTER_X,
+        y = size.height * EMPTY_BADGE_CENTER_Y
+    )
+    val badgeRadius = size.minDimension * EMPTY_BADGE_RADIUS
+    val plusArm = size.minDimension * EMPTY_BADGE_PLUS_ARM
+
+    drawCircle(
+        color = badgeSurface,
+        radius = badgeRadius,
+        center = badgeCenter
+    )
+    drawCircle(
+        color = color.copy(alpha = EMPTY_BADGE_OUTLINE_ALPHA),
+        radius = badgeRadius,
+        center = badgeCenter,
+        style = Stroke(width = EMPTY_BADGE_OUTLINE_WIDTH.toPx())
+    )
+    drawLine(
+        color = color,
+        start = Offset(badgeCenter.x - plusArm, badgeCenter.y),
+        end = Offset(badgeCenter.x + plusArm, badgeCenter.y),
+        strokeWidth = EMPTY_BADGE_PLUS_WIDTH.toPx(),
+        cap = StrokeCap.Round
+    )
+    drawLine(
+        color = color,
+        start = Offset(badgeCenter.x, badgeCenter.y - plusArm),
+        end = Offset(badgeCenter.x, badgeCenter.y + plusArm),
+        strokeWidth = EMPTY_BADGE_PLUS_WIDTH.toPx(),
+        cap = StrokeCap.Round
     )
 }
 
@@ -135,6 +189,11 @@ private const val DOSE_HIGHLIGHT_ALPHA = 0.72f
 private const val DOSE_HIGHLIGHT_RADIUS = 0.065f
 private const val DOSE_HIGHLIGHT_X = 0.39f
 private const val DOSE_HIGHLIGHT_Y = 0.61f
+private const val EMPTY_BADGE_CENTER_X = 0.73f
+private const val EMPTY_BADGE_CENTER_Y = 0.72f
+private const val EMPTY_BADGE_RADIUS = 0.20f
+private const val EMPTY_BADGE_PLUS_ARM = 0.075f
+private const val EMPTY_BADGE_OUTLINE_ALPHA = 0.70f
 private const val SCHEDULE_BODY_TOP_Y = 0.18f
 private const val SCHEDULE_BODY_LEFT_X = 0.10f
 private const val SCHEDULE_BODY_WIDTH = 0.80f
@@ -149,6 +208,8 @@ private const val SCHEDULE_DOT_LEFT_X = 0.30f
 private const val SCHEDULE_DOT_CENTER_X = 0.50f
 private const val SCHEDULE_DOT_RIGHT_X = 0.70f
 private const val DOSE_GLYPH_STROKE_DP = 1.45f
+private const val EMPTY_BADGE_OUTLINE_WIDTH_DP = 1.10f
+private const val EMPTY_BADGE_PLUS_WIDTH_DP = 1.55f
 private const val SCHEDULE_GLYPH_STROKE_DP = 1.35f
 private const val SCHEDULE_CORNER_RADIUS_DP = 2.5f
 private const val SCHEDULE_DOT_RADIUS_DP = 1.1f
@@ -159,6 +220,8 @@ private val SCHEDULE_DOT_X = listOf(
     SCHEDULE_DOT_RIGHT_X
 )
 private val DOSE_GLYPH_STROKE = DOSE_GLYPH_STROKE_DP.dp
+private val EMPTY_BADGE_OUTLINE_WIDTH = EMPTY_BADGE_OUTLINE_WIDTH_DP.dp
+private val EMPTY_BADGE_PLUS_WIDTH = EMPTY_BADGE_PLUS_WIDTH_DP.dp
 private val SCHEDULE_GLYPH_STROKE = SCHEDULE_GLYPH_STROKE_DP.dp
 private val SCHEDULE_CORNER_RADIUS = SCHEDULE_CORNER_RADIUS_DP.dp
 private val SCHEDULE_DOT_RADIUS = SCHEDULE_DOT_RADIUS_DP.dp

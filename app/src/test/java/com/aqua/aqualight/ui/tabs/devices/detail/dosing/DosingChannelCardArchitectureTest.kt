@@ -49,7 +49,7 @@ class DosingChannelCardArchitectureTest {
     }
 
     @Test
-    fun `main card summary is daily dose and selected days only`() {
+    fun `configured card summary is daily dose and selected days only`() {
         val card = source(
             "app/src/main/java/com/aqua/aqualight/ui/tabs/devices/detail/dosing/" +
                 "DosingChannelCard.kt"
@@ -66,6 +66,52 @@ class DosingChannelCardArchitectureTest {
         assertFalse(models.contains("DosingCalibrationUiState"))
         assertFalse(models.contains("DosingSetupUiState"))
         assertFalse(models.contains("SETUP_REQUIRED"))
+    }
+
+    @Test
+    fun `unconfigured card uses an empty state while configured progress remains available`() {
+        val card = source(
+            "app/src/main/java/com/aqua/aqualight/ui/tabs/devices/detail/dosing/" +
+                "DosingChannelCard.kt"
+        )
+
+        assertTrue(card.contains("state.visualState == DosingChannelVisualState.NOT_CONFIGURED"))
+        assertTrue(card.contains("DosingChannelEmptyState("))
+        assertTrue(card.contains("device_dosing_channel_empty_title"))
+        assertTrue(card.contains("device_dosing_channel_empty_description"))
+        assertTrue(card.contains("DosingDoseProgressBar("))
+        assertFalse(card.contains("0.00 ml"))
+    }
+
+    @Test
+    fun `empty state strings are owned only by dosing string resources`() {
+        val defaultDosingStrings = source("app/src/main/res/values/device_dosing_strings.xml")
+        val turkishDosingStrings = source("app/src/main/res/values-tr/device_dosing_strings.xml")
+
+        EMPTY_STATE_STRING_NAMES.forEach { name ->
+            val declaration = "name=\"$name\""
+            assertTrue(defaultDosingStrings.contains(declaration))
+            assertTrue(turkishDosingStrings.contains(declaration))
+        }
+
+        val misplacedFiles = File(repositoryRoot, "app/src/main/res")
+            .walkTopDown()
+            .filter { file ->
+                file.isFile &&
+                    file.extension == "xml" &&
+                    file.name != DOSING_STRINGS_FILE_NAME
+            }
+            .filter { file ->
+                val content = file.readText()
+                EMPTY_STATE_STRING_NAMES.any { name -> content.contains("name=\"$name\"") }
+            }
+            .map(File::getPath)
+            .toList()
+
+        assertTrue(
+            "Dosing empty-state strings must not leak into other resource files: $misplacedFiles",
+            misplacedFiles.isEmpty()
+        )
     }
 
     @Test
@@ -144,7 +190,12 @@ class DosingChannelCardArchitectureTest {
             "app/src/main/java/com/aqua/aqualight/ui/tabs/devices/detail/dosing/"
         const val DEVICE_CARD_SOURCE_ROOT =
             "app/src/main/java/com/aqua/aqualight/ui/common/devicecard/"
+        const val DOSING_STRINGS_FILE_NAME = "device_dosing_strings.xml"
 
+        val EMPTY_STATE_STRING_NAMES = listOf(
+            "device_dosing_channel_empty_title",
+            "device_dosing_channel_empty_description"
+        )
         val FORBIDDEN_RUNTIME_TYPES = listOf(
             "DeviceDosingChannelStatus",
             "DeviceDosingStatus",
