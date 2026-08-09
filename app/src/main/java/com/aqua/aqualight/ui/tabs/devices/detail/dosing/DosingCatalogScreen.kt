@@ -1,4 +1,4 @@
-@file:Suppress("FunctionNaming", "MagicNumber")
+@file:Suppress("FunctionNaming", "MagicNumber", "UnusedPrivateMember")
 
 package com.aqua.aqualight.ui.tabs.devices.detail.dosing
 
