@@ -5,6 +5,12 @@ import androidx.compose.runtime.Immutable
 import com.aqua.aqualight.R
 import com.aqua.aqualight.application.devices.DeviceDosingChannelSlot
 
+/**
+ * Dosing-only presentation state.
+ *
+ * Catalog identity and structural validity are owned by the application catalog before this state
+ * is created. The UI keeps only the values required to render the channel card.
+ */
 @Immutable
 data class DosingChannelCardUiState(
     val slotId: String,
@@ -14,14 +20,7 @@ data class DosingChannelCardUiState(
     val visualState: DosingChannelVisualState = DosingChannelVisualState.NOT_CONFIGURED,
     val scheduleDays: DosingScheduleDaysUiState = DosingScheduleDaysUiState(),
     val doseProgress: DosingDoseProgressUiState = DosingDoseProgressUiState()
-) {
-    init {
-        require(slotId.isNotBlank()) { "Dosing channel card requires a stable catalog slot id." }
-        require(channelNumber > 0) { "Dosing channel number must be positive." }
-        require(wireKey.isNotBlank()) { "Dosing channel card requires a catalog wire key." }
-        require(displayName.isNotBlank()) { "Dosing channel display name must not be blank." }
-    }
-}
+)
 
 enum class DosingChannelVisualState(
     @StringRes val labelRes: Int
@@ -45,27 +44,24 @@ enum class DosingWeekday(
     SUNDAY(R.string.device_dosing_weekday_sun)
 }
 
+/** Presentation-only schedule selection. Canonical schedule validity belongs upstream. */
 @Immutable
 data class DosingScheduleDaysUiState(
     val selectedDays: List<DosingWeekday> = emptyList()
 ) {
-    init {
-        require(selectedDays.distinct().size == selectedDays.size) {
-            "Dosing schedule days must not contain duplicates."
-        }
-    }
-
     val isEveryDay: Boolean
         get() = selectedDays.size == ALL_DOSING_WEEKDAYS.size &&
             selectedDays.containsAll(ALL_DOSING_WEEKDAYS)
 }
 
 /**
- * Volume-based daily dosing progress.
+ * Volume-based daily dosing progress used only for presentation.
  *
  * [dailyDoseMl] is the total daily dose configured by the user. [deliveredTodayMl] is the amount
  * actually delivered today. Optional [doseMilestonesMl] are cumulative volume boundaries supplied
- * by the future channel-configuration mapper. The progress contract contains no wall-clock axis.
+ * by the channel-configuration mapper. Validation and canonicalization of dosing values belongs to
+ * the application/domain boundary before values are mapped into this UI state. The progress
+ * contract contains no wall-clock axis.
  */
 @Immutable
 data class DosingDoseProgressUiState(
@@ -73,18 +69,7 @@ data class DosingDoseProgressUiState(
     val deliveredTodayMl: Double = 0.0,
     val doseMilestonesMl: List<Double> = emptyList(),
     val visualState: DosingDoseProgressVisualState = DosingDoseProgressVisualState.EMPTY
-) {
-    init {
-        require(dailyDoseMl >= 0.0) { "Daily dosing amount must not be negative." }
-        require(deliveredTodayMl >= 0.0) { "Delivered dosing amount must not be negative." }
-        require(doseMilestonesMl.all { it >= 0.0 && it <= dailyDoseMl }) {
-            "Dose milestones must stay inside the configured daily dose."
-        }
-        require(doseMilestonesMl.zipWithNext().all { (previous, next) -> previous <= next }) {
-            "Dose milestones must be ordered by cumulative volume."
-        }
-    }
-}
+)
 
 enum class DosingDoseProgressVisualState {
     EMPTY,
