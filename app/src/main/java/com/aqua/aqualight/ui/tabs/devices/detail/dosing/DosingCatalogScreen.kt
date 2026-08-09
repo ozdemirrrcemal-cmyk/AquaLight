@@ -1,4 +1,4 @@
-@file:Suppress("FunctionNaming")
+@file:Suppress("FunctionNaming", "MagicNumber")
 
 package com.aqua.aqualight.ui.tabs.devices.detail.dosing
 
@@ -23,7 +23,7 @@ import androidx.compose.ui.unit.dp
  * Final Dose Pro root composition.
  *
  * The physical device shell and every channel card are rendered from one exact catalog-derived
- * pump/channel count. Unsupported or unresolved counts fail closed instead of guessing a model.
+ * pump/channel count. Unsupported or inconsistent identities fail closed instead of guessing.
  */
 @Composable
 internal fun DeviceDosingCatalogScreen(
@@ -38,6 +38,7 @@ internal fun DeviceDosingCatalogScreen(
         Box(modifier = modifier.fillMaxSize())
         return
     }
+    val exactChannels = exactDosingChannelsOrEmpty(exactPumpCount, channels)
 
     val pumpHeads = List(exactPumpCount) { index ->
         DosingPumpHeadUiState(
@@ -76,14 +77,14 @@ internal fun DeviceDosingCatalogScreen(
             }
         }
 
-        if (channels.isNotEmpty()) {
+        if (exactChannels.isNotEmpty()) {
             item(key = DEVICE_TO_CARDS_SPACER_KEY) {
                 Spacer(modifier = Modifier.height(DEVICE_TO_CARDS_EXTRA_SPACING))
             }
         }
 
         items(
-            items = channels,
+            items = exactChannels,
             key = DosingChannelCardUiState::slotId
         ) { channel ->
             DosingChannelCard(
@@ -98,6 +99,22 @@ internal fun exactDosingPumpCountOrNull(pumpCount: Int): Int? = when (pumpCount)
     DOSING_PRO_2_PUMP_COUNT -> DOSING_PRO_2_PUMP_COUNT
     DOSING_PRO_4_PUMP_COUNT -> DOSING_PRO_4_PUMP_COUNT
     else -> null
+}
+
+internal fun exactDosingChannelsOrEmpty(
+    pumpCount: Int,
+    channels: List<DosingChannelCardUiState>
+): List<DosingChannelCardUiState> {
+    val expectedPositions = (1..pumpCount).toList()
+    val positions = channels.map(DosingChannelCardUiState::channelNumber)
+    val uniqueSlotIds = channels.map(DosingChannelCardUiState::slotId).toSet().size == channels.size
+    val uniqueWireKeys = channels.map(DosingChannelCardUiState::wireKey).toSet().size == channels.size
+    return channels.takeIf {
+        channels.size == pumpCount &&
+            positions == expectedPositions &&
+            uniqueSlotIds &&
+            uniqueWireKeys
+    }.orEmpty()
 }
 
 private const val DEVICE_ITEM_KEY = "dosing-device"
