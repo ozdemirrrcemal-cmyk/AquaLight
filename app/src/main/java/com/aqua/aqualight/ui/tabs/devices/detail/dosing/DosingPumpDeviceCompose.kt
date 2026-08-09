@@ -38,7 +38,6 @@ import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.semantics.stateDescription
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.aqua.aqualight.R
 
@@ -333,7 +332,6 @@ private const val DEVICE_INNER_INSET_DP = 7
 private const val DEVICE_DECK_INSET_DP = 9
 private const val PUMP_FRAME_INSET_DP = 7
 private const val PUMP_SPACING_DP = 8
-private const val PREVIEW_BACKGROUND_COLOR = 0xFF080A0D
 private val DOSING_PRO_2_MAX_WIDTH = DOSING_PRO_2_MAX_WIDTH_DP.dp
 private val DOSING_PRO_2_PUMP_HEAD_MAX_SIZE = DOSING_PRO_2_PUMP_HEAD_MAX_SIZE_DP.dp
 private val DOSING_PRO_4_MAX_WIDTH = DOSING_PRO_4_MAX_WIDTH_DP.dp
@@ -352,30 +350,3 @@ private val DEVICE_DECK_INSET = DEVICE_DECK_INSET_DP.dp
 private val PUMP_FRAME_INSET = PUMP_FRAME_INSET_DP.dp
 private val PUMP_SPACING = PUMP_SPACING_DP.dp
 
-@Preview(name = "Dosing Pro 4", showBackground = true, backgroundColor = PREVIEW_BACKGROUND_COLOR)
-@Composable
-private fun DosingPro4Preview() {
-    DosingPumpDevice(
-        pumpHeads = listOf(
-            DosingPumpHeadUiState(1, DosingPumpVisualState.IDLE),
-            DosingPumpHeadUiState(2, DosingPumpVisualState.RUNNING),
-            DosingPumpHeadUiState(3, DosingPumpVisualState.ERROR),
-            DosingPumpHeadUiState(4, DosingPumpVisualState.IDLE)
-        ),
-        onPumpClick = {},
-        modifier = Modifier.width(DOSING_PRO_4_MAX_WIDTH)
-    )
-}
-
-@Preview(name = "Dosing Pro 2", showBackground = true, backgroundColor = PREVIEW_BACKGROUND_COLOR)
-@Composable
-private fun DosingPro2Preview() {
-    DosingPumpDevice(
-        pumpHeads = listOf(
-            DosingPumpHeadUiState(1, DosingPumpVisualState.RUNNING),
-            DosingPumpHeadUiState(2, DosingPumpVisualState.ERROR)
-        ),
-        onPumpClick = {},
-        modifier = Modifier.width(DOSING_PRO_2_MAX_WIDTH)
-    )
-}
