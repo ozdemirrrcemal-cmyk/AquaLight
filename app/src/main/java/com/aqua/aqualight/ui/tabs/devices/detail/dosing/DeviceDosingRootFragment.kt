@@ -18,6 +18,7 @@ import com.aqua.aqualight.databinding.FragmentDeviceDosingRootBinding
 import com.aqua.aqualight.ui.common.header.AquaHeaderAction
 import com.aqua.aqualight.ui.common.header.AquaHeaderConfig
 import com.aqua.aqualight.ui.common.header.setupAquaHeader
+import com.aqua.aqualight.ui.tabs.devices.detail.dosing.channel.detail.DeviceDosingChannelDetailFragmentArgs
 import kotlinx.coroutines.launch
 
 class DeviceDosingRootFragment : Fragment(R.layout.fragment_device_dosing_root) {
@@ -81,11 +82,11 @@ class DeviceDosingRootFragment : Fragment(R.layout.fragment_device_dosing_root) 
         val navController = findNavController()
         if (navController.currentDestination?.id != R.id.deviceDosingRootFragment) return
         navController.navigate(
-            DeviceDosingRootFragmentDirections
-                .actionDeviceDosingRootFragmentToDeviceDosingChannelDetailFragment(
-                    deviceUid = args.deviceUid,
-                    slotId = slotId
-                )
+            R.id.action_deviceDosingRootFragment_to_deviceDosingChannelDetailFragment,
+            DeviceDosingChannelDetailFragmentArgs(
+                deviceUid = args.deviceUid,
+                slotId = slotId
+            ).toBundle()
         )
     }
 
