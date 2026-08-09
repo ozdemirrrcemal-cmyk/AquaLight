@@ -41,13 +41,12 @@
     <string name="device_dosing_calibration_measure_title">Enter the measured volume</string>
     <string name="device_dosing_calibration_measure_description">Keep the cylinder level and read the bottom of the meniscus, then enter the measured volume.</string>
     <string name="device_dosing_calibration_verify_title">Verify the new calibration</string>
-    <string name="device_dosing_calibration_verify_description">Choose a test volume. AquaLight will dose it with the pending calibration without saving the new calibration yet.</string>
+    <string name="device_dosing_calibration_verify_description">AquaLight will dose the fixed verification target using the pending calibration without saving it yet.</string>
     <string name="device_dosing_calibration_confirm_title">Check the verification result</string>
-    <string name="device_dosing_calibration_confirm_description">If the measured test volume matched the target, confirm the calibration. Otherwise run calibration again.</string>
+    <string name="device_dosing_calibration_confirm_description">Compare the liquid level in the measuring cylinder with the target line. Confirm only if it matches; otherwise calibrate again.</string>
     <string name="device_dosing_calibration_liquid_name_label">Dosing liquid</string>
     <string name="device_dosing_calibration_liquid_name_placeholder">Enter a liquid name</string>
     <string name="device_dosing_calibration_measured_volume_label">Measured volume</string>
-    <string name="device_dosing_calibration_verification_volume_label">Verification dose</string>
     <string name="device_dosing_calibration_volume_placeholder">0.00</string>
     <string name="device_dosing_calibration_ml_suffix">ml</string>
     <string name="device_dosing_calibration_continue">Continue</string>
@@ -56,8 +55,8 @@
     <string name="device_dosing_calibration_start_dose">Start calibration dose</string>
     <string name="device_dosing_calibration_dose_running">Calibration dose running…</string>
     <string name="device_dosing_calibration_calculate">Calculate calibration</string>
-    <string name="device_dosing_calibration_run_verification">Run verification dose</string>
-    <string name="device_dosing_calibration_verification_running">Verification dose running…</string>
+    <string name="device_dosing_calibration_run_verification">Dose %1$.0f ml</string>
+    <string name="device_dosing_calibration_verification_running">Dosing %1$.0f ml…</string>
     <string name="device_dosing_calibration_confirm_action">Calibration is accurate</string>
     <string name="device_dosing_calibration_recalibrate_action">Calibrate again</string>
     <string name="device_dosing_calibration_error_unavailable">Calibration is not available for this channel.</string>
@@ -65,5 +64,4 @@
     <string name="device_dosing_calibration_error_name_required">Enter a name for the dosing liquid.</string>
     <string name="device_dosing_calibration_error_command">The device could not complete this calibration action. Try again.</string>
     <string name="device_dosing_calibration_error_measurement">Enter a measured volume within the range supported by the device.</string>
-    <string name="device_dosing_calibration_error_verification_volume">Enter a positive verification volume within the range supported by the device.</string>
 </resources>

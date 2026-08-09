@@ -77,11 +77,14 @@ class DeviceDosingCalibrationViewModelTest {
         assertEquals(DosingCalibrationStep.VERIFY_DOSE, viewModel.uiState.value.step)
         assertEquals(3.25, operations.measuredMl, DOUBLE_TOLERANCE)
 
-        viewModel.dispatch(DosingCalibrationAction.VerificationVolumeChanged("4.00"))
         viewModel.dispatch(DosingCalibrationAction.StartVerificationDose)
         advanceUntilIdle()
         assertEquals(DosingCalibrationStep.CONFIRM, viewModel.uiState.value.step)
-        assertEquals(4.0, operations.verificationMl, DOUBLE_TOLERANCE)
+        assertEquals(
+            DosingCalibrationPolicy.VERIFICATION_DOSE_ML,
+            operations.verificationMl,
+            DOUBLE_TOLERANCE
+        )
         assertEquals(1, operations.verificationStarts)
 
         val completedEvent = async { viewModel.events.first() }

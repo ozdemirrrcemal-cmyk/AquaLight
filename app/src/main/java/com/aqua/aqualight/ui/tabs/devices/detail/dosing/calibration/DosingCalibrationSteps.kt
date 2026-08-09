@@ -143,24 +143,19 @@ private fun CalibrationVerificationControls(
     state: DosingCalibrationUiState,
     onAction: (DosingCalibrationAction) -> Unit
 ) {
-    CalibrationTextField(
-        label = stringResource(R.string.device_dosing_calibration_verification_volume_label),
-        value = state.verificationMlInput,
-        placeholder = stringResource(R.string.device_dosing_calibration_volume_placeholder),
-        suffix = stringResource(R.string.device_dosing_calibration_ml_suffix),
-        keyboardType = KeyboardType.Decimal,
-        enabled = !state.busy,
-        onValueChange = { value ->
-            onAction(DosingCalibrationAction.VerificationVolumeChanged(value))
-        }
-    )
     CalibrationActionButton(
         text = if (state.operation == DosingCalibrationOperation.VERIFYING) {
-            stringResource(R.string.device_dosing_calibration_verification_running)
+            stringResource(
+                R.string.device_dosing_calibration_verification_running,
+                state.verificationDoseMl
+            )
         } else {
-            stringResource(R.string.device_dosing_calibration_run_verification)
+            stringResource(
+                R.string.device_dosing_calibration_run_verification,
+                state.verificationDoseMl
+            )
         },
-        enabled = !state.busy && state.verificationMlInput.isNotBlank(),
+        enabled = !state.busy,
         onClick = { onAction(DosingCalibrationAction.StartVerificationDose) }
     )
 }

@@ -53,16 +53,14 @@ internal fun DosingCalibrationIllustration(
         animationSpec = tween(durationMillis = MEASUREMENT_LEVEL_ANIMATION_MS),
         label = "dosing-calibration-measured-fill"
     )
-    val verificationTarget = calibrationVolumeFraction(
-        parseCalibrationDecimal(state.verificationMlInput)
-    )
+    val verificationTarget = calibrationVolumeFraction(state.verificationDoseMl)
 
     LaunchedEffect(
         state.step,
         state.operation,
         state.calibrationDurationMs,
         state.verificationDurationMs,
-        verificationTarget
+        state.verificationDoseMl
     ) {
         when {
             state.operation == DosingCalibrationOperation.CALIBRATION_DOSING -> {
@@ -124,15 +122,15 @@ internal fun DosingCalibrationIllustration(
                 drawCalibrationCylinder(
                     colors = colors,
                     fillFraction = if (active) timedFill.value else 0f,
-                    targetFraction = verificationTarget.takeIf { it > 0f }
+                    targetFraction = verificationTarget
                 )
                 drawFallingDrops(colors, flowPhase, active = active)
             }
             DosingCalibrationStep.CONFIRM -> {
                 drawCalibrationCylinder(
                     colors = colors,
-                    fillFraction = verificationTarget,
-                    targetFraction = verificationTarget.takeIf { it > 0f }
+                    fillFraction = 0f,
+                    targetFraction = verificationTarget
                 )
             }
         }

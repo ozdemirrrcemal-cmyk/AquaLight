@@ -86,7 +86,7 @@ class DosingCalibrationArchitectureTest {
     }
 
     @Test
-    fun `wizard has exactly six named calibration steps`() {
+    fun `wizard has exactly six named calibration steps and fixed verification policy`() {
         val models = source(CALIBRATION_ROOT + "DosingCalibrationModels.kt")
 
         listOf(
@@ -98,6 +98,9 @@ class DosingCalibrationArchitectureTest {
             "CONFIRM("
         ).forEach { step -> assertTrue(models.contains(step)) }
         assertTrue(models.contains("const val COUNT = 6"))
+        assertTrue(models.contains("const val VERIFICATION_DOSE_ML = 4.0"))
+        assertFalse(models.contains("verificationMlInput"))
+        assertFalse(models.contains("VerificationVolumeChanged"))
     }
 
     private fun source(relativePath: String): String = File(repositoryRoot, relativePath).readText()
@@ -154,7 +157,6 @@ class DosingCalibrationArchitectureTest {
             "device_dosing_calibration_liquid_name_label",
             "device_dosing_calibration_liquid_name_placeholder",
             "device_dosing_calibration_measured_volume_label",
-            "device_dosing_calibration_verification_volume_label",
             "device_dosing_calibration_volume_placeholder",
             "device_dosing_calibration_ml_suffix",
             "device_dosing_calibration_continue",
@@ -171,8 +173,7 @@ class DosingCalibrationArchitectureTest {
             "device_dosing_calibration_error_connection",
             "device_dosing_calibration_error_name_required",
             "device_dosing_calibration_error_command",
-            "device_dosing_calibration_error_measurement",
-            "device_dosing_calibration_error_verification_volume"
+            "device_dosing_calibration_error_measurement"
         )
     }
 }

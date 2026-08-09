@@ -74,10 +74,6 @@ class DeviceDosingCalibrationViewModel(
                 errorMessageRes = null
             )
             DosingCalibrationAction.SubmitMeasuredVolume -> submitMeasuredVolume()
-            is DosingCalibrationAction.VerificationVolumeChanged -> _uiState.value = _uiState.value.copy(
-                verificationMlInput = action.value,
-                errorMessageRes = null
-            )
             DosingCalibrationAction.StartVerificationDose -> startVerificationDose()
             DosingCalibrationAction.ConfirmCalibration -> confirmCalibration()
             DosingCalibrationAction.Recalibrate -> recalibrate()
@@ -99,7 +95,14 @@ class DeviceDosingCalibrationViewModel(
     }
 
     private fun applyLoadedChannel(channel: DeviceDosingCalibrationChannelSnapshot) {
-        if (!channel.calibrationEditable || !channel.supportsPrime || !channel.supportsManualDose) {
+        val verificationDoseSupported =
+            DosingCalibrationPolicy.VERIFICATION_DOSE_ML <= channel.maximumVerificationDoseMl
+        if (
+            !channel.calibrationEditable ||
+            !channel.supportsPrime ||
+            !channel.supportsManualDose ||
+            !verificationDoseSupported
+        ) {
             fail(R.string.device_dosing_calibration_error_unavailable)
             return
         }
@@ -111,7 +114,6 @@ class DeviceDosingCalibrationViewModel(
             displayNameInput = channel.displayName,
             minimumMeasuredMl = channel.minimumMeasuredMl,
             maximumMeasuredMl = channel.maximumMeasuredMl,
-            maximumVerificationDoseMl = channel.maximumVerificationDoseMl,
             loaded = true,
             operation = DosingCalibrationOperation.IDLE,
             errorMessageRes = null
@@ -199,30 +201,27 @@ class DeviceDosingCalibrationViewModel(
     private fun startVerificationDose() {
         val state = _uiState.value
         if (!state.loaded || state.step != DosingCalibrationStep.VERIFY_DOSE || state.busy) return
-        val amountMl = parseCalibrationDecimal(state.verificationMlInput)
-        if (amountMl == null || amountMl <= 0.0 || amountMl > state.maximumVerificationDoseMl) {
-            fail(R.string.device_dosing_calibration_error_verification_volume)
-            return
-        }
         timedDoseJob?.cancel()
         timedDoseJob = viewModelScope.launch {
-            operations.startVerificationDose(state.deviceUid, state.channelKey, amountMl)
-                .onSuccess { run ->
+            operations.startVerificationDose(
+                deviceUid = state.deviceUid,
+                channelKey = state.channelKey,
+                amountMl = state.verificationDoseMl
+            ).onSuccess { run ->
+                _uiState.value = _uiState.value.copy(
+                    verificationDurationMs = run.durationMs,
+                    operation = DosingCalibrationOperation.VERIFYING,
+                    errorMessageRes = null
+                )
+                delay(run.durationMs)
+                operations.stopVerificationDose(state.deviceUid, state.channelKey)
+                if (_uiState.value.operation == DosingCalibrationOperation.VERIFYING) {
                     _uiState.value = _uiState.value.copy(
-                        verificationDurationMs = run.durationMs,
-                        operation = DosingCalibrationOperation.VERIFYING,
-                        errorMessageRes = null
+                        step = DosingCalibrationStep.CONFIRM,
+                        operation = DosingCalibrationOperation.IDLE
                     )
-                    delay(run.durationMs)
-                    operations.stopVerificationDose(state.deviceUid, state.channelKey)
-                    if (_uiState.value.operation == DosingCalibrationOperation.VERIFYING) {
-                        _uiState.value = _uiState.value.copy(
-                            step = DosingCalibrationStep.CONFIRM,
-                            operation = DosingCalibrationOperation.IDLE
-                        )
-                    }
                 }
-                .onFailure { fail(R.string.device_dosing_calibration_error_command) }
+            }.onFailure { fail(R.string.device_dosing_calibration_error_command) }
         }
     }
 
@@ -255,7 +254,6 @@ class DeviceDosingCalibrationViewModel(
                         step = DosingCalibrationStep.PRIME,
                         operation = DosingCalibrationOperation.IDLE,
                         measuredMlInput = "",
-                        verificationMlInput = "",
                         calibrationDurationMs = 0L,
                         verificationDurationMs = 0L,
                         pendingDoseMsPerMl = 0L,

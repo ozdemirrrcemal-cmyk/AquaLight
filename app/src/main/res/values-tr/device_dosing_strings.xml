@@ -41,13 +41,12 @@
     <string name="device_dosing_calibration_measure_title">Ölçülen hacmi girin</string>
     <string name="device_dosing_calibration_measure_description">Silindiri düz bir yüzeyde tutun, menisküsün alt noktasını okuyun ve ölçülen hacmi girin.</string>
     <string name="device_dosing_calibration_verify_title">Yeni kalibrasyonu doğrulayın</string>
-    <string name="device_dosing_calibration_verify_description">Bir test hacmi seçin. AquaLight, yeni kalibrasyonu henüz kaydetmeden bekleyen kalibrasyon değeriyle test dozunu verir.</string>
+    <string name="device_dosing_calibration_verify_description">AquaLight, yeni kalibrasyonu henüz kaydetmeden sabit doğrulama hedefini bekleyen kalibrasyon değeriyle dozlar.</string>
     <string name="device_dosing_calibration_confirm_title">Doğrulama sonucunu kontrol edin</string>
-    <string name="device_dosing_calibration_confirm_description">Ölçülen test hacmi hedefle eşleştiyse kalibrasyonu onaylayın. Eşleşmediyse yeniden kalibre edin.</string>
+    <string name="device_dosing_calibration_confirm_description">Ölçüm silindirindeki sıvı seviyesini hedef çizgisiyle karşılaştırın. Yalnızca eşleşiyorsa onaylayın; eşleşmiyorsa yeniden kalibre edin.</string>
     <string name="device_dosing_calibration_liquid_name_label">Dozaj sıvısı</string>
     <string name="device_dosing_calibration_liquid_name_placeholder">Sıvı adı girin</string>
     <string name="device_dosing_calibration_measured_volume_label">Ölçülen hacim</string>
-    <string name="device_dosing_calibration_verification_volume_label">Doğrulama dozu</string>
     <string name="device_dosing_calibration_volume_placeholder">0.00</string>
     <string name="device_dosing_calibration_ml_suffix">ml</string>
     <string name="device_dosing_calibration_continue">Devam et</string>
@@ -56,8 +55,8 @@
     <string name="device_dosing_calibration_start_dose">Kalibrasyon dozunu başlat</string>
     <string name="device_dosing_calibration_dose_running">Kalibrasyon dozu veriliyor…</string>
     <string name="device_dosing_calibration_calculate">Kalibrasyonu hesapla</string>
-    <string name="device_dosing_calibration_run_verification">Doğrulama dozunu çalıştır</string>
-    <string name="device_dosing_calibration_verification_running">Doğrulama dozu veriliyor…</string>
+    <string name="device_dosing_calibration_run_verification">%1$.0f ml dozla</string>
+    <string name="device_dosing_calibration_verification_running">%1$.0f ml dozlanıyor…</string>
     <string name="device_dosing_calibration_confirm_action">Kalibrasyon doğru</string>
     <string name="device_dosing_calibration_recalibrate_action">Yeniden kalibre et</string>
     <string name="device_dosing_calibration_error_unavailable">Bu kanal için kalibrasyon kullanılamıyor.</string>
@@ -65,5 +64,4 @@
     <string name="device_dosing_calibration_error_name_required">Dozaj sıvısı için bir ad girin.</string>
     <string name="device_dosing_calibration_error_command">Cihaz bu kalibrasyon işlemini tamamlayamadı. Tekrar deneyin.</string>
     <string name="device_dosing_calibration_error_measurement">Cihazın desteklediği aralıkta bir ölçüm hacmi girin.</string>
-    <string name="device_dosing_calibration_error_verification_volume">Cihazın desteklediği aralıkta pozitif bir doğrulama hacmi girin.</string>
 </resources>

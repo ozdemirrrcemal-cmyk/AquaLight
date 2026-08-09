@@ -45,6 +45,10 @@ enum class DosingCalibrationStep(
     }
 }
 
+internal object DosingCalibrationPolicy {
+    const val VERIFICATION_DOSE_ML = 4.0
+}
+
 enum class DosingCalibrationOperation {
     LOADING,
     IDLE,
@@ -72,10 +76,9 @@ data class DosingCalibrationUiState(
     val originalDisplayName: String = "",
     val displayNameInput: String = "",
     val measuredMlInput: String = "",
-    val verificationMlInput: String = "",
+    val verificationDoseMl: Double = DosingCalibrationPolicy.VERIFICATION_DOSE_ML,
     val minimumMeasuredMl: Double = 0.0,
     val maximumMeasuredMl: Double = 0.0,
-    val maximumVerificationDoseMl: Double = 0.0,
     val calibrationDurationMs: Long = 0L,
     val verificationDurationMs: Long = 0L,
     val pendingDoseMsPerMl: Long = 0L,
@@ -103,7 +106,6 @@ sealed interface DosingCalibrationAction {
     data object StartCalibrationDose : DosingCalibrationAction
     data class MeasuredVolumeChanged(val value: String) : DosingCalibrationAction
     data object SubmitMeasuredVolume : DosingCalibrationAction
-    data class VerificationVolumeChanged(val value: String) : DosingCalibrationAction
     data object StartVerificationDose : DosingCalibrationAction
     data object ConfirmCalibration : DosingCalibrationAction
     data object Recalibrate : DosingCalibrationAction

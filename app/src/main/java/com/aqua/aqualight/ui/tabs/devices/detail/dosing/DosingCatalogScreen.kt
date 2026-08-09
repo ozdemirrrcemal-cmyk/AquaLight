@@ -28,7 +28,7 @@ internal fun DeviceDosingCatalogScreen(
     channels: List<DosingChannelCardUiState>,
     modifier: Modifier = Modifier,
     pumpStates: List<DosingPumpVisualState> = emptyList(),
-    onPumpClick: (Int) -> Unit = {}
+    onChannelClick: (String) -> Unit = {}
 ) {
     val exactPumpCount = exactDosingPumpCountOrNull(pumpCount)
     if (exactPumpCount == null) {
@@ -68,7 +68,11 @@ internal fun DeviceDosingCatalogScreen(
                 val resolvedDeviceWidth = minOf(maxWidth, maximumDeviceWidth)
                 DosingPumpDevice(
                     pumpHeads = pumpHeads,
-                    onPumpClick = onPumpClick,
+                    onPumpClick = { channelNumber ->
+                        exactChannels
+                            .firstOrNull { channel -> channel.channelNumber == channelNumber }
+                            ?.let { channel -> onChannelClick(channel.wireKey) }
+                    },
                     modifier = Modifier.width(resolvedDeviceWidth)
                 )
             }
@@ -86,6 +90,7 @@ internal fun DeviceDosingCatalogScreen(
         ) { channel ->
             DosingChannelCard(
                 state = channel,
+                onClick = { onChannelClick(channel.wireKey) },
                 modifier = Modifier.fillMaxWidth()
             )
         }
