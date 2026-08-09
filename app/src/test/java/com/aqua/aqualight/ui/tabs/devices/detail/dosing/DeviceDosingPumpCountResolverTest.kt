@@ -1,42 +1,43 @@
 package com.aqua.aqualight.ui.tabs.devices.detail.dosing
 
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertNull
 import org.junit.Test
 
 class DeviceDosingPumpCountResolverTest {
 
     @Test
-    fun `uses explicit two channel metadata`() {
-        assertEquals(2, resolveDosingPumpCount(channelCount = 2, modelLabel = "dose-pro-4"))
+    fun `uses exact two channel catalog metadata`() {
+        assertEquals(2, resolveDosingPumpCount(channelCount = 2))
     }
 
     @Test
-    fun `uses explicit four channel metadata`() {
-        assertEquals(4, resolveDosingPumpCount(channelCount = 4, modelLabel = "dose-pro-2"))
+    fun `uses exact four channel catalog metadata`() {
+        assertEquals(4, resolveDosingPumpCount(channelCount = 4))
     }
 
     @Test
-    fun `falls back to Pro 2 model identity`() {
-        assertEquals(2, resolveDosingPumpCount(channelCount = 0, modelLabel = "Dosing Pro 2"))
+    fun `unresolved catalog metadata does not guess a product`() {
+        assertEquals(0, resolveDosingPumpCount(channelCount = 0))
     }
 
     @Test
-    fun `recognizes hyphenated case insensitive Pro 2 identity`() {
-        assertEquals(2, resolveDosingPumpCount(channelCount = 0, modelLabel = "DOSE-PRO-2"))
+    fun `unsupported channel count fails closed`() {
+        assertEquals(0, resolveDosingPumpCount(channelCount = 3))
     }
 
     @Test
-    fun `defaults unknown dosing models to four pumps`() {
-        assertEquals(4, resolveDosingPumpCount(channelCount = 0, modelLabel = "Dosing"))
+    fun `final root composition accepts only exact two pump product`() {
+        assertEquals(2, exactDosingPumpCountOrNull(2))
     }
 
     @Test
-    fun `keeps two pump Compose layout`() {
-        assertEquals(2, normalizeDosingPumpCount(2))
+    fun `final root composition accepts only exact four pump product`() {
+        assertEquals(4, exactDosingPumpCountOrNull(4))
     }
 
     @Test
-    fun `normalizes unsupported Compose layouts to four pumps`() {
-        assertEquals(4, normalizeDosingPumpCount(3))
+    fun `final root composition rejects unsupported pump count`() {
+        assertNull(exactDosingPumpCountOrNull(3))
     }
 }
