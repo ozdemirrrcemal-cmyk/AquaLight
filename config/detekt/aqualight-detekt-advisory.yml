@@ -10,8 +10,3 @@ naming:
   FunctionNaming:
     ignoreAnnotated:
       - Composable
-
-style:
-  UnusedPrivateMember:
-    ignoreAnnotated:
-      - Preview
