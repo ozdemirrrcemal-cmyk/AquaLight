@@ -21,7 +21,6 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.runtime.Composable
@@ -315,9 +314,7 @@ private const val HUB_SIZE_RATIO = 0.42f
 private const val INDICATOR_CANVAS_RATIO = 0.82f
 private const val RUNNING_PULSE_DURATION_MS = 1_450
 private const val ERROR_PULSE_DURATION_MS = 720
-private const val DOSING_PRO_2_MAX_WIDTH_DP = 360
 private const val DOSING_PRO_2_PUMP_HEAD_MAX_SIZE_DP = 104
-private const val DOSING_PRO_4_MAX_WIDTH_DP = 760
 private const val DEVICE_OUTER_CORNER_RADIUS_DP = 30
 private const val DEVICE_INNER_CORNER_RADIUS_DP = 24
 private const val DEVICE_DECK_CORNER_RADIUS_DP = 20
@@ -332,9 +329,7 @@ private const val DEVICE_INNER_INSET_DP = 7
 private const val DEVICE_DECK_INSET_DP = 9
 private const val PUMP_FRAME_INSET_DP = 7
 private const val PUMP_SPACING_DP = 8
-private val DOSING_PRO_2_MAX_WIDTH = DOSING_PRO_2_MAX_WIDTH_DP.dp
 private val DOSING_PRO_2_PUMP_HEAD_MAX_SIZE = DOSING_PRO_2_PUMP_HEAD_MAX_SIZE_DP.dp
-private val DOSING_PRO_4_MAX_WIDTH = DOSING_PRO_4_MAX_WIDTH_DP.dp
 private val DEVICE_OUTER_SHAPE = RoundedCornerShape(DEVICE_OUTER_CORNER_RADIUS_DP.dp)
 private val DEVICE_INNER_SHAPE = RoundedCornerShape(DEVICE_INNER_CORNER_RADIUS_DP.dp)
 private val DEVICE_DECK_SHAPE = RoundedCornerShape(DEVICE_DECK_CORNER_RADIUS_DP.dp)
