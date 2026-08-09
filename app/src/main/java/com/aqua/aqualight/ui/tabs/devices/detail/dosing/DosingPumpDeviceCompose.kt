@@ -52,6 +52,7 @@ enum class DosingPumpVisualState(
     @StringRes val stateLabelRes: Int
 ) {
     IDLE(R.string.device_dosing_pump_state_idle),
+    SELECTED(R.string.device_dosing_pump_state_selected),
     RUNNING(R.string.device_dosing_pump_state_running),
     ERROR(R.string.device_dosing_pump_state_error)
 }
@@ -61,6 +62,7 @@ fun DeviceDosingPumpScreen(
     pumpCount: Int,
     modifier: Modifier = Modifier,
     pumpStates: List<DosingPumpVisualState> = emptyList(),
+    pumpClicksEnabled: Boolean = true,
     onPumpClick: (Int) -> Unit = {}
 ) {
     val supportedPumpCount = normalizeDosingPumpCount(pumpCount)
@@ -86,6 +88,7 @@ fun DeviceDosingPumpScreen(
         DosingPumpDevice(
             pumpHeads = pumpHeads,
             onPumpClick = onPumpClick,
+            pumpClicksEnabled = pumpClicksEnabled,
             modifier = Modifier.width(minOf(maxWidth, maximumDeviceWidth))
         )
     }
@@ -95,7 +98,8 @@ fun DeviceDosingPumpScreen(
 fun DosingPumpDevice(
     pumpHeads: List<DosingPumpHeadUiState>,
     onPumpClick: (Int) -> Unit,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    pumpClicksEnabled: Boolean = true
 ) {
     require(
         pumpHeads.size == DOSING_PRO_2_PUMP_COUNT ||
@@ -136,7 +140,8 @@ fun DosingPumpDevice(
         ) {
             DosingPumpDeck(
                 pumpHeads = pumpHeads,
-                onPumpClick = onPumpClick
+                onPumpClick = onPumpClick,
+                pumpClicksEnabled = pumpClicksEnabled
             )
         }
     }
@@ -145,7 +150,8 @@ fun DosingPumpDevice(
 @Composable
 private fun DosingPumpDeck(
     pumpHeads: List<DosingPumpHeadUiState>,
-    onPumpClick: (Int) -> Unit
+    onPumpClick: (Int) -> Unit,
+    pumpClicksEnabled: Boolean
 ) {
     val isDosingPro2 = pumpHeads.size == DOSING_PRO_2_PUMP_COUNT
 
@@ -189,6 +195,7 @@ private fun DosingPumpDeck(
                 DosingPumpHead(
                     pumpHead = pumpHead,
                     onClick = { onPumpClick(pumpHead.channelNumber) },
+                    clickEnabled = pumpClicksEnabled,
                     modifier = pumpModifier
                 )
             }
@@ -200,6 +207,7 @@ private fun DosingPumpDeck(
 private fun DosingPumpHead(
     pumpHead: DosingPumpHeadUiState,
     onClick: () -> Unit,
+    clickEnabled: Boolean,
     modifier: Modifier = Modifier
 ) {
     val interactionSource = remember { MutableInteractionSource() }
@@ -210,7 +218,7 @@ private fun DosingPumpHead(
         pumpHead.channelNumber,
         stateLabel
     )
-    val pressedScale = if (pressed) PRESSED_SCALE else NORMAL_SCALE
+    val pressedScale = if (pressed && clickEnabled) PRESSED_SCALE else NORMAL_SCALE
 
     BoxWithConstraints(
         modifier = modifier
@@ -230,6 +238,7 @@ private fun DosingPumpHead(
                 stateDescription = stateLabel
             }
             .clickable(
+                enabled = clickEnabled,
                 interactionSource = interactionSource,
                 indication = null,
                 role = Role.Button,
@@ -324,7 +333,8 @@ private fun PumpIndicator(
         label = "dosing-pump-error-scale"
     )
     val pulseScale = when (visualState) {
-        DosingPumpVisualState.IDLE -> NORMAL_SCALE
+        DosingPumpVisualState.IDLE,
+        DosingPumpVisualState.SELECTED -> NORMAL_SCALE
         DosingPumpVisualState.RUNNING -> runningScale
         DosingPumpVisualState.ERROR -> errorScale
     }
@@ -404,7 +414,7 @@ private fun DosingPro4Preview() {
     DeviceDosingPumpScreen(
         pumpCount = DOSING_PRO_4_PUMP_COUNT,
         pumpStates = listOf(
-            DosingPumpVisualState.IDLE,
+            DosingPumpVisualState.SELECTED,
             DosingPumpVisualState.RUNNING,
             DosingPumpVisualState.ERROR,
             DosingPumpVisualState.IDLE
@@ -419,7 +429,7 @@ private fun DosingPro2Preview() {
         pumpCount = DOSING_PRO_2_PUMP_COUNT,
         pumpStates = listOf(
             DosingPumpVisualState.RUNNING,
-            DosingPumpVisualState.ERROR
+            DosingPumpVisualState.SELECTED
         )
     )
 }
