@@ -27,16 +27,18 @@ class DosingUiLayerBoundaryTest {
     }
 
     @Test
-    fun `dosing presentation models do not own domain validity rules`() {
+    fun `dosing presentation models do not own domain validity or firmware identity`() {
         val models = source(DOSING_SOURCE_ROOT + "DosingChannelCardModels.kt")
 
         assertFalse(models.contains("require(slotId"))
         assertFalse(models.contains("require(channelNumber"))
-        assertFalse(models.contains("require(wireKey"))
         assertFalse(models.contains("require(displayName"))
+        assertFalse(models.contains("selectedDays.distinct()"))
         assertFalse(models.contains("require(dailyDoseMl"))
         assertFalse(models.contains("require(deliveredTodayMl"))
         assertFalse(models.contains("require(doseMilestonesMl"))
+        assertFalse(models.contains("val wireKey: String"))
+        assertFalse(models.contains("wireKey = wireKey.value"))
 
         assertTrue(models.contains("DeviceDosingChannelSlot.toInitialDosingChannelCardUiState"))
     }
