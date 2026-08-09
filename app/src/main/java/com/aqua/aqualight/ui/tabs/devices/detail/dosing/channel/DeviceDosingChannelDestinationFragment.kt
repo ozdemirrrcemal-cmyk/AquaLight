@@ -42,16 +42,22 @@ abstract class DeviceDosingChannelDestinationFragment(
         pumpCount: Int,
         channelNumber: Int
     ) {
-        val exactPumpCount = exactDosingPumpCountOrNull(pumpCount)
-        if (
-            deviceUid.isBlank() ||
-            slotId.isBlank() ||
-            exactPumpCount == null ||
-            channelNumber !in 1..exactPumpCount
-        ) {
+        if (deviceUid.isBlank() || slotId.isBlank()) {
             findNavController().navigateUp()
             return
         }
+
+        val exactPumpCount = exactDosingPumpCountOrNull(pumpCount)
+        if (exactPumpCount == null) {
+            findNavController().navigateUp()
+            return
+        }
+
+        if (channelNumber <= 0 || channelNumber > exactPumpCount) {
+            findNavController().navigateUp()
+            return
+        }
+
         view.findViewById<ComposeView>(R.id.dosingPumpCompose).apply {
             setViewCompositionStrategy(ViewCompositionStrategy.DisposeOnViewTreeLifecycleDestroyed)
             setContent {

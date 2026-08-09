@@ -104,13 +104,18 @@ object AppRouteNavigator {
         val pumpCount = target.pumpCount
         val channelNumber = target.channelNumber
         val destinationId = target.destination.destinationId
+
+        if (deviceUid.isBlank() || slotId.isBlank() || channelTitle.isBlank()) {
+            return AppRouteOpenResult.REJECTED
+        }
+        if (pumpCount <= 0) {
+            return AppRouteOpenResult.REJECTED
+        }
+        if (channelNumber <= 0 || channelNumber > pumpCount) {
+            return AppRouteOpenResult.REJECTED
+        }
+
         return when {
-            deviceUid.isBlank() ||
-                slotId.isBlank() ||
-                channelTitle.isBlank() ||
-                pumpCount !in supportedDosingPumpCounts ||
-                channelNumber !in 1..pumpCount ->
-                AppRouteOpenResult.REJECTED
             DosingChannelRouteIdempotencyPolicy.isAlreadyOpen(
                 current = DosingChannelRouteIdentity(
                     destinationId = navController.currentDestination?.id,
@@ -211,7 +216,6 @@ object AppRouteNavigator {
 
     private val firmwareDestinationId = R.id.deviceFirmwareUpdateFragment
     private val dosingRootDestinationId = R.id.deviceDosingRootFragment
-    private val supportedDosingPumpCounts = setOf(2, 4)
 
     private val DeviceDosingChannelDestination.destinationId: Int
         get() = when (this) {
