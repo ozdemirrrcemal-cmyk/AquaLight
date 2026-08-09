@@ -5,4 +5,17 @@
     <string name="device_dosing_pump_state_error">Hata</string>
     <string name="device_dosing_pump_channel_content_description">Dozaj kanalı %1$d, %2$s</string>
     <string name="device_dosing_open_settings_description">Cihaz ayarlarını aç</string>
+
+    <string name="device_dosing_channel_status_setup_required">Kurulum gerekli</string>
+    <string name="device_dosing_channel_status_ready">Hazır</string>
+    <string name="device_dosing_channel_status_scheduled">Programlı</string>
+    <string name="device_dosing_channel_status_dosing">Dozaj yapılıyor</string>
+    <string name="device_dosing_channel_status_attention">Kontrol gerekli</string>
+    <string name="device_dosing_channel_daily_dose_format">%1$.2f ml/gün</string>
+    <string name="device_dosing_channel_calibration_required">Kalibrasyon gerekli</string>
+    <string name="device_dosing_channel_calibrated">Kalibre edildi</string>
+    <string name="device_dosing_channel_not_configured">Yapılandırılmadı</string>
+    <string name="device_dosing_channel_configured">Yapılandırıldı</string>
+    <string name="device_dosing_channel_timeline_description">24 saatlik dozaj programı</string>
+    <string name="device_dosing_channel_card_content_description">Dozaj kanalı %1$d, %2$s, %3$s</string>
 </resources>
