@@ -1,4 +1,4 @@
-@file:Suppress("FunctionNaming", "MagicNumber", "TooManyFunctions", "UnusedPrivateMember")
+@file:Suppress("FunctionNaming", "MagicNumber", "TooManyFunctions")
 
 package com.aqua.aqualight.ui.tabs.devices.detail.dosing
 
@@ -28,7 +28,6 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.style.TextOverflow
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.aqua.aqualight.R
 import com.aqua.aqualight.ui.common.devicecard.AquaDeviceCardColors
@@ -383,43 +382,3 @@ private val METADATA_ICON_TOP_PADDING = 1.dp
 private val METADATA_ICON_SIZE = 14.dp
 private val GLYPH_STROKE = 1.4.dp
 private val SETUP_KNOB_RADIUS = 1.7.dp
-
-@Preview(name = "Dosing channel - setup", showBackground = true, backgroundColor = 0xFF0A192F)
-@Composable
-private fun DosingChannelSetupPreview() {
-    DosingChannelCard(
-        state = DosingChannelCardUiState(
-            slotId = "dosing:channel1",
-            channelNumber = 1,
-            wireKey = "channel1",
-            displayName = "Channel 1"
-        ),
-        modifier = Modifier.padding(16.dp)
-    )
-}
-
-@Preview(name = "Dosing channel - active", showBackground = true, backgroundColor = 0xFF0A192F)
-@Composable
-private fun DosingChannelActivePreview() {
-    DosingChannelCard(
-        state = DosingChannelCardUiState(
-            slotId = "dosing:channel2",
-            channelNumber = 2,
-            wireKey = "channel2",
-            displayName = "Micro Elements & Iron",
-            dailyDoseMl = 4.5,
-            calibrationState = DosingCalibrationUiState.CALIBRATED,
-            setupState = DosingSetupUiState.CONFIGURED,
-            visualState = DosingChannelVisualState.DOSING,
-            timeline = DosingTimelineUiState(
-                events = listOf(
-                    DosingTimelineEventUiState(0.25f, 1.5),
-                    DosingTimelineEventUiState(0.50f, 1.5, active = true),
-                    DosingTimelineEventUiState(0.75f, 1.5)
-                ),
-                visualState = DosingTimelineVisualState.ACTIVE
-            )
-        ),
-        modifier = Modifier.padding(16.dp)
-    )
-}
