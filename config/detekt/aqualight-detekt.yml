@@ -66,9 +66,6 @@ style:
     active: false
   UnusedParameter:
     active: false
-  UnusedPrivateMember:
-    ignoreAnnotated:
-      - Preview
   UnusedPrivateProperty:
     active: false
   UseCheckOrError:
