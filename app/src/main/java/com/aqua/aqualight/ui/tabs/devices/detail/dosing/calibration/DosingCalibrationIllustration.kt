@@ -134,7 +134,6 @@ internal fun DosingCalibrationIllustration(
                     fillFraction = verificationTarget,
                     targetFraction = verificationTarget.takeIf { it > 0f }
                 )
-                drawCalibrationSuccessSeal(colors)
             }
         }
     }
