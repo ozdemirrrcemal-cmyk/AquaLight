@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="device_dosing_pump_state_idle">Ready</string>
+    <string name="device_dosing_pump_state_selected">Selected</string>
     <string name="device_dosing_pump_state_running">Running</string>
     <string name="device_dosing_pump_state_error">Error</string>
     <string name="device_dosing_pump_channel_content_description">Dosing channel %1$d, %2$s</string>
@@ -27,4 +28,42 @@
     <string name="device_dosing_channel_dose_progress_value_format">%1$.2f ml</string>
     <string name="device_dosing_channel_dose_scale_value_format">%1$.2f</string>
     <string name="device_dosing_channel_card_content_description">Dosing channel %1$d, %2$s, %3$s</string>
+
+    <string name="device_dosing_calibration_title">Calibration</string>
+    <string name="device_dosing_calibration_loading">Preparing calibration…</string>
+    <string name="device_dosing_calibration_step_format">Step %1$d of %2$d</string>
+    <string name="device_dosing_calibration_name_title">Name this dosing liquid</string>
+    <string name="device_dosing_calibration_name_description">Give the selected channel a clear liquid name before calibration.</string>
+    <string name="device_dosing_calibration_prime_title">Prime the dosing line</string>
+    <string name="device_dosing_calibration_prime_description">Place the inlet tube in the dosing liquid and hold the prime control until liquid reaches the outlet with no visible air gaps.</string>
+    <string name="device_dosing_calibration_dose_title">Run the calibration dose</string>
+    <string name="device_dosing_calibration_dose_description">Place the outlet over a measuring cylinder. AquaLight will run the selected pump for the calibration duration defined by firmware.</string>
+    <string name="device_dosing_calibration_measure_title">Enter the measured volume</string>
+    <string name="device_dosing_calibration_measure_description">Keep the cylinder level and read the bottom of the meniscus, then enter the measured volume.</string>
+    <string name="device_dosing_calibration_verify_title">Verify the new calibration</string>
+    <string name="device_dosing_calibration_verify_description">Choose a test volume. AquaLight will dose it with the pending calibration without saving the new calibration yet.</string>
+    <string name="device_dosing_calibration_confirm_title">Check the verification result</string>
+    <string name="device_dosing_calibration_confirm_description">If the measured test volume matched the target, confirm the calibration. Otherwise run calibration again.</string>
+    <string name="device_dosing_calibration_liquid_name_label">Dosing liquid</string>
+    <string name="device_dosing_calibration_liquid_name_placeholder">Enter a liquid name</string>
+    <string name="device_dosing_calibration_measured_volume_label">Measured volume</string>
+    <string name="device_dosing_calibration_verification_volume_label">Verification dose</string>
+    <string name="device_dosing_calibration_volume_placeholder">0.00</string>
+    <string name="device_dosing_calibration_ml_suffix">ml</string>
+    <string name="device_dosing_calibration_continue">Continue</string>
+    <string name="device_dosing_calibration_hold_to_prime">Press and hold to prime</string>
+    <string name="device_dosing_calibration_priming_active">Priming… release to stop</string>
+    <string name="device_dosing_calibration_start_dose">Start calibration dose</string>
+    <string name="device_dosing_calibration_dose_running">Calibration dose running…</string>
+    <string name="device_dosing_calibration_calculate">Calculate calibration</string>
+    <string name="device_dosing_calibration_run_verification">Run verification dose</string>
+    <string name="device_dosing_calibration_verification_running">Verification dose running…</string>
+    <string name="device_dosing_calibration_confirm_action">Calibration is accurate</string>
+    <string name="device_dosing_calibration_recalibrate_action">Calibrate again</string>
+    <string name="device_dosing_calibration_error_unavailable">Calibration is not available for this channel.</string>
+    <string name="device_dosing_calibration_error_connection">The device could not be prepared for calibration. Check the connection and try again.</string>
+    <string name="device_dosing_calibration_error_name_required">Enter a name for the dosing liquid.</string>
+    <string name="device_dosing_calibration_error_command">The device could not complete this calibration action. Try again.</string>
+    <string name="device_dosing_calibration_error_measurement">Enter a measured volume within the range supported by the device.</string>
+    <string name="device_dosing_calibration_error_verification_volume">Enter a positive verification volume within the range supported by the device.</string>
 </resources>
