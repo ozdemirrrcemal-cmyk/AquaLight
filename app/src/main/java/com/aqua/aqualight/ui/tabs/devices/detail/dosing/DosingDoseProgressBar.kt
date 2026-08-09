@@ -19,7 +19,7 @@ import androidx.compose.ui.geometry.CornerRadius
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.graphics.drawscope.DrawScope
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
@@ -42,7 +42,6 @@ internal fun DosingDoseProgressBar(
     typography: AquaDeviceCardTypography,
     modifier: Modifier = Modifier
 ) {
-    val context = LocalContext.current
     val currentDoseLabel = stringResource(
         R.string.device_dosing_channel_dose_progress_value_format,
         state.deliveredTodayMl
@@ -52,104 +51,163 @@ internal fun DosingDoseProgressBar(
         state.deliveredTodayMl,
         state.dailyDoseMl
     )
-    val progressFraction = state.progressFraction()
-    val doseScaleLabels = if (state.dailyDoseMl > 0.0) {
-        DOSE_SCALE_FRACTIONS.map { fraction ->
-            context.getString(
-                R.string.device_dosing_channel_dose_scale_value_format,
-                state.dailyDoseMl * fraction
-            )
-        }
-    } else {
-        emptyList()
-    }
+    val doseScaleLabels = state.doseScaleLabels()
 
     Column(modifier = modifier) {
-        Box(
-            modifier = Modifier
-                .fillMaxWidth()
-                .height(DOSE_PROGRESS_TRACK_HEIGHT)
-                .semantics { contentDescription = description },
-            contentAlignment = Alignment.CenterStart
-        ) {
-            Canvas(modifier = Modifier.fillMaxSize()) {
-                val radius = size.height / 2f
-                drawRoundRect(
-                    color = colors.mediaSurface,
-                    size = Size(size.width, size.height),
-                    cornerRadius = CornerRadius(radius, radius)
-                )
-
-                if (progressFraction > 0f) {
-                    drawRoundRect(
-                        color = state.progressColor(colors),
-                        size = Size(size.width * progressFraction, size.height),
-                        cornerRadius = CornerRadius(radius, radius)
-                    )
-                }
-
-                if (state.dailyDoseMl > 0.0) {
-                    DOSE_MAJOR_TICK_FRACTIONS.forEach { fraction ->
-                        val x = size.width * fraction
-                        drawLine(
-                            color = colors.mediaOutline,
-                            start = Offset(x, DOSE_TICK_VERTICAL_PADDING.toPx()),
-                            end = Offset(x, size.height - DOSE_TICK_VERTICAL_PADDING.toPx()),
-                            strokeWidth = DOSE_TICK_WIDTH.toPx()
-                        )
-                    }
-
-                    state.doseMilestonesMl
-                        .asSequence()
-                        .filter { it > 0.0 && it < state.dailyDoseMl }
-                        .map { (it / state.dailyDoseMl).toFloat() }
-                        .distinct()
-                        .forEach { fraction ->
-                            val x = size.width * fraction
-                            drawLine(
-                                color = colors.primaryText.copy(alpha = MILESTONE_ALPHA),
-                                start = Offset(x, MILESTONE_VERTICAL_PADDING.toPx()),
-                                end = Offset(x, size.height - MILESTONE_VERTICAL_PADDING.toPx()),
-                                strokeWidth = MILESTONE_WIDTH.toPx()
-                            )
-                        }
-                }
-            }
-
-            BasicText(
-                text = currentDoseLabel,
-                modifier = Modifier.padding(horizontal = CURRENT_DOSE_HORIZONTAL_PADDING),
-                style = typography.micro.copy(
-                    color = if (state.visualState == DosingDoseProgressVisualState.EMPTY) {
-                        colors.secondaryText
-                    } else {
-                        colors.primaryText
-                    }
-                )
-            )
-        }
-
+        DosingDoseProgressTrack(
+            state = state,
+            colors = colors,
+            typography = typography,
+            currentDoseLabel = currentDoseLabel,
+            description = description
+        )
         if (doseScaleLabels.isNotEmpty()) {
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(top = DOSE_LABEL_TOP_PADDING),
-                horizontalArrangement = Arrangement.SpaceBetween
-            ) {
-                doseScaleLabels.forEach { label ->
-                    BasicText(
-                        text = label,
-                        style = typography.micro.copy(color = colors.secondaryText)
-                    )
-                }
-            }
+            DosingDoseScaleLabels(
+                labels = doseScaleLabels,
+                colors = colors,
+                typography = typography
+            )
         }
     }
 }
 
-internal fun DosingDoseProgressUiState.progressFraction(): Float {
-    if (dailyDoseMl <= 0.0) return 0f
-    return (deliveredTodayMl / dailyDoseMl).coerceIn(0.0, 1.0).toFloat()
+@Composable
+private fun DosingDoseProgressUiState.doseScaleLabels(): List<String> = if (dailyDoseMl > 0.0) {
+    DOSE_SCALE_FRACTIONS.map { fraction ->
+        stringResource(
+            R.string.device_dosing_channel_dose_scale_value_format,
+            dailyDoseMl * fraction
+        )
+    }
+} else {
+    emptyList()
+}
+
+@Composable
+private fun DosingDoseProgressTrack(
+    state: DosingDoseProgressUiState,
+    colors: AquaDeviceCardColors,
+    typography: AquaDeviceCardTypography,
+    currentDoseLabel: String,
+    description: String
+) {
+    Box(
+        modifier = Modifier
+            .fillMaxWidth()
+            .height(DOSE_PROGRESS_TRACK_HEIGHT)
+            .semantics { contentDescription = description },
+        contentAlignment = Alignment.CenterStart
+    ) {
+        Canvas(modifier = Modifier.fillMaxSize()) {
+            drawDoseProgressTrack(
+                state = state,
+                colors = colors,
+                progressFraction = state.progressFraction()
+            )
+        }
+
+        BasicText(
+            text = currentDoseLabel,
+            modifier = Modifier.padding(horizontal = CURRENT_DOSE_HORIZONTAL_PADDING),
+            style = typography.micro.copy(color = state.progressTextColor(colors))
+        )
+    }
+}
+
+@Composable
+private fun DosingDoseScaleLabels(
+    labels: List<String>,
+    colors: AquaDeviceCardColors,
+    typography: AquaDeviceCardTypography
+) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(top = DOSE_LABEL_TOP_PADDING),
+        horizontalArrangement = Arrangement.SpaceBetween
+    ) {
+        labels.forEach { label ->
+            BasicText(
+                text = label,
+                style = typography.micro.copy(color = colors.secondaryText)
+            )
+        }
+    }
+}
+
+private fun DrawScope.drawDoseProgressTrack(
+    state: DosingDoseProgressUiState,
+    colors: AquaDeviceCardColors,
+    progressFraction: Float
+) {
+    val radius = size.height / 2f
+    drawRoundRect(
+        color = colors.mediaSurface,
+        size = Size(size.width, size.height),
+        cornerRadius = CornerRadius(radius, radius)
+    )
+    drawDoseProgressFill(
+        state = state,
+        colors = colors,
+        progressFraction = progressFraction,
+        radius = radius
+    )
+    if (state.dailyDoseMl > 0.0) {
+        drawDoseMajorTicks(colors)
+        drawDoseMilestones(state, colors)
+    }
+}
+
+private fun DrawScope.drawDoseProgressFill(
+    state: DosingDoseProgressUiState,
+    colors: AquaDeviceCardColors,
+    progressFraction: Float,
+    radius: Float
+) {
+    if (progressFraction <= 0f) return
+    drawRoundRect(
+        color = state.progressColor(colors),
+        size = Size(size.width * progressFraction, size.height),
+        cornerRadius = CornerRadius(radius, radius)
+    )
+}
+
+private fun DrawScope.drawDoseMajorTicks(colors: AquaDeviceCardColors) {
+    DOSE_MAJOR_TICK_FRACTIONS.forEach { fraction ->
+        val x = size.width * fraction
+        drawLine(
+            color = colors.mediaOutline,
+            start = Offset(x, DOSE_TICK_VERTICAL_PADDING.toPx()),
+            end = Offset(x, size.height - DOSE_TICK_VERTICAL_PADDING.toPx()),
+            strokeWidth = DOSE_TICK_WIDTH.toPx()
+        )
+    }
+}
+
+private fun DrawScope.drawDoseMilestones(
+    state: DosingDoseProgressUiState,
+    colors: AquaDeviceCardColors
+) {
+    state.doseMilestonesMl
+        .asSequence()
+        .filter { it > 0.0 && it < state.dailyDoseMl }
+        .map { (it / state.dailyDoseMl).toFloat() }
+        .distinct()
+        .forEach { fraction ->
+            val x = size.width * fraction
+            drawLine(
+                color = colors.primaryText.copy(alpha = MILESTONE_ALPHA),
+                start = Offset(x, MILESTONE_VERTICAL_PADDING.toPx()),
+                end = Offset(x, size.height - MILESTONE_VERTICAL_PADDING.toPx()),
+                strokeWidth = MILESTONE_WIDTH.toPx()
+            )
+        }
+}
+
+internal fun DosingDoseProgressUiState.progressFraction(): Float = if (dailyDoseMl <= 0.0) {
+    0f
+} else {
+    (deliveredTodayMl / dailyDoseMl).coerceIn(0.0, 1.0).toFloat()
 }
 
 private fun DosingDoseProgressUiState.progressColor(colors: AquaDeviceCardColors): Color = when (visualState) {
@@ -159,6 +217,13 @@ private fun DosingDoseProgressUiState.progressColor(colors: AquaDeviceCardColors
     DosingDoseProgressVisualState.COMPLETE -> colors.accent
     DosingDoseProgressVisualState.ERROR -> colors.danger
 }
+
+private fun DosingDoseProgressUiState.progressTextColor(colors: AquaDeviceCardColors): Color =
+    if (visualState == DosingDoseProgressVisualState.EMPTY) {
+        colors.secondaryText
+    } else {
+        colors.primaryText
+    }
 
 private val DOSE_SCALE_FRACTIONS = listOf(0.0, 0.25, 0.50, 0.75, 1.0)
 private val DOSE_MAJOR_TICK_FRACTIONS = listOf(0.25f, 0.50f, 0.75f)
