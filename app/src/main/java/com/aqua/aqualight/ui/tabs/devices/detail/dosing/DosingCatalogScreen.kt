@@ -56,28 +56,12 @@ internal fun DeviceDosingCatalogScreen(
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
         item(key = DEVICE_ITEM_KEY) {
-            BoxWithConstraints(
-                modifier = Modifier.fillMaxWidth(),
-                contentAlignment = Alignment.TopCenter
-            ) {
-                val maximumDeviceWidth = if (exactPumpCount == DOSING_PRO_2_PUMP_COUNT) {
-                    DOSING_PRO_2_MAX_WIDTH
-                } else {
-                    DOSING_PRO_4_MAX_WIDTH
-                }
-                val resolvedDeviceWidth = minOf(maxWidth, maximumDeviceWidth)
-                DosingPumpDevice(
-                    pumpHeads = pumpHeads,
-                    onPumpClick = { channelNumber ->
-                        channels.firstOrNull { channel ->
-                            channel.channelNumber == channelNumber
-                        }?.let { channel ->
-                            onChannelClick(channel.slotId)
-                        }
-                    },
-                    modifier = Modifier.width(resolvedDeviceWidth)
-                )
-            }
+            DosingPumpSection(
+                pumpCount = exactPumpCount,
+                pumpHeads = pumpHeads,
+                channels = channels,
+                onChannelClick = onChannelClick
+            )
         }
 
         if (channels.isNotEmpty()) {
@@ -96,6 +80,37 @@ internal fun DeviceDosingCatalogScreen(
                 modifier = Modifier.fillMaxWidth()
             )
         }
+    }
+}
+
+@Composable
+private fun DosingPumpSection(
+    pumpCount: Int,
+    pumpHeads: List<DosingPumpHeadUiState>,
+    channels: List<DosingChannelCardUiState>,
+    onChannelClick: (String) -> Unit
+) {
+    BoxWithConstraints(
+        modifier = Modifier.fillMaxWidth(),
+        contentAlignment = Alignment.TopCenter
+    ) {
+        val maximumDeviceWidth = if (pumpCount == DOSING_PRO_2_PUMP_COUNT) {
+            DOSING_PRO_2_MAX_WIDTH
+        } else {
+            DOSING_PRO_4_MAX_WIDTH
+        }
+        val resolvedDeviceWidth = minOf(maxWidth, maximumDeviceWidth)
+        DosingPumpDevice(
+            pumpHeads = pumpHeads,
+            onPumpClick = { channelNumber ->
+                channels.firstOrNull { channel ->
+                    channel.channelNumber == channelNumber
+                }?.let { channel ->
+                    onChannelClick(channel.slotId)
+                }
+            },
+            modifier = Modifier.width(resolvedDeviceWidth)
+        )
     }
 }
 
