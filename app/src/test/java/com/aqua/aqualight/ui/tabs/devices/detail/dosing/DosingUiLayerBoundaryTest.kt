@@ -60,7 +60,10 @@ class DosingUiLayerBoundaryTest {
         assertFalse(rootFragment.contains("DeviceDosingChannelCalibrationFragmentArgs"))
         assertTrue(operations.contains("toDeviceRootSnapshot()"))
         assertTrue(operations.contains("DefaultDeviceMenuAccessOperations.create"))
-        assertTrue(operations.contains("runtime?.requestStatus(deviceUid)"))
+        assertTrue(operations.contains("runtimePort.requestStatus(context.uid)"))
+        assertTrue(
+            operations.contains("devicesRepository.runtimeModules()?.dosing?.requestStatus(deviceUid)")
+        )
         assertTrue(operations.contains("DeviceDosingChannelDestinationPolicy.resolve"))
         assertTrue(navigator.contains("fun openDosingChannel("))
         assertTrue(appGraph.contains("deviceDosingChannelCalibrationFragment"))
