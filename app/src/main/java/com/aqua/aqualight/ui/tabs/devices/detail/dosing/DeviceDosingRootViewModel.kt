@@ -153,7 +153,8 @@ class DeviceDosingRootViewModel(
             modelText = modelLabel,
             pumpCount = resolveDosingPumpCount(exactChannelCount),
             channels = catalogChannels.map { slot ->
-                slot.toInitialDosingChannelCardUiState(targets[slot.id.value])
+                slot.toInitialDosingChannelCardUiState()
+                    .withNavigationTarget(targets[slot.id.value])
             },
             primaryCountLabelRes = KIND.primaryCountLabelRes,
             primaryCountText = exactChannelCount.takeIf { it > 0 }?.toString().orEmpty(),

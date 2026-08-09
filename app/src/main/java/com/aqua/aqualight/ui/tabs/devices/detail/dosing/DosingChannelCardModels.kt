@@ -81,19 +81,26 @@ enum class DosingDoseProgressVisualState {
 }
 
 /** Initial presentation comes only from the validated commercial channel-slot catalog. */
-internal fun DeviceDosingChannelSlot.toInitialDosingChannelCardUiState(
-    target: DeviceDosingChannelNavigationTarget? = null
-): DosingChannelCardUiState =
+internal fun DeviceDosingChannelSlot.toInitialDosingChannelCardUiState(): DosingChannelCardUiState =
     DosingChannelCardUiState(
         slotId = id.value,
         channelNumber = index.position,
-        displayName = target?.channelTitle?.ifBlank { defaultDisplayName } ?: defaultDisplayName,
-        visualState = when (target?.destination) {
+        displayName = defaultDisplayName
+    )
+
+/** Applies the central runtime target without leaking firmware addressing into presentation state. */
+internal fun DosingChannelCardUiState.withNavigationTarget(
+    target: DeviceDosingChannelNavigationTarget?
+): DosingChannelCardUiState = target?.let { navigationTarget ->
+    copy(
+        displayName = navigationTarget.channelTitle.ifBlank { displayName },
+        visualState = when (navigationTarget.destination) {
             DeviceDosingChannelDestination.DETAIL -> DosingChannelVisualState.READY
-            DeviceDosingChannelDestination.CALIBRATION,
-            null -> DosingChannelVisualState.NOT_CONFIGURED
+            DeviceDosingChannelDestination.CALIBRATION ->
+                DosingChannelVisualState.NOT_CONFIGURED
         }
     )
+} ?: this
 
 private val ALL_DOSING_WEEKDAYS = listOf(
     DosingWeekday.MONDAY,

@@ -234,12 +234,12 @@ private class RepositoryDeviceDosingChannelNavigationRuntimePort(
     override suspend fun requestStatus(
         deviceUid: DeviceUid
     ): DeviceRuntimeCommandOutcome<DeviceDosingStatus>? {
-        val dosing = devicesRepository.runtimeModules()?.dosing ?: return null
+        if (devicesRepository.runtimeModules()?.dosing == null) return null
         awaitValidatedRuntimeMetadata(
             deviceUid = deviceUid,
             timeoutMillis = CURRENT_METADATA_WAIT_MILLIS
         )
-        return dosing.requestStatus(deviceUid)
+        return devicesRepository.runtimeModules()?.dosing?.requestStatus(deviceUid)
     }
 
     private suspend fun awaitValidatedRuntimeMetadata(
