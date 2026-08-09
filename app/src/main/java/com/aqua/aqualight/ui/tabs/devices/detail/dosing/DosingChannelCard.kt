@@ -19,11 +19,15 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.geometry.CornerRadius
 import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.StrokeCap
+import androidx.compose.ui.graphics.StrokeJoin
 import androidx.compose.ui.graphics.drawscope.Stroke
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
@@ -60,7 +64,7 @@ internal fun DosingChannelCard(
     ) {
         Column(
             modifier = Modifier.fillMaxWidth(),
-            verticalArrangement = Arrangement.spacedBy(AquaDeviceCardGeometry.contentGap)
+            verticalArrangement = Arrangement.spacedBy(AquaDeviceCardGeometry.compactGap)
         ) {
             DosingChannelHeader(
                 state = state,
@@ -68,7 +72,7 @@ internal fun DosingChannelCard(
                 typography = typography,
                 statusLabel = statusLabel
             )
-            DosingChannelMetadata(
+            DosingChannelSummary(
                 state = state,
                 colors = colors,
                 typography = typography
@@ -175,40 +179,34 @@ private fun DosingStatusPill(
 }
 
 @Composable
-private fun DosingChannelMetadata(
+private fun DosingChannelSummary(
     state: DosingChannelCardUiState,
     colors: AquaDeviceCardColors,
     typography: AquaDeviceCardTypography
 ) {
+    val scheduleSummary = state.scheduleDays.summaryLabel()
+
     Row(
         modifier = Modifier.fillMaxWidth(),
-        horizontalArrangement = Arrangement.spacedBy(METADATA_GAP),
-        verticalAlignment = Alignment.Top
+        horizontalArrangement = Arrangement.spacedBy(SUMMARY_GAP),
+        verticalAlignment = Alignment.CenterVertically
     ) {
-        DosingMetadataItem(
-            icon = DosingMetadataIcon.DOSE,
+        DosingSummaryItem(
+            icon = DosingSummaryIcon.DOSE,
             label = stringResource(
                 R.string.device_dosing_channel_daily_dose_format,
-                state.doseProgress.dailyTargetMl
+                state.doseProgress.dailyDoseMl
             ),
-            tint = colors.secondaryText,
-            colors = colors,
+            iconTint = colors.accent,
+            textColor = colors.primaryText,
             typography = typography,
             modifier = Modifier.weight(1f)
         )
-        DosingMetadataItem(
-            icon = DosingMetadataIcon.CALIBRATION,
-            label = stringResource(state.calibrationState.labelRes),
-            tint = state.calibrationState.tint(colors),
-            colors = colors,
-            typography = typography,
-            modifier = Modifier.weight(1f)
-        )
-        DosingMetadataItem(
-            icon = DosingMetadataIcon.SETUP,
-            label = stringResource(state.setupState.labelRes),
-            tint = state.setupState.tint(colors),
-            colors = colors,
+        DosingSummaryItem(
+            icon = DosingSummaryIcon.DAYS,
+            label = scheduleSummary,
+            iconTint = colors.secondaryText,
+            textColor = colors.secondaryText,
             typography = typography,
             modifier = Modifier.weight(1f)
         )
@@ -216,169 +214,196 @@ private fun DosingChannelMetadata(
 }
 
 @Composable
-private fun DosingMetadataItem(
-    icon: DosingMetadataIcon,
+private fun DosingScheduleDaysUiState.summaryLabel(): String {
+    if (selectedDays.isEmpty()) {
+        return stringResource(R.string.device_dosing_channel_no_days_selected)
+    }
+    if (isEveryDay) {
+        return stringResource(R.string.device_dosing_channel_every_day)
+    }
+
+    val context = LocalContext.current
+    return selectedDays.joinToString(separator = DAY_SEPARATOR) { day ->
+        context.getString(day.shortLabelRes)
+    }
+}
+
+@Composable
+private fun DosingSummaryItem(
+    icon: DosingSummaryIcon,
     label: String,
-    tint: Color,
-    colors: AquaDeviceCardColors,
+    iconTint: Color,
+    textColor: Color,
     typography: AquaDeviceCardTypography,
     modifier: Modifier = Modifier
 ) {
     Row(
         modifier = modifier,
-        horizontalArrangement = Arrangement.spacedBy(METADATA_ICON_GAP),
-        verticalAlignment = Alignment.Top
+        horizontalArrangement = Arrangement.spacedBy(SUMMARY_ICON_GAP),
+        verticalAlignment = Alignment.CenterVertically
     ) {
-        DosingMetadataGlyph(
+        DosingSummaryGlyph(
             icon = icon,
-            tint = tint,
-            modifier = Modifier
-                .padding(top = METADATA_ICON_TOP_PADDING)
-                .size(METADATA_ICON_SIZE)
+            tint = iconTint,
+            modifier = Modifier.size(SUMMARY_ICON_SIZE)
         )
         BasicText(
             text = label,
             modifier = Modifier.weight(1f),
-            style = typography.caption.copy(
-                color = if (tint == colors.secondaryText) colors.secondaryText else tint
-            ),
-            maxLines = 2,
+            style = typography.caption.copy(color = textColor),
+            maxLines = 1,
             overflow = TextOverflow.Ellipsis
         )
     }
 }
 
 @Composable
-private fun DosingMetadataGlyph(
-    icon: DosingMetadataIcon,
+private fun DosingSummaryGlyph(
+    icon: DosingSummaryIcon,
     tint: Color,
     modifier: Modifier = Modifier
 ) {
     Canvas(modifier = modifier) {
         when (icon) {
-            DosingMetadataIcon.DOSE -> drawDoseGlyph(tint)
-            DosingMetadataIcon.CALIBRATION -> drawCalibrationGlyph(tint)
-            DosingMetadataIcon.SETUP -> drawSetupGlyph(tint)
+            DosingSummaryIcon.DOSE -> drawProfessionalDoseGlyph(tint)
+            DosingSummaryIcon.DAYS -> drawScheduleDaysGlyph(tint)
         }
     }
 }
 
-private fun androidx.compose.ui.graphics.drawscope.DrawScope.drawDoseGlyph(color: Color) {
+private fun androidx.compose.ui.graphics.drawscope.DrawScope.drawProfessionalDoseGlyph(color: Color) {
     val path = Path().apply {
         moveTo(size.width * DOSE_CENTER_X, size.height * DOSE_TOP_Y)
         cubicTo(
-            size.width * DOSE_RIGHT_CONTROL_X,
-            size.height * DOSE_FIRST_CONTROL_Y,
-            size.width * DOSE_RIGHT_CONTROL_X,
-            size.height * DOSE_SECOND_CONTROL_Y,
-            size.width * DOSE_CENTER_X,
-            size.height * DOSE_BOTTOM_Y
+            size.width * DOSE_RIGHT_UPPER_X,
+            size.height * DOSE_UPPER_CONTROL_Y,
+            size.width * DOSE_RIGHT_X,
+            size.height * DOSE_MIDDLE_CONTROL_Y,
+            size.width * DOSE_RIGHT_X,
+            size.height * DOSE_BODY_Y
         )
         cubicTo(
-            size.width * DOSE_LEFT_CONTROL_X,
-            size.height * DOSE_SECOND_CONTROL_Y,
-            size.width * DOSE_LEFT_CONTROL_X,
-            size.height * DOSE_FIRST_CONTROL_Y,
+            size.width * DOSE_RIGHT_X,
+            size.height * DOSE_BOTTOM_CONTROL_Y,
+            size.width * DOSE_LEFT_X,
+            size.height * DOSE_BOTTOM_CONTROL_Y,
+            size.width * DOSE_LEFT_X,
+            size.height * DOSE_BODY_Y
+        )
+        cubicTo(
+            size.width * DOSE_LEFT_X,
+            size.height * DOSE_MIDDLE_CONTROL_Y,
+            size.width * DOSE_LEFT_UPPER_X,
+            size.height * DOSE_UPPER_CONTROL_Y,
             size.width * DOSE_CENTER_X,
             size.height * DOSE_TOP_Y
         )
         close()
     }
-    drawPath(path = path, color = color, style = Stroke(width = GLYPH_STROKE.toPx()))
-    drawLine(
+
+    drawPath(
+        path = path,
         color = color,
-        start = Offset(size.width * TICK_LEFT_X, size.height * TICK_Y),
-        end = Offset(size.width * TICK_RIGHT_X, size.height * TICK_Y),
-        strokeWidth = GLYPH_STROKE.toPx(),
-        cap = StrokeCap.Round
+        style = Stroke(
+            width = DOSE_GLYPH_STROKE.toPx(),
+            cap = StrokeCap.Round,
+            join = StrokeJoin.Round
+        )
+    )
+    drawCircle(
+        color = color.copy(alpha = DOSE_HIGHLIGHT_ALPHA),
+        radius = size.minDimension * DOSE_HIGHLIGHT_RADIUS,
+        center = Offset(
+            x = size.width * DOSE_HIGHLIGHT_X,
+            y = size.height * DOSE_HIGHLIGHT_Y
+        )
     )
 }
 
-private fun androidx.compose.ui.graphics.drawscope.DrawScope.drawCalibrationGlyph(color: Color) {
-    val center = Offset(size.width / 2f, size.height / 2f)
-    drawCircle(
+private fun androidx.compose.ui.graphics.drawscope.DrawScope.drawScheduleDaysGlyph(color: Color) {
+    val strokeWidth = SCHEDULE_GLYPH_STROKE.toPx()
+    val bodyTop = size.height * SCHEDULE_BODY_TOP_Y
+    val bodyLeft = size.width * SCHEDULE_BODY_LEFT_X
+    val bodyWidth = size.width * SCHEDULE_BODY_WIDTH
+    val bodyHeight = size.height * SCHEDULE_BODY_HEIGHT
+
+    drawRoundRect(
         color = color,
-        radius = size.minDimension * CALIBRATION_OUTER_RADIUS,
-        center = center,
-        style = Stroke(width = GLYPH_STROKE.toPx())
-    )
-    drawCircle(
-        color = color,
-        radius = size.minDimension * CALIBRATION_INNER_RADIUS,
-        center = center
+        topLeft = Offset(bodyLeft, bodyTop),
+        size = Size(bodyWidth, bodyHeight),
+        cornerRadius = CornerRadius(SCHEDULE_CORNER_RADIUS.toPx()),
+        style = Stroke(width = strokeWidth)
     )
     drawLine(
         color = color,
-        start = Offset(center.x, 0f),
-        end = Offset(center.x, size.height * CALIBRATION_TICK_END),
-        strokeWidth = GLYPH_STROKE.toPx(),
+        start = Offset(bodyLeft, size.height * SCHEDULE_HEADER_Y),
+        end = Offset(bodyLeft + bodyWidth, size.height * SCHEDULE_HEADER_Y),
+        strokeWidth = strokeWidth,
         cap = StrokeCap.Round
     )
-}
-
-private fun androidx.compose.ui.graphics.drawscope.DrawScope.drawSetupGlyph(color: Color) {
-    SETUP_LINE_Y.forEachIndexed { index, yFraction ->
-        val y = size.height * yFraction
+    SCHEDULE_BINDER_X.forEach { xFraction ->
         drawLine(
             color = color,
-            start = Offset(0f, y),
-            end = Offset(size.width, y),
-            strokeWidth = GLYPH_STROKE.toPx(),
+            start = Offset(size.width * xFraction, size.height * SCHEDULE_BINDER_TOP_Y),
+            end = Offset(size.width * xFraction, size.height * SCHEDULE_BINDER_BOTTOM_Y),
+            strokeWidth = strokeWidth,
             cap = StrokeCap.Round
         )
+    }
+    SCHEDULE_DOT_X.forEach { xFraction ->
         drawCircle(
             color = color,
-            radius = SETUP_KNOB_RADIUS.toPx(),
-            center = Offset(size.width * SETUP_KNOB_X[index], y)
+            radius = SCHEDULE_DOT_RADIUS.toPx(),
+            center = Offset(size.width * xFraction, size.height * SCHEDULE_DOT_Y)
         )
     }
 }
 
 private fun DosingChannelVisualState.statusColor(colors: AquaDeviceCardColors): Color = when (this) {
-    DosingChannelVisualState.SETUP_REQUIRED -> colors.warning
+    DosingChannelVisualState.NOT_CONFIGURED -> colors.warning
     DosingChannelVisualState.READY,
     DosingChannelVisualState.SCHEDULED,
     DosingChannelVisualState.DOSING -> colors.accent
     DosingChannelVisualState.ERROR -> colors.danger
 }
 
-private fun DosingCalibrationUiState.tint(colors: AquaDeviceCardColors): Color = when (this) {
-    DosingCalibrationUiState.REQUIRED -> colors.warning
-    DosingCalibrationUiState.CALIBRATED -> colors.accent
-}
-
-private fun DosingSetupUiState.tint(colors: AquaDeviceCardColors): Color = when (this) {
-    DosingSetupUiState.NOT_CONFIGURED -> colors.warning
-    DosingSetupUiState.CONFIGURED -> colors.accent
-}
-
-private enum class DosingMetadataIcon {
+private enum class DosingSummaryIcon {
     DOSE,
-    CALIBRATION,
-    SETUP
+    DAYS
 }
 
-private const val STATUS_BACKGROUND_ALPHA = 0.12f
-private const val STATUS_OUTLINE_ALPHA = 0.42f
+private const val DAY_SEPARATOR = " · "
+private const val STATUS_BACKGROUND_ALPHA = 0.10f
+private const val STATUS_OUTLINE_ALPHA = 0.38f
 private const val DOSE_CENTER_X = 0.50f
-private const val DOSE_TOP_Y = 0.04f
-private const val DOSE_RIGHT_CONTROL_X = 0.88f
-private const val DOSE_LEFT_CONTROL_X = 0.12f
-private const val DOSE_FIRST_CONTROL_Y = 0.40f
-private const val DOSE_SECOND_CONTROL_Y = 0.72f
-private const val DOSE_BOTTOM_Y = 0.92f
-private const val TICK_LEFT_X = 0.35f
-private const val TICK_RIGHT_X = 0.65f
-private const val TICK_Y = 0.67f
-private const val CALIBRATION_OUTER_RADIUS = 0.36f
-private const val CALIBRATION_INNER_RADIUS = 0.10f
-private const val CALIBRATION_TICK_END = 0.22f
-private val SETUP_LINE_Y = listOf(0.22f, 0.50f, 0.78f)
-private val SETUP_KNOB_X = listOf(0.32f, 0.68f, 0.44f)
-private val CHANNEL_CARD_MIN_HEIGHT = 116.dp
-private val METADATA_GAP = 8.dp
-private val METADATA_ICON_GAP = 5.dp
-private val METADATA_ICON_TOP_PADDING = 1.dp
-private val METADATA_ICON_SIZE = 14.dp
-private val GLYPH_STROKE = 1.4.dp
-private val SETUP_KNOB_RADIUS = 1.7.dp
+private const val DOSE_TOP_Y = 0.05f
+private const val DOSE_RIGHT_UPPER_X = 0.63f
+private const val DOSE_LEFT_UPPER_X = 0.37f
+private const val DOSE_RIGHT_X = 0.84f
+private const val DOSE_LEFT_X = 0.16f
+private const val DOSE_UPPER_CONTROL_Y = 0.22f
+private const val DOSE_MIDDLE_CONTROL_Y = 0.48f
+private const val DOSE_BODY_Y = 0.66f
+private const val DOSE_BOTTOM_CONTROL_Y = 0.93f
+private const val DOSE_HIGHLIGHT_ALPHA = 0.72f
+private const val DOSE_HIGHLIGHT_RADIUS = 0.065f
+private const val DOSE_HIGHLIGHT_X = 0.39f
+private const val DOSE_HIGHLIGHT_Y = 0.61f
+private const val SCHEDULE_BODY_TOP_Y = 0.18f
+private const val SCHEDULE_BODY_LEFT_X = 0.10f
+private const val SCHEDULE_BODY_WIDTH = 0.80f
+private const val SCHEDULE_BODY_HEIGHT = 0.70f
+private const val SCHEDULE_HEADER_Y = 0.40f
+private const val SCHEDULE_BINDER_TOP_Y = 0.08f
+private const val SCHEDULE_BINDER_BOTTOM_Y = 0.28f
+private const val SCHEDULE_DOT_Y = 0.62f
+private val SCHEDULE_BINDER_X = listOf(0.32f, 0.68f)
+private val SCHEDULE_DOT_X = listOf(0.30f, 0.50f, 0.70f)
+private val CHANNEL_CARD_MIN_HEIGHT = 104.dp
+private val SUMMARY_GAP = 18.dp
+private val SUMMARY_ICON_GAP = 6.dp
+private val SUMMARY_ICON_SIZE = 16.dp
+private val DOSE_GLYPH_STROKE = 1.45.dp
+private val SCHEDULE_GLYPH_STROKE = 1.35.dp
+private val SCHEDULE_CORNER_RADIUS = 2.5.dp
+private val SCHEDULE_DOT_RADIUS = 1.1.dp

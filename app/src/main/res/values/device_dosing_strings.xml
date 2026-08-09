@@ -6,17 +6,23 @@
     <string name="device_dosing_pump_channel_content_description">Dosing channel %1$d, %2$s</string>
     <string name="device_dosing_open_settings_description">Open device settings</string>
 
-    <string name="device_dosing_channel_status_setup_required">Setup required</string>
     <string name="device_dosing_channel_status_ready">Ready</string>
     <string name="device_dosing_channel_status_scheduled">Scheduled</string>
     <string name="device_dosing_channel_status_dosing">Dosing</string>
     <string name="device_dosing_channel_status_attention">Needs attention</string>
-    <string name="device_dosing_channel_daily_dose_format">%1$.2f ml/day</string>
-    <string name="device_dosing_channel_calibration_required">Calibration required</string>
-    <string name="device_dosing_channel_calibrated">Calibrated</string>
     <string name="device_dosing_channel_not_configured">Not configured</string>
-    <string name="device_dosing_channel_configured">Configured</string>
-    <string name="device_dosing_channel_dose_progress_description">Daily dose progress. %1$.2f ml delivered of %2$.2f ml.</string>
+    <string name="device_dosing_channel_daily_dose_format">%1$.2f ml</string>
+    <string name="device_dosing_channel_every_day">Every day</string>
+    <string name="device_dosing_channel_no_days_selected">No days selected</string>
+    <string name="device_dosing_weekday_mon">Mon</string>
+    <string name="device_dosing_weekday_tue">Tue</string>
+    <string name="device_dosing_weekday_wed">Wed</string>
+    <string name="device_dosing_weekday_thu">Thu</string>
+    <string name="device_dosing_weekday_fri">Fri</string>
+    <string name="device_dosing_weekday_sat">Sat</string>
+    <string name="device_dosing_weekday_sun">Sun</string>
+    <string name="device_dosing_channel_dose_progress_description">Daily dose progress. %1$.2f ml delivered today of %2$.2f ml configured.</string>
     <string name="device_dosing_channel_dose_progress_value_format">%1$.2f ml</string>
+    <string name="device_dosing_channel_dose_scale_value_format">%1$.2f</string>
     <string name="device_dosing_channel_card_content_description">Dosing channel %1$d, %2$s, %3$s</string>
 </resources>

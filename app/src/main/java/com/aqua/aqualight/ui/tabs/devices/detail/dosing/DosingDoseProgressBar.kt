@@ -19,6 +19,7 @@ import androidx.compose.ui.geometry.CornerRadius
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
@@ -28,11 +29,11 @@ import com.aqua.aqualight.ui.common.devicecard.AquaDeviceCardColors
 import com.aqua.aqualight.ui.common.devicecard.AquaDeviceCardTypography
 
 /**
- * Daily-dose progress rail.
+ * Daily-dose progress bar.
  *
- * The x-axis represents cumulative delivered volume from 0 ml to the configured daily target.
- * It never represents wall-clock time. Future schedule/configuration binding may provide
- * [DosingDoseProgressUiState.doseCheckpointsMl] without changing this component's geometry.
+ * The x-axis represents cumulative delivered volume from 0 ml to the configured daily dose.
+ * It never represents wall-clock time. Future channel configuration may provide cumulative
+ * [DosingDoseProgressUiState.doseMilestonesMl] without changing this component's geometry.
  */
 @Composable
 internal fun DosingDoseProgressBar(
@@ -41,21 +42,22 @@ internal fun DosingDoseProgressBar(
     typography: AquaDeviceCardTypography,
     modifier: Modifier = Modifier
 ) {
+    val context = LocalContext.current
     val currentDoseLabel = stringResource(
         R.string.device_dosing_channel_dose_progress_value_format,
-        state.deliveredMl
+        state.deliveredTodayMl
     )
     val description = stringResource(
         R.string.device_dosing_channel_dose_progress_description,
-        state.deliveredMl,
-        state.dailyTargetMl
+        state.deliveredTodayMl,
+        state.dailyDoseMl
     )
     val progressFraction = state.progressFraction()
-    val doseScaleLabels = if (state.dailyTargetMl > 0.0) {
-        DOSE_LABEL_FRACTIONS.map { fraction ->
-            stringResource(
-                R.string.device_dosing_channel_dose_progress_value_format,
-                state.dailyTargetMl * fraction
+    val doseScaleLabels = if (state.dailyDoseMl > 0.0) {
+        DOSE_SCALE_FRACTIONS.map { fraction ->
+            context.getString(
+                R.string.device_dosing_channel_dose_scale_value_format,
+                state.dailyDoseMl * fraction
             )
         }
     } else {
@@ -68,7 +70,7 @@ internal fun DosingDoseProgressBar(
                 .fillMaxWidth()
                 .height(DOSE_PROGRESS_TRACK_HEIGHT)
                 .semantics { contentDescription = description },
-            contentAlignment = Alignment.Center
+            contentAlignment = Alignment.CenterStart
         ) {
             Canvas(modifier = Modifier.fillMaxSize()) {
                 val radius = size.height / 2f
@@ -86,8 +88,8 @@ internal fun DosingDoseProgressBar(
                     )
                 }
 
-                if (state.dailyTargetMl > 0.0) {
-                    DOSE_TICK_FRACTIONS.forEach { fraction ->
+                if (state.dailyDoseMl > 0.0) {
+                    DOSE_MAJOR_TICK_FRACTIONS.forEach { fraction ->
                         val x = size.width * fraction
                         drawLine(
                             color = colors.mediaOutline,
@@ -97,18 +99,18 @@ internal fun DosingDoseProgressBar(
                         )
                     }
 
-                    state.doseCheckpointsMl
+                    state.doseMilestonesMl
                         .asSequence()
-                        .filter { it > 0.0 && it < state.dailyTargetMl }
-                        .map { (it / state.dailyTargetMl).toFloat() }
+                        .filter { it > 0.0 && it < state.dailyDoseMl }
+                        .map { (it / state.dailyDoseMl).toFloat() }
                         .distinct()
                         .forEach { fraction ->
                             val x = size.width * fraction
                             drawLine(
-                                color = colors.primaryText.copy(alpha = CHECKPOINT_ALPHA),
-                                start = Offset(x, CHECKPOINT_VERTICAL_PADDING.toPx()),
-                                end = Offset(x, size.height - CHECKPOINT_VERTICAL_PADDING.toPx()),
-                                strokeWidth = CHECKPOINT_WIDTH.toPx()
+                                color = colors.primaryText.copy(alpha = MILESTONE_ALPHA),
+                                start = Offset(x, MILESTONE_VERTICAL_PADDING.toPx()),
+                                end = Offset(x, size.height - MILESTONE_VERTICAL_PADDING.toPx()),
+                                strokeWidth = MILESTONE_WIDTH.toPx()
                             )
                         }
                 }
@@ -116,7 +118,14 @@ internal fun DosingDoseProgressBar(
 
             BasicText(
                 text = currentDoseLabel,
-                style = typography.micro.copy(color = colors.primaryText)
+                modifier = Modifier.padding(horizontal = CURRENT_DOSE_HORIZONTAL_PADDING),
+                style = typography.micro.copy(
+                    color = if (state.visualState == DosingDoseProgressVisualState.EMPTY) {
+                        colors.secondaryText
+                    } else {
+                        colors.primaryText
+                    }
+                )
             )
         }
 
@@ -128,7 +137,10 @@ internal fun DosingDoseProgressBar(
                 horizontalArrangement = Arrangement.SpaceBetween
             ) {
                 doseScaleLabels.forEach { label ->
-                    BasicText(text = label, style = typography.micro)
+                    BasicText(
+                        text = label,
+                        style = typography.micro.copy(color = colors.secondaryText)
+                    )
                 }
             }
         }
@@ -136,8 +148,8 @@ internal fun DosingDoseProgressBar(
 }
 
 internal fun DosingDoseProgressUiState.progressFraction(): Float {
-    if (dailyTargetMl <= 0.0) return 0f
-    return (deliveredMl / dailyTargetMl).coerceIn(0.0, 1.0).toFloat()
+    if (dailyDoseMl <= 0.0) return 0f
+    return (deliveredTodayMl / dailyDoseMl).coerceIn(0.0, 1.0).toFloat()
 }
 
 private fun DosingDoseProgressUiState.progressColor(colors: AquaDeviceCardColors): Color = when (visualState) {
@@ -148,12 +160,13 @@ private fun DosingDoseProgressUiState.progressColor(colors: AquaDeviceCardColors
     DosingDoseProgressVisualState.ERROR -> colors.danger
 }
 
-private val DOSE_LABEL_FRACTIONS = listOf(0.0, 0.25, 0.50, 0.75, 1.0)
-private val DOSE_TICK_FRACTIONS = listOf(0.10f, 0.20f, 0.30f, 0.40f, 0.50f, 0.60f, 0.70f, 0.80f, 0.90f)
-private const val CHECKPOINT_ALPHA = 0.68f
-private val DOSE_PROGRESS_TRACK_HEIGHT = 18.dp
-private val DOSE_LABEL_TOP_PADDING = 2.dp
+private val DOSE_SCALE_FRACTIONS = listOf(0.0, 0.25, 0.50, 0.75, 1.0)
+private val DOSE_MAJOR_TICK_FRACTIONS = listOf(0.25f, 0.50f, 0.75f)
+private const val MILESTONE_ALPHA = 0.72f
+private val DOSE_PROGRESS_TRACK_HEIGHT = 16.dp
+private val CURRENT_DOSE_HORIZONTAL_PADDING = 8.dp
+private val DOSE_LABEL_TOP_PADDING = 3.dp
 private val DOSE_TICK_VERTICAL_PADDING = 4.dp
 private val DOSE_TICK_WIDTH = 1.dp
-private val CHECKPOINT_VERTICAL_PADDING = 2.dp
-private val CHECKPOINT_WIDTH = 1.5.dp
+private val MILESTONE_VERTICAL_PADDING = 2.dp
+private val MILESTONE_WIDTH = 1.5.dp

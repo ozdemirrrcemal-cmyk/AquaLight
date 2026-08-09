@@ -11,9 +11,8 @@ data class DosingChannelCardUiState(
     val channelNumber: Int,
     val wireKey: String,
     val displayName: String,
-    val calibrationState: DosingCalibrationUiState = DosingCalibrationUiState.REQUIRED,
-    val setupState: DosingSetupUiState = DosingSetupUiState.NOT_CONFIGURED,
-    val visualState: DosingChannelVisualState = DosingChannelVisualState.SETUP_REQUIRED,
+    val visualState: DosingChannelVisualState = DosingChannelVisualState.NOT_CONFIGURED,
+    val scheduleDays: DosingScheduleDaysUiState = DosingScheduleDaysUiState(),
     val doseProgress: DosingDoseProgressUiState = DosingDoseProgressUiState()
 ) {
     init {
@@ -24,52 +23,65 @@ data class DosingChannelCardUiState(
     }
 }
 
-enum class DosingCalibrationUiState(
-    @StringRes val labelRes: Int
-) {
-    REQUIRED(R.string.device_dosing_channel_calibration_required),
-    CALIBRATED(R.string.device_dosing_channel_calibrated)
-}
-
-enum class DosingSetupUiState(
-    @StringRes val labelRes: Int
-) {
-    NOT_CONFIGURED(R.string.device_dosing_channel_not_configured),
-    CONFIGURED(R.string.device_dosing_channel_configured)
-}
-
 enum class DosingChannelVisualState(
     @StringRes val labelRes: Int
 ) {
-    SETUP_REQUIRED(R.string.device_dosing_channel_status_setup_required),
+    NOT_CONFIGURED(R.string.device_dosing_channel_not_configured),
     READY(R.string.device_dosing_channel_status_ready),
     SCHEDULED(R.string.device_dosing_channel_status_scheduled),
     DOSING(R.string.device_dosing_channel_status_dosing),
     ERROR(R.string.device_dosing_channel_status_attention)
 }
 
+enum class DosingWeekday(
+    @StringRes val shortLabelRes: Int
+) {
+    MONDAY(R.string.device_dosing_weekday_mon),
+    TUESDAY(R.string.device_dosing_weekday_tue),
+    WEDNESDAY(R.string.device_dosing_weekday_wed),
+    THURSDAY(R.string.device_dosing_weekday_thu),
+    FRIDAY(R.string.device_dosing_weekday_fri),
+    SATURDAY(R.string.device_dosing_weekday_sat),
+    SUNDAY(R.string.device_dosing_weekday_sun)
+}
+
+@Immutable
+data class DosingScheduleDaysUiState(
+    val selectedDays: List<DosingWeekday> = ALL_DOSING_WEEKDAYS
+) {
+    init {
+        require(selectedDays.distinct().size == selectedDays.size) {
+            "Dosing schedule days must not contain duplicates."
+        }
+    }
+
+    val isEveryDay: Boolean
+        get() = selectedDays.size == ALL_DOSING_WEEKDAYS.size &&
+            selectedDays.containsAll(ALL_DOSING_WEEKDAYS)
+}
+
 /**
  * Volume-based daily dosing progress.
  *
- * [dailyTargetMl] is the configured total dose for the day. [deliveredMl] is the amount actually
- * delivered so far. Optional checkpoints are cumulative dose boundaries supplied by the future
- * channel configuration mapper; they are deliberately expressed in millilitres, never time.
+ * [dailyDoseMl] is the total daily dose configured by the user. [deliveredTodayMl] is the amount
+ * actually delivered today. Optional [doseMilestonesMl] are cumulative volume boundaries supplied
+ * by the future channel-configuration mapper. The progress contract contains no wall-clock axis.
  */
 @Immutable
 data class DosingDoseProgressUiState(
-    val dailyTargetMl: Double = 0.0,
-    val deliveredMl: Double = 0.0,
-    val doseCheckpointsMl: List<Double> = emptyList(),
+    val dailyDoseMl: Double = 0.0,
+    val deliveredTodayMl: Double = 0.0,
+    val doseMilestonesMl: List<Double> = emptyList(),
     val visualState: DosingDoseProgressVisualState = DosingDoseProgressVisualState.EMPTY
 ) {
     init {
-        require(dailyTargetMl >= 0.0) { "Daily dosing target must not be negative." }
-        require(deliveredMl >= 0.0) { "Delivered dosing amount must not be negative." }
-        require(doseCheckpointsMl.all { it >= 0.0 && it <= dailyTargetMl }) {
-            "Dose checkpoints must stay inside the configured daily target."
+        require(dailyDoseMl >= 0.0) { "Daily dosing amount must not be negative." }
+        require(deliveredTodayMl >= 0.0) { "Delivered dosing amount must not be negative." }
+        require(doseMilestonesMl.all { it >= 0.0 && it <= dailyDoseMl }) {
+            "Dose milestones must stay inside the configured daily dose."
         }
-        require(doseCheckpointsMl.zipWithNext().all { (previous, next) -> previous <= next }) {
-            "Dose checkpoints must be ordered by cumulative volume."
+        require(doseMilestonesMl.zipWithNext().all { (previous, next) -> previous <= next }) {
+            "Dose milestones must be ordered by cumulative volume."
         }
     }
 }
@@ -90,3 +102,13 @@ internal fun DeviceDosingChannelSlot.toInitialDosingChannelCardUiState(): Dosing
         wireKey = wireKey.value,
         displayName = defaultDisplayName
     )
+
+private val ALL_DOSING_WEEKDAYS = listOf(
+    DosingWeekday.MONDAY,
+    DosingWeekday.TUESDAY,
+    DosingWeekday.WEDNESDAY,
+    DosingWeekday.THURSDAY,
+    DosingWeekday.FRIDAY,
+    DosingWeekday.SATURDAY,
+    DosingWeekday.SUNDAY
+)
