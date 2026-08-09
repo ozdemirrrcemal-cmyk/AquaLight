@@ -2,7 +2,6 @@ package com.aqua.aqualight.ui.tabs.devices.detail.dosing.channel.calibration
 
 import android.os.Bundle
 import android.view.View
-import androidx.navigation.fragment.findNavController
 import androidx.navigation.fragment.navArgs
 import com.aqua.aqualight.R
 import com.aqua.aqualight.ui.tabs.devices.detail.dosing.channel.DeviceDosingChannelDestinationFragment
@@ -18,8 +17,12 @@ class DeviceDosingChannelCalibrationFragment :
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
-        if (args.deviceUid.isBlank() || args.slotId.isBlank()) {
-            findNavController().navigateUp()
-        }
+        setupSelectedPump(
+            view = view,
+            deviceUid = args.deviceUid,
+            slotId = args.slotId,
+            pumpCount = args.pumpCount,
+            channelNumber = args.channelNumber
+        )
     }
 }

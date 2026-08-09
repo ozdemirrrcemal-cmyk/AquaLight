@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="device_dosing_pump_state_idle">Ready</string>
+    <string name="device_dosing_pump_state_selected">Selected</string>
     <string name="device_dosing_pump_state_running">Running</string>
     <string name="device_dosing_pump_state_error">Error</string>
     <string name="device_dosing_pump_channel_content_description">Dosing channel %1$d, %2$s</string>

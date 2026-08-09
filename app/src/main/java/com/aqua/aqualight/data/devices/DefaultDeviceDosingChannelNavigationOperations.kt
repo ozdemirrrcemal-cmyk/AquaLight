@@ -74,6 +74,8 @@ internal class DefaultDeviceDosingChannelNavigationOperations(
                     DeviceDosingChannelNavigationTarget(
                         deviceUid = context.uid.value,
                         slotId = context.slot.id.value,
+                        pumpCount = context.root.channelSlots.dosingChannels.size,
+                        channelNumber = context.slot.index.position,
                         channelTitle = context.slot.defaultDisplayName,
                         destination = destination
                     )
@@ -142,6 +144,8 @@ internal class DefaultDeviceDosingChannelNavigationOperations(
                 DeviceDosingChannelNavigationTarget(
                     deviceUid = context.uid.value,
                     slotId = context.slot.id.value,
+                    pumpCount = context.root.channelSlots.dosingChannels.size,
+                    channelNumber = context.slot.index.position,
                     channelTitle = channel.displayName.ifBlank {
                         context.slot.defaultDisplayName
                     },

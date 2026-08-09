@@ -101,9 +101,15 @@ object AppRouteNavigator {
         val deviceUid = target.deviceUid.trim()
         val slotId = target.slotId.trim()
         val channelTitle = target.channelTitle.trim()
+        val pumpCount = target.pumpCount
+        val channelNumber = target.channelNumber
         val destinationId = target.destination.destinationId
         return when {
-            deviceUid.isBlank() || slotId.isBlank() || channelTitle.isBlank() ->
+            deviceUid.isBlank() ||
+                slotId.isBlank() ||
+                channelTitle.isBlank() ||
+                pumpCount !in supportedDosingPumpCounts ||
+                channelNumber !in 1..pumpCount ->
                 AppRouteOpenResult.REJECTED
             DosingChannelRouteIdempotencyPolicy.isAlreadyOpen(
                 current = DosingChannelRouteIdentity(
@@ -136,6 +142,8 @@ object AppRouteNavigator {
                             .appendPath(slotId)
                             .appendPath(target.destination.path)
                             .appendQueryParameter(QUERY_CHANNEL_TITLE, channelTitle)
+                            .appendQueryParameter(QUERY_PUMP_COUNT, pumpCount.toString())
+                            .appendQueryParameter(QUERY_CHANNEL_NUMBER, channelNumber.toString())
                             .build()
                     ),
                     dosingChannelRouteOptions()
@@ -196,11 +204,14 @@ object AppRouteNavigator {
     private const val PATH_DETAIL = "detail"
     private const val QUERY_START_TAB = "startTab"
     private const val QUERY_CHANNEL_TITLE = "channelTitle"
+    private const val QUERY_PUMP_COUNT = "pumpCount"
+    private const val QUERY_CHANNEL_NUMBER = "channelNumber"
     private const val ARG_DEVICE_UID = "deviceUid"
     private const val ARG_SLOT_ID = "slotId"
 
     private val firmwareDestinationId = R.id.deviceFirmwareUpdateFragment
     private val dosingRootDestinationId = R.id.deviceDosingRootFragment
+    private val supportedDosingPumpCounts = setOf(2, 4)
 
     private val DeviceDosingChannelDestination.destinationId: Int
         get() = when (this) {

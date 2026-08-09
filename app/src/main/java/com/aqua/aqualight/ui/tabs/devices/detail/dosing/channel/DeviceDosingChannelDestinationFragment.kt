@@ -3,12 +3,16 @@ package com.aqua.aqualight.ui.tabs.devices.detail.dosing.channel
 import android.os.Bundle
 import android.view.View
 import androidx.annotation.LayoutRes
+import androidx.compose.ui.platform.ComposeView
+import androidx.compose.ui.platform.ViewCompositionStrategy
 import androidx.fragment.app.Fragment
 import androidx.navigation.fragment.findNavController
 import com.aqua.aqualight.R
 import com.aqua.aqualight.databinding.LayoutAquaHeaderBinding
 import com.aqua.aqualight.ui.common.header.AquaHeaderConfig
 import com.aqua.aqualight.ui.common.header.setupAquaHeader
+import com.aqua.aqualight.ui.tabs.devices.detail.dosing.DosingSelectedPumpSection
+import com.aqua.aqualight.ui.tabs.devices.detail.dosing.exactDosingPumpCountOrNull
 
 /** Shared header behavior for distinct centrally resolved Dosing destinations. */
 abstract class DeviceDosingChannelDestinationFragment(
@@ -29,5 +33,33 @@ abstract class DeviceDosingChannelDestinationFragment(
                 }
             )
         )
+    }
+
+    protected fun setupSelectedPump(
+        view: View,
+        deviceUid: String,
+        slotId: String,
+        pumpCount: Int,
+        channelNumber: Int
+    ) {
+        val exactPumpCount = exactDosingPumpCountOrNull(pumpCount)
+        if (
+            deviceUid.isBlank() ||
+            slotId.isBlank() ||
+            exactPumpCount == null ||
+            channelNumber !in 1..exactPumpCount
+        ) {
+            findNavController().navigateUp()
+            return
+        }
+        view.findViewById<ComposeView>(R.id.dosingPumpCompose).apply {
+            setViewCompositionStrategy(ViewCompositionStrategy.DisposeOnViewTreeLifecycleDestroyed)
+            setContent {
+                DosingSelectedPumpSection(
+                    pumpCount = exactPumpCount,
+                    selectedChannelNumber = channelNumber
+                )
+            }
+        }
     }
 }

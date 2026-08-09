@@ -120,6 +120,8 @@ class DebugDeviceFixtureCatalogTest {
         val expected = DeviceDosingChannelNavigationTarget(
             deviceUid = "REAL-DEVICE-001",
             slotId = "dosing:channel1",
+            pumpCount = 2,
+            channelNumber = 1,
             channelTitle = "Nutrients",
             destination = DeviceDosingChannelDestination.DETAIL
         )

@@ -24,8 +24,14 @@
         <argument
             android:name="channelTitle"
             app:argType="string" />
+        <argument
+            android:name="pumpCount"
+            app:argType="integer" />
+        <argument
+            android:name="channelNumber"
+            app:argType="integer" />
         <deepLink
-            app:uri="aqualight://app/device/{deviceUid}/dosing/channel/{slotId}/calibration?channelTitle={channelTitle}" />
+            app:uri="aqualight://app/device/{deviceUid}/dosing/channel/{slotId}/calibration?channelTitle={channelTitle}&amp;pumpCount={pumpCount}&amp;channelNumber={channelNumber}" />
     </fragment>
 
     <fragment
@@ -42,7 +48,13 @@
         <argument
             android:name="channelTitle"
             app:argType="string" />
+        <argument
+            android:name="pumpCount"
+            app:argType="integer" />
+        <argument
+            android:name="channelNumber"
+            app:argType="integer" />
         <deepLink
-            app:uri="aqualight://app/device/{deviceUid}/dosing/channel/{slotId}/detail?channelTitle={channelTitle}" />
+            app:uri="aqualight://app/device/{deviceUid}/dosing/channel/{slotId}/detail?channelTitle={channelTitle}&amp;pumpCount={pumpCount}&amp;channelNumber={channelNumber}" />
     </fragment>
 </navigation>

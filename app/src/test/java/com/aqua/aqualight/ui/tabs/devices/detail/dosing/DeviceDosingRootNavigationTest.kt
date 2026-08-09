@@ -40,6 +40,8 @@ class DeviceDosingRootNavigationTest {
         val target = DeviceDosingChannelNavigationTarget(
             deviceUid = DEVICE_UID,
             slotId = SLOT_ID,
+            pumpCount = 2,
+            channelNumber = 1,
             channelTitle = "Nutrients",
             destination = DeviceDosingChannelDestination.DETAIL
         )

@@ -8,6 +8,7 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
@@ -59,8 +60,13 @@ internal fun DeviceDosingCatalogScreen(
             DosingPumpSection(
                 pumpCount = exactPumpCount,
                 pumpHeads = pumpHeads,
-                channels = channels,
-                onChannelClick = onChannelClick
+                onPumpClick = { channelNumber ->
+                    channels.firstOrNull { channel ->
+                        channel.channelNumber == channelNumber
+                    }?.let { channel ->
+                        onChannelClick(channel.slotId)
+                    }
+                }
             )
         }
 
@@ -84,14 +90,14 @@ internal fun DeviceDosingCatalogScreen(
 }
 
 @Composable
-private fun DosingPumpSection(
+internal fun DosingPumpSection(
     pumpCount: Int,
     pumpHeads: List<DosingPumpHeadUiState>,
-    channels: List<DosingChannelCardUiState>,
-    onChannelClick: (String) -> Unit
+    onPumpClick: ((Int) -> Unit)?,
+    modifier: Modifier = Modifier
 ) {
     BoxWithConstraints(
-        modifier = Modifier.fillMaxWidth(),
+        modifier = modifier.fillMaxWidth(),
         contentAlignment = Alignment.TopCenter
     ) {
         val maximumDeviceWidth = if (pumpCount == DOSING_PRO_2_PUMP_COUNT) {
@@ -102,16 +108,39 @@ private fun DosingPumpSection(
         val resolvedDeviceWidth = minOf(maxWidth, maximumDeviceWidth)
         DosingPumpDevice(
             pumpHeads = pumpHeads,
-            onPumpClick = { channelNumber ->
-                channels.firstOrNull { channel ->
-                    channel.channelNumber == channelNumber
-                }?.let { channel ->
-                    onChannelClick(channel.slotId)
-                }
-            },
+            onPumpClick = onPumpClick,
             modifier = Modifier.width(resolvedDeviceWidth)
         )
     }
+}
+
+@Composable
+internal fun DosingSelectedPumpSection(
+    pumpCount: Int,
+    selectedChannelNumber: Int,
+    modifier: Modifier = Modifier
+) {
+    val exactPumpCount = exactDosingPumpCountOrNull(pumpCount) ?: return
+    val pumpHeads = List(exactPumpCount) { index ->
+        DosingPumpHeadUiState(
+            channelNumber = index + 1,
+            visualState = if (index + 1 == selectedChannelNumber) {
+                DosingPumpVisualState.SELECTED
+            } else {
+                DosingPumpVisualState.IDLE
+            }
+        )
+    }
+    DosingPumpSection(
+        pumpCount = exactPumpCount,
+        pumpHeads = pumpHeads,
+        onPumpClick = null,
+        modifier = modifier.padding(
+            start = SCREEN_HORIZONTAL_PADDING,
+            top = SCREEN_TOP_PADDING,
+            end = SCREEN_HORIZONTAL_PADDING
+        )
+    )
 }
 
 internal fun exactDosingPumpCountOrNull(pumpCount: Int): Int? = when (pumpCount) {

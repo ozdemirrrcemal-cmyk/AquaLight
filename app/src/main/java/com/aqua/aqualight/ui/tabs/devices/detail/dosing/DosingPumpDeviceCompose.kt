@@ -50,6 +50,7 @@ enum class DosingPumpVisualState(
     @StringRes val stateLabelRes: Int
 ) {
     IDLE(R.string.device_dosing_pump_state_idle),
+    SELECTED(R.string.device_dosing_pump_state_selected),
     RUNNING(R.string.device_dosing_pump_state_running),
     ERROR(R.string.device_dosing_pump_state_error)
 }
@@ -57,7 +58,7 @@ enum class DosingPumpVisualState(
 @Composable
 fun DosingPumpDevice(
     pumpHeads: List<DosingPumpHeadUiState>,
-    onPumpClick: (Int) -> Unit,
+    onPumpClick: ((Int) -> Unit)?,
     modifier: Modifier = Modifier
 ) {
     require(
@@ -151,7 +152,9 @@ private fun DosingPumpDeck(
                 }
                 DosingPumpHead(
                     pumpHead = pumpHead,
-                    onClick = { onPumpClick(pumpHead.channelNumber) },
+                    onClick = onPumpClick?.let { click ->
+                        { click(pumpHead.channelNumber) }
+                    },
                     modifier = pumpModifier
                 )
             }
@@ -162,7 +165,7 @@ private fun DosingPumpDeck(
 @Composable
 private fun DosingPumpHead(
     pumpHead: DosingPumpHeadUiState,
-    onClick: () -> Unit,
+    onClick: (() -> Unit)?,
     modifier: Modifier = Modifier
 ) {
     val interactionSource = remember { MutableInteractionSource() }
@@ -192,11 +195,17 @@ private fun DosingPumpHead(
                 contentDescription = pumpDescription
                 stateDescription = stateLabel
             }
-            .clickable(
-                interactionSource = interactionSource,
-                indication = null,
-                role = Role.Button,
-                onClick = onClick
+            .then(
+                if (onClick == null) {
+                    Modifier
+                } else {
+                    Modifier.clickable(
+                        interactionSource = interactionSource,
+                        indication = null,
+                        role = Role.Button,
+                        onClick = onClick
+                    )
+                }
             )
             .padding(PUMP_FRAME_INSET),
         contentAlignment = Alignment.Center
@@ -287,7 +296,8 @@ private fun PumpIndicator(
         label = "dosing-pump-error-scale"
     )
     val pulseScale = when (visualState) {
-        DosingPumpVisualState.IDLE -> NORMAL_SCALE
+        DosingPumpVisualState.IDLE,
+        DosingPumpVisualState.SELECTED -> NORMAL_SCALE
         DosingPumpVisualState.RUNNING -> runningScale
         DosingPumpVisualState.ERROR -> errorScale
     }
@@ -344,4 +354,3 @@ private val DEVICE_INNER_INSET = DEVICE_INNER_INSET_DP.dp
 private val DEVICE_DECK_INSET = DEVICE_DECK_INSET_DP.dp
 private val PUMP_FRAME_INSET = PUMP_FRAME_INSET_DP.dp
 private val PUMP_SPACING = PUMP_SPACING_DP.dp
-

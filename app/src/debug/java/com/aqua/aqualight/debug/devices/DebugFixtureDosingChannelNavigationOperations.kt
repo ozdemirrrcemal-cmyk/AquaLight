@@ -69,6 +69,8 @@ internal class DebugFixtureDosingChannelNavigationOperations(
                     DeviceDosingChannelNavigationTarget(
                         deviceUid = fixture.deviceUid,
                         slotId = slot.id.value,
+                        pumpCount = fixture.channelSlots.dosingChannels.size,
+                        channelNumber = slot.index.position,
                         channelTitle = slot.defaultDisplayName,
                         destination = destination
                     )

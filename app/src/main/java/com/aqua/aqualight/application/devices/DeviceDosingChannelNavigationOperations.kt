@@ -27,6 +27,8 @@ fun interface DeviceDosingChannelNavigationOperations {
 data class DeviceDosingChannelNavigationTarget(
     val deviceUid: String,
     val slotId: String,
+    val pumpCount: Int,
+    val channelNumber: Int,
     val channelTitle: String,
     val destination: DeviceDosingChannelDestination
 )
