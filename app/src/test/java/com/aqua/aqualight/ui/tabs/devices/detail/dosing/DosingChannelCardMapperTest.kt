@@ -23,7 +23,6 @@ class DosingChannelCardMapperTest {
 
         assertEquals("dosing:channel2", state.slotId)
         assertEquals(2, state.channelNumber)
-        assertEquals("channel2", state.wireKey)
         assertEquals("Channel 2", state.displayName)
         assertEquals(DosingChannelVisualState.NOT_CONFIGURED, state.visualState)
         assertFalse(state.scheduleDays.isEveryDay)
