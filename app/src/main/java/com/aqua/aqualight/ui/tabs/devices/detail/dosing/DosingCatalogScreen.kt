@@ -1,4 +1,4 @@
-@file:Suppress("FunctionNaming", "MagicNumber", "UnusedPrivateMember")
+@file:Suppress("FunctionNaming", "MagicNumber")
 
 package com.aqua.aqualight.ui.tabs.devices.detail.dosing
 
@@ -16,7 +16,6 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 
 /**
@@ -128,31 +127,3 @@ private val CHANNEL_CARD_SPACING = 10.dp
 private val DEVICE_TO_CARDS_EXTRA_SPACING = 4.dp
 private val DOSING_PRO_2_MAX_WIDTH = 360.dp
 private val DOSING_PRO_4_MAX_WIDTH = 760.dp
-
-@Preview(name = "Dose Pro 2 - catalog cards", showBackground = true, backgroundColor = 0xFF0A192F)
-@Composable
-private fun DosePro2CatalogPreview() {
-    DeviceDosingCatalogScreen(
-        pumpCount = 2,
-        channels = previewChannels(2)
-    )
-}
-
-@Preview(name = "Dose Pro 4 - catalog cards", showBackground = true, backgroundColor = 0xFF0A192F)
-@Composable
-private fun DosePro4CatalogPreview() {
-    DeviceDosingCatalogScreen(
-        pumpCount = 4,
-        channels = previewChannels(4)
-    )
-}
-
-private fun previewChannels(count: Int): List<DosingChannelCardUiState> = List(count) { index ->
-    val position = index + 1
-    DosingChannelCardUiState(
-        slotId = "dosing:channel$position",
-        channelNumber = position,
-        wireKey = "channel$position",
-        displayName = "Channel $position"
-    )
-}
