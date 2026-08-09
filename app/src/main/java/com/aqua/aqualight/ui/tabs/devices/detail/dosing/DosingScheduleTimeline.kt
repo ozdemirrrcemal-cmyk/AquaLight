@@ -1,3 +1,5 @@
+@file:Suppress("FunctionNaming", "MagicNumber")
+
 package com.aqua.aqualight.ui.tabs.devices.detail.dosing
 
 import androidx.compose.foundation.Canvas
