@@ -194,46 +194,6 @@
             app:exitAnim="@anim/nav_slide_out_right"
             app:popEnterAnim="@anim/nav_slide_in_right"
             app:popExitAnim="@anim/nav_slide_out_left" />
-        <action
-            android:id="@+id/action_deviceDosingRootFragment_to_deviceDosingChannelDetailFragment"
-            app:destination="@id/deviceDosingChannelDetailFragment"
-            app:enterAnim="@anim/nav_slide_in_right"
-            app:exitAnim="@anim/nav_slide_out_left"
-            app:popEnterAnim="@anim/nav_slide_in_left"
-            app:popExitAnim="@anim/nav_slide_out_right" />
-        <action
-            android:id="@+id/action_deviceDosingRootFragment_to_deviceDosingChannelCalibrationFragment"
-            app:destination="@id/deviceDosingChannelCalibrationFragment"
-            app:enterAnim="@anim/nav_slide_in_right"
-            app:exitAnim="@anim/nav_slide_out_left"
-            app:popEnterAnim="@anim/nav_slide_in_left"
-            app:popExitAnim="@anim/nav_slide_out_right" />
-    </fragment>
-
-    <fragment
-        android:id="@+id/deviceDosingChannelDetailFragment"
-        android:name="com.aqua.aqualight.ui.tabs.devices.detail.dosing.channel.detail.DeviceDosingChannelDetailFragment"
-        android:label="@string/device_family_dosing"
-        tools:layout="@layout/fragment_device_dosing_channel_destination">
-        <argument
-            android:name="deviceUid"
-            app:argType="string" />
-        <argument
-            android:name="slotId"
-            app:argType="string" />
-    </fragment>
-
-    <fragment
-        android:id="@+id/deviceDosingChannelCalibrationFragment"
-        android:name="com.aqua.aqualight.ui.tabs.devices.detail.dosing.channel.calibration.DeviceDosingChannelCalibrationFragment"
-        android:label="@string/device_family_dosing"
-        tools:layout="@layout/fragment_device_dosing_channel_destination">
-        <argument
-            android:name="deviceUid"
-            app:argType="string" />
-        <argument
-            android:name="slotId"
-            app:argType="string" />
     </fragment>
 
     <fragment
