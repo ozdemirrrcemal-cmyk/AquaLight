@@ -1,3 +1,5 @@
+@file:Suppress("FunctionNaming", "MagicNumber")
+
 package com.aqua.aqualight.ui.common.devicecard
 
 import androidx.compose.foundation.background
