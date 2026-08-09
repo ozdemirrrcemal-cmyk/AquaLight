@@ -1,8 +1,5 @@
-@file:Suppress("FunctionNaming", "MagicNumber", "TooManyFunctions")
-
 package com.aqua.aqualight.ui.tabs.devices.detail.dosing
 
-import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
@@ -19,14 +16,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.geometry.CornerRadius
-import androidx.compose.ui.geometry.Offset
-import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.Path
-import androidx.compose.ui.graphics.StrokeCap
-import androidx.compose.ui.graphics.StrokeJoin
-import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
@@ -256,108 +246,6 @@ private fun DosingSummaryItem(
     }
 }
 
-@Composable
-private fun DosingSummaryGlyph(
-    icon: DosingSummaryIcon,
-    tint: Color,
-    modifier: Modifier = Modifier
-) {
-    Canvas(modifier = modifier) {
-        when (icon) {
-            DosingSummaryIcon.DOSE -> drawProfessionalDoseGlyph(tint)
-            DosingSummaryIcon.DAYS -> drawScheduleDaysGlyph(tint)
-        }
-    }
-}
-
-private fun androidx.compose.ui.graphics.drawscope.DrawScope.drawProfessionalDoseGlyph(color: Color) {
-    val path = Path().apply {
-        moveTo(size.width * DOSE_CENTER_X, size.height * DOSE_TOP_Y)
-        cubicTo(
-            size.width * DOSE_RIGHT_UPPER_X,
-            size.height * DOSE_UPPER_CONTROL_Y,
-            size.width * DOSE_RIGHT_X,
-            size.height * DOSE_MIDDLE_CONTROL_Y,
-            size.width * DOSE_RIGHT_X,
-            size.height * DOSE_BODY_Y
-        )
-        cubicTo(
-            size.width * DOSE_RIGHT_X,
-            size.height * DOSE_BOTTOM_CONTROL_Y,
-            size.width * DOSE_LEFT_X,
-            size.height * DOSE_BOTTOM_CONTROL_Y,
-            size.width * DOSE_LEFT_X,
-            size.height * DOSE_BODY_Y
-        )
-        cubicTo(
-            size.width * DOSE_LEFT_X,
-            size.height * DOSE_MIDDLE_CONTROL_Y,
-            size.width * DOSE_LEFT_UPPER_X,
-            size.height * DOSE_UPPER_CONTROL_Y,
-            size.width * DOSE_CENTER_X,
-            size.height * DOSE_TOP_Y
-        )
-        close()
-    }
-
-    drawPath(
-        path = path,
-        color = color,
-        style = Stroke(
-            width = DOSE_GLYPH_STROKE.toPx(),
-            cap = StrokeCap.Round,
-            join = StrokeJoin.Round
-        )
-    )
-    drawCircle(
-        color = color.copy(alpha = DOSE_HIGHLIGHT_ALPHA),
-        radius = size.minDimension * DOSE_HIGHLIGHT_RADIUS,
-        center = Offset(
-            x = size.width * DOSE_HIGHLIGHT_X,
-            y = size.height * DOSE_HIGHLIGHT_Y
-        )
-    )
-}
-
-private fun androidx.compose.ui.graphics.drawscope.DrawScope.drawScheduleDaysGlyph(color: Color) {
-    val strokeWidth = SCHEDULE_GLYPH_STROKE.toPx()
-    val bodyTop = size.height * SCHEDULE_BODY_TOP_Y
-    val bodyLeft = size.width * SCHEDULE_BODY_LEFT_X
-    val bodyWidth = size.width * SCHEDULE_BODY_WIDTH
-    val bodyHeight = size.height * SCHEDULE_BODY_HEIGHT
-
-    drawRoundRect(
-        color = color,
-        topLeft = Offset(bodyLeft, bodyTop),
-        size = Size(bodyWidth, bodyHeight),
-        cornerRadius = CornerRadius(SCHEDULE_CORNER_RADIUS.toPx()),
-        style = Stroke(width = strokeWidth)
-    )
-    drawLine(
-        color = color,
-        start = Offset(bodyLeft, size.height * SCHEDULE_HEADER_Y),
-        end = Offset(bodyLeft + bodyWidth, size.height * SCHEDULE_HEADER_Y),
-        strokeWidth = strokeWidth,
-        cap = StrokeCap.Round
-    )
-    SCHEDULE_BINDER_X.forEach { xFraction ->
-        drawLine(
-            color = color,
-            start = Offset(size.width * xFraction, size.height * SCHEDULE_BINDER_TOP_Y),
-            end = Offset(size.width * xFraction, size.height * SCHEDULE_BINDER_BOTTOM_Y),
-            strokeWidth = strokeWidth,
-            cap = StrokeCap.Round
-        )
-    }
-    SCHEDULE_DOT_X.forEach { xFraction ->
-        drawCircle(
-            color = color,
-            radius = SCHEDULE_DOT_RADIUS.toPx(),
-            center = Offset(size.width * xFraction, size.height * SCHEDULE_DOT_Y)
-        )
-    }
-}
-
 private fun DosingChannelVisualState.statusColor(colors: AquaDeviceCardColors): Color = when (this) {
     DosingChannelVisualState.NOT_CONFIGURED -> colors.warning
     DosingChannelVisualState.READY,
@@ -366,43 +254,14 @@ private fun DosingChannelVisualState.statusColor(colors: AquaDeviceCardColors): 
     DosingChannelVisualState.ERROR -> colors.danger
 }
 
-private enum class DosingSummaryIcon {
-    DOSE,
-    DAYS
-}
-
 private const val DAY_SEPARATOR = " · "
 private const val STATUS_BACKGROUND_ALPHA = 0.10f
 private const val STATUS_OUTLINE_ALPHA = 0.38f
-private const val DOSE_CENTER_X = 0.50f
-private const val DOSE_TOP_Y = 0.05f
-private const val DOSE_RIGHT_UPPER_X = 0.63f
-private const val DOSE_LEFT_UPPER_X = 0.37f
-private const val DOSE_RIGHT_X = 0.84f
-private const val DOSE_LEFT_X = 0.16f
-private const val DOSE_UPPER_CONTROL_Y = 0.22f
-private const val DOSE_MIDDLE_CONTROL_Y = 0.48f
-private const val DOSE_BODY_Y = 0.66f
-private const val DOSE_BOTTOM_CONTROL_Y = 0.93f
-private const val DOSE_HIGHLIGHT_ALPHA = 0.72f
-private const val DOSE_HIGHLIGHT_RADIUS = 0.065f
-private const val DOSE_HIGHLIGHT_X = 0.39f
-private const val DOSE_HIGHLIGHT_Y = 0.61f
-private const val SCHEDULE_BODY_TOP_Y = 0.18f
-private const val SCHEDULE_BODY_LEFT_X = 0.10f
-private const val SCHEDULE_BODY_WIDTH = 0.80f
-private const val SCHEDULE_BODY_HEIGHT = 0.70f
-private const val SCHEDULE_HEADER_Y = 0.40f
-private const val SCHEDULE_BINDER_TOP_Y = 0.08f
-private const val SCHEDULE_BINDER_BOTTOM_Y = 0.28f
-private const val SCHEDULE_DOT_Y = 0.62f
-private val SCHEDULE_BINDER_X = listOf(0.32f, 0.68f)
-private val SCHEDULE_DOT_X = listOf(0.30f, 0.50f, 0.70f)
-private val CHANNEL_CARD_MIN_HEIGHT = 104.dp
-private val SUMMARY_GAP = 18.dp
-private val SUMMARY_ICON_GAP = 6.dp
-private val SUMMARY_ICON_SIZE = 16.dp
-private val DOSE_GLYPH_STROKE = 1.45.dp
-private val SCHEDULE_GLYPH_STROKE = 1.35.dp
-private val SCHEDULE_CORNER_RADIUS = 2.5.dp
-private val SCHEDULE_DOT_RADIUS = 1.1.dp
+private const val CHANNEL_CARD_MIN_HEIGHT_DP = 104
+private const val SUMMARY_GAP_DP = 18
+private const val SUMMARY_ICON_GAP_DP = 6
+private const val SUMMARY_ICON_SIZE_DP = 16
+private val CHANNEL_CARD_MIN_HEIGHT = CHANNEL_CARD_MIN_HEIGHT_DP.dp
+private val SUMMARY_GAP = SUMMARY_GAP_DP.dp
+private val SUMMARY_ICON_GAP = SUMMARY_ICON_GAP_DP.dp
+private val SUMMARY_ICON_SIZE = SUMMARY_ICON_SIZE_DP.dp

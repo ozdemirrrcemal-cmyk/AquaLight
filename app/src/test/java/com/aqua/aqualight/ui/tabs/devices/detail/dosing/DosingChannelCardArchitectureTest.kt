@@ -115,6 +115,19 @@ class DosingChannelCardArchitectureTest {
         }
     }
 
+    @Test
+    fun `dose pro compose implementation contains no suppression annotations`() {
+        SUPPRESSION_FREE_SOURCE_FILES.forEach { relativePath ->
+            val content = source(relativePath)
+            FORBIDDEN_SUPPRESSION_TOKENS.forEach { token ->
+                assertFalse(
+                    "$relativePath must not suppress static analysis with $token",
+                    content.contains(token)
+                )
+            }
+        }
+    }
+
     private fun source(relativePath: String): String = File(repositoryRoot, relativePath).readText()
 
     private fun locateRepositoryRoot(): File {
@@ -127,12 +140,36 @@ class DosingChannelCardArchitectureTest {
     }
 
     private companion object {
+        const val DOSING_SOURCE_ROOT =
+            "app/src/main/java/com/aqua/aqualight/ui/tabs/devices/detail/dosing/"
+        const val DEVICE_CARD_SOURCE_ROOT =
+            "app/src/main/java/com/aqua/aqualight/ui/common/devicecard/"
+
         val FORBIDDEN_RUNTIME_TYPES = listOf(
             "DeviceDosingChannelStatus",
             "DeviceDosingStatus",
             "DeviceDosingScheduleStatus",
             "DeviceDosingRuntimeCapabilities",
             "AqlCommercialDeviceCatalog"
+        )
+        val SUPPRESSION_FREE_SOURCE_FILES = listOf(
+            DEVICE_CARD_SOURCE_ROOT + "AquaDeviceCardComposeStyle.kt",
+            DOSING_SOURCE_ROOT + "DeviceDosingRootFragment.kt",
+            DOSING_SOURCE_ROOT + "DeviceDosingRootViewModel.kt",
+            DOSING_SOURCE_ROOT + "DosingCatalogScreen.kt",
+            DOSING_SOURCE_ROOT + "DosingChannelCard.kt",
+            DOSING_SOURCE_ROOT + "DosingChannelCardModels.kt",
+            DOSING_SOURCE_ROOT + "DosingChannelGlyph.kt",
+            DOSING_SOURCE_ROOT + "DosingDoseProgressBar.kt",
+            DOSING_SOURCE_ROOT + "DosingDoseProgressDrawing.kt",
+            DOSING_SOURCE_ROOT + "DosingPumpDeviceCompose.kt",
+            DOSING_SOURCE_ROOT + "DosingPumpIndicatorDrawing.kt",
+            DOSING_SOURCE_ROOT + "DosingPumpPalette.kt"
+        )
+        val FORBIDDEN_SUPPRESSION_TOKENS = listOf(
+            "@file:Suppress(",
+            "@Suppress(",
+            "@SuppressLint("
         )
     }
 }

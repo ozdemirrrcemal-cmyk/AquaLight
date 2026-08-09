@@ -1,5 +1,3 @@
-@file:Suppress("FunctionNaming", "MagicNumber")
-
 package com.aqua.aqualight.ui.common.devicecard
 
 import androidx.compose.foundation.background
@@ -49,17 +47,17 @@ data class AquaDeviceCardTypography(
 )
 
 object AquaDeviceCardGeometry {
-    val cornerRadius = 18.dp
-    val contentHorizontalPadding = 14.dp
-    val contentVerticalPadding = 12.dp
-    val outlineWidth = 1.dp
-    val markerSize = 22.dp
-    val markerCornerRadius = 7.dp
-    val statusCornerRadius = 11.dp
-    val statusHorizontalPadding = 8.dp
-    val statusVerticalPadding = 4.dp
-    val contentGap = 10.dp
-    val compactGap = 7.dp
+    val cornerRadius = CARD_CORNER_RADIUS_DP.dp
+    val contentHorizontalPadding = CONTENT_HORIZONTAL_PADDING_DP.dp
+    val contentVerticalPadding = CONTENT_VERTICAL_PADDING_DP.dp
+    val outlineWidth = OUTLINE_WIDTH_DP.dp
+    val markerSize = MARKER_SIZE_DP.dp
+    val markerCornerRadius = MARKER_CORNER_RADIUS_DP.dp
+    val statusCornerRadius = STATUS_CORNER_RADIUS_DP.dp
+    val statusHorizontalPadding = STATUS_HORIZONTAL_PADDING_DP.dp
+    val statusVerticalPadding = STATUS_VERTICAL_PADDING_DP.dp
+    val contentGap = CONTENT_GAP_DP.dp
+    val compactGap = COMPACT_GAP_DP.dp
 }
 
 private val InterRegular = FontFamily(Font(R.font.inter_regular))
@@ -84,26 +82,26 @@ fun aquaDeviceCardTypography(colors: AquaDeviceCardColors): AquaDeviceCardTypogr
         title = TextStyle(
             color = colors.primaryText,
             fontFamily = InterSemiBold,
-            fontSize = 15.sp,
-            lineHeight = 18.sp
+            fontSize = TITLE_FONT_SIZE_SP.sp,
+            lineHeight = TITLE_LINE_HEIGHT_SP.sp
         ),
         body = TextStyle(
             color = colors.primaryText,
             fontFamily = InterMedium,
-            fontSize = 12.sp,
-            lineHeight = 16.sp
+            fontSize = BODY_FONT_SIZE_SP.sp,
+            lineHeight = BODY_LINE_HEIGHT_SP.sp
         ),
         caption = TextStyle(
             color = colors.secondaryText,
             fontFamily = InterRegular,
-            fontSize = 11.sp,
-            lineHeight = 14.sp
+            fontSize = CAPTION_FONT_SIZE_SP.sp,
+            lineHeight = CAPTION_LINE_HEIGHT_SP.sp
         ),
         micro = TextStyle(
             color = colors.secondaryText,
             fontFamily = InterMedium,
-            fontSize = 10.sp,
-            lineHeight = 12.sp
+            fontSize = MICRO_FONT_SIZE_SP.sp,
+            lineHeight = MICRO_LINE_HEIGHT_SP.sp
         )
     )
 
@@ -130,3 +128,23 @@ fun AquaDeviceCardSurface(
         content = content
     )
 }
+
+private const val CARD_CORNER_RADIUS_DP = 18
+private const val CONTENT_HORIZONTAL_PADDING_DP = 14
+private const val CONTENT_VERTICAL_PADDING_DP = 12
+private const val OUTLINE_WIDTH_DP = 1
+private const val MARKER_SIZE_DP = 22
+private const val MARKER_CORNER_RADIUS_DP = 7
+private const val STATUS_CORNER_RADIUS_DP = 11
+private const val STATUS_HORIZONTAL_PADDING_DP = 8
+private const val STATUS_VERTICAL_PADDING_DP = 4
+private const val CONTENT_GAP_DP = 10
+private const val COMPACT_GAP_DP = 7
+private const val TITLE_FONT_SIZE_SP = 15
+private const val TITLE_LINE_HEIGHT_SP = 18
+private const val BODY_FONT_SIZE_SP = 12
+private const val BODY_LINE_HEIGHT_SP = 16
+private const val CAPTION_FONT_SIZE_SP = 11
+private const val CAPTION_LINE_HEIGHT_SP = 14
+private const val MICRO_FONT_SIZE_SP = 10
+private const val MICRO_LINE_HEIGHT_SP = 12

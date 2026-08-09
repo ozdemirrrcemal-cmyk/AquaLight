@@ -5,3 +5,13 @@ build:
 config:
   validation: true
   warningsAsErrors: true
+
+naming:
+  FunctionNaming:
+    ignoreAnnotated:
+      - Composable
+
+style:
+  UnusedPrivateMember:
+    ignoreAnnotated:
+      - Preview

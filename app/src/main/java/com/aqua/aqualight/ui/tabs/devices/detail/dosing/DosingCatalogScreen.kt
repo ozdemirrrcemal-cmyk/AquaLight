@@ -1,5 +1,3 @@
-@file:Suppress("FunctionNaming", "MagicNumber")
-
 package com.aqua.aqualight.ui.tabs.devices.detail.dosing
 
 import androidx.compose.foundation.layout.Arrangement
@@ -120,10 +118,17 @@ private const val DEVICE_ITEM_KEY = "dosing-device"
 private const val DEVICE_TO_CARDS_SPACER_KEY = "dosing-device-card-gap"
 private const val DOSING_PRO_2_PUMP_COUNT = 2
 private const val DOSING_PRO_4_PUMP_COUNT = 4
-private val SCREEN_HORIZONTAL_PADDING = 16.dp
-private val SCREEN_TOP_PADDING = 12.dp
-private val SCREEN_BOTTOM_PADDING = 24.dp
-private val CHANNEL_CARD_SPACING = 10.dp
-private val DEVICE_TO_CARDS_EXTRA_SPACING = 4.dp
-private val DOSING_PRO_2_MAX_WIDTH = 360.dp
-private val DOSING_PRO_4_MAX_WIDTH = 760.dp
+private const val SCREEN_HORIZONTAL_PADDING_DP = 16
+private const val SCREEN_TOP_PADDING_DP = 12
+private const val SCREEN_BOTTOM_PADDING_DP = 24
+private const val CHANNEL_CARD_SPACING_DP = 10
+private const val DEVICE_TO_CARDS_EXTRA_SPACING_DP = 4
+private const val DOSING_PRO_2_MAX_WIDTH_DP = 360
+private const val DOSING_PRO_4_MAX_WIDTH_DP = 760
+private val SCREEN_HORIZONTAL_PADDING = SCREEN_HORIZONTAL_PADDING_DP.dp
+private val SCREEN_TOP_PADDING = SCREEN_TOP_PADDING_DP.dp
+private val SCREEN_BOTTOM_PADDING = SCREEN_BOTTOM_PADDING_DP.dp
+private val CHANNEL_CARD_SPACING = CHANNEL_CARD_SPACING_DP.dp
+private val DEVICE_TO_CARDS_EXTRA_SPACING = DEVICE_TO_CARDS_EXTRA_SPACING_DP.dp
+private val DOSING_PRO_2_MAX_WIDTH = DOSING_PRO_2_MAX_WIDTH_DP.dp
+private val DOSING_PRO_4_MAX_WIDTH = DOSING_PRO_4_MAX_WIDTH_DP.dp
