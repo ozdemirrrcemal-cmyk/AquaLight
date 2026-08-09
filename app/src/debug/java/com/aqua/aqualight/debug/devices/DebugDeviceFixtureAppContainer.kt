@@ -7,6 +7,7 @@ import com.aqua.aqualight.BuildConfig
 import com.aqua.aqualight.composition.ActiveOwnerDependencyGraphResolver
 import com.aqua.aqualight.composition.AppContainer
 import com.aqua.aqualight.composition.OwnerDependencyGraph
+import com.aqua.aqualight.data.devices.DefaultDeviceDosingCalibrationOperations
 import com.aqua.aqualight.data.devices.DefaultDeviceRootOperations
 import com.aqua.aqualight.data.devices.DefaultOwnerDevicesOperations
 import com.aqua.aqualight.data.devices.menu.DefaultDeviceMenuAccessOperations
@@ -16,6 +17,7 @@ import com.aqua.aqualight.ui.tabs.devices.DevicesViewModel
 import com.aqua.aqualight.ui.tabs.devices.detail.common.DeviceRootOverviewViewModel
 import com.aqua.aqualight.ui.tabs.devices.detail.cooling.DeviceCoolingRootViewModel
 import com.aqua.aqualight.ui.tabs.devices.detail.dosing.DeviceDosingRootViewModel
+import com.aqua.aqualight.ui.tabs.devices.detail.dosing.calibration.DeviceDosingCalibrationViewModel
 import com.aqua.aqualight.ui.tabs.devices.detail.light.DeviceLightRootViewModel
 import com.aqua.aqualight.ui.tabs.devices.detail.settings.DeviceFamilySettingsViewModel
 import com.aqua.aqualight.ui.tabs.devices.detail.timer.DeviceTimerRootViewModel
@@ -66,6 +68,8 @@ private class DebugDeviceFixtureViewModelFactory(
                 DeviceTimerRootViewModel(rootOperations(requireGraph()))
             DeviceDosingRootViewModel::class.java ->
                 DeviceDosingRootViewModel(rootOperations(requireGraph()))
+            DeviceDosingCalibrationViewModel::class.java ->
+                createDosingCalibrationViewModel(requireGraph())
             DeviceRootOverviewViewModel::class.java ->
                 DeviceRootOverviewViewModel(rootOperations(requireGraph()))
             DeviceFamilySettingsViewModel::class.java -> createSettingsViewModel(requireGraph())
@@ -73,8 +77,7 @@ private class DebugDeviceFixtureViewModelFactory(
             else -> return delegate.create(modelClass)
         }
 
-        @Suppress("UNCHECKED_CAST")
-        return viewModel as T
+        return modelClass.cast(viewModel)
     }
 
     private fun createDevicesViewModel(graph: OwnerDependencyGraph): DevicesViewModel {
@@ -102,6 +105,15 @@ private class DebugDeviceFixtureViewModelFactory(
             routeResolver = DeviceRouteResolver()
         )
     }
+
+    private fun createDosingCalibrationViewModel(
+        graph: OwnerDependencyGraph
+    ): DeviceDosingCalibrationViewModel = DeviceDosingCalibrationViewModel(
+        DebugFixtureDosingCalibrationOperations(
+            delegate = DefaultDeviceDosingCalibrationOperations(graph.devicesRepository),
+            fixtures = fixtures
+        )
+    )
 
     private fun createSettingsViewModel(graph: OwnerDependencyGraph): DeviceFamilySettingsViewModel =
         DeviceFamilySettingsViewModel(
