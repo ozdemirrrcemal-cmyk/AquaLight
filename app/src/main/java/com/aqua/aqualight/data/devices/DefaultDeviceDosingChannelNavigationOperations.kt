@@ -81,18 +81,6 @@ internal class DefaultDeviceDosingChannelNavigationOperations(
             }
         }
 
-    private fun navigationRequest(
-        deviceUid: String,
-        slotId: String
-    ): DosingChannelNavigationRequest? {
-        val normalizedDeviceUid = deviceUid.trim()
-        val normalizedSlotId = slotId.trim()
-        return normalizedDeviceUid
-            .takeIf { uid -> uid.isNotBlank() && normalizedSlotId.isNotBlank() }
-            ?.let(::DeviceUid)
-            ?.let { uid -> DosingChannelNavigationRequest(uid, normalizedSlotId) }
-    }
-
     private fun navigationContext(
         request: DosingChannelNavigationRequest
     ): DosingChannelNavigationContext? {
@@ -176,17 +164,29 @@ internal class DefaultDeviceDosingChannelNavigationOperations(
         }
     }
 
-    private data class DosingChannelNavigationRequest(
-        val uid: DeviceUid,
-        val slotId: String
-    )
-
     private data class DosingChannelNavigationContext(
         val uid: DeviceUid,
         val root: DeviceRootSnapshot,
         val slot: DeviceDosingChannelSlot
     )
 }
+
+private fun navigationRequest(
+    deviceUid: String,
+    slotId: String
+): DosingChannelNavigationRequest? {
+    val normalizedDeviceUid = deviceUid.trim()
+    val normalizedSlotId = slotId.trim()
+    return normalizedDeviceUid
+        .takeIf { uid -> uid.isNotBlank() && normalizedSlotId.isNotBlank() }
+        ?.let(::DeviceUid)
+        ?.let { uid -> DosingChannelNavigationRequest(uid, normalizedSlotId) }
+}
+
+private data class DosingChannelNavigationRequest(
+    val uid: DeviceUid,
+    val slotId: String
+)
 
 internal interface DeviceDosingChannelNavigationRuntimePort {
     suspend fun prepareRuntime(deviceUid: DeviceUid): Boolean
