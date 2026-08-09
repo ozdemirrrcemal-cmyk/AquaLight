@@ -72,11 +72,7 @@ class DeviceDosingRootViewModel(
         } else {
             emptyList()
         }
-        val exactChannelCount = when {
-            catalogChannels.isNotEmpty() -> catalogChannels.size
-            catalogState == DeviceRootCatalogState.VALID -> dosingChannelCount
-            else -> UNKNOWN_DOSING_PUMP_COUNT
-        }
+        val exactChannelCount = catalogChannels.size
         return DeviceDosingRootUiState(
             title = title.ifBlank { fallbackTitle },
             deviceUid = deviceUid,
