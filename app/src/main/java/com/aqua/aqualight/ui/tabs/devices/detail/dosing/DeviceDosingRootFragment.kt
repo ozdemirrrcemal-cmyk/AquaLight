@@ -4,6 +4,7 @@ import android.os.Bundle
 import android.view.View
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.platform.ViewCompositionStrategy
+import androidx.core.os.bundleOf
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.viewModels
 import androidx.lifecycle.Lifecycle
@@ -83,11 +84,11 @@ class DeviceDosingRootFragment : Fragment(R.layout.fragment_device_dosing_root) 
         val navController = findNavController()
         if (navController.currentDestination?.id != R.id.deviceDosingRootFragment) return
         navController.navigate(
-            DeviceDosingRootFragmentDirections
-                .actionDeviceDosingRootFragmentToDeviceDosingCalibrationFragment(
-                    deviceUid = args.deviceUid,
-                    channelKey = normalizedChannelKey
-                )
+            R.id.action_deviceDosingRootFragment_to_deviceDosingCalibrationFragment,
+            bundleOf(
+                "deviceUid" to args.deviceUid,
+                "channelKey" to normalizedChannelKey
+            )
         )
     }
 
