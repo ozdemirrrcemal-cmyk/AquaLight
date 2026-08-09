@@ -42,18 +42,11 @@ abstract class DeviceDosingChannelDestinationFragment(
         pumpCount: Int,
         channelNumber: Int
     ) {
-        if (deviceUid.isBlank() || slotId.isBlank()) {
-            findNavController().navigateUp()
-            return
-        }
+        val hasRouteIdentity = deviceUid.isNotBlank() && slotId.isNotBlank()
+        val selectedPumpCount = exactDosingPumpCountOrNull(pumpCount)
+            ?.takeIf { exactPumpCount -> channelNumber in 1..exactPumpCount }
 
-        val exactPumpCount = exactDosingPumpCountOrNull(pumpCount)
-        if (exactPumpCount == null) {
-            findNavController().navigateUp()
-            return
-        }
-
-        if (channelNumber <= 0 || channelNumber > exactPumpCount) {
+        if (!hasRouteIdentity || selectedPumpCount == null) {
             findNavController().navigateUp()
             return
         }
@@ -62,7 +55,7 @@ abstract class DeviceDosingChannelDestinationFragment(
             setViewCompositionStrategy(ViewCompositionStrategy.DisposeOnViewTreeLifecycleDestroyed)
             setContent {
                 DosingSelectedPumpSection(
-                    pumpCount = exactPumpCount,
+                    pumpCount = selectedPumpCount,
                     selectedChannelNumber = channelNumber
                 )
             }
