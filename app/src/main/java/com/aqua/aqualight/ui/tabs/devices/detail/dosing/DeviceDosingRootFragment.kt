@@ -83,7 +83,8 @@ class DeviceDosingRootFragment : Fragment(R.layout.fragment_device_dosing_root) 
             setContent {
                 val state by viewModel.uiState.collectAsStateWithLifecycle()
                 DeviceDosingPumpScreen(
-                    pumpCount = state.pumpCount
+                    pumpCount = state.pumpCount,
+                    channels = state.channels
                 )
             }
         }
