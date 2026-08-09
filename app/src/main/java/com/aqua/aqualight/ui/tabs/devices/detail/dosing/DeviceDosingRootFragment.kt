@@ -82,7 +82,7 @@ class DeviceDosingRootFragment : Fragment(R.layout.fragment_device_dosing_root) 
             setViewCompositionStrategy(ViewCompositionStrategy.DisposeOnViewTreeLifecycleDestroyed)
             setContent {
                 val state by viewModel.uiState.collectAsStateWithLifecycle()
-                DeviceDosingPumpScreen(
+                DeviceDosingCatalogScreen(
                     pumpCount = state.pumpCount,
                     channels = state.channels
                 )
