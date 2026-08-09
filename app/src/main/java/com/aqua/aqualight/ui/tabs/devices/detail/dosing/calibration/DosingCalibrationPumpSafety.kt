@@ -1,6 +1,5 @@
 package com.aqua.aqualight.ui.tabs.devices.detail.dosing.calibration
 
-import androidx.annotation.StringRes
 import com.aqua.aqualight.R
 import com.aqua.aqualight.application.devices.DeviceDosingCalibrationOperations
 import kotlinx.coroutines.CoroutineScope
@@ -20,7 +19,7 @@ internal class DosingCalibrationPumpSafety(
     private val updateState: (DosingCalibrationUiState) -> Unit,
     private val events: MutableSharedFlow<DosingCalibrationEvent>,
     private val cancelTimedDose: () -> Unit,
-    private val fail: (@StringRes Int) -> Unit
+    private val fail: (Int) -> Unit
 ) {
     private var primeRequested = false
 
