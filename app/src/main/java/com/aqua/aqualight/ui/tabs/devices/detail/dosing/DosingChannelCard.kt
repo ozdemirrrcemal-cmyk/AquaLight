@@ -27,7 +27,6 @@ import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.StrokeJoin
 import androidx.compose.ui.graphics.drawscope.Stroke
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
@@ -197,16 +196,14 @@ private fun DosingChannelSummary(
                 R.string.device_dosing_channel_daily_dose_format,
                 state.doseProgress.dailyDoseMl
             ),
-            iconTint = colors.accent,
-            textColor = colors.primaryText,
+            colors = colors,
             typography = typography,
             modifier = Modifier.weight(1f)
         )
         DosingSummaryItem(
             icon = DosingSummaryIcon.DAYS,
             label = scheduleSummary,
-            iconTint = colors.secondaryText,
-            textColor = colors.secondaryText,
+            colors = colors,
             typography = typography,
             modifier = Modifier.weight(1f)
         )
@@ -214,29 +211,31 @@ private fun DosingChannelSummary(
 }
 
 @Composable
-private fun DosingScheduleDaysUiState.summaryLabel(): String {
-    if (selectedDays.isEmpty()) {
-        return stringResource(R.string.device_dosing_channel_no_days_selected)
-    }
-    if (isEveryDay) {
-        return stringResource(R.string.device_dosing_channel_every_day)
-    }
-
-    val context = LocalContext.current
-    return selectedDays.joinToString(separator = DAY_SEPARATOR) { day ->
-        context.getString(day.shortLabelRes)
-    }
+private fun DosingScheduleDaysUiState.summaryLabel(): String = when {
+    selectedDays.isEmpty() -> stringResource(R.string.device_dosing_channel_no_days_selected)
+    isEveryDay -> stringResource(R.string.device_dosing_channel_every_day)
+    else -> selectedDays
+        .map { day -> stringResource(day.shortLabelRes) }
+        .joinToString(separator = DAY_SEPARATOR)
 }
 
 @Composable
 private fun DosingSummaryItem(
     icon: DosingSummaryIcon,
     label: String,
-    iconTint: Color,
-    textColor: Color,
+    colors: AquaDeviceCardColors,
     typography: AquaDeviceCardTypography,
     modifier: Modifier = Modifier
 ) {
+    val iconTint = when (icon) {
+        DosingSummaryIcon.DOSE -> colors.accent
+        DosingSummaryIcon.DAYS -> colors.secondaryText
+    }
+    val textColor = when (icon) {
+        DosingSummaryIcon.DOSE -> colors.primaryText
+        DosingSummaryIcon.DAYS -> colors.secondaryText
+    }
+
     Row(
         modifier = modifier,
         horizontalArrangement = Arrangement.spacedBy(SUMMARY_ICON_GAP),
