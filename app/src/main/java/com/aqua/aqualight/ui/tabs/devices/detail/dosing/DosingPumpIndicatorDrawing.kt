@@ -13,6 +13,7 @@ internal fun DrawScope.drawPumpIndicator(visualState: DosingPumpVisualState) {
 
     when (visualState) {
         DosingPumpVisualState.IDLE -> Unit
+        DosingPumpVisualState.SELECTED,
         DosingPumpVisualState.RUNNING -> drawIndicatorGlow(
             center = center,
             outerRadius = outerRadius,
@@ -27,6 +28,7 @@ internal fun DrawScope.drawPumpIndicator(visualState: DosingPumpVisualState) {
 
     val indicatorBrush = when (visualState) {
         DosingPumpVisualState.IDLE -> DosingPumpPalette.idleIndicator
+        DosingPumpVisualState.SELECTED,
         DosingPumpVisualState.RUNNING -> DosingPumpPalette.runningIndicator
         DosingPumpVisualState.ERROR -> DosingPumpPalette.errorIndicator
     }
