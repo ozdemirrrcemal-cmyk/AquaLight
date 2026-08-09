@@ -96,10 +96,11 @@ internal class OwnerViewModelFactory(
             )
         },
         DeviceAddViewModel::class.java to { graph ->
+            val repository = graph.devicesRepository
             DeviceAddViewModel(
                 discoveryOperations = DefaultProvisioningDiscoveryOperations(
                     scanner = DefaultBleProvisioningScanner(appContext),
-                    repository = graph.devicesRepository,
+                    repository = repository,
                     qrParser = AqlProvisioningQrParser(),
                     qrSecretStore = AqlProvisioningQrSecretStore(
                         context = appContext,
@@ -110,10 +111,11 @@ internal class OwnerViewModelFactory(
             )
         },
         DeviceQrScanViewModel::class.java to { graph ->
+            val repository = graph.devicesRepository
             DeviceQrScanViewModel(
                 discoveryOperations = DefaultProvisioningDiscoveryOperations(
                     scanner = DefaultBleProvisioningScanner(appContext),
-                    repository = graph.devicesRepository,
+                    repository = repository,
                     qrParser = AqlProvisioningQrParser(),
                     qrSecretStore = AqlProvisioningQrSecretStore(
                         context = appContext,
