@@ -4,6 +4,8 @@ import androidx.annotation.StringRes
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.aqua.aqualight.R
+import com.aqua.aqualight.application.devices.DeviceDosingChannelNavigationOperations
+import com.aqua.aqualight.application.devices.DeviceDosingChannelNavigationTarget
 import com.aqua.aqualight.application.devices.DeviceRootCatalogState
 import com.aqua.aqualight.application.devices.DeviceRootOperations
 import com.aqua.aqualight.application.devices.DeviceRootSnapshot
@@ -12,20 +14,30 @@ import com.aqua.aqualight.ui.tabs.devices.detail.common.DeviceRootKind
 import com.aqua.aqualight.ui.tabs.devices.detail.common.DeviceRootMenuMapper
 import com.aqua.aqualight.ui.tabs.devices.detail.common.DeviceRootPresentationMapper
 import kotlinx.coroutines.Job
+import kotlinx.coroutines.channels.Channel
+import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.launch
 
 class DeviceDosingRootViewModel(
-    private val operations: DeviceRootOperations
+    private val operations: DeviceRootOperations,
+    private val channelNavigationOperations: DeviceDosingChannelNavigationOperations
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(DeviceDosingRootUiState())
     val uiState: StateFlow<DeviceDosingRootUiState> = _uiState.asStateFlow()
+    private val navigationEventChannel = Channel<DeviceDosingChannelNavigationTarget>(
+        capacity = Channel.BUFFERED
+    )
+    val navigationEvents: Flow<DeviceDosingChannelNavigationTarget> =
+        navigationEventChannel.receiveAsFlow()
 
     private var boundDeviceUid: String = ""
     private var observeJob: Job? = null
+    private var channelNavigationJob: Job? = null
 
     fun bind(
         deviceUidText: String,
@@ -34,6 +46,7 @@ class DeviceDosingRootViewModel(
         val deviceUid = deviceUidText.trim()
         if (deviceUid.isBlank()) {
             observeJob?.cancel()
+            channelNavigationJob?.cancel()
             boundDeviceUid = ""
             _uiState.value = emptyState(fallbackTitle, "")
             return
@@ -50,6 +63,22 @@ class DeviceDosingRootViewModel(
                 _uiState.value = snapshot?.toRootUiState(fallbackTitle)
                     ?: emptyState(fallbackTitle, deviceUid)
             }
+        }
+    }
+
+    fun openChannel(slotId: String) {
+        val requestedDeviceUid = boundDeviceUid
+        val requestedSlotId = slotId.trim()
+        if (requestedDeviceUid.isBlank() || requestedSlotId.isBlank()) return
+
+        channelNavigationJob?.cancel()
+        channelNavigationJob = viewModelScope.launch {
+            channelNavigationOperations.resolve(
+                deviceUid = requestedDeviceUid,
+                slotId = requestedSlotId
+            )
+                ?.takeIf { boundDeviceUid == requestedDeviceUid }
+                ?.let { target -> navigationEventChannel.send(target) }
         }
     }
 

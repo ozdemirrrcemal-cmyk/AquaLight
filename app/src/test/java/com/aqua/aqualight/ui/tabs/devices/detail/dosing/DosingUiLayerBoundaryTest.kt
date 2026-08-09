@@ -43,6 +43,29 @@ class DosingUiLayerBoundaryTest {
         assertTrue(models.contains("DeviceDosingChannelSlot.toInitialDosingChannelCardUiState"))
     }
 
+    @Test
+    fun `channel navigation stays behind central catalog runtime and route boundaries`() {
+        val rootFragment = source(DOSING_SOURCE_ROOT + "DeviceDosingRootFragment.kt")
+        val operations = source(
+            "app/src/main/java/com/aqua/aqualight/data/devices/" +
+                "DefaultDeviceDosingChannelNavigationOperations.kt"
+        )
+        val navigator = source(
+            "app/src/main/java/com/aqua/aqualight/ui/navigation/AppRouteNavigator.kt"
+        )
+        val appGraph = source("app/src/main/res/navigation/nav_app.xml")
+
+        assertTrue(rootFragment.contains("AppRouteNavigator.openDosingChannel"))
+        assertFalse(rootFragment.contains("DeviceDosingChannelDetailFragmentArgs"))
+        assertFalse(rootFragment.contains("DeviceDosingChannelCalibrationFragmentArgs"))
+        assertTrue(operations.contains("toDeviceRootSnapshot()"))
+        assertTrue(operations.contains("runtime.requestStatus(uid)"))
+        assertTrue(operations.contains("DeviceDosingChannelDestinationPolicy.resolve"))
+        assertTrue(navigator.contains("fun openDosingChannel("))
+        assertTrue(appGraph.contains("deviceDosingChannelCalibrationFragment"))
+        assertTrue(appGraph.contains("deviceDosingChannelDetailFragment"))
+    }
+
     private fun source(relativePath: String): String = File(repositoryRoot, relativePath).readText()
 
     private fun locateRepositoryRoot(): File {

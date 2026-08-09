@@ -27,9 +27,9 @@ import androidx.compose.ui.unit.dp
 internal fun DeviceDosingCatalogScreen(
     pumpCount: Int,
     channels: List<DosingChannelCardUiState>,
+    onChannelClick: (String) -> Unit,
     modifier: Modifier = Modifier,
-    pumpStates: List<DosingPumpVisualState> = emptyList(),
-    onPumpClick: (Int) -> Unit = {}
+    pumpStates: List<DosingPumpVisualState> = emptyList()
 ) {
     val exactPumpCount = exactDosingPumpCountOrNull(pumpCount)
     if (exactPumpCount == null) {
@@ -68,7 +68,13 @@ internal fun DeviceDosingCatalogScreen(
                 val resolvedDeviceWidth = minOf(maxWidth, maximumDeviceWidth)
                 DosingPumpDevice(
                     pumpHeads = pumpHeads,
-                    onPumpClick = onPumpClick,
+                    onPumpClick = { channelNumber ->
+                        channels.firstOrNull { channel ->
+                            channel.channelNumber == channelNumber
+                        }?.let { channel ->
+                            onChannelClick(channel.slotId)
+                        }
+                    },
                     modifier = Modifier.width(resolvedDeviceWidth)
                 )
             }
@@ -86,6 +92,7 @@ internal fun DeviceDosingCatalogScreen(
         ) { channel ->
             DosingChannelCard(
                 state = channel,
+                onClick = { onChannelClick(channel.slotId) },
                 modifier = Modifier.fillMaxWidth()
             )
         }

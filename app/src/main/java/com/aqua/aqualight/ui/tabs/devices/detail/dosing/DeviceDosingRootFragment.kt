@@ -18,6 +18,7 @@ import com.aqua.aqualight.databinding.FragmentDeviceDosingRootBinding
 import com.aqua.aqualight.ui.common.header.AquaHeaderAction
 import com.aqua.aqualight.ui.common.header.AquaHeaderConfig
 import com.aqua.aqualight.ui.common.header.setupAquaHeader
+import com.aqua.aqualight.ui.navigation.AppRouteNavigator
 import kotlinx.coroutines.launch
 
 class DeviceDosingRootFragment : Fragment(R.layout.fragment_device_dosing_root) {
@@ -38,6 +39,7 @@ class DeviceDosingRootFragment : Fragment(R.layout.fragment_device_dosing_root) 
         setupHeader(title = args.deviceTitle.ifBlank { getString(R.string.device_family_dosing) })
         setupPumpContent()
         observeHeaderTitle()
+        observeChannelNavigation()
 
         viewModel.bind(
             deviceUidText = args.deviceUid,
@@ -84,8 +86,22 @@ class DeviceDosingRootFragment : Fragment(R.layout.fragment_device_dosing_root) 
                 val state by viewModel.uiState.collectAsStateWithLifecycle()
                 DeviceDosingCatalogScreen(
                     pumpCount = state.pumpCount,
-                    channels = state.channels
+                    channels = state.channels,
+                    onChannelClick = viewModel::openChannel
                 )
+            }
+        }
+    }
+
+    private fun observeChannelNavigation() {
+        viewLifecycleOwner.lifecycleScope.launch {
+            viewLifecycleOwner.repeatOnLifecycle(Lifecycle.State.STARTED) {
+                viewModel.navigationEvents.collect { target ->
+                    AppRouteNavigator.openDosingChannel(
+                        navController = findNavController(),
+                        target = target
+                    )
+                }
             }
         }
     }

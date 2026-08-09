@@ -215,7 +215,11 @@ class DosingChannelCardArchitectureTest {
             DOSING_SOURCE_ROOT + "DosingDoseProgressDrawing.kt",
             DOSING_SOURCE_ROOT + "DosingPumpDeviceCompose.kt",
             DOSING_SOURCE_ROOT + "DosingPumpIndicatorDrawing.kt",
-            DOSING_SOURCE_ROOT + "DosingPumpPalette.kt"
+            DOSING_SOURCE_ROOT + "DosingPumpPalette.kt",
+            DOSING_SOURCE_ROOT + "channel/DeviceDosingChannelDestinationFragment.kt",
+            DOSING_SOURCE_ROOT +
+                "channel/calibration/DeviceDosingChannelCalibrationFragment.kt",
+            DOSING_SOURCE_ROOT + "channel/detail/DeviceDosingChannelDetailFragment.kt"
         )
         val FORBIDDEN_SUPPRESSION_TOKENS = listOf(
             "@file:Suppress(",

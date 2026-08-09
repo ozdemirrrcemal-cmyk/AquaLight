@@ -2,6 +2,7 @@ package com.aqua.aqualight.ui.tabs.devices.detail.dosing
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -18,6 +19,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.style.TextOverflow
@@ -33,6 +35,7 @@ import com.aqua.aqualight.ui.common.devicecard.aquaDeviceCardTypography
 @Composable
 internal fun DosingChannelCard(
     state: DosingChannelCardUiState,
+    onClick: () -> Unit,
     modifier: Modifier = Modifier
 ) {
     val colors = aquaDeviceCardColors()
@@ -50,6 +53,10 @@ internal fun DosingChannelCard(
             .fillMaxWidth()
             .heightIn(min = CHANNEL_CARD_MIN_HEIGHT)
             .semantics { contentDescription = contentDescriptionText }
+            .clickable(
+                role = Role.Button,
+                onClick = onClick
+            )
     ) {
         Column(
             modifier = Modifier.fillMaxWidth(),

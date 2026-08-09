@@ -12,6 +12,7 @@ import com.aqua.aqualight.data.aquarium.devices.TankDeviceAssignmentRepository
 import com.aqua.aqualight.data.care.DefaultMaintenanceOperations
 import com.aqua.aqualight.data.care.integrity.restoreTaskSnapshotsForIntegrity
 import com.aqua.aqualight.data.care.integrity.snapshotTasksForIntegrity
+import com.aqua.aqualight.data.devices.DefaultDeviceDosingChannelNavigationOperations
 import com.aqua.aqualight.data.devices.DefaultDeviceFamilySettingsOperations
 import com.aqua.aqualight.data.devices.DefaultDeviceRootOperations
 import com.aqua.aqualight.data.devices.DefaultDeviceStatusOperations
@@ -194,7 +195,11 @@ internal class OwnerViewModelFactory(
                 DeviceTimerRootViewModel(DefaultDeviceRootOperations(repository))
 
             DeviceDosingRootViewModel::class.java ->
-                DeviceDosingRootViewModel(DefaultDeviceRootOperations(repository))
+                DeviceDosingRootViewModel(
+                    operations = DefaultDeviceRootOperations(repository),
+                    channelNavigationOperations =
+                        DefaultDeviceDosingChannelNavigationOperations(repository)
+                )
 
             DeviceRootOverviewViewModel::class.java ->
                 DeviceRootOverviewViewModel(DefaultDeviceRootOperations(repository))

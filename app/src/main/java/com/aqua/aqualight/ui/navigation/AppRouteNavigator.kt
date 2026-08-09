@@ -5,6 +5,8 @@ import androidx.navigation.NavController
 import androidx.navigation.NavDeepLinkRequest
 import androidx.navigation.navOptions
 import com.aqua.aqualight.R
+import com.aqua.aqualight.application.devices.DeviceDosingChannelDestination
+import com.aqua.aqualight.application.devices.DeviceDosingChannelNavigationTarget
 import com.aqua.aqualight.ui.tabs.aquarium.navigation.AquariumTabArgs
 
 enum class AppRouteOpenResult {
@@ -92,6 +94,57 @@ object AppRouteNavigator {
         }
     }
 
+    fun openDosingChannel(
+        navController: NavController,
+        target: DeviceDosingChannelNavigationTarget
+    ): AppRouteOpenResult {
+        val deviceUid = target.deviceUid.trim()
+        val slotId = target.slotId.trim()
+        val channelTitle = target.channelTitle.trim()
+        val destinationId = target.destination.destinationId
+        return when {
+            deviceUid.isBlank() || slotId.isBlank() || channelTitle.isBlank() ->
+                AppRouteOpenResult.REJECTED
+            DosingChannelRouteIdempotencyPolicy.isAlreadyOpen(
+                current = DosingChannelRouteIdentity(
+                    destinationId = navController.currentDestination?.id,
+                    deviceUid = navController.currentBackStackEntry
+                        ?.arguments
+                        ?.getString(ARG_DEVICE_UID),
+                    slotId = navController.currentBackStackEntry
+                        ?.arguments
+                        ?.getString(ARG_SLOT_ID)
+                ),
+                requested = DosingChannelRouteIdentity(
+                    destinationId = destinationId,
+                    deviceUid = deviceUid,
+                    slotId = slotId
+                )
+            ) -> AppRouteOpenResult.ALREADY_OPEN
+            navController.currentDestination?.id != dosingRootDestinationId ->
+                AppRouteOpenResult.REJECTED
+            else -> {
+                navController.navigate(
+                    deepLinkRequest(
+                        uri = Uri.Builder()
+                            .scheme(SCHEME)
+                            .authority(AUTHORITY)
+                            .appendPath(PATH_DEVICE)
+                            .appendPath(deviceUid)
+                            .appendPath(PATH_DOSING)
+                            .appendPath(PATH_CHANNEL)
+                            .appendPath(slotId)
+                            .appendPath(target.destination.path)
+                            .appendQueryParameter(QUERY_CHANNEL_TITLE, channelTitle)
+                            .build()
+                    ),
+                    dosingChannelRouteOptions()
+                )
+                AppRouteOpenResult.OPENED
+            }
+        }
+    }
+
     private fun standardRouteOptions() = navOptions {
         anim {
             enter = R.anim.nav_slide_in_right
@@ -102,6 +155,16 @@ object AppRouteNavigator {
     }
 
     private fun firmwareRouteOptions() = navOptions {
+        launchSingleTop = true
+        anim {
+            enter = R.anim.nav_slide_in_right
+            exit = R.anim.nav_slide_out_left
+            popEnter = R.anim.nav_slide_in_left
+            popExit = R.anim.nav_slide_out_right
+        }
+    }
+
+    private fun dosingChannelRouteOptions() = navOptions {
         launchSingleTop = true
         anim {
             enter = R.anim.nav_slide_in_right
@@ -127,10 +190,30 @@ object AppRouteNavigator {
     private const val PATH_CARE_TASK = "care-task"
     private const val PATH_DEVICE = "device"
     private const val PATH_FIRMWARE_UPDATE = "firmware-update"
+    private const val PATH_DOSING = "dosing"
+    private const val PATH_CHANNEL = "channel"
+    private const val PATH_CALIBRATION = "calibration"
+    private const val PATH_DETAIL = "detail"
     private const val QUERY_START_TAB = "startTab"
+    private const val QUERY_CHANNEL_TITLE = "channelTitle"
     private const val ARG_DEVICE_UID = "deviceUid"
+    private const val ARG_SLOT_ID = "slotId"
 
     private val firmwareDestinationId = R.id.deviceFirmwareUpdateFragment
+    private val dosingRootDestinationId = R.id.deviceDosingRootFragment
+
+    private val DeviceDosingChannelDestination.destinationId: Int
+        get() = when (this) {
+            DeviceDosingChannelDestination.CALIBRATION ->
+                R.id.deviceDosingChannelCalibrationFragment
+            DeviceDosingChannelDestination.DETAIL -> R.id.deviceDosingChannelDetailFragment
+        }
+
+    private val DeviceDosingChannelDestination.path: String
+        get() = when (this) {
+            DeviceDosingChannelDestination.CALIBRATION -> PATH_CALIBRATION
+            DeviceDosingChannelDestination.DETAIL -> PATH_DETAIL
+        }
 
     internal object DeviceFirmwareRouteIdempotencyPolicy {
         fun isAlreadyOpen(
@@ -145,4 +228,25 @@ object AppRouteNavigator {
                 current == requested
         }
     }
+
+    internal object DosingChannelRouteIdempotencyPolicy {
+        fun isAlreadyOpen(
+            current: DosingChannelRouteIdentity,
+            requested: DosingChannelRouteIdentity
+        ): Boolean {
+            val deviceUid = requested.deviceUid.orEmpty().trim()
+            val slotId = requested.slotId.orEmpty().trim()
+            return deviceUid.isNotBlank() &&
+                slotId.isNotBlank() &&
+                current.destinationId == requested.destinationId &&
+                current.deviceUid.orEmpty().trim() == deviceUid &&
+                current.slotId.orEmpty().trim() == slotId
+        }
+    }
+
+    internal data class DosingChannelRouteIdentity(
+        val destinationId: Int?,
+        val deviceUid: String?,
+        val slotId: String?
+    )
 }
