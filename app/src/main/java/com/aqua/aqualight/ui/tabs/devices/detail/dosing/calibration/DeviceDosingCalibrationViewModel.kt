@@ -26,8 +26,18 @@ class DeviceDosingCalibrationViewModel(
     val events: SharedFlow<DosingCalibrationEvent> = _events.asSharedFlow()
 
     private var boundIdentity: Pair<String, String>? = null
-    private var primeRequested = false
     private var timedDoseJob: Job? = null
+    private val pumpSafety by lazy(LazyThreadSafetyMode.NONE) {
+        DosingCalibrationPumpSafety(
+            operations = operations,
+            scope = viewModelScope,
+            currentState = _uiState::value,
+            updateState = { state -> _uiState.value = state },
+            events = _events,
+            cancelTimedDose = { timedDoseJob?.cancel() },
+            fail = ::fail
+        )
+    }
 
     fun bind(deviceUid: String, channelKey: String) {
         val identity = deviceUid.trim() to channelKey.trim().lowercase()
@@ -47,8 +57,8 @@ class DeviceDosingCalibrationViewModel(
                 errorMessageRes = null
             )
             DosingCalibrationAction.ContinueName -> continueName()
-            DosingCalibrationAction.PrimePressed -> primePressed()
-            DosingCalibrationAction.PrimeReleased -> primeReleased()
+            DosingCalibrationAction.PrimePressed -> pumpSafety.primePressed()
+            DosingCalibrationAction.PrimeReleased -> pumpSafety.primeReleased()
             DosingCalibrationAction.ContinuePrime -> {
                 if (!_uiState.value.primeActive && !_uiState.value.busy) {
                     _uiState.value = _uiState.value.copy(
@@ -71,11 +81,7 @@ class DeviceDosingCalibrationViewModel(
             DosingCalibrationAction.StartVerificationDose -> startVerificationDose()
             DosingCalibrationAction.ConfirmCalibration -> confirmCalibration()
             DosingCalibrationAction.Recalibrate -> recalibrate()
-            DosingCalibrationAction.Exit -> exitCalibration()
-            DosingCalibrationAction.DismissError -> _uiState.value = _uiState.value.copy(
-                operation = DosingCalibrationOperation.IDLE,
-                errorMessageRes = null
-            )
+            DosingCalibrationAction.Exit -> pumpSafety.exitCalibration()
         }
     }
 
@@ -132,53 +138,6 @@ class DeviceDosingCalibrationViewModel(
                         originalDisplayName = channel.displayName,
                         displayNameInput = channel.displayName,
                         step = DosingCalibrationStep.PRIME,
-                        operation = DosingCalibrationOperation.IDLE,
-                        errorMessageRes = null
-                    )
-                }
-                .onFailure { fail(R.string.device_dosing_calibration_error_command) }
-        }
-    }
-
-    private fun primePressed() {
-        val state = _uiState.value
-        if (!state.loaded || state.step != DosingCalibrationStep.PRIME || state.busy) return
-        if (state.primeActive) return
-        primeRequested = true
-        _uiState.value = state.copy(
-            operation = DosingCalibrationOperation.STARTING_PRIME,
-            errorMessageRes = null
-        )
-        viewModelScope.launch {
-            operations.startPrime(state.deviceUid, state.channelKey)
-                .onSuccess {
-                    if (primeRequested) {
-                        _uiState.value = _uiState.value.copy(
-                            operation = DosingCalibrationOperation.PRIMING
-                        )
-                    } else {
-                        operations.stopPrime(state.deviceUid, state.channelKey)
-                        _uiState.value = _uiState.value.copy(
-                            operation = DosingCalibrationOperation.IDLE
-                        )
-                    }
-                }
-                .onFailure {
-                    primeRequested = false
-                    fail(R.string.device_dosing_calibration_error_command)
-                }
-        }
-    }
-
-    private fun primeReleased() {
-        primeRequested = false
-        val state = _uiState.value
-        if (state.operation != DosingCalibrationOperation.PRIMING) return
-        _uiState.value = state.copy(operation = DosingCalibrationOperation.STOPPING_PRIME)
-        viewModelScope.launch {
-            operations.stopPrime(state.deviceUid, state.channelKey)
-                .onSuccess {
-                    _uiState.value = _uiState.value.copy(
                         operation = DosingCalibrationOperation.IDLE,
                         errorMessageRes = null
                     )
@@ -288,7 +247,6 @@ class DeviceDosingCalibrationViewModel(
         val state = _uiState.value
         if (!state.loaded || state.busy) return
         timedDoseJob?.cancel()
-        primeRequested = false
         _uiState.value = state.copy(operation = DosingCalibrationOperation.RESETTING)
         viewModelScope.launch {
             operations.cancelCalibration(state.deviceUid, state.channelKey)
@@ -305,22 +263,6 @@ class DeviceDosingCalibrationViewModel(
                     )
                 }
                 .onFailure { fail(R.string.device_dosing_calibration_error_command) }
-        }
-    }
-
-    private fun exitCalibration() {
-        val state = _uiState.value
-        if (state.operation == DosingCalibrationOperation.EXITING) return
-        timedDoseJob?.cancel()
-        primeRequested = false
-        _uiState.value = state.copy(operation = DosingCalibrationOperation.EXITING)
-        viewModelScope.launch {
-            if (state.loaded) {
-                operations.stopPrime(state.deviceUid, state.channelKey)
-                operations.stopVerificationDose(state.deviceUid, state.channelKey)
-                operations.cancelCalibration(state.deviceUid, state.channelKey)
-            }
-            _events.emit(DosingCalibrationEvent.Exit)
         }
     }
 
