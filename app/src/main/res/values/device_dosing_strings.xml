@@ -16,6 +16,7 @@
     <string name="device_dosing_channel_calibrated">Calibrated</string>
     <string name="device_dosing_channel_not_configured">Not configured</string>
     <string name="device_dosing_channel_configured">Configured</string>
-    <string name="device_dosing_channel_timeline_description">24-hour dosing schedule</string>
+    <string name="device_dosing_channel_dose_progress_description">Daily dose progress. %1$.2f ml delivered of %2$.2f ml.</string>
+    <string name="device_dosing_channel_dose_progress_value_format">%1$.2f ml</string>
     <string name="device_dosing_channel_card_content_description">Dosing channel %1$d, %2$s, %3$s</string>
 </resources>

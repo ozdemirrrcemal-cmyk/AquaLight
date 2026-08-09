@@ -26,6 +26,8 @@ class DosingChannelCardMapperTest {
         assertEquals(DosingCalibrationUiState.REQUIRED, state.calibrationState)
         assertEquals(DosingSetupUiState.NOT_CONFIGURED, state.setupState)
         assertEquals(DosingChannelVisualState.SETUP_REQUIRED, state.visualState)
-        assertEquals(DosingTimelineVisualState.EMPTY, state.timeline.visualState)
+        assertEquals(0.0, state.doseProgress.dailyTargetMl, 0.0)
+        assertEquals(0.0, state.doseProgress.deliveredMl, 0.0)
+        assertEquals(DosingDoseProgressVisualState.EMPTY, state.doseProgress.visualState)
     }
 }

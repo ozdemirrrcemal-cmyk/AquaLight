@@ -73,8 +73,8 @@ internal fun DosingChannelCard(
                 colors = colors,
                 typography = typography
             )
-            DosingScheduleTimeline(
-                state = state.timeline,
+            DosingDoseProgressBar(
+                state = state.doseProgress,
                 colors = colors,
                 typography = typography
             )
@@ -189,7 +189,7 @@ private fun DosingChannelMetadata(
             icon = DosingMetadataIcon.DOSE,
             label = stringResource(
                 R.string.device_dosing_channel_daily_dose_format,
-                state.dailyDoseMl
+                state.doseProgress.dailyTargetMl
             ),
             tint = colors.secondaryText,
             colors = colors,

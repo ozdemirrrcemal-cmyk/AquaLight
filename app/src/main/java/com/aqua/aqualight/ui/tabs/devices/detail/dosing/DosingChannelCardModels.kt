@@ -11,18 +11,16 @@ data class DosingChannelCardUiState(
     val channelNumber: Int,
     val wireKey: String,
     val displayName: String,
-    val dailyDoseMl: Double = 0.0,
     val calibrationState: DosingCalibrationUiState = DosingCalibrationUiState.REQUIRED,
     val setupState: DosingSetupUiState = DosingSetupUiState.NOT_CONFIGURED,
     val visualState: DosingChannelVisualState = DosingChannelVisualState.SETUP_REQUIRED,
-    val timeline: DosingTimelineUiState = DosingTimelineUiState()
+    val doseProgress: DosingDoseProgressUiState = DosingDoseProgressUiState()
 ) {
     init {
         require(slotId.isNotBlank()) { "Dosing channel card requires a stable catalog slot id." }
         require(channelNumber > 0) { "Dosing channel number must be positive." }
         require(wireKey.isNotBlank()) { "Dosing channel card requires a catalog wire key." }
         require(displayName.isNotBlank()) { "Dosing channel display name must not be blank." }
-        require(dailyDoseMl >= 0.0) { "Dosing channel daily dose must not be negative." }
     }
 }
 
@@ -50,30 +48,38 @@ enum class DosingChannelVisualState(
     ERROR(R.string.device_dosing_channel_status_attention)
 }
 
+/**
+ * Volume-based daily dosing progress.
+ *
+ * [dailyTargetMl] is the configured total dose for the day. [deliveredMl] is the amount actually
+ * delivered so far. Optional checkpoints are cumulative dose boundaries supplied by the future
+ * channel configuration mapper; they are deliberately expressed in millilitres, never time.
+ */
 @Immutable
-data class DosingTimelineUiState(
-    val events: List<DosingTimelineEventUiState> = emptyList(),
-    val visualState: DosingTimelineVisualState = DosingTimelineVisualState.EMPTY
-)
+data class DosingDoseProgressUiState(
+    val dailyTargetMl: Double = 0.0,
+    val deliveredMl: Double = 0.0,
+    val doseCheckpointsMl: List<Double> = emptyList(),
+    val visualState: DosingDoseProgressVisualState = DosingDoseProgressVisualState.EMPTY
+) {
+    init {
+        require(dailyTargetMl >= 0.0) { "Daily dosing target must not be negative." }
+        require(deliveredMl >= 0.0) { "Delivered dosing amount must not be negative." }
+        require(doseCheckpointsMl.all { it >= 0.0 && it <= dailyTargetMl }) {
+            "Dose checkpoints must stay inside the configured daily target."
+        }
+        require(doseCheckpointsMl.zipWithNext().all { (previous, next) -> previous <= next }) {
+            "Dose checkpoints must be ordered by cumulative volume."
+        }
+    }
+}
 
-enum class DosingTimelineVisualState {
+enum class DosingDoseProgressVisualState {
     EMPTY,
     READY,
     ACTIVE,
+    COMPLETE,
     ERROR
-}
-
-@Immutable
-data class DosingTimelineEventUiState(
-    val fractionOfDay: Float,
-    val amountMl: Double,
-    val active: Boolean = false,
-    val error: Boolean = false
-) {
-    init {
-        require(fractionOfDay in 0f..1f) { "Timeline event must be inside one 24-hour day." }
-        require(amountMl >= 0.0) { "Timeline dose amount must not be negative." }
-    }
 }
 
 /** Initial presentation comes only from the validated commercial channel-slot catalog. */

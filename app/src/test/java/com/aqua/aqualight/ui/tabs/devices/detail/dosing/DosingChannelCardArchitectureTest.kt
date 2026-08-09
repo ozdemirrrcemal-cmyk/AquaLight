@@ -49,6 +49,38 @@ class DosingChannelCardArchitectureTest {
     }
 
     @Test
+    fun `dose rail is volume based and contains no time axis contract`() {
+        val card = source(
+            "app/src/main/java/com/aqua/aqualight/ui/tabs/devices/detail/dosing/" +
+                "DosingChannelCard.kt"
+        )
+        val models = source(
+            "app/src/main/java/com/aqua/aqualight/ui/tabs/devices/detail/dosing/" +
+                "DosingChannelCardModels.kt"
+        )
+        val progressBar = source(
+            "app/src/main/java/com/aqua/aqualight/ui/tabs/devices/detail/dosing/" +
+                "DosingDoseProgressBar.kt"
+        )
+        val removedTimeline = File(
+            repositoryRoot,
+            "app/src/main/java/com/aqua/aqualight/ui/tabs/devices/detail/dosing/" +
+                "DosingScheduleTimeline.kt"
+        )
+
+        assertTrue(card.contains("DosingDoseProgressBar"))
+        assertTrue(models.contains("dailyTargetMl"))
+        assertTrue(models.contains("deliveredMl"))
+        assertTrue(models.contains("doseCheckpointsMl"))
+        assertTrue(progressBar.contains("deliveredMl / dailyTargetMl"))
+        assertFalse(models.contains("fractionOfDay"))
+        assertFalse(models.contains("DosingTimeline"))
+        assertFalse(progressBar.contains("24-hour"))
+        assertFalse(progressBar.contains("TIMELINE"))
+        assertFalse(removedTimeline.exists())
+    }
+
+    @Test
     fun `presentation does not couple channel cards to firmware runtime models`() {
         val cardModels = source(
             "app/src/main/java/com/aqua/aqualight/ui/tabs/devices/detail/dosing/" +
