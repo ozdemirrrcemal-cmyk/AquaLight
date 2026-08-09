@@ -23,14 +23,15 @@ class DosingCalibrationIntegrationArchitectureTest {
     }
 
     @Test
-    fun `owner factory no longer relies on unchecked cast or method suppression`() {
+    fun `owner factory remains central without unchecked cast or method suppression`() {
         val factory = source(OWNER_FACTORY)
 
         assertFalse(factory.contains("UNCHECKED_CAST"))
         assertFalse(factory.contains("LongMethod"))
         assertFalse(factory.contains("CyclomaticComplexMethod"))
-        assertTrue(factory.contains("modelClass.cast(viewModel)"))
-        assertTrue(factory.contains("OwnerViewModelBindings("))
+        assertTrue(factory.contains("val graph = ownerGraphResolver.requireActive()"))
+        assertTrue(factory.contains("modelClass.cast(creator(graph))"))
+        assertTrue(factory.contains("DefaultDeviceDosingCalibrationOperations("))
     }
 
     @Test
@@ -67,8 +68,7 @@ class DosingCalibrationIntegrationArchitectureTest {
             "app/src/main/java/com/aqua/aqualight/application/devices/" +
                 "DeviceDosingCalibrationOperations.kt",
             CALIBRATION_ADAPTER,
-            "app/src/main/java/com/aqua/aqualight/composition/OwnerViewModelFactory.kt",
-            "app/src/main/java/com/aqua/aqualight/composition/OwnerViewModelBindings.kt",
+            OWNER_FACTORY,
             "app/src/main/java/com/aqua/aqualight/ui/tabs/devices/detail/dosing/" +
                 "DosingPumpDeviceCompose.kt",
             "app/src/main/java/com/aqua/aqualight/ui/tabs/devices/detail/dosing/" +
