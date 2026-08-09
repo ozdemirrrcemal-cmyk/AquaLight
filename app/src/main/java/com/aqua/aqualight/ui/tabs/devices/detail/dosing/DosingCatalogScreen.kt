@@ -1,5 +1,6 @@
 package com.aqua.aqualight.ui.tabs.devices.detail.dosing
 
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
@@ -14,6 +15,7 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.unit.dp
 
 /**
@@ -27,9 +29,9 @@ import androidx.compose.ui.unit.dp
 internal fun DeviceDosingCatalogScreen(
     pumpCount: Int,
     channels: List<DosingChannelCardUiState>,
+    onChannelClick: (String) -> Unit,
     modifier: Modifier = Modifier,
-    pumpStates: List<DosingPumpVisualState> = emptyList(),
-    onPumpClick: (Int) -> Unit = {}
+    pumpStates: List<DosingPumpVisualState> = emptyList()
 ) {
     val exactPumpCount = exactDosingPumpCountOrNull(pumpCount)
     if (exactPumpCount == null) {
@@ -68,7 +70,13 @@ internal fun DeviceDosingCatalogScreen(
                 val resolvedDeviceWidth = minOf(maxWidth, maximumDeviceWidth)
                 DosingPumpDevice(
                     pumpHeads = pumpHeads,
-                    onPumpClick = onPumpClick,
+                    onPumpClick = { channelNumber ->
+                        channels.firstOrNull { channel ->
+                            channel.channelNumber == channelNumber
+                        }?.let { channel ->
+                            onChannelClick(channel.slotId)
+                        }
+                    },
                     modifier = Modifier.width(resolvedDeviceWidth)
                 )
             }
@@ -86,7 +94,12 @@ internal fun DeviceDosingCatalogScreen(
         ) { channel ->
             DosingChannelCard(
                 state = channel,
-                modifier = Modifier.fillMaxWidth()
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .clickable(
+                        role = Role.Button,
+                        onClick = { onChannelClick(channel.slotId) }
+                    )
             )
         }
     }

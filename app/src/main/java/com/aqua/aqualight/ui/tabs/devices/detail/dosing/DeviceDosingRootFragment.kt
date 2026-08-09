@@ -77,6 +77,18 @@ class DeviceDosingRootFragment : Fragment(R.layout.fragment_device_dosing_root) 
         )
     }
 
+    private fun openDosingChannel(slotId: String) {
+        val navController = findNavController()
+        if (navController.currentDestination?.id != R.id.deviceDosingRootFragment) return
+        navController.navigate(
+            DeviceDosingRootFragmentDirections
+                .actionDeviceDosingRootFragmentToDeviceDosingChannelDetailFragment(
+                    deviceUid = args.deviceUid,
+                    slotId = slotId
+                )
+        )
+    }
+
     private fun setupPumpContent() {
         binding.dosingPumpCompose.apply {
             setViewCompositionStrategy(ViewCompositionStrategy.DisposeOnViewTreeLifecycleDestroyed)
@@ -84,7 +96,8 @@ class DeviceDosingRootFragment : Fragment(R.layout.fragment_device_dosing_root) 
                 val state by viewModel.uiState.collectAsStateWithLifecycle()
                 DeviceDosingCatalogScreen(
                     pumpCount = state.pumpCount,
-                    channels = state.channels
+                    channels = state.channels,
+                    onChannelClick = ::openDosingChannel
                 )
             }
         }
