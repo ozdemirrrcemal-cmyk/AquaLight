@@ -4,7 +4,7 @@ import android.os.Bundle
 import android.text.InputType
 import android.view.View
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.mutableDoubleStateOf
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.platform.ComposeView
 import androidx.compose.ui.platform.ViewCompositionStrategy
@@ -23,7 +23,7 @@ class DeviceDosingChannelMenuFragment :
     private val menuItem: DosingDetailMenuItem?
         get() = DosingDetailMenuItem.fromRouteKey(args.menuKey)
 
-    private var reservoirCapacityMl by mutableStateOf(DEFAULT_RESERVOIR_CAPACITY_ML)
+    private var reservoirCapacityMl by mutableDoubleStateOf(DEFAULT_RESERVOIR_CAPACITY_ML)
 
     override val destinationTitle: String
         get() = menuItem
