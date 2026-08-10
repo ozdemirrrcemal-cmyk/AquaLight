@@ -7,6 +7,7 @@ import com.aqua.aqualight.BuildConfig
 import com.aqua.aqualight.composition.ActiveOwnerDependencyGraphResolver
 import com.aqua.aqualight.composition.AppContainer
 import com.aqua.aqualight.composition.OwnerDependencyGraph
+import com.aqua.aqualight.data.devices.DefaultDeviceDosingChannelNavigationOperations
 import com.aqua.aqualight.data.devices.DefaultDeviceRootOperations
 import com.aqua.aqualight.data.devices.DefaultOwnerDevicesOperations
 import com.aqua.aqualight.data.devices.menu.DefaultDeviceMenuAccessOperations
@@ -65,7 +66,7 @@ private class DebugDeviceFixtureViewModelFactory(
             DeviceTimerRootViewModel::class.java ->
                 DeviceTimerRootViewModel(rootOperations(requireGraph()))
             DeviceDosingRootViewModel::class.java ->
-                DeviceDosingRootViewModel(rootOperations(requireGraph()))
+                createDosingViewModel(requireGraph())
             DeviceRootOverviewViewModel::class.java ->
                 DeviceRootOverviewViewModel(rootOperations(requireGraph()))
             DeviceFamilySettingsViewModel::class.java -> createSettingsViewModel(requireGraph())
@@ -118,6 +119,15 @@ private class DebugDeviceFixtureViewModelFactory(
             rootOperations = rootOperations(graph),
             firmwareUpdateOperations = firmwareOperations(graph),
             manifestUrl = BuildConfig.AQL_OTA_MANIFEST_URL
+        )
+
+    private fun createDosingViewModel(graph: OwnerDependencyGraph): DeviceDosingRootViewModel =
+        DeviceDosingRootViewModel(
+            operations = rootOperations(graph),
+            channelNavigationOperations = DebugFixtureDosingChannelNavigationOperations(
+                delegate = DefaultDeviceDosingChannelNavigationOperations(graph.devicesRepository),
+                fixtures = fixtures
+            )
         )
 
     private fun rootOperations(graph: OwnerDependencyGraph) = DebugFixtureDeviceRootOperations(

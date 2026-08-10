@@ -11,30 +11,32 @@ internal object DeviceDosingMutationParser {
         "operation", "changed", "saved", "saveRequested", "runtimeTransport", "command",
         "event", "appliedChannels", "appliedSchedules", "config"
     )
-    private val PUMP_RESULT_KEYS = setOf(
+    private val PUMP_START_RESULT_KEYS = setOf(
         "operation", "channelKey", "manualActive", "saved", "runtimeTransport", "command",
         "event", "channel"
     )
+    private val PUMP_STOP_RESULT_KEYS = PUMP_START_RESULT_KEYS + "verificationReset"
     private val DOSE_NOW_KEYS = setOf(
         "operation", "channelKey", "amountMl", "durationMs", "doseMsPerMl",
-        "usePendingCalibration", "manualActive", "saved", "runtimeTransport", "command",
-        "event", "channel"
+        "usePendingCalibration", "calibrationState", "manualActive", "saved",
+        "runtimeTransport", "command", "event", "channel"
     )
     private val CALIBRATION_START_KEYS = setOf(
-        "operation", "channelKey", "durationMs", "manualActive", "saved",
+        "operation", "channelKey", "durationMs", "calibrationState", "manualActive", "saved",
         "runtimeTransport", "command", "event"
     )
     private val CALIBRATION_FINISH_KEYS = setOf(
         "operation", "channelKey", "measuredMl", "durationMs", "pendingDoseMsPerMl",
-        "pending", "saved", "runtimeTransport", "command", "event", "channel"
+        "pending", "calibrationState", "saved", "runtimeTransport", "command", "event", "channel"
     )
     private val CALIBRATION_CONFIRM_KEYS = setOf(
-        "operation", "channelKey", "doseMsPerMl", "lastCalibratedAt", "saved",
+        "operation", "channelKey", "doseMsPerMl", "lastCalibratedAt", "calibrationState", "saved",
         "runtimeTransport", "command", "event", "channel"
     )
     private val CALIBRATION_CANCEL_KEYS = setOf(
-        "operation", "channelKey", "restoredPreviousCalibration", "saved",
-        "runtimeTransport", "command", "event", "channel"
+        "operation", "channelKey", "discardedPendingCalibration",
+        "restoredPreviousCalibration", "calibrationState", "saved", "runtimeTransport",
+        "command", "event", "channel"
     )
     private val RESERVOIR_REFILL_KEYS = setOf(
         "operation", "channelKey", "changed", "reservoirRemainingMlBefore",
@@ -64,7 +66,8 @@ internal object DeviceDosingMutationParser {
             data,
             DeviceDosingRuntimeContract.Literal.PRIME_START_OPERATION,
             DeviceDosingRuntimeContract.Action.PRIME_START,
-            manualActive = true
+            manualActive = true,
+            includesVerificationReset = false
         )
 
     fun parsePrimeStop(data: JSONObject): DeviceDosingPumpCommandResult =
@@ -72,7 +75,8 @@ internal object DeviceDosingMutationParser {
             data,
             DeviceDosingRuntimeContract.Literal.PRIME_STOP_OPERATION,
             DeviceDosingRuntimeContract.Action.PRIME_STOP,
-            manualActive = false
+            manualActive = false,
+            includesVerificationReset = true
         )
 
     fun parseDoseStop(data: JSONObject): DeviceDosingPumpCommandResult =
@@ -80,7 +84,8 @@ internal object DeviceDosingMutationParser {
             data,
             DeviceDosingRuntimeContract.Literal.DOSE_STOP_OPERATION,
             DeviceDosingRuntimeContract.Action.DOSE_STOP,
-            manualActive = false
+            manualActive = false,
+            includesVerificationReset = true
         )
 
     fun parseDoseNow(data: JSONObject): DeviceDosingDoseNowResult {
@@ -104,6 +109,9 @@ internal object DeviceDosingMutationParser {
                 DeviceDosingRuntimeContract.Limit.MAX_DOSE_MS_PER_ML
             ),
             usePendingCalibration = data.requireDosingBoolean("usePendingCalibration"),
+            calibrationState = DeviceDosingCalibrationStateParser.parse(
+                data.requireDosingText("calibrationState")
+            ),
             manualActive = data.requireDosingBoolean("manualActive"),
             saved = data.requireDosingBoolean("saved"),
             runtimeTransport = data.requireDosingText("runtimeTransport"),
@@ -125,6 +133,9 @@ internal object DeviceDosingMutationParser {
                 DeviceDosingRuntimeContract.Limit.MIN_CALIBRATION_DURATION_MS,
                 DeviceDosingRuntimeContract.Limit.MAX_CALIBRATION_DURATION_MS
             ),
+            calibrationState = DeviceDosingCalibrationStateParser.parse(
+                data.requireDosingText("calibrationState")
+            ),
             manualActive = data.requireDosingBoolean("manualActive"),
             saved = data.requireDosingBoolean("saved"),
             runtimeTransport = data.requireDosingText("runtimeTransport"),
@@ -142,6 +153,7 @@ internal object DeviceDosingMutationParser {
                 result.event
             )
             require(result.manualActive)
+            require(result.calibrationState == DeviceDosingCalibrationState.RUNNING)
         }
     }
 
@@ -166,6 +178,9 @@ internal object DeviceDosingMutationParser {
                 DeviceDosingRuntimeContract.Limit.MAX_DOSE_MS_PER_ML
             ),
             pending = data.requireDosingBoolean("pending"),
+            calibrationState = DeviceDosingCalibrationStateParser.parse(
+                data.requireDosingText("calibrationState")
+            ),
             saved = data.requireDosingBoolean("saved"),
             runtimeTransport = data.requireDosingText("runtimeTransport"),
             command = data.requireDosingText("command"),
@@ -188,8 +203,11 @@ internal object DeviceDosingMutationParser {
             ),
             lastCalibratedAt = data.requireDosingLong(
                 "lastCalibratedAt",
-                DOSING_NON_NEGATIVE_LONG,
+                1L,
                 DOSING_DEVICE_UPTIME_MAX_MS
+            ),
+            calibrationState = DeviceDosingCalibrationStateParser.parse(
+                data.requireDosingText("calibrationState")
             ),
             saved = data.requireDosingBoolean("saved"),
             runtimeTransport = data.requireDosingText("runtimeTransport"),
@@ -208,6 +226,12 @@ internal object DeviceDosingMutationParser {
             channelKey = data.requireDosingText("channelKey"),
             restoredPreviousCalibration = data.requireDosingBoolean(
                 "restoredPreviousCalibration"
+            ),
+            discardedPendingCalibration = data.requireDosingBoolean(
+                "discardedPendingCalibration"
+            ),
+            calibrationState = DeviceDosingCalibrationStateParser.parse(
+                data.requireDosingText("calibrationState")
             ),
             saved = data.requireDosingBoolean("saved"),
             runtimeTransport = data.requireDosingText("runtimeTransport"),
@@ -228,6 +252,12 @@ internal object DeviceDosingMutationParser {
                 DeviceDosingRuntimeContract.Action.CALIBRATION_CANCEL,
                 result.event,
                 result.channel
+            )
+            require(!result.restoredPreviousCalibration)
+            require(result.calibrationState == DeviceDosingCalibrationState.IDLE)
+            require(
+                result.channel.channel.dosing.calibration.state ==
+                    DeviceDosingCalibrationState.IDLE
             )
         }
     }
@@ -265,13 +295,22 @@ internal object DeviceDosingMutationParser {
         data: JSONObject,
         expectedOperation: String,
         action: String,
-        manualActive: Boolean
+        manualActive: Boolean,
+        includesVerificationReset: Boolean
     ): DeviceDosingPumpCommandResult {
-        data.requireDosingKeys(PUMP_RESULT_KEYS, "dosing.$action result")
+        data.requireDosingKeys(
+            if (includesVerificationReset) PUMP_STOP_RESULT_KEYS else PUMP_START_RESULT_KEYS,
+            "dosing.$action result"
+        )
         return DeviceDosingPumpCommandResult(
             operation = data.requireDosingText("operation"),
             channelKey = data.requireDosingText("channelKey"),
             manualActive = data.requireDosingBoolean("manualActive"),
+            verificationReset = if (includesVerificationReset) {
+                data.requireDosingBoolean("verificationReset")
+            } else {
+                false
+            },
             saved = data.requireDosingBoolean("saved"),
             runtimeTransport = data.requireDosingText("runtimeTransport"),
             command = data.requireDosingText("command"),
@@ -346,8 +385,22 @@ internal object DeviceDosingMutationParser {
             result.channel
         )
         require(result.manualActive)
+        require(
+            result.calibrationState == if (result.usePendingCalibration) {
+                DeviceDosingCalibrationState.PENDING_VERIFICATION
+            } else {
+                DeviceDosingCalibrationState.IDLE
+            }
+        )
         require(result.channel.channel.valueManual >= DOSING_NORMALIZED_MIN)
-        require(result.channel.channel.dosing.doseMsPerMl == result.doseMsPerMl)
+        if (result.usePendingCalibration) {
+            require(
+                result.channel.channel.dosing.calibration.pendingDoseMsPerMl ==
+                    result.doseMsPerMl
+            )
+        } else {
+            require(result.channel.channel.dosing.doseMsPerMl == result.doseMsPerMl)
+        }
         require(
             result.durationMs == (result.amountMl * result.doseMsPerMl.toDouble()).roundToLong()
         )
@@ -367,11 +420,19 @@ internal object DeviceDosingMutationParser {
             result.channel
         )
         require(result.pending)
+        require(result.calibrationState == DeviceDosingCalibrationState.PENDING_VERIFICATION)
         require(
             result.pendingDoseMsPerMl ==
                 (result.durationMs.toDouble() / result.measuredMl).roundToLong()
         )
-        require(result.channel.channel.dosing.doseMsPerMl == result.pendingDoseMsPerMl)
+        require(
+            result.channel.channel.dosing.calibration.pendingDoseMsPerMl ==
+                result.pendingDoseMsPerMl
+        )
+        require(
+            result.channel.channel.dosing.calibration.state ==
+                DeviceDosingCalibrationState.PENDING_VERIFICATION
+        )
         require(result.channel.channel.valueManual < DOSING_NORMALIZED_MIN)
     }
 
@@ -391,6 +452,11 @@ internal object DeviceDosingMutationParser {
         require(result.channel.channel.dosing.doseMsPerMl == result.doseMsPerMl)
         require(result.channel.channel.dosing.lastCalibratedAt == result.lastCalibratedAt)
         require(result.channel.channel.dosing.calibrated)
+        require(result.calibrationState == DeviceDosingCalibrationState.IDLE)
+        require(
+            result.channel.channel.dosing.calibration.state ==
+                DeviceDosingCalibrationState.IDLE
+        )
     }
 
     private fun validateReservoirRefill(result: DeviceDosingReservoirRefillResult) {

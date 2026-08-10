@@ -15,6 +15,11 @@
 
     <color name="aqua_card_accent">@color/aqua_palette_hex_6489c9</color>
 
+    <!-- Shared semantic card-state colors -->
+    <color name="aqua_card_state_active">@color/aqua_accent</color>
+    <color name="aqua_card_state_warning">@color/dialog_icon_warning</color>
+    <color name="aqua_card_state_danger">@color/dialog_icon_error</color>
+
     <!-- Device cards: Living Room / Devices reference language -->
     <color name="aqua_card_device_surface">@color/aqua_palette_hex_101d2c</color>
     <color name="aqua_card_device_media_surface">@color/aqua_palette_hex_162a3e</color>
