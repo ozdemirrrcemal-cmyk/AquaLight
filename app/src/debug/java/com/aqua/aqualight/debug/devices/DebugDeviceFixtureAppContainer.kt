@@ -7,6 +7,7 @@ import com.aqua.aqualight.BuildConfig
 import com.aqua.aqualight.composition.ActiveOwnerDependencyGraphResolver
 import com.aqua.aqualight.composition.AppContainer
 import com.aqua.aqualight.composition.OwnerDependencyGraph
+import com.aqua.aqualight.data.devices.DefaultDeviceDosingCalibrationOperations
 import com.aqua.aqualight.data.devices.DefaultDeviceDosingChannelNavigationOperations
 import com.aqua.aqualight.data.devices.DefaultDeviceRootOperations
 import com.aqua.aqualight.data.devices.DefaultOwnerDevicesOperations
@@ -17,6 +18,7 @@ import com.aqua.aqualight.ui.tabs.devices.DevicesViewModel
 import com.aqua.aqualight.ui.tabs.devices.detail.common.DeviceRootOverviewViewModel
 import com.aqua.aqualight.ui.tabs.devices.detail.cooling.DeviceCoolingRootViewModel
 import com.aqua.aqualight.ui.tabs.devices.detail.dosing.DeviceDosingRootViewModel
+import com.aqua.aqualight.ui.tabs.devices.detail.dosing.channel.calibration.DeviceDosingChannelCalibrationViewModel
 import com.aqua.aqualight.ui.tabs.devices.detail.light.DeviceLightRootViewModel
 import com.aqua.aqualight.ui.tabs.devices.detail.settings.DeviceFamilySettingsViewModel
 import com.aqua.aqualight.ui.tabs.devices.detail.timer.DeviceTimerRootViewModel
@@ -49,6 +51,7 @@ private class DebugDeviceFixtureViewModelFactory(
 
     private val appContext = context.applicationContext
     private val fixtures = DebugDeviceFixtureCatalog()
+    private val dosingStateStore = DebugFixtureDosingStateStore(fixtures)
     private val ownerGraphResolver = ActiveOwnerDependencyGraphResolver(
         context = appContext,
         deviceFirmwareNotifications = NotificationPlatform.get(appContext).deviceFirmwareUpdates,
@@ -67,6 +70,8 @@ private class DebugDeviceFixtureViewModelFactory(
                 DeviceTimerRootViewModel(rootOperations(requireGraph()))
             DeviceDosingRootViewModel::class.java ->
                 createDosingViewModel(requireGraph())
+            DeviceDosingChannelCalibrationViewModel::class.java ->
+                createDosingCalibrationViewModel(requireGraph())
             DeviceRootOverviewViewModel::class.java ->
                 DeviceRootOverviewViewModel(rootOperations(requireGraph()))
             DeviceFamilySettingsViewModel::class.java -> createSettingsViewModel(requireGraph())
@@ -126,9 +131,20 @@ private class DebugDeviceFixtureViewModelFactory(
             operations = rootOperations(graph),
             channelNavigationOperations = DebugFixtureDosingChannelNavigationOperations(
                 delegate = DefaultDeviceDosingChannelNavigationOperations(graph.devicesRepository),
-                fixtures = fixtures
+                fixtures = fixtures,
+                stateStore = dosingStateStore
             )
         )
+
+    private fun createDosingCalibrationViewModel(
+        graph: OwnerDependencyGraph
+    ): DeviceDosingChannelCalibrationViewModel = DeviceDosingChannelCalibrationViewModel(
+        operations = DebugFixtureDosingCalibrationOperations(
+            delegate = DefaultDeviceDosingCalibrationOperations(graph.devicesRepository),
+            fixtures = fixtures,
+            stateStore = dosingStateStore
+        )
+    )
 
     private fun rootOperations(graph: OwnerDependencyGraph) = DebugFixtureDeviceRootOperations(
         delegate = DefaultDeviceRootOperations(graph.devicesRepository),
