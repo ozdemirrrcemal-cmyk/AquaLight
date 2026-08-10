@@ -1,5 +1,3 @@
-@file:Suppress("FunctionNaming", "LongMethod", "MagicNumber", "UnusedPrivateMember")
-
 package com.aqua.aqualight.ui.tabs.devices.detail.dosing
 
 import androidx.annotation.StringRes
@@ -23,7 +21,6 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.runtime.Composable
@@ -34,18 +31,12 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.shadow
-import androidx.compose.ui.geometry.Offset
-import androidx.compose.ui.graphics.Brush
-import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.drawscope.DrawScope
-import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.semantics.stateDescription
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.aqua.aqualight.R
 
@@ -59,51 +50,15 @@ enum class DosingPumpVisualState(
     @StringRes val stateLabelRes: Int
 ) {
     IDLE(R.string.device_dosing_pump_state_idle),
+    SELECTED(R.string.device_dosing_pump_state_selected),
     RUNNING(R.string.device_dosing_pump_state_running),
     ERROR(R.string.device_dosing_pump_state_error)
 }
 
 @Composable
-fun DeviceDosingPumpScreen(
-    pumpCount: Int,
-    modifier: Modifier = Modifier,
-    pumpStates: List<DosingPumpVisualState> = emptyList(),
-    onPumpClick: (Int) -> Unit = {}
-) {
-    val supportedPumpCount = normalizeDosingPumpCount(pumpCount)
-    val pumpHeads = List(supportedPumpCount) { index ->
-        DosingPumpHeadUiState(
-            channelNumber = index + 1,
-            visualState = pumpStates.getOrElse(index) { DosingPumpVisualState.IDLE }
-        )
-    }
-
-    BoxWithConstraints(
-        modifier = modifier
-            .fillMaxSize()
-            .padding(horizontal = SCREEN_HORIZONTAL_PADDING)
-            .padding(top = SCREEN_TOP_PADDING),
-        contentAlignment = Alignment.TopCenter
-    ) {
-        val maximumDeviceWidth = if (supportedPumpCount == DOSING_PRO_2_PUMP_COUNT) {
-            DOSING_PRO_2_MAX_WIDTH
-        } else {
-            DOSING_PRO_4_MAX_WIDTH
-        }
-        val resolvedDeviceWidth = minOf(maxWidth, maximumDeviceWidth)
-
-        DosingPumpDevice(
-            pumpHeads = pumpHeads,
-            onPumpClick = onPumpClick,
-            modifier = Modifier.width(resolvedDeviceWidth)
-        )
-    }
-}
-
-@Composable
 fun DosingPumpDevice(
     pumpHeads: List<DosingPumpHeadUiState>,
-    onPumpClick: (Int) -> Unit,
+    onPumpClick: ((Int) -> Unit)?,
     modifier: Modifier = Modifier
 ) {
     require(
@@ -143,35 +98,65 @@ fun DosingPumpDevice(
                 )
                 .padding(DEVICE_INNER_INSET)
         ) {
-            Box(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .background(
-                        brush = DosingPumpPalette.metalDeck,
-                        shape = DEVICE_DECK_SHAPE
-                    )
-                    .border(
-                        width = DEVICE_EDGE_WIDTH,
-                        color = DosingPumpPalette.metalHighlight,
-                        shape = DEVICE_DECK_SHAPE
-                    )
-                    .padding(DEVICE_DECK_INSET)
-            ) {
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.spacedBy(PUMP_SPACING),
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    pumpHeads.forEach { pumpHead ->
-                        DosingPumpHead(
-                            pumpHead = pumpHead,
-                            onClick = { onPumpClick(pumpHead.channelNumber) },
-                            modifier = Modifier
-                                .weight(NORMAL_SCALE)
-                                .aspectRatio(NORMAL_SCALE)
-                        )
-                    }
+            DosingPumpDeck(
+                pumpHeads = pumpHeads,
+                onPumpClick = onPumpClick
+            )
+        }
+    }
+}
+
+@Composable
+private fun DosingPumpDeck(
+    pumpHeads: List<DosingPumpHeadUiState>,
+    onPumpClick: ((Int) -> Unit)?
+) {
+    val isDosingPro2 = pumpHeads.size == DOSING_PRO_2_PUMP_COUNT
+
+    BoxWithConstraints(
+        modifier = Modifier
+            .fillMaxWidth()
+            .background(
+                brush = DosingPumpPalette.metalDeck,
+                shape = DEVICE_DECK_SHAPE
+            )
+            .border(
+                width = DEVICE_EDGE_WIDTH,
+                color = DosingPumpPalette.metalHighlight,
+                shape = DEVICE_DECK_SHAPE
+            )
+            .padding(DEVICE_DECK_INSET),
+        contentAlignment = Alignment.Center
+    ) {
+        val pro2PumpHeadSize = if (isDosingPro2) {
+            minOf(
+                DOSING_PRO_2_PUMP_HEAD_MAX_SIZE,
+                (maxWidth - PUMP_SPACING) / DOSING_PRO_2_PUMP_COUNT.toFloat()
+            )
+        } else {
+            0.dp
+        }
+
+        Row(
+            modifier = if (isDosingPro2) Modifier else Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.spacedBy(PUMP_SPACING),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            pumpHeads.forEach { pumpHead ->
+                val pumpModifier = if (isDosingPro2) {
+                    Modifier.size(pro2PumpHeadSize)
+                } else {
+                    Modifier
+                        .weight(NORMAL_SCALE)
+                        .aspectRatio(NORMAL_SCALE)
                 }
+                DosingPumpHead(
+                    pumpHead = pumpHead,
+                    onClick = onPumpClick?.let { click ->
+                        { click(pumpHead.channelNumber) }
+                    },
+                    modifier = pumpModifier
+                )
             }
         }
     }
@@ -180,7 +165,7 @@ fun DosingPumpDevice(
 @Composable
 private fun DosingPumpHead(
     pumpHead: DosingPumpHeadUiState,
-    onClick: () -> Unit,
+    onClick: (() -> Unit)?,
     modifier: Modifier = Modifier
 ) {
     val interactionSource = remember { MutableInteractionSource() }
@@ -210,53 +195,79 @@ private fun DosingPumpHead(
                 contentDescription = pumpDescription
                 stateDescription = stateLabel
             }
-            .clickable(
-                interactionSource = interactionSource,
-                indication = null,
-                role = Role.Button,
-                onClick = onClick
+            .then(
+                if (onClick == null) {
+                    Modifier
+                } else {
+                    Modifier.clickable(
+                        interactionSource = interactionSource,
+                        indication = null,
+                        role = Role.Button,
+                        onClick = onClick
+                    )
+                }
             )
             .padding(PUMP_FRAME_INSET),
         contentAlignment = Alignment.Center
     ) {
-        val hubSize = maxWidth * HUB_SIZE_RATIO
+        DosingPumpFace(
+            visualState = pumpHead.visualState,
+            hubSize = maxWidth * HUB_SIZE_RATIO
+        )
+    }
+}
 
-        Box(
-            modifier = Modifier
-                .fillMaxSize()
-                .background(
-                    brush = DosingPumpPalette.pumpFace,
-                    shape = PUMP_FACE_SHAPE
-                )
-                .border(
-                    width = DEVICE_EDGE_WIDTH,
-                    color = DosingPumpPalette.faceEdge,
-                    shape = PUMP_FACE_SHAPE
-                ),
-            contentAlignment = Alignment.Center
-        ) {
-            Box(
-                modifier = Modifier
-                    .size(hubSize)
-                    .shadow(
-                        elevation = HUB_SHADOW_ELEVATION,
-                        shape = CircleShape,
-                        clip = false
-                    )
-                    .background(brush = DosingPumpPalette.hub, shape = CircleShape)
-                    .border(
-                        width = DEVICE_EDGE_WIDTH,
-                        color = DosingPumpPalette.hubEdge,
-                        shape = CircleShape
-                    ),
-                contentAlignment = Alignment.Center
-            ) {
-                PumpIndicator(
-                    visualState = pumpHead.visualState,
-                    modifier = Modifier.size(hubSize * INDICATOR_CANVAS_RATIO)
-                )
-            }
-        }
+@Composable
+private fun DosingPumpFace(
+    visualState: DosingPumpVisualState,
+    hubSize: androidx.compose.ui.unit.Dp
+) {
+    Box(
+        modifier = Modifier
+            .fillMaxSize()
+            .background(
+                brush = DosingPumpPalette.pumpFace,
+                shape = PUMP_FACE_SHAPE
+            )
+            .border(
+                width = DEVICE_EDGE_WIDTH,
+                color = DosingPumpPalette.faceEdge,
+                shape = PUMP_FACE_SHAPE
+            ),
+        contentAlignment = Alignment.Center
+    ) {
+        DosingPumpHub(
+            visualState = visualState,
+            hubSize = hubSize
+        )
+    }
+}
+
+@Composable
+private fun DosingPumpHub(
+    visualState: DosingPumpVisualState,
+    hubSize: androidx.compose.ui.unit.Dp
+) {
+    Box(
+        modifier = Modifier
+            .size(hubSize)
+            .shadow(
+                elevation = HUB_SHADOW_ELEVATION,
+                shape = CircleShape,
+                clip = false
+            )
+            .background(brush = DosingPumpPalette.hub, shape = CircleShape)
+            .border(
+                width = DEVICE_EDGE_WIDTH,
+                color = DosingPumpPalette.hubEdge,
+                shape = CircleShape
+            ),
+        contentAlignment = Alignment.Center
+    ) {
+        PumpIndicator(
+            visualState = visualState,
+            modifier = Modifier.size(hubSize * INDICATOR_CANVAS_RATIO)
+        )
     }
 }
 
@@ -285,7 +296,8 @@ private fun PumpIndicator(
         label = "dosing-pump-error-scale"
     )
     val pulseScale = when (visualState) {
-        DosingPumpVisualState.IDLE -> NORMAL_SCALE
+        DosingPumpVisualState.IDLE,
+        DosingPumpVisualState.SELECTED -> NORMAL_SCALE
         DosingPumpVisualState.RUNNING -> runningScale
         DosingPumpVisualState.ERROR -> errorScale
     }
@@ -296,157 +308,8 @@ private fun PumpIndicator(
             scaleY = pulseScale
         }
     ) {
-        val center = Offset(size.width / 2f, size.height / 2f)
-        val outerRadius = size.minDimension / 2f
-        val coreRadius = outerRadius * INDICATOR_CORE_RATIO
-
-        when (visualState) {
-            DosingPumpVisualState.IDLE -> Unit
-            DosingPumpVisualState.RUNNING -> drawIndicatorGlow(
-                center = center,
-                outerRadius = outerRadius,
-                glowColor = DosingPumpPalette.runningGlow
-            )
-            DosingPumpVisualState.ERROR -> drawIndicatorGlow(
-                center = center,
-                outerRadius = outerRadius,
-                glowColor = DosingPumpPalette.errorGlow
-            )
-        }
-
-        val indicatorBrush = when (visualState) {
-            DosingPumpVisualState.IDLE -> DosingPumpPalette.idleIndicator
-            DosingPumpVisualState.RUNNING -> DosingPumpPalette.runningIndicator
-            DosingPumpVisualState.ERROR -> DosingPumpPalette.errorIndicator
-        }
-
-        drawCircle(
-            brush = indicatorBrush,
-            radius = coreRadius,
-            center = center
-        )
-        drawCircle(
-            color = DosingPumpPalette.indicatorEdge,
-            radius = coreRadius,
-            center = center,
-            style = Stroke(width = INDICATOR_EDGE_WIDTH.toPx())
-        )
+        drawPumpIndicator(visualState)
     }
-}
-
-private fun DrawScope.drawIndicatorGlow(
-    center: Offset,
-    outerRadius: Float,
-    glowColor: Color
-) {
-    drawCircle(
-        color = glowColor.copy(alpha = GLOW_OUTER_ALPHA),
-        radius = outerRadius,
-        center = center
-    )
-    drawCircle(
-        color = glowColor.copy(alpha = GLOW_MIDDLE_ALPHA),
-        radius = outerRadius * GLOW_MIDDLE_RADIUS_RATIO,
-        center = center
-    )
-    drawCircle(
-        color = glowColor.copy(alpha = GLOW_INNER_ALPHA),
-        radius = outerRadius * GLOW_INNER_RADIUS_RATIO,
-        center = center
-    )
-}
-
-internal fun normalizeDosingPumpCount(pumpCount: Int): Int {
-    return if (pumpCount == DOSING_PRO_2_PUMP_COUNT) {
-        DOSING_PRO_2_PUMP_COUNT
-    } else {
-        DOSING_PRO_4_PUMP_COUNT
-    }
-}
-
-private object DosingPumpPalette {
-    val outerEdge = Color(0x52FFFFFF)
-    val innerEdge = Color(0x1FFFFFFF)
-    val metalHighlight = Color(0xA6FFFFFF)
-    val faceEdge = Color(0x24FFFFFF)
-    val hubEdge = Color(0x4DFFFFFF)
-    val indicatorEdge = Color(0xB3000000)
-    val runningGlow = Color(0xFF49F28F)
-    val errorGlow = Color(0xFFFF5361)
-
-    val outerShell = Brush.verticalGradient(
-        colors = listOf(
-            Color(0xFF3A3F46),
-            Color(0xFF15191E),
-            Color(0xFF050608)
-        )
-    )
-    val innerShell = Brush.verticalGradient(
-        colors = listOf(
-            Color(0xFF15181C),
-            Color(0xFF080A0D),
-            Color(0xFF030405)
-        )
-    )
-    val metalDeck = Brush.horizontalGradient(
-        0.00f to Color(0xFF3B4047),
-        0.11f to Color(0xFFAEB3B9),
-        0.19f to Color(0xFF5E646C),
-        0.30f to Color(0xFFD8DBDE),
-        0.44f to Color(0xFF666C74),
-        0.58f to Color(0xFFB8BDC3),
-        0.73f to Color(0xFF555B63),
-        0.87f to Color(0xFFD4D7DA),
-        1.00f to Color(0xFF4B5057)
-    )
-    val pumpFrame = Brush.linearGradient(
-        colors = listOf(
-            Color(0xFFF1F2F4),
-            Color(0xFF8C9299),
-            Color(0xFF292E34),
-            Color(0xFFA3A8AE),
-            Color(0xFF3B4046)
-        )
-    )
-    val pumpFace = Brush.linearGradient(
-        colors = listOf(
-            Color(0xFF191C21),
-            Color(0xFF050608),
-            Color(0xFF101318)
-        )
-    )
-    val hub = Brush.radialGradient(
-        colors = listOf(
-            Color(0xFF8A919A),
-            Color(0xFF343941),
-            Color(0xFF15181C),
-            Color(0xFF050607)
-        )
-    )
-    val idleIndicator = Brush.radialGradient(
-        colors = listOf(
-            Color(0xFFD5D9DE),
-            Color(0xFF888F98),
-            Color(0xFF5B626C),
-            Color(0xFF2A2F35)
-        )
-    )
-    val runningIndicator = Brush.radialGradient(
-        colors = listOf(
-            Color(0xFFEFFFF5),
-            Color(0xFF85FFB4),
-            Color(0xFF38EC80),
-            Color(0xFF0F7C3B)
-        )
-    )
-    val errorIndicator = Brush.radialGradient(
-        colors = listOf(
-            Color(0xFFFFF3F4),
-            Color(0xFFFF9BA4),
-            Color(0xFFFF5361),
-            Color(0xFF8C1723)
-        )
-    )
 }
 
 private const val DOSING_PRO_2_PUMP_COUNT = 2
@@ -459,57 +322,35 @@ private const val ERROR_PULSE_MIN_SCALE = 0.92f
 private const val ERROR_PULSE_MAX_SCALE = 1.12f
 private const val HUB_SIZE_RATIO = 0.42f
 private const val INDICATOR_CANVAS_RATIO = 0.82f
-private const val INDICATOR_CORE_RATIO = 0.36f
-private const val GLOW_OUTER_ALPHA = 0.10f
-private const val GLOW_MIDDLE_ALPHA = 0.20f
-private const val GLOW_INNER_ALPHA = 0.34f
-private const val GLOW_MIDDLE_RADIUS_RATIO = 0.72f
-private const val GLOW_INNER_RADIUS_RATIO = 0.50f
 private const val RUNNING_PULSE_DURATION_MS = 1_450
 private const val ERROR_PULSE_DURATION_MS = 720
-
-private val SCREEN_HORIZONTAL_PADDING = 16.dp
-private val SCREEN_TOP_PADDING = 12.dp
-private val DOSING_PRO_2_MAX_WIDTH = 320.dp
-private val DOSING_PRO_4_MAX_WIDTH = 760.dp
-private val DEVICE_OUTER_SHAPE = RoundedCornerShape(30.dp)
-private val DEVICE_INNER_SHAPE = RoundedCornerShape(24.dp)
-private val DEVICE_DECK_SHAPE = RoundedCornerShape(20.dp)
-private val PUMP_OUTER_SHAPE = RoundedCornerShape(20.dp)
-private val PUMP_FACE_SHAPE = RoundedCornerShape(15.dp)
-private val DEVICE_SHADOW_ELEVATION = 18.dp
-private val PUMP_SHADOW_ELEVATION = 8.dp
-private val HUB_SHADOW_ELEVATION = 5.dp
-private val DEVICE_EDGE_WIDTH = 1.dp
-private val INDICATOR_EDGE_WIDTH = 1.dp
-private val DEVICE_OUTER_INSET = 7.dp
-private val DEVICE_INNER_INSET = 7.dp
-private val DEVICE_DECK_INSET = 9.dp
-private val PUMP_FRAME_INSET = 7.dp
-private val PUMP_SPACING = 8.dp
-
-@Preview(name = "Dosing Pro 4", showBackground = true, backgroundColor = 0xFF080A0D)
-@Composable
-private fun DosingPro4Preview() {
-    DeviceDosingPumpScreen(
-        pumpCount = DOSING_PRO_4_PUMP_COUNT,
-        pumpStates = listOf(
-            DosingPumpVisualState.IDLE,
-            DosingPumpVisualState.RUNNING,
-            DosingPumpVisualState.ERROR,
-            DosingPumpVisualState.IDLE
-        )
-    )
-}
-
-@Preview(name = "Dosing Pro 2", showBackground = true, backgroundColor = 0xFF080A0D)
-@Composable
-private fun DosingPro2Preview() {
-    DeviceDosingPumpScreen(
-        pumpCount = DOSING_PRO_2_PUMP_COUNT,
-        pumpStates = listOf(
-            DosingPumpVisualState.RUNNING,
-            DosingPumpVisualState.ERROR
-        )
-    )
-}
+private const val DOSING_PRO_2_PUMP_HEAD_MAX_SIZE_DP = 104
+private const val DEVICE_OUTER_CORNER_RADIUS_DP = 30
+private const val DEVICE_INNER_CORNER_RADIUS_DP = 24
+private const val DEVICE_DECK_CORNER_RADIUS_DP = 20
+private const val PUMP_OUTER_CORNER_RADIUS_DP = 20
+private const val PUMP_FACE_CORNER_RADIUS_DP = 15
+private const val DEVICE_SHADOW_ELEVATION_DP = 18
+private const val PUMP_SHADOW_ELEVATION_DP = 8
+private const val HUB_SHADOW_ELEVATION_DP = 5
+private const val DEVICE_EDGE_WIDTH_DP = 1
+private const val DEVICE_OUTER_INSET_DP = 7
+private const val DEVICE_INNER_INSET_DP = 7
+private const val DEVICE_DECK_INSET_DP = 9
+private const val PUMP_FRAME_INSET_DP = 7
+private const val PUMP_SPACING_DP = 8
+private val DOSING_PRO_2_PUMP_HEAD_MAX_SIZE = DOSING_PRO_2_PUMP_HEAD_MAX_SIZE_DP.dp
+private val DEVICE_OUTER_SHAPE = RoundedCornerShape(DEVICE_OUTER_CORNER_RADIUS_DP.dp)
+private val DEVICE_INNER_SHAPE = RoundedCornerShape(DEVICE_INNER_CORNER_RADIUS_DP.dp)
+private val DEVICE_DECK_SHAPE = RoundedCornerShape(DEVICE_DECK_CORNER_RADIUS_DP.dp)
+private val PUMP_OUTER_SHAPE = RoundedCornerShape(PUMP_OUTER_CORNER_RADIUS_DP.dp)
+private val PUMP_FACE_SHAPE = RoundedCornerShape(PUMP_FACE_CORNER_RADIUS_DP.dp)
+private val DEVICE_SHADOW_ELEVATION = DEVICE_SHADOW_ELEVATION_DP.dp
+private val PUMP_SHADOW_ELEVATION = PUMP_SHADOW_ELEVATION_DP.dp
+private val HUB_SHADOW_ELEVATION = HUB_SHADOW_ELEVATION_DP.dp
+private val DEVICE_EDGE_WIDTH = DEVICE_EDGE_WIDTH_DP.dp
+private val DEVICE_OUTER_INSET = DEVICE_OUTER_INSET_DP.dp
+private val DEVICE_INNER_INSET = DEVICE_INNER_INSET_DP.dp
+private val DEVICE_DECK_INSET = DEVICE_DECK_INSET_DP.dp
+private val PUMP_FRAME_INSET = PUMP_FRAME_INSET_DP.dp
+private val PUMP_SPACING = PUMP_SPACING_DP.dp

@@ -134,6 +134,39 @@ class DeviceDosingMutationContractTest {
     }
 
     @Test
+    fun `calibration finish remains pending until verified confirmation`() {
+        val result = DeviceDosingMutationParser.parseCalibrationFinish(
+            DeviceDosingRuntimeFixtures.calibrationFinish(
+                measuredMl = 4.0,
+                durationMs = 5_000L
+            )
+        )
+
+        assertEquals(1_250L, result.pendingDoseMsPerMl)
+        assertEquals(1_000L, result.channel.channel.dosing.doseMsPerMl)
+        assertEquals(100L, result.channel.channel.dosing.lastCalibratedAt)
+        assertEquals(
+            DeviceDosingCalibrationState.PENDING_VERIFICATION,
+            result.channel.channel.dosing.calibration.state
+        )
+    }
+
+    @Test
+    fun `verification dose uses pending coefficient without changing confirmed coefficient`() {
+        val result = DeviceDosingMutationParser.parseDoseNow(
+            DeviceDosingRuntimeFixtures.doseNow(
+                amountMl = DeviceDosingRuntimeContract.Limit.VERIFICATION_DOSE_ML,
+                doseMsPerMl = 1_250L,
+                usePendingCalibration = true
+            )
+        )
+
+        assertEquals(5_000L, result.durationMs)
+        assertEquals(1_250L, result.channel.channel.dosing.calibration.pendingDoseMsPerMl)
+        assertEquals(1_000L, result.channel.channel.dosing.doseMsPerMl)
+    }
+
+    @Test
     fun `reservoir refill result validates firmware before after and capacity echo`() {
         val result = DeviceDosingMutationParser.parseReservoirRefill(
             DeviceDosingRuntimeFixtures.reservoirRefill()

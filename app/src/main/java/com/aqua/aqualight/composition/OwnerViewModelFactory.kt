@@ -12,6 +12,8 @@ import com.aqua.aqualight.data.aquarium.devices.TankDeviceAssignmentRepository
 import com.aqua.aqualight.data.care.DefaultMaintenanceOperations
 import com.aqua.aqualight.data.care.integrity.restoreTaskSnapshotsForIntegrity
 import com.aqua.aqualight.data.care.integrity.snapshotTasksForIntegrity
+import com.aqua.aqualight.data.devices.DefaultDeviceDosingChannelNavigationOperations
+import com.aqua.aqualight.data.devices.DefaultDeviceDosingCalibrationOperations
 import com.aqua.aqualight.data.devices.DefaultDeviceFamilySettingsOperations
 import com.aqua.aqualight.data.devices.DefaultDeviceRootOperations
 import com.aqua.aqualight.data.devices.DefaultDeviceStatusOperations
@@ -37,6 +39,7 @@ import com.aqua.aqualight.ui.tabs.devices.add.DeviceQrScanViewModel
 import com.aqua.aqualight.ui.tabs.devices.detail.common.DeviceRootOverviewViewModel
 import com.aqua.aqualight.ui.tabs.devices.detail.cooling.DeviceCoolingRootViewModel
 import com.aqua.aqualight.ui.tabs.devices.detail.dosing.DeviceDosingRootViewModel
+import com.aqua.aqualight.ui.tabs.devices.detail.dosing.channel.calibration.DeviceDosingChannelCalibrationViewModel
 import com.aqua.aqualight.ui.tabs.devices.detail.light.DeviceLightRootViewModel
 import com.aqua.aqualight.ui.tabs.devices.detail.settings.DeviceFamilySettingsViewModel
 import com.aqua.aqualight.ui.tabs.devices.detail.timer.DeviceTimerRootViewModel
@@ -194,7 +197,16 @@ internal class OwnerViewModelFactory(
                 DeviceTimerRootViewModel(DefaultDeviceRootOperations(repository))
 
             DeviceDosingRootViewModel::class.java ->
-                DeviceDosingRootViewModel(DefaultDeviceRootOperations(repository))
+                DeviceDosingRootViewModel(
+                    operations = DefaultDeviceRootOperations(repository),
+                    channelNavigationOperations =
+                        DefaultDeviceDosingChannelNavigationOperations(repository)
+                )
+
+            DeviceDosingChannelCalibrationViewModel::class.java ->
+                DeviceDosingChannelCalibrationViewModel(
+                    operations = DefaultDeviceDosingCalibrationOperations(repository)
+                )
 
             DeviceRootOverviewViewModel::class.java ->
                 DeviceRootOverviewViewModel(DefaultDeviceRootOperations(repository))
@@ -274,6 +286,7 @@ internal class OwnerViewModelFactory(
             DeviceCoolingRootViewModel::class.java,
             DeviceTimerRootViewModel::class.java,
             DeviceDosingRootViewModel::class.java,
+            DeviceDosingChannelCalibrationViewModel::class.java,
             DeviceRootOverviewViewModel::class.java,
             DeviceFamilySettingsViewModel::class.java,
             DeviceFirmwareUpdateViewModel::class.java,
