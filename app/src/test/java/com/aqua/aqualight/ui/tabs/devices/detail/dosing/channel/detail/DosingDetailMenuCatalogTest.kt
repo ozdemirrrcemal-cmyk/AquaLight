@@ -1,6 +1,5 @@
 package com.aqua.aqualight.ui.tabs.devices.detail.dosing.channel.detail
 
-import com.aqua.aqualight.ui.common.devicemenu.AquaDeviceMenuTone
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
@@ -17,16 +16,9 @@ class DosingDetailMenuCatalogTest {
     }
 
     @Test
-    fun `destructive reset remains visually isolated`() {
-        val destructiveItems = DosingDetailMenuItem.entries.filter { item ->
-            item.tone == AquaDeviceMenuTone.DANGER
-        }
-
-        assertEquals(listOf(DosingDetailMenuItem.RESET_CHANNEL), destructiveItems)
-        assertTrue(
-            DOSING_DETAIL_MENU_SECTIONS.last().items.last() ==
-                DosingDetailMenuItem.RESET_CHANNEL
-        )
+    fun `reset channel is a direct action instead of a menu route`() {
+        assertTrue(DOSING_DETAIL_MENU_SECTIONS.last().hasResetChannelAction)
+        assertNull(DosingDetailMenuItem.fromRouteKey("reset-channel"))
     }
 
     @Test
