@@ -329,7 +329,10 @@ private fun CalibrationStepControls(
                         onClick = onRejectVerification,
                         enabled = !state.isLoading && !state.isBusy,
                         secondary = true,
-                        modifier = Modifier.weight(1f)
+                        singleLineCompact = true,
+                        modifier = Modifier
+                            .weight(1f)
+                            .height(AquaGuidedFlowGeometry.buttonMinHeight)
                     )
                     AquaGuidedFlowButton(
                         text = actionText(
@@ -338,7 +341,10 @@ private fun CalibrationStepControls(
                         ),
                         onClick = onAcceptVerification,
                         enabled = !state.isLoading && !state.isBusy,
-                        modifier = Modifier.weight(1f)
+                        singleLineCompact = true,
+                        modifier = Modifier
+                            .weight(1f)
+                            .height(AquaGuidedFlowGeometry.buttonMinHeight)
                     )
                 }
             }
