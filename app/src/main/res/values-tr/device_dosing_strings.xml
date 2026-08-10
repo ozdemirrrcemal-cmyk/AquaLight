@@ -60,8 +60,8 @@
     <string name="device_dosing_calibration_start_collection">5 saniyelik kalibrasyon dozunu başlat</string>
     <string name="device_dosing_calibration_save_measurement">Ölçülen hacmi kullan</string>
     <string name="device_dosing_calibration_dispense_test">4,00 ml test dozunu başlat</string>
-    <string name="device_dosing_calibration_no_retry">Hayır, yeniden kalibre et</string>
-    <string name="device_dosing_calibration_yes_confirm">Evet, kaydet</string>
+    <string name="device_dosing_calibration_no_retry">Yeniden kalibre et</string>
+    <string name="device_dosing_calibration_yes_confirm">Kalibrasyonu kaydet</string>
     <string name="device_dosing_calibration_seconds">%1$d sn</string>
     <string name="device_dosing_calibration_pump_running">Pompa çalışırken hortumu ve silindiri sabit tutun.</string>
     <string name="device_dosing_calibration_loading">Pompa durumu okunuyor…</string>
