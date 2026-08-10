@@ -61,7 +61,6 @@ internal fun DeviceDosingChannelMenuScreen(
                     DosingDetailMenuItem.CALIBRATION -> CalibrationContent()
                     DosingDetailMenuItem.RESERVOIR -> ReservoirContent()
                     DosingDetailMenuItem.MANUAL_DOSE -> ManualDoseContent()
-                    DosingDetailMenuItem.RESET_CHANNEL -> ResetChannelContent()
                 }
             }
         }
@@ -183,33 +182,6 @@ private fun ManualDoseContent() {
         )
     }
     DetailAction(R.string.device_dosing_detail_dispense_dose)
-}
-
-@Composable
-private fun ResetChannelContent() {
-    ResetWarning()
-    DetailAction(R.string.device_dosing_detail_reset_action)
-}
-
-@Composable
-private fun ResetWarning() {
-    val colors = aquaDeviceMenuColors()
-    val typography = aquaDeviceMenuTypography(colors)
-    AquaDeviceMenuSectionSurface(modifier = Modifier.fillMaxWidth()) {
-        Column(
-            modifier = Modifier.padding(AquaDeviceMenuGeometry.sectionContentPadding),
-            verticalArrangement = Arrangement.spacedBy(AquaDeviceMenuGeometry.compactGap)
-        ) {
-            BasicText(
-                text = stringResource(R.string.device_dosing_detail_reset_warning_title),
-                style = typography.heroTitle.copy(color = colors.danger)
-            )
-            BasicText(
-                text = stringResource(R.string.device_dosing_detail_reset_warning_description),
-                style = typography.heroBody
-            )
-        }
-    }
 }
 
 @Composable
