@@ -50,6 +50,23 @@ class AndroidLintEvidenceTest(unittest.TestCase):
         self.assertEqual(1, summary["totals"]["Warning"])
         self.assertEqual(0, summary["totals"]["Error"])
 
+    def test_hint_is_non_blocking_and_preserved_as_evidence(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary:
+            directory = Path(temporary)
+            reports = self.complete_reports(directory)
+            reports[0] = self.write_report(
+                directory,
+                "debug",
+                '<issue id="ComposeHint" severity="Hint" message="consider">'
+                '<location file="Example.kt" line="18" /></issue>',
+            )
+
+            summary = validate_reports(reports)
+
+        self.assertTrue(summary["passed"])
+        self.assertEqual(1, summary["totals"]["Hint"])
+        self.assertEqual([], summary["blockers"])
+
     def test_error_is_a_blocker(self) -> None:
         with tempfile.TemporaryDirectory() as temporary:
             directory = Path(temporary)
