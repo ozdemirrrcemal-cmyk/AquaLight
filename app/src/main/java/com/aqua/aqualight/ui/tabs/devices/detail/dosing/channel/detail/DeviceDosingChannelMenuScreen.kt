@@ -57,11 +57,11 @@ internal fun DeviceDosingChannelMenuScreen(
                 verticalArrangement = Arrangement.spacedBy(AquaDeviceMenuGeometry.sectionGap)
             ) {
                 when (item) {
-                    DosingDetailMenuItem.DOSING_PLAN -> DosingPlanPreview()
-                    DosingDetailMenuItem.CALIBRATION -> CalibrationPreview()
-                    DosingDetailMenuItem.RESERVOIR -> ReservoirPreview()
-                    DosingDetailMenuItem.MANUAL_DOSE -> ManualDosePreview()
-                    DosingDetailMenuItem.RESET_CHANNEL -> ResetChannelPreview()
+                    DosingDetailMenuItem.DOSING_PLAN -> DosingPlanContent()
+                    DosingDetailMenuItem.CALIBRATION -> CalibrationContent()
+                    DosingDetailMenuItem.RESERVOIR -> ReservoirContent()
+                    DosingDetailMenuItem.MANUAL_DOSE -> ManualDoseContent()
+                    DosingDetailMenuItem.RESET_CHANNEL -> ResetChannelContent()
                 }
             }
         }
@@ -69,15 +69,15 @@ internal fun DeviceDosingChannelMenuScreen(
 }
 
 @Composable
-private fun DosingPlanPreview() {
-    PreviewSection(R.string.device_dosing_detail_schedule_status_section) {
-        PreviewToggleRow(
+private fun DosingPlanContent() {
+    DetailSection(R.string.device_dosing_detail_schedule_status_section) {
+        DetailToggleRow(
             titleRes = R.string.device_dosing_detail_activate_schedule,
             descriptionRes = R.string.device_dosing_detail_activate_schedule_description,
             checked = true
         )
     }
-    PreviewSection(R.string.device_dosing_detail_amount_section) {
+    DetailSection(R.string.device_dosing_detail_amount_section) {
         AquaDeviceMenuValueRow(
             label = stringResource(R.string.device_dosing_detail_daily_dose),
             value = stringResource(R.string.device_dosing_detail_value_zero_ml),
@@ -85,13 +85,13 @@ private fun DosingPlanPreview() {
             tone = AquaDeviceMenuTone.ACCENT
         )
     }
-    PreviewSection(R.string.device_dosing_detail_schedule_section) {
-        PreviewChoiceGroup(
+    DetailSection(R.string.device_dosing_detail_schedule_section) {
+        DetailChoiceGroup(
             labelRes = R.string.device_dosing_detail_schedule_mode,
             choices = listOf(
-                PreviewChoice(R.string.device_dosing_detail_schedule_single, selected = true),
-                PreviewChoice(R.string.device_dosing_detail_schedule_hourly),
-                PreviewChoice(R.string.device_dosing_detail_schedule_custom)
+                DetailChoice(R.string.device_dosing_detail_schedule_single, selected = true),
+                DetailChoice(R.string.device_dosing_detail_schedule_hourly),
+                DetailChoice(R.string.device_dosing_detail_schedule_custom)
             )
         )
         AquaDeviceMenuValueRow(
@@ -99,20 +99,20 @@ private fun DosingPlanPreview() {
             value = stringResource(R.string.device_dosing_detail_value_unset_time)
         )
     }
-    PreviewSection(R.string.device_dosing_detail_recurrence_section) {
+    DetailSection(R.string.device_dosing_detail_recurrence_section) {
         AquaDeviceMenuValueRow(
             label = stringResource(R.string.device_dosing_detail_recurrence),
             value = stringResource(R.string.device_dosing_channel_every_day),
             tone = AquaDeviceMenuTone.ACCENT
         )
-        PreviewWeekdays()
+        DetailWeekdays()
     }
-    PreviewAction(R.string.device_dosing_detail_save_plan)
+    DetailAction(R.string.device_dosing_detail_save_plan)
 }
 
 @Composable
-private fun CalibrationPreview() {
-    PreviewSection(R.string.device_dosing_detail_calibration_status_section) {
+private fun CalibrationContent() {
+    DetailSection(R.string.device_dosing_detail_calibration_status_section) {
         AquaDeviceMenuValueRow(
             label = stringResource(R.string.device_dosing_detail_last_calibrated),
             value = stringResource(R.string.device_dosing_detail_not_calibrated),
@@ -123,19 +123,19 @@ private fun CalibrationPreview() {
             value = stringResource(R.string.device_dosing_detail_value_unavailable)
         )
     }
-    PreviewSection(R.string.device_dosing_detail_calibration_flow_section) {
+    DetailSection(R.string.device_dosing_detail_calibration_flow_section) {
         AquaDeviceMenuValueRow(
             label = stringResource(R.string.device_dosing_detail_guided_calibration),
             value = stringResource(R.string.device_dosing_detail_six_steps),
             description = stringResource(R.string.device_dosing_detail_guided_calibration_description)
         )
     }
-    PreviewAction(R.string.device_dosing_detail_start_recalibration)
+    DetailAction(R.string.device_dosing_detail_start_recalibration)
 }
 
 @Composable
-private fun ReservoirPreview() {
-    PreviewSection(R.string.device_dosing_detail_reservoir_volume_section) {
+private fun ReservoirContent() {
+    DetailSection(R.string.device_dosing_detail_reservoir_volume_section) {
         AquaDeviceMenuValueRow(
             label = stringResource(R.string.device_dosing_detail_container_volume),
             value = stringResource(R.string.device_dosing_detail_value_container_ml),
@@ -146,8 +146,8 @@ private fun ReservoirPreview() {
             value = stringResource(R.string.device_dosing_detail_value_container_ml)
         )
     }
-    PreviewSection(R.string.device_dosing_detail_reservoir_alerts_section) {
-        PreviewToggleRow(
+    DetailSection(R.string.device_dosing_detail_reservoir_alerts_section) {
+        DetailToggleRow(
             titleRes = R.string.device_dosing_detail_low_level_alert,
             descriptionRes = R.string.device_dosing_detail_low_level_alert_description,
             checked = true
@@ -158,12 +158,12 @@ private fun ReservoirPreview() {
             tone = AquaDeviceMenuTone.ACCENT
         )
     }
-    PreviewAction(R.string.device_dosing_detail_save_reservoir)
+    DetailAction(R.string.device_dosing_detail_save_reservoir)
 }
 
 @Composable
-private fun ManualDosePreview() {
-    PreviewSection(R.string.device_dosing_detail_manual_amount_section) {
+private fun ManualDoseContent() {
+    DetailSection(R.string.device_dosing_detail_manual_amount_section) {
         AquaDeviceMenuValueRow(
             label = stringResource(R.string.device_dosing_detail_manual_amount),
             value = stringResource(R.string.device_dosing_detail_value_zero_ml),
@@ -175,20 +175,20 @@ private fun ManualDosePreview() {
             value = stringResource(R.string.device_dosing_detail_value_ten_ml)
         )
     }
-    PreviewSection(R.string.device_dosing_detail_manual_safety_section) {
+    DetailSection(R.string.device_dosing_detail_manual_safety_section) {
         AquaDeviceMenuValueRow(
             label = stringResource(R.string.device_dosing_detail_delivery_mode),
             value = stringResource(R.string.device_dosing_detail_one_time_dose),
             description = stringResource(R.string.device_dosing_detail_delivery_mode_description)
         )
     }
-    PreviewAction(R.string.device_dosing_detail_dispense_dose)
+    DetailAction(R.string.device_dosing_detail_dispense_dose)
 }
 
 @Composable
-private fun ResetChannelPreview() {
+private fun ResetChannelContent() {
     ResetWarning()
-    PreviewAction(R.string.device_dosing_detail_reset_action)
+    DetailAction(R.string.device_dosing_detail_reset_action)
 }
 
 @Composable
@@ -213,7 +213,7 @@ private fun ResetWarning() {
 }
 
 @Composable
-private fun PreviewSection(
+private fun DetailSection(
     @StringRes titleRes: Int,
     content: @Composable ColumnScope.() -> Unit
 ) {
@@ -236,7 +236,7 @@ private fun PreviewSection(
 }
 
 @Composable
-private fun PreviewToggleRow(
+private fun DetailToggleRow(
     @StringRes titleRes: Int,
     @StringRes descriptionRes: Int,
     checked: Boolean
@@ -279,9 +279,9 @@ private fun PreviewToggleRow(
 }
 
 @Composable
-private fun PreviewChoiceGroup(
+private fun DetailChoiceGroup(
     @StringRes labelRes: Int,
-    choices: List<PreviewChoice>
+    choices: List<DetailChoice>
 ) {
     val colors = aquaDeviceMenuColors()
     val typography = aquaDeviceMenuTypography(colors)
@@ -308,7 +308,7 @@ private fun PreviewChoiceGroup(
 }
 
 @Composable
-private fun PreviewWeekdays() {
+private fun DetailWeekdays() {
     val weekdayRows = listOf(
         listOf(
             R.string.device_dosing_weekday_mon,
@@ -351,7 +351,7 @@ private fun PreviewWeekdays() {
 }
 
 @Composable
-private fun PreviewAction(@StringRes labelRes: Int) {
+private fun DetailAction(@StringRes labelRes: Int) {
     AquaGuidedFlowButton(
         text = stringResource(labelRes),
         onClick = {},
@@ -360,7 +360,7 @@ private fun PreviewAction(@StringRes labelRes: Int) {
     )
 }
 
-private data class PreviewChoice(
+private data class DetailChoice(
     @StringRes val labelRes: Int,
     val selected: Boolean = false
 )
