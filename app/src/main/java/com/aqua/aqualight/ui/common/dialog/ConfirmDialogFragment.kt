@@ -74,7 +74,7 @@ class ConfirmDialogFragment : DialogFragment() {
         confirmText: String,
         cancelText: String
     ) {
-        binding.deviceConfirmSheetRoot.apply {
+        binding.root.apply {
             if (childCount > 0) {
                 removeViewAt(0)
             }
