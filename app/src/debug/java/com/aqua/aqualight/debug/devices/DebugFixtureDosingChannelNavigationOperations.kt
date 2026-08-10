@@ -7,12 +7,14 @@ import com.aqua.aqualight.application.devices.DeviceRootCatalogState
 import com.aqua.aqualight.application.devices.DeviceRootSnapshot
 import com.aqua.aqualight.application.devices.OwnerDeviceFamily
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.flowOf
 
 /** Resolves known fixture channels without weakening the production runtime-backed boundary. */
 internal class DebugFixtureDosingChannelNavigationOperations(
     private val delegate: DeviceDosingChannelNavigationOperations,
-    private val fixtures: DebugDeviceFixtureCatalog
+    private val fixtures: DebugDeviceFixtureCatalog,
+    private val stateStore: DebugFixtureDosingStateStore
 ) : DeviceDosingChannelNavigationOperations {
 
     override suspend fun resolve(
@@ -34,7 +36,7 @@ internal class DebugFixtureDosingChannelNavigationOperations(
         return if (fixture == null) {
             delegate.observeTargets(deviceUid)
         } else {
-            flowOf(fixture.dosingTargets())
+            observeFixtureTargets(fixture)
         }
     }
 
@@ -48,9 +50,29 @@ internal class DebugFixtureDosingChannelNavigationOperations(
         ?.let { fixture -> resolveFixture(fixture, slotId) }
         ?: delegate.resolveCurrent(deviceUid, slotId)
 
+    private fun observeFixtureTargets(
+        fixture: DeviceRootSnapshot
+    ): Flow<List<DeviceDosingChannelNavigationTarget>> {
+        val channels = fixture.channelSlots.dosingChannels
+        if (channels.isEmpty()) return flowOf(emptyList())
+        val stateFlows = channels.map { slot ->
+            stateStore.observe(fixture.deviceUid, slot.id.value)
+        }
+        return combine(stateFlows) { states ->
+            channels.mapIndexedNotNull { index, slot ->
+                resolveFixture(
+                    fixture = fixture,
+                    slotId = slot.id.value,
+                    calibrated = states[index]?.calibrated
+                )
+            }
+        }
+    }
+
     private fun resolveFixture(
         fixture: DeviceRootSnapshot,
-        slotId: String
+        slotId: String,
+        calibrated: Boolean? = null
     ): DeviceDosingChannelNavigationTarget? {
         val normalizedSlotId = slotId.trim()
         return fixture
@@ -63,7 +85,8 @@ internal class DebugFixtureDosingChannelNavigationOperations(
             ?.singleOrNull { channel -> channel.id.value == normalizedSlotId }
             ?.let { slot ->
                 DeviceDosingChannelDestinationPolicy.resolve(
-                    calibrated = false,
+                    calibrated = calibrated
+                        ?: stateStore.isCalibrated(fixture.deviceUid, slot.id.value),
                     allowedRoutes = fixture.allowedRoutes
                 )?.let { destination ->
                     DeviceDosingChannelNavigationTarget(
@@ -71,13 +94,12 @@ internal class DebugFixtureDosingChannelNavigationOperations(
                         slotId = slot.id.value,
                         pumpCount = fixture.channelSlots.dosingChannels.size,
                         channelNumber = slot.index.position,
-                        channelTitle = slot.defaultDisplayName,
+                        channelTitle = stateStore.current(fixture.deviceUid, slot.id.value)
+                            ?.channelTitle
+                            ?: slot.defaultDisplayName,
                         destination = destination
                     )
                 }
             }
     }
-
-    private fun DeviceRootSnapshot.dosingTargets(): List<DeviceDosingChannelNavigationTarget> =
-        channelSlots.dosingChannels.mapNotNull { slot -> resolveFixture(this, slot.id.value) }
 }
