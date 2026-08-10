@@ -72,6 +72,14 @@ enum class AquaDeviceMenuTone {
     DANGER
 }
 
+@Immutable
+data class AquaDeviceMenuRowContent(
+    val title: String,
+    val description: String,
+    @DrawableRes val iconRes: Int,
+    val tone: AquaDeviceMenuTone = AquaDeviceMenuTone.ACCENT
+)
+
 object AquaDeviceMenuGeometry {
     val screenHorizontalPadding = SCREEN_HORIZONTAL_PADDING_DP.dp
     val screenTopPadding = SCREEN_TOP_PADDING_DP.dp
@@ -188,21 +196,17 @@ fun AquaDeviceMenuSectionSurface(
 
 @Composable
 fun AquaDeviceMenuRow(
-    title: String,
-    description: String,
-    @DrawableRes iconRes: Int,
+    content: AquaDeviceMenuRowContent,
     modifier: Modifier = Modifier,
-    tone: AquaDeviceMenuTone = AquaDeviceMenuTone.ACCENT,
     onClick: (() -> Unit)? = null
 ) {
     val colors = aquaDeviceMenuColors()
     val typography = aquaDeviceMenuTypography(colors)
-    val iconTint = when (tone) {
+    val iconTint = when (content.tone) {
         AquaDeviceMenuTone.ACCENT -> colors.accent
         AquaDeviceMenuTone.NEUTRAL -> colors.textSecondary
         AquaDeviceMenuTone.DANGER -> colors.danger
     }
-    val iconShape = RoundedCornerShape(AquaDeviceMenuGeometry.iconContainerRadius)
     val interactionModifier = if (onClick == null) {
         Modifier
     } else {
@@ -224,51 +228,80 @@ fun AquaDeviceMenuRow(
             ),
         verticalAlignment = Alignment.CenterVertically
     ) {
-        Box(
-            modifier = Modifier
-                .size(AquaDeviceMenuGeometry.iconContainerSize)
-                .clip(iconShape)
-                .background(colors.surfaceRaised)
-                .background(iconTint.copy(alpha = ICON_BACKGROUND_ALPHA)),
-            contentAlignment = Alignment.Center
-        ) {
-            DeviceMenuIcon(
-                painter = painterResource(iconRes),
-                tint = iconTint,
-                modifier = Modifier.size(AquaDeviceMenuGeometry.iconSize)
-            )
-        }
-
-        androidx.compose.foundation.layout.Column(
-            modifier = Modifier
-                .weight(1f)
-                .padding(horizontal = AquaDeviceMenuGeometry.rowContentGap)
-        ) {
-            BasicText(
-                text = title,
-                style = typography.rowTitle.copy(
-                    color = if (tone == AquaDeviceMenuTone.DANGER) {
-                        colors.danger
-                    } else {
-                        colors.textPrimary
-                    }
-                ),
-                maxLines = 1,
-                overflow = TextOverflow.Ellipsis
-            )
-            BasicText(
-                text = description,
-                modifier = Modifier.padding(top = AquaDeviceMenuGeometry.rowTextGap),
-                style = typography.rowBody,
-                maxLines = ROW_DESCRIPTION_MAX_LINES,
-                overflow = TextOverflow.Ellipsis
-            )
-        }
-
+        AquaDeviceMenuLeadingIcon(
+            iconRes = content.iconRes,
+            tint = iconTint,
+            surfaceColor = colors.surfaceRaised
+        )
+        AquaDeviceMenuRowText(
+            content = content,
+            colors = colors,
+            typography = typography,
+            modifier = Modifier.weight(1f)
+        )
         DeviceMenuIcon(
             painter = painterResource(R.drawable.ic_arrow_right),
-            tint = if (tone == AquaDeviceMenuTone.DANGER) colors.danger else colors.textSecondary,
+            tint = if (content.tone == AquaDeviceMenuTone.DANGER) {
+                colors.danger
+            } else {
+                colors.textSecondary
+            },
             modifier = Modifier.size(AquaDeviceMenuGeometry.trailingIconSize)
+        )
+    }
+}
+
+@Composable
+private fun AquaDeviceMenuLeadingIcon(
+    @DrawableRes iconRes: Int,
+    tint: Color,
+    surfaceColor: Color
+) {
+    val shape = RoundedCornerShape(AquaDeviceMenuGeometry.iconContainerRadius)
+    Box(
+        modifier = Modifier
+            .size(AquaDeviceMenuGeometry.iconContainerSize)
+            .clip(shape)
+            .background(surfaceColor)
+            .background(tint.copy(alpha = ICON_BACKGROUND_ALPHA)),
+        contentAlignment = Alignment.Center
+    ) {
+        DeviceMenuIcon(
+            painter = painterResource(iconRes),
+            tint = tint,
+            modifier = Modifier.size(AquaDeviceMenuGeometry.iconSize)
+        )
+    }
+}
+
+@Composable
+private fun AquaDeviceMenuRowText(
+    content: AquaDeviceMenuRowContent,
+    colors: AquaDeviceMenuColors,
+    typography: AquaDeviceMenuTypography,
+    modifier: Modifier = Modifier
+) {
+    Column(
+        modifier = modifier.padding(horizontal = AquaDeviceMenuGeometry.rowContentGap)
+    ) {
+        BasicText(
+            text = content.title,
+            style = typography.rowTitle.copy(
+                color = if (content.tone == AquaDeviceMenuTone.DANGER) {
+                    colors.danger
+                } else {
+                    colors.textPrimary
+                }
+            ),
+            maxLines = 1,
+            overflow = TextOverflow.Ellipsis
+        )
+        BasicText(
+            text = content.description,
+            modifier = Modifier.padding(top = AquaDeviceMenuGeometry.rowTextGap),
+            style = typography.rowBody,
+            maxLines = ROW_DESCRIPTION_MAX_LINES,
+            overflow = TextOverflow.Ellipsis
         )
     }
 }

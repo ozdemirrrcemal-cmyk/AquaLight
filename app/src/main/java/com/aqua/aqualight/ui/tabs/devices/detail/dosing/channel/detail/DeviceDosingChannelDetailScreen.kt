@@ -26,6 +26,7 @@ import com.aqua.aqualight.R
 import com.aqua.aqualight.ui.common.devicemenu.AquaDeviceMenuDivider
 import com.aqua.aqualight.ui.common.devicemenu.AquaDeviceMenuGeometry
 import com.aqua.aqualight.ui.common.devicemenu.AquaDeviceMenuRow
+import com.aqua.aqualight.ui.common.devicemenu.AquaDeviceMenuRowContent
 import com.aqua.aqualight.ui.common.devicemenu.AquaDeviceMenuSectionSurface
 import com.aqua.aqualight.ui.common.devicemenu.AquaDeviceMenuTone
 import com.aqua.aqualight.ui.common.devicemenu.aquaDeviceMenuColors
@@ -132,10 +133,12 @@ private fun DosingDetailSection(
                     AquaDeviceMenuDivider()
                 }
                 AquaDeviceMenuRow(
-                    title = stringResource(item.titleRes),
-                    description = stringResource(item.descriptionRes),
-                    iconRes = item.iconRes,
-                    tone = item.tone,
+                    content = AquaDeviceMenuRowContent(
+                        title = stringResource(item.titleRes),
+                        description = stringResource(item.descriptionRes),
+                        iconRes = item.iconRes,
+                        tone = item.tone
+                    ),
                     onClick = onMenuItemClick?.let { callback ->
                         { callback(item) }
                     }
