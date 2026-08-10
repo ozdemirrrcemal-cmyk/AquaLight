@@ -353,9 +353,12 @@ internal fun isTextInputValueValid(
     value: String,
     required: Boolean,
     minimumNumericValueExclusive: Double = Double.NaN
-): Boolean {
-    if (required && value.isBlank()) return false
-    if (minimumNumericValueExclusive.isNaN()) return true
-    val numericValue = value.trim().replace(',', '.').toDoubleOrNull() ?: return false
-    return numericValue > minimumNumericValueExclusive
+): Boolean = when {
+    required && value.isBlank() -> false
+    minimumNumericValueExclusive.isNaN() -> true
+    else -> value.trim()
+        .replace(',', '.')
+        .toDoubleOrNull()
+        ?.let { numericValue -> numericValue > minimumNumericValueExclusive }
+        ?: false
 }
