@@ -1,12 +1,14 @@
 package com.aqua.aqualight.ui.tabs.devices.detail.dosing.channel.detail
 
 import android.os.Bundle
+import android.text.InputType
 import android.view.View
 import androidx.compose.ui.platform.ComposeView
 import androidx.compose.ui.platform.ViewCompositionStrategy
 import androidx.navigation.fragment.findNavController
 import androidx.navigation.fragment.navArgs
 import com.aqua.aqualight.R
+import com.aqua.aqualight.ui.common.bottomsheet.TextInputBottomSheet
 import com.aqua.aqualight.ui.common.dialog.ConfirmDialogFragment
 import com.aqua.aqualight.ui.tabs.devices.detail.dosing.channel.DeviceDosingChannelDestinationFragment
 import com.aqua.aqualight.utils.DialogType
@@ -23,6 +25,7 @@ class DeviceDosingChannelDetailFragment :
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
+        setupManualDoseResult()
         setupResetConfirmationResult()
         setupSelectedPump(
             view = view,
@@ -36,8 +39,24 @@ class DeviceDosingChannelDetailFragment :
             setContent {
                 DeviceDosingChannelDetailScreen(
                     onMenuItemClick = ::openMenuItem,
+                    onManualDoseClick = ::showManualDoseEditor,
                     onResetChannelClick = ::showResetChannelConfirmation
                 )
+            }
+        }
+    }
+
+    private fun setupManualDoseResult() {
+        childFragmentManager.setFragmentResultListener(
+            MANUAL_DOSE_REQUEST_KEY,
+            viewLifecycleOwner
+        ) { _, result ->
+            if (result.getString(TextInputBottomSheet.RESULT_PAYLOAD_ID) != MANUAL_DOSE_PAYLOAD_ID) {
+                return@setFragmentResultListener
+            }
+            when (result.getString(TextInputBottomSheet.RESULT_KEY)) {
+                TextInputBottomSheet.RESULT_SAVED,
+                TextInputBottomSheet.RESULT_CANCELLED -> Unit
             }
         }
     }
@@ -75,6 +94,28 @@ class DeviceDosingChannelDetailFragment :
         )
     }
 
+    private fun showManualDoseEditor() {
+        TextInputBottomSheet.show(
+            fragmentManager = childFragmentManager,
+            title = getString(R.string.device_dosing_detail_manual_title),
+            label = getString(R.string.device_dosing_detail_manual_amount),
+            hint = getString(R.string.device_dosing_detail_manual_amount_hint),
+            initialValue = "",
+            supportingText = getString(R.string.device_dosing_detail_manual_amount_description),
+            suffixText = getString(R.string.device_dosing_detail_ml_unit),
+            saveText = getString(R.string.device_dosing_detail_dispense_dose),
+            cancelText = getString(R.string.common_cancel),
+            required = true,
+            requiredMessage = getString(R.string.device_dosing_detail_manual_amount_required),
+            requestKey = MANUAL_DOSE_REQUEST_KEY,
+            payloadId = MANUAL_DOSE_PAYLOAD_ID,
+            maxLength = MANUAL_DOSE_MAX_LENGTH,
+            inputType = InputType.TYPE_CLASS_NUMBER or InputType.TYPE_NUMBER_FLAG_DECIMAL,
+            minimumNumericValueExclusive = 0.0,
+            requestFocus = true
+        )
+    }
+
     private fun showResetChannelConfirmation() {
         ConfirmDialogFragment.show(
             fragmentManager = childFragmentManager,
@@ -96,6 +137,9 @@ class DeviceDosingChannelDetailFragment :
     }
 
     private companion object {
+        const val MANUAL_DOSE_REQUEST_KEY = "dosing_manual_dose_input"
+        const val MANUAL_DOSE_PAYLOAD_ID = "manual_dose"
+        const val MANUAL_DOSE_MAX_LENGTH = 7
         const val RESET_CONFIRM_REQUEST_KEY = "dosing_channel_reset_confirm"
         const val ACTION_RESET_CHANNEL = "reset_dosing_channel"
     }
