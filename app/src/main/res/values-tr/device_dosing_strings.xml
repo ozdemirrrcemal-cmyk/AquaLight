@@ -31,8 +31,8 @@
     <string name="device_dosing_channel_open_failed">Dozaj kanalı cihazdan okunamadı. Bağlantıyı ve firmware sürümünü kontrol edip tekrar deneyin.</string>
 
     <string name="device_dosing_detail_hero_eyebrow">Kanal kontrolleri</string>
-    <string name="device_dosing_detail_hero_title">Hassas bir dozaj rutini oluşturun</string>
-    <string name="device_dosing_detail_hero_description">Zamanlama, doğruluk ve sıvı takibini odaklı adımlarla yapılandırın.</string>
+    <string name="device_dosing_detail_hero_title">Her dozda hassasiyet, her adımda kontrol</string>
+    <string name="device_dosing_detail_hero_description">Zamanlama, kalibrasyon ve sıvı takibini tek merkezden yöneterek dozaj sürecinizi güvenle optimize edin.</string>
     <string name="device_dosing_detail_planning_section">Planlama</string>
     <string name="device_dosing_detail_accuracy_section">Doğruluk ve sıvı takibi</string>
     <string name="device_dosing_detail_control_section">Doğrudan kontrol</string>
