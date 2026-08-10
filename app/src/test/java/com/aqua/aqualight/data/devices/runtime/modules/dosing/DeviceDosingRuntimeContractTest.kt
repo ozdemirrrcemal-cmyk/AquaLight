@@ -91,6 +91,100 @@ class DeviceDosingRuntimeContractTest {
     }
 
     @Test
+    fun `status parser preserves firmware runtime-derived manual dose history`() {
+        val payload = DeviceDosingRuntimeFixtures.status()
+        payload.getJSONArray("channels").getJSONObject(0)
+            .getJSONObject("dosing")
+            .put(
+                "lastManualDose",
+                DeviceDosingRuntimeFixtures.lastManualDose(
+                    valid = true,
+                    requestedAmountMl = 5.0,
+                    deliveredAmountMl = 4.98,
+                    actualDurationMs = 4_980L,
+                    completedAt = 1_786_294_800L
+                )
+            )
+
+        val history = DeviceDosingStatusParser.parse(payload)
+            .channels.first().dosing.lastManualDose
+
+        assertTrue(history.valid)
+        assertEquals(5.0, history.requestedAmountMl, 0.0)
+        assertEquals(4.98, history.deliveredAmountMl, 0.0)
+        assertEquals(400.0, history.reservoirRemainingMlBefore, 0.0)
+        assertEquals(395.02, history.reservoirRemainingMlAfter, 0.0)
+        assertTrue(history.persisted)
+        assertEquals(4_980L, history.actualDurationMs)
+        assertEquals(
+            DeviceDosingManualDoseCompletionReason.COMPLETED,
+            history.completionReason
+        )
+        assertEquals(
+            DeviceDosingManualDoseDeliveryBasis.CALIBRATED_RUNTIME,
+            history.deliveryBasis
+        )
+    }
+
+    @Test
+    fun `status parser rejects contradictory empty manual dose history`() {
+        val payload = DeviceDosingRuntimeFixtures.status()
+        payload.getJSONArray("channels").getJSONObject(0)
+            .getJSONObject("dosing")
+            .getJSONObject("lastManualDose")
+            .put("deliveredAmountMl", 1.0)
+
+        assertTrue(runCatching { DeviceDosingStatusParser.parse(payload) }.isFailure)
+    }
+
+    @Test
+    fun `status parser distinguishes a known pump output failure from completion`() {
+        val payload = DeviceDosingRuntimeFixtures.status()
+        payload.getJSONArray("channels").getJSONObject(0)
+            .getJSONObject("dosing")
+            .put(
+                "lastManualDose",
+                DeviceDosingRuntimeFixtures.lastManualDose(
+                    valid = true,
+                    requestedAmountMl = 5.0,
+                    deliveredAmountMl = 1.25,
+                    actualDurationMs = 1_250L,
+                    completedAt = 1_786_294_800L,
+                    completionReason = "failed"
+                )
+            )
+
+        val history = DeviceDosingStatusParser.parse(payload)
+            .channels.first().dosing.lastManualDose
+
+        assertEquals(DeviceDosingManualDoseCompletionReason.FAILED, history.completionReason)
+        assertEquals(1.25, history.deliveredAmountMl, 0.0)
+    }
+
+    @Test
+    fun `status exposes a completed result that is still awaiting persistence`() {
+        val payload = DeviceDosingRuntimeFixtures.status()
+        payload.getJSONArray("channels").getJSONObject(0)
+            .getJSONObject("dosing")
+            .put(
+                "lastManualDose",
+                DeviceDosingRuntimeFixtures.lastManualDose(
+                    valid = true,
+                    requestedAmountMl = 2.0,
+                    deliveredAmountMl = 2.0,
+                    actualDurationMs = 2_000L,
+                    completedAt = 1_786_294_800L,
+                    persisted = false
+                )
+            )
+
+        val history = DeviceDosingStatusParser.parse(payload)
+            .channels.first().dosing.lastManualDose
+
+        assertFalse(history.persisted)
+    }
+
+    @Test
     fun `config payload preserves omitted fields and empty full schedule replacement`() {
         val deleteAll = DeviceDosingConfigApplyPayload(
             schedules = emptyList(),

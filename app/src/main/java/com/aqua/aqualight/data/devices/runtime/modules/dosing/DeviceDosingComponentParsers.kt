@@ -17,6 +17,109 @@ internal object DeviceDosingCalibrationStateParser {
     ) { "Unknown firmware Dosing calibration state: $value" }
 }
 
+internal object DeviceDosingManualDoseCompletionReasonParser {
+    fun parse(value: String): DeviceDosingManualDoseCompletionReason = requireNotNull(
+        DeviceDosingManualDoseCompletionReason.values().singleOrNull { reason ->
+            reason.wireValue == value
+        }
+    ) { "Unknown firmware manual dose completion reason: $value" }
+}
+
+internal object DeviceDosingManualDoseDeliveryBasisParser {
+    fun parse(value: String): DeviceDosingManualDoseDeliveryBasis = requireNotNull(
+        DeviceDosingManualDoseDeliveryBasis.values().singleOrNull { basis ->
+            basis.wireValue == value
+        }
+    ) { "Unknown firmware manual dose delivery basis: $value" }
+}
+
+internal object DeviceDosingLastManualDoseParser {
+    private val KEYS = setOf(
+        "valid", "requestedAmountMl", "deliveredAmountMl", "actualDurationMs",
+        "completedAt", "reservoirRemainingMlBefore", "reservoirRemainingMlAfter",
+        "completionReason", "deliveryBasis", "persisted"
+    )
+
+    fun parse(data: JSONObject): DeviceDosingLastManualDose {
+        data.requireDosingKeys(KEYS, "Dosing last manual dose")
+        return DeviceDosingLastManualDose(
+            valid = data.requireDosingBoolean("valid"),
+            requestedAmountMl = data.requireDosingDouble("requestedAmountMl", 0.0),
+            deliveredAmountMl = data.requireDosingDouble("deliveredAmountMl", 0.0),
+            actualDurationMs = data.requireDosingLong(
+                "actualDurationMs",
+                DOSING_NON_NEGATIVE_LONG,
+                DOSING_DEVICE_UPTIME_MAX_MS
+            ),
+            completedAt = data.requireDosingLong(
+                "completedAt",
+                DOSING_NON_NEGATIVE_LONG,
+                DOSING_DEVICE_UPTIME_MAX_MS
+            ),
+            reservoirRemainingMlBefore = data.requireDosingDouble(
+                "reservoirRemainingMlBefore",
+                DOSING_UNSET_RESERVOIR
+            ),
+            reservoirRemainingMlAfter = data.requireDosingDouble(
+                "reservoirRemainingMlAfter",
+                DOSING_UNSET_RESERVOIR
+            ),
+            completionReason = DeviceDosingManualDoseCompletionReasonParser.parse(
+                data.requireDosingText("completionReason")
+            ),
+            deliveryBasis = DeviceDosingManualDoseDeliveryBasisParser.parse(
+                data.requireDosingText("deliveryBasis")
+            ),
+            persisted = data.requireDosingBoolean("persisted")
+        ).also(::validate)
+    }
+
+    private fun validate(lastManualDose: DeviceDosingLastManualDose) {
+        require(
+            lastManualDose.deliveryBasis ==
+                DeviceDosingManualDoseDeliveryBasis.CALIBRATED_RUNTIME
+        )
+        if (!lastManualDose.valid) {
+            require(dosingValuesEquivalent(lastManualDose.requestedAmountMl, 0.0))
+            require(dosingValuesEquivalent(lastManualDose.deliveredAmountMl, 0.0))
+            require(lastManualDose.actualDurationMs == 0L)
+            require(lastManualDose.completedAt == 0L)
+            require(lastManualDose.reservoirRemainingMlBefore == DOSING_UNSET_RESERVOIR)
+            require(lastManualDose.reservoirRemainingMlAfter == DOSING_UNSET_RESERVOIR)
+            require(!lastManualDose.persisted)
+            require(
+                lastManualDose.completionReason ==
+                    DeviceDosingManualDoseCompletionReason.NONE
+            )
+            return
+        }
+
+        require(lastManualDose.requestedAmountMl > 0.0)
+        require(
+            lastManualDose.completionReason !=
+                DeviceDosingManualDoseCompletionReason.NONE
+        )
+        val reservoirUnavailable =
+            lastManualDose.reservoirRemainingMlBefore == DOSING_UNSET_RESERVOIR &&
+                lastManualDose.reservoirRemainingMlAfter == DOSING_UNSET_RESERVOIR
+        if (!reservoirUnavailable) {
+            require(lastManualDose.reservoirRemainingMlBefore >= 0.0)
+            require(lastManualDose.reservoirRemainingMlAfter >= 0.0)
+            require(
+                lastManualDose.reservoirRemainingMlAfter <=
+                    lastManualDose.reservoirRemainingMlBefore
+            )
+            require(
+                dosingValuesEquivalent(
+                    lastManualDose.reservoirRemainingMlBefore -
+                        lastManualDose.reservoirRemainingMlAfter,
+                    lastManualDose.deliveredAmountMl
+                )
+            )
+        }
+    }
+}
+
 internal object DeviceDosingRuntimeCapabilitiesParser {
     private val KEYS = setOf(
         "module", "readOnly", "supportsConfigApply", "supportsSchedules", "supportsChannels",
@@ -64,10 +167,11 @@ internal object DeviceDosingChannelParser {
     )
     private val DOSING_KEYS = setOf(
         "unit", "doseMsPerMl", "lastCalibratedAt", "calibrated",
-        "calibration",
+        "calibration", "lastManualDose",
         "reservoirTrackingEnabled", "reservoirCapacityMl", "reservoirRemainingMl",
         "reservoirRemainingPercent"
     )
+
     private val CALIBRATION_KEYS = setOf(
         "state", "startedAtUptimeMs", "durationMs", "measuredMl", "pendingDoseMsPerMl",
         "verificationDoseStarted", "verificationDoseComplete", "verificationDoseRemainingMs"
@@ -193,6 +297,9 @@ internal object DeviceDosingChannelParser {
             ),
             calibrated = data.requireDosingBoolean("calibrated"),
             calibration = parseCalibration(data.requireDosingObject("calibration")),
+            lastManualDose = DeviceDosingLastManualDoseParser.parse(
+                data.requireDosingObject("lastManualDose")
+            ),
             reservoirTrackingEnabled = data.requireDosingBoolean(
                 "reservoirTrackingEnabled"
             ),
@@ -395,6 +502,7 @@ internal object DeviceDosingConfigChannelParser {
         "doseMsPerMl", "lastCalibratedAt", "reservoirTrackingEnabled",
         "reservoirCapacityMl"
     )
+    private val DOSING_OPTIONAL_KEYS = setOf("lastManualDose")
 
     fun parse(data: JSONObject, listIndex: Int): DeviceDosingChannelConfigSnapshot {
         data.requireDosingKeys(REQUIRED_KEYS, OPTIONAL_KEYS, "Dosing config channel")
@@ -408,7 +516,11 @@ internal object DeviceDosingConfigChannelParser {
     }
 
     private fun parseDosing(data: JSONObject): DeviceDosingChannelDosingConfigSnapshot {
-        data.requireDosingKeys(DOSING_KEYS, "Dosing config channel settings")
+        data.requireDosingKeys(
+            DOSING_KEYS,
+            DOSING_OPTIONAL_KEYS,
+            "Dosing config channel settings"
+        )
         return DeviceDosingChannelDosingConfigSnapshot(
             doseMsPerMl = data.requireDosingLong(
                 "doseMsPerMl",
@@ -426,7 +538,15 @@ internal object DeviceDosingConfigChannelParser {
             reservoirCapacityMl = data.requireDosingDouble(
                 "reservoirCapacityMl",
                 DOSING_UNSET_RESERVOIR
-            )
+            ),
+            lastManualDose = if (data.has("lastManualDose")) {
+                DeviceDosingLastManualDoseParser.parse(
+                    data.requireDosingObject("lastManualDose")
+                ).also { history -> require(history.persisted) }
+                    .takeIf(DeviceDosingLastManualDose::valid)
+            } else {
+                null
+            }
         ).also { dosing ->
             if (dosing.reservoirTrackingEnabled) require(dosing.reservoirCapacityMl > 0.0)
         }

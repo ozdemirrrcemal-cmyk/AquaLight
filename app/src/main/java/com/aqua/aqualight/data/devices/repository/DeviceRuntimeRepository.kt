@@ -151,7 +151,8 @@ class DeviceRuntimeRepository(
         commandGateway = this,
         revokeLocalCredential = ::revokeLocalCredentialAndSession,
         timerAccessProvider = ::currentTimerRuntimeAccess,
-        dosingAccessProvider = ::currentDosingRuntimeAccess
+        dosingAccessProvider = ::currentDosingRuntimeAccess,
+        runtimeScope = repositoryScope
     )
 
     private val timeSyncCoordinator = DeviceTimeSyncCoordinator(repository = runtimeModules.time)

@@ -113,6 +113,45 @@ class DeviceDosingTypedEventReducerTest {
     }
 
     @Test
+    fun `autonomous completion snapshot updates measured dose and remaining reservoir`() {
+        val store = DeviceDosingRuntimeStateStore()
+        val reducer = supportedReducer(store)
+        reducer.apply(statusEvent(DEVICE_A, uptimeMs = 12_000L))
+
+        val event = statusEvent(DEVICE_A, uptimeMs = 17_100L)
+        val snapshot = (event.payload as DeviceRuntimeEventPayload.Snapshot).data
+        snapshot.getJSONArray("channels").getJSONObject(0)
+            .getJSONObject("dosing")
+            .put("reservoirRemainingMl", 395.0)
+            .put("reservoirRemainingPercent", 79.0)
+            .put(
+                "lastManualDose",
+                DeviceDosingRuntimeFixtures.lastManualDose(
+                    valid = true,
+                    requestedAmountMl = 5.0,
+                    deliveredAmountMl = 5.0,
+                    actualDurationMs = 5_000L,
+                    completedAt = 1_786_294_800L
+                )
+            )
+
+        val result = reducer.apply(event)
+        val dosing = store.states.value.getValue(DEVICE_A)
+            .status?.channels?.first()?.dosing
+
+        assertEquals(DeviceDosingEventApplyResult.Applied, result)
+        assertEquals(395.0, dosing?.reservoirRemainingMl ?: -1.0, 0.0)
+        assertEquals(5.0, dosing?.lastManualDose?.deliveredAmountMl ?: -1.0, 0.0)
+        assertEquals(
+            395.0,
+            dosing?.lastManualDose?.reservoirRemainingMlAfter ?: -1.0,
+            0.0
+        )
+        assertTrue(dosing?.lastManualDose?.persisted == true)
+        assertFalse(store.states.value.getValue(DEVICE_A).requiresStatusRefresh)
+    }
+
+    @Test
     fun `same event sequence remains device isolated`() {
         val store = DeviceDosingRuntimeStateStore()
         val reducer = supportedReducer(store)

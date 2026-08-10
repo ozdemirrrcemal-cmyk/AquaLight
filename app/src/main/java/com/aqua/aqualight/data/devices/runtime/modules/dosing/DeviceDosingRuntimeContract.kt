@@ -33,6 +33,16 @@ object DeviceDosingRuntimeContract {
         const val LAST_CALIBRATED_AT = "lastCalibratedAt"
         const val RESERVOIR_TRACKING_ENABLED = "reservoirTrackingEnabled"
         const val RESERVOIR_CAPACITY_ML = "reservoirCapacityMl"
+        const val LAST_MANUAL_DOSE = "lastManualDose"
+        const val REQUESTED_AMOUNT_ML = "requestedAmountMl"
+        const val DELIVERED_AMOUNT_ML = "deliveredAmountMl"
+        const val ACTUAL_DURATION_MS = "actualDurationMs"
+        const val COMPLETED_AT = "completedAt"
+        const val RESERVOIR_REMAINING_ML_BEFORE = "reservoirRemainingMlBefore"
+        const val RESERVOIR_REMAINING_ML_AFTER = "reservoirRemainingMlAfter"
+        const val COMPLETION_REASON = "completionReason"
+        const val DELIVERY_BASIS = "deliveryBasis"
+        const val PERSISTED = "persisted"
 
         const val ENABLED = "enabled"
         const val NAME = "name"
@@ -94,5 +104,10 @@ object DeviceDosingRuntimeContract {
         const val CALIBRATION_STATE_IDLE = "idle"
         const val CALIBRATION_STATE_RUNNING = "running"
         const val CALIBRATION_STATE_PENDING_VERIFICATION = "pendingVerification"
+        const val MANUAL_DOSE_REASON_NONE = "none"
+        const val MANUAL_DOSE_REASON_COMPLETED = "completed"
+        const val MANUAL_DOSE_REASON_STOPPED = "stopped"
+        const val MANUAL_DOSE_REASON_FAILED = "failed"
+        const val MANUAL_DOSE_DELIVERY_BASIS = "calibratedRuntime"
     }
 }

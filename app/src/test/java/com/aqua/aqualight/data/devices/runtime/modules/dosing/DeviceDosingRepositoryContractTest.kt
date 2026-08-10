@@ -6,7 +6,12 @@ import com.aqua.aqualight.data.devices.runtime.core.DeviceRuntimeCommandGateway
 import com.aqua.aqualight.data.devices.runtime.core.DeviceRuntimeCommandOutcome
 import com.aqua.aqualight.data.devices.runtime.core.DeviceRuntimeConnectionGeneration
 import com.aqua.aqualight.data.devices.runtime.ws.AqlWsIncomingMessage
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.test.advanceTimeBy
+import kotlinx.coroutines.test.runCurrent
+import kotlinx.coroutines.test.runTest
 import kotlin.math.roundToLong
 import org.json.JSONArray
 import org.json.JSONObject
@@ -14,6 +19,7 @@ import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.Test
 
+@OptIn(ExperimentalCoroutinesApi::class)
 class DeviceDosingRepositoryContractTest {
     @Test
     fun `all eleven actions use correlated results and device isolated state`() = runBlocking {
@@ -132,11 +138,36 @@ class DeviceDosingRepositoryContractTest {
         assertEquals(2, gateway.encoded.last().getJSONArray("schedules").length())
     }
 
+    @Test
+    fun `missed completion event triggers one correlated status fallback`() = runTest {
+        val gateway = FixtureGateway()
+        val repository = repository(gateway, this)
+        repository.requestStatus(DEVICE_UID)
+        gateway.actions.clear()
+
+        repository.doseNow(
+            DEVICE_UID,
+            DeviceDosingDoseNowPayload("channel1", amountMl = 1.0)
+        )
+        advanceTimeBy(1_751L)
+        runCurrent()
+
+        assertEquals(
+            listOf(
+                DeviceDosingRuntimeContract.Action.DOSE_NOW,
+                DeviceDosingRuntimeContract.Action.STATUS_GET
+            ),
+            gateway.actions
+        )
+    }
+
     private fun repository(
-        gateway: DeviceRuntimeCommandGateway
+        gateway: DeviceRuntimeCommandGateway,
+        completionScope: CoroutineScope? = null
     ) = DeviceDosingRuntimeRepository(
         gateway,
-        DeviceDosingRuntimeStateStore()
+        DeviceDosingRuntimeStateStore(),
+        completionScope
     ) { SUPPORTED_ACCESS }
 
     @Suppress("TooManyFunctions")

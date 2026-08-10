@@ -69,6 +69,13 @@ class DeviceDosingMutationContractTest {
         val result = DeviceDosingMutationParser.parseConfigApply(
             DeviceDosingRuntimeFixtures.configApply(
                 channelOneDisplayNameOverride = "Macro Pump",
+                lastManualDose = DeviceDosingRuntimeFixtures.lastManualDose(
+                    valid = true,
+                    requestedAmountMl = 5.0,
+                    deliveredAmountMl = 4.99,
+                    actualDurationMs = 4_990L,
+                    completedAt = 1_786_294_800L
+                ),
                 schedules = JSONArray().put(
                     DeviceDosingRuntimeFixtures.configSchedule(
                         name = "Evening Nutrients",
@@ -87,8 +94,31 @@ class DeviceDosingMutationContractTest {
         )
 
         assertEquals("Macro Pump", result.config.channels.first().displayNameOverride)
+        assertEquals(
+            4.99,
+            result.config.channels.first().dosing.lastManualDose?.deliveredAmountMl ?: -1.0,
+            0.0
+        )
         assertEquals(7.5, result.config.schedules.single().amountMl, 0.0)
         assertTrue(result.saved)
+    }
+
+    @Test
+    fun `config snapshot rejects manual dose history that is not persisted`() {
+        val payload = DeviceDosingRuntimeFixtures.configApply(
+            lastManualDose = DeviceDosingRuntimeFixtures.lastManualDose(
+                valid = true,
+                requestedAmountMl = 2.0,
+                deliveredAmountMl = 2.0,
+                actualDurationMs = 2_000L,
+                completedAt = 1_786_294_800L,
+                persisted = false
+            )
+        )
+
+        assertTrue(
+            runCatching { DeviceDosingMutationParser.parseConfigApply(payload) }.isFailure
+        )
     }
 
     @Test
@@ -105,6 +135,59 @@ class DeviceDosingMutationContractTest {
         assertTrue(
             runCatching { DeviceDosingMutationParser.parseDoseNow(badCalibration) }.isFailure
         )
+    }
+
+    @Test
+    fun `dose stop accepts persisted runtime-derived history from firmware`() {
+        val result = DeviceDosingMutationParser.parseDoseStop(
+            DeviceDosingRuntimeFixtures.pump(
+                action = DeviceDosingRuntimeContract.Action.DOSE_STOP,
+                active = false,
+                saved = true,
+                lastManualDose = DeviceDosingRuntimeFixtures.lastManualDose(
+                    valid = true,
+                    requestedAmountMl = 5.0,
+                    deliveredAmountMl = 2.4,
+                    actualDurationMs = 2_400L,
+                    completedAt = 1_786_294_800L,
+                    completionReason = "stopped"
+                )
+            )
+        )
+
+        assertTrue(result.saved)
+        assertEquals(
+            DeviceDosingManualDoseCompletionReason.STOPPED,
+            result.channel.channel.dosing.lastManualDose.completionReason
+        )
+        assertEquals(
+            2.4,
+            result.channel.channel.dosing.lastManualDose.deliveredAmountMl,
+            0.0
+        )
+    }
+
+    @Test
+    fun `dose stop preserves an explicit unpersisted partial result`() {
+        val result = DeviceDosingMutationParser.parseDoseStop(
+            DeviceDosingRuntimeFixtures.pump(
+                action = DeviceDosingRuntimeContract.Action.DOSE_STOP,
+                active = false,
+                saved = false,
+                lastManualDose = DeviceDosingRuntimeFixtures.lastManualDose(
+                    valid = true,
+                    requestedAmountMl = 5.0,
+                    deliveredAmountMl = 1.0,
+                    actualDurationMs = 1_000L,
+                    completedAt = 1_786_294_800L,
+                    completionReason = "stopped",
+                    persisted = false
+                )
+            )
+        )
+
+        assertTrue(!result.saved)
+        assertTrue(!result.channel.channel.dosing.lastManualDose.persisted)
     }
 
     @Test

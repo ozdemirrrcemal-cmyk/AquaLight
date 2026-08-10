@@ -125,7 +125,9 @@ private fun DeviceDosingStatus.toConfigSnapshot(): DeviceDosingConfigSnapshot =
                     doseMsPerMl = channel.dosing.doseMsPerMl,
                     lastCalibratedAt = channel.dosing.lastCalibratedAt,
                     reservoirTrackingEnabled = channel.dosing.reservoirTrackingEnabled,
-                    reservoirCapacityMl = channel.dosing.reservoirCapacityMl
+                    reservoirCapacityMl = channel.dosing.reservoirCapacityMl,
+                    lastManualDose = channel.dosing.lastManualDose
+                        .takeIf(DeviceDosingLastManualDose::valid)
                 )
             )
         },

@@ -74,7 +74,8 @@ internal object DeviceDosingRuntimeFixtures {
         channelOneDisplayNameOverride: String? = "Nutrients",
         schedules: JSONArray = JSONArray().put(configSchedule()),
         doseMsPerMl: Long = 1_000L,
-        lastCalibratedAt: Long = 100L
+        lastCalibratedAt: Long = 100L,
+        lastManualDose: JSONObject? = null
     ): JSONObject = JSONObject()
         .put("operation", "configApply")
         .put("changed", true)
@@ -96,7 +97,8 @@ internal object DeviceDosingRuntimeFixtures {
                                 "channel1",
                                 channelOneDisplayNameOverride,
                                 doseMsPerMl,
-                                lastCalibratedAt
+                                lastCalibratedAt,
+                                lastManualDose
                             )
                         )
                         .put(configChannel("channel2", null, 1_000L, 100L))
@@ -107,7 +109,9 @@ internal object DeviceDosingRuntimeFixtures {
     fun pump(
         action: String,
         active: Boolean,
-        displayName: String = "Nutrients"
+        displayName: String = "Nutrients",
+        saved: Boolean = false,
+        lastManualDose: JSONObject = lastManualDose()
     ): JSONObject {
         val operation = when (action) {
             DeviceDosingRuntimeContract.Action.PRIME_START -> "primeStart"
@@ -115,7 +119,7 @@ internal object DeviceDosingRuntimeFixtures {
             DeviceDosingRuntimeContract.Action.DOSE_STOP -> "doseStop"
             else -> error("Unsupported Dosing pump fixture action: $action")
         }
-        return mutationBase(operation, action)
+        return mutationBase(operation, action, saved = saved)
             .put("channelKey", "channel1")
             .put("manualActive", active)
             .also { result ->
@@ -128,7 +132,8 @@ internal object DeviceDosingRuntimeFixtures {
                     key = "channel1",
                     name = "Channel 1",
                     displayName = displayName,
-                    manualActive = active
+                    manualActive = active,
+                    lastManualDose = lastManualDose
                 ).put("listIndex", 0)
             )
     }
@@ -337,6 +342,32 @@ internal object DeviceDosingRuntimeFixtures {
         .put("command", "dosing.$action")
         .put("event", "dosing.status.changed")
 
+    fun lastManualDose(
+        valid: Boolean = false,
+        requestedAmountMl: Double = 0.0,
+        deliveredAmountMl: Double = 0.0,
+        actualDurationMs: Long = 0L,
+        completedAt: Long = 0L,
+        completionReason: String = if (valid) "completed" else "none",
+        reservoirRemainingMlBefore: Double = if (valid) 400.0 else -1.0,
+        reservoirRemainingMlAfter: Double = if (valid) {
+            reservoirRemainingMlBefore - deliveredAmountMl
+        } else {
+            -1.0
+        },
+        persisted: Boolean = valid
+    ): JSONObject = JSONObject()
+        .put("valid", valid)
+        .put("requestedAmountMl", requestedAmountMl)
+        .put("deliveredAmountMl", deliveredAmountMl)
+        .put("actualDurationMs", actualDurationMs)
+        .put("completedAt", completedAt)
+        .put("reservoirRemainingMlBefore", reservoirRemainingMlBefore)
+        .put("reservoirRemainingMlAfter", reservoirRemainingMlAfter)
+        .put("completionReason", completionReason)
+        .put("deliveryBasis", "calibratedRuntime")
+        .put("persisted", persisted)
+
     @Suppress("LongParameterList")
     private fun channel(
         index: Int,
@@ -353,7 +384,8 @@ internal object DeviceDosingRuntimeFixtures {
         pendingDoseMsPerMl: Long = -1L,
         verificationDoseStarted: Boolean = false,
         verificationDoseComplete: Boolean = false,
-        verificationDoseRemainingMs: Long = 0L
+        verificationDoseRemainingMs: Long = 0L,
+        lastManualDose: JSONObject = lastManualDose()
     ): JSONObject = JSONObject()
         .put("index", index)
         .put("key", key)
@@ -394,6 +426,7 @@ internal object DeviceDosingRuntimeFixtures {
                         .put("verificationDoseComplete", verificationDoseComplete)
                         .put("verificationDoseRemainingMs", verificationDoseRemainingMs)
                 )
+                .put("lastManualDose", lastManualDose)
                 .put("reservoirTrackingEnabled", true)
                 .put("reservoirCapacityMl", 500.0)
                 .put("reservoirRemainingMl", reservoirRemainingMl)
@@ -413,7 +446,8 @@ internal object DeviceDosingRuntimeFixtures {
         channelKey: String,
         displayNameOverride: String?,
         doseMsPerMl: Long,
-        lastCalibratedAt: Long
+        lastCalibratedAt: Long,
+        lastManualDose: JSONObject? = null
     ): JSONObject = JSONObject()
         .put("channelKey", channelKey)
         .put("regime", "Auto")
@@ -424,6 +458,9 @@ internal object DeviceDosingRuntimeFixtures {
                 .put("lastCalibratedAt", lastCalibratedAt)
                 .put("reservoirTrackingEnabled", true)
                 .put("reservoirCapacityMl", 500.0)
+                .also { dosing ->
+                    lastManualDose?.let { dosing.put("lastManualDose", it) }
+                }
         )
         .also { channel ->
             displayNameOverride?.let { channel.put("displayName", it) }

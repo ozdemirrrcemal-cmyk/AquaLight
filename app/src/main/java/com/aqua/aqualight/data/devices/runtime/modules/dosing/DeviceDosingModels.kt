@@ -15,6 +15,30 @@ enum class DeviceDosingCalibrationState(val wireValue: String) {
     PENDING_VERIFICATION("pendingVerification")
 }
 
+enum class DeviceDosingManualDoseCompletionReason(val wireValue: String) {
+    NONE(DeviceDosingRuntimeContract.Literal.MANUAL_DOSE_REASON_NONE),
+    COMPLETED(DeviceDosingRuntimeContract.Literal.MANUAL_DOSE_REASON_COMPLETED),
+    STOPPED(DeviceDosingRuntimeContract.Literal.MANUAL_DOSE_REASON_STOPPED),
+    FAILED(DeviceDosingRuntimeContract.Literal.MANUAL_DOSE_REASON_FAILED)
+}
+
+enum class DeviceDosingManualDoseDeliveryBasis(val wireValue: String) {
+    CALIBRATED_RUNTIME(DeviceDosingRuntimeContract.Literal.MANUAL_DOSE_DELIVERY_BASIS)
+}
+
+data class DeviceDosingLastManualDose(
+    val valid: Boolean,
+    val requestedAmountMl: Double,
+    val deliveredAmountMl: Double,
+    val actualDurationMs: Long,
+    val completedAt: Long,
+    val reservoirRemainingMlBefore: Double,
+    val reservoirRemainingMlAfter: Double,
+    val completionReason: DeviceDosingManualDoseCompletionReason,
+    val deliveryBasis: DeviceDosingManualDoseDeliveryBasis,
+    val persisted: Boolean
+)
+
 data class DeviceDosingRuntimeCapabilities(
     val module: String,
     val readOnly: Boolean,
@@ -54,6 +78,7 @@ data class DeviceDosingPumpStatus(
     val lastCalibratedAt: Long,
     val calibrated: Boolean,
     val calibration: DeviceDosingCalibrationSessionStatus,
+    val lastManualDose: DeviceDosingLastManualDose,
     val reservoirTrackingEnabled: Boolean,
     val reservoirCapacityMl: Double,
     val reservoirRemainingMl: Double,
@@ -135,7 +160,8 @@ data class DeviceDosingChannelDosingConfigSnapshot(
     val doseMsPerMl: Long,
     val lastCalibratedAt: Long,
     val reservoirTrackingEnabled: Boolean,
-    val reservoirCapacityMl: Double
+    val reservoirCapacityMl: Double,
+    val lastManualDose: DeviceDosingLastManualDose?
 )
 
 data class DeviceDosingScheduleConfigSnapshot(

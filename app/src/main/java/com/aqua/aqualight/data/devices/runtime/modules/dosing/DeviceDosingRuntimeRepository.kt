@@ -4,7 +4,16 @@ import com.aqua.aqualight.data.devices.model.DeviceUid
 import com.aqua.aqualight.data.devices.runtime.core.DeviceRuntimeCommandGateway
 import com.aqua.aqualight.data.devices.runtime.core.DeviceRuntimeCommandOutcome
 import com.aqua.aqualight.data.devices.runtime.modules.common.DeviceRuntimeJsonCommand
+import java.util.concurrent.ConcurrentHashMap
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.CoroutineStart
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.launch
 import org.json.JSONObject
 
 /** Correlated facade for all authenticated Dosing actions and full-list config helpers. */
@@ -12,9 +21,37 @@ import org.json.JSONObject
 class DeviceDosingRuntimeRepository internal constructor(
     private val gateway: DeviceRuntimeCommandGateway,
     private val stateStore: DeviceDosingRuntimeStateStore,
+    private val completionScope: CoroutineScope? = null,
     private val accessProvider: (DeviceUid) -> DeviceDosingRuntimeAccess
 ) {
     val states: StateFlow<Map<DeviceUid, DeviceDosingRuntimeState>> = stateStore.states
+    private val completionRefreshJobs = ConcurrentHashMap<ManualDoseKey, Job>()
+
+    fun observeLastManualDose(
+        deviceUid: DeviceUid,
+        channelKey: String
+    ): Flow<DeviceDosingLastManualDose?> {
+        val normalizedKey = DeviceDosingChannelKeyPayload(channelKey).normalizedChannelKey
+        return states
+            .map { statesByDevice ->
+                statesByDevice[deviceUid]?.status?.channels
+                    ?.singleOrNull { channel -> channel.key == normalizedKey }
+                    ?.dosing?.lastManualDose
+                    ?.takeIf(DeviceDosingLastManualDose::valid)
+            }
+            .distinctUntilChanged()
+    }
+
+    fun currentLastManualDose(
+        deviceUid: DeviceUid,
+        channelKey: String
+    ): DeviceDosingLastManualDose? {
+        val normalizedKey = DeviceDosingChannelKeyPayload(channelKey).normalizedChannelKey
+        return states.value[deviceUid]?.status?.channels
+            ?.singleOrNull { channel -> channel.key == normalizedKey }
+            ?.dosing?.lastManualDose
+            ?.takeIf(DeviceDosingLastManualDose::valid)
+    }
 
     suspend fun requestStatus(
         deviceUid: DeviceUid
@@ -194,7 +231,7 @@ class DeviceDosingRuntimeRepository internal constructor(
             return dosingUnsupported(deviceUid, DeviceDosingRuntimeContract.Action.DOSE_NOW)
         }
         val status = states.value[deviceUid]?.status
-        return gateway.execute(
+        val outcome = gateway.execute(
             deviceUid,
             dosingJsonCommand(
                 action = DeviceDosingRuntimeContract.Action.DOSE_NOW,
@@ -214,18 +251,44 @@ class DeviceDosingRuntimeRepository internal constructor(
                 }
             )
         ).recordMutation(deviceUid, stateStore)
+
+        if (
+            outcome is DeviceRuntimeCommandOutcome.Success &&
+            !payload.usePendingCalibration
+        ) {
+            scheduleCompletionStatusRefresh(
+                deviceUid = deviceUid,
+                channelKey = payload.normalizedChannelKey,
+                delayMillis = outcome.value.durationMs + COMPLETION_EVENT_GRACE_MS
+            )
+        }
+        return outcome
     }
 
     suspend fun doseStop(
         deviceUid: DeviceUid,
         channelKey: String
-    ): DeviceRuntimeCommandOutcome<DeviceDosingPumpCommandResult> = executePumpCommand(
-        deviceUid = deviceUid,
-        channelKey = channelKey,
-        action = DeviceDosingRuntimeContract.Action.DOSE_STOP,
-        supported = { access -> access.supportsManualDose },
-        parser = DeviceDosingMutationParser::parseDoseStop
-    )
+    ): DeviceRuntimeCommandOutcome<DeviceDosingPumpCommandResult> {
+        val normalizedKey = DeviceDosingChannelKeyPayload(channelKey).normalizedChannelKey
+        val outcome = executePumpCommand(
+            deviceUid = deviceUid,
+            channelKey = normalizedKey,
+            action = DeviceDosingRuntimeContract.Action.DOSE_STOP,
+            supported = { access -> access.supportsManualDose },
+            parser = DeviceDosingMutationParser::parseDoseStop
+        )
+        if (outcome is DeviceRuntimeCommandOutcome.Success) {
+            cancelCompletionStatusRefresh(deviceUid, normalizedKey)
+            if (!outcome.value.saved) {
+                scheduleCompletionStatusRefresh(
+                    deviceUid,
+                    normalizedKey,
+                    PERSISTENCE_RETRY_STATUS_DELAY_MS
+                )
+            }
+        }
+        return outcome
+    }
 
     suspend fun reservoirRefill(
         deviceUid: DeviceUid,
@@ -474,7 +537,69 @@ class DeviceDosingRuntimeRepository internal constructor(
             )
             else -> DosingConfigBaseline.Failed(status)
         }
+
+    internal fun clearRuntimeState(deviceUid: DeviceUid) {
+        completionRefreshJobs.entries
+            .filter { entry -> entry.key.deviceUid == deviceUid }
+            .forEach { entry ->
+                if (completionRefreshJobs.remove(entry.key, entry.value)) {
+                    entry.value.cancel()
+                }
+            }
+        stateStore.clear(deviceUid)
+    }
+
+    private fun scheduleCompletionStatusRefresh(
+        deviceUid: DeviceUid,
+        channelKey: String,
+        delayMillis: Long
+    ) {
+        val scope = completionScope ?: return
+        val key = ManualDoseKey(deviceUid, channelKey)
+        lateinit var job: Job
+        job = scope.launch(start = CoroutineStart.LAZY) {
+            try {
+                delay(delayMillis)
+                val state = states.value[deviceUid]
+                val channel = state?.status?.channels
+                    ?.singleOrNull { candidate -> candidate.key == channelKey }
+                val completionEventMissing = state?.requiresStatusRefresh != false
+                val pumpStillMarkedActive = channel?.valueManual?.let { value -> value >= 0.0 }
+                    ?: true
+                val historyStillUnpersisted = channel?.dosing?.lastManualDose?.let { history ->
+                    history.valid && !history.persisted
+                } ?: false
+                if (
+                    completionEventMissing ||
+                    pumpStillMarkedActive ||
+                    historyStillUnpersisted
+                ) {
+                    requestStatus(deviceUid)
+                }
+            } finally {
+                completionRefreshJobs.remove(key, job)
+            }
+        }
+        completionRefreshJobs.put(key, job)?.cancel()
+        if (!job.start()) {
+            completionRefreshJobs.remove(key, job)
+        }
+    }
+
+    private fun cancelCompletionStatusRefresh(deviceUid: DeviceUid, channelKey: String) {
+        completionRefreshJobs.remove(ManualDoseKey(deviceUid, channelKey))?.cancel()
+    }
+
+    private companion object {
+        const val COMPLETION_EVENT_GRACE_MS = 750L
+        const val PERSISTENCE_RETRY_STATUS_DELAY_MS = 1_250L
+    }
 }
+
+private data class ManualDoseKey(
+    val deviceUid: DeviceUid,
+    val channelKey: String
+)
 
 private sealed interface DosingConfigBaseline {
     data class Ready(val config: DeviceDosingConfigSnapshot) : DosingConfigBaseline

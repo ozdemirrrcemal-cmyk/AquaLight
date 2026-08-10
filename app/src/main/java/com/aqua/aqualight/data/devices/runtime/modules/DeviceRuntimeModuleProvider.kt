@@ -26,13 +26,15 @@ import com.aqua.aqualight.data.devices.runtime.modules.timer.DeviceTimerRuntimeR
 import com.aqua.aqualight.data.devices.runtime.modules.timer.DeviceTimerRuntimeStateStore
 import com.aqua.aqualight.data.devices.runtime.modules.timer.DeviceTimerTypedEventReducer
 import com.aqua.aqualight.i18n.AppLanguageController
+import kotlinx.coroutines.CoroutineScope
 
 /** Every authenticated runtime module uses the same correlated command broker. */
 class DeviceRuntimeModuleProvider internal constructor(
     commandGateway: DeviceRuntimeCommandGateway,
     revokeLocalCredential: suspend (DeviceUid) -> Result<Unit>,
     timerAccessProvider: (DeviceUid) -> DeviceTimerRuntimeAccess,
-    dosingAccessProvider: (DeviceUid) -> DeviceDosingRuntimeAccess
+    dosingAccessProvider: (DeviceUid) -> DeviceDosingRuntimeAccess,
+    runtimeScope: CoroutineScope
 ) {
     private val lightStateStore = DeviceLightRuntimeStateStore()
     private val lightEventReducer = DeviceLightTypedEventReducer(lightStateStore)
@@ -65,9 +67,10 @@ class DeviceRuntimeModuleProvider internal constructor(
     val timer = DeviceTimerRuntimeRepository(commandGateway, timerStateStore, timerAccessProvider)
     val cooling = DeviceCoolingRuntimeRepository(commandGateway, coolingStateStore)
     val dosing = DeviceDosingRuntimeRepository(
-        commandGateway,
-        dosingStateStore,
-        dosingAccessProvider
+        gateway = commandGateway,
+        stateStore = dosingStateStore,
+        completionScope = runtimeScope,
+        accessProvider = dosingAccessProvider
     )
     val light = DeviceLightRuntimeRepository(commandGateway, lightStateStore)
     val lightTemperatureProtection =
@@ -84,6 +87,6 @@ class DeviceRuntimeModuleProvider internal constructor(
         lightStateStore.clear(deviceUid)
         coolingStateStore.clear(deviceUid)
         timerStateStore.clear(deviceUid)
-        dosingStateStore.clear(deviceUid)
+        dosing.clearRuntimeState(deviceUid)
     }
 }

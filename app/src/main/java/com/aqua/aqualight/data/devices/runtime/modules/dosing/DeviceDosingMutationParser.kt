@@ -324,7 +324,11 @@ internal object DeviceDosingMutationParser {
                 expectedOperation,
                 result.channelKey,
                 result.saved,
-                false,
+                if (action == DeviceDosingRuntimeContract.Action.DOSE_STOP) {
+                    null
+                } else {
+                    false
+                },
                 result.runtimeTransport,
                 result.command,
                 action,
@@ -333,6 +337,14 @@ internal object DeviceDosingMutationParser {
             )
             require(result.manualActive == manualActive)
             require((result.channel.channel.valueManual >= DOSING_NORMALIZED_MIN) == manualActive)
+            val history = result.channel.channel.dosing.lastManualDose
+            if (
+                action == DeviceDosingRuntimeContract.Action.DOSE_STOP &&
+                history.valid &&
+                history.completionReason == DeviceDosingManualDoseCompletionReason.STOPPED
+            ) {
+                require(history.persisted == result.saved)
+            }
         }
     }
 
@@ -491,7 +503,7 @@ internal object DeviceDosingMutationParser {
         expectedOperation: String,
         channelKey: String,
         saved: Boolean,
-        expectedSaved: Boolean,
+        expectedSaved: Boolean?,
         runtimeTransport: String,
         command: String,
         action: String,
@@ -516,14 +528,16 @@ internal object DeviceDosingMutationParser {
         operation: String,
         expectedOperation: String,
         saved: Boolean,
-        expectedSaved: Boolean,
+        expectedSaved: Boolean?,
         runtimeTransport: String,
         command: String,
         action: String,
         event: String
     ) {
         require(operation == expectedOperation)
-        require(saved == expectedSaved)
+        if (expectedSaved != null) {
+            require(saved == expectedSaved)
+        }
         require(runtimeTransport == DeviceDosingRuntimeContract.Literal.RUNTIME_TRANSPORT)
         require(command == "${DeviceDosingRuntimeContract.MODULE}.$action")
         require(event == DeviceDosingRuntimeContract.STATUS_EVENT)
