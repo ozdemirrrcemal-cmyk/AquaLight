@@ -41,7 +41,8 @@ import com.aqua.aqualight.ui.common.devicemenu.aquaDeviceMenuTypography
 @Composable
 internal fun DeviceDosingChannelDetailScreen(
     modifier: Modifier = Modifier,
-    onMenuItemClick: ((DosingDetailMenuItem) -> Unit)? = null
+    onMenuItemClick: ((DosingDetailMenuItem) -> Unit)? = null,
+    onResetChannelClick: (() -> Unit)? = null
 ) {
     val colors = aquaDeviceMenuColors()
     var missedDoseRecoveryEnabled by rememberSaveable { mutableStateOf(false) }
@@ -69,6 +70,7 @@ internal fun DeviceDosingChannelDetailScreen(
             DosingDetailSection(
                 section = section,
                 onMenuItemClick = onMenuItemClick,
+                onResetChannelClick = onResetChannelClick,
                 missedDoseRecoveryEnabled = missedDoseRecoveryEnabled,
                 onMissedDoseRecoveryChange = { enabled ->
                     missedDoseRecoveryEnabled = enabled
@@ -124,6 +126,7 @@ private fun DosingDetailHero() {
 private fun DosingDetailSection(
     section: DosingDetailMenuSection,
     onMenuItemClick: ((DosingDetailMenuItem) -> Unit)?,
+    onResetChannelClick: (() -> Unit)?,
     missedDoseRecoveryEnabled: Boolean,
     onMissedDoseRecoveryChange: (Boolean) -> Unit
 ) {
@@ -162,6 +165,12 @@ private fun DosingDetailSection(
                     onCheckedChange = onMissedDoseRecoveryChange
                 )
             }
+            if (section.hasResetChannelAction) {
+                if (section.items.isNotEmpty()) {
+                    AquaDeviceMenuDivider()
+                }
+                DosingResetChannelAction(onClick = onResetChannelClick)
+            }
         }
     }
 }
@@ -195,10 +204,24 @@ private fun DosingMissedDoseRecoverySwitch(
     )
 }
 
+@Composable
+private fun DosingResetChannelAction(onClick: (() -> Unit)?) {
+    AquaDeviceMenuRow(
+        content = AquaDeviceMenuRowContent(
+            title = stringResource(R.string.device_dosing_detail_reset_title),
+            description = stringResource(R.string.device_dosing_detail_reset_description),
+            iconRes = R.drawable.ic_dosing_reset_24,
+            tone = AquaDeviceMenuTone.DANGER
+        ),
+        onClick = onClick
+    )
+}
+
 internal data class DosingDetailMenuSection(
     @StringRes val titleRes: Int,
     val items: List<DosingDetailMenuItem>,
-    val hasMissedDoseRecoverySwitch: Boolean = false
+    val hasMissedDoseRecoverySwitch: Boolean = false,
+    val hasResetChannelAction: Boolean = false
 )
 
 internal enum class DosingDetailMenuItem(
@@ -231,13 +254,6 @@ internal enum class DosingDetailMenuItem(
         titleRes = R.string.device_dosing_detail_manual_title,
         descriptionRes = R.string.device_dosing_detail_manual_description,
         iconRes = R.drawable.ic_dosing_manual_24
-    ),
-    RESET_CHANNEL(
-        routeKey = "reset-channel",
-        titleRes = R.string.device_dosing_detail_reset_title,
-        descriptionRes = R.string.device_dosing_detail_reset_description,
-        iconRes = R.drawable.ic_dosing_reset_24,
-        tone = AquaDeviceMenuTone.DANGER
     );
 
     companion object {
@@ -263,10 +279,8 @@ internal val DOSING_DETAIL_MENU_SECTIONS = listOf(
     ),
     DosingDetailMenuSection(
         titleRes = R.string.device_dosing_detail_control_section,
-        items = listOf(
-            DosingDetailMenuItem.MANUAL_DOSE,
-            DosingDetailMenuItem.RESET_CHANNEL
-        )
+        items = listOf(DosingDetailMenuItem.MANUAL_DOSE),
+        hasResetChannelAction = true
     )
 )
 
