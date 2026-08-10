@@ -30,6 +30,25 @@
     <string name="device_dosing_channel_card_content_description">Dozaj kanalı %1$d, %2$s, %3$s</string>
     <string name="device_dosing_channel_open_failed">Dozaj kanalı cihazdan okunamadı. Bağlantıyı ve firmware sürümünü kontrol edip tekrar deneyin.</string>
 
+    <string name="device_dosing_detail_hero_eyebrow">Kanal kontrolleri</string>
+    <string name="device_dosing_detail_hero_title">Hassas bir dozaj rutini oluşturun</string>
+    <string name="device_dosing_detail_hero_description">Zamanlama, doğruluk ve sıvı takibini odaklı adımlarla yapılandırın.</string>
+    <string name="device_dosing_detail_planning_section">Planlama</string>
+    <string name="device_dosing_detail_accuracy_section">Doğruluk ve sıvı takibi</string>
+    <string name="device_dosing_detail_control_section">Doğrudan kontrol</string>
+    <string name="device_dosing_detail_plan_title">Dozaj planı</string>
+    <string name="device_dosing_detail_plan_description">Günlük miktarı, program türünü ve tekrarı belirleyin.</string>
+    <string name="device_dosing_detail_missed_dose_title">Kaçırılan doz telafisi</string>
+    <string name="device_dosing_detail_missed_dose_description">Kaçırılan dozun bir sonraki güvenli fırsata nasıl taşınacağını seçin.</string>
+    <string name="device_dosing_detail_calibration_title">Kalibrasyon</string>
+    <string name="device_dosing_detail_calibration_description">Akış doğruluğunu inceleyin veya yönlendirmeli kalibrasyonu başlatın.</string>
+    <string name="device_dosing_detail_reservoir_title">Hazne takibi</string>
+    <string name="device_dosing_detail_reservoir_description">Kap hacmini ve düşük seviye takibini ayarlayın.</string>
+    <string name="device_dosing_detail_manual_title">Manuel dozaj</string>
+    <string name="device_dosing_detail_manual_description">İstediğiniz anda hassas ve tek seferlik bir miktar verin.</string>
+    <string name="device_dosing_detail_reset_title">Kanalı sıfırla</string>
+    <string name="device_dosing_detail_reset_description">Bu kanalın dozaj yapılandırmasını temizleyin.</string>
+
     <string name="device_dosing_calibration_step_progress">%1$d. adım / %2$d</string>
     <string name="device_dosing_calibration_name_title">Dozaj kanalını tanımlayın</string>
     <string name="device_dosing_calibration_name_description">Bu kanalda kullandığınız besin veya katkının adını girin. AquaLight, dozaj planlarında ve uyarılarda bu adı gösterecek.</string>

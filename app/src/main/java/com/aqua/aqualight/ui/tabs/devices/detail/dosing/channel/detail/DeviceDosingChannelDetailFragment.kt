@@ -2,6 +2,8 @@ package com.aqua.aqualight.ui.tabs.devices.detail.dosing.channel.detail
 
 import android.os.Bundle
 import android.view.View
+import androidx.compose.ui.platform.ComposeView
+import androidx.compose.ui.platform.ViewCompositionStrategy
 import androidx.navigation.fragment.navArgs
 import com.aqua.aqualight.R
 import com.aqua.aqualight.ui.tabs.devices.detail.dosing.channel.DeviceDosingChannelDestinationFragment
@@ -25,5 +27,11 @@ class DeviceDosingChannelDetailFragment :
             pumpCount = args.pumpCount,
             channelNumber = args.channelNumber
         )
+        view.findViewById<ComposeView>(R.id.channelDetailContent).apply {
+            setViewCompositionStrategy(ViewCompositionStrategy.DisposeOnViewTreeLifecycleDestroyed)
+            setContent {
+                DeviceDosingChannelDetailScreen()
+            }
+        }
     }
 }

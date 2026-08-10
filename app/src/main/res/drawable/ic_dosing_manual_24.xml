@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<vector
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="@dimen/aqua_size_24"
+    android:height="@dimen/aqua_size_24"
+    android:viewportWidth="24"
+    android:viewportHeight="24">
+    <path
+        android:fillColor="@color/aqua_content_on_dark"
+        android:pathData="M10,3L4.64,8.36C2.89,10.11 2,12.26 2,14.51 2,18.82 5.36,22 9.5,22c3.8,0 6.94,-2.94 7.43,-6.75H14v-2h2.93c-0.29,-1.91 -1.15,-3.7 -2.57,-5.12L10,3zM9.5,20C6.46,20 4,17.71 4,14.51c0,-1.72 0.69,-3.35 2.05,-4.71L10,5.85l2.95,3.95c0.99,0.99 1.63,2.18 1.9,3.51H12v2h2.91C14.53,17.84 12.27,20 9.5,20zM18,9V6h-3V4h3V1h2v3h3v2h-3v3h-2z" />
+</vector>

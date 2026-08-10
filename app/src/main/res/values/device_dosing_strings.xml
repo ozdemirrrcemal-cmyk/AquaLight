@@ -30,6 +30,25 @@
     <string name="device_dosing_channel_card_content_description">Dosing channel %1$d, %2$s, %3$s</string>
     <string name="device_dosing_channel_open_failed">The dosing channel could not be read from the device. Check the connection and firmware version, then try again.</string>
 
+    <string name="device_dosing_detail_hero_eyebrow">Channel controls</string>
+    <string name="device_dosing_detail_hero_title">Build a precise dosing routine</string>
+    <string name="device_dosing_detail_hero_description">Configure timing, accuracy and supply tracking in focused steps.</string>
+    <string name="device_dosing_detail_planning_section">Planning</string>
+    <string name="device_dosing_detail_accuracy_section">Accuracy and supply</string>
+    <string name="device_dosing_detail_control_section">Direct control</string>
+    <string name="device_dosing_detail_plan_title">Dosing plan</string>
+    <string name="device_dosing_detail_plan_description">Set the daily amount, schedule mode and recurrence.</string>
+    <string name="device_dosing_detail_missed_dose_title">Missed dose recovery</string>
+    <string name="device_dosing_detail_missed_dose_description">Choose how a missed dose moves to the next safe opportunity.</string>
+    <string name="device_dosing_detail_calibration_title">Calibration</string>
+    <string name="device_dosing_detail_calibration_description">Review flow accuracy or start a guided recalibration.</string>
+    <string name="device_dosing_detail_reservoir_title">Reservoir monitoring</string>
+    <string name="device_dosing_detail_reservoir_description">Set container volume and low-level monitoring.</string>
+    <string name="device_dosing_detail_manual_title">Manual dose</string>
+    <string name="device_dosing_detail_manual_description">Dispense a precise one-time amount on demand.</string>
+    <string name="device_dosing_detail_reset_title">Reset channel</string>
+    <string name="device_dosing_detail_reset_description">Clear this channel’s dosing configuration.</string>
+
     <string name="device_dosing_calibration_step_progress">Step %1$d of %2$d</string>
     <string name="device_dosing_calibration_name_title">Identify this dosing channel</string>
     <string name="device_dosing_calibration_name_description">Enter the nutrient or additive used on this channel. AquaLight will show this name in dosing schedules and alerts.</string>
