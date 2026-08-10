@@ -47,6 +47,7 @@ class DeviceDosingChannelCalibrationViewModel(
     private var hasLocalProgress = false
     private var primeRequested = false
     private var exiting = false
+    private var completionEmitted = false
     private var latestSnapshot: DeviceDosingCalibrationSnapshot? = null
 
     fun bind(
@@ -71,6 +72,7 @@ class DeviceDosingChannelCalibrationViewModel(
         this.slotId = normalizedSlot
         hasLocalProgress = false
         exiting = false
+        completionEmitted = false
         latestSnapshot = null
         _uiState.value = DeviceDosingCalibrationUiState(
             displayName = channelTitle,
@@ -237,6 +239,7 @@ class DeviceDosingChannelCalibrationViewModel(
         when (val result = operations.confirm(deviceUid, slotId)) {
             is DeviceDosingCalibrationResult.Success -> {
                 latestSnapshot = result.snapshot
+                completionEmitted = true
                 _uiState.value = _uiState.value.copy(
                     isBusy = false,
                     isPumpActive = false,
@@ -346,6 +349,18 @@ class DeviceDosingChannelCalibrationViewModel(
             candidateDoseMsPerMl = snapshot.pendingDoseMsPerMl.takeIf { it > 0L },
             error = null
         )
+        if (
+            snapshot.sessionPhase == DeviceDosingCalibrationSessionPhase.IDLE &&
+            snapshot.calibrated &&
+            !hasLocalProgress &&
+            !completionEmitted
+        ) {
+            completionEmitted = true
+            eventChannel.trySend(
+                DeviceDosingCalibrationEvent.Completed(snapshot.toDetailTarget())
+            )
+            return
+        }
         if (snapshot.sessionPhase == DeviceDosingCalibrationSessionPhase.RUNNING &&
             remainingMs > 0L
         ) {

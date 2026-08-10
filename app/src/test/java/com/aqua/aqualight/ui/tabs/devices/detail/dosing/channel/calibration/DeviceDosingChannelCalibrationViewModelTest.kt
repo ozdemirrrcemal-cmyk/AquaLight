@@ -100,6 +100,24 @@ class DeviceDosingChannelCalibrationViewModelTest {
         }
 
     @Test
+    fun `already committed calibration recovers directly to detail`() = runTest(dispatcher) {
+        val operations = FakeCalibrationOperations(
+            snapshot(
+                phase = DeviceDosingCalibrationSessionPhase.IDLE,
+                calibrated = true
+            )
+        )
+        val viewModel = viewModel(operations)
+
+        bind(viewModel)
+        advanceUntilIdle()
+        val event = viewModel.events.first() as DeviceDosingCalibrationEvent.Completed
+
+        assertEquals(DeviceDosingChannelDestination.DETAIL, event.target.destination)
+        assertEquals(0, operations.confirms)
+    }
+
+    @Test
     fun `exiting an active verification stops dose then discards pending session`() =
         runTest(dispatcher) {
             val operations = FakeCalibrationOperations(
