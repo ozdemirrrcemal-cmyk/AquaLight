@@ -13,10 +13,8 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.text.BasicText
 import androidx.compose.foundation.text.selection.SelectionContainer
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Surface
-import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -24,6 +22,9 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import com.aqua.aqualight.R
 import com.aqua.aqualight.application.devices.DeviceDosingDiagnosticSnapshot
+import com.aqua.aqualight.ui.common.flow.AquaGuidedFlowSurface
+import com.aqua.aqualight.ui.common.flow.aquaGuidedFlowColors
+import com.aqua.aqualight.ui.common.flow.aquaGuidedFlowTypography
 
 /**
  * Final Dose Pro root composition.
@@ -118,6 +119,8 @@ private fun DosingDiagnosticCard(
     snapshot: DeviceDosingDiagnosticSnapshot,
     modifier: Modifier = Modifier
 ) {
+    val colors = aquaGuidedFlowColors()
+    val typography = aquaGuidedFlowTypography(colors)
     val unavailable = stringResource(R.string.device_dosing_diagnostic_unavailable)
     val authLabel = stringResource(
         if (snapshot.authenticated) {
@@ -148,27 +151,21 @@ private fun DosingDiagnosticCard(
         snapshot.rejectedWireFrameBytes?.toString() ?: unavailable,
         snapshot.transportProtocolError ?: unavailable
     )
-    Surface(
-        modifier = modifier,
-        shape = MaterialTheme.shapes.medium,
-        color = MaterialTheme.colorScheme.errorContainer,
-        contentColor = MaterialTheme.colorScheme.onErrorContainer,
-        tonalElevation = DIAGNOSTIC_CARD_ELEVATION
-    ) {
+    AquaGuidedFlowSurface(modifier = modifier) {
         Column(
-            modifier = Modifier.padding(DIAGNOSTIC_CARD_PADDING),
+            modifier = Modifier.fillMaxWidth(),
             verticalArrangement = Arrangement.spacedBy(DIAGNOSTIC_TEXT_SPACING)
         ) {
-            Text(
+            BasicText(
                 text = stringResource(R.string.device_dosing_diagnostic_title),
-                style = MaterialTheme.typography.titleSmall
+                style = typography.label.copy(color = colors.danger)
             )
-            Text(
+            BasicText(
                 text = stringResource(R.string.device_dosing_diagnostic_disclaimer),
-                style = MaterialTheme.typography.labelSmall
+                style = typography.label.copy(color = colors.textSecondary)
             )
             SelectionContainer {
-                Text(text = report, style = MaterialTheme.typography.bodySmall)
+                BasicText(text = report, style = typography.body)
             }
         }
     }
@@ -253,6 +250,4 @@ private val CHANNEL_CARD_SPACING = CHANNEL_CARD_SPACING_DP.dp
 private val DEVICE_TO_CARDS_EXTRA_SPACING = DEVICE_TO_CARDS_EXTRA_SPACING_DP.dp
 private val DOSING_PRO_2_MAX_WIDTH = DOSING_PRO_2_MAX_WIDTH_DP.dp
 private val DOSING_PRO_4_MAX_WIDTH = DOSING_PRO_4_MAX_WIDTH_DP.dp
-private val DIAGNOSTIC_CARD_PADDING = 12.dp
 private val DIAGNOSTIC_TEXT_SPACING = 4.dp
-private val DIAGNOSTIC_CARD_ELEVATION = 2.dp
