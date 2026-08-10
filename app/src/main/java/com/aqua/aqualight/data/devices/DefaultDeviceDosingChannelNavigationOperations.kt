@@ -54,7 +54,19 @@ internal class DefaultDeviceDosingChannelNavigationOperations(
     override suspend fun refreshTargets(deviceUid: String): Boolean {
         val uid = deviceUid.trim().takeIf(String::isNotBlank)?.let(::DeviceUid)
             ?: return false
-        return runtimePort.requestStatus(uid) is DeviceRuntimeCommandOutcome.Success
+        return when (runtimePort.requestStatus(uid)) {
+            is DeviceRuntimeCommandOutcome.Success -> true
+            is DeviceRuntimeCommandOutcome.NotConnected,
+            is DeviceRuntimeCommandOutcome.NotAuthenticated,
+            is DeviceRuntimeCommandOutcome.UnsupportedByDevice,
+            is DeviceRuntimeCommandOutcome.SendFailed,
+            is DeviceRuntimeCommandOutcome.Timeout,
+            is DeviceRuntimeCommandOutcome.Cancelled -> {
+                runtimePort.prepareRuntime(uid) &&
+                    runtimePort.requestStatus(uid) is DeviceRuntimeCommandOutcome.Success
+            }
+            else -> false
+        }
     }
 
     override suspend fun resolveCurrent(
@@ -63,24 +75,9 @@ internal class DefaultDeviceDosingChannelNavigationOperations(
     ): DeviceDosingChannelNavigationTarget? = navigationRequest(deviceUid, slotId)
         ?.let(::navigationContext)
         ?.let { context ->
-            val status = runtimePort.currentStatus(context.uid)
-            if (status != null) {
-                status.toNavigationTarget(context)
-            } else {
-                DeviceDosingChannelDestinationPolicy.resolve(
-                    calibrated = false,
-                    allowedRoutes = context.root.allowedRoutes
-                )?.let { destination ->
-                    DeviceDosingChannelNavigationTarget(
-                        deviceUid = context.uid.value,
-                        slotId = context.slot.id.value,
-                        pumpCount = context.root.channelSlots.dosingChannels.size,
-                        channelNumber = context.slot.index.position,
-                        channelTitle = context.slot.defaultDisplayName,
-                        destination = destination
-                    )
-                }
-            }
+            runtimePort.currentStatus(context.uid)
+                ?.toNavigationTarget(context)
+                ?: requestTarget(context)
         }
 
     private fun navigationContext(
