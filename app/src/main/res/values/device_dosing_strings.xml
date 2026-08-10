@@ -60,8 +60,8 @@
     <string name="device_dosing_calibration_start_collection">Start the 5-second calibration dose</string>
     <string name="device_dosing_calibration_save_measurement">Use the measured volume</string>
     <string name="device_dosing_calibration_dispense_test">Start the 4.00 ml test dose</string>
-    <string name="device_dosing_calibration_no_retry">No, recalibrate</string>
-    <string name="device_dosing_calibration_yes_confirm">Yes, save</string>
+    <string name="device_dosing_calibration_no_retry">Recalibrate</string>
+    <string name="device_dosing_calibration_yes_confirm">Save calibration</string>
     <string name="device_dosing_calibration_seconds">%1$d s</string>
     <string name="device_dosing_calibration_pump_running">Keep the tubing and cylinder still while the pump is running.</string>
     <string name="device_dosing_calibration_loading">Reading the pump state…</string>
