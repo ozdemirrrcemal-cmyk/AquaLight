@@ -47,6 +47,10 @@ internal fun DeviceDosingChannelDetailScreen(
 ) {
     val colors = aquaDeviceMenuColors()
     var missedDoseRecoveryEnabled by rememberSaveable { mutableStateOf(false) }
+    val directActions = DosingDetailDirectActions(
+        onManualDoseClick = onManualDoseClick,
+        onResetChannelClick = onResetChannelClick
+    )
 
     LazyColumn(
         modifier = modifier
@@ -71,8 +75,7 @@ internal fun DeviceDosingChannelDetailScreen(
             DosingDetailSection(
                 section = section,
                 onMenuItemClick = onMenuItemClick,
-                onManualDoseClick = onManualDoseClick,
-                onResetChannelClick = onResetChannelClick,
+                directActions = directActions,
                 missedDoseRecoveryEnabled = missedDoseRecoveryEnabled,
                 onMissedDoseRecoveryChange = { enabled ->
                     missedDoseRecoveryEnabled = enabled
@@ -128,8 +131,7 @@ private fun DosingDetailHero() {
 private fun DosingDetailSection(
     section: DosingDetailMenuSection,
     onMenuItemClick: ((DosingDetailMenuItem) -> Unit)?,
-    onManualDoseClick: (() -> Unit)?,
-    onResetChannelClick: (() -> Unit)?,
+    directActions: DosingDetailDirectActions,
     missedDoseRecoveryEnabled: Boolean,
     onMissedDoseRecoveryChange: (Boolean) -> Unit
 ) {
@@ -172,13 +174,13 @@ private fun DosingDetailSection(
                 if (section.items.isNotEmpty()) {
                     AquaDeviceMenuDivider()
                 }
-                DosingManualDoseAction(onClick = onManualDoseClick)
+                DosingManualDoseAction(onClick = directActions.onManualDoseClick)
             }
             if (section.hasResetChannelAction) {
                 if (section.items.isNotEmpty() || section.hasManualDoseAction) {
                     AquaDeviceMenuDivider()
                 }
-                DosingResetChannelAction(onClick = onResetChannelClick)
+                DosingResetChannelAction(onClick = directActions.onResetChannelClick)
             }
         }
     }
@@ -239,6 +241,11 @@ private fun DosingResetChannelAction(onClick: (() -> Unit)?) {
         showTrailingIcon = false
     )
 }
+
+private data class DosingDetailDirectActions(
+    val onManualDoseClick: (() -> Unit)?,
+    val onResetChannelClick: (() -> Unit)?
+)
 
 internal data class DosingDetailMenuSection(
     @StringRes val titleRes: Int,
