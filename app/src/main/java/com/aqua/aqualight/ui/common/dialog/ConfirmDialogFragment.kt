@@ -7,6 +7,7 @@ import android.graphics.drawable.GradientDrawable
 import android.os.Bundle
 import androidx.core.content.ContextCompat
 import androidx.core.os.bundleOf
+import androidx.core.view.isNotEmpty
 import androidx.fragment.app.DialogFragment
 import androidx.fragment.app.FragmentManager
 import com.aqua.aqualight.R
@@ -83,7 +84,7 @@ class ConfirmDialogFragment : DialogFragment() {
         request: Request
     ) {
         binding.root.apply {
-            if (childCount > 0) {
+            if (isNotEmpty()) {
                 removeViewAt(0)
             }
             background = GradientDrawable().apply {
