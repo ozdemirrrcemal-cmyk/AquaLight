@@ -31,8 +31,8 @@
     <string name="device_dosing_channel_open_failed">The dosing channel could not be read from the device. Check the connection and firmware version, then try again.</string>
 
     <string name="device_dosing_detail_hero_eyebrow">Channel controls</string>
-    <string name="device_dosing_detail_hero_title">Build a precise dosing routine</string>
-    <string name="device_dosing_detail_hero_description">Configure timing, accuracy and supply tracking in focused steps.</string>
+    <string name="device_dosing_detail_hero_title">Precision in every dose, control at every step</string>
+    <string name="device_dosing_detail_hero_description">Manage scheduling, calibration and liquid tracking from one place to optimize your dosing process with confidence.</string>
     <string name="device_dosing_detail_planning_section">Planning</string>
     <string name="device_dosing_detail_accuracy_section">Accuracy and supply</string>
     <string name="device_dosing_detail_control_section">Direct control</string>
