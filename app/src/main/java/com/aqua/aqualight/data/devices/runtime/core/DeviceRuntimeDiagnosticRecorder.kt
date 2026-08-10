@@ -7,6 +7,8 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.map
+import org.json.JSONArray
+import org.json.JSONObject
 
 /**
  * Temporary, in-memory recorder for the standalone Dosing diagnostic APK.
@@ -19,6 +21,10 @@ internal object DeviceRuntimeDiagnosticRecorder {
     private const val DOSING_MODULE = "dosing"
     private const val DOSING_STATUS_ACTION = "status.get"
     private const val MAX_DETAIL_LENGTH = 240
+    private const val MAX_SAFE_VALUE_LENGTH = 32
+    private const val CHANNELS_KEY = "channels"
+    private const val DOSING_KEY = "dosing"
+    private const val RESERVOIR_REMAINING_ML_KEY = "reservoirRemainingMl"
 
     private val lock = Any()
     private val states = MutableStateFlow<Map<DeviceUid, DeviceRuntimeDiagnosticState>>(emptyMap())
@@ -102,12 +108,14 @@ internal object DeviceRuntimeDiagnosticRecorder {
         val rawDataBytes = message.data.toString()
             .toByteArray(StandardCharsets.UTF_8)
             .size
+        val reservoirRemainingMlDetail = reservoirRemainingMlDetail(message.data)
         update(deviceUid) { current ->
             current.copy(
                 stage = "REPLY_RECEIVED",
                 responseDataBytes = rawDataBytes,
                 responseStatusCode = statusCode,
-                elapsedMillis = current.elapsedNow()
+                elapsedMillis = current.elapsedNow(),
+                detail = reservoirRemainingMlDetail
             )
         }
     }
@@ -124,9 +132,14 @@ internal object DeviceRuntimeDiagnosticRecorder {
             failure.message?.trim()?.takeIf(String::isNotBlank)
         ).joinToString(": ").take(MAX_DETAIL_LENGTH)
         update(deviceUid) { current ->
+            val parserDetail = failureDetail.ifBlank { "Parser rejected the response." }
+            val combinedDetail = listOfNotNull(
+                parserDetail,
+                current.detail
+            ).joinToString("; ").take(MAX_DETAIL_LENGTH)
             current.copy(
                 stage = "PARSER_FAILED",
-                detail = failureDetail.ifBlank { "Parser rejected the response." },
+                detail = combinedDetail,
                 elapsedMillis = current.elapsedNow()
             )
         }
@@ -189,6 +202,49 @@ internal object DeviceRuntimeDiagnosticRecorder {
 
     private fun tracks(module: String, action: String): Boolean =
         module == DOSING_MODULE && action == DOSING_STATUS_ACTION
+
+    private fun reservoirRemainingMlDetail(data: JSONObject): String? {
+        val channels = data.opt(CHANNELS_KEY) as? JSONArray ?: return null
+        val summaries = List(channels.length()) { index ->
+            val channel = channels.opt(index) as? JSONObject
+            val dosing = channel?.opt(DOSING_KEY) as? JSONObject
+            val value = when {
+                dosing == null -> "dosing-missing"
+                !dosing.has(RESERVOIR_REMAINING_ML_KEY) -> "missing"
+                else -> safeReservoirValue(dosing.opt(RESERVOIR_REMAINING_ML_KEY))
+            }
+            "ch${index}=${value}"
+        }
+        return "reservoirRemainingMl[${summaries.joinToString(",")}]"
+    }
+
+    private fun safeReservoirValue(value: Any?): String = when {
+        value == null || value === JSONObject.NULL -> "json-null"
+        value is Number -> "number:${value.toString().take(MAX_SAFE_VALUE_LENGTH)}"
+        value is String -> safeReservoirString(value)
+        value is Boolean -> "boolean:${value}"
+        value is JSONObject -> "object"
+        value is JSONArray -> "array(length=${value.length()})"
+        else -> "type:${value.javaClass.simpleName.take(MAX_SAFE_VALUE_LENGTH)}"
+    }
+
+    private fun safeReservoirString(value: String): String {
+        val trimmed = value.trim()
+        val numeric = trimmed.toDoubleOrNull()
+        return when {
+            value.isEmpty() -> "string-empty"
+            value.isBlank() -> "string-blank(length=${value.length})"
+            numeric?.isFinite() == true -> {
+                val label = if (trimmed == value) {
+                    "string-numeric"
+                } else {
+                    "string-numeric-trimmed"
+                }
+                "${label}:${trimmed.take(MAX_SAFE_VALUE_LENGTH)}"
+            }
+            else -> "string(length=${value.length})"
+        }
+    }
 
     private fun update(
         deviceUid: DeviceUid,

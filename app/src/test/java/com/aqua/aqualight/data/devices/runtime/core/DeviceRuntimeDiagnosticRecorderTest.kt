@@ -5,6 +5,7 @@ import com.aqua.aqualight.data.devices.runtime.ws.AqlWsIncomingMessage
 import java.nio.charset.StandardCharsets
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.test.runTest
+import org.json.JSONArray
 import org.json.JSONObject
 import org.junit.After
 import org.junit.Assert.assertEquals
@@ -89,6 +90,43 @@ class DeviceRuntimeDiagnosticRecorderTest {
     }
 
     @Test
+    fun `reservoir trace exposes safe value types without retaining arbitrary strings`() = runTest {
+        val privateValue = "secret-device-name"
+        val data = JSONObject().put(
+            "channels",
+            JSONArray()
+                .put(dosingChannel(JSONObject.NULL))
+                .put(dosingChannel(12.5))
+                .put(dosingChannel(" 12.5 "))
+                .put(dosingChannel(privateValue))
+        )
+
+        DeviceRuntimeDiagnosticRecorder.recordReply(
+            deviceUid = UID,
+            module = MODULE,
+            action = ACTION,
+            message = AqlWsIncomingMessage.Response(
+                id = "not-published",
+                type = "response",
+                module = MODULE,
+                action = ACTION,
+                data = data,
+                ok = true,
+                statusCode = 200
+            )
+        )
+
+        val snapshot = DeviceRuntimeDiagnosticRecorder.observe(UID).first()
+        val detail = snapshot.detail.orEmpty()
+        assertTrue(detail.contains("ch0=json-null"))
+        assertTrue(detail.contains("ch1=number:12.5"))
+        assertTrue(detail.contains("ch2=string-numeric-trimmed:12.5"))
+        assertTrue(detail.contains("ch3=string(length=18)"))
+        assertFalse(snapshot.toString().contains(privateValue))
+        assertFalse(snapshot.toString().contains("not-published"))
+    }
+
+    @Test
     fun `socket close marks transport stage without inventing response size`() = runTest {
         DeviceRuntimeDiagnosticRecorder.recordPreparation(
             deviceUid = UID,
@@ -108,6 +146,11 @@ class DeviceRuntimeDiagnosticRecorderTest {
         assertEquals("message too big", snapshot.socketCloseReason)
         assertEquals(null, snapshot.responseDataBytes)
     }
+
+    private fun dosingChannel(reservoirRemainingMl: Any): JSONObject = JSONObject().put(
+        "dosing",
+        JSONObject().put("reservoirRemainingMl", reservoirRemainingMl)
+    )
 
     private companion object {
         val UID = DeviceUid("device-1")
