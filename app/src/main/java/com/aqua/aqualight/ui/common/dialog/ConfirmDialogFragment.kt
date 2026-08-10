@@ -22,23 +22,34 @@ import com.google.android.material.dialog.MaterialAlertDialogBuilder
  */
 class ConfirmDialogFragment : DialogFragment() {
 
+    data class Request(
+        val title: String,
+        val message: String,
+        val confirmText: String,
+        val cancelText: String,
+        val presentation: Presentation,
+        val resultTarget: ResultTarget
+    )
+
+    data class Presentation(
+        val type: DialogType,
+        val destructive: Boolean = false
+    )
+
+    data class ResultTarget(
+        val requestKey: String,
+        val actionId: String = ""
+    )
+
     private var resultSent = false
 
     override fun onCreateDialog(savedInstanceState: Bundle?): Dialog {
         val binding = BottomSheetDeviceConfirmBinding.inflate(layoutInflater)
-        val args = requireArguments()
-        val type = runCatching {
-            DialogType.valueOf(args.getString(ARG_TYPE).orEmpty())
-        }.getOrDefault(DialogType.INFO)
+        val request = requestFromArguments(requireArguments())
 
         configureContent(
             binding = binding,
-            type = type,
-            destructive = args.getBoolean(ARG_DESTRUCTIVE),
-            title = args.getString(ARG_TITLE).orEmpty(),
-            message = args.getString(ARG_MESSAGE).orEmpty(),
-            confirmText = args.getString(ARG_CONFIRM_TEXT).orEmpty(),
-            cancelText = args.getString(ARG_CANCEL_TEXT).orEmpty()
+            request = request
         )
 
         return MaterialAlertDialogBuilder(requireContext())
@@ -69,12 +80,7 @@ class ConfirmDialogFragment : DialogFragment() {
 
     private fun configureContent(
         binding: BottomSheetDeviceConfirmBinding,
-        type: DialogType,
-        destructive: Boolean,
-        title: String,
-        message: String,
-        confirmText: String,
-        cancelText: String
+        request: Request
     ) {
         binding.root.apply {
             if (childCount > 0) {
@@ -98,13 +104,13 @@ class ConfirmDialogFragment : DialogFragment() {
                 )
             }
         }
-        binding.ivConfirmIcon.setImageResource(iconForType(type))
-        binding.tvConfirmTitle.text = title
-        binding.tvConfirmMessage.text = message
-        binding.btnConfirmPrimary.text = confirmText
-        binding.btnConfirmCancel.text = cancelText
+        binding.ivConfirmIcon.setImageResource(iconForType(request.presentation.type))
+        binding.tvConfirmTitle.text = request.title
+        binding.tvConfirmMessage.text = request.message
+        binding.btnConfirmPrimary.text = request.confirmText
+        binding.btnConfirmCancel.text = request.cancelText
 
-        if (!destructive) {
+        if (!request.presentation.destructive) {
             binding.btnConfirmPrimary.backgroundTintList = ColorStateList.valueOf(
                 ContextCompat.getColor(requireContext(), R.color.aqua_bottom_sheet_primary)
             )
@@ -113,6 +119,26 @@ class ConfirmDialogFragment : DialogFragment() {
             )
             binding.btnConfirmPrimary.strokeWidth = 0
         }
+    }
+
+    private fun requestFromArguments(args: Bundle): Request {
+        val type = runCatching {
+            DialogType.valueOf(args.getString(ARG_TYPE).orEmpty())
+        }.getOrDefault(DialogType.INFO)
+        return Request(
+            title = args.getString(ARG_TITLE).orEmpty(),
+            message = args.getString(ARG_MESSAGE).orEmpty(),
+            confirmText = args.getString(ARG_CONFIRM_TEXT).orEmpty(),
+            cancelText = args.getString(ARG_CANCEL_TEXT).orEmpty(),
+            presentation = Presentation(
+                type = type,
+                destructive = args.getBoolean(ARG_DESTRUCTIVE)
+            ),
+            resultTarget = ResultTarget(
+                requestKey = args.getString(ARG_REQUEST_KEY).orEmpty(),
+                actionId = args.getString(ARG_ACTION_ID).orEmpty()
+            )
+        )
     }
 
     private fun publish(result: String) {
@@ -154,56 +180,31 @@ class ConfirmDialogFragment : DialogFragment() {
         private const val ARG_ACTION_ID = "arg_action_id"
         private const val TAG_PREFIX = "ConfirmDialogFragment:"
 
-        fun newInstance(
-            title: String,
-            message: String,
-            confirmText: String,
-            cancelText: String,
-            type: DialogType,
-            requestKey: String,
-            actionId: String = "",
-            destructive: Boolean = false
-        ): ConfirmDialogFragment {
+        fun newInstance(request: Request): ConfirmDialogFragment {
             return ConfirmDialogFragment().apply {
                 arguments = bundleOf(
-                    ARG_TITLE to title,
-                    ARG_MESSAGE to message,
-                    ARG_CONFIRM_TEXT to confirmText,
-                    ARG_CANCEL_TEXT to cancelText,
-                    ARG_TYPE to type.name,
-                    ARG_DESTRUCTIVE to destructive,
-                    ARG_REQUEST_KEY to requestKey,
-                    ARG_ACTION_ID to actionId
+                    ARG_TITLE to request.title,
+                    ARG_MESSAGE to request.message,
+                    ARG_CONFIRM_TEXT to request.confirmText,
+                    ARG_CANCEL_TEXT to request.cancelText,
+                    ARG_TYPE to request.presentation.type.name,
+                    ARG_DESTRUCTIVE to request.presentation.destructive,
+                    ARG_REQUEST_KEY to request.resultTarget.requestKey,
+                    ARG_ACTION_ID to request.resultTarget.actionId
                 )
             }
         }
 
         fun show(
             fragmentManager: FragmentManager,
-            title: String,
-            message: String,
-            confirmText: String,
-            cancelText: String,
-            type: DialogType,
-            requestKey: String,
-            actionId: String = "",
-            destructive: Boolean = false
+            request: Request
         ) {
-            val tag = TAG_PREFIX + requestKey
+            val tag = TAG_PREFIX + request.resultTarget.requestKey
             if (fragmentManager.findFragmentByTag(tag) != null || fragmentManager.isStateSaved) {
                 return
             }
 
-            newInstance(
-                title = title,
-                message = message,
-                confirmText = confirmText,
-                cancelText = cancelText,
-                type = type,
-                requestKey = requestKey,
-                actionId = actionId,
-                destructive = destructive
-            ).show(fragmentManager, tag)
+            newInstance(request).show(fragmentManager, tag)
         }
     }
 }
