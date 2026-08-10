@@ -213,7 +213,8 @@ private fun DosingResetChannelAction(onClick: (() -> Unit)?) {
             iconRes = R.drawable.ic_dosing_reset_24,
             tone = AquaDeviceMenuTone.DANGER
         ),
-        onClick = onClick
+        onClick = onClick,
+        showTrailingIcon = false
     )
 }
 
