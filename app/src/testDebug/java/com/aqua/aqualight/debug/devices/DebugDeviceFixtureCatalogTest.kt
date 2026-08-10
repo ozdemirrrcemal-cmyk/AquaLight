@@ -3,12 +3,16 @@ package com.aqua.aqualight.debug.devices
 import com.aqua.aqualight.application.devices.DeviceDosingChannelDestination
 import com.aqua.aqualight.application.devices.DeviceDosingChannelNavigationOperations
 import com.aqua.aqualight.application.devices.DeviceDosingChannelNavigationTarget
+import com.aqua.aqualight.application.devices.DeviceDosingDiagnosticSnapshot
 import com.aqua.aqualight.application.devices.DeviceMenuAccessOperations
 import com.aqua.aqualight.application.devices.DeviceMenuAccessResult
 import com.aqua.aqualight.application.devices.DeviceMenuUnavailableReason
 import com.aqua.aqualight.application.devices.DeviceRootCatalogState
 import com.aqua.aqualight.application.devices.OwnerDeviceAvailability
 import com.aqua.aqualight.data.devices.catalog.AqlCommercialDeviceCatalog
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.test.runTest
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
@@ -131,6 +135,34 @@ class DebugDeviceFixtureCatalogTest {
         )
 
         val result = operations.resolve(expected.deviceUid, expected.slotId)
+
+        assertSame(expected, result)
+    }
+
+    @Test
+    fun realDeviceDosingDiagnosticsDelegateToProductionBoundary() = runTest {
+        val expected = DeviceDosingDiagnosticSnapshot(
+            connectionState = "AUTHENTICATED",
+            authenticated = true,
+            stage = "REQUEST_SENT",
+            attempt = 1
+        )
+        val delegate = object : DeviceDosingChannelNavigationOperations {
+            override suspend fun resolve(
+                deviceUid: String,
+                slotId: String
+            ): DeviceDosingChannelNavigationTarget? = null
+
+            override fun observeDiagnostics(
+                deviceUid: String
+            ): Flow<DeviceDosingDiagnosticSnapshot> = flowOf(expected)
+        }
+        val operations = DebugFixtureDosingChannelNavigationOperations(
+            delegate = delegate,
+            fixtures = DebugDeviceFixtureCatalog()
+        )
+
+        val result = operations.observeDiagnostics("REAL-DEVICE-001").first()
 
         assertSame(expected, result)
     }

@@ -3,6 +3,7 @@ package com.aqua.aqualight.debug.devices
 import com.aqua.aqualight.application.devices.DeviceDosingChannelDestinationPolicy
 import com.aqua.aqualight.application.devices.DeviceDosingChannelNavigationOperations
 import com.aqua.aqualight.application.devices.DeviceDosingChannelNavigationTarget
+import com.aqua.aqualight.application.devices.DeviceDosingDiagnosticSnapshot
 import com.aqua.aqualight.application.devices.DeviceRootCatalogState
 import com.aqua.aqualight.application.devices.DeviceRootSnapshot
 import com.aqua.aqualight.application.devices.OwnerDeviceFamily
@@ -47,6 +48,9 @@ internal class DebugFixtureDosingChannelNavigationOperations(
     ): DeviceDosingChannelNavigationTarget? = fixtures.rootSnapshot(deviceUid)
         ?.let { fixture -> resolveFixture(fixture, slotId) }
         ?: delegate.resolveCurrent(deviceUid, slotId)
+
+    override fun observeDiagnostics(deviceUid: String): Flow<DeviceDosingDiagnosticSnapshot> =
+        delegate.observeDiagnostics(deviceUid)
 
     private fun resolveFixture(
         fixture: DeviceRootSnapshot,
