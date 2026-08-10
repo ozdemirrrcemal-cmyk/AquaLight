@@ -38,9 +38,6 @@ exceptions:
     active: false
 
 naming:
-  FunctionNaming:
-    ignoreAnnotated:
-      - Composable
   MatchingDeclarationName:
     active: false
 

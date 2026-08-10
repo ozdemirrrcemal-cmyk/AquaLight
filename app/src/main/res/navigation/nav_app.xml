@@ -1,60 +1,7 @@
-<?xml version="1.0" encoding="utf-8"?>
-<navigation xmlns:android="http://schemas.android.com/apk/res/android"
-    xmlns:app="http://schemas.android.com/apk/res-auto"
-    xmlns:tools="http://schemas.android.com/tools"
-    android:id="@+id/nav_app"
-    app:startDestination="@id/nav_aquarium">
-
-    <include app:graph="@navigation/nav_aquarium" />
-    <include app:graph="@navigation/nav_maintenance" />
-    <include app:graph="@navigation/nav_devices" />
-    <include app:graph="@navigation/nav_settings" />
-
-    <fragment
-        android:id="@+id/deviceDosingChannelCalibrationFragment"
-        android:name="com.aqua.aqualight.ui.tabs.devices.detail.dosing.channel.calibration.DeviceDosingChannelCalibrationFragment"
-        android:label="@string/device_menu_calibration_title"
-        tools:layout="@layout/fragment_device_dosing_channel_calibration">
-        <argument
-            android:name="deviceUid"
-            app:argType="string" />
-        <argument
-            android:name="slotId"
-            app:argType="string" />
-        <argument
-            android:name="channelTitle"
-            app:argType="string" />
-        <argument
-            android:name="pumpCount"
-            app:argType="integer" />
-        <argument
-            android:name="channelNumber"
-            app:argType="integer" />
-        <deepLink
-            app:uri="aqualight://app/device/{deviceUid}/dosing/channel/{slotId}/calibration?channelTitle={channelTitle}&amp;pumpCount={pumpCount}&amp;channelNumber={channelNumber}" />
-    </fragment>
-
-    <fragment
-        android:id="@+id/deviceDosingChannelDetailFragment"
-        android:name="com.aqua.aqualight.ui.tabs.devices.detail.dosing.channel.detail.DeviceDosingChannelDetailFragment"
-        android:label="@string/device_family_dosing"
-        tools:layout="@layout/fragment_device_dosing_channel_detail">
-        <argument
-            android:name="deviceUid"
-            app:argType="string" />
-        <argument
-            android:name="slotId"
-            app:argType="string" />
-        <argument
-            android:name="channelTitle"
-            app:argType="string" />
-        <argument
-            android:name="pumpCount"
-            app:argType="integer" />
-        <argument
-            android:name="channelNumber"
-            app:argType="integer" />
-        <deepLink
-            app:uri="aqualight://app/device/{deviceUid}/dosing/channel/{slotId}/detail?channelTitle={channelTitle}&amp;pumpCount={pumpCount}&amp;channelNumber={channelNumber}" />
-    </fragment>
+<?xml version='1.0' encoding='utf-8'?>
+<navigation xmlns:android="http://schemas.android.com/apk/res/android" xmlns:app="http://schemas.android.com/apk/res-auto" android:id="@+id/nav_app" app:startDestination="@id/nav_aquarium">
+  <include app:graph="@navigation/nav_aquarium"/>
+  <include app:graph="@navigation/nav_maintenance"/>
+  <include app:graph="@navigation/nav_devices"/>
+  <include app:graph="@navigation/nav_settings"/>
 </navigation>

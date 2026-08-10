@@ -1,8 +1,5 @@
 package com.aqua.aqualight.debug.devices
 
-import com.aqua.aqualight.application.devices.DeviceDosingChannelDestination
-import com.aqua.aqualight.application.devices.DeviceDosingChannelNavigationOperations
-import com.aqua.aqualight.application.devices.DeviceDosingChannelNavigationTarget
 import com.aqua.aqualight.application.devices.DeviceMenuAccessOperations
 import com.aqua.aqualight.application.devices.DeviceMenuAccessResult
 import com.aqua.aqualight.application.devices.DeviceMenuUnavailableReason
@@ -84,53 +81,6 @@ class DebugDeviceFixtureCatalogTest {
         )
 
         val result = operations.resolve("REAL-DEVICE-001")
-
-        assertSame(expected, result)
-    }
-
-    @Test
-    fun fixtureDosingChannelOpensCalibrationWithoutCallingRuntimeDelegate() = runTest {
-        val fixtures = DebugDeviceFixtureCatalog()
-        val dosingRoot = fixtures.snapshots
-            .mapNotNull { snapshot -> fixtures.rootSnapshot(snapshot.deviceUid.value) }
-            .first { root -> root.channelSlots.dosingChannels.isNotEmpty() }
-        val channel = dosingRoot.channelSlots.dosingChannels.first()
-        val operations = DebugFixtureDosingChannelNavigationOperations(
-            delegate = object : DeviceDosingChannelNavigationOperations {
-                override suspend fun resolve(
-                    deviceUid: String,
-                    slotId: String
-                ): DeviceDosingChannelNavigationTarget? {
-                    error("Fixture navigation must not call the physical runtime delegate.")
-                }
-            },
-            fixtures = fixtures
-        )
-
-        val result = operations.resolve(dosingRoot.deviceUid, channel.id.value)
-
-        requireNotNull(result)
-        assertEquals(DeviceDosingChannelDestination.CALIBRATION, result.destination)
-        assertEquals(channel.id.value, result.slotId)
-        assertEquals(channel.defaultDisplayName, result.channelTitle)
-    }
-
-    @Test
-    fun realDeviceDosingChannelStillDelegatesToProductionBoundary() = runTest {
-        val expected = DeviceDosingChannelNavigationTarget(
-            deviceUid = "REAL-DEVICE-001",
-            slotId = "dosing:channel1",
-            pumpCount = 2,
-            channelNumber = 1,
-            channelTitle = "Nutrients",
-            destination = DeviceDosingChannelDestination.DETAIL
-        )
-        val operations = DebugFixtureDosingChannelNavigationOperations(
-            delegate = DeviceDosingChannelNavigationOperations { _, _ -> expected },
-            fixtures = DebugDeviceFixtureCatalog()
-        )
-
-        val result = operations.resolve(expected.deviceUid, expected.slotId)
 
         assertSame(expected, result)
     }

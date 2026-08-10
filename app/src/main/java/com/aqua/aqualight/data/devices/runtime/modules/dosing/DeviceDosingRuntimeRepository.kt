@@ -106,7 +106,7 @@ class DeviceDosingRuntimeRepository internal constructor(
             dosingJsonCommand(
                 action = DeviceDosingRuntimeContract.Action.CALIBRATION_START,
                 dataFactory = {
-                    DeviceDosingCommandValidation.validateCalibrationStartRequest(
+                    DeviceDosingCommandValidation.validateCalibrationRequest(
                         payload.normalizedChannelKey,
                         status,
                         access
@@ -142,7 +142,7 @@ class DeviceDosingRuntimeRepository internal constructor(
             dosingJsonCommand(
                 action = DeviceDosingRuntimeContract.Action.CALIBRATION_FINISH,
                 dataFactory = {
-                    DeviceDosingCommandValidation.validateCalibrationFinishRequest(
+                    DeviceDosingCommandValidation.validateCalibrationRequest(
                         payload.normalizedChannelKey,
                         status,
                         access
@@ -404,19 +404,11 @@ class DeviceDosingRuntimeRepository internal constructor(
             dosingJsonCommand(
                 action = action,
                 dataFactory = {
-                    if (action == DeviceDosingRuntimeContract.Action.CALIBRATION_CONFIRM) {
-                        DeviceDosingCommandValidation.validateCalibrationConfirmRequest(
-                            normalizedKey,
-                            status,
-                            access
-                        )
-                    } else {
-                        DeviceDosingCommandValidation.validateCalibrationRequest(
-                            normalizedKey,
-                            status,
-                            access
-                        )
-                    }
+                    DeviceDosingCommandValidation.validateCalibrationRequest(
+                        normalizedKey,
+                        status,
+                        access
+                    )
                     DeviceDosingChannelKeyPayload(normalizedKey).toJson()
                 },
                 parser = { data ->

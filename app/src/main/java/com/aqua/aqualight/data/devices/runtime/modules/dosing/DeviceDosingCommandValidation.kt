@@ -22,10 +22,6 @@ internal object DeviceDosingCommandValidation {
         require(
             status.runtime.supportsCalibrationWorkflow == access.supportsCalibrationWorkflow
         )
-        require(
-            status.runtime.supportsCalibrationSessionState ==
-                access.supportsCalibrationWorkflow
-        )
         require(status.runtime.supportsReservoirRefill == access.supportsReservoirRefill)
         status.channels.forEach { channel ->
             require(channel.editable.displayName == access.supportsChannelDisplayName)
@@ -89,16 +85,6 @@ internal object DeviceDosingCommandValidation {
         if (!payload.usePendingCalibration) {
             require(channel.dosing.calibrated) { "Dosing pump must be calibrated." }
             validateDoseDuration(payload.amountMl, channel.dosing.doseMsPerMl)
-        } else {
-            val calibration = channel.dosing.calibration
-            require(calibration.state == DeviceDosingCalibrationState.PENDING_VERIFICATION) {
-                "A pending Dosing calibration is required for verification."
-            }
-            require(!calibration.verificationDoseStarted) {
-                "The Dosing verification dose has already started."
-            }
-            require(calibration.pendingDoseMsPerMl > 0L)
-            validateDoseDuration(payload.amountMl, calibration.pendingDoseMsPerMl)
         }
         if (channel.dosing.reservoirTrackingEnabled) {
             require(channel.dosing.reservoirRemainingMl + DOSING_VALUE_EPSILON >= payload.amountMl) {
@@ -121,44 +107,6 @@ internal object DeviceDosingCommandValidation {
             "running the Dosing calibration workflow"
         )
         require(channel.editable.dosingCalibration)
-    }
-
-    fun validateCalibrationStartRequest(
-        channelKey: String,
-        currentStatus: DeviceDosingStatus?,
-        access: DeviceDosingRuntimeAccess
-    ) {
-        val channel = validatedCalibrationChannel(channelKey, currentStatus, access)
-        require(channel.dosing.calibration.state == DeviceDosingCalibrationState.IDLE) {
-            "A Dosing calibration session is already active."
-        }
-    }
-
-    fun validateCalibrationFinishRequest(
-        channelKey: String,
-        currentStatus: DeviceDosingStatus?,
-        access: DeviceDosingRuntimeAccess
-    ) {
-        val channel = validatedCalibrationChannel(channelKey, currentStatus, access)
-        require(channel.dosing.calibration.state == DeviceDosingCalibrationState.RUNNING) {
-            "The timed Dosing calibration run has not started."
-        }
-    }
-
-    fun validateCalibrationConfirmRequest(
-        channelKey: String,
-        currentStatus: DeviceDosingStatus?,
-        access: DeviceDosingRuntimeAccess
-    ) {
-        val calibration = validatedCalibrationChannel(
-            channelKey,
-            currentStatus,
-            access
-        ).dosing.calibration
-        require(calibration.state == DeviceDosingCalibrationState.PENDING_VERIFICATION)
-        require(calibration.verificationDoseComplete) {
-            "The Dosing verification dose must complete before confirmation."
-        }
     }
 
     fun validateReservoirRequest(
@@ -296,17 +244,6 @@ internal object DeviceDosingCommandValidation {
                 validateCalibrationConfigRequest(dosing, channel, access)
                 validateReservoirConfigRequest(dosing, channel, access)
             }
-        }
-    }
-
-    private fun validatedCalibrationChannel(
-        channelKey: String,
-        currentStatus: DeviceDosingStatus?,
-        access: DeviceDosingRuntimeAccess
-    ): DeviceDosingChannelStatus {
-        validateCalibrationRequest(channelKey, currentStatus, access)
-        return requireNotNull(currentStatus).channels.single { channel ->
-            channel.key == channelKey
         }
     }
 

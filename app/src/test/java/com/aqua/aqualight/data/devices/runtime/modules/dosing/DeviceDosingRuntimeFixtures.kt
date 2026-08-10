@@ -1,23 +1,14 @@
 package com.aqua.aqualight.data.devices.runtime.modules.dosing
 
-import kotlin.math.roundToLong
 import org.json.JSONArray
 import org.json.JSONObject
 
 @Suppress("TooManyFunctions")
 internal object DeviceDosingRuntimeFixtures {
-    @Suppress("LongParameterList")
     fun status(
         uptimeMs: Long = 12_000L,
         schedules: JSONArray = JSONArray().put(statusSchedule()),
-        channelOneDisplayName: String = "Nutrients",
-        calibrationState: String = "idle",
-        calibrationDurationMs: Long = if (calibrationState == "idle") 0L else 5_000L,
-        measuredMl: Double = 0.0,
-        pendingDoseMsPerMl: Long = -1L,
-        verificationDoseStarted: Boolean = false,
-        verificationDoseComplete: Boolean = false,
-        verificationDoseRemainingMs: Long = 0L
+        channelOneDisplayName: String = "Nutrients"
     ): JSONObject = JSONObject()
         .put("supported", true)
         .put("channelCount", 2)
@@ -30,23 +21,7 @@ internal object DeviceDosingRuntimeFixtures {
         .put(
             "channels",
             JSONArray()
-                .put(
-                    channel(
-                        0,
-                        "channel1",
-                        "Channel 1",
-                        channelOneDisplayName,
-                        manualActive = calibrationState == "running" ||
-                            verificationDoseRemainingMs > 0L,
-                        calibrationState = calibrationState,
-                        calibrationDurationMs = calibrationDurationMs,
-                        measuredMl = measuredMl,
-                        pendingDoseMsPerMl = pendingDoseMsPerMl,
-                        verificationDoseStarted = verificationDoseStarted,
-                        verificationDoseComplete = verificationDoseComplete,
-                        verificationDoseRemainingMs = verificationDoseRemainingMs
-                    )
-                )
+                .put(channel(0, "channel1", "Channel 1", channelOneDisplayName))
                 .put(channel(1, "channel2", "Channel 2", "Channel 2"))
         )
         .put("schedules", schedules)
@@ -61,7 +36,6 @@ internal object DeviceDosingRuntimeFixtures {
                 .put("supportsPrime", true)
                 .put("supportsManualDose", true)
                 .put("supportsCalibrationWorkflow", true)
-                .put("supportsCalibrationSessionState", true)
                 .put("supportsReservoirRefill", true)
                 .put("event", "dosing.status.changed")
         )
@@ -118,9 +92,6 @@ internal object DeviceDosingRuntimeFixtures {
         return mutationBase(operation, action)
             .put("channelKey", "channel1")
             .put("manualActive", active)
-            .also { result ->
-                if (!active) result.put("verificationReset", false)
-            }
             .put(
                 "channel",
                 channel(
@@ -143,33 +114,10 @@ internal object DeviceDosingRuntimeFixtures {
         .put("durationMs", (amountMl * doseMsPerMl).toLong())
         .put("doseMsPerMl", doseMsPerMl)
         .put("usePendingCalibration", usePendingCalibration)
-        .put(
-            "calibrationState",
-            if (usePendingCalibration) "pendingVerification" else "idle"
-        )
         .put("manualActive", true)
         .put(
             "channel",
-            channel(
-                0,
-                "channel1",
-                "Channel 1",
-                "Nutrients",
-                manualActive = true,
-                calibrationState = if (usePendingCalibration) {
-                    "pendingVerification"
-                } else {
-                    "idle"
-                },
-                pendingDoseMsPerMl = if (usePendingCalibration) doseMsPerMl else -1L,
-                measuredMl = if (usePendingCalibration) 5.0 else 0.0,
-                verificationDoseStarted = usePendingCalibration,
-                verificationDoseRemainingMs = if (usePendingCalibration) {
-                    (amountMl * doseMsPerMl).toLong()
-                } else {
-                    0L
-                }
-            )
+            channel(0, "channel1", "Channel 1", "Nutrients", manualActive = true)
                 .put("listIndex", 0)
         )
 
@@ -177,14 +125,13 @@ internal object DeviceDosingRuntimeFixtures {
         mutationBase("calibrationStart", DeviceDosingRuntimeContract.Action.CALIBRATION_START)
             .put("channelKey", "channel1")
             .put("durationMs", durationMs)
-            .put("calibrationState", "running")
             .put("manualActive", true)
 
     fun calibrationFinish(
         measuredMl: Double = 5.0,
         durationMs: Long = 5_000L
     ): JSONObject {
-        val pendingDoseMsPerMl = (durationMs.toDouble() / measuredMl).roundToLong()
+        val pendingDoseMsPerMl = (durationMs.toDouble() / measuredMl).toLong()
         return mutationBase(
             "calibrationFinish",
             DeviceDosingRuntimeContract.Action.CALIBRATION_FINISH
@@ -194,7 +141,6 @@ internal object DeviceDosingRuntimeFixtures {
             .put("durationMs", durationMs)
             .put("pendingDoseMsPerMl", pendingDoseMsPerMl)
             .put("pending", true)
-            .put("calibrationState", "pendingVerification")
             .put(
                 "channel",
                 channel(
@@ -202,10 +148,7 @@ internal object DeviceDosingRuntimeFixtures {
                     "channel1",
                     "Channel 1",
                     "Nutrients",
-                    calibrationState = "pendingVerification",
-                    pendingDoseMsPerMl = pendingDoseMsPerMl,
-                    measuredMl = measuredMl,
-                    calibrationDurationMs = durationMs
+                    doseMsPerMl = pendingDoseMsPerMl
                 ).put("listIndex", 0)
             )
     }
@@ -221,7 +164,6 @@ internal object DeviceDosingRuntimeFixtures {
         .put("channelKey", "channel1")
         .put("doseMsPerMl", doseMsPerMl)
         .put("lastCalibratedAt", lastCalibratedAt)
-        .put("calibrationState", "idle")
         .put(
             "channel",
             channel(
@@ -239,9 +181,7 @@ internal object DeviceDosingRuntimeFixtures {
         DeviceDosingRuntimeContract.Action.CALIBRATION_CANCEL
     )
         .put("channelKey", "channel1")
-        .put("discardedPendingCalibration", true)
-        .put("restoredPreviousCalibration", false)
-        .put("calibrationState", "idle")
+        .put("restoredPreviousCalibration", true)
         .put(
             "channel",
             channel(0, "channel1", "Channel 1", "Nutrients").put("listIndex", 0)
@@ -346,14 +286,7 @@ internal object DeviceDosingRuntimeFixtures {
         manualActive: Boolean = false,
         doseMsPerMl: Long = 1_000L,
         lastCalibratedAt: Long = 100L,
-        reservoirRemainingMl: Double = 400.0,
-        calibrationState: String = "idle",
-        calibrationDurationMs: Long = if (calibrationState == "idle") 0L else 5_000L,
-        measuredMl: Double = 0.0,
-        pendingDoseMsPerMl: Long = -1L,
-        verificationDoseStarted: Boolean = false,
-        verificationDoseComplete: Boolean = false,
-        verificationDoseRemainingMs: Long = 0L
+        reservoirRemainingMl: Double = 400.0
     ): JSONObject = JSONObject()
         .put("index", index)
         .put("key", key)
@@ -378,22 +311,7 @@ internal object DeviceDosingRuntimeFixtures {
                 .put("unit", "ml")
                 .put("doseMsPerMl", doseMsPerMl)
                 .put("lastCalibratedAt", lastCalibratedAt)
-                .put("calibrated", doseMsPerMl > 0L && lastCalibratedAt > 0L)
-                .put(
-                    "calibration",
-                    JSONObject()
-                        .put("state", calibrationState)
-                        .put(
-                            "startedAtUptimeMs",
-                            if (calibrationState == "running") 10_000L else 0L
-                        )
-                        .put("durationMs", calibrationDurationMs)
-                        .put("measuredMl", measuredMl)
-                        .put("pendingDoseMsPerMl", pendingDoseMsPerMl)
-                        .put("verificationDoseStarted", verificationDoseStarted)
-                        .put("verificationDoseComplete", verificationDoseComplete)
-                        .put("verificationDoseRemainingMs", verificationDoseRemainingMs)
-                )
+                .put("calibrated", doseMsPerMl > 0L)
                 .put("reservoirTrackingEnabled", true)
                 .put("reservoirCapacityMl", 500.0)
                 .put("reservoirRemainingMl", reservoirRemainingMl)

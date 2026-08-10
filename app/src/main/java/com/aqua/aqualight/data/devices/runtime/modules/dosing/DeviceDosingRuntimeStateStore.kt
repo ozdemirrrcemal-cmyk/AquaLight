@@ -226,8 +226,7 @@ private fun DeviceDosingChannelStatus.applyConfig(
         dosing = dosing.copy(
             doseMsPerMl = config.dosing.doseMsPerMl,
             lastCalibratedAt = config.dosing.lastCalibratedAt,
-            calibrated = config.dosing.doseMsPerMl > 0L &&
-                config.dosing.lastCalibratedAt > 0L,
+            calibrated = config.dosing.doseMsPerMl > 0L,
             reservoirTrackingEnabled = config.dosing.reservoirTrackingEnabled,
             reservoirCapacityMl = config.dosing.reservoirCapacityMl,
             reservoirRemainingMl = remainingMl,
@@ -250,7 +249,6 @@ private fun DeviceDosingScheduleConfigSnapshot.toStatus(
         enabled = enabled,
         runtimeEnabled = enabled &&
             isBound &&
-            channel?.dosing?.calibrated == true &&
             weekdays.any { selected -> selected } &&
             repeatCount > 0 &&
             durationReady,

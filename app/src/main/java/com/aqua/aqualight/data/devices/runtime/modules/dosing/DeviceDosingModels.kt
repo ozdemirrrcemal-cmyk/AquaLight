@@ -9,12 +9,6 @@ enum class DeviceDosingRegime(val wireValue: String) {
     OFF("Off")
 }
 
-enum class DeviceDosingCalibrationState(val wireValue: String) {
-    IDLE("idle"),
-    RUNNING("running"),
-    PENDING_VERIFICATION("pendingVerification")
-}
-
 data class DeviceDosingRuntimeCapabilities(
     val module: String,
     val readOnly: Boolean,
@@ -24,7 +18,6 @@ data class DeviceDosingRuntimeCapabilities(
     val supportsPrime: Boolean,
     val supportsManualDose: Boolean,
     val supportsCalibrationWorkflow: Boolean,
-    val supportsCalibrationSessionState: Boolean,
     val supportsReservoirRefill: Boolean,
     val event: String
 )
@@ -37,23 +30,11 @@ data class DeviceDosingChannelEditable(
     val reservoir: Boolean
 )
 
-data class DeviceDosingCalibrationSessionStatus(
-    val state: DeviceDosingCalibrationState,
-    val startedAtUptimeMs: Long,
-    val durationMs: Long,
-    val measuredMl: Double,
-    val pendingDoseMsPerMl: Long,
-    val verificationDoseStarted: Boolean,
-    val verificationDoseComplete: Boolean,
-    val verificationDoseRemainingMs: Long
-)
-
 data class DeviceDosingPumpStatus(
     val unit: String,
     val doseMsPerMl: Long,
     val lastCalibratedAt: Long,
     val calibrated: Boolean,
-    val calibration: DeviceDosingCalibrationSessionStatus,
     val reservoirTrackingEnabled: Boolean,
     val reservoirCapacityMl: Double,
     val reservoirRemainingMl: Double,
@@ -177,7 +158,6 @@ data class DeviceDosingPumpCommandResult(
     val operation: String,
     val channelKey: String,
     val manualActive: Boolean,
-    val verificationReset: Boolean,
     val saved: Boolean,
     val runtimeTransport: String,
     override val command: String,
@@ -192,7 +172,6 @@ data class DeviceDosingDoseNowResult(
     val durationMs: Long,
     val doseMsPerMl: Long,
     val usePendingCalibration: Boolean,
-    val calibrationState: DeviceDosingCalibrationState,
     val manualActive: Boolean,
     val saved: Boolean,
     val runtimeTransport: String,
@@ -205,7 +184,6 @@ data class DeviceDosingCalibrationStartResult(
     val operation: String,
     val channelKey: String,
     val durationMs: Long,
-    val calibrationState: DeviceDosingCalibrationState,
     val manualActive: Boolean,
     val saved: Boolean,
     val runtimeTransport: String,
@@ -220,7 +198,6 @@ data class DeviceDosingCalibrationFinishResult(
     val durationMs: Long,
     val pendingDoseMsPerMl: Long,
     val pending: Boolean,
-    val calibrationState: DeviceDosingCalibrationState,
     val saved: Boolean,
     val runtimeTransport: String,
     override val command: String,
@@ -233,7 +210,6 @@ data class DeviceDosingCalibrationConfirmResult(
     val channelKey: String,
     val doseMsPerMl: Long,
     val lastCalibratedAt: Long,
-    val calibrationState: DeviceDosingCalibrationState,
     val saved: Boolean,
     val runtimeTransport: String,
     override val command: String,
@@ -245,8 +221,6 @@ data class DeviceDosingCalibrationCancelResult(
     val operation: String,
     val channelKey: String,
     val restoredPreviousCalibration: Boolean,
-    val discardedPendingCalibration: Boolean,
-    val calibrationState: DeviceDosingCalibrationState,
     val saved: Boolean,
     val runtimeTransport: String,
     override val command: String,

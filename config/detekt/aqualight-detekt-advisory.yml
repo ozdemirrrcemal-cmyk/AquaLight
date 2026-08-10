@@ -5,8 +5,3 @@ build:
 config:
   validation: true
   warningsAsErrors: true
-
-naming:
-  FunctionNaming:
-    ignoreAnnotated:
-      - Composable

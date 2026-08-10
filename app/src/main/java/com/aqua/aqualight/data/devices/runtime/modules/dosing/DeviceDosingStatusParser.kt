@@ -80,7 +80,6 @@ object DeviceDosingStatusParser {
                 !(channel.dosing.doseMsPerMl <= 1L && schedule.intervalOnMs < 1L) &&
                     !(channel.dosing.doseMsPerMl >= 1L && schedule.amountMl <= 0.0)
             val expectedRuntimeEnabled = schedule.enabled &&
-                channel.dosing.calibrated &&
                 schedule.weekdays.any { selected -> selected } &&
                 schedule.repeatCount > 0 &&
                 durationReady

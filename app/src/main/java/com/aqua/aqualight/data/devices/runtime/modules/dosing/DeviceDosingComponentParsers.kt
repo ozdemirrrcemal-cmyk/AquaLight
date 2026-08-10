@@ -9,19 +9,11 @@ internal object DeviceDosingRegimeParser {
     ) { "Unknown firmware Dosing regime: $value" }
 }
 
-internal object DeviceDosingCalibrationStateParser {
-    fun parse(value: String): DeviceDosingCalibrationState = requireNotNull(
-        DeviceDosingCalibrationState.values().singleOrNull { state ->
-            state.wireValue == value
-        }
-    ) { "Unknown firmware Dosing calibration state: $value" }
-}
-
 internal object DeviceDosingRuntimeCapabilitiesParser {
     private val KEYS = setOf(
         "module", "readOnly", "supportsConfigApply", "supportsSchedules", "supportsChannels",
         "supportsPrime", "supportsManualDose", "supportsCalibrationWorkflow",
-        "supportsCalibrationSessionState", "supportsReservoirRefill", "event"
+        "supportsReservoirRefill", "event"
     )
 
     fun parse(data: JSONObject): DeviceDosingRuntimeCapabilities {
@@ -37,9 +29,6 @@ internal object DeviceDosingRuntimeCapabilitiesParser {
             supportsCalibrationWorkflow = data.requireDosingBoolean(
                 "supportsCalibrationWorkflow"
             ),
-            supportsCalibrationSessionState = data.requireDosingBoolean(
-                "supportsCalibrationSessionState"
-            ),
             supportsReservoirRefill = data.requireDosingBoolean("supportsReservoirRefill"),
             event = data.requireDosingText("event")
         ).also { runtime ->
@@ -51,7 +40,6 @@ internal object DeviceDosingRuntimeCapabilitiesParser {
             require(runtime.supportsPrime)
             require(runtime.supportsManualDose)
             require(runtime.supportsCalibrationWorkflow)
-            require(runtime.supportsCalibrationSessionState)
             require(runtime.supportsReservoirRefill)
             require(runtime.event == DeviceDosingRuntimeContract.STATUS_EVENT)
         }
@@ -64,13 +52,8 @@ internal object DeviceDosingChannelParser {
     )
     private val DOSING_KEYS = setOf(
         "unit", "doseMsPerMl", "lastCalibratedAt", "calibrated",
-        "calibration",
         "reservoirTrackingEnabled", "reservoirCapacityMl", "reservoirRemainingMl",
         "reservoirRemainingPercent"
-    )
-    private val CALIBRATION_KEYS = setOf(
-        "state", "startedAtUptimeMs", "durationMs", "measuredMl", "pendingDoseMsPerMl",
-        "verificationDoseStarted", "verificationDoseComplete", "verificationDoseRemainingMs"
     )
     private val STATUS_KEYS = setOf(
         "index", "key", "name", "displayName", "profileManaged", "regime",
@@ -192,7 +175,6 @@ internal object DeviceDosingChannelParser {
                 DOSING_DEVICE_UPTIME_MAX_MS
             ),
             calibrated = data.requireDosingBoolean("calibrated"),
-            calibration = parseCalibration(data.requireDosingObject("calibration")),
             reservoirTrackingEnabled = data.requireDosingBoolean(
                 "reservoirTrackingEnabled"
             ),
@@ -212,42 +194,6 @@ internal object DeviceDosingChannelParser {
         ).also(::validateDosing)
     }
 
-    private fun parseCalibration(data: JSONObject): DeviceDosingCalibrationSessionStatus {
-        data.requireDosingKeys(CALIBRATION_KEYS, "Dosing calibration session")
-        return DeviceDosingCalibrationSessionStatus(
-            state = DeviceDosingCalibrationStateParser.parse(
-                data.requireDosingText("state")
-            ),
-            startedAtUptimeMs = data.requireDosingLong(
-                "startedAtUptimeMs",
-                DOSING_NON_NEGATIVE_LONG,
-                DOSING_DEVICE_UPTIME_MAX_MS
-            ),
-            durationMs = data.requireDosingLong(
-                "durationMs",
-                DOSING_NON_NEGATIVE_LONG,
-                DeviceDosingRuntimeContract.Limit.MAX_CALIBRATION_DURATION_MS
-            ),
-            measuredMl = data.requireDosingDouble(
-                "measuredMl",
-                DOSING_NON_NEGATIVE_LONG.toDouble(),
-                DeviceDosingRuntimeContract.Limit.MAX_CALIBRATION_MEASURED_ML
-            ),
-            pendingDoseMsPerMl = data.requireDosingLong(
-                "pendingDoseMsPerMl",
-                DOSING_UNSET_CALIBRATION,
-                DeviceDosingRuntimeContract.Limit.MAX_DOSE_MS_PER_ML
-            ),
-            verificationDoseStarted = data.requireDosingBoolean("verificationDoseStarted"),
-            verificationDoseComplete = data.requireDosingBoolean("verificationDoseComplete"),
-            verificationDoseRemainingMs = data.requireDosingLong(
-                "verificationDoseRemainingMs",
-                DOSING_NON_NEGATIVE_LONG,
-                DeviceDosingRuntimeContract.Limit.MAX_MANUAL_DOSE_DURATION_MS
-            )
-        ).also(::validateCalibration)
-    }
-
     private fun validate(channel: DeviceDosingChannelStatus) {
         require(channel.profileManaged)
         require(channel.channelKind in CHANNEL_KINDS)
@@ -261,10 +207,7 @@ internal object DeviceDosingChannelParser {
 
     private fun validateDosing(dosing: DeviceDosingPumpStatus) {
         require(dosing.unit == DeviceDosingRuntimeContract.Literal.UNIT_ML)
-        require(
-            dosing.calibrated ==
-                (dosing.doseMsPerMl > 0L && dosing.lastCalibratedAt > 0L)
-        )
+        require(dosing.calibrated == (dosing.doseMsPerMl > 0L))
         if (dosing.reservoirTrackingEnabled) {
             require(dosing.reservoirCapacityMl > 0.0)
             require(dosing.reservoirRemainingMl in 0.0..dosing.reservoirCapacityMl)
@@ -276,39 +219,6 @@ internal object DeviceDosingChannelParser {
                 dosing.reservoirRemainingPercent,
                 DOSING_UNSET_RESERVOIR
             ))
-        }
-    }
-
-    private fun validateCalibration(calibration: DeviceDosingCalibrationSessionStatus) {
-        when (calibration.state) {
-            DeviceDosingCalibrationState.IDLE -> {
-                require(calibration.startedAtUptimeMs == 0L)
-                require(calibration.durationMs == 0L)
-                require(dosingValuesEquivalent(calibration.measuredMl, 0.0))
-                require(calibration.pendingDoseMsPerMl == DOSING_UNSET_CALIBRATION)
-                require(!calibration.verificationDoseStarted)
-                require(!calibration.verificationDoseComplete)
-                require(calibration.verificationDoseRemainingMs == 0L)
-            }
-            DeviceDosingCalibrationState.RUNNING -> {
-                require(calibration.durationMs in
-                    DeviceDosingRuntimeContract.Limit.MIN_CALIBRATION_DURATION_MS..
-                        DeviceDosingRuntimeContract.Limit.MAX_CALIBRATION_DURATION_MS)
-                require(calibration.pendingDoseMsPerMl == DOSING_UNSET_CALIBRATION)
-                require(!calibration.verificationDoseStarted)
-            }
-            DeviceDosingCalibrationState.PENDING_VERIFICATION -> {
-                require(calibration.durationMs in
-                    DeviceDosingRuntimeContract.Limit.MIN_CALIBRATION_DURATION_MS..
-                        DeviceDosingRuntimeContract.Limit.MAX_CALIBRATION_DURATION_MS)
-                require(calibration.measuredMl in
-                    DeviceDosingRuntimeContract.Limit.MIN_CALIBRATION_MEASURED_ML..
-                        DeviceDosingRuntimeContract.Limit.MAX_CALIBRATION_MEASURED_ML)
-                require(calibration.pendingDoseMsPerMl > 0L)
-                require(!calibration.verificationDoseComplete || calibration.verificationDoseStarted)
-                require(!calibration.verificationDoseComplete ||
-                    calibration.verificationDoseRemainingMs == 0L)
-            }
         }
     }
 }
