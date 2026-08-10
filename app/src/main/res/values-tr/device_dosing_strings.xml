@@ -48,14 +48,11 @@
     <string name="device_dosing_detail_manual_title">Manuel dozaj</string>
     <string name="device_dosing_detail_manual_description">İstediğiniz anda hassas ve tek seferlik bir miktar verin.</string>
     <string name="device_dosing_detail_reset_title">Kanalı sıfırla</string>
-    <string name="device_dosing_detail_reset_description">Bu kanalın dozaj yapılandırmasını temizleyin.</string>
+    <string name="device_dosing_detail_reset_description">Bu kanala ait tüm dozaj yapılandırmasını kalıcı olarak temizleyin.</string>
 
-    <string name="device_dosing_detail_preview_label">Arayüz önizlemesi</string>
-    <string name="device_dosing_detail_preview_description">Navigasyon ve alan yapısı hazır. Cihaz değerleri ve işlemler sonraki aşamada bağlanacak.</string>
-    <string name="device_dosing_detail_action_preview_note">Yalnızca önizleme — cihaz işlemleri henüz bağlı değil.</string>
     <string name="device_dosing_detail_state_on">Açık</string>
     <string name="device_dosing_detail_state_off">Kapalı</string>
-    <string name="device_dosing_detail_toggle_description">Önizleme anahtarı, %1$s</string>
+    <string name="device_dosing_detail_toggle_description">Ayar anahtarı, %1$s</string>
 
     <string name="device_dosing_detail_schedule_status_section">Program durumu</string>
     <string name="device_dosing_detail_activate_schedule">Programı etkinleştir</string>
@@ -109,12 +106,7 @@
     <string name="device_dosing_detail_dispense_dose">Dozu uygula</string>
 
     <string name="device_dosing_detail_reset_warning_title">Bu dozaj kanalı sıfırlansın mı?</string>
-    <string name="device_dosing_detail_reset_warning_description">Bu yıkıcı işlem, cihaz işlemleri bağlandığında ayrıca onay gerektirecek.</string>
-    <string name="device_dosing_detail_reset_scope_section">Sıfırlama kapsamı</string>
-    <string name="device_dosing_detail_schedule_data">Program verileri</string>
-    <string name="device_dosing_detail_calibration_data">Kalibrasyon verileri</string>
-    <string name="device_dosing_detail_reservoir_data">Hazne verileri</string>
-    <string name="device_dosing_detail_will_be_cleared">Temizlenecek</string>
+    <string name="device_dosing_detail_reset_warning_description">Bu işlem, bu kanala ait tüm dozaj yapılandırmasını kalıcı olarak temizler.</string>
     <string name="device_dosing_detail_reset_action">Kanalı sıfırla</string>
 
     <string name="device_dosing_calibration_step_progress">%1$d. adım / %2$d</string>
