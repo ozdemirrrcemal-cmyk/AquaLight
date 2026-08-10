@@ -62,7 +62,6 @@ internal fun DeviceDosingChannelMenuScreen(
             ) {
                 when (item) {
                     DosingDetailMenuItem.DOSING_PLAN -> DosingPlanPreview()
-                    DosingDetailMenuItem.MISSED_DOSE_RECOVERY -> MissedDosePreview()
                     DosingDetailMenuItem.CALIBRATION -> CalibrationPreview()
                     DosingDetailMenuItem.RESERVOIR -> ReservoirPreview()
                     DosingDetailMenuItem.MANUAL_DOSE -> ManualDosePreview()
@@ -135,30 +134,6 @@ private fun DosingPlanPreview() {
         PreviewWeekdays()
     }
     PreviewAction(R.string.device_dosing_detail_save_plan)
-}
-
-@Composable
-private fun MissedDosePreview() {
-    PreviewSection(R.string.device_dosing_detail_recovery_status_section) {
-        PreviewToggleRow(
-            titleRes = R.string.device_dosing_detail_missed_compensation,
-            descriptionRes = R.string.device_dosing_detail_missed_compensation_description,
-            checked = false
-        )
-    }
-    PreviewSection(R.string.device_dosing_detail_recovery_policy_section) {
-        AquaDeviceMenuValueRow(
-            label = stringResource(R.string.device_dosing_detail_recovery_window),
-            value = stringResource(R.string.device_dosing_detail_next_safe_window),
-            description = stringResource(R.string.device_dosing_detail_recovery_window_description)
-        )
-        AquaDeviceMenuValueRow(
-            label = stringResource(R.string.device_dosing_detail_max_recovery),
-            value = stringResource(R.string.device_dosing_detail_value_zero_ml),
-            tone = AquaDeviceMenuTone.ACCENT
-        )
-    }
-    PreviewAction(R.string.device_dosing_detail_save_recovery)
 }
 
 @Composable

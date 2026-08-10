@@ -2,13 +2,14 @@ package com.aqua.aqualight.ui.tabs.devices.detail.dosing.channel.detail
 
 import com.aqua.aqualight.ui.common.devicemenu.AquaDeviceMenuTone
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Test
 
 class DosingDetailMenuCatalogTest {
 
     @Test
-    fun `menu exposes every reference control exactly once`() {
+    fun `menu exposes every destination exactly once`() {
         val items = DOSING_DETAIL_MENU_SECTIONS.flatMap(DosingDetailMenuSection::items)
 
         assertEquals(DosingDetailMenuItem.entries.toSet(), items.toSet())
@@ -36,5 +37,11 @@ class DosingDetailMenuCatalogTest {
         DosingDetailMenuItem.entries.forEach { item ->
             assertEquals(item, DosingDetailMenuItem.fromRouteKey(item.routeKey))
         }
+    }
+
+    @Test
+    fun `missed dose recovery is a direct switch instead of a menu route`() {
+        assertTrue(DOSING_DETAIL_MENU_SECTIONS.first().hasMissedDoseRecoverySwitch)
+        assertNull(DosingDetailMenuItem.fromRouteKey("missed-dose-recovery"))
     }
 }

@@ -39,7 +39,8 @@
     <string name="device_dosing_detail_plan_title">Dosing plan</string>
     <string name="device_dosing_detail_plan_description">Set the daily amount, schedule mode and recurrence.</string>
     <string name="device_dosing_detail_missed_dose_title">Missed dose recovery</string>
-    <string name="device_dosing_detail_missed_dose_description">Choose how a missed dose moves to the next safe opportunity.</string>
+    <string name="device_dosing_detail_missed_dose_description">Turn compensation in the next safe window on or off for missed doses.</string>
+    <string name="device_dosing_detail_missed_dose_toggle_description">Missed dose recovery, %1$s</string>
     <string name="device_dosing_detail_calibration_title">Calibration</string>
     <string name="device_dosing_detail_calibration_description">Review flow accuracy or start a guided recalibration.</string>
     <string name="device_dosing_detail_reservoir_title">Reservoir monitoring</string>
@@ -73,16 +74,6 @@
     <string name="device_dosing_detail_recurrence_section">Recurrence</string>
     <string name="device_dosing_detail_recurrence">Repeat</string>
     <string name="device_dosing_detail_save_plan">Save dosing plan</string>
-
-    <string name="device_dosing_detail_recovery_status_section">Compensation status</string>
-    <string name="device_dosing_detail_missed_compensation">Missed dose compensation</string>
-    <string name="device_dosing_detail_missed_compensation_description">Carries an eligible missed amount into a later safe window.</string>
-    <string name="device_dosing_detail_recovery_policy_section">Recovery policy</string>
-    <string name="device_dosing_detail_recovery_window">Recovery window</string>
-    <string name="device_dosing_detail_next_safe_window">Next safe window</string>
-    <string name="device_dosing_detail_recovery_window_description">Recovery waits for the next valid schedule opportunity.</string>
-    <string name="device_dosing_detail_max_recovery">Maximum recovery</string>
-    <string name="device_dosing_detail_save_recovery">Save recovery policy</string>
 
     <string name="device_dosing_detail_calibration_status_section">Calibration status</string>
     <string name="device_dosing_detail_last_calibrated">Last calibrated</string>

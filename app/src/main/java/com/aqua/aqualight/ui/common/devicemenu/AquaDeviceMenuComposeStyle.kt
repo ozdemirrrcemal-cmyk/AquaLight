@@ -7,6 +7,7 @@ import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.selection.toggleable
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ColumnScope
@@ -247,6 +248,56 @@ fun AquaDeviceMenuRow(
                 colors.textSecondary
             },
             modifier = Modifier.size(AquaDeviceMenuGeometry.trailingIconSize)
+        )
+    }
+}
+
+@Composable
+fun AquaDeviceMenuSwitchRow(
+    content: AquaDeviceMenuRowContent,
+    checked: Boolean,
+    toggleContentDescription: String,
+    onCheckedChange: (Boolean) -> Unit,
+    modifier: Modifier = Modifier
+) {
+    val colors = aquaDeviceMenuColors()
+    val typography = aquaDeviceMenuTypography(colors)
+    val iconTint = when (content.tone) {
+        AquaDeviceMenuTone.ACCENT -> colors.accent
+        AquaDeviceMenuTone.NEUTRAL -> colors.textSecondary
+        AquaDeviceMenuTone.DANGER -> colors.danger
+    }
+
+    Row(
+        modifier = modifier
+            .fillMaxWidth()
+            .defaultMinSize(minHeight = AquaDeviceMenuGeometry.rowMinHeight)
+            .semantics(mergeDescendants = true) {}
+            .toggleable(
+                value = checked,
+                role = Role.Switch,
+                onValueChange = onCheckedChange
+            )
+            .padding(
+                horizontal = AquaDeviceMenuGeometry.rowHorizontalPadding,
+                vertical = AquaDeviceMenuGeometry.rowVerticalPadding
+            ),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        AquaDeviceMenuRowLayout.LeadingIcon(
+            iconRes = content.iconRes,
+            tint = iconTint,
+            surfaceColor = colors.surfaceRaised
+        )
+        AquaDeviceMenuRowLayout.Text(
+            content = content,
+            colors = colors,
+            typography = typography,
+            modifier = Modifier.weight(1f)
+        )
+        AquaDeviceMenuToggle(
+            checked = checked,
+            contentDescription = toggleContentDescription
         )
     }
 }

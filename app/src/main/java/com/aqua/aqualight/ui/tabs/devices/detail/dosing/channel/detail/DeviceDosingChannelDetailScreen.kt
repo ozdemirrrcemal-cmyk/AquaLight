@@ -18,6 +18,10 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.BasicText
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -28,17 +32,19 @@ import com.aqua.aqualight.ui.common.devicemenu.AquaDeviceMenuGeometry
 import com.aqua.aqualight.ui.common.devicemenu.AquaDeviceMenuRow
 import com.aqua.aqualight.ui.common.devicemenu.AquaDeviceMenuRowContent
 import com.aqua.aqualight.ui.common.devicemenu.AquaDeviceMenuSectionSurface
+import com.aqua.aqualight.ui.common.devicemenu.AquaDeviceMenuSwitchRow
 import com.aqua.aqualight.ui.common.devicemenu.AquaDeviceMenuTone
 import com.aqua.aqualight.ui.common.devicemenu.aquaDeviceMenuColors
 import com.aqua.aqualight.ui.common.devicemenu.aquaDeviceMenuTypography
 
-/** Static menu shell whose entries open UI-only child destinations. */
+/** Static control shell with UI-only destinations and direct local controls. */
 @Composable
 internal fun DeviceDosingChannelDetailScreen(
     modifier: Modifier = Modifier,
     onMenuItemClick: ((DosingDetailMenuItem) -> Unit)? = null
 ) {
     val colors = aquaDeviceMenuColors()
+    var missedDoseRecoveryEnabled by rememberSaveable { mutableStateOf(false) }
 
     LazyColumn(
         modifier = modifier
@@ -62,7 +68,11 @@ internal fun DeviceDosingChannelDetailScreen(
         ) { section ->
             DosingDetailSection(
                 section = section,
-                onMenuItemClick = onMenuItemClick
+                onMenuItemClick = onMenuItemClick,
+                missedDoseRecoveryEnabled = missedDoseRecoveryEnabled,
+                onMissedDoseRecoveryChange = { enabled ->
+                    missedDoseRecoveryEnabled = enabled
+                }
             )
         }
     }
@@ -113,7 +123,9 @@ private fun DosingDetailHero() {
 @Composable
 private fun DosingDetailSection(
     section: DosingDetailMenuSection,
-    onMenuItemClick: ((DosingDetailMenuItem) -> Unit)?
+    onMenuItemClick: ((DosingDetailMenuItem) -> Unit)?,
+    missedDoseRecoveryEnabled: Boolean,
+    onMissedDoseRecoveryChange: (Boolean) -> Unit
 ) {
     val colors = aquaDeviceMenuColors()
     val typography = aquaDeviceMenuTypography(colors)
@@ -144,13 +156,49 @@ private fun DosingDetailSection(
                     }
                 )
             }
+            if (section.hasMissedDoseRecoverySwitch) {
+                DosingMissedDoseRecoverySwitch(
+                    checked = missedDoseRecoveryEnabled,
+                    onCheckedChange = onMissedDoseRecoveryChange
+                )
+            }
         }
     }
 }
 
+@Composable
+private fun DosingMissedDoseRecoverySwitch(
+    checked: Boolean,
+    onCheckedChange: (Boolean) -> Unit
+) {
+    val stateLabel = stringResource(
+        if (checked) {
+            R.string.device_dosing_detail_state_on
+        } else {
+            R.string.device_dosing_detail_state_off
+        }
+    )
+
+    AquaDeviceMenuDivider()
+    AquaDeviceMenuSwitchRow(
+        content = AquaDeviceMenuRowContent(
+            title = stringResource(R.string.device_dosing_detail_missed_dose_title),
+            description = stringResource(R.string.device_dosing_detail_missed_dose_description),
+            iconRes = R.drawable.ic_dosing_recovery_24
+        ),
+        checked = checked,
+        toggleContentDescription = stringResource(
+            R.string.device_dosing_detail_missed_dose_toggle_description,
+            stateLabel
+        ),
+        onCheckedChange = onCheckedChange
+    )
+}
+
 internal data class DosingDetailMenuSection(
     @StringRes val titleRes: Int,
-    val items: List<DosingDetailMenuItem>
+    val items: List<DosingDetailMenuItem>,
+    val hasMissedDoseRecoverySwitch: Boolean = false
 )
 
 internal enum class DosingDetailMenuItem(
@@ -165,12 +213,6 @@ internal enum class DosingDetailMenuItem(
         titleRes = R.string.device_dosing_detail_plan_title,
         descriptionRes = R.string.device_dosing_detail_plan_description,
         iconRes = R.drawable.ic_dosing_schedule_24
-    ),
-    MISSED_DOSE_RECOVERY(
-        routeKey = "missed-dose-recovery",
-        titleRes = R.string.device_dosing_detail_missed_dose_title,
-        descriptionRes = R.string.device_dosing_detail_missed_dose_description,
-        iconRes = R.drawable.ic_dosing_recovery_24
     ),
     CALIBRATION(
         routeKey = "calibration",
@@ -209,10 +251,8 @@ internal enum class DosingDetailMenuItem(
 internal val DOSING_DETAIL_MENU_SECTIONS = listOf(
     DosingDetailMenuSection(
         titleRes = R.string.device_dosing_detail_planning_section,
-        items = listOf(
-            DosingDetailMenuItem.DOSING_PLAN,
-            DosingDetailMenuItem.MISSED_DOSE_RECOVERY
-        )
+        items = listOf(DosingDetailMenuItem.DOSING_PLAN),
+        hasMissedDoseRecoverySwitch = true
     ),
     DosingDetailMenuSection(
         titleRes = R.string.device_dosing_detail_accuracy_section,
