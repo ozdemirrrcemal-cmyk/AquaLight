@@ -83,15 +83,19 @@
     <string name="device_dosing_detail_guided_calibration_description">Seçili kanalı odaklı bir akışta doldurun, ölçün ve doğrulayın.</string>
     <string name="device_dosing_detail_start_recalibration">Yeniden kalibrasyonu başlat</string>
 
+    <string name="device_dosing_detail_reservoir_tracking_section">Takip durumu</string>
+    <string name="device_dosing_detail_reservoir_tracking_enabled">Hazne takibini etkinleştir</string>
+    <string name="device_dosing_detail_reservoir_tracking_enabled_description">Bu kanal için kap kapasitesi ve kalan hacim takibini kullanıma açar.</string>
     <string name="device_dosing_detail_reservoir_volume_section">Kap hacmi</string>
     <string name="device_dosing_detail_container_volume">Kap kapasitesi</string>
+    <string name="device_dosing_detail_container_volume_input_label">Kapasite (ml)</string>
+    <string name="device_dosing_detail_container_volume_hint">Örn. 450</string>
+    <string name="device_dosing_detail_container_volume_required">Kap kapasitesini girin.</string>
     <string name="device_dosing_detail_available_volume">Kullanılabilir hacim</string>
-    <string name="device_dosing_detail_value_container_ml">450,0 ml</string>
+    <string name="device_dosing_detail_value_container_ml">%1$.1f ml</string>
     <string name="device_dosing_detail_reservoir_alerts_section">Sıvı uyarıları</string>
     <string name="device_dosing_detail_low_level_alert">Düşük seviye uyarısı</string>
-    <string name="device_dosing_detail_low_level_alert_description">Kullanılabilir sıvı belirlenen sınıra ulaşmadan önce uyarır.</string>
-    <string name="device_dosing_detail_alert_threshold">Uyarı eşiği</string>
-    <string name="device_dosing_detail_value_twenty_percent" formatted="false">%20</string>
+    <string name="device_dosing_detail_low_level_alert_description" formatted="false">Kullanılabilir sıvı kap kapasitesinin %10'una veya altına düştüğünde bildirim gönderir.</string>
     <string name="device_dosing_detail_save_reservoir">Hazne ayarlarını kaydet</string>
 
     <string name="device_dosing_detail_manual_amount_section">Manuel miktar</string>
