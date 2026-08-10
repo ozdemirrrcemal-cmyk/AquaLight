@@ -28,6 +28,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
 import com.aqua.aqualight.R
 import com.aqua.aqualight.ui.common.devicemenu.AquaDeviceMenuChoiceChip
+import com.aqua.aqualight.ui.common.devicemenu.AquaDeviceMenuDivider
 import com.aqua.aqualight.ui.common.devicemenu.AquaDeviceMenuGeometry
 import com.aqua.aqualight.ui.common.devicemenu.AquaDeviceMenuSectionSurface
 import com.aqua.aqualight.ui.common.devicemenu.AquaDeviceMenuTone
@@ -174,6 +175,7 @@ private fun ReservoirContent(
             ),
             tone = AquaDeviceMenuTone.ACCENT
         )
+        AquaDeviceMenuDivider()
         AquaDeviceMenuValueRow(
             label = stringResource(R.string.device_dosing_detail_available_volume),
             value = stringResource(R.string.device_dosing_detail_value_unavailable)
