@@ -7,8 +7,9 @@ import androidx.compose.ui.platform.ViewCompositionStrategy
 import androidx.navigation.fragment.findNavController
 import androidx.navigation.fragment.navArgs
 import com.aqua.aqualight.R
-import com.aqua.aqualight.ui.common.feedback.FeedbackBottomSheet
+import com.aqua.aqualight.ui.common.dialog.ConfirmDialogFragment
 import com.aqua.aqualight.ui.tabs.devices.detail.dosing.channel.DeviceDosingChannelDestinationFragment
+import com.aqua.aqualight.utils.DialogType
 
 /** Detail destination for one centrally identified, calibrated Dosing channel. */
 class DeviceDosingChannelDetailFragment :
@@ -22,6 +23,7 @@ class DeviceDosingChannelDetailFragment :
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
+        setupResetConfirmationResult()
         setupSelectedPump(
             view = view,
             deviceUid = args.deviceUid,
@@ -36,6 +38,21 @@ class DeviceDosingChannelDetailFragment :
                     onMenuItemClick = ::openMenuItem,
                     onResetChannelClick = ::showResetChannelConfirmation
                 )
+            }
+        }
+    }
+
+    private fun setupResetConfirmationResult() {
+        childFragmentManager.setFragmentResultListener(
+            RESET_CONFIRM_REQUEST_KEY,
+            viewLifecycleOwner
+        ) { _, result ->
+            if (result.getString(ConfirmDialogFragment.RESULT_ACTION_ID) != ACTION_RESET_CHANNEL) {
+                return@setFragmentResultListener
+            }
+            when (result.getString(ConfirmDialogFragment.RESULT_KEY)) {
+                ConfirmDialogFragment.RESULT_CONFIRM,
+                ConfirmDialogFragment.RESULT_CANCEL -> Unit
             }
         }
     }
@@ -59,13 +76,13 @@ class DeviceDosingChannelDetailFragment :
     }
 
     private fun showResetChannelConfirmation() {
-        FeedbackBottomSheet.show(
+        ConfirmDialogFragment.show(
             fragmentManager = childFragmentManager,
             title = getString(R.string.device_dosing_detail_reset_warning_title),
             message = getString(R.string.device_dosing_detail_reset_warning_description),
-            primaryText = getString(R.string.device_dosing_detail_reset_action),
+            confirmText = getString(R.string.device_dosing_detail_reset_action),
             cancelText = getString(R.string.cancel),
-            tone = FeedbackBottomSheet.FeedbackTone.DANGER,
+            type = DialogType.ERROR,
             requestKey = RESET_CONFIRM_REQUEST_KEY,
             actionId = ACTION_RESET_CHANNEL
         )
