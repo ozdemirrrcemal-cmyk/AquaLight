@@ -51,6 +51,11 @@ class DeviceDosingRuntimeContractTest {
         assertEquals(10.0, status.schedules.single().amountMl, 0.0)
         assertTrue(status.schedules.single().runtimeEnabled)
         assertTrue(status.runtime.supportsCalibrationWorkflow)
+        assertTrue(status.runtime.supportsCalibrationSessionState)
+        assertEquals(
+            DeviceDosingCalibrationState.IDLE,
+            status.channels.first().dosing.calibration.state
+        )
     }
 
     @Test
