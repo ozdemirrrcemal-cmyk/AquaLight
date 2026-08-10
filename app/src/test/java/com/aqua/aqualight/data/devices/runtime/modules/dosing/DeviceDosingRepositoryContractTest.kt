@@ -186,6 +186,7 @@ class DeviceDosingRepositoryContractTest {
             )
         }
 
+        @Suppress("CyclomaticComplexMethod", "LongMethod")
         private fun response(action: String, data: JSONObject): JSONObject = when (action) {
             DeviceDosingRuntimeContract.Action.STATUS_GET -> {
                 uptimeMs += 1_000L

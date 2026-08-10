@@ -1,5 +1,6 @@
 @file:Suppress(
     "CyclomaticComplexMethod",
+    "ComplexCondition",
     "LargeClass",
     "LongMethod",
     "LongParameterList",
