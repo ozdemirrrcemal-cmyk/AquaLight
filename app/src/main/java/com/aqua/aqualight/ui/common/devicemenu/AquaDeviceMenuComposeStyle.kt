@@ -228,12 +228,12 @@ fun AquaDeviceMenuRow(
             ),
         verticalAlignment = Alignment.CenterVertically
     ) {
-        AquaDeviceMenuLeadingIcon(
+        AquaDeviceMenuRowLayout.LeadingIcon(
             iconRes = content.iconRes,
             tint = iconTint,
             surfaceColor = colors.surfaceRaised
         )
-        AquaDeviceMenuRowText(
+        AquaDeviceMenuRowLayout.Text(
             content = content,
             colors = colors,
             typography = typography,
@@ -251,58 +251,60 @@ fun AquaDeviceMenuRow(
     }
 }
 
-@Composable
-private fun AquaDeviceMenuLeadingIcon(
-    @DrawableRes iconRes: Int,
-    tint: Color,
-    surfaceColor: Color
-) {
-    val shape = RoundedCornerShape(AquaDeviceMenuGeometry.iconContainerRadius)
-    Box(
-        modifier = Modifier
-            .size(AquaDeviceMenuGeometry.iconContainerSize)
-            .clip(shape)
-            .background(surfaceColor)
-            .background(tint.copy(alpha = ICON_BACKGROUND_ALPHA)),
-        contentAlignment = Alignment.Center
+private object AquaDeviceMenuRowLayout {
+    @Composable
+    fun LeadingIcon(
+        @DrawableRes iconRes: Int,
+        tint: Color,
+        surfaceColor: Color
     ) {
-        DeviceMenuIcon(
-            painter = painterResource(iconRes),
-            tint = tint,
-            modifier = Modifier.size(AquaDeviceMenuGeometry.iconSize)
-        )
+        val shape = RoundedCornerShape(AquaDeviceMenuGeometry.iconContainerRadius)
+        Box(
+            modifier = Modifier
+                .size(AquaDeviceMenuGeometry.iconContainerSize)
+                .clip(shape)
+                .background(surfaceColor)
+                .background(tint.copy(alpha = ICON_BACKGROUND_ALPHA)),
+            contentAlignment = Alignment.Center
+        ) {
+            DeviceMenuIcon(
+                painter = painterResource(iconRes),
+                tint = tint,
+                modifier = Modifier.size(AquaDeviceMenuGeometry.iconSize)
+            )
+        }
     }
-}
 
-@Composable
-private fun AquaDeviceMenuRowText(
-    content: AquaDeviceMenuRowContent,
-    colors: AquaDeviceMenuColors,
-    typography: AquaDeviceMenuTypography,
-    modifier: Modifier = Modifier
-) {
-    Column(
-        modifier = modifier.padding(horizontal = AquaDeviceMenuGeometry.rowContentGap)
+    @Composable
+    fun Text(
+        content: AquaDeviceMenuRowContent,
+        colors: AquaDeviceMenuColors,
+        typography: AquaDeviceMenuTypography,
+        modifier: Modifier = Modifier
     ) {
-        BasicText(
-            text = content.title,
-            style = typography.rowTitle.copy(
-                color = if (content.tone == AquaDeviceMenuTone.DANGER) {
-                    colors.danger
-                } else {
-                    colors.textPrimary
-                }
-            ),
-            maxLines = 1,
-            overflow = TextOverflow.Ellipsis
-        )
-        BasicText(
-            text = content.description,
-            modifier = Modifier.padding(top = AquaDeviceMenuGeometry.rowTextGap),
-            style = typography.rowBody,
-            maxLines = ROW_DESCRIPTION_MAX_LINES,
-            overflow = TextOverflow.Ellipsis
-        )
+        Column(
+            modifier = modifier.padding(horizontal = AquaDeviceMenuGeometry.rowContentGap)
+        ) {
+            BasicText(
+                text = content.title,
+                style = typography.rowTitle.copy(
+                    color = if (content.tone == AquaDeviceMenuTone.DANGER) {
+                        colors.danger
+                    } else {
+                        colors.textPrimary
+                    }
+                ),
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis
+            )
+            BasicText(
+                text = content.description,
+                modifier = Modifier.padding(top = AquaDeviceMenuGeometry.rowTextGap),
+                style = typography.rowBody,
+                maxLines = ROW_DESCRIPTION_MAX_LINES,
+                overflow = TextOverflow.Ellipsis
+            )
+        }
     }
 }
 
