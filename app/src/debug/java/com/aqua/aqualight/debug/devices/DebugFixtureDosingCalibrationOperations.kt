@@ -1,3 +1,5 @@
+@file:Suppress("TooManyFunctions")
+
 package com.aqua.aqualight.debug.devices
 
 import com.aqua.aqualight.application.devices.DeviceDosingCalibrationOperations
@@ -76,7 +78,7 @@ internal class DebugFixtureDosingStateStore(
         } else {
             state
         }
-        return refreshed.toSuccess()
+        return refreshed.toResult()
     }
 
     fun saveDisplayName(
@@ -197,9 +199,6 @@ internal class DebugFixtureDosingStateStore(
     ): DeviceDosingCalibrationResult = this?.let { snapshot ->
         DeviceDosingCalibrationResult.Success(snapshot, operationDurationMs)
     } ?: DeviceDosingCalibrationResult.Unavailable
-
-    private fun DeviceDosingCalibrationSnapshot.toSuccess(): DeviceDosingCalibrationResult =
-        DeviceDosingCalibrationResult.Success(this)
 
     private fun key(deviceUid: String, slotId: String): String =
         "${deviceUid.trim()}|${slotId.trim()}"
