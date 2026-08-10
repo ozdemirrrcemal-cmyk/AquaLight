@@ -82,9 +82,10 @@ class DeviceDosingChannelDetailFragment :
             message = getString(R.string.device_dosing_detail_reset_warning_description),
             confirmText = getString(R.string.device_dosing_detail_reset_action),
             cancelText = getString(R.string.cancel),
-            type = DialogType.ERROR,
+            type = DialogType.WARNING,
             requestKey = RESET_CONFIRM_REQUEST_KEY,
-            actionId = ACTION_RESET_CHANNEL
+            actionId = ACTION_RESET_CHANNEL,
+            destructive = true
         )
     }
 
