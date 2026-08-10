@@ -9,6 +9,8 @@
 package com.aqua.aqualight.ui.tabs.devices.detail.dosing.channel.calibration
 
 import androidx.annotation.StringRes
+import androidx.compose.animation.Crossfade
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.gestures.awaitEachGesture
@@ -115,14 +117,22 @@ internal fun DeviceDosingCalibrationScreen(
         }
         item(key = "illustration") {
             AquaGuidedFlowSurface(modifier = Modifier.fillMaxWidth()) {
-                DosingCalibrationIllustration(
-                    step = state.step,
-                    colors = colors,
-                    active = state.isPumpActive,
+                Crossfade(
+                    targetState = state.step,
+                    animationSpec = tween(durationMillis = ILLUSTRATION_TRANSITION_MILLIS),
                     modifier = Modifier
                         .fillMaxWidth()
-                        .height(178.dp)
-                )
+                        .height(ILLUSTRATION_HEIGHT),
+                    label = "dosing-calibration-step-transition"
+                ) { illustrationStep ->
+                    DosingCalibrationIllustration(
+                        step = illustrationStep,
+                        colors = colors,
+                        active = state.isPumpActive,
+                        operationDurationMillis = state.illustrationOperationDurationMillis(),
+                        modifier = Modifier.fillMaxSize()
+                    )
+                }
             }
         }
         item(key = "copy") {
@@ -310,15 +320,6 @@ private fun CalibrationStepControls(
                 )
             }
             DeviceDosingCalibrationStep.CONFIRMATION -> {
-                state.candidateDoseMsPerMl?.let { candidate ->
-                    BasicText(
-                        text = stringResource(
-                            R.string.device_dosing_calibration_candidate_rate,
-                            candidate
-                        ),
-                        style = typography.body
-                    )
-                }
                 Row(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.spacedBy(10.dp)
@@ -489,6 +490,16 @@ private fun actionText(state: DeviceDosingCalibrationUiState, @StringRes idleRes
         if (state.isBusy) R.string.device_dosing_calibration_working else idleRes
     )
 
+private fun DeviceDosingCalibrationUiState.illustrationOperationDurationMillis(): Int = when (step) {
+    DeviceDosingCalibrationStep.CALIBRATION_RUN -> CALIBRATION_RUN_DURATION_MILLIS
+    DeviceDosingCalibrationStep.VERIFICATION -> candidateDoseMsPerMl
+        ?.times(VERIFICATION_DOSE_ML)
+        ?.coerceIn(MIN_ILLUSTRATION_OPERATION_MILLIS, MAX_ILLUSTRATION_OPERATION_MILLIS)
+        ?.toInt()
+        ?: DEFAULT_VERIFICATION_DURATION_MILLIS
+    else -> DEFAULT_ILLUSTRATION_DURATION_MILLIS
+}
+
 private val DeviceDosingCalibrationStep.titleRes: Int
     @StringRes get() = when (this) {
         DeviceDosingCalibrationStep.NAME -> R.string.device_dosing_calibration_name_title
@@ -528,3 +539,12 @@ private val DeviceDosingCalibrationError.messageRes: Int
         DeviceDosingCalibrationError.UNAVAILABLE ->
             R.string.device_dosing_calibration_unavailable
     }
+
+private const val ILLUSTRATION_TRANSITION_MILLIS = 320
+private const val CALIBRATION_RUN_DURATION_MILLIS = 5_000
+private const val DEFAULT_VERIFICATION_DURATION_MILLIS = 4_000
+private const val DEFAULT_ILLUSTRATION_DURATION_MILLIS = 900
+private const val VERIFICATION_DOSE_ML = 4L
+private const val MIN_ILLUSTRATION_OPERATION_MILLIS = 700L
+private const val MAX_ILLUSTRATION_OPERATION_MILLIS = 15_000L
+private val ILLUSTRATION_HEIGHT = 210.dp
