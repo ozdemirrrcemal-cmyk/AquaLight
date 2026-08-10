@@ -14,7 +14,15 @@ from pathlib import Path
 from typing import Iterable
 
 ALL_VARIANTS = ("debug", "staging", "releaseSmoke", "release")
-ALLOWED_SEVERITIES = {"Fatal", "Error", "Warning", "Information", "Ignore"}
+EVIDENCE_SEVERITIES = (
+    "Fatal",
+    "Error",
+    "Warning",
+    "Information",
+    "Hint",
+    "Ignore",
+)
+ALLOWED_SEVERITIES = set(EVIDENCE_SEVERITIES)
 BLOCKER_SEVERITIES = {"Fatal", "Error"}
 REPORT_NAME = re.compile(r"^lint-results-(debug|staging|releaseSmoke|release)\.xml$")
 
@@ -87,7 +95,7 @@ def parse_report(path: Path) -> tuple[str, dict[str, object]]:
         "sha256": hashlib.sha256(raw).hexdigest(),
         "counts": {
             severity: counts[severity]
-            for severity in ("Fatal", "Error", "Warning", "Information", "Ignore")
+            for severity in EVIDENCE_SEVERITIES
         },
         "blockers": blockers,
     }
@@ -121,7 +129,7 @@ def validate_reports(
     ordered = [reports[variant] for variant in required]
     totals = {
         severity: sum(report["counts"][severity] for report in ordered)
-        for severity in ("Fatal", "Error", "Warning", "Information", "Ignore")
+        for severity in EVIDENCE_SEVERITIES
     }
     blockers = [
         {"variant": report["variant"], **blocker}
