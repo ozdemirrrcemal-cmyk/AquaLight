@@ -12,6 +12,7 @@ BASE_ACTIVITY = APP_ROOT / "base/BaseActivity.kt"
 BASE_LOADING_ROOT = APP_ROOT / "base/loading"
 DIALOG_MANAGER = APP_ROOT / "utils/DialogManager.kt"
 COMMON_DIALOG_ROOT = UI_ROOT / "common/dialog"
+CONFIRM_DIALOG = COMMON_DIALOG_ROOT / "ConfirmDialogFragment.kt"
 
 REQUIRED_FILES = (
     UI_ROOT / "common/bottomsheet/ThemeBottomSheet.kt",
@@ -23,6 +24,7 @@ REQUIRED_FILES = (
     UI_ROOT / "common/feedback/FeedbackBottomSheet.kt",
     UI_ROOT / "common/dialog/AppDatePickerDialogFragment.kt",
     UI_ROOT / "common/dialog/AppTimePickerDialogFragment.kt",
+    CONFIRM_DIALOG,
     BASE_LOADING_ROOT / "LoadingOverlayDialogFragment.kt",
     ROOT / "app/src/androidTest/java/com/aqua/aqualight/ui/common/feedback/ProcessSafeFeedbackInstrumentedTest.kt",
     ROOT / "app/src/androidTest/java/com/aqua/aqualight/base/loading/LoadingOverlayRaceInstrumentedTest.kt",
@@ -80,6 +82,9 @@ for source in APP_ROOT.rglob("*.kt"):
     if "AlertDialog.Builder(" in text:
         errors.append(f"{relative}: raw AlertDialog is forbidden")
 
+    if "MaterialAlertDialogBuilder(" in text and not source.is_relative_to(COMMON_DIALOG_ROOT):
+        errors.append(f"{relative}: Material confirmation dialogs must stay under ui/common/dialog")
+
     if "DatePickerDialog(" in text and not source.is_relative_to(COMMON_DIALOG_ROOT):
         errors.append(f"{relative}: date picker must use AppDatePickerDialogFragment")
 
@@ -93,7 +98,24 @@ for source in APP_ROOT.rglob("*.kt"):
         errors.append(f"{relative}: Snackbar creation must remain under BaseActivity")
 
     if "DialogManager.showConfirmDialog" in text:
-        errors.append(f"{relative}: confirmations must use FeedbackBottomSheet Fragment Result")
+        errors.append(f"{relative}: confirmations must use ConfirmDialogFragment Fragment Result")
+
+if CONFIRM_DIALOG.is_file():
+    confirm_text = CONFIRM_DIALOG.read_text(encoding="utf-8", errors="ignore")
+    for token in (
+        "BottomSheetDeviceConfirmBinding",
+        "R.drawable.ic_info",
+        "R.drawable.ic_success",
+        "R.drawable.ic_warning",
+        "R.drawable.ic_error",
+        "R.color.aqua_bottom_sheet_surface",
+        "R.color.aqua_bottom_sheet_sheet_border",
+        "R.dimen.aqua_size_28",
+    ):
+        if token not in confirm_text:
+            errors.append(
+                f"{CONFIRM_DIALOG.relative_to(ROOT)}: central confirm dialog must reuse shared Aqua resources: {token}"
+            )
 
 if DIALOG_MANAGER.is_file():
     manager_text = DIALOG_MANAGER.read_text(encoding="utf-8", errors="ignore")
@@ -115,6 +137,7 @@ if loading_renderer.is_file():
 for source in (
     UI_ROOT / "common/bottomsheet/CareTaskTypeBottomSheetFragment.kt",
     UI_ROOT / "common/bottomsheet/GlobalActionBottomSheet.kt",
+    CONFIRM_DIALOG,
     BASE_ACTIVITY,
 ):
     if not source.is_file():
