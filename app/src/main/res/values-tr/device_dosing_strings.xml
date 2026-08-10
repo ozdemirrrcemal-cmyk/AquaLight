@@ -95,7 +95,7 @@
     <string name="device_dosing_detail_value_container_ml">%1$.1f ml</string>
     <string name="device_dosing_detail_reservoir_alerts_section">Sıvı uyarıları</string>
     <string name="device_dosing_detail_low_level_alert">Düşük seviye uyarısı</string>
-    <string name="device_dosing_detail_low_level_alert_description" formatted="false">Kullanılabilir sıvı kap kapasitesinin %10'una veya altına düştüğünde bildirim gönderir.</string>
+    <string name="device_dosing_detail_low_level_alert_description" formatted="false">Kullanılabilir sıvı, kap kapasitesinin %10 seviyesine veya altına düştüğünde bildirim gönderir.</string>
     <string name="device_dosing_detail_save_reservoir">Hazne ayarlarını kaydet</string>
 
     <string name="device_dosing_detail_manual_amount_section">Manuel miktar</string>
