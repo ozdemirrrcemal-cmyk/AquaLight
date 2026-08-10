@@ -98,16 +98,12 @@
     <string name="device_dosing_detail_low_level_alert_description" formatted="false">Kullanılabilir sıvı, kap kapasitesinin %10 seviyesine veya altına düştüğünde bildirim gönderir.</string>
     <string name="device_dosing_detail_save_reservoir">Hazne ayarlarını kaydet</string>
 
-    <string name="device_dosing_detail_manual_amount_section">Manuel miktar</string>
     <string name="device_dosing_detail_manual_amount">Doz miktarı</string>
-    <string name="device_dosing_detail_manual_amount_description">Seçili kanal için hassas, tek seferlik miktar.</string>
-    <string name="device_dosing_detail_single_dose_limit">Tek doz sınırı</string>
-    <string name="device_dosing_detail_value_ten_ml">10,00 ml</string>
-    <string name="device_dosing_detail_manual_safety_section">Uygulama güvenliği</string>
-    <string name="device_dosing_detail_delivery_mode">Uygulama biçimi</string>
-    <string name="device_dosing_detail_one_time_dose">Tek seferlik doz</string>
-    <string name="device_dosing_detail_delivery_mode_description">Pompa yalnızca açık onaydan sonra çalışır.</string>
-    <string name="device_dosing_detail_dispense_dose">Dozu uygula</string>
+    <string name="device_dosing_detail_manual_amount_hint">Örn. 2,50</string>
+    <string name="device_dosing_detail_manual_amount_description">Seçili kanala tek seferlik uygulanacak miktarı girin.</string>
+    <string name="device_dosing_detail_manual_amount_required">0 ml'den büyük bir doz miktarı girin.</string>
+    <string name="device_dosing_detail_ml_unit">ml</string>
+    <string name="device_dosing_detail_dispense_dose">Dozu Uygula</string>
 
     <string name="device_dosing_detail_reset_warning_title">Bu dozaj kanalı sıfırlansın mı?</string>
     <string name="device_dosing_detail_reset_warning_description">Bu işlem, bu kanala ait tüm dozaj yapılandırmasını kalıcı olarak temizler.</string>
