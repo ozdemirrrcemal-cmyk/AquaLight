@@ -71,7 +71,6 @@ internal fun DeviceDosingChannelMenuScreen(
                         capacityValue = reservoirCapacityValue,
                         onCapacityClick = onReservoirCapacityClick
                     )
-                    DosingDetailMenuItem.MANUAL_DOSE -> ManualDoseContent()
                 }
             }
         }
@@ -196,30 +195,6 @@ private fun ReservoirContent(
         )
     }
     DetailAction(R.string.device_dosing_detail_save_reservoir)
-}
-
-@Composable
-private fun ManualDoseContent() {
-    DetailSection(R.string.device_dosing_detail_manual_amount_section) {
-        AquaDeviceMenuValueRow(
-            label = stringResource(R.string.device_dosing_detail_manual_amount),
-            value = stringResource(R.string.device_dosing_detail_value_zero_ml),
-            description = stringResource(R.string.device_dosing_detail_manual_amount_description),
-            tone = AquaDeviceMenuTone.ACCENT
-        )
-        AquaDeviceMenuValueRow(
-            label = stringResource(R.string.device_dosing_detail_single_dose_limit),
-            value = stringResource(R.string.device_dosing_detail_value_ten_ml)
-        )
-    }
-    DetailSection(R.string.device_dosing_detail_manual_safety_section) {
-        AquaDeviceMenuValueRow(
-            label = stringResource(R.string.device_dosing_detail_delivery_mode),
-            value = stringResource(R.string.device_dosing_detail_one_time_dose),
-            description = stringResource(R.string.device_dosing_detail_delivery_mode_description)
-        )
-    }
-    DetailAction(R.string.device_dosing_detail_dispense_dose)
 }
 
 @Composable
