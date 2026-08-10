@@ -317,13 +317,19 @@ class ProcessSafeFeedbackInstrumentedTest {
 
     private fun confirmDialog(): ConfirmDialogFragment {
         return ConfirmDialogFragment.newInstance(
-            title = "Reset channel",
-            message = "Reset all dosing configuration?",
-            confirmText = "Reset",
-            cancelText = "Cancel",
-            type = DialogType.ERROR,
-            requestKey = "test_confirm_dialog_result",
-            actionId = "channel-2"
+            ConfirmDialogFragment.Request(
+                title = "Reset channel",
+                message = "Reset all dosing configuration?",
+                confirmText = "Reset",
+                cancelText = "Cancel",
+                presentation = ConfirmDialogFragment.Presentation(
+                    type = DialogType.ERROR
+                ),
+                resultTarget = ConfirmDialogFragment.ResultTarget(
+                    requestKey = "test_confirm_dialog_result",
+                    actionId = "channel-2"
+                )
+            )
         )
     }
 
