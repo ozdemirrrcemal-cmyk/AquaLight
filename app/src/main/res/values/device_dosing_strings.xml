@@ -83,15 +83,19 @@
     <string name="device_dosing_detail_guided_calibration_description">Prime, measure and verify the selected channel in a focused flow.</string>
     <string name="device_dosing_detail_start_recalibration">Start recalibration</string>
 
+    <string name="device_dosing_detail_reservoir_tracking_section">Tracking status</string>
+    <string name="device_dosing_detail_reservoir_tracking_enabled">Enable reservoir monitoring</string>
+    <string name="device_dosing_detail_reservoir_tracking_enabled_description">Activates container capacity and remaining-volume monitoring for this channel.</string>
     <string name="device_dosing_detail_reservoir_volume_section">Container volume</string>
     <string name="device_dosing_detail_container_volume">Container capacity</string>
+    <string name="device_dosing_detail_container_volume_input_label">Capacity (ml)</string>
+    <string name="device_dosing_detail_container_volume_hint">e.g. 450</string>
+    <string name="device_dosing_detail_container_volume_required">Enter the container capacity.</string>
     <string name="device_dosing_detail_available_volume">Available volume</string>
-    <string name="device_dosing_detail_value_container_ml">450.0 ml</string>
+    <string name="device_dosing_detail_value_container_ml">%1$.1f ml</string>
     <string name="device_dosing_detail_reservoir_alerts_section">Supply alerts</string>
     <string name="device_dosing_detail_low_level_alert">Low-level alert</string>
-    <string name="device_dosing_detail_low_level_alert_description">Warns before the available liquid reaches the configured limit.</string>
-    <string name="device_dosing_detail_alert_threshold">Alert threshold</string>
-    <string name="device_dosing_detail_value_twenty_percent" formatted="false">20%</string>
+    <string name="device_dosing_detail_low_level_alert_description" formatted="false">Sends a notification when available liquid falls to 10% or less of container capacity.</string>
     <string name="device_dosing_detail_save_reservoir">Save reservoir settings</string>
 
     <string name="device_dosing_detail_manual_amount_section">Manual amount</string>
