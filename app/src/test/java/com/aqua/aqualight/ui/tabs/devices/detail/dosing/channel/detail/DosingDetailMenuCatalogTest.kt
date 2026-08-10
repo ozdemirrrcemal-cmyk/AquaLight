@@ -22,6 +22,12 @@ class DosingDetailMenuCatalogTest {
     }
 
     @Test
+    fun `manual dose is a direct action instead of a menu route`() {
+        assertTrue(DOSING_DETAIL_MENU_SECTIONS.last().hasManualDoseAction)
+        assertNull(DosingDetailMenuItem.fromRouteKey("manual-dose"))
+    }
+
+    @Test
     fun `every menu entry has a unique round trip route key`() {
         val routeKeys = DosingDetailMenuItem.entries.map(DosingDetailMenuItem::routeKey)
 
