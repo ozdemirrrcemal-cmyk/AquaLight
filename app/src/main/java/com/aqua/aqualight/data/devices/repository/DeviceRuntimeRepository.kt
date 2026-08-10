@@ -17,6 +17,7 @@ import com.aqua.aqualight.data.devices.runtime.core.DeviceRuntimeCommandOutcome
 import com.aqua.aqualight.data.devices.runtime.core.DeviceRuntimeCommandSession
 import com.aqua.aqualight.data.devices.runtime.core.DeviceRuntimeCompletionDisposition
 import com.aqua.aqualight.data.devices.runtime.core.DeviceRuntimeConnectionGeneration
+import com.aqua.aqualight.data.devices.runtime.core.DeviceRuntimeDiagnosticRecorder
 import com.aqua.aqualight.data.devices.runtime.events.DeviceRuntimeLifecycleEvent
 import com.aqua.aqualight.data.devices.runtime.modules.DeviceRuntimeModuleProvider
 import com.aqua.aqualight.data.devices.runtime.modules.dosing.DeviceDosingRuntimeAccess
@@ -599,6 +600,11 @@ class DeviceRuntimeRepository(
             session.sessionScope.launch(start = CoroutineStart.UNDISPATCHED) {
                 session.wsClient.connectionState.collect { state ->
                     if (!isCurrentSession(session)) return@collect
+                    DeviceRuntimeDiagnosticRecorder.recordConnection(
+                        deviceUid = session.deviceUid,
+                        connectionState = state.diagnosticName(),
+                        authenticated = state is AqlWsConnectionState.Authenticated
+                    )
                     if (state.isTerminalForPendingCommands()) {
                         commandExecutor.cancelGeneration(
                             deviceUid = session.deviceUid,
@@ -697,6 +703,11 @@ class DeviceRuntimeRepository(
             ) == DeviceRuntimeCompletionDisposition.UNMATCHED
         }
         is AqlWsEvent.Closed -> {
+            DeviceRuntimeDiagnosticRecorder.recordSocketClosed(
+                deviceUid = event.deviceUid,
+                code = event.code,
+                reason = event.reason
+            )
             commandExecutor.cancelGeneration(
                 deviceUid = session.deviceUid,
                 generation = session.generation,
@@ -706,6 +717,13 @@ class DeviceRuntimeRepository(
             true
         }
         is AqlWsEvent.Failure -> {
+            DeviceRuntimeDiagnosticRecorder.recordSocketFailure(
+                deviceUid = event.deviceUid,
+                message = event.message,
+                cause = event.throwable,
+                frameBytes = event.frameBytes,
+                protocolError = event.protocolError
+            )
             commandExecutor.cancelGeneration(
                 deviceUid = session.deviceUid,
                 generation = session.generation,
@@ -765,6 +783,15 @@ private fun AqlWsConnectionState.isTerminalForPendingCommands(): Boolean = when 
     is AqlWsConnectionState.Connecting,
     is AqlWsConnectionState.Connected,
     is AqlWsConnectionState.Authenticated -> false
+}
+
+private fun AqlWsConnectionState.diagnosticName(): String = when (this) {
+    AqlWsConnectionState.Disconnected -> "DISCONNECTED"
+    is AqlWsConnectionState.Connecting -> "CONNECTING"
+    is AqlWsConnectionState.Connected -> "CONNECTED"
+    is AqlWsConnectionState.Authenticated -> "AUTHENTICATED"
+    is AqlWsConnectionState.AuthRequired -> "AUTH_REQUIRED"
+    is AqlWsConnectionState.Failed -> "FAILED"
 }
 
 internal object RuntimeConnectionReusePolicy {

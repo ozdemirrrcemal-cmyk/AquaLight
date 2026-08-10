@@ -4,6 +4,7 @@ import com.aqua.aqualight.application.devices.DeviceDosingChannelDestinationPoli
 import com.aqua.aqualight.application.devices.DeviceDosingChannelNavigationOperations
 import com.aqua.aqualight.application.devices.DeviceDosingChannelNavigationTarget
 import com.aqua.aqualight.application.devices.DeviceDosingChannelSlot
+import com.aqua.aqualight.application.devices.DeviceDosingDiagnosticSnapshot
 import com.aqua.aqualight.application.devices.DeviceMenuAccessOperations
 import com.aqua.aqualight.application.devices.DeviceMenuAccessResult
 import com.aqua.aqualight.application.devices.DeviceRootCatalogState
@@ -13,6 +14,8 @@ import com.aqua.aqualight.data.devices.menu.DefaultDeviceMenuAccessOperations
 import com.aqua.aqualight.data.devices.model.DeviceUid
 import com.aqua.aqualight.data.devices.repository.DevicesRepository
 import com.aqua.aqualight.data.devices.runtime.core.DeviceRuntimeCommandOutcome
+import com.aqua.aqualight.data.devices.runtime.core.DeviceRuntimeDiagnosticRecorder
+import com.aqua.aqualight.data.devices.runtime.core.DeviceRuntimeDiagnosticState
 import com.aqua.aqualight.data.devices.runtime.modules.dosing.DeviceDosingStatus
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.distinctUntilChanged
@@ -79,6 +82,12 @@ internal class DefaultDeviceDosingChannelNavigationOperations(
                 ?.toNavigationTarget(context)
                 ?: requestTarget(context)
         }
+
+    override fun observeDiagnostics(deviceUid: String): Flow<DeviceDosingDiagnosticSnapshot> {
+        val uid = deviceUid.trim().takeIf(String::isNotBlank)?.let(::DeviceUid)
+            ?: return flowOf(DeviceDosingDiagnosticSnapshot())
+        return runtimePort.observeDiagnostics(uid).map(DeviceRuntimeDiagnosticState::toSnapshot)
+    }
 
     private fun navigationContext(
         request: DosingChannelNavigationRequest
@@ -194,6 +203,8 @@ internal interface DeviceDosingChannelNavigationRuntimePort {
     fun currentRootSnapshot(deviceUid: DeviceUid): DeviceRootSnapshot?
     fun observeStatus(deviceUid: DeviceUid): Flow<DeviceDosingStatus?> = flowOf(null)
     fun currentStatus(deviceUid: DeviceUid): DeviceDosingStatus? = null
+    fun observeDiagnostics(deviceUid: DeviceUid): Flow<DeviceRuntimeDiagnosticState> =
+        flowOf(DeviceRuntimeDiagnosticState())
     suspend fun requestStatus(
         deviceUid: DeviceUid
     ): DeviceRuntimeCommandOutcome<DeviceDosingStatus>?
@@ -232,6 +243,9 @@ private class RepositoryDeviceDosingChannelNavigationRuntimePort(
     override fun currentStatus(deviceUid: DeviceUid): DeviceDosingStatus? =
         devicesRepository.runtimeModules()?.dosing?.states?.value?.get(deviceUid)?.status
 
+    override fun observeDiagnostics(deviceUid: DeviceUid): Flow<DeviceRuntimeDiagnosticState> =
+        DeviceRuntimeDiagnosticRecorder.observe(deviceUid)
+
     override suspend fun requestStatus(
         deviceUid: DeviceUid
     ): DeviceRuntimeCommandOutcome<DeviceDosingStatus>? {
@@ -262,3 +276,20 @@ private class RepositoryDeviceDosingChannelNavigationRuntimePort(
         const val RECOVERY_METADATA_WAIT_MILLIS = 10_000L
     }
 }
+
+private fun DeviceRuntimeDiagnosticState.toSnapshot() = DeviceDosingDiagnosticSnapshot(
+    connectionState = connectionState,
+    authenticated = authenticated,
+    stage = stage,
+    outcome = outcome,
+    attempt = attempt,
+    generation = generation,
+    responseDataBytes = responseDataBytes,
+    responseStatusCode = responseStatusCode,
+    elapsedMillis = elapsedMillis,
+    detail = detail,
+    socketCloseCode = socketCloseCode,
+    socketCloseReason = socketCloseReason,
+    rejectedWireFrameBytes = rejectedWireFrameBytes,
+    transportProtocolError = transportProtocolError
+)

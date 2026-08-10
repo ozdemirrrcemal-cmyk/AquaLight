@@ -3,6 +3,7 @@ package com.aqua.aqualight.ui.tabs.devices.detail.dosing
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
@@ -12,10 +13,17 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.text.selection.SelectionContainer
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Surface
+import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
+import com.aqua.aqualight.R
+import com.aqua.aqualight.application.devices.DeviceDosingDiagnosticSnapshot
 
 /**
  * Final Dose Pro root composition.
@@ -28,13 +36,20 @@ import androidx.compose.ui.unit.dp
 internal fun DeviceDosingCatalogScreen(
     pumpCount: Int,
     channels: List<DosingChannelCardUiState>,
+    diagnostics: DeviceDosingDiagnosticSnapshot?,
     onChannelClick: (String) -> Unit,
     modifier: Modifier = Modifier,
     pumpStates: List<DosingPumpVisualState> = emptyList()
 ) {
     val exactPumpCount = exactDosingPumpCountOrNull(pumpCount)
     if (exactPumpCount == null) {
-        Box(modifier = modifier.fillMaxSize())
+        Box(
+            modifier = modifier
+                .fillMaxSize()
+                .padding(SCREEN_HORIZONTAL_PADDING)
+        ) {
+            diagnostics?.let { snapshot -> DosingDiagnosticCard(snapshot) }
+        }
         return
     }
 
@@ -56,6 +71,15 @@ internal fun DeviceDosingCatalogScreen(
         verticalArrangement = Arrangement.spacedBy(CHANNEL_CARD_SPACING),
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
+        diagnostics?.let { snapshot ->
+            item(key = DIAGNOSTIC_ITEM_KEY) {
+                DosingDiagnosticCard(
+                    snapshot = snapshot,
+                    modifier = Modifier.fillMaxWidth()
+                )
+            }
+        }
+
         item(key = DEVICE_ITEM_KEY) {
             DosingPumpSection(
                 pumpCount = exactPumpCount,
@@ -85,6 +109,67 @@ internal fun DeviceDosingCatalogScreen(
                 onClick = { onChannelClick(channel.slotId) },
                 modifier = Modifier.fillMaxWidth()
             )
+        }
+    }
+}
+
+@Composable
+private fun DosingDiagnosticCard(
+    snapshot: DeviceDosingDiagnosticSnapshot,
+    modifier: Modifier = Modifier
+) {
+    val unavailable = stringResource(R.string.device_dosing_diagnostic_unavailable)
+    val authLabel = stringResource(
+        if (snapshot.authenticated) {
+            R.string.device_dosing_diagnostic_yes
+        } else {
+            R.string.device_dosing_diagnostic_no
+        }
+    )
+    val socket = when {
+        snapshot.socketCloseCode != null ->
+            "${snapshot.socketCloseCode} / ${snapshot.socketCloseReason ?: unavailable}"
+        !snapshot.socketCloseReason.isNullOrBlank() -> snapshot.socketCloseReason
+        else -> unavailable
+    }
+    val report = stringResource(
+        R.string.device_dosing_diagnostic_report,
+        snapshot.connectionState,
+        authLabel,
+        snapshot.stage,
+        snapshot.outcome,
+        snapshot.attempt.toString(),
+        snapshot.generation?.toString() ?: unavailable,
+        snapshot.responseDataBytes?.toString() ?: unavailable,
+        snapshot.responseStatusCode?.toString() ?: unavailable,
+        snapshot.elapsedMillis?.toString() ?: unavailable,
+        snapshot.detail ?: unavailable,
+        socket,
+        snapshot.rejectedWireFrameBytes?.toString() ?: unavailable,
+        snapshot.transportProtocolError ?: unavailable
+    )
+    Surface(
+        modifier = modifier,
+        shape = MaterialTheme.shapes.medium,
+        color = MaterialTheme.colorScheme.errorContainer,
+        contentColor = MaterialTheme.colorScheme.onErrorContainer,
+        tonalElevation = DIAGNOSTIC_CARD_ELEVATION
+    ) {
+        Column(
+            modifier = Modifier.padding(DIAGNOSTIC_CARD_PADDING),
+            verticalArrangement = Arrangement.spacedBy(DIAGNOSTIC_TEXT_SPACING)
+        ) {
+            Text(
+                text = stringResource(R.string.device_dosing_diagnostic_title),
+                style = MaterialTheme.typography.titleSmall
+            )
+            Text(
+                text = stringResource(R.string.device_dosing_diagnostic_disclaimer),
+                style = MaterialTheme.typography.labelSmall
+            )
+            SelectionContainer {
+                Text(text = report, style = MaterialTheme.typography.bodySmall)
+            }
         }
     }
 }
@@ -150,6 +235,7 @@ internal fun exactDosingPumpCountOrNull(pumpCount: Int): Int? = when (pumpCount)
 }
 
 private const val DEVICE_ITEM_KEY = "dosing-device"
+private const val DIAGNOSTIC_ITEM_KEY = "dosing-diagnostic"
 private const val DEVICE_TO_CARDS_SPACER_KEY = "dosing-device-card-gap"
 private const val DOSING_PRO_2_PUMP_COUNT = 2
 private const val DOSING_PRO_4_PUMP_COUNT = 4
@@ -167,3 +253,6 @@ private val CHANNEL_CARD_SPACING = CHANNEL_CARD_SPACING_DP.dp
 private val DEVICE_TO_CARDS_EXTRA_SPACING = DEVICE_TO_CARDS_EXTRA_SPACING_DP.dp
 private val DOSING_PRO_2_MAX_WIDTH = DOSING_PRO_2_MAX_WIDTH_DP.dp
 private val DOSING_PRO_4_MAX_WIDTH = DOSING_PRO_4_MAX_WIDTH_DP.dp
+private val DIAGNOSTIC_CARD_PADDING = 12.dp
+private val DIAGNOSTIC_TEXT_SPACING = 4.dp
+private val DIAGNOSTIC_CARD_ELEVATION = 2.dp

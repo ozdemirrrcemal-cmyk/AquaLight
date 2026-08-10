@@ -3,6 +3,7 @@ package com.aqua.aqualight.data.devices.runtime.ws
 import com.aqua.aqualight.data.devices.contract.AqlWsContract
 import com.aqua.aqualight.data.devices.model.DeviceRuntimeEndpoint
 import com.aqua.aqualight.data.devices.model.DeviceUid
+import java.nio.charset.StandardCharsets
 import java.util.Collections
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.TimeUnit
@@ -293,10 +294,22 @@ class AqlWsClient(
                 secureSession = state.secureSession
             )
         } catch (error: AqlWsProtocolException) {
-            failProtocolConnection(webSocket, generation, deviceUid, error.protocolError)
+            failProtocolConnection(
+                webSocket = webSocket,
+                generation = generation,
+                deviceUid = deviceUid,
+                error = error.protocolError,
+                frameBytes = text.toByteArray(StandardCharsets.UTF_8).size
+            )
             return
         } catch (_: Throwable) {
-            failProtocolConnection(webSocket, generation, deviceUid, AqlWsProtocolError.MALFORMED_JSON)
+            failProtocolConnection(
+                webSocket = webSocket,
+                generation = generation,
+                deviceUid = deviceUid,
+                error = AqlWsProtocolError.MALFORMED_JSON,
+                frameBytes = text.toByteArray(StandardCharsets.UTF_8).size
+            )
             return
         }
 
@@ -587,7 +600,8 @@ class AqlWsClient(
         webSocket: WebSocket,
         generation: Long,
         deviceUid: DeviceUid,
-        error: AqlWsProtocolError
+        error: AqlWsProtocolError,
+        frameBytes: Int? = null
     ) {
         val detached = synchronized(lifecycleLock) {
             if (!isCurrentConnectionLocked(webSocket, generation, deviceUid)) return
@@ -601,7 +615,9 @@ class AqlWsClient(
                     AqlWsEvent.Failure(
                         deviceUid = deviceUid,
                         message = error.safeMessage,
-                        throwable = AqlWsProtocolException(error)
+                        throwable = AqlWsProtocolException(error),
+                        frameBytes = frameBytes,
+                        protocolError = error.name
                     )
                 )
             }

@@ -44,6 +44,13 @@ private fun <T> prepareRuntimeRequest(
     context: DeviceRuntimeExecutionContext
 ): DeviceRuntimeRequestPreparation<T> {
     val session = context.sessionProvider(deviceUid)
+    DeviceRuntimeDiagnosticRecorder.recordPreparation(
+        deviceUid = deviceUid,
+        module = command.module,
+        action = command.action,
+        authenticated = session?.authenticated == true,
+        generation = session?.generation
+    )
     return when {
         session == null -> DeviceRuntimeRequestPreparation.Rejected(
             DeviceRuntimeCommandOutcome.NotConnected(
@@ -98,6 +105,11 @@ private fun <T> createReadyRuntimeRequest(
     val pending = pendingRequests.register(key) { response ->
         command.parseSuccess(response)
     }
+    DeviceRuntimeDiagnosticRecorder.recordRequestReady(
+        deviceUid = deviceUid,
+        module = command.module,
+        action = command.action
+    )
     DeviceRuntimeRequestPreparation.Ready(
         session = session,
         message = message,
@@ -124,6 +136,12 @@ private suspend fun <T> sendAndAwaitRuntimeRequest(
     val sent = runCatching {
         preparation.session.send(preparation.message)
     }.getOrDefault(false)
+    DeviceRuntimeDiagnosticRecorder.recordSend(
+        deviceUid = preparation.session.deviceUid,
+        module = preparation.message.module,
+        action = preparation.message.action,
+        sent = sent
+    )
 
     return if (sent) {
         awaitRuntimeRequest(preparation, timeoutMillis, pendingRequests)

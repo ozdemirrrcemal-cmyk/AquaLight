@@ -3,6 +3,7 @@ package com.aqua.aqualight.data.devices.runtime.modules.dosing
 import com.aqua.aqualight.data.devices.model.DeviceUid
 import com.aqua.aqualight.data.devices.runtime.core.DeviceRuntimeCommandGateway
 import com.aqua.aqualight.data.devices.runtime.core.DeviceRuntimeCommandOutcome
+import com.aqua.aqualight.data.devices.runtime.core.DeviceRuntimeDiagnosticRecorder
 import com.aqua.aqualight.data.devices.runtime.modules.common.DeviceRuntimeJsonCommand
 import kotlinx.coroutines.flow.StateFlow
 import org.json.JSONObject
@@ -21,7 +22,10 @@ class DeviceDosingRuntimeRepository internal constructor(
     ): DeviceRuntimeCommandOutcome<DeviceDosingStatus> {
         val access = accessProvider(deviceUid)
         if (!access.supportsApi) {
-            return dosingUnsupported(deviceUid, DeviceDosingRuntimeContract.Action.STATUS_GET)
+            return dosingUnsupported(
+                deviceUid,
+                DeviceDosingRuntimeContract.Action.STATUS_GET
+            ).also(DeviceRuntimeDiagnosticRecorder::recordOutcome)
         }
         return gateway.execute(
             deviceUid,
@@ -34,6 +38,7 @@ class DeviceDosingRuntimeRepository internal constructor(
                 }
             )
         ).recordStatus(deviceUid, stateStore)
+            .also(DeviceRuntimeDiagnosticRecorder::recordOutcome)
     }
 
     suspend fun applyConfig(

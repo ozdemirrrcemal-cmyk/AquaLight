@@ -22,7 +22,29 @@ fun interface DeviceDosingChannelNavigationOperations {
         deviceUid: String,
         slotId: String
     ): DeviceDosingChannelNavigationTarget? = resolve(deviceUid, slotId)
+
+    /** Temporary, payload-free status trace used only by the standalone diagnostic APK. */
+    fun observeDiagnostics(deviceUid: String): Flow<DeviceDosingDiagnosticSnapshot> =
+        flowOf(DeviceDosingDiagnosticSnapshot())
 }
+
+@Suppress("LongParameterList")
+data class DeviceDosingDiagnosticSnapshot(
+    val connectionState: String = "NOT_OBSERVED",
+    val authenticated: Boolean = false,
+    val stage: String = "WAITING_FOR_DOSING_STATUS",
+    val outcome: String = "WAITING",
+    val attempt: Int = 0,
+    val generation: Long? = null,
+    val responseDataBytes: Int? = null,
+    val responseStatusCode: Int? = null,
+    val elapsedMillis: Long? = null,
+    val detail: String? = null,
+    val socketCloseCode: Int? = null,
+    val socketCloseReason: String? = null,
+    val rejectedWireFrameBytes: Int? = null,
+    val transportProtocolError: String? = null
+)
 
 data class DeviceDosingChannelNavigationTarget(
     val deviceUid: String,

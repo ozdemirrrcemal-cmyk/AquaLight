@@ -28,6 +28,8 @@ sealed interface AqlWsEvent {
     data class Failure(
         override val deviceUid: DeviceUid,
         val message: String,
-        val throwable: Throwable? = null
+        val throwable: Throwable? = null,
+        val frameBytes: Int? = null,
+        val protocolError: String? = null
     ) : AqlWsEvent
 }

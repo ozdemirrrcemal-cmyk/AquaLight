@@ -6,6 +6,7 @@ import androidx.lifecycle.viewModelScope
 import com.aqua.aqualight.R
 import com.aqua.aqualight.application.devices.DeviceDosingChannelNavigationOperations
 import com.aqua.aqualight.application.devices.DeviceDosingChannelNavigationTarget
+import com.aqua.aqualight.application.devices.DeviceDosingDiagnosticSnapshot
 import com.aqua.aqualight.application.devices.DeviceRootCatalogState
 import com.aqua.aqualight.application.devices.DeviceRootOperations
 import com.aqua.aqualight.application.devices.DeviceRootSnapshot
@@ -43,6 +44,7 @@ class DeviceDosingRootViewModel(
     private var channelTargets: Map<String, DeviceDosingChannelNavigationTarget> = emptyMap()
     private var observeJob: Job? = null
     private var channelStateJob: Job? = null
+    private var diagnosticJob: Job? = null
     private var channelRefreshJob: Job? = null
     private var channelNavigationJob: Job? = null
 
@@ -54,6 +56,7 @@ class DeviceDosingRootViewModel(
         if (deviceUid.isBlank()) {
             observeJob?.cancel()
             channelStateJob?.cancel()
+            diagnosticJob?.cancel()
             channelRefreshJob?.cancel()
             channelNavigationJob?.cancel()
             boundDeviceUid = ""
@@ -68,8 +71,10 @@ class DeviceDosingRootViewModel(
         this.fallbackTitle = fallbackTitle
         latestRootSnapshot = operations.current(deviceUid)
         channelTargets = emptyMap()
+        _uiState.value = _uiState.value.copy(diagnostics = null)
         observeJob?.cancel()
         channelStateJob?.cancel()
+        diagnosticJob?.cancel()
         channelRefreshJob?.cancel()
         renderBoundState()
         operations.connect(deviceUid)
@@ -85,6 +90,12 @@ class DeviceDosingRootViewModel(
                 if (boundDeviceUid != deviceUid) return@collect
                 channelTargets = targets.associateBy(DeviceDosingChannelNavigationTarget::slotId)
                 renderBoundState()
+            }
+        }
+        diagnosticJob = viewModelScope.launch {
+            channelNavigationOperations.observeDiagnostics(deviceUid).collect { diagnostics ->
+                if (boundDeviceUid != deviceUid) return@collect
+                _uiState.value = _uiState.value.copy(diagnostics = diagnostics)
             }
         }
         channelRefreshJob = viewModelScope.launch {
@@ -115,10 +126,12 @@ class DeviceDosingRootViewModel(
 
     private fun renderBoundState() {
         val deviceUid = boundDeviceUid
-        _uiState.value = latestRootSnapshot?.toRootUiState(
+        val diagnostics = _uiState.value.diagnostics
+        val rendered = latestRootSnapshot?.toRootUiState(
             fallbackTitle = fallbackTitle,
             targets = channelTargets
         ) ?: emptyState(fallbackTitle, deviceUid)
+        _uiState.value = rendered.copy(diagnostics = diagnostics)
     }
 
     private fun emptyState(title: String, deviceUid: String) = DeviceDosingRootUiState(
@@ -180,6 +193,7 @@ data class DeviceDosingRootUiState(
     val modelText: String = "",
     val pumpCount: Int = UNKNOWN_DOSING_PUMP_COUNT,
     val channels: List<DosingChannelCardUiState> = emptyList(),
+    val diagnostics: DeviceDosingDiagnosticSnapshot? = null,
     @StringRes val primaryCountLabelRes: Int = R.string.device_dosing_channels_label,
     val primaryCountText: String = "",
     val featuresText: AquaUiText = AquaUiText.Resource(R.string.device_unknown),

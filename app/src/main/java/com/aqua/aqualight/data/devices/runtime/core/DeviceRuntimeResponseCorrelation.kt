@@ -65,18 +65,24 @@ private fun completeProtocolMismatch(
 private fun runtimeReplyOutcome(
     pending: DeviceRuntimePendingRequestRegistry.Pending,
     message: AqlWsIncomingMessage
-): DeviceRuntimeCommandOutcome<Any?> = when (message) {
-    is AqlWsIncomingMessage.Response -> if (message.ok) {
-        parseRuntimeSuccess(pending, message)
-    } else {
-        protocolError(
-            pending,
-            "Firmware response used the success envelope with ok=false."
-        )
-    }
-    is AqlWsIncomingMessage.Error -> {
-        val key = pending.key
-        DeviceRuntimeCommandOutcome.FirmwareError(
+): DeviceRuntimeCommandOutcome<Any?> {
+    val key = pending.key
+    DeviceRuntimeDiagnosticRecorder.recordReply(
+        deviceUid = key.deviceUid,
+        module = key.module,
+        action = key.action,
+        message = message
+    )
+    return when (message) {
+        is AqlWsIncomingMessage.Response -> if (message.ok) {
+            parseRuntimeSuccess(pending, message)
+        } else {
+            protocolError(
+                pending,
+                "Firmware response used the success envelope with ok=false."
+            )
+        }
+        is AqlWsIncomingMessage.Error -> DeviceRuntimeCommandOutcome.FirmwareError(
             deviceUid = key.deviceUid,
             module = key.module,
             action = key.action,
@@ -87,8 +93,8 @@ private fun runtimeReplyOutcome(
             field = message.field,
             message = message.message
         )
+        is AqlWsIncomingMessage.Event -> error("Events are not pending command completions.")
     }
-    is AqlWsIncomingMessage.Event -> error("Events are not pending command completions.")
 }
 
 private fun parseRuntimeSuccess(
@@ -105,7 +111,14 @@ private fun parseRuntimeSuccess(
         statusCode = response.statusCode,
         value = pending.parseSuccess(response)
     )
-} catch (_: Throwable) {
+} catch (failure: Throwable) {
+    val key = pending.key
+    DeviceRuntimeDiagnosticRecorder.recordParserFailure(
+        deviceUid = key.deviceUid,
+        module = key.module,
+        action = key.action,
+        failure = failure
+    )
     protocolError(
         pending,
         "Successful firmware response did not match the typed command contract."

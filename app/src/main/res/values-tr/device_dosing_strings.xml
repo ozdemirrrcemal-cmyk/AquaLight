@@ -64,5 +64,11 @@
     <string name="device_dosing_calibration_invalid_name">Bu dozaj hattı için bir ad girin.</string>
     <string name="device_dosing_calibration_invalid_measurement">0,05 ile 1000 ml arasında ölçülen bir hacim girin.</string>
     <string name="device_dosing_calibration_connection_error">Cihaz isteği tamamlamadı. Bağlantıyı kontrol edip tekrar deneyin.</string>
+    <string name="device_dosing_diagnostic_title">TEŞHİS APK — düzeltme içermez</string>
+    <string name="device_dosing_diagnostic_disclaimer">Bu panel yalnız protokol aşamalarını, bayt sayılarını ve parser hata nedenini kaydeder. Ham veri paketini, kimlik bilgisini, imzayı, nonce değerini veya cihaz kimliğini kaydetmez.</string>
+    <string name="device_dosing_diagnostic_yes">EVET</string>
+    <string name="device_dosing_diagnostic_no">HAYIR</string>
+    <string name="device_dosing_diagnostic_unavailable">—</string>
+    <string name="device_dosing_diagnostic_report">Bağlantı: %1$s\nKimlik doğrulandı: %2$s\nAşama: %3$s\nSonuç: %4$s\nDeneme: %5$s\nOturum nesli: %6$s\nGelen data: %7$s bayt\nCevap kodu: %8$s\nSüre: %9$s ms\nAyrıntı: %10$s\nSocket kapanış/hata: %11$s\nReddedilen wire frame: %12$s bayt\nTransport protokol hatası: %13$s</string>
     <string name="device_dosing_calibration_unavailable">Bu pompa veya firmware sürümü kalibrasyon akışını desteklemiyor.</string>
 </resources>

@@ -64,5 +64,11 @@
     <string name="device_dosing_calibration_invalid_name">Enter a name for this dosing line.</string>
     <string name="device_dosing_calibration_invalid_measurement">Enter a measured volume between 0.05 and 1000 ml.</string>
     <string name="device_dosing_calibration_connection_error">The device did not complete the request. Check the connection and try again.</string>
+    <string name="device_dosing_diagnostic_title">DIAGNOSTIC APK — no fix included</string>
+    <string name="device_dosing_diagnostic_disclaimer">This panel records only protocol stages, byte counts, and a parser failure reason. It does not record the raw payload, credentials, signatures, nonces, or device identity.</string>
+    <string name="device_dosing_diagnostic_yes">YES</string>
+    <string name="device_dosing_diagnostic_no">NO</string>
+    <string name="device_dosing_diagnostic_unavailable">—</string>
+    <string name="device_dosing_diagnostic_report">Connection: %1$s\nAuthenticated: %2$s\nStage: %3$s\nOutcome: %4$s\nAttempt: %5$s\nGeneration: %6$s\nResponse data: %7$s bytes\nResponse status: %8$s\nElapsed: %9$s ms\nDetail: %10$s\nSocket close/failure: %11$s\nRejected wire frame: %12$s bytes\nTransport protocol error: %13$s</string>
     <string name="device_dosing_calibration_unavailable">This pump or firmware version does not support the calibration workflow.</string>
 </resources>
