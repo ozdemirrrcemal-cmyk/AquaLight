@@ -20,7 +20,6 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import com.aqua.aqualight.R
 import com.aqua.aqualight.ui.common.devicemenu.AquaDeviceMenuChoiceChip
@@ -53,9 +52,6 @@ internal fun DeviceDosingChannelMenuScreen(
         ),
         verticalArrangement = Arrangement.spacedBy(AquaDeviceMenuGeometry.sectionGap)
     ) {
-        item(key = "preview-note") {
-            DosingMenuPreviewNote()
-        }
         item(key = item.routeKey) {
             Column(
                 verticalArrangement = Arrangement.spacedBy(AquaDeviceMenuGeometry.sectionGap)
@@ -68,28 +64,6 @@ internal fun DeviceDosingChannelMenuScreen(
                     DosingDetailMenuItem.RESET_CHANNEL -> ResetChannelPreview()
                 }
             }
-        }
-    }
-}
-
-@Composable
-private fun DosingMenuPreviewNote() {
-    val colors = aquaDeviceMenuColors()
-    val typography = aquaDeviceMenuTypography(colors)
-
-    AquaDeviceMenuSectionSurface(modifier = Modifier.fillMaxWidth()) {
-        Column(
-            modifier = Modifier.padding(AquaDeviceMenuGeometry.sectionContentPadding),
-            verticalArrangement = Arrangement.spacedBy(AquaDeviceMenuGeometry.compactGap)
-        ) {
-            BasicText(
-                text = stringResource(R.string.device_dosing_detail_preview_label),
-                style = typography.eyebrow
-            )
-            BasicText(
-                text = stringResource(R.string.device_dosing_detail_preview_description),
-                style = typography.heroBody
-            )
         }
     }
 }
@@ -214,23 +188,6 @@ private fun ManualDosePreview() {
 @Composable
 private fun ResetChannelPreview() {
     ResetWarning()
-    PreviewSection(R.string.device_dosing_detail_reset_scope_section) {
-        AquaDeviceMenuValueRow(
-            label = stringResource(R.string.device_dosing_detail_schedule_data),
-            value = stringResource(R.string.device_dosing_detail_will_be_cleared),
-            tone = AquaDeviceMenuTone.DANGER
-        )
-        AquaDeviceMenuValueRow(
-            label = stringResource(R.string.device_dosing_detail_calibration_data),
-            value = stringResource(R.string.device_dosing_detail_will_be_cleared),
-            tone = AquaDeviceMenuTone.DANGER
-        )
-        AquaDeviceMenuValueRow(
-            label = stringResource(R.string.device_dosing_detail_reservoir_data),
-            value = stringResource(R.string.device_dosing_detail_will_be_cleared),
-            tone = AquaDeviceMenuTone.DANGER
-        )
-    }
     PreviewAction(R.string.device_dosing_detail_reset_action)
 }
 
@@ -395,21 +352,12 @@ private fun PreviewWeekdays() {
 
 @Composable
 private fun PreviewAction(@StringRes labelRes: Int) {
-    Column(verticalArrangement = Arrangement.spacedBy(AquaDeviceMenuGeometry.compactGap)) {
-        AquaGuidedFlowButton(
-            text = stringResource(labelRes),
-            onClick = {},
-            modifier = Modifier.fillMaxWidth(),
-            enabled = false
-        )
-        BasicText(
-            text = stringResource(R.string.device_dosing_detail_action_preview_note),
-            modifier = Modifier.fillMaxWidth(),
-            style = aquaDeviceMenuTypography(aquaDeviceMenuColors()).rowBody.copy(
-                textAlign = TextAlign.Center
-            )
-        )
-    }
+    AquaGuidedFlowButton(
+        text = stringResource(labelRes),
+        onClick = {},
+        modifier = Modifier.fillMaxWidth(),
+        enabled = false
+    )
 }
 
 private data class PreviewChoice(
