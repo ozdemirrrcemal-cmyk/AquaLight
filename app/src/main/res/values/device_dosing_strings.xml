@@ -48,14 +48,11 @@
     <string name="device_dosing_detail_manual_title">Manual dose</string>
     <string name="device_dosing_detail_manual_description">Dispense a precise one-time amount on demand.</string>
     <string name="device_dosing_detail_reset_title">Reset channel</string>
-    <string name="device_dosing_detail_reset_description">Clear this channel’s dosing configuration.</string>
+    <string name="device_dosing_detail_reset_description">Permanently clear all dosing configuration for this channel.</string>
 
-    <string name="device_dosing_detail_preview_label">Interface preview</string>
-    <string name="device_dosing_detail_preview_description">Navigation and field structure are ready. Device values and actions will be connected separately.</string>
-    <string name="device_dosing_detail_action_preview_note">Preview only — device actions are not connected yet.</string>
     <string name="device_dosing_detail_state_on">On</string>
     <string name="device_dosing_detail_state_off">Off</string>
-    <string name="device_dosing_detail_toggle_description">Preview toggle, %1$s</string>
+    <string name="device_dosing_detail_toggle_description">Setting toggle, %1$s</string>
 
     <string name="device_dosing_detail_schedule_status_section">Schedule status</string>
     <string name="device_dosing_detail_activate_schedule">Activate schedule</string>
@@ -109,12 +106,7 @@
     <string name="device_dosing_detail_dispense_dose">Dispense dose</string>
 
     <string name="device_dosing_detail_reset_warning_title">Reset this dosing channel?</string>
-    <string name="device_dosing_detail_reset_warning_description">This destructive action will require confirmation when device operations are connected.</string>
-    <string name="device_dosing_detail_reset_scope_section">Reset scope</string>
-    <string name="device_dosing_detail_schedule_data">Schedule data</string>
-    <string name="device_dosing_detail_calibration_data">Calibration data</string>
-    <string name="device_dosing_detail_reservoir_data">Reservoir data</string>
-    <string name="device_dosing_detail_will_be_cleared">Will be cleared</string>
+    <string name="device_dosing_detail_reset_warning_description">This action permanently clears all dosing configuration for this channel.</string>
     <string name="device_dosing_detail_reset_action">Reset channel</string>
 
     <string name="device_dosing_calibration_step_progress">Step %1$d of %2$d</string>
