@@ -7,6 +7,7 @@ import com.aqua.aqualight.data.devices.runtime.core.DeviceRuntimeCommandOutcome
 import com.aqua.aqualight.data.devices.runtime.core.DeviceRuntimeConnectionGeneration
 import com.aqua.aqualight.data.devices.runtime.ws.AqlWsIncomingMessage
 import kotlinx.coroutines.runBlocking
+import kotlin.math.roundToLong
 import org.json.JSONArray
 import org.json.JSONObject
 import org.junit.Assert.assertEquals
@@ -23,7 +24,7 @@ class DeviceDosingRepositoryContractTest {
             executeCalibrationActions(repository) +
             executeConfigActions(repository)
 
-        assertEquals(17, outcomes.size)
+        assertEquals(21, outcomes.size)
         assertTrue(outcomes.all { outcome -> outcome is DeviceRuntimeCommandOutcome.Success })
         assertEquals(ALL_ACTIONS, gateway.actions.toSet())
         assertEquals(DeviceDosingRuntimeContract.Action.STATUS_GET, gateway.actions.first())
@@ -55,28 +56,42 @@ class DeviceDosingRepositoryContractTest {
         repository.doseStop(DEVICE_UID, "channel1")
     )
 
+    @Suppress("LongMethod")
     private suspend fun executeCalibrationActions(
         repository: DeviceDosingRuntimeRepository
-    ): List<DeviceRuntimeCommandOutcome<*>> = listOf(
-        repository.calibrationStart(
+    ): List<DeviceRuntimeCommandOutcome<*>> {
+        val outcomes = mutableListOf<DeviceRuntimeCommandOutcome<*>>()
+        outcomes += repository.calibrationStart(
             DEVICE_UID,
             DeviceDosingCalibrationStartPayload("channel1")
-        ),
-        repository.calibrationFinish(
+        )
+        outcomes += repository.requestStatus(DEVICE_UID)
+        outcomes += repository.calibrationFinish(
             DEVICE_UID,
             DeviceDosingCalibrationFinishPayload("channel1", measuredMl = 5.0)
-        ),
-        repository.calibrationCancel(DEVICE_UID, "channel1"),
-        repository.calibrationStart(
+        )
+        outcomes += repository.calibrationCancel(DEVICE_UID, "channel1")
+        outcomes += repository.calibrationStart(
             DEVICE_UID,
             DeviceDosingCalibrationStartPayload("channel1")
-        ),
-        repository.calibrationFinish(
+        )
+        outcomes += repository.requestStatus(DEVICE_UID)
+        outcomes += repository.calibrationFinish(
             DEVICE_UID,
             DeviceDosingCalibrationFinishPayload("channel1", measuredMl = 5.0)
-        ),
-        repository.calibrationConfirm(DEVICE_UID, "channel1")
-    )
+        )
+        outcomes += repository.doseNow(
+            DEVICE_UID,
+            DeviceDosingDoseNowPayload(
+                channelKey = "channel1",
+                amountMl = DeviceDosingRuntimeContract.Limit.VERIFICATION_DOSE_ML,
+                usePendingCalibration = true
+            )
+        )
+        outcomes += repository.requestStatus(DEVICE_UID)
+        outcomes += repository.calibrationConfirm(DEVICE_UID, "channel1")
+        return outcomes
+    }
 
     private suspend fun executeConfigActions(
         repository: DeviceDosingRuntimeRepository
@@ -133,6 +148,12 @@ class DeviceDosingRepositoryContractTest {
         private var calibrationDurationMs = 5_000L
         private var doseMsPerMl = 1_000L
         private var lastCalibratedAt = 100L
+        private var calibrationState = "idle"
+        private var measuredMl = 0.0
+        private var pendingDoseMsPerMl = -1L
+        private var verificationDoseStarted = false
+        private var verificationDoseComplete = false
+        private var uptimeMs = 12_000L
 
         override suspend fun <T> execute(
             deviceUid: DeviceUid,
@@ -165,30 +186,62 @@ class DeviceDosingRepositoryContractTest {
             )
         }
 
+        @Suppress("CyclomaticComplexMethod", "LongMethod")
         private fun response(action: String, data: JSONObject): JSONObject = when (action) {
-            DeviceDosingRuntimeContract.Action.STATUS_GET ->
-                DeviceDosingRuntimeFixtures.status()
+            DeviceDosingRuntimeContract.Action.STATUS_GET -> {
+                uptimeMs += 1_000L
+                DeviceDosingRuntimeFixtures.status(
+                    uptimeMs = uptimeMs,
+                    calibrationState = calibrationState,
+                    calibrationDurationMs = if (calibrationState == "idle") {
+                        0L
+                    } else {
+                        calibrationDurationMs
+                    },
+                    measuredMl = measuredMl,
+                    pendingDoseMsPerMl = pendingDoseMsPerMl,
+                    verificationDoseStarted = verificationDoseStarted,
+                    verificationDoseComplete = verificationDoseComplete
+                )
+            }
             DeviceDosingRuntimeContract.Action.CONFIG_APPLY -> applyConfig(data)
             DeviceDosingRuntimeContract.Action.PRIME_START -> pump(action, active = true)
             DeviceDosingRuntimeContract.Action.PRIME_STOP -> pump(action, active = false)
             DeviceDosingRuntimeContract.Action.DOSE_NOW ->
                 DeviceDosingRuntimeFixtures.doseNow(
                     amountMl = data.getDouble("amountMl"),
-                    doseMsPerMl = doseMsPerMl,
+                    doseMsPerMl = if (data.getBoolean("usePendingCalibration")) {
+                        pendingDoseMsPerMl
+                    } else {
+                        doseMsPerMl
+                    },
                     usePendingCalibration = data.getBoolean("usePendingCalibration")
-                )
+                ).also {
+                    if (data.getBoolean("usePendingCalibration")) {
+                        verificationDoseStarted = true
+                        verificationDoseComplete = true
+                    }
+                }
             DeviceDosingRuntimeContract.Action.DOSE_STOP -> pump(action, active = false)
             DeviceDosingRuntimeContract.Action.CALIBRATION_START -> {
                 calibrationDurationMs = data.getLong("durationMs")
+                calibrationState = "running"
                 DeviceDosingRuntimeFixtures.calibrationStart(calibrationDurationMs)
             }
-            DeviceDosingRuntimeContract.Action.CALIBRATION_FINISH ->
+            DeviceDosingRuntimeContract.Action.CALIBRATION_FINISH -> {
+                measuredMl = data.getDouble("measuredMl")
+                pendingDoseMsPerMl =
+                    (calibrationDurationMs.toDouble() / measuredMl).roundToLong()
+                calibrationState = "pendingVerification"
                 DeviceDosingRuntimeFixtures.calibrationFinish(
-                    measuredMl = data.getDouble("measuredMl"),
+                    measuredMl = measuredMl,
                     durationMs = calibrationDurationMs
                 )
-            DeviceDosingRuntimeContract.Action.CALIBRATION_CANCEL ->
+            }
+            DeviceDosingRuntimeContract.Action.CALIBRATION_CANCEL -> {
+                resetCalibrationSession()
                 DeviceDosingRuntimeFixtures.calibrationCancel()
+            }
             DeviceDosingRuntimeContract.Action.CALIBRATION_CONFIRM -> confirmCalibration()
             DeviceDosingRuntimeContract.Action.RESERVOIR_REFILL ->
                 DeviceDosingRuntimeFixtures.reservoirRefill()
@@ -203,12 +256,21 @@ class DeviceDosingRepositoryContractTest {
             )
 
         private fun confirmCalibration(): JSONObject {
-            doseMsPerMl = 1_000L
+            doseMsPerMl = pendingDoseMsPerMl
             lastCalibratedAt = 12_100L
+            resetCalibrationSession()
             return DeviceDosingRuntimeFixtures.calibrationConfirm(
                 doseMsPerMl,
                 lastCalibratedAt
             )
+        }
+
+        private fun resetCalibrationSession() {
+            calibrationState = "idle"
+            measuredMl = 0.0
+            pendingDoseMsPerMl = -1L
+            verificationDoseStarted = false
+            verificationDoseComplete = false
         }
 
         private fun applyConfig(data: JSONObject): JSONObject {

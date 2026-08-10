@@ -28,11 +28,13 @@ abstract class DeviceDosingChannelDestinationFragment(
             fragment = this,
             config = AquaHeaderConfig(
                 titleOverride = destinationTitle,
-                onBackClick = {
-                    findNavController().navigateUp()
-                }
+                onBackClick = ::onBackRequested
             )
         )
+    }
+
+    protected open fun onBackRequested() {
+        findNavController().navigateUp()
     }
 
     protected fun setupSelectedPump(

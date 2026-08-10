@@ -46,6 +46,13 @@ object DeviceDosingRuntimeContract {
         const val DURATION_MS = "durationMs"
         const val MEASURED_ML = "measuredMl"
         const val USE_PENDING_CALIBRATION = "usePendingCalibration"
+        const val CALIBRATION = "calibration"
+        const val CALIBRATION_STATE = "calibrationState"
+        const val STARTED_AT_UPTIME_MS = "startedAtUptimeMs"
+        const val PENDING_DOSE_MS_PER_ML = "pendingDoseMsPerMl"
+        const val VERIFICATION_DOSE_STARTED = "verificationDoseStarted"
+        const val VERIFICATION_DOSE_COMPLETE = "verificationDoseComplete"
+        const val VERIFICATION_DOSE_REMAINING_MS = "verificationDoseRemainingMs"
     }
 
     object Limit {
@@ -62,6 +69,7 @@ object DeviceDosingRuntimeContract {
         const val MIN_MANUAL_DOSE_DURATION_MS = 100L
         const val MAX_MANUAL_DOSE_DURATION_MS = 3_600_000L
         const val MAX_DOSE_MS_PER_ML = 3_600_000L
+        const val VERIFICATION_DOSE_ML = 4.0
         const val LAST_MILLISECOND_OF_DAY = 86_399_999L
     }
 
@@ -83,5 +91,8 @@ object DeviceDosingRuntimeContract {
         const val CHANNEL_KIND_GPIO = "gpio"
         const val CHANNEL_KIND_DIGITAL = "digital"
         const val CHANNEL_KIND_NONE = "none"
+        const val CALIBRATION_STATE_IDLE = "idle"
+        const val CALIBRATION_STATE_RUNNING = "running"
+        const val CALIBRATION_STATE_PENDING_VERIFICATION = "pendingVerification"
     }
 }
