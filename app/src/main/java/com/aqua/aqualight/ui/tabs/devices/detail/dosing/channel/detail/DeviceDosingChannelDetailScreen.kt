@@ -31,7 +31,7 @@ import com.aqua.aqualight.ui.common.devicemenu.AquaDeviceMenuTone
 import com.aqua.aqualight.ui.common.devicemenu.aquaDeviceMenuColors
 import com.aqua.aqualight.ui.common.devicemenu.aquaDeviceMenuTypography
 
-/** Static menu shell; data binding and child destinations are intentionally added separately. */
+/** Static menu shell whose entries open UI-only child destinations. */
 @Composable
 internal fun DeviceDosingChannelDetailScreen(
     modifier: Modifier = Modifier,
@@ -151,42 +151,56 @@ internal data class DosingDetailMenuSection(
 )
 
 internal enum class DosingDetailMenuItem(
+    val routeKey: String,
     @StringRes val titleRes: Int,
     @StringRes val descriptionRes: Int,
     @DrawableRes val iconRes: Int,
     val tone: AquaDeviceMenuTone = AquaDeviceMenuTone.ACCENT
 ) {
     DOSING_PLAN(
+        routeKey = "dosing-plan",
         titleRes = R.string.device_dosing_detail_plan_title,
         descriptionRes = R.string.device_dosing_detail_plan_description,
         iconRes = R.drawable.ic_dosing_schedule_24
     ),
     MISSED_DOSE_RECOVERY(
+        routeKey = "missed-dose-recovery",
         titleRes = R.string.device_dosing_detail_missed_dose_title,
         descriptionRes = R.string.device_dosing_detail_missed_dose_description,
         iconRes = R.drawable.ic_dosing_recovery_24
     ),
     CALIBRATION(
+        routeKey = "calibration",
         titleRes = R.string.device_dosing_detail_calibration_title,
         descriptionRes = R.string.device_dosing_detail_calibration_description,
         iconRes = R.drawable.ic_dosing_calibration_24
     ),
     RESERVOIR(
+        routeKey = "reservoir",
         titleRes = R.string.device_dosing_detail_reservoir_title,
         descriptionRes = R.string.device_dosing_detail_reservoir_description,
         iconRes = R.drawable.ic_care_fertilizer_24
     ),
     MANUAL_DOSE(
+        routeKey = "manual-dose",
         titleRes = R.string.device_dosing_detail_manual_title,
         descriptionRes = R.string.device_dosing_detail_manual_description,
         iconRes = R.drawable.ic_dosing_manual_24
     ),
     RESET_CHANNEL(
+        routeKey = "reset-channel",
         titleRes = R.string.device_dosing_detail_reset_title,
         descriptionRes = R.string.device_dosing_detail_reset_description,
         iconRes = R.drawable.ic_dosing_reset_24,
         tone = AquaDeviceMenuTone.DANGER
-    )
+    );
+
+    companion object {
+        private val byRouteKey = entries.associateBy(DosingDetailMenuItem::routeKey)
+
+        fun fromRouteKey(routeKey: String): DosingDetailMenuItem? =
+            byRouteKey[routeKey.trim()]
+    }
 }
 
 internal val DOSING_DETAIL_MENU_SECTIONS = listOf(

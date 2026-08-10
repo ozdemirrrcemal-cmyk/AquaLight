@@ -8,12 +8,16 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.defaultMinSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.BasicText
 import androidx.compose.runtime.Composable
@@ -27,10 +31,12 @@ import androidx.compose.ui.graphics.painter.Painter
 import androidx.compose.ui.res.colorResource
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.Font
 import androidx.compose.ui.text.font.FontFamily
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -90,6 +96,16 @@ object AquaDeviceMenuGeometry {
     val trailingIconSize = TRAILING_ICON_SIZE_DP.dp
     val dividerIndent = DIVIDER_INDENT_DP.dp
     val dividerHeight = DIVIDER_HEIGHT_DP.dp
+    val sectionContentPadding = SECTION_CONTENT_PADDING_DP.dp
+    val compactGap = COMPACT_GAP_DP.dp
+    val choiceChipMinHeight = CHOICE_CHIP_MIN_HEIGHT_DP.dp
+    val choiceChipRadius = CHOICE_CHIP_RADIUS_DP.dp
+    val choiceChipHorizontalPadding = CHOICE_CHIP_HORIZONTAL_PADDING_DP.dp
+    val toggleWidth = TOGGLE_WIDTH_DP.dp
+    val toggleHeight = TOGGLE_HEIGHT_DP.dp
+    val toggleThumbSize = TOGGLE_THUMB_SIZE_DP.dp
+    val togglePadding = TOGGLE_PADDING_DP.dp
+    val valueMaxWidth = VALUE_MAX_WIDTH_DP.dp
 }
 
 private val InterRegular = FontFamily(Font(R.font.inter_regular))
@@ -269,6 +285,128 @@ fun AquaDeviceMenuDivider(modifier: Modifier = Modifier) {
     )
 }
 
+/** Shared label/value row for static device setting previews and connected forms. */
+@Composable
+fun AquaDeviceMenuValueRow(
+    label: String,
+    value: String,
+    modifier: Modifier = Modifier,
+    description: String? = null,
+    tone: AquaDeviceMenuTone = AquaDeviceMenuTone.NEUTRAL
+) {
+    val colors = aquaDeviceMenuColors()
+    val typography = aquaDeviceMenuTypography(colors)
+    val valueColor = when (tone) {
+        AquaDeviceMenuTone.ACCENT -> colors.accent
+        AquaDeviceMenuTone.NEUTRAL -> colors.textPrimary
+        AquaDeviceMenuTone.DANGER -> colors.danger
+    }
+
+    Row(
+        modifier = modifier
+            .fillMaxWidth()
+            .padding(AquaDeviceMenuGeometry.sectionContentPadding),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        Column(modifier = Modifier.weight(1f)) {
+            BasicText(text = label, style = typography.rowTitle)
+            description?.let { supportingText ->
+                BasicText(
+                    text = supportingText,
+                    modifier = Modifier.padding(top = AquaDeviceMenuGeometry.rowTextGap),
+                    style = typography.rowBody
+                )
+            }
+        }
+        BasicText(
+            text = value,
+            modifier = Modifier
+                .padding(start = AquaDeviceMenuGeometry.compactGap)
+                .widthIn(max = AquaDeviceMenuGeometry.valueMaxWidth),
+            style = typography.rowTitle.copy(
+                color = valueColor,
+                textAlign = TextAlign.End
+            ),
+            maxLines = 2,
+            overflow = TextOverflow.Ellipsis
+        )
+    }
+}
+
+/** Non-mutating choice visual used while a setting screen is preview-only. */
+@Composable
+fun AquaDeviceMenuChoiceChip(
+    text: String,
+    selected: Boolean,
+    modifier: Modifier = Modifier
+) {
+    val colors = aquaDeviceMenuColors()
+    val typography = aquaDeviceMenuTypography(colors)
+    val shape = RoundedCornerShape(AquaDeviceMenuGeometry.choiceChipRadius)
+
+    Box(
+        modifier = modifier
+            .defaultMinSize(minHeight = AquaDeviceMenuGeometry.choiceChipMinHeight)
+            .clip(shape)
+            .background(
+                if (selected) colors.accent.copy(alpha = CHOICE_SELECTED_ALPHA) else colors.surfaceRaised
+            )
+            .border(
+                width = AquaDeviceMenuGeometry.surfaceOutlineWidth,
+                color = if (selected) colors.accent else colors.outline,
+                shape = shape
+            )
+            .padding(
+                horizontal = AquaDeviceMenuGeometry.choiceChipHorizontalPadding,
+                vertical = AquaDeviceMenuGeometry.compactGap
+            ),
+        contentAlignment = Alignment.Center
+    ) {
+        BasicText(
+            text = text,
+            style = typography.rowBody.copy(
+                color = if (selected) colors.accent else colors.textSecondary,
+                textAlign = TextAlign.Center
+            ),
+            maxLines = 1,
+            overflow = TextOverflow.Ellipsis
+        )
+    }
+}
+
+/** Accessible, display-only toggle for UI shells that do not bind device data yet. */
+@Composable
+fun AquaDeviceMenuToggle(
+    checked: Boolean,
+    contentDescription: String,
+    modifier: Modifier = Modifier
+) {
+    val colors = aquaDeviceMenuColors()
+    val shape = RoundedCornerShape(AquaDeviceMenuGeometry.toggleHeight)
+    Box(
+        modifier = modifier
+            .width(AquaDeviceMenuGeometry.toggleWidth)
+            .height(AquaDeviceMenuGeometry.toggleHeight)
+            .clip(shape)
+            .background(if (checked) colors.accent else colors.surfaceRaised)
+            .border(
+                width = AquaDeviceMenuGeometry.surfaceOutlineWidth,
+                color = if (checked) colors.accent else colors.outline,
+                shape = shape
+            )
+            .semantics { this.contentDescription = contentDescription }
+            .padding(AquaDeviceMenuGeometry.togglePadding),
+        contentAlignment = if (checked) Alignment.CenterEnd else Alignment.CenterStart
+    ) {
+        Box(
+            modifier = Modifier
+                .size(AquaDeviceMenuGeometry.toggleThumbSize)
+                .clip(RoundedCornerShape(AquaDeviceMenuGeometry.toggleThumbSize))
+                .background(colors.textPrimary)
+        )
+    }
+}
+
 @Composable
 private fun DeviceMenuIcon(
     painter: Painter,
@@ -284,6 +422,7 @@ private fun DeviceMenuIcon(
 }
 
 private const val ICON_BACKGROUND_ALPHA = 0.12f
+private const val CHOICE_SELECTED_ALPHA = 0.14f
 private const val ROW_DESCRIPTION_MAX_LINES = 2
 private const val SCREEN_HORIZONTAL_PADDING_DP = 16
 private const val SCREEN_TOP_PADDING_DP = 14
@@ -308,6 +447,16 @@ private const val ICON_SIZE_DP = 23
 private const val TRAILING_ICON_SIZE_DP = 20
 private const val DIVIDER_INDENT_DP = 69
 private const val DIVIDER_HEIGHT_DP = 1
+private const val SECTION_CONTENT_PADDING_DP = 16
+private const val COMPACT_GAP_DP = 8
+private const val CHOICE_CHIP_MIN_HEIGHT_DP = 38
+private const val CHOICE_CHIP_RADIUS_DP = 12
+private const val CHOICE_CHIP_HORIZONTAL_PADDING_DP = 12
+private const val TOGGLE_WIDTH_DP = 46
+private const val TOGGLE_HEIGHT_DP = 26
+private const val TOGGLE_THUMB_SIZE_DP = 18
+private const val TOGGLE_PADDING_DP = 3
+private const val VALUE_MAX_WIDTH_DP = 144
 private const val EYEBROW_FONT_SIZE_SP = 11
 private const val EYEBROW_LINE_HEIGHT_SP = 14
 private const val EYEBROW_LETTER_SPACING_SP = 0.7

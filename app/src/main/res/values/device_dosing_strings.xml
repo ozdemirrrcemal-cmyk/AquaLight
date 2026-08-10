@@ -49,6 +49,83 @@
     <string name="device_dosing_detail_reset_title">Reset channel</string>
     <string name="device_dosing_detail_reset_description">Clear this channel’s dosing configuration.</string>
 
+    <string name="device_dosing_detail_preview_label">Interface preview</string>
+    <string name="device_dosing_detail_preview_description">Navigation and field structure are ready. Device values and actions will be connected separately.</string>
+    <string name="device_dosing_detail_action_preview_note">Preview only — device actions are not connected yet.</string>
+    <string name="device_dosing_detail_state_on">On</string>
+    <string name="device_dosing_detail_state_off">Off</string>
+    <string name="device_dosing_detail_toggle_description">Preview toggle, %1$s</string>
+
+    <string name="device_dosing_detail_schedule_status_section">Schedule status</string>
+    <string name="device_dosing_detail_activate_schedule">Activate schedule</string>
+    <string name="device_dosing_detail_activate_schedule_description">Makes the daily dosing routine available for this channel.</string>
+    <string name="device_dosing_detail_amount_section">Dose amount</string>
+    <string name="device_dosing_detail_daily_dose">Daily dose</string>
+    <string name="device_dosing_detail_daily_dose_description">Total amount planned across the selected day.</string>
+    <string name="device_dosing_detail_value_zero_ml">0.00 ml</string>
+    <string name="device_dosing_detail_schedule_section">Dosing schedule</string>
+    <string name="device_dosing_detail_schedule_mode">Distribution mode</string>
+    <string name="device_dosing_detail_schedule_single">Single</string>
+    <string name="device_dosing_detail_schedule_hourly">24 hourly</string>
+    <string name="device_dosing_detail_schedule_custom">Custom periods</string>
+    <string name="device_dosing_detail_timer">Timer</string>
+    <string name="device_dosing_detail_value_unset_time">--:--</string>
+    <string name="device_dosing_detail_recurrence_section">Recurrence</string>
+    <string name="device_dosing_detail_recurrence">Repeat</string>
+    <string name="device_dosing_detail_save_plan">Save dosing plan</string>
+
+    <string name="device_dosing_detail_recovery_status_section">Compensation status</string>
+    <string name="device_dosing_detail_missed_compensation">Missed dose compensation</string>
+    <string name="device_dosing_detail_missed_compensation_description">Carries an eligible missed amount into a later safe window.</string>
+    <string name="device_dosing_detail_recovery_policy_section">Recovery policy</string>
+    <string name="device_dosing_detail_recovery_window">Recovery window</string>
+    <string name="device_dosing_detail_next_safe_window">Next safe window</string>
+    <string name="device_dosing_detail_recovery_window_description">Recovery waits for the next valid schedule opportunity.</string>
+    <string name="device_dosing_detail_max_recovery">Maximum recovery</string>
+    <string name="device_dosing_detail_save_recovery">Save recovery policy</string>
+
+    <string name="device_dosing_detail_calibration_status_section">Calibration status</string>
+    <string name="device_dosing_detail_last_calibrated">Last calibrated</string>
+    <string name="device_dosing_detail_not_calibrated">Not calibrated</string>
+    <string name="device_dosing_detail_flow_accuracy">Flow accuracy</string>
+    <string name="device_dosing_detail_value_unavailable">—</string>
+    <string name="device_dosing_detail_calibration_flow_section">Calibration flow</string>
+    <string name="device_dosing_detail_guided_calibration">Guided calibration</string>
+    <string name="device_dosing_detail_six_steps">6 steps</string>
+    <string name="device_dosing_detail_guided_calibration_description">Prime, measure and verify the selected channel in a focused flow.</string>
+    <string name="device_dosing_detail_start_recalibration">Start recalibration</string>
+
+    <string name="device_dosing_detail_reservoir_volume_section">Container volume</string>
+    <string name="device_dosing_detail_container_volume">Container capacity</string>
+    <string name="device_dosing_detail_available_volume">Available volume</string>
+    <string name="device_dosing_detail_value_container_ml">450.0 ml</string>
+    <string name="device_dosing_detail_reservoir_alerts_section">Supply alerts</string>
+    <string name="device_dosing_detail_low_level_alert">Low-level alert</string>
+    <string name="device_dosing_detail_low_level_alert_description">Warns before the available liquid reaches the configured limit.</string>
+    <string name="device_dosing_detail_alert_threshold">Alert threshold</string>
+    <string name="device_dosing_detail_value_twenty_percent" formatted="false">20%</string>
+    <string name="device_dosing_detail_save_reservoir">Save reservoir settings</string>
+
+    <string name="device_dosing_detail_manual_amount_section">Manual amount</string>
+    <string name="device_dosing_detail_manual_amount">Dose amount</string>
+    <string name="device_dosing_detail_manual_amount_description">A precise one-time amount for the selected channel.</string>
+    <string name="device_dosing_detail_single_dose_limit">Single-dose limit</string>
+    <string name="device_dosing_detail_value_ten_ml">10.00 ml</string>
+    <string name="device_dosing_detail_manual_safety_section">Delivery safety</string>
+    <string name="device_dosing_detail_delivery_mode">Delivery mode</string>
+    <string name="device_dosing_detail_one_time_dose">One-time dose</string>
+    <string name="device_dosing_detail_delivery_mode_description">The pump runs only after explicit confirmation.</string>
+    <string name="device_dosing_detail_dispense_dose">Dispense dose</string>
+
+    <string name="device_dosing_detail_reset_warning_title">Reset this dosing channel?</string>
+    <string name="device_dosing_detail_reset_warning_description">This destructive action will require confirmation when device operations are connected.</string>
+    <string name="device_dosing_detail_reset_scope_section">Reset scope</string>
+    <string name="device_dosing_detail_schedule_data">Schedule data</string>
+    <string name="device_dosing_detail_calibration_data">Calibration data</string>
+    <string name="device_dosing_detail_reservoir_data">Reservoir data</string>
+    <string name="device_dosing_detail_will_be_cleared">Will be cleared</string>
+    <string name="device_dosing_detail_reset_action">Reset channel</string>
+
     <string name="device_dosing_calibration_step_progress">Step %1$d of %2$d</string>
     <string name="device_dosing_calibration_name_title">Identify this dosing channel</string>
     <string name="device_dosing_calibration_name_description">Enter the nutrient or additive used on this channel. AquaLight will show this name in dosing schedules and alerts.</string>

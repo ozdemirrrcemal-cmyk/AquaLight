@@ -49,6 +49,83 @@
     <string name="device_dosing_detail_reset_title">Kanalı sıfırla</string>
     <string name="device_dosing_detail_reset_description">Bu kanalın dozaj yapılandırmasını temizleyin.</string>
 
+    <string name="device_dosing_detail_preview_label">Arayüz önizlemesi</string>
+    <string name="device_dosing_detail_preview_description">Navigasyon ve alan yapısı hazır. Cihaz değerleri ve işlemler sonraki aşamada bağlanacak.</string>
+    <string name="device_dosing_detail_action_preview_note">Yalnızca önizleme — cihaz işlemleri henüz bağlı değil.</string>
+    <string name="device_dosing_detail_state_on">Açık</string>
+    <string name="device_dosing_detail_state_off">Kapalı</string>
+    <string name="device_dosing_detail_toggle_description">Önizleme anahtarı, %1$s</string>
+
+    <string name="device_dosing_detail_schedule_status_section">Program durumu</string>
+    <string name="device_dosing_detail_activate_schedule">Programı etkinleştir</string>
+    <string name="device_dosing_detail_activate_schedule_description">Bu kanalın günlük dozaj rutinini kullanıma açar.</string>
+    <string name="device_dosing_detail_amount_section">Doz miktarı</string>
+    <string name="device_dosing_detail_daily_dose">Günlük doz</string>
+    <string name="device_dosing_detail_daily_dose_description">Seçilen güne dağıtılacak toplam miktar.</string>
+    <string name="device_dosing_detail_value_zero_ml">0,00 ml</string>
+    <string name="device_dosing_detail_schedule_section">Dozaj zamanlaması</string>
+    <string name="device_dosing_detail_schedule_mode">Dağıtım biçimi</string>
+    <string name="device_dosing_detail_schedule_single">Tek sefer</string>
+    <string name="device_dosing_detail_schedule_hourly">24 saate eşit</string>
+    <string name="device_dosing_detail_schedule_custom">Özel aralıklar</string>
+    <string name="device_dosing_detail_timer">Zaman</string>
+    <string name="device_dosing_detail_value_unset_time">--:--</string>
+    <string name="device_dosing_detail_recurrence_section">Tekrar</string>
+    <string name="device_dosing_detail_recurrence">Yineleme</string>
+    <string name="device_dosing_detail_save_plan">Dozaj planını kaydet</string>
+
+    <string name="device_dosing_detail_recovery_status_section">Telafi durumu</string>
+    <string name="device_dosing_detail_missed_compensation">Kaçırılan doz telafisi</string>
+    <string name="device_dosing_detail_missed_compensation_description">Uygun kaçırılmış miktarı daha sonraki güvenli aralığa taşır.</string>
+    <string name="device_dosing_detail_recovery_policy_section">Telafi politikası</string>
+    <string name="device_dosing_detail_recovery_window">Telafi aralığı</string>
+    <string name="device_dosing_detail_next_safe_window">Sonraki güvenli aralık</string>
+    <string name="device_dosing_detail_recovery_window_description">Telafi, bir sonraki geçerli program fırsatını bekler.</string>
+    <string name="device_dosing_detail_max_recovery">En yüksek telafi</string>
+    <string name="device_dosing_detail_save_recovery">Telafi politikasını kaydet</string>
+
+    <string name="device_dosing_detail_calibration_status_section">Kalibrasyon durumu</string>
+    <string name="device_dosing_detail_last_calibrated">Son kalibrasyon</string>
+    <string name="device_dosing_detail_not_calibrated">Kalibre edilmedi</string>
+    <string name="device_dosing_detail_flow_accuracy">Akış doğruluğu</string>
+    <string name="device_dosing_detail_value_unavailable">—</string>
+    <string name="device_dosing_detail_calibration_flow_section">Kalibrasyon akışı</string>
+    <string name="device_dosing_detail_guided_calibration">Yönlendirmeli kalibrasyon</string>
+    <string name="device_dosing_detail_six_steps">6 adım</string>
+    <string name="device_dosing_detail_guided_calibration_description">Seçili kanalı odaklı bir akışta doldurun, ölçün ve doğrulayın.</string>
+    <string name="device_dosing_detail_start_recalibration">Yeniden kalibrasyonu başlat</string>
+
+    <string name="device_dosing_detail_reservoir_volume_section">Kap hacmi</string>
+    <string name="device_dosing_detail_container_volume">Kap kapasitesi</string>
+    <string name="device_dosing_detail_available_volume">Kullanılabilir hacim</string>
+    <string name="device_dosing_detail_value_container_ml">450,0 ml</string>
+    <string name="device_dosing_detail_reservoir_alerts_section">Sıvı uyarıları</string>
+    <string name="device_dosing_detail_low_level_alert">Düşük seviye uyarısı</string>
+    <string name="device_dosing_detail_low_level_alert_description">Kullanılabilir sıvı belirlenen sınıra ulaşmadan önce uyarır.</string>
+    <string name="device_dosing_detail_alert_threshold">Uyarı eşiği</string>
+    <string name="device_dosing_detail_value_twenty_percent" formatted="false">%20</string>
+    <string name="device_dosing_detail_save_reservoir">Hazne ayarlarını kaydet</string>
+
+    <string name="device_dosing_detail_manual_amount_section">Manuel miktar</string>
+    <string name="device_dosing_detail_manual_amount">Doz miktarı</string>
+    <string name="device_dosing_detail_manual_amount_description">Seçili kanal için hassas, tek seferlik miktar.</string>
+    <string name="device_dosing_detail_single_dose_limit">Tek doz sınırı</string>
+    <string name="device_dosing_detail_value_ten_ml">10,00 ml</string>
+    <string name="device_dosing_detail_manual_safety_section">Uygulama güvenliği</string>
+    <string name="device_dosing_detail_delivery_mode">Uygulama biçimi</string>
+    <string name="device_dosing_detail_one_time_dose">Tek seferlik doz</string>
+    <string name="device_dosing_detail_delivery_mode_description">Pompa yalnızca açık onaydan sonra çalışır.</string>
+    <string name="device_dosing_detail_dispense_dose">Dozu uygula</string>
+
+    <string name="device_dosing_detail_reset_warning_title">Bu dozaj kanalı sıfırlansın mı?</string>
+    <string name="device_dosing_detail_reset_warning_description">Bu yıkıcı işlem, cihaz işlemleri bağlandığında ayrıca onay gerektirecek.</string>
+    <string name="device_dosing_detail_reset_scope_section">Sıfırlama kapsamı</string>
+    <string name="device_dosing_detail_schedule_data">Program verileri</string>
+    <string name="device_dosing_detail_calibration_data">Kalibrasyon verileri</string>
+    <string name="device_dosing_detail_reservoir_data">Hazne verileri</string>
+    <string name="device_dosing_detail_will_be_cleared">Temizlenecek</string>
+    <string name="device_dosing_detail_reset_action">Kanalı sıfırla</string>
+
     <string name="device_dosing_calibration_step_progress">%1$d. adım / %2$d</string>
     <string name="device_dosing_calibration_name_title">Dozaj kanalını tanımlayın</string>
     <string name="device_dosing_calibration_name_description">Bu kanalda kullandığınız besin veya katkının adını girin. AquaLight, dozaj planlarında ve uyarılarda bu adı gösterecek.</string>

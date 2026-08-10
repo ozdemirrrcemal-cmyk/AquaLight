@@ -27,4 +27,14 @@ class DosingDetailMenuCatalogTest {
                 DosingDetailMenuItem.RESET_CHANNEL
         )
     }
+
+    @Test
+    fun `every menu entry has a unique round trip route key`() {
+        val routeKeys = DosingDetailMenuItem.entries.map(DosingDetailMenuItem::routeKey)
+
+        assertEquals(routeKeys.size, routeKeys.distinct().size)
+        DosingDetailMenuItem.entries.forEach { item ->
+            assertEquals(item, DosingDetailMenuItem.fromRouteKey(item.routeKey))
+        }
+    }
 }
