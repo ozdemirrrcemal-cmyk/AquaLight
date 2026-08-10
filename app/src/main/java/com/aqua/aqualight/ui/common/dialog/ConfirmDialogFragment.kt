@@ -34,6 +34,7 @@ class ConfirmDialogFragment : DialogFragment() {
         configureContent(
             binding = binding,
             type = type,
+            destructive = args.getBoolean(ARG_DESTRUCTIVE),
             title = args.getString(ARG_TITLE).orEmpty(),
             message = args.getString(ARG_MESSAGE).orEmpty(),
             confirmText = args.getString(ARG_CONFIRM_TEXT).orEmpty(),
@@ -69,6 +70,7 @@ class ConfirmDialogFragment : DialogFragment() {
     private fun configureContent(
         binding: BottomSheetDeviceConfirmBinding,
         type: DialogType,
+        destructive: Boolean,
         title: String,
         message: String,
         confirmText: String,
@@ -102,7 +104,7 @@ class ConfirmDialogFragment : DialogFragment() {
         binding.btnConfirmPrimary.text = confirmText
         binding.btnConfirmCancel.text = cancelText
 
-        if (type != DialogType.ERROR) {
+        if (!destructive) {
             binding.btnConfirmPrimary.backgroundTintList = ColorStateList.valueOf(
                 ContextCompat.getColor(requireContext(), R.color.aqua_bottom_sheet_primary)
             )
@@ -147,6 +149,7 @@ class ConfirmDialogFragment : DialogFragment() {
         private const val ARG_CONFIRM_TEXT = "arg_confirm_text"
         private const val ARG_CANCEL_TEXT = "arg_cancel_text"
         private const val ARG_TYPE = "arg_type"
+        private const val ARG_DESTRUCTIVE = "arg_destructive"
         private const val ARG_REQUEST_KEY = "arg_request_key"
         private const val ARG_ACTION_ID = "arg_action_id"
         private const val TAG_PREFIX = "ConfirmDialogFragment:"
@@ -158,7 +161,8 @@ class ConfirmDialogFragment : DialogFragment() {
             cancelText: String,
             type: DialogType,
             requestKey: String,
-            actionId: String = ""
+            actionId: String = "",
+            destructive: Boolean = false
         ): ConfirmDialogFragment {
             return ConfirmDialogFragment().apply {
                 arguments = bundleOf(
@@ -167,6 +171,7 @@ class ConfirmDialogFragment : DialogFragment() {
                     ARG_CONFIRM_TEXT to confirmText,
                     ARG_CANCEL_TEXT to cancelText,
                     ARG_TYPE to type.name,
+                    ARG_DESTRUCTIVE to destructive,
                     ARG_REQUEST_KEY to requestKey,
                     ARG_ACTION_ID to actionId
                 )
@@ -181,7 +186,8 @@ class ConfirmDialogFragment : DialogFragment() {
             cancelText: String,
             type: DialogType,
             requestKey: String,
-            actionId: String = ""
+            actionId: String = "",
+            destructive: Boolean = false
         ) {
             val tag = TAG_PREFIX + requestKey
             if (fragmentManager.findFragmentByTag(tag) != null || fragmentManager.isStateSaved) {
@@ -195,7 +201,8 @@ class ConfirmDialogFragment : DialogFragment() {
                 cancelText = cancelText,
                 type = type,
                 requestKey = requestKey,
-                actionId = actionId
+                actionId = actionId,
+                destructive = destructive
             ).show(fragmentManager, tag)
         }
     }
