@@ -21,7 +21,9 @@ import com.aqua.aqualight.ui.common.bottomsheet.TextInputBottomSheet
 import com.aqua.aqualight.ui.common.bottomsheet.ThemeBottomSheet
 import com.aqua.aqualight.ui.common.dialog.AppDatePickerDialogFragment
 import com.aqua.aqualight.ui.common.dialog.AppTimePickerDialogFragment
+import com.aqua.aqualight.ui.common.dialog.ConfirmDialogFragment
 import com.aqua.aqualight.ui.common.permission.CapabilityPermissionBottomSheet
+import com.aqua.aqualight.utils.DialogType
 import org.junit.Assert.assertArrayEquals
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNotNull
@@ -33,7 +35,7 @@ import org.junit.runner.RunWith
 class ProcessSafeFeedbackInstrumentedTest {
 
     @Test
-    fun fragmentSheetsExposeNoArgumentConstructors() {
+    fun fragmentDialogsExposeNoArgumentConstructors() {
         val sheetClasses = listOf(
             ThemeBottomSheet::class.java,
             PhotoSourceBottomSheet::class.java,
@@ -47,6 +49,7 @@ class ProcessSafeFeedbackInstrumentedTest {
             CareProfileBottomSheet::class.java,
             AppDatePickerDialogFragment::class.java,
             AppTimePickerDialogFragment::class.java,
+            ConfirmDialogFragment::class.java,
             LoadingOverlayDialogFragment::class.java,
             FeedbackBottomSheet::class.java
         )
@@ -60,6 +63,20 @@ class ProcessSafeFeedbackInstrumentedTest {
     fun feedbackSheetArgumentsCanRecreateTheSameRequest() {
         val original = feedbackSheet()
         val recreated = FeedbackBottomSheet::class.java
+            .getDeclaredConstructor()
+            .newInstance()
+            .apply { arguments = Bundle(original.requireArguments()) }
+
+        assertBundlesEquivalent(
+            expected = original.requireArguments(),
+            actual = recreated.requireArguments()
+        )
+    }
+
+    @Test
+    fun confirmDialogArgumentsCanRecreateTheSameRequest() {
+        val original = confirmDialog()
+        val recreated = ConfirmDialogFragment::class.java
             .getDeclaredConstructor()
             .newInstance()
             .apply { arguments = Bundle(original.requireArguments()) }
@@ -124,6 +141,31 @@ class ProcessSafeFeedbackInstrumentedTest {
             expected = original,
             actual = recreated.requireArguments()
         )
+    }
+
+    @Test
+    fun confirmDialogSurvivesActivityRecreationWithArgumentsIntact() {
+        var expectedArguments: Bundle? = null
+        ActivityScenario.launch(Stage8DialogTestActivity::class.java).use { scenario ->
+            scenario.onActivity { activity ->
+                val dialog = confirmDialog()
+                expectedArguments = Bundle(dialog.requireArguments())
+                dialog.show(activity.supportFragmentManager, TEST_CONFIRM_TAG)
+                activity.supportFragmentManager.executePendingTransactions()
+            }
+
+            scenario.recreate()
+
+            scenario.onActivity { activity ->
+                val restored = activity.supportFragmentManager
+                    .findFragmentByTag(TEST_CONFIRM_TAG) as? ConfirmDialogFragment
+                assertNotNull(restored)
+                assertBundlesEquivalent(
+                    expected = requireNotNull(expectedArguments),
+                    actual = requireNotNull(restored).requireArguments()
+                )
+            }
+        }
     }
 
     @Test
@@ -273,7 +315,20 @@ class ProcessSafeFeedbackInstrumentedTest {
         )
     }
 
+    private fun confirmDialog(): ConfirmDialogFragment {
+        return ConfirmDialogFragment.newInstance(
+            title = "Reset channel",
+            message = "Reset all dosing configuration?",
+            confirmText = "Reset",
+            cancelText = "Cancel",
+            type = DialogType.ERROR,
+            requestKey = "test_confirm_dialog_result",
+            actionId = "channel-2"
+        )
+    }
+
     private companion object {
+        const val TEST_CONFIRM_TAG = "stage8_confirm_dialog_rotation_test"
         const val TEST_FEEDBACK_TAG = "stage8_feedback_rotation_test"
         const val TEST_TANK_EDITOR_TAG = "stage14_tank_editor_rotation_test"
     }
