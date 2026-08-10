@@ -85,6 +85,9 @@ class TextInputBottomSheet : BottomSheetDialogFragment(
         view.findViewById<TextView>(R.id.tvTextInputLabel).text =
             args.getString(ARG_LABEL).orEmpty()
         views.inputLayout.hint = args.getString(ARG_HINT).orEmpty()
+        args.getInt(ARG_INPUT_TYPE, NO_INPUT_TYPE)
+            .takeUnless { inputType -> inputType == NO_INPUT_TYPE }
+            ?.let { inputType -> views.input.inputType = inputType }
         views.input.setText(if (presetSelected) presetDisplayValue else initialValue)
         views.input.setSelection(views.input.text?.length ?: 0)
         args.getInt(ARG_MAX_LENGTH)
@@ -252,6 +255,7 @@ class TextInputBottomSheet : BottomSheetDialogFragment(
         private const val ARG_REQUEST_KEY = "arg_request_key"
         private const val ARG_PAYLOAD_ID = "arg_payload_id"
         private const val ARG_MAX_LENGTH = "arg_max_length"
+        private const val ARG_INPUT_TYPE = "arg_input_type"
         private const val ARG_DISABLE_SAVE_WHEN_UNCHANGED =
             "arg_disable_save_when_unchanged"
         private const val ARG_REQUEST_FOCUS = "arg_request_focus"
@@ -260,6 +264,7 @@ class TextInputBottomSheet : BottomSheetDialogFragment(
         private const val ARG_PRESET_RESULT_VALUE = "arg_preset_result_value"
         private const val STATE_PRESET_SELECTED = "state_preset_selected"
         private const val TAG_PREFIX = "TextInputBottomSheet:"
+        private const val NO_INPUT_TYPE = -1
 
         @Suppress("LongParameterList")
         fun show(
@@ -277,6 +282,7 @@ class TextInputBottomSheet : BottomSheetDialogFragment(
             requestKey: String,
             payloadId: String = "",
             maxLength: Int = 0,
+            inputType: Int = NO_INPUT_TYPE,
             disableSaveWhenUnchanged: Boolean = false,
             requestFocus: Boolean = false,
             presetActionText: String = "",
@@ -300,6 +306,7 @@ class TextInputBottomSheet : BottomSheetDialogFragment(
                     ARG_REQUEST_KEY to requestKey,
                     ARG_PAYLOAD_ID to payloadId,
                     ARG_MAX_LENGTH to maxLength,
+                    ARG_INPUT_TYPE to inputType,
                     ARG_DISABLE_SAVE_WHEN_UNCHANGED to disableSaveWhenUnchanged,
                     ARG_REQUEST_FOCUS to requestFocus,
                     ARG_PRESET_ACTION_TEXT to presetActionText,
