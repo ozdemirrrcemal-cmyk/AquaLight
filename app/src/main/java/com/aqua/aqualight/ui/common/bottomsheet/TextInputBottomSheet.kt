@@ -32,6 +32,10 @@ class TextInputBottomSheet : BottomSheetDialogFragment(
         val initialValue = args.getString(ARG_INITIAL_VALUE).orEmpty()
         val required = args.getBoolean(ARG_REQUIRED)
         val disableSaveWhenUnchanged = args.getBoolean(ARG_DISABLE_SAVE_WHEN_UNCHANGED)
+        val minimumNumericValueExclusive = args.getDouble(
+            ARG_MINIMUM_NUMERIC_VALUE_EXCLUSIVE,
+            NO_MINIMUM_NUMERIC_VALUE
+        )
         val presetActionText = args.getString(ARG_PRESET_ACTION_TEXT).orEmpty()
         val presetDisplayValue = args.getString(ARG_PRESET_DISPLAY_VALUE).orEmpty()
         val presetResultValue = args.getString(ARG_PRESET_RESULT_VALUE).orEmpty()
@@ -41,7 +45,8 @@ class TextInputBottomSheet : BottomSheetDialogFragment(
                 views = views,
                 required = required,
                 disableSaveWhenUnchanged = disableSaveWhenUnchanged,
-                initialValue = initialValue
+                initialValue = initialValue,
+                minimumNumericValueExclusive = minimumNumericValueExclusive
             )
         }
 
@@ -85,6 +90,10 @@ class TextInputBottomSheet : BottomSheetDialogFragment(
         view.findViewById<TextView>(R.id.tvTextInputLabel).text =
             args.getString(ARG_LABEL).orEmpty()
         views.inputLayout.hint = args.getString(ARG_HINT).orEmpty()
+        views.inputLayout.helperText = args.getString(ARG_SUPPORTING_TEXT)
+            ?.takeIf(String::isNotBlank)
+        views.inputLayout.suffixText = args.getString(ARG_SUFFIX_TEXT)
+            ?.takeIf(String::isNotBlank)
         args.getInt(ARG_INPUT_TYPE, NO_INPUT_TYPE)
             .takeUnless { inputType -> inputType == NO_INPUT_TYPE }
             ?.let { inputType -> views.input.inputType = inputType }
@@ -178,14 +187,19 @@ class TextInputBottomSheet : BottomSheetDialogFragment(
         views: TextInputViews,
         required: Boolean,
         disableSaveWhenUnchanged: Boolean,
-        initialValue: String
+        initialValue: String,
+        minimumNumericValueExclusive: Double
     ) {
         val displayedValue = views.input.text?.toString()?.trim().orEmpty()
-        val hasRequiredValue = !required || displayedValue.isNotBlank()
+        val hasValidValue = isTextInputValueValid(
+            value = displayedValue,
+            required = required,
+            minimumNumericValueExclusive = minimumNumericValueExclusive
+        )
         val hasChanged = !disableSaveWhenUnchanged ||
             presetSelected ||
             displayedValue != initialValue.trim()
-        views.saveButton.isEnabled = hasRequiredValue && hasChanged
+        views.saveButton.isEnabled = hasValidValue && hasChanged
     }
 
     private fun requestFocusIfNeeded(
@@ -245,6 +259,8 @@ class TextInputBottomSheet : BottomSheetDialogFragment(
         private const val ARG_TITLE = "arg_title"
         private const val ARG_LABEL = "arg_label"
         private const val ARG_HINT = "arg_hint"
+        private const val ARG_SUPPORTING_TEXT = "arg_supporting_text"
+        private const val ARG_SUFFIX_TEXT = "arg_suffix_text"
         private const val ARG_INITIAL_VALUE = "arg_initial_value"
         private const val ARG_SECONDARY_LABEL = "arg_secondary_label"
         private const val ARG_SECONDARY_VALUE = "arg_secondary_value"
@@ -256,6 +272,8 @@ class TextInputBottomSheet : BottomSheetDialogFragment(
         private const val ARG_PAYLOAD_ID = "arg_payload_id"
         private const val ARG_MAX_LENGTH = "arg_max_length"
         private const val ARG_INPUT_TYPE = "arg_input_type"
+        private const val ARG_MINIMUM_NUMERIC_VALUE_EXCLUSIVE =
+            "arg_minimum_numeric_value_exclusive"
         private const val ARG_DISABLE_SAVE_WHEN_UNCHANGED =
             "arg_disable_save_when_unchanged"
         private const val ARG_REQUEST_FOCUS = "arg_request_focus"
@@ -265,6 +283,7 @@ class TextInputBottomSheet : BottomSheetDialogFragment(
         private const val STATE_PRESET_SELECTED = "state_preset_selected"
         private const val TAG_PREFIX = "TextInputBottomSheet:"
         private const val NO_INPUT_TYPE = -1
+        private val NO_MINIMUM_NUMERIC_VALUE = Double.NaN
 
         @Suppress("LongParameterList")
         fun show(
@@ -273,6 +292,8 @@ class TextInputBottomSheet : BottomSheetDialogFragment(
             label: String,
             hint: String,
             initialValue: String,
+            supportingText: String = "",
+            suffixText: String = "",
             secondaryLabel: String = "",
             secondaryValue: String = "",
             saveText: String,
@@ -283,6 +304,7 @@ class TextInputBottomSheet : BottomSheetDialogFragment(
             payloadId: String = "",
             maxLength: Int = 0,
             inputType: Int = NO_INPUT_TYPE,
+            minimumNumericValueExclusive: Double = NO_MINIMUM_NUMERIC_VALUE,
             disableSaveWhenUnchanged: Boolean = false,
             requestFocus: Boolean = false,
             presetActionText: String = "",
@@ -296,6 +318,8 @@ class TextInputBottomSheet : BottomSheetDialogFragment(
                     ARG_TITLE to title,
                     ARG_LABEL to label,
                     ARG_HINT to hint,
+                    ARG_SUPPORTING_TEXT to supportingText,
+                    ARG_SUFFIX_TEXT to suffixText,
                     ARG_INITIAL_VALUE to initialValue,
                     ARG_SECONDARY_LABEL to secondaryLabel,
                     ARG_SECONDARY_VALUE to secondaryValue,
@@ -307,6 +331,7 @@ class TextInputBottomSheet : BottomSheetDialogFragment(
                     ARG_PAYLOAD_ID to payloadId,
                     ARG_MAX_LENGTH to maxLength,
                     ARG_INPUT_TYPE to inputType,
+                    ARG_MINIMUM_NUMERIC_VALUE_EXCLUSIVE to minimumNumericValueExclusive,
                     ARG_DISABLE_SAVE_WHEN_UNCHANGED to disableSaveWhenUnchanged,
                     ARG_REQUEST_FOCUS to requestFocus,
                     ARG_PRESET_ACTION_TEXT to presetActionText,
@@ -323,3 +348,14 @@ internal fun resolveTextInputResultValue(
     presetSelected: Boolean,
     presetResultValue: String
 ): String = if (presetSelected) presetResultValue else typedValue.trim()
+
+internal fun isTextInputValueValid(
+    value: String,
+    required: Boolean,
+    minimumNumericValueExclusive: Double = Double.NaN
+): Boolean {
+    if (required && value.isBlank()) return false
+    if (minimumNumericValueExclusive.isNaN()) return true
+    val numericValue = value.trim().replace(',', '.').toDoubleOrNull() ?: return false
+    return numericValue > minimumNumericValueExclusive
+}
