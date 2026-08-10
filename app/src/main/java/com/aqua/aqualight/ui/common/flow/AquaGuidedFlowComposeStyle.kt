@@ -26,6 +26,7 @@ import androidx.compose.ui.text.font.Font
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.aqua.aqualight.R
@@ -158,7 +159,8 @@ fun AquaGuidedFlowButton(
     onClick: () -> Unit,
     modifier: Modifier = Modifier,
     enabled: Boolean = true,
-    secondary: Boolean = false
+    secondary: Boolean = false,
+    singleLineCompact: Boolean = false
 ) {
     val colors = aquaGuidedFlowColors()
     val typography = aquaGuidedFlowTypography(colors)
@@ -187,9 +189,22 @@ fun AquaGuidedFlowButton(
                 role = Role.Button,
                 onClick = onClick
             )
-            .padding(horizontal = 18.dp, vertical = 14.dp),
+            .padding(
+                horizontal = if (singleLineCompact) 8.dp else 18.dp,
+                vertical = 14.dp
+            ),
         contentAlignment = Alignment.Center
     ) {
-        BasicText(text = text, style = typography.button.copy(color = content))
+        BasicText(
+            text = text,
+            style = typography.button.copy(
+                color = content,
+                fontSize = if (singleLineCompact) 14.sp else typography.button.fontSize,
+                lineHeight = if (singleLineCompact) 18.sp else typography.button.lineHeight
+            ),
+            overflow = if (singleLineCompact) TextOverflow.Ellipsis else TextOverflow.Clip,
+            softWrap = !singleLineCompact,
+            maxLines = if (singleLineCompact) 1 else Int.MAX_VALUE
+        )
     }
 }
