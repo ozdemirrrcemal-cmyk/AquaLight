@@ -111,7 +111,7 @@ class DeviceDosingChannelDetailFragment :
             payloadId = MANUAL_DOSE_PAYLOAD_ID,
             maxLength = MANUAL_DOSE_MAX_LENGTH,
             inputType = InputType.TYPE_CLASS_NUMBER or InputType.TYPE_NUMBER_FLAG_DECIMAL,
-            minimumNumericValueExclusive = 0.0,
+            minimumNumericValueExclusive = MANUAL_DOSE_MINIMUM_EXCLUSIVE,
             requestFocus = true
         )
     }
@@ -140,6 +140,7 @@ class DeviceDosingChannelDetailFragment :
         const val MANUAL_DOSE_REQUEST_KEY = "dosing_manual_dose_input"
         const val MANUAL_DOSE_PAYLOAD_ID = "manual_dose"
         const val MANUAL_DOSE_MAX_LENGTH = 7
+        const val MANUAL_DOSE_MINIMUM_EXCLUSIVE = 0.0
         const val RESET_CONFIRM_REQUEST_KEY = "dosing_channel_reset_confirm"
         const val ACTION_RESET_CHANNEL = "reset_dosing_channel"
     }
