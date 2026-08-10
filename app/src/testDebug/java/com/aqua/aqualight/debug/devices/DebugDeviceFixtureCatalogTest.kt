@@ -1,5 +1,6 @@
 package com.aqua.aqualight.debug.devices
 
+import com.aqua.aqualight.application.devices.DeviceDosingCalibrationResult
 import com.aqua.aqualight.application.devices.DeviceDosingChannelDestination
 import com.aqua.aqualight.application.devices.DeviceDosingChannelNavigationOperations
 import com.aqua.aqualight.application.devices.DeviceDosingChannelNavigationTarget
@@ -9,6 +10,7 @@ import com.aqua.aqualight.application.devices.DeviceMenuUnavailableReason
 import com.aqua.aqualight.application.devices.DeviceRootCatalogState
 import com.aqua.aqualight.application.devices.OwnerDeviceAvailability
 import com.aqua.aqualight.data.devices.catalog.AqlCommercialDeviceCatalog
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.test.runTest
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
@@ -89,12 +91,12 @@ class DebugDeviceFixtureCatalogTest {
     }
 
     @Test
-    fun fixtureDosingChannelOpensCalibrationWithoutCallingRuntimeDelegate() = runTest {
+    fun fixtureDosingDeviceExposesCalibrationAndDetailWithoutRuntimeDelegate() = runTest {
         val fixtures = DebugDeviceFixtureCatalog()
         val dosingRoot = fixtures.snapshots
             .mapNotNull { snapshot -> fixtures.rootSnapshot(snapshot.deviceUid.value) }
-            .first { root -> root.channelSlots.dosingChannels.isNotEmpty() }
-        val channel = dosingRoot.channelSlots.dosingChannels.first()
+            .first { root -> root.channelSlots.dosingChannels.size >= 2 }
+        val stateStore = DebugFixtureDosingStateStore(fixtures)
         val operations = DebugFixtureDosingChannelNavigationOperations(
             delegate = object : DeviceDosingChannelNavigationOperations {
                 override suspend fun resolve(
@@ -104,15 +106,67 @@ class DebugDeviceFixtureCatalogTest {
                     error("Fixture navigation must not call the physical runtime delegate.")
                 }
             },
-            fixtures = fixtures
+            fixtures = fixtures,
+            stateStore = stateStore
+        )
+
+        val firstChannel = dosingRoot.channelSlots.dosingChannels[0]
+        val secondChannel = dosingRoot.channelSlots.dosingChannels[1]
+        val firstTarget = requireNotNull(
+            operations.resolve(dosingRoot.deviceUid, firstChannel.id.value)
+        )
+        val secondTarget = requireNotNull(
+            operations.resolve(dosingRoot.deviceUid, secondChannel.id.value)
+        )
+        val observedTargets = operations.observeTargets(dosingRoot.deviceUid).first()
+
+        assertEquals(DeviceDosingChannelDestination.CALIBRATION, firstTarget.destination)
+        assertEquals(DeviceDosingChannelDestination.DETAIL, secondTarget.destination)
+        assertEquals(
+            setOf(
+                DeviceDosingChannelDestination.CALIBRATION,
+                DeviceDosingChannelDestination.DETAIL
+            ),
+            observedTargets.map { target -> target.destination }.toSet()
+        )
+    }
+
+    @Test
+    fun fixtureCalibrationCompletionPromotesChannelToDetail() = runTest {
+        val fixtures = DebugDeviceFixtureCatalog()
+        val dosingRoot = fixtures.snapshots
+            .mapNotNull { snapshot -> fixtures.rootSnapshot(snapshot.deviceUid.value) }
+            .first { root -> root.channelSlots.dosingChannels.isNotEmpty() }
+        val channel = dosingRoot.channelSlots.dosingChannels.first()
+        val stateStore = DebugFixtureDosingStateStore(fixtures)
+        val operations = DebugFixtureDosingChannelNavigationOperations(
+            delegate = DeviceDosingChannelNavigationOperations { _, _ -> null },
+            fixtures = fixtures,
+            stateStore = stateStore
+        )
+
+        assertTrue(stateStore.start(dosingRoot.deviceUid, channel.id.value) is DeviceDosingCalibrationResult.Success)
+        assertTrue(
+            stateStore.finish(dosingRoot.deviceUid, channel.id.value, 4.0) is
+                DeviceDosingCalibrationResult.Success
+        )
+        assertTrue(
+            stateStore.startVerificationDose(dosingRoot.deviceUid, channel.id.value) is
+                DeviceDosingCalibrationResult.Success
+        )
+        assertTrue(
+            stateStore.refresh(dosingRoot.deviceUid, channel.id.value) is
+                DeviceDosingCalibrationResult.Success
+        )
+        assertTrue(
+            stateStore.confirm(dosingRoot.deviceUid, channel.id.value) is
+                DeviceDosingCalibrationResult.Success
         )
 
         val result = operations.resolve(dosingRoot.deviceUid, channel.id.value)
 
         requireNotNull(result)
-        assertEquals(DeviceDosingChannelDestination.CALIBRATION, result.destination)
-        assertEquals(channel.id.value, result.slotId)
-        assertEquals(channel.defaultDisplayName, result.channelTitle)
+        assertEquals(DeviceDosingChannelDestination.DETAIL, result.destination)
     }
 
     @Test
@@ -125,9 +179,11 @@ class DebugDeviceFixtureCatalogTest {
             channelTitle = "Nutrients",
             destination = DeviceDosingChannelDestination.DETAIL
         )
+        val fixtures = DebugDeviceFixtureCatalog()
         val operations = DebugFixtureDosingChannelNavigationOperations(
             delegate = DeviceDosingChannelNavigationOperations { _, _ -> expected },
-            fixtures = DebugDeviceFixtureCatalog()
+            fixtures = fixtures,
+            stateStore = DebugFixtureDosingStateStore(fixtures)
         )
 
         val result = operations.resolve(expected.deviceUid, expected.slotId)
