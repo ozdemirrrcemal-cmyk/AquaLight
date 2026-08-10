@@ -101,7 +101,7 @@
     <string name="device_dosing_detail_manual_amount">Doz miktarı</string>
     <string name="device_dosing_detail_manual_amount_hint">Örn. 2,50</string>
     <string name="device_dosing_detail_manual_amount_description">Seçili kanala tek seferlik uygulanacak miktarı girin.</string>
-    <string name="device_dosing_detail_manual_amount_required">0 ml'den büyük bir doz miktarı girin.</string>
+    <string name="device_dosing_detail_manual_amount_required">0 ml’den büyük bir doz miktarı girin.</string>
     <string name="device_dosing_detail_ml_unit">ml</string>
     <string name="device_dosing_detail_dispense_dose">Dozu Uygula</string>
 
