@@ -98,16 +98,12 @@
     <string name="device_dosing_detail_low_level_alert_description" formatted="false">Sends a notification when available liquid falls to 10 percent or less of container capacity.</string>
     <string name="device_dosing_detail_save_reservoir">Save reservoir settings</string>
 
-    <string name="device_dosing_detail_manual_amount_section">Manual amount</string>
     <string name="device_dosing_detail_manual_amount">Dose amount</string>
-    <string name="device_dosing_detail_manual_amount_description">A precise one-time amount for the selected channel.</string>
-    <string name="device_dosing_detail_single_dose_limit">Single-dose limit</string>
-    <string name="device_dosing_detail_value_ten_ml">10.00 ml</string>
-    <string name="device_dosing_detail_manual_safety_section">Delivery safety</string>
-    <string name="device_dosing_detail_delivery_mode">Delivery mode</string>
-    <string name="device_dosing_detail_one_time_dose">One-time dose</string>
-    <string name="device_dosing_detail_delivery_mode_description">The pump runs only after explicit confirmation.</string>
-    <string name="device_dosing_detail_dispense_dose">Dispense dose</string>
+    <string name="device_dosing_detail_manual_amount_hint">e.g. 2.50</string>
+    <string name="device_dosing_detail_manual_amount_description">Enter the one-time amount to apply to the selected channel.</string>
+    <string name="device_dosing_detail_manual_amount_required">Enter a dose amount greater than 0 ml.</string>
+    <string name="device_dosing_detail_ml_unit">ml</string>
+    <string name="device_dosing_detail_dispense_dose">Dispense Dose</string>
 
     <string name="device_dosing_detail_reset_warning_title">Reset this dosing channel?</string>
     <string name="device_dosing_detail_reset_warning_description">This action permanently clears all dosing configuration for this channel.</string>
