@@ -199,7 +199,8 @@ fun AquaDeviceMenuSectionSurface(
 fun AquaDeviceMenuRow(
     content: AquaDeviceMenuRowContent,
     modifier: Modifier = Modifier,
-    onClick: (() -> Unit)? = null
+    onClick: (() -> Unit)? = null,
+    showTrailingIcon: Boolean = true
 ) {
     val colors = aquaDeviceMenuColors()
     val typography = aquaDeviceMenuTypography(colors)
@@ -240,15 +241,17 @@ fun AquaDeviceMenuRow(
             typography = typography,
             modifier = Modifier.weight(1f)
         )
-        DeviceMenuIcon(
-            painter = painterResource(R.drawable.ic_arrow_right),
-            tint = if (content.tone == AquaDeviceMenuTone.DANGER) {
-                colors.danger
-            } else {
-                colors.textSecondary
-            },
-            modifier = Modifier.size(AquaDeviceMenuGeometry.trailingIconSize)
-        )
+        if (showTrailingIcon) {
+            DeviceMenuIcon(
+                painter = painterResource(R.drawable.ic_arrow_right),
+                tint = if (content.tone == AquaDeviceMenuTone.DANGER) {
+                    colors.danger
+                } else {
+                    colors.textSecondary
+                },
+                modifier = Modifier.size(AquaDeviceMenuGeometry.trailingIconSize)
+            )
+        }
     }
 }
 
