@@ -2,6 +2,7 @@ package com.aqua.aqualight.ui.tabs.devices.detail.dosing.channel.detail
 
 import android.os.Bundle
 import android.text.InputType
+import android.text.format.DateFormat
 import android.view.View
 import androidx.compose.ui.platform.ComposeView
 import androidx.compose.ui.platform.ViewCompositionStrategy
@@ -12,6 +13,8 @@ import com.aqua.aqualight.ui.common.bottomsheet.TextInputBottomSheet
 import com.aqua.aqualight.ui.common.dialog.ConfirmDialogFragment
 import com.aqua.aqualight.ui.tabs.devices.detail.dosing.channel.DeviceDosingChannelDestinationFragment
 import com.aqua.aqualight.utils.DialogType
+import java.util.Date
+import java.util.concurrent.TimeUnit
 
 /** Detail destination for one centrally identified, calibrated Dosing channel. */
 class DeviceDosingChannelDetailFragment :
@@ -25,6 +28,10 @@ class DeviceDosingChannelDetailFragment :
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
+        if (args.lastCalibratedAtEpochSeconds !in 1L..MAX_EPOCH_SECONDS) {
+            findNavController().navigateUp()
+            return
+        }
         setupManualDoseResult()
         setupResetConfirmationResult()
         setupSelectedPump(
@@ -34,11 +41,16 @@ class DeviceDosingChannelDetailFragment :
             pumpCount = args.pumpCount,
             channelNumber = args.channelNumber
         )
+        val lastCalibrationDate = formatLastCalibrationDate(
+            args.lastCalibratedAtEpochSeconds
+        )
         view.findViewById<ComposeView>(R.id.channelDetailContent).apply {
             setViewCompositionStrategy(ViewCompositionStrategy.DisposeOnViewTreeLifecycleDestroyed)
             setContent {
                 DeviceDosingChannelDetailScreen(
+                    lastCalibrationDate = lastCalibrationDate,
                     onMenuItemClick = ::openMenuItem,
+                    onRecalibrateClick = ::openRecalibration,
                     onManualDoseClick = ::showManualDoseEditor,
                     onResetChannelClick = ::showResetChannelConfirmation
                 )
@@ -94,6 +106,29 @@ class DeviceDosingChannelDetailFragment :
         )
     }
 
+    private fun openRecalibration() {
+        val navController = findNavController()
+        if (navController.currentDestination?.id != R.id.deviceDosingChannelDetailFragment) {
+            return
+        }
+        navController.navigate(
+            DeviceDosingChannelDetailFragmentDirections
+                .actionDeviceDosingChannelDetailFragmentToDeviceDosingChannelCalibrationFragment(
+                    deviceUid = args.deviceUid,
+                    slotId = args.slotId,
+                    channelTitle = args.channelTitle,
+                    pumpCount = args.pumpCount,
+                    channelNumber = args.channelNumber,
+                    recalibration = true
+                )
+        )
+    }
+
+    private fun formatLastCalibrationDate(epochSeconds: Long): String =
+        DateFormat.getMediumDateFormat(requireContext()).format(
+            Date(TimeUnit.SECONDS.toMillis(epochSeconds))
+        )
+
     private fun showManualDoseEditor() {
         TextInputBottomSheet.show(
             fragmentManager = childFragmentManager,
@@ -143,5 +178,6 @@ class DeviceDosingChannelDetailFragment :
         const val MANUAL_DOSE_MINIMUM_EXCLUSIVE = 0.0
         const val RESET_CONFIRM_REQUEST_KEY = "dosing_channel_reset_confirm"
         const val ACTION_RESET_CHANNEL = "reset_dosing_channel"
+        const val MAX_EPOCH_SECONDS = 0xFFFF_FFFFL
     }
 }

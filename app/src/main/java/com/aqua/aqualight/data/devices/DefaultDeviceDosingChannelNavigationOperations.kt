@@ -146,6 +146,7 @@ internal class DefaultDeviceDosingChannelNavigationOperations(
                     channelTitle = channel.displayName.ifBlank {
                         context.slot.defaultDisplayName
                     },
+                    lastCalibratedAtEpochSeconds = channel.dosing.lastCalibratedAt,
                     destination = destination
                 )
             }

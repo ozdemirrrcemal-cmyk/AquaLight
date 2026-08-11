@@ -11,6 +11,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.withTimeoutOrNull
 import kotlinx.coroutines.test.StandardTestDispatcher
 import kotlinx.coroutines.test.advanceUntilIdle
 import kotlinx.coroutines.test.resetMain
@@ -20,6 +21,7 @@ import kotlinx.coroutines.test.setMain
 import org.junit.After
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
+import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
@@ -96,6 +98,7 @@ class DeviceDosingChannelCalibrationViewModelTest {
 
             assertEquals(DeviceDosingChannelDestination.DETAIL, event.target.destination)
             assertEquals("channel-1", event.target.slotId)
+            assertEquals(100L, event.target.lastCalibratedAtEpochSeconds)
             assertEquals(1, operations.confirms)
         }
 
@@ -116,6 +119,24 @@ class DeviceDosingChannelCalibrationViewModelTest {
         assertEquals(DeviceDosingChannelDestination.DETAIL, event.target.destination)
         assertEquals(0, operations.confirms)
     }
+
+    @Test
+    fun `calibrated channel remains in flow when recalibration is requested`() =
+        runTest(dispatcher) {
+            val operations = FakeCalibrationOperations(
+                snapshot(
+                    phase = DeviceDosingCalibrationSessionPhase.IDLE,
+                    calibrated = true
+                )
+            )
+            val viewModel = viewModel(operations)
+
+            bind(viewModel, recalibration = true)
+            advanceUntilIdle()
+
+            assertEquals(DeviceDosingCalibrationStep.NAME, viewModel.uiState.value.step)
+            assertNull(withTimeoutOrNull(1L) { viewModel.events.first() })
+        }
 
     @Test
     fun `exiting an active verification stops dose then discards pending session`() =
@@ -147,13 +168,17 @@ class DeviceDosingChannelCalibrationViewModelTest {
             clock = DeviceDosingCalibrationClock { dispatcher.scheduler.currentTime }
         )
 
-    private fun bind(viewModel: DeviceDosingChannelCalibrationViewModel) {
+    private fun bind(
+        viewModel: DeviceDosingChannelCalibrationViewModel,
+        recalibration: Boolean = false
+    ) {
         viewModel.bind(
             deviceUid = "device-1",
             slotId = "channel-1",
             pumpCount = 2,
             channelNumber = 1,
-            channelTitle = "Channel 1"
+            channelTitle = "Channel 1",
+            recalibration = recalibration
         )
     }
 

@@ -30,6 +30,7 @@ data class DeviceDosingChannelNavigationTarget(
     val pumpCount: Int,
     val channelNumber: Int,
     val channelTitle: String,
+    val lastCalibratedAtEpochSeconds: Long,
     val destination: DeviceDosingChannelDestination
 )
 

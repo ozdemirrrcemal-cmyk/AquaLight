@@ -67,7 +67,6 @@ internal fun DeviceDosingChannelMenuScreen(
             ) {
                 when (item) {
                     DosingDetailMenuItem.DOSING_PLAN -> DosingPlanContent()
-                    DosingDetailMenuItem.CALIBRATION -> CalibrationContent()
                     DosingDetailMenuItem.RESERVOIR -> ReservoirContent(
                         capacityValue = reservoirCapacityValue,
                         onCapacityClick = onReservoirCapacityClick
@@ -104,30 +103,6 @@ private fun DosingPlanContent() {
     DetailAction(R.string.device_dosing_detail_save_plan)
 }
 
-@Composable
-private fun CalibrationContent() {
-    DetailSection(R.string.device_dosing_detail_calibration_status_section) {
-        AquaDeviceMenuValueRow(
-            label = stringResource(R.string.device_dosing_detail_last_calibrated),
-            value = stringResource(R.string.device_dosing_detail_not_calibrated),
-            tone = AquaDeviceMenuTone.ACCENT
-        )
-        AquaDeviceMenuValueRow(
-            label = stringResource(R.string.device_dosing_detail_flow_accuracy),
-            value = stringResource(R.string.device_dosing_detail_value_unavailable)
-        )
-    }
-    DetailSection(R.string.device_dosing_detail_calibration_flow_section) {
-        AquaDeviceMenuValueRow(
-            label = stringResource(R.string.device_dosing_detail_guided_calibration),
-            value = stringResource(R.string.device_dosing_detail_six_steps),
-            description = stringResource(R.string.device_dosing_detail_guided_calibration_description)
-        )
-    }
-    DetailAction(R.string.device_dosing_detail_start_recalibration)
-}
-
-@Composable
 private fun ReservoirContent(
     capacityValue: String,
     onCapacityClick: (() -> Unit)?

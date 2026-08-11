@@ -41,6 +41,7 @@ class DeviceDosingChannelCalibrationViewModel(
 
     private var deviceUid = ""
     private var slotId = ""
+    private var isRecalibration = false
     private var observeJob: Job? = null
     private var countdownJob: Job? = null
     private var primeSafetyJob: Job? = null
@@ -56,7 +57,8 @@ class DeviceDosingChannelCalibrationViewModel(
         slotId: String,
         pumpCount: Int,
         channelNumber: Int,
-        channelTitle: String
+        channelTitle: String,
+        recalibration: Boolean = false
     ) {
         val normalizedUid = deviceUid.trim()
         val normalizedSlot = slotId.trim()
@@ -67,10 +69,17 @@ class DeviceDosingChannelCalibrationViewModel(
             )
             return
         }
-        if (this.deviceUid == normalizedUid && this.slotId == normalizedSlot) return
+        if (
+            this.deviceUid == normalizedUid &&
+            this.slotId == normalizedSlot &&
+            isRecalibration == recalibration
+        ) {
+            return
+        }
 
         this.deviceUid = normalizedUid
         this.slotId = normalizedSlot
+        isRecalibration = recalibration
         hasLocalProgress = false
         exiting = false
         completionEmitted = false
@@ -353,6 +362,7 @@ class DeviceDosingChannelCalibrationViewModel(
         if (
             snapshot.sessionPhase == DeviceDosingCalibrationSessionPhase.IDLE &&
             snapshot.calibrated &&
+            !isRecalibration &&
             !hasLocalProgress &&
             !completionEmitted
         ) {
@@ -458,6 +468,7 @@ class DeviceDosingChannelCalibrationViewModel(
             pumpCount = pumpCount,
             channelNumber = channelNumber,
             channelTitle = channelTitle,
+            lastCalibratedAtEpochSeconds = lastCalibratedAt,
             destination = DeviceDosingChannelDestination.DETAIL
         )
 

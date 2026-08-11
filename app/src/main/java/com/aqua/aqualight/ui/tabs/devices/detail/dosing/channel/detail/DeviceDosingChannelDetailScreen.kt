@@ -27,6 +27,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.res.stringResource
 import com.aqua.aqualight.R
+import com.aqua.aqualight.ui.common.devicemenu.AquaDeviceMenuActionRow
 import com.aqua.aqualight.ui.common.devicemenu.AquaDeviceMenuDivider
 import com.aqua.aqualight.ui.common.devicemenu.AquaDeviceMenuGeometry
 import com.aqua.aqualight.ui.common.devicemenu.AquaDeviceMenuRow
@@ -37,17 +38,20 @@ import com.aqua.aqualight.ui.common.devicemenu.AquaDeviceMenuTone
 import com.aqua.aqualight.ui.common.devicemenu.aquaDeviceMenuColors
 import com.aqua.aqualight.ui.common.devicemenu.aquaDeviceMenuTypography
 
-/** Static control shell with UI-only destinations and direct local controls. */
+/** Channel control shell with child destinations and direct actions. */
 @Composable
 internal fun DeviceDosingChannelDetailScreen(
+    lastCalibrationDate: String,
     modifier: Modifier = Modifier,
     onMenuItemClick: ((DosingDetailMenuItem) -> Unit)? = null,
+    onRecalibrateClick: (() -> Unit)? = null,
     onManualDoseClick: (() -> Unit)? = null,
     onResetChannelClick: (() -> Unit)? = null
 ) {
     val colors = aquaDeviceMenuColors()
     var missedDoseRecoveryEnabled by rememberSaveable { mutableStateOf(false) }
     val directActions = DosingDetailDirectActions(
+        onRecalibrateClick = onRecalibrateClick,
         onManualDoseClick = onManualDoseClick,
         onResetChannelClick = onResetChannelClick
     )
@@ -76,6 +80,7 @@ internal fun DeviceDosingChannelDetailScreen(
                 section = section,
                 onMenuItemClick = onMenuItemClick,
                 directActions = directActions,
+                lastCalibrationDate = lastCalibrationDate,
                 missedDoseRecoveryEnabled = missedDoseRecoveryEnabled,
                 onMissedDoseRecoveryChange = { enabled ->
                     missedDoseRecoveryEnabled = enabled
@@ -132,6 +137,7 @@ private fun DosingDetailSection(
     section: DosingDetailMenuSection,
     onMenuItemClick: ((DosingDetailMenuItem) -> Unit)?,
     directActions: DosingDetailDirectActions,
+    lastCalibrationDate: String,
     missedDoseRecoveryEnabled: Boolean,
     onMissedDoseRecoveryChange: (Boolean) -> Unit
 ) {
@@ -148,6 +154,15 @@ private fun DosingDetailSection(
             style = typography.sectionLabel
         )
         AquaDeviceMenuSectionSurface(modifier = Modifier.fillMaxWidth()) {
+            if (section.hasCalibrationAction) {
+                DosingCalibrationAction(
+                    lastCalibrationDate = lastCalibrationDate,
+                    onClick = directActions.onRecalibrateClick
+                )
+                if (section.items.isNotEmpty()) {
+                    AquaDeviceMenuDivider()
+                }
+            }
             section.items.forEachIndexed { index, item ->
                 if (index > 0) {
                     AquaDeviceMenuDivider()
@@ -184,6 +199,26 @@ private fun DosingDetailSection(
             }
         }
     }
+}
+
+@Composable
+private fun DosingCalibrationAction(
+    lastCalibrationDate: String,
+    onClick: (() -> Unit)?
+) {
+    AquaDeviceMenuActionRow(
+        content = AquaDeviceMenuRowContent(
+            title = stringResource(R.string.device_dosing_detail_calibration_title),
+            description = stringResource(
+                R.string.device_dosing_detail_last_calibrated_compact,
+                lastCalibrationDate
+            ),
+            iconRes = R.drawable.ic_dosing_calibration_24
+        ),
+        actionText = stringResource(R.string.device_dosing_detail_recalibrate),
+        onActionClick = { onClick?.invoke() },
+        actionEnabled = onClick != null
+    )
 }
 
 @Composable
@@ -243,6 +278,7 @@ private fun DosingResetChannelAction(onClick: (() -> Unit)?) {
 }
 
 private data class DosingDetailDirectActions(
+    val onRecalibrateClick: (() -> Unit)?,
     val onManualDoseClick: (() -> Unit)?,
     val onResetChannelClick: (() -> Unit)?
 )
@@ -250,6 +286,7 @@ private data class DosingDetailDirectActions(
 internal data class DosingDetailMenuSection(
     @StringRes val titleRes: Int,
     val items: List<DosingDetailMenuItem>,
+    val hasCalibrationAction: Boolean = false,
     val hasMissedDoseRecoverySwitch: Boolean = false,
     val hasManualDoseAction: Boolean = false,
     val hasResetChannelAction: Boolean = false
@@ -267,12 +304,6 @@ internal enum class DosingDetailMenuItem(
         titleRes = R.string.device_dosing_detail_plan_title,
         descriptionRes = R.string.device_dosing_detail_plan_description,
         iconRes = R.drawable.ic_dosing_schedule_24
-    ),
-    CALIBRATION(
-        routeKey = "calibration",
-        titleRes = R.string.device_dosing_detail_calibration_title,
-        descriptionRes = R.string.device_dosing_detail_calibration_description,
-        iconRes = R.drawable.ic_dosing_calibration_24
     ),
     RESERVOIR(
         routeKey = "reservoir",
@@ -297,10 +328,8 @@ internal val DOSING_DETAIL_MENU_SECTIONS = listOf(
     ),
     DosingDetailMenuSection(
         titleRes = R.string.device_dosing_detail_accuracy_section,
-        items = listOf(
-            DosingDetailMenuItem.CALIBRATION,
-            DosingDetailMenuItem.RESERVOIR
-        )
+        items = listOf(DosingDetailMenuItem.RESERVOIR),
+        hasCalibrationAction = true
     ),
     DosingDetailMenuSection(
         titleRes = R.string.device_dosing_detail_control_section,

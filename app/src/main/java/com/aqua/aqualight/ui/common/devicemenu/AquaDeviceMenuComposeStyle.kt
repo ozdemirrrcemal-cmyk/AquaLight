@@ -123,6 +123,16 @@ object AquaDeviceMenuGeometry {
     val toggleThumbSize = TOGGLE_THUMB_SIZE_DP.dp
     val togglePadding = TOGGLE_PADDING_DP.dp
     val valueMaxWidth = VALUE_MAX_WIDTH_DP.dp
+    val inlineActionMinHeight = INLINE_ACTION_MIN_HEIGHT_DP.dp
+    val inlineActionRadius = INLINE_ACTION_RADIUS_DP.dp
+    val inlineActionHorizontalPadding = INLINE_ACTION_HORIZONTAL_PADDING_DP.dp
+    val inlineActionVerticalPadding = INLINE_ACTION_VERTICAL_PADDING_DP.dp
+    val inlineActionMaxWidth = INLINE_ACTION_MAX_WIDTH_DP.dp
+}
+
+object AquaDeviceMenuTypographyScale {
+    val inlineActionFontSize = INLINE_ACTION_FONT_SIZE_SP.sp
+    val inlineActionLineHeight = INLINE_ACTION_LINE_HEIGHT_SP.sp
 }
 
 private val InterRegular = FontFamily(Font(R.font.inter_regular))
@@ -313,7 +323,7 @@ fun AquaDeviceMenuSwitchRow(
     }
 }
 
-private object AquaDeviceMenuRowLayout {
+internal object AquaDeviceMenuRowLayout {
     @Composable
     fun LeadingIcon(
         @DrawableRes iconRes: Int,
@@ -569,6 +579,11 @@ private const val TOGGLE_HEIGHT_DP = 26
 private const val TOGGLE_THUMB_SIZE_DP = 18
 private const val TOGGLE_PADDING_DP = 3
 private const val VALUE_MAX_WIDTH_DP = 144
+private const val INLINE_ACTION_MIN_HEIGHT_DP = 48
+private const val INLINE_ACTION_RADIUS_DP = 12
+private const val INLINE_ACTION_HORIZONTAL_PADDING_DP = 10
+private const val INLINE_ACTION_VERTICAL_PADDING_DP = 9
+private const val INLINE_ACTION_MAX_WIDTH_DP = 156
 private const val EYEBROW_FONT_SIZE_SP = 11
 private const val EYEBROW_LINE_HEIGHT_SP = 14
 private const val EYEBROW_LETTER_SPACING_SP = 0.7
@@ -583,3 +598,5 @@ private const val ROW_TITLE_FONT_SIZE_SP = 15
 private const val ROW_TITLE_LINE_HEIGHT_SP = 19
 private const val ROW_BODY_FONT_SIZE_SP = 12
 private const val ROW_BODY_LINE_HEIGHT_SP = 17
+private const val INLINE_ACTION_FONT_SIZE_SP = 12
+private const val INLINE_ACTION_LINE_HEIGHT_SP = 16

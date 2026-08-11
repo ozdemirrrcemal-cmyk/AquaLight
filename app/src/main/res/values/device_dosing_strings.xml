@@ -42,7 +42,8 @@
     <string name="device_dosing_detail_missed_dose_description">Turn compensation in the next safe window on or off for missed doses.</string>
     <string name="device_dosing_detail_missed_dose_toggle_description">Missed dose recovery, %1$s</string>
     <string name="device_dosing_detail_calibration_title">Calibration</string>
-    <string name="device_dosing_detail_calibration_description">Review flow accuracy or start a guided recalibration.</string>
+    <string name="device_dosing_detail_last_calibrated_compact">Last: %1$s</string>
+    <string name="device_dosing_detail_recalibrate">Recalibrate</string>
     <string name="device_dosing_detail_reservoir_title">Reservoir Monitoring</string>
     <string name="device_dosing_detail_reservoir_description">Set container volume and low-level monitoring.</string>
     <string name="device_dosing_detail_manual_title">Manual Dose</string>
@@ -69,16 +70,7 @@
     <string name="device_dosing_detail_recurrence_section">Recurrence</string>
     <string name="device_dosing_detail_save_plan">Save dosing plan</string>
 
-    <string name="device_dosing_detail_calibration_status_section">Calibration status</string>
-    <string name="device_dosing_detail_last_calibrated">Last calibrated</string>
-    <string name="device_dosing_detail_not_calibrated">Not calibrated</string>
-    <string name="device_dosing_detail_flow_accuracy">Flow accuracy</string>
     <string name="device_dosing_detail_value_unavailable">—</string>
-    <string name="device_dosing_detail_calibration_flow_section">Calibration flow</string>
-    <string name="device_dosing_detail_guided_calibration">Guided calibration</string>
-    <string name="device_dosing_detail_six_steps">6 steps</string>
-    <string name="device_dosing_detail_guided_calibration_description">Prime, measure and verify the selected channel in a focused flow.</string>
-    <string name="device_dosing_detail_start_recalibration">Start recalibration</string>
 
     <string name="device_dosing_detail_reservoir_tracking_section">Tracking status</string>
     <string name="device_dosing_detail_reservoir_tracking_enabled">Enable reservoir monitoring</string>

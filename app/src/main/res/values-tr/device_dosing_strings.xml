@@ -42,7 +42,8 @@
     <string name="device_dosing_detail_missed_dose_description">Kaçırılan dozların bir sonraki güvenli aralıkta telafi edilmesini açın veya kapatın.</string>
     <string name="device_dosing_detail_missed_dose_toggle_description">Kaçırılan doz telafisi, %1$s</string>
     <string name="device_dosing_detail_calibration_title">Kalibrasyon</string>
-    <string name="device_dosing_detail_calibration_description">Akış doğruluğunu inceleyin veya yönlendirmeli kalibrasyonu başlatın.</string>
+    <string name="device_dosing_detail_last_calibrated_compact">Son: %1$s</string>
+    <string name="device_dosing_detail_recalibrate">Yeniden kalibre et</string>
     <string name="device_dosing_detail_reservoir_title">Hazne Takibi</string>
     <string name="device_dosing_detail_reservoir_description">Kap hacmini ve düşük seviye takibini ayarlayın.</string>
     <string name="device_dosing_detail_manual_title">Manuel Dozaj</string>
@@ -69,16 +70,7 @@
     <string name="device_dosing_detail_recurrence_section">Tekrar</string>
     <string name="device_dosing_detail_save_plan">Dozaj planını kaydet</string>
 
-    <string name="device_dosing_detail_calibration_status_section">Kalibrasyon durumu</string>
-    <string name="device_dosing_detail_last_calibrated">Son kalibrasyon</string>
-    <string name="device_dosing_detail_not_calibrated">Kalibre edilmedi</string>
-    <string name="device_dosing_detail_flow_accuracy">Akış doğruluğu</string>
     <string name="device_dosing_detail_value_unavailable">—</string>
-    <string name="device_dosing_detail_calibration_flow_section">Kalibrasyon akışı</string>
-    <string name="device_dosing_detail_guided_calibration">Yönlendirmeli kalibrasyon</string>
-    <string name="device_dosing_detail_six_steps">6 adım</string>
-    <string name="device_dosing_detail_guided_calibration_description">Seçili kanalı odaklı bir akışta doldurun, ölçün ve doğrulayın.</string>
-    <string name="device_dosing_detail_start_recalibration">Yeniden kalibrasyonu başlat</string>
 
     <string name="device_dosing_detail_reservoir_tracking_section">Takip durumu</string>
     <string name="device_dosing_detail_reservoir_tracking_enabled">Hazne takibini etkinleştir</string>

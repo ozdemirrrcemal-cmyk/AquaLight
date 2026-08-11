@@ -46,6 +46,7 @@ class DefaultDeviceDosingChannelNavigationOperationsTest {
 
         assertEquals(DeviceDosingChannelDestination.DETAIL, target?.destination)
         assertEquals(CUSTOM_CHANNEL_NAME, target?.channelTitle)
+        assertEquals(CALIBRATED_AT, target?.lastCalibratedAtEpochSeconds)
     }
 
     @Test

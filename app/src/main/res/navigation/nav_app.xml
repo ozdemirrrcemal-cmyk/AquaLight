@@ -30,6 +30,10 @@
         <argument
             android:name="channelNumber"
             app:argType="integer" />
+        <argument
+            android:name="recalibration"
+            android:defaultValue="false"
+            app:argType="boolean" />
         <deepLink
             app:uri="aqualight://app/device/{deviceUid}/dosing/channel/{slotId}/calibration?channelTitle={channelTitle}&amp;pumpCount={pumpCount}&amp;channelNumber={channelNumber}" />
     </fragment>
@@ -54,8 +58,18 @@
         <argument
             android:name="channelNumber"
             app:argType="integer" />
+        <argument
+            android:name="lastCalibratedAtEpochSeconds"
+            app:argType="long" />
         <deepLink
-            app:uri="aqualight://app/device/{deviceUid}/dosing/channel/{slotId}/detail?channelTitle={channelTitle}&amp;pumpCount={pumpCount}&amp;channelNumber={channelNumber}" />
+            app:uri="aqualight://app/device/{deviceUid}/dosing/channel/{slotId}/detail?channelTitle={channelTitle}&amp;pumpCount={pumpCount}&amp;channelNumber={channelNumber}&amp;lastCalibratedAtEpochSeconds={lastCalibratedAtEpochSeconds}" />
+        <action
+            android:id="@+id/action_deviceDosingChannelDetailFragment_to_deviceDosingChannelCalibrationFragment"
+            app:destination="@id/deviceDosingChannelCalibrationFragment"
+            app:enterAnim="@anim/nav_slide_in_right"
+            app:exitAnim="@anim/nav_slide_out_left"
+            app:popEnterAnim="@anim/nav_slide_in_left"
+            app:popExitAnim="@anim/nav_slide_out_right" />
         <action
             android:id="@+id/action_deviceDosingChannelDetailFragment_to_deviceDosingChannelMenuFragment"
             app:destination="@id/deviceDosingChannelMenuFragment"

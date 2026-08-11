@@ -28,6 +28,14 @@ class DosingDetailMenuCatalogTest {
     }
 
     @Test
+    fun `calibration is a direct action instead of a child menu route`() {
+        val accuracySection = DOSING_DETAIL_MENU_SECTIONS[1]
+
+        assertTrue(accuracySection.hasCalibrationAction)
+        assertNull(DosingDetailMenuItem.fromRouteKey("calibration"))
+    }
+
+    @Test
     fun `every menu entry has a unique round trip route key`() {
         val routeKeys = DosingDetailMenuItem.entries.map(DosingDetailMenuItem::routeKey)
 
