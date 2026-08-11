@@ -30,6 +30,7 @@ import com.aqua.aqualight.R
 import com.aqua.aqualight.ui.common.devicemenu.AquaDeviceMenuChoiceChip
 import com.aqua.aqualight.ui.common.devicemenu.AquaDeviceMenuDivider
 import com.aqua.aqualight.ui.common.devicemenu.AquaDeviceMenuGeometry
+import com.aqua.aqualight.ui.common.devicemenu.AquaDeviceMenuSelectionRow
 import com.aqua.aqualight.ui.common.devicemenu.AquaDeviceMenuSectionSurface
 import com.aqua.aqualight.ui.common.devicemenu.AquaDeviceMenuTone
 import com.aqua.aqualight.ui.common.devicemenu.AquaDeviceMenuToggle
@@ -95,26 +96,10 @@ private fun DosingPlanContent() {
         )
     }
     DetailSection(R.string.device_dosing_detail_schedule_section) {
-        DetailChoiceGroup(
-            labelRes = R.string.device_dosing_detail_schedule_mode,
-            choices = listOf(
-                DetailChoice(R.string.device_dosing_detail_schedule_single, selected = true),
-                DetailChoice(R.string.device_dosing_detail_schedule_hourly),
-                DetailChoice(R.string.device_dosing_detail_schedule_custom)
-            )
-        )
-        AquaDeviceMenuValueRow(
-            label = stringResource(R.string.device_dosing_detail_timer),
-            value = stringResource(R.string.device_dosing_detail_value_unset_time)
-        )
+        DosingScheduleOptions()
     }
     DetailSection(R.string.device_dosing_detail_recurrence_section) {
-        AquaDeviceMenuValueRow(
-            label = stringResource(R.string.device_dosing_detail_recurrence),
-            value = stringResource(R.string.device_dosing_channel_every_day),
-            tone = AquaDeviceMenuTone.ACCENT
-        )
-        DetailWeekdays()
+        DosingRecurrenceOptions()
     }
     DetailAction(R.string.device_dosing_detail_save_plan)
 }
@@ -281,73 +266,43 @@ private fun DetailToggleRow(
 }
 
 @Composable
-private fun DetailChoiceGroup(
-    @StringRes labelRes: Int,
-    choices: List<DetailChoice>
-) {
-    val colors = aquaDeviceMenuColors()
-    val typography = aquaDeviceMenuTypography(colors)
-    Column(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(AquaDeviceMenuGeometry.sectionContentPadding),
-        verticalArrangement = Arrangement.spacedBy(AquaDeviceMenuGeometry.compactGap)
-    ) {
-        BasicText(text = stringResource(labelRes), style = typography.rowTitle)
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.spacedBy(AquaDeviceMenuGeometry.compactGap)
-        ) {
-            choices.forEach { choice ->
-                AquaDeviceMenuChoiceChip(
-                    text = stringResource(choice.labelRes),
-                    selected = choice.selected,
-                    modifier = Modifier.weight(1f)
-                )
-            }
+private fun DosingScheduleOptions() {
+    DOSING_PLAN_SCHEDULE_OPTIONS.forEachIndexed { index, option ->
+        if (index > 0) {
+            AquaDeviceMenuDivider(
+                startIndent = AquaDeviceMenuGeometry.selectionDividerIndent
+            )
         }
+        AquaDeviceMenuSelectionRow(
+            text = stringResource(option.labelRes),
+            selected = option.selected
+        )
     }
 }
 
 @Composable
-private fun DetailWeekdays() {
-    val weekdayRows = listOf(
-        listOf(
-            R.string.device_dosing_weekday_mon,
-            R.string.device_dosing_weekday_tue,
-            R.string.device_dosing_weekday_wed,
-            R.string.device_dosing_weekday_thu
-        ),
-        listOf(
-            R.string.device_dosing_weekday_fri,
-            R.string.device_dosing_weekday_sat,
-            R.string.device_dosing_weekday_sun
-        )
+private fun DosingRecurrenceOptions() {
+    AquaDeviceMenuSelectionRow(
+        text = stringResource(R.string.device_dosing_channel_every_day),
+        selected = true,
+        showTrailingIcon = false
     )
-    Column(
-        modifier = Modifier.padding(
-            start = AquaDeviceMenuGeometry.sectionContentPadding,
-            end = AquaDeviceMenuGeometry.sectionContentPadding,
-            bottom = AquaDeviceMenuGeometry.sectionContentPadding
-        ),
-        verticalArrangement = Arrangement.spacedBy(AquaDeviceMenuGeometry.compactGap)
+    AquaDeviceMenuDivider(
+        startIndent = AquaDeviceMenuGeometry.selectionDividerIndent
+    )
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(AquaDeviceMenuGeometry.sectionContentPadding),
+        horizontalArrangement = Arrangement.spacedBy(AquaDeviceMenuGeometry.compactGap)
     ) {
-        weekdayRows.forEach { weekdays ->
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(AquaDeviceMenuGeometry.compactGap)
-            ) {
-                weekdays.forEach { weekdayRes ->
-                    AquaDeviceMenuChoiceChip(
-                        text = stringResource(weekdayRes),
-                        selected = true,
-                        modifier = Modifier.weight(1f)
-                    )
-                }
-                repeat(WEEKDAY_COLUMN_COUNT - weekdays.size) {
-                    Column(modifier = Modifier.weight(1f)) {}
-                }
-            }
+        DOSING_PLAN_WEEKDAY_LABELS.forEach { weekdayRes ->
+            AquaDeviceMenuChoiceChip(
+                text = stringResource(weekdayRes),
+                selected = true,
+                modifier = Modifier.weight(1f),
+                compact = true
+            )
         }
     }
 }
@@ -362,11 +317,30 @@ private fun DetailAction(@StringRes labelRes: Int) {
     )
 }
 
-private data class DetailChoice(
+internal data class DosingPlanScheduleOption(
     @StringRes val labelRes: Int,
     val selected: Boolean = false
 )
 
-private const val WEEKDAY_COLUMN_COUNT = 4
+internal val DOSING_PLAN_SCHEDULE_OPTIONS = listOf(
+    DosingPlanScheduleOption(
+        labelRes = R.string.device_dosing_detail_schedule_single,
+        selected = true
+    ),
+    DosingPlanScheduleOption(R.string.device_dosing_detail_schedule_hourly),
+    DosingPlanScheduleOption(R.string.device_dosing_detail_schedule_custom),
+    DosingPlanScheduleOption(R.string.device_dosing_detail_schedule_timer)
+)
+
+internal val DOSING_PLAN_WEEKDAY_LABELS = listOf(
+    R.string.device_dosing_weekday_mon,
+    R.string.device_dosing_weekday_tue,
+    R.string.device_dosing_weekday_wed,
+    R.string.device_dosing_weekday_thu,
+    R.string.device_dosing_weekday_fri,
+    R.string.device_dosing_weekday_sat,
+    R.string.device_dosing_weekday_sun
+)
+
 private const val ENABLED_ALPHA = 1f
 private const val DISABLED_ALPHA = 0.42f

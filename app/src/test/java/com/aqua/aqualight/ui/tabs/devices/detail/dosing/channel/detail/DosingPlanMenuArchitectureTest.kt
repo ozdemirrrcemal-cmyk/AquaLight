@@ -1,0 +1,73 @@
+package com.aqua.aqualight.ui.tabs.devices.detail.dosing.channel.detail
+
+import com.aqua.aqualight.R
+import java.io.File
+import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
+import org.junit.Assert.assertTrue
+import org.junit.Test
+
+class DosingPlanMenuArchitectureTest {
+
+    private val repositoryRoot = locateRepositoryRoot()
+
+    @Test
+    fun `schedule catalog exposes four exclusive presentation modes`() {
+        assertEquals(
+            listOf(
+                R.string.device_dosing_detail_schedule_single,
+                R.string.device_dosing_detail_schedule_hourly,
+                R.string.device_dosing_detail_schedule_custom,
+                R.string.device_dosing_detail_schedule_timer
+            ),
+            DOSING_PLAN_SCHEDULE_OPTIONS.map(DosingPlanScheduleOption::labelRes)
+        )
+        assertEquals(1, DOSING_PLAN_SCHEDULE_OPTIONS.count(DosingPlanScheduleOption::selected))
+    }
+
+    @Test
+    fun `recurrence catalog keeps every weekday in one stable order`() {
+        assertEquals(
+            listOf(
+                R.string.device_dosing_weekday_mon,
+                R.string.device_dosing_weekday_tue,
+                R.string.device_dosing_weekday_wed,
+                R.string.device_dosing_weekday_thu,
+                R.string.device_dosing_weekday_fri,
+                R.string.device_dosing_weekday_sat,
+                R.string.device_dosing_weekday_sun
+            ),
+            DOSING_PLAN_WEEKDAY_LABELS
+        )
+        assertEquals(DOSING_PLAN_WEEKDAY_LABELS.size, DOSING_PLAN_WEEKDAY_LABELS.distinct().size)
+    }
+
+    @Test
+    fun `dosing plan consumes central menu selection styling only`() {
+        val screen = source(
+            "app/src/main/java/com/aqua/aqualight/ui/tabs/devices/detail/dosing/" +
+                "channel/detail/DeviceDosingChannelMenuScreen.kt"
+        )
+        val centralSelectionRow = source(
+            "app/src/main/java/com/aqua/aqualight/ui/common/devicemenu/" +
+                "AquaDeviceMenuSelectionRow.kt"
+        )
+
+        assertTrue(screen.contains("AquaDeviceMenuSelectionRow("))
+        assertTrue(screen.contains("compact = true"))
+        assertTrue(centralSelectionRow.contains("fun AquaDeviceMenuSelectionRow("))
+        assertFalse(screen.contains("DetailChoiceGroup("))
+        assertFalse(screen.contains("weekdayRows"))
+    }
+
+    private fun source(relativePath: String): String = File(repositoryRoot, relativePath).readText()
+
+    private fun locateRepositoryRoot(): File {
+        var candidate: File? = File(System.getProperty("user.dir")).absoluteFile
+        while (candidate != null) {
+            if (File(candidate, "app/src/main").isDirectory) return candidate
+            candidate = candidate.parentFile
+        }
+        error("Cannot locate AquaLight repository root from user.dir.")
+    }
+}

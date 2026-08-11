@@ -39,6 +39,7 @@ import androidx.compose.ui.text.font.Font
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.aqua.aqualight.R
@@ -107,9 +108,16 @@ object AquaDeviceMenuGeometry {
     val dividerHeight = DIVIDER_HEIGHT_DP.dp
     val sectionContentPadding = SECTION_CONTENT_PADDING_DP.dp
     val compactGap = COMPACT_GAP_DP.dp
+    val selectionRowMinHeight = SELECTION_ROW_MIN_HEIGHT_DP.dp
+    val selectionRowVerticalPadding = SELECTION_ROW_VERTICAL_PADDING_DP.dp
+    val selectionIndicatorSize = SELECTION_INDICATOR_SIZE_DP.dp
+    val selectionIndicatorDotSize = SELECTION_INDICATOR_DOT_SIZE_DP.dp
+    val selectionContentGap = SELECTION_CONTENT_GAP_DP.dp
+    val selectionDividerIndent = SELECTION_DIVIDER_INDENT_DP.dp
     val choiceChipMinHeight = CHOICE_CHIP_MIN_HEIGHT_DP.dp
     val choiceChipRadius = CHOICE_CHIP_RADIUS_DP.dp
     val choiceChipHorizontalPadding = CHOICE_CHIP_HORIZONTAL_PADDING_DP.dp
+    val choiceChipCompactHorizontalPadding = CHOICE_CHIP_COMPACT_HORIZONTAL_PADDING_DP.dp
     val toggleWidth = TOGGLE_WIDTH_DP.dp
     val toggleHeight = TOGGLE_HEIGHT_DP.dp
     val toggleThumbSize = TOGGLE_THUMB_SIZE_DP.dp
@@ -363,12 +371,15 @@ private object AquaDeviceMenuRowLayout {
 }
 
 @Composable
-fun AquaDeviceMenuDivider(modifier: Modifier = Modifier) {
+fun AquaDeviceMenuDivider(
+    modifier: Modifier = Modifier,
+    startIndent: Dp = AquaDeviceMenuGeometry.dividerIndent
+) {
     val colors = aquaDeviceMenuColors()
     Box(
         modifier = modifier
             .fillMaxWidth()
-            .padding(start = AquaDeviceMenuGeometry.dividerIndent)
+            .padding(start = startIndent)
             .background(colors.divider)
             .defaultMinSize(minHeight = AquaDeviceMenuGeometry.dividerHeight)
     )
@@ -427,7 +438,8 @@ fun AquaDeviceMenuValueRow(
 fun AquaDeviceMenuChoiceChip(
     text: String,
     selected: Boolean,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    compact: Boolean = false
 ) {
     val colors = aquaDeviceMenuColors()
     val typography = aquaDeviceMenuTypography(colors)
@@ -446,7 +458,11 @@ fun AquaDeviceMenuChoiceChip(
                 shape = shape
             )
             .padding(
-                horizontal = AquaDeviceMenuGeometry.choiceChipHorizontalPadding,
+                horizontal = if (compact) {
+                    AquaDeviceMenuGeometry.choiceChipCompactHorizontalPadding
+                } else {
+                    AquaDeviceMenuGeometry.choiceChipHorizontalPadding
+                },
                 vertical = AquaDeviceMenuGeometry.compactGap
             ),
         contentAlignment = Alignment.Center
@@ -538,9 +554,16 @@ private const val DIVIDER_INDENT_DP = 69
 private const val DIVIDER_HEIGHT_DP = 1
 private const val SECTION_CONTENT_PADDING_DP = 16
 private const val COMPACT_GAP_DP = 8
+private const val SELECTION_ROW_MIN_HEIGHT_DP = 52
+private const val SELECTION_ROW_VERTICAL_PADDING_DP = 12
+private const val SELECTION_INDICATOR_SIZE_DP = 20
+private const val SELECTION_INDICATOR_DOT_SIZE_DP = 10
+private const val SELECTION_CONTENT_GAP_DP = 12
+private const val SELECTION_DIVIDER_INDENT_DP = 48
 private const val CHOICE_CHIP_MIN_HEIGHT_DP = 38
 private const val CHOICE_CHIP_RADIUS_DP = 12
 private const val CHOICE_CHIP_HORIZONTAL_PADDING_DP = 12
+private const val CHOICE_CHIP_COMPACT_HORIZONTAL_PADDING_DP = 2
 private const val TOGGLE_WIDTH_DP = 46
 private const val TOGGLE_HEIGHT_DP = 26
 private const val TOGGLE_THUMB_SIZE_DP = 18

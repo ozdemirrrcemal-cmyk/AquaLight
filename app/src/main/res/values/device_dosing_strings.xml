@@ -62,14 +62,11 @@
     <string name="device_dosing_detail_daily_dose_description">Total amount planned across the selected day.</string>
     <string name="device_dosing_detail_value_zero_ml">0.00 ml</string>
     <string name="device_dosing_detail_schedule_section">Dosing schedule</string>
-    <string name="device_dosing_detail_schedule_mode">Distribution mode</string>
     <string name="device_dosing_detail_schedule_single">Single</string>
-    <string name="device_dosing_detail_schedule_hourly">24 hourly</string>
+    <string name="device_dosing_detail_schedule_hourly">Hourly equal distribution</string>
     <string name="device_dosing_detail_schedule_custom">Custom periods</string>
-    <string name="device_dosing_detail_timer">Timer</string>
-    <string name="device_dosing_detail_value_unset_time">--:--</string>
+    <string name="device_dosing_detail_schedule_timer">Timer</string>
     <string name="device_dosing_detail_recurrence_section">Recurrence</string>
-    <string name="device_dosing_detail_recurrence">Repeat</string>
     <string name="device_dosing_detail_save_plan">Save dosing plan</string>
 
     <string name="device_dosing_detail_calibration_status_section">Calibration status</string>

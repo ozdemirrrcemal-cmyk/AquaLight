@@ -62,14 +62,11 @@
     <string name="device_dosing_detail_daily_dose_description">Seçilen güne dağıtılacak toplam miktar.</string>
     <string name="device_dosing_detail_value_zero_ml">0,00 ml</string>
     <string name="device_dosing_detail_schedule_section">Dozaj zamanlaması</string>
-    <string name="device_dosing_detail_schedule_mode">Dağıtım biçimi</string>
     <string name="device_dosing_detail_schedule_single">Tek sefer</string>
-    <string name="device_dosing_detail_schedule_hourly">24 saate eşit</string>
+    <string name="device_dosing_detail_schedule_hourly">Saatlik eşit dağıtım</string>
     <string name="device_dosing_detail_schedule_custom">Özel aralıklar</string>
-    <string name="device_dosing_detail_timer">Zaman</string>
-    <string name="device_dosing_detail_value_unset_time">--:--</string>
+    <string name="device_dosing_detail_schedule_timer">Zamanlayıcı</string>
     <string name="device_dosing_detail_recurrence_section">Tekrar</string>
-    <string name="device_dosing_detail_recurrence">Yineleme</string>
     <string name="device_dosing_detail_save_plan">Dozaj planını kaydet</string>
 
     <string name="device_dosing_detail_calibration_status_section">Kalibrasyon durumu</string>
