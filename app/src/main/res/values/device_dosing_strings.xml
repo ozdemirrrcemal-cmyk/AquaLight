@@ -70,6 +70,23 @@
     <string name="device_dosing_detail_recurrence_section">Recurrence</string>
     <string name="device_dosing_detail_save_plan">Save dosing plan</string>
 
+    <string name="device_dosing_single_title">Single dose</string>
+    <string name="device_dosing_single_hero_eyebrow">Single-dose schedule</string>
+    <string name="device_dosing_single_hero_title">One precise dose, exactly when you choose</string>
+    <string name="device_dosing_single_hero_description">AquaLight applies the complete daily amount once on every selected day.</string>
+    <string name="device_dosing_single_summary_section">Dose summary</string>
+    <string name="device_dosing_single_daily_amount_description">Uses the daily amount defined on the Dosing Plan screen.</string>
+    <string name="device_dosing_single_frequency">Daily frequency</string>
+    <string name="device_dosing_single_frequency_description">The complete daily amount is delivered in one run.</string>
+    <string name="device_dosing_single_one_dose">1 dose</string>
+    <string name="device_dosing_single_time_section">Application time</string>
+    <string name="device_dosing_single_time_title">Dose time</string>
+    <string name="device_dosing_single_time_description">Choose when the complete daily amount will be applied.</string>
+    <string name="device_dosing_single_use_action">Use single dose</string>
+    <string name="device_dosing_single_time_picker_title">Select application time</string>
+    <string name="device_dosing_single_time_picker_message">The complete daily dose will be applied at this time on every selected day.</string>
+    <string name="device_dosing_single_time_picker_confirm">Apply time</string>
+
     <string name="device_dosing_detail_value_unavailable">—</string>
 
     <string name="device_dosing_detail_reservoir_tracking_section">Tracking status</string>

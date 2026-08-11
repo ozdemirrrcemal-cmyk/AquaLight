@@ -133,6 +133,8 @@ object AquaDeviceMenuGeometry {
 object AquaDeviceMenuTypographyScale {
     val inlineActionFontSize = INLINE_ACTION_FONT_SIZE_SP.sp
     val inlineActionLineHeight = INLINE_ACTION_LINE_HEIGHT_SP.sp
+    val editableValueFontSize = EDITABLE_VALUE_FONT_SIZE_SP.sp
+    val editableValueLineHeight = EDITABLE_VALUE_LINE_HEIGHT_SP.sp
 }
 
 private val InterRegular = FontFamily(Font(R.font.inter_regular))
@@ -600,3 +602,5 @@ private const val ROW_BODY_FONT_SIZE_SP = 12
 private const val ROW_BODY_LINE_HEIGHT_SP = 17
 private const val INLINE_ACTION_FONT_SIZE_SP = 12
 private const val INLINE_ACTION_LINE_HEIGHT_SP = 16
+private const val EDITABLE_VALUE_FONT_SIZE_SP = 22
+private const val EDITABLE_VALUE_LINE_HEIGHT_SP = 28

@@ -23,15 +23,14 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
 import com.aqua.aqualight.R
 import com.aqua.aqualight.ui.common.devicemenu.AquaDeviceMenuChoiceChip
 import com.aqua.aqualight.ui.common.devicemenu.AquaDeviceMenuDivider
 import com.aqua.aqualight.ui.common.devicemenu.AquaDeviceMenuGeometry
+import com.aqua.aqualight.ui.common.devicemenu.AquaDeviceMenuSection
 import com.aqua.aqualight.ui.common.devicemenu.AquaDeviceMenuSelectionRow
-import com.aqua.aqualight.ui.common.devicemenu.AquaDeviceMenuSectionSurface
 import com.aqua.aqualight.ui.common.devicemenu.AquaDeviceMenuTone
 import com.aqua.aqualight.ui.common.devicemenu.AquaDeviceMenuToggle
 import com.aqua.aqualight.ui.common.devicemenu.AquaDeviceMenuValueRow
@@ -44,8 +43,10 @@ import com.aqua.aqualight.ui.common.flow.AquaGuidedFlowButton
 internal fun DeviceDosingChannelMenuScreen(
     item: DosingDetailMenuItem,
     modifier: Modifier = Modifier,
+    dailyDoseMicroliters: Long = 0L,
     reservoirCapacityValue: String = "",
-    onReservoirCapacityClick: (() -> Unit)? = null
+    onReservoirCapacityClick: (() -> Unit)? = null,
+    onScheduleOptionClick: ((DosingPlanScheduleMode) -> Unit)? = null
 ) {
     val colors = aquaDeviceMenuColors()
 
@@ -66,7 +67,10 @@ internal fun DeviceDosingChannelMenuScreen(
                 verticalArrangement = Arrangement.spacedBy(AquaDeviceMenuGeometry.sectionGap)
             ) {
                 when (item) {
-                    DosingDetailMenuItem.DOSING_PLAN -> DosingPlanContent()
+                    DosingDetailMenuItem.DOSING_PLAN -> DosingPlanContent(
+                        dailyDoseMicroliters = dailyDoseMicroliters,
+                        onScheduleOptionClick = onScheduleOptionClick
+                    )
                     DosingDetailMenuItem.RESERVOIR -> ReservoirContent(
                         capacityValue = reservoirCapacityValue,
                         onCapacityClick = onReservoirCapacityClick
@@ -78,7 +82,10 @@ internal fun DeviceDosingChannelMenuScreen(
 }
 
 @Composable
-private fun DosingPlanContent() {
+private fun DosingPlanContent(
+    dailyDoseMicroliters: Long,
+    onScheduleOptionClick: ((DosingPlanScheduleMode) -> Unit)?
+) {
     DetailSection(R.string.device_dosing_detail_schedule_status_section) {
         DetailToggleRow(
             titleRes = R.string.device_dosing_detail_activate_schedule,
@@ -89,13 +96,16 @@ private fun DosingPlanContent() {
     DetailSection(R.string.device_dosing_detail_amount_section) {
         AquaDeviceMenuValueRow(
             label = stringResource(R.string.device_dosing_detail_daily_dose),
-            value = stringResource(R.string.device_dosing_detail_value_zero_ml),
+            value = stringResource(
+                R.string.device_dosing_channel_daily_dose_format,
+                dailyDoseMicroliters.toDouble() / MICROLITERS_PER_MILLILITER
+            ),
             description = stringResource(R.string.device_dosing_detail_daily_dose_description),
             tone = AquaDeviceMenuTone.ACCENT
         )
     }
     DetailSection(R.string.device_dosing_detail_schedule_section) {
-        DosingScheduleOptions()
+        DosingScheduleOptions(onScheduleOptionClick = onScheduleOptionClick)
     }
     DetailSection(R.string.device_dosing_detail_recurrence_section) {
         DosingRecurrenceOptions()
@@ -163,26 +173,11 @@ private fun DetailSection(
     enabled: Boolean = true,
     content: @Composable ColumnScope.() -> Unit
 ) {
-    val colors = aquaDeviceMenuColors()
-    val typography = aquaDeviceMenuTypography(colors)
-    Column(
-        modifier = Modifier
-            .fillMaxWidth()
-            .alpha(if (enabled) ENABLED_ALPHA else DISABLED_ALPHA)
-    ) {
-        BasicText(
-            text = stringResource(titleRes),
-            modifier = Modifier.padding(
-                start = AquaDeviceMenuGeometry.rowHorizontalPadding,
-                bottom = AquaDeviceMenuGeometry.sectionLabelBottomSpacing
-            ),
-            style = typography.sectionLabel
-        )
-        AquaDeviceMenuSectionSurface(
-            modifier = Modifier.fillMaxWidth(),
-            content = content
-        )
-    }
+    AquaDeviceMenuSection(
+        title = stringResource(titleRes),
+        enabled = enabled,
+        content = content
+    )
 }
 
 @Composable
@@ -241,7 +236,9 @@ private fun DetailToggleRow(
 }
 
 @Composable
-private fun DosingScheduleOptions() {
+private fun DosingScheduleOptions(
+    onScheduleOptionClick: ((DosingPlanScheduleMode) -> Unit)?
+) {
     DOSING_PLAN_SCHEDULE_OPTIONS.forEachIndexed { index, option ->
         if (index > 0) {
             AquaDeviceMenuDivider(
@@ -250,7 +247,10 @@ private fun DosingScheduleOptions() {
         }
         AquaDeviceMenuSelectionRow(
             text = stringResource(option.labelRes),
-            selected = option.selected
+            selected = option.selected,
+            onClick = onScheduleOptionClick
+                ?.takeIf { option.mode == DosingPlanScheduleMode.SINGLE }
+                ?.let { callback -> { callback(option.mode) } }
         )
     }
 }
@@ -293,19 +293,39 @@ private fun DetailAction(@StringRes labelRes: Int) {
 }
 
 internal data class DosingPlanScheduleOption(
+    val mode: DosingPlanScheduleMode,
     @StringRes val labelRes: Int,
     val selected: Boolean = false
 )
 
+internal enum class DosingPlanScheduleMode {
+    SINGLE,
+    HOURLY,
+    CUSTOM,
+    TIMER
+}
+
 internal val DOSING_PLAN_SCHEDULE_OPTIONS = listOf(
     DosingPlanScheduleOption(
+        mode = DosingPlanScheduleMode.SINGLE,
         labelRes = R.string.device_dosing_detail_schedule_single,
         selected = true
     ),
-    DosingPlanScheduleOption(R.string.device_dosing_detail_schedule_hourly),
-    DosingPlanScheduleOption(R.string.device_dosing_detail_schedule_custom),
-    DosingPlanScheduleOption(R.string.device_dosing_detail_schedule_timer)
+    DosingPlanScheduleOption(
+        DosingPlanScheduleMode.HOURLY,
+        R.string.device_dosing_detail_schedule_hourly
+    ),
+    DosingPlanScheduleOption(
+        DosingPlanScheduleMode.CUSTOM,
+        R.string.device_dosing_detail_schedule_custom
+    ),
+    DosingPlanScheduleOption(
+        DosingPlanScheduleMode.TIMER,
+        R.string.device_dosing_detail_schedule_timer
+    )
 )
+
+private const val MICROLITERS_PER_MILLILITER = 1_000.0
 
 internal val DOSING_PLAN_WEEKDAY_LABELS = listOf(
     R.string.device_dosing_weekday_mon,
@@ -316,6 +336,3 @@ internal val DOSING_PLAN_WEEKDAY_LABELS = listOf(
     R.string.device_dosing_weekday_sat,
     R.string.device_dosing_weekday_sun
 )
-
-private const val ENABLED_ALPHA = 1f
-private const val DISABLED_ALPHA = 0.42f

@@ -8,6 +8,7 @@ import java.text.DateFormat as JavaDateFormat
 import java.text.DecimalFormatSymbols
 import java.text.NumberFormat
 import java.text.SimpleDateFormat
+import java.time.LocalTime
 import java.time.format.DateTimeFormatter
 import java.time.format.FormatStyle
 import java.util.Date
@@ -122,6 +123,19 @@ object LocaleFormatter {
         )
     }
 
+    /** Formats a wall-clock schedule value without converting it through a timezone. */
+    fun formatTimeOfDay24Hour(context: Context, minutesOfDay: Int): String {
+        return formatTimeOfDay24Hour(minutesOfDay, appLocale(context))
+    }
+
+    internal fun formatTimeOfDay24Hour(minutesOfDay: Int, locale: Locale): String {
+        require(minutesOfDay in 0 until MINUTES_PER_DAY) {
+            "minutesOfDay must be inside one day."
+        }
+        return DateTimeFormatter.ofPattern(TIME_OF_DAY_24_HOUR_PATTERN, locale)
+            .format(LocalTime.of(minutesOfDay / MINUTES_PER_HOUR, minutesOfDay % MINUTES_PER_HOUR))
+    }
+
     /** Product integers follow the active app locale and never use grouping separators. */
     internal fun formatInteger(value: Number, locale: Locale): String {
         return NumberFormat.getIntegerInstance(locale).apply {
@@ -228,4 +242,8 @@ object LocaleFormatter {
         val pattern = AndroidDateFormat.getBestDateTimePattern(locale, skeleton)
         return SimpleDateFormat(pattern, locale).format(Date(timeMillis))
     }
+
+    private const val MINUTES_PER_HOUR = 60
+    private const val MINUTES_PER_DAY = 24 * MINUTES_PER_HOUR
+    private const val TIME_OF_DAY_24_HOUR_PATTERN = "HH:mm"
 }

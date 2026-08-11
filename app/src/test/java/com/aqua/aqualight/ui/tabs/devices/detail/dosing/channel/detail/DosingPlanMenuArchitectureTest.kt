@@ -23,6 +23,15 @@ class DosingPlanMenuArchitectureTest {
             DOSING_PLAN_SCHEDULE_OPTIONS.map(DosingPlanScheduleOption::labelRes)
         )
         assertEquals(1, DOSING_PLAN_SCHEDULE_OPTIONS.count(DosingPlanScheduleOption::selected))
+        assertEquals(
+            listOf(
+                DosingPlanScheduleMode.SINGLE,
+                DosingPlanScheduleMode.HOURLY,
+                DosingPlanScheduleMode.CUSTOM,
+                DosingPlanScheduleMode.TIMER
+            ),
+            DOSING_PLAN_SCHEDULE_OPTIONS.map(DosingPlanScheduleOption::mode)
+        )
     }
 
     @Test
@@ -58,6 +67,27 @@ class DosingPlanMenuArchitectureTest {
         assertTrue(centralSelectionRow.contains("fun AquaDeviceMenuSelectionRow("))
         assertFalse(screen.contains("DetailChoiceGroup("))
         assertFalse(screen.contains("weekdayRows"))
+    }
+
+    @Test
+    fun `single dose editor reuses the detail pump shell and central menu components`() {
+        val fragment = source(
+            "app/src/main/java/com/aqua/aqualight/ui/tabs/devices/detail/dosing/channel/" +
+                "schedule/single/DeviceDosingSingleScheduleFragment.kt"
+        )
+        val screen = source(
+            "app/src/main/java/com/aqua/aqualight/ui/tabs/devices/detail/dosing/channel/" +
+                "schedule/single/DeviceDosingSingleScheduleScreen.kt"
+        )
+        val navigation = source("app/src/main/res/navigation/nav_app.xml")
+
+        assertTrue(fragment.contains("R.layout.fragment_device_dosing_channel_detail"))
+        assertTrue(fragment.contains("setupSelectedPump("))
+        assertTrue(fragment.contains("AquaTimePickerBottomSheet.show("))
+        assertTrue(screen.contains("AquaDeviceMenuHeroCard("))
+        assertTrue(screen.contains("AquaDeviceMenuEditableValueRow("))
+        assertTrue(navigation.contains("deviceDosingSingleScheduleFragment"))
+        assertFalse(screen.contains("DosingPumpDevice("))
     }
 
     private fun source(relativePath: String): String = File(repositoryRoot, relativePath).readText()

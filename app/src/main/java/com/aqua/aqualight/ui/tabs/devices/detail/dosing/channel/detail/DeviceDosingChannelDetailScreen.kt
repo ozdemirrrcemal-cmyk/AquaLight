@@ -4,32 +4,26 @@ import androidx.annotation.DrawableRes
 import androidx.annotation.StringRes
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
-import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.BasicText
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
 import androidx.compose.ui.res.stringResource
 import com.aqua.aqualight.R
 import com.aqua.aqualight.ui.common.devicemenu.AquaDeviceMenuActionRow
 import com.aqua.aqualight.ui.common.devicemenu.AquaDeviceMenuDivider
 import com.aqua.aqualight.ui.common.devicemenu.AquaDeviceMenuGeometry
+import com.aqua.aqualight.ui.common.devicemenu.AquaDeviceMenuHeroCard
 import com.aqua.aqualight.ui.common.devicemenu.AquaDeviceMenuRow
 import com.aqua.aqualight.ui.common.devicemenu.AquaDeviceMenuRowContent
 import com.aqua.aqualight.ui.common.devicemenu.AquaDeviceMenuSectionSurface
@@ -92,44 +86,11 @@ internal fun DeviceDosingChannelDetailScreen(
 
 @Composable
 private fun DosingDetailHero() {
-    val colors = aquaDeviceMenuColors()
-    val typography = aquaDeviceMenuTypography(colors)
-
-    AquaDeviceMenuSectionSurface(modifier = Modifier.fillMaxWidth()) {
-        Row(
-            modifier = Modifier.padding(AquaDeviceMenuGeometry.heroPadding),
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            Box(
-                modifier = Modifier
-                    .width(AquaDeviceMenuGeometry.heroAccentWidth)
-                    .height(AquaDeviceMenuGeometry.heroAccentHeight)
-                    .clip(RoundedCornerShape(AquaDeviceMenuGeometry.heroAccentRadius))
-                    .background(colors.accent)
-            )
-            Column(
-                modifier = Modifier
-                    .weight(1f)
-                    .padding(start = AquaDeviceMenuGeometry.heroContentGap),
-                verticalArrangement = Arrangement.spacedBy(
-                    AquaDeviceMenuGeometry.rowTextGap
-                )
-            ) {
-                BasicText(
-                    text = stringResource(R.string.device_dosing_detail_hero_eyebrow),
-                    style = typography.eyebrow
-                )
-                BasicText(
-                    text = stringResource(R.string.device_dosing_detail_hero_title),
-                    style = typography.heroTitle
-                )
-                BasicText(
-                    text = stringResource(R.string.device_dosing_detail_hero_description),
-                    style = typography.heroBody
-                )
-            }
-        }
-    }
+    AquaDeviceMenuHeroCard(
+        eyebrow = stringResource(R.string.device_dosing_detail_hero_eyebrow),
+        title = stringResource(R.string.device_dosing_detail_hero_title),
+        description = stringResource(R.string.device_dosing_detail_hero_description)
+    )
 }
 
 @Composable

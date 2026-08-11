@@ -23,7 +23,9 @@ feature-owned raw dialogs cannot be reconstructed safely by the framework.
 - `GlobalActionBottomSheet` is the common multi-action/detail contract.
 - `SingleChoiceBottomSheet`, `TextInputBottomSheet`, `TankSettingsEditorBottomSheet` and
   `CareProfileBottomSheet` cover the remaining reusable sheet forms.
-- `AppDatePickerDialogFragment` and `AppTimePickerDialogFragment` own all date/time picker flows.
+- `AppDatePickerDialogFragment` and `AppTimePickerDialogFragment` own compact framework date/time
+  picker flows. `AquaTimePickerBottomSheet` owns visually prominent 24-hour wall-clock selection
+  for product schedules and uses the same reconstructable argument/result contract.
 - `DialogManager` is a compatibility façade for information feedback only and delegates to the
   process-safe feedback sheet. Callback and legacy confirm APIs remain removed.
 - `LoadingOverlayDialogFragment` is owned by FragmentManager. `BaseActivity` stores loading owner
@@ -82,7 +84,8 @@ entry for removing its constructor parameter is obsolete rather than pending.
 - **Feedback bottom sheet:** information, warning, error or success acknowledgement where a sheet
   presentation is appropriate and no focused binary confirmation is required.
 - **Global action sheet:** multiple actions plus contextual details.
-- **Platform dialog fragment:** date/time or another platform-owned picker.
+- **Aqua time-picker sheet:** prominent schedule time-of-day selection in the product visual system.
+- **Platform dialog fragment:** compact date/time or another platform-owned picker.
 - **Toast:** prohibited for product feature feedback.
 
 ## Automated gates

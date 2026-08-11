@@ -7,6 +7,7 @@ import androidx.test.core.app.ActivityScenario
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import com.aqua.aqualight.application.care.CareTaskType
 import com.aqua.aqualight.base.loading.LoadingOverlayDialogFragment
+import com.aqua.aqualight.ui.common.bottomsheet.AquaTimePickerBottomSheet
 import com.aqua.aqualight.ui.common.bottomsheet.BottomSheetAction
 import com.aqua.aqualight.ui.common.bottomsheet.BottomSheetActionStyle
 import com.aqua.aqualight.ui.common.bottomsheet.BottomSheetDetailRow
@@ -44,6 +45,7 @@ class ProcessSafeFeedbackInstrumentedTest {
             CapabilityPermissionBottomSheet::class.java,
             TankSettingsEditorBottomSheet::class.java,
             GlobalActionBottomSheet::class.java,
+            AquaTimePickerBottomSheet::class.java,
             SingleChoiceBottomSheet::class.java,
             TextInputBottomSheet::class.java,
             CareProfileBottomSheet::class.java,
@@ -104,6 +106,20 @@ class ProcessSafeFeedbackInstrumentedTest {
             payloadId = "task-42"
         )
         val recreated = GlobalActionBottomSheet::class.java
+            .getDeclaredConstructor()
+            .newInstance()
+            .apply { arguments = Bundle(original.requireArguments()) }
+
+        assertBundlesEquivalent(
+            expected = original.requireArguments(),
+            actual = recreated.requireArguments()
+        )
+    }
+
+    @Test
+    fun timePickerArgumentsCanRecreateTheSameRequest() {
+        val original = timePickerSheet()
+        val recreated = AquaTimePickerBottomSheet::class.java
             .getDeclaredConstructor()
             .newInstance()
             .apply { arguments = Bundle(original.requireArguments()) }
@@ -263,6 +279,30 @@ class ProcessSafeFeedbackInstrumentedTest {
     }
 
     @Test
+    fun timePickerSheetSurvivesActivityRecreationWithArgumentsIntact() {
+        val original = timePickerSheet()
+        val expected = Bundle(original.requireArguments())
+        ActivityScenario.launch(Stage8DialogTestActivity::class.java).use { scenario ->
+            scenario.onActivity { activity ->
+                original.show(activity.supportFragmentManager, TEST_TIME_PICKER_TAG)
+                activity.supportFragmentManager.executePendingTransactions()
+            }
+
+            scenario.recreate()
+
+            scenario.onActivity { activity ->
+                val restored = activity.supportFragmentManager
+                    .findFragmentByTag(TEST_TIME_PICKER_TAG) as? AquaTimePickerBottomSheet
+                assertNotNull(restored)
+                assertBundlesEquivalent(
+                    expected = expected,
+                    actual = requireNotNull(restored).requireArguments()
+                )
+            }
+        }
+    }
+
+    @Test
     fun themeSheetContainsNoRuntimeCallbackFields() {
         val fieldNames = ThemeBottomSheet::class.java.declaredFields
             .map { field -> field.name }
@@ -333,9 +373,27 @@ class ProcessSafeFeedbackInstrumentedTest {
         )
     }
 
+    private fun timePickerSheet(): AquaTimePickerBottomSheet {
+        return AquaTimePickerBottomSheet.newInstance(
+            AquaTimePickerBottomSheet.Request(
+                title = "Select application time",
+                message = "The complete daily amount will be applied once.",
+                initialHour = 9,
+                initialMinute = 30,
+                confirmText = "Apply time",
+                cancelText = "Cancel",
+                resultTarget = AquaTimePickerBottomSheet.ResultTarget(
+                    requestKey = "test_time_picker_result",
+                    payloadId = "dose-slot-1"
+                )
+            )
+        )
+    }
+
     private companion object {
         const val TEST_CONFIRM_TAG = "stage8_confirm_dialog_rotation_test"
         const val TEST_FEEDBACK_TAG = "stage8_feedback_rotation_test"
         const val TEST_TANK_EDITOR_TAG = "stage14_tank_editor_rotation_test"
+        const val TEST_TIME_PICKER_TAG = "stage8_time_picker_rotation_test"
     }
 }

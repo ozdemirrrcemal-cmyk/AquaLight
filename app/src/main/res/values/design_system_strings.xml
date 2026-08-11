@@ -8,6 +8,13 @@
     <string name="common_not_available_double_symbol" translatable="false">--</string>
     <string name="common_not_available_em_dash" translatable="false">—</string>
     <string name="common_list_separator" translatable="false">,\u0020</string>
+    <string name="common_time_picker_hour">Hour</string>
+    <string name="common_time_picker_minute">Minute</string>
+    <string name="common_time_picker_24_hour_format">24-hour format</string>
+    <string name="common_time_picker_hour_value_description">Hour %1$d</string>
+    <string name="common_time_picker_minute_value_description">Minute %1$d</string>
+    <string name="common_time_picker_selected_time_description">Selected time: %1$s</string>
+    <string name="common_time_separator" translatable="false">:</string>
 
     <!-- Navigation -->
     <string name="navigation_auth_label">Auth</string>

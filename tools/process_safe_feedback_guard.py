@@ -18,6 +18,7 @@ REQUIRED_FILES = (
     UI_ROOT / "common/bottomsheet/ThemeBottomSheet.kt",
     UI_ROOT / "common/bottomsheet/TankSettingsEditorBottomSheet.kt",
     UI_ROOT / "common/bottomsheet/GlobalActionBottomSheet.kt",
+    UI_ROOT / "common/bottomsheet/AquaTimePickerBottomSheet.kt",
     UI_ROOT / "common/bottomsheet/SingleChoiceBottomSheet.kt",
     UI_ROOT / "common/bottomsheet/TextInputBottomSheet.kt",
     UI_ROOT / "common/bottomsheet/CareProfileBottomSheet.kt",
@@ -89,7 +90,10 @@ for source in APP_ROOT.rglob("*.kt"):
         errors.append(f"{relative}: date picker must use AppDatePickerDialogFragment")
 
     if "TimePickerDialog(" in text and not source.is_relative_to(COMMON_DIALOG_ROOT):
-        errors.append(f"{relative}: time picker must use AppTimePickerDialogFragment")
+        errors.append(
+            f"{relative}: time picker must use AppTimePickerDialogFragment "
+            "or AquaTimePickerBottomSheet"
+        )
 
     if "Toast.makeText(" in text:
         errors.append(f"{relative}: Toast is forbidden; use the shared Snackbar renderer")

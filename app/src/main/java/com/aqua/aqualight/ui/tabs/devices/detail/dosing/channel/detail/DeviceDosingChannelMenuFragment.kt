@@ -5,6 +5,7 @@ import android.text.InputType
 import android.view.View
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableDoubleStateOf
+import androidx.compose.runtime.mutableLongStateOf
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.platform.ComposeView
 import androidx.compose.ui.platform.ViewCompositionStrategy
@@ -13,6 +14,7 @@ import androidx.navigation.fragment.navArgs
 import com.aqua.aqualight.R
 import com.aqua.aqualight.ui.common.bottomsheet.TextInputBottomSheet
 import com.aqua.aqualight.ui.tabs.devices.detail.dosing.channel.DeviceDosingChannelDestinationFragment
+import com.aqua.aqualight.ui.tabs.devices.detail.dosing.channel.schedule.single.DeviceDosingSingleScheduleContract
 import java.text.NumberFormat
 
 /** UI-only child destination for one Dosing detail menu entry. */
@@ -24,6 +26,8 @@ class DeviceDosingChannelMenuFragment :
         get() = DosingDetailMenuItem.fromRouteKey(args.menuKey)
 
     private var reservoirCapacityMl by mutableDoubleStateOf(DEFAULT_RESERVOIR_CAPACITY_ML)
+    private var dailyDoseMicroliters by mutableLongStateOf(DEFAULT_DAILY_DOSE_MICROLITERS)
+    private var singleDoseStartTimeMs by mutableLongStateOf(DEFAULT_SINGLE_DOSE_START_TIME_MS)
 
     override val destinationTitle: String
         get() = menuItem
@@ -40,8 +44,19 @@ class DeviceDosingChannelMenuFragment :
             STATE_RESERVOIR_CAPACITY_ML,
             DEFAULT_RESERVOIR_CAPACITY_ML
         ) ?: DEFAULT_RESERVOIR_CAPACITY_ML
+        dailyDoseMicroliters = savedInstanceState?.getLong(
+            STATE_DAILY_DOSE_MICROLITERS,
+            DEFAULT_DAILY_DOSE_MICROLITERS
+        ) ?: DEFAULT_DAILY_DOSE_MICROLITERS
+        singleDoseStartTimeMs = savedInstanceState?.getLong(
+            STATE_SINGLE_DOSE_START_TIME_MS,
+            DEFAULT_SINGLE_DOSE_START_TIME_MS
+        ) ?: DEFAULT_SINGLE_DOSE_START_TIME_MS
         if (item == DosingDetailMenuItem.RESERVOIR) {
             setupReservoirCapacityResult()
+        }
+        if (item == DosingDetailMenuItem.DOSING_PLAN) {
+            setupSingleScheduleResult()
         }
         setupSelectedPump(
             view = view,
@@ -55,12 +70,18 @@ class DeviceDosingChannelMenuFragment :
             setContent {
                 DeviceDosingChannelMenuScreen(
                     item = item,
+                    dailyDoseMicroliters = dailyDoseMicroliters,
                     reservoirCapacityValue = getString(
                         R.string.device_dosing_detail_value_container_ml,
                         reservoirCapacityMl
                     ),
                     onReservoirCapacityClick = if (item == DosingDetailMenuItem.RESERVOIR) {
                         ::showReservoirCapacityEditor
+                    } else {
+                        null
+                    },
+                    onScheduleOptionClick = if (item == DosingDetailMenuItem.DOSING_PLAN) {
+                        ::openScheduleEditor
                     } else {
                         null
                     }
@@ -71,7 +92,52 @@ class DeviceDosingChannelMenuFragment :
 
     override fun onSaveInstanceState(outState: Bundle) {
         outState.putDouble(STATE_RESERVOIR_CAPACITY_ML, reservoirCapacityMl)
+        outState.putLong(STATE_DAILY_DOSE_MICROLITERS, dailyDoseMicroliters)
+        outState.putLong(STATE_SINGLE_DOSE_START_TIME_MS, singleDoseStartTimeMs)
         super.onSaveInstanceState(outState)
+    }
+
+    private fun setupSingleScheduleResult() {
+        parentFragmentManager.setFragmentResultListener(
+            DeviceDosingSingleScheduleContract.RESULT_REQUEST_KEY,
+            viewLifecycleOwner
+        ) { _, result ->
+            if (
+                result.getString(DeviceDosingSingleScheduleContract.RESULT_KEY) !=
+                DeviceDosingSingleScheduleContract.RESULT_SAVED ||
+                result.getString(DeviceDosingSingleScheduleContract.RESULT_SLOT_ID) != args.slotId
+            ) {
+                return@setFragmentResultListener
+            }
+            val resultStartTimeMs = result.getLong(
+                DeviceDosingSingleScheduleContract.RESULT_START_TIME_MS,
+                INVALID_START_TIME_MS
+            )
+            if (DeviceDosingSingleScheduleContract.isValidStartTime(resultStartTimeMs)) {
+                singleDoseStartTimeMs =
+                    DeviceDosingSingleScheduleContract.minuteAlignedStartTime(resultStartTimeMs)
+            }
+        }
+    }
+
+    private fun openScheduleEditor(mode: DosingPlanScheduleMode) {
+        if (mode != DosingPlanScheduleMode.SINGLE) return
+        val navController = findNavController()
+        if (navController.currentDestination?.id != R.id.deviceDosingChannelMenuFragment) {
+            return
+        }
+        navController.navigate(
+            DeviceDosingChannelMenuFragmentDirections
+                .actionDeviceDosingChannelMenuFragmentToDeviceDosingSingleScheduleFragment(
+                    deviceUid = args.deviceUid,
+                    slotId = args.slotId,
+                    channelTitle = args.channelTitle,
+                    pumpCount = args.pumpCount,
+                    channelNumber = args.channelNumber,
+                    dailyDoseMicroliters = dailyDoseMicroliters,
+                    startTimeMs = singleDoseStartTimeMs
+                )
+        )
     }
 
     private fun setupReservoirCapacityResult() {
@@ -131,9 +197,14 @@ class DeviceDosingChannelMenuFragment :
 
     private companion object {
         const val STATE_RESERVOIR_CAPACITY_ML = "reservoir_capacity_ml"
+        const val STATE_DAILY_DOSE_MICROLITERS = "daily_dose_microliters"
+        const val STATE_SINGLE_DOSE_START_TIME_MS = "single_dose_start_time_ms"
         const val RESERVOIR_CAPACITY_REQUEST_KEY = "dosing_reservoir_capacity_input"
         const val RESERVOIR_CAPACITY_PAYLOAD_ID = "reservoir_capacity"
         const val RESERVOIR_CAPACITY_MAX_LENGTH = 7
         const val DEFAULT_RESERVOIR_CAPACITY_ML = 450.0
+        const val DEFAULT_DAILY_DOSE_MICROLITERS = 0L
+        const val DEFAULT_SINGLE_DOSE_START_TIME_MS = 0L
+        const val INVALID_START_TIME_MS = -1L
     }
 }
