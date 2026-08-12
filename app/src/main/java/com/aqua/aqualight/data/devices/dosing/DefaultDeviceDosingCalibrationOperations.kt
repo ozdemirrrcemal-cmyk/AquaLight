@@ -1,14 +1,14 @@
 @file:Suppress("LongMethod", "LongParameterList", "ReturnCount", "TooManyFunctions")
 
-package com.aqua.aqualight.data.devices
+package com.aqua.aqualight.data.devices.dosing
 
-import com.aqua.aqualight.application.devices.DeviceDosingCalibrationOperations
-import com.aqua.aqualight.application.devices.DeviceDosingCalibrationResult
-import com.aqua.aqualight.application.devices.DeviceDosingCalibrationSessionPhase
-import com.aqua.aqualight.application.devices.DeviceDosingCalibrationSnapshot
 import com.aqua.aqualight.application.devices.DeviceDosingChannelSlot
 import com.aqua.aqualight.application.devices.DeviceRootCatalogState
 import com.aqua.aqualight.application.devices.OwnerDeviceFamily
+import com.aqua.aqualight.application.devices.dosing.DeviceDosingCalibrationOperations
+import com.aqua.aqualight.application.devices.dosing.DeviceDosingCalibrationResult
+import com.aqua.aqualight.application.devices.dosing.DeviceDosingCalibrationSessionPhase
+import com.aqua.aqualight.application.devices.dosing.DeviceDosingCalibrationSnapshot
 import com.aqua.aqualight.data.devices.model.DeviceUid
 import com.aqua.aqualight.data.devices.repository.DevicesRepository
 import com.aqua.aqualight.data.devices.runtime.core.DeviceRuntimeCommandOutcome
@@ -21,6 +21,7 @@ import com.aqua.aqualight.data.devices.runtime.modules.dosing.DeviceDosingDoseNo
 import com.aqua.aqualight.data.devices.runtime.modules.dosing.DeviceDosingRuntimeContract
 import com.aqua.aqualight.data.devices.runtime.modules.dosing.DeviceDosingRuntimeRepository
 import com.aqua.aqualight.data.devices.runtime.modules.dosing.DeviceDosingStatus
+import com.aqua.aqualight.data.devices.toDeviceRootSnapshot
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.flowOf
