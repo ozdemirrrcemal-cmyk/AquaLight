@@ -3,6 +3,7 @@ package com.aqua.aqualight.ui.tabs.devices.detail.dosing.channel
 import com.aqua.aqualight.ui.tabs.devices.detail.dosing.channel.detail.DeviceDosingChannelDetailViewModel
 import com.aqua.aqualight.ui.tabs.devices.detail.dosing.channel.plan.DosingPlanDraft
 import com.aqua.aqualight.ui.tabs.devices.detail.dosing.channel.plan.DosingPlanScheduleMode
+import com.aqua.aqualight.ui.tabs.devices.detail.dosing.channel.plan.DosingPlanScheduleUpdate
 import com.aqua.aqualight.ui.tabs.devices.detail.dosing.channel.plan.DeviceDosingPlanViewModel
 import com.aqua.aqualight.ui.tabs.devices.detail.dosing.channel.reservoir.DeviceDosingReservoirDraft
 import com.aqua.aqualight.ui.tabs.devices.detail.dosing.channel.reservoir.DeviceDosingReservoirViewModel
@@ -20,7 +21,7 @@ class DosingDraftViewModelBoundaryTest {
         viewModel.bindInitial(DosingPlanDraft(distributedDailyDoseMicroliters = 9_000L))
 
         viewModel.setDailyDoseMicroliters(3_000L)
-        viewModel.selectHourly(3_600_000L)
+        viewModel.applyScheduleUpdate(DosingPlanScheduleUpdate.Hourly(3_600_000L))
 
         val draft = viewModel.currentDraft()
         assertEquals(3_000L, draft.distributedDailyDoseMicroliters)
