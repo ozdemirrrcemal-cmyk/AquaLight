@@ -19,7 +19,7 @@ import com.aqua.aqualight.ui.navigation.AppRouteNavigator
 import com.aqua.aqualight.ui.tabs.devices.detail.dosing.channel.DeviceDosingChannelDestinationFragment
 import kotlinx.coroutines.launch
 
-/** Calibration destination for one centrally identified, uncalibrated Dosing channel. */
+/** Calibration destination for one centrally identified Dosing channel. */
 class DeviceDosingChannelCalibrationFragment :
     DeviceDosingChannelDestinationFragment(R.layout.fragment_device_dosing_channel_calibration) {
 
@@ -65,7 +65,8 @@ class DeviceDosingChannelCalibrationFragment :
             slotId = args.slotId,
             pumpCount = args.pumpCount,
             channelNumber = args.channelNumber,
-            channelTitle = args.channelTitle
+            channelTitle = args.channelTitle,
+            recalibration = args.recalibration
         )
     }
 

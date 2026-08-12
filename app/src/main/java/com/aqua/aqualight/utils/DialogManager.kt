@@ -14,7 +14,7 @@ enum class DialogType {
     WARNING
 }
 
-/** Compatibility facade for one-way informational feedback. Confirmations use Fragment Result directly. */
+/** Compatibility facade for one-way informational feedback. Confirmations use ConfirmDialogFragment. */
 object DialogManager {
 
     fun showInfoDialog(

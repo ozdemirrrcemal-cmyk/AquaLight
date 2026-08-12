@@ -97,6 +97,10 @@ internal class DebugFixtureDosingChannelNavigationOperations(
                         channelTitle = stateStore.current(fixture.deviceUid, slot.id.value)
                             ?.channelTitle
                             ?: slot.defaultDisplayName,
+                        lastCalibratedAtEpochSeconds = stateStore
+                            .current(fixture.deviceUid, slot.id.value)
+                            ?.lastCalibratedAt
+                            ?: 0L,
                         destination = destination
                     )
                 }

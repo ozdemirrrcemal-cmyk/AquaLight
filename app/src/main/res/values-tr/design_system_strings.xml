@@ -3,6 +3,14 @@
     <string name="common_confirm_action_title">İşlemi onaylayın</string>
     <string name="common_confirm_action_message">Devam etmek istediğinizden emin misiniz?</string>
     <string name="common_clear_search_description">Aramayı temizle</string>
+    <string name="common_time_picker_hour">Saat</string>
+    <string name="common_time_picker_minute">Dakika</string>
+    <string name="common_time_picker_24_hour_format">24 saat biçimi</string>
+    <string name="common_time_picker_hour_value_description">Saat %1$d</string>
+    <string name="common_time_picker_minute_value_description">Dakika %1$d</string>
+    <string name="common_time_picker_selected_time_description">Seçilen saat: %1$s</string>
+    <string name="common_time_picker_selected_minute_of_hour_description">Her saat için seçilen dakika: %1$d</string>
+    <string name="common_time_picker_minute_of_hour_hint">Seçilen dakikada her saat bir kez çalışır</string>
     <string name="navigation_auth_label">Kimlik doğrulama</string>
 
     <string name="device_add_scan_secure_qr_action">Güvenli QR kodunu tara</string>

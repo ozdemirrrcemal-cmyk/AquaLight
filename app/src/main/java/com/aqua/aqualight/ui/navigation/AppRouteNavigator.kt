@@ -103,6 +103,7 @@ object AppRouteNavigator {
         val channelTitle = target.channelTitle.trim()
         val pumpCount = target.pumpCount
         val channelNumber = target.channelNumber
+        val lastCalibratedAtEpochSeconds = target.lastCalibratedAtEpochSeconds
         val destinationId = target.destination.destinationId
         val hasRouteIdentity =
             deviceUid.isNotBlank() &&
@@ -111,9 +112,13 @@ object AppRouteNavigator {
         val hasValidChannel =
             pumpCount > 0 &&
                 channelNumber in 1..pumpCount
+        val hasValidCalibrationTimestamp =
+            target.destination != DeviceDosingChannelDestination.DETAIL ||
+                lastCalibratedAtEpochSeconds > 0L
 
         return when {
-            !hasRouteIdentity || !hasValidChannel -> AppRouteOpenResult.REJECTED
+            !hasRouteIdentity || !hasValidChannel || !hasValidCalibrationTimestamp ->
+                AppRouteOpenResult.REJECTED
             DosingChannelRouteIdempotencyPolicy.isAlreadyOpen(
                 current = DosingChannelRouteIdentity(
                     destinationId = navController.currentDestination?.id,
@@ -135,19 +140,12 @@ object AppRouteNavigator {
             else -> {
                 navController.navigate(
                     deepLinkRequest(
-                        uri = Uri.Builder()
-                            .scheme(SCHEME)
-                            .authority(AUTHORITY)
-                            .appendPath(PATH_DEVICE)
-                            .appendPath(deviceUid)
-                            .appendPath(PATH_DOSING)
-                            .appendPath(PATH_CHANNEL)
-                            .appendPath(slotId)
-                            .appendPath(target.destination.path)
-                            .appendQueryParameter(QUERY_CHANNEL_TITLE, channelTitle)
-                            .appendQueryParameter(QUERY_PUMP_COUNT, pumpCount.toString())
-                            .appendQueryParameter(QUERY_CHANNEL_NUMBER, channelNumber.toString())
-                            .build()
+                        uri = dosingChannelRouteUri(
+                            target = target,
+                            deviceUid = deviceUid,
+                            slotId = slotId,
+                            channelTitle = channelTitle
+                        )
                     ),
                     dosingChannelRouteOptions()
                 )
@@ -155,6 +153,33 @@ object AppRouteNavigator {
             }
         }
     }
+
+    private fun dosingChannelRouteUri(
+        target: DeviceDosingChannelNavigationTarget,
+        deviceUid: String,
+        slotId: String,
+        channelTitle: String
+    ): Uri = Uri.Builder()
+        .scheme(SCHEME)
+        .authority(AUTHORITY)
+        .appendPath(PATH_DEVICE)
+        .appendPath(deviceUid)
+        .appendPath(PATH_DOSING)
+        .appendPath(PATH_CHANNEL)
+        .appendPath(slotId)
+        .appendPath(target.destination.path)
+        .appendQueryParameter(QUERY_CHANNEL_TITLE, channelTitle)
+        .appendQueryParameter(QUERY_PUMP_COUNT, target.pumpCount.toString())
+        .appendQueryParameter(QUERY_CHANNEL_NUMBER, target.channelNumber.toString())
+        .apply {
+            if (target.destination == DeviceDosingChannelDestination.DETAIL) {
+                appendQueryParameter(
+                    QUERY_LAST_CALIBRATED_AT_EPOCH_SECONDS,
+                    target.lastCalibratedAtEpochSeconds.toString()
+                )
+            }
+        }
+        .build()
 
     private fun standardRouteOptions() = navOptions {
         anim {
@@ -209,6 +234,8 @@ object AppRouteNavigator {
     private const val QUERY_CHANNEL_TITLE = "channelTitle"
     private const val QUERY_PUMP_COUNT = "pumpCount"
     private const val QUERY_CHANNEL_NUMBER = "channelNumber"
+    private const val QUERY_LAST_CALIBRATED_AT_EPOCH_SECONDS =
+        "lastCalibratedAtEpochSeconds"
     private const val ARG_DEVICE_UID = "deviceUid"
     private const val ARG_SLOT_ID = "slotId"
 
