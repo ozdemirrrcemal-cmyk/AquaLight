@@ -1,5 +1,11 @@
-package com.aqua.aqualight.data.devices.runtime.modules.dosing
+package com.aqua.aqualight.data.devices.runtime.modules.dosing.models
 
+import com.aqua.aqualight.data.devices.runtime.modules.dosing.contract.DOSING_DEVICE_UPTIME_MAX_MS
+import com.aqua.aqualight.data.devices.runtime.modules.dosing.contract.DOSING_NON_NEGATIVE_LONG
+import com.aqua.aqualight.data.devices.runtime.modules.dosing.contract.DOSING_UNSET_CALIBRATION
+import com.aqua.aqualight.data.devices.runtime.modules.dosing.contract.DOSING_UNSET_RESERVOIR
+import com.aqua.aqualight.data.devices.runtime.modules.dosing.contract.DOSING_WEEKDAY_COUNT
+import com.aqua.aqualight.data.devices.runtime.modules.dosing.contract.DeviceDosingRuntimeContract
 import org.json.JSONArray
 import org.json.JSONObject
 
