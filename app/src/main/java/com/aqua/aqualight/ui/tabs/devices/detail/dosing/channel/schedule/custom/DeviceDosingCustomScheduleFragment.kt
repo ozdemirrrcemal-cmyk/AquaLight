@@ -11,7 +11,7 @@ import androidx.core.os.bundleOf
 import androidx.navigation.fragment.findNavController
 import androidx.navigation.fragment.navArgs
 import com.aqua.aqualight.R
-import com.aqua.aqualight.ui.tabs.devices.detail.dosing.channel.DeviceDosingChannelDestinationFragment
+import com.aqua.aqualight.ui.tabs.devices.detail.dosing.channel.common.DeviceDosingChannelDestinationFragment
 
 /** Draft editor for a daily dose distributed across explicit, non-overlapping periods. */
 class DeviceDosingCustomScheduleFragment :
@@ -63,10 +63,7 @@ class DeviceDosingCustomScheduleFragment :
             STATE_PERIODS_DRAFT,
             DeviceDosingCustomScheduleContract.encodeDraft(periods)
         )
-        outState.putInt(
-            STATE_VALIDATION_MESSAGE_RES,
-            validationMessageRes ?: NO_MESSAGE_RES
-        )
+        outState.putInt(STATE_VALIDATION_MESSAGE_RES, validationMessageRes ?: NO_MESSAGE_RES)
         if (::editor.isInitialized) editor.saveState(outState)
         super.onSaveInstanceState(outState)
     }
@@ -106,8 +103,7 @@ class DeviceDosingCustomScheduleFragment :
         val navController = findNavController()
         val canSave =
             navController.currentDestination?.id == R.id.deviceDosingCustomScheduleFragment &&
-                args.dailyDoseMicroliters > 0L &&
-                periods.isNotEmpty()
+                args.dailyDoseMicroliters > 0L && periods.isNotEmpty()
         if (!canSave) return
 
         parentFragmentManager.setFragmentResult(

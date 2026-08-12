@@ -1,4 +1,4 @@
-package com.aqua.aqualight.ui.tabs.devices.detail.dosing.channel.detail
+package com.aqua.aqualight.ui.tabs.devices.detail.dosing.channel.plan
 
 import com.aqua.aqualight.ui.tabs.devices.detail.dosing.DosingWeekday
 import org.junit.Assert.assertArrayEquals

@@ -1,4 +1,4 @@
-package com.aqua.aqualight.ui.tabs.devices.detail.dosing.channel.detail
+package com.aqua.aqualight.ui.tabs.devices.detail.dosing.channel.plan
 
 import androidx.compose.runtime.Immutable
 import com.aqua.aqualight.ui.tabs.devices.detail.dosing.DosingWeekday
@@ -19,11 +19,7 @@ internal data class DosingPlanRecurrenceState(
         weekday: DosingWeekday,
         selected: Boolean
     ): DosingPlanRecurrenceState = copy(
-        selectedDays = if (selected) {
-            selectedDays + weekday
-        } else {
-            selectedDays - weekday
-        }
+        selectedDays = if (selected) selectedDays + weekday else selectedDays - weekday
     )
 
     fun toWeekdayFlags(): BooleanArray = DOSING_PLAN_WEEKDAYS
@@ -52,5 +48,4 @@ internal val DOSING_PLAN_WEEKDAYS = listOf(
     DosingWeekday.SUNDAY
 )
 
-internal val DOSING_PLAN_WEEKDAY_LABELS = DOSING_PLAN_WEEKDAYS
-    .map(DosingWeekday::shortLabelRes)
+internal val DOSING_PLAN_WEEKDAY_LABELS = DOSING_PLAN_WEEKDAYS.map(DosingWeekday::shortLabelRes)

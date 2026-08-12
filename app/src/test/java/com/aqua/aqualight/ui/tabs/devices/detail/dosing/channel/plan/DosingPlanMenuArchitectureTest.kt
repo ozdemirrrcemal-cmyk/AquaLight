@@ -1,4 +1,4 @@
-package com.aqua.aqualight.ui.tabs.devices.detail.dosing.channel.detail
+package com.aqua.aqualight.ui.tabs.devices.detail.dosing.channel.plan
 
 import com.aqua.aqualight.R
 import java.io.File
@@ -22,7 +22,6 @@ class DosingPlanMenuArchitectureTest {
             ),
             DOSING_PLAN_SCHEDULE_OPTIONS.map(DosingPlanScheduleOption::labelRes)
         )
-        assertEquals(1, DOSING_PLAN_SCHEDULE_OPTIONS.count(DosingPlanScheduleOption::selected))
         assertEquals(
             listOf(
                 DosingPlanScheduleMode.SINGLE,
@@ -32,6 +31,7 @@ class DosingPlanMenuArchitectureTest {
             ),
             DOSING_PLAN_SCHEDULE_OPTIONS.map(DosingPlanScheduleOption::mode)
         )
+        assertEquals(DosingPlanScheduleMode.SINGLE, DosingPlanDraft().selectedScheduleMode)
     }
 
     @Test
@@ -53,29 +53,28 @@ class DosingPlanMenuArchitectureTest {
     }
 
     @Test
-    fun `schedule state is hoisted and disables every dependent plan control`() {
+    fun `plan state is hoisted and disables every dependent control`() {
         val fragment = source(
             "app/src/main/java/com/aqua/aqualight/ui/tabs/devices/detail/dosing/channel/" +
-                "detail/DeviceDosingChannelMenuFragment.kt"
+                "plan/DeviceDosingPlanFragment.kt"
         )
         val screen = source(
             "app/src/main/java/com/aqua/aqualight/ui/tabs/devices/detail/dosing/channel/" +
-                "detail/DeviceDosingChannelMenuScreen.kt"
+                "plan/DeviceDosingPlanScreen.kt"
         )
 
-        assertTrue(fragment.contains("STATE_SCHEDULE_ENABLED"))
-        assertTrue(fragment.contains("STATE_SCHEDULE_WEEKDAYS"))
-        assertTrue(screen.contains("checked = scheduleEnabled"))
-        assertTrue(screen.contains("enabled = scheduleEnabled"))
+        assertTrue(fragment.contains("DosingPlanDraft.restore"))
+        assertTrue(fragment.contains("draft.writeTo"))
+        assertTrue(screen.contains("state.scheduleEnabled"))
         assertTrue(screen.contains("onWeekdaySelectionChange"))
-        assertFalse(screen.contains("selected = true,\n                modifier = Modifier.weight(1f)"))
+        assertFalse(screen.contains("rememberSaveable"))
     }
 
     @Test
     fun `dosing plan consumes central menu selection styling only`() {
         val screen = source(
-            "app/src/main/java/com/aqua/aqualight/ui/tabs/devices/detail/dosing/" +
-                "channel/detail/DeviceDosingChannelMenuScreen.kt"
+            "app/src/main/java/com/aqua/aqualight/ui/tabs/devices/detail/dosing/channel/" +
+                "plan/DeviceDosingPlanScreen.kt"
         )
         val centralSelectionRow = source(
             "app/src/main/java/com/aqua/aqualight/ui/common/devicemenu/" +
@@ -86,11 +85,26 @@ class DosingPlanMenuArchitectureTest {
         assertTrue(screen.contains("compact = true"))
         assertTrue(centralSelectionRow.contains("fun AquaDeviceMenuSelectionRow("))
         assertFalse(screen.contains("DetailChoiceGroup("))
-        assertFalse(screen.contains("weekdayRows"))
     }
 
     @Test
-    fun `single dose editor reuses the detail pump shell and central menu components`() {
+    fun `detail routes plan and reservoir through explicit destinations`() {
+        val detail = source(
+            "app/src/main/java/com/aqua/aqualight/ui/tabs/devices/detail/dosing/channel/" +
+                "detail/DeviceDosingChannelDetailFragment.kt"
+        )
+        val navigation = source("app/src/main/res/navigation/nav_app.xml")
+
+        assertTrue(detail.contains("ToDeviceDosingPlanFragment"))
+        assertTrue(detail.contains("ToDeviceDosingReservoirFragment"))
+        assertTrue(navigation.contains("deviceDosingPlanFragment"))
+        assertTrue(navigation.contains("deviceDosingReservoirFragment"))
+        assertFalse(navigation.contains("deviceDosingChannelMenuFragment"))
+        assertFalse(navigation.contains("menuKey"))
+    }
+
+    @Test
+    fun `single dose editor reuses the shared channel shell and central components`() {
         val fragment = source(
             "app/src/main/java/com/aqua/aqualight/ui/tabs/devices/detail/dosing/channel/" +
                 "schedule/single/DeviceDosingSingleScheduleFragment.kt"
@@ -101,7 +115,6 @@ class DosingPlanMenuArchitectureTest {
         )
         val navigation = source("app/src/main/res/navigation/nav_app.xml")
 
-        assertTrue(fragment.contains("R.layout.fragment_device_dosing_channel_detail"))
         assertTrue(fragment.contains("setupSelectedPump("))
         assertTrue(fragment.contains("AquaTimePickerBottomSheet.show("))
         assertTrue(screen.contains("AquaDeviceMenuHeroCard("))
@@ -111,7 +124,7 @@ class DosingPlanMenuArchitectureTest {
     }
 
     @Test
-    fun `hourly editor reuses the pump shell and central minute picker mode`() {
+    fun `hourly editor reuses the shared channel shell and central minute picker`() {
         val fragment = source(
             "app/src/main/java/com/aqua/aqualight/ui/tabs/devices/detail/dosing/channel/" +
                 "schedule/hourly/DeviceDosingHourlyScheduleFragment.kt"
@@ -122,7 +135,6 @@ class DosingPlanMenuArchitectureTest {
         )
         val navigation = source("app/src/main/res/navigation/nav_app.xml")
 
-        assertTrue(fragment.contains("R.layout.fragment_device_dosing_channel_detail"))
         assertTrue(fragment.contains("setupSelectedPump("))
         assertTrue(fragment.contains("SelectionMode.MINUTE_OF_HOUR"))
         assertTrue(fragment.contains("AquaTimePickerBottomSheet.show("))
@@ -148,7 +160,6 @@ class DosingPlanMenuArchitectureTest {
         )
         val navigation = source("app/src/main/res/navigation/nav_app.xml")
 
-        assertTrue(fragment.contains("R.layout.fragment_device_dosing_channel_detail"))
         assertTrue(fragment.contains("setupSelectedPump("))
         assertTrue(editor.contains("AquaTimePickerBottomSheet.show("))
         assertTrue(editor.contains("IntegerStepperBottomSheet.show("))
@@ -172,18 +183,17 @@ class DosingPlanMenuArchitectureTest {
             "app/src/main/java/com/aqua/aqualight/ui/tabs/devices/detail/dosing/channel/" +
                 "schedule/timer/DeviceDosingTimerScheduleEditor.kt"
         )
-        val menu = source(
+        val planDraft = source(
             "app/src/main/java/com/aqua/aqualight/ui/tabs/devices/detail/dosing/channel/" +
-                "detail/DeviceDosingChannelMenuFragment.kt"
+                "plan/DosingPlanDraft.kt"
         )
         val navigation = source("app/src/main/res/navigation/nav_app.xml")
 
-        assertTrue(fragment.contains("R.layout.fragment_device_dosing_channel_detail"))
         assertTrue(fragment.contains("setupSelectedPump("))
         assertTrue(editor.contains("AquaTimePickerBottomSheet.show("))
         assertTrue(editor.contains("TextInputBottomSheet.show("))
         assertTrue(screen.contains("totalDoseMicroliters"))
-        assertTrue(menu.contains("displayedDailyDoseMicroliters"))
+        assertTrue(planDraft.contains("displayedDailyDoseMicroliters"))
         assertTrue(navigation.contains("deviceDosingTimerScheduleFragment"))
         assertFalse(screen.contains("DosingPumpDevice("))
     }

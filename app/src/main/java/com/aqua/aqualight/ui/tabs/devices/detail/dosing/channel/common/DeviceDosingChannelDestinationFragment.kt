@@ -1,4 +1,4 @@
-package com.aqua.aqualight.ui.tabs.devices.detail.dosing.channel
+package com.aqua.aqualight.ui.tabs.devices.detail.dosing.channel.common
 
 import android.os.Bundle
 import android.view.View
@@ -14,7 +14,7 @@ import com.aqua.aqualight.ui.common.header.setupAquaHeader
 import com.aqua.aqualight.ui.tabs.devices.detail.dosing.DosingSelectedPumpSection
 import com.aqua.aqualight.ui.tabs.devices.detail.dosing.exactDosingPumpCountOrNull
 
-/** Shared header behavior for distinct centrally resolved Dosing destinations. */
+/** Shared header and selected-pump shell for centrally resolved Dosing channel destinations. */
 abstract class DeviceDosingChannelDestinationFragment(
     @LayoutRes layoutRes: Int
 ) : Fragment(layoutRes) {

@@ -16,7 +16,7 @@ import androidx.navigation.fragment.navArgs
 import com.aqua.aqualight.R
 import com.aqua.aqualight.composition.requireAppContainer
 import com.aqua.aqualight.ui.navigation.AppRouteNavigator
-import com.aqua.aqualight.ui.tabs.devices.detail.dosing.channel.DeviceDosingChannelDestinationFragment
+import com.aqua.aqualight.ui.tabs.devices.detail.dosing.channel.common.DeviceDosingChannelDestinationFragment
 import kotlinx.coroutines.launch
 
 /** Calibration destination for one centrally identified Dosing channel. */
@@ -82,15 +82,10 @@ class DeviceDosingChannelCalibrationFragment :
             viewLifecycleOwner.repeatOnLifecycle(Lifecycle.State.STARTED) {
                 viewModel.events.collect { event ->
                     when (event) {
-                        DeviceDosingCalibrationEvent.Exit ->
-                            findNavController().navigateUp()
+                        DeviceDosingCalibrationEvent.Exit -> findNavController().navigateUp()
                         is DeviceDosingCalibrationEvent.Completed -> {
                             val navController = findNavController()
-                            if (navController.popBackStack(
-                                    R.id.deviceDosingRootFragment,
-                                    false
-                                )
-                            ) {
+                            if (navController.popBackStack(R.id.deviceDosingRootFragment, false)) {
                                 AppRouteNavigator.openDosingChannel(
                                     navController = navController,
                                     target = event.target
