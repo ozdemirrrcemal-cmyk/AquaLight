@@ -1,10 +1,10 @@
 package com.aqua.aqualight.ui.tabs.devices.detail.dosing.channel.schedule.custom
 
-import com.aqua.aqualight.application.devices.DeviceDosingCustomPeriodDraft
-import com.aqua.aqualight.application.devices.DeviceDosingCustomScheduleDraftPolicy
-import com.aqua.aqualight.application.devices.DeviceDosingCustomScheduleValidationError
-import com.aqua.aqualight.application.devices.DeviceDosingScheduleDraftLimits
-import com.aqua.aqualight.application.devices.DeviceDosingScheduleTimeDraftPolicy
+import com.aqua.aqualight.application.devices.dosing.DeviceDosingCustomPeriodDraft
+import com.aqua.aqualight.application.devices.dosing.DeviceDosingCustomScheduleDraftPolicy
+import com.aqua.aqualight.application.devices.dosing.DeviceDosingCustomScheduleValidationError
+import com.aqua.aqualight.application.devices.dosing.DeviceDosingScheduleDraftLimits
+import com.aqua.aqualight.application.devices.dosing.DeviceDosingScheduleTimeDraftPolicy
 
 internal typealias DeviceDosingCustomPeriod = DeviceDosingCustomPeriodDraft
 
