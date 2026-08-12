@@ -38,10 +38,7 @@ class DeviceDosingPlanFragment :
             host = DosingPlanScheduleResultHost(
                 fragment = this,
                 slotId = args.slotId,
-                updateSingle = viewModel::selectSingle,
-                updateHourly = viewModel::selectHourly,
-                updateCustom = viewModel::selectCustom,
-                updateTimer = viewModel::selectTimer
+                updateSchedule = viewModel::applyScheduleUpdate
             ),
             lifecycleOwner = viewLifecycleOwner
         )

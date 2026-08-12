@@ -63,8 +63,9 @@ class DosingPlanMenuArchitectureTest {
                 "plan/DeviceDosingPlanScreen.kt"
         )
 
-        assertTrue(fragment.contains("DosingPlanDraft.restore"))
-        assertTrue(fragment.contains("draft.writeTo"))
+        assertTrue(fragment.contains("viewModel.bindInitial(DosingPlanDraft.restore(savedInstanceState))"))
+        assertTrue(fragment.contains("viewModel.currentDraft().writeTo(outState)"))
+        assertTrue(fragment.contains("updateSchedule = viewModel::applyScheduleUpdate"))
         assertTrue(screen.contains("state.scheduleEnabled"))
         assertTrue(screen.contains("onWeekdaySelectionChange"))
         assertFalse(screen.contains("rememberSaveable"))

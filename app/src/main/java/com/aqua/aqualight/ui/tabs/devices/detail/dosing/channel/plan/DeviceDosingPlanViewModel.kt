@@ -2,8 +2,6 @@ package com.aqua.aqualight.ui.tabs.devices.detail.dosing.channel.plan
 
 import androidx.lifecycle.ViewModel
 import com.aqua.aqualight.ui.tabs.devices.detail.dosing.DosingWeekday
-import com.aqua.aqualight.ui.tabs.devices.detail.dosing.channel.schedule.custom.DeviceDosingCustomPeriod
-import com.aqua.aqualight.ui.tabs.devices.detail.dosing.channel.schedule.timer.DeviceDosingTimerDose
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -27,25 +25,26 @@ internal class DeviceDosingPlanViewModel : ViewModel() {
         update { state -> state.copy(distributedDailyDoseMicroliters = microliters) }
     }
 
-    fun selectSingle(startTimeMs: Long) = update { state -> state.copy(
-        singleDoseStartTimeMs = startTimeMs,
-        selectedScheduleMode = DosingPlanScheduleMode.SINGLE
-    ) }
-
-    fun selectHourly(startTimeMs: Long) = update { state -> state.copy(
-        hourlyStartTimeMs = startTimeMs,
-        selectedScheduleMode = DosingPlanScheduleMode.HOURLY
-    ) }
-
-    fun selectCustom(periods: List<DeviceDosingCustomPeriod>) = update { state -> state.copy(
-        customPeriods = periods,
-        selectedScheduleMode = DosingPlanScheduleMode.CUSTOM
-    ) }
-
-    fun selectTimer(doses: List<DeviceDosingTimerDose>) = update { state -> state.copy(
-        timerDoses = doses,
-        selectedScheduleMode = DosingPlanScheduleMode.TIMER
-    ) }
+    fun applyScheduleUpdate(scheduleUpdate: DosingPlanScheduleUpdate) = update { state ->
+        when (scheduleUpdate) {
+            is DosingPlanScheduleUpdate.Single -> state.copy(
+                singleDoseStartTimeMs = scheduleUpdate.startTimeMs,
+                selectedScheduleMode = DosingPlanScheduleMode.SINGLE
+            )
+            is DosingPlanScheduleUpdate.Hourly -> state.copy(
+                hourlyStartTimeMs = scheduleUpdate.startTimeMs,
+                selectedScheduleMode = DosingPlanScheduleMode.HOURLY
+            )
+            is DosingPlanScheduleUpdate.Custom -> state.copy(
+                customPeriods = scheduleUpdate.periods,
+                selectedScheduleMode = DosingPlanScheduleMode.CUSTOM
+            )
+            is DosingPlanScheduleUpdate.Timer -> state.copy(
+                timerDoses = scheduleUpdate.doses,
+                selectedScheduleMode = DosingPlanScheduleMode.TIMER
+            )
+        }
+    }
 
     fun setScheduleEnabled(enabled: Boolean) = update { state ->
         state.copy(scheduleEnabled = enabled)

@@ -12,10 +12,7 @@ import com.aqua.aqualight.ui.tabs.devices.detail.dosing.channel.schedule.timer.D
 internal data class DosingPlanScheduleResultHost(
     val fragment: Fragment,
     val slotId: String,
-    val updateSingle: (Long) -> Unit,
-    val updateHourly: (Long) -> Unit,
-    val updateCustom: (List<DeviceDosingCustomPeriod>) -> Unit,
-    val updateTimer: (List<DeviceDosingTimerDose>) -> Unit
+    val updateSchedule: (DosingPlanScheduleUpdate) -> Unit
 )
 
 internal fun bindDosingPlanScheduleResults(
@@ -44,7 +41,11 @@ private fun bindSingleScheduleResult(
             INVALID_START_TIME_MS
         )
         if (expected && DeviceDosingSingleScheduleContract.isValidStartTime(startTimeMs)) {
-            host.updateSingle(DeviceDosingSingleScheduleContract.minuteAlignedStartTime(startTimeMs))
+            host.updateSchedule(
+                DosingPlanScheduleUpdate.Single(
+                    DeviceDosingSingleScheduleContract.minuteAlignedStartTime(startTimeMs)
+                )
+            )
         }
     }
 }
@@ -65,7 +66,11 @@ private fun bindHourlyScheduleResult(
             INVALID_START_TIME_MS
         )
         if (expected && DeviceDosingHourlyScheduleContract.isValidStartTime(startTimeMs)) {
-            host.updateHourly(DeviceDosingHourlyScheduleContract.minuteAlignedStartTime(startTimeMs))
+            host.updateSchedule(
+                DosingPlanScheduleUpdate.Hourly(
+                    DeviceDosingHourlyScheduleContract.minuteAlignedStartTime(startTimeMs)
+                )
+            )
         }
     }
 }
@@ -84,7 +89,9 @@ private fun bindCustomScheduleResult(
         if (expected) {
             DeviceDosingCustomScheduleContract.decodeDraft(
                 result.getString(DeviceDosingCustomScheduleContract.RESULT_PERIODS_DRAFT).orEmpty()
-            )?.takeIf(List<DeviceDosingCustomPeriod>::isNotEmpty)?.let(host.updateCustom)
+            )?.takeIf(List<DeviceDosingCustomPeriod>::isNotEmpty)?.let { periods ->
+                host.updateSchedule(DosingPlanScheduleUpdate.Custom(periods))
+            }
         }
     }
 }
@@ -103,7 +110,9 @@ private fun bindTimerScheduleResult(
         if (expected) {
             DeviceDosingTimerScheduleContract.decodeDraft(
                 result.getString(DeviceDosingTimerScheduleContract.RESULT_DOSES_DRAFT).orEmpty()
-            )?.takeIf(List<DeviceDosingTimerDose>::isNotEmpty)?.let(host.updateTimer)
+            )?.takeIf(List<DeviceDosingTimerDose>::isNotEmpty)?.let { doses ->
+                host.updateSchedule(DosingPlanScheduleUpdate.Timer(doses))
+            }
         }
     }
 }
