@@ -138,8 +138,8 @@ internal class DosingCalibrationWorkflow(
         renderSuccess: Boolean = true
     ) {
         val boundRoute = route ?: return
-        if (operation == DosingCalibrationOperation.PrimeStart) {
-            scope.launch {
+        when (operation) {
+            DosingCalibrationOperation.PrimeStart -> scope.launch {
                 val result = performDosingCalibrationOperation(operations, boundRoute, operation)
                 if (result is DeviceDosingCalibrationResult.Success && !session.primeRequested) {
                     operations.primeStop(boundRoute.deviceUid, boundRoute.slotId)
@@ -147,20 +147,17 @@ internal class DosingCalibrationWorkflow(
                     handleResult(operation, result, renderSuccess)
                 }
             }
-            return
-        }
-        if (operation == DosingCalibrationOperation.PrimeStop) {
-            scope.launch {
+            DosingCalibrationOperation.PrimeStop -> scope.launch {
                 val result = performDosingCalibrationOperation(operations, boundRoute, operation)
                 handleResult(operation, result, renderSuccess)
             }
-            return
-        }
-
-        session.actionJob?.cancel()
-        session.actionJob = scope.launch {
-            val result = performDosingCalibrationOperation(operations, boundRoute, operation)
-            handleResult(operation, result, renderSuccess)
+            else -> {
+                session.actionJob?.cancel()
+                session.actionJob = scope.launch {
+                    val result = performDosingCalibrationOperation(operations, boundRoute, operation)
+                    handleResult(operation, result, renderSuccess)
+                }
+            }
         }
     }
 
@@ -173,12 +170,16 @@ internal class DosingCalibrationWorkflow(
             is DeviceDosingCalibrationResult.Success -> {
                 if (renderSuccess) applySuccess(operation, result.snapshot)
             }
-            DeviceDosingCalibrationResult.Unavailable -> renderFailure(
-                DeviceDosingCalibrationError.UNAVAILABLE
-            )
-            DeviceDosingCalibrationResult.Failed -> renderFailure(
-                DeviceDosingCalibrationError.CONNECTION
-            )
+            DeviceDosingCalibrationResult.Unavailable -> {
+                mutableUiState.value = mutableUiState.value.withCalibrationFailure(
+                    DeviceDosingCalibrationError.UNAVAILABLE
+                )
+            }
+            DeviceDosingCalibrationResult.Failed -> {
+                mutableUiState.value = mutableUiState.value.withCalibrationFailure(
+                    DeviceDosingCalibrationError.CONNECTION
+                )
+            }
         }
     }
 
@@ -226,18 +227,16 @@ internal class DosingCalibrationWorkflow(
         )
     }
 
-    private fun renderFailure(error: DeviceDosingCalibrationError) {
-        mutableUiState.value = mutableUiState.value
-            .updateProgress { progress ->
-                progress.copy(isLoading = false, isBusy = false, isPumpActive = false)
-            }
-            .copy(error = error)
-    }
-
     private companion object {
         const val PRIME_SAFETY_TIMEOUT_MS = 30_000L
     }
 }
+
+private fun DeviceDosingCalibrationUiState.withCalibrationFailure(
+    error: DeviceDosingCalibrationError
+): DeviceDosingCalibrationUiState = updateProgress { progress ->
+    progress.copy(isLoading = false, isBusy = false, isPumpActive = false)
+}.copy(error = error)
 
 private fun DeviceDosingCalibrationSnapshot.matches(route: DeviceDosingCalibrationRoute): Boolean =
     deviceUid == route.deviceUid && slotId == route.slotId

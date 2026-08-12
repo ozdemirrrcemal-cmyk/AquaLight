@@ -111,48 +111,15 @@ private fun DrawScope.drawCalibrationFluidScene(
         active = animation.active
     )
     drawCalibrationDestination(
-        colors = colors,
-        animation = animation,
-        destination = destination,
-        bounds = destinationBounds,
-        outletEnd = outletEnd,
-        showTarget = showTarget
-    )
-}
-
-private fun DrawScope.drawCalibrationDestination(
-    colors: AquaGuidedFlowColors,
-    animation: CalibrationFluidAnimation,
-    destination: CalibrationFluidDestination,
-    bounds: Rect,
-    outletEnd: Offset,
-    showTarget: Boolean
-) {
-    when (destination) {
-        CalibrationFluidDestination.WASTE -> drawCalibrationWasteCup(
+        CalibrationDestinationRenderSpec(
             colors = colors,
-            bounds = bounds,
-            active = animation.active,
-            flowPhase = animation.flowPhase,
-            outletEnd = outletEnd
+            animation = animation,
+            destination = destination,
+            bounds = destinationBounds,
+            outletEnd = outletEnd,
+            showTarget = showTarget
         )
-        CalibrationFluidDestination.CYLINDER -> {
-            drawCalibrationCylinder(
-                colors = colors,
-                bounds = bounds,
-                liquidRatio = animation.fillProgress,
-                showTarget = showTarget
-            )
-            if (animation.active) {
-                drawCalibrationDrops(
-                    colors = colors,
-                    flowPhase = animation.flowPhase,
-                    outletEnd = outletEnd,
-                    destinationY = bounds.top
-                )
-            }
-        }
-    }
+    )
 }
 
 private fun DrawScope.drawCalibrationMeasurementScene(colors: AquaGuidedFlowColors) {
