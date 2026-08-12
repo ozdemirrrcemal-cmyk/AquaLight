@@ -2,7 +2,7 @@ package com.aqua.aqualight.ui.tabs.devices.detail.dosing.channel.calibration
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.aqua.aqualight.application.devices.DeviceDosingCalibrationOperations
+import com.aqua.aqualight.application.devices.dosing.DeviceDosingCalibrationOperations
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.StateFlow
 
