@@ -61,7 +61,6 @@
     <string name="device_dosing_detail_amount_section">Doz miktarı</string>
     <string name="device_dosing_detail_daily_dose">Günlük doz</string>
     <string name="device_dosing_detail_daily_dose_description">Seçilen güne dağıtılacak toplam miktar.</string>
-    <string name="device_dosing_detail_value_zero_ml">0,00 ml</string>
     <string name="device_dosing_detail_schedule_section">Dozaj zamanlaması</string>
     <string name="device_dosing_detail_schedule_single">Tek sefer</string>
     <string name="device_dosing_detail_schedule_hourly">Saatlik eşit dağıtım</string>

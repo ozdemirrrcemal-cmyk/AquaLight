@@ -61,7 +61,6 @@
     <string name="device_dosing_detail_amount_section">Dose amount</string>
     <string name="device_dosing_detail_daily_dose">Daily dose</string>
     <string name="device_dosing_detail_daily_dose_description">Total amount planned across the selected day.</string>
-    <string name="device_dosing_detail_value_zero_ml">0.00 ml</string>
     <string name="device_dosing_detail_schedule_section">Dosing schedule</string>
     <string name="device_dosing_detail_schedule_single">Single</string>
     <string name="device_dosing_detail_schedule_hourly">Hourly equal distribution</string>
