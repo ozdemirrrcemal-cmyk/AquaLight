@@ -16,7 +16,10 @@ import com.aqua.aqualight.ui.tabs.devices.detail.dosing.channel.reservoir.Device
 internal class ProcessViewModelFactory : ScopedViewModelFactory {
 
     override fun supports(modelClass: Class<out ViewModel>): Boolean =
-        modelClass in PROCESS_BINDINGS
+        modelClass == TankDetailViewModel::class.java ||
+            modelClass == DeviceDosingChannelDetailViewModel::class.java ||
+            modelClass == DeviceDosingPlanViewModel::class.java ||
+            modelClass == DeviceDosingReservoirViewModel::class.java
 
     override fun <T : ViewModel> create(modelClass: Class<T>): T {
         val viewModel: ViewModel = when (modelClass) {
@@ -31,14 +34,5 @@ internal class ProcessViewModelFactory : ScopedViewModelFactory {
 
         @Suppress("UNCHECKED_CAST")
         return viewModel as T
-    }
-
-    private companion object {
-        val PROCESS_BINDINGS: Set<Class<out ViewModel>> = setOf(
-            TankDetailViewModel::class.java,
-            DeviceDosingChannelDetailViewModel::class.java,
-            DeviceDosingPlanViewModel::class.java,
-            DeviceDosingReservoirViewModel::class.java
-        )
     }
 }
