@@ -1,5 +1,34 @@
-package com.aqua.aqualight.data.devices.runtime.modules.dosing
+package com.aqua.aqualight.data.devices.runtime.modules.dosing.parsers
 
+import com.aqua.aqualight.data.devices.runtime.modules.dosing.contract.DOSING_DEVICE_UPTIME_MAX_MS
+import com.aqua.aqualight.data.devices.runtime.modules.dosing.contract.DOSING_INACTIVE_VALUE
+import com.aqua.aqualight.data.devices.runtime.modules.dosing.contract.DOSING_MIN_COUNT
+import com.aqua.aqualight.data.devices.runtime.modules.dosing.contract.DOSING_MIN_INDEX
+import com.aqua.aqualight.data.devices.runtime.modules.dosing.contract.DOSING_NON_NEGATIVE_LONG
+import com.aqua.aqualight.data.devices.runtime.modules.dosing.contract.DOSING_NORMALIZED_MAX
+import com.aqua.aqualight.data.devices.runtime.modules.dosing.contract.DOSING_NORMALIZED_MIN
+import com.aqua.aqualight.data.devices.runtime.modules.dosing.contract.DOSING_PERCENT_MAX
+import com.aqua.aqualight.data.devices.runtime.modules.dosing.contract.DOSING_UNAVAILABLE_INDEX
+import com.aqua.aqualight.data.devices.runtime.modules.dosing.contract.DOSING_UNSET_CALIBRATION
+import com.aqua.aqualight.data.devices.runtime.modules.dosing.contract.DOSING_UNSET_RESERVOIR
+import com.aqua.aqualight.data.devices.runtime.modules.dosing.contract.DOSING_VALUE_EPSILON
+import com.aqua.aqualight.data.devices.runtime.modules.dosing.contract.DOSING_WEEKDAY_COUNT
+import com.aqua.aqualight.data.devices.runtime.modules.dosing.contract.DeviceDosingRuntimeContract
+import com.aqua.aqualight.data.devices.runtime.modules.dosing.contract.dosingTimeText
+import com.aqua.aqualight.data.devices.runtime.modules.dosing.contract.dosingValuesEquivalent
+import com.aqua.aqualight.data.devices.runtime.modules.dosing.models.DeviceDosingCalibrationSessionStatus
+import com.aqua.aqualight.data.devices.runtime.modules.dosing.models.DeviceDosingCalibrationState
+import com.aqua.aqualight.data.devices.runtime.modules.dosing.models.DeviceDosingChannelConfigSnapshot
+import com.aqua.aqualight.data.devices.runtime.modules.dosing.models.DeviceDosingChannelDosingConfigSnapshot
+import com.aqua.aqualight.data.devices.runtime.modules.dosing.models.DeviceDosingChannelEditable
+import com.aqua.aqualight.data.devices.runtime.modules.dosing.models.DeviceDosingChannelStatus
+import com.aqua.aqualight.data.devices.runtime.modules.dosing.models.DeviceDosingChannelStatusSnapshot
+import com.aqua.aqualight.data.devices.runtime.modules.dosing.models.DeviceDosingPumpStatus
+import com.aqua.aqualight.data.devices.runtime.modules.dosing.models.DeviceDosingRegime
+import com.aqua.aqualight.data.devices.runtime.modules.dosing.models.DeviceDosingRuntimeCapabilities
+import com.aqua.aqualight.data.devices.runtime.modules.dosing.models.DeviceDosingScheduleConfig
+import com.aqua.aqualight.data.devices.runtime.modules.dosing.models.DeviceDosingScheduleConfigSnapshot
+import com.aqua.aqualight.data.devices.runtime.modules.dosing.models.DeviceDosingScheduleStatus
 import org.json.JSONArray
 import org.json.JSONObject
 
