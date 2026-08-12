@@ -1,10 +1,10 @@
 package com.aqua.aqualight.ui.tabs.devices.detail.dosing.channel.schedule.timer
 
-import com.aqua.aqualight.application.devices.DeviceDosingScheduleDraftLimits
-import com.aqua.aqualight.application.devices.DeviceDosingScheduleTimeDraftPolicy
-import com.aqua.aqualight.application.devices.DeviceDosingTimerDoseDraft
-import com.aqua.aqualight.application.devices.DeviceDosingTimerScheduleDraftPolicy
-import com.aqua.aqualight.application.devices.DeviceDosingTimerScheduleValidationError
+import com.aqua.aqualight.application.devices.dosing.DeviceDosingScheduleDraftLimits
+import com.aqua.aqualight.application.devices.dosing.DeviceDosingScheduleTimeDraftPolicy
+import com.aqua.aqualight.application.devices.dosing.DeviceDosingTimerDoseDraft
+import com.aqua.aqualight.application.devices.dosing.DeviceDosingTimerScheduleDraftPolicy
+import com.aqua.aqualight.application.devices.dosing.DeviceDosingTimerScheduleValidationError
 
 internal typealias DeviceDosingTimerDose = DeviceDosingTimerDoseDraft
 
