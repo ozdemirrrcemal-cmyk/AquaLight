@@ -1,5 +1,6 @@
-package com.aqua.aqualight.application.devices
+package com.aqua.aqualight.application.devices.dosing
 
+import com.aqua.aqualight.application.devices.DeviceRootRoute
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flowOf
 
