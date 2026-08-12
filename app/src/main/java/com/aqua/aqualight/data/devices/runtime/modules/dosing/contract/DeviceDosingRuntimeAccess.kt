@@ -1,4 +1,4 @@
-package com.aqua.aqualight.data.devices.runtime.modules.dosing
+package com.aqua.aqualight.data.devices.runtime.modules.dosing.contract
 
 import com.aqua.aqualight.data.devices.contract.AqlDeviceFeatureKey
 import com.aqua.aqualight.data.devices.contract.AqlDeviceScreenKey
