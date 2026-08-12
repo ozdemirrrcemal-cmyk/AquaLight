@@ -18,25 +18,31 @@ internal fun dosingCalibrationSuccessTransition(
         applySnapshot = true
     )
     is DosingCalibrationOperation.SaveDisplayName -> DosingCalibrationSuccessTransition(
-        state = current.copy(
-            isLoading = false,
-            isBusy = false,
-            step = DeviceDosingCalibrationStep.PRIME,
-            channelTitle = snapshot.channelTitle,
-            displayName = snapshot.channelTitle,
-            error = null
-        ),
+        state = current
+            .updateProgress { progress ->
+                progress.copy(
+                    isLoading = false,
+                    isBusy = false,
+                    step = DeviceDosingCalibrationStep.PRIME
+                )
+            }
+            .updateChannel { channel -> channel.copy(channelTitle = snapshot.channelTitle) }
+            .updateInput { input -> input.copy(displayName = snapshot.channelTitle) }
+            .copy(error = null),
         markLocalProgress = true
     )
     DosingCalibrationOperation.PrimeStart,
     DosingCalibrationOperation.PrimeStop -> DosingCalibrationSuccessTransition()
     DosingCalibrationOperation.ContinueFromPrime -> DosingCalibrationSuccessTransition(
-        state = current.copy(
-            isBusy = false,
-            isPumpActive = false,
-            step = DeviceDosingCalibrationStep.CALIBRATION_RUN,
-            error = null
-        ),
+        state = current
+            .updateProgress { progress ->
+                progress.copy(
+                    isBusy = false,
+                    isPumpActive = false,
+                    step = DeviceDosingCalibrationStep.CALIBRATION_RUN
+                )
+            }
+            .copy(error = null),
         markLocalProgress = true
     )
     DosingCalibrationOperation.StartCalibration,
@@ -46,22 +52,23 @@ internal fun dosingCalibrationSuccessTransition(
         markLocalProgress = true
     )
     DosingCalibrationOperation.ConfirmVerification -> DosingCalibrationSuccessTransition(
-        state = current.copy(
-            isBusy = false,
-            isPumpActive = false,
-            error = null
-        ),
+        state = current
+            .updateProgress { progress -> progress.copy(isBusy = false, isPumpActive = false) }
+            .copy(error = null),
         emitCompleted = true
     )
     DosingCalibrationOperation.RejectVerification -> DosingCalibrationSuccessTransition(
-        state = current.copy(
-            isBusy = false,
-            isPumpActive = false,
-            remainingMs = 0L,
-            measuredMl = "",
-            step = DeviceDosingCalibrationStep.CALIBRATION_RUN,
-            error = null
-        ),
+        state = current
+            .updateProgress { progress ->
+                progress.copy(
+                    isBusy = false,
+                    isPumpActive = false,
+                    remainingMs = 0L,
+                    step = DeviceDosingCalibrationStep.CALIBRATION_RUN
+                )
+            }
+            .updateInput { input -> input.copy(measuredMl = "") }
+            .copy(error = null),
         markLocalProgress = true
     )
 }

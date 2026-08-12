@@ -19,20 +19,56 @@ enum class DeviceDosingCalibrationError {
     UNAVAILABLE
 }
 
-data class DeviceDosingCalibrationUiState(
+data class DosingCalibrationProgressState(
     val isLoading: Boolean = true,
     val isBusy: Boolean = false,
     val step: DeviceDosingCalibrationStep = DeviceDosingCalibrationStep.NAME,
-    val displayName: String = "",
-    val measuredMl: String = "",
-    val pumpCount: Int = 0,
-    val channelNumber: Int = 0,
-    val channelTitle: String = "",
     val isPumpActive: Boolean = false,
     val remainingMs: Long = 0L,
-    val candidateDoseMsPerMl: Long? = null,
-    val error: DeviceDosingCalibrationError? = null
+    val candidateDoseMsPerMl: Long? = null
 )
+
+data class DosingCalibrationChannelState(
+    val pumpCount: Int = 0,
+    val channelNumber: Int = 0,
+    val channelTitle: String = ""
+)
+
+data class DosingCalibrationInputState(
+    val displayName: String = "",
+    val measuredMl: String = ""
+)
+
+data class DeviceDosingCalibrationUiState(
+    val progress: DosingCalibrationProgressState = DosingCalibrationProgressState(),
+    val channel: DosingCalibrationChannelState = DosingCalibrationChannelState(),
+    val input: DosingCalibrationInputState = DosingCalibrationInputState(),
+    val error: DeviceDosingCalibrationError? = null
+) {
+    val isLoading: Boolean get() = progress.isLoading
+    val isBusy: Boolean get() = progress.isBusy
+    val step: DeviceDosingCalibrationStep get() = progress.step
+    val isPumpActive: Boolean get() = progress.isPumpActive
+    val remainingMs: Long get() = progress.remainingMs
+    val candidateDoseMsPerMl: Long? get() = progress.candidateDoseMsPerMl
+    val pumpCount: Int get() = channel.pumpCount
+    val channelNumber: Int get() = channel.channelNumber
+    val channelTitle: String get() = channel.channelTitle
+    val displayName: String get() = input.displayName
+    val measuredMl: String get() = input.measuredMl
+}
+
+internal inline fun DeviceDosingCalibrationUiState.updateProgress(
+    transform: (DosingCalibrationProgressState) -> DosingCalibrationProgressState
+): DeviceDosingCalibrationUiState = copy(progress = transform(progress))
+
+internal inline fun DeviceDosingCalibrationUiState.updateChannel(
+    transform: (DosingCalibrationChannelState) -> DosingCalibrationChannelState
+): DeviceDosingCalibrationUiState = copy(channel = transform(channel))
+
+internal inline fun DeviceDosingCalibrationUiState.updateInput(
+    transform: (DosingCalibrationInputState) -> DosingCalibrationInputState
+): DeviceDosingCalibrationUiState = copy(input = transform(input))
 
 sealed interface DeviceDosingCalibrationEvent {
     data object Exit : DeviceDosingCalibrationEvent

@@ -30,10 +30,11 @@ internal fun reduceDosingCalibrationAction(
     action: DeviceDosingCalibrationAction
 ): DosingCalibrationActionDecision = when (action) {
     is DeviceDosingCalibrationAction.DisplayNameChanged -> DosingCalibrationActionDecision(
-        state = if (state.isBusy) state else state.copy(
-            displayName = action.value.take(MAX_DISPLAY_NAME_CHARACTERS),
-            error = null
-        )
+        state = if (state.isBusy) state else state
+            .updateInput { input ->
+                input.copy(displayName = action.value.take(MAX_DISPLAY_NAME_CHARACTERS))
+            }
+            .copy(error = null)
     )
     DeviceDosingCalibrationAction.SaveDisplayName -> saveDisplayNameDecision(state)
     DeviceDosingCalibrationAction.PrimePressed -> primePressedDecision(state, primeRequested)
@@ -41,17 +42,20 @@ internal fun reduceDosingCalibrationAction(
     DeviceDosingCalibrationAction.PrimeContinue -> operationDecision(
         state = state,
         operation = DosingCalibrationOperation.ContinueFromPrime,
-        nextState = state.copy(isBusy = true, isPumpActive = false, error = null)
+        nextState = state
+            .updateProgress { progress ->
+                progress.copy(isBusy = true, isPumpActive = false)
+            }
+            .copy(error = null)
     )
     DeviceDosingCalibrationAction.StartCalibration -> busyOperationDecision(
         state,
         DosingCalibrationOperation.StartCalibration
     )
     is DeviceDosingCalibrationAction.MeasuredMlChanged -> DosingCalibrationActionDecision(
-        state = if (state.isBusy) state else state.copy(
-            measuredMl = sanitizeMeasurement(action.value),
-            error = null
-        )
+        state = if (state.isBusy) state else state
+            .updateInput { input -> input.copy(measuredMl = sanitizeMeasurement(action.value)) }
+            .copy(error = null)
     )
     DeviceDosingCalibrationAction.SaveMeasurement -> saveMeasurementDecision(state)
     DeviceDosingCalibrationAction.StartVerification -> busyOperationDecision(
@@ -90,7 +94,9 @@ private fun primePressedDecision(
         DosingCalibrationActionDecision(state)
     } else {
         DosingCalibrationActionDecision(
-            state = state.copy(isPumpActive = true, error = null),
+            state = state
+                .updateProgress { progress -> progress.copy(isPumpActive = true) }
+                .copy(error = null),
             operation = DosingCalibrationOperation.PrimeStart,
             primeDirective = DosingCalibrationPrimeDirective.START
         )
@@ -106,7 +112,7 @@ private fun primeReleasedDecision(
         DosingCalibrationActionDecision(state)
     } else {
         DosingCalibrationActionDecision(
-            state = state.copy(isPumpActive = false),
+            state = state.updateProgress { progress -> progress.copy(isPumpActive = false) },
             operation = DosingCalibrationOperation.PrimeStop,
             primeDirective = DosingCalibrationPrimeDirective.STOP
         )
@@ -132,7 +138,9 @@ private fun busyOperationDecision(
 ): DosingCalibrationActionDecision = operationDecision(
     state = state,
     operation = operation,
-    nextState = state.copy(isBusy = true, error = null)
+    nextState = state
+        .updateProgress { progress -> progress.copy(isBusy = true) }
+        .copy(error = null)
 )
 
 private fun operationDecision(

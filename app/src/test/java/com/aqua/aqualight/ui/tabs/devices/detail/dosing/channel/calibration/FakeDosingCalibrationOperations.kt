@@ -11,6 +11,8 @@ internal class FakeDosingCalibrationOperations(
     initial: DeviceDosingCalibrationSnapshot
 ) : DeviceDosingCalibrationOperations {
     private val state = MutableStateFlow<DeviceDosingCalibrationSnapshot?>(initial)
+    private val current: DeviceDosingCalibrationSnapshot
+        get() = requireNotNull(state.value)
 
     var savedName = ""
     var primeStarts = 0
@@ -25,7 +27,7 @@ internal class FakeDosingCalibrationOperations(
         slotId: String
     ): Flow<DeviceDosingCalibrationSnapshot?> = state
 
-    override suspend fun refresh(deviceUid: String, slotId: String) = calibrationSuccess(current())
+    override suspend fun refresh(deviceUid: String, slotId: String) = calibrationSuccess(current)
 
     override suspend fun saveDisplayName(
         deviceUid: String,
@@ -33,37 +35,35 @@ internal class FakeDosingCalibrationOperations(
         displayName: String
     ): DeviceDosingCalibrationResult {
         savedName = displayName.trim()
-        return calibrationSuccess(current().copy(channelTitle = savedName))
+        return calibrationSuccess(current.copy(channelTitle = savedName))
     }
 
     override suspend fun primeStart(deviceUid: String, slotId: String) =
-        calibrationSuccess(current().copy(manualActive = true)).also { primeStarts += 1 }
+        calibrationSuccess(current.copy(manualActive = true)).also { primeStarts += 1 }
 
     override suspend fun primeStop(deviceUid: String, slotId: String) =
-        calibrationSuccess(current().copy(manualActive = false)).also { primeStops += 1 }
+        calibrationSuccess(current.copy(manualActive = false)).also { primeStops += 1 }
 
-    override suspend fun start(deviceUid: String, slotId: String) = calibrationSuccess(current())
+    override suspend fun start(deviceUid: String, slotId: String) = calibrationSuccess(current)
 
     override suspend fun finish(deviceUid: String, slotId: String, measuredMl: Double) =
-        calibrationSuccess(current())
+        calibrationSuccess(current)
 
     override suspend fun startVerificationDose(deviceUid: String, slotId: String) =
-        calibrationSuccess(current())
+        calibrationSuccess(current)
 
     override suspend fun stopVerificationDose(deviceUid: String, slotId: String) =
-        calibrationSuccess(current().copy(manualActive = false)).also { verificationStops += 1 }
+        calibrationSuccess(current.copy(manualActive = false)).also { verificationStops += 1 }
 
     override suspend fun confirm(deviceUid: String, slotId: String) =
         confirmResult.also { confirms += 1 }
 
     override suspend fun cancel(deviceUid: String, slotId: String) = calibrationSuccess(
-        current().copy(
+        current.copy(
             sessionPhase = DeviceDosingCalibrationSessionPhase.IDLE,
             manualActive = false
         )
     ).also { cancels += 1 }
-
-    private fun current(): DeviceDosingCalibrationSnapshot = requireNotNull(state.value)
 }
 
 internal fun calibrationRoute(recalibration: Boolean = false) = DeviceDosingCalibrationRoute(

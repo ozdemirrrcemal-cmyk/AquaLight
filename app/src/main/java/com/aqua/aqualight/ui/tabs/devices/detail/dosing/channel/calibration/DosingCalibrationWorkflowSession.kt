@@ -6,7 +6,6 @@ import kotlinx.coroutines.Job
 internal class DosingCalibrationWorkflowSession {
     var route: DeviceDosingCalibrationRoute? = null
     var observeJob: Job? = null
-    var countdownJob: Job? = null
     var primeSafetyJob: Job? = null
     var actionJob: Job? = null
     var hasLocalProgress: Boolean = false
@@ -25,7 +24,6 @@ internal class DosingCalibrationWorkflowSession {
     }
 
     fun cancelTransientJobs() {
-        countdownJob?.cancel()
         primeSafetyJob?.cancel()
         actionJob?.cancel()
     }

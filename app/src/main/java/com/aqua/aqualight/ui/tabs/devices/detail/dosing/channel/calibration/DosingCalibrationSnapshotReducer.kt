@@ -22,19 +22,26 @@ internal fun reduceDosingCalibrationSnapshot(
 ): DosingCalibrationSnapshotPresentation {
     val remainingMs = snapshot.remainingOperationMs()
     val recoveryStep = snapshot.recoveryStep(current.step, hasLocalProgress)
-    val state = current.copy(
-        isLoading = false,
-        isBusy = remainingMs > 0L,
-        step = recoveryStep,
-        displayName = snapshot.channelTitle,
-        pumpCount = snapshot.pumpCount,
-        channelNumber = snapshot.channelNumber,
-        channelTitle = snapshot.channelTitle,
-        isPumpActive = snapshot.manualActive,
-        remainingMs = remainingMs,
-        candidateDoseMsPerMl = snapshot.pendingDoseMsPerMl.takeIf { it > 0L },
-        error = null
-    )
+    val state = current
+        .updateProgress { progress ->
+            progress.copy(
+                isLoading = false,
+                isBusy = remainingMs > 0L,
+                step = recoveryStep,
+                isPumpActive = snapshot.manualActive,
+                remainingMs = remainingMs,
+                candidateDoseMsPerMl = snapshot.pendingDoseMsPerMl.takeIf { it > 0L }
+            )
+        }
+        .updateChannel { channel ->
+            channel.copy(
+                pumpCount = snapshot.pumpCount,
+                channelNumber = snapshot.channelNumber,
+                channelTitle = snapshot.channelTitle
+            )
+        }
+        .updateInput { input -> input.copy(displayName = snapshot.channelTitle) }
+        .copy(error = null)
     return DosingCalibrationSnapshotPresentation(
         state = state,
         countdown = snapshot.countdownOrNull(remainingMs)
