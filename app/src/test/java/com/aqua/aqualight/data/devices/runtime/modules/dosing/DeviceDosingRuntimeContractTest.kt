@@ -1,5 +1,16 @@
 package com.aqua.aqualight.data.devices.runtime.modules.dosing
 
+import com.aqua.aqualight.data.devices.runtime.modules.dosing.contract.DOSING_WEEKDAY_COUNT
+import com.aqua.aqualight.data.devices.runtime.modules.dosing.contract.DeviceDosingRuntimeContract
+import com.aqua.aqualight.data.devices.runtime.modules.dosing.models.DeviceDosingCalibrationFinishPayload
+import com.aqua.aqualight.data.devices.runtime.modules.dosing.models.DeviceDosingCalibrationStartPayload
+import com.aqua.aqualight.data.devices.runtime.modules.dosing.models.DeviceDosingCalibrationState
+import com.aqua.aqualight.data.devices.runtime.modules.dosing.models.DeviceDosingChannelConfig
+import com.aqua.aqualight.data.devices.runtime.modules.dosing.models.DeviceDosingChannelDosingConfig
+import com.aqua.aqualight.data.devices.runtime.modules.dosing.models.DeviceDosingConfigApplyPayload
+import com.aqua.aqualight.data.devices.runtime.modules.dosing.models.DeviceDosingDoseNowPayload
+import com.aqua.aqualight.data.devices.runtime.modules.dosing.models.DeviceDosingScheduleConfig
+import com.aqua.aqualight.data.devices.runtime.modules.dosing.parsers.DeviceDosingStatusParser
 import org.json.JSONArray
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
