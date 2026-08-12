@@ -1,4 +1,4 @@
-package com.aqua.aqualight.application.devices
+package com.aqua.aqualight.application.devices.dosing
 
 object DeviceDosingReservoirDraftPolicy {
     const val DEFAULT_CAPACITY_ML = 450.0
