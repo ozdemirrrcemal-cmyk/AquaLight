@@ -1,6 +1,6 @@
 package com.aqua.aqualight.ui.tabs.devices.detail.dosing.channel.calibration
 
-import com.aqua.aqualight.application.devices.DeviceDosingCalibrationSnapshot
+import com.aqua.aqualight.application.devices.dosing.DeviceDosingCalibrationSnapshot
 
 internal data class DosingCalibrationSuccessTransition(
     val state: DeviceDosingCalibrationUiState? = null,
