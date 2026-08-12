@@ -11,6 +11,7 @@ import android.view.ViewGroup
 import android.widget.TextView
 import androidx.annotation.StringRes
 import androidx.core.os.bundleOf
+import androidx.core.view.isGone
 import androidx.fragment.app.FragmentManager
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.LinearSnapHelper
@@ -22,7 +23,7 @@ import com.google.android.material.button.MaterialButton
 import java.text.NumberFormat
 import java.util.Locale
 
-/** Re-creatable 24-hour wall-clock picker for schedules and other product time-of-day fields. */
+/** Re-creatable picker for wall-clock times and minute-of-hour schedule offsets. */
 class AquaTimePickerBottomSheet : BottomSheetDialogFragment(
     R.layout.bottom_sheet_aqua_time_picker
 ) {
@@ -34,11 +35,20 @@ class AquaTimePickerBottomSheet : BottomSheetDialogFragment(
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
         val args = requireArguments()
-        selectedHour = restoreTimePickerSelection(
-            savedValue = savedInstanceState?.savedInt(STATE_SELECTED_HOUR),
-            initialValue = args.getInt(ARG_INITIAL_HOUR),
-            range = HOUR_RANGE
+        val selectionMode = SelectionMode.valueOf(
+            requireNotNull(args.getString(ARG_SELECTION_MODE)) {
+                "selectionMode is required."
+            }
         )
+        selectedHour = if (selectionMode == SelectionMode.MINUTE_OF_HOUR) {
+            0
+        } else {
+            restoreTimePickerSelection(
+                savedValue = savedInstanceState?.savedInt(STATE_SELECTED_HOUR),
+                initialValue = args.getInt(ARG_INITIAL_HOUR),
+                range = HOUR_RANGE
+            )
+        }
         selectedMinute = restoreTimePickerSelection(
             savedValue = savedInstanceState?.savedInt(STATE_SELECTED_MINUTE),
             initialValue = args.getInt(ARG_INITIAL_MINUTE),
@@ -51,30 +61,47 @@ class AquaTimePickerBottomSheet : BottomSheetDialogFragment(
             args.getString(ARG_MESSAGE).orEmpty()
 
         val selection = view.findViewById<TextView>(R.id.tvAquaTimePickerSelection)
+        val hourWheel = view.findViewById<RecyclerView>(R.id.rvAquaTimePickerHour)
+        val minuteWheel = view.findViewById<RecyclerView>(R.id.rvAquaTimePickerMinute)
+        configureSelectionMode(view, selectionMode)
         fun renderSelection() {
-            val formatted = LocaleFormatter.formatTimeOfDay24Hour(
-                context = requireContext(),
-                minutesOfDay = timePickerMinutesOfDay(selectedHour, selectedMinute)
-            )
+            val formatted = when (selectionMode) {
+                SelectionMode.TIME_OF_DAY -> LocaleFormatter.formatTimeOfDay24Hour(
+                    context = requireContext(),
+                    minutesOfDay = timePickerMinutesOfDay(selectedHour, selectedMinute)
+                )
+                SelectionMode.MINUTE_OF_HOUR -> getString(
+                    R.string.common_time_picker_minute_of_hour_preview,
+                    selectedMinute
+                )
+            }
             selection.text = formatted
-            selection.contentDescription = getString(
-                R.string.common_time_picker_selected_time_description,
-                formatted
-            )
+            selection.contentDescription = when (selectionMode) {
+                SelectionMode.TIME_OF_DAY -> getString(
+                    R.string.common_time_picker_selected_time_description,
+                    formatted
+                )
+                SelectionMode.MINUTE_OF_HOUR -> getString(
+                    R.string.common_time_picker_selected_minute_of_hour_description,
+                    selectedMinute
+                )
+            }
         }
 
+        if (selectionMode == SelectionMode.TIME_OF_DAY) {
+            bindWheel(
+                recyclerView = hourWheel,
+                values = HOUR_RANGE,
+                initialValue = selectedHour,
+                valueDescriptionRes = R.string.common_time_picker_hour_value_description,
+                onSelected = { hour ->
+                    selectedHour = hour
+                    renderSelection()
+                }
+            )
+        }
         bindWheel(
-            recyclerView = view.findViewById(R.id.rvAquaTimePickerHour),
-            values = HOUR_RANGE,
-            initialValue = selectedHour,
-            valueDescriptionRes = R.string.common_time_picker_hour_value_description,
-            onSelected = { hour ->
-                selectedHour = hour
-                renderSelection()
-            }
-        )
-        bindWheel(
-            recyclerView = view.findViewById(R.id.rvAquaTimePickerMinute),
+            recyclerView = minuteWheel,
             values = MINUTE_RANGE,
             initialValue = selectedMinute,
             valueDescriptionRes = R.string.common_time_picker_minute_value_description,
@@ -99,6 +126,21 @@ class AquaTimePickerBottomSheet : BottomSheetDialogFragment(
             }
         }
         renderSelection()
+    }
+
+    private fun configureSelectionMode(view: View, selectionMode: SelectionMode) {
+        val minuteOnly = selectionMode == SelectionMode.MINUTE_OF_HOUR
+        view.findViewById<View>(R.id.tvAquaTimePickerHourLabel).isGone = minuteOnly
+        view.findViewById<View>(R.id.spaceAquaTimePickerLabels).isGone = minuteOnly
+        view.findViewById<View>(R.id.rvAquaTimePickerHour).isGone = minuteOnly
+        view.findViewById<View>(R.id.tvAquaTimePickerSeparator).isGone = minuteOnly
+        view.findViewById<TextView>(R.id.tvAquaTimePickerHint).setText(
+            if (minuteOnly) {
+                R.string.common_time_picker_minute_of_hour_hint
+            } else {
+                R.string.common_time_picker_24_hour_format
+            }
+        )
     }
 
     override fun onSaveInstanceState(outState: Bundle) {
@@ -193,6 +235,7 @@ class AquaTimePickerBottomSheet : BottomSheetDialogFragment(
                     selectedHour,
                     selectedMinute
                 ),
+                RESULT_SELECTION_MODE to args.getString(ARG_SELECTION_MODE).orEmpty(),
                 RESULT_PAYLOAD_ID to args.getString(ARG_PAYLOAD_ID).orEmpty()
             )
         )
@@ -203,6 +246,7 @@ class AquaTimePickerBottomSheet : BottomSheetDialogFragment(
         val message: String,
         val initialHour: Int,
         val initialMinute: Int,
+        val selectionMode: SelectionMode = SelectionMode.TIME_OF_DAY,
         val confirmText: String,
         val cancelText: String,
         val resultTarget: ResultTarget
@@ -210,8 +254,16 @@ class AquaTimePickerBottomSheet : BottomSheetDialogFragment(
         init {
             require(initialHour in HOUR_RANGE) { "initialHour must be between 0 and 23." }
             require(initialMinute in MINUTE_RANGE) { "initialMinute must be between 0 and 59." }
+            require(selectionMode != SelectionMode.MINUTE_OF_HOUR || initialHour == 0) {
+                "Minute-of-hour selection must use initialHour 0."
+            }
             require(resultTarget.requestKey.isNotBlank()) { "requestKey must not be blank." }
         }
+    }
+
+    enum class SelectionMode {
+        TIME_OF_DAY,
+        MINUTE_OF_HOUR
     }
 
     data class ResultTarget(
@@ -224,6 +276,7 @@ class AquaTimePickerBottomSheet : BottomSheetDialogFragment(
         const val RESULT_HOUR_OF_DAY = "aqua_time_picker_hour_of_day"
         const val RESULT_MINUTE = "aqua_time_picker_minute"
         const val RESULT_MINUTES_OF_DAY = "aqua_time_picker_minutes_of_day"
+        const val RESULT_SELECTION_MODE = "aqua_time_picker_selection_mode"
         const val RESULT_PAYLOAD_ID = "aqua_time_picker_payload_id"
         const val RESULT_SELECTED = "selected"
         const val RESULT_CANCELLED = "cancelled"
@@ -232,6 +285,7 @@ class AquaTimePickerBottomSheet : BottomSheetDialogFragment(
         private const val ARG_MESSAGE = "arg_message"
         private const val ARG_INITIAL_HOUR = "arg_initial_hour"
         private const val ARG_INITIAL_MINUTE = "arg_initial_minute"
+        private const val ARG_SELECTION_MODE = "arg_selection_mode"
         private const val ARG_CONFIRM_TEXT = "arg_confirm_text"
         private const val ARG_CANCEL_TEXT = "arg_cancel_text"
         private const val ARG_REQUEST_KEY = "arg_request_key"
@@ -249,6 +303,7 @@ class AquaTimePickerBottomSheet : BottomSheetDialogFragment(
                     ARG_MESSAGE to request.message,
                     ARG_INITIAL_HOUR to request.initialHour,
                     ARG_INITIAL_MINUTE to request.initialMinute,
+                    ARG_SELECTION_MODE to request.selectionMode.name,
                     ARG_CONFIRM_TEXT to request.confirmText,
                     ARG_CANCEL_TEXT to request.cancelText,
                     ARG_REQUEST_KEY to request.resultTarget.requestKey,

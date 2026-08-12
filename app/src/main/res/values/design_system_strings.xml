@@ -14,6 +14,9 @@
     <string name="common_time_picker_hour_value_description">Hour %1$d</string>
     <string name="common_time_picker_minute_value_description">Minute %1$d</string>
     <string name="common_time_picker_selected_time_description">Selected time: %1$s</string>
+    <string name="common_time_picker_minute_of_hour_preview" translatable="false">:%1$02d</string>
+    <string name="common_time_picker_selected_minute_of_hour_description">Selected minute of every hour: %1$d</string>
+    <string name="common_time_picker_minute_of_hour_hint">Runs once every hour at the selected minute</string>
     <string name="common_time_separator" translatable="false">:</string>
 
     <!-- Navigation -->

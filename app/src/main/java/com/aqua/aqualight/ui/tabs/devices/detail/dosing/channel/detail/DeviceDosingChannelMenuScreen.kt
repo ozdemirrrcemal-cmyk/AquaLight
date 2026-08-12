@@ -44,6 +44,7 @@ internal fun DeviceDosingChannelMenuScreen(
     item: DosingDetailMenuItem,
     modifier: Modifier = Modifier,
     dailyDoseMicroliters: Long = 0L,
+    selectedScheduleMode: DosingPlanScheduleMode = DosingPlanScheduleMode.SINGLE,
     reservoirCapacityValue: String = "",
     onReservoirCapacityClick: (() -> Unit)? = null,
     onScheduleOptionClick: ((DosingPlanScheduleMode) -> Unit)? = null
@@ -69,6 +70,7 @@ internal fun DeviceDosingChannelMenuScreen(
                 when (item) {
                     DosingDetailMenuItem.DOSING_PLAN -> DosingPlanContent(
                         dailyDoseMicroliters = dailyDoseMicroliters,
+                        selectedScheduleMode = selectedScheduleMode,
                         onScheduleOptionClick = onScheduleOptionClick
                     )
                     DosingDetailMenuItem.RESERVOIR -> ReservoirContent(
@@ -84,6 +86,7 @@ internal fun DeviceDosingChannelMenuScreen(
 @Composable
 private fun DosingPlanContent(
     dailyDoseMicroliters: Long,
+    selectedScheduleMode: DosingPlanScheduleMode,
     onScheduleOptionClick: ((DosingPlanScheduleMode) -> Unit)?
 ) {
     DetailSection(R.string.device_dosing_detail_schedule_status_section) {
@@ -105,7 +108,10 @@ private fun DosingPlanContent(
         )
     }
     DetailSection(R.string.device_dosing_detail_schedule_section) {
-        DosingScheduleOptions(onScheduleOptionClick = onScheduleOptionClick)
+        DosingScheduleOptions(
+            selectedScheduleMode = selectedScheduleMode,
+            onScheduleOptionClick = onScheduleOptionClick
+        )
     }
     DetailSection(R.string.device_dosing_detail_recurrence_section) {
         DosingRecurrenceOptions()
@@ -238,6 +244,7 @@ private fun DetailToggleRow(
 
 @Composable
 private fun DosingScheduleOptions(
+    selectedScheduleMode: DosingPlanScheduleMode,
     onScheduleOptionClick: ((DosingPlanScheduleMode) -> Unit)?
 ) {
     DOSING_PLAN_SCHEDULE_OPTIONS.forEachIndexed { index, option ->
@@ -248,9 +255,12 @@ private fun DosingScheduleOptions(
         }
         AquaDeviceMenuSelectionRow(
             text = stringResource(option.labelRes),
-            selected = option.selected,
+            selected = option.mode == selectedScheduleMode,
             onClick = onScheduleOptionClick
-                ?.takeIf { option.mode == DosingPlanScheduleMode.SINGLE }
+                ?.takeIf {
+                    option.mode == DosingPlanScheduleMode.SINGLE ||
+                        option.mode == DosingPlanScheduleMode.HOURLY
+                }
                 ?.let { callback -> { callback(option.mode) } }
         )
     }

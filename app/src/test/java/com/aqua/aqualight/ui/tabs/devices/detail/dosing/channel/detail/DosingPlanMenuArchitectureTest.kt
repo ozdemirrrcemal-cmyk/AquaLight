@@ -90,6 +90,28 @@ class DosingPlanMenuArchitectureTest {
         assertFalse(screen.contains("DosingPumpDevice("))
     }
 
+    @Test
+    fun `hourly editor reuses the pump shell and central minute picker mode`() {
+        val fragment = source(
+            "app/src/main/java/com/aqua/aqualight/ui/tabs/devices/detail/dosing/channel/" +
+                "schedule/hourly/DeviceDosingHourlyScheduleFragment.kt"
+        )
+        val screen = source(
+            "app/src/main/java/com/aqua/aqualight/ui/tabs/devices/detail/dosing/channel/" +
+                "schedule/hourly/DeviceDosingHourlyScheduleScreen.kt"
+        )
+        val navigation = source("app/src/main/res/navigation/nav_app.xml")
+
+        assertTrue(fragment.contains("R.layout.fragment_device_dosing_channel_detail"))
+        assertTrue(fragment.contains("setupSelectedPump("))
+        assertTrue(fragment.contains("SelectionMode.MINUTE_OF_HOUR"))
+        assertTrue(fragment.contains("AquaTimePickerBottomSheet.show("))
+        assertTrue(screen.contains("AquaDeviceMenuHeroCard("))
+        assertTrue(screen.contains("AquaDeviceMenuEditableValueRow("))
+        assertTrue(navigation.contains("deviceDosingHourlyScheduleFragment"))
+        assertFalse(screen.contains("DosingPumpDevice("))
+    }
+
     private fun source(relativePath: String): String = File(repositoryRoot, relativePath).readText()
 
     private fun locateRepositoryRoot(): File {

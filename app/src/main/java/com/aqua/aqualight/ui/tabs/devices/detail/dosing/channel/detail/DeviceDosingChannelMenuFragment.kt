@@ -6,6 +6,7 @@ import android.view.View
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableDoubleStateOf
 import androidx.compose.runtime.mutableLongStateOf
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.platform.ComposeView
 import androidx.compose.ui.platform.ViewCompositionStrategy
@@ -14,6 +15,7 @@ import androidx.navigation.fragment.navArgs
 import com.aqua.aqualight.R
 import com.aqua.aqualight.ui.common.bottomsheet.TextInputBottomSheet
 import com.aqua.aqualight.ui.tabs.devices.detail.dosing.channel.DeviceDosingChannelDestinationFragment
+import com.aqua.aqualight.ui.tabs.devices.detail.dosing.channel.schedule.hourly.DeviceDosingHourlyScheduleContract
 import com.aqua.aqualight.ui.tabs.devices.detail.dosing.channel.schedule.single.DeviceDosingSingleScheduleContract
 import java.text.NumberFormat
 
@@ -28,6 +30,8 @@ class DeviceDosingChannelMenuFragment :
     private var reservoirCapacityMl by mutableDoubleStateOf(DEFAULT_RESERVOIR_CAPACITY_ML)
     private var dailyDoseMicroliters by mutableLongStateOf(DEFAULT_DAILY_DOSE_MICROLITERS)
     private var singleDoseStartTimeMs by mutableLongStateOf(DEFAULT_SINGLE_DOSE_START_TIME_MS)
+    private var hourlyStartTimeMs by mutableLongStateOf(DEFAULT_HOURLY_START_TIME_MS)
+    private var selectedScheduleMode by mutableStateOf(DosingPlanScheduleMode.SINGLE)
 
     override val destinationTitle: String
         get() = menuItem
@@ -52,11 +56,22 @@ class DeviceDosingChannelMenuFragment :
             STATE_SINGLE_DOSE_START_TIME_MS,
             DEFAULT_SINGLE_DOSE_START_TIME_MS
         ) ?: DEFAULT_SINGLE_DOSE_START_TIME_MS
+        hourlyStartTimeMs = savedInstanceState?.getLong(
+            STATE_HOURLY_START_TIME_MS,
+            DEFAULT_HOURLY_START_TIME_MS
+        ) ?: DEFAULT_HOURLY_START_TIME_MS
+        selectedScheduleMode = savedInstanceState
+            ?.getString(STATE_SELECTED_SCHEDULE_MODE)
+            ?.let { savedMode ->
+                DosingPlanScheduleMode.entries.firstOrNull { mode -> mode.name == savedMode }
+            }
+            ?: DosingPlanScheduleMode.SINGLE
         if (item == DosingDetailMenuItem.RESERVOIR) {
             setupReservoirCapacityResult()
         }
         if (item == DosingDetailMenuItem.DOSING_PLAN) {
             setupSingleScheduleResult()
+            setupHourlyScheduleResult()
         }
         setupSelectedPump(
             view = view,
@@ -65,12 +80,17 @@ class DeviceDosingChannelMenuFragment :
             pumpCount = args.pumpCount,
             channelNumber = args.channelNumber
         )
+        setupMenuContent(view, item)
+    }
+
+    private fun setupMenuContent(view: View, item: DosingDetailMenuItem) {
         view.findViewById<ComposeView>(R.id.channelDetailContent).apply {
             setViewCompositionStrategy(ViewCompositionStrategy.DisposeOnViewTreeLifecycleDestroyed)
             setContent {
                 DeviceDosingChannelMenuScreen(
                     item = item,
                     dailyDoseMicroliters = dailyDoseMicroliters,
+                    selectedScheduleMode = selectedScheduleMode,
                     reservoirCapacityValue = getString(
                         R.string.device_dosing_detail_value_container_ml,
                         reservoirCapacityMl
@@ -94,6 +114,8 @@ class DeviceDosingChannelMenuFragment :
         outState.putDouble(STATE_RESERVOIR_CAPACITY_ML, reservoirCapacityMl)
         outState.putLong(STATE_DAILY_DOSE_MICROLITERS, dailyDoseMicroliters)
         outState.putLong(STATE_SINGLE_DOSE_START_TIME_MS, singleDoseStartTimeMs)
+        outState.putLong(STATE_HOURLY_START_TIME_MS, hourlyStartTimeMs)
+        outState.putString(STATE_SELECTED_SCHEDULE_MODE, selectedScheduleMode.name)
         super.onSaveInstanceState(outState)
     }
 
@@ -116,18 +138,42 @@ class DeviceDosingChannelMenuFragment :
             if (DeviceDosingSingleScheduleContract.isValidStartTime(resultStartTimeMs)) {
                 singleDoseStartTimeMs =
                     DeviceDosingSingleScheduleContract.minuteAlignedStartTime(resultStartTimeMs)
+                selectedScheduleMode = DosingPlanScheduleMode.SINGLE
+            }
+        }
+    }
+
+    private fun setupHourlyScheduleResult() {
+        parentFragmentManager.setFragmentResultListener(
+            DeviceDosingHourlyScheduleContract.RESULT_REQUEST_KEY,
+            viewLifecycleOwner
+        ) { _, result ->
+            if (
+                result.getString(DeviceDosingHourlyScheduleContract.RESULT_KEY) !=
+                DeviceDosingHourlyScheduleContract.RESULT_SAVED ||
+                result.getString(DeviceDosingHourlyScheduleContract.RESULT_SLOT_ID) != args.slotId
+            ) {
+                return@setFragmentResultListener
+            }
+            val resultStartTimeMs = result.getLong(
+                DeviceDosingHourlyScheduleContract.RESULT_START_TIME_MS,
+                INVALID_START_TIME_MS
+            )
+            if (DeviceDosingHourlyScheduleContract.isValidStartTime(resultStartTimeMs)) {
+                hourlyStartTimeMs =
+                    DeviceDosingHourlyScheduleContract.minuteAlignedStartTime(resultStartTimeMs)
+                selectedScheduleMode = DosingPlanScheduleMode.HOURLY
             }
         }
     }
 
     private fun openScheduleEditor(mode: DosingPlanScheduleMode) {
-        if (mode != DosingPlanScheduleMode.SINGLE) return
         val navController = findNavController()
         if (navController.currentDestination?.id != R.id.deviceDosingChannelMenuFragment) {
             return
         }
-        navController.navigate(
-            DeviceDosingChannelMenuFragmentDirections
+        val direction = when (mode) {
+            DosingPlanScheduleMode.SINGLE -> DeviceDosingChannelMenuFragmentDirections
                 .actionDeviceDosingChannelMenuFragmentToDeviceDosingSingleScheduleFragment(
                     deviceUid = args.deviceUid,
                     slotId = args.slotId,
@@ -137,7 +183,20 @@ class DeviceDosingChannelMenuFragment :
                     dailyDoseMicroliters = dailyDoseMicroliters,
                     startTimeMs = singleDoseStartTimeMs
                 )
-        )
+            DosingPlanScheduleMode.HOURLY -> DeviceDosingChannelMenuFragmentDirections
+                .actionDeviceDosingChannelMenuFragmentToDeviceDosingHourlyScheduleFragment(
+                    deviceUid = args.deviceUid,
+                    slotId = args.slotId,
+                    channelTitle = args.channelTitle,
+                    pumpCount = args.pumpCount,
+                    channelNumber = args.channelNumber,
+                    dailyDoseMicroliters = dailyDoseMicroliters,
+                    startTimeMs = hourlyStartTimeMs
+                )
+            DosingPlanScheduleMode.CUSTOM,
+            DosingPlanScheduleMode.TIMER -> return
+        }
+        navController.navigate(direction)
     }
 
     private fun setupReservoirCapacityResult() {
@@ -199,12 +258,15 @@ class DeviceDosingChannelMenuFragment :
         const val STATE_RESERVOIR_CAPACITY_ML = "reservoir_capacity_ml"
         const val STATE_DAILY_DOSE_MICROLITERS = "daily_dose_microliters"
         const val STATE_SINGLE_DOSE_START_TIME_MS = "single_dose_start_time_ms"
+        const val STATE_HOURLY_START_TIME_MS = "hourly_start_time_ms"
+        const val STATE_SELECTED_SCHEDULE_MODE = "selected_schedule_mode"
         const val RESERVOIR_CAPACITY_REQUEST_KEY = "dosing_reservoir_capacity_input"
         const val RESERVOIR_CAPACITY_PAYLOAD_ID = "reservoir_capacity"
         const val RESERVOIR_CAPACITY_MAX_LENGTH = 7
         const val DEFAULT_RESERVOIR_CAPACITY_ML = 450.0
         const val DEFAULT_DAILY_DOSE_MICROLITERS = 0L
         const val DEFAULT_SINGLE_DOSE_START_TIME_MS = 0L
+        const val DEFAULT_HOURLY_START_TIME_MS = 0L
         const val INVALID_START_TIME_MS = -1L
     }
 }

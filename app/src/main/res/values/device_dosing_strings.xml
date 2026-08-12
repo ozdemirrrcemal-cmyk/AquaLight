@@ -86,6 +86,28 @@
     <string name="device_dosing_single_time_picker_message">The complete daily dose will be applied at this time on every selected day.</string>
     <string name="device_dosing_single_time_picker_confirm">Apply time</string>
 
+    <string name="device_dosing_hourly_hero_eyebrow">24-hour schedule</string>
+    <string name="device_dosing_hourly_hero_title">Balanced dosing, once every hour</string>
+    <string name="device_dosing_hourly_hero_description">AquaLight divides the daily amount into 24 portions and applies one at the selected minute of every hour.</string>
+    <string name="device_dosing_hourly_summary_section">Distribution summary</string>
+    <string name="device_dosing_hourly_daily_amount_description">Uses the daily amount set on the Dosing Plan screen.</string>
+    <string name="device_dosing_hourly_frequency">Daily applications</string>
+    <string name="device_dosing_hourly_frequency_description">The pump runs once every hour throughout the day.</string>
+    <string name="device_dosing_hourly_dose_count">24 doses</string>
+    <string name="device_dosing_hourly_average_dose">Average per dose</string>
+    <string name="device_dosing_hourly_average_dose_format">≈%1$.3f ml</string>
+    <string name="device_dosing_hourly_average_dose_description">The exact daily total is preserved while it is distributed across 24 applications.</string>
+    <string name="device_dosing_hourly_timing_section">Hourly timing</string>
+    <string name="device_dosing_hourly_minute_title">Application minute</string>
+    <string name="device_dosing_hourly_minute_description">The pump runs at this minute of every hour.</string>
+    <string name="device_dosing_hourly_window_title">First and last dose</string>
+    <string name="device_dosing_hourly_window_format">%1$s – %2$s</string>
+    <string name="device_dosing_hourly_window_description">Twenty-four applications, spaced exactly one hour apart.</string>
+    <string name="device_dosing_hourly_use_action">Use hourly distribution</string>
+    <string name="device_dosing_hourly_minute_picker_title">Select application minute</string>
+    <string name="device_dosing_hourly_minute_picker_message">AquaLight will apply one dose at the selected minute of every hour.</string>
+    <string name="device_dosing_hourly_minute_picker_confirm">Apply minute</string>
+
     <string name="device_dosing_detail_value_unavailable">—</string>
 
     <string name="device_dosing_detail_reservoir_tracking_section">Tracking status</string>

@@ -47,6 +47,7 @@
         android:orientation="horizontal">
 
         <TextView
+            android:id="@+id/tvAquaTimePickerHourLabel"
             style="@style/TextAppearance.Aqua.BottomSheet.TimePicker.Label"
             android:layout_width="@dimen/aqua_size_0"
             android:layout_height="wrap_content"
@@ -55,6 +56,7 @@
             android:text="@string/common_time_picker_hour" />
 
         <Space
+            android:id="@+id/spaceAquaTimePickerLabels"
             android:layout_width="@dimen/aqua_size_32"
             android:layout_height="@dimen/aqua_size_1" />
 
@@ -97,6 +99,7 @@
                 android:scrollbars="none" />
 
             <TextView
+                android:id="@+id/tvAquaTimePickerSeparator"
                 style="@style/TextAppearance.Aqua.BottomSheet.TimePicker.Separator"
                 android:layout_width="@dimen/aqua_size_32"
                 android:layout_height="match_parent"
@@ -118,6 +121,7 @@
     </FrameLayout>
 
     <TextView
+        android:id="@+id/tvAquaTimePickerHint"
         style="@style/TextAppearance.Aqua.BottomSheet.TimePicker.Hint"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"

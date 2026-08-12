@@ -54,4 +54,20 @@ class AquaTimePickerBottomSheetTest {
             timePickerMinutesOfDay(hour = 0, minute = 60)
         }
     }
+
+    @Test
+    fun `minute of hour mode rejects a wall clock hour`() {
+        assertThrows(IllegalArgumentException::class.java) {
+            AquaTimePickerBottomSheet.Request(
+                title = "Select minute",
+                message = "Runs every hour",
+                initialHour = 9,
+                initialMinute = 15,
+                selectionMode = AquaTimePickerBottomSheet.SelectionMode.MINUTE_OF_HOUR,
+                confirmText = "Apply",
+                cancelText = "Cancel",
+                resultTarget = AquaTimePickerBottomSheet.ResultTarget("hourly-result")
+            )
+        }
+    }
 }

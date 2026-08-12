@@ -86,6 +86,28 @@
     <string name="device_dosing_single_time_picker_message">Seçili her günde günlük dozun tamamı bu saatte uygulanır.</string>
     <string name="device_dosing_single_time_picker_confirm">Saati uygula</string>
 
+    <string name="device_dosing_hourly_hero_eyebrow">24 saatlik zamanlama</string>
+    <string name="device_dosing_hourly_hero_title">Dengeli dozaj, her saat bir uygulama</string>
+    <string name="device_dosing_hourly_hero_description">AquaLight günlük miktarı 24 porsiyona böler ve her saatin seçtiğiniz dakikasında birini uygular.</string>
+    <string name="device_dosing_hourly_summary_section">Dağıtım özeti</string>
+    <string name="device_dosing_hourly_daily_amount_description">Dozaj Planı ekranında belirlenen günlük miktarı kullanır.</string>
+    <string name="device_dosing_hourly_frequency">Günlük uygulama</string>
+    <string name="device_dosing_hourly_frequency_description">Pompa gün boyunca her saat bir kez çalışır.</string>
+    <string name="device_dosing_hourly_dose_count">24 doz</string>
+    <string name="device_dosing_hourly_average_dose">Doz başına ortalama</string>
+    <string name="device_dosing_hourly_average_dose_format">≈%1$.3f ml</string>
+    <string name="device_dosing_hourly_average_dose_description">Toplam günlük miktar korunarak 24 uygulama arasında hassas biçimde paylaştırılır.</string>
+    <string name="device_dosing_hourly_timing_section">Saatlik zamanlama</string>
+    <string name="device_dosing_hourly_minute_title">Uygulama dakikası</string>
+    <string name="device_dosing_hourly_minute_description">Pompa her saatin bu dakikasında çalışır.</string>
+    <string name="device_dosing_hourly_window_title">İlk ve son doz</string>
+    <string name="device_dosing_hourly_window_format">%1$s – %2$s</string>
+    <string name="device_dosing_hourly_window_description">Birer saat arayla toplam 24 uygulama yapılır.</string>
+    <string name="device_dosing_hourly_use_action">Saatlik dağıtımı kullan</string>
+    <string name="device_dosing_hourly_minute_picker_title">Uygulama dakikasını seçin</string>
+    <string name="device_dosing_hourly_minute_picker_message">AquaLight her saatin seçtiğiniz dakikasında bir doz uygular.</string>
+    <string name="device_dosing_hourly_minute_picker_confirm">Dakikayı uygula</string>
+
     <string name="device_dosing_detail_value_unavailable">—</string>
 
     <string name="device_dosing_detail_reservoir_tracking_section">Takip durumu</string>
