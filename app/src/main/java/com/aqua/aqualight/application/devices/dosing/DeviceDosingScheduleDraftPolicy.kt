@@ -1,4 +1,4 @@
-package com.aqua.aqualight.application.devices
+package com.aqua.aqualight.application.devices.dosing
 
 import java.math.BigDecimal
 
