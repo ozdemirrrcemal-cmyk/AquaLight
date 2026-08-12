@@ -4,61 +4,44 @@ import android.os.Bundle
 import android.text.InputType
 import android.view.View
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.platform.ComposeView
 import androidx.compose.ui.platform.ViewCompositionStrategy
+import androidx.fragment.app.viewModels
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.fragment.findNavController
 import androidx.navigation.fragment.navArgs
 import com.aqua.aqualight.R
+import com.aqua.aqualight.composition.requireAppContainer
 import com.aqua.aqualight.ui.common.bottomsheet.TextInputBottomSheet
 import com.aqua.aqualight.ui.tabs.devices.detail.dosing.channel.common.DeviceDosingChannelDestinationFragment
 import com.aqua.aqualight.ui.tabs.devices.detail.dosing.channel.schedule.DeviceDosingScheduleAmountContract
 import com.aqua.aqualight.ui.tabs.devices.detail.dosing.channel.schedule.custom.DeviceDosingCustomScheduleContract
 import com.aqua.aqualight.ui.tabs.devices.detail.dosing.channel.schedule.timer.DeviceDosingTimerScheduleContract
 
-/** Process-safe UI draft owner for the Dosing Plan child feature. */
+/** Navigation/render host for the ViewModel-owned, firmware-independent Dosing Plan draft. */
 class DeviceDosingPlanFragment :
     DeviceDosingChannelDestinationFragment(R.layout.fragment_device_dosing_channel_detail) {
 
     private val args: DeviceDosingPlanFragmentArgs by navArgs()
-    private var draft by mutableStateOf(DosingPlanDraft())
+    private val viewModel: DeviceDosingPlanViewModel by viewModels {
+        requireContext().requireAppContainer().defaultViewModelFactory
+    }
 
     override val destinationTitle: String
         get() = getString(R.string.device_dosing_detail_plan_title)
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
-        draft = DosingPlanDraft.restore(savedInstanceState)
+        viewModel.bindInitial(DosingPlanDraft.restore(savedInstanceState))
         setupDailyDoseResult()
         bindDosingPlanScheduleResults(
             host = DosingPlanScheduleResultHost(
                 fragment = this,
                 slotId = args.slotId,
-                updateSingle = { startTimeMs ->
-                    draft = draft.copy(
-                        singleDoseStartTimeMs = startTimeMs,
-                        selectedScheduleMode = DosingPlanScheduleMode.SINGLE
-                    )
-                },
-                updateHourly = { startTimeMs ->
-                    draft = draft.copy(
-                        hourlyStartTimeMs = startTimeMs,
-                        selectedScheduleMode = DosingPlanScheduleMode.HOURLY
-                    )
-                },
-                updateCustom = { periods ->
-                    draft = draft.copy(
-                        customPeriods = periods,
-                        selectedScheduleMode = DosingPlanScheduleMode.CUSTOM
-                    )
-                },
-                updateTimer = { doses ->
-                    draft = draft.copy(
-                        timerDoses = doses,
-                        selectedScheduleMode = DosingPlanScheduleMode.TIMER
-                    )
-                }
+                updateSingle = viewModel::selectSingle,
+                updateHourly = viewModel::selectHourly,
+                updateCustom = viewModel::selectCustom,
+                updateTimer = viewModel::selectTimer
             ),
             lifecycleOwner = viewLifecycleOwner
         )
@@ -73,7 +56,7 @@ class DeviceDosingPlanFragment :
     }
 
     override fun onSaveInstanceState(outState: Bundle) {
-        draft.writeTo(outState)
+        viewModel.currentDraft().writeTo(outState)
         super.onSaveInstanceState(outState)
     }
 
@@ -81,6 +64,7 @@ class DeviceDosingPlanFragment :
         view.findViewById<ComposeView>(R.id.channelDetailContent).apply {
             setViewCompositionStrategy(ViewCompositionStrategy.DisposeOnViewTreeLifecycleDestroyed)
             setContent {
+                val draft by viewModel.draft.collectAsStateWithLifecycle()
                 DeviceDosingPlanScreen(
                     state = DeviceDosingPlanUiState(
                         dailyDoseMicroliters = draft.displayedDailyDoseMicroliters(),
@@ -92,28 +76,11 @@ class DeviceDosingPlanFragment :
                         onScheduleOptionClick = ::openScheduleEditor,
                         onDailyDoseClick = if (
                             draft.selectedScheduleMode != DosingPlanScheduleMode.TIMER
-                        ) {
-                            ::showDailyDoseEditor
-                        } else {
-                            null
-                        },
-                        onScheduleEnabledChange = { enabled ->
-                            draft = draft.copy(scheduleEnabled = enabled)
-                        },
+                        ) ::showDailyDoseEditor else null,
+                        onScheduleEnabledChange = viewModel::setScheduleEnabled,
                         recurrence = DosingPlanRecurrenceActions(
-                            onEveryDayClick = {
-                                draft = draft.copy(
-                                    recurrenceState = draft.recurrenceState.selectEveryDay()
-                                )
-                            },
-                            onWeekdaySelectionChange = { weekday, selected ->
-                                draft = draft.copy(
-                                    recurrenceState = draft.recurrenceState.withDaySelection(
-                                        weekday = weekday,
-                                        selected = selected
-                                    )
-                                )
-                            }
+                            onEveryDayClick = viewModel::selectEveryDay,
+                            onWeekdaySelectionChange = viewModel::setWeekdaySelected
                         ),
                         onSaveClick = null
                     )
@@ -132,13 +99,12 @@ class DeviceDosingPlanFragment :
             if (!expected) return@setFragmentResultListener
             DeviceDosingScheduleAmountContract.parseMicroliters(
                 result.getString(TextInputBottomSheet.RESULT_VALUE).orEmpty()
-            )?.let { microliters ->
-                draft = draft.copy(distributedDailyDoseMicroliters = microliters)
-            }
+            )?.let(viewModel::setDailyDoseMicroliters)
         }
     }
 
     private fun openScheduleEditor(mode: DosingPlanScheduleMode) {
+        val draft = viewModel.currentDraft()
         if (!draft.scheduleEnabled) return
         val navController = findNavController()
         if (navController.currentDestination?.id != R.id.deviceDosingPlanFragment) return
@@ -188,6 +154,7 @@ class DeviceDosingPlanFragment :
     }
 
     private fun showDailyDoseEditor() {
+        val draft = viewModel.currentDraft()
         if (!draft.scheduleEnabled || draft.selectedScheduleMode == DosingPlanScheduleMode.TIMER) return
         TextInputBottomSheet.show(
             fragmentManager = childFragmentManager,

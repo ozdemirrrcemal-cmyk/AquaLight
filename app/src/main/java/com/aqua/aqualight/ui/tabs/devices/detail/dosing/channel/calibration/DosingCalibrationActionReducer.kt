@@ -1,5 +1,7 @@
 package com.aqua.aqualight.ui.tabs.devices.detail.dosing.channel.calibration
 
+import com.aqua.aqualight.application.devices.DeviceDosingCalibrationConstraints
+
 internal sealed interface DosingCalibrationOperation {
     data object Refresh : DosingCalibrationOperation
     data class SaveDisplayName(val name: String) : DosingCalibrationOperation
@@ -27,14 +29,17 @@ internal data class DosingCalibrationActionDecision(
 internal fun reduceDosingCalibrationAction(
     state: DeviceDosingCalibrationUiState,
     primeRequested: Boolean,
-    action: DeviceDosingCalibrationAction
+    action: DeviceDosingCalibrationAction,
+    constraints: DeviceDosingCalibrationConstraints
 ): DosingCalibrationActionDecision = when (action) {
     is DeviceDosingCalibrationAction.DisplayNameChanged -> DosingCalibrationActionDecision(
-        state = if (state.isBusy) state else state
-            .updateInput { input ->
-                input.copy(displayName = action.value.take(MAX_DISPLAY_NAME_CHARACTERS))
-            }
-            .copy(error = null)
+        state = if (state.isBusy) {
+            state
+        } else {
+            state.updateInput { input ->
+                input.copy(displayName = action.value.take(constraints.maxDisplayNameCharacters))
+            }.copy(error = null)
+        }
     )
     DeviceDosingCalibrationAction.SaveDisplayName -> saveDisplayNameDecision(state)
     DeviceDosingCalibrationAction.PrimePressed -> primePressedDecision(state, primeRequested)
@@ -53,11 +58,16 @@ internal fun reduceDosingCalibrationAction(
         DosingCalibrationOperation.StartCalibration
     )
     is DeviceDosingCalibrationAction.MeasuredMlChanged -> DosingCalibrationActionDecision(
-        state = if (state.isBusy) state else state
-            .updateInput { input -> input.copy(measuredMl = sanitizeMeasurement(action.value)) }
-            .copy(error = null)
+        state = if (state.isBusy) {
+            state
+        } else {
+            state.updateInput { input ->
+                input.copy(measuredMl = sanitizeMeasurement(action.value))
+            }.copy(error = null)
+        }
     )
-    DeviceDosingCalibrationAction.SaveMeasurement -> saveMeasurementDecision(state)
+    DeviceDosingCalibrationAction.SaveMeasurement ->
+        saveMeasurementDecision(state, constraints)
     DeviceDosingCalibrationAction.StartVerification -> busyOperationDecision(
         state,
         DosingCalibrationOperation.StartVerification
@@ -120,10 +130,13 @@ private fun primeReleasedDecision(
 }
 
 private fun saveMeasurementDecision(
-    state: DeviceDosingCalibrationUiState
+    state: DeviceDosingCalibrationUiState,
+    constraints: DeviceDosingCalibrationConstraints
 ): DosingCalibrationActionDecision {
     val measuredMl = parseMeasurement(state.measuredMl)
-    return if (measuredMl == null || measuredMl !in MIN_MEASURED_ML..MAX_MEASURED_ML) {
+    return if (measuredMl == null ||
+        measuredMl !in constraints.minMeasuredMl..constraints.maxMeasuredMl
+    ) {
         DosingCalibrationActionDecision(
             state = state.copy(error = DeviceDosingCalibrationError.INVALID_MEASUREMENT)
         )
@@ -163,7 +176,4 @@ private fun parseMeasurement(value: String): Double? = value
     .toDoubleOrNull()
     ?.takeIf(Double::isFinite)
 
-internal const val MAX_DISPLAY_NAME_CHARACTERS = 32
 internal const val MAX_MEASUREMENT_CHARACTERS = 8
-internal const val MIN_MEASURED_ML = 0.05
-internal const val MAX_MEASURED_ML = 1_000.0
