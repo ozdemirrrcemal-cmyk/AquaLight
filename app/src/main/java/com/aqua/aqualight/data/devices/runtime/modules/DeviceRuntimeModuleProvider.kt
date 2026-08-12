@@ -7,10 +7,10 @@ import com.aqua.aqualight.data.devices.runtime.modules.cooling.DeviceCoolingRunt
 import com.aqua.aqualight.data.devices.runtime.modules.cooling.DeviceCoolingRuntimeStateStore
 import com.aqua.aqualight.data.devices.runtime.modules.cooling.DeviceCoolingTypedEventReducer
 import com.aqua.aqualight.data.devices.runtime.modules.device.DeviceCommonRuntimeRepository
-import com.aqua.aqualight.data.devices.runtime.modules.dosing.DeviceDosingRuntimeAccess
-import com.aqua.aqualight.data.devices.runtime.modules.dosing.DeviceDosingRuntimeRepository
-import com.aqua.aqualight.data.devices.runtime.modules.dosing.DeviceDosingRuntimeStateStore
-import com.aqua.aqualight.data.devices.runtime.modules.dosing.DeviceDosingTypedEventReducer
+import com.aqua.aqualight.data.devices.runtime.modules.dosing.contract.DeviceDosingRuntimeAccess
+import com.aqua.aqualight.data.devices.runtime.modules.dosing.events.DeviceDosingTypedEventReducer
+import com.aqua.aqualight.data.devices.runtime.modules.dosing.repository.DeviceDosingRuntimeRepository
+import com.aqua.aqualight.data.devices.runtime.modules.dosing.state.DeviceDosingRuntimeStateStore
 import com.aqua.aqualight.data.devices.runtime.modules.firmware.DeviceFirmwareRuntimeRepository
 import com.aqua.aqualight.data.devices.runtime.modules.firmware.DeviceFirmwareUpdatePlanner
 import com.aqua.aqualight.data.devices.runtime.modules.firmware.DeviceFirmwareUpdateRepository
