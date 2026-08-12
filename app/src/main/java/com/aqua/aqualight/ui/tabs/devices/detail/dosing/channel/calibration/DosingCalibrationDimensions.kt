@@ -1,0 +1,28 @@
+package com.aqua.aqualight.ui.tabs.devices.detail.dosing.channel.calibration
+
+import androidx.compose.ui.unit.dp
+
+internal const val ILLUSTRATION_TRANSITION_MILLIS = 320
+internal const val CALIBRATION_RUN_DURATION_MILLIS = 5_000
+internal const val DEFAULT_VERIFICATION_DURATION_MILLIS = 4_000
+internal const val DEFAULT_ILLUSTRATION_DURATION_MILLIS = 900
+internal const val VERIFICATION_DOSE_ML = 4L
+internal const val MIN_ILLUSTRATION_OPERATION_MILLIS = 700L
+internal const val MAX_ILLUSTRATION_OPERATION_MILLIS = 15_000L
+internal const val CALIBRATION_MILLIS_PER_SECOND = 1_000.0
+
+internal val CALIBRATION_SCREEN_TOP_PADDING = 12.dp
+internal val CALIBRATION_PROGRESS_CONTENT_GAP = 10.dp
+internal val CALIBRATION_COPY_GAP = 8.dp
+internal val CALIBRATION_PROGRESS_SEGMENT_GAP = 6.dp
+internal val CALIBRATION_PROGRESS_SEGMENT_HEIGHT = 5.dp
+internal val CALIBRATION_CONTROL_GAP = 12.dp
+internal val CALIBRATION_CONFIRMATION_GAP = 10.dp
+internal val CALIBRATION_TEXT_FIELD_HORIZONTAL_PADDING = 16.dp
+internal val CALIBRATION_TEXT_FIELD_VERTICAL_PADDING = 15.dp
+internal val CALIBRATION_PRIME_HORIZONTAL_PADDING = 18.dp
+internal val CALIBRATION_PRIME_VERTICAL_PADDING = 14.dp
+internal val CALIBRATION_PRIME_DOT_SIZE = 9.dp
+internal val CALIBRATION_INLINE_GAP = 10.dp
+internal val CALIBRATION_COUNTDOWN_GAP = 4.dp
+internal val CALIBRATION_ILLUSTRATION_HEIGHT = 210.dp

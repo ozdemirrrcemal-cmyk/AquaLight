@@ -1,5 +1,3 @@
-@file:Suppress("LongMethod", "MatchingDeclarationName")
-
 package com.aqua.aqualight.ui.tabs.devices.detail.dosing.channel.schedule.single
 
 import androidx.compose.foundation.background
@@ -13,7 +11,6 @@ import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.Immutable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
@@ -29,14 +26,6 @@ import com.aqua.aqualight.ui.common.devicemenu.AquaDeviceMenuValueRow
 import com.aqua.aqualight.ui.common.devicemenu.aquaDeviceMenuColors
 import com.aqua.aqualight.ui.common.flow.AquaGuidedFlowButton
 
-@Immutable
-internal data class DeviceDosingSingleScheduleUiState(
-    val dailyDoseMicroliters: Long,
-    val startTimeMs: Long,
-    val actionEnabled: Boolean = true
-)
-
-/** Focused single-dose editor; state and events remain hoisted for the runtime binding layer. */
 @Composable
 internal fun DeviceDosingSingleScheduleScreen(
     state: DeviceDosingSingleScheduleUiState,
@@ -46,9 +35,6 @@ internal fun DeviceDosingSingleScheduleScreen(
 ) {
     val context = LocalContext.current
     val colors = aquaDeviceMenuColors()
-    val dailyDoseMl = DeviceDosingSingleScheduleContract.dailyDoseMl(
-        state.dailyDoseMicroliters
-    )
     val timeText = LocaleFormatter.formatTimeOfDay24Hour(
         context,
         DeviceDosingSingleScheduleContract.minutesOfDay(state.startTimeMs)
@@ -59,84 +45,106 @@ internal fun DeviceDosingSingleScheduleScreen(
             .fillMaxSize()
             .background(colors.background)
     ) {
-        LazyColumn(
-            modifier = Modifier.weight(1f),
-            contentPadding = PaddingValues(
-                start = AquaDeviceMenuGeometry.screenHorizontalPadding,
-                top = AquaDeviceMenuGeometry.screenTopPadding,
-                end = AquaDeviceMenuGeometry.screenHorizontalPadding,
-                bottom = AquaDeviceMenuGeometry.sectionGap
-            ),
-            verticalArrangement = Arrangement.spacedBy(AquaDeviceMenuGeometry.sectionGap)
-        ) {
-            item(key = SINGLE_HERO_KEY) {
-                AquaDeviceMenuHeroCard(
-                    eyebrow = stringResource(R.string.device_dosing_single_hero_eyebrow),
-                    title = stringResource(R.string.device_dosing_single_hero_title),
-                    description = stringResource(R.string.device_dosing_single_hero_description)
-                )
-            }
-            item(key = SINGLE_SUMMARY_KEY) {
-                AquaDeviceMenuSection(
-                    title = stringResource(R.string.device_dosing_single_summary_section)
-                ) {
-                    AquaDeviceMenuValueRow(
-                        label = stringResource(R.string.device_dosing_detail_daily_dose),
-                        value = stringResource(
-                            R.string.device_dosing_channel_daily_dose_format,
-                            dailyDoseMl
-                        ),
-                        description = stringResource(
-                            R.string.device_dosing_single_daily_amount_description
-                        ),
-                        tone = AquaDeviceMenuTone.ACCENT
-                    )
-                    AquaDeviceMenuDivider(startIndent = AquaDeviceMenuGeometry.sectionContentPadding)
-                    AquaDeviceMenuValueRow(
-                        label = stringResource(R.string.device_dosing_single_frequency),
-                        value = stringResource(R.string.device_dosing_single_one_dose),
-                        description = stringResource(
-                            R.string.device_dosing_single_frequency_description
-                        )
-                    )
-                }
-            }
-            item(key = SINGLE_TIME_KEY) {
-                AquaDeviceMenuSection(
-                    title = stringResource(R.string.device_dosing_single_time_section)
-                ) {
-                    AquaDeviceMenuEditableValueRow(
-                        label = stringResource(R.string.device_dosing_single_time_title),
-                        value = timeText,
-                        description = stringResource(
-                            R.string.device_dosing_single_time_description
-                        ),
-                        iconRes = R.drawable.ic_dosing_schedule_24,
-                        onClick = onTimeClick
-                    )
-                }
-            }
-        }
+        SingleScheduleContent(
+            state = state,
+            timeText = timeText,
+            onTimeClick = onTimeClick,
+            modifier = Modifier.weight(1f)
+        )
+        SingleScheduleFooter(
+            enabled = state.actionEnabled,
+            onSaveClick = onSaveClick
+        )
+    }
+}
 
-        Box(
-            modifier = Modifier
-                .fillMaxWidth()
-                .background(colors.background)
-                .navigationBarsPadding()
-                .padding(
-                    start = AquaDeviceMenuGeometry.screenHorizontalPadding,
-                    top = AquaDeviceMenuGeometry.compactGap,
-                    end = AquaDeviceMenuGeometry.screenHorizontalPadding,
-                    bottom = AquaDeviceMenuGeometry.screenHorizontalPadding
-                )
-        ) {
-            AquaGuidedFlowButton(
-                text = stringResource(R.string.device_dosing_single_use_action),
-                onClick = onSaveClick,
-                modifier = Modifier.fillMaxWidth(),
-                enabled = state.actionEnabled
+@Composable
+private fun SingleScheduleContent(
+    state: DeviceDosingSingleScheduleUiState,
+    timeText: String,
+    onTimeClick: () -> Unit,
+    modifier: Modifier
+) {
+    LazyColumn(
+        modifier = modifier,
+        contentPadding = PaddingValues(
+            start = AquaDeviceMenuGeometry.screenHorizontalPadding,
+            top = AquaDeviceMenuGeometry.screenTopPadding,
+            end = AquaDeviceMenuGeometry.screenHorizontalPadding,
+            bottom = AquaDeviceMenuGeometry.sectionGap
+        ),
+        verticalArrangement = Arrangement.spacedBy(AquaDeviceMenuGeometry.sectionGap)
+    ) {
+        item(key = SINGLE_HERO_KEY) { SingleScheduleHero() }
+        item(key = SINGLE_SUMMARY_KEY) { SingleScheduleSummary(state.dailyDoseMicroliters) }
+        item(key = SINGLE_TIME_KEY) { SingleScheduleTime(timeText, onTimeClick) }
+    }
+}
+
+@Composable
+private fun SingleScheduleHero() {
+    AquaDeviceMenuHeroCard(
+        eyebrow = stringResource(R.string.device_dosing_single_hero_eyebrow),
+        title = stringResource(R.string.device_dosing_single_hero_title),
+        description = stringResource(R.string.device_dosing_single_hero_description)
+    )
+}
+
+@Composable
+private fun SingleScheduleSummary(dailyDoseMicroliters: Long) {
+    AquaDeviceMenuSection(title = stringResource(R.string.device_dosing_single_summary_section)) {
+        AquaDeviceMenuValueRow(
+            label = stringResource(R.string.device_dosing_detail_daily_dose),
+            value = stringResource(
+                R.string.device_dosing_channel_daily_dose_format,
+                DeviceDosingSingleScheduleContract.dailyDoseMl(dailyDoseMicroliters)
+            ),
+            description = stringResource(R.string.device_dosing_single_daily_amount_description),
+            tone = AquaDeviceMenuTone.ACCENT
+        )
+        AquaDeviceMenuDivider(startIndent = AquaDeviceMenuGeometry.sectionContentPadding)
+        AquaDeviceMenuValueRow(
+            label = stringResource(R.string.device_dosing_single_frequency),
+            value = stringResource(R.string.device_dosing_single_one_dose),
+            description = stringResource(R.string.device_dosing_single_frequency_description)
+        )
+    }
+}
+
+@Composable
+private fun SingleScheduleTime(timeText: String, onTimeClick: () -> Unit) {
+    AquaDeviceMenuSection(title = stringResource(R.string.device_dosing_single_time_section)) {
+        AquaDeviceMenuEditableValueRow(
+            label = stringResource(R.string.device_dosing_single_time_title),
+            value = timeText,
+            description = stringResource(R.string.device_dosing_single_time_description),
+            iconRes = R.drawable.ic_dosing_schedule_24,
+            onClick = onTimeClick
+        )
+    }
+}
+
+@Composable
+private fun SingleScheduleFooter(enabled: Boolean, onSaveClick: () -> Unit) {
+    val colors = aquaDeviceMenuColors()
+    Box(
+        modifier = Modifier
+            .fillMaxWidth()
+            .background(colors.background)
+            .navigationBarsPadding()
+            .padding(
+                start = AquaDeviceMenuGeometry.screenHorizontalPadding,
+                top = AquaDeviceMenuGeometry.compactGap,
+                end = AquaDeviceMenuGeometry.screenHorizontalPadding,
+                bottom = AquaDeviceMenuGeometry.screenHorizontalPadding
             )
-        }
+    ) {
+        AquaGuidedFlowButton(
+            text = stringResource(R.string.device_dosing_single_use_action),
+            onClick = onSaveClick,
+            modifier = Modifier.fillMaxWidth(),
+            enabled = enabled
+        )
     }
 }
 

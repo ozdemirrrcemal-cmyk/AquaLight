@@ -33,40 +33,18 @@ class DeviceDosingChannelCalibrationFragment :
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
-        view.findViewById<ComposeView>(R.id.calibrationCompose).apply {
-            setViewCompositionStrategy(ViewCompositionStrategy.DisposeOnViewTreeLifecycleDestroyed)
-            setContent {
-                val state by viewModel.uiState.collectAsStateWithLifecycle()
-                DeviceDosingCalibrationScreen(
-                    state = state,
-                    onDisplayNameChange = viewModel::updateDisplayName,
-                    onSaveDisplayName = viewModel::saveDisplayNameAndContinue,
-                    onPrimePressed = viewModel::primePressed,
-                    onPrimeReleased = viewModel::primeReleased,
-                    onPrimeContinue = viewModel::continueFromPrime,
-                    onStartCalibration = viewModel::startCalibration,
-                    onMeasuredMlChange = viewModel::updateMeasuredMl,
-                    onSaveMeasurement = viewModel::saveMeasurement,
-                    onStartVerification = viewModel::startVerificationDose,
-                    onAcceptVerification = viewModel::acceptVerification,
-                    onRejectVerification = viewModel::rejectVerification
-                )
-            }
-        }
-        requireActivity().onBackPressedDispatcher.addCallback(
-            viewLifecycleOwner,
-            object : OnBackPressedCallback(true) {
-                override fun handleOnBackPressed() = viewModel.requestExit()
-            }
-        )
+        setupContent(view)
+        setupBackHandling()
         observeEvents()
         viewModel.bind(
-            deviceUid = args.deviceUid,
-            slotId = args.slotId,
-            pumpCount = args.pumpCount,
-            channelNumber = args.channelNumber,
-            channelTitle = args.channelTitle,
-            recalibration = args.recalibration
+            route = DeviceDosingCalibrationRoute(
+                deviceUid = args.deviceUid,
+                slotId = args.slotId,
+                pumpCount = args.pumpCount,
+                channelNumber = args.channelNumber,
+                channelTitle = args.channelTitle,
+                recalibration = args.recalibration
+            )
         )
     }
 
@@ -77,24 +55,50 @@ class DeviceDosingChannelCalibrationFragment :
         super.onStop()
     }
 
+    private fun setupContent(view: View) {
+        view.findViewById<ComposeView>(R.id.calibrationCompose).apply {
+            setViewCompositionStrategy(ViewCompositionStrategy.DisposeOnViewTreeLifecycleDestroyed)
+            setContent {
+                val state by viewModel.uiState.collectAsStateWithLifecycle()
+                DeviceDosingCalibrationScreen(
+                    state = state,
+                    onAction = viewModel::onAction
+                )
+            }
+        }
+    }
+
+    private fun setupBackHandling() {
+        requireActivity().onBackPressedDispatcher.addCallback(
+            viewLifecycleOwner,
+            object : OnBackPressedCallback(true) {
+                override fun handleOnBackPressed() = viewModel.requestExit()
+            }
+        )
+    }
+
     private fun observeEvents() {
         viewLifecycleOwner.lifecycleScope.launch {
             viewLifecycleOwner.repeatOnLifecycle(Lifecycle.State.STARTED) {
-                viewModel.events.collect { event ->
-                    when (event) {
-                        DeviceDosingCalibrationEvent.Exit -> findNavController().navigateUp()
-                        is DeviceDosingCalibrationEvent.Completed -> {
-                            val navController = findNavController()
-                            if (navController.popBackStack(R.id.deviceDosingRootFragment, false)) {
-                                AppRouteNavigator.openDosingChannel(
-                                    navController = navController,
-                                    target = event.target
-                                )
-                            }
-                        }
-                    }
-                }
+                viewModel.events.collect(::handleEvent)
             }
+        }
+    }
+
+    private fun handleEvent(event: DeviceDosingCalibrationEvent) {
+        when (event) {
+            DeviceDosingCalibrationEvent.Exit -> findNavController().navigateUp()
+            is DeviceDosingCalibrationEvent.Completed -> openCompletedChannel(event)
+        }
+    }
+
+    private fun openCompletedChannel(event: DeviceDosingCalibrationEvent.Completed) {
+        val navController = findNavController()
+        if (navController.popBackStack(R.id.deviceDosingRootFragment, false)) {
+            AppRouteNavigator.openDosingChannel(
+                navController = navController,
+                target = event.target
+            )
         }
     }
 }
