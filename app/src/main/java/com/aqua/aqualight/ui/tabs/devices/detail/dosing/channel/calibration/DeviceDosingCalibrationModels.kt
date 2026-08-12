@@ -1,7 +1,7 @@
 package com.aqua.aqualight.ui.tabs.devices.detail.dosing.channel.calibration
 
 import android.os.SystemClock
-import com.aqua.aqualight.application.devices.DeviceDosingChannelNavigationTarget
+import com.aqua.aqualight.application.devices.dosing.DeviceDosingChannelNavigationTarget
 
 enum class DeviceDosingCalibrationStep {
     NAME,
