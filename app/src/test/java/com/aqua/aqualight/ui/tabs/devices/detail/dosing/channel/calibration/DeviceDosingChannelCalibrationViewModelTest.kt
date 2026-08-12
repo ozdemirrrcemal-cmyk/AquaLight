@@ -1,7 +1,7 @@
 package com.aqua.aqualight.ui.tabs.devices.detail.dosing.channel.calibration
 
-import com.aqua.aqualight.application.devices.DeviceDosingCalibrationResult
-import com.aqua.aqualight.application.devices.DeviceDosingChannelDestination
+import com.aqua.aqualight.application.devices.dosing.DeviceDosingCalibrationResult
+import com.aqua.aqualight.application.devices.dosing.DeviceDosingChannelDestination
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.test.StandardTestDispatcher
