@@ -10,7 +10,7 @@ import androidx.fragment.app.viewModels
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.fragment.navArgs
 import com.aqua.aqualight.R
-import com.aqua.aqualight.application.devices.DeviceDosingReservoirDraftPolicy
+import com.aqua.aqualight.application.devices.dosing.DeviceDosingReservoirDraftPolicy
 import com.aqua.aqualight.composition.requireAppContainer
 import com.aqua.aqualight.ui.common.bottomsheet.TextInputBottomSheet
 import com.aqua.aqualight.ui.tabs.devices.detail.dosing.channel.common.DeviceDosingChannelDestinationFragment
