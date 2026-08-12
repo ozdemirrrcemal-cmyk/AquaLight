@@ -1,4 +1,4 @@
-@file:Suppress("LongMethod", "TooManyFunctions")
+@file:Suppress("LongMethod", "MagicNumber", "TooManyFunctions")
 
 package com.aqua.aqualight.ui.common.bottomsheet
 

@@ -122,6 +122,8 @@ class DebugDeviceFixtureCatalogTest {
 
         assertEquals(DeviceDosingChannelDestination.CALIBRATION, firstTarget.destination)
         assertEquals(DeviceDosingChannelDestination.DETAIL, secondTarget.destination)
+        assertEquals(0L, firstTarget.lastCalibratedAtEpochSeconds)
+        assertTrue(secondTarget.lastCalibratedAtEpochSeconds in 1L..MAX_EPOCH_SECONDS)
         assertEquals(
             setOf(
                 DeviceDosingChannelDestination.CALIBRATION,
@@ -167,6 +169,7 @@ class DebugDeviceFixtureCatalogTest {
 
         requireNotNull(result)
         assertEquals(DeviceDosingChannelDestination.DETAIL, result.destination)
+        assertTrue(result.lastCalibratedAtEpochSeconds in 1L..MAX_EPOCH_SECONDS)
     }
 
     @Test
@@ -177,6 +180,7 @@ class DebugDeviceFixtureCatalogTest {
             pumpCount = 2,
             channelNumber = 1,
             channelTitle = "Nutrients",
+            lastCalibratedAtEpochSeconds = 1L,
             destination = DeviceDosingChannelDestination.DETAIL
         )
         val fixtures = DebugDeviceFixtureCatalog()
@@ -189,5 +193,9 @@ class DebugDeviceFixtureCatalogTest {
         val result = operations.resolve(expected.deviceUid, expected.slotId)
 
         assertSame(expected, result)
+    }
+
+    private companion object {
+        const val MAX_EPOCH_SECONDS = 0xFFFF_FFFFL
     }
 }

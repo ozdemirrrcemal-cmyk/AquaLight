@@ -1,3 +1,5 @@
+@file:Suppress("LongParameterList")
+
 package com.aqua.aqualight.ui.common.devicemenu
 
 import androidx.annotation.DrawableRes

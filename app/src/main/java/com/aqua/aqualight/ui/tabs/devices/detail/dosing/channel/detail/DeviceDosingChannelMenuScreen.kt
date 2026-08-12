@@ -1,4 +1,4 @@
-@file:Suppress("LongMethod", "MagicNumber", "TooManyFunctions")
+@file:Suppress("LongMethod", "LongParameterList", "MagicNumber", "TooManyFunctions")
 
 package com.aqua.aqualight.ui.tabs.devices.detail.dosing.channel.detail
 
@@ -113,6 +113,7 @@ private fun DosingPlanContent(
     DetailAction(R.string.device_dosing_detail_save_plan)
 }
 
+@Composable
 private fun ReservoirContent(
     capacityValue: String,
     onCapacityClick: (() -> Unit)?

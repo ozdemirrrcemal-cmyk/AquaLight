@@ -10,6 +10,7 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.flowOf
+import java.util.concurrent.TimeUnit
 
 /**
  * Debug-only mutable Dosing state used by installable test devices.
@@ -36,7 +37,7 @@ internal class DebugFixtureDosingStateStore(
                     channelTitle = slot.defaultDisplayName,
                     deviceUptimeMs = FIXTURE_UPTIME_MS,
                     calibrated = calibrated,
-                    lastCalibratedAt = if (calibrated) System.currentTimeMillis() else 0L,
+                    lastCalibratedAt = if (calibrated) currentEpochSeconds() else 0L,
                     sessionPhase = DeviceDosingCalibrationSessionPhase.IDLE,
                     startedAtUptimeMs = 0L,
                     durationMs = 0L,
@@ -159,7 +160,7 @@ internal class DebugFixtureDosingStateStore(
         update(deviceUid, slotId) { state ->
             state.copy(
                 calibrated = true,
-                lastCalibratedAt = System.currentTimeMillis(),
+                lastCalibratedAt = currentEpochSeconds(),
                 sessionPhase = DeviceDosingCalibrationSessionPhase.IDLE,
                 startedAtUptimeMs = 0L,
                 durationMs = 0L,
@@ -202,6 +203,9 @@ internal class DebugFixtureDosingStateStore(
 
     private fun key(deviceUid: String, slotId: String): String =
         "${deviceUid.trim()}|${slotId.trim()}"
+
+    private fun currentEpochSeconds(): Long =
+        TimeUnit.MILLISECONDS.toSeconds(System.currentTimeMillis())
 
     private companion object {
         const val FIXTURE_UPTIME_MS = 60_000L

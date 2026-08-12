@@ -1,3 +1,5 @@
+@file:Suppress("LongMethod", "MatchingDeclarationName")
+
 package com.aqua.aqualight.ui.tabs.devices.detail.dosing.channel.schedule.single
 
 import androidx.compose.foundation.background

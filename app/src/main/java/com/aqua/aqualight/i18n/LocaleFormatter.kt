@@ -1,3 +1,5 @@
+@file:Suppress("TooManyFunctions")
+
 package com.aqua.aqualight.i18n
 
 import android.content.Context

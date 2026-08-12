@@ -1,3 +1,5 @@
+@file:Suppress("LongParameterList")
+
 package com.aqua.aqualight.ui.tabs.devices.detail.dosing.channel.detail
 
 import androidx.annotation.DrawableRes
