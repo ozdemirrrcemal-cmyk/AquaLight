@@ -17,14 +17,8 @@ internal class DosingCalibrationWorkflowSession {
     fun reset(route: DeviceDosingCalibrationRoute) {
         this.route = route
         hasLocalProgress = false
-        primeRequested = false
         exiting = false
         completionEmitted = false
         latestSnapshot = null
-    }
-
-    fun cancelTransientJobs() {
-        primeSafetyJob?.cancel()
-        actionJob?.cancel()
     }
 }

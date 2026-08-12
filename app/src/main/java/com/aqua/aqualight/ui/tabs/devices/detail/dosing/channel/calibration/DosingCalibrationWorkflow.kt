@@ -53,7 +53,13 @@ internal class DosingCalibrationWorkflow(
         )
         session.observeJob = scope.launch {
             operations.observe(normalized.deviceUid, normalized.slotId).collect { snapshot ->
-                if (snapshot != null && snapshot.matches(normalized)) applySnapshot(snapshot)
+                val currentRoute = session.route
+                if (snapshot != null &&
+                    currentRoute != null &&
+                    snapshot.matches(currentRoute)
+                ) {
+                    applySnapshot(snapshot)
+                }
             }
         }
         execute(DosingCalibrationOperation.Refresh)
@@ -80,10 +86,10 @@ internal class DosingCalibrationWorkflow(
         session.exiting = true
         countdown.cancel()
         session.primeSafetyJob?.cancel()
-        val route = session.route
         val step = mutableUiState.value.step
         val snapshot = session.latestSnapshot
         scope.launch {
+            val route = session.route
             if (route != null) {
                 if (step == DeviceDosingCalibrationStep.PRIME &&
                     (session.primeRequested || mutableUiState.value.isPumpActive)
@@ -166,7 +172,7 @@ internal class DosingCalibrationWorkflow(
         }
     }
 
-    private fun handleResult(
+    private suspend fun handleResult(
         operation: DosingCalibrationOperation,
         result: DeviceDosingCalibrationResult,
         renderSuccess: Boolean
@@ -188,7 +194,7 @@ internal class DosingCalibrationWorkflow(
         }
     }
 
-    private fun applySuccess(
+    private suspend fun applySuccess(
         operation: DosingCalibrationOperation,
         snapshot: DeviceDosingCalibrationSnapshot
     ) {
@@ -203,7 +209,7 @@ internal class DosingCalibrationWorkflow(
         if (transition.applySnapshot) applySnapshot(snapshot)
         if (transition.emitCompleted) {
             session.completionEmitted = true
-            eventChannel.trySend(DeviceDosingCalibrationEvent.Completed(snapshot.toDetailTarget()))
+            eventChannel.send(DeviceDosingCalibrationEvent.Completed(snapshot.toDetailTarget()))
         }
     }
 
