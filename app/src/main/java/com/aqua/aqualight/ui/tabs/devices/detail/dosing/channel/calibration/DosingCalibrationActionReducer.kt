@@ -1,6 +1,6 @@
 package com.aqua.aqualight.ui.tabs.devices.detail.dosing.channel.calibration
 
-import com.aqua.aqualight.application.devices.DeviceDosingCalibrationConstraints
+import com.aqua.aqualight.application.devices.dosing.DeviceDosingCalibrationConstraints
 
 internal sealed interface DosingCalibrationOperation {
     data object Refresh : DosingCalibrationOperation
