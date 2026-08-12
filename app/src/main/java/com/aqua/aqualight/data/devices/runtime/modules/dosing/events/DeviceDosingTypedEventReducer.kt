@@ -1,8 +1,25 @@
-package com.aqua.aqualight.data.devices.runtime.modules.dosing
+package com.aqua.aqualight.data.devices.runtime.modules.dosing.events
 
 import com.aqua.aqualight.data.devices.model.DeviceUid
 import com.aqua.aqualight.data.devices.runtime.events.DeviceRuntimeEventPayload
 import com.aqua.aqualight.data.devices.runtime.events.DeviceRuntimeTypedEvent
+import com.aqua.aqualight.data.devices.runtime.modules.dosing.contract.DeviceDosingCommandValidation
+import com.aqua.aqualight.data.devices.runtime.modules.dosing.contract.DeviceDosingRuntimeAccess
+import com.aqua.aqualight.data.devices.runtime.modules.dosing.contract.DeviceDosingRuntimeContract
+import com.aqua.aqualight.data.devices.runtime.modules.dosing.models.DeviceDosingCalibrationCancelResult
+import com.aqua.aqualight.data.devices.runtime.modules.dosing.models.DeviceDosingCalibrationConfirmResult
+import com.aqua.aqualight.data.devices.runtime.modules.dosing.models.DeviceDosingCalibrationFinishResult
+import com.aqua.aqualight.data.devices.runtime.modules.dosing.models.DeviceDosingCalibrationStartResult
+import com.aqua.aqualight.data.devices.runtime.modules.dosing.models.DeviceDosingChannelStatusSnapshot
+import com.aqua.aqualight.data.devices.runtime.modules.dosing.models.DeviceDosingConfigApplyResult
+import com.aqua.aqualight.data.devices.runtime.modules.dosing.models.DeviceDosingDoseNowResult
+import com.aqua.aqualight.data.devices.runtime.modules.dosing.models.DeviceDosingMutationResult
+import com.aqua.aqualight.data.devices.runtime.modules.dosing.models.DeviceDosingPumpCommandResult
+import com.aqua.aqualight.data.devices.runtime.modules.dosing.models.DeviceDosingReservoirRefillResult
+import com.aqua.aqualight.data.devices.runtime.modules.dosing.models.DeviceDosingStatus
+import com.aqua.aqualight.data.devices.runtime.modules.dosing.parsers.DeviceDosingMutationParser
+import com.aqua.aqualight.data.devices.runtime.modules.dosing.parsers.DeviceDosingStatusParser
+import com.aqua.aqualight.data.devices.runtime.modules.dosing.state.DeviceDosingRuntimeStateStore
 
 /** Applies validated `dosing.status.changed` payloads to device-isolated Dosing state. */
 internal class DeviceDosingTypedEventReducer(
@@ -99,29 +116,19 @@ internal class DeviceDosingTypedEventReducer(
         val status = stateStore.states.value[deviceUid]?.status
         when (result) {
             is DeviceDosingConfigApplyResult ->
-                DeviceDosingCommandValidation.validateConfigSnapshot(
-                    result.config,
-                    status,
-                    access
-                )
+                DeviceDosingCommandValidation.validateConfigSnapshot(result.config, status, access)
             is DeviceDosingCalibrationStartResult ->
                 DeviceDosingCommandValidation.validateCalibrationRequest(
                     result.channelKey,
                     status,
                     access
                 )
-            is DeviceDosingPumpCommandResult ->
-                validateChannel(result.channel, status, access)
-            is DeviceDosingDoseNowResult ->
-                validateChannel(result.channel, status, access)
-            is DeviceDosingCalibrationFinishResult ->
-                validateChannel(result.channel, status, access)
-            is DeviceDosingCalibrationConfirmResult ->
-                validateChannel(result.channel, status, access)
-            is DeviceDosingCalibrationCancelResult ->
-                validateChannel(result.channel, status, access)
-            is DeviceDosingReservoirRefillResult ->
-                validateChannel(result.channel, status, access)
+            is DeviceDosingPumpCommandResult -> validateChannel(result.channel, status, access)
+            is DeviceDosingDoseNowResult -> validateChannel(result.channel, status, access)
+            is DeviceDosingCalibrationFinishResult -> validateChannel(result.channel, status, access)
+            is DeviceDosingCalibrationConfirmResult -> validateChannel(result.channel, status, access)
+            is DeviceDosingCalibrationCancelResult -> validateChannel(result.channel, status, access)
+            is DeviceDosingReservoirRefillResult -> validateChannel(result.channel, status, access)
         }
     }
 
