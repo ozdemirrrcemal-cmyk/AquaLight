@@ -1,4 +1,4 @@
-package com.aqua.aqualight.data.devices.runtime.modules.dosing
+package com.aqua.aqualight.data.devices.runtime.modules.dosing.contract
 
 internal const val DOSING_MIN_COUNT = 0
 internal const val DOSING_MIN_INDEX = 0
