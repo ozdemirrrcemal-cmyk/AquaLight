@@ -1,6 +1,6 @@
 @file:Suppress("LongParameterList", "TooManyFunctions")
 
-package com.aqua.aqualight.application.devices
+package com.aqua.aqualight.application.devices.dosing
 
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
