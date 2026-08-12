@@ -1,9 +1,9 @@
 package com.aqua.aqualight.ui.tabs.devices.detail.dosing.channel.calibration
 
-import com.aqua.aqualight.application.devices.DeviceDosingCalibrationSessionPhase
-import com.aqua.aqualight.application.devices.DeviceDosingCalibrationSnapshot
-import com.aqua.aqualight.application.devices.DeviceDosingChannelDestination
-import com.aqua.aqualight.application.devices.DeviceDosingChannelNavigationTarget
+import com.aqua.aqualight.application.devices.dosing.DeviceDosingCalibrationSessionPhase
+import com.aqua.aqualight.application.devices.dosing.DeviceDosingCalibrationSnapshot
+import com.aqua.aqualight.application.devices.dosing.DeviceDosingChannelDestination
+import com.aqua.aqualight.application.devices.dosing.DeviceDosingChannelNavigationTarget
 
 internal sealed interface DosingCalibrationCountdown {
     data class CalibrationRun(val durationMs: Long) : DosingCalibrationCountdown
