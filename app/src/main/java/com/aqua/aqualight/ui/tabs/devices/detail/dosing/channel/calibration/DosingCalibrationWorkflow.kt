@@ -1,8 +1,8 @@
 package com.aqua.aqualight.ui.tabs.devices.detail.dosing.channel.calibration
 
-import com.aqua.aqualight.application.devices.DeviceDosingCalibrationOperations
-import com.aqua.aqualight.application.devices.DeviceDosingCalibrationResult
-import com.aqua.aqualight.application.devices.DeviceDosingCalibrationSnapshot
+import com.aqua.aqualight.application.devices.dosing.DeviceDosingCalibrationOperations
+import com.aqua.aqualight.application.devices.dosing.DeviceDosingCalibrationResult
+import com.aqua.aqualight.application.devices.dosing.DeviceDosingCalibrationSnapshot
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.Flow
