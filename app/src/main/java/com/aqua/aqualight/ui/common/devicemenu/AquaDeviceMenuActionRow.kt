@@ -23,10 +23,9 @@ import androidx.compose.ui.text.style.TextOverflow
 @Composable
 fun AquaDeviceMenuActionRow(
     content: AquaDeviceMenuRowContent,
-    actionText: String,
-    onActionClick: () -> Unit,
+    action: AquaDeviceMenuRowAction,
     modifier: Modifier = Modifier,
-    actionEnabled: Boolean = true
+    onClick: (() -> Unit)? = null
 ) {
     val colors = aquaDeviceMenuColors()
     val typography = aquaDeviceMenuTypography(colors)
@@ -40,6 +39,11 @@ fun AquaDeviceMenuActionRow(
         modifier = modifier
             .fillMaxWidth()
             .defaultMinSize(minHeight = AquaDeviceMenuGeometry.rowMinHeight)
+            .then(
+                onClick?.let { callback ->
+                    Modifier.clickable(role = Role.Button, onClick = callback)
+                } ?: Modifier
+            )
             .padding(
                 horizontal = AquaDeviceMenuGeometry.rowHorizontalPadding,
                 vertical = AquaDeviceMenuGeometry.rowVerticalPadding
@@ -58,9 +62,9 @@ fun AquaDeviceMenuActionRow(
             modifier = Modifier.weight(1f)
         )
         AquaDeviceMenuInlineAction(
-            text = actionText,
-            enabled = actionEnabled,
-            onClick = onActionClick
+            text = action.text,
+            enabled = action.enabled,
+            onClick = action.onClick
         )
     }
 }

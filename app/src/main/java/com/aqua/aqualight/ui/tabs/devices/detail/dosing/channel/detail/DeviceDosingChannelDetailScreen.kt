@@ -23,6 +23,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import com.aqua.aqualight.R
 import com.aqua.aqualight.ui.common.devicemenu.AquaDeviceMenuActionRow
+import com.aqua.aqualight.ui.common.devicemenu.AquaDeviceMenuRowAction
 import com.aqua.aqualight.ui.common.devicemenu.AquaDeviceMenuDivider
 import com.aqua.aqualight.ui.common.devicemenu.AquaDeviceMenuGeometry
 import com.aqua.aqualight.ui.common.devicemenu.AquaDeviceMenuHeroCard
@@ -178,9 +179,11 @@ private fun DosingCalibrationAction(
             ),
             iconRes = R.drawable.ic_dosing_calibration_24
         ),
-        actionText = stringResource(R.string.device_dosing_detail_recalibrate),
-        onActionClick = { onClick?.invoke() },
-        actionEnabled = onClick != null
+        action = AquaDeviceMenuRowAction(
+            text = stringResource(R.string.device_dosing_detail_recalibrate),
+            onClick = { onClick?.invoke() },
+            enabled = onClick != null
+        )
     )
 }
 

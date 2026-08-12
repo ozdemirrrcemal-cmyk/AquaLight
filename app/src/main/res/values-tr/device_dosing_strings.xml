@@ -61,6 +61,13 @@
     <string name="device_dosing_detail_amount_section">Doz miktarı</string>
     <string name="device_dosing_detail_daily_dose">Günlük doz</string>
     <string name="device_dosing_detail_daily_dose_description">Seçilen güne dağıtılacak toplam miktar.</string>
+    <string name="device_dosing_detail_timer_daily_dose_description">Zamanlayıcı modunda girilen bağımsız dozların toplamından hesaplanır.</string>
+    <string name="device_dosing_daily_dose_editor_title">Günlük dozu ayarla</string>
+    <string name="device_dosing_daily_dose_editor_label">Günlük miktar</string>
+    <string name="device_dosing_daily_dose_editor_hint">ör. 3,00</string>
+    <string name="device_dosing_daily_dose_editor_description">Tek sefer, saatlik ve özel aralık programları bu toplam miktarı dağıtır.</string>
+    <string name="device_dosing_daily_dose_editor_save">Günlük dozu uygula</string>
+    <string name="device_dosing_daily_dose_editor_required">0 ml’den büyük bir günlük doz girin.</string>
     <string name="device_dosing_detail_schedule_section">Dozaj zamanlaması</string>
     <string name="device_dosing_detail_schedule_single">Tek sefer</string>
     <string name="device_dosing_detail_schedule_hourly">Saatlik eşit dağıtım</string>
@@ -107,6 +114,82 @@
     <string name="device_dosing_hourly_minute_picker_title">Uygulama dakikasını seçin</string>
     <string name="device_dosing_hourly_minute_picker_message">AquaLight her saatin seçtiğiniz dakikasında bir doz uygular.</string>
     <string name="device_dosing_hourly_minute_picker_confirm">Dakikayı uygula</string>
+
+    <string name="device_dosing_schedule_add">Ekle</string>
+    <string name="device_dosing_schedule_validation_section">Programı kontrol et</string>
+    <string name="device_dosing_schedule_validation_title">Kayıt eklenmedi</string>
+    <string name="device_dosing_schedule_validation_symbol">!</string>
+
+    <string name="device_dosing_custom_hero_eyebrow">Özel aralık programı</string>
+    <string name="device_dosing_custom_hero_title">Günü seçtiğiniz aralıklara dağıtın</string>
+    <string name="device_dosing_custom_hero_description">Bir veya daha fazla zaman aralığı tanımlayın. AquaLight günlük miktarı, günde en fazla 24 uygulama olacak şekilde tüm uygulamalara eşit böler.</string>
+    <string name="device_dosing_custom_summary_section">Dağılım özeti</string>
+    <string name="device_dosing_custom_daily_amount_description">Dozaj Planı ekranında ayarlanan günlük miktarı kullanır.</string>
+    <string name="device_dosing_custom_total_applications">Günlük uygulama</string>
+    <plurals name="device_dosing_custom_total_applications_format">
+        <item quantity="one">%1$d doz</item>
+        <item quantity="other">%1$d doz</item>
+    </plurals>
+    <string name="device_dosing_custom_total_applications_description">Tüm özel aralıklardaki toplam uygulama sayısı.</string>
+    <string name="device_dosing_custom_average_dose">Doz başına ortalama</string>
+    <string name="device_dosing_custom_average_dose_format">≈%1$.3f ml</string>
+    <string name="device_dosing_custom_average_dose_description">Günlük toplam korunarak tüm uygulamalara eşit bölünür.</string>
+    <string name="device_dosing_custom_periods_section">Dozaj aralıkları</string>
+    <string name="device_dosing_custom_periods_title">Özel aralıklar</string>
+    <string name="device_dosing_custom_periods_capacity">Ayarlanan günlük uygulamalar: %1$d / %2$d.</string>
+    <string name="device_dosing_custom_empty_title">Henüz aralık eklenmedi</string>
+    <string name="device_dosing_custom_empty_description">Programı oluşturmak için başlangıç, bitiş ve uygulama sayısı ekleyin.</string>
+    <string name="device_dosing_custom_period_time_format">%1$s – %2$s</string>
+    <plurals name="device_dosing_custom_period_dose_count_format">
+        <item quantity="one">%1$d eşit uygulama</item>
+        <item quantity="other">%1$d eşit uygulama</item>
+    </plurals>
+    <string name="device_dosing_custom_use_action">Özel aralıkları kullan</string>
+    <string name="device_dosing_custom_start_picker_title">Aralık başlangıcını seç</string>
+    <string name="device_dosing_custom_start_picker_message">Bu dozaj aralığının başlayacağı zamanı seçin.</string>
+    <string name="device_dosing_custom_start_picker_confirm">Başlangıcı uygula</string>
+    <string name="device_dosing_custom_end_picker_title">Aralık bitişini seç</string>
+    <string name="device_dosing_custom_end_picker_message">Başlangıçtan sonraki bir zamanı seçin. Özel aralıklar çakışamaz.</string>
+    <string name="device_dosing_custom_end_picker_confirm">Bitişi uygula</string>
+    <string name="device_dosing_custom_count_picker_title">Bu aralıktaki uygulamalar</string>
+    <string name="device_dosing_custom_count_picker_message">AquaLight’ın başlangıç ile bitiş arasına kaç eşit uygulama yerleştireceğini seçin.</string>
+    <string name="device_dosing_custom_count_picker_format">Doz sayısı: %1$d</string>
+    <string name="device_dosing_custom_count_picker_confirm">Aralığı uygula</string>
+    <string name="device_dosing_custom_count_decrease_description">Uygulama sayısını azalt</string>
+    <string name="device_dosing_custom_count_increase_description">Uygulama sayısını artır</string>
+    <string name="device_dosing_custom_error_invalid_period">Bitiş zamanı başlangıç zamanından sonra olmalıdır.</string>
+    <string name="device_dosing_custom_error_too_many">Özel aralıklarda günde en fazla 24 toplam uygulama kullanılabilir.</string>
+    <string name="device_dosing_custom_error_overlap">Bu aralık mevcut bir aralıkla çakışıyor. Ayrı bir zaman aralığı seçin.</string>
+
+    <string name="device_dosing_timer_hero_eyebrow">Zamanlayıcı programı</string>
+    <string name="device_dosing_timer_hero_title">Her dozun tam saatini ve miktarını seçin</string>
+    <string name="device_dosing_timer_hero_description">En fazla 24 bağımsız doz ekleyin. Her miktar, Dozaj Planı ekranında gösterilen günlük toplama doğrudan eklenir.</string>
+    <string name="device_dosing_timer_summary_section">Zamanlayıcı özeti</string>
+    <string name="device_dosing_timer_daily_total">Günlük doz toplamı</string>
+    <string name="device_dosing_timer_daily_total_description">Tüm Zamanlayıcı kayıtlarının toplamı olarak otomatik hesaplanır.</string>
+    <string name="device_dosing_timer_application_count">Programlı uygulamalar</string>
+    <string name="device_dosing_timer_application_count_format">%1$d / %2$d</string>
+    <string name="device_dosing_timer_application_count_description">Her saat bir bağımsız doz içerebilir.</string>
+    <string name="device_dosing_timer_doses_section">Zamanlayıcı dozları</string>
+    <string name="device_dosing_timer_doses_title">Doz saatleri ve miktarları</string>
+    <string name="device_dosing_timer_doses_description">Bağımsız günlük dozları ekleyin, düzenleyin veya silin.</string>
+    <string name="device_dosing_timer_empty_title">Henüz Zamanlayıcı dozu eklenmedi</string>
+    <string name="device_dosing_timer_empty_description">Zamanlayıcı programını oluşturmak için bir saat ve miktar ekleyin.</string>
+    <string name="device_dosing_timer_entry_amount_format">%1$.3f ml</string>
+    <string name="device_dosing_timer_use_action">Zamanlayıcı programını kullan</string>
+    <string name="device_dosing_timer_time_picker_title">Doz saatini seç</string>
+    <string name="device_dosing_timer_time_picker_message">Bu bağımsız dozun uygulanacağı tam saati seçin.</string>
+    <string name="device_dosing_timer_time_picker_confirm">Saati uygula</string>
+    <string name="device_dosing_timer_amount_editor_title">Doz miktarını ayarla</string>
+    <string name="device_dosing_timer_amount_editor_label">Doz miktarı</string>
+    <string name="device_dosing_timer_amount_editor_hint">ör. 5,00</string>
+    <string name="device_dosing_timer_amount_editor_description">Bu miktar Zamanlayıcı günlük toplamına eklenecektir.</string>
+    <string name="device_dosing_timer_amount_editor_add">Dozu ekle</string>
+    <string name="device_dosing_timer_amount_editor_update">Değişiklikleri uygula</string>
+    <string name="device_dosing_timer_error_invalid_amount">0 ml’den büyük ve en fazla üç ondalık basamaklı bir doz miktarı girin.</string>
+    <string name="device_dosing_timer_error_too_many">Zamanlayıcı modunda günde en fazla 24 doz kullanılabilir.</string>
+    <string name="device_dosing_timer_error_duplicate_time">Bu saatte zaten bir Zamanlayıcı dozu var. Mevcut kaydı düzenleyin veya başka saat seçin.</string>
+    <string name="device_dosing_timer_error_total">Toplam doz miktarı çok büyük. Bir veya daha fazla Zamanlayıcı kaydını azaltın.</string>
 
     <string name="device_dosing_detail_value_unavailable">—</string>
 

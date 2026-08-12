@@ -28,6 +28,7 @@ import androidx.compose.ui.semantics.Role
 import com.aqua.aqualight.R
 import com.aqua.aqualight.ui.common.devicemenu.AquaDeviceMenuChoiceChip
 import com.aqua.aqualight.ui.common.devicemenu.AquaDeviceMenuDivider
+import com.aqua.aqualight.ui.common.devicemenu.AquaDeviceMenuEditableValueRow
 import com.aqua.aqualight.ui.common.devicemenu.AquaDeviceMenuGeometry
 import com.aqua.aqualight.ui.common.devicemenu.AquaDeviceMenuSection
 import com.aqua.aqualight.ui.common.devicemenu.AquaDeviceMenuSelectionRow
@@ -47,7 +48,8 @@ internal fun DeviceDosingChannelMenuScreen(
     selectedScheduleMode: DosingPlanScheduleMode = DosingPlanScheduleMode.SINGLE,
     reservoirCapacityValue: String = "",
     onReservoirCapacityClick: (() -> Unit)? = null,
-    onScheduleOptionClick: ((DosingPlanScheduleMode) -> Unit)? = null
+    onScheduleOptionClick: ((DosingPlanScheduleMode) -> Unit)? = null,
+    onDailyDoseClick: (() -> Unit)? = null
 ) {
     val colors = aquaDeviceMenuColors()
 
@@ -71,7 +73,8 @@ internal fun DeviceDosingChannelMenuScreen(
                     DosingDetailMenuItem.DOSING_PLAN -> DosingPlanContent(
                         dailyDoseMicroliters = dailyDoseMicroliters,
                         selectedScheduleMode = selectedScheduleMode,
-                        onScheduleOptionClick = onScheduleOptionClick
+                        onScheduleOptionClick = onScheduleOptionClick,
+                        onDailyDoseClick = onDailyDoseClick
                     )
                     DosingDetailMenuItem.RESERVOIR -> ReservoirContent(
                         capacityValue = reservoirCapacityValue,
@@ -87,7 +90,8 @@ internal fun DeviceDosingChannelMenuScreen(
 private fun DosingPlanContent(
     dailyDoseMicroliters: Long,
     selectedScheduleMode: DosingPlanScheduleMode,
-    onScheduleOptionClick: ((DosingPlanScheduleMode) -> Unit)?
+    onScheduleOptionClick: ((DosingPlanScheduleMode) -> Unit)?,
+    onDailyDoseClick: (() -> Unit)?
 ) {
     DetailSection(R.string.device_dosing_detail_schedule_status_section) {
         DetailToggleRow(
@@ -97,15 +101,33 @@ private fun DosingPlanContent(
         )
     }
     DetailSection(R.string.device_dosing_detail_amount_section) {
-        AquaDeviceMenuValueRow(
-            label = stringResource(R.string.device_dosing_detail_daily_dose),
-            value = stringResource(
-                R.string.device_dosing_channel_daily_dose_format,
-                dailyDoseMicroliters.toDouble() / MICROLITERS_PER_MILLILITER
-            ),
-            description = stringResource(R.string.device_dosing_detail_daily_dose_description),
-            tone = AquaDeviceMenuTone.ACCENT
+        val dailyDoseValue = stringResource(
+            R.string.device_dosing_channel_daily_dose_format,
+            dailyDoseMicroliters.toDouble() / MICROLITERS_PER_MILLILITER
         )
+        val dailyDoseDescription = stringResource(
+            if (selectedScheduleMode == DosingPlanScheduleMode.TIMER) {
+                R.string.device_dosing_detail_timer_daily_dose_description
+            } else {
+                R.string.device_dosing_detail_daily_dose_description
+            }
+        )
+        if (onDailyDoseClick == null) {
+            AquaDeviceMenuValueRow(
+                label = stringResource(R.string.device_dosing_detail_daily_dose),
+                value = dailyDoseValue,
+                description = dailyDoseDescription,
+                tone = AquaDeviceMenuTone.ACCENT
+            )
+        } else {
+            AquaDeviceMenuEditableValueRow(
+                label = stringResource(R.string.device_dosing_detail_daily_dose),
+                value = dailyDoseValue,
+                description = dailyDoseDescription,
+                iconRes = R.drawable.ic_dosing_schedule_24,
+                onClick = onDailyDoseClick
+            )
+        }
     }
     DetailSection(R.string.device_dosing_detail_schedule_section) {
         DosingScheduleOptions(
@@ -256,12 +278,7 @@ private fun DosingScheduleOptions(
         AquaDeviceMenuSelectionRow(
             text = stringResource(option.labelRes),
             selected = option.mode == selectedScheduleMode,
-            onClick = onScheduleOptionClick
-                ?.takeIf {
-                    option.mode == DosingPlanScheduleMode.SINGLE ||
-                        option.mode == DosingPlanScheduleMode.HOURLY
-                }
-                ?.let { callback -> { callback(option.mode) } }
+            onClick = onScheduleOptionClick?.let { callback -> { callback(option.mode) } }
         )
     }
 }

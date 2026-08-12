@@ -112,6 +112,62 @@ class DosingPlanMenuArchitectureTest {
         assertFalse(screen.contains("DosingPumpDevice("))
     }
 
+    @Test
+    fun `custom-period editor uses central time count and device-menu components`() {
+        val fragment = source(
+            "app/src/main/java/com/aqua/aqualight/ui/tabs/devices/detail/dosing/channel/" +
+                "schedule/custom/DeviceDosingCustomScheduleFragment.kt"
+        )
+        val screen = source(
+            "app/src/main/java/com/aqua/aqualight/ui/tabs/devices/detail/dosing/channel/" +
+                "schedule/custom/DeviceDosingCustomScheduleScreen.kt"
+        )
+        val editor = source(
+            "app/src/main/java/com/aqua/aqualight/ui/tabs/devices/detail/dosing/channel/" +
+                "schedule/custom/DeviceDosingCustomScheduleEditor.kt"
+        )
+        val navigation = source("app/src/main/res/navigation/nav_app.xml")
+
+        assertTrue(fragment.contains("R.layout.fragment_device_dosing_channel_detail"))
+        assertTrue(fragment.contains("setupSelectedPump("))
+        assertTrue(editor.contains("AquaTimePickerBottomSheet.show("))
+        assertTrue(editor.contains("IntegerStepperBottomSheet.show("))
+        assertTrue(screen.contains("AquaDeviceMenuHeroCard("))
+        assertTrue(screen.contains("AquaDeviceMenuActionRow("))
+        assertTrue(navigation.contains("deviceDosingCustomScheduleFragment"))
+        assertFalse(screen.contains("DosingPumpDevice("))
+    }
+
+    @Test
+    fun `timer editor uses central time amount and daily-total boundaries`() {
+        val fragment = source(
+            "app/src/main/java/com/aqua/aqualight/ui/tabs/devices/detail/dosing/channel/" +
+                "schedule/timer/DeviceDosingTimerScheduleFragment.kt"
+        )
+        val screen = source(
+            "app/src/main/java/com/aqua/aqualight/ui/tabs/devices/detail/dosing/channel/" +
+                "schedule/timer/DeviceDosingTimerScheduleScreen.kt"
+        )
+        val editor = source(
+            "app/src/main/java/com/aqua/aqualight/ui/tabs/devices/detail/dosing/channel/" +
+                "schedule/timer/DeviceDosingTimerScheduleEditor.kt"
+        )
+        val menu = source(
+            "app/src/main/java/com/aqua/aqualight/ui/tabs/devices/detail/dosing/channel/" +
+                "detail/DeviceDosingChannelMenuFragment.kt"
+        )
+        val navigation = source("app/src/main/res/navigation/nav_app.xml")
+
+        assertTrue(fragment.contains("R.layout.fragment_device_dosing_channel_detail"))
+        assertTrue(fragment.contains("setupSelectedPump("))
+        assertTrue(editor.contains("AquaTimePickerBottomSheet.show("))
+        assertTrue(editor.contains("TextInputBottomSheet.show("))
+        assertTrue(screen.contains("totalDoseMicroliters"))
+        assertTrue(menu.contains("displayedDailyDoseMicroliters"))
+        assertTrue(navigation.contains("deviceDosingTimerScheduleFragment"))
+        assertFalse(screen.contains("DosingPumpDevice("))
+    }
+
     private fun source(relativePath: String): String = File(repositoryRoot, relativePath).readText()
 
     private fun locateRepositoryRoot(): File {

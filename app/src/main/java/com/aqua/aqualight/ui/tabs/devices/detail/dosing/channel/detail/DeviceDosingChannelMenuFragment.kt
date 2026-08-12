@@ -15,8 +15,11 @@ import androidx.navigation.fragment.navArgs
 import com.aqua.aqualight.R
 import com.aqua.aqualight.ui.common.bottomsheet.TextInputBottomSheet
 import com.aqua.aqualight.ui.tabs.devices.detail.dosing.channel.DeviceDosingChannelDestinationFragment
-import com.aqua.aqualight.ui.tabs.devices.detail.dosing.channel.schedule.hourly.DeviceDosingHourlyScheduleContract
-import com.aqua.aqualight.ui.tabs.devices.detail.dosing.channel.schedule.single.DeviceDosingSingleScheduleContract
+import com.aqua.aqualight.ui.tabs.devices.detail.dosing.channel.schedule.DeviceDosingScheduleAmountContract
+import com.aqua.aqualight.ui.tabs.devices.detail.dosing.channel.schedule.custom.DeviceDosingCustomPeriod
+import com.aqua.aqualight.ui.tabs.devices.detail.dosing.channel.schedule.custom.DeviceDosingCustomScheduleContract
+import com.aqua.aqualight.ui.tabs.devices.detail.dosing.channel.schedule.timer.DeviceDosingTimerDose
+import com.aqua.aqualight.ui.tabs.devices.detail.dosing.channel.schedule.timer.DeviceDosingTimerScheduleContract
 import java.text.NumberFormat
 
 /** UI-only child destination for one Dosing detail menu entry. */
@@ -28,9 +31,12 @@ class DeviceDosingChannelMenuFragment :
         get() = DosingDetailMenuItem.fromRouteKey(args.menuKey)
 
     private var reservoirCapacityMl by mutableDoubleStateOf(DEFAULT_RESERVOIR_CAPACITY_ML)
-    private var dailyDoseMicroliters by mutableLongStateOf(DEFAULT_DAILY_DOSE_MICROLITERS)
+    private var distributedDailyDoseMicroliters by
+        mutableLongStateOf(DEFAULT_DAILY_DOSE_MICROLITERS)
     private var singleDoseStartTimeMs by mutableLongStateOf(DEFAULT_SINGLE_DOSE_START_TIME_MS)
     private var hourlyStartTimeMs by mutableLongStateOf(DEFAULT_HOURLY_START_TIME_MS)
+    private var customPeriods by mutableStateOf<List<DeviceDosingCustomPeriod>>(emptyList())
+    private var timerDoses by mutableStateOf<List<DeviceDosingTimerDose>>(emptyList())
     private var selectedScheduleMode by mutableStateOf(DosingPlanScheduleMode.SINGLE)
 
     override val destinationTitle: String
@@ -44,34 +50,35 @@ class DeviceDosingChannelMenuFragment :
             findNavController().navigateUp()
             return
         }
-        reservoirCapacityMl = savedInstanceState?.getDouble(
-            STATE_RESERVOIR_CAPACITY_ML,
-            DEFAULT_RESERVOIR_CAPACITY_ML
-        ) ?: DEFAULT_RESERVOIR_CAPACITY_ML
-        dailyDoseMicroliters = savedInstanceState?.getLong(
-            STATE_DAILY_DOSE_MICROLITERS,
-            DEFAULT_DAILY_DOSE_MICROLITERS
-        ) ?: DEFAULT_DAILY_DOSE_MICROLITERS
-        singleDoseStartTimeMs = savedInstanceState?.getLong(
-            STATE_SINGLE_DOSE_START_TIME_MS,
-            DEFAULT_SINGLE_DOSE_START_TIME_MS
-        ) ?: DEFAULT_SINGLE_DOSE_START_TIME_MS
-        hourlyStartTimeMs = savedInstanceState?.getLong(
-            STATE_HOURLY_START_TIME_MS,
-            DEFAULT_HOURLY_START_TIME_MS
-        ) ?: DEFAULT_HOURLY_START_TIME_MS
-        selectedScheduleMode = savedInstanceState
-            ?.getString(STATE_SELECTED_SCHEDULE_MODE)
-            ?.let { savedMode ->
-                DosingPlanScheduleMode.entries.firstOrNull { mode -> mode.name == savedMode }
-            }
-            ?: DosingPlanScheduleMode.SINGLE
+        restoreState(savedInstanceState)
         if (item == DosingDetailMenuItem.RESERVOIR) {
             setupReservoirCapacityResult()
         }
         if (item == DosingDetailMenuItem.DOSING_PLAN) {
-            setupSingleScheduleResult()
-            setupHourlyScheduleResult()
+            setupDailyDoseResult()
+            bindDosingScheduleResults(
+                host = DeviceDosingScheduleResultHost(
+                    fragment = this,
+                    slotId = args.slotId,
+                    updateSingle = { startTimeMs ->
+                        singleDoseStartTimeMs = startTimeMs
+                        selectedScheduleMode = DosingPlanScheduleMode.SINGLE
+                    },
+                    updateHourly = { startTimeMs ->
+                        hourlyStartTimeMs = startTimeMs
+                        selectedScheduleMode = DosingPlanScheduleMode.HOURLY
+                    },
+                    updateCustom = { updatedPeriods ->
+                        customPeriods = updatedPeriods
+                        selectedScheduleMode = DosingPlanScheduleMode.CUSTOM
+                    },
+                    updateTimer = { updatedDoses ->
+                        timerDoses = updatedDoses
+                        selectedScheduleMode = DosingPlanScheduleMode.TIMER
+                    }
+                ),
+                lifecycleOwner = viewLifecycleOwner
+            )
         }
         setupSelectedPump(
             view = view,
@@ -83,13 +90,46 @@ class DeviceDosingChannelMenuFragment :
         setupMenuContent(view, item)
     }
 
+    private fun restoreState(savedInstanceState: Bundle?) {
+        reservoirCapacityMl = savedInstanceState?.getDouble(
+            STATE_RESERVOIR_CAPACITY_ML,
+            DEFAULT_RESERVOIR_CAPACITY_ML
+        ) ?: DEFAULT_RESERVOIR_CAPACITY_ML
+        distributedDailyDoseMicroliters = savedInstanceState?.getLong(
+            STATE_DAILY_DOSE_MICROLITERS,
+            DEFAULT_DAILY_DOSE_MICROLITERS
+        ) ?: DEFAULT_DAILY_DOSE_MICROLITERS
+        singleDoseStartTimeMs = savedInstanceState?.getLong(
+            STATE_SINGLE_DOSE_START_TIME_MS,
+            DEFAULT_SINGLE_DOSE_START_TIME_MS
+        ) ?: DEFAULT_SINGLE_DOSE_START_TIME_MS
+        hourlyStartTimeMs = savedInstanceState?.getLong(
+            STATE_HOURLY_START_TIME_MS,
+            DEFAULT_HOURLY_START_TIME_MS
+        ) ?: DEFAULT_HOURLY_START_TIME_MS
+        customPeriods = savedInstanceState
+            ?.getString(STATE_CUSTOM_PERIODS_DRAFT)
+            ?.let(DeviceDosingCustomScheduleContract::decodeDraft)
+            ?: emptyList()
+        timerDoses = savedInstanceState
+            ?.getString(STATE_TIMER_DOSES_DRAFT)
+            ?.let(DeviceDosingTimerScheduleContract::decodeDraft)
+            ?: emptyList()
+        selectedScheduleMode = savedInstanceState
+            ?.getString(STATE_SELECTED_SCHEDULE_MODE)
+            ?.let { savedMode ->
+                DosingPlanScheduleMode.entries.firstOrNull { mode -> mode.name == savedMode }
+            }
+            ?: DosingPlanScheduleMode.SINGLE
+    }
+
     private fun setupMenuContent(view: View, item: DosingDetailMenuItem) {
         view.findViewById<ComposeView>(R.id.channelDetailContent).apply {
             setViewCompositionStrategy(ViewCompositionStrategy.DisposeOnViewTreeLifecycleDestroyed)
             setContent {
                 DeviceDosingChannelMenuScreen(
                     item = item,
-                    dailyDoseMicroliters = dailyDoseMicroliters,
+                    dailyDoseMicroliters = displayedDailyDoseMicroliters(),
                     selectedScheduleMode = selectedScheduleMode,
                     reservoirCapacityValue = getString(
                         R.string.device_dosing_detail_value_container_ml,
@@ -104,6 +144,14 @@ class DeviceDosingChannelMenuFragment :
                         ::openScheduleEditor
                     } else {
                         null
+                    },
+                    onDailyDoseClick = if (
+                        item == DosingDetailMenuItem.DOSING_PLAN &&
+                        selectedScheduleMode != DosingPlanScheduleMode.TIMER
+                    ) {
+                        ::showDailyDoseEditor
+                    } else {
+                        null
                     }
                 )
             }
@@ -112,58 +160,42 @@ class DeviceDosingChannelMenuFragment :
 
     override fun onSaveInstanceState(outState: Bundle) {
         outState.putDouble(STATE_RESERVOIR_CAPACITY_ML, reservoirCapacityMl)
-        outState.putLong(STATE_DAILY_DOSE_MICROLITERS, dailyDoseMicroliters)
+        outState.putLong(STATE_DAILY_DOSE_MICROLITERS, distributedDailyDoseMicroliters)
         outState.putLong(STATE_SINGLE_DOSE_START_TIME_MS, singleDoseStartTimeMs)
         outState.putLong(STATE_HOURLY_START_TIME_MS, hourlyStartTimeMs)
+        outState.putString(
+            STATE_CUSTOM_PERIODS_DRAFT,
+            DeviceDosingCustomScheduleContract.encodeDraft(customPeriods)
+        )
+        outState.putString(
+            STATE_TIMER_DOSES_DRAFT,
+            DeviceDosingTimerScheduleContract.encodeDraft(timerDoses)
+        )
         outState.putString(STATE_SELECTED_SCHEDULE_MODE, selectedScheduleMode.name)
         super.onSaveInstanceState(outState)
     }
 
-    private fun setupSingleScheduleResult() {
-        parentFragmentManager.setFragmentResultListener(
-            DeviceDosingSingleScheduleContract.RESULT_REQUEST_KEY,
-            viewLifecycleOwner
-        ) { _, result ->
-            if (
-                result.getString(DeviceDosingSingleScheduleContract.RESULT_KEY) !=
-                DeviceDosingSingleScheduleContract.RESULT_SAVED ||
-                result.getString(DeviceDosingSingleScheduleContract.RESULT_SLOT_ID) != args.slotId
-            ) {
-                return@setFragmentResultListener
-            }
-            val resultStartTimeMs = result.getLong(
-                DeviceDosingSingleScheduleContract.RESULT_START_TIME_MS,
-                INVALID_START_TIME_MS
-            )
-            if (DeviceDosingSingleScheduleContract.isValidStartTime(resultStartTimeMs)) {
-                singleDoseStartTimeMs =
-                    DeviceDosingSingleScheduleContract.minuteAlignedStartTime(resultStartTimeMs)
-                selectedScheduleMode = DosingPlanScheduleMode.SINGLE
-            }
+    private fun displayedDailyDoseMicroliters(): Long =
+        if (selectedScheduleMode == DosingPlanScheduleMode.TIMER) {
+            DeviceDosingTimerScheduleContract.totalDoseMicroliters(timerDoses)
+        } else {
+            distributedDailyDoseMicroliters
         }
-    }
 
-    private fun setupHourlyScheduleResult() {
-        parentFragmentManager.setFragmentResultListener(
-            DeviceDosingHourlyScheduleContract.RESULT_REQUEST_KEY,
+    private fun setupDailyDoseResult() {
+        childFragmentManager.setFragmentResultListener(
+            DAILY_DOSE_REQUEST_KEY,
             viewLifecycleOwner
         ) { _, result ->
             if (
-                result.getString(DeviceDosingHourlyScheduleContract.RESULT_KEY) !=
-                DeviceDosingHourlyScheduleContract.RESULT_SAVED ||
-                result.getString(DeviceDosingHourlyScheduleContract.RESULT_SLOT_ID) != args.slotId
+                result.getString(TextInputBottomSheet.RESULT_PAYLOAD_ID) != args.slotId ||
+                result.getString(TextInputBottomSheet.RESULT_KEY) != TextInputBottomSheet.RESULT_SAVED
             ) {
                 return@setFragmentResultListener
             }
-            val resultStartTimeMs = result.getLong(
-                DeviceDosingHourlyScheduleContract.RESULT_START_TIME_MS,
-                INVALID_START_TIME_MS
-            )
-            if (DeviceDosingHourlyScheduleContract.isValidStartTime(resultStartTimeMs)) {
-                hourlyStartTimeMs =
-                    DeviceDosingHourlyScheduleContract.minuteAlignedStartTime(resultStartTimeMs)
-                selectedScheduleMode = DosingPlanScheduleMode.HOURLY
-            }
+            DeviceDosingScheduleAmountContract.parseMicroliters(
+                result.getString(TextInputBottomSheet.RESULT_VALUE).orEmpty()
+            )?.let { microliters -> distributedDailyDoseMicroliters = microliters }
         }
     }
 
@@ -180,7 +212,7 @@ class DeviceDosingChannelMenuFragment :
                     channelTitle = args.channelTitle,
                     pumpCount = args.pumpCount,
                     channelNumber = args.channelNumber,
-                    dailyDoseMicroliters = dailyDoseMicroliters,
+                    dailyDoseMicroliters = distributedDailyDoseMicroliters,
                     startTimeMs = singleDoseStartTimeMs
                 )
             DosingPlanScheduleMode.HOURLY -> DeviceDosingChannelMenuFragmentDirections
@@ -190,13 +222,57 @@ class DeviceDosingChannelMenuFragment :
                     channelTitle = args.channelTitle,
                     pumpCount = args.pumpCount,
                     channelNumber = args.channelNumber,
-                    dailyDoseMicroliters = dailyDoseMicroliters,
+                    dailyDoseMicroliters = distributedDailyDoseMicroliters,
                     startTimeMs = hourlyStartTimeMs
                 )
-            DosingPlanScheduleMode.CUSTOM,
-            DosingPlanScheduleMode.TIMER -> return
+            DosingPlanScheduleMode.CUSTOM -> DeviceDosingChannelMenuFragmentDirections
+                .actionDeviceDosingChannelMenuFragmentToDeviceDosingCustomScheduleFragment(
+                    deviceUid = args.deviceUid,
+                    slotId = args.slotId,
+                    channelTitle = args.channelTitle,
+                    pumpCount = args.pumpCount,
+                    channelNumber = args.channelNumber,
+                    dailyDoseMicroliters = distributedDailyDoseMicroliters,
+                    periodsDraft = DeviceDosingCustomScheduleContract.encodeDraft(customPeriods)
+                )
+            DosingPlanScheduleMode.TIMER -> DeviceDosingChannelMenuFragmentDirections
+                .actionDeviceDosingChannelMenuFragmentToDeviceDosingTimerScheduleFragment(
+                    deviceUid = args.deviceUid,
+                    slotId = args.slotId,
+                    channelTitle = args.channelTitle,
+                    pumpCount = args.pumpCount,
+                    channelNumber = args.channelNumber,
+                    dosesDraft = DeviceDosingTimerScheduleContract.encodeDraft(timerDoses)
+                )
         }
         navController.navigate(direction)
+    }
+
+    private fun showDailyDoseEditor() {
+        if (selectedScheduleMode == DosingPlanScheduleMode.TIMER) return
+        TextInputBottomSheet.show(
+            fragmentManager = childFragmentManager,
+            title = getString(R.string.device_dosing_daily_dose_editor_title),
+            label = getString(R.string.device_dosing_daily_dose_editor_label),
+            hint = getString(R.string.device_dosing_daily_dose_editor_hint),
+            initialValue = DeviceDosingScheduleAmountContract.formatInput(
+                distributedDailyDoseMicroliters,
+                resources.configuration.locales[0]
+            ),
+            supportingText = getString(R.string.device_dosing_daily_dose_editor_description),
+            suffixText = getString(R.string.device_dosing_detail_ml_unit),
+            saveText = getString(R.string.device_dosing_daily_dose_editor_save),
+            cancelText = getString(R.string.common_cancel),
+            required = true,
+            requiredMessage = getString(R.string.device_dosing_daily_dose_editor_required),
+            requestKey = DAILY_DOSE_REQUEST_KEY,
+            payloadId = args.slotId,
+            maxLength = DAILY_DOSE_INPUT_MAX_LENGTH,
+            inputType = InputType.TYPE_CLASS_NUMBER or InputType.TYPE_NUMBER_FLAG_DECIMAL,
+            minimumNumericValueExclusive = 0.0,
+            disableSaveWhenUnchanged = true,
+            requestFocus = true
+        )
     }
 
     private fun setupReservoirCapacityResult() {
@@ -237,36 +313,39 @@ class DeviceDosingChannelMenuFragment :
         )
     }
 
-    private fun formatReservoirCapacityInput(capacityMl: Double): String {
-        val locale = resources.configuration.locales[0]
-        return NumberFormat.getNumberInstance(locale).apply {
-            isGroupingUsed = false
-            minimumFractionDigits = 0
-            maximumFractionDigits = 1
-        }.format(capacityMl)
-    }
-
-    private fun parseReservoirCapacity(rawValue: String): Double? {
-        return rawValue
-            .trim()
-            .replace(',', '.')
-            .toDoubleOrNull()
-            ?.takeIf { capacityMl -> capacityMl > 0.0 }
-    }
-
     private companion object {
         const val STATE_RESERVOIR_CAPACITY_ML = "reservoir_capacity_ml"
         const val STATE_DAILY_DOSE_MICROLITERS = "daily_dose_microliters"
         const val STATE_SINGLE_DOSE_START_TIME_MS = "single_dose_start_time_ms"
         const val STATE_HOURLY_START_TIME_MS = "hourly_start_time_ms"
+        const val STATE_CUSTOM_PERIODS_DRAFT = "custom_periods_draft"
+        const val STATE_TIMER_DOSES_DRAFT = "timer_doses_draft"
         const val STATE_SELECTED_SCHEDULE_MODE = "selected_schedule_mode"
+        const val DAILY_DOSE_REQUEST_KEY = "dosing_daily_dose_input"
         const val RESERVOIR_CAPACITY_REQUEST_KEY = "dosing_reservoir_capacity_input"
         const val RESERVOIR_CAPACITY_PAYLOAD_ID = "reservoir_capacity"
         const val RESERVOIR_CAPACITY_MAX_LENGTH = 7
+        const val DAILY_DOSE_INPUT_MAX_LENGTH = 12
         const val DEFAULT_RESERVOIR_CAPACITY_ML = 450.0
         const val DEFAULT_DAILY_DOSE_MICROLITERS = 0L
         const val DEFAULT_SINGLE_DOSE_START_TIME_MS = 0L
         const val DEFAULT_HOURLY_START_TIME_MS = 0L
-        const val INVALID_START_TIME_MS = -1L
     }
 }
+
+private fun DeviceDosingChannelMenuFragment.formatReservoirCapacityInput(
+    capacityMl: Double
+): String {
+    val locale = resources.configuration.locales[0]
+    return NumberFormat.getNumberInstance(locale).apply {
+        isGroupingUsed = false
+        minimumFractionDigits = 0
+        maximumFractionDigits = 1
+    }.format(capacityMl)
+}
+
+private fun parseReservoirCapacity(rawValue: String): Double? = rawValue
+    .trim()
+    .replace(',', '.')
+    .toDoubleOrNull()
+    ?.takeIf { capacityMl -> capacityMl > 0.0 }
