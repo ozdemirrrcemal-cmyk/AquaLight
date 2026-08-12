@@ -22,28 +22,33 @@ internal class DosingCalibrationCountdownController(
         countdown: DosingCalibrationCountdown?,
         onVerificationComplete: () -> Unit
     ) {
-        cancel()
         when (countdown) {
-            is DosingCalibrationCountdown.CalibrationRun -> start(
-                durationMs = countdown.durationMs,
-                onComplete = {
-                    writeState(
-                        readState()
-                            .updateProgress { progress ->
-                                progress.copy(
-                                    isBusy = false,
-                                    isPumpActive = false,
-                                    remainingMs = 0L,
-                                    step = DeviceDosingCalibrationStep.MEASUREMENT
-                                )
-                            }
-                    )
-                }
-            )
-            is DosingCalibrationCountdown.Verification -> start(
-                durationMs = countdown.durationMs,
-                onComplete = onVerificationComplete
-            )
+            is DosingCalibrationCountdown.CalibrationRun -> {
+                cancel()
+                start(
+                    durationMs = countdown.durationMs,
+                    onComplete = {
+                        writeState(
+                            readState()
+                                .updateProgress { progress ->
+                                    progress.copy(
+                                        isBusy = false,
+                                        isPumpActive = false,
+                                        remainingMs = 0L,
+                                        step = DeviceDosingCalibrationStep.MEASUREMENT
+                                    )
+                                }
+                        )
+                    }
+                )
+            }
+            is DosingCalibrationCountdown.Verification -> {
+                cancel()
+                start(
+                    durationMs = countdown.durationMs,
+                    onComplete = onVerificationComplete
+                )
+            }
             null -> Unit
         }
     }

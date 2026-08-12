@@ -39,10 +39,8 @@ internal class DosingCalibrationWorkflow(
                 .copy(error = DeviceDosingCalibrationError.UNAVAILABLE)
             return
         }
-        if (session.route == normalized) return
+        if (session.route?.matchesBinding(normalized) == true) return
 
-        countdown.cancel()
-        session.cancelTransientJobs()
         session.observeJob?.cancel()
         session.reset(normalized)
         mutableUiState.value = DeviceDosingCalibrationUiState(
@@ -83,18 +81,21 @@ internal class DosingCalibrationWorkflow(
         countdown.cancel()
         session.primeSafetyJob?.cancel()
         val route = session.route
-        val state = mutableUiState.value
+        val step = mutableUiState.value.step
         val snapshot = session.latestSnapshot
-        val primeRequested = session.primeRequested
-        session.primeRequested = false
         scope.launch {
             if (route != null) {
+                if (step == DeviceDosingCalibrationStep.PRIME &&
+                    (session.primeRequested || mutableUiState.value.isPumpActive)
+                ) {
+                    session.primeRequested = false
+                    operations.primeStop(route.deviceUid, route.slotId)
+                }
                 cleanupDosingCalibrationSession(
                     operations = operations,
                     route = route,
-                    state = state,
-                    snapshot = snapshot,
-                    primeRequested = primeRequested
+                    step = step,
+                    snapshot = snapshot
                 )
             }
             eventChannel.send(DeviceDosingCalibrationEvent.Exit)
@@ -141,15 +142,19 @@ internal class DosingCalibrationWorkflow(
         when (operation) {
             DosingCalibrationOperation.PrimeStart -> scope.launch {
                 val result = performDosingCalibrationOperation(operations, boundRoute, operation)
-                if (result is DeviceDosingCalibrationResult.Success && !session.primeRequested) {
-                    operations.primeStop(boundRoute.deviceUid, boundRoute.slotId)
-                } else {
+                if (result !is DeviceDosingCalibrationResult.Success) {
+                    session.primeRequested = false
+                    mutableUiState.value = mutableUiState.value.updateProgress { progress ->
+                        progress.copy(isPumpActive = false)
+                    }
                     handleResult(operation, result, renderSuccess)
+                } else if (!session.primeRequested) {
+                    operations.primeStop(boundRoute.deviceUid, boundRoute.slotId)
                 }
             }
             DosingCalibrationOperation.PrimeStop -> scope.launch {
                 val result = performDosingCalibrationOperation(operations, boundRoute, operation)
-                handleResult(operation, result, renderSuccess)
+                handleResult(operation, result, renderSuccess = false)
             }
             else -> {
                 session.actionJob?.cancel()
@@ -240,3 +245,8 @@ private fun DeviceDosingCalibrationUiState.withCalibrationFailure(
 
 private fun DeviceDosingCalibrationSnapshot.matches(route: DeviceDosingCalibrationRoute): Boolean =
     deviceUid == route.deviceUid && slotId == route.slotId
+
+private fun DeviceDosingCalibrationRoute.matchesBinding(other: DeviceDosingCalibrationRoute): Boolean =
+    deviceUid == other.deviceUid &&
+        slotId == other.slotId &&
+        recalibration == other.recalibration

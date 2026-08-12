@@ -7,16 +7,10 @@ import com.aqua.aqualight.application.devices.DeviceDosingCalibrationSnapshot
 internal suspend fun cleanupDosingCalibrationSession(
     operations: DeviceDosingCalibrationOperations,
     route: DeviceDosingCalibrationRoute,
-    state: DeviceDosingCalibrationUiState,
-    snapshot: DeviceDosingCalibrationSnapshot?,
-    primeRequested: Boolean
+    step: DeviceDosingCalibrationStep,
+    snapshot: DeviceDosingCalibrationSnapshot?
 ) {
-    if (state.step == DeviceDosingCalibrationStep.PRIME &&
-        (primeRequested || state.isPumpActive)
-    ) {
-        operations.primeStop(route.deviceUid, route.slotId)
-    }
-    if (state.step == DeviceDosingCalibrationStep.VERIFICATION &&
+    if (step == DeviceDosingCalibrationStep.VERIFICATION &&
         snapshot?.verificationDoseStarted == true &&
         !snapshot.verificationDoseComplete
     ) {

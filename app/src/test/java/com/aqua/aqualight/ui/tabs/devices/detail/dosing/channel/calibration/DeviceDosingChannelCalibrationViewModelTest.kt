@@ -1,5 +1,6 @@
 package com.aqua.aqualight.ui.tabs.devices.detail.dosing.channel.calibration
 
+import com.aqua.aqualight.application.devices.DeviceDosingCalibrationResult
 import com.aqua.aqualight.application.devices.DeviceDosingChannelDestination
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.first
@@ -55,6 +56,58 @@ class DeviceDosingChannelCalibrationViewModelTest {
         assertEquals(1, operations.primeStarts)
         assertEquals(1, operations.primeStops)
         assertFalse(viewModel.uiState.value.isPumpActive)
+    }
+
+    @Test
+    fun `failed prime start clears request without stop side effect`() = runTest(dispatcher) {
+        val operations = FakeDosingCalibrationOperations(calibrationSnapshot()).apply {
+            primeStartResult = DeviceDosingCalibrationResult.Failed
+        }
+        val viewModel = viewModel(operations)
+
+        bind(viewModel)
+        advanceUntilIdle()
+        viewModel.onAction(DeviceDosingCalibrationAction.DisplayNameChanged("Trace Elements"))
+        viewModel.onAction(DeviceDosingCalibrationAction.SaveDisplayName)
+        advanceUntilIdle()
+
+        viewModel.onAction(DeviceDosingCalibrationAction.PrimePressed)
+        advanceUntilIdle()
+
+        assertEquals(DeviceDosingCalibrationError.CONNECTION, viewModel.uiState.value.error)
+        assertFalse(viewModel.uiState.value.isPumpActive)
+        assertEquals(1, operations.primeStarts)
+        assertEquals(0, operations.primeStops)
+
+        viewModel.onAction(DeviceDosingCalibrationAction.PrimeReleased)
+        advanceUntilIdle()
+        assertEquals(0, operations.primeStops)
+
+        viewModel.onAction(DeviceDosingCalibrationAction.PrimePressed)
+        advanceUntilIdle()
+        assertEquals(2, operations.primeStarts)
+        assertEquals(0, operations.primeStops)
+    }
+
+    @Test
+    fun `same channel binding ignores presentation argument changes`() = runTest(dispatcher) {
+        val operations = FakeDosingCalibrationOperations(calibrationSnapshot())
+        val viewModel = viewModel(operations)
+
+        bind(viewModel)
+        advanceUntilIdle()
+        assertEquals(1, operations.refreshes)
+
+        viewModel.bind(
+            calibrationRoute().copy(
+                pumpCount = 4,
+                channelNumber = 2,
+                channelTitle = "Changed title"
+            )
+        )
+        advanceUntilIdle()
+
+        assertEquals(1, operations.refreshes)
     }
 
     @Test

@@ -15,11 +15,13 @@ internal class FakeDosingCalibrationOperations(
         get() = requireNotNull(state.value)
 
     var savedName = ""
+    var refreshes = 0
     var primeStarts = 0
     var primeStops = 0
     var verificationStops = 0
     var confirms = 0
     var cancels = 0
+    var primeStartResult: DeviceDosingCalibrationResult? = null
     var confirmResult: DeviceDosingCalibrationResult = calibrationSuccess(initial)
 
     override fun observe(
@@ -27,7 +29,8 @@ internal class FakeDosingCalibrationOperations(
         slotId: String
     ): Flow<DeviceDosingCalibrationSnapshot?> = state
 
-    override suspend fun refresh(deviceUid: String, slotId: String) = calibrationSuccess(current)
+    override suspend fun refresh(deviceUid: String, slotId: String) =
+        calibrationSuccess(current).also { refreshes += 1 }
 
     override suspend fun saveDisplayName(
         deviceUid: String,
@@ -39,7 +42,8 @@ internal class FakeDosingCalibrationOperations(
     }
 
     override suspend fun primeStart(deviceUid: String, slotId: String) =
-        calibrationSuccess(current.copy(manualActive = true)).also { primeStarts += 1 }
+        (primeStartResult ?: calibrationSuccess(current.copy(manualActive = true)))
+            .also { primeStarts += 1 }
 
     override suspend fun primeStop(deviceUid: String, slotId: String) =
         calibrationSuccess(current.copy(manualActive = false)).also { primeStops += 1 }
