@@ -1,5 +1,6 @@
 package com.aqua.aqualight.data.devices.runtime.modules.dosing
 
+import com.aqua.aqualight.data.devices.runtime.modules.dosing.contract.DeviceDosingRuntimeContract
 import org.json.JSONObject
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
