@@ -5,6 +5,7 @@ package com.aqua.aqualight.ui.common.bottomsheet
 import android.content.DialogInterface
 import android.os.Bundle
 import android.view.LayoutInflater
+import android.view.MotionEvent
 import android.view.View
 import android.view.ViewGroup
 import android.widget.TextView
@@ -145,6 +146,24 @@ class AquaTimePickerBottomSheet : BottomSheetDialogFragment(
         recyclerView.layoutManager = layoutManager
         recyclerView.adapter = adapter
         recyclerView.itemAnimator = null
+        recyclerView.addOnItemTouchListener(
+            object : RecyclerView.SimpleOnItemTouchListener() {
+                override fun onInterceptTouchEvent(
+                    recyclerView: RecyclerView,
+                    event: MotionEvent
+                ): Boolean {
+                    when (event.actionMasked) {
+                        MotionEvent.ACTION_DOWN -> recyclerView.parent
+                            ?.requestDisallowInterceptTouchEvent(true)
+
+                        MotionEvent.ACTION_UP,
+                        MotionEvent.ACTION_CANCEL -> recyclerView.parent
+                            ?.requestDisallowInterceptTouchEvent(false)
+                    }
+                    return false
+                }
+            }
+        )
         snapHelper.attachToRecyclerView(recyclerView)
         recyclerView.addOnScrollListener(
             object : RecyclerView.OnScrollListener() {
