@@ -1,5 +1,23 @@
-package com.aqua.aqualight.data.devices.runtime.modules.dosing
+package com.aqua.aqualight.data.devices.runtime.modules.dosing.parsers
 
+import com.aqua.aqualight.data.devices.runtime.modules.dosing.contract.DOSING_DEVICE_UPTIME_MAX_MS
+import com.aqua.aqualight.data.devices.runtime.modules.dosing.contract.DOSING_NON_NEGATIVE_LONG
+import com.aqua.aqualight.data.devices.runtime.modules.dosing.contract.DOSING_NORMALIZED_MIN
+import com.aqua.aqualight.data.devices.runtime.modules.dosing.contract.DeviceDosingRuntimeContract
+import com.aqua.aqualight.data.devices.runtime.modules.dosing.contract.dosingValuesEquivalent
+import com.aqua.aqualight.data.devices.runtime.modules.dosing.models.DeviceDosingCalibrationCancelResult
+import com.aqua.aqualight.data.devices.runtime.modules.dosing.models.DeviceDosingCalibrationConfirmResult
+import com.aqua.aqualight.data.devices.runtime.modules.dosing.models.DeviceDosingCalibrationFinishResult
+import com.aqua.aqualight.data.devices.runtime.modules.dosing.models.DeviceDosingCalibrationStartResult
+import com.aqua.aqualight.data.devices.runtime.modules.dosing.models.DeviceDosingCalibrationState
+import com.aqua.aqualight.data.devices.runtime.modules.dosing.models.DeviceDosingChannelConfigSnapshot
+import com.aqua.aqualight.data.devices.runtime.modules.dosing.models.DeviceDosingChannelStatusSnapshot
+import com.aqua.aqualight.data.devices.runtime.modules.dosing.models.DeviceDosingConfigApplyResult
+import com.aqua.aqualight.data.devices.runtime.modules.dosing.models.DeviceDosingConfigSnapshot
+import com.aqua.aqualight.data.devices.runtime.modules.dosing.models.DeviceDosingDoseNowResult
+import com.aqua.aqualight.data.devices.runtime.modules.dosing.models.DeviceDosingPumpCommandResult
+import com.aqua.aqualight.data.devices.runtime.modules.dosing.models.DeviceDosingReservoirRefillResult
+import com.aqua.aqualight.data.devices.runtime.modules.dosing.models.DeviceDosingScheduleConfigSnapshot
 import kotlin.math.roundToLong
 import org.json.JSONArray
 import org.json.JSONObject
