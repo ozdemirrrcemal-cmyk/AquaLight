@@ -1,4 +1,4 @@
-package com.aqua.aqualight.data.devices.runtime.modules.dosing
+package com.aqua.aqualight.data.devices.runtime.modules.dosing.contract
 
 /** Exact Android mirror of the authenticated commercial Dosing firmware contract. */
 object DeviceDosingRuntimeContract {
