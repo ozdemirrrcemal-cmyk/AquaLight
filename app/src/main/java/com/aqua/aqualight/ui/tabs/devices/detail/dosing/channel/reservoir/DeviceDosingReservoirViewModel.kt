@@ -1,7 +1,7 @@
 package com.aqua.aqualight.ui.tabs.devices.detail.dosing.channel.reservoir
 
 import androidx.lifecycle.ViewModel
-import com.aqua.aqualight.application.devices.DeviceDosingReservoirDraftPolicy
+import com.aqua.aqualight.application.devices.dosing.DeviceDosingReservoirDraftPolicy
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
