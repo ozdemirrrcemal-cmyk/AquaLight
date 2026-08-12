@@ -38,6 +38,8 @@ class DeviceDosingChannelMenuFragment :
     private var customPeriods by mutableStateOf<List<DeviceDosingCustomPeriod>>(emptyList())
     private var timerDoses by mutableStateOf<List<DeviceDosingTimerDose>>(emptyList())
     private var selectedScheduleMode by mutableStateOf(DosingPlanScheduleMode.SINGLE)
+    private var scheduleEnabled by mutableStateOf(DEFAULT_SCHEDULE_ENABLED)
+    private var recurrenceState by mutableStateOf(DosingPlanRecurrenceState())
 
     override val destinationTitle: String
         get() = menuItem
@@ -121,6 +123,14 @@ class DeviceDosingChannelMenuFragment :
                 DosingPlanScheduleMode.entries.firstOrNull { mode -> mode.name == savedMode }
             }
             ?: DosingPlanScheduleMode.SINGLE
+        scheduleEnabled = savedInstanceState?.getBoolean(
+            STATE_SCHEDULE_ENABLED,
+            DEFAULT_SCHEDULE_ENABLED
+        ) ?: DEFAULT_SCHEDULE_ENABLED
+        recurrenceState = savedInstanceState
+            ?.getBooleanArray(STATE_SCHEDULE_WEEKDAYS)
+            ?.let(DosingPlanRecurrenceState::fromWeekdayFlags)
+            ?: DosingPlanRecurrenceState()
     }
 
     private fun setupMenuContent(view: View, item: DosingDetailMenuItem) {
@@ -131,6 +141,8 @@ class DeviceDosingChannelMenuFragment :
                     item = item,
                     dailyDoseMicroliters = displayedDailyDoseMicroliters(),
                     selectedScheduleMode = selectedScheduleMode,
+                    scheduleEnabled = scheduleEnabled,
+                    recurrenceState = recurrenceState,
                     reservoirCapacityValue = getString(
                         R.string.device_dosing_detail_value_container_ml,
                         reservoirCapacityMl
@@ -150,6 +162,26 @@ class DeviceDosingChannelMenuFragment :
                         selectedScheduleMode != DosingPlanScheduleMode.TIMER
                     ) {
                         ::showDailyDoseEditor
+                    } else {
+                        null
+                    },
+                    onScheduleEnabledChange = if (item == DosingDetailMenuItem.DOSING_PLAN) {
+                        { enabled -> scheduleEnabled = enabled }
+                    } else {
+                        null
+                    },
+                    onEveryDayClick = if (item == DosingDetailMenuItem.DOSING_PLAN) {
+                        { recurrenceState = recurrenceState.selectEveryDay() }
+                    } else {
+                        null
+                    },
+                    onWeekdaySelectionChange = if (item == DosingDetailMenuItem.DOSING_PLAN) {
+                        { weekday, selected ->
+                            recurrenceState = recurrenceState.withDaySelection(
+                                weekday = weekday,
+                                selected = selected
+                            )
+                        }
                     } else {
                         null
                     }
@@ -172,6 +204,11 @@ class DeviceDosingChannelMenuFragment :
             DeviceDosingTimerScheduleContract.encodeDraft(timerDoses)
         )
         outState.putString(STATE_SELECTED_SCHEDULE_MODE, selectedScheduleMode.name)
+        outState.putBoolean(STATE_SCHEDULE_ENABLED, scheduleEnabled)
+        outState.putBooleanArray(
+            STATE_SCHEDULE_WEEKDAYS,
+            recurrenceState.toWeekdayFlags()
+        )
         super.onSaveInstanceState(outState)
     }
 
@@ -200,6 +237,7 @@ class DeviceDosingChannelMenuFragment :
     }
 
     private fun openScheduleEditor(mode: DosingPlanScheduleMode) {
+        if (!scheduleEnabled) return
         val navController = findNavController()
         if (navController.currentDestination?.id != R.id.deviceDosingChannelMenuFragment) {
             return
@@ -249,7 +287,7 @@ class DeviceDosingChannelMenuFragment :
     }
 
     private fun showDailyDoseEditor() {
-        if (selectedScheduleMode == DosingPlanScheduleMode.TIMER) return
+        if (!scheduleEnabled || selectedScheduleMode == DosingPlanScheduleMode.TIMER) return
         TextInputBottomSheet.show(
             fragmentManager = childFragmentManager,
             title = getString(R.string.device_dosing_daily_dose_editor_title),
@@ -321,6 +359,8 @@ class DeviceDosingChannelMenuFragment :
         const val STATE_CUSTOM_PERIODS_DRAFT = "custom_periods_draft"
         const val STATE_TIMER_DOSES_DRAFT = "timer_doses_draft"
         const val STATE_SELECTED_SCHEDULE_MODE = "selected_schedule_mode"
+        const val STATE_SCHEDULE_ENABLED = "schedule_enabled"
+        const val STATE_SCHEDULE_WEEKDAYS = "schedule_weekdays"
         const val DAILY_DOSE_REQUEST_KEY = "dosing_daily_dose_input"
         const val RESERVOIR_CAPACITY_REQUEST_KEY = "dosing_reservoir_capacity_input"
         const val RESERVOIR_CAPACITY_PAYLOAD_ID = "reservoir_capacity"
@@ -330,6 +370,7 @@ class DeviceDosingChannelMenuFragment :
         const val DEFAULT_DAILY_DOSE_MICROLITERS = 0L
         const val DEFAULT_SINGLE_DOSE_START_TIME_MS = 0L
         const val DEFAULT_HOURLY_START_TIME_MS = 0L
+        const val DEFAULT_SCHEDULE_ENABLED = true
     }
 }
 

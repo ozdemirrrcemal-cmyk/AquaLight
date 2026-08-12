@@ -49,6 +49,26 @@ class DosingPlanMenuArchitectureTest {
             DOSING_PLAN_WEEKDAY_LABELS
         )
         assertEquals(DOSING_PLAN_WEEKDAY_LABELS.size, DOSING_PLAN_WEEKDAY_LABELS.distinct().size)
+        assertEquals(DOSING_PLAN_WEEKDAYS.size, DOSING_PLAN_WEEKDAYS.distinct().size)
+    }
+
+    @Test
+    fun `schedule state is hoisted and disables every dependent plan control`() {
+        val fragment = source(
+            "app/src/main/java/com/aqua/aqualight/ui/tabs/devices/detail/dosing/channel/" +
+                "detail/DeviceDosingChannelMenuFragment.kt"
+        )
+        val screen = source(
+            "app/src/main/java/com/aqua/aqualight/ui/tabs/devices/detail/dosing/channel/" +
+                "detail/DeviceDosingChannelMenuScreen.kt"
+        )
+
+        assertTrue(fragment.contains("STATE_SCHEDULE_ENABLED"))
+        assertTrue(fragment.contains("STATE_SCHEDULE_WEEKDAYS"))
+        assertTrue(screen.contains("checked = scheduleEnabled"))
+        assertTrue(screen.contains("enabled = scheduleEnabled"))
+        assertTrue(screen.contains("onWeekdaySelectionChange"))
+        assertFalse(screen.contains("selected = true,\n                modifier = Modifier.weight(1f)"))
     }
 
     @Test

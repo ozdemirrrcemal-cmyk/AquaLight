@@ -8,6 +8,8 @@ import androidx.compose.foundation.text.BasicText
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
+import androidx.compose.ui.semantics.disabled
+import androidx.compose.ui.semantics.semantics
 
 /** Shared labeled surface used by device setting and editor screens. */
 @Composable
@@ -24,6 +26,9 @@ fun AquaDeviceMenuSection(
         modifier = modifier
             .fillMaxWidth()
             .alpha(if (enabled) ENABLED_ALPHA else DISABLED_ALPHA)
+            .semantics {
+                if (!enabled) disabled()
+            }
     ) {
         BasicText(
             text = title,

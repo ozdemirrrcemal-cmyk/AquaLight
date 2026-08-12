@@ -445,17 +445,25 @@ fun AquaDeviceMenuValueRow(
     }
 }
 
-/** Non-mutating choice visual used while a setting screen is preview-only. */
+/** Shared compact choice visual; it becomes an accessible checkbox when a callback is supplied. */
 @Composable
 fun AquaDeviceMenuChoiceChip(
     text: String,
     selected: Boolean,
     modifier: Modifier = Modifier,
-    compact: Boolean = false
+    compact: Boolean = false,
+    onSelectedChange: ((Boolean) -> Unit)? = null
 ) {
     val colors = aquaDeviceMenuColors()
     val typography = aquaDeviceMenuTypography(colors)
     val shape = RoundedCornerShape(AquaDeviceMenuGeometry.choiceChipRadius)
+    val interactionModifier = onSelectedChange?.let { callback ->
+        Modifier.toggleable(
+            value = selected,
+            role = Role.Checkbox,
+            onValueChange = callback
+        )
+    } ?: Modifier
 
     Box(
         modifier = modifier
@@ -469,6 +477,7 @@ fun AquaDeviceMenuChoiceChip(
                 color = if (selected) colors.accent else colors.outline,
                 shape = shape
             )
+            .then(interactionModifier)
             .padding(
                 horizontal = if (compact) {
                     AquaDeviceMenuGeometry.choiceChipCompactHorizontalPadding

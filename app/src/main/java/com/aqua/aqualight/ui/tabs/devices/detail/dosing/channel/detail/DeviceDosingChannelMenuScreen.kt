@@ -38,6 +38,7 @@ import com.aqua.aqualight.ui.common.devicemenu.AquaDeviceMenuValueRow
 import com.aqua.aqualight.ui.common.devicemenu.aquaDeviceMenuColors
 import com.aqua.aqualight.ui.common.devicemenu.aquaDeviceMenuTypography
 import com.aqua.aqualight.ui.common.flow.AquaGuidedFlowButton
+import com.aqua.aqualight.ui.tabs.devices.detail.dosing.DosingWeekday
 
 /** Static child-screen catalog; it deliberately performs no device or persistence work. */
 @Composable
@@ -46,10 +47,16 @@ internal fun DeviceDosingChannelMenuScreen(
     modifier: Modifier = Modifier,
     dailyDoseMicroliters: Long = 0L,
     selectedScheduleMode: DosingPlanScheduleMode = DosingPlanScheduleMode.SINGLE,
+    scheduleEnabled: Boolean = true,
+    recurrenceState: DosingPlanRecurrenceState = DosingPlanRecurrenceState(),
     reservoirCapacityValue: String = "",
     onReservoirCapacityClick: (() -> Unit)? = null,
     onScheduleOptionClick: ((DosingPlanScheduleMode) -> Unit)? = null,
-    onDailyDoseClick: (() -> Unit)? = null
+    onDailyDoseClick: (() -> Unit)? = null,
+    onScheduleEnabledChange: ((Boolean) -> Unit)? = null,
+    onEveryDayClick: (() -> Unit)? = null,
+    onWeekdaySelectionChange: ((DosingWeekday, Boolean) -> Unit)? = null,
+    onSavePlanClick: (() -> Unit)? = null
 ) {
     val colors = aquaDeviceMenuColors()
 
@@ -73,8 +80,14 @@ internal fun DeviceDosingChannelMenuScreen(
                     DosingDetailMenuItem.DOSING_PLAN -> DosingPlanContent(
                         dailyDoseMicroliters = dailyDoseMicroliters,
                         selectedScheduleMode = selectedScheduleMode,
+                        scheduleEnabled = scheduleEnabled,
+                        recurrenceState = recurrenceState,
                         onScheduleOptionClick = onScheduleOptionClick,
-                        onDailyDoseClick = onDailyDoseClick
+                        onDailyDoseClick = onDailyDoseClick,
+                        onScheduleEnabledChange = onScheduleEnabledChange,
+                        onEveryDayClick = onEveryDayClick,
+                        onWeekdaySelectionChange = onWeekdaySelectionChange,
+                        onSavePlanClick = onSavePlanClick
                     )
                     DosingDetailMenuItem.RESERVOIR -> ReservoirContent(
                         capacityValue = reservoirCapacityValue,
@@ -90,17 +103,27 @@ internal fun DeviceDosingChannelMenuScreen(
 private fun DosingPlanContent(
     dailyDoseMicroliters: Long,
     selectedScheduleMode: DosingPlanScheduleMode,
+    scheduleEnabled: Boolean,
+    recurrenceState: DosingPlanRecurrenceState,
     onScheduleOptionClick: ((DosingPlanScheduleMode) -> Unit)?,
-    onDailyDoseClick: (() -> Unit)?
+    onDailyDoseClick: (() -> Unit)?,
+    onScheduleEnabledChange: ((Boolean) -> Unit)?,
+    onEveryDayClick: (() -> Unit)?,
+    onWeekdaySelectionChange: ((DosingWeekday, Boolean) -> Unit)?,
+    onSavePlanClick: (() -> Unit)?
 ) {
     DetailSection(R.string.device_dosing_detail_schedule_status_section) {
         DetailToggleRow(
             titleRes = R.string.device_dosing_detail_activate_schedule,
             descriptionRes = R.string.device_dosing_detail_activate_schedule_description,
-            checked = true
+            checked = scheduleEnabled,
+            onCheckedChange = onScheduleEnabledChange
         )
     }
-    DetailSection(R.string.device_dosing_detail_amount_section) {
+    DetailSection(
+        titleRes = R.string.device_dosing_detail_amount_section,
+        enabled = scheduleEnabled
+    ) {
         val dailyDoseValue = stringResource(
             R.string.device_dosing_channel_daily_dose_format,
             dailyDoseMicroliters.toDouble() / MICROLITERS_PER_MILLILITER
@@ -125,20 +148,39 @@ private fun DosingPlanContent(
                 value = dailyDoseValue,
                 description = dailyDoseDescription,
                 iconRes = R.drawable.ic_dosing_schedule_24,
-                onClick = onDailyDoseClick
+                onClick = onDailyDoseClick,
+                enabled = scheduleEnabled
             )
         }
     }
-    DetailSection(R.string.device_dosing_detail_schedule_section) {
+    DetailSection(
+        titleRes = R.string.device_dosing_detail_schedule_section,
+        enabled = scheduleEnabled
+    ) {
         DosingScheduleOptions(
             selectedScheduleMode = selectedScheduleMode,
+            enabled = scheduleEnabled,
             onScheduleOptionClick = onScheduleOptionClick
         )
     }
-    DetailSection(R.string.device_dosing_detail_recurrence_section) {
-        DosingRecurrenceOptions()
+    DetailSection(
+        titleRes = R.string.device_dosing_detail_recurrence_section,
+        enabled = scheduleEnabled
+    ) {
+        DosingRecurrenceOptions(
+            state = recurrenceState,
+            enabled = scheduleEnabled,
+            onEveryDayClick = onEveryDayClick,
+            onWeekdaySelectionChange = onWeekdaySelectionChange
+        )
     }
-    DetailAction(R.string.device_dosing_detail_save_plan)
+    DetailAction(
+        labelRes = R.string.device_dosing_detail_save_plan,
+        enabled = scheduleEnabled &&
+            recurrenceState.selectedDays.isNotEmpty() &&
+            onSavePlanClick != null,
+        onClick = onSavePlanClick
+    )
 }
 
 @Composable
@@ -267,6 +309,7 @@ private fun DetailToggleRow(
 @Composable
 private fun DosingScheduleOptions(
     selectedScheduleMode: DosingPlanScheduleMode,
+    enabled: Boolean,
     onScheduleOptionClick: ((DosingPlanScheduleMode) -> Unit)?
 ) {
     DOSING_PLAN_SCHEDULE_OPTIONS.forEachIndexed { index, option ->
@@ -278,17 +321,27 @@ private fun DosingScheduleOptions(
         AquaDeviceMenuSelectionRow(
             text = stringResource(option.labelRes),
             selected = option.mode == selectedScheduleMode,
-            onClick = onScheduleOptionClick?.let { callback -> { callback(option.mode) } }
+            onClick = if (enabled) {
+                onScheduleOptionClick?.let { callback -> { callback(option.mode) } }
+            } else {
+                null
+            }
         )
     }
 }
 
 @Composable
-private fun DosingRecurrenceOptions() {
+private fun DosingRecurrenceOptions(
+    state: DosingPlanRecurrenceState,
+    enabled: Boolean,
+    onEveryDayClick: (() -> Unit)?,
+    onWeekdaySelectionChange: ((DosingWeekday, Boolean) -> Unit)?
+) {
     AquaDeviceMenuSelectionRow(
         text = stringResource(R.string.device_dosing_channel_every_day),
-        selected = true,
-        showTrailingIcon = false
+        selected = state.isEveryDay,
+        showTrailingIcon = false,
+        onClick = onEveryDayClick.takeIf { enabled }
     )
     AquaDeviceMenuDivider(
         startIndent = AquaDeviceMenuGeometry.selectionDividerIndent
@@ -299,24 +352,35 @@ private fun DosingRecurrenceOptions() {
             .padding(AquaDeviceMenuGeometry.sectionContentPadding),
         horizontalArrangement = Arrangement.spacedBy(AquaDeviceMenuGeometry.compactGap)
     ) {
-        DOSING_PLAN_WEEKDAY_LABELS.forEach { weekdayRes ->
+        DOSING_PLAN_WEEKDAYS.forEach { weekday ->
             AquaDeviceMenuChoiceChip(
-                text = stringResource(weekdayRes),
-                selected = true,
+                text = stringResource(weekday.shortLabelRes),
+                selected = weekday in state.selectedDays,
                 modifier = Modifier.weight(1f),
-                compact = true
+                compact = true,
+                onSelectedChange = if (enabled) {
+                    onWeekdaySelectionChange?.let { callback ->
+                        { selected -> callback(weekday, selected) }
+                    }
+                } else {
+                    null
+                }
             )
         }
     }
 }
 
 @Composable
-private fun DetailAction(@StringRes labelRes: Int) {
+private fun DetailAction(
+    @StringRes labelRes: Int,
+    enabled: Boolean = false,
+    onClick: (() -> Unit)? = null
+) {
     AquaGuidedFlowButton(
         text = stringResource(labelRes),
-        onClick = {},
+        onClick = { onClick?.invoke() },
         modifier = Modifier.fillMaxWidth(),
-        enabled = false
+        enabled = enabled
     )
 }
 
@@ -354,13 +418,3 @@ internal val DOSING_PLAN_SCHEDULE_OPTIONS = listOf(
 )
 
 private const val MICROLITERS_PER_MILLILITER = 1_000.0
-
-internal val DOSING_PLAN_WEEKDAY_LABELS = listOf(
-    R.string.device_dosing_weekday_mon,
-    R.string.device_dosing_weekday_tue,
-    R.string.device_dosing_weekday_wed,
-    R.string.device_dosing_weekday_thu,
-    R.string.device_dosing_weekday_fri,
-    R.string.device_dosing_weekday_sat,
-    R.string.device_dosing_weekday_sun
-)
