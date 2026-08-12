@@ -1,4 +1,4 @@
-package com.aqua.aqualight.data.devices.runtime.modules.dosing
+package com.aqua.aqualight.data.devices.runtime.modules.dosing.parsers
 
 import org.json.JSONArray
 import org.json.JSONObject
