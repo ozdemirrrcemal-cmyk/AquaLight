@@ -1,7 +1,7 @@
 package com.aqua.aqualight.ui.tabs.devices.detail.dosing.channel.schedule
 
-import com.aqua.aqualight.application.devices.DeviceDosingAmountDraftPolicy
-import com.aqua.aqualight.application.devices.DeviceDosingScheduleDraftLimits
+import com.aqua.aqualight.application.devices.dosing.DeviceDosingAmountDraftPolicy
+import com.aqua.aqualight.application.devices.dosing.DeviceDosingScheduleDraftLimits
 import java.text.NumberFormat
 import java.util.Locale
 
