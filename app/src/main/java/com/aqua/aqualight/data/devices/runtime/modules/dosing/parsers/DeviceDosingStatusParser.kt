@@ -1,5 +1,12 @@
-package com.aqua.aqualight.data.devices.runtime.modules.dosing
+package com.aqua.aqualight.data.devices.runtime.modules.dosing.parsers
 
+import com.aqua.aqualight.data.devices.runtime.modules.dosing.contract.DOSING_DEVICE_UPTIME_MAX_MS
+import com.aqua.aqualight.data.devices.runtime.modules.dosing.contract.DOSING_MIN_COUNT
+import com.aqua.aqualight.data.devices.runtime.modules.dosing.contract.DOSING_NON_NEGATIVE_LONG
+import com.aqua.aqualight.data.devices.runtime.modules.dosing.contract.DeviceDosingRuntimeContract
+import com.aqua.aqualight.data.devices.runtime.modules.dosing.models.DeviceDosingChannelStatus
+import com.aqua.aqualight.data.devices.runtime.modules.dosing.models.DeviceDosingScheduleStatus
+import com.aqua.aqualight.data.devices.runtime.modules.dosing.models.DeviceDosingStatus
 import org.json.JSONArray
 import org.json.JSONObject
 
