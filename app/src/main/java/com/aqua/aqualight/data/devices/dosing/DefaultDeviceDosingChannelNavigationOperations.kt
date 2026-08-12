@@ -13,7 +13,7 @@ import com.aqua.aqualight.data.devices.menu.DefaultDeviceMenuAccessOperations
 import com.aqua.aqualight.data.devices.model.DeviceUid
 import com.aqua.aqualight.data.devices.repository.DevicesRepository
 import com.aqua.aqualight.data.devices.runtime.core.DeviceRuntimeCommandOutcome
-import com.aqua.aqualight.data.devices.runtime.modules.dosing.DeviceDosingStatus
+import com.aqua.aqualight.data.devices.runtime.modules.dosing.models.DeviceDosingStatus
 import com.aqua.aqualight.data.devices.toDeviceRootSnapshot
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.distinctUntilChanged
