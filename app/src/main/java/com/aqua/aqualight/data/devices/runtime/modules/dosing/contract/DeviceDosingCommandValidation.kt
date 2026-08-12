@@ -1,5 +1,25 @@
-package com.aqua.aqualight.data.devices.runtime.modules.dosing
+package com.aqua.aqualight.data.devices.runtime.modules.dosing.contract
 
+import com.aqua.aqualight.data.devices.runtime.modules.dosing.models.DeviceDosingCalibrationFinishPayload
+import com.aqua.aqualight.data.devices.runtime.modules.dosing.models.DeviceDosingCalibrationFinishResult
+import com.aqua.aqualight.data.devices.runtime.modules.dosing.models.DeviceDosingCalibrationStartPayload
+import com.aqua.aqualight.data.devices.runtime.modules.dosing.models.DeviceDosingCalibrationStartResult
+import com.aqua.aqualight.data.devices.runtime.modules.dosing.models.DeviceDosingCalibrationState
+import com.aqua.aqualight.data.devices.runtime.modules.dosing.models.DeviceDosingChannelConfig
+import com.aqua.aqualight.data.devices.runtime.modules.dosing.models.DeviceDosingChannelConfigSnapshot
+import com.aqua.aqualight.data.devices.runtime.modules.dosing.models.DeviceDosingChannelDosingConfig
+import com.aqua.aqualight.data.devices.runtime.modules.dosing.models.DeviceDosingChannelStatus
+import com.aqua.aqualight.data.devices.runtime.modules.dosing.models.DeviceDosingChannelStatusSnapshot
+import com.aqua.aqualight.data.devices.runtime.modules.dosing.models.DeviceDosingConfigApplyPayload
+import com.aqua.aqualight.data.devices.runtime.modules.dosing.models.DeviceDosingConfigApplyResult
+import com.aqua.aqualight.data.devices.runtime.modules.dosing.models.DeviceDosingConfigSnapshot
+import com.aqua.aqualight.data.devices.runtime.modules.dosing.models.DeviceDosingDoseNowPayload
+import com.aqua.aqualight.data.devices.runtime.modules.dosing.models.DeviceDosingDoseNowResult
+import com.aqua.aqualight.data.devices.runtime.modules.dosing.models.DeviceDosingPumpCommandResult
+import com.aqua.aqualight.data.devices.runtime.modules.dosing.models.DeviceDosingReservoirRefillResult
+import com.aqua.aqualight.data.devices.runtime.modules.dosing.models.DeviceDosingScheduleConfig
+import com.aqua.aqualight.data.devices.runtime.modules.dosing.models.DeviceDosingScheduleConfigSnapshot
+import com.aqua.aqualight.data.devices.runtime.modules.dosing.models.DeviceDosingStatus
 import kotlin.math.roundToLong
 
 /** Cross-validates every Dosing request, response and authenticated metadata capability. */
