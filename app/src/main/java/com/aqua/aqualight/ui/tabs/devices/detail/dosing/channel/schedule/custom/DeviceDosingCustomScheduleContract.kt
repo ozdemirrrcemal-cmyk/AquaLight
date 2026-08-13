@@ -8,7 +8,7 @@ import com.aqua.aqualight.application.devices.dosing.DeviceDosingScheduleTimeDra
 
 internal typealias DeviceDosingCustomPeriod = DeviceDosingCustomPeriodDraft
 
-/** UI transport boundary; schedule validity is owned by application policy. */
+/** UI transport boundary; firmware-published capacities are supplied by the Plan owner. */
 internal object DeviceDosingCustomScheduleContract {
     const val RESULT_REQUEST_KEY = "dosing_custom_schedule_result"
     const val RESULT_KEY = "dosing_custom_schedule_result_state"
@@ -16,7 +16,6 @@ internal object DeviceDosingCustomScheduleContract {
     const val RESULT_SLOT_ID = "dosing_custom_schedule_slot_id"
     const val RESULT_SAVED = "saved"
 
-    const val MAX_DOSES_PER_DAY = DeviceDosingScheduleDraftLimits.MAX_DOSES_PER_DAY
     const val MILLIS_PER_MINUTE = DeviceDosingScheduleDraftLimits.MILLIS_PER_MINUTE
     const val MINUTES_PER_DAY = DeviceDosingScheduleDraftLimits.MINUTES_PER_DAY
     const val LAST_MINUTE_START_MS = DeviceDosingScheduleDraftLimits.LAST_MINUTE_START_MS
@@ -32,8 +31,13 @@ internal object DeviceDosingCustomScheduleContract {
     fun isValidTime(timeMs: Long): Boolean =
         DeviceDosingScheduleTimeDraftPolicy.isValidTime(timeMs)
 
-    fun validate(periods: List<DeviceDosingCustomPeriod>): ValidationError? =
-        DeviceDosingCustomScheduleDraftPolicy.validate(periods)?.toUiError()
+    fun validate(
+        periods: List<DeviceDosingCustomPeriod>,
+        maxPeriods: Int,
+        maxDoseCount: Int
+    ): ValidationError? = DeviceDosingCustomScheduleDraftPolicy
+        .validate(periods, maxPeriods, maxDoseCount)
+        ?.toUiError()
 
     fun normalize(periods: List<DeviceDosingCustomPeriod>): List<DeviceDosingCustomPeriod> =
         DeviceDosingCustomScheduleDraftPolicy.normalize(periods)
@@ -51,15 +55,14 @@ internal object DeviceDosingCustomScheduleContract {
 
     fun decodeDraft(encoded: String): List<DeviceDosingCustomPeriod>? = when {
         encoded.isBlank() -> emptyList()
-        else -> runCatching { decodeCustomPeriods(encoded) }.getOrNull()
-            ?.takeIf { periods -> validate(periods) == null }
-            ?.let(::normalize)
+        else -> runCatching { decodeCustomPeriods(encoded) }.getOrNull()?.let(::normalize)
     }
 }
 
 private fun DeviceDosingCustomScheduleValidationError.toUiError() = when (this) {
     DeviceDosingCustomScheduleValidationError.INVALID_PERIOD ->
         DeviceDosingCustomScheduleContract.ValidationError.INVALID_PERIOD
+    DeviceDosingCustomScheduleValidationError.TOO_MANY_PERIODS,
     DeviceDosingCustomScheduleValidationError.TOO_MANY_DOSES ->
         DeviceDosingCustomScheduleContract.ValidationError.TOO_MANY_DOSES
     DeviceDosingCustomScheduleValidationError.OVERLAPPING_PERIODS ->
