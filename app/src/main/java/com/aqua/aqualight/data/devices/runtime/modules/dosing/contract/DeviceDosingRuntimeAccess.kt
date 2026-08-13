@@ -8,11 +8,12 @@ import com.aqua.aqualight.data.devices.model.DeviceLimitSet
 import com.aqua.aqualight.data.devices.model.DeviceRuntimeMetadata
 import com.aqua.aqualight.data.devices.model.DeviceRuntimeModules
 
-/** Validated commercial metadata gate for the Dosing API backed by the internal timer engine. */
+/** Validated metadata gate for the dedicated Dose Pro scheduler/runtime. */
 internal data class DeviceDosingRuntimeAccess(
     val supportsApi: Boolean,
     val channelCount: Int,
-    val supportsSchedules: Boolean,
+    val supportsProgramEditing: Boolean,
+    val supportsChannelReset: Boolean,
     val supportsPrime: Boolean,
     val supportsManualDose: Boolean,
     val supportsCalibrationWorkflow: Boolean,
@@ -23,7 +24,8 @@ internal data class DeviceDosingRuntimeAccess(
         val UNAVAILABLE = DeviceDosingRuntimeAccess(
             supportsApi = false,
             channelCount = 0,
-            supportsSchedules = false,
+            supportsProgramEditing = false,
+            supportsChannelReset = false,
             supportsPrime = false,
             supportsManualDose = false,
             supportsCalibrationWorkflow = false,
@@ -61,12 +63,13 @@ internal data class DeviceDosingRuntimeAccess(
             )
             val supportsManualSurface = supportsApi &&
                 AqlDeviceScreenKey.DOSING_MANUAL_RUN in screens
-
             return DeviceDosingRuntimeAccess(
                 supportsApi = supportsApi,
                 channelCount = if (supportsApi) limits.dosingChannelCount else 0,
-                supportsSchedules = supportsApi &&
+                supportsProgramEditing = supportsApi &&
                     AqlDeviceScreenKey.DOSING_SCHEDULES in screens,
+                supportsChannelReset = supportsApi &&
+                    AqlDeviceScreenKey.DOSING_CHANNELS in screens,
                 supportsPrime = supportsManualSurface,
                 supportsManualDose = supportsManualSurface,
                 supportsCalibrationWorkflow = supportsApi &&
@@ -95,8 +98,8 @@ internal data class DeviceDosingRuntimeAccess(
             limits.dosingChannelCount in 1..DeviceDosingRuntimeContract.Limit.MAX_CHANNELS &&
             limits.timerChannelCount == 0 &&
             modules.dosing &&
-            modules.timerEngine &&
             !modules.timerApi &&
+            !modules.timerEngine &&
             AqlDeviceFeatureKey.DOSING_CONTROL in features &&
             AqlDeviceScreenKey.DOSING_CONTROL in screens
     }
