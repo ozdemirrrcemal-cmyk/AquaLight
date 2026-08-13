@@ -3,15 +3,15 @@ package com.aqua.aqualight.ui.tabs.devices.detail.dosing
 import androidx.annotation.StringRes
 import androidx.compose.runtime.Immutable
 import com.aqua.aqualight.R
+import com.aqua.aqualight.application.devices.DeviceDosingChannelSlot
 import com.aqua.aqualight.application.devices.dosing.DeviceDosingChannelDestination
 import com.aqua.aqualight.application.devices.dosing.DeviceDosingChannelNavigationTarget
-import com.aqua.aqualight.application.devices.DeviceDosingChannelSlot
 
 /**
  * Dosing-only presentation state.
  *
  * Catalog identity and structural validity are owned by the application catalog before this state
- * is created. The UI keeps only the values required to render the channel card.
+ * is created. Runtime values are projected from the same canonical channel status used for routing.
  */
 @Immutable
 data class DosingChannelCardUiState(
@@ -45,7 +45,6 @@ enum class DosingWeekday(
     SUNDAY(R.string.device_dosing_weekday_sun)
 }
 
-/** Presentation-only schedule selection. Canonical schedule validity belongs upstream. */
 @Immutable
 data class DosingScheduleDaysUiState(
     val selectedDays: List<DosingWeekday> = emptyList()
@@ -55,15 +54,6 @@ data class DosingScheduleDaysUiState(
             selectedDays.containsAll(ALL_DOSING_WEEKDAYS)
 }
 
-/**
- * Volume-based daily dosing progress used only for presentation.
- *
- * [dailyDoseMl] is the total daily dose configured by the user. [deliveredTodayMl] is the amount
- * actually delivered today. Optional [doseMilestonesMl] are cumulative volume boundaries supplied
- * by the channel-configuration mapper. Validation and canonicalization of dosing values belongs to
- * the application/domain boundary before values are mapped into this UI state. The progress
- * contract contains no wall-clock axis.
- */
 @Immutable
 data class DosingDoseProgressUiState(
     val dailyDoseMl: Double = 0.0,
@@ -88,17 +78,47 @@ internal fun DeviceDosingChannelSlot.toInitialDosingChannelCardUiState(): Dosing
         displayName = defaultDisplayName
     )
 
-/** Applies the central runtime target without leaking firmware addressing into presentation state. */
+/** Applies the central runtime projection without leaking firmware addressing into presentation. */
 internal fun DosingChannelCardUiState.withNavigationTarget(
     target: DeviceDosingChannelNavigationTarget?
-): DosingChannelCardUiState = target?.let { navigationTarget ->
+): DosingChannelCardUiState = target?.let { runtime ->
+    val selectedDays = runtime.programWeekdays
+        .takeIf { it.size == ALL_DOSING_WEEKDAYS.size }
+        ?.mapIndexedNotNull { index, selected -> ALL_DOSING_WEEKDAYS[index].takeIf { selected } }
+        .orEmpty()
+    val dailyDose = runtime.dailyDoseMl.takeIf { it.isFinite() && it > 0.0 } ?: 0.0
+    val delivered = runtime.scheduledDeliveredTodayMl
+        .takeIf { it.isFinite() && it >= 0.0 }
+        ?: 0.0
+    val channelVisualState = when {
+        runtime.destination == DeviceDosingChannelDestination.CALIBRATION ->
+            DosingChannelVisualState.NOT_CONFIGURED
+        !runtime.programConfigured -> DosingChannelVisualState.NOT_CONFIGURED
+        runtime.active -> DosingChannelVisualState.DOSING
+        !runtime.deliveryAccountingCertain -> DosingChannelVisualState.ERROR
+        runtime.programEnabled && !runtime.runtimeEnabled && runtime.runtimeReason !in NON_ERROR_RUNTIME_REASONS ->
+            DosingChannelVisualState.ERROR
+        runtime.programEnabled && runtime.runtimeEnabled -> DosingChannelVisualState.SCHEDULED
+        else -> DosingChannelVisualState.READY
+    }
+    val progressVisualState = when {
+        channelVisualState == DosingChannelVisualState.ERROR -> DosingDoseProgressVisualState.ERROR
+        dailyDose <= 0.0 -> DosingDoseProgressVisualState.EMPTY
+        runtime.active -> DosingDoseProgressVisualState.ACTIVE
+        delivered + PROGRESS_EPSILON >= dailyDose -> DosingDoseProgressVisualState.COMPLETE
+        else -> DosingDoseProgressVisualState.READY
+    }
     copy(
-        displayName = navigationTarget.channelTitle.ifBlank { displayName },
-        visualState = when (navigationTarget.destination) {
-            DeviceDosingChannelDestination.DETAIL -> DosingChannelVisualState.READY
-            DeviceDosingChannelDestination.CALIBRATION ->
-                DosingChannelVisualState.NOT_CONFIGURED
-        }
+        displayName = runtime.channelTitle.ifBlank { displayName },
+        visualState = channelVisualState,
+        scheduleDays = DosingScheduleDaysUiState(selectedDays),
+        doseProgress = DosingDoseProgressUiState(
+            dailyDoseMl = dailyDose,
+            deliveredTodayMl = delivered,
+            doseMilestonesMl = runtime.doseMilestonesMl
+                .filter { it.isFinite() && it > 0.0 && it <= dailyDose + PROGRESS_EPSILON },
+            visualState = progressVisualState
+        )
     )
 } ?: this
 
@@ -111,3 +131,6 @@ private val ALL_DOSING_WEEKDAYS = listOf(
     DosingWeekday.SATURDAY,
     DosingWeekday.SUNDAY
 )
+
+private val NON_ERROR_RUNTIME_REASONS = setOf("none", "programDisabled", "busy")
+private const val PROGRESS_EPSILON = 0.000_001
