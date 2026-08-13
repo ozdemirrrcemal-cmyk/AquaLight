@@ -44,9 +44,15 @@ class DeviceRuntimeModuleProvider internal constructor(
         timerAccessProvider
     )
     private val dosingStateStore = DeviceDosingRuntimeStateStore()
-    private val dosingEventReducer = DeviceDosingTypedEventReducer(
+    private val dosingRepository = DeviceDosingRuntimeRepository(
+        commandGateway,
         dosingStateStore,
         dosingAccessProvider
+    )
+    private val dosingEventReducer = DeviceDosingTypedEventReducer(
+        dosingStateStore,
+        dosingAccessProvider,
+        dosingRepository::acceptStatusChange
     )
 
     val device = DeviceCommonRuntimeRepository(commandGateway)
@@ -64,16 +70,12 @@ class DeviceRuntimeModuleProvider internal constructor(
 
     val timer = DeviceTimerRuntimeRepository(commandGateway, timerStateStore, timerAccessProvider)
     val cooling = DeviceCoolingRuntimeRepository(commandGateway, coolingStateStore)
-    val dosing = DeviceDosingRuntimeRepository(
-        commandGateway,
-        dosingStateStore,
-        dosingAccessProvider
-    )
+    val dosing: DeviceDosingRuntimeRepository = dosingRepository
     val light = DeviceLightRuntimeRepository(commandGateway, lightStateStore)
     val lightTemperatureProtection =
         DeviceLightTemperatureProtectionRuntimeRepository(commandGateway, lightStateStore)
 
-    internal fun acceptTypedRuntimeEvent(event: DeviceRuntimeTypedEvent) {
+    internal suspend fun acceptTypedRuntimeEvent(event: DeviceRuntimeTypedEvent) {
         lightEventReducer.apply(event)
         coolingEventReducer.apply(event)
         timerEventReducer.apply(event)
