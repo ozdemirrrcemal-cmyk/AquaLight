@@ -143,25 +143,41 @@ class DeviceDosingPlanFragment :
                     dailyDoseMicroliters = draft.distributedDailyDoseMicroliters,
                     startTimeMs = draft.hourlyStartTimeMs
                 )
-            DosingPlanScheduleMode.CUSTOM -> DeviceDosingPlanFragmentDirections
-                .actionDeviceDosingPlanFragmentToDeviceDosingCustomScheduleFragment(
-                    deviceUid = args.deviceUid,
-                    slotId = args.slotId,
-                    channelTitle = args.channelTitle,
-                    pumpCount = args.pumpCount,
-                    channelNumber = args.channelNumber,
-                    dailyDoseMicroliters = draft.distributedDailyDoseMicroliters,
-                    periodsDraft = DeviceDosingCustomScheduleContract.encodeDraft(draft.customPeriods)
-                )
-            DosingPlanScheduleMode.TIMER -> DeviceDosingPlanFragmentDirections
-                .actionDeviceDosingPlanFragmentToDeviceDosingTimerScheduleFragment(
-                    deviceUid = args.deviceUid,
-                    slotId = args.slotId,
-                    channelTitle = args.channelTitle,
-                    pumpCount = args.pumpCount,
-                    channelNumber = args.channelNumber,
-                    dosesDraft = DeviceDosingTimerScheduleContract.encodeDraft(draft.timerDoses)
-                )
+            DosingPlanScheduleMode.CUSTOM -> {
+                val maxPeriods = viewModel.currentMaxCustomPeriodsPerChannel()
+                val maxEvents = viewModel.currentMaxEventsPerChannel()
+                if (maxPeriods <= 0 || maxEvents <= 0) return
+                DeviceDosingPlanFragmentDirections
+                    .actionDeviceDosingPlanFragmentToDeviceDosingCustomScheduleFragment(
+                        deviceUid = args.deviceUid,
+                        slotId = args.slotId,
+                        channelTitle = args.channelTitle,
+                        pumpCount = args.pumpCount,
+                        channelNumber = args.channelNumber,
+                        dailyDoseMicroliters = draft.distributedDailyDoseMicroliters,
+                        periodsDraft = DeviceDosingCustomScheduleContract.encodeEditorPayload(
+                            periods = draft.customPeriods,
+                            maxPeriods = maxPeriods,
+                            maxDoseCount = maxEvents
+                        )
+                    )
+            }
+            DosingPlanScheduleMode.TIMER -> {
+                val maxEvents = viewModel.currentMaxEventsPerChannel()
+                if (maxEvents <= 0) return
+                DeviceDosingPlanFragmentDirections
+                    .actionDeviceDosingPlanFragmentToDeviceDosingTimerScheduleFragment(
+                        deviceUid = args.deviceUid,
+                        slotId = args.slotId,
+                        channelTitle = args.channelTitle,
+                        pumpCount = args.pumpCount,
+                        channelNumber = args.channelNumber,
+                        dosesDraft = DeviceDosingTimerScheduleContract.encodeEditorPayload(
+                            doses = draft.timerDoses,
+                            maxDoseCount = maxEvents
+                        )
+                    )
+            }
         }
         navController.navigate(direction)
     }
