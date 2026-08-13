@@ -1,0 +1,28 @@
+{
+  "fixtureVersion": 1,
+  "contract": "aqualight.dosing.v1",
+  "supportedModes": ["single", "hourly24", "customPeriods", "timer"],
+  "weekdayOrder": ["monday", "tuesday", "wednesday", "thursday", "friday", "saturday", "sunday"],
+  "limits": {
+    "amountResolutionMl": 0.001,
+    "maxEventsPerChannel": 24,
+    "maxCustomPeriodsPerChannel": 24,
+    "scheduledDispatchGraceMs": 2000,
+    "missedDoseRecoveryWindowMs": 900000,
+    "minPumpRunDurationMs": 100,
+    "maxPumpRunDurationMs": 3600000,
+    "maxManualDoseMl": 1000.0
+  },
+  "supports": {
+    "weekdayRecurrence": true,
+    "missedDoseRecovery": true,
+    "channelReset": true,
+    "dailyDeliveredUsage": true
+  },
+  "effectiveScheduledDoseExamples": [
+    {"doseMsPerMl": 1000, "available": true, "minDoseMl": 0.100, "maxDoseMl": 3600.0},
+    {"doseMsPerMl": 1500, "available": true, "minDoseMl": 0.067, "maxDoseMl": 2400.0},
+    {"doseMsPerMl": 0, "available": false, "minDoseMl": null, "maxDoseMl": null}
+  ],
+  "publication": {"live": true, "sourceOfTruth": "firmware"}
+}
