@@ -6,17 +6,36 @@ import com.aqua.aqualight.data.devices.model.DeviceCapabilitySet
 import com.aqua.aqualight.data.devices.model.DeviceFamily
 import com.aqua.aqualight.data.devices.model.DeviceLimitSet
 import com.aqua.aqualight.data.devices.model.DeviceRuntimeModules
+import com.aqua.aqualight.data.devices.model.DeviceUid
+import com.aqua.aqualight.data.devices.runtime.core.DeviceRuntimeCommand
+import com.aqua.aqualight.data.devices.runtime.core.DeviceRuntimeCommandGateway
+import com.aqua.aqualight.data.devices.runtime.core.DeviceRuntimeCommandOutcome
 import com.aqua.aqualight.data.devices.runtime.modules.dosing.contract.DeviceDosingRuntimeAccess
+import com.aqua.aqualight.data.devices.runtime.modules.dosing.models.DeviceDosingCalibrationFinishPayload
+import com.aqua.aqualight.data.devices.runtime.modules.dosing.models.DeviceDosingCalibrationStartPayload
+import com.aqua.aqualight.data.devices.runtime.modules.dosing.models.DeviceDosingDistributedProgramConfig
+import com.aqua.aqualight.data.devices.runtime.modules.dosing.models.DeviceDosingDoseNowPayload
+import com.aqua.aqualight.data.devices.runtime.modules.dosing.models.DeviceDosingProgram
+import com.aqua.aqualight.data.devices.runtime.modules.dosing.models.DeviceDosingProgramMode
+import com.aqua.aqualight.data.devices.runtime.modules.dosing.repository.DeviceDosingRuntimeRepository
+import com.aqua.aqualight.data.devices.runtime.modules.dosing.state.DeviceDosingRuntimeStateStore
+import kotlinx.coroutines.runBlocking
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
 import org.junit.Test
 
 class DeviceDosingCapabilityGateTest {
-
     @Test
-    fun `exact Dose Pro metadata enables dedicated Dosing capabilities`() {
-        val access = resolve()
+    fun `Dose Pro metadata enables dedicated Dosing runtime without Timer engine`() {
+        val access = DeviceDosingRuntimeAccess.resolve(
+            family = DeviceFamily.DOSING,
+            capabilities = capabilities(dosing = true),
+            limits = DeviceLimitSet(0, 0, 0, 0, 2),
+            features = DOSING_FEATURES,
+            screens = DOSING_SCREENS,
+            modules = modules(dosing = true)
+        )
 
         assertTrue(access.supportsApi)
         assertEquals(2, access.channelCount)
@@ -30,20 +49,13 @@ class DeviceDosingCapabilityGateTest {
     }
 
     @Test
-    fun `any standalone Timer identity rejects Dosing runtime access`() {
-        val access = resolve(
-            capabilities = capabilities(dosing = true, standaloneTimer = true),
-            limits = DeviceLimitSet(0, 0, 0, 2, 2),
-            modules = modules(dosing = true, timerApi = true, timerEngine = true)
-        )
-
-        assertFalse(access.supportsApi)
-        assertEquals(0, access.channelCount)
-    }
-
-    @Test
-    fun `timer engine flag alone rejects Dose Pro metadata`() {
-        val access = resolve(
+    fun `Dosing metadata with Timer engine is rejected`() {
+        val access = DeviceDosingRuntimeAccess.resolve(
+            family = DeviceFamily.DOSING,
+            capabilities = capabilities(dosing = true),
+            limits = DeviceLimitSet(0, 0, 0, 0, 2),
+            features = DOSING_FEATURES,
+            screens = DOSING_SCREENS,
             modules = modules(dosing = true, timerEngine = true)
         )
 
@@ -51,32 +63,73 @@ class DeviceDosingCapabilityGateTest {
     }
 
     @Test
-    fun `missing program surface disables program editing without inventing fallback`() {
-        val access = resolve(
-            screens = DOSING_SCREENS - AqlDeviceScreenKey.DOSING_SCHEDULES
+    fun `standalone Timer metadata never resolves to Dosing API access`() {
+        val access = DeviceDosingRuntimeAccess.resolve(
+            family = DeviceFamily.TIMER,
+            capabilities = capabilities(standaloneTimer = true),
+            limits = DeviceLimitSet(0, 0, 0, 2, 0),
+            features = setOf(AqlDeviceFeatureKey.TIMER_CONTROL),
+            screens = setOf(AqlDeviceScreenKey.TIMER_CONTROL),
+            modules = modules(timerApi = true, timerEngine = true)
         )
 
-        assertTrue(access.supportsApi)
-        assertFalse(access.supportsProgramEditing)
+        assertFalse(access.supportsApi)
+        assertEquals(0, access.channelCount)
     }
 
-    private fun resolve(
-        family: DeviceFamily = DeviceFamily.DOSING,
-        capabilities: DeviceCapabilitySet = capabilities(dosing = true),
-        limits: DeviceLimitSet = DeviceLimitSet(0, 0, 0, 0, 2),
-        features: Set<AqlDeviceFeatureKey> = DOSING_FEATURES,
-        screens: Set<AqlDeviceScreenKey> = DOSING_SCREENS,
-        modules: DeviceRuntimeModules = modules(dosing = true)
-    ) = DeviceDosingRuntimeAccess.resolve(
-        family = family,
-        capabilities = capabilities,
-        limits = limits,
-        features = features,
-        screens = screens,
-        modules = modules
-    )
+    @Test
+    fun `unavailable Dosing access rejects every command family before gateway`() = runBlocking {
+        val gateway = RejectingGateway()
+        val repository = DeviceDosingRuntimeRepository(
+            gateway,
+            DeviceDosingRuntimeStateStore()
+        ) { DeviceDosingRuntimeAccess.UNAVAILABLE }
+        val program = DeviceDosingProgram(
+            enabled = true,
+            weekdays = List(7) { true },
+            mode = DeviceDosingProgramMode.SINGLE,
+            missedDoseRecoveryEnabled = false,
+            config = DeviceDosingDistributedProgramConfig(10.0, 28_800_000L)
+        )
+
+        val outcomes = listOf(
+            repository.requestStatus(DEVICE_UID),
+            repository.requestChannelStatus(DEVICE_UID, "channel1"),
+            repository.setChannelDisplayName(DEVICE_UID, "channel1", "Macro"),
+            repository.saveProgram(DEVICE_UID, "channel1", program),
+            repository.resetChannel(DEVICE_UID, "channel1"),
+            repository.primeStart(DEVICE_UID, "channel1"),
+            repository.primeStop(DEVICE_UID, "channel1"),
+            repository.calibrationStart(DEVICE_UID, DeviceDosingCalibrationStartPayload("channel1")),
+            repository.calibrationFinish(
+                DEVICE_UID,
+                DeviceDosingCalibrationFinishPayload("channel1", 5.0)
+            ),
+            repository.calibrationConfirm(DEVICE_UID, "channel1"),
+            repository.calibrationCancel(DEVICE_UID, "channel1"),
+            repository.doseNow(DEVICE_UID, DeviceDosingDoseNowPayload("channel1", 5.0)),
+            repository.doseStop(DEVICE_UID, "channel1"),
+            repository.reservoirRefill(DEVICE_UID, "channel1")
+        )
+
+        assertTrue(outcomes.all { it is DeviceRuntimeCommandOutcome.UnsupportedByDevice })
+        assertEquals(0, gateway.calls)
+    }
+
+    private class RejectingGateway : DeviceRuntimeCommandGateway {
+        var calls = 0
+        override suspend fun <T> execute(
+            deviceUid: DeviceUid,
+            command: DeviceRuntimeCommand<T>,
+            timeoutMillis: Long
+        ): DeviceRuntimeCommandOutcome<T> {
+            calls++
+            error("Unsupported Dosing operation reached the command gateway.")
+        }
+    }
 
     private companion object {
+        val DEVICE_UID = DeviceUid("AQL-DOSING-GATE")
         val DOSING_FEATURES = setOf(
             AqlDeviceFeatureKey.DOSING_CONTROL,
             AqlDeviceFeatureKey.DOSING_CALIBRATION,
@@ -93,8 +146,8 @@ class DeviceDosingCapabilityGateTest {
         )
 
         fun capabilities(
-            dosing: Boolean = false,
-            standaloneTimer: Boolean = false
+            standaloneTimer: Boolean = false,
+            dosing: Boolean = false
         ) = DeviceCapabilitySet(
             light = false,
             manualLight = false,
@@ -111,9 +164,9 @@ class DeviceDosingCapabilityGateTest {
         )
 
         fun modules(
-            dosing: Boolean = false,
             timerApi: Boolean = false,
-            timerEngine: Boolean = false
+            timerEngine: Boolean = false,
+            dosing: Boolean = false
         ) = DeviceRuntimeModules(
             light = false,
             cooling = false,
