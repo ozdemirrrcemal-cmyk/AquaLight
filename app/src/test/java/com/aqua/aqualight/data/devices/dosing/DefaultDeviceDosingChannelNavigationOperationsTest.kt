@@ -143,13 +143,14 @@ class DefaultDeviceDosingChannelNavigationOperationsTest {
         effectiveName: String = DEFAULT_CHANNEL_NAME
     ): DeviceDosingChannelStatus = DeviceDosingStatusParser.parseChannel(
         DeviceDosingRuntimeFixtures.channelStatus(
-            calibrated = calibrated,
+            displayName = effectiveName,
             program = if (calibrated) {
                 DeviceDosingRuntimeFixtures.singleProgram()
             } else {
                 null
             },
-            effectiveName = effectiveName
+            lastCalibratedAt = if (calibrated) CALIBRATED_AT else 0L,
+            doseMsPerMl = if (calibrated) 1_000L else 0L
         )
     )
 
