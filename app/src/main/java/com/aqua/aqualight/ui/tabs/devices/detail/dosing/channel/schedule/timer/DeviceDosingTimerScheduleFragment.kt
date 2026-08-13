@@ -82,6 +82,7 @@ class DeviceDosingTimerScheduleFragment :
                 DeviceDosingTimerScheduleScreen(
                     state = DeviceDosingTimerScheduleUiState(
                         doses = doses,
+                        maxDoseCount = editorPayload.maxDoseCount,
                         validationMessage = validationMessageRes?.let(::getString)
                     ),
                     onAction = ::handleScheduleAction
