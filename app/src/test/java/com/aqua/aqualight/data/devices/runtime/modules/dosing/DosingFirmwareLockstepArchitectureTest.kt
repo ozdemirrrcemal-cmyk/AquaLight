@@ -8,8 +8,8 @@ import org.junit.Test
 class DosingFirmwareLockstepArchitectureTest {
 
     @Test
-    fun `production source sets contain no legacy dosing schedule contract`() {
-        productionKotlinSources().forEach { source ->
+    fun `Dosing production source sets contain no legacy schedule contract`() {
+        dosingProductionSources().forEach { source ->
             FORBIDDEN_LEGACY_TOKENS.forEach { token ->
                 assertFalse("Legacy Dosing token '$token' remains in ${source.path}", source.text.contains(token))
             }
@@ -17,7 +17,7 @@ class DosingFirmwareLockstepArchitectureTest {
     }
 
     @Test
-    fun `dosing production sources never depend on standalone timer runtime`() {
+    fun `Dosing production sources never depend on standalone Timer runtime`() {
         dosingProductionSources().forEach { source ->
             assertFalse(source.text.contains("runtime.modules.timer"))
             assertFalse(source.text.contains("DeviceTimerRuntime"))
@@ -25,7 +25,7 @@ class DosingFirmwareLockstepArchitectureTest {
     }
 
     @Test
-    fun `final dosing contract exposes program reset revision status and live metadata`() {
+    fun `final Dosing contract exposes program reset revision status and live metadata`() {
         val models = source(MODELS)
         val repository = source(REPOSITORY)
         val parser = source(STATUS_PARSER)
@@ -57,7 +57,7 @@ class DosingFirmwareLockstepArchitectureTest {
     }
 
     @Test
-    fun `dosing editor capacities are firmware supplied not application product constants`() {
+    fun `Dosing editor capacities are firmware supplied not application product constants`() {
         val policy = source(SCHEDULE_POLICY)
         val channelOperations = source(CHANNEL_OPERATIONS)
         val planViewModel = source(PLAN_VIEW_MODEL)
