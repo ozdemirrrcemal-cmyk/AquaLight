@@ -32,6 +32,7 @@ internal class DeviceDosingReservoirViewModel(
 
     private var bound: BoundChannel? = null
     private var dirty = false
+    private var canonicalRefillEligible = false
     private var observeJob: Job? = null
 
     fun bind(deviceUid: String, slotId: String, restoredDraft: DeviceDosingReservoirDraft?) {
@@ -40,7 +41,7 @@ internal class DeviceDosingReservoirViewModel(
         if (bound == target) return
         bound = target
         dirty = restoredDraft != null
-        restoredDraft?.let { mutableDraft.value = it.copy(busy = false) }
+        restoredDraft?.let { mutableDraft.value = it.copy(busy = false, refillAvailable = false) }
         observeJob?.cancel()
         observeJob = viewModelScope.launch {
             operations.observe(target.deviceUid, target.slotId).collect { snapshot ->
@@ -127,6 +128,9 @@ internal class DeviceDosingReservoirViewModel(
 
     private fun publish(snapshot: DeviceDosingChannelSnapshot) {
         val reservoir = snapshot.reservoir
+        canonicalRefillEligible = reservoir.trackingEnabled &&
+            reservoir.capacityMl != null &&
+            !snapshot.active
         val current = mutableDraft.value
         mutableDraft.value = current.copy(
             reservoirCapacityMl = if (dirty) current.reservoirCapacityMl else reservoir.capacityMl,
@@ -134,9 +138,6 @@ internal class DeviceDosingReservoirViewModel(
             remainingMl = reservoir.remainingMl,
             remainingPercent = reservoir.remainingPercent,
             accountingCertain = reservoir.accountingCertain,
-            refillAvailable = reservoir.trackingEnabled &&
-                reservoir.capacityMl != null &&
-                !snapshot.active,
             busy = current.busy
         )
         updateActionAvailability()
@@ -151,7 +152,7 @@ internal class DeviceDosingReservoirViewModel(
         }
         mutableDraft.value = state.copy(
             saveEnabled = dirty && validConfiguration && !state.busy,
-            refillAvailable = state.refillAvailable && !state.busy
+            refillAvailable = canonicalRefillEligible && !dirty && !state.busy
         )
     }
 
