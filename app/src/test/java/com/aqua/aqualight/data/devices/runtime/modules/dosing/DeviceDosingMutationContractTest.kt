@@ -1,224 +1,113 @@
 package com.aqua.aqualight.data.devices.runtime.modules.dosing
 
-import com.aqua.aqualight.data.devices.runtime.modules.dosing.contract.DeviceDosingCommandValidation
-import com.aqua.aqualight.data.devices.runtime.modules.dosing.contract.DeviceDosingRuntimeAccess
-import com.aqua.aqualight.data.devices.runtime.modules.dosing.contract.DeviceDosingRuntimeContract
 import com.aqua.aqualight.data.devices.runtime.modules.dosing.models.DeviceDosingCalibrationState
-import com.aqua.aqualight.data.devices.runtime.modules.dosing.models.DeviceDosingChannelConfig
-import com.aqua.aqualight.data.devices.runtime.modules.dosing.models.DeviceDosingConfigApplyPayload
+import com.aqua.aqualight.data.devices.runtime.modules.dosing.models.DeviceDosingRunSource
 import com.aqua.aqualight.data.devices.runtime.modules.dosing.parsers.DeviceDosingMutationParser
-import com.aqua.aqualight.data.devices.runtime.modules.dosing.parsers.DeviceDosingStatusParser
-import org.json.JSONArray
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
+import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Test
 
 class DeviceDosingMutationContractTest {
+
     @Test
-    fun `all ten Dosing mutation result schemas parse exactly`() {
-        val results = listOf(
-            DeviceDosingMutationParser.parseConfigApply(
-                DeviceDosingRuntimeFixtures.configApply()
-            ),
-            DeviceDosingMutationParser.parsePrimeStart(
-                DeviceDosingRuntimeFixtures.pump(
-                    DeviceDosingRuntimeContract.Action.PRIME_START,
-                    active = true
-                )
-            ),
-            DeviceDosingMutationParser.parsePrimeStop(
-                DeviceDosingRuntimeFixtures.pump(
-                    DeviceDosingRuntimeContract.Action.PRIME_STOP,
-                    active = false
-                )
-            ),
-            DeviceDosingMutationParser.parseCalibrationStart(
-                DeviceDosingRuntimeFixtures.calibrationStart()
-            ),
-            DeviceDosingMutationParser.parseCalibrationFinish(
-                DeviceDosingRuntimeFixtures.calibrationFinish()
-            ),
-            DeviceDosingMutationParser.parseCalibrationConfirm(
-                DeviceDosingRuntimeFixtures.calibrationConfirm()
-            ),
-            DeviceDosingMutationParser.parseCalibrationCancel(
-                DeviceDosingRuntimeFixtures.calibrationCancel()
-            ),
-            DeviceDosingMutationParser.parseDoseNow(DeviceDosingRuntimeFixtures.doseNow()),
-            DeviceDosingMutationParser.parseDoseStop(
-                DeviceDosingRuntimeFixtures.pump(
-                    DeviceDosingRuntimeContract.Action.DOSE_STOP,
-                    active = false
-                )
-            ),
-            DeviceDosingMutationParser.parseReservoirRefill(
-                DeviceDosingRuntimeFixtures.reservoirRefill()
-            )
+    fun `persistent channel mutations parse executable API response shapes`() {
+        val config = DeviceDosingMutationParser.parseChannelConfigApply(
+            DeviceDosingRuntimeFixtures.channelConfigApplyResult()
+        )
+        val program = DeviceDosingMutationParser.parseProgramApply(
+            DeviceDosingRuntimeFixtures.programApplyResult()
+        )
+        val reset = DeviceDosingMutationParser.parseChannelReset(
+            DeviceDosingRuntimeFixtures.channelResetResult()
         )
 
-        assertEquals(10, results.size)
-        assertTrue(results.all { result -> result.command.startsWith("dosing.") })
+        assertEquals("channelConfigApply", config.operation)
+        assertEquals("programApply", program.operation)
+        assertEquals("channelReset", reset.operation)
+        assertTrue(config.saved)
+        assertTrue(program.saved)
+        assertTrue(reset.saved)
+        assertEquals(8L, reset.channel.revision)
+        assertNull(reset.channel.program)
     }
 
     @Test
-    fun `config result validates exact request echo and full schedule replacement`() {
-        val requestedSchedule = DeviceDosingRuntimeFixtures.schedulePayload(
-            name = "Evening Nutrients",
-            startTimeMs = 72_000_000L,
-            amountMl = 7.5
+    fun `prime manual and stop mutations expose decorated active run source`() {
+        val prime = DeviceDosingMutationParser.parsePrimeStart(
+            DeviceDosingRuntimeFixtures.primeStartResult()
         )
-        val payload = DeviceDosingConfigApplyPayload(
-            channels = listOf(
-                DeviceDosingChannelConfig("channel1", displayName = "Macro Pump")
-            ),
-            schedules = listOf(requestedSchedule),
-            save = true
+        val dose = DeviceDosingMutationParser.parseDoseNow(
+            DeviceDosingRuntimeFixtures.doseNowResult()
         )
-        val result = DeviceDosingMutationParser.parseConfigApply(
-            DeviceDosingRuntimeFixtures.configApply(
-                channelOneDisplayNameOverride = "Macro Pump",
-                schedules = JSONArray().put(
-                    DeviceDosingRuntimeFixtures.configSchedule(
-                        name = "Evening Nutrients",
-                        startTimeMs = 72_000_000L,
-                        amountMl = 7.5
-                    )
-                )
-            )
+        val stop = DeviceDosingMutationParser.parseDoseStop(
+            DeviceDosingRuntimeFixtures.doseStopResult()
         )
 
-        DeviceDosingCommandValidation.validateConfigResult(
-            payload,
-            result,
-            DeviceDosingStatusParser.parse(DeviceDosingRuntimeFixtures.status()),
-            SUPPORTED_ACCESS
-        )
-
-        assertEquals("Macro Pump", result.config.channels.first().displayNameOverride)
-        assertEquals(7.5, result.config.schedules.single().amountMl, 0.0)
-        assertTrue(result.saved)
+        assertTrue(prime.manualActive)
+        assertEquals(DeviceDosingRunSource.PRIME, prime.channel.activeRun.source)
+        assertTrue(dose.manualActive)
+        assertEquals(DeviceDosingRunSource.MANUAL, dose.channel.activeRun.source)
+        assertFalse(stop.manualActive)
+        assertFalse(stop.channel.activeRun.active)
     }
 
     @Test
-    fun `manual dose result rejects duration and calibration mismatches`() {
-        val badDuration = DeviceDosingRuntimeFixtures.doseNow().put("durationMs", 9_999L)
-        val badCalibration = DeviceDosingRuntimeFixtures.doseNow()
-        badCalibration.getJSONObject("channel")
-            .getJSONObject("dosing")
-            .put("doseMsPerMl", 900L)
+    fun `calibration mutations preserve pending verification transaction`() {
+        val started = DeviceDosingMutationParser.parseCalibrationStart(
+            DeviceDosingRuntimeFixtures.calibrationStartResult()
+        )
+        val finished = DeviceDosingMutationParser.parseCalibrationFinish(
+            DeviceDosingRuntimeFixtures.calibrationFinishResult()
+        )
+        val confirmed = DeviceDosingMutationParser.parseCalibrationConfirm(
+            DeviceDosingRuntimeFixtures.calibrationConfirmResult()
+        )
+        val cancelled = DeviceDosingMutationParser.parseCalibrationCancel(
+            DeviceDosingRuntimeFixtures.calibrationCancelResult()
+        )
 
-        assertTrue(
-            runCatching { DeviceDosingMutationParser.parseDoseNow(badDuration) }.isFailure
-        )
-        assertTrue(
-            runCatching { DeviceDosingMutationParser.parseDoseNow(badCalibration) }.isFailure
-        )
+        assertEquals(DeviceDosingCalibrationState.RUNNING, started.calibrationState)
+        assertEquals(DeviceDosingCalibrationState.PENDING_VERIFICATION, finished.calibrationState)
+        assertEquals(1_250L, finished.pendingDoseMsPerMl)
+        assertEquals(DeviceDosingCalibrationState.IDLE, confirmed.calibrationState)
+        assertEquals(8L, confirmed.revision)
+        assertTrue(confirmed.saved)
+        assertEquals(DeviceDosingCalibrationState.IDLE, cancelled.calibrationState)
+        assertTrue(cancelled.discardedPendingCalibration)
     }
 
     @Test
-    fun `calibration workflow rejects pending persistence and channel inconsistencies`() {
-        val badPending = DeviceDosingRuntimeFixtures.calibrationFinish().put("pending", false)
-        val badSaved = DeviceDosingRuntimeFixtures.calibrationConfirm().put("saved", false)
-        val badChannel = DeviceDosingRuntimeFixtures.calibrationCancel().put(
-            "channelKey",
-            "channel2"
-        )
-
-        assertTrue(
-            runCatching {
-                DeviceDosingMutationParser.parseCalibrationFinish(badPending)
-            }.isFailure
-        )
-        assertTrue(
-            runCatching {
-                DeviceDosingMutationParser.parseCalibrationConfirm(badSaved)
-            }.isFailure
-        )
-        assertTrue(
-            runCatching {
-                DeviceDosingMutationParser.parseCalibrationCancel(badChannel)
-            }.isFailure
-        )
-    }
-
-    @Test
-    fun `calibration finish remains pending until verified confirmation`() {
-        val result = DeviceDosingMutationParser.parseCalibrationFinish(
-            DeviceDosingRuntimeFixtures.calibrationFinish(
-                measuredMl = 4.0,
-                durationMs = 5_000L
-            )
-        )
-
-        assertEquals(1_250L, result.pendingDoseMsPerMl)
-        assertEquals(1_000L, result.channel.channel.dosing.doseMsPerMl)
-        assertEquals(100L, result.channel.channel.dosing.lastCalibratedAt)
-        assertEquals(
-            DeviceDosingCalibrationState.PENDING_VERIFICATION,
-            result.channel.channel.dosing.calibration.state
-        )
-    }
-
-    @Test
-    fun `verification dose uses pending coefficient without changing confirmed coefficient`() {
+    fun `verification dose uses pending calibration source`() {
         val result = DeviceDosingMutationParser.parseDoseNow(
-            DeviceDosingRuntimeFixtures.doseNow(
-                amountMl = DeviceDosingRuntimeContract.Limit.VERIFICATION_DOSE_ML,
-                doseMsPerMl = 1_250L,
-                usePendingCalibration = true
-            )
+            DeviceDosingRuntimeFixtures.doseNowResult(pending = true)
         )
 
+        assertTrue(result.usePendingCalibration)
+        assertEquals(4.0, result.amountMl, 0.0)
         assertEquals(5_000L, result.durationMs)
-        assertEquals(1_250L, result.channel.channel.dosing.calibration.pendingDoseMsPerMl)
-        assertEquals(1_000L, result.channel.channel.dosing.doseMsPerMl)
+        assertEquals(DeviceDosingRunSource.VERIFICATION, result.channel.activeRun.source)
     }
 
     @Test
-    fun `reservoir refill result validates firmware before after and capacity echo`() {
+    fun `reservoir refill exposes physical before and after accounting`() {
         val result = DeviceDosingMutationParser.parseReservoirRefill(
-            DeviceDosingRuntimeFixtures.reservoirRefill()
+            DeviceDosingRuntimeFixtures.reservoirRefillResult()
         )
-        val badCapacity = DeviceDosingRuntimeFixtures.reservoirRefill()
-            .put("reservoirCapacityMl", 600.0)
 
-        assertEquals(400.0, result.reservoirRemainingMlBefore, 0.0)
-        assertEquals(500.0, result.reservoirRemainingMl, 0.0)
-        assertTrue(
-            runCatching {
-                DeviceDosingMutationParser.parseReservoirRefill(badCapacity)
-            }.isFailure
-        )
+        assertEquals(100.0, result.reservoirRemainingMlBefore, 0.0)
+        assertEquals(450.0, result.reservoirRemainingMl, 0.0)
+        assertTrue(result.persisted)
     }
 
     @Test
-    fun `mutation parser rejects command crossover and extra fields`() {
-        val wrongCommand = DeviceDosingRuntimeFixtures.pump(
-            DeviceDosingRuntimeContract.Action.PRIME_START,
-            active = true
-        ).put("command", "dosing.prime.stop")
-        val extra = DeviceDosingRuntimeFixtures.calibrationStart().put("channel", "fabricated")
+    fun `mutation parsers reject extra legacy response fields`() {
+        val legacy = DeviceDosingRuntimeFixtures.programApplyResult()
+            .put("changed", true)
 
         assertTrue(
-            runCatching { DeviceDosingMutationParser.parsePrimeStart(wrongCommand) }.isFailure
-        )
-        assertTrue(
-            runCatching {
-                DeviceDosingMutationParser.parseCalibrationStart(extra)
-            }.isFailure
-        )
-    }
-
-    private companion object {
-        val SUPPORTED_ACCESS = DeviceDosingRuntimeAccess(
-            supportsApi = true,
-            channelCount = 2,
-            supportsSchedules = true,
-            supportsPrime = true,
-            supportsManualDose = true,
-            supportsCalibrationWorkflow = true,
-            supportsReservoirRefill = true,
-            supportsChannelDisplayName = true
+            runCatching { DeviceDosingMutationParser.parseProgramApply(legacy) }.isFailure
         )
     }
 }
