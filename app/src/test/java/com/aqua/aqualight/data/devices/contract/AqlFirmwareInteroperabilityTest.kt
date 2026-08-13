@@ -203,7 +203,7 @@ class AqlFirmwareInteroperabilityTest {
                 assertFalse(modules.timerApi)
                 assertFalse(modules.timerEngine)
                 assertFalse(product.profile.capabilities.standaloneTimer)
-                assertEquals(0, product.profile.limits.timerChannelCount)
+                assertEquals(0, product.limits.timerChannelCount)
             }
     }
 
