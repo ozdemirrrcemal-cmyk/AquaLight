@@ -25,7 +25,7 @@ import com.aqua.aqualight.data.care.CareTaskDataStoreManager
 import com.aqua.aqualight.data.care.DefaultMaintenanceOperations
 import com.aqua.aqualight.data.care.integrity.restoreTaskSnapshotsForIntegrity
 import com.aqua.aqualight.data.care.integrity.snapshotTasksForIntegrity
-import com.aqua.aqualight.data.devices.DefaultDeviceDosingChannelNavigationOperations
+import com.aqua.aqualight.data.devices.dosing.DefaultDeviceDosingChannelNavigationOperations
 import com.aqua.aqualight.data.devices.DefaultDeviceRootOperations
 import com.aqua.aqualight.data.devices.DefaultDeviceStatusOperations
 import com.aqua.aqualight.data.devices.DefaultOwnerDevicesOperations
