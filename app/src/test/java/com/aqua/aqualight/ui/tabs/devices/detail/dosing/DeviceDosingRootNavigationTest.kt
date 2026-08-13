@@ -1,8 +1,8 @@
 package com.aqua.aqualight.ui.tabs.devices.detail.dosing
 
-import com.aqua.aqualight.application.devices.DeviceDosingChannelDestination
-import com.aqua.aqualight.application.devices.DeviceDosingChannelNavigationOperations
-import com.aqua.aqualight.application.devices.DeviceDosingChannelNavigationTarget
+import com.aqua.aqualight.application.devices.dosing.DeviceDosingChannelDestination
+import com.aqua.aqualight.application.devices.dosing.DeviceDosingChannelNavigationOperations
+import com.aqua.aqualight.application.devices.dosing.DeviceDosingChannelNavigationTarget
 import com.aqua.aqualight.application.devices.DeviceRootOperations
 import com.aqua.aqualight.application.devices.DeviceRootSnapshot
 import com.aqua.aqualight.application.devices.OwnerDeviceAvailability

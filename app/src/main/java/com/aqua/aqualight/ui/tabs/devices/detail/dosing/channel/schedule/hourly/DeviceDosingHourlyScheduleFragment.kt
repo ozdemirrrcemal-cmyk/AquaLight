@@ -12,7 +12,7 @@ import androidx.navigation.fragment.findNavController
 import androidx.navigation.fragment.navArgs
 import com.aqua.aqualight.R
 import com.aqua.aqualight.ui.common.bottomsheet.AquaTimePickerBottomSheet
-import com.aqua.aqualight.ui.tabs.devices.detail.dosing.channel.DeviceDosingChannelDestinationFragment
+import com.aqua.aqualight.ui.tabs.devices.detail.dosing.channel.common.DeviceDosingChannelDestinationFragment
 
 /** Draft editor for the 24-dose hourly schedule of one centrally identified Dosing channel. */
 class DeviceDosingHourlyScheduleFragment :
@@ -113,9 +113,7 @@ class DeviceDosingHourlyScheduleFragment :
 
     private fun saveDraft() {
         val navController = findNavController()
-        if (navController.currentDestination?.id != R.id.deviceDosingHourlyScheduleFragment) {
-            return
-        }
+        if (navController.currentDestination?.id != R.id.deviceDosingHourlyScheduleFragment) return
         parentFragmentManager.setFragmentResult(
             DeviceDosingHourlyScheduleContract.RESULT_REQUEST_KEY,
             bundleOf(

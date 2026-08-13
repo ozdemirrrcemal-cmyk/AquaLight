@@ -4,31 +4,44 @@ import android.os.Bundle
 import android.text.InputType
 import android.text.format.DateFormat
 import android.view.View
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.platform.ComposeView
 import androidx.compose.ui.platform.ViewCompositionStrategy
+import androidx.fragment.app.viewModels
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.fragment.findNavController
 import androidx.navigation.fragment.navArgs
 import com.aqua.aqualight.R
+import com.aqua.aqualight.composition.requireAppContainer
 import com.aqua.aqualight.ui.common.bottomsheet.TextInputBottomSheet
 import com.aqua.aqualight.ui.common.dialog.ConfirmDialogFragment
-import com.aqua.aqualight.ui.tabs.devices.detail.dosing.channel.DeviceDosingChannelDestinationFragment
+import com.aqua.aqualight.ui.tabs.devices.detail.dosing.channel.common.DeviceDosingChannelDestinationFragment
 import com.aqua.aqualight.utils.DialogType
 import java.util.Date
 import java.util.concurrent.TimeUnit
 
-/** Detail destination for one centrally identified, calibrated Dosing channel. */
+/** Navigation/render host for one centrally identified Dosing channel. */
 class DeviceDosingChannelDetailFragment :
     DeviceDosingChannelDestinationFragment(R.layout.fragment_device_dosing_channel_detail) {
 
     private val args: DeviceDosingChannelDetailFragmentArgs by navArgs()
+    private val viewModel: DeviceDosingChannelDetailViewModel by viewModels {
+        requireContext().requireAppContainer().defaultViewModelFactory
+    }
 
     override val destinationTitle: String
-        get() = args.channelTitle
-            .ifBlank { getString(R.string.device_family_dosing) }
+        get() = args.channelTitle.ifBlank { getString(R.string.device_family_dosing) }
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
-        if (args.lastCalibratedAtEpochSeconds !in 1L..MAX_EPOCH_SECONDS) {
+        viewModel.bind(
+            lastCalibratedAtEpochSeconds = args.lastCalibratedAtEpochSeconds,
+            restoredMissedDoseRecoveryEnabled = savedInstanceState?.getBoolean(
+                STATE_MISSED_DOSE_RECOVERY_ENABLED,
+                false
+            ) ?: false
+        )
+        if (!viewModel.currentDraft().routeValid) {
             findNavController().navigateUp()
             return
         }
@@ -41,18 +54,37 @@ class DeviceDosingChannelDetailFragment :
             pumpCount = args.pumpCount,
             channelNumber = args.channelNumber
         )
-        val lastCalibrationDate = formatLastCalibrationDate(
-            args.lastCalibratedAtEpochSeconds
+        setupContent(
+            view = view,
+            lastCalibrationDate = formatLastCalibrationDate(args.lastCalibratedAtEpochSeconds)
         )
+    }
+
+    override fun onSaveInstanceState(outState: Bundle) {
+        outState.putBoolean(
+            STATE_MISSED_DOSE_RECOVERY_ENABLED,
+            viewModel.currentDraft().missedDoseRecoveryEnabled
+        )
+        super.onSaveInstanceState(outState)
+    }
+
+    private fun setupContent(view: View, lastCalibrationDate: String) {
         view.findViewById<ComposeView>(R.id.channelDetailContent).apply {
             setViewCompositionStrategy(ViewCompositionStrategy.DisposeOnViewTreeLifecycleDestroyed)
             setContent {
+                val draft by viewModel.draft.collectAsStateWithLifecycle()
                 DeviceDosingChannelDetailScreen(
-                    lastCalibrationDate = lastCalibrationDate,
-                    onMenuItemClick = ::openMenuItem,
-                    onRecalibrateClick = ::openRecalibration,
-                    onManualDoseClick = ::showManualDoseEditor,
-                    onResetChannelClick = ::showResetChannelConfirmation
+                    state = DeviceDosingChannelDetailUiState(
+                        lastCalibrationDate = lastCalibrationDate,
+                        missedDoseRecoveryEnabled = draft.missedDoseRecoveryEnabled
+                    ),
+                    actions = DeviceDosingChannelDetailActions(
+                        onMenuItemClick = ::openMenuItem,
+                        onRecalibrateClick = ::openRecalibration,
+                        onMissedDoseRecoveryChange = viewModel::setMissedDoseRecoveryEnabled,
+                        onManualDoseClick = ::showManualDoseEditor,
+                        onResetChannelClick = ::showResetChannelConfirmation
+                    )
                 )
             }
         }
@@ -90,27 +122,32 @@ class DeviceDosingChannelDetailFragment :
 
     private fun openMenuItem(item: DosingDetailMenuItem) {
         val navController = findNavController()
-        if (navController.currentDestination?.id != R.id.deviceDosingChannelDetailFragment) {
-            return
-        }
-        navController.navigate(
-            DeviceDosingChannelDetailFragmentDirections
-                .actionDeviceDosingChannelDetailFragmentToDeviceDosingChannelMenuFragment(
+        if (navController.currentDestination?.id != R.id.deviceDosingChannelDetailFragment) return
+
+        val direction = when (item) {
+            DosingDetailMenuItem.DOSING_PLAN -> DeviceDosingChannelDetailFragmentDirections
+                .actionDeviceDosingChannelDetailFragmentToDeviceDosingPlanFragment(
                     deviceUid = args.deviceUid,
                     slotId = args.slotId,
                     channelTitle = args.channelTitle,
                     pumpCount = args.pumpCount,
-                    channelNumber = args.channelNumber,
-                    menuKey = item.routeKey
+                    channelNumber = args.channelNumber
                 )
-        )
+            DosingDetailMenuItem.RESERVOIR -> DeviceDosingChannelDetailFragmentDirections
+                .actionDeviceDosingChannelDetailFragmentToDeviceDosingReservoirFragment(
+                    deviceUid = args.deviceUid,
+                    slotId = args.slotId,
+                    channelTitle = args.channelTitle,
+                    pumpCount = args.pumpCount,
+                    channelNumber = args.channelNumber
+                )
+        }
+        navController.navigate(direction)
     }
 
     private fun openRecalibration() {
         val navController = findNavController()
-        if (navController.currentDestination?.id != R.id.deviceDosingChannelDetailFragment) {
-            return
-        }
+        if (navController.currentDestination?.id != R.id.deviceDosingChannelDetailFragment) return
         navController.navigate(
             DeviceDosingChannelDetailFragmentDirections
                 .actionDeviceDosingChannelDetailFragmentToDeviceDosingChannelCalibrationFragment(
@@ -172,12 +209,12 @@ class DeviceDosingChannelDetailFragment :
     }
 
     private companion object {
+        const val STATE_MISSED_DOSE_RECOVERY_ENABLED = "dosing_missed_dose_recovery_enabled"
         const val MANUAL_DOSE_REQUEST_KEY = "dosing_manual_dose_input"
         const val MANUAL_DOSE_PAYLOAD_ID = "manual_dose"
         const val MANUAL_DOSE_MAX_LENGTH = 7
         const val MANUAL_DOSE_MINIMUM_EXCLUSIVE = 0.0
         const val RESET_CONFIRM_REQUEST_KEY = "dosing_channel_reset_confirm"
         const val ACTION_RESET_CHANNEL = "reset_dosing_channel"
-        const val MAX_EPOCH_SECONDS = 0xFFFF_FFFFL
     }
 }

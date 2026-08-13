@@ -7,8 +7,8 @@ import com.aqua.aqualight.BuildConfig
 import com.aqua.aqualight.composition.ActiveOwnerDependencyGraphResolver
 import com.aqua.aqualight.composition.AppContainer
 import com.aqua.aqualight.composition.OwnerDependencyGraph
-import com.aqua.aqualight.data.devices.DefaultDeviceDosingCalibrationOperations
-import com.aqua.aqualight.data.devices.DefaultDeviceDosingChannelNavigationOperations
+import com.aqua.aqualight.data.devices.dosing.DefaultDeviceDosingCalibrationOperations
+import com.aqua.aqualight.data.devices.dosing.DefaultDeviceDosingChannelNavigationOperations
 import com.aqua.aqualight.data.devices.DefaultDeviceRootOperations
 import com.aqua.aqualight.data.devices.DefaultOwnerDevicesOperations
 import com.aqua.aqualight.data.devices.menu.DefaultDeviceMenuAccessOperations

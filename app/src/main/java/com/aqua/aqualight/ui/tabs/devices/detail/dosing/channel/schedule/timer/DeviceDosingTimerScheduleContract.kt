@@ -1,11 +1,14 @@
 package com.aqua.aqualight.ui.tabs.devices.detail.dosing.channel.schedule.timer
 
-internal data class DeviceDosingTimerDose(
-    val startTimeMs: Long,
-    val amountMicroliters: Long
-)
+import com.aqua.aqualight.application.devices.dosing.DeviceDosingScheduleDraftLimits
+import com.aqua.aqualight.application.devices.dosing.DeviceDosingScheduleTimeDraftPolicy
+import com.aqua.aqualight.application.devices.dosing.DeviceDosingTimerDoseDraft
+import com.aqua.aqualight.application.devices.dosing.DeviceDosingTimerScheduleDraftPolicy
+import com.aqua.aqualight.application.devices.dosing.DeviceDosingTimerScheduleValidationError
 
-/** Typed UI boundary for up to 24 independent time-and-amount doses. */
+internal typealias DeviceDosingTimerDose = DeviceDosingTimerDoseDraft
+
+/** UI transport boundary; timer validity is owned by application policy. */
 internal object DeviceDosingTimerScheduleContract {
     const val RESULT_REQUEST_KEY = "dosing_timer_schedule_result"
     const val RESULT_KEY = "dosing_timer_schedule_result_state"
@@ -13,48 +16,30 @@ internal object DeviceDosingTimerScheduleContract {
     const val RESULT_SLOT_ID = "dosing_timer_schedule_slot_id"
     const val RESULT_SAVED = "saved"
 
-    const val MAX_DOSES_PER_DAY = 24
-    const val MILLIS_PER_MINUTE = 60_000L
-    const val MINUTES_PER_DAY = 24 * 60
-    const val LAST_MINUTE_START_MS = (MINUTES_PER_DAY - 1) * MILLIS_PER_MINUTE
+    const val MAX_DOSES_PER_DAY = DeviceDosingScheduleDraftLimits.MAX_DOSES_PER_DAY
+    const val MILLIS_PER_MINUTE = DeviceDosingScheduleDraftLimits.MILLIS_PER_MINUTE
+    const val MINUTES_PER_DAY = DeviceDosingScheduleDraftLimits.MINUTES_PER_DAY
+    const val LAST_MINUTE_START_MS = DeviceDosingScheduleDraftLimits.LAST_MINUTE_START_MS
 
-    enum class ValidationError {
-        INVALID_DOSE,
-        TOO_MANY_DOSES,
-        DUPLICATE_TIME,
-        TOTAL_OVERFLOW
-    }
+    enum class ValidationError { INVALID_DOSE, TOO_MANY_DOSES, DUPLICATE_TIME, TOTAL_OVERFLOW }
 
-    fun startTimeMs(minutesOfDay: Int): Long {
-        require(minutesOfDay in 0 until MINUTES_PER_DAY) {
-            "minutesOfDay must be inside one day."
-        }
-        return minutesOfDay * MILLIS_PER_MINUTE
-    }
+    fun startTimeMs(minutesOfDay: Int): Long =
+        DeviceDosingScheduleTimeDraftPolicy.startTimeMs(minutesOfDay)
 
-    fun minutesOfDay(timeMs: Long): Int {
-        require(isValidTime(timeMs)) { "timeMs must be minute-aligned inside one day." }
-        return (timeMs / MILLIS_PER_MINUTE).toInt()
-    }
+    fun minutesOfDay(timeMs: Long): Int =
+        DeviceDosingScheduleTimeDraftPolicy.minutesOfDay(timeMs)
 
     fun isValidTime(timeMs: Long): Boolean =
-        timeMs in 0L..LAST_MINUTE_START_MS && timeMs % MILLIS_PER_MINUTE == 0L
+        DeviceDosingScheduleTimeDraftPolicy.isValidTime(timeMs)
 
-    fun validate(doses: List<DeviceDosingTimerDose>): ValidationError? = when {
-        doses.any { dose -> !isValidTimerDose(dose) } -> ValidationError.INVALID_DOSE
-        doses.size > MAX_DOSES_PER_DAY -> ValidationError.TOO_MANY_DOSES
-        hasDuplicateTimerTime(doses) -> ValidationError.DUPLICATE_TIME
-        runCatching { totalDoseMicroliters(doses) }.isFailure -> ValidationError.TOTAL_OVERFLOW
-        else -> null
-    }
+    fun validate(doses: List<DeviceDosingTimerDose>): ValidationError? =
+        DeviceDosingTimerScheduleDraftPolicy.validate(doses)?.toUiError()
 
-    fun normalize(doses: List<DeviceDosingTimerDose>): List<DeviceDosingTimerDose> {
-        require(validate(doses) == null) { "Timer doses are invalid." }
-        return doses.sortedBy(DeviceDosingTimerDose::startTimeMs)
-    }
+    fun normalize(doses: List<DeviceDosingTimerDose>): List<DeviceDosingTimerDose> =
+        DeviceDosingTimerScheduleDraftPolicy.normalize(doses)
 
     fun totalDoseMicroliters(doses: List<DeviceDosingTimerDose>): Long =
-        doses.fold(0L) { total, dose -> Math.addExact(total, dose.amountMicroliters) }
+        DeviceDosingTimerScheduleDraftPolicy.totalDoseMicroliters(doses)
 
     fun encodeDraft(doses: List<DeviceDosingTimerDose>): String =
         normalize(doses).joinToString(DOSE_SEPARATOR) { dose ->
@@ -63,29 +48,28 @@ internal object DeviceDosingTimerScheduleContract {
 
     fun decodeDraft(encoded: String): List<DeviceDosingTimerDose>? = when {
         encoded.isBlank() -> emptyList()
-        else -> runCatching { decodeTimerDoses(encoded) }
-            .getOrNull()
+        else -> runCatching { decodeTimerDoses(encoded) }.getOrNull()
             ?.takeIf { doses -> validate(doses) == null }
             ?.let(::normalize)
     }
-
 }
 
-private fun isValidTimerDose(dose: DeviceDosingTimerDose): Boolean =
-    DeviceDosingTimerScheduleContract.isValidTime(dose.startTimeMs) &&
-        dose.amountMicroliters > 0L
-
-private fun hasDuplicateTimerTime(doses: List<DeviceDosingTimerDose>): Boolean =
-    doses.map(DeviceDosingTimerDose::startTimeMs).distinct().size != doses.size
+private fun DeviceDosingTimerScheduleValidationError.toUiError() = when (this) {
+    DeviceDosingTimerScheduleValidationError.INVALID_DOSE ->
+        DeviceDosingTimerScheduleContract.ValidationError.INVALID_DOSE
+    DeviceDosingTimerScheduleValidationError.TOO_MANY_DOSES ->
+        DeviceDosingTimerScheduleContract.ValidationError.TOO_MANY_DOSES
+    DeviceDosingTimerScheduleValidationError.DUPLICATE_TIME ->
+        DeviceDosingTimerScheduleContract.ValidationError.DUPLICATE_TIME
+    DeviceDosingTimerScheduleValidationError.TOTAL_OVERFLOW ->
+        DeviceDosingTimerScheduleContract.ValidationError.TOTAL_OVERFLOW
+}
 
 private fun decodeTimerDoses(encoded: String): List<DeviceDosingTimerDose> =
     encoded.split(DOSE_SEPARATOR).map { entry ->
         val fields = entry.split(FIELD_SEPARATOR)
         require(fields.size == DOSE_FIELD_COUNT)
-        DeviceDosingTimerDose(
-            startTimeMs = fields[0].toLong(),
-            amountMicroliters = fields[1].toLong()
-        )
+        DeviceDosingTimerDose(fields[0].toLong(), fields[1].toLong())
     }
 
 private const val DOSE_SEPARATOR = ";"

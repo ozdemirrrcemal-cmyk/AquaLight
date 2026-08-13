@@ -1,14 +1,14 @@
 package com.aqua.aqualight.ui.tabs.devices.detail.dosing.channel.schedule.custom
 
-import com.aqua.aqualight.ui.tabs.devices.detail.dosing.channel.schedule.DeviceDosingScheduleAmountContract
+import com.aqua.aqualight.application.devices.dosing.DeviceDosingCustomPeriodDraft
+import com.aqua.aqualight.application.devices.dosing.DeviceDosingCustomScheduleDraftPolicy
+import com.aqua.aqualight.application.devices.dosing.DeviceDosingCustomScheduleValidationError
+import com.aqua.aqualight.application.devices.dosing.DeviceDosingScheduleDraftLimits
+import com.aqua.aqualight.application.devices.dosing.DeviceDosingScheduleTimeDraftPolicy
 
-internal data class DeviceDosingCustomPeriod(
-    val startTimeMs: Long,
-    val endTimeMs: Long,
-    val doseCount: Int
-)
+internal typealias DeviceDosingCustomPeriod = DeviceDosingCustomPeriodDraft
 
-/** Typed UI boundary for a daily amount distributed across explicit time periods. */
+/** UI transport boundary; schedule validity is owned by application policy. */
 internal object DeviceDosingCustomScheduleContract {
     const val RESULT_REQUEST_KEY = "dosing_custom_schedule_result"
     const val RESULT_KEY = "dosing_custom_schedule_result_state"
@@ -16,99 +16,61 @@ internal object DeviceDosingCustomScheduleContract {
     const val RESULT_SLOT_ID = "dosing_custom_schedule_slot_id"
     const val RESULT_SAVED = "saved"
 
-    const val MAX_DOSES_PER_DAY = 24
-    const val MILLIS_PER_MINUTE = 60_000L
-    const val MINUTES_PER_DAY = 24 * 60
-    const val LAST_MINUTE_START_MS = (MINUTES_PER_DAY - 1) * MILLIS_PER_MINUTE
+    const val MAX_DOSES_PER_DAY = DeviceDosingScheduleDraftLimits.MAX_DOSES_PER_DAY
+    const val MILLIS_PER_MINUTE = DeviceDosingScheduleDraftLimits.MILLIS_PER_MINUTE
+    const val MINUTES_PER_DAY = DeviceDosingScheduleDraftLimits.MINUTES_PER_DAY
+    const val LAST_MINUTE_START_MS = DeviceDosingScheduleDraftLimits.LAST_MINUTE_START_MS
 
-    enum class ValidationError {
-        INVALID_PERIOD,
-        TOO_MANY_DOSES,
-        OVERLAPPING_PERIODS
-    }
+    enum class ValidationError { INVALID_PERIOD, TOO_MANY_DOSES, OVERLAPPING_PERIODS }
 
-    fun startTimeMs(minutesOfDay: Int): Long {
-        require(minutesOfDay in 0 until MINUTES_PER_DAY) {
-            "minutesOfDay must be inside one day."
-        }
-        return minutesOfDay * MILLIS_PER_MINUTE
-    }
+    fun startTimeMs(minutesOfDay: Int): Long =
+        DeviceDosingScheduleTimeDraftPolicy.startTimeMs(minutesOfDay)
 
-    fun minutesOfDay(timeMs: Long): Int {
-        require(isValidTime(timeMs)) { "timeMs must be minute-aligned inside one day." }
-        return (timeMs / MILLIS_PER_MINUTE).toInt()
-    }
+    fun minutesOfDay(timeMs: Long): Int =
+        DeviceDosingScheduleTimeDraftPolicy.minutesOfDay(timeMs)
 
     fun isValidTime(timeMs: Long): Boolean =
-        timeMs in 0L..LAST_MINUTE_START_MS && timeMs % MILLIS_PER_MINUTE == 0L
+        DeviceDosingScheduleTimeDraftPolicy.isValidTime(timeMs)
 
-    fun validate(periods: List<DeviceDosingCustomPeriod>): ValidationError? = when {
-        periods.any { period -> !isValidCustomPeriod(period) } -> ValidationError.INVALID_PERIOD
-        totalDoseCount(periods) > MAX_DOSES_PER_DAY -> ValidationError.TOO_MANY_DOSES
-        customPeriodsOverlap(periods) -> ValidationError.OVERLAPPING_PERIODS
-        else -> null
-    }
+    fun validate(periods: List<DeviceDosingCustomPeriod>): ValidationError? =
+        DeviceDosingCustomScheduleDraftPolicy.validate(periods)?.toUiError()
 
-    fun normalize(periods: List<DeviceDosingCustomPeriod>): List<DeviceDosingCustomPeriod> {
-        require(validate(periods) == null) { "Custom periods are invalid." }
-        return periods.sortedBy(DeviceDosingCustomPeriod::startTimeMs)
-    }
+    fun normalize(periods: List<DeviceDosingCustomPeriod>): List<DeviceDosingCustomPeriod> =
+        DeviceDosingCustomScheduleDraftPolicy.normalize(periods)
 
     fun totalDoseCount(periods: List<DeviceDosingCustomPeriod>): Int =
-        periods.sumOf(DeviceDosingCustomPeriod::doseCount)
+        DeviceDosingCustomScheduleDraftPolicy.totalDoseCount(periods)
 
-    fun averageDoseMl(
-        dailyDoseMicroliters: Long,
-        periods: List<DeviceDosingCustomPeriod>
-    ): Double {
-        require(dailyDoseMicroliters >= 0L) { "dailyDoseMicroliters must not be negative." }
-        val count = totalDoseCount(periods)
-        return if (count == 0) {
-            0.0
-        } else {
-            DeviceDosingScheduleAmountContract.milliliters(dailyDoseMicroliters) / count
-        }
-    }
+    fun averageDoseMl(dailyDoseMicroliters: Long, periods: List<DeviceDosingCustomPeriod>): Double =
+        DeviceDosingCustomScheduleDraftPolicy.averageDoseMl(dailyDoseMicroliters, periods)
 
     fun encodeDraft(periods: List<DeviceDosingCustomPeriod>): String =
         normalize(periods).joinToString(PERIOD_SEPARATOR) { period ->
-            listOf(period.startTimeMs, period.endTimeMs, period.doseCount)
-                .joinToString(FIELD_SEPARATOR)
+            listOf(period.startTimeMs, period.endTimeMs, period.doseCount).joinToString(FIELD_SEPARATOR)
         }
 
     fun decodeDraft(encoded: String): List<DeviceDosingCustomPeriod>? = when {
         encoded.isBlank() -> emptyList()
-        else -> runCatching { decodeCustomPeriods(encoded) }
-            .getOrNull()
+        else -> runCatching { decodeCustomPeriods(encoded) }.getOrNull()
             ?.takeIf { periods -> validate(periods) == null }
             ?.let(::normalize)
     }
-
 }
 
-private fun isValidCustomPeriod(period: DeviceDosingCustomPeriod): Boolean =
-    hasValidCustomTimeRange(period) &&
-        period.doseCount in 1..DeviceDosingCustomScheduleContract.MAX_DOSES_PER_DAY
-
-private fun hasValidCustomTimeRange(period: DeviceDosingCustomPeriod): Boolean =
-    DeviceDosingCustomScheduleContract.isValidTime(period.startTimeMs) &&
-        DeviceDosingCustomScheduleContract.isValidTime(period.endTimeMs) &&
-        period.endTimeMs > period.startTimeMs
-
-private fun customPeriodsOverlap(periods: List<DeviceDosingCustomPeriod>): Boolean = periods
-    .sortedBy(DeviceDosingCustomPeriod::startTimeMs)
-    .zipWithNext()
-    .any { (first, second) -> second.startTimeMs <= first.endTimeMs }
+private fun DeviceDosingCustomScheduleValidationError.toUiError() = when (this) {
+    DeviceDosingCustomScheduleValidationError.INVALID_PERIOD ->
+        DeviceDosingCustomScheduleContract.ValidationError.INVALID_PERIOD
+    DeviceDosingCustomScheduleValidationError.TOO_MANY_DOSES ->
+        DeviceDosingCustomScheduleContract.ValidationError.TOO_MANY_DOSES
+    DeviceDosingCustomScheduleValidationError.OVERLAPPING_PERIODS ->
+        DeviceDosingCustomScheduleContract.ValidationError.OVERLAPPING_PERIODS
+}
 
 private fun decodeCustomPeriods(encoded: String): List<DeviceDosingCustomPeriod> =
     encoded.split(PERIOD_SEPARATOR).map { entry ->
         val fields = entry.split(FIELD_SEPARATOR)
         require(fields.size == PERIOD_FIELD_COUNT)
-        DeviceDosingCustomPeriod(
-            startTimeMs = fields[0].toLong(),
-            endTimeMs = fields[1].toLong(),
-            doseCount = fields[2].toInt()
-        )
+        DeviceDosingCustomPeriod(fields[0].toLong(), fields[1].toLong(), fields[2].toInt())
     }
 
 private const val PERIOD_SEPARATOR = ";"

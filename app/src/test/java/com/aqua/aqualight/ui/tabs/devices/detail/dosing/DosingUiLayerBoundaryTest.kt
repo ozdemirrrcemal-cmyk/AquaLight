@@ -47,7 +47,7 @@ class DosingUiLayerBoundaryTest {
     fun `channel navigation stays behind central catalog runtime and route boundaries`() {
         val rootFragment = source(DOSING_SOURCE_ROOT + "DeviceDosingRootFragment.kt")
         val operations = source(
-            "app/src/main/java/com/aqua/aqualight/data/devices/" +
+            "app/src/main/java/com/aqua/aqualight/data/devices/dosing/" +
                 "DefaultDeviceDosingChannelNavigationOperations.kt"
         )
         val navigator = source(
@@ -69,6 +69,103 @@ class DosingUiLayerBoundaryTest {
         assertTrue(appGraph.contains("deviceDosingChannelCalibrationFragment"))
         assertTrue(appGraph.contains("deviceDosingChannelDetailFragment"))
     }
+
+    @Test
+    fun `dosing ui never reaches data or runtime modules directly`() {
+        dosingSources().forEach { source ->
+            assertFalse(source.contains("com.aqua.aqualight.data.devices"))
+            assertFalse(source.contains("runtime.modules"))
+            assertFalse(source.contains("DevicesRepository"))
+            assertFalse(source.contains("DeviceDosingRuntimeRepository"))
+        }
+    }
+
+    @Test
+    fun `calibration lifecycle safety is owned by application boundary`() {
+        val workflow = source(
+            DOSING_SOURCE_ROOT + "channel/calibration/DosingCalibrationWorkflow.kt"
+        )
+        val applicationBoundary = source(
+            "app/src/main/java/com/aqua/aqualight/application/devices/dosing/" +
+                "DeviceDosingCalibrationOperations.kt"
+        )
+
+        assertTrue(workflow.contains("operations.exitSafely("))
+        assertTrue(workflow.contains("operations.primeSafetyStop("))
+        assertTrue(workflow.contains("operations.awaitPrimeSafetyStop("))
+        assertFalse(workflow.contains("stopVerificationDose("))
+        assertFalse(workflow.contains("DeviceDosingCalibrationSessionPhase"))
+        assertFalse(workflow.contains("delay("))
+        assertFalse(workflow.contains("PRIME_SAFETY_TIMEOUT_MS"))
+
+        assertTrue(applicationBoundary.contains("suspend fun exitSafely("))
+        assertTrue(applicationBoundary.contains("suspend fun awaitPrimeSafetyStop("))
+        assertTrue(applicationBoundary.contains("delay(constraints.primeSafetyTimeoutMs)"))
+        assertTrue(applicationBoundary.contains("verificationDoseStarted"))
+        assertTrue(applicationBoundary.contains("DeviceDosingCalibrationSessionPhase.IDLE"))
+        assertTrue(applicationBoundary.contains("primeSafetyTimeoutMs"))
+    }
+
+    @Test
+    fun `schedule business validity is delegated to application policy`() {
+        val amount = source(
+            DOSING_SOURCE_ROOT + "channel/schedule/DeviceDosingScheduleAmountContract.kt"
+        )
+        val custom = source(
+            DOSING_SOURCE_ROOT +
+                "channel/schedule/custom/DeviceDosingCustomScheduleContract.kt"
+        )
+        val timer = source(
+            DOSING_SOURCE_ROOT +
+                "channel/schedule/timer/DeviceDosingTimerScheduleContract.kt"
+        )
+        val policy = source(
+            "app/src/main/java/com/aqua/aqualight/application/devices/dosing/" +
+                "DeviceDosingScheduleDraftPolicy.kt"
+        )
+
+        assertTrue(amount.contains("DeviceDosingAmountDraftPolicy"))
+        assertTrue(custom.contains("DeviceDosingCustomScheduleDraftPolicy"))
+        assertTrue(timer.contains("DeviceDosingTimerScheduleDraftPolicy"))
+        assertFalse(custom.contains("zipWithNext()"))
+        assertFalse(timer.contains("Math.addExact"))
+        assertFalse(custom.contains("const val MAX_DOSES_PER_DAY = 24"))
+        assertFalse(timer.contains("const val MAX_DOSES_PER_DAY = 24"))
+
+        assertTrue(policy.contains("const val MAX_DOSES_PER_DAY = 24"))
+        assertTrue(policy.contains("periodsOverlap"))
+        assertTrue(policy.contains("hasDuplicateTime"))
+        assertTrue(policy.contains("Math.addExact"))
+    }
+
+    @Test
+    fun `dosing child fragments delegate feature state to viewmodels`() {
+        val plan = source(DOSING_SOURCE_ROOT + "channel/plan/DeviceDosingPlanFragment.kt")
+        val reservoir = source(
+            DOSING_SOURCE_ROOT + "channel/reservoir/DeviceDosingReservoirFragment.kt"
+        )
+        val detail = source(
+            DOSING_SOURCE_ROOT + "channel/detail/DeviceDosingChannelDetailFragment.kt"
+        )
+
+        assertFragmentUsesStateOwner(plan, "DeviceDosingPlanViewModel")
+        assertFragmentUsesStateOwner(reservoir, "DeviceDosingReservoirViewModel")
+        assertFragmentUsesStateOwner(detail, "DeviceDosingChannelDetailViewModel")
+    }
+
+    private fun assertFragmentUsesStateOwner(source: String, viewModelName: String) {
+        assertTrue(source.contains(viewModelName))
+        assertTrue(source.contains("collectAsStateWithLifecycle"))
+        assertTrue(source.contains("defaultViewModelFactory"))
+        assertFalse(source.contains("mutableStateOf"))
+        assertFalse(source.contains("mutableDoubleStateOf"))
+    }
+
+    private fun dosingSources(): List<String> = File(repositoryRoot, DOSING_SOURCE_ROOT)
+        .walkTopDown()
+        .filter { file -> file.isFile && file.extension == "kt" }
+        .map(File::readText)
+        .toList()
 
     private fun source(relativePath: String): String = File(repositoryRoot, relativePath).readText()
 

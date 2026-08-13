@@ -2,10 +2,10 @@
 
 package com.aqua.aqualight.debug.devices
 
-import com.aqua.aqualight.application.devices.DeviceDosingCalibrationOperations
-import com.aqua.aqualight.application.devices.DeviceDosingCalibrationResult
-import com.aqua.aqualight.application.devices.DeviceDosingCalibrationSessionPhase
-import com.aqua.aqualight.application.devices.DeviceDosingCalibrationSnapshot
+import com.aqua.aqualight.application.devices.dosing.DeviceDosingCalibrationOperations
+import com.aqua.aqualight.application.devices.dosing.DeviceDosingCalibrationResult
+import com.aqua.aqualight.application.devices.dosing.DeviceDosingCalibrationSessionPhase
+import com.aqua.aqualight.application.devices.dosing.DeviceDosingCalibrationSnapshot
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow

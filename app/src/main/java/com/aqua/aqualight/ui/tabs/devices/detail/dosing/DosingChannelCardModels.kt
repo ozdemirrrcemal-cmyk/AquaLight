@@ -3,8 +3,8 @@ package com.aqua.aqualight.ui.tabs.devices.detail.dosing
 import androidx.annotation.StringRes
 import androidx.compose.runtime.Immutable
 import com.aqua.aqualight.R
-import com.aqua.aqualight.application.devices.DeviceDosingChannelDestination
-import com.aqua.aqualight.application.devices.DeviceDosingChannelNavigationTarget
+import com.aqua.aqualight.application.devices.dosing.DeviceDosingChannelDestination
+import com.aqua.aqualight.application.devices.dosing.DeviceDosingChannelNavigationTarget
 import com.aqua.aqualight.application.devices.DeviceDosingChannelSlot
 
 /**

@@ -169,35 +169,35 @@
       "fields": ["fanKey", "displayName"]
     },
     "DeviceDosingCalibrationFinishPayload": {
-      "source": "app/src/main/java/com/aqua/aqualight/data/devices/runtime/modules/dosing/DeviceDosingModels.kt",
+      "source": "app/src/main/java/com/aqua/aqualight/data/devices/runtime/modules/dosing/models/DeviceDosingModels.kt",
       "fields": ["channelKey", "measuredMl"]
     },
     "DeviceDosingCalibrationStartPayload": {
-      "source": "app/src/main/java/com/aqua/aqualight/data/devices/runtime/modules/dosing/DeviceDosingModels.kt",
+      "source": "app/src/main/java/com/aqua/aqualight/data/devices/runtime/modules/dosing/models/DeviceDosingModels.kt",
       "fields": ["channelKey", "durationMs"]
     },
     "DeviceDosingChannelConfig": {
-      "source": "app/src/main/java/com/aqua/aqualight/data/devices/runtime/modules/dosing/DeviceDosingModels.kt",
+      "source": "app/src/main/java/com/aqua/aqualight/data/devices/runtime/modules/dosing/models/DeviceDosingModels.kt",
       "fields": ["channelKey", "displayName", "regime", "dosing"]
     },
     "DeviceDosingChannelDosingConfig": {
-      "source": "app/src/main/java/com/aqua/aqualight/data/devices/runtime/modules/dosing/DeviceDosingModels.kt",
+      "source": "app/src/main/java/com/aqua/aqualight/data/devices/runtime/modules/dosing/models/DeviceDosingModels.kt",
       "fields": ["doseMsPerMl", "lastCalibratedAt", "reservoirTrackingEnabled", "reservoirCapacityMl"]
     },
     "DeviceDosingChannelKeyPayload": {
-      "source": "app/src/main/java/com/aqua/aqualight/data/devices/runtime/modules/dosing/DeviceDosingModels.kt",
+      "source": "app/src/main/java/com/aqua/aqualight/data/devices/runtime/modules/dosing/models/DeviceDosingModels.kt",
       "fields": ["channelKey"]
     },
     "DeviceDosingConfigApplyPayload": {
-      "source": "app/src/main/java/com/aqua/aqualight/data/devices/runtime/modules/dosing/DeviceDosingModels.kt",
+      "source": "app/src/main/java/com/aqua/aqualight/data/devices/runtime/modules/dosing/models/DeviceDosingModels.kt",
       "fields": ["channels", "schedules", "save"]
     },
     "DeviceDosingDoseNowPayload": {
-      "source": "app/src/main/java/com/aqua/aqualight/data/devices/runtime/modules/dosing/DeviceDosingModels.kt",
+      "source": "app/src/main/java/com/aqua/aqualight/data/devices/runtime/modules/dosing/models/DeviceDosingModels.kt",
       "fields": ["channelKey", "amountMl", "usePendingCalibration"]
     },
     "DeviceDosingScheduleConfig": {
-      "source": "app/src/main/java/com/aqua/aqualight/data/devices/runtime/modules/dosing/DeviceDosingModels.kt",
+      "source": "app/src/main/java/com/aqua/aqualight/data/devices/runtime/modules/dosing/models/DeviceDosingModels.kt",
       "fields": ["enabled", "name", "channelKey", "weekdays", "startTimeMs", "intervalOnMs", "intervalOffMs", "repeatCount", "amountMl"]
     },
     "DeviceFirmwareOtaStartPayload": {

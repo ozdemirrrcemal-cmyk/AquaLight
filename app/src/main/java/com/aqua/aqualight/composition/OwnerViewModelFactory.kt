@@ -12,12 +12,12 @@ import com.aqua.aqualight.data.aquarium.devices.TankDeviceAssignmentRepository
 import com.aqua.aqualight.data.care.DefaultMaintenanceOperations
 import com.aqua.aqualight.data.care.integrity.restoreTaskSnapshotsForIntegrity
 import com.aqua.aqualight.data.care.integrity.snapshotTasksForIntegrity
-import com.aqua.aqualight.data.devices.DefaultDeviceDosingChannelNavigationOperations
-import com.aqua.aqualight.data.devices.DefaultDeviceDosingCalibrationOperations
 import com.aqua.aqualight.data.devices.DefaultDeviceFamilySettingsOperations
 import com.aqua.aqualight.data.devices.DefaultDeviceRootOperations
 import com.aqua.aqualight.data.devices.DefaultDeviceStatusOperations
 import com.aqua.aqualight.data.devices.DefaultOwnerDevicesOperations
+import com.aqua.aqualight.data.devices.dosing.DefaultDeviceDosingCalibrationOperations
+import com.aqua.aqualight.data.devices.dosing.DefaultDeviceDosingChannelNavigationOperations
 import com.aqua.aqualight.data.devices.menu.DefaultDeviceMenuAccessOperations
 import com.aqua.aqualight.data.devices.provisioning.DefaultProvisioningDiscoveryOperations
 import com.aqua.aqualight.data.devices.provisioning.DefaultProvisioningProgressOperations

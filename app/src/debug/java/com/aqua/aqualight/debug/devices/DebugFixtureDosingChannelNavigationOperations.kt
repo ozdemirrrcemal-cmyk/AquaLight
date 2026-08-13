@@ -1,8 +1,8 @@
 package com.aqua.aqualight.debug.devices
 
-import com.aqua.aqualight.application.devices.DeviceDosingChannelDestinationPolicy
-import com.aqua.aqualight.application.devices.DeviceDosingChannelNavigationOperations
-import com.aqua.aqualight.application.devices.DeviceDosingChannelNavigationTarget
+import com.aqua.aqualight.application.devices.dosing.DeviceDosingChannelDestinationPolicy
+import com.aqua.aqualight.application.devices.dosing.DeviceDosingChannelNavigationOperations
+import com.aqua.aqualight.application.devices.dosing.DeviceDosingChannelNavigationTarget
 import com.aqua.aqualight.application.devices.DeviceRootCatalogState
 import com.aqua.aqualight.application.devices.DeviceRootSnapshot
 import com.aqua.aqualight.application.devices.OwnerDeviceFamily
