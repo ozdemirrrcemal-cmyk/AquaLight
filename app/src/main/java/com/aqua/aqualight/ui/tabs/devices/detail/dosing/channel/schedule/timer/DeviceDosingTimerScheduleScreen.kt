@@ -63,11 +63,15 @@ private fun TimerScheduleContent(
         verticalArrangement = Arrangement.spacedBy(AquaDeviceMenuGeometry.sectionGap)
     ) {
         item(key = TIMER_HERO_KEY) { TimerScheduleHero() }
-        item(key = TIMER_SUMMARY_KEY) { TimerScheduleSummary(state.doses) }
+        item(key = TIMER_SUMMARY_KEY) {
+            TimerScheduleSummary(state.doses, state.maxDoseCount)
+        }
         state.validationMessage?.let { message ->
             item(key = TIMER_VALIDATION_KEY) { TimerScheduleValidation(message) }
         }
-        item(key = TIMER_DOSES_KEY) { TimerDosesSection(state.doses, onAction) }
+        item(key = TIMER_DOSES_KEY) {
+            TimerDosesSection(state.doses, state.maxDoseCount, onAction)
+        }
     }
 }
 
@@ -81,7 +85,10 @@ private fun TimerScheduleHero() {
 }
 
 @Composable
-private fun TimerScheduleSummary(doses: List<DeviceDosingTimerDose>) {
+private fun TimerScheduleSummary(
+    doses: List<DeviceDosingTimerDose>,
+    maxDoseCount: Int
+) {
     val totalDoseMicroliters = DeviceDosingTimerScheduleContract.totalDoseMicroliters(doses)
     AquaDeviceMenuSection(title = stringResource(R.string.device_dosing_timer_summary_section)) {
         AquaDeviceMenuValueRow(
@@ -99,7 +106,7 @@ private fun TimerScheduleSummary(doses: List<DeviceDosingTimerDose>) {
             value = stringResource(
                 R.string.device_dosing_timer_application_count_format,
                 doses.size,
-                DeviceDosingTimerScheduleContract.MAX_DOSES_PER_DAY
+                maxDoseCount
             ),
             description = stringResource(R.string.device_dosing_timer_application_count_description)
         )
@@ -121,6 +128,7 @@ private fun TimerScheduleValidation(message: String) {
 @Composable
 private fun TimerDosesSection(
     doses: List<DeviceDosingTimerDose>,
+    maxDoseCount: Int,
     onAction: (DeviceDosingTimerScheduleAction) -> Unit
 ) {
     AquaDeviceMenuSection(title = stringResource(R.string.device_dosing_timer_doses_section)) {
@@ -133,7 +141,7 @@ private fun TimerDosesSection(
             action = AquaDeviceMenuRowAction(
                 text = stringResource(R.string.device_dosing_schedule_add),
                 onClick = { onAction(DeviceDosingTimerScheduleAction.Add) },
-                enabled = doses.size < DeviceDosingTimerScheduleContract.MAX_DOSES_PER_DAY
+                enabled = doses.size < maxDoseCount
             )
         )
         if (doses.isEmpty()) {
