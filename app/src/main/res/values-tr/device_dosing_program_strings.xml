@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="device_dosing_reservoir_accounting_section">Rezervuar muhasebesi</string>
+    <string name="device_dosing_reservoir_accounting_state">Muhasebe durumu</string>
+    <string name="device_dosing_reservoir_accounting_certain">Doğrulandı</string>
+    <string name="device_dosing_reservoir_accounting_uncertain">Dikkat gerekiyor</string>
+    <string name="device_dosing_reservoir_refill_action">Rezervuarı dolu işaretle</string>
+</resources>
