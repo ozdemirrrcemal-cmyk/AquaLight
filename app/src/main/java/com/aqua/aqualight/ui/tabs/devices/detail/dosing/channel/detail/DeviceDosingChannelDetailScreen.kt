@@ -31,18 +31,22 @@ import com.aqua.aqualight.ui.common.devicemenu.aquaDeviceMenuTypography
 @Immutable
 internal data class DeviceDosingChannelDetailUiState(
     val lastCalibrationDate: String,
-    val missedDoseRecoveryEnabled: Boolean
+    val missedDoseRecoveryEnabled: Boolean,
+    val missedDoseRecoveryAvailable: Boolean,
+    val manualDoseAvailable: Boolean,
+    val channelResetAvailable: Boolean,
+    val interactionBusy: Boolean
 )
 
 internal data class DeviceDosingChannelDetailActions(
     val onMenuItemClick: (DosingDetailMenuItem) -> Unit,
     val onRecalibrateClick: () -> Unit,
     val onMissedDoseRecoveryChange: (Boolean) -> Unit,
-    val onManualDoseClick: () -> Unit,
-    val onResetChannelClick: () -> Unit
+    val onManualDoseClick: (() -> Unit)?,
+    val onResetChannelClick: (() -> Unit)?
 )
 
-/** Channel-level control center. Child features own their own destinations and state. */
+/** Channel-level control center driven by firmware-published Dosing capabilities. */
 @Composable
 internal fun DeviceDosingChannelDetailScreen(
     state: DeviceDosingChannelDetailUiState,
@@ -63,9 +67,7 @@ internal fun DeviceDosingChannelDetailScreen(
         ),
         verticalArrangement = Arrangement.spacedBy(AquaDeviceMenuGeometry.sectionGap)
     ) {
-        item(key = DETAIL_HERO_KEY) {
-            DosingDetailHero()
-        }
+        item(key = DETAIL_HERO_KEY) { DosingDetailHero() }
         items(
             items = DOSING_DETAIL_MENU_SECTIONS,
             key = DosingDetailMenuSection::titleRes
@@ -122,31 +124,32 @@ private fun DosingDetailSection(
                     onClick = { actions.onMenuItemClick(item) }
                 )
             }
-            if (section.hasMissedDoseRecoverySwitch) {
+            if (section.hasMissedDoseRecoverySwitch && state.missedDoseRecoveryAvailable) {
                 DosingMissedDoseRecoverySwitch(
                     checked = state.missedDoseRecoveryEnabled,
                     onCheckedChange = actions.onMissedDoseRecoveryChange
                 )
             }
-            if (section.hasManualDoseAction) {
+            if (section.hasManualDoseAction && state.manualDoseAvailable) {
                 if (section.items.isNotEmpty()) AquaDeviceMenuDivider()
-                DosingManualDoseAction(onClick = actions.onManualDoseClick)
+                DosingManualDoseAction(
+                    onClick = actions.onManualDoseClick.takeUnless { state.interactionBusy }
+                )
             }
-            if (section.hasResetChannelAction) {
+            if (section.hasResetChannelAction && state.channelResetAvailable) {
                 if (section.items.isNotEmpty() || section.hasManualDoseAction) {
                     AquaDeviceMenuDivider()
                 }
-                DosingResetChannelAction(onClick = actions.onResetChannelClick)
+                DosingResetChannelAction(
+                    onClick = actions.onResetChannelClick.takeUnless { state.interactionBusy }
+                )
             }
         }
     }
 }
 
 @Composable
-private fun DosingCalibrationAction(
-    lastCalibrationDate: String,
-    onClick: () -> Unit
-) {
+private fun DosingCalibrationAction(lastCalibrationDate: String, onClick: () -> Unit) {
     AquaDeviceMenuActionRow(
         content = AquaDeviceMenuRowContent(
             title = stringResource(R.string.device_dosing_detail_calibration_title),
@@ -189,7 +192,7 @@ private fun DosingMissedDoseRecoverySwitch(
 }
 
 @Composable
-private fun DosingManualDoseAction(onClick: () -> Unit) {
+private fun DosingManualDoseAction(onClick: (() -> Unit)?) {
     AquaDeviceMenuRow(
         content = AquaDeviceMenuRowContent(
             title = stringResource(R.string.device_dosing_detail_manual_title),
@@ -202,7 +205,7 @@ private fun DosingManualDoseAction(onClick: () -> Unit) {
 }
 
 @Composable
-private fun DosingResetChannelAction(onClick: () -> Unit) {
+private fun DosingResetChannelAction(onClick: (() -> Unit)?) {
     AquaDeviceMenuRow(
         content = AquaDeviceMenuRowContent(
             title = stringResource(R.string.device_dosing_detail_reset_title),
