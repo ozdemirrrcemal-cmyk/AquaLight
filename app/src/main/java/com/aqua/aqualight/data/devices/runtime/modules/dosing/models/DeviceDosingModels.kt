@@ -1,488 +1,438 @@
 package com.aqua.aqualight.data.devices.runtime.modules.dosing.models
 
-import com.aqua.aqualight.data.devices.runtime.modules.dosing.contract.DOSING_DEVICE_UPTIME_MAX_MS
-import com.aqua.aqualight.data.devices.runtime.modules.dosing.contract.DOSING_NON_NEGATIVE_LONG
-import com.aqua.aqualight.data.devices.runtime.modules.dosing.contract.DOSING_UNSET_CALIBRATION
-import com.aqua.aqualight.data.devices.runtime.modules.dosing.contract.DOSING_UNSET_RESERVOIR
-import com.aqua.aqualight.data.devices.runtime.modules.dosing.contract.DOSING_WEEKDAY_COUNT
 import com.aqua.aqualight.data.devices.runtime.modules.dosing.contract.DeviceDosingRuntimeContract
+import com.aqua.aqualight.data.devices.runtime.modules.dosing.contract.normalizeDosingChannelKey
 import org.json.JSONArray
 import org.json.JSONObject
-
-enum class DeviceDosingRegime(val wireValue: String) {
-    AUTO("Auto"),
-    ON("On"),
-    OFF("Off")
-}
 
 enum class DeviceDosingCalibrationState(val wireValue: String) {
     IDLE("idle"),
     RUNNING("running"),
-    PENDING_VERIFICATION("pendingVerification")
+    PENDING_VERIFICATION("pendingVerification");
+
+    companion object {
+        fun fromWire(value: String): DeviceDosingCalibrationState = entries.single { it.wireValue == value }
+    }
 }
 
-data class DeviceDosingRuntimeCapabilities(
-    val module: String,
-    val readOnly: Boolean,
-    val supportsConfigApply: Boolean,
-    val supportsSchedules: Boolean,
-    val supportsChannels: Boolean,
-    val supportsPrime: Boolean,
-    val supportsManualDose: Boolean,
-    val supportsCalibrationWorkflow: Boolean,
-    val supportsCalibrationSessionState: Boolean,
-    val supportsReservoirRefill: Boolean,
-    val event: String
+enum class DeviceDosingProgramMode(val wireValue: String) {
+    SINGLE("single"),
+    HOURLY_24("hourly24"),
+    CUSTOM_PERIODS("customPeriods"),
+    TIMER("timer");
+
+    companion object {
+        fun fromWire(value: String): DeviceDosingProgramMode = entries.single { it.wireValue == value }
+    }
+}
+
+enum class DeviceDosingRuntimeReason(val wireValue: String) {
+    NONE("none"),
+    PROGRAM_DISABLED("programDisabled"),
+    MISSING_CALIBRATION("missingCalibration"),
+    INVALID_TIME("invalidTime"),
+    RESERVOIR_UNAVAILABLE("reservoirUnavailable"),
+    ACCOUNTING_UNCERTAIN("accountingUncertain"),
+    UNSAFE_AFTER_CALIBRATION("unsafeAfterCalibration"),
+    BUSY("busy"),
+    INVALID_PROGRAM("invalidProgram");
+
+    companion object {
+        fun fromWire(value: String): DeviceDosingRuntimeReason = entries.single { it.wireValue == value }
+    }
+}
+
+enum class DeviceDosingRunSource(val wireValue: String) {
+    NONE("none"),
+    SCHEDULED("scheduled"),
+    MANUAL("manual"),
+    CALIBRATION("calibration"),
+    VERIFICATION("verification"),
+    PRIME("prime");
+
+    companion object {
+        fun fromWire(value: String): DeviceDosingRunSource = entries.single { it.wireValue == value }
+    }
+}
+
+data class DeviceDosingStatusEnvelope(
+    val supported: Boolean,
+    val schema: String,
+    val schemaVersion: Int,
+    val unit: String,
+    val channelCount: Int,
+    val uptimeMs: Long,
+    val bootReady: Boolean,
+    val storageHealthy: Boolean,
+    val storageIssue: String
+)
+
+data class DeviceDosingEffectiveScheduledDose(
+    val available: Boolean,
+    val minDoseMl: Double?,
+    val maxDoseMl: Double?
+)
+
+data class DeviceDosingSchedulingMetadata(
+    val contract: String,
+    val schemaVersion: Int,
+    val amountResolutionMl: Double,
+    val maxEventsPerChannel: Int,
+    val maxCustomPeriodsPerChannel: Int,
+    val scheduledDispatchGraceMs: Long,
+    val missedDoseRecoveryWindowMs: Long,
+    val minPumpRunDurationMs: Long,
+    val maxPumpRunDurationMs: Long,
+    val maxManualDoseMl: Double,
+    val supportsWeekdayRecurrence: Boolean,
+    val supportsMissedDoseRecovery: Boolean,
+    val supportsChannelReset: Boolean,
+    val supportsDailyDeliveredUsage: Boolean,
+    val supportedModes: List<DeviceDosingProgramMode>,
+    val weekdayOrder: List<String>,
+    val effectiveScheduledDose: DeviceDosingEffectiveScheduledDose
+)
+
+data class DeviceDosingUsageToday(
+    val dateValid: Boolean,
+    val localDate: String?,
+    val scheduledDeliveredMl: Double,
+    val manualDeliveredMl: Double,
+    val totalDeliveredMl: Double
+)
+
+data class DeviceDosingReservoirStatus(
+    val trackingEnabled: Boolean,
+    val capacityMl: Double,
+    val remainingMl: Double,
+    val accountingCertain: Boolean,
+    val remainingPercent: Double
+)
+
+data class DeviceDosingReservoirSummary(
+    val trackingEnabled: Boolean,
+    val remainingMl: Double,
+    val accountingCertain: Boolean
+)
+
+data class DeviceDosingCalibrationStatus(
+    val confirmed: Boolean,
+    val doseMsPerMl: Long,
+    val lastCalibratedAt: Long,
+    val state: DeviceDosingCalibrationState,
+    val durationMs: Long,
+    val measuredMl: Double,
+    val pendingDoseMsPerMl: Long,
+    val verificationDoseStarted: Boolean,
+    val verificationDoseComplete: Boolean
+)
+
+data class DeviceDosingActiveRunStatus(
+    val active: Boolean,
+    val source: DeviceDosingRunSource,
+    val targetAmountMl: Double,
+    val remainingMs: Long
+)
+
+data class DeviceDosingRuntimeEventStatus(
+    val valid: Boolean,
+    val sequence: Long,
+    val occurredAtMs: Long,
+    val kind: String,
+    val reason: String,
+    val source: DeviceDosingRunSource
+)
+
+data class DeviceDosingChannelHardware(
+    val channelType: String,
+    val gpio: Int,
+    val ledcChannel: Int,
+    val resolutionBits: Int,
+    val frequencyHz: Int
 )
 
 data class DeviceDosingChannelEditable(
     val hardware: Boolean,
     val displayName: Boolean,
-    val hardwareCalibration: Boolean,
     val dosingCalibration: Boolean,
     val reservoir: Boolean
 )
 
-data class DeviceDosingCalibrationSessionStatus(
-    val state: DeviceDosingCalibrationState,
-    val startedAtUptimeMs: Long,
-    val durationMs: Long,
-    val measuredMl: Double,
-    val pendingDoseMsPerMl: Long,
-    val verificationDoseStarted: Boolean,
-    val verificationDoseComplete: Boolean,
-    val verificationDoseRemainingMs: Long
-)
+sealed interface DeviceDosingProgramConfig
 
-data class DeviceDosingPumpStatus(
-    val unit: String,
-    val doseMsPerMl: Long,
-    val lastCalibratedAt: Long,
-    val calibrated: Boolean,
-    val calibration: DeviceDosingCalibrationSessionStatus,
-    val reservoirTrackingEnabled: Boolean,
-    val reservoirCapacityMl: Double,
-    val reservoirRemainingMl: Double,
-    val reservoirRemainingPercent: Double
-)
+data class DeviceDosingDistributedProgramConfig(
+    val dailyDoseMl: Double,
+    val startTimeMs: Long
+) : DeviceDosingProgramConfig
 
-data class DeviceDosingChannelStatus(
-    val index: Int,
-    val key: String,
-    val name: String,
-    val displayName: String,
-    val profileManaged: Boolean,
-    val regime: DeviceDosingRegime,
-    val channelKind: String,
-    val gpio: Int,
-    val ledcChannel: Int,
-    val group: Int,
-    val valueNow: Double,
-    val valueAuto: Double,
-    val valueManual: Double,
-    val manualTimeoutMs: Long,
-    val invert: Boolean,
-    val pwmResolutionBits: Int,
-    val pwmFrequencyHz: Int,
-    val editable: DeviceDosingChannelEditable,
-    val dosing: DeviceDosingPumpStatus
-)
-
-data class DeviceDosingChannelStatusSnapshot(
-    val listIndex: Int,
-    val channel: DeviceDosingChannelStatus
-)
-
-data class DeviceDosingScheduleStatus(
-    val index: Int,
-    val enabled: Boolean,
-    val runtimeEnabled: Boolean,
-    val name: String,
-    val channelKey: String,
-    val bound: Boolean,
-    val group: Int,
-    val weekdays: List<Boolean>,
+data class DeviceDosingCustomPeriod(
     val startTimeMs: Long,
-    val startTime: String,
-    val intervalOnMs: Long,
-    val intervalOn: String,
-    val intervalOffMs: Long,
-    val intervalOff: String,
-    val repeatCount: Int,
-    val amountMl: Double,
-    val pulseCountRuntime: Int,
-    val pulseOffPending: Boolean,
-    val pulseRemainingMs: Long
+    val endTimeMs: Long,
+    val doseCount: Int
 )
 
-data class DeviceDosingStatus(
-    val supported: Boolean,
-    val channelCount: Int,
-    val scheduleCount: Int,
-    val lockLoop: Boolean,
-    val schema: String,
-    val rootName: String,
-    val unit: String,
-    val uptimeMs: Long,
-    val channels: List<DeviceDosingChannelStatus>,
-    val schedules: List<DeviceDosingScheduleStatus>,
-    val runtime: DeviceDosingRuntimeCapabilities
-)
+data class DeviceDosingCustomPeriodsProgramConfig(
+    val dailyDoseMl: Double,
+    val periods: List<DeviceDosingCustomPeriod>
+) : DeviceDosingProgramConfig
 
-data class DeviceDosingChannelConfigSnapshot(
-    val listIndex: Int,
-    val channelKey: String,
-    val displayNameOverride: String?,
-    val regime: DeviceDosingRegime,
-    val dosing: DeviceDosingChannelDosingConfigSnapshot
-)
-
-data class DeviceDosingChannelDosingConfigSnapshot(
-    val doseMsPerMl: Long,
-    val lastCalibratedAt: Long,
-    val reservoirTrackingEnabled: Boolean,
-    val reservoirCapacityMl: Double
-)
-
-data class DeviceDosingScheduleConfigSnapshot(
-    val listIndex: Int,
-    val enabled: Boolean,
-    val name: String,
-    val channelKey: String,
-    val weekdays: List<Boolean>,
-    val startTimeMs: Long,
-    val intervalOnMs: Long,
-    val intervalOffMs: Long,
-    val repeatCount: Int,
+data class DeviceDosingTimerEvent(
+    val timeMs: Long,
     val amountMl: Double
 )
 
-data class DeviceDosingConfigSnapshot(
-    val channels: List<DeviceDosingChannelConfigSnapshot>,
-    val schedules: List<DeviceDosingScheduleConfigSnapshot>
-)
+data class DeviceDosingTimerProgramConfig(
+    val events: List<DeviceDosingTimerEvent>
+) : DeviceDosingProgramConfig
 
-sealed interface DeviceDosingMutationResult {
-    val command: String
-}
-
-data class DeviceDosingConfigApplyResult(
-    val operation: String,
-    val changed: Boolean,
-    val saved: Boolean,
-    val saveRequested: Boolean,
-    val runtimeTransport: String,
-    override val command: String,
-    val event: String,
-    val appliedChannels: Boolean,
-    val appliedSchedules: Boolean,
-    val config: DeviceDosingConfigSnapshot
-) : DeviceDosingMutationResult
-
-data class DeviceDosingPumpCommandResult(
-    val operation: String,
-    val channelKey: String,
-    val manualActive: Boolean,
-    val verificationReset: Boolean,
-    val saved: Boolean,
-    val runtimeTransport: String,
-    override val command: String,
-    val event: String,
-    val channel: DeviceDosingChannelStatusSnapshot
-) : DeviceDosingMutationResult
-
-data class DeviceDosingDoseNowResult(
-    val operation: String,
-    val channelKey: String,
-    val amountMl: Double,
-    val durationMs: Long,
-    val doseMsPerMl: Long,
-    val usePendingCalibration: Boolean,
-    val calibrationState: DeviceDosingCalibrationState,
-    val manualActive: Boolean,
-    val saved: Boolean,
-    val runtimeTransport: String,
-    override val command: String,
-    val event: String,
-    val channel: DeviceDosingChannelStatusSnapshot
-) : DeviceDosingMutationResult
-
-data class DeviceDosingCalibrationStartResult(
-    val operation: String,
-    val channelKey: String,
-    val durationMs: Long,
-    val calibrationState: DeviceDosingCalibrationState,
-    val manualActive: Boolean,
-    val saved: Boolean,
-    val runtimeTransport: String,
-    override val command: String,
-    val event: String
-) : DeviceDosingMutationResult
-
-data class DeviceDosingCalibrationFinishResult(
-    val operation: String,
-    val channelKey: String,
-    val measuredMl: Double,
-    val durationMs: Long,
-    val pendingDoseMsPerMl: Long,
-    val pending: Boolean,
-    val calibrationState: DeviceDosingCalibrationState,
-    val saved: Boolean,
-    val runtimeTransport: String,
-    override val command: String,
-    val event: String,
-    val channel: DeviceDosingChannelStatusSnapshot
-) : DeviceDosingMutationResult
-
-data class DeviceDosingCalibrationConfirmResult(
-    val operation: String,
-    val channelKey: String,
-    val doseMsPerMl: Long,
-    val lastCalibratedAt: Long,
-    val calibrationState: DeviceDosingCalibrationState,
-    val saved: Boolean,
-    val runtimeTransport: String,
-    override val command: String,
-    val event: String,
-    val channel: DeviceDosingChannelStatusSnapshot
-) : DeviceDosingMutationResult
-
-data class DeviceDosingCalibrationCancelResult(
-    val operation: String,
-    val channelKey: String,
-    val restoredPreviousCalibration: Boolean,
-    val discardedPendingCalibration: Boolean,
-    val calibrationState: DeviceDosingCalibrationState,
-    val saved: Boolean,
-    val runtimeTransport: String,
-    override val command: String,
-    val event: String,
-    val channel: DeviceDosingChannelStatusSnapshot
-) : DeviceDosingMutationResult
-
-data class DeviceDosingReservoirRefillResult(
-    val operation: String,
-    val channelKey: String,
-    val changed: Boolean,
-    val reservoirRemainingMlBefore: Double,
-    val reservoirRemainingMl: Double,
-    val reservoirCapacityMl: Double,
-    val persisted: Boolean,
-    val saved: Boolean,
-    val runtimeTransport: String,
-    override val command: String,
-    val event: String,
-    val channel: DeviceDosingChannelStatusSnapshot
-) : DeviceDosingMutationResult
-
-data class DeviceDosingChannelDosingConfig(
-    val doseMsPerMl: Long? = null,
-    val lastCalibratedAt: Long? = null,
-    val reservoirTrackingEnabled: Boolean? = null,
-    val reservoirCapacityMl: Double? = null
-) {
-    init {
-        require(
-            doseMsPerMl != null ||
-                lastCalibratedAt != null ||
-                reservoirTrackingEnabled != null ||
-                reservoirCapacityMl != null
-        ) { "A Dosing channel config must change at least one dosing field." }
-        require(
-            doseMsPerMl == null ||
-                doseMsPerMl == DOSING_UNSET_CALIBRATION ||
-                doseMsPerMl in 1L..DeviceDosingRuntimeContract.Limit.MAX_DOSE_MS_PER_ML
-        ) { "doseMsPerMl is outside the firmware-safe range." }
-        require(lastCalibratedAt == null || lastCalibratedAt in 0L..DOSING_DEVICE_UPTIME_MAX_MS) {
-            "lastCalibratedAt is outside the firmware unsigned-long range."
-        }
-        require(
-            reservoirCapacityMl == null ||
-                reservoirCapacityMl == DOSING_UNSET_RESERVOIR ||
-                reservoirCapacityMl.isFinite() && reservoirCapacityMl > 0.0
-        ) { "reservoirCapacityMl must be -1 or a positive finite value." }
-    }
-
-    internal fun toJson(): JSONObject = JSONObject().also { data ->
-        doseMsPerMl?.let { data.put(DeviceDosingRuntimeContract.Field.DOSE_MS_PER_ML, it) }
-        lastCalibratedAt?.let {
-            data.put(DeviceDosingRuntimeContract.Field.LAST_CALIBRATED_AT, it)
-        }
-        reservoirTrackingEnabled?.let {
-            data.put(DeviceDosingRuntimeContract.Field.RESERVOIR_TRACKING_ENABLED, it)
-        }
-        reservoirCapacityMl?.let {
-            data.put(DeviceDosingRuntimeContract.Field.RESERVOIR_CAPACITY_ML, it)
-        }
-    }
-}
-
-data class DeviceDosingChannelConfig(
-    val channelKey: String,
-    val displayName: String? = null,
-    val regime: DeviceDosingRegime? = null,
-    val dosing: DeviceDosingChannelDosingConfig? = null
-) {
-    val normalizedChannelKey: String = channelKey.trim().lowercase()
-    val normalizedDisplayName: String? = displayName?.trim()
-
-    init {
-        require(normalizedChannelKey.isNotEmpty()) { "channelKey must not be blank." }
-        require(normalizedChannelKey.none(Char::isISOControl)) {
-            "channelKey must not contain control characters."
-        }
-        require(displayName != null || regime != null || dosing != null) {
-            "A Dosing channel config must change displayName, regime and/or dosing settings."
-        }
-        require(normalizedDisplayName?.none(Char::isISOControl) != false) {
-            "displayName must not contain control characters."
-        }
-        require(
-            normalizedDisplayName
-                ?.toByteArray(Charsets.UTF_8)
-                ?.size
-                ?.let { size ->
-                    size <= DeviceDosingRuntimeContract.Limit.MAX_CHANNEL_DISPLAY_NAME_BYTES
-                } ?: true
-        ) {
-            "displayName must be at most " +
-                "${DeviceDosingRuntimeContract.Limit.MAX_CHANNEL_DISPLAY_NAME_BYTES} UTF-8 bytes."
-        }
-    }
-
-    internal fun toJson(): JSONObject = JSONObject()
-        .put(DeviceDosingRuntimeContract.Field.CHANNEL_KEY, normalizedChannelKey)
-        .also { data ->
-            normalizedDisplayName?.let {
-                data.put(DeviceDosingRuntimeContract.Field.DISPLAY_NAME, it)
-            }
-            regime?.let { data.put(DeviceDosingRuntimeContract.Field.REGIME, it.wireValue) }
-            dosing?.let { data.put(DeviceDosingRuntimeContract.Field.DOSING, it.toJson()) }
-        }
-}
-
-data class DeviceDosingScheduleConfig(
+data class DeviceDosingProgram(
     val enabled: Boolean,
-    val name: String,
-    val channelKey: String,
     val weekdays: List<Boolean>,
-    val startTimeMs: Long,
-    val intervalOnMs: Long = 0L,
-    val intervalOffMs: Long = 0L,
-    val repeatCount: Int = 1,
-    val amountMl: Double
+    val mode: DeviceDosingProgramMode,
+    val missedDoseRecoveryEnabled: Boolean,
+    val config: DeviceDosingProgramConfig
 ) {
-    val normalizedName: String = name.trim()
-    val normalizedChannelKey: String = channelKey.trim().lowercase()
-
     init {
-        require(normalizedName.isNotEmpty()) { "Dosing schedule name must not be blank." }
-        require(normalizedName.none(Char::isISOControl)) {
-            "Dosing schedule name must not contain control characters."
-        }
+        require(weekdays.size == DeviceDosingRuntimeContract.Limit.WEEKDAY_COUNT)
+        if (enabled) require(weekdays.any { it })
         require(
-            normalizedName.toByteArray(Charsets.UTF_8).size <=
-                DeviceDosingRuntimeContract.Limit.MAX_SCHEDULE_NAME_BYTES
-        ) {
-            "Dosing schedule name must be at most " +
-                "${DeviceDosingRuntimeContract.Limit.MAX_SCHEDULE_NAME_BYTES} UTF-8 bytes."
-        }
-        require(normalizedChannelKey.isNotEmpty()) { "channelKey must not be blank." }
-        require(normalizedChannelKey.none(Char::isISOControl)) {
-            "channelKey must not contain control characters."
-        }
-        require(weekdays.size == DOSING_WEEKDAY_COUNT) {
-            "Dosing weekdays must contain exactly $DOSING_WEEKDAY_COUNT values."
-        }
-        require(startTimeMs in 0L..DeviceDosingRuntimeContract.Limit.LAST_MILLISECOND_OF_DAY) {
-            "startTimeMs must be inside one day."
-        }
-        require(intervalOnMs in DOSING_NON_NEGATIVE_LONG..DOSING_DEVICE_UPTIME_MAX_MS) {
-            "intervalOnMs is outside the firmware unsigned-long range."
-        }
-        require(intervalOffMs in DOSING_NON_NEGATIVE_LONG..DOSING_DEVICE_UPTIME_MAX_MS) {
-            "intervalOffMs is outside the firmware unsigned-long range."
-        }
-        require(intervalOnMs <= DOSING_DEVICE_UPTIME_MAX_MS - intervalOffMs) {
-            "Dosing interval sum exceeds the firmware unsigned-long range."
-        }
-        require(repeatCount >= 0) { "repeatCount must be zero or greater." }
-        require(amountMl.isFinite() && amountMl > 0.0) {
-            "amountMl must be a positive finite value."
-        }
-        if (enabled) {
-            require(weekdays.any { selected -> selected }) {
-                "An enabled Dosing schedule requires at least one weekday."
+            when (mode) {
+                DeviceDosingProgramMode.SINGLE,
+                DeviceDosingProgramMode.HOURLY_24 -> config is DeviceDosingDistributedProgramConfig
+                DeviceDosingProgramMode.CUSTOM_PERIODS -> config is DeviceDosingCustomPeriodsProgramConfig
+                DeviceDosingProgramMode.TIMER -> config is DeviceDosingTimerProgramConfig
             }
-            require(repeatCount > 0) {
-                "An enabled Dosing schedule requires a positive repeatCount."
-            }
-        }
+        ) { "Dosing program mode/config mismatch." }
     }
 
     internal fun toJson(): JSONObject = JSONObject()
         .put(DeviceDosingRuntimeContract.Field.ENABLED, enabled)
-        .put(DeviceDosingRuntimeContract.Field.NAME, normalizedName)
-        .put(DeviceDosingRuntimeContract.Field.CHANNEL_KEY, normalizedChannelKey)
         .put(DeviceDosingRuntimeContract.Field.WEEKDAYS, JSONArray(weekdays))
-        .put(DeviceDosingRuntimeContract.Field.START_TIME_MS, startTimeMs)
-        .put(DeviceDosingRuntimeContract.Field.INTERVAL_ON_MS, intervalOnMs)
-        .put(DeviceDosingRuntimeContract.Field.INTERVAL_OFF_MS, intervalOffMs)
-        .put(DeviceDosingRuntimeContract.Field.REPEAT_COUNT, repeatCount)
-        .put(DeviceDosingRuntimeContract.Field.AMOUNT_ML, amountMl)
+        .put(DeviceDosingRuntimeContract.Field.MODE, mode.wireValue)
+        .put(
+            DeviceDosingRuntimeContract.Field.MISSED_DOSE_RECOVERY_ENABLED,
+            missedDoseRecoveryEnabled
+        )
+        .put(DeviceDosingRuntimeContract.Field.CONFIG, config.toJson())
 }
 
-data class DeviceDosingConfigApplyPayload(
-    val channels: List<DeviceDosingChannelConfig>? = null,
-    val schedules: List<DeviceDosingScheduleConfig>? = null,
-    val save: Boolean = true
+private fun DeviceDosingProgramConfig.toJson(): JSONObject = when (this) {
+    is DeviceDosingDistributedProgramConfig -> JSONObject()
+        .put(DeviceDosingRuntimeContract.Field.DAILY_DOSE_ML, dailyDoseMl)
+        .put(DeviceDosingRuntimeContract.Field.START_TIME_MS, startTimeMs)
+    is DeviceDosingCustomPeriodsProgramConfig -> JSONObject()
+        .put(DeviceDosingRuntimeContract.Field.DAILY_DOSE_ML, dailyDoseMl)
+        .put(
+            DeviceDosingRuntimeContract.Field.PERIODS,
+            JSONArray().also { array ->
+                periods.forEach { period ->
+                    array.put(
+                        JSONObject()
+                            .put(DeviceDosingRuntimeContract.Field.START_TIME_MS, period.startTimeMs)
+                            .put(DeviceDosingRuntimeContract.Field.END_TIME_MS, period.endTimeMs)
+                            .put(DeviceDosingRuntimeContract.Field.DOSE_COUNT, period.doseCount)
+                    )
+                }
+            }
+        )
+    is DeviceDosingTimerProgramConfig -> JSONObject().put(
+        DeviceDosingRuntimeContract.Field.EVENTS,
+        JSONArray().also { array ->
+            events.forEach { event ->
+                array.put(
+                    JSONObject()
+                        .put(DeviceDosingRuntimeContract.Field.TIME_MS, event.timeMs)
+                        .put(DeviceDosingRuntimeContract.Field.AMOUNT_ML, event.amountMl)
+                )
+            }
+        }
+    )
+}
+
+data class DeviceDosingGlobalChannelSummary(
+    val channelKey: String,
+    val effectiveName: String,
+    val revision: Long,
+    val runtimeEnabled: Boolean,
+    val runtimeReason: DeviceDosingRuntimeReason,
+    val programEnabled: Boolean,
+    val programMode: DeviceDosingProgramMode?,
+    val deliveryAccountingCertain: Boolean,
+    val usageToday: DeviceDosingUsageToday,
+    val reservoir: DeviceDosingReservoirSummary,
+    val active: Boolean
+)
+
+data class DeviceDosingGlobalRuntimeCapabilities(
+    val module: String,
+    val supportsProgramApply: Boolean,
+    val supportsChannelConfig: Boolean,
+    val supportsChannelReset: Boolean,
+    val supportsPrime: Boolean,
+    val supportsManualDose: Boolean,
+    val supportsCalibrationWorkflow: Boolean,
+    val supportsReservoirRefill: Boolean,
+    val supportsChannelScopedStatus: Boolean,
+    val displayNameEditable: Boolean
+)
+
+data class DeviceDosingResourceMetrics(
+    val freeHeapBytes: Long,
+    val minimumFreeHeapBytes: Long,
+    val largestFreeBlockBytes: Long,
+    val taskStackHighWaterBytes: Long,
+    val checkpointWritesThisBoot: Long,
+    val canonicalConfigBytes: Long,
+    val programServiceBytes: Long,
+    val runtimeSnapshotBytes: Long,
+    val statusSnapshotBytes: Long
+)
+
+data class DeviceDosingGlobalStatus(
+    val envelope: DeviceDosingStatusEnvelope,
+    val scheduling: DeviceDosingSchedulingMetadata,
+    val channels: List<DeviceDosingGlobalChannelSummary>,
+    val runtime: DeviceDosingGlobalRuntimeCapabilities,
+    val resources: DeviceDosingResourceMetrics
+)
+
+data class DeviceDosingChannelDetail(
+    val channelKey: String,
+    val revision: Long,
+    val runtimeEnabled: Boolean,
+    val runtimeReason: DeviceDosingRuntimeReason,
+    val program: DeviceDosingProgram?,
+    val usageToday: DeviceDosingUsageToday,
+    val index: Int,
+    val defaultName: String,
+    val displayName: String,
+    val effectiveName: String,
+    val profileManaged: Boolean,
+    val deliveryAccountingCertain: Boolean,
+    val hardware: DeviceDosingChannelHardware,
+    val calibration: DeviceDosingCalibrationStatus,
+    val reservoir: DeviceDosingReservoirStatus,
+    val activeRun: DeviceDosingActiveRunStatus,
+    val lastRuntimeEvent: DeviceDosingRuntimeEventStatus,
+    val editable: DeviceDosingChannelEditable
+)
+
+data class DeviceDosingChannelStatus(
+    val envelope: DeviceDosingStatusEnvelope,
+    val scheduling: DeviceDosingSchedulingMetadata,
+    val channel: DeviceDosingChannelDetail
+)
+
+data class DeviceDosingStatusChange(
+    val schema: String,
+    val schemaVersion: Int,
+    val channelKey: String,
+    val revision: Long,
+    val storageHealthy: Boolean,
+    val change: DeviceDosingRuntimeEventStatus
+)
+
+sealed interface DeviceDosingDisplayNameMutation {
+    data class Set(val value: String) : DeviceDosingDisplayNameMutation
+    data object Clear : DeviceDosingDisplayNameMutation
+}
+
+data class DeviceDosingReservoirConfig(
+    val trackingEnabled: Boolean,
+    val capacityMl: Double? = null
 ) {
     init {
-        require(channels != null || schedules != null) {
-            "dosing.config.apply requires channels and/or schedules."
+        if (trackingEnabled) {
+            require(capacityMl != null && capacityMl.isFinite() && capacityMl > 0.0)
+        } else {
+            require(capacityMl == null)
         }
-        require((schedules?.size ?: 0) <= DeviceDosingRuntimeContract.Limit.MAX_SCHEDULES) {
-            "Dosing supports at most ${DeviceDosingRuntimeContract.Limit.MAX_SCHEDULES} schedules."
-        }
-        require((channels?.size ?: 0) <= DeviceDosingRuntimeContract.Limit.MAX_CHANNELS) {
-            "Dosing channel request exceeds the WebSocket safety limit."
-        }
-        require(
-            channels
-                ?.map(DeviceDosingChannelConfig::normalizedChannelKey)
-                ?.let { keys -> keys.distinct().size == keys.size } ?: true
-        ) { "channelKey must be unique in the request." }
     }
 
     internal fun toJson(): JSONObject = JSONObject()
-        .put(DeviceDosingRuntimeContract.Field.SAVE, save)
-        .also { data ->
-            channels?.let { items ->
-                data.put(
-                    DeviceDosingRuntimeContract.Field.CHANNELS,
-                    JSONArray().also { array -> items.forEach { item -> array.put(item.toJson()) } }
-                )
-            }
-            schedules?.let { items ->
-                data.put(
-                    DeviceDosingRuntimeContract.Field.SCHEDULES,
-                    JSONArray().also { array -> items.forEach { item -> array.put(item.toJson()) } }
-                )
+        .put(DeviceDosingRuntimeContract.Field.TRACKING_ENABLED, trackingEnabled)
+        .also { json ->
+            if (trackingEnabled) {
+                json.put(DeviceDosingRuntimeContract.Field.CAPACITY_ML, requireNotNull(capacityMl))
             }
         }
 }
 
-internal data class DeviceDosingChannelKeyPayload(val channelKey: String) {
-    val normalizedChannelKey: String = channelKey.trim().lowercase()
+data class DeviceDosingChannelConfigPayload(
+    val channelKey: String,
+    val expectedRevision: Long,
+    val displayName: DeviceDosingDisplayNameMutation? = null,
+    val reservoir: DeviceDosingReservoirConfig? = null
+) {
+    val normalizedChannelKey = normalizeDosingChannelKey(channelKey)
 
     init {
-        require(normalizedChannelKey.isNotEmpty()) { "channelKey must not be blank." }
-        require(normalizedChannelKey.none(Char::isISOControl)) {
-            "channelKey must not contain control characters."
+        require(expectedRevision in 0L..DeviceDosingRuntimeContract.Limit.MAX_UINT32)
+        require(displayName != null || reservoir != null) { "Dosing channel config is empty." }
+        (displayName as? DeviceDosingDisplayNameMutation.Set)?.let { mutation ->
+            val value = mutation.value.trim()
+            require(value.isNotEmpty())
+            require(value.none(Char::isISOControl))
+            require(
+                value.toByteArray(Charsets.UTF_8).size <=
+                    DeviceDosingRuntimeContract.Limit.MAX_CHANNEL_DISPLAY_NAME_BYTES
+            )
         }
     }
 
-    fun toJson(): JSONObject = JSONObject()
+    internal fun toJson(): JSONObject = JSONObject()
+        .put(DeviceDosingRuntimeContract.Field.CHANNEL_KEY, normalizedChannelKey)
+        .put(DeviceDosingRuntimeContract.Field.EXPECTED_REVISION, expectedRevision)
+        .also { json ->
+            when (val mutation = displayName) {
+                null -> Unit
+                DeviceDosingDisplayNameMutation.Clear ->
+                    json.put(DeviceDosingRuntimeContract.Field.DISPLAY_NAME, JSONObject.NULL)
+                is DeviceDosingDisplayNameMutation.Set ->
+                    json.put(DeviceDosingRuntimeContract.Field.DISPLAY_NAME, mutation.value.trim())
+            }
+            reservoir?.let { value ->
+                json.put(DeviceDosingRuntimeContract.Field.RESERVOIR, value.toJson())
+            }
+        }
+}
+
+data class DeviceDosingProgramApplyPayload(
+    val channelKey: String,
+    val expectedRevision: Long,
+    val program: DeviceDosingProgram
+) {
+    val normalizedChannelKey = normalizeDosingChannelKey(channelKey)
+
+    init {
+        require(expectedRevision in 0L..DeviceDosingRuntimeContract.Limit.MAX_UINT32)
+    }
+
+    internal fun toJson(): JSONObject = JSONObject()
+        .put(DeviceDosingRuntimeContract.Field.CHANNEL_KEY, normalizedChannelKey)
+        .put(DeviceDosingRuntimeContract.Field.EXPECTED_REVISION, expectedRevision)
+        .put(DeviceDosingRuntimeContract.Field.PROGRAM, program.toJson())
+}
+
+data class DeviceDosingChannelResetPayload(
+    val channelKey: String,
+    val expectedRevision: Long
+) {
+    val normalizedChannelKey = normalizeDosingChannelKey(channelKey)
+
+    init {
+        require(expectedRevision in 0L..DeviceDosingRuntimeContract.Limit.MAX_UINT32)
+    }
+
+    internal fun toJson(): JSONObject = JSONObject()
+        .put(DeviceDosingRuntimeContract.Field.CHANNEL_KEY, normalizedChannelKey)
+        .put(DeviceDosingRuntimeContract.Field.EXPECTED_REVISION, expectedRevision)
+}
+
+data class DeviceDosingChannelKeyPayload(val channelKey: String) {
+    val normalizedChannelKey = normalizeDosingChannelKey(channelKey)
+
+    internal fun toJson(): JSONObject = JSONObject()
         .put(DeviceDosingRuntimeContract.Field.CHANNEL_KEY, normalizedChannelKey)
 }
 
@@ -490,18 +440,16 @@ data class DeviceDosingCalibrationStartPayload(
     val channelKey: String,
     val durationMs: Long = DeviceDosingRuntimeContract.Limit.DEFAULT_CALIBRATION_DURATION_MS
 ) {
-    val normalizedChannelKey: String = DeviceDosingChannelKeyPayload(channelKey).normalizedChannelKey
+    val normalizedChannelKey = normalizeDosingChannelKey(channelKey)
 
     init {
         require(
-            durationMs in
-                DeviceDosingRuntimeContract.Limit.MIN_CALIBRATION_DURATION_MS..
+            durationMs in DeviceDosingRuntimeContract.Limit.MIN_CALIBRATION_DURATION_MS..
                 DeviceDosingRuntimeContract.Limit.MAX_CALIBRATION_DURATION_MS
-        ) { "durationMs is outside the firmware calibration range." }
+        )
     }
 
-    internal fun toJson(): JSONObject = JSONObject()
-        .put(DeviceDosingRuntimeContract.Field.CHANNEL_KEY, normalizedChannelKey)
+    internal fun toJson(): JSONObject = DeviceDosingChannelKeyPayload(normalizedChannelKey).toJson()
         .put(DeviceDosingRuntimeContract.Field.DURATION_MS, durationMs)
 }
 
@@ -509,19 +457,17 @@ data class DeviceDosingCalibrationFinishPayload(
     val channelKey: String,
     val measuredMl: Double
 ) {
-    val normalizedChannelKey: String = DeviceDosingChannelKeyPayload(channelKey).normalizedChannelKey
+    val normalizedChannelKey = normalizeDosingChannelKey(channelKey)
 
     init {
         require(
-            measuredMl.isFinite() &&
-                measuredMl in
+            measuredMl.isFinite() && measuredMl in
                 DeviceDosingRuntimeContract.Limit.MIN_CALIBRATION_MEASURED_ML..
                 DeviceDosingRuntimeContract.Limit.MAX_CALIBRATION_MEASURED_ML
-        ) { "measuredMl is outside the firmware calibration range." }
+        )
     }
 
-    internal fun toJson(): JSONObject = JSONObject()
-        .put(DeviceDosingRuntimeContract.Field.CHANNEL_KEY, normalizedChannelKey)
+    internal fun toJson(): JSONObject = DeviceDosingChannelKeyPayload(normalizedChannelKey).toJson()
         .put(DeviceDosingRuntimeContract.Field.MEASURED_ML, measuredMl)
 }
 
@@ -530,34 +476,117 @@ data class DeviceDosingDoseNowPayload(
     val amountMl: Double,
     val usePendingCalibration: Boolean = false
 ) {
-    val normalizedChannelKey: String = DeviceDosingChannelKeyPayload(channelKey).normalizedChannelKey
+    val normalizedChannelKey = normalizeDosingChannelKey(channelKey)
 
     init {
-        require(
-            amountMl.isFinite() &&
-                amountMl > 0.0 &&
-                amountMl <= DeviceDosingRuntimeContract.Limit.MAX_MANUAL_DOSE_ML
-        ) {
-            "amountMl must be between 0 and " +
-                "${DeviceDosingRuntimeContract.Limit.MAX_MANUAL_DOSE_ML}."
-        }
+        require(amountMl.isFinite() && amountMl > 0.0)
     }
 
-    internal fun toJson(): JSONObject = JSONObject()
-        .put(DeviceDosingRuntimeContract.Field.CHANNEL_KEY, normalizedChannelKey)
+    internal fun toJson(): JSONObject = DeviceDosingChannelKeyPayload(normalizedChannelKey).toJson()
         .put(DeviceDosingRuntimeContract.Field.AMOUNT_ML, amountMl)
         .put(DeviceDosingRuntimeContract.Field.USE_PENDING_CALIBRATION, usePendingCalibration)
 }
 
-internal fun DeviceDosingScheduleConfigSnapshot.toPayload(): DeviceDosingScheduleConfig =
-    DeviceDosingScheduleConfig(
-        enabled = enabled,
-        name = name,
-        channelKey = channelKey,
-        weekdays = weekdays,
-        startTimeMs = startTimeMs,
-        intervalOnMs = intervalOnMs,
-        intervalOffMs = intervalOffMs,
-        repeatCount = repeatCount,
-        amountMl = amountMl
-    )
+sealed interface DeviceDosingMutationResult {
+    val operation: String
+    val channelKey: String
+    val event: String
+    val channel: DeviceDosingChannelDetail
+}
+
+data class DeviceDosingChannelConfigApplyResult(
+    override val operation: String,
+    override val channelKey: String,
+    val saved: Boolean,
+    override val event: String,
+    override val channel: DeviceDosingChannelDetail
+) : DeviceDosingMutationResult
+
+data class DeviceDosingProgramApplyResult(
+    override val operation: String,
+    override val channelKey: String,
+    val saved: Boolean,
+    override val event: String,
+    override val channel: DeviceDosingChannelDetail
+) : DeviceDosingMutationResult
+
+data class DeviceDosingChannelResetResult(
+    override val operation: String,
+    override val channelKey: String,
+    val saved: Boolean,
+    override val event: String,
+    override val channel: DeviceDosingChannelDetail
+) : DeviceDosingMutationResult
+
+data class DeviceDosingPumpCommandResult(
+    override val operation: String,
+    override val channelKey: String,
+    val durationMs: Long?,
+    val doseMsPerMl: Long?,
+    val manualActive: Boolean,
+    override val event: String,
+    override val channel: DeviceDosingChannelDetail
+) : DeviceDosingMutationResult
+
+data class DeviceDosingDoseNowResult(
+    override val operation: String,
+    override val channelKey: String,
+    val amountMl: Double,
+    val durationMs: Long,
+    val doseMsPerMl: Long,
+    val usePendingCalibration: Boolean,
+    val manualActive: Boolean,
+    override val event: String,
+    override val channel: DeviceDosingChannelDetail
+) : DeviceDosingMutationResult
+
+data class DeviceDosingCalibrationStartResult(
+    override val operation: String,
+    override val channelKey: String,
+    val durationMs: Long,
+    val calibrationState: DeviceDosingCalibrationState,
+    override val event: String,
+    override val channel: DeviceDosingChannelDetail
+) : DeviceDosingMutationResult
+
+data class DeviceDosingCalibrationFinishResult(
+    override val operation: String,
+    override val channelKey: String,
+    val measuredMl: Double,
+    val durationMs: Long,
+    val pendingDoseMsPerMl: Long,
+    val calibrationState: DeviceDosingCalibrationState,
+    override val event: String,
+    override val channel: DeviceDosingChannelDetail
+) : DeviceDosingMutationResult
+
+data class DeviceDosingCalibrationConfirmResult(
+    override val operation: String,
+    override val channelKey: String,
+    val revision: Long,
+    val doseMsPerMl: Long,
+    val lastCalibratedAt: Long,
+    val calibrationState: DeviceDosingCalibrationState,
+    val saved: Boolean,
+    override val event: String,
+    override val channel: DeviceDosingChannelDetail
+) : DeviceDosingMutationResult
+
+data class DeviceDosingCalibrationCancelResult(
+    override val operation: String,
+    override val channelKey: String,
+    val discardedPendingCalibration: Boolean,
+    val calibrationState: DeviceDosingCalibrationState,
+    override val event: String,
+    override val channel: DeviceDosingChannelDetail
+) : DeviceDosingMutationResult
+
+data class DeviceDosingReservoirRefillResult(
+    override val operation: String,
+    override val channelKey: String,
+    val reservoirRemainingMlBefore: Double,
+    val reservoirRemainingMl: Double,
+    val persisted: Boolean,
+    override val event: String,
+    override val channel: DeviceDosingChannelDetail
+) : DeviceDosingMutationResult
