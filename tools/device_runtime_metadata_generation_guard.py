@@ -205,7 +205,7 @@ require_tokens(
     (
         "fun AqlCommercialCatalogProduct.expectedRuntimeModules()",
         "timerApi = standaloneTimer",
-        "timerEngine = standaloneTimer || dosingProduct",
+        "timerEngine = standaloneTimer",
         "dosing = dosingProduct",
     ),
 )
