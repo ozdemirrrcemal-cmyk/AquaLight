@@ -38,29 +38,35 @@ class DeviceDosingCustomScheduleContractTest {
     }
 
     @Test
-    fun `overlap invalid ranges and more than 24 applications are rejected`() {
+    fun `overlap invalid ranges and firmware dose limits are rejected`() {
         assertEquals(
             DeviceDosingCustomScheduleContract.ValidationError.OVERLAPPING_PERIODS,
             DeviceDosingCustomScheduleContract.validate(
-                listOf(
+                periods = listOf(
                     period(startMinute = 120, endMinute = 180, count = 2),
                     period(startMinute = 180, endMinute = 240, count = 2)
-                )
+                ),
+                maxPeriods = MAX_PERIODS,
+                maxDoseCount = MAX_DOSE_COUNT
             )
         )
         assertEquals(
             DeviceDosingCustomScheduleContract.ValidationError.INVALID_PERIOD,
             DeviceDosingCustomScheduleContract.validate(
-                listOf(period(startMinute = 180, endMinute = 120, count = 1))
+                periods = listOf(period(startMinute = 180, endMinute = 120, count = 1)),
+                maxPeriods = MAX_PERIODS,
+                maxDoseCount = MAX_DOSE_COUNT
             )
         )
         assertEquals(
             DeviceDosingCustomScheduleContract.ValidationError.TOO_MANY_DOSES,
             DeviceDosingCustomScheduleContract.validate(
-                listOf(
+                periods = listOf(
                     period(startMinute = 120, endMinute = 180, count = 13),
                     period(startMinute = 240, endMinute = 300, count = 12)
-                )
+                ),
+                maxPeriods = MAX_PERIODS,
+                maxDoseCount = MAX_DOSE_COUNT
             )
         )
         assertNull(DeviceDosingCustomScheduleContract.decodeDraft("not-a-period"))
@@ -72,4 +78,9 @@ class DeviceDosingCustomScheduleContractTest {
             endTimeMs = DeviceDosingCustomScheduleContract.startTimeMs(endMinute),
             doseCount = count
         )
+
+    private companion object {
+        const val MAX_PERIODS = 8
+        const val MAX_DOSE_COUNT = 24
+    }
 }
