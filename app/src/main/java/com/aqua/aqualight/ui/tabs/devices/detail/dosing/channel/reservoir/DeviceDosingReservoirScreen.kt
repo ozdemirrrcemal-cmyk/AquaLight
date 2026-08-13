@@ -34,17 +34,21 @@ import com.aqua.aqualight.ui.common.flow.AquaGuidedFlowButton
 internal data class DeviceDosingReservoirUiState(
     val trackingEnabled: Boolean,
     val capacityValue: String,
-    val lowLevelAlertEnabled: Boolean
+    val remainingValue: String,
+    val accountingCertain: Boolean,
+    val saveEnabled: Boolean,
+    val refillAvailable: Boolean,
+    val busy: Boolean
 )
 
 internal data class DeviceDosingReservoirActions(
     val onTrackingEnabledChange: (Boolean) -> Unit,
     val onCapacityClick: () -> Unit,
-    val onLowLevelAlertEnabledChange: (Boolean) -> Unit,
+    val onRefillClick: (() -> Unit)?,
     val onSaveClick: (() -> Unit)?
 )
 
-/** Reservoir Monitoring child feature with fully hoisted process-safe draft state. */
+/** Reservoir editor mirrors only the firmware-owned capacity, remaining and accounting state. */
 @Composable
 internal fun DeviceDosingReservoirScreen(
     state: DeviceDosingReservoirUiState,
@@ -71,15 +75,27 @@ internal fun DeviceDosingReservoirScreen(
         item(key = RESERVOIR_VOLUME_KEY) {
             ReservoirVolumeSection(state, actions.onCapacityClick)
         }
-        item(key = RESERVOIR_ALERTS_KEY) {
-            ReservoirAlertsSection(state, actions.onLowLevelAlertEnabledChange)
+        if (state.trackingEnabled) {
+            item(key = RESERVOIR_ACCOUNTING_KEY) {
+                ReservoirAccountingSection(state)
+            }
+        }
+        if (state.refillAvailable) {
+            item(key = RESERVOIR_REFILL_KEY) {
+                AquaGuidedFlowButton(
+                    text = stringResource(R.string.device_dosing_reservoir_refill_action),
+                    onClick = { actions.onRefillClick?.invoke() },
+                    modifier = Modifier.fillMaxWidth(),
+                    enabled = !state.busy && actions.onRefillClick != null
+                )
+            }
         }
         item(key = RESERVOIR_SAVE_KEY) {
             AquaGuidedFlowButton(
                 text = stringResource(R.string.device_dosing_detail_save_reservoir),
                 onClick = { actions.onSaveClick?.invoke() },
                 modifier = Modifier.fillMaxWidth(),
-                enabled = state.trackingEnabled && actions.onSaveClick != null
+                enabled = state.saveEnabled && !state.busy && actions.onSaveClick != null
             )
         }
     }
@@ -95,7 +111,7 @@ private fun ReservoirTrackingSection(
             titleRes = R.string.device_dosing_detail_reservoir_tracking_enabled,
             descriptionRes = R.string.device_dosing_detail_reservoir_tracking_enabled_description,
             checked = state.trackingEnabled,
-            enabled = true,
+            enabled = !state.busy,
             onCheckedChange = actions.onTrackingEnabledChange
         )
     }
@@ -114,7 +130,7 @@ private fun ReservoirVolumeSection(
             label = stringResource(R.string.device_dosing_detail_container_volume),
             value = state.capacityValue,
             modifier = Modifier.clickable(
-                enabled = state.trackingEnabled,
+                enabled = state.trackingEnabled && !state.busy,
                 role = Role.Button,
                 onClick = onCapacityClick
             ),
@@ -123,26 +139,33 @@ private fun ReservoirVolumeSection(
         AquaDeviceMenuDivider()
         AquaDeviceMenuValueRow(
             label = stringResource(R.string.device_dosing_detail_available_volume),
-            value = stringResource(R.string.device_dosing_detail_value_unavailable)
+            value = state.remainingValue,
+            tone = if (state.accountingCertain) {
+                AquaDeviceMenuTone.NEUTRAL
+            } else {
+                AquaDeviceMenuTone.DANGER
+            }
         )
     }
 }
 
 @Composable
-private fun ReservoirAlertsSection(
-    state: DeviceDosingReservoirUiState,
-    onLowLevelAlertEnabledChange: (Boolean) -> Unit
-) {
-    ReservoirSection(
-        titleRes = R.string.device_dosing_detail_reservoir_alerts_section,
-        enabled = state.trackingEnabled
-    ) {
-        ReservoirToggleRow(
-            titleRes = R.string.device_dosing_detail_low_level_alert,
-            descriptionRes = R.string.device_dosing_detail_low_level_alert_description,
-            checked = state.lowLevelAlertEnabled,
-            enabled = state.trackingEnabled,
-            onCheckedChange = onLowLevelAlertEnabledChange
+private fun ReservoirAccountingSection(state: DeviceDosingReservoirUiState) {
+    ReservoirSection(R.string.device_dosing_reservoir_accounting_section) {
+        AquaDeviceMenuValueRow(
+            label = stringResource(R.string.device_dosing_reservoir_accounting_state),
+            value = stringResource(
+                if (state.accountingCertain) {
+                    R.string.device_dosing_reservoir_accounting_certain
+                } else {
+                    R.string.device_dosing_reservoir_accounting_uncertain
+                }
+            ),
+            tone = if (state.accountingCertain) {
+                AquaDeviceMenuTone.NEUTRAL
+            } else {
+                AquaDeviceMenuTone.DANGER
+            }
         )
     }
 }
@@ -209,5 +232,6 @@ private fun ReservoirToggleRow(
 
 private const val RESERVOIR_TRACKING_KEY = "dosing-reservoir-tracking"
 private const val RESERVOIR_VOLUME_KEY = "dosing-reservoir-volume"
-private const val RESERVOIR_ALERTS_KEY = "dosing-reservoir-alerts"
+private const val RESERVOIR_ACCOUNTING_KEY = "dosing-reservoir-accounting"
+private const val RESERVOIR_REFILL_KEY = "dosing-reservoir-refill"
 private const val RESERVOIR_SAVE_KEY = "dosing-reservoir-save"
