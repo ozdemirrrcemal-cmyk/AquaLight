@@ -5,8 +5,11 @@ import androidx.compose.runtime.Immutable
 @Immutable
 internal data class DeviceDosingTimerScheduleUiState(
     val doses: List<DeviceDosingTimerDose>,
+    val maxDoseCount: Int,
     val validationMessage: String? = null,
-    val actionEnabled: Boolean = doses.isNotEmpty()
+    val actionEnabled: Boolean = doses.isNotEmpty() &&
+        maxDoseCount > 0 &&
+        doses.size <= maxDoseCount
 )
 
 internal sealed interface DeviceDosingTimerScheduleAction {
