@@ -93,11 +93,6 @@ object DeviceDosingRuntimeContract {
     }
 }
 
-internal const val DOSING_NON_NEGATIVE_LONG = 0L
-internal const val DOSING_UNSET_RESERVOIR = -1.0
-internal const val DOSING_PERCENT_MAX = 100.0
-internal const val DOSING_VALUE_EPSILON = 0.000_001
-
 internal fun normalizeDosingChannelKey(value: String): String {
     val normalized = value.trim()
     require(normalized.isNotEmpty()) { "Dosing channelKey must not be empty." }
@@ -107,13 +102,3 @@ internal fun normalizeDosingChannelKey(value: String): String {
     }
     return normalized
 }
-
-internal fun isNewerDosingSample(candidate: Long, current: Long): Boolean {
-    require(candidate in 0L..DeviceDosingRuntimeContract.Limit.MAX_UINT32)
-    require(current in 0L..DeviceDosingRuntimeContract.Limit.MAX_UINT32)
-    if (candidate == current) return true
-    return ((candidate - current) and DeviceDosingRuntimeContract.Limit.MAX_UINT32) < 0x8000_0000L
-}
-
-internal fun dosingValuesEquivalent(first: Double, second: Double): Boolean =
-    kotlin.math.abs(first - second) <= DOSING_VALUE_EPSILON
