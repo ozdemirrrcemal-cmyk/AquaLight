@@ -74,6 +74,11 @@ internal class DeviceDosingPlanViewModel(
 
     fun currentDraft(): DosingPlanDraft = mutableDraft.value
 
+    fun currentMaxEventsPerChannel(): Int = snapshot?.scheduling?.maxEventsPerChannel ?: 0
+
+    fun currentMaxCustomPeriodsPerChannel(): Int =
+        snapshot?.scheduling?.maxCustomPeriodsPerChannel ?: 0
+
     suspend fun save(): Boolean {
         val target = bound ?: return false
         val currentSnapshot = snapshot ?: return false
