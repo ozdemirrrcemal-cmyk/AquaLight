@@ -14,8 +14,10 @@ import com.aqua.aqualight.data.devices.model.DeviceUid
 import com.aqua.aqualight.data.devices.runtime.core.DeviceRuntimeCommandOutcome
 import com.aqua.aqualight.data.devices.runtime.core.DeviceRuntimeConnectionGeneration
 import com.aqua.aqualight.data.devices.runtime.modules.dosing.DeviceDosingRuntimeFixtures
-import com.aqua.aqualight.data.devices.runtime.modules.dosing.models.DeviceDosingStatus
+import com.aqua.aqualight.data.devices.runtime.modules.dosing.models.DeviceDosingChannelStatus
 import com.aqua.aqualight.data.devices.runtime.modules.dosing.parsers.DeviceDosingStatusParser
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.test.runTest
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNull
@@ -24,7 +26,7 @@ import org.junit.Test
 class DefaultDeviceDosingChannelNavigationOperationsTest {
 
     @Test
-    fun `uncalibrated firmware channel opens calibration without redundant preflight`() = runTest {
+    fun `uncalibrated channel requests only its firmware status and opens calibration`() = runTest {
         val port = fakePort(successfulStatus(calibrated = false))
 
         val target = DefaultDeviceDosingChannelNavigationOperations(port)
@@ -32,13 +34,13 @@ class DefaultDeviceDosingChannelNavigationOperationsTest {
 
         assertEquals(DeviceDosingChannelDestination.CALIBRATION, target?.destination)
         assertEquals(CHANNEL_ONE_SLOT_ID, target?.slotId)
-        assertEquals(listOf(ROOT_CALL, STATUS_CALL), port.calls)
+        assertEquals(listOf(ROOT_CALL, statusCall(CHANNEL_ONE_KEY)), port.calls)
     }
 
     @Test
-    fun `calibrated firmware channel opens detail with firmware display name`() = runTest {
+    fun `calibrated channel opens detail with firmware effective name`() = runTest {
         val port = fakePort(
-            successfulStatus(calibrated = true, displayName = CUSTOM_CHANNEL_NAME)
+            successfulStatus(calibrated = true, effectiveName = CUSTOM_CHANNEL_NAME)
         )
 
         val target = DefaultDeviceDosingChannelNavigationOperations(port)
@@ -50,7 +52,7 @@ class DefaultDeviceDosingChannelNavigationOperationsTest {
     }
 
     @Test
-    fun `expired session uses central recovery once before retrying firmware status`() = runTest {
+    fun `expired session uses central recovery once before channel status retry`() = runTest {
         val port = fakePort(
             notAuthenticated(),
             successfulStatus(calibrated = false)
@@ -58,105 +60,64 @@ class DefaultDeviceDosingChannelNavigationOperationsTest {
 
         val target = DefaultDeviceDosingChannelNavigationOperations(port)
             .resolve(DEVICE_UID, CHANNEL_ONE_SLOT_ID)
-
-        assertEquals(DeviceDosingChannelDestination.CALIBRATION, target?.destination)
-        assertEquals(listOf(ROOT_CALL, STATUS_CALL, PREPARE_CALL, STATUS_CALL), port.calls)
-    }
-
-    @Test
-    fun `failed central recovery does not send a second firmware request`() = runTest {
-        val port = fakePort(notAuthenticated(), prepared = false)
-
-        val target = DefaultDeviceDosingChannelNavigationOperations(port)
-            .resolve(DEVICE_UID, CHANNEL_ONE_SLOT_ID)
-
-        assertNull(target)
-        assertEquals(listOf(ROOT_CALL, STATUS_CALL, PREPARE_CALL), port.calls)
-    }
-
-    @Test
-    fun `root refresh repairs an unauthenticated runtime before publishing channels`() = runTest {
-        val port = fakePort(
-            notAuthenticated(),
-            successfulStatus(calibrated = false)
-        )
-
-        val refreshed = DefaultDeviceDosingChannelNavigationOperations(port)
-            .refreshTargets(DEVICE_UID)
-
-        assertEquals(true, refreshed)
-        assertEquals(listOf(STATUS_CALL, PREPARE_CALL, STATUS_CALL), port.calls)
-    }
-
-    @Test
-    fun `current route uses authoritative published status without another request`() = runTest {
-        val port = fakePort(
-            currentStatus = firmwareStatus(
-                calibrated = true,
-                displayName = CUSTOM_CHANNEL_NAME
-            )
-        )
-
-        val target = DefaultDeviceDosingChannelNavigationOperations(port)
-            .resolveCurrent(DEVICE_UID, CHANNEL_ONE_SLOT_ID)
-
-        assertEquals(DeviceDosingChannelDestination.DETAIL, target?.destination)
-        assertEquals(CUSTOM_CHANNEL_NAME, target?.channelTitle)
-        assertEquals(listOf(ROOT_CALL, CURRENT_STATUS_CALL), port.calls)
-    }
-
-    @Test
-    fun `missing current status recovers instead of assuming uncalibrated`() = runTest {
-        val port = fakePort(
-            notAuthenticated(),
-            successfulStatus(calibrated = false)
-        )
-
-        val target = DefaultDeviceDosingChannelNavigationOperations(port)
-            .resolveCurrent(DEVICE_UID, CHANNEL_ONE_SLOT_ID)
 
         assertEquals(DeviceDosingChannelDestination.CALIBRATION, target?.destination)
         assertEquals(
             listOf(
                 ROOT_CALL,
-                CURRENT_STATUS_CALL,
-                STATUS_CALL,
+                statusCall(CHANNEL_ONE_KEY),
                 PREPARE_CALL,
-                STATUS_CALL
+                statusCall(CHANNEL_ONE_KEY)
             ),
             port.calls
         )
     }
 
     @Test
-    fun `missing current status with invalid firmware payload fails closed`() = runTest {
-        val port = fakePort(protocolError())
+    fun `failed central recovery does not send second channel request`() = runTest {
+        val port = fakePort(notAuthenticated(), prepared = false)
 
         val target = DefaultDeviceDosingChannelNavigationOperations(port)
-            .resolveCurrent(DEVICE_UID, CHANNEL_ONE_SLOT_ID)
+            .resolve(DEVICE_UID, CHANNEL_ONE_SLOT_ID)
 
         assertNull(target)
         assertEquals(
-            listOf(ROOT_CALL, CURRENT_STATUS_CALL, STATUS_CALL),
+            listOf(ROOT_CALL, statusCall(CHANNEL_ONE_KEY), PREPARE_CALL),
             port.calls
         )
     }
 
     @Test
-    fun `firmware protocol failure is not hidden by a blind recovery retry`() = runTest {
+    fun `current route uses already published channel status without request`() = runTest {
+        val current = channelStatus(calibrated = true, effectiveName = CUSTOM_CHANNEL_NAME)
+        val port = fakePort(currentStatus = current)
+
+        val target = DefaultDeviceDosingChannelNavigationOperations(port)
+            .resolveCurrent(DEVICE_UID, CHANNEL_ONE_SLOT_ID)
+
+        assertEquals(DeviceDosingChannelDestination.DETAIL, target?.destination)
+        assertEquals(CUSTOM_CHANNEL_NAME, target?.channelTitle)
+        assertEquals(
+            listOf(ROOT_CALL, currentStatusCall(CHANNEL_ONE_KEY)),
+            port.calls
+        )
+    }
+
+    @Test
+    fun `protocol error is not hidden by blind runtime recovery`() = runTest {
         val port = fakePort(protocolError())
 
         val target = DefaultDeviceDosingChannelNavigationOperations(port)
             .resolve(DEVICE_UID, CHANNEL_ONE_SLOT_ID)
 
         assertNull(target)
-        assertEquals(listOf(ROOT_CALL, STATUS_CALL), port.calls)
+        assertEquals(listOf(ROOT_CALL, statusCall(CHANNEL_ONE_KEY)), port.calls)
     }
 
     private fun fakePort(
-        vararg outcomes: DeviceRuntimeCommandOutcome<DeviceDosingStatus>,
+        vararg outcomes: DeviceRuntimeCommandOutcome<DeviceDosingChannelStatus>,
         prepared: Boolean = true,
-        currentStatus: DeviceDosingStatus? = null
+        currentStatus: DeviceDosingChannelStatus? = null
     ) = FakeRuntimePort(
         prepared = prepared,
         root = dosingRootSnapshot(),
@@ -166,7 +127,7 @@ class DefaultDeviceDosingChannelNavigationOperationsTest {
 
     private fun successfulStatus(
         calibrated: Boolean,
-        displayName: String = DEFAULT_CHANNEL_NAME
+        effectiveName: String = DEFAULT_CHANNEL_NAME
     ) = DeviceRuntimeCommandOutcome.Success(
         deviceUid = DeviceUid(DEVICE_UID),
         module = DOSING_MODULE,
@@ -174,7 +135,22 @@ class DefaultDeviceDosingChannelNavigationOperationsTest {
         messageId = MESSAGE_ID,
         generation = DeviceRuntimeConnectionGeneration(RUNTIME_GENERATION),
         statusCode = SUCCESS_STATUS_CODE,
-        value = firmwareStatus(calibrated, displayName)
+        value = channelStatus(calibrated, effectiveName)
+    )
+
+    private fun channelStatus(
+        calibrated: Boolean,
+        effectiveName: String = DEFAULT_CHANNEL_NAME
+    ): DeviceDosingChannelStatus = DeviceDosingStatusParser.parseChannel(
+        DeviceDosingRuntimeFixtures.channelStatus(
+            calibrated = calibrated,
+            program = if (calibrated) {
+                DeviceDosingRuntimeFixtures.singleProgram()
+            } else {
+                null
+            },
+            effectiveName = effectiveName
+        )
     )
 
     private fun notAuthenticated() = DeviceRuntimeCommandOutcome.NotAuthenticated(
@@ -190,26 +166,8 @@ class DefaultDeviceDosingChannelNavigationOperationsTest {
         action = STATUS_ACTION,
         messageId = MESSAGE_ID,
         generation = DeviceRuntimeConnectionGeneration(RUNTIME_GENERATION),
-        reason = "Invalid dosing status payload."
+        reason = "Invalid dosing channel status payload."
     )
-
-    private fun firmwareStatus(
-        calibrated: Boolean,
-        displayName: String = DEFAULT_CHANNEL_NAME
-    ): DeviceDosingStatus {
-        val status = DeviceDosingStatusParser.parse(
-            DeviceDosingRuntimeFixtures.status(channelOneDisplayName = displayName)
-        )
-        val channel = status.channels.first()
-        val dosing = channel.dosing.copy(
-            doseMsPerMl = if (calibrated) CALIBRATED_DOSE_MS_PER_ML else 0L,
-            lastCalibratedAt = if (calibrated) CALIBRATED_AT else 0L,
-            calibrated = calibrated
-        )
-        return status.copy(
-            channels = listOf(channel.copy(dosing = dosing)) + status.channels.drop(1)
-        )
-    }
 
     private fun dosingRootSnapshot() = DeviceRootSnapshot(
         deviceUid = DEVICE_UID,
@@ -236,8 +194,8 @@ class DefaultDeviceDosingChannelNavigationOperationsTest {
     private class FakeRuntimePort(
         private val prepared: Boolean,
         private val root: DeviceRootSnapshot,
-        outcomes: List<DeviceRuntimeCommandOutcome<DeviceDosingStatus>>,
-        private val currentStatus: DeviceDosingStatus?
+        outcomes: List<DeviceRuntimeCommandOutcome<DeviceDosingChannelStatus>>,
+        private val currentStatus: DeviceDosingChannelStatus?
     ) : DeviceDosingChannelNavigationRuntimePort {
         private val outcomes = ArrayDeque(outcomes)
         val calls = mutableListOf<String>()
@@ -252,15 +210,25 @@ class DefaultDeviceDosingChannelNavigationOperationsTest {
             return root
         }
 
-        override fun currentStatus(deviceUid: DeviceUid): DeviceDosingStatus? {
-            calls += CURRENT_STATUS_CALL
+        override fun observeStatuses(
+            deviceUid: DeviceUid
+        ): Flow<Map<String, DeviceDosingChannelStatus>> = flowOf(
+            currentStatus?.let { mapOf(CHANNEL_ONE_KEY to it) }.orEmpty()
+        )
+
+        override fun currentStatus(
+            deviceUid: DeviceUid,
+            channelKey: String
+        ): DeviceDosingChannelStatus? {
+            calls += currentStatusCall(channelKey)
             return currentStatus
         }
 
         override suspend fun requestStatus(
-            deviceUid: DeviceUid
-        ): DeviceRuntimeCommandOutcome<DeviceDosingStatus> {
-            calls += STATUS_CALL
+            deviceUid: DeviceUid,
+            channelKey: String
+        ): DeviceRuntimeCommandOutcome<DeviceDosingChannelStatus> {
+            calls += statusCall(channelKey)
             return outcomes.removeFirst()
         }
     }
@@ -271,8 +239,7 @@ class DefaultDeviceDosingChannelNavigationOperationsTest {
         const val CHANNEL_ONE_SLOT_ID = "dosing:channel1"
         const val DEFAULT_CHANNEL_NAME = "Channel 1"
         const val CUSTOM_CHANNEL_NAME = "Nutrients"
-        const val CALIBRATED_DOSE_MS_PER_ML = 1_000L
-        const val CALIBRATED_AT = 100L
+        const val CALIBRATED_AT = 1_786_320_000L
         const val RUNTIME_GENERATION = 1L
         const val SUCCESS_STATUS_CODE = 200
         const val DOSING_MODULE = "dosing"
@@ -280,7 +247,8 @@ class DefaultDeviceDosingChannelNavigationOperationsTest {
         const val MESSAGE_ID = "message-1"
         const val PREPARE_CALL = "prepare"
         const val ROOT_CALL = "root"
-        const val CURRENT_STATUS_CALL = "currentStatus"
-        const val STATUS_CALL = "status"
+
+        fun statusCall(channelKey: String) = "status:$channelKey"
+        fun currentStatusCall(channelKey: String) = "currentStatus:$channelKey"
     }
 }
