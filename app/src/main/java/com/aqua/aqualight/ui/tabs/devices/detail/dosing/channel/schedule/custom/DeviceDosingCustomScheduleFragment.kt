@@ -90,6 +90,8 @@ class DeviceDosingCustomScheduleFragment :
                     state = DeviceDosingCustomScheduleUiState(
                         dailyDoseMicroliters = args.dailyDoseMicroliters,
                         periods = periods,
+                        maxPeriods = editorPayload.maxPeriods,
+                        maxDoseCount = editorPayload.maxDoseCount,
                         validationMessage = validationMessageRes?.let(::getString)
                     ),
                     onAction = ::handleScheduleAction
