@@ -125,7 +125,7 @@ class AqlWsWireCodecGoldenTest {
         assertEquals(expectedPublic, AqlWsContract.publicCommandKeys())
         assertEquals(expectedAuthenticated, AqlWsContract.authenticatedCommandKeys())
         assertTrue(expectedPublic.isEmpty())
-        assertEquals(41, expectedAuthenticated.size)
+        assertEquals(43, expectedAuthenticated.size)
     }
 
     @Test
