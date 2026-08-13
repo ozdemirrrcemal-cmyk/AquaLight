@@ -8,7 +8,7 @@ import com.aqua.aqualight.application.devices.dosing.DeviceDosingTimerScheduleVa
 
 internal typealias DeviceDosingTimerDose = DeviceDosingTimerDoseDraft
 
-/** UI transport boundary; timer validity is owned by application policy. */
+/** UI transport boundary; firmware-published event capacity is supplied by the Plan owner. */
 internal object DeviceDosingTimerScheduleContract {
     const val RESULT_REQUEST_KEY = "dosing_timer_schedule_result"
     const val RESULT_KEY = "dosing_timer_schedule_result_state"
@@ -16,7 +16,6 @@ internal object DeviceDosingTimerScheduleContract {
     const val RESULT_SLOT_ID = "dosing_timer_schedule_slot_id"
     const val RESULT_SAVED = "saved"
 
-    const val MAX_DOSES_PER_DAY = DeviceDosingScheduleDraftLimits.MAX_DOSES_PER_DAY
     const val MILLIS_PER_MINUTE = DeviceDosingScheduleDraftLimits.MILLIS_PER_MINUTE
     const val MINUTES_PER_DAY = DeviceDosingScheduleDraftLimits.MINUTES_PER_DAY
     const val LAST_MINUTE_START_MS = DeviceDosingScheduleDraftLimits.LAST_MINUTE_START_MS
@@ -32,8 +31,8 @@ internal object DeviceDosingTimerScheduleContract {
     fun isValidTime(timeMs: Long): Boolean =
         DeviceDosingScheduleTimeDraftPolicy.isValidTime(timeMs)
 
-    fun validate(doses: List<DeviceDosingTimerDose>): ValidationError? =
-        DeviceDosingTimerScheduleDraftPolicy.validate(doses)?.toUiError()
+    fun validate(doses: List<DeviceDosingTimerDose>, maxDoseCount: Int): ValidationError? =
+        DeviceDosingTimerScheduleDraftPolicy.validate(doses, maxDoseCount)?.toUiError()
 
     fun normalize(doses: List<DeviceDosingTimerDose>): List<DeviceDosingTimerDose> =
         DeviceDosingTimerScheduleDraftPolicy.normalize(doses)
@@ -48,9 +47,7 @@ internal object DeviceDosingTimerScheduleContract {
 
     fun decodeDraft(encoded: String): List<DeviceDosingTimerDose>? = when {
         encoded.isBlank() -> emptyList()
-        else -> runCatching { decodeTimerDoses(encoded) }.getOrNull()
-            ?.takeIf { doses -> validate(doses) == null }
-            ?.let(::normalize)
+        else -> runCatching { decodeTimerDoses(encoded) }.getOrNull()?.let(::normalize)
     }
 }
 
