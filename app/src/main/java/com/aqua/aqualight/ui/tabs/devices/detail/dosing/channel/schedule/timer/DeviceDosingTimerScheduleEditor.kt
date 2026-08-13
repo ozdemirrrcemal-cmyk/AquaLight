@@ -13,12 +13,17 @@ import com.aqua.aqualight.ui.tabs.devices.detail.dosing.channel.schedule.DeviceD
 internal data class DeviceDosingTimerScheduleEditorHost(
     val fragment: Fragment,
     val slotId: String,
+    val maxDoseCount: Int,
     val doses: () -> List<DeviceDosingTimerDose>,
     val updateDoses: (List<DeviceDosingTimerDose>) -> Unit,
     val updateValidation: (Int?) -> Unit
-)
+) {
+    init {
+        require(maxDoseCount > 0)
+    }
+}
 
-/** Coordinates Timer time-and-amount entry independently from screen rendering. */
+/** Coordinates Timer-mode time-and-amount entry using firmware-published capacity. */
 internal class DeviceDosingTimerScheduleEditor(
     private val host: DeviceDosingTimerScheduleEditorHost,
     savedInstanceState: Bundle?
@@ -42,7 +47,10 @@ internal class DeviceDosingTimerScheduleEditor(
 
     fun beginAdd() {
         val doses = host.doses()
-        if (doses.size >= DeviceDosingTimerScheduleContract.MAX_DOSES_PER_DAY) return
+        if (doses.size >= host.maxDoseCount) {
+            host.updateValidation(R.string.device_dosing_timer_error_too_many)
+            return
+        }
         host.updateValidation(null)
         pendingIndex = NEW_DOSE_INDEX
         pendingStartTimeMs = nextDefaultTimerStartTimeMs(doses)
@@ -160,7 +168,7 @@ internal class DeviceDosingTimerScheduleEditor(
         val updated = host.doses().toMutableList().apply {
             if (pendingIndex in indices) this[pendingIndex] = candidate else add(candidate)
         }
-        val error = DeviceDosingTimerScheduleContract.validate(updated)
+        val error = DeviceDosingTimerScheduleContract.validate(updated, host.maxDoseCount)
         if (error == null) {
             host.updateDoses(DeviceDosingTimerScheduleContract.normalize(updated))
             host.updateValidation(null)
