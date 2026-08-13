@@ -39,7 +39,9 @@ internal data class DeviceDosingPlanUiState(
     val dailyDoseMicroliters: Long,
     val selectedScheduleMode: DosingPlanScheduleMode,
     val scheduleEnabled: Boolean,
-    val recurrenceState: DosingPlanRecurrenceState
+    val recurrenceState: DosingPlanRecurrenceState,
+    val saveEnabled: Boolean,
+    val saving: Boolean
 )
 
 internal data class DosingPlanRecurrenceActions(
@@ -55,7 +57,7 @@ internal data class DeviceDosingPlanActions(
     val onSaveClick: (() -> Unit)?
 )
 
-/** Dosing Plan child feature. Runtime persistence stays outside this UI-only destination. */
+/** Dosing Plan editor backed by the firmware-authoritative per-channel program. */
 @Composable
 internal fun DeviceDosingPlanScreen(
     state: DeviceDosingPlanUiState,
@@ -223,9 +225,7 @@ private fun PlanSaveAction(
         text = stringResource(R.string.device_dosing_detail_save_plan),
         onClick = { onSaveClick?.invoke() },
         modifier = Modifier.fillMaxWidth(),
-        enabled = state.scheduleEnabled &&
-            state.recurrenceState.selectedDays.isNotEmpty() &&
-            onSaveClick != null
+        enabled = state.saveEnabled && !state.saving && onSaveClick != null
     )
 }
 
