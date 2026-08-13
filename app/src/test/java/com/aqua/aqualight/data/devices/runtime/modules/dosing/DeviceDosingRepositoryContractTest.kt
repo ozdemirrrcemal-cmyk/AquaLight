@@ -40,7 +40,7 @@ class DeviceDosingRepositoryContractTest {
     }
 
     @Test
-    fun `rename and reset reuse authoritative revision instead of schedule list replacement`() = runBlocking {
+    fun `rename refreshes authoritative baseline before reset revision validation`() = runBlocking {
         val gateway = FixtureGateway()
         val repository = repository(gateway)
 
@@ -48,9 +48,13 @@ class DeviceDosingRepositoryContractTest {
         assertTrue(repository.setChannelDisplayName(DEVICE_UID, "channel1", "Macro Pump") is DeviceRuntimeCommandOutcome.Success)
         assertTrue(repository.resetChannel(DEVICE_UID, "channel1") is DeviceRuntimeCommandOutcome.Success)
 
-        assertEquals(listOf("status.get", "config.apply", "channel.reset"), gateway.actions)
+        assertEquals(
+            listOf("status.get", "config.apply", "status.get", "channel.reset"),
+            gateway.actions
+        )
         assertEquals(7L, gateway.encoded[1].getLong("expectedRevision"))
-        assertEquals(8L, gateway.encoded[2].getLong("expectedRevision"))
+        assertEquals(setOf("channelKey"), gateway.encoded[2].keySet())
+        assertEquals(8L, gateway.encoded[3].getLong("expectedRevision"))
         assertFalse(gateway.encoded.any { it.has("schedules") })
         val channel = repository.states.value.getValue(DEVICE_UID).channel("channel1")?.channel
         assertEquals(9L, channel?.revision)
