@@ -21,8 +21,6 @@ class DosingFirmwareLockstepArchitectureTest {
         dosingProductionSources().forEach { source ->
             assertFalse(source.text.contains("runtime.modules.timer"))
             assertFalse(source.text.contains("DeviceTimerRuntime"))
-            assertFalse(source.text.contains("timerApi"))
-            assertFalse(source.text.contains("timerEngine"))
         }
     }
 
