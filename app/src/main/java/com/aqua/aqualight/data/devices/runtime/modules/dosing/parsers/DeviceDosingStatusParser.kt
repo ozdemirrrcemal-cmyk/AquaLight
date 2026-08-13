@@ -1,97 +1,87 @@
 package com.aqua.aqualight.data.devices.runtime.modules.dosing.parsers
 
-import com.aqua.aqualight.data.devices.runtime.modules.dosing.contract.DOSING_DEVICE_UPTIME_MAX_MS
-import com.aqua.aqualight.data.devices.runtime.modules.dosing.contract.DOSING_MIN_COUNT
-import com.aqua.aqualight.data.devices.runtime.modules.dosing.contract.DOSING_NON_NEGATIVE_LONG
 import com.aqua.aqualight.data.devices.runtime.modules.dosing.contract.DeviceDosingRuntimeContract
 import com.aqua.aqualight.data.devices.runtime.modules.dosing.models.DeviceDosingChannelStatus
-import com.aqua.aqualight.data.devices.runtime.modules.dosing.models.DeviceDosingScheduleStatus
-import com.aqua.aqualight.data.devices.runtime.modules.dosing.models.DeviceDosingStatus
-import org.json.JSONArray
+import com.aqua.aqualight.data.devices.runtime.modules.dosing.models.DeviceDosingGlobalStatus
+import com.aqua.aqualight.data.devices.runtime.modules.dosing.models.DeviceDosingStatusChange
 import org.json.JSONObject
 
-object DeviceDosingStatusParser {
-    private val KEYS = setOf(
-        "supported", "channelCount", "scheduleCount", "lockLoop", "schema", "rootName",
-        "unit", "uptimeMs", "channels", "schedules", "runtime"
-    )
-
-    fun parse(data: JSONObject): DeviceDosingStatus {
-        data.requireDosingKeys(KEYS, "Dosing status")
-        val channels = parseChannels(data.requireDosingArray("channels"))
-        val schedules = parseSchedules(data.requireDosingArray("schedules"))
-        return DeviceDosingStatus(
-            supported = data.requireDosingBoolean("supported"),
-            channelCount = data.requireDosingInt(
-                "channelCount",
-                DOSING_MIN_COUNT,
-                DeviceDosingRuntimeContract.Limit.MAX_CHANNELS
-            ),
-            scheduleCount = data.requireDosingInt(
-                "scheduleCount",
-                DOSING_MIN_COUNT,
-                DeviceDosingRuntimeContract.Limit.MAX_SCHEDULES
-            ),
-            lockLoop = data.requireDosingBoolean("lockLoop"),
-            schema = data.requireDosingText("schema"),
-            rootName = data.requireDosingText("rootName"),
-            unit = data.requireDosingText("unit"),
-            uptimeMs = data.requireDosingLong(
-                "uptimeMs",
-                DOSING_NON_NEGATIVE_LONG,
-                DOSING_DEVICE_UPTIME_MAX_MS
+internal object DeviceDosingStatusParser {
+    fun parseGlobal(data: JSONObject): DeviceDosingGlobalStatus {
+        data.requireDosingKeys(GLOBAL_STATUS_KEYS, "Dosing global status")
+        val envelope = DeviceDosingComponentParsers.parseEnvelope(data)
+        val channelsArray = data.requireDosingArray("channels")
+        val channels = List(channelsArray.length()) { index ->
+            DeviceDosingComponentParsers.parseGlobalSummary(
+                channelsArray.get(index) as? JSONObject
+                    ?: error("Dosing channels must contain objects.")
+            )
+        }
+        require(channels.size == envelope.channelCount)
+        require(channels.map { it.channelKey }.toSet().size == channels.size)
+        return DeviceDosingGlobalStatus(
+            envelope = envelope,
+            scheduling = DeviceDosingComponentParsers.parseScheduling(
+                data.requireDosingObject("scheduling")
             ),
             channels = channels,
-            schedules = schedules,
-            runtime = DeviceDosingRuntimeCapabilitiesParser.parse(
+            runtime = DeviceDosingComponentParsers.parseRuntimeCapabilities(
                 data.requireDosingObject("runtime")
+            ),
+            resources = DeviceDosingComponentParsers.parseResources(
+                data.requireDosingObject("resources")
             )
-        ).also(::validate)
+        )
     }
 
-    private fun parseChannels(data: JSONArray): List<DeviceDosingChannelStatus> =
-        List(data.length()) { index ->
-            DeviceDosingChannelParser.parseStatus(data.requireDosingObject(index))
-        }
-
-    private fun parseSchedules(data: JSONArray): List<DeviceDosingScheduleStatus> =
-        List(data.length()) { index ->
-            DeviceDosingScheduleParser.parse(data.requireDosingObject(index))
-        }
-
-    private fun validate(status: DeviceDosingStatus) {
-        require(status.supported)
-        require(status.schema == DeviceDosingRuntimeContract.Literal.STATUS_SCHEMA)
-        require(status.rootName == DeviceDosingRuntimeContract.Literal.STATUS_ROOT)
-        require(status.unit == DeviceDosingRuntimeContract.Literal.UNIT_ML)
-        require(status.channelCount == status.channels.size)
-        require(status.scheduleCount == status.schedules.size)
-        require(status.channelCount > 0)
-        require(
-            status.channels.map(DeviceDosingChannelStatus::index) == status.channels.indices.toList()
+    fun parseChannel(data: JSONObject): DeviceDosingChannelStatus {
+        data.requireDosingKeys(CHANNEL_STATUS_KEYS, "Dosing channel-scoped status")
+        val envelope = DeviceDosingComponentParsers.parseEnvelope(data)
+        val channel = DeviceDosingComponentParsers.parseChannelDetail(
+            data.requireDosingObject("channel")
         )
-        require(
-            status.schedules.map(DeviceDosingScheduleStatus::index) ==
-                status.schedules.indices.toList()
+        require(channel.index in 0 until envelope.channelCount)
+        return DeviceDosingChannelStatus(
+            envelope = envelope,
+            scheduling = DeviceDosingComponentParsers.parseScheduling(
+                data.requireDosingObject("scheduling")
+            ),
+            channel = channel
         )
-        require(
-            status.channels.map(DeviceDosingChannelStatus::key).distinct().size ==
-                status.channels.size
-        )
-
-        val channelsByKey = status.channels.associateBy(DeviceDosingChannelStatus::key)
-        status.schedules.forEach { schedule ->
-            val channel = requireNotNull(channelsByKey[schedule.channelKey])
-            require(schedule.bound)
-            val durationReady =
-                !(channel.dosing.doseMsPerMl <= 1L && schedule.intervalOnMs < 1L) &&
-                    !(channel.dosing.doseMsPerMl >= 1L && schedule.amountMl <= 0.0)
-            val expectedRuntimeEnabled = schedule.enabled &&
-                channel.dosing.calibrated &&
-                schedule.weekdays.any { selected -> selected } &&
-                schedule.repeatCount > 0 &&
-                durationReady
-            require(schedule.runtimeEnabled == expectedRuntimeEnabled)
-        }
     }
+
+    fun parseStatusChange(data: JSONObject): DeviceDosingStatusChange {
+        data.requireDosingKeys(STATUS_CHANGE_KEYS, "Dosing status change event")
+        return DeviceDosingStatusChange(
+            schema = data.requireDosingText("schema").also {
+                require(it == DeviceDosingRuntimeContract.SCHEMA)
+            },
+            schemaVersion = data.requireDosingInt("schemaVersion").also {
+                require(it == DeviceDosingRuntimeContract.SCHEMA_VERSION)
+            },
+            channelKey = com.aqua.aqualight.data.devices.runtime.modules.dosing.contract
+                .normalizeDosingChannelKey(data.requireDosingText("channelKey")),
+            revision = data.requireDosingLong(
+                "revision",
+                minimum = 0L,
+                maximum = DeviceDosingRuntimeContract.Limit.MAX_UINT32
+            ),
+            storageHealthy = data.requireDosingBoolean("storageHealthy"),
+            change = DeviceDosingComponentParsers.parseRuntimeEvent(
+                data.requireDosingObject("change")
+            )
+        )
+    }
+
+    private val COMMON_STATUS_KEYS = setOf(
+        "supported", "schema", "schemaVersion", "unit", "channelCount", "uptimeMs",
+        "bootReady", "storageHealthy", "storageIssue"
+    )
+    private val GLOBAL_STATUS_KEYS = COMMON_STATUS_KEYS + setOf(
+        "scheduling", "channels", "runtime", "resources"
+    )
+    private val CHANNEL_STATUS_KEYS = COMMON_STATUS_KEYS + setOf("scheduling", "channel")
+    private val STATUS_CHANGE_KEYS = setOf(
+        "schema", "schemaVersion", "channelKey", "revision", "storageHealthy", "change"
+    )
 }
