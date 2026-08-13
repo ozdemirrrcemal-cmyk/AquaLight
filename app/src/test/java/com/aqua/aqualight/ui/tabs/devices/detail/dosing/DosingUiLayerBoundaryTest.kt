@@ -47,7 +47,7 @@ class DosingUiLayerBoundaryTest {
     fun `channel navigation stays behind central catalog runtime and route boundaries`() {
         val rootFragment = source(DOSING_SOURCE_ROOT + "DeviceDosingRootFragment.kt")
         val operations = source(
-            "app/src/main/java/com/aqua/aqualight/data/devices/" +
+            "app/src/main/java/com/aqua/aqualight/data/devices/dosing/" +
                 "DefaultDeviceDosingChannelNavigationOperations.kt"
         )
         val navigator = source(
@@ -86,7 +86,7 @@ class DosingUiLayerBoundaryTest {
             DOSING_SOURCE_ROOT + "channel/calibration/DosingCalibrationWorkflow.kt"
         )
         val applicationBoundary = source(
-            "app/src/main/java/com/aqua/aqualight/application/devices/" +
+            "app/src/main/java/com/aqua/aqualight/application/devices/dosing/" +
                 "DeviceDosingCalibrationOperations.kt"
         )
 
@@ -120,7 +120,7 @@ class DosingUiLayerBoundaryTest {
                 "channel/schedule/timer/DeviceDosingTimerScheduleContract.kt"
         )
         val policy = source(
-            "app/src/main/java/com/aqua/aqualight/application/devices/" +
+            "app/src/main/java/com/aqua/aqualight/application/devices/dosing/" +
                 "DeviceDosingScheduleDraftPolicy.kt"
         )
 
