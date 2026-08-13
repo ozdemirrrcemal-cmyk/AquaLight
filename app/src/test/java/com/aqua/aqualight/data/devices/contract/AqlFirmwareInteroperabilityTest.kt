@@ -228,10 +228,10 @@ class AqlFirmwareInteroperabilityTest {
     }
 
     @Test
-    fun `smart fertilizer catalog keys remain semantic not firmware wire identities`() {
-        FertilizerDoseCatalog.entries.forEach { entry ->
-            assertTrue(entry.key.isNotBlank())
-            assertFalse(entry.key.startsWith("channel"))
+    fun `smart fertilizer catalog ids remain semantic not firmware wire identities`() {
+        FertilizerDoseCatalog.rules.forEach { rule ->
+            assertTrue(rule.id.isNotBlank())
+            assertFalse(rule.id.startsWith("channel"))
         }
     }
 
