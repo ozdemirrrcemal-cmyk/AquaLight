@@ -160,15 +160,20 @@ internal class DeviceDosingPlanViewModel(
         if (scheduleEnabled && weekdays.none { it }) return null
         val config = when (selectedScheduleMode) {
             DosingPlanScheduleMode.SINGLE -> distributedConfig(
-                distributedDailyDoseMicroliters,
-                singleDoseStartTimeMs,
-                current
+                dailyDoseMicroliters = distributedDailyDoseMicroliters,
+                startTimeMs = singleDoseStartTimeMs,
+                occurrenceCount = 1,
+                current = current
             )
-            DosingPlanScheduleMode.HOURLY -> distributedConfig(
-                distributedDailyDoseMicroliters,
-                hourlyStartTimeMs,
-                current
-            )
+            DosingPlanScheduleMode.HOURLY -> {
+                if (current.scheduling.maxEventsPerChannel < HOURLY_OCCURRENCE_COUNT) return null
+                distributedConfig(
+                    dailyDoseMicroliters = distributedDailyDoseMicroliters,
+                    startTimeMs = hourlyStartTimeMs,
+                    occurrenceCount = HOURLY_OCCURRENCE_COUNT,
+                    current = current
+                )
+            }
             DosingPlanScheduleMode.CUSTOM -> customConfig(current)
             DosingPlanScheduleMode.TIMER -> timerConfig(current)
         } ?: return null
@@ -182,24 +187,24 @@ internal class DeviceDosingPlanViewModel(
     }
 
     private fun DosingPlanDraft.distributedConfig(
-        microliters: Long,
+        dailyDoseMicroliters: Long,
         startTimeMs: Long,
+        occurrenceCount: Int,
         current: DeviceDosingChannelSnapshot
     ): DeviceDosingProgramDraftConfig.Distributed? {
-        val amount = microliters.toMl()
-        if (!amountAllowed(amount, current)) return null
         if (startTimeMs !in 0L until MILLIS_PER_DAY) return null
-        return DeviceDosingProgramDraftConfig.Distributed(amount, startTimeMs)
+        val dailyDoseMl = dailyDoseMicroliters.toMl()
+        if (!distributedAmountAllowed(dailyDoseMl, occurrenceCount, current, scheduleEnabled)) {
+            return null
+        }
+        return DeviceDosingProgramDraftConfig.Distributed(dailyDoseMl, startTimeMs)
     }
 
     private fun DosingPlanDraft.customConfig(
         current: DeviceDosingChannelSnapshot
     ): DeviceDosingProgramDraftConfig.CustomPeriods? {
-        val amount = distributedDailyDoseMicroliters.toMl()
         val limits = current.scheduling
-        if (!amountAllowed(amount, current)) return null
         if (customPeriods.isEmpty() || customPeriods.size > limits.maxCustomPeriodsPerChannel) return null
-        if (customPeriods.sumOf { it.doseCount } > limits.maxEventsPerChannel) return null
         val normalized = customPeriods.sortedBy { it.startTimeMs }
         normalized.forEach { period ->
             if (
@@ -212,8 +217,13 @@ internal class DeviceDosingPlanViewModel(
         normalized.zipWithNext().forEach { (first, second) ->
             if (first.endTimeMs >= second.startTimeMs) return null
         }
+        val totalCount = normalized.sumOf { it.doseCount }
+        if (totalCount !in 1..limits.maxEventsPerChannel) return null
+        val dailyDoseMl = distributedDailyDoseMicroliters.toMl()
+        if (!distributedAmountAllowed(dailyDoseMl, totalCount, current, scheduleEnabled)) return null
+
         return DeviceDosingProgramDraftConfig.CustomPeriods(
-            dailyDoseMl = amount,
+            dailyDoseMl = dailyDoseMl,
             periods = normalized.map { period ->
                 DeviceDosingProgramCustomPeriodDraft(
                     period.startTimeMs,
@@ -232,25 +242,60 @@ internal class DeviceDosingPlanViewModel(
         val normalized = timerDoses.sortedBy { it.startTimeMs }
         if (normalized.map { it.startTimeMs }.distinct().size != normalized.size) return null
         val events = normalized.map { dose ->
-            val amount = dose.amountMicroliters.toMl()
-            if (dose.startTimeMs !in 0L until MILLIS_PER_DAY || !amountAllowed(amount, current)) {
-                return null
-            }
-            DeviceDosingProgramTimerEventDraft(dose.startTimeMs, amount)
+            if (dose.startTimeMs !in 0L until MILLIS_PER_DAY) return null
+            val amountMl = dose.amountMicroliters.toMl()
+            val quanta = canonicalAmountQuanta(amountMl, current) ?: return null
+            if (scheduleEnabled && !occurrenceAmountAllowed(quanta, current)) return null
+            DeviceDosingProgramTimerEventDraft(dose.startTimeMs, amountMl)
         }
         return DeviceDosingProgramDraftConfig.Timer(events)
     }
 
-    private fun amountAllowed(amountMl: Double, current: DeviceDosingChannelSnapshot): Boolean {
-        if (!amountMl.isFinite() || amountMl <= 0.0) return false
-        val limits = current.scheduling
-        val resolution = limits.amountResolutionMl
-        if (!resolution.isFinite() || resolution <= 0.0) return false
-        val normalized = BigDecimal.valueOf(amountMl)
-            .divide(BigDecimal.valueOf(resolution), 9, RoundingMode.HALF_UP)
-        if (normalized.stripTrailingZeros().scale() > 0) return false
-        limits.effectiveScheduledDoseMinMl?.let { if (amountMl + EPSILON < it) return false }
-        limits.effectiveScheduledDoseMaxMl?.let { if (amountMl > it + EPSILON) return false }
+    private fun distributedAmountAllowed(
+        totalAmountMl: Double,
+        occurrenceCount: Int,
+        current: DeviceDosingChannelSnapshot,
+        enforcePhysicalSafety: Boolean
+    ): Boolean {
+        if (occurrenceCount <= 0) return false
+        val totalQuanta = canonicalAmountQuanta(totalAmountMl, current) ?: return false
+        if (totalQuanta < occurrenceCount.toLong()) return false
+        if (!enforcePhysicalSafety) return true
+
+        val base = totalQuanta / occurrenceCount
+        val remainder = totalQuanta % occurrenceCount
+        return (0 until occurrenceCount).all { index ->
+            val quanta = base + if (index.toLong() < remainder) 1L else 0L
+            occurrenceAmountAllowed(quanta, current)
+        }
+    }
+
+    private fun canonicalAmountQuanta(
+        amountMl: Double,
+        current: DeviceDosingChannelSnapshot
+    ): Long? {
+        if (!amountMl.isFinite() || amountMl <= 0.0) return null
+        val resolution = current.scheduling.amountResolutionMl
+        if (!resolution.isFinite() || resolution <= 0.0) return null
+        return runCatching {
+            BigDecimal.valueOf(amountMl)
+                .divide(BigDecimal.valueOf(resolution))
+                .longValueExact()
+        }.getOrNull()?.takeIf { it > 0L }
+    }
+
+    private fun occurrenceAmountAllowed(
+        amountQuanta: Long,
+        current: DeviceDosingChannelSnapshot
+    ): Boolean {
+        val resolution = current.scheduling.amountResolutionMl
+        val amountMl = amountQuanta.toDouble() * resolution
+        current.scheduling.effectiveScheduledDoseMinMl?.let {
+            if (amountMl + EPSILON < it) return false
+        }
+        current.scheduling.effectiveScheduledDoseMaxMl?.let {
+            if (amountMl > it + EPSILON) return false
+        }
         return true
     }
 
@@ -308,6 +353,7 @@ internal class DeviceDosingPlanViewModel(
     private companion object {
         const val MICROLITERS_PER_MILLILITER = 1_000.0
         const val MILLIS_PER_DAY = 86_400_000L
+        const val HOURLY_OCCURRENCE_COUNT = 24
         const val EPSILON = 0.000_001
     }
 }
