@@ -11,12 +11,19 @@ import com.aqua.aqualight.ui.common.bottomsheet.IntegerStepperBottomSheet
 internal data class DeviceDosingCustomScheduleEditorHost(
     val fragment: Fragment,
     val slotId: String,
+    val maxPeriods: Int,
+    val maxDoseCount: Int,
     val periods: () -> List<DeviceDosingCustomPeriod>,
     val updatePeriods: (List<DeviceDosingCustomPeriod>) -> Unit,
     val updateValidation: (Int?) -> Unit
-)
+) {
+    init {
+        require(maxPeriods > 0)
+        require(maxDoseCount > 0)
+    }
+}
 
-/** Coordinates the three-step period editor independently from screen rendering. */
+/** Coordinates the period editor using firmware-published capacity constraints. */
 internal class DeviceDosingCustomScheduleEditor(
     private val host: DeviceDosingCustomScheduleEditorHost,
     savedInstanceState: Bundle?
@@ -57,7 +64,10 @@ internal class DeviceDosingCustomScheduleEditor(
 
     fun beginAdd() {
         val periods = host.periods()
-        if (remainingDoseCapacity(periods, pendingIndex) <= 0) return
+        if (periods.size >= host.maxPeriods || remainingDoseCapacity(periods, pendingIndex) <= 0) {
+            host.updateValidation(R.string.device_dosing_custom_error_too_many)
+            return
+        }
         host.updateValidation(null)
         pendingIndex = NEW_PERIOD_INDEX
         pendingStartTimeMs = nextDefaultStartTimeMs(periods)
@@ -165,7 +175,11 @@ internal class DeviceDosingCustomScheduleEditor(
         val updated = host.periods().toMutableList().apply {
             if (pendingIndex in indices) this[pendingIndex] = candidate else add(candidate)
         }
-        val error = DeviceDosingCustomScheduleContract.validate(updated)
+        val error = DeviceDosingCustomScheduleContract.validate(
+            periods = updated,
+            maxPeriods = host.maxPeriods,
+            maxDoseCount = host.maxDoseCount
+        )
         if (error == null) {
             host.updatePeriods(DeviceDosingCustomScheduleContract.normalize(updated))
             host.updateValidation(null)
@@ -173,6 +187,18 @@ internal class DeviceDosingCustomScheduleEditor(
             host.updateValidation(customValidationMessage(error))
         }
         clearPendingPeriod()
+    }
+
+    private fun remainingDoseCapacity(
+        periods: List<DeviceDosingCustomPeriod>,
+        pendingIndex: Int,
+        includePendingPeriod: Boolean = false
+    ): Int {
+        val pendingCount = periods.getOrNull(pendingIndex)?.doseCount
+            ?.takeIf { includePendingPeriod }
+            ?: 0
+        return host.maxDoseCount -
+            DeviceDosingCustomScheduleContract.totalDoseCount(periods) + pendingCount
     }
 
     private fun clearPendingPeriod() {
@@ -215,18 +241,6 @@ private fun selectedMinutesOfDay(result: Bundle, slotId: String): Int? {
     ).takeIf { minutes ->
         isExpectedResult && minutes in 0 until DeviceDosingCustomScheduleContract.MINUTES_PER_DAY
     }
-}
-
-private fun remainingDoseCapacity(
-    periods: List<DeviceDosingCustomPeriod>,
-    pendingIndex: Int,
-    includePendingPeriod: Boolean = false
-): Int {
-    val pendingCount = periods.getOrNull(pendingIndex)?.doseCount
-        ?.takeIf { includePendingPeriod }
-        ?: 0
-    return DeviceDosingCustomScheduleContract.MAX_DOSES_PER_DAY -
-        DeviceDosingCustomScheduleContract.totalDoseCount(periods) + pendingCount
 }
 
 private fun nextDefaultStartTimeMs(periods: List<DeviceDosingCustomPeriod>): Long {
