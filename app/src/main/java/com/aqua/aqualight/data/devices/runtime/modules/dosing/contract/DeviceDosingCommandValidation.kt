@@ -1,503 +1,255 @@
 package com.aqua.aqualight.data.devices.runtime.modules.dosing.contract
 
 import com.aqua.aqualight.data.devices.runtime.modules.dosing.models.DeviceDosingCalibrationFinishPayload
-import com.aqua.aqualight.data.devices.runtime.modules.dosing.models.DeviceDosingCalibrationFinishResult
 import com.aqua.aqualight.data.devices.runtime.modules.dosing.models.DeviceDosingCalibrationStartPayload
-import com.aqua.aqualight.data.devices.runtime.modules.dosing.models.DeviceDosingCalibrationStartResult
 import com.aqua.aqualight.data.devices.runtime.modules.dosing.models.DeviceDosingCalibrationState
-import com.aqua.aqualight.data.devices.runtime.modules.dosing.models.DeviceDosingChannelConfig
-import com.aqua.aqualight.data.devices.runtime.modules.dosing.models.DeviceDosingChannelConfigSnapshot
-import com.aqua.aqualight.data.devices.runtime.modules.dosing.models.DeviceDosingChannelDosingConfig
+import com.aqua.aqualight.data.devices.runtime.modules.dosing.models.DeviceDosingChannelConfigPayload
+import com.aqua.aqualight.data.devices.runtime.modules.dosing.models.DeviceDosingChannelResetPayload
 import com.aqua.aqualight.data.devices.runtime.modules.dosing.models.DeviceDosingChannelStatus
-import com.aqua.aqualight.data.devices.runtime.modules.dosing.models.DeviceDosingChannelStatusSnapshot
-import com.aqua.aqualight.data.devices.runtime.modules.dosing.models.DeviceDosingConfigApplyPayload
-import com.aqua.aqualight.data.devices.runtime.modules.dosing.models.DeviceDosingConfigApplyResult
-import com.aqua.aqualight.data.devices.runtime.modules.dosing.models.DeviceDosingConfigSnapshot
+import com.aqua.aqualight.data.devices.runtime.modules.dosing.models.DeviceDosingCustomPeriodsProgramConfig
+import com.aqua.aqualight.data.devices.runtime.modules.dosing.models.DeviceDosingDistributedProgramConfig
 import com.aqua.aqualight.data.devices.runtime.modules.dosing.models.DeviceDosingDoseNowPayload
-import com.aqua.aqualight.data.devices.runtime.modules.dosing.models.DeviceDosingDoseNowResult
-import com.aqua.aqualight.data.devices.runtime.modules.dosing.models.DeviceDosingPumpCommandResult
-import com.aqua.aqualight.data.devices.runtime.modules.dosing.models.DeviceDosingReservoirRefillResult
-import com.aqua.aqualight.data.devices.runtime.modules.dosing.models.DeviceDosingScheduleConfig
-import com.aqua.aqualight.data.devices.runtime.modules.dosing.models.DeviceDosingScheduleConfigSnapshot
-import com.aqua.aqualight.data.devices.runtime.modules.dosing.models.DeviceDosingStatus
-import kotlin.math.roundToLong
+import com.aqua.aqualight.data.devices.runtime.modules.dosing.models.DeviceDosingGlobalStatus
+import com.aqua.aqualight.data.devices.runtime.modules.dosing.models.DeviceDosingMutationResult
+import com.aqua.aqualight.data.devices.runtime.modules.dosing.models.DeviceDosingProgramApplyPayload
+import com.aqua.aqualight.data.devices.runtime.modules.dosing.models.DeviceDosingProgramMode
+import com.aqua.aqualight.data.devices.runtime.modules.dosing.models.DeviceDosingTimerProgramConfig
 
-/** Cross-validates every Dosing request, response and authenticated metadata capability. */
-@Suppress("TooManyFunctions")
+/** Cross-validates Android requests against the final firmware-owned Dosing v1 contract. */
 internal object DeviceDosingCommandValidation {
-    fun validateStatus(
-        status: DeviceDosingStatus,
-        access: DeviceDosingRuntimeAccess
-    ) {
-        require(access.supportsApi) { "Dosing API is not available." }
-        require(status.supported)
-        require(status.channelCount == access.channelCount) {
-            "Dosing status channel count differs from authenticated product metadata."
-        }
-        require(status.runtime.supportsConfigApply)
-        require(status.runtime.supportsChannels)
-        require(status.runtime.supportsSchedules == access.supportsSchedules)
+    fun validateGlobalStatus(status: DeviceDosingGlobalStatus, access: DeviceDosingRuntimeAccess) {
+        require(access.supportsApi)
+        require(status.envelope.channelCount == access.channelCount)
+        require(status.channels.size == access.channelCount)
+        require(status.runtime.module == DeviceDosingRuntimeContract.MODULE)
+        require(status.runtime.supportsProgramApply == access.supportsProgramEditing)
+        require(status.runtime.supportsChannelConfig)
+        require(status.runtime.supportsChannelReset == access.supportsChannelReset)
         require(status.runtime.supportsPrime == access.supportsPrime)
         require(status.runtime.supportsManualDose == access.supportsManualDose)
-        require(
-            status.runtime.supportsCalibrationWorkflow == access.supportsCalibrationWorkflow
-        )
-        require(
-            status.runtime.supportsCalibrationSessionState ==
-                access.supportsCalibrationWorkflow
-        )
+        require(status.runtime.supportsCalibrationWorkflow == access.supportsCalibrationWorkflow)
         require(status.runtime.supportsReservoirRefill == access.supportsReservoirRefill)
-        status.channels.forEach { channel ->
-            require(channel.editable.displayName == access.supportsChannelDisplayName)
-            require(channel.editable.dosingCalibration == access.supportsCalibrationWorkflow)
-            require(channel.editable.reservoir == access.supportsReservoirRefill)
+        require(status.runtime.supportsChannelScopedStatus)
+        require(status.runtime.displayNameEditable == access.supportsChannelDisplayName)
+        validateScheduling(status.scheduling)
+    }
+
+    fun validateChannelStatus(
+        status: DeviceDosingChannelStatus,
+        requestedChannelKey: String,
+        access: DeviceDosingRuntimeAccess
+    ) {
+        require(access.supportsApi)
+        require(status.envelope.channelCount == access.channelCount)
+        require(status.channel.channelKey == normalizeDosingChannelKey(requestedChannelKey))
+        require(status.channel.index in 0 until access.channelCount)
+        require(!status.channel.editable.hardware)
+        require(status.channel.editable.displayName == access.supportsChannelDisplayName)
+        require(status.channel.editable.dosingCalibration == access.supportsCalibrationWorkflow)
+        require(status.channel.editable.reservoir == access.supportsReservoirRefill)
+        validateScheduling(status.scheduling)
+    }
+
+    fun validateChannelConfigRequest(
+        payload: DeviceDosingChannelConfigPayload,
+        current: DeviceDosingChannelStatus,
+        access: DeviceDosingRuntimeAccess
+    ) {
+        validateChannelStatus(current, payload.normalizedChannelKey, access)
+        require(payload.expectedRevision == current.channel.revision) {
+            "Dosing channel config expectedRevision is stale before dispatch."
+        }
+        payload.displayName?.let {
+            require(access.supportsChannelDisplayName && current.channel.editable.displayName)
+        }
+        payload.reservoir?.let {
+            require(access.supportsReservoirRefill && current.channel.editable.reservoir)
         }
     }
 
-    fun validateConfigRequest(
-        payload: DeviceDosingConfigApplyPayload,
-        currentStatus: DeviceDosingStatus?,
+    fun validateProgramRequest(
+        payload: DeviceDosingProgramApplyPayload,
+        current: DeviceDosingChannelStatus,
         access: DeviceDosingRuntimeAccess
     ) {
-        require(access.supportsApi) { "Dosing API is not available." }
-        if (payload.schedules != null) {
-            require(access.supportsSchedules) { "Dosing schedules are not available." }
+        require(access.supportsProgramEditing)
+        validateChannelStatus(current, payload.normalizedChannelKey, access)
+        require(payload.expectedRevision == current.channel.revision) {
+            "Dosing program expectedRevision is stale before dispatch."
         }
-        val status = requireStatus(currentStatus, "applying Dosing config")
-        require(status.runtime.supportsConfigApply)
-        validateChannelRequests(payload.channels, status, access)
-        validateScheduleRequests(payload.schedules, status)
+        val program = payload.program
+        val scheduling = current.scheduling
+        require(program.mode in scheduling.supportedModes)
+        if (program.enabled) {
+            require(program.weekdays.any { it })
+            require(current.channel.calibration.confirmed) {
+                "An enabled Dosing program requires confirmed calibration."
+            }
+        }
+        when (val config = program.config) {
+            is DeviceDosingDistributedProgramConfig -> {
+                validateCanonicalAmount(config.dailyDoseMl, current)
+                validateLocalDayTime(config.startTimeMs)
+            }
+            is DeviceDosingCustomPeriodsProgramConfig -> {
+                require(config.periods.size <= scheduling.maxCustomPeriodsPerChannel)
+                require(config.periods.sumOf { it.doseCount } <= scheduling.maxEventsPerChannel)
+                validateCanonicalAmount(config.dailyDoseMl, current)
+                val ordered = config.periods.sortedBy { it.startTimeMs }
+                ordered.forEach { period ->
+                    validateLocalDayTime(period.startTimeMs)
+                    validateLocalDayTime(period.endTimeMs)
+                    require(period.startTimeMs < period.endTimeMs)
+                    require(period.doseCount > 0)
+                }
+                ordered.zipWithNext().forEach { (first, second) ->
+                    require(first.endTimeMs < second.startTimeMs) {
+                        "Dosing custom periods must not overlap or touch."
+                    }
+                }
+            }
+            is DeviceDosingTimerProgramConfig -> {
+                require(config.events.size <= scheduling.maxEventsPerChannel)
+                config.events.forEach { event ->
+                    validateLocalDayTime(event.timeMs)
+                    validateCanonicalAmount(event.amountMl, current)
+                }
+                require(config.events.map { it.timeMs }.distinct().size == config.events.size) {
+                    "Dosing timer event times must be unique."
+                }
+            }
+        }
+        if (program.mode == DeviceDosingProgramMode.HOURLY_24) {
+            require(scheduling.maxEventsPerChannel >= 24) {
+                "Firmware does not expose the required hourly24 occurrence capacity."
+            }
+        }
     }
 
-    fun validateConfigResult(
-        payload: DeviceDosingConfigApplyPayload,
-        result: DeviceDosingConfigApplyResult,
-        currentStatus: DeviceDosingStatus?,
+    fun validateChannelResetRequest(
+        payload: DeviceDosingChannelResetPayload,
+        current: DeviceDosingChannelStatus,
         access: DeviceDosingRuntimeAccess
     ) {
-        require(result.saveRequested == payload.save)
-        require(result.saved == payload.save)
-        require(result.appliedChannels == (payload.channels != null))
-        require(result.appliedSchedules == (payload.schedules != null))
-        validateReturnedChannels(payload.channels, result.config)
-        validateReturnedSchedules(payload.schedules, result.config)
-        validateConfigSnapshot(result.config, currentStatus, access)
+        require(access.supportsChannelReset && current.scheduling.supportsChannelReset)
+        validateChannelStatus(current, payload.normalizedChannelKey, access)
+        require(payload.expectedRevision == current.channel.revision) {
+            "Dosing reset expectedRevision is stale before dispatch."
+        }
     }
 
     fun validatePrimeRequest(
         channelKey: String,
-        currentStatus: DeviceDosingStatus?,
+        current: DeviceDosingChannelStatus,
         access: DeviceDosingRuntimeAccess
     ) {
-        require(access.supportsApi && access.supportsPrime) { "Dosing prime is not available." }
-        validateKnownChannel(channelKey, currentStatus, "priming a Dosing pump")
+        require(access.supportsPrime)
+        validateChannelStatus(current, channelKey, access)
     }
 
     fun validateDoseRequest(
         payload: DeviceDosingDoseNowPayload,
-        currentStatus: DeviceDosingStatus?,
+        current: DeviceDosingChannelStatus,
         access: DeviceDosingRuntimeAccess
     ) {
-        require(access.supportsApi && access.supportsManualDose) {
-            "Manual Dosing is not available."
-        }
-        val channel = validateKnownChannel(
-            payload.normalizedChannelKey,
-            currentStatus,
-            "running a manual dose"
-        )
-        if (!payload.usePendingCalibration) {
-            require(channel.dosing.calibrated) { "Dosing pump must be calibrated." }
-            validateDoseDuration(payload.amountMl, channel.dosing.doseMsPerMl)
-        } else {
-            val calibration = channel.dosing.calibration
-            require(calibration.state == DeviceDosingCalibrationState.PENDING_VERIFICATION) {
-                "A pending Dosing calibration is required for verification."
-            }
-            require(!calibration.verificationDoseStarted) {
-                "The Dosing verification dose has already started."
-            }
+        require(access.supportsManualDose)
+        validateChannelStatus(current, payload.normalizedChannelKey, access)
+        require(payload.amountMl <= current.scheduling.maxManualDoseMl + DOSING_VALUE_EPSILON)
+        if (payload.usePendingCalibration) {
+            val calibration = current.channel.calibration
+            require(calibration.state == DeviceDosingCalibrationState.PENDING_VERIFICATION)
             require(calibration.pendingDoseMsPerMl > 0L)
-            validateDoseDuration(payload.amountMl, calibration.pendingDoseMsPerMl)
+            require(!calibration.verificationDoseStarted)
+        } else {
+            require(current.channel.calibration.confirmed)
         }
-        if (channel.dosing.reservoirTrackingEnabled) {
-            require(channel.dosing.reservoirRemainingMl + DOSING_VALUE_EPSILON >= payload.amountMl) {
-                "The Dosing reservoir does not contain the requested amount."
-            }
-        }
-    }
-
-    fun validateCalibrationRequest(
-        channelKey: String,
-        currentStatus: DeviceDosingStatus?,
-        access: DeviceDosingRuntimeAccess
-    ) {
-        require(access.supportsApi && access.supportsCalibrationWorkflow) {
-            "Dosing calibration is not available."
-        }
-        val channel = validateKnownChannel(
-            channelKey,
-            currentStatus,
-            "running the Dosing calibration workflow"
-        )
-        require(channel.editable.dosingCalibration)
     }
 
     fun validateCalibrationStartRequest(
-        channelKey: String,
-        currentStatus: DeviceDosingStatus?,
+        payload: DeviceDosingCalibrationStartPayload,
+        current: DeviceDosingChannelStatus,
         access: DeviceDosingRuntimeAccess
     ) {
-        val channel = validatedCalibrationChannel(channelKey, currentStatus, access)
-        require(channel.dosing.calibration.state == DeviceDosingCalibrationState.IDLE) {
-            "A Dosing calibration session is already active."
-        }
+        require(access.supportsCalibrationWorkflow)
+        validateChannelStatus(current, payload.normalizedChannelKey, access)
+        require(current.channel.calibration.state == DeviceDosingCalibrationState.IDLE)
     }
 
     fun validateCalibrationFinishRequest(
-        channelKey: String,
-        currentStatus: DeviceDosingStatus?,
+        payload: DeviceDosingCalibrationFinishPayload,
+        current: DeviceDosingChannelStatus,
         access: DeviceDosingRuntimeAccess
     ) {
-        val channel = validatedCalibrationChannel(channelKey, currentStatus, access)
-        require(channel.dosing.calibration.state == DeviceDosingCalibrationState.RUNNING) {
-            "The timed Dosing calibration run has not started."
-        }
+        require(access.supportsCalibrationWorkflow)
+        validateChannelStatus(current, payload.normalizedChannelKey, access)
+        require(current.channel.calibration.state == DeviceDosingCalibrationState.RUNNING)
     }
 
-    fun validateCalibrationConfirmRequest(
+    fun validateCalibrationChannelRequest(
         channelKey: String,
-        currentStatus: DeviceDosingStatus?,
-        access: DeviceDosingRuntimeAccess
+        current: DeviceDosingChannelStatus,
+        access: DeviceDosingRuntimeAccess,
+        requireVerificationComplete: Boolean = false
     ) {
-        val calibration = validatedCalibrationChannel(
-            channelKey,
-            currentStatus,
-            access
-        ).dosing.calibration
-        require(calibration.state == DeviceDosingCalibrationState.PENDING_VERIFICATION)
-        require(calibration.verificationDoseComplete) {
-            "The Dosing verification dose must complete before confirmation."
+        require(access.supportsCalibrationWorkflow)
+        validateChannelStatus(current, channelKey, access)
+        if (requireVerificationComplete) {
+            require(current.channel.calibration.state == DeviceDosingCalibrationState.PENDING_VERIFICATION)
+            require(current.channel.calibration.verificationDoseComplete)
         }
     }
 
     fun validateReservoirRequest(
         channelKey: String,
-        currentStatus: DeviceDosingStatus?,
+        current: DeviceDosingChannelStatus,
         access: DeviceDosingRuntimeAccess
     ) {
-        require(access.supportsApi && access.supportsReservoirRefill) {
-            "Dosing reservoir refill is not available."
-        }
-        val channel = validateKnownChannel(
-            channelKey,
-            currentStatus,
-            "refilling a Dosing reservoir"
-        )
-        require(channel.editable.reservoir)
-        require(channel.dosing.reservoirTrackingEnabled)
-        require(channel.dosing.reservoirCapacityMl > 0.0)
+        require(access.supportsReservoirRefill)
+        validateChannelStatus(current, channelKey, access)
+        require(current.channel.reservoir.trackingEnabled)
+        require(current.channel.reservoir.capacityMl > 0.0)
     }
 
-    fun validatePumpResult(
-        channelKey: String,
-        result: DeviceDosingPumpCommandResult,
-        currentStatus: DeviceDosingStatus?,
-        access: DeviceDosingRuntimeAccess
-    ) {
-        require(result.channelKey == channelKey)
-        validateChannelSnapshot(result.channel, currentStatus, access)
-    }
-
-    fun validateDoseResult(
-        payload: DeviceDosingDoseNowPayload,
-        result: DeviceDosingDoseNowResult,
-        currentStatus: DeviceDosingStatus?,
-        access: DeviceDosingRuntimeAccess
-    ) {
-        require(result.channelKey == payload.normalizedChannelKey)
-        require(dosingValuesEquivalent(result.amountMl, payload.amountMl))
-        require(result.usePendingCalibration == payload.usePendingCalibration)
-        validateChannelSnapshot(result.channel, currentStatus, access)
-    }
-
-    fun validateCalibrationStartResult(
-        payload: DeviceDosingCalibrationStartPayload,
-        result: DeviceDosingCalibrationStartResult
-    ) {
-        require(result.channelKey == payload.normalizedChannelKey)
-        require(result.durationMs == payload.durationMs)
-    }
-
-    fun validateCalibrationFinishResult(
-        payload: DeviceDosingCalibrationFinishPayload,
-        result: DeviceDosingCalibrationFinishResult,
-        currentStatus: DeviceDosingStatus?,
-        access: DeviceDosingRuntimeAccess
-    ) {
-        require(result.channelKey == payload.normalizedChannelKey)
-        require(dosingValuesEquivalent(result.measuredMl, payload.measuredMl))
-        validateChannelSnapshot(result.channel, currentStatus, access)
-    }
-
-    fun validateCalibrationChannelResult(
-        channelKey: String,
-        resultChannelKey: String,
-        result: DeviceDosingChannelStatusSnapshot,
-        currentStatus: DeviceDosingStatus?,
-        access: DeviceDosingRuntimeAccess
-    ) {
-        require(resultChannelKey == channelKey)
-        validateChannelSnapshot(result, currentStatus, access)
-    }
-
-    fun validateReservoirResult(
-        channelKey: String,
-        result: DeviceDosingReservoirRefillResult,
-        currentStatus: DeviceDosingStatus?,
-        access: DeviceDosingRuntimeAccess
-    ) {
-        require(result.channelKey == channelKey)
-        validateChannelSnapshot(result.channel, currentStatus, access)
-    }
-
-    fun validateConfigSnapshot(
-        config: DeviceDosingConfigSnapshot,
-        currentStatus: DeviceDosingStatus?,
+    fun validateMutation(
+        expectedChannelKey: String,
+        result: DeviceDosingMutationResult,
         access: DeviceDosingRuntimeAccess
     ) {
         require(access.supportsApi)
-        require(config.channels.size == access.channelCount) {
-            "Dosing config channel count differs from authenticated product metadata."
-        }
-        if (!access.supportsSchedules) require(config.schedules.isEmpty())
-        currentStatus?.let { status ->
-            require(
-                config.channels.map(DeviceDosingChannelConfigSnapshot::channelKey) ==
-                    status.channels.map(DeviceDosingChannelStatus::key)
-            ) { "Dosing config channel identity differs from current status." }
-        }
+        val expected = normalizeDosingChannelKey(expectedChannelKey)
+        require(result.channelKey == expected)
+        require(result.channel.channelKey == expected)
+        require(result.channel.index in 0 until access.channelCount)
+        require(result.event == DeviceDosingRuntimeContract.STATUS_EVENT)
     }
 
-    fun validateChannelSnapshot(
-        result: DeviceDosingChannelStatusSnapshot,
-        currentStatus: DeviceDosingStatus?,
-        access: DeviceDosingRuntimeAccess
-    ) {
-        require(access.supportsApi)
-        require(result.listIndex in 0 until access.channelCount)
-        require(result.channel.editable.displayName == access.supportsChannelDisplayName)
-        require(
-            result.channel.editable.dosingCalibration == access.supportsCalibrationWorkflow
-        )
-        require(result.channel.editable.reservoir == access.supportsReservoirRefill)
-        currentStatus?.let { status ->
-            val current = requireNotNull(status.channels.getOrNull(result.listIndex))
-            require(current.sameDosingChannelIdentity(result.channel)) {
-                "Dosing channel mutation identity differs from current status."
-            }
+    private fun validateCanonicalAmount(amountMl: Double, current: DeviceDosingChannelStatus) {
+        require(amountMl.isFinite() && amountMl > 0.0)
+        val resolution = current.scheduling.amountResolutionMl
+        require(resolution.isFinite() && resolution > 0.0)
+        val quanta = amountMl / resolution
+        require(kotlin.math.abs(quanta - kotlin.math.round(quanta)) <= 0.000_001) {
+            "Dosing amount is not canonical for firmware amountResolutionMl=$resolution."
+        }
+        current.scheduling.effectiveScheduledDose.takeIf { it.available }?.let { range ->
+            requireNotNull(range.minDoseMl)
+            requireNotNull(range.maxDoseMl)
+            require(amountMl + DOSING_VALUE_EPSILON >= range.minDoseMl)
+            require(amountMl <= range.maxDoseMl + DOSING_VALUE_EPSILON)
         }
     }
 
-    private fun validateChannelRequests(
-        channels: List<DeviceDosingChannelConfig>?,
-        status: DeviceDosingStatus,
-        access: DeviceDosingRuntimeAccess
-    ) {
-        if (channels == null) return
-        require(status.runtime.supportsChannels)
-        val channelsByKey = status.channels.associateBy(DeviceDosingChannelStatus::key)
-        channels.forEach { requested ->
-            val channel = requireNotNull(channelsByKey[requested.normalizedChannelKey]) {
-                "Unknown Dosing channel key: ${requested.normalizedChannelKey}"
-            }
-            validateDisplayNameRequest(requested, channel, access)
-            requested.dosing?.let { dosing ->
-                validateCalibrationConfigRequest(dosing, channel, access)
-                validateReservoirConfigRequest(dosing, channel, access)
-            }
-        }
+    private fun validateLocalDayTime(timeMs: Long) {
+        require(timeMs in 0L..DeviceDosingRuntimeContract.Limit.LAST_MILLISECOND_OF_DAY)
     }
 
-    private fun validatedCalibrationChannel(
-        channelKey: String,
-        currentStatus: DeviceDosingStatus?,
-        access: DeviceDosingRuntimeAccess
-    ): DeviceDosingChannelStatus {
-        validateCalibrationRequest(channelKey, currentStatus, access)
-        return requireNotNull(currentStatus).channels.single { channel ->
-            channel.key == channelKey
-        }
-    }
-
-    private fun validateDisplayNameRequest(
-        requested: DeviceDosingChannelConfig,
-        channel: DeviceDosingChannelStatus,
-        access: DeviceDosingRuntimeAccess
-    ) {
-        if (requested.displayName != null) {
-            require(access.supportsChannelDisplayName && channel.editable.displayName)
-        }
-    }
-
-    private fun validateCalibrationConfigRequest(
-        dosing: DeviceDosingChannelDosingConfig,
-        channel: DeviceDosingChannelStatus,
-        access: DeviceDosingRuntimeAccess
-    ) {
-        val changesCalibration = dosing.doseMsPerMl != null || dosing.lastCalibratedAt != null
-        if (changesCalibration) {
-            require(access.supportsCalibrationWorkflow && channel.editable.dosingCalibration)
-        }
-    }
-
-    private fun validateReservoirConfigRequest(
-        dosing: DeviceDosingChannelDosingConfig,
-        channel: DeviceDosingChannelStatus,
-        access: DeviceDosingRuntimeAccess
-    ) {
-        val changesReservoir = dosing.reservoirTrackingEnabled != null ||
-            dosing.reservoirCapacityMl != null
-        if (!changesReservoir) return
-
-        require(access.supportsReservoirRefill && channel.editable.reservoir)
-        val enabled = dosing.reservoirTrackingEnabled
-            ?: channel.dosing.reservoirTrackingEnabled
-        val capacity = dosing.reservoirCapacityMl
-            ?: channel.dosing.reservoirCapacityMl
-        if (enabled) require(capacity > 0.0)
-    }
-
-    private fun validateScheduleRequests(
-        schedules: List<DeviceDosingScheduleConfig>?,
-        status: DeviceDosingStatus
-    ) {
-        if (schedules == null) return
-        require(status.runtime.supportsSchedules)
-        val channelsByKey = status.channels.associateBy(DeviceDosingChannelStatus::key)
-        schedules.forEach { schedule ->
-            val channel = requireNotNull(channelsByKey[schedule.normalizedChannelKey]) {
-                "Unknown Dosing schedule channel: ${schedule.normalizedChannelKey}"
-            }
-            if (schedule.enabled) {
-                require(channel.dosing.calibrated) {
-                    "An enabled Dosing schedule requires a calibrated pump."
-                }
-                val doseDurationMs = schedule.amountMl * channel.dosing.doseMsPerMl.toDouble()
-                require(doseDurationMs.isFinite() && doseDurationMs >= 1.0)
-                require(doseDurationMs <= DOSING_DEVICE_UPTIME_MAX_MS.toDouble())
-                val cycleMs = doseDurationMs + schedule.intervalOffMs.toDouble()
-                val maximumRepeatCount =
-                    ((DOSING_MILLISECONDS_PER_DAY + schedule.intervalOffMs) / cycleMs).toLong()
-                require(schedule.repeatCount.toLong() <= maximumRepeatCount) {
-                    "repeatCount exceeds the firmware day-bound Dosing capacity."
-                }
-            }
-        }
-    }
-
-    private fun validateReturnedChannels(
-        requested: List<DeviceDosingChannelConfig>?,
-        config: DeviceDosingConfigSnapshot
-    ) {
-        if (requested == null) return
-        val returnedByKey = config.channels.associateBy(DeviceDosingChannelConfigSnapshot::channelKey)
-        requested.forEach { item ->
-            val returned = requireNotNull(returnedByKey[item.normalizedChannelKey]) {
-                "Firmware omitted requested Dosing channel ${item.normalizedChannelKey}."
-            }
-            item.regime?.let { require(returned.regime == it) }
-            if (item.displayName != null) {
-                val expectedOverride = item.normalizedDisplayName?.takeIf(String::isNotEmpty)
-                require(returned.displayNameOverride == expectedOverride)
-            }
-            item.dosing?.let { requestedDosing ->
-                requestedDosing.doseMsPerMl?.let {
-                    require(returned.dosing.doseMsPerMl == it)
-                }
-                requestedDosing.lastCalibratedAt?.let {
-                    require(returned.dosing.lastCalibratedAt == it)
-                }
-                requestedDosing.reservoirTrackingEnabled?.let {
-                    require(returned.dosing.reservoirTrackingEnabled == it)
-                }
-                requestedDosing.reservoirCapacityMl?.let { capacity ->
-                    val expected = capacity.takeIf { it > 0.0 } ?: DOSING_UNSET_RESERVOIR
-                    require(dosingValuesEquivalent(returned.dosing.reservoirCapacityMl, expected))
-                }
-            }
-        }
-    }
-
-    private fun validateReturnedSchedules(
-        requested: List<DeviceDosingScheduleConfig>?,
-        config: DeviceDosingConfigSnapshot
-    ) {
-        if (requested == null) return
-        val expected = requested.mapIndexed { index, schedule ->
-            DeviceDosingScheduleConfigSnapshot(
-                listIndex = index,
-                enabled = schedule.enabled,
-                name = schedule.normalizedName,
-                channelKey = schedule.normalizedChannelKey,
-                weekdays = schedule.weekdays.toList(),
-                startTimeMs = schedule.startTimeMs,
-                intervalOnMs = schedule.intervalOnMs,
-                intervalOffMs = schedule.intervalOffMs,
-                repeatCount = schedule.repeatCount,
-                amountMl = schedule.amountMl
-            )
-        }
-        require(
-            config.schedules.size == expected.size &&
-                config.schedules.zip(expected).all { (returned, requested) ->
-                    returned.matchesRequest(requested)
-                }
-        ) {
-            "Firmware Dosing schedule snapshot differs from the requested replacement."
-        }
-    }
-
-    private fun validateKnownChannel(
-        channelKey: String,
-        currentStatus: DeviceDosingStatus?,
-        operation: String
-    ): DeviceDosingChannelStatus {
-        val status = requireStatus(currentStatus, operation)
-        return requireNotNull(status.channels.singleOrNull { channel -> channel.key == channelKey }) {
-            "Unknown Dosing channel key: $channelKey"
-        }
-    }
-
-    private fun requireStatus(
-        currentStatus: DeviceDosingStatus?,
-        operation: String
-    ): DeviceDosingStatus = requireNotNull(currentStatus) {
-        "Dosing status must be loaded before $operation."
-    }
-
-    private fun validateDoseDuration(amountMl: Double, doseMsPerMl: Long) {
-        val durationMs = (amountMl * doseMsPerMl.toDouble()).roundToLong()
-        require(
-            durationMs in
-                DeviceDosingRuntimeContract.Limit.MIN_MANUAL_DOSE_DURATION_MS..
-                DeviceDosingRuntimeContract.Limit.MAX_MANUAL_DOSE_DURATION_MS
-        ) { "Calculated manual dose duration is outside the firmware-safe range." }
+    private fun validateScheduling(metadata: com.aqua.aqualight.data.devices.runtime.modules.dosing.models.DeviceDosingSchedulingMetadata) {
+        require(metadata.contract == DeviceDosingRuntimeContract.SCHEMA)
+        require(metadata.schemaVersion == DeviceDosingRuntimeContract.SCHEMA_VERSION)
+        require(metadata.amountResolutionMl > 0.0)
+        require(metadata.maxEventsPerChannel > 0)
+        require(metadata.maxCustomPeriodsPerChannel > 0)
+        require(metadata.supportedModes.toSet() == DeviceDosingProgramMode.entries.toSet())
+        require(metadata.supportsWeekdayRecurrence)
     }
 }
-
-private fun DeviceDosingScheduleConfigSnapshot.matchesRequest(
-    requested: DeviceDosingScheduleConfigSnapshot
-): Boolean = copy(amountMl = requested.amountMl) == requested &&
-    dosingValuesEquivalent(amountMl, requested.amountMl)
-
-internal fun DeviceDosingChannelStatus.sameDosingChannelIdentity(
-    other: DeviceDosingChannelStatus
-): Boolean = copy(
-    regime = other.regime,
-    valueNow = other.valueNow,
-    valueAuto = other.valueAuto,
-    valueManual = other.valueManual,
-    manualTimeoutMs = other.manualTimeoutMs,
-    dosing = other.dosing
-) == other
