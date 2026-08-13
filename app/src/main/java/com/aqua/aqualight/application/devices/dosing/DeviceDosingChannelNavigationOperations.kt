@@ -35,7 +35,18 @@ data class DeviceDosingChannelNavigationTarget(
     val channelNumber: Int,
     val channelTitle: String,
     val lastCalibratedAtEpochSeconds: Long,
-    val destination: DeviceDosingChannelDestination
+    val destination: DeviceDosingChannelDestination,
+    val revision: Long = 0L,
+    val runtimeEnabled: Boolean = false,
+    val runtimeReason: String = "none",
+    val programConfigured: Boolean = false,
+    val programEnabled: Boolean = false,
+    val programWeekdays: List<Boolean> = emptyList(),
+    val dailyDoseMl: Double = 0.0,
+    val scheduledDeliveredTodayMl: Double = 0.0,
+    val doseMilestonesMl: List<Double> = emptyList(),
+    val deliveryAccountingCertain: Boolean = true,
+    val active: Boolean = false
 )
 
 enum class DeviceDosingChannelDestination {
