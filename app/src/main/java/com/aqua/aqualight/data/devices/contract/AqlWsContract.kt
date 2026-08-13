@@ -79,6 +79,8 @@ object AqlWsContract {
 
     const val ACTION_DOSING_STATUS_GET = ACTION_STATUS_GET
     const val ACTION_DOSING_CONFIG_APPLY = ACTION_CONFIG_APPLY
+    const val ACTION_DOSING_PROGRAM_APPLY = "program.apply"
+    const val ACTION_DOSING_CHANNEL_RESET = "channel.reset"
     const val ACTION_DOSING_PRIME_START = "prime.start"
     const val ACTION_DOSING_PRIME_STOP = "prime.stop"
     const val ACTION_DOSING_CALIBRATION_START = "calibration.start"
@@ -138,9 +140,6 @@ object AqlWsContract {
         const val MAX_SEQUENCE = 9_007_199_254_740_991L
     }
 
-    // The commercial WebSocket contract has no unauthenticated application
-    // command surface. Public onboarding metadata remains on the bounded UDP/BLE
-    // provisioning contracts.
     private val publicCommands = emptySet<String>()
 
     private val authenticatedCommands = setOf(
@@ -175,6 +174,8 @@ object AqlWsContract {
         commandKey(MODULE_TIMER, ACTION_TIMER_CONFIG_APPLY),
         commandKey(MODULE_TIMER, ACTION_TIMER_CHANNEL_SET),
         commandKey(MODULE_DOSING, ACTION_DOSING_CONFIG_APPLY),
+        commandKey(MODULE_DOSING, ACTION_DOSING_PROGRAM_APPLY),
+        commandKey(MODULE_DOSING, ACTION_DOSING_CHANNEL_RESET),
         commandKey(MODULE_DOSING, ACTION_DOSING_STATUS_GET),
         commandKey(MODULE_DOSING, ACTION_DOSING_PRIME_START),
         commandKey(MODULE_DOSING, ACTION_DOSING_PRIME_STOP),
@@ -200,6 +201,5 @@ object AqlWsContract {
 
     fun authenticatedCommandKeys(): Set<String> = authenticatedCommands.toSet()
 
-    private fun commandKey(module: String, action: String): String =
-        "$module.$action"
+    private fun commandKey(module: String, action: String): String = "$module.$action"
 }
