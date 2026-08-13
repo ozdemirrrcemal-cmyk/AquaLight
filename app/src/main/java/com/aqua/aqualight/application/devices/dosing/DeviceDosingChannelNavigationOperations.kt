@@ -18,7 +18,10 @@ fun interface DeviceDosingChannelNavigationOperations {
     /** Refreshes the central Dosing runtime state when the root screen is bound. */
     suspend fun refreshTargets(deviceUid: String): Boolean = false
 
-    /** Resolves a click from already-published state without performing a device request. */
+    /**
+     * Resolves from current published state when available; implementations may fall back to
+     * authoritative runtime status/recovery when published state is absent.
+     */
     suspend fun resolveCurrent(
         deviceUid: String,
         slotId: String
