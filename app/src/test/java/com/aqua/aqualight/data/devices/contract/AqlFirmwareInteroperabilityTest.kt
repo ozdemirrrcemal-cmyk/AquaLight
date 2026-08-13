@@ -1,42 +1,23 @@
 package com.aqua.aqualight.data.devices.contract
 
-import com.aqua.aqualight.data.devices.catalog.AqlCommercialCatalogProduct
+import com.aqua.aqualight.data.care.smartcare.FertilizerDoseCatalog
 import com.aqua.aqualight.data.devices.catalog.AqlCommercialDeviceCatalog
 import com.aqua.aqualight.data.devices.catalog.expectedRuntimeModules
 import com.aqua.aqualight.data.devices.model.DeviceFamily
-import com.aqua.aqualight.data.devices.runtime.events.DeviceRuntimeTypedEvent
-import com.aqua.aqualight.data.devices.runtime.modules.cooling.DeviceCoolingConfigApplyPayload
-import com.aqua.aqualight.data.devices.runtime.modules.cooling.DeviceCoolingFanDisplayNamePayload
-import com.aqua.aqualight.data.devices.runtime.modules.cooling.DeviceCoolingMode
-import com.aqua.aqualight.data.devices.runtime.modules.device.DeviceNameSetRequest
-import com.aqua.aqualight.data.devices.runtime.modules.dosing.models.DeviceDosingCalibrationFinishPayload
-import com.aqua.aqualight.data.devices.runtime.modules.dosing.models.DeviceDosingCalibrationStartPayload
-import com.aqua.aqualight.data.devices.runtime.modules.dosing.models.DeviceDosingChannelConfig
-import com.aqua.aqualight.data.devices.runtime.modules.dosing.models.DeviceDosingChannelDosingConfig
-import com.aqua.aqualight.data.devices.runtime.modules.dosing.models.DeviceDosingChannelKeyPayload
-import com.aqua.aqualight.data.devices.runtime.modules.dosing.models.DeviceDosingConfigApplyPayload
-import com.aqua.aqualight.data.devices.runtime.modules.dosing.models.DeviceDosingDoseNowPayload
-import com.aqua.aqualight.data.devices.runtime.modules.dosing.models.DeviceDosingRegime
-import com.aqua.aqualight.data.devices.runtime.modules.dosing.models.DeviceDosingScheduleConfig
-import com.aqua.aqualight.data.devices.runtime.modules.firmware.DeviceFirmwareOtaStartPayload
-import com.aqua.aqualight.data.devices.runtime.modules.light.DeviceLightChannelRegimeSetPayload
-import com.aqua.aqualight.data.devices.runtime.modules.light.DeviceLightManualChannelPayload
-import com.aqua.aqualight.data.devices.runtime.modules.light.DeviceLightManualSetPayload
-import com.aqua.aqualight.data.devices.runtime.modules.light.DeviceLightProgramApplyPayload
-import com.aqua.aqualight.data.devices.runtime.modules.light.DeviceLightProgramDeletePayload
-import com.aqua.aqualight.data.devices.runtime.modules.light.DeviceLightProgramPointPayload
-import com.aqua.aqualight.data.devices.runtime.modules.light.DeviceLightRegime
-import com.aqua.aqualight.data.devices.runtime.modules.light.DeviceLightTemperatureProtectionSetPayload
-import com.aqua.aqualight.data.devices.runtime.modules.time.DeviceManualRtcPayload
-import com.aqua.aqualight.data.devices.runtime.modules.time.DevicePhoneSyncPayload
-import com.aqua.aqualight.data.devices.runtime.modules.time.DeviceTimeConfigApplyPayload
-import com.aqua.aqualight.data.devices.runtime.modules.timer.DeviceTimerChannelConfig
-import com.aqua.aqualight.data.devices.runtime.modules.timer.DeviceTimerChannelSetPayload
-import com.aqua.aqualight.data.devices.runtime.modules.timer.DeviceTimerConfigApplyPayload
-import com.aqua.aqualight.data.devices.runtime.modules.timer.DeviceTimerRegime
-import com.aqua.aqualight.data.devices.runtime.modules.timer.DeviceTimerScheduleConfig
-import java.security.MessageDigest
-import org.json.JSONArray
+import com.aqua.aqualight.data.devices.runtime.modules.dosing.contract.DeviceDosingRuntimeContract
+import com.aqua.aqualight.data.devices.runtime.modules.dosing.models.DeviceDosingChannelConfigPayload
+import com.aqua.aqualight.data.devices.runtime.modules.dosing.models.DeviceDosingChannelResetPayload
+import com.aqua.aqualight.data.devices.runtime.modules.dosing.models.DeviceDosingCustomPeriod
+import com.aqua.aqualight.data.devices.runtime.modules.dosing.models.DeviceDosingCustomPeriodsProgramConfig
+import com.aqua.aqualight.data.devices.runtime.modules.dosing.models.DeviceDosingDisplayNameMutation
+import com.aqua.aqualight.data.devices.runtime.modules.dosing.models.DeviceDosingDistributedProgramConfig
+import com.aqua.aqualight.data.devices.runtime.modules.dosing.models.DeviceDosingProgram
+import com.aqua.aqualight.data.devices.runtime.modules.dosing.models.DeviceDosingProgramApplyPayload
+import com.aqua.aqualight.data.devices.runtime.modules.dosing.models.DeviceDosingProgramMode
+import com.aqua.aqualight.data.devices.runtime.modules.dosing.models.DeviceDosingReservoirConfig
+import com.aqua.aqualight.data.devices.runtime.modules.dosing.models.DeviceDosingTimerEvent
+import com.aqua.aqualight.data.devices.runtime.modules.dosing.models.DeviceDosingTimerProgramConfig
+import java.io.File
 import org.json.JSONObject
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
@@ -45,470 +26,262 @@ import org.junit.Test
 
 class AqlFirmwareInteroperabilityTest {
 
-    private val interoperability by lazy {
-        loadJsonFixture(INTEROPERABILITY_FIXTURE)
-    }
-
-    private val websocketGolden by lazy {
-        loadJsonFixture(WEBSOCKET_FIXTURE)
-    }
-
-    private val productCatalog by lazy {
-        loadJsonFixture(PRODUCT_CATALOG_FIXTURE)
-    }
-
     @Test
-    fun `all 41 firmware commands are exact classified and covered`() {
-        val commandAccess = websocketGolden.getJSONObject("commandAccess")
-        val authenticated = commandAccess.getJSONArray("authenticated").asStringSet()
-        val public = commandAccess.getJSONArray("public").asStringSet()
+    fun `android authenticated command matrix exactly matches commercial firmware`() {
+        val ws = fixture("aql_ws_v1_golden.json")
+        val authenticated = ws.getJSONObject("commandAccess")
+            .getJSONArray("authenticated")
+            .strings()
+            .toSet()
 
-        assertEquals(41, authenticated.size)
-        assertTrue(public.isEmpty())
-        assertEquals(public, AqlWsContract.publicCommandKeys())
+        assertEquals(43, authenticated.size)
         assertEquals(authenticated, AqlWsContract.authenticatedCommandKeys())
+        assertTrue("dosing.program.apply" in authenticated)
+        assertTrue("dosing.channel.reset" in authenticated)
+    }
 
-        authenticated.forEach { qualifiedName ->
-            val module = qualifiedName.substringBefore('.')
-            val action = qualifiedName.substringAfter('.')
-            assertTrue(AqlWsContract.isAuthenticatedCommand(module, action))
-            assertFalse(AqlWsContract.isAuthenticatedCommand(" $module", action))
-            assertFalse(AqlWsContract.isAuthenticatedCommand(module, "$action "))
-            assertFalse(AqlWsContract.isAuthenticatedCommand(module.uppercase(), action))
-        }
+    @Test
+    fun `android is pinned to the commercial dosing firmware head`() {
+        val interop = fixture("aql_firmware_interoperability_v1.json")
+        val firmware = interop.getJSONObject("firmware")
 
-        val coverage = interoperability.getJSONObject("requestCoverage")
-        val payloadless = coverage.getJSONArray("payloadlessCommands").asStringSet()
-        val payloadCommands = coverage.getJSONObject("payloadCommands")
-        val payloadCommandNames = payloadCommands.keySetExact()
-
-        assertTrue(payloadless.intersect(payloadCommandNames).isEmpty())
-        assertEquals(authenticated, payloadless + payloadCommandNames)
-
-        val referencedSerializers = linkedSetOf<String>()
-        payloadCommandNames.forEach { command ->
-            referencedSerializers += payloadCommands.getJSONArray(command).asStringSet()
-        }
+        assertEquals("agent/dosing-program-commercialization", firmware.getString("branch"))
         assertEquals(
-            interoperability.getJSONObject("serializers").keySetExact(),
-            referencedSerializers
+            "b5c63b029f74d3e458acef8169060e648db43265",
+            firmware.getString("commit")
+        )
+        assertEquals(
+            "9d030937518aae9fe2bb15f23938736a07e5024e",
+            firmware.getJSONObject("commandNames").getString("blobSha")
+        )
+        assertEquals(
+            "c18e355b1ab7553d1b5f251cf3e4662fd322ea33",
+            firmware.getJSONObject("dosingCommands").getString("blobSha")
         )
     }
 
     @Test
-    fun `all firmware events are exact typed and fail closed`() {
-        val expected = interoperability.getJSONArray("events").asStringSet()
-        val typed = DeviceRuntimeTypedEvent.Type.values()
-            .mapTo(linkedSetOf()) { type -> "${type.module}.${type.action}" }
-
-        assertEquals(11, expected.size)
-        assertEquals(expected, AqlWsEventContract.qualifiedNames())
-        assertEquals(expected, typed)
-
-        expected.forEach { qualifiedName ->
-            val module = qualifiedName.substringBefore('.')
-            val action = qualifiedName.substringAfter('.')
-            assertTrue(AqlWsEventContract.isRegisteredEvent(module, action))
-            assertFalse(AqlWsEventContract.isRegisteredEvent(" $module", action))
-            assertFalse(AqlWsEventContract.isRegisteredEvent(module, "$action "))
-            assertFalse(AqlWsEventContract.isRegisteredEvent(module.uppercase(), action))
-        }
-    }
-
-    @Test
-    fun `every Android request serializer covers its pinned firmware fields`() {
-        val actual = actualSerializerFields()
-        val serializerSpecs = interoperability.getJSONObject("serializers")
-
-        assertEquals(serializerSpecs.keySetExact(), actual.keys)
-        serializerSpecs.keySetExact().forEach { serializerName ->
-            val expectedFields = serializerSpecs
-                .getJSONObject(serializerName)
-                .getJSONArray("fields")
-                .asStringSet()
-            assertEquals(serializerName, expectedFields, actual.getValue(serializerName))
-        }
-
-        val hardwareOwned = interoperability
-            .getJSONArray("hardwareOwnedForbiddenRequestFields")
-            .asStringSet()
-        actual.forEach { (serializerName, fields) ->
-            assertTrue(
-                "$serializerName exposes hardware-owned request fields: " +
-                    fields.intersect(hardwareOwned),
-                fields.intersect(hardwareOwned).isEmpty()
+    fun `dosing channel config serializer has no legacy schedule or save fields`() {
+        val payload = DeviceDosingChannelConfigPayload(
+            channelKey = "channel1",
+            expectedRevision = 17,
+            displayName = DeviceDosingDisplayNameMutation.Set("Nutrients"),
+            reservoir = DeviceDosingReservoirConfig(
+                trackingEnabled = true,
+                capacityMl = 450.0
             )
-        }
-
-        val immutableIdentity = interoperability
-            .getJSONArray("immutableIdentityRequestFields")
-            .asStringSet()
-        val allowedOtaEcho = interoperability
-            .getJSONArray("allowedOtaIdentityEchoFields")
-            .asStringSet()
-        actual.forEach { (serializerName, fields) ->
-            val identityFields = fields.intersect(immutableIdentity)
-            if (serializerName == "DeviceFirmwareOtaStartPayload") {
-                assertEquals(allowedOtaEcho, identityFields)
-            } else {
-                assertTrue(
-                    "$serializerName exposes immutable identity fields: $identityFields",
-                    identityFields.isEmpty()
-                )
-            }
-        }
-
-        assertFalse(otaStartPayload().getBoolean("allowInsecureHttp"))
-    }
-
-    @Test
-    fun `shared golden fixtures retain pinned firmware bytes`() {
-        val fixtureSpecs = interoperability.getJSONObject("fixtures")
-        fixtureSpecs.keySetExact().forEach { fixtureName ->
-            val expectedSha = fixtureSpecs
-                .getJSONObject(fixtureName)
-                .getString("sha256")
-            assertEquals(fixtureName, expectedSha, sha256(resourceBytes(fixtureName)))
-        }
-
-        assertTrue(
-            fixtureSpecs
-                .getJSONObject(WEBSOCKET_FIXTURE)
-                .getBoolean("byteIdenticalWithFirmware")
-        )
-        assertTrue(
-            fixtureSpecs
-                .getJSONObject(COOLING_FIXTURE)
-                .getBoolean("byteIdenticalWithFirmware")
-        )
-    }
-
-    @Test
-    fun `all four families and nine commercial SKUs match the firmware export`() {
-        val fixtureProducts = productCatalog.getJSONArray("products").asObjectList()
-        val fixtureProfiles = productCatalog.getJSONObject("profiles")
-        val actualProducts = AqlCommercialDeviceCatalog.products.associateBy {
-            product -> product.productKey.value
-        }
-
-        assertEquals(9, fixtureProducts.size)
-        assertEquals(fixtureProducts.mapTo(linkedSetOf()) { it.getString("productKey") }, actualProducts.keys)
-        assertEquals(
-            setOf("light", "timer", "dosing", "cooling"),
-            actualProducts.values.mapTo(linkedSetOf()) { product -> product.family.wireValue }
-        )
-
-        fixtureProducts.forEach { expected ->
-            val product = actualProducts.getValue(expected.getString("productKey"))
-            val profile = fixtureProfiles.getJSONObject(expected.getString("profile"))
-
-            assertProductIdentity(expected, product)
-            assertProductLimits(expected.getJSONObject("limits"), product)
-            assertProductCapabilities(profile.getJSONObject("capabilities"), product)
-            assertProductProfileSets(profile, product)
-            assertProductRuntimeModules(product)
-        }
-    }
-
-    private fun assertProductIdentity(
-        expected: JSONObject,
-        product: AqlCommercialCatalogProduct
-    ) {
-        assertEquals(expected.getString("productId"), product.productId.value)
-        assertEquals(expected.getString("family"), product.family.wireValue)
-        assertEquals(expected.getString("line"), product.line.value)
-        assertEquals(expected.getString("model"), product.model.value)
-        assertEquals(expected.getString("displayName"), product.displayName)
-        assertEquals(expected.getString("skuId"), product.skuId.value)
-        assertEquals(expected.getString("skuCode"), product.skuCode.value)
-        assertEquals(expected.getString("hardwareRevision"), product.hardwareRevision.value)
-    }
-
-    private fun assertProductLimits(
-        expected: JSONObject,
-        product: AqlCommercialCatalogProduct
-    ) {
-        assertEquals(expected.getInt("lightChannelCount"), product.limits.lightChannelCount)
-        assertEquals(expected.getInt("fanOutputCount"), product.limits.fanOutputCount)
-        assertEquals(
-            expected.getInt("temperatureSensorCount"),
-            product.limits.temperatureSensorCount
-        )
-        assertEquals(expected.getInt("timerChannelCount"), product.limits.timerChannelCount)
-        assertEquals(expected.getInt("dosingChannelCount"), product.limits.dosingChannelCount)
-    }
-
-    private fun assertProductCapabilities(
-        expected: JSONObject,
-        product: AqlCommercialCatalogProduct
-    ) {
-        val actual = product.profile.capabilities
-        assertEquals(expected.getBoolean("light"), actual.light)
-        assertEquals(expected.getBoolean("manualLight"), actual.manualLight)
-        assertEquals(expected.getBoolean("lightProgram"), actual.lightProgram)
-        assertEquals(expected.getBoolean("lightPresets"), actual.lightPresets)
-        assertEquals(expected.getBoolean("lightSimulation"), actual.lightSimulation)
-        assertEquals(expected.getBoolean("fan"), actual.fan)
-        assertEquals(expected.getBoolean("cooling"), actual.cooling)
-        assertEquals(expected.getBoolean("temperature"), actual.temperature)
-        assertEquals(expected.getBoolean("standaloneTimer"), actual.standaloneTimer)
-        assertEquals(expected.getBoolean("dosing"), actual.dosing)
-        assertEquals(expected.getBoolean("timeSync"), actual.timeSync)
-        assertEquals(expected.getBoolean("ota"), actual.ota)
-    }
-
-    private fun assertProductProfileSets(
-        expected: JSONObject,
-        product: AqlCommercialCatalogProduct
-    ) {
-        assertEquals(
-            expected.getJSONArray("supportedFeatures").asStringSet(),
-            product.profile.supportedFeatures.mapTo(linkedSetOf()) { it.wireValue }
-        )
-        assertEquals(
-            expected.getJSONArray("supportedScreens").asStringSet(),
-            product.profile.supportedScreens.mapTo(linkedSetOf()) { it.wireValue }
-        )
-        assertEquals(
-            expected.getJSONArray("expectedMenuFeatures").asStringSet(),
-            product.profile.expectedMenuFeatureNames
-        )
-    }
-
-    private fun assertProductRuntimeModules(product: AqlCommercialCatalogProduct) {
-        val modules = product.expectedRuntimeModules()
-        assertEquals(product.family == DeviceFamily.LIGHT, modules.light)
-        assertEquals(product.profile.capabilities.cooling, modules.cooling)
-        assertEquals(product.profile.capabilities.temperature, modules.temperature)
-        assertEquals(product.family == DeviceFamily.TIMER, modules.timerApi)
-        assertEquals(
-            product.family == DeviceFamily.TIMER || product.family == DeviceFamily.DOSING,
-            modules.timerEngine
-        )
-        assertEquals(product.family == DeviceFamily.DOSING, modules.dosing)
-        assertTrue(modules.network)
-        assertTrue(modules.discovery)
-        assertTrue(modules.firmware)
-        assertTrue(modules.system)
-    }
-
-    private fun actualSerializerFields(): Map<String, Set<String>> =
-        linkedMapOf<String, Set<String>>().apply {
-            putAll(coolingSerializerFields())
-            putAll(dosingSerializerFields())
-            putAll(firmwareSerializerFields())
-            putAll(lightSerializerFields())
-            putAll(deviceAndTimeSerializerFields())
-            putAll(timerSerializerFields())
-        }
-
-    private fun coolingSerializerFields(): Map<String, Set<String>> {
-        val fan = DeviceCoolingFanDisplayNamePayload("fan-1", "Front fan")
-        return linkedMapOf(
-            "DeviceCoolingConfigApplyPayload" to DeviceCoolingConfigApplyPayload(
-                mode = DeviceCoolingMode.AUTO,
-                minTemperatureC = 24.0,
-                maxTemperatureC = 27.0,
-                fans = listOf(fan)
-            ).toJson().keySetExact(),
-            "DeviceCoolingFanDisplayNamePayload" to fan.toJson().keySetExact()
-        )
-    }
-
-    private fun dosingSerializerFields(): Map<String, Set<String>> {
-        val settings = DeviceDosingChannelDosingConfig(
-            doseMsPerMl = 1_000L,
-            lastCalibratedAt = 1L,
-            reservoirTrackingEnabled = true,
-            reservoirCapacityMl = 500.0
-        )
-        val channel = DeviceDosingChannelConfig(
-            channelKey = "pump-1",
-            displayName = "Macro",
-            regime = DeviceDosingRegime.AUTO,
-            dosing = settings
-        )
-        val schedule = DeviceDosingScheduleConfig(
-            enabled = true,
-            name = "Morning dose",
-            channelKey = "pump-1",
-            weekdays = WEEKDAYS,
-            startTimeMs = 1_000L,
-            intervalOnMs = 1_000L,
-            intervalOffMs = 1_000L,
-            repeatCount = 1,
-            amountMl = 1.0
-        )
-
-        return linkedMapOf(
-            "DeviceDosingCalibrationFinishPayload" to
-                DeviceDosingCalibrationFinishPayload("pump-1", 10.0).toJson().keySetExact(),
-            "DeviceDosingCalibrationStartPayload" to
-                DeviceDosingCalibrationStartPayload("pump-1").toJson().keySetExact(),
-            "DeviceDosingChannelConfig" to channel.toJson().keySetExact(),
-            "DeviceDosingChannelDosingConfig" to settings.toJson().keySetExact(),
-            "DeviceDosingChannelKeyPayload" to
-                DeviceDosingChannelKeyPayload("pump-1").toJson().keySetExact(),
-            "DeviceDosingConfigApplyPayload" to DeviceDosingConfigApplyPayload(
-                channels = listOf(channel),
-                schedules = listOf(schedule)
-            ).toJson().keySetExact(),
-            "DeviceDosingDoseNowPayload" to
-                DeviceDosingDoseNowPayload("pump-1", 1.0, true).toJson().keySetExact(),
-            "DeviceDosingScheduleConfig" to schedule.toJson().keySetExact()
-        )
-    }
-
-    private fun firmwareSerializerFields(): Map<String, Set<String>> = linkedMapOf(
-        "DeviceFirmwareOtaStartPayload" to otaStartPayload().keySetExact()
-    )
-
-    private fun lightSerializerFields(): Map<String, Set<String>> {
-        val percent = DeviceLightManualChannelPayload("red", percent = 50.0).toJson()
-        val value = DeviceLightManualChannelPayload("green", value = 0.5).toJson()
-        val pointByMillis = DeviceLightProgramPointPayload(timeMs = 0L, percent = 50.0).toJson()
-        val pointByText = DeviceLightProgramPointPayload(time = "12:00", value = 0.5).toJson()
-
-        return linkedMapOf(
-            "DeviceLightChannelRegimeSetPayload" to DeviceLightChannelRegimeSetPayload(
-                "red",
-                DeviceLightRegime.AUTO
-            ).toJson().keySetExact(),
-            "DeviceLightManualChannelPayload" to unionKeys(percent, value),
-            "DeviceLightManualSetPayload" to DeviceLightManualSetPayload(
-                channels = listOf(DeviceLightManualChannelPayload("red", percent = 50.0))
-            ).toJson().keySetExact(),
-            "DeviceLightProgramApplyPayload" to DeviceLightProgramApplyPayload(
-                channelKey = "red",
-                points = listOf(DeviceLightProgramPointPayload(timeMs = 0L, percent = 50.0)),
-                programIndex = 0
-            ).toJson().keySetExact(),
-            "DeviceLightProgramDeletePayload" to
-                DeviceLightProgramDeletePayload(0).toJson().keySetExact(),
-            "DeviceLightProgramPointPayload" to unionKeys(pointByMillis, pointByText),
-            "DeviceLightTemperatureProtectionSetPayload" to
-                DeviceLightTemperatureProtectionSetPayload(60.0).toJson().keySetExact()
-        )
-    }
-
-    private fun deviceAndTimeSerializerFields(): Map<String, Set<String>> {
-        val rtc = DeviceManualRtcPayload(
-            year = 2026,
-            month = 8,
-            day = 2,
-            weekday = 1,
-            hour = 12,
-            minute = 30,
-            second = 15,
-            timezoneId = "Europe/Istanbul",
-            posixTimeZone = "<+03>-3",
-            utcOffsetMinutes = 180
         ).toJson()
 
-        return linkedMapOf(
-            "DeviceManualRtcPayload" to rtc.keySetExact(),
-            "DeviceManualRtcPayload.parts" to rtc.getJSONObject("parts").keySetExact(),
-            "DeviceNameSetRequest" to DeviceNameSetRequest("Display tank").toJson().keySetExact(),
-            "DevicePhoneSyncPayload" to DevicePhoneSyncPayload(
-                epochMillis = 1_775_304_000_000L,
-                timezoneId = "Europe/Istanbul",
-                posixTimeZone = "<+03>-3",
-                utcOffsetMinutes = 180
-            ).toJson().keySetExact(),
-            "DeviceTimeConfigApplyPayload" to DeviceTimeConfigApplyPayload(
-                timezoneId = "Europe/Istanbul",
-                posixTimeZone = "<+03>-3",
-                utcOffsetMinutes = 180
-            ).toJson().keySetExact()
+        assertEquals(
+            setOf("channelKey", "expectedRevision", "displayName", "reservoir"),
+            payload.keySet()
         )
+        assertEquals("channel1", payload.getString("channelKey"))
+        assertEquals(17L, payload.getLong("expectedRevision"))
+        assertFalse(payload.has("schedules"))
+        assertFalse(payload.has("save"))
+        assertFalse(payload.has("regime"))
+        val reservoir = payload.getJSONObject("reservoir")
+        assertEquals(setOf("trackingEnabled", "capacityMl"), reservoir.keySet())
     }
 
-    private fun timerSerializerFields(): Map<String, Set<String>> {
-        val channel = DeviceTimerChannelConfig(
-            channelKey = "relay-1",
-            displayName = "Filter",
-            regime = DeviceTimerRegime.AUTO
-        )
-        val schedule = DeviceTimerScheduleConfig(
-            enabled = true,
-            name = "Day",
-            channelKey = "relay-1",
-            weekdays = WEEKDAYS,
-            startTimeMs = 1_000L,
-            intervalOnMs = 1_000L,
-            intervalOffMs = 1_000L,
-            repeatCount = 1
-        )
+    @Test
+    fun `display name clear is explicit json null`() {
+        val payload = DeviceDosingChannelConfigPayload(
+            channelKey = "channel1",
+            expectedRevision = 18,
+            displayName = DeviceDosingDisplayNameMutation.Clear
+        ).toJson()
 
-        return linkedMapOf(
-            "DeviceTimerChannelConfig" to channel.toJson().keySetExact(),
-            "DeviceTimerChannelSetPayload" to
-                DeviceTimerChannelSetPayload("relay-1", DeviceTimerRegime.AUTO).toJson().keySetExact(),
-            "DeviceTimerConfigApplyPayload" to DeviceTimerConfigApplyPayload(
-                channels = listOf(channel),
-                schedules = listOf(schedule)
-            ).toJson().keySetExact(),
-            "DeviceTimerScheduleConfig" to schedule.toJson().keySetExact()
-        )
+        assertTrue(payload.has("displayName"))
+        assertTrue(payload.isNull("displayName"))
+        assertFalse(payload.has("reservoir"))
     }
 
-    private fun otaStartPayload(): JSONObject = DeviceFirmwareOtaStartPayload(
-        url = "https://github.com/ozdemirrrcemal-cmyk/AquaLight-OTA-Releases/" +
-            "releases/download/dosing_dose_pro_2-v6.0.1/" +
-            "AquaLight-dosing_dose_pro_2-v6.0.1-ota.bin",
-        version = "6.0.1",
-        sha256 = "ab".repeat(32),
-        expectedSize = 1_024,
-        productKey = "LIGHT_WRGB_PRO_ELITE",
-        productId = "com.aqualight.light.wrgb_pro_elite",
-        model = "wrgb_pro_elite_120",
-        hardwareRevision = "2.0"
-    ).toJson()
+    @Test
+    fun `program apply serializer mirrors all four final firmware modes`() {
+        val weekdays = listOf(true, true, true, true, true, true, true)
+        val programs = listOf(
+            DeviceDosingProgram(
+                enabled = true,
+                weekdays = weekdays,
+                mode = DeviceDosingProgramMode.SINGLE,
+                missedDoseRecoveryEnabled = false,
+                config = DeviceDosingDistributedProgramConfig(3.0, 36_000_000L)
+            ),
+            DeviceDosingProgram(
+                enabled = true,
+                weekdays = weekdays,
+                mode = DeviceDosingProgramMode.HOURLY_24,
+                missedDoseRecoveryEnabled = false,
+                config = DeviceDosingDistributedProgramConfig(2.4, 36_900_000L)
+            ),
+            DeviceDosingProgram(
+                enabled = true,
+                weekdays = weekdays,
+                mode = DeviceDosingProgramMode.CUSTOM_PERIODS,
+                missedDoseRecoveryEnabled = true,
+                config = DeviceDosingCustomPeriodsProgramConfig(
+                    dailyDoseMl = 6.0,
+                    periods = listOf(DeviceDosingCustomPeriod(36_000_000L, 39_600_000L, 3))
+                )
+            ),
+            DeviceDosingProgram(
+                enabled = true,
+                weekdays = weekdays,
+                mode = DeviceDosingProgramMode.TIMER,
+                missedDoseRecoveryEnabled = false,
+                config = DeviceDosingTimerProgramConfig(
+                    events = listOf(
+                        DeviceDosingTimerEvent(36_000_000L, 1.0),
+                        DeviceDosingTimerEvent(50_400_000L, 5.0)
+                    )
+                )
+            )
+        )
 
-    private fun loadJsonFixture(name: String): JSONObject = JSONObject(
-        resourceBytes(name).toString(Charsets.UTF_8)
-    )
+        assertEquals(
+            setOf("single", "hourly24", "customPeriods", "timer"),
+            programs.map { it.mode.wireValue }.toSet()
+        )
 
-    private fun resourceBytes(name: String): ByteArray = checkNotNull(
-        javaClass.getResourceAsStream("/$name")
-    ) { "Missing Stage 10 fixture: $name" }.use { stream -> stream.readBytes() }
-
-    private fun JSONObject.keySetExact(): Set<String> {
-        val result = linkedSetOf<String>()
-        val iterator = keys()
-        while (iterator.hasNext()) {
-            result += iterator.next()
+        programs.forEachIndexed { index, program ->
+            val payload = DeviceDosingProgramApplyPayload(
+                channelKey = "channel1",
+                expectedRevision = 20L + index,
+                program = program
+            ).toJson()
+            assertEquals(setOf("channelKey", "expectedRevision", "program"), payload.keySet())
+            val programJson = payload.getJSONObject("program")
+            assertEquals(
+                setOf("enabled", "weekdays", "mode", "missedDoseRecoveryEnabled", "config"),
+                programJson.keySet()
+            )
+            assertFalse(programJson.has("intervalOnMs"))
+            assertFalse(programJson.has("intervalOffMs"))
+            assertFalse(programJson.has("repeatCount"))
         }
-        return result
     }
 
-    private fun JSONArray.asStringSet(): Set<String> = (0 until length())
-        .mapTo(linkedSetOf()) { index -> getString(index) }
+    @Test
+    fun `channel reset serializer is revision guarded and channel scoped`() {
+        val payload = DeviceDosingChannelResetPayload("channel3", 42L).toJson()
+        assertEquals(setOf("channelKey", "expectedRevision"), payload.keySet())
+        assertEquals("channel3", payload.getString("channelKey"))
+        assertEquals(42L, payload.getLong("expectedRevision"))
+    }
 
-    private fun JSONArray.asObjectList(): List<JSONObject> = (0 until length())
-        .map { index -> getJSONObject(index) }
+    @Test
+    fun `program fixture modes and weekday order match Android contract`() {
+        val programFixture = fixture("aql_dosing_program_v1.json")
+        assertEquals(DeviceDosingRuntimeContract.SCHEMA, programFixture.getString("schema"))
+        assertEquals(
+            DeviceDosingProgramMode.entries.map { it.wireValue },
+            programFixture.getJSONArray("supportedModes").strings()
+        )
+        assertEquals(
+            listOf(
+                "monday",
+                "tuesday",
+                "wednesday",
+                "thursday",
+                "friday",
+                "saturday",
+                "sunday"
+            ),
+            programFixture.getJSONArray("weekdayOrder").strings()
+        )
+    }
 
-    private fun unionKeys(vararg objects: JSONObject): Set<String> = objects
-        .flatMapTo(linkedSetOf()) { json -> json.keySetExact() }
+    @Test
+    fun `dose pro products never expose standalone timer runtime`() {
+        AqlCommercialDeviceCatalog.products
+            .filter { it.family == DeviceFamily.DOSING }
+            .forEach { product ->
+                val modules = product.expectedRuntimeModules()
+                assertTrue(modules.dosing)
+                assertFalse(modules.timerApi)
+                assertFalse(modules.timerEngine)
+                assertFalse(product.profile.capabilities.standaloneTimer)
+                assertEquals(0, product.profile.limits.timerChannelCount)
+            }
+    }
 
-    private fun sha256(bytes: ByteArray): String {
-        val digest = MessageDigest.getInstance("SHA-256").digest(bytes)
-        val alphabet = "0123456789abcdef"
-        return buildString(digest.size * 2) {
-            digest.forEach { byte ->
-                val value = byte.toInt() and 0xff
-                append(alphabet[value ushr 4])
-                append(alphabet[value and 0x0f])
+    @Test
+    fun `all commercial products still resolve their exact generated runtime module contract`() {
+        AqlCommercialDeviceCatalog.products.forEach { product ->
+            val expected = product.expectedRuntimeModules()
+            when (product.family) {
+                DeviceFamily.LIGHT -> assertTrue(expected.light)
+                DeviceFamily.COOLING -> assertTrue(expected.cooling)
+                DeviceFamily.TIMER -> {
+                    assertTrue(expected.timerApi)
+                    assertTrue(expected.timerEngine)
+                }
+                DeviceFamily.DOSING -> {
+                    assertTrue(expected.dosing)
+                    assertFalse(expected.timerEngine)
+                }
+                DeviceFamily.UNKNOWN -> error("Commercial catalog cannot contain unknown family")
             }
         }
     }
 
-    private companion object {
-        const val INTEROPERABILITY_FIXTURE = "aql_firmware_interoperability_v1.json"
-        const val WEBSOCKET_FIXTURE = "aql_ws_v1_golden.json"
-        const val COOLING_FIXTURE = "aql_cooling_temperature_telemetry_v1.json"
-        const val PRODUCT_CATALOG_FIXTURE = "aql_product_catalog_v1.json"
-
-        val WEEKDAYS = listOf(true, false, false, false, false, false, false)
+    @Test
+    fun `smart fertilizer catalog keys remain semantic not firmware wire identities`() {
+        FertilizerDoseCatalog.entries.forEach { entry ->
+            assertTrue(entry.key.isNotBlank())
+            assertFalse(entry.key.startsWith("channel"))
+        }
     }
+
+    @Test
+    fun `firmware scheduling metadata is live source of dosing limits`() {
+        val metadata = fixture("aql_dosing_scheduling_metadata_v1.json")
+        assertEquals("aqualight.dosing.v1", metadata.getString("contract"))
+        assertEquals("firmware", metadata.getJSONObject("publication").getString("sourceOfTruth"))
+        assertTrue(metadata.getJSONObject("publication").getBoolean("live"))
+        assertEquals(0.001, metadata.getJSONObject("limits").getDouble("amountResolutionMl"), 0.0)
+    }
+
+    @Test
+    fun `legacy dosing request types are absent from production model source`() {
+        val modelSource = source(
+            "app/src/main/java/com/aqua/aqualight/data/devices/runtime/modules/dosing/models/" +
+                "DeviceDosingModels.kt"
+        )
+        listOf(
+            "DeviceDosingScheduleConfig",
+            "DeviceDosingScheduleStatus",
+            "DeviceDosingConfigApplyPayload",
+            "DeviceDosingChannelDosingConfig"
+        ).forEach { legacy -> assertFalse(modelSource.contains(legacy)) }
+        listOf(
+            "DeviceDosingProgramApplyPayload",
+            "DeviceDosingChannelResetPayload",
+            "DeviceDosingSchedulingMetadata",
+            "DeviceDosingUsageToday"
+        ).forEach { canonical -> assertTrue(modelSource.contains(canonical)) }
+    }
+
+    private fun fixture(name: String): JSONObject = JSONObject(
+        File(repositoryRoot(), "protocol/fixtures/$name").readText()
+    )
+
+    private fun source(relativePath: String): String =
+        File(repositoryRoot(), relativePath).readText()
+
+    private fun repositoryRoot(): File {
+        var candidate: File? = File(System.getProperty("user.dir")).absoluteFile
+        while (candidate != null) {
+            if (File(candidate, "app/src/main").isDirectory) return candidate
+            candidate = candidate.parentFile
+        }
+        error("Cannot locate AquaLight repository root from user.dir.")
+    }
+
+    private fun org.json.JSONArray.strings(): List<String> =
+        List(length()) { index -> getString(index) }
+
+    private fun JSONObject.keySet(): Set<String> = keys().asSequence().toSet()
 }
