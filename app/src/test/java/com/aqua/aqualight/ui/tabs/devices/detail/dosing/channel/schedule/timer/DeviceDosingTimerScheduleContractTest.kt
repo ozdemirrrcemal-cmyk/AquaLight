@@ -29,26 +29,29 @@ class DeviceDosingTimerScheduleContractTest {
         assertEquals(
             DeviceDosingTimerScheduleContract.ValidationError.DUPLICATE_TIME,
             DeviceDosingTimerScheduleContract.validate(
-                listOf(
+                doses = listOf(
                     dose(minutes = 600, amountMicroliters = 1_000L),
                     dose(minutes = 600, amountMicroliters = 2_000L)
-                )
+                ),
+                maxDoseCount = MAX_DOSE_COUNT
             )
         )
     }
 
     @Test
-    fun `timer enforces 24 entries and overflow-safe totals`() {
+    fun `timer enforces firmware entry limit and overflow-safe totals`() {
         assertEquals(
             DeviceDosingTimerScheduleContract.ValidationError.TOO_MANY_DOSES,
             DeviceDosingTimerScheduleContract.validate(
-                (0..24).map { minute -> dose(minute, 1L) }
+                doses = (0..24).map { minute -> dose(minute, 1L) },
+                maxDoseCount = MAX_DOSE_COUNT
             )
         )
         assertEquals(
             DeviceDosingTimerScheduleContract.ValidationError.TOTAL_OVERFLOW,
             DeviceDosingTimerScheduleContract.validate(
-                listOf(dose(1, Long.MAX_VALUE), dose(2, 1L))
+                doses = listOf(dose(1, Long.MAX_VALUE), dose(2, 1L)),
+                maxDoseCount = MAX_DOSE_COUNT
             )
         )
         assertNull(DeviceDosingTimerScheduleContract.decodeDraft("invalid"))
@@ -58,4 +61,8 @@ class DeviceDosingTimerScheduleContractTest {
         startTimeMs = DeviceDosingTimerScheduleContract.startTimeMs(minutes),
         amountMicroliters = amountMicroliters
     )
+
+    private companion object {
+        const val MAX_DOSE_COUNT = 24
+    }
 }
