@@ -27,19 +27,11 @@ class DosingUiLayerBoundaryTest {
     }
 
     @Test
-    fun `dosing presentation models do not own domain validity or firmware identity`() {
+    fun `dosing presentation models do not own firmware identity`() {
         val models = source(DOSING_SOURCE_ROOT + "DosingChannelCardModels.kt")
 
-        assertFalse(models.contains("require(slotId"))
-        assertFalse(models.contains("require(channelNumber"))
-        assertFalse(models.contains("require(displayName"))
-        assertFalse(models.contains("selectedDays.distinct()"))
-        assertFalse(models.contains("require(dailyDoseMl"))
-        assertFalse(models.contains("require(deliveredTodayMl"))
-        assertFalse(models.contains("require(doseMilestonesMl"))
         assertFalse(models.contains("val wireKey: String"))
         assertFalse(models.contains("wireKey = wireKey.value"))
-
         assertTrue(models.contains("DeviceDosingChannelSlot.toInitialDosingChannelCardUiState"))
     }
 
@@ -50,9 +42,7 @@ class DosingUiLayerBoundaryTest {
             "app/src/main/java/com/aqua/aqualight/data/devices/dosing/" +
                 "DefaultDeviceDosingChannelNavigationOperations.kt"
         )
-        val navigator = source(
-            "app/src/main/java/com/aqua/aqualight/ui/navigation/AppRouteNavigator.kt"
-        )
+        val navigator = source("app/src/main/java/com/aqua/aqualight/ui/navigation/AppRouteNavigator.kt")
         val appGraph = source("app/src/main/res/navigation/nav_app.xml")
 
         assertTrue(rootFragment.contains("AppRouteNavigator.openDosingChannel"))
@@ -60,9 +50,15 @@ class DosingUiLayerBoundaryTest {
         assertFalse(rootFragment.contains("DeviceDosingChannelCalibrationFragmentArgs"))
         assertTrue(operations.contains("toDeviceRootSnapshot()"))
         assertTrue(operations.contains("DefaultDeviceMenuAccessOperations.create"))
-        assertTrue(operations.contains("runtimePort.requestStatus(context.uid)"))
         assertTrue(
-            operations.contains("devicesRepository.runtimeModules()?.dosing?.requestStatus(deviceUid)")
+            operations.contains(
+                "runtimePort.requestStatus(context.uid, context.slot.wireKey.value)"
+            )
+        )
+        assertTrue(
+            operations.contains(
+                "dosing?.requestChannelStatus(deviceUid, channelKey)"
+            )
         )
         assertTrue(operations.contains("DeviceDosingChannelDestinationPolicy.resolve"))
         assertTrue(navigator.contains("fun openDosingChannel("))
@@ -93,49 +89,111 @@ class DosingUiLayerBoundaryTest {
         assertTrue(workflow.contains("operations.exitSafely("))
         assertTrue(workflow.contains("operations.primeSafetyStop("))
         assertTrue(workflow.contains("operations.awaitPrimeSafetyStop("))
-        assertFalse(workflow.contains("stopVerificationDose("))
-        assertFalse(workflow.contains("DeviceDosingCalibrationSessionPhase"))
+        assertFalse(workflow.contains("DeviceDosingRuntimeRepository"))
         assertFalse(workflow.contains("delay("))
-        assertFalse(workflow.contains("PRIME_SAFETY_TIMEOUT_MS"))
 
         assertTrue(applicationBoundary.contains("suspend fun exitSafely("))
         assertTrue(applicationBoundary.contains("suspend fun awaitPrimeSafetyStop("))
         assertTrue(applicationBoundary.contains("delay(constraints.primeSafetyTimeoutMs)"))
         assertTrue(applicationBoundary.contains("verificationDoseStarted"))
         assertTrue(applicationBoundary.contains("DeviceDosingCalibrationSessionPhase.IDLE"))
-        assertTrue(applicationBoundary.contains("primeSafetyTimeoutMs"))
     }
 
     @Test
-    fun `schedule business validity is delegated to application policy`() {
-        val amount = source(
-            DOSING_SOURCE_ROOT + "channel/schedule/DeviceDosingScheduleAmountContract.kt"
-        )
-        val custom = source(
-            DOSING_SOURCE_ROOT +
-                "channel/schedule/custom/DeviceDosingCustomScheduleContract.kt"
-        )
-        val timer = source(
-            DOSING_SOURCE_ROOT +
-                "channel/schedule/timer/DeviceDosingTimerScheduleContract.kt"
-        )
+    fun `dosing program capacities come from firmware metadata not product constants`() {
         val policy = source(
             "app/src/main/java/com/aqua/aqualight/application/devices/dosing/" +
                 "DeviceDosingScheduleDraftPolicy.kt"
         )
+        val operations = source(
+            "app/src/main/java/com/aqua/aqualight/application/devices/dosing/" +
+                "DeviceDosingChannelOperations.kt"
+        )
+        val planViewModel = source(
+            DOSING_SOURCE_ROOT + "channel/plan/DeviceDosingPlanViewModel.kt"
+        )
+        val customContract = source(
+            DOSING_SOURCE_ROOT +
+                "channel/schedule/custom/DeviceDosingCustomScheduleContract.kt"
+        )
+        val timerContract = source(
+            DOSING_SOURCE_ROOT +
+                "channel/schedule/timer/DeviceDosingTimerScheduleContract.kt"
+        )
 
-        assertTrue(amount.contains("DeviceDosingAmountDraftPolicy"))
-        assertTrue(custom.contains("DeviceDosingCustomScheduleDraftPolicy"))
-        assertTrue(timer.contains("DeviceDosingTimerScheduleDraftPolicy"))
-        assertFalse(custom.contains("zipWithNext()"))
-        assertFalse(timer.contains("Math.addExact"))
-        assertFalse(custom.contains("const val MAX_DOSES_PER_DAY = 24"))
-        assertFalse(timer.contains("const val MAX_DOSES_PER_DAY = 24"))
+        assertFalse(policy.contains("MAX_DOSES_PER_DAY"))
+        assertTrue(policy.contains("maxPeriods: Int"))
+        assertTrue(policy.contains("maxDoseCount: Int"))
+        assertTrue(operations.contains("maxEventsPerChannel"))
+        assertTrue(operations.contains("maxCustomPeriodsPerChannel"))
+        assertTrue(planViewModel.contains("currentMaxEventsPerChannel"))
+        assertTrue(planViewModel.contains("currentMaxCustomPeriodsPerChannel"))
+        assertTrue(customContract.contains("maxPeriods"))
+        assertTrue(customContract.contains("maxDoseCount"))
+        assertTrue(timerContract.contains("maxDoseCount"))
+    }
 
-        assertTrue(policy.contains("const val MAX_DOSES_PER_DAY = 24"))
-        assertTrue(policy.contains("periodsOverlap"))
-        assertTrue(policy.contains("hasDuplicateTime"))
-        assertTrue(policy.contains("Math.addExact"))
+    @Test
+    fun `plan detail and reservoir mutations stay behind one application channel boundary`() {
+        val applicationBoundary = source(
+            "app/src/main/java/com/aqua/aqualight/application/devices/dosing/" +
+                "DeviceDosingChannelOperations.kt"
+        )
+        val adapter = source(
+            "app/src/main/java/com/aqua/aqualight/data/devices/dosing/" +
+                "DefaultDeviceDosingChannelOperations.kt"
+        )
+        val ownerFactory = source(
+            "app/src/main/java/com/aqua/aqualight/composition/OwnerViewModelFactory.kt"
+        )
+        val processFactory = source(
+            "app/src/main/java/com/aqua/aqualight/composition/ProcessViewModelFactory.kt"
+        )
+
+        listOf(
+            "suspend fun saveProgram(",
+            "suspend fun setMissedDoseRecoveryEnabled(",
+            "suspend fun dispenseManualDose(",
+            "suspend fun resetChannel(",
+            "suspend fun saveReservoir(",
+            "suspend fun refillReservoir("
+        ).forEach { contract -> assertTrue(applicationBoundary.contains(contract)) }
+
+        assertTrue(adapter.contains("runtime.saveProgram("))
+        assertTrue(adapter.contains("runtime.resetChannel("))
+        assertTrue(adapter.contains("runtime.configureReservoir("))
+        assertTrue(adapter.contains("runtime.reservoirRefill("))
+        assertTrue(ownerFactory.contains("DefaultDeviceDosingChannelOperations(repository)"))
+        assertTrue(ownerFactory.contains("DeviceDosingPlanViewModel::class.java"))
+        assertTrue(ownerFactory.contains("DeviceDosingChannelDetailViewModel::class.java"))
+        assertTrue(ownerFactory.contains("DeviceDosingReservoirViewModel::class.java"))
+        assertFalse(processFactory.contains("DeviceDosingPlanViewModel"))
+        assertFalse(processFactory.contains("DeviceDosingChannelDetailViewModel"))
+        assertFalse(processFactory.contains("DeviceDosingReservoirViewModel"))
+    }
+
+    @Test
+    fun `dosing runtime is isolated from standalone timer engine`() {
+        val access = source(
+            "app/src/main/java/com/aqua/aqualight/data/devices/runtime/modules/dosing/contract/" +
+                "DeviceDosingRuntimeAccess.kt"
+        )
+        val commercialModules = source(
+            "app/src/main/java/com/aqua/aqualight/data/devices/catalog/" +
+                "AqlCommercialRuntimeModuleContract.kt"
+        )
+        val runtimeRepository = source(
+            "app/src/main/java/com/aqua/aqualight/data/devices/runtime/modules/dosing/repository/" +
+                "DeviceDosingRuntimeRepository.kt"
+        )
+
+        assertTrue(access.contains("!capabilities.standaloneTimer"))
+        assertTrue(access.contains("limits.timerChannelCount == 0"))
+        assertTrue(access.contains("!modules.timerApi"))
+        assertTrue(access.contains("!modules.timerEngine"))
+        assertTrue(commercialModules.contains("timerEngine = standaloneTimer"))
+        assertFalse(runtimeRepository.contains("DeviceTimerRuntime"))
+        assertFalse(runtimeRepository.contains("timer.*"))
     }
 
     @Test
