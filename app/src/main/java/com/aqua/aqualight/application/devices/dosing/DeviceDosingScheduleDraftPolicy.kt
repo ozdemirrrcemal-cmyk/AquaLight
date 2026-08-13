@@ -15,6 +15,7 @@ data class DeviceDosingTimerDoseDraft(
 
 enum class DeviceDosingCustomScheduleValidationError {
     INVALID_PERIOD,
+    TOO_MANY_PERIODS,
     TOO_MANY_DOSES,
     OVERLAPPING_PERIODS
 }
@@ -26,14 +27,8 @@ enum class DeviceDosingTimerScheduleValidationError {
     TOTAL_OVERFLOW
 }
 
-/**
- * Product-level Dosing editor limits.
- *
- * These are intentionally owned outside presentation. The future firmware adapter may map
- * device capabilities into this application boundary without changing Fragment/Compose code.
- */
+/** Structural editor constants only; product capacities are firmware-published at runtime. */
 object DeviceDosingScheduleDraftLimits {
-    const val MAX_DOSES_PER_DAY = 24
     const val MICROLITERS_PER_MILLILITER = 1_000L
     const val MILLIS_PER_MINUTE = 60_000L
     const val MINUTES_PER_DAY = 24 * 60
@@ -67,9 +62,7 @@ object DeviceDosingScheduleTimeDraftPolicy {
     }
 
     fun minutesOfDay(timeMs: Long): Int {
-        require(isValidTime(timeMs)) {
-            "timeMs must be minute-aligned inside one day."
-        }
+        require(isValidTime(timeMs)) { "timeMs must be minute-aligned inside one day." }
         return (timeMs / DeviceDosingScheduleDraftLimits.MILLIS_PER_MINUTE).toInt()
     }
 
@@ -80,23 +73,27 @@ object DeviceDosingScheduleTimeDraftPolicy {
 
 object DeviceDosingCustomScheduleDraftPolicy {
     fun validate(
-        periods: List<DeviceDosingCustomPeriodDraft>
-    ): DeviceDosingCustomScheduleValidationError? = when {
-        periods.any { period -> !isValidPeriod(period) } ->
-            DeviceDosingCustomScheduleValidationError.INVALID_PERIOD
-        totalDoseCount(periods) > DeviceDosingScheduleDraftLimits.MAX_DOSES_PER_DAY ->
-            DeviceDosingCustomScheduleValidationError.TOO_MANY_DOSES
-        periodsOverlap(periods) ->
-            DeviceDosingCustomScheduleValidationError.OVERLAPPING_PERIODS
-        else -> null
+        periods: List<DeviceDosingCustomPeriodDraft>,
+        maxPeriods: Int,
+        maxDoseCount: Int
+    ): DeviceDosingCustomScheduleValidationError? {
+        require(maxPeriods > 0)
+        require(maxDoseCount > 0)
+        return when {
+            periods.any { period -> !isValidPeriod(period, maxDoseCount) } ->
+                DeviceDosingCustomScheduleValidationError.INVALID_PERIOD
+            periods.size > maxPeriods ->
+                DeviceDosingCustomScheduleValidationError.TOO_MANY_PERIODS
+            totalDoseCount(periods) > maxDoseCount ->
+                DeviceDosingCustomScheduleValidationError.TOO_MANY_DOSES
+            periodsOverlap(periods) ->
+                DeviceDosingCustomScheduleValidationError.OVERLAPPING_PERIODS
+            else -> null
+        }
     }
 
-    fun normalize(
-        periods: List<DeviceDosingCustomPeriodDraft>
-    ): List<DeviceDosingCustomPeriodDraft> {
-        require(validate(periods) == null) { "Custom periods are invalid." }
-        return periods.sortedBy(DeviceDosingCustomPeriodDraft::startTimeMs)
-    }
+    fun normalize(periods: List<DeviceDosingCustomPeriodDraft>): List<DeviceDosingCustomPeriodDraft> =
+        periods.sortedBy(DeviceDosingCustomPeriodDraft::startTimeMs)
 
     fun totalDoseCount(periods: List<DeviceDosingCustomPeriodDraft>): Int =
         periods.sumOf(DeviceDosingCustomPeriodDraft::doseCount)
@@ -114,11 +111,11 @@ object DeviceDosingCustomScheduleDraftPolicy {
         }
     }
 
-    private fun isValidPeriod(period: DeviceDosingCustomPeriodDraft): Boolean =
+    private fun isValidPeriod(period: DeviceDosingCustomPeriodDraft, maxDoseCount: Int): Boolean =
         DeviceDosingScheduleTimeDraftPolicy.isValidTime(period.startTimeMs) &&
             DeviceDosingScheduleTimeDraftPolicy.isValidTime(period.endTimeMs) &&
             period.endTimeMs > period.startTimeMs &&
-            period.doseCount in 1..DeviceDosingScheduleDraftLimits.MAX_DOSES_PER_DAY
+            period.doseCount in 1..maxDoseCount
 
     private fun periodsOverlap(periods: List<DeviceDosingCustomPeriodDraft>): Boolean = periods
         .sortedBy(DeviceDosingCustomPeriodDraft::startTimeMs)
@@ -128,23 +125,25 @@ object DeviceDosingCustomScheduleDraftPolicy {
 
 object DeviceDosingTimerScheduleDraftPolicy {
     fun validate(
-        doses: List<DeviceDosingTimerDoseDraft>
-    ): DeviceDosingTimerScheduleValidationError? = when {
-        doses.any { dose -> !isValidDose(dose) } ->
-            DeviceDosingTimerScheduleValidationError.INVALID_DOSE
-        doses.size > DeviceDosingScheduleDraftLimits.MAX_DOSES_PER_DAY ->
-            DeviceDosingTimerScheduleValidationError.TOO_MANY_DOSES
-        hasDuplicateTime(doses) ->
-            DeviceDosingTimerScheduleValidationError.DUPLICATE_TIME
-        runCatching { totalDoseMicroliters(doses) }.isFailure ->
-            DeviceDosingTimerScheduleValidationError.TOTAL_OVERFLOW
-        else -> null
+        doses: List<DeviceDosingTimerDoseDraft>,
+        maxDoseCount: Int
+    ): DeviceDosingTimerScheduleValidationError? {
+        require(maxDoseCount > 0)
+        return when {
+            doses.any { dose -> !isValidDose(dose) } ->
+                DeviceDosingTimerScheduleValidationError.INVALID_DOSE
+            doses.size > maxDoseCount ->
+                DeviceDosingTimerScheduleValidationError.TOO_MANY_DOSES
+            hasDuplicateTime(doses) ->
+                DeviceDosingTimerScheduleValidationError.DUPLICATE_TIME
+            runCatching { totalDoseMicroliters(doses) }.isFailure ->
+                DeviceDosingTimerScheduleValidationError.TOTAL_OVERFLOW
+            else -> null
+        }
     }
 
-    fun normalize(doses: List<DeviceDosingTimerDoseDraft>): List<DeviceDosingTimerDoseDraft> {
-        require(validate(doses) == null) { "Timer doses are invalid." }
-        return doses.sortedBy(DeviceDosingTimerDoseDraft::startTimeMs)
-    }
+    fun normalize(doses: List<DeviceDosingTimerDoseDraft>): List<DeviceDosingTimerDoseDraft> =
+        doses.sortedBy(DeviceDosingTimerDoseDraft::startTimeMs)
 
     fun totalDoseMicroliters(doses: List<DeviceDosingTimerDoseDraft>): Long =
         doses.fold(0L) { total, dose -> Math.addExact(total, dose.amountMicroliters) }
