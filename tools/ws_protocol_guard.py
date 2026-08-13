@@ -13,7 +13,7 @@ import sys
 
 ROOT = Path(__file__).resolve().parents[1]
 FIXTURE_PATH = ROOT / "protocol/fixtures/aql_ws_v1_golden.json"
-FIXTURE_SHA256 = "765cd113b848d4b17c173e513b714b806466ec994483a34c19970e7a1b984591"
+FIXTURE_SHA256 = "d0fe77042f3ac690b0f86f9c7b746393b6c3d96d89dca53199447b2decc2733e"
 errors: list[str] = []
 
 
@@ -208,8 +208,8 @@ try:
     access = fixture["commandAccess"]
     if access["public"]:
         errors.append("WebSocket must not expose unauthenticated application commands")
-    if len(access["authenticated"]) != 41 or len(set(access["authenticated"])) != 41:
-        errors.append("golden authenticated command matrix must contain 41 unique commands")
+    if len(access["authenticated"]) != 43 or len(set(access["authenticated"])) != 43:
+        errors.append("golden authenticated command matrix must contain 43 unique commands")
 except (KeyError, TypeError, ValueError, UnicodeError, json.JSONDecodeError) as exc:
     errors.append(f"golden fixture could not be validated: {exc}")
 
