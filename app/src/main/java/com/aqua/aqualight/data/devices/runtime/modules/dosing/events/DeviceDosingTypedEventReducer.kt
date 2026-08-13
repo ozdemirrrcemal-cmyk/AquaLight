@@ -6,66 +6,39 @@ import com.aqua.aqualight.data.devices.runtime.events.DeviceRuntimeTypedEvent
 import com.aqua.aqualight.data.devices.runtime.modules.dosing.contract.DeviceDosingCommandValidation
 import com.aqua.aqualight.data.devices.runtime.modules.dosing.contract.DeviceDosingRuntimeAccess
 import com.aqua.aqualight.data.devices.runtime.modules.dosing.contract.DeviceDosingRuntimeContract
-import com.aqua.aqualight.data.devices.runtime.modules.dosing.models.DeviceDosingCalibrationCancelResult
-import com.aqua.aqualight.data.devices.runtime.modules.dosing.models.DeviceDosingCalibrationConfirmResult
-import com.aqua.aqualight.data.devices.runtime.modules.dosing.models.DeviceDosingCalibrationFinishResult
-import com.aqua.aqualight.data.devices.runtime.modules.dosing.models.DeviceDosingCalibrationStartResult
-import com.aqua.aqualight.data.devices.runtime.modules.dosing.models.DeviceDosingChannelStatusSnapshot
-import com.aqua.aqualight.data.devices.runtime.modules.dosing.models.DeviceDosingConfigApplyResult
-import com.aqua.aqualight.data.devices.runtime.modules.dosing.models.DeviceDosingDoseNowResult
 import com.aqua.aqualight.data.devices.runtime.modules.dosing.models.DeviceDosingMutationResult
-import com.aqua.aqualight.data.devices.runtime.modules.dosing.models.DeviceDosingPumpCommandResult
-import com.aqua.aqualight.data.devices.runtime.modules.dosing.models.DeviceDosingReservoirRefillResult
-import com.aqua.aqualight.data.devices.runtime.modules.dosing.models.DeviceDosingStatus
 import com.aqua.aqualight.data.devices.runtime.modules.dosing.parsers.DeviceDosingMutationParser
-import com.aqua.aqualight.data.devices.runtime.modules.dosing.parsers.DeviceDosingStatusParser
 import com.aqua.aqualight.data.devices.runtime.modules.dosing.state.DeviceDosingRuntimeStateStore
 
-/** Applies validated `dosing.status.changed` payloads to device-isolated Dosing state. */
+/** Applies command-result events and resolves slim status-change notifications authoritatively. */
 internal class DeviceDosingTypedEventReducer(
     private val stateStore: DeviceDosingRuntimeStateStore,
-    private val accessProvider: (DeviceUid) -> DeviceDosingRuntimeAccess
+    private val accessProvider: (DeviceUid) -> DeviceDosingRuntimeAccess,
+    private val refreshStatusChange: suspend (DeviceUid, org.json.JSONObject) -> Boolean
 ) {
-    fun apply(event: DeviceRuntimeTypedEvent): DeviceDosingEventApplyResult {
+    suspend fun apply(event: DeviceRuntimeTypedEvent): DeviceDosingEventApplyResult {
         val access = accessProvider(event.deviceUid)
         return when {
             event.type != DeviceRuntimeTypedEvent.Type.DOSING_STATUS_CHANGED ->
                 DeviceDosingEventApplyResult.Ignored
             !access.supportsApi -> DeviceDosingEventApplyResult.Ignored
-            else -> applyValidatedEvent(event, access)
+            else -> runCatching {
+                when (val payload = event.payload) {
+                    is DeviceRuntimeEventPayload.Snapshot ->
+                        refreshStatusChange(event.deviceUid, payload.data)
+                    is DeviceRuntimeEventPayload.CommandResult ->
+                        applyCommandResult(event.deviceUid, payload, access)
+                }
+            }.fold(
+                onSuccess = { applied ->
+                    if (applied) DeviceDosingEventApplyResult.Applied
+                    else DeviceDosingEventApplyResult.Ignored
+                },
+                onFailure = { error ->
+                    DeviceDosingEventApplyResult.Malformed(error.message.orEmpty())
+                }
+            )
         }
-    }
-
-    private fun applyValidatedEvent(
-        event: DeviceRuntimeTypedEvent,
-        access: DeviceDosingRuntimeAccess
-    ): DeviceDosingEventApplyResult = runCatching {
-        applyPayload(event.deviceUid, event.payload, access)
-    }.fold(
-        onSuccess = { applied ->
-            if (applied) DeviceDosingEventApplyResult.Applied
-            else DeviceDosingEventApplyResult.Ignored
-        },
-        onFailure = { error ->
-            DeviceDosingEventApplyResult.Malformed(error.message.orEmpty())
-        }
-    )
-
-    private fun applyPayload(
-        deviceUid: DeviceUid,
-        payload: DeviceRuntimeEventPayload,
-        access: DeviceDosingRuntimeAccess
-    ): Boolean = when (payload) {
-        is DeviceRuntimeEventPayload.Snapshot -> {
-            val status = DeviceDosingStatusParser.parse(payload.data)
-            DeviceDosingCommandValidation.validateStatus(status, access)
-            stateStore.recordStatus(deviceUid, status)
-        }
-        is DeviceRuntimeEventPayload.CommandResult -> applyCommandResult(
-            deviceUid,
-            payload,
-            access
-        )
     }
 
     private fun applyCommandResult(
@@ -73,11 +46,9 @@ internal class DeviceDosingTypedEventReducer(
         payload: DeviceRuntimeEventPayload.CommandResult,
         access: DeviceDosingRuntimeAccess
     ): Boolean {
-        require(payload.commandModule == DeviceDosingRuntimeContract.MODULE) {
-            "Dosing event command module differs from the event module."
-        }
+        require(payload.commandModule == DeviceDosingRuntimeContract.MODULE)
         val result = parseMutation(payload.commandAction, payload.result) ?: return false
-        validateMutation(deviceUid, result, access)
+        DeviceDosingCommandValidation.validateMutation(result.channelKey, result, access)
         return stateStore.recordMutation(deviceUid, result)
     }
 
@@ -86,7 +57,11 @@ internal class DeviceDosingTypedEventReducer(
         result: org.json.JSONObject
     ): DeviceDosingMutationResult? = when (action) {
         DeviceDosingRuntimeContract.Action.CONFIG_APPLY ->
-            DeviceDosingMutationParser.parseConfigApply(result)
+            DeviceDosingMutationParser.parseChannelConfigApply(result)
+        DeviceDosingRuntimeContract.Action.PROGRAM_APPLY ->
+            DeviceDosingMutationParser.parseProgramApply(result)
+        DeviceDosingRuntimeContract.Action.CHANNEL_RESET ->
+            DeviceDosingMutationParser.parseChannelReset(result)
         DeviceDosingRuntimeContract.Action.PRIME_START ->
             DeviceDosingMutationParser.parsePrimeStart(result)
         DeviceDosingRuntimeContract.Action.PRIME_STOP ->
@@ -106,38 +81,6 @@ internal class DeviceDosingTypedEventReducer(
         DeviceDosingRuntimeContract.Action.RESERVOIR_REFILL ->
             DeviceDosingMutationParser.parseReservoirRefill(result)
         else -> null
-    }
-
-    private fun validateMutation(
-        deviceUid: DeviceUid,
-        result: DeviceDosingMutationResult,
-        access: DeviceDosingRuntimeAccess
-    ) {
-        val status = stateStore.states.value[deviceUid]?.status
-        when (result) {
-            is DeviceDosingConfigApplyResult ->
-                DeviceDosingCommandValidation.validateConfigSnapshot(result.config, status, access)
-            is DeviceDosingCalibrationStartResult ->
-                DeviceDosingCommandValidation.validateCalibrationRequest(
-                    result.channelKey,
-                    status,
-                    access
-                )
-            is DeviceDosingPumpCommandResult -> validateChannel(result.channel, status, access)
-            is DeviceDosingDoseNowResult -> validateChannel(result.channel, status, access)
-            is DeviceDosingCalibrationFinishResult -> validateChannel(result.channel, status, access)
-            is DeviceDosingCalibrationConfirmResult -> validateChannel(result.channel, status, access)
-            is DeviceDosingCalibrationCancelResult -> validateChannel(result.channel, status, access)
-            is DeviceDosingReservoirRefillResult -> validateChannel(result.channel, status, access)
-        }
-    }
-
-    private fun validateChannel(
-        channel: DeviceDosingChannelStatusSnapshot,
-        status: DeviceDosingStatus?,
-        access: DeviceDosingRuntimeAccess
-    ) {
-        DeviceDosingCommandValidation.validateChannelSnapshot(channel, status, access)
     }
 }
 
