@@ -13,13 +13,14 @@ import androidx.navigation.fragment.navArgs
 import com.aqua.aqualight.R
 import com.aqua.aqualight.ui.tabs.devices.detail.dosing.channel.common.DeviceDosingChannelDestinationFragment
 
-/** Draft editor for independent Timer doses whose amounts define the daily total. */
+/** Draft editor bounded by the current firmware-published Timer-mode event capacity. */
 class DeviceDosingTimerScheduleFragment :
     DeviceDosingChannelDestinationFragment(R.layout.fragment_device_dosing_channel_detail) {
 
     private val args: DeviceDosingTimerScheduleFragmentArgs by navArgs()
     private var doses by mutableStateOf<List<DeviceDosingTimerDose>>(emptyList())
     private var validationMessageRes by mutableStateOf<Int?>(null)
+    private lateinit var editorPayload: DeviceDosingTimerEditorPayload
     private lateinit var editor: DeviceDosingTimerScheduleEditor
 
     override val destinationTitle: String
@@ -27,13 +28,18 @@ class DeviceDosingTimerScheduleFragment :
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
-        val argumentDoses = DeviceDosingTimerScheduleContract.decodeDraft(args.dosesDraft)
-        if (argumentDoses == null) {
+        val argumentPayload = DeviceDosingTimerScheduleContract.decodeEditorPayload(args.dosesDraft)
+        if (argumentPayload == null) {
             findNavController().navigateUp()
             return
         }
+        editorPayload = argumentPayload
 
-        doses = restoreTimerDoses(savedInstanceState, argumentDoses)
+        doses = restoreTimerDoses(savedInstanceState, argumentPayload.doses)
+        if (DeviceDosingTimerScheduleContract.validate(doses, argumentPayload.maxDoseCount) != null) {
+            findNavController().navigateUp()
+            return
+        }
         validationMessageRes = savedInstanceState
             ?.getInt(STATE_VALIDATION_MESSAGE_RES, NO_MESSAGE_RES)
             ?.takeUnless { messageRes -> messageRes == NO_MESSAGE_RES }
@@ -41,6 +47,7 @@ class DeviceDosingTimerScheduleFragment :
             host = DeviceDosingTimerScheduleEditorHost(
                 fragment = this,
                 slotId = args.slotId,
+                maxDoseCount = argumentPayload.maxDoseCount,
                 doses = { doses },
                 updateDoses = { updated -> doses = updated },
                 updateValidation = { messageRes -> validationMessageRes = messageRes }
@@ -100,10 +107,19 @@ class DeviceDosingTimerScheduleFragment :
 
     private fun saveDraft() {
         val navController = findNavController()
+        val validation = if (::editorPayload.isInitialized) {
+            DeviceDosingTimerScheduleContract.validate(doses, editorPayload.maxDoseCount)
+        } else {
+            DeviceDosingTimerScheduleContract.ValidationError.INVALID_DOSE
+        }
         val canSave =
             navController.currentDestination?.id == R.id.deviceDosingTimerScheduleFragment &&
-                doses.isNotEmpty()
-        if (!canSave) return
+                doses.isNotEmpty() &&
+                validation == null
+        if (!canSave) {
+            validationMessageRes = validation?.toMessageRes()
+            return
+        }
 
         parentFragmentManager.setFragmentResult(
             DeviceDosingTimerScheduleContract.RESULT_REQUEST_KEY,
@@ -132,3 +148,14 @@ private fun restoreTimerDoses(
     ?.getString("timer_schedule_doses_draft")
     ?.let(DeviceDosingTimerScheduleContract::decodeDraft)
     ?: argumentDoses
+
+private fun DeviceDosingTimerScheduleContract.ValidationError.toMessageRes(): Int = when (this) {
+    DeviceDosingTimerScheduleContract.ValidationError.INVALID_DOSE ->
+        R.string.device_dosing_timer_error_invalid_amount
+    DeviceDosingTimerScheduleContract.ValidationError.TOO_MANY_DOSES ->
+        R.string.device_dosing_timer_error_too_many
+    DeviceDosingTimerScheduleContract.ValidationError.DUPLICATE_TIME ->
+        R.string.device_dosing_timer_error_duplicate_time
+    DeviceDosingTimerScheduleContract.ValidationError.TOTAL_OVERFLOW ->
+        R.string.device_dosing_timer_error_total
+}
