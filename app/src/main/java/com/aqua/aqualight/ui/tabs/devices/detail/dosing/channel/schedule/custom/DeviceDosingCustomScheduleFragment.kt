@@ -13,13 +13,14 @@ import androidx.navigation.fragment.navArgs
 import com.aqua.aqualight.R
 import com.aqua.aqualight.ui.tabs.devices.detail.dosing.channel.common.DeviceDosingChannelDestinationFragment
 
-/** Draft editor for a daily dose distributed across explicit, non-overlapping periods. */
+/** Draft editor bounded by the current firmware-published custom-program capacities. */
 class DeviceDosingCustomScheduleFragment :
     DeviceDosingChannelDestinationFragment(R.layout.fragment_device_dosing_channel_detail) {
 
     private val args: DeviceDosingCustomScheduleFragmentArgs by navArgs()
     private var periods by mutableStateOf<List<DeviceDosingCustomPeriod>>(emptyList())
     private var validationMessageRes by mutableStateOf<Int?>(null)
+    private lateinit var editorPayload: DeviceDosingCustomEditorPayload
     private lateinit var editor: DeviceDosingCustomScheduleEditor
 
     override val destinationTitle: String
@@ -27,13 +28,24 @@ class DeviceDosingCustomScheduleFragment :
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
-        val argumentPeriods = DeviceDosingCustomScheduleContract.decodeDraft(args.periodsDraft)
-        if (args.dailyDoseMicroliters < 0L || argumentPeriods == null) {
+        val argumentPayload = DeviceDosingCustomScheduleContract.decodeEditorPayload(args.periodsDraft)
+        if (args.dailyDoseMicroliters < 0L || argumentPayload == null) {
             findNavController().navigateUp()
             return
         }
+        editorPayload = argumentPayload
 
-        periods = restoreCustomPeriods(savedInstanceState, argumentPeriods)
+        periods = restoreCustomPeriods(savedInstanceState, argumentPayload.periods)
+        if (
+            DeviceDosingCustomScheduleContract.validate(
+                periods,
+                argumentPayload.maxPeriods,
+                argumentPayload.maxDoseCount
+            ) != null
+        ) {
+            findNavController().navigateUp()
+            return
+        }
         validationMessageRes = savedInstanceState
             ?.getInt(STATE_VALIDATION_MESSAGE_RES, NO_MESSAGE_RES)
             ?.takeUnless { messageRes -> messageRes == NO_MESSAGE_RES }
@@ -41,6 +53,8 @@ class DeviceDosingCustomScheduleFragment :
             host = DeviceDosingCustomScheduleEditorHost(
                 fragment = this,
                 slotId = args.slotId,
+                maxPeriods = argumentPayload.maxPeriods,
+                maxDoseCount = argumentPayload.maxDoseCount,
                 periods = { periods },
                 updatePeriods = { updated -> periods = updated },
                 updateValidation = { messageRes -> validationMessageRes = messageRes }
@@ -101,10 +115,24 @@ class DeviceDosingCustomScheduleFragment :
 
     private fun saveDraft() {
         val navController = findNavController()
+        val validation = if (::editorPayload.isInitialized) {
+            DeviceDosingCustomScheduleContract.validate(
+                periods,
+                editorPayload.maxPeriods,
+                editorPayload.maxDoseCount
+            )
+        } else {
+            DeviceDosingCustomScheduleContract.ValidationError.INVALID_PERIOD
+        }
         val canSave =
             navController.currentDestination?.id == R.id.deviceDosingCustomScheduleFragment &&
-                args.dailyDoseMicroliters > 0L && periods.isNotEmpty()
-        if (!canSave) return
+                args.dailyDoseMicroliters > 0L &&
+                periods.isNotEmpty() &&
+                validation == null
+        if (!canSave) {
+            validationMessageRes = validation?.toMessageRes()
+            return
+        }
 
         parentFragmentManager.setFragmentResult(
             DeviceDosingCustomScheduleContract.RESULT_REQUEST_KEY,
@@ -133,3 +161,12 @@ private fun restoreCustomPeriods(
     ?.getString("custom_schedule_periods_draft")
     ?.let(DeviceDosingCustomScheduleContract::decodeDraft)
     ?: argumentPeriods
+
+private fun DeviceDosingCustomScheduleContract.ValidationError.toMessageRes(): Int = when (this) {
+    DeviceDosingCustomScheduleContract.ValidationError.INVALID_PERIOD ->
+        R.string.device_dosing_custom_error_invalid_period
+    DeviceDosingCustomScheduleContract.ValidationError.TOO_MANY_DOSES ->
+        R.string.device_dosing_custom_error_too_many
+    DeviceDosingCustomScheduleContract.ValidationError.OVERLAPPING_PERIODS ->
+        R.string.device_dosing_custom_error_overlap
+}
