@@ -1,29 +1,24 @@
 package com.aqua.aqualight.data.devices.runtime.modules.dosing
 
-import com.aqua.aqualight.data.devices.runtime.modules.dosing.contract.DOSING_WEEKDAY_COUNT
 import com.aqua.aqualight.data.devices.runtime.modules.dosing.contract.DeviceDosingRuntimeContract
-import com.aqua.aqualight.data.devices.runtime.modules.dosing.models.DeviceDosingCalibrationFinishPayload
-import com.aqua.aqualight.data.devices.runtime.modules.dosing.models.DeviceDosingCalibrationStartPayload
-import com.aqua.aqualight.data.devices.runtime.modules.dosing.models.DeviceDosingCalibrationState
-import com.aqua.aqualight.data.devices.runtime.modules.dosing.models.DeviceDosingChannelConfig
-import com.aqua.aqualight.data.devices.runtime.modules.dosing.models.DeviceDosingChannelDosingConfig
-import com.aqua.aqualight.data.devices.runtime.modules.dosing.models.DeviceDosingConfigApplyPayload
-import com.aqua.aqualight.data.devices.runtime.modules.dosing.models.DeviceDosingDoseNowPayload
-import com.aqua.aqualight.data.devices.runtime.modules.dosing.models.DeviceDosingScheduleConfig
+import com.aqua.aqualight.data.devices.runtime.modules.dosing.models.DeviceDosingProgramMode
 import com.aqua.aqualight.data.devices.runtime.modules.dosing.parsers.DeviceDosingStatusParser
-import org.json.JSONArray
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
+import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Test
 
 class DeviceDosingRuntimeContractTest {
+
     @Test
-    fun `Dosing action catalog contains all eleven authenticated commands`() {
+    fun `Dosing action catalog exposes thirteen final authenticated commands`() {
         assertEquals(
             setOf(
                 "status.get",
                 "config.apply",
+                "program.apply",
+                "channel.reset",
                 "prime.start",
                 "prime.stop",
                 "calibration.start",
@@ -37,6 +32,8 @@ class DeviceDosingRuntimeContractTest {
             setOf(
                 DeviceDosingRuntimeContract.Action.STATUS_GET,
                 DeviceDosingRuntimeContract.Action.CONFIG_APPLY,
+                DeviceDosingRuntimeContract.Action.PROGRAM_APPLY,
+                DeviceDosingRuntimeContract.Action.CHANNEL_RESET,
                 DeviceDosingRuntimeContract.Action.PRIME_START,
                 DeviceDosingRuntimeContract.Action.PRIME_STOP,
                 DeviceDosingRuntimeContract.Action.CALIBRATION_START,
@@ -51,120 +48,69 @@ class DeviceDosingRuntimeContractTest {
     }
 
     @Test
-    fun `status parser accepts exact Dosing snapshot`() {
-        val status = DeviceDosingStatusParser.parse(DeviceDosingRuntimeFixtures.status())
-
-        assertTrue(status.supported)
-        assertEquals(2, status.channelCount)
-        assertEquals("ml", status.unit)
-        assertEquals("Nutrients", status.channels.first().displayName)
-        assertEquals(80.0, status.channels.first().dosing.reservoirRemainingPercent, 0.0)
-        assertEquals(10.0, status.schedules.single().amountMl, 0.0)
-        assertTrue(status.schedules.single().runtimeEnabled)
-        assertTrue(status.runtime.supportsCalibrationWorkflow)
-        assertTrue(status.runtime.supportsCalibrationSessionState)
-        assertEquals(
-            DeviceDosingCalibrationState.IDLE,
-            status.channels.first().dosing.calibration.state
+    fun `global status exposes firmware scheduling metadata and channel revisions`() {
+        val status = DeviceDosingStatusParser.parseGlobal(
+            DeviceDosingRuntimeFixtures.globalStatus()
         )
+
+        assertEquals(DeviceDosingRuntimeContract.SCHEMA, status.envelope.schema)
+        assertEquals(2, status.envelope.channelCount)
+        assertEquals(24, status.scheduling.maxEventsPerChannel)
+        assertEquals(24, status.scheduling.maxCustomPeriodsPerChannel)
+        assertEquals(0.001, status.scheduling.amountResolutionMl, 0.0)
+        assertEquals(DeviceDosingProgramMode.entries.toSet(), status.scheduling.supportedModes.toSet())
+        assertEquals(7L, status.channels.first().revision)
+        assertTrue(status.runtime.supportsChannelScopedStatus)
     }
 
     @Test
-    fun `status parser rejects extra fields aliases and fabricated reservoir status`() {
-        val extra = DeviceDosingRuntimeFixtures.status().put("unexpected", true)
-        val alias = DeviceDosingRuntimeFixtures.status()
-        alias.getJSONArray("channels").getJSONObject(0).put("regime", "schedule")
-        val fabricated = DeviceDosingRuntimeFixtures.status()
-        fabricated.getJSONArray("channels").getJSONObject(0)
-            .getJSONObject("dosing")
-            .put("reservoirStatus", "ok")
-
-        assertTrue(runCatching { DeviceDosingStatusParser.parse(extra) }.isFailure)
-        assertTrue(runCatching { DeviceDosingStatusParser.parse(alias) }.isFailure)
-        assertTrue(runCatching { DeviceDosingStatusParser.parse(fabricated) }.isFailure)
-    }
-
-    @Test
-    fun `status parser rejects malformed derived schedule and reservoir values`() {
-        val badTime = DeviceDosingRuntimeFixtures.status()
-        badTime.getJSONArray("schedules").getJSONObject(0).put("startTime", "8:00")
-        val badPercent = DeviceDosingRuntimeFixtures.status()
-        badPercent.getJSONArray("channels").getJSONObject(0)
-            .getJSONObject("dosing")
-            .put("reservoirRemainingPercent", 75.0)
-        val badWeekdays = DeviceDosingRuntimeFixtures.status()
-        badWeekdays.getJSONArray("schedules").getJSONObject(0)
-            .put("weekdays", JSONArray(listOf(true, false)))
-
-        assertTrue(runCatching { DeviceDosingStatusParser.parse(badTime) }.isFailure)
-        assertTrue(runCatching { DeviceDosingStatusParser.parse(badPercent) }.isFailure)
-        assertTrue(runCatching { DeviceDosingStatusParser.parse(badWeekdays) }.isFailure)
-    }
-
-    @Test
-    fun `config payload preserves omitted fields and empty full schedule replacement`() {
-        val deleteAll = DeviceDosingConfigApplyPayload(
-            schedules = emptyList(),
-            save = true
-        ).toJson()
-
-        assertEquals(setOf("schedules", "save"), deleteAll.keys().asSequence().toSet())
-        assertEquals(0, deleteAll.getJSONArray("schedules").length())
-        assertFalse(deleteAll.has("channels"))
-    }
-
-    @Test
-    fun `channel config normalizes identity display name and exact dosing fields`() {
-        val encoded = DeviceDosingChannelConfig(
-            channelKey = " CHANNEL1 ",
-            displayName = " Nutrient Pump ",
-            dosing = DeviceDosingChannelDosingConfig(
-                doseMsPerMl = 1_250L,
-                reservoirTrackingEnabled = true,
-                reservoirCapacityMl = 750.0
+    fun `channel status owns one canonical optional program and usage`() {
+        val status = DeviceDosingStatusParser.parseChannel(
+            DeviceDosingRuntimeFixtures.channelStatus(
+                effectiveName = "Nutrients"
             )
-        ).toJson()
-
-        assertEquals(setOf("channelKey", "displayName", "dosing"), encoded.keys().asSequence().toSet())
-        assertEquals("channel1", encoded.getString("channelKey"))
-        assertEquals("Nutrient Pump", encoded.getString("displayName"))
-        assertEquals(
-            setOf("doseMsPerMl", "reservoirTrackingEnabled", "reservoirCapacityMl"),
-            encoded.getJSONObject("dosing").keys().asSequence().toSet()
         )
+
+        assertEquals("channel1", status.channel.channelKey)
+        assertEquals("Nutrients", status.channel.effectiveName)
+        assertEquals(7L, status.channel.revision)
+        assertEquals(DeviceDosingProgramMode.SINGLE, status.channel.program?.mode)
+        assertTrue(status.channel.calibration.confirmed)
+        assertEquals(8.0, status.channel.usageToday.totalDeliveredMl, 0.0)
+        assertEquals(300.0, status.channel.reservoir.remainingMl, 0.0)
     }
 
     @Test
-    fun `manual dose and calibration payloads reject firmware unsafe values`() {
-        val invalidDose = runCatching {
-            DeviceDosingDoseNowPayload("channel1", amountMl = 1_000.01)
-        }
-        val invalidDuration = runCatching {
-            DeviceDosingCalibrationStartPayload("channel1", durationMs = 999L)
-        }
-        val invalidMeasurement = runCatching {
-            DeviceDosingCalibrationFinishPayload("channel1", measuredMl = 0.049)
-        }
-
-        assertTrue(invalidDose.isFailure)
-        assertTrue(invalidDuration.isFailure)
-        assertTrue(invalidMeasurement.isFailure)
-    }
-
-    @Test
-    fun `enabled Dosing schedule requires an active weekday and repeat`() {
-        val invalid = runCatching {
-            DeviceDosingScheduleConfig(
-                enabled = true,
-                name = "Invalid",
-                channelKey = "channel1",
-                weekdays = List(DOSING_WEEKDAY_COUNT) { false },
-                startTimeMs = 0L,
-                repeatCount = 0,
-                amountMl = 1.0
+    fun `disabled program remains configured while runtime is disabled`() {
+        val status = DeviceDosingStatusParser.parseChannel(
+            DeviceDosingRuntimeFixtures.channelStatus(
+                program = DeviceDosingRuntimeFixtures.singleProgram(enabled = false)
             )
-        }
+        )
 
-        assertTrue(invalid.isFailure)
+        assertFalse(status.channel.runtimeEnabled)
+        assertFalse(requireNotNull(status.channel.program).enabled)
+    }
+
+    @Test
+    fun `channel reset state represents absent program instead of empty schedule list`() {
+        val status = DeviceDosingStatusParser.parseChannel(
+            DeviceDosingRuntimeFixtures.channelStatus(program = null)
+        )
+
+        assertNull(status.channel.program)
+        assertFalse(status.channel.runtimeEnabled)
+    }
+
+    @Test
+    fun `slim status event carries revision and runtime change only`() {
+        val change = DeviceDosingStatusParser.parseStatusChange(
+            DeviceDosingRuntimeFixtures.statusChanged(revision = 9L, sequence = 4L)
+        )
+
+        assertEquals("channel1", change.channelKey)
+        assertEquals(9L, change.revision)
+        assertEquals(4L, change.change.sequence)
+        assertTrue(change.storageHealthy)
     }
 }
