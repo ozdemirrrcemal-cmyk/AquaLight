@@ -1,460 +1,417 @@
 package com.aqua.aqualight.data.devices.runtime.modules.dosing
 
+import com.aqua.aqualight.data.devices.runtime.modules.dosing.contract.DeviceDosingRuntimeContract
 import org.json.JSONArray
 import org.json.JSONObject
 
-/** Exact JSON builders for the executable `aqualight.dosing.v1` firmware API. */
+@Suppress("TooManyFunctions")
 internal object DeviceDosingRuntimeFixtures {
     fun globalStatus(
-        channelCount: Int = 2,
-        uptimeMs: Long = 10_000L,
-        revision: Long = 7L
-    ): JSONObject = commonEnvelope(channelCount, uptimeMs)
+        uptimeMs: Long = 12_000L,
+        channelOneRevision: Long = 7L,
+        channelOneName: String = "Nutrients"
+    ): JSONObject = commonStatus(uptimeMs)
         .put("scheduling", scheduling())
         .put(
             "channels",
-            JSONArray().also { array ->
-                repeat(channelCount) { index ->
-                    array.put(
-                        globalChannelSummary(
-                            channelKey = "channel${index + 1}",
-                            effectiveName = "Channel ${index + 1}",
-                            revision = revision
-                        )
-                    )
-                }
-            }
+            JSONArray()
+                .put(globalChannel("channel1", channelOneName, channelOneRevision, programEnabled = true))
+                .put(globalChannel("channel2", "Channel 2", 2L, programEnabled = false))
         )
         .put("runtime", runtimeCapabilities())
         .put("resources", resources())
 
     @Suppress("LongParameterList")
     fun channelStatus(
-        channelKey: String = "channel1",
-        index: Int = 0,
-        channelCount: Int = 2,
-        uptimeMs: Long = 10_000L,
+        uptimeMs: Long = 12_000L,
         revision: Long = 7L,
-        calibrated: Boolean = true,
-        calibrationState: String = "idle",
+        displayName: String = "Nutrients",
         program: JSONObject? = singleProgram(),
-        displayName: String = "",
-        effectiveName: String = "Channel 1",
+        calibrationState: String = DeviceDosingRuntimeContract.Literal.CALIBRATION_STATE_IDLE,
+        calibrationDurationMs: Long = 0L,
+        measuredMl: Double = 0.0,
+        pendingDoseMsPerMl: Long = 0L,
+        verificationDoseStarted: Boolean = false,
+        verificationDoseComplete: Boolean = false,
         active: Boolean = false,
         activeSource: String = "none",
+        targetAmountMl: Double = 0.0,
         remainingMs: Long = 0L,
-        verificationDoseComplete: Boolean = false
-    ): JSONObject = commonEnvelope(channelCount, uptimeMs)
-        .put("scheduling", scheduling(calibrated = calibrated))
+        reservoirRemainingMl: Double = 400.0,
+        accountingCertain: Boolean = true,
+        lastCalibratedAt: Long = 100L,
+        doseMsPerMl: Long = 1_000L
+    ): JSONObject = commonStatus(uptimeMs)
+        .put("scheduling", scheduling())
         .put(
             "channel",
             channelDetail(
-                channelKey = channelKey,
-                index = index,
                 revision = revision,
-                calibrated = calibrated,
-                calibrationState = calibrationState,
-                program = program,
                 displayName = displayName,
-                effectiveName = effectiveName,
+                program = program,
+                calibrationState = calibrationState,
+                calibrationDurationMs = calibrationDurationMs,
+                measuredMl = measuredMl,
+                pendingDoseMsPerMl = pendingDoseMsPerMl,
+                verificationDoseStarted = verificationDoseStarted,
+                verificationDoseComplete = verificationDoseComplete,
                 active = active,
                 activeSource = activeSource,
+                targetAmountMl = targetAmountMl,
                 remainingMs = remainingMs,
-                verificationDoseComplete = verificationDoseComplete
+                reservoirRemainingMl = reservoirRemainingMl,
+                accountingCertain = accountingCertain,
+                lastCalibratedAt = lastCalibratedAt,
+                doseMsPerMl = doseMsPerMl
             )
         )
 
-    fun statusChanged(
-        channelKey: String = "channel1",
+    fun statusChange(
         revision: Long = 8L,
-        sequence: Long = 3L,
-        reason: String = "programChanged"
+        kind: String = "programApplied",
+        source: String = "scheduled"
     ): JSONObject = JSONObject()
-        .put("schema", "aqualight.dosing.v1")
-        .put("schemaVersion", 1)
-        .put("channelKey", channelKey)
+        .put("schema", DeviceDosingRuntimeContract.SCHEMA)
+        .put("schemaVersion", DeviceDosingRuntimeContract.SCHEMA_VERSION)
+        .put("channelKey", "channel1")
         .put("revision", revision)
         .put("storageHealthy", true)
+        .put("change", runtimeEvent(valid = true, sequence = revision, kind = kind, source = source))
+
+    fun channelConfigApply(
+        revision: Long = 8L,
+        displayName: String = "Macro Pump"
+    ): JSONObject = persistedMutation(
+        operation = DeviceDosingRuntimeContract.Literal.CHANNEL_CONFIG_APPLY_OPERATION,
+        channel = channelDetail(revision = revision, displayName = displayName)
+    )
+
+    fun programApply(
+        revision: Long = 8L,
+        program: JSONObject = singleProgram()
+    ): JSONObject = persistedMutation(
+        operation = DeviceDosingRuntimeContract.Literal.PROGRAM_APPLY_OPERATION,
+        channel = channelDetail(revision = revision, program = program)
+    )
+
+    fun channelReset(revision: Long = 8L): JSONObject = persistedMutation(
+        operation = DeviceDosingRuntimeContract.Literal.CHANNEL_RESET_OPERATION,
+        channel = channelDetail(
+            revision = revision,
+            program = null,
+            runtimeEnabled = false,
+            runtimeReason = "programDisabled"
+        )
+    )
+
+    fun pump(action: String, active: Boolean): JSONObject {
+        val operation = when (action) {
+            DeviceDosingRuntimeContract.Action.PRIME_START ->
+                DeviceDosingRuntimeContract.Literal.PRIME_START_OPERATION
+            DeviceDosingRuntimeContract.Action.PRIME_STOP ->
+                DeviceDosingRuntimeContract.Literal.PRIME_STOP_OPERATION
+            DeviceDosingRuntimeContract.Action.DOSE_STOP ->
+                DeviceDosingRuntimeContract.Literal.DOSE_STOP_OPERATION
+            else -> error("Unsupported Dosing pump fixture action: $action")
+        }
+        return JSONObject()
+            .put("operation", operation)
+            .put("channelKey", "channel1")
+            .also { result ->
+                if (active) {
+                    result.put("durationMs", 5_000L)
+                    result.put("doseMsPerMl", 1_000L)
+                }
+            }
+            .put("manualActive", active)
+            .put("event", DeviceDosingRuntimeContract.STATUS_EVENT)
+            .put(
+                "channel",
+                channelDetail(
+                    active = active,
+                    activeSource = if (active) "prime" else "none",
+                    remainingMs = if (active) 5_000L else 0L
+                )
+            )
+    }
+
+    fun doseNow(
+        amountMl: Double = 10.0,
+        doseMsPerMl: Long = 1_000L,
+        usePendingCalibration: Boolean = false
+    ): JSONObject {
+        val durationMs = (amountMl * doseMsPerMl).toLong()
+        return JSONObject()
+            .put("operation", DeviceDosingRuntimeContract.Literal.DOSE_NOW_OPERATION)
+            .put("channelKey", "channel1")
+            .put("amountMl", amountMl)
+            .put("durationMs", durationMs)
+            .put("doseMsPerMl", doseMsPerMl)
+            .put("usePendingCalibration", usePendingCalibration)
+            .put("manualActive", true)
+            .put("event", DeviceDosingRuntimeContract.STATUS_EVENT)
+            .put(
+                "channel",
+                channelDetail(
+                    calibrationState = if (usePendingCalibration) {
+                        DeviceDosingRuntimeContract.Literal.CALIBRATION_STATE_PENDING_VERIFICATION
+                    } else {
+                        DeviceDosingRuntimeContract.Literal.CALIBRATION_STATE_IDLE
+                    },
+                    calibrationDurationMs = if (usePendingCalibration) 5_000L else 0L,
+                    measuredMl = if (usePendingCalibration) 5.0 else 0.0,
+                    pendingDoseMsPerMl = if (usePendingCalibration) doseMsPerMl else 0L,
+                    verificationDoseStarted = usePendingCalibration,
+                    active = true,
+                    activeSource = if (usePendingCalibration) "verification" else "manual",
+                    targetAmountMl = amountMl,
+                    remainingMs = durationMs
+                )
+            )
+    }
+
+    fun calibrationStart(durationMs: Long = 5_000L): JSONObject = JSONObject()
+        .put("operation", DeviceDosingRuntimeContract.Literal.CALIBRATION_START_OPERATION)
+        .put("channelKey", "channel1")
+        .put("durationMs", durationMs)
+        .put("calibrationState", DeviceDosingRuntimeContract.Literal.CALIBRATION_STATE_RUNNING)
+        .put("event", DeviceDosingRuntimeContract.STATUS_EVENT)
         .put(
-            "change",
-            runtimeEvent(
-                valid = true,
-                sequence = sequence,
-                kind = "stateChanged",
-                reason = reason,
-                source = "none"
+            "channel",
+            channelDetail(
+                calibrationState = DeviceDosingRuntimeContract.Literal.CALIBRATION_STATE_RUNNING,
+                calibrationDurationMs = durationMs,
+                active = true,
+                activeSource = "calibration",
+                remainingMs = durationMs
             )
         )
 
-    fun channelConfigApplyResult(
-        channelKey: String = "channel1",
+    fun calibrationFinish(
+        measuredMl: Double = 5.0,
+        durationMs: Long = 5_000L
+    ): JSONObject {
+        val pendingDoseMsPerMl = (durationMs / measuredMl).toLong()
+        return JSONObject()
+            .put("operation", DeviceDosingRuntimeContract.Literal.CALIBRATION_FINISH_OPERATION)
+            .put("channelKey", "channel1")
+            .put("measuredMl", measuredMl)
+            .put("durationMs", durationMs)
+            .put("pendingDoseMsPerMl", pendingDoseMsPerMl)
+            .put(
+                "calibrationState",
+                DeviceDosingRuntimeContract.Literal.CALIBRATION_STATE_PENDING_VERIFICATION
+            )
+            .put("event", DeviceDosingRuntimeContract.STATUS_EVENT)
+            .put(
+                "channel",
+                channelDetail(
+                    calibrationState =
+                        DeviceDosingRuntimeContract.Literal.CALIBRATION_STATE_PENDING_VERIFICATION,
+                    calibrationDurationMs = durationMs,
+                    measuredMl = measuredMl,
+                    pendingDoseMsPerMl = pendingDoseMsPerMl
+                )
+            )
+    }
+
+    fun calibrationConfirm(
         revision: Long = 8L,
-        displayName: String = "Macro Pump"
-    ): JSONObject = mutationBase(
-        operation = "channelConfigApply",
-        channelKey = channelKey,
-        revision = revision,
-        displayName = displayName,
-        effectiveName = displayName
-    ).put("saved", true)
-
-    fun programApplyResult(
-        channelKey: String = "channel1",
-        revision: Long = 8L,
-        program: JSONObject = singleProgram()
-    ): JSONObject = mutationBase(
-        operation = "programApply",
-        channelKey = channelKey,
-        revision = revision,
-        program = program
-    ).put("saved", true)
-
-    fun channelResetResult(
-        channelKey: String = "channel1",
-        revision: Long = 8L
-    ): JSONObject = mutationBase(
-        operation = "channelReset",
-        channelKey = channelKey,
-        revision = revision,
-        program = null
-    ).put("saved", true)
-
-    fun primeStartResult(channelKey: String = "channel1"): JSONObject =
-        mutationBase(
-            operation = "primeStart",
-            channelKey = channelKey,
-            revision = 7L,
-            active = true,
-            activeSource = "prime"
+        doseMsPerMl: Long = 1_250L,
+        lastCalibratedAt: Long = 12_100L
+    ): JSONObject = JSONObject()
+        .put("operation", DeviceDosingRuntimeContract.Literal.CALIBRATION_CONFIRM_OPERATION)
+        .put("channelKey", "channel1")
+        .put("revision", revision)
+        .put("doseMsPerMl", doseMsPerMl)
+        .put("lastCalibratedAt", lastCalibratedAt)
+        .put("calibrationState", DeviceDosingRuntimeContract.Literal.CALIBRATION_STATE_IDLE)
+        .put("saved", true)
+        .put("event", DeviceDosingRuntimeContract.STATUS_EVENT)
+        .put(
+            "channel",
+            channelDetail(
+                revision = revision,
+                doseMsPerMl = doseMsPerMl,
+                lastCalibratedAt = lastCalibratedAt
+            )
         )
-            .put("durationMs", 5_000L)
-            .put("doseMsPerMl", 1_250L)
-            .put("manualActive", true)
 
-    fun primeStopResult(channelKey: String = "channel1"): JSONObject =
-        mutationBase("primeStop", channelKey, revision = 7L)
-            .put("manualActive", false)
+    fun calibrationCancel(): JSONObject = JSONObject()
+        .put("operation", DeviceDosingRuntimeContract.Literal.CALIBRATION_CANCEL_OPERATION)
+        .put("channelKey", "channel1")
+        .put("discardedPendingCalibration", true)
+        .put("calibrationState", DeviceDosingRuntimeContract.Literal.CALIBRATION_STATE_IDLE)
+        .put("event", DeviceDosingRuntimeContract.STATUS_EVENT)
+        .put("channel", channelDetail())
 
-    fun doseNowResult(
-        channelKey: String = "channel1",
-        pending: Boolean = false
-    ): JSONObject = mutationBase(
-        operation = "doseNow",
-        channelKey = channelKey,
-        revision = 7L,
-        calibrationState = if (pending) "pendingVerification" else "idle",
-        active = true,
-        activeSource = if (pending) "verification" else "manual"
-    )
-        .put("amountMl", if (pending) 4.0 else 2.0)
-        .put("durationMs", if (pending) 5_000L else 2_500L)
-        .put("doseMsPerMl", 1_250L)
-        .put("usePendingCalibration", pending)
-        .put("manualActive", true)
-
-    fun doseStopResult(channelKey: String = "channel1"): JSONObject =
-        mutationBase("doseStop", channelKey, revision = 7L)
-            .put("manualActive", false)
-
-    fun calibrationStartResult(channelKey: String = "channel1"): JSONObject =
-        mutationBase(
-            operation = "calibrationStart",
-            channelKey = channelKey,
-            revision = 7L,
-            calibrationState = "running",
-            active = true,
-            activeSource = "calibration"
-        )
-            .put("durationMs", 5_000L)
-            .put("calibrationState", "running")
-
-    fun calibrationFinishResult(channelKey: String = "channel1"): JSONObject =
-        mutationBase(
-            operation = "calibrationFinish",
-            channelKey = channelKey,
-            revision = 7L,
-            calibrationState = "pendingVerification"
-        )
-            .put("measuredMl", 4.0)
-            .put("durationMs", 5_000L)
-            .put("pendingDoseMsPerMl", 1_250L)
-            .put("calibrationState", "pendingVerification")
-
-    fun calibrationConfirmResult(channelKey: String = "channel1"): JSONObject =
-        mutationBase(
-            operation = "calibrationConfirm",
-            channelKey = channelKey,
-            revision = 8L
-        )
-            .put("revision", 8L)
-            .put("doseMsPerMl", 1_250L)
-            .put("lastCalibratedAt", 1_786_320_000L)
-            .put("calibrationState", "idle")
-            .put("saved", true)
-
-    fun calibrationCancelResult(channelKey: String = "channel1"): JSONObject =
-        mutationBase("calibrationCancel", channelKey, revision = 7L)
-            .put("discardedPendingCalibration", true)
-            .put("calibrationState", "idle")
-
-    fun reservoirRefillResult(channelKey: String = "channel1"): JSONObject =
-        mutationBase("reservoirRefill", channelKey, revision = 7L)
-            .put("reservoirRemainingMlBefore", 100.0)
-            .put("reservoirRemainingMl", 450.0)
-            .put("persisted", true)
+    fun reservoirRefill(
+        beforeMl: Double = 400.0,
+        remainingMl: Double = 500.0
+    ): JSONObject = JSONObject()
+        .put("operation", DeviceDosingRuntimeContract.Literal.RESERVOIR_REFILL_OPERATION)
+        .put("channelKey", "channel1")
+        .put("reservoirRemainingMlBefore", beforeMl)
+        .put("reservoirRemainingMl", remainingMl)
+        .put("persisted", true)
+        .put("event", DeviceDosingRuntimeContract.STATUS_EVENT)
+        .put("channel", channelDetail(reservoirRemainingMl = remainingMl))
 
     fun singleProgram(
         enabled: Boolean = true,
-        recovery: Boolean = false,
-        dailyDoseMl: Double = 3.0,
-        startTimeMs: Long = 36_000_000L
+        dailyDoseMl: Double = 10.0,
+        startTimeMs: Long = 28_800_000L,
+        missedDoseRecoveryEnabled: Boolean = false
     ): JSONObject = JSONObject()
         .put("enabled", enabled)
-        .put("weekdays", booleanWeekdays())
+        .put("weekdays", JSONArray(List(7) { true }))
         .put("mode", "single")
-        .put("missedDoseRecoveryEnabled", recovery)
-        .put(
-            "config",
-            JSONObject()
-                .put("dailyDoseMl", dailyDoseMl)
-                .put("startTimeMs", startTimeMs)
-        )
-
-    fun hourlyProgram(
-        dailyDoseMl: Double = 2.4,
-        startTimeMs: Long = 36_900_000L
-    ): JSONObject = JSONObject()
-        .put("enabled", true)
-        .put("weekdays", booleanWeekdays())
-        .put("mode", "hourly24")
-        .put("missedDoseRecoveryEnabled", false)
-        .put(
-            "config",
-            JSONObject()
-                .put("dailyDoseMl", dailyDoseMl)
-                .put("startTimeMs", startTimeMs)
-        )
-
-    fun customProgram(): JSONObject = JSONObject()
-        .put("enabled", true)
-        .put("weekdays", booleanWeekdays())
-        .put("mode", "customPeriods")
-        .put("missedDoseRecoveryEnabled", true)
-        .put(
-            "config",
-            JSONObject()
-                .put("dailyDoseMl", 6.0)
-                .put(
-                    "periods",
-                    JSONArray()
-                        .put(
-                            JSONObject()
-                                .put("startTimeMs", 36_000_000L)
-                                .put("endTimeMs", 39_600_000L)
-                                .put("doseCount", 3)
-                        )
-                        .put(
-                            JSONObject()
-                                .put("startTimeMs", 50_400_000L)
-                                .put("endTimeMs", 57_600_000L)
-                                .put("doseCount", 3)
-                        )
-                )
-        )
+        .put("missedDoseRecoveryEnabled", missedDoseRecoveryEnabled)
+        .put("config", JSONObject().put("dailyDoseMl", dailyDoseMl).put("startTimeMs", startTimeMs))
 
     fun timerProgram(): JSONObject = JSONObject()
         .put("enabled", true)
-        .put("weekdays", booleanWeekdays())
+        .put("weekdays", JSONArray(List(7) { true }))
         .put("mode", "timer")
-        .put("missedDoseRecoveryEnabled", false)
+        .put("missedDoseRecoveryEnabled", true)
         .put(
             "config",
             JSONObject().put(
                 "events",
                 JSONArray()
-                    .put(JSONObject().put("timeMs", 36_000_000L).put("amountMl", 1.0))
-                    .put(JSONObject().put("timeMs", 50_400_000L).put("amountMl", 5.0))
+                    .put(JSONObject().put("timeMs", 28_800_000L).put("amountMl", 2.0))
+                    .put(JSONObject().put("timeMs", 72_000_000L).put("amountMl", 3.0))
             )
         )
 
-    fun scheduling(calibrated: Boolean = true): JSONObject = JSONObject()
-        .put("contract", "aqualight.dosing.v1")
-        .put("schemaVersion", 1)
+    private fun commonStatus(uptimeMs: Long): JSONObject = JSONObject()
+        .put("supported", true)
+        .put("schema", DeviceDosingRuntimeContract.SCHEMA)
+        .put("schemaVersion", DeviceDosingRuntimeContract.SCHEMA_VERSION)
+        .put("unit", DeviceDosingRuntimeContract.UNIT_ML)
+        .put("channelCount", 2)
+        .put("uptimeMs", uptimeMs)
+        .put("bootReady", true)
+        .put("storageHealthy", true)
+        .put("storageIssue", "")
+
+    private fun scheduling(): JSONObject = JSONObject()
+        .put("contract", DeviceDosingRuntimeContract.SCHEMA)
+        .put("schemaVersion", DeviceDosingRuntimeContract.SCHEMA_VERSION)
         .put("amountResolutionMl", 0.001)
         .put("maxEventsPerChannel", 24)
-        .put("maxCustomPeriodsPerChannel", 24)
+        .put("maxCustomPeriodsPerChannel", 8)
         .put("scheduledDispatchGraceMs", 2_000L)
         .put("missedDoseRecoveryWindowMs", 900_000L)
-        .put("minPumpRunDurationMs", 100L)
+        .put("minPumpRunDurationMs", 50L)
         .put("maxPumpRunDurationMs", 3_600_000L)
         .put("maxManualDoseMl", 1_000.0)
         .put("supportsWeekdayRecurrence", true)
         .put("supportsMissedDoseRecovery", true)
         .put("supportsChannelReset", true)
         .put("supportsDailyDeliveredUsage", true)
-        .put(
-            "supportedModes",
-            JSONArray(listOf("single", "hourly24", "customPeriods", "timer"))
-        )
+        .put("supportedModes", JSONArray(listOf("single", "hourly24", "customPeriods", "timer")))
         .put(
             "weekdayOrder",
-            JSONArray(
-                listOf(
-                    "monday",
-                    "tuesday",
-                    "wednesday",
-                    "thursday",
-                    "friday",
-                    "saturday",
-                    "sunday"
-                )
-            )
+            JSONArray(listOf("monday", "tuesday", "wednesday", "thursday", "friday", "saturday", "sunday"))
         )
         .put(
             "effectiveScheduledDose",
-            JSONObject()
-                .put("available", calibrated)
-                .put("minDoseMl", if (calibrated) 0.1 else JSONObject.NULL)
-                .put("maxDoseMl", if (calibrated) 3_600.0 else JSONObject.NULL)
+            JSONObject().put("available", true).put("minDoseMl", 0.05).put("maxDoseMl", 100.0)
         )
 
-    private fun commonEnvelope(channelCount: Int, uptimeMs: Long) = JSONObject()
-        .put("supported", true)
-        .put("schema", "aqualight.dosing.v1")
-        .put("schemaVersion", 1)
-        .put("unit", "ml")
-        .put("channelCount", channelCount)
-        .put("uptimeMs", uptimeMs)
-        .put("bootReady", true)
-        .put("storageHealthy", true)
-        .put("storageIssue", "")
-
-    private fun globalChannelSummary(
-        channelKey: String,
-        effectiveName: String,
-        revision: Long
-    ) = JSONObject()
-        .put("channelKey", channelKey)
-        .put("effectiveName", effectiveName)
+    private fun globalChannel(
+        key: String,
+        name: String,
+        revision: Long,
+        programEnabled: Boolean
+    ): JSONObject = JSONObject()
+        .put("channelKey", key)
+        .put("effectiveName", name)
         .put("revision", revision)
-        .put("runtimeEnabled", true)
-        .put("runtimeReason", "none")
-        .put("programEnabled", true)
-        .put("programMode", "single")
+        .put("runtimeEnabled", programEnabled)
+        .put("runtimeReason", if (programEnabled) "none" else "programDisabled")
+        .put("programEnabled", programEnabled)
+        .put("programMode", if (programEnabled) "single" else "none")
         .put("deliveryAccountingCertain", true)
         .put("usageToday", usageToday())
         .put(
             "reservoir",
-            JSONObject()
-                .put("trackingEnabled", true)
-                .put("remainingMl", 300.0)
-                .put("accountingCertain", true)
+            JSONObject().put("trackingEnabled", true).put("remainingMl", 400.0).put("accountingCertain", true)
         )
         .put("active", false)
 
-    private fun runtimeCapabilities() = JSONObject()
-        .put("module", "dosing")
-        .put("supportsProgramApply", true)
-        .put("supportsChannelConfig", true)
-        .put("supportsChannelReset", true)
-        .put("supportsPrime", true)
-        .put("supportsManualDose", true)
-        .put("supportsCalibrationWorkflow", true)
-        .put("supportsReservoirRefill", true)
-        .put("supportsChannelScopedStatus", true)
-        .put("displayNameEditable", true)
-
-    private fun resources() = JSONObject()
-        .put("freeHeapBytes", 100_000L)
-        .put("minimumFreeHeapBytes", 80_000L)
-        .put("largestFreeBlockBytes", 50_000L)
-        .put("taskStackHighWaterBytes", 4_000L)
-        .put("checkpointWritesThisBoot", 3L)
-        .put("canonicalConfigBytes", 1_000L)
-        .put("programServiceBytes", 2_000L)
-        .put("runtimeSnapshotBytes", 3_000L)
-        .put("statusSnapshotBytes", 4_000L)
-
     @Suppress("LongParameterList")
     private fun channelDetail(
-        channelKey: String,
-        index: Int,
-        revision: Long,
-        calibrated: Boolean,
-        calibrationState: String,
-        program: JSONObject?,
-        displayName: String,
-        effectiveName: String,
-        active: Boolean,
-        activeSource: String,
-        remainingMs: Long,
-        verificationDoseComplete: Boolean
-    ) = JSONObject()
-        .put("channelKey", channelKey)
+        revision: Long = 7L,
+        displayName: String = "Nutrients",
+        program: JSONObject? = singleProgram(),
+        runtimeEnabled: Boolean = program != null,
+        runtimeReason: String = if (runtimeEnabled) "none" else "programDisabled",
+        calibrationState: String = DeviceDosingRuntimeContract.Literal.CALIBRATION_STATE_IDLE,
+        calibrationDurationMs: Long = 0L,
+        measuredMl: Double = 0.0,
+        pendingDoseMsPerMl: Long = 0L,
+        verificationDoseStarted: Boolean = false,
+        verificationDoseComplete: Boolean = false,
+        active: Boolean = false,
+        activeSource: String = "none",
+        targetAmountMl: Double = 0.0,
+        remainingMs: Long = 0L,
+        reservoirRemainingMl: Double = 400.0,
+        accountingCertain: Boolean = true,
+        lastCalibratedAt: Long = 100L,
+        doseMsPerMl: Long = 1_000L
+    ): JSONObject = JSONObject()
+        .put("channelKey", "channel1")
         .put("revision", revision)
-        .put("runtimeEnabled", calibrated && program?.optBoolean("enabled", false) == true)
-        .put(
-            "runtimeReason",
-            if (!calibrated) {
-                "missingCalibration"
-            } else if (program?.optBoolean("enabled", false) == true) {
-                "none"
-            } else {
-                "programDisabled"
-            }
-        )
+        .put("runtimeEnabled", runtimeEnabled)
+        .put("runtimeReason", runtimeReason)
         .put("program", program ?: JSONObject.NULL)
         .put("usageToday", usageToday())
-        .put("index", index)
-        .put("defaultName", "Channel ${index + 1}")
+        .put("index", 0)
+        .put("defaultName", "Channel 1")
         .put("displayName", displayName)
-        .put("effectiveName", effectiveName)
+        .put("effectiveName", displayName.ifBlank { "Channel 1" })
         .put("profileManaged", true)
-        .put("deliveryAccountingCertain", true)
+        .put("deliveryAccountingCertain", accountingCertain)
         .put(
             "hardware",
             JSONObject()
-                .put("channelType", "pump")
-                .put("gpio", 12 + index)
-                .put("ledcChannel", index)
-                .put("resolutionBits", 8)
-                .put("frequencyHz", 1_000)
+                .put("channelType", "gpio")
+                .put("gpio", 4)
+                .put("ledcChannel", 0)
+                .put("resolutionBits", 10)
+                .put("frequencyHz", 5_000)
         )
         .put(
             "calibration",
             JSONObject()
-                .put("confirmed", calibrated)
-                .put("doseMsPerMl", if (calibrated) 1_250L else 0L)
-                .put("lastCalibratedAt", if (calibrated) 1_786_320_000L else 0L)
+                .put("confirmed", doseMsPerMl > 0L && lastCalibratedAt > 0L)
+                .put("doseMsPerMl", doseMsPerMl)
+                .put("lastCalibratedAt", lastCalibratedAt)
                 .put("state", calibrationState)
-                .put("durationMs", if (calibrationState == "running") 5_000L else 0L)
-                .put("measuredMl", if (calibrationState == "pendingVerification") 4.0 else 0.0)
-                .put(
-                    "pendingDoseMsPerMl",
-                    if (calibrationState == "pendingVerification") 1_250L else 0L
-                )
-                .put(
-                    "verificationDoseStarted",
-                    calibrationState == "pendingVerification" &&
-                        (activeSource == "verification" || verificationDoseComplete)
-                )
+                .put("durationMs", calibrationDurationMs)
+                .put("measuredMl", measuredMl)
+                .put("pendingDoseMsPerMl", pendingDoseMsPerMl)
+                .put("verificationDoseStarted", verificationDoseStarted)
                 .put("verificationDoseComplete", verificationDoseComplete)
         )
         .put(
             "reservoir",
             JSONObject()
                 .put("trackingEnabled", true)
-                .put("capacityMl", 450.0)
-                .put("remainingMl", 300.0)
-                .put("accountingCertain", true)
-                .put("remainingPercent", 66.666)
+                .put("capacityMl", 500.0)
+                .put("remainingMl", reservoirRemainingMl)
+                .put("accountingCertain", accountingCertain)
+                .put("remainingPercent", reservoirRemainingMl / 5.0)
         )
         .put(
             "activeRun",
             JSONObject()
                 .put("active", active)
                 .put("source", activeSource)
-                .put("targetAmountMl", if (active) 4.0 else 0.0)
+                .put("targetAmountMl", targetAmountMl)
                 .put("remainingMs", remainingMs)
         )
         .put("lastRuntimeEvent", runtimeEvent())
@@ -467,61 +424,53 @@ internal object DeviceDosingRuntimeFixtures {
                 .put("reservoir", true)
         )
 
-    private fun usageToday() = JSONObject()
+    private fun usageToday(): JSONObject = JSONObject()
         .put("dateValid", true)
         .put("localDate", "2026-08-13")
-        .put("scheduledDeliveredMl", 6.0)
-        .put("manualDeliveredMl", 2.0)
-        .put("totalDeliveredMl", 8.0)
+        .put("scheduledDeliveredMl", 3.0)
+        .put("manualDeliveredMl", 1.0)
+        .put("totalDeliveredMl", 4.0)
 
     private fun runtimeEvent(
         valid: Boolean = false,
         sequence: Long = 0L,
         kind: String = "none",
-        reason: String = "none",
         source: String = "none"
-    ) = JSONObject()
+    ): JSONObject = JSONObject()
         .put("valid", valid)
         .put("sequence", sequence)
-        .put("occurredAtMs", if (valid) 9_000L else 0L)
+        .put("occurredAtMs", if (valid) 11_000L else 0L)
         .put("kind", kind)
-        .put("reason", reason)
+        .put("reason", "none")
         .put("source", source)
 
-    @Suppress("LongParameterList")
-    private fun mutationBase(
-        operation: String,
-        channelKey: String,
-        revision: Long,
-        program: JSONObject? = singleProgram(),
-        calibrationState: String = "idle",
-        active: Boolean = false,
-        activeSource: String = "none",
-        displayName: String = "",
-        effectiveName: String = "Channel 1"
-    ): JSONObject = JSONObject()
-        .put("operation", operation)
-        .put("channelKey", channelKey)
-        .put("event", "dosing.status.changed")
-        .put(
-            "channel",
-            channelDetail(
-                channelKey = channelKey,
-                index = channelKey.removePrefix("channel").toIntOrNull()?.minus(1) ?: 0,
-                revision = revision,
-                calibrated = true,
-                calibrationState = calibrationState,
-                program = program,
-                displayName = displayName,
-                effectiveName = effectiveName,
-                active = active,
-                activeSource = activeSource,
-                remainingMs = if (active) 4_000L else 0L,
-                verificationDoseComplete = false
-            )
-        )
+    private fun runtimeCapabilities(): JSONObject = JSONObject()
+        .put("module", "dosing")
+        .put("supportsProgramApply", true)
+        .put("supportsChannelConfig", true)
+        .put("supportsChannelReset", true)
+        .put("supportsPrime", true)
+        .put("supportsManualDose", true)
+        .put("supportsCalibrationWorkflow", true)
+        .put("supportsReservoirRefill", true)
+        .put("supportsChannelScopedStatus", true)
+        .put("displayNameEditable", true)
 
-    private fun booleanWeekdays() = JSONArray(
-        listOf(true, true, true, true, true, true, true)
-    )
+    private fun resources(): JSONObject = JSONObject()
+        .put("freeHeapBytes", 100_000L)
+        .put("minimumFreeHeapBytes", 80_000L)
+        .put("largestFreeBlockBytes", 60_000L)
+        .put("taskStackHighWaterBytes", 4_096L)
+        .put("checkpointWritesThisBoot", 5L)
+        .put("canonicalConfigBytes", 1_024L)
+        .put("programServiceBytes", 2_048L)
+        .put("runtimeSnapshotBytes", 1_024L)
+        .put("statusSnapshotBytes", 2_048L)
+
+    private fun persistedMutation(operation: String, channel: JSONObject): JSONObject = JSONObject()
+        .put("operation", operation)
+        .put("channelKey", "channel1")
+        .put("saved", true)
+        .put("event", DeviceDosingRuntimeContract.STATUS_EVENT)
+        .put("channel", channel)
 }
