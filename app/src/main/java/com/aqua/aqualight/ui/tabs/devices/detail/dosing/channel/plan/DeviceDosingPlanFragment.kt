@@ -8,6 +8,7 @@ import androidx.compose.ui.platform.ComposeView
 import androidx.compose.ui.platform.ViewCompositionStrategy
 import androidx.fragment.app.viewModels
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.lifecycle.lifecycleScope
 import androidx.navigation.fragment.findNavController
 import androidx.navigation.fragment.navArgs
 import com.aqua.aqualight.R
@@ -17,8 +18,9 @@ import com.aqua.aqualight.ui.tabs.devices.detail.dosing.channel.common.DeviceDos
 import com.aqua.aqualight.ui.tabs.devices.detail.dosing.channel.schedule.DeviceDosingScheduleAmountContract
 import com.aqua.aqualight.ui.tabs.devices.detail.dosing.channel.schedule.custom.DeviceDosingCustomScheduleContract
 import com.aqua.aqualight.ui.tabs.devices.detail.dosing.channel.schedule.timer.DeviceDosingTimerScheduleContract
+import kotlinx.coroutines.launch
 
-/** Navigation/render host for the ViewModel-owned, firmware-independent Dosing Plan draft. */
+/** Navigation/render host for the firmware-backed Dosing Plan editor. */
 class DeviceDosingPlanFragment :
     DeviceDosingChannelDestinationFragment(R.layout.fragment_device_dosing_channel_detail) {
 
@@ -32,7 +34,11 @@ class DeviceDosingPlanFragment :
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
-        viewModel.bindInitial(DosingPlanDraft.restore(savedInstanceState))
+        viewModel.bind(
+            deviceUid = args.deviceUid,
+            slotId = args.slotId,
+            restoredDraft = savedInstanceState?.let(DosingPlanDraft::restore)
+        )
         setupDailyDoseResult()
         bindDosingPlanScheduleResults(
             host = DosingPlanScheduleResultHost(
@@ -62,12 +68,16 @@ class DeviceDosingPlanFragment :
             setViewCompositionStrategy(ViewCompositionStrategy.DisposeOnViewTreeLifecycleDestroyed)
             setContent {
                 val draft by viewModel.draft.collectAsStateWithLifecycle()
+                val saveEnabled by viewModel.saveEnabled.collectAsStateWithLifecycle()
+                val saving by viewModel.saving.collectAsStateWithLifecycle()
                 DeviceDosingPlanScreen(
                     state = DeviceDosingPlanUiState(
                         dailyDoseMicroliters = draft.displayedDailyDoseMicroliters(),
                         selectedScheduleMode = draft.selectedScheduleMode,
                         scheduleEnabled = draft.scheduleEnabled,
-                        recurrenceState = draft.recurrenceState
+                        recurrenceState = draft.recurrenceState,
+                        saveEnabled = saveEnabled,
+                        saving = saving
                     ),
                     actions = DeviceDosingPlanActions(
                         onScheduleOptionClick = ::openScheduleEditor,
@@ -79,10 +89,16 @@ class DeviceDosingPlanFragment :
                             onEveryDayClick = viewModel::selectEveryDay,
                             onWeekdaySelectionChange = viewModel::setWeekdaySelected
                         ),
-                        onSaveClick = null
+                        onSaveClick = ::savePlan
                     )
                 )
             }
+        }
+    }
+
+    private fun savePlan() {
+        viewLifecycleOwner.lifecycleScope.launch {
+            if (viewModel.save()) findNavController().navigateUp()
         }
     }
 
