@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="device_dosing_reservoir_accounting_section">Reservoir accounting</string>
+    <string name="device_dosing_reservoir_accounting_state">Accounting state</string>
+    <string name="device_dosing_reservoir_accounting_certain">Verified</string>
+    <string name="device_dosing_reservoir_accounting_uncertain">Needs attention</string>
+    <string name="device_dosing_reservoir_refill_action">Mark reservoir refilled</string>
+</resources>
