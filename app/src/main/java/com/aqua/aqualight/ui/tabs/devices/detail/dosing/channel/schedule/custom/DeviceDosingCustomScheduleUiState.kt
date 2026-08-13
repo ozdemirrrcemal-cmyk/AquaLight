@@ -6,8 +6,15 @@ import androidx.compose.runtime.Immutable
 internal data class DeviceDosingCustomScheduleUiState(
     val dailyDoseMicroliters: Long,
     val periods: List<DeviceDosingCustomPeriod>,
+    val maxPeriods: Int,
+    val maxDoseCount: Int,
     val validationMessage: String? = null,
-    val actionEnabled: Boolean = dailyDoseMicroliters > 0L && periods.isNotEmpty()
+    val actionEnabled: Boolean = dailyDoseMicroliters > 0L &&
+        periods.isNotEmpty() &&
+        maxPeriods > 0 &&
+        maxDoseCount > 0 &&
+        periods.size <= maxPeriods &&
+        DeviceDosingCustomScheduleContract.totalDoseCount(periods) <= maxDoseCount
 )
 
 internal sealed interface DeviceDosingCustomScheduleAction {
