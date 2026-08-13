@@ -8,6 +8,11 @@ import com.aqua.aqualight.application.devices.dosing.DeviceDosingTimerScheduleVa
 
 internal typealias DeviceDosingTimerDose = DeviceDosingTimerDoseDraft
 
+internal data class DeviceDosingTimerEditorPayload(
+    val doses: List<DeviceDosingTimerDose>,
+    val maxDoseCount: Int
+)
+
 /** UI transport boundary; firmware-published event capacity is supplied by the Plan owner. */
 internal object DeviceDosingTimerScheduleContract {
     const val RESULT_REQUEST_KEY = "dosing_timer_schedule_result"
@@ -40,6 +45,20 @@ internal object DeviceDosingTimerScheduleContract {
     fun totalDoseMicroliters(doses: List<DeviceDosingTimerDose>): Long =
         DeviceDosingTimerScheduleDraftPolicy.totalDoseMicroliters(doses)
 
+    fun encodeEditorPayload(doses: List<DeviceDosingTimerDose>, maxDoseCount: Int): String {
+        require(maxDoseCount > 0)
+        return maxDoseCount.toString() + ENVELOPE_SEPARATOR + encodeDraft(doses)
+    }
+
+    fun decodeEditorPayload(encoded: String): DeviceDosingTimerEditorPayload? = runCatching {
+        val envelope = encoded.split(ENVELOPE_SEPARATOR, limit = 2)
+        require(envelope.size == 2)
+        val maxDoseCount = envelope[0].toInt().also { require(it > 0) }
+        val doses = decodeDraft(envelope[1]) ?: error("Invalid Timer-mode Dosing draft.")
+        require(validate(doses, maxDoseCount) == null)
+        DeviceDosingTimerEditorPayload(doses, maxDoseCount)
+    }.getOrNull()
+
     fun encodeDraft(doses: List<DeviceDosingTimerDose>): String =
         normalize(doses).joinToString(DOSE_SEPARATOR) { dose ->
             listOf(dose.startTimeMs, dose.amountMicroliters).joinToString(FIELD_SEPARATOR)
@@ -69,6 +88,7 @@ private fun decodeTimerDoses(encoded: String): List<DeviceDosingTimerDose> =
         DeviceDosingTimerDose(fields[0].toLong(), fields[1].toLong())
     }
 
+private const val ENVELOPE_SEPARATOR = "|"
 private const val DOSE_SEPARATOR = ";"
 private const val FIELD_SEPARATOR = ":"
 private const val DOSE_FIELD_COUNT = 2
