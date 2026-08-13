@@ -6,6 +6,7 @@ import com.aqua.aqualight.data.devices.catalog.AqlCommercialCatalogFailureCode
 import com.aqua.aqualight.data.devices.catalog.AqlCommercialCatalogProduct
 import com.aqua.aqualight.data.devices.catalog.AqlCommercialCatalogValidation
 import com.aqua.aqualight.data.devices.catalog.AqlCommercialDeviceCatalog
+import com.aqua.aqualight.data.devices.catalog.expectedRuntimeModules
 import com.aqua.aqualight.data.devices.model.DeviceApiVersion
 import com.aqua.aqualight.data.devices.model.DeviceCapabilities
 import com.aqua.aqualight.data.devices.model.DeviceFirmwareVersion
@@ -16,7 +17,6 @@ import com.aqua.aqualight.data.devices.model.DeviceProductKey
 import com.aqua.aqualight.data.devices.model.DeviceRuntimeCapabilities
 import com.aqua.aqualight.data.devices.model.DeviceRuntimeIdentity
 import com.aqua.aqualight.data.devices.model.DeviceRuntimeMetadata
-import com.aqua.aqualight.data.devices.model.DeviceRuntimeModules
 import com.aqua.aqualight.data.devices.model.DeviceProtocolVersion
 import com.aqua.aqualight.data.devices.model.DeviceSnapshot
 import com.aqua.aqualight.data.devices.model.DeviceUid
@@ -144,19 +144,7 @@ class AqlCommercialDeviceCatalogTest {
                 supportedFeatures = profile.supportedFeatures,
                 supportedScreens = profile.supportedScreens
             ),
-            modules = DeviceRuntimeModules(
-                light = family == com.aqua.aqualight.data.devices.model.DeviceFamily.LIGHT,
-                cooling = profile.capabilities.cooling,
-                temperature = profile.capabilities.temperature,
-                timerApi = family == com.aqua.aqualight.data.devices.model.DeviceFamily.TIMER,
-                timerEngine = family == com.aqua.aqualight.data.devices.model.DeviceFamily.TIMER ||
-                    family == com.aqua.aqualight.data.devices.model.DeviceFamily.DOSING,
-                dosing = family == com.aqua.aqualight.data.devices.model.DeviceFamily.DOSING,
-                network = true,
-                discovery = true,
-                firmware = true,
-                system = true
-            )
+            modules = expectedRuntimeModules()
         )
 
     private fun AqlCommercialCatalogProduct.toSnapshot(): DeviceSnapshot = DeviceSnapshot(
