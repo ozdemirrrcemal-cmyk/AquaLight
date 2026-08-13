@@ -8,6 +8,12 @@ import com.aqua.aqualight.application.devices.dosing.DeviceDosingScheduleTimeDra
 
 internal typealias DeviceDosingCustomPeriod = DeviceDosingCustomPeriodDraft
 
+internal data class DeviceDosingCustomEditorPayload(
+    val periods: List<DeviceDosingCustomPeriod>,
+    val maxPeriods: Int,
+    val maxDoseCount: Int
+)
+
 /** UI transport boundary; firmware-published capacities are supplied by the Plan owner. */
 internal object DeviceDosingCustomScheduleContract {
     const val RESULT_REQUEST_KEY = "dosing_custom_schedule_result"
@@ -48,6 +54,28 @@ internal object DeviceDosingCustomScheduleContract {
     fun averageDoseMl(dailyDoseMicroliters: Long, periods: List<DeviceDosingCustomPeriod>): Double =
         DeviceDosingCustomScheduleDraftPolicy.averageDoseMl(dailyDoseMicroliters, periods)
 
+    fun encodeEditorPayload(
+        periods: List<DeviceDosingCustomPeriod>,
+        maxPeriods: Int,
+        maxDoseCount: Int
+    ): String {
+        require(maxPeriods > 0 && maxDoseCount > 0)
+        return listOf(maxPeriods, maxDoseCount).joinToString(LIMIT_SEPARATOR) +
+            ENVELOPE_SEPARATOR + encodeDraft(periods)
+    }
+
+    fun decodeEditorPayload(encoded: String): DeviceDosingCustomEditorPayload? = runCatching {
+        val envelope = encoded.split(ENVELOPE_SEPARATOR, limit = 2)
+        require(envelope.size == 2)
+        val limits = envelope[0].split(LIMIT_SEPARATOR)
+        require(limits.size == 2)
+        val maxPeriods = limits[0].toInt().also { require(it > 0) }
+        val maxDoseCount = limits[1].toInt().also { require(it > 0) }
+        val periods = decodeDraft(envelope[1]) ?: error("Invalid custom Dosing draft.")
+        require(validate(periods, maxPeriods, maxDoseCount) == null)
+        DeviceDosingCustomEditorPayload(periods, maxPeriods, maxDoseCount)
+    }.getOrNull()
+
     fun encodeDraft(periods: List<DeviceDosingCustomPeriod>): String =
         normalize(periods).joinToString(PERIOD_SEPARATOR) { period ->
             listOf(period.startTimeMs, period.endTimeMs, period.doseCount).joinToString(FIELD_SEPARATOR)
@@ -76,6 +104,8 @@ private fun decodeCustomPeriods(encoded: String): List<DeviceDosingCustomPeriod>
         DeviceDosingCustomPeriod(fields[0].toLong(), fields[1].toLong(), fields[2].toInt())
     }
 
+private const val ENVELOPE_SEPARATOR = "|"
+private const val LIMIT_SEPARATOR = ","
 private const val PERIOD_SEPARATOR = ";"
 private const val FIELD_SEPARATOR = ":"
 private const val PERIOD_FIELD_COUNT = 3
