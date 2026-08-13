@@ -14,8 +14,8 @@ import com.aqua.aqualight.data.devices.model.DeviceUid
 import com.aqua.aqualight.data.devices.runtime.core.DeviceRuntimeCommandOutcome
 import com.aqua.aqualight.data.devices.runtime.core.DeviceRuntimeConnectionGeneration
 import com.aqua.aqualight.data.devices.runtime.modules.dosing.DeviceDosingRuntimeFixtures
-import com.aqua.aqualight.data.devices.runtime.modules.dosing.DeviceDosingStatus
-import com.aqua.aqualight.data.devices.runtime.modules.dosing.DeviceDosingStatusParser
+import com.aqua.aqualight.data.devices.runtime.modules.dosing.models.DeviceDosingStatus
+import com.aqua.aqualight.data.devices.runtime.modules.dosing.parsers.DeviceDosingStatusParser
 import kotlinx.coroutines.test.runTest
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNull

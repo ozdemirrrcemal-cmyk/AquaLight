@@ -1,9 +1,9 @@
 package com.aqua.aqualight.debug.devices
 
-import com.aqua.aqualight.application.devices.DeviceDosingCalibrationResult
-import com.aqua.aqualight.application.devices.DeviceDosingChannelDestination
-import com.aqua.aqualight.application.devices.DeviceDosingChannelNavigationOperations
-import com.aqua.aqualight.application.devices.DeviceDosingChannelNavigationTarget
+import com.aqua.aqualight.application.devices.dosing.DeviceDosingCalibrationResult
+import com.aqua.aqualight.application.devices.dosing.DeviceDosingChannelDestination
+import com.aqua.aqualight.application.devices.dosing.DeviceDosingChannelNavigationOperations
+import com.aqua.aqualight.application.devices.dosing.DeviceDosingChannelNavigationTarget
 import com.aqua.aqualight.application.devices.DeviceMenuAccessOperations
 import com.aqua.aqualight.application.devices.DeviceMenuAccessResult
 import com.aqua.aqualight.application.devices.DeviceMenuUnavailableReason
