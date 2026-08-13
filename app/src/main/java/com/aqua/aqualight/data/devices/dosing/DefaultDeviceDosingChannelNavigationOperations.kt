@@ -14,6 +14,11 @@ import com.aqua.aqualight.data.devices.model.DeviceUid
 import com.aqua.aqualight.data.devices.repository.DevicesRepository
 import com.aqua.aqualight.data.devices.runtime.core.DeviceRuntimeCommandOutcome
 import com.aqua.aqualight.data.devices.runtime.modules.dosing.models.DeviceDosingChannelStatus
+import com.aqua.aqualight.data.devices.runtime.modules.dosing.models.DeviceDosingCustomPeriodsProgramConfig
+import com.aqua.aqualight.data.devices.runtime.modules.dosing.models.DeviceDosingDistributedProgramConfig
+import com.aqua.aqualight.data.devices.runtime.modules.dosing.models.DeviceDosingProgram
+import com.aqua.aqualight.data.devices.runtime.modules.dosing.models.DeviceDosingProgramMode
+import com.aqua.aqualight.data.devices.runtime.modules.dosing.models.DeviceDosingTimerProgramConfig
 import com.aqua.aqualight.data.devices.toDeviceRootSnapshot
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.distinctUntilChanged
@@ -53,7 +58,10 @@ internal class DefaultDeviceDosingChannelNavigationOperations(
     override suspend fun refreshTargets(deviceUid: String): Boolean {
         val uid = deviceUid.trim().takeIf(String::isNotBlank)?.let(::DeviceUid) ?: return false
         val root = runtimePort.currentRootSnapshot(uid)
-            ?.takeIf { it.catalogState == DeviceRootCatalogState.VALID && it.family == OwnerDeviceFamily.DOSING }
+            ?.takeIf {
+                it.catalogState == DeviceRootCatalogState.VALID &&
+                    it.family == OwnerDeviceFamily.DOSING
+            }
             ?: return false
         return root.channelSlots.dosingChannels.all { slot ->
             refreshOne(uid, slot.wireKey.value)
@@ -119,7 +127,8 @@ internal class DefaultDeviceDosingChannelNavigationOperations(
 
     private fun DeviceRootSnapshot.authorizedDosingSlot(slotId: String) =
         takeIf { snapshot ->
-            snapshot.catalogState == DeviceRootCatalogState.VALID && snapshot.family == OwnerDeviceFamily.DOSING
+            snapshot.catalogState == DeviceRootCatalogState.VALID &&
+                snapshot.family == OwnerDeviceFamily.DOSING
         }
             ?.channelSlots
             ?.dosingChannels
@@ -138,6 +147,7 @@ internal class DefaultDeviceDosingChannelNavigationOperations(
                 calibrated = detail.calibration.confirmed,
                 allowedRoutes = context.root.allowedRoutes
             )?.let { destination ->
+                val program = detail.program
                 DeviceDosingChannelNavigationTarget(
                     deviceUid = context.uid.value,
                     slotId = context.slot.id.value,
@@ -145,7 +155,18 @@ internal class DefaultDeviceDosingChannelNavigationOperations(
                     channelNumber = context.slot.index.position,
                     channelTitle = detail.effectiveName.ifBlank { context.slot.defaultDisplayName },
                     lastCalibratedAtEpochSeconds = detail.calibration.lastCalibratedAt,
-                    destination = destination
+                    destination = destination,
+                    revision = detail.revision,
+                    runtimeEnabled = detail.runtimeEnabled,
+                    runtimeReason = detail.runtimeReason.wireValue,
+                    programConfigured = program != null,
+                    programEnabled = program?.enabled == true,
+                    programWeekdays = program?.weekdays.orEmpty(),
+                    dailyDoseMl = program?.dailyDoseMl() ?: 0.0,
+                    scheduledDeliveredTodayMl = detail.usageToday.scheduledDeliveredMl,
+                    doseMilestonesMl = program?.doseMilestonesMl().orEmpty(),
+                    deliveryAccountingCertain = detail.deliveryAccountingCertain,
+                    active = detail.activeRun.active
                 )
             }
         }
@@ -155,7 +176,8 @@ internal class DefaultDeviceDosingChannelNavigationOperations(
     ): List<DeviceDosingChannelNavigationTarget> {
         val root = runtimePort.currentRootSnapshot(uid)
             ?.takeIf { snapshot ->
-                snapshot.catalogState == DeviceRootCatalogState.VALID && snapshot.family == OwnerDeviceFamily.DOSING
+                snapshot.catalogState == DeviceRootCatalogState.VALID &&
+                    snapshot.family == OwnerDeviceFamily.DOSING
             }
             ?: return emptyList()
         return root.channelSlots.dosingChannels.mapNotNull { slot ->
@@ -168,6 +190,34 @@ internal class DefaultDeviceDosingChannelNavigationOperations(
         val root: DeviceRootSnapshot,
         val slot: DeviceDosingChannelSlot
     )
+}
+
+private fun DeviceDosingProgram.dailyDoseMl(): Double = when (val value = config) {
+    is DeviceDosingDistributedProgramConfig -> value.dailyDoseMl
+    is DeviceDosingCustomPeriodsProgramConfig -> value.dailyDoseMl
+    is DeviceDosingTimerProgramConfig -> value.events.sumOf { it.amountMl }
+}
+
+private fun DeviceDosingProgram.doseMilestonesMl(): List<Double> = when (val value = config) {
+    is DeviceDosingDistributedProgramConfig -> {
+        val count = if (mode == DeviceDosingProgramMode.HOURLY_24) 24 else 1
+        equalMilestones(value.dailyDoseMl, count)
+    }
+    is DeviceDosingCustomPeriodsProgramConfig ->
+        equalMilestones(value.dailyDoseMl, value.periods.sumOf { it.doseCount })
+    is DeviceDosingTimerProgramConfig -> {
+        var total = 0.0
+        value.events.sortedBy { it.timeMs }.map { event ->
+            total += event.amountMl
+            total
+        }
+    }
+}
+
+private fun equalMilestones(totalMl: Double, count: Int): List<Double> {
+    if (totalMl <= 0.0 || count <= 0) return emptyList()
+    val portion = totalMl / count
+    return List(count) { index -> portion * (index + 1) }
 }
 
 private fun navigationRequest(deviceUid: String, slotId: String): DosingChannelNavigationRequest? {
@@ -204,7 +254,10 @@ private class RepositoryDeviceDosingChannelNavigationRuntimePort(
                 access.deviceUid == deviceUid.value && access.family == OwnerDeviceFamily.DOSING
             is DeviceMenuAccessResult.Unavailable -> false
         }
-        return accessAvailable && awaitValidatedRuntimeMetadata(deviceUid, RECOVERY_METADATA_WAIT_MILLIS)
+        return accessAvailable && awaitValidatedRuntimeMetadata(
+            deviceUid,
+            RECOVERY_METADATA_WAIT_MILLIS
+        )
     }
 
     override fun currentRootSnapshot(deviceUid: DeviceUid): DeviceRootSnapshot? =
@@ -216,8 +269,16 @@ private class RepositoryDeviceDosingChannelNavigationRuntimePort(
             ?.distinctUntilChanged()
             ?: flowOf(emptyMap())
 
-    override fun currentStatus(deviceUid: DeviceUid, channelKey: String): DeviceDosingChannelStatus? =
-        devicesRepository.runtimeModules()?.dosing?.states?.value?.get(deviceUid)?.channels?.get(channelKey)
+    override fun currentStatus(
+        deviceUid: DeviceUid,
+        channelKey: String
+    ): DeviceDosingChannelStatus? = devicesRepository.runtimeModules()
+        ?.dosing
+        ?.states
+        ?.value
+        ?.get(deviceUid)
+        ?.channels
+        ?.get(channelKey)
 
     override suspend fun requestStatus(
         deviceUid: DeviceUid,
@@ -228,7 +289,10 @@ private class RepositoryDeviceDosingChannelNavigationRuntimePort(
         return devicesRepository.runtimeModules()?.dosing?.requestChannelStatus(deviceUid, channelKey)
     }
 
-    private suspend fun awaitValidatedRuntimeMetadata(deviceUid: DeviceUid, timeoutMillis: Long): Boolean {
+    private suspend fun awaitValidatedRuntimeMetadata(
+        deviceUid: DeviceUid,
+        timeoutMillis: Long
+    ): Boolean {
         if (devicesRepository.currentDevice(deviceUid)?.hasValidatedRuntimeMetadata == true) return true
         return withTimeoutOrNull(timeoutMillis) {
             devicesRepository.observeDevice(deviceUid)
