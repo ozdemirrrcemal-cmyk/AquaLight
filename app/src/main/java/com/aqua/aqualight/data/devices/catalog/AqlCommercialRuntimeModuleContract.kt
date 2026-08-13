@@ -13,7 +13,7 @@ internal fun AqlCommercialCatalogProduct.expectedRuntimeModules(): DeviceRuntime
         cooling = profileCapabilities.cooling,
         temperature = profileCapabilities.temperature,
         timerApi = standaloneTimer,
-        timerEngine = standaloneTimer || dosingProduct,
+        timerEngine = standaloneTimer,
         dosing = dosingProduct,
         network = true,
         discovery = true,
