@@ -53,30 +53,42 @@ class DosingPlanMenuArchitectureTest {
     }
 
     @Test
-    fun `plan state is hoisted and disables every dependent control`() {
-        val fragment = source(
-            "app/src/main/java/com/aqua/aqualight/ui/tabs/devices/detail/dosing/channel/" +
-                "plan/DeviceDosingPlanFragment.kt"
-        )
-        val screen = source(
-            "app/src/main/java/com/aqua/aqualight/ui/tabs/devices/detail/dosing/channel/" +
-                "plan/DeviceDosingPlanScreen.kt"
-        )
+    fun `plan state is owner scoped firmware backed and saved through viewmodel`() {
+        val fragment = source(PLAN_FRAGMENT)
+        val screen = source(PLAN_SCREEN)
+        val viewModel = source(PLAN_VIEW_MODEL)
 
-        assertTrue(fragment.contains("viewModel.bindInitial(DosingPlanDraft.restore(savedInstanceState))"))
+        assertTrue(fragment.contains("viewModel.bind("))
+        assertTrue(fragment.contains("deviceUid = args.deviceUid"))
+        assertTrue(fragment.contains("slotId = args.slotId"))
+        assertTrue(fragment.contains("restoredDraft ="))
         assertTrue(fragment.contains("viewModel.currentDraft().writeTo(outState)"))
         assertTrue(fragment.contains("updateSchedule = viewModel::applyScheduleUpdate"))
+        assertTrue(fragment.contains("viewModel.save()"))
         assertTrue(screen.contains("state.scheduleEnabled"))
+        assertTrue(screen.contains("state.saveEnabled"))
+        assertTrue(screen.contains("state.saving"))
         assertTrue(screen.contains("onWeekdaySelectionChange"))
+        assertTrue(viewModel.contains("operations.saveProgram("))
         assertFalse(screen.contains("rememberSaveable"))
     }
 
     @Test
+    fun `plan validates distributed dose per compiled occurrence`() {
+        val viewModel = source(PLAN_VIEW_MODEL)
+
+        assertTrue(viewModel.contains("HOURLY_OCCURRENCE_COUNT = 24"))
+        assertTrue(viewModel.contains("distributedAmountAllowed("))
+        assertTrue(viewModel.contains("canonicalAmountQuanta("))
+        assertTrue(viewModel.contains("occurrenceAmountAllowed("))
+        assertTrue(viewModel.contains("totalQuanta / occurrenceCount"))
+        assertTrue(viewModel.contains("totalQuanta % occurrenceCount"))
+        assertFalse(viewModel.contains("amountAllowed(amount, current)"))
+    }
+
+    @Test
     fun `dosing plan consumes central menu selection styling only`() {
-        val screen = source(
-            "app/src/main/java/com/aqua/aqualight/ui/tabs/devices/detail/dosing/channel/" +
-                "plan/DeviceDosingPlanScreen.kt"
-        )
+        val screen = source(PLAN_SCREEN)
         val centralSelectionRow = source(
             "app/src/main/java/com/aqua/aqualight/ui/common/devicemenu/" +
                 "AquaDeviceMenuSelectionRow.kt"
@@ -105,7 +117,7 @@ class DosingPlanMenuArchitectureTest {
     }
 
     @Test
-    fun `single dose editor reuses the shared channel shell and central components`() {
+    fun `single dose editor reuses shared channel shell and central components`() {
         val fragment = source(
             "app/src/main/java/com/aqua/aqualight/ui/tabs/devices/detail/dosing/channel/" +
                 "schedule/single/DeviceDosingSingleScheduleFragment.kt"
@@ -125,7 +137,7 @@ class DosingPlanMenuArchitectureTest {
     }
 
     @Test
-    fun `hourly editor reuses the shared channel shell and central minute picker`() {
+    fun `hourly editor reuses shared shell and central minute picker`() {
         val fragment = source(
             "app/src/main/java/com/aqua/aqualight/ui/tabs/devices/detail/dosing/channel/" +
                 "schedule/hourly/DeviceDosingHourlyScheduleFragment.kt"
@@ -146,7 +158,7 @@ class DosingPlanMenuArchitectureTest {
     }
 
     @Test
-    fun `custom-period editor uses central time count and device-menu components`() {
+    fun `custom period editor receives firmware capacities`() {
         val fragment = source(
             "app/src/main/java/com/aqua/aqualight/ui/tabs/devices/detail/dosing/channel/" +
                 "schedule/custom/DeviceDosingCustomScheduleFragment.kt"
@@ -159,19 +171,19 @@ class DosingPlanMenuArchitectureTest {
             "app/src/main/java/com/aqua/aqualight/ui/tabs/devices/detail/dosing/channel/" +
                 "schedule/custom/DeviceDosingCustomScheduleEditor.kt"
         )
-        val navigation = source("app/src/main/res/navigation/nav_app.xml")
 
-        assertTrue(fragment.contains("setupSelectedPump("))
+        assertTrue(fragment.contains("decodeEditorPayload"))
+        assertTrue(editor.contains("maxPeriods"))
+        assertTrue(editor.contains("maxDoseCount"))
         assertTrue(editor.contains("AquaTimePickerBottomSheet.show("))
         assertTrue(editor.contains("IntegerStepperBottomSheet.show("))
         assertTrue(screen.contains("AquaDeviceMenuHeroCard("))
         assertTrue(screen.contains("AquaDeviceMenuActionRow("))
-        assertTrue(navigation.contains("deviceDosingCustomScheduleFragment"))
         assertFalse(screen.contains("DosingPumpDevice("))
     }
 
     @Test
-    fun `timer editor uses central time amount and daily-total boundaries`() {
+    fun `timer editor receives firmware event capacity`() {
         val fragment = source(
             "app/src/main/java/com/aqua/aqualight/ui/tabs/devices/detail/dosing/channel/" +
                 "schedule/timer/DeviceDosingTimerScheduleFragment.kt"
@@ -188,14 +200,13 @@ class DosingPlanMenuArchitectureTest {
             "app/src/main/java/com/aqua/aqualight/ui/tabs/devices/detail/dosing/channel/" +
                 "plan/DosingPlanDraft.kt"
         )
-        val navigation = source("app/src/main/res/navigation/nav_app.xml")
 
-        assertTrue(fragment.contains("setupSelectedPump("))
+        assertTrue(fragment.contains("decodeEditorPayload"))
+        assertTrue(editor.contains("maxDoseCount"))
         assertTrue(editor.contains("AquaTimePickerBottomSheet.show("))
         assertTrue(editor.contains("TextInputBottomSheet.show("))
         assertTrue(screen.contains("totalDoseMicroliters"))
         assertTrue(planDraft.contains("displayedDailyDoseMicroliters"))
-        assertTrue(navigation.contains("deviceDosingTimerScheduleFragment"))
         assertFalse(screen.contains("DosingPumpDevice("))
     }
 
@@ -208,5 +219,14 @@ class DosingPlanMenuArchitectureTest {
             candidate = candidate.parentFile
         }
         error("Cannot locate AquaLight repository root from user.dir.")
+    }
+
+    private companion object {
+        const val PLAN_FRAGMENT =
+            "app/src/main/java/com/aqua/aqualight/ui/tabs/devices/detail/dosing/channel/plan/DeviceDosingPlanFragment.kt"
+        const val PLAN_SCREEN =
+            "app/src/main/java/com/aqua/aqualight/ui/tabs/devices/detail/dosing/channel/plan/DeviceDosingPlanScreen.kt"
+        const val PLAN_VIEW_MODEL =
+            "app/src/main/java/com/aqua/aqualight/ui/tabs/devices/detail/dosing/channel/plan/DeviceDosingPlanViewModel.kt"
     }
 }
