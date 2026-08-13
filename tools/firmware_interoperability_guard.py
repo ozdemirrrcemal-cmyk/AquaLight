@@ -107,10 +107,14 @@ def parse_kotlin_constants(source: str) -> dict[str, str]:
         if literal:
             value = literal.group(1)
         else:
-            alias = re.fullmatch(r"(\w+)", expression)
-            if not alias:
-                fail(f"Unsupported Kotlin contract constant expression for {name}: {expression}")
-            value = resolve(alias.group(1), stack)
+            integer_literal = re.fullmatch(r"(-?\d[\d_]*)[lL]?", expression)
+            if integer_literal:
+                value = integer_literal.group(1).replace("_", "")
+            else:
+                alias = re.fullmatch(r"(\w+)", expression)
+                if not alias:
+                    fail(f"Unsupported Kotlin contract constant expression for {name}: {expression}")
+                value = resolve(alias.group(1), stack)
         resolved[name] = value
         return value
 
