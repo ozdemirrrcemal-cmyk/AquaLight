@@ -10,6 +10,7 @@ import com.aqua.aqualight.data.devices.runtime.modules.dosing.events.DeviceDosin
 import com.aqua.aqualight.data.devices.runtime.modules.dosing.events.DeviceDosingTypedEventReducer
 import com.aqua.aqualight.data.devices.runtime.modules.dosing.parsers.DeviceDosingStatusParser
 import com.aqua.aqualight.data.devices.runtime.modules.dosing.state.DeviceDosingRuntimeStateStore
+import kotlinx.coroutines.test.runTest
 import org.json.JSONObject
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
@@ -17,7 +18,7 @@ import org.junit.Test
 
 class DeviceDosingTypedEventReducerTest {
     @Test
-    fun `slim status change is parsed and delegated to authoritative refresh callback`() {
+    fun `slim status change is parsed and delegated to authoritative refresh callback`() = runTest {
         val store = DeviceDosingRuntimeStateStore()
         var refreshCalls = 0
         val reducer = supportedReducer(store) { deviceUid, data ->
@@ -36,7 +37,7 @@ class DeviceDosingTypedEventReducerTest {
     }
 
     @Test
-    fun `duplicate slim status change sequence is ignored by canonical state store`() {
+    fun `duplicate slim status change sequence is ignored by canonical state store`() = runTest {
         val store = DeviceDosingRuntimeStateStore()
         val reducer = supportedReducer(store) { deviceUid, data ->
             store.recordStatusChange(deviceUid, DeviceDosingStatusParser.parseStatusChange(data))
@@ -47,7 +48,7 @@ class DeviceDosingTypedEventReducerTest {
     }
 
     @Test
-    fun `command result events reduce new program and reset mutations`() {
+    fun `command result events reduce new program and reset mutations`() = runTest {
         val store = DeviceDosingRuntimeStateStore()
         val reducer = supportedReducer(store) { _, _ -> false }
 
@@ -73,7 +74,7 @@ class DeviceDosingTypedEventReducerTest {
     }
 
     @Test
-    fun `wrong command module is malformed and unknown action is ignored`() {
+    fun `wrong command module is malformed and unknown action is ignored`() = runTest {
         val store = DeviceDosingRuntimeStateStore()
         val reducer = supportedReducer(store) { _, _ -> false }
 
@@ -92,7 +93,7 @@ class DeviceDosingTypedEventReducerTest {
     }
 
     @Test
-    fun `unsupported product ignores malformed status event before parsing`() {
+    fun `unsupported product ignores malformed status event before parsing`() = runTest {
         val store = DeviceDosingRuntimeStateStore()
         var refreshCalls = 0
         val reducer = DeviceDosingTypedEventReducer(
