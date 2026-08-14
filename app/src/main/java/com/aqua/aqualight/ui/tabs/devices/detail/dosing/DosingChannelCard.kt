@@ -40,13 +40,26 @@ internal fun DosingChannelCard(
 ) {
     val colors = aquaDeviceCardColors()
     val typography = aquaDeviceCardTypography(colors)
-    val statusLabel = stringResource(state.visualState.labelRes)
-    val contentDescriptionText = stringResource(
-        R.string.device_dosing_channel_card_content_description,
-        state.channelNumber,
-        state.displayName,
-        statusLabel
-    )
+    val isNotConfigured = state.visualState == DosingChannelVisualState.NOT_CONFIGURED
+    val statusLabel = if (isNotConfigured) {
+        stringResource(R.string.device_dosing_channel_not_configured)
+    } else {
+        null
+    }
+    val contentDescriptionText = if (statusLabel != null) {
+        stringResource(
+            R.string.device_dosing_channel_card_content_description,
+            state.channelNumber,
+            state.displayName,
+            statusLabel
+        )
+    } else {
+        stringResource(
+            R.string.device_dosing_pump_channel_content_description,
+            state.channelNumber,
+            state.displayName
+        )
+    }
 
     AquaDeviceCardSurface(
         modifier = modifier
@@ -68,7 +81,7 @@ internal fun DosingChannelCard(
                 typography = typography,
                 statusLabel = statusLabel
             )
-            if (state.visualState == DosingChannelVisualState.NOT_CONFIGURED) {
+            if (isNotConfigured) {
                 DosingChannelEmptyState(
                     colors = colors,
                     typography = typography
@@ -94,7 +107,7 @@ private fun DosingChannelHeader(
     state: DosingChannelCardUiState,
     colors: AquaDeviceCardColors,
     typography: AquaDeviceCardTypography,
-    statusLabel: String
+    statusLabel: String?
 ) {
     Row(
         modifier = Modifier.fillMaxWidth(),
@@ -114,12 +127,14 @@ private fun DosingChannelHeader(
             maxLines = 1,
             overflow = TextOverflow.Ellipsis
         )
-        DosingStatusPill(
-            label = statusLabel,
-            color = state.visualState.statusColor(colors),
-            typography = typography,
-            modifier = Modifier.padding(start = AquaDeviceCardGeometry.compactGap)
-        )
+        statusLabel?.let { label ->
+            DosingStatusPill(
+                label = label,
+                color = colors.warning,
+                typography = typography,
+                modifier = Modifier.padding(start = AquaDeviceCardGeometry.compactGap)
+            )
+        }
     }
 }
 
@@ -312,14 +327,6 @@ private fun DosingSummaryItem(
             overflow = TextOverflow.Ellipsis
         )
     }
-}
-
-private fun DosingChannelVisualState.statusColor(colors: AquaDeviceCardColors): Color = when (this) {
-    DosingChannelVisualState.NOT_CONFIGURED -> colors.warning
-    DosingChannelVisualState.READY,
-    DosingChannelVisualState.SCHEDULED,
-    DosingChannelVisualState.DOSING -> colors.accent
-    DosingChannelVisualState.ERROR -> colors.danger
 }
 
 private const val DAY_SEPARATOR = " · "
