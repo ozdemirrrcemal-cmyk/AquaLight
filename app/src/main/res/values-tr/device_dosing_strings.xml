@@ -24,9 +24,6 @@
     <string name="device_dosing_weekday_fri">Cum</string>
     <string name="device_dosing_weekday_sat">Cmt</string>
     <string name="device_dosing_weekday_sun">Paz</string>
-    <string name="device_dosing_channel_dose_progress_description">Günlük dozaj ilerlemesi. Bugün %1$.2f ml verildi, ayarlanan günlük doz %2$.2f ml.</string>
-    <string name="device_dosing_channel_dose_progress_value_format">%1$.2f ml</string>
-    <string name="device_dosing_channel_dose_scale_value_format">%1$.2f</string>
     <string name="device_dosing_channel_card_content_description">Dozaj kanalı %1$d, %2$s, %3$s</string>
     <string name="device_dosing_channel_open_failed">Dozaj kanalı cihazdan okunamadı. Bağlantıyı ve firmware sürümünü kontrol edip tekrar deneyin.</string>
 
