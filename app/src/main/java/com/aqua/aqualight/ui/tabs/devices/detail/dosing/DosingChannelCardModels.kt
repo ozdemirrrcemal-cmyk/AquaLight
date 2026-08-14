@@ -33,8 +33,8 @@ enum class DosingChannelVisualState(
 ) {
     NOT_CONFIGURED(R.string.device_dosing_channel_not_configured),
     IDLE(null),
-    DOSING(R.string.device_dosing_channel_status_dosing),
-    ERROR(R.string.device_dosing_channel_status_attention)
+    DOSING(R.string.device_dosing_card_status_dosing),
+    ERROR(R.string.device_dosing_card_status_error)
 }
 
 enum class DosingWeekday(
