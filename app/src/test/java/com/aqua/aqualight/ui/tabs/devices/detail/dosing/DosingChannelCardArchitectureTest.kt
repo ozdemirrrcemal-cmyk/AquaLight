@@ -164,6 +164,7 @@ class DosingChannelCardArchitectureTest {
             CARD_SOURCE_ROOT + "DosingChannelCardModels.kt",
             CARD_SOURCE_ROOT + "DosingChannelCardSummary.kt",
             CARD_SOURCE_ROOT + "DosingChannelCardGlyphs.kt",
+            CARD_SOURCE_ROOT + "DosingProgressGeometryMapper.kt",
             CARD_SOURCE_ROOT + "DosingProgramProgress.kt",
             CARD_SOURCE_ROOT + "DosingProgramProgressModes.kt",
             CARD_SOURCE_ROOT + "DosingDoseRail.kt",
