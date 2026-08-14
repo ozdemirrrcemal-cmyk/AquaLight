@@ -81,14 +81,15 @@ class DosingChannelCardArchitectureTest {
 
     @Test
     fun `manual usage is separate and reservoir visibility follows firmware tracking`() {
-        val mapper = source(CARD_SOURCE_ROOT + "DosingChannelCardMapper.kt")
+        val progressMapper = source(CARD_SOURCE_ROOT + "DosingChannelCardProgressMapper.kt")
+        val reservoirMapper = source(CARD_SOURCE_ROOT + "DosingChannelCardReservoirMapper.kt")
         val progress = source(CARD_SOURCE_ROOT + "DosingProgramProgress.kt")
         val summary = source(CARD_SOURCE_ROOT + "DosingChannelCardSummary.kt")
 
-        assertTrue(mapper.contains("usageToday.manualDeliveredMicroliters"))
+        assertTrue(progressMapper.contains("usageToday.manualDeliveredMicroliters"))
         assertTrue(progress.contains("state.manualDeliveredTodayMl > 0.0"))
         assertTrue(progress.contains("DosingManualDosePill"))
-        assertTrue(mapper.contains("if (!reservoir.trackingEnabled) return null"))
+        assertTrue(reservoirMapper.contains("if (!reservoir.trackingEnabled) return null"))
         assertTrue(summary.contains("state.reservoir?.let"))
         assertFalse(progress.contains("scheduledDeliveredTodayMl +"))
     }
