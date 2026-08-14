@@ -5,6 +5,7 @@ import com.aqua.aqualight.application.devices.DeviceDosingChannelSlot
 import com.aqua.aqualight.application.devices.DeviceSlotIndex
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
+import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Test
 
@@ -24,7 +25,11 @@ class DosingChannelCardMapperTest {
         assertEquals("dosing:channel2", state.slotId)
         assertEquals(2, state.channelNumber)
         assertEquals("Channel 2", state.displayName)
-        assertEquals(0.0, state.dailyDoseMl, 0.0)
+        assertNull(state.dailyDoseMl)
+        assertNull(state.programMode)
+        assertNull(state.scheduledProgress)
+        assertNull(state.reservoir)
+        assertNull(state.manualUsage)
         assertEquals(DosingChannelVisualState.NOT_CONFIGURED, state.visualState)
         assertFalse(state.scheduleDays.isEveryDay)
         assertTrue(state.scheduleDays.selectedDays.isEmpty())
