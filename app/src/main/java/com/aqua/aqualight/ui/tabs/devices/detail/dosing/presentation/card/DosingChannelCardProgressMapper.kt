@@ -23,7 +23,8 @@ internal fun DeviceDosingChannelSnapshot.toProgramProgressUiState(
         currentOccurrences.isNotEmpty() -> currentOccurrences
         !configuredProgram.enabled && selectedToday -> configuredProgram.placeholderOccurrences()
         else -> emptyList()
-    }
+    }.withDoseFractions()
+    val customPeriods = configuredProgram.toCustomPeriodUiStates(occurrences)
     return DosingProgramProgressUiState(
         mode = configuredProgram.schedule.toUiMode(),
         dailyDoseMl = configuredProgram.dailyDoseMicroliters().toMilliliters(),
@@ -33,7 +34,8 @@ internal fun DeviceDosingChannelSnapshot.toProgramProgressUiState(
             ?.toMilliliters()
             ?: 0.0,
         occurrences = occurrences,
-        customPeriods = configuredProgram.toCustomPeriodUiStates(occurrences),
+        customPeriods = customPeriods,
+        markers = configuredProgram.toProgressMarkers(occurrences, customPeriods),
         scheduledToday = configuredProgram.enabled &&
             progress.executionCurrent &&
             progress.scheduledAmountMicroliters > 0L,
@@ -70,7 +72,6 @@ internal fun DeviceDosingProgram.dailyDoseMicroliters(): Long = when (val value 
 }
 
 private fun DeviceDosingOccurrenceProgress.toUiState() = DosingProgressOccurrenceUiState(
-    timeFraction = timeMillis.toFloat() / MILLIS_PER_DAY.toFloat(),
     amountMl = amountMicroliters.toMilliliters(),
     visualState = when (state) {
         DeviceDosingOccurrenceState.PENDING -> DosingOccurrenceVisualState.PENDING
@@ -81,18 +82,30 @@ private fun DeviceDosingOccurrenceProgress.toUiState() = DosingProgressOccurrenc
     }
 )
 
+private fun List<DosingProgressOccurrenceUiState>.withDoseFractions():
+    List<DosingProgressOccurrenceUiState> {
+    val totalAmountMl = sumOf(DosingProgressOccurrenceUiState::amountMl)
+    if (totalAmountMl <= 0.0) return this
+    var cumulativeAmountMl = 0.0
+    return map { occurrence ->
+        val startFraction = cumulativeAmountMl / totalAmountMl
+        cumulativeAmountMl += occurrence.amountMl
+        occurrence.copy(
+            startFraction = startFraction.toFloat().coerceIn(0f, 1f),
+            endFraction = (cumulativeAmountMl / totalAmountMl).toFloat().coerceIn(0f, 1f)
+        )
+    }
+}
+
 private fun DeviceDosingProgram.placeholderOccurrences():
     List<DosingProgressOccurrenceUiState> = when (val value = schedule) {
         is DeviceDosingProgramSchedule.Single -> listOf(
-            placeholderOccurrence(value.startTimeMillis, value.dailyDoseMicroliters)
+            placeholderOccurrence(value.dailyDoseMicroliters)
         )
         is DeviceDosingProgramSchedule.Hourly24 -> {
             val amounts = splitAmount(value.dailyDoseMicroliters, HOURLY_OCCURRENCE_COUNT)
             List(HOURLY_OCCURRENCE_COUNT) { index ->
-                placeholderOccurrence(
-                    timeMillis = (value.startTimeMillis + index * MILLIS_PER_HOUR) % MILLIS_PER_DAY,
-                    amountMicroliters = amounts[index]
-                )
+                placeholderOccurrence(amounts[index])
             }
         }
         is DeviceDosingProgramSchedule.CustomPeriods -> {
@@ -102,16 +115,13 @@ private fun DeviceDosingProgram.placeholderOccurrences():
             )
             var amountIndex = 0
             value.periods.flatMap { period ->
-                List(period.doseCount) { occurrenceIndex ->
-                    placeholderOccurrence(
-                        timeMillis = period.placeholderTime(occurrenceIndex),
-                        amountMicroliters = amounts[amountIndex++]
-                    )
+                List(period.doseCount) {
+                    placeholderOccurrence(amounts[amountIndex++])
                 }
             }
         }
         is DeviceDosingProgramSchedule.Timer -> value.doses.map { dose ->
-            placeholderOccurrence(dose.startTimeMs, dose.amountMicroliters)
+            placeholderOccurrence(dose.amountMicroliters)
         }
     }
 
@@ -128,17 +138,39 @@ private fun DeviceDosingProgram.toCustomPeriodUiStates(
     }
 }
 
-private fun DeviceDosingCustomPeriodDraft.placeholderTime(index: Int): Long {
-    if (doseCount <= 1) return startTimeMs
-    val interval = (endTimeMs - startTimeMs) / (doseCount - 1)
-    return startTimeMs + interval * index
+private fun DeviceDosingProgram.toProgressMarkers(
+    occurrences: List<DosingProgressOccurrenceUiState>,
+    customPeriods: List<DosingCustomPeriodProgressUiState>
+): List<DosingProgressMarkerUiState> {
+    if (occurrences.isEmpty() || schedule is DeviceDosingProgramSchedule.Single) return emptyList()
+    val candidateIndexes = when (schedule) {
+        is DeviceDosingProgramSchedule.CustomPeriods -> customPeriods
+            .runningFold(0) { total, period -> total + period.occurrences.size }
+            .drop(1)
+            .map { count -> count - 1 }
+        else -> occurrences.indices.toList()
+    }
+    val markerIndexes = candidateIndexes.evenlySampled(MAX_PROGRESS_MARKERS)
+    var cumulativeAmountMl = 0.0
+    return occurrences.mapIndexedNotNull { index, occurrence ->
+        cumulativeAmountMl += occurrence.amountMl
+        if (index !in markerIndexes) return@mapIndexedNotNull null
+        DosingProgressMarkerUiState(
+            positionFraction = occurrence.endFraction,
+            cumulativeAmountMl = cumulativeAmountMl
+        )
+    }
 }
 
-private fun placeholderOccurrence(
-    timeMillis: Long,
-    amountMicroliters: Long
-) = DosingProgressOccurrenceUiState(
-    timeFraction = timeMillis.toFloat() / MILLIS_PER_DAY.toFloat(),
+private fun List<Int>.evenlySampled(maximumSize: Int): Set<Int> {
+    if (size <= maximumSize) return toSet()
+    return (1..maximumSize).map { markerNumber ->
+        val sourceIndex = (markerNumber * size + maximumSize - 1) / maximumSize - 1
+        get(sourceIndex.coerceIn(0, lastIndex))
+    }.toSet()
+}
+
+private fun placeholderOccurrence(amountMicroliters: Long) = DosingProgressOccurrenceUiState(
     amountMl = amountMicroliters.toMilliliters(),
     visualState = DosingOccurrenceVisualState.PENDING
 )
@@ -150,6 +182,5 @@ private fun splitAmount(totalMicroliters: Long, count: Int): List<Long> {
     return List(count) { index -> baseAmount + if (index < remainder) 1L else 0L }
 }
 
-private const val MILLIS_PER_HOUR = 3_600_000L
-private const val MILLIS_PER_DAY = 86_400_000L
 private const val HOURLY_OCCURRENCE_COUNT = 24
+private const val MAX_PROGRESS_MARKERS = 6

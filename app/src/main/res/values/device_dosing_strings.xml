@@ -17,7 +17,7 @@
     <string name="device_dosing_channel_calibration_required_description">Calibrate the pump before configuring and using this channel.</string>
     <string name="device_dosing_channel_program_empty_title">Set a dosing program</string>
     <string name="device_dosing_channel_program_empty_description">Choose the daily dose, program mode and dosing days for this channel.</string>
-    <string name="device_dosing_channel_daily_dose_format">%1$.2f mL</string>
+    <string name="device_dosing_channel_daily_dose_format">%1$.2f mL/day</string>
     <string name="device_dosing_channel_every_day">Every day</string>
     <string name="device_dosing_channel_weekdays">Weekdays</string>
     <string name="device_dosing_channel_weekend">Weekend</string>
@@ -33,17 +33,17 @@
     <string name="device_dosing_channel_mode_hourly">Hourly</string>
     <string name="device_dosing_channel_mode_custom">Custom periods</string>
     <string name="device_dosing_channel_mode_timer">Timer</string>
-    <string name="device_dosing_channel_mode_progress_format">%1$d/%2$d · %3$s</string>
-    <string name="device_dosing_channel_no_dose_today_format">No dose today · %1$s</string>
-    <string name="device_dosing_channel_progress_today">Today</string>
-    <string name="device_dosing_channel_progress_amount_format">%1$.2f / %2$.2f mL</string>
+    <string name="device_dosing_channel_mode_progress_format">%3$s · %1$d/%2$d</string>
+    <string name="device_dosing_channel_no_dose_today_format">%1$s · No dose today</string>
+    <string name="device_dosing_channel_progress_delivered_format">%1$.2f mL</string>
+    <string name="device_dosing_channel_progress_marker_format">%1$.2f</string>
     <plurals name="device_dosing_channel_progress_description">
         <item quantity="one">%1$s mode. %2$d of %3$d scheduled dose completed; %4$.2f mL of %5$.2f mL delivered.</item>
         <item quantity="other">%1$s mode. %2$d of %3$d scheduled doses completed; %4$.2f mL of %5$.2f mL delivered.</item>
     </plurals>
     <string name="device_dosing_channel_no_scheduled_dose_today">No scheduled dose today</string>
-    <string name="device_dosing_channel_manual_label">Manual</string>
     <string name="device_dosing_channel_manual_amount_format">+%1$.2f mL</string>
+    <string name="device_dosing_channel_manual_description">Manual dose delivered today: %1$.2f mL.</string>
     <plurals name="device_dosing_channel_reservoir_days_format">
         <item quantity="one">~%1$d day · %2$.1f mL</item>
         <item quantity="other">~%1$d days · %2$.1f mL</item>

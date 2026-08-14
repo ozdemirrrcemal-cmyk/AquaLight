@@ -17,6 +17,7 @@ import com.aqua.aqualight.application.devices.dosing.DeviceDosingReservoirSnapsh
 import com.aqua.aqualight.application.devices.dosing.DeviceDosingRunSource
 import com.aqua.aqualight.application.devices.dosing.DeviceDosingRuntimeReason
 import com.aqua.aqualight.application.devices.dosing.DeviceDosingSchedulingPolicy
+import com.aqua.aqualight.application.devices.dosing.DeviceDosingTimerDoseDraft
 import com.aqua.aqualight.ui.tabs.devices.detail.dosing.presentation.card.DosingChannelVisualState
 import com.aqua.aqualight.ui.tabs.devices.detail.dosing.presentation.card.DosingDoseProgressVisualState
 import com.aqua.aqualight.ui.tabs.devices.detail.dosing.presentation.card.DosingProgramModeUiState
@@ -83,6 +84,10 @@ class DosingChannelCardMapperTest {
         assertEquals(10.0, state.programProgress.manualDeliveredTodayMl, 0.0)
         assertEquals(24, state.programProgress.totalOccurrences)
         assertEquals(9, state.programProgress.completedOccurrences)
+        assertEquals(
+            listOf(4.0, 8.0, 12.0, 16.0, 20.0, 24.0),
+            state.programProgress.markers.map { marker -> marker.cumulativeAmountMl }
+        )
         assertEquals(DosingDoseProgressVisualState.ACTIVE, state.programProgress.visualState)
         assertNull(state.reservoir)
         assertEquals(DosingPumpVisualState.RUNNING, snapshot.toPumpVisualState())
@@ -160,8 +165,66 @@ class DosingChannelCardMapperTest {
         assertEquals(listOf(3, 3, 2), state.programProgress.customPeriods.map {
             period -> period.occurrences.size
         })
+        assertEquals(
+            listOf(3.0, 6.0, 8.0),
+            state.programProgress.markers.map { marker -> marker.cumulativeAmountMl }
+        )
         assertEquals(8, state.programProgress.totalOccurrences)
         assertNull(state.reservoir)
+    }
+
+    @Test
+    fun `timer markers preserve firmware weighted occurrence amounts`() {
+        val amounts = listOf(1_500L, 2_000L, 1_250L, 2_750L)
+        val program = DeviceDosingProgram(
+            enabled = true,
+            weekdays = List(7) { true },
+            schedule = DeviceDosingProgramSchedule.Timer(
+                doses = amounts.mapIndexed { index, amount ->
+                    DeviceDosingTimerDoseDraft(
+                        startTimeMs = (index + 1L) * 3L * 60L * 60L * 1_000L,
+                        amountMicroliters = amount
+                    )
+                }
+            ),
+            missedDoseRecoveryEnabled = true
+        )
+        val progress = DeviceDosingChannelProgress(
+            scheduledAmountMicroliters = amounts.sum(),
+            completedAmountMicroliters = amounts.take(2).sum(),
+            occurrences = amounts.mapIndexed { index, amount ->
+                occurrence(
+                    index = index,
+                    amount = amount,
+                    state = if (index < 2) {
+                        DeviceDosingOccurrenceState.COMPLETED
+                    } else {
+                        DeviceDosingOccurrenceState.PENDING
+                    }
+                )
+            },
+            executionCurrent = true
+        )
+
+        val state = channelSlot().toInitialDosingChannelCardUiState().withChannelSnapshot(
+            snapshot = snapshot(
+                program = program,
+                progress = progress,
+                reservoir = DeviceDosingReservoirSnapshot()
+            ),
+            today = MONDAY
+        )
+
+        assertEquals(listOf(1.5, 2.0, 1.25, 2.75), state.programProgress.occurrences.map {
+            occurrence -> occurrence.amountMl
+        })
+        assertEquals(
+            listOf(1.5, 3.5, 4.75, 7.5),
+            state.programProgress.markers.map { marker -> marker.cumulativeAmountMl }
+        )
+        assertEquals(listOf(0.2f, 7f / 15f, 19f / 30f, 1f), state.programProgress.markers.map {
+            marker -> marker.positionFraction
+        })
     }
 
     private fun channelSlot() = DeviceDosingChannelSlot(

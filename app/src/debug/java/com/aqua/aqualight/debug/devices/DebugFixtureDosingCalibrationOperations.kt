@@ -608,8 +608,8 @@ internal class DebugFixtureDosingStateStore(
                 doses = listOf(
                     DeviceDosingTimerDoseDraft(7 * MILLIS_PER_HOUR, 1_500L),
                     DeviceDosingTimerDoseDraft(11 * MILLIS_PER_HOUR + 30 * MILLIS_PER_MINUTE, 2_000L),
-                    DeviceDosingTimerDoseDraft(16 * MILLIS_PER_HOUR, 2_500L),
-                    DeviceDosingTimerDoseDraft(21 * MILLIS_PER_HOUR, 1_500L)
+                    DeviceDosingTimerDoseDraft(16 * MILLIS_PER_HOUR, 1_250L),
+                    DeviceDosingTimerDoseDraft(21 * MILLIS_PER_HOUR, 2_750L)
                 )
             )
         }
@@ -791,7 +791,7 @@ internal class DebugFixtureDosingStateStore(
         DeviceDosingActiveRun(
             active = true,
             source = DeviceDosingRunSource.SCHEDULED,
-            targetAmountMicroliters = 2_500L,
+            targetAmountMicroliters = 1_250L,
             remainingMillis = 1_200L
         )
     } else {

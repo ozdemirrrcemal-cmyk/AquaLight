@@ -62,9 +62,16 @@ enum class DosingOccurrenceVisualState {
 
 @Immutable
 data class DosingProgressOccurrenceUiState(
-    val timeFraction: Float,
     val amountMl: Double,
+    val startFraction: Float = 0f,
+    val endFraction: Float = 1f,
     val visualState: DosingOccurrenceVisualState
+)
+
+@Immutable
+data class DosingProgressMarkerUiState(
+    val positionFraction: Float,
+    val cumulativeAmountMl: Double
 )
 
 @Immutable
@@ -89,6 +96,7 @@ data class DosingProgramProgressUiState(
     val manualDeliveredTodayMl: Double = 0.0,
     val occurrences: List<DosingProgressOccurrenceUiState> = emptyList(),
     val customPeriods: List<DosingCustomPeriodProgressUiState> = emptyList(),
+    val markers: List<DosingProgressMarkerUiState> = emptyList(),
     val scheduledToday: Boolean = false,
     val visualState: DosingDoseProgressVisualState = DosingDoseProgressVisualState.EMPTY
 ) {

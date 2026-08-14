@@ -4,12 +4,10 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.BasicText
@@ -23,7 +21,6 @@ import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
-import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import com.aqua.aqualight.R
@@ -38,11 +35,6 @@ internal fun DosingProgramProgress(
     modifier: Modifier = Modifier
 ) {
     val mode = state.mode ?: return
-    val amountLabel = stringResource(
-        R.string.device_dosing_channel_progress_amount_format,
-        state.scheduledDeliveredTodayMl,
-        state.dailyDoseMl
-    )
     val description = pluralStringResource(
         R.plurals.device_dosing_channel_progress_description,
         state.totalOccurrences,
@@ -59,34 +51,14 @@ internal fun DosingProgramProgress(
             .fillMaxWidth()
             .semantics { contentDescription = description },
         horizontalArrangement = Arrangement.spacedBy(PROGRESS_TO_MANUAL_GAP),
-        verticalAlignment = Alignment.Bottom
+        verticalAlignment = Alignment.Top
     ) {
-        Column(
-            modifier = Modifier.weight(1f),
-            verticalArrangement = Arrangement.spacedBy(PROGRESS_HEADER_GAP)
-        ) {
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                BasicText(
-                    text = stringResource(R.string.device_dosing_channel_progress_today),
-                    modifier = Modifier.weight(1f),
-                    style = typography.micro.copy(color = colors.secondaryText),
-                    maxLines = 1
-                )
-                BasicText(
-                    text = amountLabel,
-                    style = typography.micro.copy(color = palette.valueText),
-                    maxLines = 1
-                )
-            }
-            DosingModeProgressGraphic(
-                state = state,
-                palette = palette,
-                typography = typography
-            )
-        }
+        DosingModeProgressGraphic(
+            state = state,
+            palette = palette,
+            typography = typography,
+            modifier = Modifier.weight(1f)
+        )
         if (state.manualDeliveredTodayMl > 0.0) {
             DosingManualDosePill(
                 amountMl = state.manualDeliveredTodayMl,
@@ -101,17 +73,22 @@ internal fun DosingProgramProgress(
 private fun DosingModeProgressGraphic(
     state: DosingProgramProgressUiState,
     palette: DosingProgressPalette,
-    typography: AquaDeviceCardTypography
+    typography: AquaDeviceCardTypography,
+    modifier: Modifier = Modifier
 ) {
     if (state.occurrences.isEmpty()) {
-        DosingNoDoseTodayProgress(palette, typography)
+        DosingNoDoseTodayProgress(palette, typography, modifier)
         return
     }
     when (state.mode) {
-        DosingProgramModeUiState.SINGLE -> DosingSingleProgramProgress(state, palette)
-        DosingProgramModeUiState.HOURLY_24 -> DosingHourlyProgramProgress(state, palette)
-        DosingProgramModeUiState.CUSTOM_PERIODS -> DosingCustomProgramProgress(state, palette)
-        DosingProgramModeUiState.TIMER -> DosingTimerProgramProgress(state, palette)
+        DosingProgramModeUiState.SINGLE ->
+            DosingSingleProgramProgress(state, palette, typography, modifier)
+        DosingProgramModeUiState.HOURLY_24 ->
+            DosingHourlyProgramProgress(state, palette, typography, modifier)
+        DosingProgramModeUiState.CUSTOM_PERIODS ->
+            DosingCustomProgramProgress(state, palette, typography, modifier)
+        DosingProgramModeUiState.TIMER ->
+            DosingTimerProgramProgress(state, palette, typography, modifier)
         null -> Unit
     }
 }
@@ -119,13 +96,14 @@ private fun DosingModeProgressGraphic(
 @Composable
 private fun DosingNoDoseTodayProgress(
     palette: DosingProgressPalette,
-    typography: AquaDeviceCardTypography
+    typography: AquaDeviceCardTypography,
+    modifier: Modifier = Modifier
 ) {
     val shape = RoundedCornerShape(PROGRESS_CORNER_RADIUS)
     Box(
-        modifier = Modifier
+        modifier = modifier
             .fillMaxWidth()
-            .height(PROGRESS_GRAPHIC_HEIGHT)
+            .height(PROGRESS_RAIL_HEIGHT)
             .clip(shape)
             .background(palette.track)
             .border(width = PROGRESS_OUTLINE_WIDTH, color = palette.outline, shape = shape),
@@ -147,7 +125,11 @@ private fun DosingManualDosePill(
     typography: AquaDeviceCardTypography
 ) {
     val shape = RoundedCornerShape(MANUAL_PILL_CORNER_RADIUS)
-    Column(
+    val description = stringResource(
+        R.string.device_dosing_channel_manual_description,
+        amountMl
+    )
+    Box(
         modifier = Modifier
             .widthIn(min = MANUAL_PILL_MIN_WIDTH, max = MANUAL_PILL_MAX_WIDTH)
             .height(MANUAL_PILL_HEIGHT)
@@ -158,32 +140,15 @@ private fun DosingManualDosePill(
                 color = colors.accent.copy(alpha = MANUAL_OUTLINE_ALPHA),
                 shape = shape
             )
-            .padding(horizontal = MANUAL_HORIZONTAL_PADDING),
-        verticalArrangement = Arrangement.Center,
-        horizontalAlignment = Alignment.CenterHorizontally
+            .padding(horizontal = MANUAL_HORIZONTAL_PADDING)
+            .semantics { contentDescription = description },
+        contentAlignment = Alignment.Center
     ) {
-        Row(
-            horizontalArrangement = Arrangement.spacedBy(MANUAL_ICON_GAP),
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            DosingManualDoseGlyph(
-                tint = colors.accent,
-                modifier = Modifier.size(MANUAL_ICON_SIZE)
-            )
-            BasicText(
-                text = stringResource(R.string.device_dosing_channel_manual_label),
-                style = typography.micro.copy(color = colors.secondaryText),
-                maxLines = 1
-            )
-        }
         BasicText(
             text = stringResource(R.string.device_dosing_channel_manual_amount_format, amountMl),
-            modifier = Modifier.fillMaxWidth(),
-            style = typography.micro.copy(
-                color = colors.accent,
-                textAlign = TextAlign.Center
-            ),
-            maxLines = 1
+            style = typography.micro.copy(color = colors.accent),
+            maxLines = 1,
+            overflow = TextOverflow.Clip
         )
     }
 }
@@ -197,7 +162,8 @@ internal data class DosingProgressPalette(
     val pending: Color,
     val skipped: Color,
     val uncertain: Color,
-    val valueText: Color
+    val valueText: Color,
+    val inlineValueText: Color
 )
 
 private fun dosingProgressPalette(
@@ -220,26 +186,28 @@ private fun dosingProgressPalette(
         ),
         skipped = colors.warning,
         uncertain = colors.danger,
-        valueText = if (disabled) colors.secondaryText else colors.primaryText
+        valueText = if (disabled) colors.secondaryText else colors.primaryText,
+        inlineValueText = when {
+            error -> colors.primaryText
+            disabled -> colors.secondaryText
+            else -> colors.surface
+        }
     )
 }
 
-private const val MANUAL_BACKGROUND_ALPHA = 0.12f
-private const val MANUAL_OUTLINE_ALPHA = 0.40f
+private const val MANUAL_BACKGROUND_ALPHA = 0.04f
+private const val MANUAL_OUTLINE_ALPHA = 0.62f
 private const val ERROR_OUTLINE_ALPHA = 0.58f
 private const val DISABLED_ALPHA = 0.48f
 private const val DISABLED_PENDING_ALPHA = 0.24f
 private const val PENDING_ALPHA = 0.36f
 private const val COMPLETED_ALPHA = 0.76f
-internal val PROGRESS_GRAPHIC_HEIGHT = 24.dp
+internal val PROGRESS_RAIL_HEIGHT = 20.dp
 internal val PROGRESS_CORNER_RADIUS = 8.dp
 internal val PROGRESS_OUTLINE_WIDTH = 1.dp
-private val PROGRESS_HEADER_GAP = 3.dp
 private val PROGRESS_TO_MANUAL_GAP = 8.dp
 private val MANUAL_PILL_MIN_WIDTH = 78.dp
 private val MANUAL_PILL_MAX_WIDTH = 92.dp
-private val MANUAL_PILL_HEIGHT = 39.dp
-private val MANUAL_PILL_CORNER_RADIUS = 12.dp
+private val MANUAL_PILL_HEIGHT = PROGRESS_RAIL_HEIGHT
+private val MANUAL_PILL_CORNER_RADIUS = PROGRESS_CORNER_RADIUS
 private val MANUAL_HORIZONTAL_PADDING = 7.dp
-private val MANUAL_ICON_GAP = 3.dp
-private val MANUAL_ICON_SIZE = 11.dp

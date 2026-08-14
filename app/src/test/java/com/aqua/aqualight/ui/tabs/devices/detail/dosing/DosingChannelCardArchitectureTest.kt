@@ -68,14 +68,19 @@ class DosingChannelCardArchitectureTest {
     fun `each firmware program mode owns a distinct progress renderer`() {
         val progress = source(CARD_SOURCE_ROOT + "DosingProgramProgress.kt")
         val modes = source(CARD_SOURCE_ROOT + "DosingProgramProgressModes.kt")
+        val rail = source(CARD_SOURCE_ROOT + "DosingDoseRail.kt")
 
         assertTrue(progress.contains("DosingSingleProgramProgress"))
         assertTrue(progress.contains("DosingHourlyProgramProgress"))
         assertTrue(progress.contains("DosingCustomProgramProgress"))
         assertTrue(progress.contains("DosingTimerProgramProgress"))
-        assertTrue(modes.contains("HOURLY_CELLS_PER_ROW = 12"))
-        assertTrue(modes.contains("occurrence.timeFraction"))
-        assertTrue(modes.contains("state.customPeriods"))
+        assertTrue(modes.contains("DosingDoseRail"))
+        assertTrue(rail.contains("occurrence.startFraction"))
+        assertTrue(rail.contains("occurrence.endFraction"))
+        assertTrue(modes.contains("state.customGroupBreaks()"))
+        assertTrue(rail.contains("DosingProgressMarkerScale"))
+        assertFalse(rail.contains("occurrence.timeFraction"))
+        assertFalse(rail.contains("TIMER_NODE_RADIUS"))
         assertFalse(progress.contains("DosingDoseProgressBar"))
     }
 
@@ -87,8 +92,12 @@ class DosingChannelCardArchitectureTest {
         val summary = source(CARD_SOURCE_ROOT + "DosingChannelCardSummary.kt")
 
         assertTrue(progressMapper.contains("usageToday.manualDeliveredMicroliters"))
+        assertTrue(progressMapper.contains("withDoseFractions()"))
+        assertTrue(progressMapper.contains("toProgressMarkers"))
         assertTrue(progress.contains("state.manualDeliveredTodayMl > 0.0"))
         assertTrue(progress.contains("DosingManualDosePill"))
+        assertTrue(progress.contains("MANUAL_PILL_HEIGHT = PROGRESS_RAIL_HEIGHT"))
+        assertFalse(progress.contains("device_dosing_channel_manual_label"))
         assertTrue(reservoirMapper.contains("if (!reservoir.trackingEnabled) return null"))
         assertTrue(summary.contains("state.reservoir?.let"))
         assertFalse(progress.contains("scheduledDeliveredTodayMl +"))
@@ -157,6 +166,7 @@ class DosingChannelCardArchitectureTest {
             CARD_SOURCE_ROOT + "DosingChannelCardGlyphs.kt",
             CARD_SOURCE_ROOT + "DosingProgramProgress.kt",
             CARD_SOURCE_ROOT + "DosingProgramProgressModes.kt",
+            CARD_SOURCE_ROOT + "DosingDoseRail.kt",
             CARD_SOURCE_ROOT + "DosingReservoirProjection.kt",
             CARD_SOURCE_ROOT + "DosingReservoirSummary.kt",
             DOSING_SOURCE_ROOT + "DosingPumpDeviceCompose.kt",

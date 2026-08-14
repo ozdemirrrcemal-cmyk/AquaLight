@@ -17,7 +17,7 @@
     <string name="device_dosing_channel_calibration_required_description">Bu kanalı yapılandırıp kullanmadan önce pompayı kalibre edin.</string>
     <string name="device_dosing_channel_program_empty_title">Dozaj programını ayarlayın</string>
     <string name="device_dosing_channel_program_empty_description">Bu kanal için günlük dozu, program modunu ve dozaj günlerini seçin.</string>
-    <string name="device_dosing_channel_daily_dose_format">%1$.2f mL</string>
+    <string name="device_dosing_channel_daily_dose_format">%1$.2f mL/gün</string>
     <string name="device_dosing_channel_every_day">Her gün</string>
     <string name="device_dosing_channel_weekdays">Hafta içi</string>
     <string name="device_dosing_channel_weekend">Hafta sonu</string>
@@ -33,17 +33,17 @@
     <string name="device_dosing_channel_mode_hourly">Saatlik</string>
     <string name="device_dosing_channel_mode_custom">Özel aralıklar</string>
     <string name="device_dosing_channel_mode_timer">Zamanlayıcı</string>
-    <string name="device_dosing_channel_mode_progress_format">%1$d/%2$d · %3$s</string>
-    <string name="device_dosing_channel_no_dose_today_format">Bugün doz yok · %1$s</string>
-    <string name="device_dosing_channel_progress_today">Bugün</string>
-    <string name="device_dosing_channel_progress_amount_format">%1$.2f / %2$.2f mL</string>
+    <string name="device_dosing_channel_mode_progress_format">%3$s · %1$d/%2$d</string>
+    <string name="device_dosing_channel_no_dose_today_format">%1$s · Bugün doz yok</string>
+    <string name="device_dosing_channel_progress_delivered_format">%1$.2f mL</string>
+    <string name="device_dosing_channel_progress_marker_format">%1$.2f</string>
     <plurals name="device_dosing_channel_progress_description">
         <item quantity="one">%1$s modu. %2$d/%3$d programlı doz tamamlandı; %4$.2f/%5$.2f mL verildi.</item>
         <item quantity="other">%1$s modu. %2$d/%3$d programlı doz tamamlandı; %4$.2f/%5$.2f mL verildi.</item>
     </plurals>
     <string name="device_dosing_channel_no_scheduled_dose_today">Bugün programlı doz yok</string>
-    <string name="device_dosing_channel_manual_label">Manuel</string>
     <string name="device_dosing_channel_manual_amount_format">+%1$.2f mL</string>
+    <string name="device_dosing_channel_manual_description">Bugün verilen manuel doz: %1$.2f mL.</string>
     <plurals name="device_dosing_channel_reservoir_days_format">
         <item quantity="one">~%1$d gün · %2$.1f mL</item>
         <item quantity="other">~%1$d gün · %2$.1f mL</item>
