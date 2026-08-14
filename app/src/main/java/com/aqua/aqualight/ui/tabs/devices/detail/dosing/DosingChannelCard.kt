@@ -79,11 +79,6 @@ internal fun DosingChannelCard(
                     colors = colors,
                     typography = typography
                 )
-                DosingDoseProgressBar(
-                    state = state.doseProgress,
-                    colors = colors,
-                    typography = typography
-                )
             }
         }
     }
@@ -271,7 +266,7 @@ private fun DosingChannelSummary(
             icon = DosingSummaryIcon.DOSE,
             label = stringResource(
                 R.string.device_dosing_channel_daily_dose_format,
-                state.doseProgress.dailyDoseMl
+                state.dailyDoseMl
             ),
             colors = colors,
             typography = typography,
