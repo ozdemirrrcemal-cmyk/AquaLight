@@ -15,15 +15,17 @@ import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.unit.dp
 
 @Composable
-internal fun DosingSummaryGlyph(
-    icon: DosingSummaryIcon,
+internal fun DosingCardMetricGlyph(
+    icon: DosingCardMetricIcon,
     tint: Color,
     modifier: Modifier = Modifier
 ) {
     Canvas(modifier = modifier) {
         when (icon) {
-            DosingSummaryIcon.DOSE -> drawDoseGlyph(tint)
-            DosingSummaryIcon.DAYS -> drawScheduleDaysGlyph(tint)
+            DosingCardMetricIcon.DOSE -> drawDoseGlyph(tint)
+            DosingCardMetricIcon.SCHEDULE -> drawScheduleGlyph(tint)
+            DosingCardMetricIcon.RESERVOIR -> drawReservoirGlyph(tint)
+            DosingCardMetricIcon.MANUAL -> drawManualGlyph(tint)
         }
     }
 }
@@ -42,9 +44,11 @@ internal fun DosingEmptyStateGlyph(
     }
 }
 
-internal enum class DosingSummaryIcon {
+internal enum class DosingCardMetricIcon {
     DOSE,
-    DAYS
+    SCHEDULE,
+    RESERVOIR,
+    MANUAL
 }
 
 private fun DrawScope.drawDoseGlyph(color: Color) {
@@ -109,11 +113,7 @@ private fun DrawScope.drawEmptyStateDoseGlyph(
     val badgeRadius = size.minDimension * EMPTY_BADGE_RADIUS
     val plusArm = size.minDimension * EMPTY_BADGE_PLUS_ARM
 
-    drawCircle(
-        color = badgeSurface,
-        radius = badgeRadius,
-        center = badgeCenter
-    )
+    drawCircle(color = badgeSurface, radius = badgeRadius, center = badgeCenter)
     drawCircle(
         color = color.copy(alpha = EMPTY_BADGE_OUTLINE_ALPHA),
         radius = badgeRadius,
@@ -136,43 +136,93 @@ private fun DrawScope.drawEmptyStateDoseGlyph(
     )
 }
 
-private fun DrawScope.drawScheduleDaysGlyph(color: Color) {
-    val strokeWidth = SCHEDULE_GLYPH_STROKE.toPx()
-    val bodyTop = size.height * SCHEDULE_BODY_TOP_Y
-    val bodyLeft = size.width * SCHEDULE_BODY_LEFT_X
-    val bodyWidth = size.width * SCHEDULE_BODY_WIDTH
-    val bodyHeight = size.height * SCHEDULE_BODY_HEIGHT
+private fun DrawScope.drawScheduleGlyph(color: Color) {
+    val stroke = SCHEDULE_GLYPH_STROKE.toPx()
+    val centerY = size.height * SCHEDULE_CENTER_Y
+    val nodeRadius = size.minDimension * SCHEDULE_NODE_RADIUS
+    val left = size.width * SCHEDULE_LEFT_X
+    val right = size.width * SCHEDULE_RIGHT_X
+
+    drawLine(
+        color = color.copy(alpha = SCHEDULE_LINE_ALPHA),
+        start = Offset(left, centerY),
+        end = Offset(right, centerY),
+        strokeWidth = stroke,
+        cap = StrokeCap.Round
+    )
+    SCHEDULE_NODE_X.forEachIndexed { index, x ->
+        val filled = index == SCHEDULE_ACTIVE_NODE_INDEX
+        drawCircle(
+            color = if (filled) color else Color.Transparent,
+            radius = nodeRadius,
+            center = Offset(size.width * x, centerY)
+        )
+        drawCircle(
+            color = color,
+            radius = nodeRadius,
+            center = Offset(size.width * x, centerY),
+            style = Stroke(width = stroke)
+        )
+    }
+}
+
+private fun DrawScope.drawReservoirGlyph(color: Color) {
+    val stroke = RESERVOIR_GLYPH_STROKE.toPx()
+    val bodyLeft = size.width * RESERVOIR_LEFT_X
+    val bodyTop = size.height * RESERVOIR_TOP_Y
+    val bodyWidth = size.width * RESERVOIR_WIDTH
+    val bodyHeight = size.height * RESERVOIR_HEIGHT
+    val radius = CornerRadius(size.minDimension * RESERVOIR_CORNER_RATIO)
 
     drawRoundRect(
         color = color,
         topLeft = Offset(bodyLeft, bodyTop),
         size = Size(bodyWidth, bodyHeight),
-        cornerRadius = CornerRadius(SCHEDULE_CORNER_RADIUS.toPx()),
-        style = Stroke(width = strokeWidth)
+        cornerRadius = radius,
+        style = Stroke(width = stroke)
     )
     drawLine(
         color = color,
-        start = Offset(bodyLeft, size.height * SCHEDULE_HEADER_Y),
-        end = Offset(bodyLeft + bodyWidth, size.height * SCHEDULE_HEADER_Y),
-        strokeWidth = strokeWidth,
+        start = Offset(size.width * RESERVOIR_CAP_LEFT_X, size.height * RESERVOIR_CAP_Y),
+        end = Offset(size.width * RESERVOIR_CAP_RIGHT_X, size.height * RESERVOIR_CAP_Y),
+        strokeWidth = stroke,
         cap = StrokeCap.Round
     )
-    SCHEDULE_BINDER_X.forEach { xFraction ->
-        drawLine(
-            color = color,
-            start = Offset(size.width * xFraction, size.height * SCHEDULE_BINDER_TOP_Y),
-            end = Offset(size.width * xFraction, size.height * SCHEDULE_BINDER_BOTTOM_Y),
-            strokeWidth = strokeWidth,
-            cap = StrokeCap.Round
-        )
-    }
-    SCHEDULE_DOT_X.forEach { xFraction ->
-        drawCircle(
-            color = color,
-            radius = SCHEDULE_DOT_RADIUS.toPx(),
-            center = Offset(size.width * xFraction, size.height * SCHEDULE_DOT_Y)
-        )
-    }
+    drawLine(
+        color = color.copy(alpha = RESERVOIR_LEVEL_ALPHA),
+        start = Offset(size.width * RESERVOIR_LEVEL_LEFT_X, size.height * RESERVOIR_LEVEL_Y),
+        end = Offset(size.width * RESERVOIR_LEVEL_RIGHT_X, size.height * RESERVOIR_LEVEL_Y),
+        strokeWidth = RESERVOIR_LEVEL_STROKE.toPx(),
+        cap = StrokeCap.Round
+    )
+}
+
+private fun DrawScope.drawManualGlyph(color: Color) {
+    val center = Offset(size.width * MANUAL_CENTER_X, size.height * MANUAL_CENTER_Y)
+    val radius = size.minDimension * MANUAL_RADIUS
+    val stroke = MANUAL_GLYPH_STROKE.toPx()
+    val arm = size.minDimension * MANUAL_PLUS_ARM
+
+    drawCircle(
+        color = color,
+        radius = radius,
+        center = center,
+        style = Stroke(width = stroke)
+    )
+    drawLine(
+        color = color,
+        start = Offset(center.x - arm, center.y),
+        end = Offset(center.x + arm, center.y),
+        strokeWidth = stroke,
+        cap = StrokeCap.Round
+    )
+    drawLine(
+        color = color,
+        start = Offset(center.x, center.y - arm),
+        end = Offset(center.x, center.y + arm),
+        strokeWidth = stroke,
+        cap = StrokeCap.Round
+    )
 }
 
 private const val DOSE_CENTER_X = 0.50f
@@ -194,34 +244,47 @@ private const val EMPTY_BADGE_CENTER_Y = 0.72f
 private const val EMPTY_BADGE_RADIUS = 0.20f
 private const val EMPTY_BADGE_PLUS_ARM = 0.075f
 private const val EMPTY_BADGE_OUTLINE_ALPHA = 0.70f
-private const val SCHEDULE_BODY_TOP_Y = 0.18f
-private const val SCHEDULE_BODY_LEFT_X = 0.10f
-private const val SCHEDULE_BODY_WIDTH = 0.80f
-private const val SCHEDULE_BODY_HEIGHT = 0.70f
-private const val SCHEDULE_HEADER_Y = 0.40f
-private const val SCHEDULE_BINDER_TOP_Y = 0.08f
-private const val SCHEDULE_BINDER_BOTTOM_Y = 0.28f
-private const val SCHEDULE_DOT_Y = 0.62f
-private const val SCHEDULE_BINDER_LEFT_X = 0.32f
-private const val SCHEDULE_BINDER_RIGHT_X = 0.68f
-private const val SCHEDULE_DOT_LEFT_X = 0.30f
-private const val SCHEDULE_DOT_CENTER_X = 0.50f
-private const val SCHEDULE_DOT_RIGHT_X = 0.70f
+private const val SCHEDULE_CENTER_Y = 0.52f
+private const val SCHEDULE_LEFT_X = 0.12f
+private const val SCHEDULE_RIGHT_X = 0.88f
+private const val SCHEDULE_NODE_RADIUS = 0.12f
+private const val SCHEDULE_LINE_ALPHA = 0.50f
+private const val SCHEDULE_ACTIVE_NODE_INDEX = 1
+private const val SCHEDULE_NODE_LEFT_X = 0.20f
+private const val SCHEDULE_NODE_CENTER_X = 0.50f
+private const val SCHEDULE_NODE_RIGHT_X = 0.80f
+private const val RESERVOIR_LEFT_X = 0.20f
+private const val RESERVOIR_TOP_Y = 0.22f
+private const val RESERVOIR_WIDTH = 0.60f
+private const val RESERVOIR_HEIGHT = 0.68f
+private const val RESERVOIR_CORNER_RATIO = 0.10f
+private const val RESERVOIR_CAP_LEFT_X = 0.36f
+private const val RESERVOIR_CAP_RIGHT_X = 0.64f
+private const val RESERVOIR_CAP_Y = 0.10f
+private const val RESERVOIR_LEVEL_LEFT_X = 0.31f
+private const val RESERVOIR_LEVEL_RIGHT_X = 0.69f
+private const val RESERVOIR_LEVEL_Y = 0.66f
+private const val RESERVOIR_LEVEL_ALPHA = 0.72f
+private const val MANUAL_CENTER_X = 0.50f
+private const val MANUAL_CENTER_Y = 0.50f
+private const val MANUAL_RADIUS = 0.33f
+private const val MANUAL_PLUS_ARM = 0.15f
 private const val DOSE_GLYPH_STROKE_DP = 1.45f
 private const val EMPTY_BADGE_OUTLINE_WIDTH_DP = 1.10f
 private const val EMPTY_BADGE_PLUS_WIDTH_DP = 1.55f
 private const val SCHEDULE_GLYPH_STROKE_DP = 1.35f
-private const val SCHEDULE_CORNER_RADIUS_DP = 2.5f
-private const val SCHEDULE_DOT_RADIUS_DP = 1.1f
-private val SCHEDULE_BINDER_X = listOf(SCHEDULE_BINDER_LEFT_X, SCHEDULE_BINDER_RIGHT_X)
-private val SCHEDULE_DOT_X = listOf(
-    SCHEDULE_DOT_LEFT_X,
-    SCHEDULE_DOT_CENTER_X,
-    SCHEDULE_DOT_RIGHT_X
+private const val RESERVOIR_GLYPH_STROKE_DP = 1.35f
+private const val RESERVOIR_LEVEL_STROKE_DP = 1.8f
+private const val MANUAL_GLYPH_STROKE_DP = 1.35f
+private val SCHEDULE_NODE_X = listOf(
+    SCHEDULE_NODE_LEFT_X,
+    SCHEDULE_NODE_CENTER_X,
+    SCHEDULE_NODE_RIGHT_X
 )
 private val DOSE_GLYPH_STROKE = DOSE_GLYPH_STROKE_DP.dp
 private val EMPTY_BADGE_OUTLINE_WIDTH = EMPTY_BADGE_OUTLINE_WIDTH_DP.dp
 private val EMPTY_BADGE_PLUS_WIDTH = EMPTY_BADGE_PLUS_WIDTH_DP.dp
 private val SCHEDULE_GLYPH_STROKE = SCHEDULE_GLYPH_STROKE_DP.dp
-private val SCHEDULE_CORNER_RADIUS = SCHEDULE_CORNER_RADIUS_DP.dp
-private val SCHEDULE_DOT_RADIUS = SCHEDULE_DOT_RADIUS_DP.dp
+private val RESERVOIR_GLYPH_STROKE = RESERVOIR_GLYPH_STROKE_DP.dp
+private val RESERVOIR_LEVEL_STROKE = RESERVOIR_LEVEL_STROKE_DP.dp
+private val MANUAL_GLYPH_STROKE = MANUAL_GLYPH_STROKE_DP.dp
