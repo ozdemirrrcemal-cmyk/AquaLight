@@ -24,9 +24,6 @@
     <string name="device_dosing_weekday_fri">Fri</string>
     <string name="device_dosing_weekday_sat">Sat</string>
     <string name="device_dosing_weekday_sun">Sun</string>
-    <string name="device_dosing_channel_dose_progress_description">Daily dose progress. %1$.2f ml delivered today of %2$.2f ml configured.</string>
-    <string name="device_dosing_channel_dose_progress_value_format">%1$.2f ml</string>
-    <string name="device_dosing_channel_dose_scale_value_format">%1$.2f</string>
     <string name="device_dosing_channel_card_content_description">Dosing channel %1$d, %2$s, %3$s</string>
     <string name="device_dosing_channel_open_failed">The dosing channel could not be read from the device. Check the connection and firmware version, then try again.</string>
 
