@@ -19,6 +19,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
@@ -42,8 +43,9 @@ internal fun DosingProgramProgress(
         state.scheduledDeliveredTodayMl,
         state.dailyDoseMl
     )
-    val description = stringResource(
-        R.string.device_dosing_channel_progress_description,
+    val description = pluralStringResource(
+        R.plurals.device_dosing_channel_progress_description,
+        state.totalOccurrences,
         stringResource(mode.labelRes),
         state.completedOccurrences,
         state.totalOccurrences,

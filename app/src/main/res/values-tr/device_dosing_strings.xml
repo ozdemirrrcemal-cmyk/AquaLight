@@ -37,11 +37,17 @@
     <string name="device_dosing_channel_no_dose_today_format">Bugün doz yok · %1$s</string>
     <string name="device_dosing_channel_progress_today">Bugün</string>
     <string name="device_dosing_channel_progress_amount_format">%1$.2f / %2$.2f mL</string>
-    <string name="device_dosing_channel_progress_description">%1$s modu. %2$d/%3$d programlı doz tamamlandı; %4$.2f/%5$.2f mL verildi.</string>
+    <plurals name="device_dosing_channel_progress_description">
+        <item quantity="one">%1$s modu. %2$d/%3$d programlı doz tamamlandı; %4$.2f/%5$.2f mL verildi.</item>
+        <item quantity="other">%1$s modu. %2$d/%3$d programlı doz tamamlandı; %4$.2f/%5$.2f mL verildi.</item>
+    </plurals>
     <string name="device_dosing_channel_no_scheduled_dose_today">Bugün programlı doz yok</string>
     <string name="device_dosing_channel_manual_label">Manuel</string>
     <string name="device_dosing_channel_manual_amount_format">+%1$.2f mL</string>
-    <string name="device_dosing_channel_reservoir_days_format">~%1$d gün · %2$.1f mL</string>
+    <plurals name="device_dosing_channel_reservoir_days_format">
+        <item quantity="one">~%1$d gün · %2$.1f mL</item>
+        <item quantity="other">~%1$d gün · %2$.1f mL</item>
+    </plurals>
     <string name="device_dosing_channel_reservoir_amount_format">%1$.1f mL</string>
     <string name="device_dosing_channel_reservoir_description">Haznede kalan: %1$s</string>
     <string name="device_dosing_channel_card_content_description">Dozaj kanalı %1$d, %2$s, %3$s</string>

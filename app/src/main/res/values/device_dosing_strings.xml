@@ -37,11 +37,17 @@
     <string name="device_dosing_channel_no_dose_today_format">No dose today · %1$s</string>
     <string name="device_dosing_channel_progress_today">Today</string>
     <string name="device_dosing_channel_progress_amount_format">%1$.2f / %2$.2f mL</string>
-    <string name="device_dosing_channel_progress_description">%1$s mode. %2$d of %3$d scheduled doses completed; %4$.2f mL of %5$.2f mL delivered.</string>
+    <plurals name="device_dosing_channel_progress_description">
+        <item quantity="one">%1$s mode. %2$d of %3$d scheduled dose completed; %4$.2f mL of %5$.2f mL delivered.</item>
+        <item quantity="other">%1$s mode. %2$d of %3$d scheduled doses completed; %4$.2f mL of %5$.2f mL delivered.</item>
+    </plurals>
     <string name="device_dosing_channel_no_scheduled_dose_today">No scheduled dose today</string>
     <string name="device_dosing_channel_manual_label">Manual</string>
     <string name="device_dosing_channel_manual_amount_format">+%1$.2f mL</string>
-    <string name="device_dosing_channel_reservoir_days_format">~%1$d days · %2$.1f mL</string>
+    <plurals name="device_dosing_channel_reservoir_days_format">
+        <item quantity="one">~%1$d day · %2$.1f mL</item>
+        <item quantity="other">~%1$d days · %2$.1f mL</item>
+    </plurals>
     <string name="device_dosing_channel_reservoir_amount_format">%1$.1f mL</string>
     <string name="device_dosing_channel_reservoir_description">Reservoir remaining: %1$s</string>
     <string name="device_dosing_channel_card_content_description">Dosing channel %1$d, %2$s, %3$s</string>

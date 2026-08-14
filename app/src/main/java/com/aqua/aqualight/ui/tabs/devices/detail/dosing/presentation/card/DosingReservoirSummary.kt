@@ -13,6 +13,7 @@ import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.drawscope.Stroke
+import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
@@ -31,8 +32,9 @@ internal fun DosingReservoirSummary(
 ) {
     val color = state.tone.color(colors)
     val label = state.estimatedRemainingDays?.let { days ->
-        stringResource(
-            R.string.device_dosing_channel_reservoir_days_format,
+        pluralStringResource(
+            R.plurals.device_dosing_channel_reservoir_days_format,
+            days,
             days,
             state.remainingMl
         )
