@@ -282,8 +282,8 @@ fun AquaDeviceMenuSwitchRow(
     checked: Boolean,
     toggleContentDescription: String,
     onCheckedChange: (Boolean) -> Unit,
-    enabled: Boolean = true,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    enabled: Boolean = true
 ) {
     val colors = aquaDeviceMenuColors()
     val typography = aquaDeviceMenuTypography(colors)
