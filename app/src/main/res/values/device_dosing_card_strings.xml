@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="device_dosing_card_occurrence_count">%1$d/%2$d</string>
+    <string name="device_dosing_card_mode_single">Single</string>
+    <string name="device_dosing_card_mode_hourly24">24 hourly</string>
+    <string name="device_dosing_card_mode_custom_periods">Custom periods</string>
+    <string name="device_dosing_card_mode_timer">Timer</string>
+    <string name="device_dosing_card_reservoir_days">%1$d days</string>
+    <string name="device_dosing_card_reservoir_unknown_days">Days unavailable</string>
+    <string name="device_dosing_card_reservoir_amount">%1$.0f ml</string>
+    <string name="device_dosing_card_progress_amount">%1$.3f / %2$.3f ml</string>
+    <string name="device_dosing_card_manual_amount">Manual +%1$.3f ml</string>
+</resources>
