@@ -23,15 +23,14 @@ data class DosingChannelCardUiState(
     val doseProgress: DosingDoseProgressUiState = DosingDoseProgressUiState()
 )
 
-/**
- * Root-card configuration gate.
- *
- * Only the uncalibrated state has a visible status pill. A calibrated channel is intentionally
- * unlabeled on the root screen; schedule and dosing activity are rendered by their own content.
- */
-enum class DosingChannelVisualState {
-    NOT_CONFIGURED,
-    CALIBRATED
+enum class DosingChannelVisualState(
+    @StringRes val labelRes: Int
+) {
+    NOT_CONFIGURED(R.string.device_dosing_channel_not_configured),
+    READY(R.string.device_dosing_channel_status_ready),
+    SCHEDULED(R.string.device_dosing_channel_status_scheduled),
+    DOSING(R.string.device_dosing_channel_status_dosing),
+    ERROR(R.string.device_dosing_channel_status_attention)
 }
 
 enum class DosingWeekday(
@@ -96,7 +95,7 @@ internal fun DosingChannelCardUiState.withNavigationTarget(
     copy(
         displayName = navigationTarget.channelTitle.ifBlank { displayName },
         visualState = when (navigationTarget.destination) {
-            DeviceDosingChannelDestination.DETAIL -> DosingChannelVisualState.CALIBRATED
+            DeviceDosingChannelDestination.DETAIL -> DosingChannelVisualState.READY
             DeviceDosingChannelDestination.CALIBRATION ->
                 DosingChannelVisualState.NOT_CONFIGURED
         }
