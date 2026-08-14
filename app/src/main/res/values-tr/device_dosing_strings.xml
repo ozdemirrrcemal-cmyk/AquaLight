@@ -1,21 +1,26 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="device_dosing_pump_state_idle">Hazır</string>
+    <string name="device_dosing_pump_state_idle">Boşta</string>
     <string name="device_dosing_pump_state_selected">Seçili</string>
     <string name="device_dosing_pump_state_running">Çalışıyor</string>
     <string name="device_dosing_pump_state_error">Hata</string>
     <string name="device_dosing_pump_channel_content_description">Dozaj kanalı %1$d, %2$s</string>
     <string name="device_dosing_open_settings_description">Cihaz ayarlarını aç</string>
 
-    <string name="device_dosing_channel_status_ready">Hazır</string>
-    <string name="device_dosing_channel_status_scheduled">Programlı</string>
     <string name="device_dosing_channel_status_dosing">Dozaj yapılıyor</string>
     <string name="device_dosing_channel_status_attention">Kontrol gerekli</string>
+    <string name="device_dosing_channel_status_configured">Yapılandırıldı</string>
     <string name="device_dosing_channel_not_configured">Yapılandırılmadı</string>
-    <string name="device_dosing_channel_empty_title">Dozajı yapılandır</string>
-    <string name="device_dosing_channel_empty_description">Bu kanalı kullanmadan önce günlük doz ve program belirleyin.</string>
-    <string name="device_dosing_channel_daily_dose_format">%1$.2f ml</string>
+    <string name="device_dosing_channel_program_not_configured">Program ayarlanmadı</string>
+    <string name="device_dosing_channel_automatic_off">Otomatik doz kapalı</string>
+    <string name="device_dosing_channel_calibration_required">Kalibrasyon gerekli</string>
+    <string name="device_dosing_channel_calibration_required_description">Bu kanalı yapılandırıp kullanmadan önce pompayı kalibre edin.</string>
+    <string name="device_dosing_channel_program_empty_title">Dozaj programını ayarlayın</string>
+    <string name="device_dosing_channel_program_empty_description">Bu kanal için günlük dozu, program modunu ve dozaj günlerini seçin.</string>
+    <string name="device_dosing_channel_daily_dose_format">%1$.2f mL</string>
     <string name="device_dosing_channel_every_day">Her gün</string>
+    <string name="device_dosing_channel_weekdays">Hafta içi</string>
+    <string name="device_dosing_channel_weekend">Hafta sonu</string>
     <string name="device_dosing_channel_no_days_selected">Gün seçilmedi</string>
     <string name="device_dosing_weekday_mon">Pzt</string>
     <string name="device_dosing_weekday_tue">Sal</string>
@@ -24,9 +29,21 @@
     <string name="device_dosing_weekday_fri">Cum</string>
     <string name="device_dosing_weekday_sat">Cmt</string>
     <string name="device_dosing_weekday_sun">Paz</string>
-    <string name="device_dosing_channel_dose_progress_description">Günlük dozaj ilerlemesi. Bugün %1$.2f ml verildi, ayarlanan günlük doz %2$.2f ml.</string>
-    <string name="device_dosing_channel_dose_progress_value_format">%1$.2f ml</string>
-    <string name="device_dosing_channel_dose_scale_value_format">%1$.2f</string>
+    <string name="device_dosing_channel_mode_single">Tek sefer</string>
+    <string name="device_dosing_channel_mode_hourly">Saatlik</string>
+    <string name="device_dosing_channel_mode_custom">Özel aralıklar</string>
+    <string name="device_dosing_channel_mode_timer">Zamanlayıcı</string>
+    <string name="device_dosing_channel_mode_progress_format">%1$d/%2$d · %3$s</string>
+    <string name="device_dosing_channel_no_dose_today_format">Bugün doz yok · %1$s</string>
+    <string name="device_dosing_channel_progress_today">Bugün</string>
+    <string name="device_dosing_channel_progress_amount_format">%1$.2f / %2$.2f mL</string>
+    <string name="device_dosing_channel_progress_description">%1$s modu. %2$d/%3$d programlı doz tamamlandı; %4$.2f/%5$.2f mL verildi.</string>
+    <string name="device_dosing_channel_no_scheduled_dose_today">Bugün programlı doz yok</string>
+    <string name="device_dosing_channel_manual_label">Manuel</string>
+    <string name="device_dosing_channel_manual_amount_format">+%1$.2f mL</string>
+    <string name="device_dosing_channel_reservoir_days_format">~%1$d gün · %2$.1f mL</string>
+    <string name="device_dosing_channel_reservoir_amount_format">%1$.1f mL</string>
+    <string name="device_dosing_channel_reservoir_description">Haznede kalan: %1$s</string>
     <string name="device_dosing_channel_card_content_description">Dozaj kanalı %1$d, %2$s, %3$s</string>
     <string name="device_dosing_channel_open_failed">Dozaj kanalı cihazdan okunamadı. Bağlantıyı ve firmware sürümünü kontrol edip tekrar deneyin.</string>
 
@@ -48,6 +65,8 @@
     <string name="device_dosing_detail_reservoir_description">Kap hacmini ve düşük seviye takibini ayarlayın.</string>
     <string name="device_dosing_detail_manual_title">Manuel Dozaj</string>
     <string name="device_dosing_detail_manual_description">İstediğiniz anda hassas ve tek seferlik bir miktar verin.</string>
+    <string name="device_dosing_detail_manual_stop_title">Manuel dozu durdur</string>
+    <string name="device_dosing_detail_manual_stop_description">Etkin tek seferlik dozu güvenle durdurun.</string>
     <string name="device_dosing_detail_reset_title">Kanalı sıfırla</string>
     <string name="device_dosing_detail_reset_description">Bu kanala ait tüm dozaj yapılandırmasını kalıcı olarak temizleyin.</string>
 
@@ -75,6 +94,7 @@
     <string name="device_dosing_detail_schedule_timer">Zamanlayıcı</string>
     <string name="device_dosing_detail_recurrence_section">Tekrar</string>
     <string name="device_dosing_detail_save_plan">Dozaj planını kaydet</string>
+    <string name="device_dosing_plan_saved">Dozaj planı kaydedildi.</string>
 
     <string name="device_dosing_single_title">Tek sefer</string>
     <string name="device_dosing_single_hero_eyebrow">Tek seferlik zamanlama</string>
@@ -95,7 +115,7 @@
 
     <string name="device_dosing_hourly_hero_eyebrow">24 saatlik zamanlama</string>
     <string name="device_dosing_hourly_hero_title">Dengeli dozaj, her saat bir uygulama</string>
-    <string name="device_dosing_hourly_hero_description">AquaLight günlük miktarı 24 porsiyona böler ve her saatin seçtiğiniz dakikasında birini uygular.</string>
+    <string name="device_dosing_hourly_hero_description">AquaLight günlük miktarı 24 porsiyona böler; seçtiğiniz saatte başlar ve her saat bir doz uygular.</string>
     <string name="device_dosing_hourly_summary_section">Dağıtım özeti</string>
     <string name="device_dosing_hourly_daily_amount_description">Dozaj Planı ekranında belirlenen günlük miktarı kullanır.</string>
     <string name="device_dosing_hourly_frequency">Günlük uygulama</string>
@@ -105,15 +125,16 @@
     <string name="device_dosing_hourly_average_dose_format">≈%1$.3f ml</string>
     <string name="device_dosing_hourly_average_dose_description">Toplam günlük miktar korunarak 24 uygulama arasında hassas biçimde paylaştırılır.</string>
     <string name="device_dosing_hourly_timing_section">Saatlik zamanlama</string>
-    <string name="device_dosing_hourly_minute_title">Uygulama dakikası</string>
-    <string name="device_dosing_hourly_minute_description">Pompa her saatin bu dakikasında çalışır.</string>
+    <string name="device_dosing_hourly_start_time_title">İlk doz saati</string>
+    <string name="device_dosing_hourly_start_time_description">Bu saat programın başladığı günü belirler; sonraki 23 doz birer saat arayla uygulanır.</string>
     <string name="device_dosing_hourly_window_title">İlk ve son doz</string>
     <string name="device_dosing_hourly_window_format">%1$s – %2$s</string>
-    <string name="device_dosing_hourly_window_description">Birer saat arayla toplam 24 uygulama yapılır.</string>
+    <string name="device_dosing_hourly_window_description">Toplam 24 doz birer saat arayla uygulanır; dizi ertesi gün sona erebilir.</string>
+    <string name="device_dosing_hourly_next_day_time_format">%1$s (ertesi gün)</string>
     <string name="device_dosing_hourly_use_action">Saatlik dağıtımı kullan</string>
-    <string name="device_dosing_hourly_minute_picker_title">Uygulama dakikasını seçin</string>
-    <string name="device_dosing_hourly_minute_picker_message">AquaLight her saatin seçtiğiniz dakikasında bir doz uygular.</string>
-    <string name="device_dosing_hourly_minute_picker_confirm">Dakikayı uygula</string>
+    <string name="device_dosing_hourly_start_time_picker_title">İlk doz saatini seçin</string>
+    <string name="device_dosing_hourly_start_time_picker_message">Seçilen saat 24 dozluk diziyi başlatır. Sonraki dozlar birer saat arayla uygulanır.</string>
+    <string name="device_dosing_hourly_start_time_picker_confirm">Saati uygula</string>
 
     <string name="device_dosing_schedule_add">Ekle</string>
     <string name="device_dosing_schedule_validation_section">Programı kontrol et</string>
@@ -158,7 +179,7 @@
     <string name="device_dosing_custom_count_decrease_description">Uygulama sayısını azalt</string>
     <string name="device_dosing_custom_count_increase_description">Uygulama sayısını artır</string>
     <string name="device_dosing_custom_error_invalid_period">Bitiş zamanı başlangıç zamanından sonra olmalıdır.</string>
-    <string name="device_dosing_custom_error_too_many">Özel aralıklarda günde en fazla 24 toplam uygulama kullanılabilir.</string>
+    <string name="device_dosing_custom_error_too_many">Bu plan, kanalın özel aralık veya günlük uygulama sınırını aşıyor.</string>
     <string name="device_dosing_custom_error_overlap">Bu aralık mevcut bir aralıkla çakışıyor. Ayrı bir zaman aralığı seçin.</string>
 
     <string name="device_dosing_timer_hero_eyebrow">Zamanlayıcı programı</string>
@@ -187,7 +208,7 @@
     <string name="device_dosing_timer_amount_editor_add">Dozu ekle</string>
     <string name="device_dosing_timer_amount_editor_update">Değişiklikleri uygula</string>
     <string name="device_dosing_timer_error_invalid_amount">0 ml’den büyük ve en fazla üç ondalık basamaklı bir doz miktarı girin.</string>
-    <string name="device_dosing_timer_error_too_many">Zamanlayıcı modunda günde en fazla 24 doz kullanılabilir.</string>
+    <string name="device_dosing_timer_error_too_many">Bu plan, kanalın zamanlayıcı doz sınırını aşıyor.</string>
     <string name="device_dosing_timer_error_duplicate_time">Bu saatte zaten bir Zamanlayıcı dozu var. Mevcut kaydı düzenleyin veya başka saat seçin.</string>
     <string name="device_dosing_timer_error_total">Toplam doz miktarı çok büyük. Bir veya daha fazla Zamanlayıcı kaydını azaltın.</string>
 
@@ -212,12 +233,18 @@
     <string name="device_dosing_detail_manual_amount_hint">Örn. 2,50</string>
     <string name="device_dosing_detail_manual_amount_description">Seçili kanala tek seferlik uygulanacak miktarı girin.</string>
     <string name="device_dosing_detail_manual_amount_required">0 ml’den büyük bir doz miktarı girin.</string>
+    <string name="device_dosing_detail_manual_amount_invalid">Bu pompanın desteklediği manuel doz aralığında bir miktar girin.</string>
     <string name="device_dosing_detail_ml_unit">ml</string>
     <string name="device_dosing_detail_dispense_dose">Dozu Uygula</string>
 
     <string name="device_dosing_detail_reset_warning_title">Bu dozaj kanalı sıfırlansın mı?</string>
     <string name="device_dosing_detail_reset_warning_description">Bu işlem, bu kanala ait tüm dozaj yapılandırmasını kalıcı olarak temizler.</string>
     <string name="device_dosing_detail_reset_action">Kanalı sıfırla</string>
+    <string name="device_dosing_detail_settings_saved">Dozaj ayarı kaydedildi.</string>
+    <string name="device_dosing_detail_manual_started">Manuel doz başlatıldı.</string>
+    <string name="device_dosing_detail_manual_stopped">Manuel doz durduruldu.</string>
+    <string name="device_dosing_detail_channel_reset_done">Dozaj kanalı sıfırlandı.</string>
+    <string name="device_dosing_detail_operation_failed">Dozaj değişikliği uygulanamadı. Tekrar deneyin.</string>
 
     <string name="device_dosing_calibration_step_progress">%1$d. adım / %2$d</string>
     <string name="device_dosing_calibration_name_title">Dozaj kanalını tanımlayın</string>

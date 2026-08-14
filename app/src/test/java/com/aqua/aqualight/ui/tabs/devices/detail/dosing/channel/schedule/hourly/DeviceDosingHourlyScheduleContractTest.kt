@@ -9,27 +9,37 @@ import org.junit.Test
 class DeviceDosingHourlyScheduleContractTest {
 
     @Test
-    fun `minute offset round trips through hourly start time`() {
-        val startTimeMs = DeviceDosingHourlyScheduleContract.startTimeMs(15)
+    fun `time of day round trips through hourly start time`() {
+        val startTimeMs = DeviceDosingHourlyScheduleContract.startTimeMs(10 * 60 + 15)
 
-        assertEquals(900_000L, startTimeMs)
-        assertEquals(15, DeviceDosingHourlyScheduleContract.minuteOfHour(startTimeMs))
+        assertEquals(36_900_000L, startTimeMs)
+        assertEquals(615, DeviceDosingHourlyScheduleContract.minutesOfDay(startTimeMs))
     }
 
     @Test
-    fun `hourly start time stays inside the first hour and aligns to minutes`() {
+    fun `hourly start time accepts the full day without normalizing firmware milliseconds`() {
         assertTrue(DeviceDosingHourlyScheduleContract.isValidStartTime(0L))
         assertTrue(
             DeviceDosingHourlyScheduleContract.isValidStartTime(
-                DeviceDosingHourlyScheduleContract.LAST_MILLISECOND_OF_HOUR
+                DeviceDosingHourlyScheduleContract.LAST_MILLISECOND_OF_DAY
             )
         )
+        assertTrue(DeviceDosingHourlyScheduleContract.isValidStartTime(36_900_123L))
         assertFalse(DeviceDosingHourlyScheduleContract.isValidStartTime(-1L))
-        assertFalse(DeviceDosingHourlyScheduleContract.isValidStartTime(3_600_000L))
+        assertFalse(DeviceDosingHourlyScheduleContract.isValidStartTime(86_400_000L))
+        assertEquals(615, DeviceDosingHourlyScheduleContract.minutesOfDay(36_900_123L))
+    }
+
+    @Test
+    fun `last hourly occurrence keeps the firmware program day offset`() {
+        val start = DeviceDosingHourlyScheduleContract.startTimeMs(10 * 60 + 15)
+
         assertEquals(
-            60_000L,
-            DeviceDosingHourlyScheduleContract.minuteAlignedStartTime(119_999L)
+            DeviceDosingHourlyScheduleContract.startTimeMs(9 * 60 + 15),
+            DeviceDosingHourlyScheduleContract.lastDoseTimeMs(start)
         )
+        assertTrue(DeviceDosingHourlyScheduleContract.lastDoseFallsOnNextDay(start))
+        assertFalse(DeviceDosingHourlyScheduleContract.lastDoseFallsOnNextDay(900_000L))
     }
 
     @Test
@@ -49,10 +59,15 @@ class DeviceDosingHourlyScheduleContractTest {
             DeviceDosingHourlyScheduleContract.startTimeMs(-1)
         }
         assertThrows(IllegalArgumentException::class.java) {
-            DeviceDosingHourlyScheduleContract.startTimeMs(60)
+            DeviceDosingHourlyScheduleContract.startTimeMs(1_440)
         }
         assertThrows(IllegalArgumentException::class.java) {
             DeviceDosingHourlyScheduleContract.dailyDoseMl(-1L)
+        }
+        assertThrows(IllegalArgumentException::class.java) {
+            DeviceDosingHourlyScheduleContract.lastDoseTimeMs(
+                DeviceDosingHourlyScheduleContract.MILLIS_PER_DAY
+            )
         }
     }
 }

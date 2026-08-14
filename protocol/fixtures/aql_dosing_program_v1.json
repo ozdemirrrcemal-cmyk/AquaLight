@@ -1,0 +1,157 @@
+{
+  "fixtureVersion": 1,
+  "schema": "aqualight.dosing.v1",
+  "schemaVersion": 1,
+  "weekdayOrder": [
+    "monday",
+    "tuesday",
+    "wednesday",
+    "thursday",
+    "friday",
+    "saturday",
+    "sunday"
+  ],
+  "limits": {
+    "maxEventsPerChannel": 24,
+    "maxCustomPeriodsPerChannel": 24,
+    "amountResolutionMl": 0.001
+  },
+  "supportedModes": [
+    "single",
+    "hourly24",
+    "customPeriods",
+    "timer"
+  ],
+  "examples": {
+    "single": {
+      "channelKey": "channel1",
+      "revision": 4,
+      "enabled": true,
+      "weekdays": [true, true, true, true, true, true, true],
+      "mode": "single",
+      "missedDoseRecoveryEnabled": false,
+      "config": {
+        "dailyDoseMl": 3.0,
+        "startTimeMs": 36000000
+      },
+      "compiled": [
+        {"programDayOffset": 0, "timeMs": 36000000, "amountMl": 3.0}
+      ]
+    },
+    "hourly24": {
+      "channelKey": "channel1",
+      "revision": 5,
+      "enabled": true,
+      "weekdays": [true, false, false, false, false, false, false],
+      "mode": "hourly24",
+      "missedDoseRecoveryEnabled": false,
+      "config": {
+        "dailyDoseMl": 2.4,
+        "startTimeMs": 36900000
+      },
+      "invariants": {
+        "occurrenceCount": 24,
+        "spacingMs": 3600000,
+        "first": {"programDayOffset": 0, "timeMs": 36900000},
+        "lastBeforeMidnight": {"programDayOffset": 0, "timeMs": 83700000},
+        "firstAfterMidnight": {"programDayOffset": 1, "timeMs": 900000},
+        "last": {"programDayOffset": 1, "timeMs": 33300000},
+        "totalAmountMl": 2.4
+      }
+    },
+    "customPeriods": {
+      "channelKey": "channel1",
+      "revision": 6,
+      "enabled": true,
+      "weekdays": [true, true, true, true, true, true, true],
+      "mode": "customPeriods",
+      "missedDoseRecoveryEnabled": false,
+      "config": {
+        "dailyDoseMl": 6.0,
+        "periods": [
+          {"startTimeMs": 36000000, "endTimeMs": 39600000, "doseCount": 3},
+          {"startTimeMs": 50400000, "endTimeMs": 57600000, "doseCount": 3}
+        ]
+      },
+      "compiled": [
+        {"programDayOffset": 0, "timeMs": 36000000, "amountMl": 1.0},
+        {"programDayOffset": 0, "timeMs": 37800000, "amountMl": 1.0},
+        {"programDayOffset": 0, "timeMs": 39600000, "amountMl": 1.0},
+        {"programDayOffset": 0, "timeMs": 50400000, "amountMl": 1.0},
+        {"programDayOffset": 0, "timeMs": 54000000, "amountMl": 1.0},
+        {"programDayOffset": 0, "timeMs": 57600000, "amountMl": 1.0}
+      ]
+    },
+    "timer": {
+      "channelKey": "channel1",
+      "revision": 7,
+      "enabled": true,
+      "weekdays": [true, true, true, true, true, true, true],
+      "mode": "timer",
+      "missedDoseRecoveryEnabled": false,
+      "config": {
+        "events": [
+          {"timeMs": 36000000, "amountMl": 1.0},
+          {"timeMs": 50400000, "amountMl": 5.0}
+        ]
+      },
+      "derivedDailyDoseMl": 6.0,
+      "compiled": [
+        {"programDayOffset": 0, "timeMs": 36000000, "amountMl": 1.0},
+        {"programDayOffset": 0, "timeMs": 50400000, "amountMl": 5.0}
+      ]
+    }
+  },
+  "programApply": {
+    "command": "dosing.program.apply",
+    "requestFields": ["channelKey", "expectedRevision", "program"],
+    "successFields": ["operation", "channelKey", "saved", "event", "channel"]
+  },
+  "channelReset": {
+    "command": "dosing.channel.reset",
+    "request": {
+      "channelKey": "channel1",
+      "expectedRevision": 17
+    },
+    "invariants": {
+      "revisionIncrements": true,
+      "programBecomesNull": true,
+      "displayNameOverrideCleared": true,
+      "confirmedAndPendingCalibrationCleared": true,
+      "reservoirUserConfigBecomesUnconfigured": true,
+      "usageTodayReset": true,
+      "hardwareIdentityPreserved": true,
+      "otherChannelsUnchanged": true,
+      "atomicPersistentUserState": true
+    }
+  },
+  "usageToday": {
+    "localDateFormat": "YYYY-MM-DD",
+    "fields": [
+      "scheduledDeliveredMl",
+      "manualDeliveredMl",
+      "totalDeliveredMl"
+    ],
+    "totalFormula": "scheduledDeliveredMl + manualDeliveredMl",
+    "excludedRunSources": ["calibration", "verification", "prime"]
+  },
+  "runSources": [
+    "scheduled",
+    "manual",
+    "calibration",
+    "verification",
+    "prime"
+  ],
+  "invariants": {
+    "firmwareAuthoritative": true,
+    "oneOptionalProgramPerChannel": true,
+    "wallClockTimeIndependentFromCalibration": true,
+    "currentConfirmedCalibrationControlsScheduledRunDuration": true,
+    "pendingCalibrationControlsVerificationRunDurationAndAccounting": true,
+    "maxCompiledOccurrencesPerChannelPerProgramDay": 24,
+    "dosePro4BoundedOccurrenceCapacity": 96,
+    "standaloneTimerContractSeparate": true,
+    "noV2Schema": true,
+    "noMigrationLayer": true
+  }
+}

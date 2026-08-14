@@ -9,15 +9,6 @@ import com.aqua.aqualight.data.devices.runtime.modules.cooling.DeviceCoolingConf
 import com.aqua.aqualight.data.devices.runtime.modules.cooling.DeviceCoolingFanDisplayNamePayload
 import com.aqua.aqualight.data.devices.runtime.modules.cooling.DeviceCoolingMode
 import com.aqua.aqualight.data.devices.runtime.modules.device.DeviceNameSetRequest
-import com.aqua.aqualight.data.devices.runtime.modules.dosing.models.DeviceDosingCalibrationFinishPayload
-import com.aqua.aqualight.data.devices.runtime.modules.dosing.models.DeviceDosingCalibrationStartPayload
-import com.aqua.aqualight.data.devices.runtime.modules.dosing.models.DeviceDosingChannelConfig
-import com.aqua.aqualight.data.devices.runtime.modules.dosing.models.DeviceDosingChannelDosingConfig
-import com.aqua.aqualight.data.devices.runtime.modules.dosing.models.DeviceDosingChannelKeyPayload
-import com.aqua.aqualight.data.devices.runtime.modules.dosing.models.DeviceDosingConfigApplyPayload
-import com.aqua.aqualight.data.devices.runtime.modules.dosing.models.DeviceDosingDoseNowPayload
-import com.aqua.aqualight.data.devices.runtime.modules.dosing.models.DeviceDosingRegime
-import com.aqua.aqualight.data.devices.runtime.modules.dosing.models.DeviceDosingScheduleConfig
 import com.aqua.aqualight.data.devices.runtime.modules.firmware.DeviceFirmwareOtaStartPayload
 import com.aqua.aqualight.data.devices.runtime.modules.light.DeviceLightChannelRegimeSetPayload
 import com.aqua.aqualight.data.devices.runtime.modules.light.DeviceLightManualChannelPayload
@@ -58,7 +49,7 @@ class AqlFirmwareInteroperabilityTest {
     }
 
     @Test
-    fun `all 41 firmware commands are exact classified and covered`() {
+    fun `firmware commands stay exact while disconnected Android modules stay uncovered`() {
         val commandAccess = websocketGolden.getJSONObject("commandAccess")
         val authenticated = commandAccess.getJSONArray("authenticated").asStringSet()
         val public = commandAccess.getJSONArray("public").asStringSet()
@@ -67,6 +58,14 @@ class AqlFirmwareInteroperabilityTest {
         assertTrue(public.isEmpty())
         assertEquals(public, AqlWsContract.publicCommandKeys())
         assertEquals(authenticated, AqlWsContract.authenticatedCommandKeys())
+
+        val disconnectedModules = interoperability
+            .getJSONArray("androidDisconnectedModules")
+            .asStringSet()
+        assertEquals(setOf("dosing"), disconnectedModules)
+        val connectedCommands = authenticated.filterTo(linkedSetOf()) { command ->
+            command.substringBefore('.') !in disconnectedModules
+        }
 
         authenticated.forEach { qualifiedName ->
             val module = qualifiedName.substringBefore('.')
@@ -83,7 +82,7 @@ class AqlFirmwareInteroperabilityTest {
         val payloadCommandNames = payloadCommands.keySetExact()
 
         assertTrue(payloadless.intersect(payloadCommandNames).isEmpty())
-        assertEquals(authenticated, payloadless + payloadCommandNames)
+        assertEquals(connectedCommands, payloadless + payloadCommandNames)
 
         val referencedSerializers = linkedSetOf<String>()
         payloadCommandNames.forEach { command ->
@@ -281,10 +280,7 @@ class AqlFirmwareInteroperabilityTest {
         assertEquals(product.profile.capabilities.cooling, modules.cooling)
         assertEquals(product.profile.capabilities.temperature, modules.temperature)
         assertEquals(product.family == DeviceFamily.TIMER, modules.timerApi)
-        assertEquals(
-            product.family == DeviceFamily.TIMER || product.family == DeviceFamily.DOSING,
-            modules.timerEngine
-        )
+        assertEquals(product.family == DeviceFamily.TIMER, modules.timerEngine)
         assertEquals(product.family == DeviceFamily.DOSING, modules.dosing)
         assertTrue(modules.network)
         assertTrue(modules.discovery)
@@ -295,7 +291,6 @@ class AqlFirmwareInteroperabilityTest {
     private fun actualSerializerFields(): Map<String, Set<String>> =
         linkedMapOf<String, Set<String>>().apply {
             putAll(coolingSerializerFields())
-            putAll(dosingSerializerFields())
             putAll(firmwareSerializerFields())
             putAll(lightSerializerFields())
             putAll(deviceAndTimeSerializerFields())
@@ -312,50 +307,6 @@ class AqlFirmwareInteroperabilityTest {
                 fans = listOf(fan)
             ).toJson().keySetExact(),
             "DeviceCoolingFanDisplayNamePayload" to fan.toJson().keySetExact()
-        )
-    }
-
-    private fun dosingSerializerFields(): Map<String, Set<String>> {
-        val settings = DeviceDosingChannelDosingConfig(
-            doseMsPerMl = 1_000L,
-            lastCalibratedAt = 1L,
-            reservoirTrackingEnabled = true,
-            reservoirCapacityMl = 500.0
-        )
-        val channel = DeviceDosingChannelConfig(
-            channelKey = "pump-1",
-            displayName = "Macro",
-            regime = DeviceDosingRegime.AUTO,
-            dosing = settings
-        )
-        val schedule = DeviceDosingScheduleConfig(
-            enabled = true,
-            name = "Morning dose",
-            channelKey = "pump-1",
-            weekdays = WEEKDAYS,
-            startTimeMs = 1_000L,
-            intervalOnMs = 1_000L,
-            intervalOffMs = 1_000L,
-            repeatCount = 1,
-            amountMl = 1.0
-        )
-
-        return linkedMapOf(
-            "DeviceDosingCalibrationFinishPayload" to
-                DeviceDosingCalibrationFinishPayload("pump-1", 10.0).toJson().keySetExact(),
-            "DeviceDosingCalibrationStartPayload" to
-                DeviceDosingCalibrationStartPayload("pump-1").toJson().keySetExact(),
-            "DeviceDosingChannelConfig" to channel.toJson().keySetExact(),
-            "DeviceDosingChannelDosingConfig" to settings.toJson().keySetExact(),
-            "DeviceDosingChannelKeyPayload" to
-                DeviceDosingChannelKeyPayload("pump-1").toJson().keySetExact(),
-            "DeviceDosingConfigApplyPayload" to DeviceDosingConfigApplyPayload(
-                channels = listOf(channel),
-                schedules = listOf(schedule)
-            ).toJson().keySetExact(),
-            "DeviceDosingDoseNowPayload" to
-                DeviceDosingDoseNowPayload("pump-1", 1.0, true).toJson().keySetExact(),
-            "DeviceDosingScheduleConfig" to schedule.toJson().keySetExact()
         )
     }
 

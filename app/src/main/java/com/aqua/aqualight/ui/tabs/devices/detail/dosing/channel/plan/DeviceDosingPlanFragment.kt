@@ -7,16 +7,21 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.platform.ComposeView
 import androidx.compose.ui.platform.ViewCompositionStrategy
 import androidx.fragment.app.viewModels
+import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.lifecycle.lifecycleScope
+import androidx.lifecycle.repeatOnLifecycle
 import androidx.navigation.fragment.findNavController
 import androidx.navigation.fragment.navArgs
 import com.aqua.aqualight.R
+import com.aqua.aqualight.base.BaseActivity
 import com.aqua.aqualight.composition.requireAppContainer
 import com.aqua.aqualight.ui.common.bottomsheet.TextInputBottomSheet
 import com.aqua.aqualight.ui.tabs.devices.detail.dosing.channel.common.DeviceDosingChannelDestinationFragment
 import com.aqua.aqualight.ui.tabs.devices.detail.dosing.channel.schedule.DeviceDosingScheduleAmountContract
 import com.aqua.aqualight.ui.tabs.devices.detail.dosing.channel.schedule.custom.DeviceDosingCustomScheduleContract
 import com.aqua.aqualight.ui.tabs.devices.detail.dosing.channel.schedule.timer.DeviceDosingTimerScheduleContract
+import kotlinx.coroutines.launch
 
 /** Navigation/render host for the ViewModel-owned, firmware-independent Dosing Plan draft. */
 class DeviceDosingPlanFragment :
@@ -32,12 +37,17 @@ class DeviceDosingPlanFragment :
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
-        viewModel.bindInitial(DosingPlanDraft.restore(savedInstanceState))
+        viewModel.bind(
+            deviceUidText = args.deviceUid,
+            slotIdText = args.slotId,
+            restoredDraft = savedInstanceState?.let(DosingPlanDraft::restore)
+        )
         setupDailyDoseResult()
         bindDosingPlanScheduleResults(
             host = DosingPlanScheduleResultHost(
                 fragment = this,
                 slotId = args.slotId,
+                scheduling = { viewModel.currentEditorState().scheduling },
                 updateSchedule = viewModel::applyScheduleUpdate
             ),
             lifecycleOwner = viewLifecycleOwner
@@ -49,6 +59,7 @@ class DeviceDosingPlanFragment :
             pumpCount = args.pumpCount,
             channelNumber = args.channelNumber
         )
+        observePlanEvents()
         setupContent(view)
     }
 
@@ -61,13 +72,19 @@ class DeviceDosingPlanFragment :
         view.findViewById<ComposeView>(R.id.channelDetailContent).apply {
             setViewCompositionStrategy(ViewCompositionStrategy.DisposeOnViewTreeLifecycleDestroyed)
             setContent {
-                val draft by viewModel.draft.collectAsStateWithLifecycle()
+                val editorState by viewModel.editorState.collectAsStateWithLifecycle()
+                val draft = editorState.draft
                 DeviceDosingPlanScreen(
                     state = DeviceDosingPlanUiState(
                         dailyDoseMicroliters = draft.displayedDailyDoseMicroliters(),
                         selectedScheduleMode = draft.selectedScheduleMode,
                         scheduleEnabled = draft.scheduleEnabled,
-                        recurrenceState = draft.recurrenceState
+                        recurrenceState = draft.recurrenceState,
+                        supportedModes = editorState.supportedModes,
+                        recurrenceSupported = editorState.scheduling.supportsWeekdayRecurrence,
+                        editorEnabled = editorState.editable &&
+                            !editorState.operationInProgress,
+                        canSave = editorState.canSave
                     ),
                     actions = DeviceDosingPlanActions(
                         onScheduleOptionClick = ::openScheduleEditor,
@@ -79,7 +96,7 @@ class DeviceDosingPlanFragment :
                             onEveryDayClick = viewModel::selectEveryDay,
                             onWeekdaySelectionChange = viewModel::setWeekdaySelected
                         ),
-                        onSaveClick = null
+                        onSaveClick = viewModel::save
                     )
                 )
             }
@@ -101,8 +118,16 @@ class DeviceDosingPlanFragment :
     }
 
     private fun openScheduleEditor(mode: DosingPlanScheduleMode) {
+        val editorState = viewModel.currentEditorState()
         val draft = viewModel.currentDraft()
-        if (!draft.scheduleEnabled) return
+        if (
+            !draft.scheduleEnabled ||
+            !editorState.editable ||
+            editorState.operationInProgress ||
+            mode !in editorState.supportedModes
+        ) {
+            return
+        }
         val navController = findNavController()
         if (navController.currentDestination?.id != R.id.deviceDosingPlanFragment) return
 
@@ -135,7 +160,15 @@ class DeviceDosingPlanFragment :
                     pumpCount = args.pumpCount,
                     channelNumber = args.channelNumber,
                     dailyDoseMicroliters = draft.distributedDailyDoseMicroliters,
-                    periodsDraft = DeviceDosingCustomScheduleContract.encodeDraft(draft.customPeriods)
+                    periodsDraft = DeviceDosingCustomScheduleContract.encodeDraft(
+                        periods = draft.customPeriods,
+                        maxEventsPerChannel = editorState.scheduling.maxEventsPerChannel,
+                        maxPeriodsPerChannel =
+                            editorState.scheduling.maxCustomPeriodsPerChannel
+                    ),
+                    maxEventsPerChannel = editorState.scheduling.maxEventsPerChannel,
+                    maxCustomPeriodsPerChannel =
+                        editorState.scheduling.maxCustomPeriodsPerChannel
                 )
             DosingPlanScheduleMode.TIMER -> DeviceDosingPlanFragmentDirections
                 .actionDeviceDosingPlanFragmentToDeviceDosingTimerScheduleFragment(
@@ -144,15 +177,27 @@ class DeviceDosingPlanFragment :
                     channelTitle = args.channelTitle,
                     pumpCount = args.pumpCount,
                     channelNumber = args.channelNumber,
-                    dosesDraft = DeviceDosingTimerScheduleContract.encodeDraft(draft.timerDoses)
+                    dosesDraft = DeviceDosingTimerScheduleContract.encodeDraft(
+                        doses = draft.timerDoses,
+                        maxEventsPerChannel = editorState.scheduling.maxEventsPerChannel
+                    ),
+                    maxEventsPerChannel = editorState.scheduling.maxEventsPerChannel
                 )
         }
         navController.navigate(direction)
     }
 
     private fun showDailyDoseEditor() {
+        val editorState = viewModel.currentEditorState()
         val draft = viewModel.currentDraft()
-        if (!draft.scheduleEnabled || draft.selectedScheduleMode == DosingPlanScheduleMode.TIMER) return
+        if (
+            !draft.scheduleEnabled ||
+            !editorState.editable ||
+            editorState.operationInProgress ||
+            draft.selectedScheduleMode == DosingPlanScheduleMode.TIMER
+        ) {
+            return
+        }
         TextInputBottomSheet.show(
             fragmentManager = childFragmentManager,
             title = getString(R.string.device_dosing_daily_dose_editor_title),
@@ -176,6 +221,32 @@ class DeviceDosingPlanFragment :
             disableSaveWhenUnchanged = true,
             requestFocus = true
         )
+    }
+
+    private fun observePlanEvents() {
+        viewLifecycleOwner.lifecycleScope.launch {
+            viewLifecycleOwner.repeatOnLifecycle(Lifecycle.State.STARTED) {
+                viewModel.events.collect { event ->
+                    when (event) {
+                        DeviceDosingPlanEvent.Saved -> {
+                            showPlanMessage(R.string.device_dosing_plan_saved)
+                            findNavController().navigateUp()
+                        }
+                        DeviceDosingPlanEvent.SaveFailed -> showPlanMessage(
+                            R.string.device_dosing_detail_operation_failed,
+                            BaseActivity.SnackType.ERROR
+                        )
+                    }
+                }
+            }
+        }
+    }
+
+    private fun showPlanMessage(
+        messageRes: Int,
+        type: BaseActivity.SnackType = BaseActivity.SnackType.SUCCESS
+    ) {
+        (activity as? BaseActivity)?.showSnackBar(getString(messageRes), type)
     }
 
     private companion object {

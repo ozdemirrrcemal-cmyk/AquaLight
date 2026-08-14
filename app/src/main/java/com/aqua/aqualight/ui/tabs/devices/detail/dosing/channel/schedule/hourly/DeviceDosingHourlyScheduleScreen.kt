@@ -29,20 +29,26 @@ import com.aqua.aqualight.ui.common.flow.AquaGuidedFlowButton
 @Composable
 internal fun DeviceDosingHourlyScheduleScreen(
     state: DeviceDosingHourlyScheduleUiState,
-    onMinuteClick: () -> Unit,
+    onStartTimeClick: () -> Unit,
     onSaveClick: () -> Unit,
     modifier: Modifier = Modifier
 ) {
     val context = LocalContext.current
     val colors = aquaDeviceMenuColors()
-    val minuteOfHour = DeviceDosingHourlyScheduleContract.minuteOfHour(state.startTimeMs)
+    val startMinutesOfDay = DeviceDosingHourlyScheduleContract.minutesOfDay(state.startTimeMs)
+    val lastDoseMinutesOfDay = DeviceDosingHourlyScheduleContract.minutesOfDay(
+        DeviceDosingHourlyScheduleContract.lastDoseTimeMs(state.startTimeMs)
+    )
+    val lastDoseTime = LocaleFormatter.formatTimeOfDay24Hour(context, lastDoseMinutesOfDay)
     val window = HourlyDoseWindow(
-        first = LocaleFormatter.formatTimeOfDay24Hour(context, minuteOfHour),
-        last = LocaleFormatter.formatTimeOfDay24Hour(
-            context,
-            (DeviceDosingHourlyScheduleContract.DOSES_PER_DAY - 1) *
-                DeviceDosingHourlyScheduleContract.MINUTES_PER_HOUR + minuteOfHour
-        )
+        first = LocaleFormatter.formatTimeOfDay24Hour(context, startMinutesOfDay),
+        last = if (
+            DeviceDosingHourlyScheduleContract.lastDoseFallsOnNextDay(state.startTimeMs)
+        ) {
+            stringResource(R.string.device_dosing_hourly_next_day_time_format, lastDoseTime)
+        } else {
+            lastDoseTime
+        }
     )
 
     Column(
@@ -52,9 +58,9 @@ internal fun DeviceDosingHourlyScheduleScreen(
     ) {
         HourlyScheduleContent(
             state = state,
-            minuteOfHour = minuteOfHour,
+            startTime = window.first,
             window = window,
-            onMinuteClick = onMinuteClick,
+            onStartTimeClick = onStartTimeClick,
             modifier = Modifier.weight(1f)
         )
         HourlyScheduleFooter(state.actionEnabled, onSaveClick)
@@ -64,9 +70,9 @@ internal fun DeviceDosingHourlyScheduleScreen(
 @Composable
 private fun HourlyScheduleContent(
     state: DeviceDosingHourlyScheduleUiState,
-    minuteOfHour: Int,
+    startTime: String,
     window: HourlyDoseWindow,
-    onMinuteClick: () -> Unit,
+    onStartTimeClick: () -> Unit,
     modifier: Modifier
 ) {
     LazyColumn(
@@ -82,7 +88,7 @@ private fun HourlyScheduleContent(
         item(key = HOURLY_HERO_KEY) { HourlyScheduleHero() }
         item(key = HOURLY_SUMMARY_KEY) { HourlyScheduleSummary(state.dailyDoseMicroliters) }
         item(key = HOURLY_TIMING_KEY) {
-            HourlyScheduleTiming(minuteOfHour, window, onMinuteClick)
+            HourlyScheduleTiming(startTime, window, onStartTimeClick)
         }
     }
 }
@@ -129,17 +135,17 @@ private fun HourlyScheduleSummary(dailyDoseMicroliters: Long) {
 
 @Composable
 private fun HourlyScheduleTiming(
-    minuteOfHour: Int,
+    startTime: String,
     window: HourlyDoseWindow,
-    onMinuteClick: () -> Unit
+    onStartTimeClick: () -> Unit
 ) {
     AquaDeviceMenuSection(title = stringResource(R.string.device_dosing_hourly_timing_section)) {
         AquaDeviceMenuEditableValueRow(
-            label = stringResource(R.string.device_dosing_hourly_minute_title),
-            value = stringResource(R.string.common_time_picker_minute_of_hour_preview, minuteOfHour),
-            description = stringResource(R.string.device_dosing_hourly_minute_description),
+            label = stringResource(R.string.device_dosing_hourly_start_time_title),
+            value = startTime,
+            description = stringResource(R.string.device_dosing_hourly_start_time_description),
             iconRes = R.drawable.ic_dosing_schedule_24,
-            onClick = onMinuteClick
+            onClick = onStartTimeClick
         )
         AquaDeviceMenuDivider(startIndent = AquaDeviceMenuGeometry.sectionContentPadding)
         AquaDeviceMenuValueRow(

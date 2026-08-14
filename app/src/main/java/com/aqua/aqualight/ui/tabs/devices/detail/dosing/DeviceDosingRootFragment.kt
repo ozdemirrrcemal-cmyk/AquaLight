@@ -89,7 +89,8 @@ class DeviceDosingRootFragment : Fragment(R.layout.fragment_device_dosing_root) 
                 DeviceDosingCatalogScreen(
                     pumpCount = state.pumpCount,
                     channels = state.channels,
-                    onChannelClick = viewModel::openChannel
+                    onChannelClick = viewModel::openChannel,
+                    pumpStates = state.pumpStates
                 )
             }
         }

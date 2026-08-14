@@ -82,6 +82,8 @@ private fun CustomScheduleContent(
             CustomPeriodsSection(
                 periods = state.periods,
                 totalDoseCount = totalDoseCount,
+                maxEventsPerChannel = state.maxEventsPerChannel,
+                addEnabled = state.addEnabled,
                 onAction = onAction
             )
         }
@@ -149,6 +151,8 @@ private fun CustomScheduleValidation(message: String) {
 private fun CustomPeriodsSection(
     periods: List<DeviceDosingCustomPeriod>,
     totalDoseCount: Int,
+    maxEventsPerChannel: Int,
+    addEnabled: Boolean,
     onAction: (DeviceDosingCustomScheduleAction) -> Unit
 ) {
     AquaDeviceMenuSection(title = stringResource(R.string.device_dosing_custom_periods_section)) {
@@ -158,14 +162,14 @@ private fun CustomPeriodsSection(
                 description = stringResource(
                     R.string.device_dosing_custom_periods_capacity,
                     totalDoseCount,
-                    DeviceDosingCustomScheduleContract.MAX_DOSES_PER_DAY
+                    maxEventsPerChannel
                 ),
                 iconRes = R.drawable.ic_dosing_schedule_24
             ),
             action = AquaDeviceMenuRowAction(
                 text = stringResource(R.string.device_dosing_schedule_add),
                 onClick = { onAction(DeviceDosingCustomScheduleAction.Add) },
-                enabled = totalDoseCount < DeviceDosingCustomScheduleContract.MAX_DOSES_PER_DAY
+                enabled = addEnabled
             )
         )
         if (periods.isEmpty()) {

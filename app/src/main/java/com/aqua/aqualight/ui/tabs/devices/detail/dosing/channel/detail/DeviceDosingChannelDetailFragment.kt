@@ -9,14 +9,20 @@ import androidx.compose.ui.platform.ComposeView
 import androidx.compose.ui.platform.ViewCompositionStrategy
 import androidx.fragment.app.viewModels
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.lifecycleScope
+import androidx.lifecycle.repeatOnLifecycle
 import androidx.navigation.fragment.findNavController
 import androidx.navigation.fragment.navArgs
 import com.aqua.aqualight.R
+import com.aqua.aqualight.base.BaseActivity
 import com.aqua.aqualight.composition.requireAppContainer
 import com.aqua.aqualight.ui.common.bottomsheet.TextInputBottomSheet
 import com.aqua.aqualight.ui.common.dialog.ConfirmDialogFragment
 import com.aqua.aqualight.ui.tabs.devices.detail.dosing.channel.common.DeviceDosingChannelDestinationFragment
+import com.aqua.aqualight.ui.tabs.devices.detail.dosing.channel.schedule.DeviceDosingScheduleAmountContract
 import com.aqua.aqualight.utils.DialogType
+import kotlinx.coroutines.launch
 import java.util.Date
 import java.util.concurrent.TimeUnit
 
@@ -35,6 +41,8 @@ class DeviceDosingChannelDetailFragment :
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
         viewModel.bind(
+            deviceUidText = args.deviceUid,
+            slotIdText = args.slotId,
             lastCalibratedAtEpochSeconds = args.lastCalibratedAtEpochSeconds,
             restoredMissedDoseRecoveryEnabled = savedInstanceState?.getBoolean(
                 STATE_MISSED_DOSE_RECOVERY_ENABLED,
@@ -47,6 +55,7 @@ class DeviceDosingChannelDetailFragment :
         }
         setupManualDoseResult()
         setupResetConfirmationResult()
+        observeOperationEvents()
         setupSelectedPump(
             view = view,
             deviceUid = args.deviceUid,
@@ -54,10 +63,7 @@ class DeviceDosingChannelDetailFragment :
             pumpCount = args.pumpCount,
             channelNumber = args.channelNumber
         )
-        setupContent(
-            view = view,
-            lastCalibrationDate = formatLastCalibrationDate(args.lastCalibratedAtEpochSeconds)
-        )
+        setupContent(view)
     }
 
     override fun onSaveInstanceState(outState: Bundle) {
@@ -68,21 +74,28 @@ class DeviceDosingChannelDetailFragment :
         super.onSaveInstanceState(outState)
     }
 
-    private fun setupContent(view: View, lastCalibrationDate: String) {
+    private fun setupContent(view: View) {
         view.findViewById<ComposeView>(R.id.channelDetailContent).apply {
             setViewCompositionStrategy(ViewCompositionStrategy.DisposeOnViewTreeLifecycleDestroyed)
             setContent {
                 val draft by viewModel.draft.collectAsStateWithLifecycle()
                 DeviceDosingChannelDetailScreen(
                     state = DeviceDosingChannelDetailUiState(
-                        lastCalibrationDate = lastCalibrationDate,
-                        missedDoseRecoveryEnabled = draft.missedDoseRecoveryEnabled
+                        lastCalibrationDate = formatLastCalibrationDate(
+                            draft.lastCalibratedAtEpochSeconds
+                        ),
+                        missedDoseRecoveryEnabled = draft.missedDoseRecoveryEnabled,
+                        missedDoseRecoveryEditable = draft.missedDoseRecoveryEditable,
+                        manualDoseActive = draft.manualDoseActive,
+                        manualDoseEnabled = draft.manualDoseEnabled,
+                        resetEnabled = draft.resetEnabled,
+                        operationInProgress = draft.operationInProgress
                     ),
                     actions = DeviceDosingChannelDetailActions(
                         onMenuItemClick = ::openMenuItem,
                         onRecalibrateClick = ::openRecalibration,
                         onMissedDoseRecoveryChange = viewModel::setMissedDoseRecoveryEnabled,
-                        onManualDoseClick = ::showManualDoseEditor,
+                        onManualDoseClick = ::handleManualDoseClick,
                         onResetChannelClick = ::showResetChannelConfirmation
                     )
                 )
@@ -99,7 +112,20 @@ class DeviceDosingChannelDetailFragment :
                 return@setFragmentResultListener
             }
             when (result.getString(TextInputBottomSheet.RESULT_KEY)) {
-                TextInputBottomSheet.RESULT_SAVED,
+                TextInputBottomSheet.RESULT_SAVED -> {
+                    val amount = DeviceDosingScheduleAmountContract.parseMicroliters(
+                        result.getString(TextInputBottomSheet.RESULT_VALUE).orEmpty()
+                    )
+                    val maximum = viewModel.currentDraft().maximumManualDoseMicroliters
+                    if (amount == null || amount > maximum) {
+                        showOperationMessage(
+                            R.string.device_dosing_detail_manual_amount_invalid,
+                            BaseActivity.SnackType.ERROR
+                        )
+                    } else {
+                        viewModel.startManualDose(amount)
+                    }
+                }
                 TextInputBottomSheet.RESULT_CANCELLED -> Unit
             }
         }
@@ -114,8 +140,33 @@ class DeviceDosingChannelDetailFragment :
                 return@setFragmentResultListener
             }
             when (result.getString(ConfirmDialogFragment.RESULT_KEY)) {
-                ConfirmDialogFragment.RESULT_CONFIRM,
+                ConfirmDialogFragment.RESULT_CONFIRM -> viewModel.resetChannel()
                 ConfirmDialogFragment.RESULT_CANCEL -> Unit
+            }
+        }
+    }
+
+    private fun observeOperationEvents() {
+        viewLifecycleOwner.lifecycleScope.launch {
+            viewLifecycleOwner.repeatOnLifecycle(Lifecycle.State.STARTED) {
+                viewModel.events.collect { event ->
+                    when (event) {
+                        DeviceDosingChannelDetailEvent.MissedDoseRecoverySaved ->
+                            showOperationMessage(R.string.device_dosing_detail_settings_saved)
+                        DeviceDosingChannelDetailEvent.ManualDoseStarted ->
+                            showOperationMessage(R.string.device_dosing_detail_manual_started)
+                        DeviceDosingChannelDetailEvent.ManualDoseStopped ->
+                            showOperationMessage(R.string.device_dosing_detail_manual_stopped)
+                        DeviceDosingChannelDetailEvent.ChannelReset -> {
+                            showOperationMessage(R.string.device_dosing_detail_channel_reset_done)
+                            findNavController().navigateUp()
+                        }
+                        DeviceDosingChannelDetailEvent.OperationFailed -> showOperationMessage(
+                            R.string.device_dosing_detail_operation_failed,
+                            BaseActivity.SnackType.ERROR
+                        )
+                    }
+                }
             }
         }
     }
@@ -186,6 +237,21 @@ class DeviceDosingChannelDetailFragment :
             minimumNumericValueExclusive = MANUAL_DOSE_MINIMUM_EXCLUSIVE,
             requestFocus = true
         )
+    }
+
+    private fun handleManualDoseClick() {
+        if (viewModel.currentDraft().manualDoseActive) {
+            viewModel.stopManualDose()
+        } else {
+            showManualDoseEditor()
+        }
+    }
+
+    private fun showOperationMessage(
+        messageRes: Int,
+        type: BaseActivity.SnackType = BaseActivity.SnackType.SUCCESS
+    ) {
+        (activity as? BaseActivity)?.showSnackBar(getString(messageRes), type)
     }
 
     private fun showResetChannelConfirmation() {

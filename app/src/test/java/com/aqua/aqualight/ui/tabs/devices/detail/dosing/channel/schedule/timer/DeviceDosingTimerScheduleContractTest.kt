@@ -54,6 +54,19 @@ class DeviceDosingTimerScheduleContractTest {
         assertNull(DeviceDosingTimerScheduleContract.decodeDraft("invalid"))
     }
 
+    @Test
+    fun `firmware event limit overrides timer editor default`() {
+        val doses = listOf(dose(1, 1L), dose(2, 1L), dose(3, 1L))
+
+        assertEquals(
+            DeviceDosingTimerScheduleContract.ValidationError.TOO_MANY_DOSES,
+            DeviceDosingTimerScheduleContract.validate(
+                doses = doses,
+                maxEventsPerChannel = 2
+            )
+        )
+    }
+
     private fun dose(minutes: Int, amountMicroliters: Long) = DeviceDosingTimerDose(
         startTimeMs = DeviceDosingTimerScheduleContract.startTimeMs(minutes),
         amountMicroliters = amountMicroliters

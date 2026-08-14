@@ -25,7 +25,7 @@ class DeviceTimerCapabilityGateTest {
             limits = DeviceLimitSet(0, 0, 0, 0, 2),
             features = setOf(AqlDeviceFeatureKey.DOSING_CONTROL),
             screens = setOf(AqlDeviceScreenKey.DOSING_CONTROL),
-            modules = modules(timerApi = false, timerEngine = true, dosing = true)
+            modules = modules(timerApi = false, timerEngine = false, dosing = true)
         )
 
         assertFalse(access.supportsApi)

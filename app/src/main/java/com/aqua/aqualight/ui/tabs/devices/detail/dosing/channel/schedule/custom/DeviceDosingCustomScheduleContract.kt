@@ -32,11 +32,25 @@ internal object DeviceDosingCustomScheduleContract {
     fun isValidTime(timeMs: Long): Boolean =
         DeviceDosingScheduleTimeDraftPolicy.isValidTime(timeMs)
 
-    fun validate(periods: List<DeviceDosingCustomPeriod>): ValidationError? =
-        DeviceDosingCustomScheduleDraftPolicy.validate(periods)?.toUiError()
+    fun validate(
+        periods: List<DeviceDosingCustomPeriod>,
+        maxEventsPerChannel: Int = MAX_DOSES_PER_DAY,
+        maxPeriodsPerChannel: Int = MAX_DOSES_PER_DAY
+    ): ValidationError? = DeviceDosingCustomScheduleDraftPolicy.validate(
+        periods = periods,
+        maxEventsPerChannel = maxEventsPerChannel,
+        maxPeriodsPerChannel = maxPeriodsPerChannel
+    )?.toUiError()
 
-    fun normalize(periods: List<DeviceDosingCustomPeriod>): List<DeviceDosingCustomPeriod> =
-        DeviceDosingCustomScheduleDraftPolicy.normalize(periods)
+    fun normalize(
+        periods: List<DeviceDosingCustomPeriod>,
+        maxEventsPerChannel: Int = MAX_DOSES_PER_DAY,
+        maxPeriodsPerChannel: Int = MAX_DOSES_PER_DAY
+    ): List<DeviceDosingCustomPeriod> = DeviceDosingCustomScheduleDraftPolicy.normalize(
+        periods = periods,
+        maxEventsPerChannel = maxEventsPerChannel,
+        maxPeriodsPerChannel = maxPeriodsPerChannel
+    )
 
     fun totalDoseCount(periods: List<DeviceDosingCustomPeriod>): Int =
         DeviceDosingCustomScheduleDraftPolicy.totalDoseCount(periods)
@@ -44,16 +58,32 @@ internal object DeviceDosingCustomScheduleContract {
     fun averageDoseMl(dailyDoseMicroliters: Long, periods: List<DeviceDosingCustomPeriod>): Double =
         DeviceDosingCustomScheduleDraftPolicy.averageDoseMl(dailyDoseMicroliters, periods)
 
-    fun encodeDraft(periods: List<DeviceDosingCustomPeriod>): String =
-        normalize(periods).joinToString(PERIOD_SEPARATOR) { period ->
-            listOf(period.startTimeMs, period.endTimeMs, period.doseCount).joinToString(FIELD_SEPARATOR)
-        }
+    fun encodeDraft(
+        periods: List<DeviceDosingCustomPeriod>,
+        maxEventsPerChannel: Int = MAX_DOSES_PER_DAY,
+        maxPeriodsPerChannel: Int = MAX_DOSES_PER_DAY
+    ): String = normalize(
+        periods,
+        maxEventsPerChannel,
+        maxPeriodsPerChannel
+    ).joinToString(PERIOD_SEPARATOR) { period ->
+        listOf(period.startTimeMs, period.endTimeMs, period.doseCount)
+            .joinToString(FIELD_SEPARATOR)
+    }
 
-    fun decodeDraft(encoded: String): List<DeviceDosingCustomPeriod>? = when {
+    fun decodeDraft(
+        encoded: String,
+        maxEventsPerChannel: Int = MAX_DOSES_PER_DAY,
+        maxPeriodsPerChannel: Int = MAX_DOSES_PER_DAY
+    ): List<DeviceDosingCustomPeriod>? = when {
         encoded.isBlank() -> emptyList()
         else -> runCatching { decodeCustomPeriods(encoded) }.getOrNull()
-            ?.takeIf { periods -> validate(periods) == null }
-            ?.let(::normalize)
+            ?.takeIf { periods ->
+                validate(periods, maxEventsPerChannel, maxPeriodsPerChannel) == null
+            }
+            ?.let { periods ->
+                normalize(periods, maxEventsPerChannel, maxPeriodsPerChannel)
+            }
     }
 }
 

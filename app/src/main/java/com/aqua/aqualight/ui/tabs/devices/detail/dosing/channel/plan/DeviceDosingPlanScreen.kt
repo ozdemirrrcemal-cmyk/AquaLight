@@ -39,7 +39,11 @@ internal data class DeviceDosingPlanUiState(
     val dailyDoseMicroliters: Long,
     val selectedScheduleMode: DosingPlanScheduleMode,
     val scheduleEnabled: Boolean,
-    val recurrenceState: DosingPlanRecurrenceState
+    val recurrenceState: DosingPlanRecurrenceState,
+    val supportedModes: Set<DosingPlanScheduleMode>,
+    val recurrenceSupported: Boolean,
+    val editorEnabled: Boolean,
+    val canSave: Boolean
 )
 
 internal data class DosingPlanRecurrenceActions(
@@ -55,7 +59,7 @@ internal data class DeviceDosingPlanActions(
     val onSaveClick: (() -> Unit)?
 )
 
-/** Dosing Plan child feature. Runtime persistence stays outside this UI-only destination. */
+/** Dosing Plan child feature rendered from a firmware-independent application state. */
 @Composable
 internal fun DeviceDosingPlanScreen(
     state: DeviceDosingPlanUiState,
@@ -77,7 +81,11 @@ internal fun DeviceDosingPlanScreen(
         verticalArrangement = Arrangement.spacedBy(AquaDeviceMenuGeometry.sectionGap)
     ) {
         item(key = PLAN_STATUS_KEY) {
-            PlanStatusSection(state.scheduleEnabled, actions.onScheduleEnabledChange)
+            PlanStatusSection(
+                scheduleEnabled = state.scheduleEnabled,
+                enabled = state.editorEnabled,
+                onScheduleEnabledChange = actions.onScheduleEnabledChange
+            )
         }
         item(key = PLAN_AMOUNT_KEY) {
             PlanAmountSection(state = state, onDailyDoseClick = actions.onDailyDoseClick)
@@ -85,8 +93,10 @@ internal fun DeviceDosingPlanScreen(
         item(key = PLAN_SCHEDULE_KEY) {
             PlanScheduleSection(state = state, onScheduleOptionClick = actions.onScheduleOptionClick)
         }
-        item(key = PLAN_RECURRENCE_KEY) {
-            PlanRecurrenceSection(state = state, actions = actions.recurrence)
+        if (state.recurrenceSupported) {
+            item(key = PLAN_RECURRENCE_KEY) {
+                PlanRecurrenceSection(state = state, actions = actions.recurrence)
+            }
         }
         item(key = PLAN_SAVE_KEY) {
             PlanSaveAction(state = state, onSaveClick = actions.onSaveClick)
@@ -97,6 +107,7 @@ internal fun DeviceDosingPlanScreen(
 @Composable
 private fun PlanStatusSection(
     scheduleEnabled: Boolean,
+    enabled: Boolean,
     onScheduleEnabledChange: (Boolean) -> Unit
 ) {
     PlanSection(R.string.device_dosing_detail_schedule_status_section) {
@@ -104,6 +115,7 @@ private fun PlanStatusSection(
             titleRes = R.string.device_dosing_detail_activate_schedule,
             descriptionRes = R.string.device_dosing_detail_activate_schedule_description,
             checked = scheduleEnabled,
+            enabled = enabled,
             onCheckedChange = onScheduleEnabledChange
         )
     }
@@ -116,7 +128,7 @@ private fun PlanAmountSection(
 ) {
     PlanSection(
         titleRes = R.string.device_dosing_detail_amount_section,
-        enabled = state.scheduleEnabled
+        enabled = state.scheduleEnabled && state.editorEnabled
     ) {
         val dailyDoseValue = stringResource(
             R.string.device_dosing_channel_daily_dose_format,
@@ -143,7 +155,7 @@ private fun PlanAmountSection(
                 description = description,
                 iconRes = R.drawable.ic_dosing_schedule_24,
                 onClick = onDailyDoseClick,
-                enabled = state.scheduleEnabled
+                enabled = state.scheduleEnabled && state.editorEnabled
             )
         }
     }
@@ -156,22 +168,26 @@ private fun PlanScheduleSection(
 ) {
     PlanSection(
         titleRes = R.string.device_dosing_detail_schedule_section,
-        enabled = state.scheduleEnabled
+        enabled = state.scheduleEnabled && state.editorEnabled
     ) {
-        DOSING_PLAN_SCHEDULE_OPTIONS.forEachIndexed { index, option ->
-            if (index > 0) {
-                AquaDeviceMenuDivider(startIndent = AquaDeviceMenuGeometry.selectionDividerIndent)
-            }
-            AquaDeviceMenuSelectionRow(
-                text = stringResource(option.labelRes),
-                selected = option.mode == state.selectedScheduleMode,
-                onClick = if (state.scheduleEnabled) {
-                    { onScheduleOptionClick(option.mode) }
-                } else {
-                    null
+        DOSING_PLAN_SCHEDULE_OPTIONS
+            .filter { option -> option.mode in state.supportedModes }
+            .forEachIndexed { index, option ->
+                if (index > 0) {
+                    AquaDeviceMenuDivider(
+                        startIndent = AquaDeviceMenuGeometry.selectionDividerIndent
+                    )
                 }
-            )
-        }
+                AquaDeviceMenuSelectionRow(
+                    text = stringResource(option.labelRes),
+                    selected = option.mode == state.selectedScheduleMode,
+                    onClick = if (state.scheduleEnabled && state.editorEnabled) {
+                        { onScheduleOptionClick(option.mode) }
+                    } else {
+                        null
+                    }
+                )
+            }
     }
 }
 
@@ -182,13 +198,15 @@ private fun PlanRecurrenceSection(
 ) {
     PlanSection(
         titleRes = R.string.device_dosing_detail_recurrence_section,
-        enabled = state.scheduleEnabled
+        enabled = state.scheduleEnabled && state.editorEnabled
     ) {
         AquaDeviceMenuSelectionRow(
             text = stringResource(R.string.device_dosing_channel_every_day),
             selected = state.recurrenceState.isEveryDay,
             showTrailingIcon = false,
-            onClick = actions.onEveryDayClick.takeIf { state.scheduleEnabled }
+            onClick = actions.onEveryDayClick.takeIf {
+                state.scheduleEnabled && state.editorEnabled
+            }
         )
         AquaDeviceMenuDivider(startIndent = AquaDeviceMenuGeometry.selectionDividerIndent)
         Row(
@@ -203,7 +221,7 @@ private fun PlanRecurrenceSection(
                     selected = weekday in state.recurrenceState.selectedDays,
                     modifier = Modifier.weight(1f),
                     compact = true,
-                    onSelectedChange = if (state.scheduleEnabled) {
+                    onSelectedChange = if (state.scheduleEnabled && state.editorEnabled) {
                         { selected -> actions.onWeekdaySelectionChange(weekday, selected) }
                     } else {
                         null
@@ -223,8 +241,7 @@ private fun PlanSaveAction(
         text = stringResource(R.string.device_dosing_detail_save_plan),
         onClick = { onSaveClick?.invoke() },
         modifier = Modifier.fillMaxWidth(),
-        enabled = state.scheduleEnabled &&
-            state.recurrenceState.selectedDays.isNotEmpty() &&
+        enabled = state.canSave &&
             onSaveClick != null
     )
 }
@@ -247,6 +264,7 @@ private fun PlanToggleRow(
     @StringRes titleRes: Int,
     @StringRes descriptionRes: Int,
     checked: Boolean,
+    enabled: Boolean,
     onCheckedChange: (Boolean) -> Unit
 ) {
     val colors = aquaDeviceMenuColors()
@@ -261,6 +279,7 @@ private fun PlanToggleRow(
             .toggleable(
                 value = checked,
                 role = Role.Switch,
+                enabled = enabled,
                 onValueChange = onCheckedChange
             )
             .padding(AquaDeviceMenuGeometry.sectionContentPadding),

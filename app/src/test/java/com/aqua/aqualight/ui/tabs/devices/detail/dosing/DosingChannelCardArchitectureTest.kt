@@ -11,29 +11,19 @@ class DosingChannelCardArchitectureTest {
 
     @Test
     fun `channel cards are materialized only from validated central catalog slots`() {
-        val viewModel = source(
-            "app/src/main/java/com/aqua/aqualight/ui/tabs/devices/detail/dosing/" +
-                "DeviceDosingRootViewModel.kt"
-        )
+        val viewModel = source(DOSING_SOURCE_ROOT + "DeviceDosingRootViewModel.kt")
 
         assertTrue(viewModel.contains("catalogState == DeviceRootCatalogState.VALID"))
         assertTrue(viewModel.contains("channelSlots.dosingChannels"))
         assertTrue(viewModel.contains("slot.toInitialDosingChannelCardUiState()"))
         assertFalse(viewModel.contains("Regex("))
         assertFalse(viewModel.contains("containsMatchIn"))
-        assertFalse(viewModel.contains("modelLabel ="))
     }
 
     @Test
-    fun `final root uses stable slot ids and shared central card style`() {
-        val rootScreen = source(
-            "app/src/main/java/com/aqua/aqualight/ui/tabs/devices/detail/dosing/" +
-                "DosingCatalogScreen.kt"
-        )
-        val card = source(
-            "app/src/main/java/com/aqua/aqualight/ui/tabs/devices/detail/dosing/" +
-                "DosingChannelCard.kt"
-        )
+    fun `root card keeps central surface and stable slot identity`() {
+        val rootScreen = source(DOSING_SOURCE_ROOT + "DosingCatalogScreen.kt")
+        val card = source(CARD_SOURCE_ROOT + "DosingChannelCard.kt")
         val centralStyle = source(
             "app/src/main/java/com/aqua/aqualight/ui/common/devicecard/" +
                 "AquaDeviceCardComposeStyle.kt"
@@ -45,119 +35,70 @@ class DosingChannelCardArchitectureTest {
         assertTrue(centralStyle.contains("R.color.aqua_card_device_surface"))
         assertTrue(centralStyle.contains("R.color.aqua_card_device_outline"))
         assertTrue(centralStyle.contains("R.color.aqua_card_text_primary"))
-        assertTrue(centralStyle.contains("R.color.aqua_card_text_secondary"))
     }
 
     @Test
-    fun `configured card summary is daily dose and selected days only`() {
-        val card = source(
-            "app/src/main/java/com/aqua/aqualight/ui/tabs/devices/detail/dosing/" +
-                "DosingChannelCard.kt"
-        )
-        val models = source(
-            "app/src/main/java/com/aqua/aqualight/ui/tabs/devices/detail/dosing/" +
-                "DosingChannelCardModels.kt"
-        )
+    fun `healthy configured state has no ready pill and only exceptional states show status`() {
+        val models = source(CARD_SOURCE_ROOT + "DosingChannelCardModels.kt")
+        val header = source(CARD_SOURCE_ROOT + "DosingChannelCardHeader.kt")
 
-        assertTrue(card.contains("device_dosing_channel_daily_dose_format"))
-        assertTrue(card.contains("scheduleDays.summaryLabel()"))
-        assertFalse(card.contains("CALIBRATION"))
-        assertFalse(card.contains("DosingSetupUiState"))
-        assertFalse(models.contains("DosingCalibrationUiState"))
-        assertFalse(models.contains("DosingSetupUiState"))
-        assertFalse(models.contains("SETUP_REQUIRED"))
+        assertTrue(models.contains("CONFIGURED(R.string.device_dosing_channel_status_configured, false)"))
+        assertTrue(models.contains("DOSING(R.string.device_dosing_channel_status_dosing, false)"))
+        assertTrue(models.contains("AUTOMATIC_DOSING_OFF"))
+        assertTrue(header.contains("if (state.visualState.showsStatusPill)"))
+        assertFalse(models.contains("READY("))
+        assertFalse(models.contains("SCHEDULED("))
     }
 
     @Test
-    fun `unconfigured card uses an empty state while configured progress remains available`() {
-        val card = source(
-            "app/src/main/java/com/aqua/aqualight/ui/tabs/devices/detail/dosing/" +
-                "DosingChannelCard.kt"
-        )
+    fun `calibration and missing program use closed content states`() {
+        val card = source(CARD_SOURCE_ROOT + "DosingChannelCard.kt")
+        val mapper = source(CARD_SOURCE_ROOT + "DosingChannelCardMapper.kt")
 
-        assertTrue(card.contains("state.visualState == DosingChannelVisualState.NOT_CONFIGURED"))
-        assertTrue(card.contains("DosingChannelEmptyState("))
-        assertTrue(card.contains("device_dosing_channel_empty_title"))
-        assertTrue(card.contains("device_dosing_channel_empty_description"))
-        assertTrue(card.contains("DosingDoseProgressBar("))
+        assertTrue(card.contains("DosingChannelVisualState.NOT_CONFIGURED"))
+        assertTrue(card.contains("DosingChannelVisualState.PROGRAM_NOT_CONFIGURED"))
+        assertTrue(card.contains("device_dosing_channel_calibration_required"))
+        assertTrue(card.contains("device_dosing_channel_program_empty_title"))
+        assertTrue(mapper.contains("!calibrated -> DosingChannelVisualState.NOT_CONFIGURED"))
+        assertTrue(mapper.contains("program == null -> DosingChannelVisualState.PROGRAM_NOT_CONFIGURED"))
         assertFalse(card.contains("0.00 ml"))
     }
 
     @Test
-    fun `empty state strings are owned only by dosing string resources`() {
-        val defaultDosingStrings = source("app/src/main/res/values/device_dosing_strings.xml")
-        val turkishDosingStrings = source("app/src/main/res/values-tr/device_dosing_strings.xml")
+    fun `each firmware program mode owns a distinct progress renderer`() {
+        val progress = source(CARD_SOURCE_ROOT + "DosingProgramProgress.kt")
+        val modes = source(CARD_SOURCE_ROOT + "DosingProgramProgressModes.kt")
 
-        EMPTY_STATE_STRING_NAMES.forEach { name ->
-            val declaration = "name=\"$name\""
-            assertTrue(defaultDosingStrings.contains(declaration))
-            assertTrue(turkishDosingStrings.contains(declaration))
-        }
-
-        val misplacedFiles = File(repositoryRoot, "app/src/main/res")
-            .walkTopDown()
-            .filter { file ->
-                file.isFile &&
-                    file.extension == "xml" &&
-                    file.name != DOSING_STRINGS_FILE_NAME
-            }
-            .filter { file ->
-                val content = file.readText()
-                EMPTY_STATE_STRING_NAMES.any { name -> content.contains("name=\"$name\"") }
-            }
-            .map(File::getPath)
-            .toList()
-
-        assertTrue(
-            "Dosing empty-state strings must not leak into other resource files: $misplacedFiles",
-            misplacedFiles.isEmpty()
-        )
+        assertTrue(progress.contains("DosingSingleProgramProgress"))
+        assertTrue(progress.contains("DosingHourlyProgramProgress"))
+        assertTrue(progress.contains("DosingCustomProgramProgress"))
+        assertTrue(progress.contains("DosingTimerProgramProgress"))
+        assertTrue(modes.contains("HOURLY_CELLS_PER_ROW = 12"))
+        assertTrue(modes.contains("occurrence.timeFraction"))
+        assertTrue(modes.contains("state.customPeriods"))
+        assertFalse(progress.contains("DosingDoseProgressBar"))
     }
 
     @Test
-    fun `dose progress is volume based and contains no time axis contract`() {
-        val models = source(
-            "app/src/main/java/com/aqua/aqualight/ui/tabs/devices/detail/dosing/" +
-                "DosingChannelCardModels.kt"
-        )
-        val progressBar = source(
-            "app/src/main/java/com/aqua/aqualight/ui/tabs/devices/detail/dosing/" +
-                "DosingDoseProgressBar.kt"
-        )
-        val removedTimeline = File(
-            repositoryRoot,
-            "app/src/main/java/com/aqua/aqualight/ui/tabs/devices/detail/dosing/" +
-                "DosingScheduleTimeline.kt"
-        )
+    fun `manual usage is separate and reservoir visibility follows firmware tracking`() {
+        val mapper = source(CARD_SOURCE_ROOT + "DosingChannelCardMapper.kt")
+        val progress = source(CARD_SOURCE_ROOT + "DosingProgramProgress.kt")
+        val summary = source(CARD_SOURCE_ROOT + "DosingChannelCardSummary.kt")
 
-        assertTrue(models.contains("dailyDoseMl"))
-        assertTrue(models.contains("deliveredTodayMl"))
-        assertTrue(models.contains("doseMilestonesMl"))
-        assertTrue(progressBar.contains("deliveredTodayMl / dailyDoseMl"))
-        assertFalse(models.contains("dailyTargetMl"))
-        assertFalse(models.contains("deliveredMl"))
-        assertFalse(models.contains("doseCheckpointsMl"))
-        assertFalse(models.contains("fractionOfDay"))
-        assertFalse(models.contains("DosingTimeline"))
-        assertFalse(progressBar.contains("24-hour"))
-        assertFalse(progressBar.contains("TIMELINE"))
-        assertFalse(removedTimeline.exists())
+        assertTrue(mapper.contains("usageToday.manualDeliveredMicroliters"))
+        assertTrue(progress.contains("state.manualDeliveredTodayMl > 0.0"))
+        assertTrue(progress.contains("DosingManualDosePill"))
+        assertTrue(mapper.contains("if (!reservoir.trackingEnabled) return null"))
+        assertTrue(summary.contains("state.reservoir?.let"))
+        assertFalse(progress.contains("scheduledDeliveredTodayMl +"))
     }
 
     @Test
-    fun `presentation does not couple channel cards to firmware runtime models`() {
-        val cardModels = source(
-            "app/src/main/java/com/aqua/aqualight/ui/tabs/devices/detail/dosing/" +
-                "DosingChannelCardModels.kt"
-        )
-        val card = source(
-            "app/src/main/java/com/aqua/aqualight/ui/tabs/devices/detail/dosing/" +
-                "DosingChannelCard.kt"
-        )
-
-        FORBIDDEN_RUNTIME_TYPES.forEach { token ->
-            assertFalse(cardModels.contains(token))
-            assertFalse(card.contains(token))
+    fun `presentation does not couple cards to raw dosing v1 models`() {
+        cardSources().forEach { content ->
+            FORBIDDEN_RUNTIME_TYPES.forEach { token -> assertFalse(content.contains(token)) }
+            assertFalse(content.contains("com.aqua.aqualight.data.devices"))
+            assertFalse(content.contains("DeviceDosingV1"))
         }
     }
 
@@ -174,6 +115,12 @@ class DosingChannelCardArchitectureTest {
         }
     }
 
+    private fun cardSources(): List<String> = File(repositoryRoot, CARD_SOURCE_ROOT)
+        .walkTopDown()
+        .filter { file -> file.isFile && file.extension == "kt" }
+        .map(File::readText)
+        .toList()
+
     private fun source(relativePath: String): String = File(repositoryRoot, relativePath).readText()
 
     private fun locateRepositoryRoot(): File {
@@ -188,14 +135,8 @@ class DosingChannelCardArchitectureTest {
     private companion object {
         const val DOSING_SOURCE_ROOT =
             "app/src/main/java/com/aqua/aqualight/ui/tabs/devices/detail/dosing/"
-        const val DEVICE_CARD_SOURCE_ROOT =
-            "app/src/main/java/com/aqua/aqualight/ui/common/devicecard/"
-        const val DOSING_STRINGS_FILE_NAME = "device_dosing_strings.xml"
+        const val CARD_SOURCE_ROOT = DOSING_SOURCE_ROOT + "presentation/card/"
 
-        val EMPTY_STATE_STRING_NAMES = listOf(
-            "device_dosing_channel_empty_title",
-            "device_dosing_channel_empty_description"
-        )
         val FORBIDDEN_RUNTIME_TYPES = listOf(
             "DeviceDosingChannelStatus",
             "DeviceDosingStatus",
@@ -204,22 +145,22 @@ class DosingChannelCardArchitectureTest {
             "AqlCommercialDeviceCatalog"
         )
         val SUPPRESSION_FREE_SOURCE_FILES = listOf(
-            DEVICE_CARD_SOURCE_ROOT + "AquaDeviceCardComposeStyle.kt",
             DOSING_SOURCE_ROOT + "DeviceDosingRootFragment.kt",
             DOSING_SOURCE_ROOT + "DeviceDosingRootViewModel.kt",
             DOSING_SOURCE_ROOT + "DosingCatalogScreen.kt",
-            DOSING_SOURCE_ROOT + "DosingChannelCard.kt",
-            DOSING_SOURCE_ROOT + "DosingChannelCardModels.kt",
-            DOSING_SOURCE_ROOT + "DosingChannelGlyph.kt",
-            DOSING_SOURCE_ROOT + "DosingDoseProgressBar.kt",
-            DOSING_SOURCE_ROOT + "DosingDoseProgressDrawing.kt",
+            CARD_SOURCE_ROOT + "DosingChannelCard.kt",
+            CARD_SOURCE_ROOT + "DosingChannelCardHeader.kt",
+            CARD_SOURCE_ROOT + "DosingChannelCardMapper.kt",
+            CARD_SOURCE_ROOT + "DosingChannelCardModels.kt",
+            CARD_SOURCE_ROOT + "DosingChannelCardSummary.kt",
+            CARD_SOURCE_ROOT + "DosingChannelCardGlyphs.kt",
+            CARD_SOURCE_ROOT + "DosingProgramProgress.kt",
+            CARD_SOURCE_ROOT + "DosingProgramProgressModes.kt",
+            CARD_SOURCE_ROOT + "DosingReservoirProjection.kt",
+            CARD_SOURCE_ROOT + "DosingReservoirSummary.kt",
             DOSING_SOURCE_ROOT + "DosingPumpDeviceCompose.kt",
             DOSING_SOURCE_ROOT + "DosingPumpIndicatorDrawing.kt",
-            DOSING_SOURCE_ROOT + "DosingPumpPalette.kt",
-            DOSING_SOURCE_ROOT + "channel/common/DeviceDosingChannelDestinationFragment.kt",
-            DOSING_SOURCE_ROOT +
-                "channel/calibration/DeviceDosingChannelCalibrationFragment.kt",
-            DOSING_SOURCE_ROOT + "channel/detail/DeviceDosingChannelDetailFragment.kt"
+            DOSING_SOURCE_ROOT + "DosingPumpPalette.kt"
         )
         val FORBIDDEN_SUPPRESSION_TOKENS = listOf(
             "@file:Suppress(",

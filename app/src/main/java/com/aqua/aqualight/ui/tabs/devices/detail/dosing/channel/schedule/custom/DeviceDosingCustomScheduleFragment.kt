@@ -27,13 +27,28 @@ class DeviceDosingCustomScheduleFragment :
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
-        val argumentPeriods = DeviceDosingCustomScheduleContract.decodeDraft(args.periodsDraft)
+        val validLimits = args.maxEventsPerChannel > 0 &&
+            args.maxCustomPeriodsPerChannel > 0
+        val argumentPeriods = if (validLimits) {
+            DeviceDosingCustomScheduleContract.decodeDraft(
+                encoded = args.periodsDraft,
+                maxEventsPerChannel = args.maxEventsPerChannel,
+                maxPeriodsPerChannel = args.maxCustomPeriodsPerChannel
+            )
+        } else {
+            null
+        }
         if (args.dailyDoseMicroliters < 0L || argumentPeriods == null) {
             findNavController().navigateUp()
             return
         }
 
-        periods = restoreCustomPeriods(savedInstanceState, argumentPeriods)
+        periods = restoreCustomPeriods(
+            savedInstanceState = savedInstanceState,
+            argumentPeriods = argumentPeriods,
+            maxEventsPerChannel = args.maxEventsPerChannel,
+            maxPeriodsPerChannel = args.maxCustomPeriodsPerChannel
+        )
         validationMessageRes = savedInstanceState
             ?.getInt(STATE_VALIDATION_MESSAGE_RES, NO_MESSAGE_RES)
             ?.takeUnless { messageRes -> messageRes == NO_MESSAGE_RES }
@@ -41,6 +56,8 @@ class DeviceDosingCustomScheduleFragment :
             host = DeviceDosingCustomScheduleEditorHost(
                 fragment = this,
                 slotId = args.slotId,
+                maxEventsPerChannel = args.maxEventsPerChannel,
+                maxPeriodsPerChannel = args.maxCustomPeriodsPerChannel,
                 periods = { periods },
                 updatePeriods = { updated -> periods = updated },
                 updateValidation = { messageRes -> validationMessageRes = messageRes }
@@ -61,7 +78,11 @@ class DeviceDosingCustomScheduleFragment :
     override fun onSaveInstanceState(outState: Bundle) {
         outState.putString(
             STATE_PERIODS_DRAFT,
-            DeviceDosingCustomScheduleContract.encodeDraft(periods)
+            DeviceDosingCustomScheduleContract.encodeDraft(
+                periods = periods,
+                maxEventsPerChannel = args.maxEventsPerChannel,
+                maxPeriodsPerChannel = args.maxCustomPeriodsPerChannel
+            )
         )
         outState.putInt(STATE_VALIDATION_MESSAGE_RES, validationMessageRes ?: NO_MESSAGE_RES)
         if (::editor.isInitialized) editor.saveState(outState)
@@ -76,6 +97,8 @@ class DeviceDosingCustomScheduleFragment :
                     state = DeviceDosingCustomScheduleUiState(
                         dailyDoseMicroliters = args.dailyDoseMicroliters,
                         periods = periods,
+                        maxEventsPerChannel = args.maxEventsPerChannel,
+                        maxPeriodsPerChannel = args.maxCustomPeriodsPerChannel,
                         validationMessage = validationMessageRes?.let(::getString)
                     ),
                     onAction = ::handleScheduleAction
@@ -103,7 +126,12 @@ class DeviceDosingCustomScheduleFragment :
         val navController = findNavController()
         val canSave =
             navController.currentDestination?.id == R.id.deviceDosingCustomScheduleFragment &&
-                args.dailyDoseMicroliters > 0L && periods.isNotEmpty()
+                args.dailyDoseMicroliters > 0L && periods.isNotEmpty() &&
+                DeviceDosingCustomScheduleContract.validate(
+                    periods = periods,
+                    maxEventsPerChannel = args.maxEventsPerChannel,
+                    maxPeriodsPerChannel = args.maxCustomPeriodsPerChannel
+                ) == null
         if (!canSave) return
 
         parentFragmentManager.setFragmentResult(
@@ -113,7 +141,11 @@ class DeviceDosingCustomScheduleFragment :
                     DeviceDosingCustomScheduleContract.RESULT_SAVED,
                 DeviceDosingCustomScheduleContract.RESULT_SLOT_ID to args.slotId,
                 DeviceDosingCustomScheduleContract.RESULT_PERIODS_DRAFT to
-                    DeviceDosingCustomScheduleContract.encodeDraft(periods)
+                    DeviceDosingCustomScheduleContract.encodeDraft(
+                        periods = periods,
+                        maxEventsPerChannel = args.maxEventsPerChannel,
+                        maxPeriodsPerChannel = args.maxCustomPeriodsPerChannel
+                    )
             )
         )
         navController.navigateUp()
@@ -128,8 +160,16 @@ class DeviceDosingCustomScheduleFragment :
 
 private fun restoreCustomPeriods(
     savedInstanceState: Bundle?,
-    argumentPeriods: List<DeviceDosingCustomPeriod>
+    argumentPeriods: List<DeviceDosingCustomPeriod>,
+    maxEventsPerChannel: Int,
+    maxPeriodsPerChannel: Int
 ): List<DeviceDosingCustomPeriod> = savedInstanceState
     ?.getString("custom_schedule_periods_draft")
-    ?.let(DeviceDosingCustomScheduleContract::decodeDraft)
+    ?.let { encoded ->
+        DeviceDosingCustomScheduleContract.decodeDraft(
+            encoded = encoded,
+            maxEventsPerChannel = maxEventsPerChannel,
+            maxPeriodsPerChannel = maxPeriodsPerChannel
+        )
+    }
     ?: argumentPeriods

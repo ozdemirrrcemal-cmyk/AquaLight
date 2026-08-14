@@ -2,6 +2,7 @@ package com.aqua.aqualight.ui.tabs.devices.detail.dosing.channel.plan
 
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.LifecycleOwner
+import com.aqua.aqualight.application.devices.dosing.DeviceDosingSchedulingPolicy
 import com.aqua.aqualight.ui.tabs.devices.detail.dosing.channel.schedule.custom.DeviceDosingCustomPeriod
 import com.aqua.aqualight.ui.tabs.devices.detail.dosing.channel.schedule.custom.DeviceDosingCustomScheduleContract
 import com.aqua.aqualight.ui.tabs.devices.detail.dosing.channel.schedule.hourly.DeviceDosingHourlyScheduleContract
@@ -12,6 +13,7 @@ import com.aqua.aqualight.ui.tabs.devices.detail.dosing.channel.schedule.timer.D
 internal data class DosingPlanScheduleResultHost(
     val fragment: Fragment,
     val slotId: String,
+    val scheduling: () -> DeviceDosingSchedulingPolicy,
     val updateSchedule: (DosingPlanScheduleUpdate) -> Unit
 )
 
@@ -66,11 +68,7 @@ private fun bindHourlyScheduleResult(
             INVALID_START_TIME_MS
         )
         if (expected && DeviceDosingHourlyScheduleContract.isValidStartTime(startTimeMs)) {
-            host.updateSchedule(
-                DosingPlanScheduleUpdate.Hourly(
-                    DeviceDosingHourlyScheduleContract.minuteAlignedStartTime(startTimeMs)
-                )
-            )
+            host.updateSchedule(DosingPlanScheduleUpdate.Hourly(startTimeMs))
         }
     }
 }
@@ -87,8 +85,13 @@ private fun bindCustomScheduleResult(
             DeviceDosingCustomScheduleContract.RESULT_SAVED &&
             result.getString(DeviceDosingCustomScheduleContract.RESULT_SLOT_ID) == host.slotId
         if (expected) {
+            val scheduling = host.scheduling()
             DeviceDosingCustomScheduleContract.decodeDraft(
-                result.getString(DeviceDosingCustomScheduleContract.RESULT_PERIODS_DRAFT).orEmpty()
+                encoded = result.getString(
+                    DeviceDosingCustomScheduleContract.RESULT_PERIODS_DRAFT
+                ).orEmpty(),
+                maxEventsPerChannel = scheduling.maxEventsPerChannel,
+                maxPeriodsPerChannel = scheduling.maxCustomPeriodsPerChannel
             )?.takeIf(List<DeviceDosingCustomPeriod>::isNotEmpty)?.let { periods ->
                 host.updateSchedule(DosingPlanScheduleUpdate.Custom(periods))
             }
@@ -108,8 +111,12 @@ private fun bindTimerScheduleResult(
             DeviceDosingTimerScheduleContract.RESULT_SAVED &&
             result.getString(DeviceDosingTimerScheduleContract.RESULT_SLOT_ID) == host.slotId
         if (expected) {
+            val scheduling = host.scheduling()
             DeviceDosingTimerScheduleContract.decodeDraft(
-                result.getString(DeviceDosingTimerScheduleContract.RESULT_DOSES_DRAFT).orEmpty()
+                encoded = result.getString(
+                    DeviceDosingTimerScheduleContract.RESULT_DOSES_DRAFT
+                ).orEmpty(),
+                maxEventsPerChannel = scheduling.maxEventsPerChannel
             )?.takeIf(List<DeviceDosingTimerDose>::isNotEmpty)?.let { doses ->
                 host.updateSchedule(DosingPlanScheduleUpdate.Timer(doses))
             }

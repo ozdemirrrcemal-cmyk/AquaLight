@@ -246,6 +246,14 @@
             android:name="periodsDraft"
             android:defaultValue=""
             app:argType="string" />
+        <argument
+            android:name="maxEventsPerChannel"
+            android:defaultValue="24"
+            app:argType="integer" />
+        <argument
+            android:name="maxCustomPeriodsPerChannel"
+            android:defaultValue="24"
+            app:argType="integer" />
     </fragment>
 
     <fragment
@@ -272,5 +280,9 @@
             android:name="dosesDraft"
             android:defaultValue=""
             app:argType="string" />
+        <argument
+            android:name="maxEventsPerChannel"
+            android:defaultValue="24"
+            app:argType="integer" />
     </fragment>
 </navigation>

@@ -32,25 +32,40 @@ internal object DeviceDosingTimerScheduleContract {
     fun isValidTime(timeMs: Long): Boolean =
         DeviceDosingScheduleTimeDraftPolicy.isValidTime(timeMs)
 
-    fun validate(doses: List<DeviceDosingTimerDose>): ValidationError? =
-        DeviceDosingTimerScheduleDraftPolicy.validate(doses)?.toUiError()
+    fun validate(
+        doses: List<DeviceDosingTimerDose>,
+        maxEventsPerChannel: Int = MAX_DOSES_PER_DAY
+    ): ValidationError? = DeviceDosingTimerScheduleDraftPolicy.validate(
+        doses,
+        maxEventsPerChannel
+    )?.toUiError()
 
-    fun normalize(doses: List<DeviceDosingTimerDose>): List<DeviceDosingTimerDose> =
-        DeviceDosingTimerScheduleDraftPolicy.normalize(doses)
+    fun normalize(
+        doses: List<DeviceDosingTimerDose>,
+        maxEventsPerChannel: Int = MAX_DOSES_PER_DAY
+    ): List<DeviceDosingTimerDose> = DeviceDosingTimerScheduleDraftPolicy.normalize(
+        doses,
+        maxEventsPerChannel
+    )
 
     fun totalDoseMicroliters(doses: List<DeviceDosingTimerDose>): Long =
         DeviceDosingTimerScheduleDraftPolicy.totalDoseMicroliters(doses)
 
-    fun encodeDraft(doses: List<DeviceDosingTimerDose>): String =
-        normalize(doses).joinToString(DOSE_SEPARATOR) { dose ->
-            listOf(dose.startTimeMs, dose.amountMicroliters).joinToString(FIELD_SEPARATOR)
-        }
+    fun encodeDraft(
+        doses: List<DeviceDosingTimerDose>,
+        maxEventsPerChannel: Int = MAX_DOSES_PER_DAY
+    ): String = normalize(doses, maxEventsPerChannel).joinToString(DOSE_SEPARATOR) { dose ->
+        listOf(dose.startTimeMs, dose.amountMicroliters).joinToString(FIELD_SEPARATOR)
+    }
 
-    fun decodeDraft(encoded: String): List<DeviceDosingTimerDose>? = when {
+    fun decodeDraft(
+        encoded: String,
+        maxEventsPerChannel: Int = MAX_DOSES_PER_DAY
+    ): List<DeviceDosingTimerDose>? = when {
         encoded.isBlank() -> emptyList()
         else -> runCatching { decodeTimerDoses(encoded) }.getOrNull()
-            ?.takeIf { doses -> validate(doses) == null }
-            ?.let(::normalize)
+            ?.takeIf { doses -> validate(doses, maxEventsPerChannel) == null }
+            ?.let { doses -> normalize(doses, maxEventsPerChannel) }
     }
 }
 

@@ -6,6 +6,7 @@ import com.aqua.aqualight.application.devices.dosing.DeviceDosingChannelNavigati
 import com.aqua.aqualight.application.devices.DeviceRootOperations
 import com.aqua.aqualight.application.devices.DeviceRootSnapshot
 import com.aqua.aqualight.application.devices.OwnerDeviceAvailability
+import com.aqua.aqualight.data.devices.dosing.UnavailableDeviceDosingChannelOperations
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.Flow
@@ -49,7 +50,8 @@ class DeviceDosingRootNavigationTest {
         val navigationOperations = FakeChannelNavigationOperations(target)
         val viewModel = DeviceDosingRootViewModel(
             operations = FakeRootOperations(),
-            channelNavigationOperations = navigationOperations
+            channelNavigationOperations = navigationOperations,
+            channelOperations = UnavailableDeviceDosingChannelOperations
         )
         viewModel.bind(deviceUidText = DEVICE_UID, fallbackTitle = "Dose Pro")
 

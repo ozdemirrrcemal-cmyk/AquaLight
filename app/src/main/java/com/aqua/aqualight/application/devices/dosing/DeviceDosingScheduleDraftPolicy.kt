@@ -29,8 +29,8 @@ enum class DeviceDosingTimerScheduleValidationError {
 /**
  * Product-level Dosing editor limits.
  *
- * These are intentionally owned outside presentation. The future firmware adapter may map
- * device capabilities into this application boundary without changing Fragment/Compose code.
+ * These defaults are intentionally owned outside presentation. Per-channel firmware limits are
+ * passed into the policies by the application boundary without changing validation ownership.
  */
 object DeviceDosingScheduleDraftLimits {
     const val MAX_DOSES_PER_DAY = 24
@@ -80,21 +80,31 @@ object DeviceDosingScheduleTimeDraftPolicy {
 
 object DeviceDosingCustomScheduleDraftPolicy {
     fun validate(
-        periods: List<DeviceDosingCustomPeriodDraft>
-    ): DeviceDosingCustomScheduleValidationError? = when {
-        periods.any { period -> !isValidPeriod(period) } ->
-            DeviceDosingCustomScheduleValidationError.INVALID_PERIOD
-        totalDoseCount(periods) > DeviceDosingScheduleDraftLimits.MAX_DOSES_PER_DAY ->
-            DeviceDosingCustomScheduleValidationError.TOO_MANY_DOSES
-        periodsOverlap(periods) ->
-            DeviceDosingCustomScheduleValidationError.OVERLAPPING_PERIODS
-        else -> null
+        periods: List<DeviceDosingCustomPeriodDraft>,
+        maxEventsPerChannel: Int = DeviceDosingScheduleDraftLimits.MAX_DOSES_PER_DAY,
+        maxPeriodsPerChannel: Int = DeviceDosingScheduleDraftLimits.MAX_DOSES_PER_DAY
+    ): DeviceDosingCustomScheduleValidationError? {
+        require(maxEventsPerChannel > 0)
+        require(maxPeriodsPerChannel > 0)
+        return when {
+            periods.any { period -> !isValidPeriod(period, maxEventsPerChannel) } ->
+                DeviceDosingCustomScheduleValidationError.INVALID_PERIOD
+            periods.size > maxPeriodsPerChannel || totalDoseCount(periods) > maxEventsPerChannel ->
+                DeviceDosingCustomScheduleValidationError.TOO_MANY_DOSES
+            periodsOverlap(periods) ->
+                DeviceDosingCustomScheduleValidationError.OVERLAPPING_PERIODS
+            else -> null
+        }
     }
 
     fun normalize(
-        periods: List<DeviceDosingCustomPeriodDraft>
+        periods: List<DeviceDosingCustomPeriodDraft>,
+        maxEventsPerChannel: Int = DeviceDosingScheduleDraftLimits.MAX_DOSES_PER_DAY,
+        maxPeriodsPerChannel: Int = DeviceDosingScheduleDraftLimits.MAX_DOSES_PER_DAY
     ): List<DeviceDosingCustomPeriodDraft> {
-        require(validate(periods) == null) { "Custom periods are invalid." }
+        require(
+            validate(periods, maxEventsPerChannel, maxPeriodsPerChannel) == null
+        ) { "Custom periods are invalid." }
         return periods.sortedBy(DeviceDosingCustomPeriodDraft::startTimeMs)
     }
 
@@ -114,11 +124,14 @@ object DeviceDosingCustomScheduleDraftPolicy {
         }
     }
 
-    private fun isValidPeriod(period: DeviceDosingCustomPeriodDraft): Boolean =
+    private fun isValidPeriod(
+        period: DeviceDosingCustomPeriodDraft,
+        maxEventsPerChannel: Int
+    ): Boolean =
         DeviceDosingScheduleTimeDraftPolicy.isValidTime(period.startTimeMs) &&
             DeviceDosingScheduleTimeDraftPolicy.isValidTime(period.endTimeMs) &&
             period.endTimeMs > period.startTimeMs &&
-            period.doseCount in 1..DeviceDosingScheduleDraftLimits.MAX_DOSES_PER_DAY
+            period.doseCount in 1..maxEventsPerChannel
 
     private fun periodsOverlap(periods: List<DeviceDosingCustomPeriodDraft>): Boolean = periods
         .sortedBy(DeviceDosingCustomPeriodDraft::startTimeMs)
@@ -128,21 +141,28 @@ object DeviceDosingCustomScheduleDraftPolicy {
 
 object DeviceDosingTimerScheduleDraftPolicy {
     fun validate(
-        doses: List<DeviceDosingTimerDoseDraft>
-    ): DeviceDosingTimerScheduleValidationError? = when {
-        doses.any { dose -> !isValidDose(dose) } ->
-            DeviceDosingTimerScheduleValidationError.INVALID_DOSE
-        doses.size > DeviceDosingScheduleDraftLimits.MAX_DOSES_PER_DAY ->
-            DeviceDosingTimerScheduleValidationError.TOO_MANY_DOSES
-        hasDuplicateTime(doses) ->
-            DeviceDosingTimerScheduleValidationError.DUPLICATE_TIME
-        runCatching { totalDoseMicroliters(doses) }.isFailure ->
-            DeviceDosingTimerScheduleValidationError.TOTAL_OVERFLOW
-        else -> null
+        doses: List<DeviceDosingTimerDoseDraft>,
+        maxEventsPerChannel: Int = DeviceDosingScheduleDraftLimits.MAX_DOSES_PER_DAY
+    ): DeviceDosingTimerScheduleValidationError? {
+        require(maxEventsPerChannel > 0)
+        return when {
+            doses.any { dose -> !isValidDose(dose) } ->
+                DeviceDosingTimerScheduleValidationError.INVALID_DOSE
+            doses.size > maxEventsPerChannel ->
+                DeviceDosingTimerScheduleValidationError.TOO_MANY_DOSES
+            hasDuplicateTime(doses) ->
+                DeviceDosingTimerScheduleValidationError.DUPLICATE_TIME
+            runCatching { totalDoseMicroliters(doses) }.isFailure ->
+                DeviceDosingTimerScheduleValidationError.TOTAL_OVERFLOW
+            else -> null
+        }
     }
 
-    fun normalize(doses: List<DeviceDosingTimerDoseDraft>): List<DeviceDosingTimerDoseDraft> {
-        require(validate(doses) == null) { "Timer doses are invalid." }
+    fun normalize(
+        doses: List<DeviceDosingTimerDoseDraft>,
+        maxEventsPerChannel: Int = DeviceDosingScheduleDraftLimits.MAX_DOSES_PER_DAY
+    ): List<DeviceDosingTimerDoseDraft> {
+        require(validate(doses, maxEventsPerChannel) == null) { "Timer doses are invalid." }
         return doses.sortedBy(DeviceDosingTimerDoseDraft::startTimeMs)
     }
 

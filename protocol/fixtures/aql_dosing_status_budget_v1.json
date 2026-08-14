@@ -1,0 +1,25 @@
+{
+  "fixtureVersion": 1,
+  "schema": "aqualight.dosing.v1",
+  "transportBudgetBytes": 4096,
+  "minimumHeadroomBytes": 200,
+  "globalStatus": {
+    "channelCount": 4,
+    "maximumNameBytes": 47,
+    "maximumStorageIssueBytes": 127,
+    "fullProgramsIncluded": false,
+    "schedulingMetadataCopies": 1,
+    "expectedSerializedBytes": 3658
+  },
+  "channelStatus": {
+    "channelCount": 1,
+    "programMode": "customPeriods",
+    "customPeriodCount": 24,
+    "timerEventCountAlsoVerified": 24,
+    "maximumNameBytes": 47,
+    "maximumStorageIssueBytes": 127,
+    "fullProgramIncluded": true,
+    "expectedSerializedBytes": 3873,
+    "expectedTimerSerializedBytes": 3550
+  }
+}

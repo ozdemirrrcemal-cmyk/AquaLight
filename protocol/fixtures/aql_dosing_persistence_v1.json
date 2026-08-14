@@ -1,0 +1,128 @@
+{
+  "fixtureVersion": 1,
+  "schema": "aqualight.dosing.v1",
+  "dosePro2": {
+    "schemaVersion": 1,
+    "schema": "aqualight.dosing.v1",
+    "dosing": {
+      "channels": [
+        {
+          "channelKey": "channel1",
+          "revision": 0,
+          "stateEpoch": 0,
+          "displayName": null,
+          "calibration": null,
+          "reservoir": {"trackingEnabled": false, "capacityMl": null},
+          "program": null
+        },
+        {
+          "channelKey": "channel2",
+          "revision": 3,
+          "stateEpoch": 0,
+          "displayName": "Trace Pump",
+          "calibration": {"doseMsPerMl": 1200, "lastCalibratedAt": 1786420000},
+          "reservoir": {"trackingEnabled": true, "capacityMl": 500.0},
+          "program": {
+            "enabled": true,
+            "weekdays": [true, true, true, true, true, true, true],
+            "mode": "single",
+            "missedDoseRecoveryEnabled": false,
+            "config": {"dailyDoseMl": 3.0, "startTimeMs": 36000000}
+          }
+        }
+      ]
+    }
+  },
+  "dosePro4": {
+    "schemaVersion": 1,
+    "schema": "aqualight.dosing.v1",
+    "dosing": {
+      "channels": [
+        {
+          "channelKey": "channel1",
+          "revision": 4,
+          "stateEpoch": 0,
+          "displayName": "Macro",
+          "calibration": {"doseMsPerMl": 1000, "lastCalibratedAt": 1786420001},
+          "reservoir": {"trackingEnabled": true, "capacityMl": 1000.0},
+          "program": {
+            "enabled": true,
+            "weekdays": [true, true, true, true, true, true, true],
+            "mode": "single",
+            "missedDoseRecoveryEnabled": false,
+            "config": {"dailyDoseMl": 3.0, "startTimeMs": 36000000}
+          }
+        },
+        {
+          "channelKey": "channel2",
+          "revision": 5,
+          "stateEpoch": 0,
+          "displayName": "Micro",
+          "calibration": {"doseMsPerMl": 1100, "lastCalibratedAt": 1786420002},
+          "reservoir": {"trackingEnabled": true, "capacityMl": 500.0},
+          "program": {
+            "enabled": true,
+            "weekdays": [true, true, true, true, true, true, true],
+            "mode": "hourly24",
+            "missedDoseRecoveryEnabled": false,
+            "config": {"dailyDoseMl": 2.4, "startTimeMs": 900000}
+          }
+        },
+        {
+          "channelKey": "channel3",
+          "revision": 6,
+          "stateEpoch": 2,
+          "displayName": "Iron",
+          "calibration": {"doseMsPerMl": 900, "lastCalibratedAt": 1786420003},
+          "reservoir": {"trackingEnabled": false, "capacityMl": 750.0},
+          "program": {
+            "enabled": true,
+            "weekdays": [true, false, true, false, true, false, true],
+            "mode": "customPeriods",
+            "missedDoseRecoveryEnabled": false,
+            "config": {
+              "dailyDoseMl": 6.0,
+              "periods": [
+                {"startTimeMs": 36000000, "endTimeMs": 39600000, "doseCount": 3},
+                {"startTimeMs": 50400000, "endTimeMs": 57600000, "doseCount": 3}
+              ]
+            }
+          }
+        },
+        {
+          "channelKey": "channel4",
+          "revision": 7,
+          "stateEpoch": 0,
+          "displayName": "Carbon",
+          "calibration": {"doseMsPerMl": 1300, "lastCalibratedAt": 1786420004},
+          "reservoir": {"trackingEnabled": true, "capacityMl": 500.0},
+          "program": {
+            "enabled": true,
+            "weekdays": [true, true, true, true, true, true, true],
+            "mode": "timer",
+            "missedDoseRecoveryEnabled": false,
+            "config": {
+              "events": [
+                {"timeMs": 36000000, "amountMl": 1.0},
+                {"timeMs": 50400000, "amountMl": 5.0}
+              ]
+            }
+          }
+        }
+      ]
+    }
+  },
+  "runtimeCheckpointPolicy": {
+    "eventBitsPerChannel": 24,
+    "stateEpochInvalidatesPreResetSnapshot": true,
+    "immediateWrites": [
+      "scheduledReservation",
+      "scheduledCompletion",
+      "manualCompletion",
+      "reservoirMaintenanceCompletion",
+      "channelReset"
+    ],
+    "compiledOccurrencesPersisted": false,
+    "pendingCalibrationPersisted": false
+  }
+}

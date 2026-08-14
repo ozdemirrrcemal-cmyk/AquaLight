@@ -10,27 +10,39 @@ internal object DeviceDosingHourlyScheduleContract {
 
     const val DOSES_PER_DAY = 24
     const val MINUTES_PER_HOUR = 60
+    const val MINUTES_PER_DAY = 24 * MINUTES_PER_HOUR
     const val MILLIS_PER_MINUTE = 60_000L
-    const val LAST_MILLISECOND_OF_HOUR = 3_599_999L
+    const val MILLIS_PER_HOUR = MINUTES_PER_HOUR * MILLIS_PER_MINUTE
+    const val MILLIS_PER_DAY = MINUTES_PER_DAY * MILLIS_PER_MINUTE
+    const val LAST_MILLISECOND_OF_DAY = MILLIS_PER_DAY - 1L
 
     fun isValidStartTime(startTimeMs: Long): Boolean =
-        startTimeMs in 0L..LAST_MILLISECOND_OF_HOUR
+        startTimeMs in 0L..LAST_MILLISECOND_OF_DAY
 
-    fun minuteAlignedStartTime(startTimeMs: Long): Long {
+    fun minutesOfDay(startTimeMs: Long): Int {
         require(isValidStartTime(startTimeMs)) {
-            "Hourly startTimeMs must stay inside the first hour."
+            "Hourly startTimeMs must stay inside one local day."
         }
-        return startTimeMs / MILLIS_PER_MINUTE * MILLIS_PER_MINUTE
+        return (startTimeMs / MILLIS_PER_MINUTE).toInt()
     }
 
-    fun minuteOfHour(startTimeMs: Long): Int =
-        (minuteAlignedStartTime(startTimeMs) / MILLIS_PER_MINUTE).toInt()
-
-    fun startTimeMs(minuteOfHour: Int): Long {
-        require(minuteOfHour in 0 until MINUTES_PER_HOUR) {
-            "minuteOfHour must be between 0 and 59."
+    fun startTimeMs(minutesOfDay: Int): Long {
+        require(minutesOfDay in 0 until MINUTES_PER_DAY) {
+            "minutesOfDay must stay inside one local day."
         }
-        return minuteOfHour * MILLIS_PER_MINUTE
+        return minutesOfDay * MILLIS_PER_MINUTE
+    }
+
+    fun lastDoseTimeMs(startTimeMs: Long): Long {
+        require(isValidStartTime(startTimeMs)) {
+            "Hourly startTimeMs must stay inside one local day."
+        }
+        return (startTimeMs + (DOSES_PER_DAY - 1L) * MILLIS_PER_HOUR) % MILLIS_PER_DAY
+    }
+
+    fun lastDoseFallsOnNextDay(startTimeMs: Long): Boolean {
+        require(isValidStartTime(startTimeMs))
+        return startTimeMs + (DOSES_PER_DAY - 1L) * MILLIS_PER_HOUR >= MILLIS_PER_DAY
     }
 
     fun dailyDoseMl(dailyDoseMicroliters: Long): Double {

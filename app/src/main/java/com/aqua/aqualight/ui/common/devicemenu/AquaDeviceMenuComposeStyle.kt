@@ -281,6 +281,7 @@ fun AquaDeviceMenuSwitchRow(
     checked: Boolean,
     toggleContentDescription: String,
     onCheckedChange: (Boolean) -> Unit,
+    enabled: Boolean = true,
     modifier: Modifier = Modifier
 ) {
     val colors = aquaDeviceMenuColors()
@@ -299,6 +300,7 @@ fun AquaDeviceMenuSwitchRow(
             .toggleable(
                 value = checked,
                 role = Role.Switch,
+                enabled = enabled,
                 onValueChange = onCheckedChange
             )
             .padding(

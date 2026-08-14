@@ -937,12 +937,6 @@
     },
     {
       "ruleId": "detekt.complexity.TooManyFunctions",
-      "path": "app/src/main/java/com/aqua/aqualight/data/devices/runtime/modules/dosing/DeviceDosingRuntimeRepository.kt",
-      "message": "Class 'DeviceDosingRuntimeRepository' with '13' functions detected. Defined threshold inside classes is set to '11'",
-      "count": 1
-    },
-    {
-      "ruleId": "detekt.complexity.TooManyFunctions",
       "path": "app/src/main/java/com/aqua/aqualight/data/devices/runtime/modules/firmware/DeviceFirmwareManifestParser.kt",
       "message": "Object 'DeviceFirmwareManifestParser' with '11' functions detected. Defined threshold inside objects is set to '11'",
       "count": 1
@@ -1759,18 +1753,6 @@
     },
     {
       "ruleId": "detekt.style.MagicNumber",
-      "path": "app/src/main/java/com/aqua/aqualight/data/devices/runtime/modules/dosing/DeviceDosingModels.kt",
-      "message": "This expression contains a magic number. Consider defining it to a well named constant.",
-      "count": 2
-    },
-    {
-      "ruleId": "detekt.style.MagicNumber",
-      "path": "app/src/main/java/com/aqua/aqualight/data/devices/runtime/modules/dosing/DeviceDosingStatusParser.kt",
-      "message": "This expression contains a magic number. Consider defining it to a well named constant.",
-      "count": 2
-    },
-    {
-      "ruleId": "detekt.style.MagicNumber",
       "path": "app/src/main/java/com/aqua/aqualight/data/devices/runtime/modules/firmware/DeviceFirmwareManifestSignatureVerifier.kt",
       "message": "This expression contains a magic number. Consider defining it to a well named constant.",
       "count": 1
@@ -2152,12 +2134,6 @@
       "path": "app/src/main/java/com/aqua/aqualight/data/devices/runtime/modules/cooling/DeviceCoolingModels.kt",
       "message": "Line detected, which is longer than the defined maximum line length in the code style.",
       "count": 4
-    },
-    {
-      "ruleId": "detekt.style.MaxLineLength",
-      "path": "app/src/main/java/com/aqua/aqualight/data/devices/runtime/modules/dosing/DeviceDosingModels.kt",
-      "message": "Line detected, which is longer than the defined maximum line length in the code style.",
-      "count": 2
     },
     {
       "ruleId": "detekt.style.MaxLineLength",

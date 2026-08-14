@@ -13,6 +13,7 @@ import com.aqua.aqualight.ui.tabs.devices.detail.dosing.channel.schedule.DeviceD
 internal data class DeviceDosingTimerScheduleEditorHost(
     val fragment: Fragment,
     val slotId: String,
+    val maxEventsPerChannel: Int,
     val doses: () -> List<DeviceDosingTimerDose>,
     val updateDoses: (List<DeviceDosingTimerDose>) -> Unit,
     val updateValidation: (Int?) -> Unit
@@ -42,7 +43,10 @@ internal class DeviceDosingTimerScheduleEditor(
 
     fun beginAdd() {
         val doses = host.doses()
-        if (doses.size >= DeviceDosingTimerScheduleContract.MAX_DOSES_PER_DAY) return
+        if (doses.size >= host.maxEventsPerChannel) {
+            host.updateValidation(R.string.device_dosing_timer_error_too_many)
+            return
+        }
         host.updateValidation(null)
         pendingIndex = NEW_DOSE_INDEX
         pendingStartTimeMs = nextDefaultTimerStartTimeMs(doses)
@@ -160,9 +164,17 @@ internal class DeviceDosingTimerScheduleEditor(
         val updated = host.doses().toMutableList().apply {
             if (pendingIndex in indices) this[pendingIndex] = candidate else add(candidate)
         }
-        val error = DeviceDosingTimerScheduleContract.validate(updated)
+        val error = DeviceDosingTimerScheduleContract.validate(
+            doses = updated,
+            maxEventsPerChannel = host.maxEventsPerChannel
+        )
         if (error == null) {
-            host.updateDoses(DeviceDosingTimerScheduleContract.normalize(updated))
+            host.updateDoses(
+                DeviceDosingTimerScheduleContract.normalize(
+                    doses = updated,
+                    maxEventsPerChannel = host.maxEventsPerChannel
+                )
+            )
             host.updateValidation(null)
         } else {
             host.updateValidation(timerValidationMessage(error))

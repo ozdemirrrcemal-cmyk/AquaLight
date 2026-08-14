@@ -205,9 +205,13 @@ require_tokens(
     (
         "fun AqlCommercialCatalogProduct.expectedRuntimeModules()",
         "timerApi = standaloneTimer",
-        "timerEngine = standaloneTimer || dosingProduct",
+        "timerEngine = standaloneTimer",
         "dosing = dosingProduct",
     ),
+)
+forbid_tokens(
+    "module_contract",
+    ("timerEngine = standaloneTimer || dosingProduct",),
 )
 
 require_tokens(

@@ -28,27 +28,28 @@ class DosingUiLayerBoundaryTest {
 
     @Test
     fun `dosing presentation models do not own domain validity or firmware identity`() {
-        val models = source(DOSING_SOURCE_ROOT + "DosingChannelCardModels.kt")
+        val models = source(CARD_SOURCE_ROOT + "DosingChannelCardModels.kt")
+        val mapper = source(CARD_SOURCE_ROOT + "DosingChannelCardMapper.kt")
 
         assertFalse(models.contains("require(slotId"))
         assertFalse(models.contains("require(channelNumber"))
         assertFalse(models.contains("require(displayName"))
         assertFalse(models.contains("selectedDays.distinct()"))
         assertFalse(models.contains("require(dailyDoseMl"))
-        assertFalse(models.contains("require(deliveredTodayMl"))
-        assertFalse(models.contains("require(doseMilestonesMl"))
+        assertFalse(models.contains("require(scheduledDeliveredTodayMl"))
+        assertFalse(models.contains("require(manualDeliveredTodayMl"))
         assertFalse(models.contains("val wireKey: String"))
         assertFalse(models.contains("wireKey = wireKey.value"))
 
-        assertTrue(models.contains("DeviceDosingChannelSlot.toInitialDosingChannelCardUiState"))
+        assertTrue(mapper.contains("DeviceDosingChannelSlot.toInitialDosingChannelCardUiState"))
     }
 
     @Test
-    fun `channel navigation stays behind central catalog runtime and route boundaries`() {
+    fun `channel navigation stays behind disconnected application and route boundaries`() {
         val rootFragment = source(DOSING_SOURCE_ROOT + "DeviceDosingRootFragment.kt")
         val operations = source(
             "app/src/main/java/com/aqua/aqualight/data/devices/dosing/" +
-                "DefaultDeviceDosingChannelNavigationOperations.kt"
+                "UnavailableDeviceDosingChannelNavigationOperations.kt"
         )
         val navigator = source(
             "app/src/main/java/com/aqua/aqualight/ui/navigation/AppRouteNavigator.kt"
@@ -58,16 +59,53 @@ class DosingUiLayerBoundaryTest {
         assertTrue(rootFragment.contains("AppRouteNavigator.openDosingChannel"))
         assertFalse(rootFragment.contains("DeviceDosingChannelDetailFragmentArgs"))
         assertFalse(rootFragment.contains("DeviceDosingChannelCalibrationFragmentArgs"))
-        assertTrue(operations.contains("toDeviceRootSnapshot()"))
-        assertTrue(operations.contains("DefaultDeviceMenuAccessOperations.create"))
-        assertTrue(operations.contains("runtimePort.requestStatus(context.uid)"))
-        assertTrue(
-            operations.contains("devicesRepository.runtimeModules()?.dosing?.requestStatus(deviceUid)")
-        )
-        assertTrue(operations.contains("DeviceDosingChannelDestinationPolicy.resolve"))
+        assertTrue(operations.contains("flowOf(emptyList())"))
+        assertTrue(operations.contains("refreshTargets(deviceUid: String): Boolean = false"))
+        assertFalse(operations.contains("runtime.modules"))
+        assertFalse(operations.contains("DevicesRepository"))
         assertTrue(navigator.contains("fun openDosingChannel("))
         assertTrue(appGraph.contains("deviceDosingChannelCalibrationFragment"))
         assertTrue(appGraph.contains("deviceDosingChannelDetailFragment"))
+    }
+
+    @Test
+    fun `legacy dosing runtime package is absent`() {
+        val legacyRuntime = File(
+            repositoryRoot,
+            "app/src/main/java/com/aqua/aqualight/data/devices/runtime/modules/dosing"
+        )
+
+        assertFalse(legacyRuntime.exists())
+    }
+
+    @Test
+    fun `new dosing v1 data layer remains outside production composition`() {
+        val v1Root = File(
+            repositoryRoot,
+            "app/src/main/java/com/aqua/aqualight/data/devices/dosing/v1"
+        )
+        val provider = source(
+            "app/src/main/java/com/aqua/aqualight/data/devices/runtime/modules/" +
+                "DeviceRuntimeModuleProvider.kt"
+        )
+        val runtimeRepository = source(
+            "app/src/main/java/com/aqua/aqualight/data/devices/repository/" +
+                "DeviceRuntimeRepository.kt"
+        )
+        val mainSources = File(repositoryRoot, "app/src/main/java")
+            .walkTopDown()
+            .filter { file ->
+                file.isFile &&
+                    file.extension == "kt" &&
+                    !file.toPath().startsWith(v1Root.toPath())
+            }
+            .map(File::readText)
+            .toList()
+
+        assertTrue(v1Root.isDirectory)
+        assertFalse(provider.contains("DeviceDosingV1"))
+        assertFalse(runtimeRepository.contains("DeviceDosingV1"))
+        assertTrue(mainSources.none { source -> source.contains("DeviceDosingV1Repository") })
     }
 
     @Test
@@ -181,6 +219,7 @@ class DosingUiLayerBoundaryTest {
     private companion object {
         const val DOSING_SOURCE_ROOT =
             "app/src/main/java/com/aqua/aqualight/ui/tabs/devices/detail/dosing/"
+        const val CARD_SOURCE_ROOT = DOSING_SOURCE_ROOT + "presentation/card/"
         const val APPLICATION_DEVICE_SLOTS =
             "app/src/main/java/com/aqua/aqualight/application/devices/DeviceChannelSlots.kt"
     }

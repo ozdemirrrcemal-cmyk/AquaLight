@@ -75,13 +75,6 @@ object AqlWsCommandFactory {
         )
     }
 
-    fun dosingStatus(): AqlWsOutgoingMessage.Command {
-        return command(
-            module = AqlWsContract.MODULE_DOSING,
-            action = AqlWsContract.ACTION_DOSING_STATUS_GET
-        )
-    }
-
     fun command(
         module: String,
         action: String,

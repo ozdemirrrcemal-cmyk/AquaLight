@@ -39,8 +39,8 @@ class DeviceDosingHourlyScheduleFragment :
             ?.getLong(STATE_START_TIME_MS)
             ?.takeIf(DeviceDosingHourlyScheduleContract::isValidStartTime)
             ?: args.startTimeMs
-        startTimeMs = DeviceDosingHourlyScheduleContract.minuteAlignedStartTime(restoredStartTimeMs)
-        setupMinutePickerResult()
+        startTimeMs = restoredStartTimeMs
+        setupTimePickerResult()
         setupSelectedPump(
             view = view,
             deviceUid = args.deviceUid,
@@ -56,7 +56,7 @@ class DeviceDosingHourlyScheduleFragment :
                         dailyDoseMicroliters = args.dailyDoseMicroliters,
                         startTimeMs = startTimeMs
                     ),
-                    onMinuteClick = ::showMinutePicker,
+                    onStartTimeClick = ::showTimePicker,
                     onSaveClick = ::saveDraft
                 )
             }
@@ -68,9 +68,9 @@ class DeviceDosingHourlyScheduleFragment :
         super.onSaveInstanceState(outState)
     }
 
-    private fun setupMinutePickerResult() {
+    private fun setupTimePickerResult() {
         childFragmentManager.setFragmentResultListener(
-            MINUTE_PICKER_REQUEST_KEY,
+            TIME_PICKER_REQUEST_KEY,
             viewLifecycleOwner
         ) { _, result ->
             if (
@@ -78,33 +78,34 @@ class DeviceDosingHourlyScheduleFragment :
                 result.getString(AquaTimePickerBottomSheet.RESULT_KEY) !=
                 AquaTimePickerBottomSheet.RESULT_SELECTED ||
                 result.getString(AquaTimePickerBottomSheet.RESULT_SELECTION_MODE) !=
-                AquaTimePickerBottomSheet.SelectionMode.MINUTE_OF_HOUR.name
+                AquaTimePickerBottomSheet.SelectionMode.TIME_OF_DAY.name
             ) {
                 return@setFragmentResultListener
             }
-            val minuteOfHour = result.getInt(
-                AquaTimePickerBottomSheet.RESULT_MINUTE,
-                INVALID_MINUTE_OF_HOUR
+            val minutesOfDay = result.getInt(
+                AquaTimePickerBottomSheet.RESULT_MINUTES_OF_DAY,
+                INVALID_MINUTES_OF_DAY
             )
-            if (minuteOfHour in 0 until DeviceDosingHourlyScheduleContract.MINUTES_PER_HOUR) {
-                startTimeMs = DeviceDosingHourlyScheduleContract.startTimeMs(minuteOfHour)
+            if (minutesOfDay in 0 until DeviceDosingHourlyScheduleContract.MINUTES_PER_DAY) {
+                startTimeMs = DeviceDosingHourlyScheduleContract.startTimeMs(minutesOfDay)
             }
         }
     }
 
-    private fun showMinutePicker() {
+    private fun showTimePicker() {
+        val minutesOfDay = DeviceDosingHourlyScheduleContract.minutesOfDay(startTimeMs)
         AquaTimePickerBottomSheet.show(
             fragmentManager = childFragmentManager,
             request = AquaTimePickerBottomSheet.Request(
-                title = getString(R.string.device_dosing_hourly_minute_picker_title),
-                message = getString(R.string.device_dosing_hourly_minute_picker_message),
-                initialHour = 0,
-                initialMinute = DeviceDosingHourlyScheduleContract.minuteOfHour(startTimeMs),
-                selectionMode = AquaTimePickerBottomSheet.SelectionMode.MINUTE_OF_HOUR,
-                confirmText = getString(R.string.device_dosing_hourly_minute_picker_confirm),
+                title = getString(R.string.device_dosing_hourly_start_time_picker_title),
+                message = getString(R.string.device_dosing_hourly_start_time_picker_message),
+                initialHour = minutesOfDay / DeviceDosingHourlyScheduleContract.MINUTES_PER_HOUR,
+                initialMinute = minutesOfDay % DeviceDosingHourlyScheduleContract.MINUTES_PER_HOUR,
+                selectionMode = AquaTimePickerBottomSheet.SelectionMode.TIME_OF_DAY,
+                confirmText = getString(R.string.device_dosing_hourly_start_time_picker_confirm),
                 cancelText = getString(R.string.common_cancel),
                 resultTarget = AquaTimePickerBottomSheet.ResultTarget(
-                    requestKey = MINUTE_PICKER_REQUEST_KEY,
+                    requestKey = TIME_PICKER_REQUEST_KEY,
                     payloadId = args.slotId
                 )
             )
@@ -128,8 +129,8 @@ class DeviceDosingHourlyScheduleFragment :
 
     private companion object {
         const val STATE_START_TIME_MS = "hourly_schedule_start_time_ms"
-        const val MINUTE_PICKER_REQUEST_KEY = "hourly_schedule_minute_picker"
+        const val TIME_PICKER_REQUEST_KEY = "hourly_schedule_time_picker"
         const val DEFAULT_START_TIME_MS = 0L
-        const val INVALID_MINUTE_OF_HOUR = -1
+        const val INVALID_MINUTES_OF_DAY = -1
     }
 }

@@ -1,21 +1,26 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="device_dosing_pump_state_idle">Ready</string>
+    <string name="device_dosing_pump_state_idle">Idle</string>
     <string name="device_dosing_pump_state_selected">Selected</string>
     <string name="device_dosing_pump_state_running">Running</string>
     <string name="device_dosing_pump_state_error">Error</string>
     <string name="device_dosing_pump_channel_content_description">Dosing channel %1$d, %2$s</string>
     <string name="device_dosing_open_settings_description">Open device settings</string>
 
-    <string name="device_dosing_channel_status_ready">Ready</string>
-    <string name="device_dosing_channel_status_scheduled">Scheduled</string>
     <string name="device_dosing_channel_status_dosing">Dosing</string>
     <string name="device_dosing_channel_status_attention">Needs attention</string>
+    <string name="device_dosing_channel_status_configured">Configured</string>
     <string name="device_dosing_channel_not_configured">Not configured</string>
-    <string name="device_dosing_channel_empty_title">Set up dosing</string>
-    <string name="device_dosing_channel_empty_description">Set a daily dose and schedule before using this channel.</string>
-    <string name="device_dosing_channel_daily_dose_format">%1$.2f ml</string>
+    <string name="device_dosing_channel_program_not_configured">Program not set</string>
+    <string name="device_dosing_channel_automatic_off">Automatic dosing off</string>
+    <string name="device_dosing_channel_calibration_required">Calibration required</string>
+    <string name="device_dosing_channel_calibration_required_description">Calibrate the pump before configuring and using this channel.</string>
+    <string name="device_dosing_channel_program_empty_title">Set a dosing program</string>
+    <string name="device_dosing_channel_program_empty_description">Choose the daily dose, program mode and dosing days for this channel.</string>
+    <string name="device_dosing_channel_daily_dose_format">%1$.2f mL</string>
     <string name="device_dosing_channel_every_day">Every day</string>
+    <string name="device_dosing_channel_weekdays">Weekdays</string>
+    <string name="device_dosing_channel_weekend">Weekend</string>
     <string name="device_dosing_channel_no_days_selected">No days selected</string>
     <string name="device_dosing_weekday_mon">Mon</string>
     <string name="device_dosing_weekday_tue">Tue</string>
@@ -24,9 +29,21 @@
     <string name="device_dosing_weekday_fri">Fri</string>
     <string name="device_dosing_weekday_sat">Sat</string>
     <string name="device_dosing_weekday_sun">Sun</string>
-    <string name="device_dosing_channel_dose_progress_description">Daily dose progress. %1$.2f ml delivered today of %2$.2f ml configured.</string>
-    <string name="device_dosing_channel_dose_progress_value_format">%1$.2f ml</string>
-    <string name="device_dosing_channel_dose_scale_value_format">%1$.2f</string>
+    <string name="device_dosing_channel_mode_single">Single</string>
+    <string name="device_dosing_channel_mode_hourly">Hourly</string>
+    <string name="device_dosing_channel_mode_custom">Custom periods</string>
+    <string name="device_dosing_channel_mode_timer">Timer</string>
+    <string name="device_dosing_channel_mode_progress_format">%1$d/%2$d · %3$s</string>
+    <string name="device_dosing_channel_no_dose_today_format">No dose today · %1$s</string>
+    <string name="device_dosing_channel_progress_today">Today</string>
+    <string name="device_dosing_channel_progress_amount_format">%1$.2f / %2$.2f mL</string>
+    <string name="device_dosing_channel_progress_description">%1$s mode. %2$d of %3$d scheduled doses completed; %4$.2f mL of %5$.2f mL delivered.</string>
+    <string name="device_dosing_channel_no_scheduled_dose_today">No scheduled dose today</string>
+    <string name="device_dosing_channel_manual_label">Manual</string>
+    <string name="device_dosing_channel_manual_amount_format">+%1$.2f mL</string>
+    <string name="device_dosing_channel_reservoir_days_format">~%1$d days · %2$.1f mL</string>
+    <string name="device_dosing_channel_reservoir_amount_format">%1$.1f mL</string>
+    <string name="device_dosing_channel_reservoir_description">Reservoir remaining: %1$s</string>
     <string name="device_dosing_channel_card_content_description">Dosing channel %1$d, %2$s, %3$s</string>
     <string name="device_dosing_channel_open_failed">The dosing channel could not be read from the device. Check the connection and firmware version, then try again.</string>
 
@@ -48,6 +65,8 @@
     <string name="device_dosing_detail_reservoir_description">Set container volume and low-level monitoring.</string>
     <string name="device_dosing_detail_manual_title">Manual Dose</string>
     <string name="device_dosing_detail_manual_description">Dispense a precise one-time amount on demand.</string>
+    <string name="device_dosing_detail_manual_stop_title">Stop manual dose</string>
+    <string name="device_dosing_detail_manual_stop_description">Stop the active one-time dose safely.</string>
     <string name="device_dosing_detail_reset_title">Reset channel</string>
     <string name="device_dosing_detail_reset_description">Permanently clear all dosing configuration for this channel.</string>
 
@@ -75,6 +94,7 @@
     <string name="device_dosing_detail_schedule_timer">Timer</string>
     <string name="device_dosing_detail_recurrence_section">Recurrence</string>
     <string name="device_dosing_detail_save_plan">Save dosing plan</string>
+    <string name="device_dosing_plan_saved">Dosing plan saved.</string>
 
     <string name="device_dosing_single_title">Single dose</string>
     <string name="device_dosing_single_hero_eyebrow">Single-dose schedule</string>
@@ -95,7 +115,7 @@
 
     <string name="device_dosing_hourly_hero_eyebrow">24-hour schedule</string>
     <string name="device_dosing_hourly_hero_title">Balanced dosing, once every hour</string>
-    <string name="device_dosing_hourly_hero_description">AquaLight divides the daily amount into 24 portions and applies one at the selected minute of every hour.</string>
+    <string name="device_dosing_hourly_hero_description">AquaLight divides the daily amount into 24 portions, starting at the time you choose and continuing once per hour.</string>
     <string name="device_dosing_hourly_summary_section">Distribution summary</string>
     <string name="device_dosing_hourly_daily_amount_description">Uses the daily amount set on the Dosing Plan screen.</string>
     <string name="device_dosing_hourly_frequency">Daily applications</string>
@@ -105,15 +125,16 @@
     <string name="device_dosing_hourly_average_dose_format">≈%1$.3f ml</string>
     <string name="device_dosing_hourly_average_dose_description">The exact daily total is preserved while it is distributed across 24 applications.</string>
     <string name="device_dosing_hourly_timing_section">Hourly timing</string>
-    <string name="device_dosing_hourly_minute_title">Application minute</string>
-    <string name="device_dosing_hourly_minute_description">The pump runs at this minute of every hour.</string>
+    <string name="device_dosing_hourly_start_time_title">First dose time</string>
+    <string name="device_dosing_hourly_start_time_description">This time anchors the originating program day; the next 23 doses follow at one-hour intervals.</string>
     <string name="device_dosing_hourly_window_title">First and last dose</string>
     <string name="device_dosing_hourly_window_format">%1$s – %2$s</string>
-    <string name="device_dosing_hourly_window_description">Twenty-four applications, spaced exactly one hour apart.</string>
+    <string name="device_dosing_hourly_window_description">Twenty-four applications are spaced exactly one hour apart; the sequence may end on the next day.</string>
+    <string name="device_dosing_hourly_next_day_time_format">%1$s (next day)</string>
     <string name="device_dosing_hourly_use_action">Use hourly distribution</string>
-    <string name="device_dosing_hourly_minute_picker_title">Select application minute</string>
-    <string name="device_dosing_hourly_minute_picker_message">AquaLight will apply one dose at the selected minute of every hour.</string>
-    <string name="device_dosing_hourly_minute_picker_confirm">Apply minute</string>
+    <string name="device_dosing_hourly_start_time_picker_title">Select first dose time</string>
+    <string name="device_dosing_hourly_start_time_picker_message">The selected time anchors the 24-dose sequence. Later doses follow once per hour.</string>
+    <string name="device_dosing_hourly_start_time_picker_confirm">Apply time</string>
 
     <string name="device_dosing_schedule_add">Add</string>
     <string name="device_dosing_schedule_validation_section">Check schedule</string>
@@ -158,7 +179,7 @@
     <string name="device_dosing_custom_count_decrease_description">Decrease the application count</string>
     <string name="device_dosing_custom_count_increase_description">Increase the application count</string>
     <string name="device_dosing_custom_error_invalid_period">The end time must be later than the start time.</string>
-    <string name="device_dosing_custom_error_too_many">Custom periods support at most 24 total applications per day.</string>
+    <string name="device_dosing_custom_error_too_many">This plan exceeds the channel’s custom-period or daily application limit.</string>
     <string name="device_dosing_custom_error_overlap">This period overlaps an existing period. Choose a separate time window.</string>
 
     <string name="device_dosing_timer_hero_eyebrow">Timer schedule</string>
@@ -187,7 +208,7 @@
     <string name="device_dosing_timer_amount_editor_add">Add dose</string>
     <string name="device_dosing_timer_amount_editor_update">Apply changes</string>
     <string name="device_dosing_timer_error_invalid_amount">Enter a dose amount greater than 0 ml with at most three decimal places.</string>
-    <string name="device_dosing_timer_error_too_many">Timer mode supports at most 24 doses per day.</string>
+    <string name="device_dosing_timer_error_too_many">This plan exceeds the channel’s Timer dose limit.</string>
     <string name="device_dosing_timer_error_duplicate_time">A Timer dose already exists at this time. Edit that entry or choose another time.</string>
     <string name="device_dosing_timer_error_total">The total dose amount is too large. Reduce one or more Timer entries.</string>
 
@@ -212,12 +233,18 @@
     <string name="device_dosing_detail_manual_amount_hint">e.g. 2.50</string>
     <string name="device_dosing_detail_manual_amount_description">Enter the one-time amount to apply to the selected channel.</string>
     <string name="device_dosing_detail_manual_amount_required">Enter a dose amount greater than 0 ml.</string>
+    <string name="device_dosing_detail_manual_amount_invalid">Enter an amount within this pump’s supported manual-dose range.</string>
     <string name="device_dosing_detail_ml_unit">ml</string>
     <string name="device_dosing_detail_dispense_dose">Dispense Dose</string>
 
     <string name="device_dosing_detail_reset_warning_title">Reset this dosing channel?</string>
     <string name="device_dosing_detail_reset_warning_description">This action permanently clears all dosing configuration for this channel.</string>
     <string name="device_dosing_detail_reset_action">Reset channel</string>
+    <string name="device_dosing_detail_settings_saved">Dosing setting saved.</string>
+    <string name="device_dosing_detail_manual_started">Manual dose started.</string>
+    <string name="device_dosing_detail_manual_stopped">Manual dose stopped.</string>
+    <string name="device_dosing_detail_channel_reset_done">Dosing channel reset.</string>
+    <string name="device_dosing_detail_operation_failed">The dosing change could not be applied. Try again.</string>
 
     <string name="device_dosing_calibration_step_progress">Step %1$d of %2$d</string>
     <string name="device_dosing_calibration_name_title">Identify this dosing channel</string>

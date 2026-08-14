@@ -1,6 +1,7 @@
 {
   "fixtureVersion": 1,
-  "schema": "aql.dosing.calibration.v1",
+  "schema": "aqualight.dosing.v1",
+  "workflow": "calibration",
   "calibrationStates": [
     "idle",
     "running",
@@ -42,7 +43,8 @@
       "responseState": "idle",
       "saved": true,
       "requiresValidDeviceTime": true,
-      "requiresCompletedVerificationDose": true
+      "requiresCompletedVerificationDose": true,
+      "advancesChannelRevision": true
     },
     "cancel": {
       "name": "dosing.calibration.cancel",
@@ -54,20 +56,16 @@
     }
   },
   "statusShape": {
-    "dosing": {
+    "calibration": {
+      "confirmed": true,
       "doseMsPerMl": 1250,
       "lastCalibratedAt": 1786320000,
-      "calibrated": true,
-      "calibration": {
-        "state": "pendingVerification",
-        "startedAtUptimeMs": 0,
-        "durationMs": 5000,
-        "measuredMl": 4,
-        "pendingDoseMsPerMl": 1250,
-        "verificationDoseStarted": true,
-        "verificationDoseComplete": true,
-        "verificationDoseRemainingMs": 0
-      }
+      "state": "pendingVerification",
+      "durationMs": 5000,
+      "measuredMl": 4,
+      "pendingDoseMsPerMl": 1250,
+      "verificationDoseStarted": true,
+      "verificationDoseComplete": true
     }
   },
   "invariants": {
@@ -77,6 +75,8 @@
     "confirmCommitsCoefficientAndTimestampTogether": true,
     "failedPersistencePreservesPendingSession": true,
     "cancelPreservesPreviousConfirmedCalibration": true,
-    "firmwareRestartDiscardsPendingSession": true
+    "firmwareRestartDiscardsPendingSession": true,
+    "calibrationAndVerificationCountTowardDailyUserDose": false,
+    "verificationReservoirAccountingUsesPendingCoefficient": true
   }
 }

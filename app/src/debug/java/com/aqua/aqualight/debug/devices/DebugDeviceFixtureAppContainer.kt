@@ -7,8 +7,9 @@ import com.aqua.aqualight.BuildConfig
 import com.aqua.aqualight.composition.ActiveOwnerDependencyGraphResolver
 import com.aqua.aqualight.composition.AppContainer
 import com.aqua.aqualight.composition.OwnerDependencyGraph
-import com.aqua.aqualight.data.devices.dosing.DefaultDeviceDosingCalibrationOperations
-import com.aqua.aqualight.data.devices.dosing.DefaultDeviceDosingChannelNavigationOperations
+import com.aqua.aqualight.data.devices.dosing.UnavailableDeviceDosingCalibrationOperations
+import com.aqua.aqualight.data.devices.dosing.UnavailableDeviceDosingChannelOperations
+import com.aqua.aqualight.data.devices.dosing.UnavailableDeviceDosingChannelNavigationOperations
 import com.aqua.aqualight.data.devices.DefaultDeviceRootOperations
 import com.aqua.aqualight.data.devices.DefaultOwnerDevicesOperations
 import com.aqua.aqualight.data.devices.menu.DefaultDeviceMenuAccessOperations
@@ -19,6 +20,8 @@ import com.aqua.aqualight.ui.tabs.devices.detail.common.DeviceRootOverviewViewMo
 import com.aqua.aqualight.ui.tabs.devices.detail.cooling.DeviceCoolingRootViewModel
 import com.aqua.aqualight.ui.tabs.devices.detail.dosing.DeviceDosingRootViewModel
 import com.aqua.aqualight.ui.tabs.devices.detail.dosing.channel.calibration.DeviceDosingChannelCalibrationViewModel
+import com.aqua.aqualight.ui.tabs.devices.detail.dosing.channel.detail.DeviceDosingChannelDetailViewModel
+import com.aqua.aqualight.ui.tabs.devices.detail.dosing.channel.plan.DeviceDosingPlanViewModel
 import com.aqua.aqualight.ui.tabs.devices.detail.light.DeviceLightRootViewModel
 import com.aqua.aqualight.ui.tabs.devices.detail.settings.DeviceFamilySettingsViewModel
 import com.aqua.aqualight.ui.tabs.devices.detail.timer.DeviceTimerRootViewModel
@@ -72,6 +75,9 @@ private class DebugDeviceFixtureViewModelFactory(
                 createDosingViewModel(requireGraph())
             DeviceDosingChannelCalibrationViewModel::class.java ->
                 createDosingCalibrationViewModel(requireGraph())
+            DeviceDosingChannelDetailViewModel::class.java ->
+                createDosingChannelDetailViewModel()
+            DeviceDosingPlanViewModel::class.java -> createDosingPlanViewModel()
             DeviceRootOverviewViewModel::class.java ->
                 DeviceRootOverviewViewModel(rootOperations(requireGraph()))
             DeviceFamilySettingsViewModel::class.java -> createSettingsViewModel(requireGraph())
@@ -130,7 +136,12 @@ private class DebugDeviceFixtureViewModelFactory(
         DeviceDosingRootViewModel(
             operations = rootOperations(graph),
             channelNavigationOperations = DebugFixtureDosingChannelNavigationOperations(
-                delegate = DefaultDeviceDosingChannelNavigationOperations(graph.devicesRepository),
+                delegate = UnavailableDeviceDosingChannelNavigationOperations,
+                fixtures = fixtures,
+                stateStore = dosingStateStore
+            ),
+            channelOperations = DebugFixtureDosingChannelOperations(
+                delegate = UnavailableDeviceDosingChannelOperations,
                 fixtures = fixtures,
                 stateStore = dosingStateStore
             )
@@ -140,11 +151,29 @@ private class DebugDeviceFixtureViewModelFactory(
         graph: OwnerDependencyGraph
     ): DeviceDosingChannelCalibrationViewModel = DeviceDosingChannelCalibrationViewModel(
         operations = DebugFixtureDosingCalibrationOperations(
-            delegate = DefaultDeviceDosingCalibrationOperations(graph.devicesRepository),
+            delegate = UnavailableDeviceDosingCalibrationOperations,
             fixtures = fixtures,
             stateStore = dosingStateStore
         )
     )
+
+    private fun createDosingChannelDetailViewModel(): DeviceDosingChannelDetailViewModel =
+        DeviceDosingChannelDetailViewModel(
+            operations = DebugFixtureDosingChannelOperations(
+                delegate = UnavailableDeviceDosingChannelOperations,
+                fixtures = fixtures,
+                stateStore = dosingStateStore
+            )
+        )
+
+    private fun createDosingPlanViewModel(): DeviceDosingPlanViewModel =
+        DeviceDosingPlanViewModel(
+            operations = DebugFixtureDosingChannelOperations(
+                delegate = UnavailableDeviceDosingChannelOperations,
+                fixtures = fixtures,
+                stateStore = dosingStateStore
+            )
+        )
 
     private fun rootOperations(graph: OwnerDependencyGraph) = DebugFixtureDeviceRootOperations(
         delegate = DefaultDeviceRootOperations(graph.devicesRepository),

@@ -31,7 +31,12 @@ import com.aqua.aqualight.ui.common.devicemenu.aquaDeviceMenuTypography
 @Immutable
 internal data class DeviceDosingChannelDetailUiState(
     val lastCalibrationDate: String,
-    val missedDoseRecoveryEnabled: Boolean
+    val missedDoseRecoveryEnabled: Boolean,
+    val missedDoseRecoveryEditable: Boolean,
+    val manualDoseActive: Boolean,
+    val manualDoseEnabled: Boolean,
+    val resetEnabled: Boolean,
+    val operationInProgress: Boolean
 )
 
 internal data class DeviceDosingChannelDetailActions(
@@ -125,18 +130,27 @@ private fun DosingDetailSection(
             if (section.hasMissedDoseRecoverySwitch) {
                 DosingMissedDoseRecoverySwitch(
                     checked = state.missedDoseRecoveryEnabled,
+                    enabled = state.missedDoseRecoveryEditable && !state.operationInProgress,
                     onCheckedChange = actions.onMissedDoseRecoveryChange
                 )
             }
             if (section.hasManualDoseAction) {
                 if (section.items.isNotEmpty()) AquaDeviceMenuDivider()
-                DosingManualDoseAction(onClick = actions.onManualDoseClick)
+                DosingManualDoseAction(
+                    active = state.manualDoseActive,
+                    enabled = (state.manualDoseEnabled || state.manualDoseActive) &&
+                        !state.operationInProgress,
+                    onClick = actions.onManualDoseClick
+                )
             }
             if (section.hasResetChannelAction) {
                 if (section.items.isNotEmpty() || section.hasManualDoseAction) {
                     AquaDeviceMenuDivider()
                 }
-                DosingResetChannelAction(onClick = actions.onResetChannelClick)
+                DosingResetChannelAction(
+                    enabled = state.resetEnabled && !state.operationInProgress,
+                    onClick = actions.onResetChannelClick
+                )
             }
         }
     }
@@ -166,6 +180,7 @@ private fun DosingCalibrationAction(
 @Composable
 private fun DosingMissedDoseRecoverySwitch(
     checked: Boolean,
+    enabled: Boolean,
     onCheckedChange: (Boolean) -> Unit
 ) {
     val stateLabel = stringResource(
@@ -180,6 +195,7 @@ private fun DosingMissedDoseRecoverySwitch(
             iconRes = R.drawable.ic_dosing_recovery_24
         ),
         checked = checked,
+        enabled = enabled,
         toggleContentDescription = stringResource(
             R.string.device_dosing_detail_missed_dose_toggle_description,
             stateLabel
@@ -189,20 +205,36 @@ private fun DosingMissedDoseRecoverySwitch(
 }
 
 @Composable
-private fun DosingManualDoseAction(onClick: () -> Unit) {
+private fun DosingManualDoseAction(
+    active: Boolean,
+    enabled: Boolean,
+    onClick: () -> Unit
+) {
     AquaDeviceMenuRow(
         content = AquaDeviceMenuRowContent(
-            title = stringResource(R.string.device_dosing_detail_manual_title),
-            description = stringResource(R.string.device_dosing_detail_manual_description),
+            title = stringResource(
+                if (active) {
+                    R.string.device_dosing_detail_manual_stop_title
+                } else {
+                    R.string.device_dosing_detail_manual_title
+                }
+            ),
+            description = stringResource(
+                if (active) {
+                    R.string.device_dosing_detail_manual_stop_description
+                } else {
+                    R.string.device_dosing_detail_manual_description
+                }
+            ),
             iconRes = R.drawable.ic_dosing_manual_24
         ),
-        onClick = onClick,
+        onClick = onClick.takeIf { enabled },
         showTrailingIcon = false
     )
 }
 
 @Composable
-private fun DosingResetChannelAction(onClick: () -> Unit) {
+private fun DosingResetChannelAction(enabled: Boolean, onClick: () -> Unit) {
     AquaDeviceMenuRow(
         content = AquaDeviceMenuRowContent(
             title = stringResource(R.string.device_dosing_detail_reset_title),
@@ -210,7 +242,7 @@ private fun DosingResetChannelAction(onClick: () -> Unit) {
             iconRes = R.drawable.ic_dosing_reset_24,
             tone = AquaDeviceMenuTone.DANGER
         ),
-        onClick = onClick,
+        onClick = onClick.takeIf { enabled },
         showTrailingIcon = false
     )
 }

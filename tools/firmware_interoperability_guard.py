@@ -107,6 +107,7 @@ EXPECTED_EVENTS = {
     "firmware.ota.completed",
     "system.restarting",
 }
+EXPECTED_DISCONNECTED_ANDROID_MODULES = {"dosing"}
 
 
 class GuardFailure(AssertionError):
@@ -289,6 +290,25 @@ def verify_command_and_event_coverage(interoperability: dict[str, Any]) -> None:
     event_source = EVENT_CONTRACT_PATH.read_text(encoding="utf-8", errors="strict")
     require(android_commands(ws_source) == command_set, "Android 41-command matrix drifted")
 
+    disconnected_modules = interoperability.get("androidDisconnectedModules")
+    require(
+        isinstance(disconnected_modules, list),
+        "disconnected Android module matrix is missing",
+    )
+    require(
+        set(disconnected_modules) == EXPECTED_DISCONNECTED_ANDROID_MODULES,
+        "disconnected Android module matrix drifted",
+    )
+    require(
+        len(disconnected_modules) == len(EXPECTED_DISCONNECTED_ANDROID_MODULES),
+        "disconnected Android modules contain duplicates",
+    )
+    connected_command_set = {
+        command
+        for command in command_set
+        if command.split(".", 1)[0] not in EXPECTED_DISCONNECTED_ANDROID_MODULES
+    }
+
     declared_events = interoperability.get("events")
     require(isinstance(declared_events, list), "event matrix is missing")
     require(set(declared_events) == EXPECTED_EVENTS, "pinned firmware event matrix drifted")
@@ -310,8 +330,8 @@ def verify_command_and_event_coverage(interoperability: dict[str, Any]) -> None:
         "commands cannot be both payload-bearing and payloadless",
     )
     require(
-        set(payloadless) | set(payload_commands) == command_set,
-        "request coverage does not classify all 41 commands",
+        set(payloadless) | set(payload_commands) == connected_command_set,
+        "request coverage does not exactly classify connected Android commands",
     )
 
 
@@ -411,8 +431,9 @@ def main() -> int:
         return 1
 
     print(
-        "Firmware interoperability guard passed: 41/41 commands, 11/11 events, "
-        "all request serializers, byte-identical shared fixtures and 9/9 SKUs."
+        "Firmware interoperability guard passed: 41 command names, 30 connected "
+        "Android commands, 11/11 events, all connected request serializers, "
+        "byte-identical shared fixtures and 9/9 SKUs."
     )
     return 0
 

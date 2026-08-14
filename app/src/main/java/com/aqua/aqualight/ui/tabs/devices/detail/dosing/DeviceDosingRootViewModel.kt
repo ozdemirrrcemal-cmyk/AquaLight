@@ -9,10 +9,17 @@ import com.aqua.aqualight.application.devices.DeviceRootOperations
 import com.aqua.aqualight.application.devices.DeviceRootSnapshot
 import com.aqua.aqualight.application.devices.dosing.DeviceDosingChannelNavigationOperations
 import com.aqua.aqualight.application.devices.dosing.DeviceDosingChannelNavigationTarget
+import com.aqua.aqualight.application.devices.dosing.DeviceDosingChannelOperations
+import com.aqua.aqualight.application.devices.dosing.DeviceDosingChannelSnapshot
 import com.aqua.aqualight.ui.common.text.AquaUiText
 import com.aqua.aqualight.ui.tabs.devices.detail.common.DeviceRootKind
 import com.aqua.aqualight.ui.tabs.devices.detail.common.DeviceRootMenuMapper
 import com.aqua.aqualight.ui.tabs.devices.detail.common.DeviceRootPresentationMapper
+import com.aqua.aqualight.ui.tabs.devices.detail.dosing.presentation.card.DosingChannelCardUiState
+import com.aqua.aqualight.ui.tabs.devices.detail.dosing.presentation.card.toInitialDosingChannelCardUiState
+import com.aqua.aqualight.ui.tabs.devices.detail.dosing.presentation.card.toPumpVisualState
+import com.aqua.aqualight.ui.tabs.devices.detail.dosing.presentation.card.withChannelSnapshot
+import com.aqua.aqualight.ui.tabs.devices.detail.dosing.presentation.card.withNavigationTarget
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.Flow
@@ -24,7 +31,8 @@ import kotlinx.coroutines.launch
 
 class DeviceDosingRootViewModel(
     private val operations: DeviceRootOperations,
-    private val channelNavigationOperations: DeviceDosingChannelNavigationOperations
+    private val channelNavigationOperations: DeviceDosingChannelNavigationOperations,
+    private val channelOperations: DeviceDosingChannelOperations
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(DeviceDosingRootUiState())
@@ -41,9 +49,12 @@ class DeviceDosingRootViewModel(
     private var fallbackTitle: String = ""
     private var latestRootSnapshot: DeviceRootSnapshot? = null
     private var channelTargets: Map<String, DeviceDosingChannelNavigationTarget> = emptyMap()
+    private var channelSnapshots: Map<String, DeviceDosingChannelSnapshot> = emptyMap()
     private var observeJob: Job? = null
     private var channelStateJob: Job? = null
     private var channelRefreshJob: Job? = null
+    private var channelDataJob: Job? = null
+    private var channelDataRefreshJob: Job? = null
     private var channelNavigationJob: Job? = null
 
     fun bind(
@@ -55,10 +66,13 @@ class DeviceDosingRootViewModel(
             observeJob?.cancel()
             channelStateJob?.cancel()
             channelRefreshJob?.cancel()
+            channelDataJob?.cancel()
+            channelDataRefreshJob?.cancel()
             channelNavigationJob?.cancel()
             boundDeviceUid = ""
             latestRootSnapshot = null
             channelTargets = emptyMap()
+            channelSnapshots = emptyMap()
             _uiState.value = emptyState(fallbackTitle, "")
             return
         }
@@ -68,9 +82,13 @@ class DeviceDosingRootViewModel(
         this.fallbackTitle = fallbackTitle
         latestRootSnapshot = operations.current(deviceUid)
         channelTargets = emptyMap()
+        channelSnapshots = emptyMap()
         observeJob?.cancel()
         channelStateJob?.cancel()
         channelRefreshJob?.cancel()
+        channelDataJob?.cancel()
+        channelDataRefreshJob?.cancel()
+        channelNavigationJob?.cancel()
         renderBoundState()
         operations.connect(deviceUid)
         observeJob = viewModelScope.launch {
@@ -89,6 +107,16 @@ class DeviceDosingRootViewModel(
         }
         channelRefreshJob = viewModelScope.launch {
             channelNavigationOperations.refreshTargets(deviceUid)
+        }
+        channelDataJob = viewModelScope.launch {
+            channelOperations.observeAll(deviceUid).collect { snapshots ->
+                if (boundDeviceUid != deviceUid) return@collect
+                channelSnapshots = snapshots.associateBy(DeviceDosingChannelSnapshot::slotId)
+                renderBoundState()
+            }
+        }
+        channelDataRefreshJob = viewModelScope.launch {
+            channelOperations.refreshAll(deviceUid)
         }
     }
 
@@ -117,7 +145,8 @@ class DeviceDosingRootViewModel(
         val deviceUid = boundDeviceUid
         _uiState.value = latestRootSnapshot?.toRootUiState(
             fallbackTitle = fallbackTitle,
-            targets = channelTargets
+            targets = channelTargets,
+            snapshots = channelSnapshots
         ) ?: emptyState(fallbackTitle, deviceUid)
     }
 
@@ -135,7 +164,8 @@ class DeviceDosingRootViewModel(
 
     private fun DeviceRootSnapshot.toRootUiState(
         fallbackTitle: String,
-        targets: Map<String, DeviceDosingChannelNavigationTarget>
+        targets: Map<String, DeviceDosingChannelNavigationTarget>,
+        snapshots: Map<String, DeviceDosingChannelSnapshot>
     ): DeviceDosingRootUiState {
         val menuSections = DeviceRootMenuMapper.overview(kind = KIND, snapshot = this)
         val catalogChannels = if (catalogState == DeviceRootCatalogState.VALID) {
@@ -154,7 +184,11 @@ class DeviceDosingRootViewModel(
             pumpCount = resolveDosingPumpCount(exactChannelCount),
             channels = catalogChannels.map { slot ->
                 slot.toInitialDosingChannelCardUiState()
+                    .withChannelSnapshot(snapshots[slot.id.value])
                     .withNavigationTarget(targets[slot.id.value])
+            },
+            pumpStates = catalogChannels.map { slot ->
+                snapshots[slot.id.value]?.toPumpVisualState() ?: DosingPumpVisualState.IDLE
             },
             primaryCountLabelRes = KIND.primaryCountLabelRes,
             primaryCountText = exactChannelCount.takeIf { it > 0 }?.toString().orEmpty(),
@@ -180,6 +214,7 @@ data class DeviceDosingRootUiState(
     val modelText: String = "",
     val pumpCount: Int = UNKNOWN_DOSING_PUMP_COUNT,
     val channels: List<DosingChannelCardUiState> = emptyList(),
+    val pumpStates: List<DosingPumpVisualState> = emptyList(),
     @StringRes val primaryCountLabelRes: Int = R.string.device_dosing_channels_label,
     val primaryCountText: String = "",
     val featuresText: AquaUiText = AquaUiText.Resource(R.string.device_unknown),

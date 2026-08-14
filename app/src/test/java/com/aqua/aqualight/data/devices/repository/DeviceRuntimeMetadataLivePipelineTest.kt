@@ -75,7 +75,7 @@ class DeviceRuntimeMetadataLivePipelineTest {
         assertEquals(CUSTOM_NAME, projected.identity.customName)
         assertEquals(2, projected.limits.dosingChannelCount)
         assertFalse(projected.modules.contains("timerApi"))
-        assertTrue(projected.modules.contains("timerEngine"))
+        assertFalse(projected.modules.contains("timerEngine"))
         assertTrue(projected.modules.contains("dosing"))
 
         val root = projected.toDeviceRootSnapshot()
@@ -291,7 +291,7 @@ class DeviceRuntimeMetadataLivePipelineTest {
                 .put("cooling", false)
                 .put("temperature", false)
                 .put("timerApi", false)
-                .put("timerEngine", true)
+                .put("timerEngine", false)
                 .put("dosing", true)
                 .put("network", true)
                 .put("discovery", true)

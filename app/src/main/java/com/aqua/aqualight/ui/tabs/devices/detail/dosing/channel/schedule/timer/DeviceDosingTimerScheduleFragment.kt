@@ -27,13 +27,24 @@ class DeviceDosingTimerScheduleFragment :
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
-        val argumentDoses = DeviceDosingTimerScheduleContract.decodeDraft(args.dosesDraft)
+        val argumentDoses = if (args.maxEventsPerChannel > 0) {
+            DeviceDosingTimerScheduleContract.decodeDraft(
+                encoded = args.dosesDraft,
+                maxEventsPerChannel = args.maxEventsPerChannel
+            )
+        } else {
+            null
+        }
         if (argumentDoses == null) {
             findNavController().navigateUp()
             return
         }
 
-        doses = restoreTimerDoses(savedInstanceState, argumentDoses)
+        doses = restoreTimerDoses(
+            savedInstanceState = savedInstanceState,
+            argumentDoses = argumentDoses,
+            maxEventsPerChannel = args.maxEventsPerChannel
+        )
         validationMessageRes = savedInstanceState
             ?.getInt(STATE_VALIDATION_MESSAGE_RES, NO_MESSAGE_RES)
             ?.takeUnless { messageRes -> messageRes == NO_MESSAGE_RES }
@@ -41,6 +52,7 @@ class DeviceDosingTimerScheduleFragment :
             host = DeviceDosingTimerScheduleEditorHost(
                 fragment = this,
                 slotId = args.slotId,
+                maxEventsPerChannel = args.maxEventsPerChannel,
                 doses = { doses },
                 updateDoses = { updated -> doses = updated },
                 updateValidation = { messageRes -> validationMessageRes = messageRes }
@@ -61,7 +73,10 @@ class DeviceDosingTimerScheduleFragment :
     override fun onSaveInstanceState(outState: Bundle) {
         outState.putString(
             STATE_DOSES_DRAFT,
-            DeviceDosingTimerScheduleContract.encodeDraft(doses)
+            DeviceDosingTimerScheduleContract.encodeDraft(
+                doses = doses,
+                maxEventsPerChannel = args.maxEventsPerChannel
+            )
         )
         outState.putInt(STATE_VALIDATION_MESSAGE_RES, validationMessageRes ?: NO_MESSAGE_RES)
         if (::editor.isInitialized) editor.saveState(outState)
@@ -75,6 +90,7 @@ class DeviceDosingTimerScheduleFragment :
                 DeviceDosingTimerScheduleScreen(
                     state = DeviceDosingTimerScheduleUiState(
                         doses = doses,
+                        maxEventsPerChannel = args.maxEventsPerChannel,
                         validationMessage = validationMessageRes?.let(::getString)
                     ),
                     onAction = ::handleScheduleAction
@@ -102,7 +118,11 @@ class DeviceDosingTimerScheduleFragment :
         val navController = findNavController()
         val canSave =
             navController.currentDestination?.id == R.id.deviceDosingTimerScheduleFragment &&
-                doses.isNotEmpty()
+                doses.isNotEmpty() &&
+                DeviceDosingTimerScheduleContract.validate(
+                    doses = doses,
+                    maxEventsPerChannel = args.maxEventsPerChannel
+                ) == null
         if (!canSave) return
 
         parentFragmentManager.setFragmentResult(
@@ -112,7 +132,10 @@ class DeviceDosingTimerScheduleFragment :
                     DeviceDosingTimerScheduleContract.RESULT_SAVED,
                 DeviceDosingTimerScheduleContract.RESULT_SLOT_ID to args.slotId,
                 DeviceDosingTimerScheduleContract.RESULT_DOSES_DRAFT to
-                    DeviceDosingTimerScheduleContract.encodeDraft(doses)
+                    DeviceDosingTimerScheduleContract.encodeDraft(
+                        doses = doses,
+                        maxEventsPerChannel = args.maxEventsPerChannel
+                    )
             )
         )
         navController.navigateUp()
@@ -127,8 +150,14 @@ class DeviceDosingTimerScheduleFragment :
 
 private fun restoreTimerDoses(
     savedInstanceState: Bundle?,
-    argumentDoses: List<DeviceDosingTimerDose>
+    argumentDoses: List<DeviceDosingTimerDose>,
+    maxEventsPerChannel: Int
 ): List<DeviceDosingTimerDose> = savedInstanceState
     ?.getString("timer_schedule_doses_draft")
-    ?.let(DeviceDosingTimerScheduleContract::decodeDraft)
+    ?.let { encoded ->
+        DeviceDosingTimerScheduleContract.decodeDraft(
+            encoded = encoded,
+            maxEventsPerChannel = maxEventsPerChannel
+        )
+    }
     ?: argumentDoses

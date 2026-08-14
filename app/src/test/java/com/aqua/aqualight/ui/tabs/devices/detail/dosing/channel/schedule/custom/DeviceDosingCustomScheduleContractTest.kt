@@ -66,6 +66,31 @@ class DeviceDosingCustomScheduleContractTest {
         assertNull(DeviceDosingCustomScheduleContract.decodeDraft("not-a-period"))
     }
 
+    @Test
+    fun `firmware event and period limits override editor defaults`() {
+        val periods = listOf(
+            period(startMinute = 120, endMinute = 180, count = 2),
+            period(startMinute = 240, endMinute = 300, count = 3)
+        )
+
+        assertEquals(
+            DeviceDosingCustomScheduleContract.ValidationError.TOO_MANY_DOSES,
+            DeviceDosingCustomScheduleContract.validate(
+                periods = periods,
+                maxEventsPerChannel = 4,
+                maxPeriodsPerChannel = 2
+            )
+        )
+        assertEquals(
+            DeviceDosingCustomScheduleContract.ValidationError.TOO_MANY_DOSES,
+            DeviceDosingCustomScheduleContract.validate(
+                periods = periods,
+                maxEventsPerChannel = 5,
+                maxPeriodsPerChannel = 1
+            )
+        )
+    }
+
     private fun period(startMinute: Int, endMinute: Int, count: Int) =
         DeviceDosingCustomPeriod(
             startTimeMs = DeviceDosingCustomScheduleContract.startTimeMs(startMinute),
