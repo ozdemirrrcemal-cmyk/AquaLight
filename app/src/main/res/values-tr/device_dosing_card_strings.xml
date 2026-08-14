@@ -1,5 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
+    <string name="device_dosing_card_status_dosing">Dozaj yapılıyor</string>
+    <string name="device_dosing_card_status_error">Hata</string>
     <string name="device_dosing_card_occurrence_count">%1$d/%2$d</string>
     <string name="device_dosing_card_mode_single">Tek doz</string>
     <string name="device_dosing_card_mode_hourly24">24 saatlik</string>
