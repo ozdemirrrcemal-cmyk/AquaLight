@@ -40,12 +40,7 @@ internal fun DosingChannelCard(
 ) {
     val colors = aquaDeviceCardColors()
     val typography = aquaDeviceCardTypography(colors)
-    val isNotConfigured = state.visualState == DosingChannelVisualState.NOT_CONFIGURED
-    val statusLabel = if (isNotConfigured) {
-        stringResource(R.string.device_dosing_channel_not_configured)
-    } else {
-        null
-    }
+    val statusLabel = state.visualState.labelRes?.let { labelRes -> stringResource(labelRes) }
     val contentDescriptionText = state.cardContentDescription(statusLabel)
 
     AquaDeviceCardSurface(
@@ -53,10 +48,7 @@ internal fun DosingChannelCard(
             .fillMaxWidth()
             .heightIn(min = CHANNEL_CARD_MIN_HEIGHT)
             .semantics { contentDescription = contentDescriptionText }
-            .clickable(
-                role = Role.Button,
-                onClick = onClick
-            )
+            .clickable(role = Role.Button, onClick = onClick)
     ) {
         Column(
             modifier = Modifier.fillMaxWidth(),
@@ -68,13 +60,10 @@ internal fun DosingChannelCard(
                 typography = typography,
                 statusLabel = statusLabel
             )
-            if (isNotConfigured) {
-                DosingChannelEmptyState(
-                    colors = colors,
-                    typography = typography
-                )
+            if (state.visualState == DosingChannelVisualState.NOT_CONFIGURED) {
+                DosingChannelEmptyState(colors = colors, typography = typography)
             } else {
-                DosingChannelSummary(
+                DosingConfiguredChannelContent(
                     state = state,
                     colors = colors,
                     typography = typography
@@ -129,12 +118,19 @@ private fun DosingChannelHeader(
         statusLabel?.let { label ->
             DosingStatusPill(
                 label = label,
-                color = colors.warning,
+                color = state.visualState.statusColor(colors),
                 typography = typography,
                 modifier = Modifier.padding(start = AquaDeviceCardGeometry.compactGap)
             )
         }
     }
+}
+
+private fun DosingChannelVisualState.statusColor(colors: AquaDeviceCardColors): Color = when (this) {
+    DosingChannelVisualState.NOT_CONFIGURED -> colors.warning
+    DosingChannelVisualState.IDLE -> colors.secondaryText
+    DosingChannelVisualState.DOSING -> colors.accent
+    DosingChannelVisualState.ERROR -> colors.danger
 }
 
 @Composable
@@ -250,37 +246,118 @@ private fun DosingChannelEmptyState(
 }
 
 @Composable
-private fun DosingChannelSummary(
+private fun DosingConfiguredChannelContent(
     state: DosingChannelCardUiState,
     colors: AquaDeviceCardColors,
     typography: AquaDeviceCardTypography
 ) {
-    val scheduleSummary = state.scheduleDays.summaryLabel()
+    val hasSummary = state.dailyDoseMl != null ||
+        state.programMode != null ||
+        state.scheduledProgress != null ||
+        state.reservoir != null
 
-    Row(
-        modifier = Modifier.fillMaxWidth(),
-        horizontalArrangement = Arrangement.spacedBy(SUMMARY_GAP),
-        verticalAlignment = Alignment.CenterVertically
-    ) {
-        DosingSummaryItem(
-            icon = DosingSummaryIcon.DOSE,
-            label = stringResource(
-                R.string.device_dosing_channel_daily_dose_format,
-                state.dailyDoseMl
-            ),
+    if (hasSummary) {
+        DosingChannelMetrics(
+            state = state,
             colors = colors,
-            typography = typography,
-            modifier = Modifier.weight(1f)
+            typography = typography
         )
-        DosingSummaryItem(
-            icon = DosingSummaryIcon.DAYS,
-            label = scheduleSummary,
+    }
+
+    state.scheduledProgress?.let { progress ->
+        DosingScheduledProgress(
+            progress = progress,
+            manualUsage = state.manualUsage,
             colors = colors,
             typography = typography,
-            modifier = Modifier.weight(1f)
+            modifier = Modifier.padding(top = PROGRESS_TOP_PADDING)
         )
     }
 }
+
+@Composable
+private fun DosingChannelMetrics(
+    state: DosingChannelCardUiState,
+    colors: AquaDeviceCardColors,
+    typography: AquaDeviceCardTypography
+) {
+    Row(
+        modifier = Modifier.fillMaxWidth(),
+        horizontalArrangement = Arrangement.spacedBy(METRIC_GAP),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        state.dailyDoseMl?.let { dailyDose ->
+            val days = state.scheduleDays.summaryLabel()
+            DosingMetricItem(
+                icon = DosingCardMetricIcon.DOSE,
+                label = stringResource(R.string.device_dosing_channel_daily_dose_format, dailyDose),
+                supportingLabel = days,
+                tint = colors.accent,
+                colors = colors,
+                typography = typography,
+                modifier = Modifier.weight(1f)
+            )
+        }
+
+        state.programMode?.let { mode ->
+            val progress = state.scheduledProgress
+            val primary = if (progress != null) {
+                stringResource(
+                    R.string.device_dosing_card_occurrence_count,
+                    progress.completedCount,
+                    progress.totalCount
+                )
+            } else {
+                mode.label()
+            }
+            val supporting = if (progress != null) mode.label() else null
+            DosingMetricItem(
+                icon = DosingCardMetricIcon.SCHEDULE,
+                label = primary,
+                supportingLabel = supporting,
+                tint = colors.secondaryText,
+                colors = colors,
+                typography = typography,
+                modifier = Modifier.weight(1f)
+            )
+        }
+
+        state.reservoir?.let { reservoir ->
+            val tint = if (reservoir.level == DosingReservoirLevelUiState.LOW) {
+                colors.danger
+            } else {
+                colors.secondaryText
+            }
+            DosingMetricItem(
+                icon = DosingCardMetricIcon.RESERVOIR,
+                label = reservoir.daysLabel(),
+                supportingLabel = stringResource(
+                    R.string.device_dosing_card_reservoir_amount,
+                    reservoir.remainingMl
+                ),
+                tint = tint,
+                colors = colors,
+                typography = typography,
+                modifier = Modifier.weight(1f)
+            )
+        }
+    }
+}
+
+@Composable
+private fun DosingProgramModeUi.label(): String = stringResource(
+    when (this) {
+        DosingProgramModeUi.SINGLE -> R.string.device_dosing_card_mode_single
+        DosingProgramModeUi.HOURLY_24 -> R.string.device_dosing_card_mode_hourly24
+        DosingProgramModeUi.CUSTOM_PERIODS -> R.string.device_dosing_card_mode_custom_periods
+        DosingProgramModeUi.TIMER -> R.string.device_dosing_card_mode_timer
+    }
+)
+
+@Composable
+private fun DosingReservoirSummaryUiState.daysLabel(): String = estimatedDaysRemaining?.let { days ->
+    stringResource(R.string.device_dosing_card_reservoir_days, days)
+} ?: stringResource(R.string.device_dosing_card_reservoir_unknown_days)
 
 @Composable
 private fun DosingScheduleDaysUiState.summaryLabel(): String = when {
@@ -292,39 +369,52 @@ private fun DosingScheduleDaysUiState.summaryLabel(): String = when {
 }
 
 @Composable
-private fun DosingSummaryItem(
-    icon: DosingSummaryIcon,
+private fun DosingMetricItem(
+    icon: DosingCardMetricIcon,
     label: String,
+    supportingLabel: String?,
+    tint: Color,
     colors: AquaDeviceCardColors,
     typography: AquaDeviceCardTypography,
     modifier: Modifier = Modifier
 ) {
-    val iconTint = when (icon) {
-        DosingSummaryIcon.DOSE -> colors.accent
-        DosingSummaryIcon.DAYS -> colors.secondaryText
-    }
-    val textColor = when (icon) {
-        DosingSummaryIcon.DOSE -> colors.primaryText
-        DosingSummaryIcon.DAYS -> colors.secondaryText
-    }
-
     Row(
         modifier = modifier,
-        horizontalArrangement = Arrangement.spacedBy(SUMMARY_ICON_GAP),
+        horizontalArrangement = Arrangement.spacedBy(METRIC_ICON_GAP),
         verticalAlignment = Alignment.CenterVertically
     ) {
-        DosingSummaryGlyph(
-            icon = icon,
-            tint = iconTint,
-            modifier = Modifier.size(SUMMARY_ICON_SIZE)
-        )
-        BasicText(
-            text = label,
+        Box(
+            modifier = Modifier
+                .size(METRIC_ICON_CONTAINER_SIZE)
+                .clip(RoundedCornerShape(METRIC_ICON_CORNER_RADIUS))
+                .background(tint.copy(alpha = METRIC_ICON_BACKGROUND_ALPHA)),
+            contentAlignment = Alignment.Center
+        ) {
+            DosingCardMetricGlyph(
+                icon = icon,
+                tint = tint,
+                modifier = Modifier.size(METRIC_ICON_SIZE)
+            )
+        }
+        Column(
             modifier = Modifier.weight(1f),
-            style = typography.caption.copy(color = textColor),
-            maxLines = 1,
-            overflow = TextOverflow.Ellipsis
-        )
+            verticalArrangement = Arrangement.spacedBy(METRIC_TEXT_GAP)
+        ) {
+            BasicText(
+                text = label,
+                style = typography.caption.copy(color = colors.primaryText),
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis
+            )
+            supportingLabel?.let { supporting ->
+                BasicText(
+                    text = supporting,
+                    style = typography.micro.copy(color = tint),
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis
+                )
+            }
+        }
     }
 }
 
@@ -333,11 +423,16 @@ private const val STATUS_BACKGROUND_ALPHA = 0.10f
 private const val STATUS_OUTLINE_ALPHA = 0.38f
 private const val EMPTY_STATE_ICON_BACKGROUND_ALPHA = 0.08f
 private const val EMPTY_STATE_ICON_OUTLINE_ALPHA = 0.28f
+private const val METRIC_ICON_BACKGROUND_ALPHA = 0.09f
 private const val EMPTY_STATE_DESCRIPTION_MAX_LINES = 2
 private const val CHANNEL_CARD_MIN_HEIGHT_DP = 104
-private const val SUMMARY_GAP_DP = 18
-private const val SUMMARY_ICON_GAP_DP = 6
-private const val SUMMARY_ICON_SIZE_DP = 16
+private const val METRIC_GAP_DP = 10
+private const val METRIC_ICON_GAP_DP = 6
+private const val METRIC_ICON_CONTAINER_SIZE_DP = 24
+private const val METRIC_ICON_SIZE_DP = 14
+private const val METRIC_ICON_CORNER_RADIUS_DP = 8
+private const val METRIC_TEXT_GAP_DP = 1
+private const val PROGRESS_TOP_PADDING_DP = 2
 private const val EMPTY_STATE_VERTICAL_PADDING_DP = 4
 private const val EMPTY_STATE_CONTENT_GAP_DP = 12
 private const val EMPTY_STATE_TEXT_GAP_DP = 2
@@ -345,9 +440,13 @@ private const val EMPTY_STATE_ICON_CONTAINER_SIZE_DP = 44
 private const val EMPTY_STATE_ICON_CORNER_RADIUS_DP = 14
 private const val EMPTY_STATE_GLYPH_SIZE_DP = 28
 private val CHANNEL_CARD_MIN_HEIGHT = CHANNEL_CARD_MIN_HEIGHT_DP.dp
-private val SUMMARY_GAP = SUMMARY_GAP_DP.dp
-private val SUMMARY_ICON_GAP = SUMMARY_ICON_GAP_DP.dp
-private val SUMMARY_ICON_SIZE = SUMMARY_ICON_SIZE_DP.dp
+private val METRIC_GAP = METRIC_GAP_DP.dp
+private val METRIC_ICON_GAP = METRIC_ICON_GAP_DP.dp
+private val METRIC_ICON_CONTAINER_SIZE = METRIC_ICON_CONTAINER_SIZE_DP.dp
+private val METRIC_ICON_SIZE = METRIC_ICON_SIZE_DP.dp
+private val METRIC_ICON_CORNER_RADIUS = METRIC_ICON_CORNER_RADIUS_DP.dp
+private val METRIC_TEXT_GAP = METRIC_TEXT_GAP_DP.dp
+private val PROGRESS_TOP_PADDING = PROGRESS_TOP_PADDING_DP.dp
 private val EMPTY_STATE_VERTICAL_PADDING = EMPTY_STATE_VERTICAL_PADDING_DP.dp
 private val EMPTY_STATE_CONTENT_GAP = EMPTY_STATE_CONTENT_GAP_DP.dp
 private val EMPTY_STATE_TEXT_GAP = EMPTY_STATE_TEXT_GAP_DP.dp
