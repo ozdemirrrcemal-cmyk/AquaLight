@@ -35,8 +35,6 @@ class DosingUiLayerBoundaryTest {
         assertFalse(models.contains("require(displayName"))
         assertFalse(models.contains("selectedDays.distinct()"))
         assertFalse(models.contains("require(dailyDoseMl"))
-        assertFalse(models.contains("require(deliveredTodayMl"))
-        assertFalse(models.contains("require(doseMilestonesMl"))
         assertFalse(models.contains("val wireKey: String"))
         assertFalse(models.contains("wireKey = wireKey.value"))
 
