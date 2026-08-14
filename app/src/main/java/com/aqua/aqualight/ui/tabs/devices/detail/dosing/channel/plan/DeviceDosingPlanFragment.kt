@@ -117,17 +117,17 @@ class DeviceDosingPlanFragment :
         }
     }
 
+    @Suppress("LongMethod") // Safe Args keeps the four typed navigation contracts explicit.
     private fun openScheduleEditor(mode: DosingPlanScheduleMode) {
         val editorState = viewModel.currentEditorState()
         val draft = viewModel.currentDraft()
-        if (
-            !draft.scheduleEnabled ||
-            !editorState.editable ||
-            editorState.operationInProgress ||
-            mode !in editorState.supportedModes
-        ) {
-            return
-        }
+        val canOpenEditor = listOf(
+            draft.scheduleEnabled,
+            editorState.editable,
+            !editorState.operationInProgress,
+            mode in editorState.supportedModes
+        ).all { enabled -> enabled }
+        if (!canOpenEditor) return
         val navController = findNavController()
         if (navController.currentDestination?.id != R.id.deviceDosingPlanFragment) return
 
@@ -190,14 +190,13 @@ class DeviceDosingPlanFragment :
     private fun showDailyDoseEditor() {
         val editorState = viewModel.currentEditorState()
         val draft = viewModel.currentDraft()
-        if (
-            !draft.scheduleEnabled ||
-            !editorState.editable ||
-            editorState.operationInProgress ||
-            draft.selectedScheduleMode == DosingPlanScheduleMode.TIMER
-        ) {
-            return
-        }
+        val canEditDailyDose = listOf(
+            draft.scheduleEnabled,
+            editorState.editable,
+            !editorState.operationInProgress,
+            draft.selectedScheduleMode != DosingPlanScheduleMode.TIMER
+        ).all { enabled -> enabled }
+        if (!canEditDailyDose) return
         TextInputBottomSheet.show(
             fragmentManager = childFragmentManager,
             title = getString(R.string.device_dosing_daily_dose_editor_title),

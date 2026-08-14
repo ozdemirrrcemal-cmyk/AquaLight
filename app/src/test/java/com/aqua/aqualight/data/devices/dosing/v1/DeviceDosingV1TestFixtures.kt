@@ -143,6 +143,7 @@ internal object DeviceDosingV1TestFixtures {
             .put("reservoirRemainingMl", 500.0)
             .put("persisted", true)
 
+    @Suppress("LongMethod") // The fixture mirrors one complete firmware channel document.
     fun channelDetail(
         revision: Long = 7,
         runtimeReason: String = "none",

@@ -64,24 +64,26 @@ private class DebugDeviceFixtureViewModelFactory(
 
     override fun <T : ViewModel> create(modelClass: Class<T>): T {
         val viewModel: ViewModel = when (modelClass) {
-            DevicesViewModel::class.java -> createDevicesViewModel(requireGraph())
+            DevicesViewModel::class.java -> createDevicesViewModel(ownerGraphResolver.requireActive())
             DeviceLightRootViewModel::class.java ->
-                DeviceLightRootViewModel(rootOperations(requireGraph()))
+                DeviceLightRootViewModel(rootOperations(ownerGraphResolver.requireActive()))
             DeviceCoolingRootViewModel::class.java ->
-                DeviceCoolingRootViewModel(rootOperations(requireGraph()))
+                DeviceCoolingRootViewModel(rootOperations(ownerGraphResolver.requireActive()))
             DeviceTimerRootViewModel::class.java ->
-                DeviceTimerRootViewModel(rootOperations(requireGraph()))
+                DeviceTimerRootViewModel(rootOperations(ownerGraphResolver.requireActive()))
             DeviceDosingRootViewModel::class.java ->
-                createDosingViewModel(requireGraph())
+                createDosingViewModel(ownerGraphResolver.requireActive())
             DeviceDosingChannelCalibrationViewModel::class.java ->
-                createDosingCalibrationViewModel(requireGraph())
+                createDosingCalibrationViewModel()
             DeviceDosingChannelDetailViewModel::class.java ->
                 createDosingChannelDetailViewModel()
             DeviceDosingPlanViewModel::class.java -> createDosingPlanViewModel()
             DeviceRootOverviewViewModel::class.java ->
-                DeviceRootOverviewViewModel(rootOperations(requireGraph()))
-            DeviceFamilySettingsViewModel::class.java -> createSettingsViewModel(requireGraph())
-            DeviceFirmwareUpdateViewModel::class.java -> createFirmwareViewModel(requireGraph())
+                DeviceRootOverviewViewModel(rootOperations(ownerGraphResolver.requireActive()))
+            DeviceFamilySettingsViewModel::class.java ->
+                createSettingsViewModel(ownerGraphResolver.requireActive())
+            DeviceFirmwareUpdateViewModel::class.java ->
+                createFirmwareViewModel(ownerGraphResolver.requireActive())
             else -> return delegate.create(modelClass)
         }
 
@@ -147,15 +149,14 @@ private class DebugDeviceFixtureViewModelFactory(
             )
         )
 
-    private fun createDosingCalibrationViewModel(
-        graph: OwnerDependencyGraph
-    ): DeviceDosingChannelCalibrationViewModel = DeviceDosingChannelCalibrationViewModel(
-        operations = DebugFixtureDosingCalibrationOperations(
-            delegate = UnavailableDeviceDosingCalibrationOperations,
-            fixtures = fixtures,
-            stateStore = dosingStateStore
+    private fun createDosingCalibrationViewModel(): DeviceDosingChannelCalibrationViewModel =
+        DeviceDosingChannelCalibrationViewModel(
+            operations = DebugFixtureDosingCalibrationOperations(
+                delegate = UnavailableDeviceDosingCalibrationOperations,
+                fixtures = fixtures,
+                stateStore = dosingStateStore
+            )
         )
-    )
 
     private fun createDosingChannelDetailViewModel(): DeviceDosingChannelDetailViewModel =
         DeviceDosingChannelDetailViewModel(
@@ -185,6 +186,4 @@ private class DebugDeviceFixtureViewModelFactory(
             delegate = graph.firmwareUpdateOperations,
             fixtures = fixtures
         )
-
-    private fun requireGraph(): OwnerDependencyGraph = ownerGraphResolver.requireActive()
 }

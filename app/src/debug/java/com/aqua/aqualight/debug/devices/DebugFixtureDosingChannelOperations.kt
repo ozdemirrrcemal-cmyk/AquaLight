@@ -8,6 +8,7 @@ import com.aqua.aqualight.application.devices.dosing.DeviceDosingReservoirSettin
 import kotlinx.coroutines.flow.Flow
 
 /** Routes installable fixture devices to mutable UI data while real devices remain fail-closed. */
+@Suppress("TooManyFunctions") // Every boundary operation must route fixture and real devices alike.
 internal class DebugFixtureDosingChannelOperations(
     private val delegate: DeviceDosingChannelOperations,
     private val fixtures: DebugDeviceFixtureCatalog,

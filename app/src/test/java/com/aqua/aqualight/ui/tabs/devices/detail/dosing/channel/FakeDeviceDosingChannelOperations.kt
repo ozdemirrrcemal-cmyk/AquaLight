@@ -141,10 +141,12 @@ internal class FakeDeviceDosingChannelOperations(
 
     private fun mutate(
         transform: (DeviceDosingChannelSnapshot) -> DeviceDosingChannelSnapshot
-    ): DeviceDosingChannelOperationResult {
-        if (failMutations) return DeviceDosingChannelOperationResult.Failed
-        val current = snapshot.value ?: return DeviceDosingChannelOperationResult.Unavailable
-        return transform(current).also { updated -> snapshot.value = updated }.toResult()
+    ): DeviceDosingChannelOperationResult = when {
+        failMutations -> DeviceDosingChannelOperationResult.Failed
+        snapshot.value == null -> DeviceDosingChannelOperationResult.Unavailable
+        else -> transform(requireNotNull(snapshot.value))
+            .also { updated -> snapshot.value = updated }
+            .toResult()
     }
 
     private fun DeviceDosingChannelSnapshot?.toResult(): DeviceDosingChannelOperationResult =

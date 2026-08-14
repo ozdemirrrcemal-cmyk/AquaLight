@@ -12,21 +12,27 @@ internal object DosingReservoirProjection {
         selectedWeekdays: List<Boolean>,
         today: LocalDate
     ): Int? {
-        if (remainingMicroliters < 0L || dailyDoseMicroliters <= 0L) return null
-        if (selectedWeekdays.size != DAYS_PER_WEEK || selectedWeekdays.none { it }) return null
+        val inputsValid = listOf(
+            remainingMicroliters >= 0L,
+            dailyDoseMicroliters > 0L,
+            selectedWeekdays.size == DAYS_PER_WEEK,
+            selectedWeekdays.any { it }
+        ).all { valid -> valid }
+        if (!inputsValid) return null
 
         var available = remainingMicroliters
-        for (dayOffset in 0..MAX_PROJECTION_DAYS) {
+        val exhaustedOnDay = (0..MAX_PROJECTION_DAYS).firstOrNull { dayOffset ->
             val plannedAmount = when {
                 dayOffset == 0 -> remainingScheduledTodayMicroliters.coerceAtLeast(0L)
                 selectedWeekdays[today.plusDays(dayOffset.toLong()).dayOfWeek.value - 1] ->
                     dailyDoseMicroliters
                 else -> 0L
             }
-            if (plannedAmount > available) return dayOffset
-            available -= plannedAmount
+            val exhausted = plannedAmount > available
+            if (!exhausted) available -= plannedAmount
+            exhausted
         }
-        return MAX_PROJECTION_DAYS
+        return exhaustedOnDay ?: MAX_PROJECTION_DAYS
     }
 
     private const val DAYS_PER_WEEK = 7

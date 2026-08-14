@@ -1,4 +1,10 @@
-@file:Suppress("TooManyFunctions")
+@file:Suppress(
+    "CyclomaticComplexMethod",
+    "LargeClass",
+    "MagicNumber",
+    "ReturnCount",
+    "TooManyFunctions"
+)
 
 package com.aqua.aqualight.debug.devices
 

@@ -108,51 +108,55 @@ private fun DosingDetailSection(
             style = typography.sectionLabel
         )
         AquaDeviceMenuSectionSurface(modifier = Modifier.fillMaxWidth()) {
-            if (section.hasCalibrationAction) {
-                DosingCalibrationAction(
-                    lastCalibrationDate = state.lastCalibrationDate,
-                    onClick = actions.onRecalibrateClick
-                )
-                if (section.items.isNotEmpty()) AquaDeviceMenuDivider()
-            }
-            section.items.forEachIndexed { index, item ->
-                if (index > 0) AquaDeviceMenuDivider()
-                AquaDeviceMenuRow(
-                    content = AquaDeviceMenuRowContent(
-                        title = stringResource(item.titleRes),
-                        description = stringResource(item.descriptionRes),
-                        iconRes = item.iconRes,
-                        tone = item.tone
-                    ),
-                    onClick = { actions.onMenuItemClick(item) }
-                )
-            }
-            if (section.hasMissedDoseRecoverySwitch) {
-                DosingMissedDoseRecoverySwitch(
-                    checked = state.missedDoseRecoveryEnabled,
-                    enabled = state.missedDoseRecoveryEditable && !state.operationInProgress,
-                    onCheckedChange = actions.onMissedDoseRecoveryChange
-                )
-            }
-            if (section.hasManualDoseAction) {
-                if (section.items.isNotEmpty()) AquaDeviceMenuDivider()
-                DosingManualDoseAction(
-                    active = state.manualDoseActive,
-                    enabled = (state.manualDoseEnabled || state.manualDoseActive) &&
-                        !state.operationInProgress,
-                    onClick = actions.onManualDoseClick
-                )
-            }
-            if (section.hasResetChannelAction) {
-                if (section.items.isNotEmpty() || section.hasManualDoseAction) {
-                    AquaDeviceMenuDivider()
-                }
-                DosingResetChannelAction(
-                    enabled = state.resetEnabled && !state.operationInProgress,
-                    onClick = actions.onResetChannelClick
-                )
-            }
+            DosingDetailSectionRows(section, state, actions)
         }
+    }
+}
+
+@Composable
+private fun DosingDetailSectionRows(
+    section: DosingDetailMenuSection,
+    state: DeviceDosingChannelDetailUiState,
+    actions: DeviceDosingChannelDetailActions
+) {
+    if (section.hasCalibrationAction) {
+        DosingCalibrationAction(state.lastCalibrationDate, actions.onRecalibrateClick)
+        if (section.items.isNotEmpty()) AquaDeviceMenuDivider()
+    }
+    section.items.forEachIndexed { index, item ->
+        if (index > 0) AquaDeviceMenuDivider()
+        AquaDeviceMenuRow(
+            content = AquaDeviceMenuRowContent(
+                title = stringResource(item.titleRes),
+                description = stringResource(item.descriptionRes),
+                iconRes = item.iconRes,
+                tone = item.tone
+            ),
+            onClick = { actions.onMenuItemClick(item) }
+        )
+    }
+    if (section.hasMissedDoseRecoverySwitch) {
+        DosingMissedDoseRecoverySwitch(
+            checked = state.missedDoseRecoveryEnabled,
+            enabled = state.missedDoseRecoveryEditable && !state.operationInProgress,
+            onCheckedChange = actions.onMissedDoseRecoveryChange
+        )
+    }
+    if (section.hasManualDoseAction) {
+        if (section.items.isNotEmpty()) AquaDeviceMenuDivider()
+        DosingManualDoseAction(
+            active = state.manualDoseActive,
+            enabled = (state.manualDoseEnabled || state.manualDoseActive) &&
+                !state.operationInProgress,
+            onClick = actions.onManualDoseClick
+        )
+    }
+    if (section.hasResetChannelAction) {
+        if (section.items.isNotEmpty() || section.hasManualDoseAction) AquaDeviceMenuDivider()
+        DosingResetChannelAction(
+            enabled = state.resetEnabled && !state.operationInProgress,
+            onClick = actions.onResetChannelClick
+        )
     }
 }
 

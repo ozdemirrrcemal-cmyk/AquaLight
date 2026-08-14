@@ -9,6 +9,7 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flowOf
 
 /** Fail-closed production channel boundary while Dosing v1 remains intentionally unbound. */
+@Suppress("TooManyFunctions") // The boundary intentionally implements every fail-closed operation.
 internal object UnavailableDeviceDosingChannelOperations : DeviceDosingChannelOperations {
     override fun observe(
         deviceUid: String,

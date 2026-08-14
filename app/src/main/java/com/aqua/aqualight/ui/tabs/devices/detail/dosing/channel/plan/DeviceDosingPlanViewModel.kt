@@ -39,6 +39,7 @@ internal sealed interface DeviceDosingPlanEvent {
 }
 
 /** Firmware-independent plan editor backed by the channel application boundary. */
+@Suppress("TooManyFunctions") // Public editor intents intentionally mirror the screen controls.
 internal class DeviceDosingPlanViewModel(
     private val operations: DeviceDosingChannelOperations
 ) : ViewModel() {
@@ -142,15 +143,14 @@ internal class DeviceDosingPlanViewModel(
             ?.missedDoseRecoveryEnabled
             ?: false
         val program = state.draft.toApplicationProgram(missedDoseRecoveryEnabled)
-        if (
-            deviceUid.isBlank() ||
-            slotId.isBlank() ||
-            !state.editable ||
-            state.operationInProgress ||
-            !program.isValidFor(state.scheduling)
-        ) {
-            return
-        }
+        val canStartSave = listOf(
+            deviceUid.isNotBlank(),
+            slotId.isNotBlank(),
+            state.editable,
+            !state.operationInProgress,
+            program.isValidFor(state.scheduling)
+        ).all { valid -> valid }
+        if (!canStartSave) return
 
         mutableEditorState.value = state.copy(operationInProgress = true)
         saveJob?.cancel()

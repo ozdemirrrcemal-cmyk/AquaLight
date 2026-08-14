@@ -276,6 +276,7 @@ fun AquaDeviceMenuRow(
 }
 
 @Composable
+@Suppress("LongParameterList") // Public row API keeps state, semantics and action explicit.
 fun AquaDeviceMenuSwitchRow(
     content: AquaDeviceMenuRowContent,
     checked: Boolean,

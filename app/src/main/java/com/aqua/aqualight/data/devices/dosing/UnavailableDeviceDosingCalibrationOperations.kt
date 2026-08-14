@@ -7,6 +7,7 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flowOf
 
 /** Fail-closed production boundary while the replacement Dosing data layer is unbound. */
+@Suppress("TooManyFunctions") // The boundary intentionally implements every fail-closed operation.
 internal object UnavailableDeviceDosingCalibrationOperations :
     DeviceDosingCalibrationOperations {
 

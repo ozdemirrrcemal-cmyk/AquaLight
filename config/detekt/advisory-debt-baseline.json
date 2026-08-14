@@ -3,7 +3,7 @@
   "policyId": "aqualight-detekt-advisory-debt",
   "detektVersion": "1.23.8",
   "sourceCommit": "a48942a06391e5463e85f9f20e80543c1ef41e69",
-  "totalFindings": 1015,
+  "totalFindings": 1008,
   "fingerprints": [
     {
       "ruleId": "detekt.complexity.ComplexCondition",

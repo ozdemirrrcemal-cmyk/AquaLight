@@ -27,6 +27,7 @@ import java.util.Date
 import java.util.concurrent.TimeUnit
 
 /** Navigation/render host for one centrally identified Dosing channel. */
+@Suppress("TooManyFunctions") // Fragment lifecycle and user-action handlers stay deliberately local.
 class DeviceDosingChannelDetailFragment :
     DeviceDosingChannelDestinationFragment(R.layout.fragment_device_dosing_channel_detail) {
 

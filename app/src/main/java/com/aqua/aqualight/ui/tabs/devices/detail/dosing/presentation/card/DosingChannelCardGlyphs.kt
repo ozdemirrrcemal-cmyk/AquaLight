@@ -7,7 +7,6 @@ import androidx.compose.ui.geometry.CornerRadius
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.StrokeJoin
 import androidx.compose.ui.graphics.drawscope.DrawScope
@@ -15,11 +14,6 @@ import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.unit.dp
 import kotlin.math.cos
 import kotlin.math.sin
-
-internal enum class DosingMetricGlyphType {
-    DOSE,
-    DAYS
-}
 
 @Composable
 internal fun DosingMetricGlyph(
@@ -109,35 +103,6 @@ private fun DrawScope.drawDoseGlyph(color: Color) {
         radius = size.minDimension * HIGHLIGHT_RADIUS,
         center = Offset(size.width * HIGHLIGHT_X, size.height * HIGHLIGHT_Y)
     )
-}
-
-private fun DrawScope.dosingDropPath(): Path = Path().apply {
-    moveTo(size.width * DROP_CENTER_X, size.height * DROP_TOP_Y)
-    cubicTo(
-        size.width * DROP_RIGHT_UPPER_X,
-        size.height * DROP_UPPER_CONTROL_Y,
-        size.width * DROP_RIGHT_X,
-        size.height * DROP_MIDDLE_CONTROL_Y,
-        size.width * DROP_RIGHT_X,
-        size.height * DROP_BODY_Y
-    )
-    cubicTo(
-        size.width * DROP_RIGHT_X,
-        size.height * DROP_BOTTOM_CONTROL_Y,
-        size.width * DROP_LEFT_X,
-        size.height * DROP_BOTTOM_CONTROL_Y,
-        size.width * DROP_LEFT_X,
-        size.height * DROP_BODY_Y
-    )
-    cubicTo(
-        size.width * DROP_LEFT_X,
-        size.height * DROP_MIDDLE_CONTROL_Y,
-        size.width * DROP_LEFT_UPPER_X,
-        size.height * DROP_UPPER_CONTROL_Y,
-        size.width * DROP_CENTER_X,
-        size.height * DROP_TOP_Y
-    )
-    close()
 }
 
 private fun DrawScope.drawPlusBadge(
@@ -276,16 +241,6 @@ private fun DrawScope.drawCustomModeGlyph(color: Color) {
     }
 }
 
-private const val DROP_CENTER_X = 0.50f
-private const val DROP_TOP_Y = 0.05f
-private const val DROP_RIGHT_UPPER_X = 0.63f
-private const val DROP_LEFT_UPPER_X = 0.37f
-private const val DROP_RIGHT_X = 0.84f
-private const val DROP_LEFT_X = 0.16f
-private const val DROP_UPPER_CONTROL_Y = 0.22f
-private const val DROP_MIDDLE_CONTROL_Y = 0.48f
-private const val DROP_BODY_Y = 0.66f
-private const val DROP_BOTTOM_CONTROL_Y = 0.93f
 private const val HIGHLIGHT_ALPHA = 0.72f
 private const val HIGHLIGHT_RADIUS = 0.065f
 private const val HIGHLIGHT_X = 0.39f
@@ -312,12 +267,54 @@ private const val CLOCK_TICK_START = 0.72f
 private const val TIMER_EVENT_DISTANCE = 0.68f
 private const val CUSTOM_TOP_Y = 0.27f
 private const val CUSTOM_HEIGHT = 0.46f
-private val CALENDAR_BINDERS = listOf(0.32f, 0.68f)
-private val CALENDAR_DOTS = listOf(0.30f, 0.50f, 0.70f)
-private val CLOCK_TICK_ANGLES = listOf(0f, 90f, 180f, 270f)
-private val TIMER_EVENT_ANGLES = listOf(-90f, 20f, 145f)
-private val CUSTOM_SEGMENTS = listOf(0.08f to 0.23f, 0.38f to 0.19f, 0.64f to 0.28f)
-private val CUSTOM_SEGMENT_ALPHAS = listOf(0.72f, 1f, 0.84f)
+private const val CALENDAR_BINDER_LEFT_X = 0.32f
+private const val CALENDAR_BINDER_RIGHT_X = 0.68f
+private const val CALENDAR_DOT_LEFT_X = 0.30f
+private const val CALENDAR_DOT_CENTER_X = 0.50f
+private const val CALENDAR_DOT_RIGHT_X = 0.70f
+private const val CLOCK_TOP_ANGLE = 0f
+private const val CLOCK_RIGHT_ANGLE = 90f
+private const val CLOCK_BOTTOM_ANGLE = 180f
+private const val CLOCK_LEFT_ANGLE = 270f
+private const val TIMER_TOP_ANGLE = -90f
+private const val TIMER_RIGHT_ANGLE = 20f
+private const val TIMER_LEFT_ANGLE = 145f
+private const val CUSTOM_FIRST_START_X = 0.08f
+private const val CUSTOM_FIRST_WIDTH = 0.23f
+private const val CUSTOM_SECOND_START_X = 0.38f
+private const val CUSTOM_SECOND_WIDTH = 0.19f
+private const val CUSTOM_THIRD_START_X = 0.64f
+private const val CUSTOM_THIRD_WIDTH = 0.28f
+private const val CUSTOM_FIRST_ALPHA = 0.72f
+private const val CUSTOM_SECOND_ALPHA = 1f
+private const val CUSTOM_THIRD_ALPHA = 0.84f
+private val CALENDAR_BINDERS = listOf(CALENDAR_BINDER_LEFT_X, CALENDAR_BINDER_RIGHT_X)
+private val CALENDAR_DOTS = listOf(
+    CALENDAR_DOT_LEFT_X,
+    CALENDAR_DOT_CENTER_X,
+    CALENDAR_DOT_RIGHT_X
+)
+private val CLOCK_TICK_ANGLES = listOf(
+    CLOCK_TOP_ANGLE,
+    CLOCK_RIGHT_ANGLE,
+    CLOCK_BOTTOM_ANGLE,
+    CLOCK_LEFT_ANGLE
+)
+private val TIMER_EVENT_ANGLES = listOf(
+    TIMER_TOP_ANGLE,
+    TIMER_RIGHT_ANGLE,
+    TIMER_LEFT_ANGLE
+)
+private val CUSTOM_SEGMENTS = listOf(
+    CUSTOM_FIRST_START_X to CUSTOM_FIRST_WIDTH,
+    CUSTOM_SECOND_START_X to CUSTOM_SECOND_WIDTH,
+    CUSTOM_THIRD_START_X to CUSTOM_THIRD_WIDTH
+)
+private val CUSTOM_SEGMENT_ALPHAS = listOf(
+    CUSTOM_FIRST_ALPHA,
+    CUSTOM_SECOND_ALPHA,
+    CUSTOM_THIRD_ALPHA
+)
 private val GLYPH_STROKE = 1.45.dp
 private val BADGE_OUTLINE_WIDTH = 1.10.dp
 private val BADGE_PLUS_WIDTH = 1.55.dp

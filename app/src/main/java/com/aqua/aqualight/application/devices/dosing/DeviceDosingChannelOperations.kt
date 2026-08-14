@@ -157,46 +157,55 @@ data class DeviceDosingProgram(
         }
     }
 
-    fun isValidFor(policy: DeviceDosingSchedulingPolicy): Boolean {
-        if (schedule.mode !in policy.supportedModes) return false
-        if (enabled && policy.supportsWeekdayRecurrence && weekdays.none { it }) return false
-        if (missedDoseRecoveryEnabled && !policy.supportsMissedDoseRecovery) return false
+    fun isValidFor(policy: DeviceDosingSchedulingPolicy): Boolean =
+        isCompatibleWith(policy) && schedule.isValidFor(policy)
 
-        return when (val value = schedule) {
-            is DeviceDosingProgramSchedule.Single ->
-                policy.acceptsScheduledDose(value.dailyDoseMicroliters) &&
-                    isDosingTime(value.startTimeMillis)
-            is DeviceDosingProgramSchedule.Hourly24 ->
-                validDistributedAmount(
-                    totalMicroliters = value.dailyDoseMicroliters,
-                    count = HOURLY_DOSE_COUNT,
-                    policy = policy
-                ) &&
-                    isDosingTime(value.startTimeMillis) &&
-                    policy.maxEventsPerChannel >= HOURLY_DOSE_COUNT
-            is DeviceDosingProgramSchedule.CustomPeriods ->
-                value.periods.isNotEmpty() &&
-                    value.periods.size <= policy.maxCustomPeriodsPerChannel &&
-                    value.periods.sumOf(DeviceDosingCustomPeriodDraft::doseCount) <=
-                    policy.maxEventsPerChannel &&
-                    validDistributedAmount(
-                        totalMicroliters = value.dailyDoseMicroliters,
-                        count = value.periods.sumOf(DeviceDosingCustomPeriodDraft::doseCount),
-                        policy = policy
-                    ) &&
-                    validCustomPeriods(value.periods)
-            is DeviceDosingProgramSchedule.Timer ->
-                value.doses.isNotEmpty() &&
-                    value.doses.size <= policy.maxEventsPerChannel &&
-                    value.doses.all { dose ->
-                        isDosingTime(dose.startTimeMs) &&
-                            policy.acceptsScheduledDose(dose.amountMicroliters)
-                    } &&
-                    value.doses.map(DeviceDosingTimerDoseDraft::startTimeMs).distinct().size ==
-                    value.doses.size
-        }
-    }
+    private fun isCompatibleWith(policy: DeviceDosingSchedulingPolicy): Boolean = listOf(
+        schedule.mode in policy.supportedModes,
+        !enabled || !policy.supportsWeekdayRecurrence || weekdays.any { it },
+        !missedDoseRecoveryEnabled || policy.supportsMissedDoseRecovery
+    ).all { compatible -> compatible }
 }
+
+private fun DeviceDosingProgramSchedule.isValidFor(
+    policy: DeviceDosingSchedulingPolicy
+): Boolean = when (this) {
+    is DeviceDosingProgramSchedule.Single ->
+        policy.acceptsScheduledDose(dailyDoseMicroliters) && isDosingTime(startTimeMillis)
+    is DeviceDosingProgramSchedule.Hourly24 ->
+        validDistributedAmount(
+            totalMicroliters = dailyDoseMicroliters,
+            count = HOURLY_DOSE_COUNT,
+            policy = policy
+        ) && isDosingTime(startTimeMillis) && policy.maxEventsPerChannel >= HOURLY_DOSE_COUNT
+    is DeviceDosingProgramSchedule.CustomPeriods -> isValidFor(policy)
+    is DeviceDosingProgramSchedule.Timer -> isValidFor(policy)
+}
+
+private fun DeviceDosingProgramSchedule.CustomPeriods.isValidFor(
+    policy: DeviceDosingSchedulingPolicy
+): Boolean {
+    val eventCount = periods.sumOf(DeviceDosingCustomPeriodDraft::doseCount)
+    return listOf(
+        periods.isNotEmpty(),
+        periods.size <= policy.maxCustomPeriodsPerChannel,
+        eventCount <= policy.maxEventsPerChannel,
+        validDistributedAmount(dailyDoseMicroliters, eventCount, policy),
+        validCustomPeriods(periods)
+    ).all { valid -> valid }
+}
+
+private fun DeviceDosingProgramSchedule.Timer.isValidFor(
+    policy: DeviceDosingSchedulingPolicy
+): Boolean = listOf(
+    doses.isNotEmpty(),
+    doses.size <= policy.maxEventsPerChannel,
+    doses.all { dose ->
+        isDosingTime(dose.startTimeMs) &&
+            policy.acceptsScheduledDose(dose.amountMicroliters)
+    },
+    doses.map(DeviceDosingTimerDoseDraft::startTimeMs).distinct().size == doses.size
+).all { valid -> valid }
 
 enum class DeviceDosingOccurrenceState {
     PENDING,

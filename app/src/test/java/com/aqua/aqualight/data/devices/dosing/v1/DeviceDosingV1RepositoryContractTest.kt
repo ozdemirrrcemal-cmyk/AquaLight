@@ -172,6 +172,7 @@ class DeviceDosingV1RepositoryContractTest {
             )
         }
 
+        @Suppress("CyclomaticComplexMethod") // One exhaustive fake response per firmware action.
         private fun response(action: String, encoded: JSONObject): JSONObject = when (action) {
             DeviceDosingV1Contract.Action.STATUS_GET ->
                 if (encoded.has("channelKey")) {

@@ -9,7 +9,6 @@ import androidx.compose.foundation.text.BasicText
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
@@ -38,16 +37,14 @@ internal fun DosingChannelSummary(
                     R.string.device_dosing_channel_daily_dose_format,
                     state.programProgress.dailyDoseMl
                 ),
-                iconTint = colors.accent,
-                textColor = colors.primaryText,
+                colors = colors,
                 typography = typography,
                 modifier = Modifier.weight(1f)
             )
             DosingMetricSummary(
                 icon = DosingMetricGlyphType.DAYS,
                 label = state.scheduleDays.summaryLabel(),
-                iconTint = colors.secondaryText,
-                textColor = colors.secondaryText,
+                colors = colors,
                 typography = typography,
                 modifier = Modifier.weight(1f)
             )
@@ -79,11 +76,14 @@ internal fun DosingChannelSummary(
 private fun DosingMetricSummary(
     icon: DosingMetricGlyphType,
     label: String,
-    iconTint: Color,
-    textColor: Color,
+    colors: AquaDeviceCardColors,
     typography: AquaDeviceCardTypography,
     modifier: Modifier = Modifier
 ) {
+    val tint = when (icon) {
+        DosingMetricGlyphType.DOSE -> colors.accent
+        DosingMetricGlyphType.DAYS -> colors.secondaryText
+    }
     Row(
         modifier = modifier,
         horizontalArrangement = Arrangement.spacedBy(SUMMARY_ICON_GAP),
@@ -91,13 +91,13 @@ private fun DosingMetricSummary(
     ) {
         DosingMetricGlyph(
             type = icon,
-            tint = iconTint,
+            tint = tint,
             modifier = Modifier.size(SUMMARY_ICON_SIZE)
         )
         BasicText(
             text = label,
             modifier = Modifier.weight(1f),
-            style = typography.caption.copy(color = textColor),
+            style = typography.caption.copy(color = tint),
             maxLines = 1,
             overflow = TextOverflow.Ellipsis
         )
