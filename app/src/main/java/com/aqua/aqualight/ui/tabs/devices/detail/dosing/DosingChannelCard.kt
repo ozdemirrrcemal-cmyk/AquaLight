@@ -46,20 +46,7 @@ internal fun DosingChannelCard(
     } else {
         null
     }
-    val contentDescriptionText = if (statusLabel != null) {
-        stringResource(
-            R.string.device_dosing_channel_card_content_description,
-            state.channelNumber,
-            state.displayName,
-            statusLabel
-        )
-    } else {
-        stringResource(
-            R.string.device_dosing_pump_channel_content_description,
-            state.channelNumber,
-            state.displayName
-        )
-    }
+    val contentDescriptionText = state.cardContentDescription(statusLabel)
 
     AquaDeviceCardSurface(
         modifier = modifier
@@ -101,6 +88,23 @@ internal fun DosingChannelCard(
         }
     }
 }
+
+@Composable
+private fun DosingChannelCardUiState.cardContentDescription(statusLabel: String?): String =
+    if (statusLabel != null) {
+        stringResource(
+            R.string.device_dosing_channel_card_content_description,
+            channelNumber,
+            displayName,
+            statusLabel
+        )
+    } else {
+        stringResource(
+            R.string.device_dosing_pump_channel_content_description,
+            channelNumber,
+            displayName
+        )
+    }
 
 @Composable
 private fun DosingChannelHeader(
