@@ -29,8 +29,7 @@ internal fun DeviceDosingCatalogScreen(
     pumpCount: Int,
     channels: List<DosingChannelCardUiState>,
     onChannelClick: (String) -> Unit,
-    modifier: Modifier = Modifier,
-    pumpStates: List<DosingPumpVisualState> = emptyList()
+    modifier: Modifier = Modifier
 ) {
     val exactPumpCount = exactDosingPumpCountOrNull(pumpCount)
     if (exactPumpCount == null) {
@@ -39,9 +38,14 @@ internal fun DeviceDosingCatalogScreen(
     }
 
     val pumpHeads = List(exactPumpCount) { index ->
+        val channelNumber = index + 1
         DosingPumpHeadUiState(
-            channelNumber = index + 1,
-            visualState = pumpStates.getOrElse(index) { DosingPumpVisualState.IDLE }
+            channelNumber = channelNumber,
+            visualState = channels
+                .firstOrNull { channel -> channel.channelNumber == channelNumber }
+                ?.visualState
+                ?.toPumpVisualState()
+                ?: DosingPumpVisualState.IDLE
         )
     }
 
@@ -87,6 +91,13 @@ internal fun DeviceDosingCatalogScreen(
             )
         }
     }
+}
+
+private fun DosingChannelVisualState.toPumpVisualState(): DosingPumpVisualState = when (this) {
+    DosingChannelVisualState.NOT_CONFIGURED,
+    DosingChannelVisualState.IDLE -> DosingPumpVisualState.IDLE
+    DosingChannelVisualState.DOSING -> DosingPumpVisualState.RUNNING
+    DosingChannelVisualState.ERROR -> DosingPumpVisualState.ERROR
 }
 
 @Composable
