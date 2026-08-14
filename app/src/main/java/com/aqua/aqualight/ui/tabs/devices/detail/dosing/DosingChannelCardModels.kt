@@ -3,24 +3,25 @@ package com.aqua.aqualight.ui.tabs.devices.detail.dosing
 import androidx.annotation.StringRes
 import androidx.compose.runtime.Immutable
 import com.aqua.aqualight.R
+import com.aqua.aqualight.application.devices.DeviceDosingChannelSlot
 import com.aqua.aqualight.application.devices.dosing.DeviceDosingChannelDestination
 import com.aqua.aqualight.application.devices.dosing.DeviceDosingChannelNavigationTarget
-import com.aqua.aqualight.application.devices.DeviceDosingChannelSlot
 
 /**
  * Dosing-only presentation state.
  *
  * Catalog identity and structural validity are owned by the application catalog before this state
- * is created. The UI keeps only the values required to render the channel card.
+ * is created. The UI keeps only the values required to render the channel card. Runtime and
+ * firmware transport models must be mapped before reaching this presentation model.
  */
 @Immutable
 data class DosingChannelCardUiState(
     val slotId: String,
     val channelNumber: Int,
     val displayName: String,
+    val dailyDoseMl: Double = 0.0,
     val visualState: DosingChannelVisualState = DosingChannelVisualState.NOT_CONFIGURED,
-    val scheduleDays: DosingScheduleDaysUiState = DosingScheduleDaysUiState(),
-    val doseProgress: DosingDoseProgressUiState = DosingDoseProgressUiState()
+    val scheduleDays: DosingScheduleDaysUiState = DosingScheduleDaysUiState()
 )
 
 enum class DosingChannelVisualState(
@@ -53,31 +54,6 @@ data class DosingScheduleDaysUiState(
     val isEveryDay: Boolean
         get() = selectedDays.size == ALL_DOSING_WEEKDAYS.size &&
             selectedDays.containsAll(ALL_DOSING_WEEKDAYS)
-}
-
-/**
- * Volume-based daily dosing progress used only for presentation.
- *
- * [dailyDoseMl] is the total daily dose configured by the user. [deliveredTodayMl] is the amount
- * actually delivered today. Optional [doseMilestonesMl] are cumulative volume boundaries supplied
- * by the channel-configuration mapper. Validation and canonicalization of dosing values belongs to
- * the application/domain boundary before values are mapped into this UI state. The progress
- * contract contains no wall-clock axis.
- */
-@Immutable
-data class DosingDoseProgressUiState(
-    val dailyDoseMl: Double = 0.0,
-    val deliveredTodayMl: Double = 0.0,
-    val doseMilestonesMl: List<Double> = emptyList(),
-    val visualState: DosingDoseProgressVisualState = DosingDoseProgressVisualState.EMPTY
-)
-
-enum class DosingDoseProgressVisualState {
-    EMPTY,
-    READY,
-    ACTIVE,
-    COMPLETE,
-    ERROR
 }
 
 /** Initial presentation comes only from the validated commercial channel-slot catalog. */
