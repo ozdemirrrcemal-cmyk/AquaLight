@@ -60,6 +60,7 @@ class DosingChannelCardArchitectureTest {
         )
 
         assertTrue(card.contains("device_dosing_channel_daily_dose_format"))
+        assertTrue(card.contains("state.dailyDoseMl"))
         assertTrue(card.contains("scheduleDays.summaryLabel()"))
         assertFalse(card.contains("CALIBRATION"))
         assertFalse(card.contains("DosingSetupUiState"))
@@ -69,7 +70,7 @@ class DosingChannelCardArchitectureTest {
     }
 
     @Test
-    fun `unconfigured card uses an empty state while configured progress remains available`() {
+    fun `unconfigured card uses an empty state without legacy progress dependency`() {
         val card = source(
             "app/src/main/java/com/aqua/aqualight/ui/tabs/devices/detail/dosing/" +
                 "DosingChannelCard.kt"
@@ -79,7 +80,8 @@ class DosingChannelCardArchitectureTest {
         assertTrue(card.contains("DosingChannelEmptyState("))
         assertTrue(card.contains("device_dosing_channel_empty_title"))
         assertTrue(card.contains("device_dosing_channel_empty_description"))
-        assertTrue(card.contains("DosingDoseProgressBar("))
+        assertFalse(card.contains("DosingDoseProgressBar("))
+        assertFalse(card.contains("doseProgress"))
         assertFalse(card.contains("0.00 ml"))
     }
 
@@ -115,33 +117,30 @@ class DosingChannelCardArchitectureTest {
     }
 
     @Test
-    fun `dose progress is volume based and contains no time axis contract`() {
+    fun `legacy dose progress implementation is removed before canonical replacement`() {
         val models = source(
             "app/src/main/java/com/aqua/aqualight/ui/tabs/devices/detail/dosing/" +
                 "DosingChannelCardModels.kt"
         )
-        val progressBar = source(
+        val card = source(
             "app/src/main/java/com/aqua/aqualight/ui/tabs/devices/detail/dosing/" +
-                "DosingDoseProgressBar.kt"
+                "DosingChannelCard.kt"
         )
-        val removedTimeline = File(
+        val legacyProgressBar = File(repositoryRoot, DOSING_SOURCE_ROOT + "DosingDoseProgressBar.kt")
+        val legacyProgressDrawing = File(
             repositoryRoot,
-            "app/src/main/java/com/aqua/aqualight/ui/tabs/devices/detail/dosing/" +
-                "DosingScheduleTimeline.kt"
+            DOSING_SOURCE_ROOT + "DosingDoseProgressDrawing.kt"
         )
 
-        assertTrue(models.contains("dailyDoseMl"))
-        assertTrue(models.contains("deliveredTodayMl"))
-        assertTrue(models.contains("doseMilestonesMl"))
-        assertTrue(progressBar.contains("deliveredTodayMl / dailyDoseMl"))
-        assertFalse(models.contains("dailyTargetMl"))
-        assertFalse(models.contains("deliveredMl"))
-        assertFalse(models.contains("doseCheckpointsMl"))
-        assertFalse(models.contains("fractionOfDay"))
-        assertFalse(models.contains("DosingTimeline"))
-        assertFalse(progressBar.contains("24-hour"))
-        assertFalse(progressBar.contains("TIMELINE"))
-        assertFalse(removedTimeline.exists())
+        assertFalse(legacyProgressBar.exists())
+        assertFalse(legacyProgressDrawing.exists())
+        assertFalse(models.contains("DosingDoseProgressUiState"))
+        assertFalse(models.contains("DosingDoseProgressVisualState"))
+        assertFalse(models.contains("doseProgress"))
+        assertFalse(models.contains("deliveredTodayMl"))
+        assertFalse(models.contains("doseMilestonesMl"))
+        assertFalse(card.contains("DosingDoseProgressBar"))
+        assertFalse(card.contains("progressFraction"))
     }
 
     @Test
@@ -211,8 +210,6 @@ class DosingChannelCardArchitectureTest {
             DOSING_SOURCE_ROOT + "DosingChannelCard.kt",
             DOSING_SOURCE_ROOT + "DosingChannelCardModels.kt",
             DOSING_SOURCE_ROOT + "DosingChannelGlyph.kt",
-            DOSING_SOURCE_ROOT + "DosingDoseProgressBar.kt",
-            DOSING_SOURCE_ROOT + "DosingDoseProgressDrawing.kt",
             DOSING_SOURCE_ROOT + "DosingPumpDeviceCompose.kt",
             DOSING_SOURCE_ROOT + "DosingPumpIndicatorDrawing.kt",
             DOSING_SOURCE_ROOT + "DosingPumpPalette.kt",
