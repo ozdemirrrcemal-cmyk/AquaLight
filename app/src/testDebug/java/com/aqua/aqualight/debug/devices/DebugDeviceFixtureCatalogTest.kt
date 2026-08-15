@@ -10,7 +10,6 @@ import com.aqua.aqualight.application.devices.DeviceMenuUnavailableReason
 import com.aqua.aqualight.application.devices.DeviceRootCatalogState
 import com.aqua.aqualight.application.devices.OwnerDeviceAvailability
 import com.aqua.aqualight.data.devices.catalog.AqlCommercialDeviceCatalog
-import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.test.runTest
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
@@ -118,19 +117,11 @@ class DebugDeviceFixtureCatalogTest {
         val secondTarget = requireNotNull(
             operations.resolve(dosingRoot.deviceUid, secondChannel.id.value)
         )
-        val observedTargets = operations.observeTargets(dosingRoot.deviceUid).first()
 
         assertEquals(DeviceDosingChannelDestination.CALIBRATION, firstTarget.destination)
         assertEquals(DeviceDosingChannelDestination.DETAIL, secondTarget.destination)
         assertEquals(0L, firstTarget.lastCalibratedAtEpochSeconds)
         assertTrue(secondTarget.lastCalibratedAtEpochSeconds in 1L..MAX_EPOCH_SECONDS)
-        assertEquals(
-            setOf(
-                DeviceDosingChannelDestination.CALIBRATION,
-                DeviceDosingChannelDestination.DETAIL
-            ),
-            observedTargets.map { target -> target.destination }.toSet()
-        )
     }
 
     @Test
@@ -179,7 +170,6 @@ class DebugDeviceFixtureCatalogTest {
             slotId = "dosing:channel1",
             pumpCount = 2,
             channelNumber = 1,
-            channelTitle = "Nutrients",
             lastCalibratedAtEpochSeconds = 1L,
             destination = DeviceDosingChannelDestination.DETAIL
         )

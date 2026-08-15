@@ -112,7 +112,7 @@ class DeviceDosingChannelDetailFragment :
         viewLifecycleOwner.lifecycleScope.launch {
             viewLifecycleOwner.repeatOnLifecycle(Lifecycle.State.STARTED) {
                 viewModel.draft
-                    .map(DeviceDosingChannelDetailDraft::channelTitle)
+                    .map { draft -> draft.channelTitle }
                     .filter(String::isNotBlank)
                     .distinctUntilChanged()
                     .collect(::updateDestinationTitle)
