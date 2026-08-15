@@ -49,7 +49,7 @@ class DeviceDosingV1StateAdapterTest {
     }
 
     @Test
-    fun `owner rejects stale request revision and connection generations`() {
+    fun `owner rejects stale requests and lower revisions`() {
         val owner = DeviceDosingV1StateOwner()
         val key = DeviceDosingV1ChannelKey.from("channel1")
         val staleRequest = owner.beginRequest(DEVICE_UID, key)
@@ -88,7 +88,24 @@ class DeviceDosingV1StateAdapterTest {
                 revisionSix.progress
             )
         )
+    }
 
+    @Test
+    fun `owner resets revision on reconnect and rejects the old connection`() {
+        val owner = DeviceDosingV1StateOwner()
+        val key = DeviceDosingV1ChannelKey.from("channel1")
+        val initial = owner.beginRequest(DEVICE_UID, key)
+        val revisionSeven = fixtureState(revision = 7L)
+        assertEquals(
+            DeviceDosingV1CommitDisposition.APPLIED,
+            owner.commitRefresh(
+                initial,
+                GENERATION_ONE,
+                revisionSeven.global,
+                revisionSeven.channel,
+                revisionSeven.progress
+            )
+        )
         val reconnect = owner.beginRequest(DEVICE_UID, key)
         val revisionThree = fixtureState(revision = 3L)
         assertEquals(
@@ -101,7 +118,7 @@ class DeviceDosingV1StateAdapterTest {
                 revisionThree.progress
             )
         )
-        assertEquals(3L, owner.currentChannel(DEVICE_UID, key)?.revision)
+        assertEquals(3L, owner.reads.currentChannel(DEVICE_UID, key)?.revision)
 
         val oldConnection = owner.beginRequest(DEVICE_UID, key)
         val revisionEight = fixtureState(revision = 8L)
@@ -115,7 +132,7 @@ class DeviceDosingV1StateAdapterTest {
                 revisionEight.progress
             )
         )
-        assertEquals(3L, owner.currentChannel(DEVICE_UID, key)?.revision)
+        assertEquals(3L, owner.reads.currentChannel(DEVICE_UID, key)?.revision)
     }
 
     @Test

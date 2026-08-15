@@ -6,6 +6,7 @@ import com.aqua.aqualight.data.devices.model.DeviceUid
 import com.aqua.aqualight.data.devices.runtime.core.DeviceRuntimeConnectionGeneration
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.map
 
@@ -27,6 +28,35 @@ internal enum class DeviceDosingV1InvalidationDisposition {
     APPLIED,
     STALE_CONNECTION,
     STALE_REVISION
+}
+
+internal interface DeviceDosingV1StateReadAccess {
+    fun observeChannel(
+        deviceUid: DeviceUid,
+        channelKey: DeviceDosingV1ChannelKey
+    ): Flow<DeviceDosingChannelSnapshot?>
+
+    fun observeCalibration(
+        deviceUid: DeviceUid,
+        channelKey: DeviceDosingV1ChannelKey
+    ): Flow<DeviceDosingCalibrationSnapshot?>
+
+    fun observeAll(deviceUid: DeviceUid): Flow<List<DeviceDosingChannelSnapshot>>
+
+    fun currentChannel(
+        deviceUid: DeviceUid,
+        channelKey: DeviceDosingV1ChannelKey
+    ): DeviceDosingChannelSnapshot?
+
+    fun currentCalibration(
+        deviceUid: DeviceUid,
+        channelKey: DeviceDosingV1ChannelKey
+    ): DeviceDosingCalibrationSnapshot?
+
+    fun authoritativeRevision(
+        deviceUid: DeviceUid,
+        channelKey: DeviceDosingV1ChannelKey
+    ): Long?
 }
 
 private data class OwnedDosingChannelState(
@@ -53,6 +83,11 @@ internal class DeviceDosingV1StateOwner {
     private val requestGenerations = HashMap<DosingStateAddress, Long>()
     private val lowLevelAlertIntents = HashMap<DosingStateAddress, Boolean>()
     private val states = MutableStateFlow<Map<DeviceUid, OwnedDosingDeviceState>>(emptyMap())
+
+    val reads: DeviceDosingV1StateReadAccess = DefaultDeviceDosingV1StateReadAccess(
+        states = states,
+        currentStates = { synchronized(lock) { states.value } }
+    )
 
     fun beginRequest(
         deviceUid: DeviceUid,
@@ -81,14 +116,16 @@ internal class DeviceDosingV1StateOwner {
         }
         val mapped = runCatching {
             DeviceDosingV1SnapshotMapper.map(
-                deviceUid = token.deviceUid,
-                slotId = DeviceDosingV1SlotKeyMapper.slotId(token.channelKey),
-                global = global,
-                channelStatus = channelStatus,
-                progressStatus = progressStatus,
-                lowLevelAlertEnabled = lowLevelAlertIntents.getOrDefault(
-                    DosingStateAddress(token.deviceUid, token.channelKey),
-                    false
+                DeviceDosingV1SnapshotDocuments(
+                    deviceUid = token.deviceUid,
+                    slotId = DeviceDosingV1SlotKeyMapper.slotId(token.channelKey),
+                    global = global,
+                    channelStatus = channelStatus,
+                    progressStatus = progressStatus,
+                    lowLevelAlertEnabled = lowLevelAlertIntents.getOrDefault(
+                        DosingStateAddress(token.deviceUid, token.channelKey),
+                        false
+                    )
                 )
             )
         }.getOrElse {
@@ -179,54 +216,6 @@ internal class DeviceDosingV1StateOwner {
         DeviceDosingV1InvalidationDisposition.APPLIED
     }
 
-    fun observeChannel(deviceUid: DeviceUid, channelKey: DeviceDosingV1ChannelKey):
-        Flow<DeviceDosingChannelSnapshot?> = states
-        .map { allStates -> allStates[deviceUid]?.channels?.get(channelKey)?.authoritativeChannel() }
-        .distinctUntilChanged()
-
-    fun observeCalibration(deviceUid: DeviceUid, channelKey: DeviceDosingV1ChannelKey):
-        Flow<DeviceDosingCalibrationSnapshot?> = states
-        .map { allStates ->
-            allStates[deviceUid]?.channels?.get(channelKey)?.authoritativeCalibration()
-        }
-        .distinctUntilChanged()
-
-    fun observeAll(deviceUid: DeviceUid): Flow<List<DeviceDosingChannelSnapshot>> = states
-        .map { allStates ->
-            allStates[deviceUid]
-                ?.channels
-                ?.values
-                ?.mapNotNull(OwnedDosingChannelState::authoritativeChannel)
-                ?.sortedBy(DeviceDosingChannelSnapshot::channelNumber)
-                .orEmpty()
-        }
-        .distinctUntilChanged()
-
-    fun currentChannel(
-        deviceUid: DeviceUid,
-        channelKey: DeviceDosingV1ChannelKey
-    ): DeviceDosingChannelSnapshot? = synchronized(lock) {
-        states.value[deviceUid]?.channels?.get(channelKey)?.authoritativeChannel()
-    }
-
-    fun currentCalibration(
-        deviceUid: DeviceUid,
-        channelKey: DeviceDosingV1ChannelKey
-    ): DeviceDosingCalibrationSnapshot? = synchronized(lock) {
-        states.value[deviceUid]?.channels?.get(channelKey)?.authoritativeCalibration()
-    }
-
-    fun authoritativeRevision(
-        deviceUid: DeviceUid,
-        channelKey: DeviceDosingV1ChannelKey
-    ): Long? = synchronized(lock) {
-        states.value[deviceUid]
-            ?.channels
-            ?.get(channelKey)
-            ?.takeUnless(OwnedDosingChannelState::invalidated)
-            ?.revision
-    }
-
     fun setLowLevelAlertIntent(
         deviceUid: DeviceUid,
         channelKey: DeviceDosingV1ChannelKey,
@@ -246,27 +235,32 @@ internal class DeviceDosingV1StateOwner {
         connectionGeneration: DeviceRuntimeConnectionGeneration
     ): PreparedDevice {
         val existing = states.value[token.deviceUid]
-        if (
-            existing != null &&
+        val staleConnection = existing != null &&
             connectionGeneration.value < existing.connectionGeneration.value
-        ) {
-            return PreparedDevice(DeviceDosingV1CommitDisposition.STALE_CONNECTION, null)
-        }
         val newerConnection = existing != null &&
             connectionGeneration.value > existing.connectionGeneration.value
         val latestRequest = requestGenerations[DosingStateAddress(
             token.deviceUid,
             token.channelKey
         )]
-        if (!newerConnection && latestRequest != token.requestGeneration) {
-            return PreparedDevice(DeviceDosingV1CommitDisposition.STALE_REQUEST, null)
+        return when {
+            staleConnection -> PreparedDevice(
+                DeviceDosingV1CommitDisposition.STALE_CONNECTION,
+                null
+            )
+            !newerConnection && latestRequest != token.requestGeneration -> PreparedDevice(
+                DeviceDosingV1CommitDisposition.STALE_REQUEST,
+                null
+            )
+            else -> PreparedDevice(
+                disposition = null,
+                device = when {
+                    existing == null -> emptyDevice(connectionGeneration)
+                    newerConnection -> emptyDevice(connectionGeneration)
+                    else -> existing
+                }
+            )
         }
-        val device = when {
-            existing == null -> emptyDevice(connectionGeneration)
-            newerConnection -> emptyDevice(connectionGeneration)
-            else -> existing
-        }
-        return PreparedDevice(null, device)
     }
 
     private fun publish(deviceUid: DeviceUid, state: OwnedDosingDeviceState) {
@@ -285,6 +279,64 @@ internal class DeviceDosingV1StateOwner {
         val disposition: DeviceDosingV1CommitDisposition?,
         val device: OwnedDosingDeviceState?
     )
+}
+
+private class DefaultDeviceDosingV1StateReadAccess(
+    private val states: StateFlow<Map<DeviceUid, OwnedDosingDeviceState>>,
+    private val currentStates: () -> Map<DeviceUid, OwnedDosingDeviceState>
+) : DeviceDosingV1StateReadAccess {
+
+    override fun observeChannel(
+        deviceUid: DeviceUid,
+        channelKey: DeviceDosingV1ChannelKey
+    ): Flow<DeviceDosingChannelSnapshot?> = states
+        .map { allStates -> allStates[deviceUid]?.channels?.get(channelKey)?.authoritativeChannel() }
+        .distinctUntilChanged()
+
+    override fun observeCalibration(
+        deviceUid: DeviceUid,
+        channelKey: DeviceDosingV1ChannelKey
+    ): Flow<DeviceDosingCalibrationSnapshot?> = states
+        .map { allStates ->
+            allStates[deviceUid]?.channels?.get(channelKey)?.authoritativeCalibration()
+        }
+        .distinctUntilChanged()
+
+    override fun observeAll(deviceUid: DeviceUid): Flow<List<DeviceDosingChannelSnapshot>> = states
+        .map { allStates ->
+            allStates[deviceUid]
+                ?.channels
+                ?.values
+                ?.mapNotNull(OwnedDosingChannelState::authoritativeChannel)
+                ?.sortedBy(DeviceDosingChannelSnapshot::channelNumber)
+                .orEmpty()
+        }
+        .distinctUntilChanged()
+
+    override fun currentChannel(
+        deviceUid: DeviceUid,
+        channelKey: DeviceDosingV1ChannelKey
+    ): DeviceDosingChannelSnapshot? = currentStates()[deviceUid]
+        ?.channels
+        ?.get(channelKey)
+        ?.authoritativeChannel()
+
+    override fun currentCalibration(
+        deviceUid: DeviceUid,
+        channelKey: DeviceDosingV1ChannelKey
+    ): DeviceDosingCalibrationSnapshot? = currentStates()[deviceUid]
+        ?.channels
+        ?.get(channelKey)
+        ?.authoritativeCalibration()
+
+    override fun authoritativeRevision(
+        deviceUid: DeviceUid,
+        channelKey: DeviceDosingV1ChannelKey
+    ): Long? = currentStates()[deviceUid]
+        ?.channels
+        ?.get(channelKey)
+        ?.takeUnless(OwnedDosingChannelState::invalidated)
+        ?.revision
 }
 
 private data class DosingStateAddress(

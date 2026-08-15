@@ -63,7 +63,7 @@ class DeviceDosingRootViewModel(
             channelNavigationJob?.cancel()
             boundDeviceUid = ""
             latestRootSnapshot = null
-            channelSnapshots = emptyMap()
+            channelSnapshots = emptyList()
             _uiState.value = emptyState(fallbackTitle, "")
             return
         }
@@ -72,7 +72,7 @@ class DeviceDosingRootViewModel(
         boundDeviceUid = deviceUid
         this.fallbackTitle = fallbackTitle
         latestRootSnapshot = operations.current(deviceUid)
-        channelSnapshots = emptyMap()
+        channelSnapshots = emptyList()
         observeJob?.cancel()
         channelDataJob?.cancel()
         channelDataRefreshJob?.cancel()

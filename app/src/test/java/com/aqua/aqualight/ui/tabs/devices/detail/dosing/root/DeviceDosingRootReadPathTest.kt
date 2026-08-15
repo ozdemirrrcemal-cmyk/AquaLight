@@ -57,7 +57,7 @@ class DeviceDosingRootReadPathTest {
     }
 
     @Test
-    fun `two channel root switches atomically to authoritative cards and reconnect bootstrap`() =
+    fun `two channel root switches atomically to authoritative cards`() =
         runTest(dispatcher) {
             val channels = FakeChannelOperations()
             val viewModel = viewModel(channelCount = 2, channelOperations = channels)
@@ -96,15 +96,28 @@ class DeviceDosingRootReadPathTest {
                 0.0
             )
             assertEquals(50.0, authoritative.channels.first().reservoir?.remainingMl ?: 0.0, 0.0)
-
-            channels.emit(emptyList())
-
-            assertEquals(listOf("Catalog 1", "Catalog 2"), channelNames(viewModel))
-            assertEquals(
-                List(2) { DosingPumpVisualState.IDLE },
-                viewModel.uiState.value.pumpStates
-            )
         }
+
+    @Test
+    fun `reconnect clears authoritative cards to catalog bootstrap`() = runTest(dispatcher) {
+        val channels = FakeChannelOperations()
+        val viewModel = viewModel(channelCount = 2, channelOperations = channels)
+        viewModel.bind(DEVICE_UID, "Fallback")
+        channels.emit(
+            listOf(
+                channelSnapshot(channelNumber = 1, pumpCount = 2, active = true),
+                channelSnapshot(channelNumber = 2, pumpCount = 2)
+            )
+        )
+
+        channels.emit(emptyList())
+
+        assertEquals(listOf("Catalog 1", "Catalog 2"), channelNames(viewModel))
+        assertEquals(
+            List(2) { DosingPumpVisualState.IDLE },
+            viewModel.uiState.value.pumpStates
+        )
+    }
 
     @Test
     fun `four channel root orders a complete authoritative set by physical channel`() =

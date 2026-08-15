@@ -16,18 +16,20 @@ internal class DeviceDosingV1CalibrationOperationsAdapter(
     override fun observe(
         deviceUid: String,
         slotId: String
-    ): Flow<DeviceDosingCalibrationSnapshot?> = adapter.observeCalibration(deviceUid, slotId)
+    ): Flow<DeviceDosingCalibrationSnapshot?> =
+        adapter.stateAccess.observeCalibration(deviceUid, slotId)
 
     override suspend fun refresh(
         deviceUid: String,
         slotId: String
-    ): DeviceDosingCalibrationResult = adapter.refresh(deviceUid, slotId).toCalibrationResult()
+    ): DeviceDosingCalibrationResult =
+        adapter.refreshCoordinator.refresh(deviceUid, slotId).toCalibrationResult()
 
     override suspend fun saveDisplayName(
         deviceUid: String,
         slotId: String,
         displayName: String
-    ): DeviceDosingCalibrationResult = adapter.mutatePersisted(
+    ): DeviceDosingCalibrationResult = adapter.mutationCoordinator.mutatePersisted(
         deviceUid = deviceUid,
         slotId = slotId,
         execute = { uid, channelKey, revision, baseline ->
@@ -47,7 +49,7 @@ internal class DeviceDosingV1CalibrationOperationsAdapter(
     override suspend fun primeStart(
         deviceUid: String,
         slotId: String
-    ): DeviceDosingCalibrationResult = adapter.mutateRuntime(
+    ): DeviceDosingCalibrationResult = adapter.mutationCoordinator.mutateRuntime(
         deviceUid = deviceUid,
         slotId = slotId,
         execute = { uid, channelKey, _, baseline ->
@@ -60,7 +62,7 @@ internal class DeviceDosingV1CalibrationOperationsAdapter(
     override suspend fun primeStop(
         deviceUid: String,
         slotId: String
-    ): DeviceDosingCalibrationResult = adapter.mutateRuntime(
+    ): DeviceDosingCalibrationResult = adapter.mutationCoordinator.mutateRuntime(
         deviceUid = deviceUid,
         slotId = slotId,
         execute = { uid, channelKey, _, _ -> adapter.repository.stopPrime(uid, channelKey) },
@@ -70,7 +72,7 @@ internal class DeviceDosingV1CalibrationOperationsAdapter(
     override suspend fun start(
         deviceUid: String,
         slotId: String
-    ): DeviceDosingCalibrationResult = adapter.mutateRuntime(
+    ): DeviceDosingCalibrationResult = adapter.mutationCoordinator.mutateRuntime(
         deviceUid = deviceUid,
         slotId = slotId,
         execute = { uid, channelKey, _, baseline ->
@@ -87,7 +89,7 @@ internal class DeviceDosingV1CalibrationOperationsAdapter(
         deviceUid: String,
         slotId: String,
         measuredMl: Double
-    ): DeviceDosingCalibrationResult = adapter.mutateRuntime(
+    ): DeviceDosingCalibrationResult = adapter.mutationCoordinator.mutateRuntime(
         deviceUid = deviceUid,
         slotId = slotId,
         execute = { uid, channelKey, _, _ ->
@@ -102,7 +104,7 @@ internal class DeviceDosingV1CalibrationOperationsAdapter(
     override suspend fun startVerificationDose(
         deviceUid: String,
         slotId: String
-    ): DeviceDosingCalibrationResult = adapter.mutateRuntime(
+    ): DeviceDosingCalibrationResult = adapter.mutationCoordinator.mutateRuntime(
         deviceUid = deviceUid,
         slotId = slotId,
         execute = { uid, channelKey, _, _ ->
@@ -121,7 +123,7 @@ internal class DeviceDosingV1CalibrationOperationsAdapter(
     override suspend fun stopVerificationDose(
         deviceUid: String,
         slotId: String
-    ): DeviceDosingCalibrationResult = adapter.mutateRuntime(
+    ): DeviceDosingCalibrationResult = adapter.mutationCoordinator.mutateRuntime(
         deviceUid = deviceUid,
         slotId = slotId,
         execute = { uid, channelKey, _, _ -> adapter.repository.stopDose(uid, channelKey) },
@@ -131,7 +133,7 @@ internal class DeviceDosingV1CalibrationOperationsAdapter(
     override suspend fun confirm(
         deviceUid: String,
         slotId: String
-    ): DeviceDosingCalibrationResult = adapter.mutateRuntime(
+    ): DeviceDosingCalibrationResult = adapter.mutationCoordinator.mutateRuntime(
         deviceUid = deviceUid,
         slotId = slotId,
         execute = { uid, channelKey, _, _ ->
@@ -143,7 +145,7 @@ internal class DeviceDosingV1CalibrationOperationsAdapter(
     override suspend fun cancel(
         deviceUid: String,
         slotId: String
-    ): DeviceDosingCalibrationResult = adapter.mutateRuntime(
+    ): DeviceDosingCalibrationResult = adapter.mutationCoordinator.mutateRuntime(
         deviceUid = deviceUid,
         slotId = slotId,
         execute = { uid, channelKey, _, _ ->

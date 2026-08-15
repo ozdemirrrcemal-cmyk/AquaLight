@@ -18,23 +18,25 @@ internal class DeviceDosingV1ChannelOperationsAdapter(
     override fun observe(
         deviceUid: String,
         slotId: String
-    ): Flow<DeviceDosingChannelSnapshot?> = adapter.observeChannel(deviceUid, slotId)
+    ): Flow<DeviceDosingChannelSnapshot?> = adapter.stateAccess.observeChannel(deviceUid, slotId)
 
     override fun observeAll(deviceUid: String): Flow<List<DeviceDosingChannelSnapshot>> =
-        adapter.observeAll(deviceUid)
+        adapter.stateAccess.observeAll(deviceUid)
 
     override suspend fun refresh(
         deviceUid: String,
         slotId: String
-    ): DeviceDosingChannelOperationResult = adapter.refresh(deviceUid, slotId).toChannelResult()
+    ): DeviceDosingChannelOperationResult =
+        adapter.refreshCoordinator.refresh(deviceUid, slotId).toChannelResult()
 
-    override suspend fun refreshAll(deviceUid: String): Boolean = adapter.refreshAll(deviceUid)
+    override suspend fun refreshAll(deviceUid: String): Boolean =
+        adapter.refreshCoordinator.refreshAll(deviceUid)
 
     override suspend fun applyProgram(
         deviceUid: String,
         slotId: String,
         program: DeviceDosingProgram
-    ): DeviceDosingChannelOperationResult = adapter.mutatePersisted(
+    ): DeviceDosingChannelOperationResult = adapter.mutationCoordinator.mutatePersisted(
         deviceUid = deviceUid,
         slotId = slotId,
         execute = { uid, channelKey, revision, baseline ->
@@ -57,7 +59,7 @@ internal class DeviceDosingV1ChannelOperationsAdapter(
         deviceUid: String,
         slotId: String,
         enabled: Boolean
-    ): DeviceDosingChannelOperationResult = adapter.mutatePersisted(
+    ): DeviceDosingChannelOperationResult = adapter.mutationCoordinator.mutatePersisted(
         deviceUid = deviceUid,
         slotId = slotId,
         execute = { uid, channelKey, revision, baseline ->
@@ -80,7 +82,7 @@ internal class DeviceDosingV1ChannelOperationsAdapter(
         deviceUid: String,
         slotId: String,
         settings: DeviceDosingReservoirSettings
-    ): DeviceDosingChannelOperationResult = adapter.mutatePersisted(
+    ): DeviceDosingChannelOperationResult = adapter.mutationCoordinator.mutatePersisted(
         deviceUid = deviceUid,
         slotId = slotId,
         execute = { uid, channelKey, revision, baseline ->
@@ -102,14 +104,18 @@ internal class DeviceDosingV1ChannelOperationsAdapter(
         },
         channel = DeviceDosingV1SavedMutationResult::channel,
         onAccepted = {
-            adapter.setLowLevelAlertIntent(deviceUid, slotId, settings.lowLevelAlertEnabled)
+            adapter.stateAccess.setLowLevelAlertIntent(
+                deviceUid,
+                slotId,
+                settings.lowLevelAlertEnabled
+            )
         }
     ).toChannelResult()
 
     override suspend fun refillReservoir(
         deviceUid: String,
         slotId: String
-    ): DeviceDosingChannelOperationResult = adapter.mutateRuntime(
+    ): DeviceDosingChannelOperationResult = adapter.mutationCoordinator.mutateRuntime(
         deviceUid = deviceUid,
         slotId = slotId,
         execute = { uid, channelKey, _, baseline ->
@@ -126,7 +132,7 @@ internal class DeviceDosingV1ChannelOperationsAdapter(
         deviceUid: String,
         slotId: String,
         amountMicroliters: Long
-    ): DeviceDosingChannelOperationResult = adapter.mutateRuntime(
+    ): DeviceDosingChannelOperationResult = adapter.mutationCoordinator.mutateRuntime(
         deviceUid = deviceUid,
         slotId = slotId,
         execute = { uid, channelKey, _, baseline ->
@@ -154,7 +160,7 @@ internal class DeviceDosingV1ChannelOperationsAdapter(
     override suspend fun doseStop(
         deviceUid: String,
         slotId: String
-    ): DeviceDosingChannelOperationResult = adapter.mutateRuntime(
+    ): DeviceDosingChannelOperationResult = adapter.mutationCoordinator.mutateRuntime(
         deviceUid = deviceUid,
         slotId = slotId,
         execute = { uid, channelKey, _, baseline ->
@@ -170,7 +176,7 @@ internal class DeviceDosingV1ChannelOperationsAdapter(
     override suspend fun reset(
         deviceUid: String,
         slotId: String
-    ): DeviceDosingChannelOperationResult = adapter.mutatePersisted(
+    ): DeviceDosingChannelOperationResult = adapter.mutationCoordinator.mutatePersisted(
         deviceUid = deviceUid,
         slotId = slotId,
         execute = { uid, channelKey, revision, baseline ->
@@ -196,7 +202,7 @@ internal class DeviceDosingV1ChannelOperationsAdapter(
         DeviceDosingV1ProgramApplyRequest(
             channelKey = channelKey,
             expectedRevision = revision,
-            program = DeviceDosingV1SnapshotMapper.toWireProgram(program)
+            program = DeviceDosingV1ProgramSnapshotMapper.toWireProgram(program)
         )
     )
 
