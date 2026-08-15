@@ -11,12 +11,20 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.fragment.navArgs
 import com.aqua.aqualight.R
 import com.aqua.aqualight.application.devices.dosing.DeviceDosingReservoirDraftPolicy
+import com.aqua.aqualight.application.notifications.NotificationCategory
+import com.aqua.aqualight.base.BaseActivity
 import com.aqua.aqualight.composition.requireAppContainer
 import com.aqua.aqualight.ui.common.bottomsheet.TextInputBottomSheet
+import com.aqua.aqualight.ui.common.notification.NotificationEnablementCallbacks
+import com.aqua.aqualight.ui.common.notification.NotificationEnablementCoordinator
+import com.aqua.aqualight.ui.common.notification.NotificationEnablementDependencies
+import com.aqua.aqualight.ui.common.notification.NotificationEnablementRequest
+import com.aqua.aqualight.ui.common.notification.NotificationEnablementStep
 import com.aqua.aqualight.ui.tabs.devices.detail.dosing.channel.common.DeviceDosingChannelDestinationFragment
 import java.text.NumberFormat
 
 /** Render/input host for the ViewModel-owned reservoir draft. */
+@Suppress("TooManyFunctions") // Lifecycle and notification-gated user intents stay local.
 class DeviceDosingReservoirFragment :
     DeviceDosingChannelDestinationFragment(R.layout.fragment_device_dosing_channel_detail) {
 
@@ -24,6 +32,68 @@ class DeviceDosingReservoirFragment :
     private val viewModel: DeviceDosingReservoirViewModel by viewModels {
         requireContext().requireAppContainer().defaultViewModelFactory
     }
+    private val appContainer by lazy {
+        requireContext().requireAppContainer()
+    }
+    private val notificationEnablementCoordinator = NotificationEnablementCoordinator(
+        fragment = this,
+        instanceKey = "dosing-reservoir-low-level-alert",
+        dependencies = NotificationEnablementDependencies(
+            notificationPreferencesProvider = {
+                appContainer.notificationPreferenceUseCase
+            },
+            ownerUidProvider = {
+                appContainer.authenticatedOwnerIdentity.requireOwnerUid()
+            },
+            requestResolver = { actionToken ->
+                if (actionToken == ACTION_ENABLE_LOW_LEVEL_ALERT) {
+                    NotificationEnablementRequest(
+                        category = NotificationCategory.DEVICE_ALERTS,
+                        requiresPreciseReminders = false
+                    )
+                } else {
+                    null
+                }
+            }
+        ),
+        callbacks = NotificationEnablementCallbacks(
+            onReady = { actionToken ->
+                if (
+                    actionToken == ACTION_ENABLE_LOW_LEVEL_ALERT &&
+                    viewModel.currentDraft().trackingEnabled
+                ) {
+                    viewModel.setNotificationAvailability(
+                        DeviceDosingReservoirNotificationAvailability.AVAILABLE
+                    )
+                    viewModel.setLowLevelAlertEnabled(true)
+                }
+            },
+            onStateChanged = { actionToken, state ->
+                if (actionToken == ACTION_ENABLE_LOW_LEVEL_ALERT) {
+                    val alertEnabled = viewModel.currentDraft().lowLevelAlertEnabled
+                    viewModel.setNotificationAvailability(
+                        when {
+                            !alertEnabled || state.canDeliver -> {
+                                DeviceDosingReservoirNotificationAvailability.AVAILABLE
+                            }
+                            state.step != NotificationEnablementStep.READY -> {
+                                DeviceDosingReservoirNotificationAvailability.ANDROID_BLOCKED
+                            }
+                            else -> {
+                                DeviceDosingReservoirNotificationAvailability
+                                    .OWNER_PREFERENCE_DISABLED
+                            }
+                        }
+                    )
+                }
+            },
+            onFailure = { actionToken, _ ->
+                if (actionToken == ACTION_ENABLE_LOW_LEVEL_ALERT) {
+                    handleNotificationAccessFailure()
+                }
+            }
+        )
+    )
 
     override val destinationTitle: String
         get() = getString(R.string.device_dosing_detail_reservoir_title)
@@ -42,6 +112,11 @@ class DeviceDosingReservoirFragment :
         setupContent(view)
     }
 
+    override fun onResume() {
+        super.onResume()
+        refreshLowLevelNotificationState()
+    }
+
     override fun onSaveInstanceState(outState: Bundle) {
         viewModel.currentDraft().writeTo(outState)
         super.onSaveInstanceState(outState)
@@ -52,6 +127,8 @@ class DeviceDosingReservoirFragment :
             setViewCompositionStrategy(ViewCompositionStrategy.DisposeOnViewTreeLifecycleDestroyed)
             setContent {
                 val draft by viewModel.draft.collectAsStateWithLifecycle()
+                val notificationAvailability by
+                    viewModel.notificationAvailability.collectAsStateWithLifecycle()
                 DeviceDosingReservoirScreen(
                     state = DeviceDosingReservoirUiState(
                         trackingEnabled = draft.trackingEnabled,
@@ -59,17 +136,62 @@ class DeviceDosingReservoirFragment :
                             R.string.device_dosing_detail_value_container_ml,
                             draft.reservoirCapacityMl
                         ),
-                        lowLevelAlertEnabled = draft.lowLevelAlertEnabled
+                        lowLevelAlertEnabled = draft.lowLevelAlertEnabled,
+                        lowLevelAlertNotificationAvailability = notificationAvailability
                     ),
                     actions = DeviceDosingReservoirActions(
-                        onTrackingEnabledChange = viewModel::setTrackingEnabled,
+                        onTrackingEnabledChange = ::setTrackingEnabled,
                         onCapacityClick = ::showReservoirCapacityEditor,
-                        onLowLevelAlertEnabledChange = viewModel::setLowLevelAlertEnabled,
+                        onLowLevelAlertEnabledChange = ::setLowLevelAlertEnabled,
+                        onRepairLowLevelAlertNotifications = ::repairLowLevelNotifications,
                         onSaveClick = null
                     )
                 )
             }
         }
+    }
+
+    private fun setTrackingEnabled(enabled: Boolean) {
+        viewModel.setTrackingEnabled(enabled)
+        if (!enabled) {
+            notificationEnablementCoordinator.cancelPending()
+        } else if (viewModel.currentDraft().lowLevelAlertEnabled) {
+            refreshLowLevelNotificationState()
+        }
+    }
+
+    private fun setLowLevelAlertEnabled(enabled: Boolean) {
+        if (!enabled) {
+            notificationEnablementCoordinator.cancelPending()
+            viewModel.setLowLevelAlertEnabled(false)
+            return
+        }
+        if (!viewModel.currentDraft().trackingEnabled) return
+        notificationEnablementCoordinator.requestEnable(ACTION_ENABLE_LOW_LEVEL_ALERT)
+    }
+
+    private fun repairLowLevelNotifications() {
+        val draft = viewModel.currentDraft()
+        if (!draft.trackingEnabled || !draft.lowLevelAlertEnabled) return
+        notificationEnablementCoordinator.requestEnable(ACTION_ENABLE_LOW_LEVEL_ALERT)
+    }
+
+    private fun refreshLowLevelNotificationState() {
+        notificationEnablementCoordinator.refresh(ACTION_ENABLE_LOW_LEVEL_ALERT)
+    }
+
+    private fun handleNotificationAccessFailure() {
+        viewModel.setNotificationAvailability(
+            if (viewModel.currentDraft().lowLevelAlertEnabled) {
+                DeviceDosingReservoirNotificationAvailability.ANDROID_BLOCKED
+            } else {
+                DeviceDosingReservoirNotificationAvailability.AVAILABLE
+            }
+        )
+        (activity as? BaseActivity)?.showSnackBar(
+            getString(R.string.notification_feature_access_check_failed),
+            BaseActivity.SnackType.ERROR
+        )
     }
 
     private fun setupReservoirCapacityResult() {
@@ -122,7 +244,7 @@ private fun Bundle.toReservoirDraft() = DeviceDosingReservoirDraft(
         DeviceDosingReservoirDraftPolicy.DEFAULT_CAPACITY_ML
     ),
     trackingEnabled = getBoolean(STATE_TRACKING_ENABLED, false),
-    lowLevelAlertEnabled = getBoolean(STATE_LOW_LEVEL_ALERT_ENABLED, true)
+    lowLevelAlertEnabled = getBoolean(STATE_LOW_LEVEL_ALERT_ENABLED, false)
 )
 
 private fun DeviceDosingReservoirDraft.writeTo(outState: Bundle) {
@@ -142,3 +264,4 @@ private const val STATE_LOW_LEVEL_ALERT_ENABLED = "reservoir_low_level_alert_ena
 private const val RESERVOIR_CAPACITY_REQUEST_KEY = "dosing_reservoir_capacity_input"
 private const val RESERVOIR_CAPACITY_PAYLOAD_ID = "reservoir_capacity"
 private const val RESERVOIR_CAPACITY_MAX_LENGTH = 7
+private const val ACTION_ENABLE_LOW_LEVEL_ALERT = "enable-dosing-low-level-alert"

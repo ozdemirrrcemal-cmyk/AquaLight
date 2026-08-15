@@ -9,10 +9,18 @@ import androidx.navigation.fragment.findNavController
 import com.aqua.aqualight.R
 import com.aqua.aqualight.application.aquarium.AquariumTankSnapshot
 import com.aqua.aqualight.application.aquarium.DeleteAquariumTanksResult
+import com.aqua.aqualight.application.notifications.NotificationCategory
 import com.aqua.aqualight.base.BaseActivity
+import com.aqua.aqualight.composition.requireAppContainer
 import com.aqua.aqualight.databinding.FragmentTankSettingsOthersBinding
 import com.aqua.aqualight.ui.common.feedback.FeedbackBottomSheet
 import com.aqua.aqualight.ui.common.loading.setFragmentGlobalLoading
+import com.aqua.aqualight.ui.common.notification.NotificationEnablementCallbacks
+import com.aqua.aqualight.ui.common.notification.NotificationEnablementCoordinator
+import com.aqua.aqualight.ui.common.notification.NotificationEnablementDependencies
+import com.aqua.aqualight.ui.common.notification.NotificationEnablementRequest
+import com.aqua.aqualight.ui.common.notification.NotificationEnablementState
+import com.aqua.aqualight.ui.common.notification.NotificationEnablementStep
 import com.aqua.aqualight.ui.tabs.aquarium.AquariumTankViewModel
 import com.aqua.aqualight.ui.tabs.aquarium.export.TankPdfExporter
 import com.aqua.aqualight.utils.DialogManager
@@ -22,6 +30,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 
+@Suppress("TooManyFunctions") // Fragment lifecycle and feature intents stay deliberately local.
 class TankSettingsOthersFragment : Fragment(R.layout.fragment_tank_settings_others) {
 
     private var _binding: FragmentTankSettingsOthersBinding? = null
@@ -29,8 +38,53 @@ class TankSettingsOthersFragment : Fragment(R.layout.fragment_tank_settings_othe
 
     private val aquariumTankViewModel: AquariumTankViewModel by activityViewModels()
 
+    private val appContainer by lazy {
+        requireContext().requireAppContainer()
+    }
+    private val notificationEnablementCoordinator = NotificationEnablementCoordinator(
+        fragment = this,
+        instanceKey = "tank-care-reminders",
+        dependencies = NotificationEnablementDependencies(
+            notificationPreferencesProvider = {
+                appContainer.notificationPreferenceUseCase
+            },
+            ownerUidProvider = {
+                appContainer.authenticatedOwnerIdentity.requireOwnerUid()
+            },
+            requestResolver = { actionToken ->
+                if (actionToken == ACTION_ENABLE_CARE_REMINDERS) {
+                    NotificationEnablementRequest(
+                        category = NotificationCategory.CARE_REMINDERS,
+                        requiresPreciseReminders = true
+                    )
+                } else {
+                    null
+                }
+            }
+        ),
+        callbacks = NotificationEnablementCallbacks(
+            onReady = { actionToken ->
+                if (actionToken == ACTION_ENABLE_CARE_REMINDERS) {
+                    enableCareRemindersAfterAccess()
+                }
+            },
+            onStateChanged = { actionToken, state ->
+                if (actionToken == ACTION_ENABLE_CARE_REMINDERS) {
+                    careReminderNotificationState = state
+                    renderCareReminderNotificationState()
+                }
+            },
+            onFailure = { actionToken, _ ->
+                if (actionToken == ACTION_ENABLE_CARE_REMINDERS) {
+                    handleCareReminderAccessFailure()
+                }
+            }
+        )
+    )
+
     private var tankId: Long = 0L
     private var currentTank: AquariumTankSnapshot? = null
+    private var careReminderNotificationState: NotificationEnablementState? = null
 
     private var isDeletingTank: Boolean = false
     private var isDuplicatingTank: Boolean = false
@@ -61,6 +115,10 @@ class TankSettingsOthersFragment : Fragment(R.layout.fragment_tank_settings_othe
         observeTank()
     }
 
+    override fun onResume() {
+        super.onResume()
+        refreshCareReminderNotificationState()
+    }
 
     private fun setupFeedbackResultListener() {
         childFragmentManager.setFragmentResultListener(
@@ -97,16 +155,31 @@ class TankSettingsOthersFragment : Fragment(R.layout.fragment_tank_settings_othe
         }
 
         binding.rowCareReminderNotifications.setOnClickListener {
-            binding.switchCareReminderNotifications.isChecked =
-                !binding.switchCareReminderNotifications.isChecked
+            if (
+                currentTank?.careRemindersEnabled == true &&
+                careReminderNotificationState?.canDeliver == false
+            ) {
+                notificationEnablementCoordinator.requestEnable(
+                    ACTION_ENABLE_CARE_REMINDERS
+                )
+            } else {
+                binding.switchCareReminderNotifications.isChecked =
+                    !binding.switchCareReminderNotifications.isChecked
+            }
         }
 
         binding.switchCareReminderNotifications.setOnCheckedChangeListener {
                 _, isChecked ->
             if (!isUpdatingSwitchesProgrammatically) {
-                updateCareRemindersEnabled(
-                    enabled = isChecked
-                )
+                if (isChecked) {
+                    setCareReminderSwitchChecked(false)
+                    notificationEnablementCoordinator.requestEnable(
+                        ACTION_ENABLE_CARE_REMINDERS
+                    )
+                } else {
+                    notificationEnablementCoordinator.cancelPending()
+                    updateCareRemindersEnabled(enabled = false)
+                }
             }
         }
 
@@ -167,6 +240,56 @@ class TankSettingsOthersFragment : Fragment(R.layout.fragment_tank_settings_othe
             tank.careRemindersEnabled
 
         isUpdatingSwitchesProgrammatically = false
+        renderCareReminderNotificationState()
+    }
+
+    private fun refreshCareReminderNotificationState() {
+        notificationEnablementCoordinator.refresh(ACTION_ENABLE_CARE_REMINDERS)
+    }
+
+    private fun enableCareRemindersAfterAccess() {
+        if (_binding == null) return
+        if (currentTank?.careRemindersEnabled == true) {
+            renderCareReminderNotificationState()
+            return
+        }
+        setCareReminderSwitchChecked(true)
+        updateCareRemindersEnabled(enabled = true)
+    }
+
+    private fun renderCareReminderNotificationState() {
+        val currentBinding = _binding ?: return
+        val featureEnabled = currentTank?.careRemindersEnabled == true
+        val notificationState = careReminderNotificationState
+        currentBinding.tvCareReminderNotificationsSubtitle.setText(
+            when {
+                !featureEnabled || notificationState == null ||
+                    notificationState.canDeliver -> {
+                    R.string.aquarium_text_send_reminder_notifications_for_this_tank_s_care_tasks
+                }
+                notificationState.step != NotificationEnablementStep.READY -> {
+                    R.string.notification_feature_enabled_android_blocked_tap_to_fix
+                }
+                else -> R.string.notification_feature_owner_preference_disabled_tap_to_enable
+            }
+        )
+    }
+
+    private fun handleCareReminderAccessFailure() {
+        if (_binding == null) return
+        setCareReminderSwitchChecked(currentTank?.careRemindersEnabled == true)
+        renderCareReminderNotificationState()
+        showSnackBar(
+            message = getString(R.string.notification_feature_access_check_failed),
+            type = BaseActivity.SnackType.ERROR
+        )
+    }
+
+    private fun setCareReminderSwitchChecked(checked: Boolean) {
+        val currentBinding = _binding ?: return
+        isUpdatingSwitchesProgrammatically = true
+        currentBinding.switchCareReminderNotifications.isChecked = checked
+        isUpdatingSwitchesProgrammatically = false
     }
 
     private fun updateSmartCareEnabled(
@@ -205,9 +328,7 @@ class TankSettingsOthersFragment : Fragment(R.layout.fragment_tank_settings_othe
             } catch (exception: Exception) {
                 exception.printStackTrace()
 
-                isUpdatingSwitchesProgrammatically = true
-                binding.switchCareReminderNotifications.isChecked = !enabled
-                isUpdatingSwitchesProgrammatically = false
+                setCareReminderSwitchChecked(!enabled)
 
                 showSnackBar(
                     message = getString(R.string.aquarium_error_care_reminder_save_failed),
@@ -440,6 +561,7 @@ class TankSettingsOthersFragment : Fragment(R.layout.fragment_tank_settings_othe
         private const val ACTION_DUPLICATE = "duplicate"
         private const val ACTION_DELETE = "delete"
         private const val ACTION_MISSING = "missing"
+        private const val ACTION_ENABLE_CARE_REMINDERS = "enable-tank-care-reminders"
 
         fun newInstance(
             tankId: Long

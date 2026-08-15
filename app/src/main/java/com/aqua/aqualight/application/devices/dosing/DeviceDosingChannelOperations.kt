@@ -279,7 +279,7 @@ data class DeviceDosingReservoirSnapshot(
     val remainingMicroliters: Long = 0L,
     val accountingCertain: Boolean = true,
     val lowLevelActive: Boolean = false,
-    val lowLevelAlertEnabled: Boolean = true
+    val lowLevelAlertEnabled: Boolean = false
 ) {
     init {
         require(capacityMicroliters >= 0L)

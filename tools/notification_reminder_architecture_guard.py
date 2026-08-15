@@ -46,8 +46,11 @@ PERMISSION_POLICY = "app/src/main/java/com/aqua/aqualight/platform/permissions/P
 PRECISE_POLICY = "app/src/main/java/com/aqua/aqualight/platform/permissions/PreciseReminderAccessPolicy.kt"
 PERMISSION_COORDINATOR = "app/src/main/java/com/aqua/aqualight/ui/common/permission/CapabilityPermissionCoordinator.kt"
 PERMISSION_UI = "app/src/main/java/com/aqua/aqualight/ui/common/permission/CapabilityPermissionUiSpecResolver.kt"
+NOTIFICATION_ENABLEMENT = "app/src/main/java/com/aqua/aqualight/ui/common/notification/NotificationEnablementCoordinator.kt"
 APP_SETTINGS = "app/src/main/java/com/aqua/aqualight/ui/tabs/settings/app/AppSettingsFragment.kt"
 ADD_CARE = "app/src/main/java/com/aqua/aqualight/ui/tabs/maintenance/AddCareTaskFragment.kt"
+TANK_SETTINGS = "app/src/main/java/com/aqua/aqualight/ui/tabs/aquarium/detail/settings/TankSettingsOthersFragment.kt"
+DOSING_RESERVOIR = "app/src/main/java/com/aqua/aqualight/ui/tabs/devices/detail/dosing/channel/reservoir/DeviceDosingReservoirFragment.kt"
 CARE_STORE = "app/src/main/java/com/aqua/aqualight/data/care/CareTaskDataStoreManager.kt"
 MAINTENANCE_OPS = "app/src/main/java/com/aqua/aqualight/data/care/DefaultMaintenanceOperations.kt"
 TANK_OPS = "app/src/main/java/com/aqua/aqualight/data/aquarium/DefaultAquariumTankOperations.kt"
@@ -80,8 +83,11 @@ required_files = (
     PRECISE_POLICY,
     PERMISSION_COORDINATOR,
     PERMISSION_UI,
+    NOTIFICATION_ENABLEMENT,
     APP_SETTINGS,
     ADD_CARE,
+    TANK_SETTINGS,
+    DOSING_RESERVOIR,
     CARE_STORE,
     MAINTENANCE_OPS,
     TANK_OPS,
@@ -105,6 +111,7 @@ required_files = (
     "app/src/test/java/com/aqua/aqualight/data/care/reminder/CareReminderSchedulePolicyTest.kt",
     "app/src/test/java/com/aqua/aqualight/data/care/reminder/CareTaskReminderSchedulerTest.kt",
     "app/src/test/java/com/aqua/aqualight/platform/permissions/PreciseReminderAccessPolicyTest.kt",
+    "app/src/test/java/com/aqua/aqualight/ui/common/notification/NotificationEnablementDecisionResolverTest.kt",
     "app/src/androidTest/java/com/aqua/aqualight/data/notifications/OwnerNotificationPreferencesInstrumentedTest.kt",
     "app/src/androidTest/java/com/aqua/aqualight/data/notifications/NotificationChannelRegistryInstrumentedTest.kt",
     "app/src/androidTest/java/com/aqua/aqualight/data/notifications/OwnerNotificationCancellationInstrumentedTest.kt",
@@ -174,6 +181,23 @@ require(PERMISSION_COORDINATOR, "ACTION_REQUEST_SCHEDULE_EXACT_ALARM", "special 
 require(PERMISSION_UI, "AppCapability.PRECISE_REMINDERS", "precise timing must use the common professional permission sheet")
 require(ADD_CARE, "AppCapability.PRECISE_REMINDERS", "care-task save must require precise timing access")
 require(APP_SETTINGS, "AppCapability.PRECISE_REMINDERS", "App Settings must surface precise timing access")
+
+for token, reason in (
+    ("NotificationPreferenceUseCase", "feature enablement must use the Stage 7 application boundary"),
+    ("CapabilityPermissionCoordinator", "feature enablement must use the Stage 6 UI boundary"),
+    ("NotificationEnablementDecisionResolver", "readiness ordering must stay deterministic and testable"),
+    ("evaluation.notificationPreferences.setEnabled", "ready feature opt-in must reconcile the existing owner preference"),
+):
+    require(NOTIFICATION_ENABLEMENT, token, reason)
+for token in ("DataStore", "SharedPreferences", "NotificationDispatchUseCase", "NotificationManager"):
+    forbid(NOTIFICATION_ENABLEMENT, token, "feature enablement must not create a second preference or delivery path")
+
+for screen, category in (
+    (TANK_SETTINGS, "NotificationCategory.CARE_REMINDERS"),
+    (DOSING_RESERVOIR, "NotificationCategory.DEVICE_ALERTS"),
+):
+    require(screen, "NotificationEnablementCoordinator", "feature switch must use shared notification enablement")
+    require(screen, category, "feature switch must resolve its stable central category")
 
 require(REPOSITORY, "NotificationPreferenceRepository", "owner store must implement the application repository")
 require(REPOSITORY, "notification_preferences.pb", "owner preference must have a dedicated Proto DataStore")

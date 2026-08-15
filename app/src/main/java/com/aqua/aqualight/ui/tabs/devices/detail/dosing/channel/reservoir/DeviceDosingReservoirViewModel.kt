@@ -9,13 +9,24 @@ import kotlinx.coroutines.flow.asStateFlow
 data class DeviceDosingReservoirDraft(
     val reservoirCapacityMl: Double = DeviceDosingReservoirDraftPolicy.DEFAULT_CAPACITY_ML,
     val trackingEnabled: Boolean = false,
-    val lowLevelAlertEnabled: Boolean = true
+    val lowLevelAlertEnabled: Boolean = false
 )
+
+internal enum class DeviceDosingReservoirNotificationAvailability {
+    AVAILABLE,
+    OWNER_PREFERENCE_DISABLED,
+    ANDROID_BLOCKED
+}
 
 /** Single presentation-state owner for the firmware-independent reservoir draft. */
 internal class DeviceDosingReservoirViewModel : ViewModel() {
     private val mutableDraft = MutableStateFlow(DeviceDosingReservoirDraft())
     val draft: StateFlow<DeviceDosingReservoirDraft> = mutableDraft.asStateFlow()
+    private val mutableNotificationAvailability = MutableStateFlow(
+        DeviceDosingReservoirNotificationAvailability.AVAILABLE
+    )
+    val notificationAvailability: StateFlow<DeviceDosingReservoirNotificationAvailability> =
+        mutableNotificationAvailability.asStateFlow()
     private var initialized = false
 
     fun bindInitial(initial: DeviceDosingReservoirDraft?) {
@@ -32,6 +43,16 @@ internal class DeviceDosingReservoirViewModel : ViewModel() {
 
     fun setLowLevelAlertEnabled(enabled: Boolean) {
         mutableDraft.value = mutableDraft.value.copy(lowLevelAlertEnabled = enabled)
+        if (!enabled) {
+            mutableNotificationAvailability.value =
+                DeviceDosingReservoirNotificationAvailability.AVAILABLE
+        }
+    }
+
+    fun setNotificationAvailability(
+        availability: DeviceDosingReservoirNotificationAvailability
+    ) {
+        mutableNotificationAvailability.value = availability
     }
 
     fun setCapacityMl(capacityMl: Double) {
