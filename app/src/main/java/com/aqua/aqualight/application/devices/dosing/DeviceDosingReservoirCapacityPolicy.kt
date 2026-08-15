@@ -14,26 +14,15 @@ object DeviceDosingReservoirCapacityPolicy {
         rawValue: String,
         locale: Locale
     ): DeviceDosingReservoirCapacityValidation {
-        if (rawValue.isBlank()) {
-            return rejected(DeviceDosingReservoirCapacityRejection.REQUIRED)
+        val canonical = rawValue
+            .takeUnless(String::isBlank)
+            ?.let { value -> canonicalDecimalOrNull(value, locale) }
+        return when {
+            rawValue.isBlank() -> rejected(DeviceDosingReservoirCapacityRejection.REQUIRED)
+            canonical == null ->
+                rejected(DeviceDosingReservoirCapacityRejection.INVALID_NUMBER)
+            else -> validateCanonicalDecimal(canonical)
         }
-        val canonical = canonicalDecimalOrNull(rawValue, locale)
-            ?: return rejected(DeviceDosingReservoirCapacityRejection.INVALID_NUMBER)
-        val amount = canonical.toBigDecimalOrNull()
-            ?: return rejected(DeviceDosingReservoirCapacityRejection.INVALID_NUMBER)
-        if (amount.signum() <= 0) {
-            return rejected(DeviceDosingReservoirCapacityRejection.POSITIVE_REQUIRED)
-        }
-        if (amount > MAX_CAPACITY_MILLILITERS) {
-            return rejected(DeviceDosingReservoirCapacityRejection.OUT_OF_RANGE)
-        }
-        if (amount.stripTrailingZeros().scale() > MILLILITER_SCALE) {
-            return rejected(DeviceDosingReservoirCapacityRejection.UNSUPPORTED_PRECISION)
-        }
-        val microliters = runCatching {
-            amount.movePointRight(MILLILITER_SCALE).longValueExact()
-        }.getOrNull() ?: return rejected(DeviceDosingReservoirCapacityRejection.OUT_OF_RANGE)
-        return DeviceDosingReservoirCapacityValidation.Accepted(microliters)
     }
 
     fun format(capacityMicroliters: Long, locale: Locale): String {
@@ -55,6 +44,25 @@ object DeviceDosingReservoirCapacityPolicy {
     internal fun isSupportedMicroliters(capacityMicroliters: Long): Boolean =
         capacityMicroliters in 1L..MAX_CAPACITY_MICROLITERS
 
+    private fun validateCanonicalDecimal(
+        canonical: String
+    ): DeviceDosingReservoirCapacityValidation {
+        val amount = canonical.toBigDecimalOrNull()
+            ?: return rejected(DeviceDosingReservoirCapacityRejection.INVALID_NUMBER)
+        val rejection = when {
+            amount.signum() <= 0 -> DeviceDosingReservoirCapacityRejection.POSITIVE_REQUIRED
+            amount > MAX_CAPACITY_MILLILITERS ->
+                DeviceDosingReservoirCapacityRejection.OUT_OF_RANGE
+            amount.stripTrailingZeros().scale() > MILLILITER_SCALE ->
+                DeviceDosingReservoirCapacityRejection.UNSUPPORTED_PRECISION
+            else -> null
+        }
+        return rejection?.let(::rejected)
+            ?: DeviceDosingReservoirCapacityValidation.Accepted(
+                amount.movePointRight(MILLILITER_SCALE).longValueExact()
+            )
+    }
+
     private fun canonicalDecimalOrNull(rawValue: String, locale: Locale): String? {
         val value = rawValue.trim()
         val symbols = DecimalFormatSymbols.getInstance(locale)
@@ -63,7 +71,9 @@ object DeviceDosingReservoirCapacityPolicy {
         var hasDigit = false
         var hasDecimalSeparator = false
 
-        value.forEachIndexed { index, character ->
+        var invalidCharacter = false
+        for (index in value.indices) {
+            val character = value[index]
             val digit = Character.digit(character, DECIMAL_RADIX)
             when {
                 digit >= 0 -> {
@@ -77,12 +87,14 @@ object DeviceDosingReservoirCapacityPolicy {
                 index == 0 && character == '+' -> output.append(character)
                 index == 0 && (character == '-' || character == symbols.minusSign) ->
                     output.append('-')
-                else -> return null
+                else -> invalidCharacter = true
             }
+            if (invalidCharacter) break
         }
-        if (!hasDigit) return null
         if (output.lastOrNull() == '.') output.append('0')
-        return output.toString()
+        return output
+            .takeIf { !invalidCharacter && hasDigit }
+            ?.toString()
     }
 
     private fun rejected(
