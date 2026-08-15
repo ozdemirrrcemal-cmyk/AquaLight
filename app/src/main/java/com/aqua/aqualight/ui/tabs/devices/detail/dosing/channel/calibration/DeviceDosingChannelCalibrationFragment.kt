@@ -42,7 +42,6 @@ class DeviceDosingChannelCalibrationFragment :
                 slotId = args.slotId,
                 pumpCount = args.pumpCount,
                 channelNumber = args.channelNumber,
-                channelTitle = args.channelTitle,
                 recalibration = args.recalibration
             )
         )

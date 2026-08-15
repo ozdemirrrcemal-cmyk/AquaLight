@@ -100,15 +100,11 @@ object AppRouteNavigator {
     ): AppRouteOpenResult {
         val deviceUid = target.deviceUid.trim()
         val slotId = target.slotId.trim()
-        val channelTitle = target.channelTitle.trim()
         val pumpCount = target.pumpCount
         val channelNumber = target.channelNumber
         val lastCalibratedAtEpochSeconds = target.lastCalibratedAtEpochSeconds
         val destinationId = target.destination.destinationId
-        val hasRouteIdentity =
-            deviceUid.isNotBlank() &&
-                slotId.isNotBlank() &&
-                channelTitle.isNotBlank()
+        val hasRouteIdentity = deviceUid.isNotBlank() && slotId.isNotBlank()
         val hasValidChannel =
             pumpCount > 0 &&
                 channelNumber in 1..pumpCount
@@ -143,8 +139,7 @@ object AppRouteNavigator {
                         uri = dosingChannelRouteUri(
                             target = target,
                             deviceUid = deviceUid,
-                            slotId = slotId,
-                            channelTitle = channelTitle
+                            slotId = slotId
                         )
                     ),
                     dosingChannelRouteOptions()
@@ -157,8 +152,7 @@ object AppRouteNavigator {
     private fun dosingChannelRouteUri(
         target: DeviceDosingChannelNavigationTarget,
         deviceUid: String,
-        slotId: String,
-        channelTitle: String
+        slotId: String
     ): Uri = Uri.Builder()
         .scheme(SCHEME)
         .authority(AUTHORITY)
@@ -168,7 +162,6 @@ object AppRouteNavigator {
         .appendPath(PATH_CHANNEL)
         .appendPath(slotId)
         .appendPath(target.destination.path)
-        .appendQueryParameter(QUERY_CHANNEL_TITLE, channelTitle)
         .appendQueryParameter(QUERY_PUMP_COUNT, target.pumpCount.toString())
         .appendQueryParameter(QUERY_CHANNEL_NUMBER, target.channelNumber.toString())
         .apply {
@@ -231,7 +224,6 @@ object AppRouteNavigator {
     private const val PATH_CALIBRATION = "calibration"
     private const val PATH_DETAIL = "detail"
     private const val QUERY_START_TAB = "startTab"
-    private const val QUERY_CHANNEL_TITLE = "channelTitle"
     private const val QUERY_PUMP_COUNT = "pumpCount"
     private const val QUERY_CHANNEL_NUMBER = "channelNumber"
     private const val QUERY_LAST_CALIBRATED_AT_EPOCH_SECONDS =

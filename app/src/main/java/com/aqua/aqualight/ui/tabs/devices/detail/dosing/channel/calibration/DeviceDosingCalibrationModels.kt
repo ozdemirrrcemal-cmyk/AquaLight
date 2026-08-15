@@ -30,8 +30,7 @@ data class DosingCalibrationProgressState(
 
 data class DosingCalibrationChannelState(
     val pumpCount: Int = 0,
-    val channelNumber: Int = 0,
-    val channelTitle: String = ""
+    val channelNumber: Int = 0
 )
 
 data class DosingCalibrationInputState(
@@ -53,7 +52,6 @@ data class DeviceDosingCalibrationUiState(
     val candidateDoseMsPerMl: Long? get() = progress.candidateDoseMsPerMl
     val pumpCount: Int get() = channel.pumpCount
     val channelNumber: Int get() = channel.channelNumber
-    val channelTitle: String get() = channel.channelTitle
     val displayName: String get() = input.displayName
     val measuredMl: String get() = input.measuredMl
 }

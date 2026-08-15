@@ -24,6 +24,10 @@ internal class FakeDosingCalibrationOperations(
     var primeStartResult: DeviceDosingCalibrationResult? = null
     var confirmResult: DeviceDosingCalibrationResult = calibrationSuccess(initial)
 
+    fun publish(snapshot: DeviceDosingCalibrationSnapshot) {
+        state.value = snapshot
+    }
+
     override fun observe(
         deviceUid: String,
         slotId: String
@@ -38,7 +42,10 @@ internal class FakeDosingCalibrationOperations(
         displayName: String
     ): DeviceDosingCalibrationResult {
         savedName = displayName.trim()
-        return calibrationSuccess(current.copy(channelTitle = savedName))
+        return current.copy(channelTitle = savedName).let { saved ->
+            state.value = saved
+            calibrationSuccess(saved)
+        }
     }
 
     override suspend fun primeStart(deviceUid: String, slotId: String) =
@@ -75,7 +82,6 @@ internal fun calibrationRoute(recalibration: Boolean = false) = DeviceDosingCali
     slotId = "channel-1",
     pumpCount = 2,
     channelNumber = 1,
-    channelTitle = "Channel 1",
     recalibration = recalibration
 )
 

@@ -111,6 +111,26 @@ class DeviceDosingV1ContractTest {
     }
 
     @Test
+    fun `firmware publishes either its default or persisted user name as effective name`() {
+        val defaultName = DeviceDosingV1StatusParser.parseChannel(
+            DeviceDosingV1TestFixtures.channelStatus(
+                DeviceDosingV1TestFixtures.channelDetail()
+                    .put("displayName", JSONObject.NULL)
+                    .put("effectiveName", "Channel 1")
+            )
+        ).channel
+        val userName = DeviceDosingV1StatusParser.parseChannel(
+            DeviceDosingV1TestFixtures.channelStatus()
+        ).channel
+
+        assertEquals("Channel 1", defaultName.defaultName)
+        assertNull(defaultName.displayName)
+        assertEquals("Channel 1", defaultName.effectiveName)
+        assertEquals("Macro", userName.displayName)
+        assertEquals("Macro", userName.effectiveName)
+    }
+
+    @Test
     fun `progress values remain firmware authoritative`() {
         val progress = DeviceDosingV1StatusParser.parseProgress(
             DeviceDosingV1TestFixtures.progressStatus()

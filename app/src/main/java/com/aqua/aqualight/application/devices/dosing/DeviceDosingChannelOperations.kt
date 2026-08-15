@@ -352,6 +352,7 @@ data class DeviceDosingChannelSnapshot(
     val slotId: String,
     val pumpCount: Int,
     val channelNumber: Int,
+    /** Firmware-authoritative effective name: default name or the persisted user name. */
     val channelTitle: String,
     val revision: Long,
     val runtimeEnabled: Boolean,

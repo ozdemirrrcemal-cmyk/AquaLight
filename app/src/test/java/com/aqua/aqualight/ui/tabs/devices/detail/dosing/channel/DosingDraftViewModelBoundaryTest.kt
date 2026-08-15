@@ -141,6 +141,13 @@ class DosingDraftViewModelBoundaryTest {
             lastCalibratedAtEpochSeconds = 100L,
             restoredMissedDoseRecoveryEnabled = false
         )
+        assertEquals("Channel 2", valid.currentDraft().channelTitle)
+
+        validOperations.snapshot.value = requireNotNull(validOperations.snapshot.value).copy(
+            channelTitle = "Trace Elements"
+        )
+        assertEquals("Trace Elements", valid.currentDraft().channelTitle)
+
         valid.setMissedDoseRecoveryEnabled(true)
         assertTrue(valid.currentDraft().routeValid)
         assertTrue(valid.currentDraft().missedDoseRecoveryEnabled)

@@ -22,6 +22,7 @@ internal fun reduceDosingCalibrationSnapshot(
 ): DosingCalibrationSnapshotPresentation {
     val remainingMs = snapshot.remainingOperationMs()
     val recoveryStep = snapshot.recoveryStep(current.step, hasLocalProgress)
+    // The calibration name is an explicit required user input; firmware state never prefills it.
     val state = current
         .updateProgress { progress ->
             progress.copy(
@@ -36,11 +37,9 @@ internal fun reduceDosingCalibrationSnapshot(
         .updateChannel { channel ->
             channel.copy(
                 pumpCount = snapshot.pumpCount,
-                channelNumber = snapshot.channelNumber,
-                channelTitle = snapshot.channelTitle
+                channelNumber = snapshot.channelNumber
             )
         }
-        .updateInput { input -> input.copy(displayName = snapshot.channelTitle) }
         .copy(error = null)
     return DosingCalibrationSnapshotPresentation(
         state = state,
@@ -64,7 +63,6 @@ internal fun DeviceDosingCalibrationSnapshot.toDetailTarget() =
         slotId = slotId,
         pumpCount = pumpCount,
         channelNumber = channelNumber,
-        channelTitle = channelTitle,
         lastCalibratedAtEpochSeconds = lastCalibratedAt,
         destination = DeviceDosingChannelDestination.DETAIL
     )

@@ -136,7 +136,6 @@ class DeviceDosingPlanFragment :
                 .actionDeviceDosingPlanFragmentToDeviceDosingSingleScheduleFragment(
                     deviceUid = args.deviceUid,
                     slotId = args.slotId,
-                    channelTitle = args.channelTitle,
                     pumpCount = args.pumpCount,
                     channelNumber = args.channelNumber,
                     dailyDoseMicroliters = draft.distributedDailyDoseMicroliters,
@@ -146,7 +145,6 @@ class DeviceDosingPlanFragment :
                 .actionDeviceDosingPlanFragmentToDeviceDosingHourlyScheduleFragment(
                     deviceUid = args.deviceUid,
                     slotId = args.slotId,
-                    channelTitle = args.channelTitle,
                     pumpCount = args.pumpCount,
                     channelNumber = args.channelNumber,
                     dailyDoseMicroliters = draft.distributedDailyDoseMicroliters,
@@ -156,7 +154,6 @@ class DeviceDosingPlanFragment :
                 .actionDeviceDosingPlanFragmentToDeviceDosingCustomScheduleFragment(
                     deviceUid = args.deviceUid,
                     slotId = args.slotId,
-                    channelTitle = args.channelTitle,
                     pumpCount = args.pumpCount,
                     channelNumber = args.channelNumber,
                     dailyDoseMicroliters = draft.distributedDailyDoseMicroliters,
@@ -174,7 +171,6 @@ class DeviceDosingPlanFragment :
                 .actionDeviceDosingPlanFragmentToDeviceDosingTimerScheduleFragment(
                     deviceUid = args.deviceUid,
                     slotId = args.slotId,
-                    channelTitle = args.channelTitle,
                     pumpCount = args.pumpCount,
                     channelNumber = args.channelNumber,
                     dosesDraft = DeviceDosingTimerScheduleContract.encodeDraft(
