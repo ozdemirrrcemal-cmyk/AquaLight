@@ -1,4 +1,4 @@
-package com.aqua.aqualight.ui.tabs.devices.detail.dosing
+package com.aqua.aqualight.ui.tabs.devices.detail.dosing.root
 
 import androidx.annotation.StringRes
 import androidx.lifecycle.ViewModel
@@ -19,6 +19,7 @@ import com.aqua.aqualight.ui.tabs.devices.detail.dosing.presentation.card.Dosing
 import com.aqua.aqualight.ui.tabs.devices.detail.dosing.presentation.card.toInitialDosingChannelCardUiState
 import com.aqua.aqualight.ui.tabs.devices.detail.dosing.presentation.card.toPumpVisualState
 import com.aqua.aqualight.ui.tabs.devices.detail.dosing.presentation.card.withChannelSnapshot
+import com.aqua.aqualight.ui.tabs.devices.detail.dosing.presentation.pump.DosingPumpVisualState
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.Flow

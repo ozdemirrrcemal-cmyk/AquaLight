@@ -32,7 +32,7 @@ import com.aqua.aqualight.ui.common.devicemenu.AquaDeviceMenuValueRow
 import com.aqua.aqualight.ui.common.devicemenu.aquaDeviceMenuColors
 import com.aqua.aqualight.ui.common.devicemenu.aquaDeviceMenuTypography
 import com.aqua.aqualight.ui.common.flow.AquaGuidedFlowButton
-import com.aqua.aqualight.ui.tabs.devices.detail.dosing.DosingWeekday
+import com.aqua.aqualight.ui.tabs.devices.detail.dosing.presentation.model.DosingWeekday
 
 @Immutable
 internal data class DeviceDosingPlanUiState(

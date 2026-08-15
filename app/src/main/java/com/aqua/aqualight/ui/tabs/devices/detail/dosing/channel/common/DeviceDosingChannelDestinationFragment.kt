@@ -11,8 +11,8 @@ import com.aqua.aqualight.R
 import com.aqua.aqualight.databinding.LayoutAquaHeaderBinding
 import com.aqua.aqualight.ui.common.header.AquaHeaderConfig
 import com.aqua.aqualight.ui.common.header.setupAquaHeader
-import com.aqua.aqualight.ui.tabs.devices.detail.dosing.DosingSelectedPumpSection
-import com.aqua.aqualight.ui.tabs.devices.detail.dosing.exactDosingPumpCountOrNull
+import com.aqua.aqualight.ui.tabs.devices.detail.dosing.presentation.pump.DosingSelectedPumpSection
+import com.aqua.aqualight.ui.tabs.devices.detail.dosing.presentation.pump.exactDosingPumpCountOrNull
 
 /** Shared header and selected-pump shell for centrally resolved Dosing channel destinations. */
 abstract class DeviceDosingChannelDestinationFragment(

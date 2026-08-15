@@ -1,4 +1,4 @@
-package com.aqua.aqualight.ui.tabs.devices.detail.dosing
+package com.aqua.aqualight.ui.tabs.devices.detail.dosing.root
 
 import com.aqua.aqualight.application.devices.dosing.DeviceDosingChannelDestination
 import com.aqua.aqualight.application.devices.dosing.DeviceDosingChannelNavigationOperations

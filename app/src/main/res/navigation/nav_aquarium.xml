@@ -311,7 +311,7 @@
 
     <fragment
         android:id="@+id/deviceDosingRootFragment"
-        android:name="com.aqua.aqualight.ui.tabs.devices.detail.dosing.DeviceDosingRootFragment"
+        android:name="com.aqua.aqualight.ui.tabs.devices.detail.dosing.root.DeviceDosingRootFragment"
         android:label="@string/device_family_dosing"
         tools:layout="@layout/fragment_device_dosing_root">
         <argument

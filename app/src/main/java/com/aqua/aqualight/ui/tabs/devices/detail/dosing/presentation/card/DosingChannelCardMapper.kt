@@ -3,7 +3,7 @@ package com.aqua.aqualight.ui.tabs.devices.detail.dosing.presentation.card
 import com.aqua.aqualight.application.devices.DeviceDosingChannelSlot
 import com.aqua.aqualight.application.devices.dosing.DeviceDosingChannelSnapshot
 import com.aqua.aqualight.application.devices.dosing.DeviceDosingRuntimeReason
-import com.aqua.aqualight.ui.tabs.devices.detail.dosing.DosingPumpVisualState
+import com.aqua.aqualight.ui.tabs.devices.detail.dosing.presentation.pump.DosingPumpVisualState
 import java.time.LocalDate
 
 /** Catalog bootstrap shown only until the central firmware snapshot is available. */

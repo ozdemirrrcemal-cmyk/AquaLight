@@ -9,7 +9,7 @@ import com.aqua.aqualight.application.devices.dosing.DeviceDosingProgram
 import com.aqua.aqualight.application.devices.dosing.DeviceDosingProgramMode
 import com.aqua.aqualight.application.devices.dosing.DeviceDosingProgramSchedule
 import com.aqua.aqualight.application.devices.dosing.DeviceDosingSchedulingPolicy
-import com.aqua.aqualight.ui.tabs.devices.detail.dosing.DosingWeekday
+import com.aqua.aqualight.ui.tabs.devices.detail.dosing.presentation.model.DosingWeekday
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.Flow

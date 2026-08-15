@@ -1,6 +1,6 @@
 package com.aqua.aqualight.ui.tabs.devices.detail.dosing.channel.plan
 
-import com.aqua.aqualight.ui.tabs.devices.detail.dosing.DosingWeekday
+import com.aqua.aqualight.ui.tabs.devices.detail.dosing.presentation.model.DosingWeekday
 import org.junit.Assert.assertArrayEquals
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse

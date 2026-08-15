@@ -1,4 +1,4 @@
-package com.aqua.aqualight.ui.tabs.devices.detail.dosing
+package com.aqua.aqualight.ui.tabs.devices.detail.dosing.root
 
 import android.os.Bundle
 import android.view.View

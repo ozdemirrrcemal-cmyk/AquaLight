@@ -3,7 +3,7 @@ package com.aqua.aqualight.ui.tabs.devices.detail.dosing.presentation.card
 import androidx.annotation.StringRes
 import androidx.compose.runtime.Immutable
 import com.aqua.aqualight.R
-import com.aqua.aqualight.ui.tabs.devices.detail.dosing.DosingWeekday
+import com.aqua.aqualight.ui.tabs.devices.detail.dosing.presentation.model.DosingWeekday
 
 @Immutable
 data class DosingChannelCardUiState(

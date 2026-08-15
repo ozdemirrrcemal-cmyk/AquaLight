@@ -1,7 +1,7 @@
 package com.aqua.aqualight.ui.tabs.devices.detail.dosing.channel.plan
 
 import androidx.compose.runtime.Immutable
-import com.aqua.aqualight.ui.tabs.devices.detail.dosing.DosingWeekday
+import com.aqua.aqualight.ui.tabs.devices.detail.dosing.presentation.model.DosingWeekday
 
 /** Process-safe recurrence draft shaped like the firmware's seven weekday flags. */
 @Immutable

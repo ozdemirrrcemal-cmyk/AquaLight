@@ -11,7 +11,7 @@ class DosingChannelCardArchitectureTest {
 
     @Test
     fun `channel cards are materialized only from validated central catalog slots`() {
-        val viewModel = source(DOSING_SOURCE_ROOT + "DeviceDosingRootViewModel.kt")
+        val viewModel = source(ROOT_SOURCE_ROOT + "DeviceDosingRootViewModel.kt")
 
         assertTrue(viewModel.contains("catalogState == DeviceRootCatalogState.VALID"))
         assertTrue(viewModel.contains("channelSlots.dosingChannels"))
@@ -22,7 +22,7 @@ class DosingChannelCardArchitectureTest {
 
     @Test
     fun `root card keeps central surface and stable slot identity`() {
-        val rootScreen = source(DOSING_SOURCE_ROOT + "DosingCatalogScreen.kt")
+        val rootScreen = source(ROOT_SOURCE_ROOT + "DosingCatalogScreen.kt")
         val card = source(CARD_SOURCE_ROOT + "DosingChannelCard.kt")
         val centralStyle = source(
             "app/src/main/java/com/aqua/aqualight/ui/common/devicecard/" +
@@ -173,7 +173,9 @@ class DosingChannelCardArchitectureTest {
     private companion object {
         const val DOSING_SOURCE_ROOT =
             "app/src/main/java/com/aqua/aqualight/ui/tabs/devices/detail/dosing/"
+        const val ROOT_SOURCE_ROOT = DOSING_SOURCE_ROOT + "root/"
         const val CARD_SOURCE_ROOT = DOSING_SOURCE_ROOT + "presentation/card/"
+        const val PUMP_SOURCE_ROOT = DOSING_SOURCE_ROOT + "presentation/pump/"
 
         val FORBIDDEN_RUNTIME_TYPES = listOf(
             "DeviceDosingChannelStatus",
@@ -183,9 +185,9 @@ class DosingChannelCardArchitectureTest {
             "AqlCommercialDeviceCatalog"
         )
         val SUPPRESSION_FREE_SOURCE_FILES = listOf(
-            DOSING_SOURCE_ROOT + "DeviceDosingRootFragment.kt",
-            DOSING_SOURCE_ROOT + "DeviceDosingRootViewModel.kt",
-            DOSING_SOURCE_ROOT + "DosingCatalogScreen.kt",
+            ROOT_SOURCE_ROOT + "DeviceDosingRootFragment.kt",
+            ROOT_SOURCE_ROOT + "DeviceDosingRootViewModel.kt",
+            ROOT_SOURCE_ROOT + "DosingCatalogScreen.kt",
             CARD_SOURCE_ROOT + "DosingChannelCard.kt",
             CARD_SOURCE_ROOT + "DosingChannelCardHeader.kt",
             CARD_SOURCE_ROOT + "DosingChannelCardMapper.kt",
@@ -198,9 +200,10 @@ class DosingChannelCardArchitectureTest {
             CARD_SOURCE_ROOT + "DosingDoseRail.kt",
             CARD_SOURCE_ROOT + "DosingReservoirProjection.kt",
             CARD_SOURCE_ROOT + "DosingReservoirSummary.kt",
-            DOSING_SOURCE_ROOT + "DosingPumpDeviceCompose.kt",
-            DOSING_SOURCE_ROOT + "DosingPumpIndicatorDrawing.kt",
-            DOSING_SOURCE_ROOT + "DosingPumpPalette.kt"
+            PUMP_SOURCE_ROOT + "DosingPumpDeviceCompose.kt",
+            PUMP_SOURCE_ROOT + "DosingPumpIndicatorDrawing.kt",
+            PUMP_SOURCE_ROOT + "DosingPumpPalette.kt",
+            PUMP_SOURCE_ROOT + "DosingPumpSection.kt"
         )
         val FORBIDDEN_SUPPRESSION_TOKENS = listOf(
             "@file:Suppress(",

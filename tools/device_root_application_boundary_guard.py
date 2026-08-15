@@ -27,7 +27,7 @@ ROOT_VIEW_MODELS = (
     SOURCE / "ui/tabs/devices/detail/light/DeviceLightRootViewModel.kt",
     SOURCE / "ui/tabs/devices/detail/cooling/DeviceCoolingRootViewModel.kt",
     SOURCE / "ui/tabs/devices/detail/timer/DeviceTimerRootViewModel.kt",
-    SOURCE / "ui/tabs/devices/detail/dosing/DeviceDosingRootViewModel.kt",
+    SOURCE / "ui/tabs/devices/detail/dosing/root/DeviceDosingRootViewModel.kt",
 )
 
 errors: list[str] = []

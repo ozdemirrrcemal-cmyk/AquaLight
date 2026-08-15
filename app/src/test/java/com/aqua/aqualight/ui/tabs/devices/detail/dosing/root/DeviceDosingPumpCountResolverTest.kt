@@ -1,5 +1,6 @@
-package com.aqua.aqualight.ui.tabs.devices.detail.dosing
+package com.aqua.aqualight.ui.tabs.devices.detail.dosing.root
 
+import com.aqua.aqualight.ui.tabs.devices.detail.dosing.presentation.pump.exactDosingPumpCountOrNull
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNull
 import org.junit.Test

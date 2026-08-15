@@ -11,7 +11,7 @@ class DosingUiLayerBoundaryTest {
 
     @Test
     fun `catalog structural validity stays outside dosing ui`() {
-        val screen = source(DOSING_SOURCE_ROOT + "DosingCatalogScreen.kt")
+        val screen = source(ROOT_SOURCE_ROOT + "DosingCatalogScreen.kt")
         val catalogSlots = source(APPLICATION_DEVICE_SLOTS)
 
         assertFalse(screen.contains("exactDosingChannelsOrEmpty"))
@@ -46,8 +46,8 @@ class DosingUiLayerBoundaryTest {
 
     @Test
     fun `channel navigation stays behind disconnected application and route boundaries`() {
-        val rootFragment = source(DOSING_SOURCE_ROOT + "DeviceDosingRootFragment.kt")
-        val rootViewModel = source(DOSING_SOURCE_ROOT + "DeviceDosingRootViewModel.kt")
+        val rootFragment = source(ROOT_SOURCE_ROOT + "DeviceDosingRootFragment.kt")
+        val rootViewModel = source(ROOT_SOURCE_ROOT + "DeviceDosingRootViewModel.kt")
         val cardMapper = source(CARD_SOURCE_ROOT + "DosingChannelCardMapper.kt")
         val navigationContract = source(
             "app/src/main/java/com/aqua/aqualight/application/devices/dosing/" +
@@ -236,6 +236,7 @@ class DosingUiLayerBoundaryTest {
     private companion object {
         const val DOSING_SOURCE_ROOT =
             "app/src/main/java/com/aqua/aqualight/ui/tabs/devices/detail/dosing/"
+        const val ROOT_SOURCE_ROOT = DOSING_SOURCE_ROOT + "root/"
         const val CARD_SOURCE_ROOT = DOSING_SOURCE_ROOT + "presentation/card/"
         const val APPLICATION_DEVICE_SLOTS =
             "app/src/main/java/com/aqua/aqualight/application/devices/DeviceChannelSlots.kt"

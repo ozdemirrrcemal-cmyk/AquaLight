@@ -21,10 +21,10 @@ import com.aqua.aqualight.R
 import com.aqua.aqualight.ui.common.flow.AquaGuidedFlowColors
 import com.aqua.aqualight.ui.common.flow.AquaGuidedFlowSurface
 import com.aqua.aqualight.ui.common.flow.aquaGuidedFlowTypography
-import com.aqua.aqualight.ui.tabs.devices.detail.dosing.DosingPumpHeadUiState
-import com.aqua.aqualight.ui.tabs.devices.detail.dosing.DosingPumpSection
-import com.aqua.aqualight.ui.tabs.devices.detail.dosing.DosingPumpVisualState
-import com.aqua.aqualight.ui.tabs.devices.detail.dosing.exactDosingPumpCountOrNull
+import com.aqua.aqualight.ui.tabs.devices.detail.dosing.presentation.pump.DosingPumpHeadUiState
+import com.aqua.aqualight.ui.tabs.devices.detail.dosing.presentation.pump.DosingPumpSection
+import com.aqua.aqualight.ui.tabs.devices.detail.dosing.presentation.pump.DosingPumpVisualState
+import com.aqua.aqualight.ui.tabs.devices.detail.dosing.presentation.pump.exactDosingPumpCountOrNull
 
 @Composable
 internal fun CalibrationPump(

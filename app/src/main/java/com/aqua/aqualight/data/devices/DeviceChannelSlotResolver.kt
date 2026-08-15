@@ -2,7 +2,6 @@ package com.aqua.aqualight.data.devices
 
 import com.aqua.aqualight.application.devices.DeviceChannelSlots
 import com.aqua.aqualight.application.devices.DeviceChannelWireKey
-import com.aqua.aqualight.application.devices.DeviceDosingChannelSlot
 import com.aqua.aqualight.application.devices.DeviceFanOutputSlot
 import com.aqua.aqualight.application.devices.DeviceLightChannelSlot
 import com.aqua.aqualight.application.devices.DeviceRootRoute
@@ -11,6 +10,7 @@ import com.aqua.aqualight.application.devices.DeviceTemperatureSensorSlot
 import com.aqua.aqualight.application.devices.DeviceTimerChannelSlot
 import com.aqua.aqualight.data.devices.catalog.AqlCommercialCatalogProduct
 import com.aqua.aqualight.data.devices.contract.AqlDeviceFeatureKey
+import com.aqua.aqualight.data.devices.dosing.DosingChannelSlotFactory
 import com.aqua.aqualight.data.devices.model.DeviceFamily
 import com.aqua.aqualight.data.devices.model.DeviceLimitSet
 
@@ -52,7 +52,7 @@ internal object DeviceChannelSlotResolver {
                 count = shape.limits.timerChannelCount,
                 displayNameEditable = timerNamesEditable
             ),
-            dosingChannels = sequentialDosingSlots(
+            dosingChannels = DosingChannelSlotFactory.createSequential(
                 count = shape.limits.dosingChannelCount,
                 displayNameEditable = dosingNamesEditable
             ),
@@ -81,19 +81,6 @@ internal object DeviceChannelSlotResolver {
     ): List<DeviceTimerChannelSlot> = List(count) { index ->
         val slotIndex = DeviceSlotIndex(index)
         DeviceTimerChannelSlot(
-            index = slotIndex,
-            wireKey = DeviceChannelWireKey("channel${slotIndex.position}"),
-            defaultDisplayName = "Channel ${slotIndex.position}",
-            displayNameEditable = displayNameEditable
-        )
-    }
-
-    private fun sequentialDosingSlots(
-        count: Int,
-        displayNameEditable: Boolean
-    ): List<DeviceDosingChannelSlot> = List(count) { index ->
-        val slotIndex = DeviceSlotIndex(index)
-        DeviceDosingChannelSlot(
             index = slotIndex,
             wireKey = DeviceChannelWireKey("channel${slotIndex.position}"),
             defaultDisplayName = "Channel ${slotIndex.position}",

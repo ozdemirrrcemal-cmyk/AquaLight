@@ -1,4 +1,4 @@
-package com.aqua.aqualight.ui.tabs.devices.detail.dosing
+package com.aqua.aqualight.ui.tabs.devices.detail.dosing.presentation.pump
 
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color

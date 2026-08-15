@@ -3,6 +3,7 @@ package com.aqua.aqualight.ui.tabs.devices.detail.dosing
 import com.aqua.aqualight.application.devices.DeviceChannelWireKey
 import com.aqua.aqualight.application.devices.DeviceDosingChannelSlot
 import com.aqua.aqualight.application.devices.DeviceSlotIndex
+import com.aqua.aqualight.ui.tabs.devices.detail.dosing.presentation.pump.DosingPumpVisualState
 import com.aqua.aqualight.application.devices.dosing.DeviceDosingActiveRun
 import com.aqua.aqualight.application.devices.dosing.DeviceDosingChannelControls
 import com.aqua.aqualight.application.devices.dosing.DeviceDosingChannelProgress
