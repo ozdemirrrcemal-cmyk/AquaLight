@@ -176,10 +176,12 @@ class DeviceDosingSupplyProjectionPolicyTest {
         DeviceDosingSupplyProjectionPolicy.evaluate(
             snapshot = channelSnapshot(
                 remainingMicroliters = remainingMicroliters,
-                dailyDoseMicroliters = dailyDoseMicroliters,
                 scheduledTodayMicroliters = scheduledTodayMicroliters,
-                weekdays = weekdays,
-                programEnabled = programEnabled
+                program = singleDoseProgram(
+                    dailyDoseMicroliters = dailyDoseMicroliters,
+                    weekdays = weekdays,
+                    enabled = programEnabled
+                )
             ),
             today = MONDAY
         )
@@ -187,12 +189,10 @@ class DeviceDosingSupplyProjectionPolicyTest {
 
     private fun channelSnapshot(
         remainingMicroliters: Long,
-        dailyDoseMicroliters: Long = 10_000L,
         scheduledTodayMicroliters: Long = 0L,
-        weekdays: List<Boolean> = List(7) { true },
+        program: DeviceDosingProgram = singleDoseProgram(),
         lowLevelActive: Boolean = false,
-        reservoirAccountingCertain: Boolean = true,
-        programEnabled: Boolean = true
+        reservoirAccountingCertain: Boolean = true
     ) = DeviceDosingChannelSnapshot(
         deviceUid = "device-1",
         slotId = "dosing:channel1",
@@ -206,15 +206,7 @@ class DeviceDosingSupplyProjectionPolicyTest {
         calibrated = true,
         lastCalibratedAtEpochSeconds = 1L,
         scheduling = DeviceDosingSchedulingPolicy(),
-        program = DeviceDosingProgram(
-            enabled = programEnabled,
-            weekdays = weekdays,
-            schedule = DeviceDosingProgramSchedule.Single(
-                dailyDoseMicroliters = dailyDoseMicroliters,
-                startTimeMillis = 0L
-            ),
-            missedDoseRecoveryEnabled = true
-        ),
+        program = program,
         progress = DeviceDosingChannelProgress(
             scheduledAmountMicroliters = scheduledTodayMicroliters,
             completedAmountMicroliters = 0L,
@@ -230,6 +222,20 @@ class DeviceDosingSupplyProjectionPolicyTest {
         activeRun = DeviceDosingActiveRun(),
         controls = DeviceDosingChannelControls(),
         usageToday = DeviceDosingDailyUsageSnapshot()
+    )
+
+    private fun singleDoseProgram(
+        dailyDoseMicroliters: Long = 10_000L,
+        weekdays: List<Boolean> = List(7) { true },
+        enabled: Boolean = true
+    ) = DeviceDosingProgram(
+        enabled = enabled,
+        weekdays = weekdays,
+        schedule = DeviceDosingProgramSchedule.Single(
+            dailyDoseMicroliters = dailyDoseMicroliters,
+            startTimeMillis = 0L
+        ),
+        missedDoseRecoveryEnabled = true
     )
 
     private companion object {

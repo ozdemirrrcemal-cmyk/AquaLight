@@ -41,23 +41,21 @@ object DeviceDosingSupplyProjectionPolicy {
             reservoir.accountingCertain,
             deliveryAccountingCertain
         ).all { valid -> valid }
-        if (!canEstimate) return null
-
         val dailyDoseMicroliters = configuredProgram.dailyDoseMicroliters()
-        if (dailyDoseMicroliters <= 0L || configuredProgram.weekdays.none { selected -> selected }) {
-            return null
+        return when {
+            !canEstimate -> null
+            dailyDoseMicroliters <= 0L -> null
+            configuredProgram.weekdays.none { selected -> selected } -> null
+            else -> estimateRemainingDays(
+                remainingMicroliters = reservoir.remainingMicroliters,
+                dailyDoseMicroliters = dailyDoseMicroliters,
+                remainingScheduledTodayMicroliters =
+                    (progress.scheduledAmountMicroliters - progress.completedAmountMicroliters)
+                        .coerceAtLeast(0L),
+                selectedWeekdays = configuredProgram.weekdays,
+                today = today
+            )
         }
-
-        val remainingScheduledTodayMicroliters =
-            (progress.scheduledAmountMicroliters - progress.completedAmountMicroliters)
-                .coerceAtLeast(0L)
-        return estimateRemainingDays(
-            remainingMicroliters = reservoir.remainingMicroliters,
-            dailyDoseMicroliters = dailyDoseMicroliters,
-            remainingScheduledTodayMicroliters = remainingScheduledTodayMicroliters,
-            selectedWeekdays = configuredProgram.weekdays,
-            today = today
-        )
     }
 
     private fun estimateRemainingDays(
