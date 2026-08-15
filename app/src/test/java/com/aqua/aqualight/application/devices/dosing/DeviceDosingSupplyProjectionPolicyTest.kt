@@ -38,7 +38,8 @@ class DeviceDosingSupplyProjectionPolicyTest {
         val projection = evaluate(
             remainingMicroliters = 20_000L,
             dailyDoseMicroliters = 10_000L,
-            weekdays = List(7) { false }
+            weekdays = List(7) { false },
+            programEnabled = false
         )
 
         assertNull(projection.estimatedRemainingDays)
@@ -169,14 +170,16 @@ class DeviceDosingSupplyProjectionPolicyTest {
         remainingMicroliters: Long,
         dailyDoseMicroliters: Long,
         scheduledTodayMicroliters: Long = 0L,
-        weekdays: List<Boolean> = List(7) { true }
+        weekdays: List<Boolean> = List(7) { true },
+        programEnabled: Boolean = true
     ): DeviceDosingSupplyProjection = requireNotNull(
         DeviceDosingSupplyProjectionPolicy.evaluate(
             snapshot = channelSnapshot(
                 remainingMicroliters = remainingMicroliters,
                 dailyDoseMicroliters = dailyDoseMicroliters,
                 scheduledTodayMicroliters = scheduledTodayMicroliters,
-                weekdays = weekdays
+                weekdays = weekdays,
+                programEnabled = programEnabled
             ),
             today = MONDAY
         )
@@ -188,7 +191,8 @@ class DeviceDosingSupplyProjectionPolicyTest {
         scheduledTodayMicroliters: Long = 0L,
         weekdays: List<Boolean> = List(7) { true },
         lowLevelActive: Boolean = false,
-        reservoirAccountingCertain: Boolean = true
+        reservoirAccountingCertain: Boolean = true,
+        programEnabled: Boolean = true
     ) = DeviceDosingChannelSnapshot(
         deviceUid = "device-1",
         slotId = "dosing:channel1",
@@ -203,7 +207,7 @@ class DeviceDosingSupplyProjectionPolicyTest {
         lastCalibratedAtEpochSeconds = 1L,
         scheduling = DeviceDosingSchedulingPolicy(),
         program = DeviceDosingProgram(
-            enabled = true,
+            enabled = programEnabled,
             weekdays = weekdays,
             schedule = DeviceDosingProgramSchedule.Single(
                 dailyDoseMicroliters = dailyDoseMicroliters,

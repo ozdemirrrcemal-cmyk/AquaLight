@@ -97,6 +97,7 @@ class DosingChannelCardArchitectureTest {
     fun `manual usage is separate and reservoir visibility follows firmware tracking`() {
         val progressMapper = source(CARD_SOURCE_ROOT + "DosingChannelCardProgressMapper.kt")
         val reservoirMapper = source(CARD_SOURCE_ROOT + "DosingChannelCardReservoirMapper.kt")
+        val supplyPolicy = source(APPLICATION_SOURCE_ROOT + "DeviceDosingSupplyProjectionPolicy.kt")
         val progress = source(CARD_SOURCE_ROOT + "DosingProgramProgress.kt")
         val summary = source(CARD_SOURCE_ROOT + "DosingChannelCardSummary.kt")
 
@@ -108,7 +109,13 @@ class DosingChannelCardArchitectureTest {
         assertTrue(progress.contains("MANUAL_PILL_HEIGHT = PROGRESS_RAIL_HEIGHT"))
         assertTrue(progress.contains("padding(top = PROGRESS_VALUE_TAG_AREA_HEIGHT)"))
         assertFalse(progress.contains("device_dosing_channel_manual_label"))
-        assertTrue(reservoirMapper.contains("if (!reservoir.trackingEnabled) return null"))
+        assertTrue(
+            reservoirMapper.contains(
+                "DeviceDosingSupplyProjectionPolicy.evaluate(this, today) ?: return null"
+            )
+        )
+        assertFalse(reservoirMapper.contains("reservoir.trackingEnabled"))
+        assertTrue(supplyPolicy.contains("if (!reservoir.trackingEnabled) return null"))
         assertTrue(summary.contains("state.reservoir?.let"))
         assertFalse(progress.contains("scheduledDeliveredTodayMl +"))
     }
@@ -173,6 +180,8 @@ class DosingChannelCardArchitectureTest {
     private companion object {
         const val DOSING_SOURCE_ROOT =
             "app/src/main/java/com/aqua/aqualight/ui/tabs/devices/detail/dosing/"
+        const val APPLICATION_SOURCE_ROOT =
+            "app/src/main/java/com/aqua/aqualight/application/devices/dosing/"
         const val ROOT_SOURCE_ROOT = DOSING_SOURCE_ROOT + "root/"
         const val CARD_SOURCE_ROOT = DOSING_SOURCE_ROOT + "presentation/card/"
         const val PUMP_SOURCE_ROOT = DOSING_SOURCE_ROOT + "presentation/pump/"
