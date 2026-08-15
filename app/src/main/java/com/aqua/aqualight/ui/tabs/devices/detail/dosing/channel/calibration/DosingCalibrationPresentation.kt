@@ -51,7 +51,12 @@ internal val DeviceDosingCalibrationStep.illustrationDescriptionRes: Int
 
 internal val DeviceDosingCalibrationError.messageRes: Int
     @StringRes get() = when (this) {
-        DeviceDosingCalibrationError.INVALID_NAME -> R.string.device_dosing_calibration_invalid_name
+        DeviceDosingCalibrationError.DISPLAY_NAME_REQUIRED ->
+            R.string.device_dosing_calibration_name_required
+        DeviceDosingCalibrationError.DISPLAY_NAME_CONTROL_CHARACTER ->
+            R.string.device_dosing_calibration_name_control_character
+        DeviceDosingCalibrationError.DISPLAY_NAME_TOO_LONG ->
+            R.string.device_dosing_calibration_name_too_long
         DeviceDosingCalibrationError.INVALID_MEASUREMENT ->
             R.string.device_dosing_calibration_invalid_measurement
         DeviceDosingCalibrationError.CONNECTION -> R.string.device_dosing_calibration_connection_error

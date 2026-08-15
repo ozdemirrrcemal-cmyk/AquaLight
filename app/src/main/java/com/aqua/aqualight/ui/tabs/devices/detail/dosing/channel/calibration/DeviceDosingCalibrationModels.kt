@@ -13,7 +13,9 @@ enum class DeviceDosingCalibrationStep {
 }
 
 enum class DeviceDosingCalibrationError {
-    INVALID_NAME,
+    DISPLAY_NAME_REQUIRED,
+    DISPLAY_NAME_CONTROL_CHARACTER,
+    DISPLAY_NAME_TOO_LONG,
     INVALID_MEASUREMENT,
     CONNECTION,
     UNAVAILABLE

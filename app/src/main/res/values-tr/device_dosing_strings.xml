@@ -289,7 +289,9 @@
     <string name="device_dosing_calibration_pump_running">Pompa çalışırken hortumu ve silindiri sabit tutun.</string>
     <string name="device_dosing_calibration_loading">Pompa durumu okunuyor…</string>
     <string name="device_dosing_calibration_working">İşleniyor…</string>
-    <string name="device_dosing_calibration_invalid_name">Bu dozaj hattı için bir ad girin.</string>
+    <string name="device_dosing_calibration_name_required">Bu dozaj hattı için bir ad girin.</string>
+    <string name="device_dosing_calibration_name_control_character">Addaki desteklenmeyen kontrol karakterlerini kaldırın.</string>
+    <string name="device_dosing_calibration_name_too_long">Dozaj hattı adını kısaltın.</string>
     <string name="device_dosing_calibration_invalid_measurement">0,05 ile 1000 ml arasında ölçülen bir hacim girin.</string>
     <string name="device_dosing_calibration_connection_error">Cihaz isteği tamamlamadı. Bağlantıyı kontrol edip tekrar deneyin.</string>
     <string name="device_dosing_calibration_unavailable">Bu pompa veya firmware sürümü kalibrasyon akışını desteklemiyor.</string>

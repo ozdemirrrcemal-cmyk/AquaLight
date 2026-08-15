@@ -97,13 +97,11 @@ interface DeviceDosingCalibrationOperations {
 }
 
 data class DeviceDosingCalibrationConstraints(
-    val maxDisplayNameCharacters: Int = 32,
     val minMeasuredMl: Double = 0.05,
     val maxMeasuredMl: Double = 1_000.0,
     val primeSafetyTimeoutMs: Long = 30_000L
 ) {
     init {
-        require(maxDisplayNameCharacters > 0)
         require(minMeasuredMl.isFinite() && minMeasuredMl > 0.0)
         require(maxMeasuredMl.isFinite() && maxMeasuredMl >= minMeasuredMl)
         require(primeSafetyTimeoutMs > 0L)

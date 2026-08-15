@@ -289,7 +289,9 @@
     <string name="device_dosing_calibration_pump_running">Keep the tubing and cylinder still while the pump is running.</string>
     <string name="device_dosing_calibration_loading">Reading the pump state…</string>
     <string name="device_dosing_calibration_working">Working…</string>
-    <string name="device_dosing_calibration_invalid_name">Enter a name for this dosing line.</string>
+    <string name="device_dosing_calibration_name_required">Enter a name for this dosing line.</string>
+    <string name="device_dosing_calibration_name_control_character">Remove unsupported control characters from the name.</string>
+    <string name="device_dosing_calibration_name_too_long">Shorten the dosing-line name.</string>
     <string name="device_dosing_calibration_invalid_measurement">Enter a measured volume between 0.05 and 1000 ml.</string>
     <string name="device_dosing_calibration_connection_error">The device did not complete the request. Check the connection and try again.</string>
     <string name="device_dosing_calibration_unavailable">This pump or firmware version does not support the calibration workflow.</string>

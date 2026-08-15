@@ -1,6 +1,9 @@
 package com.aqua.aqualight.ui.tabs.devices.detail.dosing.channel.calibration
 
 import com.aqua.aqualight.application.devices.dosing.DeviceDosingCalibrationConstraints
+import com.aqua.aqualight.application.devices.dosing.DeviceDosingDisplayNamePolicy
+import com.aqua.aqualight.application.devices.dosing.DeviceDosingDisplayNameRejection
+import com.aqua.aqualight.application.devices.dosing.DeviceDosingDisplayNameValidation
 
 internal sealed interface DosingCalibrationOperation {
     data object Refresh : DosingCalibrationOperation
@@ -37,7 +40,7 @@ internal fun reduceDosingCalibrationAction(
             state
         } else {
             state.updateInput { input ->
-                input.copy(displayName = action.value.take(constraints.maxDisplayNameCharacters))
+                input.copy(displayName = action.value)
             }.copy(error = null)
         }
     )
@@ -85,15 +88,26 @@ internal fun reduceDosingCalibrationAction(
 private fun saveDisplayNameDecision(
     state: DeviceDosingCalibrationUiState
 ): DosingCalibrationActionDecision {
-    val name = state.displayName.trim()
-    return if (name.isBlank()) {
-        DosingCalibrationActionDecision(
-            state = state.copy(error = DeviceDosingCalibrationError.INVALID_NAME)
+    return when (val validation = DeviceDosingDisplayNamePolicy.validateRequired(state.displayName)) {
+        is DeviceDosingDisplayNameValidation.Accepted -> busyOperationDecision(
+            state,
+            DosingCalibrationOperation.SaveDisplayName(validation.normalizedValue)
         )
-    } else {
-        busyOperationDecision(state, DosingCalibrationOperation.SaveDisplayName(name))
+        is DeviceDosingDisplayNameValidation.Rejected -> DosingCalibrationActionDecision(
+            state = state.copy(error = validation.reason.toCalibrationError())
+        )
     }
 }
+
+private fun DeviceDosingDisplayNameRejection.toCalibrationError(): DeviceDosingCalibrationError =
+    when (this) {
+        DeviceDosingDisplayNameRejection.REQUIRED ->
+            DeviceDosingCalibrationError.DISPLAY_NAME_REQUIRED
+        DeviceDosingDisplayNameRejection.CONTROL_CHARACTER ->
+            DeviceDosingCalibrationError.DISPLAY_NAME_CONTROL_CHARACTER
+        DeviceDosingDisplayNameRejection.TOO_LONG ->
+            DeviceDosingCalibrationError.DISPLAY_NAME_TOO_LONG
+    }
 
 private fun primePressedDecision(
     state: DeviceDosingCalibrationUiState,

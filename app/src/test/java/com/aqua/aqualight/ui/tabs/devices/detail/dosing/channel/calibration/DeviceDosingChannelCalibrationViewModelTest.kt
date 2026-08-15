@@ -96,7 +96,31 @@ class DeviceDosingChannelCalibrationViewModelTest {
             advanceUntilIdle()
 
             assertEquals(DeviceDosingCalibrationStep.NAME, viewModel.uiState.value.step)
-            assertEquals(DeviceDosingCalibrationError.INVALID_NAME, viewModel.uiState.value.error)
+            assertEquals(
+                DeviceDosingCalibrationError.DISPLAY_NAME_REQUIRED,
+                viewModel.uiState.value.error
+            )
+            assertEquals("", operations.savedName)
+        }
+
+    @Test
+    fun `name draft is not truncated and byte overflow is rendered semantically`() =
+        runTest(dispatcher) {
+            val operations = FakeDosingCalibrationOperations(calibrationSnapshot())
+            val viewModel = viewModel(operations)
+
+            bind(viewModel)
+            advanceUntilIdle()
+            val oversizedName = "ş".repeat(17)
+            viewModel.onAction(DeviceDosingCalibrationAction.DisplayNameChanged(oversizedName))
+            viewModel.onAction(DeviceDosingCalibrationAction.SaveDisplayName)
+            advanceUntilIdle()
+
+            assertEquals(oversizedName, viewModel.uiState.value.displayName)
+            assertEquals(
+                DeviceDosingCalibrationError.DISPLAY_NAME_TOO_LONG,
+                viewModel.uiState.value.error
+            )
             assertEquals("", operations.savedName)
         }
 

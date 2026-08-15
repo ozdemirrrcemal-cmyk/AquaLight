@@ -16,10 +16,11 @@ device runtime and notification infrastructure.
 
 ## Current position
 
-- Current stage: **01 — Architecture and package boundaries**
-- Status: **READY FOR CHECK**
+- Current stage: **03 — Exact reservoir-capacity semantics**
+- Status: **IN PROGRESS**
 - Production wiring: **DISABLED**
-- Rule: the next stage cannot start until the current stage is reviewed and checked.
+- Rule: stages remain atomic and independently evidenced; the owner authorized uninterrupted
+  execution of Stages 02 and 03 on this branch.
 
 ## Fixed rules
 
@@ -47,7 +48,7 @@ device runtime and notification infrastructure.
 
 ## Stage list
 
-- [ ] **01 — Architecture and package boundaries** — **READY FOR CHECK**
+- [x] **01 — Architecture and package boundaries** — **COMPLETE**
   - [x] Inventory every Dosing-specific application, data and UI production source.
   - [x] Move Dosing-specific sources below their canonical Dosing package roots.
   - [x] Group the Dosing root UI below an explicit `root/` package.
@@ -58,7 +59,7 @@ device runtime and notification infrastructure.
   - [x] Prove application has no UI/data/v1-wire dependency.
   - [x] Keep runtime behavior and production composition unchanged.
   - [x] Pass the focused architecture tests, repository Python guards and `git diff --check`.
-  - [ ] Pass Android compile/unit CI on the cutover branch.
+  - [x] Pass Android compile/unit CI on the cutover branch.
 
 ### Stage 01 evidence
 
@@ -67,13 +68,26 @@ device runtime and notification infrastructure.
 - `python3 tools/device_root_application_boundary_guard.py`: passed.
 - `python3 -m unittest discover -s tools/tests -p 'test_*.py'`: 159 tests passed.
 - `git diff HEAD --check`: passed.
-- Android Gradle/CI: pending branch publication; Stage 01 remains unchecked until this gate passes.
+- Published Stage 01 tree: `a0a32864e2bc99d73ec03fde94b81009fce30cfe`.
+- Android CI, CodeQL, API 27/API 36 emulator integration, installable debug APK and Firebase
+  production-config guard passed at remote commit `4e9aabc58ee8993843dfc0b2c8e8a4fc8de14ec3`.
 
-- [ ] **02 — Firmware-compatible display-name semantics**
-  - [ ] Move display-name validation to an application-owned Dosing policy.
-  - [ ] Enforce the firmware limit of 32 UTF-8 bytes, not 32 UI characters.
-  - [ ] Cover Turkish characters, emoji, combining characters, control characters and trimming.
-  - [ ] UI renders semantic validation results without knowing the firmware byte limit.
+- [x] **02 — Firmware-compatible display-name semantics** — **COMPLETE**
+  - [x] Move display-name validation to an application-owned Dosing policy.
+  - [x] Enforce the firmware limit of 32 UTF-8 bytes, not 32 UI characters.
+  - [x] Cover Turkish characters, emoji, combining characters, control characters and trimming.
+  - [x] UI renders semantic validation results without knowing the firmware byte limit.
+
+### Stage 02 evidence
+
+- Firmware pin confirms trimmed display names are bounded to 32 UTF-8 bytes and reject control
+  characters.
+- `DeviceDosingDisplayNamePolicyTest` covers Turkish, emoji, combining sequences, controls,
+  trimming and exact byte boundaries.
+- Calibration presentation retains the complete user draft and maps application rejection reasons
+  to semantic UI errors; no byte count or firmware limit is present in UI.
+- Repository architecture guards and 159 Python guard tests pass.
+- Android compile/unit execution is included in the final Stage 03 branch CI gate.
 
 - [ ] **03 — Exact reservoir-capacity semantics**
   - [ ] Replace presentation-owned positive `Double` validation with an application policy.
