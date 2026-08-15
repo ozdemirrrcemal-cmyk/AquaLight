@@ -260,23 +260,6 @@ private fun DrawScope.drawDoseSegment(
         size = segmentSize,
         cornerRadius = cornerRadius
     )
-    if (occurrence.visualState == DosingOccurrenceVisualState.ACTIVE) {
-        val sparkCenter = Offset(
-            x = left + ACTIVE_SPARK_LEADING_OFFSET.toPx()
-                .coerceAtMost(segmentSize.width / 2f),
-            y = ACTIVE_SPARK_CENTER_Y.toPx()
-        )
-        drawCircle(
-            color = palette.active.copy(alpha = ACTIVE_SPARK_HALO_ALPHA),
-            radius = ACTIVE_SPARK_HALO_RADIUS.toPx(),
-            center = sparkCenter
-        )
-        drawCircle(
-            color = palette.active,
-            radius = ACTIVE_SPARK_RADIUS.toPx(),
-            center = sparkCenter
-        )
-    }
 }
 
 private fun DrawScope.segmentInset(
@@ -320,9 +303,4 @@ private val SEGMENT_GAP = 1.dp
 private val DEFAULT_GROUP_GAP = 4.dp
 private val RAIL_CORNER_RADIUS = 4.dp
 private val SEGMENT_CORNER_RADIUS = 2.dp
-private val ACTIVE_SPARK_CENTER_Y = 3.dp
-private val ACTIVE_SPARK_LEADING_OFFSET = 2.dp
-private val ACTIVE_SPARK_HALO_RADIUS = 2.75.dp
-private val ACTIVE_SPARK_RADIUS = 1.25.dp
 private const val MARKER_ACCENT_ALPHA = 0.72f
-private const val ACTIVE_SPARK_HALO_ALPHA = 0.22f
