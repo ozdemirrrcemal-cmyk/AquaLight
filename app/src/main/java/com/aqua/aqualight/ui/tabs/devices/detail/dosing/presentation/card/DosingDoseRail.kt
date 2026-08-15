@@ -39,11 +39,10 @@ internal fun DosingDoseRail(
     palette: DosingProgressPalette,
     typography: AquaDeviceCardTypography,
     modifier: Modifier = Modifier,
-    groupBreaks: Set<Int> = emptySet(),
-    groupGap: Dp = DEFAULT_GROUP_GAP
+    grouping: DosingDoseRailGrouping = DosingDoseRailGrouping()
 ) {
     Column(modifier = modifier.fillMaxWidth()) {
-        DosingDoseRailBody(state, palette, typography, groupBreaks, groupGap)
+        DosingDoseRailBody(state, palette, typography, grouping)
         if (state.markers.isNotEmpty()) {
             DosingProgressMarkerScale(state.markers, palette, typography)
         }
@@ -55,8 +54,7 @@ private fun DosingDoseRailBody(
     state: DosingProgramProgressUiState,
     palette: DosingProgressPalette,
     typography: AquaDeviceCardTypography,
-    groupBreaks: Set<Int>,
-    groupGap: Dp
+    grouping: DosingDoseRailGrouping
 ) {
     val deliveredLabel = stringResource(
         R.string.device_dosing_channel_progress_delivered_format,
@@ -73,7 +71,7 @@ private fun DosingDoseRailBody(
                 .fillMaxWidth()
                 .height(PROGRESS_RAIL_HEIGHT)
         ) {
-            drawDoseRail(state.occurrences, groupBreaks, groupGap, palette)
+            drawDoseRail(state.occurrences, grouping, palette)
         }
         if (state.scheduledDeliveredTodayMl > 0.0 && state.dailyDoseMl > 0.0) {
             val deliveredFraction = (
@@ -220,8 +218,7 @@ private fun DosingProgressMarkerLabel(
 
 private fun DrawScope.drawDoseRail(
     occurrences: List<DosingProgressOccurrenceUiState>,
-    groupBreaks: Set<Int>,
-    groupGap: Dp,
+    grouping: DosingDoseRailGrouping,
     palette: DosingProgressPalette
 ) {
     val railRadius = RAIL_CORNER_RADIUS.toPx().coerceAtMost(size.height / 2f)
@@ -230,18 +227,9 @@ private fun DrawScope.drawDoseRail(
         size = size,
         cornerRadius = CornerRadius(railRadius)
     )
-    drawDoseSegments(occurrences, groupBreaks, groupGap, palette)
-}
-
-private fun DrawScope.drawDoseSegments(
-    occurrences: List<DosingProgressOccurrenceUiState>,
-    groupBreaks: Set<Int>,
-    groupGap: Dp,
-    palette: DosingProgressPalette
-) {
     occurrences.forEachIndexed { index, occurrence ->
-        val leadingInset = segmentInset(index, occurrences.size, groupBreaks, groupGap)
-        val trailingInset = segmentInset(index + 1, occurrences.size, groupBreaks, groupGap)
+        val leadingInset = segmentInset(index, occurrences.size, grouping)
+        val trailingInset = segmentInset(index + 1, occurrences.size, grouping)
         val left = size.width * occurrence.startFraction.coerceIn(0f, 1f) + leadingInset
         val right = size.width * occurrence.endFraction.coerceIn(0f, 1f) - trailingInset
         if (right > left) {
@@ -302,11 +290,10 @@ private fun DrawScope.drawDoseSegment(
 private fun DrawScope.segmentInset(
     index: Int,
     occurrenceCount: Int,
-    groupBreaks: Set<Int>,
-    groupGap: Dp
+    grouping: DosingDoseRailGrouping
 ): Float = when {
     index <= 0 || index >= occurrenceCount -> 0f
-    index in groupBreaks -> groupGap.toPx() / 2f
+    index in grouping.breaks -> grouping.gap.toPx() / 2f
     else -> SEGMENT_GAP.toPx() / 2f
 }
 
@@ -317,6 +304,11 @@ private fun DosingProgressPalette.colorFor(state: DosingOccurrenceVisualState): 
     DosingOccurrenceVisualState.SKIPPED -> skipped
     DosingOccurrenceVisualState.UNCERTAIN -> uncertain
 }
+
+internal data class DosingDoseRailGrouping(
+    val breaks: Set<Int> = emptySet(),
+    val gap: Dp = DEFAULT_GROUP_GAP
+)
 
 private val VALUE_TAG_WIDTH = 56.dp
 private val VALUE_TAG_MIN_WIDTH = 42.dp

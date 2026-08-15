@@ -26,8 +26,10 @@ internal fun DosingHourlyProgramProgress(
         state = state,
         palette = palette,
         typography = typography,
-        groupBreaks = state.hourlyGroupBreaks(),
-        groupGap = HOURLY_GROUP_GAP,
+        grouping = DosingDoseRailGrouping(
+            breaks = state.hourlyGroupBreaks(),
+            gap = HOURLY_GROUP_GAP
+        ),
         modifier = modifier
     )
 }
@@ -43,8 +45,10 @@ internal fun DosingCustomProgramProgress(
         state = state,
         palette = palette,
         typography = typography,
-        groupBreaks = state.customGroupBreaks(),
-        groupGap = CUSTOM_GROUP_GAP,
+        grouping = DosingDoseRailGrouping(
+            breaks = state.customGroupBreaks(),
+            gap = CUSTOM_GROUP_GAP
+        ),
         modifier = modifier
     )
 }
