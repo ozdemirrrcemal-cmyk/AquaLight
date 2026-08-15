@@ -195,8 +195,8 @@ internal class DeviceDosingV1StateOwner {
         .map { allStates ->
             allStates[deviceUid]
                 ?.channels
-                .values
-                .mapNotNull(OwnedDosingChannelState::authoritativeChannel)
+                ?.values
+                ?.mapNotNull(OwnedDosingChannelState::authoritativeChannel)
                 ?.sortedBy(DeviceDosingChannelSnapshot::channelNumber)
                 .orEmpty()
         }
