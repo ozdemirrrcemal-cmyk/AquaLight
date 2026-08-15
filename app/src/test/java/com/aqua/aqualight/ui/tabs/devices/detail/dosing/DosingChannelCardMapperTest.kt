@@ -160,6 +160,7 @@ class DosingChannelCardMapperTest {
             .withChannelSnapshot(disabledSnapshot, MONDAY)
 
         assertEquals(DosingChannelVisualState.AUTOMATIC_DOSING_OFF, state.visualState)
+        assertFalse(state.visualState.showsStatusPill)
         assertEquals(DosingProgramModeUiState.CUSTOM_PERIODS, state.programProgress.mode)
         assertEquals(DosingDoseProgressVisualState.DISABLED, state.programProgress.visualState)
         assertEquals(listOf(3, 3, 2), state.programProgress.customPeriods.map {
@@ -170,6 +171,7 @@ class DosingChannelCardMapperTest {
             state.programProgress.markers.map { marker -> marker.cumulativeAmountMl }
         )
         assertEquals(8, state.programProgress.totalOccurrences)
+        assertEquals(0.0, state.programProgress.scheduledDeliveredTodayMl, 0.0)
         assertNull(state.reservoir)
     }
 

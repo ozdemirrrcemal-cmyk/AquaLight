@@ -55,6 +55,7 @@ internal fun DosingChannelSummary(
             verticalAlignment = Alignment.CenterVertically
         ) {
             DosingProgramSummary(
+                visualState = state.visualState,
                 progress = state.programProgress,
                 colors = colors,
                 typography = typography,
@@ -106,25 +107,28 @@ private fun DosingMetricSummary(
 
 @Composable
 private fun DosingProgramSummary(
+    visualState: DosingChannelVisualState,
     progress: DosingProgramProgressUiState,
     colors: AquaDeviceCardColors,
     typography: AquaDeviceCardTypography,
     modifier: Modifier = Modifier
 ) {
     val mode = progress.mode ?: return
-    val label = if (progress.totalOccurrences > 0) {
-        stringResource(
+    val automaticDosingOff = visualState == DosingChannelVisualState.AUTOMATIC_DOSING_OFF
+    val label = when {
+        automaticDosingOff -> stringResource(visualState.labelRes)
+        progress.totalOccurrences > 0 -> stringResource(
             R.string.device_dosing_channel_mode_progress_format,
             progress.completedOccurrences,
             progress.totalOccurrences,
             stringResource(mode.compactLabelRes())
         )
-    } else {
-        stringResource(
+        else -> stringResource(
             R.string.device_dosing_channel_no_dose_today_format,
             stringResource(mode.compactLabelRes())
         )
     }
+    val tint = if (automaticDosingOff) colors.warning else colors.accent
     Row(
         modifier = modifier,
         horizontalArrangement = Arrangement.spacedBy(SUMMARY_ICON_GAP),
@@ -132,13 +136,15 @@ private fun DosingProgramSummary(
     ) {
         DosingProgramModeGlyph(
             mode = mode,
-            tint = colors.accent,
+            tint = tint,
             modifier = Modifier.size(SUMMARY_ICON_SIZE)
         )
         BasicText(
             text = label,
             modifier = Modifier.weight(1f),
-            style = typography.caption.copy(color = colors.primaryText),
+            style = typography.caption.copy(
+                color = if (automaticDosingOff) colors.warning else colors.primaryText
+            ),
             maxLines = 1,
             overflow = TextOverflow.Ellipsis
         )

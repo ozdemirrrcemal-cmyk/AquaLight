@@ -4,7 +4,9 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
@@ -60,11 +62,13 @@ internal fun DosingProgramProgress(
             modifier = Modifier.weight(1f)
         )
         if (state.manualDeliveredTodayMl > 0.0) {
-            DosingManualDosePill(
-                amountMl = state.manualDeliveredTodayMl,
-                colors = colors,
-                typography = typography
-            )
+            Box(modifier = Modifier.padding(top = PROGRESS_VALUE_TAG_AREA_HEIGHT)) {
+                DosingManualDosePill(
+                    amountMl = state.manualDeliveredTodayMl,
+                    colors = colors,
+                    typography = typography
+                )
+            }
         }
     }
 }
@@ -100,21 +104,24 @@ private fun DosingNoDoseTodayProgress(
     modifier: Modifier = Modifier
 ) {
     val shape = RoundedCornerShape(PROGRESS_CORNER_RADIUS)
-    Box(
-        modifier = modifier
-            .fillMaxWidth()
-            .height(PROGRESS_RAIL_HEIGHT)
-            .clip(shape)
-            .background(palette.track)
-            .border(width = PROGRESS_OUTLINE_WIDTH, color = palette.outline, shape = shape),
-        contentAlignment = Alignment.Center
-    ) {
-        BasicText(
-            text = stringResource(R.string.device_dosing_channel_no_scheduled_dose_today),
-            style = typography.micro.copy(color = palette.valueText),
-            maxLines = 1,
-            overflow = TextOverflow.Ellipsis
-        )
+    Column(modifier = modifier.fillMaxWidth()) {
+        Spacer(modifier = Modifier.height(PROGRESS_VALUE_TAG_AREA_HEIGHT))
+        Box(
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(PROGRESS_RAIL_HEIGHT)
+                .clip(shape)
+                .background(palette.track)
+                .border(width = PROGRESS_OUTLINE_WIDTH, color = palette.outline, shape = shape),
+            contentAlignment = Alignment.Center
+        ) {
+            BasicText(
+                text = stringResource(R.string.device_dosing_channel_no_scheduled_dose_today),
+                style = typography.micro.copy(color = palette.valueText),
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis
+            )
+        }
     }
 }
 
@@ -163,7 +170,8 @@ internal data class DosingProgressPalette(
     val skipped: Color,
     val uncertain: Color,
     val valueText: Color,
-    val inlineValueText: Color
+    val tagSurface: Color,
+    val tagOutline: Color
 )
 
 private fun dosingProgressPalette(
@@ -187,11 +195,8 @@ private fun dosingProgressPalette(
         skipped = colors.warning,
         uncertain = colors.danger,
         valueText = if (disabled) colors.secondaryText else colors.primaryText,
-        inlineValueText = when {
-            error -> colors.primaryText
-            disabled -> colors.secondaryText
-            else -> colors.surface
-        }
+        tagSurface = colors.surface,
+        tagOutline = if (error) colors.danger else colors.mediaOutline
     )
 }
 
@@ -202,9 +207,10 @@ private const val DISABLED_ALPHA = 0.48f
 private const val DISABLED_PENDING_ALPHA = 0.24f
 private const val PENDING_ALPHA = 0.36f
 private const val COMPLETED_ALPHA = 0.76f
-internal val PROGRESS_RAIL_HEIGHT = 20.dp
+internal val PROGRESS_RAIL_HEIGHT = 16.dp
 internal val PROGRESS_CORNER_RADIUS = 8.dp
 internal val PROGRESS_OUTLINE_WIDTH = 1.dp
+internal val PROGRESS_VALUE_TAG_AREA_HEIGHT = 20.dp
 private val PROGRESS_TO_MANUAL_GAP = 8.dp
 private val MANUAL_PILL_MIN_WIDTH = 78.dp
 private val MANUAL_PILL_MAX_WIDTH = 92.dp

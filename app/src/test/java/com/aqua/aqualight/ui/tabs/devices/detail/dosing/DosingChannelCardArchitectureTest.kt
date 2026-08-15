@@ -44,7 +44,11 @@ class DosingChannelCardArchitectureTest {
 
         assertTrue(models.contains("CONFIGURED(R.string.device_dosing_channel_status_configured, false)"))
         assertTrue(models.contains("DOSING(R.string.device_dosing_channel_status_dosing, false)"))
-        assertTrue(models.contains("AUTOMATIC_DOSING_OFF"))
+        assertTrue(
+            models.contains(
+                "AUTOMATIC_DOSING_OFF(R.string.device_dosing_channel_automatic_off, false)"
+            )
+        )
         assertTrue(header.contains("if (state.visualState.showsStatusPill)"))
         assertFalse(models.contains("READY("))
         assertFalse(models.contains("SCHEDULED("))
@@ -78,7 +82,12 @@ class DosingChannelCardArchitectureTest {
         assertTrue(rail.contains("occurrence.startFraction"))
         assertTrue(rail.contains("occurrence.endFraction"))
         assertTrue(modes.contains("state.customGroupBreaks()"))
+        assertTrue(modes.contains("state.hourlyGroupBreaks()"))
+        assertTrue(modes.contains("groupGap = CUSTOM_GROUP_GAP"))
+        assertTrue(modes.contains("groupGap = HOURLY_GROUP_GAP"))
         assertTrue(rail.contains("DosingProgressMarkerScale"))
+        assertTrue(rail.contains("DosingDeliveredValueTag"))
+        assertTrue(rail.contains("PROGRESS_VALUE_TAG_AREA_HEIGHT"))
         assertFalse(rail.contains("occurrence.timeFraction"))
         assertFalse(rail.contains("TIMER_NODE_RADIUS"))
         assertFalse(progress.contains("DosingDoseProgressBar"))
@@ -97,10 +106,29 @@ class DosingChannelCardArchitectureTest {
         assertTrue(progress.contains("state.manualDeliveredTodayMl > 0.0"))
         assertTrue(progress.contains("DosingManualDosePill"))
         assertTrue(progress.contains("MANUAL_PILL_HEIGHT = PROGRESS_RAIL_HEIGHT"))
+        assertTrue(progress.contains("padding(top = PROGRESS_VALUE_TAG_AREA_HEIGHT)"))
         assertFalse(progress.contains("device_dosing_channel_manual_label"))
         assertTrue(reservoirMapper.contains("if (!reservoir.trackingEnabled) return null"))
         assertTrue(summary.contains("state.reservoir?.let"))
         assertFalse(progress.contains("scheduledDeliveredTodayMl +"))
+    }
+
+    @Test
+    fun `automatic off replaces program summary instead of showing a header pill`() {
+        val models = source(CARD_SOURCE_ROOT + "DosingChannelCardModels.kt")
+        val summary = source(CARD_SOURCE_ROOT + "DosingChannelCardSummary.kt")
+
+        assertTrue(
+            models.contains(
+                "AUTOMATIC_DOSING_OFF(R.string.device_dosing_channel_automatic_off, false)"
+            )
+        )
+        assertTrue(
+            summary.contains(
+                "visualState == DosingChannelVisualState.AUTOMATIC_DOSING_OFF"
+            )
+        )
+        assertTrue(summary.contains("stringResource(visualState.labelRes)"))
     }
 
     @Test

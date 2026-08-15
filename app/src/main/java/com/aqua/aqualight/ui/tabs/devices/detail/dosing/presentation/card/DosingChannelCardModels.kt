@@ -22,7 +22,7 @@ enum class DosingChannelVisualState(
 ) {
     NOT_CONFIGURED(R.string.device_dosing_channel_not_configured, true),
     PROGRAM_NOT_CONFIGURED(R.string.device_dosing_channel_program_not_configured, true),
-    AUTOMATIC_DOSING_OFF(R.string.device_dosing_channel_automatic_off, true),
+    AUTOMATIC_DOSING_OFF(R.string.device_dosing_channel_automatic_off, false),
     CONFIGURED(R.string.device_dosing_channel_status_configured, false),
     DOSING(R.string.device_dosing_channel_status_dosing, false),
     ERROR(R.string.device_dosing_channel_status_attention, true)
