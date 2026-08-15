@@ -28,6 +28,7 @@ REQUIRED_UI_FILES = (
 )
 REQUIRED_DATA_FILES = (
     "DosingChannelSlotFactory.kt",
+    "v1/DeviceDosingV1StateOwner.kt",
 )
 
 UI_FORBIDDEN_PATTERNS = (
@@ -61,6 +62,12 @@ DOSING_DECLARATION = re.compile(
     r"(?:class|interface|object)\s+([A-Za-z0-9_]*Dosing[A-Za-z0-9_]*)\b",
     re.MULTILINE,
 )
+DOSING_STATE_OWNER_DECLARATION = re.compile(
+    r"^[ \t]*(?:(?:public|internal|private|protected|data|sealed|open|final)\s+)*"
+    r"class\s+([A-Za-z0-9_]*Dosing[A-Za-z0-9_]*StateOwner)\b",
+    re.MULTILINE,
+)
+CANONICAL_STATE_OWNER = Path("v1/DeviceDosingV1StateOwner.kt")
 
 # DeviceChannelSlot is one shared closed catalog algebra. Its Dosing variant is identity/shape only;
 # behavior remains forbidden outside application/devices/dosing.
@@ -156,6 +163,20 @@ def validate_repository(repository_root: Path = ROOT) -> list[str]:
         source = path.read_text(encoding="utf-8", errors="ignore")
         if DATA_FORBIDDEN_REFERENCE.search(source):
             errors.append(f"{relative(path, repository_root)}: Dosing data must not depend on UI")
+
+    state_owners: list[tuple[Path, str]] = []
+    for path in kotlin_files(data_dosing_root):
+        source = path.read_text(encoding="utf-8", errors="ignore")
+        state_owners.extend(
+            (path.relative_to(data_dosing_root), match.group(1))
+            for match in DOSING_STATE_OWNER_DECLARATION.finditer(source)
+        )
+    if state_owners != [(CANONICAL_STATE_OWNER, "DeviceDosingV1StateOwner")]:
+        rendered = ", ".join(f"{path}:{name}" for path, name in state_owners) or "none"
+        errors.append(
+            "data/devices/dosing must contain exactly one canonical Dosing state owner: "
+            f"{rendered}"
+        )
 
     for path in kotlin_files(application_devices_root):
         if path.is_relative_to(application_dosing_root):

@@ -141,6 +141,25 @@ class DosingArchitectureGuardTest(unittest.TestCase):
 
             self.assertTrue(any("must not depend on UI" in error for error in errors), errors)
 
+    def test_parallel_dosing_state_owner_is_rejected(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            repository = Path(directory)
+            self._create_minimum_repository(repository)
+            duplicate = (
+                repository
+                / "app/src/main/java/com/aqua/aqualight/data/devices/dosing/"
+                "ParallelDosingStateOwner.kt"
+            )
+            duplicate.write_text(
+                "package com.aqua.aqualight.data.devices.dosing\n\n"
+                "internal class ParallelDosingStateOwner\n",
+                encoding="utf-8",
+            )
+
+            errors = GUARD.validate_repository(repository)
+
+            self.assertTrue(any("exactly one canonical" in error for error in errors), errors)
+
     def test_misplaced_application_declaration_is_rejected(self) -> None:
         with tempfile.TemporaryDirectory() as directory:
             repository = Path(directory)
@@ -177,8 +196,18 @@ class DosingArchitectureGuardTest(unittest.TestCase):
             encoding="utf-8",
         )
         for relative_path in GUARD.REQUIRED_DATA_FILES:
-            (data / relative_path).write_text(
-                "package com.aqua.aqualight.data.devices.dosing\n",
+            path = data / relative_path
+            path.parent.mkdir(parents=True, exist_ok=True)
+            package = "com.aqua.aqualight." + path.parent.relative_to(source_root).as_posix().replace(
+                "/", "."
+            )
+            declaration = (
+                "\ninternal class DeviceDosingV1StateOwner\n"
+                if path.name == "DeviceDosingV1StateOwner.kt"
+                else ""
+            )
+            path.write_text(
+                f"package {package}\n{declaration}",
                 encoding="utf-8",
             )
         for relative_path in GUARD.REQUIRED_UI_FILES:

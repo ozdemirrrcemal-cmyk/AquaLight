@@ -16,7 +16,7 @@ device runtime and notification infrastructure.
 
 ## Current position
 
-- Current stage: **05 — Calibration rejection semantics**
+- Current stage: **06 — Central Dosing state, revision and invalidation adapter**
 - Status: **READY FOR CHECK**
 - Production wiring: **DISABLED**
 - Rule: stages remain atomic and independently evidenced; the owner authorized uninterrupted
@@ -138,7 +138,7 @@ device runtime and notification infrastructure.
 - Android CI, CodeQL, API 27/API 36 emulator integration, installable debug APK and Firebase
   production-config guard passed at remote commit `9254d1bf20d341e99e5c52ce4ef83cf1846c1c00`.
 
-- [ ] **05 — Calibration rejection semantics** — **READY FOR CHECK**
+- [x] **05 — Calibration rejection semantics** — **COMPLETE**
   - [x] Represent connection, storage, physical hardware, operation-in-progress, trusted-time,
         calibration-state and invalid-measurement outcomes in the application boundary.
   - [x] Map the pinned firmware code, field and message contract to semantic application results.
@@ -149,7 +149,7 @@ device runtime and notification infrastructure.
   - [x] Prevent safety, state, storage and hardware rejections from being presented as connection
         failures.
   - [x] Keep firmware error codes, fields and messages outside UI.
-  - [ ] Pass Android compile/unit CI on the cutover branch.
+  - [x] Pass Android compile/unit CI on the cutover branch.
 
 ### Stage 05 evidence
 
@@ -167,18 +167,41 @@ device runtime and notification infrastructure.
 - Focused mapper and presentation tests cover every public semantic failure plus the internal
   fallback.
 - Dosing/general/device-root architecture guards, 164 Python guard tests, English/Turkish resource
-  XML parsing and `git diff --check` pass locally; Android CI is the remaining Stage 05 check gate.
+  XML parsing and `git diff --check` passed locally.
+- Android CI compile/unit/lint/coverage, API 27/API 36 emulator integration, installable debug APK
+  and Firebase production-config guard passed at remote commit `df828740ee1f9f3a669862edc9bc0305d4ccdf92`.
 
-- [ ] **06 — Central Dosing state, revision and invalidation adapter**
-  - [ ] Implement one device/channel-scoped Dosing state owner below `data/devices/dosing/`.
-  - [ ] Map stable application slot ids to firmware channel keys inside data.
-  - [ ] Combine global status, channel status and occurrence progress deterministically.
-  - [ ] Map v1 wire models to application channel/calibration snapshots.
-  - [ ] Serialize channel mutations and use authoritative `expectedRevision`.
-  - [ ] Reject stale responses by connection generation, request generation and revision.
-  - [ ] Refresh and surface revision conflicts without blind mutation retry.
-  - [ ] Consume `dosing.status.changed` as real state invalidation.
-  - [ ] Add adapter, stale-response, conflict and reconnect tests.
+- [ ] **06 — Central Dosing state, revision and invalidation adapter** — **READY FOR CHECK**
+  - [x] Implement one device/channel-scoped Dosing state owner below `data/devices/dosing/`.
+  - [x] Map stable application slot ids to firmware channel keys inside data.
+  - [x] Combine global status, channel status and occurrence progress deterministically.
+  - [x] Map v1 wire models to application channel/calibration snapshots.
+  - [x] Serialize channel mutations and use authoritative `expectedRevision`.
+  - [x] Reject stale responses by connection generation, request generation and revision.
+  - [x] Refresh and surface revision conflicts without blind mutation retry.
+  - [x] Consume `dosing.status.changed` as real state invalidation.
+  - [x] Add adapter, stale-response, conflict and reconnect tests.
+  - [ ] Pass Android compile/unit CI on the cutover branch.
+
+### Stage 06 evidence
+
+- `DeviceDosingV1StateOwner` is the sole device/channel-scoped source of truth. The architecture
+  guard rejects a missing, renamed or parallel Dosing state owner.
+- Stable application ids remain `dosing:channelN`; only `DeviceDosingV1SlotKeyMapper` translates
+  them to the pinned firmware `channelN` identity.
+- A snapshot is published only when global status, channel status and occurrence progress share one
+  connection generation and revision. Unknown/malformed wire state fails closed.
+- Persisted and runtime mutations share one device/channel mutex. Persisted requests read
+  `expectedRevision` only from the last complete authoritative snapshot.
+- Connection generation, adapter request generation and firmware revision each reject stale
+  responses independently. A newer connection clears every snapshot from the previous session.
+- Exact revision conflict invalidates and refreshes state, surfaces `CONFLICT`, and never retries the
+  mutation. `dosing.status.changed` is likewise treated only as invalidation followed by full reads.
+- Focused tests cover mapping, stale requests, lower revisions, old connections, reconnect,
+  cross-revision documents, event invalidation, lifecycle clearing, conflict refresh/no-retry and
+  same-channel mutation serialization.
+- Updated architecture guard tests and `git diff --check` pass locally; Android CI is the remaining
+  Stage 06 check gate.
 
 - [ ] **07 — Root screen read path and navigation**
   - [ ] Bind root cards, pump state, channel names, usage, progress and reservoir projections.
