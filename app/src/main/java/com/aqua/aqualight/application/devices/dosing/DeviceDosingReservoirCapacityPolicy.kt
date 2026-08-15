@@ -66,35 +66,13 @@ object DeviceDosingReservoirCapacityPolicy {
     private fun canonicalDecimalOrNull(rawValue: String, locale: Locale): String? {
         val value = rawValue.trim()
         val symbols = DecimalFormatSymbols.getInstance(locale)
-        val decimalSeparators = setOf(symbols.decimalSeparator, '.', ',')
-        val output = StringBuilder(value.length)
-        var hasDigit = false
-        var hasDecimalSeparator = false
-
-        var invalidCharacter = false
-        for (index in value.indices) {
-            val character = value[index]
-            val digit = Character.digit(character, DECIMAL_RADIX)
-            when {
-                digit >= 0 -> {
-                    output.append(digit)
-                    hasDigit = true
-                }
-                character in decimalSeparators && !hasDecimalSeparator -> {
-                    output.append('.')
-                    hasDecimalSeparator = true
-                }
-                index == 0 && character == '+' -> output.append(character)
-                index == 0 && (character == '-' || character == symbols.minusSign) ->
-                    output.append('-')
-                else -> invalidCharacter = true
-            }
-            if (invalidCharacter) break
-        }
-        if (output.lastOrNull() == '.') output.append('0')
-        return output
-            .takeIf { !invalidCharacter && hasDigit }
-            ?.toString()
+        val builder = CanonicalDecimalBuilder(
+            inputLength = value.length,
+            decimalSeparators = setOf(symbols.decimalSeparator, '.', ','),
+            localizedMinusSign = symbols.minusSign
+        )
+        val valid = value.indices.all { index -> builder.append(index, value[index]) }
+        return builder.resultOrNull(valid)
     }
 
     private fun rejected(
@@ -105,6 +83,54 @@ object DeviceDosingReservoirCapacityPolicy {
     private const val MAX_CAPACITY_MICROLITERS = 4_294_967_295L
     private const val MILLILITER_SCALE = 3
     private const val DECIMAL_RADIX = 10
+
+    private class CanonicalDecimalBuilder(
+        inputLength: Int,
+        private val decimalSeparators: Set<Char>,
+        private val localizedMinusSign: Char
+    ) {
+        private val output = StringBuilder(inputLength)
+        private var hasDigit = false
+        private var hasDecimalSeparator = false
+
+        fun append(index: Int, character: Char): Boolean {
+            val digit = Character.digit(character, DECIMAL_RADIX)
+            return when {
+                digit >= 0 -> appendDigit(digit)
+                character in decimalSeparators -> appendDecimalSeparator()
+                index == 0 && character == '+' -> appendSign('+')
+                index == 0 && (character == '-' || character == localizedMinusSign) ->
+                    appendSign('-')
+                else -> false
+            }
+        }
+
+        fun resultOrNull(valid: Boolean): String? {
+            if (output.lastOrNull() == '.') output.append('0')
+            return output
+                .takeIf { valid && hasDigit }
+                ?.toString()
+        }
+
+        private fun appendDigit(digit: Int): Boolean {
+            output.append(digit)
+            hasDigit = true
+            return true
+        }
+
+        private fun appendDecimalSeparator(): Boolean = if (hasDecimalSeparator) {
+            false
+        } else {
+            output.append('.')
+            hasDecimalSeparator = true
+            true
+        }
+
+        private fun appendSign(sign: Char): Boolean {
+            output.append(sign)
+            return true
+        }
+    }
 }
 
 sealed interface DeviceDosingReservoirCapacityValidation {
