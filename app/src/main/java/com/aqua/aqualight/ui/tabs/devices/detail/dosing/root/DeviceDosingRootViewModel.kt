@@ -16,9 +16,6 @@ import com.aqua.aqualight.ui.tabs.devices.detail.common.DeviceRootKind
 import com.aqua.aqualight.ui.tabs.devices.detail.common.DeviceRootMenuMapper
 import com.aqua.aqualight.ui.tabs.devices.detail.common.DeviceRootPresentationMapper
 import com.aqua.aqualight.ui.tabs.devices.detail.dosing.presentation.card.DosingChannelCardUiState
-import com.aqua.aqualight.ui.tabs.devices.detail.dosing.presentation.card.toInitialDosingChannelCardUiState
-import com.aqua.aqualight.ui.tabs.devices.detail.dosing.presentation.card.toPumpVisualState
-import com.aqua.aqualight.ui.tabs.devices.detail.dosing.presentation.card.withChannelSnapshot
 import com.aqua.aqualight.ui.tabs.devices.detail.dosing.presentation.pump.DosingPumpVisualState
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.channels.Channel
@@ -48,7 +45,7 @@ class DeviceDosingRootViewModel(
     private var boundDeviceUid: String = ""
     private var fallbackTitle: String = ""
     private var latestRootSnapshot: DeviceRootSnapshot? = null
-    private var channelSnapshots: Map<String, DeviceDosingChannelSnapshot> = emptyMap()
+    private var channelSnapshots: List<DeviceDosingChannelSnapshot> = emptyList()
     private var observeJob: Job? = null
     private var channelDataJob: Job? = null
     private var channelDataRefreshJob: Job? = null
@@ -92,7 +89,7 @@ class DeviceDosingRootViewModel(
         channelDataJob = viewModelScope.launch {
             channelOperations.observeAll(deviceUid).collect { snapshots ->
                 if (boundDeviceUid != deviceUid) return@collect
-                channelSnapshots = snapshots.associateBy(DeviceDosingChannelSnapshot::slotId)
+                channelSnapshots = snapshots
                 renderBoundState()
             }
         }
@@ -144,7 +141,7 @@ class DeviceDosingRootViewModel(
 
     private fun DeviceRootSnapshot.toRootUiState(
         fallbackTitle: String,
-        snapshots: Map<String, DeviceDosingChannelSnapshot>
+        snapshots: List<DeviceDosingChannelSnapshot>
     ): DeviceDosingRootUiState {
         val menuSections = DeviceRootMenuMapper.overview(kind = KIND, snapshot = this)
         val catalogChannels = if (catalogState == DeviceRootCatalogState.VALID) {
@@ -152,7 +149,11 @@ class DeviceDosingRootViewModel(
         } else {
             emptyList()
         }
-        val exactChannelCount = catalogChannels.size
+        val channelPresentation = resolveDosingRootChannelPresentation(
+            deviceUid = deviceUid,
+            catalogChannels = catalogChannels,
+            snapshots = snapshots
+        )
         return DeviceDosingRootUiState(
             title = title.ifBlank { fallbackTitle },
             deviceUid = deviceUid,
@@ -160,16 +161,14 @@ class DeviceDosingRootViewModel(
             ipText = ipAddress,
             firmwareText = firmwareLabel,
             modelText = modelLabel,
-            pumpCount = resolveDosingPumpCount(exactChannelCount),
-            channels = catalogChannels.map { slot ->
-                slot.toInitialDosingChannelCardUiState()
-                    .withChannelSnapshot(snapshots[slot.id.value])
-            },
-            pumpStates = catalogChannels.map { slot ->
-                snapshots[slot.id.value]?.toPumpVisualState() ?: DosingPumpVisualState.IDLE
-            },
+            pumpCount = channelPresentation.pumpCount,
+            channels = channelPresentation.channels,
+            pumpStates = channelPresentation.pumpStates,
             primaryCountLabelRes = KIND.primaryCountLabelRes,
-            primaryCountText = exactChannelCount.takeIf { it > 0 }?.toString().orEmpty(),
+            primaryCountText = channelPresentation.pumpCount
+                .takeIf { it > 0 }
+                ?.toString()
+                .orEmpty(),
             featuresText = DeviceRootPresentationMapper.overviewFeatureText(this, KIND),
             primarySectionTitleRes = KIND.primarySectionTitleRes,
             primarySectionPlaceholder = menuSections.primaryText(KIND.primarySectionPlaceholderRes),
@@ -214,4 +213,4 @@ internal fun resolveDosingPumpCount(channelCount: Int): Int = when (channelCount
 
 private const val DOSING_PRO_2_CHANNEL_COUNT = 2
 private const val DOSING_PRO_4_CHANNEL_COUNT = 4
-private const val UNKNOWN_DOSING_PUMP_COUNT = 0
+internal const val UNKNOWN_DOSING_PUMP_COUNT = 0

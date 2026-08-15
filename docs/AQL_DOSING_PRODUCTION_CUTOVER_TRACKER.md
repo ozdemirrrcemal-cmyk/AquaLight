@@ -16,11 +16,11 @@ device runtime and notification infrastructure.
 
 ## Current position
 
-- Current stage: **06 — Central Dosing state, revision and invalidation adapter**
+- Current stage: **07 — Root screen read path and navigation**
 - Status: **READY FOR CHECK**
 - Production wiring: **DISABLED**
-- Rule: stages remain atomic and independently evidenced; the owner authorized uninterrupted
-  execution of Stages 02 and 03 on this branch.
+- Rule: stages remain atomic and independently evidenced; the owner explicitly authorized Stage 07
+  implementation without waiting for the Stage 06 remote result.
 
 ## Fixed rules
 
@@ -203,11 +203,30 @@ device runtime and notification infrastructure.
 - Updated architecture guard tests and `git diff --check` pass locally; Android CI is the remaining
   Stage 06 check gate.
 
-- [ ] **07 — Root screen read path and navigation**
-  - [ ] Bind root cards, pump state, channel names, usage, progress and reservoir projections.
-  - [ ] Resolve channel navigation from current authoritative calibration state.
-  - [ ] Keep catalog values as bootstrap-only presentation.
-  - [ ] Verify two- and four-channel products and reconnect behavior.
+- [ ] **07 — Root screen read path and navigation** — **READY FOR CHECK**
+  - [x] Bind root cards, pump state, channel names, usage, progress and reservoir projections.
+  - [x] Resolve channel navigation from current authoritative calibration state.
+  - [x] Keep catalog values as bootstrap-only presentation.
+  - [x] Verify two- and four-channel products and reconnect behavior.
+
+### Stage 07 evidence
+
+- The root switches atomically from catalog bootstrap to central state only after receiving one
+  complete, identity-consistent two- or four-channel snapshot set for the bound device.
+- Authoritative cards are built directly from channel snapshots, including effective names, pump
+  state, calibrated/program state, scheduled and manual usage, occurrence progress and reservoir
+  projection. No catalog display value survives the authoritative card mapping.
+- Partial, duplicate, foreign-device, wrong-slot and wrong-channel-number snapshot sets fail closed
+  to the catalog bootstrap. Clearing the central flow at reconnect immediately removes prior-session
+  runtime presentation until a new complete set arrives.
+- `DefaultDeviceDosingChannelNavigationOperations` refreshes the selected channel before resolving
+  calibrated detail versus calibration, then rechecks the current commercial root, slot identity,
+  supported pump count and allowed routes immediately before publishing a navigation target.
+- Focused tests cover two- and four-channel products, physical ordering, card projections, reconnect,
+  malformed/partial sets, refreshed calibration state, route revocation and snapshot identity drift.
+- Production composition remains fail-closed until Stage 12. Dosing/general/device-root architecture
+  guards, 165 Python guard tests and `git diff --check` pass locally; Android compile/unit CI remains
+  the remote check gate because the sandbox cannot download the Gradle distribution.
 
 - [ ] **08 — Calibration screen cutover**
   - [ ] Bind naming, prime, calibration run, measurement, verification and confirmation.

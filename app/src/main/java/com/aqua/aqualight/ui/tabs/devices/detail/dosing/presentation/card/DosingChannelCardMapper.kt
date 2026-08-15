@@ -14,18 +14,23 @@ internal fun DeviceDosingChannelSlot.toInitialDosingChannelCardUiState(): Dosing
         displayName = defaultDisplayName
     )
 
+/** Complete firmware-authoritative card state; no catalog display value survives this mapping. */
+internal fun DeviceDosingChannelSnapshot.toDosingChannelCardUiState(
+    today: LocalDate = LocalDate.now()
+): DosingChannelCardUiState = DosingChannelCardUiState(
+    slotId = slotId,
+    channelNumber = channelNumber,
+    displayName = channelTitle,
+    visualState = toCardVisualState(),
+    scheduleDays = toScheduleDaysUiState(),
+    programProgress = toProgramProgressUiState(today),
+    reservoir = toReservoirUiState(today)
+)
+
 internal fun DosingChannelCardUiState.withChannelSnapshot(
     snapshot: DeviceDosingChannelSnapshot?,
     today: LocalDate = LocalDate.now()
-): DosingChannelCardUiState = snapshot?.let { channel ->
-    copy(
-        displayName = channel.channelTitle,
-        visualState = channel.toCardVisualState(),
-        scheduleDays = channel.toScheduleDaysUiState(),
-        programProgress = channel.toProgramProgressUiState(today),
-        reservoir = channel.toReservoirUiState(today)
-    )
-} ?: this
+): DosingChannelCardUiState = snapshot?.toDosingChannelCardUiState(today) ?: this
 
 internal fun DeviceDosingChannelSnapshot.toPumpVisualState(): DosingPumpVisualState = when {
     hasAttentionState() -> DosingPumpVisualState.ERROR
