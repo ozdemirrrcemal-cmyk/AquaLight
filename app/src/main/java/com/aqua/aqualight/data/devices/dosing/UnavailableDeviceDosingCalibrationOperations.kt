@@ -1,5 +1,6 @@
 package com.aqua.aqualight.data.devices.dosing
 
+import com.aqua.aqualight.application.devices.dosing.DeviceDosingCalibrationFailure
 import com.aqua.aqualight.application.devices.dosing.DeviceDosingCalibrationOperations
 import com.aqua.aqualight.application.devices.dosing.DeviceDosingCalibrationResult
 import com.aqua.aqualight.application.devices.dosing.DeviceDosingCalibrationSnapshot
@@ -86,5 +87,5 @@ internal object UnavailableDeviceDosingCalibrationOperations :
     ) = Unit
 
     private fun unavailable(): DeviceDosingCalibrationResult =
-        DeviceDosingCalibrationResult.Unavailable
+        DeviceDosingCalibrationResult.Rejected(DeviceDosingCalibrationFailure.INTERNAL)
 }

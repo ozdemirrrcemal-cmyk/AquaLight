@@ -149,8 +149,27 @@ sealed interface DeviceDosingCalibrationResult {
         val operationDurationMs: Long? = null
     ) : DeviceDosingCalibrationResult
 
-    data object Unavailable : DeviceDosingCalibrationResult
-    data object Failed : DeviceDosingCalibrationResult
+    data class Rejected(
+        val failure: DeviceDosingCalibrationFailure
+    ) : DeviceDosingCalibrationResult
+}
+
+/**
+ * Application-owned calibration failure semantics.
+ *
+ * Firmware error codes, fields and messages are mapped into this closed set in data. Presentation
+ * must never inspect the wire error identity. [INTERNAL] is a forward-compatible fail-closed
+ * fallback and is rendered only as a generic operation failure.
+ */
+enum class DeviceDosingCalibrationFailure {
+    CONNECTION,
+    STORAGE,
+    HARDWARE,
+    OPERATION_IN_PROGRESS,
+    DEVICE_TIME_NOT_READY,
+    CALIBRATION_STATE_MISMATCH,
+    INVALID_MEASUREMENT,
+    INTERNAL
 }
 
 private fun DeviceDosingCalibrationResult?.successSnapshotOrNull(): DeviceDosingCalibrationSnapshot? =

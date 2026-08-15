@@ -18,7 +18,12 @@ enum class DeviceDosingCalibrationError {
     DISPLAY_NAME_TOO_LONG,
     INVALID_MEASUREMENT,
     CONNECTION,
-    UNAVAILABLE
+    STORAGE,
+    HARDWARE,
+    OPERATION_IN_PROGRESS,
+    DEVICE_TIME_NOT_READY,
+    CALIBRATION_STATE_MISMATCH,
+    OPERATION_FAILED
 }
 
 data class DosingCalibrationProgressState(

@@ -60,5 +60,14 @@ internal val DeviceDosingCalibrationError.messageRes: Int
         DeviceDosingCalibrationError.INVALID_MEASUREMENT ->
             R.string.device_dosing_calibration_invalid_measurement
         DeviceDosingCalibrationError.CONNECTION -> R.string.device_dosing_calibration_connection_error
-        DeviceDosingCalibrationError.UNAVAILABLE -> R.string.device_dosing_calibration_unavailable
+        DeviceDosingCalibrationError.STORAGE -> R.string.device_dosing_calibration_storage_error
+        DeviceDosingCalibrationError.HARDWARE -> R.string.device_dosing_calibration_hardware_error
+        DeviceDosingCalibrationError.OPERATION_IN_PROGRESS ->
+            R.string.device_dosing_calibration_operation_in_progress
+        DeviceDosingCalibrationError.DEVICE_TIME_NOT_READY ->
+            R.string.device_dosing_calibration_device_time_not_ready
+        DeviceDosingCalibrationError.CALIBRATION_STATE_MISMATCH ->
+            R.string.device_dosing_calibration_state_mismatch
+        DeviceDosingCalibrationError.OPERATION_FAILED ->
+            R.string.device_dosing_calibration_operation_failed
     }

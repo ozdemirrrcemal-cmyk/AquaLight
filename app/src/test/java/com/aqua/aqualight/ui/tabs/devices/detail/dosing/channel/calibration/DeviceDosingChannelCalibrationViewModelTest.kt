@@ -1,5 +1,6 @@
 package com.aqua.aqualight.ui.tabs.devices.detail.dosing.channel.calibration
 
+import com.aqua.aqualight.application.devices.dosing.DeviceDosingCalibrationFailure
 import com.aqua.aqualight.application.devices.dosing.DeviceDosingCalibrationResult
 import com.aqua.aqualight.application.devices.dosing.DeviceDosingChannelDestination
 import kotlinx.coroutines.Dispatchers
@@ -127,7 +128,9 @@ class DeviceDosingChannelCalibrationViewModelTest {
     @Test
     fun `failed prime start clears request without stop side effect`() = runTest(dispatcher) {
         val operations = FakeDosingCalibrationOperations(calibrationSnapshot()).apply {
-            primeStartResult = DeviceDosingCalibrationResult.Failed
+            primeStartResult = DeviceDosingCalibrationResult.Rejected(
+                DeviceDosingCalibrationFailure.OPERATION_IN_PROGRESS
+            )
         }
         val viewModel = viewModel(operations)
 
@@ -140,7 +143,10 @@ class DeviceDosingChannelCalibrationViewModelTest {
         viewModel.onAction(DeviceDosingCalibrationAction.PrimePressed)
         advanceUntilIdle()
 
-        assertEquals(DeviceDosingCalibrationError.CONNECTION, viewModel.uiState.value.error)
+        assertEquals(
+            DeviceDosingCalibrationError.OPERATION_IN_PROGRESS,
+            viewModel.uiState.value.error
+        )
         assertFalse(viewModel.uiState.value.isPumpActive)
         assertEquals(1, operations.primeStarts)
         assertEquals(0, operations.primeStops)
@@ -153,6 +159,30 @@ class DeviceDosingChannelCalibrationViewModelTest {
         advanceUntilIdle()
         assertEquals(2, operations.primeStarts)
         assertEquals(0, operations.primeStops)
+    }
+
+    @Test
+    fun `application failures retain semantic presentation identity`() {
+        val expected = mapOf(
+            DeviceDosingCalibrationFailure.CONNECTION to
+                DeviceDosingCalibrationError.CONNECTION,
+            DeviceDosingCalibrationFailure.STORAGE to DeviceDosingCalibrationError.STORAGE,
+            DeviceDosingCalibrationFailure.HARDWARE to DeviceDosingCalibrationError.HARDWARE,
+            DeviceDosingCalibrationFailure.OPERATION_IN_PROGRESS to
+                DeviceDosingCalibrationError.OPERATION_IN_PROGRESS,
+            DeviceDosingCalibrationFailure.DEVICE_TIME_NOT_READY to
+                DeviceDosingCalibrationError.DEVICE_TIME_NOT_READY,
+            DeviceDosingCalibrationFailure.CALIBRATION_STATE_MISMATCH to
+                DeviceDosingCalibrationError.CALIBRATION_STATE_MISMATCH,
+            DeviceDosingCalibrationFailure.INVALID_MEASUREMENT to
+                DeviceDosingCalibrationError.INVALID_MEASUREMENT,
+            DeviceDosingCalibrationFailure.INTERNAL to
+                DeviceDosingCalibrationError.OPERATION_FAILED
+        )
+
+        expected.forEach { (failure, presentation) ->
+            assertEquals(presentation, failure.toCalibrationError())
+        }
     }
 
     @Test

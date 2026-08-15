@@ -8,6 +8,7 @@
 
 package com.aqua.aqualight.debug.devices
 
+import com.aqua.aqualight.application.devices.dosing.DeviceDosingCalibrationFailure
 import com.aqua.aqualight.application.devices.dosing.DeviceDosingCalibrationOperations
 import com.aqua.aqualight.application.devices.dosing.DeviceDosingCalibrationResult
 import com.aqua.aqualight.application.devices.dosing.DeviceDosingCalibrationSessionPhase
@@ -360,7 +361,7 @@ internal class DebugFixtureDosingStateStore(
     }
 
     fun refresh(deviceUid: String, slotId: String): DeviceDosingCalibrationResult {
-        val state = current(deviceUid, slotId) ?: return DeviceDosingCalibrationResult.Unavailable
+        val state = current(deviceUid, slotId) ?: return calibrationUnavailable()
         val refreshed = if (
             state.sessionPhase == DeviceDosingCalibrationSessionPhase.PENDING_VERIFICATION &&
             state.verificationDoseStarted &&
@@ -836,7 +837,10 @@ internal class DebugFixtureDosingStateStore(
         operationDurationMs: Long? = null
     ): DeviceDosingCalibrationResult = this?.let { snapshot ->
         DeviceDosingCalibrationResult.Success(snapshot, operationDurationMs)
-    } ?: DeviceDosingCalibrationResult.Unavailable
+    } ?: calibrationUnavailable()
+
+    private fun calibrationUnavailable(): DeviceDosingCalibrationResult =
+        DeviceDosingCalibrationResult.Rejected(DeviceDosingCalibrationFailure.INTERNAL)
 
     private fun DeviceDosingChannelSnapshot?.toChannelResult():
         DeviceDosingChannelOperationResult = this?.let { snapshot ->

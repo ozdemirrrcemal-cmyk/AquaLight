@@ -1,5 +1,6 @@
 package com.aqua.aqualight.ui.tabs.devices.detail.dosing.channel.calibration
 
+import com.aqua.aqualight.application.devices.dosing.DeviceDosingCalibrationFailure
 import com.aqua.aqualight.application.devices.dosing.DeviceDosingCalibrationOperations
 import com.aqua.aqualight.application.devices.dosing.DeviceDosingCalibrationResult
 import com.aqua.aqualight.application.devices.dosing.DeviceDosingCalibrationSnapshot
@@ -35,7 +36,7 @@ internal class DosingCalibrationWorkflow(
         if (!normalized.hasIdentity()) {
             mutableUiState.value = mutableUiState.value
                 .updateProgress { progress -> progress.copy(isLoading = false) }
-                .copy(error = DeviceDosingCalibrationError.UNAVAILABLE)
+                .copy(error = DeviceDosingCalibrationError.OPERATION_FAILED)
             return
         }
         if (session.route?.matchesBinding(normalized) == true) return
@@ -187,14 +188,9 @@ internal class DosingCalibrationWorkflow(
             is DeviceDosingCalibrationResult.Success -> {
                 if (renderSuccess) applySuccess(operation, result.snapshot)
             }
-            DeviceDosingCalibrationResult.Unavailable -> {
+            is DeviceDosingCalibrationResult.Rejected -> {
                 mutableUiState.value = mutableUiState.value.withCalibrationFailure(
-                    DeviceDosingCalibrationError.UNAVAILABLE
-                )
-            }
-            DeviceDosingCalibrationResult.Failed -> {
-                mutableUiState.value = mutableUiState.value.withCalibrationFailure(
-                    DeviceDosingCalibrationError.CONNECTION
+                    result.failure.toCalibrationError()
                 )
             }
         }
@@ -250,6 +246,23 @@ private fun DeviceDosingCalibrationUiState.withCalibrationFailure(
 ): DeviceDosingCalibrationUiState = updateProgress { progress ->
     progress.copy(isLoading = false, isBusy = false, isPumpActive = false)
 }.copy(error = error)
+
+internal fun DeviceDosingCalibrationFailure.toCalibrationError(): DeviceDosingCalibrationError =
+    when (this) {
+        DeviceDosingCalibrationFailure.CONNECTION -> DeviceDosingCalibrationError.CONNECTION
+        DeviceDosingCalibrationFailure.STORAGE -> DeviceDosingCalibrationError.STORAGE
+        DeviceDosingCalibrationFailure.HARDWARE -> DeviceDosingCalibrationError.HARDWARE
+        DeviceDosingCalibrationFailure.OPERATION_IN_PROGRESS ->
+            DeviceDosingCalibrationError.OPERATION_IN_PROGRESS
+        DeviceDosingCalibrationFailure.DEVICE_TIME_NOT_READY ->
+            DeviceDosingCalibrationError.DEVICE_TIME_NOT_READY
+        DeviceDosingCalibrationFailure.CALIBRATION_STATE_MISMATCH ->
+            DeviceDosingCalibrationError.CALIBRATION_STATE_MISMATCH
+        DeviceDosingCalibrationFailure.INVALID_MEASUREMENT ->
+            DeviceDosingCalibrationError.INVALID_MEASUREMENT
+        DeviceDosingCalibrationFailure.INTERNAL ->
+            DeviceDosingCalibrationError.OPERATION_FAILED
+    }
 
 private fun DeviceDosingCalibrationSnapshot.matches(route: DeviceDosingCalibrationRoute): Boolean =
     deviceUid == route.deviceUid && slotId == route.slotId

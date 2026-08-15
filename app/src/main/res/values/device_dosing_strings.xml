@@ -298,5 +298,10 @@
     <string name="device_dosing_calibration_name_too_long">Shorten the dosing-line name.</string>
     <string name="device_dosing_calibration_invalid_measurement">Enter a measured volume between 0.05 and 1000 ml.</string>
     <string name="device_dosing_calibration_connection_error">The device did not complete the request. Check the connection and try again.</string>
-    <string name="device_dosing_calibration_unavailable">This pump or firmware version does not support the calibration workflow.</string>
+    <string name="device_dosing_calibration_storage_error">Calibration could not be saved because device storage is unhealthy. Check the device before trying again.</string>
+    <string name="device_dosing_calibration_hardware_error">The pump could not be started safely. Check the dosing hardware before trying again.</string>
+    <string name="device_dosing_calibration_operation_in_progress">Another dosing operation is active on this channel. Wait for it to finish or stop it, then try again.</string>
+    <string name="device_dosing_calibration_device_time_not_ready">The device clock is not ready. Keep the device connected and try saving again.</string>
+    <string name="device_dosing_calibration_state_mismatch">The calibration state changed on the device. Refresh the channel and continue from its current step.</string>
+    <string name="device_dosing_calibration_operation_failed">Calibration could not be completed. Refresh the device state and try again.</string>
 </resources>

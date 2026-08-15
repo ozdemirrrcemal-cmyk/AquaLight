@@ -16,7 +16,7 @@ device runtime and notification infrastructure.
 
 ## Current position
 
-- Current stage: **04 — Reservoir alarm and supply-projection separation**
+- Current stage: **05 — Calibration rejection semantics**
 - Status: **READY FOR CHECK**
 - Production wiring: **DISABLED**
 - Rule: stages remain atomic and independently evidenced; the owner authorized uninterrupted
@@ -113,13 +113,13 @@ device runtime and notification infrastructure.
 - Repository architecture guards, XML parsing, 163 Python guard tests and `git diff --check` pass.
 - Android compile/unit execution is the final branch CI gate before hand-off.
 
-- [ ] **04 — Reservoir alarm and supply-projection separation** — **READY FOR CHECK**
+- [x] **04 — Reservoir alarm and supply-projection separation** — **COMPLETE**
   - [x] Keep firmware `lowLevelActive` as the sole low-reservoir alert signal.
   - [x] Move remaining-day projection and 10/20-day thresholds into application policy.
   - [x] Publish application-owned `supplySeverity` for UI color mapping.
   - [x] Prove projected card severity and firmware low-level alert transitions are independent.
   - [x] Remove firmware low-level fields and product thresholds from UI contracts.
-  - [ ] Pass Android compile/unit CI on the cutover branch.
+  - [x] Pass Android compile/unit CI on the cutover branch.
 
 ### Stage 04 evidence
 
@@ -134,15 +134,40 @@ device runtime and notification infrastructure.
   guard rejects future firmware low-level signal ownership in UI.
 - Production composition and central notification delivery remain unchanged; notification dispatch
   is still reserved for Stage 11.
-- Repository guards, 163 Python guard tests and `git diff --check` pass locally; Android CI is the
-  remaining Stage 04 check gate.
+- Repository guards, 163 Python guard tests and `git diff --check` passed locally.
+- Android CI, CodeQL, API 27/API 36 emulator integration, installable debug APK and Firebase
+  production-config guard passed at remote commit `9254d1bf20d341e99e5c52ce4ef83cf1846c1c00`.
 
-- [ ] **05 — Calibration rejection semantics**
-  - [ ] Represent time-required, busy, verification-required, conflict, storage-health,
-        unavailable, connection and unknown outcomes in the application boundary.
-  - [ ] Map exact firmware errors to semantic application results.
-  - [ ] Prevent safety or state rejections from being presented as connection failures.
-  - [ ] Keep firmware error codes outside UI.
+- [ ] **05 — Calibration rejection semantics** — **READY FOR CHECK**
+  - [x] Represent connection, storage, physical hardware, operation-in-progress, trusted-time,
+        calibration-state and invalid-measurement outcomes in the application boundary.
+  - [x] Map the pinned firmware code, field and message contract to semantic application results.
+  - [x] Fold verification preconditions and stale revision recovery into calibration-state mismatch
+        without exposing a separate revision or verification error to UI.
+  - [x] Keep unsupported, protocol and unrecognized outcomes as an internal fail-closed fallback;
+        do not expose an unavailable calibration failure to application or UI.
+  - [x] Prevent safety, state, storage and hardware rejections from being presented as connection
+        failures.
+  - [x] Keep firmware error codes, fields and messages outside UI.
+  - [ ] Pass Android compile/unit CI on the cutover branch.
+
+### Stage 05 evidence
+
+- `DeviceDosingCalibrationFailure` is the closed application-owned semantic result set; there is no
+  calibration-specific revision-conflict, verification-required or unavailable variant.
+- `DeviceDosingCalibrationFailureMapper` pins the firmware `code + field + message` contract. The
+  firmware's trusted-time requirement maps to `DEVICE_TIME_NOT_READY`, busy safety gates map to
+  `OPERATION_IN_PROGRESS`, verification/no-pending/stale-revision outcomes map to
+  `CALIBRATION_STATE_MISMATCH`, and measured-volume rejection maps to `INVALID_MEASUREMENT`.
+- Only the exact physical output-start failure maps to `HARDWARE`; firmware values transported as
+  `HARDWARE_ERROR` for runtime-not-ready/internal failures remain in the internal fallback.
+- Unsupported/new protocol outcomes and the fail-closed production placeholder resolve to the
+  internal generic failure; neither application nor UI publishes an unavailable calibration state.
+- UI maps application semantics to localized messages and contains no firmware error identity.
+- Focused mapper and presentation tests cover every public semantic failure plus the internal
+  fallback.
+- Dosing/general/device-root architecture guards, 164 Python guard tests, English/Turkish resource
+  XML parsing and `git diff --check` pass locally; Android CI is the remaining Stage 05 check gate.
 
 - [ ] **06 — Central Dosing state, revision and invalidation adapter**
   - [ ] Implement one device/channel-scoped Dosing state owner below `data/devices/dosing/`.
