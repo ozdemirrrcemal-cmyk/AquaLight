@@ -10,7 +10,7 @@ import kotlinx.coroutines.Job
  * or a resumed platform continuation advances the generation and cancels the previous job.
  */
 internal class NotificationEnablementOperationGate {
-    data class Ticket internal constructor(
+    data class Ticket(
         val actionToken: String,
         internal val generation: Long
     )

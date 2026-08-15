@@ -56,21 +56,27 @@ internal class CapabilityPermissionContinuationState {
     }
 
     fun markShowingExplanation(mode: CapabilityPermissionExplanationMode) {
-        requirePendingAction("Cannot show an explanation without a pending permission action.")
+        check(pendingCapability != null && !pendingActionToken.isNullOrBlank()) {
+            "Cannot show an explanation without a pending permission action."
+        }
         pendingExplanationMode = mode
         waitingForRuntimePermission = false
         waitingForSettings = false
     }
 
     fun markWaitingForRuntimePermission() {
-        requirePendingAction("Cannot request permission without a pending action.")
+        check(pendingCapability != null && !pendingActionToken.isNullOrBlank()) {
+            "Cannot request permission without a pending action."
+        }
         pendingExplanationMode = null
         waitingForRuntimePermission = true
         waitingForSettings = false
     }
 
     fun markWaitingForSettings() {
-        requirePendingAction("Cannot open Settings without a pending permission action.")
+        check(pendingCapability != null && !pendingActionToken.isNullOrBlank()) {
+            "Cannot open Settings without a pending permission action."
+        }
         pendingExplanationMode = null
         waitingForRuntimePermission = false
         waitingForSettings = true
@@ -146,9 +152,5 @@ internal class CapabilityPermissionContinuationState {
         pendingExplanationMode = explanationMode
         waitingForRuntimePermission = snapshot.waitingForRuntimePermission
         waitingForSettings = snapshot.waitingForSettings
-    }
-
-    private fun requirePendingAction(message: String) {
-        check(pendingCapability != null && !pendingActionToken.isNullOrBlank()) { message }
     }
 }

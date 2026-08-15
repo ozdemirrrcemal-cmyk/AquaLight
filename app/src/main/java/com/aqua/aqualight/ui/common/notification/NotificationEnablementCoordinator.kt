@@ -111,8 +111,11 @@ class NotificationEnablementCoordinator(
     }
 
     fun refresh(actionToken: String) {
-        if (operationGate.hasActiveOperation) return
-        val request = dependencies.requestResolver(actionToken) ?: return
+        val request = if (operationGate.hasActiveOperation) {
+            null
+        } else {
+            dependencies.requestResolver(actionToken)
+        } ?: return
         cancelRefresh()
         val generation = refreshGeneration
         val lifecycleOwner = fragment.viewLifecycleOwnerLiveData.value ?: return
@@ -250,25 +253,32 @@ class NotificationEnablementCoordinator(
                 true
             }
             NotificationEnablementStep.READY -> {
-                if (!evaluation.state.ownerPreferenceEnabled) {
-                    evaluation.notificationPreferences.setEnabled(
-                        ownerUid = evaluation.ownerUid,
-                        enabled = true
-                    )
-                }
-                if (!operationGate.isCurrent(ticket)) return false
-                callbacks.onStateChanged(
-                    ticket.actionToken,
-                    NotificationEnablementState(
-                        ownerPreferenceEnabled = true,
-                        step = NotificationEnablementStep.READY
-                    )
-                )
-                if (!operationGate.isCurrent(ticket)) return false
-                callbacks.onReady(ticket.actionToken)
+                completeReadyEvaluation(ticket, evaluation)
                 false
             }
         }
+    }
+
+    private suspend fun completeReadyEvaluation(
+        ticket: NotificationEnablementOperationGate.Ticket,
+        evaluation: NotificationEnablementEvaluation
+    ) {
+        if (!evaluation.state.ownerPreferenceEnabled) {
+            evaluation.notificationPreferences.setEnabled(
+                ownerUid = evaluation.ownerUid,
+                enabled = true
+            )
+        }
+        if (operationGate.isCurrent(ticket)) {
+            callbacks.onStateChanged(
+                ticket.actionToken,
+                NotificationEnablementState(
+                    ownerPreferenceEnabled = true,
+                    step = NotificationEnablementStep.READY
+                )
+            )
+        }
+        if (operationGate.isCurrent(ticket)) callbacks.onReady(ticket.actionToken)
     }
 
     private fun cancelRefresh() {
