@@ -17,7 +17,7 @@ device runtime and notification infrastructure.
 ## Current position
 
 - Current stage: **04 — Reservoir alarm and supply-projection separation**
-- Status: **NOT STARTED**
+- Status: **READY FOR CHECK**
 - Production wiring: **DISABLED**
 - Rule: stages remain atomic and independently evidenced; the owner authorized uninterrupted
   execution of Stages 02 and 03 on this branch.
@@ -66,7 +66,7 @@ device runtime and notification infrastructure.
 - `python3 tools/dosing_architecture_guard.py`: passed.
 - `python3 tools/architecture_guard.py`: passed.
 - `python3 tools/device_root_application_boundary_guard.py`: passed.
-- `python3 -m unittest discover -s tools/tests -p 'test_*.py'`: 162 tests passed.
+- `python3 -m unittest discover -s tools/tests -p 'test_*.py'`: 163 tests passed.
 - `git diff HEAD --check`: passed.
 - Dependency-direction checks reject both imports and fully-qualified UI/application/data layer
   references; focused negative tests cover all three forbidden directions.
@@ -88,7 +88,7 @@ device runtime and notification infrastructure.
   trimming and exact byte boundaries.
 - Calibration presentation retains the complete user draft and maps application rejection reasons
   to semantic UI errors; no byte count or firmware limit is present in UI.
-- Repository architecture guards and 162 Python guard tests pass.
+- Repository architecture guards and 163 Python guard tests pass.
 - Android compile/unit execution is included in the final Stage 03 branch CI gate.
 
 - [x] **03 — Exact reservoir-capacity semantics** — **COMPLETE**
@@ -110,15 +110,32 @@ device runtime and notification infrastructure.
   floating-point persisted intent remains in the reservoir UI path.
 - `DosingDraftViewModelBoundaryTest` proves exact locale input and recreation retention.
 - `DosingUiLayerBoundaryTest` proves precision/range constants and decimal parsing stay outside UI.
-- Repository architecture guards, XML parsing, 162 Python guard tests and `git diff --check` pass.
+- Repository architecture guards, XML parsing, 163 Python guard tests and `git diff --check` pass.
 - Android compile/unit execution is the final branch CI gate before hand-off.
 
-- [ ] **04 — Reservoir alarm and supply-projection separation**
-  - [ ] Keep firmware `lowLevelActive` as the sole low-reservoir alert signal.
-  - [ ] Move remaining-day projection and 10/20-day thresholds into application policy.
-  - [ ] Publish application-owned `supplySeverity` for UI color mapping.
-  - [ ] Prove projected card severity and firmware low-level alert transitions are independent.
-  - [ ] Remove firmware low-level fields and product thresholds from UI contracts.
+- [ ] **04 — Reservoir alarm and supply-projection separation** — **READY FOR CHECK**
+  - [x] Keep firmware `lowLevelActive` as the sole low-reservoir alert signal.
+  - [x] Move remaining-day projection and 10/20-day thresholds into application policy.
+  - [x] Publish application-owned `supplySeverity` for UI color mapping.
+  - [x] Prove projected card severity and firmware low-level alert transitions are independent.
+  - [x] Remove firmware low-level fields and product thresholds from UI contracts.
+  - [ ] Pass Android compile/unit CI on the cutover branch.
+
+### Stage 04 evidence
+
+- Pinned firmware `AqlDosingReservoirPolicy.hpp` derives the authoritative low-level signal from
+  exact canonical reservoir quanta at the 10% boundary and publishes it as `lowLevelActive`;
+  Android does not recompute that alarm.
+- `DeviceDosingSupplyProjectionPolicy` owns weekday-aware remaining-day projection and the private
+  10/20-day product thresholds, publishing `DeviceDosingSupplySeverity` for presentation mapping.
+- Application policy tests prove critical projection with the firmware alarm inactive, normal
+  projection with the firmware alarm active, uncertainty handling and exact 10/20-day boundaries.
+- Dosing UI contains neither `lowLevelActive` nor supply thresholds; the executable architecture
+  guard rejects future firmware low-level signal ownership in UI.
+- Production composition and central notification delivery remain unchanged; notification dispatch
+  is still reserved for Stage 11.
+- Repository guards, 163 Python guard tests and `git diff --check` pass locally; Android CI is the
+  remaining Stage 04 check gate.
 
 - [ ] **05 — Calibration rejection semantics**
   - [ ] Represent time-required, busy, verification-required, conflict, storage-health,

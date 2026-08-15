@@ -219,6 +219,25 @@ class DosingUiLayerBoundaryTest {
     }
 
     @Test
+    fun `reservoir alarm and supply projection remain independent application concepts`() {
+        val mapper = source(CARD_SOURCE_ROOT + "DosingChannelCardReservoirMapper.kt")
+        val policy = source(
+            "app/src/main/java/com/aqua/aqualight/application/devices/dosing/" +
+                "DeviceDosingSupplyProjectionPolicy.kt"
+        )
+
+        assertTrue(mapper.contains("projection.supplySeverity.toUiTone()"))
+        assertFalse(mapper.contains("CRITICAL_REMAINING_DAYS"))
+        assertFalse(mapper.contains("WARNING_REMAINING_DAYS"))
+        assertFalse(mapper.contains("selectedWeekdays"))
+        assertTrue(policy.contains("CRITICAL_REMAINING_DAYS = 10"))
+        assertTrue(policy.contains("WARNING_REMAINING_DAYS = 20"))
+        assertTrue(policy.contains("supplySeverity"))
+        assertFalse(policy.contains("lowLevelActive"))
+        assertTrue(dosingSources().none { source -> source.contains("lowLevelActive") })
+    }
+
+    @Test
     fun `dosing child fragments delegate feature state to viewmodels`() {
         val plan = source(DOSING_SOURCE_ROOT + "channel/plan/DeviceDosingPlanFragment.kt")
         val reservoir = source(

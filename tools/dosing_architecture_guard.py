@@ -38,6 +38,7 @@ UI_FORBIDDEN_PATTERNS = (
     (re.compile(r"\bDeviceDosingV1[A-Za-z0-9_]*\b"), "Dosing v1 wire type"),
     (re.compile(r"\bexpectedRevision\b"), "firmware revision"),
     (re.compile(r"\bchannelKey\b"), "firmware channel key"),
+    (re.compile(r"\blowLevelActive\b"), "firmware low-level signal"),
 )
 
 APPLICATION_FORBIDDEN_REFERENCE = re.compile(

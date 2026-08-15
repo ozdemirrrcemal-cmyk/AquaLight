@@ -7,6 +7,7 @@ import com.aqua.aqualight.application.devices.dosing.DeviceDosingOccurrenceState
 import com.aqua.aqualight.application.devices.dosing.DeviceDosingProgram
 import com.aqua.aqualight.application.devices.dosing.DeviceDosingProgramSchedule
 import com.aqua.aqualight.application.devices.dosing.DeviceDosingRunSource
+import com.aqua.aqualight.application.devices.dosing.dailyDoseMicroliters
 import java.time.LocalDate
 
 internal fun DeviceDosingChannelSnapshot.toProgramProgressUiState(
@@ -62,13 +63,6 @@ private fun DeviceDosingProgramSchedule.toUiMode(): DosingProgramModeUiState = w
     is DeviceDosingProgramSchedule.Hourly24 -> DosingProgramModeUiState.HOURLY_24
     is DeviceDosingProgramSchedule.CustomPeriods -> DosingProgramModeUiState.CUSTOM_PERIODS
     is DeviceDosingProgramSchedule.Timer -> DosingProgramModeUiState.TIMER
-}
-
-internal fun DeviceDosingProgram.dailyDoseMicroliters(): Long = when (val value = schedule) {
-    is DeviceDosingProgramSchedule.Single -> value.dailyDoseMicroliters
-    is DeviceDosingProgramSchedule.Hourly24 -> value.dailyDoseMicroliters
-    is DeviceDosingProgramSchedule.CustomPeriods -> value.dailyDoseMicroliters
-    is DeviceDosingProgramSchedule.Timer -> value.doses.sumOf { dose -> dose.amountMicroliters }
 }
 
 private fun DeviceDosingOccurrenceProgress.toUiState() = DosingProgressOccurrenceUiState(

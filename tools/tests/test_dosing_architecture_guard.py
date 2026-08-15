@@ -83,6 +83,25 @@ class DosingArchitectureGuardTest(unittest.TestCase):
 
             self.assertTrue(any("outer layer" in error for error in errors), errors)
 
+    def test_ui_firmware_low_level_signal_is_rejected(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            repository = Path(directory)
+            self._create_minimum_repository(repository)
+            screen = (
+                repository
+                / "app/src/main/java/com/aqua/aqualight/ui/tabs/devices/detail/dosing/root/"
+                "DosingCatalogScreen.kt"
+            )
+            screen.write_text(
+                screen.read_text(encoding="utf-8")
+                + "\nprivate val lowLevelActive = false\n",
+                encoding="utf-8",
+            )
+
+            errors = GUARD.validate_repository(repository)
+
+            self.assertTrue(any("firmware low-level signal" in error for error in errors), errors)
+
     def test_data_fully_qualified_ui_dependency_is_rejected(self) -> None:
         with tempfile.TemporaryDirectory() as directory:
             repository = Path(directory)

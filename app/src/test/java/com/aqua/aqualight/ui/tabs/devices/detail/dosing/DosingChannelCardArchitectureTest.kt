@@ -198,7 +198,6 @@ class DosingChannelCardArchitectureTest {
             CARD_SOURCE_ROOT + "DosingProgramProgress.kt",
             CARD_SOURCE_ROOT + "DosingProgramProgressModes.kt",
             CARD_SOURCE_ROOT + "DosingDoseRail.kt",
-            CARD_SOURCE_ROOT + "DosingReservoirProjection.kt",
             CARD_SOURCE_ROOT + "DosingReservoirSummary.kt",
             PUMP_SOURCE_ROOT + "DosingPumpDeviceCompose.kt",
             PUMP_SOURCE_ROOT + "DosingPumpIndicatorDrawing.kt",
