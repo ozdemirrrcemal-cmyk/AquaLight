@@ -1,6 +1,7 @@
 package com.aqua.aqualight.ui.tabs.devices.detail.dosing.channel
 
 import com.aqua.aqualight.application.devices.dosing.DeviceDosingProgramSchedule
+import com.aqua.aqualight.application.devices.dosing.DeviceDosingReservoirCapacityRejection
 import com.aqua.aqualight.ui.tabs.devices.detail.dosing.channel.detail.DeviceDosingChannelDetailViewModel
 import com.aqua.aqualight.ui.tabs.devices.detail.dosing.channel.plan.DosingPlanDraft
 import com.aqua.aqualight.ui.tabs.devices.detail.dosing.channel.plan.DosingPlanScheduleMode
@@ -9,6 +10,7 @@ import com.aqua.aqualight.ui.tabs.devices.detail.dosing.channel.plan.DeviceDosin
 import com.aqua.aqualight.ui.tabs.devices.detail.dosing.channel.reservoir.DeviceDosingReservoirDraft
 import com.aqua.aqualight.ui.tabs.devices.detail.dosing.channel.reservoir.DeviceDosingReservoirNotificationAvailability
 import com.aqua.aqualight.ui.tabs.devices.detail.dosing.channel.reservoir.DeviceDosingReservoirViewModel
+import java.util.Locale
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.test.UnconfinedTestDispatcher
@@ -83,17 +85,36 @@ class DosingDraftViewModelBoundaryTest {
     @Test
     fun `reservoir validates draft before accepting state`() {
         val viewModel = DeviceDosingReservoirViewModel()
-        viewModel.bindInitial(DeviceDosingReservoirDraft(reservoirCapacityMl = 450.0))
+        viewModel.bindInitial(
+            DeviceDosingReservoirDraft(reservoirCapacityMicroliters = 450_000L)
+        )
 
         assertFalse(viewModel.currentDraft().lowLevelAlertEnabled)
 
-        viewModel.setCapacityMl(-1.0)
-        assertEquals(450.0, viewModel.currentDraft().reservoirCapacityMl, 0.0)
+        viewModel.setCapacityInput("-1", Locale.US)
+        assertEquals(450_000L, viewModel.currentDraft().reservoirCapacityMicroliters)
+        assertEquals(
+            DeviceDosingReservoirCapacityRejection.POSITIVE_REQUIRED,
+            viewModel.capacityRejection.value
+        )
 
-        viewModel.setCapacityMl(800.0)
+        viewModel.setCapacityInput("800,125", Locale.forLanguageTag("tr-TR"))
         viewModel.setTrackingEnabled(true)
-        assertEquals(800.0, viewModel.currentDraft().reservoirCapacityMl, 0.0)
+        assertEquals(800_125L, viewModel.currentDraft().reservoirCapacityMicroliters)
+        assertEquals(null, viewModel.capacityRejection.value)
         assertTrue(viewModel.currentDraft().trackingEnabled)
+    }
+
+    @Test
+    fun `reservoir exact capacity survives viewmodel recreation without Double conversion`() {
+        val original = DeviceDosingReservoirViewModel()
+        original.bindInitial(null)
+        original.setCapacityInput("123,456", Locale.forLanguageTag("tr-TR"))
+
+        val recreated = DeviceDosingReservoirViewModel()
+        recreated.bindInitial(original.currentDraft())
+
+        assertEquals(123_456L, recreated.currentDraft().reservoirCapacityMicroliters)
     }
 
     @Test

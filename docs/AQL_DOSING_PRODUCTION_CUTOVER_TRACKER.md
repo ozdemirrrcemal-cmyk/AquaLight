@@ -16,8 +16,8 @@ device runtime and notification infrastructure.
 
 ## Current position
 
-- Current stage: **03 — Exact reservoir-capacity semantics**
-- Status: **IN PROGRESS**
+- Current stage: **04 — Reservoir alarm and supply-projection separation**
+- Status: **NOT STARTED**
 - Production wiring: **DISABLED**
 - Rule: stages remain atomic and independently evidenced; the owner authorized uninterrupted
   execution of Stages 02 and 03 on this branch.
@@ -89,11 +89,24 @@ device runtime and notification infrastructure.
 - Repository architecture guards and 159 Python guard tests pass.
 - Android compile/unit execution is included in the final Stage 03 branch CI gate.
 
-- [ ] **03 — Exact reservoir-capacity semantics**
-  - [ ] Replace presentation-owned positive `Double` validation with an application policy.
-  - [ ] Enforce exact 0.001 ml quanta and the firmware unsigned 32-bit amount range.
-  - [ ] Preserve locale-aware text entry without using floating-point values as persisted intent.
-  - [ ] UI renders semantic precision/range errors without knowing firmware quanta.
+- [x] **03 — Exact reservoir-capacity semantics** — **COMPLETE**
+  - [x] Replace presentation-owned positive `Double` validation with an application policy.
+  - [x] Enforce exact 0.001 ml quanta and the firmware unsigned 32-bit amount range.
+  - [x] Preserve locale-aware text entry without using floating-point values as persisted intent.
+  - [x] UI renders semantic precision/range errors without knowing firmware quanta.
+
+### Stage 03 evidence
+
+- The pinned firmware contract stores dosing amounts in 0.001 ml `uint32` quanta; the application
+  policy accepts only exact values in that range and retains the intent as microlitres.
+- `DeviceDosingReservoirCapacityPolicyTest` covers English, Turkish and Arabic numeric input,
+  trailing zeros, sub-quantum precision, the exact unsigned maximum and semantic rejection cases.
+- Reservoir draft state and `Bundle` recreation persist `Long` microlitres; no `Double` parsing or
+  floating-point persisted intent remains in the reservoir UI path.
+- `DosingDraftViewModelBoundaryTest` proves exact locale input and recreation retention.
+- `DosingUiLayerBoundaryTest` proves precision/range constants and decimal parsing stay outside UI.
+- Repository architecture guards, XML parsing, 159 Python guard tests and `git diff --check` pass.
+- Android compile/unit execution is the final branch CI gate before hand-off.
 
 - [ ] **04 — Reservoir alarm and supply-projection separation**
   - [ ] Keep firmware `lowLevelActive` as the sole low-reservoir alert signal.

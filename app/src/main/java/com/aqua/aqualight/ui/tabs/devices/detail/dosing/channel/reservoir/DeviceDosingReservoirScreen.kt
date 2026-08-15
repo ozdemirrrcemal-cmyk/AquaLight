@@ -22,6 +22,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
 import com.aqua.aqualight.R
+import com.aqua.aqualight.application.devices.dosing.DeviceDosingReservoirCapacityRejection
 import com.aqua.aqualight.ui.common.devicemenu.AquaDeviceMenuDivider
 import com.aqua.aqualight.ui.common.devicemenu.AquaDeviceMenuGeometry
 import com.aqua.aqualight.ui.common.devicemenu.AquaDeviceMenuSection
@@ -36,6 +37,7 @@ import com.aqua.aqualight.ui.common.flow.AquaGuidedFlowButton
 internal data class DeviceDosingReservoirUiState(
     val trackingEnabled: Boolean,
     val capacityValue: String,
+    val capacityRejection: DeviceDosingReservoirCapacityRejection?,
     val lowLevelAlertEnabled: Boolean,
     val lowLevelAlertNotificationAvailability: DeviceDosingReservoirNotificationAvailability
 )
@@ -141,12 +143,19 @@ private fun ReservoirVolumeSection(
         AquaDeviceMenuValueRow(
             label = stringResource(R.string.device_dosing_detail_container_volume),
             value = state.capacityValue,
+            description = state.capacityRejection?.let { rejection ->
+                stringResource(rejection.messageRes)
+            },
             modifier = Modifier.clickable(
                 enabled = state.trackingEnabled,
                 role = Role.Button,
                 onClick = onCapacityClick
             ),
-            tone = AquaDeviceMenuTone.ACCENT
+            tone = if (state.capacityRejection == null) {
+                AquaDeviceMenuTone.ACCENT
+            } else {
+                AquaDeviceMenuTone.DANGER
+            }
         )
         AquaDeviceMenuDivider()
         AquaDeviceMenuValueRow(
@@ -155,6 +164,20 @@ private fun ReservoirVolumeSection(
         )
     }
 }
+
+private val DeviceDosingReservoirCapacityRejection.messageRes: Int
+    @StringRes get() = when (this) {
+        DeviceDosingReservoirCapacityRejection.REQUIRED ->
+            R.string.device_dosing_detail_container_volume_required
+        DeviceDosingReservoirCapacityRejection.INVALID_NUMBER ->
+            R.string.device_dosing_detail_container_volume_invalid
+        DeviceDosingReservoirCapacityRejection.POSITIVE_REQUIRED ->
+            R.string.device_dosing_detail_container_volume_positive
+        DeviceDosingReservoirCapacityRejection.UNSUPPORTED_PRECISION ->
+            R.string.device_dosing_detail_container_volume_precision
+        DeviceDosingReservoirCapacityRejection.OUT_OF_RANGE ->
+            R.string.device_dosing_detail_container_volume_range
+    }
 
 @Composable
 private fun ReservoirAlertsSection(

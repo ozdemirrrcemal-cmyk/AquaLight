@@ -194,6 +194,31 @@ class DosingUiLayerBoundaryTest {
     }
 
     @Test
+    fun `reservoir capacity precision and range stay outside presentation`() {
+        val fragment = source(
+            DOSING_SOURCE_ROOT + "channel/reservoir/DeviceDosingReservoirFragment.kt"
+        )
+        val viewModel = source(
+            DOSING_SOURCE_ROOT + "channel/reservoir/DeviceDosingReservoirViewModel.kt"
+        )
+        val policy = source(
+            "app/src/main/java/com/aqua/aqualight/application/devices/dosing/" +
+                "DeviceDosingReservoirCapacityPolicy.kt"
+        )
+
+        listOf(fragment, viewModel).forEach { presentation ->
+            assertFalse(presentation.contains("toDoubleOrNull"))
+            assertFalse(presentation.contains("BigDecimal"))
+            assertFalse(presentation.contains("4_294_967_295"))
+            assertFalse(presentation.contains("0.001"))
+        }
+        assertTrue(fragment.contains("putLong(STATE_RESERVOIR_CAPACITY_MICROLITERS"))
+        assertTrue(viewModel.contains("DeviceDosingReservoirCapacityPolicy.validate"))
+        assertTrue(policy.contains("BigDecimal"))
+        assertTrue(policy.contains("MAX_CAPACITY_MICROLITERS"))
+    }
+
+    @Test
     fun `dosing child fragments delegate feature state to viewmodels`() {
         val plan = source(DOSING_SOURCE_ROOT + "channel/plan/DeviceDosingPlanFragment.kt")
         val reservoir = source(

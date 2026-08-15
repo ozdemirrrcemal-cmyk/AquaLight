@@ -297,7 +297,9 @@ data class DeviceDosingReservoirSettings(
         require(trackingEnabled == (capacityMicroliters != null)) {
             "Reservoir capacity is required only while tracking is enabled."
         }
-        capacityMicroliters?.let { capacity -> require(capacity > 0L) }
+        capacityMicroliters?.let { capacity ->
+            require(DeviceDosingReservoirCapacityPolicy.isSupportedMicroliters(capacity))
+        }
     }
 }
 

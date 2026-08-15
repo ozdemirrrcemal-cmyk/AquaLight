@@ -121,6 +121,23 @@ class DeviceDosingChannelOperationsContractTest {
         }
     }
 
+    @Test
+    fun `reservoir settings enforce the application capacity range`() {
+        DeviceDosingReservoirSettings(
+            trackingEnabled = true,
+            capacityMicroliters = 4_294_967_295L,
+            lowLevelAlertEnabled = true
+        )
+
+        assertThrows(IllegalArgumentException::class.java) {
+            DeviceDosingReservoirSettings(
+                trackingEnabled = true,
+                capacityMicroliters = 4_294_967_296L,
+                lowLevelAlertEnabled = true
+            )
+        }
+    }
+
     private fun program(schedule: DeviceDosingProgramSchedule) = DeviceDosingProgram(
         enabled = true,
         weekdays = List(7) { true },

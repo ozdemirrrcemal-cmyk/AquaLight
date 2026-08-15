@@ -228,8 +228,12 @@
     <string name="device_dosing_detail_container_volume_input_label">Kapasite (ml)</string>
     <string name="device_dosing_detail_container_volume_hint">Örn. 450</string>
     <string name="device_dosing_detail_container_volume_required">Kap kapasitesini girin.</string>
+    <string name="device_dosing_detail_container_volume_invalid">Geçerli bir kap kapasitesi girin.</string>
+    <string name="device_dosing_detail_container_volume_positive">Kap kapasitesi sıfırdan büyük olmalıdır.</string>
+    <string name="device_dosing_detail_container_volume_precision">Kapasiteyi desteklenen hassasiyetle girin.</string>
+    <string name="device_dosing_detail_container_volume_range">Desteklenen aralıkta bir kapasite girin.</string>
     <string name="device_dosing_detail_available_volume">Kullanılabilir hacim</string>
-    <string name="device_dosing_detail_value_container_ml">%1$.1f ml</string>
+    <string name="device_dosing_detail_value_container_ml">%1$s ml</string>
     <string name="device_dosing_detail_reservoir_alerts_section">Sıvı uyarıları</string>
     <string name="device_dosing_detail_low_level_alert">Düşük seviye uyarısı</string>
     <string name="device_dosing_detail_low_level_alert_description" formatted="false">Kullanılabilir sıvı, kap kapasitesinin %10 seviyesine veya altına düştüğünde bildirim gönderir.</string>

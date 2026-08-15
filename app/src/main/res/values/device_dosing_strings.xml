@@ -228,8 +228,12 @@
     <string name="device_dosing_detail_container_volume_input_label">Capacity (ml)</string>
     <string name="device_dosing_detail_container_volume_hint">e.g. 450</string>
     <string name="device_dosing_detail_container_volume_required">Enter the container capacity.</string>
+    <string name="device_dosing_detail_container_volume_invalid">Enter a valid container capacity.</string>
+    <string name="device_dosing_detail_container_volume_positive">Container capacity must be greater than zero.</string>
+    <string name="device_dosing_detail_container_volume_precision">Enter the capacity using a supported precision.</string>
+    <string name="device_dosing_detail_container_volume_range">Enter a capacity within the supported range.</string>
     <string name="device_dosing_detail_available_volume">Available volume</string>
-    <string name="device_dosing_detail_value_container_ml">%1$.1f ml</string>
+    <string name="device_dosing_detail_value_container_ml">%1$s ml</string>
     <string name="device_dosing_detail_reservoir_alerts_section">Supply alerts</string>
     <string name="device_dosing_detail_low_level_alert">Low-level alert</string>
     <string name="device_dosing_detail_low_level_alert_description" formatted="false">Sends a notification when available liquid falls to 10 percent or less of container capacity.</string>
