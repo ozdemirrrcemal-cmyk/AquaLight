@@ -39,14 +39,14 @@ internal fun DosingChannelSummary(
                 ),
                 colors = colors,
                 typography = typography,
-                modifier = Modifier.weight(1f)
+                modifier = Modifier.weight(SUMMARY_LEADING_COLUMN_WEIGHT)
             )
             DosingMetricSummary(
                 icon = DosingMetricGlyphType.DAYS,
                 label = state.scheduleDays.summaryLabel(),
                 colors = colors,
                 typography = typography,
-                modifier = Modifier.weight(1f)
+                modifier = Modifier.weight(SUMMARY_TRAILING_COLUMN_WEIGHT)
             )
         }
         Row(
@@ -59,14 +59,14 @@ internal fun DosingChannelSummary(
                 progress = state.programProgress,
                 colors = colors,
                 typography = typography,
-                modifier = Modifier.weight(1f)
+                modifier = Modifier.weight(SUMMARY_LEADING_COLUMN_WEIGHT)
             )
             state.reservoir?.let { reservoir ->
                 DosingReservoirSummary(
                     state = reservoir,
                     colors = colors,
                     typography = typography,
-                    modifier = Modifier.weight(1f)
+                    modifier = Modifier.weight(SUMMARY_TRAILING_COLUMN_WEIGHT)
                 )
             }
         }
@@ -170,6 +170,8 @@ private fun DosingProgramModeUiState.compactLabelRes(): Int = when (this) {
 }
 
 private const val DAY_SEPARATOR = " · "
+private const val SUMMARY_LEADING_COLUMN_WEIGHT = 0.92f
+private const val SUMMARY_TRAILING_COLUMN_WEIGHT = 1.08f
 private val SUMMARY_ROW_GAP = 5.dp
 private val SUMMARY_COLUMN_GAP = 18.dp
 private val SUMMARY_ICON_GAP = 6.dp
