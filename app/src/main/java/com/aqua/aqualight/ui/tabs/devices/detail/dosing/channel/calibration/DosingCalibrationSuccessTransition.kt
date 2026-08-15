@@ -26,7 +26,6 @@ internal fun dosingCalibrationSuccessTransition(
                     step = DeviceDosingCalibrationStep.PRIME
                 )
             }
-            .updateChannel { channel -> channel.copy(channelTitle = snapshot.channelTitle) }
             .updateInput { input -> input.copy(displayName = snapshot.channelTitle) }
             .copy(error = null),
         markLocalProgress = true

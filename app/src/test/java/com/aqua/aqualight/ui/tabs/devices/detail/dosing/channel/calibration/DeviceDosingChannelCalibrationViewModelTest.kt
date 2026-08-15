@@ -59,6 +59,48 @@ class DeviceDosingChannelCalibrationViewModelTest {
     }
 
     @Test
+    fun `firmware refresh never prefills or overwrites the required name draft`() =
+        runTest(dispatcher) {
+            val operations = FakeDosingCalibrationOperations(calibrationSnapshot())
+            val viewModel = viewModel(operations)
+
+            bind(viewModel)
+            advanceUntilIdle()
+            assertEquals("", viewModel.uiState.value.displayName)
+
+            viewModel.onAction(
+                DeviceDosingCalibrationAction.DisplayNameChanged("Trace Elements")
+            )
+            operations.publish(calibrationSnapshot().copy(channelTitle = "Firmware Name"))
+            advanceUntilIdle()
+
+            assertEquals("Trace Elements", viewModel.uiState.value.displayName)
+
+            viewModel.onAction(DeviceDosingCalibrationAction.SaveDisplayName)
+            advanceUntilIdle()
+
+            assertEquals("Trace Elements", viewModel.uiState.value.displayName)
+            assertEquals("Trace Elements", operations.savedName)
+        }
+
+    @Test
+    fun `calibration name starts empty and is mandatory`() =
+        runTest(dispatcher) {
+            val operations = FakeDosingCalibrationOperations(calibrationSnapshot())
+            val viewModel = viewModel(operations)
+
+            bind(viewModel)
+            advanceUntilIdle()
+            assertEquals("", viewModel.uiState.value.displayName)
+            viewModel.onAction(DeviceDosingCalibrationAction.SaveDisplayName)
+            advanceUntilIdle()
+
+            assertEquals(DeviceDosingCalibrationStep.NAME, viewModel.uiState.value.step)
+            assertEquals(DeviceDosingCalibrationError.INVALID_NAME, viewModel.uiState.value.error)
+            assertEquals("", operations.savedName)
+        }
+
+    @Test
     fun `failed prime start clears request without stop side effect`() = runTest(dispatcher) {
         val operations = FakeDosingCalibrationOperations(calibrationSnapshot()).apply {
             primeStartResult = DeviceDosingCalibrationResult.Failed
@@ -101,8 +143,7 @@ class DeviceDosingChannelCalibrationViewModelTest {
         viewModel.bind(
             calibrationRoute().copy(
                 pumpCount = 4,
-                channelNumber = 2,
-                channelTitle = "Changed title"
+                channelNumber = 2
             )
         )
         advanceUntilIdle()

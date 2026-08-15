@@ -233,6 +233,7 @@
     <string name="device_dosing_detail_reservoir_alerts_section">Sıvı uyarıları</string>
     <string name="device_dosing_detail_low_level_alert">Düşük seviye uyarısı</string>
     <string name="device_dosing_detail_low_level_alert_description" formatted="false">Kullanılabilir sıvı, kap kapasitesinin %10 seviyesine veya altına düştüğünde bildirim gönderir.</string>
+    <string name="device_dosing_detail_low_level_alert_tracking_disabled_description">Hazne takibi kapalı; düşük seviye bildirimi gönderilmez.</string>
     <string name="device_dosing_detail_save_reservoir">Hazne ayarlarını kaydet</string>
 
     <string name="device_dosing_detail_manual_amount">Doz miktarı</string>

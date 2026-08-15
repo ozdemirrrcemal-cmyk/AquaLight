@@ -19,7 +19,6 @@ import com.aqua.aqualight.ui.tabs.devices.detail.dosing.presentation.card.Dosing
 import com.aqua.aqualight.ui.tabs.devices.detail.dosing.presentation.card.toInitialDosingChannelCardUiState
 import com.aqua.aqualight.ui.tabs.devices.detail.dosing.presentation.card.toPumpVisualState
 import com.aqua.aqualight.ui.tabs.devices.detail.dosing.presentation.card.withChannelSnapshot
-import com.aqua.aqualight.ui.tabs.devices.detail.dosing.presentation.card.withNavigationTarget
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.Flow
@@ -48,11 +47,8 @@ class DeviceDosingRootViewModel(
     private var boundDeviceUid: String = ""
     private var fallbackTitle: String = ""
     private var latestRootSnapshot: DeviceRootSnapshot? = null
-    private var channelTargets: Map<String, DeviceDosingChannelNavigationTarget> = emptyMap()
     private var channelSnapshots: Map<String, DeviceDosingChannelSnapshot> = emptyMap()
     private var observeJob: Job? = null
-    private var channelStateJob: Job? = null
-    private var channelRefreshJob: Job? = null
     private var channelDataJob: Job? = null
     private var channelDataRefreshJob: Job? = null
     private var channelNavigationJob: Job? = null
@@ -64,14 +60,11 @@ class DeviceDosingRootViewModel(
         val deviceUid = deviceUidText.trim()
         if (deviceUid.isBlank()) {
             observeJob?.cancel()
-            channelStateJob?.cancel()
-            channelRefreshJob?.cancel()
             channelDataJob?.cancel()
             channelDataRefreshJob?.cancel()
             channelNavigationJob?.cancel()
             boundDeviceUid = ""
             latestRootSnapshot = null
-            channelTargets = emptyMap()
             channelSnapshots = emptyMap()
             _uiState.value = emptyState(fallbackTitle, "")
             return
@@ -81,11 +74,8 @@ class DeviceDosingRootViewModel(
         boundDeviceUid = deviceUid
         this.fallbackTitle = fallbackTitle
         latestRootSnapshot = operations.current(deviceUid)
-        channelTargets = emptyMap()
         channelSnapshots = emptyMap()
         observeJob?.cancel()
-        channelStateJob?.cancel()
-        channelRefreshJob?.cancel()
         channelDataJob?.cancel()
         channelDataRefreshJob?.cancel()
         channelNavigationJob?.cancel()
@@ -97,16 +87,6 @@ class DeviceDosingRootViewModel(
                 latestRootSnapshot = snapshot
                 renderBoundState()
             }
-        }
-        channelStateJob = viewModelScope.launch {
-            channelNavigationOperations.observeTargets(deviceUid).collect { targets ->
-                if (boundDeviceUid != deviceUid) return@collect
-                channelTargets = targets.associateBy(DeviceDosingChannelNavigationTarget::slotId)
-                renderBoundState()
-            }
-        }
-        channelRefreshJob = viewModelScope.launch {
-            channelNavigationOperations.refreshTargets(deviceUid)
         }
         channelDataJob = viewModelScope.launch {
             channelOperations.observeAll(deviceUid).collect { snapshots ->
@@ -145,7 +125,6 @@ class DeviceDosingRootViewModel(
         val deviceUid = boundDeviceUid
         _uiState.value = latestRootSnapshot?.toRootUiState(
             fallbackTitle = fallbackTitle,
-            targets = channelTargets,
             snapshots = channelSnapshots
         ) ?: emptyState(fallbackTitle, deviceUid)
     }
@@ -164,7 +143,6 @@ class DeviceDosingRootViewModel(
 
     private fun DeviceRootSnapshot.toRootUiState(
         fallbackTitle: String,
-        targets: Map<String, DeviceDosingChannelNavigationTarget>,
         snapshots: Map<String, DeviceDosingChannelSnapshot>
     ): DeviceDosingRootUiState {
         val menuSections = DeviceRootMenuMapper.overview(kind = KIND, snapshot = this)
@@ -185,7 +163,6 @@ class DeviceDosingRootViewModel(
             channels = catalogChannels.map { slot ->
                 slot.toInitialDosingChannelCardUiState()
                     .withChannelSnapshot(snapshots[slot.id.value])
-                    .withNavigationTarget(targets[slot.id.value])
             },
             pumpStates = catalogChannels.map { slot ->
                 snapshots[slot.id.value]?.toPumpVisualState() ?: DosingPumpVisualState.IDLE

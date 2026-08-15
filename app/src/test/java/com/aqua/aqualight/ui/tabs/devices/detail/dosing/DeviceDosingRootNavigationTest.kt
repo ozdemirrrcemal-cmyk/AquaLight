@@ -43,7 +43,6 @@ class DeviceDosingRootNavigationTest {
             slotId = SLOT_ID,
             pumpCount = 2,
             channelNumber = 1,
-            channelTitle = "Nutrients",
             lastCalibratedAtEpochSeconds = 1_786_320_000L,
             destination = DeviceDosingChannelDestination.DETAIL
         )

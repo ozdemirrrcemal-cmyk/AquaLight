@@ -51,6 +51,26 @@ class DosingChannelCardMapperTest {
     }
 
     @Test
+    fun `central snapshot name replaces catalog bootstrap exactly`() {
+        val snapshot = snapshot(
+            program = hourlyProgram(),
+            progress = hourlyProgress(),
+            reservoir = DeviceDosingReservoirSnapshot()
+        )
+        val initial = channelSlot().toInitialDosingChannelCardUiState()
+
+        assertEquals("Channel 2", initial.displayName)
+        assertEquals(
+            "Channel 2",
+            initial.withChannelSnapshot(snapshot.copy(channelTitle = "Channel 2")).displayName
+        )
+        assertEquals(
+            "Trace Elements",
+            initial.withChannelSnapshot(snapshot.copy(channelTitle = "Trace Elements")).displayName
+        )
+    }
+
+    @Test
     fun `hourly snapshot keeps scheduled and manual usage separate while hiding disabled reservoir`() {
         val program = hourlyProgram()
         val snapshot = snapshot(

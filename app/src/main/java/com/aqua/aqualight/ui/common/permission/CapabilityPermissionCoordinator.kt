@@ -72,14 +72,22 @@ class CapabilityPermissionCoordinator(
 
     override fun onResume(owner: LifecycleOwner) {
         val capability = continuation.pendingCapability ?: return
-        if (continuation.waitingForSettings) {
-            completeAction(
-                continuation.consumeSettingsReturn(policy().isGranted(capability))
-            )
-        } else {
-            completeAction(
-                continuation.consumeIfGranted(policy().isGranted(capability))
-            )
+        continuation.pendingExplanationMode?.let { explanationMode ->
+            showSheet(explanationMode.toBottomSheetMode())
+            return
+        }
+        when {
+            continuation.waitingForSettings -> {
+                completeAction(
+                    continuation.consumeSettingsReturn(policy().isGranted(capability))
+                )
+            }
+            continuation.waitingForRuntimePermission -> {
+                completeAction(
+                    continuation.consumeIfGranted(policy().isGranted(capability))
+                )
+            }
+            else -> dispatchCurrentDecision()
         }
     }
 
@@ -168,6 +176,7 @@ class CapabilityPermissionCoordinator(
             return
         }
 
+        continuation.markWaitingForRuntimePermission()
         policy.markRequested(capability)
         runCatching {
             permissionLauncher.launch(permissions)
@@ -187,6 +196,7 @@ class CapabilityPermissionCoordinator(
 
     private fun showSheet(mode: CapabilityPermissionBottomSheet.Mode) {
         val capability = continuation.pendingCapability ?: return
+        continuation.markShowingExplanation(mode.toContinuationMode())
         val manager = fragment.childFragmentManager
         if (manager.isStateSaved || manager.findFragmentByTag(sheetTag) != null) return
 
@@ -278,6 +288,8 @@ class CapabilityPermissionCoordinator(
             STATE_CAPABILITY to snapshot.capabilityName,
             STATE_ACTION to snapshot.actionToken,
             STATE_NOTIFICATION_CHANNEL_ID to snapshot.notificationChannelId,
+            STATE_EXPLANATION_MODE to snapshot.explanationModeName,
+            STATE_WAITING_FOR_RUNTIME_PERMISSION to snapshot.waitingForRuntimePermission,
             STATE_WAITING_FOR_SETTINGS to snapshot.waitingForSettings
         )
     }
@@ -289,6 +301,10 @@ class CapabilityPermissionCoordinator(
                     capabilityName = restored.getString(STATE_CAPABILITY),
                     actionToken = restored.getString(STATE_ACTION),
                     notificationChannelId = restored.getString(STATE_NOTIFICATION_CHANNEL_ID),
+                    explanationModeName = restored.getString(STATE_EXPLANATION_MODE),
+                    waitingForRuntimePermission = restored.getBoolean(
+                        STATE_WAITING_FOR_RUNTIME_PERMISSION
+                    ),
                     waitingForSettings = restored.getBoolean(STATE_WAITING_FOR_SETTINGS)
                 )
             }
@@ -300,6 +316,24 @@ class CapabilityPermissionCoordinator(
         const val STATE_CAPABILITY = "capability"
         const val STATE_ACTION = "action"
         const val STATE_NOTIFICATION_CHANNEL_ID = "notification_channel_id"
+        const val STATE_EXPLANATION_MODE = "explanation_mode"
+        const val STATE_WAITING_FOR_RUNTIME_PERMISSION = "waiting_for_runtime_permission"
         const val STATE_WAITING_FOR_SETTINGS = "waiting_for_settings"
     }
 }
+
+private fun CapabilityPermissionBottomSheet.Mode.toContinuationMode() =
+    when (this) {
+        CapabilityPermissionBottomSheet.Mode.RATIONALE ->
+            CapabilityPermissionExplanationMode.RATIONALE
+        CapabilityPermissionBottomSheet.Mode.OPEN_SETTINGS ->
+            CapabilityPermissionExplanationMode.OPEN_SETTINGS
+    }
+
+private fun CapabilityPermissionExplanationMode.toBottomSheetMode() =
+    when (this) {
+        CapabilityPermissionExplanationMode.RATIONALE ->
+            CapabilityPermissionBottomSheet.Mode.RATIONALE
+        CapabilityPermissionExplanationMode.OPEN_SETTINGS ->
+            CapabilityPermissionBottomSheet.Mode.OPEN_SETTINGS
+    }

@@ -37,6 +37,65 @@ class CapabilityPermissionContinuationStateTest {
     }
 
     @Test
+    fun `app settings explanation survives recreation until user opens settings`() {
+        val original = CapabilityPermissionContinuationState().apply {
+            begin(
+                capability = AppCapability.NOTIFICATIONS,
+                actionToken = "enable_app_notifications"
+            )
+            markShowingExplanation(CapabilityPermissionExplanationMode.OPEN_SETTINGS)
+        }
+
+        val recreated = CapabilityPermissionContinuationState().apply {
+            restore(original.snapshot())
+        }
+
+        assertEquals(
+            CapabilityPermissionExplanationMode.OPEN_SETTINGS,
+            recreated.pendingExplanationMode
+        )
+        assertEquals("enable_app_notifications", recreated.pendingActionToken)
+        assertFalse(recreated.waitingForSettings)
+
+        recreated.markWaitingForSettings()
+
+        assertNull(recreated.pendingExplanationMode)
+        assertEquals(
+            "enable_app_notifications",
+            recreated.consumeSettingsReturn(isGranted = true)
+        )
+    }
+
+    @Test
+    fun `channel settings explanation preserves channel and action across recreation`() {
+        val original = CapabilityPermissionContinuationState().apply {
+            begin(
+                capability = AppCapability.NOTIFICATIONS,
+                actionToken = "repair_device_alerts",
+                notificationChannelId = "device_alerts"
+            )
+            markShowingExplanation(CapabilityPermissionExplanationMode.OPEN_SETTINGS)
+        }
+
+        val recreated = CapabilityPermissionContinuationState().apply {
+            restore(original.snapshot())
+        }
+
+        assertEquals("device_alerts", recreated.pendingNotificationChannelId)
+        assertEquals(
+            CapabilityPermissionExplanationMode.OPEN_SETTINGS,
+            recreated.pendingExplanationMode
+        )
+
+        recreated.markWaitingForSettings()
+
+        assertEquals(
+            "repair_device_alerts",
+            recreated.consumeSettingsReturn(isGranted = true)
+        )
+    }
+
+    @Test
     fun `settings denial clears pending action`() {
         val state = CapabilityPermissionContinuationState().apply {
             begin(
@@ -81,6 +140,28 @@ class CapabilityPermissionContinuationStateTest {
 
         assertEquals("read_ssid", state.consumeIfGranted(isGranted = true))
         assertNull(state.consumeIfGranted(isGranted = true))
+    }
+
+    @Test
+    fun `runtime permission stage survives recreation`() {
+        val original = CapabilityPermissionContinuationState().apply {
+            begin(
+                capability = AppCapability.NOTIFICATIONS,
+                actionToken = "enable_notifications"
+            )
+            markWaitingForRuntimePermission()
+        }
+
+        val recreated = CapabilityPermissionContinuationState().apply {
+            restore(original.snapshot())
+        }
+
+        assertTrue(recreated.waitingForRuntimePermission)
+        assertNull(recreated.pendingExplanationMode)
+        assertEquals(
+            "enable_notifications",
+            recreated.consumeIfGranted(isGranted = true)
+        )
     }
 
     @Test

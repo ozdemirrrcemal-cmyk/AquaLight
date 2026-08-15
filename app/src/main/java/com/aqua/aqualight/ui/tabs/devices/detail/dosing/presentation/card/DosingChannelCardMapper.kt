@@ -1,13 +1,12 @@
 package com.aqua.aqualight.ui.tabs.devices.detail.dosing.presentation.card
 
 import com.aqua.aqualight.application.devices.DeviceDosingChannelSlot
-import com.aqua.aqualight.application.devices.dosing.DeviceDosingChannelDestination
-import com.aqua.aqualight.application.devices.dosing.DeviceDosingChannelNavigationTarget
 import com.aqua.aqualight.application.devices.dosing.DeviceDosingChannelSnapshot
 import com.aqua.aqualight.application.devices.dosing.DeviceDosingRuntimeReason
 import com.aqua.aqualight.ui.tabs.devices.detail.dosing.DosingPumpVisualState
 import java.time.LocalDate
 
+/** Catalog bootstrap shown only until the central firmware snapshot is available. */
 internal fun DeviceDosingChannelSlot.toInitialDosingChannelCardUiState(): DosingChannelCardUiState =
     DosingChannelCardUiState(
         slotId = id.value,
@@ -15,27 +14,12 @@ internal fun DeviceDosingChannelSlot.toInitialDosingChannelCardUiState(): Dosing
         displayName = defaultDisplayName
     )
 
-internal fun DosingChannelCardUiState.withNavigationTarget(
-    target: DeviceDosingChannelNavigationTarget?
-): DosingChannelCardUiState = target?.let { navigationTarget ->
-    copy(
-        displayName = navigationTarget.channelTitle.ifBlank { displayName },
-        visualState = when (navigationTarget.destination) {
-            DeviceDosingChannelDestination.DETAIL -> visualState.takeUnless { state ->
-                state == DosingChannelVisualState.NOT_CONFIGURED
-            } ?: DosingChannelVisualState.PROGRAM_NOT_CONFIGURED
-            DeviceDosingChannelDestination.CALIBRATION ->
-                DosingChannelVisualState.NOT_CONFIGURED
-        }
-    )
-} ?: this
-
 internal fun DosingChannelCardUiState.withChannelSnapshot(
     snapshot: DeviceDosingChannelSnapshot?,
     today: LocalDate = LocalDate.now()
 ): DosingChannelCardUiState = snapshot?.let { channel ->
     copy(
-        displayName = channel.channelTitle.ifBlank { displayName },
+        displayName = channel.channelTitle,
         visualState = channel.toCardVisualState(),
         scheduleDays = channel.toScheduleDaysUiState(),
         programProgress = channel.toProgramProgressUiState(today),

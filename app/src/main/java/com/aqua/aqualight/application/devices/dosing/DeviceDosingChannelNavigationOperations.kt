@@ -1,8 +1,6 @@
 package com.aqua.aqualight.application.devices.dosing
 
 import com.aqua.aqualight.application.devices.DeviceRootRoute
-import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.flowOf
 
 /** Central application boundary for resolving one Dosing channel click to an authorized screen. */
 fun interface DeviceDosingChannelNavigationOperations {
@@ -11,17 +9,7 @@ fun interface DeviceDosingChannelNavigationOperations {
         slotId: String
     ): DeviceDosingChannelNavigationTarget?
 
-    /** Observes targets projected from the central, device-scoped Dosing runtime state. */
-    fun observeTargets(deviceUid: String): Flow<List<DeviceDosingChannelNavigationTarget>> =
-        flowOf(emptyList())
-
-    /** Refreshes the central Dosing runtime state when the root screen is bound. */
-    suspend fun refreshTargets(deviceUid: String): Boolean = false
-
-    /**
-     * Resolves from current published state when available; implementations may fall back to
-     * authoritative runtime status/recovery when published state is absent.
-     */
+    /** Resolves from current central state, refreshing authoritative runtime state if required. */
     suspend fun resolveCurrent(
         deviceUid: String,
         slotId: String
@@ -33,7 +21,6 @@ data class DeviceDosingChannelNavigationTarget(
     val slotId: String,
     val pumpCount: Int,
     val channelNumber: Int,
-    val channelTitle: String,
     val lastCalibratedAtEpochSeconds: Long,
     val destination: DeviceDosingChannelDestination
 )

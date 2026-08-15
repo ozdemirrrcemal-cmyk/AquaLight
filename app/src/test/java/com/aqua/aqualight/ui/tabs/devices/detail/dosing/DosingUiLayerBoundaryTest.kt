@@ -47,6 +47,16 @@ class DosingUiLayerBoundaryTest {
     @Test
     fun `channel navigation stays behind disconnected application and route boundaries`() {
         val rootFragment = source(DOSING_SOURCE_ROOT + "DeviceDosingRootFragment.kt")
+        val rootViewModel = source(DOSING_SOURCE_ROOT + "DeviceDosingRootViewModel.kt")
+        val cardMapper = source(CARD_SOURCE_ROOT + "DosingChannelCardMapper.kt")
+        val navigationContract = source(
+            "app/src/main/java/com/aqua/aqualight/application/devices/dosing/" +
+                "DeviceDosingChannelNavigationOperations.kt"
+        )
+        val calibrationSnapshotReducer = source(
+            DOSING_SOURCE_ROOT +
+                "channel/calibration/DosingCalibrationSnapshotReducer.kt"
+        )
         val operations = source(
             "app/src/main/java/com/aqua/aqualight/data/devices/dosing/" +
                 "UnavailableDeviceDosingChannelNavigationOperations.kt"
@@ -59,13 +69,20 @@ class DosingUiLayerBoundaryTest {
         assertTrue(rootFragment.contains("AppRouteNavigator.openDosingChannel"))
         assertFalse(rootFragment.contains("DeviceDosingChannelDetailFragmentArgs"))
         assertFalse(rootFragment.contains("DeviceDosingChannelCalibrationFragmentArgs"))
-        assertTrue(operations.contains("flowOf(emptyList())"))
-        assertTrue(operations.contains("refreshTargets(deviceUid: String): Boolean = false"))
+        assertFalse(operations.contains("observeTargets"))
+        assertFalse(operations.contains("refreshTargets"))
         assertFalse(operations.contains("runtime.modules"))
         assertFalse(operations.contains("DevicesRepository"))
         assertTrue(navigator.contains("fun openDosingChannel("))
         assertTrue(appGraph.contains("deviceDosingChannelCalibrationFragment"))
         assertTrue(appGraph.contains("deviceDosingChannelDetailFragment"))
+        assertFalse(rootViewModel.contains("withNavigationTarget"))
+        assertFalse(cardMapper.contains("DeviceDosingChannelNavigationTarget"))
+        assertFalse(cardMapper.contains("channel.channelTitle.ifBlank"))
+        assertFalse(navigationContract.contains("channelTitle"))
+        assertFalse(navigator.contains("channelTitle"))
+        assertFalse(appGraph.contains("channelTitle"))
+        assertFalse(calibrationSnapshotReducer.contains("displayName = snapshot.channelTitle"))
     }
 
     @Test

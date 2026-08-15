@@ -121,6 +121,7 @@ data class DeviceDosingCalibrationSnapshot(
     val slotId: String,
     val pumpCount: Int,
     val channelNumber: Int,
+    /** Firmware-authoritative effective name: default name or the persisted user name. */
     val channelTitle: String,
     val deviceUptimeMs: Long,
     val calibrated: Boolean,
@@ -134,7 +135,15 @@ data class DeviceDosingCalibrationSnapshot(
     val verificationDoseComplete: Boolean,
     val verificationDoseRemainingMs: Long,
     val manualActive: Boolean
-)
+) {
+    init {
+        require(deviceUid.isNotBlank())
+        require(slotId.isNotBlank())
+        require(pumpCount > 0)
+        require(channelNumber in 1..pumpCount)
+        require(channelTitle.isNotBlank())
+    }
+}
 
 sealed interface DeviceDosingCalibrationResult {
     data class Success(

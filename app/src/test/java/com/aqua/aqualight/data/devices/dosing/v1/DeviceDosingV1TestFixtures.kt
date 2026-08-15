@@ -156,7 +156,7 @@ internal object DeviceDosingV1TestFixtures {
         .put("program", program(programMode))
         .put("usageToday", usage())
         .put("index", 0)
-        .put("defaultName", "Pump 1")
+        .put("defaultName", "Channel 1")
         .put("displayName", "Macro")
         .put("effectiveName", "Macro")
         .put("profileManaged", true)

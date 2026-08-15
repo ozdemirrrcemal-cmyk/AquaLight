@@ -4,7 +4,6 @@ import com.aqua.aqualight.application.devices.dosing.DeviceDosingCalibrationResu
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.test.runTest
 import org.junit.Assert.assertEquals
-import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNull
 import org.junit.Test
 
@@ -19,13 +18,6 @@ class UnavailableDeviceDosingOperationsTest {
         )
         assertNull(
             UnavailableDeviceDosingChannelNavigationOperations.resolve("device", "pump-1")
-        )
-        assertEquals(
-            emptyList<Any>(),
-            UnavailableDeviceDosingChannelNavigationOperations.observeTargets("device").first()
-        )
-        assertFalse(
-            UnavailableDeviceDosingChannelNavigationOperations.refreshTargets("device")
         )
     }
 }

@@ -22,9 +22,6 @@
             android:name="slotId"
             app:argType="string" />
         <argument
-            android:name="channelTitle"
-            app:argType="string" />
-        <argument
             android:name="pumpCount"
             app:argType="integer" />
         <argument
@@ -35,7 +32,7 @@
             android:defaultValue="false"
             app:argType="boolean" />
         <deepLink
-            app:uri="aqualight://app/device/{deviceUid}/dosing/channel/{slotId}/calibration?channelTitle={channelTitle}&amp;pumpCount={pumpCount}&amp;channelNumber={channelNumber}" />
+            app:uri="aqualight://app/device/{deviceUid}/dosing/channel/{slotId}/calibration?pumpCount={pumpCount}&amp;channelNumber={channelNumber}" />
     </fragment>
 
     <fragment
@@ -50,9 +47,6 @@
             android:name="slotId"
             app:argType="string" />
         <argument
-            android:name="channelTitle"
-            app:argType="string" />
-        <argument
             android:name="pumpCount"
             app:argType="integer" />
         <argument
@@ -62,7 +56,7 @@
             android:name="lastCalibratedAtEpochSeconds"
             app:argType="long" />
         <deepLink
-            app:uri="aqualight://app/device/{deviceUid}/dosing/channel/{slotId}/detail?channelTitle={channelTitle}&amp;pumpCount={pumpCount}&amp;channelNumber={channelNumber}&amp;lastCalibratedAtEpochSeconds={lastCalibratedAtEpochSeconds}" />
+            app:uri="aqualight://app/device/{deviceUid}/dosing/channel/{slotId}/detail?pumpCount={pumpCount}&amp;channelNumber={channelNumber}&amp;lastCalibratedAtEpochSeconds={lastCalibratedAtEpochSeconds}" />
         <action
             android:id="@+id/action_deviceDosingChannelDetailFragment_to_deviceDosingChannelCalibrationFragment"
             app:destination="@id/deviceDosingChannelCalibrationFragment"
@@ -96,9 +90,6 @@
             app:argType="string" />
         <argument
             android:name="slotId"
-            app:argType="string" />
-        <argument
-            android:name="channelTitle"
             app:argType="string" />
         <argument
             android:name="pumpCount"
@@ -148,9 +139,6 @@
             android:name="slotId"
             app:argType="string" />
         <argument
-            android:name="channelTitle"
-            app:argType="string" />
-        <argument
             android:name="pumpCount"
             app:argType="integer" />
         <argument
@@ -168,9 +156,6 @@
             app:argType="string" />
         <argument
             android:name="slotId"
-            app:argType="string" />
-        <argument
-            android:name="channelTitle"
             app:argType="string" />
         <argument
             android:name="pumpCount"
@@ -200,9 +185,6 @@
             android:name="slotId"
             app:argType="string" />
         <argument
-            android:name="channelTitle"
-            app:argType="string" />
-        <argument
             android:name="pumpCount"
             app:argType="integer" />
         <argument
@@ -228,9 +210,6 @@
             app:argType="string" />
         <argument
             android:name="slotId"
-            app:argType="string" />
-        <argument
-            android:name="channelTitle"
             app:argType="string" />
         <argument
             android:name="pumpCount"
@@ -266,9 +245,6 @@
             app:argType="string" />
         <argument
             android:name="slotId"
-            app:argType="string" />
-        <argument
-            android:name="channelTitle"
             app:argType="string" />
         <argument
             android:name="pumpCount"

@@ -45,10 +45,8 @@ internal class DosingCalibrationWorkflow(
         mutableUiState.value = DeviceDosingCalibrationUiState(
             channel = DosingCalibrationChannelState(
                 pumpCount = normalized.pumpCount,
-                channelNumber = normalized.channelNumber,
-                channelTitle = normalized.channelTitle
-            ),
-            input = DosingCalibrationInputState(displayName = normalized.channelTitle)
+                channelNumber = normalized.channelNumber
+            )
         )
         session.observeJob = scope.launch {
             operations.observe(normalized.deviceUid, normalized.slotId).collect { snapshot ->

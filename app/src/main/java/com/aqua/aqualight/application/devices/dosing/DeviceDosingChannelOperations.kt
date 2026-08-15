@@ -279,7 +279,7 @@ data class DeviceDosingReservoirSnapshot(
     val remainingMicroliters: Long = 0L,
     val accountingCertain: Boolean = true,
     val lowLevelActive: Boolean = false,
-    val lowLevelAlertEnabled: Boolean = true
+    val lowLevelAlertEnabled: Boolean = false
 ) {
     init {
         require(capacityMicroliters >= 0L)
@@ -352,6 +352,7 @@ data class DeviceDosingChannelSnapshot(
     val slotId: String,
     val pumpCount: Int,
     val channelNumber: Int,
+    /** Firmware-authoritative effective name: default name or the persisted user name. */
     val channelTitle: String,
     val revision: Long,
     val runtimeEnabled: Boolean,

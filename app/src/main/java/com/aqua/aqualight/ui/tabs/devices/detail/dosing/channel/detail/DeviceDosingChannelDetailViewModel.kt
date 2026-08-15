@@ -18,6 +18,7 @@ import kotlinx.coroutines.launch
 
 data class DeviceDosingChannelDetailDraft(
     val routeValid: Boolean = false,
+    val channelTitle: String = "",
     val lastCalibratedAtEpochSeconds: Long = 0L,
     val missedDoseRecoveryEnabled: Boolean = false,
     val missedDoseRecoveryEditable: Boolean = false,
@@ -182,6 +183,7 @@ internal class DeviceDosingChannelDetailViewModel(
         mutableDraft.value = mutableDraft.value.copy(
             routeValid = snapshot.calibrated && DeviceDosingChannelDetailDraftPolicy
                 .isValidCalibrationEpochSeconds(snapshot.lastCalibratedAtEpochSeconds),
+            channelTitle = snapshot.channelTitle,
             lastCalibratedAtEpochSeconds = snapshot.lastCalibratedAtEpochSeconds,
             missedDoseRecoveryEnabled = snapshot.program?.missedDoseRecoveryEnabled == true,
             missedDoseRecoveryEditable = snapshot.program != null &&

@@ -20,17 +20,28 @@ abstract class DeviceDosingChannelDestinationFragment(
 ) : Fragment(layoutRes) {
 
     protected abstract val destinationTitle: String
+    private var headerBinding: LayoutAquaHeaderBinding? = null
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
-        val header = LayoutAquaHeaderBinding.bind(view.findViewById(R.id.appHeader))
-        header.setupAquaHeader(
+        headerBinding = LayoutAquaHeaderBinding.bind(view.findViewById(R.id.appHeader))
+        updateDestinationTitle(destinationTitle)
+    }
+
+    /** Updates the shared header from destination-owned central presentation state. */
+    protected fun updateDestinationTitle(title: String) {
+        headerBinding?.setupAquaHeader(
             fragment = this,
             config = AquaHeaderConfig(
-                titleOverride = destinationTitle,
+                titleOverride = title,
                 onBackClick = ::onBackRequested
             )
         )
+    }
+
+    override fun onDestroyView() {
+        headerBinding = null
+        super.onDestroyView()
     }
 
     protected open fun onBackRequested() {

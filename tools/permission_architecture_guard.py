@@ -149,6 +149,8 @@ required_files = (
     "app/src/test/java/com/aqua/aqualight/ui/common/permission/CapabilityPermissionUiSpecResolverTest.kt",
     "app/src/test/java/com/aqua/aqualight/ui/common/permission/CapabilityPermissionContinuationStateTest.kt",
     "app/src/androidTest/java/com/aqua/aqualight/platform/permissions/PermissionInfrastructureInstrumentedTest.kt",
+    "app/src/androidTest/java/com/aqua/aqualight/ui/common/permission/CapabilityPermissionCoordinatorRecreationInstrumentedTest.kt",
+    "app/src/debug/java/com/aqua/aqualight/ui/common/permission/CapabilityPermissionRecreationTestFragment.kt",
 )
 for relative_path in required_files:
     if not (ROOT / relative_path).is_file():
@@ -232,6 +234,14 @@ if COORDINATOR_PATH.is_file():
         (
             "STATE_WAITING_FOR_SETTINGS to snapshot.waitingForSettings",
             "settings-return state must be persisted through SavedStateRegistry",
+        ),
+        (
+            "STATE_EXPLANATION_MODE to snapshot.explanationModeName",
+            "permission explanation state must survive rotation/process recreation",
+        ),
+        (
+            "continuation.pendingExplanationMode",
+            "an explanation must not be consumed as a completed permission action",
         ),
     ):
         if token not in coordinator_text:

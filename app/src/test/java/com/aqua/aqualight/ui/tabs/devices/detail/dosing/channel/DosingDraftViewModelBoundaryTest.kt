@@ -7,6 +7,7 @@ import com.aqua.aqualight.ui.tabs.devices.detail.dosing.channel.plan.DosingPlanS
 import com.aqua.aqualight.ui.tabs.devices.detail.dosing.channel.plan.DosingPlanScheduleUpdate
 import com.aqua.aqualight.ui.tabs.devices.detail.dosing.channel.plan.DeviceDosingPlanViewModel
 import com.aqua.aqualight.ui.tabs.devices.detail.dosing.channel.reservoir.DeviceDosingReservoirDraft
+import com.aqua.aqualight.ui.tabs.devices.detail.dosing.channel.reservoir.DeviceDosingReservoirNotificationAvailability
 import com.aqua.aqualight.ui.tabs.devices.detail.dosing.channel.reservoir.DeviceDosingReservoirViewModel
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -84,6 +85,8 @@ class DosingDraftViewModelBoundaryTest {
         val viewModel = DeviceDosingReservoirViewModel()
         viewModel.bindInitial(DeviceDosingReservoirDraft(reservoirCapacityMl = 450.0))
 
+        assertFalse(viewModel.currentDraft().lowLevelAlertEnabled)
+
         viewModel.setCapacityMl(-1.0)
         assertEquals(450.0, viewModel.currentDraft().reservoirCapacityMl, 0.0)
 
@@ -91,6 +94,31 @@ class DosingDraftViewModelBoundaryTest {
         viewModel.setTrackingEnabled(true)
         assertEquals(800.0, viewModel.currentDraft().reservoirCapacityMl, 0.0)
         assertTrue(viewModel.currentDraft().trackingEnabled)
+    }
+
+    @Test
+    fun `reservoir keeps user alert intent while Android delivery is blocked`() {
+        val viewModel = DeviceDosingReservoirViewModel()
+        viewModel.bindInitial(null)
+
+        viewModel.setLowLevelAlertEnabled(true)
+        viewModel.setNotificationAvailability(
+            DeviceDosingReservoirNotificationAvailability.ANDROID_BLOCKED
+        )
+
+        assertTrue(viewModel.currentDraft().lowLevelAlertEnabled)
+        assertEquals(
+            DeviceDosingReservoirNotificationAvailability.ANDROID_BLOCKED,
+            viewModel.notificationAvailability.value
+        )
+
+        viewModel.setLowLevelAlertEnabled(false)
+
+        assertFalse(viewModel.currentDraft().lowLevelAlertEnabled)
+        assertEquals(
+            DeviceDosingReservoirNotificationAvailability.AVAILABLE,
+            viewModel.notificationAvailability.value
+        )
     }
 
     @Test
@@ -113,6 +141,13 @@ class DosingDraftViewModelBoundaryTest {
             lastCalibratedAtEpochSeconds = 100L,
             restoredMissedDoseRecoveryEnabled = false
         )
+        assertEquals("Channel 2", valid.currentDraft().channelTitle)
+
+        validOperations.snapshot.value = requireNotNull(validOperations.snapshot.value).copy(
+            channelTitle = "Trace Elements"
+        )
+        assertEquals("Trace Elements", valid.currentDraft().channelTitle)
+
         valid.setMissedDoseRecoveryEnabled(true)
         assertTrue(valid.currentDraft().routeValid)
         assertTrue(valid.currentDraft().missedDoseRecoveryEnabled)

@@ -5,7 +5,6 @@ internal data class DeviceDosingCalibrationRoute(
     val slotId: String,
     val pumpCount: Int,
     val channelNumber: Int,
-    val channelTitle: String,
     val recalibration: Boolean = false
 ) {
     fun normalized(): DeviceDosingCalibrationRoute = copy(

@@ -272,6 +272,7 @@ data class DeviceDosingV1ChannelDetail(
     val index: Int,
     val defaultName: String,
     val displayName: String?,
+    /** Firmware-resolved name. Android must not recompute it from navigation or UI state. */
     val effectiveName: String,
     val profileManaged: Boolean,
     val deliveryAccountingCertain: Boolean,

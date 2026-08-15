@@ -22,6 +22,9 @@ import com.aqua.aqualight.ui.common.dialog.ConfirmDialogFragment
 import com.aqua.aqualight.ui.tabs.devices.detail.dosing.channel.common.DeviceDosingChannelDestinationFragment
 import com.aqua.aqualight.ui.tabs.devices.detail.dosing.channel.schedule.DeviceDosingScheduleAmountContract
 import com.aqua.aqualight.utils.DialogType
+import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.flow.filter
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
 import java.util.Date
 import java.util.concurrent.TimeUnit
@@ -37,7 +40,7 @@ class DeviceDosingChannelDetailFragment :
     }
 
     override val destinationTitle: String
-        get() = args.channelTitle.ifBlank { getString(R.string.device_family_dosing) }
+        get() = getString(R.string.device_family_dosing)
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
@@ -57,6 +60,7 @@ class DeviceDosingChannelDetailFragment :
         setupManualDoseResult()
         setupResetConfirmationResult()
         observeOperationEvents()
+        observeChannelTitle()
         setupSelectedPump(
             view = view,
             deviceUid = args.deviceUid,
@@ -100,6 +104,18 @@ class DeviceDosingChannelDetailFragment :
                         onResetChannelClick = ::showResetChannelConfirmation
                     )
                 )
+            }
+        }
+    }
+
+    private fun observeChannelTitle() {
+        viewLifecycleOwner.lifecycleScope.launch {
+            viewLifecycleOwner.repeatOnLifecycle(Lifecycle.State.STARTED) {
+                viewModel.draft
+                    .map { draft -> draft.channelTitle }
+                    .filter(String::isNotBlank)
+                    .distinctUntilChanged()
+                    .collect(::updateDestinationTitle)
             }
         }
     }
@@ -181,7 +197,6 @@ class DeviceDosingChannelDetailFragment :
                 .actionDeviceDosingChannelDetailFragmentToDeviceDosingPlanFragment(
                     deviceUid = args.deviceUid,
                     slotId = args.slotId,
-                    channelTitle = args.channelTitle,
                     pumpCount = args.pumpCount,
                     channelNumber = args.channelNumber
                 )
@@ -189,7 +204,6 @@ class DeviceDosingChannelDetailFragment :
                 .actionDeviceDosingChannelDetailFragmentToDeviceDosingReservoirFragment(
                     deviceUid = args.deviceUid,
                     slotId = args.slotId,
-                    channelTitle = args.channelTitle,
                     pumpCount = args.pumpCount,
                     channelNumber = args.channelNumber
                 )
@@ -205,7 +219,6 @@ class DeviceDosingChannelDetailFragment :
                 .actionDeviceDosingChannelDetailFragmentToDeviceDosingChannelCalibrationFragment(
                     deviceUid = args.deviceUid,
                     slotId = args.slotId,
-                    channelTitle = args.channelTitle,
                     pumpCount = args.pumpCount,
                     channelNumber = args.channelNumber,
                     recalibration = true
