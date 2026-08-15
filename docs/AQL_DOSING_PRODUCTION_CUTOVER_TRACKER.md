@@ -80,8 +80,8 @@ device runtime and notification infrastructure.
 
 ### Stage 02 evidence
 
-- Firmware pin confirms trimmed display names are bounded to 32 UTF-8 bytes and reject control
-  characters.
+- Firmware pin confirms ASCII-whitespace-trimmed display names are bounded to 32 UTF-8 bytes and
+  reject the firmware byte-level C0/DEL controls while permitting valid C1 UTF-8 bytes.
 - `DeviceDosingDisplayNamePolicyTest` covers Turkish, emoji, combining sequences, controls,
   trimming and exact byte boundaries.
 - Calibration presentation retains the complete user draft and maps application rejection reasons
@@ -100,7 +100,10 @@ device runtime and notification infrastructure.
 - The pinned firmware contract stores dosing amounts in 0.001 ml `uint32` quanta; the application
   policy accepts only exact values in that range and retains the intent as microlitres.
 - `DeviceDosingReservoirCapacityPolicyTest` covers English, Turkish and Arabic numeric input,
-  trailing zeros, sub-quantum precision, the exact unsigned maximum and semantic rejection cases.
+  locale grouping ambiguity, bounded raw input, trailing zeros, sub-quantum precision, the exact
+  unsigned maximum and semantic rejection cases.
+- The shared text-input surface has a platform-safe default bound, while the smaller reservoir
+  parser bound remains private to the application policy and is checked before allocation.
 - Reservoir draft state and `Bundle` recreation persist `Long` microlitres; no `Double` parsing or
   floating-point persisted intent remains in the reservoir UI path.
 - `DosingDraftViewModelBoundaryTest` proves exact locale input and recreation retention.

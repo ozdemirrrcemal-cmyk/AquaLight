@@ -282,6 +282,7 @@ class TextInputBottomSheet : BottomSheetDialogFragment(
         private const val ARG_PRESET_RESULT_VALUE = "arg_preset_result_value"
         private const val STATE_PRESET_SELECTED = "state_preset_selected"
         private const val TAG_PREFIX = "TextInputBottomSheet:"
+        private const val DEFAULT_MAX_LENGTH = 4_096
         private const val NO_INPUT_TYPE = -1
         private val NO_MINIMUM_NUMERIC_VALUE = Double.NaN
 
@@ -302,7 +303,7 @@ class TextInputBottomSheet : BottomSheetDialogFragment(
             requiredMessage: String,
             requestKey: String,
             payloadId: String = "",
-            maxLength: Int = 0,
+            maxLength: Int = DEFAULT_MAX_LENGTH,
             inputType: Int = NO_INPUT_TYPE,
             minimumNumericValueExclusive: Double = NO_MINIMUM_NUMERIC_VALUE,
             disableSaveWhenUnchanged: Boolean = false,

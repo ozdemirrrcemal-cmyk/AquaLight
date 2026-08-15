@@ -1,5 +1,7 @@
 package com.aqua.aqualight.data.devices.dosing.v1
 
+import com.aqua.aqualight.application.devices.dosing.DeviceDosingDisplayNamePolicy
+import com.aqua.aqualight.application.devices.dosing.DeviceDosingDisplayNameValidation
 import java.util.Locale
 import kotlin.math.abs
 import kotlin.math.round
@@ -196,22 +198,17 @@ sealed interface DeviceDosingV1DisplayNameUpdate {
     data object Clear : DeviceDosingV1DisplayNameUpdate
 
     data class Set(val value: String) : DeviceDosingV1DisplayNameUpdate {
-        val normalizedValue = value.trim()
-
-        init {
-            require(normalizedValue.isNotEmpty()) {
-                "Use Clear rather than Set for a blank display name."
-            }
-            require(normalizedValue.none(Char::isISOControl)) {
-                "displayName must not contain control characters."
-            }
-            require(
-                normalizedValue.toByteArray(Charsets.UTF_8).size <=
-                    DeviceDosingV1Contract.Limit.MAX_DISPLAY_NAME_BYTES
-            ) { "displayName exceeds the firmware UTF-8 byte limit." }
-        }
+        val normalizedValue = requireFirmwareDisplayName(value)
     }
 }
+
+private fun requireFirmwareDisplayName(value: String): String =
+    when (val validation = DeviceDosingDisplayNamePolicy.validateRequired(value)) {
+        is DeviceDosingDisplayNameValidation.Accepted -> validation.normalizedValue
+        is DeviceDosingDisplayNameValidation.Rejected -> throw IllegalArgumentException(
+            "Invalid firmware displayName: ${validation.reason}."
+        )
+    }
 
 data class DeviceDosingV1ReservoirUpdate(
     val trackingEnabled: Boolean,

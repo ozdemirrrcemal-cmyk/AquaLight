@@ -8,10 +8,10 @@ package com.aqua.aqualight.application.devices.dosing
  */
 object DeviceDosingDisplayNamePolicy {
     fun validateRequired(rawValue: String): DeviceDosingDisplayNameValidation {
-        val normalizedValue = rawValue.trim()
+        val normalizedValue = rawValue.trimFirmwareWhitespace()
         val rejection = when {
             normalizedValue.isEmpty() -> DeviceDosingDisplayNameRejection.REQUIRED
-            normalizedValue.any(Char::isISOControl) ->
+            normalizedValue.any(Char::isFirmwareRejectedControl) ->
                 DeviceDosingDisplayNameRejection.CONTROL_CHARACTER
             normalizedValue.toByteArray(Charsets.UTF_8).size > MAX_UTF8_BYTES ->
                 DeviceDosingDisplayNameRejection.TOO_LONG
@@ -21,7 +21,15 @@ object DeviceDosingDisplayNamePolicy {
             ?: DeviceDosingDisplayNameValidation.Accepted(normalizedValue)
     }
 
+    private fun String.trimFirmwareWhitespace(): String = trim { character ->
+        character == ' ' || character in '\t'..'\r'
+    }
+
+    private fun Char.isFirmwareRejectedControl(): Boolean = code < ASCII_SPACE || code == ASCII_DEL
+
     private const val MAX_UTF8_BYTES = 32
+    private const val ASCII_SPACE = 0x20
+    private const val ASCII_DEL = 0x7F
 }
 
 sealed interface DeviceDosingDisplayNameValidation {

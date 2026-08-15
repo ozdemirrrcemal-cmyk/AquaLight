@@ -24,7 +24,9 @@ internal fun JSONObject.requireDosingString(
 ): String {
     val value = get(key) as? String ?: error("$key must be a string.")
     require(allowEmpty || value.isNotEmpty()) { "$key must not be empty." }
-    require(value.none(Char::isISOControl)) { "$key must not contain control characters." }
+    require(value.none(Char::isFirmwareRejectedControl)) {
+        "$key must not contain firmware-rejected control characters."
+    }
     return value
 }
 
@@ -32,7 +34,9 @@ internal fun JSONObject.requireDosingNullableString(key: String): String? {
     val value = get(key)
     if (value === JSONObject.NULL) return null
     return (value as? String)?.also { text ->
-        require(text.none(Char::isISOControl)) { "$key must not contain control characters." }
+        require(text.none(Char::isFirmwareRejectedControl)) {
+            "$key must not contain firmware-rejected control characters."
+        }
     } ?: error("$key must be a string or null.")
 }
 
@@ -95,10 +99,12 @@ internal fun JSONArray.requireDosingBoolean(index: Int): Boolean =
 internal fun JSONArray.requireDosingString(index: Int): String =
     (get(index) as? String)?.also { text ->
         require(text.isNotEmpty()) { "Array item $index must not be empty." }
-        require(text.none(Char::isISOControl)) {
-            "Array item $index must not contain control characters."
+        require(text.none(Char::isFirmwareRejectedControl)) {
+            "Array item $index must not contain firmware-rejected control characters."
         }
     } ?: error("Array item $index must be a string.")
+
+private fun Char.isFirmwareRejectedControl(): Boolean = code < ASCII_SPACE || code == ASCII_DEL
 
 internal fun dosingWireValue(value: String): DeviceDosingV1WireValue =
     DeviceDosingV1WireValue(value)
@@ -117,3 +123,6 @@ internal fun requireDosingTimeMillis(value: Long, field: String) {
         "$field must be inside one local firmware day."
     }
 }
+
+private const val ASCII_SPACE = 0x20
+private const val ASCII_DEL = 0x7F

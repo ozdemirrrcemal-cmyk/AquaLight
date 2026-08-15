@@ -14,6 +14,9 @@ object DeviceDosingReservoirCapacityPolicy {
         rawValue: String,
         locale: Locale
     ): DeviceDosingReservoirCapacityValidation {
+        if (rawValue.length > MAX_RAW_INPUT_CHARACTERS) {
+            return rejected(DeviceDosingReservoirCapacityRejection.INVALID_NUMBER)
+        }
         val canonical = rawValue
             .takeUnless(String::isBlank)
             ?.let { value -> canonicalDecimalOrNull(value, locale) }
@@ -68,7 +71,7 @@ object DeviceDosingReservoirCapacityPolicy {
         val symbols = DecimalFormatSymbols.getInstance(locale)
         val builder = CanonicalDecimalBuilder(
             inputLength = value.length,
-            decimalSeparators = setOf(symbols.decimalSeparator, '.', ','),
+            decimalSeparator = symbols.decimalSeparator,
             localizedMinusSign = symbols.minusSign
         )
         val valid = value.indices.all { index -> builder.append(index, value[index]) }
@@ -83,10 +86,11 @@ object DeviceDosingReservoirCapacityPolicy {
     private const val MAX_CAPACITY_MICROLITERS = 4_294_967_295L
     private const val MILLILITER_SCALE = 3
     private const val DECIMAL_RADIX = 10
+    private const val MAX_RAW_INPUT_CHARACTERS = 32
 
     private class CanonicalDecimalBuilder(
         inputLength: Int,
-        private val decimalSeparators: Set<Char>,
+        private val decimalSeparator: Char,
         private val localizedMinusSign: Char
     ) {
         private val output = StringBuilder(inputLength)
@@ -97,7 +101,7 @@ object DeviceDosingReservoirCapacityPolicy {
             val digit = Character.digit(character, DECIMAL_RADIX)
             return when {
                 digit >= 0 -> appendDigit(digit)
-                character in decimalSeparators -> appendDecimalSeparator()
+                character == decimalSeparator -> appendDecimalSeparator()
                 index == 0 && character == '+' -> appendSign('+')
                 index == 0 && (character == '-' || character == localizedMinusSign) ->
                     appendSign('-')

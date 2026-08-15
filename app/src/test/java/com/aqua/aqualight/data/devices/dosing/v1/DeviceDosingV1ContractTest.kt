@@ -81,6 +81,20 @@ class DeviceDosingV1ContractTest {
     }
 
     @Test
+    fun `display name serializer shares the firmware byte policy`() {
+        val c1Name = DeviceDosingV1DisplayNameUpdate.Set("Trace\u0085Elements")
+        val asciiTrimmedName = DeviceDosingV1DisplayNameUpdate.Set("\tTrace Elements\r")
+        val nonAsciiWhitespace = DeviceDosingV1DisplayNameUpdate.Set("\u00a0Trace\u00a0")
+
+        assertEquals("Trace\u0085Elements", c1Name.normalizedValue)
+        assertEquals("Trace Elements", asciiTrimmedName.normalizedValue)
+        assertEquals("\u00a0Trace\u00a0", nonAsciiWhitespace.normalizedValue)
+        assertThrows(IllegalArgumentException::class.java) {
+            DeviceDosingV1DisplayNameUpdate.Set("Trace\u007fElements")
+        }
+    }
+
+    @Test
     fun `global status is strict and has no display name capability alias`() {
         val canonical = DeviceDosingV1TestFixtures.globalStatus()
         val parsed = DeviceDosingV1StatusParser.parseGlobal(canonical)
@@ -122,12 +136,21 @@ class DeviceDosingV1ContractTest {
         val userName = DeviceDosingV1StatusParser.parseChannel(
             DeviceDosingV1TestFixtures.channelStatus()
         ).channel
+        val c1Name = DeviceDosingV1StatusParser.parseChannel(
+            DeviceDosingV1TestFixtures.channelStatus(
+                DeviceDosingV1TestFixtures.channelDetail()
+                    .put("displayName", "Trace\u0085Elements")
+                    .put("effectiveName", "Trace\u0085Elements")
+            )
+        ).channel
 
         assertEquals("Channel 1", defaultName.defaultName)
         assertNull(defaultName.displayName)
         assertEquals("Channel 1", defaultName.effectiveName)
         assertEquals("Macro", userName.displayName)
         assertEquals("Macro", userName.effectiveName)
+        assertEquals("Trace\u0085Elements", c1Name.displayName)
+        assertEquals("Trace\u0085Elements", c1Name.effectiveName)
     }
 
     @Test

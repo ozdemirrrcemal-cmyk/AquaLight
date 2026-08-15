@@ -18,6 +18,20 @@ class DeviceDosingReservoirCapacityPolicyTest {
     }
 
     @Test
+    fun `locale grouping separators are rejected instead of reinterpreted as decimals`() {
+        assertRejected(
+            "1,234",
+            Locale.US,
+            DeviceDosingReservoirCapacityRejection.INVALID_NUMBER
+        )
+        assertRejected(
+            "1.234",
+            Locale.forLanguageTag("tr-TR"),
+            DeviceDosingReservoirCapacityRejection.INVALID_NUMBER
+        )
+    }
+
+    @Test
     fun `trailing zeros do not create unsupported precision`() {
         assertAccepted("1.2300", Locale.US, 1_230L)
     }
@@ -47,6 +61,15 @@ class DeviceDosingReservoirCapacityPolicyTest {
         assertRejected("1.2.3", Locale.US, DeviceDosingReservoirCapacityRejection.INVALID_NUMBER)
         assertRejected("0", Locale.US, DeviceDosingReservoirCapacityRejection.POSITIVE_REQUIRED)
         assertRejected("-2", Locale.US, DeviceDosingReservoirCapacityRejection.POSITIVE_REQUIRED)
+    }
+
+    @Test
+    fun `oversized raw input is rejected before decimal parsing`() {
+        assertRejected(
+            "1".repeat(1_000),
+            Locale.US,
+            DeviceDosingReservoirCapacityRejection.INVALID_NUMBER
+        )
     }
 
     @Test

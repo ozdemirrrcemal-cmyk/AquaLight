@@ -8,7 +8,7 @@ class DeviceDosingDisplayNamePolicyTest {
 
     @Test
     fun `required name is trimmed before acceptance`() {
-        val result = DeviceDosingDisplayNamePolicy.validateRequired("  Trace Elements  ")
+        val result = DeviceDosingDisplayNamePolicy.validateRequired("\t Trace Elements \r")
 
         assertEquals(
             "Trace Elements",
@@ -44,13 +44,27 @@ class DeviceDosingDisplayNamePolicyTest {
         assertRejected(" \n\t ", DeviceDosingDisplayNameRejection.REQUIRED)
         assertRejected("Trace\nElements", DeviceDosingDisplayNameRejection.CONTROL_CHARACTER)
         assertRejected("Trace\u007fElements", DeviceDosingDisplayNameRejection.CONTROL_CHARACTER)
-        assertRejected("Trace\u0085Elements", DeviceDosingDisplayNameRejection.CONTROL_CHARACTER)
+    }
+
+    @Test
+    fun `firmware permits C1 bytes and trims ASCII whitespace only`() {
+        assertAcceptedValue("Trace\u0085Elements", "Trace\u0085Elements")
+        assertAcceptedValue("\u00a0Trace\u00a0", "\u00a0Trace\u00a0")
     }
 
     private fun assertAccepted(value: String) {
         assertTrue(
             DeviceDosingDisplayNamePolicy.validateRequired(value) is
                 DeviceDosingDisplayNameValidation.Accepted
+        )
+    }
+
+    private fun assertAcceptedValue(value: String, expected: String) {
+        val result = DeviceDosingDisplayNamePolicy.validateRequired(value)
+
+        assertEquals(
+            expected,
+            (result as DeviceDosingDisplayNameValidation.Accepted).normalizedValue
         )
     }
 
