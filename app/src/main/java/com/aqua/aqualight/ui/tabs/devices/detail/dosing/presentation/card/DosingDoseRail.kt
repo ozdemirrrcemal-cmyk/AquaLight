@@ -24,7 +24,6 @@ import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.drawscope.DrawScope
-import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
@@ -262,13 +261,6 @@ private fun DrawScope.drawDoseSegment(
         cornerRadius = cornerRadius
     )
     if (occurrence.visualState == DosingOccurrenceVisualState.ACTIVE) {
-        drawRoundRect(
-            color = palette.active,
-            topLeft = Offset(left, 0f),
-            size = segmentSize,
-            cornerRadius = cornerRadius,
-            style = Stroke(width = ACTIVE_SEGMENT_OUTLINE.toPx())
-        )
         val sparkCenter = Offset(
             x = left + ACTIVE_SPARK_LEADING_OFFSET.toPx()
                 .coerceAtMost(segmentSize.width / 2f),
@@ -328,7 +320,6 @@ private val SEGMENT_GAP = 1.dp
 private val DEFAULT_GROUP_GAP = 4.dp
 private val RAIL_CORNER_RADIUS = 4.dp
 private val SEGMENT_CORNER_RADIUS = 2.dp
-private val ACTIVE_SEGMENT_OUTLINE = 1.25.dp
 private val ACTIVE_SPARK_CENTER_Y = 3.dp
 private val ACTIVE_SPARK_LEADING_OFFSET = 2.dp
 private val ACTIVE_SPARK_HALO_RADIUS = 2.75.dp
