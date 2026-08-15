@@ -4,7 +4,6 @@ import com.aqua.aqualight.application.devices.dosing.DeviceDosingChannelRejectio
 import com.aqua.aqualight.application.devices.dosing.DeviceDosingChannelSnapshot
 import com.aqua.aqualight.data.devices.model.DeviceUid
 import com.aqua.aqualight.data.devices.runtime.core.DeviceRuntimeCommandOutcome
-import com.aqua.aqualight.data.devices.runtime.core.DeviceRuntimeConnectionGeneration
 import java.util.concurrent.ConcurrentHashMap
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
@@ -16,6 +15,10 @@ internal class DeviceDosingV1MutationCoordinator(
     private val refreshCoordinator: DeviceDosingV1RefreshCoordinator
 ) {
     private val mutationLocks = ConcurrentHashMap<DeviceDosingV1Address, Mutex>()
+    private val conflictCoordinator = DeviceDosingV1ConflictCoordinator(
+        stateOwner,
+        refreshCoordinator
+    )
 
     suspend fun <T> mutatePersisted(
         deviceUid: String,
@@ -80,7 +83,7 @@ internal class DeviceDosingV1MutationCoordinator(
             is DosingExecutionOutcome.Completed -> when (val outcome = execution.outcome) {
                 is DeviceRuntimeCommandOutcome.Success ->
                     commitMutation(address, token, outcome, channel, onAccepted)
-                else -> failedMutation(address, outcome)
+                else -> conflictCoordinator.reconcile(address, outcome)
             }
         }
     }
@@ -172,19 +175,6 @@ internal class DeviceDosingV1MutationCoordinator(
         else -> null
     }
 
-    private suspend fun <T> failedMutation(
-        address: DeviceDosingV1Address,
-        outcome: DeviceRuntimeCommandOutcome<T>
-    ): DeviceDosingV1MutationResult<T> = if (outcome.isRevisionConflict()) {
-        outcome.connectionGenerationOrNull()?.let { generation ->
-            stateOwner.invalidate(address.deviceUid, address.channelKey, generation, null)
-        }
-        refreshCoordinator.refresh(address)
-        DeviceDosingV1MutationResult.Conflict
-    } else {
-        DeviceDosingV1MutationResult.Failed(outcome)
-    }
-
     private fun mutationLock(address: DeviceDosingV1Address): Mutex =
         mutationLocks.computeIfAbsent(address) { Mutex() }
 }
@@ -198,24 +188,3 @@ private sealed interface DosingExecutionOutcome<out T> {
         val reason: DeviceDosingChannelRejection
     ) : DosingExecutionOutcome<Nothing>
 }
-
-private fun DeviceRuntimeCommandOutcome<*>.isRevisionConflict(): Boolean =
-    this is DeviceRuntimeCommandOutcome.FirmwareError && hasStaleRevisionError()
-
-private fun DeviceRuntimeCommandOutcome.FirmwareError.hasStaleRevisionError(): Boolean =
-    code == "INVALID_VALUE" &&
-        field == "expectedRevision" &&
-        message == "stale dosing channel revision"
-
-private fun DeviceRuntimeCommandOutcome<*>.connectionGenerationOrNull():
-    DeviceRuntimeConnectionGeneration? = when (this) {
-        is DeviceRuntimeCommandOutcome.Success<*> -> generation
-        is DeviceRuntimeCommandOutcome.NotAuthenticated -> generation
-        is DeviceRuntimeCommandOutcome.SendFailed -> generation
-        is DeviceRuntimeCommandOutcome.Timeout -> generation
-        is DeviceRuntimeCommandOutcome.FirmwareError -> generation
-        is DeviceRuntimeCommandOutcome.ProtocolError -> generation
-        is DeviceRuntimeCommandOutcome.Cancelled -> generation
-        is DeviceRuntimeCommandOutcome.NotConnected,
-        is DeviceRuntimeCommandOutcome.UnsupportedByDevice -> null
-    }

@@ -12,12 +12,21 @@ class DosingChannelCardArchitectureTest {
     @Test
     fun `channel cards are materialized only from validated central catalog slots`() {
         val viewModel = source(ROOT_SOURCE_ROOT + "DeviceDosingRootViewModel.kt")
+        val presentation = source(ROOT_SOURCE_ROOT + "DeviceDosingRootChannelPresentation.kt")
 
         assertTrue(viewModel.contains("catalogState == DeviceRootCatalogState.VALID"))
         assertTrue(viewModel.contains("channelSlots.dosingChannels"))
-        assertTrue(viewModel.contains("slot.toInitialDosingChannelCardUiState()"))
+        assertTrue(viewModel.contains("resolveDosingRootChannelPresentation"))
+        assertTrue(presentation.contains("authoritativeChannelsOrNull"))
+        assertTrue(
+            presentation.contains(
+                "catalogChannels.map(DeviceDosingChannelSlot::toInitialDosingChannelCardUiState)"
+            )
+        )
         assertFalse(viewModel.contains("Regex("))
+        assertFalse(presentation.contains("Regex("))
         assertFalse(viewModel.contains("containsMatchIn"))
+        assertFalse(presentation.contains("containsMatchIn"))
     }
 
     @Test

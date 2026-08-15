@@ -61,6 +61,10 @@ internal class DeviceDosingV1StateAdapter(
         stateOwner = stateOwner,
         stateAccess = stateAccess
     )
+    private val eventCoordinator = DeviceDosingV1EventCoordinator(
+        stateOwner = stateOwner,
+        refreshCoordinator = refreshCoordinator
+    )
     internal val mutationCoordinator = DeviceDosingV1MutationCoordinator(
         stateOwner = stateOwner,
         stateAccess = stateAccess,
@@ -71,7 +75,7 @@ internal class DeviceDosingV1StateAdapter(
     val calibrationOperations = DeviceDosingV1CalibrationOperationsAdapter(this)
 
     suspend fun consume(event: DeviceRuntimeTypedEvent): DeviceDosingV1EventResult =
-        refreshCoordinator.consume(event)
+        eventCoordinator.consume(event)
 
     /** A reconnect or disconnect boundary must never retain a previous session's snapshots. */
     fun consume(event: DeviceRuntimeLifecycleEvent) {

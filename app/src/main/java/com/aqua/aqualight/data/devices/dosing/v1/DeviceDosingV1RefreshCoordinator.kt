@@ -2,7 +2,6 @@ package com.aqua.aqualight.data.devices.dosing.v1
 
 import com.aqua.aqualight.data.devices.model.DeviceUid
 import com.aqua.aqualight.data.devices.runtime.core.DeviceRuntimeCommandOutcome
-import com.aqua.aqualight.data.devices.runtime.events.DeviceRuntimeTypedEvent
 
 /** Coordinates refreshes without owning any authoritative state. */
 internal class DeviceDosingV1RefreshCoordinator(
@@ -27,42 +26,9 @@ internal class DeviceDosingV1RefreshCoordinator(
         }
     }
 
-    suspend fun consume(event: DeviceRuntimeTypedEvent): DeviceDosingV1EventResult =
-        when (event.type) {
-            DeviceRuntimeTypedEvent.Type.DOSING_STATUS_CHANGED -> consumeStatusChanged(event)
-            else -> DeviceDosingV1EventResult.Ignored
-        }
-
     suspend fun refresh(address: DeviceDosingV1Address): DeviceDosingV1RefreshResult {
         val token = stateOwner.beginRequest(address.deviceUid, address.channelKey)
         return refresh(address, token, repository.requestGlobalStatus(address.deviceUid))
-    }
-
-    private suspend fun consumeStatusChanged(
-        event: DeviceRuntimeTypedEvent
-    ): DeviceDosingV1EventResult = runCatching {
-        DeviceDosingV1EventParser.parseInvalidation(event.payload)
-    }.fold(
-        onSuccess = { invalidation -> refreshInvalidated(event, invalidation) },
-        onFailure = { DeviceDosingV1EventResult.Malformed }
-    )
-
-    private suspend fun refreshInvalidated(
-        event: DeviceRuntimeTypedEvent,
-        invalidation: DeviceDosingV1Invalidation
-    ): DeviceDosingV1EventResult = when (
-        stateOwner.invalidate(
-            deviceUid = event.deviceUid,
-            channelKey = invalidation.channelKey,
-            connectionGeneration = event.generation,
-            revisionHint = invalidation.revisionHint
-        )
-    ) {
-        DeviceDosingV1InvalidationDisposition.STALE_CONNECTION,
-        DeviceDosingV1InvalidationDisposition.STALE_REVISION -> DeviceDosingV1EventResult.Ignored
-        DeviceDosingV1InvalidationDisposition.APPLIED -> refresh(
-            DeviceDosingV1Address(event.deviceUid, invalidation.channelKey)
-        ).toEventResult()
     }
 
     private suspend fun refresh(
@@ -138,13 +104,6 @@ private fun DeviceDosingV1CommitDisposition.toRefreshResult(
     DeviceDosingV1CommitDisposition.STALE_REQUEST -> stateAccess.currentState(address)?.let {
         DeviceDosingV1RefreshResult.Success(it)
     } ?: DeviceDosingV1RefreshResult.RejectedStale
-}
-
-private fun DeviceDosingV1RefreshResult.toEventResult(): DeviceDosingV1EventResult = when (this) {
-    is DeviceDosingV1RefreshResult.Success -> DeviceDosingV1EventResult.Refreshed(state)
-    DeviceDosingV1RefreshResult.Malformed -> DeviceDosingV1EventResult.Malformed
-    is DeviceDosingV1RefreshResult.Failed,
-    DeviceDosingV1RefreshResult.RejectedStale -> DeviceDosingV1EventResult.RefreshFailed
 }
 
 private fun DeviceDosingV1RefreshResult.isAuthoritative(): Boolean =
