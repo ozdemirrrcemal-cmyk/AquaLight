@@ -11,7 +11,7 @@ object DeviceDosingDisplayNamePolicy {
         val normalizedValue = rawValue.trimFirmwareWhitespace()
         val rejection = when {
             normalizedValue.isEmpty() -> DeviceDosingDisplayNameRejection.REQUIRED
-            normalizedValue.any(Char::isFirmwareRejectedControl) ->
+            normalizedValue.any { character -> character.isFirmwareRejectedControl() } ->
                 DeviceDosingDisplayNameRejection.CONTROL_CHARACTER
             normalizedValue.toByteArray(Charsets.UTF_8).size > MAX_UTF8_BYTES ->
                 DeviceDosingDisplayNameRejection.TOO_LONG
