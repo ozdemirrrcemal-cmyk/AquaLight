@@ -31,23 +31,21 @@ REQUIRED_DATA_FILES = (
 )
 
 UI_FORBIDDEN_PATTERNS = (
-    (re.compile(r"^import\s+com\.aqua\.aqualight\.data\.", re.MULTILINE), "data import"),
-    (re.compile(r"^import\s+com\.aqua\.aqualight\.platform\.", re.MULTILINE), "platform import"),
-    (re.compile(r"^import\s+org\.json\.", re.MULTILINE), "JSON import"),
+    (re.compile(r"\bcom\.aqua\.aqualight\.data\."), "data-layer dependency"),
+    (re.compile(r"\bcom\.aqua\.aqualight\.platform\."), "platform dependency"),
+    (re.compile(r"\borg\.json\."), "JSON dependency"),
     (re.compile(r"\bruntime\.modules\b"), "runtime-module dependency"),
     (re.compile(r"\bDeviceDosingV1[A-Za-z0-9_]*\b"), "Dosing v1 wire type"),
     (re.compile(r"\bexpectedRevision\b"), "firmware revision"),
     (re.compile(r"\bchannelKey\b"), "firmware channel key"),
 )
 
-APPLICATION_FORBIDDEN_IMPORT = re.compile(
-    r"^import\s+(?:android(?:x)?\.|org\.json\.|"
-    r"com\.aqua\.aqualight\.(?:composition|data|platform|ui)\.)",
-    re.MULTILINE,
+APPLICATION_FORBIDDEN_REFERENCE = re.compile(
+    r"\b(?:android(?:x)?\.|org\.json\.|"
+    r"com\.aqua\.aqualight\.(?:composition|data|platform|ui)\.)"
 )
-DATA_FORBIDDEN_IMPORT = re.compile(
-    r"^import\s+com\.aqua\.aqualight\.ui\.",
-    re.MULTILINE,
+DATA_FORBIDDEN_REFERENCE = re.compile(
+    r"\bcom\.aqua\.aqualight\.ui\."
 )
 DOSING_DECLARATION = re.compile(
     r"^[ \t]*(?:(?:public|internal|private|protected|data|sealed|enum|value|fun|abstract|open|final)\s+)*"
@@ -136,7 +134,7 @@ def validate_repository(repository_root: Path = ROOT) -> list[str]:
 
     for path in kotlin_files(application_dosing_root):
         source = path.read_text(encoding="utf-8", errors="ignore")
-        if APPLICATION_FORBIDDEN_IMPORT.search(source):
+        if APPLICATION_FORBIDDEN_REFERENCE.search(source):
             errors.append(
                 f"{relative(path, repository_root)}: Dosing application depends on an outer layer"
             )
@@ -147,8 +145,8 @@ def validate_repository(repository_root: Path = ROOT) -> list[str]:
 
     for path in kotlin_files(data_dosing_root):
         source = path.read_text(encoding="utf-8", errors="ignore")
-        if DATA_FORBIDDEN_IMPORT.search(source):
-            errors.append(f"{relative(path, repository_root)}: Dosing data must not import UI")
+        if DATA_FORBIDDEN_REFERENCE.search(source):
+            errors.append(f"{relative(path, repository_root)}: Dosing data must not depend on UI")
 
     for path in kotlin_files(application_devices_root):
         if path.is_relative_to(application_dosing_root):

@@ -42,7 +42,66 @@ class DosingArchitectureGuardTest(unittest.TestCase):
 
             errors = GUARD.validate_repository(repository)
 
-            self.assertTrue(any("data import" in error for error in errors), errors)
+            self.assertTrue(any("data-layer dependency" in error for error in errors), errors)
+
+    def test_ui_fully_qualified_data_dependency_is_rejected(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            repository = Path(directory)
+            self._create_minimum_repository(repository)
+            screen = (
+                repository
+                / "app/src/main/java/com/aqua/aqualight/ui/tabs/devices/detail/dosing/root/"
+                "DosingCatalogScreen.kt"
+            )
+            screen.write_text(
+                screen.read_text(encoding="utf-8")
+                + "\nprivate val forbidden: "
+                "com.aqua.aqualight.data.devices.dosing.Adapter? = null\n",
+                encoding="utf-8",
+            )
+
+            errors = GUARD.validate_repository(repository)
+
+            self.assertTrue(any("data-layer dependency" in error for error in errors), errors)
+
+    def test_application_fully_qualified_outer_dependency_is_rejected(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            repository = Path(directory)
+            self._create_minimum_repository(repository)
+            contract = (
+                repository
+                / "app/src/main/java/com/aqua/aqualight/application/devices/dosing/Contract.kt"
+            )
+            contract.write_text(
+                contract.read_text(encoding="utf-8")
+                + "\nprivate val forbidden: "
+                "com.aqua.aqualight.data.devices.dosing.Adapter? = null\n",
+                encoding="utf-8",
+            )
+
+            errors = GUARD.validate_repository(repository)
+
+            self.assertTrue(any("outer layer" in error for error in errors), errors)
+
+    def test_data_fully_qualified_ui_dependency_is_rejected(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            repository = Path(directory)
+            self._create_minimum_repository(repository)
+            adapter = (
+                repository
+                / "app/src/main/java/com/aqua/aqualight/data/devices/dosing/Adapter.kt"
+            )
+            adapter.write_text(
+                adapter.read_text(encoding="utf-8")
+                + "\nprivate val forbidden: "
+                "com.aqua.aqualight.ui.tabs.devices.detail.dosing.root."
+                "DosingCatalogScreen? = null\n",
+                encoding="utf-8",
+            )
+
+            errors = GUARD.validate_repository(repository)
+
+            self.assertTrue(any("must not depend on UI" in error for error in errors), errors)
 
     def test_misplaced_application_declaration_is_rejected(self) -> None:
         with tempfile.TemporaryDirectory() as directory:
@@ -72,11 +131,11 @@ class DosingArchitectureGuardTest(unittest.TestCase):
         application.mkdir(parents=True)
         data.mkdir(parents=True)
         (application / "Contract.kt").write_text(
-            "package com.aqua.aqualight.application.devices.dosing\n",
+            "package com.aqua.aqualight.application.devices.dosing\n\ninternal class Contract\n",
             encoding="utf-8",
         )
         (data / "Adapter.kt").write_text(
-            "package com.aqua.aqualight.data.devices.dosing\n",
+            "package com.aqua.aqualight.data.devices.dosing\n\ninternal class Adapter\n",
             encoding="utf-8",
         )
         for relative_path in GUARD.REQUIRED_DATA_FILES:
@@ -90,7 +149,12 @@ class DosingArchitectureGuardTest(unittest.TestCase):
             package = "com.aqua.aqualight." + path.parent.relative_to(source_root).as_posix().replace(
                 "/", "."
             )
-            path.write_text(f"package {package}\n", encoding="utf-8")
+            declaration = (
+                "\ninternal class DosingCatalogScreen\n"
+                if path.name == "DosingCatalogScreen.kt"
+                else ""
+            )
+            path.write_text(f"package {package}\n{declaration}", encoding="utf-8")
 
 
 if __name__ == "__main__":

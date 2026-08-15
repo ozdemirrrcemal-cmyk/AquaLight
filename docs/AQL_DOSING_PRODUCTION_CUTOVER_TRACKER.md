@@ -66,8 +66,10 @@ device runtime and notification infrastructure.
 - `python3 tools/dosing_architecture_guard.py`: passed.
 - `python3 tools/architecture_guard.py`: passed.
 - `python3 tools/device_root_application_boundary_guard.py`: passed.
-- `python3 -m unittest discover -s tools/tests -p 'test_*.py'`: 159 tests passed.
+- `python3 -m unittest discover -s tools/tests -p 'test_*.py'`: 162 tests passed.
 - `git diff HEAD --check`: passed.
+- Dependency-direction checks reject both imports and fully-qualified UI/application/data layer
+  references; focused negative tests cover all three forbidden directions.
 - Published Stage 01 tree: `a0a32864e2bc99d73ec03fde94b81009fce30cfe`.
 - Android CI, CodeQL, API 27/API 36 emulator integration, installable debug APK and Firebase
   production-config guard passed at remote commit `4e9aabc58ee8993843dfc0b2c8e8a4fc8de14ec3`.
@@ -86,7 +88,7 @@ device runtime and notification infrastructure.
   trimming and exact byte boundaries.
 - Calibration presentation retains the complete user draft and maps application rejection reasons
   to semantic UI errors; no byte count or firmware limit is present in UI.
-- Repository architecture guards and 159 Python guard tests pass.
+- Repository architecture guards and 162 Python guard tests pass.
 - Android compile/unit execution is included in the final Stage 03 branch CI gate.
 
 - [x] **03 — Exact reservoir-capacity semantics** — **COMPLETE**
@@ -108,7 +110,7 @@ device runtime and notification infrastructure.
   floating-point persisted intent remains in the reservoir UI path.
 - `DosingDraftViewModelBoundaryTest` proves exact locale input and recreation retention.
 - `DosingUiLayerBoundaryTest` proves precision/range constants and decimal parsing stay outside UI.
-- Repository architecture guards, XML parsing, 159 Python guard tests and `git diff --check` pass.
+- Repository architecture guards, XML parsing, 162 Python guard tests and `git diff --check` pass.
 - Android compile/unit execution is the final branch CI gate before hand-off.
 
 - [ ] **04 — Reservoir alarm and supply-projection separation**
