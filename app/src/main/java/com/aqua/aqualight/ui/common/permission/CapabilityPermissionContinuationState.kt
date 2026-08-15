@@ -2,12 +2,19 @@ package com.aqua.aqualight.ui.common.permission
 
 import com.aqua.aqualight.platform.permissions.AppCapability
 
+internal enum class CapabilityPermissionExplanationMode {
+    RATIONALE,
+    OPEN_SETTINGS
+}
+
 /** Serializable value state for one pending permission-gated user action. */
 internal data class CapabilityPermissionContinuationSnapshot(
     val capabilityName: String?,
     val actionToken: String?,
     val notificationChannelId: String?,
-    val waitingForSettings: Boolean
+    val waitingForSettings: Boolean,
+    val explanationModeName: String? = null,
+    val waitingForRuntimePermission: Boolean = false
 )
 
 /**
@@ -25,6 +32,10 @@ internal class CapabilityPermissionContinuationState {
         private set
     var pendingNotificationChannelId: String? = null
         private set
+    var pendingExplanationMode: CapabilityPermissionExplanationMode? = null
+        private set
+    var waitingForRuntimePermission: Boolean = false
+        private set
     var waitingForSettings: Boolean = false
         private set
 
@@ -39,13 +50,29 @@ internal class CapabilityPermissionContinuationState {
         pendingNotificationChannelId = notificationChannelId
             ?.trim()
             ?.takeIf(String::isNotBlank)
+        pendingExplanationMode = null
+        waitingForRuntimePermission = false
+        waitingForSettings = false
+    }
+
+    fun markShowingExplanation(mode: CapabilityPermissionExplanationMode) {
+        requirePendingAction("Cannot show an explanation without a pending permission action.")
+        pendingExplanationMode = mode
+        waitingForRuntimePermission = false
+        waitingForSettings = false
+    }
+
+    fun markWaitingForRuntimePermission() {
+        requirePendingAction("Cannot request permission without a pending action.")
+        pendingExplanationMode = null
+        waitingForRuntimePermission = true
         waitingForSettings = false
     }
 
     fun markWaitingForSettings() {
-        check(pendingCapability != null && !pendingActionToken.isNullOrBlank()) {
-            "Cannot open Settings without a pending permission action."
-        }
+        requirePendingAction("Cannot open Settings without a pending permission action.")
+        pendingExplanationMode = null
+        waitingForRuntimePermission = false
         waitingForSettings = true
     }
 
@@ -72,6 +99,8 @@ internal class CapabilityPermissionContinuationState {
         pendingCapability = null
         pendingActionToken = null
         pendingNotificationChannelId = null
+        pendingExplanationMode = null
+        waitingForRuntimePermission = false
         waitingForSettings = false
     }
 
@@ -80,7 +109,9 @@ internal class CapabilityPermissionContinuationState {
             capabilityName = pendingCapability?.name,
             actionToken = pendingActionToken,
             notificationChannelId = pendingNotificationChannelId,
-            waitingForSettings = waitingForSettings
+            waitingForSettings = waitingForSettings,
+            explanationModeName = pendingExplanationMode?.name,
+            waitingForRuntimePermission = waitingForRuntimePermission
         )
     }
 
@@ -89,8 +120,20 @@ internal class CapabilityPermissionContinuationState {
             ?.capabilityName
             ?.let { name -> runCatching { AppCapability.valueOf(name) }.getOrNull() }
         val action = snapshot?.actionToken?.trim()?.takeIf(String::isNotBlank)
+        val explanationMode = snapshot
+            ?.explanationModeName
+            ?.let { name ->
+                runCatching { CapabilityPermissionExplanationMode.valueOf(name) }.getOrNull()
+            }
 
-        if (capability == null || action == null) {
+        val invalidExplanationMode = snapshot?.explanationModeName != null &&
+            explanationMode == null
+        val stageCount = (if (explanationMode != null) 1 else 0) +
+            (if (snapshot?.waitingForRuntimePermission == true) 1 else 0) +
+            (if (snapshot?.waitingForSettings == true) 1 else 0)
+        val invalidIdentity = capability == null || action == null
+        val invalidStage = invalidExplanationMode || stageCount > 1
+        if (invalidIdentity || invalidStage) {
             clear()
             return
         }
@@ -100,6 +143,12 @@ internal class CapabilityPermissionContinuationState {
         pendingNotificationChannelId = snapshot.notificationChannelId
             ?.trim()
             ?.takeIf(String::isNotBlank)
+        pendingExplanationMode = explanationMode
+        waitingForRuntimePermission = snapshot.waitingForRuntimePermission
         waitingForSettings = snapshot.waitingForSettings
+    }
+
+    private fun requirePendingAction(message: String) {
+        check(pendingCapability != null && !pendingActionToken.isNullOrBlank()) { message }
     }
 }

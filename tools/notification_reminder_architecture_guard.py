@@ -47,6 +47,7 @@ PRECISE_POLICY = "app/src/main/java/com/aqua/aqualight/platform/permissions/Prec
 PERMISSION_COORDINATOR = "app/src/main/java/com/aqua/aqualight/ui/common/permission/CapabilityPermissionCoordinator.kt"
 PERMISSION_UI = "app/src/main/java/com/aqua/aqualight/ui/common/permission/CapabilityPermissionUiSpecResolver.kt"
 NOTIFICATION_ENABLEMENT = "app/src/main/java/com/aqua/aqualight/ui/common/notification/NotificationEnablementCoordinator.kt"
+NOTIFICATION_ENABLEMENT_GATE = "app/src/main/java/com/aqua/aqualight/ui/common/notification/NotificationEnablementOperationGate.kt"
 APP_SETTINGS = "app/src/main/java/com/aqua/aqualight/ui/tabs/settings/app/AppSettingsFragment.kt"
 ADD_CARE = "app/src/main/java/com/aqua/aqualight/ui/tabs/maintenance/AddCareTaskFragment.kt"
 TANK_SETTINGS = "app/src/main/java/com/aqua/aqualight/ui/tabs/aquarium/detail/settings/TankSettingsOthersFragment.kt"
@@ -84,6 +85,7 @@ required_files = (
     PERMISSION_COORDINATOR,
     PERMISSION_UI,
     NOTIFICATION_ENABLEMENT,
+    NOTIFICATION_ENABLEMENT_GATE,
     APP_SETTINGS,
     ADD_CARE,
     TANK_SETTINGS,
@@ -112,6 +114,7 @@ required_files = (
     "app/src/test/java/com/aqua/aqualight/data/care/reminder/CareTaskReminderSchedulerTest.kt",
     "app/src/test/java/com/aqua/aqualight/platform/permissions/PreciseReminderAccessPolicyTest.kt",
     "app/src/test/java/com/aqua/aqualight/ui/common/notification/NotificationEnablementDecisionResolverTest.kt",
+    "app/src/test/java/com/aqua/aqualight/ui/common/notification/NotificationEnablementOperationGateTest.kt",
     "app/src/androidTest/java/com/aqua/aqualight/data/notifications/OwnerNotificationPreferencesInstrumentedTest.kt",
     "app/src/androidTest/java/com/aqua/aqualight/data/notifications/NotificationChannelRegistryInstrumentedTest.kt",
     "app/src/androidTest/java/com/aqua/aqualight/data/notifications/OwnerNotificationCancellationInstrumentedTest.kt",
@@ -187,8 +190,15 @@ for token, reason in (
     ("CapabilityPermissionCoordinator", "feature enablement must use the Stage 6 UI boundary"),
     ("NotificationEnablementDecisionResolver", "readiness ordering must stay deterministic and testable"),
     ("evaluation.notificationPreferences.setEnabled", "ready feature opt-in must reconcile the existing owner preference"),
+    ("NotificationEnablementOperationGate", "feature enablement must serialize user intent"),
+    ("operationGate.cancel()", "feature cancellation must invalidate active async work"),
 ):
     require(NOTIFICATION_ENABLEMENT, token, reason)
+for token, reason in (
+    ("activeJob?.cancel()", "superseded enablement work must be cancelled as a Job"),
+    ("job.cancel()", "a stale Job must be cancelled before it can start"),
+):
+    require(NOTIFICATION_ENABLEMENT_GATE, token, reason)
 for token in ("DataStore", "SharedPreferences", "NotificationDispatchUseCase", "NotificationManager"):
     forbid(NOTIFICATION_ENABLEMENT, token, "feature enablement must not create a second preference or delivery path")
 

@@ -9,6 +9,8 @@ import com.aqua.aqualight.application.notifications.NotificationPreferenceUseCas
 import com.aqua.aqualight.platform.permissions.AppCapability
 import com.aqua.aqualight.ui.common.permission.CapabilityPermissionCoordinator
 import java.util.concurrent.CancellationException
+import kotlinx.coroutines.CoroutineStart
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
 
 data class NotificationEnablementRequest(
@@ -71,12 +73,12 @@ internal object NotificationEnablementDecisionResolver {
 }
 
 /**
- * Stateless feature-enablement adapter over the Stage 6 permission coordinator and
+ * Fragment-scoped feature-enablement adapter over the Stage 6 permission coordinator and
  * Stage 7 notification use-case.
  *
  * Feature switches keep owning their domain preference. This class stores no second
- * preference and never posts notifications; it only completes the shared Android
- * readiness flow before allowing a feature preference to become enabled.
+ * preference and never posts notifications. It serializes enablement intents and completes
+ * the shared Android readiness flow before allowing a feature preference to become enabled.
  */
 class NotificationEnablementCoordinator(
     private val fragment: Fragment,
@@ -84,47 +86,103 @@ class NotificationEnablementCoordinator(
     private val dependencies: NotificationEnablementDependencies,
     private val callbacks: NotificationEnablementCallbacks
 ) {
+    private val operationGate = NotificationEnablementOperationGate()
+    private var refreshJob: Job? = null
+    private var refreshGeneration: Long = 0L
     private val capabilityCoordinator = CapabilityPermissionCoordinator(
         fragment = fragment,
         instanceKey = instanceKey
     ) { continuationToken ->
         val continuation = NotificationEnablementContinuation.parse(continuationToken)
         if (continuation != null) {
-            evaluateAndContinue(
-                actionToken = continuation.actionToken,
+            cancelRefresh()
+            launchEvaluation(
+                ticket = operationGate.resume(continuation.actionToken),
                 returnedFrom = continuation.step
             )
         }
     }
 
     fun requestEnable(actionToken: String) {
-        evaluateAndContinue(actionToken = actionToken, returnedFrom = null)
+        val ticket = operationGate.begin(actionToken) ?: return
+        capabilityCoordinator.cancelPending()
+        cancelRefresh()
+        launchEvaluation(ticket = ticket, returnedFrom = null)
     }
 
     fun refresh(actionToken: String) {
+        if (operationGate.hasActiveOperation) return
         val request = dependencies.requestResolver(actionToken) ?: return
-        launchSafely(actionToken) {
-            val state = evaluate(request).state
-            callbacks.onStateChanged(actionToken, state)
+        cancelRefresh()
+        val generation = refreshGeneration
+        val lifecycleOwner = fragment.viewLifecycleOwnerLiveData.value ?: return
+        val job = lifecycleOwner.lifecycleScope.launch(start = CoroutineStart.LAZY) {
+            try {
+                val failure = runCatching {
+                    val state = evaluate(request).state
+                    if (isCurrentRefresh(generation)) {
+                        callbacks.onStateChanged(actionToken, state)
+                    }
+                }.exceptionOrNull()
+                when (failure) {
+                    null -> Unit
+                    is CancellationException -> throw failure
+                    else -> if (isCurrentRefresh(generation)) {
+                        callbacks.onFailure(actionToken, failure)
+                    }
+                }
+            } finally {
+                if (refreshGeneration == generation) refreshJob = null
+            }
         }
+        refreshJob = job
+        job.start()
     }
 
     fun cancelPending() {
+        operationGate.cancel()
+        cancelRefresh()
         capabilityCoordinator.cancelPending()
     }
 
-    private fun evaluateAndContinue(
-        actionToken: String,
+    private fun launchEvaluation(
+        ticket: NotificationEnablementOperationGate.Ticket,
         returnedFrom: NotificationEnablementStep?
     ) {
-        val request = dependencies.requestResolver(actionToken) ?: return
-        launchSafely(actionToken) {
-            val evaluation = evaluate(request)
-            callbacks.onStateChanged(actionToken, evaluation.state)
-            if (evaluation.state.step != returnedFrom) {
-                continueEvaluation(actionToken, evaluation)
+        val request = dependencies.requestResolver(ticket.actionToken)
+        if (request == null) {
+            operationGate.complete(ticket)
+            return
+        }
+        val lifecycleOwner = fragment.viewLifecycleOwnerLiveData.value
+        if (lifecycleOwner == null) {
+            operationGate.complete(ticket)
+            return
+        }
+        val job = lifecycleOwner.lifecycleScope.launch(start = CoroutineStart.LAZY) {
+            val failure = runCatching {
+                val evaluation = evaluate(request)
+                if (!operationGate.isCurrent(ticket)) return@launch
+                callbacks.onStateChanged(ticket.actionToken, evaluation.state)
+                if (!operationGate.isCurrent(ticket)) return@launch
+                if (evaluation.state.step == returnedFrom) {
+                    operationGate.complete(ticket)
+                    return@launch
+                }
+                val waitingForPlatform = continueEvaluation(ticket, evaluation)
+                if (!waitingForPlatform) operationGate.complete(ticket)
+            }.exceptionOrNull()
+            when (failure) {
+                null -> Unit
+                is CancellationException -> throw failure
+                else -> if (operationGate.isCurrent(ticket)) {
+                    operationGate.complete(ticket)
+                    callbacks.onFailure(ticket.actionToken, failure)
+                }
             }
         }
+        operationGate.attach(ticket, job)
+        job.start()
     }
 
     private suspend fun evaluate(
@@ -151,26 +209,29 @@ class NotificationEnablementCoordinator(
     }
 
     private suspend fun continueEvaluation(
-        actionToken: String,
+        ticket: NotificationEnablementOperationGate.Ticket,
         evaluation: NotificationEnablementEvaluation
-    ) {
+    ): Boolean {
+        if (!operationGate.isCurrent(ticket)) return false
         val step = evaluation.state.step
         val continuationToken = NotificationEnablementContinuation(
-            actionToken = actionToken,
+            actionToken = ticket.actionToken,
             step = step
         ).encode()
-        when (step) {
+        return when (step) {
             NotificationEnablementStep.REQUEST_RUNTIME_PERMISSION -> {
                 capabilityCoordinator.runWhenGranted(
                     capability = AppCapability.NOTIFICATIONS,
                     actionToken = continuationToken
                 )
+                true
             }
             NotificationEnablementStep.OPEN_APP_SETTINGS -> {
                 capabilityCoordinator.openSettingsFor(
                     capability = AppCapability.NOTIFICATIONS,
                     actionToken = continuationToken
                 )
+                true
             }
             NotificationEnablementStep.OPEN_CHANNEL_SETTINGS -> {
                 capabilityCoordinator.openNotificationChannelSettingsFor(
@@ -179,12 +240,14 @@ class NotificationEnablementCoordinator(
                     ),
                     actionToken = continuationToken
                 )
+                true
             }
             NotificationEnablementStep.REQUEST_PRECISE_REMINDERS -> {
                 capabilityCoordinator.runWhenGranted(
                     capability = AppCapability.PRECISE_REMINDERS,
                     actionToken = continuationToken
                 )
+                true
             }
             NotificationEnablementStep.READY -> {
                 if (!evaluation.state.ownerPreferenceEnabled) {
@@ -193,32 +256,33 @@ class NotificationEnablementCoordinator(
                         enabled = true
                     )
                 }
+                if (!operationGate.isCurrent(ticket)) return false
                 callbacks.onStateChanged(
-                    actionToken,
+                    ticket.actionToken,
                     NotificationEnablementState(
                         ownerPreferenceEnabled = true,
                         step = NotificationEnablementStep.READY
                     )
                 )
-                callbacks.onReady(actionToken)
+                if (!operationGate.isCurrent(ticket)) return false
+                callbacks.onReady(ticket.actionToken)
+                false
             }
         }
     }
 
-    private fun launchSafely(
-        actionToken: String,
-        action: suspend () -> Unit
-    ) {
-        val lifecycleOwner = fragment.viewLifecycleOwnerLiveData.value ?: return
-        lifecycleOwner.lifecycleScope.launch {
-            val failure = runCatching { action() }.exceptionOrNull()
-            when (failure) {
-                null -> Unit
-                is CancellationException -> throw failure
-                else -> callbacks.onFailure(actionToken, failure)
-            }
+    private fun cancelRefresh() {
+        refreshGeneration = if (refreshGeneration == Long.MAX_VALUE) {
+            0L
+        } else {
+            refreshGeneration + 1L
         }
+        refreshJob?.cancel()
+        refreshJob = null
     }
+
+    private fun isCurrentRefresh(generation: Long): Boolean =
+        generation == refreshGeneration && !operationGate.hasActiveOperation
 }
 
 private data class NotificationEnablementEvaluation(
