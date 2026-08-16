@@ -149,8 +149,7 @@ class DosingDraftViewModelBoundaryTest {
         invalid.bind(
             deviceUidText = "device-1",
             slotIdText = "dosing:channel2",
-            lastCalibratedAtEpochSeconds = 0L,
-            restoredMissedDoseRecoveryEnabled = false
+            lastCalibratedAtEpochSeconds = 0L
         )
         assertFalse(invalid.currentDraft().routeValid)
 
@@ -159,8 +158,7 @@ class DosingDraftViewModelBoundaryTest {
         valid.bind(
             deviceUidText = "device-1",
             slotIdText = "dosing:channel2",
-            lastCalibratedAtEpochSeconds = 100L,
-            restoredMissedDoseRecoveryEnabled = false
+            lastCalibratedAtEpochSeconds = 100L
         )
         assertEquals("Channel 2", valid.currentDraft().channelTitle)
 
@@ -174,7 +172,7 @@ class DosingDraftViewModelBoundaryTest {
         assertTrue(valid.currentDraft().missedDoseRecoveryEnabled)
         assertEquals(true, validOperations.lastMissedDoseRecoveryEnabled)
 
-        valid.startManualDose(2_500L)
+        valid.startManualDose("2.500")
         assertEquals(2_500L, validOperations.lastManualDoseMicroliters)
         assertTrue(valid.currentDraft().manualDoseActive)
 
