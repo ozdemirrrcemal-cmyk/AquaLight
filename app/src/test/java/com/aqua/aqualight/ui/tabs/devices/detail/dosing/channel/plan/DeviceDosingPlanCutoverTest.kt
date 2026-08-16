@@ -1,0 +1,156 @@
+package com.aqua.aqualight.ui.tabs.devices.detail.dosing.channel.plan
+
+import com.aqua.aqualight.application.devices.dosing.DeviceDosingChannelOperationResult
+import com.aqua.aqualight.application.devices.dosing.DeviceDosingChannelOperations
+import com.aqua.aqualight.application.devices.dosing.DeviceDosingChannelRejection
+import com.aqua.aqualight.application.devices.dosing.DeviceDosingCustomPeriodDraft
+import com.aqua.aqualight.application.devices.dosing.DeviceDosingProgram
+import com.aqua.aqualight.application.devices.dosing.DeviceDosingProgramSchedule
+import com.aqua.aqualight.application.devices.dosing.DeviceDosingSchedulingPolicy
+import com.aqua.aqualight.application.devices.dosing.DeviceDosingTimerDoseDraft
+import com.aqua.aqualight.ui.tabs.devices.detail.dosing.channel.FakeDeviceDosingChannelOperations
+import com.aqua.aqualight.ui.tabs.devices.detail.dosing.channel.sampleDosingChannelSnapshot
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.test.UnconfinedTestDispatcher
+import kotlinx.coroutines.test.resetMain
+import kotlinx.coroutines.test.runTest
+import kotlinx.coroutines.test.setMain
+import org.junit.After
+import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
+import org.junit.Assert.assertNull
+import org.junit.Before
+import org.junit.Test
+
+@OptIn(ExperimentalCoroutinesApi::class)
+class DeviceDosingPlanCutoverTest {
+    private val dispatcher = UnconfinedTestDispatcher()
+
+    @Before
+    fun setUp() {
+        Dispatchers.setMain(dispatcher)
+    }
+
+    @After
+    fun tearDown() {
+        Dispatchers.resetMain()
+    }
+
+    @Test
+    fun `all plan modes preserve one authoritative program intent through save`() =
+        runTest(dispatcher) {
+            stage10Programs().forEach { program ->
+                val operations = FakeDeviceDosingChannelOperations(
+                    sampleDosingChannelSnapshot().copy(program = program)
+                )
+                val viewModel = DeviceDosingPlanViewModel(operations)
+
+                viewModel.bind(DEVICE_UID, SLOT_ID, restoredDraft = null)
+                assertEquals(program, viewModel.currentEditorState().programIntent)
+
+                viewModel.save()
+
+                assertEquals(program, operations.lastProgram)
+                assertEquals(program, viewModel.currentEditorState().programIntent)
+            }
+        }
+
+    @Test
+    fun `authoritative scheduling limit blocks a stale oversized editor result`() =
+        runTest(dispatcher) {
+            val operations = FakeDeviceDosingChannelOperations(
+                sampleDosingChannelSnapshot().copy(
+                    scheduling = DeviceDosingSchedulingPolicy(maxEventsPerChannel = 1)
+                )
+            )
+            val viewModel = DeviceDosingPlanViewModel(operations)
+            viewModel.bind(DEVICE_UID, SLOT_ID, restoredDraft = null)
+
+            viewModel.applyScheduleUpdate(
+                DosingPlanScheduleUpdate.Timer(
+                    listOf(
+                        DeviceDosingTimerDoseDraft(0L, 1_000L),
+                        DeviceDosingTimerDoseDraft(3_600_000L, 1_000L)
+                    )
+                )
+            )
+
+            assertFalse(viewModel.currentEditorState().canSave)
+            viewModel.save()
+            assertNull(operations.lastProgram)
+        }
+
+    @Test
+    fun `program conflict is surfaced once without a blind retry`() = runTest(dispatcher) {
+        val delegate = FakeDeviceDosingChannelOperations()
+        var applyCount = 0
+        val operations = object : DeviceDosingChannelOperations by delegate {
+            override suspend fun applyProgram(
+                deviceUid: String,
+                slotId: String,
+                program: DeviceDosingProgram
+            ): DeviceDosingChannelOperationResult {
+                applyCount += 1
+                return DeviceDosingChannelOperationResult.Rejected(
+                    DeviceDosingChannelRejection.CONFLICT
+                )
+            }
+        }
+        val viewModel = DeviceDosingPlanViewModel(operations)
+
+        viewModel.bind(DEVICE_UID, SLOT_ID, restoredDraft = null)
+        viewModel.save()
+
+        assertEquals(1, applyCount)
+        assertEquals(DeviceDosingPlanEvent.SaveFailed, viewModel.events.first())
+        assertFalse(viewModel.currentEditorState().operationInProgress)
+    }
+
+    private companion object {
+        const val DEVICE_UID = "device-1"
+        const val SLOT_ID = "dosing:channel2"
+    }
+}
+
+private fun stage10Programs(): List<DeviceDosingProgram> {
+    val weekdays = listOf(true, false, true, false, true, false, true)
+    return listOf(
+        DeviceDosingProgram(
+            enabled = true,
+            weekdays = weekdays,
+            schedule = DeviceDosingProgramSchedule.Single(3_000L, 28_800_000L),
+            missedDoseRecoveryEnabled = true
+        ),
+        DeviceDosingProgram(
+            enabled = false,
+            weekdays = weekdays,
+            schedule = DeviceDosingProgramSchedule.Hourly24(24_000L, 3_600_000L),
+            missedDoseRecoveryEnabled = false
+        ),
+        DeviceDosingProgram(
+            enabled = true,
+            weekdays = weekdays,
+            schedule = DeviceDosingProgramSchedule.CustomPeriods(
+                dailyDoseMicroliters = 4_000L,
+                periods = listOf(
+                    DeviceDosingCustomPeriodDraft(0L, 3_600_000L, 2),
+                    DeviceDosingCustomPeriodDraft(7_200_000L, 10_800_000L, 2)
+                )
+            ),
+            missedDoseRecoveryEnabled = true
+        ),
+        DeviceDosingProgram(
+            enabled = true,
+            weekdays = weekdays,
+            schedule = DeviceDosingProgramSchedule.Timer(
+                listOf(
+                    DeviceDosingTimerDoseDraft(0L, 1_000L),
+                    DeviceDosingTimerDoseDraft(3_600_000L, 2_000L)
+                )
+            ),
+            missedDoseRecoveryEnabled = false
+        )
+    )
+}
