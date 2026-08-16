@@ -130,7 +130,13 @@ internal class DeviceDosingChannelDetailViewModel(
         if (!mutableDraft.value.manualDoseEnabled) return
         val amountMicroliters = DeviceDosingManualDoseDraftPolicy.parseMicroliters(rawAmount)
         if (amountMicroliters == null) {
-            emitFailure(DeviceDosingChannelDetailFailure.INVALID_INPUT)
+            viewModelScope.launch {
+                eventChannel.send(
+                    DeviceDosingChannelDetailEvent.OperationFailed(
+                        DeviceDosingChannelDetailFailure.INVALID_INPUT
+                    )
+                )
+            }
             return
         }
         mutate(
@@ -236,12 +242,6 @@ internal class DeviceDosingChannelDetailViewModel(
                 !snapshot.activeRun.active,
             resetEnabled = snapshot.controls.resetSupported
         )
-    }
-
-    private fun emitFailure(failure: DeviceDosingChannelDetailFailure) {
-        viewModelScope.launch {
-            eventChannel.send(DeviceDosingChannelDetailEvent.OperationFailed(failure))
-        }
     }
 
     private fun clearBinding() {
