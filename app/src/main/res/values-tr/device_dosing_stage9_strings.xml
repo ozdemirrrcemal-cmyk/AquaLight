@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="device_dosing_detail_error_invalid_input">Bu kanalın desteklediği bir miktar girip tekrar deneyin.</string>
+    <string name="device_dosing_detail_error_invalid_input">@string/device_dosing_detail_manual_amount_invalid</string>
     <string name="device_dosing_detail_error_not_editable">Bu ayar artık düzenlenemiyor. Kanalın güncel durumunu kontrol edin.</string>
     <string name="device_dosing_detail_error_calibration_required">Manuel doz başlatmadan önce bu kanalı kalibre edin.</string>
     <string name="device_dosing_detail_error_busy">Başka bir dozaj işlemi etkin. Tekrar denemeden önce kanalın güncel durumunu kontrol edin.</string>
