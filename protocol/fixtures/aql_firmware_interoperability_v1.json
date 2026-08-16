@@ -3,7 +3,7 @@
   "schema": "aql.android-firmware.interoperability.v1",
   "firmware": {
     "repository": "ozdemirrrcemal-cmyk/AquaLight-Firmware",
-    "commit": "c77d191398b4bca1d24be99699d1a8fe17ac3dfb",
+    "commit": "a0403bf408fcf898ae94a9178eba34efdc2af9bc",
     "commandNames": {
       "path": "src/api/v1/commands/AqlCommandNames.hpp",
       "blobSha": "7bff40576bb77450c662181e2b09b5be961e6809"
