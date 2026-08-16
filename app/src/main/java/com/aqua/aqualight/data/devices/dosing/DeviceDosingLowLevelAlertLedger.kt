@@ -95,12 +95,17 @@ internal class SharedPreferencesDeviceDosingLowLevelAlertLedger private construc
             "$ownerUid\u0000$deviceUid\u0000$slotId".toByteArray(Charsets.UTF_8)
         )
         return digest.joinToString(separator = "") { byte ->
-            (byte.toInt() and 0xff).toString(16).padStart(2, '0')
+            (byte.toInt() and BYTE_MASK)
+                .toString(HEX_RADIX)
+                .padStart(HEX_BYTE_WIDTH, '0')
         }
     }
 
     companion object {
         private const val PREFERENCES_NAME = "aql_dosing_low_level_alert_ledger_v1"
+        private const val BYTE_MASK = 0xff
+        private const val HEX_RADIX = 16
+        private const val HEX_BYTE_WIDTH = 2
 
         fun create(
             context: Context,
