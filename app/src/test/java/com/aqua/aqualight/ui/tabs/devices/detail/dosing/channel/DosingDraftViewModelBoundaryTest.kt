@@ -83,64 +83,69 @@ class DosingDraftViewModelBoundaryTest {
     }
 
     @Test
-    fun `reservoir validates draft before accepting state`() {
-        val viewModel = DeviceDosingReservoirViewModel()
-        viewModel.bindInitial(
-            DeviceDosingReservoirDraft(reservoirCapacityMicroliters = 450_000L)
-        )
+    fun `reservoir validates draft before accepting state`() = runTest(dispatcher) {
+        val operations = FakeDeviceDosingChannelOperations()
+        val viewModel = DeviceDosingReservoirViewModel(operations)
+        viewModel.bind("device-1", "dosing:channel2", restoredDraft = null)
 
         assertFalse(viewModel.currentDraft().lowLevelAlertEnabled)
+        assertEquals(450_000L, viewModel.currentDraft().reservoirCapacityMicroliters)
 
         viewModel.setCapacityInput("-1", Locale.US)
         assertEquals(450_000L, viewModel.currentDraft().reservoirCapacityMicroliters)
         assertEquals(
             DeviceDosingReservoirCapacityRejection.POSITIVE_REQUIRED,
-            viewModel.capacityRejection.value
+            viewModel.currentEditorState().capacityRejection
         )
 
         viewModel.setCapacityInput("800,125", Locale.forLanguageTag("tr-TR"))
-        viewModel.setTrackingEnabled(true)
         assertEquals(800_125L, viewModel.currentDraft().reservoirCapacityMicroliters)
-        assertEquals(null, viewModel.capacityRejection.value)
+        assertEquals(null, viewModel.currentEditorState().capacityRejection)
         assertTrue(viewModel.currentDraft().trackingEnabled)
     }
 
     @Test
-    fun `reservoir exact capacity survives viewmodel recreation without Double conversion`() {
-        val original = DeviceDosingReservoirViewModel()
-        original.bindInitial(null)
-        original.setCapacityInput("123,456", Locale.forLanguageTag("tr-TR"))
+    fun `reservoir exact capacity survives viewmodel recreation without Double conversion`() =
+        runTest(dispatcher) {
+            val original = DeviceDosingReservoirViewModel(FakeDeviceDosingChannelOperations())
+            original.bind("device-1", "dosing:channel2", restoredDraft = null)
+            original.setCapacityInput("123,456", Locale.forLanguageTag("tr-TR"))
 
-        val recreated = DeviceDosingReservoirViewModel()
-        recreated.bindInitial(original.currentDraft())
+            val recreated = DeviceDosingReservoirViewModel(FakeDeviceDosingChannelOperations())
+            recreated.bind(
+                "device-1",
+                "dosing:channel2",
+                restoredDraft = original.currentDraft()
+            )
 
-        assertEquals(123_456L, recreated.currentDraft().reservoirCapacityMicroliters)
-    }
+            assertEquals(123_456L, recreated.currentDraft().reservoirCapacityMicroliters)
+        }
 
     @Test
-    fun `reservoir keeps user alert intent while Android delivery is blocked`() {
-        val viewModel = DeviceDosingReservoirViewModel()
-        viewModel.bindInitial(null)
+    fun `reservoir keeps user alert intent while Android delivery is blocked`() =
+        runTest(dispatcher) {
+            val viewModel = DeviceDosingReservoirViewModel(FakeDeviceDosingChannelOperations())
+            viewModel.bind("device-1", "dosing:channel2", restoredDraft = null)
 
-        viewModel.setLowLevelAlertEnabled(true)
-        viewModel.setNotificationAvailability(
-            DeviceDosingReservoirNotificationAvailability.ANDROID_BLOCKED
-        )
+            viewModel.setLowLevelAlertEnabled(true)
+            viewModel.setNotificationAvailability(
+                DeviceDosingReservoirNotificationAvailability.ANDROID_BLOCKED
+            )
 
-        assertTrue(viewModel.currentDraft().lowLevelAlertEnabled)
-        assertEquals(
-            DeviceDosingReservoirNotificationAvailability.ANDROID_BLOCKED,
-            viewModel.notificationAvailability.value
-        )
+            assertTrue(viewModel.currentDraft().lowLevelAlertEnabled)
+            assertEquals(
+                DeviceDosingReservoirNotificationAvailability.ANDROID_BLOCKED,
+                viewModel.currentEditorState().notificationAvailability
+            )
 
-        viewModel.setLowLevelAlertEnabled(false)
+            viewModel.setLowLevelAlertEnabled(false)
 
-        assertFalse(viewModel.currentDraft().lowLevelAlertEnabled)
-        assertEquals(
-            DeviceDosingReservoirNotificationAvailability.AVAILABLE,
-            viewModel.notificationAvailability.value
-        )
-    }
+            assertFalse(viewModel.currentDraft().lowLevelAlertEnabled)
+            assertEquals(
+                DeviceDosingReservoirNotificationAvailability.AVAILABLE,
+                viewModel.currentEditorState().notificationAvailability
+            )
+        }
 
     @Test
     fun `detail owns route validity and delegates setting mutation`() = runTest(dispatcher) {
