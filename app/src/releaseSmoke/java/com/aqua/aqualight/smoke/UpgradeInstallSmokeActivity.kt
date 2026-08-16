@@ -1,7 +1,6 @@
 package com.aqua.aqualight.smoke
 
 import android.annotation.SuppressLint
-import android.app.Activity
 import android.content.Context
 import android.content.SharedPreferences
 import android.content.pm.PackageInfo
@@ -12,7 +11,12 @@ import android.os.Bundle
 import android.os.Process
 import android.view.Gravity
 import android.widget.TextView
+import androidx.activity.viewModels
 import androidx.appcompat.app.AppCompatActivity
+import androidx.lifecycle.LiveData
+import androidx.lifecycle.MutableLiveData
+import androidx.lifecycle.ViewModel
+import androidx.lifecycle.viewModelScope
 import com.aqua.aqualight.app.AquaApp
 import com.aqua.aqualight.data.devices.model.DeviceUid
 import com.aqua.aqualight.data.devices.store.DeviceCredentialStore
@@ -21,10 +25,7 @@ import com.aqua.aqualight.i18n.AppLanguageController
 import java.io.File
 import java.security.MessageDigest
 import java.util.UUID
-import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.SupervisorJob
-import kotlinx.coroutines.cancel
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
@@ -40,62 +41,75 @@ import org.json.JSONObject
  */
 class UpgradeInstallSmokeActivity : AppCompatActivity() {
 
-    private val activityScope = CoroutineScope(SupervisorJob() + Dispatchers.Main.immediate)
-    private var validationStarted = false
+    private val validationViewModel by viewModels<UpgradeInstallSmokeViewModel>()
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        render(UpgradeInstallContract.RUNNING_MARKER)
+        validationViewModel.marker.observe(this, ::render)
+        validationViewModel.start(
+            context = applicationContext,
+            action = intent.getStringExtra(UpgradeInstallContract.EXTRA_ACTION).orEmpty()
+        )
     }
 
-    override fun onPostResume() {
-        super.onPostResume()
+    private fun render(marker: String) {
+        setContentView(
+            TextView(this).apply {
+                text = marker
+                contentDescription = marker
+                gravity = Gravity.CENTER
+                textSize = UpgradeInstallContract.MARKER_TEXT_SIZE_SP
+            }
+        )
+    }
+}
+
+private class UpgradeInstallSmokeViewModel : ViewModel() {
+    private val mutableMarker = MutableLiveData(UpgradeInstallContract.RUNNING_MARKER)
+    val marker: LiveData<String> = mutableMarker
+    private var validationStarted = false
+
+    fun start(context: Context, action: String) {
         if (validationStarted) return
         validationStarted = true
-        startValidation()
-    }
-
-    private fun startValidation() {
-        activityScope.launch {
-            val action = intent.getStringExtra(UpgradeInstallContract.EXTRA_ACTION).orEmpty()
+        val appContext = context.applicationContext
+        viewModelScope.launch {
             val result = runCatching {
                 withContext(Dispatchers.IO) {
-                    when (action) {
+                    val evidence = when (action) {
                         UpgradeInstallContract.ACTION_SEED ->
-                            UpgradeInstallValidator.seed(this@UpgradeInstallSmokeActivity)
+                            UpgradeInstallValidator.seed(appContext)
 
                         UpgradeInstallContract.ACTION_VERIFY ->
-                            UpgradeInstallValidator.verify(this@UpgradeInstallSmokeActivity)
+                            UpgradeInstallValidator.verify(appContext)
 
                         else -> error("Unsupported upgrade-install smoke action.")
                     }
+                    writeEvidence(appContext, action, evidence)
+                    if (action == UpgradeInstallContract.ACTION_VERIFY) {
+                        UpgradeStateStore(appContext).clearValidationState()
+                    }
+                    evidence
                 }
             }
-            result.onSuccess { evidence ->
-                writeEvidence(action, evidence)
-                render(
+            mutableMarker.value = result.fold(
+                onSuccess = {
                     if (action == UpgradeInstallContract.ACTION_SEED) {
                         UpgradeInstallContract.BASELINE_PASS_MARKER
                     } else {
                         UpgradeInstallContract.CANDIDATE_PASS_MARKER
                     }
-                )
-            }.onFailure { error ->
-                render(
+                },
+                onFailure = { error ->
                     "${UpgradeInstallContract.FAIL_MARKER}:" +
                         "${error::class.java.simpleName}:${error.message.orEmpty()}"
-                )
-            }
+                }
+            )
         }
     }
 
-    override fun onDestroy() {
-        activityScope.cancel()
-        super.onDestroy()
-    }
-
-    private fun writeEvidence(action: String, evidence: JSONObject) {
-        val root = getExternalFilesDir(null) ?: error(
+    private fun writeEvidence(context: Context, action: String, evidence: JSONObject) {
+        val root = context.getExternalFilesDir(null) ?: error(
             "App-specific external storage is unavailable."
         )
         val directory = File(root, UpgradeInstallContract.EVIDENCE_DIRECTORY)
@@ -113,35 +127,24 @@ class UpgradeInstallSmokeActivity : AppCompatActivity() {
             "Upgrade-install evidence could not be persisted."
         }
     }
-
-    private fun render(marker: String) {
-        setContentView(
-            TextView(this).apply {
-                text = marker
-                contentDescription = marker
-                gravity = Gravity.CENTER
-                textSize = UpgradeInstallContract.MARKER_TEXT_SIZE_SP
-            }
-        )
-    }
 }
 
 private object UpgradeInstallValidator {
 
-    suspend fun seed(activity: Activity): JSONObject {
-        val identity = PackageIdentityReader.read(activity)
-        val stateStore = UpgradeStateStore(activity)
+    suspend fun seed(context: Context): JSONObject {
+        val identity = PackageIdentityReader.read(context)
+        val stateStore = UpgradeStateStore(context)
         stateStore.awaitStartupAppearanceSync()
         stateStore.reset()
         stateStore.seed(identity)
-        UpgradeCredentialProbe(activity).seed()
+        UpgradeCredentialProbe(context).seed()
 
         return JSONObject()
             .put("schemaVersion", UpgradeInstallContract.SCHEMA_VERSION)
             .put("passed", true)
             .put("phase", UpgradeInstallContract.BASELINE_PHASE)
             .put("baselineMode", UpgradeInstallContract.BASELINE_MODE)
-            .put("packageName", activity.packageName)
+            .put("packageName", context.packageName)
             .put("versionName", identity.versionName)
             .put("versionCode", identity.versionCode)
             .put("processId", identity.processId)
@@ -149,12 +152,12 @@ private object UpgradeInstallValidator {
             .put("signerSha256", identity.signerSha256)
     }
 
-    suspend fun verify(activity: Activity): JSONObject {
-        val candidate = PackageIdentityReader.read(activity)
-        val stateStore = UpgradeStateStore(activity)
+    suspend fun verify(context: Context): JSONObject {
+        val candidate = PackageIdentityReader.read(context)
+        val stateStore = UpgradeStateStore(context)
         stateStore.awaitStartupAppearanceSync()
         val baseline = stateStore.load()
-        val credentialEvidence = UpgradeCredentialProbe(activity).verifyAndCleanup()
+        val credentialEvidence = UpgradeCredentialProbe(context).verifyAndCleanup()
         val checks = linkedMapOf(
             "versionCodeIncreased" to (candidate.versionCode > baseline.versionCode),
             "signerUnchanged" to (candidate.signerSha256 == baseline.signerSha256),
@@ -174,14 +177,13 @@ private object UpgradeInstallValidator {
         check(failedChecks.isEmpty()) {
             "Upgrade-install checks failed: ${failedChecks.sorted()}"
         }
-        stateStore.clearValidationState()
 
         return JSONObject()
             .put("schemaVersion", UpgradeInstallContract.SCHEMA_VERSION)
             .put("passed", true)
             .put("phase", UpgradeInstallContract.CANDIDATE_PHASE)
             .put("baselineMode", UpgradeInstallContract.BASELINE_MODE)
-            .put("packageName", activity.packageName)
+            .put("packageName", context.packageName)
             .put("baseline", baseline.toJson())
             .put("candidate", candidate.toJson())
             .put("checks", UpgradeInstallJson.fromMap(checks))
