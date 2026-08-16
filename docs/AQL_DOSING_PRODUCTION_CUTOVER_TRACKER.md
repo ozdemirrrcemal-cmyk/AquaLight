@@ -19,8 +19,9 @@ device runtime and notification infrastructure.
 - Current stage: **12 — Production composition and commercial acceptance**
 - Status: **IMPLEMENTED — AUTOMATED AND PHYSICAL ACCEPTANCE PENDING**
 - Production wiring: **ENABLED**
-- Rule: merge approval remains blocked until Stage 12 automated gates and real-device acceptance are
-  recorded. Dosing has no debug, smoke or fixture runtime path after this cutover.
+- Rule: merge approval remains blocked until Stage 12 acceptance and all Stage 13-20 commercial
+  firmware-parity gates are completed and recorded. Dosing has no debug, smoke or fixture runtime
+  path after this cutover.
 
 ## Fixed rules
 
@@ -293,3 +294,100 @@ device runtime and notification infrastructure.
   debug decorator creates its own owner graph, or if a second Dosing state owner appears.
 - Automated and physical-device acceptance remain intentionally unchecked until their evidence is
   produced; Stage 12 implementation alone does not grant merge approval.
+
+- [ ] **13 — Channel status wire-contract parity** — **PENDING — MERGE BLOCKER**
+  - [ ] Align channel-scoped `status.get(channelKey)` with the firmware response shape:
+        envelope + `scheduling` + `channel`.
+  - [ ] Extend the Dosing v1 channel-status wire model and strict parser to consume `scheduling`
+        without weakening unknown-field fail-closed validation.
+  - [ ] Keep global-status and channel-status contracts explicit and independently tested.
+  - [ ] Add a current-firmware channel-status fixture proving the exact response parses successfully
+        and an unknown extra field is still rejected.
+  - [ ] Preserve layer boundaries: UI/application must not import wire JSON, firmware actions or
+        parser models.
+
+- [ ] **14 — Channel scheduling model and central state propagation** — **PENDING — MERGE BLOCKER**
+  - [ ] Map channel-scoped scheduling metadata from the v1 wire contract into application-owned
+        semantic scheduling state through the data layer.
+  - [ ] Propagate that state only through the canonical `DeviceDosingV1StateOwner`; do not create a
+        second Dosing source of truth, cache or feature-owned runtime state owner.
+  - [ ] Keep global scheduling capabilities distinct from channel-specific effective scheduling
+        limits so calibrated channel semantics cannot be replaced by global defaults.
+  - [ ] Preserve connection-generation, request-generation and revision coherence when publishing
+        the enriched authoritative channel snapshot.
+  - [ ] Add mapper/state-owner tests for calibrated, uncalibrated, reconnect and stale-response
+        cases.
+
+- [ ] **15 — Plan validation from effective channel limits** — **PENDING — MERGE BLOCKER**
+  - [ ] Drive plan/program validation from the selected channel's firmware-published
+        `effectiveScheduledDose` limits rather than global scheduling metadata.
+  - [ ] Keep validation policy in the application layer; UI only renders semantic validation
+        results and never recomputes firmware-authoritative limits.
+  - [ ] Preserve firmware as the final mutation authority while ensuring Android preflight accepts
+        and rejects the same effective scheduled-dose boundaries.
+  - [ ] Cover calibrated min/max boundaries, unavailable effective limits and calibration changes in
+        focused plan/application tests.
+
+- [ ] **16 — Current firmware fixture and parity pin renewal** — **PENDING — MERGE BLOCKER**
+  - [ ] Resolve and record the exact reviewed HEAD of
+        `AquaLight-Firmware:agent/dosing-program-commercialization` when this stage is executed.
+  - [ ] Replace the stale Android firmware-contract pin with that deliberately reviewed commercial
+        contract commit; do not advance the pin without reviewing the corresponding contract diff.
+  - [ ] Refresh checked firmware-source hashes and Dosing JSON fixtures from the same recorded
+        revision.
+  - [ ] Make fixture provenance explicit so a green Android test suite cannot imply parity with a
+        different firmware revision.
+  - [ ] Prove the parity test fails when a pinned firmware contract artifact changes without the
+        Android mirror/fixture update.
+
+- [ ] **17 — Complete 14-command request/response contract suite** — **PENDING — MERGE BLOCKER**
+  - [ ] Cover all firmware Dosing actions: `status.get`, `progress.get`, `config.apply`,
+        `program.apply`, `channel.reset`, `prime.start`, `prime.stop`, `calibration.start`,
+        `calibration.finish`, `calibration.confirm`, `calibration.cancel`, `dose.now`, `dose.stop`
+        and `reservoir.refill`.
+  - [ ] Validate real request fields and real response fields, nested objects, required/optional
+        members, enums/literals, numeric units/quanta and revision semantics for every action.
+  - [ ] Cover both global and channel-scoped `status.get` variants and every mutation response shape
+        actually consumed by Android.
+  - [ ] Keep strict unknown-field/unknown-enum behavior fail closed unless the firmware contract
+        explicitly defines forward-compatible semantics.
+  - [ ] Prove the suite detects field, nesting, literal, unit and semantic drift instead of checking
+        action-name presence only.
+
+- [ ] **18 — Screen/application command-routing acceptance** — **PENDING — MERGE BLOCKER**
+  - [ ] Prove every Dosing screen reaches firmware only through application operations -> Dosing v1
+        repository/adapter -> central `DeviceRuntimeCommandGateway`; direct UI/data/wire command
+        dispatch is forbidden.
+  - [ ] Verify Channel Detail routes manual dose, stop and reset to `dose.now`, `dose.stop` and
+        `channel.reset` respectively.
+  - [ ] Verify Plan save routes one authoritative intent through `program.apply`.
+  - [ ] Verify Reservoir configuration/refill route through `config.apply` and `reservoir.refill`.
+  - [ ] Verify Calibration routes prime start/stop, calibration start/finish, verification dose,
+        confirm and cancel through the exact firmware commands and preserves cleanup ordering.
+  - [ ] Add application-level acceptance tests that fail on command swaps, bypasses or a second
+        feature-specific command path.
+
+- [ ] **19 — CI firmware-contract drift merge gate** — **PENDING — MERGE BLOCKER**
+  - [ ] Add a mandatory CI gate that rejects a firmware-contract change when the Android Dosing
+        mirror, fixtures and contract evidence have not been updated together.
+  - [ ] Gate the complete action inventory, schema/version, request/response fields, nested shapes,
+        enums/literals, numeric semantics, scheduling semantics and mutation-result contracts.
+  - [ ] Include the central-architecture guards so parity work cannot introduce a second state owner,
+        direct runtime bypass or Dosing-specific transport path.
+  - [ ] Ensure the gate cannot pass solely because all 14 action names still exist.
+  - [ ] Make this gate merge-blocking on `agent/dosing-production-cutover` before commercial sign-off.
+
+- [ ] **20 — Final firmware-HEAD end-to-end Dosing audit** — **PENDING — FINAL MERGE BLOCKER**
+  - [ ] Re-resolve and record the exact firmware commercial-branch HEAD after Stages 13-19; audit
+        Android against that revision rather than an earlier assumed commit.
+  - [ ] Re-verify authoritative root/channel refresh, Plan, Reservoir, Calibration, manual dose,
+        stop/reset, occurrence progress, reconnect/invalidation and mutation-conflict behavior.
+  - [ ] Run the complete contract, mapper/state-owner, application-routing, architecture and CI gates
+        against the recorded firmware revision.
+  - [ ] Complete the hardware-dependent real-device acceptance required by Stage 12 against the same
+        reviewed contract without changing shared transport, crypto, provisioning or firmware-owned
+        behavior.
+  - [ ] Prove there is no central-architecture bypass, duplicate Dosing state/source-of-truth or
+        commercial behavior deviation anywhere in the production Dosing path.
+  - [ ] Grant merge approval only when Stages 12-20 have recorded evidence and all automated plus
+        physical gates are green.
