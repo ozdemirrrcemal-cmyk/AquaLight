@@ -1,6 +1,7 @@
 package com.aqua.aqualight.data.devices.dosing
 
 import android.content.Context
+import androidx.core.content.edit
 import java.security.MessageDigest
 import java.util.concurrent.ConcurrentHashMap
 
@@ -85,7 +86,9 @@ internal class SharedPreferencesDeviceDosingLowLevelAlertLedger private construc
             ?: AlertRecord()
 
     private fun write(deviceUid: String, slotId: String, record: AlertRecord) {
-        preferences.edit().putString(key(deviceUid, slotId), record.encode()).commit()
+        preferences.edit(commit = true) {
+            putString(key(deviceUid, slotId), record.encode())
+        }
     }
 
     private fun key(deviceUid: String, slotId: String): String {
