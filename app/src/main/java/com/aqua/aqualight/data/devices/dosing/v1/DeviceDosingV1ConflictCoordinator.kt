@@ -3,7 +3,7 @@ package com.aqua.aqualight.data.devices.dosing.v1
 import com.aqua.aqualight.data.devices.runtime.core.DeviceRuntimeCommandOutcome
 import com.aqua.aqualight.data.devices.runtime.core.DeviceRuntimeConnectionGeneration
 
-/** Reconciles optimistic-revision conflicts against authoritative device state. */
+/** Reconciles mutation failures against authoritative device state. */
 internal class DeviceDosingV1ConflictCoordinator(
     private val stateOwner: DeviceDosingV1StateOwner,
     private val refreshCoordinator: DeviceDosingV1RefreshCoordinator
@@ -18,6 +18,10 @@ internal class DeviceDosingV1ConflictCoordinator(
         refreshCoordinator.refresh(address)
         DeviceDosingV1MutationResult.Conflict
     } else {
+        // A failed command can still coincide with device-side state changes (for example BUSY).
+        // Reconcile centrally so every observer sees the latest authoritative snapshot; the UI
+        // never invents or preserves a parallel runtime state after a failed mutation.
+        refreshCoordinator.refresh(address)
         DeviceDosingV1MutationResult.Failed(outcome)
     }
 }
