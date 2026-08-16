@@ -17,6 +17,7 @@ INTEROPERABILITY_PATH = (
     ROOT / "protocol/fixtures/aql_firmware_interoperability_v1.json"
 )
 WEBSOCKET_PATH = ROOT / "protocol/fixtures/aql_ws_v1_golden.json"
+DOSING_PIN_PATH = ROOT / "protocol/fixtures/aql_android_dosing_v1_pin.json"
 PRODUCT_CATALOG_PATH = ROOT / "protocol/fixtures/aql_product_catalog_v1.json"
 WS_CONTRACT_PATH = (
     ROOT
@@ -33,8 +34,8 @@ INTEROPERABILITY_TEST_PATH = (
 )
 
 FIRMWARE_REPOSITORY = "ozdemirrrcemal-cmyk/AquaLight-Firmware"
-FIRMWARE_COMMIT = "38e8812c1bcecf948ebab85979bff21a24f4b79c"
-COMMAND_NAMES_BLOB = "3f93db851c8c6c31bec2284bc295fabde0d87220"
+FIRMWARE_COMMIT = "c77d191398b4bca1d24be99699d1a8fe17ac3dfb"
+COMMAND_NAMES_BLOB = "7bff40576bb77450c662181e2b09b5be961e6809"
 EVENT_CONTRACT_BLOB = "f71cbe76679fd425d6697c89800975e00e9edee5"
 PRODUCT_CATALOG_EXPORT_COMMIT = "cf2222e58e6c69a729071a5d1205497b3fceaa70"
 REQUEST_CONTRACT_BLOBS = {
@@ -63,13 +64,16 @@ REQUEST_CONTRACT_BLOBS = {
         "77e5299511fe67e07d7cc1ffbd0114ff7316677b"
     ),
     "src/api/v1/commands/AqlDosingCommands.hpp": (
-        "1d84bc0eaadb77f9041978c2ce46c7042c158009"
+        "ab747617b774c467c1e54e6f302e564507a32928"
+    ),
+    "src/api/v1/commands/AqlDosingProgressCommands.hpp": (
+        "8700e785bdd2e747abea3b09eff97755e2addad0"
     ),
     "src/api/v1/commands/AqlFirmwareCommands.hpp": (
         "8b1107d159ca3ff026754c8a06bd1e75fb608c37"
     ),
     "src/modules/timer/AqlTimerService.hpp": (
-        "ca37e6722e4e9d214e5efd6fc089d5e64db2490a"
+        "c0c9c717fbe5b0b4ae25034a98a503d80adb4fdb"
     ),
     "src/security/AqlSecurityService.hpp": (
         "484906dbdd833d6ad7505ae1755748d239fc0805"
@@ -78,13 +82,13 @@ REQUEST_CONTRACT_BLOBS = {
 
 EXPECTED_FIXTURES = {
     "aql_ws_v1_golden.json": (
-        "765cd113b848d4b17c173e513b714b806466ec994483a34c19970e7a1b984591",
-        "d6d62d76970d7a17bcaceec9d4b308c3deb47b8b",
+        "175676bc085cdc146b28d37301d632f60977f2753cb7923387266974c81c3818",
+        "8dc8cf1b854df8f86f3ff73cc5c4040270a1b784",
         True,
     ),
     "aql_cooling_temperature_telemetry_v1.json": (
-        "020ff7e2b2fe94ad6aa7795e549cac5a926a40ac372855b475e32aecf7685213",
-        "a44b8639576a56bbcad9175b36c1a61676357879",
+        "b55264e9f0d3e8fea16a869848db612c7f4e3be166f6f1211fb1556f594bef5a",
+        "cd73c587714d95febdb6b3176da1763f6df8fc1f",
         True,
     ),
     "aql_product_catalog_v1.json": (
@@ -107,7 +111,8 @@ EXPECTED_EVENTS = {
     "firmware.ota.completed",
     "system.restarting",
 }
-EXPECTED_DISCONNECTED_ANDROID_MODULES = {"dosing"}
+EXPECTED_DISCONNECTED_ANDROID_MODULES: set[str] = set()
+EXPECTED_DOSING_ACTION_COUNT = 14
 
 
 class GuardFailure(AssertionError):
@@ -283,12 +288,12 @@ def verify_command_and_event_coverage(interoperability: dict[str, Any]) -> None:
     require(public == [], "WebSocket public command matrix must be empty")
     require(isinstance(authenticated, list), "authenticated command matrix is missing")
     command_set = set(authenticated)
-    require(len(authenticated) == 41, "firmware fixture must contain 41 commands")
-    require(len(command_set) == 41, "firmware fixture command names must be unique")
+    require(len(authenticated) == 44, "firmware fixture must contain 44 commands")
+    require(len(command_set) == 44, "firmware fixture command names must be unique")
 
     ws_source = WS_CONTRACT_PATH.read_text(encoding="utf-8", errors="strict")
     event_source = EVENT_CONTRACT_PATH.read_text(encoding="utf-8", errors="strict")
-    require(android_commands(ws_source) == command_set, "Android 41-command matrix drifted")
+    require(android_commands(ws_source) == command_set, "Android 44-command matrix drifted")
 
     disconnected_modules = interoperability.get("androidDisconnectedModules")
     require(
@@ -303,11 +308,6 @@ def verify_command_and_event_coverage(interoperability: dict[str, Any]) -> None:
         len(disconnected_modules) == len(EXPECTED_DISCONNECTED_ANDROID_MODULES),
         "disconnected Android modules contain duplicates",
     )
-    connected_command_set = {
-        command
-        for command in command_set
-        if command.split(".", 1)[0] not in EXPECTED_DISCONNECTED_ANDROID_MODULES
-    }
 
     declared_events = interoperability.get("events")
     require(isinstance(declared_events, list), "event matrix is missing")
@@ -329,9 +329,50 @@ def verify_command_and_event_coverage(interoperability: dict[str, Any]) -> None:
         set(payloadless).isdisjoint(payload_commands),
         "commands cannot be both payload-bearing and payloadless",
     )
+    core_coverage = set(payloadless) | set(payload_commands)
+
+    dosing_pin = load_json(DOSING_PIN_PATH)
+    dosing_firmware = dosing_pin.get("firmware")
+    dosing_contract = dosing_pin.get("contract")
+    require(isinstance(dosing_firmware, dict), "Dosing firmware pin is missing")
+    require(isinstance(dosing_contract, dict), "Dosing contract pin is missing")
     require(
-        set(payloadless) | set(payload_commands) == connected_command_set,
-        "request coverage does not exactly classify connected Android commands",
+        dosing_firmware.get("commit") == FIRMWARE_COMMIT,
+        "Dosing firmware pin must match the global firmware revision",
+    )
+    require(
+        dosing_contract.get("productionWiring") is True,
+        "Dosing production wiring must remain enabled",
+    )
+    dosing_actions = dosing_contract.get("authenticatedActions")
+    require(isinstance(dosing_actions, list), "Dosing authenticated action matrix is missing")
+    dosing_action_set = set(dosing_actions)
+    require(
+        len(dosing_actions) == EXPECTED_DOSING_ACTION_COUNT,
+        "Dosing pin must contain 14 authenticated actions",
+    )
+    require(
+        len(dosing_action_set) == EXPECTED_DOSING_ACTION_COUNT,
+        "Dosing authenticated actions must be unique",
+    )
+    require(
+        all(
+            isinstance(action, str) and action.startswith("dosing.")
+            for action in dosing_actions
+        ),
+        "Dosing authenticated actions must use exact dosing.* command names",
+    )
+    require(
+        dosing_action_set == {command for command in command_set if command.startswith("dosing.")},
+        "global firmware fixture and Dosing v1 pin command matrices drifted",
+    )
+    require(
+        core_coverage.isdisjoint(dosing_action_set),
+        "core request coverage must not duplicate feature-owned Dosing v1 commands",
+    )
+    require(
+        core_coverage | dosing_action_set == command_set,
+        "request coverage plus Dosing v1 pin does not exactly classify all 44 commands",
     )
 
 
@@ -431,9 +472,9 @@ def main() -> int:
         return 1
 
     print(
-        "Firmware interoperability guard passed: 41 command names, 30 connected "
-        "Android commands, 11/11 events, all connected request serializers, "
-        "byte-identical shared fixtures and 9/9 SKUs."
+        "Firmware interoperability guard passed: 44 command names, 44 connected "
+        "Android commands (30 core + 14 feature-owned Dosing v1), 11/11 events, "
+        "core request serializers, byte-identical shared fixtures and 9/9 SKUs."
     )
     return 0
 

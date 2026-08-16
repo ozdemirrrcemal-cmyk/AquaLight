@@ -49,12 +49,12 @@ class AqlFirmwareInteroperabilityTest {
     }
 
     @Test
-    fun `firmware commands stay exact while disconnected Android modules stay uncovered`() {
+    fun `firmware commands stay exact with complete feature owned request coverage`() {
         val commandAccess = websocketGolden.getJSONObject("commandAccess")
         val authenticated = commandAccess.getJSONArray("authenticated").asStringSet()
         val public = commandAccess.getJSONArray("public").asStringSet()
 
-        assertEquals(41, authenticated.size)
+        assertEquals(44, authenticated.size)
         assertTrue(public.isEmpty())
         assertEquals(public, AqlWsContract.publicCommandKeys())
         assertEquals(authenticated, AqlWsContract.authenticatedCommandKeys())
@@ -62,10 +62,7 @@ class AqlFirmwareInteroperabilityTest {
         val disconnectedModules = interoperability
             .getJSONArray("androidDisconnectedModules")
             .asStringSet()
-        assertEquals(setOf("dosing"), disconnectedModules)
-        val connectedCommands = authenticated.filterTo(linkedSetOf()) { command ->
-            command.substringBefore('.') !in disconnectedModules
-        }
+        assertTrue(disconnectedModules.isEmpty())
 
         authenticated.forEach { qualifiedName ->
             val module = qualifiedName.substringBefore('.')
@@ -80,9 +77,27 @@ class AqlFirmwareInteroperabilityTest {
         val payloadless = coverage.getJSONArray("payloadlessCommands").asStringSet()
         val payloadCommands = coverage.getJSONObject("payloadCommands")
         val payloadCommandNames = payloadCommands.keySetExact()
+        val coreCoverage = payloadless + payloadCommandNames
 
         assertTrue(payloadless.intersect(payloadCommandNames).isEmpty())
-        assertEquals(connectedCommands, payloadless + payloadCommandNames)
+
+        val dosingPin = loadJsonFixture(DOSING_PIN_FIXTURE)
+        assertEquals(
+            FIRMWARE_COMMIT,
+            dosingPin.getJSONObject("firmware").getString("commit")
+        )
+        val dosingContract = dosingPin.getJSONObject("contract")
+        assertTrue(dosingContract.getBoolean("productionWiring"))
+        val dosingCommands = dosingContract
+            .getJSONArray("authenticatedActions")
+            .asStringSet()
+        assertEquals(14, dosingCommands.size)
+        assertEquals(
+            authenticated.filterTo(linkedSetOf()) { command -> command.startsWith("dosing.") },
+            dosingCommands
+        )
+        assertTrue(coreCoverage.intersect(dosingCommands).isEmpty())
+        assertEquals(authenticated, coreCoverage + dosingCommands)
 
         val referencedSerializers = linkedSetOf<String>()
         payloadCommandNames.forEach { command ->
@@ -191,7 +206,10 @@ class AqlFirmwareInteroperabilityTest {
         }
 
         assertEquals(9, fixtureProducts.size)
-        assertEquals(fixtureProducts.mapTo(linkedSetOf()) { it.getString("productKey") }, actualProducts.keys)
+        assertEquals(
+            fixtureProducts.mapTo(linkedSetOf()) { it.getString("productKey") },
+            actualProducts.keys
+        )
         assertEquals(
             setOf("light", "timer", "dosing", "cooling"),
             actualProducts.values.mapTo(linkedSetOf()) { product -> product.family.wireValue }
@@ -394,7 +412,10 @@ class AqlFirmwareInteroperabilityTest {
         return linkedMapOf(
             "DeviceTimerChannelConfig" to channel.toJson().keySetExact(),
             "DeviceTimerChannelSetPayload" to
-                DeviceTimerChannelSetPayload("relay-1", DeviceTimerRegime.AUTO).toJson().keySetExact(),
+                DeviceTimerChannelSetPayload(
+                    "relay-1",
+                    DeviceTimerRegime.AUTO
+                ).toJson().keySetExact(),
             "DeviceTimerConfigApplyPayload" to DeviceTimerConfigApplyPayload(
                 channels = listOf(channel),
                 schedules = listOf(schedule)
@@ -459,6 +480,8 @@ class AqlFirmwareInteroperabilityTest {
         const val WEBSOCKET_FIXTURE = "aql_ws_v1_golden.json"
         const val COOLING_FIXTURE = "aql_cooling_temperature_telemetry_v1.json"
         const val PRODUCT_CATALOG_FIXTURE = "aql_product_catalog_v1.json"
+        const val DOSING_PIN_FIXTURE = "aql_android_dosing_v1_pin.json"
+        const val FIRMWARE_COMMIT = "c77d191398b4bca1d24be99699d1a8fe17ac3dfb"
 
         val WEEKDAYS = listOf(true, false, false, false, false, false, false)
     }
