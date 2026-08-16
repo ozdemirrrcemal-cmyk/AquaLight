@@ -66,7 +66,7 @@ class DeviceDosingReservoirCutoverTest {
             viewModel.refill()
 
             assertEquals(450_000L, viewModel.currentEditorState().remainingMicroliters)
-            assertFalse(viewModel.currentEditorState().lowLevelActive)
+            assertFalse(viewModel.currentEditorState().reservoirNeedsAttention)
         }
 
     @Test

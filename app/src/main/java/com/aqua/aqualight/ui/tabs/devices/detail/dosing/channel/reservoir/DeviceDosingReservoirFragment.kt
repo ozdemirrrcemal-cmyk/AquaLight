@@ -138,7 +138,7 @@ class DeviceDosingReservoirFragment :
                             ?: getString(R.string.device_dosing_detail_value_unavailable),
                         capacityRejection = editorState.capacityRejection,
                         lowLevelAlertEnabled = draft.lowLevelAlertEnabled,
-                        lowLevelActive = editorState.lowLevelActive,
+                        reservoirNeedsAttention = editorState.reservoirNeedsAttention,
                         editorEnabled = editorState.editable && !editorState.operationInProgress,
                         canSave = editorState.canSave,
                         canRefill = editorState.canRefill,

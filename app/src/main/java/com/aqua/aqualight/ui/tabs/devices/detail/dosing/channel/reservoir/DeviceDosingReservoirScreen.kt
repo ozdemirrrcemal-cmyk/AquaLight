@@ -40,7 +40,7 @@ internal data class DeviceDosingReservoirUiState(
     val remainingValue: String,
     val capacityRejection: DeviceDosingReservoirCapacityRejection?,
     val lowLevelAlertEnabled: Boolean,
-    val lowLevelActive: Boolean,
+    val reservoirNeedsAttention: Boolean,
     val editorEnabled: Boolean,
     val canSave: Boolean,
     val canRefill: Boolean,
@@ -153,7 +153,11 @@ private fun ReservoirVolumeSection(
         AquaDeviceMenuValueRow(
             label = stringResource(R.string.device_dosing_detail_available_volume),
             value = state.remainingValue,
-            tone = if (state.lowLevelActive) AquaDeviceMenuTone.DANGER else AquaDeviceMenuTone.NEUTRAL
+            tone = if (state.reservoirNeedsAttention) {
+                AquaDeviceMenuTone.DANGER
+            } else {
+                AquaDeviceMenuTone.NEUTRAL
+            }
         )
         AquaDeviceMenuDivider()
         AquaGuidedFlowButton(

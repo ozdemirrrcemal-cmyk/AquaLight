@@ -9,6 +9,7 @@ import com.aqua.aqualight.application.devices.dosing.DeviceDosingReservoirCapaci
 import com.aqua.aqualight.application.devices.dosing.DeviceDosingReservoirCapacityRejection
 import com.aqua.aqualight.application.devices.dosing.DeviceDosingReservoirCapacityValidation
 import com.aqua.aqualight.application.devices.dosing.DeviceDosingReservoirSettings
+import com.aqua.aqualight.application.devices.dosing.requiresLowReservoirAttention
 import java.util.Locale
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.channels.Channel
@@ -36,7 +37,7 @@ internal data class DeviceDosingReservoirEditorState(
     val draft: DeviceDosingReservoirDraft = DeviceDosingReservoirDraft(),
     val remainingMicroliters: Long? = null,
     val remainingAccountingCertain: Boolean = true,
-    val lowLevelActive: Boolean = false,
+    val reservoirNeedsAttention: Boolean = false,
     val editable: Boolean = false,
     val refillSupported: Boolean = false,
     val operationInProgress: Boolean = false,
@@ -253,7 +254,7 @@ internal class DeviceDosingReservoirViewModel(
                 snapshot.reservoir.trackingEnabled
             },
             remainingAccountingCertain = snapshot.reservoir.accountingCertain,
-            lowLevelActive = snapshot.reservoir.lowLevelActive,
+            reservoirNeedsAttention = snapshot.reservoir.requiresLowReservoirAttention,
             editable = snapshot.controls.reservoirEditable,
             refillSupported = snapshot.controls.refillSupported,
             initialized = true,
