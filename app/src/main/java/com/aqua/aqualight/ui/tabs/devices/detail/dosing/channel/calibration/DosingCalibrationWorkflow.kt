@@ -52,11 +52,10 @@ internal class DosingCalibrationWorkflow(
         session.observeJob = scope.launch {
             operations.observe(normalized.deviceUid, normalized.slotId).collect { snapshot ->
                 val currentRoute = session.route
-                if (snapshot != null &&
-                    currentRoute != null &&
-                    snapshot.matches(currentRoute)
-                ) {
-                    applySnapshot(snapshot)
+                when {
+                    currentRoute == null -> Unit
+                    snapshot == null -> applyUnavailableSnapshot()
+                    snapshot.matches(currentRoute) -> applySnapshot(snapshot)
                 }
             }
         }
@@ -85,7 +84,7 @@ internal class DosingCalibrationWorkflow(
         session.exiting = true
         countdown.cancel()
         session.primeSafetyJob?.cancel()
-        val primeMayBeActive = session.primeRequested || mutableUiState.value.isPumpActive
+        val primeMayBeActive = session.primeRequested
         session.primeRequested = false
         val lastKnownSnapshot = session.latestSnapshot
         scope.launch {
@@ -213,6 +212,26 @@ internal class DosingCalibrationWorkflow(
             session.completionEmitted = true
             eventChannel.send(DeviceDosingCalibrationEvent.Completed(snapshot.toDetailTarget()))
         }
+    }
+
+    private fun applyUnavailableSnapshot() {
+        countdown.cancel()
+        session.primeSafetyJob?.cancel()
+        session.primeSafetyJob = null
+        session.primeRequested = false
+        session.hasLocalProgress = false
+        session.latestSnapshot = null
+        mutableUiState.value = mutableUiState.value
+            .updateProgress { progress ->
+                progress.copy(
+                    isLoading = true,
+                    isBusy = false,
+                    isPumpActive = false,
+                    remainingMs = 0L,
+                    candidateDoseMsPerMl = null
+                )
+            }
+            .copy(error = null)
     }
 
     private fun applySnapshot(snapshot: DeviceDosingCalibrationSnapshot) {

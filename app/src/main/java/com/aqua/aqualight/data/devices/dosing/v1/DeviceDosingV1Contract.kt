@@ -61,6 +61,7 @@ object DeviceDosingV1Contract {
         const val MIN_CALIBRATION_DURATION_MS = 1_000L
         const val DEFAULT_CALIBRATION_DURATION_MS = 5_000L
         const val MAX_CALIBRATION_DURATION_MS = 60_000L
+        const val VERIFICATION_DOSE_ML = 4.0
         const val MIN_MEASURED_ML = 0.05
         const val MAX_MEASURED_ML = 1_000.0
         const val MAX_MANUAL_DOSE_ML = 1_000.0

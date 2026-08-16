@@ -79,7 +79,10 @@ internal class DeviceDosingV1CalibrationOperationsAdapter(
             requireCalibrationMutation(baseline.controls.calibrationEditable)
             adapter.repository.startCalibration(
                 uid,
-                DeviceDosingV1CalibrationStartRequest(channelKey)
+                DeviceDosingV1CalibrationStartRequest(
+                    channelKey = channelKey,
+                    durationMillis = DeviceDosingV1Contract.Limit.DEFAULT_CALIBRATION_DURATION_MS
+                )
             )
         },
         channel = DeviceDosingV1CalibrationStartResult::channel
@@ -112,7 +115,9 @@ internal class DeviceDosingV1CalibrationOperationsAdapter(
                 uid,
                 DeviceDosingV1DoseNowRequest(
                     channelKey = channelKey,
-                    amount = DeviceDosingV1Amount.fromMilliliters(VERIFICATION_DOSE_ML),
+                    amount = DeviceDosingV1Amount.fromMilliliters(
+                        DeviceDosingV1Contract.Limit.VERIFICATION_DOSE_ML
+                    ),
                     usePendingCalibration = true
                 )
             )
@@ -153,10 +158,6 @@ internal class DeviceDosingV1CalibrationOperationsAdapter(
         },
         channel = DeviceDosingV1CalibrationCancelResult::channel
     ).toCalibrationResult()
-
-    private companion object {
-        const val VERIFICATION_DOSE_ML = 4.0
-    }
 }
 
 private fun DeviceDosingV1RefreshResult.toCalibrationResult(): DeviceDosingCalibrationResult =
