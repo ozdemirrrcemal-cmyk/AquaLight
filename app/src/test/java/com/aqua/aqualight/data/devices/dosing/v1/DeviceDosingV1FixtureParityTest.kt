@@ -112,7 +112,7 @@ class DeviceDosingV1FixtureParityTest {
         const val FIRMWARE_COMMIT = "c77d191398b4bca1d24be99699d1a8fe17ac3dfb"
         val EXPECTED_SHA256 = linkedMapOf(
             "aql_dosing_calibration_v1.json" to
-                "6b691f99d92e1740ea2efd98c3c20cc4cea309fd703f8db430241e2fca385fe9b",
+                "6b691f99d92e1740ea2efd98c3c20cc4cea309fd703f8db430241e2fca385fe9",
             "aql_dosing_persistence_v1.json" to
                 "767a9e08e6cf71a221470958b616790f3ddd223dfd77033fde03708899fea880",
             "aql_dosing_program_v1.json" to
