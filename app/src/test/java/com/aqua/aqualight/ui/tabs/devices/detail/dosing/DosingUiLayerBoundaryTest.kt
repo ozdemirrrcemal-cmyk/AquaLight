@@ -45,7 +45,7 @@ class DosingUiLayerBoundaryTest {
     }
 
     @Test
-    fun `channel navigation stays behind disconnected application and route boundaries`() {
+    fun `channel navigation stays behind application and route boundaries`() {
         val rootFragment = source(ROOT_SOURCE_ROOT + "DeviceDosingRootFragment.kt")
         val rootViewModel = source(ROOT_SOURCE_ROOT + "DeviceDosingRootViewModel.kt")
         val cardMapper = source(CARD_SOURCE_ROOT + "DosingChannelCardMapper.kt")
@@ -57,10 +57,6 @@ class DosingUiLayerBoundaryTest {
             DOSING_SOURCE_ROOT +
                 "channel/calibration/DosingCalibrationSnapshotReducer.kt"
         )
-        val operations = source(
-            "app/src/main/java/com/aqua/aqualight/data/devices/dosing/" +
-                "UnavailableDeviceDosingChannelNavigationOperations.kt"
-        )
         val navigator = source(
             "app/src/main/java/com/aqua/aqualight/ui/navigation/AppRouteNavigator.kt"
         )
@@ -69,10 +65,9 @@ class DosingUiLayerBoundaryTest {
         assertTrue(rootFragment.contains("AppRouteNavigator.openDosingChannel"))
         assertFalse(rootFragment.contains("DeviceDosingChannelDetailFragmentArgs"))
         assertFalse(rootFragment.contains("DeviceDosingChannelCalibrationFragmentArgs"))
-        assertFalse(operations.contains("observeTargets"))
-        assertFalse(operations.contains("refreshTargets"))
-        assertFalse(operations.contains("runtime.modules"))
-        assertFalse(operations.contains("DevicesRepository"))
+        assertFalse(navigationContract.contains("com.aqua.aqualight.data.devices"))
+        assertFalse(navigationContract.contains("runtime.modules"))
+        assertFalse(navigationContract.contains("DevicesRepository"))
         assertTrue(navigator.contains("fun openDosingChannel("))
         assertTrue(appGraph.contains("deviceDosingChannelCalibrationFragment"))
         assertTrue(appGraph.contains("deviceDosingChannelDetailFragment"))
@@ -96,7 +91,7 @@ class DosingUiLayerBoundaryTest {
     }
 
     @Test
-    fun `new dosing v1 data layer remains outside production composition`() {
+    fun `dosing v1 production composition remains owner scoped and central`() {
         val v1Root = File(
             repositoryRoot,
             "app/src/main/java/com/aqua/aqualight/data/devices/dosing/v1"
@@ -108,6 +103,13 @@ class DosingUiLayerBoundaryTest {
         val runtimeRepository = source(
             "app/src/main/java/com/aqua/aqualight/data/devices/repository/" +
                 "DeviceRuntimeRepository.kt"
+        )
+        val ownerGraph = source(
+            "app/src/main/java/com/aqua/aqualight/composition/OwnerDependencyGraph.kt"
+        )
+        val productionRuntime = source(
+            "app/src/main/java/com/aqua/aqualight/data/devices/dosing/v1/" +
+                "DeviceDosingV1ProductionRuntime.kt"
         )
         val mainSources = File(repositoryRoot, "app/src/main/java")
             .walkTopDown()
@@ -122,6 +124,20 @@ class DosingUiLayerBoundaryTest {
         assertTrue(v1Root.isDirectory)
         assertFalse(provider.contains("DeviceDosingV1"))
         assertFalse(runtimeRepository.contains("DeviceDosingV1"))
+        assertTrue(ownerGraph.contains("dosingOperations = createDosingOperations(dependencies)"))
+        assertTrue(ownerGraph.contains("DeviceDosingV1ProductionRuntime("))
+        assertTrue(productionRuntime.contains("DeviceDosingV1StateOwner(lowLevelAlertLedger)"))
+        assertTrue(
+            productionRuntime.contains(
+                "DeviceDosingV1Repository(runtimeModules.commandGateway)"
+            )
+        )
+        assertTrue(productionRuntime.contains("devicesRepository.typedRuntimeEvents()"))
+        assertTrue(
+            mainSources.count { source ->
+                source.contains("DeviceDosingV1ProductionRuntime(")
+            } == 1
+        )
         assertTrue(mainSources.none { source -> source.contains("DeviceDosingV1Repository") })
     }
 
