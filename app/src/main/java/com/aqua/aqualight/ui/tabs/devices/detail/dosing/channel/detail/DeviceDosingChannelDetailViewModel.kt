@@ -5,7 +5,9 @@ import androidx.lifecycle.viewModelScope
 import com.aqua.aqualight.application.devices.dosing.DeviceDosingChannelDetailDraftPolicy
 import com.aqua.aqualight.application.devices.dosing.DeviceDosingChannelOperationResult
 import com.aqua.aqualight.application.devices.dosing.DeviceDosingChannelOperations
+import com.aqua.aqualight.application.devices.dosing.DeviceDosingChannelRejection
 import com.aqua.aqualight.application.devices.dosing.DeviceDosingChannelSnapshot
+import com.aqua.aqualight.application.devices.dosing.DeviceDosingManualDoseDraftPolicy
 import com.aqua.aqualight.application.devices.dosing.DeviceDosingRunSource
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.channels.Channel
@@ -18,6 +20,7 @@ import kotlinx.coroutines.launch
 
 data class DeviceDosingChannelDetailDraft(
     val routeValid: Boolean = false,
+    val authoritativeStateAvailable: Boolean = false,
     val channelTitle: String = "",
     val lastCalibratedAtEpochSeconds: Long = 0L,
     val missedDoseRecoveryEnabled: Boolean = false,
@@ -25,16 +28,28 @@ data class DeviceDosingChannelDetailDraft(
     val manualDoseActive: Boolean = false,
     val manualDoseEnabled: Boolean = false,
     val resetEnabled: Boolean = false,
-    val maximumManualDoseMicroliters: Long = 0L,
     val operationInProgress: Boolean = false
 )
+
+enum class DeviceDosingChannelDetailFailure {
+    INVALID_INPUT,
+    NOT_EDITABLE,
+    CALIBRATION_REQUIRED,
+    BUSY,
+    STATE_CHANGED,
+    SAFETY_BLOCKED,
+    UNAVAILABLE,
+    TRY_AGAIN
+}
 
 sealed interface DeviceDosingChannelDetailEvent {
     data object MissedDoseRecoverySaved : DeviceDosingChannelDetailEvent
     data object ManualDoseStarted : DeviceDosingChannelDetailEvent
     data object ManualDoseStopped : DeviceDosingChannelDetailEvent
     data object ChannelReset : DeviceDosingChannelDetailEvent
-    data object OperationFailed : DeviceDosingChannelDetailEvent
+    data class OperationFailed(
+        val failure: DeviceDosingChannelDetailFailure
+    ) : DeviceDosingChannelDetailEvent
 }
 
 /** State owner for one channel detail screen, backed only by the application boundary. */
@@ -56,8 +71,7 @@ internal class DeviceDosingChannelDetailViewModel(
     fun bind(
         deviceUidText: String,
         slotIdText: String,
-        lastCalibratedAtEpochSeconds: Long,
-        restoredMissedDoseRecoveryEnabled: Boolean
+        lastCalibratedAtEpochSeconds: Long
     ) {
         val deviceUid = deviceUidText.trim()
         val slotId = slotIdText.trim()
@@ -75,13 +89,16 @@ internal class DeviceDosingChannelDetailViewModel(
         mutableDraft.value = DeviceDosingChannelDetailDraft(
             routeValid = DeviceDosingChannelDetailDraftPolicy
                 .isValidCalibrationEpochSeconds(lastCalibratedAtEpochSeconds),
-            lastCalibratedAtEpochSeconds = lastCalibratedAtEpochSeconds,
-            missedDoseRecoveryEnabled = restoredMissedDoseRecoveryEnabled
+            lastCalibratedAtEpochSeconds = lastCalibratedAtEpochSeconds
         )
         observeJob = viewModelScope.launch {
             operations.observe(deviceUid, slotId).collect { snapshot ->
                 if (boundDeviceUid != deviceUid || boundSlotId != slotId) return@collect
-                snapshot?.let(::applySnapshot)
+                if (snapshot == null) {
+                    clearAuthoritativeState()
+                } else {
+                    applySnapshot(snapshot)
+                }
             }
         }
         refreshJob = viewModelScope.launch {
@@ -92,29 +109,21 @@ internal class DeviceDosingChannelDetailViewModel(
     fun currentDraft(): DeviceDosingChannelDetailDraft = mutableDraft.value
 
     fun setMissedDoseRecoveryEnabled(enabled: Boolean) {
-        val previous = mutableDraft.value.missedDoseRecoveryEnabled
-        if (!mutableDraft.value.missedDoseRecoveryEditable || previous == enabled) return
-        mutableDraft.value = mutableDraft.value.copy(missedDoseRecoveryEnabled = enabled)
+        val state = mutableDraft.value
+        if (!state.missedDoseRecoveryEditable || state.missedDoseRecoveryEnabled == enabled) return
         mutate(
             operation = { deviceUid, slotId ->
                 operations.setMissedDoseRecoveryEnabled(deviceUid, slotId, enabled)
             },
-            successEvent = DeviceDosingChannelDetailEvent.MissedDoseRecoverySaved,
-            onFailure = {
-                mutableDraft.value = mutableDraft.value.copy(
-                    missedDoseRecoveryEnabled = previous
-                )
-            }
+            successEvent = DeviceDosingChannelDetailEvent.MissedDoseRecoverySaved
         )
     }
 
-    fun startManualDose(amountMicroliters: Long) {
-        val state = mutableDraft.value
-        if (
-            !state.manualDoseEnabled ||
-            amountMicroliters <= 0L ||
-            amountMicroliters > state.maximumManualDoseMicroliters
-        ) {
+    fun startManualDose(rawAmount: String) {
+        if (!mutableDraft.value.manualDoseEnabled) return
+        val amountMicroliters = DeviceDosingManualDoseDraftPolicy.parseMicroliters(rawAmount)
+        if (amountMicroliters == null) {
+            emitFailure(DeviceDosingChannelDetailFailure.INVALID_INPUT)
             return
         }
         mutate(
@@ -143,8 +152,7 @@ internal class DeviceDosingChannelDetailViewModel(
 
     private fun mutate(
         operation: suspend (String, String) -> DeviceDosingChannelOperationResult,
-        successEvent: DeviceDosingChannelDetailEvent,
-        onFailure: () -> Unit = {}
+        successEvent: DeviceDosingChannelDetailEvent
     ) {
         val deviceUid = boundDeviceUid
         val slotId = boundSlotId
@@ -155,8 +163,7 @@ internal class DeviceDosingChannelDetailViewModel(
             val result = runCatching { operation(deviceUid, slotId) }
                 .getOrElse { DeviceDosingChannelOperationResult.Failed }
             if (boundDeviceUid != deviceUid || boundSlotId != slotId) return@launch
-            val success = applyResult(result, successEvent)
-            if (!success) onFailure()
+            applyResult(result, successEvent)
         }
     }
 
@@ -170,10 +177,34 @@ internal class DeviceDosingChannelDetailViewModel(
             successEvent?.let { event -> eventChannel.send(event) }
             true
         }
-        else -> {
+        is DeviceDosingChannelOperationResult.Rejected -> {
             mutableDraft.value = mutableDraft.value.copy(operationInProgress = false)
-            if (successEvent != null) {
-                eventChannel.send(DeviceDosingChannelDetailEvent.OperationFailed)
+            successEvent?.let {
+                eventChannel.send(
+                    DeviceDosingChannelDetailEvent.OperationFailed(result.reason.toDetailFailure())
+                )
+            }
+            false
+        }
+        DeviceDosingChannelOperationResult.Unavailable -> {
+            mutableDraft.value = mutableDraft.value.copy(operationInProgress = false)
+            successEvent?.let {
+                eventChannel.send(
+                    DeviceDosingChannelDetailEvent.OperationFailed(
+                        DeviceDosingChannelDetailFailure.UNAVAILABLE
+                    )
+                )
+            }
+            false
+        }
+        DeviceDosingChannelOperationResult.Failed -> {
+            mutableDraft.value = mutableDraft.value.copy(operationInProgress = false)
+            successEvent?.let {
+                eventChannel.send(
+                    DeviceDosingChannelDetailEvent.OperationFailed(
+                        DeviceDosingChannelDetailFailure.TRY_AGAIN
+                    )
+                )
             }
             false
         }
@@ -183,6 +214,7 @@ internal class DeviceDosingChannelDetailViewModel(
         mutableDraft.value = mutableDraft.value.copy(
             routeValid = snapshot.calibrated && DeviceDosingChannelDetailDraftPolicy
                 .isValidCalibrationEpochSeconds(snapshot.lastCalibratedAtEpochSeconds),
+            authoritativeStateAvailable = true,
             channelTitle = snapshot.channelTitle,
             lastCalibratedAtEpochSeconds = snapshot.lastCalibratedAtEpochSeconds,
             missedDoseRecoveryEnabled = snapshot.program?.missedDoseRecoveryEnabled == true,
@@ -195,9 +227,25 @@ internal class DeviceDosingChannelDetailViewModel(
             manualDoseEnabled = snapshot.calibrated &&
                 snapshot.controls.manualDoseSupported &&
                 !snapshot.activeRun.active,
-            resetEnabled = snapshot.controls.resetSupported,
-            maximumManualDoseMicroliters = snapshot.scheduling.maximumManualDoseMicroliters
+            resetEnabled = snapshot.controls.resetSupported
         )
+    }
+
+    private fun clearAuthoritativeState() {
+        mutableDraft.value = mutableDraft.value.copy(
+            authoritativeStateAvailable = false,
+            missedDoseRecoveryEnabled = false,
+            missedDoseRecoveryEditable = false,
+            manualDoseActive = false,
+            manualDoseEnabled = false,
+            resetEnabled = false
+        )
+    }
+
+    private fun emitFailure(failure: DeviceDosingChannelDetailFailure) {
+        viewModelScope.launch {
+            eventChannel.send(DeviceDosingChannelDetailEvent.OperationFailed(failure))
+        }
     }
 
     private fun clearBinding() {
@@ -209,3 +257,15 @@ internal class DeviceDosingChannelDetailViewModel(
         mutableDraft.value = DeviceDosingChannelDetailDraft()
     }
 }
+
+private fun DeviceDosingChannelRejection.toDetailFailure(): DeviceDosingChannelDetailFailure =
+    when (this) {
+        DeviceDosingChannelRejection.INVALID_DRAFT -> DeviceDosingChannelDetailFailure.INVALID_INPUT
+        DeviceDosingChannelRejection.NOT_EDITABLE -> DeviceDosingChannelDetailFailure.NOT_EDITABLE
+        DeviceDosingChannelRejection.NOT_CALIBRATED ->
+            DeviceDosingChannelDetailFailure.CALIBRATION_REQUIRED
+        DeviceDosingChannelRejection.BUSY -> DeviceDosingChannelDetailFailure.BUSY
+        DeviceDosingChannelRejection.CONFLICT -> DeviceDosingChannelDetailFailure.STATE_CHANGED
+        DeviceDosingChannelRejection.UNSAFE -> DeviceDosingChannelDetailFailure.SAFETY_BLOCKED
+        DeviceDosingChannelRejection.UNKNOWN -> DeviceDosingChannelDetailFailure.TRY_AGAIN
+    }
