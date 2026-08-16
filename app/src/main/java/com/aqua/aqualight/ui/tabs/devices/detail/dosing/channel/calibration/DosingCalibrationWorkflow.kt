@@ -3,8 +3,8 @@ package com.aqua.aqualight.ui.tabs.devices.detail.dosing.channel.calibration
 import com.aqua.aqualight.application.devices.dosing.DeviceDosingCalibrationFailure
 import com.aqua.aqualight.application.devices.dosing.DeviceDosingCalibrationOperations
 import com.aqua.aqualight.application.devices.dosing.DeviceDosingCalibrationResult
-import com.aqua.aqualight.application.devices.dosing.DeviceDosingCalibrationSessionPhase
 import com.aqua.aqualight.application.devices.dosing.DeviceDosingCalibrationSnapshot
+import com.aqua.aqualight.application.devices.dosing.hasActiveCalibrationSession
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.Flow
@@ -223,7 +223,7 @@ internal class DosingCalibrationWorkflow(
         val route = session.route ?: return
         if (
             session.authoritativeSessionInterrupted &&
-            snapshot.sessionPhase == DeviceDosingCalibrationSessionPhase.IDLE
+            !snapshot.hasActiveCalibrationSession
         ) {
             session.hasLocalProgress = false
         }
@@ -269,9 +269,7 @@ private fun markCalibrationSnapshotUnavailable(
     session.primeSafetyJob?.cancel()
     session.primeSafetyJob = null
     session.authoritativeSessionInterrupted =
-        session.latestSnapshot?.sessionPhase?.let { phase ->
-            phase != DeviceDosingCalibrationSessionPhase.IDLE
-        } == true
+        session.latestSnapshot?.hasActiveCalibrationSession == true
     mutableUiState.value = mutableUiState.value
         .updateProgress { progress ->
             progress.copy(
