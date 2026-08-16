@@ -95,7 +95,14 @@ internal class DeviceDosingChannelDetailViewModel(
             operations.observe(deviceUid, slotId).collect { snapshot ->
                 if (boundDeviceUid != deviceUid || boundSlotId != slotId) return@collect
                 if (snapshot == null) {
-                    clearAuthoritativeState()
+                    mutableDraft.value = mutableDraft.value.copy(
+                        authoritativeStateAvailable = false,
+                        missedDoseRecoveryEnabled = false,
+                        missedDoseRecoveryEditable = false,
+                        manualDoseActive = false,
+                        manualDoseEnabled = false,
+                        resetEnabled = false
+                    )
                 } else {
                     applySnapshot(snapshot)
                 }
@@ -228,17 +235,6 @@ internal class DeviceDosingChannelDetailViewModel(
                 snapshot.controls.manualDoseSupported &&
                 !snapshot.activeRun.active,
             resetEnabled = snapshot.controls.resetSupported
-        )
-    }
-
-    private fun clearAuthoritativeState() {
-        mutableDraft.value = mutableDraft.value.copy(
-            authoritativeStateAvailable = false,
-            missedDoseRecoveryEnabled = false,
-            missedDoseRecoveryEditable = false,
-            manualDoseActive = false,
-            manualDoseEnabled = false,
-            resetEnabled = false
         )
     }
 
