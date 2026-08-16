@@ -59,7 +59,7 @@ class DosingDraftViewModelBoundaryTest {
         viewModel.applyScheduleUpdate(DosingPlanScheduleUpdate.Hourly(3_600_000L))
         viewModel.save()
 
-        val draft = viewModel.currentDraft()
+        val draft = viewModel.currentEditorState().draft
         assertEquals(3_000L, draft.distributedDailyDoseMicroliters)
         assertEquals(3_600_000L, draft.hourlyStartTimeMs)
         assertEquals(DosingPlanScheduleMode.HOURLY, draft.selectedScheduleMode)
