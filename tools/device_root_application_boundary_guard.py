@@ -233,17 +233,26 @@ for path, text in ((MENU_MAPPER, menu_mapper), (PRESENTATION_MAPPER, presentatio
     if re.search(r"^import\s+com\.aqua\.aqualight\.data\.", text, re.MULTILINE):
         errors.append(f"{path.relative_to(ROOT)}: root presentation must consume application values")
 
+shared_root_bindings = (
+    "DefaultDeviceRootOperations(",
+    "DeviceLightRootViewModel(",
+    "DeviceCoolingRootViewModel(",
+    "DeviceTimerRootViewModel(",
+    "DeviceRootOverviewViewModel(",
+)
 for path, text in ((FACTORY, factory), (SMOKE_FACTORY, smoke_factory)):
-    for token in (
-        "DefaultDeviceRootOperations(",
-        "DeviceLightRootViewModel(",
-        "DeviceCoolingRootViewModel(",
-        "DeviceTimerRootViewModel(",
-        "DeviceDosingRootViewModel(",
-        "DeviceRootOverviewViewModel(",
-    ):
+    for token in shared_root_bindings:
         if token not in text:
             errors.append(f"{path.relative_to(ROOT)}: production/smoke root binding is missing: {token}")
+
+# Dosing has one commercial path only. Production must own the root binding; release-smoke must not
+# recreate Dosing through a fake/fail-closed implementation.
+if "DeviceDosingRootViewModel(" not in factory:
+    errors.append(f"{FACTORY.relative_to(ROOT)}: production Dosing root binding is missing")
+if "DeviceDosingRootViewModel(" in smoke_factory:
+    errors.append(
+        f"{SMOKE_FACTORY.relative_to(ROOT)}: alternate release-smoke Dosing root binding is forbidden"
+    )
 
 for token in (
     "FakeDeviceRootOperations",
