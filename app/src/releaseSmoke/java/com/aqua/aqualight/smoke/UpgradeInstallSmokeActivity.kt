@@ -46,6 +46,10 @@ class UpgradeInstallSmokeActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         validationViewModel.marker.observe(this, ::render)
+    }
+
+    override fun onPostResume() {
+        super.onPostResume()
         validationViewModel.start(
             context = applicationContext,
             action = intent.getStringExtra(UpgradeInstallContract.EXTRA_ACTION).orEmpty()
@@ -64,7 +68,7 @@ class UpgradeInstallSmokeActivity : AppCompatActivity() {
     }
 }
 
-private class UpgradeInstallSmokeViewModel : ViewModel() {
+internal class UpgradeInstallSmokeViewModel : ViewModel() {
     private val mutableMarker = MutableLiveData(UpgradeInstallContract.RUNNING_MARKER)
     val marker: LiveData<String> = mutableMarker
     private var validationStarted = false
