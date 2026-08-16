@@ -2,7 +2,6 @@ package com.aqua.aqualight.composition
 
 import androidx.lifecycle.ViewModel
 import com.aqua.aqualight.ui.tabs.aquarium.detail.TankDetailViewModel
-import com.aqua.aqualight.ui.tabs.devices.detail.dosing.channel.reservoir.DeviceDosingReservoirViewModel
 
 /**
  * ViewModels that do not require authenticated-owner state.
@@ -13,13 +12,11 @@ import com.aqua.aqualight.ui.tabs.devices.detail.dosing.channel.reservoir.Device
 internal class ProcessViewModelFactory : ScopedViewModelFactory {
 
     override fun supports(modelClass: Class<out ViewModel>): Boolean =
-        modelClass == TankDetailViewModel::class.java ||
-            modelClass == DeviceDosingReservoirViewModel::class.java
+        modelClass == TankDetailViewModel::class.java
 
     override fun <T : ViewModel> create(modelClass: Class<T>): T {
         val viewModel: ViewModel = when (modelClass) {
             TankDetailViewModel::class.java -> TankDetailViewModel()
-            DeviceDosingReservoirViewModel::class.java -> DeviceDosingReservoirViewModel()
             else -> throw IllegalArgumentException(
                 "No process-scoped ViewModel binding for ${modelClass.name}."
             )
