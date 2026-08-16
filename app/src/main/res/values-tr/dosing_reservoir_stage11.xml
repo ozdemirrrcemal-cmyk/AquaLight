@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="device_dosing_reservoir_refill">Hazneyi dolu olarak işaretle</string>
+    <string name="device_dosing_reservoir_saved">Hazne ayarları kaydedildi.</string>
+    <string name="device_dosing_reservoir_refilled">Hazne seviyesi dolu olarak sıfırlandı.</string>
+    <string name="device_dosing_low_level_notification_title">Dozaj haznesi azalıyor</string>
+    <string name="device_dosing_low_level_notification_message">%1$s haznesi düşük seviyede. Dozajın güvenilir devam etmesi için hazneyi doldurun.</string>
+    <string name="device_dosing_low_level_notification_channel_fallback">Dozaj kanalı</string>
+</resources>

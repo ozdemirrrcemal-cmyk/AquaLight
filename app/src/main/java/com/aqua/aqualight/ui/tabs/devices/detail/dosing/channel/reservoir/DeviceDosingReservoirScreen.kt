@@ -37,17 +37,23 @@ import com.aqua.aqualight.ui.common.flow.AquaGuidedFlowButton
 internal data class DeviceDosingReservoirUiState(
     val trackingEnabled: Boolean,
     val capacityValue: String,
+    val remainingValue: String,
     val capacityRejection: DeviceDosingReservoirCapacityRejection?,
     val lowLevelAlertEnabled: Boolean,
+    val lowLevelActive: Boolean,
+    val editorEnabled: Boolean,
+    val canSave: Boolean,
+    val canRefill: Boolean,
     val lowLevelAlertNotificationAvailability: DeviceDosingReservoirNotificationAvailability
 )
 
 internal data class DeviceDosingReservoirActions(
     val onTrackingEnabledChange: (Boolean) -> Unit,
     val onCapacityClick: () -> Unit,
+    val onRefillClick: () -> Unit,
     val onLowLevelAlertEnabledChange: (Boolean) -> Unit,
     val onRepairLowLevelAlertNotifications: () -> Unit,
-    val onSaveClick: (() -> Unit)?
+    val onSaveClick: () -> Unit
 )
 
 private data class ReservoirSupportingAction(
@@ -65,7 +71,7 @@ private data class ReservoirAlertPresentation(
     @StringRes val actionRes: Int?
 )
 
-/** Reservoir Monitoring child feature with fully hoisted process-safe draft state. */
+/** Reservoir Monitoring child feature rendered only from the central application snapshot/draft. */
 @Composable
 internal fun DeviceDosingReservoirScreen(
     state: DeviceDosingReservoirUiState,
@@ -73,11 +79,8 @@ internal fun DeviceDosingReservoirScreen(
     modifier: Modifier = Modifier
 ) {
     val colors = aquaDeviceMenuColors()
-
     LazyColumn(
-        modifier = modifier
-            .fillMaxSize()
-            .background(colors.background),
+        modifier = modifier.fillMaxSize().background(colors.background),
         contentPadding = PaddingValues(
             start = AquaDeviceMenuGeometry.screenHorizontalPadding,
             top = AquaDeviceMenuGeometry.screenTopPadding,
@@ -86,26 +89,15 @@ internal fun DeviceDosingReservoirScreen(
         ),
         verticalArrangement = Arrangement.spacedBy(AquaDeviceMenuGeometry.sectionGap)
     ) {
-        item(key = RESERVOIR_TRACKING_KEY) {
-            ReservoirTrackingSection(state, actions)
-        }
-        item(key = RESERVOIR_VOLUME_KEY) {
-            ReservoirVolumeSection(state, actions.onCapacityClick)
-        }
-        item(key = RESERVOIR_ALERTS_KEY) {
-            ReservoirAlertsSection(
-                state = state,
-                onLowLevelAlertEnabledChange = actions.onLowLevelAlertEnabledChange,
-                onRepairLowLevelAlertNotifications =
-                    actions.onRepairLowLevelAlertNotifications
-            )
-        }
+        item(key = RESERVOIR_TRACKING_KEY) { ReservoirTrackingSection(state, actions) }
+        item(key = RESERVOIR_VOLUME_KEY) { ReservoirVolumeSection(state, actions) }
+        item(key = RESERVOIR_ALERTS_KEY) { ReservoirAlertsSection(state, actions) }
         item(key = RESERVOIR_SAVE_KEY) {
             AquaGuidedFlowButton(
                 text = stringResource(R.string.device_dosing_detail_save_reservoir),
-                onClick = { actions.onSaveClick?.invoke() },
+                onClick = actions.onSaveClick,
                 modifier = Modifier.fillMaxWidth(),
-                enabled = state.trackingEnabled && actions.onSaveClick != null
+                enabled = state.canSave
             )
         }
     }
@@ -125,7 +117,7 @@ private fun ReservoirTrackingSection(
                 )
             ),
             checked = state.trackingEnabled,
-            enabled = true,
+            enabled = state.editorEnabled,
             onCheckedChange = actions.onTrackingEnabledChange
         )
     }
@@ -134,7 +126,7 @@ private fun ReservoirTrackingSection(
 @Composable
 private fun ReservoirVolumeSection(
     state: DeviceDosingReservoirUiState,
-    onCapacityClick: () -> Unit
+    actions: DeviceDosingReservoirActions
 ) {
     ReservoirSection(
         titleRes = R.string.device_dosing_detail_reservoir_volume_section,
@@ -147,9 +139,9 @@ private fun ReservoirVolumeSection(
                 stringResource(rejection.messageRes)
             },
             modifier = Modifier.clickable(
-                enabled = state.trackingEnabled,
+                enabled = state.trackingEnabled && state.editorEnabled,
                 role = Role.Button,
-                onClick = onCapacityClick
+                onClick = actions.onCapacityClick
             ),
             tone = if (state.capacityRejection == null) {
                 AquaDeviceMenuTone.ACCENT
@@ -160,7 +152,15 @@ private fun ReservoirVolumeSection(
         AquaDeviceMenuDivider()
         AquaDeviceMenuValueRow(
             label = stringResource(R.string.device_dosing_detail_available_volume),
-            value = stringResource(R.string.device_dosing_detail_value_unavailable)
+            value = state.remainingValue,
+            tone = if (state.lowLevelActive) AquaDeviceMenuTone.DANGER else AquaDeviceMenuTone.NEUTRAL
+        )
+        AquaDeviceMenuDivider()
+        AquaGuidedFlowButton(
+            text = stringResource(R.string.device_dosing_reservoir_refill),
+            onClick = actions.onRefillClick,
+            modifier = Modifier.fillMaxWidth().padding(AquaDeviceMenuGeometry.sectionContentPadding),
+            enabled = state.canRefill
         )
     }
 }
@@ -182,8 +182,7 @@ private val DeviceDosingReservoirCapacityRejection.messageRes: Int
 @Composable
 private fun ReservoirAlertsSection(
     state: DeviceDosingReservoirUiState,
-    onLowLevelAlertEnabledChange: (Boolean) -> Unit,
-    onRepairLowLevelAlertNotifications: () -> Unit
+    actions: DeviceDosingReservoirActions
 ) {
     val presentation = state.alertPresentation()
     ReservoirSection(
@@ -196,12 +195,12 @@ private fun ReservoirAlertsSection(
                 description = stringResource(presentation.descriptionRes)
             ),
             checked = state.lowLevelAlertEnabled,
-            enabled = state.trackingEnabled,
-            onCheckedChange = onLowLevelAlertEnabledChange,
+            enabled = state.trackingEnabled && state.editorEnabled,
+            onCheckedChange = actions.onLowLevelAlertEnabledChange,
             supportingAction = presentation.actionRes?.let { actionRes ->
                 ReservoirSupportingAction(
                     text = stringResource(actionRes),
-                    onClick = onRepairLowLevelAlertNotifications
+                    onClick = actions.onRepairLowLevelAlertNotifications
                 )
             }
         )
@@ -209,18 +208,14 @@ private fun ReservoirAlertsSection(
 }
 
 private fun DeviceDosingReservoirUiState.alertPresentation(): ReservoirAlertPresentation {
-    val notificationBlocked = trackingEnabled &&
-        lowLevelAlertEnabled &&
-        lowLevelAlertNotificationAvailability !=
-        DeviceDosingReservoirNotificationAvailability.AVAILABLE
+    val notificationBlocked = trackingEnabled && lowLevelAlertEnabled &&
+        lowLevelAlertNotificationAvailability != DeviceDosingReservoirNotificationAvailability.AVAILABLE
     val ownerPreferenceDisabled = notificationBlocked &&
         lowLevelAlertNotificationAvailability ==
         DeviceDosingReservoirNotificationAvailability.OWNER_PREFERENCE_DISABLED
     return ReservoirAlertPresentation(
         descriptionRes = when {
-            !trackingEnabled -> {
-                R.string.device_dosing_detail_low_level_alert_tracking_disabled_description
-            }
+            !trackingEnabled -> R.string.device_dosing_detail_low_level_alert_tracking_disabled_description
             ownerPreferenceDisabled -> R.string.notification_feature_owner_preference_disabled
             notificationBlocked -> R.string.notification_feature_enabled_android_blocked
             else -> R.string.device_dosing_detail_low_level_alert_description
@@ -259,7 +254,6 @@ private fun ReservoirToggleRow(
     val stateLabel = stringResource(
         if (checked) R.string.device_dosing_detail_state_on else R.string.device_dosing_detail_state_off
     )
-
     Row(
         modifier = Modifier
             .fillMaxWidth()
@@ -272,9 +266,7 @@ private fun ReservoirToggleRow(
         verticalAlignment = Alignment.CenterVertically
     ) {
         Column(
-            modifier = Modifier
-                .weight(1f)
-                .padding(end = AquaDeviceMenuGeometry.compactGap)
+            modifier = Modifier.weight(1f).padding(end = AquaDeviceMenuGeometry.compactGap)
         ) {
             BasicText(text = stringResource(content.titleRes), style = typography.rowTitle)
             BasicText(
@@ -286,9 +278,7 @@ private fun ReservoirToggleRow(
                 Box(
                     modifier = Modifier
                         .padding(top = AquaDeviceMenuGeometry.rowTextGap)
-                        .defaultMinSize(
-                            minHeight = AquaDeviceMenuGeometry.inlineActionMinHeight
-                        )
+                        .defaultMinSize(minHeight = AquaDeviceMenuGeometry.inlineActionMinHeight)
                         .clickable(
                             enabled = enabled,
                             role = Role.Button,

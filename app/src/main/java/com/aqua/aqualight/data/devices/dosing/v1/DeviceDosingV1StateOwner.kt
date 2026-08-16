@@ -2,6 +2,8 @@ package com.aqua.aqualight.data.devices.dosing.v1
 
 import com.aqua.aqualight.application.devices.dosing.DeviceDosingCalibrationSnapshot
 import com.aqua.aqualight.application.devices.dosing.DeviceDosingChannelSnapshot
+import com.aqua.aqualight.data.devices.dosing.DeviceDosingLowLevelAlertLedger
+import com.aqua.aqualight.data.devices.dosing.InMemoryDeviceDosingLowLevelAlertLedger
 import com.aqua.aqualight.data.devices.model.DeviceUid
 import com.aqua.aqualight.data.devices.runtime.core.DeviceRuntimeConnectionGeneration
 import kotlinx.coroutines.flow.Flow
@@ -76,12 +78,16 @@ private data class OwnedDosingDeviceState(
  * The only device/channel-scoped Dosing state owner.
  *
  * Raw replies and events may enter through different paths, but application snapshots are emitted
- * only after generation, request ordering and revision coherence are all proven here.
+ * only after generation, request ordering and revision coherence are all proven here. Channel alert
+ * intent is projected from the dedicated owner-scoped ledger; it never becomes a second firmware
+ * state owner.
  */
-internal class DeviceDosingV1StateOwner {
+internal class DeviceDosingV1StateOwner(
+    private val lowLevelAlertLedger: DeviceDosingLowLevelAlertLedger =
+        InMemoryDeviceDosingLowLevelAlertLedger()
+) {
     private val lock = Any()
     private val requestGenerations = HashMap<DosingStateAddress, Long>()
-    private val lowLevelAlertIntents = HashMap<DosingStateAddress, Boolean>()
     private val states = MutableStateFlow<Map<DeviceUid, OwnedDosingDeviceState>>(emptyMap())
 
     val reads: DeviceDosingV1StateReadAccess = DefaultDeviceDosingV1StateReadAccess(
@@ -114,17 +120,18 @@ internal class DeviceDosingV1StateOwner {
         if (currentRevision != null && incomingRevision < currentRevision) {
             return@synchronized DeviceDosingV1CommitDisposition.STALE_REVISION
         }
+        val slotId = DeviceDosingV1SlotKeyMapper.slotId(token.channelKey)
         val mapped = runCatching {
             DeviceDosingV1SnapshotMapper.map(
                 DeviceDosingV1SnapshotDocuments(
                     deviceUid = token.deviceUid,
-                    slotId = DeviceDosingV1SlotKeyMapper.slotId(token.channelKey),
+                    slotId = slotId,
                     global = global,
                     channelStatus = channelStatus,
                     progressStatus = progressStatus,
-                    lowLevelAlertEnabled = lowLevelAlertIntents.getOrDefault(
-                        DosingStateAddress(token.deviceUid, token.channelKey),
-                        false
+                    lowLevelAlertEnabled = lowLevelAlertLedger.isEnabled(
+                        token.deviceUid.value,
+                        slotId
                     )
                 )
             )
@@ -170,7 +177,7 @@ internal class DeviceDosingV1StateOwner {
                         channel = current?.channel,
                         calibration = current?.calibration
                     )
-                    )
+                )
             )
         )
         DeviceDosingV1CommitDisposition.APPLIED
@@ -210,7 +217,7 @@ internal class DeviceDosingV1StateOwner {
                         channel = null,
                         calibration = null
                     )
-                    )
+                )
             )
         )
         DeviceDosingV1InvalidationDisposition.APPLIED
@@ -221,9 +228,26 @@ internal class DeviceDosingV1StateOwner {
         channelKey: DeviceDosingV1ChannelKey,
         enabled: Boolean
     ) = synchronized(lock) {
-        lowLevelAlertIntents[DosingStateAddress(deviceUid, channelKey)] = enabled
+        val slotId = DeviceDosingV1SlotKeyMapper.slotId(channelKey)
+        lowLevelAlertLedger.setEnabled(deviceUid.value, slotId, enabled)
+        val device = states.value[deviceUid] ?: return@synchronized
+        val current = device.channels[channelKey] ?: return@synchronized
+        val channel = current.channel ?: return@synchronized
+        publish(
+            deviceUid,
+            device.copy(
+                channels = device.channels + (
+                    channelKey to current.copy(
+                        channel = channel.copy(
+                            reservoir = channel.reservoir.copy(lowLevelAlertEnabled = enabled)
+                        )
+                    )
+                )
+            )
+        )
     }
 
+    /** Runtime lifecycle clearing must never erase durable channel alert intent or dedupe state. */
     fun clear(deviceUid: DeviceUid) = synchronized(lock) {
         if (deviceUid in states.value) {
             states.value = states.value.toMutableMap().apply { remove(deviceUid) }.toMap()

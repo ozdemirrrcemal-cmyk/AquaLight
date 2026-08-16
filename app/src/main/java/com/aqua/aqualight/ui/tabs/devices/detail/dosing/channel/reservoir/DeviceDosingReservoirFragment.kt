@@ -7,7 +7,11 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.platform.ComposeView
 import androidx.compose.ui.platform.ViewCompositionStrategy
 import androidx.fragment.app.viewModels
+import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.lifecycle.lifecycleScope
+import androidx.lifecycle.repeatOnLifecycle
+import androidx.navigation.fragment.findNavController
 import androidx.navigation.fragment.navArgs
 import com.aqua.aqualight.R
 import com.aqua.aqualight.application.devices.dosing.DeviceDosingReservoirCapacityPolicy
@@ -22,8 +26,9 @@ import com.aqua.aqualight.ui.common.notification.NotificationEnablementRequest
 import com.aqua.aqualight.ui.common.notification.NotificationEnablementStep
 import com.aqua.aqualight.ui.tabs.devices.detail.dosing.channel.common.DeviceDosingChannelDestinationFragment
 import java.util.Locale
+import kotlinx.coroutines.launch
 
-/** Render/input host for the ViewModel-owned reservoir draft. */
+/** Render/input host for the authoritative reservoir editor. */
 @Suppress("TooManyFunctions") // Lifecycle and notification-gated user intents stay local.
 class DeviceDosingReservoirFragment :
     DeviceDosingChannelDestinationFragment(R.layout.fragment_device_dosing_channel_detail) {
@@ -32,19 +37,13 @@ class DeviceDosingReservoirFragment :
     private val viewModel: DeviceDosingReservoirViewModel by viewModels {
         requireContext().requireAppContainer().defaultViewModelFactory
     }
-    private val appContainer by lazy {
-        requireContext().requireAppContainer()
-    }
+    private val appContainer by lazy { requireContext().requireAppContainer() }
     private val notificationEnablementCoordinator = NotificationEnablementCoordinator(
         fragment = this,
         instanceKey = "dosing-reservoir-low-level-alert",
         dependencies = NotificationEnablementDependencies(
-            notificationPreferencesProvider = {
-                appContainer.notificationPreferenceUseCase
-            },
-            ownerUidProvider = {
-                appContainer.authenticatedOwnerIdentity.requireOwnerUid()
-            },
+            notificationPreferencesProvider = { appContainer.notificationPreferenceUseCase },
+            ownerUidProvider = { appContainer.authenticatedOwnerIdentity.requireOwnerUid() },
             requestResolver = { actionToken ->
                 if (actionToken == ACTION_ENABLE_LOW_LEVEL_ALERT) {
                     NotificationEnablementRequest(
@@ -73,24 +72,18 @@ class DeviceDosingReservoirFragment :
                     val alertEnabled = viewModel.currentDraft().lowLevelAlertEnabled
                     viewModel.setNotificationAvailability(
                         when {
-                            !alertEnabled || state.canDeliver -> {
+                            !alertEnabled || state.canDeliver ->
                                 DeviceDosingReservoirNotificationAvailability.AVAILABLE
-                            }
-                            state.step != NotificationEnablementStep.READY -> {
+                            state.step != NotificationEnablementStep.READY ->
                                 DeviceDosingReservoirNotificationAvailability.ANDROID_BLOCKED
-                            }
-                            else -> {
-                                DeviceDosingReservoirNotificationAvailability
-                                    .OWNER_PREFERENCE_DISABLED
-                            }
+                            else ->
+                                DeviceDosingReservoirNotificationAvailability.OWNER_PREFERENCE_DISABLED
                         }
                     )
                 }
             },
             onFailure = { actionToken, _ ->
-                if (actionToken == ACTION_ENABLE_LOW_LEVEL_ALERT) {
-                    handleNotificationAccessFailure()
-                }
+                if (actionToken == ACTION_ENABLE_LOW_LEVEL_ALERT) handleNotificationAccessFailure()
             }
         )
     )
@@ -100,7 +93,11 @@ class DeviceDosingReservoirFragment :
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
-        viewModel.bindInitial(savedInstanceState?.toReservoirDraft())
+        viewModel.bind(
+            deviceUidText = args.deviceUid,
+            slotIdText = args.slotId,
+            restoredDraft = savedInstanceState?.toReservoirDraft()
+        )
         setupReservoirCapacityResult()
         setupSelectedPump(
             view = view,
@@ -109,6 +106,7 @@ class DeviceDosingReservoirFragment :
             pumpCount = args.pumpCount,
             channelNumber = args.channelNumber
         )
+        observeReservoirEvents()
         setupContent(view)
     }
 
@@ -126,35 +124,44 @@ class DeviceDosingReservoirFragment :
         view.findViewById<ComposeView>(R.id.channelDetailContent).apply {
             setViewCompositionStrategy(ViewCompositionStrategy.DisposeOnViewTreeLifecycleDestroyed)
             setContent {
-                val draft by viewModel.draft.collectAsStateWithLifecycle()
-                val notificationAvailability by
-                    viewModel.notificationAvailability.collectAsStateWithLifecycle()
-                val capacityRejection by viewModel.capacityRejection.collectAsStateWithLifecycle()
+                val editorState by viewModel.editorState.collectAsStateWithLifecycle()
+                val draft = editorState.draft
                 DeviceDosingReservoirScreen(
                     state = DeviceDosingReservoirUiState(
                         trackingEnabled = draft.trackingEnabled,
-                        capacityValue = getString(
-                            R.string.device_dosing_detail_value_container_ml,
-                            DeviceDosingReservoirCapacityPolicy.format(
-                                draft.reservoirCapacityMicroliters,
-                                currentLocale()
-                            )
-                        ),
-                        capacityRejection = capacityRejection,
+                        capacityValue = formatVolume(draft.reservoirCapacityMicroliters),
+                        remainingValue = editorState.remainingMicroliters
+                            ?.takeIf {
+                                draft.trackingEnabled && editorState.remainingAccountingCertain
+                            }
+                            ?.let(::formatVolume)
+                            ?: getString(R.string.device_dosing_detail_value_unavailable),
+                        capacityRejection = editorState.capacityRejection,
                         lowLevelAlertEnabled = draft.lowLevelAlertEnabled,
-                        lowLevelAlertNotificationAvailability = notificationAvailability
+                        lowLevelActive = editorState.lowLevelActive,
+                        editorEnabled = editorState.editable && !editorState.operationInProgress,
+                        canSave = editorState.canSave,
+                        canRefill = editorState.canRefill,
+                        lowLevelAlertNotificationAvailability =
+                            editorState.notificationAvailability
                     ),
                     actions = DeviceDosingReservoirActions(
                         onTrackingEnabledChange = ::setTrackingEnabled,
                         onCapacityClick = ::showReservoirCapacityEditor,
+                        onRefillClick = viewModel::refill,
                         onLowLevelAlertEnabledChange = ::setLowLevelAlertEnabled,
                         onRepairLowLevelAlertNotifications = ::repairLowLevelNotifications,
-                        onSaveClick = null
+                        onSaveClick = viewModel::save
                     )
                 )
             }
         }
     }
+
+    private fun formatVolume(microliters: Long): String = getString(
+        R.string.device_dosing_detail_value_container_ml,
+        DeviceDosingReservoirCapacityPolicy.format(microliters, currentLocale())
+    )
 
     private fun setTrackingEnabled(enabled: Boolean) {
         viewModel.setTrackingEnabled(enabled)
@@ -193,10 +200,39 @@ class DeviceDosingReservoirFragment :
                 DeviceDosingReservoirNotificationAvailability.AVAILABLE
             }
         )
-        (activity as? BaseActivity)?.showSnackBar(
-            getString(R.string.notification_feature_access_check_failed),
+        showReservoirMessage(
+            R.string.notification_feature_access_check_failed,
             BaseActivity.SnackType.ERROR
         )
+    }
+
+    private fun observeReservoirEvents() {
+        viewLifecycleOwner.lifecycleScope.launch {
+            viewLifecycleOwner.repeatOnLifecycle(Lifecycle.State.STARTED) {
+                viewModel.events.collect { event ->
+                    when (event) {
+                        DeviceDosingReservoirEvent.Saved -> {
+                            showReservoirMessage(R.string.device_dosing_reservoir_saved)
+                            findNavController().navigateUp()
+                        }
+                        DeviceDosingReservoirEvent.Refilled ->
+                            showReservoirMessage(R.string.device_dosing_reservoir_refilled)
+                        DeviceDosingReservoirEvent.SaveFailed,
+                        DeviceDosingReservoirEvent.RefillFailed -> showReservoirMessage(
+                            R.string.device_dosing_detail_operation_failed,
+                            BaseActivity.SnackType.ERROR
+                        )
+                    }
+                }
+            }
+        }
+    }
+
+    private fun showReservoirMessage(
+        messageRes: Int,
+        type: BaseActivity.SnackType = BaseActivity.SnackType.SUCCESS
+    ) {
+        (activity as? BaseActivity)?.showSnackBar(getString(messageRes), type)
     }
 
     private fun setupReservoirCapacityResult() {
@@ -216,8 +252,9 @@ class DeviceDosingReservoirFragment :
     }
 
     private fun showReservoirCapacityEditor() {
-        val draft = viewModel.currentDraft()
-        if (!draft.trackingEnabled) return
+        val state = viewModel.currentEditorState()
+        val draft = state.draft
+        if (!draft.trackingEnabled || !state.editable || state.operationInProgress) return
         TextInputBottomSheet.show(
             fragmentManager = childFragmentManager,
             title = getString(R.string.device_dosing_detail_container_volume),

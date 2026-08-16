@@ -43,6 +43,7 @@ import com.aqua.aqualight.ui.tabs.devices.detail.dosing.root.DeviceDosingRootVie
 import com.aqua.aqualight.ui.tabs.devices.detail.dosing.channel.calibration.DeviceDosingChannelCalibrationViewModel
 import com.aqua.aqualight.ui.tabs.devices.detail.dosing.channel.detail.DeviceDosingChannelDetailViewModel
 import com.aqua.aqualight.ui.tabs.devices.detail.dosing.channel.plan.DeviceDosingPlanViewModel
+import com.aqua.aqualight.ui.tabs.devices.detail.dosing.channel.reservoir.DeviceDosingReservoirViewModel
 import com.aqua.aqualight.ui.tabs.devices.detail.light.DeviceLightRootViewModel
 import com.aqua.aqualight.ui.tabs.devices.detail.settings.DeviceFamilySettingsViewModel
 import com.aqua.aqualight.ui.tabs.devices.detail.timer.DeviceTimerRootViewModel
@@ -70,193 +71,146 @@ internal class OwnerViewModelFactory(
         AndroidMaintenanceTextResolver(appContext)
     }
 
-    override fun supports(modelClass: Class<out ViewModel>): Boolean {
-        return modelClass in OWNER_BINDINGS
-    }
+    override fun supports(modelClass: Class<out ViewModel>): Boolean = modelClass in OWNER_BINDINGS
 
     @Suppress("LongMethod", "CyclomaticComplexMethod")
     override fun <T : ViewModel> create(modelClass: Class<T>): T {
-        check(supports(modelClass)) {
-            "No owner-scoped ViewModel binding for ${modelClass.name}."
-        }
+        check(supports(modelClass)) { "No owner-scoped ViewModel binding for ${modelClass.name}." }
 
         val graph = ownerGraphResolver.requireActive()
         val repository = graph.devicesRepository
         val assignments = graph.assignmentRepository
 
         val viewModel: ViewModel = when (modelClass) {
-            SettingsViewModel::class.java ->
-                SettingsViewModel(
-                    userProfileOperations = userProfileOperations,
-                    deviceStatusOperations = DefaultDeviceStatusOperations(repository)
-                )
-
-            DataManagementViewModel::class.java ->
-                DataManagementViewModel(
-                    archiveOperations = graph.userDataArchiveOperations
-                )
-
-            DeviceStatusViewModel::class.java ->
-                DeviceStatusViewModel(
-                    operations = DefaultDeviceStatusOperations(repository),
-                    clock = SystemDeviceStatusClock()
-                )
-
-            DevicesViewModel::class.java ->
-                DevicesViewModel(
-                    operations = createOwnerDevicesOperations(graph, repository, assignments),
-                    menuAccessOperations = DefaultDeviceMenuAccessOperations.create(repository),
-                    routeResolver = DeviceRouteResolver()
-                )
-
-            DeviceAddViewModel::class.java ->
-                DeviceAddViewModel(
-                    discoveryOperations = DefaultProvisioningDiscoveryOperations(
-                        scanner = DefaultBleProvisioningScanner(appContext),
-                        repository = repository,
-                        qrParser = AqlProvisioningQrParser(),
-                        qrSecretStore = AqlProvisioningQrSecretStore(
-                            context = appContext,
-                            ownerUidProvider = { graph.ownerUid }
-                        )
-                    ),
-                    textResolver = appTextResolver
-                )
-
-            DeviceQrScanViewModel::class.java ->
-                DeviceQrScanViewModel(
-                    discoveryOperations = DefaultProvisioningDiscoveryOperations(
-                        scanner = DefaultBleProvisioningScanner(appContext),
-                        repository = repository,
-                        qrParser = AqlProvisioningQrParser(),
-                        qrSecretStore = AqlProvisioningQrSecretStore(
-                            context = appContext,
-                            ownerUidProvider = { graph.ownerUid }
-                        )
-                    ),
-                    textResolver = appTextResolver
-                )
-
-            DeviceProvisioningProgressViewModel::class.java ->
-                DeviceProvisioningProgressViewModel(
-                    operations = DefaultProvisioningProgressOperations(
+            SettingsViewModel::class.java -> SettingsViewModel(
+                userProfileOperations = userProfileOperations,
+                deviceStatusOperations = DefaultDeviceStatusOperations(repository)
+            )
+            DataManagementViewModel::class.java -> DataManagementViewModel(
+                archiveOperations = graph.userDataArchiveOperations
+            )
+            DeviceStatusViewModel::class.java -> DeviceStatusViewModel(
+                operations = DefaultDeviceStatusOperations(repository),
+                clock = SystemDeviceStatusClock()
+            )
+            DevicesViewModel::class.java -> DevicesViewModel(
+                operations = createOwnerDevicesOperations(graph, repository, assignments),
+                menuAccessOperations = DefaultDeviceMenuAccessOperations.create(repository),
+                routeResolver = DeviceRouteResolver()
+            )
+            DeviceAddViewModel::class.java -> DeviceAddViewModel(
+                discoveryOperations = DefaultProvisioningDiscoveryOperations(
+                    scanner = DefaultBleProvisioningScanner(appContext),
+                    repository = repository,
+                    qrParser = AqlProvisioningQrParser(),
+                    qrSecretStore = AqlProvisioningQrSecretStore(
                         context = appContext,
-                        ownerUid = graph.ownerUid,
-                        draftStore = AqlProvisioningDraftStore(
-                            context = appContext,
-                            ownerUidProvider = { graph.ownerUid }
-                        )
-                    ),
-                    textResolver = appTextResolver
-                )
-
-            AquariumTankViewModel::class.java ->
-                AquariumTankViewModel(
-                    operations = DefaultAquariumTankOperations(
-                        context = appContext,
-                        tankStore = graph.aquariumTankStore,
-                        tankDataCleaner = OwnerTankDataCleaner(
-                            deleteTankRecords = graph.aquariumTankStore::deleteTanks,
-                            snapshotCareTasksForTank = { tankId ->
-                                graph.careTaskStore.snapshotTasksForIntegrity(tankId)
-                            },
-                            deleteCareTasksForTank = graph.careTaskStore::deleteTasksForTank,
-                            restoreCareTasksForTank = { tankId, snapshots ->
-                                graph.careTaskStore.restoreTaskSnapshotsForIntegrity(
-                                    tankId = tankId,
-                                    snapshots = snapshots
-                                )
-                            },
-                            removeDeviceAssignmentsForTank =
-                                assignments::removeAssignmentsForTank,
-                            cancelCareTaskReminder =
-                                notificationPreferenceUseCase::cancelCareTask,
-                            reconcileCareReminders =
-                                notificationPreferenceUseCase::reconcileOwner
-                        ),
-                        notificationPreferences = notificationPreferenceUseCase
+                        ownerUidProvider = { graph.ownerUid }
                     )
-                )
-
-            MaintenanceViewModel::class.java ->
-                MaintenanceViewModel(
-                    operations = DefaultMaintenanceOperations(
+                ),
+                textResolver = appTextResolver
+            )
+            DeviceQrScanViewModel::class.java -> DeviceQrScanViewModel(
+                discoveryOperations = DefaultProvisioningDiscoveryOperations(
+                    scanner = DefaultBleProvisioningScanner(appContext),
+                    repository = repository,
+                    qrParser = AqlProvisioningQrParser(),
+                    qrSecretStore = AqlProvisioningQrSecretStore(
                         context = appContext,
-                        manager = graph.careTaskStore,
-                        notificationPreferences = notificationPreferenceUseCase
+                        ownerUidProvider = { graph.ownerUid }
+                    )
+                ),
+                textResolver = appTextResolver
+            )
+            DeviceProvisioningProgressViewModel::class.java -> DeviceProvisioningProgressViewModel(
+                operations = DefaultProvisioningProgressOperations(
+                    context = appContext,
+                    ownerUid = graph.ownerUid,
+                    draftStore = AqlProvisioningDraftStore(
+                        context = appContext,
+                        ownerUidProvider = { graph.ownerUid }
+                    )
+                ),
+                textResolver = appTextResolver
+            )
+            AquariumTankViewModel::class.java -> AquariumTankViewModel(
+                operations = DefaultAquariumTankOperations(
+                    context = appContext,
+                    tankStore = graph.aquariumTankStore,
+                    tankDataCleaner = OwnerTankDataCleaner(
+                        deleteTankRecords = graph.aquariumTankStore::deleteTanks,
+                        snapshotCareTasksForTank = { tankId ->
+                            graph.careTaskStore.snapshotTasksForIntegrity(tankId)
+                        },
+                        deleteCareTasksForTank = graph.careTaskStore::deleteTasksForTank,
+                        restoreCareTasksForTank = { tankId, snapshots ->
+                            graph.careTaskStore.restoreTaskSnapshotsForIntegrity(tankId, snapshots)
+                        },
+                        removeDeviceAssignmentsForTank = assignments::removeAssignmentsForTank,
+                        cancelCareTaskReminder = notificationPreferenceUseCase::cancelCareTask,
+                        reconcileCareReminders = notificationPreferenceUseCase::reconcileOwner
                     ),
-                    textResolver = maintenanceTextResolver
+                    notificationPreferences = notificationPreferenceUseCase
                 )
-
+            )
+            MaintenanceViewModel::class.java -> MaintenanceViewModel(
+                operations = DefaultMaintenanceOperations(
+                    context = appContext,
+                    manager = graph.careTaskStore,
+                    notificationPreferences = notificationPreferenceUseCase
+                ),
+                textResolver = maintenanceTextResolver
+            )
             DeviceLightRootViewModel::class.java ->
-                DeviceLightRootViewModel(
-                    rootOperations = DefaultDeviceRootOperations(repository)
-                )
-
+                DeviceLightRootViewModel(DefaultDeviceRootOperations(repository))
             DeviceCoolingRootViewModel::class.java ->
                 DeviceCoolingRootViewModel(DefaultDeviceRootOperations(repository))
-
             DeviceTimerRootViewModel::class.java ->
                 DeviceTimerRootViewModel(DefaultDeviceRootOperations(repository))
-
-            DeviceDosingRootViewModel::class.java ->
-                DeviceDosingRootViewModel(
-                    operations = DefaultDeviceRootOperations(repository),
-                    channelNavigationOperations =
-                        UnavailableDeviceDosingChannelNavigationOperations,
-                    channelOperations = UnavailableDeviceDosingChannelOperations
-                )
-
+            DeviceDosingRootViewModel::class.java -> DeviceDosingRootViewModel(
+                operations = DefaultDeviceRootOperations(repository),
+                channelNavigationOperations = UnavailableDeviceDosingChannelNavigationOperations,
+                channelOperations = UnavailableDeviceDosingChannelOperations
+            )
             DeviceDosingChannelCalibrationViewModel::class.java ->
                 DeviceDosingChannelCalibrationViewModel(
                     operations = UnavailableDeviceDosingCalibrationOperations
                 )
-
-            DeviceDosingChannelDetailViewModel::class.java ->
-                DeviceDosingChannelDetailViewModel(
-                    operations = UnavailableDeviceDosingChannelOperations
-                )
-
-            DeviceDosingPlanViewModel::class.java ->
-                DeviceDosingPlanViewModel(
-                    operations = UnavailableDeviceDosingChannelOperations
-                )
-
+            DeviceDosingChannelDetailViewModel::class.java -> DeviceDosingChannelDetailViewModel(
+                operations = UnavailableDeviceDosingChannelOperations
+            )
+            DeviceDosingPlanViewModel::class.java -> DeviceDosingPlanViewModel(
+                operations = UnavailableDeviceDosingChannelOperations
+            )
+            DeviceDosingReservoirViewModel::class.java -> DeviceDosingReservoirViewModel(
+                operations = UnavailableDeviceDosingChannelOperations
+            )
             DeviceRootOverviewViewModel::class.java ->
                 DeviceRootOverviewViewModel(DefaultDeviceRootOperations(repository))
-
-            DeviceFamilySettingsViewModel::class.java ->
-                DeviceFamilySettingsViewModel(
-                    settingsOperations = DefaultDeviceFamilySettingsOperations(repository),
-                    firmwareUpdateOperations = graph.firmwareUpdateOperations,
-                    manifestUrl = BuildConfig.AQL_OTA_MANIFEST_URL
+            DeviceFamilySettingsViewModel::class.java -> DeviceFamilySettingsViewModel(
+                settingsOperations = DefaultDeviceFamilySettingsOperations(repository),
+                firmwareUpdateOperations = graph.firmwareUpdateOperations,
+                manifestUrl = BuildConfig.AQL_OTA_MANIFEST_URL
+            )
+            DeviceFirmwareUpdateViewModel::class.java -> DeviceFirmwareUpdateViewModel(
+                rootOperations = DefaultDeviceRootOperations(repository),
+                firmwareUpdateOperations = graph.firmwareUpdateOperations,
+                manifestUrl = BuildConfig.AQL_OTA_MANIFEST_URL
+            )
+            TankDetailDevicesViewModel::class.java -> TankDetailDevicesViewModel(
+                assignmentOperations = DefaultTankDeviceAssignmentOperations(
+                    assignmentRepository = assignments,
+                    devicesRepository = repository
+                ),
+                menuAccessOperations = DefaultDeviceMenuAccessOperations.create(repository),
+                routeResolver = DeviceRouteResolver()
+            )
+            TankDeviceSelectViewModel::class.java -> TankDeviceSelectViewModel(
+                assignmentOperations = DefaultTankDeviceAssignmentOperations(
+                    assignmentRepository = assignments,
+                    devicesRepository = repository
                 )
-
-            DeviceFirmwareUpdateViewModel::class.java ->
-                DeviceFirmwareUpdateViewModel(
-                    rootOperations = DefaultDeviceRootOperations(repository),
-                    firmwareUpdateOperations = graph.firmwareUpdateOperations,
-                    manifestUrl = BuildConfig.AQL_OTA_MANIFEST_URL
-                )
-
-            TankDetailDevicesViewModel::class.java ->
-                TankDetailDevicesViewModel(
-                    assignmentOperations = DefaultTankDeviceAssignmentOperations(
-                        assignmentRepository = assignments,
-                        devicesRepository = repository
-                    ),
-                    menuAccessOperations = DefaultDeviceMenuAccessOperations.create(repository),
-                    routeResolver = DeviceRouteResolver()
-                )
-
-            TankDeviceSelectViewModel::class.java ->
-                TankDeviceSelectViewModel(
-                    assignmentOperations = DefaultTankDeviceAssignmentOperations(
-                        assignmentRepository = assignments,
-                        devicesRepository = repository
-                    )
-                )
-
+            )
             else -> error("Unreachable owner ViewModel binding: ${modelClass.name}")
         }
 
@@ -268,22 +222,20 @@ internal class OwnerViewModelFactory(
         graph: OwnerDependencyGraph,
         repository: DevicesRepository,
         assignments: TankDeviceAssignmentRepository
-    ): DefaultOwnerDevicesOperations {
-        return DefaultOwnerDevicesOperations(
+    ): DefaultOwnerDevicesOperations = DefaultOwnerDevicesOperations(
+        devicesRepository = repository,
+        assignmentRepository = assignments,
+        deviceDataCleaner = OwnerDeviceDataCleaner.create(
             devicesRepository = repository,
-            assignmentRepository = assignments,
-            deviceDataCleaner = OwnerDeviceDataCleaner.create(
-                devicesRepository = repository,
-                assignmentRepository = assignments
-            ),
-            cleanupDeletedDeviceNotifications = { deviceUids ->
-                graph.deviceFirmwareNotifications.clearDeletedDevices(
-                    ownerUid = graph.ownerUid,
-                    deviceUids = deviceUids
-                )
-            }
-        )
-    }
+            assignmentRepository = assignments
+        ),
+        cleanupDeletedDeviceNotifications = { deviceUids ->
+            graph.deviceFirmwareNotifications.clearDeletedDevices(
+                ownerUid = graph.ownerUid,
+                deviceUids = deviceUids
+            )
+        }
+    )
 
     private companion object {
         val OWNER_BINDINGS: Set<Class<out ViewModel>> = setOf(
@@ -303,6 +255,7 @@ internal class OwnerViewModelFactory(
             DeviceDosingChannelCalibrationViewModel::class.java,
             DeviceDosingChannelDetailViewModel::class.java,
             DeviceDosingPlanViewModel::class.java,
+            DeviceDosingReservoirViewModel::class.java,
             DeviceRootOverviewViewModel::class.java,
             DeviceFamilySettingsViewModel::class.java,
             DeviceFirmwareUpdateViewModel::class.java,
