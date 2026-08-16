@@ -296,17 +296,17 @@ private fun resolveReservoirDraft(
     authoritative: DeviceDosingReservoirDraft,
     restored: DeviceDosingReservoirDraft?,
     forceAuthoritative: Boolean
-): ReservoirDraftResolution {
-    if (forceAuthoritative) return ReservoirDraftResolution(authoritative, dirty = false)
-    if (!current.initialized) {
+): ReservoirDraftResolution = when {
+    forceAuthoritative -> ReservoirDraftResolution(authoritative, dirty = false)
+    !current.initialized -> {
         val initialDraft = restored ?: authoritative
-        return ReservoirDraftResolution(
+        ReservoirDraftResolution(
             draft = initialDraft,
             dirty = restored != null && initialDraft != authoritative
         )
     }
-    if (!current.dirty) return ReservoirDraftResolution(authoritative, dirty = false)
-    return ReservoirDraftResolution(current.draft, dirty = true)
+    !current.dirty -> ReservoirDraftResolution(authoritative, dirty = false)
+    else -> ReservoirDraftResolution(current.draft, dirty = true)
 }
 
 private fun DeviceDosingReservoirEditorState.asUnavailable(): DeviceDosingReservoirEditorState =
@@ -318,20 +318,24 @@ private fun DeviceDosingReservoirEditorState.asUnavailable(): DeviceDosingReserv
 
 private inline fun DeviceDosingReservoirEditorState.withUpdatedDraft(
     transform: (DeviceDosingReservoirDraft) -> DeviceDosingReservoirDraft
-): DeviceDosingReservoirEditorState {
-    if (!editable || operationInProgress) return this
+): DeviceDosingReservoirEditorState = if (!editable || operationInProgress) {
+    this
+} else {
     val updated = transform(draft)
-    if (updated == draft) return this
-    return copy(
-        draft = updated,
-        dirty = true,
-        capacityRejection = null,
-        notificationAvailability = if (!updated.lowLevelAlertEnabled) {
-            DeviceDosingReservoirNotificationAvailability.AVAILABLE
-        } else {
-            notificationAvailability
-        }
-    )
+    if (updated == draft) {
+        this
+    } else {
+        copy(
+            draft = updated,
+            dirty = true,
+            capacityRejection = null,
+            notificationAvailability = if (!updated.lowLevelAlertEnabled) {
+                DeviceDosingReservoirNotificationAvailability.AVAILABLE
+            } else {
+                notificationAvailability
+            }
+        )
+    }
 }
 
 private fun DeviceDosingChannelSnapshot.toReservoirDraft(): DeviceDosingReservoirDraft =
