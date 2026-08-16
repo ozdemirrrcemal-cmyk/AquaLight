@@ -245,10 +245,7 @@ class DeviceDosingCalibrationStage8Test {
             refreshes += 1
             val current = state.value ?: return connectionFailure()
             val refreshed = if (
-                completeVerificationOnRefresh &&
-                current.sessionPhase == DeviceDosingCalibrationSessionPhase.PENDING_VERIFICATION &&
-                current.verificationDoseStarted &&
-                !current.verificationDoseComplete
+                completeVerificationOnRefresh && current.hasActiveVerification()
             ) {
                 current.copy(
                     verificationDoseComplete = true,
@@ -402,3 +399,8 @@ class DeviceDosingCalibrationStage8Test {
         )
     }
 }
+
+private fun DeviceDosingCalibrationSnapshot.hasActiveVerification(): Boolean =
+    sessionPhase == DeviceDosingCalibrationSessionPhase.PENDING_VERIFICATION &&
+        verificationDoseStarted &&
+        !verificationDoseComplete

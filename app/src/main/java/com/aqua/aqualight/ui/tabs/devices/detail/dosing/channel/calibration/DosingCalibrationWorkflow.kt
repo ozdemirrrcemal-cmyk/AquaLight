@@ -55,7 +55,11 @@ internal class DosingCalibrationWorkflow(
                 val currentRoute = session.route
                 when {
                     currentRoute == null -> Unit
-                    snapshot == null -> applyUnavailableSnapshot()
+                    snapshot == null -> markCalibrationSnapshotUnavailable(
+                        session = session,
+                        countdown = countdown,
+                        mutableUiState = mutableUiState
+                    )
                     snapshot.matches(currentRoute) -> applySnapshot(snapshot)
                 }
             }
@@ -215,27 +219,6 @@ internal class DosingCalibrationWorkflow(
         }
     }
 
-    private fun applyUnavailableSnapshot() {
-        countdown.cancel()
-        session.primeSafetyJob?.cancel()
-        session.primeSafetyJob = null
-        session.authoritativeSessionInterrupted =
-            session.latestSnapshot?.sessionPhase?.let { phase ->
-                phase != DeviceDosingCalibrationSessionPhase.IDLE
-            } == true
-        mutableUiState.value = mutableUiState.value
-            .updateProgress { progress ->
-                progress.copy(
-                    isLoading = true,
-                    isBusy = false,
-                    isPumpActive = false,
-                    remainingMs = 0L,
-                    candidateDoseMsPerMl = null
-                )
-            }
-            .copy(error = null)
-    }
-
     private fun applySnapshot(snapshot: DeviceDosingCalibrationSnapshot) {
         val route = session.route ?: return
         if (
@@ -275,6 +258,31 @@ internal class DosingCalibrationWorkflow(
             onVerificationComplete = { execute(DosingCalibrationOperation.Refresh) }
         )
     }
+}
+
+private fun markCalibrationSnapshotUnavailable(
+    session: DosingCalibrationWorkflowSession,
+    countdown: DosingCalibrationCountdownController,
+    mutableUiState: MutableStateFlow<DeviceDosingCalibrationUiState>
+) {
+    countdown.cancel()
+    session.primeSafetyJob?.cancel()
+    session.primeSafetyJob = null
+    session.authoritativeSessionInterrupted =
+        session.latestSnapshot?.sessionPhase?.let { phase ->
+            phase != DeviceDosingCalibrationSessionPhase.IDLE
+        } == true
+    mutableUiState.value = mutableUiState.value
+        .updateProgress { progress ->
+            progress.copy(
+                isLoading = true,
+                isBusy = false,
+                isPumpActive = false,
+                remainingMs = 0L,
+                candidateDoseMsPerMl = null
+            )
+        }
+        .copy(error = null)
 }
 
 private fun DeviceDosingCalibrationUiState.withCalibrationFailure(
