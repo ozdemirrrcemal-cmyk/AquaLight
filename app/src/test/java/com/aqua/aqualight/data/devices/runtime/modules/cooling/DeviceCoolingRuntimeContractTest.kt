@@ -108,7 +108,7 @@ class DeviceCoolingRuntimeContractTest {
     fun `firmware telemetry fixture keeps exact field order and command count`() {
         val fixture = JSONObject(readFirmwareTelemetryFixture())
 
-        assertEquals(41, fixture.getInt("commandCount"))
+        assertEquals(44, fixture.getInt("commandCount"))
         assertEquals("temperature.changed", fixture.getString("event"))
         assertEquals(
             listOf("sensorIndex", "readingValid", "temperatureC", "sampledAtMs"),
