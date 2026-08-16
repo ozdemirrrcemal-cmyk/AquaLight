@@ -55,8 +55,6 @@ internal class DeviceDosingPlanViewModel(
     private var refreshJob: Job? = null
     private var saveJob: Job? = null
 
-    fun currentDraft(): DosingPlanDraft = mutableEditorState.value.draft
-
     fun currentEditorState(): DeviceDosingPlanEditorState = mutableEditorState.value
 
     fun bind(

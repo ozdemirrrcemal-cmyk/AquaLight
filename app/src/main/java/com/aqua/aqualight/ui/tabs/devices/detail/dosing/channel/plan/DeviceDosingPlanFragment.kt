@@ -64,7 +64,7 @@ class DeviceDosingPlanFragment :
     }
 
     override fun onSaveInstanceState(outState: Bundle) {
-        viewModel.currentDraft().writeTo(outState)
+        viewModel.currentEditorState().draft.writeTo(outState)
         super.onSaveInstanceState(outState)
     }
 
@@ -120,7 +120,7 @@ class DeviceDosingPlanFragment :
     @Suppress("LongMethod") // Safe Args keeps the four typed navigation contracts explicit.
     private fun openScheduleEditor(mode: DosingPlanScheduleMode) {
         val editorState = viewModel.currentEditorState()
-        val draft = viewModel.currentDraft()
+        val draft = editorState.draft
         val canOpenEditor = listOf(
             draft.scheduleEnabled,
             editorState.editable,
@@ -185,7 +185,7 @@ class DeviceDosingPlanFragment :
 
     private fun showDailyDoseEditor() {
         val editorState = viewModel.currentEditorState()
-        val draft = viewModel.currentDraft()
+        val draft = editorState.draft
         val canEditDailyDose = listOf(
             draft.scheduleEnabled,
             editorState.editable,
