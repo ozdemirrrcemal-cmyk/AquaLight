@@ -244,7 +244,6 @@
     <string name="device_dosing_detail_manual_amount_hint">e.g. 2.50</string>
     <string name="device_dosing_detail_manual_amount_description">Enter the one-time amount to apply to the selected channel.</string>
     <string name="device_dosing_detail_manual_amount_required">Enter a dose amount greater than 0 ml.</string>
-    <string name="device_dosing_detail_manual_amount_invalid">Enter an amount within this pump’s supported manual-dose range.</string>
     <string name="device_dosing_detail_ml_unit">ml</string>
     <string name="device_dosing_detail_dispense_dose">Dispense Dose</string>
 
@@ -255,6 +254,13 @@
     <string name="device_dosing_detail_manual_started">Manual dose started.</string>
     <string name="device_dosing_detail_manual_stopped">Manual dose stopped.</string>
     <string name="device_dosing_detail_channel_reset_done">Dosing channel reset.</string>
+    <string name="device_dosing_detail_error_invalid_input">Enter an amount supported by this channel and try again.</string>
+    <string name="device_dosing_detail_error_not_editable">This setting is no longer editable. Review the latest channel state.</string>
+    <string name="device_dosing_detail_error_calibration_required">Calibrate this channel before starting a manual dose.</string>
+    <string name="device_dosing_detail_error_busy">Another dosing operation is active. Review the current channel state before trying again.</string>
+    <string name="device_dosing_detail_error_state_changed">The channel changed on the device. AquaLight refreshed the latest state; review it and try again.</string>
+    <string name="device_dosing_detail_error_safety_blocked">The device blocked this change for safety. Review the current channel state before trying again.</string>
+    <string name="device_dosing_detail_error_unavailable">This operation is not available for the connected device.</string>
     <string name="device_dosing_detail_operation_failed">The dosing change could not be applied. Try again.</string>
 
     <string name="device_dosing_calibration_step_progress">Step %1$d of %2$d</string>

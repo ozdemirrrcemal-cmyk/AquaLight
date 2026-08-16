@@ -244,7 +244,6 @@
     <string name="device_dosing_detail_manual_amount_hint">Örn. 2,50</string>
     <string name="device_dosing_detail_manual_amount_description">Seçili kanala tek seferlik uygulanacak miktarı girin.</string>
     <string name="device_dosing_detail_manual_amount_required">0 ml’den büyük bir doz miktarı girin.</string>
-    <string name="device_dosing_detail_manual_amount_invalid">Bu pompanın desteklediği manuel doz aralığında bir miktar girin.</string>
     <string name="device_dosing_detail_ml_unit">ml</string>
     <string name="device_dosing_detail_dispense_dose">Dozu Uygula</string>
 
@@ -255,6 +254,13 @@
     <string name="device_dosing_detail_manual_started">Manuel doz başlatıldı.</string>
     <string name="device_dosing_detail_manual_stopped">Manuel doz durduruldu.</string>
     <string name="device_dosing_detail_channel_reset_done">Dozaj kanalı sıfırlandı.</string>
+    <string name="device_dosing_detail_error_invalid_input">Bu kanalın desteklediği bir miktar girip tekrar deneyin.</string>
+    <string name="device_dosing_detail_error_not_editable">Bu ayar artık düzenlenemiyor. Kanalın güncel durumunu kontrol edin.</string>
+    <string name="device_dosing_detail_error_calibration_required">Manuel doz başlatmadan önce bu kanalı kalibre edin.</string>
+    <string name="device_dosing_detail_error_busy">Başka bir dozaj işlemi etkin. Tekrar denemeden önce kanalın güncel durumunu kontrol edin.</string>
+    <string name="device_dosing_detail_error_state_changed">Kanal durumu cihazda değişti. AquaLight güncel durumu yeniledi; kontrol edip tekrar deneyin.</string>
+    <string name="device_dosing_detail_error_safety_blocked">Cihaz bu değişikliği güvenlik nedeniyle engelledi. Tekrar denemeden önce kanalın güncel durumunu kontrol edin.</string>
+    <string name="device_dosing_detail_error_unavailable">Bu işlem bağlı cihazda kullanılamıyor.</string>
     <string name="device_dosing_detail_operation_failed">Dozaj değişikliği uygulanamadı. Tekrar deneyin.</string>
 
     <string name="device_dosing_calibration_step_progress">%1$d. adım / %2$d</string>
