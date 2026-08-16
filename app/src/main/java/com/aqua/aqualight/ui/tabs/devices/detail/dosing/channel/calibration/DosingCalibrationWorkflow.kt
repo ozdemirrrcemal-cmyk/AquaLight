@@ -3,6 +3,7 @@ package com.aqua.aqualight.ui.tabs.devices.detail.dosing.channel.calibration
 import com.aqua.aqualight.application.devices.dosing.DeviceDosingCalibrationFailure
 import com.aqua.aqualight.application.devices.dosing.DeviceDosingCalibrationOperations
 import com.aqua.aqualight.application.devices.dosing.DeviceDosingCalibrationResult
+import com.aqua.aqualight.application.devices.dosing.DeviceDosingCalibrationSessionPhase
 import com.aqua.aqualight.application.devices.dosing.DeviceDosingCalibrationSnapshot
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.channels.Channel
@@ -218,9 +219,10 @@ internal class DosingCalibrationWorkflow(
         countdown.cancel()
         session.primeSafetyJob?.cancel()
         session.primeSafetyJob = null
-        session.primeRequested = false
-        session.hasLocalProgress = false
-        session.latestSnapshot = null
+        session.authoritativeSessionInterrupted =
+            session.latestSnapshot?.sessionPhase?.let { phase ->
+                phase != DeviceDosingCalibrationSessionPhase.IDLE
+            } == true
         mutableUiState.value = mutableUiState.value
             .updateProgress { progress ->
                 progress.copy(
@@ -235,8 +237,23 @@ internal class DosingCalibrationWorkflow(
     }
 
     private fun applySnapshot(snapshot: DeviceDosingCalibrationSnapshot) {
-        session.latestSnapshot = snapshot
         val route = session.route ?: return
+        if (
+            session.authoritativeSessionInterrupted &&
+            snapshot.sessionPhase == DeviceDosingCalibrationSessionPhase.IDLE
+        ) {
+            session.hasLocalProgress = false
+        }
+        session.authoritativeSessionInterrupted = false
+        val interruptedPrime = session.primeRequested && mutableUiState.value.isLoading
+        if (interruptedPrime) {
+            session.primeRequested = false
+            scope.launch {
+                val result = operations.primeSafetyStop(route.deviceUid, route.slotId)
+                handleResult(DosingCalibrationOperation.PrimeStop, result, renderSuccess = false)
+            }
+        }
+        session.latestSnapshot = snapshot
         val presentation = reduceDosingCalibrationSnapshot(
             snapshot = snapshot,
             current = mutableUiState.value,

@@ -61,17 +61,16 @@ class DeviceDosingCalibrationStage8Test {
         }
 
     @Test
-    fun `reconnect fails closed then recovers only from the new authoritative session`() =
+    fun `reconnect fails closed and recovers only from the new authoritative session`() =
         runTest(dispatcher) {
-            val operations = Stage8CalibrationOperations(idleSnapshot())
+            val operations = Stage8CalibrationOperations(
+                activeVerificationSnapshot(remainingMs = 750L)
+            )
             val viewModel = viewModel(operations)
 
             viewModel.bind(route())
             runCurrent()
-            viewModel.onAction(DeviceDosingCalibrationAction.DisplayNameChanged("Trace Elements"))
-            viewModel.onAction(DeviceDosingCalibrationAction.SaveDisplayName)
-            runCurrent()
-            assertEquals(DeviceDosingCalibrationStep.PRIME, viewModel.uiState.value.step)
+            assertEquals(DeviceDosingCalibrationStep.VERIFICATION, viewModel.uiState.value.step)
 
             operations.publish(null)
             runCurrent()
@@ -81,17 +80,43 @@ class DeviceDosingCalibrationStage8Test {
             assertFalse(viewModel.uiState.value.isPumpActive)
             assertEquals(0L, viewModel.uiState.value.remainingMs)
 
+            operations.publish(activeVerificationSnapshot(remainingMs = 600L))
+            runCurrent()
+            assertEquals(DeviceDosingCalibrationStep.VERIFICATION, viewModel.uiState.value.step)
+            assertTrue(viewModel.uiState.value.isPumpActive)
+            assertEquals(600L, viewModel.uiState.value.remainingMs)
+
+            operations.publish(null)
+            runCurrent()
             operations.publish(idleSnapshot())
             runCurrent()
-            assertEquals(DeviceDosingCalibrationStep.NAME, viewModel.uiState.value.step)
 
-            operations.publish(activeVerificationSnapshot(remainingMs = 750L))
+            assertEquals(DeviceDosingCalibrationStep.NAME, viewModel.uiState.value.step)
+            assertFalse(viewModel.uiState.value.isBusy)
+            assertFalse(viewModel.uiState.value.isPumpActive)
+        }
+
+    @Test
+    fun `prime interrupted by reconnect is safety stopped when authoritative state returns`() =
+        runTest(dispatcher) {
+            val operations = Stage8CalibrationOperations(idleSnapshot())
+            val viewModel = viewModel(operations)
+            advanceToPrime(viewModel)
+
+            viewModel.onAction(DeviceDosingCalibrationAction.PrimePressed)
+            runCurrent()
+            assertTrue(viewModel.uiState.value.isPumpActive)
+
+            operations.publish(null)
+            runCurrent()
+            assertTrue(viewModel.uiState.value.isLoading)
+            assertEquals(0, operations.primeStops)
+
+            operations.publish(idleSnapshot())
             runCurrent()
 
-            assertEquals(DeviceDosingCalibrationStep.VERIFICATION, viewModel.uiState.value.step)
-            assertTrue(viewModel.uiState.value.isBusy)
-            assertTrue(viewModel.uiState.value.isPumpActive)
-            assertEquals(750L, viewModel.uiState.value.remainingMs)
+            assertEquals(1, operations.primeStops)
+            assertFalse(viewModel.uiState.value.isPumpActive)
         }
 
     @Test

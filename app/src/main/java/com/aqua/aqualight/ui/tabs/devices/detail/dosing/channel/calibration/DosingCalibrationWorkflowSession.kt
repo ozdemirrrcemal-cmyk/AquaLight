@@ -12,6 +12,7 @@ internal class DosingCalibrationWorkflowSession {
     var primeRequested: Boolean = false
     var exiting: Boolean = false
     var completionEmitted: Boolean = false
+    var authoritativeSessionInterrupted: Boolean = false
     var latestSnapshot: DeviceDosingCalibrationSnapshot? = null
 
     fun reset(route: DeviceDosingCalibrationRoute) {
@@ -24,6 +25,7 @@ internal class DosingCalibrationWorkflowSession {
         hasLocalProgress = false
         exiting = false
         completionEmitted = false
+        authoritativeSessionInterrupted = false
         latestSnapshot = null
     }
 }
