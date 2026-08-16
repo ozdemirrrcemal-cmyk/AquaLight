@@ -5,8 +5,9 @@ import com.aqua.aqualight.data.devices.contract.AqlWsContract
 /**
  * Android mirror of the final firmware-owned aqualight.dosing.v1 wire contract.
  *
- * This package is intentionally not registered in DeviceRuntimeModuleProvider. It can be
- * exercised by contract tests while the production UI remains on application fixtures.
+ * Production composition reaches this contract only through the central owner-scoped Dosing
+ * adapter. The shared runtime module provider exposes the correlated command gateway but owns no
+ * Dosing behavior or Dosing state.
  */
 object DeviceDosingV1Contract {
     const val MODULE = AqlWsContract.MODULE_DOSING

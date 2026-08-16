@@ -1,8 +1,9 @@
 #!/usr/bin/env python3
-"""Enforce Dosing package ownership and inward dependency direction."""
+"""Enforce Dosing package ownership, production cutover and inward dependency direction."""
 
 from __future__ import annotations
 
+import json
 import re
 import sys
 from pathlib import Path
@@ -29,6 +30,7 @@ REQUIRED_UI_FILES = (
 REQUIRED_DATA_FILES = (
     "DosingChannelSlotFactory.kt",
     "v1/DeviceDosingV1StateOwner.kt",
+    "v1/DeviceDosingV1ProductionRuntime.kt",
 )
 
 UI_FORBIDDEN_PATTERNS = (
@@ -93,6 +95,148 @@ def expected_package(path: Path, source_root: Path) -> str:
 
 def declared_dosing_types(source: str) -> set[str]:
     return {match.group(1) for match in DOSING_DECLARATION.finditer(source)}
+
+
+def require_tokens(
+    path: Path,
+    repository_root: Path,
+    errors: list[str],
+    *tokens: str,
+) -> None:
+    source = path.read_text(encoding="utf-8", errors="ignore")
+    for token in tokens:
+        if token not in source:
+            errors.append(
+                f"{relative(path, repository_root)}: required production Dosing token is missing: "
+                f"{token}"
+            )
+
+
+def validate_production_cutover(repository_root: Path, source_root: Path) -> list[str]:
+    errors: list[str] = []
+    owner_factory = source_root / "composition/OwnerViewModelFactory.kt"
+    owner_graph = source_root / "composition/OwnerDependencyGraph.kt"
+    app_container = source_root / "composition/AppContainer.kt"
+    data_dosing_root = source_root / "data/devices/dosing"
+    debug_device_root = repository_root / "app/src/debug/java/com/aqua/aqualight/debug/devices"
+    release_smoke_container = (
+        repository_root
+        / "app/src/releaseSmoke/java/com/aqua/aqualight/smoke/ReleaseSmokeAppContainer.kt"
+    )
+    pin_path = repository_root / "protocol/fixtures/aql_android_dosing_v1_pin.json"
+
+    if owner_factory.is_file():
+        source = owner_factory.read_text(encoding="utf-8", errors="ignore")
+        if "UnavailableDeviceDosing" in source:
+            errors.append(
+                f"{relative(owner_factory, repository_root)}: fail-closed Dosing binding is forbidden "
+                "in production composition"
+            )
+        require_tokens(
+            owner_factory,
+            repository_root,
+            errors,
+            "graph.dosingOperations",
+            "channelNavigationOperations = dosing.navigationOperations",
+            "channelOperations = dosing.channelOperations",
+            "graph.dosingOperations.calibrationOperations",
+        )
+
+    if owner_graph.is_file():
+        require_tokens(
+            owner_graph,
+            repository_root,
+            errors,
+            "val dosingOperations: OwnerDosingOperations",
+            "DeviceDosingV1ProductionRuntime(",
+            "SharedPreferencesDeviceDosingLowLevelAlertLedger.create(",
+            "notificationDispatch = notificationDispatchUseCase",
+            "dosingOperations = createDosingOperations(dependencies)",
+            "registerOwnerScopedResource",
+        )
+
+    if app_container.is_file():
+        require_tokens(
+            app_container,
+            repository_root,
+            errors,
+            "internal fun interface OwnerDependencyGraphAccess",
+            "DefaultAppContainer(\n    context: Context\n) : AppContainer, OwnerDependencyGraphAccess",
+            "override fun requireActiveOwnerGraph(): OwnerDependencyGraph",
+        )
+
+    for path in kotlin_files(data_dosing_root):
+        source = path.read_text(encoding="utf-8", errors="ignore")
+        if "UnavailableDeviceDosing" in source:
+            errors.append(
+                f"{relative(path, repository_root)}: obsolete fail-closed Dosing implementation "
+                "must be removed after production cutover"
+            )
+
+    if pin_path.is_file():
+        try:
+            pin = json.loads(pin_path.read_text(encoding="utf-8"))
+            production_wiring = pin["contract"]["productionWiring"]
+        except (json.JSONDecodeError, KeyError, TypeError) as error:
+            errors.append(
+                f"{relative(pin_path, repository_root)}: invalid Dosing production pin: {error}"
+            )
+        else:
+            if production_wiring is not True:
+                errors.append(
+                    f"{relative(pin_path, repository_root)}: contract.productionWiring must be true"
+                )
+
+    if debug_device_root.is_dir():
+        for path in kotlin_files(debug_device_root):
+            if path.name.startswith("DebugFixtureDosing"):
+                errors.append(
+                    f"{relative(path, repository_root)}: Dosing debug fixture implementation is "
+                    "forbidden after physical-device cutover"
+                )
+            source = path.read_text(encoding="utf-8", errors="ignore")
+            if "DebugFixtureDosingStateStore" in source:
+                errors.append(
+                    f"{relative(path, repository_root)}: parallel Dosing fixture state is forbidden"
+                )
+        fixture_catalog = debug_device_root / "DebugDeviceFixtureCatalog.kt"
+        if fixture_catalog.is_file():
+            fixture_source = fixture_catalog.read_text(encoding="utf-8", errors="ignore")
+            exclusion = ".filterNot { product -> product.family == DeviceFamily.DOSING }"
+            if exclusion not in fixture_source:
+                errors.append(
+                    f"{relative(fixture_catalog, repository_root)}: Dosing products must be excluded "
+                    "from installable debug fixtures"
+                )
+        fixture_container = debug_device_root / "DebugDeviceFixtureAppContainer.kt"
+        if fixture_container.is_file():
+            fixture_source = fixture_container.read_text(encoding="utf-8", errors="ignore")
+            for forbidden in (
+                "DebugFixtureDosing",
+                "DeviceDosingRootViewModel",
+                "ActiveOwnerDependencyGraphResolver",
+            ):
+                if forbidden in fixture_source:
+                    errors.append(
+                        f"{relative(fixture_container, repository_root)}: Dosing/debug composition "
+                        f"must not contain {forbidden}"
+                    )
+            if "OwnerDependencyGraphAccess" not in fixture_source:
+                errors.append(
+                    f"{relative(fixture_container, repository_root)}: debug decorators must share "
+                    "the production owner graph"
+                )
+
+    if release_smoke_container.is_file():
+        smoke_source = release_smoke_container.read_text(encoding="utf-8", errors="ignore")
+        for forbidden in ("UnavailableDeviceDosing", "DeviceDosingRootViewModel"):
+            if forbidden in smoke_source:
+                errors.append(
+                    f"{relative(release_smoke_container, repository_root)}: release smoke must not "
+                    f"carry an alternate Dosing path: {forbidden}"
+                )
+
+    return errors
 
 
 def validate_repository(repository_root: Path = ROOT) -> list[str]:
@@ -210,6 +354,7 @@ def validate_repository(repository_root: Path = ROOT) -> list[str]:
             f"{relative(legacy_runtime, repository_root)}: parallel legacy Dosing runtime is forbidden"
         )
 
+    errors.extend(validate_production_cutover(repository_root, source_root))
     return errors
 
 

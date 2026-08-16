@@ -25,7 +25,7 @@ import com.aqua.aqualight.i18n.AppLanguageController
 
 /** Every authenticated runtime module uses the same correlated command broker. */
 class DeviceRuntimeModuleProvider internal constructor(
-    commandGateway: DeviceRuntimeCommandGateway,
+    internal val commandGateway: DeviceRuntimeCommandGateway,
     revokeLocalCredential: suspend (DeviceUid) -> Result<Unit>,
     timerAccessProvider: (DeviceUid) -> DeviceTimerRuntimeAccess
 ) {

@@ -16,11 +16,11 @@ device runtime and notification infrastructure.
 
 ## Current position
 
-- Current stage: **07 — Root screen read path and navigation**
-- Status: **READY FOR CHECK**
-- Production wiring: **DISABLED**
-- Rule: stages remain atomic and independently evidenced; the owner explicitly authorized Stage 07
-  implementation without waiting for the Stage 06 remote result.
+- Current stage: **12 — Production composition and commercial acceptance**
+- Status: **IMPLEMENTED — AUTOMATED AND PHYSICAL ACCEPTANCE PENDING**
+- Production wiring: **ENABLED**
+- Rule: merge approval remains blocked until Stage 12 automated gates and real-device acceptance are
+  recorded. Dosing has no debug, smoke or fixture runtime path after this cutover.
 
 ## Fixed rules
 
@@ -43,8 +43,9 @@ device runtime and notification infrastructure.
   notification store, channel registry or direct Android notification path may be introduced.
 - Mutations use firmware `expectedRevision`; stale conflicts are refreshed and surfaced without a
   blind mutation retry.
-- Production composition remains fail-closed until every screen and the final cutover gate pass.
-- Each stage is implemented, tested, reviewed and checked before the next stage begins.
+- Production composition resolves Dosing only through the central v1 adapter/runtime; fail-closed
+  Dosing bindings and Dosing runtime fixtures are forbidden after Stage 12.
+- Each stage is implemented, tested, reviewed and checked before merge approval is granted.
 
 ## Stage list
 
@@ -161,8 +162,8 @@ device runtime and notification infrastructure.
   `CALIBRATION_STATE_MISMATCH`, and measured-volume rejection maps to `INVALID_MEASUREMENT`.
 - Only the exact physical output-start failure maps to `HARDWARE`; firmware values transported as
   `HARDWARE_ERROR` for runtime-not-ready/internal failures remain in the internal fallback.
-- Unsupported/new protocol outcomes and the fail-closed production placeholder resolve to the
-  internal generic failure; neither application nor UI publishes an unavailable calibration state.
+- Unsupported/new protocol outcomes resolve to the internal generic failure; neither application nor
+  UI publishes an unavailable calibration state.
 - UI maps application semantics to localized messages and contains no firmware error identity.
 - Focused mapper and presentation tests cover every public semantic failure plus the internal
   fallback.
@@ -224,43 +225,71 @@ device runtime and notification infrastructure.
   supported pump count and allowed routes immediately before publishing a navigation target.
 - Focused tests cover two- and four-channel products, physical ordering, card projections, reconnect,
   malformed/partial sets, refreshed calibration state, route revocation and snapshot identity drift.
-- Production composition remains fail-closed until Stage 12. Dosing/general/device-root architecture
-  guards, 165 Python guard tests and `git diff --check` pass locally; Android compile/unit CI remains
-  the remote check gate because the sandbox cannot download the Gradle distribution.
+- Production composition remained fail-closed through Stage 11. Dosing/general/device-root
+  architecture guards, focused Python guard tests and `git diff --check` covered the pre-cutover
+  boundary.
 
-- [ ] **08 — Calibration screen cutover**
-  - [ ] Bind naming, prime, calibration run, measurement, verification and confirmation.
-  - [ ] Use the firmware 5-second calibration run and 4 ml pending-calibration verification dose.
-  - [ ] Preserve prime timeout, host-stop and exit cleanup ordering.
-  - [ ] Verify recovery after recreation, reconnect and interrupted verification.
+- [x] **08 — Calibration screen cutover** — **IMPLEMENTED**
+  - [x] Bind naming, prime, calibration run, measurement, verification and confirmation.
+  - [x] Use the firmware 5-second calibration run and 4 ml pending-calibration verification dose.
+  - [x] Preserve prime timeout, host-stop and exit cleanup ordering.
+  - [x] Verify recovery after recreation, reconnect and interrupted verification.
 
-- [ ] **09 — Channel detail cutover**
-  - [ ] Bind missed-dose recovery through full-program mutation.
-  - [ ] Bind manual dose start/stop and active-run state.
-  - [ ] Bind channel reset with revision checked before any destructive consequence.
-  - [ ] Render actionable semantic failures and authoritative refreshed state.
+- [x] **09 — Channel detail cutover** — **IMPLEMENTED**
+  - [x] Bind missed-dose recovery through full-program mutation.
+  - [x] Bind manual dose start/stop and active-run state.
+  - [x] Bind channel reset with revision checked before any destructive consequence.
+  - [x] Render actionable semantic failures and authoritative refreshed state.
 
-- [ ] **10 — Dosing plan cutover**
-  - [ ] Bind Single, Hourly 24, Custom Periods and Timer modes.
-  - [ ] Preserve Monday-through-Sunday ordering and firmware-published scheduling limits.
-  - [ ] Bind enabled state, recurrence and missed-dose recovery in one program intent.
-  - [ ] Verify round-trip status/apply/status equality and conflict behavior.
+- [x] **10 — Dosing plan cutover** — **IMPLEMENTED**
+  - [x] Bind Single, Hourly 24, Custom Periods and Timer modes.
+  - [x] Preserve Monday-through-Sunday ordering and firmware-published scheduling limits.
+  - [x] Bind enabled state, recurrence and missed-dose recovery in one program intent.
+  - [x] Verify round-trip status/apply/status equality and conflict behavior.
 
-- [ ] **11 — Reservoir and central low-level notification cutover**
-  - [ ] Load and save tracking/capacity from authoritative channel state.
-  - [ ] Show remaining volume and bind reservoir refill.
-  - [ ] Persist channel-level low-level alert intent outside UI.
-  - [ ] Detect the authoritative `lowLevelActive` false-to-true transition with durable deduplication.
-  - [ ] Gate dispatch by channel intent, owner preference and Android delivery readiness.
-  - [ ] Dispatch exclusively through `NotificationDispatchUseCase`.
-  - [ ] Verify process recreation, reconnect, alert reset and repeated-low-state behavior.
+- [x] **11 — Reservoir and central low-level notification cutover** — **IMPLEMENTED**
+  - [x] Load and save tracking/capacity from authoritative channel state.
+  - [x] Show remaining volume and bind reservoir refill.
+  - [x] Persist channel-level low-level alert intent outside UI.
+  - [x] Detect the authoritative `lowLevelActive` false-to-true transition with durable deduplication.
+  - [x] Gate dispatch by channel intent, owner preference and Android delivery readiness.
+  - [x] Dispatch exclusively through `NotificationDispatchUseCase`.
+  - [x] Verify process recreation, reconnect, alert reset and repeated-low-state behavior.
 
-- [ ] **12 — Production composition and commercial acceptance**
-  - [ ] Replace all production `UnavailableDeviceDosing*` bindings with central adapters.
-  - [ ] Set the pinned Dosing contract `productionWiring` evidence to true.
-  - [ ] Add a guard that forbids fail-closed Dosing bindings in production composition.
-  - [ ] Keep debug fixtures isolated from production state ownership.
+- [ ] **12 — Production composition and commercial acceptance** — **ACCEPTANCE PENDING**
+  - [x] Replace all production `UnavailableDeviceDosing*` bindings with central adapters and remove
+        the obsolete fail-closed implementations.
+  - [x] Set the pinned Dosing contract `productionWiring` evidence to true.
+  - [x] Add a guard that forbids fail-closed Dosing bindings in production composition.
+  - [x] Remove all Dosing debug/smoke fixture runtime, state, calibration, navigation and mutation
+        paths; Dosing uses the production path in every build type.
   - [ ] Pass Android CI, API 27/API 36 emulator, installable APK and CodeQL.
   - [ ] Pass physical-device status, calibration, manual dose, program, reservoir and notification
         acceptance without changing transport, crypto, provisioning or firmware-owned behavior.
   - [ ] Grant merge approval only after all automated and physical gates are recorded.
+
+### Stage 12 implementation evidence
+
+- `OwnerDependencyGraph` eagerly owns exactly one owner-scoped Dosing production boundary. All Dosing
+  ViewModels resolve channel, calibration and navigation operations from that same boundary, and the
+  Dosing event/notification monitor is alive without requiring a Dosing screen to be opened.
+- `DeviceDosingV1ProductionRuntime` reuses the existing correlated `DeviceRuntimeCommandGateway`,
+  typed runtime events and lifecycle events. It creates no socket, transport, crypto or provisioning
+  path and owns no state outside the canonical `DeviceDosingV1StateOwner`.
+- Authenticated real Dosing devices are refreshed through the central adapter at the runtime
+  lifecycle boundary, so authoritative state and low-level transition monitoring do not depend on
+  UI observation.
+- The durable channel alert ledger remains an application-intent/deduplication ledger only; alert
+  delivery continues exclusively through the central `NotificationDispatchUseCase`.
+- The debug decorator shares the exact production `OwnerDependencyGraph` instead of creating a
+  second owner graph. Dosing products are excluded from the debug fixture catalog and every Dosing
+  ViewModel delegates to production composition.
+- Release-smoke composition no longer carries a Dosing root or fail-closed Dosing implementation;
+  Dosing acceptance is reserved for the real production graph and physical devices.
+- All `UnavailableDeviceDosing*` source/test files and `DebugFixtureDosing*` source/test files are
+  removed, so there is no second concrete Dosing operations implementation or fixture state owner.
+- `tools/dosing_architecture_guard.py` now fails if production composition regresses to fail-closed
+  Dosing bindings, if `productionWiring` becomes false, if a Dosing debug/smoke path returns, if a
+  debug decorator creates its own owner graph, or if a second Dosing state owner appears.
+- Automated and physical-device acceptance remain intentionally unchecked until their evidence is
+  produced; Stage 12 implementation alone does not grant merge approval.

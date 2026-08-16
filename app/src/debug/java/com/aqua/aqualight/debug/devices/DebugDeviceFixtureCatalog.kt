@@ -7,6 +7,7 @@ import com.aqua.aqualight.data.devices.catalog.AqlCommercialCatalogProduct
 import com.aqua.aqualight.data.devices.catalog.AqlCommercialDeviceCatalog
 import com.aqua.aqualight.data.devices.model.DeviceCapabilities
 import com.aqua.aqualight.data.devices.model.DeviceConnectionState
+import com.aqua.aqualight.data.devices.model.DeviceFamily
 import com.aqua.aqualight.data.devices.model.DeviceIdentity
 import com.aqua.aqualight.data.devices.model.DeviceLimits
 import com.aqua.aqualight.data.devices.model.DeviceOnlineState
@@ -18,23 +19,22 @@ import com.aqua.aqualight.data.devices.toDeviceRootSnapshot
 import com.aqua.aqualight.data.devices.toOwnerDeviceListItem
 
 /**
- * Installable-Debug-only device fixtures.
+ * Installable-Debug-only fixtures for non-Dosing products.
  *
- * There is exactly one fixture for every production commercial catalog product. Product identity,
- * capabilities, limits, features, screens and menu routes always originate from that catalog. The
- * fixture supplies only physical-device facts unavailable during UI work: identity, endpoint,
- * liveness and validated runtime generation.
+ * Dosing fixtures are deliberately excluded. Dosing acceptance uses physical devices and the same
+ * production runtime/state path in every build type.
  */
 internal class DebugDeviceFixtureCatalog {
 
     val snapshots: List<DeviceSnapshot> = AqlCommercialDeviceCatalog.products
+        .filterNot { product -> product.family == DeviceFamily.DOSING }
         .mapIndexed { index, product -> product.toFixtureSnapshot(index) }
 
     private val snapshotsByUid = snapshots.associateBy { snapshot -> snapshot.deviceUid.value }
 
     init {
-        check(snapshots.size == AqlCommercialDeviceCatalog.products.size) {
-            "Debug fixture catalog must cover every commercial product."
+        check(snapshots.none { snapshot -> snapshot.product.family == DeviceFamily.DOSING }) {
+            "Dosing debug fixtures are forbidden; Dosing must use the production runtime."
         }
         snapshots.forEach { snapshot ->
             check(snapshot.toDeviceRootSnapshot().catalogState == DeviceRootCatalogState.VALID) {

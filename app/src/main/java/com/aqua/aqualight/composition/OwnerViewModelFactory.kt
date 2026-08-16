@@ -16,9 +16,6 @@ import com.aqua.aqualight.data.devices.DefaultDeviceFamilySettingsOperations
 import com.aqua.aqualight.data.devices.DefaultDeviceRootOperations
 import com.aqua.aqualight.data.devices.DefaultDeviceStatusOperations
 import com.aqua.aqualight.data.devices.DefaultOwnerDevicesOperations
-import com.aqua.aqualight.data.devices.dosing.UnavailableDeviceDosingCalibrationOperations
-import com.aqua.aqualight.data.devices.dosing.UnavailableDeviceDosingChannelOperations
-import com.aqua.aqualight.data.devices.dosing.UnavailableDeviceDosingChannelNavigationOperations
 import com.aqua.aqualight.data.devices.menu.DefaultDeviceMenuAccessOperations
 import com.aqua.aqualight.data.devices.provisioning.DefaultProvisioningDiscoveryOperations
 import com.aqua.aqualight.data.devices.provisioning.DefaultProvisioningProgressOperations
@@ -39,11 +36,11 @@ import com.aqua.aqualight.ui.tabs.devices.add.DeviceProvisioningProgressViewMode
 import com.aqua.aqualight.ui.tabs.devices.add.DeviceQrScanViewModel
 import com.aqua.aqualight.ui.tabs.devices.detail.common.DeviceRootOverviewViewModel
 import com.aqua.aqualight.ui.tabs.devices.detail.cooling.DeviceCoolingRootViewModel
-import com.aqua.aqualight.ui.tabs.devices.detail.dosing.root.DeviceDosingRootViewModel
 import com.aqua.aqualight.ui.tabs.devices.detail.dosing.channel.calibration.DeviceDosingChannelCalibrationViewModel
 import com.aqua.aqualight.ui.tabs.devices.detail.dosing.channel.detail.DeviceDosingChannelDetailViewModel
 import com.aqua.aqualight.ui.tabs.devices.detail.dosing.channel.plan.DeviceDosingPlanViewModel
 import com.aqua.aqualight.ui.tabs.devices.detail.dosing.channel.reservoir.DeviceDosingReservoirViewModel
+import com.aqua.aqualight.ui.tabs.devices.detail.dosing.root.DeviceDosingRootViewModel
 import com.aqua.aqualight.ui.tabs.devices.detail.light.DeviceLightRootViewModel
 import com.aqua.aqualight.ui.tabs.devices.detail.settings.DeviceFamilySettingsViewModel
 import com.aqua.aqualight.ui.tabs.devices.detail.timer.DeviceTimerRootViewModel
@@ -200,32 +197,32 @@ internal class OwnerViewModelFactory(
             DeviceTimerRootViewModel::class.java ->
                 DeviceTimerRootViewModel(DefaultDeviceRootOperations(repository))
 
-            DeviceDosingRootViewModel::class.java ->
+            DeviceDosingRootViewModel::class.java -> graph.dosingOperations.let { dosing ->
                 DeviceDosingRootViewModel(
                     operations = DefaultDeviceRootOperations(repository),
-                    channelNavigationOperations =
-                        UnavailableDeviceDosingChannelNavigationOperations,
-                    channelOperations = UnavailableDeviceDosingChannelOperations
+                    channelNavigationOperations = dosing.navigationOperations,
+                    channelOperations = dosing.channelOperations
                 )
+            }
 
             DeviceDosingChannelCalibrationViewModel::class.java ->
                 DeviceDosingChannelCalibrationViewModel(
-                    operations = UnavailableDeviceDosingCalibrationOperations
+                    operations = graph.dosingOperations.calibrationOperations
                 )
 
             DeviceDosingChannelDetailViewModel::class.java ->
                 DeviceDosingChannelDetailViewModel(
-                    operations = UnavailableDeviceDosingChannelOperations
+                    operations = graph.dosingOperations.channelOperations
                 )
 
             DeviceDosingPlanViewModel::class.java ->
                 DeviceDosingPlanViewModel(
-                    operations = UnavailableDeviceDosingChannelOperations
+                    operations = graph.dosingOperations.channelOperations
                 )
 
             DeviceDosingReservoirViewModel::class.java ->
                 DeviceDosingReservoirViewModel(
-                    operations = UnavailableDeviceDosingChannelOperations
+                    operations = graph.dosingOperations.channelOperations
                 )
 
             DeviceRootOverviewViewModel::class.java ->

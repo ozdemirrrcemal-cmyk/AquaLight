@@ -17,7 +17,7 @@
   "contract": {
     "schema": "aqualight.dosing.v1",
     "schemaVersion": 1,
-    "productionWiring": false,
+    "productionWiring": true,
     "authenticatedActions": [
       "dosing.status.get",
       "dosing.progress.get",

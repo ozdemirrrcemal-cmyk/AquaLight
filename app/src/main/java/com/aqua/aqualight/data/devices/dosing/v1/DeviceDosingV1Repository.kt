@@ -7,7 +7,7 @@ import com.aqua.aqualight.data.devices.runtime.modules.common.DeviceRuntimeJsonC
 import org.json.JSONObject
 
 /**
- * Complete firmware v1 command surface, deliberately left out of the production composition root.
+ * Complete firmware v1 command surface over the shared correlated device-runtime gateway.
  *
  * The repository performs transport serialization and strict response parsing only. It does not
  * derive occurrence progress, reservoir state, revisions, runtime reasons, or percentages.

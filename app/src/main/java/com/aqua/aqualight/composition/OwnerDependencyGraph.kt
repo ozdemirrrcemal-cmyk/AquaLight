@@ -4,9 +4,13 @@ import android.content.Context
 import com.aqua.aqualight.BuildConfig
 import com.aqua.aqualight.application.auth.AuthenticatedOwnerIdentity
 import com.aqua.aqualight.application.devices.DeviceFirmwareUpdateOperations
+import com.aqua.aqualight.application.devices.dosing.DeviceDosingCalibrationOperations
+import com.aqua.aqualight.application.devices.dosing.DeviceDosingChannelNavigationOperations
+import com.aqua.aqualight.application.devices.dosing.DeviceDosingChannelOperations
 import com.aqua.aqualight.application.devices.provisioning.ProvisioningDraftOperations
 import com.aqua.aqualight.application.devices.provisioning.ProvisioningDraftRequest
 import com.aqua.aqualight.application.devices.provisioning.ProvisioningDraftSession
+import com.aqua.aqualight.application.notifications.NotificationDispatchUseCase
 import com.aqua.aqualight.application.notifications.NotificationPreferenceUseCase
 import com.aqua.aqualight.application.user.UserDataArchiveOperations
 import com.aqua.aqualight.data.aquarium.devices.TankDeviceAssignmentRepository
@@ -16,6 +20,10 @@ import com.aqua.aqualight.data.auth.OwnerSessionCoordinator
 import com.aqua.aqualight.data.auth.OwnerSessionStateMachine
 import com.aqua.aqualight.data.care.CareTaskDataStoreManager
 import com.aqua.aqualight.data.devices.DefaultDeviceFirmwareUpdateOperations
+import com.aqua.aqualight.data.devices.DefaultDeviceRootOperations
+import com.aqua.aqualight.data.devices.dosing.DefaultDeviceDosingChannelNavigationOperations
+import com.aqua.aqualight.data.devices.dosing.SharedPreferencesDeviceDosingLowLevelAlertLedger
+import com.aqua.aqualight.data.devices.dosing.v1.DeviceDosingV1ProductionRuntime
 import com.aqua.aqualight.data.devices.provisioning.repository.DefaultProvisioningDraftOperations
 import com.aqua.aqualight.data.devices.provisioning.store.AqlProvisioningDraftStore
 import com.aqua.aqualight.data.devices.provisioning.store.AqlProvisioningQrSecretStore
@@ -32,6 +40,7 @@ import com.aqua.aqualight.data.user.archive.UserDataBackupRestorer
 import com.aqua.aqualight.platform.documents.AndroidUserDataDocumentOperations
 import com.aqua.aqualight.platform.media.UserDataArchiveMediaGateway
 import com.aqua.aqualight.platform.notifications.DeviceFirmwareUpdateNotificationOperations
+import com.aqua.aqualight.platform.text.AndroidDeviceDosingLowLevelAlertTextResolver
 
 /** Immutable dependency snapshot for one committed authenticated-owner session. */
 internal data class OwnerDependencyGraph(
@@ -44,7 +53,15 @@ internal data class OwnerDependencyGraph(
     val aquariumTankStore: AquariumTankDataStoreManager,
     val careTaskStore: CareTaskDataStoreManager,
     val userDataArchiveOperations: UserDataArchiveOperations,
-    val provisioningDraftOperations: ProvisioningDraftOperations
+    val provisioningDraftOperations: ProvisioningDraftOperations,
+    val dosingOperations: OwnerDosingOperations
+)
+
+/** One owner-scoped application boundary set backed by one central Dosing state owner. */
+internal data class OwnerDosingOperations(
+    val channelOperations: DeviceDosingChannelOperations,
+    val calibrationOperations: DeviceDosingCalibrationOperations,
+    val navigationOperations: DeviceDosingChannelNavigationOperations
 )
 
 internal fun interface OwnerDependencyGraphResolver {
@@ -68,6 +85,7 @@ internal class ActiveOwnerDependencyGraphResolver(
     context: Context,
     private val deviceFirmwareNotifications: DeviceFirmwareUpdateNotificationOperations,
     private val notificationPreferenceUseCase: NotificationPreferenceUseCase,
+    private val notificationDispatchUseCase: NotificationDispatchUseCase,
     private val userPreferencesManager: UserPreferencesManager
 ) : OwnerDependencyGraphResolver {
 
@@ -207,6 +225,31 @@ internal class ActiveOwnerDependencyGraphResolver(
                     context = appContext,
                     ownerUidProvider = ownerUidProvider
                 )
+            ),
+            dosingOperations = createDosingOperations(dependencies)
+        )
+    }
+
+    private fun createDosingOperations(
+        dependencies: ActiveOwnerDependencies
+    ): OwnerDosingOperations {
+        val runtime = DeviceDosingV1ProductionRuntime(
+            devicesRepository = dependencies.devicesRepository,
+            ownerUid = dependencies.ownerUid,
+            lowLevelAlertLedger = SharedPreferencesDeviceDosingLowLevelAlertLedger.create(
+                context = appContext,
+                ownerUid = dependencies.ownerUid
+            ),
+            notificationDispatch = notificationDispatchUseCase,
+            alertTextResolver = AndroidDeviceDosingLowLevelAlertTextResolver(appContext)
+        ).also(dependencies.devicesRepository::registerOwnerScopedResource)
+        val channelOperations = runtime.channelOperations
+        return OwnerDosingOperations(
+            channelOperations = channelOperations,
+            calibrationOperations = runtime.calibrationOperations,
+            navigationOperations = DefaultDeviceDosingChannelNavigationOperations(
+                rootOperations = DefaultDeviceRootOperations(dependencies.devicesRepository),
+                channelOperations = channelOperations
             )
         )
     }

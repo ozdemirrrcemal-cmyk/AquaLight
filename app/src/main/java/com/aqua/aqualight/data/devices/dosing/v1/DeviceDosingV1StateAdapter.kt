@@ -48,8 +48,9 @@ internal sealed interface DeviceDosingV1EventResult {
 /**
  * Central Dosing facade over the v1 wire repository and its focused stateless collaborators.
  *
- * [DeviceDosingV1StateOwner] remains the only owner of authoritative mutable state.
- * It is deliberately not installed in production composition before Stage 12.
+ * [DeviceDosingV1StateOwner] remains the only owner of authoritative mutable state. Production
+ * composition creates exactly one adapter/runtime set per committed owner graph and all Dosing
+ * screens resolve through its application boundaries.
  */
 internal class DeviceDosingV1StateAdapter(
     internal val repository: DeviceDosingV1Repository,

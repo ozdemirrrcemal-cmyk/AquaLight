@@ -1,27 +1,18 @@
 package com.aqua.aqualight.debug.devices
 
-import android.content.Context
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import com.aqua.aqualight.BuildConfig
-import com.aqua.aqualight.composition.ActiveOwnerDependencyGraphResolver
 import com.aqua.aqualight.composition.AppContainer
 import com.aqua.aqualight.composition.OwnerDependencyGraph
-import com.aqua.aqualight.data.devices.dosing.UnavailableDeviceDosingCalibrationOperations
-import com.aqua.aqualight.data.devices.dosing.UnavailableDeviceDosingChannelOperations
-import com.aqua.aqualight.data.devices.dosing.UnavailableDeviceDosingChannelNavigationOperations
+import com.aqua.aqualight.composition.OwnerDependencyGraphAccess
 import com.aqua.aqualight.data.devices.DefaultDeviceRootOperations
 import com.aqua.aqualight.data.devices.DefaultOwnerDevicesOperations
 import com.aqua.aqualight.data.devices.menu.DefaultDeviceMenuAccessOperations
 import com.aqua.aqualight.data.devices.remove.OwnerDeviceDataCleaner
-import com.aqua.aqualight.data.notifications.NotificationPlatform
 import com.aqua.aqualight.ui.tabs.devices.DevicesViewModel
 import com.aqua.aqualight.ui.tabs.devices.detail.common.DeviceRootOverviewViewModel
 import com.aqua.aqualight.ui.tabs.devices.detail.cooling.DeviceCoolingRootViewModel
-import com.aqua.aqualight.ui.tabs.devices.detail.dosing.root.DeviceDosingRootViewModel
-import com.aqua.aqualight.ui.tabs.devices.detail.dosing.channel.calibration.DeviceDosingChannelCalibrationViewModel
-import com.aqua.aqualight.ui.tabs.devices.detail.dosing.channel.detail.DeviceDosingChannelDetailViewModel
-import com.aqua.aqualight.ui.tabs.devices.detail.dosing.channel.plan.DeviceDosingPlanViewModel
 import com.aqua.aqualight.ui.tabs.devices.detail.light.DeviceLightRootViewModel
 import com.aqua.aqualight.ui.tabs.devices.detail.settings.DeviceFamilySettingsViewModel
 import com.aqua.aqualight.ui.tabs.devices.detail.timer.DeviceTimerRootViewModel
@@ -29,67 +20,55 @@ import com.aqua.aqualight.ui.tabs.devices.detail.update.DeviceFirmwareUpdateView
 import com.aqua.aqualight.ui.tabs.devices.route.DeviceRouteResolver
 
 /**
- * Debug-only AppContainer decorator. Every non-device binding remains owned by the production
- * container. Device bindings retain the active production owner graph and decorate only the small
- * application boundaries needed by catalog-backed fixtures.
+ * Debug-only AppContainer decorator for non-Dosing catalog fixtures.
+ *
+ * The decorator shares the exact production owner graph. Dosing is never overridden here, so every
+ * Dosing ViewModel uses the production runtime, adapter and canonical state owner in debug builds.
  */
 internal class DebugDeviceFixtureAppContainer(
-    context: Context,
     private val delegate: AppContainer
 ) : AppContainer by delegate {
+    private val ownerGraphAccess = requireNotNull(delegate as? OwnerDependencyGraphAccess) {
+        "Debug fixture composition requires the production owner graph."
+    }
 
     override val defaultViewModelFactory: ViewModelProvider.Factory =
         DebugDeviceFixtureViewModelFactory(
-            context = context.applicationContext,
             delegate = delegate.defaultViewModelFactory,
-            appContainer = delegate
+            ownerGraphAccess = ownerGraphAccess
         )
 }
 
 private class DebugDeviceFixtureViewModelFactory(
-    context: Context,
     private val delegate: ViewModelProvider.Factory,
-    appContainer: AppContainer
+    private val ownerGraphAccess: OwnerDependencyGraphAccess
 ) : ViewModelProvider.Factory {
 
-    private val appContext = context.applicationContext
     private val fixtures = DebugDeviceFixtureCatalog()
-    private val dosingStateStore = DebugFixtureDosingStateStore(fixtures)
-    private val ownerGraphResolver = ActiveOwnerDependencyGraphResolver(
-        context = appContext,
-        deviceFirmwareNotifications = NotificationPlatform.get(appContext).deviceFirmwareUpdates,
-        notificationPreferenceUseCase = appContainer.notificationPreferenceUseCase,
-        userPreferencesManager = appContainer.userPreferencesManager
-    )
 
     override fun <T : ViewModel> create(modelClass: Class<T>): T {
         val viewModel: ViewModel = when (modelClass) {
-            DevicesViewModel::class.java -> createDevicesViewModel(ownerGraphResolver.requireActive())
+            DevicesViewModel::class.java -> createDevicesViewModel(requireGraph())
             DeviceLightRootViewModel::class.java ->
-                DeviceLightRootViewModel(rootOperations(ownerGraphResolver.requireActive()))
+                DeviceLightRootViewModel(rootOperations(requireGraph()))
             DeviceCoolingRootViewModel::class.java ->
-                DeviceCoolingRootViewModel(rootOperations(ownerGraphResolver.requireActive()))
+                DeviceCoolingRootViewModel(rootOperations(requireGraph()))
             DeviceTimerRootViewModel::class.java ->
-                DeviceTimerRootViewModel(rootOperations(ownerGraphResolver.requireActive()))
-            DeviceDosingRootViewModel::class.java ->
-                createDosingViewModel(ownerGraphResolver.requireActive())
-            DeviceDosingChannelCalibrationViewModel::class.java ->
-                createDosingCalibrationViewModel()
-            DeviceDosingChannelDetailViewModel::class.java ->
-                createDosingChannelDetailViewModel()
-            DeviceDosingPlanViewModel::class.java -> createDosingPlanViewModel()
+                DeviceTimerRootViewModel(rootOperations(requireGraph()))
             DeviceRootOverviewViewModel::class.java ->
-                DeviceRootOverviewViewModel(rootOperations(ownerGraphResolver.requireActive()))
+                DeviceRootOverviewViewModel(rootOperations(requireGraph()))
             DeviceFamilySettingsViewModel::class.java ->
-                createSettingsViewModel(ownerGraphResolver.requireActive())
+                createSettingsViewModel(requireGraph())
             DeviceFirmwareUpdateViewModel::class.java ->
-                createFirmwareViewModel(ownerGraphResolver.requireActive())
+                createFirmwareViewModel(requireGraph())
             else -> return delegate.create(modelClass)
         }
 
         @Suppress("UNCHECKED_CAST")
         return viewModel as T
     }
+
+    private fun requireGraph(): OwnerDependencyGraph = ownerGraphAccess.requireActiveOwnerGraph()
 
     private fun createDevicesViewModel(graph: OwnerDependencyGraph): DevicesViewModel {
         val repository = graph.devicesRepository
@@ -132,48 +111,6 @@ private class DebugDeviceFixtureViewModelFactory(
             rootOperations = rootOperations(graph),
             firmwareUpdateOperations = firmwareOperations(graph),
             manifestUrl = BuildConfig.AQL_OTA_MANIFEST_URL
-        )
-
-    private fun createDosingViewModel(graph: OwnerDependencyGraph): DeviceDosingRootViewModel =
-        DeviceDosingRootViewModel(
-            operations = rootOperations(graph),
-            channelNavigationOperations = DebugFixtureDosingChannelNavigationOperations(
-                delegate = UnavailableDeviceDosingChannelNavigationOperations,
-                fixtures = fixtures,
-                stateStore = dosingStateStore
-            ),
-            channelOperations = DebugFixtureDosingChannelOperations(
-                delegate = UnavailableDeviceDosingChannelOperations,
-                fixtures = fixtures,
-                stateStore = dosingStateStore
-            )
-        )
-
-    private fun createDosingCalibrationViewModel(): DeviceDosingChannelCalibrationViewModel =
-        DeviceDosingChannelCalibrationViewModel(
-            operations = DebugFixtureDosingCalibrationOperations(
-                delegate = UnavailableDeviceDosingCalibrationOperations,
-                fixtures = fixtures,
-                stateStore = dosingStateStore
-            )
-        )
-
-    private fun createDosingChannelDetailViewModel(): DeviceDosingChannelDetailViewModel =
-        DeviceDosingChannelDetailViewModel(
-            operations = DebugFixtureDosingChannelOperations(
-                delegate = UnavailableDeviceDosingChannelOperations,
-                fixtures = fixtures,
-                stateStore = dosingStateStore
-            )
-        )
-
-    private fun createDosingPlanViewModel(): DeviceDosingPlanViewModel =
-        DeviceDosingPlanViewModel(
-            operations = DebugFixtureDosingChannelOperations(
-                delegate = UnavailableDeviceDosingChannelOperations,
-                fixtures = fixtures,
-                stateStore = dosingStateStore
-            )
         )
 
     private fun rootOperations(graph: OwnerDependencyGraph) = DebugFixtureDeviceRootOperations(

@@ -160,6 +160,52 @@ class DosingArchitectureGuardTest(unittest.TestCase):
 
             self.assertTrue(any("exactly one canonical" in error for error in errors), errors)
 
+    def test_fail_closed_production_dosing_binding_is_rejected(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            repository = Path(directory)
+            self._create_minimum_repository(repository)
+            composition = repository / "app/src/main/java/com/aqua/aqualight/composition"
+            composition.mkdir(parents=True)
+            (composition / "OwnerViewModelFactory.kt").write_text(
+                "package com.aqua.aqualight.composition\n\n"
+                "private val forbidden = UnavailableDeviceDosingChannelOperations\n",
+                encoding="utf-8",
+            )
+
+            errors = GUARD.validate_repository(repository)
+
+            self.assertTrue(any("fail-closed Dosing binding" in error for error in errors), errors)
+
+    def test_false_production_wiring_pin_is_rejected(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            repository = Path(directory)
+            self._create_minimum_repository(repository)
+            fixtures = repository / "protocol/fixtures"
+            fixtures.mkdir(parents=True)
+            (fixtures / "aql_android_dosing_v1_pin.json").write_text(
+                '{"contract":{"productionWiring":false}}',
+                encoding="utf-8",
+            )
+
+            errors = GUARD.validate_repository(repository)
+
+            self.assertTrue(any("productionWiring must be true" in error for error in errors), errors)
+
+    def test_debug_dosing_fixture_implementation_is_rejected(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            repository = Path(directory)
+            self._create_minimum_repository(repository)
+            debug_root = repository / "app/src/debug/java/com/aqua/aqualight/debug/devices"
+            debug_root.mkdir(parents=True)
+            (debug_root / "DebugFixtureDosingChannelOperations.kt").write_text(
+                "package com.aqua.aqualight.debug.devices\n",
+                encoding="utf-8",
+            )
+
+            errors = GUARD.validate_repository(repository)
+
+            self.assertTrue(any("Dosing debug fixture implementation" in error for error in errors), errors)
+
     def test_misplaced_application_declaration_is_rejected(self) -> None:
         with tempfile.TemporaryDirectory() as directory:
             repository = Path(directory)

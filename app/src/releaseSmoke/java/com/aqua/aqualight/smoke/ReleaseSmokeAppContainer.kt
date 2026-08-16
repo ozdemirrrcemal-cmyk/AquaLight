@@ -25,8 +25,6 @@ import com.aqua.aqualight.data.care.CareTaskDataStoreManager
 import com.aqua.aqualight.data.care.DefaultMaintenanceOperations
 import com.aqua.aqualight.data.care.integrity.restoreTaskSnapshotsForIntegrity
 import com.aqua.aqualight.data.care.integrity.snapshotTasksForIntegrity
-import com.aqua.aqualight.data.devices.dosing.UnavailableDeviceDosingChannelNavigationOperations
-import com.aqua.aqualight.data.devices.dosing.UnavailableDeviceDosingChannelOperations
 import com.aqua.aqualight.data.devices.DefaultDeviceRootOperations
 import com.aqua.aqualight.data.devices.DefaultDeviceStatusOperations
 import com.aqua.aqualight.data.devices.DefaultOwnerDevicesOperations
@@ -53,7 +51,6 @@ import com.aqua.aqualight.ui.tabs.devices.add.DeviceProvisioningProgressViewMode
 import com.aqua.aqualight.ui.tabs.devices.add.DeviceQrScanViewModel
 import com.aqua.aqualight.ui.tabs.devices.detail.common.DeviceRootOverviewViewModel
 import com.aqua.aqualight.ui.tabs.devices.detail.cooling.DeviceCoolingRootViewModel
-import com.aqua.aqualight.ui.tabs.devices.detail.dosing.root.DeviceDosingRootViewModel
 import com.aqua.aqualight.ui.tabs.devices.detail.light.DeviceLightRootViewModel
 import com.aqua.aqualight.ui.tabs.devices.detail.timer.DeviceTimerRootViewModel
 import com.aqua.aqualight.ui.tabs.devices.route.DeviceRouteResolver
@@ -62,6 +59,12 @@ import com.aqua.aqualight.ui.tabs.settings.SettingsViewModel
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 
+/**
+ * CI-only release-smoke container.
+ *
+ * Dosing is intentionally absent: Dosing acceptance runs only through the real production owner
+ * composition against physical devices, never through a smoke or fixture implementation.
+ */
 internal class ReleaseSmokeAppContainer(context: Context) : AppContainer {
     private val profileOperations = SmokeUserProfileOperations()
 
@@ -239,14 +242,6 @@ private class ReleaseSmokeViewModelFactory(
 
         modelClass.isAssignableFrom(DeviceTimerRootViewModel::class.java) ->
             DeviceTimerRootViewModel(DefaultDeviceRootOperations(devicesRepository))
-
-        modelClass.isAssignableFrom(DeviceDosingRootViewModel::class.java) ->
-            DeviceDosingRootViewModel(
-                operations = DefaultDeviceRootOperations(devicesRepository),
-                channelNavigationOperations =
-                    UnavailableDeviceDosingChannelNavigationOperations,
-                channelOperations = UnavailableDeviceDosingChannelOperations
-            )
 
         modelClass.isAssignableFrom(DeviceRootOverviewViewModel::class.java) ->
             DeviceRootOverviewViewModel(DefaultDeviceRootOperations(devicesRepository))
