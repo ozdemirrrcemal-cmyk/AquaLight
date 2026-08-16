@@ -97,7 +97,11 @@ internal class DeviceDosingReservoirViewModel(
         val deviceUid = deviceUidText.trim()
         val slotId = slotIdText.trim()
         if (deviceUid.isBlank() || slotId.isBlank()) {
-            clearBinding()
+            jobs.cancelAll()
+            boundDeviceUid = ""
+            boundSlotId = ""
+            this.restoredDraft = null
+            mutableEditorState.value = DeviceDosingReservoirEditorState()
             return
         }
         if (boundDeviceUid == deviceUid && boundSlotId == slotId) return
@@ -263,14 +267,6 @@ internal class DeviceDosingReservoirViewModel(
                 current.notificationAvailability
             }
         )
-    }
-
-    private fun clearBinding() {
-        jobs.cancelAll()
-        boundDeviceUid = ""
-        boundSlotId = ""
-        restoredDraft = null
-        mutableEditorState.value = DeviceDosingReservoirEditorState()
     }
 }
 
