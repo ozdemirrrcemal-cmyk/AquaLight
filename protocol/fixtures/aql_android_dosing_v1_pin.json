@@ -3,15 +3,15 @@
   "schema": "aql.android.dosing-v1.pin.v1",
   "firmware": {
     "repository": "ozdemirrrcemal-cmyk/AquaLight-Firmware",
-    "commit": "c77d191398b4bca1d24be99699d1a8fe17ac3dfb",
+    "commit": "a0403bf408fcf898ae94a9178eba34efdc2af9bc",
     "sources": {
       "src/api/v1/commands/AqlDosingCommands.hpp": "ab747617b774c467c1e54e6f302e564507a32928",
       "src/api/v1/commands/AqlDosingProgressCommands.hpp": "8700e785bdd2e747abea3b09eff97755e2addad0",
       "src/modules/dosing/AqlDosingProgramApiCodec.hpp": "7f4eb5d41108a962bc9476fef6a3895327c1d26e",
-      "src/modules/dosing/AqlDosingStatusCodec.hpp": "8444b439b82a572556a10c9b515dd0b88fbd2aa3",
+      "src/modules/dosing/AqlDosingStatusCodec.hpp": "77524043931c58bb90d3e84f628f64acca97d3a2",
       "src/modules/dosing/AqlDosingSchedulingMetadataCodec.hpp": "cab751e2d508651d17550c48314707524053f995",
-      "src/modules/dosing/AqlDosingRuntimeEvent.hpp": "c1c26ec1ce1a37204df6b9c7827894c8760401f7",
-      "src/modules/dosing/AqlDosingRuntimeService.hpp": "915e0e53f858a7651ddfbc5ef401bcc101c954b8"
+      "src/modules/dosing/AqlDosingRuntimeEvent.hpp": "0b40b1eff35af48976f95fedba5a2854885f2439",
+      "src/modules/dosing/AqlDosingRuntimeService.hpp": "359116d281844391b0541c475a07b6f03c7d8570"
     }
   },
   "contract": {
@@ -42,5 +42,13 @@
     "aql_dosing_progress_budget_v1.json": "a9f71db11191d42d76e2951bb09f305229140399",
     "aql_dosing_scheduling_metadata_v1.json": "ef1d2c344c12606bb6aaf322142af8179eae0869",
     "aql_dosing_status_budget_v1.json": "f62cc6d2bf9644020498e9eaca80f1c90c4b87e0"
+  },
+  "derivedFixtures": {
+    "aql_dosing_channel_status_v1.json": {
+      "blob": "aa6721ab881de34419c09e5769d70366af36d3d5",
+      "derivedFrom": "src/modules/dosing/AqlDosingStatusCodec.hpp",
+      "sourceBlob": "77524043931c58bb90d3e84f628f64acca97d3a2",
+      "firmwareCommit": "a0403bf408fcf898ae94a9178eba34efdc2af9bc"
+    }
   }
 }

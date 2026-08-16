@@ -42,7 +42,9 @@ internal object DeviceDosingV1TestFixtures {
 
     fun channelStatus(
         channel: JSONObject = channelDetail()
-    ): JSONObject = envelope(channelCount = 2).put("channel", channel)
+    ): JSONObject = envelope(channelCount = 2)
+        .put("scheduling", scheduling())
+        .put("channel", channel)
 
     fun progressStatus(): JSONObject = envelope(channelCount = 2)
         .put("channelKey", "channel1")

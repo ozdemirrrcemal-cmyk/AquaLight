@@ -1,0 +1,109 @@
+{
+  "supported": true,
+  "schema": "aqualight.dosing.v1",
+  "schemaVersion": 1,
+  "unit": "ml",
+  "channelCount": 2,
+  "uptimeMs": 123456,
+  "bootReady": true,
+  "storageHealthy": true,
+  "storageIssue": "",
+  "scheduling": {
+    "contract": "aqualight.dosing.v1",
+    "schemaVersion": 1,
+    "amountResolutionMl": 0.001,
+    "maxEventsPerChannel": 24,
+    "maxCustomPeriodsPerChannel": 24,
+    "scheduledDispatchGraceMs": 2000,
+    "missedDoseRecoveryProgramDay": true,
+    "minPumpRunDurationMs": 100,
+    "maxPumpRunDurationMs": 3600000,
+    "maxManualDoseMl": 1000.0,
+    "supportsWeekdayRecurrence": true,
+    "supportsMissedDoseRecovery": true,
+    "supportsChannelReset": true,
+    "supportsDailyDeliveredUsage": true,
+    "supportedModes": ["single", "hourly24", "customPeriods", "timer"],
+    "weekdayOrder": ["monday", "tuesday", "wednesday", "thursday", "friday", "saturday", "sunday"],
+    "effectiveScheduledDose": {
+      "available": true,
+      "minDoseMl": 0.08,
+      "maxDoseMl": 2880.0
+    }
+  },
+  "channel": {
+    "channelKey": "channel1",
+    "revision": 7,
+    "runtimeEnabled": true,
+    "runtimeReason": "none",
+    "program": {
+      "enabled": true,
+      "weekdays": [true, true, true, true, true, true, true],
+      "mode": "hourly24",
+      "missedDoseRecoveryEnabled": false,
+      "config": {
+        "dailyDoseMl": 2.4,
+        "startTimeMs": 36900000
+      }
+    },
+    "usageToday": {
+      "dateValid": true,
+      "localDate": "2026-08-14",
+      "scheduledDeliveredMl": 1.1,
+      "manualDeliveredMl": 0.3,
+      "totalDeliveredMl": 1.4
+    },
+    "index": 0,
+    "defaultName": "Channel 1",
+    "displayName": "Macro",
+    "effectiveName": "Macro",
+    "profileManaged": true,
+    "deliveryAccountingCertain": true,
+    "hardware": {
+      "channelType": "pwm",
+      "gpio": 18,
+      "ledcChannel": 0,
+      "resolutionBits": 12,
+      "frequencyHz": 1000
+    },
+    "calibration": {
+      "confirmed": true,
+      "doseMsPerMl": 1250,
+      "lastCalibratedAt": 1786320000,
+      "state": "idle",
+      "durationMs": 0,
+      "measuredMl": 0.0,
+      "pendingDoseMsPerMl": 0,
+      "verificationDoseStarted": false,
+      "verificationDoseComplete": false
+    },
+    "reservoir": {
+      "trackingEnabled": true,
+      "capacityMl": 500.0,
+      "remainingMl": 325.0,
+      "accountingCertain": true,
+      "lowLevelActive": false,
+      "remainingPercent": 65.0
+    },
+    "activeRun": {
+      "active": false,
+      "source": "none",
+      "targetAmountMl": 0.0,
+      "remainingMs": 0
+    },
+    "lastRuntimeEvent": {
+      "valid": true,
+      "sequence": 11,
+      "occurredAtMs": 122000,
+      "kind": "runCompleted",
+      "reason": "naturalDeadline",
+      "source": "scheduled"
+    },
+    "editable": {
+      "hardware": false,
+      "displayName": true,
+      "dosingCalibration": true,
+      "reservoir": true
+    }
+  }
+}

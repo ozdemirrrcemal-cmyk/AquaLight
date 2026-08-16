@@ -286,6 +286,7 @@ data class DeviceDosingV1ChannelDetail(
 
 data class DeviceDosingV1ChannelStatus(
     val envelope: DeviceDosingV1Envelope,
+    val scheduling: DeviceDosingV1SchedulingMetadata,
     val channel: DeviceDosingV1ChannelDetail
 )
 

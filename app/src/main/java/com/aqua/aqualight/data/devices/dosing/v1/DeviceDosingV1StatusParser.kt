@@ -12,7 +12,7 @@ object DeviceDosingV1StatusParser {
     private val GLOBAL_KEYS = ENVELOPE_KEYS + setOf(
         "scheduling", "channels", "runtime", "resources"
     )
-    private val CHANNEL_KEYS = ENVELOPE_KEYS + "channel"
+    private val CHANNEL_KEYS = ENVELOPE_KEYS + setOf("scheduling", "channel")
     private val PROGRESS_KEYS = ENVELOPE_KEYS + setOf(
         "channelKey", "revision", "programEnabled", "programMode", "progress", "occurrences"
     )
@@ -44,6 +44,7 @@ object DeviceDosingV1StatusParser {
         }
         return DeviceDosingV1ChannelStatus(
             envelope = envelope,
+            scheduling = parseScheduling(data.requireDosingObject("scheduling")),
             channel = parseChannelDetail(data.requireDosingObject("channel"))
         )
     }

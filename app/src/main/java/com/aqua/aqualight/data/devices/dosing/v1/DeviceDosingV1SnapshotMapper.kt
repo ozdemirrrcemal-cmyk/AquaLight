@@ -38,7 +38,9 @@ internal object DeviceDosingV1SnapshotMapper {
                 deliveryAccountingCertain = detail.deliveryAccountingCertain,
                 calibrated = detail.calibration.confirmed,
                 lastCalibratedAtEpochSeconds = detail.calibration.lastCalibratedAt,
-                scheduling = DeviceDosingV1ProgramSnapshotMapper.scheduling(global.scheduling),
+                scheduling = DeviceDosingV1ProgramSnapshotMapper.scheduling(
+                    documents.channelStatus.scheduling
+                ),
                 program = detail.program?.let(DeviceDosingV1ProgramSnapshotMapper::program),
                 progress = DeviceDosingV1ProgressSnapshotMapper.map(
                     documents.progressStatus,

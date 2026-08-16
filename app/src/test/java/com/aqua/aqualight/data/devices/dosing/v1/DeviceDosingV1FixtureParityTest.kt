@@ -10,26 +10,28 @@ import org.junit.Test
 @Suppress("MagicNumber")
 class DeviceDosingV1FixtureParityTest {
     @Test
-    fun `canonical firmware fixtures remain byte identical to the pinned revision`() {
+    fun `canonical and derived firmware fixtures remain byte identical to the reviewed revision`() {
         EXPECTED_SHA256.forEach { (name, expected) ->
             assertEquals(name, expected, sha256(resourceBytes(name)))
         }
     }
 
     @Test
-    fun `pin records final firmware commit fourteen actions and production wiring`() {
+    fun `pin records reviewed firmware sources fixtures fourteen actions and production wiring`() {
         val pin = resourceJson(PIN_FIXTURE)
         val firmware = pin.getJSONObject("firmware")
-        val sources = firmware.getJSONObject("sources")
         val contract = pin.getJSONObject("contract")
         val actions = contract.getJSONArray("authenticatedActions")
+        val derived = pin.getJSONObject("derivedFixtures")
+            .getJSONObject(CHANNEL_STATUS_FIXTURE)
 
         assertEquals(FIRMWARE_COMMIT, firmware.getString("commit"))
-        assertEquals(7, sources.length())
-        assertEquals(
-            "915e0e53f858a7651ddfbc5ef401bcc101c954b8",
-            sources.getString("src/modules/dosing/AqlDosingRuntimeService.hpp")
-        )
+        assertEquals(PINNED_SOURCE_BLOBS, firmware.getJSONObject("sources").stringMap())
+        assertEquals(PINNED_FIXTURE_BLOBS, pin.getJSONObject("fixtures").stringMap())
+        assertEquals(DERIVED_CHANNEL_STATUS_BLOB, derived.getString("blob"))
+        assertEquals(STATUS_CODEC_PATH, derived.getString("derivedFrom"))
+        assertEquals(PINNED_SOURCE_BLOBS.getValue(STATUS_CODEC_PATH), derived.getString("sourceBlob"))
+        assertEquals(FIRMWARE_COMMIT, derived.getString("firmwareCommit"))
         assertEquals(DeviceDosingV1Contract.SCHEMA, contract.getString("schema"))
         assertEquals(DeviceDosingV1Contract.SCHEMA_VERSION, contract.getLong("schemaVersion"))
         assertTrue(contract.getBoolean("productionWiring"))
@@ -100,6 +102,9 @@ class DeviceDosingV1FixtureParityTest {
             "Missing fixture resource: " + name
         }.use { input -> input.readBytes() }
 
+    private fun JSONObject.stringMap(): Map<String, String> =
+        keys().asSequence().associateWith { key -> getString(key) }
+
     private fun sha256(bytes: ByteArray): String =
         MessageDigest.getInstance("SHA-256")
             .digest(bytes)
@@ -109,10 +114,47 @@ class DeviceDosingV1FixtureParityTest {
 
     private companion object {
         const val PIN_FIXTURE = "aql_android_dosing_v1_pin.json"
-        const val FIRMWARE_COMMIT = "c77d191398b4bca1d24be99699d1a8fe17ac3dfb"
+        const val CHANNEL_STATUS_FIXTURE = "aql_dosing_channel_status_v1.json"
+        const val FIRMWARE_COMMIT = "a0403bf408fcf898ae94a9178eba34efdc2af9bc"
+        const val STATUS_CODEC_PATH = "src/modules/dosing/AqlDosingStatusCodec.hpp"
+        const val DERIVED_CHANNEL_STATUS_BLOB = "aa6721ab881de34419c09e5769d70366af36d3d5"
+
+        val PINNED_SOURCE_BLOBS = linkedMapOf(
+            "src/api/v1/commands/AqlDosingCommands.hpp" to
+                "ab747617b774c467c1e54e6f302e564507a32928",
+            "src/api/v1/commands/AqlDosingProgressCommands.hpp" to
+                "8700e785bdd2e747abea3b09eff97755e2addad0",
+            "src/modules/dosing/AqlDosingProgramApiCodec.hpp" to
+                "7f4eb5d41108a962bc9476fef6a3895327c1d26e",
+            STATUS_CODEC_PATH to "77524043931c58bb90d3e84f628f64acca97d3a2",
+            "src/modules/dosing/AqlDosingSchedulingMetadataCodec.hpp" to
+                "cab751e2d508651d17550c48314707524053f995",
+            "src/modules/dosing/AqlDosingRuntimeEvent.hpp" to
+                "0b40b1eff35af48976f95fedba5a2854885f2439",
+            "src/modules/dosing/AqlDosingRuntimeService.hpp" to
+                "359116d281844391b0541c475a07b6f03c7d8570"
+        )
+
+        val PINNED_FIXTURE_BLOBS = linkedMapOf(
+            "aql_dosing_calibration_v1.json" to
+                "45b45e2ad9fe145763325e0b88b321325b01f681",
+            "aql_dosing_persistence_v1.json" to
+                "a6f3a38c0b701493139858a76d674296640a0dd0",
+            "aql_dosing_program_v1.json" to
+                "809a64d12a577be7757d8570e400009c9636adad",
+            "aql_dosing_progress_budget_v1.json" to
+                "a9f71db11191d42d76e2951bb09f305229140399",
+            "aql_dosing_scheduling_metadata_v1.json" to
+                "ef1d2c344c12606bb6aaf322142af8179eae0869",
+            "aql_dosing_status_budget_v1.json" to
+                "f62cc6d2bf9644020498e9eaca80f1c90c4b87e0"
+        )
+
         val EXPECTED_SHA256 = linkedMapOf(
             "aql_dosing_calibration_v1.json" to
                 "6b691f99d92e1740ea2efd98c3c20cc4cea309fd703f8db430241e2fca385fe9",
+            CHANNEL_STATUS_FIXTURE to
+                "ac48a094e5127e54a3a51a66a1487f81ecb5993241fa0ccb7f5669cef7af752e",
             "aql_dosing_persistence_v1.json" to
                 "767a9e08e6cf71a221470958b616790f3ddd223dfd77033fde03708899fea880",
             "aql_dosing_program_v1.json" to
