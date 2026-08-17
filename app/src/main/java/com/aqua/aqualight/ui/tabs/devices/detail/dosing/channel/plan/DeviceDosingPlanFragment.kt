@@ -14,6 +14,7 @@ import androidx.lifecycle.repeatOnLifecycle
 import androidx.navigation.fragment.findNavController
 import androidx.navigation.fragment.navArgs
 import com.aqua.aqualight.R
+import com.aqua.aqualight.application.devices.dosing.DeviceDosingChannelRejection
 import com.aqua.aqualight.base.BaseActivity
 import com.aqua.aqualight.composition.requireAppContainer
 import com.aqua.aqualight.ui.common.bottomsheet.TextInputBottomSheet
@@ -40,7 +41,11 @@ class DeviceDosingPlanFragment :
         viewModel.bind(
             deviceUidText = args.deviceUid,
             slotIdText = args.slotId,
-            restoredDraft = savedInstanceState?.let(DosingPlanDraft::restore)
+            restoredDraft = savedInstanceState?.let(DosingPlanDraft::restore),
+            restoredBaseRevision = savedInstanceState
+                ?.takeIf { state -> state.containsKey(STATE_BASE_REVISION) }
+                ?.getLong(STATE_BASE_REVISION),
+            restoredDraftDirty = savedInstanceState?.getBoolean(STATE_DRAFT_DIRTY, false) == true
         )
         setupDailyDoseResult()
         bindDosingPlanScheduleResults(
@@ -64,7 +69,12 @@ class DeviceDosingPlanFragment :
     }
 
     override fun onSaveInstanceState(outState: Bundle) {
-        viewModel.currentEditorState().draft.writeTo(outState)
+        val editorState = viewModel.currentEditorState()
+        editorState.draft.writeTo(outState)
+        editorState.baseRevision?.let { revision ->
+            outState.putLong(STATE_BASE_REVISION, revision)
+        }
+        outState.putBoolean(STATE_DRAFT_DIRTY, editorState.draftDirty)
         super.onSaveInstanceState(outState)
     }
 
@@ -130,6 +140,13 @@ class DeviceDosingPlanFragment :
         if (!canOpenEditor) return
         val navController = findNavController()
         if (navController.currentDestination?.id != R.id.deviceDosingPlanFragment) return
+
+        if (draft.hasSubMinuteTiming(mode)) {
+            showPlanMessage(
+                R.string.device_dosing_plan_subminute_timing,
+                BaseActivity.SnackType.WARNING
+            )
+        }
 
         val direction = when (mode) {
             DosingPlanScheduleMode.SINGLE -> DeviceDosingPlanFragmentDirections
@@ -227,6 +244,18 @@ class DeviceDosingPlanFragment :
                             showPlanMessage(R.string.device_dosing_plan_saved)
                             findNavController().navigateUp()
                         }
+                        is DeviceDosingPlanEvent.InvalidDraft -> showPlanMessage(
+                            validationMessage(event.issue),
+                            BaseActivity.SnackType.WARNING
+                        )
+                        is DeviceDosingPlanEvent.SaveRejected -> showPlanMessage(
+                            rejectionMessage(event.reason),
+                            BaseActivity.SnackType.WARNING
+                        )
+                        DeviceDosingPlanEvent.SaveUnavailable -> showPlanMessage(
+                            R.string.device_dosing_plan_unavailable,
+                            BaseActivity.SnackType.ERROR
+                        )
                         DeviceDosingPlanEvent.SaveFailed -> showPlanMessage(
                             R.string.device_dosing_detail_operation_failed,
                             BaseActivity.SnackType.ERROR
@@ -247,5 +276,43 @@ class DeviceDosingPlanFragment :
     private companion object {
         const val DAILY_DOSE_REQUEST_KEY = "dosing_daily_dose_input"
         const val DAILY_DOSE_INPUT_MAX_LENGTH = 12
+        const val STATE_BASE_REVISION = "dosing_plan_base_revision"
+        const val STATE_DRAFT_DIRTY = "dosing_plan_draft_dirty"
     }
 }
+
+private fun validationMessage(issue: DosingPlanValidationIssue): Int = when (issue) {
+    DosingPlanValidationIssue.DOSE_LIMIT -> R.string.device_dosing_plan_invalid_dose_limit
+    DosingPlanValidationIssue.EVENT_LIMIT -> R.string.device_dosing_plan_invalid_event_limit
+    DosingPlanValidationIssue.NO_DAYS -> R.string.device_dosing_plan_invalid_no_days
+    DosingPlanValidationIssue.UNSUPPORTED_MODE -> R.string.device_dosing_plan_invalid_mode
+    DosingPlanValidationIssue.RECOVERY_UNSUPPORTED ->
+        R.string.device_dosing_plan_invalid_recovery
+    DosingPlanValidationIssue.INVALID_SCHEDULE -> R.string.device_dosing_plan_invalid_schedule
+}
+
+private fun rejectionMessage(reason: DeviceDosingChannelRejection): Int = when (reason) {
+    DeviceDosingChannelRejection.INVALID_DRAFT -> R.string.device_dosing_plan_invalid_schedule
+    DeviceDosingChannelRejection.NOT_EDITABLE -> R.string.device_dosing_plan_rejected_not_editable
+    DeviceDosingChannelRejection.NOT_CALIBRATED ->
+        R.string.device_dosing_plan_rejected_not_calibrated
+    DeviceDosingChannelRejection.BUSY -> R.string.device_dosing_plan_rejected_busy
+    DeviceDosingChannelRejection.CONFLICT -> R.string.device_dosing_plan_rejected_conflict
+    DeviceDosingChannelRejection.UNSAFE -> R.string.device_dosing_plan_rejected_unsafe
+    DeviceDosingChannelRejection.UNKNOWN -> R.string.device_dosing_detail_operation_failed
+}
+
+private fun DosingPlanDraft.hasSubMinuteTiming(mode: DosingPlanScheduleMode): Boolean = when (mode) {
+    DosingPlanScheduleMode.SINGLE -> singleDoseStartTimeMs.hasSubMinutePrecision()
+    DosingPlanScheduleMode.HOURLY -> hourlyStartTimeMs.hasSubMinutePrecision()
+    DosingPlanScheduleMode.CUSTOM -> customPeriods.any { period ->
+        period.startTimeMs.hasSubMinutePrecision() || period.endTimeMs.hasSubMinutePrecision()
+    }
+    DosingPlanScheduleMode.TIMER -> timerDoses.any { dose ->
+        dose.startTimeMs.hasSubMinutePrecision()
+    }
+}
+
+private fun Long.hasSubMinutePrecision(): Boolean = this % MILLIS_PER_MINUTE != 0L
+
+private const val MILLIS_PER_MINUTE = 60_000L

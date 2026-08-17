@@ -5,6 +5,7 @@ import com.aqua.aqualight.application.devices.dosing.DeviceDosingChannelOperatio
 import com.aqua.aqualight.application.devices.dosing.DeviceDosingChannelRejection
 import com.aqua.aqualight.application.devices.dosing.DeviceDosingChannelSnapshot
 import com.aqua.aqualight.application.devices.dosing.DeviceDosingProgram
+import com.aqua.aqualight.application.devices.dosing.DeviceDosingProgramRevisionOperations
 import com.aqua.aqualight.application.devices.dosing.DeviceDosingReservoirSettings
 import com.aqua.aqualight.data.devices.runtime.core.DeviceRuntimeCommandOutcome
 import kotlinx.coroutines.flow.Flow
@@ -13,7 +14,7 @@ import kotlinx.coroutines.flow.Flow
 @Suppress("TooManyFunctions") // This class implements the complete application boundary verbatim.
 internal class DeviceDosingV1ChannelOperationsAdapter(
     private val adapter: DeviceDosingV1StateAdapter
-) : DeviceDosingChannelOperations {
+) : DeviceDosingChannelOperations, DeviceDosingProgramRevisionOperations {
 
     override fun observe(
         deviceUid: String,
@@ -36,10 +37,40 @@ internal class DeviceDosingV1ChannelOperationsAdapter(
         deviceUid: String,
         slotId: String,
         program: DeviceDosingProgram
+    ): DeviceDosingChannelOperationResult = applyProgramInternal(
+        deviceUid = deviceUid,
+        slotId = slotId,
+        program = program,
+        expectedRevision = null
+    )
+
+    override suspend fun applyProgramAtRevision(
+        deviceUid: String,
+        slotId: String,
+        program: DeviceDosingProgram,
+        expectedRevision: Long
+    ): DeviceDosingChannelOperationResult = applyProgramInternal(
+        deviceUid = deviceUid,
+        slotId = slotId,
+        program = program,
+        expectedRevision = expectedRevision
+    )
+
+    private suspend fun applyProgramInternal(
+        deviceUid: String,
+        slotId: String,
+        program: DeviceDosingProgram,
+        expectedRevision: Long?
     ): DeviceDosingChannelOperationResult = adapter.mutationCoordinator.mutatePersisted(
         deviceUid = deviceUid,
         slotId = slotId,
         execute = { uid, channelKey, revision, baseline ->
+            expectedRevision?.let { editorRevision ->
+                requireMutation(
+                    revision == editorRevision,
+                    DeviceDosingChannelRejection.CONFLICT
+                )
+            }
             requireMutation(
                 baseline.controls.programEditable,
                 DeviceDosingChannelRejection.NOT_EDITABLE

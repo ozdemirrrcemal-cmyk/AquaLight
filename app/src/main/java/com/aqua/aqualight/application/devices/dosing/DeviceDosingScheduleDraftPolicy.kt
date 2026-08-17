@@ -66,16 +66,24 @@ object DeviceDosingScheduleTimeDraftPolicy {
         return minutesOfDay * DeviceDosingScheduleDraftLimits.MILLIS_PER_MINUTE
     }
 
+    /**
+     * Presentation uses whole-minute pickers, while firmware-authoritative programs may contain
+     * any millisecond inside the program day. Existing sub-minute values are therefore accepted
+     * and displayed at their containing minute until the user explicitly edits that time.
+     */
     fun minutesOfDay(timeMs: Long): Int {
         require(isValidTime(timeMs)) {
-            "timeMs must be minute-aligned inside one day."
+            "timeMs must be inside one firmware program day."
         }
         return (timeMs / DeviceDosingScheduleDraftLimits.MILLIS_PER_MINUTE).toInt()
     }
 
     fun isValidTime(timeMs: Long): Boolean =
-        timeMs in 0L..DeviceDosingScheduleDraftLimits.LAST_MINUTE_START_MS &&
-            timeMs % DeviceDosingScheduleDraftLimits.MILLIS_PER_MINUTE == 0L
+        timeMs in 0L until MILLIS_PER_DAY
+
+    private const val MILLIS_PER_DAY =
+        DeviceDosingScheduleDraftLimits.MINUTES_PER_DAY *
+            DeviceDosingScheduleDraftLimits.MILLIS_PER_MINUTE
 }
 
 object DeviceDosingCustomScheduleDraftPolicy {
