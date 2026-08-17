@@ -87,7 +87,10 @@ private fun DrawScope.drawCalibrationFluidScene(
     val destinationBounds = fluidDestinationBounds(destination)
     val outletEnd = Offset(destinationBounds.center.x, destinationBounds.top)
     val inlet = inletPath(bottle, pumpCenter, pumpRadius)
-    val outlet = outletPath(pumpCenter, pumpRadius, outletEnd)
+    val outlet = when (destination) {
+        CalibrationFluidDestination.WASTE -> wasteOutletPath(pumpCenter, pumpRadius, outletEnd)
+        CalibrationFluidDestination.CYLINDER -> cylinderOutletPath(pumpCenter, pumpRadius, outletEnd)
+    }
 
     drawCalibrationTube(
         path = inlet,
@@ -101,7 +104,7 @@ private fun DrawScope.drawCalibrationFluidScene(
         active = animation.active,
         flowPhase = animation.flowPhase
     )
-    if (animation.active) {
+    if (animation.active && destination == CalibrationFluidDestination.CYLINDER) {
         drawSolidCalibrationFlow(inlet, colors)
         drawSolidCalibrationFlow(outlet, colors)
     }
@@ -210,7 +213,17 @@ private fun inletPath(
     lineTo(pumpCenter.x - pumpRadius, pumpCenter.y)
 }
 
-private fun outletPath(
+private fun wasteOutletPath(
+    pumpCenter: Offset,
+    pumpRadius: Float,
+    outletEnd: Offset
+) = Path().apply {
+    moveTo(pumpCenter.x + pumpRadius, pumpCenter.y)
+    lineTo(outletEnd.x, pumpCenter.y)
+    lineTo(outletEnd.x, outletEnd.y)
+}
+
+private fun cylinderOutletPath(
     pumpCenter: Offset,
     pumpRadius: Float,
     outletEnd: Offset
