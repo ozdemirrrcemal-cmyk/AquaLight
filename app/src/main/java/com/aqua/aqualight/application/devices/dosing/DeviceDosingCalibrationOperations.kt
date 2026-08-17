@@ -24,7 +24,7 @@ interface DeviceDosingCalibrationOperations {
     ): DeviceDosingCalibrationResult = primeStop(deviceUid, slotId)
 
     /** Product-owned safety deadline; the caller performs the stop after this returns. */
-    suspend fun awaitPrimeSafetyDeadline() {
+    suspend fun awaitPrimeSafetyStop() {
         delay(constraints.primeSafetyTimeoutMs)
     }
 
@@ -61,33 +61,55 @@ interface DeviceDosingCalibrationOperations {
     /**
      * Owns calibration exit safety ordering in the application layer.
      *
-     * This composes existing central runtime operations only; it does not introduce a new
-     * firmware action. The last observed snapshot is accepted as a safety hint so loss of
-     * connectivity during host exit does not erase already-known cleanup obligations.
+     * Every cleanup command remains on the existing central runtime path. A fresh authoritative
+     * refresh is mandatory after any already-running workflow mutation has settled, and exit only
+     * succeeds after the final snapshot proves the channel is idle. Cleanup failures are returned
+     * to presentation instead of being swallowed.
      */
     suspend fun exitSafely(
         deviceUid: String,
         slotId: String,
         primeMayBeActive: Boolean,
         lastKnownSnapshot: DeviceDosingCalibrationSnapshot?
-    ) {
+    ): DeviceDosingCalibrationResult {
+        var cleanupFailure: DeviceDosingCalibrationResult.Rejected? = null
         if (primeMayBeActive) {
-            runCatching { primeSafetyStop(deviceUid, slotId) }
+            val result = primeSafetyStop(deviceUid, slotId)
+            if (result is DeviceDosingCalibrationResult.Rejected) cleanupFailure = result
         }
 
-        val snapshot = lastKnownSnapshot ?: runCatching { refresh(deviceUid, slotId) }
-            .getOrNull()
-            .successSnapshotOrNull()
-
-        if (snapshot?.verificationDoseStarted == true && !snapshot.verificationDoseComplete) {
-            runCatching { stopVerificationDose(deviceUid, slotId) }
+        val refreshResult = refresh(deviceUid, slotId)
+        var snapshot = when (refreshResult) {
+            is DeviceDosingCalibrationResult.Success -> refreshResult.snapshot
+            is DeviceDosingCalibrationResult.Rejected ->
+                lastKnownSnapshot ?: return cleanupFailure ?: refreshResult
         }
 
-        if (snapshot?.sessionPhase?.let { phase ->
-                phase != DeviceDosingCalibrationSessionPhase.IDLE
-            } == true
-        ) {
-            runCatching { cancel(deviceUid, slotId) }
+        if (snapshot.verificationDoseStarted && !snapshot.verificationDoseComplete) {
+            when (val result = stopVerificationDose(deviceUid, slotId)) {
+                is DeviceDosingCalibrationResult.Success -> snapshot = result.snapshot
+                is DeviceDosingCalibrationResult.Rejected ->
+                    if (cleanupFailure == null) cleanupFailure = result
+            }
+        }
+        if (snapshot.sessionPhase != DeviceDosingCalibrationSessionPhase.IDLE) {
+            when (val result = cancel(deviceUid, slotId)) {
+                is DeviceDosingCalibrationResult.Success -> Unit
+                is DeviceDosingCalibrationResult.Rejected ->
+                    if (cleanupFailure == null) cleanupFailure = result
+            }
+        }
+
+        return when (val finalResult = refresh(deviceUid, slotId)) {
+            is DeviceDosingCalibrationResult.Rejected -> cleanupFailure ?: finalResult
+            is DeviceDosingCalibrationResult.Success -> when {
+                cleanupFailure != null -> cleanupFailure
+                finalResult.snapshot.sessionPhase != DeviceDosingCalibrationSessionPhase.IDLE ||
+                    finalResult.snapshot.manualActive -> DeviceDosingCalibrationResult.Rejected(
+                    DeviceDosingCalibrationFailure.CALIBRATION_STATE_MISMATCH
+                )
+                else -> finalResult
+            }
         }
     }
 }
@@ -167,6 +189,3 @@ enum class DeviceDosingCalibrationFailure {
     INVALID_MEASUREMENT,
     INTERNAL
 }
-
-private fun DeviceDosingCalibrationResult?.successSnapshotOrNull(): DeviceDosingCalibrationSnapshot? =
-    (this as? DeviceDosingCalibrationResult.Success)?.snapshot
