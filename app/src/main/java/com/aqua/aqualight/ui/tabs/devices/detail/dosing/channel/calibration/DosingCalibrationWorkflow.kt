@@ -336,18 +336,10 @@ internal class DosingCalibrationWorkflow(
 private suspend fun performVerificationDeadline(
     operations: DeviceDosingCalibrationOperations,
     route: DeviceDosingCalibrationRoute
-): DeviceDosingCalibrationResult = when (
-    val stopResult = operations.stopVerificationDose(route.deviceUid, route.slotId)
-) {
-    is DeviceDosingCalibrationResult.Success -> {
-        if (stopResult.snapshot.verificationDoseComplete) {
-            stopResult
-        } else {
-            operations.refresh(route.deviceUid, route.slotId)
-        }
-    }
-    is DeviceDosingCalibrationResult.Rejected -> stopResult
-}
+): DeviceDosingCalibrationResult = operations.reconcileVerificationDeadline(
+    deviceUid = route.deviceUid,
+    slotId = route.slotId
+)
 
 private fun CoroutineScope.launchTrackedCalibrationOperation(
     session: DosingCalibrationWorkflowSession,

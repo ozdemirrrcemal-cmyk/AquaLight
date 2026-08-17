@@ -65,8 +65,15 @@ internal class FakeDosingCalibrationOperations(
     override suspend fun startVerificationDose(deviceUid: String, slotId: String) =
         calibrationSuccess(current)
 
-    override suspend fun stopVerificationDose(deviceUid: String, slotId: String) =
-        calibrationSuccess(current.copy(manualActive = false)).also { verificationStops += 1 }
+    override suspend fun stopVerificationDose(
+        deviceUid: String,
+        slotId: String
+    ): DeviceDosingCalibrationResult {
+        verificationStops += 1
+        val snapshot = current.copy(manualActive = false)
+        state.value = snapshot
+        return calibrationSuccess(snapshot)
+    }
 
     override suspend fun confirm(
         deviceUid: String,
@@ -78,12 +85,18 @@ internal class FakeDosingCalibrationOperations(
         if (result is DeviceDosingCalibrationResult.Success) state.value = result.snapshot
     }
 
-    override suspend fun cancel(deviceUid: String, slotId: String) = calibrationSuccess(
-        current.copy(
+    override suspend fun cancel(
+        deviceUid: String,
+        slotId: String
+    ): DeviceDosingCalibrationResult {
+        val snapshot = current.copy(
             sessionPhase = DeviceDosingCalibrationSessionPhase.IDLE,
             manualActive = false
         )
-    ).also { cancels += 1 }
+        state.value = snapshot
+        cancels += 1
+        return calibrationSuccess(snapshot)
+    }
 }
 
 internal fun calibrationRoute(recalibration: Boolean = false) = DeviceDosingCalibrationRoute(

@@ -5,10 +5,12 @@ import com.aqua.aqualight.application.devices.dosing.DeviceDosingChannelControls
 import com.aqua.aqualight.application.devices.dosing.DeviceDosingChannelOperationResult
 import com.aqua.aqualight.application.devices.dosing.DeviceDosingChannelOperations
 import com.aqua.aqualight.application.devices.dosing.DeviceDosingChannelProgress
+import com.aqua.aqualight.application.devices.dosing.DeviceDosingChannelRejection
 import com.aqua.aqualight.application.devices.dosing.DeviceDosingChannelSnapshot
 import com.aqua.aqualight.application.devices.dosing.DeviceDosingOccurrenceProgress
 import com.aqua.aqualight.application.devices.dosing.DeviceDosingOccurrenceState
 import com.aqua.aqualight.application.devices.dosing.DeviceDosingProgram
+import com.aqua.aqualight.application.devices.dosing.DeviceDosingProgramRevisionOperations
 import com.aqua.aqualight.application.devices.dosing.DeviceDosingProgramSchedule
 import com.aqua.aqualight.application.devices.dosing.DeviceDosingReservoirSettings
 import com.aqua.aqualight.application.devices.dosing.DeviceDosingReservoirSnapshot
@@ -21,7 +23,7 @@ import kotlinx.coroutines.flow.map
 
 internal class FakeDeviceDosingChannelOperations(
     initialSnapshot: DeviceDosingChannelSnapshot? = sampleDosingChannelSnapshot()
-) : DeviceDosingChannelOperations {
+) : DeviceDosingChannelOperations, DeviceDosingProgramRevisionOperations {
     val snapshot = MutableStateFlow(initialSnapshot)
     var failMutations: Boolean = false
     var lastProgram: DeviceDosingProgram? = null
@@ -51,6 +53,21 @@ internal class FakeDeviceDosingChannelOperations(
     ): DeviceDosingChannelOperationResult {
         lastProgram = program
         return mutate { state -> state.copy(revision = state.revision + 1L, program = program) }
+    }
+
+    override suspend fun applyProgramAtRevision(
+        deviceUid: String,
+        slotId: String,
+        program: DeviceDosingProgram,
+        expectedRevision: Long
+    ): DeviceDosingChannelOperationResult {
+        val current = snapshot.value ?: return DeviceDosingChannelOperationResult.Unavailable
+        if (current.revision != expectedRevision) {
+            return DeviceDosingChannelOperationResult.Rejected(
+                DeviceDosingChannelRejection.CONFLICT
+            )
+        }
+        return applyProgram(deviceUid, slotId, program)
     }
 
     override suspend fun setMissedDoseRecoveryEnabled(

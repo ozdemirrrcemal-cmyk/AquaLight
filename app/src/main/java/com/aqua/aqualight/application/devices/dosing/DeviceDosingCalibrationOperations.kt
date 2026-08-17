@@ -47,6 +47,28 @@ interface DeviceDosingCalibrationOperations {
     ): DeviceDosingCalibrationResult
 
     /**
+     * Owns expired verification reconciliation in the application safety boundary.
+     *
+     * Presentation schedules the deadline only. The stop and final authoritative refresh remain on
+     * the existing central calibration operations path so lifecycle safety never moves into UI.
+     */
+    suspend fun reconcileVerificationDeadline(
+        deviceUid: String,
+        slotId: String
+    ): DeviceDosingCalibrationResult = when (
+        val stopResult = stopVerificationDose(deviceUid, slotId)
+    ) {
+        is DeviceDosingCalibrationResult.Success -> {
+            if (stopResult.snapshot.verificationDoseComplete) {
+                stopResult
+            } else {
+                refresh(deviceUid, slotId)
+            }
+        }
+        is DeviceDosingCalibrationResult.Rejected -> stopResult
+    }
+
+    /**
      * Commits the final user-visible channel identity and confirmed calibration atomically in the
      * firmware-owned calibration confirmation transaction.
      */
