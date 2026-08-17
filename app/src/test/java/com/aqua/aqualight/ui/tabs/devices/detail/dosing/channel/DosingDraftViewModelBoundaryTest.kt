@@ -148,43 +148,45 @@ class DosingDraftViewModelBoundaryTest {
         }
 
     @Test
-    fun `detail owns route validity and delegates setting mutation`() = runTest(dispatcher) {
-        val operations = FakeDeviceDosingChannelOperations(initialSnapshot = null)
-        val invalid = DeviceDosingChannelDetailViewModel(operations)
-        invalid.bind(
-            deviceUidText = "device-1",
-            slotIdText = "dosing:channel2",
-            lastCalibratedAtEpochSeconds = 0L
-        )
-        assertFalse(invalid.currentDraft().routeValid)
+    fun `detail owns route validity from authoritative snapshot and delegates setting mutation`() =
+        runTest(dispatcher) {
+            val operations = FakeDeviceDosingChannelOperations(initialSnapshot = null)
+            val invalid = DeviceDosingChannelDetailViewModel(operations)
+            invalid.bind(
+                deviceUidText = "device-1",
+                slotIdText = "dosing:channel2"
+            )
+            assertFalse(invalid.currentDraft().authoritativeStateAvailable)
+            assertFalse(invalid.currentDraft().routeValid)
 
-        val validOperations = FakeDeviceDosingChannelOperations()
-        val valid = DeviceDosingChannelDetailViewModel(validOperations)
-        valid.bind(
-            deviceUidText = "device-1",
-            slotIdText = "dosing:channel2",
-            lastCalibratedAtEpochSeconds = 100L
-        )
-        assertEquals("Channel 2", valid.currentDraft().channelTitle)
+            val validOperations = FakeDeviceDosingChannelOperations()
+            val valid = DeviceDosingChannelDetailViewModel(validOperations)
+            valid.bind(
+                deviceUidText = "device-1",
+                slotIdText = "dosing:channel2"
+            )
+            assertTrue(valid.currentDraft().authoritativeStateAvailable)
+            assertTrue(valid.currentDraft().routeValid)
+            assertEquals("Channel 2", valid.currentDraft().channelTitle)
 
-        validOperations.snapshot.value = requireNotNull(validOperations.snapshot.value).copy(
-            channelTitle = "Trace Elements"
-        )
-        assertEquals("Trace Elements", valid.currentDraft().channelTitle)
+            validOperations.snapshot.value = requireNotNull(validOperations.snapshot.value).copy(
+                channelTitle = "Trace Elements"
+            )
+            assertEquals("Trace Elements", valid.currentDraft().channelTitle)
 
-        valid.setMissedDoseRecoveryEnabled(true)
-        assertTrue(valid.currentDraft().routeValid)
-        assertTrue(valid.currentDraft().missedDoseRecoveryEnabled)
-        assertEquals(true, validOperations.lastMissedDoseRecoveryEnabled)
+            valid.setMissedDoseRecoveryEnabled(true)
+            assertTrue(valid.currentDraft().routeValid)
+            assertTrue(valid.currentDraft().missedDoseRecoveryEnabled)
+            assertEquals(true, validOperations.lastMissedDoseRecoveryEnabled)
 
-        valid.startManualDose("2.500")
-        assertEquals(2_500L, validOperations.lastManualDoseMicroliters)
-        assertTrue(valid.currentDraft().manualDoseActive)
+            valid.startManualDose("2.500")
+            assertEquals(2_500L, validOperations.lastManualDoseMicroliters)
+            assertTrue(valid.currentDraft().manualDoseActive)
 
-        valid.stopManualDose()
-        assertFalse(valid.currentDraft().manualDoseActive)
+            valid.stopManualDose()
+            assertFalse(valid.currentDraft().manualDoseActive)
 
-        valid.resetChannel()
-        assertFalse(valid.currentDraft().routeValid)
-    }
+            valid.resetChannel()
+            assertFalse(valid.currentDraft().routeValid)
+        }
 }
