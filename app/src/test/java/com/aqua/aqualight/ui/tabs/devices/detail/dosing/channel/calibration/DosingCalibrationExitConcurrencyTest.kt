@@ -91,7 +91,8 @@ class DosingCalibrationExitConcurrencyTest {
         }
         val viewModel = viewModel(operations)
         bind(viewModel, restoredName = DISPLAY_NAME)
-        advanceUntilIdle()
+        // Active verification owns a recurring authoritative poll; settle only immediate work.
+        runCurrent()
 
         viewModel.requestExit()
         advanceUntilIdle()

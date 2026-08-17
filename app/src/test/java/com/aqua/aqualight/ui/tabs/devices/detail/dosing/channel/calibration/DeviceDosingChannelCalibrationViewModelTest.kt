@@ -314,7 +314,8 @@ class DeviceDosingChannelCalibrationViewModelTest {
         val viewModel = viewModel(operations)
 
         bind(viewModel, restoredName = "Trace Elements")
-        advanceUntilIdle()
+        // Active verification owns a recurring authoritative poll; settle only immediate work.
+        runCurrent()
         viewModel.requestExit()
         advanceUntilIdle()
 
