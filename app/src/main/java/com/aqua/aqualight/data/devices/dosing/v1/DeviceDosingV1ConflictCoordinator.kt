@@ -15,13 +15,13 @@ internal class DeviceDosingV1ConflictCoordinator(
         outcome.connectionGenerationOrNull()?.let { generation ->
             stateOwner.invalidate(address.deviceUid, address.channelKey, generation, null)
         }
-        refreshCoordinator.refresh(address)
+        refreshCoordinator.refreshWithinGate(address)
         DeviceDosingV1MutationResult.Conflict
     } else {
         // A failed command can still coincide with device-side state changes (for example BUSY).
         // Reconcile centrally so every observer sees the latest authoritative snapshot; the UI
         // never invents or preserves a parallel runtime state after a failed mutation.
-        refreshCoordinator.refresh(address)
+        refreshCoordinator.refreshWithinGate(address)
         DeviceDosingV1MutationResult.Failed(outcome)
     }
 }
@@ -30,19 +30,16 @@ private fun DeviceRuntimeCommandOutcome<*>.isRevisionConflict(): Boolean =
     this is DeviceRuntimeCommandOutcome.FirmwareError && hasStaleRevisionError()
 
 private fun DeviceRuntimeCommandOutcome.FirmwareError.hasStaleRevisionError(): Boolean =
-    code == "INVALID_VALUE" &&
-        field == "expectedRevision" &&
-        message == "stale dosing channel revision"
+    code == "INVALID_VALUE" && field == "expectedRevision" && message == "stale dosing channel revision"
 
-private fun DeviceRuntimeCommandOutcome<*>.connectionGenerationOrNull():
-    DeviceRuntimeConnectionGeneration? = when (this) {
-        is DeviceRuntimeCommandOutcome.Success<*> -> generation
-        is DeviceRuntimeCommandOutcome.NotAuthenticated -> generation
-        is DeviceRuntimeCommandOutcome.SendFailed -> generation
-        is DeviceRuntimeCommandOutcome.Timeout -> generation
-        is DeviceRuntimeCommandOutcome.FirmwareError -> generation
-        is DeviceRuntimeCommandOutcome.ProtocolError -> generation
-        is DeviceRuntimeCommandOutcome.Cancelled -> generation
-        is DeviceRuntimeCommandOutcome.NotConnected,
-        is DeviceRuntimeCommandOutcome.UnsupportedByDevice -> null
-    }
+private fun DeviceRuntimeCommandOutcome<*>.connectionGenerationOrNull(): DeviceRuntimeConnectionGeneration? = when (this) {
+    is DeviceRuntimeCommandOutcome.Success<*> -> generation
+    is DeviceRuntimeCommandOutcome.NotAuthenticated -> generation
+    is DeviceRuntimeCommandOutcome.SendFailed -> generation
+    is DeviceRuntimeCommandOutcome.Timeout -> generation
+    is DeviceRuntimeCommandOutcome.FirmwareError -> generation
+    is DeviceRuntimeCommandOutcome.ProtocolError -> generation
+    is DeviceRuntimeCommandOutcome.Cancelled -> generation
+    is DeviceRuntimeCommandOutcome.NotConnected,
+    is DeviceRuntimeCommandOutcome.UnsupportedByDevice -> null
+}
