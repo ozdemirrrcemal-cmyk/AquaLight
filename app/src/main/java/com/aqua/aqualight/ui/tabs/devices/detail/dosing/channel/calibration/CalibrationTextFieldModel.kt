@@ -22,7 +22,11 @@ import androidx.compose.foundation.text.BasicText
 import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberUpdatedState
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -106,12 +110,14 @@ internal fun PressAndHoldPrimeButton(
     val shape = RoundedCornerShape(AquaGuidedFlowGeometry.buttonRadius)
     val currentEnabled = rememberUpdatedState(enabled)
     val currentOnAction = rememberUpdatedState(onAction)
+    var gesturePressed by remember { mutableStateOf(false) }
+    val visualPressed = gesturePressed || pressed
     Box(
         modifier = Modifier
             .fillMaxWidth()
             .height(AquaGuidedFlowGeometry.buttonMinHeight)
             .clip(shape)
-            .background(primeButtonBackground(pressed, enabled, colors))
+            .background(primeButtonBackground(visualPressed, enabled, colors))
             .semantics {
                 contentDescription = description
                 role = Role.Button
@@ -120,10 +126,12 @@ internal fun PressAndHoldPrimeButton(
                 awaitEachGesture {
                     awaitFirstDown(requireUnconsumed = false)
                     if (currentEnabled.value) {
+                        gesturePressed = true
                         currentOnAction.value(DeviceDosingCalibrationAction.PrimePressed)
                         try {
                             waitForUpOrCancellation()
                         } finally {
+                            gesturePressed = false
                             currentOnAction.value(DeviceDosingCalibrationAction.PrimeReleased)
                         }
                     } else {
@@ -142,19 +150,19 @@ internal fun PressAndHoldPrimeButton(
                 modifier = Modifier
                     .size(CALIBRATION_PRIME_DOT_SIZE)
                     .clip(CircleShape)
-                    .background(if (pressed) colors.onAccent else colors.accent)
+                    .background(if (visualPressed) colors.onAccent else colors.accent)
             )
             Spacer(Modifier.width(CALIBRATION_INLINE_GAP))
             BasicText(
                 text = stringResource(
-                    if (pressed) {
+                    if (visualPressed) {
                         R.string.device_dosing_calibration_priming
                     } else {
                         R.string.device_dosing_calibration_hold_to_prime
                     }
                 ),
                 style = typography.button.copy(
-                    color = if (pressed) colors.onAccent else colors.onSecondaryButton
+                    color = if (visualPressed) colors.onAccent else colors.onSecondaryButton
                 )
             )
         }

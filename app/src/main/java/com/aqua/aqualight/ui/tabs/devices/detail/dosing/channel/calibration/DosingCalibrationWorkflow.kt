@@ -236,6 +236,33 @@ internal class DosingCalibrationWorkflow(
         }
     }
 
+    private fun executeVerificationDeadline() {
+        if (session.exiting || session.completionEmitted) return
+        val route = session.route ?: return
+        session.actionJob?.cancel()
+        session.actionJob = scope.launchTrackedCalibrationOperation(session) {
+            operationMutex.withLock {
+                val stopResult = operations.stopVerificationDose(route.deviceUid, route.slotId)
+                val authoritativeResult = when (stopResult) {
+                    is DeviceDosingCalibrationResult.Success -> {
+                        session.acceptedAuthoritativeSnapshot(stopResult.snapshot)
+                        if (stopResult.snapshot.verificationDoseComplete) {
+                            stopResult
+                        } else {
+                            operations.refresh(route.deviceUid, route.slotId)
+                        }
+                    }
+                    is DeviceDosingCalibrationResult.Rejected -> stopResult
+                }
+                handleResult(
+                    DosingCalibrationOperation.Refresh,
+                    authoritativeResult,
+                    renderSuccess = true
+                )
+            }
+        }
+    }
+
     private suspend fun handleResult(
         operation: DosingCalibrationOperation,
         result: DeviceDosingCalibrationResult,
@@ -322,9 +349,17 @@ internal class DosingCalibrationWorkflow(
             eventChannel.trySend(DeviceDosingCalibrationEvent.Completed(snapshot.toDetailTarget()))
             return
         }
+        val scheduledCountdown = presentation.countdown
         countdown.schedule(
-            countdown = presentation.countdown,
-            onComplete = { execute(DosingCalibrationOperation.Refresh) }
+            countdown = scheduledCountdown,
+            onComplete = {
+                when (scheduledCountdown) {
+                    is DosingCalibrationCountdown.CalibrationRun ->
+                        execute(DosingCalibrationOperation.Refresh)
+                    is DosingCalibrationCountdown.Verification -> executeVerificationDeadline()
+                    null -> Unit
+                }
+            }
         )
     }
 }
