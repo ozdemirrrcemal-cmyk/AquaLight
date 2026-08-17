@@ -264,7 +264,7 @@ tasks.configureEach { task ->
 
 dependencies {
     // Firebase BoM
-    implementation platform("com.google.firebase:firebase-bom:34.5.0")
+    implementation platform("com.google.firebase:firebase-bom:34.17.0")
 
     // Firebase runtime is deliberately limited to authentication and text feedback storage.
     implementation "com.google.firebase:firebase-auth"
