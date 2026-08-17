@@ -4,7 +4,6 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.text.BasicText
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
@@ -12,7 +11,6 @@ import com.aqua.aqualight.R
 import com.aqua.aqualight.ui.common.flow.AquaGuidedFlowButton
 import com.aqua.aqualight.ui.common.flow.AquaGuidedFlowColors
 import com.aqua.aqualight.ui.common.flow.AquaGuidedFlowGeometry
-import com.aqua.aqualight.ui.common.flow.aquaGuidedFlowTypography
 
 @Composable
 internal fun CalibrationStepControls(
@@ -35,7 +33,6 @@ internal fun CalibrationStepControls(
             DeviceDosingCalibrationStep.CONFIRMATION ->
                 CalibrationConfirmationControls(state, onAction)
         }
-        if (state.isLoading) CalibrationLoading(colors)
     }
 }
 
@@ -172,13 +169,4 @@ private fun CalibrationConfirmationControls(
                 .height(AquaGuidedFlowGeometry.buttonMinHeight)
         )
     }
-}
-
-@Composable
-private fun CalibrationLoading(colors: AquaGuidedFlowColors) {
-    BasicText(
-        text = stringResource(R.string.device_dosing_calibration_loading),
-        style = aquaGuidedFlowTypography(colors).body,
-        modifier = Modifier.fillMaxWidth()
-    )
 }

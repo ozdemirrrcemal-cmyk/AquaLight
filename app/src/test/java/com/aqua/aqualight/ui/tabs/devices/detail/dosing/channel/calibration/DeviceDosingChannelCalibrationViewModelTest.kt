@@ -3,6 +3,7 @@ package com.aqua.aqualight.ui.tabs.devices.detail.dosing.channel.calibration
 import com.aqua.aqualight.application.devices.dosing.DeviceDosingCalibrationFailure
 import com.aqua.aqualight.application.devices.dosing.DeviceDosingCalibrationResult
 import com.aqua.aqualight.application.devices.dosing.DeviceDosingChannelDestination
+import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.test.StandardTestDispatcher
@@ -34,7 +35,7 @@ class DeviceDosingChannelCalibrationViewModelTest {
     }
 
     @Test
-    fun `name and prime steps use application boundary with release safety`() = runTest(dispatcher) {
+    fun `name remains a local draft until final calibration confirmation`() = runTest(dispatcher) {
         val operations = FakeDosingCalibrationOperations(calibrationSnapshot())
         val viewModel = viewModel(operations)
 
@@ -44,15 +45,18 @@ class DeviceDosingChannelCalibrationViewModelTest {
 
         viewModel.onAction(DeviceDosingCalibrationAction.DisplayNameChanged(" Trace Elements "))
         viewModel.onAction(DeviceDosingCalibrationAction.SaveDisplayName)
-        advanceUntilIdle()
+        runCurrent()
+
         assertEquals(DeviceDosingCalibrationStep.PRIME, viewModel.uiState.value.step)
-        assertEquals("Trace Elements", operations.savedName)
+        assertEquals("Trace Elements", viewModel.uiState.value.displayName)
+        assertEquals("", operations.confirmedName)
+        assertEquals(0, operations.confirms)
 
         viewModel.onAction(DeviceDosingCalibrationAction.PrimePressed)
         runCurrent()
         assertTrue(viewModel.uiState.value.isPumpActive)
         viewModel.onAction(DeviceDosingCalibrationAction.PrimeReleased)
-        advanceUntilIdle()
+        runCurrent()
 
         assertEquals(1, operations.primeStarts)
         assertEquals(1, operations.primeStops)
@@ -60,49 +64,45 @@ class DeviceDosingChannelCalibrationViewModelTest {
     }
 
     @Test
-    fun `firmware refresh never prefills or overwrites the required name draft`() =
-        runTest(dispatcher) {
-            val operations = FakeDosingCalibrationOperations(calibrationSnapshot())
-            val viewModel = viewModel(operations)
+    fun `firmware refresh never overwrites the uncommitted name draft`() = runTest(dispatcher) {
+        val operations = FakeDosingCalibrationOperations(calibrationSnapshot())
+        val viewModel = viewModel(operations)
 
-            bind(viewModel)
-            advanceUntilIdle()
-            assertEquals("", viewModel.uiState.value.displayName)
+        bind(viewModel)
+        advanceUntilIdle()
+        assertEquals("", viewModel.uiState.value.displayName)
 
-            viewModel.onAction(
-                DeviceDosingCalibrationAction.DisplayNameChanged("Trace Elements")
-            )
-            operations.publish(calibrationSnapshot().copy(channelTitle = "Firmware Name"))
-            advanceUntilIdle()
+        viewModel.onAction(DeviceDosingCalibrationAction.DisplayNameChanged("Trace Elements"))
+        operations.publish(calibrationSnapshot().copy(channelTitle = "Firmware Name"))
+        runCurrent()
 
-            assertEquals("Trace Elements", viewModel.uiState.value.displayName)
+        assertEquals("Trace Elements", viewModel.uiState.value.displayName)
+        viewModel.onAction(DeviceDosingCalibrationAction.SaveDisplayName)
+        runCurrent()
 
-            viewModel.onAction(DeviceDosingCalibrationAction.SaveDisplayName)
-            advanceUntilIdle()
-
-            assertEquals("Trace Elements", viewModel.uiState.value.displayName)
-            assertEquals("Trace Elements", operations.savedName)
-        }
+        assertEquals(DeviceDosingCalibrationStep.PRIME, viewModel.uiState.value.step)
+        assertEquals("Trace Elements", viewModel.uiState.value.displayName)
+        assertEquals("", operations.confirmedName)
+    }
 
     @Test
-    fun `calibration name starts empty and is mandatory`() =
-        runTest(dispatcher) {
-            val operations = FakeDosingCalibrationOperations(calibrationSnapshot())
-            val viewModel = viewModel(operations)
+    fun `calibration name starts empty and is mandatory`() = runTest(dispatcher) {
+        val operations = FakeDosingCalibrationOperations(calibrationSnapshot())
+        val viewModel = viewModel(operations)
 
-            bind(viewModel)
-            advanceUntilIdle()
-            assertEquals("", viewModel.uiState.value.displayName)
-            viewModel.onAction(DeviceDosingCalibrationAction.SaveDisplayName)
-            advanceUntilIdle()
+        bind(viewModel)
+        advanceUntilIdle()
+        assertEquals("", viewModel.uiState.value.displayName)
+        viewModel.onAction(DeviceDosingCalibrationAction.SaveDisplayName)
+        runCurrent()
 
-            assertEquals(DeviceDosingCalibrationStep.NAME, viewModel.uiState.value.step)
-            assertEquals(
-                DeviceDosingCalibrationError.DISPLAY_NAME_REQUIRED,
-                viewModel.uiState.value.error
-            )
-            assertEquals("", operations.savedName)
-        }
+        assertEquals(DeviceDosingCalibrationStep.NAME, viewModel.uiState.value.step)
+        assertEquals(
+            DeviceDosingCalibrationError.DISPLAY_NAME_REQUIRED,
+            viewModel.uiState.value.error
+        )
+        assertEquals("", operations.confirmedName)
+    }
 
     @Test
     fun `name draft is not truncated and byte overflow is rendered semantically`() =
@@ -115,51 +115,89 @@ class DeviceDosingChannelCalibrationViewModelTest {
             val oversizedName = "ş".repeat(17)
             viewModel.onAction(DeviceDosingCalibrationAction.DisplayNameChanged(oversizedName))
             viewModel.onAction(DeviceDosingCalibrationAction.SaveDisplayName)
-            advanceUntilIdle()
+            runCurrent()
 
             assertEquals(oversizedName, viewModel.uiState.value.displayName)
             assertEquals(
                 DeviceDosingCalibrationError.DISPLAY_NAME_TOO_LONG,
                 viewModel.uiState.value.error
             )
-            assertEquals("", operations.savedName)
+            assertEquals("", operations.confirmedName)
         }
 
     @Test
-    fun `failed prime start clears request without stop side effect`() = runTest(dispatcher) {
-        val operations = FakeDosingCalibrationOperations(calibrationSnapshot()).apply {
-            primeStartResult = DeviceDosingCalibrationResult.Rejected(
-                DeviceDosingCalibrationFailure.OPERATION_IN_PROGRESS
+    fun `failed prime start clears request and the semantic error survives status refresh`() =
+        runTest(dispatcher) {
+            val operations = FakeDosingCalibrationOperations(calibrationSnapshot()).apply {
+                primeStartResult = DeviceDosingCalibrationResult.Rejected(
+                    DeviceDosingCalibrationFailure.OPERATION_IN_PROGRESS
+                )
+            }
+            val viewModel = viewModel(operations)
+
+            bind(viewModel)
+            advanceUntilIdle()
+            viewModel.onAction(DeviceDosingCalibrationAction.DisplayNameChanged("Trace Elements"))
+            viewModel.onAction(DeviceDosingCalibrationAction.SaveDisplayName)
+            runCurrent()
+
+            viewModel.onAction(DeviceDosingCalibrationAction.PrimePressed)
+            runCurrent()
+
+            assertEquals(
+                DeviceDosingCalibrationError.OPERATION_IN_PROGRESS,
+                viewModel.uiState.value.error
             )
+            assertFalse(viewModel.uiState.value.isPumpActive)
+            assertEquals(1, operations.primeStarts)
+            assertEquals(0, operations.primeStops)
+
+            operations.publish(calibrationSnapshot())
+            runCurrent()
+            assertEquals(
+                DeviceDosingCalibrationError.OPERATION_IN_PROGRESS,
+                viewModel.uiState.value.error
+            )
+
+            viewModel.onAction(DeviceDosingCalibrationAction.PrimeReleased)
+            runCurrent()
+            assertEquals(0, operations.primeStops)
+
+            viewModel.onAction(DeviceDosingCalibrationAction.PrimePressed)
+            runCurrent()
+            assertEquals(2, operations.primeStarts)
+            assertEquals(0, operations.primeStops)
         }
-        val viewModel = viewModel(operations)
 
-        bind(viewModel)
-        advanceUntilIdle()
-        viewModel.onAction(DeviceDosingCalibrationAction.DisplayNameChanged("Trace Elements"))
-        viewModel.onAction(DeviceDosingCalibrationAction.SaveDisplayName)
-        advanceUntilIdle()
+    @Test
+    fun `mutation invalidation does not replace the active calibration screen with loading state`() =
+        runTest(dispatcher) {
+            val operations = FakeDosingCalibrationOperations(calibrationSnapshot())
+            val viewModel = viewModel(operations)
+            bind(viewModel)
+            advanceUntilIdle()
+            viewModel.onAction(DeviceDosingCalibrationAction.DisplayNameChanged("Trace Elements"))
+            viewModel.onAction(DeviceDosingCalibrationAction.SaveDisplayName)
+            runCurrent()
 
-        viewModel.onAction(DeviceDosingCalibrationAction.PrimePressed)
-        advanceUntilIdle()
+            val release = CompletableDeferred<Unit>()
+            operations.primeStartBlocker = release
+            viewModel.onAction(DeviceDosingCalibrationAction.PrimePressed)
+            runCurrent()
+            operations.publish(null)
+            runCurrent()
 
-        assertEquals(
-            DeviceDosingCalibrationError.OPERATION_IN_PROGRESS,
-            viewModel.uiState.value.error
-        )
-        assertFalse(viewModel.uiState.value.isPumpActive)
-        assertEquals(1, operations.primeStarts)
-        assertEquals(0, operations.primeStops)
+            assertEquals(DeviceDosingCalibrationStep.PRIME, viewModel.uiState.value.step)
+            assertFalse(viewModel.uiState.value.isLoading)
+            assertTrue(viewModel.uiState.value.isPumpActive)
 
-        viewModel.onAction(DeviceDosingCalibrationAction.PrimeReleased)
-        advanceUntilIdle()
-        assertEquals(0, operations.primeStops)
-
-        viewModel.onAction(DeviceDosingCalibrationAction.PrimePressed)
-        advanceUntilIdle()
-        assertEquals(2, operations.primeStarts)
-        assertEquals(0, operations.primeStops)
-    }
+            release.complete(Unit)
+            runCurrent()
+            viewModel.onAction(DeviceDosingCalibrationAction.PrimeReleased)
+            runCurrent()
+            assertFalse(viewModel.uiState.value.isLoading)
+            assertFalse(viewModel.uiState.value.isPumpActive)
+        }
 
     @Test
     fun `application failures retain semantic presentation identity`() {
@@ -206,13 +244,15 @@ class DeviceDosingChannelCalibrationViewModelTest {
     }
 
     @Test
-    fun `completed verification resumes at confirmation and emits detail target`() = runTest(dispatcher) {
+    fun `completed verification commits final name and emits detail target`() = runTest(dispatcher) {
         val operations = FakeDosingCalibrationOperations(completedVerificationSnapshot()).apply {
-            confirmResult = calibrationSuccess(calibratedCalibrationSnapshot())
+            confirmResult = calibrationSuccess(
+                calibratedCalibrationSnapshot().copy(channelTitle = "Trace Elements")
+            )
         }
         val viewModel = viewModel(operations)
 
-        bind(viewModel)
+        bind(viewModel, restoredName = "Trace Elements")
         advanceUntilIdle()
         assertEquals(DeviceDosingCalibrationStep.CONFIRMATION, viewModel.uiState.value.step)
 
@@ -220,6 +260,7 @@ class DeviceDosingChannelCalibrationViewModelTest {
         advanceUntilIdle()
         val event = viewModel.events.first() as DeviceDosingCalibrationEvent.Completed
 
+        assertEquals("Trace Elements", operations.confirmedName)
         assertEquals(DeviceDosingChannelDestination.DETAIL, event.target.destination)
         assertEquals("channel-1", event.target.slotId)
         assertEquals(100L, event.target.lastCalibratedAtEpochSeconds)
@@ -240,15 +281,31 @@ class DeviceDosingChannelCalibrationViewModelTest {
     }
 
     @Test
-    fun `calibrated channel remains in flow when recalibration is requested`() = runTest(dispatcher) {
-        val operations = FakeDosingCalibrationOperations(calibratedCalibrationSnapshot())
+    fun `recalibration prefills the existing persisted channel name`() = runTest(dispatcher) {
+        val operations = FakeDosingCalibrationOperations(
+            calibratedCalibrationSnapshot().copy(channelTitle = "Nitrat")
+        )
         val viewModel = viewModel(operations)
 
         bind(viewModel, recalibration = true)
         advanceUntilIdle()
 
         assertEquals(DeviceDosingCalibrationStep.NAME, viewModel.uiState.value.step)
+        assertEquals("Nitrat", viewModel.uiState.value.displayName)
         assertNull(withTimeoutOrNull(1L) { viewModel.events.first() })
+    }
+
+    @Test
+    fun `restored local name draft wins over recalibration prefill`() = runTest(dispatcher) {
+        val operations = FakeDosingCalibrationOperations(
+            calibratedCalibrationSnapshot().copy(channelTitle = "Nitrat")
+        )
+        val viewModel = viewModel(operations)
+
+        bind(viewModel, recalibration = true, restoredName = "Restored Draft")
+        advanceUntilIdle()
+
+        assertEquals("Restored Draft", viewModel.uiState.value.displayName)
     }
 
     @Test
@@ -256,7 +313,7 @@ class DeviceDosingChannelCalibrationViewModelTest {
         val operations = FakeDosingCalibrationOperations(activeVerificationSnapshot())
         val viewModel = viewModel(operations)
 
-        bind(viewModel)
+        bind(viewModel, restoredName = "Trace Elements")
         advanceUntilIdle()
         viewModel.requestExit()
         advanceUntilIdle()
@@ -274,8 +331,11 @@ class DeviceDosingChannelCalibrationViewModelTest {
 
     private fun bind(
         viewModel: DeviceDosingChannelCalibrationViewModel,
-        recalibration: Boolean = false
+        recalibration: Boolean = false,
+        restoredName: String? = null
     ) {
-        viewModel.bind(calibrationRoute(recalibration))
+        viewModel.bind(
+            calibrationRoute(recalibration).copy(restoredDisplayNameDraft = restoredName)
+        )
     }
 }

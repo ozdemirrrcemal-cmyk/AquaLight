@@ -22,12 +22,11 @@ internal fun reduceDosingCalibrationSnapshot(
 ): DosingCalibrationSnapshotPresentation {
     val remainingMs = snapshot.remainingOperationMs()
     val recoveryStep = snapshot.recoveryStep(current.step, hasLocalProgress)
-    // The calibration name is an explicit required user input; firmware state never prefills it.
     val state = current
         .updateProgress { progress ->
             progress.copy(
                 isLoading = false,
-                isBusy = remainingMs > 0L,
+                isBusy = snapshot.operationPending(remainingMs),
                 step = recoveryStep,
                 isPumpActive = snapshot.manualActive,
                 remainingMs = remainingMs,
@@ -40,7 +39,6 @@ internal fun reduceDosingCalibrationSnapshot(
                 channelNumber = snapshot.channelNumber
             )
         }
-        .copy(error = null)
     return DosingCalibrationSnapshotPresentation(
         state = state,
         countdown = snapshot.countdownOrNull(remainingMs)
@@ -87,6 +85,13 @@ private fun DeviceDosingCalibrationSnapshot.recoveryStep(
         }
 }
 
+private fun DeviceDosingCalibrationSnapshot.operationPending(remainingMs: Long): Boolean = when {
+    sessionPhase == DeviceDosingCalibrationSessionPhase.RUNNING -> remainingMs > 0L
+    sessionPhase == DeviceDosingCalibrationSessionPhase.PENDING_VERIFICATION ->
+        verificationDoseStarted && !verificationDoseComplete
+    else -> false
+}
+
 private fun DeviceDosingCalibrationSnapshot.remainingOperationMs(): Long = when {
     sessionPhase == DeviceDosingCalibrationSessionPhase.RUNNING -> runningRemainingMs()
     verificationDoseStarted && !verificationDoseComplete -> verificationDoseRemainingMs
@@ -100,9 +105,7 @@ private fun DeviceDosingCalibrationSnapshot.countdownOrNull(
         DosingCalibrationCountdown.CalibrationRun(remainingMs)
     sessionPhase == DeviceDosingCalibrationSessionPhase.PENDING_VERIFICATION &&
         verificationDoseStarted &&
-        !verificationDoseComplete &&
-        verificationDoseRemainingMs > 0L ->
-        DosingCalibrationCountdown.Verification(verificationDoseRemainingMs)
+        !verificationDoseComplete -> DosingCalibrationCountdown.Verification(remainingMs)
     else -> null
 }
 

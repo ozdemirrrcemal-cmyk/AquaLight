@@ -7,14 +7,13 @@ import com.aqua.aqualight.application.devices.dosing.DeviceDosingDisplayNameVali
 
 internal sealed interface DosingCalibrationOperation {
     data object Refresh : DosingCalibrationOperation
-    data class SaveDisplayName(val name: String) : DosingCalibrationOperation
     data object PrimeStart : DosingCalibrationOperation
     data object PrimeStop : DosingCalibrationOperation
     data object ContinueFromPrime : DosingCalibrationOperation
     data object StartCalibration : DosingCalibrationOperation
     data class FinishMeasurement(val measuredMl: Double) : DosingCalibrationOperation
     data object StartVerification : DosingCalibrationOperation
-    data object ConfirmVerification : DosingCalibrationOperation
+    data class ConfirmVerification(val displayName: String) : DosingCalibrationOperation
     data object RejectVerification : DosingCalibrationOperation
 }
 
@@ -26,7 +25,8 @@ internal enum class DosingCalibrationPrimeDirective {
 internal data class DosingCalibrationActionDecision(
     val state: DeviceDosingCalibrationUiState,
     val operation: DosingCalibrationOperation? = null,
-    val primeDirective: DosingCalibrationPrimeDirective? = null
+    val primeDirective: DosingCalibrationPrimeDirective? = null,
+    val markLocalProgress: Boolean = false
 )
 
 internal fun reduceDosingCalibrationAction(
@@ -75,10 +75,7 @@ internal fun reduceDosingCalibrationAction(
         state,
         DosingCalibrationOperation.StartVerification
     )
-    DeviceDosingCalibrationAction.AcceptVerification -> busyOperationDecision(
-        state,
-        DosingCalibrationOperation.ConfirmVerification
-    )
+    DeviceDosingCalibrationAction.AcceptVerification -> confirmDisplayNameDecision(state)
     DeviceDosingCalibrationAction.RejectVerification -> busyOperationDecision(
         state,
         DosingCalibrationOperation.RejectVerification
@@ -87,16 +84,39 @@ internal fun reduceDosingCalibrationAction(
 
 private fun saveDisplayNameDecision(
     state: DeviceDosingCalibrationUiState
-): DosingCalibrationActionDecision {
-    return when (val validation = DeviceDosingDisplayNamePolicy.validateRequired(state.displayName)) {
-        is DeviceDosingDisplayNameValidation.Accepted -> busyOperationDecision(
-            state,
-            DosingCalibrationOperation.SaveDisplayName(validation.normalizedValue)
-        )
-        is DeviceDosingDisplayNameValidation.Rejected -> DosingCalibrationActionDecision(
-            state = state.copy(error = validation.reason.toCalibrationError())
-        )
-    }
+): DosingCalibrationActionDecision = when (
+    val validation = DeviceDosingDisplayNamePolicy.validateRequired(state.displayName)
+) {
+    is DeviceDosingDisplayNameValidation.Accepted -> DosingCalibrationActionDecision(
+        state = state
+            .updateInput { input -> input.copy(displayName = validation.normalizedValue) }
+            .updateProgress { progress ->
+                progress.copy(
+                    isLoading = false,
+                    isBusy = false,
+                    step = DeviceDosingCalibrationStep.PRIME
+                )
+            }
+            .copy(error = null),
+        markLocalProgress = true
+    )
+    is DeviceDosingDisplayNameValidation.Rejected -> DosingCalibrationActionDecision(
+        state = state.copy(error = validation.reason.toCalibrationError())
+    )
+}
+
+private fun confirmDisplayNameDecision(
+    state: DeviceDosingCalibrationUiState
+): DosingCalibrationActionDecision = when (
+    val validation = DeviceDosingDisplayNamePolicy.validateRequired(state.displayName)
+) {
+    is DeviceDosingDisplayNameValidation.Accepted -> busyOperationDecision(
+        state.updateInput { input -> input.copy(displayName = validation.normalizedValue) },
+        DosingCalibrationOperation.ConfirmVerification(validation.normalizedValue)
+    )
+    is DeviceDosingDisplayNameValidation.Rejected -> DosingCalibrationActionDecision(
+        state = state.copy(error = validation.reason.toCalibrationError())
+    )
 }
 
 private fun DeviceDosingDisplayNameRejection.toCalibrationError(): DeviceDosingCalibrationError =

@@ -29,7 +29,7 @@ internal object DeviceDosingV1CalibrationSnapshotMapper {
         verificationDoseStarted = detail.calibration.verificationDoseStarted,
         verificationDoseComplete = detail.calibration.verificationDoseComplete,
         verificationDoseRemainingMs = verificationRemainingMillis(detail),
-        manualActive = detail.activeRun.active
+        manualActive = detail.activeRun.active && detail.activeRun.remainingMillis > 0L
     )
 
     private fun calibrationStartedAtUptime(detail: DeviceDosingV1ChannelDetail): Long =

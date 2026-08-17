@@ -4,6 +4,7 @@ import com.aqua.aqualight.application.devices.dosing.DeviceDosingCalibrationOper
 import com.aqua.aqualight.application.devices.dosing.DeviceDosingCalibrationResult
 import com.aqua.aqualight.application.devices.dosing.DeviceDosingCalibrationSessionPhase
 import com.aqua.aqualight.application.devices.dosing.DeviceDosingCalibrationSnapshot
+import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 
@@ -14,7 +15,7 @@ internal class FakeDosingCalibrationOperations(
     private val current: DeviceDosingCalibrationSnapshot
         get() = requireNotNull(state.value)
 
-    var savedName = ""
+    var confirmedName = ""
     var refreshes = 0
     var primeStarts = 0
     var primeStops = 0
@@ -23,8 +24,9 @@ internal class FakeDosingCalibrationOperations(
     var cancels = 0
     var primeStartResult: DeviceDosingCalibrationResult? = null
     var confirmResult: DeviceDosingCalibrationResult = calibrationSuccess(initial)
+    var primeStartBlocker: CompletableDeferred<Unit>? = null
 
-    fun publish(snapshot: DeviceDosingCalibrationSnapshot) {
+    fun publish(snapshot: DeviceDosingCalibrationSnapshot?) {
         state.value = snapshot
     }
 
@@ -36,24 +38,24 @@ internal class FakeDosingCalibrationOperations(
     override suspend fun refresh(deviceUid: String, slotId: String) =
         calibrationSuccess(current).also { refreshes += 1 }
 
-    override suspend fun saveDisplayName(
+    override suspend fun primeStart(
         deviceUid: String,
-        slotId: String,
-        displayName: String
+        slotId: String
     ): DeviceDosingCalibrationResult {
-        savedName = displayName.trim()
-        return current.copy(channelTitle = savedName).let { saved ->
-            state.value = saved
-            calibrationSuccess(saved)
-        }
+        primeStarts += 1
+        val baseline = current
+        primeStartBlocker?.await()
+        val result = primeStartResult ?: calibrationSuccess(baseline.copy(manualActive = true))
+        if (result is DeviceDosingCalibrationResult.Success) state.value = result.snapshot
+        return result
     }
 
-    override suspend fun primeStart(deviceUid: String, slotId: String) =
-        (primeStartResult ?: calibrationSuccess(current.copy(manualActive = true)))
-            .also { primeStarts += 1 }
-
-    override suspend fun primeStop(deviceUid: String, slotId: String) =
-        calibrationSuccess(current.copy(manualActive = false)).also { primeStops += 1 }
+    override suspend fun primeStop(deviceUid: String, slotId: String): DeviceDosingCalibrationResult {
+        primeStops += 1
+        val snapshot = current.copy(manualActive = false)
+        state.value = snapshot
+        return calibrationSuccess(snapshot)
+    }
 
     override suspend fun start(deviceUid: String, slotId: String) = calibrationSuccess(current)
 
@@ -66,8 +68,15 @@ internal class FakeDosingCalibrationOperations(
     override suspend fun stopVerificationDose(deviceUid: String, slotId: String) =
         calibrationSuccess(current.copy(manualActive = false)).also { verificationStops += 1 }
 
-    override suspend fun confirm(deviceUid: String, slotId: String) =
-        confirmResult.also { confirms += 1 }
+    override suspend fun confirm(
+        deviceUid: String,
+        slotId: String,
+        displayName: String
+    ): DeviceDosingCalibrationResult = confirmResult.also { result ->
+        confirms += 1
+        confirmedName = displayName
+        if (result is DeviceDosingCalibrationResult.Success) state.value = result.snapshot
+    }
 
     override suspend fun cancel(deviceUid: String, slotId: String) = calibrationSuccess(
         current.copy(
@@ -88,12 +97,12 @@ internal fun calibrationRoute(recalibration: Boolean = false) = DeviceDosingCali
 internal fun calibrationSuccess(snapshot: DeviceDosingCalibrationSnapshot) =
     DeviceDosingCalibrationResult.Success(snapshot)
 
-internal fun calibrationSnapshot() = baseCalibrationSnapshot()
-
 internal fun calibratedCalibrationSnapshot() = baseCalibrationSnapshot().copy(
     calibrated = true,
     lastCalibratedAt = 100L
 )
+
+internal fun calibrationSnapshot() = baseCalibrationSnapshot()
 
 internal fun completedVerificationSnapshot() = baseCalibrationSnapshot().copy(
     sessionPhase = DeviceDosingCalibrationSessionPhase.PENDING_VERIFICATION,

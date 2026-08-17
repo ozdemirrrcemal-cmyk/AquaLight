@@ -38,7 +38,8 @@
     "confirm": {
       "name": "dosing.calibration.confirm",
       "request": {
-        "channelKey": "channel1"
+        "channelKey": "channel1",
+        "displayName": "Trace Elements"
       },
       "responseState": "idle",
       "saved": true,
@@ -73,6 +74,7 @@
     "verificationUsesPendingCalibrationOnly": true,
     "scheduledDoseRequiresConfirmedTimestamp": true,
     "confirmCommitsCoefficientAndTimestampTogether": true,
+    "confirmCommitsDisplayNameWithCalibration": true,
     "failedPersistencePreservesPendingSession": true,
     "cancelPreservesPreviousConfirmedCalibration": true,
     "firmwareRestartDiscardsPendingSession": true,

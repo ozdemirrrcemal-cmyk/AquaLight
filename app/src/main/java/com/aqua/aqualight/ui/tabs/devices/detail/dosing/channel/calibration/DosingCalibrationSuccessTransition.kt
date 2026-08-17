@@ -17,19 +17,6 @@ internal fun dosingCalibrationSuccessTransition(
     DosingCalibrationOperation.Refresh -> DosingCalibrationSuccessTransition(
         applySnapshot = true
     )
-    is DosingCalibrationOperation.SaveDisplayName -> DosingCalibrationSuccessTransition(
-        state = current
-            .updateProgress { progress ->
-                progress.copy(
-                    isLoading = false,
-                    isBusy = false,
-                    step = DeviceDosingCalibrationStep.PRIME
-                )
-            }
-            .updateInput { input -> input.copy(displayName = snapshot.channelTitle) }
-            .copy(error = null),
-        markLocalProgress = true
-    )
     DosingCalibrationOperation.PrimeStart,
     DosingCalibrationOperation.PrimeStop -> DosingCalibrationSuccessTransition()
     DosingCalibrationOperation.ContinueFromPrime -> DosingCalibrationSuccessTransition(
@@ -50,7 +37,7 @@ internal fun dosingCalibrationSuccessTransition(
         applySnapshot = true,
         markLocalProgress = true
     )
-    DosingCalibrationOperation.ConfirmVerification -> DosingCalibrationSuccessTransition(
+    is DosingCalibrationOperation.ConfirmVerification -> DosingCalibrationSuccessTransition(
         state = current
             .updateProgress { progress -> progress.copy(isBusy = false, isPumpActive = false) }
             .copy(error = null),

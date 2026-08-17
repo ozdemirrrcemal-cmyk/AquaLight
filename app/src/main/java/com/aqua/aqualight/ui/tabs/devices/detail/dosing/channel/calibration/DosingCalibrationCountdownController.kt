@@ -20,34 +20,20 @@ internal class DosingCalibrationCountdownController(
 
     fun schedule(
         countdown: DosingCalibrationCountdown?,
-        onVerificationComplete: () -> Unit
+        onComplete: () -> Unit
     ) {
         when (countdown) {
             is DosingCalibrationCountdown.CalibrationRun -> {
                 cancel()
-                start(
-                    durationMs = countdown.durationMs,
-                    onComplete = {
-                        writeState(
-                            readState()
-                                .updateProgress { progress ->
-                                    progress.copy(
-                                        isBusy = false,
-                                        isPumpActive = false,
-                                        remainingMs = 0L,
-                                        step = DeviceDosingCalibrationStep.MEASUREMENT
-                                    )
-                                }
-                        )
-                    }
-                )
+                start(countdown.durationMs, onComplete)
             }
             is DosingCalibrationCountdown.Verification -> {
                 cancel()
-                start(
-                    durationMs = countdown.durationMs,
-                    onComplete = onVerificationComplete
-                )
+                if (countdown.durationMs > 0L) {
+                    start(countdown.durationMs, onComplete)
+                } else {
+                    scheduleAuthoritativePoll(onComplete)
+                }
             }
             null -> Unit
         }
@@ -82,7 +68,15 @@ internal class DosingCalibrationCountdownController(
         }
     }
 
+    private fun scheduleAuthoritativePoll(onComplete: () -> Unit) {
+        job = scope.launch {
+            delay(AUTHORITATIVE_POLL_DELAY_MS)
+            onComplete()
+        }
+    }
+
     private companion object {
         const val COUNTDOWN_TICK_MS = 100L
+        const val AUTHORITATIVE_POLL_DELAY_MS = 100L
     }
 }

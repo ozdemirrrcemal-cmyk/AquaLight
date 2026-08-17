@@ -311,6 +311,16 @@ data class DeviceDosingV1CalibrationFinishRequest(
         .put("measuredMl", measuredMilliliters)
 }
 
+data class DeviceDosingV1CalibrationConfirmRequest(
+    val channelKey: DeviceDosingV1ChannelKey,
+    val displayName: String
+) {
+    private val normalizedDisplayName = requireFirmwareDisplayName(displayName)
+
+    internal fun toJson(): JSONObject = channelJson(channelKey)
+        .put("displayName", normalizedDisplayName)
+}
+
 data class DeviceDosingV1DoseNowRequest(
     val channelKey: DeviceDosingV1ChannelKey,
     val amount: DeviceDosingV1Amount,

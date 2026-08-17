@@ -38,7 +38,7 @@ class DeviceDosingCalibrationStage8Test {
     }
 
     @Test
-    fun `recreation resumes an authoritative calibration run at its remaining time`() =
+    fun `calibration countdown refreshes authoritative completion before measurement`() =
         runTest(dispatcher) {
             val operations = Stage8CalibrationOperations(runningSnapshot(remainingMs = 1_500L))
             val viewModel = viewModel(operations)
@@ -50,10 +50,13 @@ class DeviceDosingCalibrationStage8Test {
             assertTrue(viewModel.uiState.value.isBusy)
             assertTrue(viewModel.uiState.value.isPumpActive)
             assertEquals(1_500L, viewModel.uiState.value.remainingMs)
+            val refreshesBeforeDeadline = operations.refreshes
+            operations.completeCalibrationOnRefresh = true
 
             dispatcher.scheduler.advanceTimeBy(1_500L)
             runCurrent()
 
+            assertTrue(operations.refreshes > refreshesBeforeDeadline)
             assertEquals(DeviceDosingCalibrationStep.MEASUREMENT, viewModel.uiState.value.step)
             assertFalse(viewModel.uiState.value.isBusy)
             assertFalse(viewModel.uiState.value.isPumpActive)
@@ -226,6 +229,7 @@ class DeviceDosingCalibrationStage8Test {
         var primeStops = 0
         var verificationStops = 0
         var cancels = 0
+        var completeCalibrationOnRefresh = false
         var completeVerificationOnRefresh = false
         val cleanupOrder = mutableListOf<String>()
 
@@ -244,26 +248,23 @@ class DeviceDosingCalibrationStage8Test {
         ): DeviceDosingCalibrationResult {
             refreshes += 1
             val current = state.value ?: return connectionFailure()
-            val refreshed = if (
-                completeVerificationOnRefresh && current.hasActiveVerification()
-            ) {
-                current.copy(
-                    verificationDoseComplete = true,
-                    verificationDoseRemainingMs = 0L,
-                    manualActive = false
-                ).also { state.value = it }
-            } else {
-                current
+            val refreshed = when {
+                completeCalibrationOnRefresh &&
+                    current.sessionPhase == DeviceDosingCalibrationSessionPhase.RUNNING ->
+                    current.copy(
+                        deviceUptimeMs = current.startedAtUptimeMs + current.durationMs,
+                        manualActive = false
+                    )
+                completeVerificationOnRefresh && current.hasActiveVerification() ->
+                    current.copy(
+                        verificationDoseComplete = true,
+                        verificationDoseRemainingMs = 0L,
+                        manualActive = false
+                    )
+                else -> current
             }
+            state.value = refreshed
             return success(refreshed)
-        }
-
-        override suspend fun saveDisplayName(
-            deviceUid: String,
-            slotId: String,
-            displayName: String
-        ): DeviceDosingCalibrationResult = currentOrFailure { current ->
-            current.copy(channelTitle = displayName.trim()).also { state.value = it }
         }
 
         override suspend fun primeStart(
@@ -309,7 +310,8 @@ class DeviceDosingCalibrationStage8Test {
 
         override suspend fun confirm(
             deviceUid: String,
-            slotId: String
+            slotId: String,
+            displayName: String
         ): DeviceDosingCalibrationResult = currentOrFailure { it }
 
         override suspend fun cancel(
@@ -333,7 +335,9 @@ class DeviceDosingCalibrationStage8Test {
             transform: (DeviceDosingCalibrationSnapshot) -> DeviceDosingCalibrationSnapshot
         ): DeviceDosingCalibrationResult {
             val current = state.value ?: return connectionFailure()
-            return success(transform(current))
+            val transformed = transform(current)
+            state.value = transformed
+            return success(transformed)
         }
 
         private fun success(snapshot: DeviceDosingCalibrationSnapshot) =

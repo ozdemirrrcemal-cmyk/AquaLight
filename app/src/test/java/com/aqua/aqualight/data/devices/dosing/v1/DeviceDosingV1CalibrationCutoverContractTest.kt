@@ -7,11 +7,12 @@ import org.junit.Test
 
 class DeviceDosingV1CalibrationCutoverContractTest {
     @Test
-    fun `stage 8 requests pin the firmware calibration duration and verification dose`() {
+    fun `calibration requests pin duration verification dose and final identity commit`() {
         val fixture = fixture()
         val commands = fixture.getJSONObject("commands")
         val firmwareStart = commands.getJSONObject("start").getJSONObject("request")
         val firmwareVerification = commands.getJSONObject("verify").getJSONObject("request")
+        val firmwareConfirm = commands.getJSONObject("confirm").getJSONObject("request")
 
         assertEquals(
             DeviceDosingV1Contract.Limit.DEFAULT_CALIBRATION_DURATION_MS,
@@ -49,6 +50,17 @@ class DeviceDosingV1CalibrationCutoverContractTest {
             firmwareVerification.getDouble("amountMl"),
             verification.getDouble("amountMl"),
             0.0
+        )
+
+        val confirm = DeviceDosingV1CalibrationConfirmRequest(
+            channelKey = CHANNEL,
+            displayName = " Trace Elements "
+        ).toJson()
+        assertEquals(firmwareConfirm.getString("channelKey"), confirm.getString("channelKey"))
+        assertEquals(firmwareConfirm.getString("displayName"), confirm.getString("displayName"))
+        assertTrue(
+            fixture.getJSONObject("invariants")
+                .getBoolean("confirmCommitsDisplayNameWithCalibration")
         )
     }
 

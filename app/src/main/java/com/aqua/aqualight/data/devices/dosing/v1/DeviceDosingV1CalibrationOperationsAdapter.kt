@@ -25,27 +25,6 @@ internal class DeviceDosingV1CalibrationOperationsAdapter(
     ): DeviceDosingCalibrationResult =
         adapter.refreshCoordinator.refresh(deviceUid, slotId).toCalibrationResult()
 
-    override suspend fun saveDisplayName(
-        deviceUid: String,
-        slotId: String,
-        displayName: String
-    ): DeviceDosingCalibrationResult = adapter.mutationCoordinator.mutatePersisted(
-        deviceUid = deviceUid,
-        slotId = slotId,
-        execute = { uid, channelKey, revision, baseline ->
-            requireCalibrationMutation(baseline.controls.displayNameEditable)
-            adapter.repository.applyConfig(
-                uid,
-                DeviceDosingV1ConfigApplyRequest(
-                    channelKey = channelKey,
-                    expectedRevision = revision,
-                    displayName = DeviceDosingV1DisplayNameUpdate.Set(displayName)
-                )
-            )
-        },
-        channel = DeviceDosingV1SavedMutationResult::channel
-    ).toCalibrationResult()
-
     override suspend fun primeStart(
         deviceUid: String,
         slotId: String
@@ -137,12 +116,22 @@ internal class DeviceDosingV1CalibrationOperationsAdapter(
 
     override suspend fun confirm(
         deviceUid: String,
-        slotId: String
+        slotId: String,
+        displayName: String
     ): DeviceDosingCalibrationResult = adapter.mutationCoordinator.mutateRuntime(
         deviceUid = deviceUid,
         slotId = slotId,
-        execute = { uid, channelKey, _, _ ->
-            adapter.repository.confirmCalibration(uid, channelKey)
+        execute = { uid, channelKey, _, baseline ->
+            requireCalibrationMutation(
+                baseline.controls.calibrationEditable && baseline.controls.displayNameEditable
+            )
+            adapter.repository.confirmCalibration(
+                uid,
+                DeviceDosingV1CalibrationConfirmRequest(
+                    channelKey = channelKey,
+                    displayName = displayName
+                )
+            )
         },
         channel = DeviceDosingV1CalibrationConfirmResult::channel
     ).toCalibrationResult()

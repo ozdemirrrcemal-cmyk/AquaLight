@@ -5,7 +5,8 @@ internal data class DeviceDosingCalibrationRoute(
     val slotId: String,
     val pumpCount: Int,
     val channelNumber: Int,
-    val recalibration: Boolean = false
+    val recalibration: Boolean = false,
+    val restoredDisplayNameDraft: String? = null
 ) {
     fun normalized(): DeviceDosingCalibrationRoute = copy(
         deviceUid = deviceUid.trim(),

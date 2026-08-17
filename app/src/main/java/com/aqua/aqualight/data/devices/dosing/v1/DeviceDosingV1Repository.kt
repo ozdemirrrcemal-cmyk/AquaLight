@@ -116,11 +116,11 @@ class DeviceDosingV1Repository(
 
     suspend fun confirmCalibration(
         deviceUid: DeviceUid,
-        channelKey: DeviceDosingV1ChannelKey
+        request: DeviceDosingV1CalibrationConfirmRequest
     ): DeviceRuntimeCommandOutcome<DeviceDosingV1CalibrationConfirmResult> = execute(
         deviceUid = deviceUid,
         action = DeviceDosingV1Contract.Action.CALIBRATION_CONFIRM,
-        dataFactory = { channelJson(channelKey) },
+        dataFactory = request::toJson,
         parser = DeviceDosingV1MutationParser::parseCalibrationConfirm
     )
 

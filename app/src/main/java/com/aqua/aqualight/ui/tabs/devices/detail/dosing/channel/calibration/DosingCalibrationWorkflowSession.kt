@@ -14,6 +14,35 @@ internal class DosingCalibrationWorkflowSession {
     var completionEmitted: Boolean = false
     var authoritativeSessionInterrupted: Boolean = false
     var latestSnapshot: DeviceDosingCalibrationSnapshot? = null
+    var nameDraftInitialized: Boolean = false
+    var suppressTransientUnavailable: Boolean = false
+    private var inFlightOperationCount: Int = 0
+
+    val hasInFlightOperation: Boolean
+        get() = inFlightOperationCount > 0
+
+    fun beginOperation() {
+        inFlightOperationCount += 1
+        suppressTransientUnavailable = true
+    }
+
+    fun endOperation() {
+        if (inFlightOperationCount > 0) {
+            inFlightOperationCount -= 1
+        }
+        if (inFlightOperationCount == 0) {
+            suppressTransientUnavailable = false
+        }
+    }
+
+    fun acceptedAuthoritativeSnapshot(snapshot: DeviceDosingCalibrationSnapshot) {
+        latestSnapshot = snapshot
+        suppressTransientUnavailable = false
+    }
+
+    fun operationRejected() {
+        suppressTransientUnavailable = false
+    }
 
     fun reset(route: DeviceDosingCalibrationRoute) {
         primeSafetyJob?.cancel()
@@ -27,5 +56,8 @@ internal class DosingCalibrationWorkflowSession {
         completionEmitted = false
         authoritativeSessionInterrupted = false
         latestSnapshot = null
+        nameDraftInitialized = false
+        suppressTransientUnavailable = false
+        inFlightOperationCount = 0
     }
 }

@@ -14,12 +14,6 @@ interface DeviceDosingCalibrationOperations {
 
     suspend fun refresh(deviceUid: String, slotId: String): DeviceDosingCalibrationResult
 
-    suspend fun saveDisplayName(
-        deviceUid: String,
-        slotId: String,
-        displayName: String
-    ): DeviceDosingCalibrationResult
-
     suspend fun primeStart(deviceUid: String, slotId: String): DeviceDosingCalibrationResult
     suspend fun primeStop(deviceUid: String, slotId: String): DeviceDosingCalibrationResult
 
@@ -29,16 +23,9 @@ interface DeviceDosingCalibrationOperations {
         slotId: String
     ): DeviceDosingCalibrationResult = primeStop(deviceUid, slotId)
 
-    /**
-     * Owns the product prime safety window outside presentation.
-     * Cancelling the caller cancels the pending stop before the window expires.
-     */
-    suspend fun awaitPrimeSafetyStop(
-        deviceUid: String,
-        slotId: String
-    ): DeviceDosingCalibrationResult {
+    /** Product-owned safety deadline; the caller performs the stop after this returns. */
+    suspend fun awaitPrimeSafetyDeadline() {
         delay(constraints.primeSafetyTimeoutMs)
-        return primeSafetyStop(deviceUid, slotId)
     }
 
     suspend fun start(deviceUid: String, slotId: String): DeviceDosingCalibrationResult
@@ -59,7 +46,16 @@ interface DeviceDosingCalibrationOperations {
         slotId: String
     ): DeviceDosingCalibrationResult
 
-    suspend fun confirm(deviceUid: String, slotId: String): DeviceDosingCalibrationResult
+    /**
+     * Commits the final user-visible channel identity and confirmed calibration atomically in the
+     * firmware-owned calibration confirmation transaction.
+     */
+    suspend fun confirm(
+        deviceUid: String,
+        slotId: String,
+        displayName: String
+    ): DeviceDosingCalibrationResult
+
     suspend fun cancel(deviceUid: String, slotId: String): DeviceDosingCalibrationResult
 
     /**

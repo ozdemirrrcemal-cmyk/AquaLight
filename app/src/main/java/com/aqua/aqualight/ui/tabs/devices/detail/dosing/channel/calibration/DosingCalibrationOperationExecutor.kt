@@ -9,11 +9,6 @@ internal suspend fun performDosingCalibrationOperation(
     operation: DosingCalibrationOperation
 ): DeviceDosingCalibrationResult = when (operation) {
     DosingCalibrationOperation.Refresh -> operations.refresh(route.deviceUid, route.slotId)
-    is DosingCalibrationOperation.SaveDisplayName -> operations.saveDisplayName(
-        route.deviceUid,
-        route.slotId,
-        operation.name
-    )
     DosingCalibrationOperation.PrimeStart -> operations.primeStart(route.deviceUid, route.slotId)
     DosingCalibrationOperation.PrimeStop,
     DosingCalibrationOperation.ContinueFromPrime -> operations.primeStop(
@@ -30,9 +25,10 @@ internal suspend fun performDosingCalibrationOperation(
         route.deviceUid,
         route.slotId
     )
-    DosingCalibrationOperation.ConfirmVerification -> operations.confirm(
+    is DosingCalibrationOperation.ConfirmVerification -> operations.confirm(
         route.deviceUid,
-        route.slotId
+        route.slotId,
+        operation.displayName
     )
     DosingCalibrationOperation.RejectVerification -> operations.cancel(
         route.deviceUid,

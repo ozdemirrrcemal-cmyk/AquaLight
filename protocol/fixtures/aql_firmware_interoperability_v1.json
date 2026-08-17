@@ -3,7 +3,7 @@
   "schema": "aql.android-firmware.interoperability.v1",
   "firmware": {
     "repository": "ozdemirrrcemal-cmyk/AquaLight-Firmware",
-    "commit": "a0403bf408fcf898ae94a9178eba34efdc2af9bc",
+    "commit": "e198a893d909c06c540452165cfe4e8c21fd6434",
     "commandNames": {
       "path": "src/api/v1/commands/AqlCommandNames.hpp",
       "blobSha": "7bff40576bb77450c662181e2b09b5be961e6809"
@@ -21,7 +21,7 @@
       "src/api/v1/commands/AqlLightTemperatureProtectionCommands.hpp": "e3d44b0c1cad994378b12ce5b9003fd7a94d4f44",
       "src/api/v1/commands/AqlCoolingCommands.hpp": "a4b6c390e4af6f28f2c844cef1d7429eb0206718",
       "src/api/v1/commands/AqlTimerCommands.hpp": "77e5299511fe67e07d7cc1ffbd0114ff7316677b",
-      "src/api/v1/commands/AqlDosingCommands.hpp": "ab747617b774c467c1e54e6f302e564507a32928",
+      "src/api/v1/commands/AqlDosingCommands.hpp": "5c0201f9a4e09f93f4dd54af8c1fba9dec167105",
       "src/api/v1/commands/AqlDosingProgressCommands.hpp": "8700e785bdd2e747abea3b09eff97755e2addad0",
       "src/api/v1/commands/AqlFirmwareCommands.hpp": "8b1107d159ca3ff026754c8a06bd1e75fb608c37",
       "src/modules/timer/AqlTimerService.hpp": "c0c9c717fbe5b0b4ae25034a98a503d80adb4fdb",

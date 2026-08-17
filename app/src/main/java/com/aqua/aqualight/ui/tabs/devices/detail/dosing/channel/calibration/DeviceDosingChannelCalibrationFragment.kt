@@ -42,9 +42,17 @@ class DeviceDosingChannelCalibrationFragment :
                 slotId = args.slotId,
                 pumpCount = args.pumpCount,
                 channelNumber = args.channelNumber,
-                recalibration = args.recalibration
+                recalibration = args.recalibration,
+                restoredDisplayNameDraft = savedInstanceState
+                    ?.getString(STATE_DISPLAY_NAME_DRAFT)
+                    ?.takeIf(String::isNotEmpty)
             )
         )
+    }
+
+    override fun onSaveInstanceState(outState: Bundle) {
+        outState.putString(STATE_DISPLAY_NAME_DRAFT, viewModel.uiState.value.displayName)
+        super.onSaveInstanceState(outState)
     }
 
     override fun onBackRequested() = viewModel.requestExit()
@@ -99,5 +107,9 @@ class DeviceDosingChannelCalibrationFragment :
                 target = event.target
             )
         }
+    }
+
+    private companion object {
+        const val STATE_DISPLAY_NAME_DRAFT = "dosingCalibration.displayNameDraft"
     }
 }

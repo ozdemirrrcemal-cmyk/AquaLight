@@ -70,6 +70,13 @@ class DeviceDosingV1FixtureParityTest {
         assertFalse(status.has("verificationDoseRemainingMs"))
         assertTrue(status.has("verificationDoseStarted"))
         assertTrue(status.has("verificationDoseComplete"))
+        assertEquals(
+            "Trace Elements",
+            fixture.getJSONObject("commands")
+                .getJSONObject("confirm")
+                .getJSONObject("request")
+                .getString("displayName")
+        )
     }
 
     @Test
@@ -115,13 +122,13 @@ class DeviceDosingV1FixtureParityTest {
     private companion object {
         const val PIN_FIXTURE = "aql_android_dosing_v1_pin.json"
         const val CHANNEL_STATUS_FIXTURE = "aql_dosing_channel_status_v1.json"
-        const val FIRMWARE_COMMIT = "a0403bf408fcf898ae94a9178eba34efdc2af9bc"
+        const val FIRMWARE_COMMIT = "e198a893d909c06c540452165cfe4e8c21fd6434"
         const val STATUS_CODEC_PATH = "src/modules/dosing/AqlDosingStatusCodec.hpp"
         const val DERIVED_CHANNEL_STATUS_BLOB = "aa6721ab881de34419c09e5769d70366af36d3d5"
 
         val PINNED_SOURCE_BLOBS = linkedMapOf(
             "src/api/v1/commands/AqlDosingCommands.hpp" to
-                "ab747617b774c467c1e54e6f302e564507a32928",
+                "5c0201f9a4e09f93f4dd54af8c1fba9dec167105",
             "src/api/v1/commands/AqlDosingProgressCommands.hpp" to
                 "8700e785bdd2e747abea3b09eff97755e2addad0",
             "src/modules/dosing/AqlDosingProgramApiCodec.hpp" to
@@ -132,12 +139,12 @@ class DeviceDosingV1FixtureParityTest {
             "src/modules/dosing/AqlDosingRuntimeEvent.hpp" to
                 "0b40b1eff35af48976f95fedba5a2854885f2439",
             "src/modules/dosing/AqlDosingRuntimeService.hpp" to
-                "359116d281844391b0541c475a07b6f03c7d8570"
+                "e5d811ad19cbc72c32a4c1f13ca1f23689bcf91a"
         )
 
         val PINNED_FIXTURE_BLOBS = linkedMapOf(
             "aql_dosing_calibration_v1.json" to
-                "45b45e2ad9fe145763325e0b88b321325b01f681",
+                "99b538f38cb30db2d5ec6baff16898a889ba3845",
             "aql_dosing_persistence_v1.json" to
                 "a6f3a38c0b701493139858a76d674296640a0dd0",
             "aql_dosing_program_v1.json" to
@@ -152,7 +159,7 @@ class DeviceDosingV1FixtureParityTest {
 
         val EXPECTED_SHA256 = linkedMapOf(
             "aql_dosing_calibration_v1.json" to
-                "6b691f99d92e1740ea2efd98c3c20cc4cea309fd703f8db430241e2fca385fe9",
+                "3a6ca527de4b7dc9ead427e5a85b382d5e0069a93f46f258f4f6da3f06cf060d",
             CHANNEL_STATUS_FIXTURE to
                 "ac48a094e5127e54a3a51a66a1487f81ecb5993241fa0ccb7f5669cef7af752e",
             "aql_dosing_persistence_v1.json" to
