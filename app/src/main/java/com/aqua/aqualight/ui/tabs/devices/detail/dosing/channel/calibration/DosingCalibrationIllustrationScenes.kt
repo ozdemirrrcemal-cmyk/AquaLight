@@ -145,7 +145,7 @@ private fun DrawScope.drawSolidCalibrationFlow(
 }
 
 private fun DrawScope.drawCalibrationMeasurementScene(colors: AquaGuidedFlowColors) {
-    val cylinder = measurementCylinderBounds()
+    val cylinder = measurementCylinderBounds
     val meniscusY = cylinder.bottom - cylinder.height * CALIBRATION_FILL_RATIO
     drawCalibrationCylinder(
         colors = colors,
@@ -162,7 +162,7 @@ private fun DrawScope.drawCalibrationMeasurementScene(colors: AquaGuidedFlowColo
 }
 
 private fun DrawScope.drawCalibrationConfirmationScene(colors: AquaGuidedFlowColors) {
-    val cylinder = measurementCylinderBounds()
+    val cylinder = measurementCylinderBounds
     drawCalibrationCylinder(
         colors = colors,
         bounds = cylinder,
@@ -193,12 +193,13 @@ private fun DrawScope.fluidDestinationBounds(destination: CalibrationFluidDestin
     bottom = size.height * DESTINATION_BOTTOM
 )
 
-private fun DrawScope.measurementCylinderBounds() = Rect(
-    left = size.width * MEASUREMENT_CYLINDER_LEFT,
-    top = size.height * SCENE_TOP,
-    right = size.width * MEASUREMENT_CYLINDER_RIGHT,
-    bottom = size.height * SCENE_BOTTOM
-)
+private val DrawScope.measurementCylinderBounds: Rect
+    get() = Rect(
+        left = size.width * MEASUREMENT_CYLINDER_LEFT,
+        top = size.height * SCENE_TOP,
+        right = size.width * MEASUREMENT_CYLINDER_RIGHT,
+        bottom = size.height * SCENE_BOTTOM
+    )
 
 private fun inletPath(
     bottle: Rect,
