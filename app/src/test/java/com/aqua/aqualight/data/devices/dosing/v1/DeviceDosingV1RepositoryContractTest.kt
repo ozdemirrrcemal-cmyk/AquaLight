@@ -62,7 +62,10 @@ class DeviceDosingV1RepositoryContractTest {
                 DEVICE_UID,
                 DeviceDosingV1CalibrationFinishRequest(CHANNEL, 4.0)
             ),
-            repository.confirmCalibration(DEVICE_UID, CHANNEL),
+            repository.confirmCalibration(
+                DEVICE_UID,
+                DeviceDosingV1CalibrationConfirmRequest(CHANNEL, "Macro")
+            ),
             repository.cancelCalibration(DEVICE_UID, CHANNEL),
             repository.doseNow(
                 DEVICE_UID,
@@ -95,7 +98,7 @@ class DeviceDosingV1RepositoryContractTest {
                 setOf("channelKey"),
                 setOf("channelKey", "durationMs"),
                 setOf("channelKey", "measuredMl"),
-                setOf("channelKey"),
+                setOf("channelKey", "displayName"),
                 setOf("channelKey"),
                 setOf("channelKey", "amountMl", "usePendingCalibration"),
                 setOf("channelKey"),
