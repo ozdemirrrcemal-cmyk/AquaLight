@@ -12,10 +12,11 @@ internal class DosingCalibrationCountdownController(
     private val writeState: (DeviceDosingCalibrationUiState) -> Unit
 ) {
     private var job: Job? = null
+    private var expiredVerificationPollConsumed = false
 
     fun cancel() {
-        job?.cancel()
-        job = null
+        cancelPendingJob()
+        expiredVerificationPollConsumed = false
     }
 
     fun schedule(
@@ -28,15 +29,22 @@ internal class DosingCalibrationCountdownController(
                 start(countdown.durationMs, onComplete)
             }
             is DosingCalibrationCountdown.Verification -> {
-                cancel()
                 if (countdown.durationMs > 0L) {
+                    cancel()
                     start(countdown.durationMs, onComplete)
-                } else {
+                } else if (!expiredVerificationPollConsumed) {
+                    cancelPendingJob()
+                    expiredVerificationPollConsumed = true
                     scheduleAuthoritativePoll(onComplete)
                 }
             }
             null -> cancel()
         }
+    }
+
+    private fun cancelPendingJob() {
+        job?.cancel()
+        job = null
     }
 
     private fun start(durationMs: Long, onComplete: () -> Unit) {
