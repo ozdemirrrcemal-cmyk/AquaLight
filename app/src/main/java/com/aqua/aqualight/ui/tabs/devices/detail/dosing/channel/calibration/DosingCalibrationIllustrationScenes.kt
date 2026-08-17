@@ -5,6 +5,7 @@ import androidx.compose.ui.geometry.Rect
 import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.drawscope.DrawScope
+import androidx.compose.ui.graphics.drawscope.Stroke
 import com.aqua.aqualight.ui.common.flow.AquaGuidedFlowColors
 
 internal enum class CalibrationFluidDestination {
@@ -85,19 +86,25 @@ private fun DrawScope.drawCalibrationFluidScene(
     val pumpRadius = size.minDimension * PUMP_RADIUS_RATIO
     val destinationBounds = fluidDestinationBounds(destination)
     val outletEnd = Offset(destinationBounds.center.x, destinationBounds.top)
+    val inlet = inletPath(bottle, pumpCenter, pumpRadius)
+    val outlet = outletPath(pumpCenter, pumpRadius, outletEnd)
 
     drawCalibrationTube(
-        path = inletPath(bottle, pumpCenter, pumpRadius),
+        path = inlet,
         colors = colors,
         active = animation.active,
         flowPhase = animation.flowPhase
     )
     drawCalibrationTube(
-        path = outletPath(pumpCenter, pumpRadius, outletEnd),
+        path = outlet,
         colors = colors,
         active = animation.active,
         flowPhase = animation.flowPhase
     )
+    if (animation.active) {
+        drawSolidCalibrationFlow(inlet, colors)
+        drawSolidCalibrationFlow(outlet, colors)
+    }
     drawCalibrationReservoir(colors, bottle)
     drawCalibrationPump(
         colors = colors,
@@ -118,6 +125,21 @@ private fun DrawScope.drawCalibrationFluidScene(
             bounds = destinationBounds,
             outletEnd = outletEnd,
             showTarget = showTarget
+        )
+    )
+}
+
+private fun DrawScope.drawSolidCalibrationFlow(
+    path: Path,
+    colors: AquaGuidedFlowColors
+) {
+    val tubeWidth = size.minDimension * TUBE_WIDTH_RATIO
+    drawPath(
+        path = path,
+        color = colors.accent.copy(alpha = TUBE_ACTIVE_ALPHA),
+        style = Stroke(
+            width = tubeWidth * TUBE_ACTIVE_SCALE,
+            cap = StrokeCap.Round
         )
     )
 }
@@ -193,7 +215,11 @@ private fun outletPath(
     pumpRadius: Float,
     outletEnd: Offset
 ) = Path().apply {
+    val approachX = outletEnd.x - pumpRadius * 0.65f
+    val entryY = outletEnd.y - pumpRadius * 0.30f
     moveTo(pumpCenter.x + pumpRadius, pumpCenter.y)
-    lineTo(outletEnd.x, pumpCenter.y)
+    lineTo(approachX, pumpCenter.y)
+    lineTo(approachX, entryY)
+    lineTo(outletEnd.x, entryY)
     lineTo(outletEnd.x, outletEnd.y)
 }
