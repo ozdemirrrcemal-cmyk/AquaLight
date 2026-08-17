@@ -5,6 +5,7 @@ import com.aqua.aqualight.application.devices.dosing.DeviceDosingChannelOperatio
 import com.aqua.aqualight.application.devices.dosing.DeviceDosingChannelRejection
 import com.aqua.aqualight.application.devices.dosing.DeviceDosingCustomPeriodDraft
 import com.aqua.aqualight.application.devices.dosing.DeviceDosingProgram
+import com.aqua.aqualight.application.devices.dosing.DeviceDosingProgramRevisionOperations
 import com.aqua.aqualight.application.devices.dosing.DeviceDosingProgramSchedule
 import com.aqua.aqualight.application.devices.dosing.DeviceDosingSchedulingPolicy
 import com.aqua.aqualight.application.devices.dosing.DeviceDosingTimerDoseDraft
@@ -21,6 +22,7 @@ import org.junit.After
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNull
+import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
 
@@ -77,22 +79,31 @@ class DeviceDosingPlanCutoverTest {
                 )
             )
 
-            assertFalse(viewModel.currentEditorState().canSave)
+            assertTrue(viewModel.currentEditorState().canSave)
             viewModel.save()
             assertNull(operations.lastProgram)
+            assertEquals(
+                DeviceDosingPlanEvent.InvalidDraft(DosingPlanValidationIssue.EVENT_LIMIT),
+                viewModel.events.first()
+            )
         }
 
     @Test
     fun `program conflict is surfaced once without a blind retry`() = runTest(dispatcher) {
         val delegate = FakeDeviceDosingChannelOperations()
-        var applyCount = 0
-        val operations = object : DeviceDosingChannelOperations by delegate {
-            override suspend fun applyProgram(
+        val attempts = mutableListOf<Pair<DeviceDosingProgram, Long>>()
+        val operations = object :
+            DeviceDosingChannelOperations by delegate,
+            DeviceDosingProgramRevisionOperations {
+            override suspend fun applyProgramAtRevision(
                 deviceUid: String,
                 slotId: String,
-                program: DeviceDosingProgram
+                program: DeviceDosingProgram,
+                expectedRevision: Long
             ): DeviceDosingChannelOperationResult {
-                applyCount += 1
+                check(deviceUid == DEVICE_UID)
+                check(slotId == SLOT_ID)
+                attempts += program to expectedRevision
                 return DeviceDosingChannelOperationResult.Rejected(
                     DeviceDosingChannelRejection.CONFLICT
                 )
@@ -101,10 +112,15 @@ class DeviceDosingPlanCutoverTest {
         val viewModel = DeviceDosingPlanViewModel(operations)
 
         viewModel.bind(DEVICE_UID, SLOT_ID, restoredDraft = null)
+        val expectedBaseRevision = viewModel.currentEditorState().baseRevision
         viewModel.save()
 
-        assertEquals(1, applyCount)
-        assertEquals(DeviceDosingPlanEvent.SaveFailed, viewModel.events.first())
+        assertEquals(1, attempts.size)
+        assertEquals(expectedBaseRevision, attempts.single().second)
+        assertEquals(
+            DeviceDosingPlanEvent.SaveRejected(DeviceDosingChannelRejection.CONFLICT),
+            viewModel.events.first()
+        )
         assertFalse(viewModel.currentEditorState().operationInProgress)
     }
 

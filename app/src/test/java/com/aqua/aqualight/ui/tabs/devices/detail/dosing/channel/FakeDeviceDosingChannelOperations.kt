@@ -61,13 +61,14 @@ internal class FakeDeviceDosingChannelOperations(
         program: DeviceDosingProgram,
         expectedRevision: Long
     ): DeviceDosingChannelOperationResult {
-        val current = snapshot.value ?: return DeviceDosingChannelOperationResult.Unavailable
-        if (current.revision != expectedRevision) {
-            return DeviceDosingChannelOperationResult.Rejected(
+        val current = snapshot.value
+        return when {
+            current == null -> DeviceDosingChannelOperationResult.Unavailable
+            current.revision != expectedRevision -> DeviceDosingChannelOperationResult.Rejected(
                 DeviceDosingChannelRejection.CONFLICT
             )
+            else -> applyProgram(deviceUid, slotId, program)
         }
-        return applyProgram(deviceUid, slotId, program)
     }
 
     override suspend fun setMissedDoseRecoveryEnabled(

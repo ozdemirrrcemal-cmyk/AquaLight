@@ -91,7 +91,7 @@ class DosingCalibrationExitConcurrencyTest {
         }
         val viewModel = viewModel(operations)
         bind(viewModel, restoredName = DISPLAY_NAME)
-        // Active verification owns a recurring authoritative poll; settle only immediate work.
+        // Expired verification may own one scheduled authoritative poll; settle only immediate work.
         runCurrent()
 
         viewModel.requestExit()
@@ -158,6 +158,19 @@ private class ExitRaceOperations private constructor(
         set(value) {
             delegate.confirmResult = value
         }
+
+    override suspend fun exitSafely(
+        deviceUid: String,
+        slotId: String,
+        primeMayBeActive: Boolean,
+        lastKnownSnapshot: DeviceDosingCalibrationSnapshot?
+    ): DeviceDosingCalibrationResult =
+        super<DeviceDosingCalibrationOperations>.exitSafely(
+            deviceUid = deviceUid,
+            slotId = slotId,
+            primeMayBeActive = primeMayBeActive,
+            lastKnownSnapshot = lastKnownSnapshot
+        )
 
     override suspend fun start(
         deviceUid: String,
