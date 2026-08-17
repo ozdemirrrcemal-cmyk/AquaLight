@@ -29,14 +29,8 @@ internal object DeviceDosingV1ChannelSnapshotMapper {
         val reservoir = detail.reservoir
         return DeviceDosingReservoirSnapshot(
             trackingEnabled = reservoir.trackingEnabled,
-            capacityMicroliters = DeviceDosingV1AmountMapper.toMicroliters(
-                reservoir.capacityMilliliters,
-                allowZero = true
-            ),
-            remainingMicroliters = DeviceDosingV1AmountMapper.toMicroliters(
-                reservoir.remainingMilliliters,
-                allowZero = true
-            ),
+            capacityMicroliters = reservoirAmountMicroliters(reservoir.capacityMilliliters),
+            remainingMicroliters = reservoirAmountMicroliters(reservoir.remainingMilliliters),
             accountingCertain = reservoir.accountingCertain,
             lowLevelActive = reservoir.lowLevelActive,
             lowLevelAlertEnabled = lowLevelAlertEnabled
@@ -91,6 +85,13 @@ internal object DeviceDosingV1ChannelSnapshotMapper {
         refillSupported = detail.editable.reservoir && global.runtime.supportsReservoirRefill
     )
 
+    private fun reservoirAmountMicroliters(value: Double): Long =
+        if (value == FIRMWARE_UNAVAILABLE_AMOUNT_ML) {
+            0L
+        } else {
+            DeviceDosingV1AmountMapper.toMicroliters(value, allowZero = true)
+        }
+
     private fun runSource(value: DeviceDosingV1WireValue): DeviceDosingRunSource =
         when (value.raw) {
             "none" -> DeviceDosingRunSource.NONE
@@ -101,4 +102,8 @@ internal object DeviceDosingV1ChannelSnapshotMapper {
             "prime" -> DeviceDosingRunSource.PRIME
             else -> DeviceDosingRunSource.UNKNOWN
         }
+
+    // Firmware uses -1.0 only as the unavailable reservoir-value sentinel. The application keeps
+    // amounts non-negative and carries availability through tracking/accounting state instead.
+    private const val FIRMWARE_UNAVAILABLE_AMOUNT_ML = -1.0
 }
