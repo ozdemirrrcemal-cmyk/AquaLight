@@ -203,17 +203,18 @@ internal class DosingCalibrationWorkflow(
     private fun execute(
         operation: DosingCalibrationOperation,
         route: DeviceDosingCalibrationRoute? = session.route,
-        renderSuccess: Boolean = true
+        renderSuccess: Boolean = true,
+        verificationDeadline: Boolean = false
     ) {
         if (session.exiting || session.completionEmitted) return
         val boundRoute = route ?: return
         val task: suspend () -> Unit = {
             operationMutex.withLock {
-                val result = performDosingCalibrationOperation(
-                    operations,
-                    boundRoute,
-                    operation
-                )
+                val result = if (verificationDeadline) {
+                    performVerificationDeadline(operations, boundRoute)
+                } else {
+                    performDosingCalibrationOperation(operations, boundRoute, operation)
+                }
                 if (operation == DosingCalibrationOperation.PrimeStart &&
                     result !is DeviceDosingCalibrationResult.Success
                 ) {
@@ -233,33 +234,6 @@ internal class DosingCalibrationWorkflow(
         } else {
             session.actionJob?.cancel()
             session.actionJob = scope.launchTrackedCalibrationOperation(session, task)
-        }
-    }
-
-    private fun executeVerificationDeadline() {
-        if (session.exiting || session.completionEmitted) return
-        val route = session.route ?: return
-        session.actionJob?.cancel()
-        session.actionJob = scope.launchTrackedCalibrationOperation(session) {
-            operationMutex.withLock {
-                val stopResult = operations.stopVerificationDose(route.deviceUid, route.slotId)
-                val authoritativeResult = when (stopResult) {
-                    is DeviceDosingCalibrationResult.Success -> {
-                        session.acceptedAuthoritativeSnapshot(stopResult.snapshot)
-                        if (stopResult.snapshot.verificationDoseComplete) {
-                            stopResult
-                        } else {
-                            operations.refresh(route.deviceUid, route.slotId)
-                        }
-                    }
-                    is DeviceDosingCalibrationResult.Rejected -> stopResult
-                }
-                handleResult(
-                    DosingCalibrationOperation.Refresh,
-                    authoritativeResult,
-                    renderSuccess = true
-                )
-            }
         }
     }
 
@@ -349,19 +323,30 @@ internal class DosingCalibrationWorkflow(
             eventChannel.trySend(DeviceDosingCalibrationEvent.Completed(snapshot.toDetailTarget()))
             return
         }
-        val scheduledCountdown = presentation.countdown
+        val verificationDeadline = presentation.countdown is DosingCalibrationCountdown.Verification
         countdown.schedule(
-            countdown = scheduledCountdown,
+            countdown = presentation.countdown,
             onComplete = {
-                when (scheduledCountdown) {
-                    is DosingCalibrationCountdown.CalibrationRun ->
-                        execute(DosingCalibrationOperation.Refresh)
-                    is DosingCalibrationCountdown.Verification -> executeVerificationDeadline()
-                    null -> Unit
-                }
+                execute(DosingCalibrationOperation.Refresh, verificationDeadline = verificationDeadline)
             }
         )
     }
+}
+
+private suspend fun performVerificationDeadline(
+    operations: DeviceDosingCalibrationOperations,
+    route: DeviceDosingCalibrationRoute
+): DeviceDosingCalibrationResult = when (
+    val stopResult = operations.stopVerificationDose(route.deviceUid, route.slotId)
+) {
+    is DeviceDosingCalibrationResult.Success -> {
+        if (stopResult.snapshot.verificationDoseComplete) {
+            stopResult
+        } else {
+            operations.refresh(route.deviceUid, route.slotId)
+        }
+    }
+    is DeviceDosingCalibrationResult.Rejected -> stopResult
 }
 
 private fun CoroutineScope.launchTrackedCalibrationOperation(

@@ -112,12 +112,28 @@ internal class DeviceDosingPlanViewModel(
         observeJob = viewModelScope.launch {
             operations.observe(deviceUid, slotId).collect { snapshot ->
                 if (boundDeviceUid != deviceUid || boundSlotId != slotId) return@collect
-                snapshot?.let(::applySnapshot)
+                snapshot?.let { authoritative ->
+                    mutableEditorState.value = reduceDosingPlanSnapshot(
+                        current = mutableEditorState.value,
+                        snapshot = authoritative,
+                        restoredDraft = this@DeviceDosingPlanViewModel.restoredDraft,
+                        restoredBaseRevision = this@DeviceDosingPlanViewModel.restoredBaseRevision,
+                        restoredDraftDirty = this@DeviceDosingPlanViewModel.restoredDraftDirty
+                    )
+                }
             }
         }
         refreshJob = viewModelScope.launch {
             when (val result = operations.refresh(deviceUid, slotId)) {
-                is DeviceDosingChannelOperationResult.Success -> applySnapshot(result.snapshot)
+                is DeviceDosingChannelOperationResult.Success -> {
+                    mutableEditorState.value = reduceDosingPlanSnapshot(
+                        current = mutableEditorState.value,
+                        snapshot = result.snapshot,
+                        restoredDraft = this@DeviceDosingPlanViewModel.restoredDraft,
+                        restoredBaseRevision = this@DeviceDosingPlanViewModel.restoredBaseRevision,
+                        restoredDraftDirty = this@DeviceDosingPlanViewModel.restoredDraftDirty
+                    )
+                }
                 else -> Unit
             }
         }
@@ -126,7 +142,7 @@ internal class DeviceDosingPlanViewModel(
     fun setDailyDoseMicroliters(microliters: Long) {
         if (microliters <= 0L) return
         updateDraft { state -> state.copy(distributedDailyDoseMicroliters = microliters) }
-        emitConstraintWarningIfNeeded()
+        emitConstraintWarningIfNeeded(mutableEditorState.value, eventChannel)
     }
 
     fun applyScheduleUpdate(scheduleUpdate: DosingPlanScheduleUpdate) {
@@ -150,7 +166,7 @@ internal class DeviceDosingPlanViewModel(
                 )
             }
         }
-        emitConstraintWarningIfNeeded()
+        emitConstraintWarningIfNeeded(mutableEditorState.value, eventChannel)
     }
 
     fun setScheduleEnabled(enabled: Boolean) = updateDraft { state ->
@@ -201,84 +217,8 @@ internal class DeviceDosingPlanViewModel(
                 )
             }.getOrElse { DeviceDosingChannelOperationResult.Failed }
             if (boundDeviceUid != deviceUid || boundSlotId != slotId) return@launch
-            when (result) {
-                is DeviceDosingChannelOperationResult.Success -> {
-                    mutableEditorState.value = mutableEditorState.value.copy(
-                        draftDirty = false,
-                        baseRevision = result.snapshot.revision
-                    )
-                    applySnapshot(result.snapshot)
-                    mutableEditorState.value = mutableEditorState.value.copy(
-                        operationInProgress = false
-                    )
-                    eventChannel.send(DeviceDosingPlanEvent.Saved)
-                }
-                is DeviceDosingChannelOperationResult.Rejected -> {
-                    if (result.reason == DeviceDosingChannelRejection.CONFLICT) {
-                        reconcileConflictRevision(deviceUid, slotId)
-                    }
-                    mutableEditorState.value = mutableEditorState.value.copy(
-                        operationInProgress = false
-                    )
-                    eventChannel.send(DeviceDosingPlanEvent.SaveRejected(result.reason))
-                }
-                DeviceDosingChannelOperationResult.Unavailable -> {
-                    mutableEditorState.value = mutableEditorState.value.copy(
-                        operationInProgress = false
-                    )
-                    eventChannel.send(DeviceDosingPlanEvent.SaveUnavailable)
-                }
-                DeviceDosingChannelOperationResult.Failed -> {
-                    mutableEditorState.value = mutableEditorState.value.copy(
-                        operationInProgress = false
-                    )
-                    eventChannel.send(DeviceDosingPlanEvent.SaveFailed)
-                }
-            }
+            handleSaveResult(deviceUid, slotId, result)
         }
-    }
-
-    private suspend fun reconcileConflictRevision(deviceUid: String, slotId: String) {
-        val refreshed = runCatching { operations.refresh(deviceUid, slotId) }.getOrNull()
-        if (refreshed !is DeviceDosingChannelOperationResult.Success) return
-        if (boundDeviceUid != deviceUid || boundSlotId != slotId) return
-        applySnapshot(refreshed.snapshot)
-        mutableEditorState.value = mutableEditorState.value.copy(
-            baseRevision = refreshed.snapshot.revision
-        )
-    }
-
-    private fun applySnapshot(snapshot: DeviceDosingChannelSnapshot) {
-        val current = mutableEditorState.value
-        val firstSnapshot = !current.initialized
-        val keepDraft = current.initialized && current.draftDirty
-        val nextDraft = when {
-            firstSnapshot -> restoredDraft ?: snapshot.program?.toPlanDraft() ?: defaultDraft()
-            keepDraft -> current.draft
-            else -> snapshot.program?.toPlanDraft() ?: defaultDraft()
-        }
-        val nextBaseRevision = when {
-            firstSnapshot -> restoredBaseRevision ?: snapshot.revision
-            keepDraft -> current.baseRevision
-            else -> snapshot.revision
-        }
-        val nextDraftDirty = when {
-            firstSnapshot -> restoredDraft != null && restoredDraftDirty
-            keepDraft -> true
-            else -> false
-        }
-        mutableEditorState.value = current.copy(
-            draft = nextDraft,
-            scheduling = snapshot.scheduling,
-            supportedModes = snapshot.scheduling.supportedModes.mapTo(linkedSetOf()) { mode ->
-                mode.toPlanMode()
-            },
-            missedDoseRecoveryEnabled = snapshot.program?.missedDoseRecoveryEnabled ?: false,
-            editable = snapshot.calibrated && snapshot.controls.programEditable,
-            initialized = true,
-            baseRevision = nextBaseRevision,
-            draftDirty = nextDraftDirty
-        )
     }
 
     private inline fun updateDraft(transform: (DosingPlanDraft) -> DosingPlanDraft) {
@@ -292,65 +232,198 @@ internal class DeviceDosingPlanViewModel(
         )
     }
 
-    private fun emitConstraintWarningIfNeeded() {
-        val state = mutableEditorState.value
-        if (!state.initialized) return
-        val program = state.programIntent
-        if (program.isValidFor(state.scheduling)) return
-        val issue = planValidationIssue(program, state.scheduling)
-        if (issue == DosingPlanValidationIssue.DOSE_LIMIT ||
-            issue == DosingPlanValidationIssue.EVENT_LIMIT
-        ) {
-            eventChannel.trySend(DeviceDosingPlanEvent.InvalidDraft(issue))
+    private suspend fun handleSaveResult(
+        deviceUid: String,
+        slotId: String,
+        result: DeviceDosingChannelOperationResult
+    ) {
+        when (result) {
+            is DeviceDosingChannelOperationResult.Success -> {
+                val savedState = mutableEditorState.value.copy(
+                    draftDirty = false,
+                    baseRevision = result.snapshot.revision
+                )
+                mutableEditorState.value = reduceDosingPlanSnapshot(
+                    current = savedState,
+                    snapshot = result.snapshot,
+                    restoredDraft = restoredDraft,
+                    restoredBaseRevision = restoredBaseRevision,
+                    restoredDraftDirty = restoredDraftDirty
+                ).copy(operationInProgress = false)
+                eventChannel.send(DeviceDosingPlanEvent.Saved)
+            }
+            is DeviceDosingChannelOperationResult.Rejected -> {
+                if (result.reason == DeviceDosingChannelRejection.CONFLICT) {
+                    val refreshed = refreshConflictRevision(operations, deviceUid, slotId)
+                    if (refreshed != null &&
+                        boundDeviceUid == deviceUid &&
+                        boundSlotId == slotId
+                    ) {
+                        mutableEditorState.value = reduceDosingPlanSnapshot(
+                            current = mutableEditorState.value,
+                            snapshot = refreshed,
+                            restoredDraft = restoredDraft,
+                            restoredBaseRevision = restoredBaseRevision,
+                            restoredDraftDirty = restoredDraftDirty
+                        ).copy(baseRevision = refreshed.revision)
+                    }
+                }
+                mutableEditorState.value = mutableEditorState.value.copy(
+                    operationInProgress = false
+                )
+                eventChannel.send(DeviceDosingPlanEvent.SaveRejected(result.reason))
+            }
+            DeviceDosingChannelOperationResult.Unavailable -> {
+                mutableEditorState.value = mutableEditorState.value.copy(
+                    operationInProgress = false
+                )
+                eventChannel.send(DeviceDosingPlanEvent.SaveUnavailable)
+            }
+            DeviceDosingChannelOperationResult.Failed -> {
+                mutableEditorState.value = mutableEditorState.value.copy(
+                    operationInProgress = false
+                )
+                eventChannel.send(DeviceDosingPlanEvent.SaveFailed)
+            }
         }
     }
+}
+
+private data class RecoveredDosingPlanDraft(
+    val draft: DosingPlanDraft,
+    val baseRevision: Long?,
+    val draftDirty: Boolean
+)
+
+private fun reduceDosingPlanSnapshot(
+    current: DeviceDosingPlanEditorState,
+    snapshot: DeviceDosingChannelSnapshot,
+    restoredDraft: DosingPlanDraft?,
+    restoredBaseRevision: Long?,
+    restoredDraftDirty: Boolean
+): DeviceDosingPlanEditorState {
+    val recovered = recoverDosingPlanDraft(
+        current = current,
+        snapshot = snapshot,
+        restoredDraft = restoredDraft,
+        restoredBaseRevision = restoredBaseRevision,
+        restoredDraftDirty = restoredDraftDirty
+    )
+    return current.copy(
+        draft = recovered.draft,
+        scheduling = snapshot.scheduling,
+        supportedModes = snapshot.scheduling.supportedModes.mapTo(linkedSetOf()) { mode ->
+            mode.toPlanMode()
+        },
+        missedDoseRecoveryEnabled = snapshot.program?.missedDoseRecoveryEnabled ?: false,
+        editable = snapshot.calibrated && snapshot.controls.programEditable,
+        initialized = true,
+        baseRevision = recovered.baseRevision,
+        draftDirty = recovered.draftDirty
+    )
+}
+
+private fun recoverDosingPlanDraft(
+    current: DeviceDosingPlanEditorState,
+    snapshot: DeviceDosingChannelSnapshot,
+    restoredDraft: DosingPlanDraft?,
+    restoredBaseRevision: Long?,
+    restoredDraftDirty: Boolean
+): RecoveredDosingPlanDraft = when {
+    !current.initialized -> RecoveredDosingPlanDraft(
+        draft = restoredDraft ?: snapshot.program?.toPlanDraft() ?: defaultDraft(),
+        baseRevision = restoredBaseRevision ?: snapshot.revision,
+        draftDirty = restoredDraft != null && restoredDraftDirty
+    )
+    current.draftDirty -> RecoveredDosingPlanDraft(
+        draft = current.draft,
+        baseRevision = current.baseRevision,
+        draftDirty = true
+    )
+    else -> RecoveredDosingPlanDraft(
+        draft = snapshot.program?.toPlanDraft() ?: defaultDraft(),
+        baseRevision = snapshot.revision,
+        draftDirty = false
+    )
+}
+
+private fun emitConstraintWarningIfNeeded(
+    state: DeviceDosingPlanEditorState,
+    eventChannel: Channel<DeviceDosingPlanEvent>
+) {
+    if (!state.initialized) return
+    val program = state.programIntent
+    if (program.isValidFor(state.scheduling)) return
+    val issue = planValidationIssue(program, state.scheduling)
+    if (issue == DosingPlanValidationIssue.DOSE_LIMIT ||
+        issue == DosingPlanValidationIssue.EVENT_LIMIT
+    ) {
+        eventChannel.trySend(DeviceDosingPlanEvent.InvalidDraft(issue))
+    }
+}
+
+private suspend fun refreshConflictRevision(
+    operations: DeviceDosingChannelOperations,
+    deviceUid: String,
+    slotId: String
+): DeviceDosingChannelSnapshot? = when (
+    val result = runCatching { operations.refresh(deviceUid, slotId) }.getOrNull()
+) {
+    is DeviceDosingChannelOperationResult.Success -> result.snapshot
+    else -> null
 }
 
 private fun planValidationIssue(
     program: DeviceDosingProgram,
     policy: DeviceDosingSchedulingPolicy
+): DosingPlanValidationIssue = when {
+    program.schedule.mode !in policy.supportedModes ->
+        DosingPlanValidationIssue.UNSUPPORTED_MODE
+    program.enabled && policy.supportsWeekdayRecurrence && program.weekdays.none { it } ->
+        DosingPlanValidationIssue.NO_DAYS
+    program.missedDoseRecoveryEnabled && !policy.supportsMissedDoseRecovery ->
+        DosingPlanValidationIssue.RECOVERY_UNSUPPORTED
+    else -> scheduleValidationIssue(program.schedule, policy)
+}
+
+private fun scheduleValidationIssue(
+    schedule: DeviceDosingProgramSchedule,
+    policy: DeviceDosingSchedulingPolicy
+): DosingPlanValidationIssue = when (schedule) {
+    is DeviceDosingProgramSchedule.Single -> when {
+        !policy.acceptsScheduledDose(schedule.dailyDoseMicroliters) ->
+            DosingPlanValidationIssue.DOSE_LIMIT
+        else -> DosingPlanValidationIssue.INVALID_SCHEDULE
+    }
+    is DeviceDosingProgramSchedule.Hourly24 -> when {
+        policy.maxEventsPerChannel < HOURLY_DOSE_COUNT ->
+            DosingPlanValidationIssue.EVENT_LIMIT
+        !distributedAmountsFit(schedule.dailyDoseMicroliters, HOURLY_DOSE_COUNT, policy) ->
+            DosingPlanValidationIssue.DOSE_LIMIT
+        else -> DosingPlanValidationIssue.INVALID_SCHEDULE
+    }
+    is DeviceDosingProgramSchedule.CustomPeriods -> customScheduleValidationIssue(schedule, policy)
+    is DeviceDosingProgramSchedule.Timer -> when {
+        schedule.doses.size > policy.maxEventsPerChannel ->
+            DosingPlanValidationIssue.EVENT_LIMIT
+        schedule.doses.any { dose -> !policy.acceptsScheduledDose(dose.amountMicroliters) } ->
+            DosingPlanValidationIssue.DOSE_LIMIT
+        else -> DosingPlanValidationIssue.INVALID_SCHEDULE
+    }
+}
+
+private fun customScheduleValidationIssue(
+    schedule: DeviceDosingProgramSchedule.CustomPeriods,
+    policy: DeviceDosingSchedulingPolicy
 ): DosingPlanValidationIssue {
-    if (program.schedule.mode !in policy.supportedModes) {
-        return DosingPlanValidationIssue.UNSUPPORTED_MODE
-    }
-    if (program.enabled && policy.supportsWeekdayRecurrence && program.weekdays.none { it }) {
-        return DosingPlanValidationIssue.NO_DAYS
-    }
-    if (program.missedDoseRecoveryEnabled && !policy.supportsMissedDoseRecovery) {
-        return DosingPlanValidationIssue.RECOVERY_UNSUPPORTED
-    }
-    return when (val schedule = program.schedule) {
-        is DeviceDosingProgramSchedule.Single -> when {
-            !policy.acceptsScheduledDose(schedule.dailyDoseMicroliters) ->
-                DosingPlanValidationIssue.DOSE_LIMIT
-            else -> DosingPlanValidationIssue.INVALID_SCHEDULE
-        }
-        is DeviceDosingProgramSchedule.Hourly24 -> when {
-            policy.maxEventsPerChannel < HOURLY_DOSE_COUNT ->
-                DosingPlanValidationIssue.EVENT_LIMIT
-            !distributedAmountsFit(schedule.dailyDoseMicroliters, HOURLY_DOSE_COUNT, policy) ->
-                DosingPlanValidationIssue.DOSE_LIMIT
-            else -> DosingPlanValidationIssue.INVALID_SCHEDULE
-        }
-        is DeviceDosingProgramSchedule.CustomPeriods -> {
-            val eventCount = schedule.periods.sumOf { period -> period.doseCount }
-            when {
-                schedule.periods.size > policy.maxCustomPeriodsPerChannel ||
-                    eventCount > policy.maxEventsPerChannel ->
-                    DosingPlanValidationIssue.EVENT_LIMIT
-                eventCount > 0 &&
-                    !distributedAmountsFit(schedule.dailyDoseMicroliters, eventCount, policy) ->
-                    DosingPlanValidationIssue.DOSE_LIMIT
-                else -> DosingPlanValidationIssue.INVALID_SCHEDULE
-            }
-        }
-        is DeviceDosingProgramSchedule.Timer -> when {
-            schedule.doses.size > policy.maxEventsPerChannel ->
-                DosingPlanValidationIssue.EVENT_LIMIT
-            schedule.doses.any { dose -> !policy.acceptsScheduledDose(dose.amountMicroliters) } ->
-                DosingPlanValidationIssue.DOSE_LIMIT
-            else -> DosingPlanValidationIssue.INVALID_SCHEDULE
-        }
+    val eventCount = schedule.periods.sumOf { period -> period.doseCount }
+    return when {
+        schedule.periods.size > policy.maxCustomPeriodsPerChannel ||
+            eventCount > policy.maxEventsPerChannel -> DosingPlanValidationIssue.EVENT_LIMIT
+        eventCount > 0 &&
+            !distributedAmountsFit(schedule.dailyDoseMicroliters, eventCount, policy) ->
+            DosingPlanValidationIssue.DOSE_LIMIT
+        else -> DosingPlanValidationIssue.INVALID_SCHEDULE
     }
 }
 

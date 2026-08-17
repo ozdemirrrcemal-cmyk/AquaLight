@@ -87,10 +87,7 @@ private fun DrawScope.drawCalibrationFluidScene(
     val destinationBounds = fluidDestinationBounds(destination)
     val outletEnd = Offset(destinationBounds.center.x, destinationBounds.top)
     val inlet = inletPath(bottle, pumpCenter, pumpRadius)
-    val outlet = when (destination) {
-        CalibrationFluidDestination.WASTE -> wasteOutletPath(pumpCenter, pumpRadius, outletEnd)
-        CalibrationFluidDestination.CYLINDER -> cylinderOutletPath(pumpCenter, pumpRadius, outletEnd)
-    }
+    val outlet = outletPath(destination, pumpCenter, pumpRadius, outletEnd)
 
     drawCalibrationTube(
         path = inlet,
@@ -213,26 +210,28 @@ private fun inletPath(
     lineTo(pumpCenter.x - pumpRadius, pumpCenter.y)
 }
 
-private fun wasteOutletPath(
+private fun outletPath(
+    destination: CalibrationFluidDestination,
     pumpCenter: Offset,
     pumpRadius: Float,
     outletEnd: Offset
 ) = Path().apply {
     moveTo(pumpCenter.x + pumpRadius, pumpCenter.y)
-    lineTo(outletEnd.x, pumpCenter.y)
-    lineTo(outletEnd.x, outletEnd.y)
+    when (destination) {
+        CalibrationFluidDestination.WASTE -> {
+            lineTo(outletEnd.x, pumpCenter.y)
+            lineTo(outletEnd.x, outletEnd.y)
+        }
+        CalibrationFluidDestination.CYLINDER -> {
+            val approachX = outletEnd.x - pumpRadius * CYLINDER_APPROACH_RADIUS_RATIO
+            val entryY = outletEnd.y - pumpRadius * CYLINDER_ENTRY_RADIUS_RATIO
+            lineTo(approachX, pumpCenter.y)
+            lineTo(approachX, entryY)
+            lineTo(outletEnd.x, entryY)
+            lineTo(outletEnd.x, outletEnd.y)
+        }
+    }
 }
 
-private fun cylinderOutletPath(
-    pumpCenter: Offset,
-    pumpRadius: Float,
-    outletEnd: Offset
-) = Path().apply {
-    val approachX = outletEnd.x - pumpRadius * 0.65f
-    val entryY = outletEnd.y - pumpRadius * 0.30f
-    moveTo(pumpCenter.x + pumpRadius, pumpCenter.y)
-    lineTo(approachX, pumpCenter.y)
-    lineTo(approachX, entryY)
-    lineTo(outletEnd.x, entryY)
-    lineTo(outletEnd.x, outletEnd.y)
-}
+private const val CYLINDER_APPROACH_RADIUS_RATIO = 0.65f
+private const val CYLINDER_ENTRY_RADIUS_RATIO = 0.30f

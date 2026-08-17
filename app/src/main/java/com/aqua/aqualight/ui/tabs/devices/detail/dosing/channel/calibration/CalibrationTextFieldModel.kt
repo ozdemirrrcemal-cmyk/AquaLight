@@ -105,7 +105,6 @@ internal fun PressAndHoldPrimeButton(
     colors: AquaGuidedFlowColors,
     onAction: (DeviceDosingCalibrationAction) -> Unit
 ) {
-    val typography = aquaGuidedFlowTypography(colors)
     val description = stringResource(R.string.device_dosing_calibration_prime_accessibility)
     val shape = RoundedCornerShape(AquaGuidedFlowGeometry.buttonRadius)
     val currentEnabled = rememberUpdatedState(enabled)
@@ -145,27 +144,36 @@ internal fun PressAndHoldPrimeButton(
             ),
         contentAlignment = Alignment.Center
     ) {
-        Row(verticalAlignment = Alignment.CenterVertically) {
-            Box(
-                modifier = Modifier
-                    .size(CALIBRATION_PRIME_DOT_SIZE)
-                    .clip(CircleShape)
-                    .background(if (visualPressed) colors.onAccent else colors.accent)
+        PrimeButtonContent(visualPressed = visualPressed, colors = colors)
+    }
+}
+
+@Composable
+private fun PrimeButtonContent(
+    visualPressed: Boolean,
+    colors: AquaGuidedFlowColors
+) {
+    val typography = aquaGuidedFlowTypography(colors)
+    Row(verticalAlignment = Alignment.CenterVertically) {
+        Box(
+            modifier = Modifier
+                .size(CALIBRATION_PRIME_DOT_SIZE)
+                .clip(CircleShape)
+                .background(if (visualPressed) colors.onAccent else colors.accent)
+        )
+        Spacer(Modifier.width(CALIBRATION_INLINE_GAP))
+        BasicText(
+            text = stringResource(
+                if (visualPressed) {
+                    R.string.device_dosing_calibration_priming
+                } else {
+                    R.string.device_dosing_calibration_hold_to_prime
+                }
+            ),
+            style = typography.button.copy(
+                color = if (visualPressed) colors.onAccent else colors.onSecondaryButton
             )
-            Spacer(Modifier.width(CALIBRATION_INLINE_GAP))
-            BasicText(
-                text = stringResource(
-                    if (visualPressed) {
-                        R.string.device_dosing_calibration_priming
-                    } else {
-                        R.string.device_dosing_calibration_hold_to_prime
-                    }
-                ),
-                style = typography.button.copy(
-                    color = if (visualPressed) colors.onAccent else colors.onSecondaryButton
-                )
-            )
-        }
+        )
     }
 }
 
