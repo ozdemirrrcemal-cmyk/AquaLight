@@ -28,7 +28,8 @@ internal fun DeviceDosingCalibrationScreen(
             end = AquaGuidedFlowGeometry.screenHorizontalPadding,
             bottom = AquaGuidedFlowGeometry.screenBottomPadding
         ),
-        verticalArrangement = Arrangement.spacedBy(AquaGuidedFlowGeometry.sectionGap)
+        verticalArrangement = Arrangement.spacedBy(AquaGuidedFlowGeometry.sectionGap),
+        userScrollEnabled = state.step != DeviceDosingCalibrationStep.PRIME || !state.isPumpActive
     ) {
         item(key = CALIBRATION_PUMP_KEY) {
             CalibrationPump(

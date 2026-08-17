@@ -77,10 +77,11 @@ private data class OwnedDosingDeviceState(
 /**
  * The only device/channel-scoped Dosing state owner.
  *
- * Raw replies and events may enter through different paths, but application snapshots are emitted
- * only after generation, request ordering and revision coherence are all proven here. Channel alert
- * intent is projected from the dedicated owner-scoped ledger; it never becomes a second firmware
- * state owner.
+ * Raw replies and events may enter through different paths, but snapshots enter this owner only
+ * after generation, request ordering and revision coherence are proven. Short mutation/event
+ * invalidations retain the last validated snapshot for presentation stability while authoritative
+ * current reads remain fail-closed until refresh. Channel alert intent is projected from the
+ * dedicated owner-scoped ledger; it never becomes a second firmware state owner.
  */
 internal class DeviceDosingV1StateOwner(
     private val lowLevelAlertLedger: DeviceDosingLowLevelAlertLedger =
@@ -214,8 +215,8 @@ internal class DeviceDosingV1StateOwner(
                     channelKey to OwnedDosingChannelState(
                         revision = revisionFloor,
                         invalidated = true,
-                        channel = null,
-                        calibration = null
+                        channel = current?.channel,
+                        calibration = current?.calibration
                     )
                 )
             )
@@ -314,7 +315,7 @@ private class DefaultDeviceDosingV1StateReadAccess(
         deviceUid: DeviceUid,
         channelKey: DeviceDosingV1ChannelKey
     ): Flow<DeviceDosingChannelSnapshot?> = states
-        .map { allStates -> allStates[deviceUid]?.channels?.get(channelKey)?.authoritativeChannel() }
+        .map { allStates -> allStates[deviceUid]?.channels?.get(channelKey)?.presentationChannel() }
         .distinctUntilChanged()
 
     override fun observeCalibration(
@@ -322,7 +323,7 @@ private class DefaultDeviceDosingV1StateReadAccess(
         channelKey: DeviceDosingV1ChannelKey
     ): Flow<DeviceDosingCalibrationSnapshot?> = states
         .map { allStates ->
-            allStates[deviceUid]?.channels?.get(channelKey)?.authoritativeCalibration()
+            allStates[deviceUid]?.channels?.get(channelKey)?.presentationCalibration()
         }
         .distinctUntilChanged()
 
@@ -331,7 +332,7 @@ private class DefaultDeviceDosingV1StateReadAccess(
             allStates[deviceUid]
                 ?.channels
                 ?.values
-                ?.mapNotNull(OwnedDosingChannelState::authoritativeChannel)
+                ?.mapNotNull(OwnedDosingChannelState::presentationChannel)
                 ?.sortedBy(DeviceDosingChannelSnapshot::channelNumber)
                 .orEmpty()
         }
@@ -367,6 +368,10 @@ private data class DosingStateAddress(
     val deviceUid: DeviceUid,
     val channelKey: DeviceDosingV1ChannelKey
 )
+
+private fun OwnedDosingChannelState.presentationChannel(): DeviceDosingChannelSnapshot? = channel
+
+private fun OwnedDosingChannelState.presentationCalibration(): DeviceDosingCalibrationSnapshot? = calibration
 
 private fun OwnedDosingChannelState.authoritativeChannel(): DeviceDosingChannelSnapshot? =
     channel.takeUnless { invalidated }
