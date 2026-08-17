@@ -6,27 +6,19 @@ import com.aqua.aqualight.data.devices.runtime.events.DeviceRuntimeTypedEvent
 internal class DeviceDosingV1EventCoordinator(
     private val stateOwner: DeviceDosingV1StateOwner,
     private val refreshCoordinator: DeviceDosingV1RefreshCoordinator,
-    private val operationGate: DeviceDosingV1ChannelOperationGate =
-        DeviceDosingV1ChannelOperationGate()
+    private val operationGate: DeviceDosingV1ChannelOperationGate = DeviceDosingV1ChannelOperationGate()
 ) {
-    suspend fun consume(event: DeviceRuntimeTypedEvent): DeviceDosingV1EventResult =
-        when (event.type) {
-            DeviceRuntimeTypedEvent.Type.DOSING_STATUS_CHANGED -> consumeStatusChanged(event)
-            else -> DeviceDosingV1EventResult.Ignored
-        }
+    suspend fun consume(event: DeviceRuntimeTypedEvent): DeviceDosingV1EventResult = when (event.type) {
+        DeviceRuntimeTypedEvent.Type.DOSING_STATUS_CHANGED -> consumeStatusChanged(event)
+        else -> DeviceDosingV1EventResult.Ignored
+    }
 
-    private suspend fun consumeStatusChanged(
-        event: DeviceRuntimeTypedEvent
-    ): DeviceDosingV1EventResult {
+    private suspend fun consumeStatusChanged(event: DeviceRuntimeTypedEvent): DeviceDosingV1EventResult {
         val invalidation = runCatching {
             DeviceDosingV1EventParser.parseInvalidation(event.payload)
-        }.getOrElse {
-            return DeviceDosingV1EventResult.Malformed
-        }
+        }.getOrElse { return DeviceDosingV1EventResult.Malformed }
         val address = DeviceDosingV1Address(event.deviceUid, invalidation.channelKey)
-        return operationGate.withChannel(address) {
-            refreshInvalidated(event, invalidation)
-        }
+        return operationGate.withChannel(address) { refreshInvalidated(event, invalidation) }
     }
 
     private suspend fun refreshInvalidated(
@@ -42,7 +34,7 @@ internal class DeviceDosingV1EventCoordinator(
     ) {
         DeviceDosingV1InvalidationDisposition.STALE_CONNECTION,
         DeviceDosingV1InvalidationDisposition.STALE_REVISION -> DeviceDosingV1EventResult.Ignored
-        DeviceDosingV1InvalidationDisposition.APPLIED -> refreshCoordinator.refresh(
+        DeviceDosingV1InvalidationDisposition.APPLIED -> refreshCoordinator.refreshWithinGate(
             DeviceDosingV1Address(event.deviceUid, invalidation.channelKey)
         ).toEventResult()
     }
