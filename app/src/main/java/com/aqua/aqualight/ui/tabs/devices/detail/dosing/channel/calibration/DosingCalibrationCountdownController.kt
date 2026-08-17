@@ -35,7 +35,7 @@ internal class DosingCalibrationCountdownController(
                     scheduleAuthoritativePoll(onComplete)
                 }
             }
-            null -> Unit
+            null -> cancel()
         }
     }
 
@@ -77,6 +77,6 @@ internal class DosingCalibrationCountdownController(
 
     private companion object {
         const val COUNTDOWN_TICK_MS = 100L
-        const val AUTHORITATIVE_POLL_DELAY_MS = 100L
+        const val AUTHORITATIVE_POLL_DELAY_MS = 250L
     }
 }
