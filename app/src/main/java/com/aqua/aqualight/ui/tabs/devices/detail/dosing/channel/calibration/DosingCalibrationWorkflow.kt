@@ -137,13 +137,9 @@ internal class DosingCalibrationWorkflow(
     }
 
     fun onHostStopped() {
-        if (session.exiting || session.completionEmitted) return
-        if (!session.primeRequested ||
-            mutableUiState.value.step != DeviceDosingCalibrationStep.PRIME
-        ) {
-            return
-        }
-        val route = session.route ?: return
+        val route = session.route?.takeIf {
+            session.shouldStopPrimeOnHostStop(mutableUiState.value)
+        } ?: return
         session.primeSafetyJob?.cancel()
         session.primeRequested = false
         mutableUiState.value = mutableUiState.value.updateProgress { progress ->
@@ -344,6 +340,13 @@ private fun CoroutineScope.launchTrackedCalibrationOperation(
         session.endOperation()
     }
 }
+
+private fun DosingCalibrationWorkflowSession.shouldStopPrimeOnHostStop(
+    state: DeviceDosingCalibrationUiState
+): Boolean = !exiting &&
+    !completionEmitted &&
+    primeRequested &&
+    state.step == DeviceDosingCalibrationStep.PRIME
 
 private fun DosingCalibrationWorkflowSession.shouldSuppressTransientUnavailable(): Boolean =
     hasInFlightOperation || suppressTransientUnavailable

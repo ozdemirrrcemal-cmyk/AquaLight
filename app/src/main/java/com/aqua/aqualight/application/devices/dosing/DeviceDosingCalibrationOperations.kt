@@ -71,48 +71,92 @@ interface DeviceDosingCalibrationOperations {
         slotId: String,
         primeMayBeActive: Boolean,
         lastKnownSnapshot: DeviceDosingCalibrationSnapshot?
-    ): DeviceDosingCalibrationResult {
-        var cleanupFailure: DeviceDosingCalibrationResult.Rejected? = null
+    ): DeviceDosingCalibrationResult = DeviceDosingCalibrationExitCleanup(
+        operations = this,
+        deviceUid = deviceUid,
+        slotId = slotId,
+        primeMayBeActive = primeMayBeActive,
+        lastKnownSnapshot = lastKnownSnapshot
+    ).execute()
+}
+
+private class DeviceDosingCalibrationExitCleanup(
+    private val operations: DeviceDosingCalibrationOperations,
+    private val deviceUid: String,
+    private val slotId: String,
+    private val primeMayBeActive: Boolean,
+    lastKnownSnapshot: DeviceDosingCalibrationSnapshot?
+) {
+    private var snapshot: DeviceDosingCalibrationSnapshot? = lastKnownSnapshot
+    private var cleanupFailure: DeviceDosingCalibrationResult.Rejected? = null
+
+    suspend fun execute(): DeviceDosingCalibrationResult {
+        stopPrimeIfNeeded()
+        val refreshFailure = refreshAuthoritativeSnapshot()
+        return if (refreshFailure != null) {
+            refreshFailure
+        } else {
+            stopVerificationIfNeeded()
+            cancelCalibrationIfNeeded()
+            verifyIdle()
+        }
+    }
+
+    private suspend fun stopPrimeIfNeeded() {
         if (primeMayBeActive) {
-            val result = primeSafetyStop(deviceUid, slotId)
-            if (result is DeviceDosingCalibrationResult.Rejected) cleanupFailure = result
+            applyCleanupResult(operations.primeSafetyStop(deviceUid, slotId))
         }
+    }
 
-        val refreshResult = refresh(deviceUid, slotId)
-        var snapshot = when (refreshResult) {
-            is DeviceDosingCalibrationResult.Success -> refreshResult.snapshot
+    private suspend fun refreshAuthoritativeSnapshot(): DeviceDosingCalibrationResult.Rejected? =
+        when (val result = operations.refresh(deviceUid, slotId)) {
+            is DeviceDosingCalibrationResult.Success -> {
+                snapshot = result.snapshot
+                null
+            }
             is DeviceDosingCalibrationResult.Rejected ->
-                lastKnownSnapshot ?: return cleanupFailure ?: refreshResult
+                if (snapshot == null) cleanupFailure ?: result else null
         }
 
-        if (snapshot.verificationDoseStarted && !snapshot.verificationDoseComplete) {
-            when (val result = stopVerificationDose(deviceUid, slotId)) {
-                is DeviceDosingCalibrationResult.Success -> snapshot = result.snapshot
-                is DeviceDosingCalibrationResult.Rejected ->
-                    if (cleanupFailure == null) cleanupFailure = result
-            }
+    private suspend fun stopVerificationIfNeeded() {
+        val current = snapshot
+        if (current != null && current.verificationDoseStarted && !current.verificationDoseComplete) {
+            applyCleanupResult(operations.stopVerificationDose(deviceUid, slotId))
         }
-        if (snapshot.sessionPhase != DeviceDosingCalibrationSessionPhase.IDLE) {
-            when (val result = cancel(deviceUid, slotId)) {
-                is DeviceDosingCalibrationResult.Success -> Unit
-                is DeviceDosingCalibrationResult.Rejected ->
-                    if (cleanupFailure == null) cleanupFailure = result
-            }
-        }
+    }
 
-        return when (val finalResult = refresh(deviceUid, slotId)) {
-            is DeviceDosingCalibrationResult.Rejected -> cleanupFailure ?: finalResult
+    private suspend fun cancelCalibrationIfNeeded() {
+        val current = snapshot
+        if (current != null && current.sessionPhase != DeviceDosingCalibrationSessionPhase.IDLE) {
+            applyCleanupResult(operations.cancel(deviceUid, slotId))
+        }
+    }
+
+    private fun applyCleanupResult(result: DeviceDosingCalibrationResult) {
+        when (result) {
+            is DeviceDosingCalibrationResult.Success -> snapshot = result.snapshot
+            is DeviceDosingCalibrationResult.Rejected ->
+                if (cleanupFailure == null) cleanupFailure = result
+        }
+    }
+
+    private suspend fun verifyIdle(): DeviceDosingCalibrationResult {
+        val failure = cleanupFailure
+        return when (val result = operations.refresh(deviceUid, slotId)) {
+            is DeviceDosingCalibrationResult.Rejected -> failure ?: result
             is DeviceDosingCalibrationResult.Success -> when {
-                cleanupFailure != null -> cleanupFailure
-                finalResult.snapshot.sessionPhase != DeviceDosingCalibrationSessionPhase.IDLE ||
-                    finalResult.snapshot.manualActive -> DeviceDosingCalibrationResult.Rejected(
+                failure != null -> failure
+                result.snapshot.isSafeForCalibrationExit -> result
+                else -> DeviceDosingCalibrationResult.Rejected(
                     DeviceDosingCalibrationFailure.CALIBRATION_STATE_MISMATCH
                 )
-                else -> finalResult
             }
         }
     }
 }
+
+private val DeviceDosingCalibrationSnapshot.isSafeForCalibrationExit: Boolean
+    get() = sessionPhase == DeviceDosingCalibrationSessionPhase.IDLE && !manualActive
 
 data class DeviceDosingCalibrationConstraints(
     val minMeasuredMl: Double = 0.05,
