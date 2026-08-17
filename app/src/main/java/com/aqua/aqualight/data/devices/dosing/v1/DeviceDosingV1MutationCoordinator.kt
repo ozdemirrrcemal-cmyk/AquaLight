@@ -26,23 +26,14 @@ internal class DeviceDosingV1MutationCoordinator(
     private val stateOwner: DeviceDosingV1StateOwner,
     private val stateAccess: DeviceDosingV1StateAccess,
     private val refreshCoordinator: DeviceDosingV1RefreshCoordinator,
-    private val operationGate: DeviceDosingV1ChannelOperationGate =
-        DeviceDosingV1ChannelOperationGate()
+    private val operationGate: DeviceDosingV1ChannelOperationGate = DeviceDosingV1ChannelOperationGate()
 ) {
-    private val conflictCoordinator = DeviceDosingV1ConflictCoordinator(
-        stateOwner,
-        refreshCoordinator
-    )
+    private val conflictCoordinator = DeviceDosingV1ConflictCoordinator(stateOwner, refreshCoordinator)
 
     suspend fun <T> mutatePersisted(
         deviceUid: String,
         slotId: String,
-        execute: suspend (
-            DeviceUid,
-            DeviceDosingV1ChannelKey,
-            Long,
-            DeviceDosingChannelSnapshot
-        ) -> DeviceRuntimeCommandOutcome<T>,
+        execute: suspend (DeviceUid, DeviceDosingV1ChannelKey, Long, DeviceDosingChannelSnapshot) -> DeviceRuntimeCommandOutcome<T>,
         channel: (T) -> DeviceDosingV1ChannelDetail,
         onAccepted: () -> Unit = {}
     ): DeviceDosingV1MutationResult<T> = mutateSerialized(
@@ -56,12 +47,7 @@ internal class DeviceDosingV1MutationCoordinator(
     suspend fun <T> mutateRuntime(
         deviceUid: String,
         slotId: String,
-        execute: suspend (
-            DeviceUid,
-            DeviceDosingV1ChannelKey,
-            Long,
-            DeviceDosingChannelSnapshot
-        ) -> DeviceRuntimeCommandOutcome<T>,
+        execute: suspend (DeviceUid, DeviceDosingV1ChannelKey, Long, DeviceDosingChannelSnapshot) -> DeviceRuntimeCommandOutcome<T>,
         channel: (T) -> DeviceDosingV1ChannelDetail
     ): DeviceDosingV1MutationResult<T> = mutateSerialized(
         address = stateAccess.address(deviceUid, slotId),
@@ -73,12 +59,7 @@ internal class DeviceDosingV1MutationCoordinator(
     private suspend fun <T> mutateSerialized(
         address: DeviceDosingV1Address,
         requiresRevision: Boolean,
-        execute: suspend (
-            DeviceUid,
-            DeviceDosingV1ChannelKey,
-            Long,
-            DeviceDosingChannelSnapshot
-        ) -> DeviceRuntimeCommandOutcome<T>,
+        execute: suspend (DeviceUid, DeviceDosingV1ChannelKey, Long, DeviceDosingChannelSnapshot) -> DeviceRuntimeCommandOutcome<T>,
         channel: (T) -> DeviceDosingV1ChannelDetail,
         onAccepted: () -> Unit = {}
     ): DeviceDosingV1MutationResult<T> = operationGate.withChannel(address) {
@@ -92,11 +73,9 @@ internal class DeviceDosingV1MutationCoordinator(
         }
         val token = stateOwner.beginRequest(address.deviceUid, address.channelKey)
         when (val execution = executeMutation(address, revision, baseline.channel, execute)) {
-            is DosingExecutionOutcome.Rejected ->
-                DeviceDosingV1MutationResult.LocallyRejected(execution.reason)
+            is DosingExecutionOutcome.Rejected -> DeviceDosingV1MutationResult.LocallyRejected(execution.reason)
             is DosingExecutionOutcome.Completed -> when (val outcome = execution.outcome) {
-                is DeviceRuntimeCommandOutcome.Success ->
-                    commitMutation(address, token, outcome, channel, onAccepted)
+                is DeviceRuntimeCommandOutcome.Success -> commitMutation(address, token, outcome, channel, onAccepted)
                 else -> conflictCoordinator.reconcile(address, outcome)
             }
         }
@@ -106,16 +85,9 @@ internal class DeviceDosingV1MutationCoordinator(
         address: DeviceDosingV1Address,
         revision: Long,
         baseline: DeviceDosingChannelSnapshot,
-        execute: suspend (
-            DeviceUid,
-            DeviceDosingV1ChannelKey,
-            Long,
-            DeviceDosingChannelSnapshot
-        ) -> DeviceRuntimeCommandOutcome<T>
+        execute: suspend (DeviceUid, DeviceDosingV1ChannelKey, Long, DeviceDosingChannelSnapshot) -> DeviceRuntimeCommandOutcome<T>
     ): DosingExecutionOutcome<T> = try {
-        DosingExecutionOutcome.Completed(
-            execute(address.deviceUid, address.channelKey, revision, baseline)
-        )
+        DosingExecutionOutcome.Completed(execute(address.deviceUid, address.channelKey, revision, baseline))
     } catch (rejection: LocalDosingMutationRejection) {
         DosingExecutionOutcome.Rejected(rejection.reason)
     } catch (_: IllegalArgumentException) {
@@ -142,9 +114,7 @@ internal class DeviceDosingV1MutationCoordinator(
     ): DeviceDosingV1MutationResult<T> = runCatching {
         stateOwner.recordMutation(token, outcome.generation, detail)
     }.fold(
-        onSuccess = { disposition ->
-            reconcileMutation(address, outcome.value, disposition, onAccepted)
-        },
+        onSuccess = { disposition -> reconcileMutation(address, outcome.value, disposition, onAccepted) },
         onFailure = { DeviceDosingV1MutationResult.Malformed }
     )
 
@@ -155,7 +125,7 @@ internal class DeviceDosingV1MutationCoordinator(
         onAccepted: () -> Unit
     ): DeviceDosingV1MutationResult<T> = when (disposition) {
         DeviceDosingV1CommitDisposition.STALE_CONNECTION -> {
-            refreshCoordinator.refresh(address)
+            refreshCoordinator.refreshWithinGate(address)
             DeviceDosingV1MutationResult.RejectedStale
         }
         DeviceDosingV1CommitDisposition.MALFORMED -> DeviceDosingV1MutationResult.Malformed
@@ -168,11 +138,8 @@ internal class DeviceDosingV1MutationCoordinator(
     private suspend fun <T> refreshAccepted(
         address: DeviceDosingV1Address,
         value: T
-    ): DeviceDosingV1MutationResult<T> = when (val refreshed = refreshCoordinator.refresh(address)) {
-        is DeviceDosingV1RefreshResult.Success -> DeviceDosingV1MutationResult.Success(
-            value = value,
-            state = refreshed.state
-        )
+    ): DeviceDosingV1MutationResult<T> = when (val refreshed = refreshCoordinator.refreshWithinGate(address)) {
+        is DeviceDosingV1RefreshResult.Success -> DeviceDosingV1MutationResult.Success(value, refreshed.state)
         DeviceDosingV1RefreshResult.Malformed -> DeviceDosingV1MutationResult.Malformed
         is DeviceDosingV1RefreshResult.Failed,
         DeviceDosingV1RefreshResult.RejectedStale -> stateAccess.currentState(address)?.let { state ->
@@ -183,7 +150,7 @@ internal class DeviceDosingV1MutationCoordinator(
     private suspend fun authoritativeBaseline(
         address: DeviceDosingV1Address
     ): DeviceDosingV1AuthoritativeState? = stateAccess.currentState(address) ?: when (
-        val refreshed = refreshCoordinator.refresh(address)
+        val refreshed = refreshCoordinator.refreshWithinGate(address)
     ) {
         is DeviceDosingV1RefreshResult.Success -> refreshed.state
         else -> null
@@ -191,11 +158,6 @@ internal class DeviceDosingV1MutationCoordinator(
 }
 
 private sealed interface DosingExecutionOutcome<out T> {
-    data class Completed<T>(
-        val outcome: DeviceRuntimeCommandOutcome<T>
-    ) : DosingExecutionOutcome<T>
-
-    data class Rejected(
-        val reason: DeviceDosingChannelRejection
-    ) : DosingExecutionOutcome<Nothing>
+    data class Completed<T>(val outcome: DeviceRuntimeCommandOutcome<T>) : DosingExecutionOutcome<T>
+    data class Rejected(val reason: DeviceDosingChannelRejection) : DosingExecutionOutcome<Nothing>
 }
