@@ -22,6 +22,7 @@ import androidx.compose.foundation.text.BasicText
 import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -103,6 +104,8 @@ internal fun PressAndHoldPrimeButton(
     val typography = aquaGuidedFlowTypography(colors)
     val description = stringResource(R.string.device_dosing_calibration_prime_accessibility)
     val shape = RoundedCornerShape(AquaGuidedFlowGeometry.buttonRadius)
+    val currentEnabled = rememberUpdatedState(enabled)
+    val currentOnAction = rememberUpdatedState(onAction)
     Box(
         modifier = Modifier
             .fillMaxWidth()
@@ -113,15 +116,18 @@ internal fun PressAndHoldPrimeButton(
                 contentDescription = description
                 role = Role.Button
             }
-            .pointerInput(enabled) {
-                if (!enabled) return@pointerInput
+            .pointerInput(Unit) {
                 awaitEachGesture {
                     awaitFirstDown(requireUnconsumed = false)
-                    onAction(DeviceDosingCalibrationAction.PrimePressed)
-                    try {
+                    if (currentEnabled.value) {
+                        currentOnAction.value(DeviceDosingCalibrationAction.PrimePressed)
+                        try {
+                            waitForUpOrCancellation()
+                        } finally {
+                            currentOnAction.value(DeviceDosingCalibrationAction.PrimeReleased)
+                        }
+                    } else {
                         waitForUpOrCancellation()
-                    } finally {
-                        onAction(DeviceDosingCalibrationAction.PrimeReleased)
                     }
                 }
             }
@@ -160,8 +166,8 @@ private fun primeButtonBackground(
     enabled: Boolean,
     colors: AquaGuidedFlowColors
 ) = when {
-    !enabled -> colors.disabled
     pressed -> colors.accent
+    !enabled -> colors.disabled
     else -> colors.secondaryButton
 }
 
