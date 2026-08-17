@@ -3,7 +3,7 @@
   "schema": "aql.android.dosing-v1.pin.v1",
   "firmware": {
     "repository": "ozdemirrrcemal-cmyk/AquaLight-Firmware",
-    "commit": "e198a893d909c06c540452165cfe4e8c21fd6434",
+    "commit": "b2a1e17d354fa8970dacaa522e6648e799db1bf7",
     "sources": {
       "src/api/v1/commands/AqlDosingCommands.hpp": "5c0201f9a4e09f93f4dd54af8c1fba9dec167105",
       "src/api/v1/commands/AqlDosingProgressCommands.hpp": "8700e785bdd2e747abea3b09eff97755e2addad0",
@@ -11,7 +11,7 @@
       "src/modules/dosing/AqlDosingStatusCodec.hpp": "77524043931c58bb90d3e84f628f64acca97d3a2",
       "src/modules/dosing/AqlDosingSchedulingMetadataCodec.hpp": "cab751e2d508651d17550c48314707524053f995",
       "src/modules/dosing/AqlDosingRuntimeEvent.hpp": "0b40b1eff35af48976f95fedba5a2854885f2439",
-      "src/modules/dosing/AqlDosingRuntimeService.hpp": "e5d811ad19cbc72c32a4c1f13ca1f23689bcf91a"
+      "src/modules/dosing/AqlDosingRuntimeService.hpp": "7731c7bae5164d741d72eeb46a5fb47ffd7084b2"
     }
   },
   "contract": {
@@ -36,7 +36,7 @@
     ]
   },
   "fixtures": {
-    "aql_dosing_calibration_v1.json": "99b538f38cb30db2d5ec6baff16898a889ba3845",
+    "aql_dosing_calibration_v1.json": "bb7ce3da02db64e6c83ef755ca416a137e5bab60",
     "aql_dosing_persistence_v1.json": "a6f3a38c0b701493139858a76d674296640a0dd0",
     "aql_dosing_program_v1.json": "809a64d12a577be7757d8570e400009c9636adad",
     "aql_dosing_progress_budget_v1.json": "a9f71db11191d42d76e2951bb09f305229140399",
@@ -48,7 +48,7 @@
       "blob": "aa6721ab881de34419c09e5769d70366af36d3d5",
       "derivedFrom": "src/modules/dosing/AqlDosingStatusCodec.hpp",
       "sourceBlob": "77524043931c58bb90d3e84f628f64acca97d3a2",
-      "firmwareCommit": "e198a893d909c06c540452165cfe4e8c21fd6434"
+      "firmwareCommit": "b2a1e17d354fa8970dacaa522e6648e799db1bf7"
     }
   }
 }

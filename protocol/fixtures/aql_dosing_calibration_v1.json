@@ -79,6 +79,7 @@
     "cancelPreservesPreviousConfirmedCalibration": true,
     "firmwareRestartDiscardsPendingSession": true,
     "calibrationAndVerificationCountTowardDailyUserDose": false,
-    "verificationReservoirAccountingUsesPendingCoefficient": true
+    "calibrationMaintenanceMutatesProductionReservoir": false,
+    "verificationRequiresProductionReservoirAvailability": false
   }
 }
