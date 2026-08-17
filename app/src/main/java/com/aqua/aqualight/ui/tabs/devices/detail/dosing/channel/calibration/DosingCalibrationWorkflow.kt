@@ -260,8 +260,7 @@ internal class DosingCalibrationWorkflow(
     ) {
         val transition = dosingCalibrationSuccessTransition(
             operation = operation,
-            current = mutableUiState.value,
-            snapshot = snapshot
+            current = mutableUiState.value
         )
         if (transition.markLocalProgress) session.hasLocalProgress = true
         transition.state?.let { state -> mutableUiState.value = state }
@@ -274,7 +273,14 @@ internal class DosingCalibrationWorkflow(
 
     private fun applySnapshot(snapshot: DeviceDosingCalibrationSnapshot) {
         val route = session.route ?: return
-        initializeDisplayNameDraft(route, snapshot)
+        if (!session.nameDraftInitialized) {
+            session.nameDraftInitialized = true
+            if (route.recalibration) {
+                mutableUiState.value = mutableUiState.value.updateInput { input ->
+                    input.copy(displayName = snapshot.channelTitle)
+                }
+            }
+        }
         if (
             session.authoritativeSessionInterrupted &&
             !snapshot.hasActiveCalibrationSession
@@ -320,18 +326,6 @@ internal class DosingCalibrationWorkflow(
             countdown = presentation.countdown,
             onComplete = { execute(DosingCalibrationOperation.Refresh) }
         )
-    }
-
-    private fun initializeDisplayNameDraft(
-        route: DeviceDosingCalibrationRoute,
-        snapshot: DeviceDosingCalibrationSnapshot
-    ) {
-        if (session.nameDraftInitialized) return
-        session.nameDraftInitialized = true
-        if (!route.recalibration) return
-        mutableUiState.value = mutableUiState.value.updateInput { input ->
-            input.copy(displayName = snapshot.channelTitle)
-        }
     }
 }
 

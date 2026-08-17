@@ -167,7 +167,11 @@ private fun saveMeasurementDecision(
     state: DeviceDosingCalibrationUiState,
     constraints: DeviceDosingCalibrationConstraints
 ): DosingCalibrationActionDecision {
-    val measuredMl = parseMeasurement(state.measuredMl)
+    val measuredMl = state.measuredMl
+        .trim()
+        .replace(',', '.')
+        .toDoubleOrNull()
+        ?.takeIf(Double::isFinite)
     return if (measuredMl == null ||
         measuredMl !in constraints.minMeasuredMl..constraints.maxMeasuredMl
     ) {
@@ -203,11 +207,5 @@ private fun operationDecision(
 private fun sanitizeMeasurement(value: String): String = value
     .filter { character -> character.isDigit() || character == '.' || character == ',' }
     .take(MAX_MEASUREMENT_CHARACTERS)
-
-private fun parseMeasurement(value: String): Double? = value
-    .trim()
-    .replace(',', '.')
-    .toDoubleOrNull()
-    ?.takeIf(Double::isFinite)
 
 internal const val MAX_MEASUREMENT_CHARACTERS = 8
