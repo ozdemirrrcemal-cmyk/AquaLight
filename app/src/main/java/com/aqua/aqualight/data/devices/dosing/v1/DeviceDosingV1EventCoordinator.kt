@@ -5,7 +5,9 @@ import com.aqua.aqualight.data.devices.runtime.events.DeviceRuntimeTypedEvent
 /** Converts runtime events into invalidations and delegates authoritative refreshes. */
 internal class DeviceDosingV1EventCoordinator(
     private val stateOwner: DeviceDosingV1StateOwner,
-    private val refreshCoordinator: DeviceDosingV1RefreshCoordinator
+    private val refreshCoordinator: DeviceDosingV1RefreshCoordinator,
+    private val operationGate: DeviceDosingV1ChannelOperationGate =
+        DeviceDosingV1ChannelOperationGate()
 ) {
     suspend fun consume(event: DeviceRuntimeTypedEvent): DeviceDosingV1EventResult =
         when (event.type) {
@@ -15,12 +17,17 @@ internal class DeviceDosingV1EventCoordinator(
 
     private suspend fun consumeStatusChanged(
         event: DeviceRuntimeTypedEvent
-    ): DeviceDosingV1EventResult = runCatching {
-        DeviceDosingV1EventParser.parseInvalidation(event.payload)
-    }.fold(
-        onSuccess = { invalidation -> refreshInvalidated(event, invalidation) },
-        onFailure = { DeviceDosingV1EventResult.Malformed }
-    )
+    ): DeviceDosingV1EventResult {
+        val invalidation = runCatching {
+            DeviceDosingV1EventParser.parseInvalidation(event.payload)
+        }.getOrElse {
+            return DeviceDosingV1EventResult.Malformed
+        }
+        val address = DeviceDosingV1Address(event.deviceUid, invalidation.channelKey)
+        return operationGate.withChannel(address) {
+            refreshInvalidated(event, invalidation)
+        }
+    }
 
     private suspend fun refreshInvalidated(
         event: DeviceRuntimeTypedEvent,

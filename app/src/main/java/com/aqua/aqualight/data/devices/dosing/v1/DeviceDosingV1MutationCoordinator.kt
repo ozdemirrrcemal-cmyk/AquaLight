@@ -8,13 +8,27 @@ import java.util.concurrent.ConcurrentHashMap
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 
+/** Serializes all per-channel operations that may reconcile authoritative Dosing state. */
+internal class DeviceDosingV1ChannelOperationGate {
+    private val locks = ConcurrentHashMap<DeviceDosingV1Address, Mutex>()
+
+    suspend fun <T> withChannel(
+        address: DeviceDosingV1Address,
+        block: suspend () -> T
+    ): T = lock(address).withLock { block() }
+
+    private fun lock(address: DeviceDosingV1Address): Mutex =
+        locks.computeIfAbsent(address) { Mutex() }
+}
+
 /** Serializes mutations per channel and reconciles their authoritative refresh. */
 internal class DeviceDosingV1MutationCoordinator(
     private val stateOwner: DeviceDosingV1StateOwner,
     private val stateAccess: DeviceDosingV1StateAccess,
-    private val refreshCoordinator: DeviceDosingV1RefreshCoordinator
+    private val refreshCoordinator: DeviceDosingV1RefreshCoordinator,
+    private val operationGate: DeviceDosingV1ChannelOperationGate =
+        DeviceDosingV1ChannelOperationGate()
 ) {
-    private val mutationLocks = ConcurrentHashMap<DeviceDosingV1Address, Mutex>()
     private val conflictCoordinator = DeviceDosingV1ConflictCoordinator(
         stateOwner,
         refreshCoordinator
@@ -67,12 +81,12 @@ internal class DeviceDosingV1MutationCoordinator(
         ) -> DeviceRuntimeCommandOutcome<T>,
         channel: (T) -> DeviceDosingV1ChannelDetail,
         onAccepted: () -> Unit = {}
-    ): DeviceDosingV1MutationResult<T> = mutationLock(address).withLock {
+    ): DeviceDosingV1MutationResult<T> = operationGate.withChannel(address) {
         val baseline = authoritativeBaseline(address)
-            ?: return@withLock DeviceDosingV1MutationResult.Malformed
+            ?: return@withChannel DeviceDosingV1MutationResult.Malformed
         val revision = if (requiresRevision) {
             stateAccess.authoritativeRevision(address)
-                ?: return@withLock DeviceDosingV1MutationResult.Malformed
+                ?: return@withChannel DeviceDosingV1MutationResult.Malformed
         } else {
             baseline.channel.revision
         }
@@ -174,9 +188,6 @@ internal class DeviceDosingV1MutationCoordinator(
         is DeviceDosingV1RefreshResult.Success -> refreshed.state
         else -> null
     }
-
-    private fun mutationLock(address: DeviceDosingV1Address): Mutex =
-        mutationLocks.computeIfAbsent(address) { Mutex() }
 }
 
 private sealed interface DosingExecutionOutcome<out T> {

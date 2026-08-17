@@ -62,14 +62,17 @@ internal class DeviceDosingV1StateAdapter(
         stateOwner = stateOwner,
         stateAccess = stateAccess
     )
-    private val eventCoordinator = DeviceDosingV1EventCoordinator(
-        stateOwner = stateOwner,
-        refreshCoordinator = refreshCoordinator
-    )
+    private val operationGate = DeviceDosingV1ChannelOperationGate()
     internal val mutationCoordinator = DeviceDosingV1MutationCoordinator(
         stateOwner = stateOwner,
         stateAccess = stateAccess,
-        refreshCoordinator = refreshCoordinator
+        refreshCoordinator = refreshCoordinator,
+        operationGate = operationGate
+    )
+    private val eventCoordinator = DeviceDosingV1EventCoordinator(
+        stateOwner = stateOwner,
+        refreshCoordinator = refreshCoordinator,
+        operationGate = operationGate
     )
 
     val channelOperations = DeviceDosingV1ChannelOperationsAdapter(this)
