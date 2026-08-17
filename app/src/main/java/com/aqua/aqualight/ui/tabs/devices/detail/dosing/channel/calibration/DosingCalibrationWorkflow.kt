@@ -289,64 +289,102 @@ internal class DosingCalibrationWorkflow(
         previousSnapshot: DeviceDosingCalibrationSnapshot? = session.latestSnapshot
     ) {
         val route = session.route ?: return
-        if (!session.nameDraftInitialized) {
-            session.nameDraftInitialized = true
-            if (route.recalibration) {
-                mutableUiState.value = mutableUiState.value.updateInput { input ->
-                    input.copy(displayName = snapshot.channelTitle)
-                }
+        initializeNameDraftIfNeeded(route, snapshot)
+        reconcileInterruptedSession(snapshot)
+        stopInterruptedPrimeIfNeeded(route)
+        session.acceptedAuthoritativeSnapshot(snapshot)
+        val presentation = renderAuthoritativeSnapshot(snapshot)
+        if (shouldCompleteFromSnapshot(route, snapshot, previousSnapshot)) {
+            completeFromSnapshot(snapshot)
+            return
+        }
+        scheduleSnapshotCountdown(presentation)
+    }
+
+    private fun initializeNameDraftIfNeeded(
+        route: DeviceDosingCalibrationRoute,
+        snapshot: DeviceDosingCalibrationSnapshot
+    ) {
+        if (session.nameDraftInitialized) return
+        session.nameDraftInitialized = true
+        if (route.recalibration) {
+            mutableUiState.value = mutableUiState.value.updateInput { input ->
+                input.copy(displayName = snapshot.channelTitle)
             }
         }
+    }
+
+    private fun reconcileInterruptedSession(snapshot: DeviceDosingCalibrationSnapshot) {
         if (session.authoritativeSessionInterrupted && !snapshot.hasActiveCalibrationSession) {
             session.hasLocalProgress = false
         }
         session.authoritativeSessionInterrupted = false
-        val interruptedPrime = session.primeRequested && mutableUiState.value.isLoading
-        if (interruptedPrime) {
-            session.primeRequested = false
-            scope.launch {
-                session.beginOperation()
-                try {
-                    operationMutex.withLock {
-                        val result = operations.primeSafetyStop(route.deviceUid, route.slotId)
-                        handleResult(
-                            DosingCalibrationOperation.PrimeStop,
-                            result,
-                            renderSuccess = false
-                        )
-                    }
-                } finally {
-                    session.endOperation()
+    }
+
+    private fun stopInterruptedPrimeIfNeeded(route: DeviceDosingCalibrationRoute) {
+        if (!session.primeRequested || !mutableUiState.value.isLoading) return
+        session.primeRequested = false
+        scope.launch {
+            session.beginOperation()
+            try {
+                operationMutex.withLock {
+                    val result = operations.primeSafetyStop(route.deviceUid, route.slotId)
+                    handleResult(
+                        DosingCalibrationOperation.PrimeStop,
+                        result,
+                        renderSuccess = false
+                    )
                 }
+            } finally {
+                session.endOperation()
             }
         }
-        session.acceptedAuthoritativeSnapshot(snapshot)
+    }
+
+    private fun renderAuthoritativeSnapshot(
+        snapshot: DeviceDosingCalibrationSnapshot
+    ): DosingCalibrationSnapshotPresentation {
         val presentation = reduceDosingCalibrationSnapshot(
             snapshot = snapshot,
             current = mutableUiState.value,
             hasLocalProgress = session.hasLocalProgress
         )
         mutableUiState.value = presentation.state
-        val committedConfirmation =
-            mutableUiState.value.step == DeviceDosingCalibrationStep.CONFIRMATION &&
-                session.hasLocalProgress &&
-                snapshot.isCommittedCalibrationTransitionFrom(
-                    previous = previousSnapshot,
-                    expectedDisplayName = mutableUiState.value.displayName
-                )
-        val preexistingCalibration = snapshot.shouldAutoComplete(
+        return presentation
+    }
+
+    private fun shouldCompleteFromSnapshot(
+        route: DeviceDosingCalibrationRoute,
+        snapshot: DeviceDosingCalibrationSnapshot,
+        previousSnapshot: DeviceDosingCalibrationSnapshot?
+    ): Boolean {
+        if (session.exiting || session.completionEmitted) return false
+        if (isCommittedConfirmation(snapshot, previousSnapshot)) return true
+        return snapshot.shouldAutoComplete(
             isRecalibration = route.recalibration,
             hasLocalProgress = session.hasLocalProgress,
             completionEmitted = session.completionEmitted
         )
-        if (!session.exiting &&
-            !session.completionEmitted &&
-            (committedConfirmation || preexistingCalibration)
-        ) {
-            session.completionEmitted = true
-            eventChannel.trySend(DeviceDosingCalibrationEvent.Completed(snapshot.toDetailTarget()))
-            return
-        }
+    }
+
+    private fun isCommittedConfirmation(
+        snapshot: DeviceDosingCalibrationSnapshot,
+        previousSnapshot: DeviceDosingCalibrationSnapshot?
+    ): Boolean {
+        if (mutableUiState.value.step != DeviceDosingCalibrationStep.CONFIRMATION) return false
+        if (!session.hasLocalProgress) return false
+        return snapshot.isCommittedCalibrationTransitionFrom(
+            previous = previousSnapshot,
+            expectedDisplayName = mutableUiState.value.displayName
+        )
+    }
+
+    private fun completeFromSnapshot(snapshot: DeviceDosingCalibrationSnapshot) {
+        session.completionEmitted = true
+        eventChannel.trySend(DeviceDosingCalibrationEvent.Completed(snapshot.toDetailTarget()))
+    }
+
+    private fun scheduleSnapshotCountdown(presentation: DosingCalibrationSnapshotPresentation) {
         val verificationDeadline = presentation.countdown is DosingCalibrationCountdown.Verification
         countdown.schedule(
             countdown = presentation.countdown,
