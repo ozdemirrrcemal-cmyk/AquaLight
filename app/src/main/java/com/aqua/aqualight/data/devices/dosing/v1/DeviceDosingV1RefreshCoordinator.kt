@@ -7,7 +7,9 @@ import com.aqua.aqualight.data.devices.runtime.core.DeviceRuntimeCommandOutcome
 internal class DeviceDosingV1RefreshCoordinator(
     private val repository: DeviceDosingV1Repository,
     private val stateOwner: DeviceDosingV1StateOwner,
-    private val stateAccess: DeviceDosingV1StateAccess
+    private val stateAccess: DeviceDosingV1StateAccess,
+    private val operationGate: DeviceDosingV1ChannelOperationGate =
+        DeviceDosingV1ChannelOperationGate()
 ) {
     suspend fun refresh(deviceUid: String, slotId: String): DeviceDosingV1RefreshResult =
         refresh(stateAccess.address(deviceUid, slotId))
@@ -17,21 +19,33 @@ internal class DeviceDosingV1RefreshCoordinator(
         val globalOutcome = repository.requestGlobalStatus(uid)
         return when (globalOutcome) {
             is DeviceRuntimeCommandOutcome.Success -> globalOutcome.value.channels.all { channel ->
-                refresh(
-                    DeviceDosingV1Address(uid, channel.channelKey),
-                    globalOutcome
-                ).isAuthoritative()
+                val address = DeviceDosingV1Address(uid, channel.channelKey)
+                operationGate.withChannel(address) {
+                    refreshWithinGate(address, globalOutcome)
+                }.isAuthoritative()
             }
             else -> false
         }
     }
 
-    suspend fun refresh(address: DeviceDosingV1Address): DeviceDosingV1RefreshResult {
+    suspend fun refresh(address: DeviceDosingV1Address): DeviceDosingV1RefreshResult =
+        operationGate.withChannel(address) {
+            refreshWithinGate(address)
+        }
+
+    /**
+     * Authoritative refresh for callers that already hold [DeviceDosingV1ChannelOperationGate].
+     * Keeping this separate prevents nested locking while ensuring every externally initiated
+     * reconciliation shares the same per-channel serialization boundary as mutations and events.
+     */
+    internal suspend fun refreshWithinGate(
+        address: DeviceDosingV1Address
+    ): DeviceDosingV1RefreshResult {
         val token = stateOwner.beginRequest(address.deviceUid, address.channelKey)
         return refresh(address, token, repository.requestGlobalStatus(address.deviceUid))
     }
 
-    private suspend fun refresh(
+    private suspend fun refreshWithinGate(
         address: DeviceDosingV1Address,
         global: DeviceRuntimeCommandOutcome.Success<DeviceDosingV1GlobalStatus>
     ): DeviceDosingV1RefreshResult = refresh(
