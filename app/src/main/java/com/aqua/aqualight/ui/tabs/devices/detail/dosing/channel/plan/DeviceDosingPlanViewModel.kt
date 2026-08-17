@@ -9,7 +9,7 @@ import com.aqua.aqualight.application.devices.dosing.DeviceDosingChannelSnapshot
 import com.aqua.aqualight.application.devices.dosing.DeviceDosingProgram
 import com.aqua.aqualight.application.devices.dosing.DeviceDosingProgramSchedule
 import com.aqua.aqualight.application.devices.dosing.DeviceDosingSchedulingPolicy
-import com.aqua.aqualight.application.devices.dosing.applyProgramAtRevision
+import com.aqua.aqualight.application.devices.dosing.applyProgramAgainstBaseRevision
 import com.aqua.aqualight.ui.tabs.devices.detail.dosing.presentation.model.DosingWeekday
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.channels.Channel
@@ -193,11 +193,11 @@ internal class DeviceDosingPlanViewModel(
         saveJob?.cancel()
         saveJob = viewModelScope.launch {
             val result = runCatching {
-                operations.applyProgramAtRevision(
+                operations.applyProgramAgainstBaseRevision(
                     deviceUid = deviceUid,
                     slotId = slotId,
                     program = program,
-                    expectedRevision = checkNotNull(baseRevision)
+                    baseRevision = checkNotNull(baseRevision)
                 )
             }.getOrElse { DeviceDosingChannelOperationResult.Failed }
             if (boundDeviceUid != deviceUid || boundSlotId != slotId) return@launch
