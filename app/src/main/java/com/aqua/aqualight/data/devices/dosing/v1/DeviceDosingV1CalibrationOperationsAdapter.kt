@@ -122,9 +122,10 @@ internal class DeviceDosingV1CalibrationOperationsAdapter(
         deviceUid = deviceUid,
         slotId = slotId,
         execute = { uid, channelKey, _, baseline ->
-            requireCalibrationMutation(
-                baseline.controls.calibrationEditable && baseline.controls.displayNameEditable
-            )
+            // Final identity persistence belongs to the calibration transaction itself. Standalone
+            // display-name editing remains blocked while calibration is open, but that generic
+            // config guard must never block the firmware-owned pending-verification confirmation.
+            requireCalibrationMutation(baseline.controls.calibrationEditable)
             adapter.repository.confirmCalibration(
                 uid,
                 DeviceDosingV1CalibrationConfirmRequest(

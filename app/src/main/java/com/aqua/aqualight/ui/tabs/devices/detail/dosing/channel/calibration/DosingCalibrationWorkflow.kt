@@ -5,6 +5,7 @@ import com.aqua.aqualight.application.devices.dosing.DeviceDosingCalibrationOper
 import com.aqua.aqualight.application.devices.dosing.DeviceDosingCalibrationResult
 import com.aqua.aqualight.application.devices.dosing.DeviceDosingCalibrationSnapshot
 import com.aqua.aqualight.application.devices.dosing.hasActiveCalibrationSession
+import com.aqua.aqualight.application.devices.dosing.isCommittedCalibrationTransitionFrom
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.Flow
@@ -126,7 +127,8 @@ internal class DosingCalibrationWorkflow(
                         session.operationRejected()
                         session.exiting = false
                         mutableUiState.value = mutableUiState.value.withCalibrationFailure(
-                            result.failure.toCalibrationError()
+                            error = result.failure.toCalibrationError(),
+                            hasAuthoritativeSnapshot = session.latestSnapshot != null
                         )
                     }
                 }
@@ -244,13 +246,21 @@ internal class DosingCalibrationWorkflow(
     ) {
         when (result) {
             is DeviceDosingCalibrationResult.Success -> {
+                val previousSnapshot = session.latestSnapshot
                 session.acceptedAuthoritativeSnapshot(result.snapshot)
-                if (renderSuccess) applySuccess(operation, result.snapshot)
+                if (renderSuccess) {
+                    applySuccess(
+                        operation = operation,
+                        snapshot = result.snapshot,
+                        previousSnapshot = previousSnapshot
+                    )
+                }
             }
             is DeviceDosingCalibrationResult.Rejected -> {
                 session.operationRejected()
                 mutableUiState.value = mutableUiState.value.withCalibrationFailure(
-                    result.failure.toCalibrationError()
+                    error = result.failure.toCalibrationError(),
+                    hasAuthoritativeSnapshot = session.latestSnapshot != null
                 )
             }
         }
@@ -258,7 +268,8 @@ internal class DosingCalibrationWorkflow(
 
     private suspend fun applySuccess(
         operation: DosingCalibrationOperation,
-        snapshot: DeviceDosingCalibrationSnapshot
+        snapshot: DeviceDosingCalibrationSnapshot,
+        previousSnapshot: DeviceDosingCalibrationSnapshot?
     ) {
         val transition = dosingCalibrationSuccessTransition(
             operation = operation,
@@ -266,14 +277,17 @@ internal class DosingCalibrationWorkflow(
         )
         if (transition.markLocalProgress) session.hasLocalProgress = true
         transition.state?.let { state -> mutableUiState.value = state }
-        if (transition.applySnapshot) applySnapshot(snapshot)
+        if (transition.applySnapshot) applySnapshot(snapshot, previousSnapshot)
         if (transition.emitCompleted && !session.exiting && !session.completionEmitted) {
             session.completionEmitted = true
             eventChannel.send(DeviceDosingCalibrationEvent.Completed(snapshot.toDetailTarget()))
         }
     }
 
-    private fun applySnapshot(snapshot: DeviceDosingCalibrationSnapshot) {
+    private fun applySnapshot(
+        snapshot: DeviceDosingCalibrationSnapshot,
+        previousSnapshot: DeviceDosingCalibrationSnapshot? = session.latestSnapshot
+    ) {
         val route = session.route ?: return
         if (!session.nameDraftInitialized) {
             session.nameDraftInitialized = true
@@ -313,11 +327,21 @@ internal class DosingCalibrationWorkflow(
             hasLocalProgress = session.hasLocalProgress
         )
         mutableUiState.value = presentation.state
-        if (!session.exiting && snapshot.shouldAutoComplete(
-                isRecalibration = route.recalibration,
-                hasLocalProgress = session.hasLocalProgress,
-                completionEmitted = session.completionEmitted
-            )
+        val committedConfirmation =
+            mutableUiState.value.step == DeviceDosingCalibrationStep.CONFIRMATION &&
+                session.hasLocalProgress &&
+                snapshot.isCommittedCalibrationTransitionFrom(
+                    previous = previousSnapshot,
+                    expectedDisplayName = mutableUiState.value.displayName
+                )
+        val preexistingCalibration = snapshot.shouldAutoComplete(
+            isRecalibration = route.recalibration,
+            hasLocalProgress = session.hasLocalProgress,
+            completionEmitted = session.completionEmitted
+        )
+        if (!session.exiting &&
+            !session.completionEmitted &&
+            (committedConfirmation || preexistingCalibration)
         ) {
             session.completionEmitted = true
             eventChannel.trySend(DeviceDosingCalibrationEvent.Completed(snapshot.toDetailTarget()))
@@ -386,11 +410,11 @@ private fun markCalibrationSnapshotUnavailable(
 }
 
 private fun DeviceDosingCalibrationUiState.withCalibrationFailure(
-    error: DeviceDosingCalibrationError
+    error: DeviceDosingCalibrationError,
+    hasAuthoritativeSnapshot: Boolean
 ): DeviceDosingCalibrationUiState = updateProgress { progress ->
     progress.copy(
-        isLoading = error == DeviceDosingCalibrationError.CONNECTION ||
-            error == DeviceDosingCalibrationError.OPERATION_FAILED,
+        isLoading = !hasAuthoritativeSnapshot,
         isBusy = false,
         isPumpActive = false
     )

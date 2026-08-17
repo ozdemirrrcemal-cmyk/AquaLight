@@ -35,10 +35,9 @@ internal fun dosingCalibrationSuccessTransition(
         markLocalProgress = true
     )
     is DosingCalibrationOperation.ConfirmVerification -> DosingCalibrationSuccessTransition(
-        state = current
-            .updateProgress { progress -> progress.copy(isBusy = false, isPumpActive = false) }
-            .copy(error = null),
-        emitCompleted = true
+        state = current.copy(error = null),
+        applySnapshot = true,
+        markLocalProgress = true
     )
     DosingCalibrationOperation.RejectVerification -> DosingCalibrationSuccessTransition(
         state = current
