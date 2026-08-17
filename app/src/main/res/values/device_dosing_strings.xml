@@ -310,7 +310,6 @@
     <string name="device_dosing_calibration_yes_confirm">Save calibration</string>
     <string name="device_dosing_calibration_seconds">%1$d s</string>
     <string name="device_dosing_calibration_pump_running">Keep the tubing and cylinder still while the pump is running.</string>
-    <string name="device_dosing_calibration_loading">Reading the pump state…</string>
     <string name="device_dosing_calibration_working">Working…</string>
     <string name="device_dosing_calibration_name_required">Enter a name for this dosing line.</string>
     <string name="device_dosing_calibration_name_control_character">Remove unsupported control characters from the name.</string>
