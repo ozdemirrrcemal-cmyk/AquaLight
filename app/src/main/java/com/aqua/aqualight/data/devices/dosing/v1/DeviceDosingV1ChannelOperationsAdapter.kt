@@ -40,7 +40,10 @@ internal class DeviceDosingV1ChannelOperationsAdapter(
         deviceUid = deviceUid,
         slotId = slotId,
         execute = { uid, channelKey, revision, baseline ->
-            requireMutation(baseline.controls.programEditable, DeviceDosingChannelRejection.NOT_EDITABLE)
+            requireMutation(
+                baseline.controls.programEditable,
+                DeviceDosingChannelRejection.NOT_EDITABLE
+            )
             requireMutation(
                 program.isValidFor(baseline.scheduling),
                 DeviceDosingChannelRejection.INVALID_DRAFT
@@ -63,6 +66,10 @@ internal class DeviceDosingV1ChannelOperationsAdapter(
         deviceUid = deviceUid,
         slotId = slotId,
         execute = { uid, channelKey, revision, baseline ->
+            requireMutation(
+                baseline.controls.programEditable,
+                DeviceDosingChannelRejection.NOT_EDITABLE
+            )
             requireMutation(
                 baseline.scheduling.supportsMissedDoseRecovery,
                 DeviceDosingChannelRejection.NOT_EDITABLE
@@ -236,7 +243,7 @@ private fun DeviceDosingV1RefreshResult.toChannelResult(): DeviceDosingChannelOp
     when (this) {
         is DeviceDosingV1RefreshResult.Success ->
             DeviceDosingChannelOperationResult.Success(state.channel)
-        is DeviceDosingV1RefreshResult.Failed -> outcome.toChannelFailure()
+        is DeviceDosingV1RefreshResult.Failed -> DeviceDosingChannelFailureMapper.map(outcome)
         DeviceDosingV1RefreshResult.Malformed,
         DeviceDosingV1RefreshResult.RejectedStale -> DeviceDosingChannelOperationResult.Failed
     }
@@ -245,7 +252,7 @@ private fun DeviceDosingV1MutationResult<*>.toChannelResult():
     DeviceDosingChannelOperationResult = when (this) {
         is DeviceDosingV1MutationResult.Success ->
             DeviceDosingChannelOperationResult.Success(state.channel)
-        is DeviceDosingV1MutationResult.Failed -> outcome.toChannelFailure()
+        is DeviceDosingV1MutationResult.Failed -> DeviceDosingChannelFailureMapper.map(outcome)
         is DeviceDosingV1MutationResult.LocallyRejected ->
             DeviceDosingChannelOperationResult.Rejected(reason)
         DeviceDosingV1MutationResult.Conflict -> DeviceDosingChannelOperationResult.Rejected(
@@ -253,22 +260,6 @@ private fun DeviceDosingV1MutationResult<*>.toChannelResult():
         )
         DeviceDosingV1MutationResult.Malformed,
         DeviceDosingV1MutationResult.RejectedStale -> DeviceDosingChannelOperationResult.Failed
-    }
-
-private fun DeviceRuntimeCommandOutcome<*>.toChannelFailure():
-    DeviceDosingChannelOperationResult = when (this) {
-        is DeviceRuntimeCommandOutcome.UnsupportedByDevice ->
-            DeviceDosingChannelOperationResult.Unavailable
-        is DeviceRuntimeCommandOutcome.FirmwareError -> DeviceDosingChannelOperationResult.Rejected(
-            when (code) {
-                "DEVICE_BUSY" -> DeviceDosingChannelRejection.BUSY
-                "INVALID_VALUE", "MISSING_FIELD", "BAD_REQUEST" ->
-                    DeviceDosingChannelRejection.INVALID_DRAFT
-                "STORAGE_ERROR", "HARDWARE_ERROR" -> DeviceDosingChannelRejection.UNSAFE
-                else -> DeviceDosingChannelRejection.UNKNOWN
-            }
-        )
-        else -> DeviceDosingChannelOperationResult.Failed
     }
 
 private fun requireMutation(condition: Boolean, reason: DeviceDosingChannelRejection) {

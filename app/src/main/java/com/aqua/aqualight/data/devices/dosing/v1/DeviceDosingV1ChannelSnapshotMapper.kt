@@ -72,18 +72,33 @@ internal object DeviceDosingV1ChannelSnapshotMapper {
     fun controls(
         detail: DeviceDosingV1ChannelDetail,
         global: DeviceDosingV1GlobalStatus
-    ): DeviceDosingChannelControls = DeviceDosingChannelControls(
-        programEditable = global.runtime.supportsProgramApply,
-        reservoirEditable = detail.editable.reservoir && global.runtime.supportsChannelConfig,
-        displayNameEditable = detail.editable.displayName && global.runtime.supportsChannelConfig,
-        calibrationEditable = detail.editable.dosingCalibration &&
-            global.runtime.supportsCalibrationWorkflow,
-        manualDoseSupported = global.runtime.supportsManualDose,
-        stopDoseSupported = global.runtime.supportsManualDose,
-        resetSupported = global.runtime.supportsChannelReset &&
-            global.scheduling.supportsChannelReset,
-        refillSupported = detail.editable.reservoir && global.runtime.supportsReservoirRefill
-    )
+    ): DeviceDosingChannelControls {
+        // Firmware gates persisted program/config mutations on boot/storage health and on the
+        // absence of an active output or open calibration session. The local mutation coordinator
+        // serializes Android-owned requests; a concurrent external client is still rejected by
+        // firmware and reconciled through the central state owner.
+        val persistedMutationAllowed = global.envelope.bootReady &&
+            global.envelope.storageHealthy &&
+            !detail.activeRun.active &&
+            detail.calibration.state.raw == CALIBRATION_IDLE
+
+        return DeviceDosingChannelControls(
+            programEditable = persistedMutationAllowed && global.runtime.supportsProgramApply,
+            reservoirEditable = persistedMutationAllowed &&
+                detail.editable.reservoir &&
+                global.runtime.supportsChannelConfig,
+            displayNameEditable = persistedMutationAllowed &&
+                detail.editable.displayName &&
+                global.runtime.supportsChannelConfig,
+            calibrationEditable = detail.editable.dosingCalibration &&
+                global.runtime.supportsCalibrationWorkflow,
+            manualDoseSupported = global.runtime.supportsManualDose,
+            stopDoseSupported = global.runtime.supportsManualDose,
+            resetSupported = global.runtime.supportsChannelReset &&
+                global.scheduling.supportsChannelReset,
+            refillSupported = detail.editable.reservoir && global.runtime.supportsReservoirRefill
+        )
+    }
 
     private fun reservoirAmountMicroliters(value: Double): Long =
         if (value == FIRMWARE_UNAVAILABLE_AMOUNT_ML) {
@@ -106,4 +121,5 @@ internal object DeviceDosingV1ChannelSnapshotMapper {
     // Firmware uses -1.0 only as the unavailable reservoir-value sentinel. The application keeps
     // amounts non-negative and carries availability through tracking/accounting state instead.
     private const val FIRMWARE_UNAVAILABLE_AMOUNT_ML = -1.0
+    private const val CALIBRATION_IDLE = "idle"
 }

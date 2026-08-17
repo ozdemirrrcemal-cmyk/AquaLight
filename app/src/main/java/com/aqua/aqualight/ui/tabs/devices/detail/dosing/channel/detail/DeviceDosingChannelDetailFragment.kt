@@ -43,18 +43,10 @@ class DeviceDosingChannelDetailFragment :
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
-        viewModel.bind(
-            deviceUidText = args.deviceUid,
-            slotIdText = args.slotId,
-            lastCalibratedAtEpochSeconds = args.lastCalibratedAtEpochSeconds
-        )
-        if (!viewModel.currentDraft().routeValid) {
-            findNavController().navigateUp()
-            return
-        }
         setupManualDoseResult()
         setupResetConfirmationResult()
         observeOperationEvents()
+        observeAuthoritativeRoute()
         observeChannelTitle()
         setupSelectedPump(
             view = view,
@@ -64,6 +56,10 @@ class DeviceDosingChannelDetailFragment :
             channelNumber = args.channelNumber
         )
         setupContent(view)
+        viewModel.bind(
+            deviceUidText = args.deviceUid,
+            slotIdText = args.slotId
+        )
     }
 
     private fun setupContent(view: View) {
@@ -93,6 +89,25 @@ class DeviceDosingChannelDetailFragment :
                         onResetChannelClick = ::showResetChannelConfirmation
                     )
                 )
+            }
+        }
+    }
+
+    private fun observeAuthoritativeRoute() {
+        viewLifecycleOwner.lifecycleScope.launch {
+            viewLifecycleOwner.repeatOnLifecycle(Lifecycle.State.STARTED) {
+                viewModel.draft
+                    .map { draft -> draft.authoritativeStateAvailable && !draft.routeValid }
+                    .distinctUntilChanged()
+                    .filter { routeRejected -> routeRejected }
+                    .collect {
+                        val navController = findNavController()
+                        if (navController.currentDestination?.id ==
+                            R.id.deviceDosingChannelDetailFragment
+                        ) {
+                            navController.navigateUp()
+                        }
+                    }
             }
         }
     }

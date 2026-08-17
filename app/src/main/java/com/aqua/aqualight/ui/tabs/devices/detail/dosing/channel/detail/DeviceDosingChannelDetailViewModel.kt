@@ -70,8 +70,7 @@ internal class DeviceDosingChannelDetailViewModel(
 
     fun bind(
         deviceUidText: String,
-        slotIdText: String,
-        lastCalibratedAtEpochSeconds: Long
+        slotIdText: String
     ) {
         val deviceUid = deviceUidText.trim()
         val slotId = slotIdText.trim()
@@ -86,16 +85,13 @@ internal class DeviceDosingChannelDetailViewModel(
         mutationJob?.cancel()
         boundDeviceUid = deviceUid
         boundSlotId = slotId
-        mutableDraft.value = DeviceDosingChannelDetailDraft(
-            routeValid = DeviceDosingChannelDetailDraftPolicy
-                .isValidCalibrationEpochSeconds(lastCalibratedAtEpochSeconds),
-            lastCalibratedAtEpochSeconds = lastCalibratedAtEpochSeconds
-        )
+        mutableDraft.value = DeviceDosingChannelDetailDraft()
         observeJob = viewModelScope.launch {
             operations.observe(deviceUid, slotId).collect { snapshot ->
                 if (boundDeviceUid != deviceUid || boundSlotId != slotId) return@collect
                 if (snapshot == null) {
                     mutableDraft.value = mutableDraft.value.copy(
+                        routeValid = false,
                         authoritativeStateAvailable = false,
                         missedDoseRecoveryEnabled = false,
                         missedDoseRecoveryEditable = false,
