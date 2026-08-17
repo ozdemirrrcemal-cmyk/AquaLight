@@ -16,16 +16,22 @@ interface DeviceDosingProgramRevisionOperations {
     ): DeviceDosingChannelOperationResult
 }
 
-/** Fail closed when a backing implementation cannot guarantee revision-aware program mutation. */
-suspend fun DeviceDosingChannelOperations.applyProgramAtRevision(
+/**
+ * Application-semantic optimistic-concurrency entry point for long-lived editors.
+ *
+ * UI code owns only the revision of the application snapshot from which its draft was derived.
+ * Translation of that base revision into the firmware mutation contract remains behind the
+ * application boundary and is implemented by the revision-aware data adapter.
+ */
+suspend fun DeviceDosingChannelOperations.applyProgramAgainstBaseRevision(
     deviceUid: String,
     slotId: String,
     program: DeviceDosingProgram,
-    expectedRevision: Long
+    baseRevision: Long
 ): DeviceDosingChannelOperationResult =
     (this as? DeviceDosingProgramRevisionOperations)?.applyProgramAtRevision(
         deviceUid = deviceUid,
         slotId = slotId,
         program = program,
-        expectedRevision = expectedRevision
+        expectedRevision = baseRevision
     ) ?: DeviceDosingChannelOperationResult.Failed
