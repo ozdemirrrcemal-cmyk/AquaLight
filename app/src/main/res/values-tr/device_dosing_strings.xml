@@ -101,6 +101,19 @@
     <string name="device_dosing_detail_recurrence_section">Tekrar</string>
     <string name="device_dosing_detail_save_plan">Dozaj planını kaydet</string>
     <string name="device_dosing_plan_saved">Dozaj planı kaydedildi.</string>
+    <string name="device_dosing_plan_invalid_dose_limit">Planlanan dozlardan biri veya birkaçı cihazın kalibre edilmiş doz sınırlarının dışında. Miktarı veya programı düzenleyin.</string>
+    <string name="device_dosing_plan_invalid_event_limit">Bu program cihazın desteklediği günlük olay veya özel periyot sınırını aşıyor.</string>
+    <string name="device_dosing_plan_invalid_no_days">Programı kaydetmeden önce en az bir dozlama günü seçin.</string>
+    <string name="device_dosing_plan_invalid_mode">Bu dozlama modu bağlı cihaz tarafından desteklenmiyor.</string>
+    <string name="device_dosing_plan_invalid_recovery">Kaçırılan doz telafisi bağlı cihaz tarafından desteklenmiyor.</string>
+    <string name="device_dosing_plan_invalid_schedule">Dozlama programı bağlı cihaz için geçerli değil. Saatleri ve miktarları kontrol edin.</string>
+    <string name="device_dosing_plan_rejected_not_editable">Cihazın mevcut durumunda dozlama programı düzenlenemez.</string>
+    <string name="device_dosing_plan_rejected_not_calibrated">Dozlama programını kaydetmeden önce bu kanalı kalibre edin.</string>
+    <string name="device_dosing_plan_rejected_busy">Kanal şu anda meşgul. Mevcut işlem tamamlandıktan sonra tekrar deneyin.</string>
+    <string name="device_dosing_plan_rejected_conflict">Siz düzenleme yaparken cihazdaki program değişti. Taslağınızı gözden geçirip en güncel sürümün üzerine uygulamak için tekrar kaydedin.</string>
+    <string name="device_dosing_plan_rejected_unsafe">Cihaz mevcut çalışma durumu bu değişiklik için güvenli olmadığı için programı reddetti.</string>
+    <string name="device_dosing_plan_unavailable">Cihaza ulaşılamadığı için dozlama programı kaydedilemedi. Bağlantıyı kontrol edip tekrar deneyin.</string>
+    <string name="device_dosing_plan_subminute_timing">Firmware programında saniye hassasiyetli zamanlama var. AquaLight siz bu zamanı değiştirene kadar tam değeri korur; düzenleyici tam dakikayı gösterir.</string>
 
     <string name="device_dosing_single_title">Tek sefer</string>
     <string name="device_dosing_single_hero_eyebrow">Tek seferlik zamanlama</string>
