@@ -24,28 +24,32 @@ internal fun DosingChannelSummary(
     colors: AquaDeviceCardColors,
     typography: AquaDeviceCardTypography
 ) {
-    Column(
-        modifier = Modifier.fillMaxWidth(),
-        verticalArrangement = Arrangement.spacedBy(SUMMARY_ROW_GAP)
-    ) {
-        if (state.visualState == DosingChannelVisualState.PROGRAM_NOT_CONFIGURED) {
-            DosingProgramSummary(
-                visualState = state.visualState,
-                progress = state.programProgress,
-                colors = colors,
-                typography = typography
-            )
-        } else {
-            DosingScheduleMetricsRow(
-                state = state,
-                colors = colors,
-                typography = typography
-            )
-            DosingProgramAndReservoirRow(
-                state = state,
-                colors = colors,
-                typography = typography
-            )
+    val visualState = state.visualState
+    if (visualState != null) {
+        Column(
+            modifier = Modifier.fillMaxWidth(),
+            verticalArrangement = Arrangement.spacedBy(SUMMARY_ROW_GAP)
+        ) {
+            if (visualState == DosingChannelVisualState.PROGRAM_NOT_CONFIGURED) {
+                DosingProgramSummary(
+                    visualState = visualState,
+                    progress = state.programProgress,
+                    colors = colors,
+                    typography = typography
+                )
+            } else {
+                DosingScheduleMetricsRow(
+                    state = state,
+                    colors = colors,
+                    typography = typography
+                )
+                DosingProgramAndReservoirRow(
+                    state = state,
+                    visualState = visualState,
+                    colors = colors,
+                    typography = typography
+                )
+            }
         }
     }
 }
@@ -84,6 +88,7 @@ private fun DosingScheduleMetricsRow(
 @Composable
 private fun DosingProgramAndReservoirRow(
     state: DosingChannelCardUiState,
+    visualState: DosingChannelVisualState,
     colors: AquaDeviceCardColors,
     typography: AquaDeviceCardTypography
 ) {
@@ -93,7 +98,7 @@ private fun DosingProgramAndReservoirRow(
         verticalAlignment = Alignment.CenterVertically
     ) {
         DosingProgramSummary(
-            visualState = state.visualState,
+            visualState = visualState,
             progress = state.programProgress,
             colors = colors,
             typography = typography,

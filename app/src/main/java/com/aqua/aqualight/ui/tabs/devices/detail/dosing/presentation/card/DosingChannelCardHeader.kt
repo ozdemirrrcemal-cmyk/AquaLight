@@ -24,7 +24,7 @@ internal fun DosingChannelHeader(
     state: DosingChannelCardUiState,
     colors: AquaDeviceCardColors,
     typography: AquaDeviceCardTypography,
-    stateLabel: String
+    stateLabel: String?
 ) {
     Row(
         modifier = Modifier.fillMaxWidth(),
@@ -44,10 +44,11 @@ internal fun DosingChannelHeader(
             maxLines = 1,
             overflow = TextOverflow.Ellipsis
         )
-        if (state.visualState.showsStatusPill) {
+        val visualState = state.visualState
+        if (visualState?.showsStatusPill == true && stateLabel != null) {
             DosingStatusPill(
                 label = stateLabel,
-                color = state.visualState.statusColor(colors),
+                color = visualState.statusColor(colors),
                 typography = typography,
                 modifier = Modifier.padding(start = AquaDeviceCardGeometry.compactGap)
             )

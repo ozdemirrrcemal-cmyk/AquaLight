@@ -15,7 +15,7 @@ internal data class DeviceDosingRootChannelPresentation(
     val authoritative: Boolean
 )
 
-/** Atomically switches the root from catalog bootstrap to one complete central-state snapshot. */
+/** Atomically switches the root from topology-only catalog bootstrap to central firmware state. */
 internal fun resolveDosingRootChannelPresentation(
     deviceUid: String,
     catalogChannels: List<DeviceDosingChannelSlot>,
@@ -42,7 +42,7 @@ internal fun resolveDosingRootChannelPresentation(
         DeviceDosingRootChannelPresentation(
             pumpCount = pumpCount,
             channels = catalogChannels.map(DeviceDosingChannelSlot::toInitialDosingChannelCardUiState),
-            pumpStates = List(pumpCount) { DosingPumpVisualState.IDLE },
+            pumpStates = emptyList(),
             authoritative = false
         )
     }

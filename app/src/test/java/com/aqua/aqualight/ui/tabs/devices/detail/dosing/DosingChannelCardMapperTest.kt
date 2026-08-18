@@ -36,13 +36,13 @@ import org.junit.Test
 class DosingChannelCardMapperTest {
 
     @Test
-    fun `initial card identity is calibration-first and contains no fake metrics`() {
+    fun `initial card exposes topology without manufacturing runtime state`() {
         val state = channelSlot().toInitialDosingChannelCardUiState()
 
         assertEquals("dosing:channel2", state.slotId)
         assertEquals(2, state.channelNumber)
         assertEquals("Channel 2", state.displayName)
-        assertEquals(DosingChannelVisualState.NOT_CONFIGURED, state.visualState)
+        assertNull(state.visualState)
         assertFalse(state.scheduleDays.isEveryDay)
         assertTrue(state.scheduleDays.selectedDays.isEmpty())
         assertNull(state.programProgress.mode)
@@ -181,7 +181,7 @@ class DosingChannelCardMapperTest {
             .withChannelSnapshot(disabledSnapshot)
 
         assertEquals(DosingChannelVisualState.AUTOMATIC_DOSING_OFF, state.visualState)
-        assertFalse(state.visualState.showsStatusPill)
+        assertFalse(requireNotNull(state.visualState).showsStatusPill)
         assertEquals(DosingProgramModeUiState.CUSTOM_PERIODS, state.programProgress.mode)
         assertEquals(DosingDoseProgressVisualState.DISABLED, state.programProgress.visualState)
         assertTrue(state.programProgress.occurrences.isEmpty())

@@ -37,6 +37,7 @@ import kotlinx.coroutines.test.setMain
 import org.junit.After
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
+import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
@@ -65,10 +66,10 @@ class DeviceDosingRootReadPathTest {
             viewModel.bind(DEVICE_UID, "Fallback")
 
             assertEquals(listOf("Catalog 1", "Catalog 2"), channelNames(viewModel))
-            assertEquals(
-                listOf(DosingPumpVisualState.IDLE, DosingPumpVisualState.IDLE),
-                viewModel.uiState.value.pumpStates
-            )
+            assertTrue(viewModel.uiState.value.pumpStates.isEmpty())
+            viewModel.uiState.value.channels.forEach { channel ->
+                assertNull(channel.visualState)
+            }
 
             channels.emit(
                 listOf(
@@ -99,7 +100,7 @@ class DeviceDosingRootReadPathTest {
         }
 
     @Test
-    fun `reconnect clears authoritative cards to catalog bootstrap`() = runTest(dispatcher) {
+    fun `reconnect clears authoritative cards to topology-only bootstrap`() = runTest(dispatcher) {
         val channels = FakeChannelOperations()
         val viewModel = viewModel(channelCount = 2, channelOperations = channels)
         viewModel.bind(DEVICE_UID, "Fallback")
@@ -113,10 +114,10 @@ class DeviceDosingRootReadPathTest {
         channels.emit(emptyList())
 
         assertEquals(listOf("Catalog 1", "Catalog 2"), channelNames(viewModel))
-        assertEquals(
-            List(2) { DosingPumpVisualState.IDLE },
-            viewModel.uiState.value.pumpStates
-        )
+        assertTrue(viewModel.uiState.value.pumpStates.isEmpty())
+        viewModel.uiState.value.channels.forEach { channel ->
+            assertNull(channel.visualState)
+        }
     }
 
     @Test

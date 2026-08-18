@@ -10,7 +10,7 @@ data class DosingChannelCardUiState(
     val slotId: String,
     val channelNumber: Int,
     val displayName: String,
-    val visualState: DosingChannelVisualState = DosingChannelVisualState.NOT_CONFIGURED,
+    val visualState: DosingChannelVisualState? = null,
     val scheduleDays: DosingScheduleDaysUiState = DosingScheduleDaysUiState(),
     val programProgress: DosingProgramProgressUiState = DosingProgramProgressUiState(),
     val reservoir: DosingReservoirUiState? = null
