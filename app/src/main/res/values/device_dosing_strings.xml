@@ -279,8 +279,8 @@
     <string name="device_dosing_calibration_step_progress">Step %1$d of %2$d</string>
     <string name="device_dosing_calibration_name_title">Name your nutrient or additive</string>
     <string name="device_dosing_calibration_name_description">Enter the name of the nutrient or additive you will use on this channel. This name appears in dosing schedules and notifications.</string>
-    <string name="device_dosing_calibration_prime_title">Prime the tubing</string>
-    <string name="device_dosing_calibration_prime_description">Place the intake tube in the liquid reservoir and the outlet tube in a waste cup. Press and hold; release when liquid flows continuously with no air bubbles.</string>
+    <string name="device_dosing_calibration_prime_title">Fill the tubing with liquid</string>
+    <string name="device_dosing_calibration_prime_description">Place the intake tube in the liquid reservoir and the outlet tube in a waste cup. Press and hold the button until liquid flows continuously with no air bubbles.</string>
     <string name="device_dosing_calibration_run_title">Collect the 5-second calibration dose</string>
     <string name="device_dosing_calibration_run_description">Place the outlet tube in a clean, dry, low-volume graduated cylinder. The pump runs for exactly 5 seconds; keep the cylinder still until it stops.</string>
     <string name="device_dosing_calibration_measure_title">Enter the actual volume</string>
@@ -299,7 +299,7 @@
     <string name="device_dosing_calibration_measurement_placeholder">Measured volume</string>
     <string name="device_dosing_calibration_ml_unit">ml</string>
     <string name="device_dosing_calibration_continue">Continue</string>
-    <string name="device_dosing_calibration_hold_to_prime">Press and hold to prime</string>
+    <string name="device_dosing_calibration_hold_to_prime">Press and hold to fill</string>
     <string name="device_dosing_calibration_priming">Priming… release to stop</string>
     <string name="device_dosing_calibration_prime_accessibility">Press and hold to run the selected pump. Release to stop it.</string>
     <string name="device_dosing_calibration_tubing_ready">The tubing is completely filled</string>
