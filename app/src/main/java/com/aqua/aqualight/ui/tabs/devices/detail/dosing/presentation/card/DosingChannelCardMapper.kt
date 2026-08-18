@@ -4,7 +4,6 @@ import com.aqua.aqualight.application.devices.DeviceDosingChannelSlot
 import com.aqua.aqualight.application.devices.dosing.DeviceDosingChannelSnapshot
 import com.aqua.aqualight.application.devices.dosing.DeviceDosingRuntimeReason
 import com.aqua.aqualight.ui.tabs.devices.detail.dosing.presentation.pump.DosingPumpVisualState
-import java.time.LocalDate
 
 /** Catalog bootstrap shown only until the central firmware snapshot is available. */
 internal fun DeviceDosingChannelSlot.toInitialDosingChannelCardUiState(): DosingChannelCardUiState =
@@ -15,22 +14,20 @@ internal fun DeviceDosingChannelSlot.toInitialDosingChannelCardUiState(): Dosing
     )
 
 /** Complete firmware-authoritative card state; no catalog display value survives this mapping. */
-internal fun DeviceDosingChannelSnapshot.toDosingChannelCardUiState(
-    today: LocalDate = LocalDate.now()
-): DosingChannelCardUiState = DosingChannelCardUiState(
-    slotId = slotId,
-    channelNumber = channelNumber,
-    displayName = channelTitle,
-    visualState = toCardVisualState(),
-    scheduleDays = toScheduleDaysUiState(),
-    programProgress = toProgramProgressUiState(today),
-    reservoir = toReservoirUiState()
-)
+internal fun DeviceDosingChannelSnapshot.toDosingChannelCardUiState(): DosingChannelCardUiState =
+    DosingChannelCardUiState(
+        slotId = slotId,
+        channelNumber = channelNumber,
+        displayName = channelTitle,
+        visualState = toCardVisualState(),
+        scheduleDays = toScheduleDaysUiState(),
+        programProgress = toProgramProgressUiState(),
+        reservoir = toReservoirUiState()
+    )
 
 internal fun DosingChannelCardUiState.withChannelSnapshot(
-    snapshot: DeviceDosingChannelSnapshot?,
-    today: LocalDate = LocalDate.now()
-): DosingChannelCardUiState = snapshot?.toDosingChannelCardUiState(today) ?: this
+    snapshot: DeviceDosingChannelSnapshot?
+): DosingChannelCardUiState = snapshot?.toDosingChannelCardUiState() ?: this
 
 internal fun DeviceDosingChannelSnapshot.toPumpVisualState(): DosingPumpVisualState = when {
     hasAttentionState() -> DosingPumpVisualState.ERROR
