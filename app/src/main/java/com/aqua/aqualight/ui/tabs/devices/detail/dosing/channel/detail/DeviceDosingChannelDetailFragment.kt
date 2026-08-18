@@ -162,10 +162,8 @@ class DeviceDosingChannelDetailFragment :
                             showOperationMessage(R.string.device_dosing_detail_manual_started)
                         DeviceDosingChannelDetailEvent.ManualDoseStopped ->
                             showOperationMessage(R.string.device_dosing_detail_manual_stopped)
-                        DeviceDosingChannelDetailEvent.ChannelReset -> {
+                        DeviceDosingChannelDetailEvent.ChannelReset ->
                             showOperationMessage(R.string.device_dosing_detail_channel_reset_done)
-                            navigateUpFromDetailIfCurrent()
-                        }
                         is DeviceDosingChannelDetailEvent.OperationFailed ->
                             showOperationFailure(event.failure)
                     }
