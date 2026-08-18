@@ -185,23 +185,27 @@ class DeviceDosingSupplyProjectionPolicyTest {
         scheduledTodayMicroliters: Long = 0L,
         weekdays: List<Boolean> = List(7) { true },
         programEnabled: Boolean = true
-    ): DeviceDosingSupplyProjection = requireNotNull(
-        DeviceDosingSupplyProjectionPolicy.evaluate(
-            snapshot = channelSnapshot(
-                remainingMicroliters = remainingMicroliters,
-                scheduledTodayMicroliters = scheduledTodayMicroliters,
-                program = singleDoseProgram(
-                    dailyDoseMicroliters = dailyDoseMicroliters,
-                    weekdays = weekdays,
-                    enabled = programEnabled
-                )
+    ): DeviceDosingSupplyProjection {
+        val snapshot = channelSnapshot(
+            remainingMicroliters = remainingMicroliters,
+            program = singleDoseProgram(
+                dailyDoseMicroliters = dailyDoseMicroliters,
+                weekdays = weekdays,
+                enabled = programEnabled
             )
         )
-    )
+        val snapshotWithProgress = snapshot.copy(
+            progress = snapshot.progress.copy(
+                scheduledAmountMicroliters = scheduledTodayMicroliters
+            )
+        )
+        return requireNotNull(
+            DeviceDosingSupplyProjectionPolicy.evaluate(snapshotWithProgress)
+        )
+    }
 
     private fun channelSnapshot(
         remainingMicroliters: Long,
-        scheduledTodayMicroliters: Long = 0L,
         program: DeviceDosingProgram = singleDoseProgram(),
         lowLevelActive: Boolean = false,
         reservoirAccountingCertain: Boolean = true,
@@ -221,7 +225,7 @@ class DeviceDosingSupplyProjectionPolicyTest {
         scheduling = DeviceDosingSchedulingPolicy(),
         program = program,
         progress = DeviceDosingChannelProgress(
-            scheduledAmountMicroliters = scheduledTodayMicroliters,
+            scheduledAmountMicroliters = 0L,
             completedAmountMicroliters = 0L,
             executionCurrent = true,
             programDayDate = programDayDate
