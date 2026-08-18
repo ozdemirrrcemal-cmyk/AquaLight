@@ -289,36 +289,46 @@ internal class DosingCalibrationWorkflow(
         previousSnapshot: DeviceDosingCalibrationSnapshot? = session.latestSnapshot
     ) {
         val route = session.route ?: return
-        initializeNameDraftIfNeeded(route, snapshot)
-        reconcileInterruptedSession(snapshot)
+        DosingCalibrationSnapshotReconciliation.initializeNameDraftIfNeeded(
+            session = session,
+            mutableUiState = mutableUiState,
+            route = route,
+            snapshot = snapshot
+        )
+        DosingCalibrationSnapshotReconciliation.reconcileInterruptedSession(session, snapshot)
         stopInterruptedPrimeIfNeeded(route)
         session.acceptedAuthoritativeSnapshot(snapshot)
-        val presentation = renderAuthoritativeSnapshot(snapshot)
-        if (shouldCompleteFromSnapshot(route, snapshot, previousSnapshot)) {
-            completeFromSnapshot(snapshot)
+        val presentation = DosingCalibrationSnapshotReconciliation.renderAuthoritativeSnapshot(
+            session = session,
+            mutableUiState = mutableUiState,
+            snapshot = snapshot
+        )
+        if (
+            DosingCalibrationSnapshotReconciliation.shouldCompleteFromSnapshot(
+                session = session,
+                state = mutableUiState.value,
+                route = route,
+                snapshot = snapshot,
+                previousSnapshot = previousSnapshot
+            )
+        ) {
+            DosingCalibrationSnapshotReconciliation.completeFromSnapshot(
+                session = session,
+                eventChannel = eventChannel,
+                snapshot = snapshot
+            )
             return
         }
-        scheduleSnapshotCountdown(presentation)
-    }
-
-    private fun initializeNameDraftIfNeeded(
-        route: DeviceDosingCalibrationRoute,
-        snapshot: DeviceDosingCalibrationSnapshot
-    ) {
-        if (session.nameDraftInitialized) return
-        session.nameDraftInitialized = true
-        if (route.recalibration) {
-            mutableUiState.value = mutableUiState.value.updateInput { input ->
-                input.copy(displayName = snapshot.channelTitle)
+        DosingCalibrationSnapshotReconciliation.scheduleSnapshotCountdown(
+            countdown = countdown,
+            presentation = presentation,
+            onComplete = { verificationDeadline ->
+                execute(
+                    DosingCalibrationOperation.Refresh,
+                    verificationDeadline = verificationDeadline
+                )
             }
-        }
-    }
-
-    private fun reconcileInterruptedSession(snapshot: DeviceDosingCalibrationSnapshot) {
-        if (session.authoritativeSessionInterrupted && !snapshot.hasActiveCalibrationSession) {
-            session.hasLocalProgress = false
-        }
-        session.authoritativeSessionInterrupted = false
+        )
     }
 
     private fun stopInterruptedPrimeIfNeeded(route: DeviceDosingCalibrationRoute) {
@@ -340,8 +350,37 @@ internal class DosingCalibrationWorkflow(
             }
         }
     }
+}
 
-    private fun renderAuthoritativeSnapshot(
+private object DosingCalibrationSnapshotReconciliation {
+    fun initializeNameDraftIfNeeded(
+        session: DosingCalibrationWorkflowSession,
+        mutableUiState: MutableStateFlow<DeviceDosingCalibrationUiState>,
+        route: DeviceDosingCalibrationRoute,
+        snapshot: DeviceDosingCalibrationSnapshot
+    ) {
+        if (session.nameDraftInitialized) return
+        session.nameDraftInitialized = true
+        if (route.recalibration) {
+            mutableUiState.value = mutableUiState.value.updateInput { input ->
+                input.copy(displayName = snapshot.channelTitle)
+            }
+        }
+    }
+
+    fun reconcileInterruptedSession(
+        session: DosingCalibrationWorkflowSession,
+        snapshot: DeviceDosingCalibrationSnapshot
+    ) {
+        if (session.authoritativeSessionInterrupted && !snapshot.hasActiveCalibrationSession) {
+            session.hasLocalProgress = false
+        }
+        session.authoritativeSessionInterrupted = false
+    }
+
+    fun renderAuthoritativeSnapshot(
+        session: DosingCalibrationWorkflowSession,
+        mutableUiState: MutableStateFlow<DeviceDosingCalibrationUiState>,
         snapshot: DeviceDosingCalibrationSnapshot
     ): DosingCalibrationSnapshotPresentation {
         val presentation = reduceDosingCalibrationSnapshot(
@@ -353,44 +392,60 @@ internal class DosingCalibrationWorkflow(
         return presentation
     }
 
-    private fun shouldCompleteFromSnapshot(
+    fun shouldCompleteFromSnapshot(
+        session: DosingCalibrationWorkflowSession,
+        state: DeviceDosingCalibrationUiState,
         route: DeviceDosingCalibrationRoute,
         snapshot: DeviceDosingCalibrationSnapshot,
         previousSnapshot: DeviceDosingCalibrationSnapshot?
     ): Boolean {
-        if (session.exiting || session.completionEmitted) return false
-        if (isCommittedConfirmation(snapshot, previousSnapshot)) return true
-        return snapshot.shouldAutoComplete(
-            isRecalibration = route.recalibration,
-            hasLocalProgress = session.hasLocalProgress,
-            completionEmitted = session.completionEmitted
+        val canComplete = !session.exiting && !session.completionEmitted
+        val committedConfirmation = canComplete && isCommittedConfirmation(
+            session = session,
+            state = state,
+            snapshot = snapshot,
+            previousSnapshot = previousSnapshot
         )
+        return committedConfirmation ||
+            canComplete && snapshot.shouldAutoComplete(
+                isRecalibration = route.recalibration,
+                hasLocalProgress = session.hasLocalProgress,
+                completionEmitted = session.completionEmitted
+            )
     }
 
-    private fun isCommittedConfirmation(
+    fun isCommittedConfirmation(
+        session: DosingCalibrationWorkflowSession,
+        state: DeviceDosingCalibrationUiState,
         snapshot: DeviceDosingCalibrationSnapshot,
         previousSnapshot: DeviceDosingCalibrationSnapshot?
     ): Boolean {
-        if (mutableUiState.value.step != DeviceDosingCalibrationStep.CONFIRMATION) return false
-        if (!session.hasLocalProgress) return false
-        return snapshot.isCommittedCalibrationTransitionFrom(
+        val confirmationReady =
+            state.step == DeviceDosingCalibrationStep.CONFIRMATION && session.hasLocalProgress
+        return confirmationReady && snapshot.isCommittedCalibrationTransitionFrom(
             previous = previousSnapshot,
-            expectedDisplayName = mutableUiState.value.displayName
+            expectedDisplayName = state.displayName
         )
     }
 
-    private fun completeFromSnapshot(snapshot: DeviceDosingCalibrationSnapshot) {
+    fun completeFromSnapshot(
+        session: DosingCalibrationWorkflowSession,
+        eventChannel: Channel<DeviceDosingCalibrationEvent>,
+        snapshot: DeviceDosingCalibrationSnapshot
+    ) {
         session.completionEmitted = true
         eventChannel.trySend(DeviceDosingCalibrationEvent.Completed(snapshot.toDetailTarget()))
     }
 
-    private fun scheduleSnapshotCountdown(presentation: DosingCalibrationSnapshotPresentation) {
+    fun scheduleSnapshotCountdown(
+        countdown: DosingCalibrationCountdownController,
+        presentation: DosingCalibrationSnapshotPresentation,
+        onComplete: (verificationDeadline: Boolean) -> Unit
+    ) {
         val verificationDeadline = presentation.countdown is DosingCalibrationCountdown.Verification
         countdown.schedule(
             countdown = presentation.countdown,
-            onComplete = {
-                execute(DosingCalibrationOperation.Refresh, verificationDeadline = verificationDeadline)
-            }
+            onComplete = { onComplete(verificationDeadline) }
         )
     }
 }
