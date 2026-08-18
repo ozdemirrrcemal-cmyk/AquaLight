@@ -279,8 +279,8 @@
     <string name="device_dosing_calibration_step_progress">%1$d. adım / %2$d</string>
     <string name="device_dosing_calibration_name_title">Besin veya katkınızı adlandırın</string>
     <string name="device_dosing_calibration_name_description">Bu kanalda kullanacağınız besin veya katkının adını girin. Bu ad, dozaj planlarında ve bildirimlerde gösterilir.</string>
-    <string name="device_dosing_calibration_prime_title">Hortumu doldurun</string>
-    <string name="device_dosing_calibration_prime_description">Emiş hortumunu sıvı kabına, çıkış hortumunu atık kabına yerleştirin. Basılı tutun; sıvı uçtan kesintisiz ve hava kabarcığı olmadan akınca bırakın.</string>
+    <string name="device_dosing_calibration_prime_title">Hortumu sıvıyla doldurun</string>
+    <string name="device_dosing_calibration_prime_description">Emiş hortumunu sıvı kabına, çıkış hortumunu atık kabına yerleştirin. Sıvı kesintisiz ve hava kabarcığı olmadan akana kadar düğmeyi basılı tutun.</string>
     <string name="device_dosing_calibration_run_title">5 saniyelik kalibrasyon dozunu toplayın</string>
     <string name="device_dosing_calibration_run_description">Çıkış hortumunu temiz, kuru ve düşük hacimli dereceli silindire yerleştirin. Başlattığınızda pompa tam 5 saniye çalışır; silindiri işlem bitene kadar hareket ettirmeyin.</string>
     <string name="device_dosing_calibration_measure_title">Gerçek hacmi girin</string>
@@ -299,7 +299,7 @@
     <string name="device_dosing_calibration_measurement_placeholder">Ölçülen hacim</string>
     <string name="device_dosing_calibration_ml_unit">ml</string>
     <string name="device_dosing_calibration_continue">Devam et</string>
-    <string name="device_dosing_calibration_hold_to_prime">Hortumu doldurmak için basılı tut</string>
+    <string name="device_dosing_calibration_hold_to_prime">Doldurmak için basılı tut</string>
     <string name="device_dosing_calibration_priming">Dolduruluyor… durdurmak için bırak</string>
     <string name="device_dosing_calibration_prime_accessibility">Seçili pompayı çalıştırmak için basılı tutun. Durdurmak için bırakın.</string>
     <string name="device_dosing_calibration_tubing_ready">Hortum tamamen doldu</string>
