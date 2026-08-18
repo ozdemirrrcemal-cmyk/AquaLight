@@ -109,18 +109,6 @@ internal fun CalibrationStepCopy(state: DeviceDosingCalibrationUiState) {
 }
 
 @Composable
-internal fun CalibrationErrorMessage(
-    error: DeviceDosingCalibrationError,
-    colors: AquaGuidedFlowColors
-) {
-    val typography = aquaGuidedFlowTypography(colors)
-    BasicText(
-        text = stringResource(error.messageRes),
-        style = typography.body.copy(color = colors.danger)
-    )
-}
-
-@Composable
 internal fun CalibrationProgressLabel(
     step: DeviceDosingCalibrationStep,
     colors: AquaGuidedFlowColors
