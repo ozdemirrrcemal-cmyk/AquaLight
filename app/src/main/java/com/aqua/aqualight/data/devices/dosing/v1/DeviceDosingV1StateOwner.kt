@@ -78,10 +78,11 @@ private data class OwnedDosingDeviceState(
  * The only device/channel-scoped Dosing state owner.
  *
  * Raw replies and events may enter through different paths, but snapshots enter this owner only
- * after generation, request ordering and revision coherence are proven. Short mutation/event
- * invalidations retain the last validated snapshot for presentation stability while authoritative
- * current reads remain fail-closed until refresh. Channel alert intent is projected from the
- * dedicated owner-scoped ledger; it never becomes a second firmware state owner.
+ * after generation, request ordering and revision coherence are proven. Mutation, event and runtime
+ * lifecycle invalidations retain the last validated snapshots for presentation continuity while
+ * authoritative current reads remain fail-closed until a fresh reconciliation succeeds. Channel
+ * alert intent is projected from the dedicated owner-scoped ledger; it never becomes a second
+ * firmware state owner.
  */
 internal class DeviceDosingV1StateOwner(
     private val lowLevelAlertLedger: DeviceDosingLowLevelAlertLedger =
@@ -224,6 +225,28 @@ internal class DeviceDosingV1StateOwner(
         DeviceDosingV1InvalidationDisposition.APPLIED
     }
 
+    /**
+     * Revokes current-session authority without erasing the last validated presentation snapshot.
+     *
+     * Request generations are advanced first so a response started before the lifecycle boundary
+     * cannot race the disconnect/re-authentication transition and make the previous session current
+     * again. Fresh requests may subsequently re-authorize this generation, or a newer connection
+     * generation may replace it through the normal commit path.
+     */
+    fun invalidateForRuntimeLifecycle(deviceUid: DeviceUid) = synchronized(lock) {
+        requestGenerations.invalidateRequestsFor(deviceUid)
+        val device = states.value[deviceUid] ?: return@synchronized
+        publish(
+            deviceUid,
+            device.copy(
+                global = null,
+                channels = device.channels.mapValues { (_, channel) ->
+                    channel.copy(invalidated = true)
+                }
+            )
+        )
+    }
+
     fun setLowLevelAlertIntent(
         deviceUid: DeviceUid,
         channelKey: DeviceDosingV1ChannelKey,
@@ -248,7 +271,7 @@ internal class DeviceDosingV1StateOwner(
         )
     }
 
-    /** Runtime lifecycle clearing must never erase durable channel alert intent or dedupe state. */
+    /** Hard owner teardown only; runtime lifecycle boundaries use invalidation instead. */
     fun clear(deviceUid: DeviceUid) = synchronized(lock) {
         if (deviceUid in states.value) {
             states.value = states.value.toMutableMap().apply { remove(deviceUid) }.toMap()
@@ -368,6 +391,13 @@ private data class DosingStateAddress(
     val deviceUid: DeviceUid,
     val channelKey: DeviceDosingV1ChannelKey
 )
+
+private fun MutableMap<DosingStateAddress, Long>.invalidateRequestsFor(deviceUid: DeviceUid) {
+    val addresses = keys.filter { address -> address.deviceUid == deviceUid }
+    for (address in addresses) {
+        this[address] = getValue(address) + 1L
+    }
+}
 
 private fun OwnedDosingChannelState.presentationChannel(): DeviceDosingChannelSnapshot? = channel
 
