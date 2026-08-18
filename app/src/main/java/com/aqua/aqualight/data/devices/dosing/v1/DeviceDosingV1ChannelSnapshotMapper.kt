@@ -81,6 +81,7 @@ internal object DeviceDosingV1ChannelSnapshotMapper {
             global.envelope.storageHealthy &&
             !detail.activeRun.active &&
             detail.calibration.state.raw == CALIBRATION_IDLE
+        val resetAllowed = global.envelope.bootReady && global.envelope.storageHealthy
 
         return DeviceDosingChannelControls(
             programEditable = persistedMutationAllowed && global.runtime.supportsProgramApply,
@@ -94,7 +95,8 @@ internal object DeviceDosingV1ChannelSnapshotMapper {
                 global.runtime.supportsCalibrationWorkflow,
             manualDoseSupported = global.runtime.supportsManualDose,
             stopDoseSupported = global.runtime.supportsManualDose,
-            resetSupported = global.runtime.supportsChannelReset &&
+            resetSupported = resetAllowed &&
+                global.runtime.supportsChannelReset &&
                 global.scheduling.supportsChannelReset,
             refillSupported = detail.editable.reservoir && global.runtime.supportsReservoirRefill
         )
