@@ -277,8 +277,8 @@
     <string name="device_dosing_detail_operation_failed">Dozaj değişikliği uygulanamadı. Tekrar deneyin.</string>
 
     <string name="device_dosing_calibration_step_progress">%1$d. adım / %2$d</string>
-    <string name="device_dosing_calibration_name_title">Dozaj kanalını tanımlayın</string>
-    <string name="device_dosing_calibration_name_description">Bu kanalda kullandığınız besin veya katkının adını girin. AquaLight, dozaj planlarında ve uyarılarda bu adı gösterecek.</string>
+    <string name="device_dosing_calibration_name_title">Besin veya katkınızı adlandırın</string>
+    <string name="device_dosing_calibration_name_description">Bu kanalda kullanacağınız besin veya katkının adını girin. Bu ad, dozaj planlarında ve bildirimlerde gösterilir.</string>
     <string name="device_dosing_calibration_prime_title">Hortumu doldurun</string>
     <string name="device_dosing_calibration_prime_description">Emiş hortumunu sıvı kabına, çıkış hortumunu atık kabına yerleştirin. Basılı tutun; sıvı uçtan kesintisiz ve hava kabarcığı olmadan akınca bırakın.</string>
     <string name="device_dosing_calibration_run_title">5 saniyelik kalibrasyon dozunu toplayın</string>
@@ -295,7 +295,7 @@
     <string name="device_dosing_calibration_measure_illustration_description">Menisküsün en alt noktasının göz hizasında okunmasını gösteren dereceli silindir.</string>
     <string name="device_dosing_calibration_verify_illustration_description">Pompanın dereceli silindire 4 mililitre test dozu verdiğini gösteren animasyon.</string>
     <string name="device_dosing_calibration_confirm_illustration_description">Menisküsü 4 mililitre çizgisinde ve kabul aralığında gösteren dereceli silindir.</string>
-    <string name="device_dosing_calibration_name_placeholder">Besin adı</string>
+    <string name="device_dosing_calibration_name_placeholder">Besin veya katkı adı</string>
     <string name="device_dosing_calibration_measurement_placeholder">Ölçülen hacim</string>
     <string name="device_dosing_calibration_ml_unit">ml</string>
     <string name="device_dosing_calibration_continue">Devam et</string>
