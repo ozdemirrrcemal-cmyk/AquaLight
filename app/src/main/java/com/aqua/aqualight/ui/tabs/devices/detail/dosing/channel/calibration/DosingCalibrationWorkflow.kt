@@ -90,7 +90,7 @@ internal class DosingCalibrationWorkflow(
             session.nameDraftInitialized = true
         }
         if (decision.markLocalProgress) session.hasLocalProgress = true
-        applyPrimeDirective(decision.primeDirective)
+        session.applyPrimeDirective(decision.primeDirective, ::startPrimeSafetyWindow)
         if (decision.operation == DosingCalibrationOperation.ContinueFromPrime) {
             session.primeRequested = false
             session.primeSafetyJob?.cancel()
@@ -161,17 +161,6 @@ internal class DosingCalibrationWorkflow(
             } finally {
                 session.endOperation()
             }
-        }
-    }
-
-    private fun applyPrimeDirective(directive: DosingCalibrationPrimeDirective?) {
-        when (directive) {
-            DosingCalibrationPrimeDirective.START -> startPrimeSafetyWindow()
-            DosingCalibrationPrimeDirective.STOP -> {
-                session.primeSafetyJob?.cancel()
-                session.primeRequested = false
-            }
-            null -> Unit
         }
     }
 
@@ -349,6 +338,20 @@ internal class DosingCalibrationWorkflow(
                 session.endOperation()
             }
         }
+    }
+}
+
+private fun DosingCalibrationWorkflowSession.applyPrimeDirective(
+    directive: DosingCalibrationPrimeDirective?,
+    startPrimeSafetyWindow: () -> Unit
+) {
+    when (directive) {
+        DosingCalibrationPrimeDirective.START -> startPrimeSafetyWindow()
+        DosingCalibrationPrimeDirective.STOP -> {
+            primeSafetyJob?.cancel()
+            primeRequested = false
+        }
+        null -> Unit
     }
 }
 
