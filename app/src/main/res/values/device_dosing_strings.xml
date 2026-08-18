@@ -287,8 +287,8 @@
     <string name="device_dosing_calibration_measure_description">Place the cylinder on a level surface. Read the liquid level at eye level and enter the value to the nearest 0.05 ml.</string>
     <string name="device_dosing_calibration_verify_title">Apply the 4.00 ml test dose</string>
     <string name="device_dosing_calibration_verify_description">Empty and completely dry the cylinder, then place the outlet tube back inside it. The pump will dispense a 4.00 ml test dose using the new calibration setting.</string>
-    <string name="device_dosing_calibration_confirm_title">Check the test dose</string>
-    <string name="device_dosing_calibration_confirm_description">Read the cylinder at eye level on a level surface. Save if it shows 3.95–4.05 ml; otherwise recalibrate. The previous calibration remains until you save.</string>
+    <string name="device_dosing_calibration_confirm_title">Check the test result</string>
+    <string name="device_dosing_calibration_confirm_description">Check the liquid level in the cylinder at eye level. If the value is between 3.95–4.05 ml, save the calibration; otherwise recalibrate. If you exit without saving, the current calibration is preserved.</string>
     <string name="device_dosing_calibration_name_illustration_description">Animated liquid reservoir and name label.</string>
     <string name="device_dosing_calibration_prime_illustration_description">Animation of liquid flowing from the reservoir through the peristaltic pump and tubing into a waste cup.</string>
     <string name="device_dosing_calibration_run_illustration_description">Animation of liquid flowing through the pump and tubing into a graduated cylinder.</string>
