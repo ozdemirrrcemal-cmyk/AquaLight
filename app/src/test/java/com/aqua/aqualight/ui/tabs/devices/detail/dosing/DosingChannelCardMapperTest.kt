@@ -131,7 +131,8 @@ class DosingChannelCardMapperTest {
             occurrences = listOf(
                 occurrence(index = 0, state = DeviceDosingOccurrenceState.RUNNING, amount = 10_000L)
             ),
-            executionCurrent = true
+            executionCurrent = true,
+            programDayDate = MONDAY
         )
         val state = channelSlot().toInitialDosingChannelCardUiState().withChannelSnapshot(
             snapshot = snapshot(

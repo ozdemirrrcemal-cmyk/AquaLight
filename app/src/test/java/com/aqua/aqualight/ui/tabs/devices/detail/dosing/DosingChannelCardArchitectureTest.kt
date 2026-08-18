@@ -91,6 +91,7 @@ class DosingChannelCardArchitectureTest {
         )
         assertTrue(summary.contains("DosingProgramSetupSummary"))
         assertTrue(summary.contains("device_dosing_channel_program_empty_title"))
+        assertTrue(summary.contains("device_dosing_channel_program_empty_description"))
         assertTrue(
             models.contains(
                 "PROGRAM_NOT_CONFIGURED(R.string.device_dosing_channel_program_not_configured, false)"
@@ -144,11 +145,14 @@ class DosingChannelCardArchitectureTest {
         assertFalse(progress.contains("device_dosing_channel_manual_label"))
         assertTrue(
             reservoirMapper.contains(
-                "DeviceDosingSupplyProjectionPolicy.evaluate(this, today) ?: return null"
+                "DeviceDosingSupplyProjectionPolicy.evaluate(this) ?: return null"
             )
         )
+        assertFalse(reservoirMapper.contains("LocalDate"))
+        assertFalse(reservoirMapper.contains("today"))
         assertFalse(reservoirMapper.contains("reservoir.trackingEnabled"))
         assertTrue(supplyPolicy.contains("if (!reservoir.trackingEnabled) return null"))
+        assertTrue(supplyPolicy.contains("val programDayDate = progress.programDayDate"))
         assertTrue(summary.contains("state.reservoir?.let"))
         assertFalse(progress.contains("scheduledDeliveredTodayMl +"))
     }

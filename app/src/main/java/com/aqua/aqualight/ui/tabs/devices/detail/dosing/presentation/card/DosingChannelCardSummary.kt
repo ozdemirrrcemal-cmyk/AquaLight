@@ -10,6 +10,8 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import com.aqua.aqualight.R
@@ -203,8 +205,12 @@ private fun DosingProgramSetupSummary(
     typography: AquaDeviceCardTypography,
     modifier: Modifier = Modifier
 ) {
+    val title = stringResource(R.string.device_dosing_channel_program_empty_title)
+    val description = stringResource(R.string.device_dosing_channel_program_empty_description)
     Row(
-        modifier = modifier,
+        modifier = modifier.semantics(mergeDescendants = true) {
+            contentDescription = "$title. $description"
+        },
         horizontalArrangement = Arrangement.spacedBy(SUMMARY_ICON_GAP),
         verticalAlignment = Alignment.CenterVertically
     ) {
@@ -214,7 +220,7 @@ private fun DosingProgramSetupSummary(
             modifier = Modifier.size(SUMMARY_ICON_SIZE)
         )
         BasicText(
-            text = stringResource(R.string.device_dosing_channel_program_empty_title),
+            text = title,
             modifier = Modifier.weight(1f),
             style = typography.caption.copy(color = colors.primaryText),
             maxLines = 1,
