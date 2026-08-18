@@ -2,6 +2,7 @@
 
 package com.aqua.aqualight.application.devices.dosing
 
+import java.time.LocalDate
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flowOf
 
@@ -244,7 +245,9 @@ data class DeviceDosingChannelProgress(
     val completedAmountMicroliters: Long = 0L,
     val occurrences: List<DeviceDosingOccurrenceProgress> = emptyList(),
     val executionCurrent: Boolean = false,
-    val accountingCertain: Boolean = true
+    val accountingCertain: Boolean = true,
+    /** Firmware-owned active program day. Null means no authoritative projection anchor exists. */
+    val programDayDate: LocalDate? = null
 ) {
     init {
         require(scheduledAmountMicroliters >= 0L)

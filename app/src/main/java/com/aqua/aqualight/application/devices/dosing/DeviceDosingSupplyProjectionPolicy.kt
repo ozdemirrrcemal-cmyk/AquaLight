@@ -10,14 +10,11 @@ import java.time.LocalDate
  */
 object DeviceDosingSupplyProjectionPolicy {
 
-    fun evaluate(
-        snapshot: DeviceDosingChannelSnapshot,
-        today: LocalDate
-    ): DeviceDosingSupplyProjection? {
+    fun evaluate(snapshot: DeviceDosingChannelSnapshot): DeviceDosingSupplyProjection? {
         val reservoir = snapshot.reservoir
         if (!reservoir.trackingEnabled) return null
 
-        val remainingDays = snapshot.estimatedRemainingDays(today)
+        val remainingDays = snapshot.estimatedRemainingDays()
         val supplySeverity = when {
             !reservoir.accountingCertain || !snapshot.deliveryAccountingCertain ->
                 DeviceDosingSupplySeverity.UNCERTAIN
@@ -33,7 +30,7 @@ object DeviceDosingSupplyProjectionPolicy {
         )
     }
 
-    private fun DeviceDosingChannelSnapshot.estimatedRemainingDays(today: LocalDate): Int? {
+    private fun DeviceDosingChannelSnapshot.estimatedRemainingDays(): Int? {
         val configuredProgram = program ?: return null
         val canEstimate = listOf(
             configuredProgram.enabled,
@@ -42,8 +39,10 @@ object DeviceDosingSupplyProjectionPolicy {
             deliveryAccountingCertain
         ).all { valid -> valid }
         val dailyDoseMicroliters = configuredProgram.dailyDoseMicroliters()
+        val programDayDate = progress.programDayDate
         return when {
             !canEstimate -> null
+            programDayDate == null -> null
             dailyDoseMicroliters <= 0L -> null
             configuredProgram.weekdays.none { selected -> selected } -> null
             else -> estimateRemainingDays(
@@ -53,7 +52,7 @@ object DeviceDosingSupplyProjectionPolicy {
                     (progress.scheduledAmountMicroliters - progress.completedAmountMicroliters)
                         .coerceAtLeast(0L),
                 selectedWeekdays = configuredProgram.weekdays,
-                today = today
+                programDayDate = programDayDate
             )
         }
     }
@@ -63,14 +62,15 @@ object DeviceDosingSupplyProjectionPolicy {
         dailyDoseMicroliters: Long,
         remainingScheduledTodayMicroliters: Long,
         selectedWeekdays: List<Boolean>,
-        today: LocalDate
+        programDayDate: LocalDate
     ): Int {
         var availableMicroliters = remainingMicroliters
         return (0..MAX_PROJECTION_DAYS).firstOrNull { dayOffset ->
             val plannedMicroliters = when {
                 dayOffset == 0 -> remainingScheduledTodayMicroliters
-                selectedWeekdays[today.plusDays(dayOffset.toLong()).dayOfWeek.value - 1] ->
-                    dailyDoseMicroliters
+                selectedWeekdays[
+                    programDayDate.plusDays(dayOffset.toLong()).dayOfWeek.value - 1
+                ] -> dailyDoseMicroliters
                 else -> 0L
             }
             val exhausted = plannedMicroliters > availableMicroliters

@@ -24,7 +24,7 @@ internal fun DeviceDosingChannelSnapshot.toDosingChannelCardUiState(
     visualState = toCardVisualState(),
     scheduleDays = toScheduleDaysUiState(),
     programProgress = toProgramProgressUiState(today),
-    reservoir = toReservoirUiState(today)
+    reservoir = toReservoirUiState()
 )
 
 internal fun DosingChannelCardUiState.withChannelSnapshot(
