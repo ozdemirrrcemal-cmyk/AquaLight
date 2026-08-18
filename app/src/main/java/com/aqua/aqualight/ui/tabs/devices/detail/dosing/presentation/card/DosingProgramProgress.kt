@@ -81,7 +81,12 @@ private fun DosingModeProgressGraphic(
     modifier: Modifier = Modifier
 ) {
     if (state.occurrences.isEmpty()) {
-        DosingNoDoseTodayProgress(palette, typography, modifier)
+        DosingEmptyProgramProgress(
+            disabled = state.visualState == DosingDoseProgressVisualState.DISABLED,
+            palette = palette,
+            typography = typography,
+            modifier = modifier
+        )
         return
     }
     when (state.mode) {
@@ -98,12 +103,18 @@ private fun DosingModeProgressGraphic(
 }
 
 @Composable
-private fun DosingNoDoseTodayProgress(
+private fun DosingEmptyProgramProgress(
+    disabled: Boolean,
     palette: DosingProgressPalette,
     typography: AquaDeviceCardTypography,
     modifier: Modifier = Modifier
 ) {
     val shape = RoundedCornerShape(PROGRESS_CORNER_RADIUS)
+    val emptyLabel = if (disabled) {
+        null
+    } else {
+        stringResource(R.string.device_dosing_channel_no_scheduled_dose_today)
+    }
     Column(modifier = modifier.fillMaxWidth()) {
         Spacer(modifier = Modifier.height(PROGRESS_VALUE_TAG_AREA_HEIGHT))
         Box(
@@ -115,12 +126,14 @@ private fun DosingNoDoseTodayProgress(
                 .border(width = PROGRESS_OUTLINE_WIDTH, color = palette.outline, shape = shape),
             contentAlignment = Alignment.Center
         ) {
-            BasicText(
-                text = stringResource(R.string.device_dosing_channel_no_scheduled_dose_today),
-                style = typography.micro.copy(color = palette.valueText),
-                maxLines = 1,
-                overflow = TextOverflow.Ellipsis
-            )
+            emptyLabel?.let { label ->
+                BasicText(
+                    text = label,
+                    style = typography.micro.copy(color = palette.valueText),
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis
+                )
+            }
         }
     }
 }
