@@ -54,11 +54,6 @@ internal fun DeviceDosingCalibrationScreen(
                 onAction = onAction
             )
         }
-        state.error?.let { error ->
-            item(key = CALIBRATION_ERROR_KEY) {
-                CalibrationErrorMessage(error = error, colors = colors)
-            }
-        }
     }
 }
 
@@ -67,4 +62,3 @@ private const val CALIBRATION_PROGRESS_KEY = "progress"
 private const val CALIBRATION_ILLUSTRATION_KEY = "illustration"
 private const val CALIBRATION_COPY_KEY = "copy"
 private const val CALIBRATION_CONTROLS_KEY = "controls"
-private const val CALIBRATION_ERROR_KEY = "error"
