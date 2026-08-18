@@ -277,8 +277,8 @@
     <string name="device_dosing_detail_operation_failed">The dosing change could not be applied. Try again.</string>
 
     <string name="device_dosing_calibration_step_progress">Step %1$d of %2$d</string>
-    <string name="device_dosing_calibration_name_title">Identify this dosing channel</string>
-    <string name="device_dosing_calibration_name_description">Enter the nutrient or additive used on this channel. AquaLight will show this name in dosing schedules and alerts.</string>
+    <string name="device_dosing_calibration_name_title">Name your nutrient or additive</string>
+    <string name="device_dosing_calibration_name_description">Enter the name of the nutrient or additive you will use on this channel. This name appears in dosing schedules and notifications.</string>
     <string name="device_dosing_calibration_prime_title">Prime the tubing</string>
     <string name="device_dosing_calibration_prime_description">Place the intake tube in the liquid reservoir and the outlet tube in a waste cup. Press and hold; release when liquid flows continuously with no air bubbles.</string>
     <string name="device_dosing_calibration_run_title">Collect the 5-second calibration dose</string>
@@ -295,7 +295,7 @@
     <string name="device_dosing_calibration_measure_illustration_description">Graduated cylinder showing how to read the bottom of the meniscus at eye level.</string>
     <string name="device_dosing_calibration_verify_illustration_description">Animation of the pump dispensing a 4 milliliter test dose into a graduated cylinder.</string>
     <string name="device_dosing_calibration_confirm_illustration_description">Graduated cylinder with the meniscus at 4 milliliters inside the accepted range.</string>
-    <string name="device_dosing_calibration_name_placeholder">Nutrient name</string>
+    <string name="device_dosing_calibration_name_placeholder">Nutrient or additive name</string>
     <string name="device_dosing_calibration_measurement_placeholder">Measured volume</string>
     <string name="device_dosing_calibration_ml_unit">ml</string>
     <string name="device_dosing_calibration_continue">Continue</string>
