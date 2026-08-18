@@ -35,9 +35,9 @@ class DeviceDosingSupplyProjectionPolicyTest {
 
     @Test
     fun `missing firmware program day suppresses estimate without hiding supply projection`() {
-        val snapshot = channelSnapshot(
-            remainingMicroliters = 80_000L,
-            programDayDate = null
+        val authoritative = channelSnapshot(remainingMicroliters = 80_000L)
+        val snapshot = authoritative.copy(
+            progress = authoritative.progress.copy(programDayDate = null)
         )
 
         val projection = requireNotNull(DeviceDosingSupplyProjectionPolicy.evaluate(snapshot))
@@ -208,8 +208,7 @@ class DeviceDosingSupplyProjectionPolicyTest {
         remainingMicroliters: Long,
         program: DeviceDosingProgram = singleDoseProgram(),
         lowLevelActive: Boolean = false,
-        reservoirAccountingCertain: Boolean = true,
-        programDayDate: LocalDate? = MONDAY
+        reservoirAccountingCertain: Boolean = true
     ) = DeviceDosingChannelSnapshot(
         deviceUid = "device-1",
         slotId = "dosing:channel1",
@@ -228,7 +227,7 @@ class DeviceDosingSupplyProjectionPolicyTest {
             scheduledAmountMicroliters = 0L,
             completedAmountMicroliters = 0L,
             executionCurrent = true,
-            programDayDate = programDayDate
+            programDayDate = MONDAY
         ),
         reservoir = DeviceDosingReservoirSnapshot(
             trackingEnabled = true,
