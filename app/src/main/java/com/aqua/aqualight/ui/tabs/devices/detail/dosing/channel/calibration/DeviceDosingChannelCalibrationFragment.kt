@@ -14,6 +14,7 @@ import androidx.lifecycle.repeatOnLifecycle
 import androidx.navigation.fragment.findNavController
 import androidx.navigation.fragment.navArgs
 import com.aqua.aqualight.R
+import com.aqua.aqualight.base.BaseActivity
 import com.aqua.aqualight.composition.requireAppContainer
 import com.aqua.aqualight.ui.navigation.AppRouteNavigator
 import com.aqua.aqualight.ui.tabs.devices.detail.dosing.channel.common.DeviceDosingChannelDestinationFragment
@@ -87,7 +88,8 @@ class DeviceDosingChannelCalibrationFragment :
     private fun observeEvents() {
         viewLifecycleOwner.lifecycleScope.launch {
             viewLifecycleOwner.repeatOnLifecycle(Lifecycle.State.STARTED) {
-                viewModel.events.collect(::handleEvent)
+                launch { viewModel.events.collect(::handleEvent) }
+                launch { viewModel.feedbackEvents.collect(::showCalibrationFailure) }
             }
         }
     }
@@ -97,6 +99,13 @@ class DeviceDosingChannelCalibrationFragment :
             DeviceDosingCalibrationEvent.Exit -> findNavController().navigateUp()
             is DeviceDosingCalibrationEvent.Completed -> openCompletedChannel(event)
         }
+    }
+
+    private fun showCalibrationFailure(error: DeviceDosingCalibrationError) {
+        (activity as? BaseActivity)?.showSnackBar(
+            message = getString(error.messageRes),
+            type = error.snackType()
+        )
     }
 
     private fun openCompletedChannel(event: DeviceDosingCalibrationEvent.Completed) {
@@ -112,4 +121,18 @@ class DeviceDosingChannelCalibrationFragment :
     private companion object {
         const val STATE_DISPLAY_NAME_DRAFT = "dosingCalibration.displayNameDraft"
     }
+}
+
+private fun DeviceDosingCalibrationError.snackType(): BaseActivity.SnackType = when (this) {
+    DeviceDosingCalibrationError.DISPLAY_NAME_REQUIRED,
+    DeviceDosingCalibrationError.DISPLAY_NAME_CONTROL_CHARACTER,
+    DeviceDosingCalibrationError.DISPLAY_NAME_TOO_LONG,
+    DeviceDosingCalibrationError.INVALID_MEASUREMENT,
+    DeviceDosingCalibrationError.OPERATION_IN_PROGRESS,
+    DeviceDosingCalibrationError.DEVICE_TIME_NOT_READY,
+    DeviceDosingCalibrationError.CALIBRATION_STATE_MISMATCH -> BaseActivity.SnackType.WARNING
+    DeviceDosingCalibrationError.CONNECTION,
+    DeviceDosingCalibrationError.STORAGE,
+    DeviceDosingCalibrationError.HARDWARE,
+    DeviceDosingCalibrationError.OPERATION_FAILED -> BaseActivity.SnackType.ERROR
 }
