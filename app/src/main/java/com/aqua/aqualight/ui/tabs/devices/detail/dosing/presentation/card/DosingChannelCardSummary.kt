@@ -34,50 +34,76 @@ internal fun DosingChannelSummary(
                 typography = typography
             )
         } else {
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(SUMMARY_COLUMN_GAP),
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                DosingMetricSummary(
-                    icon = DosingMetricGlyphType.DOSE,
-                    label = stringResource(
-                        R.string.device_dosing_channel_daily_dose_format,
-                        state.programProgress.dailyDoseMl
-                    ),
-                    colors = colors,
-                    typography = typography,
-                    modifier = Modifier.weight(SUMMARY_LEADING_COLUMN_WEIGHT)
-                )
-                DosingMetricSummary(
-                    icon = DosingMetricGlyphType.DAYS,
-                    label = state.scheduleDays.summaryLabel(),
-                    colors = colors,
-                    typography = typography,
-                    modifier = Modifier.weight(SUMMARY_TRAILING_COLUMN_WEIGHT)
-                )
-            }
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(SUMMARY_COLUMN_GAP),
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                DosingProgramSummary(
-                    visualState = state.visualState,
-                    progress = state.programProgress,
-                    colors = colors,
-                    typography = typography,
-                    modifier = Modifier.weight(SUMMARY_LEADING_COLUMN_WEIGHT)
-                )
-                state.reservoir?.let { reservoir ->
-                    DosingReservoirSummary(
-                        state = reservoir,
-                        colors = colors,
-                        typography = typography,
-                        modifier = Modifier.weight(SUMMARY_TRAILING_COLUMN_WEIGHT)
-                    )
-                }
-            }
+            DosingScheduleMetricsRow(
+                state = state,
+                colors = colors,
+                typography = typography
+            )
+            DosingProgramAndReservoirRow(
+                state = state,
+                colors = colors,
+                typography = typography
+            )
+        }
+    }
+}
+
+@Composable
+private fun DosingScheduleMetricsRow(
+    state: DosingChannelCardUiState,
+    colors: AquaDeviceCardColors,
+    typography: AquaDeviceCardTypography
+) {
+    Row(
+        modifier = Modifier.fillMaxWidth(),
+        horizontalArrangement = Arrangement.spacedBy(SUMMARY_COLUMN_GAP),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        DosingMetricSummary(
+            icon = DosingMetricGlyphType.DOSE,
+            label = stringResource(
+                R.string.device_dosing_channel_daily_dose_format,
+                state.programProgress.dailyDoseMl
+            ),
+            colors = colors,
+            typography = typography,
+            modifier = Modifier.weight(SUMMARY_LEADING_COLUMN_WEIGHT)
+        )
+        DosingMetricSummary(
+            icon = DosingMetricGlyphType.DAYS,
+            label = state.scheduleDays.summaryLabel(),
+            colors = colors,
+            typography = typography,
+            modifier = Modifier.weight(SUMMARY_TRAILING_COLUMN_WEIGHT)
+        )
+    }
+}
+
+@Composable
+private fun DosingProgramAndReservoirRow(
+    state: DosingChannelCardUiState,
+    colors: AquaDeviceCardColors,
+    typography: AquaDeviceCardTypography
+) {
+    Row(
+        modifier = Modifier.fillMaxWidth(),
+        horizontalArrangement = Arrangement.spacedBy(SUMMARY_COLUMN_GAP),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        DosingProgramSummary(
+            visualState = state.visualState,
+            progress = state.programProgress,
+            colors = colors,
+            typography = typography,
+            modifier = Modifier.weight(SUMMARY_LEADING_COLUMN_WEIGHT)
+        )
+        state.reservoir?.let { reservoir ->
+            DosingReservoirSummary(
+                state = reservoir,
+                colors = colors,
+                typography = typography,
+                modifier = Modifier.weight(SUMMARY_TRAILING_COLUMN_WEIGHT)
+            )
         }
     }
 }
