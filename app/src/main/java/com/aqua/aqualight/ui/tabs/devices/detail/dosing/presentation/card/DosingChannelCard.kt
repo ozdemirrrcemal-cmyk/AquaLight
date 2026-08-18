@@ -84,14 +84,6 @@ private fun DosingChannelCardContent(
                 colors = colors,
                 typography = typography
             )
-            DosingChannelVisualState.PROGRAM_NOT_CONFIGURED -> DosingChannelEmptyState(
-                title = stringResource(R.string.device_dosing_channel_program_empty_title),
-                description = stringResource(
-                    R.string.device_dosing_channel_program_empty_description
-                ),
-                colors = colors,
-                typography = typography
-            )
             else -> {
                 DosingChannelSummary(state, colors, typography)
                 DosingProgramProgress(state.programProgress, colors, typography)

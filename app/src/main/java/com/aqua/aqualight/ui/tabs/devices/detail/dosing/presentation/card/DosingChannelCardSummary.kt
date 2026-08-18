@@ -26,48 +26,57 @@ internal fun DosingChannelSummary(
         modifier = Modifier.fillMaxWidth(),
         verticalArrangement = Arrangement.spacedBy(SUMMARY_ROW_GAP)
     ) {
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.spacedBy(SUMMARY_COLUMN_GAP),
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            DosingMetricSummary(
-                icon = DosingMetricGlyphType.DOSE,
-                label = stringResource(
-                    R.string.device_dosing_channel_daily_dose_format,
-                    state.programProgress.dailyDoseMl
-                ),
-                colors = colors,
-                typography = typography,
-                modifier = Modifier.weight(SUMMARY_LEADING_COLUMN_WEIGHT)
-            )
-            DosingMetricSummary(
-                icon = DosingMetricGlyphType.DAYS,
-                label = state.scheduleDays.summaryLabel(),
-                colors = colors,
-                typography = typography,
-                modifier = Modifier.weight(SUMMARY_TRAILING_COLUMN_WEIGHT)
-            )
-        }
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.spacedBy(SUMMARY_COLUMN_GAP),
-            verticalAlignment = Alignment.CenterVertically
-        ) {
+        if (state.visualState == DosingChannelVisualState.PROGRAM_NOT_CONFIGURED) {
             DosingProgramSummary(
                 visualState = state.visualState,
                 progress = state.programProgress,
                 colors = colors,
-                typography = typography,
-                modifier = Modifier.weight(SUMMARY_LEADING_COLUMN_WEIGHT)
+                typography = typography
             )
-            state.reservoir?.let { reservoir ->
-                DosingReservoirSummary(
-                    state = reservoir,
+        } else {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(SUMMARY_COLUMN_GAP),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                DosingMetricSummary(
+                    icon = DosingMetricGlyphType.DOSE,
+                    label = stringResource(
+                        R.string.device_dosing_channel_daily_dose_format,
+                        state.programProgress.dailyDoseMl
+                    ),
+                    colors = colors,
+                    typography = typography,
+                    modifier = Modifier.weight(SUMMARY_LEADING_COLUMN_WEIGHT)
+                )
+                DosingMetricSummary(
+                    icon = DosingMetricGlyphType.DAYS,
+                    label = state.scheduleDays.summaryLabel(),
                     colors = colors,
                     typography = typography,
                     modifier = Modifier.weight(SUMMARY_TRAILING_COLUMN_WEIGHT)
                 )
+            }
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(SUMMARY_COLUMN_GAP),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                DosingProgramSummary(
+                    visualState = state.visualState,
+                    progress = state.programProgress,
+                    colors = colors,
+                    typography = typography,
+                    modifier = Modifier.weight(SUMMARY_LEADING_COLUMN_WEIGHT)
+                )
+                state.reservoir?.let { reservoir ->
+                    DosingReservoirSummary(
+                        state = reservoir,
+                        colors = colors,
+                        typography = typography,
+                        modifier = Modifier.weight(SUMMARY_TRAILING_COLUMN_WEIGHT)
+                    )
+                }
             }
         }
     }
@@ -113,7 +122,18 @@ private fun DosingProgramSummary(
     typography: AquaDeviceCardTypography,
     modifier: Modifier = Modifier
 ) {
-    val mode = progress.mode ?: return
+    val mode = progress.mode
+    if (mode == null) {
+        if (visualState == DosingChannelVisualState.PROGRAM_NOT_CONFIGURED) {
+            DosingProgramSetupSummary(
+                colors = colors,
+                typography = typography,
+                modifier = modifier
+            )
+        }
+        return
+    }
+
     val automaticDosingOff = visualState == DosingChannelVisualState.AUTOMATIC_DOSING_OFF
     val label = when {
         automaticDosingOff -> stringResource(visualState.labelRes)
@@ -145,6 +165,32 @@ private fun DosingProgramSummary(
             style = typography.caption.copy(
                 color = if (automaticDosingOff) colors.warning else colors.primaryText
             ),
+            maxLines = 1,
+            overflow = TextOverflow.Ellipsis
+        )
+    }
+}
+
+@Composable
+private fun DosingProgramSetupSummary(
+    colors: AquaDeviceCardColors,
+    typography: AquaDeviceCardTypography,
+    modifier: Modifier = Modifier
+) {
+    Row(
+        modifier = modifier,
+        horizontalArrangement = Arrangement.spacedBy(SUMMARY_ICON_GAP),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        DosingEmptyStateGlyph(
+            tint = colors.accent,
+            badgeSurface = colors.mediaSurface,
+            modifier = Modifier.size(SUMMARY_ICON_SIZE)
+        )
+        BasicText(
+            text = stringResource(R.string.device_dosing_channel_program_empty_title),
+            modifier = Modifier.weight(1f),
+            style = typography.caption.copy(color = colors.primaryText),
             maxLines = 1,
             overflow = TextOverflow.Ellipsis
         )
