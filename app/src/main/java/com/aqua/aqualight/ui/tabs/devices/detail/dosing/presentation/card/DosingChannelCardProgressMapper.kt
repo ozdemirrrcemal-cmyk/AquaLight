@@ -71,9 +71,8 @@ private fun DeviceDosingOccurrenceProgress.toUiState() = DosingProgressOccurrenc
 private fun DeviceDosingProgram.toCustomPeriodUiStates(
     occurrences: List<DosingProgressOccurrenceUiState>
 ): List<DosingCustomPeriodProgressUiState> {
-    if (occurrences.isEmpty()) return emptyList()
     val periods = (schedule as? DeviceDosingProgramSchedule.CustomPeriods)?.periods
-        ?: return emptyList()
+    if (occurrences.isEmpty() || periods == null) return emptyList()
     var cursor = 0
     return periods.map { period ->
         DosingCustomPeriodProgressUiState(
