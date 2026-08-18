@@ -287,8 +287,8 @@
     <string name="device_dosing_calibration_measure_description">Silindiri düz bir zemine yerleştirin. Sıvı seviyesini göz hizasında okuyun ve değeri 0,05 ml hassasiyetle girin.</string>
     <string name="device_dosing_calibration_verify_title">4,00 ml test dozunu uygulayın</string>
     <string name="device_dosing_calibration_verify_description">Silindiri boşaltıp tamamen kurulayın ve çıkış hortumunu yeniden içine yerleştirin. Pompa, yeni kalibrasyon ayarıyla 4,00 ml test dozu verecek.</string>
-    <string name="device_dosing_calibration_confirm_title">Test dozunu kontrol edin</string>
-    <string name="device_dosing_calibration_confirm_description">Silindiri düz zeminde göz hizasında okuyun. Seviye 3,95–4,05 ml arasındaysa kaydedin; değilse yeniden kalibre edin. Kaydetmedikçe önceki kalibrasyon korunur.</string>
+    <string name="device_dosing_calibration_confirm_title">Test sonucunu kontrol edin</string>
+    <string name="device_dosing_calibration_confirm_description">Silindirdeki sıvı seviyesini göz hizasında kontrol edin. Değer 3,95–4,05 ml arasındaysa kalibrasyonu kaydedin; değilse yeniden kalibre edin. Kaydetmeden çıkarsanız mevcut kalibrasyon korunur.</string>
     <string name="device_dosing_calibration_name_illustration_description">Sıvı kabı ve ad etiketinin animasyonlu gösterimi.</string>
     <string name="device_dosing_calibration_prime_illustration_description">Sıvının kaptan peristaltik pompaya, hortumdan da atık kabına aktığını gösteren animasyon.</string>
     <string name="device_dosing_calibration_run_illustration_description">Sıvının pompa ve hortumdan dereceli silindire aktığını gösteren animasyon.</string>
