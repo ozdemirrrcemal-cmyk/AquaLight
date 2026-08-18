@@ -101,12 +101,7 @@ class DeviceDosingChannelDetailFragment :
                     .distinctUntilChanged()
                     .filter { routeRejected -> routeRejected }
                     .collect {
-                        val navController = findNavController()
-                        if (navController.currentDestination?.id ==
-                            R.id.deviceDosingChannelDetailFragment
-                        ) {
-                            navController.navigateUp()
-                        }
+                        navigateUpFromDetailIfCurrent()
                     }
             }
         }
@@ -169,13 +164,20 @@ class DeviceDosingChannelDetailFragment :
                             showOperationMessage(R.string.device_dosing_detail_manual_stopped)
                         DeviceDosingChannelDetailEvent.ChannelReset -> {
                             showOperationMessage(R.string.device_dosing_detail_channel_reset_done)
-                            findNavController().navigateUp()
+                            navigateUpFromDetailIfCurrent()
                         }
                         is DeviceDosingChannelDetailEvent.OperationFailed ->
                             showOperationFailure(event.failure)
                     }
                 }
             }
+        }
+    }
+
+    private fun navigateUpFromDetailIfCurrent() {
+        val navController = findNavController()
+        if (navController.currentDestination?.id == R.id.deviceDosingChannelDetailFragment) {
+            navController.navigateUp()
         }
     }
 
