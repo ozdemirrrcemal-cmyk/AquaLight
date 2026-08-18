@@ -31,6 +31,13 @@ class DeviceDosingV1ChannelSnapshotMapperControlsTest {
     }
 
     @Test
+    fun `channel reset requires firmware readiness and healthy storage`() {
+        assertTrue(controls().resetSupported)
+        assertFalse(controls(bootReady = false).resetSupported)
+        assertFalse(controls(storageHealthy = false).resetSupported)
+    }
+
+    @Test
     fun `channel reset remains available during active run`() {
         val controls = controls(activeRun = true)
 
