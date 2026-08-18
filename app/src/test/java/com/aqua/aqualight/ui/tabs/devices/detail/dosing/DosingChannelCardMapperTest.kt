@@ -94,7 +94,7 @@ class DosingChannelCardMapperTest {
 
         val state = channelSlot()
             .toInitialDosingChannelCardUiState()
-            .withChannelSnapshot(snapshot, MONDAY)
+            .withChannelSnapshot(snapshot)
 
         assertEquals("Macro nutrients", state.displayName)
         assertEquals(DosingChannelVisualState.DOSING, state.visualState)
@@ -143,8 +143,7 @@ class DosingChannelCardMapperTest {
                     capacityMicroliters = 100_000L,
                     remainingMicroliters = 95_000L
                 )
-            ),
-            today = MONDAY
+            )
         )
 
         val reservoir = requireNotNull(state.reservoir)
@@ -155,7 +154,7 @@ class DosingChannelCardMapperTest {
     }
 
     @Test
-    fun `disabled custom program preserves grouped plan without manufacturing runtime progress`() {
+    fun `disabled custom program renders empty rail without manufacturing firmware progress`() {
         val program = DeviceDosingProgram(
             enabled = false,
             weekdays = List(7) { true },
@@ -179,20 +178,16 @@ class DosingChannelCardMapperTest {
         )
 
         val state = channelSlot().toInitialDosingChannelCardUiState()
-            .withChannelSnapshot(disabledSnapshot, MONDAY)
+            .withChannelSnapshot(disabledSnapshot)
 
         assertEquals(DosingChannelVisualState.AUTOMATIC_DOSING_OFF, state.visualState)
         assertFalse(state.visualState.showsStatusPill)
         assertEquals(DosingProgramModeUiState.CUSTOM_PERIODS, state.programProgress.mode)
         assertEquals(DosingDoseProgressVisualState.DISABLED, state.programProgress.visualState)
-        assertEquals(listOf(3, 3, 2), state.programProgress.customPeriods.map {
-            period -> period.occurrences.size
-        })
-        assertEquals(
-            listOf(3.0, 6.0, 8.0),
-            state.programProgress.markers.map { marker -> marker.cumulativeAmountMl }
-        )
-        assertEquals(8, state.programProgress.totalOccurrences)
+        assertTrue(state.programProgress.occurrences.isEmpty())
+        assertTrue(state.programProgress.customPeriods.isEmpty())
+        assertTrue(state.programProgress.markers.isEmpty())
+        assertEquals(0, state.programProgress.totalOccurrences)
         assertEquals(0.0, state.programProgress.scheduledDeliveredTodayMl, 0.0)
         assertNull(state.reservoir)
     }
@@ -235,8 +230,7 @@ class DosingChannelCardMapperTest {
                 program = program,
                 progress = progress,
                 reservoir = DeviceDosingReservoirSnapshot()
-            ),
-            today = MONDAY
+            )
         )
 
         assertEquals(listOf(1.5, 2.0, 1.25, 2.75), state.programProgress.occurrences.map {
