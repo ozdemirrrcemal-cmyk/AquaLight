@@ -62,6 +62,11 @@ class DeviceDosingChannelDetailFragment :
         )
     }
 
+    override fun onStart() {
+        super.onStart()
+        viewModel.refreshAuthoritative()
+    }
+
     private fun setupContent(view: View) {
         view.findViewById<ComposeView>(R.id.channelDetailContent).apply {
             setViewCompositionStrategy(ViewCompositionStrategy.DisposeOnViewTreeLifecycleDestroyed)
@@ -223,6 +228,7 @@ class DeviceDosingChannelDetailFragment :
         )
 
     private fun showManualDoseEditor() {
+        if (!viewModel.currentDraft().manualDoseEnabled) return
         TextInputBottomSheet.show(
             fragmentManager = childFragmentManager,
             title = getString(R.string.device_dosing_detail_manual_title),
