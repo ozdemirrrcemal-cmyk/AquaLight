@@ -31,19 +31,22 @@ internal fun DosingReservoirSummary(
     modifier: Modifier = Modifier
 ) {
     val color = state.tone.color(colors)
-    val label = state.estimatedRemainingDays?.let { days ->
-        pluralStringResource(
-            R.plurals.device_dosing_channel_reservoir_days_format,
-            days,
-            days,
+    val label = when {
+        !state.remainingAvailable ->
+            stringResource(R.string.device_dosing_card_reservoir_unavailable)
+        state.estimatedRemainingDays != null -> pluralStringResource(
+            R.plurals.device_dosing_card_reservoir_days_format,
+            state.estimatedRemainingDays,
+            state.estimatedRemainingDays,
             state.remainingMl
         )
-    } ?: stringResource(
-        R.string.device_dosing_channel_reservoir_amount_format,
-        state.remainingMl
-    )
+        else -> stringResource(
+            R.string.device_dosing_card_reservoir_amount_format,
+            state.remainingMl
+        )
+    }
     val description = stringResource(
-        R.string.device_dosing_channel_reservoir_description,
+        R.string.device_dosing_card_reservoir_description,
         label
     )
     Row(
@@ -53,6 +56,7 @@ internal fun DosingReservoirSummary(
     ) {
         DosingReservoirGlyph(
             fillFraction = state.fillFraction,
+            fillAvailable = state.fillAvailable,
             color = color,
             outlineColor = colors.secondaryText,
             modifier = Modifier.size(RESERVOIR_ICON_SIZE)
@@ -70,6 +74,7 @@ internal fun DosingReservoirSummary(
 @Composable
 private fun DosingReservoirGlyph(
     fillFraction: Float,
+    fillAvailable: Boolean,
     color: Color,
     outlineColor: Color,
     modifier: Modifier = Modifier
@@ -85,15 +90,17 @@ private fun DosingReservoirGlyph(
         val resolvedFill = fillFraction.coerceIn(0f, 1f)
         val fillHeight = innerHeight * resolvedFill
 
-        drawRoundRect(
-            color = color.copy(alpha = FILL_ALPHA),
-            topLeft = Offset(
-                bodyLeft + innerInset,
-                bodyTop + innerInset + innerHeight - fillHeight
-            ),
-            size = Size(bodyWidth - innerInset * 2f, fillHeight),
-            cornerRadius = CornerRadius(FILL_CORNER_RADIUS.toPx())
-        )
+        if (fillAvailable) {
+            drawRoundRect(
+                color = color.copy(alpha = FILL_ALPHA),
+                topLeft = Offset(
+                    bodyLeft + innerInset,
+                    bodyTop + innerInset + innerHeight - fillHeight
+                ),
+                size = Size(bodyWidth - innerInset * 2f, fillHeight),
+                cornerRadius = CornerRadius(FILL_CORNER_RADIUS.toPx())
+            )
+        }
         drawRoundRect(
             color = outlineColor,
             topLeft = Offset(bodyLeft, bodyTop),
@@ -108,12 +115,17 @@ private fun DosingReservoirGlyph(
             cornerRadius = CornerRadius(CAP_CORNER_RADIUS.toPx()),
             style = Stroke(width = stroke)
         )
-        drawLine(
-            color = color.copy(alpha = LEVEL_LINE_ALPHA),
-            start = Offset(bodyLeft + innerInset, bodyTop + bodyHeight * LEVEL_LINE_Y),
-            end = Offset(bodyLeft + bodyWidth - innerInset, bodyTop + bodyHeight * LEVEL_LINE_Y),
-            strokeWidth = LEVEL_LINE_WIDTH.toPx()
-        )
+        if (fillAvailable) {
+            drawLine(
+                color = color.copy(alpha = LEVEL_LINE_ALPHA),
+                start = Offset(bodyLeft + innerInset, bodyTop + bodyHeight * LEVEL_LINE_Y),
+                end = Offset(
+                    bodyLeft + bodyWidth - innerInset,
+                    bodyTop + bodyHeight * LEVEL_LINE_Y
+                ),
+                strokeWidth = LEVEL_LINE_WIDTH.toPx()
+            )
+        }
     }
 }
 

@@ -282,12 +282,15 @@ data class DeviceDosingReservoirSnapshot(
     val remainingMicroliters: Long = 0L,
     val accountingCertain: Boolean = true,
     val lowLevelActive: Boolean = false,
-    val lowLevelAlertEnabled: Boolean = false
+    val lowLevelAlertEnabled: Boolean = false,
+    /** Firmware reports remainingMl=-1 when no authoritative remaining amount exists. */
+    val remainingAvailable: Boolean = true
 ) {
     init {
         require(capacityMicroliters >= 0L)
         require(remainingMicroliters >= 0L)
         if (trackingEnabled) require(capacityMicroliters > 0L)
+        if (!remainingAvailable) require(remainingMicroliters == 0L)
     }
 }
 

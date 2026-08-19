@@ -9,20 +9,35 @@ internal object DeviceDosingV1ProgressSnapshotMapper {
     fun map(
         status: DeviceDosingV1ProgressStatus,
         detail: DeviceDosingV1ChannelDetail
-    ): DeviceDosingChannelProgress = DeviceDosingChannelProgress(
-        scheduledAmountMicroliters = DeviceDosingV1AmountMapper.toMicroliters(
-            status.progress.totalAmountMilliliters,
-            allowZero = true
-        ),
-        completedAmountMicroliters = DeviceDosingV1AmountMapper.toMicroliters(
-            status.progress.completedAmountMilliliters,
-            allowZero = true
-        ),
-        occurrences = status.occurrences.map(::occurrence),
-        executionCurrent = status.progress.executionCurrent,
-        accountingCertain = detail.deliveryAccountingCertain && status.progress.uncertain == 0,
-        programDayDate = parseFirmwareProgramDayDate(status.progress.programDayDate)
-    )
+    ): DeviceDosingChannelProgress {
+        val programDayDate = parseFirmwareProgramDayDate(status.progress.programDayDate)
+        val scheduleActive = when (status.progress.scheduleState.raw) {
+            SCHEDULE_ACTIVE -> true
+            SCHEDULE_NONE -> false
+            else -> error("Unknown firmware Dosing schedule state.")
+        }
+        require(scheduleActive == (programDayDate != null)) {
+            "Firmware Dosing schedule state and program-day date disagree."
+        }
+        require(scheduleActive || !status.progress.executionCurrent) {
+            "Firmware Dosing execution cannot be current without an active program day."
+        }
+
+        return DeviceDosingChannelProgress(
+            scheduledAmountMicroliters = DeviceDosingV1AmountMapper.toMicroliters(
+                status.progress.totalAmountMilliliters,
+                allowZero = true
+            ),
+            completedAmountMicroliters = DeviceDosingV1AmountMapper.toMicroliters(
+                status.progress.completedAmountMilliliters,
+                allowZero = true
+            ),
+            occurrences = status.occurrences.map(::occurrence),
+            executionCurrent = status.progress.executionCurrent,
+            accountingCertain = detail.deliveryAccountingCertain && status.progress.uncertain == 0,
+            programDayDate = programDayDate
+        )
+    }
 
     private fun occurrence(value: DeviceDosingV1Occurrence): DeviceDosingOccurrenceProgress =
         DeviceDosingOccurrenceProgress(
@@ -42,6 +57,9 @@ internal object DeviceDosingV1ProgressSnapshotMapper {
                 else -> error("Unknown firmware Dosing occurrence state.")
             }
         )
+
+    private const val SCHEDULE_ACTIVE = "active"
+    private const val SCHEDULE_NONE = "noSchedule"
 }
 
 /**

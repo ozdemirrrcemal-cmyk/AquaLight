@@ -27,13 +27,15 @@ internal object DeviceDosingV1ChannelSnapshotMapper {
         lowLevelAlertEnabled: Boolean
     ): DeviceDosingReservoirSnapshot {
         val reservoir = detail.reservoir
+        val remainingAvailable = reservoir.remainingMilliliters != FIRMWARE_UNAVAILABLE_AMOUNT_ML
         return DeviceDosingReservoirSnapshot(
             trackingEnabled = reservoir.trackingEnabled,
             capacityMicroliters = reservoirAmountMicroliters(reservoir.capacityMilliliters),
             remainingMicroliters = reservoirAmountMicroliters(reservoir.remainingMilliliters),
             accountingCertain = reservoir.accountingCertain,
             lowLevelActive = reservoir.lowLevelActive,
-            lowLevelAlertEnabled = lowLevelAlertEnabled
+            lowLevelAlertEnabled = lowLevelAlertEnabled,
+            remainingAvailable = remainingAvailable
         )
     }
 

@@ -7,11 +7,16 @@ import com.aqua.aqualight.application.devices.dosing.DeviceDosingSupplySeverity
 
 internal fun DeviceDosingChannelSnapshot.toReservoirUiState(): DosingReservoirUiState? {
     val projection = DeviceDosingSupplyProjectionPolicy.evaluate(this) ?: return null
+    val remainingAvailable = reservoir.remainingAvailable &&
+        reservoir.accountingCertain &&
+        deliveryAccountingCertain
     return DosingReservoirUiState(
         remainingMl = reservoir.remainingMicroliters.toMilliliters(),
         fillFraction = reservoir.fillFraction(),
         estimatedRemainingDays = projection.estimatedRemainingDays,
-        tone = projection.supplySeverity.toUiTone()
+        tone = projection.supplySeverity.toUiTone(),
+        remainingAvailable = remainingAvailable,
+        fillAvailable = remainingAvailable && reservoir.capacityMicroliters > 0L
     )
 }
 

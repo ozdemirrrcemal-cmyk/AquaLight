@@ -1,5 +1,6 @@
 package com.aqua.aqualight.ui.tabs.devices.detail.dosing.presentation.card
 
+import com.aqua.aqualight.application.devices.dosing.DeviceDosingChannelProgress
 import com.aqua.aqualight.application.devices.dosing.DeviceDosingChannelSnapshot
 import com.aqua.aqualight.application.devices.dosing.DeviceDosingOccurrenceProgress
 import com.aqua.aqualight.application.devices.dosing.DeviceDosingOccurrenceState
@@ -16,7 +17,8 @@ internal fun DeviceDosingChannelSnapshot.toProgramProgressUiState(): DosingProgr
     val configuredProgram = program ?: return DosingProgramProgressUiState(
         manualDeliveredTodayMl = manualDeliveredTodayMl
     )
-    val occurrences = if (progress.executionCurrent) {
+    val hasActiveProgramDay = configuredProgram.enabled && progress.hasFirmwareProgramDay()
+    val occurrences = if (hasActiveProgramDay) {
         progress.occurrences
             .map(DeviceDosingOccurrenceProgress::toUiState)
             .withDoseFractions()
@@ -32,19 +34,25 @@ internal fun DeviceDosingChannelSnapshot.toProgramProgressUiState(): DosingProgr
         occurrences = occurrences,
         customPeriods = customPeriods,
         markers = configuredProgram.toProgressMarkers(occurrences, customPeriods),
-        scheduledToday = configuredProgram.enabled &&
-            progress.executionCurrent &&
-            progress.scheduledAmountMicroliters > 0L,
+        scheduledToday = hasActiveProgramDay && progress.scheduledAmountMicroliters > 0L,
         visualState = toProgressVisualState(configuredProgram)
     )
 }
+
+/**
+ * Firmware owns program-day selection. A valid program-day date is the durable application-level
+ * anchor. executionCurrent is only a runtime-checkpoint match, but true still implies the same
+ * firmware window and remains a compatibility-safe fallback for already-materialized snapshots.
+ */
+private fun DeviceDosingChannelProgress.hasFirmwareProgramDay(): Boolean =
+    programDayDate != null || executionCurrent
 
 private fun DeviceDosingChannelSnapshot.toProgressVisualState(
     configuredProgram: DeviceDosingProgram
 ): DosingDoseProgressVisualState = when {
     hasAttentionState() || !progress.accountingCertain -> DosingDoseProgressVisualState.ERROR
     !configuredProgram.enabled -> DosingDoseProgressVisualState.DISABLED
-    !progress.executionCurrent || progress.scheduledAmountMicroliters <= 0L ->
+    !progress.hasFirmwareProgramDay() || progress.scheduledAmountMicroliters <= 0L ->
         DosingDoseProgressVisualState.EMPTY
     activeRun.active && activeRun.source == DeviceDosingRunSource.SCHEDULED ->
         DosingDoseProgressVisualState.ACTIVE

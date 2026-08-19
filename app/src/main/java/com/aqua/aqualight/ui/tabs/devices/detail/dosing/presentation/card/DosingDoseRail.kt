@@ -56,7 +56,7 @@ private fun DosingDoseRailBody(
     grouping: DosingDoseRailGrouping
 ) {
     val deliveredLabel = stringResource(
-        R.string.device_dosing_channel_progress_delivered_format,
+        R.string.device_dosing_card_progress_delivered_format,
         state.scheduledDeliveredTodayMl
     )
     BoxWithConstraints(
@@ -200,7 +200,7 @@ private fun DosingProgressMarkerLabel(
         .coerceIn(0.dp, (availableWidth - MARKER_LABEL_WIDTH).coerceAtLeast(0.dp))
     BasicText(
         text = stringResource(
-            R.string.device_dosing_channel_progress_marker_format,
+            R.string.device_dosing_card_progress_marker_format,
             marker.cumulativeAmountMl
         ),
         modifier = Modifier
@@ -272,9 +272,9 @@ private fun DrawScope.segmentInset(
     else -> SEGMENT_GAP.toPx() / 2f
 }
 
-private fun DosingProgressPalette.colorFor(state: DosingOccurrenceVisualState): Color = when (state) {
-    DosingOccurrenceVisualState.PENDING,
-    DosingOccurrenceVisualState.ACTIVE -> pending
+internal fun DosingProgressPalette.colorFor(state: DosingOccurrenceVisualState): Color = when (state) {
+    DosingOccurrenceVisualState.PENDING -> pending
+    DosingOccurrenceVisualState.ACTIVE -> active
     DosingOccurrenceVisualState.COMPLETED -> completed
     DosingOccurrenceVisualState.SKIPPED -> skipped
     DosingOccurrenceVisualState.UNCERTAIN -> uncertain

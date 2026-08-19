@@ -81,16 +81,17 @@ private fun DosingChannelCardContent(
             typography = typography,
             stateLabel = stateLabel
         )
-        when (state.visualState) {
-            null -> Unit
-            DosingChannelVisualState.NOT_CONFIGURED -> DosingChannelEmptyState(
-                title = stringResource(R.string.device_dosing_channel_calibration_required),
-                description = stringResource(
-                    R.string.device_dosing_channel_calibration_required_description
-                ),
-                colors = colors,
-                typography = typography
-            )
+        when {
+            state.visualState == null -> Unit
+            state.setupState == DosingChannelSetupUiState.CALIBRATION_REQUIRED ||
+                state.visualState == DosingChannelVisualState.NOT_CONFIGURED -> DosingChannelEmptyState(
+                    title = stringResource(R.string.device_dosing_channel_calibration_required),
+                    description = stringResource(
+                        R.string.device_dosing_channel_calibration_required_description
+                    ),
+                    colors = colors,
+                    typography = typography
+                )
             else -> {
                 DosingChannelSummary(state, colors, typography)
                 DosingProgramProgress(state.programProgress, colors, typography)

@@ -30,10 +30,13 @@ internal fun DosingChannelSummary(
             modifier = Modifier.fillMaxWidth(),
             verticalArrangement = Arrangement.spacedBy(SUMMARY_ROW_GAP)
         ) {
-            if (visualState == DosingChannelVisualState.PROGRAM_NOT_CONFIGURED) {
+            val programNotConfigured =
+                state.setupState == DosingChannelSetupUiState.PROGRAM_NOT_CONFIGURED ||
+                    visualState == DosingChannelVisualState.PROGRAM_NOT_CONFIGURED
+            if (programNotConfigured) {
                 DosingProgramSummary(
+                    state = state,
                     visualState = visualState,
-                    progress = state.programProgress,
                     colors = colors,
                     typography = typography
                 )
@@ -68,7 +71,7 @@ private fun DosingScheduleMetricsRow(
         DosingMetricSummary(
             icon = DosingMetricGlyphType.DOSE,
             label = stringResource(
-                R.string.device_dosing_channel_daily_dose_format,
+                R.string.device_dosing_card_daily_dose_format,
                 state.programProgress.dailyDoseMl
             ),
             colors = colors,
@@ -98,8 +101,8 @@ private fun DosingProgramAndReservoirRow(
         verticalAlignment = Alignment.CenterVertically
     ) {
         DosingProgramSummary(
+            state = state,
             visualState = visualState,
-            progress = state.programProgress,
             colors = colors,
             typography = typography,
             modifier = Modifier.weight(SUMMARY_LEADING_COLUMN_WEIGHT)
@@ -149,15 +152,19 @@ private fun DosingMetricSummary(
 
 @Composable
 private fun DosingProgramSummary(
+    state: DosingChannelCardUiState,
     visualState: DosingChannelVisualState,
-    progress: DosingProgramProgressUiState,
     colors: AquaDeviceCardColors,
     typography: AquaDeviceCardTypography,
     modifier: Modifier = Modifier
 ) {
+    val progress = state.programProgress
     val mode = progress.mode
     if (mode == null) {
-        if (visualState == DosingChannelVisualState.PROGRAM_NOT_CONFIGURED) {
+        if (
+            state.setupState == DosingChannelSetupUiState.PROGRAM_NOT_CONFIGURED ||
+            visualState == DosingChannelVisualState.PROGRAM_NOT_CONFIGURED
+        ) {
             DosingProgramSetupSummary(
                 colors = colors,
                 typography = typography,
@@ -167,20 +174,14 @@ private fun DosingProgramSummary(
         return
     }
 
-    val automaticDosingOff = visualState == DosingChannelVisualState.AUTOMATIC_DOSING_OFF
-    val label = when {
-        automaticDosingOff -> stringResource(visualState.labelRes)
-        progress.totalOccurrences > 0 -> stringResource(
-            R.string.device_dosing_channel_mode_progress_format,
-            progress.completedOccurrences,
-            progress.totalOccurrences,
-            stringResource(mode.compactLabelRes())
-        )
-        else -> stringResource(
-            R.string.device_dosing_channel_no_dose_today_format,
-            stringResource(mode.compactLabelRes())
-        )
-    }
+    val automaticDosingOff =
+        state.setupState == DosingChannelSetupUiState.AUTOMATIC_DOSING_OFF ||
+            visualState == DosingChannelVisualState.AUTOMATIC_DOSING_OFF
+    val label = dosingProgramSummaryLabel(
+        visualState = visualState,
+        progress = progress,
+        automaticDosingOff = automaticDosingOff
+    )
     val tint = if (automaticDosingOff) colors.warning else colors.accent
     Row(
         modifier = modifier,
@@ -200,6 +201,35 @@ private fun DosingProgramSummary(
             ),
             maxLines = 1,
             overflow = TextOverflow.Ellipsis
+        )
+    }
+}
+
+@Composable
+private fun dosingProgramSummaryLabel(
+    visualState: DosingChannelVisualState,
+    progress: DosingProgramProgressUiState,
+    automaticDosingOff: Boolean
+): String {
+    val mode = requireNotNull(progress.mode)
+    return when {
+        automaticDosingOff -> {
+            val labelState = if (visualState == DosingChannelVisualState.AUTOMATIC_DOSING_OFF) {
+                visualState
+            } else {
+                DosingChannelVisualState.AUTOMATIC_DOSING_OFF
+            }
+            stringResource(labelState.labelRes)
+        }
+        progress.totalOccurrences > 0 -> stringResource(
+            R.string.device_dosing_channel_mode_progress_format,
+            progress.completedOccurrences,
+            progress.totalOccurrences,
+            stringResource(mode.compactLabelRes())
+        )
+        else -> stringResource(
+            R.string.device_dosing_channel_no_dose_today_format,
+            stringResource(mode.compactLabelRes())
         )
     }
 }

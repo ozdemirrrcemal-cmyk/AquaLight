@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="device_dosing_card_daily_dose_format">%1$.3f mL/gün</string>
+    <string name="device_dosing_card_progress_delivered_format">%1$.3f mL</string>
+    <string name="device_dosing_card_progress_marker_format">%1$.3f</string>
+    <plurals name="device_dosing_card_progress_description">
+        <item quantity="one">%1$s modu. %2$d/%3$d programlı doz tamamlandı; %4$.3f/%5$.3f mL verildi.</item>
+        <item quantity="other">%1$s modu. %2$d/%3$d programlı doz tamamlandı; %4$.3f/%5$.3f mL verildi.</item>
+    </plurals>
+    <string name="device_dosing_card_manual_amount_format">+%1$.3f mL</string>
+    <string name="device_dosing_card_manual_description">Bugün verilen manuel doz: %1$.3f mL.</string>
+    <plurals name="device_dosing_card_reservoir_days_format">
+        <item quantity="one">~%1$d gün · %2$.3f mL</item>
+        <item quantity="other">~%1$d gün · %2$.3f mL</item>
+    </plurals>
+    <string name="device_dosing_card_reservoir_amount_format">%1$.3f mL</string>
+    <string name="device_dosing_card_reservoir_unavailable">—</string>
+    <string name="device_dosing_card_reservoir_description">Haznede kalan: %1$s</string>
+</resources>

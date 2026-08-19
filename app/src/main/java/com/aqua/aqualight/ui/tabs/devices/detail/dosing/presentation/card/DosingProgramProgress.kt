@@ -53,7 +53,7 @@ internal fun DosingProgramProgress(
         return
     }
     val description = pluralStringResource(
-        R.plurals.device_dosing_channel_progress_description,
+        R.plurals.device_dosing_card_progress_description,
         state.totalOccurrences,
         stringResource(mode.labelRes),
         state.completedOccurrences,
@@ -161,7 +161,7 @@ private fun DosingManualDosePill(
 ) {
     val shape = RoundedCornerShape(MANUAL_PILL_CORNER_RADIUS)
     val description = stringResource(
-        R.string.device_dosing_channel_manual_description,
+        R.string.device_dosing_card_manual_description,
         amountMl
     )
     Box(
@@ -180,7 +180,7 @@ private fun DosingManualDosePill(
         contentAlignment = Alignment.Center
     ) {
         BasicText(
-            text = stringResource(R.string.device_dosing_channel_manual_amount_format, amountMl),
+            text = stringResource(R.string.device_dosing_card_manual_amount_format, amountMl),
             style = typography.micro.copy(color = colors.accent),
             maxLines = 1,
             overflow = TextOverflow.Clip

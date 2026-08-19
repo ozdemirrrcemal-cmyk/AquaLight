@@ -16,8 +16,9 @@ object DeviceDosingSupplyProjectionPolicy {
 
         val remainingDays = snapshot.estimatedRemainingDays()
         val supplySeverity = when {
-            !reservoir.accountingCertain || !snapshot.deliveryAccountingCertain ->
-                DeviceDosingSupplySeverity.UNCERTAIN
+            !reservoir.remainingAvailable ||
+                !reservoir.accountingCertain ||
+                !snapshot.deliveryAccountingCertain -> DeviceDosingSupplySeverity.UNCERTAIN
             remainingDays != null && remainingDays < CRITICAL_REMAINING_DAYS ->
                 DeviceDosingSupplySeverity.CRITICAL
             remainingDays != null && remainingDays <= WARNING_REMAINING_DAYS ->
@@ -34,7 +35,7 @@ object DeviceDosingSupplyProjectionPolicy {
         val configuredProgram = program ?: return null
         val canEstimate = listOf(
             configuredProgram.enabled,
-            progress.executionCurrent,
+            reservoir.remainingAvailable,
             reservoir.accountingCertain,
             deliveryAccountingCertain
         ).all { valid -> valid }

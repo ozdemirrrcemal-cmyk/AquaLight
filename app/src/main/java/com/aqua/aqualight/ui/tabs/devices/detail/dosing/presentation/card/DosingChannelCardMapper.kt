@@ -2,6 +2,7 @@ package com.aqua.aqualight.ui.tabs.devices.detail.dosing.presentation.card
 
 import com.aqua.aqualight.application.devices.DeviceDosingChannelSlot
 import com.aqua.aqualight.application.devices.dosing.DeviceDosingChannelSnapshot
+import com.aqua.aqualight.application.devices.dosing.DeviceDosingRunSource
 import com.aqua.aqualight.application.devices.dosing.DeviceDosingRuntimeReason
 import com.aqua.aqualight.ui.tabs.devices.detail.dosing.presentation.pump.DosingPumpVisualState
 
@@ -22,7 +23,10 @@ internal fun DeviceDosingChannelSnapshot.toDosingChannelCardUiState(): DosingCha
         visualState = toCardVisualState(),
         scheduleDays = toScheduleDaysUiState(),
         programProgress = toProgramProgressUiState(),
-        reservoir = toReservoirUiState()
+        reservoir = toReservoirUiState(),
+        setupState = toCardSetupState(),
+        runtimeState = toCardRuntimeState(),
+        activeRunSource = activeRun.source.toCardRunSource()
     )
 
 internal fun DosingChannelCardUiState.withChannelSnapshot(
@@ -40,21 +44,42 @@ private fun DeviceDosingChannelSnapshot.toScheduleDaysUiState() = DosingSchedule
         .mapNotNull { (weekday, selected) -> weekday.takeIf { selected } }
 )
 
+private fun DeviceDosingChannelSnapshot.toCardSetupState(): DosingChannelSetupUiState = when {
+    !calibrated -> DosingChannelSetupUiState.CALIBRATION_REQUIRED
+    program == null -> DosingChannelSetupUiState.PROGRAM_NOT_CONFIGURED
+    !program.enabled -> DosingChannelSetupUiState.AUTOMATIC_DOSING_OFF
+    else -> DosingChannelSetupUiState.CONFIGURED
+}
+
+private fun DeviceDosingChannelSnapshot.toCardRuntimeState(): DosingChannelRuntimeUiState = when {
+    hasAttentionState() -> DosingChannelRuntimeUiState.ATTENTION
+    activeRun.active -> DosingChannelRuntimeUiState.DOSING
+    else -> DosingChannelRuntimeUiState.IDLE
+}
+
 private fun DeviceDosingChannelSnapshot.toCardVisualState(): DosingChannelVisualState = when {
-    !calibrated -> DosingChannelVisualState.NOT_CONFIGURED
-    program == null -> DosingChannelVisualState.PROGRAM_NOT_CONFIGURED
     hasAttentionState() -> DosingChannelVisualState.ERROR
-    !program.enabled -> DosingChannelVisualState.AUTOMATIC_DOSING_OFF
+    !calibrated -> DosingChannelVisualState.NOT_CONFIGURED
     activeRun.active -> DosingChannelVisualState.DOSING
+    program == null -> DosingChannelVisualState.PROGRAM_NOT_CONFIGURED
+    !program.enabled -> DosingChannelVisualState.AUTOMATIC_DOSING_OFF
     else -> DosingChannelVisualState.CONFIGURED
+}
+
+private fun DeviceDosingRunSource.toCardRunSource(): DosingChannelRunSourceUiState = when (this) {
+    DeviceDosingRunSource.NONE -> DosingChannelRunSourceUiState.NONE
+    DeviceDosingRunSource.SCHEDULED -> DosingChannelRunSourceUiState.SCHEDULED
+    DeviceDosingRunSource.MANUAL -> DosingChannelRunSourceUiState.MANUAL
+    DeviceDosingRunSource.CALIBRATION -> DosingChannelRunSourceUiState.CALIBRATION
+    DeviceDosingRunSource.VERIFICATION -> DosingChannelRunSourceUiState.VERIFICATION
+    DeviceDosingRunSource.PRIME -> DosingChannelRunSourceUiState.PRIME
+    DeviceDosingRunSource.UNKNOWN -> DosingChannelRunSourceUiState.UNKNOWN
 }
 
 internal fun DeviceDosingChannelSnapshot.hasAttentionState(): Boolean =
     !deliveryAccountingCertain ||
         runtimeReason in ATTENTION_RUNTIME_REASONS ||
         reservoir.trackingEnabled && !reservoir.accountingCertain
-
-internal fun Long.toMilliliters(): Double = toDouble() / MICROLITERS_PER_MILLILITER
 
 private val ATTENTION_RUNTIME_REASONS = setOf(
     DeviceDosingRuntimeReason.INVALID_TIME,
@@ -64,5 +89,3 @@ private val ATTENTION_RUNTIME_REASONS = setOf(
     DeviceDosingRuntimeReason.INVALID_PROGRAM,
     DeviceDosingRuntimeReason.UNKNOWN
 )
-
-private const val MICROLITERS_PER_MILLILITER = 1_000.0

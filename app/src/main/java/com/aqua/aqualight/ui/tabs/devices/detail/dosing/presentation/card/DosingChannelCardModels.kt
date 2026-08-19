@@ -13,7 +13,10 @@ data class DosingChannelCardUiState(
     val visualState: DosingChannelVisualState? = null,
     val scheduleDays: DosingScheduleDaysUiState = DosingScheduleDaysUiState(),
     val programProgress: DosingProgramProgressUiState = DosingProgramProgressUiState(),
-    val reservoir: DosingReservoirUiState? = null
+    val reservoir: DosingReservoirUiState? = null,
+    val setupState: DosingChannelSetupUiState? = null,
+    val runtimeState: DosingChannelRuntimeUiState = DosingChannelRuntimeUiState.IDLE,
+    val activeRunSource: DosingChannelRunSourceUiState = DosingChannelRunSourceUiState.NONE
 )
 
 enum class DosingChannelVisualState(
@@ -26,6 +29,29 @@ enum class DosingChannelVisualState(
     CONFIGURED(R.string.device_dosing_channel_status_configured, false),
     DOSING(R.string.device_dosing_channel_status_dosing, false),
     ERROR(R.string.device_dosing_channel_status_attention, true)
+}
+
+enum class DosingChannelSetupUiState {
+    CALIBRATION_REQUIRED,
+    PROGRAM_NOT_CONFIGURED,
+    AUTOMATIC_DOSING_OFF,
+    CONFIGURED
+}
+
+enum class DosingChannelRuntimeUiState {
+    IDLE,
+    DOSING,
+    ATTENTION
+}
+
+enum class DosingChannelRunSourceUiState {
+    NONE,
+    SCHEDULED,
+    MANUAL,
+    CALIBRATION,
+    VERIFICATION,
+    PRIME,
+    UNKNOWN
 }
 
 @Immutable
@@ -121,7 +147,9 @@ data class DosingReservoirUiState(
     val remainingMl: Double,
     val fillFraction: Float,
     val estimatedRemainingDays: Int?,
-    val tone: DosingReservoirTone
+    val tone: DosingReservoirTone,
+    val remainingAvailable: Boolean = true,
+    val fillAvailable: Boolean = true
 )
 
 internal val ALL_DOSING_WEEKDAYS = DosingWeekday.entries.toList()
