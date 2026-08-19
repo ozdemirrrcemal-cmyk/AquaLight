@@ -210,7 +210,7 @@ class DosingUiLayerBoundaryTest {
     }
 
     @Test
-    fun `reservoir capacity precision and range stay outside presentation`() {
+    fun `reservoir capacity policy stays centralized and unsaved draft is not persisted`() {
         val fragment = source(
             DOSING_SOURCE_ROOT + "channel/reservoir/DeviceDosingReservoirFragment.kt"
         )
@@ -228,7 +228,9 @@ class DosingUiLayerBoundaryTest {
             assertFalse(presentation.contains("4_294_967_295"))
             assertFalse(presentation.contains("0.001"))
         }
-        assertTrue(fragment.contains("putLong(STATE_RESERVOIR_CAPACITY_MICROLITERS"))
+        assertFalse(fragment.contains("onSaveInstanceState"))
+        assertFalse(fragment.contains("STATE_RESERVOIR_CAPACITY_MICROLITERS"))
+        assertFalse(viewModel.contains("restoredDraft"))
         assertTrue(viewModel.contains("DeviceDosingReservoirCapacityPolicy.validate"))
         assertTrue(policy.contains("BigDecimal"))
         assertTrue(policy.contains("MAX_CAPACITY_MICROLITERS"))
