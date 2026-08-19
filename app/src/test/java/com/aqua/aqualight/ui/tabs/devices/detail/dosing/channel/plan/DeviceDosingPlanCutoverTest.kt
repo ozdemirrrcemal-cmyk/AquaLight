@@ -124,6 +124,51 @@ class DeviceDosingPlanCutoverTest {
         assertFalse(viewModel.currentEditorState().operationInProgress)
     }
 
+    @Test
+    fun `program conflict reloads authoritative program instead of rebasing stale draft`() =
+        runTest(dispatcher) {
+            val initial = sampleDosingChannelSnapshot().copy(revision = 10L)
+            val authoritativeProgram = requireNotNull(initial.program).copy(
+                weekdays = listOf(true, false, true, false, true, false, true),
+                schedule = DeviceDosingProgramSchedule.Single(
+                    dailyDoseMicroliters = 4_000L,
+                    startTimeMillis = 32_400_000L
+                )
+            )
+            val operations = FakeDeviceDosingChannelOperations(initial)
+            val viewModel = DeviceDosingPlanViewModel(operations)
+
+            viewModel.bind(DEVICE_UID, SLOT_ID, restoredDraft = null)
+            viewModel.setDailyDoseMicroliters(12_000L)
+            val staleProgram = viewModel.currentEditorState().programIntent
+
+            operations.snapshot.value = initial.copy(
+                revision = 11L,
+                program = authoritativeProgram
+            )
+
+            assertEquals(10L, viewModel.currentEditorState().baseRevision)
+            assertEquals(staleProgram, viewModel.currentEditorState().programIntent)
+            assertTrue(viewModel.currentEditorState().draftDirty)
+
+            viewModel.save()
+
+            assertEquals(
+                DeviceDosingPlanEvent.SaveRejected(DeviceDosingChannelRejection.CONFLICT),
+                viewModel.events.first()
+            )
+            val reconciled = viewModel.currentEditorState()
+            assertEquals(11L, reconciled.baseRevision)
+            assertEquals(authoritativeProgram, reconciled.programIntent)
+            assertFalse(reconciled.draftDirty)
+            assertFalse(reconciled.operationInProgress)
+            assertNull(operations.lastProgram)
+
+            viewModel.save()
+
+            assertEquals(authoritativeProgram, operations.lastProgram)
+        }
+
     private companion object {
         const val DEVICE_UID = "device-1"
         const val SLOT_ID = "dosing:channel2"

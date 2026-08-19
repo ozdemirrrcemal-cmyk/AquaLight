@@ -43,6 +43,18 @@ class DeviceDosingChannelFailureMapperTest {
     }
 
     @Test
+    fun `program apply calibration requirement retains not calibrated semantics`() {
+        assertRejected(
+            DeviceDosingChannelRejection.NOT_CALIBRATED,
+            firmwareError(
+                action = DeviceDosingV1Contract.Action.PROGRAM_APPLY,
+                field = "calibration",
+                message = "confirmed calibration is required for enabled automatic dosing"
+            )
+        )
+    }
+
+    @Test
     fun `stale revision retains state changed semantics`() {
         assertRejected(
             DeviceDosingChannelRejection.CONFLICT,
@@ -117,12 +129,13 @@ class DeviceDosingChannelFailureMapperTest {
 
     private fun firmwareError(
         code: String = "INVALID_VALUE",
+        action: String = DeviceDosingV1Contract.Action.DOSE_NOW,
         field: String,
         message: String
     ) = DeviceRuntimeCommandOutcome.FirmwareError(
         deviceUid = DEVICE_UID,
         module = DeviceDosingV1Contract.MODULE,
-        action = DeviceDosingV1Contract.Action.DOSE_NOW,
+        action = action,
         messageId = "response-1",
         generation = GENERATION,
         statusCode = 422,

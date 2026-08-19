@@ -54,7 +54,7 @@ internal object DeviceDosingChannelFailureMapper {
             DeviceDosingChannelRejection.CONFLICT
 
         error.field == FirmwareField.CALIBRATION &&
-            error.message == MISSING_CALIBRATION_MESSAGE ->
+            error.message in CALIBRATION_REQUIRED_MESSAGES ->
             DeviceDosingChannelRejection.NOT_CALIBRATED
 
         (error.field to error.message) in BUSY_IDENTITIES ->
@@ -90,6 +90,11 @@ internal object DeviceDosingChannelFailureMapper {
         const val PROGRAM = "program"
     }
 
+    private val CALIBRATION_REQUIRED_MESSAGES = setOf(
+        "pump must be calibrated before manual dosing",
+        "confirmed calibration is required for enabled automatic dosing"
+    )
+
     private val BUSY_IDENTITIES = setOf(
         FirmwareField.DOSING to
             "dosing channel is busy with an active run or calibration session",
@@ -103,8 +108,6 @@ internal object DeviceDosingChannelFailureMapper {
 
     private const val PROGRAM_FIELD_PREFIX = "program."
     private const val STALE_REVISION_MESSAGE = "stale dosing channel revision"
-    private const val MISSING_CALIBRATION_MESSAGE =
-        "pump must be calibrated before manual dosing"
     private const val CHANNEL_NOT_FOUND_MESSAGE =
         "configured dosing channel was not found"
 }

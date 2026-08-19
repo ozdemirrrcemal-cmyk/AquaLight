@@ -110,7 +110,7 @@
     <string name="device_dosing_plan_rejected_not_editable">Cihazın mevcut durumunda dozlama programı düzenlenemez.</string>
     <string name="device_dosing_plan_rejected_not_calibrated">Dozlama programını kaydetmeden önce bu kanalı kalibre edin.</string>
     <string name="device_dosing_plan_rejected_busy">Kanal şu anda meşgul. Mevcut işlem tamamlandıktan sonra tekrar deneyin.</string>
-    <string name="device_dosing_plan_rejected_conflict">Siz düzenleme yaparken cihazdaki program değişti. Taslağınızı gözden geçirip en güncel sürümün üzerine uygulamak için tekrar kaydedin.</string>
+    <string name="device_dosing_plan_rejected_conflict">Siz düzenleme yaparken cihazdaki program değişti. En güncel program yeniden yüklendi; kontrol edip değişikliklerinizi yeniden uygulayın.</string>
     <string name="device_dosing_plan_rejected_unsafe">Cihaz mevcut çalışma durumu bu değişiklik için güvenli olmadığı için programı reddetti.</string>
     <string name="device_dosing_plan_unavailable">Cihaza ulaşılamadığı için dozlama programı kaydedilemedi. Bağlantıyı kontrol edip tekrar deneyin.</string>
     <string name="device_dosing_plan_subminute_timing">Firmware programında saniye hassasiyetli zamanlama var. AquaLight siz bu zamanı değiştirene kadar tam değeri korur; düzenleyici tam dakikayı gösterir.</string>
