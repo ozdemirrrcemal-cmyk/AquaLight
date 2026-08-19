@@ -62,7 +62,7 @@
     <string name="device_dosing_detail_plan_title">Dozaj Planı</string>
     <string name="device_dosing_detail_plan_description">Günlük miktarı, program türünü ve tekrarı belirleyin.</string>
     <string name="device_dosing_detail_missed_dose_title">Kaçırılan doz telafisi</string>
-    <string name="device_dosing_detail_missed_dose_description">Kaçırılan dozların bir sonraki güvenli aralıkta telafi edilmesini açın veya kapatın.</string>
+    <string name="device_dosing_detail_missed_dose_description">Kaçırılan programlı dozları, cihaz koşulları güvenli olduğunda en eskiden başlayarak tek tek telafi eder. Kapalıyken kaçırılan dozlar atlanır.</string>
     <string name="device_dosing_detail_missed_dose_toggle_description">Kaçırılan doz telafisi, %1$s</string>
     <string name="device_dosing_detail_calibration_title">Kalibrasyon</string>
     <string name="device_dosing_detail_last_calibrated_compact">Son: %1$s</string>
