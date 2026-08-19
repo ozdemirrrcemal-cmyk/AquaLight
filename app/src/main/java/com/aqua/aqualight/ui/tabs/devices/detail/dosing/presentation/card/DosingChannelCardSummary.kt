@@ -213,14 +213,11 @@ private fun dosingProgramSummaryLabel(
 ): String {
     val mode = requireNotNull(progress.mode)
     return when {
-        automaticDosingOff -> {
-            val labelState = if (visualState == DosingChannelVisualState.AUTOMATIC_DOSING_OFF) {
-                visualState
-            } else {
-                DosingChannelVisualState.AUTOMATIC_DOSING_OFF
-            }
-            stringResource(labelState.labelRes)
-        }
+        automaticDosingOff &&
+            visualState == DosingChannelVisualState.AUTOMATIC_DOSING_OFF ->
+            stringResource(visualState.labelRes)
+        automaticDosingOff ->
+            stringResource(DosingChannelVisualState.AUTOMATIC_DOSING_OFF.labelRes)
         progress.totalOccurrences > 0 -> stringResource(
             R.string.device_dosing_channel_mode_progress_format,
             progress.completedOccurrences,
