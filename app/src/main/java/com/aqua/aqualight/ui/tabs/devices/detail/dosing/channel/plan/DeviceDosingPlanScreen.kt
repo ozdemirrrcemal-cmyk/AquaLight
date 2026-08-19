@@ -131,7 +131,7 @@ private fun PlanAmountSection(
         enabled = state.scheduleEnabled && state.editorEnabled
     ) {
         val dailyDoseValue = stringResource(
-            R.string.device_dosing_channel_daily_dose_format,
+            R.string.device_dosing_plan_daily_dose_value_format,
             state.dailyDoseMicroliters.toDouble() / MICROLITERS_PER_MILLILITER
         )
         val description = stringResource(
