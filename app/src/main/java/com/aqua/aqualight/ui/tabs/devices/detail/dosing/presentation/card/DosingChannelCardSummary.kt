@@ -68,7 +68,7 @@ private fun DosingScheduleMetricsRow(
         DosingMetricSummary(
             icon = DosingMetricGlyphType.DOSE,
             label = stringResource(
-                R.string.device_dosing_channel_daily_dose_format,
+                R.string.device_dosing_plan_daily_dose_value_format,
                 state.programProgress.dailyDoseMl
             ),
             colors = colors,
