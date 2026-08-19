@@ -7,7 +7,6 @@ import com.aqua.aqualight.ui.tabs.devices.detail.dosing.channel.plan.DosingPlanD
 import com.aqua.aqualight.ui.tabs.devices.detail.dosing.channel.plan.DosingPlanScheduleMode
 import com.aqua.aqualight.ui.tabs.devices.detail.dosing.channel.plan.DosingPlanScheduleUpdate
 import com.aqua.aqualight.ui.tabs.devices.detail.dosing.channel.plan.DeviceDosingPlanViewModel
-import com.aqua.aqualight.ui.tabs.devices.detail.dosing.channel.reservoir.DeviceDosingReservoirDraft
 import com.aqua.aqualight.ui.tabs.devices.detail.dosing.channel.reservoir.DeviceDosingReservoirNotificationAvailability
 import com.aqua.aqualight.ui.tabs.devices.detail.dosing.channel.reservoir.DeviceDosingReservoirViewModel
 import java.util.Locale
@@ -86,8 +85,9 @@ class DosingDraftViewModelBoundaryTest {
     fun `reservoir validates draft before accepting state`() = runTest(dispatcher) {
         val operations = FakeDeviceDosingChannelOperations()
         val viewModel = DeviceDosingReservoirViewModel(operations)
-        viewModel.bind("device-1", "dosing:channel2", restoredDraft = null)
+        viewModel.bind("device-1", "dosing:channel2")
 
+        assertFalse(viewModel.currentEditorState().canSave)
         assertFalse(viewModel.currentDraft().lowLevelAlertEnabled)
         assertEquals(450_000L, viewModel.currentDraft().reservoirCapacityMicroliters)
 
@@ -102,30 +102,28 @@ class DosingDraftViewModelBoundaryTest {
         assertEquals(800_125L, viewModel.currentDraft().reservoirCapacityMicroliters)
         assertEquals(null, viewModel.currentEditorState().capacityRejection)
         assertTrue(viewModel.currentDraft().trackingEnabled)
+        assertTrue(viewModel.currentEditorState().canSave)
     }
 
     @Test
-    fun `reservoir exact capacity survives viewmodel recreation without Double conversion`() =
-        runTest(dispatcher) {
-            val original = DeviceDosingReservoirViewModel(FakeDeviceDosingChannelOperations())
-            original.bind("device-1", "dosing:channel2", restoredDraft = null)
-            original.setCapacityInput("123,456", Locale.forLanguageTag("tr-TR"))
+    fun `reservoir discards unsaved capacity on viewmodel recreation`() = runTest(dispatcher) {
+        val original = DeviceDosingReservoirViewModel(FakeDeviceDosingChannelOperations())
+        original.bind("device-1", "dosing:channel2")
+        original.setCapacityInput("123,456", Locale.forLanguageTag("tr-TR"))
+        assertEquals(123_456L, original.currentDraft().reservoirCapacityMicroliters)
 
-            val recreated = DeviceDosingReservoirViewModel(FakeDeviceDosingChannelOperations())
-            recreated.bind(
-                "device-1",
-                "dosing:channel2",
-                restoredDraft = original.currentDraft()
-            )
+        val recreated = DeviceDosingReservoirViewModel(FakeDeviceDosingChannelOperations())
+        recreated.bind("device-1", "dosing:channel2")
 
-            assertEquals(123_456L, recreated.currentDraft().reservoirCapacityMicroliters)
-        }
+        assertEquals(450_000L, recreated.currentDraft().reservoirCapacityMicroliters)
+        assertFalse(recreated.currentEditorState().canSave)
+    }
 
     @Test
     fun `reservoir keeps user alert intent while Android delivery is blocked`() =
         runTest(dispatcher) {
             val viewModel = DeviceDosingReservoirViewModel(FakeDeviceDosingChannelOperations())
-            viewModel.bind("device-1", "dosing:channel2", restoredDraft = null)
+            viewModel.bind("device-1", "dosing:channel2")
 
             viewModel.setLowLevelAlertEnabled(true)
             viewModel.setNotificationAvailability(

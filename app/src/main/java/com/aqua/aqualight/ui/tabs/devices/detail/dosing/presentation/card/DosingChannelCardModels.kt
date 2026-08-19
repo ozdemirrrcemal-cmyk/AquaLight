@@ -10,7 +10,7 @@ data class DosingChannelCardUiState(
     val slotId: String,
     val channelNumber: Int,
     val displayName: String,
-    val visualState: DosingChannelVisualState = DosingChannelVisualState.NOT_CONFIGURED,
+    val visualState: DosingChannelVisualState? = null,
     val scheduleDays: DosingScheduleDaysUiState = DosingScheduleDaysUiState(),
     val programProgress: DosingProgramProgressUiState = DosingProgramProgressUiState(),
     val reservoir: DosingReservoirUiState? = null
@@ -21,7 +21,7 @@ enum class DosingChannelVisualState(
     val showsStatusPill: Boolean
 ) {
     NOT_CONFIGURED(R.string.device_dosing_channel_not_configured, true),
-    PROGRAM_NOT_CONFIGURED(R.string.device_dosing_channel_program_not_configured, true),
+    PROGRAM_NOT_CONFIGURED(R.string.device_dosing_channel_program_not_configured, false),
     AUTOMATIC_DOSING_OFF(R.string.device_dosing_channel_automatic_off, false),
     CONFIGURED(R.string.device_dosing_channel_status_configured, false),
     DOSING(R.string.device_dosing_channel_status_dosing, false),

@@ -6,6 +6,7 @@ import com.aqua.aqualight.application.devices.dosing.DeviceDosingChannelRejectio
 import com.aqua.aqualight.application.devices.dosing.DeviceDosingChannelSnapshot
 import com.aqua.aqualight.application.devices.dosing.DeviceDosingProgram
 import com.aqua.aqualight.application.devices.dosing.DeviceDosingProgramRevisionOperations
+import com.aqua.aqualight.application.devices.dosing.DeviceDosingReservoirRevisionOperations
 import com.aqua.aqualight.application.devices.dosing.DeviceDosingReservoirSettings
 import com.aqua.aqualight.data.devices.runtime.core.DeviceRuntimeCommandOutcome
 import kotlinx.coroutines.flow.Flow
@@ -14,7 +15,9 @@ import kotlinx.coroutines.flow.Flow
 @Suppress("TooManyFunctions") // This class implements the complete application boundary verbatim.
 internal class DeviceDosingV1ChannelOperationsAdapter(
     private val adapter: DeviceDosingV1StateAdapter
-) : DeviceDosingChannelOperations, DeviceDosingProgramRevisionOperations {
+) : DeviceDosingChannelOperations,
+    DeviceDosingProgramRevisionOperations,
+    DeviceDosingReservoirRevisionOperations {
 
     override fun observe(
         deviceUid: String,
@@ -66,10 +69,7 @@ internal class DeviceDosingV1ChannelOperationsAdapter(
         slotId = slotId,
         execute = { uid, channelKey, revision, baseline ->
             expectedRevision?.let { editorRevision ->
-                requireMutation(
-                    revision == editorRevision,
-                    DeviceDosingChannelRejection.CONFLICT
-                )
+                requireMutation(revision == editorRevision, DeviceDosingChannelRejection.CONFLICT)
             }
             requireMutation(
                 baseline.controls.programEditable,
@@ -79,12 +79,7 @@ internal class DeviceDosingV1ChannelOperationsAdapter(
                 program.isValidFor(baseline.scheduling),
                 DeviceDosingChannelRejection.INVALID_DRAFT
             )
-            repositoryProgramApply(
-                uid = uid,
-                channelKey = channelKey,
-                revision = revision,
-                program = program
-            )
+            repositoryProgramApply(uid, channelKey, revision, program)
         },
         channel = DeviceDosingV1SavedMutationResult::channel
     ).toChannelResult()
@@ -120,10 +115,37 @@ internal class DeviceDosingV1ChannelOperationsAdapter(
         deviceUid: String,
         slotId: String,
         settings: DeviceDosingReservoirSettings
+    ): DeviceDosingChannelOperationResult = applyReservoirSettingsInternal(
+        deviceUid = deviceUid,
+        slotId = slotId,
+        settings = settings,
+        expectedRevision = null
+    )
+
+    override suspend fun applyReservoirSettingsAtRevision(
+        deviceUid: String,
+        slotId: String,
+        settings: DeviceDosingReservoirSettings,
+        expectedRevision: Long
+    ): DeviceDosingChannelOperationResult = applyReservoirSettingsInternal(
+        deviceUid = deviceUid,
+        slotId = slotId,
+        settings = settings,
+        expectedRevision = expectedRevision
+    )
+
+    private suspend fun applyReservoirSettingsInternal(
+        deviceUid: String,
+        slotId: String,
+        settings: DeviceDosingReservoirSettings,
+        expectedRevision: Long?
     ): DeviceDosingChannelOperationResult = adapter.mutationCoordinator.mutatePersisted(
         deviceUid = deviceUid,
         slotId = slotId,
         execute = { uid, channelKey, revision, baseline ->
+            expectedRevision?.let { editorRevision ->
+                requireMutation(revision == editorRevision, DeviceDosingChannelRejection.CONFLICT)
+            }
             requireMutation(
                 baseline.controls.reservoirEditable,
                 DeviceDosingChannelRejection.NOT_EDITABLE
@@ -149,6 +171,17 @@ internal class DeviceDosingV1ChannelOperationsAdapter(
             )
         }
     ).toChannelResult()
+
+    override suspend fun setReservoirLowLevelAlertEnabled(
+        deviceUid: String,
+        slotId: String,
+        enabled: Boolean
+    ): DeviceDosingChannelOperationResult {
+        adapter.stateAccess.setLowLevelAlertIntent(deviceUid, slotId, enabled)
+        return adapter.stateAccess.currentChannel(deviceUid, slotId)
+            ?.let { snapshot -> DeviceDosingChannelOperationResult.Success(snapshot) }
+            ?: DeviceDosingChannelOperationResult.Unavailable
+    }
 
     override suspend fun refillReservoir(
         deviceUid: String,
@@ -279,10 +312,9 @@ private fun DeviceDosingV1RefreshResult.toChannelResult(): DeviceDosingChannelOp
         DeviceDosingV1RefreshResult.RejectedStale -> DeviceDosingChannelOperationResult.Failed
     }
 
-private fun DeviceDosingV1MutationResult<*>.toChannelResult():
-    DeviceDosingChannelOperationResult = when (this) {
-        is DeviceDosingV1MutationResult.Success ->
-            DeviceDosingChannelOperationResult.Success(state.channel)
+private fun DeviceDosingV1MutationResult<*>.toChannelResult(): DeviceDosingChannelOperationResult =
+    when (this) {
+        is DeviceDosingV1MutationResult.Success -> DeviceDosingChannelOperationResult.Success(state.channel)
         is DeviceDosingV1MutationResult.Failed -> DeviceDosingChannelFailureMapper.map(outcome)
         is DeviceDosingV1MutationResult.LocallyRejected ->
             DeviceDosingChannelOperationResult.Rejected(reason)

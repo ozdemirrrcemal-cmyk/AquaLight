@@ -44,7 +44,7 @@ internal fun DeviceDosingCatalogScreen(
     val pumpHeads = List(exactPumpCount) { index ->
         DosingPumpHeadUiState(
             channelNumber = index + 1,
-            visualState = pumpStates.getOrElse(index) { DosingPumpVisualState.IDLE }
+            visualState = pumpStates.getOrNull(index)
         )
     }
 

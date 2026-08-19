@@ -62,7 +62,7 @@
     <string name="device_dosing_detail_plan_title">Dosing Plan</string>
     <string name="device_dosing_detail_plan_description">Set the daily amount, schedule mode and recurrence.</string>
     <string name="device_dosing_detail_missed_dose_title">Missed dose recovery</string>
-    <string name="device_dosing_detail_missed_dose_description">Turn compensation in the next safe window on or off for missed doses.</string>
+    <string name="device_dosing_detail_missed_dose_description">Recovers missed scheduled doses one at a time, oldest first, when device conditions are safe. When off, missed doses are skipped.</string>
     <string name="device_dosing_detail_missed_dose_toggle_description">Missed dose recovery, %1$s</string>
     <string name="device_dosing_detail_calibration_title">Calibration</string>
     <string name="device_dosing_detail_last_calibrated_compact">Last: %1$s</string>
@@ -110,7 +110,7 @@
     <string name="device_dosing_plan_rejected_not_editable">The dosing program cannot be edited in the device’s current state.</string>
     <string name="device_dosing_plan_rejected_not_calibrated">Calibrate this channel before saving a dosing program.</string>
     <string name="device_dosing_plan_rejected_busy">The channel is busy. Wait for the current operation to finish and try again.</string>
-    <string name="device_dosing_plan_rejected_conflict">The program changed on the device while you were editing. Review your draft, then save again to apply it over the latest version.</string>
+    <string name="device_dosing_plan_rejected_conflict">The program changed on the device while you were editing. The latest program was reloaded; review it and apply your changes again.</string>
     <string name="device_dosing_plan_rejected_unsafe">The device rejected this program because the current runtime state is not safe for the change.</string>
     <string name="device_dosing_plan_unavailable">The dosing program could not be saved because the device is unavailable. Check the connection and try again.</string>
     <string name="device_dosing_plan_subminute_timing">This firmware program contains second-level timing. AquaLight preserves the exact value until you change that time; the editor displays whole minutes.</string>

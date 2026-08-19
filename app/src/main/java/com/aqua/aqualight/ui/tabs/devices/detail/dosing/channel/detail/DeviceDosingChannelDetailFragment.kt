@@ -62,6 +62,11 @@ class DeviceDosingChannelDetailFragment :
         )
     }
 
+    override fun onStart() {
+        super.onStart()
+        viewModel.refreshAuthoritative()
+    }
+
     private fun setupContent(view: View) {
         view.findViewById<ComposeView>(R.id.channelDetailContent).apply {
             setViewCompositionStrategy(ViewCompositionStrategy.DisposeOnViewTreeLifecycleDestroyed)
@@ -101,12 +106,7 @@ class DeviceDosingChannelDetailFragment :
                     .distinctUntilChanged()
                     .filter { routeRejected -> routeRejected }
                     .collect {
-                        val navController = findNavController()
-                        if (navController.currentDestination?.id ==
-                            R.id.deviceDosingChannelDetailFragment
-                        ) {
-                            navController.navigateUp()
-                        }
+                        navigateUpFromDetailIfCurrent()
                     }
             }
         }
@@ -167,15 +167,20 @@ class DeviceDosingChannelDetailFragment :
                             showOperationMessage(R.string.device_dosing_detail_manual_started)
                         DeviceDosingChannelDetailEvent.ManualDoseStopped ->
                             showOperationMessage(R.string.device_dosing_detail_manual_stopped)
-                        DeviceDosingChannelDetailEvent.ChannelReset -> {
+                        DeviceDosingChannelDetailEvent.ChannelReset ->
                             showOperationMessage(R.string.device_dosing_detail_channel_reset_done)
-                            findNavController().navigateUp()
-                        }
                         is DeviceDosingChannelDetailEvent.OperationFailed ->
                             showOperationFailure(event.failure)
                     }
                 }
             }
+        }
+    }
+
+    private fun navigateUpFromDetailIfCurrent() {
+        val navController = findNavController()
+        if (navController.currentDestination?.id == R.id.deviceDosingChannelDetailFragment) {
+            navController.navigateUp()
         }
     }
 
@@ -223,6 +228,7 @@ class DeviceDosingChannelDetailFragment :
         )
 
     private fun showManualDoseEditor() {
+        if (!viewModel.currentDraft().manualDoseEnabled) return
         TextInputBottomSheet.show(
             fragmentManager = childFragmentManager,
             title = getString(R.string.device_dosing_detail_manual_title),

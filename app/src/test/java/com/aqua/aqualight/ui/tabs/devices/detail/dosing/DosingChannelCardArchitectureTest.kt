@@ -30,6 +30,26 @@ class DosingChannelCardArchitectureTest {
     }
 
     @Test
+    fun `topology bootstrap cannot manufacture runtime state or add a second access gate`() {
+        val models = source(CARD_SOURCE_ROOT + "DosingChannelCardModels.kt")
+        val card = source(CARD_SOURCE_ROOT + "DosingChannelCard.kt")
+        val presentation = source(ROOT_SOURCE_ROOT + "DeviceDosingRootChannelPresentation.kt")
+        val rootScreen = source(ROOT_SOURCE_ROOT + "DosingCatalogScreen.kt")
+        val pump = source(PUMP_SOURCE_ROOT + "DosingPumpDeviceCompose.kt")
+
+        assertTrue(models.contains("val visualState: DosingChannelVisualState? = null"))
+        assertTrue(presentation.contains("pumpStates = emptyList()"))
+        assertFalse(
+            presentation.contains("List(pumpCount) { DosingPumpVisualState.IDLE }")
+        )
+        assertTrue(card.contains(".clickable(role = Role.Button, onClick = onClick)"))
+        assertFalse(card.contains("interactionModifier"))
+        assertFalse(rootScreen.contains("channel.visualState != null"))
+        assertTrue(pump.contains("val visualState: DosingPumpVisualState? = null"))
+        assertTrue(pump.contains("visualState?.let { state -> drawPumpIndicator(state) }"))
+    }
+
+    @Test
     fun `root card keeps central surface and stable slot identity`() {
         val rootScreen = source(ROOT_SOURCE_ROOT + "DosingCatalogScreen.kt")
         val card = source(CARD_SOURCE_ROOT + "DosingChannelCard.kt")
@@ -55,23 +75,48 @@ class DosingChannelCardArchitectureTest {
         assertTrue(models.contains("DOSING(R.string.device_dosing_channel_status_dosing, false)"))
         assertTrue(
             models.contains(
+                "PROGRAM_NOT_CONFIGURED(R.string.device_dosing_channel_program_not_configured, false)"
+            )
+        )
+        assertTrue(
+            models.contains(
                 "AUTOMATIC_DOSING_OFF(R.string.device_dosing_channel_automatic_off, false)"
             )
         )
-        assertTrue(header.contains("if (state.visualState.showsStatusPill)"))
+        assertTrue(header.contains("visualState?.showsStatusPill == true"))
         assertFalse(models.contains("READY("))
         assertFalse(models.contains("SCHEDULED("))
     }
 
     @Test
-    fun `calibration and missing program use closed content states`() {
+    fun `calibration stays closed while missing program uses normal card summary`() {
         val card = source(CARD_SOURCE_ROOT + "DosingChannelCard.kt")
         val mapper = source(CARD_SOURCE_ROOT + "DosingChannelCardMapper.kt")
+        val models = source(CARD_SOURCE_ROOT + "DosingChannelCardModels.kt")
+        val summary = source(CARD_SOURCE_ROOT + "DosingChannelCardSummary.kt")
 
         assertTrue(card.contains("DosingChannelVisualState.NOT_CONFIGURED"))
-        assertTrue(card.contains("DosingChannelVisualState.PROGRAM_NOT_CONFIGURED"))
         assertTrue(card.contains("device_dosing_channel_calibration_required"))
-        assertTrue(card.contains("device_dosing_channel_program_empty_title"))
+        assertFalse(
+            card.contains(
+                "DosingChannelVisualState.PROGRAM_NOT_CONFIGURED -> DosingChannelEmptyState"
+            )
+        )
+        assertFalse(card.contains("device_dosing_channel_program_empty_title"))
+        assertFalse(card.contains("device_dosing_channel_program_empty_description"))
+        assertTrue(
+            summary.contains(
+                "visualState == DosingChannelVisualState.PROGRAM_NOT_CONFIGURED"
+            )
+        )
+        assertTrue(summary.contains("DosingProgramSetupSummary"))
+        assertTrue(summary.contains("device_dosing_channel_program_empty_title"))
+        assertTrue(summary.contains("device_dosing_channel_program_empty_description"))
+        assertTrue(
+            models.contains(
+                "PROGRAM_NOT_CONFIGURED(R.string.device_dosing_channel_program_not_configured, false)"
+            )
+        )
         assertTrue(mapper.contains("!calibrated -> DosingChannelVisualState.NOT_CONFIGURED"))
         assertTrue(mapper.contains("program == null -> DosingChannelVisualState.PROGRAM_NOT_CONFIGURED"))
         assertFalse(card.contains("0.00 ml"))
@@ -120,11 +165,14 @@ class DosingChannelCardArchitectureTest {
         assertFalse(progress.contains("device_dosing_channel_manual_label"))
         assertTrue(
             reservoirMapper.contains(
-                "DeviceDosingSupplyProjectionPolicy.evaluate(this, today) ?: return null"
+                "DeviceDosingSupplyProjectionPolicy.evaluate(this) ?: return null"
             )
         )
+        assertFalse(reservoirMapper.contains("LocalDate"))
+        assertFalse(reservoirMapper.contains("today"))
         assertFalse(reservoirMapper.contains("reservoir.trackingEnabled"))
         assertTrue(supplyPolicy.contains("if (!reservoir.trackingEnabled) return null"))
+        assertTrue(supplyPolicy.contains("val programDayDate = progress.programDayDate"))
         assertTrue(summary.contains("state.reservoir?.let"))
         assertFalse(progress.contains("scheduledDeliveredTodayMl +"))
     }

@@ -75,10 +75,18 @@ internal class DeviceDosingChannelDetailViewModel(
         val deviceUid = deviceUidText.trim()
         val slotId = slotIdText.trim()
         if (deviceUid.isBlank() || slotId.isBlank()) {
-            clearBinding()
+            observeJob?.cancel()
+            refreshJob?.cancel()
+            mutationJob?.cancel()
+            boundDeviceUid = ""
+            boundSlotId = ""
+            mutableDraft.value = DeviceDosingChannelDetailDraft()
             return
         }
-        if (boundDeviceUid == deviceUid && boundSlotId == slotId) return
+        if (boundDeviceUid == deviceUid && boundSlotId == slotId) {
+            refreshAuthoritative()
+            return
+        }
 
         observeJob?.cancel()
         refreshJob?.cancel()
@@ -104,12 +112,19 @@ internal class DeviceDosingChannelDetailViewModel(
                 }
             }
         }
+        refreshAuthoritative()
+    }
+
+    fun currentDraft(): DeviceDosingChannelDetailDraft = mutableDraft.value
+
+    fun refreshAuthoritative() {
+        val deviceUid = boundDeviceUid
+        val slotId = boundSlotId
+        if (deviceUid.isBlank() || slotId.isBlank() || refreshJob?.isActive == true) return
         refreshJob = viewModelScope.launch {
             applyResult(operations.refresh(deviceUid, slotId), successEvent = null)
         }
     }
-
-    fun currentDraft(): DeviceDosingChannelDetailDraft = mutableDraft.value
 
     fun setMissedDoseRecoveryEnabled(enabled: Boolean) {
         val state = mutableDraft.value
@@ -238,15 +253,6 @@ internal class DeviceDosingChannelDetailViewModel(
                 !snapshot.activeRun.active,
             resetEnabled = snapshot.controls.resetSupported
         )
-    }
-
-    private fun clearBinding() {
-        observeJob?.cancel()
-        refreshJob?.cancel()
-        mutationJob?.cancel()
-        boundDeviceUid = ""
-        boundSlotId = ""
-        mutableDraft.value = DeviceDosingChannelDetailDraft()
     }
 }
 

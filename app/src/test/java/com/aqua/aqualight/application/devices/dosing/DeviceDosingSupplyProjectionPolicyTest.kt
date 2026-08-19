@@ -22,7 +22,7 @@ class DeviceDosingSupplyProjectionPolicyTest {
     }
 
     @Test
-    fun `selected weekdays are projected as calendar days rather than dose count`() {
+    fun `firmware program day anchors selected weekdays as calendar days`() {
         val projection = evaluate(
             remainingMicroliters = 20_000L,
             dailyDoseMicroliters = 10_000L,
@@ -31,6 +31,19 @@ class DeviceDosingSupplyProjectionPolicyTest {
 
         assertEquals(8, projection.estimatedRemainingDays)
         assertEquals(DeviceDosingSupplySeverity.CRITICAL, projection.supplySeverity)
+    }
+
+    @Test
+    fun `missing firmware program day suppresses estimate without hiding supply projection`() {
+        val authoritative = channelSnapshot(remainingMicroliters = 80_000L)
+        val snapshot = authoritative.copy(
+            progress = authoritative.progress.copy(programDayDate = null)
+        )
+
+        val projection = requireNotNull(DeviceDosingSupplyProjectionPolicy.evaluate(snapshot))
+
+        assertNull(projection.estimatedRemainingDays)
+        assertEquals(DeviceDosingSupplySeverity.NORMAL, projection.supplySeverity)
     }
 
     @Test
@@ -83,8 +96,8 @@ class DeviceDosingSupplyProjectionPolicyTest {
         assertFalse(withoutAlarm.reservoir.lowLevelActive)
         assertTrue(withAlarm.reservoir.lowLevelActive)
         assertEquals(
-            DeviceDosingSupplyProjectionPolicy.evaluate(withoutAlarm, MONDAY),
-            DeviceDosingSupplyProjectionPolicy.evaluate(withAlarm, MONDAY)
+            DeviceDosingSupplyProjectionPolicy.evaluate(withoutAlarm),
+            DeviceDosingSupplyProjectionPolicy.evaluate(withAlarm)
         )
     }
 
@@ -96,7 +109,7 @@ class DeviceDosingSupplyProjectionPolicyTest {
         )
 
         val projection = requireNotNull(
-            DeviceDosingSupplyProjectionPolicy.evaluate(snapshot, MONDAY)
+            DeviceDosingSupplyProjectionPolicy.evaluate(snapshot)
         )
 
         assertTrue(snapshot.reservoir.lowLevelActive)
@@ -113,7 +126,7 @@ class DeviceDosingSupplyProjectionPolicyTest {
         )
 
         val projection = requireNotNull(
-            DeviceDosingSupplyProjectionPolicy.evaluate(snapshot, MONDAY)
+            DeviceDosingSupplyProjectionPolicy.evaluate(snapshot)
         )
 
         assertFalse(snapshot.reservoir.lowLevelActive)
@@ -127,7 +140,7 @@ class DeviceDosingSupplyProjectionPolicyTest {
             reservoir = DeviceDosingReservoirSnapshot()
         )
 
-        assertNull(DeviceDosingSupplyProjectionPolicy.evaluate(snapshot, MONDAY))
+        assertNull(DeviceDosingSupplyProjectionPolicy.evaluate(snapshot))
     }
 
     @Test
@@ -172,24 +185,27 @@ class DeviceDosingSupplyProjectionPolicyTest {
         scheduledTodayMicroliters: Long = 0L,
         weekdays: List<Boolean> = List(7) { true },
         programEnabled: Boolean = true
-    ): DeviceDosingSupplyProjection = requireNotNull(
-        DeviceDosingSupplyProjectionPolicy.evaluate(
-            snapshot = channelSnapshot(
-                remainingMicroliters = remainingMicroliters,
-                scheduledTodayMicroliters = scheduledTodayMicroliters,
-                program = singleDoseProgram(
-                    dailyDoseMicroliters = dailyDoseMicroliters,
-                    weekdays = weekdays,
-                    enabled = programEnabled
-                )
-            ),
-            today = MONDAY
+    ): DeviceDosingSupplyProjection {
+        val snapshot = channelSnapshot(
+            remainingMicroliters = remainingMicroliters,
+            program = singleDoseProgram(
+                dailyDoseMicroliters = dailyDoseMicroliters,
+                weekdays = weekdays,
+                enabled = programEnabled
+            )
         )
-    )
+        val snapshotWithProgress = snapshot.copy(
+            progress = snapshot.progress.copy(
+                scheduledAmountMicroliters = scheduledTodayMicroliters
+            )
+        )
+        return requireNotNull(
+            DeviceDosingSupplyProjectionPolicy.evaluate(snapshotWithProgress)
+        )
+    }
 
     private fun channelSnapshot(
         remainingMicroliters: Long,
-        scheduledTodayMicroliters: Long = 0L,
         program: DeviceDosingProgram = singleDoseProgram(),
         lowLevelActive: Boolean = false,
         reservoirAccountingCertain: Boolean = true
@@ -208,9 +224,10 @@ class DeviceDosingSupplyProjectionPolicyTest {
         scheduling = DeviceDosingSchedulingPolicy(),
         program = program,
         progress = DeviceDosingChannelProgress(
-            scheduledAmountMicroliters = scheduledTodayMicroliters,
+            scheduledAmountMicroliters = 0L,
             completedAmountMicroliters = 0L,
-            executionCurrent = true
+            executionCurrent = true,
+            programDayDate = MONDAY
         ),
         reservoir = DeviceDosingReservoirSnapshot(
             trackingEnabled = true,

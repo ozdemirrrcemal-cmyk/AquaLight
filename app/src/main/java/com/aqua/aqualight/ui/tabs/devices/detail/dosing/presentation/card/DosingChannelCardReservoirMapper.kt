@@ -4,12 +4,9 @@ import com.aqua.aqualight.application.devices.dosing.DeviceDosingChannelSnapshot
 import com.aqua.aqualight.application.devices.dosing.DeviceDosingReservoirSnapshot
 import com.aqua.aqualight.application.devices.dosing.DeviceDosingSupplyProjectionPolicy
 import com.aqua.aqualight.application.devices.dosing.DeviceDosingSupplySeverity
-import java.time.LocalDate
 
-internal fun DeviceDosingChannelSnapshot.toReservoirUiState(
-    today: LocalDate
-): DosingReservoirUiState? {
-    val projection = DeviceDosingSupplyProjectionPolicy.evaluate(this, today) ?: return null
+internal fun DeviceDosingChannelSnapshot.toReservoirUiState(): DosingReservoirUiState? {
+    val projection = DeviceDosingSupplyProjectionPolicy.evaluate(this) ?: return null
     return DosingReservoirUiState(
         remainingMl = reservoir.remainingMicroliters.toMilliliters(),
         fillFraction = reservoir.fillFraction(),

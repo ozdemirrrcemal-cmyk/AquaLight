@@ -260,12 +260,12 @@ internal class DeviceDosingPlanViewModel(
                         boundSlotId == slotId
                     ) {
                         mutableEditorState.value = reduceDosingPlanSnapshot(
-                            current = mutableEditorState.value,
+                            current = mutableEditorState.value.copy(draftDirty = false),
                             snapshot = refreshed,
                             restoredDraft = restoredDraft,
                             restoredBaseRevision = restoredBaseRevision,
                             restoredDraftDirty = restoredDraftDirty
-                        ).copy(baseRevision = refreshed.revision)
+                        )
                     }
                 }
                 mutableEditorState.value = mutableEditorState.value.copy(

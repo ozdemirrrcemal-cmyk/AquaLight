@@ -39,19 +39,25 @@ internal fun DosingChannelCard(
 ) {
     val colors = aquaDeviceCardColors()
     val typography = aquaDeviceCardTypography(colors)
-    val stateLabel = stringResource(state.visualState.labelRes)
-    val cardDescription = stringResource(
-        R.string.device_dosing_channel_card_content_description,
-        state.channelNumber,
-        state.displayName,
-        stateLabel
-    )
+    val visualState = state.visualState
+    val stateLabel = visualState?.let { stateValue -> stringResource(stateValue.labelRes) }
+    val semanticModifier = if (stateLabel == null) {
+        Modifier
+    } else {
+        val cardDescription = stringResource(
+            R.string.device_dosing_channel_card_content_description,
+            state.channelNumber,
+            state.displayName,
+            stateLabel
+        )
+        Modifier.semantics { contentDescription = cardDescription }
+    }
 
     AquaDeviceCardSurface(
         modifier = modifier
             .fillMaxWidth()
             .heightIn(min = CHANNEL_CARD_MIN_HEIGHT)
-            .semantics { contentDescription = cardDescription }
+            .then(semanticModifier)
             .clickable(role = Role.Button, onClick = onClick)
     ) {
         DosingChannelCardContent(state, colors, typography, stateLabel)
@@ -63,7 +69,7 @@ private fun DosingChannelCardContent(
     state: DosingChannelCardUiState,
     colors: AquaDeviceCardColors,
     typography: AquaDeviceCardTypography,
-    stateLabel: String
+    stateLabel: String?
 ) {
     Column(
         modifier = Modifier.fillMaxWidth(),
@@ -76,18 +82,11 @@ private fun DosingChannelCardContent(
             stateLabel = stateLabel
         )
         when (state.visualState) {
+            null -> Unit
             DosingChannelVisualState.NOT_CONFIGURED -> DosingChannelEmptyState(
                 title = stringResource(R.string.device_dosing_channel_calibration_required),
                 description = stringResource(
                     R.string.device_dosing_channel_calibration_required_description
-                ),
-                colors = colors,
-                typography = typography
-            )
-            DosingChannelVisualState.PROGRAM_NOT_CONFIGURED -> DosingChannelEmptyState(
-                title = stringResource(R.string.device_dosing_channel_program_empty_title),
-                description = stringResource(
-                    R.string.device_dosing_channel_program_empty_description
                 ),
                 colors = colors,
                 typography = typography

@@ -43,7 +43,7 @@ import com.aqua.aqualight.R
 @Immutable
 data class DosingPumpHeadUiState(
     val channelNumber: Int,
-    val visualState: DosingPumpVisualState = DosingPumpVisualState.IDLE
+    val visualState: DosingPumpVisualState? = null
 )
 
 enum class DosingPumpVisualState(
@@ -170,12 +170,21 @@ private fun DosingPumpHead(
 ) {
     val interactionSource = remember { MutableInteractionSource() }
     val pressed by interactionSource.collectIsPressedAsState()
-    val stateLabel = stringResource(pumpHead.visualState.stateLabelRes)
-    val pumpDescription = stringResource(
-        R.string.device_dosing_pump_channel_content_description,
-        pumpHead.channelNumber,
-        stateLabel
-    )
+    val visualState = pumpHead.visualState
+    val stateLabel = visualState?.let { state -> stringResource(state.stateLabelRes) }
+    val semanticModifier = if (stateLabel == null) {
+        Modifier
+    } else {
+        val pumpDescription = stringResource(
+            R.string.device_dosing_pump_channel_content_description,
+            pumpHead.channelNumber,
+            stateLabel
+        )
+        Modifier.semantics {
+            contentDescription = pumpDescription
+            stateDescription = stateLabel
+        }
+    }
     val pressedScale = if (pressed) PRESSED_SCALE else NORMAL_SCALE
 
     BoxWithConstraints(
@@ -191,10 +200,7 @@ private fun DosingPumpHead(
             )
             .clip(PUMP_OUTER_SHAPE)
             .background(brush = DosingPumpPalette.pumpFrame)
-            .semantics {
-                contentDescription = pumpDescription
-                stateDescription = stateLabel
-            }
+            .then(semanticModifier)
             .then(
                 if (onClick == null) {
                     Modifier
@@ -211,7 +217,7 @@ private fun DosingPumpHead(
         contentAlignment = Alignment.Center
     ) {
         DosingPumpFace(
-            visualState = pumpHead.visualState,
+            visualState = visualState,
             hubSize = maxWidth * HUB_SIZE_RATIO
         )
     }
@@ -219,7 +225,7 @@ private fun DosingPumpHead(
 
 @Composable
 private fun DosingPumpFace(
-    visualState: DosingPumpVisualState,
+    visualState: DosingPumpVisualState?,
     hubSize: androidx.compose.ui.unit.Dp
 ) {
     Box(
@@ -245,7 +251,7 @@ private fun DosingPumpFace(
 
 @Composable
 private fun DosingPumpHub(
-    visualState: DosingPumpVisualState,
+    visualState: DosingPumpVisualState?,
     hubSize: androidx.compose.ui.unit.Dp
 ) {
     Box(
@@ -273,7 +279,7 @@ private fun DosingPumpHub(
 
 @Composable
 private fun PumpIndicator(
-    visualState: DosingPumpVisualState,
+    visualState: DosingPumpVisualState?,
     modifier: Modifier = Modifier
 ) {
     val transition = rememberInfiniteTransition(label = "dosing-pump-indicator")
@@ -296,6 +302,7 @@ private fun PumpIndicator(
         label = "dosing-pump-error-scale"
     )
     val pulseScale = when (visualState) {
+        null,
         DosingPumpVisualState.IDLE,
         DosingPumpVisualState.SELECTED -> NORMAL_SCALE
         DosingPumpVisualState.RUNNING -> runningScale
@@ -308,7 +315,7 @@ private fun PumpIndicator(
             scaleY = pulseScale
         }
     ) {
-        drawPumpIndicator(visualState)
+        visualState?.let { state -> drawPumpIndicator(state) }
     }
 }
 

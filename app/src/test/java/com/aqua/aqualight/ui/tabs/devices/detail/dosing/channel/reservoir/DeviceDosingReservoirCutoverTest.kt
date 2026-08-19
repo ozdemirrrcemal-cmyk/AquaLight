@@ -1,5 +1,6 @@
 package com.aqua.aqualight.ui.tabs.devices.detail.dosing.channel.reservoir
 
+import com.aqua.aqualight.application.devices.dosing.DeviceDosingReservoirCapacityPolicy
 import com.aqua.aqualight.ui.tabs.devices.detail.dosing.channel.FakeDeviceDosingChannelOperations
 import java.util.Locale
 import kotlinx.coroutines.Dispatchers
@@ -30,64 +31,108 @@ class DeviceDosingReservoirCutoverTest {
     }
 
     @Test
-    fun `authoritative reservoir state loads and save uses central channel mutation`() =
+    fun `save is enabled only for a real reservoir change and returns disabled when reverted`() =
         runTest(dispatcher) {
             val operations = FakeDeviceDosingChannelOperations()
             val viewModel = DeviceDosingReservoirViewModel(operations)
+            viewModel.bind(DEVICE_UID, SLOT_ID)
 
-            viewModel.bind(DEVICE_UID, SLOT_ID, restoredDraft = null)
+            assertFalse(viewModel.currentEditorState().canSave)
+            viewModel.setCapacityInput("500", Locale.US)
+            assertTrue(viewModel.currentEditorState().canSave)
+            assertFalse(viewModel.currentEditorState().canRefill)
 
-            val initial = viewModel.currentEditorState()
-            assertTrue(initial.initialized)
-            assertTrue(initial.draft.trackingEnabled)
-            assertEquals(450_000L, initial.draft.reservoirCapacityMicroliters)
-            assertEquals(250_000L, initial.remainingMicroliters)
-            assertFalse(initial.dirty)
+            viewModel.setCapacityInput("450", Locale.US)
+            assertFalse(viewModel.currentEditorState().canSave)
+            assertTrue(viewModel.currentEditorState().canRefill)
 
             viewModel.setCapacityInput("500", Locale.US)
-            viewModel.setLowLevelAlertEnabled(true)
-            assertTrue(viewModel.currentEditorState().canSave)
-
             viewModel.save()
 
+            assertEquals(1, operations.reservoirConfigMutationCount)
+            assertEquals(1L, operations.lastReservoirExpectedRevision)
             assertEquals(500_000L, operations.lastReservoirSettings?.capacityMicroliters)
-            assertEquals(true, operations.lastReservoirSettings?.lowLevelAlertEnabled)
-            assertFalse(viewModel.currentEditorState().dirty)
+            assertEquals(500_000L, viewModel.currentEditorState().remainingMicroliters)
+            assertFalse(viewModel.currentEditorState().canSave)
+            assertFalse(viewModel.currentEditorState().canRefill)
         }
 
     @Test
-    fun `refill delegates to central runtime mutation and refreshes remaining volume`() =
+    fun `alert only save never reapplies firmware reservoir baseline`() = runTest(dispatcher) {
+        val operations = FakeDeviceDosingChannelOperations()
+        val viewModel = DeviceDosingReservoirViewModel(operations)
+        viewModel.bind(DEVICE_UID, SLOT_ID)
+
+        assertEquals(250_000L, viewModel.currentEditorState().remainingMicroliters)
+        viewModel.setLowLevelAlertEnabled(true)
+        assertTrue(viewModel.currentEditorState().canSave)
+        viewModel.save()
+
+        assertEquals(0, operations.reservoirConfigMutationCount)
+        assertEquals(1, operations.lowLevelAlertMutationCount)
+        assertEquals(250_000L, viewModel.currentEditorState().remainingMicroliters)
+        assertTrue(viewModel.currentEditorState().draft.lowLevelAlertEnabled)
+        assertFalse(viewModel.currentEditorState().canSave)
+    }
+
+    @Test
+    fun `refill requires authoritative tracking clean config and a non-full or uncertain level`() =
         runTest(dispatcher) {
             val operations = FakeDeviceDosingChannelOperations()
             val viewModel = DeviceDosingReservoirViewModel(operations)
-            viewModel.bind(DEVICE_UID, SLOT_ID, restoredDraft = null)
+            viewModel.bind(DEVICE_UID, SLOT_ID)
 
-            assertEquals(250_000L, viewModel.currentEditorState().remainingMicroliters)
+            assertTrue(viewModel.currentEditorState().canRefill)
+            viewModel.setCapacityInput("500", Locale.US)
+            assertFalse(viewModel.currentEditorState().canRefill)
+            viewModel.setCapacityInput("450", Locale.US)
+            assertTrue(viewModel.currentEditorState().canRefill)
+
+            operations.snapshot.value = requireNotNull(operations.snapshot.value).copy(
+                reservoir = requireNotNull(operations.snapshot.value).reservoir.copy(
+                    remainingMicroliters = 450_000L,
+                    accountingCertain = true
+                )
+            )
+            assertFalse(viewModel.currentEditorState().canRefill)
+
+            operations.snapshot.value = requireNotNull(operations.snapshot.value).copy(
+                reservoir = requireNotNull(operations.snapshot.value).reservoir.copy(
+                    remainingMicroliters = 300_000L,
+                    accountingCertain = false
+                )
+            )
+            assertTrue(viewModel.currentEditorState().canRefill)
             viewModel.refill()
 
+            assertEquals(1, operations.refillMutationCount)
             assertEquals(450_000L, viewModel.currentEditorState().remainingMicroliters)
-            assertFalse(viewModel.currentEditorState().reservoirNeedsAttention)
+            assertTrue(viewModel.currentEditorState().remainingAccountingCertain)
+            assertFalse(viewModel.currentEditorState().canRefill)
         }
 
     @Test
-    fun `process recreation restores unsaved draft without replacing authoritative remaining`() =
-        runTest(dispatcher) {
-            val operations = FakeDeviceDosingChannelOperations()
-            val restored = DeviceDosingReservoirDraft(
-                reservoirCapacityMicroliters = 700_000L,
-                trackingEnabled = true,
-                lowLevelAlertEnabled = true
-            )
-            val viewModel = DeviceDosingReservoirViewModel(operations)
-
-            viewModel.bind(DEVICE_UID, SLOT_ID, restoredDraft = restored)
-
-            val state = viewModel.currentEditorState()
-            assertEquals(restored, state.draft)
-            assertEquals(250_000L, state.remainingMicroliters)
-            assertTrue(state.dirty)
-            assertTrue(state.canSave)
+    fun `a new reservoir editor discards an unsaved capacity draft`() = runTest(dispatcher) {
+        val operations = FakeDeviceDosingChannelOperations()
+        DeviceDosingReservoirViewModel(operations).also { first ->
+            first.bind(DEVICE_UID, SLOT_ID)
+            first.setCapacityInput("700", Locale.US)
+            assertEquals(700_000L, first.currentDraft().reservoirCapacityMicroliters)
+            assertTrue(first.currentEditorState().canSave)
         }
+
+        val reopened = DeviceDosingReservoirViewModel(operations)
+        reopened.bind(DEVICE_UID, SLOT_ID)
+
+        assertEquals(450_000L, reopened.currentDraft().reservoirCapacityMicroliters)
+        assertEquals(250_000L, reopened.currentEditorState().remainingMicroliters)
+        assertFalse(reopened.currentEditorState().canSave)
+    }
+
+    @Test
+    fun `authoritative empty reservoir formats as zero instead of default capacity`() {
+        assertEquals("0", DeviceDosingReservoirCapacityPolicy.formatRuntimeVolume(0L, Locale.US))
+    }
 
     private companion object {
         const val DEVICE_UID = "device-1"

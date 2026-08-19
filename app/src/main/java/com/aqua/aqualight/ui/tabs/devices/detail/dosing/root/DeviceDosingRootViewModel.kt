@@ -67,7 +67,10 @@ class DeviceDosingRootViewModel(
             _uiState.value = emptyState(fallbackTitle, "")
             return
         }
-        if (boundDeviceUid == deviceUid) return
+        if (boundDeviceUid == deviceUid) {
+            refreshAuthoritative()
+            return
+        }
 
         boundDeviceUid = deviceUid
         this.fallbackTitle = fallbackTitle
@@ -93,6 +96,12 @@ class DeviceDosingRootViewModel(
                 renderBoundState()
             }
         }
+        refreshAuthoritative()
+    }
+
+    fun refreshAuthoritative() {
+        val deviceUid = boundDeviceUid
+        if (deviceUid.isBlank() || channelDataRefreshJob?.isActive == true) return
         channelDataRefreshJob = viewModelScope.launch {
             channelOperations.refreshAll(deviceUid)
         }
