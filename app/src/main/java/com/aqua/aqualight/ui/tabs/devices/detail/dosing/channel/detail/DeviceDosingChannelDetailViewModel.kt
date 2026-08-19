@@ -75,7 +75,12 @@ internal class DeviceDosingChannelDetailViewModel(
         val deviceUid = deviceUidText.trim()
         val slotId = slotIdText.trim()
         if (deviceUid.isBlank() || slotId.isBlank()) {
-            clearBinding()
+            observeJob?.cancel()
+            refreshJob?.cancel()
+            mutationJob?.cancel()
+            boundDeviceUid = ""
+            boundSlotId = ""
+            mutableDraft.value = DeviceDosingChannelDetailDraft()
             return
         }
         if (boundDeviceUid == deviceUid && boundSlotId == slotId) {
@@ -248,15 +253,6 @@ internal class DeviceDosingChannelDetailViewModel(
                 !snapshot.activeRun.active,
             resetEnabled = snapshot.controls.resetSupported
         )
-    }
-
-    private fun clearBinding() {
-        observeJob?.cancel()
-        refreshJob?.cancel()
-        mutationJob?.cancel()
-        boundDeviceUid = ""
-        boundSlotId = ""
-        mutableDraft.value = DeviceDosingChannelDetailDraft()
     }
 }
 
