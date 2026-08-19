@@ -73,33 +73,49 @@ internal object DeviceDosingV1ChannelSnapshotMapper {
         detail: DeviceDosingV1ChannelDetail,
         global: DeviceDosingV1GlobalStatus
     ): DeviceDosingChannelControls {
-        val persistedMutationAllowed = global.envelope.bootReady &&
-            global.envelope.storageHealthy &&
-            !detail.activeRun.active &&
+        val storageReady = allEnabled(
+            global.envelope.bootReady,
+            global.envelope.storageHealthy
+        )
+        val outputIdle = !detail.activeRun.active
+        val persistedMutationAllowed = allEnabled(
+            storageReady,
+            outputIdle,
             detail.calibration.state.raw == CALIBRATION_IDLE
-        val resetAllowed = global.envelope.bootReady && global.envelope.storageHealthy
-        val runtimeRefillAllowed = global.envelope.bootReady &&
-            global.envelope.storageHealthy &&
-            !detail.activeRun.active
+        )
+        val runtimeRefillAllowed = allEnabled(storageReady, outputIdle)
 
         return DeviceDosingChannelControls(
-            programEditable = persistedMutationAllowed && global.runtime.supportsProgramApply,
-            reservoirEditable = persistedMutationAllowed &&
-                detail.editable.reservoir &&
-                global.runtime.supportsChannelConfig,
-            displayNameEditable = persistedMutationAllowed &&
-                detail.editable.displayName &&
-                global.runtime.supportsChannelConfig,
-            calibrationEditable = detail.editable.dosingCalibration &&
-                global.runtime.supportsCalibrationWorkflow,
+            programEditable = allEnabled(
+                persistedMutationAllowed,
+                global.runtime.supportsProgramApply
+            ),
+            reservoirEditable = allEnabled(
+                persistedMutationAllowed,
+                detail.editable.reservoir,
+                global.runtime.supportsChannelConfig
+            ),
+            displayNameEditable = allEnabled(
+                persistedMutationAllowed,
+                detail.editable.displayName,
+                global.runtime.supportsChannelConfig
+            ),
+            calibrationEditable = allEnabled(
+                detail.editable.dosingCalibration,
+                global.runtime.supportsCalibrationWorkflow
+            ),
             manualDoseSupported = global.runtime.supportsManualDose,
             stopDoseSupported = global.runtime.supportsManualDose,
-            resetSupported = resetAllowed &&
-                global.runtime.supportsChannelReset &&
-                global.scheduling.supportsChannelReset,
-            refillSupported = runtimeRefillAllowed &&
-                detail.editable.reservoir &&
+            resetSupported = allEnabled(
+                storageReady,
+                global.runtime.supportsChannelReset,
+                global.scheduling.supportsChannelReset
+            ),
+            refillSupported = allEnabled(
+                runtimeRefillAllowed,
+                detail.editable.reservoir,
                 global.runtime.supportsReservoirRefill
+            )
         )
     }
 
@@ -120,6 +136,8 @@ internal object DeviceDosingV1ChannelSnapshotMapper {
             "prime" -> DeviceDosingRunSource.PRIME
             else -> DeviceDosingRunSource.UNKNOWN
         }
+
+    private fun allEnabled(vararg conditions: Boolean): Boolean = conditions.all { it }
 
     private const val FIRMWARE_UNAVAILABLE_AMOUNT_ML = -1.0
     private const val CALIBRATION_IDLE = "idle"

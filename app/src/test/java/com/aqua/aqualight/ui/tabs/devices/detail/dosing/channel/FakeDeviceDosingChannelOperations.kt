@@ -107,24 +107,29 @@ internal class FakeDeviceDosingChannelOperations(
         settings: DeviceDosingReservoirSettings,
         expectedRevision: Long
     ): DeviceDosingChannelOperationResult {
-        val current = snapshot.value ?: return DeviceDosingChannelOperationResult.Unavailable
-        if (current.revision != expectedRevision) {
-            return DeviceDosingChannelOperationResult.Rejected(DeviceDosingChannelRejection.CONFLICT)
-        }
-        lastReservoirSettings = settings
-        lastReservoirExpectedRevision = expectedRevision
-        reservoirConfigMutationCount += 1
-        return mutate { state ->
-            val capacity = settings.capacityMicroliters ?: 0L
-            state.copy(
-                revision = state.revision + 1L,
-                reservoir = DeviceDosingReservoirSnapshot(
-                    trackingEnabled = settings.trackingEnabled,
-                    capacityMicroliters = capacity,
-                    remainingMicroliters = capacity,
-                    lowLevelAlertEnabled = settings.lowLevelAlertEnabled
-                )
+        val current = snapshot.value
+        return when {
+            current == null -> DeviceDosingChannelOperationResult.Unavailable
+            current.revision != expectedRevision -> DeviceDosingChannelOperationResult.Rejected(
+                DeviceDosingChannelRejection.CONFLICT
             )
+            else -> {
+                lastReservoirSettings = settings
+                lastReservoirExpectedRevision = expectedRevision
+                reservoirConfigMutationCount += 1
+                mutate { state ->
+                    val capacity = settings.capacityMicroliters ?: 0L
+                    state.copy(
+                        revision = state.revision + 1L,
+                        reservoir = DeviceDosingReservoirSnapshot(
+                            trackingEnabled = settings.trackingEnabled,
+                            capacityMicroliters = capacity,
+                            remainingMicroliters = capacity,
+                            lowLevelAlertEnabled = settings.lowLevelAlertEnabled
+                        )
+                    )
+                }
+            }
         }
     }
 

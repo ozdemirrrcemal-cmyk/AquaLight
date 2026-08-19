@@ -192,46 +192,17 @@ internal class DeviceDosingReservoirViewModel(
             }.getOrElse { DeviceDosingChannelOperationResult.Failed }
             if (boundDeviceUid != deviceUid || boundSlotId != slotId) return@launch
 
-            when (result) {
-                is DeviceDosingChannelOperationResult.Success -> {
-                    mutableEditorState.value = reduceReservoirSnapshot(
-                        mutableEditorState.value.copy(operationInProgress = false),
-                        result.snapshot,
-                        forceAuthoritative = true
-                    )
-                    eventChannel.send(DeviceDosingReservoirEvent.Saved)
-                }
-                is DeviceDosingChannelOperationResult.Rejected -> {
-                    if (result.reason == DeviceDosingChannelRejection.CONFLICT) {
-                        val refreshed = when (
-                            val refresh = runCatching {
-                                operations.refresh(deviceUid, slotId)
-                            }.getOrNull()
-                        ) {
-                            is DeviceDosingChannelOperationResult.Success -> refresh.snapshot
-                            else -> null
-                        }
-                        if (refreshed != null &&
-                            boundDeviceUid == deviceUid && boundSlotId == slotId
-                        ) {
-                            mutableEditorState.value = rebaseReservoirDraft(
-                                mutableEditorState.value,
-                                refreshed
-                            )
-                        }
-                    }
-                    mutableEditorState.value = mutableEditorState.value.copy(
-                        operationInProgress = false
-                    )
-                    eventChannel.send(DeviceDosingReservoirEvent.SaveRejected(result.reason))
-                }
-                else -> {
-                    mutableEditorState.value = mutableEditorState.value.copy(
-                        operationInProgress = false
-                    )
-                    eventChannel.send(DeviceDosingReservoirEvent.SaveFailed)
-                }
-            }
+            val resolution = resolveReservoirSaveResult(
+                operations = operations,
+                deviceUid = deviceUid,
+                slotId = slotId,
+                current = mutableEditorState.value,
+                result = result
+            )
+            if (boundDeviceUid != deviceUid || boundSlotId != slotId) return@launch
+
+            mutableEditorState.value = resolution.state
+            eventChannel.send(resolution.event)
         }
     }
 
@@ -294,6 +265,63 @@ private class ReservoirEditorJobs {
         refresh?.cancel()
         mutation?.cancel()
     }
+}
+
+private data class ReservoirSaveResolution(
+    val state: DeviceDosingReservoirEditorState,
+    val event: DeviceDosingReservoirEvent
+)
+
+private suspend fun resolveReservoirSaveResult(
+    operations: DeviceDosingChannelOperations,
+    deviceUid: String,
+    slotId: String,
+    current: DeviceDosingReservoirEditorState,
+    result: DeviceDosingChannelOperationResult
+): ReservoirSaveResolution = when (result) {
+    is DeviceDosingChannelOperationResult.Success -> ReservoirSaveResolution(
+        state = reduceReservoirSnapshot(
+            current.copy(operationInProgress = false),
+            result.snapshot,
+            forceAuthoritative = true
+        ),
+        event = DeviceDosingReservoirEvent.Saved
+    )
+    is DeviceDosingChannelOperationResult.Rejected -> resolveReservoirSaveRejection(
+        operations = operations,
+        deviceUid = deviceUid,
+        slotId = slotId,
+        current = current,
+        rejection = result.reason
+    )
+    else -> ReservoirSaveResolution(
+        state = current.copy(operationInProgress = false),
+        event = DeviceDosingReservoirEvent.SaveFailed
+    )
+}
+
+private suspend fun resolveReservoirSaveRejection(
+    operations: DeviceDosingChannelOperations,
+    deviceUid: String,
+    slotId: String,
+    current: DeviceDosingReservoirEditorState,
+    rejection: DeviceDosingChannelRejection
+): ReservoirSaveResolution {
+    val resolvedState = if (rejection == DeviceDosingChannelRejection.CONFLICT) {
+        val refreshed = when (
+            val refresh = runCatching { operations.refresh(deviceUid, slotId) }.getOrNull()
+        ) {
+            is DeviceDosingChannelOperationResult.Success -> refresh.snapshot
+            else -> null
+        }
+        refreshed?.let { snapshot -> rebaseReservoirDraft(current, snapshot) } ?: current
+    } else {
+        current
+    }
+    return ReservoirSaveResolution(
+        state = resolvedState.copy(operationInProgress = false),
+        event = DeviceDosingReservoirEvent.SaveRejected(rejection)
+    )
 }
 
 private suspend fun performReservoirSave(
