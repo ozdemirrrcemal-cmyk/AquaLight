@@ -35,21 +35,7 @@
     <string name="device_dosing_channel_mode_timer">Zamanlayıcı</string>
     <string name="device_dosing_channel_mode_progress_format">%3$s · %1$d/%2$d</string>
     <string name="device_dosing_channel_no_dose_today_format">%1$s · Bugün doz yok</string>
-    <string name="device_dosing_channel_progress_delivered_format">%1$.2f mL</string>
-    <string name="device_dosing_channel_progress_marker_format">%1$.2f</string>
-    <plurals name="device_dosing_channel_progress_description">
-        <item quantity="one">%1$s modu. %2$d/%3$d programlı doz tamamlandı; %4$.2f/%5$.2f mL verildi.</item>
-        <item quantity="other">%1$s modu. %2$d/%3$d programlı doz tamamlandı; %4$.2f/%5$.2f mL verildi.</item>
-    </plurals>
     <string name="device_dosing_channel_no_scheduled_dose_today">Bugün programlı doz yok</string>
-    <string name="device_dosing_channel_manual_amount_format">+%1$.2f mL</string>
-    <string name="device_dosing_channel_manual_description">Bugün verilen manuel doz: %1$.2f mL.</string>
-    <plurals name="device_dosing_channel_reservoir_days_format">
-        <item quantity="one">~%1$d gün · %2$.1f mL</item>
-        <item quantity="other">~%1$d gün · %2$.1f mL</item>
-    </plurals>
-    <string name="device_dosing_channel_reservoir_amount_format">%1$.1f mL</string>
-    <string name="device_dosing_channel_reservoir_description">Haznede kalan: %1$s</string>
     <string name="device_dosing_channel_card_content_description">Dozaj kanalı %1$d, %2$s, %3$s</string>
     <string name="device_dosing_channel_open_failed">Dozaj kanalı cihazdan okunamadı. Bağlantıyı ve firmware sürümünü kontrol edip tekrar deneyin.</string>
 
