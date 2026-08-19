@@ -22,21 +22,18 @@ object DeviceDosingReservoirCapacityPolicy {
             ?.let { value -> canonicalDecimalOrNull(value, locale) }
         return when {
             rawValue.isBlank() -> rejected(DeviceDosingReservoirCapacityRejection.REQUIRED)
-            canonical == null ->
-                rejected(DeviceDosingReservoirCapacityRejection.INVALID_NUMBER)
+            canonical == null -> rejected(DeviceDosingReservoirCapacityRejection.INVALID_NUMBER)
             else -> validateCanonicalDecimal(canonical)
         }
     }
 
-    fun format(capacityMicroliters: Long, locale: Locale): String {
-        val exactCapacity = normalizePersistedMicroliters(capacityMicroliters)
-        return DecimalFormat(
-            "0.###",
-            DecimalFormatSymbols.getInstance(locale)
-        ).apply {
-            isGroupingUsed = false
-            roundingMode = RoundingMode.UNNECESSARY
-        }.format(BigDecimal.valueOf(exactCapacity, MILLILITER_SCALE))
+    fun format(capacityMicroliters: Long, locale: Locale): String =
+        formatExact(normalizePersistedMicroliters(capacityMicroliters), locale)
+
+    /** Formats firmware-authoritative remaining volume without capacity-default substitution. */
+    fun formatRuntimeVolume(microliters: Long, locale: Locale): String {
+        require(microliters in 0L..MAX_CAPACITY_MICROLITERS)
+        return formatExact(microliters, locale)
     }
 
     fun normalizePersistedMicroliters(capacityMicroliters: Long?): Long =
@@ -47,6 +44,14 @@ object DeviceDosingReservoirCapacityPolicy {
     internal fun isSupportedMicroliters(capacityMicroliters: Long): Boolean =
         capacityMicroliters in 1L..MAX_CAPACITY_MICROLITERS
 
+    private fun formatExact(microliters: Long, locale: Locale): String = DecimalFormat(
+        "0.###",
+        DecimalFormatSymbols.getInstance(locale)
+    ).apply {
+        isGroupingUsed = false
+        roundingMode = RoundingMode.UNNECESSARY
+    }.format(BigDecimal.valueOf(microliters, MILLILITER_SCALE))
+
     private fun validateCanonicalDecimal(
         canonical: String
     ): DeviceDosingReservoirCapacityValidation {
@@ -54,8 +59,7 @@ object DeviceDosingReservoirCapacityPolicy {
             ?: return rejected(DeviceDosingReservoirCapacityRejection.INVALID_NUMBER)
         val rejection = when {
             amount.signum() <= 0 -> DeviceDosingReservoirCapacityRejection.POSITIVE_REQUIRED
-            amount > MAX_CAPACITY_MILLILITERS ->
-                DeviceDosingReservoirCapacityRejection.OUT_OF_RANGE
+            amount > MAX_CAPACITY_MILLILITERS -> DeviceDosingReservoirCapacityRejection.OUT_OF_RANGE
             amount.stripTrailingZeros().scale() > MILLILITER_SCALE ->
                 DeviceDosingReservoirCapacityRejection.UNSUPPORTED_PRECISION
             else -> null
@@ -111,9 +115,7 @@ object DeviceDosingReservoirCapacityPolicy {
 
         fun resultOrNull(valid: Boolean): String? {
             if (output.lastOrNull() == '.') output.append('0')
-            return output
-                .takeIf { valid && hasDigit }
-                ?.toString()
+            return output.takeIf { valid && hasDigit }?.toString()
         }
 
         private fun appendDigit(digit: Int): Boolean {

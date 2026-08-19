@@ -4,12 +4,15 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.aqua.aqualight.application.devices.dosing.DeviceDosingChannelOperationResult
 import com.aqua.aqualight.application.devices.dosing.DeviceDosingChannelOperations
+import com.aqua.aqualight.application.devices.dosing.DeviceDosingChannelRejection
 import com.aqua.aqualight.application.devices.dosing.DeviceDosingChannelSnapshot
 import com.aqua.aqualight.application.devices.dosing.DeviceDosingReservoirCapacityPolicy
 import com.aqua.aqualight.application.devices.dosing.DeviceDosingReservoirCapacityRejection
 import com.aqua.aqualight.application.devices.dosing.DeviceDosingReservoirCapacityValidation
 import com.aqua.aqualight.application.devices.dosing.DeviceDosingReservoirSettings
+import com.aqua.aqualight.application.devices.dosing.applyReservoirSettingsAgainstBaseRevision
 import com.aqua.aqualight.application.devices.dosing.requiresLowReservoirAttention
+import com.aqua.aqualight.application.devices.dosing.setReservoirLowLevelAlertPreference
 import java.util.Locale
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.channels.Channel
@@ -35,6 +38,7 @@ internal enum class DeviceDosingReservoirNotificationAvailability {
 
 internal data class DeviceDosingReservoirEditorState(
     val draft: DeviceDosingReservoirDraft = DeviceDosingReservoirDraft(),
+    val savedDraft: DeviceDosingReservoirDraft = DeviceDosingReservoirDraft(),
     val remainingMicroliters: Long? = null,
     val remainingAccountingCertain: Boolean = true,
     val reservoirNeedsAttention: Boolean = false,
@@ -42,29 +46,45 @@ internal data class DeviceDosingReservoirEditorState(
     val refillSupported: Boolean = false,
     val operationInProgress: Boolean = false,
     val initialized: Boolean = false,
-    val dirty: Boolean = false,
+    val baseRevision: Long? = null,
     val capacityRejection: DeviceDosingReservoirCapacityRejection? = null,
     val notificationAvailability: DeviceDosingReservoirNotificationAvailability =
         DeviceDosingReservoirNotificationAvailability.AVAILABLE
 ) {
+    val firmwareConfigDirty: Boolean
+        get() = !draft.hasSameFirmwareReservoirConfig(savedDraft)
+
+    val alertPreferenceDirty: Boolean
+        get() = draft.effectiveLowLevelAlertEnabled != savedDraft.effectiveLowLevelAlertEnabled
+
+    val dirty: Boolean
+        get() = firmwareConfigDirty || alertPreferenceDirty
+
     val canSave: Boolean
-        get() = initialized && editable && dirty && !operationInProgress && capacityRejection == null
+        get() = initialized && dirty && !operationInProgress && capacityRejection == null &&
+            (!firmwareConfigDirty || (editable && baseRevision != null))
 
     val canRefill: Boolean
-        get() = initialized && refillSupported && draft.trackingEnabled && !operationInProgress
+        get() {
+            val authoritativeCapacity = savedDraft.reservoirCapacityMicroliters
+            val refillNeeded = !remainingAccountingCertain ||
+                remainingMicroliters?.let { remaining -> remaining < authoritativeCapacity } == true
+            return initialized && refillSupported && savedDraft.trackingEnabled &&
+                authoritativeCapacity > 0L && !firmwareConfigDirty && !operationInProgress &&
+                refillNeeded
+        }
 
     val settingsIntent: DeviceDosingReservoirSettings
         get() = DeviceDosingReservoirSettings(
             trackingEnabled = draft.trackingEnabled,
-            capacityMicroliters = draft.reservoirCapacityMicroliters.takeIf {
-                draft.trackingEnabled
-            },
-            lowLevelAlertEnabled = draft.trackingEnabled && draft.lowLevelAlertEnabled
+            capacityMicroliters = draft.reservoirCapacityMicroliters.takeIf { draft.trackingEnabled },
+            lowLevelAlertEnabled = draft.effectiveLowLevelAlertEnabled
         )
 }
 
 internal sealed interface DeviceDosingReservoirEvent {
     data object Saved : DeviceDosingReservoirEvent
+    data class SaveRejected(val reason: DeviceDosingChannelRejection) : DeviceDosingReservoirEvent
     data object SaveFailed : DeviceDosingReservoirEvent
     data object Refilled : DeviceDosingReservoirEvent
     data object RefillFailed : DeviceDosingReservoirEvent
@@ -83,24 +103,18 @@ internal class DeviceDosingReservoirViewModel(
     private val jobs = ReservoirEditorJobs()
     private var boundDeviceUid = ""
     private var boundSlotId = ""
-    private var restoredDraft: DeviceDosingReservoirDraft? = null
 
     fun currentEditorState(): DeviceDosingReservoirEditorState = mutableEditorState.value
 
     fun currentDraft(): DeviceDosingReservoirDraft = mutableEditorState.value.draft
 
-    fun bind(
-        deviceUidText: String,
-        slotIdText: String,
-        restoredDraft: DeviceDosingReservoirDraft?
-    ) {
+    fun bind(deviceUidText: String, slotIdText: String) {
         val deviceUid = deviceUidText.trim()
         val slotId = slotIdText.trim()
         if (deviceUid.isBlank() || slotId.isBlank()) {
             jobs.cancelAll()
             boundDeviceUid = ""
             boundSlotId = ""
-            this.restoredDraft = null
             mutableEditorState.value = DeviceDosingReservoirEditorState()
             return
         }
@@ -109,22 +123,23 @@ internal class DeviceDosingReservoirViewModel(
         jobs.cancelAll()
         boundDeviceUid = deviceUid
         boundSlotId = slotId
-        this.restoredDraft = restoredDraft
         mutableEditorState.value = DeviceDosingReservoirEditorState()
 
         jobs.observe = viewModelScope.launch {
             operations.observe(deviceUid, slotId).collect { snapshot ->
                 if (boundDeviceUid != deviceUid || boundSlotId != slotId) return@collect
-                if (snapshot == null) {
-                    mutableEditorState.value = mutableEditorState.value.asUnavailable()
-                } else {
-                    applySnapshot(snapshot)
-                }
+                mutableEditorState.value = snapshot?.let { authoritative ->
+                    reduceReservoirSnapshot(mutableEditorState.value, authoritative)
+                } ?: mutableEditorState.value.asUnavailable()
             }
         }
         jobs.refresh = viewModelScope.launch {
             when (val result = operations.refresh(deviceUid, slotId)) {
-                is DeviceDosingChannelOperationResult.Success -> applySnapshot(result.snapshot)
+                is DeviceDosingChannelOperationResult.Success ->
+                    mutableEditorState.value = reduceReservoirSnapshot(
+                        mutableEditorState.value,
+                        result.snapshot
+                    )
                 else -> if (!mutableEditorState.value.initialized) {
                     mutableEditorState.value = mutableEditorState.value.asUnavailable()
                 }
@@ -132,42 +147,34 @@ internal class DeviceDosingReservoirViewModel(
         }
     }
 
-    fun setTrackingEnabled(enabled: Boolean) {
-        mutableEditorState.value = mutableEditorState.value.withUpdatedDraft { draft ->
-            draft.copy(trackingEnabled = enabled)
-        }
+    fun setTrackingEnabled(enabled: Boolean) = updateDraft { draft ->
+        draft.copy(trackingEnabled = enabled)
     }
 
     fun setLowLevelAlertEnabled(enabled: Boolean) {
-        mutableEditorState.value = mutableEditorState.value.withUpdatedDraft { draft ->
-            if (enabled && !draft.trackingEnabled) draft else draft.copy(lowLevelAlertEnabled = enabled)
-        }
+        val current = mutableEditorState.value
+        if (enabled && !current.draft.trackingEnabled) return
+        updateDraft { draft -> draft.copy(lowLevelAlertEnabled = enabled) }
     }
 
-    fun setNotificationAvailability(
-        availability: DeviceDosingReservoirNotificationAvailability
-    ) {
-        mutableEditorState.value = mutableEditorState.value.copy(
-            notificationAvailability = availability
-        )
+    fun setNotificationAvailability(availability: DeviceDosingReservoirNotificationAvailability) {
+        mutableEditorState.value = mutableEditorState.value.copy(notificationAvailability = availability)
     }
 
     fun setCapacityInput(rawValue: String, locale: Locale) {
         val state = mutableEditorState.value
         if (!state.editable || state.operationInProgress) return
-        when (val validation = DeviceDosingReservoirCapacityPolicy.validate(rawValue, locale)) {
-            is DeviceDosingReservoirCapacityValidation.Accepted -> {
-                mutableEditorState.value = state.copy(
-                    draft = state.draft.copy(
-                        reservoirCapacityMicroliters = validation.capacityMicroliters
-                    ),
-                    capacityRejection = null,
-                    dirty = true
-                )
-            }
-            is DeviceDosingReservoirCapacityValidation.Rejected -> {
-                mutableEditorState.value = state.copy(capacityRejection = validation.reason)
-            }
+        mutableEditorState.value = when (val validation =
+            DeviceDosingReservoirCapacityPolicy.validate(rawValue, locale)
+        ) {
+            is DeviceDosingReservoirCapacityValidation.Accepted -> state.copy(
+                draft = state.draft.copy(
+                    reservoirCapacityMicroliters = validation.capacityMicroliters
+                ),
+                capacityRejection = null
+            )
+            is DeviceDosingReservoirCapacityValidation.Rejected ->
+                state.copy(capacityRejection = validation.reason)
         }
     }
 
@@ -176,23 +183,47 @@ internal class DeviceDosingReservoirViewModel(
         val slotId = boundSlotId
         val state = mutableEditorState.value
         if (deviceUid.isBlank() || slotId.isBlank() || !state.canSave) return
-        val settings = runCatching { state.settingsIntent }.getOrNull() ?: return
 
         mutableEditorState.value = state.copy(operationInProgress = true)
         jobs.mutation?.cancel()
         jobs.mutation = viewModelScope.launch {
             val result = runCatching {
-                operations.applyReservoirSettings(deviceUid, slotId, settings)
+                performReservoirSave(operations, deviceUid, slotId, state)
             }.getOrElse { DeviceDosingChannelOperationResult.Failed }
             if (boundDeviceUid != deviceUid || boundSlotId != slotId) return@launch
+
             when (result) {
                 is DeviceDosingChannelOperationResult.Success -> {
-                    applySnapshot(result.snapshot, forceAuthoritativeDraft = true)
-                    mutableEditorState.value = mutableEditorState.value.copy(
-                        operationInProgress = false,
-                        dirty = false
+                    mutableEditorState.value = reduceReservoirSnapshot(
+                        mutableEditorState.value.copy(operationInProgress = false),
+                        result.snapshot,
+                        forceAuthoritative = true
                     )
                     eventChannel.send(DeviceDosingReservoirEvent.Saved)
+                }
+                is DeviceDosingChannelOperationResult.Rejected -> {
+                    if (result.reason == DeviceDosingChannelRejection.CONFLICT) {
+                        val refreshed = when (
+                            val refresh = runCatching {
+                                operations.refresh(deviceUid, slotId)
+                            }.getOrNull()
+                        ) {
+                            is DeviceDosingChannelOperationResult.Success -> refresh.snapshot
+                            else -> null
+                        }
+                        if (refreshed != null &&
+                            boundDeviceUid == deviceUid && boundSlotId == slotId
+                        ) {
+                            mutableEditorState.value = rebaseReservoirDraft(
+                                mutableEditorState.value,
+                                refreshed
+                            )
+                        }
+                    }
+                    mutableEditorState.value = mutableEditorState.value.copy(
+                        operationInProgress = false
+                    )
+                    eventChannel.send(DeviceDosingReservoirEvent.SaveRejected(result.reason))
                 }
                 else -> {
                     mutableEditorState.value = mutableEditorState.value.copy(
@@ -218,9 +249,9 @@ internal class DeviceDosingReservoirViewModel(
             if (boundDeviceUid != deviceUid || boundSlotId != slotId) return@launch
             when (result) {
                 is DeviceDosingChannelOperationResult.Success -> {
-                    applySnapshot(result.snapshot)
-                    mutableEditorState.value = mutableEditorState.value.copy(
-                        operationInProgress = false
+                    mutableEditorState.value = reduceReservoirSnapshot(
+                        mutableEditorState.value.copy(operationInProgress = false),
+                        result.snapshot
                     )
                     eventChannel.send(DeviceDosingReservoirEvent.Refilled)
                 }
@@ -234,34 +265,17 @@ internal class DeviceDosingReservoirViewModel(
         }
     }
 
-    private fun applySnapshot(
-        snapshot: DeviceDosingChannelSnapshot,
-        forceAuthoritativeDraft: Boolean = false
+    private inline fun updateDraft(
+        transform: (DeviceDosingReservoirDraft) -> DeviceDosingReservoirDraft
     ) {
-        if (snapshot.deviceUid != boundDeviceUid || snapshot.slotId != boundSlotId) return
-
         val current = mutableEditorState.value
-        val reservoir = snapshot.reservoir
-        val resolution = resolveReservoirDraft(
-            current = current,
-            authoritative = snapshot.toReservoirDraft(),
-            restored = restoredDraft,
-            forceAuthoritative = forceAuthoritativeDraft
-        )
-        restoredDraft = null
+        if (!current.editable || current.operationInProgress) return
+        val updated = transform(current.draft)
+        if (updated == current.draft) return
         mutableEditorState.value = current.copy(
-            draft = resolution.draft,
-            remainingMicroliters = reservoir.remainingMicroliters.takeIf {
-                reservoir.trackingEnabled
-            },
-            remainingAccountingCertain = reservoir.accountingCertain,
-            reservoirNeedsAttention = reservoir.requiresLowReservoirAttention,
-            editable = snapshot.controls.reservoirEditable,
-            refillSupported = snapshot.controls.refillSupported,
-            initialized = true,
-            dirty = resolution.dirty,
+            draft = updated,
             capacityRejection = null,
-            notificationAvailability = if (!resolution.draft.lowLevelAlertEnabled) {
+            notificationAvailability = if (!updated.effectiveLowLevelAlertEnabled) {
                 DeviceDosingReservoirNotificationAvailability.AVAILABLE
             } else {
                 current.notificationAvailability
@@ -282,57 +296,85 @@ private class ReservoirEditorJobs {
     }
 }
 
-private data class ReservoirDraftResolution(
-    val draft: DeviceDosingReservoirDraft,
-    val dirty: Boolean
-)
+private suspend fun performReservoirSave(
+    operations: DeviceDosingChannelOperations,
+    deviceUid: String,
+    slotId: String,
+    state: DeviceDosingReservoirEditorState
+): DeviceDosingChannelOperationResult = if (state.firmwareConfigDirty) {
+    operations.applyReservoirSettingsAgainstBaseRevision(
+        deviceUid = deviceUid,
+        slotId = slotId,
+        settings = state.settingsIntent,
+        baseRevision = checkNotNull(state.baseRevision)
+    )
+} else {
+    operations.setReservoirLowLevelAlertPreference(
+        deviceUid = deviceUid,
+        slotId = slotId,
+        enabled = state.draft.effectiveLowLevelAlertEnabled
+    )
+}
 
-private fun resolveReservoirDraft(
+private fun reduceReservoirSnapshot(
     current: DeviceDosingReservoirEditorState,
-    authoritative: DeviceDosingReservoirDraft,
-    restored: DeviceDosingReservoirDraft?,
-    forceAuthoritative: Boolean
-): ReservoirDraftResolution = when {
-    forceAuthoritative -> ReservoirDraftResolution(authoritative, dirty = false)
-    !current.initialized -> {
-        val initialDraft = restored ?: authoritative
-        ReservoirDraftResolution(
-            draft = initialDraft,
-            dirty = restored != null && initialDraft != authoritative
+    snapshot: DeviceDosingChannelSnapshot,
+    forceAuthoritative: Boolean = false
+): DeviceDosingReservoirEditorState {
+    val authoritative = snapshot.toReservoirDraft()
+    val preserveFirmwareDraft = current.initialized && current.firmwareConfigDirty && !forceAuthoritative
+    val preserveAlertOnly = current.initialized && current.alertPreferenceDirty && !preserveFirmwareDraft &&
+        !forceAuthoritative
+    val draft = when {
+        preserveFirmwareDraft -> current.draft
+        preserveAlertOnly -> authoritative.copy(
+            lowLevelAlertEnabled = current.draft.lowLevelAlertEnabled
         )
+        else -> authoritative
     }
-    !current.dirty -> ReservoirDraftResolution(authoritative, dirty = false)
-    else -> ReservoirDraftResolution(current.draft, dirty = true)
+    val savedDraft = if (preserveFirmwareDraft) current.savedDraft else authoritative
+    val baseRevision = if (preserveFirmwareDraft) current.baseRevision else snapshot.revision
+    val reservoir = snapshot.reservoir
+    return current.copy(
+        draft = draft,
+        savedDraft = savedDraft,
+        remainingMicroliters = reservoir.remainingMicroliters.takeIf { reservoir.trackingEnabled },
+        remainingAccountingCertain = reservoir.accountingCertain,
+        reservoirNeedsAttention = reservoir.requiresLowReservoirAttention,
+        editable = snapshot.controls.reservoirEditable,
+        refillSupported = snapshot.controls.refillSupported,
+        operationInProgress = false,
+        initialized = true,
+        baseRevision = baseRevision,
+        capacityRejection = null,
+        notificationAvailability = if (!draft.effectiveLowLevelAlertEnabled) {
+            DeviceDosingReservoirNotificationAvailability.AVAILABLE
+        } else {
+            current.notificationAvailability
+        }
+    )
+}
+
+private fun rebaseReservoirDraft(
+    current: DeviceDosingReservoirEditorState,
+    snapshot: DeviceDosingChannelSnapshot
+): DeviceDosingReservoirEditorState {
+    val authoritative = snapshot.toReservoirDraft()
+    val reservoir = snapshot.reservoir
+    return current.copy(
+        savedDraft = authoritative,
+        remainingMicroliters = reservoir.remainingMicroliters.takeIf { reservoir.trackingEnabled },
+        remainingAccountingCertain = reservoir.accountingCertain,
+        reservoirNeedsAttention = reservoir.requiresLowReservoirAttention,
+        editable = snapshot.controls.reservoirEditable,
+        refillSupported = snapshot.controls.refillSupported,
+        baseRevision = snapshot.revision,
+        capacityRejection = null
+    )
 }
 
 private fun DeviceDosingReservoirEditorState.asUnavailable(): DeviceDosingReservoirEditorState =
-    copy(
-        editable = false,
-        refillSupported = false,
-        operationInProgress = false
-    )
-
-private inline fun DeviceDosingReservoirEditorState.withUpdatedDraft(
-    transform: (DeviceDosingReservoirDraft) -> DeviceDosingReservoirDraft
-): DeviceDosingReservoirEditorState = if (!editable || operationInProgress) {
-    this
-} else {
-    val updated = transform(draft)
-    if (updated == draft) {
-        this
-    } else {
-        copy(
-            draft = updated,
-            dirty = true,
-            capacityRejection = null,
-            notificationAvailability = if (!updated.lowLevelAlertEnabled) {
-                DeviceDosingReservoirNotificationAvailability.AVAILABLE
-            } else {
-                notificationAvailability
-            }
-        )
-    }
-}
+    copy(editable = false, refillSupported = false, operationInProgress = false)
 
 private fun DeviceDosingChannelSnapshot.toReservoirDraft(): DeviceDosingReservoirDraft =
     DeviceDosingReservoirDraft(
@@ -341,3 +383,11 @@ private fun DeviceDosingChannelSnapshot.toReservoirDraft(): DeviceDosingReservoi
         trackingEnabled = reservoir.trackingEnabled,
         lowLevelAlertEnabled = reservoir.lowLevelAlertEnabled
     )
+
+private val DeviceDosingReservoirDraft.effectiveLowLevelAlertEnabled: Boolean
+    get() = trackingEnabled && lowLevelAlertEnabled
+
+private fun DeviceDosingReservoirDraft.hasSameFirmwareReservoirConfig(
+    other: DeviceDosingReservoirDraft
+): Boolean = trackingEnabled == other.trackingEnabled &&
+    (!trackingEnabled || reservoirCapacityMicroliters == other.reservoirCapacityMicroliters)

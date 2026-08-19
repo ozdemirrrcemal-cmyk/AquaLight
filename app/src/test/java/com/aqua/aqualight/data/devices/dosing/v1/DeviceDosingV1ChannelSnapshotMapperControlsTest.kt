@@ -31,6 +31,14 @@ class DeviceDosingV1ChannelSnapshotMapperControlsTest {
     }
 
     @Test
+    fun `reservoir refill follows firmware readiness storage and active run gates`() {
+        assertTrue(controls().refillSupported)
+        assertFalse(controls(bootReady = false).refillSupported)
+        assertFalse(controls(storageHealthy = false).refillSupported)
+        assertFalse(controls(activeRun = true).refillSupported)
+    }
+
+    @Test
     fun `channel reset requires firmware readiness and healthy storage`() {
         assertTrue(controls().resetSupported)
         assertFalse(controls(bootReady = false).resetSupported)

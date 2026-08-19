@@ -12,6 +12,7 @@ import com.aqua.aqualight.application.devices.dosing.DeviceDosingOccurrenceState
 import com.aqua.aqualight.application.devices.dosing.DeviceDosingProgram
 import com.aqua.aqualight.application.devices.dosing.DeviceDosingProgramRevisionOperations
 import com.aqua.aqualight.application.devices.dosing.DeviceDosingProgramSchedule
+import com.aqua.aqualight.application.devices.dosing.DeviceDosingReservoirRevisionOperations
 import com.aqua.aqualight.application.devices.dosing.DeviceDosingReservoirSettings
 import com.aqua.aqualight.application.devices.dosing.DeviceDosingReservoirSnapshot
 import com.aqua.aqualight.application.devices.dosing.DeviceDosingRunSource
@@ -23,13 +24,19 @@ import kotlinx.coroutines.flow.map
 
 internal class FakeDeviceDosingChannelOperations(
     initialSnapshot: DeviceDosingChannelSnapshot? = sampleDosingChannelSnapshot()
-) : DeviceDosingChannelOperations, DeviceDosingProgramRevisionOperations {
+) : DeviceDosingChannelOperations,
+    DeviceDosingProgramRevisionOperations,
+    DeviceDosingReservoirRevisionOperations {
     val snapshot = MutableStateFlow(initialSnapshot)
     var failMutations: Boolean = false
     var lastProgram: DeviceDosingProgram? = null
     var lastMissedDoseRecoveryEnabled: Boolean? = null
     var lastReservoirSettings: DeviceDosingReservoirSettings? = null
+    var lastReservoirExpectedRevision: Long? = null
     var lastManualDoseMicroliters: Long? = null
+    var reservoirConfigMutationCount: Int = 0
+    var lowLevelAlertMutationCount: Int = 0
+    var refillMutationCount: Int = 0
 
     override fun observe(
         deviceUid: String,
@@ -90,7 +97,23 @@ internal class FakeDeviceDosingChannelOperations(
         slotId: String,
         settings: DeviceDosingReservoirSettings
     ): DeviceDosingChannelOperationResult {
+        val revision = snapshot.value?.revision ?: return DeviceDosingChannelOperationResult.Unavailable
+        return applyReservoirSettingsAtRevision(deviceUid, slotId, settings, revision)
+    }
+
+    override suspend fun applyReservoirSettingsAtRevision(
+        deviceUid: String,
+        slotId: String,
+        settings: DeviceDosingReservoirSettings,
+        expectedRevision: Long
+    ): DeviceDosingChannelOperationResult {
+        val current = snapshot.value ?: return DeviceDosingChannelOperationResult.Unavailable
+        if (current.revision != expectedRevision) {
+            return DeviceDosingChannelOperationResult.Rejected(DeviceDosingChannelRejection.CONFLICT)
+        }
         lastReservoirSettings = settings
+        lastReservoirExpectedRevision = expectedRevision
+        reservoirConfigMutationCount += 1
         return mutate { state ->
             val capacity = settings.capacityMicroliters ?: 0L
             state.copy(
@@ -105,16 +128,33 @@ internal class FakeDeviceDosingChannelOperations(
         }
     }
 
+    override suspend fun setReservoirLowLevelAlertEnabled(
+        deviceUid: String,
+        slotId: String,
+        enabled: Boolean
+    ): DeviceDosingChannelOperationResult {
+        lowLevelAlertMutationCount += 1
+        return mutate { state ->
+            state.copy(
+                reservoir = state.reservoir.copy(lowLevelAlertEnabled = enabled)
+            )
+        }
+    }
+
     override suspend fun refillReservoir(
         deviceUid: String,
         slotId: String
-    ): DeviceDosingChannelOperationResult = mutate { state ->
-        state.copy(
-            reservoir = state.reservoir.copy(
-                remainingMicroliters = state.reservoir.capacityMicroliters,
-                lowLevelActive = false
+    ): DeviceDosingChannelOperationResult {
+        refillMutationCount += 1
+        return mutate { state ->
+            state.copy(
+                reservoir = state.reservoir.copy(
+                    remainingMicroliters = state.reservoir.capacityMicroliters,
+                    accountingCertain = true,
+                    lowLevelActive = false
+                )
             )
-        )
+        }
     }
 
     override suspend fun doseNow(

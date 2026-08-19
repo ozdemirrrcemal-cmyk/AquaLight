@@ -14,6 +14,7 @@ import androidx.lifecycle.repeatOnLifecycle
 import androidx.navigation.fragment.findNavController
 import androidx.navigation.fragment.navArgs
 import com.aqua.aqualight.R
+import com.aqua.aqualight.application.devices.dosing.DeviceDosingChannelRejection
 import com.aqua.aqualight.application.devices.dosing.DeviceDosingReservoirCapacityPolicy
 import com.aqua.aqualight.application.notifications.NotificationCategory
 import com.aqua.aqualight.base.BaseActivity
@@ -93,11 +94,7 @@ class DeviceDosingReservoirFragment :
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
-        viewModel.bind(
-            deviceUidText = args.deviceUid,
-            slotIdText = args.slotId,
-            restoredDraft = savedInstanceState?.toReservoirDraft()
-        )
+        viewModel.bind(deviceUidText = args.deviceUid, slotIdText = args.slotId)
         setupReservoirCapacityResult()
         setupSelectedPump(
             view = view,
@@ -115,11 +112,6 @@ class DeviceDosingReservoirFragment :
         refreshLowLevelNotificationState()
     }
 
-    override fun onSaveInstanceState(outState: Bundle) {
-        viewModel.currentDraft().writeTo(outState)
-        super.onSaveInstanceState(outState)
-    }
-
     private fun setupContent(view: View) {
         view.findViewById<ComposeView>(R.id.channelDetailContent).apply {
             setViewCompositionStrategy(ViewCompositionStrategy.DisposeOnViewTreeLifecycleDestroyed)
@@ -129,12 +121,12 @@ class DeviceDosingReservoirFragment :
                 DeviceDosingReservoirScreen(
                     state = DeviceDosingReservoirUiState(
                         trackingEnabled = draft.trackingEnabled,
-                        capacityValue = formatVolume(draft.reservoirCapacityMicroliters),
+                        capacityValue = formatCapacity(draft.reservoirCapacityMicroliters),
                         remainingValue = editorState.remainingMicroliters
                             ?.takeIf {
                                 draft.trackingEnabled && editorState.remainingAccountingCertain
                             }
-                            ?.let(::formatVolume)
+                            ?.let(::formatRemainingVolume)
                             ?: getString(R.string.device_dosing_detail_value_unavailable),
                         capacityRejection = editorState.capacityRejection,
                         lowLevelAlertEnabled = draft.lowLevelAlertEnabled,
@@ -142,8 +134,7 @@ class DeviceDosingReservoirFragment :
                         editorEnabled = editorState.editable && !editorState.operationInProgress,
                         canSave = editorState.canSave,
                         canRefill = editorState.canRefill,
-                        lowLevelAlertNotificationAvailability =
-                            editorState.notificationAvailability
+                        lowLevelAlertNotificationAvailability = editorState.notificationAvailability
                     ),
                     actions = DeviceDosingReservoirActions(
                         onTrackingEnabledChange = ::setTrackingEnabled,
@@ -158,9 +149,14 @@ class DeviceDosingReservoirFragment :
         }
     }
 
-    private fun formatVolume(microliters: Long): String = getString(
+    private fun formatCapacity(microliters: Long): String = getString(
         R.string.device_dosing_detail_value_container_ml,
         DeviceDosingReservoirCapacityPolicy.format(microliters, currentLocale())
+    )
+
+    private fun formatRemainingVolume(microliters: Long): String = getString(
+        R.string.device_dosing_detail_value_container_ml,
+        DeviceDosingReservoirCapacityPolicy.formatRuntimeVolume(microliters, currentLocale())
     )
 
     private fun setTrackingEnabled(enabled: Boolean) {
@@ -215,6 +211,10 @@ class DeviceDosingReservoirFragment :
                             showReservoirMessage(R.string.device_dosing_reservoir_saved)
                             findNavController().navigateUp()
                         }
+                        is DeviceDosingReservoirEvent.SaveRejected -> showReservoirMessage(
+                            event.reason.messageRes,
+                            BaseActivity.SnackType.ERROR
+                        )
                         DeviceDosingReservoirEvent.Refilled ->
                             showReservoirMessage(R.string.device_dosing_reservoir_refilled)
                         DeviceDosingReservoirEvent.SaveFailed,
@@ -279,27 +279,18 @@ class DeviceDosingReservoirFragment :
     private fun currentLocale(): Locale = resources.configuration.locales[0]
 }
 
-private fun Bundle.toReservoirDraft() = DeviceDosingReservoirDraft(
-    reservoirCapacityMicroliters = DeviceDosingReservoirCapacityPolicy
-        .normalizePersistedMicroliters(
-            getLong(
-                STATE_RESERVOIR_CAPACITY_MICROLITERS,
-                DeviceDosingReservoirCapacityPolicy.DEFAULT_CAPACITY_MICROLITERS
-            )
-        ),
-    trackingEnabled = getBoolean(STATE_TRACKING_ENABLED, false),
-    lowLevelAlertEnabled = getBoolean(STATE_LOW_LEVEL_ALERT_ENABLED, false)
-)
+private val DeviceDosingChannelRejection.messageRes: Int
+    get() = when (this) {
+        DeviceDosingChannelRejection.INVALID_DRAFT -> R.string.device_dosing_detail_error_invalid_input
+        DeviceDosingChannelRejection.NOT_EDITABLE -> R.string.device_dosing_detail_error_not_editable
+        DeviceDosingChannelRejection.NOT_CALIBRATED ->
+            R.string.device_dosing_detail_error_calibration_required
+        DeviceDosingChannelRejection.BUSY -> R.string.device_dosing_detail_error_busy
+        DeviceDosingChannelRejection.CONFLICT -> R.string.device_dosing_detail_error_state_changed
+        DeviceDosingChannelRejection.UNSAFE -> R.string.device_dosing_detail_error_safety_blocked
+        DeviceDosingChannelRejection.UNKNOWN -> R.string.device_dosing_detail_operation_failed
+    }
 
-private fun DeviceDosingReservoirDraft.writeTo(outState: Bundle) {
-    outState.putLong(STATE_RESERVOIR_CAPACITY_MICROLITERS, reservoirCapacityMicroliters)
-    outState.putBoolean(STATE_TRACKING_ENABLED, trackingEnabled)
-    outState.putBoolean(STATE_LOW_LEVEL_ALERT_ENABLED, lowLevelAlertEnabled)
-}
-
-private const val STATE_RESERVOIR_CAPACITY_MICROLITERS = "reservoir_capacity_microliters"
-private const val STATE_TRACKING_ENABLED = "reservoir_tracking_enabled"
-private const val STATE_LOW_LEVEL_ALERT_ENABLED = "reservoir_low_level_alert_enabled"
 private const val RESERVOIR_CAPACITY_REQUEST_KEY = "dosing_reservoir_capacity_input"
 private const val RESERVOIR_CAPACITY_PAYLOAD_ID = "reservoir_capacity"
 private const val ACTION_ENABLE_LOW_LEVEL_ALERT = "enable-dosing-low-level-alert"
