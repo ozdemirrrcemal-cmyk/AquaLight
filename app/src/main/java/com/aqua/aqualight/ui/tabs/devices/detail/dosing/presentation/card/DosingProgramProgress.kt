@@ -36,7 +36,22 @@ internal fun DosingProgramProgress(
     typography: AquaDeviceCardTypography,
     modifier: Modifier = Modifier
 ) {
-    val mode = state.mode ?: return
+    val mode = state.mode
+    if (mode == null) {
+        if (state.manualDeliveredTodayMl > 0.0) {
+            Row(
+                modifier = modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.End
+            ) {
+                DosingManualDosePill(
+                    amountMl = state.manualDeliveredTodayMl,
+                    colors = colors,
+                    typography = typography
+                )
+            }
+        }
+        return
+    }
     val description = pluralStringResource(
         R.plurals.device_dosing_channel_progress_description,
         state.totalOccurrences,

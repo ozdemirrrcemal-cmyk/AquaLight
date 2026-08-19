@@ -9,7 +9,13 @@ import com.aqua.aqualight.application.devices.dosing.DeviceDosingRunSource
 import com.aqua.aqualight.application.devices.dosing.dailyDoseMicroliters
 
 internal fun DeviceDosingChannelSnapshot.toProgramProgressUiState(): DosingProgramProgressUiState {
-    val configuredProgram = program ?: return DosingProgramProgressUiState()
+    val manualDeliveredTodayMl = usageToday.manualDeliveredMicroliters
+        .takeIf { usageToday.valid }
+        ?.toMilliliters()
+        ?: 0.0
+    val configuredProgram = program ?: return DosingProgramProgressUiState(
+        manualDeliveredTodayMl = manualDeliveredTodayMl
+    )
     val occurrences = if (progress.executionCurrent) {
         progress.occurrences
             .map(DeviceDosingOccurrenceProgress::toUiState)
@@ -22,10 +28,7 @@ internal fun DeviceDosingChannelSnapshot.toProgramProgressUiState(): DosingProgr
         mode = configuredProgram.schedule.toUiMode(),
         dailyDoseMl = configuredProgram.dailyDoseMicroliters().toMilliliters(),
         scheduledDeliveredTodayMl = progress.completedAmountMicroliters.toMilliliters(),
-        manualDeliveredTodayMl = usageToday.manualDeliveredMicroliters
-            .takeIf { usageToday.valid }
-            ?.toMilliliters()
-            ?: 0.0,
+        manualDeliveredTodayMl = manualDeliveredTodayMl,
         occurrences = occurrences,
         customPeriods = customPeriods,
         markers = configuredProgram.toProgressMarkers(occurrences, customPeriods),
