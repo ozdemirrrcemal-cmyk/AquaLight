@@ -49,6 +49,10 @@ internal class DeviceDosingV1StateAccess(
         stateOwner.setLowLevelAlertIntent(address.deviceUid, address.channelKey, enabled)
     }
 
+    fun invalidateDevice(deviceUid: DeviceUid) {
+        stateOwner.invalidateDevice(deviceUid)
+    }
+
     fun clear(deviceUid: DeviceUid) {
         stateOwner.clear(deviceUid)
     }
