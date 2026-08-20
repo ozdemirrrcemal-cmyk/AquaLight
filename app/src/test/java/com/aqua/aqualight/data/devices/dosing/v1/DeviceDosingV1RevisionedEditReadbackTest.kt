@@ -1,5 +1,6 @@
 package com.aqua.aqualight.data.devices.dosing.v1
 
+import com.aqua.aqualight.application.devices.dosing.DeviceDosingChannelCommittedResult
 import com.aqua.aqualight.application.devices.dosing.DeviceDosingChannelOperationResult
 import com.aqua.aqualight.data.devices.model.DeviceUid
 import com.aqua.aqualight.data.devices.runtime.core.DeviceRuntimeCommand
@@ -7,15 +8,16 @@ import com.aqua.aqualight.data.devices.runtime.core.DeviceRuntimeCommandGateway
 import com.aqua.aqualight.data.devices.runtime.core.DeviceRuntimeCommandOutcome
 import com.aqua.aqualight.data.devices.runtime.core.DeviceRuntimeConnectionGeneration
 import java.util.ArrayDeque
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.test.runTest
 import org.junit.Assert.assertEquals
-import org.junit.Assert.assertTrue
+import org.junit.Assert.assertNull
 import org.junit.Test
 
 class DeviceDosingV1RevisionedEditReadbackTest {
 
     @Test
-    fun `revisioned editor save returns only after authoritative readback is published`() = runTest {
+    fun `revisioned editor save returns after firmware ack and reconciles in background`() = runTest {
         val gateway = ScriptedGateway().apply {
             enqueueRefresh(revision = 7L)
             enqueueProgramMutation(revision = 8L)
@@ -27,6 +29,7 @@ class DeviceDosingV1RevisionedEditReadbackTest {
         )
         val initial = adapter.channelOperations.refresh(DEVICE_UID.value, SLOT_ID)
             as DeviceDosingChannelOperationResult.Success
+        val provenPresentation = adapter.channelOperations.observeAll(DEVICE_UID.value).first()
 
         val result = adapter.channelOperations.applyProgramAtRevision(
             deviceUid = DEVICE_UID.value,
@@ -35,15 +38,32 @@ class DeviceDosingV1RevisionedEditReadbackTest {
             expectedRevision = 7L
         )
 
-        assertTrue(result is DeviceDosingChannelOperationResult.Success)
-        assertEquals(8L, (result as DeviceDosingChannelOperationResult.Success).snapshot.revision)
-        assertEquals(8L, adapter.currentChannel(DEVICE_UID.value, SLOT_ID)?.revision)
-        assertEquals(7, gateway.actions.size)
+        // The user-visible save completes at the durable firmware ACK. The three-document
+        // authoritative readback must not sit on the save/navigation critical path.
+        assertEquals(DeviceDosingChannelCommittedResult(8L), result)
+        assertEquals(4, gateway.actions.size)
         assertEquals(
             1,
             gateway.actions.count { action ->
                 action == DeviceDosingV1Contract.Action.PROGRAM_APPLY
             }
+        )
+
+        // Authority is withdrawn until coherent readback, while the same central owner keeps the
+        // last proven presentation so the root screen does not flash empty or rebuild fake cards.
+        assertNull(adapter.currentChannel(DEVICE_UID.value, SLOT_ID))
+        assertEquals(
+            provenPresentation,
+            adapter.channelOperations.observeAll(DEVICE_UID.value).first()
+        )
+
+        testScheduler.runCurrent()
+
+        assertEquals(7, gateway.actions.size)
+        assertEquals(8L, adapter.currentChannel(DEVICE_UID.value, SLOT_ID)?.revision)
+        assertEquals(
+            8L,
+            adapter.channelOperations.observeAll(DEVICE_UID.value).first().single().revision
         )
     }
 
