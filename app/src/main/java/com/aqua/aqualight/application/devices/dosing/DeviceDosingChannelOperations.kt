@@ -277,7 +277,8 @@ data class DeviceDosingChannelProgress(
         occurrence.state == DeviceDosingOccurrenceState.UNCERTAIN
     },
     val completionPercent: Double = if (scheduledAmountMicroliters > 0L) {
-        completedAmountMicroliters.toDouble() / scheduledAmountMicroliters.toDouble() * 100.0
+        completedAmountMicroliters.toDouble() / scheduledAmountMicroliters.toDouble() *
+            DOSING_PROGRESS_PERCENT_SCALE
     } else {
         0.0
     },
@@ -319,7 +320,10 @@ data class DeviceDosingChannelProgress(
         require(uncertainOccurrences == occurrences.count { occurrence ->
             occurrence.state == DeviceDosingOccurrenceState.UNCERTAIN
         })
-        require(completionPercent.isFinite() && completionPercent in 0.0..100.0)
+        require(
+            completionPercent.isFinite() &&
+                completionPercent in 0.0..DOSING_PROGRESS_PERCENT_SCALE
+        )
         require(occurrences.map(DeviceDosingOccurrenceProgress::index).distinct().size ==
             occurrences.size)
         require(runningOccurrences <= 1)
@@ -501,6 +505,7 @@ private fun validDistributedAmount(
     }
 }
 
+private const val DOSING_PROGRESS_PERCENT_SCALE = 100.0
 private const val WEEKDAY_COUNT = 7
 private const val HOURLY_DOSE_COUNT = 24
 private const val MILLIS_PER_DAY = 86_400_000L

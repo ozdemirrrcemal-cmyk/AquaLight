@@ -196,7 +196,8 @@ class DeviceDosingSupplyProjectionPolicyTest {
         )
         val snapshotWithProgress = snapshot.copy(
             progress = snapshot.progress.copy(
-                scheduledAmountMicroliters = scheduledTodayMicroliters
+                scheduledAmountMicroliters = scheduledTodayMicroliters,
+                remainingAmountMicroliters = scheduledTodayMicroliters
             )
         )
         return requireNotNull(

@@ -156,7 +156,7 @@ class DosingChannelCardArchitectureTest {
         val summary = source(CARD_SOURCE_ROOT + "DosingChannelCardSummary.kt")
 
         assertTrue(progressMapper.contains("usageToday.manualDeliveredMicroliters"))
-        assertTrue(progressMapper.contains("withDoseFractions()"))
+        assertTrue(progressMapper.contains(".withDoseFractions(scheduledAmountTodayMl)"))
         assertTrue(progressMapper.contains("toProgressMarkers"))
         assertTrue(progress.contains("state.manualDeliveredTodayMl > 0.0"))
         assertTrue(progress.contains("DosingManualDosePill"))
