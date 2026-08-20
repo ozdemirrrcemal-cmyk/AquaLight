@@ -31,6 +31,7 @@ internal class DeviceDosingV1MutationCoordinator(
 ) {
     private val conflictCoordinator = DeviceDosingV1ConflictCoordinator(stateOwner, refreshCoordinator)
 
+    @Suppress("LongParameterList")
     suspend fun <T> mutatePersisted(
         deviceUid: String,
         slotId: String,
@@ -41,13 +42,15 @@ internal class DeviceDosingV1MutationCoordinator(
             DeviceDosingChannelSnapshot
         ) -> DeviceRuntimeCommandOutcome<T>,
         channel: (T) -> DeviceDosingV1ChannelDetail,
-        onAccepted: () -> Unit = {}
+        onAccepted: () -> Unit = {},
+        reconcileBeforeReturn: Boolean = false
     ): DeviceDosingV1MutationResult<T> = mutateSerialized(
         address = stateAccess.address(deviceUid, slotId),
         persistedMutation = true,
         execute = execute,
         channel = channel,
-        onAccepted = onAccepted
+        onAccepted = onAccepted,
+        reconcileBeforeReturn = reconcileBeforeReturn
     )
 
     suspend fun <T> mutateRuntime(
@@ -64,9 +67,11 @@ internal class DeviceDosingV1MutationCoordinator(
         address = stateAccess.address(deviceUid, slotId),
         persistedMutation = false,
         execute = execute,
-        channel = channel
+        channel = channel,
+        reconcileBeforeReturn = false
     )
 
+    @Suppress("LongParameterList")
     private suspend fun <T> mutateSerialized(
         address: DeviceDosingV1Address,
         persistedMutation: Boolean,
@@ -77,7 +82,8 @@ internal class DeviceDosingV1MutationCoordinator(
             DeviceDosingChannelSnapshot
         ) -> DeviceRuntimeCommandOutcome<T>,
         channel: (T) -> DeviceDosingV1ChannelDetail,
-        onAccepted: () -> Unit = {}
+        onAccepted: () -> Unit = {},
+        reconcileBeforeReturn: Boolean
     ): DeviceDosingV1MutationResult<T> = operationGate.withChannel(address) {
         val baseline = authoritativeBaseline(address)
             ?: return@withChannel DeviceDosingV1MutationResult.Malformed
@@ -99,7 +105,8 @@ internal class DeviceDosingV1MutationCoordinator(
                         outcome = outcome,
                         channel = channel,
                         persistedMutation = persistedMutation,
-                        onAccepted = onAccepted
+                        onAccepted = onAccepted,
+                        reconcileBeforeReturn = reconcileBeforeReturn
                     )
                 )
                 else -> conflictCoordinator.reconcile(address, outcome)
@@ -151,7 +158,8 @@ internal class DeviceDosingV1MutationCoordinator(
                 if (
                     accepted.persistedMutation &&
                     disposition == DeviceDosingV1CommitDisposition.APPLIED &&
-                    scheduler != null
+                    scheduler != null &&
+                    !accepted.reconcileBeforeReturn
                 ) {
                     scheduler(accepted.address, detail.revision)
                     DeviceDosingV1MutationResult.Committed(
@@ -269,7 +277,8 @@ private data class AcceptedDosingMutation<T>(
     val outcome: DeviceRuntimeCommandOutcome.Success<T>,
     val channel: (T) -> DeviceDosingV1ChannelDetail,
     val persistedMutation: Boolean,
-    val onAccepted: () -> Unit
+    val onAccepted: () -> Unit,
+    val reconcileBeforeReturn: Boolean
 )
 
 private sealed interface DosingExecutionOutcome<out T> {
