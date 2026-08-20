@@ -6,6 +6,8 @@ import com.aqua.aqualight.application.devices.dosing.DeviceDosingChannelSnapshot
 import com.aqua.aqualight.data.devices.runtime.core.DeviceRuntimeCommandOutcome
 import com.aqua.aqualight.data.devices.runtime.events.DeviceRuntimeLifecycleEvent
 import com.aqua.aqualight.data.devices.runtime.events.DeviceRuntimeTypedEvent
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.launch
 
 internal data class DeviceDosingV1AuthoritativeState(
     val channel: DeviceDosingChannelSnapshot,
@@ -52,7 +54,8 @@ internal sealed interface DeviceDosingV1EventResult {
 /** Central Dosing facade; [DeviceDosingV1StateOwner] remains the only authoritative state owner. */
 internal class DeviceDosingV1StateAdapter(
     internal val repository: DeviceDosingV1Repository,
-    stateOwner: DeviceDosingV1StateOwner = DeviceDosingV1StateOwner()
+    stateOwner: DeviceDosingV1StateOwner = DeviceDosingV1StateOwner(),
+    reconciliationScope: CoroutineScope? = null
 ) {
     internal val stateAccess = DeviceDosingV1StateAccess(stateOwner)
     private val operationGate = DeviceDosingV1ChannelOperationGate()
@@ -62,11 +65,23 @@ internal class DeviceDosingV1StateAdapter(
         stateAccess = stateAccess,
         operationGate = operationGate
     )
+    private val backgroundReconciliation = reconciliationScope?.let { scope ->
+        { address: DeviceDosingV1Address, committedRevision: Long ->
+            scope.launch {
+                val currentRevision = stateAccess.authoritativeRevision(address)
+                if (currentRevision == null || currentRevision < committedRevision) {
+                    refreshCoordinator.refresh(address)
+                }
+            }
+            Unit
+        }
+    }
     internal val mutationCoordinator = DeviceDosingV1MutationCoordinator(
         stateOwner = stateOwner,
         stateAccess = stateAccess,
         refreshCoordinator = refreshCoordinator,
-        operationGate = operationGate
+        operationGate = operationGate,
+        scheduleBackgroundReconciliation = backgroundReconciliation
     )
     private val eventCoordinator = DeviceDosingV1EventCoordinator(
         stateOwner = stateOwner,

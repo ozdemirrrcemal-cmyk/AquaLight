@@ -26,7 +26,8 @@ internal class DeviceDosingV1MutationCoordinator(
     private val stateOwner: DeviceDosingV1StateOwner,
     private val stateAccess: DeviceDosingV1StateAccess,
     private val refreshCoordinator: DeviceDosingV1RefreshCoordinator,
-    private val operationGate: DeviceDosingV1ChannelOperationGate = DeviceDosingV1ChannelOperationGate()
+    private val operationGate: DeviceDosingV1ChannelOperationGate = DeviceDosingV1ChannelOperationGate(),
+    private val scheduleBackgroundReconciliation: ((DeviceDosingV1Address, Long) -> Unit)? = null
 ) {
     private val conflictCoordinator = DeviceDosingV1ConflictCoordinator(stateOwner, refreshCoordinator)
 
@@ -146,13 +147,26 @@ internal class DeviceDosingV1MutationCoordinator(
                 DeviceDosingV1MutationResult.Malformed
             } else {
                 accepted.onAccepted()
-                reconcileMutation(
-                    address = accepted.address,
-                    value = accepted.outcome.value,
-                    disposition = disposition,
-                    persistedMutation = accepted.persistedMutation,
-                    committedRevision = detail.revision
-                )
+                val scheduler = scheduleBackgroundReconciliation
+                if (
+                    accepted.persistedMutation &&
+                    disposition == DeviceDosingV1CommitDisposition.APPLIED &&
+                    scheduler != null
+                ) {
+                    scheduler(accepted.address, detail.revision)
+                    DeviceDosingV1MutationResult.Committed(
+                        accepted.outcome.value,
+                        detail.revision
+                    )
+                } else {
+                    reconcileMutation(
+                        address = accepted.address,
+                        value = accepted.outcome.value,
+                        disposition = disposition,
+                        persistedMutation = accepted.persistedMutation,
+                        committedRevision = detail.revision
+                    )
+                }
             }
         },
         onFailure = { DeviceDosingV1MutationResult.Malformed }

@@ -44,7 +44,8 @@ internal class DeviceDosingV1ProductionRuntime(
     private val stateOwner = DeviceDosingV1StateOwner(lowLevelAlertLedger)
     private val adapter = DeviceDosingV1StateAdapter(
         repository = DeviceDosingV1Repository(runtimeModules.commandGateway),
-        stateOwner = stateOwner
+        stateOwner = stateOwner,
+        reconciliationScope = runtimeScope
     )
     private val alertMonitor = DeviceDosingLowLevelAlertMonitor(
         ownerUid = ownerUid,
