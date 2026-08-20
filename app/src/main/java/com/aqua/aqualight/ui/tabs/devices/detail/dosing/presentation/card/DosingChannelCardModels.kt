@@ -92,22 +92,19 @@ enum class DosingDoseProgressVisualState {
 data class DosingProgramProgressUiState(
     val mode: DosingProgramModeUiState? = null,
     val dailyDoseMl: Double = 0.0,
+    val scheduledAmountTodayMl: Double = 0.0,
     val scheduledDeliveredTodayMl: Double = 0.0,
+    val remainingScheduledTodayMl: Double = 0.0,
+    val completionFraction: Float = 0f,
     val manualDeliveredTodayMl: Double = 0.0,
     val occurrences: List<DosingProgressOccurrenceUiState> = emptyList(),
     val customPeriods: List<DosingCustomPeriodProgressUiState> = emptyList(),
     val markers: List<DosingProgressMarkerUiState> = emptyList(),
+    val totalOccurrences: Int = 0,
+    val completedOccurrences: Int = 0,
     val scheduledToday: Boolean = false,
     val visualState: DosingDoseProgressVisualState = DosingDoseProgressVisualState.EMPTY
-) {
-    val totalOccurrences: Int
-        get() = occurrences.size
-
-    val completedOccurrences: Int
-        get() = occurrences.count { occurrence ->
-            occurrence.visualState == DosingOccurrenceVisualState.COMPLETED
-        }
-}
+)
 
 enum class DosingReservoirTone {
     NORMAL,

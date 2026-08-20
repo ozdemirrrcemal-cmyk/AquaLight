@@ -233,17 +233,54 @@ data class DeviceDosingOccurrenceProgress(
     }
 }
 
+enum class DeviceDosingScheduleState {
+    ACTIVE,
+    NO_SCHEDULE
+}
+
 /**
- * Compiled progress for the current firmware program day.
+ * Firmware-owned compiled progress projection for the current program day.
  *
- * Summary amounts and individual occurrences are retained separately because an active physical
- * run may not yet be included in the completed amount. The application adapter is responsible for
- * translating wire values and rejecting malformed occurrence lists before constructing this type.
+ * Wire summary values are retained explicitly so presentation never has to recreate scheduler
+ * counts, amount totals, remaining amount or completion percentage. Defaults are only construction
+ * conveniences for non-wire callers; the production v1 mapper supplies every authoritative field.
  */
 data class DeviceDosingChannelProgress(
     val scheduledAmountMicroliters: Long = 0L,
     val completedAmountMicroliters: Long = 0L,
+    val remainingAmountMicroliters: Long =
+        (scheduledAmountMicroliters - completedAmountMicroliters).coerceAtLeast(0L),
     val occurrences: List<DeviceDosingOccurrenceProgress> = emptyList(),
+    val scheduleState: DeviceDosingScheduleState = if (scheduledAmountMicroliters > 0L) {
+        DeviceDosingScheduleState.ACTIVE
+    } else {
+        DeviceDosingScheduleState.NO_SCHEDULE
+    },
+    val totalOccurrences: Int = occurrences.size,
+    val completedOccurrences: Int = occurrences.count { occurrence ->
+        occurrence.state == DeviceDosingOccurrenceState.COMPLETED
+    },
+    val resolvedOccurrences: Int = occurrences.count { occurrence ->
+        occurrence.state == DeviceDosingOccurrenceState.COMPLETED ||
+            occurrence.state == DeviceDosingOccurrenceState.SKIPPED
+    },
+    val pendingOccurrences: Int = occurrences.count { occurrence ->
+        occurrence.state == DeviceDosingOccurrenceState.PENDING
+    },
+    val runningOccurrences: Int = occurrences.count { occurrence ->
+        occurrence.state == DeviceDosingOccurrenceState.RUNNING
+    },
+    val skippedOccurrences: Int = occurrences.count { occurrence ->
+        occurrence.state == DeviceDosingOccurrenceState.SKIPPED
+    },
+    val uncertainOccurrences: Int = occurrences.count { occurrence ->
+        occurrence.state == DeviceDosingOccurrenceState.UNCERTAIN
+    },
+    val completionPercent: Double = if (scheduledAmountMicroliters > 0L) {
+        completedAmountMicroliters.toDouble() / scheduledAmountMicroliters.toDouble() * 100.0
+    } else {
+        0.0
+    },
     val executionCurrent: Boolean = false,
     val accountingCertain: Boolean = true,
     /** Firmware-owned active program day. Null means no authoritative projection anchor exists. */
@@ -252,11 +289,40 @@ data class DeviceDosingChannelProgress(
     init {
         require(scheduledAmountMicroliters >= 0L)
         require(completedAmountMicroliters in 0L..scheduledAmountMicroliters)
+        require(remainingAmountMicroliters in 0L..scheduledAmountMicroliters)
+        require(completedAmountMicroliters + remainingAmountMicroliters == scheduledAmountMicroliters)
+        require(totalOccurrences >= 0)
+        require(completedOccurrences >= 0)
+        require(resolvedOccurrences >= 0)
+        require(pendingOccurrences >= 0)
+        require(runningOccurrences >= 0)
+        require(skippedOccurrences >= 0)
+        require(uncertainOccurrences >= 0)
+        require(totalOccurrences == occurrences.size)
+        require(resolvedOccurrences == completedOccurrences + skippedOccurrences)
+        require(
+            pendingOccurrences + runningOccurrences + completedOccurrences +
+                skippedOccurrences + uncertainOccurrences == totalOccurrences
+        )
+        require(completedOccurrences == occurrences.count { occurrence ->
+            occurrence.state == DeviceDosingOccurrenceState.COMPLETED
+        })
+        require(pendingOccurrences == occurrences.count { occurrence ->
+            occurrence.state == DeviceDosingOccurrenceState.PENDING
+        })
+        require(runningOccurrences == occurrences.count { occurrence ->
+            occurrence.state == DeviceDosingOccurrenceState.RUNNING
+        })
+        require(skippedOccurrences == occurrences.count { occurrence ->
+            occurrence.state == DeviceDosingOccurrenceState.SKIPPED
+        })
+        require(uncertainOccurrences == occurrences.count { occurrence ->
+            occurrence.state == DeviceDosingOccurrenceState.UNCERTAIN
+        })
+        require(completionPercent.isFinite() && completionPercent in 0.0..100.0)
         require(occurrences.map(DeviceDosingOccurrenceProgress::index).distinct().size ==
             occurrences.size)
-        require(occurrences.count { occurrence ->
-            occurrence.state == DeviceDosingOccurrenceState.RUNNING
-        } <= 1)
+        require(runningOccurrences <= 1)
     }
 }
 

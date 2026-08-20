@@ -3,9 +3,9 @@ package com.aqua.aqualight.ui.tabs.devices.detail.dosing.presentation.card
 import com.aqua.aqualight.application.devices.dosing.DeviceDosingProgram
 import com.aqua.aqualight.application.devices.dosing.DeviceDosingProgramSchedule
 
-internal fun List<DosingProgressOccurrenceUiState>.withDoseFractions():
-    List<DosingProgressOccurrenceUiState> {
-    val totalAmountMl = sumOf(DosingProgressOccurrenceUiState::amountMl)
+internal fun List<DosingProgressOccurrenceUiState>.withDoseFractions(
+    totalAmountMl: Double
+): List<DosingProgressOccurrenceUiState> {
     if (totalAmountMl <= 0.0) return this
     var cumulativeAmountMl = 0.0
     return map { occurrence ->
@@ -20,9 +20,16 @@ internal fun List<DosingProgressOccurrenceUiState>.withDoseFractions():
 
 internal fun DeviceDosingProgram.toProgressMarkers(
     occurrences: List<DosingProgressOccurrenceUiState>,
-    customPeriods: List<DosingCustomPeriodProgressUiState>
+    customPeriods: List<DosingCustomPeriodProgressUiState>,
+    totalAmountMl: Double
 ): List<DosingProgressMarkerUiState> {
-    if (occurrences.isEmpty() || schedule is DeviceDosingProgramSchedule.Single) return emptyList()
+    if (
+        occurrences.isEmpty() ||
+        totalAmountMl <= 0.0 ||
+        schedule is DeviceDosingProgramSchedule.Single
+    ) {
+        return emptyList()
+    }
     val candidateIndexes = when (schedule) {
         is DeviceDosingProgramSchedule.CustomPeriods -> customPeriods
             .runningFold(0) { total, period -> total + period.occurrences.size }

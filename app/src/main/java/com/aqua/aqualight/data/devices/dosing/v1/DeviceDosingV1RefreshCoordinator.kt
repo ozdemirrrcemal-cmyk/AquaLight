@@ -16,16 +16,20 @@ internal class DeviceDosingV1RefreshCoordinator(
 
     suspend fun refreshAll(deviceUid: String): Boolean {
         val uid = DeviceUid(deviceUid.trim())
-        val globalOutcome = repository.requestGlobalStatus(uid)
-        return when (globalOutcome) {
-            is DeviceRuntimeCommandOutcome.Success -> globalOutcome.value.channels.all { channel ->
-                val address = DeviceDosingV1Address(uid, channel.channelKey)
-                operationGate.withChannel(address) {
-                    refreshWithinGate(address, globalOutcome)
-                }.isAuthoritative()
+        val discovery = repository.requestGlobalStatus(uid)
+        if (discovery !is DeviceRuntimeCommandOutcome.Success) return false
+
+        var allAuthoritative = true
+        discovery.value.channels.forEach { channel ->
+            val address = DeviceDosingV1Address(uid, channel.channelKey)
+            val result = operationGate.withChannel(address) {
+                // Each channel receives a fresh coherent global/channel/progress triplet. The
+                // discovery document is used only to enumerate firmware-owned channel keys.
+                refreshWithinGate(address)
             }
-            else -> false
+            if (!result.isAuthoritative()) allAuthoritative = false
         }
+        return allAuthoritative
     }
 
     suspend fun refresh(address: DeviceDosingV1Address): DeviceDosingV1RefreshResult =
@@ -44,15 +48,6 @@ internal class DeviceDosingV1RefreshCoordinator(
         val token = stateOwner.beginRequest(address.deviceUid, address.channelKey)
         return refresh(address, token, repository.requestGlobalStatus(address.deviceUid))
     }
-
-    private suspend fun refreshWithinGate(
-        address: DeviceDosingV1Address,
-        global: DeviceRuntimeCommandOutcome.Success<DeviceDosingV1GlobalStatus>
-    ): DeviceDosingV1RefreshResult = refresh(
-        address = address,
-        token = stateOwner.beginRequest(address.deviceUid, address.channelKey),
-        globalOutcome = global
-    )
 
     private suspend fun refresh(
         address: DeviceDosingV1Address,

@@ -6,6 +6,7 @@ import com.aqua.aqualight.application.devices.dosing.DeviceDosingOccurrenceState
 import com.aqua.aqualight.application.devices.dosing.DeviceDosingProgram
 import com.aqua.aqualight.application.devices.dosing.DeviceDosingProgramSchedule
 import com.aqua.aqualight.application.devices.dosing.DeviceDosingRunSource
+import com.aqua.aqualight.application.devices.dosing.DeviceDosingScheduleState
 import com.aqua.aqualight.application.devices.dosing.dailyDoseMicroliters
 
 internal fun DeviceDosingChannelSnapshot.toProgramProgressUiState(): DosingProgramProgressUiState {
@@ -16,40 +17,49 @@ internal fun DeviceDosingChannelSnapshot.toProgramProgressUiState(): DosingProgr
     val configuredProgram = program ?: return DosingProgramProgressUiState(
         manualDeliveredTodayMl = manualDeliveredTodayMl
     )
-    val occurrences = if (progress.executionCurrent) {
-        progress.occurrences
-            .map(DeviceDosingOccurrenceProgress::toUiState)
-            .withDoseFractions()
-    } else {
-        emptyList()
-    }
+    val scheduledAmountTodayMl = progress.scheduledAmountMicroliters.toMilliliters()
+    val occurrences = progress.occurrences
+        .map(DeviceDosingOccurrenceProgress::toUiState)
+        .withDoseFractions(scheduledAmountTodayMl)
     val customPeriods = configuredProgram.toCustomPeriodUiStates(occurrences)
+    val scheduledToday = configuredProgram.enabled &&
+        progress.scheduleState == DeviceDosingScheduleState.ACTIVE &&
+        progress.totalOccurrences > 0 &&
+        progress.scheduledAmountMicroliters > 0L
     return DosingProgramProgressUiState(
         mode = configuredProgram.schedule.toUiMode(),
         dailyDoseMl = configuredProgram.dailyDoseMicroliters().toMilliliters(),
+        scheduledAmountTodayMl = scheduledAmountTodayMl,
         scheduledDeliveredTodayMl = progress.completedAmountMicroliters.toMilliliters(),
+        remainingScheduledTodayMl = progress.remainingAmountMicroliters.toMilliliters(),
+        completionFraction = (progress.completionPercent / PERCENT_SCALE)
+            .toFloat()
+            .coerceIn(0f, 1f),
         manualDeliveredTodayMl = manualDeliveredTodayMl,
         occurrences = occurrences,
         customPeriods = customPeriods,
-        markers = configuredProgram.toProgressMarkers(occurrences, customPeriods),
-        scheduledToday = configuredProgram.enabled &&
-            progress.executionCurrent &&
-            progress.scheduledAmountMicroliters > 0L,
-        visualState = toProgressVisualState(configuredProgram)
+        markers = configuredProgram.toProgressMarkers(
+            occurrences = occurrences,
+            customPeriods = customPeriods,
+            totalAmountMl = scheduledAmountTodayMl
+        ),
+        totalOccurrences = progress.totalOccurrences,
+        completedOccurrences = progress.completedOccurrences,
+        scheduledToday = scheduledToday,
+        visualState = toProgressVisualState(configuredProgram, scheduledToday)
     )
 }
 
 private fun DeviceDosingChannelSnapshot.toProgressVisualState(
-    configuredProgram: DeviceDosingProgram
+    configuredProgram: DeviceDosingProgram,
+    scheduledToday: Boolean
 ): DosingDoseProgressVisualState = when {
     hasAttentionState() || !progress.accountingCertain -> DosingDoseProgressVisualState.ERROR
     !configuredProgram.enabled -> DosingDoseProgressVisualState.DISABLED
-    !progress.executionCurrent || progress.scheduledAmountMicroliters <= 0L ->
-        DosingDoseProgressVisualState.EMPTY
+    !scheduledToday -> DosingDoseProgressVisualState.EMPTY
     activeRun.active && activeRun.source == DeviceDosingRunSource.SCHEDULED ->
         DosingDoseProgressVisualState.ACTIVE
-    progress.completedAmountMicroliters >= progress.scheduledAmountMicroliters ->
-        DosingDoseProgressVisualState.COMPLETE
+    progress.completionPercent >= PERCENT_SCALE -> DosingDoseProgressVisualState.COMPLETE
     else -> DosingDoseProgressVisualState.READY
 }
 
@@ -83,3 +93,5 @@ private fun DeviceDosingProgram.toCustomPeriodUiStates(
         ).also { cursor += period.doseCount }
     }
 }
+
+private const val PERCENT_SCALE = 100.0

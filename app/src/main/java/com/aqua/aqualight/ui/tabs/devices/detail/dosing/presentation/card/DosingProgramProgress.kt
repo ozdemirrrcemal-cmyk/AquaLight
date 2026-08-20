@@ -59,7 +59,7 @@ internal fun DosingProgramProgress(
         state.completedOccurrences,
         state.totalOccurrences,
         state.scheduledDeliveredTodayMl,
-        state.dailyDoseMl
+        state.scheduledAmountTodayMl
     )
     val palette = dosingProgressPalette(colors, state.visualState)
 
@@ -95,7 +95,7 @@ private fun DosingModeProgressGraphic(
     typography: AquaDeviceCardTypography,
     modifier: Modifier = Modifier
 ) {
-    if (state.occurrences.isEmpty()) {
+    if (!state.scheduledToday || state.occurrences.isEmpty()) {
         DosingEmptyProgramProgress(
             disabled = state.visualState == DosingDoseProgressVisualState.DISABLED,
             palette = palette,

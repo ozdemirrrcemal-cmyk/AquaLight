@@ -3,6 +3,7 @@ package com.aqua.aqualight.data.devices.dosing.v1
 import com.aqua.aqualight.application.devices.dosing.DeviceDosingChannelProgress
 import com.aqua.aqualight.application.devices.dosing.DeviceDosingOccurrenceProgress
 import com.aqua.aqualight.application.devices.dosing.DeviceDosingOccurrenceState
+import com.aqua.aqualight.application.devices.dosing.DeviceDosingScheduleState
 import java.time.LocalDate
 
 internal object DeviceDosingV1ProgressSnapshotMapper {
@@ -18,7 +19,20 @@ internal object DeviceDosingV1ProgressSnapshotMapper {
             status.progress.completedAmountMilliliters,
             allowZero = true
         ),
+        remainingAmountMicroliters = DeviceDosingV1AmountMapper.toMicroliters(
+            status.progress.remainingAmountMilliliters,
+            allowZero = true
+        ),
         occurrences = status.occurrences.map(::occurrence),
+        scheduleState = scheduleState(status.progress.scheduleState),
+        totalOccurrences = status.progress.total,
+        completedOccurrences = status.progress.completed,
+        resolvedOccurrences = status.progress.resolved,
+        pendingOccurrences = status.progress.pending,
+        runningOccurrences = status.progress.running,
+        skippedOccurrences = status.progress.skipped,
+        uncertainOccurrences = status.progress.uncertain,
+        completionPercent = status.progress.completionPercent,
         executionCurrent = status.progress.executionCurrent,
         accountingCertain = detail.deliveryAccountingCertain && status.progress.uncertain == 0,
         programDayDate = parseFirmwareProgramDayDate(status.progress.programDayDate)
@@ -42,6 +56,13 @@ internal object DeviceDosingV1ProgressSnapshotMapper {
                 else -> error("Unknown firmware Dosing occurrence state.")
             }
         )
+
+    private fun scheduleState(value: DeviceDosingV1WireValue): DeviceDosingScheduleState =
+        when (value.raw) {
+            "active" -> DeviceDosingScheduleState.ACTIVE
+            "noSchedule" -> DeviceDosingScheduleState.NO_SCHEDULE
+            else -> error("Unknown firmware Dosing schedule state.")
+        }
 }
 
 /**

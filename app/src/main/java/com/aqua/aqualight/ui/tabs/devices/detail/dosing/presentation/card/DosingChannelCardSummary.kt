@@ -170,7 +170,7 @@ private fun DosingProgramSummary(
     val automaticDosingOff = visualState == DosingChannelVisualState.AUTOMATIC_DOSING_OFF
     val label = when {
         automaticDosingOff -> stringResource(visualState.labelRes)
-        progress.totalOccurrences > 0 -> stringResource(
+        progress.scheduledToday && progress.totalOccurrences > 0 -> stringResource(
             R.string.device_dosing_channel_mode_progress_format,
             progress.completedOccurrences,
             progress.totalOccurrences,

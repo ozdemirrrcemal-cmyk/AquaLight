@@ -72,10 +72,8 @@ private fun DosingDoseRailBody(
         ) {
             drawDoseRail(state.occurrences, grouping, palette)
         }
-        if (state.scheduledDeliveredTodayMl > 0.0 && state.dailyDoseMl > 0.0) {
-            val deliveredFraction = (
-                state.scheduledDeliveredTodayMl / state.dailyDoseMl
-                ).coerceIn(0.0, 1.0).toFloat()
+        if (state.scheduledDeliveredTodayMl > 0.0 && state.scheduledAmountTodayMl > 0.0) {
+            val deliveredFraction = state.completionFraction.coerceIn(0f, 1f)
             val maximumTagStart = (maxWidth - VALUE_TAG_WIDTH).coerceAtLeast(0.dp)
             val tagStart = (maxWidth * deliveredFraction - VALUE_TAG_WIDTH / 2)
                 .coerceIn(0.dp, maximumTagStart)
@@ -273,8 +271,8 @@ private fun DrawScope.segmentInset(
 }
 
 private fun DosingProgressPalette.colorFor(state: DosingOccurrenceVisualState): Color = when (state) {
-    DosingOccurrenceVisualState.PENDING,
-    DosingOccurrenceVisualState.ACTIVE -> pending
+    DosingOccurrenceVisualState.PENDING -> pending
+    DosingOccurrenceVisualState.ACTIVE -> active
     DosingOccurrenceVisualState.COMPLETED -> completed
     DosingOccurrenceVisualState.SKIPPED -> skipped
     DosingOccurrenceVisualState.UNCERTAIN -> uncertain
