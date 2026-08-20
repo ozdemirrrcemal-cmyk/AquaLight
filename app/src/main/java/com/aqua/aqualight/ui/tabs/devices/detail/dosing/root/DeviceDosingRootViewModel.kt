@@ -153,10 +153,11 @@ class DeviceDosingRootViewModel(
         snapshots: List<DeviceDosingChannelSnapshot>
     ): DeviceDosingRootUiState {
         val menuSections = DeviceRootMenuMapper.overview(kind = KIND, snapshot = this)
-        val catalogChannels = if (catalogState == DeviceRootCatalogState.VALID) {
-            channelSlots.dosingChannels
-        } else {
-            emptyList()
+        val catalogChannels = when (catalogState) {
+            DeviceRootCatalogState.PENDING,
+            DeviceRootCatalogState.VALID -> channelSlots.dosingChannels
+            DeviceRootCatalogState.UNSUPPORTED,
+            DeviceRootCatalogState.INVALID -> emptyList()
         }
         val channelPresentation = resolveDosingRootChannelPresentation(
             deviceUid = deviceUid,
