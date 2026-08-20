@@ -78,10 +78,10 @@ private data class OwnedDosingDeviceState(
  * The only device/channel-scoped Dosing state owner.
  *
  * Raw replies and events may enter through different paths, but snapshots enter this owner only
- * after generation, request ordering and revision coherence are proven. Short mutation/event
- * invalidations retain the last validated snapshot for presentation stability while authoritative
- * current reads remain fail-closed until refresh. Channel alert intent is projected from the
- * dedicated owner-scoped ledger; it never becomes a second firmware state owner.
+ * after generation, request ordering and revision coherence are proven. Short mutation/event and
+ * runtime lifecycle invalidations retain the last validated snapshot for presentation stability
+ * while authoritative current reads remain fail-closed until refresh. Channel alert intent is
+ * projected from the dedicated owner-scoped ledger; it never becomes a second firmware state owner.
  */
 internal class DeviceDosingV1StateOwner(
     private val lowLevelAlertLedger: DeviceDosingLowLevelAlertLedger =
@@ -200,7 +200,7 @@ internal class DeviceDosingV1StateOwner(
         val device = when {
             existingDevice == null -> emptyDevice(connectionGeneration)
             connectionGeneration.value > existingDevice.connectionGeneration.value ->
-                emptyDevice(connectionGeneration)
+                carryPresentation(existingDevice, connectionGeneration)
             else -> existingDevice
         }
         val current = device.channels[channelKey]
@@ -222,6 +222,29 @@ internal class DeviceDosingV1StateOwner(
             )
         )
         DeviceDosingV1InvalidationDisposition.APPLIED
+    }
+
+    /**
+     * Withdraws current authority at a runtime lifecycle boundary without clearing the last proven
+     * presentation. Old in-flight request tokens are invalidated, so a disconnected generation can
+     * never republish itself after this boundary.
+     */
+    fun invalidateDevice(deviceUid: DeviceUid) = synchronized(lock) {
+        requestGenerations.keys
+            .filter { address -> address.deviceUid == deviceUid }
+            .forEach { address ->
+                requestGenerations[address] = requestGenerations.getValue(address) + 1L
+            }
+        val existing = states.value[deviceUid] ?: return@synchronized
+        publish(
+            deviceUid,
+            existing.copy(
+                global = null,
+                channels = existing.channels.mapValues { (_, channel) ->
+                    channel.copy(invalidated = true)
+                }
+            )
+        )
     }
 
     fun setLowLevelAlertIntent(
@@ -248,7 +271,7 @@ internal class DeviceDosingV1StateOwner(
         )
     }
 
-    /** Runtime lifecycle clearing must never erase durable channel alert intent or dedupe state. */
+    /** Permanent owner/device teardown; runtime lifecycle transitions use [invalidateDevice]. */
     fun clear(deviceUid: DeviceUid) = synchronized(lock) {
         if (deviceUid in states.value) {
             states.value = states.value.toMutableMap().apply { remove(deviceUid) }.toMap()
@@ -281,7 +304,7 @@ internal class DeviceDosingV1StateOwner(
                 disposition = null,
                 device = when {
                     existing == null -> emptyDevice(connectionGeneration)
-                    newerConnection -> emptyDevice(connectionGeneration)
+                    newerConnection -> carryPresentation(existing, connectionGeneration)
                     else -> existing
                 }
             )
@@ -298,6 +321,27 @@ internal class DeviceDosingV1StateOwner(
         connectionGeneration = generation,
         global = null,
         channels = emptyMap()
+    )
+
+    /**
+     * A new transport generation resets revision ordering while retaining only visual snapshots.
+     * The embedded old revision remains display data; owner revision floors restart at zero so a
+     * freshly booted firmware generation may legitimately publish a lower authoritative revision.
+     */
+    private fun carryPresentation(
+        previous: OwnedDosingDeviceState,
+        generation: DeviceRuntimeConnectionGeneration
+    ): OwnedDosingDeviceState = OwnedDosingDeviceState(
+        connectionGeneration = generation,
+        global = null,
+        channels = previous.channels.mapValues { (_, channel) ->
+            OwnedDosingChannelState(
+                revision = 0L,
+                invalidated = true,
+                channel = channel.channel,
+                calibration = channel.calibration
+            )
+        }
     )
 
     private data class PreparedDevice(
