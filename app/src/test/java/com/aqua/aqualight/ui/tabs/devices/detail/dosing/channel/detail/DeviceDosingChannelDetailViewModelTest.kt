@@ -1,12 +1,14 @@
 package com.aqua.aqualight.ui.tabs.devices.detail.dosing.channel.detail
 
 import com.aqua.aqualight.application.devices.dosing.DeviceDosingActiveRun
+import com.aqua.aqualight.application.devices.dosing.DeviceDosingChannelCommittedResult
 import com.aqua.aqualight.application.devices.dosing.DeviceDosingChannelControls
 import com.aqua.aqualight.application.devices.dosing.DeviceDosingChannelOperationResult
 import com.aqua.aqualight.application.devices.dosing.DeviceDosingChannelOperations
 import com.aqua.aqualight.application.devices.dosing.DeviceDosingChannelProgress
 import com.aqua.aqualight.application.devices.dosing.DeviceDosingChannelSnapshot
 import com.aqua.aqualight.application.devices.dosing.DeviceDosingProgram
+import com.aqua.aqualight.application.devices.dosing.DeviceDosingProgramSchedule
 import com.aqua.aqualight.application.devices.dosing.DeviceDosingReservoirSettings
 import com.aqua.aqualight.application.devices.dosing.DeviceDosingReservoirSnapshot
 import com.aqua.aqualight.application.devices.dosing.DeviceDosingRuntimeReason
@@ -19,6 +21,7 @@ import kotlinx.coroutines.test.StandardTestDispatcher
 import kotlinx.coroutines.test.resetMain
 import kotlinx.coroutines.test.setMain
 import org.junit.After
+import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
 import org.junit.Before
@@ -68,10 +71,92 @@ class DeviceDosingChannelDetailViewModelTest {
         assertFalse(viewModel.currentDraft().routeValid)
     }
 
+    @Test
+    fun `missed dose recovery toggle is optimistic and stale snapshot cannot revert it`() {
+        val initial = snapshot(
+            calibrated = true,
+            missedDoseRecoveryEnabled = false,
+            revision = 1L
+        )
+        val operations = FakeOperations(
+            refreshSnapshot = initial,
+            missedDoseRecoveryResult = DeviceDosingChannelCommittedResult(revision = 2L)
+        )
+        val viewModel = DeviceDosingChannelDetailViewModel(operations)
+
+        viewModel.bind(DEVICE_UID, SLOT_ID)
+        dispatcher.scheduler.advanceUntilIdle()
+
+        viewModel.setMissedDoseRecoveryEnabled(true)
+
+        assertTrue(viewModel.currentDraft().missedDoseRecoveryEnabled)
+        assertFalse(viewModel.currentDraft().missedDoseRecoveryEditable)
+
+        dispatcher.scheduler.advanceUntilIdle()
+
+        assertTrue(viewModel.currentDraft().missedDoseRecoveryEnabled)
+        assertFalse(viewModel.currentDraft().missedDoseRecoveryEditable)
+        assertEquals(1, operations.missedDoseRecoveryMutationCount)
+
+        operations.emit(initial.copy(channelTitle = "Macro stale"))
+        dispatcher.scheduler.advanceUntilIdle()
+
+        assertTrue(viewModel.currentDraft().missedDoseRecoveryEnabled)
+
+        viewModel.setMissedDoseRecoveryEnabled(false)
+        dispatcher.scheduler.advanceUntilIdle()
+
+        assertEquals(1, operations.missedDoseRecoveryMutationCount)
+
+        operations.emit(
+            snapshot(
+                calibrated = true,
+                missedDoseRecoveryEnabled = true,
+                revision = 2L
+            )
+        )
+        dispatcher.scheduler.advanceUntilIdle()
+
+        assertTrue(viewModel.currentDraft().missedDoseRecoveryEnabled)
+        assertTrue(viewModel.currentDraft().missedDoseRecoveryEditable)
+    }
+
+    @Test
+    fun `failed missed dose recovery mutation rolls optimistic toggle back`() {
+        val initial = snapshot(
+            calibrated = true,
+            missedDoseRecoveryEnabled = false,
+            revision = 1L
+        )
+        val operations = FakeOperations(
+            refreshSnapshot = initial,
+            missedDoseRecoveryResult = DeviceDosingChannelOperationResult.Failed
+        )
+        val viewModel = DeviceDosingChannelDetailViewModel(operations)
+
+        viewModel.bind(DEVICE_UID, SLOT_ID)
+        dispatcher.scheduler.advanceUntilIdle()
+
+        viewModel.setMissedDoseRecoveryEnabled(true)
+
+        assertTrue(viewModel.currentDraft().missedDoseRecoveryEnabled)
+
+        dispatcher.scheduler.advanceUntilIdle()
+
+        assertFalse(viewModel.currentDraft().missedDoseRecoveryEnabled)
+        assertTrue(viewModel.currentDraft().missedDoseRecoveryEditable)
+        assertEquals(1, operations.missedDoseRecoveryMutationCount)
+    }
+
     private class FakeOperations(
-        private val refreshSnapshot: DeviceDosingChannelSnapshot
+        private val refreshSnapshot: DeviceDosingChannelSnapshot,
+        private val missedDoseRecoveryResult: DeviceDosingChannelOperationResult =
+            DeviceDosingChannelOperationResult.Failed
     ) : DeviceDosingChannelOperations {
         private val state = MutableStateFlow<DeviceDosingChannelSnapshot?>(null)
+
+        var missedDoseRecoveryMutationCount: Int = 0
+            private set
 
         override fun observe(
             deviceUid: String,
@@ -96,7 +181,10 @@ class DeviceDosingChannelDetailViewModelTest {
             deviceUid: String,
             slotId: String,
             enabled: Boolean
-        ): DeviceDosingChannelOperationResult = DeviceDosingChannelOperationResult.Failed
+        ): DeviceDosingChannelOperationResult {
+            missedDoseRecoveryMutationCount += 1
+            return missedDoseRecoveryResult
+        }
 
         override suspend fun applyReservoirSettings(
             deviceUid: String,
@@ -124,6 +212,10 @@ class DeviceDosingChannelDetailViewModelTest {
             deviceUid: String,
             slotId: String
         ): DeviceDosingChannelOperationResult = DeviceDosingChannelOperationResult.Failed
+
+        fun emit(snapshot: DeviceDosingChannelSnapshot?) {
+            state.value = snapshot
+        }
     }
 
     private companion object {
@@ -131,25 +223,42 @@ class DeviceDosingChannelDetailViewModelTest {
         const val SLOT_ID = "dosing:channel1"
         const val CALIBRATED_AT = 1_786_320_000L
 
-        fun snapshot(calibrated: Boolean): DeviceDosingChannelSnapshot =
+        fun snapshot(
+            calibrated: Boolean,
+            missedDoseRecoveryEnabled: Boolean? = null,
+            revision: Long = 1L
+        ): DeviceDosingChannelSnapshot =
             DeviceDosingChannelSnapshot(
                 deviceUid = DEVICE_UID,
                 slotId = SLOT_ID,
                 pumpCount = 1,
                 channelNumber = 1,
                 channelTitle = "Macro",
-                revision = 1L,
+                revision = revision,
                 runtimeEnabled = true,
                 runtimeReason = DeviceDosingRuntimeReason.NONE,
                 deliveryAccountingCertain = true,
                 calibrated = calibrated,
                 lastCalibratedAtEpochSeconds = if (calibrated) CALIBRATED_AT else 0L,
                 scheduling = DeviceDosingSchedulingPolicy(),
-                program = null,
+                program = missedDoseRecoveryEnabled?.let(::program),
                 progress = DeviceDosingChannelProgress(),
                 reservoir = DeviceDosingReservoirSnapshot(),
                 activeRun = DeviceDosingActiveRun(),
-                controls = DeviceDosingChannelControls()
+                controls = DeviceDosingChannelControls(
+                    programEditable = missedDoseRecoveryEnabled != null
+                )
+            )
+
+        fun program(missedDoseRecoveryEnabled: Boolean): DeviceDosingProgram =
+            DeviceDosingProgram(
+                enabled = true,
+                weekdays = List(7) { true },
+                schedule = DeviceDosingProgramSchedule.Single(
+                    dailyDoseMicroliters = 1_000L,
+                    startTimeMillis = 0L
+                ),
+                missedDoseRecoveryEnabled = missedDoseRecoveryEnabled
             )
     }
 }
