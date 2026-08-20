@@ -1,7 +1,13 @@
 package com.aqua.aqualight.application.devices
 
 enum class DeviceRootCatalogState {
+    /** Exact commercial identity/topology is known, but current-session runtime metadata is pending. */
+    PENDING,
+    /** Exact identity, capabilities, limits, screens, features and modules were validated. */
     VALID,
+    /** A complete exact commercial identity was reported but is not supported by this catalog. */
+    UNSUPPORTED,
+    /** Reported commercial data is malformed or conflicts with the pinned catalog contract. */
     INVALID
 }
 
