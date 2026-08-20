@@ -229,16 +229,6 @@ internal class DeviceDosingV1MutationCoordinator(
         }
     }
 
-    private fun <T> acceptedReadbackResult(
-        value: T,
-        committedRevision: Long,
-        state: DeviceDosingV1AuthoritativeState
-    ): DeviceDosingV1MutationResult<T> = if (state.channel.revision >= committedRevision) {
-        DeviceDosingV1MutationResult.Success(value, state)
-    } else {
-        DeviceDosingV1MutationResult.Malformed
-    }
-
     private suspend fun authoritativeBaseline(
         address: DeviceDosingV1Address
     ): DeviceDosingV1AuthoritativeState? = stateAccess.currentState(address) ?: when (
@@ -247,6 +237,16 @@ internal class DeviceDosingV1MutationCoordinator(
         is DeviceDosingV1RefreshResult.Success -> refreshed.state
         else -> null
     }
+}
+
+private fun <T> acceptedReadbackResult(
+    value: T,
+    committedRevision: Long,
+    state: DeviceDosingV1AuthoritativeState
+): DeviceDosingV1MutationResult<T> = if (state.channel.revision >= committedRevision) {
+    DeviceDosingV1MutationResult.Success(value, state)
+} else {
+    DeviceDosingV1MutationResult.Malformed
 }
 
 private data class AcceptedDosingMutation<T>(
