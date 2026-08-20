@@ -7,12 +7,20 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.text.BasicText
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
+import com.aqua.aqualight.R
+import com.aqua.aqualight.application.devices.DeviceRootCatalogState
+import com.aqua.aqualight.ui.common.devicecard.AquaDeviceCardSurface
+import com.aqua.aqualight.ui.common.devicecard.aquaDeviceCardColors
+import com.aqua.aqualight.ui.common.devicecard.aquaDeviceCardTypography
 import com.aqua.aqualight.ui.tabs.devices.detail.dosing.presentation.card.DosingChannelCard
 import com.aqua.aqualight.ui.tabs.devices.detail.dosing.presentation.card.DosingChannelCardUiState
 import com.aqua.aqualight.ui.tabs.devices.detail.dosing.presentation.pump.DosingPumpHeadUiState
@@ -29,6 +37,7 @@ import com.aqua.aqualight.ui.tabs.devices.detail.dosing.presentation.pump.exactD
  */
 @Composable
 internal fun DeviceDosingCatalogScreen(
+    catalogState: DeviceRootCatalogState,
     pumpCount: Int,
     channels: List<DosingChannelCardUiState>,
     onChannelClick: (String) -> Unit,
@@ -37,7 +46,10 @@ internal fun DeviceDosingCatalogScreen(
 ) {
     val exactPumpCount = exactDosingPumpCountOrNull(pumpCount)
     if (exactPumpCount == null) {
-        Box(modifier = modifier.fillMaxSize())
+        DosingCatalogUnavailableState(
+            catalogState = catalogState,
+            modifier = modifier
+        )
         return
     }
 
@@ -88,6 +100,36 @@ internal fun DeviceDosingCatalogScreen(
                 onClick = { onChannelClick(channel.slotId) },
                 modifier = Modifier.fillMaxWidth()
             )
+        }
+    }
+}
+
+/** A real unresolved/unsupported state is explicit; it is never replaced with a guessed pump count. */
+@Composable
+private fun DosingCatalogUnavailableState(
+    catalogState: DeviceRootCatalogState,
+    modifier: Modifier
+) {
+    val colors = aquaDeviceCardColors()
+    val typography = aquaDeviceCardTypography(colors)
+    val message = when (catalogState) {
+        DeviceRootCatalogState.PENDING ->
+            stringResource(R.string.device_menu_dosing_controls_preparing)
+        DeviceRootCatalogState.VALID,
+        DeviceRootCatalogState.UNSUPPORTED,
+        DeviceRootCatalogState.INVALID -> stringResource(R.string.device_unavailable_message)
+    }
+    Box(
+        modifier = modifier
+            .fillMaxSize()
+            .padding(
+                start = SCREEN_HORIZONTAL_PADDING,
+                top = SCREEN_TOP_PADDING,
+                end = SCREEN_HORIZONTAL_PADDING
+            )
+    ) {
+        AquaDeviceCardSurface(modifier = Modifier.fillMaxWidth()) {
+            BasicText(text = message, style = typography.body)
         }
     }
 }
