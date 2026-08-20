@@ -82,7 +82,8 @@ internal class DeviceDosingV1ChannelOperationsAdapter(
             )
             repositoryProgramApply(uid, channelKey, revision, program)
         },
-        channel = DeviceDosingV1SavedMutationResult::channel
+        channel = DeviceDosingV1SavedMutationResult::channel,
+        reconcileBeforeReturn = expectedRevision != null
     ).toChannelResult()
 
     override suspend fun setMissedDoseRecoveryEnabled(
@@ -170,7 +171,8 @@ internal class DeviceDosingV1ChannelOperationsAdapter(
                 slotId,
                 settings.lowLevelAlertEnabled
             )
-        }
+        },
+        reconcileBeforeReturn = expectedRevision != null
     ).toChannelResult()
 
     override suspend fun setReservoirLowLevelAlertEnabled(
