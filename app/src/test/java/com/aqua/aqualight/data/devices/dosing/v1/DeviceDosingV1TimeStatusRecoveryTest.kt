@@ -37,6 +37,7 @@ class DeviceDosingV1TimeStatusRecoveryTest {
             listOf(
                 DeviceDosingV1Contract.Action.STATUS_GET,
                 DeviceDosingV1Contract.Action.STATUS_GET,
+                DeviceDosingV1Contract.Action.STATUS_GET,
                 DeviceDosingV1Contract.Action.PROGRESS_GET
             ),
             gateway.actions
@@ -78,6 +79,10 @@ class DeviceDosingV1TimeStatusRecoveryTest {
                     envelope = status.envelope.copy(channelCount = SINGLE_CHANNEL_COUNT)
                 )
             }
+
+            // refreshAll first discovers firmware-owned channel keys, then obtains a fresh
+            // GLOBAL/CHANNEL/PROGRESS triplet for each channel before committing authority.
+            enqueueSuccess(DeviceDosingV1Contract.Action.STATUS_GET, global)
             enqueueSuccess(DeviceDosingV1Contract.Action.STATUS_GET, global)
             enqueueSuccess(DeviceDosingV1Contract.Action.STATUS_GET, channel)
             enqueueSuccess(DeviceDosingV1Contract.Action.PROGRESS_GET, progress)
