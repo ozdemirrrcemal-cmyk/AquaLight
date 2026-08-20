@@ -1,5 +1,6 @@
 package com.aqua.aqualight.data.devices.dosing.v1
 
+import com.aqua.aqualight.application.devices.dosing.DeviceDosingDiagnosticTrace
 import com.aqua.aqualight.data.devices.runtime.core.DeviceRuntimeCommandOutcome
 import com.aqua.aqualight.data.devices.runtime.core.DeviceRuntimeConnectionGeneration
 
@@ -10,18 +11,28 @@ internal class DeviceDosingV1ConflictCoordinator(
 ) {
     suspend fun <T> reconcile(
         address: DeviceDosingV1Address,
-        outcome: DeviceRuntimeCommandOutcome<T>
+        outcome: DeviceRuntimeCommandOutcome<T>,
+        diagnosticId: Long? = null
     ): DeviceDosingV1MutationResult<T> = if (outcome.isRevisionConflict()) {
+        traceConflict(address, diagnosticId, "RECONCILE", "revision conflict -> refresh")
         outcome.connectionGenerationOrNull()?.let { generation ->
             stateOwner.invalidate(address.deviceUid, address.channelKey, generation, null)
         }
-        refreshCoordinator.refreshWithinGate(address)
+        val refreshed = refreshCoordinator.refreshWithinGate(address, diagnosticId)
+        traceConflict(address, diagnosticId, "RECONCILE", "conflict refresh=$refreshed")
         DeviceDosingV1MutationResult.Conflict
     } else {
         // A failed command can still coincide with device-side state changes (for example BUSY).
         // Reconcile centrally so every observer sees the latest authoritative snapshot; the UI
         // never invents or preserves a parallel runtime state after a failed mutation.
-        refreshCoordinator.refreshWithinGate(address)
+        traceConflict(
+            address,
+            diagnosticId,
+            "RECONCILE",
+            "command failed (${outcome.dosingDiagnosticSummary()}) -> refresh device state"
+        )
+        val refreshed = refreshCoordinator.refreshWithinGate(address, diagnosticId)
+        traceConflict(address, diagnosticId, "RECONCILE", "failure refresh=$refreshed")
         DeviceDosingV1MutationResult.Failed(outcome)
     }
 }
@@ -46,3 +57,18 @@ private fun DeviceRuntimeCommandOutcome<*>.connectionGenerationOrNull():
         is DeviceRuntimeCommandOutcome.NotConnected,
         is DeviceRuntimeCommandOutcome.UnsupportedByDevice -> null
     }
+
+private fun traceConflict(
+    address: DeviceDosingV1Address,
+    diagnosticId: Long?,
+    stage: String,
+    detail: String
+) {
+    DeviceDosingDiagnosticTrace.record(
+        deviceUid = address.deviceUid.value,
+        slotId = DeviceDosingV1SlotKeyMapper.slotId(address.channelKey),
+        operationId = diagnosticId,
+        stage = stage,
+        detail = detail
+    )
+}
