@@ -2,16 +2,38 @@ package com.aqua.aqualight.data.devices
 
 import com.aqua.aqualight.application.devices.DeviceRootCatalogState
 import com.aqua.aqualight.application.devices.DeviceRootSnapshot
+import com.aqua.aqualight.data.devices.catalog.AqlCommercialCatalogFailureCode
+import com.aqua.aqualight.data.devices.catalog.AqlCommercialCatalogIdentityResolution
 import com.aqua.aqualight.data.devices.catalog.AqlCommercialCatalogProduct
 import com.aqua.aqualight.data.devices.catalog.AqlCommercialCatalogValidation
 import com.aqua.aqualight.data.devices.catalog.AqlCommercialDeviceCatalog
 import com.aqua.aqualight.data.devices.model.DeviceSnapshot
 
 internal fun DeviceSnapshot.toDeviceRootSnapshot(): DeviceRootSnapshot {
-    if (!hasValidatedRuntimeMetadata) return toInvalidDeviceRootSnapshot()
+    if (!hasValidatedRuntimeMetadata) {
+        return when (val identity = AqlCommercialDeviceCatalog.resolveSnapshotIdentity(this)) {
+            is AqlCommercialCatalogIdentityResolution.Resolved ->
+                toPendingDeviceRootSnapshot(identity.product)
+            AqlCommercialCatalogIdentityResolution.Pending ->
+                toUnavailableDeviceRootSnapshot(DeviceRootCatalogState.PENDING)
+            AqlCommercialCatalogIdentityResolution.Unsupported ->
+                toUnavailableDeviceRootSnapshot(DeviceRootCatalogState.UNSUPPORTED)
+            AqlCommercialCatalogIdentityResolution.Invalid ->
+                toUnavailableDeviceRootSnapshot(DeviceRootCatalogState.INVALID)
+        }
+    }
     return when (val validation = AqlCommercialDeviceCatalog.validateSnapshot(this)) {
         is AqlCommercialCatalogValidation.Valid -> toValidatedDeviceRootSnapshot(validation.product)
-        is AqlCommercialCatalogValidation.Invalid -> toInvalidDeviceRootSnapshot()
+        is AqlCommercialCatalogValidation.Invalid -> toUnavailableDeviceRootSnapshot(
+            catalogState = if (
+                validation.failure.code ==
+                AqlCommercialCatalogFailureCode.UNKNOWN_COMPATIBILITY_IDENTITY
+            ) {
+                DeviceRootCatalogState.UNSUPPORTED
+            } else {
+                DeviceRootCatalogState.INVALID
+            }
+        )
     }
 }
 
@@ -50,11 +72,46 @@ private fun DeviceSnapshot.toValidatedDeviceRootSnapshot(
     )
 }
 
-private fun DeviceSnapshot.toInvalidDeviceRootSnapshot(): DeviceRootSnapshot = DeviceRootSnapshot(
+/**
+ * Publishes only immutable, exact catalog topology while current-session metadata is pending.
+ * Routes/capabilities remain fail-closed until full authenticated validation reaches VALID.
+ */
+private fun DeviceSnapshot.toPendingDeviceRootSnapshot(
+    product: AqlCommercialCatalogProduct
+): DeviceRootSnapshot {
+    val channelSlots = DeviceChannelSlotResolver.resolve(product)
+    return DeviceRootSnapshot(
+        deviceUid = deviceUid.value,
+        title = title,
+        availability = connectionState.onlineState.toOwnerDeviceAvailability(),
+        family = product.family.toOwnerDeviceFamily(),
+        catalogState = DeviceRootCatalogState.PENDING,
+        productKey = product.productKey.value,
+        productId = product.productId.value,
+        model = product.model.value,
+        serialNumber = identity.serialNumber,
+        hardwareRevision = product.hardwareRevision.value,
+        ipAddress = endpoint.ip.trim(),
+        firmwareLabel = firmwareLabel(),
+        modelLabel = "${product.model.value} / ${product.hardwareRevision.value}",
+        lightChannelCount = channelSlots.lightChannels.size,
+        timerChannelCount = channelSlots.timerChannels.size,
+        dosingChannelCount = channelSlots.dosingChannels.size,
+        fanOutputCount = channelSlots.fanOutputs.size,
+        temperatureSensorCount = channelSlots.temperatureSensors.size,
+        channelSlots = channelSlots,
+        productDisplayName = product.displayName,
+        hasCustomName = identity.customName.isNotBlank()
+    )
+}
+
+private fun DeviceSnapshot.toUnavailableDeviceRootSnapshot(
+    catalogState: DeviceRootCatalogState
+): DeviceRootSnapshot = DeviceRootSnapshot(
     deviceUid = deviceUid.value,
     title = title,
     availability = connectionState.onlineState.toOwnerDeviceAvailability(),
-    catalogState = DeviceRootCatalogState.INVALID,
+    catalogState = catalogState,
     serialNumber = identity.serialNumber,
     ipAddress = endpoint.ip.trim(),
     firmwareLabel = firmwareLabel(),
