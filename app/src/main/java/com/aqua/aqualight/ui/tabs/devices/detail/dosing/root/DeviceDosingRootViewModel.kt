@@ -167,6 +167,7 @@ class DeviceDosingRootViewModel(
         return DeviceDosingRootUiState(
             title = title.ifBlank { fallbackTitle },
             deviceUid = deviceUid,
+            catalogState = catalogState,
             connectionStatusRes = DeviceRootPresentationMapper.availabilityLabelRes(this),
             ipText = ipAddress,
             firmwareText = firmwareLabel,
@@ -195,6 +196,7 @@ class DeviceDosingRootViewModel(
 data class DeviceDosingRootUiState(
     val title: String = "",
     val deviceUid: String = "",
+    val catalogState: DeviceRootCatalogState = DeviceRootCatalogState.PENDING,
     @StringRes val connectionStatusRes: Int = R.string.device_offline,
     val ipText: String = "",
     val firmwareText: String = "",
