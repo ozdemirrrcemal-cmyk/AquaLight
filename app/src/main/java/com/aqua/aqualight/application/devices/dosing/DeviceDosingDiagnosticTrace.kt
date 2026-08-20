@@ -31,11 +31,7 @@ internal object DeviceDosingDiagnosticTrace {
     private val operationStartNanos = ConcurrentHashMap<Long, Long>()
     private val entries = MutableStateFlow<List<Entry>>(emptyList())
 
-    fun beginProgramSave(
-        deviceUid: String,
-        slotId: String,
-        editorRevision: Long?
-    ): Long {
+    fun beginPersistedMutation(deviceUid: String, slotId: String): Long {
         val operationId = operationSequence.incrementAndGet()
         operationStartNanos[operationId] = System.nanoTime()
         synchronized(lock) {
@@ -47,7 +43,7 @@ internal object DeviceDosingDiagnosticTrace {
                 slotId = slotId,
                 operationId = operationId,
                 stage = "SAVE",
-                detail = "BEGIN editorRev=${editorRevision ?: "none"}"
+                detail = "BEGIN persisted mutation"
             )).takeLast(MAX_GLOBAL_ENTRIES)
         }
         return operationId
