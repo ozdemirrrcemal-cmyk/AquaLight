@@ -60,16 +60,24 @@ class DeviceDosingV1TimeStatusRecoveryTest {
                     channel.channelKey.value == "channel1"
                 }
                 status.copy(
-                    envelope = status.envelope.copy(channelCount = 1),
+                    envelope = status.envelope.copy(channelCount = SINGLE_CHANNEL_COUNT),
                     channels = listOf(channel)
                 )
             }
             val channel = DeviceDosingV1StatusParser.parseChannel(
                 DeviceDosingV1TestFixtures.channelStatus()
-            )
+            ).let { status ->
+                status.copy(
+                    envelope = status.envelope.copy(channelCount = SINGLE_CHANNEL_COUNT)
+                )
+            }
             val progress = DeviceDosingV1StatusParser.parseProgress(
                 DeviceDosingV1TestFixtures.progressStatus()
-            )
+            ).let { status ->
+                status.copy(
+                    envelope = status.envelope.copy(channelCount = SINGLE_CHANNEL_COUNT)
+                )
+            }
             enqueueSuccess(DeviceDosingV1Contract.Action.STATUS_GET, global)
             enqueueSuccess(DeviceDosingV1Contract.Action.STATUS_GET, channel)
             enqueueSuccess(DeviceDosingV1Contract.Action.PROGRESS_GET, progress)
@@ -93,6 +101,7 @@ class DeviceDosingV1TimeStatusRecoveryTest {
     }
 
     private companion object {
+        const val SINGLE_CHANNEL_COUNT = 1
         val DEVICE_UID = DeviceUid("AQL-DOSING-TIME-RECOVERY")
         const val SLOT_ID = "dosing:channel1"
         val GENERATION = DeviceRuntimeConnectionGeneration(1L)
