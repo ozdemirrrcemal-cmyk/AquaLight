@@ -1,5 +1,6 @@
 package com.aqua.aqualight.data.devices.dosing.v1
 
+import com.aqua.aqualight.application.devices.dosing.DeviceDosingDiagnosticTrace
 import com.aqua.aqualight.data.devices.model.DeviceUid
 import com.aqua.aqualight.data.devices.runtime.core.DeviceRuntimeCommandOutcome
 
@@ -39,10 +40,24 @@ internal class DeviceDosingV1RefreshCoordinator(
      * reconciliation shares the same per-channel serialization boundary as mutations and events.
      */
     internal suspend fun refreshWithinGate(
-        address: DeviceDosingV1Address
+        address: DeviceDosingV1Address,
+        diagnosticId: Long? = null
     ): DeviceDosingV1RefreshResult {
         val token = stateOwner.beginRequest(address.deviceUid, address.channelKey)
-        return refresh(address, token, repository.requestGlobalStatus(address.deviceUid))
+        traceRefresh(
+            address,
+            diagnosticId,
+            "REFRESH",
+            "START requestGeneration=${token.requestGeneration}"
+        )
+        val globalOutcome = repository.requestGlobalStatus(address.deviceUid)
+        traceRefresh(
+            address,
+            diagnosticId,
+            "GLOBAL",
+            globalOutcome.refreshDiagnosticSummary(address)
+        )
+        return refresh(address, token, globalOutcome, diagnosticId)
     }
 
     private suspend fun refreshWithinGate(
@@ -51,39 +66,76 @@ internal class DeviceDosingV1RefreshCoordinator(
     ): DeviceDosingV1RefreshResult = refresh(
         address = address,
         token = stateOwner.beginRequest(address.deviceUid, address.channelKey),
-        globalOutcome = global
+        globalOutcome = global,
+        diagnosticId = null
     )
 
     private suspend fun refresh(
         address: DeviceDosingV1Address,
         token: DeviceDosingV1RequestToken,
-        globalOutcome: DeviceRuntimeCommandOutcome<DeviceDosingV1GlobalStatus>
+        globalOutcome: DeviceRuntimeCommandOutcome<DeviceDosingV1GlobalStatus>,
+        diagnosticId: Long?
     ): DeviceDosingV1RefreshResult = when (globalOutcome) {
-        is DeviceRuntimeCommandOutcome.Success -> refreshChannel(address, token, globalOutcome)
+        is DeviceRuntimeCommandOutcome.Success ->
+            refreshChannel(address, token, globalOutcome, diagnosticId)
         else -> DeviceDosingV1RefreshResult.Failed(globalOutcome)
     }
 
     private suspend fun refreshChannel(
         address: DeviceDosingV1Address,
         token: DeviceDosingV1RequestToken,
-        global: DeviceRuntimeCommandOutcome.Success<DeviceDosingV1GlobalStatus>
+        global: DeviceRuntimeCommandOutcome.Success<DeviceDosingV1GlobalStatus>,
+        diagnosticId: Long?
     ): DeviceDosingV1RefreshResult = when (
         val channel = repository.requestChannelStatus(address.deviceUid, address.channelKey)
     ) {
-        is DeviceRuntimeCommandOutcome.Success -> refreshProgress(address, token, global, channel)
-        else -> DeviceDosingV1RefreshResult.Failed(channel)
+        is DeviceRuntimeCommandOutcome.Success -> {
+            traceRefresh(
+                address,
+                diagnosticId,
+                "CHANNEL",
+                channel.refreshDiagnosticSummary(address)
+            )
+            refreshProgress(address, token, global, channel, diagnosticId)
+        }
+        else -> {
+            traceRefresh(
+                address,
+                diagnosticId,
+                "CHANNEL",
+                channel.refreshDiagnosticSummary(address)
+            )
+            DeviceDosingV1RefreshResult.Failed(channel)
+        }
     }
 
     private suspend fun refreshProgress(
         address: DeviceDosingV1Address,
         token: DeviceDosingV1RequestToken,
         global: DeviceRuntimeCommandOutcome.Success<DeviceDosingV1GlobalStatus>,
-        channel: DeviceRuntimeCommandOutcome.Success<DeviceDosingV1ChannelStatus>
+        channel: DeviceRuntimeCommandOutcome.Success<DeviceDosingV1ChannelStatus>,
+        diagnosticId: Long?
     ): DeviceDosingV1RefreshResult = when (
         val progress = repository.requestProgress(address.deviceUid, address.channelKey)
     ) {
-        is DeviceRuntimeCommandOutcome.Success -> commit(address, token, global, channel, progress)
-        else -> DeviceDosingV1RefreshResult.Failed(progress)
+        is DeviceRuntimeCommandOutcome.Success -> {
+            traceRefresh(
+                address,
+                diagnosticId,
+                "PROGRESS",
+                progress.refreshDiagnosticSummary(address)
+            )
+            commit(address, token, global, channel, progress, diagnosticId)
+        }
+        else -> {
+            traceRefresh(
+                address,
+                diagnosticId,
+                "PROGRESS",
+                progress.refreshDiagnosticSummary(address)
+            )
+            DeviceDosingV1RefreshResult.Failed(progress)
+        }
     }
 
     private fun commit(
@@ -91,17 +143,38 @@ internal class DeviceDosingV1RefreshCoordinator(
         token: DeviceDosingV1RequestToken,
         global: DeviceRuntimeCommandOutcome.Success<DeviceDosingV1GlobalStatus>,
         channel: DeviceRuntimeCommandOutcome.Success<DeviceDosingV1ChannelStatus>,
-        progress: DeviceRuntimeCommandOutcome.Success<DeviceDosingV1ProgressStatus>
-    ): DeviceDosingV1RefreshResult = if (sameConnectionGeneration(global, channel, progress)) {
-        stateOwner.commitRefresh(
+        progress: DeviceRuntimeCommandOutcome.Success<DeviceDosingV1ProgressStatus>,
+        diagnosticId: Long?
+    ): DeviceDosingV1RefreshResult {
+        if (!sameConnectionGeneration(global, channel, progress)) {
+            traceRefresh(
+                address,
+                diagnosticId,
+                "JOIN",
+                "STALE generation mismatch global=${global.generation.value} " +
+                    "channel=${channel.generation.value} progress=${progress.generation.value}"
+            )
+            return DeviceDosingV1RefreshResult.RejectedStale
+        }
+
+        val disposition = stateOwner.commitRefresh(
             token = token,
             connectionGeneration = global.generation,
             global = global.value,
             channelStatus = channel.value,
             progressStatus = progress.value
-        ).toRefreshResult(address, stateAccess)
-    } else {
-        DeviceDosingV1RefreshResult.RejectedStale
+        )
+        val globalRevision = global.value.channels
+            .singleOrNull { candidate -> candidate.channelKey == address.channelKey }
+            ?.revision
+        traceRefresh(
+            address,
+            diagnosticId,
+            "JOIN",
+            "globalRev=$globalRevision channelRev=${channel.value.channel.revision} " +
+                "progressRev=${progress.value.revision} commit=$disposition"
+        )
+        return disposition.toRefreshResult(address, stateAccess)
     }
 }
 
@@ -128,3 +201,39 @@ private fun sameConnectionGeneration(
     second: DeviceRuntimeCommandOutcome.Success<*>,
     third: DeviceRuntimeCommandOutcome.Success<*>
 ): Boolean = first.generation == second.generation && second.generation == third.generation
+
+private fun DeviceRuntimeCommandOutcome<*>.refreshDiagnosticSummary(
+    address: DeviceDosingV1Address
+): String {
+    val revision = when (this) {
+        is DeviceRuntimeCommandOutcome.Success<*> -> when (val value = value) {
+            is DeviceDosingV1GlobalStatus -> value.channels
+                .singleOrNull { candidate -> candidate.channelKey == address.channelKey }
+                ?.revision
+            is DeviceDosingV1ChannelStatus -> value.channel.revision
+            is DeviceDosingV1ProgressStatus -> value.revision
+            else -> null
+        }
+        else -> null
+    }
+    return if (revision == null) {
+        dosingDiagnosticSummary()
+    } else {
+        "${dosingDiagnosticSummary()} rev=$revision"
+    }
+}
+
+private fun traceRefresh(
+    address: DeviceDosingV1Address,
+    diagnosticId: Long?,
+    stage: String,
+    detail: String
+) {
+    DeviceDosingDiagnosticTrace.record(
+        deviceUid = address.deviceUid.value,
+        slotId = DeviceDosingV1SlotKeyMapper.slotId(address.channelKey),
+        operationId = diagnosticId,
+        stage = stage,
+        detail = detail
+    )
+}
