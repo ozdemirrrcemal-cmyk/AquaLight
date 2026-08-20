@@ -10,6 +10,7 @@ internal class DeviceDosingV1EventCoordinator(
 ) {
     suspend fun consume(event: DeviceRuntimeTypedEvent): DeviceDosingV1EventResult = when (event.type) {
         DeviceRuntimeTypedEvent.Type.DOSING_STATUS_CHANGED -> consumeStatusChanged(event)
+        DeviceRuntimeTypedEvent.Type.TIME_STATUS_CHANGED -> consumeTimeStatusChanged(event)
         else -> DeviceDosingV1EventResult.Ignored
     }
 
@@ -19,6 +20,20 @@ internal class DeviceDosingV1EventCoordinator(
         }.getOrElse { return DeviceDosingV1EventResult.Malformed }
         val address = DeviceDosingV1Address(event.deviceUid, invalidation.channelKey)
         return operationGate.withChannel(address) { refreshInvalidated(event, invalidation) }
+    }
+
+    /**
+     * Scheduler readiness is device-wide. Phone/NTP/manual time synchronization can therefore
+     * change every enabled channel from INVALID_TIME to runnable without changing channel revision.
+     * Re-read all channels through the central refresh coordinator instead of mutating UI state or
+     * projecting the time event itself into Dosing state.
+     */
+    private suspend fun consumeTimeStatusChanged(
+        event: DeviceRuntimeTypedEvent
+    ): DeviceDosingV1EventResult = if (refreshCoordinator.refreshAll(event.deviceUid.value)) {
+        DeviceDosingV1EventResult.RefreshedAll
+    } else {
+        DeviceDosingV1EventResult.RefreshFailed
     }
 
     private suspend fun refreshInvalidated(

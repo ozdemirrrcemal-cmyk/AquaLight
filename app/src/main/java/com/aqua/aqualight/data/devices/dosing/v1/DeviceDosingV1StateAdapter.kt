@@ -46,6 +46,7 @@ internal sealed interface DeviceDosingV1MutationResult<out T> {
 
 internal sealed interface DeviceDosingV1EventResult {
     data class Refreshed(val state: DeviceDosingV1AuthoritativeState) : DeviceDosingV1EventResult
+    data object RefreshedAll : DeviceDosingV1EventResult
     data object Ignored : DeviceDosingV1EventResult
     data object Malformed : DeviceDosingV1EventResult
     data object RefreshFailed : DeviceDosingV1EventResult

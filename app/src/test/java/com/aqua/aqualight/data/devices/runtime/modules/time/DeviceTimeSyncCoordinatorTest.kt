@@ -13,7 +13,7 @@ import org.junit.Test
 
 class DeviceTimeSyncCoordinatorTest {
     @Test
-    fun `synchronizes one confirmed phone snapshot per device session`() = runBlocking {
+    fun `later validated bootstrap is allowed to re-anchor phone time`() = runBlocking {
         val calls = AtomicInteger(0)
         val coordinator = DeviceTimeSyncCoordinator(
             syncPhoneNow = { deviceUid ->
@@ -21,18 +21,18 @@ class DeviceTimeSyncCoordinatorTest {
                 success(deviceUid)
             }
         )
-        val deviceUid = DeviceUid("device-time-once")
+        val deviceUid = DeviceUid("device-time-rebootstrap")
 
         val first = coordinator.syncPhoneNowIfNeeded(deviceUid)
         val second = coordinator.syncPhoneNowIfNeeded(deviceUid)
 
         assertTrue(first is DeviceTimeSyncDecision.Attempted)
-        assertTrue(second is DeviceTimeSyncDecision.Skipped)
-        assertEquals(1, calls.get())
+        assertTrue(second is DeviceTimeSyncDecision.Attempted)
+        assertEquals(2, calls.get())
     }
 
     @Test
-    fun `failed outcome does not mark session synchronized and allows retry`() = runBlocking {
+    fun `failed outcome allows the next validated bootstrap to retry`() = runBlocking {
         val calls = AtomicInteger(0)
         val coordinator = DeviceTimeSyncCoordinator(
             syncPhoneNow = { deviceUid ->
@@ -55,7 +55,7 @@ class DeviceTimeSyncCoordinatorTest {
     }
 
     @Test
-    fun `concurrent request is skipped while one broker command is pending`() = runBlocking {
+    fun `concurrent duplicate is skipped while one broker command is pending`() = runBlocking {
         val entered = CompletableDeferred<Unit>()
         val release = CompletableDeferred<Unit>()
         val calls = AtomicInteger(0)
@@ -71,30 +71,12 @@ class DeviceTimeSyncCoordinatorTest {
 
         val first = async { coordinator.syncPhoneNowIfNeeded(deviceUid) }
         entered.await()
-        val second = coordinator.syncPhoneNowIfNeeded(deviceUid, force = true)
+        val second = coordinator.syncPhoneNowIfNeeded(deviceUid)
         release.complete(Unit)
 
         assertTrue(second is DeviceTimeSyncDecision.Skipped)
         assertTrue(first.await() is DeviceTimeSyncDecision.Attempted)
         assertEquals(1, calls.get())
-    }
-
-    @Test
-    fun `clearing session memory allows synchronization again`() = runBlocking {
-        val calls = AtomicInteger(0)
-        val deviceUid = DeviceUid("device-time-clear")
-        val coordinator = DeviceTimeSyncCoordinator(
-            syncPhoneNow = { uid ->
-                calls.incrementAndGet()
-                success(uid)
-            }
-        )
-
-        coordinator.syncPhoneNowIfNeeded(deviceUid)
-        coordinator.clearSessionMemory(deviceUid)
-        coordinator.syncPhoneNowIfNeeded(deviceUid)
-
-        assertEquals(2, calls.get())
     }
 
     private fun success(
