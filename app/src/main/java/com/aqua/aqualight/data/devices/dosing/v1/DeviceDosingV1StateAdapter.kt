@@ -20,7 +20,21 @@ internal sealed interface DeviceDosingV1RefreshResult {
 }
 
 internal sealed interface DeviceDosingV1MutationResult<out T> {
-    data class Success<T>(val value: T, val state: DeviceDosingV1AuthoritativeState) : DeviceDosingV1MutationResult<T>
+    data class Success<T>(
+        val value: T,
+        val state: DeviceDosingV1AuthoritativeState
+    ) : DeviceDosingV1MutationResult<T>
+
+    /**
+     * Firmware durably accepted a persisted mutation, but authoritative readback is still pending.
+     * No snapshot is carried because the central state owner must remain fail-closed until a full
+     * global/channel/progress join succeeds.
+     */
+    data class Committed<T>(
+        val value: T,
+        val revision: Long
+    ) : DeviceDosingV1MutationResult<T>
+
     data class Failed(val outcome: DeviceRuntimeCommandOutcome<*>) : DeviceDosingV1MutationResult<Nothing>
     data class LocallyRejected(val reason: DeviceDosingChannelRejection) : DeviceDosingV1MutationResult<Nothing>
     data object Conflict : DeviceDosingV1MutationResult<Nothing>

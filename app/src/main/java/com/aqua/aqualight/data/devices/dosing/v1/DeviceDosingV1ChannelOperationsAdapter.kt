@@ -1,5 +1,6 @@
 package com.aqua.aqualight.data.devices.dosing.v1
 
+import com.aqua.aqualight.application.devices.dosing.DeviceDosingChannelCommittedResult
 import com.aqua.aqualight.application.devices.dosing.DeviceDosingChannelOperationResult
 import com.aqua.aqualight.application.devices.dosing.DeviceDosingChannelOperations
 import com.aqua.aqualight.application.devices.dosing.DeviceDosingChannelRejection
@@ -315,6 +316,7 @@ private fun DeviceDosingV1RefreshResult.toChannelResult(): DeviceDosingChannelOp
 private fun DeviceDosingV1MutationResult<*>.toChannelResult(): DeviceDosingChannelOperationResult =
     when (this) {
         is DeviceDosingV1MutationResult.Success -> DeviceDosingChannelOperationResult.Success(state.channel)
+        is DeviceDosingV1MutationResult.Committed -> DeviceDosingChannelCommittedResult(revision)
         is DeviceDosingV1MutationResult.Failed -> DeviceDosingChannelFailureMapper.map(outcome)
         is DeviceDosingV1MutationResult.LocallyRejected ->
             DeviceDosingChannelOperationResult.Rejected(reason)

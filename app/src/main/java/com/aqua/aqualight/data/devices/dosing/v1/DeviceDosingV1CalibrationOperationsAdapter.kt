@@ -171,6 +171,11 @@ private fun <T> DeviceDosingV1MutationResult<T>.toCalibrationResult(
         snapshot = state.calibration,
         operationDurationMs = operationDuration(value)
     )
+    // Calibration commands are runtime mutations and cannot legitimately produce Committed.
+    // Keep this defensive path fail-closed if that contract ever changes unexpectedly.
+    is DeviceDosingV1MutationResult.Committed -> DeviceDosingCalibrationResult.Rejected(
+        DeviceDosingCalibrationFailure.INTERNAL
+    )
     is DeviceDosingV1MutationResult.Failed -> DeviceDosingCalibrationResult.Rejected(
         DeviceDosingCalibrationFailureMapper.map(outcome)
     )

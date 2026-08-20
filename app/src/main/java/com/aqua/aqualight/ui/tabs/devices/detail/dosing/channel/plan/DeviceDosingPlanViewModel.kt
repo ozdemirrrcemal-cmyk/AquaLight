@@ -2,6 +2,7 @@ package com.aqua.aqualight.ui.tabs.devices.detail.dosing.channel.plan
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.aqua.aqualight.application.devices.dosing.DeviceDosingChannelCommittedResult
 import com.aqua.aqualight.application.devices.dosing.DeviceDosingChannelOperationResult
 import com.aqua.aqualight.application.devices.dosing.DeviceDosingChannelOperations
 import com.aqua.aqualight.application.devices.dosing.DeviceDosingChannelRejection
@@ -250,6 +251,16 @@ internal class DeviceDosingPlanViewModel(
                     restoredBaseRevision = restoredBaseRevision,
                     restoredDraftDirty = restoredDraftDirty
                 ).copy(operationInProgress = false)
+                eventChannel.send(DeviceDosingPlanEvent.Saved)
+            }
+            is DeviceDosingChannelCommittedResult -> {
+                // Firmware has durably committed the exact persisted intent. Readback remains
+                // centralized and fail-closed, so acknowledge the save without inventing a snapshot.
+                mutableEditorState.value = mutableEditorState.value.copy(
+                    operationInProgress = false,
+                    draftDirty = false,
+                    baseRevision = result.revision
+                )
                 eventChannel.send(DeviceDosingPlanEvent.Saved)
             }
             is DeviceDosingChannelOperationResult.Rejected -> {

@@ -2,6 +2,7 @@ package com.aqua.aqualight.ui.tabs.devices.detail.dosing.channel.detail
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.aqua.aqualight.application.devices.dosing.DeviceDosingChannelCommittedResult
 import com.aqua.aqualight.application.devices.dosing.DeviceDosingChannelDetailDraftPolicy
 import com.aqua.aqualight.application.devices.dosing.DeviceDosingChannelOperationResult
 import com.aqua.aqualight.application.devices.dosing.DeviceDosingChannelOperations
@@ -197,6 +198,13 @@ internal class DeviceDosingChannelDetailViewModel(
     ): Boolean = when (result) {
         is DeviceDosingChannelOperationResult.Success -> {
             applySnapshot(result.snapshot)
+            mutableDraft.value = mutableDraft.value.copy(operationInProgress = false)
+            successEvent?.let { event -> eventChannel.send(event) }
+            true
+        }
+        is DeviceDosingChannelCommittedResult -> {
+            // Persisted write is complete; central readback will update the draft when authoritative
+            // state is available again. Never project mutation response data as a fake snapshot.
             mutableDraft.value = mutableDraft.value.copy(operationInProgress = false)
             successEvent?.let { event -> eventChannel.send(event) }
             true

@@ -2,6 +2,7 @@ package com.aqua.aqualight.ui.tabs.devices.detail.dosing.channel.reservoir
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.aqua.aqualight.application.devices.dosing.DeviceDosingChannelCommittedResult
 import com.aqua.aqualight.application.devices.dosing.DeviceDosingChannelOperationResult
 import com.aqua.aqualight.application.devices.dosing.DeviceDosingChannelOperations
 import com.aqua.aqualight.application.devices.dosing.DeviceDosingChannelRejection
@@ -287,6 +288,17 @@ private suspend fun resolveReservoirSaveResult(
         ),
         event = DeviceDosingReservoirEvent.Saved
     )
+    is DeviceDosingChannelCommittedResult -> ReservoirSaveResolution(
+        // Persisted config is committed, but authoritative readback is still pending. Advance only
+        // the editor's save base and local draft bookkeeping; never synthesize firmware state.
+        state = current.copy(
+            savedDraft = current.draft,
+            operationInProgress = false,
+            baseRevision = result.revision,
+            capacityRejection = null
+        ),
+        event = DeviceDosingReservoirEvent.Saved
+    )
     is DeviceDosingChannelOperationResult.Rejected -> resolveReservoirSaveRejection(
         operations = operations,
         deviceUid = deviceUid,
@@ -294,7 +306,8 @@ private suspend fun resolveReservoirSaveResult(
         current = current,
         rejection = result.reason
     )
-    else -> ReservoirSaveResolution(
+    DeviceDosingChannelOperationResult.Unavailable,
+    DeviceDosingChannelOperationResult.Failed -> ReservoirSaveResolution(
         state = current.copy(operationInProgress = false),
         event = DeviceDosingReservoirEvent.SaveFailed
     )
