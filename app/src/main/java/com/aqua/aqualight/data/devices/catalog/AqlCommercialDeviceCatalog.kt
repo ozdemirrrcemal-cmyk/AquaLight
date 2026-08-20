@@ -48,6 +48,23 @@ internal sealed interface AqlCommercialCatalogValidation {
     data class Invalid(val failure: AqlCommercialCatalogFailure) : AqlCommercialCatalogValidation
 }
 
+/**
+ * Exact identity-only resolution used while authenticated runtime metadata is being revalidated.
+ *
+ * A resolved row may provide immutable commercial topology for presentation, but it is never a
+ * substitute for [AqlCommercialCatalogValidation.Valid]. Capabilities, routes and commands remain
+ * unavailable until the complete current-session metadata document validates.
+ */
+internal sealed interface AqlCommercialCatalogIdentityResolution {
+    data class Resolved(
+        val product: AqlCommercialCatalogProduct
+    ) : AqlCommercialCatalogIdentityResolution
+
+    data object Pending : AqlCommercialCatalogIdentityResolution
+    data object Unsupported : AqlCommercialCatalogIdentityResolution
+    data object Invalid : AqlCommercialCatalogIdentityResolution
+}
+
 internal object AqlCommercialDeviceCatalog {
     val products: List<AqlCommercialCatalogProduct> = AQL_GENERATED_COMMERCIAL_PRODUCTS
 
@@ -72,6 +89,26 @@ internal object AqlCommercialDeviceCatalog {
             return invalid(AqlCommercialCatalogFailureCode.MALFORMED_REPORTED_PRODUCT, "snapshot")
         }
         return validateReported(reported)
+    }
+
+    fun resolveSnapshotIdentity(snapshot: DeviceSnapshot): AqlCommercialCatalogIdentityResolution {
+        val product = snapshot.product
+        if (
+            product.productKey.isEmpty() ||
+            product.productId.isEmpty() ||
+            product.model.isEmpty() ||
+            product.hardwareRevision.isEmpty()
+        ) {
+            return AqlCommercialCatalogIdentityResolution.Pending
+        }
+        val compatibilityIdentity = runCatching {
+            product.toCompatibilityIdentity()
+        }.getOrElse {
+            return AqlCommercialCatalogIdentityResolution.Invalid
+        }
+        return productsByIdentity[compatibilityIdentity]
+            ?.let(AqlCommercialCatalogIdentityResolution::Resolved)
+            ?: AqlCommercialCatalogIdentityResolution.Unsupported
     }
 
     private fun validateReported(reported: ReportedCatalogProduct): AqlCommercialCatalogValidation {
