@@ -95,8 +95,13 @@ internal class DeviceDosingV1StateAdapter(
 
     suspend fun consume(event: DeviceRuntimeTypedEvent): DeviceDosingV1EventResult = eventCoordinator.consume(event)
 
-    /** A reconnect or disconnect boundary must never retain a previous session's snapshots. */
-    fun consume(event: DeviceRuntimeLifecycleEvent) { stateAccess.clear(event.deviceUid) }
+    /**
+     * A runtime lifecycle boundary withdraws authority immediately but keeps the last proven
+     * presentation in the same central owner until the new coherent refresh replaces it.
+     */
+    fun consume(event: DeviceRuntimeLifecycleEvent) {
+        stateAccess.invalidateDevice(event.deviceUid)
+    }
 
     fun currentChannel(deviceUid: String, slotId: String): DeviceDosingChannelSnapshot? =
         stateAccess.currentChannel(deviceUid, slotId)
