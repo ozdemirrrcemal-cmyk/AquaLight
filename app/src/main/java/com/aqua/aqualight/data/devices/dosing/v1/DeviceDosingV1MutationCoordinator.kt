@@ -2,6 +2,7 @@ package com.aqua.aqualight.data.devices.dosing.v1
 
 import com.aqua.aqualight.application.devices.dosing.DeviceDosingChannelRejection
 import com.aqua.aqualight.application.devices.dosing.DeviceDosingChannelSnapshot
+import com.aqua.aqualight.application.devices.dosing.DeviceDosingDiagnosticTrace
 import com.aqua.aqualight.data.devices.model.DeviceUid
 import com.aqua.aqualight.data.devices.runtime.core.DeviceRuntimeCommandOutcome
 import java.util.concurrent.ConcurrentHashMap
@@ -41,13 +42,22 @@ internal class DeviceDosingV1MutationCoordinator(
         ) -> DeviceRuntimeCommandOutcome<T>,
         channel: (T) -> DeviceDosingV1ChannelDetail,
         onAccepted: () -> Unit = {}
-    ): DeviceDosingV1MutationResult<T> = mutateSerialized(
-        address = stateAccess.address(deviceUid, slotId),
-        requiresRevision = true,
-        execute = execute,
-        channel = channel,
-        onAccepted = onAccepted
-    )
+    ): DeviceDosingV1MutationResult<T> {
+        val address = stateAccess.address(deviceUid, slotId)
+        val diagnosticId = DeviceDosingDiagnosticTrace.beginPersistedMutation(
+            deviceUid = address.deviceUid.value,
+            slotId = DeviceDosingV1SlotKeyMapper.slotId(address.channelKey)
+        )
+        traceDiagnostic(address, diagnosticId, "GATE", "waiting for channel serialization")
+        return mutateSerialized(
+            address = address,
+            requiresRevision = true,
+            execute = execute,
+            channel = channel,
+            onAccepted = onAccepted,
+            diagnosticId = diagnosticId
+        )
+    }
 
     suspend fun <T> mutateRuntime(
         deviceUid: String,
@@ -76,24 +86,44 @@ internal class DeviceDosingV1MutationCoordinator(
             DeviceDosingChannelSnapshot
         ) -> DeviceRuntimeCommandOutcome<T>,
         channel: (T) -> DeviceDosingV1ChannelDetail,
-        onAccepted: () -> Unit = {}
+        onAccepted: () -> Unit = {},
+        diagnosticId: Long? = null
     ): DeviceDosingV1MutationResult<T> = operationGate.withChannel(address) {
-        val baseline = authoritativeBaseline(address)
-            ?: return@withChannel DeviceDosingV1MutationResult.Malformed
+        traceDiagnostic(address, diagnosticId, "GATE", "entered channel serialization")
+        val baseline = authoritativeBaseline(address, diagnosticId)
+            ?: return@withChannel DeviceDosingV1MutationResult.Malformed.also {
+                traceDiagnostic(address, diagnosticId, "BASELINE", "FAILED no authoritative state")
+            }
+        traceDiagnostic(
+            address,
+            diagnosticId,
+            "BASELINE",
+            "authoritativeRev=${baseline.channel.revision} requiresRevision=$requiresRevision"
+        )
         val revision = if (requiresRevision) {
             stateAccess.authoritativeRevision(address)
-                ?: return@withChannel DeviceDosingV1MutationResult.Malformed
+                ?: return@withChannel DeviceDosingV1MutationResult.Malformed.also {
+                    traceDiagnostic(address, diagnosticId, "REVISION", "FAILED authoritative revision missing")
+                }
         } else {
             baseline.channel.revision
         }
+        traceDiagnostic(address, diagnosticId, "REVISION", "selected expectedRev=$revision")
         val token = stateOwner.beginRequest(address.deviceUid, address.channelKey)
+        traceDiagnostic(address, diagnosticId, "TOKEN", "requestGeneration=${token.requestGeneration}")
         when (val execution = executeMutation(address, revision, baseline.channel, execute)) {
-            is DosingExecutionOutcome.Rejected ->
+            is DosingExecutionOutcome.Rejected -> {
+                traceDiagnostic(address, diagnosticId, "COMMAND", "LOCAL_REJECT reason=${execution.reason}")
                 DeviceDosingV1MutationResult.LocallyRejected(execution.reason)
-            is DosingExecutionOutcome.Completed -> when (val outcome = execution.outcome) {
-                is DeviceRuntimeCommandOutcome.Success ->
-                    commitMutation(address, token, outcome, channel, onAccepted)
-                else -> conflictCoordinator.reconcile(address, outcome)
+            }
+            is DosingExecutionOutcome.Completed -> {
+                val outcome = execution.outcome
+                traceDiagnostic(address, diagnosticId, "COMMAND", outcome.mutationDiagnosticSummary())
+                when (outcome) {
+                    is DeviceRuntimeCommandOutcome.Success ->
+                        commitMutation(address, token, outcome, channel, onAccepted, diagnosticId)
+                    else -> conflictCoordinator.reconcile(address, outcome, diagnosticId)
+                }
             }
         }
     }
@@ -123,68 +153,145 @@ internal class DeviceDosingV1MutationCoordinator(
         token: DeviceDosingV1RequestToken,
         outcome: DeviceRuntimeCommandOutcome.Success<T>,
         channel: (T) -> DeviceDosingV1ChannelDetail,
-        onAccepted: () -> Unit
-    ): DeviceDosingV1MutationResult<T> = runCatching { channel(outcome.value) }.fold(
-        onSuccess = { detail -> recordMutation(address, token, outcome, detail, onAccepted) },
-        onFailure = { DeviceDosingV1MutationResult.Malformed }
-    )
+        onAccepted: () -> Unit,
+        diagnosticId: Long?
+    ): DeviceDosingV1MutationResult<T> {
+        val detail = runCatching { channel(outcome.value) }.getOrElse { error ->
+            traceDiagnostic(
+                address,
+                diagnosticId,
+                "PARSE",
+                "FAILED ${error::class.simpleName ?: "unknown"}: ${error.message.orEmpty().take(100)}"
+            )
+            return DeviceDosingV1MutationResult.Malformed
+        }
+        traceDiagnostic(address, diagnosticId, "PARSE", "responseRev=${detail.revision}")
+        return recordMutation(address, token, outcome, detail, onAccepted, diagnosticId)
+    }
 
     private suspend fun <T> recordMutation(
         address: DeviceDosingV1Address,
         token: DeviceDosingV1RequestToken,
         outcome: DeviceRuntimeCommandOutcome.Success<T>,
         detail: DeviceDosingV1ChannelDetail,
-        onAccepted: () -> Unit
+        onAccepted: () -> Unit,
+        diagnosticId: Long?
     ): DeviceDosingV1MutationResult<T> = runCatching {
         stateOwner.recordMutation(token, outcome.generation, detail)
     }.fold(
-        onSuccess = { disposition -> reconcileMutation(address, outcome.value, disposition, onAccepted) },
-        onFailure = { DeviceDosingV1MutationResult.Malformed }
+        onSuccess = { disposition ->
+            traceDiagnostic(address, diagnosticId, "OWNER", "recordMutation=$disposition")
+            reconcileMutation(address, outcome.value, disposition, onAccepted, diagnosticId)
+        },
+        onFailure = { error ->
+            traceDiagnostic(
+                address,
+                diagnosticId,
+                "OWNER",
+                "recordMutation THREW ${error::class.simpleName ?: "unknown"}"
+            )
+            DeviceDosingV1MutationResult.Malformed
+        }
     )
 
     private suspend fun <T> reconcileMutation(
         address: DeviceDosingV1Address,
         value: T,
         disposition: DeviceDosingV1CommitDisposition,
-        onAccepted: () -> Unit
+        onAccepted: () -> Unit,
+        diagnosticId: Long?
     ): DeviceDosingV1MutationResult<T> = when (disposition) {
         DeviceDosingV1CommitDisposition.STALE_CONNECTION -> {
-            refreshCoordinator.refreshWithinGate(address)
+            traceDiagnostic(address, diagnosticId, "OWNER", "STALE_CONNECTION -> refresh")
+            refreshCoordinator.refreshWithinGate(address, diagnosticId)
             DeviceDosingV1MutationResult.RejectedStale
         }
-        DeviceDosingV1CommitDisposition.MALFORMED -> DeviceDosingV1MutationResult.Malformed
+        DeviceDosingV1CommitDisposition.MALFORMED -> {
+            traceDiagnostic(address, diagnosticId, "OWNER", "MALFORMED")
+            DeviceDosingV1MutationResult.Malformed
+        }
         else -> {
             onAccepted()
-            refreshAccepted(address, value)
+            refreshAccepted(address, value, diagnosticId)
         }
     }
 
     private suspend fun <T> refreshAccepted(
         address: DeviceDosingV1Address,
-        value: T
+        value: T,
+        diagnosticId: Long?
     ): DeviceDosingV1MutationResult<T> = when (
-        val refreshed = refreshCoordinator.refreshWithinGate(address)
+        val refreshed = refreshCoordinator.refreshWithinGate(address, diagnosticId)
     ) {
-        is DeviceDosingV1RefreshResult.Success ->
+        is DeviceDosingV1RefreshResult.Success -> {
+            traceDiagnostic(
+                address,
+                diagnosticId,
+                "RESULT",
+                "SUCCESS authoritativeRev=${refreshed.state.channel.revision}"
+            )
             DeviceDosingV1MutationResult.Success(value, refreshed.state)
-        DeviceDosingV1RefreshResult.Malformed -> DeviceDosingV1MutationResult.Malformed
+        }
+        DeviceDosingV1RefreshResult.Malformed -> {
+            traceDiagnostic(address, diagnosticId, "RESULT", "MALFORMED after accepted mutation")
+            DeviceDosingV1MutationResult.Malformed
+        }
         is DeviceDosingV1RefreshResult.Failed,
         DeviceDosingV1RefreshResult.RejectedStale -> stateAccess.currentState(address)?.let { state ->
+            traceDiagnostic(
+                address,
+                diagnosticId,
+                "RESULT",
+                "SUCCESS via retained authoritative state rev=${state.channel.revision} refresh=$refreshed"
+            )
             DeviceDosingV1MutationResult.Success(value, state)
-        } ?: DeviceDosingV1MutationResult.RejectedStale
+        } ?: DeviceDosingV1MutationResult.RejectedStale.also {
+            traceDiagnostic(address, diagnosticId, "RESULT", "REJECTED_STALE refresh=$refreshed")
+        }
     }
 
     private suspend fun authoritativeBaseline(
-        address: DeviceDosingV1Address
-    ): DeviceDosingV1AuthoritativeState? = stateAccess.currentState(address) ?: when (
-        val refreshed = refreshCoordinator.refreshWithinGate(address)
-    ) {
-        is DeviceDosingV1RefreshResult.Success -> refreshed.state
-        else -> null
+        address: DeviceDosingV1Address,
+        diagnosticId: Long?
+    ): DeviceDosingV1AuthoritativeState? = stateAccess.currentState(address)?.also { state ->
+        traceDiagnostic(address, diagnosticId, "BASELINE", "cache hit rev=${state.channel.revision}")
+    } ?: run {
+        traceDiagnostic(address, diagnosticId, "BASELINE", "cache miss -> authoritative refresh")
+        when (val refreshed = refreshCoordinator.refreshWithinGate(address, diagnosticId)) {
+            is DeviceDosingV1RefreshResult.Success -> refreshed.state
+            else -> null.also {
+                traceDiagnostic(address, diagnosticId, "BASELINE", "refresh failed: $refreshed")
+            }
+        }
     }
 }
 
 private sealed interface DosingExecutionOutcome<out T> {
     data class Completed<T>(val outcome: DeviceRuntimeCommandOutcome<T>) : DosingExecutionOutcome<T>
     data class Rejected(val reason: DeviceDosingChannelRejection) : DosingExecutionOutcome<Nothing>
+}
+
+private fun DeviceRuntimeCommandOutcome<*>.mutationDiagnosticSummary(): String {
+    val base = dosingDiagnosticSummary()
+    val responseRevision = (this as? DeviceRuntimeCommandOutcome.Success<*>)
+        ?.value
+        ?.let { value -> value as? DeviceDosingV1SavedMutationResult }
+        ?.channel
+        ?.revision
+    return if (responseRevision == null) base else "$base responseRev=$responseRevision"
+}
+
+private fun traceDiagnostic(
+    address: DeviceDosingV1Address,
+    diagnosticId: Long?,
+    stage: String,
+    detail: String
+) {
+    DeviceDosingDiagnosticTrace.record(
+        deviceUid = address.deviceUid.value,
+        slotId = DeviceDosingV1SlotKeyMapper.slotId(address.channelKey),
+        operationId = diagnosticId,
+        stage = stage,
+        detail = detail
+    )
 }
