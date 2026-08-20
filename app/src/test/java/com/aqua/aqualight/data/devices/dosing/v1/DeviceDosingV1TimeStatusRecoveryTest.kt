@@ -56,10 +56,12 @@ class DeviceDosingV1TimeStatusRecoveryTest {
             val global = DeviceDosingV1StatusParser.parseGlobal(
                 DeviceDosingV1TestFixtures.globalStatus()
             ).let { status ->
+                val channel = status.channels.single { channel ->
+                    channel.channelKey.value == "channel1"
+                }
                 status.copy(
-                    channels = status.channels.filter { channel ->
-                        channel.channelKey.value == "channel1"
-                    }
+                    envelope = status.envelope.copy(channelCount = 1),
+                    channels = listOf(channel)
                 )
             }
             val channel = DeviceDosingV1StatusParser.parseChannel(
