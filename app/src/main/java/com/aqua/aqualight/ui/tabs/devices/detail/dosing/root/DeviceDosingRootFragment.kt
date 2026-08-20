@@ -38,15 +38,15 @@ class DeviceDosingRootFragment : Fragment(R.layout.fragment_device_dosing_root) 
         _binding = FragmentDeviceDosingRootBinding.bind(view)
 
         setupHeader(title = args.deviceTitle.ifBlank { getString(R.string.device_family_dosing) })
-        setupPumpContent()
-        observeHeaderTitle()
-        observeChannelNavigation()
-        observeChannelNavigationFailures()
-
+        // Bind the exact catalog/central Dosing state before Compose observes its first frame.
         viewModel.bind(
             deviceUidText = args.deviceUid,
             fallbackTitle = args.deviceTitle
         )
+        setupPumpContent()
+        observeHeaderTitle()
+        observeChannelNavigation()
+        observeChannelNavigationFailures()
     }
 
     override fun onStart() {
