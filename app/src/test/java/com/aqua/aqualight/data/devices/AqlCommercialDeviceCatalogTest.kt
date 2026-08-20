@@ -8,6 +8,7 @@ import com.aqua.aqualight.data.devices.catalog.AqlCommercialCatalogValidation
 import com.aqua.aqualight.data.devices.catalog.AqlCommercialDeviceCatalog
 import com.aqua.aqualight.data.devices.model.DeviceApiVersion
 import com.aqua.aqualight.data.devices.model.DeviceCapabilities
+import com.aqua.aqualight.data.devices.model.DeviceFamily
 import com.aqua.aqualight.data.devices.model.DeviceFirmwareVersion
 import com.aqua.aqualight.data.devices.model.DeviceIdentity
 import com.aqua.aqualight.data.devices.model.DeviceLimits
@@ -102,6 +103,60 @@ class AqlCommercialDeviceCatalogTest {
     }
 
     @Test
+    fun `known dosing identity keeps exact two or four pump topology while metadata is pending`() {
+        listOf(
+            "DOSING_DOSE_PRO_2" to 2,
+            "DOSING_DOSE_PRO_4" to 4
+        ).forEach { (productKey, expectedPumpCount) ->
+            val root = product(productKey).toSnapshot().withoutValidatedRuntimeMetadata()
+                .toDeviceRootSnapshot()
+
+            assertEquals(DeviceRootCatalogState.PENDING, root.catalogState)
+            assertEquals(OwnerDeviceFamily.DOSING, root.family)
+            assertEquals(expectedPumpCount, root.dosingChannelCount)
+            assertEquals(expectedPumpCount, root.channelSlots.dosingChannels.size)
+            assertEquals(productKey, root.productKey)
+            assertTrue(root.allowedRoutes.isEmpty())
+            assertTrue(root.capabilities.isEmpty())
+        }
+    }
+
+    @Test
+    fun `incomplete pending identity never fabricates a dosing pump count`() {
+        val root = DeviceSnapshot(
+            identity = DeviceIdentity(uid = DeviceUid("pending-dosing")),
+            product = DeviceProduct(
+                family = DeviceFamily.DOSING,
+                displayName = "Dose Pro"
+            )
+        ).toDeviceRootSnapshot()
+
+        assertEquals(DeviceRootCatalogState.PENDING, root.catalogState)
+        assertEquals(0, root.dosingChannelCount)
+        assertTrue(root.channelSlots.dosingChannels.isEmpty())
+        assertTrue(root.allowedRoutes.isEmpty())
+    }
+
+    @Test
+    fun `complete unknown identity is unsupported and never falls back to four pumps`() {
+        val snapshot = product("DOSING_DOSE_PRO_2")
+            .toSnapshot()
+            .withoutValidatedRuntimeMetadata()
+            .let { current ->
+                current.copy(
+                    product = current.product.copy(productKey = "DOSING_DOSE_PRO_UNKNOWN")
+                )
+            }
+
+        val root = snapshot.toDeviceRootSnapshot()
+
+        assertEquals(DeviceRootCatalogState.UNSUPPORTED, root.catalogState)
+        assertEquals(0, root.dosingChannelCount)
+        assertTrue(root.channelSlots.dosingChannels.isEmpty())
+        assertTrue(root.allowedRoutes.isEmpty())
+    }
+
+    @Test
     fun `unknown snapshot feature withdraws root family menus and routes`() {
         val snapshot = product("DOSING_DOSE_PRO_2").toSnapshot().copy(
             supportedFeatures = listOf("DOSING_CONTROL", "LEGACY_DOSING_ALIAS")
@@ -145,12 +200,12 @@ class AqlCommercialDeviceCatalogTest {
                 supportedScreens = profile.supportedScreens
             ),
             modules = DeviceRuntimeModules(
-                light = family == com.aqua.aqualight.data.devices.model.DeviceFamily.LIGHT,
+                light = family == DeviceFamily.LIGHT,
                 cooling = profile.capabilities.cooling,
                 temperature = profile.capabilities.temperature,
-                timerApi = family == com.aqua.aqualight.data.devices.model.DeviceFamily.TIMER,
-                timerEngine = family == com.aqua.aqualight.data.devices.model.DeviceFamily.TIMER,
-                dosing = family == com.aqua.aqualight.data.devices.model.DeviceFamily.DOSING,
+                timerApi = family == DeviceFamily.TIMER,
+                timerEngine = family == DeviceFamily.TIMER,
+                dosing = family == DeviceFamily.DOSING,
                 network = true,
                 discovery = true,
                 firmware = true,
@@ -203,5 +258,14 @@ class AqlCommercialDeviceCatalogTest {
         supportedFeatures = profile.supportedFeatures.map { it.wireValue },
         supportedScreens = profile.supportedScreens.map { it.wireValue },
         runtimeMetadataGeneration = 1L
+    )
+
+    private fun DeviceSnapshot.withoutValidatedRuntimeMetadata(): DeviceSnapshot = copy(
+        capabilities = DeviceCapabilities(),
+        limits = DeviceLimits(),
+        supportedFeatures = emptyList(),
+        supportedScreens = emptyList(),
+        modules = emptyList(),
+        runtimeMetadataGeneration = 0L
     )
 }
