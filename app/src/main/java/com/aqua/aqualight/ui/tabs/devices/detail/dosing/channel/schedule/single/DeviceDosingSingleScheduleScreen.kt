@@ -25,6 +25,7 @@ import com.aqua.aqualight.ui.common.devicemenu.AquaDeviceMenuTone
 import com.aqua.aqualight.ui.common.devicemenu.AquaDeviceMenuValueRow
 import com.aqua.aqualight.ui.common.devicemenu.aquaDeviceMenuColors
 import com.aqua.aqualight.ui.common.flow.AquaGuidedFlowButton
+import com.aqua.aqualight.ui.tabs.devices.detail.dosing.channel.schedule.DeviceDosingScheduleAmountContract
 
 @Composable
 internal fun DeviceDosingSingleScheduleScreen(
@@ -92,12 +93,17 @@ private fun SingleScheduleHero() {
 
 @Composable
 private fun SingleScheduleSummary(dailyDoseMicroliters: Long) {
+    val context = LocalContext.current
+    val dailyDose = DeviceDosingScheduleAmountContract.formatDisplay(
+        dailyDoseMicroliters,
+        context.resources.configuration.locales[0]
+    )
     AquaDeviceMenuSection(title = stringResource(R.string.device_dosing_single_summary_section)) {
         AquaDeviceMenuValueRow(
             label = stringResource(R.string.device_dosing_detail_daily_dose),
             value = stringResource(
-                R.string.device_dosing_channel_daily_dose_format,
-                DeviceDosingSingleScheduleContract.dailyDoseMl(dailyDoseMicroliters)
+                R.string.device_dosing_single_daily_dose_value_format,
+                dailyDose
             ),
             description = stringResource(R.string.device_dosing_single_daily_amount_description),
             tone = AquaDeviceMenuTone.ACCENT
