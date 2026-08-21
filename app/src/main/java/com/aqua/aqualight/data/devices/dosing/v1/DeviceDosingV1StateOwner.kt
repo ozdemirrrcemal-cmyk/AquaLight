@@ -252,14 +252,14 @@ internal class DeviceDosingV1StateOwner(
      * A socket lifecycle transition revokes write authority but is not a domain-state reset.
      * Presentation keeps the last fully validated firmware projection until the authenticated
      * generation refreshes it, preventing transport churn from becoming false switch/card state.
-     */
+    */
     fun invalidateAll(deviceUid: DeviceUid) = synchronized(lock) {
-        val device = states.value[deviceUid] ?: return@synchronized
         requestGenerations.keys
             .filter { address -> address.deviceUid == deviceUid }
             .forEach { address ->
                 requestGenerations[address] = requestGenerations.getValue(address) + 1L
             }
+        val device = states.value[deviceUid] ?: return@synchronized
         publish(
             deviceUid,
             device.copy(
