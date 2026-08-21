@@ -12,6 +12,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import com.aqua.aqualight.R
@@ -105,8 +106,7 @@ private fun HourlyScheduleHero() {
 
 @Composable
 private fun HourlyScheduleSummary(dailyDoseMicroliters: Long) {
-    val context = LocalContext.current
-    val locale = context.resources.configuration.locales[0]
+    val locale = LocalConfiguration.current.locales[0]
     val dailyDose = DeviceDosingScheduleAmountContract.formatDisplay(
         dailyDoseMicroliters,
         locale

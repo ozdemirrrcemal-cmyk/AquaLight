@@ -12,6 +12,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
@@ -62,6 +63,13 @@ private fun CustomScheduleContent(
     } else {
         null
     }
+    val periodsPresentation = CustomPeriodsPresentation(
+        periods = state.periods,
+        totalDoseCount = totalDoseCount,
+        maxEventsPerChannel = state.maxEventsPerChannel,
+        maxPeriodsPerChannel = state.maxPeriodsPerChannel,
+        addEnabled = state.addEnabled
+    )
     LazyColumn(
         modifier = modifier,
         contentPadding = PaddingValues(
@@ -85,11 +93,7 @@ private fun CustomScheduleContent(
         }
         item(key = CUSTOM_PERIODS_KEY) {
             CustomPeriodsSection(
-                periods = state.periods,
-                totalDoseCount = totalDoseCount,
-                maxEventsPerChannel = state.maxEventsPerChannel,
-                maxPeriodsPerChannel = state.maxPeriodsPerChannel,
-                addEnabled = state.addEnabled,
+                presentation = periodsPresentation,
                 onAction = onAction
             )
         }
@@ -111,8 +115,7 @@ private fun CustomScheduleSummary(
     totalDoseCount: Int,
     averageDoseMl: Double?
 ) {
-    val context = LocalContext.current
-    val locale = context.resources.configuration.locales[0]
+    val locale = LocalConfiguration.current.locales[0]
     val dailyDose = DeviceDosingScheduleAmountContract.formatDisplay(
         dailyDoseMicroliters,
         locale
@@ -169,11 +172,7 @@ private fun CustomScheduleValidation(message: String) {
 
 @Composable
 private fun CustomPeriodsSection(
-    periods: List<DeviceDosingCustomPeriod>,
-    totalDoseCount: Int,
-    maxEventsPerChannel: Int,
-    maxPeriodsPerChannel: Int,
-    addEnabled: Boolean,
+    presentation: CustomPeriodsPresentation,
     onAction: (DeviceDosingCustomScheduleAction) -> Unit
 ) {
     AquaDeviceMenuSection(title = stringResource(R.string.device_dosing_custom_periods_section)) {
@@ -182,23 +181,23 @@ private fun CustomPeriodsSection(
                 title = stringResource(R.string.device_dosing_custom_periods_title),
                 description = stringResource(
                     R.string.device_dosing_custom_periods_capacity,
-                    periods.size,
-                    maxPeriodsPerChannel,
-                    totalDoseCount,
-                    maxEventsPerChannel
+                    presentation.periods.size,
+                    presentation.maxPeriodsPerChannel,
+                    presentation.totalDoseCount,
+                    presentation.maxEventsPerChannel
                 ),
                 iconRes = R.drawable.ic_dosing_schedule_24
             ),
             action = AquaDeviceMenuRowAction(
                 text = stringResource(R.string.device_dosing_schedule_add),
                 onClick = { onAction(DeviceDosingCustomScheduleAction.Add) },
-                enabled = addEnabled
+                enabled = presentation.addEnabled
             )
         )
-        if (periods.isEmpty()) {
+        if (presentation.periods.isEmpty()) {
             EmptyCustomPeriods()
         } else {
-            periods.forEachIndexed { index, period ->
+            presentation.periods.forEachIndexed { index, period ->
                 AquaDeviceMenuDivider(startIndent = AquaDeviceMenuGeometry.sectionContentPadding)
                 CustomPeriodRow(index = index, period = period, onAction = onAction)
             }
@@ -275,6 +274,14 @@ private fun CustomScheduleFooter(
         )
     }
 }
+
+private data class CustomPeriodsPresentation(
+    val periods: List<DeviceDosingCustomPeriod>,
+    val totalDoseCount: Int,
+    val maxEventsPerChannel: Int,
+    val maxPeriodsPerChannel: Int,
+    val addEnabled: Boolean
+)
 
 private const val CUSTOM_HERO_KEY = "custom-dose-hero"
 private const val CUSTOM_SUMMARY_KEY = "custom-dose-summary"
