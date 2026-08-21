@@ -37,6 +37,19 @@ internal class DeviceDosingV1RefreshCoordinator(
             refreshWithinGate(address)
         }
 
+    /** Checks and reconciles a durable ACK inside the shared per-channel serialization gate. */
+    internal suspend fun reconcileCommitted(
+        address: DeviceDosingV1Address,
+        minimumRevision: Long
+    ): DeviceDosingV1RefreshResult = operationGate.withChannel(address) {
+        val current = stateAccess.currentState(address)
+        if (current != null && current.channel.revision >= minimumRevision) {
+            DeviceDosingV1RefreshResult.Success(current)
+        } else {
+            refreshWithinGate(address)
+        }
+    }
+
     /**
      * Authoritative refresh for callers that already hold [DeviceDosingV1ChannelOperationGate].
      * Keeping this separate prevents nested locking while ensuring every externally initiated

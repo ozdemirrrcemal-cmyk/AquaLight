@@ -52,7 +52,7 @@ class DeviceDosingPlanFragment :
             host = DosingPlanScheduleResultHost(
                 fragment = this,
                 slotId = args.slotId,
-                scheduling = { viewModel.currentEditorState().scheduling },
+                scheduling = { viewModel.currentEditorState.scheduling },
                 updateSchedule = viewModel::applyScheduleUpdate
             ),
             lifecycleOwner = viewLifecycleOwner
@@ -69,7 +69,7 @@ class DeviceDosingPlanFragment :
     }
 
     override fun onSaveInstanceState(outState: Bundle) {
-        val editorState = viewModel.currentEditorState()
+        val editorState = viewModel.currentEditorState
         editorState.draft.writeTo(outState)
         editorState.baseRevision?.let { revision ->
             outState.putLong(STATE_BASE_REVISION, revision)
@@ -129,7 +129,7 @@ class DeviceDosingPlanFragment :
 
     @Suppress("LongMethod") // Safe Args keeps the four typed navigation contracts explicit.
     private fun openScheduleEditor(mode: DosingPlanScheduleMode) {
-        val editorState = viewModel.currentEditorState()
+        val editorState = viewModel.currentEditorState
         val draft = editorState.draft
         val canOpenEditor = listOf(
             draft.scheduleEnabled,
@@ -201,7 +201,7 @@ class DeviceDosingPlanFragment :
     }
 
     private fun showDailyDoseEditor() {
-        val editorState = viewModel.currentEditorState()
+        val editorState = viewModel.currentEditorState
         val draft = editorState.draft
         val canEditDailyDose = listOf(
             draft.scheduleEnabled,

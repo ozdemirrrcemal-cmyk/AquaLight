@@ -73,6 +73,45 @@ class DeviceDosingV1CommittedMutationTest {
             )
         }
 
+    @Test
+    fun `persisted ack from prior connection is not misreported by older retained readback`() =
+        runTest {
+            val gateway = ScriptedGateway().apply {
+                enqueueRefresh(revision = 137L, generation = GENERATION_TWO)
+                enqueueProgramMutation(revision = 138L, generation = GENERATION_ONE)
+                enqueue(
+                    DeviceDosingV1Contract.Action.STATUS_GET,
+                    DeviceRuntimeCommandOutcome.Cancelled(
+                        deviceUid = DEVICE_UID,
+                        module = DeviceDosingV1Contract.MODULE,
+                        action = DeviceDosingV1Contract.Action.STATUS_GET,
+                        messageId = "stale-connection-readback",
+                        generation = GENERATION_TWO,
+                        reason = "readback transport unavailable"
+                    )
+                )
+            }
+            val adapter = DeviceDosingV1StateAdapter(DeviceDosingV1Repository(gateway))
+            val initial = adapter.channelOperations.refresh(DEVICE_UID.value, SLOT_ID)
+                as DeviceDosingChannelOperationResult.Success
+
+            val result = adapter.channelOperations.applyProgramAtRevision(
+                deviceUid = DEVICE_UID.value,
+                slotId = SLOT_ID,
+                program = requireNotNull(initial.snapshot.program),
+                expectedRevision = 137L
+            )
+
+            assertEquals(DeviceDosingChannelCommittedResult(138L), result)
+            assertEquals(137L, adapter.currentChannel(DEVICE_UID.value, SLOT_ID)?.revision)
+            assertEquals(
+                1,
+                gateway.requests.count { request ->
+                    request.action == DeviceDosingV1Contract.Action.PROGRAM_APPLY
+                }
+            )
+        }
+
     private class ScriptedGateway : DeviceRuntimeCommandGateway {
         data class Request(val action: String)
 

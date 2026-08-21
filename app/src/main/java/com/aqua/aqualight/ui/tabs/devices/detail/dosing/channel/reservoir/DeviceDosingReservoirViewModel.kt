@@ -7,14 +7,18 @@ import com.aqua.aqualight.application.devices.dosing.DeviceDosingChannelOperatio
 import com.aqua.aqualight.application.devices.dosing.DeviceDosingChannelOperations
 import com.aqua.aqualight.application.devices.dosing.DeviceDosingChannelRejection
 import com.aqua.aqualight.application.devices.dosing.DeviceDosingChannelSnapshot
+import com.aqua.aqualight.application.devices.dosing.DeviceDosingMutationReconciliation
 import com.aqua.aqualight.application.devices.dosing.DeviceDosingReservoirCapacityPolicy
 import com.aqua.aqualight.application.devices.dosing.DeviceDosingReservoirCapacityRejection
 import com.aqua.aqualight.application.devices.dosing.DeviceDosingReservoirCapacityValidation
 import com.aqua.aqualight.application.devices.dosing.DeviceDosingReservoirSettings
+import com.aqua.aqualight.application.devices.dosing.DeviceDosingRevisionedIntent
+import com.aqua.aqualight.application.devices.dosing.applyRevisionedIntentWithReconciliation
 import com.aqua.aqualight.application.devices.dosing.applyReservoirSettingsAgainstBaseRevision
 import com.aqua.aqualight.application.devices.dosing.requiresLowReservoirAttention
 import com.aqua.aqualight.application.devices.dosing.setReservoirLowLevelAlertPreference
 import java.util.Locale
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.Flow
@@ -188,9 +192,13 @@ internal class DeviceDosingReservoirViewModel(
         mutableEditorState.value = state.copy(operationInProgress = true)
         jobs.mutation?.cancel()
         jobs.mutation = viewModelScope.launch {
-            val result = runCatching {
+            val reconciliation = try {
                 performReservoirSave(operations, deviceUid, slotId, state)
-            }.getOrElse { DeviceDosingChannelOperationResult.Failed }
+            } catch (cancellation: CancellationException) {
+                throw cancellation
+            } catch (_: Exception) {
+                DeviceDosingMutationReconciliation(DeviceDosingChannelOperationResult.Failed)
+            }
             if (boundDeviceUid != deviceUid || boundSlotId != slotId) return@launch
 
             val resolution = resolveReservoirSaveResult(
@@ -198,7 +206,7 @@ internal class DeviceDosingReservoirViewModel(
                 deviceUid = deviceUid,
                 slotId = slotId,
                 current = mutableEditorState.value,
-                result = result
+                reconciliation = reconciliation
             )
             if (boundDeviceUid != deviceUid || boundSlotId != slotId) return@launch
 
@@ -216,8 +224,13 @@ internal class DeviceDosingReservoirViewModel(
         mutableEditorState.value = state.copy(operationInProgress = true)
         jobs.mutation?.cancel()
         jobs.mutation = viewModelScope.launch {
-            val result = runCatching { operations.refillReservoir(deviceUid, slotId) }
-                .getOrElse { DeviceDosingChannelOperationResult.Failed }
+            val result = try {
+                operations.refillReservoir(deviceUid, slotId)
+            } catch (cancellation: CancellationException) {
+                throw cancellation
+            } catch (_: Exception) {
+                DeviceDosingChannelOperationResult.Failed
+            }
             if (boundDeviceUid != deviceUid || boundSlotId != slotId) return@launch
             when (result) {
                 is DeviceDosingChannelOperationResult.Success -> {
@@ -273,13 +286,23 @@ private data class ReservoirSaveResolution(
     val event: DeviceDosingReservoirEvent
 )
 
+private data class ReservoirEditorBinding(
+    val deviceUid: String,
+    val slotId: String
+)
+
+private data class ReservoirSaveRejection(
+    val reason: DeviceDosingChannelRejection,
+    val authoritativeSnapshot: DeviceDosingChannelSnapshot?
+)
+
 private suspend fun resolveReservoirSaveResult(
     operations: DeviceDosingChannelOperations,
     deviceUid: String,
     slotId: String,
     current: DeviceDosingReservoirEditorState,
-    result: DeviceDosingChannelOperationResult
-): ReservoirSaveResolution = when (result) {
+    reconciliation: DeviceDosingMutationReconciliation
+): ReservoirSaveResolution = when (val result = reconciliation.result) {
     is DeviceDosingChannelOperationResult.Success -> ReservoirSaveResolution(
         state = reduceReservoirSnapshot(
             current.copy(operationInProgress = false),
@@ -301,10 +324,12 @@ private suspend fun resolveReservoirSaveResult(
     )
     is DeviceDosingChannelOperationResult.Rejected -> resolveReservoirSaveRejection(
         operations = operations,
-        deviceUid = deviceUid,
-        slotId = slotId,
+        binding = ReservoirEditorBinding(deviceUid, slotId),
         current = current,
-        rejection = result.reason
+        rejection = ReservoirSaveRejection(
+            reason = result.reason,
+            authoritativeSnapshot = reconciliation.authoritativeSnapshot
+        )
     )
     DeviceDosingChannelOperationResult.Unavailable,
     DeviceDosingChannelOperationResult.Failed -> ReservoirSaveResolution(
@@ -315,25 +340,23 @@ private suspend fun resolveReservoirSaveResult(
 
 private suspend fun resolveReservoirSaveRejection(
     operations: DeviceDosingChannelOperations,
-    deviceUid: String,
-    slotId: String,
+    binding: ReservoirEditorBinding,
     current: DeviceDosingReservoirEditorState,
-    rejection: DeviceDosingChannelRejection
+    rejection: ReservoirSaveRejection
 ): ReservoirSaveResolution {
-    val resolvedState = if (rejection == DeviceDosingChannelRejection.CONFLICT) {
-        val refreshed = when (
-            val refresh = runCatching { operations.refresh(deviceUid, slotId) }.getOrNull()
-        ) {
-            is DeviceDosingChannelOperationResult.Success -> refresh.snapshot
-            else -> null
-        }
+    val resolvedState = if (rejection.reason == DeviceDosingChannelRejection.CONFLICT) {
+        val refreshed = rejection.authoritativeSnapshot ?: refreshReservoirConflict(
+            operations,
+            binding.deviceUid,
+            binding.slotId
+        )
         refreshed?.let { snapshot -> rebaseReservoirDraft(current, snapshot) } ?: current
     } else {
         current
     }
     return ReservoirSaveResolution(
         state = resolvedState.copy(operationInProgress = false),
-        event = DeviceDosingReservoirEvent.SaveRejected(rejection)
+        event = DeviceDosingReservoirEvent.SaveRejected(rejection.reason)
     )
 }
 
@@ -342,19 +365,46 @@ private suspend fun performReservoirSave(
     deviceUid: String,
     slotId: String,
     state: DeviceDosingReservoirEditorState
-): DeviceDosingChannelOperationResult = if (state.firmwareConfigDirty) {
-    operations.applyReservoirSettingsAgainstBaseRevision(
-        deviceUid = deviceUid,
-        slotId = slotId,
-        settings = state.settingsIntent,
-        baseRevision = checkNotNull(state.baseRevision)
+): DeviceDosingMutationReconciliation = if (state.firmwareConfigDirty) {
+    val desiredDomain = state.draft.toFirmwareReservoirDomain()
+    operations.applyRevisionedIntentWithReconciliation(
+        intent = DeviceDosingRevisionedIntent(
+            deviceUid = deviceUid,
+            slotId = slotId,
+            baseRevision = checkNotNull(state.baseRevision),
+            baseDomain = state.savedDraft.toFirmwareReservoirDomain(),
+            desiredDomain = desiredDomain
+        ),
+        domainFrom = { snapshot -> snapshot.toReservoirDraft().toFirmwareReservoirDomain() },
+        applyAtRevision = { revision ->
+            operations.applyReservoirSettingsAgainstBaseRevision(
+                deviceUid = deviceUid,
+                slotId = slotId,
+                settings = state.settingsIntent,
+                baseRevision = revision
+            )
+        }
     )
 } else {
-    operations.setReservoirLowLevelAlertPreference(
-        deviceUid = deviceUid,
-        slotId = slotId,
-        enabled = state.draft.effectiveLowLevelAlertEnabled
+    DeviceDosingMutationReconciliation(
+        operations.setReservoirLowLevelAlertPreference(
+            deviceUid = deviceUid,
+            slotId = slotId,
+            enabled = state.draft.effectiveLowLevelAlertEnabled
+        )
     )
+}
+
+private suspend fun refreshReservoirConflict(
+    operations: DeviceDosingChannelOperations,
+    deviceUid: String,
+    slotId: String
+): DeviceDosingChannelSnapshot? = try {
+    (operations.refresh(deviceUid, slotId) as? DeviceDosingChannelOperationResult.Success)?.snapshot
+} catch (cancellation: CancellationException) {
+    throw cancellation
+} catch (_: Exception) {
+    null
 }
 
 private fun reduceReservoirSnapshot(
@@ -374,7 +424,14 @@ private fun reduceReservoirSnapshot(
         else -> authoritative
     }
     val savedDraft = if (preserveFirmwareDraft) current.savedDraft else authoritative
-    val baseRevision = if (preserveFirmwareDraft) current.baseRevision else snapshot.revision
+    val firmwareBaselineStillCurrent = current.savedDraft.hasSameFirmwareReservoirConfig(
+        authoritative
+    )
+    val baseRevision = if (preserveFirmwareDraft && !firmwareBaselineStillCurrent) {
+        current.baseRevision
+    } else {
+        snapshot.revision
+    }
     val reservoir = snapshot.reservoir
     return current.copy(
         draft = draft,
@@ -384,7 +441,6 @@ private fun reduceReservoirSnapshot(
         reservoirNeedsAttention = reservoir.requiresLowReservoirAttention,
         editable = snapshot.controls.reservoirEditable,
         refillSupported = snapshot.controls.refillSupported,
-        operationInProgress = false,
         initialized = true,
         baseRevision = baseRevision,
         capacityRejection = null,
@@ -432,3 +488,14 @@ private fun DeviceDosingReservoirDraft.hasSameFirmwareReservoirConfig(
     other: DeviceDosingReservoirDraft
 ): Boolean = trackingEnabled == other.trackingEnabled &&
     (!trackingEnabled || reservoirCapacityMicroliters == other.reservoirCapacityMicroliters)
+
+private data class FirmwareReservoirDomain(
+    val trackingEnabled: Boolean,
+    val capacityMicroliters: Long?
+)
+
+private fun DeviceDosingReservoirDraft.toFirmwareReservoirDomain(): FirmwareReservoirDomain =
+    FirmwareReservoirDomain(
+        trackingEnabled = trackingEnabled,
+        capacityMicroliters = reservoirCapacityMicroliters.takeIf { trackingEnabled }
+    )

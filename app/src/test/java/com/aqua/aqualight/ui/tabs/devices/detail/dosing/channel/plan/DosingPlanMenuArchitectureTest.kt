@@ -65,7 +65,7 @@ class DosingPlanMenuArchitectureTest {
 
         assertTrue(fragment.contains("viewModel.bind("))
         assertTrue(fragment.contains("restoredDraft = savedInstanceState"))
-        assertTrue(fragment.contains("val editorState = viewModel.currentEditorState()"))
+        assertTrue(fragment.contains("val editorState = viewModel.currentEditorState"))
         assertTrue(fragment.contains("editorState.draft.writeTo(outState)"))
         assertTrue(fragment.contains("STATE_BASE_REVISION"))
         assertTrue(fragment.contains("updateSchedule = viewModel::applyScheduleUpdate"))

@@ -50,12 +50,12 @@ class DeviceDosingPlanCutoverTest {
                 val viewModel = DeviceDosingPlanViewModel(operations)
 
                 viewModel.bind(DEVICE_UID, SLOT_ID, restoredDraft = null)
-                assertEquals(program, viewModel.currentEditorState().programIntent)
+                assertEquals(program, viewModel.currentEditorState.programIntent)
 
                 viewModel.save()
 
                 assertEquals(program, operations.lastProgram)
-                assertEquals(program, viewModel.currentEditorState().programIntent)
+                assertEquals(program, viewModel.currentEditorState.programIntent)
             }
         }
 
@@ -79,7 +79,7 @@ class DeviceDosingPlanCutoverTest {
                 )
             )
 
-            assertTrue(viewModel.currentEditorState().canSave)
+            assertTrue(viewModel.currentEditorState.canSave)
             viewModel.save()
             assertNull(operations.lastProgram)
             assertEquals(
@@ -89,7 +89,7 @@ class DeviceDosingPlanCutoverTest {
         }
 
     @Test
-    fun `program conflict is surfaced once without a blind retry`() = runTest(dispatcher) {
+    fun `persistent program conflict performs only one bounded reapply`() = runTest(dispatcher) {
         val delegate = FakeDeviceDosingChannelOperations()
         val attempts = mutableListOf<Pair<DeviceDosingProgram, Long>>()
         val operations = object :
@@ -112,16 +112,17 @@ class DeviceDosingPlanCutoverTest {
         val viewModel = DeviceDosingPlanViewModel(operations)
 
         viewModel.bind(DEVICE_UID, SLOT_ID, restoredDraft = null)
-        val expectedBaseRevision = viewModel.currentEditorState().baseRevision
+        viewModel.setDailyDoseMicroliters(9_000L)
+        val expectedBaseRevision = viewModel.currentEditorState.baseRevision
         viewModel.save()
 
-        assertEquals(1, attempts.size)
-        assertEquals(expectedBaseRevision, attempts.single().second)
+        assertEquals(2, attempts.size)
+        assertEquals(listOf(expectedBaseRevision, expectedBaseRevision), attempts.map { it.second })
         assertEquals(
             DeviceDosingPlanEvent.SaveRejected(DeviceDosingChannelRejection.CONFLICT),
             viewModel.events.first()
         )
-        assertFalse(viewModel.currentEditorState().operationInProgress)
+        assertFalse(viewModel.currentEditorState.operationInProgress)
     }
 
     @Test
@@ -140,16 +141,16 @@ class DeviceDosingPlanCutoverTest {
 
             viewModel.bind(DEVICE_UID, SLOT_ID, restoredDraft = null)
             viewModel.setDailyDoseMicroliters(12_000L)
-            val staleProgram = viewModel.currentEditorState().programIntent
+            val staleProgram = viewModel.currentEditorState.programIntent
 
             operations.snapshot.value = initial.copy(
                 revision = 11L,
                 program = authoritativeProgram
             )
 
-            assertEquals(10L, viewModel.currentEditorState().baseRevision)
-            assertEquals(staleProgram, viewModel.currentEditorState().programIntent)
-            assertTrue(viewModel.currentEditorState().draftDirty)
+            assertEquals(10L, viewModel.currentEditorState.baseRevision)
+            assertEquals(staleProgram, viewModel.currentEditorState.programIntent)
+            assertTrue(viewModel.currentEditorState.draftDirty)
 
             viewModel.save()
 
@@ -157,7 +158,7 @@ class DeviceDosingPlanCutoverTest {
                 DeviceDosingPlanEvent.SaveRejected(DeviceDosingChannelRejection.CONFLICT),
                 viewModel.events.first()
             )
-            val reconciled = viewModel.currentEditorState()
+            val reconciled = viewModel.currentEditorState
             assertEquals(11L, reconciled.baseRevision)
             assertEquals(authoritativeProgram, reconciled.programIntent)
             assertFalse(reconciled.draftDirty)
@@ -167,6 +168,39 @@ class DeviceDosingPlanCutoverTest {
             viewModel.save()
 
             assertEquals(authoritativeProgram, operations.lastProgram)
+        }
+
+    @Test
+    fun `unrelated reservoir revision advances plan base and saves in one attempt`() =
+        runTest(dispatcher) {
+            val initial = sampleDosingChannelSnapshot().copy(revision = 10L)
+            val operations = FakeDeviceDosingChannelOperations(initial)
+            val viewModel = DeviceDosingPlanViewModel(operations)
+            viewModel.bind(DEVICE_UID, SLOT_ID, restoredDraft = null)
+            viewModel.setDailyDoseMicroliters(9_000L)
+
+            operations.snapshot.value = initial.copy(
+                revision = 11L,
+                reservoir = initial.reservoir.copy(
+                    remainingMicroliters = 200_000L
+                )
+            )
+
+            assertEquals(11L, viewModel.currentEditorState.baseRevision)
+            assertTrue(viewModel.currentEditorState.draftDirty)
+
+            viewModel.save()
+
+            assertEquals(DeviceDosingPlanEvent.Saved, viewModel.events.first())
+            assertEquals(1, operations.programMutationCount)
+            assertEquals(11L, operations.lastProgramExpectedRevision)
+            assertEquals(
+                9_000L,
+                (requireNotNull(operations.lastProgram).schedule as
+                    DeviceDosingProgramSchedule.Single).dailyDoseMicroliters
+            )
+            assertFalse(viewModel.currentEditorState.operationInProgress)
+            assertFalse(viewModel.currentEditorState.draftDirty)
         }
 
     private companion object {

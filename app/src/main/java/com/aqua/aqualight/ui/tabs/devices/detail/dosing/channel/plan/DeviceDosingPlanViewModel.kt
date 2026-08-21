@@ -7,11 +7,12 @@ import com.aqua.aqualight.application.devices.dosing.DeviceDosingChannelOperatio
 import com.aqua.aqualight.application.devices.dosing.DeviceDosingChannelOperations
 import com.aqua.aqualight.application.devices.dosing.DeviceDosingChannelRejection
 import com.aqua.aqualight.application.devices.dosing.DeviceDosingChannelSnapshot
+import com.aqua.aqualight.application.devices.dosing.DeviceDosingMutationReconciliation
 import com.aqua.aqualight.application.devices.dosing.DeviceDosingProgram
 import com.aqua.aqualight.application.devices.dosing.DeviceDosingProgramSchedule
 import com.aqua.aqualight.application.devices.dosing.DeviceDosingSchedulingPolicy
-import com.aqua.aqualight.application.devices.dosing.applyProgramAgainstBaseRevision
 import com.aqua.aqualight.ui.tabs.devices.detail.dosing.presentation.model.DosingWeekday
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.Flow
@@ -30,6 +31,8 @@ internal data class DeviceDosingPlanEditorState(
     val operationInProgress: Boolean = false,
     val initialized: Boolean = false,
     val baseRevision: Long? = null,
+    val baseProgram: DeviceDosingProgram? = null,
+    val baseProgramKnown: Boolean = false,
     val draftDirty: Boolean = false
 ) {
     val programIntent: DeviceDosingProgram
@@ -76,7 +79,8 @@ internal class DeviceDosingPlanViewModel(
     private var refreshJob: Job? = null
     private var saveJob: Job? = null
 
-    fun currentEditorState(): DeviceDosingPlanEditorState = mutableEditorState.value
+    val currentEditorState: DeviceDosingPlanEditorState
+        get() = mutableEditorState.value
 
     fun bind(
         deviceUidText: String,
@@ -209,16 +213,23 @@ internal class DeviceDosingPlanViewModel(
         mutableEditorState.value = state.copy(operationInProgress = true)
         saveJob?.cancel()
         saveJob = viewModelScope.launch {
-            val result = runCatching {
-                operations.applyProgramAgainstBaseRevision(
-                    deviceUid = deviceUid,
-                    slotId = slotId,
-                    program = program,
-                    baseRevision = checkNotNull(baseRevision)
+            val reconciliation = try {
+                operations.reconcilePlanSave(
+                    DeviceDosingPlanSaveRequest(
+                        deviceUid = deviceUid,
+                        slotId = slotId,
+                        state = state,
+                        program = program,
+                        baseRevision = checkNotNull(baseRevision)
+                    )
                 )
-            }.getOrElse { DeviceDosingChannelOperationResult.Failed }
+            } catch (cancellation: CancellationException) {
+                throw cancellation
+            } catch (_: Exception) {
+                DeviceDosingMutationReconciliation(DeviceDosingChannelOperationResult.Failed)
+            }
             if (boundDeviceUid != deviceUid || boundSlotId != slotId) return@launch
-            handleSaveResult(deviceUid, slotId, result)
+            handleSaveResult(deviceUid, slotId, program, reconciliation)
         }
     }
 
@@ -236,9 +247,10 @@ internal class DeviceDosingPlanViewModel(
     private suspend fun handleSaveResult(
         deviceUid: String,
         slotId: String,
-        result: DeviceDosingChannelOperationResult
+        program: DeviceDosingProgram,
+        reconciliation: DeviceDosingMutationReconciliation
     ) {
-        when (result) {
+        when (val result = reconciliation.result) {
             is DeviceDosingChannelOperationResult.Success -> {
                 val savedState = mutableEditorState.value.copy(
                     draftDirty = false,
@@ -259,30 +271,14 @@ internal class DeviceDosingPlanViewModel(
                 mutableEditorState.value = mutableEditorState.value.copy(
                     operationInProgress = false,
                     draftDirty = false,
-                    baseRevision = result.revision
+                    baseRevision = result.revision,
+                    baseProgram = program,
+                    baseProgramKnown = true
                 )
                 eventChannel.send(DeviceDosingPlanEvent.Saved)
             }
             is DeviceDosingChannelOperationResult.Rejected -> {
-                if (result.reason == DeviceDosingChannelRejection.CONFLICT) {
-                    val refreshed = refreshConflictRevision(operations, deviceUid, slotId)
-                    if (refreshed != null &&
-                        boundDeviceUid == deviceUid &&
-                        boundSlotId == slotId
-                    ) {
-                        mutableEditorState.value = reduceDosingPlanSnapshot(
-                            current = mutableEditorState.value.copy(draftDirty = false),
-                            snapshot = refreshed,
-                            restoredDraft = restoredDraft,
-                            restoredBaseRevision = restoredBaseRevision,
-                            restoredDraftDirty = restoredDraftDirty
-                        )
-                    }
-                }
-                mutableEditorState.value = mutableEditorState.value.copy(
-                    operationInProgress = false
-                )
-                eventChannel.send(DeviceDosingPlanEvent.SaveRejected(result.reason))
+                handleRejectedSave(deviceUid, slotId, result, reconciliation.authoritativeSnapshot)
             }
             DeviceDosingChannelOperationResult.Unavailable -> {
                 mutableEditorState.value = mutableEditorState.value.copy(
@@ -298,11 +294,36 @@ internal class DeviceDosingPlanViewModel(
             }
         }
     }
+
+    private suspend fun handleRejectedSave(
+        deviceUid: String,
+        slotId: String,
+        rejection: DeviceDosingChannelOperationResult.Rejected,
+        authoritativeSnapshot: DeviceDosingChannelSnapshot?
+    ) {
+        if (rejection.reason == DeviceDosingChannelRejection.CONFLICT) {
+            val refreshed = authoritativeSnapshot
+                ?: refreshConflictRevision(operations, deviceUid, slotId)
+            if (refreshed != null && boundDeviceUid == deviceUid && boundSlotId == slotId) {
+                mutableEditorState.value = reduceDosingPlanSnapshot(
+                    current = mutableEditorState.value.copy(draftDirty = false),
+                    snapshot = refreshed,
+                    restoredDraft = restoredDraft,
+                    restoredBaseRevision = restoredBaseRevision,
+                    restoredDraftDirty = restoredDraftDirty
+                )
+            }
+        }
+        mutableEditorState.value = mutableEditorState.value.copy(operationInProgress = false)
+        eventChannel.send(DeviceDosingPlanEvent.SaveRejected(rejection.reason))
+    }
 }
 
 private data class RecoveredDosingPlanDraft(
     val draft: DosingPlanDraft,
     val baseRevision: Long?,
+    val baseProgram: DeviceDosingProgram?,
+    val baseProgramKnown: Boolean,
     val draftDirty: Boolean
 )
 
@@ -330,6 +351,8 @@ private fun reduceDosingPlanSnapshot(
         editable = snapshot.calibrated && snapshot.controls.programEditable,
         initialized = true,
         baseRevision = recovered.baseRevision,
+        baseProgram = recovered.baseProgram,
+        baseProgramKnown = recovered.baseProgramKnown,
         draftDirty = recovered.draftDirty
     )
 }
@@ -341,19 +364,33 @@ private fun recoverDosingPlanDraft(
     restoredBaseRevision: Long?,
     restoredDraftDirty: Boolean
 ): RecoveredDosingPlanDraft = when {
-    !current.initialized -> RecoveredDosingPlanDraft(
-        draft = restoredDraft ?: snapshot.program?.toPlanDraft() ?: defaultDraft(),
-        baseRevision = restoredBaseRevision ?: snapshot.revision,
-        draftDirty = restoredDraft != null && restoredDraftDirty
-    )
-    current.draftDirty -> RecoveredDosingPlanDraft(
-        draft = current.draft,
-        baseRevision = current.baseRevision,
-        draftDirty = true
-    )
+    !current.initialized -> {
+        val recoveredDirty = restoredDraft != null && restoredDraftDirty
+        val recoveredRevision = restoredBaseRevision ?: snapshot.revision
+        RecoveredDosingPlanDraft(
+            draft = restoredDraft ?: snapshot.program?.toPlanDraft() ?: defaultDraft(),
+            baseRevision = recoveredRevision,
+            baseProgram = snapshot.program,
+            baseProgramKnown = !recoveredDirty || recoveredRevision == snapshot.revision,
+            draftDirty = recoveredDirty
+        )
+    }
+    current.draftDirty -> {
+        val baselineStillCurrent = current.baseProgramKnown &&
+            current.baseProgram.hasSamePlanMutationDomain(snapshot.program)
+        RecoveredDosingPlanDraft(
+            draft = current.draft,
+            baseRevision = if (baselineStillCurrent) snapshot.revision else current.baseRevision,
+            baseProgram = if (baselineStillCurrent) snapshot.program else current.baseProgram,
+            baseProgramKnown = current.baseProgramKnown,
+            draftDirty = true
+        )
+    }
     else -> RecoveredDosingPlanDraft(
         draft = snapshot.program?.toPlanDraft() ?: defaultDraft(),
         baseRevision = snapshot.revision,
+        baseProgram = snapshot.program,
+        baseProgramKnown = true,
         draftDirty = false
     )
 }
@@ -377,11 +414,12 @@ private suspend fun refreshConflictRevision(
     operations: DeviceDosingChannelOperations,
     deviceUid: String,
     slotId: String
-): DeviceDosingChannelSnapshot? = when (
-    val result = runCatching { operations.refresh(deviceUid, slotId) }.getOrNull()
-) {
-    is DeviceDosingChannelOperationResult.Success -> result.snapshot
-    else -> null
+): DeviceDosingChannelSnapshot? = try {
+    (operations.refresh(deviceUid, slotId) as? DeviceDosingChannelOperationResult.Success)?.snapshot
+} catch (cancellation: CancellationException) {
+    throw cancellation
+} catch (_: Exception) {
+    null
 }
 
 private fun planValidationIssue(

@@ -227,12 +227,14 @@ internal class DeviceDosingV1MutationCoordinator(
             refreshedState != null -> acceptedReadbackResult(
                 value = value,
                 committedRevision = committedRevision,
-                state = refreshedState
+                state = refreshedState,
+                persistedMutation = persistedMutation
             )
             currentState != null -> acceptedReadbackResult(
                 value = value,
                 committedRevision = committedRevision,
-                state = currentState
+                state = currentState,
+                persistedMutation = persistedMutation
             )
             persistedMutation -> DeviceDosingV1MutationResult.Committed(value, committedRevision)
             refreshed is DeviceDosingV1RefreshResult.Malformed -> DeviceDosingV1MutationResult.Malformed
@@ -256,9 +258,12 @@ internal class DeviceDosingV1MutationCoordinator(
 private fun <T> acceptedReadbackResult(
     value: T,
     committedRevision: Long,
-    state: DeviceDosingV1AuthoritativeState
+    state: DeviceDosingV1AuthoritativeState,
+    persistedMutation: Boolean
 ): DeviceDosingV1MutationResult<T> = if (state.channel.revision >= committedRevision) {
     DeviceDosingV1MutationResult.Success(value, state)
+} else if (persistedMutation) {
+    DeviceDosingV1MutationResult.Committed(value, committedRevision)
 } else {
     DeviceDosingV1MutationResult.Malformed
 }

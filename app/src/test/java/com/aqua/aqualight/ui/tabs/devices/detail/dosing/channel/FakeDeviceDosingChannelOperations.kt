@@ -30,6 +30,8 @@ internal class FakeDeviceDosingChannelOperations(
     val snapshot = MutableStateFlow(initialSnapshot)
     var failMutations: Boolean = false
     var lastProgram: DeviceDosingProgram? = null
+    var lastProgramExpectedRevision: Long? = null
+    var programMutationCount: Int = 0
     var lastMissedDoseRecoveryEnabled: Boolean? = null
     var lastReservoirSettings: DeviceDosingReservoirSettings? = null
     var lastReservoirExpectedRevision: Long? = null
@@ -59,6 +61,7 @@ internal class FakeDeviceDosingChannelOperations(
         program: DeviceDosingProgram
     ): DeviceDosingChannelOperationResult {
         lastProgram = program
+        programMutationCount += 1
         return mutate { state -> state.copy(revision = state.revision + 1L, program = program) }
     }
 
@@ -68,6 +71,7 @@ internal class FakeDeviceDosingChannelOperations(
         program: DeviceDosingProgram,
         expectedRevision: Long
     ): DeviceDosingChannelOperationResult {
+        lastProgramExpectedRevision = expectedRevision
         val current = snapshot.value
         return when {
             current == null -> DeviceDosingChannelOperationResult.Unavailable

@@ -57,16 +57,16 @@ class DeviceDosingPlanCommittedSaveTest {
 
             viewModel.bind(DEVICE_UID, SLOT_ID, restoredDraft = null)
             viewModel.setDailyDoseMicroliters(9_000L)
-            assertEquals(10L, viewModel.currentEditorState().baseRevision)
-            assertEquals(true, viewModel.currentEditorState().draftDirty)
+            assertEquals(10L, viewModel.currentEditorState.baseRevision)
+            assertEquals(true, viewModel.currentEditorState.draftDirty)
 
             viewModel.save()
 
             assertEquals(DeviceDosingPlanEvent.Saved, viewModel.events.first())
             assertEquals(listOf(10L), attempts)
-            assertEquals(11L, viewModel.currentEditorState().baseRevision)
-            assertFalse(viewModel.currentEditorState().draftDirty)
-            assertFalse(viewModel.currentEditorState().operationInProgress)
+            assertEquals(11L, viewModel.currentEditorState.baseRevision)
+            assertFalse(viewModel.currentEditorState.draftDirty)
+            assertFalse(viewModel.currentEditorState.operationInProgress)
         }
 
     private companion object {

@@ -10,6 +10,7 @@ import com.aqua.aqualight.application.devices.dosing.DeviceDosingChannelRejectio
 import com.aqua.aqualight.application.devices.dosing.DeviceDosingChannelSnapshot
 import com.aqua.aqualight.application.devices.dosing.DeviceDosingManualDoseDraftPolicy
 import com.aqua.aqualight.application.devices.dosing.DeviceDosingRunSource
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.Flow
@@ -212,8 +213,13 @@ internal class DeviceDosingChannelDetailViewModel(
         mutationJob?.cancel()
         mutableDraft.value = state.copy(operationInProgress = true)
         mutationJob = viewModelScope.launch {
-            val result = runCatching { operation(deviceUid, slotId) }
-                .getOrElse { DeviceDosingChannelOperationResult.Failed }
+            val result = try {
+                operation(deviceUid, slotId)
+            } catch (cancellation: CancellationException) {
+                throw cancellation
+            } catch (_: Exception) {
+                DeviceDosingChannelOperationResult.Failed
+            }
             if (boundDeviceUid != deviceUid || boundSlotId != slotId) return@launch
             applyResult(result, successEvent)
         }

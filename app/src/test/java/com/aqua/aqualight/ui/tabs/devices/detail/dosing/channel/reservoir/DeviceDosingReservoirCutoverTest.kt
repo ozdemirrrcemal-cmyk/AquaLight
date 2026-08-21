@@ -1,10 +1,13 @@
 package com.aqua.aqualight.ui.tabs.devices.detail.dosing.channel.reservoir
 
+import com.aqua.aqualight.application.devices.dosing.DeviceDosingChannelRejection
 import com.aqua.aqualight.application.devices.dosing.DeviceDosingReservoirCapacityPolicy
 import com.aqua.aqualight.ui.tabs.devices.detail.dosing.channel.FakeDeviceDosingChannelOperations
+import com.aqua.aqualight.ui.tabs.devices.detail.dosing.channel.sampleDosingChannelSnapshot
 import java.util.Locale
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.test.UnconfinedTestDispatcher
 import kotlinx.coroutines.test.resetMain
 import kotlinx.coroutines.test.runTest
@@ -133,6 +136,92 @@ class DeviceDosingReservoirCutoverTest {
     fun `authoritative empty reservoir formats as zero instead of default capacity`() {
         assertEquals("0", DeviceDosingReservoirCapacityPolicy.formatRuntimeVolume(0L, Locale.US))
     }
+
+    @Test
+    fun `unrelated channel revision is absorbed and reservoir saves with one user action`() =
+        runTest(dispatcher) {
+            val initial = sampleDosingChannelSnapshot().copy(revision = 10L)
+            val operations = FakeDeviceDosingChannelOperations(initial)
+            val viewModel = DeviceDosingReservoirViewModel(operations)
+            viewModel.bind(DEVICE_UID, SLOT_ID)
+            viewModel.setCapacityInput("500", Locale.US)
+
+            operations.snapshot.value = initial.copy(
+                revision = 11L,
+                program = requireNotNull(initial.program).copy(
+                    missedDoseRecoveryEnabled = true
+                )
+            )
+
+            assertEquals(11L, viewModel.currentEditorState().baseRevision)
+            assertTrue(viewModel.currentEditorState().firmwareConfigDirty)
+
+            viewModel.save()
+
+            assertEquals(DeviceDosingReservoirEvent.Saved, viewModel.events.first())
+            assertEquals(1, operations.reservoirConfigMutationCount)
+            assertEquals(11L, operations.lastReservoirExpectedRevision)
+            assertEquals(500_000L, operations.lastReservoirSettings?.capacityMicroliters)
+            assertFalse(viewModel.currentEditorState().operationInProgress)
+            assertFalse(viewModel.currentEditorState().dirty)
+        }
+
+    @Test
+    fun `already applied reservoir intent is accepted without a duplicate firmware write`() =
+        runTest(dispatcher) {
+            val initial = sampleDosingChannelSnapshot().copy(revision = 10L)
+            val operations = FakeDeviceDosingChannelOperations(initial)
+            val viewModel = DeviceDosingReservoirViewModel(operations)
+            viewModel.bind(DEVICE_UID, SLOT_ID)
+            viewModel.setCapacityInput("500", Locale.US)
+
+            operations.snapshot.value = initial.copy(
+                revision = 11L,
+                reservoir = initial.reservoir.copy(
+                    capacityMicroliters = 500_000L,
+                    remainingMicroliters = 500_000L
+                )
+            )
+            assertEquals(10L, viewModel.currentEditorState().baseRevision)
+
+            viewModel.save()
+
+            assertEquals(DeviceDosingReservoirEvent.Saved, viewModel.events.first())
+            assertEquals(0, operations.reservoirConfigMutationCount)
+            assertEquals(11L, viewModel.currentEditorState().baseRevision)
+            assertFalse(viewModel.currentEditorState().dirty)
+        }
+
+    @Test
+    fun `real concurrent reservoir change remains a conflict and is never overwritten`() =
+        runTest(dispatcher) {
+            val initial = sampleDosingChannelSnapshot().copy(revision = 10L)
+            val operations = FakeDeviceDosingChannelOperations(initial)
+            val viewModel = DeviceDosingReservoirViewModel(operations)
+            viewModel.bind(DEVICE_UID, SLOT_ID)
+            viewModel.setCapacityInput("500", Locale.US)
+
+            operations.snapshot.value = initial.copy(
+                revision = 11L,
+                reservoir = initial.reservoir.copy(
+                    capacityMicroliters = 600_000L,
+                    remainingMicroliters = 600_000L
+                )
+            )
+
+            viewModel.save()
+
+            assertEquals(
+                DeviceDosingReservoirEvent.SaveRejected(DeviceDosingChannelRejection.CONFLICT),
+                viewModel.events.first()
+            )
+            assertEquals(0, operations.reservoirConfigMutationCount)
+            assertEquals(500_000L, viewModel.currentDraft().reservoirCapacityMicroliters)
+            assertEquals(600_000L, viewModel.currentEditorState().savedDraft
+                .reservoirCapacityMicroliters)
+            assertEquals(11L, viewModel.currentEditorState().baseRevision)
+            assertFalse(viewModel.currentEditorState().operationInProgress)
+        }
 
     private companion object {
         const val DEVICE_UID = "device-1"

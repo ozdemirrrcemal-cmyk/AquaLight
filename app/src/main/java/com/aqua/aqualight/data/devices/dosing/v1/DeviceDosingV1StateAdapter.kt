@@ -69,10 +69,7 @@ internal class DeviceDosingV1StateAdapter(
     private val backgroundReconciliation = reconciliationScope?.let { scope ->
         { address: DeviceDosingV1Address, committedRevision: Long ->
             scope.launch {
-                val currentRevision = stateAccess.authoritativeRevision(address)
-                if (currentRevision == null || currentRevision < committedRevision) {
-                    refreshCoordinator.refresh(address)
-                }
+                refreshCoordinator.reconcileCommitted(address, committedRevision)
             }
             Unit
         }

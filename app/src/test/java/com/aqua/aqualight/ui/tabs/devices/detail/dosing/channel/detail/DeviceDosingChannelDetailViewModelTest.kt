@@ -6,6 +6,7 @@ import com.aqua.aqualight.application.devices.dosing.DeviceDosingChannelControls
 import com.aqua.aqualight.application.devices.dosing.DeviceDosingChannelOperationResult
 import com.aqua.aqualight.application.devices.dosing.DeviceDosingChannelOperations
 import com.aqua.aqualight.application.devices.dosing.DeviceDosingChannelProgress
+import com.aqua.aqualight.application.devices.dosing.DeviceDosingChannelRejection
 import com.aqua.aqualight.application.devices.dosing.DeviceDosingChannelSnapshot
 import com.aqua.aqualight.application.devices.dosing.DeviceDosingProgram
 import com.aqua.aqualight.application.devices.dosing.DeviceDosingProgramSchedule
@@ -115,7 +116,7 @@ class DeviceDosingChannelDetailViewModelTest {
     }
 
     @Test
-    fun `rapid reversal stays immediate but waits for authoritative revision before follow up write`() {
+    fun `rapid reversal proactively reconciles and completes without passive switch freeze`() {
         val initial = snapshot(
             calibrated = true,
             missedDoseRecoveryEnabled = false,
@@ -126,6 +127,15 @@ class DeviceDosingChannelDetailViewModelTest {
             missedDoseRecoveryResults = listOf(
                 DeviceDosingChannelCommittedResult(revision = 2L),
                 DeviceDosingChannelCommittedResult(revision = 3L)
+            ),
+            subsequentRefreshResults = listOf(
+                DeviceDosingChannelOperationResult.Success(
+                    snapshot(
+                        calibrated = true,
+                        missedDoseRecoveryEnabled = true,
+                        revision = 2L
+                    )
+                )
             )
         )
         val viewModel = DeviceDosingChannelDetailViewModel(operations)
@@ -145,33 +155,11 @@ class DeviceDosingChannelDetailViewModelTest {
 
         dispatcher.scheduler.advanceUntilIdle()
 
-        assertEquals(listOf(true), operations.missedDoseRecoveryTargets)
-        assertFalse(viewModel.currentDraft().missedDoseRecoveryEnabled)
-        assertTrue(viewModel.currentDraft().missedDoseRecoverySyncing)
-        assertFalse(viewModel.currentDraft().operationInProgress)
-        assertEquals(1, operations.refreshCount)
-
-        operations.emit(initial.copy(channelTitle = "Macro stale"))
-        dispatcher.scheduler.advanceUntilIdle()
-
-        assertEquals("Macro stale", viewModel.currentDraft().channelTitle)
-        assertEquals(listOf(true), operations.missedDoseRecoveryTargets)
-        assertFalse(viewModel.currentDraft().missedDoseRecoveryEnabled)
-        assertTrue(viewModel.currentDraft().missedDoseRecoverySyncing)
-
-        operations.emit(
-            snapshot(
-                calibrated = true,
-                missedDoseRecoveryEnabled = true,
-                revision = 2L
-            )
-        )
-        dispatcher.scheduler.advanceUntilIdle()
-
         assertEquals(listOf(true, false), operations.missedDoseRecoveryTargets)
         assertFalse(viewModel.currentDraft().missedDoseRecoveryEnabled)
         assertFalse(viewModel.currentDraft().missedDoseRecoverySyncing)
         assertFalse(viewModel.currentDraft().operationInProgress)
+        assertEquals(2, operations.refreshCount)
     }
 
     @Test
@@ -240,6 +228,15 @@ class DeviceDosingChannelDetailViewModelTest {
                 missedDoseRecoveryResults = listOf(
                     DeviceDosingChannelCommittedResult(revision = 2L),
                     DeviceDosingChannelCommittedResult(revision = 3L)
+                ),
+                subsequentRefreshResults = listOf(
+                    DeviceDosingChannelOperationResult.Success(
+                        snapshot(
+                            calibrated = true,
+                            missedDoseRecoveryEnabled = true,
+                            revision = 2L
+                        )
+                    )
                 )
             )
             val viewModel = DeviceDosingChannelDetailViewModel(operations)
@@ -253,20 +250,6 @@ class DeviceDosingChannelDetailViewModelTest {
 
             viewModel.setMissedDoseRecoveryEnabled(true)
             viewModel.setMissedDoseRecoveryEnabled(false)
-            testScheduler.advanceUntilIdle()
-
-            assertEquals(listOf(true), operations.missedDoseRecoveryTargets)
-            assertTrue(events.isEmpty())
-            assertFalse(viewModel.currentDraft().missedDoseRecoveryEnabled)
-            assertTrue(viewModel.currentDraft().missedDoseRecoverySyncing)
-
-            operations.emit(
-                snapshot(
-                    calibrated = true,
-                    missedDoseRecoveryEnabled = true,
-                    revision = 2L
-                )
-            )
             testScheduler.advanceUntilIdle()
 
             assertEquals(listOf(true, false), operations.missedDoseRecoveryTargets)
@@ -399,6 +382,15 @@ class DeviceDosingChannelDetailViewModelTest {
                 missedDoseRecoveryResults = listOf(
                     DeviceDosingChannelCommittedResult(revision = 2L),
                     DeviceDosingChannelOperationResult.Failed
+                ),
+                subsequentRefreshResults = listOf(
+                    DeviceDosingChannelOperationResult.Success(
+                        snapshot(
+                            calibrated = true,
+                            missedDoseRecoveryEnabled = true,
+                            revision = 2L
+                        )
+                    )
                 )
             )
             val viewModel = DeviceDosingChannelDetailViewModel(operations)
@@ -412,20 +404,6 @@ class DeviceDosingChannelDetailViewModelTest {
 
             viewModel.setMissedDoseRecoveryEnabled(true)
             viewModel.setMissedDoseRecoveryEnabled(false)
-            testScheduler.advanceUntilIdle()
-
-            assertEquals(listOf(true), operations.missedDoseRecoveryTargets)
-            assertFalse(viewModel.currentDraft().missedDoseRecoveryEnabled)
-            assertTrue(viewModel.currentDraft().missedDoseRecoverySyncing)
-            assertTrue(events.isEmpty())
-
-            operations.emit(
-                snapshot(
-                    calibrated = true,
-                    missedDoseRecoveryEnabled = true,
-                    revision = 2L
-                )
-            )
             testScheduler.advanceUntilIdle()
 
             assertEquals(listOf(true, false), operations.missedDoseRecoveryTargets)
@@ -548,12 +526,98 @@ class DeviceDosingChannelDetailViewModelTest {
         assertTrue(viewModel.currentDraft().resetEnabled)
     }
 
+    @Test
+    fun `firmware revision conflict rereads and reapplies switch intent only once`() =
+        runTest(dispatcher) {
+            val initial = snapshot(
+                calibrated = true,
+                missedDoseRecoveryEnabled = false,
+                revision = 1L
+            )
+            val operations = FakeOperations(
+                refreshSnapshot = initial,
+                missedDoseRecoveryResults = listOf(
+                    DeviceDosingChannelOperationResult.Rejected(
+                        DeviceDosingChannelRejection.CONFLICT
+                    ),
+                    DeviceDosingChannelCommittedResult(revision = 3L)
+                ),
+                subsequentRefreshResults = listOf(
+                    DeviceDosingChannelOperationResult.Success(initial.copy(revision = 2L))
+                )
+            )
+            val viewModel = DeviceDosingChannelDetailViewModel(operations)
+            val events = mutableListOf<DeviceDosingChannelDetailEvent>()
+            backgroundScope.launch(UnconfinedTestDispatcher(testScheduler)) {
+                viewModel.events.toList(events)
+            }
+
+            viewModel.bind(DEVICE_UID, SLOT_ID)
+            testScheduler.advanceUntilIdle()
+            viewModel.setMissedDoseRecoveryEnabled(true)
+            testScheduler.advanceUntilIdle()
+
+            assertEquals(listOf(true, true), operations.missedDoseRecoveryTargets)
+            assertEquals(2, operations.refreshCount)
+            assertTrue(viewModel.currentDraft().missedDoseRecoveryEnabled)
+            assertFalse(viewModel.currentDraft().missedDoseRecoverySyncing)
+            assertEquals(listOf(DeviceDosingChannelDetailEvent.MissedDoseRecoverySaved), events)
+        }
+
+    @Test
+    fun `failed reversal readback rolls back honestly and never leaves other controls frozen`() =
+        runTest(dispatcher) {
+            val initial = snapshot(
+                calibrated = true,
+                missedDoseRecoveryEnabled = true,
+                revision = 1L,
+                resetSupported = true
+            )
+            val operations = FakeOperations(
+                refreshSnapshot = initial,
+                missedDoseRecoveryResults = listOf(
+                    DeviceDosingChannelCommittedResult(revision = 2L)
+                ),
+                subsequentRefreshResults = listOf(DeviceDosingChannelOperationResult.Failed)
+            )
+            val viewModel = DeviceDosingChannelDetailViewModel(operations)
+            val events = mutableListOf<DeviceDosingChannelDetailEvent>()
+            backgroundScope.launch(UnconfinedTestDispatcher(testScheduler)) {
+                viewModel.events.toList(events)
+            }
+
+            viewModel.bind(DEVICE_UID, SLOT_ID)
+            testScheduler.advanceUntilIdle()
+            viewModel.setMissedDoseRecoveryEnabled(false)
+            viewModel.setMissedDoseRecoveryEnabled(true)
+            testScheduler.advanceUntilIdle()
+
+            assertEquals(listOf(false), operations.missedDoseRecoveryTargets)
+            assertFalse(viewModel.currentDraft().missedDoseRecoveryEnabled)
+            assertFalse(viewModel.currentDraft().missedDoseRecoverySyncing)
+            assertTrue(viewModel.currentDraft().resetEnabled)
+            assertEquals(
+                listOf(
+                    DeviceDosingChannelDetailEvent.OperationFailed(
+                        DeviceDosingChannelDetailFailure.TRY_AGAIN
+                    )
+                ),
+                events
+            )
+
+            viewModel.resetChannel()
+            testScheduler.advanceUntilIdle()
+            assertEquals(1, operations.resetCallCount)
+        }
+
     private class FakeOperations(
         private val refreshSnapshot: DeviceDosingChannelSnapshot,
-        missedDoseRecoveryResults: List<DeviceDosingChannelOperationResult> = emptyList()
+        missedDoseRecoveryResults: List<DeviceDosingChannelOperationResult> = emptyList(),
+        subsequentRefreshResults: List<DeviceDosingChannelOperationResult> = emptyList()
     ) : DeviceDosingChannelOperations {
         private val state = MutableStateFlow<DeviceDosingChannelSnapshot?>(null)
         private val queuedMissedDoseRecoveryResults = missedDoseRecoveryResults.toMutableList()
+        private val queuedSubsequentRefreshResults = subsequentRefreshResults.toMutableList()
 
         var refreshCount: Int = 0
             private set
@@ -573,8 +637,15 @@ class DeviceDosingChannelDetailViewModelTest {
             slotId: String
         ): DeviceDosingChannelOperationResult {
             refreshCount += 1
-            state.value = refreshSnapshot
-            return DeviceDosingChannelOperationResult.Success(refreshSnapshot)
+            val result = if (refreshCount == 1 || queuedSubsequentRefreshResults.isEmpty()) {
+                DeviceDosingChannelOperationResult.Success(refreshSnapshot)
+            } else {
+                queuedSubsequentRefreshResults.removeAt(0)
+            }
+            if (result is DeviceDosingChannelOperationResult.Success) {
+                state.value = result.snapshot
+            }
+            return result
         }
 
         override suspend fun applyProgram(

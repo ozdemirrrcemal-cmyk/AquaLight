@@ -4,6 +4,8 @@ import com.aqua.aqualight.application.devices.dosing.DeviceDosingChannelCommitte
 import com.aqua.aqualight.application.devices.dosing.DeviceDosingChannelOperationResult
 import com.aqua.aqualight.application.devices.dosing.DeviceDosingChannelOperations
 import com.aqua.aqualight.application.devices.dosing.DeviceDosingChannelSnapshot
+import com.aqua.aqualight.application.devices.dosing.DeviceDosingMutationReconciliation
+import com.aqua.aqualight.application.devices.dosing.applyLatestIntentWithReconciliation
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Job
@@ -24,6 +26,7 @@ internal data class DeviceDosingMissedDoseRecoveryAuthority(
 internal sealed interface DeviceDosingMissedDoseRecoveryAction {
     data object Idle : DeviceDosingMissedDoseRecoveryAction
     data class Write(val targetEnabled: Boolean) : DeviceDosingMissedDoseRecoveryAction
+    data class Reconcile(val minimumRevision: Long) : DeviceDosingMissedDoseRecoveryAction
     data class Fail(val failure: DeviceDosingChannelDetailFailure) : DeviceDosingMissedDoseRecoveryAction
 }
 
@@ -59,11 +62,13 @@ internal class DeviceDosingMissedDoseRecoveryIntentState {
     private var desiredEnabled: Boolean? = null
     private var inFlight: InFlightMissedDoseRecovery? = null
     private var acknowledged: AcknowledgedMissedDoseRecovery? = null
+    private var reconciliationInFlight: Boolean = false
 
     fun reset() {
         desiredEnabled = null
         inFlight = null
         acknowledged = null
+        reconciliationInFlight = false
     }
 
     fun request(enabled: Boolean) {
@@ -81,7 +86,12 @@ internal class DeviceDosingMissedDoseRecoveryIntentState {
                 desiredEnabled = null
                 DeviceDosingMissedDoseRecoveryAction.Idle
             }
-            acknowledged != null -> DeviceDosingMissedDoseRecoveryAction.Idle
+            reconciliationInFlight -> DeviceDosingMissedDoseRecoveryAction.Idle
+            acknowledged != null -> DeviceDosingMissedDoseRecoveryAction.Reconcile(
+                minimumRevision = requireNotNull(acknowledged).revision.also {
+                    reconciliationInFlight = true
+                }
+            )
             !authority.editable -> {
                 desiredEnabled = null
                 DeviceDosingMissedDoseRecoveryAction.Fail(
@@ -197,6 +207,27 @@ internal class DeviceDosingMissedDoseRecoveryIntentState {
         }
     }
 
+    fun onReconciliationCompleted(
+        failure: DeviceDosingChannelDetailFailure?
+    ): DeviceDosingMissedDoseRecoveryFeedback {
+        val shouldFailLatestIntent = if (reconciliationInFlight) {
+            reconciliationInFlight = false
+            val pendingTarget = acknowledged?.targetEnabled
+            val latestIntent = desiredEnabled
+            val queuedReversal = pendingTarget != null && latestIntent != null &&
+                latestIntent != pendingTarget
+            failure != null && queuedReversal
+        } else {
+            false
+        }
+        if (shouldFailLatestIntent) desiredEnabled = null
+        return if (shouldFailLatestIntent) {
+            DeviceDosingMissedDoseRecoveryFeedback.Failed(requireNotNull(failure))
+        } else {
+            DeviceDosingMissedDoseRecoveryFeedback.None
+        }
+    }
+
     fun onAuthorityChanged(
         authority: DeviceDosingMissedDoseRecoveryAuthority
     ): DeviceDosingMissedDoseRecoveryFeedback {
@@ -234,7 +265,8 @@ internal class DeviceDosingMissedDoseRecoveryIntentState {
             ?: acknowledged?.targetEnabled
             ?: authority.enabled,
         missedDoseRecoveryEditable = authority.editable,
-        missedDoseRecoverySyncing = desiredEnabled != null || inFlight != null
+        missedDoseRecoverySyncing = desiredEnabled != null || inFlight != null ||
+            reconciliationInFlight
     )
 
     private fun recordAcknowledged(targetEnabled: Boolean, revision: Long) {
@@ -312,28 +344,82 @@ internal class DeviceDosingMissedDoseRecoveryController(
                 present()
                 publish(DeviceDosingMissedDoseRecoveryFeedback.Failed(action.failure))
             }
+            is DeviceDosingMissedDoseRecoveryAction.Reconcile -> reconcile(action)
             is DeviceDosingMissedDoseRecoveryAction.Write -> {
                 val binding = hooks.currentBinding()
                 present()
                 mutationJob = scope.launch {
-                    val result = if (binding.deviceUid.isBlank() || binding.slotId.isBlank()) {
-                        DeviceDosingChannelOperationResult.Unavailable
+                    val reconciliation = if (
+                        binding.deviceUid.isBlank() || binding.slotId.isBlank()
+                    ) {
+                        DeviceDosingMutationReconciliation(
+                            DeviceDosingChannelOperationResult.Unavailable
+                        )
                     } else {
                         try {
-                            operations.setMissedDoseRecoveryEnabled(
-                                binding.deviceUid,
-                                binding.slotId,
-                                action.targetEnabled
+                            operations.applyLatestIntentWithReconciliation(
+                                deviceUid = binding.deviceUid,
+                                slotId = binding.slotId,
+                                desiredDomain = MissedDoseRecoveryDomain(action.targetEnabled),
+                                domainFrom = { snapshot ->
+                                    MissedDoseRecoveryDomain(
+                                        snapshot.program?.missedDoseRecoveryEnabled
+                                    )
+                                },
+                                apply = {
+                                    operations.setMissedDoseRecoveryEnabled(
+                                        binding.deviceUid,
+                                        binding.slotId,
+                                        action.targetEnabled
+                                    )
+                                }
                             )
                         } catch (cancellation: CancellationException) {
                             throw cancellation
                         } catch (_: Exception) {
-                            DeviceDosingChannelOperationResult.Failed
+                            DeviceDosingMutationReconciliation(
+                                DeviceDosingChannelOperationResult.Failed
+                            )
                         }
                     }
                     if (hooks.currentBinding() != binding) return@launch
-                    handleResult(action.targetEnabled, result)
+                    if (reconciliation.result !is DeviceDosingChannelOperationResult.Success) {
+                        reconciliation.authoritativeSnapshot?.let(hooks.applySnapshot)
+                    }
+                    handleResult(action.targetEnabled, reconciliation.result)
                 }
+            }
+        }
+    }
+
+    private fun reconcile(action: DeviceDosingMissedDoseRecoveryAction.Reconcile) {
+        val binding = hooks.currentBinding()
+        present()
+        mutationJob = scope.launch {
+            val result = if (binding.deviceUid.isBlank() || binding.slotId.isBlank()) {
+                DeviceDosingChannelOperationResult.Unavailable
+            } else {
+                try {
+                    operations.refresh(binding.deviceUid, binding.slotId)
+                } catch (cancellation: CancellationException) {
+                    throw cancellation
+                } catch (_: Exception) {
+                    DeviceDosingChannelOperationResult.Failed
+                }
+            }
+            if (hooks.currentBinding() != binding) return@launch
+
+            if (
+                result is DeviceDosingChannelOperationResult.Success &&
+                result.snapshot.revision >= action.minimumRevision
+            ) {
+                intent.onReconciliationCompleted(failure = null)
+                hooks.applySnapshot(result.snapshot)
+            } else {
+                val feedback = intent.onReconciliationCompleted(result.toReconciliationFailure())
+                present()
+                publish(feedback)
+                drive()
             }
         }
     }
@@ -391,4 +477,17 @@ internal class DeviceDosingMissedDoseRecoveryController(
     private fun present() {
         hooks.updateDraft(intent.present(hooks.currentDraft(), authority))
     }
+}
+
+private data class MissedDoseRecoveryDomain(
+    val enabled: Boolean?
+)
+
+private fun DeviceDosingChannelOperationResult.toReconciliationFailure():
+    DeviceDosingChannelDetailFailure = when (this) {
+    is DeviceDosingChannelOperationResult.Rejected -> reason.toDetailFailure()
+    DeviceDosingChannelOperationResult.Unavailable -> DeviceDosingChannelDetailFailure.UNAVAILABLE
+    is DeviceDosingChannelOperationResult.Success,
+    is DeviceDosingChannelCommittedResult,
+    DeviceDosingChannelOperationResult.Failed -> DeviceDosingChannelDetailFailure.TRY_AGAIN
 }
