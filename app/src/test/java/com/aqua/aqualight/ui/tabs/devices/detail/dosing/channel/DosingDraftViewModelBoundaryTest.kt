@@ -58,14 +58,14 @@ class DosingDraftViewModelBoundaryTest {
         viewModel.applyScheduleUpdate(DosingPlanScheduleUpdate.Hourly(3_600_000L))
         viewModel.save()
 
-        val draft = viewModel.currentEditorState().draft
+        val draft = viewModel.currentEditorState.draft
         assertEquals(3_000L, draft.distributedDailyDoseMicroliters)
         assertEquals(3_600_000L, draft.hourlyStartTimeMs)
         assertEquals(DosingPlanScheduleMode.HOURLY, draft.selectedScheduleMode)
         val savedSchedule = operations.lastProgram?.schedule as? DeviceDosingProgramSchedule.Hourly24
         assertNotNull(savedSchedule)
         assertEquals(3_000L, savedSchedule?.dailyDoseMicroliters)
-        assertTrue(viewModel.currentEditorState().canSave)
+        assertTrue(viewModel.currentEditorState.canSave)
     }
 
     @Test
@@ -76,7 +76,7 @@ class DosingDraftViewModelBoundaryTest {
 
         viewModel.setScheduleEnabled(false)
 
-        assertTrue(viewModel.currentEditorState().canSave)
+        assertTrue(viewModel.currentEditorState.canSave)
         viewModel.save()
         assertFalse(operations.lastProgram?.enabled ?: true)
     }
