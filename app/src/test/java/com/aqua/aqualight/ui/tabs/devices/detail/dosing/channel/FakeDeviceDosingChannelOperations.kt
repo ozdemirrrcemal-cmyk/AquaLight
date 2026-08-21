@@ -29,6 +29,7 @@ internal class FakeDeviceDosingChannelOperations(
     DeviceDosingReservoirRevisionOperations {
     val snapshot = MutableStateFlow(initialSnapshot)
     var failMutations: Boolean = false
+    var forceRevisionConflicts: Boolean = false
     var lastProgram: DeviceDosingProgram? = null
     var lastProgramExpectedRevision: Long? = null
     var programMutationCount: Int = 0
@@ -71,14 +72,25 @@ internal class FakeDeviceDosingChannelOperations(
         program: DeviceDosingProgram,
         expectedRevision: Long
     ): DeviceDosingChannelOperationResult {
-        lastProgramExpectedRevision = expectedRevision
         val current = snapshot.value
         return when {
             current == null -> DeviceDosingChannelOperationResult.Unavailable
-            current.revision != expectedRevision -> DeviceDosingChannelOperationResult.Rejected(
+            forceRevisionConflicts -> DeviceDosingChannelOperationResult.Rejected(
                 DeviceDosingChannelRejection.CONFLICT
             )
-            else -> applyProgram(deviceUid, slotId, program)
+            current.program.hasSamePlanAssignment(program) -> current.toResult()
+            else -> {
+                lastProgramExpectedRevision = current.revision
+                applyProgram(
+                    deviceUid,
+                    slotId,
+                    program.copy(
+                        missedDoseRecoveryEnabled = current.program
+                            ?.missedDoseRecoveryEnabled
+                            ?: program.missedDoseRecoveryEnabled
+                    )
+                )
+            }
         }
     }
 
@@ -114,12 +126,20 @@ internal class FakeDeviceDosingChannelOperations(
         val current = snapshot.value
         return when {
             current == null -> DeviceDosingChannelOperationResult.Unavailable
-            current.revision != expectedRevision -> DeviceDosingChannelOperationResult.Rejected(
+            forceRevisionConflicts -> DeviceDosingChannelOperationResult.Rejected(
                 DeviceDosingChannelRejection.CONFLICT
             )
+            current.reservoir.hasSameFirmwareAssignment(settings) -> {
+                snapshot.value = current.copy(
+                    reservoir = current.reservoir.copy(
+                        lowLevelAlertEnabled = settings.lowLevelAlertEnabled
+                    )
+                )
+                snapshot.value.toResult()
+            }
             else -> {
                 lastReservoirSettings = settings
-                lastReservoirExpectedRevision = expectedRevision
+                lastReservoirExpectedRevision = current.revision
                 reservoirConfigMutationCount += 1
                 mutate { state ->
                     val capacity = settings.capacityMicroliters ?: 0L
@@ -220,6 +240,16 @@ internal class FakeDeviceDosingChannelOperations(
         this?.let { snapshot -> DeviceDosingChannelOperationResult.Success(snapshot) }
             ?: DeviceDosingChannelOperationResult.Unavailable
 }
+
+private fun DeviceDosingProgram?.hasSamePlanAssignment(
+    desired: DeviceDosingProgram
+): Boolean = this?.copy(missedDoseRecoveryEnabled = false) ==
+    desired.copy(missedDoseRecoveryEnabled = false)
+
+private fun DeviceDosingReservoirSnapshot.hasSameFirmwareAssignment(
+    settings: DeviceDosingReservoirSettings
+): Boolean = trackingEnabled == settings.trackingEnabled &&
+    (!settings.trackingEnabled || capacityMicroliters == settings.capacityMicroliters)
 
 internal fun sampleDosingChannelSnapshot(): DeviceDosingChannelSnapshot {
     val program = DeviceDosingProgram(

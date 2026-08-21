@@ -538,14 +538,6 @@ class DeviceDosingChannelDetailViewModelTest {
                 refreshSnapshot = initial,
                 missedDoseRecoveryResults = listOf(
                     DeviceDosingChannelCommittedResult(revision = 3L)
-                ),
-                subsequentRefreshResults = listOf(
-                    DeviceDosingChannelOperationResult.Success(
-                        initial.copy(
-                            revision = 3L,
-                            program = initial.program?.copy(missedDoseRecoveryEnabled = true)
-                        )
-                    )
                 )
             )
             val viewModel = DeviceDosingChannelDetailViewModel(operations)
@@ -560,7 +552,7 @@ class DeviceDosingChannelDetailViewModelTest {
             testScheduler.advanceUntilIdle()
 
             assertEquals(listOf(true), operations.missedDoseRecoveryTargets)
-            assertEquals(2, operations.refreshCount)
+            assertEquals(1, operations.refreshCount)
             assertTrue(viewModel.currentDraft().missedDoseRecoveryEnabled)
             assertFalse(viewModel.currentDraft().missedDoseRecoverySyncing)
             assertEquals(listOf(DeviceDosingChannelDetailEvent.MissedDoseRecoverySaved), events)

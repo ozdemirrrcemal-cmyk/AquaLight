@@ -84,6 +84,10 @@ internal class DeviceDosingV1MutationCoordinator(
     ): DeviceDosingV1MutationResult<T> = operationGate.withChannel(address) {
         var baseline = authoritativeBaseline(address)
             ?: return@withChannel DeviceDosingV1MutationResult.Malformed
+        if (mutation.assignmentSatisfied?.invoke(baseline.channel) == true) {
+            mutation.onAccepted()
+            return@withChannel DeviceDosingV1MutationResult.Reconciled(baseline)
+        }
         var attempt = 0
         while (attempt < MAX_REPLAY_SAFE_ASSIGNMENT_ATTEMPTS) {
             val result = mutateAgainstBaseline(

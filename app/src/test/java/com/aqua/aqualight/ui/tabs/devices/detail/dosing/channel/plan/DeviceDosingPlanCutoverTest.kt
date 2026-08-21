@@ -147,6 +147,7 @@ class DeviceDosingPlanCutoverTest {
                 revision = 11L,
                 program = authoritativeProgram
             )
+            operations.forceRevisionConflicts = true
 
             assertEquals(10L, viewModel.currentEditorState.baseRevision)
             assertEquals(staleProgram, viewModel.currentEditorState.programIntent)

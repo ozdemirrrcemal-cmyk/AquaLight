@@ -193,7 +193,7 @@ class DeviceDosingReservoirCutoverTest {
         }
 
     @Test
-    fun `real concurrent reservoir change remains a conflict and is never overwritten`() =
+    fun `central retry budget exhaustion remains a conflict and is never overwritten`() =
         runTest(dispatcher) {
             val initial = sampleDosingChannelSnapshot().copy(revision = 10L)
             val operations = FakeDeviceDosingChannelOperations(initial)
@@ -208,6 +208,7 @@ class DeviceDosingReservoirCutoverTest {
                     remainingMicroliters = 600_000L
                 )
             )
+            operations.forceRevisionConflicts = true
 
             viewModel.save()
 

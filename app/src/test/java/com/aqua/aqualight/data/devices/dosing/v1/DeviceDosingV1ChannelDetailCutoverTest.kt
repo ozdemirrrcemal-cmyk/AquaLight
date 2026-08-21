@@ -194,6 +194,30 @@ class DeviceDosingV1ChannelDetailCutoverTest {
     }
 
     @Test
+    fun `already current switch assignment skips the firmware mutation`() = runTest {
+        val gateway = Stage9Gateway().apply {
+            enqueueRefresh(revision = 7L, missedDoseRecoveryEnabled = true)
+        }
+        val adapter = DeviceDosingV1StateAdapter(DeviceDosingV1Repository(gateway))
+        adapter.channelOperations.refresh(DEVICE_UID.value, SLOT_ID)
+
+        val result = adapter.channelOperations.setMissedDoseRecoveryEnabled(
+            DEVICE_UID.value,
+            SLOT_ID,
+            true
+        )
+
+        assertTrue(result is DeviceDosingChannelOperationResult.Success)
+        assertEquals(
+            0,
+            gateway.requests.count { request ->
+                request.action == DeviceDosingV1Contract.Action.PROGRAM_APPLY
+            }
+        )
+        assertEquals(7L, (result as DeviceDosingChannelOperationResult.Success).snapshot.revision)
+    }
+
+    @Test
     fun `manual start stop render active run only from refreshed authoritative state`() = runTest {
         val gateway = Stage9Gateway().apply {
             enqueueRefresh(revision = 7L, manualActive = false)
