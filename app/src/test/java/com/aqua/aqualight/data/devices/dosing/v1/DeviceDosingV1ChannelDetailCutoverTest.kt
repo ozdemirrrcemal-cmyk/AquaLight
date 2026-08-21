@@ -51,54 +51,53 @@ class DeviceDosingV1ChannelDetailCutoverTest {
     }
 
     @Test
-    fun `plan save after switch reuses latest revision and preserves the switch field`() = runTest {
-        val gateway = Stage9Gateway().apply {
-            enqueueRefresh(revision = 7L, missedDoseRecoveryEnabled = false)
-            enqueueProgramMutation(revision = 8L, missedDoseRecoveryEnabled = true)
-            enqueueRefresh(revision = 8L, missedDoseRecoveryEnabled = true)
-            enqueueProgramMutation(revision = 9L, missedDoseRecoveryEnabled = true)
-            enqueueRefresh(revision = 9L, missedDoseRecoveryEnabled = true)
-        }
-        val adapter = DeviceDosingV1StateAdapter(DeviceDosingV1Repository(gateway))
-        val initial = adapter.channelOperations.refresh(DEVICE_UID.value, SLOT_ID)
-            as DeviceDosingChannelOperationResult.Success
-        val planFromBeforeSwitch = requireNotNull(initial.snapshot.program)
-
-        val switchResult = adapter.channelOperations.setMissedDoseRecoveryEnabled(
-            DEVICE_UID.value,
-            SLOT_ID,
-            true
-        )
-        val planResult = adapter.channelOperations.applyProgramAtRevision(
-            deviceUid = DEVICE_UID.value,
-            slotId = SLOT_ID,
-            program = planFromBeforeSwitch,
-            expectedRevision = 7L
-        )
-
-        assertTrue(switchResult is DeviceDosingChannelOperationResult.Success)
-        assertTrue(planResult is DeviceDosingChannelOperationResult.Success)
-        val mutations = gateway.requests.filter { request ->
-            request.action == DeviceDosingV1Contract.Action.PROGRAM_APPLY
-        }
-        assertEquals(2, mutations.size)
-        assertEquals(
-            listOf(7L, 8L),
-            mutations.map { request -> JSONObject(request.data).getLong("expectedRevision") }
-        )
-        assertTrue(
-            mutations.all { request ->
-                JSONObject(request.data)
-                    .getJSONObject("program")
-                    .getBoolean("missedDoseRecoveryEnabled")
+    fun `unchanged plan after switch skips a duplicate write and preserves the switch field`() =
+        runTest {
+            val gateway = Stage9Gateway().apply {
+                enqueueRefresh(revision = 7L, missedDoseRecoveryEnabled = false)
+                enqueueProgramMutation(revision = 8L, missedDoseRecoveryEnabled = true)
+                enqueueRefresh(revision = 8L, missedDoseRecoveryEnabled = true)
             }
-        )
-        assertTrue(
-            (planResult as DeviceDosingChannelOperationResult.Success)
-                .snapshot.program?.missedDoseRecoveryEnabled == true
-        )
-        assertEquals(9L, planResult.snapshot.revision)
-    }
+            val adapter = DeviceDosingV1StateAdapter(DeviceDosingV1Repository(gateway))
+            val initial = adapter.channelOperations.refresh(DEVICE_UID.value, SLOT_ID)
+                as DeviceDosingChannelOperationResult.Success
+            val planFromBeforeSwitch = requireNotNull(initial.snapshot.program)
+
+            val switchResult = adapter.channelOperations.setMissedDoseRecoveryEnabled(
+                DEVICE_UID.value,
+                SLOT_ID,
+                true
+            )
+            val planResult = adapter.channelOperations.applyProgramAtRevision(
+                deviceUid = DEVICE_UID.value,
+                slotId = SLOT_ID,
+                program = planFromBeforeSwitch,
+                expectedRevision = 7L
+            )
+
+            assertTrue(switchResult is DeviceDosingChannelOperationResult.Success)
+            assertTrue(planResult is DeviceDosingChannelOperationResult.Success)
+            val mutations = gateway.requests.filter { request ->
+                request.action == DeviceDosingV1Contract.Action.PROGRAM_APPLY
+            }
+            assertEquals(1, mutations.size)
+            assertEquals(
+                listOf(7L),
+                mutations.map { request -> JSONObject(request.data).getLong("expectedRevision") }
+            )
+            assertTrue(
+                mutations.all { request ->
+                    JSONObject(request.data)
+                        .getJSONObject("program")
+                        .getBoolean("missedDoseRecoveryEnabled")
+                }
+            )
+            assertTrue(
+                (planResult as DeviceDosingChannelOperationResult.Success)
+                    .snapshot.program?.missedDoseRecoveryEnabled == true
+            )
+            assertEquals(8L, planResult.snapshot.revision)
+        }
 
     @Test
     fun `ambiguous switch timeout rereads and retries inside one user action`() = runTest {

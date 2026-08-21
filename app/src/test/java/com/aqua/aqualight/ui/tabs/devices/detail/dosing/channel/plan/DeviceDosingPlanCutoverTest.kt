@@ -51,11 +51,13 @@ class DeviceDosingPlanCutoverTest {
 
                 viewModel.bind(DEVICE_UID, SLOT_ID, restoredDraft = null)
                 assertEquals(program, viewModel.currentEditorState.programIntent)
+                viewModel.setScheduleEnabled(!program.enabled)
+                val expectedProgram = program.copy(enabled = !program.enabled)
 
                 viewModel.save()
 
-                assertEquals(program, operations.lastProgram)
-                assertEquals(program, viewModel.currentEditorState.programIntent)
+                assertEquals(expectedProgram, operations.lastProgram)
+                assertEquals(expectedProgram, viewModel.currentEditorState.programIntent)
             }
         }
 

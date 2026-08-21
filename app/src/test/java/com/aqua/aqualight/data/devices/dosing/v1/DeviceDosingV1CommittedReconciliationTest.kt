@@ -20,8 +20,8 @@ class DeviceDosingV1CommittedReconciliationTest {
         runTest {
             val gateway = ScriptedGateway().apply {
                 enqueueRefresh(revision = 7L)
-                enqueueProgramMutation(revision = 8L)
-                enqueueRefresh(revision = 8L)
+                enqueueProgramMutation(revision = 8L, programEnabled = false)
+                enqueueRefresh(revision = 8L, programEnabled = false)
             }
             val adapter = DeviceDosingV1StateAdapter(
                 repository = DeviceDosingV1Repository(gateway),
@@ -33,7 +33,7 @@ class DeviceDosingV1CommittedReconciliationTest {
             val result = adapter.channelOperations.applyProgram(
                 DEVICE_UID.value,
                 SLOT_ID,
-                requireNotNull(initial.snapshot.program)
+                requireNotNull(initial.snapshot.program).copy(enabled = false)
             )
 
             assertEquals(DeviceDosingChannelCommittedResult(8L), result)
@@ -57,10 +57,10 @@ class DeviceDosingV1CommittedReconciliationTest {
         runTest {
             val gateway = ScriptedGateway().apply {
                 enqueueRefresh(revision = 7L)
-                enqueueProgramMutation(revision = 8L)
-                enqueueRefresh(revision = 8L)
-                enqueueProgramMutation(revision = 9L)
-                enqueueRefresh(revision = 9L)
+                enqueueProgramMutation(revision = 8L, programEnabled = false)
+                enqueueRefresh(revision = 8L, programEnabled = false)
+                enqueueProgramMutation(revision = 9L, programEnabled = true)
+                enqueueRefresh(revision = 9L, programEnabled = true)
             }
             val adapter = DeviceDosingV1StateAdapter(
                 repository = DeviceDosingV1Repository(gateway),
@@ -73,12 +73,12 @@ class DeviceDosingV1CommittedReconciliationTest {
             val first = adapter.channelOperations.applyProgram(
                 DEVICE_UID.value,
                 SLOT_ID,
-                program
+                program.copy(enabled = false)
             )
             val second = adapter.channelOperations.applyProgram(
                 DEVICE_UID.value,
                 SLOT_ID,
-                program
+                program.copy(enabled = true)
             )
 
             assertEquals(DeviceDosingChannelCommittedResult(8L), first)
@@ -110,14 +110,14 @@ class DeviceDosingV1CommittedReconciliationTest {
         private val responses = ArrayDeque<Response>()
         val actions = mutableListOf<String>()
 
-        fun enqueueRefresh(revision: Long) {
-            val (global, channel, progress) = fixtureState(revision)
+        fun enqueueRefresh(revision: Long, programEnabled: Boolean = true) {
+            val (global, channel, progress) = fixtureState(revision, programEnabled)
             enqueueSuccess(DeviceDosingV1Contract.Action.STATUS_GET, global)
             enqueueSuccess(DeviceDosingV1Contract.Action.STATUS_GET, channel)
             enqueueSuccess(DeviceDosingV1Contract.Action.PROGRESS_GET, progress)
         }
 
-        fun enqueueProgramMutation(revision: Long) {
+        fun enqueueProgramMutation(revision: Long, programEnabled: Boolean = true) {
             val parsed = DeviceDosingV1MutationParser.parseProgramApply(
                 DeviceDosingV1TestFixtures.savedMutation(
                     DeviceDosingV1Contract.Literal.PROGRAM_APPLY
@@ -125,7 +125,12 @@ class DeviceDosingV1CommittedReconciliationTest {
             )
             enqueueSuccess(
                 DeviceDosingV1Contract.Action.PROGRAM_APPLY,
-                parsed.copy(channel = parsed.channel.copy(revision = revision))
+                parsed.copy(
+                    channel = parsed.channel.copy(
+                        revision = revision,
+                        program = parsed.channel.program?.copy(enabled = programEnabled)
+                    )
+                )
             )
         }
 
@@ -151,14 +156,17 @@ class DeviceDosingV1CommittedReconciliationTest {
         const val SLOT_ID = "dosing:channel1"
         val GENERATION = DeviceRuntimeConnectionGeneration(1L)
 
-        fun fixtureState(revision: Long): FixtureState {
+        fun fixtureState(revision: Long, programEnabled: Boolean = true): FixtureState {
             val global = DeviceDosingV1StatusParser.parseGlobal(
                 DeviceDosingV1TestFixtures.globalStatus()
             ).let { status ->
                 status.copy(
                     channels = status.channels.map { channel ->
                         if (channel.channelKey.value == "channel1") {
-                            channel.copy(revision = revision)
+                            channel.copy(
+                                revision = revision,
+                                programEnabled = programEnabled
+                            )
                         } else {
                             channel
                         }
@@ -168,11 +176,16 @@ class DeviceDosingV1CommittedReconciliationTest {
             val channel = DeviceDosingV1StatusParser.parseChannel(
                 DeviceDosingV1TestFixtures.channelStatus()
             ).let { status ->
-                status.copy(channel = status.channel.copy(revision = revision))
+                status.copy(
+                    channel = status.channel.copy(
+                        revision = revision,
+                        program = status.channel.program?.copy(enabled = programEnabled)
+                    )
+                )
             }
             val progress = DeviceDosingV1StatusParser.parseProgress(
                 DeviceDosingV1TestFixtures.progressStatus()
-            ).copy(revision = revision)
+            ).copy(revision = revision, programEnabled = programEnabled)
             return FixtureState(global, channel, progress)
         }
 
