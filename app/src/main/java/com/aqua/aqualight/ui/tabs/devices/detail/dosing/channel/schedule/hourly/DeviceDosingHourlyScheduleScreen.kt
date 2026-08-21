@@ -25,6 +25,7 @@ import com.aqua.aqualight.ui.common.devicemenu.AquaDeviceMenuTone
 import com.aqua.aqualight.ui.common.devicemenu.AquaDeviceMenuValueRow
 import com.aqua.aqualight.ui.common.devicemenu.aquaDeviceMenuColors
 import com.aqua.aqualight.ui.common.flow.AquaGuidedFlowButton
+import com.aqua.aqualight.ui.tabs.devices.detail.dosing.channel.schedule.DeviceDosingScheduleAmountContract
 
 @Composable
 internal fun DeviceDosingHourlyScheduleScreen(
@@ -104,12 +105,22 @@ private fun HourlyScheduleHero() {
 
 @Composable
 private fun HourlyScheduleSummary(dailyDoseMicroliters: Long) {
+    val context = LocalContext.current
+    val locale = context.resources.configuration.locales[0]
+    val dailyDose = DeviceDosingScheduleAmountContract.formatDisplay(
+        dailyDoseMicroliters,
+        locale
+    )
+    val averageDose = DeviceDosingScheduleAmountContract.formatDisplay(
+        DeviceDosingHourlyScheduleContract.averageDoseMl(dailyDoseMicroliters),
+        locale
+    )
     AquaDeviceMenuSection(title = stringResource(R.string.device_dosing_hourly_summary_section)) {
         AquaDeviceMenuValueRow(
             label = stringResource(R.string.device_dosing_detail_daily_dose),
             value = stringResource(
-                R.string.device_dosing_channel_daily_dose_format,
-                DeviceDosingHourlyScheduleContract.dailyDoseMl(dailyDoseMicroliters)
+                R.string.device_dosing_hourly_daily_dose_value_format,
+                dailyDose
             ),
             description = stringResource(R.string.device_dosing_hourly_daily_amount_description),
             tone = AquaDeviceMenuTone.ACCENT
@@ -125,7 +136,7 @@ private fun HourlyScheduleSummary(dailyDoseMicroliters: Long) {
             label = stringResource(R.string.device_dosing_hourly_average_dose),
             value = stringResource(
                 R.string.device_dosing_hourly_average_dose_format,
-                DeviceDosingHourlyScheduleContract.averageDoseMl(dailyDoseMicroliters)
+                averageDose
             ),
             description = stringResource(R.string.device_dosing_hourly_average_dose_description),
             tone = AquaDeviceMenuTone.ACCENT
