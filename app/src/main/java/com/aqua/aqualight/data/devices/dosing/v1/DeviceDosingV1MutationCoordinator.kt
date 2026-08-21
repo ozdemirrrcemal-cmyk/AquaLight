@@ -86,7 +86,8 @@ internal class DeviceDosingV1MutationCoordinator(
             ?: return@withChannel DeviceDosingV1MutationResult.Malformed
         if (mutation.assignmentSatisfied?.invoke(baseline.channel) == true) {
             mutation.onAccepted()
-            return@withChannel DeviceDosingV1MutationResult.Reconciled(baseline)
+            val acceptedState = stateAccess.currentState(address) ?: baseline
+            return@withChannel DeviceDosingV1MutationResult.Reconciled(acceptedState)
         }
         var attempt = 0
         while (attempt < MAX_REPLAY_SAFE_ASSIGNMENT_ATTEMPTS) {
@@ -105,7 +106,8 @@ internal class DeviceDosingV1MutationCoordinator(
             val reconciled = stateAccess.currentState(address) ?: return@withChannel result
             if (mutation.assignmentSatisfied?.invoke(reconciled.channel) == true) {
                 mutation.onAccepted()
-                return@withChannel DeviceDosingV1MutationResult.Reconciled(reconciled)
+                val acceptedState = stateAccess.currentState(address) ?: reconciled
+                return@withChannel DeviceDosingV1MutationResult.Reconciled(acceptedState)
             }
             if (attempt >= MAX_REPLAY_SAFE_ASSIGNMENT_ATTEMPTS - 1) return@withChannel result
             baseline = reconciled

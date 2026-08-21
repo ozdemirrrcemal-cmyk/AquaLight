@@ -1,6 +1,7 @@
 package com.aqua.aqualight.data.devices.dosing.v1
 
 import com.aqua.aqualight.application.devices.dosing.DeviceDosingChannelOperationResult
+import com.aqua.aqualight.application.devices.dosing.DeviceDosingReservoirSettings
 import com.aqua.aqualight.data.devices.model.DeviceUid
 import com.aqua.aqualight.data.devices.runtime.core.DeviceRuntimeCommand
 import com.aqua.aqualight.data.devices.runtime.core.DeviceRuntimeCommandGateway
@@ -46,6 +47,42 @@ class DeviceDosingV1StateAdapterTest {
             listOf("{}", "{\"channelKey\":\"channel1\"}", "{\"channelKey\":\"channel1\"}"),
             gateway.requests.map(ScriptedDosingGateway.Request::data)
         )
+    }
+
+    @Test
+    fun `already current reservoir assignment returns the accepted alert intent`() = runTest {
+        val gateway = ScriptedDosingGateway().apply { enqueueRefresh(revision = 7L) }
+        val adapter = DeviceDosingV1StateAdapter(DeviceDosingV1Repository(gateway))
+        val initial = adapter.channelOperations.refresh(DEVICE_UID.value, SLOT_ID)
+            as DeviceDosingChannelOperationResult.Success
+        val reservoir = initial.snapshot.reservoir
+
+        val result = adapter.channelOperations.applyReservoirSettings(
+            DEVICE_UID.value,
+            SLOT_ID,
+            DeviceDosingReservoirSettings(
+                trackingEnabled = reservoir.trackingEnabled,
+                capacityMicroliters = reservoir.capacityMicroliters
+                    .takeIf { reservoir.trackingEnabled },
+                lowLevelAlertEnabled = true
+            )
+        )
+
+        assertTrue(result is DeviceDosingChannelOperationResult.Success)
+        assertTrue(
+            (result as DeviceDosingChannelOperationResult.Success)
+                .snapshot
+                .reservoir
+                .lowLevelAlertEnabled
+        )
+        assertTrue(
+            requireNotNull(adapter.currentChannel(DEVICE_UID.value, SLOT_ID))
+                .reservoir
+                .lowLevelAlertEnabled
+        )
+        assertTrue(gateway.requests.none { request ->
+            request.action == DeviceDosingV1Contract.Action.CONFIG_APPLY
+        })
     }
 
     @Test
