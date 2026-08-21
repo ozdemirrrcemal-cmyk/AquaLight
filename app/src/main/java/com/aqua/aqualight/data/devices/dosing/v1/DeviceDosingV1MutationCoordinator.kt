@@ -122,7 +122,9 @@ internal class DeviceDosingV1MutationCoordinator(
             baseline.channel.revision
         }
         val token = stateOwner.beginRequest(address.deviceUid, address.channelKey)
-        when (val execution = executeMutation(address, revision, baseline.channel, mutation.execute)) {
+        return when (
+            val execution = executeMutation(address, revision, baseline.channel, mutation.execute)
+        ) {
             is DosingExecutionOutcome.Rejected ->
                 DeviceDosingV1MutationResult.LocallyRejected(execution.reason)
             is DosingExecutionOutcome.Completed -> when (val outcome = execution.outcome) {
