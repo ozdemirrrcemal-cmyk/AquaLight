@@ -39,4 +39,16 @@ class DeviceDosingScheduleAmountContractTest {
         assertEquals("2,50", DeviceDosingScheduleAmountContract.formatDisplay(2_500L, turkish))
         assertEquals("2,125", DeviceDosingScheduleAmountContract.formatDisplay(2_125L, turkish))
     }
+
+    @Test
+    fun `computed display amounts use the same commercial precision`() {
+        assertEquals("0.60", DeviceDosingScheduleAmountContract.formatDisplay(0.6, Locale.US))
+        assertEquals("0.125", DeviceDosingScheduleAmountContract.formatDisplay(0.125, Locale.US))
+        assertEquals("0.333", DeviceDosingScheduleAmountContract.formatDisplay(1.0 / 3.0, Locale.US))
+
+        val turkish = Locale.forLanguageTag("tr-TR")
+        assertEquals("0,60", DeviceDosingScheduleAmountContract.formatDisplay(0.6, turkish))
+        assertEquals("0,125", DeviceDosingScheduleAmountContract.formatDisplay(0.125, turkish))
+        assertEquals("0,333", DeviceDosingScheduleAmountContract.formatDisplay(1.0 / 3.0, turkish))
+    }
 }

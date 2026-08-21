@@ -28,11 +28,18 @@ internal object DeviceDosingScheduleAmountContract {
         }.format(DeviceDosingAmountDraftPolicy.milliliters(microliters))
 
     fun formatDisplay(microliters: Long, locale: Locale): String =
-        NumberFormat.getNumberInstance(locale).apply {
+        formatDisplay(DeviceDosingAmountDraftPolicy.milliliters(microliters), locale)
+
+    fun formatDisplay(milliliters: Double, locale: Locale): String {
+        require(milliliters.isFinite() && milliliters >= 0.0) {
+            "milliliters must be a finite non-negative value."
+        }
+        return NumberFormat.getNumberInstance(locale).apply {
             isGroupingUsed = false
             minimumFractionDigits = MIN_DISPLAY_FRACTION_DIGITS
             maximumFractionDigits = MAX_FRACTION_DIGITS
-        }.format(DeviceDosingAmountDraftPolicy.milliliters(microliters))
+        }.format(milliliters)
+    }
 
     private const val MIN_DISPLAY_FRACTION_DIGITS = 2
     private const val MAX_FRACTION_DIGITS = 3

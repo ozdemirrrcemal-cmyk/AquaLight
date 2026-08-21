@@ -54,6 +54,14 @@ private fun CustomScheduleContent(
     modifier: Modifier
 ) {
     val totalDoseCount = DeviceDosingCustomScheduleContract.totalDoseCount(state.periods)
+    val averageDoseMl = if (state.dailyDoseMicroliters > 0L && totalDoseCount > 0) {
+        DeviceDosingCustomScheduleContract.averageDoseMl(
+            dailyDoseMicroliters = state.dailyDoseMicroliters,
+            periods = state.periods
+        )
+    } else {
+        null
+    }
     LazyColumn(
         modifier = modifier,
         contentPadding = PaddingValues(
@@ -69,10 +77,7 @@ private fun CustomScheduleContent(
             CustomScheduleSummary(
                 dailyDoseMicroliters = state.dailyDoseMicroliters,
                 totalDoseCount = totalDoseCount,
-                averageDoseMl = DeviceDosingCustomScheduleContract.averageDoseMl(
-                    dailyDoseMicroliters = state.dailyDoseMicroliters,
-                    periods = state.periods
-                )
+                averageDoseMl = averageDoseMl
             )
         }
         state.validationMessage?.let { message ->
@@ -83,6 +88,7 @@ private fun CustomScheduleContent(
                 periods = state.periods,
                 totalDoseCount = totalDoseCount,
                 maxEventsPerChannel = state.maxEventsPerChannel,
+                maxPeriodsPerChannel = state.maxPeriodsPerChannel,
                 addEnabled = state.addEnabled,
                 onAction = onAction
             )
@@ -103,15 +109,26 @@ private fun CustomScheduleHero() {
 private fun CustomScheduleSummary(
     dailyDoseMicroliters: Long,
     totalDoseCount: Int,
-    averageDoseMl: Double
+    averageDoseMl: Double?
 ) {
+    val context = LocalContext.current
+    val locale = context.resources.configuration.locales[0]
+    val dailyDose = DeviceDosingScheduleAmountContract.formatDisplay(
+        dailyDoseMicroliters,
+        locale
+    )
+    val averageDoseValue = if (averageDoseMl == null) {
+        stringResource(R.string.device_dosing_detail_value_unavailable)
+    } else {
+        stringResource(
+            R.string.device_dosing_custom_average_dose_format,
+            DeviceDosingScheduleAmountContract.formatDisplay(averageDoseMl, locale)
+        )
+    }
     AquaDeviceMenuSection(title = stringResource(R.string.device_dosing_custom_summary_section)) {
         AquaDeviceMenuValueRow(
             label = stringResource(R.string.device_dosing_detail_daily_dose),
-            value = stringResource(
-                R.string.device_dosing_channel_daily_dose_format,
-                DeviceDosingScheduleAmountContract.milliliters(dailyDoseMicroliters)
-            ),
+            value = "$dailyDose mL",
             description = stringResource(R.string.device_dosing_custom_daily_amount_description),
             tone = AquaDeviceMenuTone.ACCENT
         )
@@ -128,7 +145,7 @@ private fun CustomScheduleSummary(
         AquaDeviceMenuDivider(startIndent = AquaDeviceMenuGeometry.sectionContentPadding)
         AquaDeviceMenuValueRow(
             label = stringResource(R.string.device_dosing_custom_average_dose),
-            value = stringResource(R.string.device_dosing_custom_average_dose_format, averageDoseMl),
+            value = averageDoseValue,
             description = stringResource(R.string.device_dosing_custom_average_dose_description),
             tone = AquaDeviceMenuTone.ACCENT
         )
@@ -152,6 +169,7 @@ private fun CustomPeriodsSection(
     periods: List<DeviceDosingCustomPeriod>,
     totalDoseCount: Int,
     maxEventsPerChannel: Int,
+    maxPeriodsPerChannel: Int,
     addEnabled: Boolean,
     onAction: (DeviceDosingCustomScheduleAction) -> Unit
 ) {
@@ -161,6 +179,8 @@ private fun CustomPeriodsSection(
                 title = stringResource(R.string.device_dosing_custom_periods_title),
                 description = stringResource(
                     R.string.device_dosing_custom_periods_capacity,
+                    periods.size,
+                    maxPeriodsPerChannel,
                     totalDoseCount,
                     maxEventsPerChannel
                 ),
