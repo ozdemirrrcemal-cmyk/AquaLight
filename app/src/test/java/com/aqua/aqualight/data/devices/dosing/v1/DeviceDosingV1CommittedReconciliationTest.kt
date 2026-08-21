@@ -52,6 +52,55 @@ class DeviceDosingV1CommittedReconciliationTest {
             )
         }
 
+    @Test
+    fun `back to back saves share committed readback without a user visible conflict`() =
+        runTest {
+            val gateway = ScriptedGateway().apply {
+                enqueueRefresh(revision = 7L)
+                enqueueProgramMutation(revision = 8L)
+                enqueueRefresh(revision = 8L)
+                enqueueProgramMutation(revision = 9L)
+                enqueueRefresh(revision = 9L)
+            }
+            val adapter = DeviceDosingV1StateAdapter(
+                repository = DeviceDosingV1Repository(gateway),
+                reconciliationScope = backgroundScope
+            )
+            val initial = adapter.channelOperations.refresh(DEVICE_UID.value, SLOT_ID)
+                as DeviceDosingChannelOperationResult.Success
+            val program = requireNotNull(initial.snapshot.program)
+
+            val first = adapter.channelOperations.applyProgram(
+                DEVICE_UID.value,
+                SLOT_ID,
+                program
+            )
+            val second = adapter.channelOperations.applyProgram(
+                DEVICE_UID.value,
+                SLOT_ID,
+                program
+            )
+
+            assertEquals(DeviceDosingChannelCommittedResult(8L), first)
+            assertEquals(DeviceDosingChannelCommittedResult(9L), second)
+            assertEquals(
+                2,
+                gateway.actions.count { action ->
+                    action == DeviceDosingV1Contract.Action.PROGRAM_APPLY
+                }
+            )
+
+            testScheduler.runCurrent()
+
+            assertEquals(9L, adapter.currentChannel(DEVICE_UID.value, SLOT_ID)?.revision)
+            assertEquals(
+                2,
+                gateway.actions.count { action ->
+                    action == DeviceDosingV1Contract.Action.PROGRAM_APPLY
+                }
+            )
+        }
+
     private class ScriptedGateway : DeviceRuntimeCommandGateway {
         private data class Response(
             val action: String,

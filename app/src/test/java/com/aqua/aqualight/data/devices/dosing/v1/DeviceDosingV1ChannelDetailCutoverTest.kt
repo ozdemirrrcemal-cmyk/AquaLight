@@ -51,6 +51,149 @@ class DeviceDosingV1ChannelDetailCutoverTest {
     }
 
     @Test
+    fun `plan save after switch reuses latest revision and preserves the switch field`() = runTest {
+        val gateway = Stage9Gateway().apply {
+            enqueueRefresh(revision = 7L, missedDoseRecoveryEnabled = false)
+            enqueueProgramMutation(revision = 8L, missedDoseRecoveryEnabled = true)
+            enqueueRefresh(revision = 8L, missedDoseRecoveryEnabled = true)
+            enqueueProgramMutation(revision = 9L, missedDoseRecoveryEnabled = true)
+            enqueueRefresh(revision = 9L, missedDoseRecoveryEnabled = true)
+        }
+        val adapter = DeviceDosingV1StateAdapter(DeviceDosingV1Repository(gateway))
+        val initial = adapter.channelOperations.refresh(DEVICE_UID.value, SLOT_ID)
+            as DeviceDosingChannelOperationResult.Success
+        val planFromBeforeSwitch = requireNotNull(initial.snapshot.program)
+
+        val switchResult = adapter.channelOperations.setMissedDoseRecoveryEnabled(
+            DEVICE_UID.value,
+            SLOT_ID,
+            true
+        )
+        val planResult = adapter.channelOperations.applyProgramAtRevision(
+            deviceUid = DEVICE_UID.value,
+            slotId = SLOT_ID,
+            program = planFromBeforeSwitch,
+            expectedRevision = 7L
+        )
+
+        assertTrue(switchResult is DeviceDosingChannelOperationResult.Success)
+        assertTrue(planResult is DeviceDosingChannelOperationResult.Success)
+        val mutations = gateway.requests.filter { request ->
+            request.action == DeviceDosingV1Contract.Action.PROGRAM_APPLY
+        }
+        assertEquals(2, mutations.size)
+        assertEquals(
+            listOf(7L, 8L),
+            mutations.map { request -> JSONObject(request.data).getLong("expectedRevision") }
+        )
+        assertTrue(
+            mutations.all { request ->
+                JSONObject(request.data)
+                    .getJSONObject("program")
+                    .getBoolean("missedDoseRecoveryEnabled")
+            }
+        )
+        assertTrue(
+            (planResult as DeviceDosingChannelOperationResult.Success)
+                .snapshot.program?.missedDoseRecoveryEnabled == true
+        )
+        assertEquals(9L, planResult.snapshot.revision)
+    }
+
+    @Test
+    fun `ambiguous switch timeout rereads and retries inside one user action`() = runTest {
+        val gateway = Stage9Gateway().apply {
+            enqueueRefresh(revision = 7L, missedDoseRecoveryEnabled = false)
+            enqueueTimeout(DeviceDosingV1Contract.Action.PROGRAM_APPLY)
+            enqueueRefresh(revision = 7L, missedDoseRecoveryEnabled = false)
+            enqueueProgramMutation(revision = 8L, missedDoseRecoveryEnabled = true)
+            enqueueRefresh(revision = 8L, missedDoseRecoveryEnabled = true)
+        }
+        val adapter = DeviceDosingV1StateAdapter(DeviceDosingV1Repository(gateway))
+        adapter.channelOperations.refresh(DEVICE_UID.value, SLOT_ID)
+
+        val result = adapter.channelOperations.setMissedDoseRecoveryEnabled(
+            DEVICE_UID.value,
+            SLOT_ID,
+            true
+        )
+
+        assertTrue(result is DeviceDosingChannelOperationResult.Success)
+        val mutations = gateway.requests.filter { request ->
+            request.action == DeviceDosingV1Contract.Action.PROGRAM_APPLY
+        }
+        assertEquals(2, mutations.size)
+        assertEquals(
+            listOf(7L, 7L),
+            mutations.map { request -> JSONObject(request.data).getLong("expectedRevision") }
+        )
+        assertTrue(
+            (result as DeviceDosingChannelOperationResult.Success)
+                .snapshot.program?.missedDoseRecoveryEnabled == true
+        )
+    }
+
+    @Test
+    fun `switch revision conflict rebases and completes inside one user action`() = runTest {
+        val gateway = Stage9Gateway().apply {
+            enqueueRefresh(revision = 7L, missedDoseRecoveryEnabled = false)
+            enqueueRevisionConflict(DeviceDosingV1Contract.Action.PROGRAM_APPLY)
+            enqueueRefresh(revision = 8L, missedDoseRecoveryEnabled = false)
+            enqueueProgramMutation(revision = 9L, missedDoseRecoveryEnabled = true)
+            enqueueRefresh(revision = 9L, missedDoseRecoveryEnabled = true)
+        }
+        val adapter = DeviceDosingV1StateAdapter(DeviceDosingV1Repository(gateway))
+        adapter.channelOperations.refresh(DEVICE_UID.value, SLOT_ID)
+
+        val result = adapter.channelOperations.setMissedDoseRecoveryEnabled(
+            DEVICE_UID.value,
+            SLOT_ID,
+            true
+        )
+
+        assertTrue(result is DeviceDosingChannelOperationResult.Success)
+        val mutations = gateway.requests.filter { request ->
+            request.action == DeviceDosingV1Contract.Action.PROGRAM_APPLY
+        }
+        assertEquals(2, mutations.size)
+        assertEquals(
+            listOf(7L, 8L),
+            mutations.map { request -> JSONObject(request.data).getLong("expectedRevision") }
+        )
+        val snapshot = (result as DeviceDosingChannelOperationResult.Success).snapshot
+        assertEquals(9L, snapshot.revision)
+        assertTrue(snapshot.program?.missedDoseRecoveryEnabled == true)
+    }
+
+    @Test
+    fun `lost switch ack is accepted only after readback proves the requested state`() = runTest {
+        val gateway = Stage9Gateway().apply {
+            enqueueRefresh(revision = 7L, missedDoseRecoveryEnabled = false)
+            enqueueTimeout(DeviceDosingV1Contract.Action.PROGRAM_APPLY)
+            enqueueRefresh(revision = 8L, missedDoseRecoveryEnabled = true)
+        }
+        val adapter = DeviceDosingV1StateAdapter(DeviceDosingV1Repository(gateway))
+        adapter.channelOperations.refresh(DEVICE_UID.value, SLOT_ID)
+
+        val result = adapter.channelOperations.setMissedDoseRecoveryEnabled(
+            DEVICE_UID.value,
+            SLOT_ID,
+            true
+        )
+
+        assertTrue(result is DeviceDosingChannelOperationResult.Success)
+        assertEquals(
+            1,
+            gateway.requests.count { request ->
+                request.action == DeviceDosingV1Contract.Action.PROGRAM_APPLY
+            }
+        )
+        val snapshot = (result as DeviceDosingChannelOperationResult.Success).snapshot
+        assertEquals(8L, snapshot.revision)
+        assertTrue(snapshot.program?.missedDoseRecoveryEnabled == true)
+    }
+
+    @Test
     fun `manual start stop render active run only from refreshed authoritative state`() = runTest {
         val gateway = Stage9Gateway().apply {
             enqueueRefresh(revision = 7L, manualActive = false)
@@ -186,6 +329,37 @@ class DeviceDosingV1ChannelDetailCutoverTest {
                     code = "DEVICE_BUSY",
                     field = "",
                     message = "dosing operation in progress"
+                )
+            )
+        }
+
+        fun enqueueTimeout(action: String) {
+            enqueue(
+                action,
+                DeviceRuntimeCommandOutcome.Timeout(
+                    deviceUid = DEVICE_UID,
+                    module = DeviceDosingV1Contract.MODULE,
+                    action = action,
+                    messageId = "timeout-$action",
+                    generation = GENERATION,
+                    timeoutMillis = 5_000L
+                )
+            )
+        }
+
+        fun enqueueRevisionConflict(action: String) {
+            enqueue(
+                action,
+                DeviceRuntimeCommandOutcome.FirmwareError(
+                    deviceUid = DEVICE_UID,
+                    module = DeviceDosingV1Contract.MODULE,
+                    action = action,
+                    messageId = "conflict-$action",
+                    generation = GENERATION,
+                    statusCode = 409,
+                    code = "INVALID_VALUE",
+                    field = "expectedRevision",
+                    message = "stale dosing channel revision"
                 )
             )
         }

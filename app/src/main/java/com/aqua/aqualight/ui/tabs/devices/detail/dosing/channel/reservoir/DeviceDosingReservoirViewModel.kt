@@ -12,8 +12,6 @@ import com.aqua.aqualight.application.devices.dosing.DeviceDosingReservoirCapaci
 import com.aqua.aqualight.application.devices.dosing.DeviceDosingReservoirCapacityRejection
 import com.aqua.aqualight.application.devices.dosing.DeviceDosingReservoirCapacityValidation
 import com.aqua.aqualight.application.devices.dosing.DeviceDosingReservoirSettings
-import com.aqua.aqualight.application.devices.dosing.DeviceDosingRevisionedIntent
-import com.aqua.aqualight.application.devices.dosing.applyRevisionedIntentWithReconciliation
 import com.aqua.aqualight.application.devices.dosing.applyReservoirSettingsAgainstBaseRevision
 import com.aqua.aqualight.application.devices.dosing.requiresLowReservoirAttention
 import com.aqua.aqualight.application.devices.dosing.setReservoirLowLevelAlertPreference
@@ -366,24 +364,13 @@ private suspend fun performReservoirSave(
     slotId: String,
     state: DeviceDosingReservoirEditorState
 ): DeviceDosingMutationReconciliation = if (state.firmwareConfigDirty) {
-    val desiredDomain = state.draft.toFirmwareReservoirDomain()
-    operations.applyRevisionedIntentWithReconciliation(
-        intent = DeviceDosingRevisionedIntent(
+    DeviceDosingMutationReconciliation(
+        operations.applyReservoirSettingsAgainstBaseRevision(
             deviceUid = deviceUid,
             slotId = slotId,
-            baseRevision = checkNotNull(state.baseRevision),
-            baseDomain = state.savedDraft.toFirmwareReservoirDomain(),
-            desiredDomain = desiredDomain
-        ),
-        domainFrom = { snapshot -> snapshot.toReservoirDraft().toFirmwareReservoirDomain() },
-        applyAtRevision = { revision ->
-            operations.applyReservoirSettingsAgainstBaseRevision(
-                deviceUid = deviceUid,
-                slotId = slotId,
-                settings = state.settingsIntent,
-                baseRevision = revision
-            )
-        }
+            settings = state.settingsIntent,
+            baseRevision = checkNotNull(state.baseRevision)
+        )
     )
 } else {
     DeviceDosingMutationReconciliation(
@@ -488,14 +475,3 @@ private fun DeviceDosingReservoirDraft.hasSameFirmwareReservoirConfig(
     other: DeviceDosingReservoirDraft
 ): Boolean = trackingEnabled == other.trackingEnabled &&
     (!trackingEnabled || reservoirCapacityMicroliters == other.reservoirCapacityMicroliters)
-
-private data class FirmwareReservoirDomain(
-    val trackingEnabled: Boolean,
-    val capacityMicroliters: Long?
-)
-
-private fun DeviceDosingReservoirDraft.toFirmwareReservoirDomain(): FirmwareReservoirDomain =
-    FirmwareReservoirDomain(
-        trackingEnabled = trackingEnabled,
-        capacityMicroliters = reservoirCapacityMicroliters.takeIf { trackingEnabled }
-    )

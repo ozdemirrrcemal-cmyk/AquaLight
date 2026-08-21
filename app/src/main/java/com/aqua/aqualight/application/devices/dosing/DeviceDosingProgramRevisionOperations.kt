@@ -1,11 +1,12 @@
 package com.aqua.aqualight.application.devices.dosing
 
 /**
- * Revision-aware program mutation capability for long-lived editors.
+ * Revision-origin-aware program mutation capability for long-lived editors.
  *
- * The normal channel boundary remains the public application contract. Editors that keep a draft
- * across authoritative state updates use this capability so a stale draft can never be persisted
- * against a newer firmware revision without an explicit conflict round-trip.
+ * [expectedRevision] identifies the snapshot from which the plan draft originated. The central
+ * data adapter owns the actual firmware compare-and-swap transaction: it rebases plan-owned fields
+ * on the latest authoritative channel, preserves independently owned fields, and retries only
+ * idempotent assignments. A normal stale editor revision is therefore not a user-facing error.
  */
 interface DeviceDosingProgramRevisionOperations {
     suspend fun applyProgramAtRevision(
@@ -20,8 +21,7 @@ interface DeviceDosingProgramRevisionOperations {
  * Application-semantic optimistic-concurrency entry point for long-lived editors.
  *
  * UI code owns only the revision of the application snapshot from which its draft was derived.
- * Translation of that base revision into the firmware mutation contract remains behind the
- * application boundary and is implemented by the revision-aware data adapter.
+ * Translation and reconciliation remain behind the application boundary.
  */
 suspend fun DeviceDosingChannelOperations.applyProgramAgainstBaseRevision(
     deviceUid: String,

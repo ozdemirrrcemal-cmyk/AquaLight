@@ -218,7 +218,6 @@ internal class DeviceDosingPlanViewModel(
                     DeviceDosingPlanSaveRequest(
                         deviceUid = deviceUid,
                         slotId = slotId,
-                        state = state,
                         program = program,
                         baseRevision = checkNotNull(baseRevision)
                     )

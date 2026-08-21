@@ -53,12 +53,11 @@ internal class DeviceDosingV1ChannelOperationsAdapter(
         slotId: String,
         program: DeviceDosingProgram,
         expectedRevision: Long
-    ): DeviceDosingChannelOperationResult = applyProgramInternal(
-        deviceUid = deviceUid,
-        slotId = slotId,
-        program = program,
-        expectedRevision = expectedRevision
-    )
+    ): DeviceDosingChannelOperationResult = if (expectedRevision < 0L) {
+        DeviceDosingChannelOperationResult.Failed
+    } else {
+        applyProgramInternal(deviceUid, slotId, program, expectedRevision)
+    }
 
     private suspend fun applyProgramInternal(
         deviceUid: String,
@@ -68,21 +67,36 @@ internal class DeviceDosingV1ChannelOperationsAdapter(
     ): DeviceDosingChannelOperationResult = adapter.mutationCoordinator.mutatePersisted(
         deviceUid = deviceUid,
         slotId = slotId,
-        execute = { uid, channelKey, revision, baseline ->
-            expectedRevision?.let { editorRevision ->
-                requireMutation(revision == editorRevision, DeviceDosingChannelRejection.CONFLICT)
-            }
-            requireMutation(
-                baseline.controls.programEditable,
-                DeviceDosingChannelRejection.NOT_EDITABLE
-            )
-            requireMutation(
-                program.isValidFor(baseline.scheduling),
-                DeviceDosingChannelRejection.INVALID_DRAFT
-            )
-            repositoryProgramApply(uid, channelKey, revision, program)
-        },
-        channel = DeviceDosingV1SavedMutationResult::channel
+        mutation = DeviceDosingV1PersistedMutation(
+            assignmentSatisfied = { snapshot ->
+                if (expectedRevision != null) {
+                    snapshot.program.hasSamePlanAssignment(program)
+                } else {
+                    snapshot.program == program
+                }
+            },
+            execute = { uid, channelKey, revision, baseline ->
+                requireMutation(
+                    baseline.controls.programEditable,
+                    DeviceDosingChannelRejection.NOT_EDITABLE
+                )
+                val effectiveProgram = if (expectedRevision != null) {
+                    program.copy(
+                        missedDoseRecoveryEnabled = baseline.program
+                            ?.missedDoseRecoveryEnabled
+                            ?: program.missedDoseRecoveryEnabled
+                    )
+                } else {
+                    program
+                }
+                requireMutation(
+                    effectiveProgram.isValidFor(baseline.scheduling),
+                    DeviceDosingChannelRejection.INVALID_DRAFT
+                )
+                repositoryProgramApply(uid, channelKey, revision, effectiveProgram)
+            },
+            channel = DeviceDosingV1SavedMutationResult::channel
+        )
     ).toChannelResult()
 
     override suspend fun setMissedDoseRecoveryEnabled(
@@ -92,24 +106,30 @@ internal class DeviceDosingV1ChannelOperationsAdapter(
     ): DeviceDosingChannelOperationResult = adapter.mutationCoordinator.mutatePersisted(
         deviceUid = deviceUid,
         slotId = slotId,
-        execute = { uid, channelKey, revision, baseline ->
-            requireMutation(
-                baseline.controls.programEditable,
-                DeviceDosingChannelRejection.NOT_EDITABLE
-            )
-            requireMutation(
-                baseline.scheduling.supportsMissedDoseRecovery,
-                DeviceDosingChannelRejection.NOT_EDITABLE
-            )
-            val current = baseline.program ?: reject(DeviceDosingChannelRejection.INVALID_DRAFT)
-            val updated = current.copy(missedDoseRecoveryEnabled = enabled)
-            requireMutation(
-                updated.isValidFor(baseline.scheduling),
-                DeviceDosingChannelRejection.INVALID_DRAFT
-            )
-            repositoryProgramApply(uid, channelKey, revision, updated)
-        },
-        channel = DeviceDosingV1SavedMutationResult::channel
+        mutation = DeviceDosingV1PersistedMutation(
+            assignmentSatisfied = { snapshot ->
+                snapshot.program?.missedDoseRecoveryEnabled == enabled
+            },
+            execute = { uid, channelKey, revision, baseline ->
+                requireMutation(
+                    baseline.controls.programEditable,
+                    DeviceDosingChannelRejection.NOT_EDITABLE
+                )
+                requireMutation(
+                    baseline.scheduling.supportsMissedDoseRecovery,
+                    DeviceDosingChannelRejection.NOT_EDITABLE
+                )
+                val current = baseline.program
+                    ?: reject(DeviceDosingChannelRejection.INVALID_DRAFT)
+                val updated = current.copy(missedDoseRecoveryEnabled = enabled)
+                requireMutation(
+                    updated.isValidFor(baseline.scheduling),
+                    DeviceDosingChannelRejection.INVALID_DRAFT
+                )
+                repositoryProgramApply(uid, channelKey, revision, updated)
+            },
+            channel = DeviceDosingV1SavedMutationResult::channel
+        )
     ).toChannelResult()
 
     override suspend fun applyReservoirSettings(
@@ -119,8 +139,7 @@ internal class DeviceDosingV1ChannelOperationsAdapter(
     ): DeviceDosingChannelOperationResult = applyReservoirSettingsInternal(
         deviceUid = deviceUid,
         slotId = slotId,
-        settings = settings,
-        expectedRevision = null
+        settings = settings
     )
 
     override suspend fun applyReservoirSettingsAtRevision(
@@ -128,49 +147,51 @@ internal class DeviceDosingV1ChannelOperationsAdapter(
         slotId: String,
         settings: DeviceDosingReservoirSettings,
         expectedRevision: Long
-    ): DeviceDosingChannelOperationResult = applyReservoirSettingsInternal(
-        deviceUid = deviceUid,
-        slotId = slotId,
-        settings = settings,
-        expectedRevision = expectedRevision
-    )
+    ): DeviceDosingChannelOperationResult = if (expectedRevision < 0L) {
+        DeviceDosingChannelOperationResult.Failed
+    } else {
+        applyReservoirSettingsInternal(deviceUid, slotId, settings)
+    }
 
     private suspend fun applyReservoirSettingsInternal(
         deviceUid: String,
         slotId: String,
-        settings: DeviceDosingReservoirSettings,
-        expectedRevision: Long?
+        settings: DeviceDosingReservoirSettings
     ): DeviceDosingChannelOperationResult = adapter.mutationCoordinator.mutatePersisted(
         deviceUid = deviceUid,
         slotId = slotId,
-        execute = { uid, channelKey, revision, baseline ->
-            expectedRevision?.let { editorRevision ->
-                requireMutation(revision == editorRevision, DeviceDosingChannelRejection.CONFLICT)
-            }
-            requireMutation(
-                baseline.controls.reservoirEditable,
-                DeviceDosingChannelRejection.NOT_EDITABLE
-            )
-            repositoryConfigApply(
-                uid,
-                DeviceDosingV1ConfigApplyRequest(
-                    channelKey = channelKey,
-                    expectedRevision = revision,
-                    reservoir = DeviceDosingV1ReservoirUpdate(
-                        trackingEnabled = settings.trackingEnabled,
-                        capacity = settings.capacityMicroliters?.toWireAmount()
+        mutation = DeviceDosingV1PersistedMutation(
+            assignmentSatisfied = { snapshot ->
+                snapshot.reservoir.trackingEnabled == settings.trackingEnabled &&
+                    (!settings.trackingEnabled ||
+                        snapshot.reservoir.capacityMicroliters == settings.capacityMicroliters)
+            },
+            execute = { uid, channelKey, revision, baseline ->
+                requireMutation(
+                    baseline.controls.reservoirEditable,
+                    DeviceDosingChannelRejection.NOT_EDITABLE
+                )
+                repositoryConfigApply(
+                    uid,
+                    DeviceDosingV1ConfigApplyRequest(
+                        channelKey = channelKey,
+                        expectedRevision = revision,
+                        reservoir = DeviceDosingV1ReservoirUpdate(
+                            trackingEnabled = settings.trackingEnabled,
+                            capacity = settings.capacityMicroliters?.toWireAmount()
+                        )
                     )
                 )
-            )
-        },
-        channel = DeviceDosingV1SavedMutationResult::channel,
-        onAccepted = {
-            adapter.stateAccess.setLowLevelAlertIntent(
-                deviceUid,
-                slotId,
-                settings.lowLevelAlertEnabled
-            )
-        }
+            },
+            channel = DeviceDosingV1SavedMutationResult::channel,
+            onAccepted = {
+                adapter.stateAccess.setLowLevelAlertIntent(
+                    deviceUid,
+                    slotId,
+                    settings.lowLevelAlertEnabled
+                )
+            }
+        )
     ).toChannelResult()
 
     override suspend fun setReservoirLowLevelAlertEnabled(
@@ -251,17 +272,19 @@ internal class DeviceDosingV1ChannelOperationsAdapter(
     ): DeviceDosingChannelOperationResult = adapter.mutationCoordinator.mutatePersisted(
         deviceUid = deviceUid,
         slotId = slotId,
-        execute = { uid, channelKey, revision, baseline ->
-            requireMutation(
-                baseline.controls.resetSupported,
-                DeviceDosingChannelRejection.NOT_EDITABLE
-            )
-            repositoryChannelReset(
-                uid,
-                DeviceDosingV1ChannelResetRequest(channelKey, revision)
-            )
-        },
-        channel = DeviceDosingV1SavedMutationResult::channel
+        mutation = DeviceDosingV1PersistedMutation(
+            execute = { uid, channelKey, revision, baseline ->
+                requireMutation(
+                    baseline.controls.resetSupported,
+                    DeviceDosingChannelRejection.NOT_EDITABLE
+                )
+                repositoryChannelReset(
+                    uid,
+                    DeviceDosingV1ChannelResetRequest(channelKey, revision)
+                )
+            },
+            channel = DeviceDosingV1SavedMutationResult::channel
+        )
     ).toChannelResult()
 
     private suspend fun repositoryProgramApply(
@@ -316,6 +339,8 @@ private fun DeviceDosingV1RefreshResult.toChannelResult(): DeviceDosingChannelOp
 private fun DeviceDosingV1MutationResult<*>.toChannelResult(): DeviceDosingChannelOperationResult =
     when (this) {
         is DeviceDosingV1MutationResult.Success -> DeviceDosingChannelOperationResult.Success(state.channel)
+        is DeviceDosingV1MutationResult.Reconciled ->
+            DeviceDosingChannelOperationResult.Success(state.channel)
         is DeviceDosingV1MutationResult.Committed -> DeviceDosingChannelCommittedResult(revision)
         is DeviceDosingV1MutationResult.Failed -> DeviceDosingChannelFailureMapper.map(outcome)
         is DeviceDosingV1MutationResult.LocallyRejected ->
@@ -338,3 +363,8 @@ private fun Long.toWireAmount(): DeviceDosingV1Amount =
     DeviceDosingV1Amount.fromMilliliters(
         toDouble() / DeviceDosingV1Contract.Limit.AMOUNT_QUANTA_PER_ML
     )
+
+private fun DeviceDosingProgram?.hasSamePlanAssignment(
+    desired: DeviceDosingProgram
+): Boolean = this?.copy(missedDoseRecoveryEnabled = false) ==
+    desired.copy(missedDoseRecoveryEnabled = false)

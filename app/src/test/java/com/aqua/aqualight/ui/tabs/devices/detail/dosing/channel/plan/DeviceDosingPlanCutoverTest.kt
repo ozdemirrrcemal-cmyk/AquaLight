@@ -89,44 +89,44 @@ class DeviceDosingPlanCutoverTest {
         }
 
     @Test
-    fun `persistent program conflict performs only one bounded reapply`() = runTest(dispatcher) {
-        val delegate = FakeDeviceDosingChannelOperations()
-        val attempts = mutableListOf<Pair<DeviceDosingProgram, Long>>()
-        val operations = object :
-            DeviceDosingChannelOperations by delegate,
-            DeviceDosingProgramRevisionOperations {
-            override suspend fun applyProgramAtRevision(
-                deviceUid: String,
-                slotId: String,
-                program: DeviceDosingProgram,
-                expectedRevision: Long
-            ): DeviceDosingChannelOperationResult {
-                check(deviceUid == DEVICE_UID)
-                check(slotId == SLOT_ID)
-                attempts += program to expectedRevision
-                return DeviceDosingChannelOperationResult.Rejected(
-                    DeviceDosingChannelRejection.CONFLICT
-                )
+    fun `persistent data boundary conflict is surfaced after the central retry budget`() =
+        runTest(dispatcher) {
+            val delegate = FakeDeviceDosingChannelOperations()
+            val attempts = mutableListOf<Pair<DeviceDosingProgram, Long>>()
+            val operations = object :
+                DeviceDosingChannelOperations by delegate,
+                DeviceDosingProgramRevisionOperations {
+                override suspend fun applyProgramAtRevision(
+                    deviceUid: String,
+                    slotId: String,
+                    program: DeviceDosingProgram,
+                    expectedRevision: Long
+                ): DeviceDosingChannelOperationResult {
+                    check(deviceUid == DEVICE_UID)
+                    check(slotId == SLOT_ID)
+                    attempts += program to expectedRevision
+                    return DeviceDosingChannelOperationResult.Rejected(
+                        DeviceDosingChannelRejection.CONFLICT
+                    )
+                }
             }
+            val viewModel = DeviceDosingPlanViewModel(operations)
+
+            viewModel.bind(DEVICE_UID, SLOT_ID, restoredDraft = null)
+            viewModel.setDailyDoseMicroliters(9_000L)
+            val expectedBaseRevision = viewModel.currentEditorState.baseRevision
+            viewModel.save()
+
+            assertEquals(listOf(expectedBaseRevision), attempts.map { it.second })
+            assertEquals(
+                DeviceDosingPlanEvent.SaveRejected(DeviceDosingChannelRejection.CONFLICT),
+                viewModel.events.first()
+            )
+            assertFalse(viewModel.currentEditorState.operationInProgress)
         }
-        val viewModel = DeviceDosingPlanViewModel(operations)
-
-        viewModel.bind(DEVICE_UID, SLOT_ID, restoredDraft = null)
-        viewModel.setDailyDoseMicroliters(9_000L)
-        val expectedBaseRevision = viewModel.currentEditorState.baseRevision
-        viewModel.save()
-
-        assertEquals(2, attempts.size)
-        assertEquals(listOf(expectedBaseRevision, expectedBaseRevision), attempts.map { it.second })
-        assertEquals(
-            DeviceDosingPlanEvent.SaveRejected(DeviceDosingChannelRejection.CONFLICT),
-            viewModel.events.first()
-        )
-        assertFalse(viewModel.currentEditorState.operationInProgress)
-    }
 
     @Test
-    fun `program conflict reloads authoritative program instead of rebasing stale draft`() =
+    fun `exhausted program conflict reloads the final authoritative program`() =
         runTest(dispatcher) {
             val initial = sampleDosingChannelSnapshot().copy(revision = 10L)
             val authoritativeProgram = requireNotNull(initial.program).copy(
@@ -164,10 +164,6 @@ class DeviceDosingPlanCutoverTest {
             assertFalse(reconciled.draftDirty)
             assertFalse(reconciled.operationInProgress)
             assertNull(operations.lastProgram)
-
-            viewModel.save()
-
-            assertEquals(authoritativeProgram, operations.lastProgram)
         }
 
     @Test

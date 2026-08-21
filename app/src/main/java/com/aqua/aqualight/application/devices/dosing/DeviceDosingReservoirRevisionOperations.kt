@@ -1,10 +1,11 @@
 package com.aqua.aqualight.application.devices.dosing
 
 /**
- * Revision-aware reservoir mutation capability for the long-lived reservoir editor.
+ * Revision-origin-aware reservoir mutation capability for the long-lived reservoir editor.
  *
  * Firmware reservoir configuration and Android-owned low-level notification intent stay separate:
- * changing notification intent must never re-apply the physical reservoir baseline.
+ * changing notification intent must never re-apply the physical reservoir baseline. The central
+ * data coordinator rebases retry-safe configuration assignments on the latest firmware revision.
  */
 interface DeviceDosingReservoirRevisionOperations {
     suspend fun applyReservoirSettingsAtRevision(

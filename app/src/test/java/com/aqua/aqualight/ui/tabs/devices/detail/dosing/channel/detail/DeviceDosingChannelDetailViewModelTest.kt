@@ -527,7 +527,7 @@ class DeviceDosingChannelDetailViewModelTest {
     }
 
     @Test
-    fun `firmware revision conflict rereads and reapplies switch intent only once`() =
+    fun `centrally reconciled switch commit settles without a UI mutation replay`() =
         runTest(dispatcher) {
             val initial = snapshot(
                 calibrated = true,
@@ -537,13 +537,15 @@ class DeviceDosingChannelDetailViewModelTest {
             val operations = FakeOperations(
                 refreshSnapshot = initial,
                 missedDoseRecoveryResults = listOf(
-                    DeviceDosingChannelOperationResult.Rejected(
-                        DeviceDosingChannelRejection.CONFLICT
-                    ),
                     DeviceDosingChannelCommittedResult(revision = 3L)
                 ),
                 subsequentRefreshResults = listOf(
-                    DeviceDosingChannelOperationResult.Success(initial.copy(revision = 2L))
+                    DeviceDosingChannelOperationResult.Success(
+                        initial.copy(
+                            revision = 3L,
+                            program = initial.program?.copy(missedDoseRecoveryEnabled = true)
+                        )
+                    )
                 )
             )
             val viewModel = DeviceDosingChannelDetailViewModel(operations)
@@ -557,7 +559,7 @@ class DeviceDosingChannelDetailViewModelTest {
             viewModel.setMissedDoseRecoveryEnabled(true)
             testScheduler.advanceUntilIdle()
 
-            assertEquals(listOf(true, true), operations.missedDoseRecoveryTargets)
+            assertEquals(listOf(true), operations.missedDoseRecoveryTargets)
             assertEquals(2, operations.refreshCount)
             assertTrue(viewModel.currentDraft().missedDoseRecoveryEnabled)
             assertFalse(viewModel.currentDraft().missedDoseRecoverySyncing)

@@ -11,18 +11,19 @@ internal class DeviceDosingV1ConflictCoordinator(
     suspend fun <T> reconcile(
         address: DeviceDosingV1Address,
         outcome: DeviceRuntimeCommandOutcome<T>
-    ): DeviceDosingV1MutationResult<T> = if (outcome.isRevisionConflict()) {
+    ): DeviceDosingV1MutationResult<T> {
         outcome.connectionGenerationOrNull()?.let { generation ->
             stateOwner.invalidate(address.deviceUid, address.channelKey, generation, null)
         }
         refreshCoordinator.refreshWithinGate(address)
-        DeviceDosingV1MutationResult.Conflict
-    } else {
-        // A failed command can still coincide with device-side state changes (for example BUSY).
-        // Reconcile centrally so every observer sees the latest authoritative snapshot; the UI
-        // never invents or preserves a parallel runtime state after a failed mutation.
-        refreshCoordinator.refreshWithinGate(address)
-        DeviceDosingV1MutationResult.Failed(outcome)
+        return if (outcome.isRevisionConflict()) {
+            DeviceDosingV1MutationResult.Conflict
+        } else {
+            // A failed command can still coincide with device-side state changes. Invalidation
+            // prevents an unsuccessful readback from leaving the old revision writable, while the
+            // owner continues presenting its last validated projection until refresh succeeds.
+            DeviceDosingV1MutationResult.Failed(outcome)
+        }
     }
 }
 

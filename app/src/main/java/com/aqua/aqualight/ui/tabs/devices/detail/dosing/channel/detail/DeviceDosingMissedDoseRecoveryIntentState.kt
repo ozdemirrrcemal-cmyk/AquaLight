@@ -5,7 +5,6 @@ import com.aqua.aqualight.application.devices.dosing.DeviceDosingChannelOperatio
 import com.aqua.aqualight.application.devices.dosing.DeviceDosingChannelOperations
 import com.aqua.aqualight.application.devices.dosing.DeviceDosingChannelSnapshot
 import com.aqua.aqualight.application.devices.dosing.DeviceDosingMutationReconciliation
-import com.aqua.aqualight.application.devices.dosing.applyLatestIntentWithReconciliation
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Job
@@ -357,22 +356,12 @@ internal class DeviceDosingMissedDoseRecoveryController(
                         )
                     } else {
                         try {
-                            operations.applyLatestIntentWithReconciliation(
-                                deviceUid = binding.deviceUid,
-                                slotId = binding.slotId,
-                                desiredDomain = MissedDoseRecoveryDomain(action.targetEnabled),
-                                domainFrom = { snapshot ->
-                                    MissedDoseRecoveryDomain(
-                                        snapshot.program?.missedDoseRecoveryEnabled
-                                    )
-                                },
-                                apply = {
-                                    operations.setMissedDoseRecoveryEnabled(
-                                        binding.deviceUid,
-                                        binding.slotId,
-                                        action.targetEnabled
-                                    )
-                                }
+                            DeviceDosingMutationReconciliation(
+                                operations.setMissedDoseRecoveryEnabled(
+                                    binding.deviceUid,
+                                    binding.slotId,
+                                    action.targetEnabled
+                                )
                             )
                         } catch (cancellation: CancellationException) {
                             throw cancellation
@@ -479,9 +468,6 @@ internal class DeviceDosingMissedDoseRecoveryController(
     }
 }
 
-private data class MissedDoseRecoveryDomain(
-    val enabled: Boolean?
-)
 
 private fun DeviceDosingChannelOperationResult.toReconciliationFailure():
     DeviceDosingChannelDetailFailure = when (this) {

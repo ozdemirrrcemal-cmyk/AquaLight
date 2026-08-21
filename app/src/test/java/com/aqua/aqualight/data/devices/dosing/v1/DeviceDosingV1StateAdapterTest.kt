@@ -1,7 +1,6 @@
 package com.aqua.aqualight.data.devices.dosing.v1
 
 import com.aqua.aqualight.application.devices.dosing.DeviceDosingChannelOperationResult
-import com.aqua.aqualight.application.devices.dosing.DeviceDosingChannelRejection
 import com.aqua.aqualight.data.devices.model.DeviceUid
 import com.aqua.aqualight.data.devices.runtime.core.DeviceRuntimeCommand
 import com.aqua.aqualight.data.devices.runtime.core.DeviceRuntimeCommandGateway
@@ -13,6 +12,7 @@ import com.aqua.aqualight.data.devices.runtime.events.DeviceRuntimeTypedEvent
 import java.util.ArrayDeque
 import kotlinx.coroutines.async
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.test.runTest
 import org.json.JSONObject
 import org.junit.Assert.assertEquals
@@ -136,7 +136,56 @@ class DeviceDosingV1StateAdapterTest {
     }
 
     @Test
-    fun `revision conflict refreshes authoritative state without retrying mutation`() = runTest {
+    fun `new connection invalidation preserves presentation until authoritative refresh`() =
+        runTest {
+            val owner = DeviceDosingV1StateOwner()
+            val key = DeviceDosingV1ChannelKey.from("channel1")
+            val initialRequest = owner.beginRequest(DEVICE_UID, key)
+            val revisionSeven = fixtureState(revision = 7L)
+            assertEquals(
+                DeviceDosingV1CommitDisposition.APPLIED,
+                owner.commitRefresh(
+                    initialRequest,
+                    GENERATION_ONE,
+                    revisionSeven.global,
+                    revisionSeven.channel,
+                    revisionSeven.progress
+                )
+            )
+            val presentedChannel = owner.reads.observeChannel(DEVICE_UID, key).first()
+            val presentedCalibration = owner.reads.observeCalibration(DEVICE_UID, key).first()
+
+            assertEquals(
+                DeviceDosingV1InvalidationDisposition.APPLIED,
+                owner.invalidate(DEVICE_UID, key, GENERATION_TWO, revisionHint = null)
+            )
+
+            assertNull(owner.reads.currentChannel(DEVICE_UID, key))
+            assertNull(owner.reads.currentCalibration(DEVICE_UID, key))
+            assertNull(owner.reads.authoritativeRevision(DEVICE_UID, key))
+            assertEquals(presentedChannel, owner.reads.observeChannel(DEVICE_UID, key).first())
+            assertEquals(
+                presentedCalibration,
+                owner.reads.observeCalibration(DEVICE_UID, key).first()
+            )
+
+            val reconnectRequest = owner.beginRequest(DEVICE_UID, key)
+            val revisionThree = fixtureState(revision = 3L)
+            assertEquals(
+                DeviceDosingV1CommitDisposition.APPLIED,
+                owner.commitRefresh(
+                    reconnectRequest,
+                    GENERATION_TWO,
+                    revisionThree.global,
+                    revisionThree.channel,
+                    revisionThree.progress
+                )
+            )
+            assertEquals(3L, owner.reads.currentChannel(DEVICE_UID, key)?.revision)
+        }
+
+    @Test
+    fun `revision conflict is successful when readback already proves the assignment`() = runTest {
         val gateway = ScriptedDosingGateway().apply {
             enqueueRefresh(revision = 7L)
             enqueue(
@@ -155,10 +204,7 @@ class DeviceDosingV1StateAdapterTest {
             requireNotNull(initial.snapshot.program)
         )
 
-        assertEquals(
-            DeviceDosingChannelOperationResult.Rejected(DeviceDosingChannelRejection.CONFLICT),
-            result
-        )
+        assertTrue(result is DeviceDosingChannelOperationResult.Success)
         val mutations = gateway.requests.filter { request ->
             request.action == DeviceDosingV1Contract.Action.PROGRAM_APPLY
         }
@@ -272,15 +318,29 @@ class DeviceDosingV1StateAdapterTest {
     }
 
     @Test
-    fun `runtime lifecycle boundary clears the previous session snapshot`() = runTest {
+    fun `runtime lifecycle boundary invalidates writes without clearing presentation`() = runTest {
         val gateway = ScriptedDosingGateway().apply { enqueueRefresh(revision = 7L) }
         val adapter = DeviceDosingV1StateAdapter(DeviceDosingV1Repository(gateway))
         adapter.channelOperations.refresh(DEVICE_UID.value, SLOT_ID)
+        val presentedChannel = adapter.channelOperations.observe(DEVICE_UID.value, SLOT_ID).first()
+        val presentedCards = adapter.channelOperations.observeAll(DEVICE_UID.value).first()
+        val presentedCalibration = adapter.stateAccess
+            .observeCalibration(DEVICE_UID.value, SLOT_ID)
+            .first()
 
         adapter.consume(DeviceRuntimeLifecycleEvent.Unavailable(DEVICE_UID))
 
         assertNull(adapter.currentChannel(DEVICE_UID.value, SLOT_ID))
         assertNull(adapter.currentCalibration(DEVICE_UID.value, SLOT_ID))
+        assertEquals(
+            presentedChannel,
+            adapter.channelOperations.observe(DEVICE_UID.value, SLOT_ID).first()
+        )
+        assertEquals(presentedCards, adapter.channelOperations.observeAll(DEVICE_UID.value).first())
+        assertEquals(
+            presentedCalibration,
+            adapter.stateAccess.observeCalibration(DEVICE_UID.value, SLOT_ID).first()
+        )
     }
 
     private class ScriptedDosingGateway(

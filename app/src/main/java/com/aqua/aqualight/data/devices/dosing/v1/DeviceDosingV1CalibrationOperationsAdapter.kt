@@ -171,6 +171,10 @@ private fun <T> DeviceDosingV1MutationResult<T>.toCalibrationResult(
         snapshot = state.calibration,
         operationDurationMs = operationDuration(value)
     )
+    // Replay-safe assignment reconciliation is not enabled for calibration workflows.
+    is DeviceDosingV1MutationResult.Reconciled -> DeviceDosingCalibrationResult.Rejected(
+        DeviceDosingCalibrationFailure.INTERNAL
+    )
     // Calibration commands are runtime mutations and cannot legitimately produce Committed.
     // Keep this defensive path fail-closed if that contract ever changes unexpectedly.
     is DeviceDosingV1MutationResult.Committed -> DeviceDosingCalibrationResult.Rejected(

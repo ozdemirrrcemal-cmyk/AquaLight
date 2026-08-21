@@ -200,7 +200,7 @@ internal class DeviceDosingV1StateOwner(
         val device = when {
             existingDevice == null -> emptyDevice(connectionGeneration)
             connectionGeneration.value > existingDevice.connectionGeneration.value ->
-                emptyDevice(connectionGeneration)
+                existingDevice.advanceConnectionGeneration(connectionGeneration)
             else -> existingDevice
         }
         val current = device.channels[channelKey]
@@ -248,11 +248,21 @@ internal class DeviceDosingV1StateOwner(
         )
     }
 
-    /** Runtime lifecycle clearing must never erase durable channel alert intent or dedupe state. */
-    fun clear(deviceUid: DeviceUid) = synchronized(lock) {
-        if (deviceUid in states.value) {
-            states.value = states.value.toMutableMap().apply { remove(deviceUid) }.toMap()
-        }
+    /**
+     * A socket lifecycle transition revokes write authority but is not a domain-state reset.
+     * Presentation keeps the last fully validated firmware projection until the authenticated
+     * generation refreshes it, preventing transport churn from becoming false switch/card state.
+     */
+    fun invalidateAll(deviceUid: DeviceUid) = synchronized(lock) {
+        val device = states.value[deviceUid] ?: return@synchronized
+        publish(
+            deviceUid,
+            device.copy(
+                channels = device.channels.mapValues { (_, channel) ->
+                    channel.copy(invalidated = true)
+                }
+            )
+        )
     }
 
     private fun prepareDevice(
@@ -281,7 +291,7 @@ internal class DeviceDosingV1StateOwner(
                 disposition = null,
                 device = when {
                     existing == null -> emptyDevice(connectionGeneration)
-                    newerConnection -> emptyDevice(connectionGeneration)
+                    newerConnection -> existing.advanceConnectionGeneration(connectionGeneration)
                     else -> existing
                 }
             )
@@ -298,6 +308,21 @@ internal class DeviceDosingV1StateOwner(
         connectionGeneration = generation,
         global = null,
         channels = emptyMap()
+    )
+
+    /**
+     * Cross a runtime connection boundary without turning a transport transition into fake UI
+     * state. Old revisions and global data are not authoritative in the new session, but the last
+     * validated channel/calibration projections remain safe for presentation until refresh wins.
+     */
+    private fun OwnedDosingDeviceState.advanceConnectionGeneration(
+        generation: DeviceRuntimeConnectionGeneration
+    ): OwnedDosingDeviceState = copy(
+        connectionGeneration = generation,
+        global = null,
+        channels = channels.mapValues { (_, channel) ->
+            channel.copy(revision = 0L, invalidated = true)
+        }
     )
 
     private data class PreparedDevice(

@@ -37,6 +37,11 @@ internal sealed interface DeviceDosingV1MutationResult<out T> {
         val revision: Long
     ) : DeviceDosingV1MutationResult<T>
 
+    /** A failed/contended assignment was proven present by authoritative readback. */
+    data class Reconciled(
+        val state: DeviceDosingV1AuthoritativeState
+    ) : DeviceDosingV1MutationResult<Nothing>
+
     data class Failed(val outcome: DeviceRuntimeCommandOutcome<*>) : DeviceDosingV1MutationResult<Nothing>
     data class LocallyRejected(val reason: DeviceDosingChannelRejection) : DeviceDosingV1MutationResult<Nothing>
     data object Conflict : DeviceDosingV1MutationResult<Nothing>
@@ -92,8 +97,8 @@ internal class DeviceDosingV1StateAdapter(
 
     suspend fun consume(event: DeviceRuntimeTypedEvent): DeviceDosingV1EventResult = eventCoordinator.consume(event)
 
-    /** A reconnect or disconnect boundary must never retain a previous session's snapshots. */
-    fun consume(event: DeviceRuntimeLifecycleEvent) { stateAccess.clear(event.deviceUid) }
+    /** Socket lifecycle changes revoke authority without fabricating empty firmware state. */
+    fun consume(event: DeviceRuntimeLifecycleEvent) { stateAccess.invalidateAll(event.deviceUid) }
 
     fun currentChannel(deviceUid: String, slotId: String): DeviceDosingChannelSnapshot? =
         stateAccess.currentChannel(deviceUid, slotId)
