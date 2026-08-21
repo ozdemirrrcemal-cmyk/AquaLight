@@ -6,7 +6,6 @@ import com.aqua.aqualight.application.devices.dosing.DeviceDosingChannelCommitte
 import com.aqua.aqualight.application.devices.dosing.DeviceDosingChannelDetailDraftPolicy
 import com.aqua.aqualight.application.devices.dosing.DeviceDosingChannelOperationResult
 import com.aqua.aqualight.application.devices.dosing.DeviceDosingChannelOperations
-import com.aqua.aqualight.application.devices.dosing.DeviceDosingChannelRejection
 import com.aqua.aqualight.application.devices.dosing.DeviceDosingChannelSnapshot
 import com.aqua.aqualight.application.devices.dosing.DeviceDosingManualDoseDraftPolicy
 import com.aqua.aqualight.application.devices.dosing.DeviceDosingRunSource
@@ -53,18 +52,7 @@ sealed interface DeviceDosingChannelDetailEvent {
     ) : DeviceDosingChannelDetailEvent
 }
 
-private data class InFlightMissedDoseRecovery(
-    val targetEnabled: Boolean,
-    val committedRevision: Long? = null
-)
-
-/**
- * State owner for one channel detail screen, backed only by the application boundary.
- *
- * Missed-dose recovery follows Android unidirectional-data-flow semantics: the authoritative
- * device snapshot remains central, while the latest user intent is presentation-only state. Device
- * writes stay serialized and an intermediate intent can never overwrite a newer user choice.
- */
+/** State owner for one channel detail screen, backed only by the application boundary. */
 internal class DeviceDosingChannelDetailViewModel(
     private val operations: DeviceDosingChannelOperations
 ) : ViewModel() {
@@ -74,35 +62,18 @@ internal class DeviceDosingChannelDetailViewModel(
     private val eventChannel = Channel<DeviceDosingChannelDetailEvent>(Channel.BUFFERED)
     val events: Flow<DeviceDosingChannelDetailEvent> = eventChannel.receiveAsFlow()
 
+    private val missedDoseIntent = DeviceDosingMissedDoseRecoveryIntentState()
+    private var missedDoseAuthority = DeviceDosingMissedDoseRecoveryAuthority()
     private var boundDeviceUid: String = ""
     private var boundSlotId: String = ""
     private var observeJob: Job? = null
     private var refreshJob: Job? = null
     private var mutationJob: Job? = null
 
-    private var desiredMissedDoseRecoveryEnabled: Boolean? = null
-    private var inFlightMissedDoseRecovery: InFlightMissedDoseRecovery? = null
-    private var authoritativeMissedDoseRecoveryEnabled: Boolean = false
-    private var authoritativeMissedDoseRecoveryEditable: Boolean = false
-    private var authoritativeMissedDoseRecoveryRevision: Long = 0L
-
-    fun bind(
-        deviceUidText: String,
-        slotIdText: String
-    ) {
+    fun bind(deviceUidText: String, slotIdText: String) {
         val deviceUid = deviceUidText.trim()
         val slotId = slotIdText.trim()
-        if (deviceUid.isBlank() || slotId.isBlank()) {
-            observeJob?.cancel()
-            refreshJob?.cancel()
-            mutationJob?.cancel()
-            boundDeviceUid = ""
-            boundSlotId = ""
-            resetMissedDoseRecoveryPresentation()
-            mutableDraft.value = DeviceDosingChannelDetailDraft()
-            return
-        }
-        if (boundDeviceUid == deviceUid && boundSlotId == slotId) {
+        if (boundDeviceUid == deviceUid && boundSlotId == slotId && deviceUid.isNotBlank()) {
             refreshAuthoritative()
             return
         }
@@ -110,26 +81,20 @@ internal class DeviceDosingChannelDetailViewModel(
         observeJob?.cancel()
         refreshJob?.cancel()
         mutationJob?.cancel()
-        boundDeviceUid = deviceUid
-        boundSlotId = slotId
-        resetMissedDoseRecoveryPresentation()
+        missedDoseIntent.reset()
+        missedDoseAuthority = DeviceDosingMissedDoseRecoveryAuthority()
         mutableDraft.value = DeviceDosingChannelDetailDraft()
+        boundDeviceUid = deviceUid.takeIf { it.isNotBlank() && slotId.isNotBlank() }.orEmpty()
+        boundSlotId = slotId.takeIf { boundDeviceUid.isNotBlank() }.orEmpty()
+        if (boundDeviceUid.isBlank()) return
+
         observeJob = viewModelScope.launch {
             operations.observe(deviceUid, slotId).collect { snapshot ->
                 if (boundDeviceUid != deviceUid || boundSlotId != slotId) return@collect
                 if (snapshot == null) {
-                    resetMissedDoseRecoveryPresentation()
-                    mutableDraft.value = mutableDraft.value.copy(
-                        routeValid = false,
-                        authoritativeStateAvailable = false,
-                        missedDoseRecoveryEnabled = false,
-                        missedDoseRecoveryEditable = false,
-                        missedDoseRecoverySyncing = false,
-                        manualDoseActive = false,
-                        manualDoseEnabled = false,
-                        resetEnabled = false,
-                        operationInProgress = false
-                    )
+                    missedDoseIntent.reset()
+                    missedDoseAuthority = DeviceDosingMissedDoseRecoveryAuthority()
+                    mutableDraft.value = DeviceDosingChannelDetailDraft()
                 } else {
                     applySnapshot(snapshot)
                 }
@@ -156,18 +121,15 @@ internal class DeviceDosingChannelDetailViewModel(
 
     fun setMissedDoseRecoveryEnabled(enabled: Boolean) {
         val state = mutableDraft.value
-        val switchOwnsOperation = state.missedDoseRecoverySyncing
-        if (
-            !state.missedDoseRecoveryEditable ||
-            (state.operationInProgress && !switchOwnsOperation) ||
-            state.missedDoseRecoveryEnabled == enabled
-        ) {
-            return
+        val blockedByOtherOperation = state.operationInProgress && !state.missedDoseRecoverySyncing
+        val shouldAccept = state.missedDoseRecoveryEditable &&
+            !blockedByOtherOperation &&
+            state.missedDoseRecoveryEnabled != enabled
+        if (shouldAccept) {
+            missedDoseIntent.request(enabled)
+            mutableDraft.value = missedDoseIntent.present(mutableDraft.value, missedDoseAuthority)
+            driveMissedDoseRecovery()
         }
-
-        desiredMissedDoseRecoveryEnabled = enabled
-        publishMissedDoseRecoveryPresentation()
-        driveMissedDoseRecovery()
     }
 
     fun startManualDose(rawAmount: String) {
@@ -193,161 +155,71 @@ internal class DeviceDosingChannelDetailViewModel(
 
     fun stopManualDose() {
         if (!mutableDraft.value.manualDoseActive) return
-        mutate(
-            operation = operations::doseStop,
-            successEvent = DeviceDosingChannelDetailEvent.ManualDoseStopped
-        )
+        mutate(operations::doseStop, DeviceDosingChannelDetailEvent.ManualDoseStopped)
     }
 
     fun resetChannel() {
         if (!mutableDraft.value.resetEnabled) return
-        mutate(
-            operation = operations::reset,
-            successEvent = DeviceDosingChannelDetailEvent.ChannelReset
-        )
+        mutate(operations::reset, DeviceDosingChannelDetailEvent.ChannelReset)
     }
 
     private fun driveMissedDoseRecovery() {
-        if (inFlightMissedDoseRecovery != null) return
-
-        val targetEnabled = desiredMissedDoseRecoveryEnabled ?: run {
-            publishMissedDoseRecoveryPresentation()
-            return
-        }
-        if (targetEnabled == authoritativeMissedDoseRecoveryEnabled) {
-            desiredMissedDoseRecoveryEnabled = null
-            publishMissedDoseRecoveryPresentation()
-            return
-        }
-        if (!authoritativeMissedDoseRecoveryEditable) {
-            failFinalMissedDoseRecoveryIntent(DeviceDosingChannelDetailFailure.NOT_EDITABLE)
-            return
-        }
-
-        val deviceUid = boundDeviceUid
-        val slotId = boundSlotId
-        if (deviceUid.isBlank() || slotId.isBlank()) {
-            failFinalMissedDoseRecoveryIntent(DeviceDosingChannelDetailFailure.UNAVAILABLE)
-            return
-        }
-
-        inFlightMissedDoseRecovery = InFlightMissedDoseRecovery(targetEnabled = targetEnabled)
-        publishMissedDoseRecoveryPresentation()
-        mutationJob = viewModelScope.launch {
-            val result = runCatching {
-                operations.setMissedDoseRecoveryEnabled(deviceUid, slotId, targetEnabled)
-            }.getOrElse { DeviceDosingChannelOperationResult.Failed }
-            if (boundDeviceUid != deviceUid || boundSlotId != slotId) return@launch
-            applyMissedDoseRecoveryResult(targetEnabled, result)
-        }
-    }
-
-    private suspend fun applyMissedDoseRecoveryResult(
-        targetEnabled: Boolean,
-        result: DeviceDosingChannelOperationResult
-    ) {
-        val inFlight = inFlightMissedDoseRecovery
-        if (inFlight == null || inFlight.targetEnabled != targetEnabled) return
-
-        when (result) {
-            is DeviceDosingChannelOperationResult.Success -> {
-                inFlightMissedDoseRecovery = inFlight.copy(
-                    committedRevision = result.snapshot.revision
+        when (val action = missedDoseIntent.nextAction(missedDoseAuthority)) {
+            DeviceDosingMissedDoseRecoveryAction.Idle -> {
+                mutableDraft.value = missedDoseIntent.present(
+                    mutableDraft.value,
+                    missedDoseAuthority
                 )
-                applySnapshot(result.snapshot)
             }
-            is DeviceDosingChannelCommittedResult -> {
-                inFlightMissedDoseRecovery = inFlight.copy(
-                    committedRevision = result.revision
+            is DeviceDosingMissedDoseRecoveryAction.Fail -> {
+                mutableDraft.value = missedDoseIntent.present(
+                    mutableDraft.value,
+                    missedDoseAuthority
                 )
-                val failure = reconcileMissedDoseRecoveryWithAuthority()
-                publishMissedDoseRecoveryPresentation()
-                if (failure != null) {
-                    eventChannel.send(DeviceDosingChannelDetailEvent.OperationFailed(failure))
-                } else {
-                    driveMissedDoseRecovery()
+                viewModelScope.launch {
+                    eventChannel.send(DeviceDosingChannelDetailEvent.OperationFailed(action.failure))
                 }
             }
-            is DeviceDosingChannelOperationResult.Rejected -> {
-                handleMissedDoseRecoveryFailure(
-                    failedTargetEnabled = targetEnabled,
-                    failure = result.reason.toDetailFailure()
+            is DeviceDosingMissedDoseRecoveryAction.Write -> {
+                val deviceUid = boundDeviceUid
+                val slotId = boundSlotId
+                mutableDraft.value = missedDoseIntent.present(
+                    mutableDraft.value,
+                    missedDoseAuthority
                 )
+                mutationJob = viewModelScope.launch {
+                    val result = if (deviceUid.isBlank() || slotId.isBlank()) {
+                        DeviceDosingChannelOperationResult.Unavailable
+                    } else {
+                        runCatching {
+                            operations.setMissedDoseRecoveryEnabled(
+                                deviceUid,
+                                slotId,
+                                action.targetEnabled
+                            )
+                        }.getOrElse { DeviceDosingChannelOperationResult.Failed }
+                    }
+                    if (boundDeviceUid != deviceUid || boundSlotId != slotId) return@launch
+                    val resolution = missedDoseIntent.onOperationResult(
+                        action.targetEnabled,
+                        result,
+                        missedDoseAuthority
+                    )
+                    val snapshot = resolution.snapshot
+                    if (snapshot != null && snapshot.revision >= missedDoseAuthority.revision) {
+                        applySnapshot(snapshot, resolution.failure)
+                    } else {
+                        mutableDraft.value = missedDoseIntent.present(
+                            mutableDraft.value,
+                            missedDoseAuthority
+                        )
+                        resolution.failure?.let {
+                            eventChannel.send(DeviceDosingChannelDetailEvent.OperationFailed(it))
+                        }
+                        driveMissedDoseRecovery()
+                    }
+                }
             }
-            DeviceDosingChannelOperationResult.Unavailable -> {
-                handleMissedDoseRecoveryFailure(
-                    failedTargetEnabled = targetEnabled,
-                    failure = DeviceDosingChannelDetailFailure.UNAVAILABLE
-                )
-            }
-            DeviceDosingChannelOperationResult.Failed -> {
-                handleMissedDoseRecoveryFailure(
-                    failedTargetEnabled = targetEnabled,
-                    failure = DeviceDosingChannelDetailFailure.TRY_AGAIN
-                )
-            }
-        }
-    }
-
-    private suspend fun handleMissedDoseRecoveryFailure(
-        failedTargetEnabled: Boolean,
-        failure: DeviceDosingChannelDetailFailure
-    ) {
-        val inFlight = inFlightMissedDoseRecovery
-        if (inFlight == null || inFlight.targetEnabled != failedTargetEnabled) return
-
-        inFlightMissedDoseRecovery = null
-        val desiredEnabled = desiredMissedDoseRecoveryEnabled
-        when {
-            desiredEnabled == authoritativeMissedDoseRecoveryEnabled -> {
-                desiredMissedDoseRecoveryEnabled = null
-                publishMissedDoseRecoveryPresentation()
-            }
-            desiredEnabled != null && desiredEnabled != failedTargetEnabled -> {
-                publishMissedDoseRecoveryPresentation()
-                driveMissedDoseRecovery()
-            }
-            else -> {
-                desiredMissedDoseRecoveryEnabled = null
-                publishMissedDoseRecoveryPresentation()
-                eventChannel.send(DeviceDosingChannelDetailEvent.OperationFailed(failure))
-            }
-        }
-    }
-
-    /**
-     * A persisted ACK is not presented as authoritative state. Confirmation requires a central
-     * snapshot at or beyond the committed revision. This also handles the race where that snapshot
-     * reaches the observer immediately before the coroutine receives the ACK result.
-     */
-    private fun reconcileMissedDoseRecoveryWithAuthority(): DeviceDosingChannelDetailFailure? {
-        val inFlight = inFlightMissedDoseRecovery ?: return null
-        val committedRevision = inFlight.committedRevision ?: return null
-        if (authoritativeMissedDoseRecoveryRevision < committedRevision) return null
-
-        inFlightMissedDoseRecovery = null
-        val targetConfirmed =
-            authoritativeMissedDoseRecoveryEnabled == inFlight.targetEnabled
-        val latestIntentStillRequiresFailedTarget =
-            desiredMissedDoseRecoveryEnabled == inFlight.targetEnabled
-
-        return if (!targetConfirmed && latestIntentStillRequiresFailedTarget) {
-            desiredMissedDoseRecoveryEnabled = null
-            DeviceDosingChannelDetailFailure.STATE_CHANGED
-        } else {
-            if (desiredMissedDoseRecoveryEnabled == authoritativeMissedDoseRecoveryEnabled) {
-                desiredMissedDoseRecoveryEnabled = null
-            }
-            null
-        }
-    }
-
-    private fun failFinalMissedDoseRecoveryIntent(failure: DeviceDosingChannelDetailFailure) {
-        desiredMissedDoseRecoveryEnabled = null
-        inFlightMissedDoseRecovery = null
-        publishMissedDoseRecoveryPresentation()
-        viewModelScope.launch {
-            eventChannel.send(DeviceDosingChannelDetailEvent.OperationFailed(failure))
         }
     }
 
@@ -375,14 +247,12 @@ internal class DeviceDosingChannelDetailViewModel(
         is DeviceDosingChannelOperationResult.Success -> {
             applySnapshot(result.snapshot)
             mutableDraft.value = mutableDraft.value.copy(operationInProgress = false)
-            successEvent?.let { event -> eventChannel.send(event) }
+            successEvent?.let { eventChannel.send(it) }
             true
         }
         is DeviceDosingChannelCommittedResult -> {
-            // Persisted write is complete; central readback will update the draft when authoritative
-            // state is available again. Never project mutation response data as a fake snapshot.
             mutableDraft.value = mutableDraft.value.copy(operationInProgress = false)
-            successEvent?.let { event -> eventChannel.send(event) }
+            successEvent?.let { eventChannel.send(it) }
             true
         }
         is DeviceDosingChannelOperationResult.Rejected -> {
@@ -418,15 +288,26 @@ internal class DeviceDosingChannelDetailViewModel(
         }
     }
 
-    private fun applySnapshot(snapshot: DeviceDosingChannelSnapshot) {
-        authoritativeMissedDoseRecoveryEnabled =
-            snapshot.program?.missedDoseRecoveryEnabled == true
-        authoritativeMissedDoseRecoveryEditable = snapshot.program != null &&
-            snapshot.scheduling.supportsMissedDoseRecovery &&
-            snapshot.controls.programEditable
-        authoritativeMissedDoseRecoveryRevision = snapshot.revision
-
-        val missedDoseRecoveryFailure = reconcileMissedDoseRecoveryWithAuthority()
+    private fun applySnapshot(
+        snapshot: DeviceDosingChannelSnapshot,
+        priorMissedDoseFailure: DeviceDosingChannelDetailFailure? = null
+    ) {
+        val staleSnapshot = mutableDraft.value.authoritativeStateAvailable &&
+            snapshot.revision < missedDoseAuthority.revision
+        if (staleSnapshot) {
+            mutableDraft.value = missedDoseIntent.present(mutableDraft.value, missedDoseAuthority)
+            driveMissedDoseRecovery()
+            return
+        }
+        missedDoseAuthority = DeviceDosingMissedDoseRecoveryAuthority(
+            enabled = snapshot.program?.missedDoseRecoveryEnabled == true,
+            editable = snapshot.program != null &&
+                snapshot.scheduling.supportsMissedDoseRecovery &&
+                snapshot.controls.programEditable,
+            revision = snapshot.revision
+        )
+        val missedDoseFailure = priorMissedDoseFailure
+            ?: missedDoseIntent.onAuthorityChanged(missedDoseAuthority)
 
         mutableDraft.value = mutableDraft.value.copy(
             routeValid = snapshot.calibrated && DeviceDosingChannelDetailDraftPolicy
@@ -442,55 +323,12 @@ internal class DeviceDosingChannelDetailViewModel(
                 !snapshot.activeRun.active,
             resetEnabled = snapshot.controls.resetSupported
         )
-        publishMissedDoseRecoveryPresentation()
-
-        if (missedDoseRecoveryFailure != null) {
+        mutableDraft.value = missedDoseIntent.present(mutableDraft.value, missedDoseAuthority)
+        if (missedDoseFailure != null) {
             viewModelScope.launch {
-                eventChannel.send(
-                    DeviceDosingChannelDetailEvent.OperationFailed(missedDoseRecoveryFailure)
-                )
+                eventChannel.send(DeviceDosingChannelDetailEvent.OperationFailed(missedDoseFailure))
             }
-        } else {
-            driveMissedDoseRecovery()
         }
-    }
-
-    private fun publishMissedDoseRecoveryPresentation() {
-        val current = mutableDraft.value
-        val syncing = desiredMissedDoseRecoveryEnabled != null ||
-            inFlightMissedDoseRecovery != null
-        val operationInProgress = when {
-            syncing -> true
-            current.missedDoseRecoverySyncing -> false
-            else -> current.operationInProgress
-        }
-
-        mutableDraft.value = current.copy(
-            missedDoseRecoveryEnabled = desiredMissedDoseRecoveryEnabled
-                ?: authoritativeMissedDoseRecoveryEnabled,
-            missedDoseRecoveryEditable = authoritativeMissedDoseRecoveryEditable,
-            missedDoseRecoverySyncing = syncing,
-            operationInProgress = operationInProgress
-        )
-    }
-
-    private fun resetMissedDoseRecoveryPresentation() {
-        desiredMissedDoseRecoveryEnabled = null
-        inFlightMissedDoseRecovery = null
-        authoritativeMissedDoseRecoveryEnabled = false
-        authoritativeMissedDoseRecoveryEditable = false
-        authoritativeMissedDoseRecoveryRevision = 0L
+        driveMissedDoseRecovery()
     }
 }
-
-private fun DeviceDosingChannelRejection.toDetailFailure(): DeviceDosingChannelDetailFailure =
-    when (this) {
-        DeviceDosingChannelRejection.INVALID_DRAFT -> DeviceDosingChannelDetailFailure.INVALID_INPUT
-        DeviceDosingChannelRejection.NOT_EDITABLE -> DeviceDosingChannelDetailFailure.NOT_EDITABLE
-        DeviceDosingChannelRejection.NOT_CALIBRATED ->
-            DeviceDosingChannelDetailFailure.CALIBRATION_REQUIRED
-        DeviceDosingChannelRejection.BUSY -> DeviceDosingChannelDetailFailure.BUSY
-        DeviceDosingChannelRejection.CONFLICT -> DeviceDosingChannelDetailFailure.STATE_CHANGED
-        DeviceDosingChannelRejection.UNSAFE -> DeviceDosingChannelDetailFailure.SAFETY_BLOCKED
-        DeviceDosingChannelRejection.UNKNOWN -> DeviceDosingChannelDetailFailure.TRY_AGAIN
-    }

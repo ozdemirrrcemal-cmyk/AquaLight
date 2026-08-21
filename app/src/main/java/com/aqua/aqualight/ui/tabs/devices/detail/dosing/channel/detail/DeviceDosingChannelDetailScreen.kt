@@ -38,7 +38,13 @@ internal data class DeviceDosingChannelDetailUiState(
     val manualDoseEnabled: Boolean,
     val resetEnabled: Boolean,
     val operationInProgress: Boolean
-)
+) {
+    val missedDoseRecoveryInteractionEnabled: Boolean
+        get() {
+            val switchOwnsOperation = missedDoseRecoverySyncing || !operationInProgress
+            return missedDoseRecoveryEditable && switchOwnsOperation
+        }
+}
 
 internal data class DeviceDosingChannelDetailActions(
     val onMenuItemClick: (DosingDetailMenuItem) -> Unit,
@@ -139,8 +145,7 @@ private fun DosingDetailSectionRows(
     if (section.hasMissedDoseRecoverySwitch) {
         DosingMissedDoseRecoverySwitch(
             checked = state.missedDoseRecoveryEnabled,
-            enabled = state.missedDoseRecoveryEditable &&
-                (!state.operationInProgress || state.missedDoseRecoverySyncing),
+            enabled = state.missedDoseRecoveryInteractionEnabled,
             onCheckedChange = actions.onMissedDoseRecoveryChange
         )
     }
