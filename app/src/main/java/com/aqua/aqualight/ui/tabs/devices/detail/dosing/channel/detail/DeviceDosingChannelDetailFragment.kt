@@ -81,6 +81,7 @@ class DeviceDosingChannelDetailFragment :
                         },
                         missedDoseRecoveryEnabled = draft.missedDoseRecoveryEnabled,
                         missedDoseRecoveryEditable = draft.missedDoseRecoveryEditable,
+                        missedDoseRecoverySyncing = draft.missedDoseRecoverySyncing,
                         manualDoseActive = draft.manualDoseActive,
                         manualDoseEnabled = draft.manualDoseEnabled,
                         resetEnabled = draft.resetEnabled,
@@ -161,8 +162,6 @@ class DeviceDosingChannelDetailFragment :
             viewLifecycleOwner.repeatOnLifecycle(Lifecycle.State.STARTED) {
                 viewModel.events.collect { event ->
                     when (event) {
-                        DeviceDosingChannelDetailEvent.MissedDoseRecoverySaved ->
-                            showOperationMessage(R.string.device_dosing_detail_settings_saved)
                         DeviceDosingChannelDetailEvent.ManualDoseStarted ->
                             showOperationMessage(R.string.device_dosing_detail_manual_started)
                         DeviceDosingChannelDetailEvent.ManualDoseStopped ->

@@ -33,6 +33,7 @@ internal data class DeviceDosingChannelDetailUiState(
     val lastCalibrationDate: String,
     val missedDoseRecoveryEnabled: Boolean,
     val missedDoseRecoveryEditable: Boolean,
+    val missedDoseRecoverySyncing: Boolean,
     val manualDoseActive: Boolean,
     val manualDoseEnabled: Boolean,
     val resetEnabled: Boolean,
@@ -138,7 +139,8 @@ private fun DosingDetailSectionRows(
     if (section.hasMissedDoseRecoverySwitch) {
         DosingMissedDoseRecoverySwitch(
             checked = state.missedDoseRecoveryEnabled,
-            enabled = state.missedDoseRecoveryEditable && !state.operationInProgress,
+            enabled = state.missedDoseRecoveryEditable &&
+                (!state.operationInProgress || state.missedDoseRecoverySyncing),
             onCheckedChange = actions.onMissedDoseRecoveryChange
         )
     }
