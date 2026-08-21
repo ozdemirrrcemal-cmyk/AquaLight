@@ -62,7 +62,7 @@
     <string name="device_dosing_detail_plan_title">Dosing Plan</string>
     <string name="device_dosing_detail_plan_description">Set the daily amount, schedule mode and recurrence.</string>
     <string name="device_dosing_detail_missed_dose_title">Missed dose recovery</string>
-    <string name="device_dosing_detail_missed_dose_description">Recovers missed scheduled doses one at a time, oldest first, when device conditions are safe. When off, missed doses are skipped.</string>
+    <string name="device_dosing_detail_missed_dose_description">Recovers missed doses in order when device conditions are safe.</string>
     <string name="device_dosing_detail_missed_dose_toggle_description">Missed dose recovery, %1$s</string>
     <string name="device_dosing_detail_calibration_title">Calibration</string>
     <string name="device_dosing_detail_last_calibrated_compact">Last: %1$s</string>
