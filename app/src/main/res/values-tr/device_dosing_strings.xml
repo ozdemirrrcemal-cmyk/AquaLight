@@ -166,6 +166,7 @@
     <string name="device_dosing_custom_hero_title">Günlük dozu seçtiğiniz zaman aralıklarına dağıtın</string>
     <string name="device_dosing_custom_hero_description">Bir veya daha fazla zaman aralığı ekleyin. AquaLight günlük dozu, planlanan dozlara eşit olarak dağıtır.</string>
     <string name="device_dosing_custom_summary_section">Dağılım özeti</string>
+    <string name="device_dosing_custom_daily_dose_value_format">%1$s mL</string>
     <string name="device_dosing_custom_daily_amount_description">Dozaj Planı ekranında ayarlanan günlük dozu kullanır.</string>
     <string name="device_dosing_custom_total_applications">Günlük doz sayısı</string>
     <plurals name="device_dosing_custom_total_applications_format">

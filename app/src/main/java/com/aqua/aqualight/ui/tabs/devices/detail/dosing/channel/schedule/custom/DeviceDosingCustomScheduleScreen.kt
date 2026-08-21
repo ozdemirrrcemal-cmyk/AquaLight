@@ -128,7 +128,10 @@ private fun CustomScheduleSummary(
     AquaDeviceMenuSection(title = stringResource(R.string.device_dosing_custom_summary_section)) {
         AquaDeviceMenuValueRow(
             label = stringResource(R.string.device_dosing_detail_daily_dose),
-            value = "$dailyDose mL",
+            value = stringResource(
+                R.string.device_dosing_custom_daily_dose_value_format,
+                dailyDose
+            ),
             description = stringResource(R.string.device_dosing_custom_daily_amount_description),
             tone = AquaDeviceMenuTone.ACCENT
         )

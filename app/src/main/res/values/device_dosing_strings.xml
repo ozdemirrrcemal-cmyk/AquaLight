@@ -166,6 +166,7 @@
     <string name="device_dosing_custom_hero_title">Distribute the daily dose across the periods you choose</string>
     <string name="device_dosing_custom_hero_description">Add one or more time periods. AquaLight distributes the daily dose equally across the scheduled doses.</string>
     <string name="device_dosing_custom_summary_section">Distribution summary</string>
+    <string name="device_dosing_custom_daily_dose_value_format">%1$s mL</string>
     <string name="device_dosing_custom_daily_amount_description">Uses the daily dose set on the Dosing Plan screen.</string>
     <string name="device_dosing_custom_total_applications">Daily dose count</string>
     <plurals name="device_dosing_custom_total_applications_format">
