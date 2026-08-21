@@ -194,8 +194,16 @@ private fun DosingProgressMarkerLabel(
     availableWidth: Dp
 ) {
     val markerCenter = availableWidth * marker.positionFraction.coerceIn(0f, 1f)
-    val markerStart = (markerCenter - MARKER_LABEL_WIDTH / 2)
-        .coerceIn(0.dp, (availableWidth - MARKER_LABEL_WIDTH).coerceAtLeast(0.dp))
+    val halfLabelWidth = MARKER_LABEL_WIDTH / 2
+    val maximumMarkerStart = (availableWidth - MARKER_LABEL_WIDTH).coerceAtLeast(0.dp)
+    val unclampedMarkerStart = markerCenter - halfLabelWidth
+    val markerStart = unclampedMarkerStart.coerceIn(0.dp, maximumMarkerStart)
+    val markerTextAlign = when {
+        availableWidth <= MARKER_LABEL_WIDTH -> TextAlign.Center
+        unclampedMarkerStart < 0.dp -> TextAlign.Start
+        unclampedMarkerStart > maximumMarkerStart -> TextAlign.End
+        else -> TextAlign.Center
+    }
     BasicText(
         text = stringResource(
             R.string.device_dosing_channel_progress_marker_format,
@@ -206,7 +214,7 @@ private fun DosingProgressMarkerLabel(
             .width(MARKER_LABEL_WIDTH),
         style = typography.micro.copy(
             color = palette.valueText,
-            textAlign = TextAlign.Center
+            textAlign = markerTextAlign
         ),
         maxLines = 1,
         overflow = TextOverflow.Clip
