@@ -185,6 +185,40 @@ class DeviceDosingV1StateAdapterTest {
         }
 
     @Test
+    fun `lifecycle invalidation rejects a late reply from the previous socket`() = runTest {
+        val owner = DeviceDosingV1StateOwner()
+        val key = DeviceDosingV1ChannelKey.from("channel1")
+        val initial = fixtureState(revision = 7L)
+        assertEquals(
+            DeviceDosingV1CommitDisposition.APPLIED,
+            owner.commitRefresh(
+                owner.beginRequest(DEVICE_UID, key),
+                GENERATION_ONE,
+                initial.global,
+                initial.channel,
+                initial.progress
+            )
+        )
+        val lateRequest = owner.beginRequest(DEVICE_UID, key)
+
+        owner.invalidateAll(DEVICE_UID)
+        val late = fixtureState(revision = 8L)
+
+        assertEquals(
+            DeviceDosingV1CommitDisposition.STALE_REQUEST,
+            owner.commitRefresh(
+                lateRequest,
+                GENERATION_ONE,
+                late.global,
+                late.channel,
+                late.progress
+            )
+        )
+        assertNull(owner.reads.currentChannel(DEVICE_UID, key))
+        assertEquals(7L, owner.reads.observeChannel(DEVICE_UID, key).first()?.revision)
+    }
+
+    @Test
     fun `revision conflict is successful when readback already proves the assignment`() = runTest {
         val gateway = ScriptedDosingGateway().apply {
             enqueueRefresh(revision = 7L)

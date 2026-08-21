@@ -255,6 +255,11 @@ internal class DeviceDosingV1StateOwner(
      */
     fun invalidateAll(deviceUid: DeviceUid) = synchronized(lock) {
         val device = states.value[deviceUid] ?: return@synchronized
+        requestGenerations.keys
+            .filter { address -> address.deviceUid == deviceUid }
+            .forEach { address ->
+                requestGenerations[address] = requestGenerations.getValue(address) + 1L
+            }
         publish(
             deviceUid,
             device.copy(
