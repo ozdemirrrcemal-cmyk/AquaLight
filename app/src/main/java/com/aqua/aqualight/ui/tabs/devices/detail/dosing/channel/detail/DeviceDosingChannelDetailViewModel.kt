@@ -103,8 +103,6 @@ internal class DeviceDosingChannelDetailViewModel(
         refreshAuthoritative()
     }
 
-    fun currentDraft(): DeviceDosingChannelDetailDraft = mutableDraft.value
-
     fun refreshAuthoritative() {
         val deviceUid = boundDeviceUid
         val slotId = boundSlotId
@@ -332,3 +330,7 @@ internal class DeviceDosingChannelDetailViewModel(
         driveMissedDoseRecovery()
     }
 }
+
+/** Read-only convenience accessor kept outside the ViewModel's behavioral surface. */
+internal fun DeviceDosingChannelDetailViewModel.currentDraft(): DeviceDosingChannelDetailDraft =
+    draft.value
