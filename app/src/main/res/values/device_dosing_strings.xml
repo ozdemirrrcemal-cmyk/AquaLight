@@ -17,7 +17,6 @@
     <string name="device_dosing_channel_calibration_required_description">Calibrate the pump before configuring and using this channel.</string>
     <string name="device_dosing_channel_program_empty_title">Set a dosing program</string>
     <string name="device_dosing_channel_program_empty_description">Choose the daily dose, program mode and dosing days for this channel.</string>
-    <string name="device_dosing_channel_daily_dose_format">%1$.2f mL/day</string>
     <string name="device_dosing_channel_every_day">Every day</string>
     <string name="device_dosing_channel_weekdays">Weekdays</string>
     <string name="device_dosing_channel_weekend">Weekend</string>

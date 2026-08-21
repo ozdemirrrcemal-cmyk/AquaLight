@@ -17,7 +17,6 @@
     <string name="device_dosing_channel_calibration_required_description">Bu kanalı yapılandırıp kullanmadan önce pompayı kalibre edin.</string>
     <string name="device_dosing_channel_program_empty_title">Dozaj programını ayarlayın</string>
     <string name="device_dosing_channel_program_empty_description">Bu kanal için günlük dozu, program modunu ve dozaj günlerini seçin.</string>
-    <string name="device_dosing_channel_daily_dose_format">%1$.2f mL/gün</string>
     <string name="device_dosing_channel_every_day">Her gün</string>
     <string name="device_dosing_channel_weekdays">Hafta içi</string>
     <string name="device_dosing_channel_weekend">Hafta sonu</string>
