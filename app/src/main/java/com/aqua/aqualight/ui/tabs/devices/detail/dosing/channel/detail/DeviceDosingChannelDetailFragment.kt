@@ -84,7 +84,8 @@ class DeviceDosingChannelDetailFragment :
                         manualDoseActive = draft.manualDoseActive,
                         manualDoseEnabled = draft.manualDoseEnabled,
                         resetEnabled = draft.resetEnabled,
-                        operationInProgress = draft.operationInProgress
+                        operationInProgress = draft.operationInProgress,
+                        missedDoseRecoverySyncing = draft.missedDoseRecoverySyncing
                     ),
                     actions = DeviceDosingChannelDetailActions(
                         onMenuItemClick = ::openMenuItem,

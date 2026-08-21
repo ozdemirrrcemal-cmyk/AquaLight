@@ -29,7 +29,8 @@ data class DeviceDosingChannelDetailDraft(
     val manualDoseActive: Boolean = false,
     val manualDoseEnabled: Boolean = false,
     val resetEnabled: Boolean = false,
-    val operationInProgress: Boolean = false
+    val operationInProgress: Boolean = false,
+    val missedDoseRecoverySyncing: Boolean = false
 )
 
 enum class DeviceDosingChannelDetailFailure {
@@ -69,6 +70,23 @@ internal class DeviceDosingChannelDetailViewModel(
     private var refreshJob: Job? = null
     private var mutationJob: Job? = null
 
+    private val missedDoseRecovery = DeviceDosingMissedDoseRecoveryController(
+        operations = operations,
+        scope = viewModelScope,
+        hooks = DeviceDosingMissedDoseRecoveryHooks(
+            currentBinding = {
+                DeviceDosingChannelDetailBinding(
+                    deviceUid = boundDeviceUid,
+                    slotId = boundSlotId
+                )
+            },
+            currentDraft = { mutableDraft.value },
+            updateDraft = { draft -> mutableDraft.value = draft },
+            applySnapshot = ::applySnapshot,
+            publishEvent = eventChannel::send
+        )
+    )
+
     fun bind(
         deviceUidText: String,
         slotIdText: String
@@ -79,6 +97,7 @@ internal class DeviceDosingChannelDetailViewModel(
             observeJob?.cancel()
             refreshJob?.cancel()
             mutationJob?.cancel()
+            missedDoseRecovery.reset()
             boundDeviceUid = ""
             boundSlotId = ""
             mutableDraft.value = DeviceDosingChannelDetailDraft()
@@ -92,6 +111,7 @@ internal class DeviceDosingChannelDetailViewModel(
         observeJob?.cancel()
         refreshJob?.cancel()
         mutationJob?.cancel()
+        missedDoseRecovery.reset()
         boundDeviceUid = deviceUid
         boundSlotId = slotId
         mutableDraft.value = DeviceDosingChannelDetailDraft()
@@ -99,6 +119,7 @@ internal class DeviceDosingChannelDetailViewModel(
             operations.observe(deviceUid, slotId).collect { snapshot ->
                 if (boundDeviceUid != deviceUid || boundSlotId != slotId) return@collect
                 if (snapshot == null) {
+                    missedDoseRecovery.reset()
                     mutableDraft.value = mutableDraft.value.copy(
                         routeValid = false,
                         authoritativeStateAvailable = false,
@@ -106,7 +127,8 @@ internal class DeviceDosingChannelDetailViewModel(
                         missedDoseRecoveryEditable = false,
                         manualDoseActive = false,
                         manualDoseEnabled = false,
-                        resetEnabled = false
+                        resetEnabled = false,
+                        missedDoseRecoverySyncing = false
                     )
                 } else {
                     applySnapshot(snapshot)
@@ -129,13 +151,14 @@ internal class DeviceDosingChannelDetailViewModel(
 
     fun setMissedDoseRecoveryEnabled(enabled: Boolean) {
         val state = mutableDraft.value
-        if (!state.missedDoseRecoveryEditable || state.missedDoseRecoveryEnabled == enabled) return
-        mutate(
-            operation = { deviceUid, slotId ->
-                operations.setMissedDoseRecoveryEnabled(deviceUid, slotId, enabled)
-            },
-            successEvent = DeviceDosingChannelDetailEvent.MissedDoseRecoverySaved
-        )
+        if (
+            !state.missedDoseRecoveryEditable ||
+            state.operationInProgress ||
+            state.missedDoseRecoveryEnabled == enabled
+        ) {
+            return
+        }
+        missedDoseRecovery.request(enabled)
     }
 
     fun startManualDose(rawAmount: String) {
@@ -181,9 +204,13 @@ internal class DeviceDosingChannelDetailViewModel(
     ) {
         val deviceUid = boundDeviceUid
         val slotId = boundSlotId
-        if (deviceUid.isBlank() || slotId.isBlank() || mutableDraft.value.operationInProgress) return
+        if (deviceUid.isBlank() || slotId.isBlank()) return
+
+        val state = mutableDraft.value
+        if (state.operationInProgress || state.missedDoseRecoverySyncing) return
+
         mutationJob?.cancel()
-        mutableDraft.value = mutableDraft.value.copy(operationInProgress = true)
+        mutableDraft.value = state.copy(operationInProgress = true)
         mutationJob = viewModelScope.launch {
             val result = runCatching { operation(deviceUid, slotId) }
                 .getOrElse { DeviceDosingChannelOperationResult.Failed }
@@ -261,10 +288,11 @@ internal class DeviceDosingChannelDetailViewModel(
                 !snapshot.activeRun.active,
             resetEnabled = snapshot.controls.resetSupported
         )
+        missedDoseRecovery.onSnapshot(snapshot)
     }
 }
 
-private fun DeviceDosingChannelRejection.toDetailFailure(): DeviceDosingChannelDetailFailure =
+internal fun DeviceDosingChannelRejection.toDetailFailure(): DeviceDosingChannelDetailFailure =
     when (this) {
         DeviceDosingChannelRejection.INVALID_DRAFT -> DeviceDosingChannelDetailFailure.INVALID_INPUT
         DeviceDosingChannelRejection.NOT_EDITABLE -> DeviceDosingChannelDetailFailure.NOT_EDITABLE

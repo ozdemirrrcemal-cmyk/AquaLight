@@ -36,7 +36,8 @@ internal data class DeviceDosingChannelDetailUiState(
     val manualDoseActive: Boolean,
     val manualDoseEnabled: Boolean,
     val resetEnabled: Boolean,
-    val operationInProgress: Boolean
+    val operationInProgress: Boolean,
+    val missedDoseRecoverySyncing: Boolean = false
 )
 
 internal data class DeviceDosingChannelDetailActions(
@@ -69,7 +70,11 @@ internal fun DeviceDosingChannelDetailScreen(
         verticalArrangement = Arrangement.spacedBy(AquaDeviceMenuGeometry.sectionGap)
     ) {
         item(key = DETAIL_HERO_KEY) {
-            DosingDetailHero()
+            AquaDeviceMenuHeroCard(
+                eyebrow = stringResource(R.string.device_dosing_detail_hero_eyebrow),
+                title = stringResource(R.string.device_dosing_detail_hero_title),
+                description = stringResource(R.string.device_dosing_detail_hero_description)
+            )
         }
         items(
             items = DOSING_DETAIL_MENU_SECTIONS,
@@ -78,15 +83,6 @@ internal fun DeviceDosingChannelDetailScreen(
             DosingDetailSection(section = section, state = state, actions = actions)
         }
     }
-}
-
-@Composable
-private fun DosingDetailHero() {
-    AquaDeviceMenuHeroCard(
-        eyebrow = stringResource(R.string.device_dosing_detail_hero_eyebrow),
-        title = stringResource(R.string.device_dosing_detail_hero_title),
-        description = stringResource(R.string.device_dosing_detail_hero_description)
-    )
 }
 
 @Composable
@@ -135,6 +131,17 @@ private fun DosingDetailSectionRows(
             onClick = { actions.onMenuItemClick(item) }
         )
     }
+    DosingMissedDoseRecoveryControl(section, state, actions)
+    DosingManualDoseControl(section, state, actions)
+    DosingResetChannelControl(section, state, actions)
+}
+
+@Composable
+private fun DosingMissedDoseRecoveryControl(
+    section: DosingDetailMenuSection,
+    state: DeviceDosingChannelDetailUiState,
+    actions: DeviceDosingChannelDetailActions
+) {
     if (section.hasMissedDoseRecoverySwitch) {
         DosingMissedDoseRecoverySwitch(
             checked = state.missedDoseRecoveryEnabled,
@@ -142,19 +149,38 @@ private fun DosingDetailSectionRows(
             onCheckedChange = actions.onMissedDoseRecoveryChange
         )
     }
+}
+
+@Composable
+private fun DosingManualDoseControl(
+    section: DosingDetailMenuSection,
+    state: DeviceDosingChannelDetailUiState,
+    actions: DeviceDosingChannelDetailActions
+) {
     if (section.hasManualDoseAction) {
         if (section.items.isNotEmpty()) AquaDeviceMenuDivider()
         DosingManualDoseAction(
             active = state.manualDoseActive,
             enabled = (state.manualDoseEnabled || state.manualDoseActive) &&
-                !state.operationInProgress,
+                !state.operationInProgress &&
+                !state.missedDoseRecoverySyncing,
             onClick = actions.onManualDoseClick
         )
     }
+}
+
+@Composable
+private fun DosingResetChannelControl(
+    section: DosingDetailMenuSection,
+    state: DeviceDosingChannelDetailUiState,
+    actions: DeviceDosingChannelDetailActions
+) {
     if (section.hasResetChannelAction) {
         if (section.items.isNotEmpty() || section.hasManualDoseAction) AquaDeviceMenuDivider()
         DosingResetChannelAction(
-            enabled = state.resetEnabled && !state.operationInProgress,
+            enabled = state.resetEnabled &&
+                !state.operationInProgress &&
+                !state.missedDoseRecoverySyncing,
             onClick = actions.onResetChannelClick
         )
     }
