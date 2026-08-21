@@ -4,6 +4,7 @@ import com.aqua.aqualight.application.devices.dosing.DeviceDosingChannelCommitte
 import com.aqua.aqualight.application.devices.dosing.DeviceDosingChannelOperationResult
 import com.aqua.aqualight.application.devices.dosing.DeviceDosingChannelOperations
 import com.aqua.aqualight.application.devices.dosing.DeviceDosingChannelSnapshot
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
@@ -318,13 +319,17 @@ internal class DeviceDosingMissedDoseRecoveryController(
                     val result = if (binding.deviceUid.isBlank() || binding.slotId.isBlank()) {
                         DeviceDosingChannelOperationResult.Unavailable
                     } else {
-                        runCatching {
+                        try {
                             operations.setMissedDoseRecoveryEnabled(
                                 binding.deviceUid,
                                 binding.slotId,
                                 action.targetEnabled
                             )
-                        }.getOrElse { DeviceDosingChannelOperationResult.Failed }
+                        } catch (cancellation: CancellationException) {
+                            throw cancellation
+                        } catch (_: Exception) {
+                            DeviceDosingChannelOperationResult.Failed
+                        }
                     }
                     if (hooks.currentBinding() != binding) return@launch
                     handleResult(action.targetEnabled, result)
