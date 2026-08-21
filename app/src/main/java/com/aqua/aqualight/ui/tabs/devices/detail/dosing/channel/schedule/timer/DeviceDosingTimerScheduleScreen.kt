@@ -80,7 +80,7 @@ private fun TimerScheduleHero() {
     AquaDeviceMenuHeroCard(
         eyebrow = stringResource(R.string.device_dosing_timer_hero_eyebrow),
         title = stringResource(R.string.device_dosing_timer_hero_title),
-        description = stringResource(R.string.device_dosing_timer_hero_description)
+        description = stringResource(R.string.device_dosing_timer_hero_body)
     )
 }
 
@@ -89,26 +89,31 @@ private fun TimerScheduleSummary(
     doses: List<DeviceDosingTimerDose>,
     maxEventsPerChannel: Int
 ) {
+    val context = LocalContext.current
     val totalDoseMicroliters = DeviceDosingTimerScheduleContract.totalDoseMicroliters(doses)
+    val totalDose = DeviceDosingScheduleAmountContract.formatDisplay(
+        totalDoseMicroliters,
+        context.resources.configuration.locales[0]
+    )
     AquaDeviceMenuSection(title = stringResource(R.string.device_dosing_timer_summary_section)) {
         AquaDeviceMenuValueRow(
             label = stringResource(R.string.device_dosing_timer_daily_total),
             value = stringResource(
-                R.string.device_dosing_channel_daily_dose_format,
-                DeviceDosingScheduleAmountContract.milliliters(totalDoseMicroliters)
+                R.string.device_dosing_timer_daily_total_value_format,
+                totalDose
             ),
             description = stringResource(R.string.device_dosing_timer_daily_total_description),
             tone = AquaDeviceMenuTone.ACCENT
         )
         AquaDeviceMenuDivider(startIndent = AquaDeviceMenuGeometry.sectionContentPadding)
         AquaDeviceMenuValueRow(
-            label = stringResource(R.string.device_dosing_timer_application_count),
+            label = stringResource(R.string.device_dosing_timer_dose_count_label),
             value = stringResource(
                 R.string.device_dosing_timer_application_count_format,
                 doses.size,
                 maxEventsPerChannel
             ),
-            description = stringResource(R.string.device_dosing_timer_application_count_description)
+            description = stringResource(R.string.device_dosing_timer_dose_count_description)
         )
     }
 }
@@ -159,7 +164,7 @@ private fun TimerDosesSection(
 private fun EmptyTimerDoses() {
     AquaDeviceMenuDivider(startIndent = AquaDeviceMenuGeometry.sectionContentPadding)
     AquaDeviceMenuValueRow(
-        label = stringResource(R.string.device_dosing_timer_empty_title),
+        label = stringResource(R.string.device_dosing_timer_empty_state_title),
         value = stringResource(R.string.device_dosing_detail_value_unavailable),
         description = stringResource(R.string.device_dosing_timer_empty_description)
     )
@@ -176,12 +181,16 @@ private fun TimerDoseRow(
         context,
         DeviceDosingTimerScheduleContract.minutesOfDay(dose.startTimeMs)
     )
+    val amount = DeviceDosingScheduleAmountContract.formatDisplay(
+        dose.amountMicroliters,
+        context.resources.configuration.locales[0]
+    )
     AquaDeviceMenuActionRow(
         content = AquaDeviceMenuRowContent(
             title = time,
             description = stringResource(
-                R.string.device_dosing_timer_entry_amount_format,
-                DeviceDosingScheduleAmountContract.milliliters(dose.amountMicroliters)
+                R.string.device_dosing_timer_entry_value_format,
+                amount
             ),
             iconRes = R.drawable.ic_dosing_schedule_24
         ),

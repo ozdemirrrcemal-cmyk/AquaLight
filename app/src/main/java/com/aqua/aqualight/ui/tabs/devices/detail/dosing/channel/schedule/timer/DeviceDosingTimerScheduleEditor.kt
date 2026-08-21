@@ -87,7 +87,7 @@ internal class DeviceDosingTimerScheduleEditor(
                     result.getString(TextInputBottomSheet.RESULT_VALUE).orEmpty()
                 )
                 if (amountMicroliters == null) {
-                    host.updateValidation(R.string.device_dosing_timer_error_invalid_amount)
+                    host.updateValidation(R.string.device_dosing_timer_invalid_amount_message)
                     clearPendingDose()
                 } else {
                     commitPendingDose(amountMicroliters)
@@ -134,7 +134,7 @@ internal class DeviceDosingTimerScheduleEditor(
             supportingText = fragment.getString(
                 R.string.device_dosing_timer_amount_editor_description
             ),
-            suffixText = fragment.getString(R.string.device_dosing_detail_ml_unit),
+            suffixText = fragment.getString(R.string.device_dosing_timer_amount_unit),
             saveText = fragment.getString(
                 if (pendingIndex in doses.indices) {
                     R.string.device_dosing_timer_amount_editor_update
@@ -145,7 +145,7 @@ internal class DeviceDosingTimerScheduleEditor(
             cancelText = fragment.getString(R.string.common_cancel),
             required = true,
             requiredMessage = fragment.getString(
-                R.string.device_dosing_timer_error_invalid_amount
+                R.string.device_dosing_timer_invalid_amount_message
             ),
             requestKey = AMOUNT_REQUEST_KEY,
             payloadId = host.slotId,
@@ -220,7 +220,7 @@ private fun timerValidationMessage(
     error: DeviceDosingTimerScheduleContract.ValidationError
 ): Int = when (error) {
     DeviceDosingTimerScheduleContract.ValidationError.INVALID_DOSE ->
-        R.string.device_dosing_timer_error_invalid_amount
+        R.string.device_dosing_timer_invalid_amount_message
     DeviceDosingTimerScheduleContract.ValidationError.TOO_MANY_DOSES ->
         R.string.device_dosing_timer_error_too_many
     DeviceDosingTimerScheduleContract.ValidationError.DUPLICATE_TIME ->

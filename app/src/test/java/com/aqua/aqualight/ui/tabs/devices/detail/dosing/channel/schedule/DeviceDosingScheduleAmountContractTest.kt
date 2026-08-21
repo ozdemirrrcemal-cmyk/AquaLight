@@ -27,4 +27,16 @@ class DeviceDosingScheduleAmountContractTest {
         assertEquals("5.25", DeviceDosingScheduleAmountContract.formatInput(5_250L, Locale.US))
         assertEquals(3.125, DeviceDosingScheduleAmountContract.milliliters(3_125L), 0.0)
     }
+
+    @Test
+    fun `display formatting keeps two decimals and preserves meaningful third decimal`() {
+        assertEquals("2.00", DeviceDosingScheduleAmountContract.formatDisplay(2_000L, Locale.US))
+        assertEquals("2.50", DeviceDosingScheduleAmountContract.formatDisplay(2_500L, Locale.US))
+        assertEquals("2.125", DeviceDosingScheduleAmountContract.formatDisplay(2_125L, Locale.US))
+
+        val turkish = Locale.forLanguageTag("tr-TR")
+        assertEquals("2,00", DeviceDosingScheduleAmountContract.formatDisplay(2_000L, turkish))
+        assertEquals("2,50", DeviceDosingScheduleAmountContract.formatDisplay(2_500L, turkish))
+        assertEquals("2,125", DeviceDosingScheduleAmountContract.formatDisplay(2_125L, turkish))
+    }
 }

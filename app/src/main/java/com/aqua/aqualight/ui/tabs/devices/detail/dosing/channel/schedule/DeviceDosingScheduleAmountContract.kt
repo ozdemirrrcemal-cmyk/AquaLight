@@ -24,8 +24,16 @@ internal object DeviceDosingScheduleAmountContract {
         NumberFormat.getNumberInstance(locale).apply {
             isGroupingUsed = false
             minimumFractionDigits = 0
-            maximumFractionDigits = MAX_INPUT_FRACTION_DIGITS
+            maximumFractionDigits = MAX_FRACTION_DIGITS
         }.format(DeviceDosingAmountDraftPolicy.milliliters(microliters))
 
-    private const val MAX_INPUT_FRACTION_DIGITS = 3
+    fun formatDisplay(microliters: Long, locale: Locale): String =
+        NumberFormat.getNumberInstance(locale).apply {
+            isGroupingUsed = false
+            minimumFractionDigits = MIN_DISPLAY_FRACTION_DIGITS
+            maximumFractionDigits = MAX_FRACTION_DIGITS
+        }.format(DeviceDosingAmountDraftPolicy.milliliters(microliters))
+
+    private const val MIN_DISPLAY_FRACTION_DIGITS = 2
+    private const val MAX_FRACTION_DIGITS = 3
 }

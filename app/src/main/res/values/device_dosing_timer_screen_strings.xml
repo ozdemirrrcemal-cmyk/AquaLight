@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="device_dosing_timer_hero_body">Add up to 24 independent doses. The daily total is calculated automatically from the doses you add.</string>
+    <string name="device_dosing_timer_daily_total_value_format">%1$s mL/day</string>
+    <string name="device_dosing_timer_dose_count_label">Scheduled doses</string>
+    <string name="device_dosing_timer_dose_count_description">Only one dose can be scheduled for the same time.</string>
+    <string name="device_dosing_timer_empty_state_title">No doses added yet</string>
+    <string name="device_dosing_timer_entry_value_format">%1$s mL</string>
+    <string name="device_dosing_timer_amount_unit">mL</string>
+    <string name="device_dosing_timer_invalid_amount_message">Enter a dose amount greater than 0 mL with at most three decimal places.</string>
+</resources>
