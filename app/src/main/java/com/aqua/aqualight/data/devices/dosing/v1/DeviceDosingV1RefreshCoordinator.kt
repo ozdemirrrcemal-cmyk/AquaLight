@@ -20,7 +20,7 @@ internal class DeviceDosingV1RefreshCoordinator(
     >()
 
     suspend fun refresh(deviceUid: String, slotId: String): DeviceDosingV1RefreshResult =
-        refresh(stateAccess.address(deviceUid, slotId))
+        refresh(dosingV1Address(deviceUid, slotId))
 
     suspend fun refreshAll(deviceUid: String): Boolean {
         val uid = DeviceUid(deviceUid.trim())

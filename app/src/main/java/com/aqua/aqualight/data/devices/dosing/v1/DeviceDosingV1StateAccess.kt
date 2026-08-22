@@ -65,13 +65,13 @@ internal class DeviceDosingV1StateAccess(
     fun invalidateAll(deviceUid: DeviceUid) {
         stateOwner.invalidateAll(deviceUid)
     }
-
-    fun address(deviceUid: String, slotId: String): DeviceDosingV1Address =
-        DeviceDosingV1Address(
-            deviceUid = DeviceUid(deviceUid.trim()),
-            channelKey = DeviceDosingV1SlotKeyMapper.channelKey(slotId.trim())
-        )
 }
+
+internal fun dosingV1Address(deviceUid: String, slotId: String): DeviceDosingV1Address =
+    DeviceDosingV1Address(
+        deviceUid = DeviceUid(deviceUid.trim()),
+        channelKey = DeviceDosingV1SlotKeyMapper.channelKey(slotId.trim())
+    )
 
 internal data class DeviceDosingV1Address(
     val deviceUid: DeviceUid,

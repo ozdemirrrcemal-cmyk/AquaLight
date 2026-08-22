@@ -59,37 +59,47 @@ internal class DeviceDosingV1MissedDoseRecoveryIntentCoordinator(
 
     private suspend fun drive(address: IntentAddress) {
         try {
-            while (true) {
-                val attempt = synchronized(lock) {
-                    val intent = checkNotNull(pending[address])
-                    IntentAttempt(intent.targetEnabled, intent.generation)
-                }
-                val result = try {
-                    execute(address.deviceUid, address.slotId, attempt.targetEnabled)
-                } catch (cancellation: CancellationException) {
-                    throw cancellation
-                } catch (_: Exception) {
-                    DeviceDosingChannelOperationResult.Failed
-                }
-                val completed = synchronized(lock) {
-                    val intent = checkNotNull(pending[address])
-                    if (intent.generation != attempt.generation) {
-                        null
-                    } else {
-                        pending.remove(address)
-                        intent.waiters.toList()
-                    }
-                }
-                if (completed != null) {
-                    completed.forEach { waiter -> waiter.complete(result) }
-                    return
-                }
-            }
+            while (!runLatestAttempt(address)) Unit
         } catch (cancellation: CancellationException) {
             synchronized(lock) { pending.remove(address) }
                 ?.waiters
                 ?.forEach { waiter -> waiter.cancel(cancellation) }
             throw cancellation
+        }
+    }
+
+    private suspend fun runLatestAttempt(address: IntentAddress): Boolean {
+        val attempt = synchronized(lock) {
+            val intent = checkNotNull(pending[address])
+            IntentAttempt(intent.targetEnabled, intent.generation)
+        }
+        val result = executeAttempt(address, attempt)
+        val completed = takeWaitersIfLatest(address, attempt) ?: return false
+        completed.forEach { waiter -> waiter.complete(result) }
+        return true
+    }
+
+    private suspend fun executeAttempt(
+        address: IntentAddress,
+        attempt: IntentAttempt
+    ): DeviceDosingChannelOperationResult = try {
+        execute(address.deviceUid, address.slotId, attempt.targetEnabled)
+    } catch (cancellation: CancellationException) {
+        throw cancellation
+    } catch (_: Exception) {
+        DeviceDosingChannelOperationResult.Failed
+    }
+
+    private fun takeWaitersIfLatest(
+        address: IntentAddress,
+        attempt: IntentAttempt
+    ): List<CompletableDeferred<DeviceDosingChannelOperationResult>>? = synchronized(lock) {
+        val intent = checkNotNull(pending[address])
+        if (intent.generation != attempt.generation) {
+            null
+        } else {
+            pending.remove(address)
+            intent.waiters.toList()
         }
     }
 

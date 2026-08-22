@@ -22,7 +22,11 @@ class DeviceDosingPrimeHoldStabilityContractTest {
         assertTrue(reads.contains("?.presentationCalibration()"))
         assertTrue(reads.contains("?.authoritativeChannel()"))
         assertTrue(reads.contains("?.authoritativeCalibration()"))
-        assertTrue(reads.contains("takeUnless(OwnedDosingChannelState::invalidated)"))
+        assertTrue(
+            reads.contains(
+                "state.authority == OwnedDosingChannelAuthority.AUTHORITATIVE"
+            )
+        )
     }
 
     @Test

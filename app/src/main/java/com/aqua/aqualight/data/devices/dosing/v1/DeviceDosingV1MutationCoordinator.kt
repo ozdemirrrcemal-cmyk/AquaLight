@@ -50,7 +50,7 @@ internal class DeviceDosingV1MutationCoordinator(
         slotId: String,
         mutation: DeviceDosingV1PersistedMutation<T>
     ): DeviceDosingV1MutationResult<T> = mutateSerialized(
-        address = stateAccess.address(deviceUid, slotId),
+        address = dosingV1Address(deviceUid, slotId),
         mutation = DosingMutationDefinition(
             persistedMutation = true,
             assignmentSatisfied = mutation.assignmentSatisfied,
@@ -71,7 +71,7 @@ internal class DeviceDosingV1MutationCoordinator(
         ) -> DeviceRuntimeCommandOutcome<T>,
         channel: (T) -> DeviceDosingV1ChannelDetail
     ): DeviceDosingV1MutationResult<T> = mutateSerialized(
-        address = stateAccess.address(deviceUid, slotId),
+        address = dosingV1Address(deviceUid, slotId),
         mutation = DosingMutationDefinition(
             persistedMutation = false,
             execute = execute,
@@ -147,7 +147,7 @@ internal class DeviceDosingV1MutationCoordinator(
         val revision = baseline.state.channel.revision
         val token = stateOwner.beginRequest(address.deviceUid, address.channelKey)
         return when (
-            val execution = executeMutation(
+            val execution = executeDosingMutation(
                 address,
                 revision,
                 baseline.state.channel,
@@ -170,26 +170,6 @@ internal class DeviceDosingV1MutationCoordinator(
                 else -> conflictCoordinator.reconcile(address, outcome)
             }
         }
-    }
-
-    private suspend fun <T> executeMutation(
-        address: DeviceDosingV1Address,
-        revision: Long,
-        baseline: DeviceDosingChannelSnapshot,
-        execute: suspend (
-            DeviceUid,
-            DeviceDosingV1ChannelKey,
-            Long,
-            DeviceDosingChannelSnapshot
-        ) -> DeviceRuntimeCommandOutcome<T>
-    ): DosingExecutionOutcome<T> = try {
-        DosingExecutionOutcome.Completed(
-            execute(address.deviceUid, address.channelKey, revision, baseline)
-        )
-    } catch (rejection: LocalDosingMutationRejection) {
-        DosingExecutionOutcome.Rejected(rejection.reason)
-    } catch (_: IllegalArgumentException) {
-        DosingExecutionOutcome.Rejected(DeviceDosingChannelRejection.INVALID_DRAFT)
     }
 
     private suspend fun <T> commitMutation(
@@ -291,29 +271,48 @@ internal class DeviceDosingV1MutationCoordinator(
     private suspend fun <T> mutationBaseline(
         address: DeviceDosingV1Address,
         mutation: DosingMutationDefinition<T>
-    ): DosingMutationBaseline? {
+    ): DosingMutationBaseline? =
         stateAccess.currentState(address)?.let { current ->
-            return DosingMutationBaseline(
+            DosingMutationBaseline(
                 state = current,
                 source = DosingMutationBaselineSource.AUTHORITATIVE
             )
-        }
-        if (mutation.persistedMutation && mutation.assignmentSatisfied != null) {
+        } ?: if (mutation.persistedMutation && mutation.assignmentSatisfied != null) {
             stateAccess.committedMutationContinuation(address)?.let { committed ->
-                return DosingMutationBaseline(
+                DosingMutationBaseline(
                     state = committed,
                     source = DosingMutationBaselineSource.COMMITTED_MUTATION
                 )
             }
-        }
-        return when (val refreshed = refreshCoordinator.refreshWithinGate(address)) {
+        } else {
+            null
+        } ?: when (val refreshed = refreshCoordinator.refreshWithinGate(address)) {
             is DeviceDosingV1RefreshResult.Success -> DosingMutationBaseline(
                 state = refreshed.state,
                 source = DosingMutationBaselineSource.AUTHORITATIVE
             )
             else -> null
         }
-    }
+}
+
+private suspend fun <T> executeDosingMutation(
+    address: DeviceDosingV1Address,
+    revision: Long,
+    baseline: DeviceDosingChannelSnapshot,
+    execute: suspend (
+        DeviceUid,
+        DeviceDosingV1ChannelKey,
+        Long,
+        DeviceDosingChannelSnapshot
+    ) -> DeviceRuntimeCommandOutcome<T>
+): DosingExecutionOutcome<T> = try {
+    DosingExecutionOutcome.Completed(
+        execute(address.deviceUid, address.channelKey, revision, baseline)
+    )
+} catch (rejection: LocalDosingMutationRejection) {
+    DosingExecutionOutcome.Rejected(rejection.reason)
+} catch (_: IllegalArgumentException) {
+    DosingExecutionOutcome.Rejected(DeviceDosingChannelRejection.INVALID_DRAFT)
 }
 
 private fun <T> acceptedReadbackResult(
