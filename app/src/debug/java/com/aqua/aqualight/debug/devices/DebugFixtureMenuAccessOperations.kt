@@ -31,7 +31,8 @@ internal class DebugFixtureMenuAccessOperations(
                 is AqlCommercialCatalogValidation.Valid -> DeviceMenuAccessResult.Available(
                     deviceUid = snapshot.deviceUid.value,
                     title = snapshot.title,
-                    family = validation.product.family.toOwnerDeviceFamily()
+                    family = validation.product.family.toOwnerDeviceFamily(),
+                    presentationPrepared = true
                 )
                 is AqlCommercialCatalogValidation.Invalid -> unavailable(
                     snapshot,

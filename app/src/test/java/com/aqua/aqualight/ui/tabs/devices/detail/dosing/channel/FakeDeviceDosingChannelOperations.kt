@@ -49,6 +49,9 @@ internal class FakeDeviceDosingChannelOperations(
     override fun observeAll(deviceUid: String): Flow<List<DeviceDosingChannelSnapshot>> =
         snapshot.map { value -> listOfNotNull(value) }
 
+    override fun currentAll(deviceUid: String): List<DeviceDosingChannelSnapshot> =
+        listOfNotNull(snapshot.value)
+
     override suspend fun refresh(
         deviceUid: String,
         slotId: String

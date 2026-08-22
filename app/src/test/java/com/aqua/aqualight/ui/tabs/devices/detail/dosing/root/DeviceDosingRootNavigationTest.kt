@@ -1,11 +1,14 @@
 package com.aqua.aqualight.ui.tabs.devices.detail.dosing.root
 
-import com.aqua.aqualight.application.devices.dosing.DeviceDosingChannelDestination
-import com.aqua.aqualight.application.devices.dosing.DeviceDosingChannelNavigationOperations
-import com.aqua.aqualight.application.devices.dosing.DeviceDosingChannelNavigationTarget
+import com.aqua.aqualight.application.devices.DeviceMenuAccessOperations
+import com.aqua.aqualight.application.devices.DeviceMenuAccessResult
+import com.aqua.aqualight.application.devices.DeviceMenuUnavailableReason
 import com.aqua.aqualight.application.devices.DeviceRootOperations
 import com.aqua.aqualight.application.devices.DeviceRootSnapshot
 import com.aqua.aqualight.application.devices.OwnerDeviceAvailability
+import com.aqua.aqualight.application.devices.dosing.DeviceDosingChannelDestination
+import com.aqua.aqualight.application.devices.dosing.DeviceDosingChannelNavigationOperations
+import com.aqua.aqualight.application.devices.dosing.DeviceDosingChannelNavigationTarget
 import com.aqua.aqualight.data.devices.dosing.UnavailableDeviceDosingChannelOperations
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -50,7 +53,8 @@ class DeviceDosingRootNavigationTest {
         val viewModel = DeviceDosingRootViewModel(
             operations = FakeRootOperations(),
             channelNavigationOperations = navigationOperations,
-            channelOperations = UnavailableDeviceDosingChannelOperations
+            channelOperations = UnavailableDeviceDosingChannelOperations,
+            menuAccessOperations = UnavailableMenuAccessOperations
         )
         viewModel.bind(deviceUidText = DEVICE_UID, fallbackTitle = "Dose Pro")
 
@@ -90,6 +94,14 @@ class DeviceDosingRootNavigationTest {
         override fun current(deviceUid: String): DeviceRootSnapshot = snapshot
 
         override fun connect(deviceUid: String): Result<Unit> = Result.success(Unit)
+    }
+
+    private object UnavailableMenuAccessOperations : DeviceMenuAccessOperations {
+        override suspend fun resolve(deviceUid: String): DeviceMenuAccessResult =
+            DeviceMenuAccessResult.Unavailable(
+                title = "",
+                reason = DeviceMenuUnavailableReason.CURRENT_DATA_NOT_READY
+            )
     }
 
     private companion object {

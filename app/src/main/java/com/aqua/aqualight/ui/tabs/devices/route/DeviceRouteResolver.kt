@@ -7,8 +7,8 @@ import com.aqua.aqualight.application.devices.OwnerDeviceFamily
 /**
  * Maps an application-approved device-menu decision to a UI navigation destination.
  *
- * Liveness and repository access are resolved before this mapper is called. UI routing depends only
- * on firmware-provided family metadata carried by the application result.
+ * Liveness, catalog closure and first-frame preparation are resolved before this mapper is called.
+ * UI routing depends only on application-approved family metadata and readiness.
  */
 class DeviceRouteResolver {
 
@@ -22,27 +22,32 @@ class DeviceRouteResolver {
             OwnerDeviceFamily.LIGHT -> DeviceRoute(
                 deviceUid = deviceUid,
                 title = title,
-                target = DeviceRouteTarget.LIGHT_ROOT
+                target = DeviceRouteTarget.LIGHT_ROOT,
+                presentationPrepared = access.presentationPrepared
             )
             OwnerDeviceFamily.DOSING -> DeviceRoute(
                 deviceUid = deviceUid,
                 title = title,
-                target = DeviceRouteTarget.DOSING_ROOT
+                target = DeviceRouteTarget.DOSING_ROOT,
+                presentationPrepared = access.presentationPrepared
             )
             OwnerDeviceFamily.TIMER -> DeviceRoute(
                 deviceUid = deviceUid,
                 title = title,
-                target = DeviceRouteTarget.TIMER_ROOT
+                target = DeviceRouteTarget.TIMER_ROOT,
+                presentationPrepared = access.presentationPrepared
             )
             OwnerDeviceFamily.COOLING -> DeviceRoute(
                 deviceUid = deviceUid,
                 title = title,
-                target = DeviceRouteTarget.COOLING_ROOT
+                target = DeviceRouteTarget.COOLING_ROOT,
+                presentationPrepared = access.presentationPrepared
             )
             OwnerDeviceFamily.UNKNOWN -> DeviceRoute(
                 deviceUid = deviceUid,
                 title = title,
                 target = DeviceRouteTarget.UNSUPPORTED,
+                presentationPrepared = access.presentationPrepared,
                 messageRes = R.string.device_unsupported_family_message
             )
         }

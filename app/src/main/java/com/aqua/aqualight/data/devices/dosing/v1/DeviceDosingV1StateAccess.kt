@@ -25,6 +25,9 @@ internal class DeviceDosingV1StateAccess(
     fun observeAll(deviceUid: String): Flow<List<DeviceDosingChannelSnapshot>> =
         stateOwner.reads.observeAll(DeviceUid(deviceUid.trim()))
 
+    fun currentAll(deviceUid: String): List<DeviceDosingChannelSnapshot> =
+        stateOwner.reads.currentAll(DeviceUid(deviceUid.trim()))
+
     fun currentChannel(deviceUid: String, slotId: String): DeviceDosingChannelSnapshot? {
         val address = dosingV1Address(deviceUid, slotId)
         return stateOwner.reads.currentChannel(address.deviceUid, address.channelKey)

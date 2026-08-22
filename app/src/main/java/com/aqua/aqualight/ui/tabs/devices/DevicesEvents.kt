@@ -5,10 +5,12 @@ import com.aqua.aqualight.ui.tabs.devices.route.DeviceRoute
 
 sealed class DevicesEvent {
     data class OpenRoute(
-        val route: DeviceRoute
+        val route: DeviceRoute,
+        val requestDeviceUid: String = route.deviceUid
     ) : DevicesEvent()
 
     data class ShowDeviceUnavailable(
+        val requestDeviceUid: String,
         val title: String,
         @StringRes val messageRes: Int
     ) : DevicesEvent()

@@ -2,6 +2,7 @@ package com.aqua.aqualight.data.devices.menu
 
 import com.aqua.aqualight.application.devices.DeviceMenuAccessOperations
 import com.aqua.aqualight.application.devices.DeviceMenuAccessResult
+import com.aqua.aqualight.application.devices.DeviceMenuPresentationPreparationOperations
 import com.aqua.aqualight.application.devices.DeviceMenuUnavailableReason
 import com.aqua.aqualight.application.devices.OwnerDeviceFamily
 import com.aqua.aqualight.data.devices.catalog.AqlCommercialCatalogProduct
@@ -36,6 +37,7 @@ class CommercialDeviceMenuAccessOperationsTest {
 
         assertEquals(OwnerDeviceFamily.LIGHT, result.family)
         assertEquals(snapshot.deviceUid.value, result.deviceUid)
+        assertTrue(result.presentationPrepared)
     }
 
     @Test
@@ -91,7 +93,8 @@ class CommercialDeviceMenuAccessOperationsTest {
             currentSnapshot = {
                 snapshotReads += 1
                 null
-            }
+            },
+            presentationPreparationOperations = alwaysPrepared()
         )
 
         val result = operations.resolve("device-offline")
@@ -100,13 +103,39 @@ class CommercialDeviceMenuAccessOperationsTest {
         assertEquals(0, snapshotReads)
     }
 
+    @Test
+    fun `current presentation preparation failure blocks commercial routing`() = runTest {
+        val snapshot = product("DOSING_DOSE_PRO_2").toSnapshot()
+        val operations = CommercialDeviceMenuAccessOperations(
+            livenessOperations = fixedLiveness(
+                DeviceMenuAccessResult.Available(
+                    deviceUid = snapshot.deviceUid.value,
+                    title = snapshot.title,
+                    family = OwnerDeviceFamily.DOSING
+                )
+            ),
+            currentSnapshot = { snapshot },
+            presentationPreparationOperations = DeviceMenuPresentationPreparationOperations {
+                false
+            }
+        )
+
+        val result = operations.resolve(snapshot.deviceUid.value)
+            as DeviceMenuAccessResult.Unavailable
+
+        assertEquals(DeviceMenuUnavailableReason.CURRENT_DATA_NOT_READY, result.reason)
+    }
+
     private fun operations(
         snapshot: DeviceSnapshot,
         liveness: DeviceMenuAccessResult
     ) = CommercialDeviceMenuAccessOperations(
         livenessOperations = fixedLiveness(liveness),
-        currentSnapshot = { snapshot }
+        currentSnapshot = { snapshot },
+        presentationPreparationOperations = alwaysPrepared()
     )
+
+    private fun alwaysPrepared() = DeviceMenuPresentationPreparationOperations { true }
 
     private fun fixedLiveness(result: DeviceMenuAccessResult): DeviceMenuAccessOperations =
         object : DeviceMenuAccessOperations {

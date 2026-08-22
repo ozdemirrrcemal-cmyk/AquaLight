@@ -6,6 +6,8 @@ import androidx.lifecycle.ViewModelProvider
 import com.aqua.aqualight.application.auth.AccountSecurityOperations
 import com.aqua.aqualight.application.auth.AuthenticatedOwnerIdentity
 import com.aqua.aqualight.application.auth.SessionExitOperations
+import com.aqua.aqualight.application.devices.DeviceMenuPresentationPreparationOperations
+import com.aqua.aqualight.application.devices.OwnerDeviceFamily
 import com.aqua.aqualight.application.devices.provisioning.ProvisioningDraftOperations
 import com.aqua.aqualight.application.feedback.FeedbackSubmissionUseCase
 import com.aqua.aqualight.application.notifications.NotificationDispatchUseCase
@@ -132,6 +134,9 @@ private class ReleaseSmokeViewModelFactory(
     )
     private val maintenanceTextResolver = AndroidMaintenanceTextResolver(appContext)
     private val appTextResolver = AndroidAppTextResolver(appContext)
+    private val menuPresentationPreparation = DeviceMenuPresentationPreparationOperations { access ->
+        access.family != OwnerDeviceFamily.DOSING
+    }
 
     override fun <T : ViewModel> create(modelClass: Class<T>): T {
         val viewModel = createPrimaryViewModel(modelClass)
@@ -198,7 +203,10 @@ private class ReleaseSmokeViewModelFactory(
                     assignmentRepository = assignmentRepository
                 )
             ),
-            menuAccessOperations = DefaultDeviceMenuAccessOperations.create(devicesRepository),
+            menuAccessOperations = DefaultDeviceMenuAccessOperations.create(
+                devicesRepository = devicesRepository,
+                presentationPreparationOperations = menuPresentationPreparation
+            ),
             routeResolver = DeviceRouteResolver()
         )
 
@@ -258,7 +266,10 @@ private class ReleaseSmokeViewModelFactory(
                     assignmentRepository = assignmentRepository,
                     devicesRepository = devicesRepository
                 ),
-                menuAccessOperations = DefaultDeviceMenuAccessOperations.create(devicesRepository),
+                menuAccessOperations = DefaultDeviceMenuAccessOperations.create(
+                    devicesRepository = devicesRepository,
+                    presentationPreparationOperations = menuPresentationPreparation
+                ),
                 routeResolver = DeviceRouteResolver()
             )
 

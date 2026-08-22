@@ -21,6 +21,9 @@ object DeviceMenuUnavailableMessageMapper {
             DeviceMenuUnavailableReason.VERIFICATION_TIMED_OUT -> {
                 R.string.device_menu_verification_timed_out_message
             }
+            DeviceMenuUnavailableReason.CURRENT_DATA_NOT_READY -> {
+                R.string.device_menu_current_data_not_ready_message
+            }
             DeviceMenuUnavailableReason.COMMERCIAL_PRODUCT_MISMATCH -> {
                 R.string.device_unsupported_family_message
             }

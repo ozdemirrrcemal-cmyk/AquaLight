@@ -2,6 +2,7 @@ package com.aqua.aqualight.ui.tabs.devices.detail.dosing.root
 
 import com.aqua.aqualight.application.devices.DeviceDosingChannelSlot
 import com.aqua.aqualight.application.devices.dosing.DeviceDosingChannelSnapshot
+import com.aqua.aqualight.application.devices.dosing.validatedDosingChannelSetOrNull
 import com.aqua.aqualight.ui.tabs.devices.detail.dosing.presentation.card.DosingChannelCardUiState
 import com.aqua.aqualight.ui.tabs.devices.detail.dosing.presentation.card.toDosingChannelCardUiState
 import com.aqua.aqualight.ui.tabs.devices.detail.dosing.presentation.card.toInitialDosingChannelCardUiState
@@ -24,10 +25,10 @@ internal fun resolveDosingRootChannelPresentation(
     val pumpCount = resolveDosingPumpCount(catalogChannels.size)
     if (pumpCount == UNKNOWN_DOSING_PUMP_COUNT) return EMPTY_DOSING_CHANNEL_PRESENTATION
 
-    val authoritative = snapshots.authoritativeChannelsOrNull(
+    val authoritative = validatedDosingChannelSetOrNull(
         deviceUid = deviceUid,
         catalogChannels = catalogChannels,
-        pumpCount = pumpCount
+        snapshots = snapshots
     )
     return if (authoritative != null) {
         DeviceDosingRootChannelPresentation(
@@ -45,26 +46,6 @@ internal fun resolveDosingRootChannelPresentation(
             pumpStates = emptyList(),
             authoritative = false
         )
-    }
-}
-
-private fun Collection<DeviceDosingChannelSnapshot>.authoritativeChannelsOrNull(
-    deviceUid: String,
-    catalogChannels: List<DeviceDosingChannelSlot>,
-    pumpCount: Int
-): List<DeviceDosingChannelSnapshot>? {
-    if (size != pumpCount) return null
-    val catalogBySlot = catalogChannels.associateBy { slot -> slot.id.value }
-    val ordered = sortedBy(DeviceDosingChannelSnapshot::channelNumber)
-    val expectedChannelNumbers = 1..pumpCount
-    return ordered.takeIf { channels ->
-        channels.map(DeviceDosingChannelSnapshot::slotId).toSet().size == pumpCount &&
-            channels.map(DeviceDosingChannelSnapshot::channelNumber) == expectedChannelNumbers.toList() &&
-            channels.all { channel ->
-                channel.deviceUid == deviceUid &&
-                    channel.pumpCount == pumpCount &&
-                    catalogBySlot[channel.slotId]?.index?.position == channel.channelNumber
-            }
     }
 }
 

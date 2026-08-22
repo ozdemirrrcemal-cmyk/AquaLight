@@ -227,10 +227,16 @@ for token in (
     "validation.product.family.toOwnerDeviceFamily()",
 ):
     require(token in menu_access, f"commercial menu access token is missing: {token}")
-require(
-    "fun create(devicesRepository: DevicesRepository): DeviceMenuAccessOperations" in default_menu_access,
-    "menu factory must return the composed application boundary",
-)
+for token in (
+    "fun create(",
+    "presentationPreparationOperations: DeviceMenuPresentationPreparationOperations",
+    "): DeviceMenuAccessOperations",
+    "presentationPreparationOperations = presentationPreparationOperations",
+):
+    require(
+        token in default_menu_access,
+        f"menu factory must return the prepared composed application boundary: {token}",
+    )
 require(
     "CommercialDeviceMenuAccessOperations(" in default_menu_access,
     "liveness access must be followed by commercial catalog validation",

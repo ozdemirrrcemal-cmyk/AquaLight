@@ -9,6 +9,7 @@ import com.aqua.aqualight.composition.OwnerDependencyGraphAccess
 import com.aqua.aqualight.data.devices.DefaultDeviceRootOperations
 import com.aqua.aqualight.data.devices.DefaultOwnerDevicesOperations
 import com.aqua.aqualight.data.devices.menu.DefaultDeviceMenuAccessOperations
+import com.aqua.aqualight.data.devices.menu.DefaultDeviceMenuPresentationPreparationOperations
 import com.aqua.aqualight.data.devices.remove.OwnerDeviceDataCleaner
 import com.aqua.aqualight.ui.tabs.devices.DevicesViewModel
 import com.aqua.aqualight.ui.tabs.devices.detail.common.DeviceRootOverviewViewModel
@@ -89,7 +90,14 @@ private class DebugDeviceFixtureViewModelFactory(
         return DevicesViewModel(
             operations = DebugFixtureOwnerDevicesOperations(realOperations, fixtures),
             menuAccessOperations = DebugFixtureMenuAccessOperations(
-                delegate = DefaultDeviceMenuAccessOperations.create(repository),
+                delegate = DefaultDeviceMenuAccessOperations.create(
+                    devicesRepository = repository,
+                    presentationPreparationOperations =
+                    DefaultDeviceMenuPresentationPreparationOperations(
+                        rootOperations = DefaultDeviceRootOperations(repository),
+                        dosingOperations = graph.dosingOperations.channelOperations
+                    )
+                ),
                 fixtures = fixtures
             ),
             routeResolver = DeviceRouteResolver()

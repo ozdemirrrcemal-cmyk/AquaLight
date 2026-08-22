@@ -9,4 +9,5 @@
     <string name="device_menu_authentication_required_message">This device must be paired with your account again before its controls can be opened.</string>
     <string name="device_menu_device_unresponsive_message">The device is on the local network but is not responding. Check its power and Wi-Fi connection.</string>
     <string name="device_menu_verification_timed_out_message">The connection check took too long. AquaLight will keep trying automatically.</string>
+    <string name="device_menu_current_data_not_ready_message">Current device data could not be loaded safely. Please try again.</string>
 </resources>

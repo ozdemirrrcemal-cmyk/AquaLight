@@ -187,6 +187,10 @@
             android:name="deviceTitle"
             app:argType="string"
             android:defaultValue="" />
+        <argument
+            android:name="presentationPrepared"
+            app:argType="boolean"
+            android:defaultValue="false" />
         <action
             android:id="@+id/action_deviceDosingRootFragment_to_deviceDosingSettingsFragment"
             app:destination="@id/deviceDosingSettingsFragment"

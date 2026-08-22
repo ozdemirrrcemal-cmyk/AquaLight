@@ -373,7 +373,8 @@ class TankDetailFragment :
             DeviceRouteTarget.DOSING_ROOT ->
                 TankDetailFragmentDirections.actionTankDetailFragmentToDeviceDosingRootFragment(
                     deviceUid = route.deviceUid,
-                    deviceTitle = route.title.ifBlank { getString(route.titleRes) }
+                    deviceTitle = route.title.ifBlank { getString(route.titleRes) },
+                    presentationPrepared = route.presentationPrepared
                 )
 
             DeviceRouteTarget.TIMER_ROOT ->

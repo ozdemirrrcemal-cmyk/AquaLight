@@ -37,6 +37,9 @@ internal class DeviceDosingV1ChannelOperationsAdapter(
     override fun observeAll(deviceUid: String): Flow<List<DeviceDosingChannelSnapshot>> =
         adapter.stateAccess.observeAll(deviceUid)
 
+    override fun currentAll(deviceUid: String): List<DeviceDosingChannelSnapshot> =
+        adapter.stateAccess.currentAll(deviceUid)
+
     override suspend fun refresh(
         deviceUid: String,
         slotId: String

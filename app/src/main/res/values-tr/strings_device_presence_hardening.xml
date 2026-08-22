@@ -5,4 +5,5 @@
     <string name="device_menu_authentication_required_message">Cihaz kontrollerini açmadan önce bu cihazı hesabınızla yeniden eşleştirmeniz gerekiyor.</string>
     <string name="device_menu_device_unresponsive_message">Cihaz yerel ağda görünüyor ancak yanıt vermiyor. Güç ve Wi-Fi bağlantısını kontrol edin.</string>
     <string name="device_menu_verification_timed_out_message">Bağlantı kontrolü gereğinden uzun sürdü. AquaLight otomatik olarak denemeye devam edecek.</string>
+    <string name="device_menu_current_data_not_ready_message">Cihazın güncel verileri güvenli şekilde yüklenemedi. Lütfen yeniden deneyin.</string>
 </resources>

@@ -7,13 +7,14 @@ import com.aqua.aqualight.R
  * Navigation decision produced from firmware supplied product family/capabilities.
  *
  * UI must route by deviceUid and resolved firmware metadata, not by local numeric ids or model-name
- * guesses. Real runtime root screens are connected gradually; this route object is the stable
- * boundary between the Devices list and the Navigation graph.
+ * guesses. The preparation marker lets a destination consume only a pre-navigation authoritative
+ * snapshot; this route object remains the stable boundary to the Navigation graph.
  */
 data class DeviceRoute(
     val deviceUid: String,
     val title: String,
     val target: DeviceRouteTarget,
+    val presentationPrepared: Boolean = false,
     @StringRes val titleRes: Int = R.string.device_menu_default_title,
     @StringRes val messageRes: Int = 0
 )

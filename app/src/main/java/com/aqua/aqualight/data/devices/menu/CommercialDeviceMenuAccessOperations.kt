@@ -2,22 +2,48 @@ package com.aqua.aqualight.data.devices.menu
 
 import com.aqua.aqualight.application.devices.DeviceMenuAccessOperations
 import com.aqua.aqualight.application.devices.DeviceMenuAccessResult
+import com.aqua.aqualight.application.devices.DeviceMenuPresentationPreparationOperations
 import com.aqua.aqualight.application.devices.DeviceMenuUnavailableReason
 import com.aqua.aqualight.data.devices.catalog.AqlCommercialCatalogValidation
 import com.aqua.aqualight.data.devices.catalog.AqlCommercialDeviceCatalog
 import com.aqua.aqualight.data.devices.model.DeviceSnapshot
 import com.aqua.aqualight.data.devices.model.DeviceUid
 import com.aqua.aqualight.data.devices.toOwnerDeviceFamily
+import java.util.concurrent.CancellationException
 
 internal class CommercialDeviceMenuAccessOperations(
     private val livenessOperations: DeviceMenuAccessOperations,
-    private val currentSnapshot: (DeviceUid) -> DeviceSnapshot?
+    private val currentSnapshot: (DeviceUid) -> DeviceSnapshot?,
+    private val presentationPreparationOperations:
+        DeviceMenuPresentationPreparationOperations
 ) : DeviceMenuAccessOperations {
 
     override suspend fun resolve(deviceUid: String): DeviceMenuAccessResult {
         return when (val liveness = livenessOperations.resolve(deviceUid)) {
             is DeviceMenuAccessResult.Unavailable -> liveness
-            is DeviceMenuAccessResult.Available -> validateCommercialProduct(liveness)
+            is DeviceMenuAccessResult.Available -> when (
+                val validated = validateCommercialProduct(liveness)
+            ) {
+                is DeviceMenuAccessResult.Unavailable -> validated
+                is DeviceMenuAccessResult.Available -> preparePresentation(validated)
+            }
+        }
+    }
+
+    private suspend fun preparePresentation(
+        validated: DeviceMenuAccessResult.Available
+    ): DeviceMenuAccessResult {
+        val prepared = try {
+            presentationPreparationOperations.prepare(validated)
+        } catch (cancellation: CancellationException) {
+            throw cancellation
+        } catch (_: Throwable) {
+            false
+        }
+        return if (prepared) {
+            validated.copy(presentationPrepared = true)
+        } else {
+            unavailable(validated, DeviceMenuUnavailableReason.CURRENT_DATA_NOT_READY)
         }
     }
 

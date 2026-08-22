@@ -2,6 +2,7 @@ package com.aqua.aqualight.data.devices.menu
 
 import com.aqua.aqualight.application.devices.DeviceMenuAccessOperations
 import com.aqua.aqualight.application.devices.DeviceMenuAccessResult
+import com.aqua.aqualight.application.devices.DeviceMenuPresentationPreparationOperations
 import com.aqua.aqualight.application.devices.DeviceMenuUnavailableReason
 import com.aqua.aqualight.data.devices.model.DeviceOnlineState
 import com.aqua.aqualight.data.devices.model.DeviceSnapshot
@@ -413,13 +414,17 @@ internal class DefaultDeviceMenuAccessOperations(
     }
 
     companion object {
-        fun create(devicesRepository: DevicesRepository): DeviceMenuAccessOperations {
+        fun create(
+            devicesRepository: DevicesRepository,
+            presentationPreparationOperations: DeviceMenuPresentationPreparationOperations
+        ): DeviceMenuAccessOperations {
             val livenessOperations = DefaultDeviceMenuAccessOperations(
                 runtimePort = RepositoryDeviceMenuRuntimePort(devicesRepository)
             )
             return CommercialDeviceMenuAccessOperations(
                 livenessOperations = livenessOperations,
-                currentSnapshot = devicesRepository::currentDevice
+                currentSnapshot = devicesRepository::currentDevice,
+                presentationPreparationOperations = presentationPreparationOperations
             )
         }
 

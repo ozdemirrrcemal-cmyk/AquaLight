@@ -1,8 +1,8 @@
 package com.aqua.aqualight.data.devices.dosing.v1
 
+import com.aqua.aqualight.application.devices.dosing.DeviceDosingCalibrationResult
 import com.aqua.aqualight.application.devices.dosing.DeviceDosingChannelCommittedResult
 import com.aqua.aqualight.application.devices.dosing.DeviceDosingChannelOperationResult
-import com.aqua.aqualight.application.devices.dosing.DeviceDosingCalibrationResult
 import com.aqua.aqualight.data.devices.model.DeviceUid
 import com.aqua.aqualight.data.devices.runtime.core.DeviceRuntimeCommand
 import com.aqua.aqualight.data.devices.runtime.core.DeviceRuntimeCommandGateway
@@ -25,7 +25,7 @@ import org.junit.Test
 class DeviceDosingV1CommittedReconciliationTest {
 
     @Test
-    fun `persisted ack returns immediately and publishes coherent background readback`() =
+    fun `persisted ack keeps coherent presentation until background readback`() =
         runTest {
             val gateway = ScriptedGateway().apply {
                 enqueueRefresh(revision = 7L)
@@ -47,9 +47,9 @@ class DeviceDosingV1CommittedReconciliationTest {
 
             assertEquals(DeviceDosingChannelCommittedResult(8L), result)
             assertEquals(4, gateway.actions.size)
-            val projected = adapter.channelOperations.observeAll(DEVICE_UID.value).first().single()
-            assertEquals(8L, projected.revision)
-            assertEquals(false, projected.program?.enabled)
+            val retained = adapter.channelOperations.observeAll(DEVICE_UID.value).first().single()
+            assertEquals(7L, retained.revision)
+            assertTrue(requireNotNull(retained.program).enabled)
 
             testScheduler.runCurrent()
 
@@ -104,8 +104,8 @@ class DeviceDosingV1CommittedReconciliationTest {
             )
 
             assertNull(adapter.currentChannel(DEVICE_UID.value, SLOT_ID))
-            val projected = adapter.channelOperations.observeAll(DEVICE_UID.value).first().single()
-            assertEquals(9L, projected.revision)
+            val retained = adapter.channelOperations.observeAll(DEVICE_UID.value).first().single()
+            assertEquals(7L, retained.revision)
 
             testScheduler.runCurrent()
 
@@ -119,7 +119,7 @@ class DeviceDosingV1CommittedReconciliationTest {
         }
 
     @Test
-    fun `slow post ack readback never delays committed UI result`() =
+    fun `slow post ack readback never exposes a partial projection`() =
         runTest {
             val gateway = ScriptedGateway().apply {
                 enqueueRefresh(revision = 7L)
@@ -147,9 +147,9 @@ class DeviceDosingV1CommittedReconciliationTest {
             assertEquals(4, gateway.actions.size)
             assertEquals(0L, testScheduler.currentTime)
             assertNull(adapter.currentChannel(DEVICE_UID.value, SLOT_ID))
-            val projected = adapter.channelOperations.observeAll(DEVICE_UID.value).first().single()
-            assertEquals(8L, projected.revision)
-            assertFalse(requireNotNull(projected.program).enabled)
+            val retained = adapter.channelOperations.observeAll(DEVICE_UID.value).first().single()
+            assertEquals(7L, retained.revision)
+            assertTrue(requireNotNull(retained.program).enabled)
 
             testScheduler.runCurrent()
 

@@ -17,6 +17,7 @@ import com.aqua.aqualight.data.devices.DefaultDeviceRootOperations
 import com.aqua.aqualight.data.devices.DefaultDeviceStatusOperations
 import com.aqua.aqualight.data.devices.DefaultOwnerDevicesOperations
 import com.aqua.aqualight.data.devices.menu.DefaultDeviceMenuAccessOperations
+import com.aqua.aqualight.data.devices.menu.DefaultDeviceMenuPresentationPreparationOperations
 import com.aqua.aqualight.data.devices.provisioning.DefaultProvisioningDiscoveryOperations
 import com.aqua.aqualight.data.devices.provisioning.DefaultProvisioningProgressOperations
 import com.aqua.aqualight.data.devices.provisioning.ble.DefaultBleProvisioningScanner
@@ -103,7 +104,7 @@ internal class OwnerViewModelFactory(
             DevicesViewModel::class.java ->
                 DevicesViewModel(
                     operations = createOwnerDevicesOperations(graph, repository, assignments),
-                    menuAccessOperations = DefaultDeviceMenuAccessOperations.create(repository),
+                    menuAccessOperations = createDeviceMenuAccessOperations(graph, repository),
                     routeResolver = DeviceRouteResolver()
                 )
 
@@ -201,7 +202,8 @@ internal class OwnerViewModelFactory(
                 DeviceDosingRootViewModel(
                     operations = DefaultDeviceRootOperations(repository),
                     channelNavigationOperations = dosing.navigationOperations,
-                    channelOperations = dosing.channelOperations
+                    channelOperations = dosing.channelOperations,
+                    menuAccessOperations = createDeviceMenuAccessOperations(graph, repository)
                 )
             }
 
@@ -248,7 +250,7 @@ internal class OwnerViewModelFactory(
                         assignmentRepository = assignments,
                         devicesRepository = repository
                     ),
-                    menuAccessOperations = DefaultDeviceMenuAccessOperations.create(repository),
+                    menuAccessOperations = createDeviceMenuAccessOperations(graph, repository),
                     routeResolver = DeviceRouteResolver()
                 )
 
@@ -287,6 +289,18 @@ internal class OwnerViewModelFactory(
             }
         )
     }
+
+    private fun createDeviceMenuAccessOperations(
+        graph: OwnerDependencyGraph,
+        repository: DevicesRepository
+    ) = DefaultDeviceMenuAccessOperations.create(
+        devicesRepository = repository,
+        presentationPreparationOperations =
+        DefaultDeviceMenuPresentationPreparationOperations(
+            rootOperations = DefaultDeviceRootOperations(repository),
+            dosingOperations = graph.dosingOperations.channelOperations
+        )
+    )
 
     private companion object {
         val OWNER_BINDINGS: Set<Class<out ViewModel>> = setOf(

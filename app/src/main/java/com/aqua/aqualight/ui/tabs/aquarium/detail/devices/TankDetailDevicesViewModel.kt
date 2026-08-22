@@ -103,22 +103,32 @@ class TankDetailDevicesViewModel(
                     title = "",
                     reason = DeviceMenuUnavailableReason.CURRENT_LIVENESS_NOT_PROVEN
                 )
-            } finally {
-                if (openingDeviceId.value == deviceUid) {
-                    openingDeviceId.value = null
-                }
             }
 
             when (result) {
-                is DeviceMenuAccessResult.Available ->
-                    _events.send(
-                        TankDetailDevicesEvent.OpenDeviceRoute(
-                            route = routeResolver.resolve(result)
+                is DeviceMenuAccessResult.Available -> {
+                    if (result.presentationPrepared) {
+                        _events.send(
+                            TankDetailDevicesEvent.OpenDeviceRoute(
+                                route = routeResolver.resolve(result)
+                            )
                         )
-                    )
+                    } else {
+                        _events.send(
+                            TankDetailDevicesEvent.ShowDeviceUnavailable(
+                                requestUid = deviceUid,
+                                title = result.title,
+                                messageRes = DeviceMenuUnavailableMessageMapper.messageRes(
+                                    DeviceMenuUnavailableReason.CURRENT_DATA_NOT_READY
+                                )
+                            )
+                        )
+                    }
+                }
                 is DeviceMenuAccessResult.Unavailable ->
                     _events.send(
                         TankDetailDevicesEvent.ShowDeviceUnavailable(
+                            requestUid = deviceUid,
                             title = result.title,
                             messageRes = DeviceMenuUnavailableMessageMapper.messageRes(
                                 result.reason
@@ -126,6 +136,13 @@ class TankDetailDevicesViewModel(
                         )
                     )
             }
+        }
+    }
+
+    fun onDeviceMenuOpenHandled(deviceUid: String) {
+        if (openingDeviceId.value == deviceUid) {
+            openingDeviceId.value = null
+            menuOpenJob = null
         }
     }
 
@@ -168,9 +185,13 @@ data class TankDetailDevicesUiState(
 )
 
 sealed interface TankDetailDevicesEvent {
-    data class OpenDeviceRoute(val route: DeviceRoute) : TankDetailDevicesEvent
+    data class OpenDeviceRoute(
+        val route: DeviceRoute,
+        val requestUid: String = route.deviceUid
+    ) : TankDetailDevicesEvent
 
     data class ShowDeviceUnavailable(
+        val requestUid: String,
         val title: String,
         @StringRes val messageRes: Int
     ) : TankDetailDevicesEvent

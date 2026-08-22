@@ -19,6 +19,7 @@ import com.aqua.aqualight.databinding.FragmentDeviceDosingRootBinding
 import com.aqua.aqualight.ui.common.header.AquaHeaderAction
 import com.aqua.aqualight.ui.common.header.AquaHeaderConfig
 import com.aqua.aqualight.ui.common.header.setupAquaHeader
+import com.aqua.aqualight.ui.common.loading.setFragmentGlobalLoading
 import com.aqua.aqualight.ui.navigation.AppRouteNavigator
 import kotlinx.coroutines.launch
 
@@ -38,20 +39,22 @@ class DeviceDosingRootFragment : Fragment(R.layout.fragment_device_dosing_root) 
         _binding = FragmentDeviceDosingRootBinding.bind(view)
 
         setupHeader(title = args.deviceTitle.ifBlank { getString(R.string.device_family_dosing) })
+        viewModel.bind(
+            deviceUidText = args.deviceUid,
+            fallbackTitle = args.deviceTitle,
+            presentationPrepared = args.presentationPrepared
+        )
+        setFragmentGlobalLoading(viewModel.uiState.value.isPreparing)
         setupPumpContent()
         observeHeaderTitle()
         observeChannelNavigation()
         observeChannelNavigationFailures()
-
-        viewModel.bind(
-            deviceUidText = args.deviceUid,
-            fallbackTitle = args.deviceTitle
-        )
+        observeInitialRefreshFailures()
     }
 
     override fun onStart() {
         super.onStart()
-        viewModel.refreshAuthoritative()
+        viewModel.onHostStarted()
     }
 
     private fun setupHeader(title: String) {
@@ -127,11 +130,25 @@ class DeviceDosingRootFragment : Fragment(R.layout.fragment_device_dosing_root) 
         }
     }
 
+    private fun observeInitialRefreshFailures() {
+        viewLifecycleOwner.lifecycleScope.launch {
+            viewLifecycleOwner.repeatOnLifecycle(Lifecycle.State.STARTED) {
+                viewModel.initialRefreshFailureEvents.collect {
+                    (activity as? BaseActivity)?.showSnackBar(
+                        message = getString(R.string.device_menu_current_data_not_ready_message),
+                        type = BaseActivity.SnackType.ERROR
+                    )
+                }
+            }
+        }
+    }
+
     private fun observeHeaderTitle() {
         viewLifecycleOwner.lifecycleScope.launch {
             viewLifecycleOwner.repeatOnLifecycle(Lifecycle.State.STARTED) {
                 viewModel.uiState.collect { state ->
                     if (_binding == null) return@collect
+                    setFragmentGlobalLoading(state.isPreparing)
                     setupHeader(
                         title = state.title.ifBlank {
                             args.deviceTitle.ifBlank { getString(R.string.device_family_dosing) }

@@ -8,8 +8,8 @@ import com.aqua.aqualight.application.devices.OwnerDeviceAvailability
 import com.aqua.aqualight.application.devices.OwnerDeviceFamily
 import com.aqua.aqualight.application.devices.OwnerDeviceListItem
 import com.aqua.aqualight.application.devices.OwnerDevicesOperations
-import com.aqua.aqualight.ui.tabs.devices.route.DeviceRouteResolver
 import com.aqua.aqualight.ui.common.devicecard.DeviceCompactStatusStyle
+import com.aqua.aqualight.ui.tabs.devices.route.DeviceRouteResolver
 import com.aqua.aqualight.ui.tabs.devices.route.DeviceRouteTarget
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -71,7 +71,8 @@ class DevicesViewModelBoundaryTest {
             result = DeviceMenuAccessResult.Available(
                 deviceUid = "device-1",
                 title = "AquaLight One",
-                family = OwnerDeviceFamily.LIGHT
+                family = OwnerDeviceFamily.LIGHT,
+                presentationPrepared = true
             )
         )
         val viewModel = createViewModel(
@@ -86,6 +87,36 @@ class DevicesViewModelBoundaryTest {
         assertEquals("device-1", event.route.deviceUid)
         assertEquals("AquaLight One", event.route.title)
         assertEquals(DeviceRouteTarget.LIGHT_ROOT, event.route.target)
+        assertTrue(event.route.presentationPrepared)
+        assertTrue(viewModel.uiState.value.isOpeningDeviceMenu)
+
+        viewModel.onDeviceMenuOpenHandled("device-1")
+
+        assertFalse(viewModel.uiState.value.isOpeningDeviceMenu)
+    }
+
+    @Test
+    fun `available result without presentation proof is rejected before navigation`() = runTest {
+        val viewModel = createViewModel(
+            operations = FakeOwnerDevicesOperations(listOf(device("device-1"))),
+            menuOperations = FakeDeviceMenuAccessOperations(
+                DeviceMenuAccessResult.Available(
+                    deviceUid = "device-1",
+                    title = "Dose Pro",
+                    family = OwnerDeviceFamily.DOSING
+                )
+            )
+        )
+
+        viewModel.onDeviceClicked("device-1")
+        val event = viewModel.events.first() as DevicesEvent.ShowDeviceUnavailable
+
+        assertEquals("device-1", event.requestDeviceUid)
+        assertTrue(viewModel.uiState.value.isOpeningDeviceMenu)
+
+        viewModel.onDeviceMenuOpenHandled(event.requestDeviceUid)
+
+        assertFalse(viewModel.uiState.value.isOpeningDeviceMenu)
     }
 
     @Test

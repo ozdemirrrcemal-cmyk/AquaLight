@@ -34,9 +34,6 @@ class DeviceDosingChannelCalibrationFragment :
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
-        setupContent(view)
-        setupBackHandling()
-        observeEvents()
         viewModel.bind(
             route = DeviceDosingCalibrationRoute(
                 deviceUid = args.deviceUid,
@@ -47,8 +44,11 @@ class DeviceDosingChannelCalibrationFragment :
                 restoredDisplayNameDraft = savedInstanceState
                     ?.getString(STATE_DISPLAY_NAME_DRAFT)
                     ?.takeIf(String::isNotEmpty)
-            )
+                )
         )
+        setupContent(view)
+        setupBackHandling()
+        observeEvents()
     }
 
     override fun onSaveInstanceState(outState: Bundle) {

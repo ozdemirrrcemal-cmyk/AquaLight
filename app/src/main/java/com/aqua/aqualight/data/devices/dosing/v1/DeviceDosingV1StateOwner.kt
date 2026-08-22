@@ -45,6 +45,8 @@ internal interface DeviceDosingV1StateReadAccess {
 
     fun observeAll(deviceUid: DeviceUid): Flow<List<DeviceDosingChannelSnapshot>>
 
+    fun currentAll(deviceUid: DeviceUid): List<DeviceDosingChannelSnapshot>
+
     fun currentChannel(
         deviceUid: DeviceUid,
         channelKey: DeviceDosingV1ChannelKey
@@ -81,14 +83,16 @@ internal data class DeviceDosingV1CommittedMutationContinuation(
 private enum class OwnedDosingChannelAuthority {
     AUTHORITATIVE,
     COMMITTED_MUTATION,
-    INVALIDATED
+    RECONCILING,
+    CONNECTION_STALE
 }
 
 private data class OwnedDosingChannelState(
     val revision: Long,
     val authority: OwnedDosingChannelAuthority,
     val channel: DeviceDosingChannelSnapshot?,
-    val calibration: DeviceDosingCalibrationSnapshot?
+    val calibration: DeviceDosingCalibrationSnapshot?,
+    val committedMutation: DeviceDosingV1CommittedMutationContinuation? = null
 )
 
 private data class OwnedDosingDeviceState(
@@ -101,10 +105,12 @@ private data class OwnedDosingDeviceState(
  * The only device/channel-scoped Dosing state owner.
  *
  * Raw replies and events may enter through different paths, but snapshots enter this owner only
- * after generation, request ordering and revision coherence are proven. Short mutation/event
- * invalidations retain the last validated snapshot for presentation stability while authoritative
- * current reads remain fail-closed until refresh. Channel alert intent is projected from the
- * dedicated owner-scoped ledger; it never becomes a second firmware state owner.
+ * after generation, request ordering and revision coherence are proven. Same-connection mutation
+ * and event reconciliation retains the last coherent snapshot for presentation stability while
+ * authoritative current reads remain fail-closed. Connection boundaries withhold that snapshot so
+ * prior-session runtime and progress can never be presented as current. Mutation ACK projections
+ * remain internal continuations only. Channel alert intent is projected from the dedicated
+ * owner-scoped ledger; it never becomes a second firmware state owner.
  */
 internal class DeviceDosingV1StateOwner(
     private val lowLevelAlertLedger: DeviceDosingLowLevelAlertLedger =
@@ -166,7 +172,8 @@ internal class DeviceDosingV1StateOwner(
             revision = incomingRevision,
             authority = OwnedDosingChannelAuthority.AUTHORITATIVE,
             channel = mapped.channel,
-            calibration = mapped.calibration
+            calibration = mapped.calibration,
+            committedMutation = null
         )
         publish(
             token.deviceUid,
@@ -205,12 +212,18 @@ internal class DeviceDosingV1StateOwner(
                     token.channelKey to OwnedDosingChannelState(
                         revision = channel.revision,
                         authority = if (projection == null) {
-                            OwnedDosingChannelAuthority.INVALIDATED
+                            OwnedDosingChannelAuthority.RECONCILING
                         } else {
                             OwnedDosingChannelAuthority.COMMITTED_MUTATION
                         },
-                        channel = projection?.channel ?: current?.channel,
-                        calibration = projection?.calibration ?: current?.calibration
+                        channel = current?.channel,
+                        calibration = current?.calibration,
+                        committedMutation = projection?.let { projected ->
+                            DeviceDosingV1CommittedMutationContinuation(
+                                channel = projected.channel,
+                                calibration = projected.calibration
+                            )
+                        }
                     )
                 )
             )
@@ -231,9 +244,11 @@ internal class DeviceDosingV1StateOwner(
         ) {
             return@synchronized DeviceDosingV1InvalidationDisposition.STALE_CONNECTION
         }
+        val connectionAdvanced = existingDevice != null &&
+            connectionGeneration.value > existingDevice.connectionGeneration.value
         val device = when {
             existingDevice == null -> emptyDevice(connectionGeneration)
-            connectionGeneration.value > existingDevice.connectionGeneration.value ->
+            connectionAdvanced ->
                 existingDevice.advanceConnectionGeneration(connectionGeneration)
             else -> existingDevice
         }
@@ -242,15 +257,22 @@ internal class DeviceDosingV1StateOwner(
             return@synchronized DeviceDosingV1InvalidationDisposition.STALE_REVISION
         }
         val revisionFloor = maxOf(revisionHint ?: 0L, current?.revision ?: 0L)
+        val connectionPresentationStale = connectionAdvanced ||
+            current?.authority == OwnedDosingChannelAuthority.CONNECTION_STALE
         publish(
             deviceUid,
             device.copy(
                 channels = device.channels + (
                     channelKey to OwnedDosingChannelState(
                         revision = revisionFloor,
-                        authority = OwnedDosingChannelAuthority.INVALIDATED,
+                        authority = if (connectionPresentationStale) {
+                            OwnedDosingChannelAuthority.CONNECTION_STALE
+                        } else {
+                            OwnedDosingChannelAuthority.RECONCILING
+                        },
                         channel = current?.channel,
-                        calibration = current?.calibration
+                        calibration = current?.calibration,
+                        committedMutation = null
                     )
                 )
             )
@@ -268,14 +290,25 @@ internal class DeviceDosingV1StateOwner(
         val device = states.value[deviceUid] ?: return@synchronized
         val current = device.channels[channelKey] ?: return@synchronized
         val channel = current.channel ?: return@synchronized
+        val updatedChannel = channel.copy(
+            reservoir = channel.reservoir.copy(lowLevelAlertEnabled = enabled)
+        )
+        val updatedContinuation = current.committedMutation?.let { continuation ->
+            continuation.copy(
+                channel = continuation.channel.copy(
+                    reservoir = continuation.channel.reservoir.copy(
+                        lowLevelAlertEnabled = enabled
+                    )
+                )
+            )
+        }
         publish(
             deviceUid,
             device.copy(
                 channels = device.channels + (
                     channelKey to current.copy(
-                        channel = channel.copy(
-                            reservoir = channel.reservoir.copy(lowLevelAlertEnabled = enabled)
-                        )
+                        channel = updatedChannel,
+                        committedMutation = updatedContinuation
                     )
                 )
             )
@@ -283,9 +316,9 @@ internal class DeviceDosingV1StateOwner(
     }
 
     /**
-     * A socket lifecycle transition revokes write authority but is not a domain-state reset.
-     * Presentation keeps the last fully validated firmware projection until the authenticated
-     * generation refreshes it, preventing transport churn from becoming false switch/card state.
+     * A socket lifecycle transition revokes both write and presentation freshness. The last
+     * coherent snapshot stays inside this owner for diagnostics and safe replacement, but UI reads
+     * remain empty until the authenticated connection publishes a new authoritative snapshot.
     */
     fun invalidateAll(deviceUid: DeviceUid) = synchronized(lock) {
         requestGenerations.keys
@@ -298,7 +331,10 @@ internal class DeviceDosingV1StateOwner(
             deviceUid,
             device.copy(
                 channels = device.channels.mapValues { (_, channel) ->
-                    channel.copy(authority = OwnedDosingChannelAuthority.INVALIDATED)
+                    channel.copy(
+                        authority = OwnedDosingChannelAuthority.CONNECTION_STALE,
+                        committedMutation = null
+                    )
                 }
             )
         )
@@ -350,9 +386,9 @@ internal class DeviceDosingV1StateOwner(
     )
 
     /**
-     * Cross a runtime connection boundary without turning a transport transition into fake UI
-     * state. Old revisions and global data are not authoritative in the new session, but the last
-     * validated channel/calibration projections remain safe for presentation until refresh wins.
+     * Cross a runtime connection boundary without turning the previous session into fake UI state.
+     * Old revisions and global data remain retained only inside the owner and are withheld from
+     * presentation until the new authenticated generation wins a coherent refresh.
      */
     private fun OwnedDosingDeviceState.advanceConnectionGeneration(
         generation: DeviceRuntimeConnectionGeneration
@@ -362,7 +398,8 @@ internal class DeviceDosingV1StateOwner(
         channels = channels.mapValues { (_, channel) ->
             channel.copy(
                 revision = 0L,
-                authority = OwnedDosingChannelAuthority.INVALIDATED
+                authority = OwnedDosingChannelAuthority.CONNECTION_STALE,
+                committedMutation = null
             )
         }
     )
@@ -405,6 +442,14 @@ private class DefaultDeviceDosingV1StateReadAccess(
         }
         .distinctUntilChanged()
 
+    override fun currentAll(deviceUid: DeviceUid): List<DeviceDosingChannelSnapshot> =
+        currentStates()[deviceUid]
+            ?.channels
+            ?.values
+            ?.mapNotNull(OwnedDosingChannelState::authoritativeChannel)
+            ?.sortedBy(DeviceDosingChannelSnapshot::channelNumber)
+            .orEmpty()
+
     override fun currentChannel(
         deviceUid: DeviceUid,
         channelKey: DeviceDosingV1ChannelKey
@@ -439,11 +484,7 @@ private class DefaultDeviceDosingV1StateReadAccess(
         ?.takeIf { state ->
             state.authority == OwnedDosingChannelAuthority.COMMITTED_MUTATION
         }
-        ?.let { state ->
-            val channel = state.channel ?: return@let null
-            val calibration = state.calibration ?: return@let null
-            DeviceDosingV1CommittedMutationContinuation(channel, calibration)
-        }
+        ?.committedMutation
 }
 
 private data class DosingStateAddress(
@@ -451,9 +492,11 @@ private data class DosingStateAddress(
     val channelKey: DeviceDosingV1ChannelKey
 )
 
-private fun OwnedDosingChannelState.presentationChannel(): DeviceDosingChannelSnapshot? = channel
+private fun OwnedDosingChannelState.presentationChannel(): DeviceDosingChannelSnapshot? =
+    channel.takeUnless { authority == OwnedDosingChannelAuthority.CONNECTION_STALE }
 
-private fun OwnedDosingChannelState.presentationCalibration(): DeviceDosingCalibrationSnapshot? = calibration
+private fun OwnedDosingChannelState.presentationCalibration(): DeviceDosingCalibrationSnapshot? =
+    calibration.takeUnless { authority == OwnedDosingChannelAuthority.CONNECTION_STALE }
 
 private fun OwnedDosingChannelState.authoritativeChannel(): DeviceDosingChannelSnapshot? =
     channel.takeIf { authority == OwnedDosingChannelAuthority.AUTHORITATIVE }
@@ -468,8 +511,8 @@ private fun mutationProjection(
     detail: DeviceDosingV1ChannelDetail,
     lowLevelAlertLedger: DeviceDosingLowLevelAlertLedger
 ): DeviceDosingV1MappedSnapshots? = current?.let { state ->
-    val channel = state.channel
-    val calibration = state.calibration
+    val channel = state.committedMutation?.channel ?: state.channel
+    val calibration = state.committedMutation?.calibration ?: state.calibration
     if (channel == null || calibration == null) {
         null
     } else {

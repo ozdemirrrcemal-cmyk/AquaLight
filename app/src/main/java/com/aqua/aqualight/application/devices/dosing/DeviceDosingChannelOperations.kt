@@ -24,6 +24,9 @@ interface DeviceDosingChannelOperations {
     fun observeAll(deviceUid: String): Flow<List<DeviceDosingChannelSnapshot>> =
         flowOf(emptyList())
 
+    /** Complete authoritative channel set from the current connection, ordered physically. */
+    fun currentAll(deviceUid: String): List<DeviceDosingChannelSnapshot> = emptyList()
+
     suspend fun refresh(
         deviceUid: String,
         slotId: String

@@ -149,9 +149,17 @@ class DevicesFragment : Fragment(R.layout.fragment_devices) {
                 launch {
                     viewModel.events.collect { event ->
                         when (event) {
-                            is DevicesEvent.OpenRoute -> openDeviceRoute(event.route)
+                            is DevicesEvent.OpenRoute -> try {
+                                openDeviceRoute(event.route)
+                            } finally {
+                                viewModel.onDeviceMenuOpenHandled(event.requestDeviceUid)
+                            }
                             is DevicesEvent.ShowDeviceUnavailable -> {
-                                showDeviceUnavailable(event)
+                                try {
+                                    showDeviceUnavailable(event)
+                                } finally {
+                                    viewModel.onDeviceMenuOpenHandled(event.requestDeviceUid)
+                                }
                             }
                             is DevicesEvent.ShowDeletePartialSuccess -> {
                                 showDeletePartialSuccess(event)
@@ -171,14 +179,15 @@ class DevicesFragment : Fragment(R.layout.fragment_devices) {
 
         setupHeader(state)
         deviceAdapter.submitList(state.devices)
-        binding.rvSelectedDevices.isEnabled = !state.isDeletingDevices
+        val globalBusy = state.isDeletingDevices || state.isOpeningDeviceMenu
+        binding.rvSelectedDevices.isEnabled = !globalBusy
         binding.btnEmptyAddDevice.isEnabled =
             !state.isDeletingDevices && !state.isOpeningDeviceMenu
         binding.rvSelectedDevices.isVisible = state.devices.isNotEmpty()
         binding.tvEmptyState.isVisible = state.isEmpty
         baseActivity()?.setGlobalLoading(
             ownerKey = DEVICE_OPERATION_LOADING_OWNER,
-            show = state.isDeletingDevices
+            show = globalBusy
         )
     }
 
@@ -271,7 +280,8 @@ class DevicesFragment : Fragment(R.layout.fragment_devices) {
             DeviceRouteTarget.DOSING_ROOT ->
                 DevicesFragmentDirections.actionDevicesFragmentToDeviceDosingRootFragment(
                     deviceUid = route.deviceUid,
-                    deviceTitle = route.title.ifBlank { getString(route.titleRes) }
+                    deviceTitle = route.title.ifBlank { getString(route.titleRes) },
+                    presentationPrepared = route.presentationPrepared
                 )
             DeviceRouteTarget.TIMER_ROOT ->
                 DevicesFragmentDirections.actionDevicesFragmentToDeviceTimerRootFragment(

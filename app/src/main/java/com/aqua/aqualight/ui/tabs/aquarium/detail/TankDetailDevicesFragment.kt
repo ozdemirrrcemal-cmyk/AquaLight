@@ -130,11 +130,19 @@ class TankDetailDevicesFragment : Fragment(R.layout.fragment_tank_detail_devices
                     viewModel.events.collect { event ->
                         when (event) {
                             is TankDetailDevicesEvent.OpenDeviceRoute -> {
-                                parentHost()?.onTankDetailDeviceClicked(event.route)
+                                try {
+                                    parentHost()?.onTankDetailDeviceClicked(event.route)
+                                } finally {
+                                    viewModel.onDeviceMenuOpenHandled(event.requestUid)
+                                }
                             }
 
                             is TankDetailDevicesEvent.ShowDeviceUnavailable -> {
-                                showDeviceUnavailable(event)
+                                try {
+                                    showDeviceUnavailable(event)
+                                } finally {
+                                    viewModel.onDeviceMenuOpenHandled(event.requestUid)
+                                }
                             }
 
                             TankDetailDevicesEvent.ShowRemoveFailed -> {
@@ -162,7 +170,9 @@ class TankDetailDevicesFragment : Fragment(R.layout.fragment_tank_detail_devices
     private fun renderState(
         state: TankDetailDevicesUiState
     ) {
-        val globalBusy = state.isLoading || state.isRemovingDevice
+        val globalBusy = state.isLoading ||
+            state.isRemovingDevice ||
+            state.isOpeningDeviceMenu
 
         adapter.submitList(state.devices)
         binding.rvAssignedDevices.isEnabled = !globalBusy

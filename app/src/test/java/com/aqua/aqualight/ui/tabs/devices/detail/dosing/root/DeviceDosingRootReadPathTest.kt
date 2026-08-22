@@ -3,6 +3,9 @@ package com.aqua.aqualight.ui.tabs.devices.detail.dosing.root
 import com.aqua.aqualight.application.devices.DeviceChannelSlots
 import com.aqua.aqualight.application.devices.DeviceChannelWireKey
 import com.aqua.aqualight.application.devices.DeviceDosingChannelSlot
+import com.aqua.aqualight.application.devices.DeviceMenuAccessOperations
+import com.aqua.aqualight.application.devices.DeviceMenuAccessResult
+import com.aqua.aqualight.application.devices.DeviceMenuUnavailableReason
 import com.aqua.aqualight.application.devices.DeviceRootCatalogState
 import com.aqua.aqualight.application.devices.DeviceRootOperations
 import com.aqua.aqualight.application.devices.DeviceRootRoute
@@ -26,10 +29,12 @@ import com.aqua.aqualight.application.devices.dosing.DeviceDosingSchedulingPolic
 import com.aqua.aqualight.data.devices.dosing.UnavailableDeviceDosingChannelNavigationOperations
 import com.aqua.aqualight.data.devices.dosing.UnavailableDeviceDosingChannelOperations
 import com.aqua.aqualight.ui.tabs.devices.detail.dosing.presentation.pump.DosingPumpVisualState
+import kotlinx.coroutines.CoroutineStart
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.test.UnconfinedTestDispatcher
 import kotlinx.coroutines.test.resetMain
 import kotlinx.coroutines.test.runTest
@@ -58,24 +63,20 @@ class DeviceDosingRootReadPathTest {
     }
 
     @Test
-    fun `two channel root switches atomically to authoritative cards`() =
+    fun `prepared two channel root renders authoritative cards on its first frame`() =
         runTest(dispatcher) {
-            val channels = FakeChannelOperations()
-            val viewModel = viewModel(channelCount = 2, channelOperations = channels)
-
-            viewModel.bind(DEVICE_UID, "Fallback")
-
-            assertEquals(listOf("Catalog 1", "Catalog 2"), channelNames(viewModel))
-            assertTrue(viewModel.uiState.value.pumpStates.isEmpty())
-            viewModel.uiState.value.channels.forEach { channel ->
-                assertNull(channel.visualState)
-            }
-
-            channels.emit(
-                listOf(
+            val channels = FakeChannelOperations(
+                initialSnapshots = listOf(
                     channelSnapshot(channelNumber = 2, pumpCount = 2),
                     channelSnapshot(channelNumber = 1, pumpCount = 2, active = true)
                 )
+            )
+            val viewModel = viewModel(channelCount = 2, channelOperations = channels)
+
+            viewModel.bind(
+                deviceUidText = DEVICE_UID,
+                fallbackTitle = "Fallback",
+                presentationPrepared = true
             )
 
             val authoritative = viewModel.uiState.value
@@ -101,14 +102,17 @@ class DeviceDosingRootReadPathTest {
 
     @Test
     fun `reconnect clears authoritative cards to topology-only bootstrap`() = runTest(dispatcher) {
-        val channels = FakeChannelOperations()
-        val viewModel = viewModel(channelCount = 2, channelOperations = channels)
-        viewModel.bind(DEVICE_UID, "Fallback")
-        channels.emit(
-            listOf(
+        val channels = FakeChannelOperations(
+            initialSnapshots = listOf(
                 channelSnapshot(channelNumber = 1, pumpCount = 2, active = true),
                 channelSnapshot(channelNumber = 2, pumpCount = 2)
             )
+        )
+        val viewModel = viewModel(channelCount = 2, channelOperations = channels)
+        viewModel.bind(
+            deviceUidText = DEVICE_UID,
+            fallbackTitle = "Fallback",
+            presentationPrepared = true
         )
 
         channels.emit(emptyList())
@@ -123,14 +127,16 @@ class DeviceDosingRootReadPathTest {
     @Test
     fun `four channel root orders a complete authoritative set by physical channel`() =
         runTest(dispatcher) {
-            val channels = FakeChannelOperations()
-            val viewModel = viewModel(channelCount = 4, channelOperations = channels)
-            viewModel.bind(DEVICE_UID, "Fallback")
-
-            channels.emit(
-                (4 downTo 1).map { channelNumber ->
+            val channels = FakeChannelOperations(
+                initialSnapshots = (4 downTo 1).map { channelNumber ->
                     channelSnapshot(channelNumber = channelNumber, pumpCount = 4)
                 }
+            )
+            val viewModel = viewModel(channelCount = 4, channelOperations = channels)
+            viewModel.bind(
+                deviceUidText = DEVICE_UID,
+                fallbackTitle = "Fallback",
+                presentationPrepared = true
             )
 
             assertEquals(4, viewModel.uiState.value.pumpCount)
@@ -145,17 +151,20 @@ class DeviceDosingRootReadPathTest {
     fun `transient metadata invalidation preserves last validated firmware cards`() =
         runTest(dispatcher) {
             val root = FakeRootOperations(rootSnapshot(channelCount = 4))
-            val channels = FakeChannelOperations()
-            val viewModel = viewModel(root, channels)
-            viewModel.bind(DEVICE_UID, "Fallback")
-            channels.emit(
-                (1..4).map { channelNumber ->
+            val channels = FakeChannelOperations(
+                initialSnapshots = (1..4).map { channelNumber ->
                     channelSnapshot(
                         channelNumber = channelNumber,
                         pumpCount = 4,
                         active = channelNumber == 1
                     )
                 }
+            )
+            val viewModel = viewModel(root, channels)
+            viewModel.bind(
+                deviceUidText = DEVICE_UID,
+                fallbackTitle = "Fallback",
+                presentationPrepared = true
             )
             val validated = viewModel.uiState.value
 
@@ -179,14 +188,16 @@ class DeviceDosingRootReadPathTest {
     @Test
     fun `invalid cold start cannot invent card topology from firmware snapshots`() =
         runTest(dispatcher) {
-            val channels = FakeChannelOperations()
-            val viewModel = viewModel(FakeRootOperations(invalidRootSnapshot()), channels)
-            viewModel.bind(DEVICE_UID, "Fallback")
-
-            channels.emit(
-                (1..4).map { channelNumber ->
+            val channels = FakeChannelOperations(
+                initialSnapshots = (1..4).map { channelNumber ->
                     channelSnapshot(channelNumber = channelNumber, pumpCount = 4)
                 }
+            )
+            val viewModel = viewModel(FakeRootOperations(invalidRootSnapshot()), channels)
+            viewModel.bind(
+                deviceUidText = DEVICE_UID,
+                fallbackTitle = "Fallback",
+                presentationPrepared = true
             )
 
             assertEquals(UNKNOWN_DOSING_PUMP_COUNT, viewModel.uiState.value.pumpCount)
@@ -197,9 +208,18 @@ class DeviceDosingRootReadPathTest {
     @Test
     fun `partial foreign or duplicate state cannot replace catalog bootstrap`() =
         runTest(dispatcher) {
-            val channels = FakeChannelOperations()
+            val channels = FakeChannelOperations(
+                initialSnapshots = listOf(
+                    channelSnapshot(channelNumber = 1, pumpCount = 2),
+                    channelSnapshot(channelNumber = 2, pumpCount = 2)
+                )
+            )
             val viewModel = viewModel(channelCount = 2, channelOperations = channels)
-            viewModel.bind(DEVICE_UID, "Fallback")
+            viewModel.bind(
+                deviceUidText = DEVICE_UID,
+                fallbackTitle = "Fallback",
+                presentationPrepared = true
+            )
 
             channels.emit(listOf(channelSnapshot(channelNumber = 1, pumpCount = 2)))
             assertEquals(listOf("Catalog 1", "Catalog 2"), channelNames(viewModel))
@@ -215,8 +235,77 @@ class DeviceDosingRootReadPathTest {
             val duplicate = channelSnapshot(channelNumber = 1, pumpCount = 2)
             channels.emit(listOf(duplicate, duplicate))
             assertEquals(listOf("Catalog 1", "Catalog 2"), channelNames(viewModel))
-            assertTrue(channels.refreshAllCalled)
+            assertFalse(channels.refreshAllCalled)
             assertFalse(viewModel.uiState.value.channels.isEmpty())
+        }
+
+    @Test
+    fun `unprepared entry never renders cached active run before fresh read`() =
+        runTest(dispatcher) {
+            val stale = listOf(
+                channelSnapshot(channelNumber = 1, pumpCount = 2, active = true),
+                channelSnapshot(channelNumber = 2, pumpCount = 2)
+            )
+            val fresh = stale.map { snapshot ->
+                snapshot.copy(
+                    runtimeReason = DeviceDosingRuntimeReason.NONE,
+                    activeRun = DeviceDosingActiveRun(),
+                    progress = snapshot.progress.copy(
+                        completedAmountMicroliters = 0L,
+                        remainingAmountMicroliters = snapshot.progress
+                            .scheduledAmountMicroliters,
+                        completionPercent = 0.0
+                    ),
+                    usageToday = DeviceDosingDailyUsageSnapshot()
+                )
+            }
+            val channels = FakeChannelOperations(
+                initialSnapshots = stale
+            )
+            val menuAccess = FakeMenuAccessOperations {
+                channels.emit(fresh)
+                DeviceMenuAccessResult.Available(
+                    deviceUid = DEVICE_UID,
+                    title = "Dose Pro",
+                    family = OwnerDeviceFamily.DOSING,
+                    presentationPrepared = true
+                )
+            }
+            val viewModel = viewModel(
+                rootOperations = FakeRootOperations(rootSnapshot(channelCount = 2)),
+                channelOperations = channels,
+                menuAccessOperations = menuAccess
+            )
+            val rendered = mutableListOf<DeviceDosingRootUiState>()
+            val collection = backgroundScope.launch(start = CoroutineStart.UNDISPATCHED) {
+                viewModel.uiState.collect(rendered::add)
+            }
+
+            viewModel.bind(
+                deviceUidText = DEVICE_UID,
+                fallbackTitle = "Fallback",
+                presentationPrepared = false
+            )
+
+            assertTrue(menuAccess.resolveCalled)
+            assertFalse(channels.refreshAllCalled)
+            assertFalse(viewModel.uiState.value.isPreparing)
+            assertTrue(rendered.none { state ->
+                DosingPumpVisualState.RUNNING in state.pumpStates
+            })
+            assertEquals(
+                0.0,
+                viewModel.uiState.value.channels.first()
+                    .programProgress.scheduledDeliveredTodayMl,
+                0.0
+            )
+            assertEquals(
+                0.0,
+                viewModel.uiState.value.channels.first()
+                    .programProgress.manualDeliveredTodayMl,
+                0.0
+            )
+            collection.cancel()
         }
 
     private fun viewModel(
@@ -226,11 +315,18 @@ class DeviceDosingRootReadPathTest {
 
     private fun viewModel(
         rootOperations: DeviceRootOperations,
-        channelOperations: DeviceDosingChannelOperations
+        channelOperations: DeviceDosingChannelOperations,
+        menuAccessOperations: DeviceMenuAccessOperations = FakeMenuAccessOperations {
+            DeviceMenuAccessResult.Unavailable(
+                title = "",
+                reason = DeviceMenuUnavailableReason.CURRENT_DATA_NOT_READY
+            )
+        }
     ) = DeviceDosingRootViewModel(
         operations = rootOperations,
         channelNavigationOperations = UnavailableDeviceDosingChannelNavigationOperations,
-        channelOperations = channelOperations
+        channelOperations = channelOperations,
+        menuAccessOperations = menuAccessOperations
     )
 
     private fun channelNames(viewModel: DeviceDosingRootViewModel): List<String> =
@@ -252,21 +348,38 @@ class DeviceDosingRootReadPathTest {
         }
     }
 
-    private class FakeChannelOperations :
+    private class FakeChannelOperations(
+        initialSnapshots: List<DeviceDosingChannelSnapshot> = emptyList(),
+        private val refreshSucceeds: Boolean = true
+    ) :
         DeviceDosingChannelOperations by UnavailableDeviceDosingChannelOperations {
-        private val snapshots = MutableStateFlow<List<DeviceDosingChannelSnapshot>>(emptyList())
+        private val snapshots = MutableStateFlow(initialSnapshots)
         var refreshAllCalled: Boolean = false
 
         override fun observeAll(deviceUid: String): Flow<List<DeviceDosingChannelSnapshot>> =
             snapshots
 
+        override fun currentAll(deviceUid: String): List<DeviceDosingChannelSnapshot> =
+            snapshots.value
+
         override suspend fun refreshAll(deviceUid: String): Boolean {
             refreshAllCalled = true
-            return true
+            return refreshSucceeds
         }
 
         fun emit(value: List<DeviceDosingChannelSnapshot>) {
             snapshots.value = value
+        }
+    }
+
+    private class FakeMenuAccessOperations(
+        private val result: () -> DeviceMenuAccessResult
+    ) : DeviceMenuAccessOperations {
+        var resolveCalled: Boolean = false
+
+        override suspend fun resolve(deviceUid: String): DeviceMenuAccessResult {
+            resolveCalled = true
+            return result()
         }
     }
 

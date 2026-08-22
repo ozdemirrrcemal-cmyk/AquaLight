@@ -65,22 +65,32 @@ class DevicesViewModel(
                     title = "",
                     reason = DeviceMenuUnavailableReason.CURRENT_LIVENESS_NOT_PROVEN
                 )
-            } finally {
-                if (openingDeviceUid.value == deviceUid) {
-                    openingDeviceUid.value = null
-                }
             }
 
             when (result) {
-                is DeviceMenuAccessResult.Available ->
-                    _events.send(
-                        DevicesEvent.OpenRoute(
-                            route = routeResolver.resolve(result)
+                is DeviceMenuAccessResult.Available -> {
+                    if (result.presentationPrepared) {
+                        _events.send(
+                            DevicesEvent.OpenRoute(
+                                route = routeResolver.resolve(result)
+                            )
                         )
-                    )
+                    } else {
+                        _events.send(
+                            DevicesEvent.ShowDeviceUnavailable(
+                                requestDeviceUid = deviceUid,
+                                title = result.title,
+                                messageRes = DeviceMenuUnavailableMessageMapper.messageRes(
+                                    DeviceMenuUnavailableReason.CURRENT_DATA_NOT_READY
+                                )
+                            )
+                        )
+                    }
+                }
                 is DeviceMenuAccessResult.Unavailable ->
                     _events.send(
                         DevicesEvent.ShowDeviceUnavailable(
+                            requestDeviceUid = deviceUid,
                             title = result.title,
                             messageRes = DeviceMenuUnavailableMessageMapper.messageRes(
                                 result.reason
@@ -88,6 +98,14 @@ class DevicesViewModel(
                         )
                     )
             }
+        }
+    }
+
+    /** Keeps the central loading barrier visible until the UI consumes the terminal menu event. */
+    fun onDeviceMenuOpenHandled(deviceUid: String) {
+        if (openingDeviceUid.value == deviceUid) {
+            openingDeviceUid.value = null
+            menuOpenJob = null
         }
     }
 

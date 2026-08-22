@@ -7,7 +7,7 @@ import org.junit.Test
 class DeviceDosingPrimeHoldStabilityContractTest {
 
     @Test
-    fun `transient dosing invalidation keeps presentation stable but authoritative reads fail closed`() {
+    fun `presentation is stable only inside the current connection`() {
         val source = source(
             "app/src/main/java/com/aqua/aqualight/data/devices/dosing/v1/" +
                 "DeviceDosingV1StateOwner.kt"
@@ -15,9 +15,13 @@ class DeviceDosingPrimeHoldStabilityContractTest {
         val invalidate = source.substringAfter("fun invalidate(")
             .substringBefore("fun setLowLevelAlertIntent(")
         val reads = source.substringAfter("private class DefaultDeviceDosingV1StateReadAccess(")
+        val lifecycle = source.substringAfter("fun invalidateAll(")
+            .substringBefore("private fun prepareDevice(")
 
         assertTrue(invalidate.contains("channel = current?.channel"))
         assertTrue(invalidate.contains("calibration = current?.calibration"))
+        assertTrue(invalidate.contains("OwnedDosingChannelAuthority.RECONCILING"))
+        assertTrue(lifecycle.contains("OwnedDosingChannelAuthority.CONNECTION_STALE"))
         assertTrue(reads.contains("?.presentationChannel()"))
         assertTrue(reads.contains("?.presentationCalibration()"))
         assertTrue(reads.contains("?.authoritativeChannel()"))
