@@ -41,6 +41,8 @@ private fun DeviceDosingChannelSnapshot.toScheduleDaysUiState() = DosingSchedule
 )
 
 private fun DeviceDosingChannelSnapshot.toCardVisualState(): DosingChannelVisualState = when {
+    runtimeReason == DeviceDosingRuntimeReason.INVALID_TIME ->
+        DosingChannelVisualState.RTC_ATTENTION
     !calibrated -> DosingChannelVisualState.NOT_CONFIGURED
     program == null -> DosingChannelVisualState.PROGRAM_NOT_CONFIGURED
     hasAttentionState() -> DosingChannelVisualState.ERROR

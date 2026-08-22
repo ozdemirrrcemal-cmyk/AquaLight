@@ -16,6 +16,11 @@ CONTRACT_PATH = TIME_ROOT / "DeviceTimeRuntimeContract.kt"
 MODELS_PATH = TIME_ROOT / "DeviceTimeModels.kt"
 PARSER_PATH = TIME_ROOT / "DeviceTimeStatusParser.kt"
 COORDINATOR_PATH = TIME_ROOT / "DeviceTimeSyncCoordinator.kt"
+RUNTIME_REPOSITORY_PATH = (
+    ROOT
+    / "app/src/main/java/com/aqua/aqualight/data/devices/repository/"
+    / "DeviceRuntimeRepository.kt"
+)
 PARSER_TEST_PATH = (
     ROOT
     / "app/src/test/java/com/aqua/aqualight/data/devices/runtime/modules/time/"
@@ -79,6 +84,7 @@ def verify() -> None:
     models = read(MODELS_PATH)
     parser = read(PARSER_PATH)
     coordinator = read(COORDINATOR_PATH)
+    runtime_repository = read(RUNTIME_REPOSITORY_PATH)
     parser_test = read(PARSER_TEST_PATH)
     coordinator_test = read(COORDINATOR_TEST_PATH)
 
@@ -114,19 +120,35 @@ def verify() -> None:
     require("private const val MIN_SYNCED_YEAR = 2000" in parser, "RTC lower year must be 2000")
     require("day in MIN_DAY..daysInMonth(year, month)" in parser, "calendar date validation missing")
 
-    status_index = coordinator.find("requestStatus(deviceUid)")
-    sync_index = coordinator.find("syncPhoneNow(deviceUid)", status_index + 1)
+    status_index = coordinator.find("requestStatus(deviceUid, generation)")
+    sync_index = coordinator.find("syncPhoneNow(deviceUid, generation)", status_index + 1)
     require(status_index >= 0 and sync_index > status_index, "status must precede phone sync")
     for fragment in (
-        "requestStatus = repository::requestStatus",
-        "save = false",
-        "status.requiresPhoneDiscipline(phoneZone)",
-        "else -> DeviceTimeSyncDecision.Skipped",
+        "currentConnectionGeneration",
+        "statusOutcome.generation != generation",
+        "statusOutcome.value.requiresPhoneDiscipline(currentTimeZoneSnapshot())",
+        "STATUS_FIRST_RETRY_DELAYS_MILLIS = listOf(250L, 750L)",
+        "syncOutcome.isTransientFailure()",
+        "is DeviceRuntimeCommandOutcome.FirmwareError",
+        "is DeviceRuntimeCommandOutcome.ProtocolError -> false",
         "!timeSet",
         "timezoneId != phoneZone.timezoneId",
         "utcOffsetMinutes != phoneZone.utcOffsetMinutes",
     ):
         require(fragment in coordinator, f"mandatory-RTC bootstrap policy missing: {fragment}")
+
+    for fragment in (
+        "executeIfCurrentAuthenticatedGeneration(deviceUid, generation)",
+        "currentConnectionGeneration = ::currentConnectionGeneration",
+        "CoroutineStart.UNDISPATCHED",
+        "runtimeModules.time.requestStatus(deviceUid)",
+        "runtimeModules.time.syncPhoneNow(deviceUid = deviceUid, save = false)",
+        "generation = connectionGeneration",
+    ):
+        require(
+            fragment in runtime_repository,
+            f"generation-bound RTC dispatch policy missing: {fragment}",
+        )
 
     require(
         coordinator.count("data class Attempted(") == 1
@@ -134,9 +156,18 @@ def verify() -> None:
         "existing DeviceTimeSyncDecision.Attempted(outcome) source shape drifted",
     )
     require(
-        "assertTrue(first is DeviceTimeSyncDecision.Skipped)" in coordinator_test
-        and "assertEquals(0, syncCalls.get())" in coordinator_test,
-        "status failure must have regression evidence for fail-closed no-mutation behavior",
+        "non transient firmware status failure is not retried" in coordinator_test
+        and "non transient firmware sync failure is not retried" in coordinator_test
+        and "transient status retry is bounded to three status reads" in coordinator_test
+        and "transient sync failure rechecks status before retrying mutation" in coordinator_test
+        and "assertEquals(listOf(\"status\", \"sync\", \"status\", \"sync\"), calls)"
+        in coordinator_test,
+        "bounded status-first retry needs hard-failure and ordering regression evidence",
+    )
+    require(
+        "new generation is not blocked and stale status cannot sync it" in coordinator_test
+        and "assertEquals(listOf(GENERATION_TWO), syncedGenerations)" in coordinator_test,
+        "connection-generation isolation needs stale-status regression evidence",
     )
 
     forbidden_production_tokens = (

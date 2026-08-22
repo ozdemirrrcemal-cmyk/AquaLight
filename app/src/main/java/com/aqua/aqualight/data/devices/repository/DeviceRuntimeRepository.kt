@@ -37,9 +37,11 @@ import kotlinx.coroutines.CompletableJob
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.CoroutineStart
+import kotlinx.coroutines.Deferred
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.async
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.SharedFlow
@@ -152,7 +154,19 @@ class DeviceRuntimeRepository(
         timerAccessProvider = ::currentTimerRuntimeAccess
     )
 
-    private val timeSyncCoordinator = DeviceTimeSyncCoordinator(repository = runtimeModules.time)
+    private val timeSyncCoordinator = DeviceTimeSyncCoordinator(
+        requestStatus = { deviceUid, generation ->
+            executeIfCurrentAuthenticatedGeneration(deviceUid, generation) {
+                runtimeModules.time.requestStatus(deviceUid)
+            }
+        },
+        syncPhoneNow = { deviceUid, generation ->
+            executeIfCurrentAuthenticatedGeneration(deviceUid, generation) {
+                runtimeModules.time.syncPhoneNow(deviceUid = deviceUid, save = false)
+            }
+        },
+        currentConnectionGeneration = ::currentConnectionGeneration
+    )
 
     private val _connectionState = MutableSharedFlow<AqlWsConnectionState>(
         extraBufferCapacity = EVENT_BUFFER_CAPACITY
@@ -288,6 +302,25 @@ class DeviceRuntimeRepository(
                 }
             }
         }
+    }
+
+    /**
+     * Starts a time command only while [generation] is still the current authenticated session.
+     * UNDISPATCHED execution reaches command dispatch while the same lifecycle locks are held, so
+     * a reconnect cannot move an old status decision onto a replacement socket generation.
+     */
+    private suspend fun <T> executeIfCurrentAuthenticatedGeneration(
+        deviceUid: DeviceUid,
+        generation: DeviceRuntimeConnectionGeneration,
+        operation: suspend () -> DeviceRuntimeCommandOutcome<T>
+    ): DeviceRuntimeCommandOutcome<T>? {
+        var result: Deferred<DeviceRuntimeCommandOutcome<T>>? = null
+        val started = runIfCurrentAuthenticatedGeneration(deviceUid, generation) {
+            result = repositoryScope.async(start = CoroutineStart.UNDISPATCHED) {
+                operation()
+            }
+        }
+        return if (started) checkNotNull(result).await() else null
     }
 
     internal fun pendingCommandCount(): Int = commandExecutor.pendingCount()
@@ -484,8 +517,12 @@ class DeviceRuntimeRepository(
     ): DeviceRuntimeMetadataUpdate {
         return when (val validation = AqlCommercialDeviceCatalog.validate(state.metadata)) {
             is AqlCommercialCatalogValidation.Valid -> {
-                repositoryScope.launch {
-                    timeSyncCoordinator.syncPhoneNowIfNeeded(state.deviceUid)
+                val connectionGeneration = currentConnectionGeneration(state.deviceUid)
+                if (connectionGeneration != null) repositoryScope.launch {
+                    timeSyncCoordinator.syncPhoneNowIfNeeded(
+                        deviceUid = state.deviceUid,
+                        generation = connectionGeneration
+                    )
                 }
                 DeviceRuntimeMetadataUpdate.Ready(state)
             }

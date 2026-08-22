@@ -25,6 +25,7 @@ enum class DosingChannelVisualState(
     AUTOMATIC_DOSING_OFF(R.string.device_dosing_channel_automatic_off, false),
     CONFIGURED(R.string.device_dosing_channel_status_configured, false),
     DOSING(R.string.device_dosing_channel_status_dosing, false),
+    RTC_ATTENTION(R.string.device_dosing_channel_status_rtc_attention, true),
     ERROR(R.string.device_dosing_channel_status_attention, true)
 }
 

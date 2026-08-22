@@ -8,6 +8,7 @@
     <string name="device_dosing_open_settings_description">Open device settings</string>
 
     <string name="device_dosing_channel_status_dosing">Dosing</string>
+    <string name="device_dosing_channel_status_rtc_attention">RTC check required</string>
     <string name="device_dosing_channel_status_attention">Needs attention</string>
     <string name="device_dosing_channel_status_configured">Configured</string>
     <string name="device_dosing_channel_not_configured">Not configured</string>

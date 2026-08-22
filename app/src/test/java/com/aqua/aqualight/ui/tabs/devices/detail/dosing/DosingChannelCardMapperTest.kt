@@ -1,5 +1,6 @@
 package com.aqua.aqualight.ui.tabs.devices.detail.dosing
 
+import com.aqua.aqualight.R
 import com.aqua.aqualight.application.devices.DeviceChannelWireKey
 import com.aqua.aqualight.application.devices.DeviceDosingChannelSlot
 import com.aqua.aqualight.application.devices.DeviceSlotIndex
@@ -69,6 +70,91 @@ class DosingChannelCardMapperTest {
         assertEquals(
             "Trace Elements",
             initial.withChannelSnapshot(snapshot.copy(channelTitle = "Trace Elements")).displayName
+        )
+    }
+
+    @Test
+    fun `only invalid time uses the rtc specific attention label`() {
+        val baseSnapshot = snapshot(
+            program = hourlyProgram(),
+            progress = hourlyProgress(),
+            reservoir = DeviceDosingReservoirSnapshot()
+        )
+        val invalidTimeSnapshot = baseSnapshot.copy(
+            runtimeEnabled = false,
+            runtimeReason = DeviceDosingRuntimeReason.INVALID_TIME
+        )
+
+        val invalidTimeState = channelSlot().toInitialDosingChannelCardUiState()
+            .withChannelSnapshot(invalidTimeSnapshot)
+
+        assertEquals(DosingChannelVisualState.RTC_ATTENTION, invalidTimeState.visualState)
+        assertEquals(
+            R.string.device_dosing_channel_status_rtc_attention,
+            requireNotNull(invalidTimeState.visualState).labelRes
+        )
+        assertTrue(requireNotNull(invalidTimeState.visualState).showsStatusPill)
+        assertEquals(DosingPumpVisualState.ERROR, invalidTimeSnapshot.toPumpVisualState())
+
+        val invalidTimeWithoutChannelSetup = channelSlot().toInitialDosingChannelCardUiState()
+            .withChannelSnapshot(
+                invalidTimeSnapshot.copy(
+                    calibrated = false,
+                    program = null
+                )
+            )
+        assertEquals(
+            DosingChannelVisualState.RTC_ATTENTION,
+            invalidTimeWithoutChannelSetup.visualState
+        )
+    }
+
+    @Test
+    fun `non rtc attention reasons keep the generic attention label`() {
+        val baseSnapshot = snapshot(
+            program = hourlyProgram(),
+            progress = hourlyProgress(),
+            reservoir = DeviceDosingReservoirSnapshot()
+        )
+
+        listOf(
+            DeviceDosingRuntimeReason.RESERVOIR_UNAVAILABLE,
+            DeviceDosingRuntimeReason.ACCOUNTING_UNCERTAIN,
+            DeviceDosingRuntimeReason.UNSAFE_AFTER_CALIBRATION,
+            DeviceDosingRuntimeReason.INVALID_PROGRAM,
+            DeviceDosingRuntimeReason.UNKNOWN
+        ).forEach { runtimeReason ->
+            val genericState = channelSlot().toInitialDosingChannelCardUiState()
+                .withChannelSnapshot(
+                    baseSnapshot.copy(
+                        runtimeEnabled = false,
+                        runtimeReason = runtimeReason
+                    )
+                )
+
+            assertEquals(DosingChannelVisualState.ERROR, genericState.visualState)
+            assertEquals(
+                R.string.device_dosing_channel_status_attention,
+                requireNotNull(genericState.visualState).labelRes
+            )
+        }
+
+        val uncertainReservoirState = channelSlot().toInitialDosingChannelCardUiState()
+            .withChannelSnapshot(
+                baseSnapshot.copy(
+                    reservoir = DeviceDosingReservoirSnapshot(
+                        trackingEnabled = true,
+                        capacityMicroliters = 100_000L,
+                        remainingMicroliters = 50_000L,
+                        accountingCertain = false
+                    )
+                )
+            )
+
+        assertEquals(DosingChannelVisualState.ERROR, uncertainReservoirState.visualState)
+        assertEquals(
+            R.string.device_dosing_channel_status_attention,
+            requireNotNull(uncertainReservoirState.visualState).labelRes
         )
     }
 

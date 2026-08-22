@@ -8,6 +8,7 @@
     <string name="device_dosing_open_settings_description">Cihaz ayarlarını aç</string>
 
     <string name="device_dosing_channel_status_dosing">Dozaj yapılıyor</string>
+    <string name="device_dosing_channel_status_rtc_attention">RTC kontrolü gerekli</string>
     <string name="device_dosing_channel_status_attention">Kontrol gerekli</string>
     <string name="device_dosing_channel_status_configured">Yapılandırıldı</string>
     <string name="device_dosing_channel_not_configured">Yapılandırılmadı</string>

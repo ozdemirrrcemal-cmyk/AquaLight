@@ -120,6 +120,7 @@ private fun DosingChannelVisualState.statusColor(colors: AquaDeviceCardColors): 
     DosingChannelVisualState.AUTOMATIC_DOSING_OFF -> colors.warning
     DosingChannelVisualState.CONFIGURED,
     DosingChannelVisualState.DOSING -> colors.accent
+    DosingChannelVisualState.RTC_ATTENTION,
     DosingChannelVisualState.ERROR -> colors.danger
 }
 

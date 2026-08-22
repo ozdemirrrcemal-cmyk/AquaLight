@@ -83,6 +83,13 @@ class DosingChannelCardArchitectureTest {
                 "AUTOMATIC_DOSING_OFF(R.string.device_dosing_channel_automatic_off, false)"
             )
         )
+        assertTrue(
+            models.contains(
+                "RTC_ATTENTION(R.string.device_dosing_channel_status_rtc_attention, true)"
+            )
+        )
+        assertTrue(header.contains("DosingChannelVisualState.RTC_ATTENTION,"))
+        assertTrue(header.contains("DosingChannelVisualState.ERROR -> colors.danger"))
         assertTrue(header.contains("visualState?.showsStatusPill == true"))
         assertFalse(models.contains("READY("))
         assertFalse(models.contains("SCHEDULED("))
