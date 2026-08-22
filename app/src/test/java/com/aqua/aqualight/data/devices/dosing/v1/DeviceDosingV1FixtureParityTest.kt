@@ -122,7 +122,7 @@ class DeviceDosingV1FixtureParityTest {
     private companion object {
         const val PIN_FIXTURE = "aql_android_dosing_v1_pin.json"
         const val CHANNEL_STATUS_FIXTURE = "aql_dosing_channel_status_v1.json"
-        const val FIRMWARE_COMMIT = "b2a1e17d354fa8970dacaa522e6648e799db1bf7"
+        const val FIRMWARE_COMMIT = "751cdc2e497531b8f754b59b4a2ae3828aaf9b52"
         const val STATUS_CODEC_PATH = "src/modules/dosing/AqlDosingStatusCodec.hpp"
         const val DERIVED_CHANNEL_STATUS_BLOB = "aa6721ab881de34419c09e5769d70366af36d3d5"
 
@@ -139,7 +139,7 @@ class DeviceDosingV1FixtureParityTest {
             "src/modules/dosing/AqlDosingRuntimeEvent.hpp" to
                 "0b40b1eff35af48976f95fedba5a2854885f2439",
             "src/modules/dosing/AqlDosingRuntimeService.hpp" to
-                "7731c7bae5164d741d72eeb46a5fb47ffd7084b2"
+                "681af115fdcc0345556157462d5e3e4114705a66"
         )
 
         val PINNED_FIXTURE_BLOBS = linkedMapOf(
