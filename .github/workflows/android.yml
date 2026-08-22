@@ -111,6 +111,7 @@ jobs:
           python3 tools/navigation_guard.py
           python3 tools/ws_protocol_guard.py
           python3 tools/firmware_interoperability_guard.py
+          python3 tools/time_rtc_v1_contract_guard.py
           python3 tools/ws_v1_commercial_closure_guard.py
           python3 tools/permission_architecture_guard.py
           python3 tools/notification_reminder_architecture_guard.py
@@ -345,3 +346,4 @@ jobs:
           rm -f app/src/staging/google-services.json
           rm -f app/src/releaseSmoke/google-services.json
           rm -f app/src/release/google-services.json
+

@@ -3,7 +3,7 @@
   "schema": "aql.android-firmware.interoperability.v1",
   "firmware": {
     "repository": "ozdemirrrcemal-cmyk/AquaLight-Firmware",
-    "commit": "b2a1e17d354fa8970dacaa522e6648e799db1bf7",
+    "commit": "751cdc2e497531b8f754b59b4a2ae3828aaf9b52",
     "commandNames": {
       "path": "src/api/v1/commands/AqlCommandNames.hpp",
       "blobSha": "7bff40576bb77450c662181e2b09b5be961e6809"
@@ -16,7 +16,7 @@
       "src/api/v1/commands/AqlDeviceCommands.hpp": "a78d6355555afea780fdb62809bc9107d7122698",
       "src/api/v1/commands/AqlNetworkCommands.hpp": "529a3b341e81a48d33b9036343dbb0b9f2844fb6",
       "src/api/v1/commands/AqlSecurityCommands.hpp": "1c16c3e7c6d1456b1802f494d91c104347ad09aa",
-      "src/api/v1/commands/AqlTimeCommands.hpp": "d8d82bf9edd1a2669d4a2fb0eaf7e6f105e3fc8a",
+      "src/api/v1/commands/AqlTimeCommands.hpp": "19a49536d5ab4b5d421c70e3fa9e6199fa2e9d72",
       "src/api/v1/commands/AqlLightCommands.hpp": "57e576a2e02a5fc8347fca16be6b0cbf0e540a1b",
       "src/api/v1/commands/AqlLightTemperatureProtectionCommands.hpp": "e3d44b0c1cad994378b12ce5b9003fd7a94d4f44",
       "src/api/v1/commands/AqlCoolingCommands.hpp": "a4b6c390e4af6f28f2c844cef1d7429eb0206718",
@@ -24,7 +24,7 @@
       "src/api/v1/commands/AqlDosingCommands.hpp": "5c0201f9a4e09f93f4dd54af8c1fba9dec167105",
       "src/api/v1/commands/AqlDosingProgressCommands.hpp": "8700e785bdd2e747abea3b09eff97755e2addad0",
       "src/api/v1/commands/AqlFirmwareCommands.hpp": "8b1107d159ca3ff026754c8a06bd1e75fb608c37",
-      "src/modules/timer/AqlTimerService.hpp": "c0c9c717fbe5b0b4ae25034a98a503d80adb4fdb",
+      "src/modules/timer/AqlTimerService.hpp": "27dd1a51d532f9deef91ee2da86a4b3055fd001f",
       "src/security/AqlSecurityService.hpp": "484906dbdd833d6ad7505ae1755748d239fc0805"
     }
   },
@@ -352,3 +352,4 @@
     "hardwareRevision"
   ]
 }
+

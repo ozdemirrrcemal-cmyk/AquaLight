@@ -1,10 +1,15 @@
 package com.aqua.aqualight.data.devices.runtime.modules.time
 
 /**
- * Firmware verified Android mirror.
+ * Firmware-verified Android mirror.
  *
  * Firmware:
- * AquaLight-Firmware / feature/ble-qr-wifi-provisioning
+ * AquaLight-Firmware / agent/rtc-commercial-v1-20260822
+ * commit 751cdc2e497531b8f754b59b4a2ae3828aaf9b52
+ *
+ * The mandatory-RTC implementation preserves the original aql.ws.v1 module, actions, request
+ * fields and exact response shapes. Android derives readiness from the existing `timeSet` field;
+ * there is no status-version selector, RTC extension object, or parallel time contract.
  *
  * module: time
  * actions:
