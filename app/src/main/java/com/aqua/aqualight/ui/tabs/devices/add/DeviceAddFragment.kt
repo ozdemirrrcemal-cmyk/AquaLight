@@ -59,7 +59,7 @@ class DeviceAddFragment : Fragment(R.layout.fragment_device_add) {
         binding.appHeader.setupAquaHeader(
             fragment = this,
             config = AquaHeaderConfig(
-                titleOverride = getString(R.string.device_add_title),
+                title = getString(R.string.device_add_title),
                 onBackClick = {
                     findNavController().navigateUp()
                 }

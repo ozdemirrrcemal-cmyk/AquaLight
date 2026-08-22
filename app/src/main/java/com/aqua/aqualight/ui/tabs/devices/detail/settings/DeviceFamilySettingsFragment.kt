@@ -80,7 +80,7 @@ abstract class DeviceFamilySettingsFragment : Fragment(R.layout.fragment_device_
         binding.appHeader.setupAquaHeader(
             fragment = this,
             config = AquaHeaderConfig(
-                titleOverride = getString(R.string.device_settings_title),
+                title = getString(R.string.device_settings_title),
                 onBackClick = {
                     findNavController().navigateUp()
                 }

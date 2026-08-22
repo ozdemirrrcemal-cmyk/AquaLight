@@ -5,6 +5,7 @@ import android.view.View
 import androidx.fragment.app.Fragment
 import com.aqua.aqualight.R
 import com.aqua.aqualight.databinding.FragmentSecuritySettingsBinding
+import com.aqua.aqualight.ui.common.header.AquaHeaderConfig
 import com.aqua.aqualight.ui.common.header.setupAquaHeader
 import com.aqua.aqualight.utils.DialogManager
 import com.aqua.aqualight.utils.DialogType
@@ -34,7 +35,10 @@ class SecuritySettingsFragment :
 
     private fun setupHeader() {
         binding.appHeader.setupAquaHeader(
-            fragment = this
+            fragment = this,
+            config = AquaHeaderConfig(
+                title = getString(R.string.screen_title_security_settings)
+            )
         )
     }
 

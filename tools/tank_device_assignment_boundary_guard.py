@@ -80,12 +80,15 @@ for path, text in ((DETAIL_VM, detail_vm), (SELECT_VM, select_vm)):
         "import com.aqua.aqualight.data.",
         "DevicesRepository",
         "TankDeviceAssignmentRepository",
-        "DeviceUid",
         "TankDeviceAssignmentResult",
         "TankDeviceRemovalResult",
     ):
         if forbidden in text:
             errors.append(f"{path.relative_to(ROOT)}: assignment infrastructure leaked into UI: {forbidden}")
+    if re.search(r"\bDeviceUid\b", text):
+        errors.append(
+            f"{path.relative_to(ROOT)}: assignment infrastructure leaked into UI: DeviceUid"
+        )
 
 for token in (
     "assignmentOperations.assignedDevices(tankId)",

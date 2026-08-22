@@ -27,7 +27,7 @@ abstract class LegalDocumentFragment : Fragment(R.layout.fragment_legal_document
         binding.appHeader.setupAquaHeader(
             fragment = this,
             config = AquaHeaderConfig(
-                titleOverride = getString(document.titleRes)
+                title = getString(document.titleRes)
             )
         )
         binding.legalWebView.loadSecureLocalAsset(

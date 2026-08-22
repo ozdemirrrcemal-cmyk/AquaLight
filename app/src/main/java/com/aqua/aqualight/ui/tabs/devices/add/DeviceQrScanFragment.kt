@@ -91,7 +91,7 @@ class DeviceQrScanFragment : Fragment(R.layout.fragment_device_qr_scan) {
         binding.appHeader.setupAquaHeader(
             fragment = this,
             config = AquaHeaderConfig(
-                titleOverride = getString(R.string.device_qr_title),
+                title = getString(R.string.device_qr_title),
                 onBackClick = {
                     findNavController().navigateUp()
                 }

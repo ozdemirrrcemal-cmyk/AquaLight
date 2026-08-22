@@ -17,7 +17,7 @@ class UserDataArchiveArchitectureTest {
         )
         val layout = source("app/src/main/res/layout/fragment_data_management.xml")
 
-        assertTrue(fragment.contains("setupAquaHeader(fragment = this)"))
+        assertTrue(fragment.contains("title = getString(R.string.screen_title_data_management)"))
         assertTrue(fragment.contains("defaultViewModelFactory"))
         assertTrue(fragment.contains("FeedbackBottomSheet"))
         assertTrue(fragment.contains("UserDataCreateDocumentContract"))

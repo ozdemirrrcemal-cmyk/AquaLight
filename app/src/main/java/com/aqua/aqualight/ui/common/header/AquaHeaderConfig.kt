@@ -3,8 +3,9 @@ package com.aqua.aqualight.ui.common.header
 import androidx.annotation.ColorInt
 import androidx.annotation.DrawableRes
 
+/** Header presentation supplied entirely by the screen that owns the header view. */
 data class AquaHeaderConfig(
-    val titleOverride: String? = null,
+    val title: String,
     val showBackButton: Boolean = true,
     val onBackClick: (() -> Unit)? = null,
     @DrawableRes val statusIconRes: Int? = null,

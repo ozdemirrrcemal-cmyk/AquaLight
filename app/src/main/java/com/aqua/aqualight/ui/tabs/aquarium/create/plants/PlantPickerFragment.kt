@@ -50,6 +50,7 @@ class PlantPickerFragment : Fragment(R.layout.fragment_plant_picker) {
         binding.appHeader.setupAquaHeader(
             fragment = this,
             config = AquaHeaderConfig(
+                title = getString(R.string.screen_title_plant_picker),
                 onBackClick = {
                     closePicker()
                 },

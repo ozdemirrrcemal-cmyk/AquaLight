@@ -13,6 +13,7 @@ import com.aqua.aqualight.composition.requireAppContainer
 import com.aqua.aqualight.databinding.FragmentLogoutBinding
 import com.aqua.aqualight.ui.auth.security.ReAuthenticateFragment
 import com.aqua.aqualight.ui.common.feedback.FeedbackBottomSheet
+import com.aqua.aqualight.ui.common.header.AquaHeaderConfig
 import com.aqua.aqualight.ui.common.header.setupAquaHeader
 import com.aqua.aqualight.ui.common.loading.setFragmentGlobalLoading
 import com.aqua.aqualight.ui.navigation.RootNavigator
@@ -84,7 +85,10 @@ class LogoutFragment :
 
     private fun setupHeader() {
         binding.appHeader.setupAquaHeader(
-            fragment = this
+            fragment = this,
+            config = AquaHeaderConfig(
+                title = getString(R.string.screen_title_logout)
+            )
         )
     }
 

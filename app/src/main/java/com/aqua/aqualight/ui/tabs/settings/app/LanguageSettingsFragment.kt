@@ -9,6 +9,7 @@ import com.aqua.aqualight.R
 import com.aqua.aqualight.composition.requireAppContainer
 import com.aqua.aqualight.databinding.FragmentLanguageSettingsBinding
 import com.aqua.aqualight.i18n.SupportedLocaleRegistry
+import com.aqua.aqualight.ui.common.header.AquaHeaderConfig
 import com.aqua.aqualight.ui.common.header.setupAquaHeader
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
@@ -36,7 +37,12 @@ class LanguageSettingsFragment : Fragment(R.layout.fragment_language_settings) {
     }
 
     private fun setupHeader() {
-        binding.appHeader.setupAquaHeader(fragment = this)
+        binding.appHeader.setupAquaHeader(
+            fragment = this,
+            config = AquaHeaderConfig(
+                title = getString(R.string.screen_title_language)
+            )
+        )
     }
 
     private fun observeSelectedLanguage() {

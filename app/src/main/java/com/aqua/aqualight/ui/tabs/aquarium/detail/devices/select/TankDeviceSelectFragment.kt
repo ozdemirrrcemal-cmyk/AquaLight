@@ -56,7 +56,7 @@ class TankDeviceSelectFragment : Fragment(R.layout.fragment_tank_device_select) 
         binding.appHeader.setupAquaHeader(
             fragment = this,
             config = AquaHeaderConfig(
-                titleOverride = getString(R.string.tank_device_select_title)
+                title = getString(R.string.tank_device_select_title)
             )
         )
     }

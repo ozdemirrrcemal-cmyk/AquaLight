@@ -6,6 +6,7 @@ import android.view.View
 import androidx.fragment.app.Fragment
 import com.aqua.aqualight.R
 import com.aqua.aqualight.databinding.FragmentAboutAppBinding
+import com.aqua.aqualight.ui.common.header.AquaHeaderConfig
 import com.aqua.aqualight.ui.common.header.setupAquaHeader
 import java.util.Calendar
 
@@ -32,7 +33,10 @@ class AboutAppFragment : Fragment(R.layout.fragment_about_app) {
 
     private fun setupHeader() {
         binding.appHeader.setupAquaHeader(
-            fragment = this
+            fragment = this,
+            config = AquaHeaderConfig(
+                title = getString(R.string.screen_title_about)
+            )
         )
     }
 

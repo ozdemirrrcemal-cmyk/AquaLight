@@ -22,6 +22,7 @@ import com.aqua.aqualight.databinding.FragmentEditProfileBinding
 import com.aqua.aqualight.platform.media.AppMediaScope
 import com.aqua.aqualight.platform.permissions.AppCapability
 import com.aqua.aqualight.ui.common.bottomsheet.PhotoSourceBottomSheet
+import com.aqua.aqualight.ui.common.header.AquaHeaderConfig
 import com.aqua.aqualight.ui.common.header.setupAquaHeader
 import com.aqua.aqualight.ui.common.loading.setFragmentGlobalLoading
 import com.aqua.aqualight.ui.common.media.MediaCropPreparationResult
@@ -128,7 +129,12 @@ class EditProfileFragment : Fragment(R.layout.fragment_edit_profile) {
         super.onViewCreated(view, savedInstanceState)
         _binding = FragmentEditProfileBinding.bind(view)
 
-        binding.appHeader.setupAquaHeader(fragment = this)
+        binding.appHeader.setupAquaHeader(
+            fragment = this,
+            config = AquaHeaderConfig(
+                title = getString(R.string.screen_title_edit_profile)
+            )
+        )
         setupPhotoSourceResultListener()
         setupClickListeners()
         observeProfileAndSelection()

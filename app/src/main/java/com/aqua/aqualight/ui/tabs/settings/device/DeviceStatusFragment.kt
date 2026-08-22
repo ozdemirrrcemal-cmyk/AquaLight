@@ -12,6 +12,7 @@ import androidx.recyclerview.widget.LinearLayoutManager
 import com.aqua.aqualight.R
 import com.aqua.aqualight.composition.requireAppContainer
 import com.aqua.aqualight.databinding.FragmentDeviceStatusBinding
+import com.aqua.aqualight.ui.common.header.AquaHeaderConfig
 import com.aqua.aqualight.ui.common.header.setupAquaHeader
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
@@ -46,7 +47,10 @@ class DeviceStatusFragment : Fragment(R.layout.fragment_device_status) {
 
     private fun setupHeader() {
         binding.appHeader.setupAquaHeader(
-            fragment = this
+            fragment = this,
+            config = AquaHeaderConfig(
+                title = getString(R.string.screen_title_device_status)
+            )
         )
     }
 

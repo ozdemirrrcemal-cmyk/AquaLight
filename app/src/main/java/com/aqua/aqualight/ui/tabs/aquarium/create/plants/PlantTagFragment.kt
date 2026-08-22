@@ -60,7 +60,7 @@ class PlantTagFragment : Fragment(R.layout.fragment_plant_tag) {
         binding.appHeader.setupAquaHeader(
             fragment = this,
             config = AquaHeaderConfig(
-                titleOverride = getString(R.string.aquarium_tag_plants_title),
+                title = getString(R.string.aquarium_tag_plants_title),
                 onBackClick = ::closePlantTagFlow,
                 cardIconAction = AquaHeaderCardIconAction(
                     iconRes = R.drawable.ic_check_24,

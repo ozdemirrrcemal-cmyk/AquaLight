@@ -23,6 +23,7 @@ import com.aqua.aqualight.application.feedback.FeedbackSubmissionFailureKind
 import com.aqua.aqualight.base.BaseActivity
 import com.aqua.aqualight.composition.requireAppContainer
 import com.aqua.aqualight.databinding.FragmentFeedbackBinding
+import com.aqua.aqualight.ui.common.header.AquaHeaderConfig
 import com.aqua.aqualight.ui.common.header.setupAquaHeader
 import com.aqua.aqualight.ui.common.loading.setFragmentGlobalLoading
 import kotlinx.coroutines.launch
@@ -61,7 +62,12 @@ class FeedbackFragment : Fragment(R.layout.fragment_feedback) {
     }
 
     private fun setupHeader() = with(binding) {
-        appHeader.setupAquaHeader(fragment = this@FeedbackFragment)
+        appHeader.setupAquaHeader(
+            fragment = this@FeedbackFragment,
+            config = AquaHeaderConfig(
+                title = getString(R.string.screen_title_feedback)
+            )
+        )
         tvSubInfo.text = getString(R.string.feedback_subinfo)
         tvFooter.text = getString(R.string.feedback_footer)
     }

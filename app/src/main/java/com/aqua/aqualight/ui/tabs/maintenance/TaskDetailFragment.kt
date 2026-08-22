@@ -94,7 +94,7 @@ class TaskDetailFragment :
     binding.appHeader.setupAquaHeader(
       fragment = this,
       config = AquaHeaderConfig(
-        titleOverride = getString(R.string.maintenance_task_detail_title),
+        title = getString(R.string.maintenance_task_detail_title),
         onBackClick = {
           findNavController().popBackStack()
         },

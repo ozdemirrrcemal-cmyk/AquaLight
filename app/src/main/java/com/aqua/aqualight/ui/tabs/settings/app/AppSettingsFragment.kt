@@ -88,7 +88,7 @@ class AppSettingsFragment : Fragment(R.layout.fragment_app_settings) {
         binding.appHeader.setupAquaHeader(
             fragment = this,
             config = AquaHeaderConfig(
-                titleOverride = getString(R.string.screen_title_app_settings)
+                title = getString(R.string.screen_title_app_settings)
             )
         )
     }

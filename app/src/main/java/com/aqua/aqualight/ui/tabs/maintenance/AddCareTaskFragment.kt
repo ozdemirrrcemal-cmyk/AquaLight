@@ -129,7 +129,7 @@ class AddCareTaskFragment : Fragment(R.layout.fragment_add_care_task) {
         binding.appHeader.setupAquaHeader(
             fragment = this,
             config = AquaHeaderConfig(
-                titleOverride = title,
+                title = title,
                 onBackClick = ::closeForm
             )
         )

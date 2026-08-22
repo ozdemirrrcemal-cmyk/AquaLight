@@ -19,10 +19,13 @@ import com.aqua.aqualight.ui.common.header.AquaHeaderConfig
 import com.aqua.aqualight.ui.common.header.AquaHeaderFilledIconAction
 import com.aqua.aqualight.ui.common.header.AquaHeaderPrimaryAction
 import com.aqua.aqualight.ui.common.header.setupAquaHeader
+import com.aqua.aqualight.ui.tabs.devices.route.DeviceMenuPresentationState
 import com.aqua.aqualight.ui.tabs.devices.route.DeviceRoute
 import com.aqua.aqualight.ui.tabs.devices.route.DeviceRouteTarget
 import com.aqua.aqualight.utils.DialogManager
 import com.aqua.aqualight.utils.DialogType
+import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
 
 class DevicesFragment : Fragment(R.layout.fragment_devices) {
@@ -76,7 +79,7 @@ class DevicesFragment : Fragment(R.layout.fragment_devices) {
             fragment = this,
             config = if (state.selectionMode) {
                 AquaHeaderConfig(
-                    titleOverride = getString(
+                    title = getString(
                         R.string.devices_selected_count_title,
                         state.selectedCount
                     ),
@@ -96,6 +99,7 @@ class DevicesFragment : Fragment(R.layout.fragment_devices) {
                 )
             } else {
                 AquaHeaderConfig(
+                    title = getString(R.string.screen_title_devices),
                     showBackButton = false,
                     primaryAction = AquaHeaderPrimaryAction(
                         text = getString(R.string.devices_add_action),
@@ -147,20 +151,14 @@ class DevicesFragment : Fragment(R.layout.fragment_devices) {
                     }
                 }
                 launch {
+                    viewModel.uiState
+                        .map { state -> state.deviceMenuState }
+                        .distinctUntilChanged()
+                        .collect(::handleDeviceMenuState)
+                }
+                launch {
                     viewModel.events.collect { event ->
                         when (event) {
-                            is DevicesEvent.OpenRoute -> try {
-                                openDeviceRoute(event.route)
-                            } finally {
-                                viewModel.onDeviceMenuOpenHandled(event.requestDeviceUid)
-                            }
-                            is DevicesEvent.ShowDeviceUnavailable -> {
-                                try {
-                                    showDeviceUnavailable(event)
-                                } finally {
-                                    viewModel.onDeviceMenuOpenHandled(event.requestDeviceUid)
-                                }
-                            }
                             is DevicesEvent.ShowDeletePartialSuccess -> {
                                 showDeletePartialSuccess(event)
                             }
@@ -191,13 +189,34 @@ class DevicesFragment : Fragment(R.layout.fragment_devices) {
         )
     }
 
+    private fun handleDeviceMenuState(state: DeviceMenuPresentationState) {
+        when (state) {
+            DeviceMenuPresentationState.Idle,
+            is DeviceMenuPresentationState.Preparing -> Unit
+
+            is DeviceMenuPresentationState.Ready -> {
+                if (openDeviceRoute(state.route)) {
+                    viewModel.onDeviceMenuResultHandled(state.requestId)
+                }
+            }
+
+            is DeviceMenuPresentationState.Failure -> {
+                if (showDeviceUnavailable(state)) {
+                    viewModel.onDeviceMenuResultHandled(state.requestId)
+                }
+            }
+        }
+    }
+
     private fun showDeviceUnavailable(
-        event: DevicesEvent.ShowDeviceUnavailable
-    ) {
-        baseActivity()?.showDeviceOfflineDialog(
-            deviceTitle = event.title,
-            messageRes = event.messageRes
+        state: DeviceMenuPresentationState.Failure
+    ): Boolean {
+        val host = baseActivity() ?: return false
+        host.showDeviceOfflineDialog(
+            deviceTitle = state.title,
+            messageRes = state.messageRes
         )
+        return true
     }
 
     private fun showDeletePartialSuccess(
@@ -268,8 +287,8 @@ class DevicesFragment : Fragment(R.layout.fragment_devices) {
         )
     }
 
-    private fun openDeviceRoute(route: DeviceRoute) {
-        if (!isAdded) return
+    private fun openDeviceRoute(route: DeviceRoute): Boolean {
+        if (!isAdded) return false
 
         val directions = when (route.target) {
             DeviceRouteTarget.LIGHT_ROOT ->
@@ -304,6 +323,7 @@ class DevicesFragment : Fragment(R.layout.fragment_devices) {
         }
 
         findNavController().navigate(directions)
+        return true
     }
 
     private fun baseActivity(): BaseActivity? {

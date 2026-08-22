@@ -22,6 +22,9 @@ STATUS_CLOCK = SOURCE / "ui/tabs/settings/device/DeviceStatusClock.kt"
 CARD_MAPPER = SOURCE / "ui/tabs/devices/DeviceCardMapper.kt"
 STATUS_MAPPER = SOURCE / "ui/tabs/settings/device/DeviceStatusSnapshotMapper.kt"
 ROUTE_RESOLVER = SOURCE / "ui/tabs/devices/route/DeviceRouteResolver.kt"
+MENU_PRESENTATION_STATE = (
+    SOURCE / "ui/tabs/devices/route/DeviceMenuPresentationState.kt"
+)
 OBSOLETE_UI_GATE = SOURCE / "ui/tabs/devices/route/DeviceMenuOpenGate.kt"
 FACTORY = SOURCE / "composition/OwnerViewModelFactory.kt"
 SMOKE_FACTORY = ROOT / "app/src/releaseSmoke/java/com/aqua/aqualight/smoke/ReleaseSmokeAppContainer.kt"
@@ -58,6 +61,7 @@ status_clock = read(STATUS_CLOCK)
 card_mapper = read(CARD_MAPPER)
 status_mapper = read(STATUS_MAPPER)
 route_resolver = read(ROUTE_RESOLVER)
+menu_presentation_state = read(MENU_PRESENTATION_STATE)
 factory = read(FACTORY)
 smoke_factory = read(SMOKE_FACTORY)
 devices_test = read(DEVICES_TEST)
@@ -212,7 +216,10 @@ for path, text in (
     for token in (
         "private val menuAccessOperations: DeviceMenuAccessOperations",
         "menuAccessOperations.resolve(deviceUid)",
-        "routeResolver.resolve(result)",
+        "DeviceMenuPresentationStateHolder(routeResolver)",
+        "deviceMenuPresentation.begin(deviceUid)",
+        "deviceMenuPresentation.complete(request = request, result = result)",
+        "deviceMenuPresentation.acknowledge(requestId)",
     ):
         if token not in text:
             errors.append(
@@ -227,6 +234,31 @@ for path, text in (
             errors.append(
                 f"{path.relative_to(ROOT)}: device-menu implementation leaked into UI: {forbidden}"
             )
+
+for token, reason in (
+    (
+        "sealed interface DeviceMenuPresentationState",
+        "device-menu preparation must have one typed UI-state contract",
+    ),
+    (
+        "class DeviceMenuPresentationStateHolder",
+        "both device-card flows must share one transition contract",
+    ),
+    ("data object Idle", "the device-menu state machine needs an idle state"),
+    ("data class Preparing", "the device-menu state machine needs a preparing state"),
+    ("data class Ready", "the device-menu state machine needs a ready state"),
+    ("data class Failure", "the device-menu state machine needs a failure state"),
+    (
+        "routeResolver.resolve(this)",
+        "approved application results must use the central route resolver",
+    ),
+    (
+        "DeviceMenuUnavailableReason.CURRENT_DATA_NOT_READY",
+        "unprepared presentation must fail closed before navigation",
+    ),
+):
+    if token not in menu_presentation_state:
+        errors.append(f"{MENU_PRESENTATION_STATE.relative_to(ROOT)}: {reason}: {token}")
 
 for token, reason in (
     ("private val operations: OwnerDevicesOperations", "DevicesViewModel must receive the owner-device boundary"),

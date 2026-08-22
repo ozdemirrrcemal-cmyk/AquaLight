@@ -7,6 +7,7 @@ import androidx.navigation.NavDirections
 import androidx.navigation.fragment.findNavController
 import com.aqua.aqualight.R
 import com.aqua.aqualight.databinding.FragmentLegalCenterBinding
+import com.aqua.aqualight.ui.common.header.AquaHeaderConfig
 import com.aqua.aqualight.ui.common.header.setupAquaHeader
 
 class LegalCenterFragment : Fragment(R.layout.fragment_legal_center) {
@@ -18,7 +19,12 @@ class LegalCenterFragment : Fragment(R.layout.fragment_legal_center) {
         super.onViewCreated(view, savedInstanceState)
         _binding = FragmentLegalCenterBinding.bind(view)
 
-        binding.appHeader.setupAquaHeader(fragment = this)
+        binding.appHeader.setupAquaHeader(
+            fragment = this,
+            config = AquaHeaderConfig(
+                title = getString(R.string.screen_title_legal_center)
+            )
+        )
 
         binding.rowPrivacyNotice.setOnClickListener {
             safeNavigate(

@@ -16,6 +16,7 @@ import com.aqua.aqualight.databinding.FragmentChangeEmailBinding
 import com.aqua.aqualight.ui.auth.state.AuthActionState
 import com.aqua.aqualight.ui.auth.viewmodel.ChangeEmailViewModel
 import com.aqua.aqualight.ui.common.feedback.FeedbackBottomSheet
+import com.aqua.aqualight.ui.common.header.AquaHeaderConfig
 import com.aqua.aqualight.ui.common.header.setupAquaHeader
 import com.aqua.aqualight.ui.common.loading.setFragmentGlobalLoading
 import com.aqua.aqualight.ui.navigation.RootNavigator
@@ -82,7 +83,10 @@ class ChangeEmailFragment :
 
     private fun setupHeader() {
         binding.appHeader.setupAquaHeader(
-            fragment = this
+            fragment = this,
+            config = AquaHeaderConfig(
+                title = getString(R.string.screen_title_change_email)
+            )
         )
     }
 

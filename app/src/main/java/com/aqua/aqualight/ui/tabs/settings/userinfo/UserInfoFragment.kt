@@ -17,6 +17,7 @@ import com.aqua.aqualight.R
 import com.aqua.aqualight.base.BaseActivity
 import com.aqua.aqualight.composition.requireAppContainer
 import com.aqua.aqualight.databinding.FragmentUserInfoBinding
+import com.aqua.aqualight.ui.common.header.AquaHeaderConfig
 import com.aqua.aqualight.ui.common.header.setupAquaHeader
 import com.aqua.aqualight.ui.common.loading.setFragmentGlobalLoading
 import kotlinx.coroutines.flow.collectLatest
@@ -51,7 +52,12 @@ class UserInfoFragment : Fragment(R.layout.fragment_user_info) {
     }
 
     private fun setupHeader() {
-        binding.appHeader.setupAquaHeader(fragment = this)
+        binding.appHeader.setupAquaHeader(
+            fragment = this,
+            config = AquaHeaderConfig(
+                title = getString(R.string.screen_title_user_info)
+            )
+        )
     }
 
     private fun observeUserInfo() {

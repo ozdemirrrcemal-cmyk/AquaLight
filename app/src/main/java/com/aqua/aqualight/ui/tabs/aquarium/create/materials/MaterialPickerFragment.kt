@@ -125,6 +125,7 @@ class MaterialPickerFragment : Fragment(R.layout.fragment_material_picker) {
         binding.appHeader.setupAquaHeader(
             fragment = this,
             config = AquaHeaderConfig(
+                title = getString(R.string.screen_title_material_picker),
                 onBackClick = {
                     closePicker()
                 },

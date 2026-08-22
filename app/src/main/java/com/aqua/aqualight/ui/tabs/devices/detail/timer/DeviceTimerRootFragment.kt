@@ -43,7 +43,7 @@ class DeviceTimerRootFragment : Fragment(R.layout.fragment_device_timer_root) {
         binding.appHeader.setupAquaHeader(
             fragment = this,
             config = AquaHeaderConfig(
-                titleOverride = title,
+                title = title,
                 onBackClick = { findNavController().navigateUp() },
                 actions = listOf(
                     AquaHeaderAction(

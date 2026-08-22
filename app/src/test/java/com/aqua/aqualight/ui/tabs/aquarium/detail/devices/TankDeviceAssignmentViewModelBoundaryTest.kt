@@ -10,11 +10,13 @@ import com.aqua.aqualight.application.devices.OwnerDeviceFamily
 import com.aqua.aqualight.application.devices.RemoveDeviceFromTankResult
 import com.aqua.aqualight.application.devices.TankDeviceAssignmentOperations
 import com.aqua.aqualight.application.devices.TankDeviceListItem
+import com.aqua.aqualight.ui.common.devicecard.DeviceCompactStatusStyle
 import com.aqua.aqualight.ui.tabs.aquarium.detail.devices.select.TankDeviceSelectEmptyReason
 import com.aqua.aqualight.ui.tabs.aquarium.detail.devices.select.TankDeviceSelectEvent
 import com.aqua.aqualight.ui.tabs.aquarium.detail.devices.select.TankDeviceSelectViewModel
-import com.aqua.aqualight.ui.common.devicecard.DeviceCompactStatusStyle
+import com.aqua.aqualight.ui.tabs.devices.route.DeviceMenuPresentationState
 import com.aqua.aqualight.ui.tabs.devices.route.DeviceRouteResolver
+import com.aqua.aqualight.ui.tabs.devices.route.DeviceRouteTarget
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -80,6 +82,43 @@ class TankDeviceAssignmentViewModelBoundaryTest {
 
         assertEquals(TankDetailDevicesEvent.ShowRemoveFailed, viewModel.events.first())
         assertEquals(10L to "device-1", operations.lastRemoveRequest)
+    }
+
+    @Test
+    fun `tank detail exposes prepared device route as acknowledged UI state`() = runTest {
+        val menuOperations = FakeMenuAccessOperations(
+            result = DeviceMenuAccessResult.Available(
+                deviceUid = "device-1",
+                title = "AquaLight device-1",
+                family = OwnerDeviceFamily.LIGHT,
+                presentationPrepared = true
+            )
+        )
+        val viewModel = TankDetailDevicesViewModel(
+            assignmentOperations = FakeTankDeviceAssignmentOperations(
+                assigned = listOf(device("device-1"))
+            ),
+            menuAccessOperations = menuOperations,
+            routeResolver = DeviceRouteResolver()
+        )
+        viewModel.bind(10L)
+
+        viewModel.onDeviceClicked("device-1")
+
+        val menuState = viewModel.uiState.first { state ->
+            state.deviceMenuState is DeviceMenuPresentationState.Ready
+        }.deviceMenuState as DeviceMenuPresentationState.Ready
+        assertEquals("device-1", menuState.route.deviceUid)
+        assertEquals(DeviceRouteTarget.LIGHT_ROOT, menuState.route.target)
+        assertTrue(viewModel.uiState.value.isOpeningDeviceMenu)
+
+        viewModel.onDeviceMenuResultHandled(menuState.requestId)
+
+        assertEquals(
+            DeviceMenuPresentationState.Idle,
+            viewModel.uiState.value.deviceMenuState
+        )
+        assertFalse(viewModel.uiState.value.isOpeningDeviceMenu)
     }
 
     @Test
@@ -174,12 +213,14 @@ class TankDeviceAssignmentViewModelBoundaryTest {
         }
     }
 
-    private class FakeMenuAccessOperations : DeviceMenuAccessOperations {
+    private class FakeMenuAccessOperations(
+        var result: DeviceMenuAccessResult = DeviceMenuAccessResult.Unavailable(
+            title = "",
+            reason = DeviceMenuUnavailableReason.CURRENT_LIVENESS_NOT_PROVEN
+        )
+    ) : DeviceMenuAccessOperations {
         override suspend fun resolve(deviceUid: String): DeviceMenuAccessResult =
-            DeviceMenuAccessResult.Unavailable(
-                title = "",
-                reason = DeviceMenuUnavailableReason.CURRENT_LIVENESS_NOT_PROVEN
-            )
+            result
     }
 
     class MainDispatcherRule(

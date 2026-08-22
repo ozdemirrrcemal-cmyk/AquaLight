@@ -103,7 +103,7 @@ class CreateTankFragment : Fragment(R.layout.fragment_create_tank) {
         binding.appHeader.setupAquaHeader(
             fragment = this,
             config = AquaHeaderConfig(
-                titleOverride = getString(
+                title = getString(
                     R.string.aquarium_create_step_title,
                     safeStepIndex + 1
                 ),

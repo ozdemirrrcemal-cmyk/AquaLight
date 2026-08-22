@@ -18,6 +18,7 @@ import com.aqua.aqualight.platform.documents.UserDataCreateDocumentContract
 import com.aqua.aqualight.platform.documents.UserDataDocumentCreateRequest
 import com.aqua.aqualight.platform.documents.UserDataOpenBackupDocumentContract
 import com.aqua.aqualight.ui.common.feedback.FeedbackBottomSheet
+import com.aqua.aqualight.ui.common.header.AquaHeaderConfig
 import com.aqua.aqualight.ui.common.header.setupAquaHeader
 import com.aqua.aqualight.ui.common.loading.setFragmentGlobalLoading
 import kotlinx.coroutines.launch
@@ -68,7 +69,12 @@ class DataManagementFragment : Fragment(R.layout.fragment_data_management) {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
         _binding = FragmentDataManagementBinding.bind(view)
-        binding.appHeader.setupAquaHeader(fragment = this)
+        binding.appHeader.setupAquaHeader(
+            fragment = this,
+            config = AquaHeaderConfig(
+                title = getString(R.string.screen_title_data_management)
+            )
+        )
         with(binding) {
             cardCreateBackup.setOnClickListener { viewModel.requestBackup() }
             cardRestoreBackup.setOnClickListener { viewModel.requestRestoreDocument() }

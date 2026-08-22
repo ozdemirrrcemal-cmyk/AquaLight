@@ -9,6 +9,7 @@ import com.aqua.aqualight.application.devices.OwnerDeviceFamily
 import com.aqua.aqualight.application.devices.OwnerDeviceListItem
 import com.aqua.aqualight.application.devices.OwnerDevicesOperations
 import com.aqua.aqualight.ui.common.devicecard.DeviceCompactStatusStyle
+import com.aqua.aqualight.ui.tabs.devices.route.DeviceMenuPresentationState
 import com.aqua.aqualight.ui.tabs.devices.route.DeviceRouteResolver
 import com.aqua.aqualight.ui.tabs.devices.route.DeviceRouteTarget
 import kotlinx.coroutines.CoroutineScope
@@ -81,18 +82,24 @@ class DevicesViewModelBoundaryTest {
         )
 
         viewModel.onDeviceClicked("device-1")
-        val event = viewModel.events.first() as DevicesEvent.OpenRoute
+        val menuState = viewModel.uiState.first { state ->
+            state.deviceMenuState is DeviceMenuPresentationState.Ready
+        }.deviceMenuState as DeviceMenuPresentationState.Ready
 
         assertEquals("device-1", menuOperations.lastRequest)
-        assertEquals("device-1", event.route.deviceUid)
-        assertEquals("AquaLight One", event.route.title)
-        assertEquals(DeviceRouteTarget.LIGHT_ROOT, event.route.target)
-        assertTrue(event.route.presentationPrepared)
+        assertEquals("device-1", menuState.route.deviceUid)
+        assertEquals("AquaLight One", menuState.route.title)
+        assertEquals(DeviceRouteTarget.LIGHT_ROOT, menuState.route.target)
+        assertTrue(menuState.route.presentationPrepared)
         assertTrue(viewModel.uiState.value.isOpeningDeviceMenu)
 
-        viewModel.onDeviceMenuOpenHandled("device-1")
+        viewModel.onDeviceMenuResultHandled(menuState.requestId)
 
         assertFalse(viewModel.uiState.value.isOpeningDeviceMenu)
+        assertEquals(
+            DeviceMenuPresentationState.Idle,
+            viewModel.uiState.value.deviceMenuState
+        )
     }
 
     @Test
@@ -109,12 +116,14 @@ class DevicesViewModelBoundaryTest {
         )
 
         viewModel.onDeviceClicked("device-1")
-        val event = viewModel.events.first() as DevicesEvent.ShowDeviceUnavailable
+        val menuState = viewModel.uiState.first { state ->
+            state.deviceMenuState is DeviceMenuPresentationState.Failure
+        }.deviceMenuState as DeviceMenuPresentationState.Failure
 
-        assertEquals("device-1", event.requestDeviceUid)
+        assertEquals("device-1", menuState.deviceUid)
         assertTrue(viewModel.uiState.value.isOpeningDeviceMenu)
 
-        viewModel.onDeviceMenuOpenHandled(event.requestDeviceUid)
+        viewModel.onDeviceMenuResultHandled(menuState.requestId)
 
         assertFalse(viewModel.uiState.value.isOpeningDeviceMenu)
     }

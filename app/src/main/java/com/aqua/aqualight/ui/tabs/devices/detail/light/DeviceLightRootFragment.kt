@@ -45,7 +45,7 @@ class DeviceLightRootFragment : Fragment(R.layout.fragment_device_light_root) {
         binding.appHeader.setupAquaHeader(
             fragment = this,
             config = AquaHeaderConfig(
-                titleOverride = title,
+                title = title,
                 onBackClick = {
                     findNavController().navigateUp()
                 },

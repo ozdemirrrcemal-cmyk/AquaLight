@@ -43,7 +43,7 @@ class DeviceCoolingRootFragment : Fragment(R.layout.fragment_device_cooling_root
         binding.appHeader.setupAquaHeader(
             fragment = this,
             config = AquaHeaderConfig(
-                titleOverride = title,
+                title = title,
                 onBackClick = { findNavController().navigateUp() },
                 actions = listOf(
                     AquaHeaderAction(

@@ -33,7 +33,7 @@ abstract class DeviceDosingChannelDestinationFragment(
         headerBinding?.setupAquaHeader(
             fragment = this,
             config = AquaHeaderConfig(
-                titleOverride = title,
+                title = title,
                 onBackClick = ::onBackRequested
             )
         )

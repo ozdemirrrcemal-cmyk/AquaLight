@@ -19,9 +19,12 @@ import com.aqua.aqualight.ui.tabs.aquarium.detail.devices.TankAssignedDevicesAda
 import com.aqua.aqualight.ui.tabs.aquarium.detail.devices.TankDetailDevicesEvent
 import com.aqua.aqualight.ui.tabs.aquarium.detail.devices.TankDetailDevicesUiState
 import com.aqua.aqualight.ui.tabs.aquarium.detail.devices.TankDetailDevicesViewModel
+import com.aqua.aqualight.ui.tabs.devices.route.DeviceMenuPresentationState
 import com.aqua.aqualight.ui.tabs.devices.route.DeviceRoute
 import com.aqua.aqualight.utils.DialogManager
 import com.aqua.aqualight.utils.DialogType
+import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
 
 class TankDetailDevicesFragment : Fragment(R.layout.fragment_tank_detail_devices) {
@@ -127,24 +130,15 @@ class TankDetailDevicesFragment : Fragment(R.layout.fragment_tank_detail_devices
                 }
 
                 launch {
+                    viewModel.uiState
+                        .map { state -> state.deviceMenuState }
+                        .distinctUntilChanged()
+                        .collect(::handleDeviceMenuState)
+                }
+
+                launch {
                     viewModel.events.collect { event ->
                         when (event) {
-                            is TankDetailDevicesEvent.OpenDeviceRoute -> {
-                                try {
-                                    parentHost()?.onTankDetailDeviceClicked(event.route)
-                                } finally {
-                                    viewModel.onDeviceMenuOpenHandled(event.requestUid)
-                                }
-                            }
-
-                            is TankDetailDevicesEvent.ShowDeviceUnavailable -> {
-                                try {
-                                    showDeviceUnavailable(event)
-                                } finally {
-                                    viewModel.onDeviceMenuOpenHandled(event.requestUid)
-                                }
-                            }
-
                             TankDetailDevicesEvent.ShowRemoveFailed -> {
                                 showError(
                                     title = getString(R.string.tank_device_remove_failed_title),
@@ -186,13 +180,34 @@ class TankDetailDevicesFragment : Fragment(R.layout.fragment_tank_detail_devices
         )
     }
 
+    private fun handleDeviceMenuState(state: DeviceMenuPresentationState) {
+        when (state) {
+            DeviceMenuPresentationState.Idle,
+            is DeviceMenuPresentationState.Preparing -> Unit
+
+            is DeviceMenuPresentationState.Ready -> {
+                val host = parentHost() ?: return
+                host.onTankDetailDeviceClicked(state.route)
+                viewModel.onDeviceMenuResultHandled(state.requestId)
+            }
+
+            is DeviceMenuPresentationState.Failure -> {
+                if (showDeviceUnavailable(state)) {
+                    viewModel.onDeviceMenuResultHandled(state.requestId)
+                }
+            }
+        }
+    }
+
     private fun showDeviceUnavailable(
-        event: TankDetailDevicesEvent.ShowDeviceUnavailable
-    ) {
-        baseActivity()?.showDeviceOfflineDialog(
-            deviceTitle = event.title,
-            messageRes = event.messageRes
+        state: DeviceMenuPresentationState.Failure
+    ): Boolean {
+        val host = baseActivity() ?: return false
+        host.showDeviceOfflineDialog(
+            deviceTitle = state.title,
+            messageRes = state.messageRes
         )
+        return true
     }
 
     private fun showError(

@@ -68,7 +68,7 @@ class DeviceProvisioningProgressFragment : Fragment(R.layout.fragment_device_pro
         binding.appHeader.setupAquaHeader(
             fragment = this,
             config = AquaHeaderConfig(
-                titleOverride = getString(R.string.device_provisioning_title),
+                title = getString(R.string.device_provisioning_title),
                 onBackClick = viewModel::requestExit
             )
         )

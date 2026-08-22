@@ -76,7 +76,7 @@ class DeviceWifiProvisioningFragment : Fragment(R.layout.fragment_device_wifi_pr
         binding.appHeader.setupAquaHeader(
             fragment = this,
             config = AquaHeaderConfig(
-                titleOverride = getString(R.string.device_wifi_title),
+                title = getString(R.string.device_wifi_title),
                 onBackClick = {
                     findNavController().navigateUp()
                 }

@@ -17,6 +17,7 @@ import com.aqua.aqualight.composition.requireAppContainer
 import com.aqua.aqualight.databinding.FragmentReAuthenticateBinding
 import com.aqua.aqualight.platform.auth.GoogleIdentityTokenResult
 import com.aqua.aqualight.ui.common.feedback.FeedbackBottomSheet
+import com.aqua.aqualight.ui.common.header.AquaHeaderConfig
 import com.aqua.aqualight.ui.common.header.setupAquaHeader
 import com.aqua.aqualight.ui.common.loading.setFragmentGlobalLoading
 import com.aqua.aqualight.utils.DialogManager
@@ -121,7 +122,12 @@ class ReAuthenticateFragment :
     }
 
     private fun setupHeader() {
-        binding.appHeader.setupAquaHeader(fragment = this)
+        binding.appHeader.setupAquaHeader(
+            fragment = this,
+            config = AquaHeaderConfig(
+                title = getString(R.string.screen_title_re_authenticate)
+            )
+        )
     }
 
     private fun setupUi() {

@@ -61,7 +61,7 @@ class DeviceDosingRootFragment : Fragment(R.layout.fragment_device_dosing_root) 
         binding.appHeader.setupAquaHeader(
             fragment = this,
             config = AquaHeaderConfig(
-                titleOverride = title,
+                title = title,
                 onBackClick = {
                     findNavController().navigateUp()
                 },

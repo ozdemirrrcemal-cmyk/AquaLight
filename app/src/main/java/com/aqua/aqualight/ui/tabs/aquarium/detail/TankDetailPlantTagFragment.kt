@@ -65,7 +65,7 @@ class TankDetailPlantTagFragment : Fragment(R.layout.fragment_plant_tag) {
         binding.appHeader.setupAquaHeader(
             fragment = this,
             config = AquaHeaderConfig(
-                titleOverride = getString(R.string.aquarium_tag_plants_title),
+                title = getString(R.string.aquarium_tag_plants_title),
                 onBackClick = { findNavController().navigateUp() },
                 cardIconAction = AquaHeaderCardIconAction(
                     iconRes = R.drawable.ic_check_24,

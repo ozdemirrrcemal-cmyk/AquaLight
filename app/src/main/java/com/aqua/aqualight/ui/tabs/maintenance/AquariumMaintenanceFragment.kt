@@ -87,7 +87,7 @@ class AquariumMaintenanceFragment :
         binding.appHeader.setupAquaHeader(
             fragment = this,
             config = AquaHeaderConfig(
-                titleOverride = getString(R.string.maintenance_title),
+                title = getString(R.string.maintenance_title),
                 showBackButton = false,
                 primaryAction = AquaHeaderPrimaryAction(
                     text = getString(R.string.maintenance_action_add),

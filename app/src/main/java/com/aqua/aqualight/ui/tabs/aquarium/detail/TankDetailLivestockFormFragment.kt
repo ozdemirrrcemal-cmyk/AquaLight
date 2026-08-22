@@ -241,7 +241,7 @@ Fragment(R.layout.fragment_tank_livestock_form) {
         binding.appHeader.setupAquaHeader(
             fragment = this,
             config = AquaHeaderConfig(
-                titleOverride = title,
+                title = title,
                 onBackClick = {
                     closeForm()
                 }

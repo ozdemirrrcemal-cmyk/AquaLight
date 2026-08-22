@@ -52,7 +52,7 @@ class DeviceFirmwareUpdateFragment : Fragment(R.layout.fragment_device_firmware_
         binding.appHeader.setupAquaHeader(
             fragment = this,
             config = AquaHeaderConfig(
-                titleOverride = getString(R.string.device_settings_firmware_update_title),
+                title = getString(R.string.device_settings_firmware_update_title),
                 onBackClick = { findNavController().navigateUp() }
             )
         )
