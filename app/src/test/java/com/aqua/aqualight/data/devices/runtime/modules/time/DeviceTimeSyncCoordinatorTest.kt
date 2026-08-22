@@ -40,7 +40,7 @@ class DeviceTimeSyncCoordinatorTest {
         val syncCalls = AtomicInteger(0)
         val deviceUid = DeviceUid("device-time-rtc-recovery")
         val coordinator = coordinator(
-            requestStatus = { uid -> statusSuccess(uid, status(timeSet = false)) },
+            requestStatus = { uid -> statusSuccess(uid, status().copy(timeSet = false)) },
             syncPhoneNow = { uid ->
                 syncCalls.incrementAndGet()
                 syncSuccess(uid)
@@ -61,7 +61,7 @@ class DeviceTimeSyncCoordinatorTest {
             requestStatus = { uid ->
                 statusSuccess(
                     uid,
-                    status(
+                    status().copy(
                         timezoneId = "UTC",
                         posixTimeZone = "UTC0",
                         utcOffsetMinutes = 0,
@@ -95,7 +95,7 @@ class DeviceTimeSyncCoordinatorTest {
                         action = DeviceTimeRuntimeContract.Action.STATUS_GET
                     )
                 } else {
-                    statusSuccess(uid, status(timeSet = false))
+                    statusSuccess(uid, status().copy(timeSet = false))
                 }
             },
             syncPhoneNow = { uid ->
@@ -127,7 +127,7 @@ class DeviceTimeSyncCoordinatorTest {
                 statusCalls.incrementAndGet()
                 entered.complete(Unit)
                 release.await()
-                statusSuccess(uid, status(timeSet = false))
+                statusSuccess(uid, status().copy(timeSet = false))
             },
             syncPhoneNow = { uid ->
                 syncCalls.incrementAndGet()
@@ -196,24 +196,17 @@ class DeviceTimeSyncCoordinatorTest {
             )
         )
 
-    private fun status(
-        timeSet: Boolean = true,
-        timezoneId: String = "Europe/Istanbul",
-        posixTimeZone: String = "TRT-3",
-        utcOffsetMinutes: Int = 180,
-        autoSyncNtpEnabled: Boolean = true,
-        autoSyncGadgetEnabled: Boolean = true
-    ): DeviceTimeStatus = DeviceTimeStatus(
-        timeSet = timeSet,
-        timeString = if (timeSet) "2026-08-01 12:00:00" else "1970-01-01 00:00:00",
-        timezoneId = timezoneId,
-        posixTimeZone = posixTimeZone,
-        utcOffsetMinutes = utcOffsetMinutes,
-        autoSyncNtpEnabled = autoSyncNtpEnabled,
-        autoSyncGadgetEnabled = autoSyncGadgetEnabled,
+    private fun status(): DeviceTimeStatus = DeviceTimeStatus(
+        timeSet = true,
+        timeString = "2026-08-01 12:00:00",
+        timezoneId = "Europe/Istanbul",
+        posixTimeZone = "TRT-3",
+        utcOffsetMinutes = 180,
+        autoSyncNtpEnabled = true,
+        autoSyncGadgetEnabled = true,
         ntpServerPrimary = "pool.ntp.org",
         ntpServerSecondary = "time.nist.gov",
-        lastSyncSource = if (timeSet) "rtc" else "none",
+        lastSyncSource = "rtc",
         lastSyncEpochMillis = 0L,
         lastSyncUptimeMs = 5_000L
     )

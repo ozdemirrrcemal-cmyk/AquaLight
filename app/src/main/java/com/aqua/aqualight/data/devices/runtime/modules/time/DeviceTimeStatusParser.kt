@@ -70,6 +70,8 @@ object DeviceTimeStatusParser {
         require(DeviceRuntimeJson.intValue(data, "second") in MIN_SECOND..MAX_SECOND)
     }
 
+    // Calendar month numbers and their fixed day counts are the domain representation here.
+    @Suppress("MagicNumber")
     private fun daysInMonth(year: Int, month: Int): Int = when (month) {
         1, 3, 5, 7, 8, 10, 12 -> 31
         4, 6, 9, 11 -> 30
@@ -77,6 +79,7 @@ object DeviceTimeStatusParser {
         else -> 0
     }
 
+    @Suppress("MagicNumber")
     private fun isLeapYear(year: Int): Boolean =
         year % 4 == 0 && (year % 100 != 0 || year % 400 == 0)
 
@@ -128,7 +131,6 @@ object DeviceTimeStatusParser {
     private const val MIN_MONTH = 1
     private const val MAX_MONTH = 12
     private const val MIN_DAY = 1
-    private const val MAX_DAY = 31
     private const val MIN_WEEKDAY = 1
     private const val MAX_WEEKDAY = 7
     private const val MIN_HOUR = 0
