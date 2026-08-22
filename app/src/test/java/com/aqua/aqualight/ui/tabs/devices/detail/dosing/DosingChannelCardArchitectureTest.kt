@@ -13,11 +13,21 @@ class DosingChannelCardArchitectureTest {
     fun `channel cards are materialized only from validated central catalog slots`() {
         val viewModel = source(ROOT_SOURCE_ROOT + "DeviceDosingRootViewModel.kt")
         val presentation = source(ROOT_SOURCE_ROOT + "DeviceDosingRootChannelPresentation.kt")
+        val channelSetPolicy = source(
+            APPLICATION_SOURCE_ROOT + "DeviceDosingChannelSetPolicy.kt"
+        )
 
         assertTrue(viewModel.contains("catalogState == DeviceRootCatalogState.VALID"))
         assertTrue(viewModel.contains("channelSlots.dosingChannels"))
         assertTrue(viewModel.contains("resolveDosingRootChannelPresentation"))
-        assertTrue(presentation.contains("authoritativeChannelsOrNull"))
+        assertTrue(presentation.contains("validatedDosingChannelSetOrNull"))
+        assertTrue(channelSetPolicy.contains("channel.deviceUid == deviceUid"))
+        assertTrue(channelSetPolicy.contains("channel.pumpCount == expectedCount"))
+        assertTrue(
+            channelSetPolicy.contains(
+                "catalogBySlot[channel.slotId]?.index?.position == channel.channelNumber"
+            )
+        )
         assertTrue(
             presentation.contains(
                 "catalogChannels.map(DeviceDosingChannelSlot::toInitialDosingChannelCardUiState)"
@@ -25,8 +35,10 @@ class DosingChannelCardArchitectureTest {
         )
         assertFalse(viewModel.contains("Regex("))
         assertFalse(presentation.contains("Regex("))
+        assertFalse(channelSetPolicy.contains("Regex("))
         assertFalse(viewModel.contains("containsMatchIn"))
         assertFalse(presentation.contains("containsMatchIn"))
+        assertFalse(channelSetPolicy.contains("containsMatchIn"))
     }
 
     @Test
