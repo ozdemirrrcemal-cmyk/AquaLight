@@ -17,12 +17,19 @@ fun LayoutAquaHeaderBinding.setupAquaHeader(
     val navController =
         fragment.findNavController()
 
-    val resolvedTitle =
-        config.titleOverride
-            ?: navController.currentDestination
-                ?.label
-                ?.toString()
-                .orEmpty()
+    val titleOwner =
+        (aquaHeaderRoot.getTag(R.id.aqua_header_title_owner) as? AquaHeaderTitleOwner)
+            ?: AquaHeaderTitleOwner().also { owner ->
+                aquaHeaderRoot.setTag(R.id.aqua_header_title_owner, owner)
+            }
+
+    val resolvedTitle = titleOwner.resolve(
+        titleOverride = config.titleOverride,
+        currentDestinationTitle = navController.currentDestination
+            ?.label
+            ?.toString()
+            .orEmpty()
+    )
 
     tvTitle.text =
         resolvedTitle
@@ -498,4 +505,3 @@ private fun Fragment.resolveCardIconActionStrokeColor(
 
     return ContextCompat.getColor(requireContext(), colorRes)
 }
-
