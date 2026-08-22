@@ -247,19 +247,7 @@ class DeviceDosingRootReadPathTest {
                 channelSnapshot(channelNumber = 1, pumpCount = 2, active = true),
                 channelSnapshot(channelNumber = 2, pumpCount = 2)
             )
-            val fresh = stale.map { snapshot ->
-                snapshot.copy(
-                    runtimeReason = DeviceDosingRuntimeReason.NONE,
-                    activeRun = DeviceDosingActiveRun(),
-                    progress = snapshot.progress.copy(
-                        completedAmountMicroliters = 0L,
-                        remainingAmountMicroliters = snapshot.progress
-                            .scheduledAmountMicroliters,
-                        completionPercent = 0.0
-                    ),
-                    usageToday = DeviceDosingDailyUsageSnapshot()
-                )
-            }
+            val fresh = stale.withoutRuntimeHistory()
             val channels = FakeChannelOperations(
                 initialSnapshots = stale
             )
@@ -387,6 +375,19 @@ class DeviceDosingRootReadPathTest {
     private companion object {
         const val DEVICE_UID = "device-1"
     }
+}
+
+private fun List<DeviceDosingChannelSnapshot>.withoutRuntimeHistory() = map { snapshot ->
+    snapshot.copy(
+        runtimeReason = DeviceDosingRuntimeReason.NONE,
+        activeRun = DeviceDosingActiveRun(),
+        progress = snapshot.progress.copy(
+            completedAmountMicroliters = 0L,
+            remainingAmountMicroliters = snapshot.progress.scheduledAmountMicroliters,
+            completionPercent = 0.0
+        ),
+        usageToday = DeviceDosingDailyUsageSnapshot()
+    )
 }
 
 private fun rootSnapshot(channelCount: Int) = DeviceRootSnapshot(

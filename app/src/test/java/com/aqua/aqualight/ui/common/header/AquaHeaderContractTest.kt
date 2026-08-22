@@ -22,7 +22,7 @@ class AquaHeaderContractTest {
         assertFalse(configSource.contains("titleOverride"))
         assertTrue(bindingSource.contains("config: AquaHeaderConfig\n"))
         assertFalse(bindingSource.contains("config: AquaHeaderConfig ="))
-        assertTrue(bindingSource.contains("tvTitle.text =\n        config.title"))
+        assertTrue(bindingSource.contains("tvTitle.text = config.title"))
     }
 
     @Test

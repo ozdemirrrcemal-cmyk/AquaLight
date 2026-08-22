@@ -140,7 +140,12 @@ class DeviceDosingRootViewModel(
         channelDataRefreshJob = viewModelScope.launch {
             val refreshed = try {
                 if (initialPresentationRefresh) {
-                    prepareMenuEntry(deviceUid)
+                    when (val access = menuAccessOperations.resolve(deviceUid)) {
+                        is DeviceMenuAccessResult.Available ->
+                            access.presentationPrepared &&
+                                access.family == OwnerDeviceFamily.DOSING
+                        is DeviceMenuAccessResult.Unavailable -> false
+                    }
                 } else {
                     channelOperations.refreshAll(deviceUid)
                 }
@@ -163,13 +168,6 @@ class DeviceDosingRootViewModel(
             }
         }
     }
-
-    private suspend fun prepareMenuEntry(deviceUid: String): Boolean =
-        when (val access = menuAccessOperations.resolve(deviceUid)) {
-            is DeviceMenuAccessResult.Available ->
-                access.presentationPrepared && access.family == OwnerDeviceFamily.DOSING
-            is DeviceMenuAccessResult.Unavailable -> false
-        }
 
     /**
      * Starts observation only after the pre-navigation barrier or this binding has completed an

@@ -256,17 +256,20 @@ def validate_icon_descriptions(errors: list[str]) -> None:
                     "requires a content description"
                 )
 
-    binding_path = JAVA / "com/aqua/aqualight/ui/common/header/AquaHeaderBindingExt.kt"
-    binding = binding_path.read_text(encoding="utf-8")
+    binding_directory = JAVA / "com/aqua/aqualight/ui/common/header"
+    binding_paths = sorted(binding_directory.glob("AquaHeader*BindingExt.kt"))
+    binding = "\n".join(
+        path.read_text(encoding="utf-8") for path in binding_paths
+    )
     assignments = (
-        ("button.contentDescription", "action.contentDescription"),
-        ("btnFilledIconAction.contentDescription", "filledIconAction.contentDescription"),
-        ("btnCardIconAction.contentDescription", "cardIconAction.contentDescription"),
+        ("button.contentDescription", "action?.contentDescription"),
+        ("btnFilledIconAction.contentDescription", "action?.contentDescription"),
+        ("btnCardIconAction.contentDescription", "action?.contentDescription"),
     )
     for target, source in assignments:
         if target not in binding or source not in binding:
             errors.append(
-                f"{relative(binding_path)} is missing dynamic icon label assignment "
+                f"{relative(binding_directory)} is missing dynamic icon label assignment "
                 f"{target} <- {source}"
             )
 

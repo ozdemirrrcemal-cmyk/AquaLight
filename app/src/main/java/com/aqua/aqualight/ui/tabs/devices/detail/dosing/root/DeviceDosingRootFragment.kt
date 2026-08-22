@@ -43,7 +43,7 @@ class DeviceDosingRootFragment : Fragment(R.layout.fragment_device_dosing_root) 
             fallbackTitle = args.deviceTitle,
             presentationPrepared = args.presentationPrepared
         )
-        setupHeader(title = resolveHeaderTitle(viewModel.uiState.value.title))
+        setupHeader(authoritativeTitle = viewModel.uiState.value.title)
         setFragmentGlobalLoading(viewModel.uiState.value.isPreparing)
         setupPumpContent()
         observeHeaderTitle()
@@ -57,7 +57,10 @@ class DeviceDosingRootFragment : Fragment(R.layout.fragment_device_dosing_root) 
         viewModel.onHostStarted()
     }
 
-    private fun setupHeader(title: String) {
+    private fun setupHeader(authoritativeTitle: String) {
+        val title = authoritativeTitle
+            .ifBlank { args.deviceTitle }
+            .ifBlank { getString(R.string.device_family_dosing) }
         binding.appHeader.setupAquaHeader(
             fragment = this,
             config = AquaHeaderConfig(
@@ -77,11 +80,6 @@ class DeviceDosingRootFragment : Fragment(R.layout.fragment_device_dosing_root) 
             )
         )
     }
-
-    private fun resolveHeaderTitle(authoritativeTitle: String): String =
-        authoritativeTitle
-            .ifBlank { args.deviceTitle }
-            .ifBlank { getString(R.string.device_family_dosing) }
 
     private fun openSettings() {
         val navController = findNavController()
@@ -154,7 +152,7 @@ class DeviceDosingRootFragment : Fragment(R.layout.fragment_device_dosing_root) 
                 viewModel.uiState.collect { state ->
                     if (_binding == null) return@collect
                     setFragmentGlobalLoading(state.isPreparing)
-                    setupHeader(title = resolveHeaderTitle(state.title))
+                    setupHeader(authoritativeTitle = state.title)
                 }
             }
         }

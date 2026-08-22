@@ -33,18 +33,18 @@ internal class DefaultDeviceMenuPresentationPreparationOperations(
         } ?: false
 
     private suspend fun prepareDosing(deviceUid: String): Boolean {
-        val root = rootOperations.current(deviceUid) ?: return false
-        if (
-            root.catalogState != DeviceRootCatalogState.VALID ||
-            root.family != OwnerDeviceFamily.DOSING
-        ) {
-            return false
-        }
+        val catalogChannels = rootOperations.current(deviceUid)
+            ?.takeIf { root ->
+                root.catalogState == DeviceRootCatalogState.VALID &&
+                    root.family == OwnerDeviceFamily.DOSING
+            }
+            ?.channelSlots
+            ?.dosingChannels
+            .orEmpty()
+        val refreshed = catalogChannels.isNotEmpty() &&
+            dosingOperations.refreshAll(deviceUid)
 
-        val catalogChannels = root.channelSlots.dosingChannels
-        if (catalogChannels.isEmpty() || !dosingOperations.refreshAll(deviceUid)) return false
-
-        return validatedDosingChannelSetOrNull(
+        return refreshed && validatedDosingChannelSetOrNull(
             deviceUid = deviceUid,
             catalogChannels = catalogChannels,
             snapshots = dosingOperations.currentAll(deviceUid)

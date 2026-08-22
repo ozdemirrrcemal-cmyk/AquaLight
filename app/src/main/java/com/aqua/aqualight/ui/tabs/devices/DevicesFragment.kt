@@ -201,22 +201,14 @@ class DevicesFragment : Fragment(R.layout.fragment_devices) {
             }
 
             is DeviceMenuPresentationState.Failure -> {
-                if (showDeviceUnavailable(state)) {
-                    viewModel.onDeviceMenuResultHandled(state.requestId)
-                }
+                val host = baseActivity() ?: return
+                host.showDeviceOfflineDialog(
+                    deviceTitle = state.title,
+                    messageRes = state.messageRes
+                )
+                viewModel.onDeviceMenuResultHandled(state.requestId)
             }
         }
-    }
-
-    private fun showDeviceUnavailable(
-        state: DeviceMenuPresentationState.Failure
-    ): Boolean {
-        val host = baseActivity() ?: return false
-        host.showDeviceOfflineDialog(
-            deviceTitle = state.title,
-            messageRes = state.messageRes
-        )
-        return true
     }
 
     private fun showDeletePartialSuccess(

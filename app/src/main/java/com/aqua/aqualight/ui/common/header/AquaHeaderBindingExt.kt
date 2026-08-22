@@ -1,493 +1,69 @@
 package com.aqua.aqualight.ui.common.header
 
-import android.content.res.ColorStateList
-import android.text.Editable
-import android.text.TextWatcher
 import android.view.View
-import androidx.core.content.ContextCompat
 import androidx.fragment.app.Fragment
 import androidx.navigation.fragment.findNavController
-import com.aqua.aqualight.R
 import com.aqua.aqualight.databinding.LayoutAquaHeaderBinding
 
 fun LayoutAquaHeaderBinding.setupAquaHeader(
     fragment: Fragment,
     config: AquaHeaderConfig
 ) {
-    val navController =
-        fragment.findNavController()
+    tvTitle.text = config.title
+    renderBackNavigation(fragment, config)
+    renderStatusIcon(config.statusIconRes)
+    renderToolbarActions(config.actions)
+    renderFilledIconAction(config.filledIconAction)
+    renderCardIconAction(fragment, config.cardIconAction)
+    renderPillTextAction(fragment, config.pillTextAction)
+    renderScoreBadge(config.scoreBadge)
+    renderPrimaryAction(config.primaryAction)
+    renderSearchField(config.searchField)
+}
 
-    tvTitle.text =
-        config.title
-
-    if (config.showBackButton) {
-        btnBack.visibility =
-            View.VISIBLE
-
-        btnBack.setOnClickListener {
-            config.onBackClick?.invoke()
-                ?: navController.popBackStack()
+private fun LayoutAquaHeaderBinding.renderBackNavigation(
+    fragment: Fragment,
+    config: AquaHeaderConfig
+) {
+    btnBack.visibility = if (config.showBackButton) View.VISIBLE else View.GONE
+    btnBack.setOnClickListener(
+        if (config.showBackButton) {
+            View.OnClickListener {
+                config.onBackClick?.invoke()
+                    ?: fragment.findNavController().popBackStack()
+            }
+        } else {
+            null
         }
-    } else {
-        btnBack.visibility =
-            View.GONE
+    )
+}
 
-        btnBack.setOnClickListener(null)
-    }
-
-    if (config.statusIconRes == null) {
-        imgStatusIcon.visibility =
-            View.GONE
-
+private fun LayoutAquaHeaderBinding.renderStatusIcon(statusIconRes: Int?) {
+    imgStatusIcon.visibility = if (statusIconRes == null) View.GONE else View.VISIBLE
+    if (statusIconRes == null) {
         imgStatusIcon.setImageDrawable(null)
     } else {
-        imgStatusIcon.visibility =
-            View.VISIBLE
-
-        imgStatusIcon.setImageResource(
-            config.statusIconRes
-        )
+        imgStatusIcon.setImageResource(statusIconRes)
     }
+}
 
-    val actionButtons =
-        listOf(
-            btnActionOne,
-            btnActionTwo,
-            btnActionThree
-        )
+private fun LayoutAquaHeaderBinding.renderToolbarActions(
+    actions: List<AquaHeaderAction>
+) {
+    val buttons = listOf(btnActionOne, btnActionTwo, btnActionThree)
+    headerActionsContainer.visibility = if (actions.isEmpty()) View.GONE else View.VISIBLE
 
-    headerActionsContainer.visibility =
-        if (config.actions.isEmpty()) {
-            View.GONE
-        } else {
-            View.VISIBLE
-        }
-
-    actionButtons.forEachIndexed { index, button ->
-        val action =
-            config.actions.getOrNull(index)
-
+    buttons.forEachIndexed { index, button ->
+        val action = actions.getOrNull(index)
+        button.visibility = if (action == null) View.GONE else View.VISIBLE
+        button.contentDescription = action?.contentDescription
+        button.setOnClickListener(action?.let { item ->
+            View.OnClickListener { item.onClick() }
+        })
         if (action == null) {
-            button.visibility =
-                View.GONE
-
-            button.setOnClickListener(null)
-
             button.setImageDrawable(null)
-
-            button.contentDescription =
-                null
         } else {
-            button.visibility =
-                View.VISIBLE
-
-            button.setImageResource(
-                action.iconRes
-            )
-
-            button.contentDescription =
-                action.contentDescription
-
-            button.setOnClickListener {
-                action.onClick()
-            }
+            button.setImageResource(action.iconRes)
         }
     }
-
-    val filledIconAction =
-        config.filledIconAction
-
-    if (filledIconAction == null) {
-        btnFilledIconAction.visibility =
-            View.GONE
-
-        btnFilledIconAction.setImageDrawable(null)
-
-        btnFilledIconAction.contentDescription =
-            null
-
-        btnFilledIconAction.isEnabled =
-            true
-
-        btnFilledIconAction.alpha =
-            1f
-
-        btnFilledIconAction.setOnClickListener(null)
-    } else {
-        btnFilledIconAction.visibility =
-            View.VISIBLE
-
-        btnFilledIconAction.setImageResource(
-            filledIconAction.iconRes
-        )
-
-        btnFilledIconAction.contentDescription =
-            filledIconAction.contentDescription
-
-        btnFilledIconAction.isEnabled =
-            filledIconAction.enabled
-
-        btnFilledIconAction.alpha =
-            if (filledIconAction.enabled) {
-                1f
-            } else {
-                0.45f
-            }
-
-        btnFilledIconAction.setOnClickListener(
-            if (filledIconAction.enabled) {
-                View.OnClickListener {
-                    filledIconAction.onClick()
-                }
-            } else {
-                null
-            }
-        )
-    }
-
-    val cardIconAction =
-        config.cardIconAction
-
-    if (cardIconAction == null) {
-        btnCardIconAction.visibility =
-            View.GONE
-
-        btnCardIconAction.contentDescription =
-            null
-
-        btnCardIconAction.isClickable =
-            false
-
-        btnCardIconAction.isFocusable =
-            false
-
-        btnCardIconAction.isEnabled =
-            true
-
-        btnCardIconAction.alpha =
-            1f
-
-        btnCardIconAction.setOnClickListener(null)
-
-        ivCardIconAction.setImageDrawable(null)
-    } else {
-        btnCardIconAction.visibility =
-            View.VISIBLE
-
-        btnCardIconAction.setCardBackgroundColor(
-            cardIconAction.backgroundColor
-                ?: fragment.resolveCardIconActionBackgroundColor(cardIconAction.tone)
-        )
-
-        btnCardIconAction.strokeColor =
-            cardIconAction.strokeColor
-                ?: fragment.resolveCardIconActionStrokeColor(cardIconAction.tone)
-
-        btnCardIconAction.contentDescription =
-            cardIconAction.contentDescription
-
-        btnCardIconAction.isClickable =
-            cardIconAction.enabled
-
-        btnCardIconAction.isFocusable =
-            cardIconAction.enabled
-
-        btnCardIconAction.isEnabled =
-            cardIconAction.enabled
-
-        btnCardIconAction.alpha =
-            if (cardIconAction.enabled) {
-                1f
-            } else {
-                0.45f
-            }
-
-        ivCardIconAction.setImageResource(
-            cardIconAction.iconRes
-        )
-
-        ivCardIconAction.imageTintList =
-            ColorStateList.valueOf(
-                cardIconAction.iconTintColor
-                    ?: ContextCompat.getColor(fragment.requireContext(), R.color.aqua_content_on_dark)
-            )
-
-        btnCardIconAction.setOnClickListener(
-            if (cardIconAction.enabled) {
-                View.OnClickListener {
-                    cardIconAction.onClick()
-                }
-            } else {
-                null
-            }
-        )
-    }
-
-    val pillTextAction =
-        config.pillTextAction
-
-    if (pillTextAction == null) {
-        btnPillTextAction.visibility =
-            View.GONE
-
-        btnPillTextAction.text =
-            null
-
-        btnPillTextAction.contentDescription =
-            null
-
-        btnPillTextAction.isEnabled =
-            true
-
-        btnPillTextAction.alpha =
-            1f
-
-        btnPillTextAction.setOnClickListener(null)
-    } else {
-        btnPillTextAction.visibility =
-            View.VISIBLE
-
-        btnPillTextAction.text =
-            pillTextAction.text
-
-        btnPillTextAction.contentDescription =
-            pillTextAction.contentDescription
-
-        btnPillTextAction.setTextColor(
-            pillTextAction.textColor
-                ?: ContextCompat.getColor(fragment.requireContext(), R.color.aqua_content_on_dark)
-        )
-
-        btnPillTextAction.setBackgroundResource(
-            pillTextAction.backgroundRes
-        )
-
-        btnPillTextAction.isEnabled =
-            pillTextAction.enabled
-
-        btnPillTextAction.alpha =
-            if (pillTextAction.enabled) {
-                1f
-            } else {
-                0.45f
-            }
-
-        btnPillTextAction.setOnClickListener(
-            if (pillTextAction.enabled) {
-                View.OnClickListener {
-                    pillTextAction.onClick()
-                }
-            } else {
-                null
-            }
-        )
-    }
-
-    val scoreBadge =
-        config.scoreBadge
-
-    if (scoreBadge == null) {
-        scoreContainer.visibility =
-            View.GONE
-
-        tvScore.text =
-            null
-
-        scoreContainer.contentDescription =
-            null
-
-        scoreContainer.isClickable =
-            false
-
-        scoreContainer.isFocusable =
-            false
-
-        scoreContainer.setOnClickListener(null)
-    } else {
-        scoreContainer.visibility =
-            View.VISIBLE
-
-        tvScore.text =
-            scoreBadge.text
-
-        tvScore.setTextColor(
-            scoreBadge.textColor
-        )
-
-        scoreContainer.strokeColor =
-            scoreBadge.strokeColor
-
-        scoreContainer.contentDescription =
-            scoreBadge.contentDescription
-
-        scoreContainer.isClickable =
-            scoreBadge.onClick != null
-
-        scoreContainer.isFocusable =
-            scoreBadge.onClick != null
-
-        scoreContainer.setOnClickListener(
-            scoreBadge.onClick?.let { onClick ->
-                View.OnClickListener {
-                    onClick()
-                }
-            }
-        )
-    }
-
-    val primaryAction =
-        config.primaryAction
-
-    if (primaryAction == null) {
-        btnPrimaryAction.visibility =
-            View.GONE
-
-        btnPrimaryAction.text =
-            null
-
-        btnPrimaryAction.contentDescription =
-            null
-
-        btnPrimaryAction.setOnClickListener(null)
-    } else {
-        btnPrimaryAction.visibility =
-            View.VISIBLE
-
-        btnPrimaryAction.text =
-            primaryAction.text
-
-        btnPrimaryAction.contentDescription =
-            primaryAction.contentDescription
-
-        btnPrimaryAction.setOnClickListener {
-            primaryAction.onClick()
-        }
-    }
-
-    val oldWatcher =
-        etHeaderSearch.tag as? TextWatcher
-
-    if (oldWatcher != null) {
-        etHeaderSearch.removeTextChangedListener(oldWatcher)
-        etHeaderSearch.tag = null
-    }
-
-    val searchField =
-        config.searchField
-
-    if (searchField == null) {
-        searchContainer.visibility =
-            View.GONE
-
-        titleStatusContainer.visibility =
-            View.VISIBLE
-
-        headerRightContainer.visibility =
-            View.VISIBLE
-
-        etHeaderSearch.setText("")
-
-        btnClearHeaderSearch.visibility =
-            View.GONE
-
-        btnClearHeaderSearch.setOnClickListener(null)
-    } else {
-        searchContainer.visibility =
-            View.VISIBLE
-
-        titleStatusContainer.visibility =
-            View.GONE
-
-        headerRightContainer.visibility =
-            View.GONE
-
-        etHeaderSearch.hint =
-            searchField.hint
-
-        if (etHeaderSearch.text.toString() != searchField.text) {
-            etHeaderSearch.setText(
-                searchField.text
-            )
-
-            etHeaderSearch.setSelection(
-                etHeaderSearch.text.length
-            )
-        }
-
-        btnClearHeaderSearch.visibility =
-            if (etHeaderSearch.text.isNullOrBlank()) {
-                View.GONE
-            } else {
-                View.VISIBLE
-            }
-
-        val watcher =
-            object : TextWatcher {
-
-                override fun beforeTextChanged(
-                    s: CharSequence?,
-                    start: Int,
-                    count: Int,
-                    after: Int
-                ) = Unit
-
-                override fun onTextChanged(
-                    s: CharSequence?,
-                    start: Int,
-                    before: Int,
-                    count: Int
-                ) {
-                    val value =
-                        s?.toString().orEmpty()
-
-                    btnClearHeaderSearch.visibility =
-                        if (value.isBlank()) {
-                            View.GONE
-                        } else {
-                            View.VISIBLE
-                        }
-
-                    searchField.onTextChanged(value)
-                }
-
-                override fun afterTextChanged(
-                    s: Editable?
-                ) = Unit
-            }
-
-        etHeaderSearch.addTextChangedListener(watcher)
-        etHeaderSearch.tag = watcher
-
-        btnClearHeaderSearch.setOnClickListener {
-            etHeaderSearch.setText("")
-            searchField.onClearClick?.invoke()
-        }
-    }
-}
-
-
-private fun Fragment.resolveCardIconActionBackgroundColor(
-    tone: AquaHeaderCardIconTone
-): Int {
-    val colorRes = when (tone) {
-        AquaHeaderCardIconTone.SUCCESS -> R.color.aqua_toolbar_action_success_container
-        AquaHeaderCardIconTone.PRIMARY -> R.color.aqua_toolbar_action_primary_container
-        AquaHeaderCardIconTone.NEUTRAL -> R.color.aqua_toolbar_action_neutral_container
-        AquaHeaderCardIconTone.DANGER -> R.color.aqua_toolbar_action_danger_container
-    }
-
-    return ContextCompat.getColor(requireContext(), colorRes)
-}
-
-private fun Fragment.resolveCardIconActionStrokeColor(
-    tone: AquaHeaderCardIconTone
-): Int {
-    val colorRes = when (tone) {
-        AquaHeaderCardIconTone.SUCCESS -> R.color.aqua_toolbar_action_success_outline
-        AquaHeaderCardIconTone.PRIMARY -> R.color.aqua_toolbar_action_primary_outline
-        AquaHeaderCardIconTone.NEUTRAL -> R.color.aqua_toolbar_action_neutral_outline
-        AquaHeaderCardIconTone.DANGER -> R.color.aqua_toolbar_action_danger_outline
-    }
-
-    return ContextCompat.getColor(requireContext(), colorRes)
 }
