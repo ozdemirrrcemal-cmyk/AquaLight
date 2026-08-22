@@ -142,6 +142,59 @@ class DeviceDosingRootReadPathTest {
         }
 
     @Test
+    fun `transient metadata invalidation preserves last validated firmware cards`() =
+        runTest(dispatcher) {
+            val root = FakeRootOperations(rootSnapshot(channelCount = 4))
+            val channels = FakeChannelOperations()
+            val viewModel = viewModel(root, channels)
+            viewModel.bind(DEVICE_UID, "Fallback")
+            channels.emit(
+                (1..4).map { channelNumber ->
+                    channelSnapshot(
+                        channelNumber = channelNumber,
+                        pumpCount = 4,
+                        active = channelNumber == 1
+                    )
+                }
+            )
+            val validated = viewModel.uiState.value
+
+            root.emit(invalidRootSnapshot())
+
+            val reconnecting = viewModel.uiState.value
+            assertEquals(4, reconnecting.pumpCount)
+            assertEquals(validated.channels, reconnecting.channels)
+            assertEquals(validated.pumpStates, reconnecting.pumpStates)
+            assertEquals(
+                listOf(
+                    "Authoritative 1",
+                    "Authoritative 2",
+                    "Authoritative 3",
+                    "Authoritative 4"
+                ),
+                channelNames(viewModel)
+            )
+        }
+
+    @Test
+    fun `invalid cold start cannot invent card topology from firmware snapshots`() =
+        runTest(dispatcher) {
+            val channels = FakeChannelOperations()
+            val viewModel = viewModel(FakeRootOperations(invalidRootSnapshot()), channels)
+            viewModel.bind(DEVICE_UID, "Fallback")
+
+            channels.emit(
+                (1..4).map { channelNumber ->
+                    channelSnapshot(channelNumber = channelNumber, pumpCount = 4)
+                }
+            )
+
+            assertEquals(UNKNOWN_DOSING_PUMP_COUNT, viewModel.uiState.value.pumpCount)
+            assertTrue(viewModel.uiState.value.channels.isEmpty())
+            assertTrue(viewModel.uiState.value.pumpStates.isEmpty())
+        }
+
+    @Test
     fun `partial foreign or duplicate state cannot replace catalog bootstrap`() =
         runTest(dispatcher) {
             val channels = FakeChannelOperations()
@@ -169,8 +222,13 @@ class DeviceDosingRootReadPathTest {
     private fun viewModel(
         channelCount: Int,
         channelOperations: DeviceDosingChannelOperations
+    ) = viewModel(FakeRootOperations(rootSnapshot(channelCount)), channelOperations)
+
+    private fun viewModel(
+        rootOperations: DeviceRootOperations,
+        channelOperations: DeviceDosingChannelOperations
     ) = DeviceDosingRootViewModel(
-        operations = FakeRootOperations(rootSnapshot(channelCount)),
+        operations = rootOperations,
         channelNavigationOperations = UnavailableDeviceDosingChannelNavigationOperations,
         channelOperations = channelOperations
     )
@@ -179,15 +237,19 @@ class DeviceDosingRootReadPathTest {
         viewModel.uiState.value.channels.map { channel -> channel.displayName }
 
     private class FakeRootOperations(
-        private val snapshot: DeviceRootSnapshot
+        snapshot: DeviceRootSnapshot
     ) : DeviceRootOperations {
         private val snapshots = MutableStateFlow<DeviceRootSnapshot?>(snapshot)
 
         override fun observe(deviceUid: String): Flow<DeviceRootSnapshot?> = snapshots
 
-        override fun current(deviceUid: String): DeviceRootSnapshot = snapshot
+        override fun current(deviceUid: String): DeviceRootSnapshot? = snapshots.value
 
         override fun connect(deviceUid: String): Result<Unit> = Result.success(Unit)
+
+        fun emit(value: DeviceRootSnapshot?) {
+            snapshots.value = value
+        }
     }
 
     private class FakeChannelOperations :
@@ -237,6 +299,13 @@ private fun rootSnapshot(channelCount: Int) = DeviceRootSnapshot(
         DeviceRootRoute.DOSING_CHANNELS,
         DeviceRootRoute.DOSING_CALIBRATION
     )
+)
+
+private fun invalidRootSnapshot() = DeviceRootSnapshot(
+    deviceUid = "device-1",
+    title = "Dose Pro",
+    availability = OwnerDeviceAvailability.REACHABLE,
+    catalogState = DeviceRootCatalogState.INVALID
 )
 
 private fun channelSnapshot(

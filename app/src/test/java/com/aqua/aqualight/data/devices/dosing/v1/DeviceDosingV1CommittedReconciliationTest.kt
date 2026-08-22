@@ -8,15 +8,17 @@ import com.aqua.aqualight.data.devices.runtime.core.DeviceRuntimeCommandGateway
 import com.aqua.aqualight.data.devices.runtime.core.DeviceRuntimeCommandOutcome
 import com.aqua.aqualight.data.devices.runtime.core.DeviceRuntimeConnectionGeneration
 import java.util.ArrayDeque
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.test.runTest
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNull
+import org.junit.Assert.assertTrue
 import org.junit.Test
 
 class DeviceDosingV1CommittedReconciliationTest {
 
     @Test
-    fun `persisted ack returns before authoritative readback and reconciles in owner scope`() =
+    fun `persisted ack publishes coherent firmware readback before returning success`() =
         runTest {
             val gateway = ScriptedGateway().apply {
                 enqueueRefresh(revision = 7L)
@@ -36,14 +38,16 @@ class DeviceDosingV1CommittedReconciliationTest {
                 requireNotNull(initial.snapshot.program).copy(enabled = false)
             )
 
-            assertEquals(DeviceDosingChannelCommittedResult(8L), result)
-            assertEquals(4, gateway.actions.size)
-            assertNull(adapter.currentChannel(DEVICE_UID.value, SLOT_ID))
-
-            testScheduler.runCurrent()
-
             assertEquals(7, gateway.actions.size)
+            assertTrue(result is DeviceDosingChannelOperationResult.Success)
+            assertEquals(
+                8L,
+                (result as DeviceDosingChannelOperationResult.Success).snapshot.revision
+            )
             assertEquals(8L, adapter.currentChannel(DEVICE_UID.value, SLOT_ID)?.revision)
+            val observed = adapter.channelOperations.observeAll(DEVICE_UID.value).first().single()
+            assertEquals(8L, observed.revision)
+            assertEquals(false, observed.program?.enabled)
             assertEquals(
                 1,
                 gateway.actions.count { action ->
@@ -81,8 +85,14 @@ class DeviceDosingV1CommittedReconciliationTest {
                 program.copy(enabled = true)
             )
 
-            assertEquals(DeviceDosingChannelCommittedResult(8L), first)
-            assertEquals(DeviceDosingChannelCommittedResult(9L), second)
+            assertEquals(
+                8L,
+                (first as DeviceDosingChannelOperationResult.Success).snapshot.revision
+            )
+            assertEquals(
+                9L,
+                (second as DeviceDosingChannelOperationResult.Success).snapshot.revision
+            )
             assertEquals(
                 2,
                 gateway.actions.count { action ->
@@ -90,11 +100,47 @@ class DeviceDosingV1CommittedReconciliationTest {
                 }
             )
 
-            testScheduler.runCurrent()
-
             assertEquals(9L, adapter.currentChannel(DEVICE_UID.value, SLOT_ID)?.revision)
             assertEquals(
                 2,
+                gateway.actions.count { action ->
+                    action == DeviceDosingV1Contract.Action.PROGRAM_APPLY
+                }
+            )
+        }
+
+    @Test
+    fun `post ack readback loss returns committed and schedules owner scoped fallback`() =
+        runTest {
+            val gateway = ScriptedGateway().apply {
+                enqueueRefresh(revision = 7L)
+                enqueueProgramMutation(revision = 8L, programEnabled = false)
+                enqueueReadbackFailure()
+                enqueueRefresh(revision = 8L, programEnabled = false)
+            }
+            val adapter = DeviceDosingV1StateAdapter(
+                repository = DeviceDosingV1Repository(gateway),
+                reconciliationScope = backgroundScope
+            )
+            val initial = adapter.channelOperations.refresh(DEVICE_UID.value, SLOT_ID)
+                as DeviceDosingChannelOperationResult.Success
+
+            val result = adapter.channelOperations.applyProgram(
+                DEVICE_UID.value,
+                SLOT_ID,
+                requireNotNull(initial.snapshot.program).copy(enabled = false)
+            )
+
+            assertEquals(DeviceDosingChannelCommittedResult(8L), result)
+            assertEquals(5, gateway.actions.size)
+            assertNull(adapter.currentChannel(DEVICE_UID.value, SLOT_ID))
+
+            testScheduler.runCurrent()
+
+            assertEquals(8, gateway.actions.size)
+            assertEquals(8L, adapter.currentChannel(DEVICE_UID.value, SLOT_ID)?.revision)
+            assertEquals(
+                1,
                 gateway.actions.count { action ->
                     action == DeviceDosingV1Contract.Action.PROGRAM_APPLY
                 }
@@ -129,6 +175,22 @@ class DeviceDosingV1CommittedReconciliationTest {
                     channel = parsed.channel.copy(
                         revision = revision,
                         program = parsed.channel.program?.copy(enabled = programEnabled)
+                    )
+                )
+            )
+        }
+
+        fun enqueueReadbackFailure() {
+            responses.addLast(
+                Response(
+                    action = DeviceDosingV1Contract.Action.STATUS_GET,
+                    outcome = DeviceRuntimeCommandOutcome.Cancelled(
+                        deviceUid = DEVICE_UID,
+                        module = DeviceDosingV1Contract.MODULE,
+                        action = DeviceDosingV1Contract.Action.STATUS_GET,
+                        messageId = "post-ack-readback",
+                        generation = GENERATION,
+                        reason = "runtime transport unavailable"
                     )
                 )
             )

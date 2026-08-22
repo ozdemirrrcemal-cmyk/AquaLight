@@ -189,25 +189,19 @@ internal class DeviceDosingV1MutationCoordinator(
                 DeviceDosingV1MutationResult.Malformed
             } else {
                 accepted.onAccepted()
-                val scheduler = scheduleBackgroundReconciliation
-                if (
-                    accepted.persistedMutation &&
-                    disposition == DeviceDosingV1CommitDisposition.APPLIED &&
-                    scheduler != null
-                ) {
-                    scheduler(accepted.address, detail.revision)
-                    DeviceDosingV1MutationResult.Committed(
-                        accepted.outcome.value,
-                        detail.revision
-                    )
-                } else {
-                    reconcileMutation(
-                        address = accepted.address,
-                        value = accepted.outcome.value,
-                        disposition = disposition,
-                        persistedMutation = accepted.persistedMutation,
-                        committedRevision = detail.revision
-                    )
+                reconcileMutation(
+                    address = accepted.address,
+                    value = accepted.outcome.value,
+                    disposition = disposition,
+                    persistedMutation = accepted.persistedMutation,
+                    committedRevision = detail.revision
+                ).also { result ->
+                    if (result is DeviceDosingV1MutationResult.Committed) {
+                        scheduleBackgroundReconciliation?.invoke(
+                            accepted.address,
+                            detail.revision
+                        )
+                    }
                 }
             }
         },
@@ -239,9 +233,12 @@ internal class DeviceDosingV1MutationCoordinator(
     }
 
     /**
-     * A successful firmware response is the commit boundary for persisted writes. Readback is a
-     * separate synchronization step: losing transport after the ACK must never replay or misreport
-     * a durable write. Runtime mutations keep their stricter existing readback requirement.
+     * A successful firmware response is the commit boundary for persisted writes. A coherent
+     * readback is still attempted before success reaches the UI so every observing screen sees the
+     * committed firmware snapshot before navigation. Losing transport after the ACK must never
+     * replay or misreport a durable write; that exceptional path returns
+     * [DeviceDosingV1MutationResult.Committed] and lets the owner-scoped fallback reconciliation
+     * continue without a second mutation.
      */
     private fun <T> resolveAcceptedReadback(
         address: DeviceDosingV1Address,

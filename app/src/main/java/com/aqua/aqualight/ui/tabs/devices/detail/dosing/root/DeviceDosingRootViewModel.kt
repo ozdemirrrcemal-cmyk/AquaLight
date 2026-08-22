@@ -4,6 +4,7 @@ import androidx.annotation.StringRes
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.aqua.aqualight.R
+import com.aqua.aqualight.application.devices.DeviceDosingChannelSlot
 import com.aqua.aqualight.application.devices.DeviceRootCatalogState
 import com.aqua.aqualight.application.devices.DeviceRootOperations
 import com.aqua.aqualight.application.devices.DeviceRootSnapshot
@@ -45,6 +46,7 @@ class DeviceDosingRootViewModel(
     private var boundDeviceUid: String = ""
     private var fallbackTitle: String = ""
     private var latestRootSnapshot: DeviceRootSnapshot? = null
+    private var validatedCatalogChannels: List<DeviceDosingChannelSlot> = emptyList()
     private var channelSnapshots: List<DeviceDosingChannelSnapshot> = emptyList()
     private var observeJob: Job? = null
     private var channelDataJob: Job? = null
@@ -63,6 +65,7 @@ class DeviceDosingRootViewModel(
             channelNavigationJob?.cancel()
             boundDeviceUid = ""
             latestRootSnapshot = null
+            validatedCatalogChannels = emptyList()
             channelSnapshots = emptyList()
             _uiState.value = emptyState(fallbackTitle, "")
             return
@@ -74,7 +77,8 @@ class DeviceDosingRootViewModel(
 
         boundDeviceUid = deviceUid
         this.fallbackTitle = fallbackTitle
-        latestRootSnapshot = operations.current(deviceUid)
+        validatedCatalogChannels = emptyList()
+        acceptRootSnapshot(operations.current(deviceUid))
         channelSnapshots = emptyList()
         observeJob?.cancel()
         channelDataJob?.cancel()
@@ -85,7 +89,7 @@ class DeviceDosingRootViewModel(
         observeJob = viewModelScope.launch {
             operations.observe(deviceUid).collect { snapshot ->
                 if (boundDeviceUid != deviceUid) return@collect
-                latestRootSnapshot = snapshot
+                acceptRootSnapshot(snapshot)
                 renderBoundState()
             }
         }
@@ -132,8 +136,21 @@ class DeviceDosingRootViewModel(
         val deviceUid = boundDeviceUid
         _uiState.value = latestRootSnapshot?.toRootUiState(
             fallbackTitle = fallbackTitle,
+            catalogChannels = validatedCatalogChannels,
             snapshots = channelSnapshots
         ) ?: emptyState(fallbackTitle, deviceUid)
+    }
+
+    /**
+     * Runtime metadata is write authority, not a command to erase an already validated screen.
+     * Keep the last validated topology for presentation across a transient reconnect; route and
+     * mutation authorization continue to read the latest fail-closed root snapshot.
+     */
+    private fun acceptRootSnapshot(snapshot: DeviceRootSnapshot?) {
+        latestRootSnapshot = snapshot
+        if (snapshot?.catalogState == DeviceRootCatalogState.VALID) {
+            validatedCatalogChannels = snapshot.channelSlots.dosingChannels
+        }
     }
 
     private fun emptyState(title: String, deviceUid: String) = DeviceDosingRootUiState(
@@ -150,14 +167,10 @@ class DeviceDosingRootViewModel(
 
     private fun DeviceRootSnapshot.toRootUiState(
         fallbackTitle: String,
+        catalogChannels: List<DeviceDosingChannelSlot>,
         snapshots: List<DeviceDosingChannelSnapshot>
     ): DeviceDosingRootUiState {
         val menuSections = DeviceRootMenuMapper.overview(kind = KIND, snapshot = this)
-        val catalogChannels = if (catalogState == DeviceRootCatalogState.VALID) {
-            channelSlots.dosingChannels
-        } else {
-            emptyList()
-        }
         val channelPresentation = resolveDosingRootChannelPresentation(
             deviceUid = deviceUid,
             catalogChannels = catalogChannels,
