@@ -274,7 +274,7 @@ class DeviceDosingPlanFragment :
         viewLifecycleOwner.lifecycleScope.launch {
             viewLifecycleOwner.repeatOnLifecycle(Lifecycle.State.STARTED) {
                 viewModel.editorState
-                    .map(DeviceDosingPlanEditorState::operationInProgress)
+                    .map { state: DeviceDosingPlanEditorState -> state.operationInProgress }
                     .distinctUntilChanged()
                     .collect { loading -> setFragmentGlobalLoading(loading) }
             }
