@@ -4,30 +4,16 @@ import com.aqua.aqualight.application.devices.dosing.DeviceDosingChannelCommitte
 import com.aqua.aqualight.application.devices.dosing.DeviceDosingChannelOperationResult
 import com.aqua.aqualight.application.devices.dosing.DeviceDosingChannelOperations
 import com.aqua.aqualight.application.devices.dosing.DeviceDosingChannelSnapshot
-import com.aqua.aqualight.application.devices.dosing.DeviceDosingMutationReconciliation
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
 
-/**
- * Read-only projection of the latest central Dosing snapshot needed by the switch UI.
- *
- * This is not a device state owner. The central Dosing state owner remains authoritative; this
- * value is replaced only from authoritative channel snapshots.
- */
+/** Read-only projection of the latest central Dosing snapshot needed by the switch UI. */
 internal data class DeviceDosingMissedDoseRecoveryAuthority(
     val enabled: Boolean = false,
     val editable: Boolean = false,
     val revision: Long = 0L
 )
-
-internal sealed interface DeviceDosingMissedDoseRecoveryAction {
-    data object Idle : DeviceDosingMissedDoseRecoveryAction
-    data class Write(val targetEnabled: Boolean) : DeviceDosingMissedDoseRecoveryAction
-    data class Reconcile(val minimumRevision: Long) : DeviceDosingMissedDoseRecoveryAction
-    data class Fail(val failure: DeviceDosingChannelDetailFailure) : DeviceDosingMissedDoseRecoveryAction
-}
 
 internal sealed interface DeviceDosingMissedDoseRecoveryFeedback {
     data object None : DeviceDosingMissedDoseRecoveryFeedback
@@ -37,223 +23,77 @@ internal sealed interface DeviceDosingMissedDoseRecoveryFeedback {
     ) : DeviceDosingMissedDoseRecoveryFeedback
 }
 
-private data class InFlightMissedDoseRecovery(
-    val targetEnabled: Boolean
-)
-
-/**
- * Durable firmware ACK projected temporarily while the central state owner is invalidated awaiting
- * readback. It expires as soon as an equal/newer authoritative snapshot arrives and is never used as
- * a replacement device state owner.
- */
+/** Durable firmware ACK retained only until an equal/newer central presentation arrives. */
 private data class AcknowledgedMissedDoseRecovery(
     val targetEnabled: Boolean,
     val revision: Long
 )
 
 /**
- * Pure UI-intent state machine for the missed-dose recovery switch.
+ * Transient switch presentation state.
  *
- * It owns only transient user intent and mutation metadata. Authoritative device state still comes
- * exclusively from the central Dosing state owner.
+ * Persistence ordering and latest-intent coalescing belong to the central data coordinator. This
+ * class never refreshes firmware, never owns revision authority and never replays a mutation.
  */
 internal class DeviceDosingMissedDoseRecoveryIntentState {
     private var desiredEnabled: Boolean? = null
-    private var inFlight: InFlightMissedDoseRecovery? = null
     private var acknowledged: AcknowledgedMissedDoseRecovery? = null
-    private var reconciliationInFlight: Boolean = false
+    private var latestRequestId: Long = 0L
 
     fun reset() {
+        latestRequestId += 1L
         desiredEnabled = null
-        inFlight = null
         acknowledged = null
-        reconciliationInFlight = false
     }
 
-    fun request(enabled: Boolean) {
+    fun request(enabled: Boolean): Long {
         desiredEnabled = enabled
+        latestRequestId += 1L
+        return latestRequestId
     }
 
-    fun nextAction(
-        authority: DeviceDosingMissedDoseRecoveryAuthority
-    ): DeviceDosingMissedDoseRecoveryAction {
-        val persistedEnabled = acknowledged?.targetEnabled ?: authority.enabled
-        return when {
-            inFlight != null -> DeviceDosingMissedDoseRecoveryAction.Idle
-            desiredEnabled == null -> DeviceDosingMissedDoseRecoveryAction.Idle
-            desiredEnabled == persistedEnabled -> {
-                desiredEnabled = null
-                DeviceDosingMissedDoseRecoveryAction.Idle
-            }
-            reconciliationInFlight -> DeviceDosingMissedDoseRecoveryAction.Idle
-            acknowledged != null -> DeviceDosingMissedDoseRecoveryAction.Reconcile(
-                minimumRevision = requireNotNull(acknowledged).revision.also {
-                    reconciliationInFlight = true
-                }
-            )
-            !authority.editable -> {
-                desiredEnabled = null
-                DeviceDosingMissedDoseRecoveryAction.Fail(
-                    DeviceDosingChannelDetailFailure.NOT_EDITABLE
-                )
-            }
-            else -> DeviceDosingMissedDoseRecoveryAction.Write(
-                targetEnabled = requireNotNull(desiredEnabled).also { targetEnabled ->
-                    inFlight = InFlightMissedDoseRecovery(targetEnabled)
-                }
-            )
-        }
-    }
+    fun isLatest(requestId: Long): Boolean = requestId == latestRequestId
 
-    /** Handles a durable firmware ACK when its authoritative readback may still be pending. */
-    fun onCommitted(
-        targetEnabled: Boolean,
-        committedRevision: Long,
-        authority: DeviceDosingMissedDoseRecoveryAuthority
-    ): DeviceDosingMissedDoseRecoveryFeedback {
-        val active = inFlight
-        if (active == null || active.targetEnabled != targetEnabled) {
-            return DeviceDosingMissedDoseRecoveryFeedback.None
-        }
-        inFlight = null
-        acknowledged = null
-        return when {
-            authority.revision < committedRevision -> {
-                recordAcknowledged(targetEnabled, committedRevision)
-                if (desiredEnabled == targetEnabled) {
-                    desiredEnabled = null
-                    DeviceDosingMissedDoseRecoveryFeedback.Saved
-                } else {
-                    DeviceDosingMissedDoseRecoveryFeedback.None
-                }
-            }
-            authority.enabled == targetEnabled && desiredEnabled == targetEnabled -> {
-                desiredEnabled = null
-                DeviceDosingMissedDoseRecoveryFeedback.Saved
-            }
-            authority.enabled != targetEnabled && desiredEnabled == targetEnabled -> {
-                desiredEnabled = null
-                DeviceDosingMissedDoseRecoveryFeedback.Failed(
-                    DeviceDosingChannelDetailFailure.STATE_CHANGED
-                )
-            }
-            else -> DeviceDosingMissedDoseRecoveryFeedback.None
-        }
-    }
-
-    /** Handles a successful mutation that already includes an authoritative readback snapshot. */
     fun onSuccessfulReadback(
+        requestId: Long,
         targetEnabled: Boolean,
-        committedRevision: Long,
         authority: DeviceDosingMissedDoseRecoveryAuthority
     ): DeviceDosingMissedDoseRecoveryFeedback {
-        val active = inFlight
-        var feedback: DeviceDosingMissedDoseRecoveryFeedback =
-            DeviceDosingMissedDoseRecoveryFeedback.None
-
-        if (active != null && active.targetEnabled == targetEnabled) {
-            inFlight = null
-            acknowledged = null
-            feedback = when {
-                authority.revision < committedRevision -> {
-                    recordAcknowledged(targetEnabled, committedRevision)
-                    if (desiredEnabled == targetEnabled) {
-                        desiredEnabled = null
-                        DeviceDosingMissedDoseRecoveryFeedback.Saved
-                    } else {
-                        DeviceDosingMissedDoseRecoveryFeedback.None
-                    }
-                }
-                authority.enabled == targetEnabled && desiredEnabled == targetEnabled -> {
-                    desiredEnabled = null
-                    DeviceDosingMissedDoseRecoveryFeedback.Saved
-                }
-                authority.enabled != targetEnabled && desiredEnabled == targetEnabled -> {
-                    desiredEnabled = null
-                    DeviceDosingMissedDoseRecoveryFeedback.Failed(
-                        DeviceDosingChannelDetailFailure.STATE_CHANGED
-                    )
-                }
-                else -> DeviceDosingMissedDoseRecoveryFeedback.None
-            }
+        if (requestId != latestRequestId) return DeviceDosingMissedDoseRecoveryFeedback.None
+        desiredEnabled = null
+        acknowledged = null
+        return if (authority.enabled == targetEnabled) {
+            DeviceDosingMissedDoseRecoveryFeedback.Saved
+        } else {
+            DeviceDosingMissedDoseRecoveryFeedback.Failed(
+                DeviceDosingChannelDetailFailure.STATE_CHANGED
+            )
         }
-        return feedback
+    }
+
+    fun onCommitted(
+        requestId: Long,
+        targetEnabled: Boolean,
+        committedRevision: Long
+    ): DeviceDosingMissedDoseRecoveryFeedback {
+        if (requestId != latestRequestId) return DeviceDosingMissedDoseRecoveryFeedback.None
+        desiredEnabled = null
+        acknowledged = AcknowledgedMissedDoseRecovery(targetEnabled, committedRevision)
+        return DeviceDosingMissedDoseRecoveryFeedback.Saved
     }
 
     fun onFailure(
-        failedTargetEnabled: Boolean,
-        failure: DeviceDosingChannelDetailFailure,
-        authority: DeviceDosingMissedDoseRecoveryAuthority
+        requestId: Long,
+        failure: DeviceDosingChannelDetailFailure
     ): DeviceDosingMissedDoseRecoveryFeedback {
-        val active = inFlight
-        if (active == null || active.targetEnabled != failedTargetEnabled) {
-            return DeviceDosingMissedDoseRecoveryFeedback.None
-        }
-        inFlight = null
-        val persistedEnabled = acknowledged?.targetEnabled ?: authority.enabled
-        val latestIntent = desiredEnabled
-        return when {
-            latestIntent == persistedEnabled -> {
-                desiredEnabled = null
-                DeviceDosingMissedDoseRecoveryFeedback.None
-            }
-            latestIntent != null && latestIntent != failedTargetEnabled ->
-                DeviceDosingMissedDoseRecoveryFeedback.None
-            else -> {
-                desiredEnabled = null
-                DeviceDosingMissedDoseRecoveryFeedback.Failed(failure)
-            }
-        }
+        if (requestId != latestRequestId) return DeviceDosingMissedDoseRecoveryFeedback.None
+        desiredEnabled = null
+        return DeviceDosingMissedDoseRecoveryFeedback.Failed(failure)
     }
 
-    fun onReconciliationCompleted(
-        failure: DeviceDosingChannelDetailFailure?
-    ): DeviceDosingMissedDoseRecoveryFeedback {
-        val shouldFailLatestIntent = if (reconciliationInFlight) {
-            reconciliationInFlight = false
-            val pendingTarget = acknowledged?.targetEnabled
-            val latestIntent = desiredEnabled
-            val queuedReversal = pendingTarget != null && latestIntent != null &&
-                latestIntent != pendingTarget
-            failure != null && queuedReversal
-        } else {
-            false
-        }
-        if (shouldFailLatestIntent) desiredEnabled = null
-        return if (shouldFailLatestIntent) {
-            DeviceDosingMissedDoseRecoveryFeedback.Failed(requireNotNull(failure))
-        } else {
-            DeviceDosingMissedDoseRecoveryFeedback.None
-        }
-    }
-
-    fun onAuthorityChanged(
-        authority: DeviceDosingMissedDoseRecoveryAuthority
-    ): DeviceDosingMissedDoseRecoveryFeedback {
-        val pendingAck = acknowledged
-        val feedback = when {
-            pendingAck == null -> DeviceDosingMissedDoseRecoveryFeedback.None
-            authority.revision < pendingAck.revision -> DeviceDosingMissedDoseRecoveryFeedback.None
-            else -> {
-                acknowledged = null
-                when {
-                    authority.enabled == pendingAck.targetEnabled || inFlight != null ->
-                        DeviceDosingMissedDoseRecoveryFeedback.None
-                    desiredEnabled == null ->
-                        DeviceDosingMissedDoseRecoveryFeedback.Failed(
-                            DeviceDosingChannelDetailFailure.STATE_CHANGED
-                        )
-                    desiredEnabled == pendingAck.targetEnabled -> {
-                        desiredEnabled = null
-                        DeviceDosingMissedDoseRecoveryFeedback.Failed(
-                            DeviceDosingChannelDetailFailure.STATE_CHANGED
-                        )
-                    }
-                    else -> DeviceDosingMissedDoseRecoveryFeedback.None
-                }
-            }
-        }
-        return feedback
+    fun onAuthorityChanged(authority: DeviceDosingMissedDoseRecoveryAuthority) {
+        val accepted = acknowledged ?: return
+        if (authority.revision >= accepted.revision) acknowledged = null
     }
 
     fun present(
@@ -264,16 +104,8 @@ internal class DeviceDosingMissedDoseRecoveryIntentState {
             ?: acknowledged?.targetEnabled
             ?: authority.enabled,
         missedDoseRecoveryEditable = authority.editable,
-        missedDoseRecoverySyncing = desiredEnabled != null || inFlight != null ||
-            reconciliationInFlight
+        missedDoseRecoverySyncing = desiredEnabled != null
     )
-
-    private fun recordAcknowledged(targetEnabled: Boolean, revision: Long) {
-        val current = acknowledged
-        if (current == null || revision >= current.revision) {
-            acknowledged = AcknowledgedMissedDoseRecovery(targetEnabled, revision)
-        }
-    }
 }
 
 internal data class DeviceDosingChannelDetailBinding(
@@ -289,12 +121,7 @@ internal data class DeviceDosingMissedDoseRecoveryHooks(
     val publishEvent: suspend (DeviceDosingChannelDetailEvent) -> Unit
 )
 
-/**
- * Switch-specific UI coordinator.
- *
- * It owns only transient switch intent and its in-flight job. Firmware persistence and all
- * authoritative state remain behind [DeviceDosingChannelOperations] and the central Dosing owner.
- */
+/** UI facade over the central latest-intent mutation queue. */
 internal class DeviceDosingMissedDoseRecoveryController(
     private val operations: DeviceDosingChannelOperations,
     private val scope: CoroutineScope,
@@ -302,19 +129,21 @@ internal class DeviceDosingMissedDoseRecoveryController(
 ) {
     private val intent = DeviceDosingMissedDoseRecoveryIntentState()
     private var authority = DeviceDosingMissedDoseRecoveryAuthority()
-    private var mutationJob: Job? = null
 
     fun reset() {
-        mutationJob?.cancel()
-        mutationJob = null
         intent.reset()
         authority = DeviceDosingMissedDoseRecoveryAuthority()
     }
 
     fun request(enabled: Boolean) {
-        intent.request(enabled)
+        val requestId = intent.request(enabled)
+        val binding = hooks.currentBinding()
         present()
-        drive()
+        scope.launch {
+            val result = persist(binding, enabled)
+            if (hooks.currentBinding() != binding) return@launch
+            handleResult(requestId, enabled, result)
+        }
     }
 
     fun onSnapshot(snapshot: DeviceDosingChannelSnapshot) {
@@ -325,131 +154,65 @@ internal class DeviceDosingMissedDoseRecoveryController(
                 snapshot.controls.programEditable,
             revision = snapshot.revision
         )
-        val feedback = if (nextAuthority.revision >= authority.revision) {
+        if (nextAuthority.revision >= authority.revision) {
             authority = nextAuthority
             intent.onAuthorityChanged(authority)
-        } else {
-            DeviceDosingMissedDoseRecoveryFeedback.None
         }
         present()
-        publish(feedback)
-        drive()
     }
 
-    private fun drive() {
-        when (val action = intent.nextAction(authority)) {
-            DeviceDosingMissedDoseRecoveryAction.Idle -> present()
-            is DeviceDosingMissedDoseRecoveryAction.Fail -> {
-                present()
-                publish(DeviceDosingMissedDoseRecoveryFeedback.Failed(action.failure))
-            }
-            is DeviceDosingMissedDoseRecoveryAction.Reconcile -> reconcile(action)
-            is DeviceDosingMissedDoseRecoveryAction.Write -> {
-                val binding = hooks.currentBinding()
-                present()
-                mutationJob = scope.launch {
-                    val reconciliation = if (
-                        binding.deviceUid.isBlank() || binding.slotId.isBlank()
-                    ) {
-                        DeviceDosingMutationReconciliation(
-                            DeviceDosingChannelOperationResult.Unavailable
-                        )
-                    } else {
-                        try {
-                            DeviceDosingMutationReconciliation(
-                                operations.setMissedDoseRecoveryEnabled(
-                                    binding.deviceUid,
-                                    binding.slotId,
-                                    action.targetEnabled
-                                )
-                            )
-                        } catch (cancellation: CancellationException) {
-                            throw cancellation
-                        } catch (_: Exception) {
-                            DeviceDosingMutationReconciliation(
-                                DeviceDosingChannelOperationResult.Failed
-                            )
-                        }
-                    }
-                    if (hooks.currentBinding() != binding) return@launch
-                    if (reconciliation.result !is DeviceDosingChannelOperationResult.Success) {
-                        reconciliation.authoritativeSnapshot?.let(hooks.applySnapshot)
-                    }
-                    handleResult(action.targetEnabled, reconciliation.result)
-                }
-            }
-        }
-    }
-
-    private fun reconcile(action: DeviceDosingMissedDoseRecoveryAction.Reconcile) {
-        val binding = hooks.currentBinding()
-        present()
-        mutationJob = scope.launch {
-            val result = if (binding.deviceUid.isBlank() || binding.slotId.isBlank()) {
-                DeviceDosingChannelOperationResult.Unavailable
-            } else {
-                try {
-                    operations.refresh(binding.deviceUid, binding.slotId)
-                } catch (cancellation: CancellationException) {
-                    throw cancellation
-                } catch (_: Exception) {
-                    DeviceDosingChannelOperationResult.Failed
-                }
-            }
-            if (hooks.currentBinding() != binding) return@launch
-
-            if (
-                result is DeviceDosingChannelOperationResult.Success &&
-                result.snapshot.revision >= action.minimumRevision
-            ) {
-                intent.onReconciliationCompleted(failure = null)
-                hooks.applySnapshot(result.snapshot)
-            } else {
-                val feedback = intent.onReconciliationCompleted(result.toReconciliationFailure())
-                present()
-                publish(feedback)
-                drive()
-            }
+    private suspend fun persist(
+        binding: DeviceDosingChannelDetailBinding,
+        enabled: Boolean
+    ): DeviceDosingChannelOperationResult = if (
+        binding.deviceUid.isBlank() || binding.slotId.isBlank()
+    ) {
+        DeviceDosingChannelOperationResult.Unavailable
+    } else {
+        try {
+            operations.setMissedDoseRecoveryEnabled(
+                binding.deviceUid,
+                binding.slotId,
+                enabled
+            )
+        } catch (cancellation: CancellationException) {
+            throw cancellation
+        } catch (_: Exception) {
+            DeviceDosingChannelOperationResult.Failed
         }
     }
 
     private fun handleResult(
+        requestId: Long,
         targetEnabled: Boolean,
         result: DeviceDosingChannelOperationResult
     ) {
+        if (!intent.isLatest(requestId)) return
         val feedback = when (result) {
             is DeviceDosingChannelOperationResult.Success -> {
                 hooks.applySnapshot(result.snapshot)
-                intent.onSuccessfulReadback(
-                    targetEnabled = targetEnabled,
-                    committedRevision = result.snapshot.revision,
-                    authority = authority
-                )
+                intent.onSuccessfulReadback(requestId, targetEnabled, authority)
             }
             is DeviceDosingChannelCommittedResult -> intent.onCommitted(
+                requestId = requestId,
                 targetEnabled = targetEnabled,
-                committedRevision = result.revision,
-                authority = authority
+                committedRevision = result.revision
             )
             is DeviceDosingChannelOperationResult.Rejected -> intent.onFailure(
-                failedTargetEnabled = targetEnabled,
-                failure = result.reason.toDetailFailure(),
-                authority = authority
+                requestId,
+                result.reason.toDetailFailure()
             )
             DeviceDosingChannelOperationResult.Unavailable -> intent.onFailure(
-                failedTargetEnabled = targetEnabled,
-                failure = DeviceDosingChannelDetailFailure.UNAVAILABLE,
-                authority = authority
+                requestId,
+                DeviceDosingChannelDetailFailure.UNAVAILABLE
             )
             DeviceDosingChannelOperationResult.Failed -> intent.onFailure(
-                failedTargetEnabled = targetEnabled,
-                failure = DeviceDosingChannelDetailFailure.TRY_AGAIN,
-                authority = authority
+                requestId,
+                DeviceDosingChannelDetailFailure.TRY_AGAIN
             )
         }
         present()
         publish(feedback)
-        drive()
     }
 
     private fun publish(feedback: DeviceDosingMissedDoseRecoveryFeedback) {
@@ -466,14 +229,4 @@ internal class DeviceDosingMissedDoseRecoveryController(
     private fun present() {
         hooks.updateDraft(intent.present(hooks.currentDraft(), authority))
     }
-}
-
-
-private fun DeviceDosingChannelOperationResult.toReconciliationFailure():
-    DeviceDosingChannelDetailFailure = when (this) {
-    is DeviceDosingChannelOperationResult.Rejected -> reason.toDetailFailure()
-    DeviceDosingChannelOperationResult.Unavailable -> DeviceDosingChannelDetailFailure.UNAVAILABLE
-    is DeviceDosingChannelOperationResult.Success,
-    is DeviceDosingChannelCommittedResult,
-    DeviceDosingChannelOperationResult.Failed -> DeviceDosingChannelDetailFailure.TRY_AGAIN
 }

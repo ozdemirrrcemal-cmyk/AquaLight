@@ -105,7 +105,7 @@ internal class DeviceDosingChannelDetailViewModel(
             return
         }
         if (boundDeviceUid == deviceUid && boundSlotId == slotId) {
-            refreshAuthoritative()
+            applyCurrentOrRefresh(deviceUid, slotId)
             return
         }
 
@@ -136,7 +136,7 @@ internal class DeviceDosingChannelDetailViewModel(
                 }
             }
         }
-        refreshAuthoritative()
+        applyCurrentOrRefresh(deviceUid, slotId)
     }
 
     fun currentDraft(): DeviceDosingChannelDetailDraft = mutableDraft.value
@@ -145,8 +145,21 @@ internal class DeviceDosingChannelDetailViewModel(
         val deviceUid = boundDeviceUid
         val slotId = boundSlotId
         if (deviceUid.isBlank() || slotId.isBlank() || refreshJob?.isActive == true) return
+        operations.current(deviceUid, slotId)?.let { current ->
+            applySnapshot(current)
+            return
+        }
         refreshJob = viewModelScope.launch {
             applyResult(operations.refresh(deviceUid, slotId), successEvent = null)
+        }
+    }
+
+    private fun applyCurrentOrRefresh(deviceUid: String, slotId: String) {
+        val current = operations.current(deviceUid, slotId)
+        if (current == null) {
+            refreshAuthoritative()
+        } else {
+            applySnapshot(current)
         }
     }
 

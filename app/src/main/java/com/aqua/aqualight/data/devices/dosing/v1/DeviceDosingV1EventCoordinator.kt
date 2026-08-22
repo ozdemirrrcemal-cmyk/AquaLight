@@ -5,8 +5,7 @@ import com.aqua.aqualight.data.devices.runtime.events.DeviceRuntimeTypedEvent
 /** Converts runtime events into invalidations and delegates authoritative refreshes. */
 internal class DeviceDosingV1EventCoordinator(
     private val stateOwner: DeviceDosingV1StateOwner,
-    private val refreshCoordinator: DeviceDosingV1RefreshCoordinator,
-    private val operationGate: DeviceDosingV1ChannelOperationGate = DeviceDosingV1ChannelOperationGate()
+    private val refreshCoordinator: DeviceDosingV1RefreshCoordinator
 ) {
     suspend fun consume(event: DeviceRuntimeTypedEvent): DeviceDosingV1EventResult = when (event.type) {
         DeviceRuntimeTypedEvent.Type.DOSING_STATUS_CHANGED -> consumeStatusChanged(event)
@@ -19,7 +18,7 @@ internal class DeviceDosingV1EventCoordinator(
             DeviceDosingV1EventParser.parseInvalidation(event.payload)
         }.getOrElse { return DeviceDosingV1EventResult.Malformed }
         val address = DeviceDosingV1Address(event.deviceUid, invalidation.channelKey)
-        return operationGate.withChannel(address) { refreshInvalidated(event, invalidation) }
+        return refreshInvalidated(address, event, invalidation)
     }
 
     /**
@@ -37,6 +36,7 @@ internal class DeviceDosingV1EventCoordinator(
     }
 
     private suspend fun refreshInvalidated(
+        address: DeviceDosingV1Address,
         event: DeviceRuntimeTypedEvent,
         invalidation: DeviceDosingV1Invalidation
     ): DeviceDosingV1EventResult = when (
@@ -49,9 +49,8 @@ internal class DeviceDosingV1EventCoordinator(
     ) {
         DeviceDosingV1InvalidationDisposition.STALE_CONNECTION,
         DeviceDosingV1InvalidationDisposition.STALE_REVISION -> DeviceDosingV1EventResult.Ignored
-        DeviceDosingV1InvalidationDisposition.APPLIED -> refreshCoordinator.refreshWithinGate(
-            DeviceDosingV1Address(event.deviceUid, invalidation.channelKey)
-        ).toEventResult()
+        DeviceDosingV1InvalidationDisposition.APPLIED -> refreshCoordinator.refresh(address)
+            .toEventResult()
     }
 }
 

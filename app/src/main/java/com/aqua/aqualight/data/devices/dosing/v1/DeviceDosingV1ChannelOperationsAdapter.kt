@@ -20,6 +20,15 @@ internal class DeviceDosingV1ChannelOperationsAdapter(
     DeviceDosingProgramRevisionOperations,
     DeviceDosingReservoirRevisionOperations {
 
+    private val missedDoseRecoveryIntents =
+        DeviceDosingV1MissedDoseRecoveryIntentCoordinator(
+            scope = adapter.reconciliationScope,
+            execute = ::persistMissedDoseRecoveryEnabled
+        )
+
+    override fun current(deviceUid: String, slotId: String): DeviceDosingChannelSnapshot? =
+        adapter.stateAccess.currentChannel(deviceUid, slotId)
+
     override fun observe(
         deviceUid: String,
         slotId: String
@@ -100,6 +109,16 @@ internal class DeviceDosingV1ChannelOperationsAdapter(
     ).toChannelResult()
 
     override suspend fun setMissedDoseRecoveryEnabled(
+        deviceUid: String,
+        slotId: String,
+        enabled: Boolean
+    ): DeviceDosingChannelOperationResult = missedDoseRecoveryIntents.submit(
+        deviceUid = deviceUid,
+        slotId = slotId,
+        enabled = enabled
+    )
+
+    private suspend fun persistMissedDoseRecoveryEnabled(
         deviceUid: String,
         slotId: String,
         enabled: Boolean

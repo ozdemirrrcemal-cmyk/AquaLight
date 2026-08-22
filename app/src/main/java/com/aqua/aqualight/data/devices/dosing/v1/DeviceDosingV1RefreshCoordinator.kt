@@ -2,6 +2,9 @@ package com.aqua.aqualight.data.devices.dosing.v1
 
 import com.aqua.aqualight.data.devices.model.DeviceUid
 import com.aqua.aqualight.data.devices.runtime.core.DeviceRuntimeCommandOutcome
+import java.util.concurrent.ConcurrentHashMap
+import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.CompletableDeferred
 
 /** Coordinates refreshes without owning any authoritative state. */
 internal class DeviceDosingV1RefreshCoordinator(
@@ -11,6 +14,11 @@ internal class DeviceDosingV1RefreshCoordinator(
     private val operationGate: DeviceDosingV1ChannelOperationGate =
         DeviceDosingV1ChannelOperationGate()
 ) {
+    private val inFlightRefreshes = ConcurrentHashMap<
+        DeviceDosingV1Address,
+        CompletableDeferred<DeviceDosingV1RefreshResult>
+    >()
+
     suspend fun refresh(deviceUid: String, slotId: String): DeviceDosingV1RefreshResult =
         refresh(stateAccess.address(deviceUid, slotId))
 
@@ -22,33 +30,44 @@ internal class DeviceDosingV1RefreshCoordinator(
         var allAuthoritative = true
         discovery.value.channels.forEach { channel ->
             val address = DeviceDosingV1Address(uid, channel.channelKey)
-            val result = operationGate.withChannel(address) {
-                // Each channel receives a fresh coherent global/channel/progress triplet. The
-                // discovery document is used only to enumerate firmware-owned channel keys.
-                refreshWithinGate(address)
-            }
+            // Each channel receives a fresh coherent global/channel/progress triplet. Concurrent
+            // screen, event and lifecycle callers share the same per-channel flight.
+            val result = refresh(address)
             if (!result.isAuthoritative()) allAuthoritative = false
         }
         return allAuthoritative
     }
 
-    suspend fun refresh(address: DeviceDosingV1Address): DeviceDosingV1RefreshResult =
-        operationGate.withChannel(address) {
-            refreshWithinGate(address)
+    suspend fun refresh(address: DeviceDosingV1Address): DeviceDosingV1RefreshResult {
+        val pending = CompletableDeferred<DeviceDosingV1RefreshResult>()
+        val existing = inFlightRefreshes.putIfAbsent(address, pending)
+        if (existing != null) return existing.await()
+
+        return try {
+            val result = operationGate.withChannel(address) { refreshWithinGate(address) }
+            pending.complete(result)
+            result
+        } catch (cancellation: CancellationException) {
+            // The producer belongs to its caller, but joined event/lifecycle consumers must not be
+            // cancelled with that caller. They receive a normal stale result and may retry later.
+            pending.complete(DeviceDosingV1RefreshResult.RejectedStale)
+            throw cancellation
+        } finally {
+            // Repository commands normally model failures as outcomes. This fail-closed completion
+            // protects joined callers if an unexpected producer exception escapes instead.
+            pending.complete(DeviceDosingV1RefreshResult.Malformed)
+            inFlightRefreshes.remove(address, pending)
         }
+    }
 
     /** Checks and reconciles a durable ACK inside the shared per-channel serialization gate. */
     internal suspend fun reconcileCommitted(
         address: DeviceDosingV1Address,
         minimumRevision: Long
-    ): DeviceDosingV1RefreshResult = operationGate.withChannel(address) {
-        val current = stateAccess.currentState(address)
-        if (current != null && current.channel.revision >= minimumRevision) {
-            DeviceDosingV1RefreshResult.Success(current)
-        } else {
-            refreshWithinGate(address)
-        }
-    }
+    ): DeviceDosingV1RefreshResult = stateAccess.currentState(address)
+        ?.takeIf { current -> current.channel.revision >= minimumRevision }
+        ?.let(DeviceDosingV1RefreshResult::Success)
+        ?: refresh(address)
 
     /**
      * Authoritative refresh for callers that already hold [DeviceDosingV1ChannelOperationGate].

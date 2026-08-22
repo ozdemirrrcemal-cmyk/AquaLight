@@ -59,11 +59,34 @@ internal interface DeviceDosingV1StateReadAccess {
         deviceUid: DeviceUid,
         channelKey: DeviceDosingV1ChannelKey
     ): Long?
+
+    /**
+     * Full channel projection returned by the latest durable mutation ACK.
+     *
+     * This is deliberately unavailable to presentation and general runtime reads. It exists only
+     * so the central mutation coordinator can continue a replay-safe persisted assignment at the
+     * ACK revision without waiting for an unrelated progress readback.
+     */
+    fun committedMutationContinuation(
+        deviceUid: DeviceUid,
+        channelKey: DeviceDosingV1ChannelKey
+    ): DeviceDosingV1CommittedMutationContinuation?
+}
+
+internal data class DeviceDosingV1CommittedMutationContinuation(
+    val channel: DeviceDosingChannelSnapshot,
+    val calibration: DeviceDosingCalibrationSnapshot
+)
+
+private enum class OwnedDosingChannelAuthority {
+    AUTHORITATIVE,
+    COMMITTED_MUTATION,
+    INVALIDATED
 }
 
 private data class OwnedDosingChannelState(
     val revision: Long,
-    val invalidated: Boolean,
+    val authority: OwnedDosingChannelAuthority,
     val channel: DeviceDosingChannelSnapshot?,
     val calibration: DeviceDosingCalibrationSnapshot?
 )
@@ -141,7 +164,7 @@ internal class DeviceDosingV1StateOwner(
         }
         val updatedChannel = OwnedDosingChannelState(
             revision = incomingRevision,
-            invalidated = false,
+            authority = OwnedDosingChannelAuthority.AUTHORITATIVE,
             channel = mapped.channel,
             calibration = mapped.calibration
         )
@@ -181,7 +204,11 @@ internal class DeviceDosingV1StateOwner(
                 channels = device.channels + (
                     token.channelKey to OwnedDosingChannelState(
                         revision = channel.revision,
-                        invalidated = true,
+                        authority = if (projection == null) {
+                            OwnedDosingChannelAuthority.INVALIDATED
+                        } else {
+                            OwnedDosingChannelAuthority.COMMITTED_MUTATION
+                        },
                         channel = projection?.channel ?: current?.channel,
                         calibration = projection?.calibration ?: current?.calibration
                     )
@@ -221,7 +248,7 @@ internal class DeviceDosingV1StateOwner(
                 channels = device.channels + (
                     channelKey to OwnedDosingChannelState(
                         revision = revisionFloor,
-                        invalidated = true,
+                        authority = OwnedDosingChannelAuthority.INVALIDATED,
                         channel = current?.channel,
                         calibration = current?.calibration
                     )
@@ -271,7 +298,7 @@ internal class DeviceDosingV1StateOwner(
             deviceUid,
             device.copy(
                 channels = device.channels.mapValues { (_, channel) ->
-                    channel.copy(invalidated = true)
+                    channel.copy(authority = OwnedDosingChannelAuthority.INVALIDATED)
                 }
             )
         )
@@ -333,7 +360,10 @@ internal class DeviceDosingV1StateOwner(
         connectionGeneration = generation,
         global = null,
         channels = channels.mapValues { (_, channel) ->
-            channel.copy(revision = 0L, invalidated = true)
+            channel.copy(
+                revision = 0L,
+                authority = OwnedDosingChannelAuthority.INVALIDATED
+            )
         }
     )
 
@@ -397,8 +427,23 @@ private class DefaultDeviceDosingV1StateReadAccess(
     ): Long? = currentStates()[deviceUid]
         ?.channels
         ?.get(channelKey)
-        ?.takeUnless(OwnedDosingChannelState::invalidated)
+        ?.takeIf { state -> state.authority == OwnedDosingChannelAuthority.AUTHORITATIVE }
         ?.revision
+
+    override fun committedMutationContinuation(
+        deviceUid: DeviceUid,
+        channelKey: DeviceDosingV1ChannelKey
+    ): DeviceDosingV1CommittedMutationContinuation? = currentStates()[deviceUid]
+        ?.channels
+        ?.get(channelKey)
+        ?.takeIf { state ->
+            state.authority == OwnedDosingChannelAuthority.COMMITTED_MUTATION
+        }
+        ?.let { state ->
+            val channel = state.channel ?: return@let null
+            val calibration = state.calibration ?: return@let null
+            DeviceDosingV1CommittedMutationContinuation(channel, calibration)
+        }
 }
 
 private data class DosingStateAddress(
@@ -411,10 +456,10 @@ private fun OwnedDosingChannelState.presentationChannel(): DeviceDosingChannelSn
 private fun OwnedDosingChannelState.presentationCalibration(): DeviceDosingCalibrationSnapshot? = calibration
 
 private fun OwnedDosingChannelState.authoritativeChannel(): DeviceDosingChannelSnapshot? =
-    channel.takeUnless { invalidated }
+    channel.takeIf { authority == OwnedDosingChannelAuthority.AUTHORITATIVE }
 
 private fun OwnedDosingChannelState.authoritativeCalibration(): DeviceDosingCalibrationSnapshot? =
-    calibration.takeUnless { invalidated }
+    calibration.takeIf { authority == OwnedDosingChannelAuthority.AUTHORITATIVE }
 
 private fun mutationProjection(
     current: OwnedDosingChannelState?,

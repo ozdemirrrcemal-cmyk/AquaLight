@@ -41,6 +41,19 @@ internal class DeviceDosingV1StateAccess(
                 ?.let { calibration -> DeviceDosingV1AuthoritativeState(channel, calibration) }
         }
 
+    /** Mutation-only continuation from a durable ACK; never exposed as authoritative UI state. */
+    fun committedMutationContinuation(
+        address: DeviceDosingV1Address
+    ): DeviceDosingV1AuthoritativeState? = stateOwner.reads.committedMutationContinuation(
+        address.deviceUid,
+        address.channelKey
+    )?.let { continuation ->
+        DeviceDosingV1AuthoritativeState(
+            channel = continuation.channel,
+            calibration = continuation.calibration
+        )
+    }
+
     fun authoritativeRevision(address: DeviceDosingV1Address): Long? =
         stateOwner.reads.authoritativeRevision(address.deviceUid, address.channelKey)
 

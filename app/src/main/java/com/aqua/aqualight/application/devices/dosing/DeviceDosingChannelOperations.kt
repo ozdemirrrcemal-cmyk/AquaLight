@@ -13,6 +13,9 @@ import kotlinx.coroutines.flow.flowOf
  * adapter owns channel-key translation, optimistic revisions, wire enums, JSON and invalidation.
  */
 interface DeviceDosingChannelOperations {
+    /** Latest fully authoritative channel snapshot, if the current connection has one. */
+    fun current(deviceUid: String, slotId: String): DeviceDosingChannelSnapshot? = null
+
     fun observe(
         deviceUid: String,
         slotId: String
