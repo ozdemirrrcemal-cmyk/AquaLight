@@ -3,7 +3,7 @@
   "schema": "aql.android.dosing-v1.pin.v1",
   "firmware": {
     "repository": "ozdemirrrcemal-cmyk/AquaLight-Firmware",
-    "commit": "751cdc2e497531b8f754b59b4a2ae3828aaf9b52",
+    "commit": "4a5366c887bb7f5cf33f32b2f33083620e585ed2",
     "sources": {
       "src/api/v1/commands/AqlDosingCommands.hpp": "5c0201f9a4e09f93f4dd54af8c1fba9dec167105",
       "src/api/v1/commands/AqlDosingProgressCommands.hpp": "8700e785bdd2e747abea3b09eff97755e2addad0",
@@ -11,7 +11,7 @@
       "src/modules/dosing/AqlDosingStatusCodec.hpp": "77524043931c58bb90d3e84f628f64acca97d3a2",
       "src/modules/dosing/AqlDosingSchedulingMetadataCodec.hpp": "cab751e2d508651d17550c48314707524053f995",
       "src/modules/dosing/AqlDosingRuntimeEvent.hpp": "0b40b1eff35af48976f95fedba5a2854885f2439",
-      "src/modules/dosing/AqlDosingRuntimeService.hpp": "681af115fdcc0345556157462d5e3e4114705a66"
+      "src/modules/dosing/AqlDosingRuntimeService.hpp": "e501cf0ae1a4f84a9a716bac91b0f668066653ce"
     }
   },
   "contract": {
@@ -48,8 +48,7 @@
       "blob": "aa6721ab881de34419c09e5769d70366af36d3d5",
       "derivedFrom": "src/modules/dosing/AqlDosingStatusCodec.hpp",
       "sourceBlob": "77524043931c58bb90d3e84f628f64acca97d3a2",
-      "firmwareCommit": "751cdc2e497531b8f754b59b4a2ae3828aaf9b52"
+      "firmwareCommit": "4a5366c887bb7f5cf33f32b2f33083620e585ed2"
     }
   }
 }
-

@@ -202,7 +202,7 @@ class DosingChannelCardMapperTest {
     }
 
     @Test
-    fun `tracked reservoir maps fill and weekday-aware critical day estimate`() {
+    fun `tracked reservoir uses firmware reservation at weekday warning boundary`() {
         val program = DeviceDosingProgram(
             enabled = true,
             weekdays = List(7) { true },
@@ -228,16 +228,16 @@ class DosingChannelCardMapperTest {
                 reservoir = DeviceDosingReservoirSnapshot(
                     trackingEnabled = true,
                     capacityMicroliters = 100_000L,
-                    remainingMicroliters = 95_000L
+                    remainingMicroliters = 90_000L
                 )
             )
         )
 
         val reservoir = requireNotNull(state.reservoir)
-        assertEquals(95.0, reservoir.remainingMl, 0.0)
-        assertEquals(0.95f, reservoir.fillFraction, 0.0f)
-        assertEquals(9, reservoir.estimatedRemainingDays)
-        assertEquals(DosingReservoirTone.CRITICAL, reservoir.tone)
+        assertEquals(90.0, reservoir.remainingMl, 0.0)
+        assertEquals(0.9f, reservoir.fillFraction, 0.0f)
+        assertEquals(10, reservoir.estimatedRemainingDays)
+        assertEquals(DosingReservoirTone.WARNING, reservoir.tone)
     }
 
     @Test

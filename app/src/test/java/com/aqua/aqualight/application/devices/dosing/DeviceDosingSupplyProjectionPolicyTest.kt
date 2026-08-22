@@ -150,6 +150,42 @@ class DeviceDosingSupplyProjectionPolicyTest {
     }
 
     @Test
+    fun `reserved uncertain dose is not subtracted twice at ten day boundary`() {
+        val amountMicroliters = 10_000L
+        val authoritative = channelSnapshot(
+            remainingMicroliters = 90_000L,
+            program = singleDoseProgram(dailyDoseMicroliters = amountMicroliters),
+            deliveryAccountingCertain = false
+        )
+        val snapshot = authoritative.copy(
+            progress = DeviceDosingChannelProgress(
+                scheduledAmountMicroliters = amountMicroliters,
+                completedAmountMicroliters = 0L,
+                occurrences = listOf(
+                    DeviceDosingOccurrenceProgress(
+                        index = 0,
+                        eventId = 1L,
+                        programDayOffset = 0,
+                        timeMillis = 0L,
+                        amountMicroliters = amountMicroliters,
+                        state = DeviceDosingOccurrenceState.UNCERTAIN
+                    )
+                ),
+                executionCurrent = true,
+                accountingCertain = false,
+                programDayDate = MONDAY
+            )
+        )
+
+        val projection = requireNotNull(
+            DeviceDosingSupplyProjectionPolicy.evaluate(snapshot)
+        )
+
+        assertEquals(10, projection.estimatedRemainingDays)
+        assertEquals(DeviceDosingSupplySeverity.WARNING, projection.supplySeverity)
+    }
+
+    @Test
     fun `disabled reservoir tracking publishes no supply projection`() {
         val snapshot = channelSnapshot(remainingMicroliters = 0L).copy(
             reservoir = DeviceDosingReservoirSnapshot()
@@ -209,10 +245,28 @@ class DeviceDosingSupplyProjectionPolicyTest {
                 enabled = programEnabled
             )
         )
+        val pendingOccurrences = if (scheduledTodayMicroliters > 0L) {
+            listOf(
+                DeviceDosingOccurrenceProgress(
+                    index = 0,
+                    eventId = 1L,
+                    programDayOffset = 0,
+                    timeMillis = 0L,
+                    amountMicroliters = scheduledTodayMicroliters,
+                    state = DeviceDosingOccurrenceState.PENDING
+                )
+            )
+        } else {
+            emptyList()
+        }
         val snapshotWithProgress = snapshot.copy(
-            progress = snapshot.progress.copy(
+            progress = DeviceDosingChannelProgress(
                 scheduledAmountMicroliters = scheduledTodayMicroliters,
-                remainingAmountMicroliters = scheduledTodayMicroliters
+                completedAmountMicroliters = 0L,
+                occurrences = pendingOccurrences,
+                executionCurrent = snapshot.progress.executionCurrent,
+                accountingCertain = snapshot.progress.accountingCertain,
+                programDayDate = snapshot.progress.programDayDate
             )
         )
         return requireNotNull(

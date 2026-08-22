@@ -50,9 +50,15 @@ object DeviceDosingSupplyProjectionPolicy {
             else -> estimateRemainingDays(
                 remainingMicroliters = reservoir.remainingMicroliters,
                 dailyDoseMicroliters = dailyDoseMicroliters,
-                remainingScheduledTodayMicroliters =
-                    (progress.scheduledAmountMicroliters - progress.completedAmountMicroliters)
-                        .coerceAtLeast(0L),
+                // Firmware reserves RUNNING and UNCERTAIN targets from the
+                // reservoir before output energizes. SKIPPED occurrences will
+                // not run. Only PENDING occurrences remain future demand.
+                remainingScheduledTodayMicroliters = progress.occurrences
+                    .asSequence()
+                    .filter { occurrence ->
+                        occurrence.state == DeviceDosingOccurrenceState.PENDING
+                    }
+                    .sumOf { occurrence -> occurrence.amountMicroliters },
                 selectedWeekdays = configuredProgram.weekdays,
                 programDayDate = programDayDate
             )
