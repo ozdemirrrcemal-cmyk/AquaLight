@@ -10,7 +10,7 @@ internal class DeviceDosingV1StateAccess(
     private val stateOwner: DeviceDosingV1StateOwner
 ) {
     fun observeChannel(deviceUid: String, slotId: String): Flow<DeviceDosingChannelSnapshot?> {
-        val address = address(deviceUid, slotId)
+        val address = dosingV1Address(deviceUid, slotId)
         return stateOwner.reads.observeChannel(address.deviceUid, address.channelKey)
     }
 
@@ -18,7 +18,7 @@ internal class DeviceDosingV1StateAccess(
         deviceUid: String,
         slotId: String
     ): Flow<DeviceDosingCalibrationSnapshot?> {
-        val address = address(deviceUid, slotId)
+        val address = dosingV1Address(deviceUid, slotId)
         return stateOwner.reads.observeCalibration(address.deviceUid, address.channelKey)
     }
 
@@ -26,12 +26,12 @@ internal class DeviceDosingV1StateAccess(
         stateOwner.reads.observeAll(DeviceUid(deviceUid.trim()))
 
     fun currentChannel(deviceUid: String, slotId: String): DeviceDosingChannelSnapshot? {
-        val address = address(deviceUid, slotId)
+        val address = dosingV1Address(deviceUid, slotId)
         return stateOwner.reads.currentChannel(address.deviceUid, address.channelKey)
     }
 
     fun currentCalibration(deviceUid: String, slotId: String): DeviceDosingCalibrationSnapshot? {
-        val address = address(deviceUid, slotId)
+        val address = dosingV1Address(deviceUid, slotId)
         return stateOwner.reads.currentCalibration(address.deviceUid, address.channelKey)
     }
 
@@ -58,7 +58,7 @@ internal class DeviceDosingV1StateAccess(
         stateOwner.reads.authoritativeRevision(address.deviceUid, address.channelKey)
 
     fun setLowLevelAlertIntent(deviceUid: String, slotId: String, enabled: Boolean) {
-        val address = address(deviceUid, slotId)
+        val address = dosingV1Address(deviceUid, slotId)
         stateOwner.setLowLevelAlertIntent(address.deviceUid, address.channelKey, enabled)
     }
 
