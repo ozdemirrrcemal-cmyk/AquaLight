@@ -63,6 +63,42 @@ internal object DeviceDosingV1SnapshotMapper {
         )
     }
 
+    /**
+     * Projects the full channel document returned by a durable mutation ACK for presentation.
+     * The previous progress document is retained until readback, so this projection must remain
+     * invalidated and must never be exposed through authoritative reads.
+     */
+    fun projectMutation(
+        current: DeviceDosingV1MappedSnapshots,
+        detail: DeviceDosingV1ChannelDetail,
+        lowLevelAlertEnabled: Boolean
+    ): DeviceDosingV1MappedSnapshots {
+        require(detail.index + 1 == current.channel.channelNumber)
+        val projectedChannel = current.channel.copy(
+            channelTitle = detail.effectiveName,
+            revision = detail.revision,
+            runtimeEnabled = detail.runtimeEnabled,
+            runtimeReason = DeviceDosingV1ChannelSnapshotMapper.runtimeReason(detail),
+            deliveryAccountingCertain = detail.deliveryAccountingCertain,
+            calibrated = detail.calibration.confirmed,
+            lastCalibratedAtEpochSeconds = detail.calibration.lastCalibratedAt,
+            program = detail.program?.let(DeviceDosingV1ProgramSnapshotMapper::program),
+            reservoir = DeviceDosingV1ChannelSnapshotMapper.reservoir(
+                detail,
+                lowLevelAlertEnabled
+            ),
+            activeRun = DeviceDosingV1ChannelSnapshotMapper.activeRun(detail),
+            usageToday = DeviceDosingV1ChannelSnapshotMapper.usage(detail)
+        )
+        return DeviceDosingV1MappedSnapshots(
+            channel = projectedChannel,
+            calibration = DeviceDosingV1CalibrationSnapshotMapper.project(
+                current = current.calibration,
+                detail = detail
+            )
+        )
+    }
+
     private fun validateJoinedStatus(documents: DeviceDosingV1SnapshotDocuments) {
         val global = documents.global
         val channelStatus = documents.channelStatus

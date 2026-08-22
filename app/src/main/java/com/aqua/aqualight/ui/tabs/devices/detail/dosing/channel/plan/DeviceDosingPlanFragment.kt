@@ -18,10 +18,13 @@ import com.aqua.aqualight.application.devices.dosing.DeviceDosingChannelRejectio
 import com.aqua.aqualight.base.BaseActivity
 import com.aqua.aqualight.composition.requireAppContainer
 import com.aqua.aqualight.ui.common.bottomsheet.TextInputBottomSheet
+import com.aqua.aqualight.ui.common.loading.setFragmentGlobalLoading
 import com.aqua.aqualight.ui.tabs.devices.detail.dosing.channel.common.DeviceDosingChannelDestinationFragment
 import com.aqua.aqualight.ui.tabs.devices.detail.dosing.channel.schedule.DeviceDosingScheduleAmountContract
 import com.aqua.aqualight.ui.tabs.devices.detail.dosing.channel.schedule.custom.DeviceDosingCustomScheduleContract
 import com.aqua.aqualight.ui.tabs.devices.detail.dosing.channel.schedule.timer.DeviceDosingTimerScheduleContract
+import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
 
 /** Navigation/render host for the ViewModel-owned, firmware-independent Dosing Plan draft. */
@@ -65,6 +68,7 @@ class DeviceDosingPlanFragment :
             channelNumber = args.channelNumber
         )
         observePlanEvents()
+        observeSaveLoading()
         setupContent(view)
     }
 
@@ -262,6 +266,17 @@ class DeviceDosingPlanFragment :
                         )
                     }
                 }
+            }
+        }
+    }
+
+    private fun observeSaveLoading() {
+        viewLifecycleOwner.lifecycleScope.launch {
+            viewLifecycleOwner.repeatOnLifecycle(Lifecycle.State.STARTED) {
+                viewModel.editorState
+                    .map(DeviceDosingPlanEditorState::operationInProgress)
+                    .distinctUntilChanged()
+                    .collect { loading -> setFragmentGlobalLoading(loading) }
             }
         }
     }

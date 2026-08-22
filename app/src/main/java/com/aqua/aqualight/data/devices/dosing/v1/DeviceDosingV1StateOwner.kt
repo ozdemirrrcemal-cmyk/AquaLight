@@ -168,6 +168,13 @@ internal class DeviceDosingV1StateOwner(
         if (current != null && channel.revision < current.revision) {
             return@synchronized DeviceDosingV1CommitDisposition.STALE_REVISION
         }
+        val projection = mutationProjection(
+            current = current,
+            deviceUid = token.deviceUid,
+            channelKey = token.channelKey,
+            detail = channel,
+            lowLevelAlertLedger = lowLevelAlertLedger
+        )
         publish(
             token.deviceUid,
             device.copy(
@@ -175,8 +182,8 @@ internal class DeviceDosingV1StateOwner(
                     token.channelKey to OwnedDosingChannelState(
                         revision = channel.revision,
                         invalidated = true,
-                        channel = current?.channel,
-                        calibration = current?.calibration
+                        channel = projection?.channel ?: current?.channel,
+                        calibration = projection?.calibration ?: current?.calibration
                     )
                 )
             )
@@ -408,3 +415,28 @@ private fun OwnedDosingChannelState.authoritativeChannel(): DeviceDosingChannelS
 
 private fun OwnedDosingChannelState.authoritativeCalibration(): DeviceDosingCalibrationSnapshot? =
     calibration.takeUnless { invalidated }
+
+private fun mutationProjection(
+    current: OwnedDosingChannelState?,
+    deviceUid: DeviceUid,
+    channelKey: DeviceDosingV1ChannelKey,
+    detail: DeviceDosingV1ChannelDetail,
+    lowLevelAlertLedger: DeviceDosingLowLevelAlertLedger
+): DeviceDosingV1MappedSnapshots? = current?.let { state ->
+    val channel = state.channel
+    val calibration = state.calibration
+    if (channel == null || calibration == null) {
+        null
+    } else {
+        runCatching {
+            DeviceDosingV1SnapshotMapper.projectMutation(
+                current = DeviceDosingV1MappedSnapshots(channel, calibration),
+                detail = detail,
+                lowLevelAlertEnabled = lowLevelAlertLedger.isEnabled(
+                    deviceUid.value,
+                    DeviceDosingV1SlotKeyMapper.slotId(channelKey)
+                )
+            )
+        }.getOrNull()
+    }
+}

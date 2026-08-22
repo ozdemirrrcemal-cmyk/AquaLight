@@ -69,6 +69,10 @@ class DosingPlanMenuArchitectureTest {
         assertTrue(fragment.contains("editorState.draft.writeTo(outState)"))
         assertTrue(fragment.contains("STATE_BASE_REVISION"))
         assertTrue(fragment.contains("updateSchedule = viewModel::applyScheduleUpdate"))
+        assertTrue(fragment.contains("setFragmentGlobalLoading"))
+        assertTrue(
+            fragment.contains(".map(DeviceDosingPlanEditorState::operationInProgress)")
+        )
         assertTrue(screen.contains("state.scheduleEnabled"))
         assertTrue(screen.contains("onWeekdaySelectionChange"))
         assertFalse(screen.contains("rememberSaveable"))

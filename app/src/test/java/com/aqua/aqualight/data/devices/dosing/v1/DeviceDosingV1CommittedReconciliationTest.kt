@@ -8,9 +8,11 @@ import com.aqua.aqualight.data.devices.runtime.core.DeviceRuntimeCommandGateway
 import com.aqua.aqualight.data.devices.runtime.core.DeviceRuntimeCommandOutcome
 import com.aqua.aqualight.data.devices.runtime.core.DeviceRuntimeConnectionGeneration
 import java.util.ArrayDeque
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.test.runTest
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Test
@@ -110,12 +112,16 @@ class DeviceDosingV1CommittedReconciliationTest {
         }
 
     @Test
-    fun `post ack readback loss returns committed and schedules owner scoped fallback`() =
+    fun `slow post ack readback is bounded and publishes ack projection before navigation`() =
         runTest {
             val gateway = ScriptedGateway().apply {
                 enqueueRefresh(revision = 7L)
                 enqueueProgramMutation(revision = 8L, programEnabled = false)
-                enqueueReadbackFailure()
+                enqueueDelayedReadback(
+                    revision = 8L,
+                    programEnabled = false,
+                    delayMillis = 10_000L
+                )
                 enqueueRefresh(revision = 8L, programEnabled = false)
             }
             val adapter = DeviceDosingV1StateAdapter(
@@ -133,7 +139,11 @@ class DeviceDosingV1CommittedReconciliationTest {
 
             assertEquals(DeviceDosingChannelCommittedResult(8L), result)
             assertEquals(5, gateway.actions.size)
+            assertEquals(1_500L, testScheduler.currentTime)
             assertNull(adapter.currentChannel(DEVICE_UID.value, SLOT_ID))
+            val projected = adapter.channelOperations.observeAll(DEVICE_UID.value).first().single()
+            assertEquals(8L, projected.revision)
+            assertFalse(requireNotNull(projected.program).enabled)
 
             testScheduler.runCurrent()
 
@@ -150,7 +160,8 @@ class DeviceDosingV1CommittedReconciliationTest {
     private class ScriptedGateway : DeviceRuntimeCommandGateway {
         private data class Response(
             val action: String,
-            val outcome: DeviceRuntimeCommandOutcome<*>
+            val outcome: DeviceRuntimeCommandOutcome<*>,
+            val delayMillis: Long = 0L
         )
 
         private val responses = ArrayDeque<Response>()
@@ -180,18 +191,17 @@ class DeviceDosingV1CommittedReconciliationTest {
             )
         }
 
-        fun enqueueReadbackFailure() {
+        fun enqueueDelayedReadback(
+            revision: Long,
+            programEnabled: Boolean,
+            delayMillis: Long
+        ) {
+            val global = fixtureState(revision, programEnabled).global
             responses.addLast(
                 Response(
                     action = DeviceDosingV1Contract.Action.STATUS_GET,
-                    outcome = DeviceRuntimeCommandOutcome.Cancelled(
-                        deviceUid = DEVICE_UID,
-                        module = DeviceDosingV1Contract.MODULE,
-                        action = DeviceDosingV1Contract.Action.STATUS_GET,
-                        messageId = "post-ack-readback",
-                        generation = GENERATION,
-                        reason = "runtime transport unavailable"
-                    )
+                    outcome = success(DeviceDosingV1Contract.Action.STATUS_GET, global),
+                    delayMillis = delayMillis
                 )
             )
         }
@@ -209,6 +219,7 @@ class DeviceDosingV1CommittedReconciliationTest {
             val response = responses.removeFirst()
             assertEquals(response.action, command.action)
             actions += command.action
+            delay(response.delayMillis)
             return response.outcome as DeviceRuntimeCommandOutcome<T>
         }
     }

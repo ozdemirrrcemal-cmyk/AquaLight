@@ -7,6 +7,7 @@ import com.aqua.aqualight.data.devices.runtime.core.DeviceRuntimeCommandOutcome
 import java.util.concurrent.ConcurrentHashMap
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
+import kotlinx.coroutines.withTimeoutOrNull
 
 /** Serializes all per-channel operations that may reconcile authoritative Dosing state. */
 internal class DeviceDosingV1ChannelOperationGate {
@@ -216,29 +217,28 @@ internal class DeviceDosingV1MutationCoordinator(
         committedRevision: Long
     ): DeviceDosingV1MutationResult<T> = when (disposition) {
         DeviceDosingV1CommitDisposition.MALFORMED -> DeviceDosingV1MutationResult.Malformed
-        DeviceDosingV1CommitDisposition.STALE_CONNECTION -> resolveAcceptedReadback(
+        else -> boundedAcceptedReadback(
+            refreshCoordinator = refreshCoordinator,
             address = address,
-            value = value,
             persistedMutation = persistedMutation,
-            committedRevision = committedRevision,
-            refreshed = refreshCoordinator.refreshWithinGate(address)
-        )
-        else -> resolveAcceptedReadback(
-            address,
-            value,
-            persistedMutation,
-            committedRevision,
-            refreshCoordinator.refreshWithinGate(address)
-        )
+            backgroundReconciliationAvailable = scheduleBackgroundReconciliation != null
+        )?.let { refreshed ->
+            resolveAcceptedReadback(
+                address = address,
+                value = value,
+                persistedMutation = persistedMutation,
+                committedRevision = committedRevision,
+                refreshed = refreshed
+            )
+        } ?: DeviceDosingV1MutationResult.Committed(value, committedRevision)
     }
 
     /**
-     * A successful firmware response is the commit boundary for persisted writes. A coherent
-     * readback is still attempted before success reaches the UI so every observing screen sees the
-     * committed firmware snapshot before navigation. Losing transport after the ACK must never
-     * replay or misreport a durable write; that exceptional path returns
-     * [DeviceDosingV1MutationResult.Committed] and lets the owner-scoped fallback reconciliation
-     * continue without a second mutation.
+     * A successful firmware response is the commit boundary for persisted writes. Its full channel
+     * document is published as an invalidated presentation projection, then coherent readback gets
+     * a bounded foreground budget. Losing transport or exceeding that budget must never replay or
+     * misreport a durable write; that path returns [DeviceDosingV1MutationResult.Committed] and lets
+     * owner-scoped reconciliation continue without a second mutation.
      */
     private fun <T> resolveAcceptedReadback(
         address: DeviceDosingV1Address,
@@ -334,4 +334,21 @@ private fun DeviceDosingV1MutationResult<*>.isReplayableAssignmentFailure(): Boo
     else -> false
 }
 
+/** Production ACK readback has a UX budget; full reconciliation continues owner-scoped. */
+private suspend fun boundedAcceptedReadback(
+    refreshCoordinator: DeviceDosingV1RefreshCoordinator,
+    address: DeviceDosingV1Address,
+    persistedMutation: Boolean,
+    backgroundReconciliationAvailable: Boolean
+): DeviceDosingV1RefreshResult? = if (
+    persistedMutation && backgroundReconciliationAvailable
+) {
+    withTimeoutOrNull(POST_ACK_READBACK_BUDGET_MILLIS) {
+        refreshCoordinator.refreshWithinGate(address)
+    }
+} else {
+    refreshCoordinator.refreshWithinGate(address)
+}
+
 private const val MAX_REPLAY_SAFE_ASSIGNMENT_ATTEMPTS = 3
+private const val POST_ACK_READBACK_BUDGET_MILLIS = 1_500L
