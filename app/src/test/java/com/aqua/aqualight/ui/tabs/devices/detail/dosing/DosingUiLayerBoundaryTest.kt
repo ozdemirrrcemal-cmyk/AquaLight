@@ -10,6 +10,24 @@ class DosingUiLayerBoundaryTest {
     private val repositoryRoot = locateRepositoryRoot()
 
     @Test
+    fun `dosing root initializes first frame header from bound central state`() {
+        val rootFragment = source(ROOT_SOURCE_ROOT + "DeviceDosingRootFragment.kt")
+        val bind = rootFragment.indexOf("viewModel.bind(")
+        val firstFrameHeader = rootFragment.indexOf(
+            "setupHeader(title = resolveHeaderTitle(viewModel.uiState.value.title))"
+        )
+
+        assertTrue(bind >= 0)
+        assertTrue(firstFrameHeader > bind)
+        assertTrue(
+            rootFragment.contains(
+                "authoritativeTitle\n            .ifBlank { args.deviceTitle }"
+            )
+        )
+        assertFalse(rootFragment.contains("setupHeader(title = args.deviceTitle.ifBlank"))
+    }
+
+    @Test
     fun `catalog structural validity stays outside dosing ui`() {
         val screen = source(ROOT_SOURCE_ROOT + "DosingCatalogScreen.kt")
         val catalogSlots = source(APPLICATION_DEVICE_SLOTS)

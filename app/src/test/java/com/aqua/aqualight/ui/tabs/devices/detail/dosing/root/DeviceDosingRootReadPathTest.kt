@@ -80,6 +80,7 @@ class DeviceDosingRootReadPathTest {
             )
 
             val authoritative = viewModel.uiState.value
+            assertEquals("Dose Pro", authoritative.title)
             assertEquals(listOf("Authoritative 1", "Authoritative 2"), channelNames(viewModel))
             assertEquals(
                 listOf(1, 2),
