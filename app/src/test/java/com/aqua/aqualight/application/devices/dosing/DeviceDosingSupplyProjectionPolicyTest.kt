@@ -135,6 +135,21 @@ class DeviceDosingSupplyProjectionPolicyTest {
     }
 
     @Test
+    fun `delivery uncertainty keeps conservative reservoir projection available`() {
+        val snapshot = channelSnapshot(
+            remainingMicroliters = 80_000L,
+            deliveryAccountingCertain = false
+        )
+
+        val projection = requireNotNull(
+            DeviceDosingSupplyProjectionPolicy.evaluate(snapshot)
+        )
+
+        assertEquals(9, projection.estimatedRemainingDays)
+        assertEquals(DeviceDosingSupplySeverity.CRITICAL, projection.supplySeverity)
+    }
+
+    @Test
     fun `disabled reservoir tracking publishes no supply projection`() {
         val snapshot = channelSnapshot(remainingMicroliters = 0L).copy(
             reservoir = DeviceDosingReservoirSnapshot()
@@ -209,7 +224,8 @@ class DeviceDosingSupplyProjectionPolicyTest {
         remainingMicroliters: Long,
         program: DeviceDosingProgram = singleDoseProgram(),
         lowLevelActive: Boolean = false,
-        reservoirAccountingCertain: Boolean = true
+        reservoirAccountingCertain: Boolean = true,
+        deliveryAccountingCertain: Boolean = true
     ) = DeviceDosingChannelSnapshot(
         deviceUid = "device-1",
         slotId = "dosing:channel1",
@@ -219,7 +235,7 @@ class DeviceDosingSupplyProjectionPolicyTest {
         revision = 1L,
         runtimeEnabled = true,
         runtimeReason = DeviceDosingRuntimeReason.NONE,
-        deliveryAccountingCertain = true,
+        deliveryAccountingCertain = deliveryAccountingCertain,
         calibrated = true,
         lastCalibratedAtEpochSeconds = 1L,
         scheduling = DeviceDosingSchedulingPolicy(),

@@ -143,18 +143,36 @@ internal class FakeDeviceDosingChannelOperations(
                 reservoirConfigMutationCount += 1
                 mutate { state ->
                     val capacity = settings.capacityMicroliters ?: 0L
+                    val trackingEnabled = settings.trackingEnabled
+                    val accountingCertain = when {
+                        !trackingEnabled -> true
+                        !state.reservoir.trackingEnabled -> true
+                        else -> state.reservoir.accountingCertain
+                    }
+                    val remaining = when {
+                        !trackingEnabled -> 0L
+                        !state.reservoir.trackingEnabled -> capacity
+                        else -> state.reservoir.remainingMicroliters.coerceAtMost(capacity)
+                    }
                     state.copy(
                         revision = state.revision + 1L,
                         reservoir = DeviceDosingReservoirSnapshot(
-                            trackingEnabled = settings.trackingEnabled,
+                            trackingEnabled = trackingEnabled,
                             capacityMicroliters = capacity,
-                            remainingMicroliters = capacity,
+                            remainingMicroliters = remaining,
+                            accountingCertain = accountingCertain,
+                            lowLevelActive = trackingEnabled && accountingCertain &&
+                                remaining * LOW_LEVEL_DIVISOR <= capacity,
                             lowLevelAlertEnabled = settings.lowLevelAlertEnabled
                         )
                     )
                 }
             }
         }
+    }
+
+    private companion object {
+        const val LOW_LEVEL_DIVISOR = 10L
     }
 
     override suspend fun setReservoirLowLevelAlertEnabled(

@@ -21,6 +21,7 @@ import com.aqua.aqualight.application.devices.dosing.DeviceDosingSchedulingPolic
 import com.aqua.aqualight.application.devices.dosing.DeviceDosingTimerDoseDraft
 import com.aqua.aqualight.ui.tabs.devices.detail.dosing.presentation.card.DosingChannelVisualState
 import com.aqua.aqualight.ui.tabs.devices.detail.dosing.presentation.card.DosingDoseProgressVisualState
+import com.aqua.aqualight.ui.tabs.devices.detail.dosing.presentation.card.DosingOccurrenceVisualState
 import com.aqua.aqualight.ui.tabs.devices.detail.dosing.presentation.card.DosingProgramModeUiState
 import com.aqua.aqualight.ui.tabs.devices.detail.dosing.presentation.card.DosingReservoirTone
 import com.aqua.aqualight.ui.tabs.devices.detail.dosing.presentation.card.toInitialDosingChannelCardUiState
@@ -243,6 +244,57 @@ class DosingChannelCardMapperTest {
         assertEquals(listOf(0.2f, 7f / 15f, 19f / 30f, 1f), state.programProgress.markers.map {
             marker -> marker.positionFraction
         })
+    }
+
+    @Test
+    fun `interrupted delivery stays occurrence scoped without global error state`() {
+        val program = hourlyProgram()
+        val interruptedProgress = DeviceDosingChannelProgress(
+            scheduledAmountMicroliters = 24_000L,
+            completedAmountMicroliters = 8_000L,
+            occurrences = listOf(
+                occurrence(
+                    index = 0,
+                    amount = 8_000L,
+                    state = DeviceDosingOccurrenceState.COMPLETED
+                ),
+                occurrence(
+                    index = 1,
+                    amount = 1_000L,
+                    state = DeviceDosingOccurrenceState.UNCERTAIN
+                ),
+                occurrence(
+                    index = 2,
+                    amount = 15_000L,
+                    state = DeviceDosingOccurrenceState.PENDING
+                )
+            ),
+            executionCurrent = true,
+            accountingCertain = false,
+            programDayDate = MONDAY
+        )
+        val snapshot = snapshot(
+            program = program,
+            progress = interruptedProgress,
+            reservoir = DeviceDosingReservoirSnapshot(
+                trackingEnabled = true,
+                capacityMicroliters = 450_000L,
+                remainingMicroliters = 290_000L,
+                accountingCertain = true
+            )
+        ).copy(deliveryAccountingCertain = false)
+
+        val state = channelSlot().toInitialDosingChannelCardUiState()
+            .withChannelSnapshot(snapshot)
+
+        assertEquals(DosingChannelVisualState.CONFIGURED, state.visualState)
+        assertEquals(DosingPumpVisualState.IDLE, snapshot.toPumpVisualState())
+        assertEquals(DosingDoseProgressVisualState.READY, state.programProgress.visualState)
+        assertEquals(
+            DosingOccurrenceVisualState.UNCERTAIN,
+            state.programProgress.occurrences[1].visualState
+        )
+        assertEquals(290.0, requireNotNull(state.reservoir).remainingMl, 0.0)
     }
 
     private fun channelSlot() = DeviceDosingChannelSlot(

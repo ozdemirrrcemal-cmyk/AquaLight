@@ -55,9 +55,9 @@ class DeviceDosingReservoirCutoverTest {
             assertEquals(1, operations.reservoirConfigMutationCount)
             assertEquals(1L, operations.lastReservoirExpectedRevision)
             assertEquals(500_000L, operations.lastReservoirSettings?.capacityMicroliters)
-            assertEquals(500_000L, viewModel.currentEditorState().remainingMicroliters)
+            assertEquals(250_000L, viewModel.currentEditorState().remainingMicroliters)
             assertFalse(viewModel.currentEditorState().canSave)
-            assertFalse(viewModel.currentEditorState().canRefill)
+            assertTrue(viewModel.currentEditorState().canRefill)
         }
 
     @Test
@@ -79,7 +79,7 @@ class DeviceDosingReservoirCutoverTest {
     }
 
     @Test
-    fun `refill requires authoritative tracking clean config and a non-full or uncertain level`() =
+    fun `refill requires authoritative tracking clean config and a certain non-full level`() =
         runTest(dispatcher) {
             val operations = FakeDeviceDosingChannelOperations()
             val viewModel = DeviceDosingReservoirViewModel(operations)
@@ -105,6 +105,16 @@ class DeviceDosingReservoirCutoverTest {
                     accountingCertain = false
                 )
             )
+            assertFalse(viewModel.currentEditorState().canRefill)
+            viewModel.refill()
+            assertEquals(0, operations.refillMutationCount)
+            assertEquals(300_000L, viewModel.currentEditorState().remainingMicroliters)
+
+            operations.snapshot.value = requireNotNull(operations.snapshot.value).copy(
+                reservoir = requireNotNull(operations.snapshot.value).reservoir.copy(
+                    accountingCertain = true
+                )
+            )
             assertTrue(viewModel.currentEditorState().canRefill)
             viewModel.refill()
 
@@ -112,6 +122,28 @@ class DeviceDosingReservoirCutoverTest {
             assertEquals(450_000L, viewModel.currentEditorState().remainingMicroliters)
             assertTrue(viewModel.currentEditorState().remainingAccountingCertain)
             assertFalse(viewModel.currentEditorState().canRefill)
+        }
+
+    @Test
+    fun `power loss snapshot preserves firmware balance without automatic refill`() =
+        runTest(dispatcher) {
+            val operations = FakeDeviceDosingChannelOperations()
+            val viewModel = DeviceDosingReservoirViewModel(operations)
+            viewModel.bind(DEVICE_UID, SLOT_ID)
+
+            val before = requireNotNull(operations.snapshot.value)
+            operations.snapshot.value = before.copy(
+                deliveryAccountingCertain = false,
+                reservoir = before.reservoir.copy(
+                    remainingMicroliters = 240_000L,
+                    accountingCertain = true
+                )
+            )
+
+            assertEquals(0, operations.refillMutationCount)
+            assertEquals(240_000L, viewModel.currentEditorState().remainingMicroliters)
+            assertTrue(viewModel.currentEditorState().remainingAccountingCertain)
+            assertTrue(viewModel.currentEditorState().canRefill)
         }
 
     @Test

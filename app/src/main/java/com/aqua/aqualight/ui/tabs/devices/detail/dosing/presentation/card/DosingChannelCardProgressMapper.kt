@@ -54,7 +54,9 @@ private fun DeviceDosingChannelSnapshot.toProgressVisualState(
     configuredProgram: DeviceDosingProgram,
     scheduledToday: Boolean
 ): DosingDoseProgressVisualState = when {
-    hasAttentionState() || !progress.accountingCertain -> DosingDoseProgressVisualState.ERROR
+    // Delivery uncertainty is rendered on the affected occurrence, not as a
+    // channel-wide failure that implies a reservoir recovery action.
+    hasAttentionState() -> DosingDoseProgressVisualState.ERROR
     !configuredProgram.enabled -> DosingDoseProgressVisualState.DISABLED
     !scheduledToday -> DosingDoseProgressVisualState.EMPTY
     activeRun.active && activeRun.source == DeviceDosingRunSource.SCHEDULED ->

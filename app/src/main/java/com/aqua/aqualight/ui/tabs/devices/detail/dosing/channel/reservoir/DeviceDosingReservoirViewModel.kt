@@ -70,7 +70,9 @@ internal data class DeviceDosingReservoirEditorState(
     val canRefill: Boolean
         get() {
             val authoritativeCapacity = savedDraft.reservoirCapacityMicroliters
-            val refillNeeded = !remainingAccountingCertain ||
+            // Refill confirms a physical fill. An uncertain legacy balance is
+            // not converted into a recovery instruction for the user.
+            val refillNeeded = remainingAccountingCertain &&
                 remainingMicroliters?.let { remaining -> remaining < authoritativeCapacity } == true
             return initialized && refillSupported && savedDraft.trackingEnabled &&
                 authoritativeCapacity > 0L && !firmwareConfigDirty && !operationInProgress &&

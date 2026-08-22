@@ -49,9 +49,10 @@ private fun DeviceDosingChannelSnapshot.toCardVisualState(): DosingChannelVisual
     else -> DosingChannelVisualState.CONFIGURED
 }
 
+// Exact daily delivery may be unknown for one interrupted occurrence while
+// firmware still owns a safe conservative reservoir balance and scheduler.
 internal fun DeviceDosingChannelSnapshot.hasAttentionState(): Boolean =
-    !deliveryAccountingCertain ||
-        runtimeReason in ATTENTION_RUNTIME_REASONS ||
+    runtimeReason in ATTENTION_RUNTIME_REASONS ||
         reservoir.trackingEnabled && !reservoir.accountingCertain
 
 internal fun Long.toMilliliters(): Double = toDouble() / MICROLITERS_PER_MILLILITER

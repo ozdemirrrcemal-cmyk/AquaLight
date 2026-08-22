@@ -1,8 +1,8 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="device_dosing_reservoir_refill">Mark reservoir as refilled</string>
+    <string name="device_dosing_reservoir_refill">I filled the reservoir to capacity</string>
     <string name="device_dosing_reservoir_saved">Reservoir settings saved.</string>
-    <string name="device_dosing_reservoir_refilled">Reservoir level reset to full.</string>
+    <string name="device_dosing_reservoir_refilled">Reservoir level set to the saved capacity.</string>
     <string name="device_dosing_low_level_notification_title">Dosing reservoir is low</string>
     <string name="device_dosing_low_level_notification_message">%1$s reservoir is low. Refill it to keep dosing reliable.</string>
     <string name="device_dosing_low_level_notification_channel_fallback">Dosing channel</string>

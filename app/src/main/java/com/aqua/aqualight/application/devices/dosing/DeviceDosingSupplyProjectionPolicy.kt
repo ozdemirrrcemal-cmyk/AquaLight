@@ -14,9 +14,12 @@ object DeviceDosingSupplyProjectionPolicy {
         val reservoir = snapshot.reservoir
         if (!reservoir.trackingEnabled) return null
 
+        // Firmware's certain remaining value is already conservative after an
+        // interrupted dose; exact daily-delivery certainty is not a second
+        // reservoir authority and must not suppress this supply projection.
         val remainingDays = snapshot.estimatedRemainingDays()
         val supplySeverity = when {
-            !reservoir.accountingCertain || !snapshot.deliveryAccountingCertain ->
+            !reservoir.accountingCertain ->
                 DeviceDosingSupplySeverity.UNCERTAIN
             remainingDays != null && remainingDays < CRITICAL_REMAINING_DAYS ->
                 DeviceDosingSupplySeverity.CRITICAL
@@ -35,8 +38,7 @@ object DeviceDosingSupplyProjectionPolicy {
         val canEstimate = listOf(
             configuredProgram.enabled,
             progress.executionCurrent,
-            reservoir.accountingCertain,
-            deliveryAccountingCertain
+            reservoir.accountingCertain
         ).all { valid -> valid }
         val dailyDoseMicroliters = configuredProgram.dailyDoseMicroliters()
         val programDayDate = progress.programDayDate
