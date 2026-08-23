@@ -23,6 +23,10 @@ internal class DeviceDosingV1ChannelOperationsAdapter(
     DeviceDosingProgramRevisionOperations,
     DeviceDosingReservoirRevisionOperations {
 
+    private val programIntents = DeviceDosingV1ProgramIntentCoordinator(
+        scope = adapter.reconciliationScope,
+        execute = ::persistProgramIntent
+    )
     private val missedDoseRecoveryIntents =
         DeviceDosingV1MissedDoseRecoveryIntentCoordinator(
             scope = adapter.reconciliationScope,
@@ -93,45 +97,59 @@ internal class DeviceDosingV1ChannelOperationsAdapter(
         slotId: String,
         program: DeviceDosingProgram,
         origin: DeviceDosingProgramMutationOrigin?
-    ): DeviceDosingChannelOperationResult = adapter.mutationCoordinator.mutatePersisted(
+    ): DeviceDosingChannelOperationResult = programIntents.submit(
         deviceUid = deviceUid,
         slotId = slotId,
-        mutation = DeviceDosingV1PersistedMutation(
-            assignmentSatisfied = { snapshot ->
-                if (origin != null) {
-                    snapshot.program.hasSamePlanAssignment(program)
-                } else {
-                    snapshot.program == program
-                }
-            },
-            origin = origin?.let { mutationOrigin ->
-                DeviceDosingV1PersistedMutationOrigin(mutationOrigin.revision) { snapshot ->
-                    snapshot.program.hasSamePlanOrigin(mutationOrigin.baseProgram)
-                }
-            },
-            execute = { uid, channelKey, revision, baseline ->
-                requireMutation(
-                    baseline.controls.programEditable,
-                    DeviceDosingChannelRejection.NOT_EDITABLE
-                )
-                val effectiveProgram = if (origin != null) {
-                    program.copy(
-                        missedDoseRecoveryEnabled = baseline.program
-                            ?.missedDoseRecoveryEnabled
-                            ?: program.missedDoseRecoveryEnabled
+        intent = DeviceDosingV1ProgramAssignmentIntent(program, origin)
+    )
+
+    private suspend fun persistProgramIntent(
+        deviceUid: String,
+        slotId: String,
+        intent: DeviceDosingV1ProgramAssignmentIntent
+    ): DeviceDosingChannelOperationResult {
+        val program = intent.program
+        val origin = intent.origin
+        return adapter.mutationCoordinator.mutatePersisted(
+            deviceUid = deviceUid,
+            slotId = slotId,
+            mutation = DeviceDosingV1PersistedMutation(
+                assignmentSatisfied = { snapshot ->
+                    if (origin != null) {
+                        snapshot.program.hasSamePlanAssignment(program)
+                    } else {
+                        snapshot.program == program
+                    }
+                },
+                origin = origin?.let { mutationOrigin ->
+                    DeviceDosingV1PersistedMutationOrigin(mutationOrigin.revision) { snapshot ->
+                        snapshot.program.hasSamePlanOrigin(mutationOrigin.baseProgram)
+                    }
+                },
+                execute = { uid, channelKey, revision, baseline ->
+                    requireMutation(
+                        baseline.controls.programEditable,
+                        DeviceDosingChannelRejection.NOT_EDITABLE
                     )
-                } else {
-                    program
-                }
-                requireMutation(
-                    effectiveProgram.isValidFor(baseline.scheduling),
-                    DeviceDosingChannelRejection.INVALID_DRAFT
-                )
-                repositoryProgramApply(uid, channelKey, revision, effectiveProgram)
-            },
-            channel = DeviceDosingV1SavedMutationResult::channel
-        )
-    ).toChannelResult()
+                    val effectiveProgram = if (origin != null) {
+                        program.copy(
+                            missedDoseRecoveryEnabled = baseline.program
+                                ?.missedDoseRecoveryEnabled
+                                ?: program.missedDoseRecoveryEnabled
+                        )
+                    } else {
+                        program
+                    }
+                    requireMutation(
+                        effectiveProgram.isValidFor(baseline.scheduling),
+                        DeviceDosingChannelRejection.INVALID_DRAFT
+                    )
+                    repositoryProgramApply(uid, channelKey, revision, effectiveProgram)
+                },
+                channel = DeviceDosingV1SavedMutationResult::channel
+            )
+        ).toChannelResult()
+    }
 
     override suspend fun setMissedDoseRecoveryEnabled(
         deviceUid: String,

@@ -3,7 +3,7 @@ package com.aqua.aqualight.data.devices.dosing.v1
 import com.aqua.aqualight.data.devices.runtime.core.DeviceRuntimeCommandOutcome
 import com.aqua.aqualight.data.devices.runtime.core.DeviceRuntimeConnectionGeneration
 
-/** Reconciles mutation failures against authoritative device state. */
+/** Reconciles mutation failures against a fresh mutation-critical device readback. */
 internal class DeviceDosingV1ConflictCoordinator(
     private val stateOwner: DeviceDosingV1StateOwner,
     private val refreshCoordinator: DeviceDosingV1RefreshCoordinator
@@ -15,7 +15,9 @@ internal class DeviceDosingV1ConflictCoordinator(
         outcome.connectionGenerationOrNull()?.let { generation ->
             stateOwner.invalidate(address.deviceUid, address.channelKey, generation, null)
         }
-        refreshCoordinator.refreshWithinGate(address)
+        // Failure recovery belongs to the single-writer transaction. It must never join an older
+        // background flight whose request token predates the attempted write.
+        refreshCoordinator.refreshForMutation(address)
         return if (outcome.isRevisionConflict()) {
             DeviceDosingV1MutationResult.Conflict
         } else {

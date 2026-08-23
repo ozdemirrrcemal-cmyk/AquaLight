@@ -60,13 +60,14 @@ internal class DeviceDosingV1StateAdapter(
     internal val reconciliationScope: CoroutineScope? = null
 ) {
     internal val stateAccess = DeviceDosingV1StateAccess(stateOwner)
-    private val operationGate = DeviceDosingV1ChannelOperationGate()
+    private val operationAdmission = DeviceDosingV1ChannelOperationAdmission()
+    private val mutationProcessor = DeviceDosingV1ChannelMutationProcessor(reconciliationScope)
     internal val refreshCoordinator = DeviceDosingV1RefreshCoordinator(
         repository = repository,
         stateOwner = stateOwner,
         stateAccess = stateAccess,
         producerScope = reconciliationScope,
-        operationGate = operationGate
+        operationAdmission = operationAdmission
     )
     private val backgroundReconciliation = reconciliationScope?.let { scope ->
         DeviceDosingV1CommittedReconciliationScheduler(scope, refreshCoordinator)
@@ -75,7 +76,8 @@ internal class DeviceDosingV1StateAdapter(
         stateOwner = stateOwner,
         stateAccess = stateAccess,
         refreshCoordinator = refreshCoordinator,
-        operationGate = operationGate,
+        mutationProcessor = mutationProcessor,
+        operationAdmission = operationAdmission,
         scheduleBackgroundReconciliation = backgroundReconciliation?.let { scheduler ->
             scheduler::schedule
         }

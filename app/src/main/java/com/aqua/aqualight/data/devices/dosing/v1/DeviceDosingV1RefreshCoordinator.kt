@@ -10,24 +10,24 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.CoroutineStart
 import kotlinx.coroutines.Deferred
 import kotlinx.coroutines.async
-import kotlinx.coroutines.cancelAndJoin
 import kotlinx.coroutines.currentCoroutineContext
 import kotlinx.coroutines.ensureActive
 
-/** Coordinates refreshes without owning any authoritative state. */
+/** Coordinates non-blocking background readback without owning authoritative state. */
 internal class DeviceDosingV1RefreshCoordinator(
     private val repository: DeviceDosingV1Repository,
     private val stateOwner: DeviceDosingV1StateOwner,
     private val stateAccess: DeviceDosingV1StateAccess,
     private val producerScope: CoroutineScope? = null,
-    private val operationGate: DeviceDosingV1ChannelOperationGate =
-        DeviceDosingV1ChannelOperationGate()
+    internal val operationAdmission: DeviceDosingV1ChannelOperationAdmission =
+        DeviceDosingV1ChannelOperationAdmission()
 ) {
     private val refreshFlights = DeviceDosingV1RefreshFlights(producerScope)
     private val refreshProducer = DeviceDosingV1RefreshProducer(
         repository = repository,
         stateOwner = stateOwner,
-        stateAccess = stateAccess
+        stateAccess = stateAccess,
+        operationAdmission = operationAdmission
     )
 
     suspend fun refresh(deviceUid: String, slotId: String): DeviceDosingV1RefreshResult =
@@ -52,18 +52,11 @@ internal class DeviceDosingV1RefreshCoordinator(
         return allAuthoritative
     }
 
+    /** Background readback never owns a lock needed by a foreground mutation. */
     suspend fun refresh(address: DeviceDosingV1Address): DeviceDosingV1RefreshResult =
         refreshFlights.channel(address) {
-            operationGate.withRefresh(
-                address = address,
-                preempted = DeviceDosingV1RefreshResult.RejectedStale
-            ) { refreshProducer.refreshWithinGate(address) }
+            refreshProducer.refreshBackground(address)
         }
-
-    /** A user write outranks any in-flight readback but never another firmware mutation. */
-    internal suspend fun preemptForMutation(address: DeviceDosingV1Address) {
-        refreshFlights.cancelChannel(address)
-    }
 
     internal suspend fun refreshInvalidated(
         address: DeviceDosingV1Address,
@@ -76,17 +69,12 @@ internal class DeviceDosingV1RefreshCoordinator(
         var needsAnotherAttempt = true
         while (attempt < MAX_INVALIDATED_REFRESH_ATTEMPTS && needsAnotherAttempt) {
             val candidate = refreshFlights.channel(address) {
-                operationGate.withRefresh(
+                authoritativeAfterInvalidation(
                     address = address,
-                    preempted = DeviceDosingV1RefreshResult.RejectedStale
-                ) {
-                    authoritativeAfterInvalidation(
-                        address = address,
-                        connectionGeneration = connectionGeneration,
-                        revisionHint = revisionHint,
-                        runtimeEventSequenceHint = runtimeEventSequenceHint
-                    ) ?: refreshProducer.refreshWithinGate(address)
-                }
+                    connectionGeneration = connectionGeneration,
+                    revisionHint = revisionHint,
+                    runtimeEventSequenceHint = runtimeEventSequenceHint
+                ) ?: refreshProducer.refreshBackground(address)
             }
             val authoritative = authoritativeAfterInvalidation(
                 address = address,
@@ -125,7 +113,7 @@ internal class DeviceDosingV1RefreshCoordinator(
         )
         ?.let(DeviceDosingV1RefreshResult::Success)
 
-    /** Checks and reconciles a durable ACK inside the shared per-channel serialization gate. */
+    /** Owner-scoped post-commit reconciliation; it is never a prerequisite for the next write. */
     internal suspend fun reconcileCommitted(
         address: DeviceDosingV1Address,
         minimumRevision: Long
@@ -135,26 +123,42 @@ internal class DeviceDosingV1RefreshCoordinator(
         ?: refresh(address)
 
     /**
-     * Authoritative refresh for callers that already hold [DeviceDosingV1ChannelOperationGate].
-     * Keeping this separate prevents nested locking while ensuring every externally initiated
-     * reconciliation shares the same per-channel serialization boundary as mutations and events.
+     * Fresh readback that belongs to the single-writer mutation transaction itself. It deliberately
+     * bypasses background single-flight/admission so mutation recovery can never join an older,
+     * owner-scoped background read that began before the write.
      */
-    internal suspend fun refreshWithinGate(
+    internal suspend fun refreshForMutation(
         address: DeviceDosingV1Address
-    ): DeviceDosingV1RefreshResult = refreshProducer.refreshWithinGate(address)
+    ): DeviceDosingV1RefreshResult = refreshProducer.refreshForMutation(address)
 }
 
 /** Produces and atomically commits one coherent global/channel/progress readback. */
 private class DeviceDosingV1RefreshProducer(
     private val repository: DeviceDosingV1Repository,
     private val stateOwner: DeviceDosingV1StateOwner,
-    private val stateAccess: DeviceDosingV1StateAccess
+    private val stateAccess: DeviceDosingV1StateAccess,
+    private val operationAdmission: DeviceDosingV1ChannelOperationAdmission
 ) {
-    suspend fun refreshWithinGate(
+    suspend fun refreshBackground(
         address: DeviceDosingV1Address
+    ): DeviceDosingV1RefreshResult = refreshStable(address, background = true)
+
+    suspend fun refreshForMutation(
+        address: DeviceDosingV1Address
+    ): DeviceDosingV1RefreshResult = refreshStable(address, background = false)
+
+    private suspend fun refreshStable(
+        address: DeviceDosingV1Address,
+        background: Boolean
     ): DeviceDosingV1RefreshResult {
         repeat(MAX_REFRESH_STABILITY_ATTEMPTS) { attempt ->
-            val token = stateOwner.beginRequest(address.deviceUid, address.channelKey)
+            val token = if (background) {
+                operationAdmission.admitBackgroundRead(address) {
+                    stateOwner.beginRequest(address.deviceUid, address.channelKey)
+                } ?: return DeviceDosingV1RefreshResult.RejectedStale
+            } else {
+                stateOwner.beginRequest(address.deviceUid, address.channelKey)
+            }
             val result = refresh(
                 address,
                 token,
@@ -249,13 +253,6 @@ private class DeviceDosingV1RefreshFlights(
         cancellationFallback = false,
         producer = producer
     )
-
-    suspend fun cancelChannel(address: DeviceDosingV1Address) {
-        if (producerScope == null) return
-        val active = channels[address] ?: return
-        active.cancelAndJoin()
-        channels.remove(address, active)
-    }
 
     private suspend fun <K : Any, V> flight(
         key: K,

@@ -38,9 +38,12 @@ internal data class DeviceDosingPlanEditorState(
     val programIntent: DeviceDosingProgram
         get() = draft.toApplicationProgram(missedDoseRecoveryEnabled)
 
-    /** Save is allowed only when the editor has a complete application-domain CAS origin. */
+    /**
+     * An owner-scoped central latest-intent queue accepts a newer Save while an older one is still
+     * synchronizing. operationInProgress is therefore presentation state, never input backpressure.
+     */
     val canSave: Boolean
-        get() = editable && baseRevision != null && baseProgramKnown && !operationInProgress
+        get() = editable && baseRevision != null && baseProgramKnown
 }
 
 internal enum class DosingPlanValidationIssue {
@@ -159,7 +162,6 @@ internal class DeviceDosingPlanViewModel(
         val canStartSave = listOf(
             currentBinding != null,
             state.editable,
-            !state.operationInProgress,
             baseRevision != null,
             state.baseProgramKnown
         ).all { valid -> valid }
@@ -176,6 +178,8 @@ internal class DeviceDosingPlanViewModel(
 
         val binding = checkNotNull(currentBinding)
         mutableEditorState.value = state.copy(operationInProgress = true)
+        // Cancels only this screen's obsolete waiter. The accepted data-layer intent is owner-scoped
+        // and continues; the replacement Save becomes the latest target of the central queue.
         saveJob?.cancel()
         saveJob = viewModelScope.launch {
             val reconciliation = try {
@@ -200,7 +204,7 @@ internal class DeviceDosingPlanViewModel(
 
     private inline fun updateDraft(transform: (DosingPlanDraft) -> DosingPlanDraft) {
         val current = mutableEditorState.value
-        if (!current.editable || current.operationInProgress) return
+        if (!current.editable) return
         val updated = transform(current.draft)
         if (updated == current.draft) return
         mutableEditorState.value = current.copy(
@@ -228,7 +232,7 @@ internal class DeviceDosingPlanViewModel(
                 eventChannel.send(DeviceDosingPlanEvent.Saved)
             }
             is DeviceDosingChannelCommittedResult -> {
-                // Firmware has durably committed the exact persisted intent. Readback remains
+                // Firmware has durably committed the exact latest persisted intent. Readback remains
                 // centralized and fail-closed, so acknowledge the save without inventing a snapshot.
                 mutableEditorState.value = mutableEditorState.value.copy(
                     operationInProgress = false,

@@ -20,7 +20,12 @@ internal class DeviceDosingV1CommittedReconciliationScheduler(
 
     fun schedule(address: DeviceDosingV1Address, minimumRevision: Long) {
         val job = scope.launch(start = CoroutineStart.LAZY) {
-            refreshCoordinator.reconcileCommitted(address, minimumRevision)
+            // A newer foreground mutation can legitimately make a joined older background flight
+            // stale. Retry that admission race only; real transport/protocol failures remain bounded.
+            repeat(MAX_STALE_RECONCILIATION_ATTEMPTS) {
+                val result = refreshCoordinator.reconcileCommitted(address, minimumRevision)
+                if (result != DeviceDosingV1RefreshResult.RejectedStale) return@launch
+            }
         }
         val previous = synchronized(lock) {
             val current = scheduled[address]
@@ -45,3 +50,5 @@ internal class DeviceDosingV1CommittedReconciliationScheduler(
         val job: Job
     )
 }
+
+private const val MAX_STALE_RECONCILIATION_ATTEMPTS = 2

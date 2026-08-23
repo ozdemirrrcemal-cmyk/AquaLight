@@ -184,9 +184,9 @@ class DeviceDosingChannelDetailFragment :
         viewLifecycleOwner.lifecycleScope.launch {
             viewLifecycleOwner.repeatOnLifecycle(Lifecycle.State.STARTED) {
                 viewModel.draft
-                    .map { draft ->
-                        draft.operationInProgress || draft.missedDoseRecoverySyncing
-                    }
+                    // Latest-intent switch synchronization is deliberately non-blocking. Only
+                    // effect operations that must not be repeated expose the global input blocker.
+                    .map { draft -> draft.operationInProgress }
                     .distinctUntilChanged()
                     .collect { loading -> setFragmentGlobalLoading(loading) }
             }
