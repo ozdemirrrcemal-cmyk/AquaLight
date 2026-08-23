@@ -2,6 +2,9 @@ package com.aqua.aqualight.ui.tabs.devices
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.aqua.aqualight.application.devices.DeviceControlSurfacePreparationOperations
+import com.aqua.aqualight.application.devices.DeviceControlSurfacePreparationRequest
+import com.aqua.aqualight.application.devices.DeviceControlSurfacePreparationResult
 import com.aqua.aqualight.application.devices.DeviceMenuAccessOperations
 import com.aqua.aqualight.application.devices.DeviceMenuAccessResult
 import com.aqua.aqualight.application.devices.DeviceMenuUnavailableReason
@@ -22,6 +25,7 @@ import kotlinx.coroutines.launch
 class DevicesViewModel(
     private val operations: OwnerDevicesOperations,
     menuAccessOperations: DeviceMenuAccessOperations,
+    controlSurfacePreparationOperations: DeviceControlSurfacePreparationOperations,
     routeResolver: DeviceRouteResolver
 ) : ViewModel() {
 
@@ -36,6 +40,7 @@ class DevicesViewModel(
 
     private val menuOpenResolver = DeviceMenuOpenResolver(
         menuAccessOperations = menuAccessOperations,
+        controlSurfacePreparationOperations = controlSurfacePreparationOperations,
         routeResolver = routeResolver
     )
     private var menuOpenJob: Job? = null
@@ -210,6 +215,7 @@ class DevicesViewModel(
 
 private class DeviceMenuOpenResolver(
     private val menuAccessOperations: DeviceMenuAccessOperations,
+    private val controlSurfacePreparationOperations: DeviceControlSurfacePreparationOperations,
     private val routeResolver: DeviceRouteResolver
 ) {
     suspend fun resolve(deviceUid: String): DevicesEvent {
@@ -218,7 +224,7 @@ private class DeviceMenuOpenResolver(
             when (val result = menuAccessOperations.resolve(deviceUid)) {
                 is DeviceMenuAccessResult.Available -> {
                     deviceTitle = result.title
-                    DevicesEvent.OpenRoute(route = routeResolver.resolve(result))
+                    resolvePreparedRoute(result)
                 }
                 is DeviceMenuAccessResult.Unavailable -> unavailableEvent(
                     title = result.title,
@@ -232,6 +238,24 @@ private class DeviceMenuOpenResolver(
                 reason = DeviceMenuUnavailableReason.CURRENT_LIVENESS_NOT_PROVEN
             )
         }
+    }
+
+    private suspend fun resolvePreparedRoute(
+        access: DeviceMenuAccessResult.Available
+    ): DevicesEvent = when (
+        val preparation = controlSurfacePreparationOperations.prepare(
+            DeviceControlSurfacePreparationRequest(
+                deviceUid = access.deviceUid,
+                family = access.family
+            )
+        )
+    ) {
+        DeviceControlSurfacePreparationResult.Ready ->
+            DevicesEvent.OpenRoute(route = routeResolver.resolve(access))
+        is DeviceControlSurfacePreparationResult.Unavailable -> unavailableEvent(
+            title = access.title,
+            reason = preparation.reason
+        )
     }
 
     private fun unavailableEvent(
