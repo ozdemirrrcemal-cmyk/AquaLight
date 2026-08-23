@@ -36,8 +36,11 @@ internal data class DeviceDosingV1PersistedMutationOrigin(
  *
  * Exactly one owner-scoped mutation processor owns firmware writes for a channel. Background reads
  * never hold its write lane; mutation-critical readback is performed inside this lane and therefore
- * cannot join an older background flight. State acceptance remains exclusively in StateOwner.
+ * cannot join an older background flight. Complete persisted ACKs are the durable continuation for
+ * assignment mutations and deliberately do not trigger an immediate post-ACK wire read. State
+ * acceptance remains exclusively in StateOwner.
  */
+@Suppress("TooManyFunctions") // One central transaction coordinator owns the complete write flow.
 internal class DeviceDosingV1MutationCoordinator(
     private val stateOwner: DeviceDosingV1StateOwner,
     private val stateAccess: DeviceDosingV1StateAccess,
@@ -93,9 +96,6 @@ internal class DeviceDosingV1MutationCoordinator(
     ): DeviceDosingV1MutationResult<T> = mutationProcessor.submit(
         address = address,
         mutation = {
-            // Best-effort cleanup only: never join the old read. Even if cancellation is late or
-            // ignored by the transport, the write proceeds and StateOwner token/revision guards
-            // make the older read unable to overwrite it.
             refreshCoordinator.preemptBackgroundForMutation(address)
             operationAdmission.beginMutation(address)
             try {
@@ -105,12 +105,16 @@ internal class DeviceDosingV1MutationCoordinator(
             }
         },
         afterResultPublished = { result ->
-            if (result is DeviceDosingV1MutationResult.Committed) {
+            if (
+                result is DeviceDosingV1MutationResult.Committed &&
+                mutation.requiresBackgroundReconciliation()
+            ) {
                 scheduleBackgroundReconciliation?.invoke(address, result.revision)
             }
         }
     )
 
+    @Suppress("ReturnCount") // Fail-fast transaction exits keep rejected/stale writes unambiguous.
     private suspend fun <T> mutateSingleWriter(
         address: DeviceDosingV1Address,
         mutation: DosingMutationDefinition<T>
@@ -125,11 +129,7 @@ internal class DeviceDosingV1MutationCoordinator(
         }
         var attempt = 0
         while (attempt < MAX_REPLAY_SAFE_ASSIGNMENT_ATTEMPTS) {
-            val result = mutateAgainstBaseline(
-                address = address,
-                baseline = baseline,
-                mutation = mutation
-            )
+            val result = mutateAgainstBaseline(address, baseline, mutation)
             val replayableFailure = mutation.assignmentSatisfied != null &&
                 result.isReplayableAssignmentFailure()
             if (!replayableFailure) return result
@@ -143,9 +143,7 @@ internal class DeviceDosingV1MutationCoordinator(
             if (!mutation.origin.accepts(reconciled.channel)) {
                 return DeviceDosingV1MutationResult.Conflict
             }
-            if (attempt >= MAX_REPLAY_SAFE_ASSIGNMENT_ATTEMPTS - 1) {
-                return result
-            }
+            if (attempt >= MAX_REPLAY_SAFE_ASSIGNMENT_ATTEMPTS - 1) return result
             baseline = DosingMutationBaseline(
                 state = reconciled,
                 source = DosingMutationBaselineSource.AUTHORITATIVE
@@ -164,8 +162,6 @@ internal class DeviceDosingV1MutationCoordinator(
         return if (baseline.source == DosingMutationBaselineSource.COMMITTED_MUTATION) {
             DeviceDosingV1MutationResult.Committed(baseline.state.channel.revision)
         } else {
-            // onAccepted may project owner-scoped local intent (for example reservoir alert
-            // preference). Return the owner's post-callback state, not the pre-callback baseline.
             DeviceDosingV1MutationResult.Reconciled(
                 stateAccess.currentState(address) ?: baseline.state
             )
@@ -272,19 +268,12 @@ internal class DeviceDosingV1MutationCoordinator(
     ): DeviceDosingV1MutationResult<T> {
         val refreshedState = (refreshed as? DeviceDosingV1RefreshResult.Success)?.state
         val currentState = if (refreshedState == null) stateAccess.currentState(address) else null
-
         return when {
             refreshedState != null -> acceptedReadbackResult(
-                value = value,
-                committedRevision = committedRevision,
-                state = refreshedState,
-                persistedMutation = persistedMutation
+                value, committedRevision, refreshedState, persistedMutation
             )
             currentState != null -> acceptedReadbackResult(
-                value = value,
-                committedRevision = committedRevision,
-                state = currentState,
-                persistedMutation = persistedMutation
+                value, committedRevision, currentState, persistedMutation
             )
             persistedMutation -> DeviceDosingV1MutationResult.Committed(committedRevision)
             refreshed is DeviceDosingV1RefreshResult.Malformed -> DeviceDosingV1MutationResult.Malformed
@@ -300,28 +289,18 @@ internal class DeviceDosingV1MutationCoordinator(
         mutation: DosingMutationDefinition<T>
     ): DosingMutationBaseline? {
         val cached = stateAccess.currentState(address)?.let { current ->
-            DosingMutationBaseline(
-                state = current,
-                source = DosingMutationBaselineSource.AUTHORITATIVE
-            )
+            DosingMutationBaseline(current, DosingMutationBaselineSource.AUTHORITATIVE)
         } ?: if (mutation.persistedMutation && mutation.assignmentSatisfied != null) {
             stateAccess.committedMutationContinuation(address)?.let { committed ->
-                DosingMutationBaseline(
-                    state = committed,
-                    source = DosingMutationBaselineSource.COMMITTED_MUTATION
-                )
+                DosingMutationBaseline(committed, DosingMutationBaselineSource.COMMITTED_MUTATION)
             }
-        } else {
-            null
-        }
+        } else null
         if (cached != null && cached.state.channel.revision >= (mutation.origin?.revision ?: 0L)) {
             return cached
         }
         return when (val refreshed = refreshCoordinator.refreshForMutation(address)) {
-            is DeviceDosingV1RefreshResult.Success -> DosingMutationBaseline(
-                state = refreshed.state,
-                source = DosingMutationBaselineSource.AUTHORITATIVE
-            )
+            is DeviceDosingV1RefreshResult.Success ->
+                DosingMutationBaseline(refreshed.state, DosingMutationBaselineSource.AUTHORITATIVE)
             else -> null
         }
     }
@@ -390,10 +369,7 @@ private data class DosingMutationBaseline(
     val source: DosingMutationBaselineSource
 )
 
-private enum class DosingMutationBaselineSource {
-    AUTHORITATIVE,
-    COMMITTED_MUTATION
-}
+private enum class DosingMutationBaselineSource { AUTHORITATIVE, COMMITTED_MUTATION }
 
 private sealed interface DosingExecutionOutcome<out T> {
     data class Completed<T>(val outcome: DeviceRuntimeCommandOutcome<T>) : DosingExecutionOutcome<T>
@@ -412,17 +388,16 @@ private fun DeviceDosingV1MutationResult<*>.isReplayableAssignmentFailure(): Boo
     else -> false
 }
 
+private fun DosingMutationDefinition<*>.requiresBackgroundReconciliation(): Boolean =
+    persistedMutation && acknowledgementVisibility == DeviceDosingV1MutationVisibility.RUNTIME_ACK
+
 private fun DeviceDosingV1PersistedMutationOrigin?.acceptsBaseline(
     baseline: DosingMutationBaseline
-): Boolean {
-    if (this == null) return true
-    if (
-        baseline.source == DosingMutationBaselineSource.COMMITTED_MUTATION &&
-        baseline.state.channel.revision >= revision
-    ) {
-        return true
-    }
-    return accepts(baseline.state.channel)
+): Boolean = when {
+    this == null -> true
+    baseline.source == DosingMutationBaselineSource.COMMITTED_MUTATION &&
+        baseline.state.channel.revision >= revision -> true
+    else -> accepts(baseline.state.channel)
 }
 
 private fun DeviceDosingV1PersistedMutationOrigin?.accepts(

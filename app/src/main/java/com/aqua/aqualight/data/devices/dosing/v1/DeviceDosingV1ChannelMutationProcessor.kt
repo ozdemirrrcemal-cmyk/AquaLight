@@ -30,24 +30,24 @@ internal class DeviceDosingV1ChannelMutationProcessor(
     ): T {
         val scope = ownerScope ?: return fallbackLocks
             .computeIfAbsent(address) { Mutex() }
-            .withLock {
-                mutation().also(afterResultPublished)
-            }
+            .withLock { mutation().also(afterResultPublished) }
 
         val result = CompletableDeferred<T>()
         val task = MutationTask(
             execute = {
-                try {
-                    val value = mutation()
-                    // Foreground completion wins scheduling priority over optional reconciliation.
-                    result.complete(value)
-                    afterResultPublished(value)
-                } catch (cancellation: CancellationException) {
-                    result.cancel(cancellation)
-                    throw cancellation
-                } catch (failure: Throwable) {
-                    result.completeExceptionally(failure)
-                }
+                runCatching { mutation() }.fold(
+                    onSuccess = { value ->
+                        result.complete(value)
+                        afterResultPublished(value)
+                    },
+                    onFailure = { failure ->
+                        if (failure is CancellationException) {
+                            result.cancel(failure)
+                            throw failure
+                        }
+                        result.completeExceptionally(failure)
+                    }
+                )
             },
             cancel = { cancellation -> result.cancel(cancellation) }
         )
@@ -63,7 +63,6 @@ internal class DeviceDosingV1ChannelMutationProcessor(
         scope: CoroutineScope
     ): MutationWorker {
         workers[address]?.let { return it }
-
         val queue = Channel<MutationTask>(
             capacity = Channel.UNLIMITED,
             onUndeliveredElement = { task ->
@@ -91,9 +90,7 @@ internal class DeviceDosingV1ChannelMutationProcessor(
         }
     }
 
-    private data class MutationWorker(
-        val queue: Channel<MutationTask>
-    )
+    private data class MutationWorker(val queue: Channel<MutationTask>)
 
     private data class MutationTask(
         val execute: suspend () -> Unit,
