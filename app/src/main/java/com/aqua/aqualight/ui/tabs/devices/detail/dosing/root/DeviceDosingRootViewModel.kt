@@ -4,10 +4,12 @@ import androidx.annotation.StringRes
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.aqua.aqualight.R
+import com.aqua.aqualight.application.devices.DeviceControlSurfacePreparationOperations
 import com.aqua.aqualight.application.devices.DeviceDosingChannelSlot
 import com.aqua.aqualight.application.devices.DeviceRootCatalogState
 import com.aqua.aqualight.application.devices.DeviceRootOperations
 import com.aqua.aqualight.application.devices.DeviceRootSnapshot
+import com.aqua.aqualight.application.devices.OwnerDeviceFamily
 import com.aqua.aqualight.application.devices.dosing.DeviceDosingChannelNavigationOperations
 import com.aqua.aqualight.application.devices.dosing.DeviceDosingChannelNavigationTarget
 import com.aqua.aqualight.application.devices.dosing.DeviceDosingChannelOperations
@@ -18,6 +20,7 @@ import com.aqua.aqualight.ui.tabs.devices.detail.common.DeviceRootMenuMapper
 import com.aqua.aqualight.ui.tabs.devices.detail.common.DeviceRootPresentationMapper
 import com.aqua.aqualight.ui.tabs.devices.detail.dosing.presentation.card.DosingChannelCardUiState
 import com.aqua.aqualight.ui.tabs.devices.detail.dosing.presentation.pump.DosingPumpVisualState
+import kotlinx.coroutines.CoroutineStart
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.Flow
@@ -30,7 +33,8 @@ import kotlinx.coroutines.launch
 class DeviceDosingRootViewModel(
     private val operations: DeviceRootOperations,
     private val channelNavigationOperations: DeviceDosingChannelNavigationOperations,
-    private val channelOperations: DeviceDosingChannelOperations
+    private val channelOperations: DeviceDosingChannelOperations,
+    private val controlSurfacePreparationOperations: DeviceControlSurfacePreparationOperations
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(DeviceDosingRootUiState())
@@ -75,6 +79,12 @@ class DeviceDosingRootViewModel(
             return
         }
 
+        val preparedRefreshAlreadyCompleted =
+            controlSurfacePreparationOperations.consumeFreshPreparation(
+                deviceUid = deviceUid,
+                family = OwnerDeviceFamily.DOSING
+            )
+
         boundDeviceUid = deviceUid
         this.fallbackTitle = fallbackTitle
         validatedCatalogChannels = emptyList()
@@ -93,14 +103,16 @@ class DeviceDosingRootViewModel(
                 renderBoundState()
             }
         }
-        channelDataJob = viewModelScope.launch {
+        channelDataJob = viewModelScope.launch(start = CoroutineStart.UNDISPATCHED) {
             channelOperations.observeAll(deviceUid).collect { snapshots ->
                 if (boundDeviceUid != deviceUid) return@collect
                 channelSnapshots = snapshots
                 renderBoundState()
             }
         }
-        refreshAuthoritative()
+        if (!preparedRefreshAlreadyCompleted) {
+            refreshAuthoritative()
+        }
     }
 
     fun refreshAuthoritative() {
