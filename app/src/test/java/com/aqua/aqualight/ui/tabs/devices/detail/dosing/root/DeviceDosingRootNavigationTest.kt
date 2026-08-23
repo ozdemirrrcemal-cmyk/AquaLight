@@ -1,5 +1,8 @@
 package com.aqua.aqualight.ui.tabs.devices.detail.dosing.root
 
+import com.aqua.aqualight.application.devices.DeviceControlSurfacePreparationOperations
+import com.aqua.aqualight.application.devices.DeviceControlSurfacePreparationRequest
+import com.aqua.aqualight.application.devices.DeviceControlSurfacePreparationResult
 import com.aqua.aqualight.application.devices.DeviceRootOperations
 import com.aqua.aqualight.application.devices.DeviceRootSnapshot
 import com.aqua.aqualight.application.devices.OwnerDeviceAvailability
@@ -50,7 +53,8 @@ class DeviceDosingRootNavigationTest {
         val viewModel = DeviceDosingRootViewModel(
             operations = FakeRootOperations(),
             channelNavigationOperations = navigationOperations,
-            channelOperations = UnavailableDeviceDosingChannelOperations
+            channelOperations = UnavailableDeviceDosingChannelOperations,
+            controlSurfacePreparationOperations = FakePreparationOperations()
         )
         viewModel.bind(deviceUidText = DEVICE_UID)
 
@@ -67,7 +71,8 @@ class DeviceDosingRootNavigationTest {
         val viewModel = DeviceDosingRootViewModel(
             operations = rootOperations,
             channelNavigationOperations = FakeChannelNavigationOperations(null),
-            channelOperations = UnavailableDeviceDosingChannelOperations
+            channelOperations = UnavailableDeviceDosingChannelOperations,
+            controlSurfacePreparationOperations = FakePreparationOperations()
         )
 
         viewModel.bind(deviceUidText = DEVICE_UID)
@@ -77,6 +82,12 @@ class DeviceDosingRootNavigationTest {
         rootOperations.publishTitle("My Doser")
 
         assertEquals("My Doser", viewModel.uiState.value.title)
+    }
+
+    private class FakePreparationOperations : DeviceControlSurfacePreparationOperations {
+        override suspend fun prepare(
+            request: DeviceControlSurfacePreparationRequest
+        ): DeviceControlSurfacePreparationResult = DeviceControlSurfacePreparationResult.Ready
     }
 
     private class FakeChannelNavigationOperations(
