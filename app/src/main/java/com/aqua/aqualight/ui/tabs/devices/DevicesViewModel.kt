@@ -69,13 +69,17 @@ class DevicesViewModel(
                         )
                     }
                     is DeviceMenuOpenResult.Unavailable -> {
-                        clearMenuOpen(deviceUid)
+                        if (openingDeviceUid.value == deviceUid) {
+                            openingDeviceUid.value = null
+                        }
                         _events.send(result.toUnavailableEvent())
                     }
                 }
             } catch (error: Throwable) {
                 abandonPendingNavigation(deviceUid)
-                clearMenuOpen(deviceUid)
+                if (openingDeviceUid.value == deviceUid) {
+                    openingDeviceUid.value = null
+                }
                 if (error is CancellationException) throw error
                 _events.send(
                     DevicesEvent.ShowDeviceUnavailable(
@@ -105,7 +109,9 @@ class DevicesViewModel(
             if (!committed) menuOpenUseCase.abandon(pending)
             pendingMenuOpen = null
         }
-        clearMenuOpen(deviceUid)
+        if (openingDeviceUid.value == deviceUid) {
+            openingDeviceUid.value = null
+        }
     }
 
     /** Cancels any in-flight open and invalidates a prepared handoff owned by the destroyed host. */
@@ -180,12 +186,6 @@ class DevicesViewModel(
         } ?: return
         menuOpenUseCase.abandon(pending)
         pendingMenuOpen = null
-    }
-
-    private fun clearMenuOpen(deviceUid: String) {
-        if (openingDeviceUid.value == deviceUid) {
-            openingDeviceUid.value = null
-        }
     }
 
     private fun toggleDeviceSelection(deviceUid: String) {
