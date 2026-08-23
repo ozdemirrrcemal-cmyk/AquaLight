@@ -21,8 +21,8 @@ import kotlinx.coroutines.launch
 
 class DevicesViewModel(
     private val operations: OwnerDevicesOperations,
-    private val menuAccessOperations: DeviceMenuAccessOperations,
-    private val routeResolver: DeviceRouteResolver
+    menuAccessOperations: DeviceMenuAccessOperations,
+    routeResolver: DeviceRouteResolver
 ) : ViewModel() {
 
     private val selectedDeviceUids = MutableStateFlow<Set<String>>(emptySet())
@@ -34,6 +34,10 @@ class DevicesViewModel(
     private val _events = Channel<DevicesEvent>(capacity = Channel.BUFFERED)
     val events: Flow<DevicesEvent> = _events.receiveAsFlow()
 
+    private val menuOpenResolver = DeviceMenuOpenResolver(
+        menuAccessOperations = menuAccessOperations,
+        routeResolver = routeResolver
+    )
     private var menuOpenJob: Job? = null
 
     init {
@@ -57,7 +61,16 @@ class DevicesViewModel(
         menuOpenJob?.cancel()
         openingDeviceUid.value = deviceUid
         menuOpenJob = viewModelScope.launch {
-            resolveMenuOpen(deviceUid)
+            try {
+                val event = menuOpenResolver.resolve(deviceUid)
+                if (event is DevicesEvent.ShowDeviceUnavailable) {
+                    clearMenuOpen(deviceUid)
+                }
+                _events.send(event)
+            } catch (error: CancellationException) {
+                clearMenuOpen(deviceUid)
+                throw error
+            }
         }
     }
 
@@ -122,51 +135,6 @@ class DevicesViewModel(
                 deletingDevices.value = false
             }
         }
-    }
-
-    private suspend fun resolveMenuOpen(deviceUid: String) {
-        var deviceTitle = ""
-        try {
-            when (val result = menuAccessOperations.resolve(deviceUid)) {
-                is DeviceMenuAccessResult.Available -> {
-                    deviceTitle = result.title
-                    _events.send(
-                        DevicesEvent.OpenRoute(
-                            route = routeResolver.resolve(result)
-                        )
-                    )
-                }
-                is DeviceMenuAccessResult.Unavailable -> failMenuOpen(
-                    deviceUid = deviceUid,
-                    title = result.title,
-                    reason = result.reason
-                )
-            }
-        } catch (error: Throwable) {
-            if (error is CancellationException) {
-                clearMenuOpen(deviceUid)
-                throw error
-            }
-            failMenuOpen(
-                deviceUid = deviceUid,
-                title = deviceTitle,
-                reason = DeviceMenuUnavailableReason.CURRENT_LIVENESS_NOT_PROVEN
-            )
-        }
-    }
-
-    private suspend fun failMenuOpen(
-        deviceUid: String,
-        title: String,
-        reason: DeviceMenuUnavailableReason
-    ) {
-        clearMenuOpen(deviceUid)
-        _events.send(
-            DevicesEvent.ShowDeviceUnavailable(
-                title = title,
-                messageRes = DeviceMenuUnavailableMessageMapper.messageRes(reason)
-            )
-        )
     }
 
     private fun clearMenuOpen(deviceUid: String) {
@@ -237,5 +205,40 @@ class DevicesViewModel(
         val openingDeviceUid: String? = null,
         val isOpeningDeviceMenu: Boolean = false,
         val isDeletingDevices: Boolean = false
+    )
+}
+
+private class DeviceMenuOpenResolver(
+    private val menuAccessOperations: DeviceMenuAccessOperations,
+    private val routeResolver: DeviceRouteResolver
+) {
+    suspend fun resolve(deviceUid: String): DevicesEvent {
+        var deviceTitle = ""
+        return try {
+            when (val result = menuAccessOperations.resolve(deviceUid)) {
+                is DeviceMenuAccessResult.Available -> {
+                    deviceTitle = result.title
+                    DevicesEvent.OpenRoute(route = routeResolver.resolve(result))
+                }
+                is DeviceMenuAccessResult.Unavailable -> unavailableEvent(
+                    title = result.title,
+                    reason = result.reason
+                )
+            }
+        } catch (error: Throwable) {
+            if (error is CancellationException) throw error
+            unavailableEvent(
+                title = deviceTitle,
+                reason = DeviceMenuUnavailableReason.CURRENT_LIVENESS_NOT_PROVEN
+            )
+        }
+    }
+
+    private fun unavailableEvent(
+        title: String,
+        reason: DeviceMenuUnavailableReason
+    ) = DevicesEvent.ShowDeviceUnavailable(
+        title = title,
+        messageRes = DeviceMenuUnavailableMessageMapper.messageRes(reason)
     )
 }
