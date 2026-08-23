@@ -61,9 +61,7 @@ class TankDetailDevicesViewModel(
                     TankAssignedDeviceItem(
                         deviceUid = device.deviceUid,
                         title = device.displayName,
-                        card = DeviceCompactSnapshotMapper.map(device).copy(
-                            isBusy = currentOpeningDeviceId == device.deviceUid
-                        )
+                        card = DeviceCompactSnapshotMapper.map(device)
                     )
                 }
                 TankDetailDevicesUiState(
