@@ -1,5 +1,6 @@
 package com.aqua.aqualight.data.devices.dosing.v1
 
+import com.aqua.aqualight.application.devices.dosing.DeviceDosingCalibrationSessionPhase
 import com.aqua.aqualight.application.devices.dosing.DeviceDosingChannelOperationResult
 import com.aqua.aqualight.application.devices.dosing.DeviceDosingReservoirSettings
 import com.aqua.aqualight.data.devices.model.DeviceUid
@@ -173,7 +174,66 @@ class DeviceDosingV1StateAdapterTest {
     }
 
     @Test
-    fun `new connection invalidation preserves presentation until authoritative refresh`() =
+    fun `calibration mutation projection stays internal until coherent uptime refresh`() = runTest {
+        val owner = DeviceDosingV1StateOwner()
+        val key = DeviceDosingV1ChannelKey.from("channel1")
+        val initial = fixtureState(revision = 7L)
+        assertEquals(
+            DeviceDosingV1CommitDisposition.APPLIED,
+            owner.commitRefresh(
+                owner.beginRequest(DEVICE_UID, key),
+                GENERATION_ONE,
+                initial.global,
+                initial.channel,
+                initial.progress
+            )
+        )
+        val presentedBefore = owner.reads.observeCalibration(DEVICE_UID, key).first()
+        val mutationJson = DeviceDosingV1TestFixtures.calibrationStart()
+        val detailJson = mutationJson.getJSONObject("channel")
+        detailJson.put("revision", 8L)
+        detailJson.getJSONObject("calibration")
+            .put("state", "running")
+            .put("durationMs", 5_000L)
+        detailJson.getJSONObject("activeRun")
+            .put("active", true)
+            .put("source", "calibration")
+            .put("remainingMs", 5_000L)
+        detailJson.getJSONObject("lastRuntimeEvent")
+            .put("occurredAtMs", 123_556L)
+            .put("kind", "runStarted")
+            .put("source", "calibration")
+        val mutation = DeviceDosingV1MutationParser.parseCalibrationStart(mutationJson)
+
+        assertEquals(
+            DeviceDosingV1CommitDisposition.APPLIED,
+            owner.recordMutation(
+                owner.beginRequest(DEVICE_UID, key),
+                GENERATION_ONE,
+                mutation.channel
+            )
+        )
+
+        assertNull(owner.reads.currentCalibration(DEVICE_UID, key))
+        assertEquals(
+            presentedBefore,
+            owner.reads.observeCalibration(DEVICE_UID, key).first()
+        )
+        val continuation = requireNotNull(
+            owner.reads.committedMutationContinuation(DEVICE_UID, key)
+        )
+        assertEquals(
+            DeviceDosingCalibrationSessionPhase.RUNNING,
+            continuation.calibration.sessionPhase
+        )
+        assertTrue(
+            continuation.calibration.deviceUptimeMs <
+                continuation.calibration.startedAtUptimeMs
+        )
+    }
+
+    @Test
+    fun `new connection invalidation withholds prior session presentation until refresh`() =
         runTest {
             val owner = DeviceDosingV1StateOwner()
             val key = DeviceDosingV1ChannelKey.from("channel1")
@@ -189,9 +249,6 @@ class DeviceDosingV1StateAdapterTest {
                     revisionSeven.progress
                 )
             )
-            val presentedChannel = owner.reads.observeChannel(DEVICE_UID, key).first()
-            val presentedCalibration = owner.reads.observeCalibration(DEVICE_UID, key).first()
-
             assertEquals(
                 DeviceDosingV1InvalidationDisposition.APPLIED,
                 owner.invalidate(DEVICE_UID, key, GENERATION_TWO, revisionHint = null)
@@ -200,11 +257,9 @@ class DeviceDosingV1StateAdapterTest {
             assertNull(owner.reads.currentChannel(DEVICE_UID, key))
             assertNull(owner.reads.currentCalibration(DEVICE_UID, key))
             assertNull(owner.reads.authoritativeRevision(DEVICE_UID, key))
-            assertEquals(presentedChannel, owner.reads.observeChannel(DEVICE_UID, key).first())
-            assertEquals(
-                presentedCalibration,
-                owner.reads.observeCalibration(DEVICE_UID, key).first()
-            )
+            assertNull(owner.reads.observeChannel(DEVICE_UID, key).first())
+            assertNull(owner.reads.observeCalibration(DEVICE_UID, key).first())
+            assertTrue(owner.reads.observeAll(DEVICE_UID).first().isEmpty())
 
             val reconnectRequest = owner.beginRequest(DEVICE_UID, key)
             val revisionThree = fixtureState(revision = 3L)
@@ -219,6 +274,43 @@ class DeviceDosingV1StateAdapterTest {
                 )
             )
             assertEquals(3L, owner.reads.currentChannel(DEVICE_UID, key)?.revision)
+            assertEquals(
+                listOf(3L),
+                owner.reads.currentAll(DEVICE_UID).map { channel -> channel.revision }
+            )
+        }
+
+    @Test
+    fun `same connection invalidation keeps last coherent presentation without write authority`() =
+        runTest {
+            val owner = DeviceDosingV1StateOwner()
+            val key = DeviceDosingV1ChannelKey.from("channel1")
+            val initial = fixtureState(revision = 7L)
+            assertEquals(
+                DeviceDosingV1CommitDisposition.APPLIED,
+                owner.commitRefresh(
+                    owner.beginRequest(DEVICE_UID, key),
+                    GENERATION_ONE,
+                    initial.global,
+                    initial.channel,
+                    initial.progress
+                )
+            )
+            val presentedChannel = owner.reads.observeChannel(DEVICE_UID, key).first()
+            val presentedCalibration = owner.reads.observeCalibration(DEVICE_UID, key).first()
+
+            assertEquals(
+                DeviceDosingV1InvalidationDisposition.APPLIED,
+                owner.invalidate(DEVICE_UID, key, GENERATION_ONE, revisionHint = 8L)
+            )
+
+            assertNull(owner.reads.currentChannel(DEVICE_UID, key))
+            assertNull(owner.reads.currentCalibration(DEVICE_UID, key))
+            assertEquals(presentedChannel, owner.reads.observeChannel(DEVICE_UID, key).first())
+            assertEquals(
+                presentedCalibration,
+                owner.reads.observeCalibration(DEVICE_UID, key).first()
+            )
         }
 
     @Test
@@ -252,7 +344,7 @@ class DeviceDosingV1StateAdapterTest {
             )
         )
         assertNull(owner.reads.currentChannel(DEVICE_UID, key))
-        assertEquals(7L, owner.reads.observeChannel(DEVICE_UID, key).first()?.revision)
+        assertNull(owner.reads.observeChannel(DEVICE_UID, key).first())
     }
 
     @Test
@@ -420,29 +512,17 @@ class DeviceDosingV1StateAdapterTest {
     }
 
     @Test
-    fun `runtime lifecycle boundary invalidates writes without clearing presentation`() = runTest {
+    fun `runtime lifecycle boundary withholds stale presentation and write authority`() = runTest {
         val gateway = ScriptedDosingGateway().apply { enqueueRefresh(revision = 7L) }
         val adapter = DeviceDosingV1StateAdapter(DeviceDosingV1Repository(gateway))
         adapter.channelOperations.refresh(DEVICE_UID.value, SLOT_ID)
-        val presentedChannel = adapter.channelOperations.observe(DEVICE_UID.value, SLOT_ID).first()
-        val presentedCards = adapter.channelOperations.observeAll(DEVICE_UID.value).first()
-        val presentedCalibration = adapter.stateAccess
-            .observeCalibration(DEVICE_UID.value, SLOT_ID)
-            .first()
-
         adapter.consume(DeviceRuntimeLifecycleEvent.Unavailable(DEVICE_UID))
 
         assertNull(adapter.currentChannel(DEVICE_UID.value, SLOT_ID))
         assertNull(adapter.currentCalibration(DEVICE_UID.value, SLOT_ID))
-        assertEquals(
-            presentedChannel,
-            adapter.channelOperations.observe(DEVICE_UID.value, SLOT_ID).first()
-        )
-        assertEquals(presentedCards, adapter.channelOperations.observeAll(DEVICE_UID.value).first())
-        assertEquals(
-            presentedCalibration,
-            adapter.stateAccess.observeCalibration(DEVICE_UID.value, SLOT_ID).first()
-        )
+        assertNull(adapter.channelOperations.observe(DEVICE_UID.value, SLOT_ID).first())
+        assertTrue(adapter.channelOperations.observeAll(DEVICE_UID.value).first().isEmpty())
+        assertNull(adapter.stateAccess.observeCalibration(DEVICE_UID.value, SLOT_ID).first())
     }
 
     private class ScriptedDosingGateway(

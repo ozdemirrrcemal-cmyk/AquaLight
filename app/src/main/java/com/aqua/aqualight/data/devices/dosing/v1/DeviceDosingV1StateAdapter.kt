@@ -84,16 +84,20 @@ internal class DeviceDosingV1StateAdapter(
     )
     private val eventCoordinator = DeviceDosingV1EventCoordinator(
         stateOwner = stateOwner,
-        refreshCoordinator = refreshCoordinator
+        refreshCoordinator = refreshCoordinator,
+        operationGate = operationGate
     )
 
     val channelOperations = DeviceDosingV1ChannelOperationsAdapter(this)
     val calibrationOperations = DeviceDosingV1CalibrationOperationsAdapter(this)
 
-    suspend fun consume(event: DeviceRuntimeTypedEvent): DeviceDosingV1EventResult = eventCoordinator.consume(event)
+    suspend fun consume(event: DeviceRuntimeTypedEvent): DeviceDosingV1EventResult =
+        eventCoordinator.consume(event)
 
     /** Socket lifecycle changes revoke authority without fabricating empty firmware state. */
-    fun consume(event: DeviceRuntimeLifecycleEvent) { stateAccess.invalidateAll(event.deviceUid) }
+    fun consume(event: DeviceRuntimeLifecycleEvent) {
+        stateAccess.invalidateAll(event.deviceUid)
+    }
 
     fun currentChannel(deviceUid: String, slotId: String): DeviceDosingChannelSnapshot? =
         stateAccess.currentChannel(deviceUid, slotId)
@@ -102,4 +106,6 @@ internal class DeviceDosingV1StateAdapter(
         stateAccess.currentCalibration(deviceUid, slotId)
 }
 
-internal class LocalDosingMutationRejection(val reason: DeviceDosingChannelRejection) : IllegalStateException()
+internal class LocalDosingMutationRejection(
+    val reason: DeviceDosingChannelRejection
+) : IllegalStateException()

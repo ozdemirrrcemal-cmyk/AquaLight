@@ -1,11 +1,14 @@
 package com.aqua.aqualight.ui.tabs.devices.detail.dosing.root
 
-import com.aqua.aqualight.application.devices.dosing.DeviceDosingChannelDestination
-import com.aqua.aqualight.application.devices.dosing.DeviceDosingChannelNavigationOperations
-import com.aqua.aqualight.application.devices.dosing.DeviceDosingChannelNavigationTarget
+import com.aqua.aqualight.application.devices.DeviceControlSurfacePreparationOperations
+import com.aqua.aqualight.application.devices.DeviceControlSurfacePreparationRequest
+import com.aqua.aqualight.application.devices.DeviceControlSurfacePreparationResult
 import com.aqua.aqualight.application.devices.DeviceRootOperations
 import com.aqua.aqualight.application.devices.DeviceRootSnapshot
 import com.aqua.aqualight.application.devices.OwnerDeviceAvailability
+import com.aqua.aqualight.application.devices.dosing.DeviceDosingChannelDestination
+import com.aqua.aqualight.application.devices.dosing.DeviceDosingChannelNavigationOperations
+import com.aqua.aqualight.application.devices.dosing.DeviceDosingChannelNavigationTarget
 import com.aqua.aqualight.data.devices.dosing.UnavailableDeviceDosingChannelOperations
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -50,7 +53,8 @@ class DeviceDosingRootNavigationTest {
         val viewModel = DeviceDosingRootViewModel(
             operations = FakeRootOperations(),
             channelNavigationOperations = navigationOperations,
-            channelOperations = UnavailableDeviceDosingChannelOperations
+            channelOperations = UnavailableDeviceDosingChannelOperations,
+            controlSurfacePreparationOperations = FakePreparationOperations
         )
         viewModel.bind(deviceUidText = DEVICE_UID, fallbackTitle = "Dose Pro")
 
@@ -90,6 +94,12 @@ class DeviceDosingRootNavigationTest {
         override fun current(deviceUid: String): DeviceRootSnapshot = snapshot
 
         override fun connect(deviceUid: String): Result<Unit> = Result.success(Unit)
+    }
+
+    private object FakePreparationOperations : DeviceControlSurfacePreparationOperations {
+        override suspend fun prepare(
+            request: DeviceControlSurfacePreparationRequest
+        ): DeviceControlSurfacePreparationResult = DeviceControlSurfacePreparationResult.Ready
     }
 
     private companion object {

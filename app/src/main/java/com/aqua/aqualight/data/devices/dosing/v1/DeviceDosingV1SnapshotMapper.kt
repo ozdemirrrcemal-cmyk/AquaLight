@@ -64,9 +64,9 @@ internal object DeviceDosingV1SnapshotMapper {
     }
 
     /**
-     * Projects the full channel document returned by a durable mutation ACK for presentation.
-     * The previous progress document is retained until readback, so this projection must remain
-     * invalidated and must never be exposed through authoritative reads.
+     * Projects the full channel document returned by a durable mutation ACK for replay-safe
+     * mutation continuation. The previous progress and uptime documents are retained until
+     * readback, so this projection must never be exposed to presentation or authoritative reads.
      */
     fun projectMutation(
         current: DeviceDosingV1MappedSnapshots,

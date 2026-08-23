@@ -20,6 +20,7 @@ import com.aqua.aqualight.ui.tabs.devices.detail.common.DeviceRootMenuMapper
 import com.aqua.aqualight.ui.tabs.devices.detail.common.DeviceRootPresentationMapper
 import com.aqua.aqualight.ui.tabs.devices.detail.dosing.presentation.card.DosingChannelCardUiState
 import com.aqua.aqualight.ui.tabs.devices.detail.dosing.presentation.pump.DosingPumpVisualState
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineStart
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.channels.Channel
@@ -52,6 +53,7 @@ class DeviceDosingRootViewModel(
     private var latestRootSnapshot: DeviceRootSnapshot? = null
     private var validatedCatalogChannels: List<DeviceDosingChannelSlot> = emptyList()
     private var channelSnapshots: List<DeviceDosingChannelSnapshot> = emptyList()
+    private var channelNavigationInProgress: Boolean = false
     private var observeJob: Job? = null
     private var channelDataJob: Job? = null
     private var channelDataRefreshJob: Job? = null
@@ -71,6 +73,7 @@ class DeviceDosingRootViewModel(
             latestRootSnapshot = null
             validatedCatalogChannels = emptyList()
             channelSnapshots = emptyList()
+            channelNavigationInProgress = false
             _uiState.value = emptyState(fallbackTitle, "")
             return
         }
@@ -90,6 +93,7 @@ class DeviceDosingRootViewModel(
         validatedCatalogChannels = emptyList()
         acceptRootSnapshot(operations.current(deviceUid))
         channelSnapshots = emptyList()
+        channelNavigationInProgress = false
         observeJob?.cancel()
         channelDataJob?.cancel()
         channelDataRefreshJob?.cancel()
@@ -126,16 +130,31 @@ class DeviceDosingRootViewModel(
     fun openChannel(slotId: String) {
         val requestedDeviceUid = boundDeviceUid
         val requestedSlotId = slotId.trim()
-        if (requestedDeviceUid.isBlank() || requestedSlotId.isBlank()) return
+        if (
+            requestedDeviceUid.isBlank() ||
+            requestedSlotId.isBlank() ||
+            channelNavigationJob?.isActive == true
+        ) {
+            return
+        }
 
-        channelNavigationJob?.cancel()
+        channelNavigationInProgress = true
+        renderBoundState()
         channelNavigationJob = viewModelScope.launch {
-            val target = channelNavigationOperations.resolveCurrent(
-                deviceUid = requestedDeviceUid,
-                slotId = requestedSlotId
-            )
+            val target = try {
+                channelNavigationOperations.resolveCurrent(
+                    deviceUid = requestedDeviceUid,
+                    slotId = requestedSlotId
+                )
+            } catch (cancellation: CancellationException) {
+                throw cancellation
+            } catch (_: Exception) {
+                null
+            }
             if (boundDeviceUid != requestedDeviceUid) return@launch
 
+            channelNavigationInProgress = false
+            renderBoundState()
             if (target == null) {
                 navigationFailureEventChannel.send(Unit)
             } else {
@@ -146,11 +165,14 @@ class DeviceDosingRootViewModel(
 
     private fun renderBoundState() {
         val deviceUid = boundDeviceUid
-        _uiState.value = latestRootSnapshot?.toRootUiState(
+        val rendered = latestRootSnapshot?.toRootUiState(
             fallbackTitle = fallbackTitle,
             catalogChannels = validatedCatalogChannels,
             snapshots = channelSnapshots
         ) ?: emptyState(fallbackTitle, deviceUid)
+        _uiState.value = rendered.copy(
+            channelNavigationInProgress = channelNavigationInProgress
+        )
     }
 
     /**
@@ -219,6 +241,7 @@ class DeviceDosingRootViewModel(
 data class DeviceDosingRootUiState(
     val title: String = "",
     val deviceUid: String = "",
+    val channelNavigationInProgress: Boolean = false,
     @StringRes val connectionStatusRes: Int = R.string.device_offline,
     val ipText: String = "",
     val firmwareText: String = "",

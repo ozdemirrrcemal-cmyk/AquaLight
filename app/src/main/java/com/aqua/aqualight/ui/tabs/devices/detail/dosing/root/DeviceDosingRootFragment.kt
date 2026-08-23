@@ -19,6 +19,7 @@ import com.aqua.aqualight.databinding.FragmentDeviceDosingRootBinding
 import com.aqua.aqualight.ui.common.header.AquaHeaderAction
 import com.aqua.aqualight.ui.common.header.AquaHeaderConfig
 import com.aqua.aqualight.ui.common.header.setupAquaHeader
+import com.aqua.aqualight.ui.common.loading.setFragmentGlobalLoading
 import com.aqua.aqualight.ui.navigation.AppRouteNavigator
 import kotlinx.coroutines.launch
 
@@ -126,6 +127,7 @@ class DeviceDosingRootFragment : Fragment(R.layout.fragment_device_dosing_root) 
             viewLifecycleOwner.repeatOnLifecycle(Lifecycle.State.STARTED) {
                 viewModel.uiState.collect { state ->
                     if (_binding == null) return@collect
+                    setFragmentGlobalLoading(state.channelNavigationInProgress)
                     setupHeader(
                         title = state.title.ifBlank {
                             args.deviceTitle.ifBlank { getString(R.string.device_family_dosing) }

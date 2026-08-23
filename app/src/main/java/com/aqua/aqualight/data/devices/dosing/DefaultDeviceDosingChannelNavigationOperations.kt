@@ -10,6 +10,7 @@ import com.aqua.aqualight.application.devices.dosing.DeviceDosingChannelNavigati
 import com.aqua.aqualight.application.devices.dosing.DeviceDosingChannelOperationResult
 import com.aqua.aqualight.application.devices.dosing.DeviceDosingChannelOperations
 import com.aqua.aqualight.application.devices.dosing.DeviceDosingChannelSnapshot
+import com.aqua.aqualight.application.devices.dosing.awaitAuthoritative
 import kotlinx.coroutines.flow.first
 
 /** Resolves Dosing navigation from the same authoritative channel boundary used by the screens. */
@@ -31,8 +32,11 @@ internal class DefaultDeviceDosingChannelNavigationOperations(
         deviceUid: String,
         slotId: String
     ): DeviceDosingChannelNavigationTarget? = navigationAddress(deviceUid, slotId)?.let { address ->
-        val refreshed = channelOperations.refresh(address.deviceUid, address.slotId)
-        (refreshed as? DeviceDosingChannelOperationResult.Success)?.snapshot?.let { snapshot ->
+        val authoritative = channelOperations.awaitAuthoritative(
+            address.deviceUid,
+            address.slotId
+        )
+        (authoritative as? DeviceDosingChannelOperationResult.Success)?.snapshot?.let { snapshot ->
             resolveSnapshot(address, snapshot)
         }
     }

@@ -1,5 +1,6 @@
 package com.aqua.aqualight.data.devices.dosing.v1
 
+import com.aqua.aqualight.application.devices.dosing.DeviceDosingAuthoritativeReconciliationOperations
 import com.aqua.aqualight.application.devices.dosing.DeviceDosingChannelCommittedResult
 import com.aqua.aqualight.application.devices.dosing.DeviceDosingChannelOperationResult
 import com.aqua.aqualight.application.devices.dosing.DeviceDosingChannelOperations
@@ -17,6 +18,7 @@ import kotlinx.coroutines.flow.Flow
 internal class DeviceDosingV1ChannelOperationsAdapter(
     private val adapter: DeviceDosingV1StateAdapter
 ) : DeviceDosingChannelOperations,
+    DeviceDosingAuthoritativeReconciliationOperations,
     DeviceDosingProgramRevisionOperations,
     DeviceDosingReservoirRevisionOperations {
 
@@ -42,6 +44,12 @@ internal class DeviceDosingV1ChannelOperationsAdapter(
         slotId: String
     ): DeviceDosingChannelOperationResult =
         adapter.refreshCoordinator.refresh(deviceUid, slotId).toChannelResult()
+
+    override suspend fun awaitAuthoritative(
+        deviceUid: String,
+        slotId: String
+    ): DeviceDosingChannelOperationResult =
+        adapter.refreshCoordinator.awaitAuthoritative(deviceUid, slotId).toChannelResult()
 
     override suspend fun refreshAll(deviceUid: String): Boolean =
         adapter.refreshCoordinator.refreshAll(deviceUid)

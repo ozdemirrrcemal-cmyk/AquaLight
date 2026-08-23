@@ -23,6 +23,16 @@ internal class DeviceDosingV1RefreshCoordinator(
     suspend fun refresh(deviceUid: String, slotId: String): DeviceDosingV1RefreshResult =
         refresh(dosingV1Address(deviceUid, slotId))
 
+    /**
+     * Returns a current coherent snapshot without issuing redundant I/O. When the channel is
+     * reconciling, callers join the shared per-channel serialization domain; after acquiring it we
+     * re-check authority before deciding whether another readback is actually required.
+     */
+    suspend fun awaitAuthoritative(
+        deviceUid: String,
+        slotId: String
+    ): DeviceDosingV1RefreshResult = awaitAuthoritative(dosingV1Address(deviceUid, slotId))
+
     suspend fun refreshAll(deviceUid: String): Boolean {
         val uid = DeviceUid(deviceUid.trim())
         val pending = CompletableDeferred<Boolean>()
@@ -57,13 +67,33 @@ internal class DeviceDosingV1RefreshCoordinator(
         return allAuthoritative
     }
 
-    suspend fun refresh(address: DeviceDosingV1Address): DeviceDosingV1RefreshResult {
+    suspend fun refresh(address: DeviceDosingV1Address): DeviceDosingV1RefreshResult =
+        runSingleFlight(address, acceptCurrentAfterGate = false)
+
+    private suspend fun awaitAuthoritative(
+        address: DeviceDosingV1Address
+    ): DeviceDosingV1RefreshResult = stateAccess.currentState(address)
+        ?.let(DeviceDosingV1RefreshResult::Success)
+        ?: runSingleFlight(address, acceptCurrentAfterGate = true)
+
+    private suspend fun runSingleFlight(
+        address: DeviceDosingV1Address,
+        acceptCurrentAfterGate: Boolean
+    ): DeviceDosingV1RefreshResult {
         val pending = CompletableDeferred<DeviceDosingV1RefreshResult>()
         val existing = inFlightRefreshes.putIfAbsent(address, pending)
         if (existing != null) return existing.await()
 
         return try {
-            val result = operationGate.withChannel(address) { refreshWithinGate(address) }
+            val result = operationGate.withChannel(address) {
+                if (acceptCurrentAfterGate) {
+                    stateAccess.currentState(address)
+                        ?.let(DeviceDosingV1RefreshResult::Success)
+                        ?: refreshWithinGate(address)
+                } else {
+                    refreshWithinGate(address)
+                }
+            }
             pending.complete(result)
             result
         } catch (cancellation: CancellationException) {

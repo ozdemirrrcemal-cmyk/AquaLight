@@ -7,7 +7,7 @@ import org.junit.Test
 class DeviceDosingPrimeHoldStabilityContractTest {
 
     @Test
-    fun `transient dosing invalidation keeps presentation stable but authoritative reads fail closed`() {
+    fun `reconciliation separates coherent presentation continuation and authority`() {
         val source = source(
             "app/src/main/java/com/aqua/aqualight/data/devices/dosing/v1/" +
                 "DeviceDosingV1StateOwner.kt"
@@ -15,18 +15,30 @@ class DeviceDosingPrimeHoldStabilityContractTest {
         val invalidate = source.substringAfter("fun invalidate(")
             .substringBefore("fun setLowLevelAlertIntent(")
         val reads = source.substringAfter("private class DefaultDeviceDosingV1StateReadAccess(")
+        val lifecycle = source.substringAfter("fun invalidateAll(")
+            .substringBefore("private fun prepareDevice(")
 
-        assertTrue(invalidate.contains("channel = current?.channel"))
-        assertTrue(invalidate.contains("calibration = current?.calibration"))
+        assertTrue(source.contains("val coherentChannel: DeviceDosingChannelSnapshot?"))
+        assertTrue(source.contains("val coherentCalibration: DeviceDosingCalibrationSnapshot?"))
+        assertTrue(
+            source.contains(
+                "val committedMutation: DeviceDosingV1CommittedMutationContinuation? = null"
+            )
+        )
+        assertTrue(source.contains("OwnedDosingChannelAuthority.AUTHORITATIVE"))
+        assertTrue(source.contains("OwnedDosingChannelAuthority.RECONCILING"))
+        assertTrue(source.contains("OwnedDosingChannelAuthority.CONNECTION_STALE"))
+        assertTrue(invalidate.contains("committedMutation = preservedContinuation"))
+        assertTrue(
+            invalidate.contains(
+                "revisionHint == null || revisionHint <= continuation.channel.revision"
+            )
+        )
+        assertTrue(lifecycle.contains("OwnedDosingChannelAuthority.CONNECTION_STALE"))
         assertTrue(reads.contains("?.presentationChannel()"))
         assertTrue(reads.contains("?.presentationCalibration()"))
         assertTrue(reads.contains("?.authoritativeChannel()"))
         assertTrue(reads.contains("?.authoritativeCalibration()"))
-        assertTrue(
-            reads.contains(
-                "state.authority == OwnedDosingChannelAuthority.AUTHORITATIVE"
-            )
-        )
     }
 
     @Test
