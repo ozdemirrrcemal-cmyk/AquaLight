@@ -3,6 +3,7 @@ package com.aqua.aqualight.composition
 import android.content.Context
 import androidx.lifecycle.ViewModel
 import com.aqua.aqualight.BuildConfig
+import com.aqua.aqualight.application.devices.DeviceMenuOpenUseCase
 import com.aqua.aqualight.application.notifications.NotificationPreferenceUseCase
 import com.aqua.aqualight.application.user.UserProfileOperations
 import com.aqua.aqualight.data.aquarium.DefaultAquariumTankOperations
@@ -103,7 +104,7 @@ internal class OwnerViewModelFactory(
             DevicesViewModel::class.java ->
                 DevicesViewModel(
                     operations = createOwnerDevicesOperations(graph, repository, assignments),
-                    menuAccessOperations = DefaultDeviceMenuAccessOperations.create(repository),
+                    menuOpenUseCase = createDeviceMenuOpenUseCase(graph, repository),
                     routeResolver = DeviceRouteResolver()
                 )
 
@@ -201,7 +202,9 @@ internal class OwnerViewModelFactory(
                 DeviceDosingRootViewModel(
                     operations = DefaultDeviceRootOperations(repository),
                     channelNavigationOperations = dosing.navigationOperations,
-                    channelOperations = dosing.channelOperations
+                    channelOperations = dosing.channelOperations,
+                    controlSurfacePreparationOperations =
+                        dosing.controlSurfacePreparationOperations
                 )
             }
 
@@ -248,7 +251,7 @@ internal class OwnerViewModelFactory(
                         assignmentRepository = assignments,
                         devicesRepository = repository
                     ),
-                    menuAccessOperations = DefaultDeviceMenuAccessOperations.create(repository),
+                    menuOpenUseCase = createDeviceMenuOpenUseCase(graph, repository),
                     routeResolver = DeviceRouteResolver()
                 )
 
@@ -266,6 +269,15 @@ internal class OwnerViewModelFactory(
         @Suppress("UNCHECKED_CAST")
         return viewModel as T
     }
+
+    private fun createDeviceMenuOpenUseCase(
+        graph: OwnerDependencyGraph,
+        repository: DevicesRepository
+    ): DeviceMenuOpenUseCase = DeviceMenuOpenUseCase(
+        menuAccessOperations = DefaultDeviceMenuAccessOperations.create(repository),
+        controlSurfacePreparationOperations =
+            graph.dosingOperations.controlSurfacePreparationOperations
+    )
 
     private fun createOwnerDevicesOperations(
         graph: OwnerDependencyGraph,

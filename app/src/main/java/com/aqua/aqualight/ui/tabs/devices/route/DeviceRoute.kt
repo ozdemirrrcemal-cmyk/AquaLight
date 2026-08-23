@@ -1,20 +1,19 @@
 package com.aqua.aqualight.ui.tabs.devices.route
 
 import androidx.annotation.StringRes
-import com.aqua.aqualight.R
 
 /**
  * Navigation decision produced from firmware supplied product family/capabilities.
  *
- * UI must route by deviceUid and resolved firmware metadata, not by local numeric ids or model-name
- * guesses. Real runtime root screens are connected gradually; this route object is the stable
- * boundary between the Devices list and the Navigation graph.
+ * Supported control surfaces navigate by stable device identity only. Their dynamic user-visible
+ * title belongs to the central device snapshot and must never be copied into navigation as a second
+ * state authority. [unsupportedTitle] exists only for the unsupported fallback screen, which has no
+ * supported device-root state holder of its own.
  */
 data class DeviceRoute(
     val deviceUid: String,
-    val title: String,
     val target: DeviceRouteTarget,
-    @StringRes val titleRes: Int = R.string.device_menu_default_title,
+    val unsupportedTitle: String = "",
     @StringRes val messageRes: Int = 0
 )
 

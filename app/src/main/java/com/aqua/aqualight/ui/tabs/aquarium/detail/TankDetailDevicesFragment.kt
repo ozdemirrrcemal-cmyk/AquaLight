@@ -33,7 +33,7 @@ class TankDetailDevicesFragment : Fragment(R.layout.fragment_tank_detail_devices
 
         fun onTankDetailDeviceClicked(
             route: DeviceRoute
-        )
+        ): Boolean
     }
 
     private val viewModel: TankDetailDevicesViewModel by viewModels {
@@ -130,7 +130,16 @@ class TankDetailDevicesFragment : Fragment(R.layout.fragment_tank_detail_devices
                     viewModel.events.collect { event ->
                         when (event) {
                             is TankDetailDevicesEvent.OpenDeviceRoute -> {
-                                parentHost()?.onTankDetailDeviceClicked(event.route)
+                                var committed = false
+                                try {
+                                    committed =
+                                        parentHost()?.onTankDetailDeviceClicked(event.route) == true
+                                } finally {
+                                    viewModel.onDeviceNavigationFinished(
+                                        deviceUid = event.route.deviceUid,
+                                        committed = committed
+                                    )
+                                }
                             }
 
                             is TankDetailDevicesEvent.ShowDeviceUnavailable -> {
@@ -162,23 +171,28 @@ class TankDetailDevicesFragment : Fragment(R.layout.fragment_tank_detail_devices
     private fun renderState(
         state: TankDetailDevicesUiState
     ) {
-        val globalBusy = state.isLoading || state.isRemovingDevice
+        val operationBusy = state.isLoading || state.isRemovingDevice
+        val interactionBusy = operationBusy || state.isOpeningDeviceMenu
 
         adapter.submitList(state.devices)
-        binding.rvAssignedDevices.isEnabled = !globalBusy
-        binding.btnAddDevice.isEnabled =
-            !globalBusy && !state.isOpeningDeviceMenu
+        binding.rvAssignedDevices.isEnabled = !interactionBusy
+        binding.btnAddDevice.isEnabled = !interactionBusy
         binding.rvAssignedDevices.isVisible = !state.isLoading && state.isEmpty.not()
         binding.cardDevicesEmpty.isVisible = !state.isLoading && state.isEmpty
         baseActivity()?.setGlobalLoading(
-            ownerKey = TANK_DEVICE_LOADING_OWNER,
-            show = globalBusy
+            ownerKey = TANK_DEVICE_OPERATION_LOADING_OWNER,
+            show = operationBusy
+        )
+        baseActivity()?.setGlobalLoading(
+            ownerKey = TANK_DEVICE_MENU_LOADING_OWNER,
+            show = state.isOpeningDeviceMenu
         )
     }
 
     private fun showDeviceUnavailable(
         event: TankDetailDevicesEvent.ShowDeviceUnavailable
     ) {
+        baseActivity()?.clearGlobalLoading(TANK_DEVICE_MENU_LOADING_OWNER)
         baseActivity()?.showDeviceOfflineDialog(
             deviceTitle = event.title,
             messageRes = event.messageRes
@@ -229,7 +243,9 @@ class TankDetailDevicesFragment : Fragment(R.layout.fragment_tank_detail_devices
     }
 
     override fun onDestroyView() {
-        baseActivity()?.clearGlobalLoading(TANK_DEVICE_LOADING_OWNER)
+        viewModel.onNavigationHostDestroyed()
+        baseActivity()?.clearGlobalLoading(TANK_DEVICE_OPERATION_LOADING_OWNER)
+        baseActivity()?.clearGlobalLoading(TANK_DEVICE_MENU_LOADING_OWNER)
         binding.rvAssignedDevices.adapter = null
         _binding = null
         super.onDestroyView()
@@ -239,8 +255,10 @@ class TankDetailDevicesFragment : Fragment(R.layout.fragment_tank_detail_devices
 
         private const val ARG_TANK_ID = "tankId"
         private const val REMOVE_DEVICE_REQUEST_KEY = "tank_detail_remove_device_result"
-        private const val TANK_DEVICE_LOADING_OWNER =
+        private const val TANK_DEVICE_OPERATION_LOADING_OWNER =
             "TankDetailDevicesFragment.DeviceOperation"
+        private const val TANK_DEVICE_MENU_LOADING_OWNER =
+            "TankDetailDevicesFragment.MenuOpen"
 
         fun newInstance(
             tankId: Long

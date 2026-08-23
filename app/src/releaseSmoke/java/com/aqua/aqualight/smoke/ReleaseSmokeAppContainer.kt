@@ -6,6 +6,10 @@ import androidx.lifecycle.ViewModelProvider
 import com.aqua.aqualight.application.auth.AccountSecurityOperations
 import com.aqua.aqualight.application.auth.AuthenticatedOwnerIdentity
 import com.aqua.aqualight.application.auth.SessionExitOperations
+import com.aqua.aqualight.application.devices.DeviceControlSurfacePreparationOperations
+import com.aqua.aqualight.application.devices.DeviceControlSurfacePreparationRequest
+import com.aqua.aqualight.application.devices.DeviceControlSurfacePreparationResult
+import com.aqua.aqualight.application.devices.DeviceMenuOpenUseCase
 import com.aqua.aqualight.application.devices.provisioning.ProvisioningDraftOperations
 import com.aqua.aqualight.application.feedback.FeedbackSubmissionUseCase
 import com.aqua.aqualight.application.notifications.NotificationDispatchUseCase
@@ -132,6 +136,10 @@ private class ReleaseSmokeViewModelFactory(
     )
     private val maintenanceTextResolver = AndroidMaintenanceTextResolver(appContext)
     private val appTextResolver = AndroidAppTextResolver(appContext)
+    private val deviceMenuOpenUseCase = DeviceMenuOpenUseCase(
+        menuAccessOperations = DefaultDeviceMenuAccessOperations.create(devicesRepository),
+        controlSurfacePreparationOperations = ReleaseSmokeControlSurfacePreparationOperations
+    )
 
     override fun <T : ViewModel> create(modelClass: Class<T>): T {
         val viewModel = createPrimaryViewModel(modelClass)
@@ -198,7 +206,7 @@ private class ReleaseSmokeViewModelFactory(
                     assignmentRepository = assignmentRepository
                 )
             ),
-            menuAccessOperations = DefaultDeviceMenuAccessOperations.create(devicesRepository),
+            menuOpenUseCase = deviceMenuOpenUseCase,
             routeResolver = DeviceRouteResolver()
         )
 
@@ -258,7 +266,7 @@ private class ReleaseSmokeViewModelFactory(
                     assignmentRepository = assignmentRepository,
                     devicesRepository = devicesRepository
                 ),
-                menuAccessOperations = DefaultDeviceMenuAccessOperations.create(devicesRepository),
+                menuOpenUseCase = deviceMenuOpenUseCase,
                 routeResolver = DeviceRouteResolver()
             )
 
@@ -276,6 +284,13 @@ private class ReleaseSmokeViewModelFactory(
     private companion object {
         const val SMOKE_OWNER_UID = "release-smoke-owner"
     }
+}
+
+private object ReleaseSmokeControlSurfacePreparationOperations :
+    DeviceControlSurfacePreparationOperations {
+    override suspend fun prepare(
+        request: DeviceControlSurfacePreparationRequest
+    ): DeviceControlSurfacePreparationResult = DeviceControlSurfacePreparationResult.Ready
 }
 
 private class SmokeUserProfileOperations : UserProfileOperations {

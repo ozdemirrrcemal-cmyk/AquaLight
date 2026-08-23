@@ -19,15 +19,12 @@ class DeviceLightRootViewModel(
     private var boundDeviceUid: String = ""
     private var observeJob: Job? = null
 
-    fun bind(
-        deviceUidText: String,
-        fallbackTitle: String
-    ) {
+    fun bind(deviceUidText: String) {
         val deviceUid = deviceUidText.trim()
         if (deviceUid.isBlank()) {
             observeJob?.cancel()
             boundDeviceUid = ""
-            _uiState.value = DeviceLightRootUiState(title = fallbackTitle)
+            _uiState.value = DeviceLightRootUiState()
             return
         }
         if (boundDeviceUid == deviceUid) return
@@ -35,19 +32,13 @@ class DeviceLightRootViewModel(
         boundDeviceUid = deviceUid
         observeJob?.cancel()
         _uiState.value = DeviceLightRootUiState(
-            title = rootOperations.current(deviceUid)
-                ?.title
-                .orEmpty()
-                .ifBlank { fallbackTitle }
+            title = rootOperations.current(deviceUid)?.title.orEmpty()
         )
         rootOperations.connect(deviceUid)
         observeJob = viewModelScope.launch {
             rootOperations.observe(deviceUid).collect { snapshot ->
                 _uiState.value = DeviceLightRootUiState(
-                    title = snapshot
-                        ?.title
-                        .orEmpty()
-                        .ifBlank { fallbackTitle }
+                    title = snapshot?.title.orEmpty()
                 )
             }
         }

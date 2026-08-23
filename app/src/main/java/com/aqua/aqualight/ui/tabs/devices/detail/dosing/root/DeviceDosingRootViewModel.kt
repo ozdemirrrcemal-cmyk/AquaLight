@@ -4,10 +4,12 @@ import androidx.annotation.StringRes
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.aqua.aqualight.R
+import com.aqua.aqualight.application.devices.DeviceControlSurfacePreparationOperations
 import com.aqua.aqualight.application.devices.DeviceDosingChannelSlot
 import com.aqua.aqualight.application.devices.DeviceRootCatalogState
 import com.aqua.aqualight.application.devices.DeviceRootOperations
 import com.aqua.aqualight.application.devices.DeviceRootSnapshot
+import com.aqua.aqualight.application.devices.OwnerDeviceFamily
 import com.aqua.aqualight.application.devices.dosing.DeviceDosingChannelNavigationOperations
 import com.aqua.aqualight.application.devices.dosing.DeviceDosingChannelNavigationTarget
 import com.aqua.aqualight.application.devices.dosing.DeviceDosingChannelOperations
@@ -18,6 +20,7 @@ import com.aqua.aqualight.ui.tabs.devices.detail.common.DeviceRootMenuMapper
 import com.aqua.aqualight.ui.tabs.devices.detail.common.DeviceRootPresentationMapper
 import com.aqua.aqualight.ui.tabs.devices.detail.dosing.presentation.card.DosingChannelCardUiState
 import com.aqua.aqualight.ui.tabs.devices.detail.dosing.presentation.pump.DosingPumpVisualState
+import kotlinx.coroutines.CoroutineStart
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.Flow
@@ -30,7 +33,8 @@ import kotlinx.coroutines.launch
 class DeviceDosingRootViewModel(
     private val operations: DeviceRootOperations,
     private val channelNavigationOperations: DeviceDosingChannelNavigationOperations,
-    private val channelOperations: DeviceDosingChannelOperations
+    private val channelOperations: DeviceDosingChannelOperations,
+    private val controlSurfacePreparationOperations: DeviceControlSurfacePreparationOperations
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(DeviceDosingRootUiState())
@@ -44,7 +48,6 @@ class DeviceDosingRootViewModel(
     val navigationFailureEvents: Flow<Unit> = navigationFailureEventChannel.receiveAsFlow()
 
     private var boundDeviceUid: String = ""
-    private var fallbackTitle: String = ""
     private var latestRootSnapshot: DeviceRootSnapshot? = null
     private var validatedCatalogChannels: List<DeviceDosingChannelSlot> = emptyList()
     private var channelSnapshots: List<DeviceDosingChannelSnapshot> = emptyList()
@@ -53,21 +56,10 @@ class DeviceDosingRootViewModel(
     private var channelDataRefreshJob: Job? = null
     private var channelNavigationJob: Job? = null
 
-    fun bind(
-        deviceUidText: String,
-        fallbackTitle: String
-    ) {
+    fun bind(deviceUidText: String) {
         val deviceUid = deviceUidText.trim()
         if (deviceUid.isBlank()) {
-            observeJob?.cancel()
-            channelDataJob?.cancel()
-            channelDataRefreshJob?.cancel()
-            channelNavigationJob?.cancel()
-            boundDeviceUid = ""
-            latestRootSnapshot = null
-            validatedCatalogChannels = emptyList()
-            channelSnapshots = emptyList()
-            _uiState.value = emptyState(fallbackTitle, "")
+            clearBinding()
             return
         }
         if (boundDeviceUid == deviceUid) {
@@ -75,17 +67,27 @@ class DeviceDosingRootViewModel(
             return
         }
 
+        val preparedHandoff = controlSurfacePreparationOperations.consumeFreshPreparation(
+            deviceUid = deviceUid,
+            family = OwnerDeviceFamily.DOSING
+        )
+
         boundDeviceUid = deviceUid
-        this.fallbackTitle = fallbackTitle
         validatedCatalogChannels = emptyList()
         acceptRootSnapshot(operations.current(deviceUid))
-        channelSnapshots = emptyList()
         observeJob?.cancel()
         channelDataJob?.cancel()
         channelDataRefreshJob?.cancel()
         channelNavigationJob?.cancel()
-        renderBoundState()
+
+        // Reconnect/reuse is resolved by the central repository. The preparation marker is never
+        // accepted as proof by itself: after this call we re-read the authoritative channel view.
         operations.connect(deviceUid)
+        val authoritativeAtBind = currentAuthoritativeSurface(deviceUid)
+        val preparedSurfaceStillCurrent = preparedHandoff && authoritativeAtBind.isNotEmpty()
+        channelSnapshots = authoritativeAtBind
+        renderBoundState()
+
         observeJob = viewModelScope.launch {
             operations.observe(deviceUid).collect { snapshot ->
                 if (boundDeviceUid != deviceUid) return@collect
@@ -93,14 +95,16 @@ class DeviceDosingRootViewModel(
                 renderBoundState()
             }
         }
-        channelDataJob = viewModelScope.launch {
+        channelDataJob = viewModelScope.launch(start = CoroutineStart.UNDISPATCHED) {
             channelOperations.observeAll(deviceUid).collect { snapshots ->
                 if (boundDeviceUid != deviceUid) return@collect
                 channelSnapshots = snapshots
                 renderBoundState()
             }
         }
-        refreshAuthoritative()
+        if (!preparedSurfaceStillCurrent) {
+            refreshAuthoritative()
+        }
     }
 
     fun refreshAuthoritative() {
@@ -132,19 +136,45 @@ class DeviceDosingRootViewModel(
         }
     }
 
+    private fun clearBinding() {
+        observeJob?.cancel()
+        channelDataJob?.cancel()
+        channelDataRefreshJob?.cancel()
+        channelNavigationJob?.cancel()
+        boundDeviceUid = ""
+        latestRootSnapshot = null
+        validatedCatalogChannels = emptyList()
+        channelSnapshots = emptyList()
+        _uiState.value = emptyState("")
+    }
+
+    private fun currentAuthoritativeSurface(
+        deviceUid: String
+    ): List<DeviceDosingChannelSnapshot> {
+        if (validatedCatalogChannels.isEmpty()) return emptyList()
+        val current = validatedCatalogChannels.mapNotNull { slot ->
+            channelOperations.current(deviceUid, slot.id.value)
+        }
+        val presentation = resolveDosingRootChannelPresentation(
+            deviceUid = deviceUid,
+            catalogChannels = validatedCatalogChannels,
+            snapshots = current
+        )
+        return current.takeIf { presentation.authoritative } ?: emptyList()
+    }
+
     private fun renderBoundState() {
         val deviceUid = boundDeviceUid
         _uiState.value = latestRootSnapshot?.toRootUiState(
-            fallbackTitle = fallbackTitle,
             catalogChannels = validatedCatalogChannels,
             snapshots = channelSnapshots
-        ) ?: emptyState(fallbackTitle, deviceUid)
+        ) ?: emptyState(deviceUid)
     }
 
     /**
-     * Runtime metadata is write authority, not a command to erase an already validated screen.
-     * Keep the last validated topology for presentation across a transient reconnect; route and
-     * mutation authorization continue to read the latest fail-closed root snapshot.
+     * Runtime metadata is write authority, not a command to erase an already validated topology.
+     * Keep the last validated channel catalog across a transient reconnect while the root snapshot
+     * remains the sole source of dynamic device identity, including the user-defined title.
      */
     private fun acceptRootSnapshot(snapshot: DeviceRootSnapshot?) {
         latestRootSnapshot = snapshot
@@ -153,8 +183,7 @@ class DeviceDosingRootViewModel(
         }
     }
 
-    private fun emptyState(title: String, deviceUid: String) = DeviceDosingRootUiState(
-        title = title,
+    private fun emptyState(deviceUid: String) = DeviceDosingRootUiState(
         deviceUid = deviceUid,
         connectionStatusRes = R.string.device_offline,
         pumpCount = UNKNOWN_DOSING_PUMP_COUNT,
@@ -166,7 +195,6 @@ class DeviceDosingRootViewModel(
     )
 
     private fun DeviceRootSnapshot.toRootUiState(
-        fallbackTitle: String,
         catalogChannels: List<DeviceDosingChannelSlot>,
         snapshots: List<DeviceDosingChannelSnapshot>
     ): DeviceDosingRootUiState {
@@ -177,7 +205,7 @@ class DeviceDosingRootViewModel(
             snapshots = snapshots
         )
         return DeviceDosingRootUiState(
-            title = title.ifBlank { fallbackTitle },
+            title = title,
             deviceUid = deviceUid,
             connectionStatusRes = DeviceRootPresentationMapper.availabilityLabelRes(this),
             ipText = ipAddress,

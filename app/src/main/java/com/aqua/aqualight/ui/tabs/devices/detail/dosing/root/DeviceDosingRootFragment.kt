@@ -31,27 +31,32 @@ class DeviceDosingRootFragment : Fragment(R.layout.fragment_device_dosing_root) 
 
     private var _binding: FragmentDeviceDosingRootBinding? = null
     private val binding get() = _binding!!
+    private var hasStartedOnce = false
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
         _binding = FragmentDeviceDosingRootBinding.bind(view)
 
-        setupHeader(title = args.deviceTitle.ifBlank { getString(R.string.device_family_dosing) })
+        viewModel.bind(args.deviceUid)
+        setupHeader(
+            title = viewModel.uiState.value.title.ifBlank {
+                getString(R.string.device_family_dosing)
+            }
+        )
         setupPumpContent()
         observeHeaderTitle()
         observeChannelNavigation()
         observeChannelNavigationFailures()
-
-        viewModel.bind(
-            deviceUidText = args.deviceUid,
-            fallbackTitle = args.deviceTitle
-        )
     }
 
     override fun onStart() {
         super.onStart()
-        viewModel.refreshAuthoritative()
+        if (hasStartedOnce) {
+            viewModel.refreshAuthoritative()
+        } else {
+            hasStartedOnce = true
+        }
     }
 
     private fun setupHeader(title: String) {
@@ -133,9 +138,7 @@ class DeviceDosingRootFragment : Fragment(R.layout.fragment_device_dosing_root) 
                 viewModel.uiState.collect { state ->
                     if (_binding == null) return@collect
                     setupHeader(
-                        title = state.title.ifBlank {
-                            args.deviceTitle.ifBlank { getString(R.string.device_family_dosing) }
-                        }
+                        title = state.title.ifBlank { getString(R.string.device_family_dosing) }
                     )
                 }
             }

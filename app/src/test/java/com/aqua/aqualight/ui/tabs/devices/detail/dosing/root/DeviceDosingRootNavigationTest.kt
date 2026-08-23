@@ -1,11 +1,14 @@
 package com.aqua.aqualight.ui.tabs.devices.detail.dosing.root
 
-import com.aqua.aqualight.application.devices.dosing.DeviceDosingChannelDestination
-import com.aqua.aqualight.application.devices.dosing.DeviceDosingChannelNavigationOperations
-import com.aqua.aqualight.application.devices.dosing.DeviceDosingChannelNavigationTarget
+import com.aqua.aqualight.application.devices.DeviceControlSurfacePreparationOperations
+import com.aqua.aqualight.application.devices.DeviceControlSurfacePreparationRequest
+import com.aqua.aqualight.application.devices.DeviceControlSurfacePreparationResult
 import com.aqua.aqualight.application.devices.DeviceRootOperations
 import com.aqua.aqualight.application.devices.DeviceRootSnapshot
 import com.aqua.aqualight.application.devices.OwnerDeviceAvailability
+import com.aqua.aqualight.application.devices.dosing.DeviceDosingChannelDestination
+import com.aqua.aqualight.application.devices.dosing.DeviceDosingChannelNavigationOperations
+import com.aqua.aqualight.application.devices.dosing.DeviceDosingChannelNavigationTarget
 import com.aqua.aqualight.data.devices.dosing.UnavailableDeviceDosingChannelOperations
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -50,15 +53,41 @@ class DeviceDosingRootNavigationTest {
         val viewModel = DeviceDosingRootViewModel(
             operations = FakeRootOperations(),
             channelNavigationOperations = navigationOperations,
-            channelOperations = UnavailableDeviceDosingChannelOperations
+            channelOperations = UnavailableDeviceDosingChannelOperations,
+            controlSurfacePreparationOperations = FakePreparationOperations()
         )
-        viewModel.bind(deviceUidText = DEVICE_UID, fallbackTitle = "Dose Pro")
+        viewModel.bind(deviceUidText = DEVICE_UID)
 
         viewModel.openChannel(" $SLOT_ID ")
 
         assertEquals(target, viewModel.navigationEvents.first())
         assertEquals(DEVICE_UID, navigationOperations.requestedDeviceUid)
         assertEquals(SLOT_ID, navigationOperations.requestedSlotId)
+    }
+
+    @Test
+    fun `dosing header starts from and follows dynamic device title`() = runTest(dispatcher) {
+        val rootOperations = FakeRootOperations(initialTitle = "Dose Pro 4")
+        val viewModel = DeviceDosingRootViewModel(
+            operations = rootOperations,
+            channelNavigationOperations = FakeChannelNavigationOperations(null),
+            channelOperations = UnavailableDeviceDosingChannelOperations,
+            controlSurfacePreparationOperations = FakePreparationOperations()
+        )
+
+        viewModel.bind(deviceUidText = DEVICE_UID)
+
+        assertEquals("Dose Pro 4", viewModel.uiState.value.title)
+
+        rootOperations.publishTitle("My Doser")
+
+        assertEquals("My Doser", viewModel.uiState.value.title)
+    }
+
+    private class FakePreparationOperations : DeviceControlSurfacePreparationOperations {
+        override suspend fun prepare(
+            request: DeviceControlSurfacePreparationRequest
+        ): DeviceControlSurfacePreparationResult = DeviceControlSurfacePreparationResult.Ready
     }
 
     private class FakeChannelNavigationOperations(
@@ -77,19 +106,26 @@ class DeviceDosingRootNavigationTest {
         }
     }
 
-    private class FakeRootOperations : DeviceRootOperations {
-        private val snapshot = DeviceRootSnapshot(
-            deviceUid = DEVICE_UID,
-            title = "Dose Pro",
-            availability = OwnerDeviceAvailability.REACHABLE
-        )
-        private val snapshots = MutableStateFlow<DeviceRootSnapshot?>(snapshot)
+    private class FakeRootOperations(
+        initialTitle: String = "Dose Pro"
+    ) : DeviceRootOperations {
+        private val snapshots = MutableStateFlow<DeviceRootSnapshot?>(snapshot(initialTitle))
 
         override fun observe(deviceUid: String): Flow<DeviceRootSnapshot?> = snapshots
 
-        override fun current(deviceUid: String): DeviceRootSnapshot = snapshot
+        override fun current(deviceUid: String): DeviceRootSnapshot? = snapshots.value
 
         override fun connect(deviceUid: String): Result<Unit> = Result.success(Unit)
+
+        fun publishTitle(title: String) {
+            snapshots.value = snapshot(title)
+        }
+
+        private fun snapshot(title: String) = DeviceRootSnapshot(
+            deviceUid = DEVICE_UID,
+            title = title,
+            availability = OwnerDeviceAvailability.REACHABLE
+        )
     }
 
     private companion object {

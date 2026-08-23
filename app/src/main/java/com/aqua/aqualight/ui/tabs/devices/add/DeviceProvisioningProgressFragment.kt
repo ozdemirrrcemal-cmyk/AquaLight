@@ -236,23 +236,19 @@ class DeviceProvisioningProgressFragment : Fragment(R.layout.fragment_device_pro
     private fun ProvisionedDevice.toDevicesDestination(): NavDirections = when (family) {
         OwnerDeviceFamily.LIGHT ->
             DevicesFragmentDirections.actionDevicesFragmentToDeviceLightRootFragment(
-                deviceUid = deviceUid,
-                deviceTitle = title
+                deviceUid = deviceUid
             )
         OwnerDeviceFamily.DOSING ->
             DevicesFragmentDirections.actionDevicesFragmentToDeviceDosingRootFragment(
-                deviceUid = deviceUid,
-                deviceTitle = title
+                deviceUid = deviceUid
             )
         OwnerDeviceFamily.TIMER ->
             DevicesFragmentDirections.actionDevicesFragmentToDeviceTimerRootFragment(
-                deviceUid = deviceUid,
-                deviceTitle = title
+                deviceUid = deviceUid
             )
         OwnerDeviceFamily.COOLING ->
             DevicesFragmentDirections.actionDevicesFragmentToDeviceCoolingRootFragment(
-                deviceUid = deviceUid,
-                deviceTitle = title
+                deviceUid = deviceUid
             )
         OwnerDeviceFamily.UNKNOWN ->
             DevicesFragmentDirections.actionDevicesFragmentToUnsupportedDeviceFragment(
