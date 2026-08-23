@@ -32,27 +32,6 @@ internal object DeviceDosingV1CalibrationSnapshotMapper {
         manualActive = detail.activeRun.active && detail.activeRun.remainingMillis > 0L
     )
 
-    fun project(
-        current: DeviceDosingCalibrationSnapshot,
-        detail: DeviceDosingV1ChannelDetail
-    ): DeviceDosingCalibrationSnapshot = current.copy(
-        channelNumber = detail.index + 1,
-        channelTitle = detail.effectiveName,
-        calibrated = detail.calibration.confirmed,
-        lastCalibratedAt = detail.calibration.lastCalibratedAt,
-        sessionPhase = calibrationPhase(detail.calibration.state),
-        startedAtUptimeMs = calibrationStartedAtUptime(detail),
-        durationMs = detail.calibration.durationMillis,
-        measuredMl = detail.calibration.measuredMilliliters,
-        pendingDoseMsPerMl = DeviceDosingV1AmountMapper.toExactLong(
-            detail.calibration.pendingDoseMillisPerMilliliter
-        ),
-        verificationDoseStarted = detail.calibration.verificationDoseStarted,
-        verificationDoseComplete = detail.calibration.verificationDoseComplete,
-        verificationDoseRemainingMs = verificationRemainingMillis(detail),
-        manualActive = detail.activeRun.active && detail.activeRun.remainingMillis > 0L
-    )
-
     private fun calibrationStartedAtUptime(detail: DeviceDosingV1ChannelDetail): Long =
         detail.lastRuntimeEvent.occurredAtMillis.takeIf {
             detail.lastRuntimeEvent.valid &&

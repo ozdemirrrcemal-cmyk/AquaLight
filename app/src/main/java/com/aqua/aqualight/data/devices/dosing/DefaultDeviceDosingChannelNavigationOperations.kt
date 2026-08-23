@@ -31,9 +31,14 @@ internal class DefaultDeviceDosingChannelNavigationOperations(
         deviceUid: String,
         slotId: String
     ): DeviceDosingChannelNavigationTarget? = navigationAddress(deviceUid, slotId)?.let { address ->
-        val refreshed = channelOperations.refresh(address.deviceUid, address.slotId)
-        (refreshed as? DeviceDosingChannelOperationResult.Success)?.snapshot?.let { snapshot ->
-            resolveSnapshot(address, snapshot)
+        val currentTarget = channelOperations
+            .currentNavigationSnapshot(address.deviceUid, address.slotId)
+            ?.let { snapshot -> resolveSnapshot(address, snapshot) }
+        currentTarget ?: run {
+            val refreshed = channelOperations.refresh(address.deviceUid, address.slotId)
+            (refreshed as? DeviceDosingChannelOperationResult.Success)?.snapshot?.let { snapshot ->
+                resolveSnapshot(address, snapshot)
+            }
         }
     }
 

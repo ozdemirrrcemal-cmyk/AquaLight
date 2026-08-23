@@ -7,12 +7,23 @@ package com.aqua.aqualight.application.devices.dosing
  * changing notification intent must never re-apply the physical reservoir baseline. The central
  * data coordinator rebases retry-safe configuration assignments on the latest firmware revision.
  */
+data class DeviceDosingReservoirMutationOrigin(
+    val revision: Long,
+    val trackingEnabled: Boolean,
+    val capacityMicroliters: Long?
+) {
+    init {
+        require(revision >= 0L)
+        require(trackingEnabled == (capacityMicroliters != null))
+    }
+}
+
 interface DeviceDosingReservoirRevisionOperations {
-    suspend fun applyReservoirSettingsAtRevision(
+    suspend fun applyReservoirSettingsAtOrigin(
         deviceUid: String,
         slotId: String,
         settings: DeviceDosingReservoirSettings,
-        expectedRevision: Long
+        origin: DeviceDosingReservoirMutationOrigin
     ): DeviceDosingChannelOperationResult
 
     suspend fun setReservoirLowLevelAlertEnabled(
@@ -22,17 +33,17 @@ interface DeviceDosingReservoirRevisionOperations {
     ): DeviceDosingChannelOperationResult
 }
 
-suspend fun DeviceDosingChannelOperations.applyReservoirSettingsAgainstBaseRevision(
+suspend fun DeviceDosingChannelOperations.applyReservoirSettingsAgainstOrigin(
     deviceUid: String,
     slotId: String,
     settings: DeviceDosingReservoirSettings,
-    baseRevision: Long
+    origin: DeviceDosingReservoirMutationOrigin
 ): DeviceDosingChannelOperationResult =
-    (this as? DeviceDosingReservoirRevisionOperations)?.applyReservoirSettingsAtRevision(
+    (this as? DeviceDosingReservoirRevisionOperations)?.applyReservoirSettingsAtOrigin(
         deviceUid = deviceUid,
         slotId = slotId,
         settings = settings,
-        expectedRevision = baseRevision
+        origin = origin
     ) ?: DeviceDosingChannelOperationResult.Failed
 
 suspend fun DeviceDosingChannelOperations.setReservoirLowLevelAlertPreference(

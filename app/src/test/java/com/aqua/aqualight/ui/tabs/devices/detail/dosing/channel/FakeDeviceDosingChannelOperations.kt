@@ -10,8 +10,10 @@ import com.aqua.aqualight.application.devices.dosing.DeviceDosingChannelSnapshot
 import com.aqua.aqualight.application.devices.dosing.DeviceDosingOccurrenceProgress
 import com.aqua.aqualight.application.devices.dosing.DeviceDosingOccurrenceState
 import com.aqua.aqualight.application.devices.dosing.DeviceDosingProgram
+import com.aqua.aqualight.application.devices.dosing.DeviceDosingProgramMutationOrigin
 import com.aqua.aqualight.application.devices.dosing.DeviceDosingProgramRevisionOperations
 import com.aqua.aqualight.application.devices.dosing.DeviceDosingProgramSchedule
+import com.aqua.aqualight.application.devices.dosing.DeviceDosingReservoirMutationOrigin
 import com.aqua.aqualight.application.devices.dosing.DeviceDosingReservoirRevisionOperations
 import com.aqua.aqualight.application.devices.dosing.DeviceDosingReservoirSettings
 import com.aqua.aqualight.application.devices.dosing.DeviceDosingReservoirSnapshot
@@ -31,11 +33,13 @@ internal class FakeDeviceDosingChannelOperations(
     var failMutations: Boolean = false
     var forceRevisionConflicts: Boolean = false
     var lastProgram: DeviceDosingProgram? = null
-    var lastProgramExpectedRevision: Long? = null
+    var lastProgramOrigin: DeviceDosingProgramMutationOrigin? = null
+    var lastProgramAppliedRevision: Long? = null
     var programMutationCount: Int = 0
     var lastMissedDoseRecoveryEnabled: Boolean? = null
     var lastReservoirSettings: DeviceDosingReservoirSettings? = null
-    var lastReservoirExpectedRevision: Long? = null
+    var lastReservoirOrigin: DeviceDosingReservoirMutationOrigin? = null
+    var lastReservoirAppliedRevision: Long? = null
     var lastManualDoseMicroliters: Long? = null
     var reservoirConfigMutationCount: Int = 0
     var lowLevelAlertMutationCount: Int = 0
@@ -66,21 +70,24 @@ internal class FakeDeviceDosingChannelOperations(
         return mutate { state -> state.copy(revision = state.revision + 1L, program = program) }
     }
 
-    override suspend fun applyProgramAtRevision(
+    override suspend fun applyProgramAtOrigin(
         deviceUid: String,
         slotId: String,
         program: DeviceDosingProgram,
-        expectedRevision: Long
+        origin: DeviceDosingProgramMutationOrigin
     ): DeviceDosingChannelOperationResult {
+        lastProgramOrigin = origin
         val current = snapshot.value
         return when {
             current == null -> DeviceDosingChannelOperationResult.Unavailable
+            current.program.hasSamePlanAssignment(program) -> current.toResult()
             forceRevisionConflicts -> DeviceDosingChannelOperationResult.Rejected(
                 DeviceDosingChannelRejection.CONFLICT
             )
-            current.program.hasSamePlanAssignment(program) -> current.toResult()
+            !current.program.hasSamePlanAssignment(origin.baseProgram) ->
+                DeviceDosingChannelOperationResult.Rejected(DeviceDosingChannelRejection.CONFLICT)
             else -> {
-                lastProgramExpectedRevision = current.revision
+                lastProgramAppliedRevision = current.revision
                 applyProgram(
                     deviceUid,
                     slotId,
@@ -113,22 +120,31 @@ internal class FakeDeviceDosingChannelOperations(
         slotId: String,
         settings: DeviceDosingReservoirSettings
     ): DeviceDosingChannelOperationResult {
-        val revision = snapshot.value?.revision ?: return DeviceDosingChannelOperationResult.Unavailable
-        return applyReservoirSettingsAtRevision(deviceUid, slotId, settings, revision)
+        val current = snapshot.value ?: return DeviceDosingChannelOperationResult.Unavailable
+        return applyReservoirSettingsAtOrigin(
+            deviceUid,
+            slotId,
+            settings,
+            DeviceDosingReservoirMutationOrigin(
+                revision = current.revision,
+                trackingEnabled = current.reservoir.trackingEnabled,
+                capacityMicroliters = current.reservoir.capacityMicroliters.takeIf {
+                    current.reservoir.trackingEnabled
+                }
+            )
+        )
     }
 
-    override suspend fun applyReservoirSettingsAtRevision(
+    override suspend fun applyReservoirSettingsAtOrigin(
         deviceUid: String,
         slotId: String,
         settings: DeviceDosingReservoirSettings,
-        expectedRevision: Long
+        origin: DeviceDosingReservoirMutationOrigin
     ): DeviceDosingChannelOperationResult {
+        lastReservoirOrigin = origin
         val current = snapshot.value
         return when {
             current == null -> DeviceDosingChannelOperationResult.Unavailable
-            forceRevisionConflicts -> DeviceDosingChannelOperationResult.Rejected(
-                DeviceDosingChannelRejection.CONFLICT
-            )
             current.reservoir.hasSameFirmwareAssignment(settings) -> {
                 snapshot.value = current.copy(
                     reservoir = current.reservoir.copy(
@@ -137,9 +153,14 @@ internal class FakeDeviceDosingChannelOperations(
                 )
                 snapshot.value.toResult()
             }
+            forceRevisionConflicts -> DeviceDosingChannelOperationResult.Rejected(
+                DeviceDosingChannelRejection.CONFLICT
+            )
+            !current.reservoir.hasSameFirmwareAssignment(origin) ->
+                DeviceDosingChannelOperationResult.Rejected(DeviceDosingChannelRejection.CONFLICT)
             else -> {
                 lastReservoirSettings = settings
-                lastReservoirExpectedRevision = current.revision
+                lastReservoirAppliedRevision = current.revision
                 reservoirConfigMutationCount += 1
                 mutate { state ->
                     val capacity = settings.capacityMicroliters ?: 0L
@@ -260,14 +281,19 @@ internal class FakeDeviceDosingChannelOperations(
 }
 
 private fun DeviceDosingProgram?.hasSamePlanAssignment(
-    desired: DeviceDosingProgram
+    desired: DeviceDosingProgram?
 ): Boolean = this?.copy(missedDoseRecoveryEnabled = false) ==
-    desired.copy(missedDoseRecoveryEnabled = false)
+    desired?.copy(missedDoseRecoveryEnabled = false)
 
 private fun DeviceDosingReservoirSnapshot.hasSameFirmwareAssignment(
     settings: DeviceDosingReservoirSettings
 ): Boolean = trackingEnabled == settings.trackingEnabled &&
     (!settings.trackingEnabled || capacityMicroliters == settings.capacityMicroliters)
+
+private fun DeviceDosingReservoirSnapshot.hasSameFirmwareAssignment(
+    origin: DeviceDosingReservoirMutationOrigin
+): Boolean = trackingEnabled == origin.trackingEnabled &&
+    (!origin.trackingEnabled || capacityMicroliters == origin.capacityMicroliters)
 
 internal fun sampleDosingChannelSnapshot(): DeviceDosingChannelSnapshot {
     val program = DeviceDosingProgram(

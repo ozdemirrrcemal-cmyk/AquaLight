@@ -430,6 +430,8 @@ data class DeviceDosingV1DirectEvent(
 data class DeviceDosingV1Invalidation(
     val channelKey: DeviceDosingV1ChannelKey,
     val revisionHint: Long?,
+    /** Monotonic firmware runtime-event sequence carried by the invalidating event, when valid. */
+    val runtimeEventSequenceHint: Long? = null,
     val refreshGlobal: Boolean = true,
     val refreshChannel: Boolean = true,
     val refreshProgress: Boolean = true

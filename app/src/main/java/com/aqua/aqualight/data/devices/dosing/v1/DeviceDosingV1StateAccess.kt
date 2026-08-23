@@ -30,6 +30,28 @@ internal class DeviceDosingV1StateAccess(
         return stateOwner.reads.currentChannel(address.deviceUid, address.channelKey)
     }
 
+    fun currentValidatedPresentationChannel(
+        deviceUid: String,
+        slotId: String
+    ): DeviceDosingChannelSnapshot? {
+        val address = dosingV1Address(deviceUid, slotId)
+        return stateOwner.reads.currentValidatedPresentationChannel(
+            address.deviceUid,
+            address.channelKey
+        )
+    }
+
+    fun currentNavigationChannel(
+        deviceUid: String,
+        slotId: String
+    ): DeviceDosingChannelSnapshot? {
+        val address = dosingV1Address(deviceUid, slotId)
+        return stateOwner.reads.currentNavigationChannel(
+            address.deviceUid,
+            address.channelKey
+        )
+    }
+
     fun currentCalibration(deviceUid: String, slotId: String): DeviceDosingCalibrationSnapshot? {
         val address = dosingV1Address(deviceUid, slotId)
         return stateOwner.reads.currentCalibration(address.deviceUid, address.channelKey)

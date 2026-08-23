@@ -2,6 +2,7 @@ package com.aqua.aqualight.data.devices.dosing.v1
 
 import com.aqua.aqualight.application.devices.dosing.DeviceDosingChannelCommittedResult
 import com.aqua.aqualight.application.devices.dosing.DeviceDosingChannelOperationResult
+import com.aqua.aqualight.application.devices.dosing.DeviceDosingProgramMutationOrigin
 import com.aqua.aqualight.data.devices.model.DeviceUid
 import com.aqua.aqualight.data.devices.runtime.core.DeviceRuntimeCommand
 import com.aqua.aqualight.data.devices.runtime.core.DeviceRuntimeCommandGateway
@@ -43,11 +44,14 @@ class DeviceDosingV1CommittedMutationTest {
                 as DeviceDosingChannelOperationResult.Success
             val program = requireNotNull(initial.snapshot.program).copy(enabled = false)
 
-            val result = adapter.channelOperations.applyProgramAtRevision(
+            val result = adapter.channelOperations.applyProgramAtOrigin(
                 deviceUid = DEVICE_UID.value,
                 slotId = SLOT_ID,
                 program = program,
-                expectedRevision = 137L
+                origin = DeviceDosingProgramMutationOrigin(
+                    revision = 137L,
+                    baseProgram = initial.snapshot.program
+                )
             )
 
             assertEquals(DeviceDosingChannelCommittedResult(138L), result)
@@ -107,11 +111,14 @@ class DeviceDosingV1CommittedMutationTest {
             val initial = adapter.channelOperations.refresh(DEVICE_UID.value, SLOT_ID)
                 as DeviceDosingChannelOperationResult.Success
 
-            val result = adapter.channelOperations.applyProgramAtRevision(
+            val result = adapter.channelOperations.applyProgramAtOrigin(
                 deviceUid = DEVICE_UID.value,
                 slotId = SLOT_ID,
                 program = requireNotNull(initial.snapshot.program).copy(enabled = false),
-                expectedRevision = 137L
+                origin = DeviceDosingProgramMutationOrigin(
+                    revision = 137L,
+                    baseProgram = initial.snapshot.program
+                )
             )
 
             assertEquals(DeviceDosingChannelCommittedResult(138L), result)

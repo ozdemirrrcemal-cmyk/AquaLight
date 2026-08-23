@@ -43,7 +43,8 @@ object DeviceDosingV1EventParser {
             is DeviceRuntimeEventPayload.Snapshot -> parseDirect(payload.data).let { event ->
                 DeviceDosingV1Invalidation(
                     channelKey = event.channelKey,
-                    revisionHint = event.revision
+                    revisionHint = event.revision,
+                    runtimeEventSequenceHint = event.change.validSequenceOrNull()
                 )
             }
             is DeviceRuntimeEventPayload.CommandResult -> {
@@ -59,7 +60,8 @@ object DeviceDosingV1EventParser {
                 )
                 DeviceDosingV1Invalidation(
                     channelKey = channel.channelKey,
-                    revisionHint = channel.revision
+                    revisionHint = channel.revision,
+                    runtimeEventSequenceHint = channel.lastRuntimeEvent.validSequenceOrNull()
                 )
             }
         }
@@ -101,3 +103,6 @@ object DeviceDosingV1EventParser {
         DeviceDosingV1Contract.Action.PROGRESS_GET
     )
 }
+
+private fun DeviceDosingV1RuntimeEventSnapshot.validSequenceOrNull(): Long? =
+    sequence.takeIf { valid }

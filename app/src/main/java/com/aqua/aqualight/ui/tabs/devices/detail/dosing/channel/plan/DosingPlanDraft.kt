@@ -23,55 +23,71 @@ internal data class DosingPlanDraft(
             distributedDailyDoseMicroliters
         }
 
-    fun writeTo(outState: Bundle) {
-        outState.putLong(STATE_DAILY_DOSE_MICROLITERS, distributedDailyDoseMicroliters)
-        outState.putLong(STATE_SINGLE_DOSE_START_TIME_MS, singleDoseStartTimeMs)
-        outState.putLong(STATE_HOURLY_START_TIME_MS, hourlyStartTimeMs)
+    fun writeTo(outState: Bundle) = writeTo(outState, keyPrefix = "")
+
+    fun writeTo(outState: Bundle, keyPrefix: String) {
+        outState.putLong(keyPrefix + STATE_DAILY_DOSE_MICROLITERS, distributedDailyDoseMicroliters)
+        outState.putLong(keyPrefix + STATE_SINGLE_DOSE_START_TIME_MS, singleDoseStartTimeMs)
+        outState.putLong(keyPrefix + STATE_HOURLY_START_TIME_MS, hourlyStartTimeMs)
         outState.putString(
-            STATE_CUSTOM_PERIODS_DRAFT,
+            keyPrefix + STATE_CUSTOM_PERIODS_DRAFT,
             DeviceDosingCustomScheduleContract.encodeDraft(customPeriods)
         )
         outState.putString(
-            STATE_TIMER_DOSES_DRAFT,
+            keyPrefix + STATE_TIMER_DOSES_DRAFT,
             DeviceDosingTimerScheduleContract.encodeDraft(timerDoses)
         )
-        outState.putString(STATE_SELECTED_SCHEDULE_MODE, selectedScheduleMode.name)
-        outState.putBoolean(STATE_SCHEDULE_ENABLED, scheduleEnabled)
-        outState.putBooleanArray(STATE_SCHEDULE_WEEKDAYS, recurrenceState.toWeekdayFlags())
+        outState.putString(keyPrefix + STATE_SELECTED_SCHEDULE_MODE, selectedScheduleMode.name)
+        outState.putBoolean(keyPrefix + STATE_SCHEDULE_ENABLED, scheduleEnabled)
+        outState.putBooleanArray(
+            keyPrefix + STATE_SCHEDULE_WEEKDAYS,
+            recurrenceState.toWeekdayFlags()
+        )
     }
 
     companion object {
-        fun restore(savedInstanceState: Bundle?): DosingPlanDraft {
+        fun restore(savedInstanceState: Bundle?): DosingPlanDraft = restore(
+            savedInstanceState,
+            keyPrefix = ""
+        )
+
+        fun restore(savedInstanceState: Bundle?, keyPrefix: String): DosingPlanDraft {
             if (savedInstanceState == null) return DosingPlanDraft()
             return DosingPlanDraft(
                 distributedDailyDoseMicroliters = savedInstanceState.getLong(
-                    STATE_DAILY_DOSE_MICROLITERS,
+                    keyPrefix + STATE_DAILY_DOSE_MICROLITERS,
                     DEFAULT_DAILY_DOSE_MICROLITERS
                 ),
                 singleDoseStartTimeMs = savedInstanceState.getLong(
-                    STATE_SINGLE_DOSE_START_TIME_MS,
+                    keyPrefix + STATE_SINGLE_DOSE_START_TIME_MS,
                     DEFAULT_SINGLE_DOSE_START_TIME_MS
                 ),
                 hourlyStartTimeMs = savedInstanceState.getLong(
-                    STATE_HOURLY_START_TIME_MS,
+                    keyPrefix + STATE_HOURLY_START_TIME_MS,
                     DEFAULT_HOURLY_START_TIME_MS
                 ),
-                customPeriods = savedInstanceState.getString(STATE_CUSTOM_PERIODS_DRAFT)
+                customPeriods = savedInstanceState.getString(
+                    keyPrefix + STATE_CUSTOM_PERIODS_DRAFT
+                )
                     ?.let(DeviceDosingCustomScheduleContract::decodeDraft)
                     ?: emptyList(),
-                timerDoses = savedInstanceState.getString(STATE_TIMER_DOSES_DRAFT)
+                timerDoses = savedInstanceState.getString(keyPrefix + STATE_TIMER_DOSES_DRAFT)
                     ?.let(DeviceDosingTimerScheduleContract::decodeDraft)
                     ?: emptyList(),
-                selectedScheduleMode = savedInstanceState.getString(STATE_SELECTED_SCHEDULE_MODE)
+                selectedScheduleMode = savedInstanceState.getString(
+                    keyPrefix + STATE_SELECTED_SCHEDULE_MODE
+                )
                     ?.let { savedMode ->
                         DosingPlanScheduleMode.entries.firstOrNull { mode -> mode.name == savedMode }
                     }
                     ?: DosingPlanScheduleMode.SINGLE,
                 scheduleEnabled = savedInstanceState.getBoolean(
-                    STATE_SCHEDULE_ENABLED,
+                    keyPrefix + STATE_SCHEDULE_ENABLED,
                     DEFAULT_SCHEDULE_ENABLED
                 ),
-                recurrenceState = savedInstanceState.getBooleanArray(STATE_SCHEDULE_WEEKDAYS)
+                recurrenceState = savedInstanceState.getBooleanArray(
+                    keyPrefix + STATE_SCHEDULE_WEEKDAYS
+                )
                     ?.let(DosingPlanRecurrenceState::fromWeekdayFlags)
                     ?: DosingPlanRecurrenceState()
             )

@@ -53,6 +53,52 @@ class DefaultDeviceDosingChannelNavigationOperationsTest {
     }
 
     @Test
+    fun `validated current presentation resolves without a firmware refresh`() = runTest {
+        val validated = channelSnapshot(
+            calibrated = true,
+            lastCalibratedAt = CALIBRATED_AT
+        )
+        val channels = FakeChannelOperations(
+            observed = validated,
+            refreshed = DeviceDosingChannelOperationResult.Failed,
+            validatedPresentation = validated
+        )
+        val operations = DefaultDeviceDosingChannelNavigationOperations(
+            rootOperations = FakeRootOperations(rootSnapshot(channelCount = 2)),
+            channelOperations = channels
+        )
+
+        val target = operations.resolveCurrent(DEVICE_UID, SLOT_ID)
+
+        assertEquals(DeviceDosingChannelDestination.DETAIL, target?.destination)
+        assertEquals(CALIBRATED_AT, target?.lastCalibratedAtEpochSeconds)
+        assertEquals(0, channels.refreshCount)
+    }
+
+    @Test
+    fun `durable route snapshot resolves without another firmware refresh`() = runTest {
+        val durableRoute = channelSnapshot(
+            calibrated = true,
+            lastCalibratedAt = CALIBRATED_AT
+        )
+        val channels = FakeChannelOperations(
+            observed = durableRoute,
+            refreshed = DeviceDosingChannelOperationResult.Failed,
+            navigationSnapshot = durableRoute
+        )
+        val operations = DefaultDeviceDosingChannelNavigationOperations(
+            rootOperations = FakeRootOperations(rootSnapshot(channelCount = 2)),
+            channelOperations = channels
+        )
+
+        val target = operations.resolveCurrent(DEVICE_UID, SLOT_ID)
+
+        assertEquals(DeviceDosingChannelDestination.DETAIL, target?.destination)
+        assertEquals(CALIBRATED_AT, target?.lastCalibratedAtEpochSeconds)
+        assertEquals(0, channels.refreshCount)
+    }
+
+    @Test
     fun `uncalibrated four channel product resolves only through authorized calibration route`() =
         runTest {
             val channel = channelSnapshot(
@@ -118,7 +164,9 @@ class DefaultDeviceDosingChannelNavigationOperationsTest {
 
     private class FakeChannelOperations(
         private val observed: DeviceDosingChannelSnapshot,
-        private val refreshed: DeviceDosingChannelOperationResult
+        private val refreshed: DeviceDosingChannelOperationResult,
+        private val validatedPresentation: DeviceDosingChannelSnapshot? = null,
+        private val navigationSnapshot: DeviceDosingChannelSnapshot? = validatedPresentation
     ) : DeviceDosingChannelOperations by UnavailableDeviceDosingChannelOperations {
         var refreshCount: Int = 0
         var refreshedDeviceUid: String = ""
@@ -128,6 +176,16 @@ class DefaultDeviceDosingChannelNavigationOperationsTest {
             deviceUid: String,
             slotId: String
         ): Flow<DeviceDosingChannelSnapshot?> = flowOf(observed)
+
+        override fun currentValidatedPresentation(
+            deviceUid: String,
+            slotId: String
+        ): DeviceDosingChannelSnapshot? = validatedPresentation
+
+        override fun currentNavigationSnapshot(
+            deviceUid: String,
+            slotId: String
+        ): DeviceDosingChannelSnapshot? = navigationSnapshot
 
         override suspend fun refresh(
             deviceUid: String,

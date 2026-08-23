@@ -92,10 +92,9 @@ internal object DeviceDosingV1SnapshotMapper {
         )
         return DeviceDosingV1MappedSnapshots(
             channel = projectedChannel,
-            calibration = DeviceDosingV1CalibrationSnapshotMapper.project(
-                current = current.calibration,
-                detail = detail
-            )
+            // A mutation ACK has no envelope uptime. Calibration is a time-based projection and
+            // must therefore remain the previous coherent snapshot until full status readback.
+            calibration = current.calibration
         )
     }
 

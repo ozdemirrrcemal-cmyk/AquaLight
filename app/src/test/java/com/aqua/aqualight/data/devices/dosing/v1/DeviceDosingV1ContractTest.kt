@@ -202,6 +202,8 @@ class DeviceDosingV1ContractTest {
 
         assertEquals(8L, direct.revisionHint)
         assertEquals(7L, wrapper.revisionHint)
+        assertEquals(12L, direct.runtimeEventSequenceHint)
+        assertEquals(11L, wrapper.runtimeEventSequenceHint)
         assertTrue(direct.refreshGlobal)
         assertTrue(direct.refreshChannel)
         assertTrue(direct.refreshProgress)

@@ -11,8 +11,9 @@ import com.aqua.aqualight.application.devices.dosing.DeviceDosingMutationReconci
 import com.aqua.aqualight.application.devices.dosing.DeviceDosingReservoirCapacityPolicy
 import com.aqua.aqualight.application.devices.dosing.DeviceDosingReservoirCapacityRejection
 import com.aqua.aqualight.application.devices.dosing.DeviceDosingReservoirCapacityValidation
+import com.aqua.aqualight.application.devices.dosing.DeviceDosingReservoirMutationOrigin
 import com.aqua.aqualight.application.devices.dosing.DeviceDosingReservoirSettings
-import com.aqua.aqualight.application.devices.dosing.applyReservoirSettingsAgainstBaseRevision
+import com.aqua.aqualight.application.devices.dosing.applyReservoirSettingsAgainstOrigin
 import com.aqua.aqualight.application.devices.dosing.requiresLowReservoirAttention
 import com.aqua.aqualight.application.devices.dosing.setReservoirLowLevelAlertPreference
 import java.util.Locale
@@ -367,11 +368,16 @@ private suspend fun performReservoirSave(
     state: DeviceDosingReservoirEditorState
 ): DeviceDosingMutationReconciliation = if (state.firmwareConfigDirty) {
     DeviceDosingMutationReconciliation(
-        operations.applyReservoirSettingsAgainstBaseRevision(
+        operations.applyReservoirSettingsAgainstOrigin(
             deviceUid = deviceUid,
             slotId = slotId,
             settings = state.settingsIntent,
-            baseRevision = checkNotNull(state.baseRevision)
+            origin = DeviceDosingReservoirMutationOrigin(
+                revision = checkNotNull(state.baseRevision),
+                trackingEnabled = state.savedDraft.trackingEnabled,
+                capacityMicroliters = state.savedDraft.reservoirCapacityMicroliters
+                    .takeIf { state.savedDraft.trackingEnabled }
+            )
         )
     )
 } else {

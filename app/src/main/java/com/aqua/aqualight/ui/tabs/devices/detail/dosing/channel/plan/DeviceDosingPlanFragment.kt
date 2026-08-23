@@ -48,6 +48,9 @@ class DeviceDosingPlanFragment :
             restoredBaseRevision = savedInstanceState
                 ?.takeIf { state -> state.containsKey(STATE_BASE_REVISION) }
                 ?.getLong(STATE_BASE_REVISION),
+            restoredBaseProgram = savedInstanceState.restoreBaseProgram(),
+            restoredBaseProgramKnown = savedInstanceState
+                ?.getBoolean(STATE_BASE_PROGRAM_KNOWN, false) == true,
             restoredDraftDirty = savedInstanceState?.getBoolean(STATE_DRAFT_DIRTY, false) == true
         )
         setupDailyDoseResult()
@@ -77,6 +80,18 @@ class DeviceDosingPlanFragment :
         editorState.draft.writeTo(outState)
         editorState.baseRevision?.let { revision ->
             outState.putLong(STATE_BASE_REVISION, revision)
+        }
+        outState.putBoolean(STATE_BASE_PROGRAM_KNOWN, editorState.baseProgramKnown)
+        if (editorState.baseProgramKnown) {
+            val baseProgram = editorState.baseProgram
+            outState.putBoolean(STATE_BASE_PROGRAM_PRESENT, baseProgram != null)
+            baseProgram?.let { program ->
+                program.toPlanDraft().writeTo(outState, BASE_PROGRAM_KEY_PREFIX)
+                outState.putBoolean(
+                    STATE_BASE_PROGRAM_MISSED_DOSE_RECOVERY,
+                    program.missedDoseRecoveryEnabled
+                )
+            }
         }
         outState.putBoolean(STATE_DRAFT_DIRTY, editorState.draftDirty)
         super.onSaveInstanceState(outState)
@@ -288,10 +303,26 @@ class DeviceDosingPlanFragment :
         (activity as? BaseActivity)?.showSnackBar(getString(messageRes), type)
     }
 
+    private fun Bundle?.restoreBaseProgram() = this
+        ?.takeIf { state ->
+            state.getBoolean(STATE_BASE_PROGRAM_KNOWN, false) &&
+                state.getBoolean(STATE_BASE_PROGRAM_PRESENT, false)
+        }
+        ?.let { state ->
+            DosingPlanDraft.restore(state, BASE_PROGRAM_KEY_PREFIX).toApplicationProgram(
+                state.getBoolean(STATE_BASE_PROGRAM_MISSED_DOSE_RECOVERY, false)
+            )
+        }
+
     private companion object {
         const val DAILY_DOSE_REQUEST_KEY = "dosing_daily_dose_input"
         const val DAILY_DOSE_INPUT_MAX_LENGTH = 12
         const val STATE_BASE_REVISION = "dosing_plan_base_revision"
+        const val STATE_BASE_PROGRAM_KNOWN = "dosing_plan_base_program_known"
+        const val STATE_BASE_PROGRAM_PRESENT = "dosing_plan_base_program_present"
+        const val STATE_BASE_PROGRAM_MISSED_DOSE_RECOVERY =
+            "dosing_plan_base_program_missed_dose_recovery"
+        const val BASE_PROGRAM_KEY_PREFIX = "dosing_plan_base_program_"
         const val STATE_DRAFT_DIRTY = "dosing_plan_draft_dirty"
     }
 }

@@ -53,7 +53,10 @@ class DeviceDosingReservoirCutoverTest {
             viewModel.save()
 
             assertEquals(1, operations.reservoirConfigMutationCount)
-            assertEquals(1L, operations.lastReservoirExpectedRevision)
+            assertEquals(1L, operations.lastReservoirOrigin?.revision)
+            assertEquals(true, operations.lastReservoirOrigin?.trackingEnabled)
+            assertEquals(450_000L, operations.lastReservoirOrigin?.capacityMicroliters)
+            assertEquals(1L, operations.lastReservoirAppliedRevision)
             assertEquals(500_000L, operations.lastReservoirSettings?.capacityMicroliters)
             assertEquals(250_000L, viewModel.currentEditorState().remainingMicroliters)
             assertFalse(viewModel.currentEditorState().canSave)
@@ -192,7 +195,8 @@ class DeviceDosingReservoirCutoverTest {
 
             assertEquals(DeviceDosingReservoirEvent.Saved, viewModel.events.first())
             assertEquals(1, operations.reservoirConfigMutationCount)
-            assertEquals(11L, operations.lastReservoirExpectedRevision)
+            assertEquals(11L, operations.lastReservoirOrigin?.revision)
+            assertEquals(11L, operations.lastReservoirAppliedRevision)
             assertEquals(500_000L, operations.lastReservoirSettings?.capacityMicroliters)
             assertFalse(viewModel.currentEditorState().operationInProgress)
             assertFalse(viewModel.currentEditorState().dirty)

@@ -16,6 +16,26 @@ interface DeviceDosingChannelOperations {
     /** Latest fully authoritative channel snapshot, if the current connection has one. */
     fun current(deviceUid: String, slotId: String): DeviceDosingChannelSnapshot? = null
 
+    /**
+     * Current-generation snapshot safe for immediate navigation. This may include a durable
+     * persisted mutation ACK while its coherent progress readback is still running, but never a
+     * lifecycle-invalidated presentation snapshot.
+     */
+    fun currentValidatedPresentation(
+        deviceUid: String,
+        slotId: String
+    ): DeviceDosingChannelSnapshot? = current(deviceUid, slotId)
+
+    /**
+     * Route-only current-generation fallback. An implementation may use a same-revision durable
+     * ACK continuation to choose detail versus calibration while runtime reads remain fail-closed.
+     * This snapshot must never be used to render progress or drive a mutation.
+     */
+    fun currentNavigationSnapshot(
+        deviceUid: String,
+        slotId: String
+    ): DeviceDosingChannelSnapshot? = currentValidatedPresentation(deviceUid, slotId)
+
     fun observe(
         deviceUid: String,
         slotId: String

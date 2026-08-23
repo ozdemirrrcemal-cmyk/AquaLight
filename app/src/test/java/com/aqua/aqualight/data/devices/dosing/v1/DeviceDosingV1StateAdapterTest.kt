@@ -1,6 +1,8 @@
 package com.aqua.aqualight.data.devices.dosing.v1
 
 import com.aqua.aqualight.application.devices.dosing.DeviceDosingChannelOperationResult
+import com.aqua.aqualight.application.devices.dosing.DeviceDosingChannelRejection
+import com.aqua.aqualight.application.devices.dosing.DeviceDosingReservoirMutationOrigin
 import com.aqua.aqualight.application.devices.dosing.DeviceDosingReservoirSettings
 import com.aqua.aqualight.data.devices.model.DeviceUid
 import com.aqua.aqualight.data.devices.runtime.core.DeviceRuntimeCommand
@@ -86,6 +88,74 @@ class DeviceDosingV1StateAdapterTest {
     }
 
     @Test
+    fun `reservoir origin rebases an unrelated revision without overwriting its domain`() = runTest {
+        val gateway = ScriptedDosingGateway().apply {
+            enqueueRefresh(revision = 7L, reservoirCapacityMicroliters = 500_000L)
+            enqueueRefresh(revision = 8L, reservoirCapacityMicroliters = 500_000L)
+            enqueueConfigMutation(revision = 9L, reservoirCapacityMicroliters = 600_000L)
+            enqueueRefresh(revision = 9L, reservoirCapacityMicroliters = 600_000L)
+        }
+        val adapter = DeviceDosingV1StateAdapter(DeviceDosingV1Repository(gateway))
+        adapter.channelOperations.refresh(DEVICE_UID.value, SLOT_ID)
+        adapter.channelOperations.refresh(DEVICE_UID.value, SLOT_ID)
+
+        val result = adapter.channelOperations.applyReservoirSettingsAtOrigin(
+            deviceUid = DEVICE_UID.value,
+            slotId = SLOT_ID,
+            settings = DeviceDosingReservoirSettings(
+                trackingEnabled = true,
+                capacityMicroliters = 600_000L,
+                lowLevelAlertEnabled = false
+            ),
+            origin = DeviceDosingReservoirMutationOrigin(
+                revision = 7L,
+                trackingEnabled = true,
+                capacityMicroliters = 500_000L
+            )
+        )
+
+        assertTrue(result is DeviceDosingChannelOperationResult.Success)
+        val configRequest = gateway.requests.single { request ->
+            request.action == DeviceDosingV1Contract.Action.CONFIG_APPLY
+        }
+        assertEquals(8L, JSONObject(configRequest.data).getLong("expectedRevision"))
+    }
+
+    @Test
+    fun `reservoir origin conflict never sends config apply`() = runTest {
+        val gateway = ScriptedDosingGateway().apply {
+            enqueueRefresh(revision = 7L, reservoirCapacityMicroliters = 500_000L)
+            enqueueRefresh(revision = 8L, reservoirCapacityMicroliters = 550_000L)
+        }
+        val adapter = DeviceDosingV1StateAdapter(DeviceDosingV1Repository(gateway))
+        adapter.channelOperations.refresh(DEVICE_UID.value, SLOT_ID)
+        adapter.channelOperations.refresh(DEVICE_UID.value, SLOT_ID)
+
+        val result = adapter.channelOperations.applyReservoirSettingsAtOrigin(
+            deviceUid = DEVICE_UID.value,
+            slotId = SLOT_ID,
+            settings = DeviceDosingReservoirSettings(
+                trackingEnabled = true,
+                capacityMicroliters = 600_000L,
+                lowLevelAlertEnabled = false
+            ),
+            origin = DeviceDosingReservoirMutationOrigin(
+                revision = 7L,
+                trackingEnabled = true,
+                capacityMicroliters = 500_000L
+            )
+        )
+
+        assertEquals(
+            DeviceDosingChannelOperationResult.Rejected(DeviceDosingChannelRejection.CONFLICT),
+            result
+        )
+        assertTrue(gateway.requests.none { request ->
+            request.action == DeviceDosingV1Contract.Action.CONFIG_APPLY
+        })
+    }
+
+    @Test
     fun `owner rejects stale requests and lower revisions`() {
         val owner = DeviceDosingV1StateOwner()
         val key = DeviceDosingV1ChannelKey.from("channel1")
@@ -123,6 +193,297 @@ class DeviceDosingV1StateAdapterTest {
                 revisionSix.global,
                 revisionSix.channel,
                 revisionSix.progress
+            )
+        )
+    }
+
+    @Test
+    fun `same revision event keeps persisted continuation while newer runtime event invalidates presentation`() {
+        val owner = DeviceDosingV1StateOwner()
+        val key = DeviceDosingV1ChannelKey.from("channel1")
+        val initial = fixtureState(revision = 7L)
+        assertEquals(
+            DeviceDosingV1CommitDisposition.APPLIED,
+            owner.commitRefresh(
+                owner.beginRequest(DEVICE_UID, key),
+                GENERATION_ONE,
+                initial.global,
+                initial.channel,
+                initial.progress
+            )
+        )
+        val saved = DeviceDosingV1MutationParser.parseProgramApply(
+            DeviceDosingV1TestFixtures.savedMutation(
+                DeviceDosingV1Contract.Literal.PROGRAM_APPLY
+            )
+        ).channel.copy(revision = 8L)
+        assertEquals(
+            DeviceDosingV1CommitDisposition.APPLIED,
+            owner.recordMutation(
+                token = owner.beginRequest(DEVICE_UID, key),
+                connectionGeneration = GENERATION_ONE,
+                channel = saved,
+                visibility = DeviceDosingV1MutationVisibility.PERSISTED_ACK
+            )
+        )
+        assertEquals(8L, owner.reads.committedMutationContinuation(DEVICE_UID, key)?.channel?.revision)
+
+        assertEquals(
+            DeviceDosingV1InvalidationDisposition.DUPLICATE_EVENT,
+            owner.invalidate(
+                DEVICE_UID,
+                key,
+                GENERATION_ONE,
+                revisionHint = 8L,
+                runtimeEventSequenceHint = 11L
+            )
+        )
+        assertEquals(8L, owner.reads.currentValidatedPresentationChannel(DEVICE_UID, key)?.revision)
+        assertEquals(8L, owner.reads.committedMutationContinuation(DEVICE_UID, key)?.channel?.revision)
+
+        assertEquals(
+            DeviceDosingV1InvalidationDisposition.APPLIED,
+            owner.invalidate(
+                DEVICE_UID,
+                key,
+                GENERATION_ONE,
+                revisionHint = 8L,
+                runtimeEventSequenceHint = 12L
+            )
+        )
+        assertNull(owner.reads.currentValidatedPresentationChannel(DEVICE_UID, key))
+        assertEquals(8L, owner.reads.committedMutationContinuation(DEVICE_UID, key)?.channel?.revision)
+
+        assertEquals(
+            DeviceDosingV1InvalidationDisposition.APPLIED,
+            owner.invalidate(
+                DEVICE_UID,
+                key,
+                GENERATION_ONE,
+                revisionHint = 9L,
+                runtimeEventSequenceHint = 13L
+            )
+        )
+        assertNull(owner.reads.committedMutationContinuation(DEVICE_UID, key))
+    }
+
+    @Test
+    fun `authoritative refresh must contain the invalidating runtime event sequence`() {
+        val owner = DeviceDosingV1StateOwner()
+        val key = DeviceDosingV1ChannelKey.from("channel1")
+        val sequenceEleven = fixtureState(revision = 7L)
+        assertEquals(
+            DeviceDosingV1CommitDisposition.APPLIED,
+            owner.commitRefresh(
+                owner.beginRequest(DEVICE_UID, key),
+                GENERATION_ONE,
+                sequenceEleven.global,
+                sequenceEleven.channel,
+                sequenceEleven.progress
+            )
+        )
+        assertEquals(
+            DeviceDosingV1InvalidationDisposition.APPLIED,
+            owner.invalidate(
+                DEVICE_UID,
+                key,
+                GENERATION_ONE,
+                revisionHint = 7L,
+                runtimeEventSequenceHint = 12L
+            )
+        )
+
+        val missingSequence = sequenceEleven.channel.copy(
+            channel = sequenceEleven.channel.channel.copy(
+                lastRuntimeEvent = sequenceEleven.channel.channel.lastRuntimeEvent.copy(
+                    valid = false
+                )
+            )
+        )
+        assertEquals(
+            DeviceDosingV1CommitDisposition.STALE_RUNTIME_EVENT,
+            owner.commitRefresh(
+                owner.beginRequest(DEVICE_UID, key),
+                GENERATION_ONE,
+                sequenceEleven.global,
+                missingSequence,
+                sequenceEleven.progress
+            )
+        )
+        assertNull(owner.reads.currentChannel(DEVICE_UID, key))
+
+        val sequenceTwelve = sequenceEleven.channel.copy(
+            channel = sequenceEleven.channel.channel.copy(
+                lastRuntimeEvent = sequenceEleven.channel.channel.lastRuntimeEvent.copy(
+                    sequence = 12L
+                )
+            )
+        )
+        assertEquals(
+            DeviceDosingV1CommitDisposition.APPLIED,
+            owner.commitRefresh(
+                owner.beginRequest(DEVICE_UID, key),
+                GENERATION_ONE,
+                sequenceEleven.global,
+                sequenceTwelve,
+                sequenceEleven.progress
+            )
+        )
+        assertEquals(7L, owner.reads.currentChannel(DEVICE_UID, key)?.revision)
+    }
+
+    @Test
+    fun `higher revision non presentable ack clears older persisted continuation`() {
+        val owner = DeviceDosingV1StateOwner()
+        val key = DeviceDosingV1ChannelKey.from("channel1")
+        val initial = fixtureState(revision = 7L)
+        owner.commitRefresh(
+            owner.beginRequest(DEVICE_UID, key),
+            GENERATION_ONE,
+            initial.global,
+            initial.channel,
+            initial.progress
+        )
+        val persisted = DeviceDosingV1MutationParser.parseProgramApply(
+            DeviceDosingV1TestFixtures.savedMutation(
+                DeviceDosingV1Contract.Literal.PROGRAM_APPLY
+            )
+        ).channel.copy(revision = 8L)
+        owner.recordMutation(
+            owner.beginRequest(DEVICE_UID, key),
+            GENERATION_ONE,
+            persisted,
+            DeviceDosingV1MutationVisibility.PERSISTED_ACK
+        )
+        assertEquals(8L, owner.reads.committedMutationContinuation(DEVICE_UID, key)?.channel?.revision)
+
+        val resetStyleAck = persisted.copy(
+            revision = 9L,
+            calibration = persisted.calibration.copy(
+                confirmed = false,
+                lastCalibratedAt = 0L
+            )
+        )
+        assertEquals(
+            DeviceDosingV1CommitDisposition.APPLIED,
+            owner.recordMutation(
+                owner.beginRequest(DEVICE_UID, key),
+                GENERATION_ONE,
+                resetStyleAck,
+                DeviceDosingV1MutationVisibility.RUNTIME_ACK
+            )
+        )
+
+        assertNull(owner.reads.committedMutationContinuation(DEVICE_UID, key))
+        assertNull(owner.reads.currentValidatedPresentationChannel(DEVICE_UID, key))
+    }
+
+    @Test
+    fun `persisted ack older than invalidating event is continuation only`() {
+        val owner = DeviceDosingV1StateOwner()
+        val key = DeviceDosingV1ChannelKey.from("channel1")
+        val initial = fixtureState(revision = 7L)
+        owner.commitRefresh(
+            owner.beginRequest(DEVICE_UID, key),
+            GENERATION_ONE,
+            initial.global,
+            initial.channel,
+            initial.progress
+        )
+        owner.invalidate(
+            DEVICE_UID,
+            key,
+            GENERATION_ONE,
+            revisionHint = 7L,
+            runtimeEventSequenceHint = 12L
+        )
+        val staleEventAck = DeviceDosingV1MutationParser.parseProgramApply(
+            DeviceDosingV1TestFixtures.savedMutation(
+                DeviceDosingV1Contract.Literal.PROGRAM_APPLY
+            )
+        ).channel.copy(revision = 8L)
+
+        assertEquals(
+            DeviceDosingV1CommitDisposition.APPLIED,
+            owner.recordMutation(
+                owner.beginRequest(DEVICE_UID, key),
+                GENERATION_ONE,
+                staleEventAck,
+                DeviceDosingV1MutationVisibility.PERSISTED_ACK
+            )
+        )
+
+        assertNull(owner.reads.currentValidatedPresentationChannel(DEVICE_UID, key))
+        assertEquals(
+            8L,
+            owner.reads.committedMutationContinuation(DEVICE_UID, key)?.channel?.revision
+        )
+        assertEquals(8L, owner.reads.currentNavigationChannel(DEVICE_UID, key)?.revision)
+    }
+
+    @Test
+    fun `runtime event sequence comparison follows uint32 serial arithmetic`() {
+        val owner = DeviceDosingV1StateOwner()
+        val key = DeviceDosingV1ChannelKey.from("channel1")
+        val fixture = fixtureState(revision = 7L)
+        val nearWrap = fixture.channel.copy(
+            channel = fixture.channel.channel.copy(
+                lastRuntimeEvent = fixture.channel.channel.lastRuntimeEvent.copy(
+                    sequence = 0xFFFF_FFFEL
+                )
+            )
+        )
+        owner.commitRefresh(
+            owner.beginRequest(DEVICE_UID, key),
+            GENERATION_ONE,
+            fixture.global,
+            nearWrap,
+            fixture.progress
+        )
+
+        assertEquals(
+            DeviceDosingV1InvalidationDisposition.APPLIED,
+            owner.invalidate(
+                DEVICE_UID,
+                key,
+                GENERATION_ONE,
+                revisionHint = 7L,
+                runtimeEventSequenceHint = 1L
+            )
+        )
+        val afterWrap = nearWrap.copy(
+            channel = nearWrap.channel.copy(
+                lastRuntimeEvent = nearWrap.channel.lastRuntimeEvent.copy(sequence = 1L)
+            )
+        )
+        assertEquals(
+            DeviceDosingV1CommitDisposition.APPLIED,
+            owner.commitRefresh(
+                owner.beginRequest(DEVICE_UID, key),
+                GENERATION_ONE,
+                fixture.global,
+                afterWrap,
+                fixture.progress
+            )
+        )
+        assertEquals(
+            DeviceDosingV1InvalidationDisposition.DUPLICATE_EVENT,
+            owner.invalidate(
+                DEVICE_UID,
+                key,
+                GENERATION_ONE,
+                revisionHint = 7L,
+                runtimeEventSequenceHint = 0xFFFF_FFFEL
+            )
+        )
+        assertEquals(
+            DeviceDosingV1InvalidationDisposition.DUPLICATE_EVENT,
+            owner.invalidate(
+                DEVICE_UID,
+                key,
+                GENERATION_ONE,
+                revisionHint = 7L,
+                runtimeEventSequenceHint = 0x8000_0001L
             )
         )
     }
@@ -467,9 +828,14 @@ class DeviceDosingV1StateAdapterTest {
         fun enqueueRefresh(
             revision: Long,
             generation: DeviceRuntimeConnectionGeneration = GENERATION_ONE,
-            programEnabled: Boolean = true
+            programEnabled: Boolean = true,
+            reservoirCapacityMicroliters: Long = 500_000L
         ) {
-            val (global, channel, progress) = fixtureState(revision, programEnabled)
+            val (global, channel, progress) = fixtureState(
+                revision,
+                programEnabled,
+                reservoirCapacityMicroliters
+            )
             enqueueSuccess(DeviceDosingV1Contract.Action.STATUS_GET, global, generation)
             enqueueSuccess(DeviceDosingV1Contract.Action.STATUS_GET, channel, generation)
             enqueueSuccess(DeviceDosingV1Contract.Action.PROGRESS_GET, progress, generation)
@@ -487,6 +853,27 @@ class DeviceDosingV1StateAdapterTest {
                     channel = parsed.channel.copy(
                         revision = revision,
                         program = parsed.channel.program?.copy(enabled = programEnabled)
+                    )
+                )
+            )
+        }
+
+        fun enqueueConfigMutation(revision: Long, reservoirCapacityMicroliters: Long) {
+            val parsed = DeviceDosingV1MutationParser.parseConfigApply(
+                DeviceDosingV1TestFixtures.savedMutation(
+                    DeviceDosingV1Contract.Literal.CHANNEL_CONFIG_APPLY
+                )
+            )
+            enqueueSuccess(
+                DeviceDosingV1Contract.Action.CONFIG_APPLY,
+                parsed.copy(
+                    channel = parsed.channel.copy(
+                        revision = revision,
+                        reservoir = parsed.channel.reservoir.copy(
+                            trackingEnabled = true,
+                            capacityMilliliters = reservoirCapacityMicroliters / 1_000.0,
+                            remainingMilliliters = reservoirCapacityMicroliters / 1_000.0
+                        )
                     )
                 )
             )
@@ -528,7 +915,11 @@ class DeviceDosingV1StateAdapterTest {
         val GENERATION_ONE = DeviceRuntimeConnectionGeneration(1L)
         val GENERATION_TWO = DeviceRuntimeConnectionGeneration(2L)
 
-        fun fixtureState(revision: Long, programEnabled: Boolean = true): FixtureState {
+        fun fixtureState(
+            revision: Long,
+            programEnabled: Boolean = true,
+            reservoirCapacityMicroliters: Long = 500_000L
+        ): FixtureState {
             val global = DeviceDosingV1StatusParser.parseGlobal(
                 DeviceDosingV1TestFixtures.globalStatus()
             ).let { status ->
@@ -551,7 +942,14 @@ class DeviceDosingV1StateAdapterTest {
                 status.copy(
                     channel = status.channel.copy(
                         revision = revision,
-                        program = status.channel.program?.copy(enabled = programEnabled)
+                        program = status.channel.program?.copy(enabled = programEnabled),
+                        reservoir = status.channel.reservoir.copy(
+                            capacityMilliliters = reservoirCapacityMicroliters / 1_000.0,
+                            remainingMilliliters = minOf(
+                                status.channel.reservoir.remainingMilliliters,
+                                reservoirCapacityMicroliters / 1_000.0
+                            )
+                        )
                     )
                 )
             }

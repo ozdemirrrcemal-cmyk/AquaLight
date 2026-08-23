@@ -2,6 +2,7 @@ package com.aqua.aqualight.data.devices.dosing.v1
 
 import com.aqua.aqualight.application.devices.dosing.DeviceDosingChannelOperationResult
 import com.aqua.aqualight.application.devices.dosing.DeviceDosingChannelRejection
+import com.aqua.aqualight.application.devices.dosing.DeviceDosingProgramMutationOrigin
 import com.aqua.aqualight.application.devices.dosing.DeviceDosingRunSource
 import com.aqua.aqualight.data.devices.model.DeviceUid
 import com.aqua.aqualight.data.devices.runtime.core.DeviceRuntimeCommand
@@ -68,11 +69,14 @@ class DeviceDosingV1ChannelDetailCutoverTest {
                 SLOT_ID,
                 true
             )
-            val planResult = adapter.channelOperations.applyProgramAtRevision(
+            val planResult = adapter.channelOperations.applyProgramAtOrigin(
                 deviceUid = DEVICE_UID.value,
                 slotId = SLOT_ID,
                 program = planFromBeforeSwitch,
-                expectedRevision = 7L
+                origin = DeviceDosingProgramMutationOrigin(
+                    revision = 7L,
+                    baseProgram = planFromBeforeSwitch
+                )
             )
 
             assertTrue(switchResult is DeviceDosingChannelOperationResult.Success)

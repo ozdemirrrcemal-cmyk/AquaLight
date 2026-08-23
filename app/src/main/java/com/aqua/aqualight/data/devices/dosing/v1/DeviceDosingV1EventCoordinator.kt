@@ -44,11 +44,14 @@ internal class DeviceDosingV1EventCoordinator(
             deviceUid = event.deviceUid,
             channelKey = invalidation.channelKey,
             connectionGeneration = event.generation,
-            revisionHint = invalidation.revisionHint
+            revisionHint = invalidation.revisionHint,
+            runtimeEventSequenceHint = invalidation.runtimeEventSequenceHint
         )
     ) {
         DeviceDosingV1InvalidationDisposition.STALE_CONNECTION,
-        DeviceDosingV1InvalidationDisposition.STALE_REVISION -> DeviceDosingV1EventResult.Ignored
+        DeviceDosingV1InvalidationDisposition.STALE_REVISION,
+        DeviceDosingV1InvalidationDisposition.DUPLICATE_EVENT ->
+            DeviceDosingV1EventResult.Ignored
         DeviceDosingV1InvalidationDisposition.APPLIED -> refreshCoordinator.refresh(address)
             .toEventResult()
     }

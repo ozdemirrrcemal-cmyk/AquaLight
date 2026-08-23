@@ -24,6 +24,9 @@ internal class DeviceDosingV1ChannelOperationGate {
 /** A replay policy and firmware assignment handled as one serialized persisted mutation. */
 internal data class DeviceDosingV1PersistedMutation<T>(
     val assignmentSatisfied: ((DeviceDosingChannelSnapshot) -> Boolean)? = null,
+    val origin: DeviceDosingV1PersistedMutationOrigin? = null,
+    val acknowledgementVisibility: DeviceDosingV1MutationVisibility =
+        DeviceDosingV1MutationVisibility.PERSISTED_ACK,
     val execute: suspend (
         DeviceUid,
         DeviceDosingV1ChannelKey,
@@ -34,14 +37,23 @@ internal data class DeviceDosingV1PersistedMutation<T>(
     val onAccepted: () -> Unit = {}
 )
 
+/** Application-domain CAS origin for a long-lived editor mutation. */
+internal data class DeviceDosingV1PersistedMutationOrigin(
+    val revision: Long,
+    val domainStillPresent: (DeviceDosingChannelSnapshot) -> Boolean
+) {
+    init {
+        require(revision >= 0L)
+    }
+}
+
 /** Serializes mutations per channel and reconciles their authoritative refresh. */
 internal class DeviceDosingV1MutationCoordinator(
     private val stateOwner: DeviceDosingV1StateOwner,
     private val stateAccess: DeviceDosingV1StateAccess,
     private val refreshCoordinator: DeviceDosingV1RefreshCoordinator,
     private val operationGate: DeviceDosingV1ChannelOperationGate = DeviceDosingV1ChannelOperationGate(),
-    private val scheduleBackgroundReconciliation: ((DeviceDosingV1Address, Long) -> Unit)? = null,
-    private val cancelBackgroundReconciliation: ((DeviceDosingV1Address) -> Unit)? = null
+    private val scheduleBackgroundReconciliation: ((DeviceDosingV1Address, Long) -> Unit)? = null
 ) {
     private val conflictCoordinator = DeviceDosingV1ConflictCoordinator(stateOwner, refreshCoordinator)
 
@@ -53,7 +65,9 @@ internal class DeviceDosingV1MutationCoordinator(
         address = dosingV1Address(deviceUid, slotId),
         mutation = DosingMutationDefinition(
             persistedMutation = true,
+            acknowledgementVisibility = mutation.acknowledgementVisibility,
             assignmentSatisfied = mutation.assignmentSatisfied,
+            origin = mutation.origin,
             execute = mutation.execute,
             channel = mutation.channel,
             onAccepted = mutation.onAccepted
@@ -74,6 +88,7 @@ internal class DeviceDosingV1MutationCoordinator(
         address = dosingV1Address(deviceUid, slotId),
         mutation = DosingMutationDefinition(
             persistedMutation = false,
+            acknowledgementVisibility = DeviceDosingV1MutationVisibility.RUNTIME_ACK,
             execute = execute,
             channel = channel
         )
@@ -82,46 +97,47 @@ internal class DeviceDosingV1MutationCoordinator(
     private suspend fun <T> mutateSerialized(
         address: DeviceDosingV1Address,
         mutation: DosingMutationDefinition<T>
-    ): DeviceDosingV1MutationResult<T> {
-        // A user mutation always outranks optional post-ACK consistency work. Cancellation happens
-        // before waiting for the channel gate so a slow background readback cannot add UX latency.
-        cancelBackgroundReconciliation?.invoke(address)
-        return operationGate.withChannel(address) {
-            var baseline = mutationBaseline(address, mutation)
-                ?: return@withChannel DeviceDosingV1MutationResult.Malformed
-            if (mutation.assignmentSatisfied?.invoke(baseline.state.channel) == true) {
-                return@withChannel acceptSatisfiedAssignment(address, baseline, mutation)
-            }
-            var attempt = 0
-            while (attempt < MAX_REPLAY_SAFE_ASSIGNMENT_ATTEMPTS) {
-                val result = mutateAgainstBaseline(
-                    address = address,
-                    baseline = baseline,
-                    mutation = mutation
-                )
-                val replayableFailure = mutation.assignmentSatisfied != null &&
-                    result.isReplayableAssignmentFailure()
-                if (!replayableFailure) return@withChannel result
-
-                // Failure reconciliation already refreshed inside this same channel gate. Replay
-                // only when it produced a coherent authoritative baseline.
-                val reconciled = stateAccess.currentState(address) ?: return@withChannel result
-                if (mutation.assignmentSatisfied?.invoke(reconciled.channel) == true) {
-                    mutation.onAccepted()
-                    val acceptedState = stateAccess.currentState(address) ?: reconciled
-                    return@withChannel DeviceDosingV1MutationResult.Reconciled(acceptedState)
-                }
-                if (attempt >= MAX_REPLAY_SAFE_ASSIGNMENT_ATTEMPTS - 1) {
-                    return@withChannel result
-                }
-                baseline = DosingMutationBaseline(
-                    state = reconciled,
-                    source = DosingMutationBaselineSource.AUTHORITATIVE
-                )
-                attempt += 1
-            }
-            error("Replay-safe assignment loop must return within its bounded attempt budget.")
+    ): DeviceDosingV1MutationResult<T> = operationGate.withChannel(address) {
+        var baseline = mutationBaseline(address, mutation)
+            ?: return@withChannel DeviceDosingV1MutationResult.Malformed
+        if (mutation.assignmentSatisfied?.invoke(baseline.state.channel) == true) {
+            return@withChannel acceptSatisfiedAssignment(address, baseline, mutation)
         }
+        if (!mutation.origin.accepts(baseline.state.channel)) {
+            return@withChannel DeviceDosingV1MutationResult.Conflict
+        }
+        var attempt = 0
+        while (attempt < MAX_REPLAY_SAFE_ASSIGNMENT_ATTEMPTS) {
+            val result = mutateAgainstBaseline(
+                address = address,
+                baseline = baseline,
+                mutation = mutation
+            )
+            val replayableFailure = mutation.assignmentSatisfied != null &&
+                result.isReplayableAssignmentFailure()
+            if (!replayableFailure) return@withChannel result
+
+            // Failure reconciliation already refreshed inside this same channel gate. Replay
+            // only when it produced a coherent authoritative baseline.
+            val reconciled = stateAccess.currentState(address) ?: return@withChannel result
+            if (mutation.assignmentSatisfied?.invoke(reconciled.channel) == true) {
+                mutation.onAccepted()
+                val acceptedState = stateAccess.currentState(address) ?: reconciled
+                return@withChannel DeviceDosingV1MutationResult.Reconciled(acceptedState)
+            }
+            if (!mutation.origin.accepts(reconciled.channel)) {
+                return@withChannel DeviceDosingV1MutationResult.Conflict
+            }
+            if (attempt >= MAX_REPLAY_SAFE_ASSIGNMENT_ATTEMPTS - 1) {
+                return@withChannel result
+            }
+            baseline = DosingMutationBaseline(
+                state = reconciled,
+                source = DosingMutationBaselineSource.AUTHORITATIVE
+            )
+            attempt += 1
+        }
+        error("Replay-safe assignment loop must return within its bounded attempt budget.")
     }
 
     private fun <T> acceptSatisfiedAssignment(
@@ -164,6 +180,7 @@ internal class DeviceDosingV1MutationCoordinator(
                         outcome = outcome,
                         channel = mutation.channel,
                         persistedMutation = mutation.persistedMutation,
+                        acknowledgementVisibility = mutation.acknowledgementVisibility,
                         onAccepted = mutation.onAccepted
                     )
                 )
@@ -185,7 +202,12 @@ internal class DeviceDosingV1MutationCoordinator(
         accepted: AcceptedDosingMutation<T>,
         detail: DeviceDosingV1ChannelDetail
     ): DeviceDosingV1MutationResult<T> = runCatching {
-        stateOwner.recordMutation(accepted.token, accepted.outcome.generation, detail)
+        stateOwner.recordMutation(
+            token = accepted.token,
+            connectionGeneration = accepted.outcome.generation,
+            channel = detail,
+            visibility = accepted.acknowledgementVisibility
+        )
     }.fold(
         onSuccess = { disposition ->
             if (disposition == DeviceDosingV1CommitDisposition.MALFORMED) {
@@ -271,8 +293,8 @@ internal class DeviceDosingV1MutationCoordinator(
     private suspend fun <T> mutationBaseline(
         address: DeviceDosingV1Address,
         mutation: DosingMutationDefinition<T>
-    ): DosingMutationBaseline? =
-        stateAccess.currentState(address)?.let { current ->
+    ): DosingMutationBaseline? {
+        val cached = stateAccess.currentState(address)?.let { current ->
             DosingMutationBaseline(
                 state = current,
                 source = DosingMutationBaselineSource.AUTHORITATIVE
@@ -286,13 +308,18 @@ internal class DeviceDosingV1MutationCoordinator(
             }
         } else {
             null
-        } ?: when (val refreshed = refreshCoordinator.refreshWithinGate(address)) {
+        }
+        if (cached != null && cached.state.channel.revision >= (mutation.origin?.revision ?: 0L)) {
+            return cached
+        }
+        return when (val refreshed = refreshCoordinator.refreshWithinGate(address)) {
             is DeviceDosingV1RefreshResult.Success -> DosingMutationBaseline(
                 state = refreshed.state,
                 source = DosingMutationBaselineSource.AUTHORITATIVE
             )
             else -> null
         }
+    }
 }
 
 private suspend fun <T> executeDosingMutation(
@@ -334,12 +361,15 @@ private data class AcceptedDosingMutation<T>(
     val outcome: DeviceRuntimeCommandOutcome.Success<T>,
     val channel: (T) -> DeviceDosingV1ChannelDetail,
     val persistedMutation: Boolean,
+    val acknowledgementVisibility: DeviceDosingV1MutationVisibility,
     val onAccepted: () -> Unit
 )
 
 private data class DosingMutationDefinition<T>(
     val persistedMutation: Boolean,
+    val acknowledgementVisibility: DeviceDosingV1MutationVisibility,
     val assignmentSatisfied: ((DeviceDosingChannelSnapshot) -> Boolean)? = null,
+    val origin: DeviceDosingV1PersistedMutationOrigin? = null,
     val execute: suspend (
         DeviceUid,
         DeviceDosingV1ChannelKey,
@@ -376,5 +406,11 @@ private fun DeviceDosingV1MutationResult<*>.isReplayableAssignmentFailure(): Boo
     }
     else -> false
 }
+
+private fun DeviceDosingV1PersistedMutationOrigin?.accepts(
+    snapshot: DeviceDosingChannelSnapshot
+): Boolean = this == null || (
+    snapshot.revision >= revision && domainStillPresent(snapshot)
+)
 
 private const val MAX_REPLAY_SAFE_ASSIGNMENT_ATTEMPTS = 3

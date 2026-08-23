@@ -6,9 +6,12 @@ import com.aqua.aqualight.application.devices.dosing.DeviceDosingChannelOperatio
 import com.aqua.aqualight.application.devices.dosing.DeviceDosingChannelRejection
 import com.aqua.aqualight.application.devices.dosing.DeviceDosingChannelSnapshot
 import com.aqua.aqualight.application.devices.dosing.DeviceDosingProgram
+import com.aqua.aqualight.application.devices.dosing.DeviceDosingProgramMutationOrigin
 import com.aqua.aqualight.application.devices.dosing.DeviceDosingProgramRevisionOperations
+import com.aqua.aqualight.application.devices.dosing.DeviceDosingReservoirMutationOrigin
 import com.aqua.aqualight.application.devices.dosing.DeviceDosingReservoirRevisionOperations
 import com.aqua.aqualight.application.devices.dosing.DeviceDosingReservoirSettings
+import com.aqua.aqualight.application.devices.dosing.DeviceDosingReservoirSnapshot
 import com.aqua.aqualight.data.devices.runtime.core.DeviceRuntimeCommandOutcome
 import kotlinx.coroutines.flow.Flow
 
@@ -28,6 +31,22 @@ internal class DeviceDosingV1ChannelOperationsAdapter(
 
     override fun current(deviceUid: String, slotId: String): DeviceDosingChannelSnapshot? =
         adapter.stateAccess.currentChannel(deviceUid, slotId)
+
+    override fun currentValidatedPresentation(
+        deviceUid: String,
+        slotId: String
+    ): DeviceDosingChannelSnapshot? = adapter.stateAccess.currentValidatedPresentationChannel(
+        deviceUid,
+        slotId
+    )
+
+    override fun currentNavigationSnapshot(
+        deviceUid: String,
+        slotId: String
+    ): DeviceDosingChannelSnapshot? = adapter.stateAccess.currentNavigationChannel(
+        deviceUid,
+        slotId
+    )
 
     override fun observe(
         deviceUid: String,
@@ -54,34 +73,40 @@ internal class DeviceDosingV1ChannelOperationsAdapter(
         deviceUid = deviceUid,
         slotId = slotId,
         program = program,
-        expectedRevision = null
+        origin = null
     )
 
-    override suspend fun applyProgramAtRevision(
+    override suspend fun applyProgramAtOrigin(
         deviceUid: String,
         slotId: String,
         program: DeviceDosingProgram,
-        expectedRevision: Long
-    ): DeviceDosingChannelOperationResult = if (expectedRevision < 0L) {
-        DeviceDosingChannelOperationResult.Failed
-    } else {
-        applyProgramInternal(deviceUid, slotId, program, expectedRevision)
-    }
+        origin: DeviceDosingProgramMutationOrigin
+    ): DeviceDosingChannelOperationResult = applyProgramInternal(
+        deviceUid,
+        slotId,
+        program,
+        origin
+    )
 
     private suspend fun applyProgramInternal(
         deviceUid: String,
         slotId: String,
         program: DeviceDosingProgram,
-        expectedRevision: Long?
+        origin: DeviceDosingProgramMutationOrigin?
     ): DeviceDosingChannelOperationResult = adapter.mutationCoordinator.mutatePersisted(
         deviceUid = deviceUid,
         slotId = slotId,
         mutation = DeviceDosingV1PersistedMutation(
             assignmentSatisfied = { snapshot ->
-                if (expectedRevision != null) {
+                if (origin != null) {
                     snapshot.program.hasSamePlanAssignment(program)
                 } else {
                     snapshot.program == program
+                }
+            },
+            origin = origin?.let { mutationOrigin ->
+                DeviceDosingV1PersistedMutationOrigin(mutationOrigin.revision) { snapshot ->
+                    snapshot.program.hasSamePlanOrigin(mutationOrigin.baseProgram)
                 }
             },
             execute = { uid, channelKey, revision, baseline ->
@@ -89,7 +114,7 @@ internal class DeviceDosingV1ChannelOperationsAdapter(
                     baseline.controls.programEditable,
                     DeviceDosingChannelRejection.NOT_EDITABLE
                 )
-                val effectiveProgram = if (expectedRevision != null) {
+                val effectiveProgram = if (origin != null) {
                     program.copy(
                         missedDoseRecoveryEnabled = baseline.program
                             ?.missedDoseRecoveryEnabled
@@ -158,32 +183,44 @@ internal class DeviceDosingV1ChannelOperationsAdapter(
     ): DeviceDosingChannelOperationResult = applyReservoirSettingsInternal(
         deviceUid = deviceUid,
         slotId = slotId,
-        settings = settings
+        settings = settings,
+        origin = null
     )
 
-    override suspend fun applyReservoirSettingsAtRevision(
+    override suspend fun applyReservoirSettingsAtOrigin(
         deviceUid: String,
         slotId: String,
         settings: DeviceDosingReservoirSettings,
-        expectedRevision: Long
-    ): DeviceDosingChannelOperationResult = if (expectedRevision < 0L) {
-        DeviceDosingChannelOperationResult.Failed
-    } else {
-        applyReservoirSettingsInternal(deviceUid, slotId, settings)
-    }
+        origin: DeviceDosingReservoirMutationOrigin
+    ): DeviceDosingChannelOperationResult = applyReservoirSettingsInternal(
+        deviceUid,
+        slotId,
+        settings,
+        origin
+    )
 
     private suspend fun applyReservoirSettingsInternal(
         deviceUid: String,
         slotId: String,
-        settings: DeviceDosingReservoirSettings
+        settings: DeviceDosingReservoirSettings,
+        origin: DeviceDosingReservoirMutationOrigin?
     ): DeviceDosingChannelOperationResult = adapter.mutationCoordinator.mutatePersisted(
         deviceUid = deviceUid,
         slotId = slotId,
         mutation = DeviceDosingV1PersistedMutation(
             assignmentSatisfied = { snapshot ->
-                snapshot.reservoir.trackingEnabled == settings.trackingEnabled &&
-                    (!settings.trackingEnabled ||
-                        snapshot.reservoir.capacityMicroliters == settings.capacityMicroliters)
+                snapshot.reservoir.hasSameReservoirAssignment(
+                    settings.trackingEnabled,
+                    settings.capacityMicroliters
+                )
+            },
+            origin = origin?.let { mutationOrigin ->
+                DeviceDosingV1PersistedMutationOrigin(mutationOrigin.revision) { snapshot ->
+                    snapshot.reservoir.hasSameReservoirAssignment(
+                        mutationOrigin.trackingEnabled,
+                        mutationOrigin.capacityMicroliters
+                    )
+                }
             },
             execute = { uid, channelKey, revision, baseline ->
                 requireMutation(
@@ -292,6 +329,10 @@ internal class DeviceDosingV1ChannelOperationsAdapter(
         deviceUid = deviceUid,
         slotId = slotId,
         mutation = DeviceDosingV1PersistedMutation(
+            // Reset is durable, but its ACK changes calibration/runtime domains without carrying
+            // the envelope uptime required for a coherent calibration snapshot. Keep presentation
+            // on the previous coherent state until the owner-scoped full readback succeeds.
+            acknowledgementVisibility = DeviceDosingV1MutationVisibility.RUNTIME_ACK,
             execute = { uid, channelKey, revision, baseline ->
                 requireMutation(
                     baseline.controls.resetSupported,
@@ -387,3 +428,14 @@ private fun DeviceDosingProgram?.hasSamePlanAssignment(
     desired: DeviceDosingProgram
 ): Boolean = this?.copy(missedDoseRecoveryEnabled = false) ==
     desired.copy(missedDoseRecoveryEnabled = false)
+
+private fun DeviceDosingProgram?.hasSamePlanOrigin(
+    origin: DeviceDosingProgram?
+): Boolean = this?.copy(missedDoseRecoveryEnabled = false) ==
+    origin?.copy(missedDoseRecoveryEnabled = false)
+
+private fun DeviceDosingReservoirSnapshot.hasSameReservoirAssignment(
+    trackingEnabled: Boolean,
+    capacityMicroliters: Long?
+): Boolean = this.trackingEnabled == trackingEnabled &&
+    (!trackingEnabled || this.capacityMicroliters == capacityMicroliters)

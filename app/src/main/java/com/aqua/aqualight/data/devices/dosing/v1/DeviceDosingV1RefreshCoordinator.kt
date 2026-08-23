@@ -5,26 +5,54 @@ import com.aqua.aqualight.data.devices.runtime.core.DeviceRuntimeCommandOutcome
 import java.util.concurrent.ConcurrentHashMap
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CompletableDeferred
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.CoroutineStart
+import kotlinx.coroutines.Deferred
+import kotlinx.coroutines.async
 
 /** Coordinates refreshes without owning any authoritative state. */
 internal class DeviceDosingV1RefreshCoordinator(
     private val repository: DeviceDosingV1Repository,
     private val stateOwner: DeviceDosingV1StateOwner,
     private val stateAccess: DeviceDosingV1StateAccess,
+    private val producerScope: CoroutineScope? = null,
     private val operationGate: DeviceDosingV1ChannelOperationGate =
         DeviceDosingV1ChannelOperationGate()
 ) {
     private val inFlightRefreshes = ConcurrentHashMap<
         DeviceDosingV1Address,
-        CompletableDeferred<DeviceDosingV1RefreshResult>
+        Deferred<DeviceDosingV1RefreshResult>
     >()
-    private val inFlightRefreshAll = ConcurrentHashMap<DeviceUid, CompletableDeferred<Boolean>>()
+    private val inFlightRefreshAll = ConcurrentHashMap<DeviceUid, Deferred<Boolean>>()
 
     suspend fun refresh(deviceUid: String, slotId: String): DeviceDosingV1RefreshResult =
         refresh(dosingV1Address(deviceUid, slotId))
 
     suspend fun refreshAll(deviceUid: String): Boolean {
         val uid = DeviceUid(deviceUid.trim())
+        val scope = producerScope ?: return refreshAllCallerScoped(uid)
+        val candidate = scope.async(start = CoroutineStart.LAZY) {
+            try {
+                refreshAllProducer(uid)
+            } catch (cancellation: CancellationException) {
+                throw cancellation
+            } catch (_: Exception) {
+                false
+            }
+        }
+        val existing = inFlightRefreshAll.putIfAbsent(uid, candidate)
+        if (existing != null) {
+            candidate.cancel()
+            return existing.await()
+        }
+
+        candidate.invokeOnCompletion { inFlightRefreshAll.remove(uid, candidate) }
+        candidate.start()
+        return candidate.await()
+    }
+
+    /** Test-only fallback for adapters that do not own a production reconciliation scope. */
+    private suspend fun refreshAllCallerScoped(uid: DeviceUid): Boolean {
         val pending = CompletableDeferred<Boolean>()
         val existing = inFlightRefreshAll.putIfAbsent(uid, pending)
         if (existing != null) return existing.await()
@@ -58,6 +86,31 @@ internal class DeviceDosingV1RefreshCoordinator(
     }
 
     suspend fun refresh(address: DeviceDosingV1Address): DeviceDosingV1RefreshResult {
+        val scope = producerScope ?: return refreshCallerScoped(address)
+        val candidate = scope.async(start = CoroutineStart.LAZY) {
+            try {
+                operationGate.withChannel(address) { refreshWithinGate(address) }
+            } catch (cancellation: CancellationException) {
+                throw cancellation
+            } catch (_: Exception) {
+                DeviceDosingV1RefreshResult.Malformed
+            }
+        }
+        val existing = inFlightRefreshes.putIfAbsent(address, candidate)
+        if (existing != null) {
+            candidate.cancel()
+            return existing.await()
+        }
+
+        candidate.invokeOnCompletion { inFlightRefreshes.remove(address, candidate) }
+        candidate.start()
+        return candidate.await()
+    }
+
+    /** Test-only fallback for adapters that do not own a production reconciliation scope. */
+    private suspend fun refreshCallerScoped(
+        address: DeviceDosingV1Address
+    ): DeviceDosingV1RefreshResult {
         val pending = CompletableDeferred<DeviceDosingV1RefreshResult>()
         val existing = inFlightRefreshes.putIfAbsent(address, pending)
         if (existing != null) return existing.await()
@@ -96,8 +149,21 @@ internal class DeviceDosingV1RefreshCoordinator(
     internal suspend fun refreshWithinGate(
         address: DeviceDosingV1Address
     ): DeviceDosingV1RefreshResult {
-        val token = stateOwner.beginRequest(address.deviceUid, address.channelKey)
-        return refresh(address, token, repository.requestGlobalStatus(address.deviceUid))
+        repeat(MAX_REFRESH_STABILITY_ATTEMPTS) { attempt ->
+            val token = stateOwner.beginRequest(address.deviceUid, address.channelKey)
+            val result = refresh(
+                address,
+                token,
+                repository.requestGlobalStatus(address.deviceUid)
+            )
+            if (
+                result != DeviceDosingV1RefreshResult.RejectedStale ||
+                attempt == MAX_REFRESH_STABILITY_ATTEMPTS - 1
+            ) {
+                return result
+            }
+        }
+        error("Refresh stability loop exhausted without returning")
     }
 
     private suspend fun refresh(
@@ -160,7 +226,9 @@ private fun DeviceDosingV1CommitDisposition.toRefreshResult(
     } ?: DeviceDosingV1RefreshResult.Malformed
     DeviceDosingV1CommitDisposition.MALFORMED -> DeviceDosingV1RefreshResult.Malformed
     DeviceDosingV1CommitDisposition.STALE_CONNECTION,
-    DeviceDosingV1CommitDisposition.STALE_REVISION -> DeviceDosingV1RefreshResult.RejectedStale
+    DeviceDosingV1CommitDisposition.STALE_REVISION,
+    DeviceDosingV1CommitDisposition.STALE_RUNTIME_EVENT ->
+        DeviceDosingV1RefreshResult.RejectedStale
     DeviceDosingV1CommitDisposition.STALE_REQUEST -> stateAccess.currentState(address)?.let {
         DeviceDosingV1RefreshResult.Success(it)
     } ?: DeviceDosingV1RefreshResult.RejectedStale
@@ -174,3 +242,5 @@ private fun sameConnectionGeneration(
     second: DeviceRuntimeCommandOutcome.Success<*>,
     third: DeviceRuntimeCommandOutcome.Success<*>
 ): Boolean = first.generation == second.generation && second.generation == third.generation
+
+private const val MAX_REFRESH_STABILITY_ATTEMPTS = 2

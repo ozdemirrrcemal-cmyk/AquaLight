@@ -23,13 +23,21 @@ internal enum class DeviceDosingV1CommitDisposition {
     STALE_CONNECTION,
     STALE_REQUEST,
     STALE_REVISION,
+    STALE_RUNTIME_EVENT,
     MALFORMED
 }
 
 internal enum class DeviceDosingV1InvalidationDisposition {
     APPLIED,
     STALE_CONNECTION,
-    STALE_REVISION
+    STALE_REVISION,
+    DUPLICATE_EVENT
+}
+
+/** Controls whether a mutation ACK is complete enough to become stable presentation state. */
+internal enum class DeviceDosingV1MutationVisibility {
+    PERSISTED_ACK,
+    RUNTIME_ACK
 }
 
 internal interface DeviceDosingV1StateReadAccess {
@@ -54,6 +62,18 @@ internal interface DeviceDosingV1StateReadAccess {
         deviceUid: DeviceUid,
         channelKey: DeviceDosingV1ChannelKey
     ): DeviceDosingCalibrationSnapshot?
+
+    /** Coherent status or a durable persisted ACK from the current connection generation. */
+    fun currentValidatedPresentationChannel(
+        deviceUid: DeviceUid,
+        channelKey: DeviceDosingV1ChannelKey
+    ): DeviceDosingChannelSnapshot?
+
+    /** Same-revision durable continuation safe only for destination selection. */
+    fun currentNavigationChannel(
+        deviceUid: DeviceUid,
+        channelKey: DeviceDosingV1ChannelKey
+    ): DeviceDosingChannelSnapshot?
 
     fun authoritativeRevision(
         deviceUid: DeviceUid,
@@ -86,9 +106,12 @@ private enum class OwnedDosingChannelAuthority {
 
 private data class OwnedDosingChannelState(
     val revision: Long,
+    val runtimeEventSequence: Long?,
     val authority: OwnedDosingChannelAuthority,
     val channel: DeviceDosingChannelSnapshot?,
-    val calibration: DeviceDosingCalibrationSnapshot?
+    val calibration: DeviceDosingCalibrationSnapshot?,
+    /** Durable persisted-ACK continuation; independent from presentation freshness. */
+    val committedMutationContinuation: DeviceDosingV1CommittedMutationContinuation?
 )
 
 private data class OwnedDosingDeviceState(
@@ -140,9 +163,23 @@ internal class DeviceDosingV1StateOwner(
         if (prepared.disposition != null) return@synchronized prepared.disposition
         val device = checkNotNull(prepared.device)
         val incomingRevision = channelStatus.channel.revision
-        val currentRevision = device.channels[token.channelKey]?.revision
+        val current = device.channels[token.channelKey]
+        val currentRevision = current?.revision
         if (currentRevision != null && incomingRevision < currentRevision) {
             return@synchronized DeviceDosingV1CommitDisposition.STALE_REVISION
+        }
+        val incomingRuntimeEventSequence = channelStatus.channel.lastRuntimeEvent
+            .validSequenceOrNull()
+        if (
+            current?.runtimeEventSequence != null &&
+            !incomingRuntimeEventSequence.isSameOrNewerRuntimeEventThan(
+                current.runtimeEventSequence
+            )
+        ) {
+            // An event can invalidate the owner after CHANNEL_STATUS_GET was captured but before
+            // PROGRESS_GET completes. Never stamp that older triplet authoritative by merely
+            // merging the newer sequence floor into it.
+            return@synchronized DeviceDosingV1CommitDisposition.STALE_RUNTIME_EVENT
         }
         val slotId = DeviceDosingV1SlotKeyMapper.slotId(token.channelKey)
         val mapped = runCatching {
@@ -164,9 +201,12 @@ internal class DeviceDosingV1StateOwner(
         }
         val updatedChannel = OwnedDosingChannelState(
             revision = incomingRevision,
+            runtimeEventSequence = incomingRuntimeEventSequence
+                .mergeRuntimeEventSequence(current?.runtimeEventSequence),
             authority = OwnedDosingChannelAuthority.AUTHORITATIVE,
             channel = mapped.channel,
-            calibration = mapped.calibration
+            calibration = mapped.calibration,
+            committedMutationContinuation = null
         )
         publish(
             token.deviceUid,
@@ -181,7 +221,8 @@ internal class DeviceDosingV1StateOwner(
     fun recordMutation(
         token: DeviceDosingV1RequestToken,
         connectionGeneration: DeviceRuntimeConnectionGeneration,
-        channel: DeviceDosingV1ChannelDetail
+        channel: DeviceDosingV1ChannelDetail,
+        visibility: DeviceDosingV1MutationVisibility
     ): DeviceDosingV1CommitDisposition = synchronized(lock) {
         require(channel.channelKey == token.channelKey)
         val prepared = prepareDevice(token, connectionGeneration)
@@ -191,26 +232,54 @@ internal class DeviceDosingV1StateOwner(
         if (current != null && channel.revision < current.revision) {
             return@synchronized DeviceDosingV1CommitDisposition.STALE_REVISION
         }
-        val projection = mutationProjection(
-            current = current,
-            deviceUid = token.deviceUid,
-            channelKey = token.channelKey,
-            detail = channel,
-            lowLevelAlertLedger = lowLevelAlertLedger
-        )
+        // Runtime ACKs do not carry the envelope uptime or a coherent progress document. Publishing
+        // them would create a torn calibration/runtime snapshot. Persisted ACKs contain the durable
+        // configuration domain and may be presented while their progress readback catches up.
+        val incomingRuntimeEventSequence = channel.lastRuntimeEvent.validSequenceOrNull()
+        val persistedProjection = if (
+            visibility == DeviceDosingV1MutationVisibility.PERSISTED_ACK
+        ) {
+            mutationProjection(
+                current = current,
+                deviceUid = token.deviceUid,
+                channelKey = token.channelKey,
+                detail = channel,
+                lowLevelAlertLedger = lowLevelAlertLedger
+            )
+        } else {
+            null
+        }
+        val presentationProjection = persistedProjection?.takeIf {
+            current?.runtimeEventSequence == null ||
+                incomingRuntimeEventSequence.isSameOrNewerRuntimeEventThan(
+                    current.runtimeEventSequence
+                )
+        }
         publish(
             token.deviceUid,
             device.copy(
                 channels = device.channels + (
                     token.channelKey to OwnedDosingChannelState(
                         revision = channel.revision,
-                        authority = if (projection == null) {
+                        runtimeEventSequence = incomingRuntimeEventSequence
+                            .mergeRuntimeEventSequence(current?.runtimeEventSequence),
+                        authority = if (presentationProjection == null) {
                             OwnedDosingChannelAuthority.INVALIDATED
                         } else {
                             OwnedDosingChannelAuthority.COMMITTED_MUTATION
                         },
-                        channel = projection?.channel ?: current?.channel,
-                        calibration = projection?.calibration ?: current?.calibration
+                        channel = presentationProjection?.channel ?: current?.channel,
+                        calibration = presentationProjection?.calibration ?: current?.calibration,
+                        committedMutationContinuation = when {
+                            persistedProjection != null -> DeviceDosingV1CommittedMutationContinuation(
+                                channel = persistedProjection.channel,
+                                calibration = persistedProjection.calibration
+                            )
+                            visibility == DeviceDosingV1MutationVisibility.RUNTIME_ACK &&
+                                channel.revision == current?.revision ->
+                                current?.committedMutationContinuation
+                            else -> null
+                        }
                     )
                 )
             )
@@ -222,7 +291,8 @@ internal class DeviceDosingV1StateOwner(
         deviceUid: DeviceUid,
         channelKey: DeviceDosingV1ChannelKey,
         connectionGeneration: DeviceRuntimeConnectionGeneration,
-        revisionHint: Long?
+        revisionHint: Long?,
+        runtimeEventSequenceHint: Long? = null
     ): DeviceDosingV1InvalidationDisposition = synchronized(lock) {
         val existingDevice = states.value[deviceUid]
         if (
@@ -241,16 +311,36 @@ internal class DeviceDosingV1StateOwner(
         if (revisionHint != null && current != null && revisionHint < current.revision) {
             return@synchronized DeviceDosingV1InvalidationDisposition.STALE_REVISION
         }
+        if (
+            current != null &&
+            current.authority != OwnedDosingChannelAuthority.INVALIDATED &&
+            revisionHint == current.revision &&
+            runtimeEventSequenceHint != null &&
+            current.runtimeEventSequence != null &&
+            !runtimeEventSequenceHint.isNewerRuntimeEventThan(current.runtimeEventSequence)
+        ) {
+            // The ACK/status already contains this exact firmware event. Do not downgrade a usable
+            // current-generation snapshot or erase persisted mutation continuation.
+            return@synchronized DeviceDosingV1InvalidationDisposition.DUPLICATE_EVENT
+        }
         val revisionFloor = maxOf(revisionHint ?: 0L, current?.revision ?: 0L)
+        val retainedContinuation = current?.committedMutationContinuation?.takeIf {
+            revisionHint != null && revisionHint == current.revision
+        }
+        val address = DosingStateAddress(deviceUid, channelKey)
+        requestGenerations[address] = requestGenerations.getOrDefault(address, 0L) + 1L
         publish(
             deviceUid,
             device.copy(
                 channels = device.channels + (
                     channelKey to OwnedDosingChannelState(
                         revision = revisionFloor,
+                        runtimeEventSequence = runtimeEventSequenceHint
+                            .mergeRuntimeEventSequence(current?.runtimeEventSequence),
                         authority = OwnedDosingChannelAuthority.INVALIDATED,
                         channel = current?.channel,
-                        calibration = current?.calibration
+                        calibration = current?.calibration,
+                        committedMutationContinuation = retainedContinuation
                     )
                 )
             )
@@ -298,7 +388,10 @@ internal class DeviceDosingV1StateOwner(
             deviceUid,
             device.copy(
                 channels = device.channels.mapValues { (_, channel) ->
-                    channel.copy(authority = OwnedDosingChannelAuthority.INVALIDATED)
+                    channel.copy(
+                        authority = OwnedDosingChannelAuthority.INVALIDATED,
+                        committedMutationContinuation = null
+                    )
                 }
             )
         )
@@ -362,7 +455,9 @@ internal class DeviceDosingV1StateOwner(
         channels = channels.mapValues { (_, channel) ->
             channel.copy(
                 revision = 0L,
-                authority = OwnedDosingChannelAuthority.INVALIDATED
+                runtimeEventSequence = null,
+                authority = OwnedDosingChannelAuthority.INVALIDATED,
+                committedMutationContinuation = null
             )
         }
     )
@@ -421,6 +516,22 @@ private class DefaultDeviceDosingV1StateReadAccess(
         ?.get(channelKey)
         ?.authoritativeCalibration()
 
+    override fun currentValidatedPresentationChannel(
+        deviceUid: DeviceUid,
+        channelKey: DeviceDosingV1ChannelKey
+    ): DeviceDosingChannelSnapshot? = currentStates()[deviceUid]
+        ?.channels
+        ?.get(channelKey)
+        ?.validatedPresentationChannel()
+
+    override fun currentNavigationChannel(
+        deviceUid: DeviceUid,
+        channelKey: DeviceDosingV1ChannelKey
+    ): DeviceDosingChannelSnapshot? = currentStates()[deviceUid]
+        ?.channels
+        ?.get(channelKey)
+        ?.navigationChannel()
+
     override fun authoritativeRevision(
         deviceUid: DeviceUid,
         channelKey: DeviceDosingV1ChannelKey
@@ -436,14 +547,7 @@ private class DefaultDeviceDosingV1StateReadAccess(
     ): DeviceDosingV1CommittedMutationContinuation? = currentStates()[deviceUid]
         ?.channels
         ?.get(channelKey)
-        ?.takeIf { state ->
-            state.authority == OwnedDosingChannelAuthority.COMMITTED_MUTATION
-        }
-        ?.let { state ->
-            val channel = state.channel ?: return@let null
-            val calibration = state.calibration ?: return@let null
-            DeviceDosingV1CommittedMutationContinuation(channel, calibration)
-        }
+        ?.committedMutationContinuation
 }
 
 private data class DosingStateAddress(
@@ -460,6 +564,32 @@ private fun OwnedDosingChannelState.authoritativeChannel(): DeviceDosingChannelS
 
 private fun OwnedDosingChannelState.authoritativeCalibration(): DeviceDosingCalibrationSnapshot? =
     calibration.takeIf { authority == OwnedDosingChannelAuthority.AUTHORITATIVE }
+
+private fun OwnedDosingChannelState.validatedPresentationChannel(): DeviceDosingChannelSnapshot? =
+    channel.takeIf { authority != OwnedDosingChannelAuthority.INVALIDATED }
+
+private fun OwnedDosingChannelState.navigationChannel(): DeviceDosingChannelSnapshot? =
+    validatedPresentationChannel() ?: committedMutationContinuation
+        ?.channel
+        ?.takeIf { continuation -> continuation.revision == revision }
+
+private fun DeviceDosingV1RuntimeEventSnapshot.validSequenceOrNull(): Long? =
+    sequence.takeIf { valid }
+
+private fun Long?.mergeRuntimeEventSequence(previous: Long?): Long? = when {
+    this == null -> previous
+    previous == null || this == previous || this.isNewerRuntimeEventThan(previous) -> this
+    else -> previous
+}
+
+private fun Long?.isSameOrNewerRuntimeEventThan(previous: Long): Boolean =
+    this != null && (this == previous || this.isNewerRuntimeEventThan(previous))
+
+/** RFC-1982 style comparison for the firmware's uint32 runtime-event counter. */
+private fun Long.isNewerRuntimeEventThan(previous: Long): Boolean {
+    val distance = (this - previous).and(UINT32_MASK)
+    return distance in 1L until UINT32_HALF_RANGE
+}
 
 private fun mutationProjection(
     current: OwnedDosingChannelState?,
@@ -485,3 +615,6 @@ private fun mutationProjection(
         }.getOrNull()
     }
 }
+
+private const val UINT32_MASK = 0xFFFF_FFFFL
+private const val UINT32_HALF_RANGE = 0x8000_0000L

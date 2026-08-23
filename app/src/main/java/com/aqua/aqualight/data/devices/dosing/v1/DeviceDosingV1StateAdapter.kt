@@ -65,6 +65,7 @@ internal class DeviceDosingV1StateAdapter(
         repository = repository,
         stateOwner = stateOwner,
         stateAccess = stateAccess,
+        producerScope = reconciliationScope,
         operationGate = operationGate
     )
     private val backgroundReconciliation = reconciliationScope?.let { scope ->
@@ -77,9 +78,6 @@ internal class DeviceDosingV1StateAdapter(
         operationGate = operationGate,
         scheduleBackgroundReconciliation = backgroundReconciliation?.let { scheduler ->
             scheduler::schedule
-        },
-        cancelBackgroundReconciliation = backgroundReconciliation?.let { scheduler ->
-            scheduler::cancel
         }
     )
     private val eventCoordinator = DeviceDosingV1EventCoordinator(

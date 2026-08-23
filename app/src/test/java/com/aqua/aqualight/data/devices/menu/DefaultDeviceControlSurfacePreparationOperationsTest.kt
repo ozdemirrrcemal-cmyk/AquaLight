@@ -57,8 +57,30 @@ class DefaultDeviceControlSurfacePreparationOperationsTest {
 
         assertTrue(result is DeviceControlSurfacePreparationResult.Ready)
         assertEquals(0, channels.refreshCalls)
-        assertFalse(operations.consumeFreshPreparation(DEVICE_UID, OwnerDeviceFamily.DOSING))
+        assertTrue(operations.consumeFreshPreparation(DEVICE_UID, OwnerDeviceFamily.DOSING))
     }
+
+    @Test
+    fun `presentation only state refreshes before authoritative preparation becomes ready`() =
+        runTest {
+            val presentation = snapshots(4)
+            val channels = FakeChannelOperations(
+                initialSnapshots = presentation,
+                initialAuthoritativeSnapshots = emptyList(),
+                refreshedSnapshots = presentation
+            )
+            val operations = preparation(channelCount = 4, channels = channels)
+
+            assertEquals(presentation, channels.currentSnapshots())
+            assertTrue(channels.currentAuthoritativeSnapshots().isEmpty())
+
+            val result = operations.prepare(request())
+
+            assertTrue(result is DeviceControlSurfacePreparationResult.Ready)
+            assertEquals(1, channels.refreshCalls)
+            assertEquals(presentation, channels.currentAuthoritativeSnapshots())
+            assertTrue(operations.consumeFreshPreparation(DEVICE_UID, OwnerDeviceFamily.DOSING))
+        }
 
     @Test
     fun `cold refresh failure keeps navigation unavailable`() = runTest {
@@ -112,22 +134,35 @@ class DefaultDeviceControlSurfacePreparationOperationsTest {
 
     private class FakeChannelOperations(
         initialSnapshots: List<DeviceDosingChannelSnapshot> = emptyList(),
+        initialAuthoritativeSnapshots: List<DeviceDosingChannelSnapshot> = initialSnapshots,
         private val refreshResult: Boolean = true,
         private val refreshedSnapshots: List<DeviceDosingChannelSnapshot> = initialSnapshots
     ) : DeviceDosingChannelOperations by UnavailableDeviceDosingChannelOperations {
         private val snapshots = MutableStateFlow(initialSnapshots)
+        private var authoritativeSnapshots = initialAuthoritativeSnapshots
         var refreshCalls: Int = 0
 
         override fun observeAll(deviceUid: String): Flow<List<DeviceDosingChannelSnapshot>> =
             snapshots
 
+        override fun current(deviceUid: String, slotId: String): DeviceDosingChannelSnapshot? =
+            authoritativeSnapshots.singleOrNull { snapshot ->
+                snapshot.deviceUid == deviceUid && snapshot.slotId == slotId
+            }
+
         override suspend fun refreshAll(deviceUid: String): Boolean {
             refreshCalls += 1
-            if (refreshResult) snapshots.value = refreshedSnapshots
+            if (refreshResult) {
+                snapshots.value = refreshedSnapshots
+                authoritativeSnapshots = refreshedSnapshots
+            }
             return refreshResult
         }
 
         fun currentSnapshots(): List<DeviceDosingChannelSnapshot> = snapshots.value
+
+        fun currentAuthoritativeSnapshots(): List<DeviceDosingChannelSnapshot> =
+            authoritativeSnapshots
     }
 
     private companion object {

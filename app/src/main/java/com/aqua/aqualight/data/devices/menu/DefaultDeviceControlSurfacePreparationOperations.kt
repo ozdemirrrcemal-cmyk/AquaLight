@@ -11,7 +11,6 @@ import com.aqua.aqualight.application.devices.OwnerDeviceFamily
 import com.aqua.aqualight.application.devices.dosing.DeviceDosingChannelOperations
 import com.aqua.aqualight.application.devices.dosing.DeviceDosingChannelSnapshot
 import java.util.concurrent.ConcurrentHashMap
-import kotlinx.coroutines.flow.first
 
 /**
  * Owner-scoped preparation orchestrator. It owns no device state: Dosing presentation continues to
@@ -51,14 +50,15 @@ internal class DefaultDeviceControlSurfacePreparationOperations(
             return unavailable(DeviceMenuUnavailableReason.COMMERCIAL_PRODUCT_MISMATCH)
         }
 
-        if (currentPresentation(deviceUid).matches(deviceUid, expectedSlots)) {
+        if (currentAuthoritative(deviceUid, expectedSlots).matches(deviceUid, expectedSlots)) {
+            freshlyPreparedDeviceUids += deviceUid
             return DeviceControlSurfacePreparationResult.Ready
         }
 
         if (!dosingChannelOperations.refreshAll(deviceUid)) {
             return unavailable(DeviceMenuUnavailableReason.CURRENT_LIVENESS_NOT_PROVEN)
         }
-        if (!currentPresentation(deviceUid).matches(deviceUid, expectedSlots)) {
+        if (!currentAuthoritative(deviceUid, expectedSlots).matches(deviceUid, expectedSlots)) {
             return unavailable(DeviceMenuUnavailableReason.CURRENT_LIVENESS_NOT_PROVEN)
         }
 
@@ -74,8 +74,12 @@ internal class DefaultDeviceControlSurfacePreparationOperations(
         return freshlyPreparedDeviceUids.remove(deviceUid.trim())
     }
 
-    private suspend fun currentPresentation(deviceUid: String): List<DeviceDosingChannelSnapshot> =
-        dosingChannelOperations.observeAll(deviceUid).first()
+    private fun currentAuthoritative(
+        deviceUid: String,
+        expectedSlots: List<DeviceDosingChannelSlot>
+    ): List<DeviceDosingChannelSnapshot> = expectedSlots.mapNotNull { slot ->
+        dosingChannelOperations.current(deviceUid, slot.id.value)
+    }
 
     private fun unavailable(
         reason: DeviceMenuUnavailableReason

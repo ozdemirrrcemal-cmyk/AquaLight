@@ -8,9 +8,8 @@ import kotlinx.coroutines.launch
 /**
  * Owner-scoped scheduler for post-ACK readback.
  *
- * At most one optional reconciliation is retained per channel. A newer user mutation cancels this
- * work before entering the central operation gate, so background consistency work can never hold a
- * newer idempotent assignment behind a full firmware readback.
+ * At most one optional reconciliation waiter is retained per channel. Its shared refresh producer
+ * is owner-scoped, so replacing or cancelling this waiter never aborts an in-flight device read.
  */
 internal class DeviceDosingV1CommittedReconciliationScheduler(
     private val scope: CoroutineScope,
@@ -39,10 +38,6 @@ internal class DeviceDosingV1CommittedReconciliationScheduler(
             }
         }
         job.start()
-    }
-
-    fun cancel(address: DeviceDosingV1Address) {
-        synchronized(lock) { scheduled.remove(address) }?.job?.cancel()
     }
 
     private data class ScheduledReconciliation(

@@ -38,9 +38,9 @@ internal data class DeviceDosingPlanEditorState(
     val programIntent: DeviceDosingProgram
         get() = draft.toApplicationProgram(missedDoseRecoveryEnabled)
 
-    /** Save stays actionable while editable so validation feedback can use the central snackbar. */
+    /** Save is allowed only when the editor has a complete application-domain CAS origin. */
     val canSave: Boolean
-        get() = editable && !operationInProgress
+        get() = editable && baseRevision != null && baseProgramKnown && !operationInProgress
 }
 
 internal enum class DosingPlanValidationIssue {
@@ -74,6 +74,8 @@ internal class DeviceDosingPlanViewModel(
     private var boundSlotId: String = ""
     private var restoredDraft: DosingPlanDraft? = null
     private var restoredBaseRevision: Long? = null
+    private var restoredBaseProgram: DeviceDosingProgram? = null
+    private var restoredBaseProgramKnown: Boolean = false
     private var restoredDraftDirty: Boolean = false
     private var observeJob: Job? = null
     private var refreshJob: Job? = null
@@ -87,6 +89,8 @@ internal class DeviceDosingPlanViewModel(
         slotIdText: String,
         restoredDraft: DosingPlanDraft?,
         restoredBaseRevision: Long? = null,
+        restoredBaseProgram: DeviceDosingProgram? = null,
+        restoredBaseProgramKnown: Boolean = false,
         restoredDraftDirty: Boolean = false
     ) {
         val deviceUid = deviceUidText.trim()
@@ -99,6 +103,8 @@ internal class DeviceDosingPlanViewModel(
             boundSlotId = ""
             this.restoredDraft = null
             this.restoredBaseRevision = null
+            this.restoredBaseProgram = null
+            this.restoredBaseProgramKnown = false
             this.restoredDraftDirty = false
             mutableEditorState.value = DeviceDosingPlanEditorState()
             return
@@ -112,6 +118,8 @@ internal class DeviceDosingPlanViewModel(
         boundSlotId = slotId
         this.restoredDraft = restoredDraft
         this.restoredBaseRevision = restoredBaseRevision
+        this.restoredBaseProgram = restoredBaseProgram
+        this.restoredBaseProgramKnown = restoredBaseProgramKnown
         this.restoredDraftDirty = restoredDraftDirty
         mutableEditorState.value = DeviceDosingPlanEditorState()
         observeJob = viewModelScope.launch {
@@ -123,6 +131,9 @@ internal class DeviceDosingPlanViewModel(
                         snapshot = authoritative,
                         restoredDraft = this@DeviceDosingPlanViewModel.restoredDraft,
                         restoredBaseRevision = this@DeviceDosingPlanViewModel.restoredBaseRevision,
+                        restoredBaseProgram = this@DeviceDosingPlanViewModel.restoredBaseProgram,
+                        restoredBaseProgramKnown =
+                            this@DeviceDosingPlanViewModel.restoredBaseProgramKnown,
                         restoredDraftDirty = this@DeviceDosingPlanViewModel.restoredDraftDirty
                     )
                 }
@@ -136,6 +147,9 @@ internal class DeviceDosingPlanViewModel(
                         snapshot = result.snapshot,
                         restoredDraft = this@DeviceDosingPlanViewModel.restoredDraft,
                         restoredBaseRevision = this@DeviceDosingPlanViewModel.restoredBaseRevision,
+                        restoredBaseProgram = this@DeviceDosingPlanViewModel.restoredBaseProgram,
+                        restoredBaseProgramKnown =
+                            this@DeviceDosingPlanViewModel.restoredBaseProgramKnown,
                         restoredDraftDirty = this@DeviceDosingPlanViewModel.restoredDraftDirty
                     )
                 }
@@ -197,7 +211,8 @@ internal class DeviceDosingPlanViewModel(
             slotId.isNotBlank(),
             state.editable,
             !state.operationInProgress,
-            baseRevision != null
+            baseRevision != null,
+            state.baseProgramKnown
         ).all { valid -> valid }
         if (!canStartSave) return
 
@@ -219,7 +234,8 @@ internal class DeviceDosingPlanViewModel(
                         deviceUid = deviceUid,
                         slotId = slotId,
                         program = program,
-                        baseRevision = checkNotNull(baseRevision)
+                        baseRevision = checkNotNull(baseRevision),
+                        baseProgram = state.baseProgram
                     )
                 )
             } catch (cancellation: CancellationException) {
@@ -260,6 +276,8 @@ internal class DeviceDosingPlanViewModel(
                     snapshot = result.snapshot,
                     restoredDraft = restoredDraft,
                     restoredBaseRevision = restoredBaseRevision,
+                    restoredBaseProgram = restoredBaseProgram,
+                    restoredBaseProgramKnown = restoredBaseProgramKnown,
                     restoredDraftDirty = restoredDraftDirty
                 ).copy(operationInProgress = false)
                 eventChannel.send(DeviceDosingPlanEvent.Saved)
@@ -309,6 +327,8 @@ internal class DeviceDosingPlanViewModel(
                     snapshot = refreshed,
                     restoredDraft = restoredDraft,
                     restoredBaseRevision = restoredBaseRevision,
+                    restoredBaseProgram = restoredBaseProgram,
+                    restoredBaseProgramKnown = restoredBaseProgramKnown,
                     restoredDraftDirty = restoredDraftDirty
                 )
             }
@@ -331,6 +351,8 @@ private fun reduceDosingPlanSnapshot(
     snapshot: DeviceDosingChannelSnapshot,
     restoredDraft: DosingPlanDraft?,
     restoredBaseRevision: Long?,
+    restoredBaseProgram: DeviceDosingProgram?,
+    restoredBaseProgramKnown: Boolean,
     restoredDraftDirty: Boolean
 ): DeviceDosingPlanEditorState {
     val recovered = recoverDosingPlanDraft(
@@ -338,6 +360,8 @@ private fun reduceDosingPlanSnapshot(
         snapshot = snapshot,
         restoredDraft = restoredDraft,
         restoredBaseRevision = restoredBaseRevision,
+        restoredBaseProgram = restoredBaseProgram,
+        restoredBaseProgramKnown = restoredBaseProgramKnown,
         restoredDraftDirty = restoredDraftDirty
     )
     return current.copy(
@@ -361,18 +385,36 @@ private fun recoverDosingPlanDraft(
     snapshot: DeviceDosingChannelSnapshot,
     restoredDraft: DosingPlanDraft?,
     restoredBaseRevision: Long?,
+    restoredBaseProgram: DeviceDosingProgram?,
+    restoredBaseProgramKnown: Boolean,
     restoredDraftDirty: Boolean
 ): RecoveredDosingPlanDraft = when {
     !current.initialized -> {
         val recoveredDirty = restoredDraft != null && restoredDraftDirty
         val recoveredRevision = restoredBaseRevision ?: snapshot.revision
-        RecoveredDosingPlanDraft(
-            draft = restoredDraft ?: snapshot.program?.toPlanDraft() ?: defaultDraft(),
-            baseRevision = recoveredRevision,
-            baseProgram = snapshot.program,
-            baseProgramKnown = !recoveredDirty || recoveredRevision == snapshot.revision,
-            draftDirty = recoveredDirty
-        )
+        val savedOriginAvailable = recoveredDirty &&
+            restoredBaseRevision != null &&
+            restoredBaseProgramKnown
+        val currentSnapshotIsOrigin = recoveredDirty && recoveredRevision == snapshot.revision
+        if (recoveredDirty && !savedOriginAvailable && !currentSnapshotIsOrigin) {
+            // Legacy/incomplete process state cannot safely identify the editor's CAS origin.
+            // Reload authoritative data instead of leaving an editable draft that can never save.
+            RecoveredDosingPlanDraft(
+                draft = snapshot.program?.toPlanDraft() ?: defaultDraft(),
+                baseRevision = snapshot.revision,
+                baseProgram = snapshot.program,
+                baseProgramKnown = true,
+                draftDirty = false
+            )
+        } else {
+            RecoveredDosingPlanDraft(
+                draft = restoredDraft ?: snapshot.program?.toPlanDraft() ?: defaultDraft(),
+                baseRevision = recoveredRevision,
+                baseProgram = if (savedOriginAvailable) restoredBaseProgram else snapshot.program,
+                baseProgramKnown = true,
+                draftDirty = recoveredDirty
+            )
+        }
     }
     current.draftDirty -> {
         val baselineStillCurrent = current.baseProgramKnown &&

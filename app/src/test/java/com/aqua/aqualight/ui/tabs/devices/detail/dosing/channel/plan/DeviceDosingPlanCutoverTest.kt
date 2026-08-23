@@ -5,6 +5,7 @@ import com.aqua.aqualight.application.devices.dosing.DeviceDosingChannelOperatio
 import com.aqua.aqualight.application.devices.dosing.DeviceDosingChannelRejection
 import com.aqua.aqualight.application.devices.dosing.DeviceDosingCustomPeriodDraft
 import com.aqua.aqualight.application.devices.dosing.DeviceDosingProgram
+import com.aqua.aqualight.application.devices.dosing.DeviceDosingProgramMutationOrigin
 import com.aqua.aqualight.application.devices.dosing.DeviceDosingProgramRevisionOperations
 import com.aqua.aqualight.application.devices.dosing.DeviceDosingProgramSchedule
 import com.aqua.aqualight.application.devices.dosing.DeviceDosingSchedulingPolicy
@@ -94,19 +95,19 @@ class DeviceDosingPlanCutoverTest {
     fun `persistent data boundary conflict is surfaced after the central retry budget`() =
         runTest(dispatcher) {
             val delegate = FakeDeviceDosingChannelOperations()
-            val attempts = mutableListOf<Pair<DeviceDosingProgram, Long>>()
+            val attempts = mutableListOf<Pair<DeviceDosingProgram, DeviceDosingProgramMutationOrigin>>()
             val operations = object :
                 DeviceDosingChannelOperations by delegate,
                 DeviceDosingProgramRevisionOperations {
-                override suspend fun applyProgramAtRevision(
+                override suspend fun applyProgramAtOrigin(
                     deviceUid: String,
                     slotId: String,
                     program: DeviceDosingProgram,
-                    expectedRevision: Long
+                    origin: DeviceDosingProgramMutationOrigin
                 ): DeviceDosingChannelOperationResult {
                     check(deviceUid == DEVICE_UID)
                     check(slotId == SLOT_ID)
-                    attempts += program to expectedRevision
+                    attempts += program to origin
                     return DeviceDosingChannelOperationResult.Rejected(
                         DeviceDosingChannelRejection.CONFLICT
                     )
@@ -117,9 +118,14 @@ class DeviceDosingPlanCutoverTest {
             viewModel.bind(DEVICE_UID, SLOT_ID, restoredDraft = null)
             viewModel.setDailyDoseMicroliters(9_000L)
             val expectedBaseRevision = viewModel.currentEditorState.baseRevision
+            val expectedBaseProgram = viewModel.currentEditorState.baseProgram
             viewModel.save()
 
-            assertEquals(listOf(expectedBaseRevision), attempts.map { it.second })
+            assertEquals(listOf(expectedBaseRevision), attempts.map { it.second.revision })
+            assertEquals(
+                listOf(expectedBaseProgram),
+                attempts.map { it.second.baseProgram }
+            )
             assertEquals(
                 DeviceDosingPlanEvent.SaveRejected(DeviceDosingChannelRejection.CONFLICT),
                 viewModel.events.first()
@@ -192,7 +198,8 @@ class DeviceDosingPlanCutoverTest {
 
             assertEquals(DeviceDosingPlanEvent.Saved, viewModel.events.first())
             assertEquals(1, operations.programMutationCount)
-            assertEquals(11L, operations.lastProgramExpectedRevision)
+            assertEquals(11L, operations.lastProgramOrigin?.revision)
+            assertEquals(11L, operations.lastProgramAppliedRevision)
             assertEquals(
                 9_000L,
                 (requireNotNull(operations.lastProgram).schedule as
@@ -200,6 +207,73 @@ class DeviceDosingPlanCutoverTest {
             )
             assertFalse(viewModel.currentEditorState.operationInProgress)
             assertFalse(viewModel.currentEditorState.draftDirty)
+        }
+
+    @Test
+    fun `restored dirty draft retains its complete origin across an unrelated revision`() =
+        runTest(dispatcher) {
+            val original = sampleDosingChannelSnapshot().copy(revision = 10L)
+            val current = original.copy(
+                revision = 11L,
+                reservoir = original.reservoir.copy(remainingMicroliters = 200_000L)
+            )
+            val baseProgram = requireNotNull(original.program)
+            val restoredDraft = baseProgram.toPlanDraft().copy(
+                distributedDailyDoseMicroliters = 9_000L
+            )
+            val operations = FakeDeviceDosingChannelOperations(current)
+            val viewModel = DeviceDosingPlanViewModel(operations)
+
+            viewModel.bind(
+                deviceUidText = DEVICE_UID,
+                slotIdText = SLOT_ID,
+                restoredDraft = restoredDraft,
+                restoredBaseRevision = 10L,
+                restoredBaseProgram = baseProgram,
+                restoredBaseProgramKnown = true,
+                restoredDraftDirty = true
+            )
+
+            assertTrue(viewModel.currentEditorState.canSave)
+            assertTrue(viewModel.currentEditorState.draftDirty)
+            assertEquals(11L, viewModel.currentEditorState.baseRevision)
+            assertEquals(9_000L, viewModel.currentEditorState.draft.distributedDailyDoseMicroliters)
+
+            viewModel.save()
+
+            assertEquals(DeviceDosingPlanEvent.Saved, viewModel.events.first())
+            assertEquals(11L, operations.lastProgramOrigin?.revision)
+            assertEquals(
+                9_000L,
+                (requireNotNull(operations.lastProgram).schedule as
+                    DeviceDosingProgramSchedule.Single).dailyDoseMicroliters
+            )
+        }
+
+    @Test
+    fun `legacy dirty restore without an origin reloads instead of deadlocking save`() =
+        runTest(dispatcher) {
+            val current = sampleDosingChannelSnapshot().copy(revision = 11L)
+            val operations = FakeDeviceDosingChannelOperations(current)
+            val viewModel = DeviceDosingPlanViewModel(operations)
+
+            viewModel.bind(
+                deviceUidText = DEVICE_UID,
+                slotIdText = SLOT_ID,
+                restoredDraft = requireNotNull(current.program).toPlanDraft().copy(
+                    distributedDailyDoseMicroliters = 9_000L
+                ),
+                restoredBaseRevision = 10L,
+                restoredDraftDirty = true
+            )
+
+            assertTrue(viewModel.currentEditorState.canSave)
+            assertFalse(viewModel.currentEditorState.draftDirty)
+            assertEquals(11L, viewModel.currentEditorState.baseRevision)
+            assertEquals(
+                current.program,
+                viewModel.currentEditorState.programIntent
+            )
         }
 
     private companion object {

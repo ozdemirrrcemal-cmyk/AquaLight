@@ -112,7 +112,10 @@ internal object DeviceDosingV1TestFixtures {
         .put("manualActive", true)
 
     fun calibrationStart(): JSONObject =
-        mutationBase(DeviceDosingV1Contract.Literal.CALIBRATION_START)
+        mutationBase(
+            operation = DeviceDosingV1Contract.Literal.CALIBRATION_START,
+            detail = calibrationRunningDetail()
+        )
             .put("durationMs", 5_000)
             .put("calibrationState", "running")
 
@@ -344,16 +347,37 @@ internal object DeviceDosingV1TestFixtures {
     private fun runtimeEvent(
         valid: Boolean = true,
         sequence: Long = 11,
+        occurredAtMillis: Long = 122_000L,
         kind: String = "runCompleted",
         reason: String = "naturalDeadline",
         source: String = "scheduled"
     ): JSONObject = JSONObject()
         .put("valid", valid)
         .put("sequence", sequence)
-        .put("occurredAtMs", 122_000)
+        .put("occurredAtMs", occurredAtMillis)
         .put("kind", kind)
         .put("reason", reason)
         .put("source", source)
+
+    private fun calibrationRunningDetail(): JSONObject = channelDetail().also { detail ->
+        detail.getJSONObject("calibration")
+            .put("state", "running")
+            .put("durationMs", 5_000)
+        detail.getJSONObject("activeRun")
+            .put("active", true)
+            .put("source", "calibration")
+            .put("remainingMs", 5_000)
+        detail.put(
+            "lastRuntimeEvent",
+            runtimeEvent(
+                sequence = 12,
+                occurredAtMillis = 123_500L,
+                kind = "runStarted",
+                reason = "calibrationChanged",
+                source = "calibration"
+            )
+        )
+    }
 
     private fun mutationBase(
         operation: String,

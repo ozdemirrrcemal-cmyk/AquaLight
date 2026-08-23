@@ -2,12 +2,16 @@ package com.aqua.aqualight.data.devices.dosing.v1
 
 import com.aqua.aqualight.application.devices.dosing.DeviceDosingChannelCommittedResult
 import com.aqua.aqualight.application.devices.dosing.DeviceDosingChannelOperationResult
+import com.aqua.aqualight.application.devices.dosing.DeviceDosingChannelRejection
 import com.aqua.aqualight.application.devices.dosing.DeviceDosingCalibrationResult
+import com.aqua.aqualight.application.devices.dosing.DeviceDosingProgramMutationOrigin
 import com.aqua.aqualight.data.devices.model.DeviceUid
 import com.aqua.aqualight.data.devices.runtime.core.DeviceRuntimeCommand
 import com.aqua.aqualight.data.devices.runtime.core.DeviceRuntimeCommandGateway
 import com.aqua.aqualight.data.devices.runtime.core.DeviceRuntimeCommandOutcome
 import com.aqua.aqualight.data.devices.runtime.core.DeviceRuntimeConnectionGeneration
+import com.aqua.aqualight.data.devices.runtime.events.DeviceRuntimeEventPayload
+import com.aqua.aqualight.data.devices.runtime.events.DeviceRuntimeTypedEvent
 import java.util.ArrayDeque
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.async
@@ -171,11 +175,11 @@ class DeviceDosingV1CommittedReconciliationTest {
         }
 
     @Test
-    fun `ten second readback cannot block rapid missed dose off then on intent`() = runTest {
+    fun `rapid missed dose intents serialize behind readback without losing latest intent`() = runTest {
         val gateway = ScriptedGateway().apply {
             enqueueRefresh(revision = 7L, missedDoseRecoveryEnabled = true)
             enqueueProgramMutation(revision = 8L, missedDoseRecoveryEnabled = false)
-            enqueueDelayedGlobalReadback(
+            enqueueDelayedReadback(
                 revision = 8L,
                 programEnabled = true,
                 missedDoseRecoveryEnabled = false,
@@ -204,7 +208,7 @@ class DeviceDosingV1CommittedReconciliationTest {
 
         assertEquals(DeviceDosingChannelCommittedResult(8L), disabled)
         assertEquals(DeviceDosingChannelCommittedResult(9L), enabled)
-        assertEquals(0L, testScheduler.currentTime)
+        assertEquals(10_000L, testScheduler.currentTime)
         assertProgramRequests(
             gateway = gateway,
             expectedRevisions = listOf(7L, 8L),
@@ -303,11 +307,346 @@ class DeviceDosingV1CommittedReconciliationTest {
     }
 
     @Test
+    fun `owner scoped channel refresh survives cancellation of its first waiter`() = runTest {
+        val gateway = ScriptedGateway().apply {
+            enqueueDelayedReadback(
+                revision = 7L,
+                programEnabled = true,
+                delayMillis = 10_000L
+            )
+        }
+        val adapter = DeviceDosingV1StateAdapter(
+            repository = DeviceDosingV1Repository(gateway),
+            reconciliationScope = backgroundScope
+        )
+
+        val first = async { adapter.channelOperations.refresh(DEVICE_UID.value, SLOT_ID) }
+        testScheduler.runCurrent()
+        val second = async { adapter.channelOperations.refresh(DEVICE_UID.value, SLOT_ID) }
+        testScheduler.runCurrent()
+
+        assertEquals(listOf(DeviceDosingV1Contract.Action.STATUS_GET), gateway.actions)
+
+        first.cancel()
+        testScheduler.runCurrent()
+        testScheduler.advanceTimeBy(10_000L)
+        testScheduler.runCurrent()
+
+        assertTrue(first.isCancelled)
+        assertTrue(second.await() is DeviceDosingChannelOperationResult.Success)
+        assertEquals(
+            listOf(
+                DeviceDosingV1Contract.Action.STATUS_GET,
+                DeviceDosingV1Contract.Action.STATUS_GET,
+                DeviceDosingV1Contract.Action.PROGRESS_GET
+            ),
+            gateway.actions
+        )
+    }
+
+    @Test
+    fun `owner scoped refresh all survives cancellation of its first waiter`() = runTest {
+        val gateway = ScriptedGateway().apply {
+            enqueueDelayedRefreshAll(revision = 7L, delayMillis = 10_000L)
+        }
+        val adapter = DeviceDosingV1StateAdapter(
+            repository = DeviceDosingV1Repository(gateway),
+            reconciliationScope = backgroundScope
+        )
+
+        val first = async { adapter.channelOperations.refreshAll(DEVICE_UID.value) }
+        testScheduler.runCurrent()
+        val second = async { adapter.channelOperations.refreshAll(DEVICE_UID.value) }
+        testScheduler.runCurrent()
+
+        assertEquals(listOf(DeviceDosingV1Contract.Action.STATUS_GET), gateway.actions)
+
+        first.cancel()
+        testScheduler.runCurrent()
+        testScheduler.advanceTimeBy(10_000L)
+        testScheduler.runCurrent()
+
+        assertTrue(first.isCancelled)
+        assertTrue(second.await())
+        assertEquals(
+            listOf(
+                DeviceDosingV1Contract.Action.STATUS_GET,
+                DeviceDosingV1Contract.Action.STATUS_GET,
+                DeviceDosingV1Contract.Action.STATUS_GET,
+                DeviceDosingV1Contract.Action.PROGRESS_GET
+            ),
+            gateway.actions
+        )
+    }
+
+    @Test
+    fun `newer event during an in flight readback forces one fresh triplet`() = runTest {
+        val gateway = ScriptedGateway().apply {
+            enqueueDelayedReadback(
+                revision = 8L,
+                programEnabled = true,
+                delayMillis = 100L,
+                runtimeEventSequence = 11L
+            )
+            enqueueRefresh(revision = 8L, runtimeEventSequence = 12L)
+        }
+        val adapter = DeviceDosingV1StateAdapter(
+            repository = DeviceDosingV1Repository(gateway),
+            reconciliationScope = backgroundScope
+        )
+
+        val screenRefresh = async {
+            adapter.channelOperations.refresh(DEVICE_UID.value, SLOT_ID)
+        }
+        testScheduler.runCurrent()
+        val eventRefresh = async {
+            adapter.consume(directEvent())
+        }
+        testScheduler.runCurrent()
+
+        testScheduler.advanceTimeBy(100L)
+        testScheduler.runCurrent()
+
+        assertTrue(screenRefresh.await() is DeviceDosingChannelOperationResult.Success)
+        assertTrue(eventRefresh.await() is DeviceDosingV1EventResult.Refreshed)
+        assertEquals(
+            listOf(
+                DeviceDosingV1Contract.Action.STATUS_GET,
+                DeviceDosingV1Contract.Action.STATUS_GET,
+                DeviceDosingV1Contract.Action.PROGRESS_GET,
+                DeviceDosingV1Contract.Action.STATUS_GET,
+                DeviceDosingV1Contract.Action.STATUS_GET,
+                DeviceDosingV1Contract.Action.PROGRESS_GET
+            ),
+            gateway.actions
+        )
+        assertEquals(8L, adapter.currentChannel(DEVICE_UID.value, SLOT_ID)?.revision)
+    }
+
+    @Test
+    fun `stale event readback retries once then remains fail closed`() = runTest {
+        val gateway = ScriptedGateway().apply {
+            enqueueDelayedReadback(
+                revision = 8L,
+                programEnabled = true,
+                delayMillis = 100L,
+                runtimeEventSequence = 11L
+            )
+            enqueueRefresh(revision = 8L, runtimeEventSequence = 11L)
+        }
+        val adapter = DeviceDosingV1StateAdapter(
+            repository = DeviceDosingV1Repository(gateway),
+            reconciliationScope = backgroundScope
+        )
+
+        val screenRefresh = async {
+            adapter.channelOperations.refresh(DEVICE_UID.value, SLOT_ID)
+        }
+        testScheduler.runCurrent()
+        val eventRefresh = async {
+            adapter.consume(directEvent())
+        }
+        testScheduler.runCurrent()
+
+        testScheduler.advanceTimeBy(100L)
+        testScheduler.runCurrent()
+
+        assertEquals(
+            DeviceDosingChannelOperationResult.Rejected(DeviceDosingChannelRejection.STALE),
+            screenRefresh.await()
+        )
+        assertEquals(DeviceDosingV1EventResult.RefreshFailed, eventRefresh.await())
+        assertEquals(6, gateway.actions.size)
+        assertNull(adapter.currentChannel(DEVICE_UID.value, SLOT_ID))
+    }
+
+    @Test
+    fun `reset ack never publishes a torn calibration snapshot`() = runTest {
+        val gateway = ScriptedGateway().apply {
+            enqueueRefresh(revision = 7L)
+            enqueueResetMutation(revision = 8L)
+            enqueueNotConnected(DeviceDosingV1Contract.Action.STATUS_GET)
+        }
+        val adapter = DeviceDosingV1StateAdapter(
+            repository = DeviceDosingV1Repository(gateway),
+            reconciliationScope = backgroundScope
+        )
+        val initial = adapter.channelOperations.refresh(DEVICE_UID.value, SLOT_ID)
+            as DeviceDosingChannelOperationResult.Success
+        assertTrue(initial.snapshot.calibrated)
+
+        val result = adapter.channelOperations.reset(DEVICE_UID.value, SLOT_ID)
+
+        assertEquals(DeviceDosingChannelCommittedResult(8L), result)
+        assertNull(
+            adapter.channelOperations.currentValidatedPresentation(DEVICE_UID.value, SLOT_ID)
+        )
+        assertNull(
+            adapter.channelOperations.currentNavigationSnapshot(DEVICE_UID.value, SLOT_ID)
+        )
+        val retainedChannel = adapter.channelOperations.observeAll(DEVICE_UID.value).first().single()
+        val retainedCalibration = adapter.calibrationOperations
+            .observe(DEVICE_UID.value, SLOT_ID)
+            .first()
+        assertTrue(retainedChannel.calibrated)
+        assertTrue(requireNotNull(retainedCalibration).calibrated)
+
+        testScheduler.runCurrent()
+
+        assertNull(adapter.currentChannel(DEVICE_UID.value, SLOT_ID))
+        assertNull(adapter.currentCalibration(DEVICE_UID.value, SLOT_ID))
+        assertEquals(5, gateway.actions.size)
+    }
+
+    @Test
+    fun `external plan domain change conflicts without sending a firmware command`() = runTest {
+        val gateway = ScriptedGateway().apply {
+            enqueueRefresh(revision = 7L, programEnabled = true)
+            enqueueRefresh(revision = 8L, programEnabled = false)
+        }
+        val adapter = DeviceDosingV1StateAdapter(DeviceDosingV1Repository(gateway))
+        val initial = adapter.channelOperations.refresh(DEVICE_UID.value, SLOT_ID)
+            as DeviceDosingChannelOperationResult.Success
+        val baseProgram = requireNotNull(initial.snapshot.program)
+        adapter.channelOperations.refresh(DEVICE_UID.value, SLOT_ID)
+
+        val result = adapter.channelOperations.applyProgramAtOrigin(
+            deviceUid = DEVICE_UID.value,
+            slotId = SLOT_ID,
+            program = baseProgram.copy(
+                weekdays = baseProgram.weekdays.mapIndexed { index, enabled ->
+                    if (index == 0) !enabled else enabled
+                }
+            ),
+            origin = DeviceDosingProgramMutationOrigin(
+                revision = 7L,
+                baseProgram = baseProgram
+            )
+        )
+
+        assertEquals(
+            DeviceDosingChannelOperationResult.Rejected(DeviceDosingChannelRejection.CONFLICT),
+            result
+        )
+        assertTrue(gateway.programRequests().isEmpty())
+    }
+
+    @Test
+    fun `missed dose only revision rebases plan on latest revision and preserves switch`() = runTest {
+        val gateway = ScriptedGateway().apply {
+            enqueueRefresh(revision = 7L, missedDoseRecoveryEnabled = false)
+            enqueueRefresh(revision = 8L, missedDoseRecoveryEnabled = true)
+            enqueueProgramMutation(
+                revision = 9L,
+                programEnabled = false,
+                missedDoseRecoveryEnabled = true
+            )
+            enqueueRefresh(
+                revision = 9L,
+                programEnabled = false,
+                missedDoseRecoveryEnabled = true
+            )
+        }
+        val adapter = DeviceDosingV1StateAdapter(DeviceDosingV1Repository(gateway))
+        val initial = adapter.channelOperations.refresh(DEVICE_UID.value, SLOT_ID)
+            as DeviceDosingChannelOperationResult.Success
+        val baseProgram = requireNotNull(initial.snapshot.program)
+        adapter.channelOperations.refresh(DEVICE_UID.value, SLOT_ID)
+
+        val result = adapter.channelOperations.applyProgramAtOrigin(
+            deviceUid = DEVICE_UID.value,
+            slotId = SLOT_ID,
+            program = baseProgram.copy(enabled = false),
+            origin = DeviceDosingProgramMutationOrigin(
+                revision = 7L,
+                baseProgram = baseProgram
+            )
+        )
+
+        assertTrue(result is DeviceDosingChannelOperationResult.Success)
+        val request = gateway.programRequests().single()
+        assertEquals(8L, request.getLong("expectedRevision"))
+        val sentProgram = request.getJSONObject("program")
+        assertFalse(sentProgram.getBoolean("enabled"))
+        assertTrue(sentProgram.getBoolean("missedDoseRecoveryEnabled"))
+        val saved = result as DeviceDosingChannelOperationResult.Success
+        assertFalse(requireNotNull(saved.snapshot.program).enabled)
+        assertTrue(saved.snapshot.program?.missedDoseRecoveryEnabled == true)
+    }
+
+    @Test
+    fun `same revision event and failed readback do not break the next plan save`() = runTest {
+        val gateway = ScriptedGateway().apply {
+            enqueueRefresh(revision = 7L, programEnabled = true)
+            enqueueProgramMutation(revision = 8L, programEnabled = false)
+            enqueueNotConnected(DeviceDosingV1Contract.Action.STATUS_GET)
+            enqueueProgramMutation(revision = 9L, programEnabled = true)
+            enqueueRefresh(revision = 9L, programEnabled = true)
+        }
+        val adapter = DeviceDosingV1StateAdapter(
+            repository = DeviceDosingV1Repository(gateway),
+            reconciliationScope = backgroundScope
+        )
+        val initial = adapter.channelOperations.refresh(DEVICE_UID.value, SLOT_ID)
+            as DeviceDosingChannelOperationResult.Success
+        val baseProgram = requireNotNull(initial.snapshot.program)
+
+        val disabled = adapter.channelOperations.applyProgramAtOrigin(
+            deviceUid = DEVICE_UID.value,
+            slotId = SLOT_ID,
+            program = baseProgram.copy(enabled = false),
+            origin = DeviceDosingProgramMutationOrigin(7L, baseProgram)
+        )
+        assertEquals(DeviceDosingChannelCommittedResult(8L), disabled)
+
+        val eventResult = adapter.consume(
+            DeviceRuntimeTypedEvent(
+                deviceUid = DEVICE_UID,
+                generation = GENERATION,
+                messageId = "program-event-r8",
+                type = DeviceRuntimeTypedEvent.Type.DOSING_STATUS_CHANGED,
+                payload = DeviceRuntimeEventPayload.Snapshot(
+                    DeviceDosingV1TestFixtures.directEvent()
+                )
+            )
+        )
+        assertEquals(DeviceDosingV1EventResult.RefreshFailed, eventResult)
+        val actionsAfterFailedReadback = gateway.actions.size
+        assertEquals(
+            8L,
+            adapter.channelOperations
+                .currentNavigationSnapshot(DEVICE_UID.value, SLOT_ID)
+                ?.revision
+        )
+        assertEquals(actionsAfterFailedReadback, gateway.actions.size)
+
+        val enabled = adapter.channelOperations.applyProgramAtOrigin(
+            deviceUid = DEVICE_UID.value,
+            slotId = SLOT_ID,
+            program = baseProgram.copy(enabled = true),
+            origin = DeviceDosingProgramMutationOrigin(
+                revision = 8L,
+                baseProgram = baseProgram.copy(enabled = false)
+            )
+        )
+        assertEquals(DeviceDosingChannelCommittedResult(9L), enabled)
+        assertProgramRequests(
+            gateway = gateway,
+            expectedRevisions = listOf(7L, 8L),
+            expectedRecoveryValues = listOf(false, false)
+        )
+
+        testScheduler.runCurrent()
+        assertEquals(9L, adapter.currentChannel(DEVICE_UID.value, SLOT_ID)?.revision)
+        assertTrue(adapter.currentChannel(DEVICE_UID.value, SLOT_ID)?.program?.enabled == true)
+    }
+
+    @Test
     fun `switch then save share ack revision and preserve both program intents`() = runTest {
         val gateway = ScriptedGateway().apply {
             enqueueRefresh(revision = 7L, missedDoseRecoveryEnabled = false)
             enqueueProgramMutation(revision = 8L, missedDoseRecoveryEnabled = true)
-            enqueueDelayedGlobalReadback(
+            enqueueDelayedReadback(
                 revision = 8L,
                 programEnabled = true,
                 missedDoseRecoveryEnabled = true,
@@ -337,16 +676,19 @@ class DeviceDosingV1CommittedReconciliationTest {
             true
         )
         testScheduler.runCurrent()
-        val saveResult = adapter.channelOperations.applyProgramAtRevision(
+        val saveResult = adapter.channelOperations.applyProgramAtOrigin(
             deviceUid = DEVICE_UID.value,
             slotId = SLOT_ID,
             program = requireNotNull(initial.snapshot.program).copy(enabled = false),
-            expectedRevision = 7L
+            origin = DeviceDosingProgramMutationOrigin(
+                revision = 7L,
+                baseProgram = initial.snapshot.program
+            )
         )
 
         assertEquals(DeviceDosingChannelCommittedResult(8L), switchResult)
         assertEquals(DeviceDosingChannelCommittedResult(9L), saveResult)
-        assertEquals(0L, testScheduler.currentTime)
+        assertEquals(10_000L, testScheduler.currentTime)
         assertProgramRequests(
             gateway = gateway,
             expectedRevisions = listOf(7L, 8L),
@@ -370,7 +712,7 @@ class DeviceDosingV1CommittedReconciliationTest {
                 programEnabled = false,
                 missedDoseRecoveryEnabled = false
             )
-            enqueueDelayedGlobalReadback(
+            enqueueDelayedReadback(
                 revision = 8L,
                 programEnabled = false,
                 missedDoseRecoveryEnabled = false,
@@ -394,11 +736,14 @@ class DeviceDosingV1CommittedReconciliationTest {
         val initial = adapter.channelOperations.refresh(DEVICE_UID.value, SLOT_ID)
             as DeviceDosingChannelOperationResult.Success
 
-        val saveResult = adapter.channelOperations.applyProgramAtRevision(
+        val saveResult = adapter.channelOperations.applyProgramAtOrigin(
             deviceUid = DEVICE_UID.value,
             slotId = SLOT_ID,
             program = requireNotNull(initial.snapshot.program).copy(enabled = false),
-            expectedRevision = 7L
+            origin = DeviceDosingProgramMutationOrigin(
+                revision = 7L,
+                baseProgram = initial.snapshot.program
+            )
         )
         testScheduler.runCurrent()
         val switchResult = adapter.channelOperations.setMissedDoseRecoveryEnabled(
@@ -409,7 +754,7 @@ class DeviceDosingV1CommittedReconciliationTest {
 
         assertEquals(DeviceDosingChannelCommittedResult(8L), saveResult)
         assertEquals(DeviceDosingChannelCommittedResult(9L), switchResult)
-        assertEquals(0L, testScheduler.currentTime)
+        assertEquals(10_000L, testScheduler.currentTime)
         assertProgramRequests(
             gateway = gateway,
             expectedRevisions = listOf(7L, 8L),
@@ -510,12 +855,14 @@ class DeviceDosingV1CommittedReconciliationTest {
         fun enqueueRefresh(
             revision: Long,
             programEnabled: Boolean = true,
-            missedDoseRecoveryEnabled: Boolean = false
+            missedDoseRecoveryEnabled: Boolean = false,
+            runtimeEventSequence: Long = 11L
         ) {
             val (global, channel, progress) = fixtureState(
                 revision,
                 programEnabled,
-                missedDoseRecoveryEnabled
+                missedDoseRecoveryEnabled,
+                runtimeEventSequence
             )
             enqueueSuccess(DeviceDosingV1Contract.Action.STATUS_GET, global)
             enqueueSuccess(DeviceDosingV1Contract.Action.STATUS_GET, channel)
@@ -548,6 +895,26 @@ class DeviceDosingV1CommittedReconciliationTest {
             )
         }
 
+        fun enqueueResetMutation(revision: Long) {
+            val parsed = DeviceDosingV1MutationParser.parseChannelReset(
+                DeviceDosingV1TestFixtures.savedMutation(
+                    DeviceDosingV1Contract.Literal.CHANNEL_RESET
+                )
+            )
+            enqueueSuccess(
+                DeviceDosingV1Contract.Action.CHANNEL_RESET,
+                parsed.copy(
+                    channel = parsed.channel.copy(
+                        revision = revision,
+                        calibration = parsed.channel.calibration.copy(
+                            confirmed = false,
+                            lastCalibratedAt = 0L
+                        )
+                    )
+                )
+            )
+        }
+
         fun enqueueCalibrationConfirm() {
             enqueueSuccess(
                 DeviceDosingV1Contract.Action.CALIBRATION_CONFIRM,
@@ -561,12 +928,14 @@ class DeviceDosingV1CommittedReconciliationTest {
             revision: Long,
             programEnabled: Boolean,
             missedDoseRecoveryEnabled: Boolean = false,
-            delayMillis: Long
+            delayMillis: Long,
+            runtimeEventSequence: Long = 11L
         ) {
             val (global, channel, progress) = fixtureState(
                 revision,
                 programEnabled,
-                missedDoseRecoveryEnabled
+                missedDoseRecoveryEnabled,
+                runtimeEventSequence
             )
             responses.addLast(
                 Response(
@@ -579,22 +948,23 @@ class DeviceDosingV1CommittedReconciliationTest {
             enqueueSuccess(DeviceDosingV1Contract.Action.PROGRESS_GET, progress)
         }
 
-        fun enqueueDelayedGlobalReadback(
-            revision: Long,
-            programEnabled: Boolean,
-            missedDoseRecoveryEnabled: Boolean,
-            delayMillis: Long
-        ) {
-            val global = fixtureState(
-                revision,
-                programEnabled,
-                missedDoseRecoveryEnabled
-            ).global
+        fun enqueueDelayedRefreshAll(revision: Long, delayMillis: Long) {
+            val (global, channel, progress) = singleChannelFixtureState(revision)
+            enqueueSuccess(DeviceDosingV1Contract.Action.STATUS_GET, global, delayMillis)
+            enqueueSuccess(DeviceDosingV1Contract.Action.STATUS_GET, global)
+            enqueueSuccess(DeviceDosingV1Contract.Action.STATUS_GET, channel)
+            enqueueSuccess(DeviceDosingV1Contract.Action.PROGRESS_GET, progress)
+        }
+
+        fun enqueueNotConnected(action: String) {
             responses.addLast(
                 Response(
-                    action = DeviceDosingV1Contract.Action.STATUS_GET,
-                    outcome = success(DeviceDosingV1Contract.Action.STATUS_GET, global),
-                    delayMillis = delayMillis
+                    action = action,
+                    outcome = DeviceRuntimeCommandOutcome.NotConnected(
+                        deviceUid = DEVICE_UID,
+                        module = DeviceDosingV1Contract.MODULE,
+                        action = action
+                    )
                 )
             )
         }
@@ -630,7 +1000,8 @@ class DeviceDosingV1CommittedReconciliationTest {
         fun fixtureState(
             revision: Long,
             programEnabled: Boolean = true,
-            missedDoseRecoveryEnabled: Boolean = false
+            missedDoseRecoveryEnabled: Boolean = false,
+            runtimeEventSequence: Long = 11L
         ): FixtureState {
             val global = DeviceDosingV1StatusParser.parseGlobal(
                 DeviceDosingV1TestFixtures.globalStatus()
@@ -657,6 +1028,9 @@ class DeviceDosingV1CommittedReconciliationTest {
                         program = status.channel.program?.copy(
                             enabled = programEnabled,
                             missedDoseRecoveryEnabled = missedDoseRecoveryEnabled
+                        ),
+                        lastRuntimeEvent = status.channel.lastRuntimeEvent.copy(
+                            sequence = runtimeEventSequence
                         )
                     )
                 )
@@ -665,6 +1039,21 @@ class DeviceDosingV1CommittedReconciliationTest {
                 DeviceDosingV1TestFixtures.progressStatus()
             ).copy(revision = revision, programEnabled = programEnabled)
             return FixtureState(global, channel, progress)
+        }
+
+        fun singleChannelFixtureState(revision: Long): FixtureState = fixtureState(revision).let {
+            FixtureState(
+                global = it.global.copy(
+                    envelope = it.global.envelope.copy(channelCount = 1),
+                    channels = it.global.channels.take(1)
+                ),
+                channel = it.channel.copy(
+                    envelope = it.channel.envelope.copy(channelCount = 1)
+                ),
+                progress = it.progress.copy(
+                    envelope = it.progress.envelope.copy(channelCount = 1)
+                )
+            )
         }
 
         fun <T> success(
@@ -678,6 +1067,16 @@ class DeviceDosingV1CommittedReconciliationTest {
             generation = GENERATION,
             statusCode = 200,
             value = value
+        )
+
+        fun directEvent(): DeviceRuntimeTypedEvent = DeviceRuntimeTypedEvent(
+            deviceUid = DEVICE_UID,
+            generation = GENERATION,
+            messageId = "runtime-event-sequence-12",
+            type = DeviceRuntimeTypedEvent.Type.DOSING_STATUS_CHANGED,
+            payload = DeviceRuntimeEventPayload.Snapshot(
+                DeviceDosingV1TestFixtures.directEvent()
+            )
         )
     }
 

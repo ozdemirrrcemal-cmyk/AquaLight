@@ -4,6 +4,7 @@ import com.aqua.aqualight.application.devices.dosing.DeviceDosingChannelCommitte
 import com.aqua.aqualight.application.devices.dosing.DeviceDosingChannelOperationResult
 import com.aqua.aqualight.application.devices.dosing.DeviceDosingChannelOperations
 import com.aqua.aqualight.application.devices.dosing.DeviceDosingProgram
+import com.aqua.aqualight.application.devices.dosing.DeviceDosingProgramMutationOrigin
 import com.aqua.aqualight.application.devices.dosing.DeviceDosingProgramRevisionOperations
 import com.aqua.aqualight.ui.tabs.devices.detail.dosing.channel.FakeDeviceDosingChannelOperations
 import com.aqua.aqualight.ui.tabs.devices.detail.dosing.channel.sampleDosingChannelSnapshot
@@ -43,14 +44,14 @@ class DeviceDosingPlanCommittedSaveTest {
             val operations = object :
                 DeviceDosingChannelOperations by delegate,
                 DeviceDosingProgramRevisionOperations {
-                override suspend fun applyProgramAtRevision(
+                override suspend fun applyProgramAtOrigin(
                     deviceUid: String,
                     slotId: String,
                     program: DeviceDosingProgram,
-                    expectedRevision: Long
+                    origin: DeviceDosingProgramMutationOrigin
                 ): DeviceDosingChannelOperationResult {
-                    attempts += expectedRevision
-                    return DeviceDosingChannelCommittedResult(expectedRevision + 1L)
+                    attempts += origin.revision
+                    return DeviceDosingChannelCommittedResult(origin.revision + 1L)
                 }
             }
             val viewModel = DeviceDosingPlanViewModel(operations)
