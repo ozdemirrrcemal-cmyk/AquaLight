@@ -38,15 +38,14 @@ class DeviceDosingRootFragment : Fragment(R.layout.fragment_device_dosing_root) 
         _binding = FragmentDeviceDosingRootBinding.bind(view)
 
         setupHeader(title = args.deviceTitle.ifBlank { getString(R.string.device_family_dosing) })
-        setupPumpContent()
-        observeHeaderTitle()
-        observeChannelNavigation()
-        observeChannelNavigationFailures()
-
         viewModel.bind(
             deviceUidText = args.deviceUid,
             fallbackTitle = args.deviceTitle
         )
+        setupPumpContent()
+        observeHeaderTitle()
+        observeChannelNavigation()
+        observeChannelNavigationFailures()
     }
 
     private fun setupHeader(title: String) {
