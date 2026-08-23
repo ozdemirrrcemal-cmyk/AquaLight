@@ -268,6 +268,7 @@ class DevicesFragment : Fragment(R.layout.fragment_devices) {
 
     private fun openDeviceRoute(route: DeviceRoute) {
         if (!isAdded) {
+            baseActivity()?.clearGlobalLoading(DEVICE_MENU_LOADING_OWNER)
             viewModel.onDeviceNavigationStarted(route.deviceUid)
             return
         }
@@ -308,19 +309,20 @@ class DevicesFragment : Fragment(R.layout.fragment_devices) {
                 )
         }
 
-        baseActivity()?.clearGlobalLoading(DEVICE_MENU_LOADING_OWNER)
         binding.root.postOnAnimation {
             if (
                 _binding == null ||
                 !isAdded ||
                 findNavController().currentDestination?.id != R.id.devicesFragment
             ) {
+                baseActivity()?.clearGlobalLoading(DEVICE_MENU_LOADING_OWNER)
                 viewModel.onDeviceNavigationStarted(route.deviceUid)
                 return@postOnAnimation
             }
             try {
                 findNavController().navigate(directions)
             } finally {
+                baseActivity()?.clearGlobalLoading(DEVICE_MENU_LOADING_OWNER)
                 viewModel.onDeviceNavigationStarted(route.deviceUid)
             }
         }
