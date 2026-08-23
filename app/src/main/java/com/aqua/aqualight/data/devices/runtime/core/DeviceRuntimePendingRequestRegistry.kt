@@ -115,6 +115,7 @@ internal class DeviceRuntimePendingRequestRegistry {
                     "requestId" to key.messageId,
                     "module" to key.module,
                     "action" to key.action,
+                    "cancellationReason" to reason.toDeviceRuntimeDiagnosticCancellationReason(),
                     "completionAccepted" to completed
                 )
             }

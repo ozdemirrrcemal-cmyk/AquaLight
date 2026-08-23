@@ -166,8 +166,22 @@ private fun traceResponse(
         "envelope" to message.javaClass.simpleName,
         "module" to message.module,
         "action" to message.action,
+        *message.diagnosticFields(),
         *fields
     )
+}
+
+private fun AqlWsIncomingMessage.diagnosticFields(): Array<Pair<String, Any?>> = when (this) {
+    is AqlWsIncomingMessage.Response -> arrayOf(
+        "accepted" to ok,
+        "statusCode" to statusCode
+    )
+    is AqlWsIncomingMessage.Error -> arrayOf(
+        "statusCode" to statusCode,
+        "errorCode" to code,
+        "errorField" to field
+    )
+    is AqlWsIncomingMessage.Event -> emptyArray()
 }
 
 private const val RUNTIME_RESPONSE_CATEGORY = "runtime_response"

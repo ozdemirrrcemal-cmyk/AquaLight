@@ -1,5 +1,7 @@
 package com.aqua.aqualight.debug.diagnostics
 
+import android.content.ClipData
+import android.content.ClipboardManager
 import android.content.Context
 import android.graphics.Typeface
 import android.graphics.drawable.GradientDrawable
@@ -9,6 +11,7 @@ import android.view.View
 import android.widget.FrameLayout
 import android.widget.ScrollView
 import android.widget.TextView
+import android.widget.Toast
 import kotlin.math.roundToInt
 
 /** Debug-only top trace surface. Transparent areas never become touch targets. */
@@ -41,6 +44,10 @@ internal class DebugDiagnosticOverlayView(
         setTextSize(TypedValue.COMPLEX_UNIT_SP, HEADER_TEXT_SIZE_SP)
         typeface = Typeface.MONOSPACE
         setOnClickListener { toggleExpanded() }
+        setOnLongClickListener {
+            this@DebugDiagnosticOverlayView.copyLatestRecords()
+            true
+        }
     }
     private val bodyText = TextView(context).apply {
         setPadding(
@@ -51,6 +58,7 @@ internal class DebugDiagnosticOverlayView(
         )
         setTextColor(BODY_TEXT_COLOR)
         setTextSize(TypedValue.COMPLEX_UNIT_SP, BODY_TEXT_SIZE_SP)
+        setTextIsSelectable(true)
         typeface = Typeface.MONOSPACE
     }
     private val body = ScrollView(context).apply {
@@ -104,10 +112,28 @@ internal class DebugDiagnosticOverlayView(
     private fun renderHeader(latest: DebugDiagnosticRecord?) {
         val marker = if (expanded) COLLAPSE_MARKER else EXPAND_MARKER
         header.text = if (latest == null) {
-            "$marker $READY_LABEL"
+            "$marker $READY_LABEL • $COPY_HINT"
         } else {
-            "$marker #${latest.sequence} ${latest.event.category}/${latest.event.name}"
+            "$marker #${latest.sequence} ${latest.event.category}/${latest.event.name} • $COPY_HINT"
         }
+    }
+
+    private fun copyLatestRecords() {
+        if (latestRecords.isEmpty()) {
+            Toast.makeText(context, EMPTY_COPY_MESSAGE, Toast.LENGTH_SHORT).show()
+            return
+        }
+        val trace = latestRecords.joinToString(
+            separator = "\n",
+            transform = DebugDiagnosticFormatter::format
+        )
+        context.getSystemService(ClipboardManager::class.java)
+            ?.setPrimaryClip(ClipData.newPlainText(CLIP_LABEL, trace))
+        Toast.makeText(
+            context,
+            "$COPIED_MESSAGE ${latestRecords.size}",
+            Toast.LENGTH_SHORT
+        ).show()
     }
 
     private fun renderBody() {
@@ -122,13 +148,17 @@ internal class DebugDiagnosticOverlayView(
         const val OPEN_DESCRIPTION = "Open diagnostic trace"
         const val CLOSE_DESCRIPTION = "Close diagnostic trace"
         const val READY_LABEL = "TRACE ready"
+        const val COPY_HINT = "HOLD=COPY"
+        const val CLIP_LABEL = "AquaLight diagnostic trace"
+        const val COPIED_MESSAGE = "TRACE copied:"
+        const val EMPTY_COPY_MESSAGE = "TRACE is empty"
         const val EXPAND_MARKER = "▼"
         const val COLLAPSE_MARKER = "▲"
         const val BODY_HEIGHT_RATIO = 0.36f
         const val HEADER_HEIGHT_DP = 28f
         const val MIN_BODY_HEIGHT_DP = 180f
         const val MAX_BODY_HEIGHT_DP = 360f
-        const val MAX_HEADER_WIDTH_DP = 240f
+        const val MAX_HEADER_WIDTH_DP = 340f
         const val HORIZONTAL_PADDING_DP = 8f
         const val BODY_PADDING_DP = 6f
         const val CORNER_RADIUS_DP = 6f

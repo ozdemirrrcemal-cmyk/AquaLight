@@ -6,6 +6,8 @@ import android.util.TypedValue
 import android.view.MotionEvent
 import android.view.View
 import android.view.ViewGroup
+import android.widget.Button
+import android.widget.CompoundButton
 import android.widget.TextView
 import androidx.annotation.StringRes
 import androidx.appcompat.app.AppCompatActivity
@@ -74,13 +76,17 @@ open class BaseActivity : AppCompatActivity() {
     }
 
     override fun dispatchTouchEvent(event: MotionEvent): Boolean {
-        if (
+        val shouldRecord =
             AppDiagnosticTrace.isEnabled &&
             event.actionMasked == MotionEvent.ACTION_UP
-        ) {
-            BaseActivityTouchDiagnostics.record(this, event)
+        val target = if (shouldRecord) {
+            BaseActivityTouchDiagnostics.resolveTarget(this, event)
+        } else {
+            null
         }
-        return super.dispatchTouchEvent(event)
+        val handled = super.dispatchTouchEvent(event)
+        if (shouldRecord) BaseActivityTouchDiagnostics.record(this, target, handled)
+        return handled
     }
 
     override fun onSaveInstanceState(outState: Bundle) {
@@ -279,18 +285,28 @@ private fun Any.toLoadingOwnerKey(): String =
 
 private object BaseActivityTouchDiagnostics {
 
-    fun record(activity: BaseActivity, event: MotionEvent) {
-        val target = findTarget(
+    fun resolveTarget(activity: BaseActivity, event: MotionEvent): View? {
+        val leaf = findTarget(
             view = activity.window.decorView,
             rawX = event.rawX.toInt(),
             rawY = event.rawY.toInt()
         )
+        return generateSequence(leaf) { view -> view.parent as? View }
+            .firstOrNull(::isActionable) ?: leaf
+    }
+
+    fun record(activity: BaseActivity, target: View?, handled: Boolean) {
+        val resourceName = target?.let(::viewId)
         AppDiagnosticTrace.event(
             category = "input",
             name = "action.up",
             "activity" to activity.javaClass.simpleName,
-            "viewId" to target?.let(::viewId),
-            "viewClass" to target?.let(::className)
+            "viewId" to resourceName,
+            "viewClass" to target?.let(::className),
+            "control" to target?.let { view -> controlType(view, resourceName) },
+            "checked" to (target as? CompoundButton)?.isChecked,
+            "enabled" to target?.isEnabled,
+            "handled" to handled
         )
     }
 
@@ -313,6 +329,24 @@ private object BaseActivityTouchDiagnostics {
             findTarget(group.getChildAt(index), rawX, rawY)
         }
 
+    private fun isActionable(view: View): Boolean =
+        view is CompoundButton || view.isClickable || view.isLongClickable
+
+    private fun controlType(view: View, resourceName: String?): String {
+        val className = className(view)
+        return when {
+            resourceName.containsAny("save", "kaydet") -> "save"
+            view is CompoundButton ||
+                className.contains("switch", ignoreCase = true) ||
+                resourceName.containsAny("switch", "toggle") -> "switch"
+            view is Button || className.contains("button", ignoreCase = true) -> "button"
+            className.contains("card", ignoreCase = true) ||
+                resourceName.containsAny("card") -> "card"
+            view.isClickable -> "clickable"
+            else -> "view"
+        }
+    }
+
     private fun viewId(view: View): String? =
         view.id.takeUnless { resourceId -> resourceId == View.NO_ID }
             ?.let { resourceId ->
@@ -327,4 +361,7 @@ private object BaseActivityTouchDiagnostics {
         }.ifBlank {
             "View"
         }
+
+    private fun String?.containsAny(vararg candidates: String): Boolean =
+        this != null && candidates.any { candidate -> contains(candidate, ignoreCase = true) }
 }

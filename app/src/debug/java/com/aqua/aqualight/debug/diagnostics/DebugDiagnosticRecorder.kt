@@ -1,5 +1,8 @@
 package com.aqua.aqualight.debug.diagnostics
 
+import android.os.Handler
+import android.os.HandlerThread
+import android.os.Process
 import android.util.Log
 import com.aqua.aqualight.base.diagnostics.AppDiagnosticTrace
 import java.time.Instant
@@ -7,7 +10,6 @@ import java.time.ZoneId
 import java.time.format.DateTimeFormatter
 import java.util.ArrayDeque
 import java.util.Locale
-import java.util.concurrent.atomic.AtomicLong
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -22,32 +24,44 @@ internal class DebugDiagnosticRecorder(
     private val capacity: Int = DEFAULT_CAPACITY
 ) : AppDiagnosticTrace.Sink {
 
-    private val lock = Any()
-    private val nextSequence = AtomicLong(0L)
+    init {
+        require(capacity in MIN_CAPACITY..MAX_CAPACITY)
+    }
+
+    /*
+     * Trace formatting, ring snapshots and Logcat writes run away from runtime/state threads.
+     * The one process-long worker also establishes a deterministic total order for concurrent
+     * event/ACK callbacks without extending their critical sections.
+     */
+    private val workerThread = HandlerThread(
+        WORKER_THREAD_NAME,
+        Process.THREAD_PRIORITY_BACKGROUND
+    ).apply { start() }
+    private val worker = Handler(workerThread.looper)
+    private var nextSequence = 0L
     private val ring = ArrayDeque<DebugDiagnosticRecord>(capacity)
     private val mutableRecords = MutableStateFlow<List<DebugDiagnosticRecord>>(emptyList())
 
     val records: StateFlow<List<DebugDiagnosticRecord>> = mutableRecords.asStateFlow()
 
-    init {
-        require(capacity in MIN_CAPACITY..MAX_CAPACITY)
+    override fun record(event: AppDiagnosticTrace.Event) {
+        worker.post { append(event) }
     }
 
-    override fun record(event: AppDiagnosticTrace.Event) {
+    private fun append(event: AppDiagnosticTrace.Event) {
+        nextSequence += 1L
         val record = DebugDiagnosticRecord(
-            sequence = nextSequence.incrementAndGet(),
+            sequence = nextSequence,
             event = event
         )
-        synchronized(lock) {
-            while (ring.size >= capacity) ring.removeFirst()
-            ring.addLast(record)
-            mutableRecords.value = ring.toList()
-        }
+        while (ring.size >= capacity) ring.removeFirst()
+        ring.addLast(record)
+        mutableRecords.value = ring.toList()
         Log.d(LOG_TAG, DebugDiagnosticFormatter.format(record))
     }
 
     fun clear() {
-        synchronized(lock) {
+        worker.post {
             ring.clear()
             mutableRecords.value = emptyList()
         }
@@ -58,6 +72,7 @@ internal class DebugDiagnosticRecorder(
         const val MIN_CAPACITY = 32
         const val MAX_CAPACITY = 1_000
         const val LOG_TAG = "AqlDiagnostic"
+        const val WORKER_THREAD_NAME = "aql-diagnostic-trace"
     }
 }
 

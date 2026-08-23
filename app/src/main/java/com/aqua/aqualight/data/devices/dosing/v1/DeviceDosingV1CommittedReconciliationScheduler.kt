@@ -1,6 +1,7 @@
 package com.aqua.aqualight.data.devices.dosing.v1
 
 import com.aqua.aqualight.base.diagnostics.AppDiagnosticTrace
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.CoroutineStart
 import kotlinx.coroutines.Job
@@ -30,19 +31,25 @@ internal class DeviceDosingV1CommittedReconciliationScheduler(
                 "result" to result.javaClass.simpleName
             )
         }
+        var ignoredMinimumRevision: Long? = null
         val previous = synchronized(lock) {
             val current = scheduled[address]
             if (current != null && current.minimumRevision >= minimumRevision) {
-                address.traceReconciliation(
-                    "schedule_ignored",
-                    "minimumRevision" to minimumRevision,
-                    "existingMinimumRevision" to current.minimumRevision
-                )
-                job.cancel()
-                return
+                ignoredMinimumRevision = current.minimumRevision
+                null
+            } else {
+                scheduled[address] = ScheduledReconciliation(minimumRevision, job)
+                current?.job
             }
-            scheduled[address] = ScheduledReconciliation(minimumRevision, job)
-            current?.job
+        }
+        ignoredMinimumRevision?.let { existingMinimumRevision ->
+            address.traceReconciliation(
+                "schedule_ignored",
+                "minimumRevision" to minimumRevision,
+                "existingMinimumRevision" to existingMinimumRevision
+            )
+            job.cancel()
+            return
         }
         address.traceReconciliation(
             "schedule_installed",
@@ -57,7 +64,11 @@ internal class DeviceDosingV1CommittedReconciliationScheduler(
             address.traceReconciliation(
                 "job_completed",
                 "minimumRevision" to minimumRevision,
-                "cancelled" to (cause != null)
+                "cancelled" to (cause is CancellationException),
+                "failure" to cause
+                    ?.takeUnless { failure -> failure is CancellationException }
+                    ?.javaClass
+                    ?.simpleName
             )
         }
         job.start()
