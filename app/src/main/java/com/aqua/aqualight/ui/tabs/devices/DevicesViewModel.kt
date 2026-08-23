@@ -52,43 +52,18 @@ class DevicesViewModel(
             toggleDeviceSelection(deviceUid)
             return
         }
-        if (openingDeviceUid.value == deviceUid) return
+        if (openingDeviceUid.value != null) return
 
         menuOpenJob?.cancel()
         openingDeviceUid.value = deviceUid
         menuOpenJob = viewModelScope.launch {
-            val result = try {
-                menuAccessOperations.resolve(deviceUid)
-            } catch (error: Throwable) {
-                if (error is CancellationException) throw error
-                DeviceMenuAccessResult.Unavailable(
-                    title = "",
-                    reason = DeviceMenuUnavailableReason.CURRENT_LIVENESS_NOT_PROVEN
-                )
-            } finally {
-                if (openingDeviceUid.value == deviceUid) {
-                    openingDeviceUid.value = null
-                }
-            }
-
-            when (result) {
-                is DeviceMenuAccessResult.Available ->
-                    _events.send(
-                        DevicesEvent.OpenRoute(
-                            route = routeResolver.resolve(result)
-                        )
-                    )
-                is DeviceMenuAccessResult.Unavailable ->
-                    _events.send(
-                        DevicesEvent.ShowDeviceUnavailable(
-                            title = result.title,
-                            messageRes = DeviceMenuUnavailableMessageMapper.messageRes(
-                                result.reason
-                            )
-                        )
-                    )
-            }
+            resolveMenuOpen(deviceUid)
         }
+    }
+
+    /** Called only after the Fragment has committed or abandoned the navigation attempt. */
+    fun onDeviceNavigationStarted(deviceUid: String) {
+        clearMenuOpen(deviceUid)
     }
 
     fun onDeviceLongClicked(deviceUid: String) {
@@ -149,6 +124,57 @@ class DevicesViewModel(
         }
     }
 
+    private suspend fun resolveMenuOpen(deviceUid: String) {
+        var deviceTitle = ""
+        try {
+            when (val result = menuAccessOperations.resolve(deviceUid)) {
+                is DeviceMenuAccessResult.Available -> {
+                    deviceTitle = result.title
+                    _events.send(
+                        DevicesEvent.OpenRoute(
+                            route = routeResolver.resolve(result)
+                        )
+                    )
+                }
+                is DeviceMenuAccessResult.Unavailable -> failMenuOpen(
+                    deviceUid = deviceUid,
+                    title = result.title,
+                    reason = result.reason
+                )
+            }
+        } catch (error: Throwable) {
+            if (error is CancellationException) {
+                clearMenuOpen(deviceUid)
+                throw error
+            }
+            failMenuOpen(
+                deviceUid = deviceUid,
+                title = deviceTitle,
+                reason = DeviceMenuUnavailableReason.CURRENT_LIVENESS_NOT_PROVEN
+            )
+        }
+    }
+
+    private suspend fun failMenuOpen(
+        deviceUid: String,
+        title: String,
+        reason: DeviceMenuUnavailableReason
+    ) {
+        clearMenuOpen(deviceUid)
+        _events.send(
+            DevicesEvent.ShowDeviceUnavailable(
+                title = title,
+                messageRes = DeviceMenuUnavailableMessageMapper.messageRes(reason)
+            )
+        )
+    }
+
+    private fun clearMenuOpen(deviceUid: String) {
+        if (openingDeviceUid.value == deviceUid) {
+            openingDeviceUid.value = null
+        }
+    }
+
     private fun toggleDeviceSelection(deviceUid: String) {
         val current = selectedDeviceUids.value
         selectedDeviceUids.value = if (deviceUid in current) {
@@ -176,11 +202,7 @@ class DevicesViewModel(
                 operationState
             ) { devices, selectedUids, operation ->
                 val cards = devices.map { device ->
-                    val mapped = DeviceCardMapper.map(device = device)
-                    mapped.copy(
-                        card = mapped.card.copy(
-                            isBusy = operation.openingDeviceUid == device.deviceUid
-                        ),
+                    DeviceCardMapper.map(device = device).copy(
                         isSelected = device.deviceUid in selectedUids
                     )
                 }

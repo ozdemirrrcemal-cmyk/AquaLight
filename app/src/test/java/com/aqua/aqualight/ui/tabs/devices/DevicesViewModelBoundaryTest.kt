@@ -8,9 +8,10 @@ import com.aqua.aqualight.application.devices.OwnerDeviceAvailability
 import com.aqua.aqualight.application.devices.OwnerDeviceFamily
 import com.aqua.aqualight.application.devices.OwnerDeviceListItem
 import com.aqua.aqualight.application.devices.OwnerDevicesOperations
-import com.aqua.aqualight.ui.tabs.devices.route.DeviceRouteResolver
 import com.aqua.aqualight.ui.common.devicecard.DeviceCompactStatusStyle
+import com.aqua.aqualight.ui.tabs.devices.route.DeviceRouteResolver
 import com.aqua.aqualight.ui.tabs.devices.route.DeviceRouteTarget
+import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -66,7 +67,7 @@ class DevicesViewModelBoundaryTest {
     }
 
     @Test
-    fun `available device menu result is mapped to UI route`() = runTest {
+    fun `available device menu result is mapped to UI route until navigation commits`() = runTest {
         val menuOperations = FakeDeviceMenuAccessOperations(
             result = DeviceMenuAccessResult.Available(
                 deviceUid = "device-1",
@@ -86,6 +87,43 @@ class DevicesViewModelBoundaryTest {
         assertEquals("device-1", event.route.deviceUid)
         assertEquals("AquaLight One", event.route.title)
         assertEquals(DeviceRouteTarget.LIGHT_ROOT, event.route.target)
+        assertTrue(viewModel.uiState.value.isOpeningDeviceMenu)
+        assertFalse(viewModel.uiState.value.devices.single().card.isBusy)
+
+        viewModel.onDeviceNavigationStarted("device-1")
+        assertFalse(viewModel.uiState.value.isOpeningDeviceMenu)
+    }
+
+    @Test
+    fun `menu opening uses screen loading state without mutating card busy state`() = runTest {
+        val menuOperations = FakeDeviceMenuAccessOperations(block = true)
+        val viewModel = createViewModel(
+            operations = FakeOwnerDevicesOperations(listOf(device("device-1"))),
+            menuOperations = menuOperations
+        )
+
+        viewModel.onDeviceClicked("device-1")
+        menuOperations.started.await()
+
+        val opening = viewModel.uiState.value
+        assertTrue(opening.isOpeningDeviceMenu)
+        assertEquals("device-1", opening.openingDeviceUid)
+        assertFalse(opening.devices.single().card.isBusy)
+
+        menuOperations.release(
+            DeviceMenuAccessResult.Available(
+                deviceUid = "device-1",
+                title = "Dose Pro 4",
+                family = OwnerDeviceFamily.DOSING
+            )
+        )
+        viewModel.events.first()
+
+        assertTrue(viewModel.uiState.value.isOpeningDeviceMenu)
+        assertFalse(viewModel.uiState.value.devices.single().card.isBusy)
+
+        viewModel.onDeviceNavigationStarted("device-1")
+        assertFalse(viewModel.uiState.value.isOpeningDeviceMenu)
     }
 
     @Test
@@ -172,13 +210,22 @@ class DevicesViewModelBoundaryTest {
         var result: DeviceMenuAccessResult = DeviceMenuAccessResult.Unavailable(
             title = "",
             reason = DeviceMenuUnavailableReason.CURRENT_LIVENESS_NOT_PROVEN
-        )
+        ),
+        private val block: Boolean = false
     ) : DeviceMenuAccessOperations {
         var lastRequest: String = ""
+        val started = CompletableDeferred<Unit>()
+        private val blockedResult = CompletableDeferred<DeviceMenuAccessResult>()
 
         override suspend fun resolve(deviceUid: String): DeviceMenuAccessResult {
             lastRequest = deviceUid
-            return result
+            started.complete(Unit)
+            return if (block) blockedResult.await() else result
+        }
+
+        fun release(value: DeviceMenuAccessResult) {
+            result = value
+            blockedResult.complete(value)
         }
     }
 
