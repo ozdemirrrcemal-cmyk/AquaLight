@@ -7,20 +7,15 @@ import com.aqua.aqualight.data.devices.runtime.core.DeviceRuntimeCommand
 import com.aqua.aqualight.data.devices.runtime.core.DeviceRuntimeCommandGateway
 import com.aqua.aqualight.data.devices.runtime.core.DeviceRuntimeCommandOutcome
 import com.aqua.aqualight.data.devices.runtime.core.DeviceRuntimeConnectionGeneration
-import kotlinx.coroutines.CompletableDeferred
-import kotlinx.coroutines.async
-import kotlinx.coroutines.test.runCurrent
 import kotlinx.coroutines.test.runTest
 import org.junit.Assert.assertEquals
-import org.junit.Assert.assertFalse
-import org.junit.Assert.assertTrue
 import org.junit.Test
 
 class DeviceDosingV1NonBlockingReadWriteTest {
 
     @Test
-    fun `hung background reconciliation never blocks a newer program mutation`() = runTest {
-        val gateway = OverlappingGateway()
+    fun `persisted ack continuation sends consecutive writes without automatic readback`() = runTest {
+        val gateway = ConsecutiveWriteGateway()
         val adapter = DeviceDosingV1StateAdapter(
             repository = DeviceDosingV1Repository(gateway),
             reconciliationScope = backgroundScope
@@ -28,50 +23,36 @@ class DeviceDosingV1NonBlockingReadWriteTest {
         val initial = adapter.channelOperations.refresh(DEVICE_UID.value, SLOT_ID)
             as DeviceDosingChannelOperationResult.Success
         val initialProgram = requireNotNull(initial.snapshot.program)
+        gateway.actions.clear()
 
-        val first = async {
-            adapter.channelOperations.applyProgram(
-                DEVICE_UID.value,
-                SLOT_ID,
-                initialProgram.copy(enabled = false)
-            )
-        }
-        runCurrent()
-        assertEquals(DeviceDosingChannelCommittedResult(8L), first.await())
+        val first = adapter.channelOperations.applyProgram(
+            DEVICE_UID.value,
+            SLOT_ID,
+            initialProgram.copy(enabled = false)
+        )
+        val second = adapter.channelOperations.applyProgram(
+            DEVICE_UID.value,
+            SLOT_ID,
+            initialProgram.copy(enabled = true)
+        )
 
-        gateway.backgroundReadStarted.await()
-        val second = async {
-            adapter.channelOperations.applyProgram(
-                DEVICE_UID.value,
-                SLOT_ID,
-                initialProgram.copy(enabled = true)
-            )
-        }
-        runCurrent()
-
-        // The old status.get is deliberately still suspended. The foreground write must already
-        // have crossed the firmware commit boundary without cancelling or waiting for that read.
-        assertTrue(second.isCompleted)
-        assertEquals(DeviceDosingChannelCommittedResult(9L), second.await())
-        assertFalse(gateway.releaseBackgroundRead.isCompleted)
-        assertEquals(2, gateway.programApplyCount)
-
-        gateway.releaseBackgroundRead.complete(Unit)
-        runCurrent()
-
-        // The pre-write refresh token is stale. Its stability retry occurs after the write and is
-        // allowed to publish only the revision-9 coherent triplet.
-        assertEquals(9L, adapter.currentChannel(DEVICE_UID.value, SLOT_ID)?.revision)
-        assertEquals(2, gateway.programApplyCount)
+        assertEquals(DeviceDosingChannelCommittedResult(8L), first)
+        assertEquals(DeviceDosingChannelCommittedResult(9L), second)
+        assertEquals(
+            listOf(
+                DeviceDosingV1Contract.Action.PROGRAM_APPLY,
+                DeviceDosingV1Contract.Action.PROGRAM_APPLY
+            ),
+            gateway.actions
+        )
+        assertEquals(listOf(7L, 8L), gateway.expectedRevisions)
     }
 
-    private class OverlappingGateway : DeviceRuntimeCommandGateway {
-        val backgroundReadStarted = CompletableDeferred<Unit>()
-        val releaseBackgroundRead = CompletableDeferred<Unit>()
-        var programApplyCount: Int = 0
-            private set
-        private var statusGetCount: Int = 0
-        private var progressGetCount: Int = 0
+    private class ConsecutiveWriteGateway : DeviceRuntimeCommandGateway {
+        val actions = mutableListOf<String>()
+        val expectedRevisions = mutableListOf<Long>()
+        private var statusGetCount = 0
+        private var programApplyCount = 0
 
         @Suppress("UNCHECKED_CAST")
         override suspend fun <T> execute(
@@ -80,64 +61,34 @@ class DeviceDosingV1NonBlockingReadWriteTest {
             timeoutMillis: Long
         ): DeviceRuntimeCommandOutcome<T> {
             assertEquals(DEVICE_UID, deviceUid)
+            actions += command.action
             val outcome: DeviceRuntimeCommandOutcome<*> = when (command.action) {
-                DeviceDosingV1Contract.Action.STATUS_GET -> nextStatus()
-                DeviceDosingV1Contract.Action.PROGRESS_GET -> nextProgress()
-                DeviceDosingV1Contract.Action.PROGRAM_APPLY -> nextProgramApply()
+                DeviceDosingV1Contract.Action.STATUS_GET -> nextInitialStatus()
+                DeviceDosingV1Contract.Action.PROGRESS_GET -> success(
+                    DeviceDosingV1Contract.Action.PROGRESS_GET,
+                    fixtureState(7L, true).progress
+                )
+                DeviceDosingV1Contract.Action.PROGRAM_APPLY -> nextProgramApply(command)
                 else -> error("Unexpected action ${command.action}")
             }
             return outcome as DeviceRuntimeCommandOutcome<T>
         }
 
-        private suspend fun nextStatus(): DeviceRuntimeCommandOutcome<*> {
+        private fun nextInitialStatus(): DeviceRuntimeCommandOutcome<*> {
             statusGetCount += 1
+            val state = fixtureState(7L, true)
             return when (statusGetCount) {
-                1 -> success(
-                    DeviceDosingV1Contract.Action.STATUS_GET,
-                    fixtureState(7L, true).global
-                )
-                2 -> success(
-                    DeviceDosingV1Contract.Action.STATUS_GET,
-                    fixtureState(7L, true).channel
-                )
-                3 -> {
-                    backgroundReadStarted.complete(Unit)
-                    releaseBackgroundRead.await()
-                    success(
-                        DeviceDosingV1Contract.Action.STATUS_GET,
-                        fixtureState(8L, false).global
-                    )
-                }
-                4 -> success(
-                    DeviceDosingV1Contract.Action.STATUS_GET,
-                    fixtureState(8L, false).channel
-                )
-                5 -> success(
-                    DeviceDosingV1Contract.Action.STATUS_GET,
-                    fixtureState(9L, true).global
-                )
-                6 -> success(
-                    DeviceDosingV1Contract.Action.STATUS_GET,
-                    fixtureState(9L, true).channel
-                )
-                else -> error("Unexpected status.get #$statusGetCount")
+                1 -> success(DeviceDosingV1Contract.Action.STATUS_GET, state.global)
+                2 -> success(DeviceDosingV1Contract.Action.STATUS_GET, state.channel)
+                else -> error("Persisted ACK path sent unexpected status.get #$statusGetCount")
             }
         }
 
-        private fun nextProgress(): DeviceRuntimeCommandOutcome<*> {
-            progressGetCount += 1
-            val state = when (progressGetCount) {
-                1 -> fixtureState(7L, true)
-                2 -> fixtureState(8L, false)
-                3 -> fixtureState(9L, true)
-                else -> error("Unexpected progress.get #$progressGetCount")
-            }
-            return success(DeviceDosingV1Contract.Action.PROGRESS_GET, state.progress)
-        }
-
-        private fun nextProgramApply(): DeviceRuntimeCommandOutcome<*> {
+        private fun nextProgramApply(command: DeviceRuntimeCommand<*>): DeviceRuntimeCommandOutcome<*> {
+            val request = command.encodeData()
+            expectedRevisions += request.getLong("expectedRevision")
             programApplyCount += 1
-            val revision = if (programApplyCount == 1) 8L else 9L
+            val revision = 7L + programApplyCount
             val enabled = programApplyCount != 1
             val parsed = DeviceDosingV1MutationParser.parseProgramApply(
                 DeviceDosingV1TestFixtures.savedMutation(
