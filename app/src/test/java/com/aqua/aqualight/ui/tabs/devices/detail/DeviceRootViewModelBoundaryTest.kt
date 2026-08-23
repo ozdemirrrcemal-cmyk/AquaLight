@@ -12,7 +12,9 @@ import com.aqua.aqualight.application.devices.OwnerDeviceFamily
 import com.aqua.aqualight.ui.common.text.AquaUiText
 import com.aqua.aqualight.ui.tabs.devices.detail.common.DeviceRootKind
 import com.aqua.aqualight.ui.tabs.devices.detail.common.DeviceRootOverviewViewModel
+import com.aqua.aqualight.ui.tabs.devices.detail.cooling.DeviceCoolingRootViewModel
 import com.aqua.aqualight.ui.tabs.devices.detail.light.DeviceLightRootViewModel
+import com.aqua.aqualight.ui.tabs.devices.detail.timer.DeviceTimerRootViewModel
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.Flow
@@ -59,7 +61,7 @@ class DeviceRootViewModelBoundaryTest {
     }
 
     @Test
-    fun `light root exposes only the device title state`() {
+    fun `light root exposes only the current device title state`() {
         val operations = FakeDeviceRootOperations(
             rootSnapshot(
                 capabilities = setOf(DeviceRootCapability.MANUAL_LIGHT),
@@ -68,14 +70,33 @@ class DeviceRootViewModelBoundaryTest {
         )
         val viewModel = DeviceLightRootViewModel(operations)
 
-        viewModel.bind(
-            deviceUidText = "device-1",
-            fallbackTitle = "Light"
-        )
+        viewModel.bind(deviceUidText = "device-1")
 
         assertEquals("AquaLight Dosing", viewModel.uiState.value.title)
         assertEquals("device-1", operations.lastObservedUid)
         assertEquals("device-1", operations.lastConnectedUid)
+    }
+
+    @Test
+    fun `supported root titles follow the same dynamic device snapshot`() {
+        val operations = FakeDeviceRootOperations(rootSnapshot())
+        val light = DeviceLightRootViewModel(operations)
+        val timer = DeviceTimerRootViewModel(operations)
+        val cooling = DeviceCoolingRootViewModel(operations)
+
+        light.bind("device-1")
+        timer.bind("device-1")
+        cooling.bind("device-1")
+
+        assertEquals("AquaLight Dosing", light.uiState.value.title)
+        assertEquals("AquaLight Dosing", timer.uiState.value.title)
+        assertEquals("AquaLight Dosing", cooling.uiState.value.title)
+
+        operations.publishTitle("My Aquarium Controller")
+
+        assertEquals("My Aquarium Controller", light.uiState.value.title)
+        assertEquals("My Aquarium Controller", timer.uiState.value.title)
+        assertEquals("My Aquarium Controller", cooling.uiState.value.title)
     }
 
     private fun rootSnapshot(
@@ -83,7 +104,8 @@ class DeviceRootViewModelBoundaryTest {
         menuFeatures: Set<DeviceRootMenuFeature> = setOf(
             DeviceRootMenuFeature.DOSING_CHANNELS,
             DeviceRootMenuFeature.DOSING_SCHEDULES
-        )
+        ),
+        title: String = "AquaLight Dosing"
     ): DeviceRootSnapshot {
         val family = if (DeviceRootCapability.DOSING in capabilities) {
             OwnerDeviceFamily.DOSING
@@ -95,7 +117,7 @@ class DeviceRootViewModelBoundaryTest {
         }
         return DeviceRootSnapshot(
             deviceUid = "device-1",
-            title = "AquaLight Dosing",
+            title = title,
             availability = OwnerDeviceAvailability.REACHABLE,
             family = family,
             catalogState = DeviceRootCatalogState.VALID,
@@ -110,7 +132,7 @@ class DeviceRootViewModelBoundaryTest {
         )
     }
 
-    private class FakeDeviceRootOperations(
+    private inner class FakeDeviceRootOperations(
         initialSnapshot: DeviceRootSnapshot?
     ) : DeviceRootOperations {
         private val snapshots = MutableStateFlow(initialSnapshot)
@@ -127,6 +149,11 @@ class DeviceRootViewModelBoundaryTest {
         override fun connect(deviceUid: String): Result<Unit> {
             lastConnectedUid = deviceUid
             return Result.success(Unit)
+        }
+
+        fun publishTitle(title: String) {
+            val current = snapshots.value ?: return
+            snapshots.value = current.copy(title = title)
         }
     }
 

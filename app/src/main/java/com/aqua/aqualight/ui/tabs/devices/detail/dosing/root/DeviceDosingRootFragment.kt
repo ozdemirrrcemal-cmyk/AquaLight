@@ -37,13 +37,11 @@ class DeviceDosingRootFragment : Fragment(R.layout.fragment_device_dosing_root) 
 
         _binding = FragmentDeviceDosingRootBinding.bind(view)
 
-        val navigationTitle = navigationTitle()
-        viewModel.bind(
-            deviceUidText = args.deviceUid,
-            fallbackTitle = navigationTitle
-        )
+        viewModel.bind(args.deviceUid)
         setupHeader(
-            title = viewModel.uiState.value.title.ifBlank { navigationTitle }
+            title = viewModel.uiState.value.title.ifBlank {
+                getString(R.string.device_family_dosing)
+            }
         )
         setupPumpContent()
         observeHeaderTitle()
@@ -135,15 +133,12 @@ class DeviceDosingRootFragment : Fragment(R.layout.fragment_device_dosing_root) 
                 viewModel.uiState.collect { state ->
                     if (_binding == null) return@collect
                     setupHeader(
-                        title = state.title.ifBlank { navigationTitle() }
+                        title = state.title.ifBlank { getString(R.string.device_family_dosing) }
                     )
                 }
             }
         }
     }
-
-    private fun navigationTitle(): String =
-        args.deviceTitle.ifBlank { getString(R.string.device_family_dosing) }
 
     override fun onDestroyView() {
         _binding = null

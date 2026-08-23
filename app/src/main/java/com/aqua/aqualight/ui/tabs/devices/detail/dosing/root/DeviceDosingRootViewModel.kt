@@ -44,7 +44,6 @@ class DeviceDosingRootViewModel(
     val navigationFailureEvents: Flow<Unit> = navigationFailureEventChannel.receiveAsFlow()
 
     private var boundDeviceUid: String = ""
-    private var navigationTitle: String = ""
     private var latestRootSnapshot: DeviceRootSnapshot? = null
     private var validatedCatalogChannels: List<DeviceDosingChannelSlot> = emptyList()
     private var channelSnapshots: List<DeviceDosingChannelSnapshot> = emptyList()
@@ -53,10 +52,7 @@ class DeviceDosingRootViewModel(
     private var channelDataRefreshJob: Job? = null
     private var channelNavigationJob: Job? = null
 
-    fun bind(
-        deviceUidText: String,
-        fallbackTitle: String
-    ) {
+    fun bind(deviceUidText: String) {
         val deviceUid = deviceUidText.trim()
         if (deviceUid.isBlank()) {
             observeJob?.cancel()
@@ -64,11 +60,10 @@ class DeviceDosingRootViewModel(
             channelDataRefreshJob?.cancel()
             channelNavigationJob?.cancel()
             boundDeviceUid = ""
-            navigationTitle = fallbackTitle.trim()
             latestRootSnapshot = null
             validatedCatalogChannels = emptyList()
             channelSnapshots = emptyList()
-            _uiState.value = emptyState(navigationTitle, "")
+            _uiState.value = emptyState("")
             return
         }
         if (boundDeviceUid == deviceUid) {
@@ -77,7 +72,6 @@ class DeviceDosingRootViewModel(
         }
 
         boundDeviceUid = deviceUid
-        navigationTitle = fallbackTitle.trim()
         validatedCatalogChannels = emptyList()
         acceptRootSnapshot(operations.current(deviceUid))
         channelSnapshots = emptyList()
@@ -136,16 +130,15 @@ class DeviceDosingRootViewModel(
     private fun renderBoundState() {
         val deviceUid = boundDeviceUid
         _uiState.value = latestRootSnapshot?.toRootUiState(
-            navigationTitle = navigationTitle,
             catalogChannels = validatedCatalogChannels,
             snapshots = channelSnapshots
-        ) ?: emptyState(navigationTitle, deviceUid)
+        ) ?: emptyState(deviceUid)
     }
 
     /**
-     * Runtime metadata is write authority, not a command to erase an already validated screen.
-     * Keep the last validated topology for presentation across a transient reconnect; route and
-     * mutation authorization continue to read the latest fail-closed root snapshot.
+     * Runtime metadata is write authority, not a command to erase an already validated topology.
+     * Keep the last validated channel catalog across a transient reconnect while the root snapshot
+     * remains the sole source of dynamic device identity, including the user-defined title.
      */
     private fun acceptRootSnapshot(snapshot: DeviceRootSnapshot?) {
         latestRootSnapshot = snapshot
@@ -154,8 +147,7 @@ class DeviceDosingRootViewModel(
         }
     }
 
-    private fun emptyState(title: String, deviceUid: String) = DeviceDosingRootUiState(
-        title = title,
+    private fun emptyState(deviceUid: String) = DeviceDosingRootUiState(
         deviceUid = deviceUid,
         connectionStatusRes = R.string.device_offline,
         pumpCount = UNKNOWN_DOSING_PUMP_COUNT,
@@ -167,7 +159,6 @@ class DeviceDosingRootViewModel(
     )
 
     private fun DeviceRootSnapshot.toRootUiState(
-        navigationTitle: String,
         catalogChannels: List<DeviceDosingChannelSlot>,
         snapshots: List<DeviceDosingChannelSnapshot>
     ): DeviceDosingRootUiState {
@@ -178,7 +169,7 @@ class DeviceDosingRootViewModel(
             snapshots = snapshots
         )
         return DeviceDosingRootUiState(
-            title = resolveDosingRootCanonicalTitle(this, navigationTitle),
+            title = title,
             deviceUid = deviceUid,
             connectionStatusRes = DeviceRootPresentationMapper.availabilityLabelRes(this),
             ipText = ipAddress,
@@ -204,12 +195,6 @@ class DeviceDosingRootViewModel(
         val KIND = DeviceRootKind.DOSING
     }
 }
-
-/** One title policy for both the first frame and every later root-state emission. */
-internal fun resolveDosingRootCanonicalTitle(
-    snapshot: DeviceRootSnapshot?,
-    navigationTitle: String
-): String = snapshot?.title?.trim().orEmpty().ifBlank { navigationTitle.trim() }
 
 data class DeviceDosingRootUiState(
     val title: String = "",

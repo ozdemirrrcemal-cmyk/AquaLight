@@ -52,7 +52,7 @@ class DeviceDosingRootNavigationTest {
             channelNavigationOperations = navigationOperations,
             channelOperations = UnavailableDeviceDosingChannelOperations
         )
-        viewModel.bind(deviceUidText = DEVICE_UID, fallbackTitle = "Dose Pro")
+        viewModel.bind(deviceUidText = DEVICE_UID)
 
         viewModel.openChannel(" $SLOT_ID ")
 
@@ -62,29 +62,7 @@ class DeviceDosingRootNavigationTest {
     }
 
     @Test
-    fun `first header frame uses current canonical root title instead of stale navigation title`() =
-        runTest(dispatcher) {
-            val rootOperations = FakeRootOperations(initialTitle = "Dose Pro 4")
-            val viewModel = DeviceDosingRootViewModel(
-                operations = rootOperations,
-                channelNavigationOperations = FakeChannelNavigationOperations(null),
-                channelOperations = UnavailableDeviceDosingChannelOperations
-            )
-
-            viewModel.bind(
-                deviceUidText = DEVICE_UID,
-                fallbackTitle = "Legacy dosing title"
-            )
-
-            assertEquals("Dose Pro 4", viewModel.uiState.value.title)
-
-            rootOperations.publishTitle("Dose Pro 4")
-
-            assertEquals("Dose Pro 4", viewModel.uiState.value.title)
-        }
-
-    @Test
-    fun `runtime title changes keep using the same canonical title contract`() = runTest(dispatcher) {
+    fun `dosing header starts from and follows dynamic device title`() = runTest(dispatcher) {
         val rootOperations = FakeRootOperations(initialTitle = "Dose Pro 4")
         val viewModel = DeviceDosingRootViewModel(
             operations = rootOperations,
@@ -92,30 +70,13 @@ class DeviceDosingRootNavigationTest {
             channelOperations = UnavailableDeviceDosingChannelOperations
         )
 
-        viewModel.bind(
-            deviceUidText = DEVICE_UID,
-            fallbackTitle = "Legacy dosing title"
-        )
+        viewModel.bind(deviceUidText = DEVICE_UID)
+
+        assertEquals("Dose Pro 4", viewModel.uiState.value.title)
+
         rootOperations.publishTitle("My Doser")
 
         assertEquals("My Doser", viewModel.uiState.value.title)
-    }
-
-    @Test
-    fun `navigation title is canonical fallback when root snapshot has no title`() = runTest(dispatcher) {
-        val rootOperations = FakeRootOperations(initialTitle = "")
-        val viewModel = DeviceDosingRootViewModel(
-            operations = rootOperations,
-            channelNavigationOperations = FakeChannelNavigationOperations(null),
-            channelOperations = UnavailableDeviceDosingChannelOperations
-        )
-
-        viewModel.bind(
-            deviceUidText = DEVICE_UID,
-            fallbackTitle = "Dose Pro 4"
-        )
-
-        assertEquals("Dose Pro 4", viewModel.uiState.value.title)
     }
 
     private class FakeChannelNavigationOperations(
