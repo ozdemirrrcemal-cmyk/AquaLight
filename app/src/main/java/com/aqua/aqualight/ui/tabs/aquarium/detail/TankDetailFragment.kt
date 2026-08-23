@@ -363,34 +363,38 @@ class TankDetailFragment :
     private fun openDeviceRoute(
         route: DeviceRoute
     ) {
+        // The shared graph still exposes its legacy deviceTitle argument, but supported roots
+        // deliberately receive no dynamic title through navigation. They resolve it centrally.
         val directions = when (route.target) {
             DeviceRouteTarget.LIGHT_ROOT ->
                 TankDetailFragmentDirections.actionTankDetailFragmentToDeviceLightRootFragment(
                     deviceUid = route.deviceUid,
-                    deviceTitle = route.title.ifBlank { getString(route.titleRes) }
+                    deviceTitle = ""
                 )
 
             DeviceRouteTarget.DOSING_ROOT ->
                 TankDetailFragmentDirections.actionTankDetailFragmentToDeviceDosingRootFragment(
                     deviceUid = route.deviceUid,
-                    deviceTitle = route.title.ifBlank { getString(route.titleRes) }
+                    deviceTitle = ""
                 )
 
             DeviceRouteTarget.TIMER_ROOT ->
                 TankDetailFragmentDirections.actionTankDetailFragmentToDeviceTimerRootFragment(
                     deviceUid = route.deviceUid,
-                    deviceTitle = route.title.ifBlank { getString(route.titleRes) }
+                    deviceTitle = ""
                 )
 
             DeviceRouteTarget.COOLING_ROOT ->
                 TankDetailFragmentDirections.actionTankDetailFragmentToDeviceCoolingRootFragment(
                     deviceUid = route.deviceUid,
-                    deviceTitle = route.title.ifBlank { getString(route.titleRes) }
+                    deviceTitle = ""
                 )
 
             DeviceRouteTarget.UNSUPPORTED ->
                 TankDetailFragmentDirections.actionTankDetailFragmentToUnsupportedDeviceFragment(
-                    deviceTitle = route.title.ifBlank { getString(route.titleRes) },
+                    deviceTitle = route.unsupportedTitle.ifBlank {
+                        getString(R.string.device_menu_default_title)
+                    },
                     message = route.messageRes.takeIf { it != 0 }
                         ?.let { getString(it) }
                         .orEmpty(),

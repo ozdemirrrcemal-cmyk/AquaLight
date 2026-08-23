@@ -67,7 +67,7 @@ class DevicesViewModelBoundaryTest {
     }
 
     @Test
-    fun `available device menu result is mapped to UI route until navigation commits`() = runTest {
+    fun `available device menu route carries identity but not supported root title`() = runTest {
         val menuOperations = FakeDeviceMenuAccessOperations(
             result = DeviceMenuAccessResult.Available(
                 deviceUid = "device-1",
@@ -85,8 +85,8 @@ class DevicesViewModelBoundaryTest {
 
         assertEquals("device-1", menuOperations.lastRequest)
         assertEquals("device-1", event.route.deviceUid)
-        assertEquals("AquaLight One", event.route.title)
         assertEquals(DeviceRouteTarget.LIGHT_ROOT, event.route.target)
+        assertEquals("", event.route.unsupportedTitle)
         assertTrue(viewModel.uiState.value.isOpeningDeviceMenu)
         assertFalse(viewModel.uiState.value.devices.single().card.isBusy)
 
