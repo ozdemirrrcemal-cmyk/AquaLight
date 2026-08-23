@@ -104,6 +104,8 @@ internal class OwnerViewModelFactory(
                 DevicesViewModel(
                     operations = createOwnerDevicesOperations(graph, repository, assignments),
                     menuAccessOperations = DefaultDeviceMenuAccessOperations.create(repository),
+                    controlSurfacePreparationOperations =
+                        graph.dosingOperations.controlSurfacePreparationOperations,
                     routeResolver = DeviceRouteResolver()
                 )
 
@@ -201,7 +203,9 @@ internal class OwnerViewModelFactory(
                 DeviceDosingRootViewModel(
                     operations = DefaultDeviceRootOperations(repository),
                     channelNavigationOperations = dosing.navigationOperations,
-                    channelOperations = dosing.channelOperations
+                    channelOperations = dosing.channelOperations,
+                    controlSurfacePreparationOperations =
+                        dosing.controlSurfacePreparationOperations
                 )
             }
 
