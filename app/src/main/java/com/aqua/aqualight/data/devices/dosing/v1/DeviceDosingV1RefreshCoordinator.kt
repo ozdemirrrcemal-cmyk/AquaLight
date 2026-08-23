@@ -263,23 +263,24 @@ private class DeviceDosingV1RefreshFlights(
         fallback: V,
         cancellationFallback: V,
         producer: suspend () -> V
-    ): V = producerScope?.let { scope ->
-        ownerScoped(
-            scope = scope,
-            key = key,
-            flights = flights,
-            fallback = fallback,
-            cancellationFallback = cancellationFallback,
-            producer = producer
-        )
-    } ?: callerScoped(key, flights, fallback, cancellationFallback, producer)
+    ): V {
+        val fallbacks = RefreshFlightFallbacks(fallback, cancellationFallback)
+        return producerScope?.let { scope ->
+            ownerScoped(
+                scope = scope,
+                key = key,
+                flights = flights,
+                fallbacks = fallbacks,
+                producer = producer
+            )
+        } ?: callerScoped(key, flights, fallbacks, producer)
+    }
 
     private suspend fun <K : Any, V> ownerScoped(
         scope: CoroutineScope,
         key: K,
         flights: ConcurrentHashMap<K, Deferred<V>>,
-        fallback: V,
-        cancellationFallback: V,
+        fallbacks: RefreshFlightFallbacks<V>,
         producer: suspend () -> V
     ): V {
         val candidate = scope.async(start = CoroutineStart.LAZY) {
@@ -288,7 +289,7 @@ private class DeviceDosingV1RefreshFlights(
             } catch (cancellation: CancellationException) {
                 throw cancellation
             } catch (_: Exception) {
-                fallback
+                fallbacks.failure
             }
         }
         val existing = flights.putIfAbsent(key, candidate)
@@ -302,9 +303,10 @@ private class DeviceDosingV1RefreshFlights(
         }
         return try {
             selected.await()
-        } catch (cancellation: CancellationException) {
+        } catch (producerCancellation: CancellationException) {
             currentCoroutineContext().ensureActive()
-            cancellationFallback
+            if (!selected.isCancelled) throw producerCancellation
+            fallbacks.cancellation
         }
     }
 
@@ -312,8 +314,7 @@ private class DeviceDosingV1RefreshFlights(
     private suspend fun <K : Any, V> callerScoped(
         key: K,
         flights: ConcurrentHashMap<K, Deferred<V>>,
-        fallback: V,
-        cancellationFallback: V,
+        fallbacks: RefreshFlightFallbacks<V>,
         producer: suspend () -> V
     ): V {
         val pending = CompletableDeferred<V>()
@@ -324,15 +325,20 @@ private class DeviceDosingV1RefreshFlights(
             try {
                 producer().also(pending::complete)
             } catch (cancellation: CancellationException) {
-                pending.complete(cancellationFallback)
+                pending.complete(fallbacks.cancellation)
                 throw cancellation
             } finally {
-                pending.complete(fallback)
+                pending.complete(fallbacks.failure)
                 flights.remove(key, pending)
             }
         }
     }
 }
+
+private data class RefreshFlightFallbacks<V>(
+    val failure: V,
+    val cancellation: V
+)
 
 private fun DeviceDosingV1CommitDisposition.toRefreshResult(
     address: DeviceDosingV1Address,

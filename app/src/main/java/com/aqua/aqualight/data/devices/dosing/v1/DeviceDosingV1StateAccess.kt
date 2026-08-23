@@ -76,9 +76,6 @@ internal class DeviceDosingV1StateAccess(
         )
     }
 
-    fun authoritativeRevision(address: DeviceDosingV1Address): Long? =
-        stateOwner.reads.authoritativeRevision(address.deviceUid, address.channelKey)
-
     fun setLowLevelAlertIntent(deviceUid: String, slotId: String, enabled: Boolean) {
         val address = dosingV1Address(deviceUid, slotId)
         stateOwner.setLowLevelAlertIntent(address.deviceUid, address.channelKey, enabled)
