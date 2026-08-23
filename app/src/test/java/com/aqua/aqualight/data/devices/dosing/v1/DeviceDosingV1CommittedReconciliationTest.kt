@@ -451,10 +451,7 @@ class DeviceDosingV1CommittedReconciliationTest {
         testScheduler.advanceTimeBy(100L)
         testScheduler.runCurrent()
 
-        assertEquals(
-            DeviceDosingChannelOperationResult.Rejected(DeviceDosingChannelRejection.STALE),
-            screenRefresh.await()
-        )
+        assertEquals(DeviceDosingChannelOperationResult.Failed, screenRefresh.await())
         assertEquals(DeviceDosingV1EventResult.RefreshFailed, eventRefresh.await())
         assertEquals(6, gateway.actions.size)
         assertNull(adapter.currentChannel(DEVICE_UID.value, SLOT_ID))
