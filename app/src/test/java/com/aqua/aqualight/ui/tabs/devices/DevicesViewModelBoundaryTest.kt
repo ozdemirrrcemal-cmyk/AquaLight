@@ -70,7 +70,7 @@ class DevicesViewModelBoundaryTest {
     }
 
     @Test
-    fun `available device menu is prepared before route opens`() = runTest {
+    fun `available device menu result is mapped to UI route`() = runTest {
         val menuOperations = FakeDeviceMenuAccessOperations(
             result = DeviceMenuAccessResult.Available(
                 deviceUid = "device-1",
