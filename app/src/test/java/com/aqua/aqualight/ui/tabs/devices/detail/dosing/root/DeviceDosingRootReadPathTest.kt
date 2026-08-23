@@ -63,7 +63,7 @@ class DeviceDosingRootReadPathTest {
             val channels = FakeChannelOperations()
             val viewModel = viewModel(channelCount = 2, channelOperations = channels)
 
-            viewModel.bind(DEVICE_UID, "Fallback")
+            viewModel.bind(DEVICE_UID)
 
             assertEquals(listOf("Catalog 1", "Catalog 2"), channelNames(viewModel))
             assertTrue(viewModel.uiState.value.pumpStates.isEmpty())
@@ -103,7 +103,7 @@ class DeviceDosingRootReadPathTest {
     fun `reconnect clears authoritative cards to topology-only bootstrap`() = runTest(dispatcher) {
         val channels = FakeChannelOperations()
         val viewModel = viewModel(channelCount = 2, channelOperations = channels)
-        viewModel.bind(DEVICE_UID, "Fallback")
+        viewModel.bind(DEVICE_UID)
         channels.emit(
             listOf(
                 channelSnapshot(channelNumber = 1, pumpCount = 2, active = true),
@@ -125,7 +125,7 @@ class DeviceDosingRootReadPathTest {
         runTest(dispatcher) {
             val channels = FakeChannelOperations()
             val viewModel = viewModel(channelCount = 4, channelOperations = channels)
-            viewModel.bind(DEVICE_UID, "Fallback")
+            viewModel.bind(DEVICE_UID)
 
             channels.emit(
                 (4 downTo 1).map { channelNumber ->
@@ -147,7 +147,7 @@ class DeviceDosingRootReadPathTest {
             val root = FakeRootOperations(rootSnapshot(channelCount = 4))
             val channels = FakeChannelOperations()
             val viewModel = viewModel(root, channels)
-            viewModel.bind(DEVICE_UID, "Fallback")
+            viewModel.bind(DEVICE_UID)
             channels.emit(
                 (1..4).map { channelNumber ->
                     channelSnapshot(
@@ -181,7 +181,7 @@ class DeviceDosingRootReadPathTest {
         runTest(dispatcher) {
             val channels = FakeChannelOperations()
             val viewModel = viewModel(FakeRootOperations(invalidRootSnapshot()), channels)
-            viewModel.bind(DEVICE_UID, "Fallback")
+            viewModel.bind(DEVICE_UID)
 
             channels.emit(
                 (1..4).map { channelNumber ->
@@ -199,7 +199,7 @@ class DeviceDosingRootReadPathTest {
         runTest(dispatcher) {
             val channels = FakeChannelOperations()
             val viewModel = viewModel(channelCount = 2, channelOperations = channels)
-            viewModel.bind(DEVICE_UID, "Fallback")
+            viewModel.bind(DEVICE_UID)
 
             channels.emit(listOf(channelSnapshot(channelNumber = 1, pumpCount = 2)))
             assertEquals(listOf("Catalog 1", "Catalog 2"), channelNames(viewModel))
