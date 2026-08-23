@@ -53,7 +53,7 @@ class DosingPlanMenuArchitectureTest {
     }
 
     @Test
-    fun `plan state is hoisted and disables every dependent control`() {
+    fun `plan state is hoisted while save synchronization remains non blocking`() {
         val fragment = source(
             "app/src/main/java/com/aqua/aqualight/ui/tabs/devices/detail/dosing/channel/" +
                 "plan/DeviceDosingPlanFragment.kt"
@@ -61,6 +61,10 @@ class DosingPlanMenuArchitectureTest {
         val screen = source(
             "app/src/main/java/com/aqua/aqualight/ui/tabs/devices/detail/dosing/channel/" +
                 "plan/DeviceDosingPlanScreen.kt"
+        )
+        val viewModel = source(
+            "app/src/main/java/com/aqua/aqualight/ui/tabs/devices/detail/dosing/channel/" +
+                "plan/DeviceDosingPlanViewModel.kt"
         )
         val savedState = source(
             "app/src/main/java/com/aqua/aqualight/ui/tabs/devices/detail/dosing/channel/" +
@@ -73,10 +77,9 @@ class DosingPlanMenuArchitectureTest {
         assertTrue(savedState.contains("draft.writeTo(outState)"))
         assertTrue(savedState.contains("STATE_BASE_REVISION"))
         assertTrue(fragment.contains("updateSchedule = viewModel::applyScheduleUpdate"))
-        assertTrue(fragment.contains("setFragmentGlobalLoading"))
-        assertTrue(
-            fragment.contains("state: DeviceDosingPlanEditorState -> state.operationInProgress")
-        )
+        assertFalse(fragment.contains("setFragmentGlobalLoading"))
+        assertTrue(viewModel.contains("val canSave: Boolean"))
+        assertTrue(viewModel.contains("get() = editable && baseRevision != null && baseProgramKnown"))
         assertTrue(screen.contains("state.scheduleEnabled"))
         assertTrue(screen.contains("onWeekdaySelectionChange"))
         assertFalse(screen.contains("rememberSaveable"))

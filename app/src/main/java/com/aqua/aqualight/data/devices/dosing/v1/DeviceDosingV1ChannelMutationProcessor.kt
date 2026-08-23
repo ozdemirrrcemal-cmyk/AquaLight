@@ -25,17 +25,23 @@ internal class DeviceDosingV1ChannelMutationProcessor(
 
     suspend fun <T> submit(
         address: DeviceDosingV1Address,
-        mutation: suspend () -> T
+        mutation: suspend () -> T,
+        afterResultPublished: (T) -> Unit = {}
     ): T {
         val scope = ownerScope ?: return fallbackLocks
             .computeIfAbsent(address) { Mutex() }
-            .withLock { mutation() }
+            .withLock {
+                mutation().also(afterResultPublished)
+            }
 
         val result = CompletableDeferred<T>()
         val task = MutationTask(
             execute = {
                 try {
-                    result.complete(mutation())
+                    val value = mutation()
+                    // Foreground completion wins scheduling priority over optional reconciliation.
+                    result.complete(value)
+                    afterResultPublished(value)
                 } catch (cancellation: CancellationException) {
                     result.cancel(cancellation)
                     throw cancellation

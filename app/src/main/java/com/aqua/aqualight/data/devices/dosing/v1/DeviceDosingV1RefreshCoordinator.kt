@@ -44,8 +44,6 @@ internal class DeviceDosingV1RefreshCoordinator(
         var allAuthoritative = true
         discovery.value.channels.forEach { channel ->
             val address = DeviceDosingV1Address(uid, channel.channelKey)
-            // Each channel receives a fresh coherent global/channel/progress triplet. Concurrent
-            // screen, event and lifecycle callers share the same per-channel flight.
             val result = refresh(address)
             if (!result.isAuthoritative()) allAuthoritative = false
         }
@@ -57,6 +55,15 @@ internal class DeviceDosingV1RefreshCoordinator(
         refreshFlights.channel(address) {
             refreshProducer.refreshBackground(address)
         }
+
+    /**
+     * Best-effort resource cleanup only. A foreground mutation never waits for this cancellation;
+     * request/revision/generation guards remain the correctness boundary if the read has already
+     * crossed into the runtime gateway.
+     */
+    internal fun preemptBackgroundForMutation(address: DeviceDosingV1Address) {
+        refreshFlights.cancelChannel(address)
+    }
 
     internal suspend fun refreshInvalidated(
         address: DeviceDosingV1Address,
@@ -245,6 +252,10 @@ private class DeviceDosingV1RefreshFlights(
         cancellationFallback = DeviceDosingV1RefreshResult.RejectedStale,
         producer = producer
     )
+
+    fun cancelChannel(address: DeviceDosingV1Address) {
+        channels[address]?.cancel()
+    }
 
     suspend fun device(uid: DeviceUid, producer: suspend () -> Boolean): Boolean = flight(
         key = uid,

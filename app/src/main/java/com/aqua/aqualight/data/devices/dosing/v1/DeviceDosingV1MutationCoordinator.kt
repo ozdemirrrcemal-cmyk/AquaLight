@@ -90,18 +90,26 @@ internal class DeviceDosingV1MutationCoordinator(
     private suspend fun <T> mutateSerialized(
         address: DeviceDosingV1Address,
         mutation: DosingMutationDefinition<T>
-    ): DeviceDosingV1MutationResult<T> = mutationProcessor.submit(address) {
-        operationAdmission.beginMutation(address)
-        val result = try {
-            mutateSingleWriter(address, mutation)
-        } finally {
-            operationAdmission.endMutation(address)
+    ): DeviceDosingV1MutationResult<T> = mutationProcessor.submit(
+        address = address,
+        mutation = {
+            // Best-effort cleanup only: never join the old read. Even if cancellation is late or
+            // ignored by the transport, the write proceeds and StateOwner token/revision guards
+            // make the older read unable to overwrite it.
+            refreshCoordinator.preemptBackgroundForMutation(address)
+            operationAdmission.beginMutation(address)
+            try {
+                mutateSingleWriter(address, mutation)
+            } finally {
+                operationAdmission.endMutation(address)
+            }
+        },
+        afterResultPublished = { result ->
+            if (result is DeviceDosingV1MutationResult.Committed) {
+                scheduleBackgroundReconciliation?.invoke(address, result.revision)
+            }
         }
-        if (result is DeviceDosingV1MutationResult.Committed) {
-            scheduleBackgroundReconciliation?.invoke(address, result.revision)
-        }
-        result
-    }
+    )
 
     private suspend fun <T> mutateSingleWriter(
         address: DeviceDosingV1Address,
@@ -110,7 +118,7 @@ internal class DeviceDosingV1MutationCoordinator(
         var baseline = mutationBaseline(address, mutation)
             ?: return DeviceDosingV1MutationResult.Malformed
         if (mutation.assignmentSatisfied?.invoke(baseline.state.channel) == true) {
-            return acceptSatisfiedAssignment(baseline, mutation)
+            return acceptSatisfiedAssignment(address, baseline, mutation)
         }
         if (!mutation.origin.acceptsBaseline(baseline)) {
             return DeviceDosingV1MutationResult.Conflict
@@ -126,8 +134,6 @@ internal class DeviceDosingV1MutationCoordinator(
                 result.isReplayableAssignmentFailure()
             if (!replayableFailure) return result
 
-            // Failure reconciliation produced a fresh mutation-critical readback. Replay only when
-            // the central owner exposes that result as coherent authoritative state.
             val reconciled = stateAccess.currentState(address) ?: return result
             if (mutation.assignmentSatisfied?.invoke(reconciled.channel) == true) {
                 mutation.onAccepted()
@@ -150,6 +156,7 @@ internal class DeviceDosingV1MutationCoordinator(
     }
 
     private fun <T> acceptSatisfiedAssignment(
+        address: DeviceDosingV1Address,
         baseline: DosingMutationBaseline,
         mutation: DosingMutationDefinition<T>
     ): DeviceDosingV1MutationResult<T> {
@@ -157,7 +164,11 @@ internal class DeviceDosingV1MutationCoordinator(
         return if (baseline.source == DosingMutationBaselineSource.COMMITTED_MUTATION) {
             DeviceDosingV1MutationResult.Committed(baseline.state.channel.revision)
         } else {
-            DeviceDosingV1MutationResult.Reconciled(baseline.state)
+            // onAccepted may project owner-scoped local intent (for example reservoir alert
+            // preference). Return the owner's post-callback state, not the pre-callback baseline.
+            DeviceDosingV1MutationResult.Reconciled(
+                stateAccess.currentState(address) ?: baseline.state
+            )
         }
     }
 
@@ -252,11 +263,6 @@ internal class DeviceDosingV1MutationCoordinator(
         )
     }
 
-    /**
-     * A successful firmware response is the commit boundary for persisted writes. Production
-     * publishes the ACK channel projection immediately and performs coherent readback owner-scoped;
-     * runtime mutations retain their stricter synchronous readback contract.
-     */
     private fun <T> resolveAcceptedReadback(
         address: DeviceDosingV1Address,
         value: T,
@@ -406,11 +412,6 @@ private fun DeviceDosingV1MutationResult<*>.isReplayableAssignmentFailure(): Boo
     else -> false
 }
 
-/**
- * A durable local ACK is a trusted continuation owned by this same mutation processor. A newer
- * pending local assignment may therefore rebase on it. Authoritative readback keeps strict
- * application-domain CAS semantics so external firmware changes are never overwritten silently.
- */
 private fun DeviceDosingV1PersistedMutationOrigin?.acceptsBaseline(
     baseline: DosingMutationBaseline
 ): Boolean {

@@ -4,6 +4,7 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.CoroutineStart
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.yield
 
 /**
  * Owner-scoped scheduler for post-ACK readback.
@@ -20,8 +21,9 @@ internal class DeviceDosingV1CommittedReconciliationScheduler(
 
     fun schedule(address: DeviceDosingV1Address, minimumRevision: Long) {
         val job = scope.launch(start = CoroutineStart.LAZY) {
-            // A newer foreground mutation can legitimately make a joined older background flight
-            // stale. Retry that admission race only; real transport/protocol failures remain bounded.
+            // Let the durable ACK result reach the foreground before optional readback competes for
+            // runtime bandwidth. This is scheduling priority, not a correctness dependency.
+            yield()
             repeat(MAX_STALE_RECONCILIATION_ATTEMPTS) {
                 val result = refreshCoordinator.reconcileCommitted(address, minimumRevision)
                 if (result != DeviceDosingV1RefreshResult.RejectedStale) return@launch
