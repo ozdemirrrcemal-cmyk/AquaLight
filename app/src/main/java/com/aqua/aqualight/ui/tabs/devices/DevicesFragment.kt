@@ -96,6 +96,7 @@ class DevicesFragment : Fragment(R.layout.fragment_devices) {
                 )
             } else {
                 AquaHeaderConfig(
+                    titleOverride = getString(R.string.screen_title_devices),
                     showBackButton = false,
                     primaryAction = AquaHeaderPrimaryAction(
                         text = getString(R.string.devices_add_action),
