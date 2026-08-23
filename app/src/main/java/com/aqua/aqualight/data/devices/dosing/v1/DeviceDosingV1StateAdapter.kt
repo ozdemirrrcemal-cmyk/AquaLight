@@ -3,6 +3,7 @@ package com.aqua.aqualight.data.devices.dosing.v1
 import com.aqua.aqualight.application.devices.dosing.DeviceDosingCalibrationSnapshot
 import com.aqua.aqualight.application.devices.dosing.DeviceDosingChannelRejection
 import com.aqua.aqualight.application.devices.dosing.DeviceDosingChannelSnapshot
+import com.aqua.aqualight.data.devices.model.DeviceUid
 import com.aqua.aqualight.data.devices.runtime.core.DeviceRuntimeCommandOutcome
 import com.aqua.aqualight.data.devices.runtime.events.DeviceRuntimeLifecycleEvent
 import com.aqua.aqualight.data.devices.runtime.events.DeviceRuntimeTypedEvent
@@ -57,19 +58,26 @@ internal sealed interface DeviceDosingV1EventResult {
 internal class DeviceDosingV1StateAdapter(
     internal val repository: DeviceDosingV1Repository,
     private val stateOwner: DeviceDosingV1StateOwner = DeviceDosingV1StateOwner(),
-    internal val reconciliationScope: CoroutineScope? = null
+    reconciliationScope: CoroutineScope? = null
 ) {
     internal val stateAccess = DeviceDosingV1StateAccess(stateOwner)
+    internal val assignmentRecoveryGate = DeviceDosingV1AssignmentRecoveryGate()
+    internal val reconciliationScope: CoroutineScope? = reconciliationScope?.let { ownerScope ->
+        CoroutineScope(
+            ownerScope.coroutineContext +
+                DeviceDosingV1AssignmentRecoveryContext(assignmentRecoveryGate)
+        )
+    }
     private val operationAdmission = DeviceDosingV1ChannelOperationAdmission()
-    private val mutationProcessor = DeviceDosingV1ChannelMutationProcessor(reconciliationScope)
+    private val mutationProcessor = DeviceDosingV1ChannelMutationProcessor(this.reconciliationScope)
     internal val refreshCoordinator = DeviceDosingV1RefreshCoordinator(
         repository = repository,
         stateOwner = stateOwner,
         stateAccess = stateAccess,
-        producerScope = reconciliationScope,
+        producerScope = this.reconciliationScope,
         operationAdmission = operationAdmission
     )
-    private val backgroundReconciliation = reconciliationScope?.let { scope ->
+    private val backgroundReconciliation = this.reconciliationScope?.let { scope ->
         DeviceDosingV1CommittedReconciliationScheduler(scope, refreshCoordinator)
     }
     internal val mutationCoordinator = DeviceDosingV1MutationCoordinator(
@@ -78,6 +86,7 @@ internal class DeviceDosingV1StateAdapter(
         refreshCoordinator = refreshCoordinator,
         mutationProcessor = mutationProcessor,
         operationAdmission = operationAdmission,
+        recoveryGate = assignmentRecoveryGate,
         scheduleBackgroundReconciliation = backgroundReconciliation?.let { scheduler ->
             scheduler::schedule
         }
@@ -93,7 +102,17 @@ internal class DeviceDosingV1StateAdapter(
     suspend fun consume(event: DeviceRuntimeTypedEvent): DeviceDosingV1EventResult = eventCoordinator.consume(event)
 
     /** Socket lifecycle changes revoke authority without fabricating empty firmware state. */
-    fun consume(event: DeviceRuntimeLifecycleEvent) { stateOwner.invalidateAll(event.deviceUid) }
+    fun consume(event: DeviceRuntimeLifecycleEvent) {
+        stateOwner.invalidateAll(event.deviceUid)
+    }
+
+    /**
+     * Releases retained assignment intents only after the normal authenticated Dosing bootstrap has
+     * had its first opportunity to rebuild authoritative state.
+     */
+    internal fun resumePendingAssignments(deviceUid: DeviceUid) {
+        assignmentRecoveryGate.markAuthenticated(deviceUid)
+    }
 
     fun currentChannel(deviceUid: String, slotId: String): DeviceDosingChannelSnapshot? =
         stateAccess.currentChannel(deviceUid, slotId)

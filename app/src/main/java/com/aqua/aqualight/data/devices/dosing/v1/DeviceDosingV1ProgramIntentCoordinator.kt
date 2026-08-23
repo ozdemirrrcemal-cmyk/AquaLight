@@ -3,6 +3,7 @@ package com.aqua.aqualight.data.devices.dosing.v1
 import com.aqua.aqualight.application.devices.dosing.DeviceDosingChannelOperationResult
 import com.aqua.aqualight.application.devices.dosing.DeviceDosingProgram
 import com.aqua.aqualight.application.devices.dosing.DeviceDosingProgramMutationOrigin
+import com.aqua.aqualight.data.devices.model.DeviceUid
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.CoroutineScope
@@ -19,17 +20,22 @@ internal data class DeviceDosingV1ProgramAssignmentIntent(
  *
  * At most one program assignment for one channel is executing. While that write is in flight,
  * later Save intents replace the pending target instead of growing an unbounded firmware queue.
- * Every waiter completes from the final target that actually settles. Cancelling a screen waiter
- * never cancels the accepted owner-scoped worker.
+ * All concurrent callers await one shared settlement, so rapid input also cannot grow an unbounded
+ * waiter list. Cancelling a screen waiter never cancels the accepted owner-scoped worker.
+ *
+ * If a transport/ambiguous boundary is recorded during an attempt, the result is not surfaced as a
+ * terminal failure. The worker waits for recovery when necessary and restarts from the newest target.
  */
 internal class DeviceDosingV1ProgramIntentCoordinator(
     private val scope: CoroutineScope?,
+    recoveryGate: DeviceDosingV1AssignmentRecoveryGate? = null,
     private val execute: suspend (
         deviceUid: String,
         slotId: String,
         intent: DeviceDosingV1ProgramAssignmentIntent
     ) -> DeviceDosingChannelOperationResult
 ) {
+    private val recoveryGate = recoveryGate ?: scope.dosingAssignmentRecoveryGate()
     private val lock = Any()
     private val pending = HashMap<IntentAddress, PendingIntent>()
 
@@ -39,20 +45,19 @@ internal class DeviceDosingV1ProgramIntentCoordinator(
         intent: DeviceDosingV1ProgramAssignmentIntent
     ): DeviceDosingChannelOperationResult {
         val address = IntentAddress(deviceUid.trim(), slotId.trim())
-        val waiter = CompletableDeferred<DeviceDosingChannelOperationResult>()
-        val startWorker = synchronized(lock) {
+        val submission = synchronized(lock) {
             val current = pending.getOrPut(address) { PendingIntent(intent) }
             current.target = intent
             current.generation += 1L
-            current.waiters += waiter
-            if (current.running) {
+            val startWorker = if (current.running) {
                 false
             } else {
                 current.running = true
                 true
             }
+            Submission(current.settlement, startWorker)
         }
-        if (startWorker) {
+        if (submission.startWorker) {
             val ownerScope = scope
             if (ownerScope == null) {
                 drive(address)
@@ -63,7 +68,7 @@ internal class DeviceDosingV1ProgramIntentCoordinator(
                     }
             }
         }
-        return waiter.await()
+        return submission.settlement.await()
     }
 
     private suspend fun drive(address: IntentAddress) {
@@ -71,21 +76,37 @@ internal class DeviceDosingV1ProgramIntentCoordinator(
             while (!runLatestAttempt(address)) Unit
         } catch (cancellation: CancellationException) {
             synchronized(lock) { pending.remove(address) }
-                ?.waiters
-                ?.forEach { waiter -> waiter.cancel(cancellation) }
+                ?.settlement
+                ?.cancel(cancellation)
             throw cancellation
         }
     }
 
     private suspend fun runLatestAttempt(address: IntentAddress): Boolean {
+        awaitPendingRecovery(address)
         val attempt = synchronized(lock) {
             val current = checkNotNull(pending[address])
             IntentAttempt(current.target, current.generation)
         }
+        val deviceUid = DeviceUid(address.deviceUid)
+        val beforeRecovery = recoveryGate?.currentInterruptionEpoch(deviceUid) ?: 0L
         val result = executeAttempt(address, attempt)
-        val completed = takeWaitersIfLatest(address, attempt) ?: return false
-        completed.forEach { waiter -> waiter.complete(result) }
+        val interruption = recoveryGate?.interruptionAfter(deviceUid, beforeRecovery)
+        if (interruption != null) {
+            recoveryGate.awaitRecovery(deviceUid, interruption)
+            return false
+        }
+        val settlement = takeSettlementIfLatest(address, attempt) ?: return false
+        settlement.complete(result)
         return true
+    }
+
+    private suspend fun awaitPendingRecovery(address: IntentAddress) {
+        val gate = recoveryGate ?: return
+        val deviceUid = DeviceUid(address.deviceUid)
+        gate.pendingInterruption(deviceUid)?.let { epoch ->
+            gate.awaitRecovery(deviceUid, epoch)
+        }
     }
 
     private suspend fun executeAttempt(
@@ -99,30 +120,26 @@ internal class DeviceDosingV1ProgramIntentCoordinator(
         DeviceDosingChannelOperationResult.Failed
     }
 
-    private fun takeWaitersIfLatest(
+    private fun takeSettlementIfLatest(
         address: IntentAddress,
         attempt: IntentAttempt
-    ): List<CompletableDeferred<DeviceDosingChannelOperationResult>>? = synchronized(lock) {
+    ): CompletableDeferred<DeviceDosingChannelOperationResult>? = synchronized(lock) {
         val current = checkNotNull(pending[address])
         if (current.generation != attempt.generation) {
             null
         } else {
             pending.remove(address)
-            current.waiters.toList()
+            current.settlement
         }
     }
 
     private fun completeTerminatedWorker(address: IntentAddress, failure: Throwable) {
-        val waiters = synchronized(lock) { pending.remove(address) }
-            ?.waiters
-            .orEmpty()
+        val settlement = synchronized(lock) { pending.remove(address) }?.settlement ?: return
         val cancellation = failure as? CancellationException
-        waiters.forEach { waiter ->
-            if (cancellation == null) {
-                waiter.complete(DeviceDosingChannelOperationResult.Failed)
-            } else {
-                waiter.cancel(cancellation)
-            }
+        if (cancellation == null) {
+            settlement.complete(DeviceDosingChannelOperationResult.Failed)
+        } else {
+            settlement.cancel(cancellation)
         }
     }
 
@@ -136,10 +153,15 @@ internal class DeviceDosingV1ProgramIntentCoordinator(
         val generation: Long
     )
 
+    private data class Submission(
+        val settlement: CompletableDeferred<DeviceDosingChannelOperationResult>,
+        val startWorker: Boolean
+    )
+
     private class PendingIntent(initialTarget: DeviceDosingV1ProgramAssignmentIntent) {
         var target: DeviceDosingV1ProgramAssignmentIntent = initialTarget
         var generation: Long = 0L
         var running: Boolean = false
-        val waiters = mutableListOf<CompletableDeferred<DeviceDosingChannelOperationResult>>()
+        val settlement = CompletableDeferred<DeviceDosingChannelOperationResult>()
     }
 }

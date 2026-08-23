@@ -39,6 +39,10 @@ internal data class DeviceDosingV1PersistedMutationOrigin(
  * cannot join an older background flight. Complete persisted ACKs are the durable continuation for
  * assignment mutations and deliberately do not trigger an immediate post-ACK wire read. State
  * acceptance remains exclusively in StateOwner.
+ *
+ * Transport/timeout ambiguity is reconciled but never replayed inside this transaction. The central
+ * latest-intent owner restarts from the newest desired assignment after the recovery checkpoint, so
+ * an obsolete in-flight target can never be blindly re-issued after a socket loss.
  */
 @Suppress("TooManyFunctions") // One central transaction coordinator owns the complete write flow.
 internal class DeviceDosingV1MutationCoordinator(
@@ -49,9 +53,15 @@ internal class DeviceDosingV1MutationCoordinator(
         DeviceDosingV1ChannelMutationProcessor(null),
     private val operationAdmission: DeviceDosingV1ChannelOperationAdmission =
         refreshCoordinator.operationAdmission,
+    private val recoveryGate: DeviceDosingV1AssignmentRecoveryGate =
+        DeviceDosingV1AssignmentRecoveryGate(),
     private val scheduleBackgroundReconciliation: ((DeviceDosingV1Address, Long) -> Unit)? = null
 ) {
-    private val conflictCoordinator = DeviceDosingV1ConflictCoordinator(stateOwner, refreshCoordinator)
+    private val conflictCoordinator = DeviceDosingV1ConflictCoordinator(
+        stateOwner = stateOwner,
+        refreshCoordinator = refreshCoordinator,
+        recoveryGate = recoveryGate
+    )
 
     suspend fun <T> mutatePersisted(
         deviceUid: String,
@@ -301,7 +311,12 @@ internal class DeviceDosingV1MutationCoordinator(
         return when (val refreshed = refreshCoordinator.refreshForMutation(address)) {
             is DeviceDosingV1RefreshResult.Success ->
                 DosingMutationBaseline(refreshed.state, DosingMutationBaselineSource.AUTHORITATIVE)
-            else -> null
+            is DeviceDosingV1RefreshResult.Failed -> {
+                conflictCoordinator.recordBaselineRecoveryIfRequired(address, refreshed.outcome)
+                null
+            }
+            DeviceDosingV1RefreshResult.Malformed,
+            DeviceDosingV1RefreshResult.RejectedStale -> null
         }
     }
 }
@@ -376,17 +391,9 @@ private sealed interface DosingExecutionOutcome<out T> {
     data class Rejected(val reason: DeviceDosingChannelRejection) : DosingExecutionOutcome<Nothing>
 }
 
-private fun DeviceDosingV1MutationResult<*>.isReplayableAssignmentFailure(): Boolean = when (this) {
-    DeviceDosingV1MutationResult.Conflict -> true
-    is DeviceDosingV1MutationResult.Failed -> when (outcome) {
-        is DeviceRuntimeCommandOutcome.SendFailed,
-        is DeviceRuntimeCommandOutcome.Timeout,
-        is DeviceRuntimeCommandOutcome.Cancelled,
-        is DeviceRuntimeCommandOutcome.ProtocolError -> true
-        else -> false
-    }
-    else -> false
-}
+/** Only an explicit CAS conflict may replay inside the transaction; transport ambiguity may not. */
+private fun DeviceDosingV1MutationResult<*>.isReplayableAssignmentFailure(): Boolean =
+    this == DeviceDosingV1MutationResult.Conflict
 
 private fun DosingMutationDefinition<*>.requiresBackgroundReconciliation(): Boolean =
     persistedMutation && acknowledgementVisibility == DeviceDosingV1MutationVisibility.RUNTIME_ACK

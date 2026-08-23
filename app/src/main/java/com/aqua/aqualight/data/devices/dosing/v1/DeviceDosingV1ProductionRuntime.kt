@@ -51,7 +51,7 @@ internal class DeviceDosingV1ProductionRuntime(
         ownerUid = ownerUid,
         ledger = lowLevelAlertLedger,
         notificationDispatch = notificationDispatch,
-        textResolver = alertTextResolver
+        alertTextResolver = alertTextResolver
     )
 
     val channelOperations: DeviceDosingChannelOperations = adapter.channelOperations
@@ -87,7 +87,13 @@ internal class DeviceDosingV1ProductionRuntime(
             event is DeviceRuntimeLifecycleEvent.Authenticated &&
             devicesRepository.currentDevice(event.deviceUid)?.product?.family == DeviceFamily.DOSING
         ) {
-            channelOperations.refreshAll(event.deviceUid.value)
+            try {
+                // The normal bootstrap gets first chance to rebuild authoritative state. Recovery
+                // workers are released afterwards and therefore restart from a fresh central baseline.
+                channelOperations.refreshAll(event.deviceUid.value)
+            } finally {
+                adapter.resumePendingAssignments(event.deviceUid)
+            }
         }
     }
 
