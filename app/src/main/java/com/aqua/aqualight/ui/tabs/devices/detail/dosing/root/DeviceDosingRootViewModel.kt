@@ -4,10 +4,12 @@ import androidx.annotation.StringRes
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.aqua.aqualight.R
+import com.aqua.aqualight.application.devices.DeviceControlSurfacePreparationOperations
 import com.aqua.aqualight.application.devices.DeviceDosingChannelSlot
 import com.aqua.aqualight.application.devices.DeviceRootCatalogState
 import com.aqua.aqualight.application.devices.DeviceRootOperations
 import com.aqua.aqualight.application.devices.DeviceRootSnapshot
+import com.aqua.aqualight.application.devices.OwnerDeviceFamily
 import com.aqua.aqualight.application.devices.dosing.DeviceDosingChannelNavigationOperations
 import com.aqua.aqualight.application.devices.dosing.DeviceDosingChannelNavigationTarget
 import com.aqua.aqualight.application.devices.dosing.DeviceDosingChannelOperations
@@ -18,6 +20,7 @@ import com.aqua.aqualight.ui.tabs.devices.detail.common.DeviceRootMenuMapper
 import com.aqua.aqualight.ui.tabs.devices.detail.common.DeviceRootPresentationMapper
 import com.aqua.aqualight.ui.tabs.devices.detail.dosing.presentation.card.DosingChannelCardUiState
 import com.aqua.aqualight.ui.tabs.devices.detail.dosing.presentation.pump.DosingPumpVisualState
+import kotlinx.coroutines.CoroutineStart
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.Flow
@@ -30,7 +33,8 @@ import kotlinx.coroutines.launch
 class DeviceDosingRootViewModel(
     private val operations: DeviceRootOperations,
     private val channelNavigationOperations: DeviceDosingChannelNavigationOperations,
-    private val channelOperations: DeviceDosingChannelOperations
+    private val channelOperations: DeviceDosingChannelOperations,
+    private val controlSurfacePreparationOperations: DeviceControlSurfacePreparationOperations
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(DeviceDosingRootUiState())
@@ -55,15 +59,7 @@ class DeviceDosingRootViewModel(
     fun bind(deviceUidText: String) {
         val deviceUid = deviceUidText.trim()
         if (deviceUid.isBlank()) {
-            observeJob?.cancel()
-            channelDataJob?.cancel()
-            channelDataRefreshJob?.cancel()
-            channelNavigationJob?.cancel()
-            boundDeviceUid = ""
-            latestRootSnapshot = null
-            validatedCatalogChannels = emptyList()
-            channelSnapshots = emptyList()
-            _uiState.value = emptyState("")
+            clearBinding()
             return
         }
         if (boundDeviceUid == deviceUid) {
@@ -71,16 +67,27 @@ class DeviceDosingRootViewModel(
             return
         }
 
+        val preparedHandoff = controlSurfacePreparationOperations.consumeFreshPreparation(
+            deviceUid = deviceUid,
+            family = OwnerDeviceFamily.DOSING
+        )
+
         boundDeviceUid = deviceUid
         validatedCatalogChannels = emptyList()
         acceptRootSnapshot(operations.current(deviceUid))
-        channelSnapshots = emptyList()
         observeJob?.cancel()
         channelDataJob?.cancel()
         channelDataRefreshJob?.cancel()
         channelNavigationJob?.cancel()
-        renderBoundState()
+
+        // Reconnect/reuse is resolved by the central repository. The preparation marker is never
+        // accepted as proof by itself: after this call we re-read the authoritative channel view.
         operations.connect(deviceUid)
+        val authoritativeAtBind = currentAuthoritativeSurface(deviceUid)
+        val preparedSurfaceStillCurrent = preparedHandoff && authoritativeAtBind.isNotEmpty()
+        channelSnapshots = authoritativeAtBind
+        renderBoundState()
+
         observeJob = viewModelScope.launch {
             operations.observe(deviceUid).collect { snapshot ->
                 if (boundDeviceUid != deviceUid) return@collect
@@ -88,14 +95,16 @@ class DeviceDosingRootViewModel(
                 renderBoundState()
             }
         }
-        channelDataJob = viewModelScope.launch {
+        channelDataJob = viewModelScope.launch(start = CoroutineStart.UNDISPATCHED) {
             channelOperations.observeAll(deviceUid).collect { snapshots ->
                 if (boundDeviceUid != deviceUid) return@collect
                 channelSnapshots = snapshots
                 renderBoundState()
             }
         }
-        refreshAuthoritative()
+        if (!preparedSurfaceStillCurrent) {
+            refreshAuthoritative()
+        }
     }
 
     fun refreshAuthoritative() {
@@ -125,6 +134,33 @@ class DeviceDosingRootViewModel(
                 navigationEventChannel.send(target)
             }
         }
+    }
+
+    private fun clearBinding() {
+        observeJob?.cancel()
+        channelDataJob?.cancel()
+        channelDataRefreshJob?.cancel()
+        channelNavigationJob?.cancel()
+        boundDeviceUid = ""
+        latestRootSnapshot = null
+        validatedCatalogChannels = emptyList()
+        channelSnapshots = emptyList()
+        _uiState.value = emptyState("")
+    }
+
+    private fun currentAuthoritativeSurface(
+        deviceUid: String
+    ): List<DeviceDosingChannelSnapshot> {
+        if (validatedCatalogChannels.isEmpty()) return emptyList()
+        val current = validatedCatalogChannels.mapNotNull { slot ->
+            channelOperations.current(deviceUid, slot.id.value)
+        }
+        val presentation = resolveDosingRootChannelPresentation(
+            deviceUid = deviceUid,
+            catalogChannels = validatedCatalogChannels,
+            snapshots = current
+        )
+        return current.takeIf { presentation.authoritative } ?: emptyList()
     }
 
     private fun renderBoundState() {
