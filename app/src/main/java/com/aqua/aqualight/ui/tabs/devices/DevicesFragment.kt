@@ -172,14 +172,19 @@ class DevicesFragment : Fragment(R.layout.fragment_devices) {
 
         setupHeader(state)
         deviceAdapter.submitList(state.devices)
-        binding.rvSelectedDevices.isEnabled = !state.isDeletingDevices
+        binding.rvSelectedDevices.isEnabled =
+            !state.isDeletingDevices && !state.isOpeningDeviceMenu
         binding.btnEmptyAddDevice.isEnabled =
             !state.isDeletingDevices && !state.isOpeningDeviceMenu
         binding.rvSelectedDevices.isVisible = state.devices.isNotEmpty()
         binding.tvEmptyState.isVisible = state.isEmpty
         baseActivity()?.setGlobalLoading(
-            ownerKey = DEVICE_OPERATION_LOADING_OWNER,
+            ownerKey = DEVICE_DELETE_LOADING_OWNER,
             show = state.isDeletingDevices
+        )
+        baseActivity()?.setGlobalLoading(
+            ownerKey = DEVICE_MENU_PREPARATION_LOADING_OWNER,
+            show = state.isPreparingDeviceMenu
         )
     }
 
@@ -261,7 +266,10 @@ class DevicesFragment : Fragment(R.layout.fragment_devices) {
     }
 
     private fun openDeviceRoute(route: DeviceRoute) {
-        if (!isAdded) return
+        if (!isAdded) {
+            viewModel.onDeviceNavigationStarted(route.deviceUid)
+            return
+        }
 
         val directions = when (route.target) {
             DeviceRouteTarget.LIGHT_ROOT ->
@@ -294,7 +302,18 @@ class DevicesFragment : Fragment(R.layout.fragment_devices) {
                 )
         }
 
-        findNavController().navigate(directions)
+        binding.root.postOnAnimation {
+            if (
+                _binding == null ||
+                !isAdded ||
+                findNavController().currentDestination?.id != R.id.devicesFragment
+            ) {
+                viewModel.onDeviceNavigationStarted(route.deviceUid)
+                return@postOnAnimation
+            }
+            findNavController().navigate(directions)
+            viewModel.onDeviceNavigationStarted(route.deviceUid)
+        }
     }
 
     private fun baseActivity(): BaseActivity? {
@@ -302,14 +321,16 @@ class DevicesFragment : Fragment(R.layout.fragment_devices) {
     }
 
     override fun onDestroyView() {
-        baseActivity()?.clearGlobalLoading(DEVICE_OPERATION_LOADING_OWNER)
+        baseActivity()?.clearGlobalLoading(DEVICE_DELETE_LOADING_OWNER)
+        baseActivity()?.clearGlobalLoading(DEVICE_MENU_PREPARATION_LOADING_OWNER)
         binding.rvSelectedDevices.adapter = null
         _binding = null
         super.onDestroyView()
     }
 
     private companion object {
-        const val DEVICE_OPERATION_LOADING_OWNER = "DevicesFragment.DeviceOperation"
+        const val DEVICE_DELETE_LOADING_OWNER = "DevicesFragment.DeleteOperation"
+        const val DEVICE_MENU_PREPARATION_LOADING_OWNER = "DevicesFragment.MenuPreparation"
         const val DELETE_DEVICES_REQUEST_KEY = "devices_delete_result"
     }
 }
