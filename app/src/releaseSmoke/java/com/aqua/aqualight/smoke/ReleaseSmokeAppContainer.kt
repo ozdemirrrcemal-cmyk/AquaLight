@@ -6,6 +6,9 @@ import androidx.lifecycle.ViewModelProvider
 import com.aqua.aqualight.application.auth.AccountSecurityOperations
 import com.aqua.aqualight.application.auth.AuthenticatedOwnerIdentity
 import com.aqua.aqualight.application.auth.SessionExitOperations
+import com.aqua.aqualight.application.devices.DeviceControlSurfacePreparationOperations
+import com.aqua.aqualight.application.devices.DeviceControlSurfacePreparationRequest
+import com.aqua.aqualight.application.devices.DeviceControlSurfacePreparationResult
 import com.aqua.aqualight.application.devices.provisioning.ProvisioningDraftOperations
 import com.aqua.aqualight.application.feedback.FeedbackSubmissionUseCase
 import com.aqua.aqualight.application.notifications.NotificationDispatchUseCase
@@ -199,6 +202,7 @@ private class ReleaseSmokeViewModelFactory(
                 )
             ),
             menuAccessOperations = DefaultDeviceMenuAccessOperations.create(devicesRepository),
+            controlSurfacePreparationOperations = SmokeControlSurfacePreparationOperations,
             routeResolver = DeviceRouteResolver()
         )
 
@@ -276,6 +280,13 @@ private class ReleaseSmokeViewModelFactory(
     private companion object {
         const val SMOKE_OWNER_UID = "release-smoke-owner"
     }
+}
+
+private object SmokeControlSurfacePreparationOperations :
+    DeviceControlSurfacePreparationOperations {
+    override suspend fun prepare(
+        request: DeviceControlSurfacePreparationRequest
+    ): DeviceControlSurfacePreparationResult = DeviceControlSurfacePreparationResult.Ready
 }
 
 private class SmokeUserProfileOperations : UserProfileOperations {
