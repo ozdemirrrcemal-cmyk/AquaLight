@@ -257,7 +257,7 @@ private class DeviceDosingV1RefreshFlights(
         channels.remove(address, active)
     }
 
-    private suspend fun <K, V> flight(
+    private suspend fun <K : Any, V> flight(
         key: K,
         flights: ConcurrentHashMap<K, Deferred<V>>,
         fallback: V,
@@ -274,7 +274,7 @@ private class DeviceDosingV1RefreshFlights(
         )
     } ?: callerScoped(key, flights, fallback, cancellationFallback, producer)
 
-    private suspend fun <K, V> ownerScoped(
+    private suspend fun <K : Any, V> ownerScoped(
         scope: CoroutineScope,
         key: K,
         flights: ConcurrentHashMap<K, Deferred<V>>,
@@ -309,7 +309,7 @@ private class DeviceDosingV1RefreshFlights(
     }
 
     /** Test-only fallback for adapters that do not own a production reconciliation scope. */
-    private suspend fun <K, V> callerScoped(
+    private suspend fun <K : Any, V> callerScoped(
         key: K,
         flights: ConcurrentHashMap<K, Deferred<V>>,
         fallback: V,
