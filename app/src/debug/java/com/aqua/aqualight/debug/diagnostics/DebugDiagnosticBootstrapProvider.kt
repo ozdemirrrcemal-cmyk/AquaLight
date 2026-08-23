@@ -7,6 +7,7 @@ import android.content.ContentValues
 import android.database.Cursor
 import android.net.Uri
 import android.os.Bundle
+import android.view.View
 import android.widget.FrameLayout
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
@@ -62,58 +63,100 @@ private class DebugDiagnosticActivityInstaller(
 ) : Application.ActivityLifecycleCallbacks {
 
     override fun onActivityCreated(activity: Activity, savedInstanceState: Bundle?) {
-        val baseActivity = activity as? BaseActivity
-        val content = baseActivity?.findViewById<FrameLayout>(android.R.id.content)
-        val overlayMissing = content
-            ?.findViewWithTag<DebugDiagnosticOverlayView>(OVERLAY_TAG) == null
-        if (baseActivity != null && content != null && overlayMissing) {
-            installOverlay(baseActivity, content)
+        scheduleOverlayInstallation(activity)
+    }
+
+    override fun onActivityResumed(activity: Activity) {
+        (activity as? BaseActivity)?.let(::ensureOverlay)
+    }
+
+    private fun scheduleOverlayInstallation(activity: Activity) {
+        val baseActivity = activity as? BaseActivity ?: return
+        baseActivity.window.decorView.post {
+            ensureOverlay(baseActivity)
         }
     }
 
-    private fun installOverlay(activity: BaseActivity, content: FrameLayout) {
+    private fun ensureOverlay(activity: BaseActivity) {
+        if (activity.isFinishing || activity.isDestroyed) return
+
+        val windowHost = activity.window.decorView as? FrameLayout ?: return
+        val existing = windowHost.findViewWithTag<DebugDiagnosticOverlayView>(OVERLAY_TAG)
+        if (existing != null) {
+            applyCurrentTopInset(windowHost, existing)
+            existing.bringToFront()
+            ViewCompat.requestApplyInsets(existing)
+            return
+        }
+        installOverlay(activity, windowHost)
+    }
+
+    private fun installOverlay(activity: BaseActivity, windowHost: FrameLayout) {
         val overlay = DebugDiagnosticOverlayView(activity)
-        content.addView(
+        windowHost.addView(
             overlay,
             FrameLayout.LayoutParams(
                 FrameLayout.LayoutParams.MATCH_PARENT,
                 FrameLayout.LayoutParams.WRAP_CONTENT
             )
         )
-        applyStatusBarInset(overlay)
+        applyStatusBarInset(windowHost, overlay)
         activity.lifecycleScope.launch {
             activity.repeatOnLifecycle(Lifecycle.State.STARTED) {
                 recorder.records.collect(overlay::render)
             }
         }
+        overlay.bringToFront()
         AppDiagnosticTrace.event(
             category = "lifecycle",
-            name = "activity.created",
+            name = "diagnostic_overlay.attached",
             "activity" to activity.javaClass.simpleName
         )
     }
 
     override fun onActivityStarted(activity: Activity) = Unit
-    override fun onActivityResumed(activity: Activity) = Unit
     override fun onActivityPaused(activity: Activity) = Unit
     override fun onActivityStopped(activity: Activity) = Unit
     override fun onActivitySaveInstanceState(activity: Activity, outState: Bundle) = Unit
     override fun onActivityDestroyed(activity: Activity) = Unit
 
-    private fun applyStatusBarInset(overlay: DebugDiagnosticOverlayView) {
+    private fun applyStatusBarInset(
+        windowHost: FrameLayout,
+        overlay: DebugDiagnosticOverlayView
+    ) {
         ViewCompat.setOnApplyWindowInsetsListener(overlay) { view, insets ->
-            val topInset = insets.getInsets(
-                WindowInsetsCompat.Type.statusBars() or
-                    WindowInsetsCompat.Type.displayCutout()
-            ).top
-            val layoutParams = view.layoutParams as FrameLayout.LayoutParams
-            if (layoutParams.topMargin != topInset) {
-                layoutParams.topMargin = topInset
-                view.layoutParams = layoutParams
-            }
+            updateTopInset(view, insets)
             insets
         }
+        if (!applyCurrentTopInset(windowHost, overlay)) {
+            windowHost.post {
+                if (overlay.parent === windowHost) {
+                    applyCurrentTopInset(windowHost, overlay)
+                }
+            }
+        }
         ViewCompat.requestApplyInsets(overlay)
+    }
+
+    private fun applyCurrentTopInset(
+        windowHost: FrameLayout,
+        overlay: DebugDiagnosticOverlayView
+    ): Boolean {
+        val insets = ViewCompat.getRootWindowInsets(windowHost) ?: return false
+        updateTopInset(overlay, insets)
+        return true
+    }
+
+    private fun updateTopInset(view: View, insets: WindowInsetsCompat) {
+        val topInset = insets.getInsets(
+            WindowInsetsCompat.Type.statusBars() or
+                WindowInsetsCompat.Type.displayCutout()
+        ).top
+        val layoutParams = view.layoutParams as FrameLayout.LayoutParams
+        if (layoutParams.topMargin != topInset) {
+            layoutParams.topMargin = topInset
+            view.layoutParams = layoutParams
+        }
     }
 
     private companion object {

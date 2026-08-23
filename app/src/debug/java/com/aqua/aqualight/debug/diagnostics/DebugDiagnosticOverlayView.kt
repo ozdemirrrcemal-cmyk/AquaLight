@@ -27,6 +27,7 @@ internal class DebugDiagnosticOverlayView(
             context.dp(MAX_BODY_HEIGHT_DP)
         )
     private val header = TextView(context).apply {
+        tag = HEADER_TAG
         background = roundedBackground(HEADER_BACKGROUND_COLOR, context.dp(CORNER_RADIUS_DP))
         contentDescription = OPEN_DESCRIPTION
         ellipsize = android.text.TextUtils.TruncateAt.END
@@ -145,6 +146,7 @@ internal class DebugDiagnosticOverlayView(
 
     private companion object {
         const val OVERLAY_TAG = "aqualight-debug-diagnostic-overlay"
+        const val HEADER_TAG = "aqualight-debug-diagnostic-header"
         const val OPEN_DESCRIPTION = "Open diagnostic trace"
         const val CLOSE_DESCRIPTION = "Close diagnostic trace"
         const val READY_LABEL = "TRACE ready"
