@@ -49,11 +49,6 @@ class DeviceDosingRootFragment : Fragment(R.layout.fragment_device_dosing_root) 
         )
     }
 
-    override fun onStart() {
-        super.onStart()
-        viewModel.refreshAuthoritative()
-    }
-
     private fun setupHeader(title: String) {
         binding.appHeader.setupAquaHeader(
             fragment = this,
