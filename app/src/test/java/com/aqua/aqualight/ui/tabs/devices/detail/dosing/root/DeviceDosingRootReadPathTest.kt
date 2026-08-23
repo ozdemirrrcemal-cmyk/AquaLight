@@ -2,6 +2,9 @@ package com.aqua.aqualight.ui.tabs.devices.detail.dosing.root
 
 import com.aqua.aqualight.application.devices.DeviceChannelSlots
 import com.aqua.aqualight.application.devices.DeviceChannelWireKey
+import com.aqua.aqualight.application.devices.DeviceControlSurfacePreparationOperations
+import com.aqua.aqualight.application.devices.DeviceControlSurfacePreparationRequest
+import com.aqua.aqualight.application.devices.DeviceControlSurfacePreparationResult
 import com.aqua.aqualight.application.devices.DeviceDosingChannelSlot
 import com.aqua.aqualight.application.devices.DeviceRootCatalogState
 import com.aqua.aqualight.application.devices.DeviceRootOperations
@@ -12,7 +15,6 @@ import com.aqua.aqualight.application.devices.OwnerDeviceAvailability
 import com.aqua.aqualight.application.devices.OwnerDeviceFamily
 import com.aqua.aqualight.application.devices.dosing.DeviceDosingActiveRun
 import com.aqua.aqualight.application.devices.dosing.DeviceDosingChannelControls
-import com.aqua.aqualight.application.devices.dosing.DeviceDosingChannelOperationResult
 import com.aqua.aqualight.application.devices.dosing.DeviceDosingChannelOperations
 import com.aqua.aqualight.application.devices.dosing.DeviceDosingChannelProgress
 import com.aqua.aqualight.application.devices.dosing.DeviceDosingChannelSnapshot
@@ -55,6 +57,49 @@ class DeviceDosingRootReadPathTest {
     @After
     fun tearDown() {
         Dispatchers.resetMain()
+    }
+
+    @Test
+    fun `prepared authoritative surface is the first root state without duplicate refresh`() =
+        runTest(dispatcher) {
+            val prepared = (1..4).map { channelNumber ->
+                channelSnapshot(channelNumber = channelNumber, pumpCount = 4)
+            }
+            val channels = FakeChannelOperations(
+                initialSnapshots = prepared,
+                initialAuthoritativeSnapshots = prepared
+            )
+            val viewModel = viewModel(
+                rootOperations = FakeRootOperations(rootSnapshot(channelCount = 4)),
+                channelOperations = channels,
+                preparationOperations = FakePreparationOperations(fresh = true)
+            )
+
+            viewModel.bind(DEVICE_UID)
+
+            assertEquals(
+                listOf("Authoritative 1", "Authoritative 2", "Authoritative 3", "Authoritative 4"),
+                channelNames(viewModel)
+            )
+            assertFalse(channels.refreshAllCalled)
+        }
+
+    @Test
+    fun `stale preparation marker cannot skip authoritative refresh`() = runTest(dispatcher) {
+        val channels = FakeChannelOperations()
+        val viewModel = viewModel(
+            rootOperations = FakeRootOperations(rootSnapshot(channelCount = 4)),
+            channelOperations = channels,
+            preparationOperations = FakePreparationOperations(fresh = true)
+        )
+
+        viewModel.bind(DEVICE_UID)
+
+        assertTrue(channels.refreshAllCalled)
+        assertEquals(
+            listOf("Catalog 1", "Catalog 2", "Catalog 3", "Catalog 4"),
+            channelNames(viewModel)
+        )
     }
 
     @Test
@@ -226,15 +271,31 @@ class DeviceDosingRootReadPathTest {
 
     private fun viewModel(
         rootOperations: DeviceRootOperations,
-        channelOperations: DeviceDosingChannelOperations
+        channelOperations: DeviceDosingChannelOperations,
+        preparationOperations: DeviceControlSurfacePreparationOperations =
+            FakePreparationOperations()
     ) = DeviceDosingRootViewModel(
         operations = rootOperations,
         channelNavigationOperations = UnavailableDeviceDosingChannelNavigationOperations,
-        channelOperations = channelOperations
+        channelOperations = channelOperations,
+        controlSurfacePreparationOperations = preparationOperations
     )
 
     private fun channelNames(viewModel: DeviceDosingRootViewModel): List<String> =
         viewModel.uiState.value.channels.map { channel -> channel.displayName }
+
+    private class FakePreparationOperations(
+        private var fresh: Boolean = false
+    ) : DeviceControlSurfacePreparationOperations {
+        override suspend fun prepare(
+            request: DeviceControlSurfacePreparationRequest
+        ): DeviceControlSurfacePreparationResult = DeviceControlSurfacePreparationResult.Ready
+
+        override fun consumeFreshPreparation(
+            deviceUid: String,
+            family: OwnerDeviceFamily
+        ): Boolean = fresh.also { fresh = false }
+    }
 
     private class FakeRootOperations(
         snapshot: DeviceRootSnapshot
@@ -252,13 +313,21 @@ class DeviceDosingRootReadPathTest {
         }
     }
 
-    private class FakeChannelOperations :
-        DeviceDosingChannelOperations by UnavailableDeviceDosingChannelOperations {
-        private val snapshots = MutableStateFlow<List<DeviceDosingChannelSnapshot>>(emptyList())
+    private class FakeChannelOperations(
+        initialSnapshots: List<DeviceDosingChannelSnapshot> = emptyList(),
+        initialAuthoritativeSnapshots: List<DeviceDosingChannelSnapshot> = emptyList()
+    ) : DeviceDosingChannelOperations by UnavailableDeviceDosingChannelOperations {
+        private val snapshots = MutableStateFlow(initialSnapshots)
+        private var authoritativeSnapshots = initialAuthoritativeSnapshots
         var refreshAllCalled: Boolean = false
 
         override fun observeAll(deviceUid: String): Flow<List<DeviceDosingChannelSnapshot>> =
             snapshots
+
+        override fun current(deviceUid: String, slotId: String): DeviceDosingChannelSnapshot? =
+            authoritativeSnapshots.singleOrNull { snapshot ->
+                snapshot.deviceUid == deviceUid && snapshot.slotId == slotId
+            }
 
         override suspend fun refreshAll(deviceUid: String): Boolean {
             refreshAllCalled = true
@@ -281,6 +350,7 @@ private fun rootSnapshot(channelCount: Int) = DeviceRootSnapshot(
     availability = OwnerDeviceAvailability.REACHABLE,
     family = OwnerDeviceFamily.DOSING,
     catalogState = DeviceRootCatalogState.VALID,
+    dosingChannelCount = channelCount,
     channelSlots = DeviceChannelSlots(
         lightChannels = emptyList(),
         timerChannels = emptyList(),
