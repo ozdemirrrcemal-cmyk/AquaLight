@@ -42,28 +42,25 @@ internal class DefaultDeviceControlSurfacePreparationOperations(
     ): DeviceControlSurfacePreparationResult {
         freshlyPreparedDeviceUids.remove(deviceUid)
         val root = rootOperations.current(deviceUid)
-            ?: return unavailable(DeviceMenuUnavailableReason.DEVICE_NOT_REGISTERED)
-        val expectedSlots = root.channelSlots.dosingChannels
-
-        if (
-            expectedSlots.isEmpty() ||
-            !root.matchesDosingCatalog(expectedSlots)
-        ) {
-            return unavailable(DeviceMenuUnavailableReason.COMMERCIAL_PRODUCT_MISMATCH)
+        val result = when {
+            root == null ->
+                unavailable(DeviceMenuUnavailableReason.DEVICE_NOT_REGISTERED)
+            root.channelSlots.dosingChannels.isEmpty() ||
+                !root.matchesDosingCatalog(root.channelSlots.dosingChannels) ->
+                unavailable(DeviceMenuUnavailableReason.COMMERCIAL_PRODUCT_MISMATCH)
+            // A menu open is a freshness boundary: liveness/catalog validation is followed by one
+            // authoritative Dosing refresh before navigation, even when an older complete projection
+            // is still available for presentation continuity.
+            !dosingChannelOperations.refreshAll(deviceUid) ->
+                unavailable(DeviceMenuUnavailableReason.CURRENT_LIVENESS_NOT_PROVEN)
+            !hasAuthoritativeSurface(deviceUid, root.channelSlots.dosingChannels) ->
+                unavailable(DeviceMenuUnavailableReason.CURRENT_LIVENESS_NOT_PROVEN)
+            else -> {
+                freshlyPreparedDeviceUids += deviceUid
+                DeviceControlSurfacePreparationResult.Ready
+            }
         }
-
-        // A menu open is a freshness boundary: liveness/catalog validation is followed by one
-        // authoritative Dosing refresh before navigation, even when an older complete projection
-        // is still available for presentation continuity.
-        if (!dosingChannelOperations.refreshAll(deviceUid)) {
-            return unavailable(DeviceMenuUnavailableReason.CURRENT_LIVENESS_NOT_PROVEN)
-        }
-        if (!hasAuthoritativeSurface(deviceUid, expectedSlots)) {
-            return unavailable(DeviceMenuUnavailableReason.CURRENT_LIVENESS_NOT_PROVEN)
-        }
-
-        freshlyPreparedDeviceUids += deviceUid
-        return DeviceControlSurfacePreparationResult.Ready
+        return result
     }
 
     override fun consumeFreshPreparation(
