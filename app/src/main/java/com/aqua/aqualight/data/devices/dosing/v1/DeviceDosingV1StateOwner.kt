@@ -27,6 +27,11 @@ internal enum class DeviceDosingV1CommitDisposition {
     MALFORMED
 }
 
+internal data class DeviceDosingV1RefreshCommitResult(
+    val disposition: DeviceDosingV1CommitDisposition,
+    val state: DeviceDosingV1AuthoritativeState? = null
+)
+
 internal enum class DeviceDosingV1InvalidationDisposition {
     APPLIED,
     STALE_CONNECTION,
@@ -314,15 +319,33 @@ internal class DeviceDosingV1StateOwner(
         global: DeviceDosingV1GlobalStatus,
         channelStatus: DeviceDosingV1ChannelStatus,
         progressStatus: DeviceDosingV1ProgressStatus
-    ): DeviceDosingV1CommitDisposition = synchronized(lock) {
+    ): DeviceDosingV1CommitDisposition = commitRefreshResult(
+        token = token,
+        connectionGeneration = connectionGeneration,
+        global = global,
+        channelStatus = channelStatus,
+        progressStatus = progressStatus
+    ).disposition
+
+    fun commitRefreshResult(
+        token: DeviceDosingV1RequestToken,
+        connectionGeneration: DeviceRuntimeConnectionGeneration,
+        global: DeviceDosingV1GlobalStatus,
+        channelStatus: DeviceDosingV1ChannelStatus,
+        progressStatus: DeviceDosingV1ProgressStatus
+    ): DeviceDosingV1RefreshCommitResult = synchronized(lock) {
         val prepared = prepareDevice(token, connectionGeneration)
-        if (prepared.disposition != null) return@synchronized prepared.disposition
+        if (prepared.disposition != null) {
+            return@synchronized DeviceDosingV1RefreshCommitResult(prepared.disposition)
+        }
         val device = checkNotNull(prepared.device)
         val incomingRevision = channelStatus.channel.revision
         val current = device.channels[token.channelKey]
         val currentRevision = current?.revision
         if (currentRevision != null && incomingRevision < currentRevision) {
-            return@synchronized DeviceDosingV1CommitDisposition.STALE_REVISION
+            return@synchronized DeviceDosingV1RefreshCommitResult(
+                DeviceDosingV1CommitDisposition.STALE_REVISION
+            )
         }
         val incomingRuntimeEventSequence = channelStatus.channel.lastRuntimeEvent
             .validSequenceOrNull()
@@ -335,7 +358,9 @@ internal class DeviceDosingV1StateOwner(
             // An event can invalidate the owner after CHANNEL_STATUS_GET was captured but before
             // PROGRESS_GET completes. Never stamp that older triplet authoritative by merely
             // merging the newer sequence floor into it.
-            return@synchronized DeviceDosingV1CommitDisposition.STALE_RUNTIME_EVENT
+            return@synchronized DeviceDosingV1RefreshCommitResult(
+                DeviceDosingV1CommitDisposition.STALE_RUNTIME_EVENT
+            )
         }
         val slotId = DeviceDosingV1SlotKeyMapper.slotId(token.channelKey)
         val mapped = runCatching {
@@ -353,8 +378,14 @@ internal class DeviceDosingV1StateOwner(
                 )
             )
         }.getOrElse {
-            return@synchronized DeviceDosingV1CommitDisposition.MALFORMED
+            return@synchronized DeviceDosingV1RefreshCommitResult(
+                DeviceDosingV1CommitDisposition.MALFORMED
+            )
         }
+        val authoritativeState = DeviceDosingV1AuthoritativeState(
+            channel = mapped.channel,
+            calibration = mapped.calibration
+        )
         val updatedChannel = OwnedDosingChannelState(
             revision = incomingRevision,
             runtimeEventSequence = incomingRuntimeEventSequence
@@ -371,7 +402,13 @@ internal class DeviceDosingV1StateOwner(
                 channels = device.channels + (token.channelKey to updatedChannel)
             )
         )
-        DeviceDosingV1CommitDisposition.APPLIED
+        // Return the snapshot linearized by this commit. A StateFlow observer can synchronously
+        // process a newer runtime event during publish(), but that later invalidation must not
+        // retroactively turn this already-applied readback into a UI failure.
+        DeviceDosingV1RefreshCommitResult(
+            disposition = DeviceDosingV1CommitDisposition.APPLIED,
+            state = authoritativeState
+        )
     }
 
     fun recordMutation(
@@ -538,7 +575,11 @@ internal class DeviceDosingV1StateOwner(
             else -> PreparedDevice(
                 disposition = null,
                 device = when {
-                    existing == null -> emptyDevice(connectionGeneration)
+                    existing == null -> OwnedDosingDeviceState(
+                        connectionGeneration = connectionGeneration,
+                        global = null,
+                        channels = emptyMap()
+                    )
                     newerConnection -> existing.advanceConnectionGeneration(connectionGeneration)
                     else -> existing
                 }
@@ -549,14 +590,6 @@ internal class DeviceDosingV1StateOwner(
     private fun publish(deviceUid: DeviceUid, state: OwnedDosingDeviceState) {
         states.value = states.value + (deviceUid to state)
     }
-
-    private fun emptyDevice(
-        generation: DeviceRuntimeConnectionGeneration
-    ): OwnedDosingDeviceState = OwnedDosingDeviceState(
-        connectionGeneration = generation,
-        global = null,
-        channels = emptyMap()
-    )
 
     /**
      * Cross a runtime connection boundary without turning a transport transition into fake UI

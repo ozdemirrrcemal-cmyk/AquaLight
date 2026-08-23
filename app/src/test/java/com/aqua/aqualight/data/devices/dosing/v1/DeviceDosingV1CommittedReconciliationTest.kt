@@ -614,7 +614,11 @@ class DeviceDosingV1CommittedReconciliationTest {
             enqueueProgramMutation(revision = 8L, programEnabled = false)
             enqueueNotConnected(DeviceDosingV1Contract.Action.STATUS_GET)
             enqueueProgramMutation(revision = 9L, programEnabled = true)
-            enqueueRefresh(revision = 9L, programEnabled = true)
+            enqueueRefresh(
+                revision = 9L,
+                programEnabled = true,
+                runtimeEventSequence = 12L
+            )
         }
         val adapter = DeviceDosingV1StateAdapter(
             repository = DeviceDosingV1Repository(gateway),

@@ -209,7 +209,7 @@ private class DeviceDosingV1RefreshProducer(
         channel: DeviceRuntimeCommandOutcome.Success<DeviceDosingV1ChannelStatus>,
         progress: DeviceRuntimeCommandOutcome.Success<DeviceDosingV1ProgressStatus>
     ): DeviceDosingV1RefreshResult = if (sameConnectionGeneration(global, channel, progress)) {
-        stateOwner.commitRefresh(
+        stateOwner.commitRefreshResult(
             token = token,
             connectionGeneration = global.generation,
             global = global.value,
@@ -340,13 +340,13 @@ private data class RefreshFlightFallbacks<V>(
     val cancellation: V
 )
 
-private fun DeviceDosingV1CommitDisposition.toRefreshResult(
+private fun DeviceDosingV1RefreshCommitResult.toRefreshResult(
     address: DeviceDosingV1Address,
     stateAccess: DeviceDosingV1StateAccess
-): DeviceDosingV1RefreshResult = when (this) {
-    DeviceDosingV1CommitDisposition.APPLIED -> stateAccess.currentState(address)?.let {
-        DeviceDosingV1RefreshResult.Success(it)
-    } ?: DeviceDosingV1RefreshResult.Malformed
+): DeviceDosingV1RefreshResult = when (disposition) {
+    DeviceDosingV1CommitDisposition.APPLIED -> state?.let(
+        DeviceDosingV1RefreshResult::Success
+    ) ?: DeviceDosingV1RefreshResult.Malformed
     DeviceDosingV1CommitDisposition.MALFORMED -> DeviceDosingV1RefreshResult.Malformed
     DeviceDosingV1CommitDisposition.STALE_CONNECTION,
     DeviceDosingV1CommitDisposition.STALE_REVISION,
