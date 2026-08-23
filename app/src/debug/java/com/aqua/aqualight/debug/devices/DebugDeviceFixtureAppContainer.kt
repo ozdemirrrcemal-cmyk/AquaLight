@@ -92,6 +92,8 @@ private class DebugDeviceFixtureViewModelFactory(
                 delegate = DefaultDeviceMenuAccessOperations.create(repository),
                 fixtures = fixtures
             ),
+            controlSurfacePreparationOperations =
+                graph.dosingOperations.controlSurfacePreparationOperations,
             routeResolver = DeviceRouteResolver()
         )
     }
