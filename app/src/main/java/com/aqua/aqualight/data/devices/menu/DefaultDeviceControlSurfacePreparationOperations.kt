@@ -35,6 +35,10 @@ internal class DefaultDeviceControlSurfacePreparationOperations(
             return DeviceControlSurfacePreparationResult.Ready
         }
 
+        // A fresh marker belongs only to the immediately preceding cold preparation/navigation
+        // handoff. A later menu attempt must not inherit it after a cancelled or abandoned route.
+        freshlyPreparedDeviceUids.remove(deviceUid)
+
         val root = rootOperations.current(deviceUid)
             ?: return unavailable(DeviceMenuUnavailableReason.DEVICE_NOT_REGISTERED)
         val expectedSlots = root.channelSlots.dosingChannels
@@ -51,7 +55,6 @@ internal class DefaultDeviceControlSurfacePreparationOperations(
             return DeviceControlSurfacePreparationResult.Ready
         }
 
-        freshlyPreparedDeviceUids.remove(deviceUid)
         if (!dosingChannelOperations.refreshAll(deviceUid)) {
             return unavailable(DeviceMenuUnavailableReason.CURRENT_LIVENESS_NOT_PROVEN)
         }
