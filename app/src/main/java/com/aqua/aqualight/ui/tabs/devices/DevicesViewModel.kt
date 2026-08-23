@@ -65,21 +65,21 @@ class DevicesViewModel(
         menuOpenJob = viewModelScope.launch {
             var deviceTitle = ""
             try {
-                when (val access = menuAccessOperations.resolve(deviceUid)) {
+                when (val result = menuAccessOperations.resolve(deviceUid)) {
                     is DeviceMenuAccessResult.Unavailable -> {
                         failMenuOpen(
                             deviceUid = deviceUid,
-                            title = access.title,
-                            reason = access.reason
+                            title = result.title,
+                            reason = result.reason
                         )
                     }
                     is DeviceMenuAccessResult.Available -> {
-                        deviceTitle = access.title
+                        deviceTitle = result.title
                         when (
                             val preparation = controlSurfacePreparationOperations.prepare(
                                 DeviceControlSurfacePreparationRequest(
-                                    deviceUid = access.deviceUid,
-                                    family = access.family
+                                    deviceUid = result.deviceUid,
+                                    family = result.family
                                 )
                             )
                         ) {
@@ -87,14 +87,14 @@ class DevicesViewModel(
                                 completePreparation(deviceUid)
                                 _events.send(
                                     DevicesEvent.OpenRoute(
-                                        route = routeResolver.resolve(access)
+                                        route = routeResolver.resolve(result)
                                     )
                                 )
                             }
                             is DeviceControlSurfacePreparationResult.Unavailable -> {
                                 failMenuOpen(
                                     deviceUid = deviceUid,
-                                    title = access.title,
+                                    title = result.title,
                                     reason = preparation.reason
                                 )
                             }
