@@ -3,6 +3,7 @@ package com.aqua.aqualight.composition
 import android.content.Context
 import com.aqua.aqualight.BuildConfig
 import com.aqua.aqualight.application.auth.AuthenticatedOwnerIdentity
+import com.aqua.aqualight.application.devices.DeviceControlSurfacePreparationOperations
 import com.aqua.aqualight.application.devices.DeviceFirmwareUpdateOperations
 import com.aqua.aqualight.application.devices.dosing.DeviceDosingCalibrationOperations
 import com.aqua.aqualight.application.devices.dosing.DeviceDosingChannelNavigationOperations
@@ -24,6 +25,7 @@ import com.aqua.aqualight.data.devices.DefaultDeviceRootOperations
 import com.aqua.aqualight.data.devices.dosing.DefaultDeviceDosingChannelNavigationOperations
 import com.aqua.aqualight.data.devices.dosing.SharedPreferencesDeviceDosingLowLevelAlertLedger
 import com.aqua.aqualight.data.devices.dosing.v1.DeviceDosingV1ProductionRuntime
+import com.aqua.aqualight.data.devices.menu.DefaultDeviceControlSurfacePreparationOperations
 import com.aqua.aqualight.data.devices.provisioning.repository.DefaultProvisioningDraftOperations
 import com.aqua.aqualight.data.devices.provisioning.store.AqlProvisioningDraftStore
 import com.aqua.aqualight.data.devices.provisioning.store.AqlProvisioningQrSecretStore
@@ -61,7 +63,8 @@ internal data class OwnerDependencyGraph(
 internal data class OwnerDosingOperations(
     val channelOperations: DeviceDosingChannelOperations,
     val calibrationOperations: DeviceDosingCalibrationOperations,
-    val navigationOperations: DeviceDosingChannelNavigationOperations
+    val navigationOperations: DeviceDosingChannelNavigationOperations,
+    val controlSurfacePreparationOperations: DeviceControlSurfacePreparationOperations
 )
 
 internal fun interface OwnerDependencyGraphResolver {
@@ -244,13 +247,19 @@ internal class ActiveOwnerDependencyGraphResolver(
             alertTextResolver = AndroidDeviceDosingLowLevelAlertTextResolver(appContext)
         ).also(dependencies.devicesRepository::registerOwnerScopedResource)
         val channelOperations = runtime.channelOperations
+        val rootOperations = DefaultDeviceRootOperations(dependencies.devicesRepository)
         return OwnerDosingOperations(
             channelOperations = channelOperations,
             calibrationOperations = runtime.calibrationOperations,
             navigationOperations = DefaultDeviceDosingChannelNavigationOperations(
-                rootOperations = DefaultDeviceRootOperations(dependencies.devicesRepository),
+                rootOperations = rootOperations,
                 channelOperations = channelOperations
-            )
+            ),
+            controlSurfacePreparationOperations =
+                DefaultDeviceControlSurfacePreparationOperations(
+                    rootOperations = rootOperations,
+                    dosingChannelOperations = channelOperations
+                )
         )
     }
 
