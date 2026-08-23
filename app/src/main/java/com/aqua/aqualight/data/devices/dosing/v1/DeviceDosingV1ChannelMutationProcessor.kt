@@ -25,8 +25,8 @@ internal class DeviceDosingV1ChannelMutationProcessor(
 
     suspend fun <T> submit(
         address: DeviceDosingV1Address,
-        mutation: suspend () -> T,
-        afterResultPublished: (T) -> Unit = {}
+        afterResultPublished: (T) -> Unit = {},
+        mutation: suspend () -> T
     ): T {
         val scope = ownerScope ?: return fallbackLocks
             .computeIfAbsent(address) { Mutex() }
