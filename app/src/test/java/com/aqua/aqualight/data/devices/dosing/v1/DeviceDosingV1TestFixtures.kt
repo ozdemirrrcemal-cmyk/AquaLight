@@ -85,11 +85,13 @@ internal object DeviceDosingV1TestFixtures {
         .put(
             "change",
             runtimeEvent(
-                valid = true,
-                sequence = 12,
-                kind = "stateChanged",
-                reason = "programChanged",
-                source = "scheduled"
+                RuntimeEventFixture(
+                    valid = true,
+                    sequence = 12,
+                    kind = "stateChanged",
+                    reason = "programChanged",
+                    source = "scheduled"
+                )
             )
         )
 
@@ -344,20 +346,24 @@ internal object DeviceDosingV1TestFixtures {
         .put("amountMl", 1.2)
         .put("status", status)
 
+    private data class RuntimeEventFixture(
+        val valid: Boolean = true,
+        val sequence: Long = 11,
+        val occurredAtMillis: Long = 122_000L,
+        val kind: String = "runCompleted",
+        val reason: String = "naturalDeadline",
+        val source: String = "scheduled"
+    )
+
     private fun runtimeEvent(
-        valid: Boolean = true,
-        sequence: Long = 11,
-        occurredAtMillis: Long = 122_000L,
-        kind: String = "runCompleted",
-        reason: String = "naturalDeadline",
-        source: String = "scheduled"
+        fixture: RuntimeEventFixture = RuntimeEventFixture()
     ): JSONObject = JSONObject()
-        .put("valid", valid)
-        .put("sequence", sequence)
-        .put("occurredAtMs", occurredAtMillis)
-        .put("kind", kind)
-        .put("reason", reason)
-        .put("source", source)
+        .put("valid", fixture.valid)
+        .put("sequence", fixture.sequence)
+        .put("occurredAtMs", fixture.occurredAtMillis)
+        .put("kind", fixture.kind)
+        .put("reason", fixture.reason)
+        .put("source", fixture.source)
 
     private fun calibrationRunningDetail(): JSONObject = channelDetail().also { detail ->
         detail.getJSONObject("calibration")
@@ -370,11 +376,13 @@ internal object DeviceDosingV1TestFixtures {
         detail.put(
             "lastRuntimeEvent",
             runtimeEvent(
-                sequence = 12,
-                occurredAtMillis = 123_500L,
-                kind = "runStarted",
-                reason = "calibrationChanged",
-                source = "calibration"
+                RuntimeEventFixture(
+                    sequence = 12,
+                    occurredAtMillis = 123_500L,
+                    kind = "runStarted",
+                    reason = "calibrationChanged",
+                    source = "calibration"
+                )
             )
         )
     }

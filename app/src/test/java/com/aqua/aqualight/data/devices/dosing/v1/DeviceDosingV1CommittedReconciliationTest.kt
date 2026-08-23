@@ -13,10 +13,14 @@ import com.aqua.aqualight.data.devices.runtime.core.DeviceRuntimeConnectionGener
 import com.aqua.aqualight.data.devices.runtime.events.DeviceRuntimeEventPayload
 import com.aqua.aqualight.data.devices.runtime.events.DeviceRuntimeTypedEvent
 import java.util.ArrayDeque
+import kotlinx.coroutines.CompletableDeferred
+import kotlinx.coroutines.CoroutineStart
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.async
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.test.UnconfinedTestDispatcher
 import kotlinx.coroutines.test.runTest
 import org.json.JSONObject
 import org.junit.Assert.assertEquals
@@ -26,6 +30,7 @@ import org.junit.Assert.assertTrue
 import org.junit.Test
 
 @OptIn(ExperimentalCoroutinesApi::class)
+@Suppress("LargeClass", "LongMethod") // One concurrency matrix shares a scripted firmware queue.
 class DeviceDosingV1CommittedReconciliationTest {
 
     @Test
@@ -175,11 +180,11 @@ class DeviceDosingV1CommittedReconciliationTest {
         }
 
     @Test
-    fun `rapid missed dose intents serialize behind readback without losing latest intent`() = runTest {
+    fun `ten second readback cannot block rapid missed dose off then on intent`() = runTest {
         val gateway = ScriptedGateway().apply {
             enqueueRefresh(revision = 7L, missedDoseRecoveryEnabled = true)
             enqueueProgramMutation(revision = 8L, missedDoseRecoveryEnabled = false)
-            enqueueDelayedReadback(
+            enqueueDelayedGlobalReadback(
                 revision = 8L,
                 programEnabled = true,
                 missedDoseRecoveryEnabled = false,
@@ -208,7 +213,7 @@ class DeviceDosingV1CommittedReconciliationTest {
 
         assertEquals(DeviceDosingChannelCommittedResult(8L), disabled)
         assertEquals(DeviceDosingChannelCommittedResult(9L), enabled)
-        assertEquals(10_000L, testScheduler.currentTime)
+        assertEquals(0L, testScheduler.currentTime)
         assertProgramRequests(
             gateway = gateway,
             expectedRevisions = listOf(7L, 8L),
@@ -421,6 +426,37 @@ class DeviceDosingV1CommittedReconciliationTest {
             gateway.actions
         )
         assertEquals(8L, adapter.currentChannel(DEVICE_UID.value, SLOT_ID)?.revision)
+    }
+
+    @Test
+    fun `event rechecks its floor after joining a just committed refresh`() = runTest {
+        val gateway = ScriptedGateway().apply {
+            enqueueRefresh(revision = 8L, runtimeEventSequence = 11L)
+            enqueueRefresh(revision = 8L, runtimeEventSequence = 12L)
+        }
+        val adapter = DeviceDosingV1StateAdapter(
+            repository = DeviceDosingV1Repository(gateway),
+            reconciliationScope = backgroundScope
+        )
+        val eventResult = CompletableDeferred<DeviceDosingV1EventResult>()
+        backgroundScope.launch(
+            context = UnconfinedTestDispatcher(testScheduler),
+            start = CoroutineStart.UNDISPATCHED
+        ) {
+            adapter.channelOperations.observeAll(DEVICE_UID.value).first { channels ->
+                channels.singleOrNull()?.revision == 8L
+            }
+            eventResult.complete(adapter.consume(directEvent()))
+        }
+
+        val screenRefresh = async {
+            adapter.channelOperations.refresh(DEVICE_UID.value, SLOT_ID)
+        }
+
+        assertTrue(screenRefresh.await() is DeviceDosingChannelOperationResult.Success)
+        assertTrue(eventResult.await() is DeviceDosingV1EventResult.Refreshed)
+        assertEquals(8L, adapter.currentChannel(DEVICE_UID.value, SLOT_ID)?.revision)
+        assertEquals(6, gateway.actions.size)
     }
 
     @Test
@@ -643,7 +679,7 @@ class DeviceDosingV1CommittedReconciliationTest {
         val gateway = ScriptedGateway().apply {
             enqueueRefresh(revision = 7L, missedDoseRecoveryEnabled = false)
             enqueueProgramMutation(revision = 8L, missedDoseRecoveryEnabled = true)
-            enqueueDelayedReadback(
+            enqueueDelayedGlobalReadback(
                 revision = 8L,
                 programEnabled = true,
                 missedDoseRecoveryEnabled = true,
@@ -685,7 +721,7 @@ class DeviceDosingV1CommittedReconciliationTest {
 
         assertEquals(DeviceDosingChannelCommittedResult(8L), switchResult)
         assertEquals(DeviceDosingChannelCommittedResult(9L), saveResult)
-        assertEquals(10_000L, testScheduler.currentTime)
+        assertEquals(0L, testScheduler.currentTime)
         assertProgramRequests(
             gateway = gateway,
             expectedRevisions = listOf(7L, 8L),
@@ -709,7 +745,7 @@ class DeviceDosingV1CommittedReconciliationTest {
                 programEnabled = false,
                 missedDoseRecoveryEnabled = false
             )
-            enqueueDelayedReadback(
+            enqueueDelayedGlobalReadback(
                 revision = 8L,
                 programEnabled = false,
                 missedDoseRecoveryEnabled = false,
@@ -751,7 +787,7 @@ class DeviceDosingV1CommittedReconciliationTest {
 
         assertEquals(DeviceDosingChannelCommittedResult(8L), saveResult)
         assertEquals(DeviceDosingChannelCommittedResult(9L), switchResult)
-        assertEquals(10_000L, testScheduler.currentTime)
+        assertEquals(0L, testScheduler.currentTime)
         assertProgramRequests(
             gateway = gateway,
             expectedRevisions = listOf(7L, 8L),
@@ -943,6 +979,24 @@ class DeviceDosingV1CommittedReconciliationTest {
             )
             enqueueSuccess(DeviceDosingV1Contract.Action.STATUS_GET, channel)
             enqueueSuccess(DeviceDosingV1Contract.Action.PROGRESS_GET, progress)
+        }
+
+        fun enqueueDelayedGlobalReadback(
+            revision: Long,
+            programEnabled: Boolean,
+            missedDoseRecoveryEnabled: Boolean,
+            delayMillis: Long
+        ) {
+            val global = fixtureState(
+                revision,
+                programEnabled,
+                missedDoseRecoveryEnabled
+            ).global
+            enqueueSuccess(
+                DeviceDosingV1Contract.Action.STATUS_GET,
+                global,
+                delayMillis
+            )
         }
 
         fun enqueueDelayedRefreshAll(revision: Long, delayMillis: Long) {

@@ -24,6 +24,7 @@ import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Test
 
+@Suppress("LargeClass", "LongMethod") // One state-authority matrix shares deterministic fixtures.
 class DeviceDosingV1StateAdapterTest {
 
     @Test
@@ -330,6 +331,96 @@ class DeviceDosingV1StateAdapterTest {
             )
         )
         assertEquals(7L, owner.reads.currentChannel(DEVICE_UID, key)?.revision)
+    }
+
+    @Test
+    fun `in flight refresh containing event sequence remains admissible`() {
+        val owner = DeviceDosingV1StateOwner()
+        val key = DeviceDosingV1ChannelKey.from("channel1")
+        val inFlight = owner.beginRequest(DEVICE_UID, key)
+        val sequenceTwelve = fixtureState(revision = 7L).let { state ->
+            state.copy(
+                channel = state.channel.copy(
+                    channel = state.channel.channel.copy(
+                        lastRuntimeEvent = state.channel.channel.lastRuntimeEvent.copy(
+                            sequence = 12L
+                        )
+                    )
+                )
+            )
+        }
+
+        assertEquals(
+            DeviceDosingV1InvalidationDisposition.APPLIED,
+            owner.invalidate(
+                DEVICE_UID,
+                key,
+                GENERATION_ONE,
+                revisionHint = 7L,
+                runtimeEventSequenceHint = 12L
+            )
+        )
+        assertEquals(
+            DeviceDosingV1CommitDisposition.APPLIED,
+            owner.commitRefresh(
+                inFlight,
+                GENERATION_ONE,
+                sequenceTwelve.global,
+                sequenceTwelve.channel,
+                sequenceTwelve.progress
+            )
+        )
+        assertEquals(7L, owner.reads.currentChannel(DEVICE_UID, key)?.revision)
+    }
+
+    @Test
+    fun `queued event refresh reuses a readback that already satisfies its floor`() = runTest {
+        val owner = DeviceDosingV1StateOwner()
+        val stateAccess = DeviceDosingV1StateAccess(owner)
+        val gateway = ScriptedDosingGateway()
+        val coordinator = DeviceDosingV1RefreshCoordinator(
+            repository = DeviceDosingV1Repository(gateway),
+            stateOwner = owner,
+            stateAccess = stateAccess
+        )
+        val key = DeviceDosingV1ChannelKey.from("channel1")
+        val address = DeviceDosingV1Address(DEVICE_UID, key)
+        val inFlight = owner.beginRequest(DEVICE_UID, key)
+        val sequenceTwelve = fixtureState(revision = 7L).let { state ->
+            state.copy(
+                channel = state.channel.copy(
+                    channel = state.channel.channel.copy(
+                        lastRuntimeEvent = state.channel.channel.lastRuntimeEvent.copy(
+                            sequence = 12L
+                        )
+                    )
+                )
+            )
+        }
+        owner.invalidate(
+            DEVICE_UID,
+            key,
+            GENERATION_ONE,
+            revisionHint = 7L,
+            runtimeEventSequenceHint = 12L
+        )
+        owner.commitRefresh(
+            inFlight,
+            GENERATION_ONE,
+            sequenceTwelve.global,
+            sequenceTwelve.channel,
+            sequenceTwelve.progress
+        )
+
+        val result = coordinator.refreshInvalidated(
+            address = address,
+            connectionGeneration = GENERATION_ONE,
+            revisionHint = 7L,
+            runtimeEventSequenceHint = 12L
+        )
+
+        assertTrue(result is DeviceDosingV1RefreshResult.Success)
+        assertTrue(gateway.requests.isEmpty())
     }
 
     @Test
@@ -672,7 +763,7 @@ class DeviceDosingV1StateAdapterTest {
     fun `status changed event invalidates and refreshes instead of becoming a snapshot`() = runTest {
         val gateway = ScriptedDosingGateway().apply {
             enqueueRefresh(revision = 7L)
-            enqueueRefresh(revision = 8L)
+            enqueueRefresh(revision = 8L, runtimeEventSequence = 12L)
         }
         val adapter = DeviceDosingV1StateAdapter(DeviceDosingV1Repository(gateway))
         adapter.channelOperations.refresh(DEVICE_UID.value, SLOT_ID)
@@ -829,12 +920,14 @@ class DeviceDosingV1StateAdapterTest {
             revision: Long,
             generation: DeviceRuntimeConnectionGeneration = GENERATION_ONE,
             programEnabled: Boolean = true,
-            reservoirCapacityMicroliters: Long = 500_000L
+            reservoirCapacityMicroliters: Long = 500_000L,
+            runtimeEventSequence: Long = 11L
         ) {
             val (global, channel, progress) = fixtureState(
                 revision,
                 programEnabled,
-                reservoirCapacityMicroliters
+                reservoirCapacityMicroliters,
+                runtimeEventSequence
             )
             enqueueSuccess(DeviceDosingV1Contract.Action.STATUS_GET, global, generation)
             enqueueSuccess(DeviceDosingV1Contract.Action.STATUS_GET, channel, generation)
@@ -918,7 +1011,8 @@ class DeviceDosingV1StateAdapterTest {
         fun fixtureState(
             revision: Long,
             programEnabled: Boolean = true,
-            reservoirCapacityMicroliters: Long = 500_000L
+            reservoirCapacityMicroliters: Long = 500_000L,
+            runtimeEventSequence: Long = 11L
         ): FixtureState {
             val global = DeviceDosingV1StatusParser.parseGlobal(
                 DeviceDosingV1TestFixtures.globalStatus()
@@ -943,6 +1037,9 @@ class DeviceDosingV1StateAdapterTest {
                     channel = status.channel.copy(
                         revision = revision,
                         program = status.channel.program?.copy(enabled = programEnabled),
+                        lastRuntimeEvent = status.channel.lastRuntimeEvent.copy(
+                            sequence = runtimeEventSequence
+                        ),
                         reservoir = status.channel.reservoir.copy(
                             capacityMilliliters = reservoirCapacityMicroliters / 1_000.0,
                             remainingMilliliters = minOf(

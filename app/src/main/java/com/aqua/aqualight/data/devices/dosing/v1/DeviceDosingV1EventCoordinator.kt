@@ -52,8 +52,12 @@ internal class DeviceDosingV1EventCoordinator(
         DeviceDosingV1InvalidationDisposition.STALE_REVISION,
         DeviceDosingV1InvalidationDisposition.DUPLICATE_EVENT ->
             DeviceDosingV1EventResult.Ignored
-        DeviceDosingV1InvalidationDisposition.APPLIED -> refreshCoordinator.refresh(address)
-            .toEventResult()
+        DeviceDosingV1InvalidationDisposition.APPLIED -> refreshCoordinator.refreshInvalidated(
+            address = address,
+            connectionGeneration = event.generation,
+            revisionHint = invalidation.revisionHint,
+            runtimeEventSequenceHint = invalidation.runtimeEventSequenceHint
+        ).toEventResult()
     }
 }
 

@@ -56,7 +56,7 @@ internal sealed interface DeviceDosingV1EventResult {
 /** Central Dosing facade; [DeviceDosingV1StateOwner] remains the only authoritative state owner. */
 internal class DeviceDosingV1StateAdapter(
     internal val repository: DeviceDosingV1Repository,
-    stateOwner: DeviceDosingV1StateOwner = DeviceDosingV1StateOwner(),
+    private val stateOwner: DeviceDosingV1StateOwner = DeviceDosingV1StateOwner(),
     internal val reconciliationScope: CoroutineScope? = null
 ) {
     internal val stateAccess = DeviceDosingV1StateAccess(stateOwner)
@@ -91,7 +91,7 @@ internal class DeviceDosingV1StateAdapter(
     suspend fun consume(event: DeviceRuntimeTypedEvent): DeviceDosingV1EventResult = eventCoordinator.consume(event)
 
     /** Socket lifecycle changes revoke authority without fabricating empty firmware state. */
-    fun consume(event: DeviceRuntimeLifecycleEvent) { stateAccess.invalidateAll(event.deviceUid) }
+    fun consume(event: DeviceRuntimeLifecycleEvent) { stateOwner.invalidateAll(event.deviceUid) }
 
     fun currentChannel(deviceUid: String, slotId: String): DeviceDosingChannelSnapshot? =
         stateAccess.currentChannel(deviceUid, slotId)

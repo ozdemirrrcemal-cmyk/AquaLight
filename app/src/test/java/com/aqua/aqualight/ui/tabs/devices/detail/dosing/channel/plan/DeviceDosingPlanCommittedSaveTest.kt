@@ -56,7 +56,7 @@ class DeviceDosingPlanCommittedSaveTest {
             }
             val viewModel = DeviceDosingPlanViewModel(operations)
 
-            viewModel.bind(DEVICE_UID, SLOT_ID, restoredDraft = null)
+            viewModel.bind(DEVICE_UID, SLOT_ID)
             viewModel.setDailyDoseMicroliters(9_000L)
             assertEquals(10L, viewModel.currentEditorState.baseRevision)
             assertEquals(true, viewModel.currentEditorState.draftDirty)

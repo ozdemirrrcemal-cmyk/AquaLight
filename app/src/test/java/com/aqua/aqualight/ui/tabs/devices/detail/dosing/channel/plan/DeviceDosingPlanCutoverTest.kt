@@ -50,7 +50,7 @@ class DeviceDosingPlanCutoverTest {
                 )
                 val viewModel = DeviceDosingPlanViewModel(operations)
 
-                viewModel.bind(DEVICE_UID, SLOT_ID, restoredDraft = null)
+                viewModel.bind(DEVICE_UID, SLOT_ID)
                 assertEquals(program, viewModel.currentEditorState.programIntent)
                 viewModel.setScheduleEnabled(!program.enabled)
                 val expectedProgram = program.copy(enabled = !program.enabled)
@@ -71,7 +71,7 @@ class DeviceDosingPlanCutoverTest {
                 )
             )
             val viewModel = DeviceDosingPlanViewModel(operations)
-            viewModel.bind(DEVICE_UID, SLOT_ID, restoredDraft = null)
+            viewModel.bind(DEVICE_UID, SLOT_ID)
 
             viewModel.applyScheduleUpdate(
                 DosingPlanScheduleUpdate.Timer(
@@ -115,7 +115,7 @@ class DeviceDosingPlanCutoverTest {
             }
             val viewModel = DeviceDosingPlanViewModel(operations)
 
-            viewModel.bind(DEVICE_UID, SLOT_ID, restoredDraft = null)
+            viewModel.bind(DEVICE_UID, SLOT_ID)
             viewModel.setDailyDoseMicroliters(9_000L)
             val expectedBaseRevision = viewModel.currentEditorState.baseRevision
             val expectedBaseProgram = viewModel.currentEditorState.baseProgram
@@ -147,7 +147,7 @@ class DeviceDosingPlanCutoverTest {
             val operations = FakeDeviceDosingChannelOperations(initial)
             val viewModel = DeviceDosingPlanViewModel(operations)
 
-            viewModel.bind(DEVICE_UID, SLOT_ID, restoredDraft = null)
+            viewModel.bind(DEVICE_UID, SLOT_ID)
             viewModel.setDailyDoseMicroliters(12_000L)
             val staleProgram = viewModel.currentEditorState.programIntent
 
@@ -181,7 +181,7 @@ class DeviceDosingPlanCutoverTest {
             val initial = sampleDosingChannelSnapshot().copy(revision = 10L)
             val operations = FakeDeviceDosingChannelOperations(initial)
             val viewModel = DeviceDosingPlanViewModel(operations)
-            viewModel.bind(DEVICE_UID, SLOT_ID, restoredDraft = null)
+            viewModel.bind(DEVICE_UID, SLOT_ID)
             viewModel.setDailyDoseMicroliters(9_000L)
 
             operations.snapshot.value = initial.copy(
@@ -227,11 +227,13 @@ class DeviceDosingPlanCutoverTest {
             viewModel.bind(
                 deviceUidText = DEVICE_UID,
                 slotIdText = SLOT_ID,
-                restoredDraft = restoredDraft,
-                restoredBaseRevision = 10L,
-                restoredBaseProgram = baseProgram,
-                restoredBaseProgramKnown = true,
-                restoredDraftDirty = true
+                restoredState = DosingPlanRestoreState(
+                    draft = restoredDraft,
+                    baseRevision = 10L,
+                    baseProgram = baseProgram,
+                    baseProgramKnown = true,
+                    draftDirty = true
+                )
             )
 
             assertTrue(viewModel.currentEditorState.canSave)
@@ -260,11 +262,13 @@ class DeviceDosingPlanCutoverTest {
             viewModel.bind(
                 deviceUidText = DEVICE_UID,
                 slotIdText = SLOT_ID,
-                restoredDraft = requireNotNull(current.program).toPlanDraft().copy(
-                    distributedDailyDoseMicroliters = 9_000L
-                ),
-                restoredBaseRevision = 10L,
-                restoredDraftDirty = true
+                restoredState = DosingPlanRestoreState(
+                    draft = requireNotNull(current.program).toPlanDraft().copy(
+                        distributedDailyDoseMicroliters = 9_000L
+                    ),
+                    baseRevision = 10L,
+                    draftDirty = true
+                )
             )
 
             assertTrue(viewModel.currentEditorState.canSave)

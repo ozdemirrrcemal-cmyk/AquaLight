@@ -7,6 +7,7 @@ import com.aqua.aqualight.application.devices.DeviceDosingChannelSlot
 import com.aqua.aqualight.application.devices.DeviceMenuUnavailableReason
 import com.aqua.aqualight.application.devices.DeviceRootCatalogState
 import com.aqua.aqualight.application.devices.DeviceRootOperations
+import com.aqua.aqualight.application.devices.DeviceRootSnapshot
 import com.aqua.aqualight.application.devices.OwnerDeviceFamily
 import com.aqua.aqualight.application.devices.dosing.DeviceDosingChannelOperations
 import com.aqua.aqualight.application.devices.dosing.DeviceDosingChannelSnapshot
@@ -25,43 +26,49 @@ internal class DefaultDeviceControlSurfacePreparationOperations(
 
     override suspend fun prepare(
         request: DeviceControlSurfacePreparationRequest
-    ): DeviceControlSurfacePreparationResult {
-        val deviceUid = request.deviceUid.trim()
-        if (deviceUid.isBlank()) {
-            return unavailable(DeviceMenuUnavailableReason.INVALID_DEVICE_UID)
-        }
-        if (request.family != OwnerDeviceFamily.DOSING) {
-            return DeviceControlSurfacePreparationResult.Ready
-        }
+    ): DeviceControlSurfacePreparationResult = when {
+        request.deviceUid.trim().isBlank() ->
+            unavailable(DeviceMenuUnavailableReason.INVALID_DEVICE_UID)
+        request.family != OwnerDeviceFamily.DOSING ->
+            DeviceControlSurfacePreparationResult.Ready
+        else -> prepareDosing(request.deviceUid.trim())
+    }
 
+    private suspend fun prepareDosing(
+        deviceUid: String
+    ): DeviceControlSurfacePreparationResult {
         // A fresh marker belongs only to the immediately preceding cold preparation/navigation
         // handoff. A later menu attempt must not inherit it after a cancelled or abandoned route.
         freshlyPreparedDeviceUids.remove(deviceUid)
-
         val root = rootOperations.current(deviceUid)
-            ?: return unavailable(DeviceMenuUnavailableReason.DEVICE_NOT_REGISTERED)
+        return root?.let { snapshot -> prepareDosingRoot(deviceUid, snapshot) }
+            ?: unavailable(DeviceMenuUnavailableReason.DEVICE_NOT_REGISTERED)
+    }
+
+    private suspend fun prepareDosingRoot(
+        deviceUid: String,
+        root: DeviceRootSnapshot
+    ): DeviceControlSurfacePreparationResult {
         val expectedSlots = root.channelSlots.dosingChannels
-        if (
-            root.catalogState != DeviceRootCatalogState.VALID ||
-            root.family != OwnerDeviceFamily.DOSING ||
-            expectedSlots.isEmpty() ||
-            root.dosingChannelCount != expectedSlots.size
-        ) {
-            return unavailable(DeviceMenuUnavailableReason.COMMERCIAL_PRODUCT_MISMATCH)
+        return when {
+            expectedSlots.isEmpty() ->
+                unavailable(DeviceMenuUnavailableReason.COMMERCIAL_PRODUCT_MISMATCH)
+            !root.matchesDosingCatalog(expectedSlots) ->
+                unavailable(DeviceMenuUnavailableReason.COMMERCIAL_PRODUCT_MISMATCH)
+            hasAuthoritativeSurface(deviceUid, expectedSlots) -> ready(deviceUid)
+            !dosingChannelOperations.refreshAll(deviceUid) ->
+                unavailable(DeviceMenuUnavailableReason.CURRENT_LIVENESS_NOT_PROVEN)
+            hasAuthoritativeSurface(deviceUid, expectedSlots) -> ready(deviceUid)
+            else -> unavailable(DeviceMenuUnavailableReason.CURRENT_LIVENESS_NOT_PROVEN)
         }
+    }
 
-        if (currentAuthoritative(deviceUid, expectedSlots).matches(deviceUid, expectedSlots)) {
-            freshlyPreparedDeviceUids += deviceUid
-            return DeviceControlSurfacePreparationResult.Ready
-        }
+    private fun hasAuthoritativeSurface(
+        deviceUid: String,
+        expectedSlots: List<DeviceDosingChannelSlot>
+    ): Boolean = currentAuthoritative(deviceUid, expectedSlots).matches(deviceUid, expectedSlots)
 
-        if (!dosingChannelOperations.refreshAll(deviceUid)) {
-            return unavailable(DeviceMenuUnavailableReason.CURRENT_LIVENESS_NOT_PROVEN)
-        }
-        if (!currentAuthoritative(deviceUid, expectedSlots).matches(deviceUid, expectedSlots)) {
-            return unavailable(DeviceMenuUnavailableReason.CURRENT_LIVENESS_NOT_PROVEN)
-        }
-
+    private fun ready(deviceUid: String): DeviceControlSurfacePreparationResult {
         freshlyPreparedDeviceUids += deviceUid
         return DeviceControlSurfacePreparationResult.Ready
     }
@@ -86,6 +93,12 @@ internal class DefaultDeviceControlSurfacePreparationOperations(
     ): DeviceControlSurfacePreparationResult.Unavailable =
         DeviceControlSurfacePreparationResult.Unavailable(reason)
 }
+
+private fun DeviceRootSnapshot.matchesDosingCatalog(
+    expectedSlots: List<DeviceDosingChannelSlot>
+): Boolean = catalogState == DeviceRootCatalogState.VALID &&
+    family == OwnerDeviceFamily.DOSING &&
+    dosingChannelCount == expectedSlots.size
 
 private fun List<DeviceDosingChannelSnapshot>.matches(
     deviceUid: String,

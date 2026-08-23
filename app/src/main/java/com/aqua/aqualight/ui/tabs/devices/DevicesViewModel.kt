@@ -12,6 +12,7 @@ import com.aqua.aqualight.application.devices.OwnerDevicesOperations
 import com.aqua.aqualight.ui.common.devicepresence.DeviceMenuUnavailableMessageMapper
 import com.aqua.aqualight.ui.tabs.devices.route.DeviceRouteResolver
 import java.util.concurrent.CancellationException
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.Flow
@@ -30,8 +31,6 @@ class DevicesViewModel(
 ) : ViewModel() {
 
     private val selectedDeviceUids = MutableStateFlow<Set<String>>(emptySet())
-    private val openingDeviceUid = MutableStateFlow<String?>(null)
-    private val preparingDeviceUid = MutableStateFlow<String?>(null)
     private val deletingDevices = MutableStateFlow(false)
     private val _uiState = MutableStateFlow(DevicesUiState())
     val uiState: StateFlow<DevicesUiState> = _uiState.asStateFlow()
@@ -39,7 +38,12 @@ class DevicesViewModel(
     private val _events = Channel<DevicesEvent>(capacity = Channel.BUFFERED)
     val events: Flow<DevicesEvent> = _events.receiveAsFlow()
 
-    private var menuOpenJob: Job? = null
+    private val menuOpenCoordinator = DevicesMenuOpenCoordinator(
+        menuAccessOperations = menuAccessOperations,
+        controlSurfacePreparationOperations = controlSurfacePreparationOperations,
+        routeResolver = routeResolver,
+        emitEvent = { event -> _events.send(event) }
+    )
 
     init {
         operations.start(viewModelScope)
@@ -57,74 +61,19 @@ class DevicesViewModel(
             toggleDeviceSelection(deviceUid)
             return
         }
-        if (openingDeviceUid.value != null) return
-
-        menuOpenJob?.cancel()
-        openingDeviceUid.value = deviceUid
-        preparingDeviceUid.value = deviceUid
-        menuOpenJob = viewModelScope.launch {
-            var deviceTitle = ""
-            try {
-                when (val result = menuAccessOperations.resolve(deviceUid)) {
-                    is DeviceMenuAccessResult.Unavailable -> {
-                        failMenuOpen(
-                            deviceUid = deviceUid,
-                            title = result.title,
-                            reason = result.reason
-                        )
-                    }
-                    is DeviceMenuAccessResult.Available -> {
-                        deviceTitle = result.title
-                        when (
-                            val preparation = controlSurfacePreparationOperations.prepare(
-                                DeviceControlSurfacePreparationRequest(
-                                    deviceUid = result.deviceUid,
-                                    family = result.family
-                                )
-                            )
-                        ) {
-                            DeviceControlSurfacePreparationResult.Ready -> {
-                                completePreparation(deviceUid)
-                                _events.send(
-                                    DevicesEvent.OpenRoute(
-                                        route = routeResolver.resolve(result)
-                                    )
-                                )
-                            }
-                            is DeviceControlSurfacePreparationResult.Unavailable -> {
-                                failMenuOpen(
-                                    deviceUid = deviceUid,
-                                    title = result.title,
-                                    reason = preparation.reason
-                                )
-                            }
-                        }
-                    }
-                }
-            } catch (error: Throwable) {
-                if (error is CancellationException) {
-                    clearMenuOpen(deviceUid)
-                    throw error
-                }
-                failMenuOpen(
-                    deviceUid = deviceUid,
-                    title = deviceTitle,
-                    reason = DeviceMenuUnavailableReason.CURRENT_LIVENESS_NOT_PROVEN
-                )
-            }
-        }
+        menuOpenCoordinator.open(viewModelScope, deviceUid)
     }
 
     /** Called only after the Fragment has committed the navigation attempt. */
     fun onDeviceNavigationStarted(deviceUid: String) {
-        clearMenuOpen(deviceUid)
+        menuOpenCoordinator.navigationStarted(deviceUid)
     }
 
     fun onDeviceLongClicked(deviceUid: String) {
         if (
             deviceUid.isBlank() ||
             deletingDevices.value ||
-            openingDeviceUid.value != null
+            menuOpenCoordinator.isOpening
         ) {
             return
         }
@@ -140,7 +89,7 @@ class DevicesViewModel(
         if (
             selected.isEmpty() ||
             deletingDevices.value ||
-            openingDeviceUid.value != null
+            menuOpenCoordinator.isOpening
         ) {
             return
         }
@@ -178,35 +127,6 @@ class DevicesViewModel(
         }
     }
 
-    private suspend fun failMenuOpen(
-        deviceUid: String,
-        title: String,
-        reason: DeviceMenuUnavailableReason
-    ) {
-        clearMenuOpen(deviceUid)
-        _events.send(
-            DevicesEvent.ShowDeviceUnavailable(
-                title = title,
-                messageRes = DeviceMenuUnavailableMessageMapper.messageRes(reason)
-            )
-        )
-    }
-
-    private fun completePreparation(deviceUid: String) {
-        if (preparingDeviceUid.value == deviceUid) {
-            preparingDeviceUid.value = null
-        }
-    }
-
-    private fun clearMenuOpen(deviceUid: String) {
-        if (preparingDeviceUid.value == deviceUid) {
-            preparingDeviceUid.value = null
-        }
-        if (openingDeviceUid.value == deviceUid) {
-            openingDeviceUid.value = null
-        }
-    }
-
     private fun toggleDeviceSelection(deviceUid: String) {
         val current = selectedDeviceUids.value
         selectedDeviceUids.value = if (deviceUid in current) {
@@ -218,8 +138,8 @@ class DevicesViewModel(
 
     private fun observeDevices() {
         val operationState = combine(
-            openingDeviceUid,
-            preparingDeviceUid,
+            menuOpenCoordinator.openingDeviceUid,
+            menuOpenCoordinator.preparingDeviceUid,
             deletingDevices
         ) { currentOpeningDeviceUid, currentPreparingDeviceUid, isDeletingDevices ->
             OperationState(
@@ -275,4 +195,111 @@ class DevicesViewModel(
         val isPreparingDeviceMenu: Boolean = false,
         val isDeletingDevices: Boolean = false
     )
+}
+
+private class DevicesMenuOpenCoordinator(
+    private val menuAccessOperations: DeviceMenuAccessOperations,
+    private val controlSurfacePreparationOperations: DeviceControlSurfacePreparationOperations,
+    private val routeResolver: DeviceRouteResolver,
+    private val emitEvent: suspend (DevicesEvent) -> Unit
+) {
+    private val _openingDeviceUid = MutableStateFlow<String?>(null)
+    val openingDeviceUid: StateFlow<String?> = _openingDeviceUid.asStateFlow()
+    private val _preparingDeviceUid = MutableStateFlow<String?>(null)
+    val preparingDeviceUid: StateFlow<String?> = _preparingDeviceUid.asStateFlow()
+    private var menuOpenJob: Job? = null
+
+    val isOpening: Boolean
+        get() = openingDeviceUid.value != null
+
+    fun open(scope: CoroutineScope, deviceUid: String) {
+        if (isOpening) return
+        menuOpenJob?.cancel()
+        _openingDeviceUid.value = deviceUid
+        _preparingDeviceUid.value = deviceUid
+        menuOpenJob = scope.launch { resolveAndPrepare(deviceUid) }
+    }
+
+    fun navigationStarted(deviceUid: String) {
+        clear(deviceUid)
+    }
+
+    private suspend fun resolveAndPrepare(deviceUid: String) {
+        var deviceTitle = ""
+        try {
+            when (val result = menuAccessOperations.resolve(deviceUid)) {
+                is DeviceMenuAccessResult.Unavailable -> fail(
+                    deviceUid = deviceUid,
+                    title = result.title,
+                    reason = result.reason
+                )
+                is DeviceMenuAccessResult.Available -> {
+                    deviceTitle = result.title
+                    prepareAvailable(deviceUid, result)
+                }
+            }
+        } catch (error: Throwable) {
+            if (error is CancellationException) {
+                clear(deviceUid)
+                throw error
+            }
+            fail(
+                deviceUid = deviceUid,
+                title = deviceTitle,
+                reason = DeviceMenuUnavailableReason.CURRENT_LIVENESS_NOT_PROVEN
+            )
+        }
+    }
+
+    private suspend fun prepareAvailable(
+        requestedDeviceUid: String,
+        result: DeviceMenuAccessResult.Available
+    ) {
+        val preparation = controlSurfacePreparationOperations.prepare(
+            DeviceControlSurfacePreparationRequest(
+                deviceUid = result.deviceUid,
+                family = result.family
+            )
+        )
+        when (preparation) {
+            DeviceControlSurfacePreparationResult.Ready -> {
+                completePreparation(requestedDeviceUid)
+                emitEvent(DevicesEvent.OpenRoute(routeResolver.resolve(result)))
+            }
+            is DeviceControlSurfacePreparationResult.Unavailable -> fail(
+                deviceUid = requestedDeviceUid,
+                title = result.title,
+                reason = preparation.reason
+            )
+        }
+    }
+
+    private suspend fun fail(
+        deviceUid: String,
+        title: String,
+        reason: DeviceMenuUnavailableReason
+    ) {
+        clear(deviceUid)
+        emitEvent(
+            DevicesEvent.ShowDeviceUnavailable(
+                title = title,
+                messageRes = DeviceMenuUnavailableMessageMapper.messageRes(reason)
+            )
+        )
+    }
+
+    private fun completePreparation(deviceUid: String) {
+        if (_preparingDeviceUid.value == deviceUid) {
+            _preparingDeviceUid.value = null
+        }
+    }
+
+    private fun clear(deviceUid: String) {
+        if (_preparingDeviceUid.value == deviceUid) {
+            _preparingDeviceUid.value = null
+        }
+        if (_openingDeviceUid.value == deviceUid) {
+            _openingDeviceUid.value = null
+        }
+    }
 }

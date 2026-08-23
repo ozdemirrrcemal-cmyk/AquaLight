@@ -5,20 +5,65 @@ import com.aqua.aqualight.application.devices.dosing.DeviceDosingChannelSnapshot
 import com.aqua.aqualight.data.devices.model.DeviceUid
 import com.aqua.aqualight.data.devices.runtime.core.DeviceRuntimeCommandOutcome
 import java.util.concurrent.ConcurrentHashMap
+import java.util.concurrent.atomic.AtomicInteger
 import kotlinx.coroutines.sync.Mutex
-import kotlinx.coroutines.sync.withLock
 
-/** Serializes all per-channel operations that may reconcile authoritative Dosing state. */
+/** Gives user mutations priority while preserving per-channel firmware serialization. */
 internal class DeviceDosingV1ChannelOperationGate {
-    private val locks = ConcurrentHashMap<DeviceDosingV1Address, Mutex>()
+    private val channels = ConcurrentHashMap<DeviceDosingV1Address, ChannelGate>()
 
-    suspend fun <T> withChannel(
+    suspend fun <T> withMutation(
         address: DeviceDosingV1Address,
+        preemptRefresh: suspend () -> Unit,
         block: suspend () -> T
-    ): T = lock(address).withLock { block() }
+    ): T {
+        val channel = channel(address)
+        channel.pendingMutations.incrementAndGet()
+        var announced = true
+        var admissionAcquired = false
+        var operationAcquired = false
+        try {
+            channel.mutationAdmission.lock()
+            admissionAcquired = true
+            preemptRefresh()
+            channel.operationMutex.lock()
+            operationAcquired = true
+            channel.pendingMutations.decrementAndGet()
+            announced = false
+            return block()
+        } finally {
+            if (operationAcquired) channel.operationMutex.unlock()
+            if (admissionAcquired) channel.mutationAdmission.unlock()
+            if (announced) {
+                channel.pendingMutations.decrementAndGet()
+            }
+        }
+    }
 
-    private fun lock(address: DeviceDosingV1Address): Mutex =
-        locks.computeIfAbsent(address) { Mutex() }
+    suspend fun <T> withRefresh(
+        address: DeviceDosingV1Address,
+        preempted: T,
+        block: suspend () -> T
+    ): T {
+        val channel = channel(address)
+        if (channel.pendingMutations.get() > 0) return preempted
+
+        channel.operationMutex.lock()
+        return try {
+            if (channel.pendingMutations.get() > 0) preempted else block()
+        } finally {
+            channel.operationMutex.unlock()
+        }
+    }
+
+    private fun channel(address: DeviceDosingV1Address): ChannelGate =
+        channels.computeIfAbsent(address) { ChannelGate() }
+
+    private class ChannelGate(
+        val operationMutex: Mutex = Mutex(),
+        val mutationAdmission: Mutex = Mutex(),
+        val pendingMutations: AtomicInteger = AtomicInteger()
+    )
 }
 
 /** A replay policy and firmware assignment handled as one serialized persisted mutation. */
@@ -97,14 +142,17 @@ internal class DeviceDosingV1MutationCoordinator(
     private suspend fun <T> mutateSerialized(
         address: DeviceDosingV1Address,
         mutation: DosingMutationDefinition<T>
-    ): DeviceDosingV1MutationResult<T> = operationGate.withChannel(address) {
+    ): DeviceDosingV1MutationResult<T> = operationGate.withMutation(
+        address = address,
+        preemptRefresh = { refreshCoordinator.preemptForMutation(address) }
+    ) {
         var baseline = mutationBaseline(address, mutation)
-            ?: return@withChannel DeviceDosingV1MutationResult.Malformed
+            ?: return@withMutation DeviceDosingV1MutationResult.Malformed
         if (mutation.assignmentSatisfied?.invoke(baseline.state.channel) == true) {
-            return@withChannel acceptSatisfiedAssignment(address, baseline, mutation)
+            return@withMutation acceptSatisfiedAssignment(address, baseline, mutation)
         }
         if (!mutation.origin.accepts(baseline.state.channel)) {
-            return@withChannel DeviceDosingV1MutationResult.Conflict
+            return@withMutation DeviceDosingV1MutationResult.Conflict
         }
         var attempt = 0
         while (attempt < MAX_REPLAY_SAFE_ASSIGNMENT_ATTEMPTS) {
@@ -115,21 +163,21 @@ internal class DeviceDosingV1MutationCoordinator(
             )
             val replayableFailure = mutation.assignmentSatisfied != null &&
                 result.isReplayableAssignmentFailure()
-            if (!replayableFailure) return@withChannel result
+            if (!replayableFailure) return@withMutation result
 
             // Failure reconciliation already refreshed inside this same channel gate. Replay
             // only when it produced a coherent authoritative baseline.
-            val reconciled = stateAccess.currentState(address) ?: return@withChannel result
+            val reconciled = stateAccess.currentState(address) ?: return@withMutation result
             if (mutation.assignmentSatisfied?.invoke(reconciled.channel) == true) {
                 mutation.onAccepted()
                 val acceptedState = stateAccess.currentState(address) ?: reconciled
-                return@withChannel DeviceDosingV1MutationResult.Reconciled(acceptedState)
+                return@withMutation DeviceDosingV1MutationResult.Reconciled(acceptedState)
             }
             if (!mutation.origin.accepts(reconciled.channel)) {
-                return@withChannel DeviceDosingV1MutationResult.Conflict
+                return@withMutation DeviceDosingV1MutationResult.Conflict
             }
             if (attempt >= MAX_REPLAY_SAFE_ASSIGNMENT_ATTEMPTS - 1) {
-                return@withChannel result
+                return@withMutation result
             }
             baseline = DosingMutationBaseline(
                 state = reconciled,

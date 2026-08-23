@@ -58,10 +58,10 @@ internal class DeviceDosingV1StateAccess(
     }
 
     fun currentState(address: DeviceDosingV1Address): DeviceDosingV1AuthoritativeState? =
-        stateOwner.reads.currentChannel(address.deviceUid, address.channelKey)?.let { channel ->
-            stateOwner.reads.currentCalibration(address.deviceUid, address.channelKey)
-                ?.let { calibration -> DeviceDosingV1AuthoritativeState(channel, calibration) }
-        }
+        stateOwner.reads.currentAuthoritativeStateAtLeast(
+            address.deviceUid,
+            address.channelKey
+        )
 
     /** Mutation-only continuation from a durable ACK; never exposed as authoritative UI state. */
     fun committedMutationContinuation(
@@ -84,9 +84,6 @@ internal class DeviceDosingV1StateAccess(
         stateOwner.setLowLevelAlertIntent(address.deviceUid, address.channelKey, enabled)
     }
 
-    fun invalidateAll(deviceUid: DeviceUid) {
-        stateOwner.invalidateAll(deviceUid)
-    }
 }
 
 internal fun dosingV1Address(deviceUid: String, slotId: String): DeviceDosingV1Address =

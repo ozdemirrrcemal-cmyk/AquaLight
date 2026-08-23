@@ -4,6 +4,7 @@ import com.aqua.aqualight.application.devices.dosing.DeviceDosingProgramSchedule
 import com.aqua.aqualight.application.devices.dosing.DeviceDosingReservoirCapacityRejection
 import com.aqua.aqualight.ui.tabs.devices.detail.dosing.channel.detail.DeviceDosingChannelDetailViewModel
 import com.aqua.aqualight.ui.tabs.devices.detail.dosing.channel.plan.DosingPlanDraft
+import com.aqua.aqualight.ui.tabs.devices.detail.dosing.channel.plan.DosingPlanRestoreState
 import com.aqua.aqualight.ui.tabs.devices.detail.dosing.channel.plan.DosingPlanScheduleMode
 import com.aqua.aqualight.ui.tabs.devices.detail.dosing.channel.plan.DosingPlanScheduleUpdate
 import com.aqua.aqualight.ui.tabs.devices.detail.dosing.channel.plan.DeviceDosingPlanViewModel
@@ -46,12 +47,16 @@ class DosingDraftViewModelBoundaryTest {
         viewModel.bind(
             deviceUidText = "device-1",
             slotIdText = "dosing:channel2",
-            restoredDraft = DosingPlanDraft(distributedDailyDoseMicroliters = 2_000L)
+            restoredState = DosingPlanRestoreState(
+                draft = DosingPlanDraft(distributedDailyDoseMicroliters = 2_000L)
+            )
         )
         viewModel.bind(
             deviceUidText = "device-1",
             slotIdText = "dosing:channel2",
-            restoredDraft = DosingPlanDraft(distributedDailyDoseMicroliters = 9_000L)
+            restoredState = DosingPlanRestoreState(
+                draft = DosingPlanDraft(distributedDailyDoseMicroliters = 9_000L)
+            )
         )
 
         viewModel.setDailyDoseMicroliters(3_000L)
@@ -72,7 +77,7 @@ class DosingDraftViewModelBoundaryTest {
     fun `disabled valid plan remains saveable`() = runTest(dispatcher) {
         val operations = FakeDeviceDosingChannelOperations()
         val viewModel = DeviceDosingPlanViewModel(operations)
-        viewModel.bind("device-1", "dosing:channel2", restoredDraft = null)
+        viewModel.bind("device-1", "dosing:channel2")
 
         viewModel.setScheduleEnabled(false)
 

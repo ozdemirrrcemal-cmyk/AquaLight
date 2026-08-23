@@ -70,15 +70,9 @@ internal class DeviceDosingPlanViewModel(
     private val eventChannel = Channel<DeviceDosingPlanEvent>(Channel.BUFFERED)
     val events: Flow<DeviceDosingPlanEvent> = eventChannel.receiveAsFlow()
 
-    private var boundDeviceUid: String = ""
-    private var boundSlotId: String = ""
-    private var restoredDraft: DosingPlanDraft? = null
-    private var restoredBaseRevision: Long? = null
-    private var restoredBaseProgram: DeviceDosingProgram? = null
-    private var restoredBaseProgramKnown: Boolean = false
-    private var restoredDraftDirty: Boolean = false
-    private var observeJob: Job? = null
-    private var refreshJob: Job? = null
+    private var boundChannel: DosingPlanChannelBinding? = null
+    private var restoreState = DosingPlanRestoreState()
+    private val snapshotBinding = DosingPlanSnapshotBinding(operations, viewModelScope)
     private var saveJob: Job? = null
 
     val currentEditorState: DeviceDosingPlanEditorState
@@ -87,73 +81,30 @@ internal class DeviceDosingPlanViewModel(
     fun bind(
         deviceUidText: String,
         slotIdText: String,
-        restoredDraft: DosingPlanDraft?,
-        restoredBaseRevision: Long? = null,
-        restoredBaseProgram: DeviceDosingProgram? = null,
-        restoredBaseProgramKnown: Boolean = false,
-        restoredDraftDirty: Boolean = false
+        restoredState: DosingPlanRestoreState = DosingPlanRestoreState()
     ) {
-        val deviceUid = deviceUidText.trim()
-        val slotId = slotIdText.trim()
-        if (deviceUid.isBlank() || slotId.isBlank()) {
-            observeJob?.cancel()
-            refreshJob?.cancel()
+        val binding = DosingPlanChannelBinding.from(deviceUidText, slotIdText)
+        if (binding == null) {
+            boundChannel = null
+            snapshotBinding.clear()
             saveJob?.cancel()
-            boundDeviceUid = ""
-            boundSlotId = ""
-            this.restoredDraft = null
-            this.restoredBaseRevision = null
-            this.restoredBaseProgram = null
-            this.restoredBaseProgramKnown = false
-            this.restoredDraftDirty = false
+            restoreState = DosingPlanRestoreState()
             mutableEditorState.value = DeviceDosingPlanEditorState()
             return
         }
-        if (boundDeviceUid == deviceUid && boundSlotId == slotId) return
+        if (boundChannel == binding) return
 
-        observeJob?.cancel()
-        refreshJob?.cancel()
         saveJob?.cancel()
-        boundDeviceUid = deviceUid
-        boundSlotId = slotId
-        this.restoredDraft = restoredDraft
-        this.restoredBaseRevision = restoredBaseRevision
-        this.restoredBaseProgram = restoredBaseProgram
-        this.restoredBaseProgramKnown = restoredBaseProgramKnown
-        this.restoredDraftDirty = restoredDraftDirty
+        boundChannel = binding
+        restoreState = restoredState
         mutableEditorState.value = DeviceDosingPlanEditorState()
-        observeJob = viewModelScope.launch {
-            operations.observe(deviceUid, slotId).collect { snapshot ->
-                if (boundDeviceUid != deviceUid || boundSlotId != slotId) return@collect
-                snapshot?.let { authoritative ->
-                    mutableEditorState.value = reduceDosingPlanSnapshot(
-                        current = mutableEditorState.value,
-                        snapshot = authoritative,
-                        restoredDraft = this@DeviceDosingPlanViewModel.restoredDraft,
-                        restoredBaseRevision = this@DeviceDosingPlanViewModel.restoredBaseRevision,
-                        restoredBaseProgram = this@DeviceDosingPlanViewModel.restoredBaseProgram,
-                        restoredBaseProgramKnown =
-                            this@DeviceDosingPlanViewModel.restoredBaseProgramKnown,
-                        restoredDraftDirty = this@DeviceDosingPlanViewModel.restoredDraftDirty
-                    )
-                }
-            }
-        }
-        refreshJob = viewModelScope.launch {
-            when (val result = operations.refresh(deviceUid, slotId)) {
-                is DeviceDosingChannelOperationResult.Success -> {
-                    mutableEditorState.value = reduceDosingPlanSnapshot(
-                        current = mutableEditorState.value,
-                        snapshot = result.snapshot,
-                        restoredDraft = this@DeviceDosingPlanViewModel.restoredDraft,
-                        restoredBaseRevision = this@DeviceDosingPlanViewModel.restoredBaseRevision,
-                        restoredBaseProgram = this@DeviceDosingPlanViewModel.restoredBaseProgram,
-                        restoredBaseProgramKnown =
-                            this@DeviceDosingPlanViewModel.restoredBaseProgramKnown,
-                        restoredDraftDirty = this@DeviceDosingPlanViewModel.restoredDraftDirty
-                    )
-                }
-                else -> Unit
+        snapshotBinding.replace(binding) { snapshot ->
+            if (boundChannel == binding) {
+                mutableEditorState.value = reduceDosingPlanSnapshot(
+                    current = mutableEditorState.value,
+                    snapshot = snapshot,
+                    restoredState = restoreState
+                )
             }
         }
     }
@@ -201,14 +152,12 @@ internal class DeviceDosingPlanViewModel(
     }
 
     fun save() {
-        val deviceUid = boundDeviceUid
-        val slotId = boundSlotId
+        val currentBinding = boundChannel
         val state = mutableEditorState.value
         val program = state.programIntent
         val baseRevision = state.baseRevision
         val canStartSave = listOf(
-            deviceUid.isNotBlank(),
-            slotId.isNotBlank(),
+            currentBinding != null,
             state.editable,
             !state.operationInProgress,
             baseRevision != null,
@@ -225,14 +174,15 @@ internal class DeviceDosingPlanViewModel(
             return
         }
 
+        val binding = checkNotNull(currentBinding)
         mutableEditorState.value = state.copy(operationInProgress = true)
         saveJob?.cancel()
         saveJob = viewModelScope.launch {
             val reconciliation = try {
                 operations.reconcilePlanSave(
                     DeviceDosingPlanSaveRequest(
-                        deviceUid = deviceUid,
-                        slotId = slotId,
+                        deviceUid = binding.deviceUid,
+                        slotId = binding.slotId,
                         program = program,
                         baseRevision = checkNotNull(baseRevision),
                         baseProgram = state.baseProgram
@@ -243,8 +193,8 @@ internal class DeviceDosingPlanViewModel(
             } catch (_: Exception) {
                 DeviceDosingMutationReconciliation(DeviceDosingChannelOperationResult.Failed)
             }
-            if (boundDeviceUid != deviceUid || boundSlotId != slotId) return@launch
-            handleSaveResult(deviceUid, slotId, program, reconciliation)
+            if (boundChannel != binding) return@launch
+            handleSaveResult(binding, program, reconciliation)
         }
     }
 
@@ -260,8 +210,7 @@ internal class DeviceDosingPlanViewModel(
     }
 
     private suspend fun handleSaveResult(
-        deviceUid: String,
-        slotId: String,
+        binding: DosingPlanChannelBinding,
         program: DeviceDosingProgram,
         reconciliation: DeviceDosingMutationReconciliation
     ) {
@@ -274,11 +223,7 @@ internal class DeviceDosingPlanViewModel(
                 mutableEditorState.value = reduceDosingPlanSnapshot(
                     current = savedState,
                     snapshot = result.snapshot,
-                    restoredDraft = restoredDraft,
-                    restoredBaseRevision = restoredBaseRevision,
-                    restoredBaseProgram = restoredBaseProgram,
-                    restoredBaseProgramKnown = restoredBaseProgramKnown,
-                    restoredDraftDirty = restoredDraftDirty
+                    restoredState = restoreState
                 ).copy(operationInProgress = false)
                 eventChannel.send(DeviceDosingPlanEvent.Saved)
             }
@@ -295,7 +240,7 @@ internal class DeviceDosingPlanViewModel(
                 eventChannel.send(DeviceDosingPlanEvent.Saved)
             }
             is DeviceDosingChannelOperationResult.Rejected -> {
-                handleRejectedSave(deviceUid, slotId, result, reconciliation.authoritativeSnapshot)
+                handleRejectedSave(binding, result, reconciliation.authoritativeSnapshot)
             }
             DeviceDosingChannelOperationResult.Unavailable -> {
                 mutableEditorState.value = mutableEditorState.value.copy(
@@ -313,127 +258,24 @@ internal class DeviceDosingPlanViewModel(
     }
 
     private suspend fun handleRejectedSave(
-        deviceUid: String,
-        slotId: String,
+        binding: DosingPlanChannelBinding,
         rejection: DeviceDosingChannelOperationResult.Rejected,
         authoritativeSnapshot: DeviceDosingChannelSnapshot?
     ) {
         if (rejection.reason == DeviceDosingChannelRejection.CONFLICT) {
             val refreshed = authoritativeSnapshot
-                ?: refreshConflictRevision(operations, deviceUid, slotId)
-            if (refreshed != null && boundDeviceUid == deviceUid && boundSlotId == slotId) {
+                ?: refreshConflictRevision(operations, binding.deviceUid, binding.slotId)
+            if (refreshed != null && boundChannel == binding) {
                 mutableEditorState.value = reduceDosingPlanSnapshot(
                     current = mutableEditorState.value.copy(draftDirty = false),
                     snapshot = refreshed,
-                    restoredDraft = restoredDraft,
-                    restoredBaseRevision = restoredBaseRevision,
-                    restoredBaseProgram = restoredBaseProgram,
-                    restoredBaseProgramKnown = restoredBaseProgramKnown,
-                    restoredDraftDirty = restoredDraftDirty
+                    restoredState = restoreState
                 )
             }
         }
         mutableEditorState.value = mutableEditorState.value.copy(operationInProgress = false)
         eventChannel.send(DeviceDosingPlanEvent.SaveRejected(rejection.reason))
     }
-}
-
-private data class RecoveredDosingPlanDraft(
-    val draft: DosingPlanDraft,
-    val baseRevision: Long?,
-    val baseProgram: DeviceDosingProgram?,
-    val baseProgramKnown: Boolean,
-    val draftDirty: Boolean
-)
-
-private fun reduceDosingPlanSnapshot(
-    current: DeviceDosingPlanEditorState,
-    snapshot: DeviceDosingChannelSnapshot,
-    restoredDraft: DosingPlanDraft?,
-    restoredBaseRevision: Long?,
-    restoredBaseProgram: DeviceDosingProgram?,
-    restoredBaseProgramKnown: Boolean,
-    restoredDraftDirty: Boolean
-): DeviceDosingPlanEditorState {
-    val recovered = recoverDosingPlanDraft(
-        current = current,
-        snapshot = snapshot,
-        restoredDraft = restoredDraft,
-        restoredBaseRevision = restoredBaseRevision,
-        restoredBaseProgram = restoredBaseProgram,
-        restoredBaseProgramKnown = restoredBaseProgramKnown,
-        restoredDraftDirty = restoredDraftDirty
-    )
-    return current.copy(
-        draft = recovered.draft,
-        scheduling = snapshot.scheduling,
-        supportedModes = snapshot.scheduling.supportedModes.mapTo(linkedSetOf()) { mode ->
-            mode.toPlanMode()
-        },
-        missedDoseRecoveryEnabled = snapshot.program?.missedDoseRecoveryEnabled ?: false,
-        editable = snapshot.calibrated && snapshot.controls.programEditable,
-        initialized = true,
-        baseRevision = recovered.baseRevision,
-        baseProgram = recovered.baseProgram,
-        baseProgramKnown = recovered.baseProgramKnown,
-        draftDirty = recovered.draftDirty
-    )
-}
-
-private fun recoverDosingPlanDraft(
-    current: DeviceDosingPlanEditorState,
-    snapshot: DeviceDosingChannelSnapshot,
-    restoredDraft: DosingPlanDraft?,
-    restoredBaseRevision: Long?,
-    restoredBaseProgram: DeviceDosingProgram?,
-    restoredBaseProgramKnown: Boolean,
-    restoredDraftDirty: Boolean
-): RecoveredDosingPlanDraft = when {
-    !current.initialized -> {
-        val recoveredDirty = restoredDraft != null && restoredDraftDirty
-        val recoveredRevision = restoredBaseRevision ?: snapshot.revision
-        val savedOriginAvailable = recoveredDirty &&
-            restoredBaseRevision != null &&
-            restoredBaseProgramKnown
-        val currentSnapshotIsOrigin = recoveredDirty && recoveredRevision == snapshot.revision
-        if (recoveredDirty && !savedOriginAvailable && !currentSnapshotIsOrigin) {
-            // Legacy/incomplete process state cannot safely identify the editor's CAS origin.
-            // Reload authoritative data instead of leaving an editable draft that can never save.
-            RecoveredDosingPlanDraft(
-                draft = snapshot.program?.toPlanDraft() ?: defaultDraft(),
-                baseRevision = snapshot.revision,
-                baseProgram = snapshot.program,
-                baseProgramKnown = true,
-                draftDirty = false
-            )
-        } else {
-            RecoveredDosingPlanDraft(
-                draft = restoredDraft ?: snapshot.program?.toPlanDraft() ?: defaultDraft(),
-                baseRevision = recoveredRevision,
-                baseProgram = if (savedOriginAvailable) restoredBaseProgram else snapshot.program,
-                baseProgramKnown = true,
-                draftDirty = recoveredDirty
-            )
-        }
-    }
-    current.draftDirty -> {
-        val baselineStillCurrent = current.baseProgramKnown &&
-            current.baseProgram.hasSamePlanMutationDomain(snapshot.program)
-        RecoveredDosingPlanDraft(
-            draft = current.draft,
-            baseRevision = if (baselineStillCurrent) snapshot.revision else current.baseRevision,
-            baseProgram = if (baselineStillCurrent) snapshot.program else current.baseProgram,
-            baseProgramKnown = current.baseProgramKnown,
-            draftDirty = true
-        )
-    }
-    else -> RecoveredDosingPlanDraft(
-        draft = snapshot.program?.toPlanDraft() ?: defaultDraft(),
-        baseRevision = snapshot.revision,
-        baseProgram = snapshot.program,
-        baseProgramKnown = true,
-        draftDirty = false
-    )
 }
 
 private fun emitConstraintWarningIfNeeded(
@@ -532,11 +374,4 @@ private fun distributedAmountsFit(
     }
 }
 
-private fun defaultDraft() = DosingPlanDraft(
-    distributedDailyDoseMicroliters = DEFAULT_DAILY_DOSE_MICROLITERS,
-    singleDoseStartTimeMs = DEFAULT_START_TIME_MILLIS
-)
-
-private const val DEFAULT_DAILY_DOSE_MICROLITERS = 3_000L
-private const val DEFAULT_START_TIME_MILLIS = 8 * 60 * 60 * 1_000L
 private const val HOURLY_DOSE_COUNT = 24

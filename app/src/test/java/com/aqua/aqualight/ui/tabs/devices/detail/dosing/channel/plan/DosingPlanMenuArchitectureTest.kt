@@ -62,12 +62,16 @@ class DosingPlanMenuArchitectureTest {
             "app/src/main/java/com/aqua/aqualight/ui/tabs/devices/detail/dosing/channel/" +
                 "plan/DeviceDosingPlanScreen.kt"
         )
+        val savedState = source(
+            "app/src/main/java/com/aqua/aqualight/ui/tabs/devices/detail/dosing/channel/" +
+                "plan/DosingPlanSavedState.kt"
+        )
 
         assertTrue(fragment.contains("viewModel.bind("))
-        assertTrue(fragment.contains("restoredDraft = savedInstanceState"))
-        assertTrue(fragment.contains("val editorState = viewModel.currentEditorState"))
-        assertTrue(fragment.contains("editorState.draft.writeTo(outState)"))
-        assertTrue(fragment.contains("STATE_BASE_REVISION"))
+        assertTrue(fragment.contains("restoredState = savedInstanceState.restoreDosingPlanState()"))
+        assertTrue(fragment.contains("writeDosingPlanStateTo(outState)"))
+        assertTrue(savedState.contains("draft.writeTo(outState)"))
+        assertTrue(savedState.contains("STATE_BASE_REVISION"))
         assertTrue(fragment.contains("updateSchedule = viewModel::applyScheduleUpdate"))
         assertTrue(fragment.contains("setFragmentGlobalLoading"))
         assertTrue(
