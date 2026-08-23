@@ -66,6 +66,18 @@ internal class DefaultDeviceControlSurfacePreparationOperations(
     override fun consumeFreshPreparation(
         deviceUid: String,
         family: OwnerDeviceFamily
+    ): Boolean = removeFreshPreparation(deviceUid, family)
+
+    override fun discardFreshPreparation(
+        deviceUid: String,
+        family: OwnerDeviceFamily
+    ) {
+        removeFreshPreparation(deviceUid, family)
+    }
+
+    private fun removeFreshPreparation(
+        deviceUid: String,
+        family: OwnerDeviceFamily
     ): Boolean {
         if (family != OwnerDeviceFamily.DOSING) return false
         return freshlyPreparedDeviceUids.remove(deviceUid.trim())

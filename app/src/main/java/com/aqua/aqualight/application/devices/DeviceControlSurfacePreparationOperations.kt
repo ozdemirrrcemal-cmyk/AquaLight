@@ -21,6 +21,15 @@ interface DeviceControlSurfacePreparationOperations {
         deviceUid: String,
         family: OwnerDeviceFamily
     ): Boolean = false
+
+    /**
+     * Discards a one-shot handoff when the UI cannot commit the prepared navigation attempt.
+     * Implementations must keep this idempotent so lifecycle teardown can safely call it as well.
+     */
+    fun discardFreshPreparation(
+        deviceUid: String,
+        family: OwnerDeviceFamily
+    ) = Unit
 }
 
 data class DeviceControlSurfacePreparationRequest(

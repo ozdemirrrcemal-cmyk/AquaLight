@@ -3,6 +3,7 @@ package com.aqua.aqualight.debug.devices
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import com.aqua.aqualight.BuildConfig
+import com.aqua.aqualight.application.devices.DeviceMenuOpenUseCase
 import com.aqua.aqualight.composition.AppContainer
 import com.aqua.aqualight.composition.OwnerDependencyGraph
 import com.aqua.aqualight.composition.OwnerDependencyGraphAccess
@@ -88,12 +89,14 @@ private class DebugDeviceFixtureViewModelFactory(
         )
         return DevicesViewModel(
             operations = DebugFixtureOwnerDevicesOperations(realOperations, fixtures),
-            menuAccessOperations = DebugFixtureMenuAccessOperations(
-                delegate = DefaultDeviceMenuAccessOperations.create(repository),
-                fixtures = fixtures
+            menuOpenUseCase = DeviceMenuOpenUseCase(
+                menuAccessOperations = DebugFixtureMenuAccessOperations(
+                    delegate = DefaultDeviceMenuAccessOperations.create(repository),
+                    fixtures = fixtures
+                ),
+                controlSurfacePreparationOperations =
+                    graph.dosingOperations.controlSurfacePreparationOperations
             ),
-            controlSurfacePreparationOperations =
-                graph.dosingOperations.controlSurfacePreparationOperations,
             routeResolver = DeviceRouteResolver()
         )
     }

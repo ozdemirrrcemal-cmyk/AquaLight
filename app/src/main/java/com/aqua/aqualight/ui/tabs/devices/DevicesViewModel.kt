@@ -2,11 +2,8 @@ package com.aqua.aqualight.ui.tabs.devices
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.aqua.aqualight.application.devices.DeviceControlSurfacePreparationOperations
-import com.aqua.aqualight.application.devices.DeviceControlSurfacePreparationRequest
-import com.aqua.aqualight.application.devices.DeviceControlSurfacePreparationResult
-import com.aqua.aqualight.application.devices.DeviceMenuAccessOperations
-import com.aqua.aqualight.application.devices.DeviceMenuAccessResult
+import com.aqua.aqualight.application.devices.DeviceMenuOpenResult
+import com.aqua.aqualight.application.devices.DeviceMenuOpenUseCase
 import com.aqua.aqualight.application.devices.DeviceMenuUnavailableReason
 import com.aqua.aqualight.application.devices.OwnerDevicesOperations
 import com.aqua.aqualight.ui.common.devicepresence.DeviceMenuUnavailableMessageMapper
@@ -24,9 +21,8 @@ import kotlinx.coroutines.launch
 
 class DevicesViewModel(
     private val operations: OwnerDevicesOperations,
-    menuAccessOperations: DeviceMenuAccessOperations,
-    controlSurfacePreparationOperations: DeviceControlSurfacePreparationOperations,
-    routeResolver: DeviceRouteResolver
+    private val menuOpenUseCase: DeviceMenuOpenUseCase,
+    private val routeResolver: DeviceRouteResolver
 ) : ViewModel() {
 
     private val selectedDeviceUids = MutableStateFlow<Set<String>>(emptySet())
@@ -38,11 +34,7 @@ class DevicesViewModel(
     private val _events = Channel<DevicesEvent>(capacity = Channel.BUFFERED)
     val events: Flow<DevicesEvent> = _events.receiveAsFlow()
 
-    private val menuOpenResolver = DeviceMenuOpenResolver(
-        menuAccessOperations = menuAccessOperations,
-        controlSurfacePreparationOperations = controlSurfacePreparationOperations,
-        routeResolver = routeResolver
-    )
+    private var pendingMenuOpen: DeviceMenuOpenResult.Ready? = null
     private var menuOpenJob: Job? = null
 
     init {
@@ -67,21 +59,61 @@ class DevicesViewModel(
         openingDeviceUid.value = deviceUid
         menuOpenJob = viewModelScope.launch {
             try {
-                val event = menuOpenResolver.resolve(deviceUid)
-                if (event is DevicesEvent.ShowDeviceUnavailable) {
-                    clearMenuOpen(deviceUid)
+                when (val result = menuOpenUseCase.resolve(deviceUid)) {
+                    is DeviceMenuOpenResult.Ready -> {
+                        pendingMenuOpen = result
+                        _events.send(
+                            DevicesEvent.OpenRoute(
+                                route = routeResolver.resolve(result.access)
+                            )
+                        )
+                    }
+                    is DeviceMenuOpenResult.Unavailable -> {
+                        clearMenuOpen(deviceUid)
+                        _events.send(result.toUnavailableEvent())
+                    }
                 }
-                _events.send(event)
-            } catch (error: CancellationException) {
+            } catch (error: Throwable) {
+                abandonPendingNavigation(deviceUid)
                 clearMenuOpen(deviceUid)
-                throw error
+                if (error is CancellationException) throw error
+                _events.send(
+                    DevicesEvent.ShowDeviceUnavailable(
+                        title = _uiState.value.devices
+                            .firstOrNull { device -> device.deviceUid == deviceUid }
+                            ?.card
+                            ?.displayName
+                            .orEmpty(),
+                        messageRes = DeviceMenuUnavailableMessageMapper.messageRes(
+                            DeviceMenuUnavailableReason.CURRENT_LIVENESS_NOT_PROVEN
+                        )
+                    )
+                )
             }
         }
     }
 
-    /** Called only after the Fragment has committed or abandoned the navigation attempt. */
-    fun onDeviceNavigationStarted(deviceUid: String) {
+    /** Called after the Fragment has either committed or abandoned the navigation attempt. */
+    fun onDeviceNavigationFinished(
+        deviceUid: String,
+        committed: Boolean
+    ) {
+        val pending = pendingMenuOpen?.takeIf { ready ->
+            ready.access.deviceUid == deviceUid
+        }
+        if (pending != null) {
+            if (!committed) menuOpenUseCase.abandon(pending)
+            pendingMenuOpen = null
+        }
         clearMenuOpen(deviceUid)
+    }
+
+    /** Cancels any in-flight open and invalidates a prepared handoff owned by the destroyed host. */
+    fun onNavigationHostDestroyed() {
+        menuOpenJob?.cancel()
+        pendingMenuOpen?.let(menuOpenUseCase::abandon)
+        pendingMenuOpen = null
+        openingDeviceUid.value = null
     }
 
     fun onDeviceLongClicked(deviceUid: String) {
@@ -140,6 +172,14 @@ class DevicesViewModel(
                 deletingDevices.value = false
             }
         }
+    }
+
+    private fun abandonPendingNavigation(deviceUid: String) {
+        val pending = pendingMenuOpen?.takeIf { ready ->
+            ready.access.deviceUid == deviceUid
+        } ?: return
+        menuOpenUseCase.abandon(pending)
+        pendingMenuOpen = null
     }
 
     private fun clearMenuOpen(deviceUid: String) {
@@ -213,56 +253,8 @@ class DevicesViewModel(
     )
 }
 
-private class DeviceMenuOpenResolver(
-    private val menuAccessOperations: DeviceMenuAccessOperations,
-    private val controlSurfacePreparationOperations: DeviceControlSurfacePreparationOperations,
-    private val routeResolver: DeviceRouteResolver
-) {
-    suspend fun resolve(deviceUid: String): DevicesEvent {
-        var deviceTitle = ""
-        return try {
-            when (val result = menuAccessOperations.resolve(deviceUid)) {
-                is DeviceMenuAccessResult.Available -> {
-                    deviceTitle = result.title
-                    resolvePreparedRoute(result)
-                }
-                is DeviceMenuAccessResult.Unavailable -> unavailableEvent(
-                    title = result.title,
-                    reason = result.reason
-                )
-            }
-        } catch (error: Throwable) {
-            if (error is CancellationException) throw error
-            unavailableEvent(
-                title = deviceTitle,
-                reason = DeviceMenuUnavailableReason.CURRENT_LIVENESS_NOT_PROVEN
-            )
-        }
-    }
-
-    private suspend fun resolvePreparedRoute(
-        result: DeviceMenuAccessResult.Available
-    ): DevicesEvent = when (
-        val preparation = controlSurfacePreparationOperations.prepare(
-            DeviceControlSurfacePreparationRequest(
-                deviceUid = result.deviceUid,
-                family = result.family
-            )
-        )
-    ) {
-        DeviceControlSurfacePreparationResult.Ready ->
-            DevicesEvent.OpenRoute(route = routeResolver.resolve(result))
-        is DeviceControlSurfacePreparationResult.Unavailable -> unavailableEvent(
-            title = result.title,
-            reason = preparation.reason
-        )
-    }
-
-    private fun unavailableEvent(
-        title: String,
-        reason: DeviceMenuUnavailableReason
-    ) = DevicesEvent.ShowDeviceUnavailable(
+private fun DeviceMenuOpenResult.Unavailable.toUnavailableEvent() =
+    DevicesEvent.ShowDeviceUnavailable(
         title = title,
         messageRes = DeviceMenuUnavailableMessageMapper.messageRes(reason)
     )
-}

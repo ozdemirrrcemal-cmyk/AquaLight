@@ -6,6 +6,7 @@ import com.aqua.aqualight.application.devices.DeviceControlSurfacePreparationReq
 import com.aqua.aqualight.application.devices.DeviceControlSurfacePreparationResult
 import com.aqua.aqualight.application.devices.DeviceMenuAccessOperations
 import com.aqua.aqualight.application.devices.DeviceMenuAccessResult
+import com.aqua.aqualight.application.devices.DeviceMenuOpenUseCase
 import com.aqua.aqualight.application.devices.DeviceMenuUnavailableReason
 import com.aqua.aqualight.application.devices.OwnerDeviceAvailability
 import com.aqua.aqualight.application.devices.OwnerDeviceFamily
@@ -97,8 +98,9 @@ class DevicesViewModelBoundaryTest {
         assertTrue(viewModel.uiState.value.isOpeningDeviceMenu)
         assertFalse(viewModel.uiState.value.devices.single().card.isBusy)
 
-        viewModel.onDeviceNavigationStarted("device-1")
+        viewModel.onDeviceNavigationFinished("device-1", committed = true)
         assertFalse(viewModel.uiState.value.isOpeningDeviceMenu)
+        assertEquals(null, preparationOperations.lastDiscardRequest)
     }
 
     @Test
@@ -132,7 +134,35 @@ class DevicesViewModelBoundaryTest {
         assertTrue(viewModel.uiState.value.isOpeningDeviceMenu)
         assertFalse(viewModel.uiState.value.devices.single().card.isBusy)
 
-        viewModel.onDeviceNavigationStarted("device-1")
+        viewModel.onDeviceNavigationFinished("device-1", committed = true)
+        assertFalse(viewModel.uiState.value.isOpeningDeviceMenu)
+    }
+
+    @Test
+    fun `abandoned prepared navigation discards one shot handoff`() = runTest {
+        val preparationOperations = FakeControlSurfacePreparationOperations()
+        val viewModel = createViewModel(
+            operations = FakeOwnerDevicesOperations(listOf(device("device-1"))),
+            menuOperations = FakeDeviceMenuAccessOperations(
+                result = DeviceMenuAccessResult.Available(
+                    deviceUid = "device-1",
+                    title = "Dose Pro 4",
+                    family = OwnerDeviceFamily.DOSING
+                )
+            ),
+            preparationOperations = preparationOperations
+        )
+
+        viewModel.onDeviceClicked("device-1")
+        val event = viewModel.events.first()
+        assertTrue(event is DevicesEvent.OpenRoute)
+
+        viewModel.onDeviceNavigationFinished("device-1", committed = false)
+
+        assertEquals(
+            "device-1" to OwnerDeviceFamily.DOSING,
+            preparationOperations.lastDiscardRequest
+        )
         assertFalse(viewModel.uiState.value.isOpeningDeviceMenu)
     }
 
@@ -200,8 +230,10 @@ class DevicesViewModelBoundaryTest {
     ): DevicesViewModel {
         return DevicesViewModel(
             operations = operations,
-            menuAccessOperations = menuOperations,
-            controlSurfacePreparationOperations = preparationOperations,
+            menuOpenUseCase = DeviceMenuOpenUseCase(
+                menuAccessOperations = menuOperations,
+                controlSurfacePreparationOperations = preparationOperations
+            ),
             routeResolver = DeviceRouteResolver()
         )
     }
@@ -264,6 +296,7 @@ class DevicesViewModelBoundaryTest {
         private val block: Boolean = false
     ) : DeviceControlSurfacePreparationOperations {
         var lastRequest: DeviceControlSurfacePreparationRequest? = null
+        var lastDiscardRequest: Pair<String, OwnerDeviceFamily>? = null
         val started = CompletableDeferred<Unit>()
         private val blockedResult = CompletableDeferred<DeviceControlSurfacePreparationResult>()
 
@@ -273,6 +306,13 @@ class DevicesViewModelBoundaryTest {
             lastRequest = request
             started.complete(Unit)
             return if (block) blockedResult.await() else result
+        }
+
+        override fun discardFreshPreparation(
+            deviceUid: String,
+            family: OwnerDeviceFamily
+        ) {
+            lastDiscardRequest = deviceUid to family
         }
 
         fun release(value: DeviceControlSurfacePreparationResult) {

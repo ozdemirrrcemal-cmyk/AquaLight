@@ -2,19 +2,24 @@ package com.aqua.aqualight.ui.tabs.aquarium.detail.devices
 
 import com.aqua.aqualight.application.devices.AssignDeviceToTankResult
 import com.aqua.aqualight.application.devices.AvailableTankDevicesSnapshot
+import com.aqua.aqualight.application.devices.DeviceControlSurfacePreparationOperations
+import com.aqua.aqualight.application.devices.DeviceControlSurfacePreparationRequest
+import com.aqua.aqualight.application.devices.DeviceControlSurfacePreparationResult
 import com.aqua.aqualight.application.devices.DeviceMenuAccessOperations
 import com.aqua.aqualight.application.devices.DeviceMenuAccessResult
+import com.aqua.aqualight.application.devices.DeviceMenuOpenUseCase
 import com.aqua.aqualight.application.devices.DeviceMenuUnavailableReason
 import com.aqua.aqualight.application.devices.OwnerDeviceAvailability
 import com.aqua.aqualight.application.devices.OwnerDeviceFamily
 import com.aqua.aqualight.application.devices.RemoveDeviceFromTankResult
 import com.aqua.aqualight.application.devices.TankDeviceAssignmentOperations
 import com.aqua.aqualight.application.devices.TankDeviceListItem
+import com.aqua.aqualight.ui.common.devicecard.DeviceCompactStatusStyle
 import com.aqua.aqualight.ui.tabs.aquarium.detail.devices.select.TankDeviceSelectEmptyReason
 import com.aqua.aqualight.ui.tabs.aquarium.detail.devices.select.TankDeviceSelectEvent
 import com.aqua.aqualight.ui.tabs.aquarium.detail.devices.select.TankDeviceSelectViewModel
-import com.aqua.aqualight.ui.common.devicecard.DeviceCompactStatusStyle
 import com.aqua.aqualight.ui.tabs.devices.route.DeviceRouteResolver
+import com.aqua.aqualight.ui.tabs.devices.route.DeviceRouteTarget
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -46,11 +51,7 @@ class TankDeviceAssignmentViewModelBoundaryTest {
         val operations = FakeTankDeviceAssignmentOperations(
             assigned = listOf(device("device-1"))
         )
-        val viewModel = TankDetailDevicesViewModel(
-            assignmentOperations = operations,
-            menuAccessOperations = FakeMenuAccessOperations(),
-            routeResolver = DeviceRouteResolver()
-        )
+        val viewModel = createTankDetailViewModel(operations)
 
         viewModel.bind(10L)
 
@@ -63,17 +64,45 @@ class TankDeviceAssignmentViewModelBoundaryTest {
     }
 
     @Test
+    fun `tank detail menu open uses shared preparation contract before route`() = runTest {
+        val preparation = FakePreparationOperations()
+        val viewModel = createTankDetailViewModel(
+            operations = FakeTankDeviceAssignmentOperations(
+                assigned = listOf(device("device-1"))
+            ),
+            menuAccess = FakeMenuAccessOperations(
+                DeviceMenuAccessResult.Available(
+                    deviceUid = "device-1",
+                    title = "Dose Pro 4",
+                    family = OwnerDeviceFamily.DOSING
+                )
+            ),
+            preparation = preparation
+        )
+        viewModel.bind(10L)
+
+        viewModel.onDeviceClicked("device-1")
+        val event = viewModel.events.first() as TankDetailDevicesEvent.OpenDeviceRoute
+
+        assertEquals("device-1", preparation.lastRequest?.deviceUid)
+        assertEquals(OwnerDeviceFamily.DOSING, preparation.lastRequest?.family)
+        assertEquals(DeviceRouteTarget.DOSING_ROOT, event.route.target)
+        assertTrue(viewModel.uiState.value.isOpeningDeviceMenu)
+
+        viewModel.onDeviceNavigationFinished("device-1", committed = false)
+
+        assertEquals("device-1" to OwnerDeviceFamily.DOSING, preparation.lastDiscardRequest)
+        assertFalse(viewModel.uiState.value.isOpeningDeviceMenu)
+    }
+
+    @Test
     fun `tank detail emits remove failure from typed application result`() = runTest {
         val operations = FakeTankDeviceAssignmentOperations(
             assigned = listOf(device("device-1"))
         ).apply {
             removeResult = RemoveDeviceFromTankResult.FAILURE
         }
-        val viewModel = TankDetailDevicesViewModel(
-            assignmentOperations = operations,
-            menuAccessOperations = FakeMenuAccessOperations(),
-            routeResolver = DeviceRouteResolver()
-        )
+        val viewModel = createTankDetailViewModel(operations)
         viewModel.bind(10L)
 
         viewModel.removeDeviceFromTank("device-1")
@@ -121,6 +150,19 @@ class TankDeviceAssignmentViewModelBoundaryTest {
         assertEquals(42L, event.existingTankId)
         assertEquals(10L to "device-1", operations.lastAssignRequest)
     }
+
+    private fun createTankDetailViewModel(
+        operations: TankDeviceAssignmentOperations,
+        menuAccess: DeviceMenuAccessOperations = FakeMenuAccessOperations(),
+        preparation: DeviceControlSurfacePreparationOperations = FakePreparationOperations()
+    ): TankDetailDevicesViewModel = TankDetailDevicesViewModel(
+        assignmentOperations = operations,
+        menuOpenUseCase = DeviceMenuOpenUseCase(
+            menuAccessOperations = menuAccess,
+            controlSurfacePreparationOperations = preparation
+        ),
+        routeResolver = DeviceRouteResolver()
+    )
 
     private fun device(uid: String) = TankDeviceListItem(
         deviceUid = uid,
@@ -174,12 +216,32 @@ class TankDeviceAssignmentViewModelBoundaryTest {
         }
     }
 
-    private class FakeMenuAccessOperations : DeviceMenuAccessOperations {
-        override suspend fun resolve(deviceUid: String): DeviceMenuAccessResult =
-            DeviceMenuAccessResult.Unavailable(
-                title = "",
-                reason = DeviceMenuUnavailableReason.CURRENT_LIVENESS_NOT_PROVEN
-            )
+    private class FakeMenuAccessOperations(
+        private val result: DeviceMenuAccessResult = DeviceMenuAccessResult.Unavailable(
+            title = "",
+            reason = DeviceMenuUnavailableReason.CURRENT_LIVENESS_NOT_PROVEN
+        )
+    ) : DeviceMenuAccessOperations {
+        override suspend fun resolve(deviceUid: String): DeviceMenuAccessResult = result
+    }
+
+    private class FakePreparationOperations : DeviceControlSurfacePreparationOperations {
+        var lastRequest: DeviceControlSurfacePreparationRequest? = null
+        var lastDiscardRequest: Pair<String, OwnerDeviceFamily>? = null
+
+        override suspend fun prepare(
+            request: DeviceControlSurfacePreparationRequest
+        ): DeviceControlSurfacePreparationResult {
+            lastRequest = request
+            return DeviceControlSurfacePreparationResult.Ready
+        }
+
+        override fun discardFreshPreparation(
+            deviceUid: String,
+            family: OwnerDeviceFamily
+        ) {
+            lastDiscardRequest = deviceUid to family
+        }
     }
 
     class MainDispatcherRule(

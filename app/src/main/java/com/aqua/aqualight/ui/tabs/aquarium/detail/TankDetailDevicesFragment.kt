@@ -33,7 +33,7 @@ class TankDetailDevicesFragment : Fragment(R.layout.fragment_tank_detail_devices
 
         fun onTankDetailDeviceClicked(
             route: DeviceRoute
-        )
+        ): Boolean
     }
 
     private val viewModel: TankDetailDevicesViewModel by viewModels {
@@ -130,7 +130,16 @@ class TankDetailDevicesFragment : Fragment(R.layout.fragment_tank_detail_devices
                     viewModel.events.collect { event ->
                         when (event) {
                             is TankDetailDevicesEvent.OpenDeviceRoute -> {
-                                parentHost()?.onTankDetailDeviceClicked(event.route)
+                                var committed = false
+                                try {
+                                    committed =
+                                        parentHost()?.onTankDetailDeviceClicked(event.route) == true
+                                } finally {
+                                    viewModel.onDeviceNavigationFinished(
+                                        deviceUid = event.route.deviceUid,
+                                        committed = committed
+                                    )
+                                }
                             }
 
                             is TankDetailDevicesEvent.ShowDeviceUnavailable -> {
@@ -229,6 +238,7 @@ class TankDetailDevicesFragment : Fragment(R.layout.fragment_tank_detail_devices
     }
 
     override fun onDestroyView() {
+        viewModel.onNavigationHostDestroyed()
         baseActivity()?.clearGlobalLoading(TANK_DEVICE_LOADING_OWNER)
         binding.rvAssignedDevices.adapter = null
         _binding = null

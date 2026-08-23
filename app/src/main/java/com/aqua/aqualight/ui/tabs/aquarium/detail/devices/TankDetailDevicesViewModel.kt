@@ -4,8 +4,8 @@ import androidx.annotation.StringRes
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.aqua.aqualight.R
-import com.aqua.aqualight.application.devices.DeviceMenuAccessOperations
-import com.aqua.aqualight.application.devices.DeviceMenuAccessResult
+import com.aqua.aqualight.application.devices.DeviceMenuOpenResult
+import com.aqua.aqualight.application.devices.DeviceMenuOpenUseCase
 import com.aqua.aqualight.application.devices.DeviceMenuUnavailableReason
 import com.aqua.aqualight.application.devices.RemoveDeviceFromTankResult
 import com.aqua.aqualight.application.devices.TankDeviceAssignmentOperations
@@ -28,7 +28,7 @@ import kotlinx.coroutines.launch
 
 class TankDetailDevicesViewModel(
     private val assignmentOperations: TankDeviceAssignmentOperations,
-    private val menuAccessOperations: DeviceMenuAccessOperations,
+    private val menuOpenUseCase: DeviceMenuOpenUseCase,
     private val routeResolver: DeviceRouteResolver
 ) : ViewModel() {
 
@@ -43,6 +43,7 @@ class TankDetailDevicesViewModel(
     private var boundTankId: Long = 0L
     private var observeJob: Job? = null
     private var menuOpenJob: Job? = null
+    private var pendingMenuOpen: DeviceMenuOpenResult.Ready? = null
 
     fun bind(tankId: Long) {
         if (tankId <= 0L || boundTankId == tankId) return
@@ -89,44 +90,70 @@ class TankDetailDevicesViewModel(
     }
 
     fun onDeviceClicked(deviceUid: String) {
-        if (deviceUid.isBlank() || removingDevice.value) return
-        if (openingDeviceId.value == deviceUid) return
+        if (
+            deviceUid.isBlank() ||
+            removingDevice.value ||
+            openingDeviceId.value != null
+        ) {
+            return
+        }
 
         menuOpenJob?.cancel()
         openingDeviceId.value = deviceUid
         menuOpenJob = viewModelScope.launch {
-            val result = try {
-                menuAccessOperations.resolve(deviceUid)
-            } catch (error: Throwable) {
-                if (error is CancellationException) throw error
-                DeviceMenuAccessResult.Unavailable(
-                    title = "",
-                    reason = DeviceMenuUnavailableReason.CURRENT_LIVENESS_NOT_PROVEN
-                )
-            } finally {
-                if (openingDeviceId.value == deviceUid) {
-                    openingDeviceId.value = null
-                }
-            }
-
-            when (result) {
-                is DeviceMenuAccessResult.Available ->
-                    _events.send(
-                        TankDetailDevicesEvent.OpenDeviceRoute(
-                            route = routeResolver.resolve(result)
-                        )
-                    )
-                is DeviceMenuAccessResult.Unavailable ->
-                    _events.send(
-                        TankDetailDevicesEvent.ShowDeviceUnavailable(
-                            title = result.title,
-                            messageRes = DeviceMenuUnavailableMessageMapper.messageRes(
-                                result.reason
+            try {
+                when (val result = menuOpenUseCase.resolve(deviceUid)) {
+                    is DeviceMenuOpenResult.Ready -> {
+                        pendingMenuOpen = result
+                        _events.send(
+                            TankDetailDevicesEvent.OpenDeviceRoute(
+                                route = routeResolver.resolve(result.access)
                             )
                         )
+                    }
+                    is DeviceMenuOpenResult.Unavailable -> {
+                        clearMenuOpen(deviceUid)
+                        _events.send(result.toUnavailableEvent())
+                    }
+                }
+            } catch (error: Throwable) {
+                abandonPendingNavigation(deviceUid)
+                clearMenuOpen(deviceUid)
+                if (error is CancellationException) throw error
+                _events.send(
+                    TankDetailDevicesEvent.ShowDeviceUnavailable(
+                        title = _uiState.value.devices
+                            .firstOrNull { device -> device.deviceUid == deviceUid }
+                            ?.title
+                            .orEmpty(),
+                        messageRes = DeviceMenuUnavailableMessageMapper.messageRes(
+                            DeviceMenuUnavailableReason.CURRENT_LIVENESS_NOT_PROVEN
+                        )
                     )
+                )
             }
         }
+    }
+
+    fun onDeviceNavigationFinished(
+        deviceUid: String,
+        committed: Boolean
+    ) {
+        val pending = pendingMenuOpen?.takeIf { ready ->
+            ready.access.deviceUid == deviceUid
+        }
+        if (pending != null) {
+            if (!committed) menuOpenUseCase.abandon(pending)
+            pendingMenuOpen = null
+        }
+        clearMenuOpen(deviceUid)
+    }
+
+    fun onNavigationHostDestroyed() {
+        menuOpenJob?.cancel()
+        pendingMenuOpen?.let(menuOpenUseCase::abandon)
+        pendingMenuOpen = null
+        openingDeviceId.value = null
     }
 
     fun removeDeviceFromTank(deviceUid: String) {
@@ -148,6 +175,20 @@ class TankDetailDevicesViewModel(
                 RemoveDeviceFromTankResult.FAILURE ->
                     _events.send(TankDetailDevicesEvent.ShowRemoveFailed)
             }
+        }
+    }
+
+    private fun abandonPendingNavigation(deviceUid: String) {
+        val pending = pendingMenuOpen?.takeIf { ready ->
+            ready.access.deviceUid == deviceUid
+        } ?: return
+        menuOpenUseCase.abandon(pending)
+        pendingMenuOpen = null
+    }
+
+    private fun clearMenuOpen(deviceUid: String) {
+        if (openingDeviceId.value == deviceUid) {
+            openingDeviceId.value = null
         }
     }
 
@@ -178,3 +219,9 @@ sealed interface TankDetailDevicesEvent {
     data object ShowRemoveFailed : TankDetailDevicesEvent
     data object ShowLoadFailed : TankDetailDevicesEvent
 }
+
+private fun DeviceMenuOpenResult.Unavailable.toUnavailableEvent() =
+    TankDetailDevicesEvent.ShowDeviceUnavailable(
+        title = title,
+        messageRes = DeviceMenuUnavailableMessageMapper.messageRes(reason)
+    )

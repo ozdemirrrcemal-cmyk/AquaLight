@@ -269,33 +269,26 @@ class DevicesFragment : Fragment(R.layout.fragment_devices) {
     private fun openDeviceRoute(route: DeviceRoute) {
         if (!isAdded) {
             baseActivity()?.clearGlobalLoading(DEVICE_MENU_LOADING_OWNER)
-            viewModel.onDeviceNavigationStarted(route.deviceUid)
+            viewModel.onDeviceNavigationFinished(route.deviceUid, committed = false)
             return
         }
 
-        // The generated graph still exposes the legacy deviceTitle argument, but supported roots
-        // deliberately receive no dynamic title through navigation. They resolve it from the
-        // central device snapshot by deviceUid.
         val directions = when (route.target) {
             DeviceRouteTarget.LIGHT_ROOT ->
                 DevicesFragmentDirections.actionDevicesFragmentToDeviceLightRootFragment(
-                    deviceUid = route.deviceUid,
-                    deviceTitle = ""
+                    deviceUid = route.deviceUid
                 )
             DeviceRouteTarget.DOSING_ROOT ->
                 DevicesFragmentDirections.actionDevicesFragmentToDeviceDosingRootFragment(
-                    deviceUid = route.deviceUid,
-                    deviceTitle = ""
+                    deviceUid = route.deviceUid
                 )
             DeviceRouteTarget.TIMER_ROOT ->
                 DevicesFragmentDirections.actionDevicesFragmentToDeviceTimerRootFragment(
-                    deviceUid = route.deviceUid,
-                    deviceTitle = ""
+                    deviceUid = route.deviceUid
                 )
             DeviceRouteTarget.COOLING_ROOT ->
                 DevicesFragmentDirections.actionDevicesFragmentToDeviceCoolingRootFragment(
-                    deviceUid = route.deviceUid,
-                    deviceTitle = ""
+                    deviceUid = route.deviceUid
                 )
             DeviceRouteTarget.UNSUPPORTED ->
                 DevicesFragmentDirections.actionDevicesFragmentToUnsupportedDeviceFragment(
@@ -310,20 +303,23 @@ class DevicesFragment : Fragment(R.layout.fragment_devices) {
         }
 
         binding.root.postOnAnimation {
-            if (
-                _binding == null ||
-                !isAdded ||
-                findNavController().currentDestination?.id != R.id.devicesFragment
-            ) {
+            val hostReady =
+                _binding != null && isAdded && !parentFragmentManager.isStateSaved
+            val isCurrentDestination =
+                findNavController().currentDestination?.id == R.id.devicesFragment
+            if (!hostReady || !isCurrentDestination) {
                 baseActivity()?.clearGlobalLoading(DEVICE_MENU_LOADING_OWNER)
-                viewModel.onDeviceNavigationStarted(route.deviceUid)
+                viewModel.onDeviceNavigationFinished(route.deviceUid, committed = false)
                 return@postOnAnimation
             }
+
+            var committed = false
             try {
                 findNavController().navigate(directions)
+                committed = true
             } finally {
                 baseActivity()?.clearGlobalLoading(DEVICE_MENU_LOADING_OWNER)
-                viewModel.onDeviceNavigationStarted(route.deviceUid)
+                viewModel.onDeviceNavigationFinished(route.deviceUid, committed)
             }
         }
     }
@@ -333,6 +329,7 @@ class DevicesFragment : Fragment(R.layout.fragment_devices) {
     }
 
     override fun onDestroyView() {
+        viewModel.onNavigationHostDestroyed()
         baseActivity()?.clearGlobalLoading(DEVICE_DELETE_LOADING_OWNER)
         baseActivity()?.clearGlobalLoading(DEVICE_MENU_LOADING_OWNER)
         binding.rvSelectedDevices.adapter = null

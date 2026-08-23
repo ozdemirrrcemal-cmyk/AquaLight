@@ -86,6 +86,23 @@ class DefaultDeviceControlSurfacePreparationOperationsTest {
     }
 
     @Test
+    fun `abandoned preparation handoff is discarded idempotently`() = runTest {
+        val channels = FakeChannelOperations(
+            refreshResult = true,
+            refreshedSnapshots = snapshots(4)
+        )
+        val operations = preparation(channelCount = 4, channels = channels)
+
+        val result = operations.prepare(request())
+        assertTrue(result is DeviceControlSurfacePreparationResult.Ready)
+
+        operations.discardFreshPreparation(DEVICE_UID, OwnerDeviceFamily.DOSING)
+        operations.discardFreshPreparation(DEVICE_UID, OwnerDeviceFamily.DOSING)
+
+        assertFalse(operations.consumeFreshPreparation(DEVICE_UID, OwnerDeviceFamily.DOSING))
+    }
+
+    @Test
     fun `refresh failure keeps navigation unavailable`() = runTest {
         val channels = FakeChannelOperations(refreshResult = false)
         val operations = preparation(channelCount = 4, channels = channels)
