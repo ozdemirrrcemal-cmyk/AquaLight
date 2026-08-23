@@ -61,7 +61,7 @@ class DeviceRootViewModelBoundaryTest {
     }
 
     @Test
-    fun `light root exposes only the current device title state`() {
+    fun `light root exposes only the device title state`() {
         val operations = FakeDeviceRootOperations(
             rootSnapshot(
                 capabilities = setOf(DeviceRootCapability.MANUAL_LIGHT),
