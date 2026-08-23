@@ -51,7 +51,7 @@ internal class DeviceDosingV1ProductionRuntime(
         ownerUid = ownerUid,
         ledger = lowLevelAlertLedger,
         notificationDispatch = notificationDispatch,
-        alertTextResolver = alertTextResolver
+        textResolver = alertTextResolver
     )
 
     val channelOperations: DeviceDosingChannelOperations = adapter.channelOperations

@@ -64,9 +64,12 @@ internal class DeviceDosingV1ConflictCoordinator(
             is DeviceDosingV1RefreshResult.Success ->
                 recoveryGate.markRecoveredInterruption(address.deviceUid)
 
-            is DeviceDosingV1RefreshResult.Failed -> if (refreshed.outcome.requiresReconnect()) {
-                revokeAuthority(address, refreshed.outcome)
-                recoveryGate.markTransportInterrupted(address.deviceUid)
+            is DeviceDosingV1RefreshResult.Failed -> {
+                if (refreshed.outcome.requiresReconnect()) {
+                    revokeAuthority(address, refreshed.outcome)
+                    recoveryGate.markTransportInterrupted(address.deviceUid)
+                }
+                Unit
             }
 
             DeviceDosingV1RefreshResult.RejectedStale -> {
@@ -75,8 +78,11 @@ internal class DeviceDosingV1ConflictCoordinator(
                 recoveryGate.markRecoveredInterruption(address.deviceUid)
             }
 
-            DeviceDosingV1RefreshResult.Malformed -> if (originalOutcome.requiresReconnect()) {
-                recoveryGate.markTransportInterrupted(address.deviceUid)
+            DeviceDosingV1RefreshResult.Malformed -> {
+                if (originalOutcome.requiresReconnect()) {
+                    recoveryGate.markTransportInterrupted(address.deviceUid)
+                }
+                Unit
             }
         }
     }
@@ -85,9 +91,10 @@ internal class DeviceDosingV1ConflictCoordinator(
         address: DeviceDosingV1Address,
         outcome: DeviceRuntimeCommandOutcome<*>
     ) {
-        outcome.connectionGenerationOrNull()?.let { generation ->
+        val generation = outcome.connectionGenerationOrNull()
+        if (generation != null) {
             stateOwner.invalidate(address.deviceUid, address.channelKey, generation, null)
-        } ?: if (outcome is DeviceRuntimeCommandOutcome.NotConnected) {
+        } else if (outcome is DeviceRuntimeCommandOutcome.NotConnected) {
             stateOwner.invalidateAll(address.deviceUid)
         }
     }
