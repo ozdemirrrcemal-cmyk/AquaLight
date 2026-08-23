@@ -1,6 +1,9 @@
 package com.aqua.aqualight.ui.tabs.devices
 
 import com.aqua.aqualight.application.devices.DeleteOwnerDevicesResult
+import com.aqua.aqualight.application.devices.DeviceControlSurfacePreparationOperations
+import com.aqua.aqualight.application.devices.DeviceControlSurfacePreparationRequest
+import com.aqua.aqualight.application.devices.DeviceControlSurfacePreparationResult
 import com.aqua.aqualight.application.devices.DeviceMenuAccessOperations
 import com.aqua.aqualight.application.devices.DeviceMenuAccessResult
 import com.aqua.aqualight.application.devices.DeviceMenuUnavailableReason
@@ -8,9 +11,10 @@ import com.aqua.aqualight.application.devices.OwnerDeviceAvailability
 import com.aqua.aqualight.application.devices.OwnerDeviceFamily
 import com.aqua.aqualight.application.devices.OwnerDeviceListItem
 import com.aqua.aqualight.application.devices.OwnerDevicesOperations
-import com.aqua.aqualight.ui.tabs.devices.route.DeviceRouteResolver
 import com.aqua.aqualight.ui.common.devicecard.DeviceCompactStatusStyle
+import com.aqua.aqualight.ui.tabs.devices.route.DeviceRouteResolver
 import com.aqua.aqualight.ui.tabs.devices.route.DeviceRouteTarget
+import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -66,7 +70,7 @@ class DevicesViewModelBoundaryTest {
     }
 
     @Test
-    fun `available device menu result is mapped to UI route`() = runTest {
+    fun `available device menu is prepared before route opens`() = runTest {
         val menuOperations = FakeDeviceMenuAccessOperations(
             result = DeviceMenuAccessResult.Available(
                 deviceUid = "device-1",
@@ -74,18 +78,84 @@ class DevicesViewModelBoundaryTest {
                 family = OwnerDeviceFamily.LIGHT
             )
         )
+        val preparation = FakeControlSurfacePreparationOperations()
         val viewModel = createViewModel(
             operations = FakeOwnerDevicesOperations(listOf(device("device-1"))),
-            menuOperations = menuOperations
+            menuOperations = menuOperations,
+            preparationOperations = preparation
         )
 
         viewModel.onDeviceClicked("device-1")
         val event = viewModel.events.first() as DevicesEvent.OpenRoute
 
         assertEquals("device-1", menuOperations.lastRequest)
+        assertEquals("device-1", preparation.lastRequest?.deviceUid)
+        assertEquals(OwnerDeviceFamily.LIGHT, preparation.lastRequest?.family)
         assertEquals("device-1", event.route.deviceUid)
         assertEquals("AquaLight One", event.route.title)
         assertEquals(DeviceRouteTarget.LIGHT_ROOT, event.route.target)
+        assertFalse(viewModel.uiState.value.isPreparingDeviceMenu)
+        assertTrue(viewModel.uiState.value.isOpeningDeviceMenu)
+        assertFalse(viewModel.uiState.value.devices.single().card.isBusy)
+
+        viewModel.onDeviceNavigationStarted("device-1")
+        assertFalse(viewModel.uiState.value.isOpeningDeviceMenu)
+    }
+
+    @Test
+    fun `card geometry stays idle while central preparation is running`() = runTest {
+        val preparation = FakeControlSurfacePreparationOperations(block = true)
+        val viewModel = createViewModel(
+            operations = FakeOwnerDevicesOperations(listOf(device("device-1"))),
+            menuOperations = FakeDeviceMenuAccessOperations(
+                DeviceMenuAccessResult.Available(
+                    deviceUid = "device-1",
+                    title = "Dose Pro 4",
+                    family = OwnerDeviceFamily.DOSING
+                )
+            ),
+            preparationOperations = preparation
+        )
+
+        viewModel.onDeviceClicked("device-1")
+        preparation.started.await()
+
+        val state = viewModel.uiState.value
+        assertTrue(state.isPreparingDeviceMenu)
+        assertTrue(state.isOpeningDeviceMenu)
+        assertFalse(state.devices.single().card.isBusy)
+
+        preparation.release(DeviceControlSurfacePreparationResult.Ready)
+        viewModel.events.first()
+        assertFalse(viewModel.uiState.value.isPreparingDeviceMenu)
+        assertTrue(viewModel.uiState.value.isOpeningDeviceMenu)
+    }
+
+    @Test
+    fun `preparation failure keeps Devices open and clears loading state`() = runTest {
+        val viewModel = createViewModel(
+            operations = FakeOwnerDevicesOperations(listOf(device("dosing-1"))),
+            menuOperations = FakeDeviceMenuAccessOperations(
+                DeviceMenuAccessResult.Available(
+                    deviceUid = "dosing-1",
+                    title = "Dose Pro 4",
+                    family = OwnerDeviceFamily.DOSING
+                )
+            ),
+            preparationOperations = FakeControlSurfacePreparationOperations(
+                result = DeviceControlSurfacePreparationResult.Unavailable(
+                    DeviceMenuUnavailableReason.CURRENT_LIVENESS_NOT_PROVEN
+                )
+            )
+        )
+
+        viewModel.onDeviceClicked("dosing-1")
+        val event = viewModel.events.first()
+
+        assertTrue(event is DevicesEvent.ShowDeviceUnavailable)
+        assertFalse(viewModel.uiState.value.isPreparingDeviceMenu)
+        assertFalse(viewModel.uiState.value.isOpeningDeviceMenu)
+        assertFalse(viewModel.uiState.value.devices.single().card.isBusy)
     }
 
     @Test
@@ -121,11 +191,14 @@ class DevicesViewModelBoundaryTest {
 
     private fun createViewModel(
         operations: OwnerDevicesOperations,
-        menuOperations: DeviceMenuAccessOperations = FakeDeviceMenuAccessOperations()
+        menuOperations: DeviceMenuAccessOperations = FakeDeviceMenuAccessOperations(),
+        preparationOperations: DeviceControlSurfacePreparationOperations =
+            FakeControlSurfacePreparationOperations()
     ): DevicesViewModel {
         return DevicesViewModel(
             operations = operations,
             menuAccessOperations = menuOperations,
+            controlSurfacePreparationOperations = preparationOperations,
             routeResolver = DeviceRouteResolver()
         )
     }
@@ -179,6 +252,29 @@ class DevicesViewModelBoundaryTest {
         override suspend fun resolve(deviceUid: String): DeviceMenuAccessResult {
             lastRequest = deviceUid
             return result
+        }
+    }
+
+    private class FakeControlSurfacePreparationOperations(
+        private var result: DeviceControlSurfacePreparationResult =
+            DeviceControlSurfacePreparationResult.Ready,
+        private val block: Boolean = false
+    ) : DeviceControlSurfacePreparationOperations {
+        var lastRequest: DeviceControlSurfacePreparationRequest? = null
+        val started = CompletableDeferred<Unit>()
+        private val blockedResult = CompletableDeferred<DeviceControlSurfacePreparationResult>()
+
+        override suspend fun prepare(
+            request: DeviceControlSurfacePreparationRequest
+        ): DeviceControlSurfacePreparationResult {
+            lastRequest = request
+            started.complete(Unit)
+            return if (block) blockedResult.await() else result
+        }
+
+        fun release(value: DeviceControlSurfacePreparationResult) {
+            result = value
+            blockedResult.complete(value)
         }
     }
 
