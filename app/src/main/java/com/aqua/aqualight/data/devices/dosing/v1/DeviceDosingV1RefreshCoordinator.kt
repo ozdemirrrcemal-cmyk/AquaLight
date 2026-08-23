@@ -18,12 +18,31 @@ internal class DeviceDosingV1RefreshCoordinator(
         DeviceDosingV1Address,
         CompletableDeferred<DeviceDosingV1RefreshResult>
     >()
+    private val inFlightRefreshAll = ConcurrentHashMap<DeviceUid, CompletableDeferred<Boolean>>()
 
     suspend fun refresh(deviceUid: String, slotId: String): DeviceDosingV1RefreshResult =
         refresh(dosingV1Address(deviceUid, slotId))
 
     suspend fun refreshAll(deviceUid: String): Boolean {
         val uid = DeviceUid(deviceUid.trim())
+        val pending = CompletableDeferred<Boolean>()
+        val existing = inFlightRefreshAll.putIfAbsent(uid, pending)
+        if (existing != null) return existing.await()
+
+        return try {
+            val result = refreshAllProducer(uid)
+            pending.complete(result)
+            result
+        } catch (cancellation: CancellationException) {
+            pending.complete(false)
+            throw cancellation
+        } finally {
+            pending.complete(false)
+            inFlightRefreshAll.remove(uid, pending)
+        }
+    }
+
+    private suspend fun refreshAllProducer(uid: DeviceUid): Boolean {
         val discovery = repository.requestGlobalStatus(uid)
         if (discovery !is DeviceRuntimeCommandOutcome.Success) return false
 
