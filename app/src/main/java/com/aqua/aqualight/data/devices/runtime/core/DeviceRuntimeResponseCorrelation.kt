@@ -1,5 +1,6 @@
 package com.aqua.aqualight.data.devices.runtime.core
 
+import com.aqua.aqualight.base.diagnostics.AppDiagnosticTrace
 import com.aqua.aqualight.data.devices.model.DeviceUid
 import com.aqua.aqualight.data.devices.runtime.ws.AqlWsIncomingMessage
 
@@ -9,8 +10,14 @@ internal fun completeCorrelatedRuntimeReply(
     message: AqlWsIncomingMessage,
     pendingRequests: DeviceRuntimePendingRequestRegistry
 ): DeviceRuntimeCompletionDisposition {
+    traceResponse(
+        name = "arrived",
+        deviceUid = deviceUid,
+        generation = generation,
+        message = message
+    )
     val pending = pendingRequests.find(deviceUid, generation, message.id)
-    return when {
+    val disposition = when {
         pending == null -> terminalOrUnmatched(
             deviceUid = deviceUid,
             generation = generation,
@@ -18,6 +25,14 @@ internal fun completeCorrelatedRuntimeReply(
             pendingRequests = pendingRequests
         )
         pending.key.module != message.module || pending.key.action != message.action -> {
+            traceResponse(
+                "protocol_mismatch",
+                deviceUid,
+                generation,
+                message,
+                "expectedModule" to pending.key.module,
+                "expectedAction" to pending.key.action
+            )
             completeProtocolMismatch(pending, pendingRequests)
             DeviceRuntimeCompletionDisposition.COMPLETED
         }
@@ -28,6 +43,14 @@ internal fun completeCorrelatedRuntimeReply(
             DeviceRuntimeCompletionDisposition.COMPLETED
         }
     }
+    traceResponse(
+        "completed",
+        deviceUid,
+        generation,
+        message,
+        "disposition" to disposition.name
+    )
+    return disposition
 }
 
 private fun terminalOrUnmatched(
@@ -126,3 +149,25 @@ private fun protocolError(
         reason = reason
     )
 }
+
+private fun traceResponse(
+    name: String,
+    deviceUid: DeviceUid,
+    generation: DeviceRuntimeConnectionGeneration,
+    message: AqlWsIncomingMessage,
+    vararg fields: Pair<String, Any?>
+) {
+    AppDiagnosticTrace.event(
+        RUNTIME_RESPONSE_CATEGORY,
+        name,
+        "device" to AppDiagnosticTrace.deviceRef(deviceUid.value),
+        "generation" to generation.value,
+        "requestId" to message.id,
+        "envelope" to message.javaClass.simpleName,
+        "module" to message.module,
+        "action" to message.action,
+        *fields
+    )
+}
+
+private const val RUNTIME_RESPONSE_CATEGORY = "runtime_response"

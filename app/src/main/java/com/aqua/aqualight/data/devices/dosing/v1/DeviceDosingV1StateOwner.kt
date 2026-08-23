@@ -2,6 +2,7 @@ package com.aqua.aqualight.data.devices.dosing.v1
 
 import com.aqua.aqualight.application.devices.dosing.DeviceDosingCalibrationSnapshot
 import com.aqua.aqualight.application.devices.dosing.DeviceDosingChannelSnapshot
+import com.aqua.aqualight.base.diagnostics.AppDiagnosticTrace
 import com.aqua.aqualight.data.devices.dosing.DeviceDosingLowLevelAlertLedger
 import com.aqua.aqualight.data.devices.dosing.InMemoryDeviceDosingLowLevelAlertLedger
 import com.aqua.aqualight.data.devices.model.DeviceUid
@@ -149,6 +150,13 @@ internal class DeviceDosingV1StateOwner(
         val address = DosingStateAddress(deviceUid, channelKey)
         val generation = requestGenerations.getOrDefault(address, 0L) + 1L
         requestGenerations[address] = generation
+        AppDiagnosticTrace.event(
+            DOSING_STATE_CATEGORY,
+            "request_started",
+            "device" to AppDiagnosticTrace.deviceRef(deviceUid.value),
+            "slot" to channelKey.value,
+            "requestGeneration" to generation
+        )
         DeviceDosingV1RequestToken(deviceUid, channelKey, generation)
     }
 
@@ -196,9 +204,7 @@ internal class DeviceDosingV1StateOwner(
                     )
                 )
             )
-        }.getOrElse {
-            return@synchronized DeviceDosingV1CommitDisposition.MALFORMED
-        }
+        }.getOrElse { return@synchronized DeviceDosingV1CommitDisposition.MALFORMED }
         val updatedChannel = OwnedDosingChannelState(
             revision = incomingRevision,
             runtimeEventSequence = incomingRuntimeEventSequence
@@ -378,12 +384,20 @@ internal class DeviceDosingV1StateOwner(
      * generation refreshes it, preventing transport churn from becoming false switch/card state.
     */
     fun invalidateAll(deviceUid: DeviceUid) = synchronized(lock) {
+        val currentDevice = states.value[deviceUid]
+        AppDiagnosticTrace.event(
+            DOSING_STATE_CATEGORY,
+            "invalidate_all_started",
+            "device" to AppDiagnosticTrace.deviceRef(deviceUid.value),
+            "generation" to currentDevice?.connectionGeneration?.value,
+            "slotCount" to currentDevice?.channels?.size
+        )
         requestGenerations.keys
             .filter { address -> address.deviceUid == deviceUid }
             .forEach { address ->
                 requestGenerations[address] = requestGenerations.getValue(address) + 1L
             }
-        val device = states.value[deviceUid] ?: return@synchronized
+        val device = currentDevice ?: return@synchronized
         publish(
             deviceUid,
             device.copy(
@@ -394,6 +408,13 @@ internal class DeviceDosingV1StateOwner(
                     )
                 }
             )
+        )
+        AppDiagnosticTrace.event(
+            DOSING_STATE_CATEGORY,
+            "invalidate_all_applied",
+            "device" to AppDiagnosticTrace.deviceRef(deviceUid.value),
+            "generation" to device.connectionGeneration.value,
+            "slotCount" to device.channels.size
         )
     }
 
@@ -618,3 +639,4 @@ private fun mutationProjection(
 
 private const val UINT32_MASK = 0xFFFF_FFFFL
 private const val UINT32_HALF_RANGE = 0x8000_0000L
+private const val DOSING_STATE_CATEGORY = "dosing_state"

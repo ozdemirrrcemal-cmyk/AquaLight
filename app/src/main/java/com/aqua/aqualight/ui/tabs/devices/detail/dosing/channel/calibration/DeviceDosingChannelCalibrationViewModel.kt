@@ -46,6 +46,7 @@ class DeviceDosingChannelCalibrationViewModel(
     internal fun bind(route: DeviceDosingCalibrationRoute) = workflow.bind(route)
 
     internal fun onAction(action: DeviceDosingCalibrationAction) {
+        DeviceDosingCalibrationDiagnosticTrace.action(action, workflow.uiState.value)
         workflow.onAction(action)
         val error = workflow.uiState.value.error
         if (error == null) {
@@ -59,11 +60,15 @@ class DeviceDosingChannelCalibrationViewModel(
     }
 
     fun requestExit() {
+        DeviceDosingCalibrationDiagnosticTrace.requestExit(workflow.uiState.value)
         lastForwardedError = null
         workflow.requestExit()
     }
 
-    fun onHostStopped() = workflow.onHostStopped()
+    fun onHostStopped() {
+        DeviceDosingCalibrationDiagnosticTrace.hostStopped(workflow.uiState.value)
+        workflow.onHostStopped()
+    }
 }
 
 private fun DeviceDosingCalibrationAction.producesSynchronousValidationFeedback(): Boolean =

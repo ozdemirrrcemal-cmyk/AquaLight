@@ -153,12 +153,18 @@ internal class DeviceDosingReservoirViewModel(
         }
     }
 
-    fun setTrackingEnabled(enabled: Boolean) = updateDraft { draft ->
-        draft.copy(trackingEnabled = enabled)
+    fun setTrackingEnabled(enabled: Boolean) {
+        DeviceDosingReservoirDiagnosticTrace.trackingSwitch(
+            boundSlotId,
+            enabled,
+            mutableEditorState.value
+        )
+        updateDraft { draft -> draft.copy(trackingEnabled = enabled) }
     }
 
     fun setLowLevelAlertEnabled(enabled: Boolean) {
         val current = mutableEditorState.value
+        DeviceDosingReservoirDiagnosticTrace.alertSwitch(boundSlotId, enabled, current)
         if (enabled && !current.draft.trackingEnabled) return
         updateDraft { draft -> draft.copy(lowLevelAlertEnabled = enabled) }
     }
@@ -188,6 +194,7 @@ internal class DeviceDosingReservoirViewModel(
         val deviceUid = boundDeviceUid
         val slotId = boundSlotId
         val state = mutableEditorState.value
+        DeviceDosingReservoirDiagnosticTrace.saveAttempt(slotId, state)
         if (deviceUid.isBlank() || slotId.isBlank() || !state.canSave) return
 
         mutableEditorState.value = state.copy(operationInProgress = true)
@@ -212,6 +219,13 @@ internal class DeviceDosingReservoirViewModel(
             if (boundDeviceUid != deviceUid || boundSlotId != slotId) return@launch
 
             mutableEditorState.value = resolution.state
+            DeviceDosingReservoirDiagnosticTrace.saveResult(
+                slotId = slotId,
+                requestedState = state,
+                operationResult = reconciliation.result,
+                event = resolution.event,
+                revision = resolution.state.baseRevision
+            )
             eventChannel.send(resolution.event)
         }
     }

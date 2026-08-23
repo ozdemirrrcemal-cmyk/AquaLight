@@ -138,10 +138,22 @@ internal class DeviceDosingMissedDoseRecoveryController(
     fun request(enabled: Boolean) {
         val requestId = intent.request(enabled)
         val binding = hooks.currentBinding()
+        DeviceDosingMissedDoseRecoveryDiagnosticTrace.save(
+            binding = binding,
+            targetEnabled = enabled,
+            baseRevision = authority.revision
+        )
         present()
         scope.launch {
             val result = persist(binding, enabled)
-            if (hooks.currentBinding() != binding) return@launch
+            if (hooks.currentBinding() != binding) {
+                DeviceDosingMissedDoseRecoveryDiagnosticTrace.discarded(
+                    slotId = binding.slotId,
+                    targetEnabled = enabled,
+                    reason = "binding_changed"
+                )
+                return@launch
+            }
             handleResult(requestId, enabled, result)
         }
     }
@@ -187,7 +199,19 @@ internal class DeviceDosingMissedDoseRecoveryController(
         targetEnabled: Boolean,
         result: DeviceDosingChannelOperationResult
     ) {
-        if (!intent.isLatest(requestId)) return
+        if (!intent.isLatest(requestId)) {
+            DeviceDosingMissedDoseRecoveryDiagnosticTrace.discarded(
+                slotId = hooks.currentBinding().slotId,
+                targetEnabled = targetEnabled,
+                reason = "superseded"
+            )
+            return
+        }
+        DeviceDosingMissedDoseRecoveryDiagnosticTrace.result(
+            binding = hooks.currentBinding(),
+            targetEnabled = targetEnabled,
+            result = result
+        )
         val feedback = when (result) {
             is DeviceDosingChannelOperationResult.Success -> {
                 hooks.applySnapshot(result.snapshot)

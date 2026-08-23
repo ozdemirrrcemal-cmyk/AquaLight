@@ -188,8 +188,9 @@ internal class DeviceDosingPlanViewModel(
         emitConstraintWarningIfNeeded(mutableEditorState.value, eventChannel)
     }
 
-    fun setScheduleEnabled(enabled: Boolean) = updateDraft { state ->
-        state.copy(scheduleEnabled = enabled)
+    fun setScheduleEnabled(enabled: Boolean) {
+        DeviceDosingPlanDiagnosticTrace.scheduleSwitch(boundSlotId, enabled, mutableEditorState.value)
+        updateDraft { state -> state.copy(scheduleEnabled = enabled) }
     }
 
     fun selectEveryDay() = updateDraft { state ->
@@ -214,13 +215,14 @@ internal class DeviceDosingPlanViewModel(
             baseRevision != null,
             state.baseProgramKnown
         ).all { valid -> valid }
+        DeviceDosingPlanDiagnosticTrace.saveAttempt(slotId, program.enabled, state, canStartSave)
         if (!canStartSave) return
 
         if (!program.isValidFor(state.scheduling)) {
+            val issue = planValidationIssue(program, state.scheduling)
+            DeviceDosingPlanDiagnosticTrace.validationRejected(slotId, program.enabled, state, issue)
             eventChannel.trySend(
-                DeviceDosingPlanEvent.InvalidDraft(
-                    planValidationIssue(program, state.scheduling)
-                )
+                DeviceDosingPlanEvent.InvalidDraft(issue)
             )
             return
         }
@@ -265,6 +267,12 @@ internal class DeviceDosingPlanViewModel(
         program: DeviceDosingProgram,
         reconciliation: DeviceDosingMutationReconciliation
     ) {
+        DeviceDosingPlanDiagnosticTrace.saveResult(
+            slotId,
+            program.enabled,
+            mutableEditorState.value,
+            reconciliation.result
+        )
         when (val result = reconciliation.result) {
             is DeviceDosingChannelOperationResult.Success -> {
                 val savedState = mutableEditorState.value.copy(

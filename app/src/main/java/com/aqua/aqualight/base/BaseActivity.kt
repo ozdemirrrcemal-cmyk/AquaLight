@@ -1,7 +1,9 @@
 package com.aqua.aqualight.base
 
+import android.graphics.Rect
 import android.os.Bundle
 import android.util.TypedValue
+import android.view.MotionEvent
 import android.view.View
 import android.view.ViewGroup
 import android.widget.TextView
@@ -10,6 +12,7 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.core.content.ContextCompat
 import androidx.lifecycle.ViewModelProvider
 import com.aqua.aqualight.R
+import com.aqua.aqualight.base.diagnostics.AppDiagnosticTrace
 import com.aqua.aqualight.base.loading.LoadingOverlayDialogFragment
 import com.aqua.aqualight.composition.requireAppContainer
 import com.aqua.aqualight.utils.DialogManager
@@ -68,6 +71,16 @@ open class BaseActivity : AppCompatActivity() {
     override fun onPostResume() {
         super.onPostResume()
         renderGlobalLoading()
+    }
+
+    override fun dispatchTouchEvent(event: MotionEvent): Boolean {
+        if (
+            AppDiagnosticTrace.isEnabled &&
+            event.actionMasked == MotionEvent.ACTION_UP
+        ) {
+            BaseActivityTouchDiagnostics.record(this, event)
+        }
+        return super.dispatchTouchEvent(event)
     }
 
     override fun onSaveInstanceState(outState: Bundle) {
@@ -133,6 +146,13 @@ open class BaseActivity : AppCompatActivity() {
     ) {
         if (isFinishing || isDestroyed) return
 
+        AppDiagnosticTrace.event(
+            category = "feedback",
+            name = "device_offline_dialog.shown",
+            "activity" to javaClass.simpleName,
+            "state" to DialogType.WARNING.name
+        )
+
         val safeTitle = deviceTitle.trim().ifBlank {
             getString(R.string.device_menu_default_title)
         }
@@ -153,10 +173,6 @@ open class BaseActivity : AppCompatActivity() {
         )
     }
 
-    private fun Any.toLoadingOwnerKey(): String {
-        return "${this::class.java.name}@${System.identityHashCode(this)}"
-    }
-
     private fun renderGlobalLoading() {
         if (isFinishing || isDestroyed) return
         if (loadingOwners.isNotEmpty()) {
@@ -171,6 +187,12 @@ open class BaseActivity : AppCompatActivity() {
         type: SnackType = SnackType.NORMAL
     ) {
         val root = findViewById<View>(android.R.id.content) ?: return
+        AppDiagnosticTrace.event(
+            category = "feedback",
+            name = "snackbar.shown",
+            "activity" to javaClass.simpleName,
+            "state" to type.name
+        )
         val snackbar = Snackbar.make(
             root,
             message,
@@ -228,6 +250,12 @@ open class BaseActivity : AppCompatActivity() {
         message: String?,
         throwable: Throwable? = null
     ) {
+        AppDiagnosticTrace.event(
+            category = "error",
+            name = "application_error.logged",
+            "activity" to javaClass.simpleName,
+            "failure" to throwable?.javaClass?.simpleName
+        )
         android.util.Log.e(
             tag,
             message,
@@ -244,4 +272,59 @@ open class BaseActivity : AppCompatActivity() {
     private companion object {
         const val STATE_LOADING_OWNERS = "base_activity_loading_owners"
     }
+}
+
+private fun Any.toLoadingOwnerKey(): String =
+    "${this::class.java.name}@${System.identityHashCode(this)}"
+
+private object BaseActivityTouchDiagnostics {
+
+    fun record(activity: BaseActivity, event: MotionEvent) {
+        val target = findTarget(
+            view = activity.window.decorView,
+            rawX = event.rawX.toInt(),
+            rawY = event.rawY.toInt()
+        )
+        AppDiagnosticTrace.event(
+            category = "input",
+            name = "action.up",
+            "activity" to activity.javaClass.simpleName,
+            "viewId" to target?.let(::viewId),
+            "viewClass" to target?.let(::className)
+        )
+    }
+
+    private fun findTarget(view: View, rawX: Int, rawY: Int): View? {
+        val visibleBounds = Rect()
+        val containsTouch = view.isShown &&
+            view.getGlobalVisibleRect(visibleBounds) &&
+            visibleBounds.contains(rawX, rawY)
+        if (!containsTouch) return null
+
+        val childTarget = (view as? ViewGroup)
+            ?.let { group -> findChildTarget(group, rawX, rawY) }
+        return childTarget ?: view.takeIf {
+            it.id != View.NO_ID || it.isClickable || it.isLongClickable
+        }
+    }
+
+    private fun findChildTarget(group: ViewGroup, rawX: Int, rawY: Int): View? =
+        (group.childCount - 1 downTo 0).firstNotNullOfOrNull { index ->
+            findTarget(group.getChildAt(index), rawX, rawY)
+        }
+
+    private fun viewId(view: View): String? =
+        view.id.takeUnless { resourceId -> resourceId == View.NO_ID }
+            ?.let { resourceId ->
+                runCatching {
+                    view.resources.getResourceEntryName(resourceId)
+                }.getOrNull()
+            }
+
+    private fun className(view: View): String =
+        view.javaClass.simpleName.ifBlank {
+            view.javaClass.superclass?.simpleName.orEmpty()
+        }.ifBlank {
+            "View"
+        }
 }

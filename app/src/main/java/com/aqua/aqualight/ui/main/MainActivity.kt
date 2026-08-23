@@ -10,6 +10,7 @@ import androidx.navigation.NavController
 import androidx.navigation.fragment.NavHostFragment
 import com.aqua.aqualight.R
 import com.aqua.aqualight.base.BaseActivity
+import com.aqua.aqualight.base.diagnostics.AppDiagnosticTrace
 import com.aqua.aqualight.composition.requireAppContainer
 import com.aqua.aqualight.data.auth.AppSessionCoordinator
 import com.aqua.aqualight.data.recovery.LocalDataRecoveryTracker
@@ -58,6 +59,7 @@ class MainActivity : BaseActivity() {
         ) as NavHostFragment
 
         navController = navHost.navController
+        MainActivityDiagnosticNavigation.observe(this, navController)
 
         binding.navHost.isVisible = false
         binding.bottomNav.isVisible = false
@@ -273,4 +275,25 @@ class MainActivity : BaseActivity() {
 
         navController.graph = graph
     }
+}
+
+private object MainActivityDiagnosticNavigation {
+
+    fun observe(activity: MainActivity, navController: NavController) {
+        navController.addOnDestinationChangedListener { _, destination, _ ->
+            AppDiagnosticTrace.event(
+                category = "navigation",
+                name = "destination.changed",
+                "destination" to destinationName(activity, destination.id),
+                "destinationId" to destination.id
+            )
+        }
+    }
+
+    private fun destinationName(activity: MainActivity, destinationId: Int): String =
+        runCatching {
+            activity.resources.getResourceEntryName(destinationId)
+        }.getOrElse {
+            "unresolved"
+        }
 }

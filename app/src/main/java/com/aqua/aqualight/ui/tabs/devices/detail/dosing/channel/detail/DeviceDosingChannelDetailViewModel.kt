@@ -156,6 +156,11 @@ internal class DeviceDosingChannelDetailViewModel(
 
     fun setMissedDoseRecoveryEnabled(enabled: Boolean) {
         val state = mutableDraft.value
+        DeviceDosingMissedDoseRecoveryDiagnosticTrace.switch(
+            slotId = boundSlotId,
+            targetEnabled = enabled,
+            state = state
+        )
         if (
             !state.missedDoseRecoveryEditable ||
             state.operationInProgress ||

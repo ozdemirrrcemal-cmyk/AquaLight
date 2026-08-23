@@ -2,6 +2,7 @@ package com.aqua.aqualight.data.devices.dosing.v1
 
 import com.aqua.aqualight.application.devices.dosing.DeviceDosingChannelRejection
 import com.aqua.aqualight.application.devices.dosing.DeviceDosingChannelSnapshot
+import com.aqua.aqualight.base.diagnostics.AppDiagnosticTrace
 import com.aqua.aqualight.data.devices.model.DeviceUid
 import com.aqua.aqualight.data.devices.runtime.core.DeviceRuntimeCommandOutcome
 import java.util.concurrent.ConcurrentHashMap
@@ -98,16 +99,23 @@ internal class DeviceDosingV1MutationCoordinator(
         address: DeviceDosingV1Address,
         mutation: DosingMutationDefinition<T>
     ): DeviceDosingV1MutationResult<T> = operationGate.withChannel(address) {
+        address.traceMutation("begin", "persisted" to mutation.persistedMutation)
         var baseline = mutationBaseline(address, mutation)
             ?: return@withChannel DeviceDosingV1MutationResult.Malformed
+        address.traceMutation("baseline_selected", "revision" to baseline.state.channel.revision)
         if (mutation.assignmentSatisfied?.invoke(baseline.state.channel) == true) {
+            address.traceMutation("assignment_checked", "satisfied" to true)
             return@withChannel acceptSatisfiedAssignment(address, baseline, mutation)
         }
+        address.traceMutation("assignment_checked", "satisfied" to false)
         if (!mutation.origin.accepts(baseline.state.channel)) {
+            address.traceMutation("origin_checked", "accepted" to false)
             return@withChannel DeviceDosingV1MutationResult.Conflict
         }
+        address.traceMutation("origin_checked", "accepted" to true)
         var attempt = 0
         while (attempt < MAX_REPLAY_SAFE_ASSIGNMENT_ATTEMPTS) {
+            address.traceMutation("attempt_started", "attempt" to attempt)
             val result = mutateAgainstBaseline(
                 address = address,
                 baseline = baseline,
@@ -115,6 +123,7 @@ internal class DeviceDosingV1MutationCoordinator(
             )
             val replayableFailure = mutation.assignmentSatisfied != null &&
                 result.isReplayableAssignmentFailure()
+            address.traceMutation("attempt_completed", "result" to result.traceName())
             if (!replayableFailure) return@withChannel result
 
             // Failure reconciliation already refreshed inside this same channel gate. Replay
@@ -162,6 +171,11 @@ internal class DeviceDosingV1MutationCoordinator(
     ): DeviceDosingV1MutationResult<T> {
         val revision = baseline.state.channel.revision
         val token = stateOwner.beginRequest(address.deviceUid, address.channelKey)
+        address.traceMutation(
+            "request_created",
+            "requestGeneration" to token.requestGeneration,
+            "revision" to revision
+        )
         return when (
             val execution = executeDosingMutation(
                 address,
@@ -170,21 +184,33 @@ internal class DeviceDosingV1MutationCoordinator(
                 mutation.execute
             )
         ) {
-            is DosingExecutionOutcome.Rejected ->
+            is DosingExecutionOutcome.Rejected -> {
+                address.traceMutation("execution_rejected", "reason" to execution.reason.name)
                 DeviceDosingV1MutationResult.LocallyRejected(execution.reason)
+            }
             is DosingExecutionOutcome.Completed -> when (val outcome = execution.outcome) {
-                is DeviceRuntimeCommandOutcome.Success -> commitMutation(
-                    AcceptedDosingMutation(
-                        address = address,
-                        token = token,
-                        outcome = outcome,
-                        channel = mutation.channel,
-                        persistedMutation = mutation.persistedMutation,
-                        acknowledgementVisibility = mutation.acknowledgementVisibility,
-                        onAccepted = mutation.onAccepted
+                is DeviceRuntimeCommandOutcome.Success -> {
+                    address.traceMutation(
+                        "ack_arrived",
+                        "requestId" to outcome.messageId,
+                        "generation" to outcome.generation.value
                     )
-                )
-                else -> conflictCoordinator.reconcile(address, outcome)
+                    commitMutation(
+                        AcceptedDosingMutation(
+                            address = address,
+                            token = token,
+                            outcome = outcome,
+                            channel = mutation.channel,
+                            persistedMutation = mutation.persistedMutation,
+                            acknowledgementVisibility = mutation.acknowledgementVisibility,
+                            onAccepted = mutation.onAccepted
+                        )
+                    )
+                }
+                else -> {
+                    address.traceMutation("execution_failed", "outcome" to outcome.traceName())
+                    conflictCoordinator.reconcile(address, outcome)
+                }
             }
         }
     }
@@ -195,13 +221,21 @@ internal class DeviceDosingV1MutationCoordinator(
         accepted.channel(accepted.outcome.value)
     }.fold(
         onSuccess = { detail -> recordMutation(accepted, detail) },
-        onFailure = { DeviceDosingV1MutationResult.Malformed }
+        onFailure = {
+            accepted.address.traceMutation("ack_parse_failed")
+            DeviceDosingV1MutationResult.Malformed
+        }
     )
 
     private suspend fun <T> recordMutation(
         accepted: AcceptedDosingMutation<T>,
         detail: DeviceDosingV1ChannelDetail
     ): DeviceDosingV1MutationResult<T> = runCatching {
+        accepted.address.traceMutation(
+            "ack_record_started",
+            "revision" to detail.revision,
+            "visibility" to accepted.acknowledgementVisibility.name
+        )
         stateOwner.recordMutation(
             token = accepted.token,
             connectionGeneration = accepted.outcome.generation,
@@ -210,6 +244,11 @@ internal class DeviceDosingV1MutationCoordinator(
         )
     }.fold(
         onSuccess = { disposition ->
+            accepted.address.traceMutation(
+                "ack_record_completed",
+                "revision" to detail.revision,
+                "disposition" to disposition.name
+            )
             if (disposition == DeviceDosingV1CommitDisposition.MALFORMED) {
                 DeviceDosingV1MutationResult.Malformed
             } else {
@@ -230,7 +269,10 @@ internal class DeviceDosingV1MutationCoordinator(
                 }
             }
         },
-        onFailure = { DeviceDosingV1MutationResult.Malformed }
+        onFailure = {
+            accepted.address.traceMutation("ack_record_failed", "revision" to detail.revision)
+            DeviceDosingV1MutationResult.Malformed
+        }
     )
 
     private suspend fun <T> finishAcceptedMutation(
@@ -310,14 +352,37 @@ internal class DeviceDosingV1MutationCoordinator(
             null
         }
         if (cached != null && cached.state.channel.revision >= (mutation.origin?.revision ?: 0L)) {
+            address.traceMutation(
+                "baseline_cache_hit",
+                "source" to cached.source.name,
+                "revision" to cached.state.channel.revision
+            )
             return cached
         }
+        address.traceMutation(
+            "baseline_refresh_started",
+            "cachedRevision" to cached?.state?.channel?.revision,
+            "requiredRevision" to mutation.origin?.revision
+        )
         return when (val refreshed = refreshCoordinator.refreshWithinGate(address)) {
-            is DeviceDosingV1RefreshResult.Success -> DosingMutationBaseline(
-                state = refreshed.state,
-                source = DosingMutationBaselineSource.AUTHORITATIVE
-            )
-            else -> null
+            is DeviceDosingV1RefreshResult.Success -> {
+                address.traceMutation(
+                    "baseline_refresh_completed",
+                    "result" to refreshed.traceName(),
+                    "revision" to refreshed.state.channel.revision
+                )
+                DosingMutationBaseline(
+                    state = refreshed.state,
+                    source = DosingMutationBaselineSource.AUTHORITATIVE
+                )
+            }
+            else -> {
+                address.traceMutation(
+                    "baseline_refresh_completed",
+                    "result" to refreshed.traceName()
+                )
+                null
+            }
         }
     }
 }
@@ -413,4 +478,24 @@ private fun DeviceDosingV1PersistedMutationOrigin?.accepts(
     snapshot.revision >= revision && domainStillPresent(snapshot)
 )
 
+private fun DeviceDosingV1Address.traceMutation(
+    name: String,
+    vararg fields: Pair<String, Any?>
+) {
+    AppDiagnosticTrace.event(
+        DOSING_MUTATION_CATEGORY,
+        name,
+        "device" to AppDiagnosticTrace.deviceRef(deviceUid.value),
+        "slot" to channelKey.value,
+        *fields
+    )
+}
+
+private fun DeviceDosingV1MutationResult<*>.traceName(): String = javaClass.simpleName
+
+private fun DeviceDosingV1RefreshResult.traceName(): String = javaClass.simpleName
+
+private fun DeviceRuntimeCommandOutcome<*>.traceName(): String = javaClass.simpleName
+
 private const val MAX_REPLAY_SAFE_ASSIGNMENT_ATTEMPTS = 3
+private const val DOSING_MUTATION_CATEGORY = "dosing_mutation"

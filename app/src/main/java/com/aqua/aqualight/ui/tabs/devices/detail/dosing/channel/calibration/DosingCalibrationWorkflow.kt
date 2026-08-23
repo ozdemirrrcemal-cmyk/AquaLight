@@ -79,6 +79,7 @@ internal class DosingCalibrationWorkflow(
     fun onAction(action: DeviceDosingCalibrationAction) {
         if (session.exiting || session.completionEmitted) return
         val route = session.route ?: return
+        val previousStep = mutableUiState.value.step
         val decision = reduceDosingCalibrationAction(
             state = mutableUiState.value,
             primeRequested = session.primeRequested,
@@ -86,6 +87,12 @@ internal class DosingCalibrationWorkflow(
             constraints = operations.constraints
         )
         mutableUiState.value = decision.state
+        DeviceDosingCalibrationDiagnosticTrace.stepTransition(
+            slotId = route.slotId,
+            fromStep = previousStep,
+            toStep = decision.state.step,
+            operation = decision.operation
+        )
         if (action is DeviceDosingCalibrationAction.DisplayNameChanged) {
             session.nameDraftInitialized = true
         }
@@ -233,6 +240,12 @@ internal class DosingCalibrationWorkflow(
         result: DeviceDosingCalibrationResult,
         renderSuccess: Boolean
     ) {
+        DeviceDosingCalibrationDiagnosticTrace.result(
+            slotId = session.route?.slotId,
+            operation = operation,
+            result = result,
+            step = mutableUiState.value.step
+        )
         when (result) {
             is DeviceDosingCalibrationResult.Success -> {
                 val previousSnapshot = session.latestSnapshot
@@ -260,12 +273,19 @@ internal class DosingCalibrationWorkflow(
         snapshot: DeviceDosingCalibrationSnapshot,
         previousSnapshot: DeviceDosingCalibrationSnapshot?
     ) {
+        val previousStep = mutableUiState.value.step
         val transition = dosingCalibrationSuccessTransition(
             operation = operation,
             current = mutableUiState.value
         )
         if (transition.markLocalProgress) session.hasLocalProgress = true
         transition.state?.let { state -> mutableUiState.value = state }
+        DeviceDosingCalibrationDiagnosticTrace.stepTransition(
+            slotId = session.route?.slotId,
+            fromStep = previousStep,
+            toStep = mutableUiState.value.step,
+            operation = operation
+        )
         if (transition.applySnapshot) applySnapshot(snapshot, previousSnapshot)
         if (transition.emitCompleted && !session.exiting && !session.completionEmitted) {
             session.completionEmitted = true
@@ -278,6 +298,8 @@ internal class DosingCalibrationWorkflow(
         previousSnapshot: DeviceDosingCalibrationSnapshot? = session.latestSnapshot
     ) {
         val route = session.route ?: return
+        val previousStep = mutableUiState.value.step
+        val previousPhase = previousSnapshot?.sessionPhase
         DosingCalibrationSnapshotReconciliation.initializeNameDraftIfNeeded(
             session = session,
             mutableUiState = mutableUiState,
@@ -291,6 +313,13 @@ internal class DosingCalibrationWorkflow(
             session = session,
             mutableUiState = mutableUiState,
             snapshot = snapshot
+        )
+        DeviceDosingCalibrationDiagnosticTrace.snapshotTransition(
+            slotId = route.slotId,
+            fromStep = previousStep,
+            toStep = mutableUiState.value.step,
+            fromPhase = previousPhase,
+            toPhase = snapshot.sessionPhase
         )
         if (
             DosingCalibrationSnapshotReconciliation.shouldCompleteFromSnapshot(

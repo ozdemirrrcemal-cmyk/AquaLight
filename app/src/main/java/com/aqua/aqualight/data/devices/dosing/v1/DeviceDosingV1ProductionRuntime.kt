@@ -4,6 +4,7 @@ import com.aqua.aqualight.application.devices.dosing.DeviceDosingCalibrationOper
 import com.aqua.aqualight.application.devices.dosing.DeviceDosingChannelOperations
 import com.aqua.aqualight.application.devices.dosing.DeviceDosingLowLevelAlertTextResolver
 import com.aqua.aqualight.application.notifications.NotificationDispatchUseCase
+import com.aqua.aqualight.base.diagnostics.AppDiagnosticTrace
 import com.aqua.aqualight.data.devices.dosing.DeviceDosingLowLevelAlertLedger
 import com.aqua.aqualight.data.devices.dosing.DeviceDosingLowLevelAlertMonitor
 import com.aqua.aqualight.data.devices.model.DeviceFamily
@@ -82,16 +83,36 @@ internal class DeviceDosingV1ProductionRuntime(
     }
 
     private suspend fun consumeLifecycle(event: DeviceRuntimeLifecycleEvent) {
+        event.traceLifecycle("arrived")
         adapter.consume(event)
+        event.traceLifecycle("state_invalidated")
         if (
             event is DeviceRuntimeLifecycleEvent.Authenticated &&
             devicesRepository.currentDevice(event.deviceUid)?.product?.family == DeviceFamily.DOSING
         ) {
-            channelOperations.refreshAll(event.deviceUid.value)
+            event.traceLifecycle("readback_started")
+            val authoritative = channelOperations.refreshAll(event.deviceUid.value)
+            event.traceLifecycle("readback_completed", "authoritative" to authoritative)
         }
     }
 
     override fun close() {
+        AppDiagnosticTrace.event(DOSING_LIFECYCLE_CATEGORY, "runtime_closed")
         runtimeScope.cancel()
     }
 }
+
+private fun DeviceRuntimeLifecycleEvent.traceLifecycle(
+    name: String,
+    vararg fields: Pair<String, Any?>
+) {
+    AppDiagnosticTrace.event(
+        DOSING_LIFECYCLE_CATEGORY,
+        name,
+        "device" to AppDiagnosticTrace.deviceRef(deviceUid.value),
+        "lifecycleType" to javaClass.simpleName,
+        *fields
+    )
+}
+
+private const val DOSING_LIFECYCLE_CATEGORY = "dosing_lifecycle"

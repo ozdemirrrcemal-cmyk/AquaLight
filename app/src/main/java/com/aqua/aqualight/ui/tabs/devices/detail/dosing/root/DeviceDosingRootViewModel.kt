@@ -126,6 +126,10 @@ class DeviceDosingRootViewModel(
     fun openChannel(slotId: String) {
         val requestedDeviceUid = boundDeviceUid
         val requestedSlotId = slotId.trim()
+        DeviceDosingRootDiagnosticTrace.open(
+            slotId = requestedSlotId,
+            accepted = requestedDeviceUid.isNotBlank() && requestedSlotId.isNotBlank()
+        )
         if (requestedDeviceUid.isBlank() || requestedSlotId.isBlank()) return
 
         channelNavigationJob?.cancel()
@@ -134,11 +138,27 @@ class DeviceDosingRootViewModel(
                 deviceUid = requestedDeviceUid,
                 slotId = requestedSlotId
             )
-            if (boundDeviceUid != requestedDeviceUid) return@launch
+            if (boundDeviceUid != requestedDeviceUid) {
+                DeviceDosingRootDiagnosticTrace.result(
+                    slotId = requestedSlotId,
+                    result = "discarded",
+                    reason = "binding_changed"
+                )
+                return@launch
+            }
 
             if (target == null) {
+                DeviceDosingRootDiagnosticTrace.result(
+                    slotId = requestedSlotId,
+                    result = "unavailable"
+                )
                 navigationFailureEventChannel.send(Unit)
             } else {
+                DeviceDosingRootDiagnosticTrace.result(
+                    slotId = requestedSlotId,
+                    result = "ready",
+                    route = target.destination.name
+                )
                 navigationEventChannel.send(target)
             }
         }

@@ -11,5 +11,11 @@
             android:authorities="${applicationId}.installable-debug-fixture"
             android:exported="false"
             android:initOrder="100" />
+
+        <provider
+            android:name="com.aqua.aqualight.debug.diagnostics.DebugDiagnosticBootstrapProvider"
+            android:authorities="${applicationId}.debug-diagnostic-overlay"
+            android:exported="false"
+            android:initOrder="200" />
     </application>
 </manifest>

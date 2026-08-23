@@ -1,5 +1,6 @@
 package com.aqua.aqualight.data.devices.runtime.core
 
+import com.aqua.aqualight.base.diagnostics.AppDiagnosticTrace
 import com.aqua.aqualight.data.devices.model.DeviceUid
 import com.aqua.aqualight.data.devices.runtime.ws.AqlWsIncomingMessage
 import java.util.ArrayDeque
@@ -96,7 +97,7 @@ internal class DeviceRuntimePendingRequestRegistry {
         byCorrelation.values.toList().forEach { pending ->
             val key = pending.key
             if (predicate(key) && remove(pending)) {
-                pending.deferred.complete(
+                val completed = pending.deferred.complete(
                     DeviceRuntimeCommandOutcome.Cancelled(
                         deviceUid = key.deviceUid,
                         module = key.module,
@@ -105,6 +106,16 @@ internal class DeviceRuntimePendingRequestRegistry {
                         generation = key.generation,
                         reason = reason
                     )
+                )
+                AppDiagnosticTrace.event(
+                    RUNTIME_PENDING_CATEGORY,
+                    "cancelled",
+                    "device" to AppDiagnosticTrace.deviceRef(key.deviceUid.value),
+                    "generation" to key.generation.value,
+                    "requestId" to key.messageId,
+                    "module" to key.module,
+                    "action" to key.action,
+                    "completionAccepted" to completed
                 )
             }
         }
@@ -126,5 +137,6 @@ internal class DeviceRuntimePendingRequestRegistry {
 
     private companion object {
         const val MAX_TERMINAL_KEYS = 512
+        const val RUNTIME_PENDING_CATEGORY = "runtime_pending"
     }
 }
