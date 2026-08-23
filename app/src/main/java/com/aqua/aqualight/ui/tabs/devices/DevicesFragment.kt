@@ -191,6 +191,7 @@ class DevicesFragment : Fragment(R.layout.fragment_devices) {
     private fun showDeviceUnavailable(
         event: DevicesEvent.ShowDeviceUnavailable
     ) {
+        baseActivity()?.clearGlobalLoading(DEVICE_MENU_PREPARATION_LOADING_OWNER)
         baseActivity()?.showDeviceOfflineDialog(
             deviceTitle = event.title,
             messageRes = event.messageRes
@@ -302,6 +303,7 @@ class DevicesFragment : Fragment(R.layout.fragment_devices) {
                 )
         }
 
+        baseActivity()?.clearGlobalLoading(DEVICE_MENU_PREPARATION_LOADING_OWNER)
         binding.root.postOnAnimation {
             if (
                 _binding == null ||
