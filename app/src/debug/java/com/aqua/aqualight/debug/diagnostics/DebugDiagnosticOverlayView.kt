@@ -112,9 +112,9 @@ internal class DebugDiagnosticOverlayView(
     private fun renderHeader(latest: DebugDiagnosticRecord?) {
         val marker = if (expanded) COLLAPSE_MARKER else EXPAND_MARKER
         header.text = if (latest == null) {
-            "$marker $READY_LABEL • $COPY_HINT"
+            "$marker $COPY_HINT • $READY_LABEL"
         } else {
-            "$marker #${latest.sequence} ${latest.event.category}/${latest.event.name} • $COPY_HINT"
+            "$marker $COPY_HINT • #${latest.sequence} ${latest.event.category}/${latest.event.name}"
         }
     }
 
