@@ -241,19 +241,19 @@ private class DeviceMenuOpenResolver(
     }
 
     private suspend fun resolvePreparedRoute(
-        access: DeviceMenuAccessResult.Available
+        result: DeviceMenuAccessResult.Available
     ): DevicesEvent = when (
         val preparation = controlSurfacePreparationOperations.prepare(
             DeviceControlSurfacePreparationRequest(
-                deviceUid = access.deviceUid,
-                family = access.family
+                deviceUid = result.deviceUid,
+                family = result.family
             )
         )
     ) {
         DeviceControlSurfacePreparationResult.Ready ->
-            DevicesEvent.OpenRoute(route = routeResolver.resolve(access))
+            DevicesEvent.OpenRoute(route = routeResolver.resolve(result))
         is DeviceControlSurfacePreparationResult.Unavailable -> unavailableEvent(
-            title = access.title,
+            title = result.title,
             reason = preparation.reason
         )
     }
