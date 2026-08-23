@@ -2,6 +2,9 @@ package com.aqua.aqualight.ui.tabs.devices.detail.dosing.root
 
 import com.aqua.aqualight.application.devices.DeviceChannelSlots
 import com.aqua.aqualight.application.devices.DeviceChannelWireKey
+import com.aqua.aqualight.application.devices.DeviceControlSurfacePreparationOperations
+import com.aqua.aqualight.application.devices.DeviceControlSurfacePreparationRequest
+import com.aqua.aqualight.application.devices.DeviceControlSurfacePreparationResult
 import com.aqua.aqualight.application.devices.DeviceDosingChannelSlot
 import com.aqua.aqualight.application.devices.DeviceRootCatalogState
 import com.aqua.aqualight.application.devices.DeviceRootOperations
@@ -98,6 +101,30 @@ class DeviceDosingRootReadPathTest {
             )
             assertEquals(50.0, authoritative.channels.first().reservoir?.remainingMl ?: 0.0, 0.0)
         }
+
+    @Test
+    fun `prepared four channel state is authoritative before bind returns`() = runTest(dispatcher) {
+        val preparedChannels = (1..4).map { channelNumber ->
+            channelSnapshot(channelNumber = channelNumber, pumpCount = 4)
+        }
+        val channels = FakeChannelOperations(initialSnapshots = preparedChannels)
+        val preparation = FakePreparationOperations(fresh = true)
+        val viewModel = viewModel(
+            rootOperations = FakeRootOperations(rootSnapshot(channelCount = 4)),
+            channelOperations = channels,
+            preparationOperations = preparation
+        )
+
+        viewModel.bind(DEVICE_UID, "Fallback")
+
+        assertEquals(
+            listOf("Authoritative 1", "Authoritative 2", "Authoritative 3", "Authoritative 4"),
+            channelNames(viewModel)
+        )
+        assertEquals(4, viewModel.uiState.value.pumpCount)
+        assertFalse(channels.refreshAllCalled)
+        assertEquals(1, preparation.consumeCalls)
+    }
 
     @Test
     fun `reconnect clears authoritative cards to topology-only bootstrap`() = runTest(dispatcher) {
@@ -226,11 +253,14 @@ class DeviceDosingRootReadPathTest {
 
     private fun viewModel(
         rootOperations: DeviceRootOperations,
-        channelOperations: DeviceDosingChannelOperations
+        channelOperations: DeviceDosingChannelOperations,
+        preparationOperations: DeviceControlSurfacePreparationOperations =
+            FakePreparationOperations()
     ) = DeviceDosingRootViewModel(
         operations = rootOperations,
         channelNavigationOperations = UnavailableDeviceDosingChannelNavigationOperations,
-        channelOperations = channelOperations
+        channelOperations = channelOperations,
+        controlSurfacePreparationOperations = preparationOperations
     )
 
     private fun channelNames(viewModel: DeviceDosingRootViewModel): List<String> =
@@ -252,9 +282,10 @@ class DeviceDosingRootReadPathTest {
         }
     }
 
-    private class FakeChannelOperations :
-        DeviceDosingChannelOperations by UnavailableDeviceDosingChannelOperations {
-        private val snapshots = MutableStateFlow<List<DeviceDosingChannelSnapshot>>(emptyList())
+    private class FakeChannelOperations(
+        initialSnapshots: List<DeviceDosingChannelSnapshot> = emptyList()
+    ) : DeviceDosingChannelOperations by UnavailableDeviceDosingChannelOperations {
+        private val snapshots = MutableStateFlow(initialSnapshots)
         var refreshAllCalled: Boolean = false
 
         override fun observeAll(deviceUid: String): Flow<List<DeviceDosingChannelSnapshot>> =
@@ -270,6 +301,24 @@ class DeviceDosingRootReadPathTest {
         }
     }
 
+    private class FakePreparationOperations(
+        private val fresh: Boolean = false
+    ) : DeviceControlSurfacePreparationOperations {
+        var consumeCalls = 0
+
+        override suspend fun prepare(
+            request: DeviceControlSurfacePreparationRequest
+        ): DeviceControlSurfacePreparationResult = DeviceControlSurfacePreparationResult.Ready
+
+        override fun consumeFreshPreparation(
+            deviceUid: String,
+            family: OwnerDeviceFamily
+        ): Boolean {
+            consumeCalls += 1
+            return fresh
+        }
+    }
+
     private companion object {
         const val DEVICE_UID = "device-1"
     }
@@ -281,6 +330,7 @@ private fun rootSnapshot(channelCount: Int) = DeviceRootSnapshot(
     availability = OwnerDeviceAvailability.REACHABLE,
     family = OwnerDeviceFamily.DOSING,
     catalogState = DeviceRootCatalogState.VALID,
+    dosingChannelCount = channelCount,
     channelSlots = DeviceChannelSlots(
         lightChannels = emptyList(),
         timerChannels = emptyList(),
