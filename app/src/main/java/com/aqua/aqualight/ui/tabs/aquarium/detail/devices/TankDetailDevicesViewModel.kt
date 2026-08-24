@@ -59,7 +59,6 @@ class TankDetailDevicesViewModel(
     private var spotlightRotationJob: Job? = null
     private var pendingMenuOpen: DeviceMenuOpenResult.Ready? = null
 
-    @Suppress("LongMethod")
     fun bind(tankId: Long) {
         if (tankId <= 0L || boundTankId == tankId) return
 
@@ -70,60 +69,22 @@ class TankDetailDevicesViewModel(
 
         val assignedDevices = assignmentOperations.assignedDevices(tankId)
             .onEach(::syncDosingObservers)
-        val interactionState = combine(
-            openingDeviceId,
-            removingDevice
-        ) { currentOpeningDeviceId, isRemovingDevice ->
-            TankDeviceInteractionState(
-                openingDeviceId = currentOpeningDeviceId,
-                isRemovingDevice = isRemovingDevice
-            )
-        }
-        val dosingPresentationState = combine(
-            dosingSummaries,
-            spotlightIndices
-        ) { summaries, indices ->
-            TankDosingPresentationState(
-                summaries = summaries,
-                spotlightIndices = indices
-            )
-        }
+        val interactionState = observeInteractionState(
+            openingDeviceId = openingDeviceId,
+            removingDevice = removingDevice
+        )
+        val dosingPresentationState = observeDosingPresentationState(
+            dosingSummaries = dosingSummaries,
+            spotlightIndices = spotlightIndices
+        )
 
         observeJob = viewModelScope.launch {
             combine(
                 assignedDevices,
                 interactionState,
-                dosingPresentationState
-            ) { devices, interaction, dosingPresentation ->
-                val items = devices.map { device ->
-                    val compactCard = DeviceCompactSnapshotMapper.map(device)
-                    val liveDosingSummary = dosingPresentation.summaries[device.deviceUid]
-                        .takeIf { device.availability == OwnerDeviceAvailability.REACHABLE }
-                    val dosingCard = if (device.family == OwnerDeviceFamily.DOSING) {
-                        compactCard.toDosingSpotlightCardUi(
-                            summary = liveDosingSummary,
-                            selectedIndex =
-                                dosingPresentation.spotlightIndices[device.deviceUid] ?: 0
-                        )
-                    } else {
-                        null
-                    }
-                    TankAssignedDeviceItem(
-                        deviceUid = device.deviceUid,
-                        title = device.displayName,
-                        card = compactCard,
-                        dosingCard = dosingCard
-                    )
-                }
-                TankDetailDevicesUiState(
-                    devices = items,
-                    isEmpty = items.isEmpty(),
-                    isLoading = false,
-                    openingDeviceId = interaction.openingDeviceId,
-                    isOpeningDeviceMenu = interaction.openingDeviceId != null,
-                    isRemovingDevice = interaction.isRemovingDevice
-                )
-            }.catch {
+                dosingPresentationState,
+                ::buildTankDetailDevicesUiState
+            ).catch {
                 _uiState.update { current ->
                     current.copy(
                         devices = emptyList(),
@@ -362,6 +323,66 @@ private data class TankDosingPresentationState(
     val summaries: Map<String, DeviceDosingCardSummary>,
     val spotlightIndices: Map<String, Int>
 )
+
+private fun observeInteractionState(
+    openingDeviceId: Flow<String?>,
+    removingDevice: Flow<Boolean>
+): Flow<TankDeviceInteractionState> = combine(
+    openingDeviceId,
+    removingDevice
+) { currentOpeningDeviceId, isRemovingDevice ->
+    TankDeviceInteractionState(
+        openingDeviceId = currentOpeningDeviceId,
+        isRemovingDevice = isRemovingDevice
+    )
+}
+
+private fun observeDosingPresentationState(
+    dosingSummaries: Flow<Map<String, DeviceDosingCardSummary>>,
+    spotlightIndices: Flow<Map<String, Int>>
+): Flow<TankDosingPresentationState> = combine(
+    dosingSummaries,
+    spotlightIndices
+) { summaries, indices ->
+    TankDosingPresentationState(
+        summaries = summaries,
+        spotlightIndices = indices
+    )
+}
+
+private fun buildTankDetailDevicesUiState(
+    devices: List<TankDeviceListItem>,
+    interaction: TankDeviceInteractionState,
+    dosingPresentation: TankDosingPresentationState
+): TankDetailDevicesUiState {
+    val items = devices.map { device ->
+        val compactCard = DeviceCompactSnapshotMapper.map(device)
+        val liveDosingSummary = dosingPresentation.summaries[device.deviceUid]
+            .takeIf { device.availability == OwnerDeviceAvailability.REACHABLE }
+        val dosingCard = if (device.family == OwnerDeviceFamily.DOSING) {
+            compactCard.toDosingSpotlightCardUi(
+                summary = liveDosingSummary,
+                selectedIndex = dosingPresentation.spotlightIndices[device.deviceUid] ?: 0
+            )
+        } else {
+            null
+        }
+        TankAssignedDeviceItem(
+            deviceUid = device.deviceUid,
+            title = device.displayName,
+            card = compactCard,
+            dosingCard = dosingCard
+        )
+    }
+    return TankDetailDevicesUiState(
+        devices = items,
+        isEmpty = items.isEmpty(),
+        isLoading = false,
+        openingDeviceId = interaction.openingDeviceId,
+        isOpeningDeviceMenu = interaction.openingDeviceId != null,
+        isRemovingDevice = interaction.isRemovingDevice
+    )
+}
 
 private fun isDeviceRemovalAllowed(
     tankId: Long,
