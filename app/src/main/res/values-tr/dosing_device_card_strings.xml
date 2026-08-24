@@ -5,8 +5,10 @@
         <item quantity="other">%1$d kanal · %2$d aktif</item>
     </plurals>
     <string name="dosing_device_card_loading">Dozaj durumu hazırlanıyor</string>
+    <string name="dosing_device_card_unavailable">Dozaj verisi kullanılamıyor</string>
     <string name="dosing_device_card_offline">Dozaj cihazı çevrimdışı</string>
     <string name="dosing_device_card_loading_detail">Dozaj kanalları merkezi cihaz durumundan hazırlanıyor</string>
+    <string name="dosing_device_card_unavailable_detail">Canlı dozaj verisi hazırlanamadı</string>
     <string name="dosing_device_card_offline_detail">Cihaz yeniden bağlandığında canlı dozaj verileri gösterilecek</string>
     <string name="dosing_device_card_active">AKTİF</string>
     <string name="dosing_device_card_inactive">PASİF</string>

@@ -15,7 +15,7 @@ import com.aqua.aqualight.application.devices.RemoveDeviceFromTankResult
 import com.aqua.aqualight.application.devices.TankDeviceAssignmentOperations
 import com.aqua.aqualight.application.devices.TankDeviceListItem
 import com.aqua.aqualight.application.devices.dosing.DeviceDosingCardOperations
-import com.aqua.aqualight.application.devices.dosing.DeviceDosingCardSummary
+import com.aqua.aqualight.application.devices.dosing.DeviceDosingCardState
 import com.aqua.aqualight.ui.common.devicecard.DeviceCompactStatusStyle
 import com.aqua.aqualight.ui.tabs.aquarium.detail.devices.select.TankDeviceSelectEmptyReason
 import com.aqua.aqualight.ui.tabs.aquarium.detail.devices.select.TankDeviceSelectEvent
@@ -270,9 +270,9 @@ class TankDeviceAssignmentViewModelBoundaryTest {
     private class FakeDeviceDosingCardOperations : DeviceDosingCardOperations {
         val observeRequests = mutableListOf<String>()
 
-        override fun observe(deviceUid: String): Flow<DeviceDosingCardSummary?> {
+        override fun observe(deviceUid: String): Flow<DeviceDosingCardState> {
             observeRequests += deviceUid
-            return MutableStateFlow(null)
+            return MutableStateFlow(DeviceDosingCardState.Preparing)
         }
     }
 

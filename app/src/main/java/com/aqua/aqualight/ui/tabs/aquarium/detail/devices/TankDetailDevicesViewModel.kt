@@ -13,7 +13,7 @@ import com.aqua.aqualight.application.devices.RemoveDeviceFromTankResult
 import com.aqua.aqualight.application.devices.TankDeviceAssignmentOperations
 import com.aqua.aqualight.application.devices.TankDeviceListItem
 import com.aqua.aqualight.application.devices.dosing.DeviceDosingCardOperations
-import com.aqua.aqualight.application.devices.dosing.DeviceDosingCardSummary
+import com.aqua.aqualight.application.devices.dosing.DeviceDosingCardState
 import com.aqua.aqualight.ui.common.devicecard.DeviceCompactSnapshotMapper
 import com.aqua.aqualight.ui.common.devicepresence.DeviceMenuUnavailableMessageMapper
 import com.aqua.aqualight.ui.tabs.devices.route.DeviceRoute
@@ -47,7 +47,7 @@ class TankDetailDevicesViewModel(
 
     private val openingDeviceId = MutableStateFlow<String?>(null)
     private val removingDevice = MutableStateFlow(false)
-    private val dosingSummaries = MutableStateFlow<Map<String, DeviceDosingCardSummary>>(emptyMap())
+    private val dosingCardStates = MutableStateFlow<Map<String, DeviceDosingCardState>>(emptyMap())
     private val spotlightRotation = DosingSpotlightRotationController(viewModelScope)
 
     private val dosingObserverJobs = mutableMapOf<String, Job>()
@@ -70,7 +70,7 @@ class TankDetailDevicesViewModel(
             removingDevice = removingDevice
         )
         val dosingPresentationState = observeDosingPresentationState(
-            dosingSummaries = dosingSummaries,
+            dosingCardStates = dosingCardStates,
             spotlightIndices = spotlightRotation.indices
         )
 
@@ -211,36 +211,32 @@ class TankDetailDevicesViewModel(
 
         (dosingObserverJobs.keys - reachableDosingDeviceIds).forEach { deviceUid ->
             dosingObserverJobs.remove(deviceUid)?.cancel()
-            dosingSummaries.update { summaries -> summaries - deviceUid }
+            dosingCardStates.update { states -> states - deviceUid }
         }
-        spotlightRotation.updateChannelCounts(dosingSummaries.value.toSpotlightChannelCounts())
+        spotlightRotation.updateChannelCounts(dosingCardStates.value.toSpotlightChannelCounts())
 
         if (operations != null) {
             reachableDosingDeviceIds
                 .filterNot(dosingObserverJobs::containsKey)
                 .forEach { deviceUid ->
                     dosingObserverJobs[deviceUid] = viewModelScope.launch {
-                        operations.observe(deviceUid)
-                            .catch { emit(null) }
-                            .collect { summary ->
-                                updateDosingSummary(
-                                    deviceUid = deviceUid,
-                                    summary = summary
-                                )
-                            }
+                        operations.observe(deviceUid).collect { state ->
+                            updateDosingCardState(
+                                deviceUid = deviceUid,
+                                state = state
+                            )
+                        }
                     }
                 }
         }
     }
 
-    private fun updateDosingSummary(
+    private fun updateDosingCardState(
         deviceUid: String,
-        summary: DeviceDosingCardSummary?
+        state: DeviceDosingCardState
     ) {
-        dosingSummaries.update { summaries ->
-            if (summary == null) summaries - deviceUid else summaries + (deviceUid to summary)
-        }
-        spotlightRotation.updateChannelCounts(dosingSummaries.value.toSpotlightChannelCounts())
+        dosingCardStates.update { states -> states + (deviceUid to state) }
+        spotlightRotation.updateChannelCounts(dosingCardStates.value.toSpotlightChannelCounts())
     }
 
     private fun abandonPendingNavigation(deviceUid: String) {
@@ -285,7 +281,7 @@ private data class TankDeviceInteractionState(
 )
 
 private data class TankDosingPresentationState(
-    val summaries: Map<String, DeviceDosingCardSummary>,
+    val states: Map<String, DeviceDosingCardState>,
     val spotlightIndices: Map<String, Int>
 )
 
@@ -303,14 +299,14 @@ private fun observeInteractionState(
 }
 
 private fun observeDosingPresentationState(
-    dosingSummaries: Flow<Map<String, DeviceDosingCardSummary>>,
+    dosingCardStates: Flow<Map<String, DeviceDosingCardState>>,
     spotlightIndices: Flow<Map<String, Int>>
 ): Flow<TankDosingPresentationState> = combine(
-    dosingSummaries,
+    dosingCardStates,
     spotlightIndices
-) { summaries, indices ->
+) { states, indices ->
     TankDosingPresentationState(
-        summaries = summaries,
+        states = states,
         spotlightIndices = indices
     )
 }
@@ -322,11 +318,11 @@ private fun buildTankDetailDevicesUiState(
 ): TankDetailDevicesUiState {
     val items = devices.map { device ->
         val compactCard = DeviceCompactSnapshotMapper.map(device)
-        val liveDosingSummary = dosingPresentation.summaries[device.deviceUid]
+        val liveDosingState = dosingPresentation.states[device.deviceUid]
             .takeIf { device.availability == OwnerDeviceAvailability.REACHABLE }
         val dosingCard = if (device.family == OwnerDeviceFamily.DOSING) {
             compactCard.toDosingSpotlightCardUi(
-                summary = liveDosingSummary,
+                state = liveDosingState,
                 selectedIndex = dosingPresentation.spotlightIndices[device.deviceUid] ?: 0
             )
         } else {
@@ -349,8 +345,14 @@ private fun buildTankDetailDevicesUiState(
     )
 }
 
-private fun Map<String, DeviceDosingCardSummary>.toSpotlightChannelCounts(): Map<String, Int> =
-    mapValues { (_, summary) -> summary.channels.size }
+private fun Map<String, DeviceDosingCardState>.toSpotlightChannelCounts(): Map<String, Int> =
+    mapNotNull { (deviceUid, state) ->
+        (state as? DeviceDosingCardState.Ready)
+            ?.summary
+            ?.channels
+            ?.size
+            ?.let { count -> deviceUid to count }
+    }.toMap()
 
 private fun isDeviceRemovalAllowed(
     tankId: Long,

@@ -30,7 +30,7 @@ object DosingDeviceSpotlightCardBinder {
         }
 
         bindHeader(binding, header, online, displayName)
-        bindSummary(binding, item.summary, online)
+        bindSummary(binding, item, online)
         bindSpotlight(binding, item, online)
         bindAccessibility(binding, item.summary, displayName, item.selectedChannel?.title.orEmpty())
     }
@@ -64,16 +64,17 @@ object DosingDeviceSpotlightCardBinder {
 
     private fun bindSummary(
         binding: ItemDosingDeviceSpotlightCardBinding,
-        summary: DeviceDosingCardSummary?,
+        item: DosingDeviceSpotlightCardUi,
         online: Boolean
     ) {
         val context = binding.root.context
-        binding.tvDosingChannelSummary.text = summary?.let { value ->
-            channelSummaryText(context, value)
-        } ?: context.getString(
-            if (online) R.string.dosing_device_card_loading
-            else R.string.dosing_device_card_offline
-        )
+        binding.tvDosingChannelSummary.text = when {
+            !online -> context.getString(R.string.dosing_device_card_offline)
+            item.summary != null -> channelSummaryText(context, item.summary)
+            item.contentState == DosingDeviceSpotlightContentState.UNAVAILABLE ->
+                context.getString(R.string.dosing_device_card_unavailable)
+            else -> context.getString(R.string.dosing_device_card_loading)
+        }
     }
 
     private fun bindSpotlight(
@@ -87,8 +88,12 @@ object DosingDeviceSpotlightCardBinder {
         binding.tvDosingUnavailable.isVisible = channel == null
         if (channel == null) {
             binding.tvDosingUnavailable.text = context.getString(
-                if (online) R.string.dosing_device_card_loading_detail
-                else R.string.dosing_device_card_offline_detail
+                when {
+                    !online -> R.string.dosing_device_card_offline_detail
+                    item.contentState == DosingDeviceSpotlightContentState.UNAVAILABLE ->
+                        R.string.dosing_device_card_unavailable_detail
+                    else -> R.string.dosing_device_card_loading_detail
+                }
             )
             binding.channelIndicator.removeAllViews()
             return

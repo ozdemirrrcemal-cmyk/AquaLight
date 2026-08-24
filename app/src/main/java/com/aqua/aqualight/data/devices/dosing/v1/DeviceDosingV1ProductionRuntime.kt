@@ -59,7 +59,7 @@ internal class DeviceDosingV1ProductionRuntime(
     val channelOperations: DeviceDosingChannelOperations =
         DeviceDosingReconciledChannelOperations(adapter.channelOperations)
     val cardOperations: DeviceDosingCardOperations = DeviceDosingV1CardOperations(
-        devicesRepository = devicesRepository,
+        runtimePort = RepositoryDeviceDosingCardRuntimePort(devicesRepository),
         channelOperations = channelOperations
     )
     val calibrationOperations: DeviceDosingCalibrationOperations = adapter.calibrationOperations
