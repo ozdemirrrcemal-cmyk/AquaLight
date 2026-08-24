@@ -88,6 +88,76 @@ internal fun DosingManualDoseGlyph(
     }
 }
 
+@Composable
+internal fun DosingNextDoseGlyph(
+    tint: Color,
+    modifier: Modifier = Modifier
+) {
+    Canvas(modifier = modifier) {
+        drawNextDoseGlyph(tint)
+    }
+}
+
+private fun DrawScope.drawNextDoseGlyph(color: Color) {
+    val stroke = NEXT_DOSE_GLYPH_STROKE.toPx()
+    val center = Offset(
+        x = size.width * NEXT_DOSE_CLOCK_CENTER_X,
+        y = size.height * NEXT_DOSE_CLOCK_CENTER_Y
+    )
+    val radius = size.minDimension * NEXT_DOSE_CLOCK_RADIUS
+
+    drawCircle(
+        color = color,
+        radius = radius,
+        center = center,
+        style = Stroke(width = stroke)
+    )
+    drawLine(
+        color = color,
+        start = center,
+        end = Offset(center.x, center.y - radius * NEXT_DOSE_MINUTE_HAND_LENGTH),
+        strokeWidth = stroke,
+        cap = StrokeCap.Round
+    )
+    drawLine(
+        color = color,
+        start = center,
+        end = Offset(center.x + radius * NEXT_DOSE_HOUR_HAND_LENGTH, center.y),
+        strokeWidth = stroke,
+        cap = StrokeCap.Round
+    )
+    drawCircle(
+        color = color,
+        radius = NEXT_DOSE_CENTER_DOT_RADIUS.toPx(),
+        center = center
+    )
+
+    val arrowY = size.height * NEXT_DOSE_ARROW_CENTER_Y
+    val arrowEnd = Offset(size.width * NEXT_DOSE_ARROW_END_X, arrowY)
+    val arrowWingX = size.width * NEXT_DOSE_ARROW_WING_X
+    drawLine(
+        color = color,
+        start = Offset(size.width * NEXT_DOSE_ARROW_START_X, arrowY),
+        end = arrowEnd,
+        strokeWidth = stroke,
+        cap = StrokeCap.Round
+    )
+    drawLine(
+        color = color,
+        start = Offset(arrowWingX, size.height * NEXT_DOSE_ARROW_TOP_Y),
+        end = arrowEnd,
+        strokeWidth = stroke,
+        cap = StrokeCap.Round
+    )
+    drawLine(
+        color = color,
+        start = Offset(arrowWingX, size.height * NEXT_DOSE_ARROW_BOTTOM_Y),
+        end = arrowEnd,
+        strokeWidth = stroke,
+        cap = StrokeCap.Round
+    )
+}
+
 private fun DrawScope.drawDoseGlyph(color: Color) {
     drawPath(
         path = dosingDropPath(),
@@ -251,6 +321,17 @@ private const val BADGE_RADIUS = 0.20f
 private const val BADGE_PLUS_ARM = 0.075f
 private const val MANUAL_PLUS_ARM = 0.10f
 private const val BADGE_OUTLINE_ALPHA = 0.70f
+private const val NEXT_DOSE_CLOCK_CENTER_X = 0.34f
+private const val NEXT_DOSE_CLOCK_CENTER_Y = 0.50f
+private const val NEXT_DOSE_CLOCK_RADIUS = 0.28f
+private const val NEXT_DOSE_MINUTE_HAND_LENGTH = 0.58f
+private const val NEXT_DOSE_HOUR_HAND_LENGTH = 0.45f
+private const val NEXT_DOSE_ARROW_START_X = 0.68f
+private const val NEXT_DOSE_ARROW_END_X = 0.93f
+private const val NEXT_DOSE_ARROW_WING_X = 0.81f
+private const val NEXT_DOSE_ARROW_CENTER_Y = 0.50f
+private const val NEXT_DOSE_ARROW_TOP_Y = 0.37f
+private const val NEXT_DOSE_ARROW_BOTTOM_Y = 0.63f
 private const val CALENDAR_LEFT_X = 0.10f
 private const val CALENDAR_TOP_Y = 0.18f
 private const val CALENDAR_WIDTH = 0.80f
@@ -319,6 +400,8 @@ private val GLYPH_STROKE = 1.45.dp
 private val BADGE_OUTLINE_WIDTH = 1.10.dp
 private val BADGE_PLUS_WIDTH = 1.55.dp
 private val MANUAL_PLUS_WIDTH = 1.35.dp
+private val NEXT_DOSE_GLYPH_STROKE = 1.25.dp
+private val NEXT_DOSE_CENTER_DOT_RADIUS = 0.65.dp
 private val CALENDAR_CORNER_RADIUS = 2.5.dp
 private val CALENDAR_DOT_RADIUS = 1.1.dp
 private val MODE_STROKE = 1.25.dp

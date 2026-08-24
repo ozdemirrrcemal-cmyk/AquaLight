@@ -3,12 +3,15 @@ package com.aqua.aqualight.ui.tabs.devices.detail.dosing.presentation.card
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.text.BasicText
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import com.aqua.aqualight.R
@@ -33,17 +36,18 @@ internal fun DosingNextDoseSummary(
     } else {
         clockTime
     }
+    val iconDescription = stringResource(R.string.device_dosing_channel_next_dose_icon_description)
 
     Row(
         modifier = modifier.fillMaxWidth(),
         horizontalArrangement = Arrangement.spacedBy(NEXT_DOSE_TEXT_GAP),
         verticalAlignment = Alignment.CenterVertically
     ) {
-        BasicText(
-            text = stringResource(R.string.device_dosing_channel_next_dose_label),
-            style = typography.micro.copy(color = colors.secondaryText),
-            maxLines = 1,
-            overflow = TextOverflow.Clip
+        DosingNextDoseGlyph(
+            tint = colors.secondaryText,
+            modifier = Modifier
+                .size(NEXT_DOSE_GLYPH_SIZE)
+                .semantics { contentDescription = iconDescription }
         )
         BasicText(
             text = stringResource(
@@ -60,4 +64,5 @@ internal fun DosingNextDoseSummary(
 
 private const val MILLIS_PER_MINUTE = 60_000L
 private const val NEXT_DAY_OFFSET = 1
+private val NEXT_DOSE_GLYPH_SIZE = 18.dp
 private val NEXT_DOSE_TEXT_GAP = 4.dp
