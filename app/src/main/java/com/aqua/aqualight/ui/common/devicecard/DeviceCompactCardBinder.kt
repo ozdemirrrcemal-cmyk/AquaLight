@@ -5,6 +5,7 @@ import androidx.core.content.ContextCompat
 import androidx.core.view.isVisible
 import com.aqua.aqualight.R
 import com.aqua.aqualight.databinding.ItemDeviceCompactCardBinding
+import com.aqua.aqualight.ui.common.dosing.pump.DosingPumpProductVisualBinder
 
 object DeviceCompactCardBinder {
 
@@ -34,10 +35,13 @@ object DeviceCompactCardBinder {
         binding.tvTankName.text = supporting
         binding.tvTankName.isVisible = supporting.isNotBlank()
 
-        binding.ivDeviceIcon.setImageResource(item.iconRes)
-        binding.ivDeviceIcon.imageTintList = null
-        binding.ivDeviceIcon.clearColorFilter()
-        binding.ivDeviceIcon.contentDescription = name
+        DosingPumpProductVisualBinder.bind(
+            pumpView = binding.dosingPumpVisual,
+            fallbackImageView = binding.ivDeviceIcon,
+            dosingChannelCount = item.dosingChannelCount,
+            fallbackIconRes = item.iconRes,
+            contentDescription = name
+        )
 
         binding.ivPresenceIcon.imageTintList = ColorStateList.valueOf(
             presenceIconColor(binding, item.statusStyle)

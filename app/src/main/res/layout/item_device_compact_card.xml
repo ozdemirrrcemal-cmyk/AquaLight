@@ -36,6 +36,14 @@
             app:layout_constraintTop_toTopOf="parent"
             app:strokeWidth="@dimen/aqua_size_1">
 
+            <com.aqua.aqualight.ui.common.dosing.pump.DosingPumpProductVisualView
+                android:id="@+id/dosingPumpVisual"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:importantForAccessibility="no"
+                android:visibility="gone"
+                tools:visibility="gone" />
+
             <ImageView
                 android:id="@+id/ivDeviceIcon"
                 android:layout_width="@dimen/aqua_size_32"

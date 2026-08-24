@@ -25,6 +25,7 @@ object DeviceCardMapper {
                 serialText = device.serialText.ifBlank { device.deviceUid },
                 supportingText = supportingText,
                 iconRes = DeviceFamilyIconMapper.iconFor(device.family),
+                dosingChannelCount = device.dosingChannelCount,
                 statusStyle = if (isReachable) {
                     DeviceCompactStatusStyle.ONLINE
                 } else {
