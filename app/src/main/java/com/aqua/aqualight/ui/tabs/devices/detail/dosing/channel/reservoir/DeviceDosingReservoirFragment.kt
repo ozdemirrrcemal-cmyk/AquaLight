@@ -20,6 +20,7 @@ import com.aqua.aqualight.application.notifications.NotificationCategory
 import com.aqua.aqualight.base.BaseActivity
 import com.aqua.aqualight.composition.requireAppContainer
 import com.aqua.aqualight.ui.common.bottomsheet.TextInputBottomSheet
+import com.aqua.aqualight.ui.common.loading.setFragmentGlobalLoading
 import com.aqua.aqualight.ui.common.notification.NotificationEnablementCallbacks
 import com.aqua.aqualight.ui.common.notification.NotificationEnablementCoordinator
 import com.aqua.aqualight.ui.common.notification.NotificationEnablementDependencies
@@ -27,6 +28,8 @@ import com.aqua.aqualight.ui.common.notification.NotificationEnablementRequest
 import com.aqua.aqualight.ui.common.notification.NotificationEnablementStep
 import com.aqua.aqualight.ui.tabs.devices.detail.dosing.channel.common.DeviceDosingChannelDestinationFragment
 import java.util.Locale
+import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
 
 /** Render/input host for the authoritative reservoir editor. */
@@ -104,6 +107,7 @@ class DeviceDosingReservoirFragment :
             channelNumber = args.channelNumber
         )
         observeReservoirEvents()
+        observeOperationLoading()
         setupContent(view)
     }
 
@@ -224,6 +228,17 @@ class DeviceDosingReservoirFragment :
                         )
                     }
                 }
+            }
+        }
+    }
+
+    private fun observeOperationLoading() {
+        viewLifecycleOwner.lifecycleScope.launch {
+            viewLifecycleOwner.repeatOnLifecycle(Lifecycle.State.STARTED) {
+                viewModel.editorState
+                    .map { state -> state.operationInProgress }
+                    .distinctUntilChanged()
+                    .collect { loading -> setFragmentGlobalLoading(loading) }
             }
         }
     }

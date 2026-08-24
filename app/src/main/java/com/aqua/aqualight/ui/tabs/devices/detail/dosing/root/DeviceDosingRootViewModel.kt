@@ -63,7 +63,7 @@ class DeviceDosingRootViewModel(
             return
         }
         if (boundDeviceUid == deviceUid) {
-            refreshAuthoritative()
+            renderBoundState()
             return
         }
 

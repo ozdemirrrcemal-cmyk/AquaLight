@@ -19,6 +19,7 @@ import com.aqua.aqualight.base.BaseActivity
 import com.aqua.aqualight.composition.requireAppContainer
 import com.aqua.aqualight.ui.common.bottomsheet.TextInputBottomSheet
 import com.aqua.aqualight.ui.common.dialog.ConfirmDialogFragment
+import com.aqua.aqualight.ui.common.loading.setFragmentGlobalLoading
 import com.aqua.aqualight.ui.tabs.devices.detail.dosing.channel.common.DeviceDosingChannelDestinationFragment
 import com.aqua.aqualight.utils.DialogType
 import kotlinx.coroutines.flow.distinctUntilChanged
@@ -46,6 +47,7 @@ class DeviceDosingChannelDetailFragment :
         setupManualDoseResult()
         setupResetConfirmationResult()
         observeOperationEvents()
+        observeOperationLoading()
         observeAuthoritativeRoute()
         observeChannelTitle()
         setupSelectedPump(
@@ -121,6 +123,17 @@ class DeviceDosingChannelDetailFragment :
                     .filter(String::isNotBlank)
                     .distinctUntilChanged()
                     .collect(::updateDestinationTitle)
+            }
+        }
+    }
+
+    private fun observeOperationLoading() {
+        viewLifecycleOwner.lifecycleScope.launch {
+            viewLifecycleOwner.repeatOnLifecycle(Lifecycle.State.STARTED) {
+                viewModel.draft
+                    .map { draft -> draft.operationInProgress || draft.missedDoseRecoverySyncing }
+                    .distinctUntilChanged()
+                    .collect { loading -> setFragmentGlobalLoading(loading) }
             }
         }
     }

@@ -31,7 +31,6 @@ class DeviceDosingRootFragment : Fragment(R.layout.fragment_device_dosing_root) 
 
     private var _binding: FragmentDeviceDosingRootBinding? = null
     private val binding get() = _binding!!
-    private var hasStartedOnce = false
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
@@ -48,15 +47,6 @@ class DeviceDosingRootFragment : Fragment(R.layout.fragment_device_dosing_root) 
         observeHeaderTitle()
         observeChannelNavigation()
         observeChannelNavigationFailures()
-    }
-
-    override fun onStart() {
-        super.onStart()
-        if (hasStartedOnce) {
-            viewModel.refreshAuthoritative()
-        } else {
-            hasStartedOnce = true
-        }
     }
 
     private fun setupHeader(title: String) {

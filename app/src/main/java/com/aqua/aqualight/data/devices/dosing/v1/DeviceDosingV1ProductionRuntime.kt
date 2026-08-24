@@ -3,6 +3,7 @@ package com.aqua.aqualight.data.devices.dosing.v1
 import com.aqua.aqualight.application.devices.dosing.DeviceDosingCalibrationOperations
 import com.aqua.aqualight.application.devices.dosing.DeviceDosingChannelOperations
 import com.aqua.aqualight.application.devices.dosing.DeviceDosingLowLevelAlertTextResolver
+import com.aqua.aqualight.application.devices.dosing.DeviceDosingReconciledChannelOperations
 import com.aqua.aqualight.application.notifications.NotificationDispatchUseCase
 import com.aqua.aqualight.data.devices.dosing.DeviceDosingLowLevelAlertLedger
 import com.aqua.aqualight.data.devices.dosing.DeviceDosingLowLevelAlertMonitor
@@ -54,7 +55,8 @@ internal class DeviceDosingV1ProductionRuntime(
         textResolver = alertTextResolver
     )
 
-    val channelOperations: DeviceDosingChannelOperations = adapter.channelOperations
+    val channelOperations: DeviceDosingChannelOperations =
+        DeviceDosingReconciledChannelOperations(adapter.channelOperations)
     val calibrationOperations: DeviceDosingCalibrationOperations = adapter.calibrationOperations
 
     init {
