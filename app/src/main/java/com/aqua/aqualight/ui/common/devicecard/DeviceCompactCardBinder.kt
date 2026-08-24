@@ -38,6 +38,7 @@ object DeviceCompactCardBinder {
         DosingPumpProductVisualBinder.bind(
             pumpView = binding.dosingPumpVisual,
             fallbackImageView = binding.ivDeviceIcon,
+            isDosingProduct = item.isDosingProduct,
             dosingChannelCount = item.dosingChannelCount,
             fallbackIconRes = item.iconRes,
             contentDescription = name

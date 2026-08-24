@@ -47,6 +47,7 @@ object DosingDeviceSpotlightCardBinder {
         DosingPumpProductVisualBinder.bind(
             container = binding.deviceIconContainer,
             fallbackImageView = binding.ivDeviceIcon,
+            isDosingProduct = true,
             dosingChannelCount = header.dosingChannelCount,
             fallbackIconRes = header.iconRes,
             contentDescription = displayName

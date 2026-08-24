@@ -99,11 +99,7 @@ private fun DeviceSnapshot.latestSeenAtMillis(): Long {
     ).maxOrNull() ?: 0L
 }
 
-/**
- * Physical pump layout is catalog-owned and must not be inferred from a display name or live state.
- * Non-Dosing products return null. A known Dosing family with an unresolved catalog identity returns
- * zero so presentation can fail closed instead of falling back to a four-head product image.
- */
+/** Physical pump layout is catalog-owned and is never inferred from display text or live state. */
 private fun DeviceSnapshot.catalogDosingChannelCount(): Int? {
     if (product.family != DeviceFamily.DOSING) return null
 
@@ -114,7 +110,7 @@ private fun DeviceSnapshot.catalogDosingChannelCount(): Int? {
             model = DeviceProductModel(product.model),
             hardwareRevision = DeviceHardwareRevision(product.hardwareRevision)
         )
-    }.getOrNull() ?: return 0
+    }.getOrNull() ?: return null
 
     return AqlCommercialDeviceCatalog.products
         .firstOrNull { catalogProduct ->
@@ -122,5 +118,8 @@ private fun DeviceSnapshot.catalogDosingChannelCount(): Int? {
         }
         ?.limits
         ?.dosingChannelCount
-        ?: 0
+        ?.takeIf { count -> count == DOSING_PRO_2_CHANNEL_COUNT || count == DOSING_PRO_4_CHANNEL_COUNT }
 }
+
+private const val DOSING_PRO_2_CHANNEL_COUNT = 2
+private const val DOSING_PRO_4_CHANNEL_COUNT = 4

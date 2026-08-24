@@ -27,7 +27,7 @@ data class OwnerDeviceListItem(
     val family: OwnerDeviceFamily,
     val availability: OwnerDeviceAvailability,
     val assignedTankName: String = "",
-    /** Null for non-Dosing products; 0 means a Dosing product whose catalog identity is unresolved. */
+    /** Exact catalog-owned physical Dosing channel count; null when not applicable or unresolved. */
     val dosingChannelCount: Int? = null
 )
 

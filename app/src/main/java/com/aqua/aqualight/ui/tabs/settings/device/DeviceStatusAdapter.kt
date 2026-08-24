@@ -40,6 +40,7 @@ class DeviceStatusAdapter : RecyclerView.Adapter<DeviceStatusAdapter.DeviceViewH
             DosingPumpProductVisualBinder.bind(
                 container = binding.deviceIconContainer,
                 fallbackImageView = binding.ivDeviceIcon,
+                isDosingProduct = item.isDosingProduct,
                 dosingChannelCount = item.dosingChannelCount,
                 fallbackIconRes = item.iconRes,
                 contentDescription = name

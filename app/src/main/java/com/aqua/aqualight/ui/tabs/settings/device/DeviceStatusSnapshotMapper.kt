@@ -2,6 +2,7 @@ package com.aqua.aqualight.ui.tabs.settings.device
 
 import com.aqua.aqualight.R
 import com.aqua.aqualight.application.devices.OwnerDeviceAvailability
+import com.aqua.aqualight.application.devices.OwnerDeviceFamily
 import com.aqua.aqualight.application.devices.OwnerDeviceStatusSnapshot
 import com.aqua.aqualight.ui.common.devicecard.DeviceFamilyIconMapper
 import com.aqua.aqualight.ui.common.text.AquaUiText
@@ -59,6 +60,7 @@ object DeviceStatusSnapshotMapper {
         return DeviceStatusItem(
             displayName = displayName,
             iconRes = DeviceFamilyIconMapper.iconFor(family),
+            isDosingProduct = family == OwnerDeviceFamily.DOSING,
             dosingChannelCount = dosingChannelCount,
             ip = ipAddress,
             serialText = serialText.ifBlank { deviceUid },

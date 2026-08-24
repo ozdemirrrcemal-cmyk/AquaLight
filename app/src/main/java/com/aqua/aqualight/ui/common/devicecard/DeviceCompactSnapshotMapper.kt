@@ -1,6 +1,7 @@
 package com.aqua.aqualight.ui.common.devicecard
 
 import com.aqua.aqualight.application.devices.OwnerDeviceAvailability
+import com.aqua.aqualight.application.devices.OwnerDeviceFamily
 import com.aqua.aqualight.application.devices.TankDeviceListItem
 
 object DeviceCompactSnapshotMapper {
@@ -18,6 +19,7 @@ object DeviceCompactSnapshotMapper {
             serialText = device.serialText.ifBlank { device.deviceUid },
             supportingText = supportingText,
             iconRes = DeviceFamilyIconMapper.iconFor(device.family),
+            isDosingProduct = device.family == OwnerDeviceFamily.DOSING,
             dosingChannelCount = device.dosingChannelCount,
             statusStyle = if (isReachable) {
                 DeviceCompactStatusStyle.ONLINE

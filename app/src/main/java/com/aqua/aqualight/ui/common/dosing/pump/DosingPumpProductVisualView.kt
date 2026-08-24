@@ -93,6 +93,7 @@ object DosingPumpProductVisualBinder {
     fun bind(
         container: ViewGroup,
         fallbackImageView: ImageView,
+        isDosingProduct: Boolean,
         dosingChannelCount: Int?,
         @DrawableRes fallbackIconRes: Int,
         contentDescription: CharSequence
@@ -100,6 +101,7 @@ object DosingPumpProductVisualBinder {
         bind(
             pumpView = container.obtainPumpVisualView(),
             fallbackImageView = fallbackImageView,
+            isDosingProduct = isDosingProduct,
             dosingChannelCount = dosingChannelCount,
             fallbackIconRes = fallbackIconRes,
             contentDescription = contentDescription
@@ -109,11 +111,11 @@ object DosingPumpProductVisualBinder {
     fun bind(
         pumpView: DosingPumpProductVisualView,
         fallbackImageView: ImageView,
+        isDosingProduct: Boolean,
         dosingChannelCount: Int?,
         @DrawableRes fallbackIconRes: Int,
         contentDescription: CharSequence
     ) {
-        val isDosingProduct = dosingChannelCount != null
         val exactPumpCount = dosingChannelCount?.takeIf(::isSupportedDosingPumpCount)
 
         pumpView.bindPumpCount(exactPumpCount ?: UNBOUND_PUMP_COUNT)

@@ -54,6 +54,7 @@ data class DeviceStatusUiState(
 data class DeviceStatusItem(
     val displayName: String = "",
     @DrawableRes val iconRes: Int,
+    val isDosingProduct: Boolean = false,
     val dosingChannelCount: Int? = null,
     val ip: String = "",
     val serialText: String = "",
