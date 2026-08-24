@@ -237,7 +237,6 @@
     <string name="device_dosing_timer_error_total">The total dose amount is too large. Reduce one or more Timer entries.</string>
 
     <string name="device_dosing_detail_value_unavailable">—</string>
-
     <string name="device_dosing_detail_reservoir_tracking_section">Tracking status</string>
     <string name="device_dosing_detail_reservoir_tracking_enabled">Enable reservoir monitoring</string>
     <string name="device_dosing_detail_reservoir_tracking_enabled_description">Activates container capacity and remaining-volume monitoring for this channel.</string>
@@ -327,4 +326,8 @@
     <string name="device_dosing_calibration_device_time_not_ready">The device clock is not ready. Keep the device connected and try saving again.</string>
     <string name="device_dosing_calibration_state_mismatch">The calibration state changed on the device. Refresh the channel and continue from its current step.</string>
     <string name="device_dosing_calibration_operation_failed">Calibration could not be completed. Refresh the device state and try again.</string>
+
+    <string name="device_dosing_channel_next_dose_label">Next</string>
+    <string name="device_dosing_channel_next_dose_value_format">%1$s · %2$.2f mL</string>
+    <string name="device_dosing_channel_next_day_time_format">%1$s · +1 day</string>
 </resources>
