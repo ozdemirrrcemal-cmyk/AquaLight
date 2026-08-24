@@ -18,5 +18,7 @@ data class OwnerDeviceStatusSnapshot(
     val family: OwnerDeviceFamily,
     val availability: OwnerDeviceAvailability,
     val ipAddress: String = "",
-    val lastSeenAtMillis: Long = 0L
+    val lastSeenAtMillis: Long = 0L,
+    /** Null for non-Dosing products; 0 means a Dosing product whose catalog identity is unresolved. */
+    val dosingChannelCount: Int? = null
 )

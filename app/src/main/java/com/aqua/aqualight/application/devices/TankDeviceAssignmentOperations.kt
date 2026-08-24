@@ -22,7 +22,9 @@ data class TankDeviceListItem(
     val displayName: String,
     val serialText: String,
     val family: OwnerDeviceFamily,
-    val availability: OwnerDeviceAvailability
+    val availability: OwnerDeviceAvailability,
+    /** Null for non-Dosing products; 0 means a Dosing product whose catalog identity is unresolved. */
+    val dosingChannelCount: Int? = null
 )
 
 data class AvailableTankDevicesSnapshot(

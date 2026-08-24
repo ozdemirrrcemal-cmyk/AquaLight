@@ -26,7 +26,9 @@ data class OwnerDeviceListItem(
     val serialText: String,
     val family: OwnerDeviceFamily,
     val availability: OwnerDeviceAvailability,
-    val assignedTankName: String = ""
+    val assignedTankName: String = "",
+    /** Null for non-Dosing products; 0 means a Dosing product whose catalog identity is unresolved. */
+    val dosingChannelCount: Int? = null
 )
 
 enum class OwnerDeviceFamily {

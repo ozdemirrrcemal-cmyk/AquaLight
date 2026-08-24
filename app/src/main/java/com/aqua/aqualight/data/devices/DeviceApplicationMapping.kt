@@ -5,8 +5,14 @@ import com.aqua.aqualight.application.devices.OwnerDeviceFamily
 import com.aqua.aqualight.application.devices.OwnerDeviceListItem
 import com.aqua.aqualight.application.devices.OwnerDeviceStatusSnapshot
 import com.aqua.aqualight.application.devices.TankDeviceListItem
+import com.aqua.aqualight.data.devices.catalog.AqlCommercialDeviceCatalog
+import com.aqua.aqualight.data.devices.model.DeviceCompatibilityIdentity
 import com.aqua.aqualight.data.devices.model.DeviceFamily
+import com.aqua.aqualight.data.devices.model.DeviceHardwareRevision
 import com.aqua.aqualight.data.devices.model.DeviceOnlineState
+import com.aqua.aqualight.data.devices.model.DeviceProductId
+import com.aqua.aqualight.data.devices.model.DeviceProductKey
+import com.aqua.aqualight.data.devices.model.DeviceProductModel
 import com.aqua.aqualight.data.devices.model.DeviceSnapshot
 
 internal fun DeviceSnapshot.toOwnerDeviceListItem(
@@ -18,7 +24,8 @@ internal fun DeviceSnapshot.toOwnerDeviceListItem(
         serialText = serialText(),
         family = product.family.toOwnerDeviceFamily(),
         availability = connectionState.onlineState.toOwnerDeviceAvailability(),
-        assignedTankName = assignedTankName.trim()
+        assignedTankName = assignedTankName.trim(),
+        dosingChannelCount = catalogDosingChannelCount()
     )
 }
 
@@ -30,7 +37,8 @@ internal fun DeviceSnapshot.toOwnerDeviceStatusSnapshot(): OwnerDeviceStatusSnap
         family = product.family.toOwnerDeviceFamily(),
         availability = connectionState.onlineState.toOwnerDeviceAvailability(),
         ipAddress = endpoint.ip.trim(),
-        lastSeenAtMillis = latestSeenAtMillis()
+        lastSeenAtMillis = latestSeenAtMillis(),
+        dosingChannelCount = catalogDosingChannelCount()
     )
 }
 
@@ -40,7 +48,8 @@ internal fun DeviceSnapshot.toTankDeviceListItem(): TankDeviceListItem {
         displayName = title.ifBlank { deviceUid.value },
         serialText = serialText(),
         family = product.family.toOwnerDeviceFamily(),
-        availability = connectionState.onlineState.toOwnerDeviceAvailability()
+        availability = connectionState.onlineState.toOwnerDeviceAvailability(),
+        dosingChannelCount = catalogDosingChannelCount()
     )
 }
 
@@ -88,4 +97,30 @@ private fun DeviceSnapshot.latestSeenAtMillis(): Long {
         connectionState.lastUdpSeenAtMillis,
         lastSeenAtMillis.takeIf { value -> value > 0L }
     ).maxOrNull() ?: 0L
+}
+
+/**
+ * Physical pump layout is catalog-owned and must not be inferred from a display name or live state.
+ * Non-Dosing products return null. A known Dosing family with an unresolved catalog identity returns
+ * zero so presentation can fail closed instead of falling back to a four-head product image.
+ */
+private fun DeviceSnapshot.catalogDosingChannelCount(): Int? {
+    if (product.family != DeviceFamily.DOSING) return null
+
+    val compatibilityIdentity = runCatching {
+        DeviceCompatibilityIdentity(
+            productKey = DeviceProductKey(product.productKey),
+            productId = DeviceProductId(product.productId),
+            model = DeviceProductModel(product.model),
+            hardwareRevision = DeviceHardwareRevision(product.hardwareRevision)
+        )
+    }.getOrNull() ?: return 0
+
+    return AqlCommercialDeviceCatalog.products
+        .firstOrNull { catalogProduct ->
+            catalogProduct.compatibilityIdentity == compatibilityIdentity
+        }
+        ?.limits
+        ?.dosingChannelCount
+        ?: 0
 }
