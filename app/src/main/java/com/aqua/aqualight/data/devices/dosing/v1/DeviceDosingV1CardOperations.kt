@@ -7,6 +7,7 @@ import com.aqua.aqualight.application.devices.dosing.DeviceDosingChannelOperatio
 import com.aqua.aqualight.data.devices.model.DeviceFamily
 import com.aqua.aqualight.data.devices.model.DeviceUid
 import com.aqua.aqualight.data.devices.repository.DevicesRepository
+import com.aqua.aqualight.data.devices.runtime.ws.AqlWsConnectionState
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
@@ -47,11 +48,26 @@ internal class DeviceDosingV1CardOperations(
     private suspend fun ensureCentralRuntimeSession(deviceUid: DeviceUid) {
         withContext(connectionDispatcher) {
             val device = devicesRepository.currentDevice(deviceUid)
-            if (device?.product?.family == DeviceFamily.DOSING) {
-                // Best effort: observation remains active while the central runtime performs
-                // connection/recovery and later publishes authoritative channel state.
-                devicesRepository.connectRuntime(deviceUid)
+            if (device?.product?.family != DeviceFamily.DOSING) return@withContext
+
+            val reusedAuthenticatedSession =
+                devicesRepository.currentRuntimeConnectionState(deviceUid)
+                    .isAuthenticatedFor(deviceUid)
+            val connectionReady = devicesRepository.connectRuntime(deviceUid).isSuccess
+            val sessionStillAuthenticated =
+                devicesRepository.currentRuntimeConnectionState(deviceUid)
+                    .isAuthenticatedFor(deviceUid)
+
+            if (connectionReady && reusedAuthenticatedSession && sessionStillAuthenticated) {
+                // The runtime may have authenticated before this owner-scoped Dosing adapter began
+                // collecting lifecycle events. Reusing that session emits no new Authenticated edge,
+                // so hydrate the card through the same central device-wide refresh used by runtime
+                // bootstrap. Fresh connections remain owned by the production lifecycle collector.
+                channelOperations.refreshAll(deviceUid.value)
             }
         }
     }
 }
+
+private fun AqlWsConnectionState?.isAuthenticatedFor(deviceUid: DeviceUid): Boolean =
+    this is AqlWsConnectionState.Authenticated && this.deviceUid == deviceUid
