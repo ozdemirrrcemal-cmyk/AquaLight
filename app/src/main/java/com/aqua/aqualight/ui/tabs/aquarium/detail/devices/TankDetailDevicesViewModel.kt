@@ -32,6 +32,7 @@ import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.flow.update
+import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 
 class TankDetailDevicesViewModel(
@@ -64,7 +65,6 @@ class TankDetailDevicesViewModel(
 
         boundTankId = tankId
         assignmentOperations.start(viewModelScope)
-        startSpotlightRotation()
         observeJob?.cancel()
 
         val assignedDevices = assignmentOperations.assignedDevices(tankId)
@@ -210,6 +210,7 @@ class TankDetailDevicesViewModel(
             dosingSummaries.update { summaries -> summaries - deviceUid }
             spotlightIndices.update { indices -> indices - deviceUid }
         }
+        syncSpotlightRotation()
 
         dosingDeviceIds
             .filterNot(dosingObserverJobs::containsKey)
@@ -245,12 +246,22 @@ class TankDetailDevicesViewModel(
                 )
             }
         }
+        syncSpotlightRotation()
     }
 
-    private fun startSpotlightRotation() {
-        if (spotlightRotationJob != null) return
+    private fun syncSpotlightRotation() {
+        val shouldRotate = dosingSummaries.value.values.any { summary ->
+            summary.channels.size > 1
+        }
+        if (!shouldRotate) {
+            spotlightRotationJob?.cancel()
+            spotlightRotationJob = null
+            return
+        }
+        if (spotlightRotationJob?.isActive == true) return
+
         spotlightRotationJob = viewModelScope.launch {
-            while (true) {
+            while (isActive) {
                 delay(SPOTLIGHT_ROTATION_INTERVAL_MILLIS)
                 val summaries = dosingSummaries.value
                 spotlightIndices.update { current ->
