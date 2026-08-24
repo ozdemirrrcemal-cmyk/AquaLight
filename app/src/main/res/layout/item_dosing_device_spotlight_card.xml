@@ -8,8 +8,8 @@
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
     android:layout_marginHorizontal="@dimen/aqua_size_4"
-    android:layout_marginTop="@dimen/aqua_size_8"
-    android:layout_marginBottom="@dimen/aqua_size_6"
+    android:layout_marginTop="@dimen/aqua_size_6"
+    android:layout_marginBottom="@dimen/aqua_size_4"
     android:clickable="true"
     android:focusable="true"
     android:foreground="?attr/selectableItemBackground"
@@ -20,24 +20,24 @@
     <androidx.constraintlayout.widget.ConstraintLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:paddingStart="@dimen/aqua_size_16"
-        android:paddingTop="@dimen/aqua_size_16"
-        android:paddingEnd="@dimen/aqua_size_16"
-        android:paddingBottom="@dimen/aqua_size_16">
+        android:paddingStart="@dimen/aqua_size_14"
+        android:paddingTop="@dimen/aqua_size_8"
+        android:paddingEnd="@dimen/aqua_size_14"
+        android:paddingBottom="@dimen/aqua_size_8">
 
         <com.google.android.material.card.MaterialCardView
             android:id="@+id/deviceIconContainer"
             style="@style/Widget.Aqua.Card.Device.Media"
-            android:layout_width="@dimen/aqua_size_82"
-            android:layout_height="@dimen/aqua_size_82"
+            android:layout_width="@dimen/aqua_size_46"
+            android:layout_height="@dimen/aqua_size_46"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toTopOf="parent"
             app:strokeWidth="@dimen/aqua_size_1">
 
             <ImageView
                 android:id="@+id/ivDeviceIcon"
-                android:layout_width="@dimen/aqua_size_72"
-                android:layout_height="@dimen/aqua_size_72"
+                android:layout_width="@dimen/aqua_size_38"
+                android:layout_height="@dimen/aqua_size_38"
                 android:layout_gravity="center"
                 android:adjustViewBounds="true"
                 android:contentDescription="@string/app_name"
@@ -50,8 +50,8 @@
             android:id="@+id/headerTextColumn"
             android:layout_width="@dimen/aqua_size_0"
             android:layout_height="wrap_content"
-            android:layout_marginStart="@dimen/aqua_size_14"
-            android:layout_marginEnd="@dimen/aqua_size_8"
+            android:layout_marginStart="@dimen/aqua_size_10"
+            android:layout_marginEnd="@dimen/aqua_size_6"
             android:gravity="center_vertical"
             android:orientation="vertical"
             app:layout_constraintBottom_toBottomOf="@id/deviceIconContainer"
@@ -67,7 +67,7 @@
                 android:includeFontPadding="false"
                 android:maxLines="1"
                 android:textColor="@color/aqua_content_primary"
-                android:textSize="@dimen/aqua_text_size_title_intermediate"
+                android:textSize="@dimen/aqua_text_size_card_title"
                 android:textStyle="bold"
                 tools:text="Dose Pro 4" />
 
@@ -75,12 +75,12 @@
                 android:id="@+id/tvDosingChannelSummary"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="@dimen/aqua_size_8"
+                android:layout_marginTop="@dimen/aqua_size_3"
                 android:ellipsize="end"
                 android:includeFontPadding="false"
                 android:maxLines="1"
                 android:textColor="@color/aqua_accent_positive"
-                android:textSize="@dimen/aqua_text_size_body_small"
+                android:textSize="@dimen/aqua_text_size_caption_plus"
                 android:textStyle="bold"
                 tools:text="4 kanal · 3 aktif" />
 
@@ -88,15 +88,15 @@
 
         <FrameLayout
             android:id="@+id/trailingContainer"
-            android:layout_width="@dimen/aqua_size_44"
-            android:layout_height="@dimen/aqua_size_44"
+            android:layout_width="@dimen/aqua_size_36"
+            android:layout_height="@dimen/aqua_size_36"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintTop_toTopOf="@id/deviceIconContainer">
 
             <ImageView
                 android:id="@+id/ivPresenceIcon"
-                android:layout_width="@dimen/aqua_size_24"
-                android:layout_height="@dimen/aqua_size_24"
+                android:layout_width="@dimen/aqua_size_20"
+                android:layout_height="@dimen/aqua_size_20"
                 android:layout_gravity="center"
                 android:contentDescription="@string/app_name"
                 android:src="@drawable/ic_status_wifi"
@@ -104,18 +104,18 @@
 
             <View
                 android:id="@+id/presenceDot"
-                android:layout_width="@dimen/aqua_size_8"
-                android:layout_height="@dimen/aqua_size_8"
+                android:layout_width="@dimen/aqua_size_6"
+                android:layout_height="@dimen/aqua_size_6"
                 android:layout_gravity="end|bottom"
-                android:layout_marginEnd="@dimen/aqua_size_5"
-                android:layout_marginBottom="@dimen/aqua_size_5"
+                android:layout_marginEnd="@dimen/aqua_size_4"
+                android:layout_marginBottom="@dimen/aqua_size_4"
                 android:background="@drawable/bg_online_dot" />
 
             <ProgressBar
                 android:id="@+id/progressCardAction"
                 style="?android:attr/progressBarStyleSmall"
-                android:layout_width="@dimen/aqua_size_24"
-                android:layout_height="@dimen/aqua_size_24"
+                android:layout_width="@dimen/aqua_size_20"
+                android:layout_height="@dimen/aqua_size_20"
                 android:layout_gravity="center"
                 android:contentDescription="@string/device_menu_checking_accessibility"
                 android:indeterminate="true"
@@ -127,7 +127,7 @@
             android:id="@+id/spotlightDivider"
             android:layout_width="@dimen/aqua_size_0"
             android:layout_height="@dimen/aqua_size_1"
-            android:layout_marginTop="@dimen/aqua_size_16"
+            android:layout_marginTop="@dimen/aqua_size_6"
             android:background="@color/aqua_card_device_outline"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent"
@@ -137,7 +137,7 @@
             android:id="@+id/spotlightContent"
             android:layout_width="@dimen/aqua_size_0"
             android:layout_height="wrap_content"
-            android:layout_marginTop="@dimen/aqua_size_14"
+            android:layout_marginTop="@dimen/aqua_size_6"
             android:orientation="vertical"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent"
@@ -149,8 +149,8 @@
                 android:layout_height="wrap_content"
                 android:gravity="center"
                 android:includeFontPadding="false"
-                android:paddingTop="@dimen/aqua_size_12"
-                android:paddingBottom="@dimen/aqua_size_12"
+                android:paddingTop="@dimen/aqua_size_8"
+                android:paddingBottom="@dimen/aqua_size_8"
                 android:textColor="@color/aqua_content_muted"
                 android:textSize="@dimen/aqua_text_size_body_small"
                 android:visibility="gone"
@@ -172,8 +172,8 @@
 
                     <com.google.android.material.card.MaterialCardView
                         style="@style/Widget.Aqua.Card.IconAccent"
-                        android:layout_width="@dimen/aqua_size_40"
-                        android:layout_height="@dimen/aqua_size_40"
+                        android:layout_width="@dimen/aqua_size_32"
+                        android:layout_height="@dimen/aqua_size_32"
                         app:strokeWidth="@dimen/aqua_size_1">
 
                         <TextView
@@ -183,7 +183,7 @@
                             android:gravity="center"
                             android:includeFontPadding="false"
                             android:textColor="@color/aqua_accent_positive"
-                            android:textSize="@dimen/aqua_text_size_body_xlarge"
+                            android:textSize="@dimen/aqua_text_size_body_large"
                             android:textStyle="bold"
                             tools:text="2" />
 
@@ -192,7 +192,7 @@
                     <LinearLayout
                         android:layout_width="@dimen/aqua_size_0"
                         android:layout_height="wrap_content"
-                        android:layout_marginStart="@dimen/aqua_size_12"
+                        android:layout_marginStart="@dimen/aqua_size_8"
                         android:layout_weight="1"
                         android:orientation="vertical">
 
@@ -204,7 +204,7 @@
                             android:includeFontPadding="false"
                             android:maxLines="1"
                             android:textColor="@color/aqua_content_primary"
-                            android:textSize="@dimen/aqua_text_size_card_title"
+                            android:textSize="@dimen/aqua_text_size_body_large"
                             android:textStyle="bold"
                             tools:text="Potasyum" />
 
@@ -212,7 +212,7 @@
                             android:id="@+id/tvSpotlightState"
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
-                            android:layout_marginTop="@dimen/aqua_size_4"
+                            android:layout_marginTop="@dimen/aqua_size_2"
                             android:includeFontPadding="false"
                             android:textColor="@color/aqua_accent_positive"
                             android:textSize="@dimen/aqua_text_size_micro_label"
@@ -224,7 +224,7 @@
                     <LinearLayout
                         android:id="@+id/channelIndicator"
                         android:layout_width="wrap_content"
-                        android:layout_height="@dimen/aqua_size_24"
+                        android:layout_height="@dimen/aqua_size_20"
                         android:gravity="center_vertical|end"
                         android:orientation="horizontal" />
 
@@ -234,15 +234,15 @@
                     android:id="@+id/metricsRow"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:layout_marginTop="@dimen/aqua_size_14"
+                    android:layout_marginTop="@dimen/aqua_size_6"
                     android:baselineAligned="false"
                     android:orientation="horizontal">
 
                     <com.google.android.material.card.MaterialCardView
                         style="@style/Widget.Aqua.Card.Metric"
                         android:layout_width="@dimen/aqua_size_0"
-                        android:layout_height="@dimen/aqua_size_110"
-                        android:layout_marginEnd="@dimen/aqua_size_5"
+                        android:layout_height="@dimen/aqua_size_64"
+                        android:layout_marginEnd="@dimen/aqua_size_4"
                         android:layout_weight="1">
 
                         <LinearLayout
@@ -250,11 +250,11 @@
                             android:layout_height="match_parent"
                             android:gravity="center_horizontal"
                             android:orientation="vertical"
-                            android:padding="@dimen/aqua_size_10">
+                            android:padding="@dimen/aqua_size_4">
 
                             <ImageView
-                                android:layout_width="@dimen/aqua_size_20"
-                                android:layout_height="@dimen/aqua_size_20"
+                                android:layout_width="@dimen/aqua_size_14"
+                                android:layout_height="@dimen/aqua_size_14"
                                 android:contentDescription="@string/dosing_device_card_daily"
                                 android:src="@drawable/ic_care_fertilizer_24"
                                 app:tint="@color/aqua_accent_aqua" />
@@ -262,24 +262,24 @@
                             <TextView
                                 android:layout_width="wrap_content"
                                 android:layout_height="wrap_content"
-                                android:layout_marginTop="@dimen/aqua_size_5"
+                                android:layout_marginTop="@dimen/aqua_size_2"
                                 android:includeFontPadding="false"
                                 android:text="@string/dosing_device_card_daily"
                                 android:textColor="@color/aqua_content_muted"
-                                android:textSize="@dimen/aqua_text_size_status_micro"
+                                android:textSize="@dimen/aqua_text_size_status_nano"
                                 android:textStyle="bold" />
 
                             <TextView
                                 android:id="@+id/tvDailyDoseValue"
                                 android:layout_width="match_parent"
                                 android:layout_height="wrap_content"
-                                android:layout_marginTop="@dimen/aqua_size_5"
+                                android:layout_marginTop="@dimen/aqua_size_2"
                                 android:ellipsize="end"
                                 android:gravity="center"
                                 android:includeFontPadding="false"
                                 android:maxLines="1"
                                 android:textColor="@color/aqua_content_primary"
-                                android:textSize="@dimen/aqua_text_size_body_compact"
+                                android:textSize="@dimen/aqua_text_size_body_small"
                                 android:textStyle="bold"
                                 tools:text="32,00 mL" />
 
@@ -287,7 +287,7 @@
                                 android:id="@+id/tvDailyDoseSub"
                                 android:layout_width="match_parent"
                                 android:layout_height="wrap_content"
-                                android:layout_marginTop="@dimen/aqua_size_3"
+                                android:layout_marginTop="@dimen/aqua_size_1"
                                 android:ellipsize="end"
                                 android:gravity="center"
                                 android:includeFontPadding="false"
@@ -303,8 +303,8 @@
                     <com.google.android.material.card.MaterialCardView
                         style="@style/Widget.Aqua.Card.Metric"
                         android:layout_width="@dimen/aqua_size_0"
-                        android:layout_height="@dimen/aqua_size_110"
-                        android:layout_marginHorizontal="@dimen/aqua_size_3"
+                        android:layout_height="@dimen/aqua_size_64"
+                        android:layout_marginHorizontal="@dimen/aqua_size_2"
                         android:layout_weight="1">
 
                         <LinearLayout
@@ -312,11 +312,11 @@
                             android:layout_height="match_parent"
                             android:gravity="center_horizontal"
                             android:orientation="vertical"
-                            android:padding="@dimen/aqua_size_10">
+                            android:padding="@dimen/aqua_size_4">
 
                             <ImageView
-                                android:layout_width="@dimen/aqua_size_20"
-                                android:layout_height="@dimen/aqua_size_20"
+                                android:layout_width="@dimen/aqua_size_14"
+                                android:layout_height="@dimen/aqua_size_14"
                                 android:contentDescription="@string/dosing_device_card_next"
                                 android:src="@drawable/ic_dosing_schedule_24"
                                 app:tint="@color/aqua_accent_aqua" />
@@ -324,23 +324,23 @@
                             <TextView
                                 android:layout_width="wrap_content"
                                 android:layout_height="wrap_content"
-                                android:layout_marginTop="@dimen/aqua_size_5"
+                                android:layout_marginTop="@dimen/aqua_size_2"
                                 android:includeFontPadding="false"
                                 android:text="@string/dosing_device_card_next"
                                 android:textColor="@color/aqua_content_muted"
-                                android:textSize="@dimen/aqua_text_size_status_micro"
+                                android:textSize="@dimen/aqua_text_size_status_nano"
                                 android:textStyle="bold" />
 
                             <TextView
                                 android:id="@+id/tvNextDoseValue"
                                 android:layout_width="match_parent"
                                 android:layout_height="wrap_content"
-                                android:layout_marginTop="@dimen/aqua_size_5"
+                                android:layout_marginTop="@dimen/aqua_size_2"
                                 android:gravity="center"
                                 android:includeFontPadding="false"
                                 android:maxLines="1"
                                 android:textColor="@color/aqua_content_primary"
-                                android:textSize="@dimen/aqua_text_size_body_compact"
+                                android:textSize="@dimen/aqua_text_size_body_small"
                                 android:textStyle="bold"
                                 tools:text="14:00" />
 
@@ -348,7 +348,7 @@
                                 android:id="@+id/tvNextDoseSub"
                                 android:layout_width="match_parent"
                                 android:layout_height="wrap_content"
-                                android:layout_marginTop="@dimen/aqua_size_3"
+                                android:layout_marginTop="@dimen/aqua_size_1"
                                 android:gravity="center"
                                 android:includeFontPadding="false"
                                 android:maxLines="1"
@@ -363,8 +363,8 @@
                     <com.google.android.material.card.MaterialCardView
                         style="@style/Widget.Aqua.Card.Metric"
                         android:layout_width="@dimen/aqua_size_0"
-                        android:layout_height="@dimen/aqua_size_110"
-                        android:layout_marginStart="@dimen/aqua_size_5"
+                        android:layout_height="@dimen/aqua_size_64"
+                        android:layout_marginStart="@dimen/aqua_size_4"
                         android:layout_weight="1">
 
                         <LinearLayout
@@ -372,11 +372,11 @@
                             android:layout_height="match_parent"
                             android:gravity="center_horizontal"
                             android:orientation="vertical"
-                            android:padding="@dimen/aqua_size_10">
+                            android:padding="@dimen/aqua_size_4">
 
                             <ImageView
-                                android:layout_width="@dimen/aqua_size_20"
-                                android:layout_height="@dimen/aqua_size_20"
+                                android:layout_width="@dimen/aqua_size_14"
+                                android:layout_height="@dimen/aqua_size_14"
                                 android:contentDescription="@string/dosing_device_card_reservoir"
                                 android:src="@drawable/ic_dosing_reservoir_24"
                                 app:tint="@color/aqua_accent_aqua" />
@@ -384,24 +384,24 @@
                             <TextView
                                 android:layout_width="wrap_content"
                                 android:layout_height="wrap_content"
-                                android:layout_marginTop="@dimen/aqua_size_5"
+                                android:layout_marginTop="@dimen/aqua_size_2"
                                 android:includeFontPadding="false"
                                 android:text="@string/dosing_device_card_reservoir"
                                 android:textColor="@color/aqua_content_muted"
-                                android:textSize="@dimen/aqua_text_size_status_micro"
+                                android:textSize="@dimen/aqua_text_size_status_nano"
                                 android:textStyle="bold" />
 
                             <TextView
                                 android:id="@+id/tvReservoirValue"
                                 android:layout_width="match_parent"
                                 android:layout_height="wrap_content"
-                                android:layout_marginTop="@dimen/aqua_size_5"
+                                android:layout_marginTop="@dimen/aqua_size_2"
                                 android:ellipsize="end"
                                 android:gravity="center"
                                 android:includeFontPadding="false"
                                 android:maxLines="1"
                                 android:textColor="@color/aqua_content_primary"
-                                android:textSize="@dimen/aqua_text_size_body_compact"
+                                android:textSize="@dimen/aqua_text_size_body_small"
                                 android:textStyle="bold"
                                 tools:text="446,2 mL" />
 
@@ -409,7 +409,7 @@
                                 android:id="@+id/tvReservoirSub"
                                 android:layout_width="match_parent"
                                 android:layout_height="wrap_content"
-                                android:layout_marginTop="@dimen/aqua_size_3"
+                                android:layout_marginTop="@dimen/aqua_size_1"
                                 android:ellipsize="end"
                                 android:gravity="center"
                                 android:includeFontPadding="false"
