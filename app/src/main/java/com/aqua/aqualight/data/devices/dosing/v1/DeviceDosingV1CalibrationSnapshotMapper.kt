@@ -5,6 +5,14 @@ import com.aqua.aqualight.application.devices.dosing.DeviceDosingCalibrationSnap
 import com.aqua.aqualight.data.devices.model.DeviceUid
 
 internal object DeviceDosingV1CalibrationSnapshotMapper {
+    /**
+     * Maps calibration runtime only from one coherent channel-status envelope.
+     *
+     * Calibration elapsed time combines [DeviceDosingV1Envelope.uptimeMillis] with the channel's
+     * run-start event. A mutation ACK carries channel detail but no matching envelope uptime, so
+     * mutation projections must preserve the previous calibration snapshot until authoritative
+     * global/channel/progress readback supplies a coherent time pair.
+     */
     fun map(
         detail: DeviceDosingV1ChannelDetail,
         deviceUid: DeviceUid,
@@ -17,27 +25,6 @@ internal object DeviceDosingV1CalibrationSnapshotMapper {
         channelNumber = detail.index + 1,
         channelTitle = detail.effectiveName,
         deviceUptimeMs = envelope.uptimeMillis,
-        calibrated = detail.calibration.confirmed,
-        lastCalibratedAt = detail.calibration.lastCalibratedAt,
-        sessionPhase = calibrationPhase(detail.calibration.state),
-        startedAtUptimeMs = calibrationStartedAtUptime(detail),
-        durationMs = detail.calibration.durationMillis,
-        measuredMl = detail.calibration.measuredMilliliters,
-        pendingDoseMsPerMl = DeviceDosingV1AmountMapper.toExactLong(
-            detail.calibration.pendingDoseMillisPerMilliliter
-        ),
-        verificationDoseStarted = detail.calibration.verificationDoseStarted,
-        verificationDoseComplete = detail.calibration.verificationDoseComplete,
-        verificationDoseRemainingMs = verificationRemainingMillis(detail),
-        manualActive = detail.activeRun.active && detail.activeRun.remainingMillis > 0L
-    )
-
-    fun project(
-        current: DeviceDosingCalibrationSnapshot,
-        detail: DeviceDosingV1ChannelDetail
-    ): DeviceDosingCalibrationSnapshot = current.copy(
-        channelNumber = detail.index + 1,
-        channelTitle = detail.effectiveName,
         calibrated = detail.calibration.confirmed,
         lastCalibratedAt = detail.calibration.lastCalibratedAt,
         sessionPhase = calibrationPhase(detail.calibration.state),
