@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Fail CI when background code can open foreground device runtime."""
+"""Fail CI when startup or background code bypasses central runtime contracts."""
 
 from pathlib import Path
 import sys
@@ -55,14 +55,42 @@ for token, reason in (
 
 splash_path = "app/src/main/java/com/aqua/aqualight/ui/splash/SplashActivity.kt"
 splash = read(splash_path)
-for token in ("AuthSessionManager", "currentSessionState", "delay(2400", "delay(2_400"):
-    forbid(splash_path, splash, token, "Splash must be a visual handoff only")
-require(
-    splash_path,
-    splash,
-    "Intent(this, MainActivity::class.java)",
-    "Splash must immediately hand startup authority to MainActivity",
-)
+for token in (
+    "AuthSessionManager",
+    "currentSessionState",
+    "CoroutineScope",
+    "lifecycleScope",
+    "delay(",
+    "postDelayed(",
+    "Thread.sleep(",
+    "SystemClock.sleep(",
+    "logo.post {",
+):
+    forbid(
+        splash_path,
+        splash,
+        token,
+        "Splash may wait only for bounded visual animation completion and must not own startup",
+    )
+for token, reason in (
+    (
+        "setAnimationListener(",
+        "branded splash completion must be driven by the animation lifecycle",
+    ),
+    (
+        "override fun onAnimationEnd(",
+        "visual handoff must occur only after the splash animation completes",
+    ),
+    (
+        "completeVisualHandoffIfReady()",
+        "animation completion must use the lifecycle-safe single handoff boundary",
+    ),
+    (
+        "Intent(this, MainActivity::class.java)",
+        "visual splash must hand UI control to MainActivity",
+    ),
+):
+    require(splash_path, splash, token, reason)
 
 provider_path = (
     "app/src/main/java/com/aqua/aqualight/data/auth/AuthenticatedOwnerProvider.kt"
@@ -308,6 +336,6 @@ if errors:
     sys.exit(1)
 
 print(
-    "Session/startup guard passed: foreground runtime, auth coordination, "
+    "Session/startup guard passed: branded splash handoff, foreground runtime, auth coordination, "
     "owner-scoped prompt durable background maintenance and terminal cleanup tests are intact."
 )
