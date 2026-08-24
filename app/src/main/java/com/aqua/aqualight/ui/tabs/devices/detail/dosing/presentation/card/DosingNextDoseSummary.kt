@@ -67,5 +67,5 @@ internal fun DosingNextDoseSummary(
 private const val MILLIS_PER_MINUTE = 60_000L
 private const val NEXT_DAY_OFFSET = 1
 private val NEXT_DOSE_GLYPH_SIZE = 16.dp
-private val NEXT_DOSE_GLYPH_OPTICAL_X_OFFSET = 1.dp
+private val NEXT_DOSE_GLYPH_OPTICAL_X_OFFSET = 2.dp
 private val NEXT_DOSE_TEXT_GAP = 6.dp
