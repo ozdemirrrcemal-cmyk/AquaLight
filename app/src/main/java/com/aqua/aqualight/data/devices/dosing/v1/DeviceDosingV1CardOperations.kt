@@ -101,19 +101,21 @@ internal class DeviceDosingV1CardOperations(
     ): DeviceDosingCardUnavailableReason? {
         val reusedAuthenticatedSession = runtimePort.currentConnectionState(deviceUid)
             .isAuthenticatedFor(deviceUid)
-        if (runtimePort.connectRuntime(deviceUid).isFailure) {
-            return DeviceDosingCardUnavailableReason.RUNTIME_CONNECTION_FAILED
+        return if (runtimePort.connectRuntime(deviceUid).isFailure) {
+            DeviceDosingCardUnavailableReason.RUNTIME_CONNECTION_FAILED
+        } else {
+            val sessionStillAuthenticated = runtimePort.currentConnectionState(deviceUid)
+                .isAuthenticatedFor(deviceUid)
+            if (
+                reusedAuthenticatedSession &&
+                sessionStillAuthenticated &&
+                !channelOperations.refreshAll(deviceUid.value)
+            ) {
+                DeviceDosingCardUnavailableReason.AUTHORITATIVE_REFRESH_FAILED
+            } else {
+                null
+            }
         }
-        val sessionStillAuthenticated = runtimePort.currentConnectionState(deviceUid)
-            .isAuthenticatedFor(deviceUid)
-        if (
-            reusedAuthenticatedSession &&
-            sessionStillAuthenticated &&
-            !channelOperations.refreshAll(deviceUid.value)
-        ) {
-            return DeviceDosingCardUnavailableReason.AUTHORITATIVE_REFRESH_FAILED
-        }
-        return null
     }
 }
 
