@@ -4,6 +4,7 @@ import android.content.Context
 import androidx.lifecycle.ViewModel
 import com.aqua.aqualight.BuildConfig
 import com.aqua.aqualight.application.devices.DeviceMenuOpenUseCase
+import com.aqua.aqualight.application.devices.dosing.DeviceDosingCardUseCase
 import com.aqua.aqualight.application.notifications.NotificationPreferenceUseCase
 import com.aqua.aqualight.application.user.UserProfileOperations
 import com.aqua.aqualight.data.aquarium.DefaultAquariumTankOperations
@@ -249,8 +250,10 @@ internal class OwnerViewModelFactory(
                     ),
                     menuOpenUseCase = createDeviceMenuOpenUseCase(graph, repository),
                     routeResolver = DeviceRouteResolver(),
-                    dosingChannelOperations = graph.dosingOperations.channelOperations,
-                    rootOperations = DefaultDeviceRootOperations(repository)
+                    dosingCardOperations = DeviceDosingCardUseCase(
+                        rootOperations = DefaultDeviceRootOperations(repository),
+                        channelOperations = graph.dosingOperations.channelOperations
+                    )
                 )
 
             TankDeviceSelectViewModel::class.java ->

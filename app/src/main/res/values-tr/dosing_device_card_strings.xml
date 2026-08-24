@@ -1,6 +1,9 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="dosing_device_card_channel_summary">%1$d kanal · %2$d aktif</string>
+    <plurals name="dosing_device_card_channel_summary">
+        <item quantity="one">%1$d kanal · %2$d aktif</item>
+        <item quantity="other">%1$d kanal · %2$d aktif</item>
+    </plurals>
     <string name="dosing_device_card_loading">Dozaj durumu hazırlanıyor</string>
     <string name="dosing_device_card_offline">Dozaj cihazı çevrimdışı</string>
     <string name="dosing_device_card_loading_detail">Dozaj kanalları merkezi cihaz durumundan hazırlanıyor</string>
@@ -17,7 +20,10 @@
     <string name="dosing_device_card_next_unavailable">Sıradaki doz yok</string>
     <string name="dosing_device_card_reservoir_tracking_off">Takip kapalı</string>
     <string name="dosing_device_card_reservoir_low">Seviye düşük</string>
-    <string name="dosing_device_card_remaining_days">≈%1$d gün</string>
+    <plurals name="dosing_device_card_remaining_days">
+        <item quantity="one">≈%1$d gün</item>
+        <item quantity="other">≈%1$d gün</item>
+    </plurals>
     <string name="dosing_device_card_reservoir_uncertain">Tahmin bekleniyor</string>
     <string name="dosing_device_card_reservoir_estimate_unavailable">Tahmin kullanılamıyor</string>
     <string name="dosing_device_card_accessibility">%1$s. %2$s. %3$s.</string>

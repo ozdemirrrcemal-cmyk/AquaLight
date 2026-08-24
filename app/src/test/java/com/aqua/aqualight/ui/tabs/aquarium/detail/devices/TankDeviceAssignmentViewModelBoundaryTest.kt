@@ -9,13 +9,13 @@ import com.aqua.aqualight.application.devices.DeviceMenuAccessOperations
 import com.aqua.aqualight.application.devices.DeviceMenuAccessResult
 import com.aqua.aqualight.application.devices.DeviceMenuOpenUseCase
 import com.aqua.aqualight.application.devices.DeviceMenuUnavailableReason
-import com.aqua.aqualight.application.devices.DeviceRootOperations
-import com.aqua.aqualight.application.devices.DeviceRootSnapshot
 import com.aqua.aqualight.application.devices.OwnerDeviceAvailability
 import com.aqua.aqualight.application.devices.OwnerDeviceFamily
 import com.aqua.aqualight.application.devices.RemoveDeviceFromTankResult
 import com.aqua.aqualight.application.devices.TankDeviceAssignmentOperations
 import com.aqua.aqualight.application.devices.TankDeviceListItem
+import com.aqua.aqualight.application.devices.dosing.DeviceDosingCardOperations
+import com.aqua.aqualight.application.devices.dosing.DeviceDosingCardSummary
 import com.aqua.aqualight.ui.common.devicecard.DeviceCompactStatusStyle
 import com.aqua.aqualight.ui.tabs.aquarium.detail.devices.select.TankDeviceSelectEmptyReason
 import com.aqua.aqualight.ui.tabs.aquarium.detail.devices.select.TankDeviceSelectEvent
@@ -66,8 +66,8 @@ class TankDeviceAssignmentViewModelBoundaryTest {
     }
 
     @Test
-    fun `tank detail requests shared runtime for reachable dosing card`() {
-        val rootOperations = FakeDeviceRootOperations()
+    fun `tank detail observes dosing card application boundary when device is reachable`() {
+        val cardOperations = FakeDeviceDosingCardOperations()
         val operations = FakeTankDeviceAssignmentOperations(
             assigned = listOf(
                 device(
@@ -78,12 +78,34 @@ class TankDeviceAssignmentViewModelBoundaryTest {
         )
         val viewModel = createTankDetailViewModel(
             operations = operations,
-            rootOperations = rootOperations
+            dosingCardOperations = cardOperations
         )
 
         viewModel.bind(10L)
 
-        assertEquals(listOf("dose-1"), rootOperations.connectRequests)
+        assertEquals(listOf("dose-1"), cardOperations.observeRequests)
+    }
+
+    @Test
+    fun `tank detail does not activate dosing card observation while device is unreachable`() {
+        val cardOperations = FakeDeviceDosingCardOperations()
+        val operations = FakeTankDeviceAssignmentOperations(
+            assigned = listOf(
+                device(
+                    uid = "dose-1",
+                    family = OwnerDeviceFamily.DOSING,
+                    availability = OwnerDeviceAvailability.UNREACHABLE
+                )
+            )
+        )
+        val viewModel = createTankDetailViewModel(
+            operations = operations,
+            dosingCardOperations = cardOperations
+        )
+
+        viewModel.bind(10L)
+
+        assertTrue(cardOperations.observeRequests.isEmpty())
     }
 
     @Test
@@ -178,7 +200,7 @@ class TankDeviceAssignmentViewModelBoundaryTest {
         operations: TankDeviceAssignmentOperations,
         menuAccess: DeviceMenuAccessOperations = FakeMenuAccessOperations(),
         preparation: DeviceControlSurfacePreparationOperations = FakePreparationOperations(),
-        rootOperations: DeviceRootOperations? = null
+        dosingCardOperations: DeviceDosingCardOperations? = null
     ): TankDetailDevicesViewModel = TankDetailDevicesViewModel(
         assignmentOperations = operations,
         menuOpenUseCase = DeviceMenuOpenUseCase(
@@ -186,7 +208,7 @@ class TankDeviceAssignmentViewModelBoundaryTest {
             controlSurfacePreparationOperations = preparation
         ),
         routeResolver = DeviceRouteResolver(),
-        rootOperations = rootOperations
+        dosingCardOperations = dosingCardOperations
     )
 
     private fun device(
@@ -245,17 +267,12 @@ class TankDeviceAssignmentViewModelBoundaryTest {
         }
     }
 
-    private class FakeDeviceRootOperations : DeviceRootOperations {
-        val connectRequests = mutableListOf<String>()
+    private class FakeDeviceDosingCardOperations : DeviceDosingCardOperations {
+        val observeRequests = mutableListOf<String>()
 
-        override fun observe(deviceUid: String): Flow<DeviceRootSnapshot?> =
-            MutableStateFlow(null)
-
-        override fun current(deviceUid: String): DeviceRootSnapshot? = null
-
-        override fun connect(deviceUid: String): Result<Unit> {
-            connectRequests += deviceUid
-            return Result.success(Unit)
+        override fun observe(deviceUid: String): Flow<DeviceDosingCardSummary?> {
+            observeRequests += deviceUid
+            return MutableStateFlow(null)
         }
     }
 

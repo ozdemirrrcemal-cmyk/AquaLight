@@ -7,15 +7,13 @@ import com.aqua.aqualight.R
 import com.aqua.aqualight.application.devices.DeviceMenuOpenResult
 import com.aqua.aqualight.application.devices.DeviceMenuOpenUseCase
 import com.aqua.aqualight.application.devices.DeviceMenuUnavailableReason
-import com.aqua.aqualight.application.devices.DeviceRootOperations
 import com.aqua.aqualight.application.devices.OwnerDeviceAvailability
 import com.aqua.aqualight.application.devices.OwnerDeviceFamily
 import com.aqua.aqualight.application.devices.RemoveDeviceFromTankResult
 import com.aqua.aqualight.application.devices.TankDeviceAssignmentOperations
 import com.aqua.aqualight.application.devices.TankDeviceListItem
+import com.aqua.aqualight.application.devices.dosing.DeviceDosingCardOperations
 import com.aqua.aqualight.application.devices.dosing.DeviceDosingCardSummary
-import com.aqua.aqualight.application.devices.dosing.DeviceDosingCardSummaryPolicy
-import com.aqua.aqualight.application.devices.dosing.DeviceDosingChannelOperations
 import com.aqua.aqualight.ui.common.devicecard.DeviceCompactSnapshotMapper
 import com.aqua.aqualight.ui.common.devicepresence.DeviceMenuUnavailableMessageMapper
 import com.aqua.aqualight.ui.tabs.devices.route.DeviceRoute
@@ -38,8 +36,7 @@ class TankDetailDevicesViewModel(
     private val assignmentOperations: TankDeviceAssignmentOperations,
     private val menuOpenUseCase: DeviceMenuOpenUseCase,
     private val routeResolver: DeviceRouteResolver,
-    private val dosingChannelOperations: DeviceDosingChannelOperations? = null,
-    private val rootOperations: DeviceRootOperations? = null
+    private val dosingCardOperations: DeviceDosingCardOperations? = null
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(TankDetailDevicesUiState())
@@ -54,7 +51,6 @@ class TankDetailDevicesViewModel(
     private val spotlightRotation = DosingSpotlightRotationController(viewModelScope)
 
     private val dosingObserverJobs = mutableMapOf<String, Job>()
-    private val dosingRuntimeConnectionRequests = mutableSetOf<String>()
     private var boundTankId: Long = 0L
     private var observeJob: Job? = null
     private var menuOpenJob: Job? = null
@@ -203,43 +199,38 @@ class TankDetailDevicesViewModel(
     }
 
     private fun syncDosingObservers(devices: List<TankDeviceListItem>) {
-        val dosingDevices = devices.filter { device ->
-            device.family == OwnerDeviceFamily.DOSING
-        }
-        val dosingDeviceIds = dosingDevices.map(TankDeviceListItem::deviceUid).toSet()
-        val operations = dosingChannelOperations
+        val reachableDosingDeviceIds = devices
+            .asSequence()
+            .filter { device ->
+                device.family == OwnerDeviceFamily.DOSING &&
+                    device.availability == OwnerDeviceAvailability.REACHABLE
+            }
+            .map(TankDeviceListItem::deviceUid)
+            .toSet()
+        val operations = dosingCardOperations
 
-        (dosingObserverJobs.keys - dosingDeviceIds).forEach { deviceUid ->
+        (dosingObserverJobs.keys - reachableDosingDeviceIds).forEach { deviceUid ->
             dosingObserverJobs.remove(deviceUid)?.cancel()
             dosingSummaries.update { summaries -> summaries - deviceUid }
         }
         spotlightRotation.updateChannelCounts(dosingSummaries.value.toSpotlightChannelCounts())
 
         if (operations != null) {
-            dosingDeviceIds
+            reachableDosingDeviceIds
                 .filterNot(dosingObserverJobs::containsKey)
                 .forEach { deviceUid ->
                     dosingObserverJobs[deviceUid] = viewModelScope.launch {
-                        operations.observeAll(deviceUid)
-                            .catch { emit(emptyList()) }
-                            .collect { snapshots ->
+                        operations.observe(deviceUid)
+                            .catch { emit(null) }
+                            .collect { summary ->
                                 updateDosingSummary(
                                     deviceUid = deviceUid,
-                                    summary = DeviceDosingCardSummaryPolicy.build(
-                                        deviceUid = deviceUid,
-                                        snapshots = snapshots
-                                    )
+                                    summary = summary
                                 )
                             }
                     }
                 }
         }
-
-        requestDosingRuntimeConnections(
-            devices = dosingDevices,
-            requestedDeviceIds = dosingRuntimeConnectionRequests,
-            rootOperations = rootOperations
-        )
     }
 
     private fun updateDosingSummary(
@@ -356,36 +347,6 @@ private fun buildTankDetailDevicesUiState(
         isOpeningDeviceMenu = interaction.openingDeviceId != null,
         isRemovingDevice = interaction.isRemovingDevice
     )
-}
-
-/**
- * The tank card only asks an application boundary to establish the shared runtime session.
- * Authentication, refresh and authoritative state publication remain owned by the central
- * owner-scoped Dosing runtime; no firmware polling or parallel state is introduced here.
- */
-private fun requestDosingRuntimeConnections(
-    devices: List<TankDeviceListItem>,
-    requestedDeviceIds: MutableSet<String>,
-    rootOperations: DeviceRootOperations?
-) {
-    val reachableDeviceIds = devices
-        .asSequence()
-        .filter { device -> device.availability == OwnerDeviceAvailability.REACHABLE }
-        .map(TankDeviceListItem::deviceUid)
-        .toSet()
-
-    requestedDeviceIds.retainAll(reachableDeviceIds)
-    reachableDeviceIds
-        .asSequence()
-        .filterNot(requestedDeviceIds::contains)
-        .forEach { deviceUid ->
-            val connectionRequested = runCatching {
-                rootOperations?.connect(deviceUid)?.isSuccess == true
-            }.getOrDefault(false)
-            if (connectionRequested) {
-                requestedDeviceIds += deviceUid
-            }
-        }
 }
 
 private fun Map<String, DeviceDosingCardSummary>.toSpotlightChannelCounts(): Map<String, Int> =

@@ -5,6 +5,15 @@ import java.util.Locale
 
 internal object DosingDeviceCardFormatter {
 
+    fun integer(
+        value: Int,
+        locale: Locale
+    ): String {
+        return NumberFormat.getIntegerInstance(locale).apply {
+            isGroupingUsed = false
+        }.format(value)
+    }
+
     fun milliliters(
         microliters: Long,
         locale: Locale,

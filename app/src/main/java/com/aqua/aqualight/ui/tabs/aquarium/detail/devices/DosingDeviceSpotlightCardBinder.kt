@@ -1,5 +1,6 @@
 package com.aqua.aqualight.ui.tabs.aquarium.detail.devices
 
+import android.content.Context
 import android.content.res.ColorStateList
 import android.graphics.drawable.GradientDrawable
 import android.view.View
@@ -68,11 +69,7 @@ object DosingDeviceSpotlightCardBinder {
     ) {
         val context = binding.root.context
         binding.tvDosingChannelSummary.text = summary?.let { value ->
-            context.getString(
-                R.string.dosing_device_card_channel_summary,
-                value.channelCount,
-                value.activeChannelCount
-            )
+            channelSummaryText(context, value)
         } ?: context.getString(
             if (online) R.string.dosing_device_card_loading
             else R.string.dosing_device_card_offline
@@ -98,7 +95,7 @@ object DosingDeviceSpotlightCardBinder {
         }
 
         val locale = binding.root.resources.configuration.locales[0]
-        binding.tvChannelBadge.text = channel.channelNumber.toString()
+        binding.tvChannelBadge.text = DosingDeviceCardFormatter.integer(channel.channelNumber, locale)
         binding.tvSpotlightChannelName.text = channel.title
         bindRuntimeState(binding, channel.runtimeEnabled)
         bindDailyDose(binding, channel.dailyDoseMicroliters, locale)
@@ -184,11 +181,14 @@ object DosingDeviceSpotlightCardBinder {
             null -> context.getString(R.string.dosing_device_card_reservoir_tracking_off)
             DeviceDosingCardReservoirState.LOW ->
                 context.getString(R.string.dosing_device_card_reservoir_low)
-            DeviceDosingCardReservoirState.ESTIMATED ->
-                context.getString(
-                    R.string.dosing_device_card_remaining_days,
-                    requireNotNull(reservoir.estimatedRemainingDays)
+            DeviceDosingCardReservoirState.ESTIMATED -> {
+                val days = requireNotNull(reservoir.estimatedRemainingDays)
+                context.resources.getQuantityString(
+                    R.plurals.dosing_device_card_remaining_days,
+                    days,
+                    days
                 )
+            }
             DeviceDosingCardReservoirState.UNCERTAIN ->
                 context.getString(R.string.dosing_device_card_reservoir_uncertain)
             DeviceDosingCardReservoirState.ESTIMATE_UNAVAILABLE ->
@@ -242,11 +242,7 @@ object DosingDeviceSpotlightCardBinder {
     ) {
         val context = binding.root.context
         val summaryText = summary?.let { value ->
-            context.getString(
-                R.string.dosing_device_card_channel_summary,
-                value.channelCount,
-                value.activeChannelCount
-            )
+            channelSummaryText(context, value)
         } ?: binding.tvDosingChannelSummary.text.toString()
         binding.root.contentDescription = context.getString(
             R.string.dosing_device_card_accessibility,
@@ -255,4 +251,14 @@ object DosingDeviceSpotlightCardBinder {
             channelTitle
         )
     }
+
+    private fun channelSummaryText(
+        context: Context,
+        summary: DeviceDosingCardSummary
+    ): String = context.resources.getQuantityString(
+        R.plurals.dosing_device_card_channel_summary,
+        summary.channelCount,
+        summary.channelCount,
+        summary.activeChannelCount
+    )
 }
