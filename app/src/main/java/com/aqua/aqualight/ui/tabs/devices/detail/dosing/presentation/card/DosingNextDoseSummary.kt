@@ -44,7 +44,7 @@ internal fun DosingNextDoseSummary(
         verticalAlignment = Alignment.CenterVertically
     ) {
         DosingNextDoseGlyph(
-            tint = colors.secondaryText,
+            tint = colors.accent,
             modifier = Modifier
                 .size(NEXT_DOSE_GLYPH_SIZE)
                 .semantics { contentDescription = iconDescription }
@@ -64,5 +64,5 @@ internal fun DosingNextDoseSummary(
 
 private const val MILLIS_PER_MINUTE = 60_000L
 private const val NEXT_DAY_OFFSET = 1
-private val NEXT_DOSE_GLYPH_SIZE = 18.dp
-private val NEXT_DOSE_TEXT_GAP = 4.dp
+private val NEXT_DOSE_GLYPH_SIZE = 16.dp
+private val NEXT_DOSE_TEXT_GAP = 6.dp
