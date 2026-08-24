@@ -1,6 +1,0 @@
-<?xml version="1.0" encoding="utf-8"?>
-<resources>
-    <string name="device_dosing_channel_next_dose_label">Sonraki</string>
-    <string name="device_dosing_channel_next_dose_value_format">%1$s · %2$.2f mL</string>
-    <string name="device_dosing_channel_next_day_time_format">%1$s · +1 gün</string>
-</resources>
