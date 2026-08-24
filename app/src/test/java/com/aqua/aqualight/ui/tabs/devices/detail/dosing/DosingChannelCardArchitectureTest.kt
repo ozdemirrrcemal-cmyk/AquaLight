@@ -35,7 +35,8 @@ class DosingChannelCardArchitectureTest {
         val card = source(CARD_SOURCE_ROOT + "DosingChannelCard.kt")
         val presentation = source(ROOT_SOURCE_ROOT + "DeviceDosingRootChannelPresentation.kt")
         val rootScreen = source(ROOT_SOURCE_ROOT + "DosingCatalogScreen.kt")
-        val pump = source(PUMP_SOURCE_ROOT + "DosingPumpDeviceCompose.kt")
+        val pumpFacade = source(PUMP_SOURCE_ROOT + "DosingPumpDeviceCompose.kt")
+        val pump = source(SHARED_PUMP_SOURCE_ROOT + "DosingPumpDeviceCompose.kt")
 
         assertTrue(models.contains("val visualState: DosingChannelVisualState? = null"))
         assertTrue(presentation.contains("pumpStates = emptyList()"))
@@ -45,6 +46,7 @@ class DosingChannelCardArchitectureTest {
         assertTrue(card.contains(".clickable(role = Role.Button, onClick = onClick)"))
         assertFalse(card.contains("interactionModifier"))
         assertFalse(rootScreen.contains("channel.visualState != null"))
+        assertTrue(pumpFacade.contains("SharedDosingPumpDevice("))
         assertTrue(pump.contains("val visualState: DosingPumpVisualState? = null"))
         assertTrue(pump.contains("visualState?.let { state -> drawPumpIndicator(state) }"))
     }
@@ -249,6 +251,8 @@ class DosingChannelCardArchitectureTest {
         const val ROOT_SOURCE_ROOT = DOSING_SOURCE_ROOT + "root/"
         const val CARD_SOURCE_ROOT = DOSING_SOURCE_ROOT + "presentation/card/"
         const val PUMP_SOURCE_ROOT = DOSING_SOURCE_ROOT + "presentation/pump/"
+        const val SHARED_PUMP_SOURCE_ROOT =
+            "app/src/main/java/com/aqua/aqualight/ui/common/dosing/pump/"
 
         val FORBIDDEN_RUNTIME_TYPES = listOf(
             "DeviceDosingChannelStatus",
@@ -275,7 +279,11 @@ class DosingChannelCardArchitectureTest {
             PUMP_SOURCE_ROOT + "DosingPumpDeviceCompose.kt",
             PUMP_SOURCE_ROOT + "DosingPumpIndicatorDrawing.kt",
             PUMP_SOURCE_ROOT + "DosingPumpPalette.kt",
-            PUMP_SOURCE_ROOT + "DosingPumpSection.kt"
+            PUMP_SOURCE_ROOT + "DosingPumpSection.kt",
+            SHARED_PUMP_SOURCE_ROOT + "DosingPumpDeviceCompose.kt",
+            SHARED_PUMP_SOURCE_ROOT + "DosingPumpIndicatorDrawing.kt",
+            SHARED_PUMP_SOURCE_ROOT + "DosingPumpPalette.kt",
+            SHARED_PUMP_SOURCE_ROOT + "DosingPumpProductVisualView.kt"
         )
         val FORBIDDEN_SUPPRESSION_TOKENS = listOf(
             "@file:Suppress(",
