@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="dosing_debug_trace_title" translatable="false">DOSING TRACE</string>
+    <string name="dosing_debug_trace_count" translatable="false">DOSING TRACE • %1$d</string>
+    <string name="dosing_debug_copy" translatable="false">KOPYALA</string>
+    <string name="dosing_debug_clear" translatable="false">TEMİZLE</string>
+    <string name="dosing_debug_collapse" translatable="false">DARALT</string>
+    <string name="dosing_debug_expand" translatable="false">AÇ</string>
+    <string name="dosing_debug_copy_confirmation" translatable="false">Dosing trace kopyalandı</string>
+</resources>

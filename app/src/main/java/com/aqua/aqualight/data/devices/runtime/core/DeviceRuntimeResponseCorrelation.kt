@@ -2,6 +2,7 @@ package com.aqua.aqualight.data.devices.runtime.core
 
 import com.aqua.aqualight.data.devices.model.DeviceUid
 import com.aqua.aqualight.data.devices.runtime.ws.AqlWsIncomingMessage
+import com.aqua.aqualight.debug.dosing.DosingDebugTrace
 
 internal fun completeCorrelatedRuntimeReply(
     deviceUid: DeviceUid,
@@ -9,8 +10,24 @@ internal fun completeCorrelatedRuntimeReply(
     message: AqlWsIncomingMessage,
     pendingRequests: DeviceRuntimePendingRequestRegistry
 ): DeviceRuntimeCompletionDisposition {
+    val dosing = DosingDebugTrace.isDosingModule(message.module)
+    if (dosing) {
+        val envelope = when (message) {
+            is AqlWsIncomingMessage.Response -> "response ok=${message.ok} status=${message.statusCode}"
+            is AqlWsIncomingMessage.Error ->
+                "error status=${message.statusCode} code=${message.code} field=${message.field}"
+            is AqlWsIncomingMessage.Event -> "event"
+        }
+        DosingDebugTrace.log(
+            "WIRE",
+            "RECV device=${DosingDebugTrace.shortDevice(deviceUid.value)} gen=${generation.value} " +
+                "id=${message.id} ${message.module}.${message.action} $envelope " +
+                "data=${DosingDebugTrace.compactJson(message.data)}"
+        )
+    }
+
     val pending = pendingRequests.find(deviceUid, generation, message.id)
-    return when {
+    val disposition = when {
         pending == null -> terminalOrUnmatched(
             deviceUid = deviceUid,
             generation = generation,
@@ -28,6 +45,14 @@ internal fun completeCorrelatedRuntimeReply(
             DeviceRuntimeCompletionDisposition.COMPLETED
         }
     }
+
+    if (dosing) {
+        DosingDebugTrace.log(
+            "WIRE",
+            "CORRELATE id=${message.id} ${message.module}.${message.action} disposition=$disposition"
+        )
+    }
+    return disposition
 }
 
 private fun terminalOrUnmatched(
@@ -105,7 +130,15 @@ private fun parseRuntimeSuccess(
         statusCode = response.statusCode,
         value = pending.parseSuccess(response)
     )
-} catch (_: Throwable) {
+} catch (error: Throwable) {
+    if (DosingDebugTrace.isDosingModule(pending.key.module)) {
+        DosingDebugTrace.log(
+            "PARSE",
+            "FAIL id=${pending.key.messageId} ${pending.key.module}.${pending.key.action} " +
+                "${error::class.java.simpleName}: " +
+                DosingDebugTrace.compact(error.message.orEmpty(), TRACE_PARSE_MESSAGE_CHARS)
+        )
+    }
     protocolError(
         pending,
         "Successful firmware response did not match the typed command contract."
@@ -126,3 +159,5 @@ private fun protocolError(
         reason = reason
     )
 }
+
+private const val TRACE_PARSE_MESSAGE_CHARS = 300

@@ -4,19 +4,26 @@ import android.app.Dialog
 import android.graphics.drawable.ColorDrawable
 import android.os.Build
 import android.os.Bundle
+import android.view.Gravity
 import android.view.View
 import android.view.ViewGroup
 import android.view.Window
 import android.view.WindowManager
 import android.view.animation.AnimationUtils
+import android.widget.FrameLayout
 import android.widget.ImageView
 import androidx.core.content.ContextCompat
 import androidx.core.view.WindowCompat
 import androidx.fragment.app.DialogFragment
 import androidx.fragment.app.FragmentManager
+import androidx.lifecycle.lifecycleScope
 import com.aqua.aqualight.R
+import com.aqua.aqualight.debug.dosing.DosingDebugOverlayView
+import com.aqua.aqualight.debug.dosing.DosingDebugTrace
 import java.lang.ref.WeakReference
 import java.util.WeakHashMap
+import kotlinx.coroutines.flow.collect
+import kotlinx.coroutines.launch
 
 /** Full-screen, non-cancelable loading renderer owned by FragmentManager. */
 class LoadingOverlayDialogFragment : DialogFragment(R.layout.loading_overlay) {
@@ -46,6 +53,25 @@ class LoadingOverlayDialogFragment : DialogFragment(R.layout.loading_overlay) {
             image.startAnimation(
                 AnimationUtils.loadAnimation(requireContext(), R.anim.rotate_pulse_logo)
             )
+        }
+
+        if (DosingDebugOverlayView.enabled(requireContext())) {
+            val root = view as? FrameLayout
+            if (root != null) {
+                val overlay = DosingDebugOverlayView(requireContext())
+                root.addView(
+                    overlay,
+                    FrameLayout.LayoutParams(
+                        ViewGroup.LayoutParams.MATCH_PARENT,
+                        ViewGroup.LayoutParams.WRAP_CONTENT,
+                        Gravity.TOP
+                    )
+                )
+                overlay.bringToFront()
+                viewLifecycleOwner.lifecycleScope.launch {
+                    DosingDebugTrace.lines.collect(overlay::submit)
+                }
+            }
         }
     }
 

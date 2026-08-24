@@ -12,13 +12,18 @@ import androidx.lifecycle.ViewModelProvider
 import com.aqua.aqualight.R
 import com.aqua.aqualight.base.loading.LoadingOverlayDialogFragment
 import com.aqua.aqualight.composition.requireAppContainer
+import com.aqua.aqualight.debug.dosing.DosingDebugOverlayView
+import com.aqua.aqualight.debug.dosing.DosingDebugTrace
 import com.aqua.aqualight.utils.DialogManager
 import com.aqua.aqualight.utils.DialogType
 import com.google.android.material.snackbar.Snackbar
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.cancel
+import kotlinx.coroutines.flow.collect
+import kotlinx.coroutines.launch
 
 open class BaseActivity : AppCompatActivity() {
 
@@ -39,6 +44,8 @@ open class BaseActivity : AppCompatActivity() {
     )
 
     private val loadingOwners: MutableSet<String> = linkedSetOf()
+    private var dosingDebugOverlay: DosingDebugOverlayView? = null
+    private var dosingDebugTraceJob: Job? = null
 
     private val legacyLoadingOwner =
         "${BaseActivity::class.java.name}.LegacyLoadingOwner"
@@ -67,6 +74,31 @@ open class BaseActivity : AppCompatActivity() {
 
     override fun onPostResume() {
         super.onPostResume()
+        if (DosingDebugOverlayView.enabled(this) && !isFinishing && !isDestroyed) {
+            val root = findViewById<ViewGroup>(android.R.id.content)
+            if (root != null) {
+                val existing = dosingDebugOverlay
+                if (existing?.parent !== root) {
+                    (existing?.parent as? ViewGroup)?.removeView(existing)
+                    dosingDebugTraceJob?.cancel()
+                    val overlay = DosingDebugOverlayView(this)
+                    root.addView(
+                        overlay,
+                        ViewGroup.LayoutParams(
+                            ViewGroup.LayoutParams.MATCH_PARENT,
+                            ViewGroup.LayoutParams.WRAP_CONTENT
+                        )
+                    )
+                    overlay.bringToFront()
+                    dosingDebugOverlay = overlay
+                    dosingDebugTraceJob = uiScope.launch {
+                        DosingDebugTrace.lines.collect(overlay::submit)
+                    }
+                } else {
+                    existing.bringToFront()
+                }
+            }
+        }
         renderGlobalLoading()
     }
 
@@ -236,6 +268,10 @@ open class BaseActivity : AppCompatActivity() {
     }
 
     override fun onDestroy() {
+        dosingDebugTraceJob?.cancel()
+        dosingDebugTraceJob = null
+        (dosingDebugOverlay?.parent as? ViewGroup)?.removeView(dosingDebugOverlay)
+        dosingDebugOverlay = null
         activityJob.cancel()
         if (isFinishing) loadingOwners.clear()
         super.onDestroy()

@@ -5,6 +5,7 @@ import com.aqua.aqualight.data.devices.repository.DeviceRuntimeRepository
 import com.aqua.aqualight.data.devices.runtime.core.DeviceRuntimeConnectionGeneration
 import com.aqua.aqualight.data.devices.runtime.ws.AqlWsEvent
 import com.aqua.aqualight.data.devices.runtime.ws.AqlWsIncomingMessage
+import com.aqua.aqualight.debug.dosing.DosingDebugTrace
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.CoroutineStart
 import kotlinx.coroutines.Job
@@ -79,6 +80,15 @@ class DeviceRuntimeEventPipeline(
     private suspend fun routeMessage(event: AqlWsEvent.Message) {
         val message = event.parsed as? AqlWsIncomingMessage.Event ?: return
         val generation = currentGeneration(event.deviceUid) ?: return
+        val dosing = DosingDebugTrace.isDosingModule(message.module)
+        if (dosing) {
+            DosingDebugTrace.log(
+                "EVENT",
+                "RECV device=${DosingDebugTrace.shortDevice(event.deviceUid.value)} " +
+                    "gen=${generation.value} id=${message.id} ${message.module}.${message.action} " +
+                    "data=${DosingDebugTrace.compactJson(message.data)}"
+            )
+        }
         router.activate(event.deviceUid, generation)
         val result = router.route(
             deviceUid = event.deviceUid,
@@ -87,6 +97,12 @@ class DeviceRuntimeEventPipeline(
         )
         if (result is DeviceRuntimeEventRoutingResult.Routed) {
             repository.runtimeModules.acceptTypedRuntimeEvent(result.event)
+        }
+        if (dosing) {
+            DosingDebugTrace.log(
+                "EVENT",
+                "ROUTE id=${message.id} ${message.module}.${message.action} result=${result::class.java.simpleName}"
+            )
         }
         _routingResults.emit(result)
     }
