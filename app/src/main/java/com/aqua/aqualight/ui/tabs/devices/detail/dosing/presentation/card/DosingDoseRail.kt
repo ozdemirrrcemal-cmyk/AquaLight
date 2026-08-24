@@ -73,7 +73,14 @@ private fun DosingDoseRailBody(
             drawDoseRail(state.occurrences, grouping, palette)
         }
         if (state.scheduledDeliveredTodayMl > 0.0 && state.scheduledAmountTodayMl > 0.0) {
-            val deliveredFraction = state.completionFraction.coerceIn(0f, 1f)
+            val deliveredOccurrence = state.occurrences
+                .lastOrNull { it.visualState == DosingOccurrenceVisualState.ACTIVE }
+                ?: state.occurrences
+                    .lastOrNull { it.visualState == DosingOccurrenceVisualState.COMPLETED }
+            val deliveredFraction = deliveredOccurrence
+                ?.endFraction
+                ?.coerceIn(0f, 1f)
+                ?: state.completionFraction.coerceIn(0f, 1f)
             val maximumTagStart = (maxWidth - VALUE_TAG_WIDTH).coerceAtLeast(0.dp)
             val tagStart = (maxWidth * deliveredFraction - VALUE_TAG_WIDTH / 2)
                 .coerceIn(0.dp, maximumTagStart)

@@ -80,6 +80,13 @@ data class DosingCustomPeriodProgressUiState(
     val occurrences: List<DosingProgressOccurrenceUiState>
 )
 
+@Immutable
+data class DosingNextDoseUiState(
+    val timeMillis: Long,
+    val amountMl: Double,
+    val programDayOffset: Int
+)
+
 enum class DosingDoseProgressVisualState {
     EMPTY,
     READY,
@@ -101,6 +108,7 @@ data class DosingProgramProgressUiState(
     val occurrences: List<DosingProgressOccurrenceUiState> = emptyList(),
     val customPeriods: List<DosingCustomPeriodProgressUiState> = emptyList(),
     val markers: List<DosingProgressMarkerUiState> = emptyList(),
+    val nextDose: DosingNextDoseUiState? = null,
     val totalOccurrences: Int = 0,
     val completedOccurrences: Int = 0,
     val scheduledToday: Boolean = false,

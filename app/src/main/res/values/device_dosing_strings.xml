@@ -45,8 +45,8 @@
     <string name="device_dosing_channel_manual_amount_format">+%1$.2f mL</string>
     <string name="device_dosing_channel_manual_description">Manual dose delivered today: %1$.2f mL.</string>
     <plurals name="device_dosing_channel_reservoir_days_format">
-        <item quantity="one">~%1$d day · %2$.1f mL</item>
-        <item quantity="other">~%1$d days · %2$.1f mL</item>
+        <item quantity="one">%2$.1f mL · ≈%1$d day</item>
+        <item quantity="other">%2$.1f mL · ≈%1$d days</item>
     </plurals>
     <string name="device_dosing_channel_reservoir_amount_format">%1$.1f mL</string>
     <string name="device_dosing_channel_reservoir_description">Reservoir remaining: %1$s</string>
@@ -327,4 +327,7 @@
     <string name="device_dosing_calibration_device_time_not_ready">The device clock is not ready. Keep the device connected and try saving again.</string>
     <string name="device_dosing_calibration_state_mismatch">The calibration state changed on the device. Refresh the channel and continue from its current step.</string>
     <string name="device_dosing_calibration_operation_failed">Calibration could not be completed. Refresh the device state and try again.</string>
+    <string name="device_dosing_channel_next_dose_icon_description">Next dose</string>
+    <string name="device_dosing_channel_next_dose_value_format">%1$s · %2$.2f mL</string>
+    <string name="device_dosing_channel_next_day_time_format">%1$s · +1 day</string>
 </resources>

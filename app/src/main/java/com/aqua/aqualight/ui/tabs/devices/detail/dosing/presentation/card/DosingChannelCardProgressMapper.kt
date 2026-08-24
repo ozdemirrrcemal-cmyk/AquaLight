@@ -8,6 +8,7 @@ import com.aqua.aqualight.application.devices.dosing.DeviceDosingProgramSchedule
 import com.aqua.aqualight.application.devices.dosing.DeviceDosingRunSource
 import com.aqua.aqualight.application.devices.dosing.DeviceDosingScheduleState
 import com.aqua.aqualight.application.devices.dosing.dailyDoseMicroliters
+import com.aqua.aqualight.application.devices.dosing.nextScheduledOccurrence
 
 internal fun DeviceDosingChannelSnapshot.toProgramProgressUiState(): DosingProgramProgressUiState {
     val manualDeliveredTodayMl = usageToday.manualDeliveredMicroliters
@@ -43,6 +44,7 @@ internal fun DeviceDosingChannelSnapshot.toProgramProgressUiState(): DosingProgr
             customPeriods = customPeriods,
             totalAmountMl = scheduledAmountTodayMl
         ),
+        nextDose = progress.nextScheduledOccurrence()?.toNextDoseUiState(),
         totalOccurrences = progress.totalOccurrences,
         completedOccurrences = progress.completedOccurrences,
         scheduledToday = scheduledToday,
@@ -81,6 +83,12 @@ private fun DeviceDosingOccurrenceProgress.toUiState() = DosingProgressOccurrenc
         DeviceDosingOccurrenceState.SKIPPED -> DosingOccurrenceVisualState.SKIPPED
         DeviceDosingOccurrenceState.UNCERTAIN -> DosingOccurrenceVisualState.UNCERTAIN
     }
+)
+
+private fun DeviceDosingOccurrenceProgress.toNextDoseUiState() = DosingNextDoseUiState(
+    timeMillis = timeMillis,
+    amountMl = amountMicroliters.toMilliliters(),
+    programDayOffset = programDayOffset
 )
 
 private fun DeviceDosingProgram.toCustomPeriodUiStates(
