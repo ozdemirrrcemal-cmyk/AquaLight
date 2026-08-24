@@ -7,6 +7,7 @@ import com.aqua.aqualight.R
 import com.aqua.aqualight.application.devices.DeviceMenuOpenResult
 import com.aqua.aqualight.application.devices.DeviceMenuOpenUseCase
 import com.aqua.aqualight.application.devices.DeviceMenuUnavailableReason
+import com.aqua.aqualight.application.devices.DeviceRootOperations
 import com.aqua.aqualight.application.devices.OwnerDeviceAvailability
 import com.aqua.aqualight.application.devices.OwnerDeviceFamily
 import com.aqua.aqualight.application.devices.RemoveDeviceFromTankResult
@@ -39,7 +40,8 @@ class TankDetailDevicesViewModel(
     private val assignmentOperations: TankDeviceAssignmentOperations,
     private val menuOpenUseCase: DeviceMenuOpenUseCase,
     private val routeResolver: DeviceRouteResolver,
-    private val dosingChannelOperations: DeviceDosingChannelOperations? = null
+    private val dosingChannelOperations: DeviceDosingChannelOperations? = null,
+    private val rootOperations: DeviceRootOperations? = null
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(TankDetailDevicesUiState())
@@ -54,6 +56,7 @@ class TankDetailDevicesViewModel(
     private val spotlightIndices = MutableStateFlow<Map<String, Int>>(emptyMap())
 
     private val dosingObserverJobs = mutableMapOf<String, Job>()
+    private val dosingRuntimeConnectionRequests = mutableSetOf<String>()
     private var boundTankId: Long = 0L
     private var observeJob: Job? = null
     private var menuOpenJob: Job? = null
@@ -198,12 +201,11 @@ class TankDetailDevicesViewModel(
     }
 
     private fun syncDosingObservers(devices: List<TankDeviceListItem>) {
-        val operations = dosingChannelOperations ?: return
-        val dosingDeviceIds = devices
-            .asSequence()
-            .filter { device -> device.family == OwnerDeviceFamily.DOSING }
-            .map(TankDeviceListItem::deviceUid)
-            .toSet()
+        val dosingDevices = devices.filter { device ->
+            device.family == OwnerDeviceFamily.DOSING
+        }
+        val dosingDeviceIds = dosingDevices.map(TankDeviceListItem::deviceUid).toSet()
+        val operations = dosingChannelOperations
 
         (dosingObserverJobs.keys - dosingDeviceIds).forEach { deviceUid ->
             dosingObserverJobs.remove(deviceUid)?.cancel()
@@ -212,21 +214,52 @@ class TankDetailDevicesViewModel(
         }
         syncSpotlightRotation()
 
-        dosingDeviceIds
-            .filterNot(dosingObserverJobs::containsKey)
-            .forEach { deviceUid ->
-                dosingObserverJobs[deviceUid] = viewModelScope.launch {
-                    operations.observeAll(deviceUid)
-                        .catch { emit(emptyList()) }
-                        .collect { snapshots ->
-                            updateDosingSummary(
-                                deviceUid = deviceUid,
-                                summary = DeviceDosingCardSummaryPolicy.build(
+        if (operations != null) {
+            dosingDeviceIds
+                .filterNot(dosingObserverJobs::containsKey)
+                .forEach { deviceUid ->
+                    dosingObserverJobs[deviceUid] = viewModelScope.launch {
+                        operations.observeAll(deviceUid)
+                            .catch { emit(emptyList()) }
+                            .collect { snapshots ->
+                                updateDosingSummary(
                                     deviceUid = deviceUid,
-                                    snapshots = snapshots
+                                    summary = DeviceDosingCardSummaryPolicy.build(
+                                        deviceUid = deviceUid,
+                                        snapshots = snapshots
+                                    )
                                 )
-                            )
-                        }
+                            }
+                    }
+                }
+        }
+
+        syncDosingRuntimeConnections(dosingDevices)
+    }
+
+    /**
+     * The tank card only asks the application boundary to establish the shared runtime session.
+     * Authentication, refresh and authoritative state publication remain owned by the central
+     * repository and [DeviceDosingV1ProductionRuntime]; no firmware polling or parallel state is
+     * introduced here.
+     */
+    private fun syncDosingRuntimeConnections(devices: List<TankDeviceListItem>) {
+        val reachableDeviceIds = devices
+            .asSequence()
+            .filter { device -> device.availability == OwnerDeviceAvailability.REACHABLE }
+            .map(TankDeviceListItem::deviceUid)
+            .toSet()
+
+        dosingRuntimeConnectionRequests.retainAll(reachableDeviceIds)
+        reachableDeviceIds
+            .asSequence()
+            .filterNot(dosingRuntimeConnectionRequests::contains)
+            .forEach { deviceUid ->
+                val connectionRequested = runCatching {
+                    rootOperations?.connect(deviceUid)?.isSuccess == true
+                }.getOrDefault(false)
+                if (connectionRequested) {
+                    dosingRuntimeConnectionRequests += deviceUid
                 }
             }
     }
