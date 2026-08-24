@@ -206,34 +206,6 @@ object DosingDeviceSpotlightCardBinder {
         )
     }
 
-    private fun bindIndicators(
-        container: LinearLayout,
-        pageCount: Int,
-        selectedIndex: Int
-    ) {
-        val context = container.context
-        container.removeAllViews()
-        if (pageCount <= 1) return
-
-        val dotSize = context.resources.getDimensionPixelSize(R.dimen.aqua_size_6)
-        val dotSpacing = context.resources.getDimensionPixelSize(R.dimen.aqua_size_4)
-        val selectedColor = ContextCompat.getColor(context, R.color.aqua_accent_positive)
-        val idleColor = ContextCompat.getColor(context, R.color.aqua_content_muted)
-        repeat(pageCount) { index ->
-            container.addView(
-                View(context).apply {
-                    background = GradientDrawable().apply {
-                        shape = GradientDrawable.OVAL
-                        setColor(if (index == selectedIndex) selectedColor else idleColor)
-                    }
-                    layoutParams = LinearLayout.LayoutParams(dotSize, dotSize).apply {
-                        marginStart = if (index == 0) 0 else dotSpacing
-                    }
-                }
-            )
-        }
-    }
-
     private fun bindAccessibility(
         binding: ItemDosingDeviceSpotlightCardBinding,
         summary: DeviceDosingCardSummary?,
@@ -261,4 +233,32 @@ object DosingDeviceSpotlightCardBinder {
         summary.channelCount,
         summary.activeChannelCount
     )
+}
+
+private fun bindIndicators(
+    container: LinearLayout,
+    pageCount: Int,
+    selectedIndex: Int
+) {
+    val context = container.context
+    container.removeAllViews()
+    if (pageCount <= 1) return
+
+    val dotSize = context.resources.getDimensionPixelSize(R.dimen.aqua_size_6)
+    val dotSpacing = context.resources.getDimensionPixelSize(R.dimen.aqua_size_4)
+    val selectedColor = ContextCompat.getColor(context, R.color.aqua_accent_positive)
+    val idleColor = ContextCompat.getColor(context, R.color.aqua_content_muted)
+    repeat(pageCount) { index ->
+        container.addView(
+            View(context).apply {
+                background = GradientDrawable().apply {
+                    shape = GradientDrawable.OVAL
+                    setColor(if (index == selectedIndex) selectedColor else idleColor)
+                }
+                layoutParams = LinearLayout.LayoutParams(dotSize, dotSize).apply {
+                    marginStart = if (index == 0) 0 else dotSpacing
+                }
+            }
+        )
+    }
 }
