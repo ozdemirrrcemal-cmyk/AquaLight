@@ -1,6 +1,7 @@
 package com.aqua.aqualight.data.devices.dosing.v1
 
 import com.aqua.aqualight.application.devices.dosing.DeviceDosingCalibrationOperations
+import com.aqua.aqualight.application.devices.dosing.DeviceDosingCardOperations
 import com.aqua.aqualight.application.devices.dosing.DeviceDosingChannelOperations
 import com.aqua.aqualight.application.devices.dosing.DeviceDosingLowLevelAlertTextResolver
 import com.aqua.aqualight.application.devices.dosing.DeviceDosingReconciledChannelOperations
@@ -57,6 +58,10 @@ internal class DeviceDosingV1ProductionRuntime(
 
     val channelOperations: DeviceDosingChannelOperations =
         DeviceDosingReconciledChannelOperations(adapter.channelOperations)
+    val cardOperations: DeviceDosingCardOperations = DeviceDosingV1CardOperations(
+        devicesRepository = devicesRepository,
+        channelOperations = channelOperations
+    )
     val calibrationOperations: DeviceDosingCalibrationOperations = adapter.calibrationOperations
 
     init {
