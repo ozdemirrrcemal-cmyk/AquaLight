@@ -229,19 +229,19 @@ class TankDetailDevicesViewModel(
 
     private fun syncDosingObservers(devices: List<TankDeviceListItem>) {
         val operations = dosingChannelOperations ?: return
-        val desiredDeviceUids = devices
+        val dosingDeviceIds = devices
             .asSequence()
             .filter { device -> device.family == OwnerDeviceFamily.DOSING }
             .map(TankDeviceListItem::deviceUid)
             .toSet()
 
-        (dosingObserverJobs.keys - desiredDeviceUids).forEach { deviceUid ->
+        (dosingObserverJobs.keys - dosingDeviceIds).forEach { deviceUid ->
             dosingObserverJobs.remove(deviceUid)?.cancel()
             dosingSummaries.update { summaries -> summaries - deviceUid }
             spotlightIndices.update { indices -> indices - deviceUid }
         }
 
-        desiredDeviceUids
+        dosingDeviceIds
             .filterNot(dosingObserverJobs::containsKey)
             .forEach { deviceUid ->
                 dosingObserverJobs[deviceUid] = viewModelScope.launch {
