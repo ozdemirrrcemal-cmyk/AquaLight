@@ -166,12 +166,9 @@ internal class OwnerViewModelFactory(
                                     snapshots = snapshots
                                 )
                             },
-                            removeDeviceAssignmentsForTank =
-                                assignments::removeAssignmentsForTank,
-                            cancelCareTaskReminder =
-                                notificationPreferenceUseCase::cancelCareTask,
-                            reconcileCareReminders =
-                                notificationPreferenceUseCase::reconcileOwner
+                            removeDeviceAssignmentsForTank = assignments::removeAssignmentsForTank,
+                            cancelCareTaskReminder = notificationPreferenceUseCase::cancelCareTask,
+                            reconcileCareReminders = notificationPreferenceUseCase::reconcileOwner
                         ),
                         notificationPreferences = notificationPreferenceUseCase
                     )
@@ -252,7 +249,8 @@ internal class OwnerViewModelFactory(
                     ),
                     menuOpenUseCase = createDeviceMenuOpenUseCase(graph, repository),
                     routeResolver = DeviceRouteResolver(),
-                    dosingChannelOperations = graph.dosingOperations.channelOperations
+                    dosingChannelOperations = graph.dosingOperations.channelOperations,
+                    rootOperations = DefaultDeviceRootOperations(repository)
                 )
 
             TankDeviceSelectViewModel::class.java ->
@@ -275,8 +273,7 @@ internal class OwnerViewModelFactory(
         repository: DevicesRepository
     ): DeviceMenuOpenUseCase = DeviceMenuOpenUseCase(
         menuAccessOperations = DefaultDeviceMenuAccessOperations.create(repository),
-        controlSurfacePreparationOperations =
-            graph.dosingOperations.controlSurfacePreparationOperations
+        controlSurfacePreparationOperations = graph.dosingOperations.controlSurfacePreparationOperations
     )
 
     private fun createOwnerDevicesOperations(
