@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="dosing_device_card_channel_summary">%1$d channels · %2$d active</string>
+    <string name="dosing_device_card_loading">Preparing dosing status</string>
+    <string name="dosing_device_card_offline">Dosing device offline</string>
+    <string name="dosing_device_card_loading_detail">Dosing channels are being prepared from the central device state</string>
+    <string name="dosing_device_card_offline_detail">Live dosing data will appear when the device reconnects</string>
+    <string name="dosing_device_card_active">ACTIVE</string>
+    <string name="dosing_device_card_inactive">INACTIVE</string>
+    <string name="dosing_device_card_daily">DAILY</string>
+    <string name="dosing_device_card_next">NEXT</string>
+    <string name="dosing_device_card_reservoir">RESERVOIR</string>
+    <string name="dosing_device_card_ml_value">%1$s mL</string>
+    <string name="dosing_device_card_metric_empty">—</string>
+    <string name="dosing_device_card_program_off">Program off</string>
+    <string name="dosing_device_card_daily_plan">daily plan</string>
+    <string name="dosing_device_card_next_unavailable">No next dose</string>
+    <string name="dosing_device_card_reservoir_tracking_off">Tracking off</string>
+    <string name="dosing_device_card_reservoir_low">Low level</string>
+    <string name="dosing_device_card_remaining_days">≈%1$d days</string>
+    <string name="dosing_device_card_reservoir_uncertain">Estimate pending</string>
+    <string name="dosing_device_card_reservoir_estimate_unavailable">Estimate unavailable</string>
+    <string name="dosing_device_card_accessibility">%1$s. %2$s. %3$s.</string>
+</resources>

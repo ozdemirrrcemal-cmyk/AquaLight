@@ -203,8 +203,7 @@ internal class OwnerViewModelFactory(
                     operations = DefaultDeviceRootOperations(repository),
                     channelNavigationOperations = dosing.navigationOperations,
                     channelOperations = dosing.channelOperations,
-                    controlSurfacePreparationOperations =
-                        dosing.controlSurfacePreparationOperations
+                    controlSurfacePreparationOperations = dosing.controlSurfacePreparationOperations
                 )
             }
 
@@ -252,7 +251,8 @@ internal class OwnerViewModelFactory(
                         devicesRepository = repository
                     ),
                     menuOpenUseCase = createDeviceMenuOpenUseCase(graph, repository),
-                    routeResolver = DeviceRouteResolver()
+                    routeResolver = DeviceRouteResolver(),
+                    dosingChannelOperations = graph.dosingOperations.channelOperations
                 )
 
             TankDeviceSelectViewModel::class.java ->
