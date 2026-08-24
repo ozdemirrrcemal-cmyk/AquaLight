@@ -45,8 +45,8 @@
     <string name="device_dosing_channel_manual_amount_format">+%1$.2f mL</string>
     <string name="device_dosing_channel_manual_description">Bugün verilen manuel doz: %1$.2f mL.</string>
     <plurals name="device_dosing_channel_reservoir_days_format">
-        <item quantity="one">~%1$d gün · %2$.1f mL</item>
-        <item quantity="other">~%1$d gün · %2$.1f mL</item>
+        <item quantity="one">%2$.1f mL · ≈%1$d gün</item>
+        <item quantity="other">%2$.1f mL · ≈%1$d gün</item>
     </plurals>
     <string name="device_dosing_channel_reservoir_amount_format">%1$.1f mL</string>
     <string name="device_dosing_channel_reservoir_description">Haznede kalan: %1$s</string>
