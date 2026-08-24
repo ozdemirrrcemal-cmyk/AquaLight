@@ -38,18 +38,12 @@ internal fun DosingProgramProgress(
 ) {
     val mode = state.mode
     if (mode == null) {
-        if (state.manualDeliveredTodayMl > 0.0) {
-            Row(
-                modifier = modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.End
-            ) {
-                DosingManualDosePill(
-                    amountMl = state.manualDeliveredTodayMl,
-                    colors = colors,
-                    typography = typography
-                )
-            }
-        }
+        DosingManualOnlyProgress(
+            amountMl = state.manualDeliveredTodayMl,
+            colors = colors,
+            typography = typography,
+            modifier = modifier
+        )
         return
     }
     val description = pluralStringResource(
@@ -97,6 +91,26 @@ internal fun DosingProgramProgress(
                 }
             }
         }
+    }
+}
+
+@Composable
+private fun DosingManualOnlyProgress(
+    amountMl: Double,
+    colors: AquaDeviceCardColors,
+    typography: AquaDeviceCardTypography,
+    modifier: Modifier = Modifier
+) {
+    if (amountMl <= 0.0) return
+    Row(
+        modifier = modifier.fillMaxWidth(),
+        horizontalArrangement = Arrangement.End
+    ) {
+        DosingManualDosePill(
+            amountMl = amountMl,
+            colors = colors,
+            typography = typography
+        )
     }
 }
 
