@@ -238,10 +238,9 @@ class TankDetailDevicesViewModel(
     }
 
     /**
-     * The tank card only asks the application boundary to establish the shared runtime session.
+     * The tank card only asks an application boundary to establish the shared runtime session.
      * Authentication, refresh and authoritative state publication remain owned by the central
-     * repository and [DeviceDosingV1ProductionRuntime]; no firmware polling or parallel state is
-     * introduced here.
+     * owner-scoped Dosing runtime; no firmware polling or parallel state is introduced here.
      */
     private fun syncDosingRuntimeConnections(devices: List<TankDeviceListItem>) {
         val reachableDeviceIds = devices
