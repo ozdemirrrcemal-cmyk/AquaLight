@@ -57,7 +57,6 @@ object DosingDeviceSpotlightCardBinder {
             if (online) R.string.device_online else R.string.device_offline
         )
         binding.ivPresenceIcon.isVisible = !header.isBusy
-        binding.presenceDot.isVisible = online && !header.isBusy
         binding.progressCardAction.isVisible = header.isBusy
         binding.root.isEnabled = !header.isBusy
     }
