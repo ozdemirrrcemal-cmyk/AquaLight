@@ -39,7 +39,16 @@ internal fun DosingProgramModeGlyph(
         when (mode) {
             DosingProgramModeUiState.SINGLE -> drawSingleModeGlyph(tint)
             DosingProgramModeUiState.HOURLY_24 -> drawClockModeGlyph(tint, showEvents = false)
-            DosingProgramModeUiState.CUSTOM_PERIODS -> drawCustomModeGlyph(tint)
+            DosingProgramModeUiState.CUSTOM_PERIODS -> {
+                CUSTOM_SEGMENTS.forEachIndexed { index, segment ->
+                    drawRoundRect(
+                        color = tint.copy(alpha = CUSTOM_SEGMENT_ALPHAS[index]),
+                        topLeft = Offset(size.width * segment.first, size.height * CUSTOM_TOP_Y),
+                        size = Size(size.width * segment.second, size.height * CUSTOM_HEIGHT),
+                        cornerRadius = CornerRadius(CUSTOM_CORNER_RADIUS.toPx())
+                    )
+                }
+            }
             DosingProgramModeUiState.TIMER -> drawClockModeGlyph(tint, showEvents = true)
         }
     }
@@ -297,17 +306,6 @@ private fun DrawScope.drawClockModeGlyph(color: Color, showEvents: Boolean) {
                 cap = StrokeCap.Round
             )
         }
-    }
-}
-
-private fun DrawScope.drawCustomModeGlyph(color: Color) {
-    CUSTOM_SEGMENTS.forEachIndexed { index, segment ->
-        drawRoundRect(
-            color = color.copy(alpha = CUSTOM_SEGMENT_ALPHAS[index]),
-            topLeft = Offset(size.width * segment.first, size.height * CUSTOM_TOP_Y),
-            size = Size(size.width * segment.second, size.height * CUSTOM_HEIGHT),
-            cornerRadius = CornerRadius(CUSTOM_CORNER_RADIUS.toPx())
-        )
     }
 }
 
