@@ -187,7 +187,8 @@
                         android:layout_marginStart="@dimen/aqua_size_8"
                         android:layout_weight="1"
                         android:gravity="center_vertical"
-                        android:orientation="horizontal">
+                        android:orientation="horizontal"
+                        tools:ignore="InefficientWeight">
 
                         <TextView
                             android:id="@+id/tvSpotlightChannelName"
