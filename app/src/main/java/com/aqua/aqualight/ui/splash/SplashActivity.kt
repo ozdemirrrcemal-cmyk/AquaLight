@@ -52,13 +52,7 @@ class SplashActivity : BaseActivity() {
     }
 
     private fun completeVisualHandoffIfReady() {
-        if (
-            !visualAnimationCompleted ||
-            mainHandoffStarted ||
-            isFinishing ||
-            isDestroyed ||
-            !lifecycle.currentState.isAtLeast(Lifecycle.State.RESUMED)
-        ) {
+        if (!isVisualHandoffReady()) {
             return
         }
 
@@ -70,5 +64,12 @@ class SplashActivity : BaseActivity() {
         )
         overridePendingTransition(0, 0)
         finish()
+    }
+
+    private fun isVisualHandoffReady(): Boolean {
+        val visualStateReady = visualAnimationCompleted && !mainHandoffStarted
+        val activityStateReady = !isFinishing && !isDestroyed
+        val lifecycleReady = lifecycle.currentState.isAtLeast(Lifecycle.State.RESUMED)
+        return visualStateReady && activityStateReady && lifecycleReady
     }
 }
