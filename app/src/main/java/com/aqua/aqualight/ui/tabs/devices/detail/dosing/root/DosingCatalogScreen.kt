@@ -2,11 +2,12 @@ package com.aqua.aqualight.ui.tabs.devices.detail.dosing.root
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
-import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.weight
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.runtime.Composable
@@ -48,59 +49,60 @@ internal fun DeviceDosingCatalogScreen(
         )
     }
 
-    LazyColumn(
-        modifier = modifier.fillMaxSize(),
-        contentPadding = PaddingValues(
-            start = SCREEN_HORIZONTAL_PADDING,
-            top = SCREEN_TOP_PADDING,
-            end = SCREEN_HORIZONTAL_PADDING,
-            bottom = SCREEN_BOTTOM_PADDING
-        ),
-        verticalArrangement = Arrangement.spacedBy(CHANNEL_CARD_SPACING),
-        horizontalAlignment = Alignment.CenterHorizontally
-    ) {
-        item(key = DEVICE_ITEM_KEY) {
-            DosingPumpSection(
-                pumpCount = exactPumpCount,
-                pumpHeads = pumpHeads,
-                onPumpClick = { channelNumber ->
-                    channels.firstOrNull { channel ->
-                        channel.channelNumber == channelNumber
-                    }?.let { channel ->
-                        onChannelClick(channel.slotId)
-                    }
+    Column(modifier = modifier.fillMaxSize()) {
+        DosingPumpSection(
+            pumpCount = exactPumpCount,
+            pumpHeads = pumpHeads,
+            onPumpClick = { channelNumber ->
+                channels.firstOrNull { channel ->
+                    channel.channelNumber == channelNumber
+                }?.let { channel ->
+                    onChannelClick(channel.slotId)
                 }
+            },
+            modifier = Modifier.padding(
+                start = SCREEN_HORIZONTAL_PADDING,
+                top = SCREEN_TOP_PADDING,
+                end = SCREEN_HORIZONTAL_PADDING
             )
-        }
+        )
 
-        if (channels.isNotEmpty()) {
-            item(key = DEVICE_TO_CARDS_SPACER_KEY) {
-                Spacer(modifier = Modifier.height(DEVICE_TO_CARDS_EXTRA_SPACING))
+        LazyColumn(
+            modifier = Modifier
+                .fillMaxWidth()
+                .weight(1f),
+            contentPadding = PaddingValues(
+                start = SCREEN_HORIZONTAL_PADDING,
+                top = CARD_LIST_TOP_PADDING,
+                end = SCREEN_HORIZONTAL_PADDING,
+                bottom = SCREEN_BOTTOM_PADDING
+            ),
+            verticalArrangement = Arrangement.spacedBy(CHANNEL_CARD_SPACING),
+            horizontalAlignment = Alignment.CenterHorizontally
+        ) {
+            items(
+                items = channels,
+                key = DosingChannelCardUiState::slotId
+            ) { channel ->
+                DosingChannelCard(
+                    state = channel,
+                    onClick = { onChannelClick(channel.slotId) },
+                    modifier = Modifier.fillMaxWidth()
+                )
             }
-        }
-
-        items(
-            items = channels,
-            key = DosingChannelCardUiState::slotId
-        ) { channel ->
-            DosingChannelCard(
-                state = channel,
-                onClick = { onChannelClick(channel.slotId) },
-                modifier = Modifier.fillMaxWidth()
-            )
         }
     }
 }
 
-private const val DEVICE_ITEM_KEY = "dosing-device"
-private const val DEVICE_TO_CARDS_SPACER_KEY = "dosing-device-card-gap"
 private const val SCREEN_HORIZONTAL_PADDING_DP = 16
 private const val SCREEN_TOP_PADDING_DP = 12
 private const val SCREEN_BOTTOM_PADDING_DP = 24
 private const val CHANNEL_CARD_SPACING_DP = 10
 private const val DEVICE_TO_CARDS_EXTRA_SPACING_DP = 4
+private const val CARD_LIST_TOP_PADDING_DP =
+    CHANNEL_CARD_SPACING_DP * 2 + DEVICE_TO_CARDS_EXTRA_SPACING_DP
 private val SCREEN_HORIZONTAL_PADDING = SCREEN_HORIZONTAL_PADDING_DP.dp
 private val SCREEN_TOP_PADDING = SCREEN_TOP_PADDING_DP.dp
 private val SCREEN_BOTTOM_PADDING = SCREEN_BOTTOM_PADDING_DP.dp
 private val CHANNEL_CARD_SPACING = CHANNEL_CARD_SPACING_DP.dp
-private val DEVICE_TO_CARDS_EXTRA_SPACING = DEVICE_TO_CARDS_EXTRA_SPACING_DP.dp
+private val CARD_LIST_TOP_PADDING = CARD_LIST_TOP_PADDING_DP.dp
