@@ -59,6 +59,7 @@ object DeviceStatusSnapshotMapper {
         return DeviceStatusItem(
             displayName = displayName,
             iconRes = DeviceFamilyIconMapper.iconFor(family),
+            dosingChannelCount = dosingChannelCount,
             ip = ipAddress,
             serialText = serialText.ifBlank { deviceUid },
             lastSeenText = lastSeenText(nowMillis),

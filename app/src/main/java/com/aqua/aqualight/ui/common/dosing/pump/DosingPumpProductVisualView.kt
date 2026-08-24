@@ -3,6 +3,8 @@ package com.aqua.aqualight.ui.common.dosing.pump
 import android.content.Context
 import android.util.AttributeSet
 import android.view.View
+import android.view.ViewGroup
+import android.widget.FrameLayout
 import android.widget.ImageView
 import androidx.annotation.DrawableRes
 import androidx.compose.foundation.layout.Box
@@ -89,6 +91,22 @@ private fun DosingPumpProductThumbnail(
 /** Shared ViewBinding bridge. Dosing never falls back to the legacy four-head bitmap. */
 object DosingPumpProductVisualBinder {
     fun bind(
+        container: ViewGroup,
+        fallbackImageView: ImageView,
+        dosingChannelCount: Int?,
+        @DrawableRes fallbackIconRes: Int,
+        contentDescription: CharSequence
+    ) {
+        bind(
+            pumpView = container.obtainPumpVisualView(),
+            fallbackImageView = fallbackImageView,
+            dosingChannelCount = dosingChannelCount,
+            fallbackIconRes = fallbackIconRes,
+            contentDescription = contentDescription
+        )
+    }
+
+    fun bind(
         pumpView: DosingPumpProductVisualView,
         fallbackImageView: ImageView,
         dosingChannelCount: Int?,
@@ -111,7 +129,24 @@ object DosingPumpProductVisualBinder {
     }
 }
 
-private fun isSupportedDosingPumpCount(value: Int): Boolean =
+private fun ViewGroup.obtainPumpVisualView(): DosingPumpProductVisualView {
+    for (index in 0 until childCount) {
+        val child = getChildAt(index)
+        if (child is DosingPumpProductVisualView) return child
+    }
+
+    return DosingPumpProductVisualView(context).also { pumpView ->
+        pumpView.layoutParams = FrameLayout.LayoutParams(
+            ViewGroup.LayoutParams.MATCH_PARENT,
+            ViewGroup.LayoutParams.MATCH_PARENT
+        )
+        pumpView.importantForAccessibility = View.IMPORTANT_FOR_ACCESSIBILITY_NO
+        pumpView.visibility = View.GONE
+        addView(pumpView, 0)
+    }
+}
+
+internal fun isSupportedDosingPumpCount(value: Int): Boolean =
     value == DOSING_PRO_2_PUMP_COUNT || value == DOSING_PRO_4_PUMP_COUNT
 
 private const val UNBOUND_PUMP_COUNT = 0

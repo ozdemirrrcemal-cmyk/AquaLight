@@ -7,6 +7,7 @@ import androidx.recyclerview.widget.RecyclerView
 import androidx.core.content.ContextCompat
 import com.aqua.aqualight.R
 import com.aqua.aqualight.databinding.ItemDeviceStatusBinding
+import com.aqua.aqualight.ui.common.dosing.pump.DosingPumpProductVisualBinder
 import com.aqua.aqualight.ui.common.text.resolve
 
 class DeviceStatusAdapter : RecyclerView.Adapter<DeviceStatusAdapter.DeviceViewHolder>() {
@@ -36,10 +37,13 @@ class DeviceStatusAdapter : RecyclerView.Adapter<DeviceStatusAdapter.DeviceViewH
             )
 
             binding.tvDeviceName.text = name
-            binding.ivDeviceIcon.setImageResource(item.iconRes)
-            binding.ivDeviceIcon.imageTintList = null
-            binding.ivDeviceIcon.clearColorFilter()
-            binding.ivDeviceIcon.contentDescription = name
+            DosingPumpProductVisualBinder.bind(
+                container = binding.deviceIconContainer,
+                fallbackImageView = binding.ivDeviceIcon,
+                dosingChannelCount = item.dosingChannelCount,
+                fallbackIconRes = item.iconRes,
+                contentDescription = name
+            )
             binding.tvIp.text = item.ip.ifBlank { context.getString(R.string.device_unknown) }
             binding.tvSerialTitle.setText(R.string.device_label_serial)
             binding.tvSerial.text = serial

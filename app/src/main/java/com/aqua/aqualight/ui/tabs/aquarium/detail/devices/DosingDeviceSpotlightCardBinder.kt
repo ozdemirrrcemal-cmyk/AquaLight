@@ -14,6 +14,7 @@ import com.aqua.aqualight.application.devices.dosing.DeviceDosingCardReservoirSu
 import com.aqua.aqualight.application.devices.dosing.DeviceDosingCardSummary
 import com.aqua.aqualight.databinding.ItemDosingDeviceSpotlightCardBinding
 import com.aqua.aqualight.ui.common.devicecard.DeviceCompactStatusStyle
+import com.aqua.aqualight.ui.common.dosing.pump.DosingPumpProductVisualBinder
 import java.util.Locale
 
 object DosingDeviceSpotlightCardBinder {
@@ -43,10 +44,13 @@ object DosingDeviceSpotlightCardBinder {
     ) {
         val context = binding.root.context
         binding.tvDeviceName.text = displayName
-        binding.ivDeviceIcon.setImageResource(header.iconRes)
-        binding.ivDeviceIcon.imageTintList = null
-        binding.ivDeviceIcon.clearColorFilter()
-        binding.ivDeviceIcon.contentDescription = displayName
+        DosingPumpProductVisualBinder.bind(
+            container = binding.deviceIconContainer,
+            fallbackImageView = binding.ivDeviceIcon,
+            dosingChannelCount = header.dosingChannelCount,
+            fallbackIconRes = header.iconRes,
+            contentDescription = displayName
+        )
         binding.ivPresenceIcon.imageTintList = ColorStateList.valueOf(
             ContextCompat.getColor(
                 context,

@@ -5,10 +5,12 @@ import com.aqua.aqualight.application.devices.dosing.DeviceDosingCardChannelSumm
 import com.aqua.aqualight.application.devices.dosing.DeviceDosingCardSummary
 import com.aqua.aqualight.ui.common.devicecard.DeviceCompactCardUi
 import com.aqua.aqualight.ui.common.devicecard.DeviceCompactStatusStyle
+import com.aqua.aqualight.ui.common.dosing.pump.isSupportedDosingPumpCount
 
 data class DosingDeviceSpotlightHeaderUi(
     val displayName: String,
     @DrawableRes val iconRes: Int,
+    val dosingChannelCount: Int?,
     val statusStyle: DeviceCompactStatusStyle,
     val isBusy: Boolean
 )
@@ -25,7 +27,11 @@ internal fun DeviceCompactCardUi.toDosingSpotlightCardUi(
     summary: DeviceDosingCardSummary?,
     selectedIndex: Int
 ): DosingDeviceSpotlightCardUi {
-    val channels = summary?.channels.orEmpty()
+    val expectedChannelCount = dosingChannelCount?.takeIf(::isSupportedDosingPumpCount)
+    val trustedSummary = summary?.takeIf { value ->
+        expectedChannelCount != null && value.channelCount == expectedChannelCount
+    }
+    val channels = trustedSummary?.channels.orEmpty()
     val safeIndex = if (channels.isEmpty()) {
         0
     } else {
@@ -35,10 +41,11 @@ internal fun DeviceCompactCardUi.toDosingSpotlightCardUi(
         header = DosingDeviceSpotlightHeaderUi(
             displayName = displayName,
             iconRes = iconRes,
+            dosingChannelCount = dosingChannelCount,
             statusStyle = statusStyle,
             isBusy = isBusy
         ),
-        summary = summary,
+        summary = trustedSummary,
         selectedChannel = channels.getOrNull(safeIndex),
         selectedIndex = safeIndex,
         pageCount = channels.size

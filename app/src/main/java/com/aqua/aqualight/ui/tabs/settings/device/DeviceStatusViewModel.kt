@@ -54,6 +54,7 @@ data class DeviceStatusUiState(
 data class DeviceStatusItem(
     val displayName: String = "",
     @DrawableRes val iconRes: Int,
+    val dosingChannelCount: Int? = null,
     val ip: String = "",
     val serialText: String = "",
     val lastSeenText: AquaUiText = AquaUiText.Resource(R.string.common_not_available_symbol),
