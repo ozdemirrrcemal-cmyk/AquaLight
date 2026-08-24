@@ -153,7 +153,7 @@ object DosingPumpProductVisualBinder {
         val card = this as? MaterialCardView ?: return
         if (isDosingProduct) {
             card.setCardBackgroundColor(
-                ContextCompat.getColor(card.context, R.color.aqua_palette_hex_00000000)
+                ContextCompat.getColor(card.context, R.color.aqua_color_transparent)
             )
             card.strokeWidth = NO_STROKE_WIDTH
             card.radius = NO_CORNER_RADIUS
@@ -169,7 +169,7 @@ object DosingPumpProductVisualBinder {
 
     private fun ViewGroup.captureMediaHostState(): MediaHostState {
         val card = this as? MaterialCardView
-        val transparent = ContextCompat.getColor(context, R.color.aqua_palette_hex_00000000)
+        val transparent = ContextCompat.getColor(context, R.color.aqua_color_transparent)
         return MediaHostState(
             width = layoutParams.width,
             cardBackgroundColor = card?.cardBackgroundColor ?: ColorStateList.valueOf(transparent),
