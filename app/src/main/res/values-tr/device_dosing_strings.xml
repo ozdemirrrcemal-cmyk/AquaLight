@@ -237,7 +237,6 @@
     <string name="device_dosing_timer_error_total">Toplam doz miktarı çok büyük. Bir veya daha fazla Zamanlayıcı kaydını azaltın.</string>
 
     <string name="device_dosing_detail_value_unavailable">—</string>
-
     <string name="device_dosing_detail_reservoir_tracking_section">Takip durumu</string>
     <string name="device_dosing_detail_reservoir_tracking_enabled">Hazne takibini etkinleştir</string>
     <string name="device_dosing_detail_reservoir_tracking_enabled_description">Bu kanal için kap kapasitesi ve kalan hacim takibini kullanıma açar.</string>
@@ -327,4 +326,8 @@
     <string name="device_dosing_calibration_device_time_not_ready">Cihaz saati hazır değil. Cihazı bağlı tutup kaydetmeyi yeniden deneyin.</string>
     <string name="device_dosing_calibration_state_mismatch">Cihazdaki kalibrasyon durumu değişti. Kanalı yenileyip güncel adımdan devam edin.</string>
     <string name="device_dosing_calibration_operation_failed">Kalibrasyon tamamlanamadı. Cihaz durumunu yenileyip yeniden deneyin.</string>
+
+    <string name="device_dosing_channel_next_dose_label">Sonraki</string>
+    <string name="device_dosing_channel_next_dose_value_format">%1$s · %2$.2f mL</string>
+    <string name="device_dosing_channel_next_day_time_format">%1$s · +1 gün</string>
 </resources>
