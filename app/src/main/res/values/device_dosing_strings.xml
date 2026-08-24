@@ -45,8 +45,8 @@
     <string name="device_dosing_channel_manual_amount_format">+%1$.2f mL</string>
     <string name="device_dosing_channel_manual_description">Manual dose delivered today: %1$.2f mL.</string>
     <plurals name="device_dosing_channel_reservoir_days_format">
-        <item quantity="one">~%1$d day · %2$.1f mL</item>
-        <item quantity="other">~%1$d days · %2$.1f mL</item>
+        <item quantity="one">%2$.1f mL · ≈%1$d day</item>
+        <item quantity="other">%2$.1f mL · ≈%1$d days</item>
     </plurals>
     <string name="device_dosing_channel_reservoir_amount_format">%1$.1f mL</string>
     <string name="device_dosing_channel_reservoir_description">Reservoir remaining: %1$s</string>
