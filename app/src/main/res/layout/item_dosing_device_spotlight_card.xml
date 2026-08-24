@@ -102,15 +102,6 @@
                 android:src="@drawable/ic_status_wifi"
                 app:tint="@color/aqua_accent_positive" />
 
-            <View
-                android:id="@+id/presenceDot"
-                android:layout_width="@dimen/aqua_size_6"
-                android:layout_height="@dimen/aqua_size_6"
-                android:layout_gravity="end|bottom"
-                android:layout_marginEnd="@dimen/aqua_size_4"
-                android:layout_marginBottom="@dimen/aqua_size_4"
-                android:background="@drawable/bg_online_dot" />
-
             <ProgressBar
                 android:id="@+id/progressCardAction"
                 style="?android:attr/progressBarStyleSmall"
@@ -171,7 +162,7 @@
                     android:orientation="horizontal">
 
                     <com.google.android.material.card.MaterialCardView
-                        style="@style/Widget.Aqua.Card.IconAccent"
+                        style="@style/Widget.Aqua.Card.Device.Media"
                         android:layout_width="@dimen/aqua_size_32"
                         android:layout_height="@dimen/aqua_size_32"
                         app:strokeWidth="@dimen/aqua_size_1">
@@ -185,7 +176,7 @@
                             android:textColor="@color/aqua_accent_positive"
                             android:textSize="@dimen/aqua_text_size_body_large"
                             android:textStyle="bold"
-                            tools:text="2" />
+                            tools:text="1" />
 
                     </com.google.android.material.card.MaterialCardView>
 
@@ -194,11 +185,12 @@
                         android:layout_height="wrap_content"
                         android:layout_marginStart="@dimen/aqua_size_8"
                         android:layout_weight="1"
-                        android:orientation="vertical">
+                        android:gravity="center_vertical"
+                        android:orientation="horizontal">
 
                         <TextView
                             android:id="@+id/tvSpotlightChannelName"
-                            android:layout_width="match_parent"
+                            android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
                             android:ellipsize="end"
                             android:includeFontPadding="false"
@@ -206,17 +198,16 @@
                             android:textColor="@color/aqua_content_primary"
                             android:textSize="@dimen/aqua_text_size_body_large"
                             android:textStyle="bold"
-                            tools:text="Potasyum" />
+                            tools:text="deneme" />
 
                         <TextView
                             android:id="@+id/tvSpotlightState"
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:layout_marginTop="@dimen/aqua_size_2"
-                            android:includeFontPadding="false"
-                            android:textColor="@color/aqua_accent_positive"
-                            android:textSize="@dimen/aqua_text_size_micro_label"
-                            android:textStyle="bold"
+                            style="@style/Widget.Aqua.Chip.Status"
+                            android:layout_height="@dimen/aqua_size_22"
+                            android:layout_marginStart="@dimen/aqua_size_8"
+                            android:paddingStart="@dimen/aqua_size_8"
+                            android:paddingEnd="@dimen/aqua_size_8"
+                            android:textSize="@dimen/aqua_text_size_status_nano"
                             tools:text="AKTİF" />
 
                     </LinearLayout>
@@ -248,32 +239,40 @@
                         <LinearLayout
                             android:layout_width="match_parent"
                             android:layout_height="match_parent"
-                            android:gravity="center_horizontal"
+                            android:gravity="center"
                             android:orientation="vertical"
                             android:padding="@dimen/aqua_size_4">
 
-                            <ImageView
-                                android:layout_width="@dimen/aqua_size_14"
-                                android:layout_height="@dimen/aqua_size_14"
-                                android:contentDescription="@string/dosing_device_card_daily"
-                                android:src="@drawable/ic_care_fertilizer_24"
-                                app:tint="@color/aqua_accent_aqua" />
-
-                            <TextView
+                            <LinearLayout
                                 android:layout_width="wrap_content"
                                 android:layout_height="wrap_content"
-                                android:layout_marginTop="@dimen/aqua_size_2"
-                                android:includeFontPadding="false"
-                                android:text="@string/dosing_device_card_daily"
-                                android:textColor="@color/aqua_content_muted"
-                                android:textSize="@dimen/aqua_text_size_status_nano"
-                                android:textStyle="bold" />
+                                android:gravity="center_vertical"
+                                android:orientation="horizontal">
+
+                                <ImageView
+                                    android:layout_width="@dimen/aqua_size_14"
+                                    android:layout_height="@dimen/aqua_size_14"
+                                    android:contentDescription="@string/dosing_device_card_daily"
+                                    android:src="@drawable/ic_care_fertilizer_24"
+                                    app:tint="@color/aqua_accent_aqua" />
+
+                                <TextView
+                                    android:layout_width="wrap_content"
+                                    android:layout_height="wrap_content"
+                                    android:layout_marginStart="@dimen/aqua_size_4"
+                                    android:includeFontPadding="false"
+                                    android:text="@string/dosing_device_card_daily"
+                                    android:textColor="@color/aqua_content_muted"
+                                    android:textSize="@dimen/aqua_text_size_status_nano"
+                                    android:textStyle="bold" />
+
+                            </LinearLayout>
 
                             <TextView
                                 android:id="@+id/tvDailyDoseValue"
                                 android:layout_width="match_parent"
                                 android:layout_height="wrap_content"
-                                android:layout_marginTop="@dimen/aqua_size_2"
+                                android:layout_marginTop="@dimen/aqua_size_4"
                                 android:ellipsize="end"
                                 android:gravity="center"
                                 android:includeFontPadding="false"
@@ -281,7 +280,7 @@
                                 android:textColor="@color/aqua_content_primary"
                                 android:textSize="@dimen/aqua_text_size_body_small"
                                 android:textStyle="bold"
-                                tools:text="32,00 mL" />
+                                tools:text="3,00 mL" />
 
                             <TextView
                                 android:id="@+id/tvDailyDoseSub"
@@ -310,39 +309,47 @@
                         <LinearLayout
                             android:layout_width="match_parent"
                             android:layout_height="match_parent"
-                            android:gravity="center_horizontal"
+                            android:gravity="center"
                             android:orientation="vertical"
                             android:padding="@dimen/aqua_size_4">
 
-                            <ImageView
-                                android:layout_width="@dimen/aqua_size_14"
-                                android:layout_height="@dimen/aqua_size_14"
-                                android:contentDescription="@string/dosing_device_card_next"
-                                android:src="@drawable/ic_dosing_schedule_24"
-                                app:tint="@color/aqua_accent_aqua" />
-
-                            <TextView
+                            <LinearLayout
                                 android:layout_width="wrap_content"
                                 android:layout_height="wrap_content"
-                                android:layout_marginTop="@dimen/aqua_size_2"
-                                android:includeFontPadding="false"
-                                android:text="@string/dosing_device_card_next"
-                                android:textColor="@color/aqua_content_muted"
-                                android:textSize="@dimen/aqua_text_size_status_nano"
-                                android:textStyle="bold" />
+                                android:gravity="center_vertical"
+                                android:orientation="horizontal">
+
+                                <ImageView
+                                    android:layout_width="@dimen/aqua_size_14"
+                                    android:layout_height="@dimen/aqua_size_14"
+                                    android:contentDescription="@string/dosing_device_card_next"
+                                    android:src="@drawable/ic_dosing_schedule_24"
+                                    app:tint="@color/aqua_accent_aqua" />
+
+                                <TextView
+                                    android:layout_width="wrap_content"
+                                    android:layout_height="wrap_content"
+                                    android:layout_marginStart="@dimen/aqua_size_4"
+                                    android:includeFontPadding="false"
+                                    android:text="@string/dosing_device_card_next"
+                                    android:textColor="@color/aqua_content_muted"
+                                    android:textSize="@dimen/aqua_text_size_status_nano"
+                                    android:textStyle="bold" />
+
+                            </LinearLayout>
 
                             <TextView
                                 android:id="@+id/tvNextDoseValue"
                                 android:layout_width="match_parent"
                                 android:layout_height="wrap_content"
-                                android:layout_marginTop="@dimen/aqua_size_2"
+                                android:layout_marginTop="@dimen/aqua_size_4"
                                 android:gravity="center"
                                 android:includeFontPadding="false"
                                 android:maxLines="1"
                                 android:textColor="@color/aqua_content_primary"
                                 android:textSize="@dimen/aqua_text_size_body_small"
                                 android:textStyle="bold"
-                                tools:text="14:00" />
+                                tools:text="—" />
 
                             <TextView
                                 android:id="@+id/tvNextDoseSub"
@@ -354,7 +361,7 @@
                                 android:maxLines="1"
                                 android:textColor="@color/aqua_content_muted"
                                 android:textSize="@dimen/aqua_text_size_status_nano"
-                                tools:text="1,33 mL" />
+                                tools:text="Sıradaki doz yok" />
 
                         </LinearLayout>
 
@@ -370,32 +377,40 @@
                         <LinearLayout
                             android:layout_width="match_parent"
                             android:layout_height="match_parent"
-                            android:gravity="center_horizontal"
+                            android:gravity="center"
                             android:orientation="vertical"
                             android:padding="@dimen/aqua_size_4">
 
-                            <ImageView
-                                android:layout_width="@dimen/aqua_size_14"
-                                android:layout_height="@dimen/aqua_size_14"
-                                android:contentDescription="@string/dosing_device_card_reservoir"
-                                android:src="@drawable/ic_dosing_reservoir_24"
-                                app:tint="@color/aqua_accent_aqua" />
-
-                            <TextView
+                            <LinearLayout
                                 android:layout_width="wrap_content"
                                 android:layout_height="wrap_content"
-                                android:layout_marginTop="@dimen/aqua_size_2"
-                                android:includeFontPadding="false"
-                                android:text="@string/dosing_device_card_reservoir"
-                                android:textColor="@color/aqua_content_muted"
-                                android:textSize="@dimen/aqua_text_size_status_nano"
-                                android:textStyle="bold" />
+                                android:gravity="center_vertical"
+                                android:orientation="horizontal">
+
+                                <ImageView
+                                    android:layout_width="@dimen/aqua_size_14"
+                                    android:layout_height="@dimen/aqua_size_14"
+                                    android:contentDescription="@string/dosing_device_card_reservoir"
+                                    android:src="@drawable/ic_dosing_reservoir_24"
+                                    app:tint="@color/aqua_accent_aqua" />
+
+                                <TextView
+                                    android:layout_width="wrap_content"
+                                    android:layout_height="wrap_content"
+                                    android:layout_marginStart="@dimen/aqua_size_4"
+                                    android:includeFontPadding="false"
+                                    android:text="@string/dosing_device_card_reservoir"
+                                    android:textColor="@color/aqua_content_muted"
+                                    android:textSize="@dimen/aqua_text_size_status_nano"
+                                    android:textStyle="bold" />
+
+                            </LinearLayout>
 
                             <TextView
                                 android:id="@+id/tvReservoirValue"
                                 android:layout_width="match_parent"
                                 android:layout_height="wrap_content"
-                                android:layout_marginTop="@dimen/aqua_size_2"
+                                android:layout_marginTop="@dimen/aqua_size_4"
                                 android:ellipsize="end"
                                 android:gravity="center"
                                 android:includeFontPadding="false"
@@ -403,7 +418,7 @@
                                 android:textColor="@color/aqua_content_primary"
                                 android:textSize="@dimen/aqua_text_size_body_small"
                                 android:textStyle="bold"
-                                tools:text="446,2 mL" />
+                                tools:text="444,9 mL" />
 
                             <TextView
                                 android:id="@+id/tvReservoirSub"
@@ -416,7 +431,7 @@
                                 android:maxLines="1"
                                 android:textColor="@color/aqua_content_muted"
                                 android:textSize="@dimen/aqua_text_size_status_nano"
-                                tools:text="≈14 gün" />
+                                tools:text="≈149 gün" />
 
                         </LinearLayout>
 
