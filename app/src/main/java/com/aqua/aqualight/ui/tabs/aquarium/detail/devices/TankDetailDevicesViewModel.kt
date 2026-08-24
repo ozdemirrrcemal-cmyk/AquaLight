@@ -23,7 +23,6 @@ import com.aqua.aqualight.ui.tabs.devices.route.DeviceRouteResolver
 import java.util.concurrent.CancellationException
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.channels.Channel
-import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -33,7 +32,6 @@ import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.flow.update
-import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 
 class TankDetailDevicesViewModel(
@@ -53,14 +51,13 @@ class TankDetailDevicesViewModel(
     private val openingDeviceId = MutableStateFlow<String?>(null)
     private val removingDevice = MutableStateFlow(false)
     private val dosingSummaries = MutableStateFlow<Map<String, DeviceDosingCardSummary>>(emptyMap())
-    private val spotlightIndices = MutableStateFlow<Map<String, Int>>(emptyMap())
+    private val spotlightRotation = DosingSpotlightRotationController(viewModelScope)
 
     private val dosingObserverJobs = mutableMapOf<String, Job>()
     private val dosingRuntimeConnectionRequests = mutableSetOf<String>()
     private var boundTankId: Long = 0L
     private var observeJob: Job? = null
     private var menuOpenJob: Job? = null
-    private var spotlightRotationJob: Job? = null
     private var pendingMenuOpen: DeviceMenuOpenResult.Ready? = null
 
     fun bind(tankId: Long) {
@@ -78,7 +75,7 @@ class TankDetailDevicesViewModel(
         )
         val dosingPresentationState = observeDosingPresentationState(
             dosingSummaries = dosingSummaries,
-            spotlightIndices = spotlightIndices
+            spotlightIndices = spotlightRotation.indices
         )
 
         observeJob = viewModelScope.launch {
@@ -100,6 +97,10 @@ class TankDetailDevicesViewModel(
                 _uiState.value = state
             }
         }
+    }
+
+    fun onDevicesSurfaceVisibilityChanged(visible: Boolean) {
+        spotlightRotation.setVisible(visible)
     }
 
     fun onDeviceClicked(deviceUid: String) {
@@ -163,6 +164,7 @@ class TankDetailDevicesViewModel(
     }
 
     fun onNavigationHostDestroyed() {
+        spotlightRotation.setVisible(false)
         menuOpenJob?.cancel()
         pendingMenuOpen?.let(menuOpenUseCase::abandon)
         pendingMenuOpen = null
@@ -210,9 +212,8 @@ class TankDetailDevicesViewModel(
         (dosingObserverJobs.keys - dosingDeviceIds).forEach { deviceUid ->
             dosingObserverJobs.remove(deviceUid)?.cancel()
             dosingSummaries.update { summaries -> summaries - deviceUid }
-            spotlightIndices.update { indices -> indices - deviceUid }
         }
-        syncSpotlightRotation()
+        spotlightRotation.updateChannelCounts(dosingSummaries.value.toSpotlightChannelCounts())
 
         if (operations != null) {
             dosingDeviceIds
@@ -234,33 +235,11 @@ class TankDetailDevicesViewModel(
                 }
         }
 
-        syncDosingRuntimeConnections(dosingDevices)
-    }
-
-    /**
-     * The tank card only asks an application boundary to establish the shared runtime session.
-     * Authentication, refresh and authoritative state publication remain owned by the central
-     * owner-scoped Dosing runtime; no firmware polling or parallel state is introduced here.
-     */
-    private fun syncDosingRuntimeConnections(devices: List<TankDeviceListItem>) {
-        val reachableDeviceIds = devices
-            .asSequence()
-            .filter { device -> device.availability == OwnerDeviceAvailability.REACHABLE }
-            .map(TankDeviceListItem::deviceUid)
-            .toSet()
-
-        dosingRuntimeConnectionRequests.retainAll(reachableDeviceIds)
-        reachableDeviceIds
-            .asSequence()
-            .filterNot(dosingRuntimeConnectionRequests::contains)
-            .forEach { deviceUid ->
-                val connectionRequested = runCatching {
-                    rootOperations?.connect(deviceUid)?.isSuccess == true
-                }.getOrDefault(false)
-                if (connectionRequested) {
-                    dosingRuntimeConnectionRequests += deviceUid
-                }
-            }
+        requestDosingRuntimeConnections(
+            devices = dosingDevices,
+            requestedDeviceIds = dosingRuntimeConnectionRequests,
+            rootOperations = rootOperations
+        )
     }
 
     private fun updateDosingSummary(
@@ -270,51 +249,7 @@ class TankDetailDevicesViewModel(
         dosingSummaries.update { summaries ->
             if (summary == null) summaries - deviceUid else summaries + (deviceUid to summary)
         }
-        spotlightIndices.update { indices ->
-            when {
-                summary == null || summary.channels.isEmpty() -> indices - deviceUid
-                else -> indices + (
-                    deviceUid to (indices[deviceUid] ?: 0).coerceIn(0, summary.channels.lastIndex)
-                )
-            }
-        }
-        syncSpotlightRotation()
-    }
-
-    private fun syncSpotlightRotation() {
-        val shouldRotate = dosingSummaries.value.values.any { summary ->
-            summary.channels.size > 1
-        }
-        if (!shouldRotate) {
-            spotlightRotationJob?.cancel()
-            spotlightRotationJob = null
-            return
-        }
-        if (spotlightRotationJob?.isActive == true) return
-
-        spotlightRotationJob = viewModelScope.launch {
-            while (isActive) {
-                delay(SPOTLIGHT_ROTATION_INTERVAL_MILLIS)
-                val summaries = dosingSummaries.value
-                spotlightIndices.update { current ->
-                    buildMap {
-                        current.forEach { (deviceUid, index) ->
-                            put(deviceUid, index)
-                        }
-                        summaries.forEach { (deviceUid, summary) ->
-                            val count = summary.channels.size
-                            when {
-                                count == 1 -> put(deviceUid, 0)
-                                count > 1 -> put(
-                                    deviceUid,
-                                    ((current[deviceUid] ?: 0) + 1) % count
-                                )
-                            }
-                        }
-                    }
-                }
-            }
-        }
+        spotlightRotation.updateChannelCounts(dosingSummaries.value.toSpotlightChannelCounts())
     }
 
     private fun abandonPendingNavigation(deviceUid: String) {
@@ -329,10 +264,6 @@ class TankDetailDevicesViewModel(
         if (openingDeviceId.value == deviceUid) {
             openingDeviceId.value = null
         }
-    }
-
-    private companion object {
-        const val SPOTLIGHT_ROTATION_INTERVAL_MILLIS = 10_000L
     }
 }
 
@@ -426,6 +357,39 @@ private fun buildTankDetailDevicesUiState(
         isRemovingDevice = interaction.isRemovingDevice
     )
 }
+
+/**
+ * The tank card only asks an application boundary to establish the shared runtime session.
+ * Authentication, refresh and authoritative state publication remain owned by the central
+ * owner-scoped Dosing runtime; no firmware polling or parallel state is introduced here.
+ */
+private fun requestDosingRuntimeConnections(
+    devices: List<TankDeviceListItem>,
+    requestedDeviceIds: MutableSet<String>,
+    rootOperations: DeviceRootOperations?
+) {
+    val reachableDeviceIds = devices
+        .asSequence()
+        .filter { device -> device.availability == OwnerDeviceAvailability.REACHABLE }
+        .map(TankDeviceListItem::deviceUid)
+        .toSet()
+
+    requestedDeviceIds.retainAll(reachableDeviceIds)
+    reachableDeviceIds
+        .asSequence()
+        .filterNot(requestedDeviceIds::contains)
+        .forEach { deviceUid ->
+            val connectionRequested = runCatching {
+                rootOperations?.connect(deviceUid)?.isSuccess == true
+            }.getOrDefault(false)
+            if (connectionRequested) {
+                requestedDeviceIds += deviceUid
+            }
+        }
+}
+
+private fun Map<String, DeviceDosingCardSummary>.toSpotlightChannelCounts(): Map<String, Int> =
+    mapValues { (_, summary) -> summary.channels.size }
 
 private fun isDeviceRemovalAllowed(
     tankId: Long,
