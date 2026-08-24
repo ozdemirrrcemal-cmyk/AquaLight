@@ -11,6 +11,10 @@ import com.aqua.aqualight.application.devices.dosing.dailyDoseMicroliters
 import com.aqua.aqualight.application.devices.dosing.nextScheduledOccurrence
 
 internal fun DeviceDosingChannelSnapshot.toProgramProgressUiState(): DosingProgramProgressUiState {
+    val scheduledDeliveredTodayMl = usageToday.scheduledDeliveredMicroliters
+        .takeIf { usageToday.valid }
+        ?.toMilliliters()
+        ?: 0.0
     val manualDeliveredTodayMl = usageToday.manualDeliveredMicroliters
         .takeIf { usageToday.valid }
         ?.toMilliliters()
@@ -31,7 +35,7 @@ internal fun DeviceDosingChannelSnapshot.toProgramProgressUiState(): DosingProgr
         mode = configuredProgram.schedule.toUiMode(),
         dailyDoseMl = configuredProgram.dailyDoseMicroliters().toMilliliters(),
         scheduledAmountTodayMl = scheduledAmountTodayMl,
-        scheduledDeliveredTodayMl = progress.completedAmountMicroliters.toMilliliters(),
+        scheduledDeliveredTodayMl = scheduledDeliveredTodayMl,
         remainingScheduledTodayMl = progress.remainingAmountMicroliters.toMilliliters(),
         completionFraction = (progress.completionPercent / PERCENT_SCALE)
             .toFloat()
