@@ -9,6 +9,8 @@ import com.aqua.aqualight.application.devices.DeviceMenuAccessOperations
 import com.aqua.aqualight.application.devices.DeviceMenuAccessResult
 import com.aqua.aqualight.application.devices.DeviceMenuOpenUseCase
 import com.aqua.aqualight.application.devices.DeviceMenuUnavailableReason
+import com.aqua.aqualight.application.devices.DeviceRootOperations
+import com.aqua.aqualight.application.devices.DeviceRootSnapshot
 import com.aqua.aqualight.application.devices.OwnerDeviceAvailability
 import com.aqua.aqualight.application.devices.OwnerDeviceFamily
 import com.aqua.aqualight.application.devices.RemoveDeviceFromTankResult
@@ -61,6 +63,27 @@ class TankDeviceAssignmentViewModelBoundaryTest {
         assertEquals("device-1", state.devices.single().deviceUid)
         assertEquals("AquaLight device-1", state.devices.single().card.displayName)
         assertEquals(DeviceCompactStatusStyle.ONLINE, state.devices.single().card.statusStyle)
+    }
+
+    @Test
+    fun `tank detail requests shared runtime for reachable dosing card`() {
+        val rootOperations = FakeDeviceRootOperations()
+        val operations = FakeTankDeviceAssignmentOperations(
+            assigned = listOf(
+                device(
+                    uid = "dose-1",
+                    family = OwnerDeviceFamily.DOSING
+                )
+            )
+        )
+        val viewModel = createTankDetailViewModel(
+            operations = operations,
+            rootOperations = rootOperations
+        )
+
+        viewModel.bind(10L)
+
+        assertEquals(listOf("dose-1"), rootOperations.connectRequests)
     }
 
     @Test
@@ -154,22 +177,28 @@ class TankDeviceAssignmentViewModelBoundaryTest {
     private fun createTankDetailViewModel(
         operations: TankDeviceAssignmentOperations,
         menuAccess: DeviceMenuAccessOperations = FakeMenuAccessOperations(),
-        preparation: DeviceControlSurfacePreparationOperations = FakePreparationOperations()
+        preparation: DeviceControlSurfacePreparationOperations = FakePreparationOperations(),
+        rootOperations: DeviceRootOperations? = null
     ): TankDetailDevicesViewModel = TankDetailDevicesViewModel(
         assignmentOperations = operations,
         menuOpenUseCase = DeviceMenuOpenUseCase(
             menuAccessOperations = menuAccess,
             controlSurfacePreparationOperations = preparation
         ),
-        routeResolver = DeviceRouteResolver()
+        routeResolver = DeviceRouteResolver(),
+        rootOperations = rootOperations
     )
 
-    private fun device(uid: String) = TankDeviceListItem(
+    private fun device(
+        uid: String,
+        family: OwnerDeviceFamily = OwnerDeviceFamily.LIGHT,
+        availability: OwnerDeviceAvailability = OwnerDeviceAvailability.REACHABLE
+    ) = TankDeviceListItem(
         deviceUid = uid,
         displayName = "AquaLight $uid",
         serialText = "AQL-$uid",
-        family = OwnerDeviceFamily.LIGHT,
-        availability = OwnerDeviceAvailability.REACHABLE
+        family = family,
+        availability = availability
     )
 
     private class FakeTankDeviceAssignmentOperations(
@@ -213,6 +242,20 @@ class TankDeviceAssignmentViewModelBoundaryTest {
         ): RemoveDeviceFromTankResult {
             lastRemoveRequest = tankId to deviceUid
             return removeResult
+        }
+    }
+
+    private class FakeDeviceRootOperations : DeviceRootOperations {
+        val connectRequests = mutableListOf<String>()
+
+        override fun observe(deviceUid: String): Flow<DeviceRootSnapshot?> =
+            MutableStateFlow(null)
+
+        override fun current(deviceUid: String): DeviceRootSnapshot? = null
+
+        override fun connect(deviceUid: String): Result<Unit> {
+            connectRequests += deviceUid
+            return Result.success(Unit)
         }
     }
 
