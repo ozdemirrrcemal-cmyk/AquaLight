@@ -2,7 +2,6 @@ package com.aqua.aqualight.ui.common.dosing.pump
 
 import android.content.Context
 import android.content.res.ColorStateList
-import android.graphics.Color
 import android.util.AttributeSet
 import android.view.View
 import android.view.ViewGroup
@@ -23,6 +22,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.platform.AbstractComposeView
 import androidx.compose.ui.unit.dp
+import androidx.core.content.ContextCompat
 import com.aqua.aqualight.R
 import com.google.android.material.card.MaterialCardView
 import java.util.WeakHashMap
@@ -152,7 +152,9 @@ object DosingPumpProductVisualBinder {
 
         val card = this as? MaterialCardView ?: return
         if (isDosingProduct) {
-            card.setCardBackgroundColor(Color.TRANSPARENT)
+            card.setCardBackgroundColor(
+                ContextCompat.getColor(card.context, R.color.aqua_palette_hex_00000000)
+            )
             card.strokeWidth = NO_STROKE_WIDTH
             card.radius = NO_CORNER_RADIUS
             card.cardElevation = NO_CARD_ELEVATION
@@ -167,10 +169,11 @@ object DosingPumpProductVisualBinder {
 
     private fun ViewGroup.captureMediaHostState(): MediaHostState {
         val card = this as? MaterialCardView
+        val transparent = ContextCompat.getColor(context, R.color.aqua_palette_hex_00000000)
         return MediaHostState(
             width = layoutParams.width,
-            cardBackgroundColor = card?.cardBackgroundColor ?: ColorStateList.valueOf(Color.TRANSPARENT),
-            strokeColor = card?.strokeColor ?: Color.TRANSPARENT,
+            cardBackgroundColor = card?.cardBackgroundColor ?: ColorStateList.valueOf(transparent),
+            strokeColor = card?.strokeColor ?: transparent,
             strokeWidth = card?.strokeWidth ?: NO_STROKE_WIDTH,
             radius = card?.radius ?: NO_CORNER_RADIUS,
             cardElevation = card?.cardElevation ?: NO_CARD_ELEVATION
