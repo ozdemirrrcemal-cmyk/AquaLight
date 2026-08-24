@@ -207,7 +207,16 @@ class TankDetailDevicesViewModel(
 
     fun removeDeviceFromTank(deviceUid: String) {
         val tankId = boundTankId
-        if (!canRemoveDevice(tankId, deviceUid)) return
+        if (
+            !isDeviceRemovalAllowed(
+                tankId = tankId,
+                deviceUid = deviceUid,
+                isRemovingDevice = removingDevice.value,
+                openingDeviceId = openingDeviceId.value
+            )
+        ) {
+            return
+        }
 
         viewModelScope.launch {
             removingDevice.value = true
@@ -318,12 +327,6 @@ class TankDetailDevicesViewModel(
         }
     }
 
-    private fun canRemoveDevice(tankId: Long, deviceUid: String): Boolean {
-        val requestIsValid = tankId > 0L && deviceUid.isNotBlank()
-        val operationsAreIdle = !removingDevice.value && openingDeviceId.value == null
-        return requestIsValid && operationsAreIdle
-    }
-
     private companion object {
         const val SPOTLIGHT_ROTATION_INTERVAL_MILLIS = 10_000L
     }
@@ -359,6 +362,17 @@ private data class TankDosingPresentationState(
     val summaries: Map<String, DeviceDosingCardSummary>,
     val spotlightIndices: Map<String, Int>
 )
+
+private fun isDeviceRemovalAllowed(
+    tankId: Long,
+    deviceUid: String,
+    isRemovingDevice: Boolean,
+    openingDeviceId: String?
+): Boolean {
+    val requestIsValid = tankId > 0L && deviceUid.isNotBlank()
+    val operationsAreIdle = !isRemovingDevice && openingDeviceId == null
+    return requestIsValid && operationsAreIdle
+}
 
 private fun DeviceMenuOpenResult.Unavailable.toUnavailableEvent() =
     TankDetailDevicesEvent.ShowDeviceUnavailable(
