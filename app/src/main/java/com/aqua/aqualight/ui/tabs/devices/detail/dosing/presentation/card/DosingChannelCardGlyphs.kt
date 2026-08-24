@@ -37,7 +37,20 @@ internal fun DosingProgramModeGlyph(
 ) {
     Canvas(modifier = modifier) {
         when (mode) {
-            DosingProgramModeUiState.SINGLE -> drawSingleModeGlyph(tint)
+            DosingProgramModeUiState.SINGLE -> {
+                val center = Offset(size.width / 2f, size.height / 2f)
+                drawCircle(
+                    color = tint.copy(alpha = MODE_RING_ALPHA),
+                    radius = size.minDimension * MODE_RING_RADIUS,
+                    center = center,
+                    style = Stroke(width = MODE_STROKE.toPx())
+                )
+                drawCircle(
+                    color = tint,
+                    radius = size.minDimension * MODE_CORE_RADIUS,
+                    center = center
+                )
+            }
             DosingProgramModeUiState.HOURLY_24 -> drawClockModeGlyph(tint, showEvents = false)
             DosingProgramModeUiState.CUSTOM_PERIODS -> {
                 CUSTOM_SEGMENTS.forEachIndexed { index, segment ->
@@ -250,21 +263,6 @@ private fun DrawScope.drawCalendarGlyph(color: Color) {
             center = Offset(size.width * x, size.height * CALENDAR_DOT_Y)
         )
     }
-}
-
-private fun DrawScope.drawSingleModeGlyph(color: Color) {
-    val center = Offset(size.width / 2f, size.height / 2f)
-    drawCircle(
-        color = color.copy(alpha = MODE_RING_ALPHA),
-        radius = size.minDimension * MODE_RING_RADIUS,
-        center = center,
-        style = Stroke(width = MODE_STROKE.toPx())
-    )
-    drawCircle(
-        color = color,
-        radius = size.minDimension * MODE_CORE_RADIUS,
-        center = center
-    )
 }
 
 private fun DrawScope.drawClockModeGlyph(color: Color, showEvents: Boolean) {
