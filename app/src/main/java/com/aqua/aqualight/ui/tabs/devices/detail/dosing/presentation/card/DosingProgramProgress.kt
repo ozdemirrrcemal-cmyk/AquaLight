@@ -63,26 +63,38 @@ internal fun DosingProgramProgress(
     )
     val palette = dosingProgressPalette(colors, state.visualState)
 
-    Row(
-        modifier = modifier
-            .fillMaxWidth()
-            .semantics { contentDescription = description },
-        horizontalArrangement = Arrangement.spacedBy(PROGRESS_TO_MANUAL_GAP),
-        verticalAlignment = Alignment.Top
+    Column(
+        modifier = modifier.fillMaxWidth(),
+        verticalArrangement = Arrangement.spacedBy(NEXT_DOSE_TO_PROGRESS_GAP)
     ) {
-        DosingModeProgressGraphic(
-            state = state,
-            palette = palette,
-            typography = typography,
-            modifier = Modifier.weight(1f)
-        )
-        if (state.manualDeliveredTodayMl > 0.0) {
-            Box(modifier = Modifier.padding(top = PROGRESS_VALUE_TAG_AREA_HEIGHT)) {
-                DosingManualDosePill(
-                    amountMl = state.manualDeliveredTodayMl,
-                    colors = colors,
-                    typography = typography
-                )
+        state.nextDose?.let { nextDose ->
+            DosingNextDoseSummary(
+                state = nextDose,
+                colors = colors,
+                typography = typography
+            )
+        }
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .semantics { contentDescription = description },
+            horizontalArrangement = Arrangement.spacedBy(PROGRESS_TO_MANUAL_GAP),
+            verticalAlignment = Alignment.Top
+        ) {
+            DosingModeProgressGraphic(
+                state = state,
+                palette = palette,
+                typography = typography,
+                modifier = Modifier.weight(1f)
+            )
+            if (state.manualDeliveredTodayMl > 0.0) {
+                Box(modifier = Modifier.padding(top = PROGRESS_VALUE_TAG_AREA_HEIGHT)) {
+                    DosingManualDosePill(
+                        amountMl = state.manualDeliveredTodayMl,
+                        colors = colors,
+                        typography = typography
+                    )
+                }
             }
         }
     }
@@ -239,6 +251,7 @@ internal val PROGRESS_RAIL_HEIGHT = 16.dp
 internal val PROGRESS_CORNER_RADIUS = 8.dp
 internal val PROGRESS_OUTLINE_WIDTH = 1.dp
 internal val PROGRESS_VALUE_TAG_AREA_HEIGHT = 20.dp
+private val NEXT_DOSE_TO_PROGRESS_GAP = 0.dp
 private val PROGRESS_TO_MANUAL_GAP = 8.dp
 private val MANUAL_PILL_MIN_WIDTH = 78.dp
 private val MANUAL_PILL_MAX_WIDTH = 92.dp
