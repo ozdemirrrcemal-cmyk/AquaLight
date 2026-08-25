@@ -1,0 +1,430 @@
+<?xml version="1.0" encoding="utf-8"?>
+<com.google.android.material.card.MaterialCardView
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    style="@style/Widget.Aqua.Card.Device"
+    android:id="@+id/card"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:layout_marginHorizontal="@dimen/aqua_size_4"
+    android:layout_marginTop="@dimen/aqua_size_6"
+    android:layout_marginBottom="@dimen/aqua_size_4"
+    android:clickable="true"
+    android:focusable="true"
+    android:foreground="?attr/selectableItemBackground"
+    app:cardUseCompatPadding="false"
+    app:rippleColor="@color/aqua_card_ripple"
+    app:strokeWidth="@dimen/aqua_size_1">
+
+    <androidx.constraintlayout.widget.ConstraintLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:paddingStart="@dimen/aqua_size_14"
+        android:paddingTop="@dimen/aqua_size_8"
+        android:paddingEnd="@dimen/aqua_size_14"
+        android:paddingBottom="@dimen/aqua_size_8">
+
+        <com.google.android.material.card.MaterialCardView
+            android:id="@+id/deviceIconContainer"
+            style="@style/Widget.Aqua.Card.Device.Media"
+            android:layout_width="@dimen/aqua_size_46"
+            android:layout_height="@dimen/aqua_size_46"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toTopOf="parent"
+            app:strokeWidth="@dimen/aqua_size_1">
+
+            <ImageView
+                android:id="@+id/ivDeviceIcon"
+                android:layout_width="@dimen/aqua_size_38"
+                android:layout_height="@dimen/aqua_size_38"
+                android:layout_gravity="center"
+                android:adjustViewBounds="true"
+                android:contentDescription="@string/app_name"
+                android:scaleType="centerInside"
+                tools:src="@drawable/img_dosing_pump_4ch" />
+
+        </com.google.android.material.card.MaterialCardView>
+
+        <LinearLayout
+            android:id="@+id/headerTextColumn"
+            android:layout_width="@dimen/aqua_size_0"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="@dimen/aqua_size_10"
+            android:layout_marginEnd="@dimen/aqua_size_6"
+            android:gravity="center_vertical"
+            android:orientation="vertical"
+            app:layout_constraintBottom_toBottomOf="@id/deviceIconContainer"
+            app:layout_constraintEnd_toStartOf="@id/trailingContainer"
+            app:layout_constraintStart_toEndOf="@id/deviceIconContainer"
+            app:layout_constraintTop_toTopOf="@id/deviceIconContainer">
+
+            <TextView
+                android:id="@+id/tvDeviceName"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:ellipsize="end"
+                android:includeFontPadding="false"
+                android:maxLines="1"
+                android:textColor="@color/aqua_content_primary"
+                android:textSize="@dimen/aqua_text_size_card_title"
+                android:textStyle="bold"
+                tools:text="Dose Pro 4" />
+
+            <TextView
+                android:id="@+id/tvDosingChannelSummary"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="@dimen/aqua_size_3"
+                android:ellipsize="end"
+                android:includeFontPadding="false"
+                android:maxLines="1"
+                android:textColor="@color/aqua_accent_positive"
+                android:textSize="@dimen/aqua_text_size_caption_plus"
+                android:textStyle="bold"
+                tools:text="4 kanal · 3 aktif" />
+
+        </LinearLayout>
+
+        <FrameLayout
+            android:id="@+id/trailingContainer"
+            android:layout_width="@dimen/aqua_size_36"
+            android:layout_height="@dimen/aqua_size_36"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintTop_toTopOf="@id/deviceIconContainer">
+
+            <ImageView
+                android:id="@+id/ivPresenceIcon"
+                android:layout_width="@dimen/aqua_size_20"
+                android:layout_height="@dimen/aqua_size_20"
+                android:layout_gravity="center"
+                android:contentDescription="@string/app_name"
+                android:src="@drawable/ic_status_wifi"
+                app:tint="@color/aqua_accent_positive" />
+
+            <ProgressBar
+                android:id="@+id/progressCardAction"
+                style="?android:attr/progressBarStyleSmall"
+                android:layout_width="@dimen/aqua_size_20"
+                android:layout_height="@dimen/aqua_size_20"
+                android:layout_gravity="center"
+                android:contentDescription="@string/device_menu_checking_accessibility"
+                android:indeterminate="true"
+                android:visibility="gone" />
+
+        </FrameLayout>
+
+        <View
+            android:id="@+id/spotlightDivider"
+            android:layout_width="@dimen/aqua_size_0"
+            android:layout_height="@dimen/aqua_size_1"
+            android:layout_marginTop="@dimen/aqua_size_6"
+            android:background="@color/aqua_card_device_outline"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toBottomOf="@id/deviceIconContainer" />
+
+        <LinearLayout
+            android:id="@+id/spotlightContent"
+            android:layout_width="@dimen/aqua_size_0"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="@dimen/aqua_size_6"
+            android:orientation="vertical"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toBottomOf="@id/spotlightDivider">
+
+            <TextView
+                android:id="@+id/tvDosingUnavailable"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:gravity="center"
+                android:includeFontPadding="false"
+                android:paddingTop="@dimen/aqua_size_8"
+                android:paddingBottom="@dimen/aqua_size_8"
+                android:textColor="@color/aqua_content_muted"
+                android:textSize="@dimen/aqua_text_size_body_small"
+                android:visibility="gone"
+                tools:text="Dozaj kanalları merkezi durumdan hazırlanıyor"
+                tools:visibility="visible" />
+
+            <LinearLayout
+                android:id="@+id/spotlightDetails"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                tools:visibility="visible">
+
+                <androidx.constraintlayout.widget.ConstraintLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content">
+
+                    <com.google.android.material.card.MaterialCardView
+                        android:id="@+id/channelBadgeContainer"
+                        style="@style/Widget.Aqua.Card.Device.Media"
+                        android:layout_width="@dimen/aqua_size_32"
+                        android:layout_height="@dimen/aqua_size_32"
+                        app:layout_constraintBottom_toBottomOf="parent"
+                        app:layout_constraintStart_toStartOf="parent"
+                        app:layout_constraintTop_toTopOf="parent"
+                        app:strokeWidth="@dimen/aqua_size_1">
+
+                        <TextView
+                            android:id="@+id/tvChannelBadge"
+                            android:layout_width="match_parent"
+                            android:layout_height="match_parent"
+                            android:gravity="center"
+                            android:includeFontPadding="false"
+                            android:textColor="@color/aqua_accent_positive"
+                            android:textSize="@dimen/aqua_text_size_body_large"
+                            android:textStyle="bold"
+                            tools:text="1" />
+
+                    </com.google.android.material.card.MaterialCardView>
+
+                    <LinearLayout
+                        android:id="@+id/channelTitleRow"
+                        android:layout_width="@dimen/aqua_size_0"
+                        android:layout_height="wrap_content"
+                        android:layout_marginStart="@dimen/aqua_size_8"
+                        android:layout_marginEnd="@dimen/aqua_size_8"
+                        android:gravity="center_vertical"
+                        android:orientation="horizontal"
+                        app:layout_constraintBottom_toBottomOf="@id/channelBadgeContainer"
+                        app:layout_constraintEnd_toStartOf="@id/channelIndicator"
+                        app:layout_constraintStart_toEndOf="@id/channelBadgeContainer"
+                        app:layout_constraintTop_toTopOf="@id/channelBadgeContainer">
+
+                        <TextView
+                            android:id="@+id/tvSpotlightChannelName"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:ellipsize="end"
+                            android:includeFontPadding="false"
+                            android:maxLines="1"
+                            android:textColor="@color/aqua_content_primary"
+                            android:textSize="@dimen/aqua_text_size_body_large"
+                            android:textStyle="bold"
+                            tools:text="deneme" />
+
+                        <TextView
+                            android:id="@+id/tvSpotlightState"
+                            style="@style/Widget.Aqua.Chip.Status"
+                            android:layout_height="@dimen/aqua_size_22"
+                            android:layout_marginStart="@dimen/aqua_size_8"
+                            android:paddingStart="@dimen/aqua_size_8"
+                            android:paddingEnd="@dimen/aqua_size_8"
+                            android:textSize="@dimen/aqua_text_size_status_nano"
+                            tools:text="AKTİF" />
+
+                    </LinearLayout>
+
+                    <LinearLayout
+                        android:id="@+id/channelIndicator"
+                        android:layout_width="wrap_content"
+                        android:layout_height="@dimen/aqua_size_20"
+                        android:gravity="center_vertical|end"
+                        android:orientation="horizontal"
+                        app:layout_constraintBottom_toBottomOf="@id/channelBadgeContainer"
+                        app:layout_constraintEnd_toEndOf="parent"
+                        app:layout_constraintTop_toTopOf="@id/channelBadgeContainer" />
+
+                </androidx.constraintlayout.widget.ConstraintLayout>
+
+                <androidx.constraintlayout.widget.ConstraintLayout
+                    android:id="@+id/metricsRow"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="@dimen/aqua_size_6">
+
+                    <com.google.android.material.card.MaterialCardView
+                        android:id="@+id/dailyMetricCard"
+                        style="@style/Widget.Aqua.Card.Metric"
+                        android:layout_width="@dimen/aqua_size_0"
+                        android:layout_height="@dimen/aqua_size_64"
+                        android:layout_marginEnd="@dimen/aqua_size_4"
+                        app:layout_constraintEnd_toStartOf="@id/nextMetricCard"
+                        app:layout_constraintHorizontal_chainStyle="spread"
+                        app:layout_constraintStart_toStartOf="parent"
+                        app:layout_constraintTop_toTopOf="parent">
+
+                        <LinearLayout
+                            android:layout_width="match_parent"
+                            android:layout_height="match_parent"
+                            android:gravity="center"
+                            android:orientation="vertical"
+                            android:padding="@dimen/aqua_size_4">
+
+                            <TextView
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                app:drawableStartCompat="@drawable/ic_care_fertilizer_24"
+                                android:drawablePadding="@dimen/aqua_size_4"
+                                app:drawableTint="@color/aqua_accent_aqua"
+                                android:gravity="center_vertical"
+                                android:includeFontPadding="false"
+                                android:text="@string/dosing_device_card_daily"
+                                android:textColor="@color/aqua_content_muted"
+                                android:textSize="@dimen/aqua_text_size_status_nano"
+                                android:textStyle="bold" />
+
+                            <TextView
+                                android:id="@+id/tvDailyDoseValue"
+                                android:layout_width="match_parent"
+                                android:layout_height="wrap_content"
+                                android:layout_marginTop="@dimen/aqua_size_4"
+                                android:ellipsize="end"
+                                android:gravity="center"
+                                android:includeFontPadding="false"
+                                android:maxLines="1"
+                                android:textColor="@color/aqua_content_primary"
+                                android:textSize="@dimen/aqua_text_size_body_small"
+                                android:textStyle="bold"
+                                tools:text="3,00 mL" />
+
+                            <TextView
+                                android:id="@+id/tvDailyDoseSub"
+                                android:layout_width="match_parent"
+                                android:layout_height="wrap_content"
+                                android:layout_marginTop="@dimen/aqua_size_1"
+                                android:ellipsize="end"
+                                android:gravity="center"
+                                android:includeFontPadding="false"
+                                android:maxLines="1"
+                                android:textColor="@color/aqua_content_muted"
+                                android:textSize="@dimen/aqua_text_size_status_nano"
+                                tools:text="günlük plan" />
+
+                        </LinearLayout>
+
+                    </com.google.android.material.card.MaterialCardView>
+
+                    <com.google.android.material.card.MaterialCardView
+                        android:id="@+id/nextMetricCard"
+                        style="@style/Widget.Aqua.Card.Metric"
+                        android:layout_width="@dimen/aqua_size_0"
+                        android:layout_height="@dimen/aqua_size_64"
+                        android:layout_marginHorizontal="@dimen/aqua_size_2"
+                        app:layout_constraintEnd_toStartOf="@id/reservoirMetricCard"
+                        app:layout_constraintStart_toEndOf="@id/dailyMetricCard"
+                        app:layout_constraintTop_toTopOf="parent">
+
+                        <LinearLayout
+                            android:layout_width="match_parent"
+                            android:layout_height="match_parent"
+                            android:gravity="center"
+                            android:orientation="vertical"
+                            android:padding="@dimen/aqua_size_4">
+
+                            <TextView
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                app:drawableStartCompat="@drawable/ic_dosing_schedule_24"
+                                android:drawablePadding="@dimen/aqua_size_4"
+                                app:drawableTint="@color/aqua_accent_aqua"
+                                android:gravity="center_vertical"
+                                android:includeFontPadding="false"
+                                android:text="@string/dosing_device_card_next"
+                                android:textColor="@color/aqua_content_muted"
+                                android:textSize="@dimen/aqua_text_size_status_nano"
+                                android:textStyle="bold" />
+
+                            <TextView
+                                android:id="@+id/tvNextDoseValue"
+                                android:layout_width="match_parent"
+                                android:layout_height="wrap_content"
+                                android:layout_marginTop="@dimen/aqua_size_4"
+                                android:gravity="center"
+                                android:includeFontPadding="false"
+                                android:maxLines="1"
+                                android:textColor="@color/aqua_content_primary"
+                                android:textSize="@dimen/aqua_text_size_body_small"
+                                android:textStyle="bold"
+                                tools:text="—" />
+
+                            <TextView
+                                android:id="@+id/tvNextDoseSub"
+                                android:layout_width="match_parent"
+                                android:layout_height="wrap_content"
+                                android:layout_marginTop="@dimen/aqua_size_1"
+                                android:gravity="center"
+                                android:includeFontPadding="false"
+                                android:maxLines="1"
+                                android:textColor="@color/aqua_content_muted"
+                                android:textSize="@dimen/aqua_text_size_status_nano"
+                                tools:text="Sıradaki doz yok" />
+
+                        </LinearLayout>
+
+                    </com.google.android.material.card.MaterialCardView>
+
+                    <com.google.android.material.card.MaterialCardView
+                        android:id="@+id/reservoirMetricCard"
+                        style="@style/Widget.Aqua.Card.Metric"
+                        android:layout_width="@dimen/aqua_size_0"
+                        android:layout_height="@dimen/aqua_size_64"
+                        android:layout_marginStart="@dimen/aqua_size_4"
+                        app:layout_constraintEnd_toEndOf="parent"
+                        app:layout_constraintStart_toEndOf="@id/nextMetricCard"
+                        app:layout_constraintTop_toTopOf="parent">
+
+                        <LinearLayout
+                            android:layout_width="match_parent"
+                            android:layout_height="match_parent"
+                            android:gravity="center"
+                            android:orientation="vertical"
+                            android:padding="@dimen/aqua_size_4">
+
+                            <TextView
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                app:drawableStartCompat="@drawable/ic_dosing_reservoir_24"
+                                android:drawablePadding="@dimen/aqua_size_4"
+                                app:drawableTint="@color/aqua_accent_aqua"
+                                android:gravity="center_vertical"
+                                android:includeFontPadding="false"
+                                android:text="@string/dosing_device_card_reservoir"
+                                android:textColor="@color/aqua_content_muted"
+                                android:textSize="@dimen/aqua_text_size_status_nano"
+                                android:textStyle="bold" />
+
+                            <TextView
+                                android:id="@+id/tvReservoirValue"
+                                android:layout_width="match_parent"
+                                android:layout_height="wrap_content"
+                                android:layout_marginTop="@dimen/aqua_size_4"
+                                android:ellipsize="end"
+                                android:gravity="center"
+                                android:includeFontPadding="false"
+                                android:maxLines="1"
+                                android:textColor="@color/aqua_content_primary"
+                                android:textSize="@dimen/aqua_text_size_body_small"
+                                android:textStyle="bold"
+                                tools:text="444,9 mL" />
+
+                            <TextView
+                                android:id="@+id/tvReservoirSub"
+                                android:layout_width="match_parent"
+                                android:layout_height="wrap_content"
+                                android:layout_marginTop="@dimen/aqua_size_1"
+                                android:ellipsize="end"
+                                android:gravity="center"
+                                android:includeFontPadding="false"
+                                android:maxLines="1"
+                                android:textColor="@color/aqua_content_muted"
+                                android:textSize="@dimen/aqua_text_size_status_nano"
+                                tools:text="≈149 gün" />
+
+                        </LinearLayout>
+
+                    </com.google.android.material.card.MaterialCardView>
+
+                </androidx.constraintlayout.widget.ConstraintLayout>
+
+            </LinearLayout>
+
+        </LinearLayout>
+
+    </androidx.constraintlayout.widget.ConstraintLayout>
+
+</com.google.android.material.card.MaterialCardView>

@@ -14,6 +14,8 @@ import com.aqua.aqualight.application.devices.OwnerDeviceFamily
 import com.aqua.aqualight.application.devices.RemoveDeviceFromTankResult
 import com.aqua.aqualight.application.devices.TankDeviceAssignmentOperations
 import com.aqua.aqualight.application.devices.TankDeviceListItem
+import com.aqua.aqualight.application.devices.dosing.DeviceDosingCardOperations
+import com.aqua.aqualight.application.devices.dosing.DeviceDosingCardState
 import com.aqua.aqualight.ui.common.devicecard.DeviceCompactStatusStyle
 import com.aqua.aqualight.ui.tabs.aquarium.detail.devices.select.TankDeviceSelectEmptyReason
 import com.aqua.aqualight.ui.tabs.aquarium.detail.devices.select.TankDeviceSelectEvent
@@ -61,6 +63,49 @@ class TankDeviceAssignmentViewModelBoundaryTest {
         assertEquals("device-1", state.devices.single().deviceUid)
         assertEquals("AquaLight device-1", state.devices.single().card.displayName)
         assertEquals(DeviceCompactStatusStyle.ONLINE, state.devices.single().card.statusStyle)
+    }
+
+    @Test
+    fun `tank detail observes dosing card application boundary when device is reachable`() {
+        val cardOperations = FakeDeviceDosingCardOperations()
+        val operations = FakeTankDeviceAssignmentOperations(
+            assigned = listOf(
+                device(
+                    uid = "dose-1",
+                    family = OwnerDeviceFamily.DOSING
+                )
+            )
+        )
+        val viewModel = createTankDetailViewModel(
+            operations = operations,
+            dosingCardOperations = cardOperations
+        )
+
+        viewModel.bind(10L)
+
+        assertEquals(listOf("dose-1"), cardOperations.observeRequests)
+    }
+
+    @Test
+    fun `tank detail does not activate dosing card observation while device is unreachable`() {
+        val cardOperations = FakeDeviceDosingCardOperations()
+        val operations = FakeTankDeviceAssignmentOperations(
+            assigned = listOf(
+                device(
+                    uid = "dose-1",
+                    family = OwnerDeviceFamily.DOSING,
+                    availability = OwnerDeviceAvailability.UNREACHABLE
+                )
+            )
+        )
+        val viewModel = createTankDetailViewModel(
+            operations = operations,
+            dosingCardOperations = cardOperations
+        )
+
+        viewModel.bind(10L)
+
+        assertTrue(cardOperations.observeRequests.isEmpty())
     }
 
     @Test
@@ -154,22 +199,28 @@ class TankDeviceAssignmentViewModelBoundaryTest {
     private fun createTankDetailViewModel(
         operations: TankDeviceAssignmentOperations,
         menuAccess: DeviceMenuAccessOperations = FakeMenuAccessOperations(),
-        preparation: DeviceControlSurfacePreparationOperations = FakePreparationOperations()
+        preparation: DeviceControlSurfacePreparationOperations = FakePreparationOperations(),
+        dosingCardOperations: DeviceDosingCardOperations? = null
     ): TankDetailDevicesViewModel = TankDetailDevicesViewModel(
         assignmentOperations = operations,
         menuOpenUseCase = DeviceMenuOpenUseCase(
             menuAccessOperations = menuAccess,
             controlSurfacePreparationOperations = preparation
         ),
-        routeResolver = DeviceRouteResolver()
+        routeResolver = DeviceRouteResolver(),
+        dosingCardOperations = dosingCardOperations
     )
 
-    private fun device(uid: String) = TankDeviceListItem(
+    private fun device(
+        uid: String,
+        family: OwnerDeviceFamily = OwnerDeviceFamily.LIGHT,
+        availability: OwnerDeviceAvailability = OwnerDeviceAvailability.REACHABLE
+    ) = TankDeviceListItem(
         deviceUid = uid,
         displayName = "AquaLight $uid",
         serialText = "AQL-$uid",
-        family = OwnerDeviceFamily.LIGHT,
-        availability = OwnerDeviceAvailability.REACHABLE
+        family = family,
+        availability = availability
     )
 
     private class FakeTankDeviceAssignmentOperations(
@@ -213,6 +264,15 @@ class TankDeviceAssignmentViewModelBoundaryTest {
         ): RemoveDeviceFromTankResult {
             lastRemoveRequest = tankId to deviceUid
             return removeResult
+        }
+    }
+
+    private class FakeDeviceDosingCardOperations : DeviceDosingCardOperations {
+        val observeRequests = mutableListOf<String>()
+
+        override fun observe(deviceUid: String): Flow<DeviceDosingCardState> {
+            observeRequests += deviceUid
+            return MutableStateFlow(DeviceDosingCardState.Preparing)
         }
     }
 

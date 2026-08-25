@@ -6,6 +6,7 @@ import com.aqua.aqualight.application.auth.AuthenticatedOwnerIdentity
 import com.aqua.aqualight.application.devices.DeviceControlSurfacePreparationOperations
 import com.aqua.aqualight.application.devices.DeviceFirmwareUpdateOperations
 import com.aqua.aqualight.application.devices.dosing.DeviceDosingCalibrationOperations
+import com.aqua.aqualight.application.devices.dosing.DeviceDosingCardOperations
 import com.aqua.aqualight.application.devices.dosing.DeviceDosingChannelNavigationOperations
 import com.aqua.aqualight.application.devices.dosing.DeviceDosingChannelOperations
 import com.aqua.aqualight.application.devices.provisioning.ProvisioningDraftOperations
@@ -62,6 +63,7 @@ internal data class OwnerDependencyGraph(
 /** One owner-scoped application boundary set backed by one central Dosing state owner. */
 internal data class OwnerDosingOperations(
     val channelOperations: DeviceDosingChannelOperations,
+    val cardOperations: DeviceDosingCardOperations,
     val calibrationOperations: DeviceDosingCalibrationOperations,
     val navigationOperations: DeviceDosingChannelNavigationOperations,
     val controlSurfacePreparationOperations: DeviceControlSurfacePreparationOperations
@@ -250,6 +252,7 @@ internal class ActiveOwnerDependencyGraphResolver(
         val rootOperations = DefaultDeviceRootOperations(dependencies.devicesRepository)
         return OwnerDosingOperations(
             channelOperations = channelOperations,
+            cardOperations = runtime.cardOperations,
             calibrationOperations = runtime.calibrationOperations,
             navigationOperations = DefaultDeviceDosingChannelNavigationOperations(
                 rootOperations = rootOperations,

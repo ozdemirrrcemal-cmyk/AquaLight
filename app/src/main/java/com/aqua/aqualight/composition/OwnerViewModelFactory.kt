@@ -166,12 +166,9 @@ internal class OwnerViewModelFactory(
                                     snapshots = snapshots
                                 )
                             },
-                            removeDeviceAssignmentsForTank =
-                                assignments::removeAssignmentsForTank,
-                            cancelCareTaskReminder =
-                                notificationPreferenceUseCase::cancelCareTask,
-                            reconcileCareReminders =
-                                notificationPreferenceUseCase::reconcileOwner
+                            removeDeviceAssignmentsForTank = assignments::removeAssignmentsForTank,
+                            cancelCareTaskReminder = notificationPreferenceUseCase::cancelCareTask,
+                            reconcileCareReminders = notificationPreferenceUseCase::reconcileOwner
                         ),
                         notificationPreferences = notificationPreferenceUseCase
                     )
@@ -203,8 +200,7 @@ internal class OwnerViewModelFactory(
                     operations = DefaultDeviceRootOperations(repository),
                     channelNavigationOperations = dosing.navigationOperations,
                     channelOperations = dosing.channelOperations,
-                    controlSurfacePreparationOperations =
-                        dosing.controlSurfacePreparationOperations
+                    controlSurfacePreparationOperations = dosing.controlSurfacePreparationOperations
                 )
             }
 
@@ -252,7 +248,8 @@ internal class OwnerViewModelFactory(
                         devicesRepository = repository
                     ),
                     menuOpenUseCase = createDeviceMenuOpenUseCase(graph, repository),
-                    routeResolver = DeviceRouteResolver()
+                    routeResolver = DeviceRouteResolver(),
+                    dosingCardOperations = graph.dosingOperations.cardOperations
                 )
 
             TankDeviceSelectViewModel::class.java ->
@@ -275,8 +272,7 @@ internal class OwnerViewModelFactory(
         repository: DevicesRepository
     ): DeviceMenuOpenUseCase = DeviceMenuOpenUseCase(
         menuAccessOperations = DefaultDeviceMenuAccessOperations.create(repository),
-        controlSurfacePreparationOperations =
-            graph.dosingOperations.controlSurfacePreparationOperations
+        controlSurfacePreparationOperations = graph.dosingOperations.controlSurfacePreparationOperations
     )
 
     private fun createOwnerDevicesOperations(

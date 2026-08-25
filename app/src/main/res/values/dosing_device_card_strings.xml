@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <plurals name="dosing_device_card_channel_summary">
+        <item quantity="one">%1$d channel · %2$d active</item>
+        <item quantity="other">%1$d channels · %2$d active</item>
+    </plurals>
+    <string name="dosing_device_card_loading">Preparing dosing status</string>
+    <string name="dosing_device_card_unavailable">Dosing data unavailable</string>
+    <string name="dosing_device_card_offline">Dosing device offline</string>
+    <string name="dosing_device_card_loading_detail">Dosing channels are being prepared from the central device state</string>
+    <string name="dosing_device_card_unavailable_detail">Live dosing data could not be prepared</string>
+    <string name="dosing_device_card_offline_detail">Live dosing data will appear when the device reconnects</string>
+    <string name="dosing_device_card_active">ACTIVE</string>
+    <string name="dosing_device_card_inactive">INACTIVE</string>
+    <string name="dosing_device_card_daily">DAILY</string>
+    <string name="dosing_device_card_next">NEXT</string>
+    <string name="dosing_device_card_reservoir">RESERVOIR</string>
+    <string name="dosing_device_card_ml_value">%1$s mL</string>
+    <string name="dosing_device_card_metric_empty">—</string>
+    <string name="dosing_device_card_program_off">Program off</string>
+    <string name="dosing_device_card_daily_plan">daily plan</string>
+    <string name="dosing_device_card_next_unavailable">No next dose</string>
+    <string name="dosing_device_card_reservoir_tracking_off">Tracking off</string>
+    <string name="dosing_device_card_reservoir_low">Low level</string>
+    <plurals name="dosing_device_card_remaining_days">
+        <item quantity="one">≈%1$d day</item>
+        <item quantity="other">≈%1$d days</item>
+    </plurals>
+    <string name="dosing_device_card_reservoir_uncertain">Estimate pending</string>
+    <string name="dosing_device_card_reservoir_estimate_unavailable">Estimate unavailable</string>
+    <string name="dosing_device_card_accessibility">%1$s. %2$s. %3$s.</string>
+</resources>

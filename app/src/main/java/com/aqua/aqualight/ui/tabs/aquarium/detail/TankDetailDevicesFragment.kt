@@ -5,7 +5,9 @@ import android.view.View
 import androidx.core.view.isVisible
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.viewModels
+import androidx.lifecycle.DefaultLifecycleObserver
 import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.LifecycleOwner
 import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.repeatOnLifecycle
 import androidx.recyclerview.widget.LinearLayoutManager
@@ -62,6 +64,11 @@ class TankDetailDevicesFragment : Fragment(R.layout.fragment_tank_detail_devices
         super.onViewCreated(view, savedInstanceState)
 
         _binding = FragmentTankDetailDevicesBinding.bind(view)
+        viewLifecycleOwner.lifecycle.addObserver(
+            TankDevicesSpotlightVisibilityObserver(
+                viewModel::onDevicesSurfaceVisibilityChanged
+            )
+        )
 
         setupFeedbackResultListener()
         setupRecycler()
@@ -269,5 +276,22 @@ class TankDetailDevicesFragment : Fragment(R.layout.fragment_tank_detail_devices
                 }
             }
         }
+    }
+}
+
+private class TankDevicesSpotlightVisibilityObserver(
+    private val onVisibilityChanged: (Boolean) -> Unit
+) : DefaultLifecycleObserver {
+
+    override fun onResume(owner: LifecycleOwner) {
+        onVisibilityChanged(true)
+    }
+
+    override fun onPause(owner: LifecycleOwner) {
+        onVisibilityChanged(false)
+    }
+
+    override fun onDestroy(owner: LifecycleOwner) {
+        onVisibilityChanged(false)
     }
 }
