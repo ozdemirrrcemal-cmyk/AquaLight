@@ -5,6 +5,7 @@ import androidx.core.content.ContextCompat
 import androidx.core.view.isVisible
 import com.aqua.aqualight.R
 import com.aqua.aqualight.databinding.ItemDeviceCompactCardBinding
+import com.aqua.aqualight.ui.common.devicevisual.dosing.DosingDeviceVisualViewBinder
 
 object DeviceCompactCardBinder {
 
@@ -34,10 +35,7 @@ object DeviceCompactCardBinder {
         binding.tvTankName.text = supporting
         binding.tvTankName.isVisible = supporting.isNotBlank()
 
-        binding.ivDeviceIcon.setImageResource(item.iconRes)
-        binding.ivDeviceIcon.imageTintList = null
-        binding.ivDeviceIcon.clearColorFilter()
-        binding.ivDeviceIcon.contentDescription = name
+        bindDeviceVisual(binding, item, name)
 
         binding.ivPresenceIcon.imageTintList = ColorStateList.valueOf(
             presenceIconColor(binding, item.statusStyle)
@@ -73,6 +71,29 @@ object DeviceCompactCardBinder {
                 supporting,
                 trailingText
             )
+        }
+    }
+
+    private fun bindDeviceVisual(
+        binding: ItemDeviceCompactCardBinding,
+        item: DeviceCompactCardUi,
+        name: String
+    ) {
+        if (item.visualKind == DeviceCompactVisualKind.DOSING_IDENTITY) {
+            DosingDeviceVisualViewBinder.bindIdentity(
+                container = binding.deviceIconContainer,
+                fallbackView = binding.ivDeviceIcon,
+                contentDescription = name
+            )
+        } else {
+            DosingDeviceVisualViewBinder.clearIdentity(
+                container = binding.deviceIconContainer,
+                fallbackView = binding.ivDeviceIcon
+            )
+            binding.ivDeviceIcon.setImageResource(item.iconRes)
+            binding.ivDeviceIcon.imageTintList = null
+            binding.ivDeviceIcon.clearColorFilter()
+            binding.ivDeviceIcon.contentDescription = name
         }
     }
 
