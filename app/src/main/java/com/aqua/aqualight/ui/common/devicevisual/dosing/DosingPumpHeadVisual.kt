@@ -55,7 +55,7 @@ internal enum class DosingPumpHeadVisualState {
  */
 @Composable
 internal fun DosingPumpHeadVisual(
-    visualState: DosingPumpHeadVisualState? = null,
+    visualState: DosingPumpHeadVisualState? = DosingPumpHeadVisualState.IDLE,
     onClick: (() -> Unit)? = null,
     contentDescriptionText: String? = null,
     stateDescriptionText: String? = null,
