@@ -34,10 +34,7 @@ object DeviceCompactCardBinder {
         binding.tvTankName.text = supporting
         binding.tvTankName.isVisible = supporting.isNotBlank()
 
-        binding.ivDeviceIcon.setImageResource(item.iconRes)
-        binding.ivDeviceIcon.imageTintList = null
-        binding.ivDeviceIcon.clearColorFilter()
-        binding.ivDeviceIcon.contentDescription = name
+        bindDeviceVisual(binding, item, name)
 
         binding.ivPresenceIcon.imageTintList = ColorStateList.valueOf(
             presenceIconColor(binding, item.statusStyle)
@@ -76,6 +73,25 @@ object DeviceCompactCardBinder {
         }
     }
 
+    private fun bindDeviceVisual(
+        binding: ItemDeviceCompactCardBinding,
+        item: DeviceCompactCardUi,
+        name: String
+    ) {
+        val isDosingIdentity = item.visualKind == DeviceCompactVisualKind.DOSING_IDENTITY
+        binding.dosingDeviceIdentityVisual.isVisible = isDosingIdentity
+        binding.ivDeviceIcon.isVisible = !isDosingIdentity
+
+        if (isDosingIdentity) {
+            binding.dosingDeviceIdentityVisual.pumpCount = DEFAULT_DOSING_PUMP_COUNT
+        } else {
+            binding.ivDeviceIcon.setImageResource(item.iconRes)
+            binding.ivDeviceIcon.imageTintList = null
+            binding.ivDeviceIcon.clearColorFilter()
+            binding.ivDeviceIcon.contentDescription = name
+        }
+    }
+
     private fun presenceIconColor(
         binding: ItemDeviceCompactCardBinding,
         style: DeviceCompactStatusStyle
@@ -88,4 +104,6 @@ object DeviceCompactCardBinder {
         }
         return ContextCompat.getColor(binding.root.context, colorRes)
     }
+
+    private const val DEFAULT_DOSING_PUMP_COUNT = 4
 }
