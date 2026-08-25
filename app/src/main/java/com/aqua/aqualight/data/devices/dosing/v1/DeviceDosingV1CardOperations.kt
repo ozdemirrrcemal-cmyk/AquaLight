@@ -19,7 +19,7 @@ import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.flowOf
-import kotlinx.coroutines.flow.transform
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.withContext
 
 /** Narrow data-layer port used only to reuse the owner-scoped central runtime session. */
@@ -49,9 +49,9 @@ internal class RepositoryDeviceDosingCardRuntimePort(
  * central runtime session and the authoritative [DeviceDosingChannelOperations] projection; it
  * owns no transport, socket, protocol session or mutable Dosing state.
  *
- * Presentation is snapshot-stable: once the central owner has published a complete validated
- * snapshot, runtime preparation, reconnect and refresh failures never replace it with transient
- * preparing/unavailable content. The next complete central snapshot atomically replaces it.
+ * Presentation is snapshot-stable because the central Dosing state owner remains the only snapshot
+ * retainer. A complete central presentation snapshot always wins over concurrent preparation,
+ * reconnect or refresh failures, while this adapter deliberately owns no secondary snapshot cache.
  */
 internal class DeviceDosingV1CardOperations(
     private val runtimePort: DeviceDosingCardRuntimePort,
@@ -87,33 +87,18 @@ internal class DeviceDosingV1CardOperations(
 
     private fun observeCentralPresentation(
         deviceUid: String
-    ): Flow<CentralCardPresentation> {
-        var retainedSummary: DeviceDosingCardSummary? = null
-        return channelOperations.observeAll(deviceUid)
-            .transform { snapshots ->
-                val summary = DeviceDosingCardSummaryPolicy.build(
-                    deviceUid = deviceUid,
-                    snapshots = snapshots
-                )
-                if (summary != null) {
-                    retainedSummary = summary
-                    emit(CentralCardPresentation.Available(summary))
-                } else if (retainedSummary == null) {
-                    emit(CentralCardPresentation.Missing)
-                }
-            }
-            .catch { error ->
-                if (error is CancellationException) throw error
-                val retained = retainedSummary
-                emit(
-                    if (retained != null) {
-                        CentralCardPresentation.Available(retained)
-                    } else {
-                        CentralCardPresentation.Failed
-                    }
-                )
-            }
-    }
+    ): Flow<CentralCardPresentation> = channelOperations.observeAll(deviceUid)
+        .map { snapshots ->
+            DeviceDosingCardSummaryPolicy.build(
+                deviceUid = deviceUid,
+                snapshots = snapshots
+            )?.let(CentralCardPresentation::Available)
+                ?: CentralCardPresentation.Missing
+        }
+        .catch { error ->
+            if (error is CancellationException) throw error
+            emit(CentralCardPresentation.Failed)
+        }
 
     private fun observeRuntimePreparation(
         deviceUid: DeviceUid
