@@ -14,6 +14,7 @@ import com.aqua.aqualight.application.devices.dosing.DeviceDosingCardReservoirSu
 import com.aqua.aqualight.application.devices.dosing.DeviceDosingCardSummary
 import com.aqua.aqualight.databinding.ItemDosingDeviceSpotlightCardBinding
 import com.aqua.aqualight.ui.common.devicecard.DeviceCompactStatusStyle
+import com.aqua.aqualight.ui.common.devicevisual.dosing.DosingDeviceVisualViewBinder
 import java.util.Locale
 
 object DosingDeviceSpotlightCardBinder {
@@ -28,8 +29,9 @@ object DosingDeviceSpotlightCardBinder {
         val displayName = header.displayName.trim().ifBlank {
             context.getString(R.string.device_menu_default_title)
         }
+        val pumpCount = item.summary?.channelCount ?: item.pageCount
 
-        bindHeader(binding, header, online, displayName)
+        bindHeader(binding, header, online, displayName, pumpCount)
         bindSummary(binding, item, online)
         bindSpotlight(binding, item, online)
         bindAccessibility(binding, item.summary, displayName, item.selectedChannel?.title.orEmpty())
@@ -39,14 +41,17 @@ object DosingDeviceSpotlightCardBinder {
         binding: ItemDosingDeviceSpotlightCardBinding,
         header: DosingDeviceSpotlightHeaderUi,
         online: Boolean,
-        displayName: String
+        displayName: String,
+        pumpCount: Int
     ) {
         val context = binding.root.context
         binding.tvDeviceName.text = displayName
-        binding.ivDeviceIcon.setImageResource(header.iconRes)
-        binding.ivDeviceIcon.imageTintList = null
-        binding.ivDeviceIcon.clearColorFilter()
-        binding.ivDeviceIcon.contentDescription = displayName
+        DosingDeviceVisualViewBinder.bindIdentity(
+            container = binding.deviceIconContainer,
+            fallbackView = binding.ivDeviceIcon,
+            pumpCount = pumpCount,
+            contentDescription = displayName
+        )
         binding.ivPresenceIcon.imageTintList = ColorStateList.valueOf(
             ContextCompat.getColor(
                 context,
@@ -100,7 +105,10 @@ object DosingDeviceSpotlightCardBinder {
         }
 
         val locale = binding.root.resources.configuration.locales[0]
-        binding.tvChannelBadge.text = DosingDeviceCardFormatter.integer(channel.channelNumber, locale)
+        DosingDeviceVisualViewBinder.bindPumpHead(
+            container = binding.channelBadgeContainer,
+            fallbackView = binding.tvChannelBadge
+        )
         binding.tvSpotlightChannelName.text = channel.title
         bindRuntimeState(binding, channel.runtimeEnabled)
         bindDailyDose(binding, channel.dailyDoseMicroliters, locale)
