@@ -3,10 +3,12 @@ package com.aqua.aqualight.ui.tabs.settings.device
 import android.content.res.ColorStateList
 import android.view.LayoutInflater
 import android.view.ViewGroup
-import androidx.recyclerview.widget.RecyclerView
 import androidx.core.content.ContextCompat
+import androidx.recyclerview.widget.RecyclerView
 import com.aqua.aqualight.R
 import com.aqua.aqualight.databinding.ItemDeviceStatusBinding
+import com.aqua.aqualight.ui.common.devicecard.DeviceCompactVisualKind
+import com.aqua.aqualight.ui.common.devicevisual.dosing.DosingDeviceVisualViewBinding
 import com.aqua.aqualight.ui.common.text.resolve
 
 class DeviceStatusAdapter : RecyclerView.Adapter<DeviceStatusAdapter.DeviceViewHolder>() {
@@ -36,10 +38,7 @@ class DeviceStatusAdapter : RecyclerView.Adapter<DeviceStatusAdapter.DeviceViewH
             )
 
             binding.tvDeviceName.text = name
-            binding.ivDeviceIcon.setImageResource(item.iconRes)
-            binding.ivDeviceIcon.imageTintList = null
-            binding.ivDeviceIcon.clearColorFilter()
-            binding.ivDeviceIcon.contentDescription = name
+            bindDeviceVisual(item, name)
             binding.tvIp.text = item.ip.ifBlank { context.getString(R.string.device_unknown) }
             binding.tvSerialTitle.setText(R.string.device_label_serial)
             binding.tvSerial.text = serial
@@ -60,6 +59,28 @@ class DeviceStatusAdapter : RecyclerView.Adapter<DeviceStatusAdapter.DeviceViewH
                 presenceText
             )
         }
+
+        private fun bindDeviceVisual(
+            item: DeviceStatusItem,
+            name: String
+        ) {
+            if (item.visualKind == DeviceCompactVisualKind.DOSING_IDENTITY) {
+                DosingDeviceVisualViewBinding.showIdentity(
+                    container = binding.deviceIconContainer,
+                    fallback = binding.ivDeviceIcon,
+                    sizeDp = DOSING_IDENTITY_SIZE_DP
+                )
+            } else {
+                DosingDeviceVisualViewBinding.clearIdentity(
+                    container = binding.deviceIconContainer,
+                    fallback = binding.ivDeviceIcon
+                )
+                binding.ivDeviceIcon.setImageResource(item.iconRes)
+                binding.ivDeviceIcon.imageTintList = null
+                binding.ivDeviceIcon.clearColorFilter()
+                binding.ivDeviceIcon.contentDescription = name
+            }
+        }
     }
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): DeviceViewHolder {
@@ -77,4 +98,7 @@ class DeviceStatusAdapter : RecyclerView.Adapter<DeviceStatusAdapter.DeviceViewH
 
     override fun getItemCount(): Int = items.size
 
+    private companion object {
+        const val DOSING_IDENTITY_SIZE_DP = 44
+    }
 }
