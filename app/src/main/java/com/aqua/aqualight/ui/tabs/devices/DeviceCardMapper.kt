@@ -1,9 +1,11 @@
 package com.aqua.aqualight.ui.tabs.devices
 
 import com.aqua.aqualight.application.devices.OwnerDeviceAvailability
+import com.aqua.aqualight.application.devices.OwnerDeviceFamily
 import com.aqua.aqualight.application.devices.OwnerDeviceListItem
 import com.aqua.aqualight.ui.common.devicecard.DeviceCompactCardUi
 import com.aqua.aqualight.ui.common.devicecard.DeviceCompactStatusStyle
+import com.aqua.aqualight.ui.common.devicecard.DeviceCompactVisualKind
 import com.aqua.aqualight.ui.common.devicecard.DeviceFamilyIconMapper
 
 object DeviceCardMapper {
@@ -25,6 +27,11 @@ object DeviceCardMapper {
                 serialText = device.serialText.ifBlank { device.deviceUid },
                 supportingText = supportingText,
                 iconRes = DeviceFamilyIconMapper.iconFor(device.family),
+                visualKind = if (device.family == OwnerDeviceFamily.DOSING) {
+                    DeviceCompactVisualKind.DOSING_IDENTITY
+                } else {
+                    DeviceCompactVisualKind.ICON
+                },
                 statusStyle = if (isReachable) {
                     DeviceCompactStatusStyle.ONLINE
                 } else {
