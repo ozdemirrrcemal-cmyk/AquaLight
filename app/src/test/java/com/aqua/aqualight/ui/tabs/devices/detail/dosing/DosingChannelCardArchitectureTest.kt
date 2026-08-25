@@ -46,7 +46,7 @@ class DosingChannelCardArchitectureTest {
         assertFalse(card.contains("interactionModifier"))
         assertFalse(rootScreen.contains("channel.visualState != null"))
         assertTrue(pump.contains("val visualState: DosingPumpVisualState? = null"))
-        assertTrue(pump.contains("visualState?.let { state -> drawPumpIndicator(state) }"))
+        assertTrue(pump.contains("visualState = visualState?.toSharedVisualState()"))
     }
 
     @Test
