@@ -3,7 +3,6 @@ package com.aqua.aqualight.ui.tabs.devices.detail.dosing.presentation.card
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.text.BasicText
 import androidx.compose.runtime.Composable
@@ -44,13 +43,14 @@ internal fun DosingNextDoseSummary(
         horizontalArrangement = Arrangement.spacedBy(NEXT_DOSE_TEXT_GAP),
         verticalAlignment = Alignment.CenterVertically
     ) {
-        DosingNextDoseGlyph(
-            tint = colors.accent,
-            modifier = Modifier
-                .size(NEXT_DOSE_GLYPH_SIZE)
-                .offset(x = NEXT_DOSE_GLYPH_OPTICAL_X_OFFSET)
-                .semantics { contentDescription = iconDescription }
-        )
+        DosingLeadingIconSlot {
+            DosingNextDoseGlyph(
+                tint = colors.secondaryText,
+                modifier = Modifier
+                    .size(NEXT_DOSE_GLYPH_SIZE)
+                    .semantics { contentDescription = iconDescription }
+            )
+        }
         BasicText(
             text = stringResource(
                 R.string.device_dosing_channel_next_dose_value_format,
@@ -67,5 +67,4 @@ internal fun DosingNextDoseSummary(
 private const val MILLIS_PER_MINUTE = 60_000L
 private const val NEXT_DAY_OFFSET = 1
 private val NEXT_DOSE_GLYPH_SIZE = 16.dp
-private val NEXT_DOSE_GLYPH_OPTICAL_X_OFFSET = 2.dp
 private val NEXT_DOSE_TEXT_GAP = 6.dp
