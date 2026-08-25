@@ -19,6 +19,11 @@ object DeviceCompactSnapshotMapper {
             serialText = device.serialText.ifBlank { device.deviceUid },
             supportingText = supportingText,
             iconRes = DeviceFamilyIconMapper.iconFor(device.family),
+            visualKind = if (device.family == OwnerDeviceFamily.DOSING) {
+                DeviceCompactVisualKind.DOSING_IDENTITY
+            } else {
+                DeviceCompactVisualKind.ICON
+            },
             statusStyle = if (isReachable) {
                 DeviceCompactStatusStyle.ONLINE
             } else {
