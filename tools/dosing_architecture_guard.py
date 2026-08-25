@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Enforce Dosing package ownership, production cutover and inward dependency direction."""
+"""Enforce Dosing ownership, shared visual boundaries and inward dependency direction."""
 
 from __future__ import annotations
 
@@ -16,16 +16,22 @@ APPLICATION_DOSING_ROOT = APPLICATION_DEVICES_ROOT / "dosing"
 DATA_DEVICES_ROOT = JAVA_ROOT / "data/devices"
 DATA_DOSING_ROOT = DATA_DEVICES_ROOT / "dosing"
 UI_DOSING_ROOT = JAVA_ROOT / "ui/tabs/devices/detail/dosing"
+SHARED_DOSING_VISUAL_ROOT = JAVA_ROOT / "ui/common/devicevisual/dosing"
 
 REQUIRED_UI_FILES = (
     "root/DeviceDosingRootFragment.kt",
     "root/DeviceDosingRootViewModel.kt",
     "root/DosingCatalogScreen.kt",
     "presentation/model/DosingWeekday.kt",
-    "presentation/pump/DosingPumpDeviceCompose.kt",
-    "presentation/pump/DosingPumpIndicatorDrawing.kt",
-    "presentation/pump/DosingPumpPalette.kt",
     "presentation/pump/DosingPumpSection.kt",
+)
+REQUIRED_SHARED_UI_FILES = (
+    "DosingDeviceIdentityVisual.kt",
+    "DosingDeviceVisualViewBinder.kt",
+    "DosingPumpDeviceCompose.kt",
+    "DosingPumpHeadMarker.kt",
+    "DosingPumpIndicatorDrawing.kt",
+    "DosingPumpPalette.kt",
 )
 REQUIRED_DATA_FILES = (
     "DosingChannelSlotFactory.kt",
@@ -58,6 +64,9 @@ APPLICATION_FORBIDDEN_REFERENCE = re.compile(
 )
 DATA_FORBIDDEN_REFERENCE = re.compile(
     r"\bcom\.aqua\.aqualight\.ui\."
+)
+SHARED_VISUAL_FORBIDDEN_REFERENCE = re.compile(
+    r"\bcom\.aqua\.aqualight\.ui\.tabs\.devices\.detail\.dosing\."
 )
 DOSING_DECLARATION = re.compile(
     r"^[ \t]*(?:(?:public|internal|private|protected|data|sealed|enum|value|fun|abstract|open|final)\s+)*"
@@ -246,12 +255,14 @@ def validate_repository(repository_root: Path = ROOT) -> list[str]:
     data_devices_root = source_root / "data/devices"
     data_dosing_root = data_devices_root / "dosing"
     ui_dosing_root = source_root / "ui/tabs/devices/detail/dosing"
+    shared_dosing_visual_root = source_root / "ui/common/devicevisual/dosing"
     errors: list[str] = []
 
     for directory, label in (
         (application_dosing_root, "application Dosing root"),
         (data_dosing_root, "data Dosing root"),
         (ui_dosing_root, "UI Dosing root"),
+        (shared_dosing_visual_root, "shared Dosing visual root"),
     ):
         if not directory.is_dir():
             errors.append(f"{relative(directory, repository_root)}: missing {label}")
@@ -264,6 +275,11 @@ def validate_repository(repository_root: Path = ROOT) -> list[str]:
         if not path.is_file():
             errors.append(f"{relative(path, repository_root)}: required feature-owned UI file is missing")
 
+    for required in REQUIRED_SHARED_UI_FILES:
+        path = shared_dosing_visual_root / required
+        if not path.is_file():
+            errors.append(f"{relative(path, repository_root)}: required shared Dosing visual file is missing")
+
     for required in REQUIRED_DATA_FILES:
         path = data_dosing_root / required
         if not path.is_file():
@@ -274,7 +290,12 @@ def validate_repository(repository_root: Path = ROOT) -> list[str]:
             f"{relative(path, repository_root)}: Dosing UI files must live in a screen/feature package"
         )
 
-    for package_root in (application_dosing_root, data_dosing_root, ui_dosing_root):
+    for package_root in (
+        application_dosing_root,
+        data_dosing_root,
+        ui_dosing_root,
+        shared_dosing_visual_root,
+    ):
         for path in kotlin_files(package_root):
             source = path.read_text(encoding="utf-8", errors="ignore")
             package = expected_package(path, source_root)
@@ -284,13 +305,22 @@ def validate_repository(repository_root: Path = ROOT) -> list[str]:
                     f"{package}"
                 )
 
-    for path in kotlin_files(ui_dosing_root):
+    for ui_root in (ui_dosing_root, shared_dosing_visual_root):
+        for path in kotlin_files(ui_root):
+            source = path.read_text(encoding="utf-8", errors="ignore")
+            for pattern, label in UI_FORBIDDEN_PATTERNS:
+                if pattern.search(source):
+                    errors.append(
+                        f"{relative(path, repository_root)}: Dosing UI must not own {label}"
+                    )
+
+    for path in kotlin_files(shared_dosing_visual_root):
         source = path.read_text(encoding="utf-8", errors="ignore")
-        for pattern, label in UI_FORBIDDEN_PATTERNS:
-            if pattern.search(source):
-                errors.append(
-                    f"{relative(path, repository_root)}: Dosing UI must not own {label}"
-                )
+        if SHARED_VISUAL_FORBIDDEN_REFERENCE.search(source):
+            errors.append(
+                f"{relative(path, repository_root)}: shared Dosing visuals must not depend on "
+                "feature-owned Dosing UI"
+            )
 
     for path in kotlin_files(application_dosing_root):
         source = path.read_text(encoding="utf-8", errors="ignore")
