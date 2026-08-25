@@ -108,13 +108,13 @@ internal fun DosingDeviceIdentityVisual(
                         .padding(bodyWidth * DECK_INSET_RATIO),
                     contentAlignment = Alignment.Center
                 ) {
-                    val rowWidth = if (exactPumpCount == DOSING_PRO_2_PUMP_COUNT) {
-                        bodyWidth * PRO_2_HEAD_ROW_WIDTH_RATIO
+                    val rowWidthFraction = if (exactPumpCount == DOSING_PRO_2_PUMP_COUNT) {
+                        PRO_2_HEAD_ROW_WIDTH_RATIO
                     } else {
-                        bodyWidth
+                        1f
                     }
                     Row(
-                        modifier = Modifier.width(rowWidth),
+                        modifier = Modifier.fillMaxWidth(rowWidthFraction),
                         horizontalArrangement = Arrangement.spacedBy(
                             bodyWidth * HEAD_SPACING_RATIO
                         ),
