@@ -18,6 +18,7 @@ import androidx.compose.ui.text.style.TextOverflow
 import com.aqua.aqualight.ui.common.devicecard.AquaDeviceCardColors
 import com.aqua.aqualight.ui.common.devicecard.AquaDeviceCardGeometry
 import com.aqua.aqualight.ui.common.devicecard.AquaDeviceCardTypography
+import com.aqua.aqualight.ui.tabs.devices.detail.dosing.presentation.pump.DosingPumpFaceIcon
 
 @Composable
 internal fun DosingChannelHeader(
@@ -30,10 +31,8 @@ internal fun DosingChannelHeader(
         modifier = Modifier.fillMaxWidth(),
         verticalAlignment = Alignment.CenterVertically
     ) {
-        DosingChannelMarker(
-            channelNumber = state.channelNumber,
-            colors = colors,
-            typography = typography
+        DosingPumpFaceIcon(
+            modifier = Modifier.size(AquaDeviceCardGeometry.markerSize)
         )
         BasicText(
             text = state.displayName,
@@ -53,32 +52,6 @@ internal fun DosingChannelHeader(
                 modifier = Modifier.padding(start = AquaDeviceCardGeometry.compactGap)
             )
         }
-    }
-}
-
-@Composable
-private fun DosingChannelMarker(
-    channelNumber: Int,
-    colors: AquaDeviceCardColors,
-    typography: AquaDeviceCardTypography
-) {
-    val shape = RoundedCornerShape(AquaDeviceCardGeometry.markerCornerRadius)
-    Box(
-        modifier = Modifier
-            .size(AquaDeviceCardGeometry.markerSize)
-            .clip(shape)
-            .background(colors.mediaSurface)
-            .border(
-                width = AquaDeviceCardGeometry.outlineWidth,
-                color = colors.mediaOutline,
-                shape = shape
-            ),
-        contentAlignment = Alignment.Center
-    ) {
-        BasicText(
-            text = channelNumber.toString(),
-            style = typography.body.copy(color = colors.accent)
-        )
     }
 }
 
