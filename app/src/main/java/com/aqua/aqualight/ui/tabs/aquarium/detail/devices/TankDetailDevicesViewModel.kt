@@ -59,6 +59,7 @@ class TankDetailDevicesViewModel(
     fun bind(tankId: Long) {
         if (tankId <= 0L || boundTankId == tankId) return
 
+        resetDosingPresentation()
         boundTankId = tankId
         assignmentOperations.start(viewModelScope)
         observeJob?.cancel()
@@ -199,6 +200,11 @@ class TankDetailDevicesViewModel(
     }
 
     private fun syncDosingObservers(devices: List<TankDeviceListItem>) {
+        val assignedDosingDeviceIds = devices
+            .asSequence()
+            .filter { device -> device.family == OwnerDeviceFamily.DOSING }
+            .map(TankDeviceListItem::deviceUid)
+            .toSet()
         val reachableDosingDeviceIds = devices
             .asSequence()
             .filter { device ->
@@ -211,7 +217,10 @@ class TankDetailDevicesViewModel(
 
         (dosingObserverJobs.keys - reachableDosingDeviceIds).forEach { deviceUid ->
             dosingObserverJobs.remove(deviceUid)?.cancel()
-            dosingCardStates.update { states -> states - deviceUid }
+        }
+        val removedDosingDeviceIds = dosingCardStates.value.keys - assignedDosingDeviceIds
+        if (removedDosingDeviceIds.isNotEmpty()) {
+            dosingCardStates.update { states -> states - removedDosingDeviceIds }
         }
         spotlightRotation.updateChannelCounts(dosingCardStates.value.toSpotlightChannelCounts())
 
@@ -237,6 +246,13 @@ class TankDetailDevicesViewModel(
     ) {
         dosingCardStates.update { states -> states + (deviceUid to state) }
         spotlightRotation.updateChannelCounts(dosingCardStates.value.toSpotlightChannelCounts())
+    }
+
+    private fun resetDosingPresentation() {
+        dosingObserverJobs.values.forEach(Job::cancel)
+        dosingObserverJobs.clear()
+        dosingCardStates.value = emptyMap()
+        spotlightRotation.updateChannelCounts(emptyMap())
     }
 
     private fun abandonPendingNavigation(deviceUid: String) {
@@ -318,11 +334,10 @@ private fun buildTankDetailDevicesUiState(
 ): TankDetailDevicesUiState {
     val items = devices.map { device ->
         val compactCard = DeviceCompactSnapshotMapper.map(device)
-        val liveDosingState = dosingPresentation.states[device.deviceUid]
-            .takeIf { device.availability == OwnerDeviceAvailability.REACHABLE }
+        val dosingState = dosingPresentation.states[device.deviceUid]
         val dosingCard = if (device.family == OwnerDeviceFamily.DOSING) {
             compactCard.toDosingSpotlightCardUi(
-                state = liveDosingState,
+                state = dosingState,
                 selectedIndex = dosingPresentation.spotlightIndices[device.deviceUid] ?: 0
             )
         } else {
