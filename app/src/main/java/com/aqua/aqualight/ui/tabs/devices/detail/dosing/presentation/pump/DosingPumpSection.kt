@@ -8,6 +8,9 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
+import com.aqua.aqualight.ui.common.devicevisual.dosing.DosingPumpDevice
+import com.aqua.aqualight.ui.common.devicevisual.dosing.DosingPumpHeadUiState
+import com.aqua.aqualight.ui.common.devicevisual.dosing.DosingPumpVisualState
 
 @Composable
 internal fun DosingPumpSection(

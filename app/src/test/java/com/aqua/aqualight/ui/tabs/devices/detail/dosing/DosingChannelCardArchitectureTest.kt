@@ -35,7 +35,7 @@ class DosingChannelCardArchitectureTest {
         val card = source(CARD_SOURCE_ROOT + "DosingChannelCard.kt")
         val presentation = source(ROOT_SOURCE_ROOT + "DeviceDosingRootChannelPresentation.kt")
         val rootScreen = source(ROOT_SOURCE_ROOT + "DosingCatalogScreen.kt")
-        val pump = source(PUMP_SOURCE_ROOT + "DosingPumpDeviceCompose.kt")
+        val pump = source(COMMON_DOSING_VISUAL_SOURCE_ROOT + "DosingPumpDeviceCompose.kt")
 
         assertTrue(models.contains("val visualState: DosingChannelVisualState? = null"))
         assertTrue(presentation.contains("pumpStates = emptyList()"))
@@ -212,6 +212,24 @@ class DosingChannelCardArchitectureTest {
     }
 
     @Test
+    fun `shared dosing visuals replace numeric marker without owning device state`() {
+        val header = source(CARD_SOURCE_ROOT + "DosingChannelCardHeader.kt")
+        val section = source(PUMP_SOURCE_ROOT + "DosingPumpSection.kt")
+        val operational = source(COMMON_DOSING_VISUAL_SOURCE_ROOT + "DosingPumpDeviceCompose.kt")
+        val identity = source(COMMON_DOSING_VISUAL_SOURCE_ROOT + "DosingDeviceIdentityVisual.kt")
+
+        assertTrue(header.contains("DosingPumpHeadMarker"))
+        assertFalse(header.contains("channelNumber.toString()"))
+        assertTrue(section.contains("ui.common.devicevisual.dosing.DosingPumpDevice"))
+        assertTrue(operational.contains("package com.aqua.aqualight.ui.common.devicevisual.dosing"))
+        assertTrue(identity.contains("fun DosingDeviceIdentityVisual"))
+        listOf(operational, identity).forEach { content ->
+            assertFalse(content.contains("import com.aqua.aqualight.data."))
+            assertFalse(content.contains("import com.aqua.aqualight.application.devices.dosing."))
+        }
+    }
+
+    @Test
     fun `dose pro compose implementation contains no suppression annotations`() {
         SUPPRESSION_FREE_SOURCE_FILES.forEach { relativePath ->
             val content = source(relativePath)
@@ -249,6 +267,8 @@ class DosingChannelCardArchitectureTest {
         const val ROOT_SOURCE_ROOT = DOSING_SOURCE_ROOT + "root/"
         const val CARD_SOURCE_ROOT = DOSING_SOURCE_ROOT + "presentation/card/"
         const val PUMP_SOURCE_ROOT = DOSING_SOURCE_ROOT + "presentation/pump/"
+        const val COMMON_DOSING_VISUAL_SOURCE_ROOT =
+            "app/src/main/java/com/aqua/aqualight/ui/common/devicevisual/dosing/"
 
         val FORBIDDEN_RUNTIME_TYPES = listOf(
             "DeviceDosingChannelStatus",
@@ -272,9 +292,11 @@ class DosingChannelCardArchitectureTest {
             CARD_SOURCE_ROOT + "DosingProgramProgressModes.kt",
             CARD_SOURCE_ROOT + "DosingDoseRail.kt",
             CARD_SOURCE_ROOT + "DosingReservoirSummary.kt",
-            PUMP_SOURCE_ROOT + "DosingPumpDeviceCompose.kt",
-            PUMP_SOURCE_ROOT + "DosingPumpIndicatorDrawing.kt",
-            PUMP_SOURCE_ROOT + "DosingPumpPalette.kt",
+            COMMON_DOSING_VISUAL_SOURCE_ROOT + "DosingPumpDeviceCompose.kt",
+            COMMON_DOSING_VISUAL_SOURCE_ROOT + "DosingPumpIndicatorDrawing.kt",
+            COMMON_DOSING_VISUAL_SOURCE_ROOT + "DosingPumpPalette.kt",
+            COMMON_DOSING_VISUAL_SOURCE_ROOT + "DosingPumpHeadMarker.kt",
+            COMMON_DOSING_VISUAL_SOURCE_ROOT + "DosingDeviceIdentityVisual.kt",
             PUMP_SOURCE_ROOT + "DosingPumpSection.kt"
         )
         val FORBIDDEN_SUPPRESSION_TOKENS = listOf(

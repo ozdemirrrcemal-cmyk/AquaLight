@@ -1,4 +1,4 @@
-package com.aqua.aqualight.ui.tabs.devices.detail.dosing.presentation.pump
+package com.aqua.aqualight.ui.common.devicevisual.dosing
 
 import androidx.annotation.StringRes
 import androidx.compose.animation.core.RepeatMode
@@ -55,6 +55,13 @@ enum class DosingPumpVisualState(
     ERROR(R.string.device_dosing_pump_state_error)
 }
 
+/**
+ * Shared operational Dose Pro front-face renderer.
+ *
+ * Geometry intentionally matches the original Dosing surface implementation. Keep this component
+ * free of repository/runtime state so every feature consumes the same visual without creating a
+ * second Dosing state owner.
+ */
 @Composable
 fun DosingPumpDevice(
     pumpHeads: List<DosingPumpHeadUiState>,

@@ -1,4 +1,4 @@
-package com.aqua.aqualight.ui.tabs.devices.detail.dosing.presentation.pump
+package com.aqua.aqualight.ui.common.devicevisual.dosing
 
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
@@ -12,6 +12,9 @@ internal object DosingPumpPalette {
     val indicatorEdge = Color(INDICATOR_EDGE_COLOR)
     val runningGlow = Color(RUNNING_GLOW_COLOR)
     val errorGlow = Color(ERROR_GLOW_COLOR)
+    val hoseShadow = Color(HOSE_SHADOW_COLOR)
+    val hoseBase = Color(HOSE_BASE_COLOR)
+    val hoseHighlight = Color(HOSE_HIGHLIGHT_COLOR)
 
     val outerShell = Brush.verticalGradient(
         colors = listOf(
@@ -96,6 +99,9 @@ private const val HUB_EDGE_COLOR = 0x4DFFFFFF
 private const val INDICATOR_EDGE_COLOR = 0xB3000000
 private const val RUNNING_GLOW_COLOR = 0xFF49F28F
 private const val ERROR_GLOW_COLOR = 0xFFFF5361
+private const val HOSE_SHADOW_COLOR = 0x6B071018
+private const val HOSE_BASE_COLOR = 0xD9CDD3D8
+private const val HOSE_HIGHLIGHT_COLOR = 0xEFFFFFFF
 private const val OUTER_SHELL_TOP_COLOR = 0xFF3A3F46
 private const val OUTER_SHELL_MIDDLE_COLOR = 0xFF15191E
 private const val OUTER_SHELL_BOTTOM_COLOR = 0xFF050608
