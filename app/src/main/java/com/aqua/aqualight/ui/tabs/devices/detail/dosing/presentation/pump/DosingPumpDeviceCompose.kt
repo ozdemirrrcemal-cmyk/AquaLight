@@ -15,6 +15,7 @@ import androidx.compose.runtime.Immutable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.unit.dp
 import com.aqua.aqualight.R
 import com.aqua.aqualight.ui.common.devicevisual.dosing.DosingOperationalDeviceShell
 import com.aqua.aqualight.ui.common.devicevisual.dosing.DosingPumpHeadVisual
@@ -87,7 +88,7 @@ private fun DosingPumpDeck(
                     DOSING_PRO_2_PUMP_COUNT.toFloat()
             )
         } else {
-            androidx.compose.ui.unit.Dp.Zero
+            0.dp
         }
 
         Row(
