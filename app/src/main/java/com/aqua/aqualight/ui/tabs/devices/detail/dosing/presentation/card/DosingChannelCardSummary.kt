@@ -188,6 +188,8 @@ private fun DosingProgramSummary(
             stringResource(mode.compactLabelRes())
         )
     }
+    val programTint = if (automaticDosingOff) colors.warning else colors.secondaryText
+    val programTextColor = if (automaticDosingOff) colors.warning else colors.primaryText
     Row(
         modifier = modifier,
         horizontalArrangement = Arrangement.spacedBy(SUMMARY_ICON_GAP),
@@ -196,14 +198,14 @@ private fun DosingProgramSummary(
         DosingLeadingIconSlot {
             DosingProgramModeGlyph(
                 mode = mode,
-                tint = colors.secondaryText,
+                tint = programTint,
                 modifier = Modifier.size(SUMMARY_ICON_SIZE)
             )
         }
         BasicText(
             text = label,
             modifier = Modifier.weight(1f),
-            style = typography.caption.copy(color = colors.primaryText),
+            style = typography.caption.copy(color = programTextColor),
             maxLines = 1,
             overflow = TextOverflow.Ellipsis
         )
