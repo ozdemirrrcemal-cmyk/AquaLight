@@ -146,7 +146,7 @@ class DeviceDosingV1CardOperationsTest {
     }
 
     @Test
-    fun `refresh failure keeps retained central snapshot visible`() = runTest {
+    fun `refresh failure cannot replace retained central snapshot`() = runTest {
         val runtime = FakeRuntimePort(
             connectionState = authenticatedState(),
             connectResult = Result.success(Unit)
@@ -164,43 +164,21 @@ class DeviceDosingV1CardOperationsTest {
     }
 
     @Test
-    fun `partial refresh never replaces retained snapshot with preparing`() = runTest {
+    fun `connection failure cannot replace retained central snapshot`() = runTest {
         val runtime = FakeRuntimePort(
             connectionState = AqlWsConnectionState.Disconnected,
-            connectResult = Result.success(Unit)
+            connectResult = Result.failure(IllegalStateException(CONNECTION_FAILURE_MESSAGE))
         )
         val channels = FakeChannelOperations(
             refreshAllResult = true,
-            observations = flow {
-                emit(completeSnapshotSet(RETAINED_CHANNEL_TITLE))
-                emit(emptyList())
-            }
+            observations = flowOf(completeSnapshotSet(RETAINED_CHANNEL_TITLE))
         )
         val operations = operations(runtime, channels)
 
         val states = operations.observe(DEVICE_UID).toList()
 
         assertSingleReadyState(states, RETAINED_CHANNEL_TITLE)
-    }
-
-    @Test
-    fun `observation failure after retained snapshot keeps last validated card state`() = runTest {
-        val runtime = FakeRuntimePort(
-            connectionState = AqlWsConnectionState.Disconnected,
-            connectResult = Result.success(Unit)
-        )
-        val channels = FakeChannelOperations(
-            refreshAllResult = true,
-            observations = flow {
-                emit(completeSnapshotSet(RETAINED_CHANNEL_TITLE))
-                error(OBSERVATION_FAILURE_MESSAGE)
-            }
-        )
-        val operations = operations(runtime, channels)
-
-        val states = operations.observe(DEVICE_UID).toList()
-
-        assertSingleReadyState(states, RETAINED_CHANNEL_TITLE)
+        assertEquals(NO_REFRESH, channels.refreshAllCalls)
     }
 
     private fun operations(
