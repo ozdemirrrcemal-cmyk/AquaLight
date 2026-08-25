@@ -59,7 +59,10 @@ class TankDetailDevicesViewModel(
     fun bind(tankId: Long) {
         if (tankId <= 0L || boundTankId == tankId) return
 
-        resetDosingPresentation()
+        dosingObserverJobs.values.forEach(Job::cancel)
+        dosingObserverJobs.clear()
+        dosingCardStates.value = emptyMap()
+        spotlightRotation.updateChannelCounts(emptyMap())
         boundTankId = tankId
         assignmentOperations.start(viewModelScope)
         observeJob?.cancel()
@@ -246,13 +249,6 @@ class TankDetailDevicesViewModel(
     ) {
         dosingCardStates.update { states -> states + (deviceUid to state) }
         spotlightRotation.updateChannelCounts(dosingCardStates.value.toSpotlightChannelCounts())
-    }
-
-    private fun resetDosingPresentation() {
-        dosingObserverJobs.values.forEach(Job::cancel)
-        dosingObserverJobs.clear()
-        dosingCardStates.value = emptyMap()
-        spotlightRotation.updateChannelCounts(emptyMap())
     }
 
     private fun abandonPendingNavigation(deviceUid: String) {
