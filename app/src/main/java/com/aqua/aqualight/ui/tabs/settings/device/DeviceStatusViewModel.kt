@@ -3,8 +3,9 @@ package com.aqua.aqualight.ui.tabs.settings.device
 import androidx.annotation.DrawableRes
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.aqua.aqualight.application.devices.DeviceStatusOperations
 import com.aqua.aqualight.R
+import com.aqua.aqualight.application.devices.DeviceStatusOperations
+import com.aqua.aqualight.ui.common.devicecard.DeviceCompactVisualKind
 import com.aqua.aqualight.ui.common.text.AquaUiText
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -54,6 +55,7 @@ data class DeviceStatusUiState(
 data class DeviceStatusItem(
     val displayName: String = "",
     @DrawableRes val iconRes: Int,
+    val visualKind: DeviceCompactVisualKind = DeviceCompactVisualKind.ICON,
     val ip: String = "",
     val serialText: String = "",
     val lastSeenText: AquaUiText = AquaUiText.Resource(R.string.common_not_available_symbol),
