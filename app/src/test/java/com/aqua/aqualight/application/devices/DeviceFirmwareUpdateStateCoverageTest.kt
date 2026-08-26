@@ -37,16 +37,20 @@ class DeviceFirmwareUpdateStateCoverageTest {
             DeviceOtaState.Recovering(DEVICE_UID, "2.0.0", 500),
             DeviceOtaState.RestartRequired(DEVICE_UID, "2.0.0", true, content),
             DeviceOtaState.Succeeded(DEVICE_UID, "2.0.0", content),
+            DeviceOtaState.RolledBack(DEVICE_UID, "2.0.0", "1.0.0", content),
+            DeviceOtaState.PostRestartTimeout(DEVICE_UID, "2.0.0", "1.0.0", content),
             DeviceOtaState.Failed(DEVICE_UID, failure)
         )
 
         assertTrue(content.isPresent)
         assertTrue(states.all { state -> state.deviceUid == DEVICE_UID })
         assertEquals(DeviceOtaProgressPhase.WRITING, (states[6] as DeviceOtaState.InProgress).phase)
+        assertEquals("1.0.0", (states[10] as DeviceOtaState.RolledBack).restoredVersion)
+        assertEquals("1.0.0", (states[11] as DeviceOtaState.PostRestartTimeout).previousVersion)
         assertEquals("Güvenli güncelleme", content.title)
         assertEquals(
             DeviceOtaFailureReason.INTEGRITY_CHECK_FAILED,
-            (states[10] as DeviceOtaState.Failed).failure.reason
+            (states[12] as DeviceOtaState.Failed).failure.reason
         )
         assertFalse(DeviceFirmwareReleaseContent.EMPTY.isPresent)
     }
