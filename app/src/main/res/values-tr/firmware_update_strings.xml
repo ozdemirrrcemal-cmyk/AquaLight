@@ -60,5 +60,6 @@
     <string name="device_settings_update_notification_rollback_message">%1$s güncellemeyi reddetti ve %2$s sürümüne geri döndü.</string>
     <string name="device_settings_update_notification_timeout_title">Güncelleme kurtarması ilgilenmenizi gerektiriyor</string>
     <string name="device_settings_update_notification_timeout_message">%1$s korumalı güncelleme süresi içinde yeniden bağlanmadı.</string>
+    <string name="device_settings_ota_outcome_rollback_recovered">Güncelleme güvenli biçimde geri alındı. Önceki çalışan firmware devrede.</string>
     <string name="device_settings_ota_failure_post_restart_timeout">Cihaz güncellemeden sonra yeniden bağlanmadı. Bağlantıyı tekrar deneyin.</string>
 </resources>
