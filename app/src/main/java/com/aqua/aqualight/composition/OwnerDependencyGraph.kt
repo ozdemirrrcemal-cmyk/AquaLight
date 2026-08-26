@@ -21,6 +21,7 @@ import com.aqua.aqualight.data.devices.provisioning.store.AqlProvisioningDraftSt
 import com.aqua.aqualight.data.devices.provisioning.store.AqlProvisioningQrSecretStore
 import com.aqua.aqualight.data.devices.repository.DevicesRepository
 import com.aqua.aqualight.data.devices.repository.DevicesRepositoryProvider
+import com.aqua.aqualight.data.devices.runtime.modules.firmware.EncryptedDeviceOtaRecoveryStore
 import com.aqua.aqualight.data.user.UserDataScope
 import com.aqua.aqualight.data.user.UserPreferencesManager
 import com.aqua.aqualight.data.user.archive.DefaultUserDataArchiveOperations
@@ -216,6 +217,10 @@ internal class ActiveOwnerDependencyGraphResolver(
     ): DeviceFirmwareUpdateOperations {
         return DefaultDeviceFirmwareUpdateOperations(
             devicesRepository = dependencies.devicesRepository,
+            recoveryStore = EncryptedDeviceOtaRecoveryStore(
+                context = appContext,
+                ownerUidProvider = { dependencies.ownerUid }
+            ),
             statePublisher = { state, deviceName ->
                 deviceFirmwareNotifications.publishOtaState(
                     ownerUid = dependencies.ownerUid,
