@@ -84,7 +84,7 @@ enum class DeviceOtaFailureStage {
     UPDATE_EXECUTION
 }
 
-/** Stable user-facing OTA failure categories derived from the exact firmware contract. */
+/** Stable user-facing OTA failure/outcome categories derived from the exact firmware contract. */
 enum class DeviceOtaFailureReason {
     CHECK_FAILED,
     CONNECTION,
@@ -117,6 +117,7 @@ enum class DeviceOtaFailureReason {
     FLASH_WRITE_FAILED,
     SECURITY_VALIDATION_FAILED,
     PROTOCOL_MISMATCH,
+    ROLLBACK_RECOVERED,
     POST_RESTART_TIMEOUT,
     DEVICE_INTERNAL
 }
