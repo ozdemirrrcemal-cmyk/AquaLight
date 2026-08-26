@@ -19,34 +19,44 @@ import org.junit.Test
 class DosingScheduledUsageAuthorityTest {
 
     @Test
-    fun `scheduled delivered total comes from firmware usage instead of progress projection`() {
+    fun `program progress uses completed amount when calendar day usage is higher`() {
         val state = snapshot(
+            completedAmountMicroliters = PROGRAM_TARGET_MICROLITERS,
+            occurrenceState = DeviceDosingOccurrenceState.COMPLETED,
             usage = DeviceDosingDailyUsageSnapshot(
                 valid = true,
-                scheduledDeliveredMicroliters = 380L,
-                totalDeliveredMicroliters = 380L
+                scheduledDeliveredMicroliters = HIGHER_CALENDAR_DAY_USAGE_MICROLITERS,
+                totalDeliveredMicroliters = HIGHER_CALENDAR_DAY_USAGE_MICROLITERS
             )
         ).toDosingChannelCardUiState()
 
-        assertEquals(0.38, state.programProgress.scheduledDeliveredTodayMl, 0.0)
-        assertEquals(0f, state.programProgress.completionFraction, 0f)
-        assertEquals(0, state.programProgress.completedOccurrences)
+        assertEquals(5.0, state.programProgress.scheduledDeliveredTodayMl, 0.0)
+        assertEquals(1f, state.programProgress.completionFraction, 0f)
+        assertEquals(1, state.programProgress.completedOccurrences)
     }
 
     @Test
-    fun `invalid firmware usage date never exposes stale scheduled delivery`() {
+    fun `skipped occurrence does not advance program progress from physical daily usage`() {
         val state = snapshot(
+            completedAmountMicroliters = 0L,
+            occurrenceState = DeviceDosingOccurrenceState.SKIPPED,
             usage = DeviceDosingDailyUsageSnapshot(
-                valid = false,
-                scheduledDeliveredMicroliters = 380L,
-                totalDeliveredMicroliters = 380L
+                valid = true,
+                scheduledDeliveredMicroliters = PARTIAL_PHYSICAL_USAGE_MICROLITERS,
+                totalDeliveredMicroliters = PARTIAL_PHYSICAL_USAGE_MICROLITERS
             )
         ).toDosingChannelCardUiState()
 
         assertEquals(0.0, state.programProgress.scheduledDeliveredTodayMl, 0.0)
+        assertEquals(0f, state.programProgress.completionFraction, 0f)
+        assertEquals(0, state.programProgress.completedOccurrences)
     }
 
-    private fun snapshot(usage: DeviceDosingDailyUsageSnapshot) = DeviceDosingChannelSnapshot(
+    private fun snapshot(
+        completedAmountMicroliters: Long,
+        occurrenceState: DeviceDosingOccurrenceState,
+        usage: DeviceDosingDailyUsageSnapshot
+    ) = DeviceDosingChannelSnapshot(
         deviceUid = "device-1",
         slotId = "dosing:channel2",
         pumpCount = 4,
@@ -63,22 +73,22 @@ class DosingScheduledUsageAuthorityTest {
             enabled = true,
             weekdays = List(7) { true },
             schedule = DeviceDosingProgramSchedule.Single(
-                dailyDoseMicroliters = 1_000L,
+                dailyDoseMicroliters = PROGRAM_TARGET_MICROLITERS,
                 startTimeMillis = 36_000_000L
             ),
             missedDoseRecoveryEnabled = true
         ),
         progress = DeviceDosingChannelProgress(
-            scheduledAmountMicroliters = 1_000L,
-            completedAmountMicroliters = 0L,
+            scheduledAmountMicroliters = PROGRAM_TARGET_MICROLITERS,
+            completedAmountMicroliters = completedAmountMicroliters,
             occurrences = listOf(
                 DeviceDosingOccurrenceProgress(
                     index = 0,
                     eventId = 1L,
                     programDayOffset = 0,
                     timeMillis = 36_000_000L,
-                    amountMicroliters = 1_000L,
-                    state = DeviceDosingOccurrenceState.SKIPPED
+                    amountMicroliters = PROGRAM_TARGET_MICROLITERS,
+                    state = occurrenceState
                 )
             ),
             executionCurrent = true
@@ -88,4 +98,10 @@ class DosingScheduledUsageAuthorityTest {
         controls = DeviceDosingChannelControls(),
         usageToday = usage
     )
+
+    private companion object {
+        const val PROGRAM_TARGET_MICROLITERS = 5_000L
+        const val HIGHER_CALENDAR_DAY_USAGE_MICROLITERS = 5_340L
+        const val PARTIAL_PHYSICAL_USAGE_MICROLITERS = 380L
+    }
 }
