@@ -40,6 +40,10 @@ interface DeviceFirmwareUpdateOperations {
 
     suspend fun clearStatus(deviceUid: String): DeviceFirmwareCommandResult
 
+    /** Explicit user retry after the bounded post-restart recovery window expires. */
+    suspend fun retryPostRestartRecovery(deviceUid: String): DeviceFirmwareCommandResult =
+        requestStatus(deviceUid)
+
     fun close() = Unit
 }
 
@@ -113,6 +117,7 @@ enum class DeviceOtaFailureReason {
     FLASH_WRITE_FAILED,
     SECURITY_VALIDATION_FAILED,
     PROTOCOL_MISMATCH,
+    POST_RESTART_TIMEOUT,
     DEVICE_INTERNAL
 }
 
@@ -201,6 +206,22 @@ sealed interface DeviceOtaState {
     data class Succeeded(
         override val deviceUid: String,
         val targetVersion: String,
+        val releaseContent: DeviceFirmwareReleaseContent
+    ) : DeviceOtaState
+
+    /** Device recovered by ESP-IDF rollback and is reachable on the previous known-good version. */
+    data class RolledBack(
+        override val deviceUid: String,
+        val targetVersion: String,
+        val restoredVersion: String,
+        val releaseContent: DeviceFirmwareReleaseContent
+    ) : DeviceOtaState
+
+    /** Device did not return within the bounded post-restart recovery window. */
+    data class PostRestartTimeout(
+        override val deviceUid: String,
+        val targetVersion: String,
+        val previousVersion: String,
         val releaseContent: DeviceFirmwareReleaseContent
     ) : DeviceOtaState
 
