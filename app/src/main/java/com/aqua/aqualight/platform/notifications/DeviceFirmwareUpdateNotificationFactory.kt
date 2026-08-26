@@ -51,6 +51,8 @@ internal class DeviceFirmwareUpdateNotificationFactory(context: Context) {
             )
             is DeviceOtaState.RestartRequired -> restart(ownerUid, state, normalizedName)
             is DeviceOtaState.Succeeded -> success(ownerUid, state, normalizedName)
+            is DeviceOtaState.RolledBack -> rollback(ownerUid, state, normalizedName)
+            is DeviceOtaState.PostRestartTimeout -> timeout(ownerUid, state, normalizedName)
             is DeviceOtaState.Failed -> if (
                 state.failure.stage == DeviceOtaFailureStage.UPDATE_EXECUTION
             ) {
@@ -126,6 +128,38 @@ internal class DeviceFirmwareUpdateNotificationFactory(context: Context) {
             state.targetVersion
         ),
         progressPercent = COMPLETE_PROGRESS_PERCENT,
+        route = operationRoute(state.targetVersion)
+    )
+
+    private fun rollback(
+        ownerUid: String,
+        state: DeviceOtaState.RolledBack,
+        deviceName: String
+    ): DeviceUpdateNotification = DeviceUpdateNotification(
+        ownerUid = ownerUid,
+        deviceUid = state.deviceUid,
+        title = text(R.string.device_settings_update_notification_rollback_title),
+        message = text(
+            R.string.device_settings_update_notification_rollback_message,
+            deviceName,
+            state.restoredVersion
+        ),
+        progressPercent = COMPLETE_PROGRESS_PERCENT,
+        route = operationRoute(state.targetVersion)
+    )
+
+    private fun timeout(
+        ownerUid: String,
+        state: DeviceOtaState.PostRestartTimeout,
+        deviceName: String
+    ): DeviceUpdateNotification = DeviceUpdateNotification(
+        ownerUid = ownerUid,
+        deviceUid = state.deviceUid,
+        title = text(R.string.device_settings_update_notification_timeout_title),
+        message = text(
+            R.string.device_settings_update_notification_timeout_message,
+            deviceName
+        ),
         route = operationRoute(state.targetVersion)
     )
 
