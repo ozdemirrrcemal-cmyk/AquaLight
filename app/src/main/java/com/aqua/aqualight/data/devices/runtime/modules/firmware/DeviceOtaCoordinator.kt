@@ -40,9 +40,13 @@ internal class DeviceOtaCoordinator(
     snapshotUpdates: StateFlow<Map<DeviceUid, DeviceSnapshot>>? = null,
     private val recoverRuntime: (DeviceUid) -> Result<Unit> = connectRuntime,
     private val refreshDiscovery: suspend () -> Unit = {},
+    private val recoveryStore: DeviceOtaRecoveryStore = NoOpDeviceOtaRecoveryStore,
     dispatcher: CoroutineDispatcher = Dispatchers.Default,
     private val restartWaitMillis: Long = DEFAULT_RESTART_WAIT_MILLIS,
-    private val discoverySettleMillis: Long = DEFAULT_DISCOVERY_SETTLE_MILLIS
+    private val discoverySettleMillis: Long = DEFAULT_DISCOVERY_SETTLE_MILLIS,
+    private val postRestartRecoveryTimeoutMillis: Long = DEFAULT_POST_RESTART_RECOVERY_TIMEOUT_MILLIS,
+    private val recoveryBackoffMillis: List<Long> = DEFAULT_RECOVERY_BACKOFF_MILLIS,
+    private val clockMillis: () -> Long = System::currentTimeMillis
 ) : Closeable {
 
     private data class SelectedPlan(
@@ -64,13 +68,17 @@ internal class DeviceOtaCoordinator(
     private val scope = CoroutineScope(SupervisorJob() + dispatcher)
     private val states = ConcurrentHashMap<DeviceUid, MutableStateFlow<DeviceOtaState>>()
     private val selectedPlans = ConcurrentHashMap<DeviceUid, SelectedPlan>()
-    private val pendingVersionVerification = ConcurrentHashMap<DeviceUid, SelectedPlan>()
+    private val pendingVersionVerification = ConcurrentHashMap<DeviceUid, DeviceOtaRecoveryRecord>()
+    private val verificationReady = ConcurrentHashMap.newKeySet<DeviceUid>()
     private val startLocks = ConcurrentHashMap<DeviceUid, Mutex>()
     private val recoveryJobs = ConcurrentHashMap<DeviceUid, Job>()
 
     init {
         require(restartWaitMillis >= 0L)
         require(discoverySettleMillis >= 0L)
+        require(postRestartRecoveryTimeoutMillis > 0L)
+        require(recoveryBackoffMillis.isNotEmpty())
+        require(recoveryBackoffMillis.all { it >= 0L })
         runtimeLifecycleEvents?.let { events ->
             scope.launch { events.collect(::processLifecycleEvent) }
         }
@@ -82,13 +90,17 @@ internal class DeviceOtaCoordinator(
         }
     }
 
-    fun observe(deviceUid: DeviceUid): StateFlow<DeviceOtaState> = stateFlow(deviceUid).asStateFlow()
+    fun observe(deviceUid: DeviceUid): StateFlow<DeviceOtaState> {
+        restorePendingRecovery(deviceUid)
+        return stateFlow(deviceUid).asStateFlow()
+    }
 
     suspend fun checkAvailability(
         deviceUid: DeviceUid,
         manifestUrl: String,
         applyNow: Boolean
     ): Result<DeviceOtaState> {
+        restorePendingRecovery(deviceUid)
         val state = stateFlow(deviceUid)
         if (hasActiveOperation(deviceUid)) {
             return Result.failure(
@@ -155,7 +167,6 @@ internal class DeviceOtaCoordinator(
         ).also { clearPlanState(deviceUid) }
         is DeviceFirmwareAvailability.UpdateAvailable -> {
             val applicationPlan = availability.plan.toApplicationPlan()
-            pendingVersionVerification.remove(deviceUid)
             selectedPlans[deviceUid] = SelectedPlan(
                 dataPlan = availability.plan,
                 applicationPlan = applicationPlan
@@ -299,6 +310,29 @@ internal class DeviceOtaCoordinator(
             }
         )
 
+    suspend fun retryPostRestartRecovery(deviceUid: DeviceUid): AppCommandResult {
+        restorePendingRecovery(deviceUid)
+        val current = pendingVersionVerification[deviceUid]
+            ?: return AppCommandResult(
+                sent = false,
+                failure = DeviceOtaFailureMapper.protocol(
+                    "No pending post-restart OTA verification exists for this device."
+                )
+            )
+        val restarted = current.copy(recoveryStartedAtMillis = clockMillis())
+        pendingVersionVerification[deviceUid] = restarted
+        recoveryStore.save(restarted)
+        verificationReady.remove(deviceUid)
+        recoveryJobs.remove(deviceUid)?.cancel()
+        stateFlow(deviceUid).value = DeviceOtaState.Recovering(
+            deviceUid = deviceUid.value,
+            targetVersion = restarted.targetVersion,
+            progressPermille = COMPLETE_PROGRESS_PERMILLE
+        )
+        scheduleRecovery(deviceUid)
+        return AppCommandResult(sent = true)
+    }
+
     private fun applyStatusOutcome(
         deviceUid: DeviceUid,
         outcome: DeviceRuntimeCommandOutcome<DeviceFirmwareOtaSnapshot>
@@ -362,10 +396,8 @@ internal class DeviceOtaCoordinator(
 
     private fun processLifecycleEvent(event: DeviceRuntimeLifecycleEvent) {
         when (event) {
-            is DeviceRuntimeLifecycleEvent.Authenticated ->
-                recoverAfterAuthentication(event.deviceUid)
-            is DeviceRuntimeLifecycleEvent.Unavailable ->
-                markRuntimeUnavailable(event.deviceUid)
+            is DeviceRuntimeLifecycleEvent.Authenticated -> recoverAfterAuthentication(event.deviceUid)
+            is DeviceRuntimeLifecycleEvent.Unavailable -> markRuntimeUnavailable(event.deviceUid)
         }
     }
 
@@ -412,7 +444,9 @@ internal class DeviceOtaCoordinator(
 
     private fun processSnapshotUpdates(snapshots: Map<DeviceUid, DeviceSnapshot>) {
         pendingVersionVerification.keys.toList().forEach { deviceUid ->
-            snapshots[deviceUid]?.let { snapshot -> verifyInstalledFirmware(deviceUid, snapshot) }
+            if (verificationReady.contains(deviceUid)) {
+                snapshots[deviceUid]?.let { snapshot -> verifyInstalledFirmware(deviceUid, snapshot) }
+            }
         }
     }
 
@@ -436,18 +470,18 @@ internal class DeviceOtaCoordinator(
             val activeSelection = selected?.copy(runtimeGeneration = generation)
             if (activeSelection != null) selectedPlans[deviceUid] = activeSelection
             val releaseContent = activeSelection?.applicationPlan?.releaseContent
+                ?: pendingVersionVerification[deviceUid]?.releaseContent
                 ?: DeviceFirmwareReleaseContent.EMPTY
             val targetVersion = snapshot.targetVersion.ifBlank {
-                activeSelection?.dataPlan?.targetVersion.orEmpty()
+                activeSelection?.dataPlan?.targetVersion
+                    ?: pendingVersionVerification[deviceUid]?.targetVersion
+                    .orEmpty()
             }
             armRestartVerification(deviceUid, snapshot, activeSelection)
             state.value = when {
                 snapshot.phase == DeviceFirmwareOtaPhase.IDLE &&
                     activeSelection != null &&
                     state.value is DeviceOtaState.UpdateAvailable -> {
-                    // A recovery status probe preserves the exact signed plan selected immediately
-                    // beforehand. A historical failed terminal status is handled above for the same
-                    // reason: it has no correlation to the newly prepared installation attempt.
                     DeviceOtaState.UpdateAvailable(activeSelection.applicationPlan)
                 }
                 snapshot.phase == DeviceFirmwareOtaPhase.IDLE &&
@@ -459,7 +493,6 @@ internal class DeviceOtaCoordinator(
                     releaseContent = releaseContent
                 )
             }
-            verifyCurrentFirmwareIfReady(deviceUid, snapshot, activeSelection)
         }
         return null
     }
@@ -474,41 +507,31 @@ internal class DeviceOtaCoordinator(
             snapshot.restartRequired &&
             selected != null
         ) {
-            pendingVersionVerification[deviceUid] = selected
+            val existing = pendingVersionVerification[deviceUid]
+            val record = existing ?: selected.toRecoveryRecord(deviceUid, clockMillis())
+            pendingVersionVerification[deviceUid] = record
+            recoveryStore.save(record)
+            verificationReady.remove(deviceUid)
             if (snapshot.restartScheduled) scheduleRecovery(deviceUid)
         }
     }
 
-    private fun verifyCurrentFirmwareIfReady(
-        deviceUid: DeviceUid,
-        snapshot: DeviceFirmwareOtaSnapshot,
-        selected: SelectedPlan?
-    ) {
-        if (
-            snapshot.phase == DeviceFirmwareOtaPhase.SUCCEEDED &&
-            snapshot.restartRequired &&
-            selected != null
-        ) {
-            snapshotProvider(deviceUid)?.let { current ->
-                verifyInstalledFirmware(deviceUid, current)
-            }
-        }
-    }
-
     private fun recoverAfterAuthentication(deviceUid: DeviceUid) {
-        recoveryJobs.remove(deviceUid)?.cancel()
+        restorePendingRecovery(deviceUid)
         pendingVersionVerification[deviceUid]?.let {
-            snapshotProvider(deviceUid)?.let { snapshot ->
-                verifyInstalledFirmware(deviceUid, snapshot)
-            }
+            verificationReady.add(deviceUid)
+            snapshotProvider(deviceUid)?.let { snapshot -> verifyInstalledFirmware(deviceUid, snapshot) }
+            if (pendingVersionVerification.containsKey(deviceUid)) scheduleRecovery(deviceUid)
             return
         }
+        recoveryJobs.remove(deviceUid)?.cancel()
         if (stateFlow(deviceUid).value.requiresOtaStatusRecovery) {
             scope.launch { requestStatus(deviceUid) }
         }
     }
 
     private fun markRuntimeUnavailable(deviceUid: DeviceUid) {
+        restorePendingRecovery(deviceUid)
         val current = stateFlow(deviceUid).value
         if (
             !current.requiresRuntimeRecovery &&
@@ -516,9 +539,11 @@ internal class DeviceOtaCoordinator(
         ) {
             return
         }
+        verificationReady.remove(deviceUid)
         stateFlow(deviceUid).value = DeviceOtaState.Recovering(
             deviceUid = deviceUid.value,
-            targetVersion = current.targetVersionOrEmpty,
+            targetVersion = pendingVersionVerification[deviceUid]?.targetVersion
+                ?: current.targetVersionOrEmpty,
             progressPermille = current.progressPermilleOrZero
         )
         scheduleRecovery(deviceUid)
@@ -528,49 +553,164 @@ internal class DeviceOtaCoordinator(
         synchronized(recoveryJobs) {
             if (recoveryJobs[deviceUid]?.isActive == true) return
             val job = scope.launch {
-                if (restartWaitMillis > 0L) delay(restartWaitMillis)
-                if (pendingVersionVerification.containsKey(deviceUid)) {
-                    val current = stateFlow(deviceUid).value
-                    stateFlow(deviceUid).value = DeviceOtaState.Recovering(
-                        deviceUid = deviceUid.value,
-                        targetVersion = current.targetVersionOrEmpty,
-                        progressPermille = current.progressPermilleOrZero
-                    )
+                val pending = pendingVersionVerification[deviceUid]
+                if (pending == null) {
+                    runSingleRuntimeRecovery(deviceUid)
+                    return@launch
                 }
-                runCatching { refreshDiscovery() }
-                if (discoverySettleMillis > 0L) delay(discoverySettleMillis)
-                recoverRuntime(deviceUid)
+
+                var attempt = 0
+                while (pendingVersionVerification.containsKey(deviceUid)) {
+                    val record = pendingVersionVerification[deviceUid] ?: return@launch
+                    val elapsed = (clockMillis() - record.recoveryStartedAtMillis).coerceAtLeast(0L)
+                    val remaining = postRestartRecoveryTimeoutMillis - elapsed
+                    if (remaining <= 0L) {
+                        publishPostRestartTimeout(deviceUid, record)
+                        return@launch
+                    }
+
+                    if (attempt == 0 && restartWaitMillis > 0L) {
+                        delay(minOf(restartWaitMillis, remaining))
+                    }
+                    runCatching { refreshDiscovery() }
+                    val afterDiscoveryRemaining = remainingRecoveryMillis(record)
+                    if (afterDiscoveryRemaining <= 0L) {
+                        publishPostRestartTimeout(deviceUid, record)
+                        return@launch
+                    }
+                    if (discoverySettleMillis > 0L) {
+                        delay(minOf(discoverySettleMillis, afterDiscoveryRemaining))
+                    }
+
+                    val recovered = recoverRuntime(deviceUid)
+                    if (recovered.isSuccess) {
+                        verificationReady.add(deviceUid)
+                        snapshotProvider(deviceUid)?.let { snapshot ->
+                            verifyInstalledFirmware(deviceUid, snapshot)
+                        }
+                        if (!pendingVersionVerification.containsKey(deviceUid)) return@launch
+                    }
+
+                    val current = pendingVersionVerification[deviceUid] ?: return@launch
+                    val remainingAfterAttempt = remainingRecoveryMillis(current)
+                    if (remainingAfterAttempt <= 0L) {
+                        publishPostRestartTimeout(deviceUid, current)
+                        return@launch
+                    }
+                    val backoff = recoveryBackoffMillis[
+                        attempt.coerceAtMost(recoveryBackoffMillis.lastIndex)
+                    ]
+                    attempt++
+                    if (backoff > 0L) delay(minOf(backoff, remainingAfterAttempt))
+                }
             }
             recoveryJobs[deviceUid] = job
             job.invokeOnCompletion { recoveryJobs.remove(deviceUid, job) }
         }
     }
 
+    private suspend fun runSingleRuntimeRecovery(deviceUid: DeviceUid) {
+        if (restartWaitMillis > 0L) delay(restartWaitMillis)
+        runCatching { refreshDiscovery() }
+        if (discoverySettleMillis > 0L) delay(discoverySettleMillis)
+        recoverRuntime(deviceUid)
+    }
+
+    private fun remainingRecoveryMillis(record: DeviceOtaRecoveryRecord): Long =
+        postRestartRecoveryTimeoutMillis -
+            (clockMillis() - record.recoveryStartedAtMillis).coerceAtLeast(0L)
+
+    private fun publishPostRestartTimeout(
+        deviceUid: DeviceUid,
+        record: DeviceOtaRecoveryRecord
+    ) {
+        verificationReady.remove(deviceUid)
+        stateFlow(deviceUid).value = DeviceOtaState.PostRestartTimeout(
+            deviceUid = deviceUid.value,
+            targetVersion = record.targetVersion,
+            previousVersion = record.previousVersion,
+            releaseContent = record.releaseContent
+        )
+    }
+
     private fun verifyInstalledFirmware(deviceUid: DeviceUid, snapshot: DeviceSnapshot) {
-        val selected = pendingVersionVerification[deviceUid]
-        if (
-            selected != null &&
-            snapshot.hasValidatedRuntimeMetadata &&
-            snapshot.runtimeMetadataGeneration != selected.dataPlan.runtimeMetadataGeneration
-        ) {
-            val error = DeviceOtaValidator.installedFirmwareError(snapshot, selected.dataPlan)
-            if (error == null) completeInstalledFirmwareVerification(deviceUid, selected)
-            else fail(deviceUid, DeviceOtaFailureMapper.incompatible(error))
+        val record = pendingVersionVerification[deviceUid] ?: return
+        if (!verificationReady.contains(deviceUid) || !snapshot.hasValidatedRuntimeMetadata) return
+
+        val identityError = installedIdentityError(snapshot, record)
+        if (identityError != null) {
+            fail(deviceUid, DeviceOtaFailureMapper.incompatible(identityError))
+            return
         }
+
+        when (snapshot.firmwareVersion) {
+            record.targetVersion -> completeInstalledFirmwareVerification(deviceUid, record)
+            record.previousVersion -> completeRollbackVerification(deviceUid, record)
+            else -> fail(
+                deviceUid,
+                DeviceOtaFailureMapper.incompatible(
+                    "Reconnected firmware is neither the OTA target nor the previous known-good version."
+                )
+            )
+        }
+    }
+
+    private fun installedIdentityError(
+        snapshot: DeviceSnapshot,
+        record: DeviceOtaRecoveryRecord
+    ): String? = when {
+        snapshot.product.productKey != record.productKey ->
+            "Reconnected device productKey differs after OTA restart."
+        snapshot.product.productId != record.productId ->
+            "Reconnected device productId differs after OTA restart."
+        snapshot.product.model != record.model ->
+            "Reconnected device model differs after OTA restart."
+        snapshot.product.hardwareRevision != record.hardwareRevision ->
+            "Reconnected device hardwareRevision differs after OTA restart."
+        else -> null
     }
 
     private fun completeInstalledFirmwareVerification(
         deviceUid: DeviceUid,
-        selected: SelectedPlan
+        record: DeviceOtaRecoveryRecord
     ) {
-        pendingVersionVerification.remove(deviceUid)
+        clearRecoveryRecord(deviceUid)
         selectedPlans.remove(deviceUid)
-        recoveryJobs.remove(deviceUid)?.cancel()
         stateFlow(deviceUid).value = DeviceOtaState.Succeeded(
             deviceUid = deviceUid.value,
-            targetVersion = selected.dataPlan.targetVersion,
-            releaseContent = selected.applicationPlan.releaseContent
+            targetVersion = record.targetVersion,
+            releaseContent = record.releaseContent
         )
+    }
+
+    private fun completeRollbackVerification(
+        deviceUid: DeviceUid,
+        record: DeviceOtaRecoveryRecord
+    ) {
+        clearRecoveryRecord(deviceUid)
+        selectedPlans.remove(deviceUid)
+        stateFlow(deviceUid).value = DeviceOtaState.RolledBack(
+            deviceUid = deviceUid.value,
+            targetVersion = record.targetVersion,
+            restoredVersion = record.previousVersion,
+            releaseContent = record.releaseContent
+        )
+    }
+
+    private fun restorePendingRecovery(deviceUid: DeviceUid) {
+        if (pendingVersionVerification.containsKey(deviceUid)) return
+        val record = recoveryStore.load(deviceUid.value) ?: return
+        pendingVersionVerification[deviceUid] = record
+        verificationReady.remove(deviceUid)
+        val current = stateFlow(deviceUid).value
+        if (current is DeviceOtaState.Idle || current is DeviceOtaState.PostRestartTimeout) {
+            stateFlow(deviceUid).value = DeviceOtaState.Recovering(
+                deviceUid = deviceUid.value,
+                targetVersion = record.targetVersion,
+                progressPermille = COMPLETE_PROGRESS_PERMILLE
+            )
+        }
+        scheduleRecovery(deviceUid)
     }
 
     private fun handleCommandFailure(
@@ -597,18 +737,23 @@ internal class DeviceOtaCoordinator(
     private fun stateFlow(deviceUid: DeviceUid): MutableStateFlow<DeviceOtaState> =
         states.getOrPut(deviceUid) { MutableStateFlow(DeviceOtaState.Idle(deviceUid.value)) }
 
+    private fun clearRecoveryRecord(deviceUid: DeviceUid) {
+        pendingVersionVerification.remove(deviceUid)
+        verificationReady.remove(deviceUid)
+        recoveryJobs.remove(deviceUid)?.cancel()
+        recoveryStore.remove(deviceUid.value)
+    }
+
     private fun clearPlanState(deviceUid: DeviceUid) {
         selectedPlans.remove(deviceUid)
-        pendingVersionVerification.remove(deviceUid)
-        recoveryJobs.remove(deviceUid)?.cancel()
+        clearRecoveryRecord(deviceUid)
     }
 
     private fun fail(
         deviceUid: DeviceUid,
         failure: DeviceOtaFailure
     ) {
-        pendingVersionVerification.remove(deviceUid)
-        recoveryJobs.remove(deviceUid)?.cancel()
+        clearRecoveryRecord(deviceUid)
         stateFlow(deviceUid).value = DeviceOtaState.Failed(
             deviceUid = deviceUid.value,
             failure = failure
@@ -620,13 +765,35 @@ internal class DeviceOtaCoordinator(
         recoveryJobs.clear()
         selectedPlans.clear()
         pendingVersionVerification.clear()
+        verificationReady.clear()
         startLocks.clear()
         scope.cancel()
     }
 
+    private fun SelectedPlan.toRecoveryRecord(
+        deviceUid: DeviceUid,
+        startedAtMillis: Long
+    ): DeviceOtaRecoveryRecord = DeviceOtaRecoveryRecord(
+        deviceUid = deviceUid.value,
+        previousVersion = dataPlan.currentVersion,
+        targetVersion = dataPlan.targetVersion,
+        productKey = dataPlan.productKey,
+        productId = dataPlan.productId,
+        model = dataPlan.model,
+        hardwareRevision = dataPlan.hardwareRevision,
+        runtimeMetadataGeneration = dataPlan.runtimeMetadataGeneration,
+        manifestTag = applicationPlan.manifestTag,
+        firmwareSha256 = dataPlan.firmware.sha256,
+        releaseContent = applicationPlan.releaseContent,
+        recoveryStartedAtMillis = startedAtMillis
+    )
+
     private companion object {
         const val DEFAULT_RESTART_WAIT_MILLIS = 1_000L
         const val DEFAULT_DISCOVERY_SETTLE_MILLIS = 750L
+        const val DEFAULT_POST_RESTART_RECOVERY_TIMEOUT_MILLIS = 120_000L
+        const val COMPLETE_PROGRESS_PERMILLE = 1_000
+        val DEFAULT_RECOVERY_BACKOFF_MILLIS = listOf(1_000L, 2_000L, 4_000L, 8_000L, 15_000L)
     }
 }
 
@@ -689,6 +856,9 @@ private val DeviceOtaState.targetVersionOrEmpty: String
         is DeviceOtaState.InProgress -> targetVersion
         is DeviceOtaState.Recovering -> targetVersion
         is DeviceOtaState.RestartRequired -> targetVersion
+        is DeviceOtaState.Succeeded -> targetVersion
+        is DeviceOtaState.RolledBack -> targetVersion
+        is DeviceOtaState.PostRestartTimeout -> targetVersion
         else -> ""
     }
 
