@@ -11,6 +11,8 @@
     <string name="device_settings_update_hero_title_recovering">Güvenli biçimde yeniden bağlanılıyor</string>
     <string name="device_settings_update_hero_title_restarting">Cihazınız yeniden başlatılıyor</string>
     <string name="device_settings_update_hero_title_succeeded">Güncelleme başarıyla yüklendi</string>
+    <string name="device_settings_update_hero_title_rolled_back">Güncelleme güvenli biçimde geri alındı</string>
+    <string name="device_settings_update_hero_title_post_restart_timeout">Güncellemeden sonra cihaza ulaşılamadı</string>
     <string name="device_settings_update_hero_title_up_to_date">Cihazınız güncel</string>
     <string name="device_settings_update_hero_title_failed">Güncelleme ilgilenmenizi gerektiriyor</string>
     <string name="device_settings_update_hero_title_unsupported">Uyumlu güncelleme bulunamadı</string>
@@ -21,16 +23,23 @@
     <string name="device_settings_update_hero_summary_required_version">%1$s sürümü bu cihaz için zorunludur. Yüklemeden önce doğrulanmış sürüm bilgilerini inceleyin.</string>
     <string name="device_settings_update_hero_summary_starting">Güvenli güncelleme oturumu hazırlanıyor. Cihazın gücünü ve bağlantısını koruyun.</string>
     <string name="device_settings_update_hero_summary_installing">Doğrulanmış paket aktarılıyor ve yükleniyor. Cihazın gücünü kesmeyin.</string>
-    <string name="device_settings_update_hero_summary_recovering">Güncelleme adımından sonra cihaz yeniden bağlanıyor. Bu işlem biraz sürebilir.</string>
+    <string name="device_settings_update_hero_summary_recovering">Güncelleme adımından sonra cihaz yeniden bağlanıyor. Kurtarma süresi sınırlıdır; cihaz dönmezse işlem açık bir sonuçla sonlanır.</string>
     <string name="device_settings_update_hero_summary_restarting">Cihaz yeniden başlatılıyor ve doğrulama sonrasında otomatik olarak yeniden bağlanacak.</string>
     <string name="device_settings_update_hero_summary_succeeded_version">%1$s sürümü başarıyla yüklendi ve doğrulandı.</string>
     <string name="device_settings_update_hero_summary_succeeded">Yeni yazılım başarıyla yüklendi ve doğrulandı.</string>
+    <string name="device_settings_update_hero_summary_rolled_back_version">%1$s sürümü kabul edilmedi. ESP-IDF rollback cihazı önceki çalışan %2$s sürümüne güvenli biçimde döndürdü.</string>
+    <string name="device_settings_update_hero_summary_post_restart_timeout">AquaLight cihazın korumalı yeniden başlatma süresi içinde geri döndüğünü doğrulayamadı. Firmware’i yeniden yüklemeden bağlantıyı tekrar deneyebilirsiniz.</string>
     <string name="device_settings_update_hero_summary_up_to_date_version">%1$s sürümü bu cihaz için en yeni uyumlu ve imzalı sürümdür.</string>
     <string name="device_settings_update_hero_summary_up_to_date">En yeni uyumlu ve imzalı sürüm zaten yüklü.</string>
     <string name="device_settings_update_hero_summary_unsupported">AquaLight bu cihaz profili için uyumlu ve imzalı bir sürüm bulamadı.</string>
 
     <string name="device_settings_update_status_check_failed">Güncelleme denetlenemedi</string>
+    <string name="device_settings_update_status_rolled_back">Geri alındı</string>
+    <string name="device_settings_update_status_post_restart_timeout">Yeniden bağlantı zaman aşımına uğradı</string>
     <string name="device_settings_update_phase_check_failed">AquaLight güncelleme bilgilerini doğrulayamadı. Aşağıdaki sorunu giderip tekrar deneyin.</string>
+    <string name="device_settings_update_phase_rolled_back">Önceki çalışan firmware yeniden devrede. Cihaz çalışır durumda.</string>
+    <string name="device_settings_update_phase_post_restart_timeout">Yüklü firmware sürümü doğrulanamadan korumalı yeniden bağlantı süresi doldu.</string>
+    <string name="device_settings_update_action_retry_connection">Bağlantıyı tekrar dene</string>
 
     <string name="device_settings_update_release_warnings_heading">Sürüme özel notlar</string>
     <string name="device_settings_update_release_details_unavailable_title">Ayrıntılı sürüm notları sağlanmadı</string>
@@ -46,4 +55,10 @@
     <string name="device_settings_update_now_action">Şimdi güncelle</string>
     <string name="device_settings_update_action_hint_available">Güncelleme hemen başlar ve cihaz yeniden başlatılabilir.</string>
     <string name="device_settings_update_action_hint_active">Doğrulama tamamlanana kadar cihazın gücünü ve bağlantısını koruyun.</string>
+
+    <string name="device_settings_update_notification_rollback_title">Cihaz güvenli biçimde kurtarıldı</string>
+    <string name="device_settings_update_notification_rollback_message">%1$s güncellemeyi reddetti ve %2$s sürümüne geri döndü.</string>
+    <string name="device_settings_update_notification_timeout_title">Güncelleme kurtarması ilgilenmenizi gerektiriyor</string>
+    <string name="device_settings_update_notification_timeout_message">%1$s korumalı güncelleme süresi içinde yeniden bağlanmadı.</string>
+    <string name="device_settings_ota_failure_post_restart_timeout">Cihaz güncellemeden sonra yeniden bağlanmadı. Bağlantıyı tekrar deneyin.</string>
 </resources>
