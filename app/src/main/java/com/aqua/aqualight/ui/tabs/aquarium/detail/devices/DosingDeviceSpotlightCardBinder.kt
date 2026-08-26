@@ -7,7 +7,6 @@ import android.view.View
 import android.widget.LinearLayout
 import androidx.compose.foundation.layout.size
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.platform.ViewCompositionStrategy
 import androidx.core.content.ContextCompat
 import androidx.core.view.isVisible
 import com.aqua.aqualight.R
@@ -24,9 +23,6 @@ import java.util.Locale
 object DosingDeviceSpotlightCardBinder {
 
     fun prepare(binding: ItemDosingDeviceSpotlightCardBinding) {
-        binding.channelPumpFace.setViewCompositionStrategy(
-            ViewCompositionStrategy.DisposeOnViewTreeLifecycleDestroyed
-        )
         binding.channelPumpFace.setContent {
             DosingPumpFaceIcon(
                 modifier = Modifier.size(AquaDeviceCardGeometry.markerSize)
