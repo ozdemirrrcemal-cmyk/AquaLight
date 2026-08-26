@@ -5,6 +5,9 @@ import android.content.res.ColorStateList
 import android.graphics.drawable.GradientDrawable
 import android.view.View
 import android.widget.LinearLayout
+import androidx.compose.foundation.layout.size
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.ViewCompositionStrategy
 import androidx.core.content.ContextCompat
 import androidx.core.view.isVisible
 import com.aqua.aqualight.R
@@ -13,10 +16,23 @@ import com.aqua.aqualight.application.devices.dosing.DeviceDosingCardReservoirSt
 import com.aqua.aqualight.application.devices.dosing.DeviceDosingCardReservoirSummary
 import com.aqua.aqualight.application.devices.dosing.DeviceDosingCardSummary
 import com.aqua.aqualight.databinding.ItemDosingDeviceSpotlightCardBinding
+import com.aqua.aqualight.ui.common.devicecard.AquaDeviceCardGeometry
 import com.aqua.aqualight.ui.common.devicecard.DeviceCompactStatusStyle
+import com.aqua.aqualight.ui.tabs.devices.detail.dosing.presentation.pump.DosingPumpFaceIcon
 import java.util.Locale
 
 object DosingDeviceSpotlightCardBinder {
+
+    fun prepare(binding: ItemDosingDeviceSpotlightCardBinding) {
+        binding.channelPumpFace.setViewCompositionStrategy(
+            ViewCompositionStrategy.DisposeOnViewTreeLifecycleDestroyed
+        )
+        binding.channelPumpFace.setContent {
+            DosingPumpFaceIcon(
+                modifier = Modifier.size(AquaDeviceCardGeometry.markerSize)
+            )
+        }
+    }
 
     fun bind(
         binding: ItemDosingDeviceSpotlightCardBinding,
@@ -30,9 +46,14 @@ object DosingDeviceSpotlightCardBinder {
         }
 
         bindHeader(binding, header, online, displayName)
-        bindSummary(binding, item, online)
         bindSpotlight(binding, item, online)
-        bindAccessibility(binding, item.summary, displayName, item.selectedChannel?.title.orEmpty())
+        bindAccessibility(
+            binding = binding,
+            item = item,
+            online = online,
+            displayName = displayName,
+            channelTitle = item.selectedChannel?.title.orEmpty()
+        )
     }
 
     private fun bindHeader(
@@ -62,21 +83,6 @@ object DosingDeviceSpotlightCardBinder {
         binding.root.isEnabled = !header.isBusy
     }
 
-    private fun bindSummary(
-        binding: ItemDosingDeviceSpotlightCardBinding,
-        item: DosingDeviceSpotlightCardUi,
-        online: Boolean
-    ) {
-        val context = binding.root.context
-        binding.tvDosingChannelSummary.text = when {
-            !online -> context.getString(R.string.dosing_device_card_offline)
-            item.summary != null -> channelSummaryText(context, item.summary)
-            item.contentState == DosingDeviceSpotlightContentState.UNAVAILABLE ->
-                context.getString(R.string.dosing_device_card_unavailable)
-            else -> context.getString(R.string.dosing_device_card_loading)
-        }
-    }
-
     private fun bindSpotlight(
         binding: ItemDosingDeviceSpotlightCardBinding,
         item: DosingDeviceSpotlightCardUi,
@@ -100,31 +106,11 @@ object DosingDeviceSpotlightCardBinder {
         }
 
         val locale = binding.root.resources.configuration.locales[0]
-        binding.tvChannelBadge.text = DosingDeviceCardFormatter.integer(channel.channelNumber, locale)
         binding.tvSpotlightChannelName.text = channel.title
-        bindRuntimeState(binding, channel.runtimeEnabled)
         bindDailyDose(binding, channel.dailyDoseMicroliters, locale)
         bindNextDose(binding, channel.nextDose, locale)
         bindReservoir(binding, channel.reservoir, locale)
         bindIndicators(binding.channelIndicator, item.pageCount, item.selectedIndex)
-    }
-
-    private fun bindRuntimeState(
-        binding: ItemDosingDeviceSpotlightCardBinding,
-        runtimeEnabled: Boolean
-    ) {
-        val context = binding.root.context
-        binding.tvSpotlightState.text = context.getString(
-            if (runtimeEnabled) R.string.dosing_device_card_active
-            else R.string.dosing_device_card_inactive
-        )
-        binding.tvSpotlightState.setTextColor(
-            ContextCompat.getColor(
-                context,
-                if (runtimeEnabled) R.color.aqua_accent_positive
-                else R.color.aqua_content_muted
-            )
-        )
     }
 
     private fun bindDailyDose(
@@ -213,14 +199,19 @@ object DosingDeviceSpotlightCardBinder {
 
     private fun bindAccessibility(
         binding: ItemDosingDeviceSpotlightCardBinding,
-        summary: DeviceDosingCardSummary?,
+        item: DosingDeviceSpotlightCardUi,
+        online: Boolean,
         displayName: String,
         channelTitle: String
     ) {
         val context = binding.root.context
-        val summaryText = summary?.let { value ->
-            channelSummaryText(context, value)
-        } ?: binding.tvDosingChannelSummary.text.toString()
+        val summaryText = when {
+            !online -> context.getString(R.string.dosing_device_card_offline)
+            item.summary != null -> channelSummaryText(context, item.summary)
+            item.contentState == DosingDeviceSpotlightContentState.UNAVAILABLE ->
+                context.getString(R.string.dosing_device_card_unavailable)
+            else -> context.getString(R.string.dosing_device_card_loading)
+        }
         binding.root.contentDescription = context.getString(
             R.string.dosing_device_card_accessibility,
             displayName,

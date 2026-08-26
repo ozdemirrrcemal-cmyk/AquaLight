@@ -109,6 +109,10 @@ class TankAssignedDevicesAdapter(
 
         private var lastSpotlightIndex: Int? = null
 
+        init {
+            DosingDeviceSpotlightCardBinder.prepare(binding)
+        }
+
         fun bind(item: TankAssignedDeviceItem) {
             val dosingCard = requireNotNull(item.dosingCard)
             val animateSpotlight = lastSpotlightIndex != null &&
