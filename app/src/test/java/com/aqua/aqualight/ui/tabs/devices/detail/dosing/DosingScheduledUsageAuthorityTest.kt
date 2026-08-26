@@ -18,6 +18,7 @@ import org.junit.Test
 
 class DosingScheduledUsageAuthorityTest {
 
+    // Calendar-day physical usage and program-day progress are distinct firmware authorities.
     @Test
     fun `program progress uses completed amount when calendar day usage is higher`() {
         val state = snapshot(
