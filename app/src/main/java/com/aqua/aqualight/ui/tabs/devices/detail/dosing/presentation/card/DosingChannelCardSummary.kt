@@ -123,24 +123,31 @@ private fun DosingMetricSummary(
     typography: AquaDeviceCardTypography,
     modifier: Modifier = Modifier
 ) {
-    val tint = when (icon) {
-        DosingMetricGlyphType.DOSE -> colors.accent
-        DosingMetricGlyphType.DAYS -> colors.secondaryText
-    }
+    val iconTint = colors.secondaryText
     Row(
         modifier = modifier,
         horizontalArrangement = Arrangement.spacedBy(SUMMARY_ICON_GAP),
         verticalAlignment = Alignment.CenterVertically
     ) {
-        DosingMetricGlyph(
-            type = icon,
-            tint = tint,
-            modifier = Modifier.size(SUMMARY_ICON_SIZE)
-        )
+        if (icon == DosingMetricGlyphType.DOSE) {
+            DosingLeadingIconSlot {
+                DosingMetricGlyph(
+                    type = icon,
+                    tint = iconTint,
+                    modifier = Modifier.size(SUMMARY_ICON_SIZE)
+                )
+            }
+        } else {
+            DosingMetricGlyph(
+                type = icon,
+                tint = iconTint,
+                modifier = Modifier.size(SUMMARY_ICON_SIZE)
+            )
+        }
         BasicText(
             text = label,
             modifier = Modifier.weight(1f),
-            style = typography.caption.copy(color = tint),
+            style = typography.caption.copy(color = colors.primaryText),
             maxLines = 1,
             overflow = TextOverflow.Ellipsis
         )
@@ -181,23 +188,24 @@ private fun DosingProgramSummary(
             stringResource(mode.compactLabelRes())
         )
     }
-    val tint = if (automaticDosingOff) colors.warning else colors.accent
+    val programTint = if (automaticDosingOff) colors.warning else colors.secondaryText
+    val programTextColor = if (automaticDosingOff) colors.warning else colors.primaryText
     Row(
         modifier = modifier,
         horizontalArrangement = Arrangement.spacedBy(SUMMARY_ICON_GAP),
         verticalAlignment = Alignment.CenterVertically
     ) {
-        DosingProgramModeGlyph(
-            mode = mode,
-            tint = tint,
-            modifier = Modifier.size(SUMMARY_ICON_SIZE)
-        )
+        DosingLeadingIconSlot {
+            DosingProgramModeGlyph(
+                mode = mode,
+                tint = programTint,
+                modifier = Modifier.size(SUMMARY_ICON_SIZE)
+            )
+        }
         BasicText(
             text = label,
             modifier = Modifier.weight(1f),
-            style = typography.caption.copy(
-                color = if (automaticDosingOff) colors.warning else colors.primaryText
-            ),
+            style = typography.caption.copy(color = programTextColor),
             maxLines = 1,
             overflow = TextOverflow.Ellipsis
         )
@@ -219,11 +227,13 @@ private fun DosingProgramSetupSummary(
         horizontalArrangement = Arrangement.spacedBy(SUMMARY_ICON_GAP),
         verticalAlignment = Alignment.CenterVertically
     ) {
-        DosingEmptyStateGlyph(
-            tint = colors.accent,
-            badgeSurface = colors.mediaSurface,
-            modifier = Modifier.size(SUMMARY_ICON_SIZE)
-        )
+        DosingLeadingIconSlot {
+            DosingEmptyStateGlyph(
+                tint = colors.accent,
+                badgeSurface = colors.mediaSurface,
+                modifier = Modifier.size(SUMMARY_ICON_SIZE)
+            )
+        }
         BasicText(
             text = title,
             modifier = Modifier.weight(1f),
