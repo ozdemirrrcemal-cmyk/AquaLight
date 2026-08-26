@@ -589,7 +589,7 @@ internal fun DeviceRootSnapshot.toDeviceFamilySettingsUiState(): DeviceFamilySet
     DeviceFamilySettingsUiState(
         deviceName = title,
         productDisplayName = productDisplayName,
-        hasCustomName = hasCustomName,
+        hasCustomDeviceName = hasCustomName,
         serialNumber = serialNumber.ifBlank { deviceUid },
         hardwareRevision = hardwareRevision,
         firmwareVersion = firmwareLabel,
