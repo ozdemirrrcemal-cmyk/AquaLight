@@ -80,6 +80,18 @@ class DeviceFirmwareUpdateApplicationContractTest {
                 releaseContent = releaseContent
             ),
             DeviceOtaState.Succeeded(DEVICE_UID, plan.targetVersion, releaseContent),
+            DeviceOtaState.RolledBack(
+                DEVICE_UID,
+                plan.targetVersion,
+                plan.currentVersion,
+                releaseContent
+            ),
+            DeviceOtaState.PostRestartTimeout(
+                DEVICE_UID,
+                plan.targetVersion,
+                plan.currentVersion,
+                releaseContent
+            ),
             DeviceOtaState.Failed(DEVICE_UID, failure)
         )
 
@@ -87,7 +99,15 @@ class DeviceFirmwareUpdateApplicationContractTest {
         assertEquals(plan.targetVersion, (states[5] as DeviceOtaState.Starting).plan.targetVersion)
         assertEquals(500, (states[6] as DeviceOtaState.InProgress).progressPermille)
         assertTrue((states[8] as DeviceOtaState.RestartRequired).restartScheduled)
-        assertEquals("wifi", (states[10] as DeviceOtaState.Failed).failure.field)
+        assertEquals(
+            plan.currentVersion,
+            (states[10] as DeviceOtaState.RolledBack).restoredVersion
+        )
+        assertEquals(
+            plan.currentVersion,
+            (states[11] as DeviceOtaState.PostRestartTimeout).previousVersion
+        )
+        assertEquals("wifi", (states[12] as DeviceOtaState.Failed).failure.field)
 
         assertTrue(DeviceFirmwareCommandResult(sent = true, messageId = "ok").isSuccess)
         assertFalse(
