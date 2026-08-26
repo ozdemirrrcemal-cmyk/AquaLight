@@ -82,6 +82,9 @@ for path, text, tokens in (
             "suspend fun checkAvailability",
             "suspend fun prepareUpdate",
             "suspend fun startUpdate",
+            "suspend fun retryPostRestartRecovery",
+            "data class RolledBack(",
+            "data class PostRestartTimeout(",
         ),
     ),
 ):
@@ -116,6 +119,8 @@ for path, text, tokens in (
             "coordinator.startUpdate",
             "coordinator.requestStatus",
             "coordinator.clearStatus",
+            "coordinator.retryPostRestartRecovery",
+            "recoveryStore = recoveryStore",
         ),
     ),
 ):
@@ -128,11 +133,18 @@ for token in (
     "fun observe(deviceUid: DeviceUid)",
     "suspend fun checkAvailability(",
     "suspend fun startUpdate(plan: PreparedDeviceFirmwareUpdate)",
+    "suspend fun retryPostRestartRecovery(deviceUid: DeviceUid)",
     "events.collect(::processLifecycleEvent)",
     "events.collect(::processTypedEvent)",
     "updates.collect(::processSnapshotUpdates)",
     "parseOtaProgressEventExact",
-    "runtimeMetadataGeneration != selected.dataPlan.runtimeMetadataGeneration",
+    "snapshot.runtimeMetadataGeneration == record.runtimeMetadataGeneration",
+    "record.targetVersion -> completeInstalledFirmwareVerification",
+    "record.previousVersion -> completeRollbackVerification",
+    "DeviceOtaState.RolledBack",
+    "DeviceOtaState.PostRestartTimeout",
+    "recoveryStore.save(record)",
+    "recoveryStore.remove(deviceUid.value)",
 ):
     if token not in ota_coordinator:
         errors.append(f"{OTA_COORDINATOR.relative_to(ROOT)}: shared OTA coordinator token is missing: {token}")
