@@ -171,6 +171,8 @@ private val OTA_FAILURE_MESSAGE_RESOURCES = mapOf(
         R.string.device_settings_update_error_security_validation,
     DeviceOtaFailureReason.PROTOCOL_MISMATCH to
         R.string.device_settings_update_error_protocol_mismatch,
+    DeviceOtaFailureReason.POST_RESTART_TIMEOUT to
+        R.string.device_settings_ota_failure_post_restart_timeout,
     DeviceOtaFailureReason.DEVICE_INTERNAL to
         R.string.device_settings_update_error_device_internal
 )
