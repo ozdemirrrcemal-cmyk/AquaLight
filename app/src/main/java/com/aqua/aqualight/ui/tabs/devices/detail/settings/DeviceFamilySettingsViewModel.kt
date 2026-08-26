@@ -8,6 +8,7 @@ import com.aqua.aqualight.application.devices.DeviceFirmwareUpdateOperations
 import com.aqua.aqualight.application.devices.DeviceLightProtectionSnapshot
 import com.aqua.aqualight.application.devices.DeviceLightProtectionThresholdPolicy
 import com.aqua.aqualight.application.devices.DeviceOtaFailure
+import com.aqua.aqualight.application.devices.DeviceOtaFailureReason
 import com.aqua.aqualight.application.devices.DeviceOtaFailureStage
 import com.aqua.aqualight.application.devices.DeviceOtaState
 import com.aqua.aqualight.application.devices.DeviceRootCatalogState
@@ -383,6 +384,22 @@ class DeviceFamilySettingsViewModel(
                 version = state.targetVersion,
                 progressPermille = COMPLETE_PROGRESS_PERMILLE
             )
+            is DeviceOtaState.RolledBack -> DeviceSettingsUpdateActionState.Failed(
+                DeviceOtaFailure(
+                    reason = DeviceOtaFailureReason.ROLLBACK_RECOVERED,
+                    recoverable = false,
+                    diagnosticMessage =
+                        "OTA target ${state.targetVersion} was rolled back to ${state.restoredVersion}."
+                )
+            )
+            is DeviceOtaState.PostRestartTimeout -> DeviceSettingsUpdateActionState.Failed(
+                DeviceOtaFailure(
+                    reason = DeviceOtaFailureReason.POST_RESTART_TIMEOUT,
+                    recoverable = true,
+                    diagnosticMessage =
+                        "Device did not return within the bounded OTA restart window."
+                )
+            )
             is DeviceOtaState.Failed -> DeviceSettingsUpdateActionState.Failed(state.failure)
         }
         _uiState.update { current -> current.copy(updateActionState = actionState) }
@@ -572,7 +589,7 @@ internal fun DeviceRootSnapshot.toDeviceFamilySettingsUiState(): DeviceFamilySet
     DeviceFamilySettingsUiState(
         deviceName = title,
         productDisplayName = productDisplayName,
-        hasCustomDeviceName = hasCustomName,
+        hasCustomName = hasCustomName,
         serialNumber = serialNumber.ifBlank { deviceUid },
         hardwareRevision = hardwareRevision,
         firmwareVersion = firmwareLabel,
