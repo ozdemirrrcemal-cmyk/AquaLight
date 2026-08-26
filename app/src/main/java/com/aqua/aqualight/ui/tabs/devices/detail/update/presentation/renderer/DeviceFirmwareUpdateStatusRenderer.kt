@@ -84,10 +84,12 @@ internal class DeviceFirmwareUpdateStatusRenderer(
         lastAnnouncementKey = key
     }
 
-    private fun resolve(text: DeviceFirmwareUpdateText): String =
-        text.formatArg?.let { formatArg ->
-            string(text.stringRes, formatArg)
-        } ?: string(text.stringRes)
+    private fun resolve(text: DeviceFirmwareUpdateText): String = when {
+        text.formatArg != null && text.secondFormatArg != null ->
+            string(text.stringRes, text.formatArg, text.secondFormatArg)
+        text.formatArg != null -> string(text.stringRes, text.formatArg)
+        else -> string(text.stringRes)
+    }
 
     private fun setIconTint(view: AppCompatImageView, @ColorRes colorRes: Int) {
         ImageViewCompat.setImageTintList(
@@ -101,8 +103,8 @@ internal class DeviceFirmwareUpdateStatusRenderer(
     private fun string(@StringRes stringRes: Int): String =
         fragment.getString(stringRes)
 
-    private fun string(@StringRes stringRes: Int, formatArg: Any): String =
-        fragment.getString(stringRes, formatArg)
+    private fun string(@StringRes stringRes: Int, vararg formatArgs: Any): String =
+        fragment.getString(stringRes, *formatArgs)
 
     private fun color(@ColorRes colorRes: Int): Int =
         ContextCompat.getColor(fragment.requireContext(), colorRes)
