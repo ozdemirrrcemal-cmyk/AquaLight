@@ -636,6 +636,7 @@ internal class DeviceOtaCoordinator(
     private fun verifyInstalledFirmware(deviceUid: DeviceUid, snapshot: DeviceSnapshot) {
         val record = pendingVersionVerification[deviceUid] ?: return
         if (!verificationReady.contains(deviceUid) || !snapshot.hasValidatedRuntimeMetadata) return
+        if (snapshot.runtimeMetadataGeneration == record.runtimeMetadataGeneration) return
 
         val identityError = installedIdentityError(snapshot, record)
         if (identityError != null) {
