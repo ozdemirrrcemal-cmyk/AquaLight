@@ -11,6 +11,8 @@
     <string name="device_settings_update_hero_title_recovering">Reconnecting securely</string>
     <string name="device_settings_update_hero_title_restarting">Restarting your device</string>
     <string name="device_settings_update_hero_title_succeeded">Update installed successfully</string>
+    <string name="device_settings_update_hero_title_rolled_back">Update rolled back safely</string>
+    <string name="device_settings_update_hero_title_post_restart_timeout">Device did not return after the update</string>
     <string name="device_settings_update_hero_title_up_to_date">Your device is up to date</string>
     <string name="device_settings_update_hero_title_failed">The update needs attention</string>
     <string name="device_settings_update_hero_title_unsupported">No compatible update is available</string>
@@ -21,16 +23,23 @@
     <string name="device_settings_update_hero_summary_required_version">Version %1$s is required for this device. Review the verified release information before installing it.</string>
     <string name="device_settings_update_hero_summary_starting">A secure update session is being prepared. Keep the device powered and connected.</string>
     <string name="device_settings_update_hero_summary_installing">The verified package is being transferred and installed. Do not interrupt device power.</string>
-    <string name="device_settings_update_hero_summary_recovering">The device is reconnecting after the update step. This can take a moment.</string>
+    <string name="device_settings_update_hero_summary_recovering">The device is reconnecting after the update step. Recovery is bounded and will stop with a clear result if the device does not return.</string>
     <string name="device_settings_update_hero_summary_restarting">The device is restarting and will reconnect automatically after verification.</string>
     <string name="device_settings_update_hero_summary_succeeded_version">Version %1$s was installed and verified successfully.</string>
     <string name="device_settings_update_hero_summary_succeeded">The new software was installed and verified successfully.</string>
+    <string name="device_settings_update_hero_summary_rolled_back_version">Version %1$s was not accepted. ESP-IDF rollback recovered the device on the previous working version %2$s.</string>
+    <string name="device_settings_update_hero_summary_post_restart_timeout">AquaLight could not confirm that the device returned within the protected restart window. You can retry the connection without reinstalling the firmware.</string>
     <string name="device_settings_update_hero_summary_up_to_date_version">Version %1$s is the latest compatible signed release for this device.</string>
     <string name="device_settings_update_hero_summary_up_to_date">The latest compatible signed release is already installed.</string>
     <string name="device_settings_update_hero_summary_unsupported">AquaLight could not find a compatible signed release for this device profile.</string>
 
     <string name="device_settings_update_status_check_failed">Update check failed</string>
+    <string name="device_settings_update_status_rolled_back">Rolled back</string>
+    <string name="device_settings_update_status_post_restart_timeout">Reconnect timed out</string>
     <string name="device_settings_update_phase_check_failed">AquaLight could not verify update information. Resolve the issue below and try again.</string>
+    <string name="device_settings_update_phase_rolled_back">The previous working firmware is running. The device remains operational.</string>
+    <string name="device_settings_update_phase_post_restart_timeout">The protected reconnect window expired before the installed firmware version could be verified.</string>
+    <string name="device_settings_update_action_retry_connection">Retry connection</string>
 
     <string name="device_settings_update_release_warnings_heading">Release-specific notes</string>
     <string name="device_settings_update_release_details_unavailable_title">Detailed release notes were not provided</string>
@@ -46,4 +55,10 @@
     <string name="device_settings_update_now_action">Update now</string>
     <string name="device_settings_update_action_hint_available">The update starts immediately and may restart the device.</string>
     <string name="device_settings_update_action_hint_active">Keep the device powered and connected until verification is complete.</string>
+
+    <string name="device_settings_update_notification_rollback_title">Device recovered safely</string>
+    <string name="device_settings_update_notification_rollback_message">%1$s rejected the update and returned to version %2$s.</string>
+    <string name="device_settings_update_notification_timeout_title">Update recovery needs attention</string>
+    <string name="device_settings_update_notification_timeout_message">%1$s did not reconnect within the protected update window.</string>
+    <string name="device_settings_ota_failure_post_restart_timeout">The device did not reconnect after the update. Retry the connection.</string>
 </resources>
