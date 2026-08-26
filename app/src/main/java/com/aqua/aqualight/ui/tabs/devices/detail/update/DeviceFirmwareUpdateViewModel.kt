@@ -78,6 +78,13 @@ class DeviceFirmwareUpdateViewModel(
 
     fun retry() {
         if (operationJob?.isActive == true) return
+        if (_uiState.value.mode == DeviceFirmwareUpdateMode.POST_RESTART_TIMEOUT) {
+            operationJob = viewModelScope.launch {
+                val result = firmwareUpdateOperations.retryPostRestartRecovery(boundDeviceUid)
+                if (!result.isSuccess) result.failure?.let(::publishLocalFailure)
+            }
+            return
+        }
         refreshAndRecover()
     }
 
@@ -222,6 +229,24 @@ private class DeviceFirmwareUpdateStateMapper {
             phase = null,
             progressPermille = COMPLETE_PROGRESS_PERMILLE
         )
+        is DeviceOtaState.RolledBack -> common.copy(
+            mode = DeviceFirmwareUpdateMode.ROLLED_BACK,
+            currentVersion = state.restoredVersion,
+            targetVersion = state.targetVersion,
+            phase = null,
+            progressPermille = COMPLETE_PROGRESS_PERMILLE
+        )
+        is DeviceOtaState.PostRestartTimeout -> common.copy(
+            mode = DeviceFirmwareUpdateMode.POST_RESTART_TIMEOUT,
+            currentVersion = state.previousVersion.ifBlank { common.currentVersion },
+            targetVersion = state.targetVersion,
+            phase = null,
+            failure = DeviceOtaFailure(
+                reason = DeviceOtaFailureReason.POST_RESTART_TIMEOUT,
+                recoverable = true,
+                diagnosticMessage = "Device did not return within the bounded OTA restart window."
+            )
+        )
         is DeviceOtaState.Failed -> common.copy(
             mode = DeviceFirmwareUpdateMode.FAILED,
             phase = null,
@@ -243,6 +268,8 @@ private class DeviceFirmwareUpdateStateMapper {
             is DeviceOtaState.InProgress -> state.releaseContent
             is DeviceOtaState.RestartRequired -> state.releaseContent
             is DeviceOtaState.Succeeded -> state.releaseContent
+            is DeviceOtaState.RolledBack -> state.releaseContent
+            is DeviceOtaState.PostRestartTimeout -> state.releaseContent
             else -> DeviceFirmwareReleaseContent.EMPTY
         }
         if (content.isPresent) retainedReleaseContent = content
@@ -277,6 +304,8 @@ enum class DeviceFirmwareUpdateMode {
     RECOVERING,
     RESTARTING,
     SUCCEEDED,
+    ROLLED_BACK,
+    POST_RESTART_TIMEOUT,
     UP_TO_DATE,
     FAILED,
     UNSUPPORTED;
