@@ -9,6 +9,8 @@ import com.aqua.aqualight.application.devices.PreparedDeviceFirmwareUpdate
 import com.aqua.aqualight.data.devices.model.DeviceUid
 import com.aqua.aqualight.data.devices.repository.DevicesRepository
 import com.aqua.aqualight.data.devices.runtime.modules.firmware.DeviceOtaCoordinator
+import com.aqua.aqualight.data.devices.runtime.modules.firmware.DeviceOtaRecoveryStore
+import com.aqua.aqualight.data.devices.runtime.modules.firmware.NoOpDeviceOtaRecoveryStore
 import com.aqua.aqualight.i18n.AppLanguageController
 import java.util.Locale
 import java.util.concurrent.CancellationException
@@ -31,7 +33,8 @@ internal class DefaultDeviceFirmwareUpdateOperations(
     private val devicesRepository: DevicesRepository,
     private val statePublisher: suspend (DeviceOtaState, String) -> Unit = { _, _ -> },
     private val availabilityRefreshPolicy: DeviceFirmwareAvailabilityRefreshPolicy =
-        DeviceFirmwareAvailabilityRefreshPolicy()
+        DeviceFirmwareAvailabilityRefreshPolicy(),
+    recoveryStore: DeviceOtaRecoveryStore = NoOpDeviceOtaRecoveryStore
 ) : DeviceFirmwareUpdateOperations, AutoCloseable {
 
     private val operationsScope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
@@ -46,6 +49,7 @@ internal class DefaultDeviceFirmwareUpdateOperations(
             devicesRepository.refreshForegroundBurst()
             Unit
         },
+        recoveryStore = recoveryStore,
         updaterProvider = { devicesRepository.runtimeModules()?.firmwareUpdate },
         runtimeLifecycleEvents = devicesRepository.runtimeLifecycleEvents(),
         runtimeTypedEvents = devicesRepository.typedRuntimeEvents(),
@@ -149,6 +153,9 @@ internal class DefaultDeviceFirmwareUpdateOperations(
 
     override suspend fun clearStatus(deviceUid: String): DeviceFirmwareCommandResult =
         coordinator.clearStatus(requireDeviceUid(deviceUid))
+
+    override suspend fun retryPostRestartRecovery(deviceUid: String): DeviceFirmwareCommandResult =
+        coordinator.retryPostRestartRecovery(requireDeviceUid(deviceUid))
 
     override fun close() {
         localeRefreshJob.cancel()
@@ -286,6 +293,8 @@ private fun DeviceOtaState.requiresReleaseContentRelocalization(
     val currentLocale = when (this) {
         is DeviceOtaState.UpToDate -> releaseContent.localeTag
         is DeviceOtaState.UpdateAvailable -> plan.releaseContent.localeTag
+        is DeviceOtaState.RolledBack -> releaseContent.localeTag
+        is DeviceOtaState.PostRestartTimeout -> releaseContent.localeTag
         else -> null
     }.releaseLocaleOrNull()
 
@@ -315,7 +324,9 @@ private fun DeviceOtaState.allowsPassiveAvailabilityRefresh(): Boolean = when (t
     is DeviceOtaState.InProgress,
     is DeviceOtaState.Recovering,
     is DeviceOtaState.RestartRequired,
-    is DeviceOtaState.Succeeded -> false
+    is DeviceOtaState.Succeeded,
+    is DeviceOtaState.RolledBack,
+    is DeviceOtaState.PostRestartTimeout -> false
 }
 
 private fun DeviceOtaState.notificationKey(): String? = when (this) {
@@ -326,6 +337,8 @@ private fun DeviceOtaState.notificationKey(): String? = when (this) {
         "recovering:$targetVersion:${progressPermille.toNotificationProgressPercent()}"
     is DeviceOtaState.RestartRequired -> "restart:$targetVersion:$restartScheduled"
     is DeviceOtaState.Succeeded -> "succeeded:$targetVersion"
+    is DeviceOtaState.RolledBack -> "rolled-back:$targetVersion:$restoredVersion"
+    is DeviceOtaState.PostRestartTimeout -> "post-restart-timeout:$targetVersion:$previousVersion"
     is DeviceOtaState.Failed -> if (
         failure.stage == DeviceOtaFailureStage.UPDATE_EXECUTION
     ) {
