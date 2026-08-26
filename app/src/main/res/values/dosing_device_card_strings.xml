@@ -10,8 +10,6 @@
     <string name="dosing_device_card_loading_detail">Dosing channels are being prepared from the central device state</string>
     <string name="dosing_device_card_unavailable_detail">Live dosing data could not be prepared</string>
     <string name="dosing_device_card_offline_detail">Live dosing data will appear when the device reconnects</string>
-    <string name="dosing_device_card_active">ACTIVE</string>
-    <string name="dosing_device_card_inactive">INACTIVE</string>
     <string name="dosing_device_card_daily">DAILY</string>
     <string name="dosing_device_card_next">NEXT</string>
     <string name="dosing_device_card_reservoir">RESERVOIR</string>

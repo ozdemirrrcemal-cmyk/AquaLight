@@ -10,8 +10,6 @@
     <string name="dosing_device_card_loading_detail">Dozaj kanalları merkezi cihaz durumundan hazırlanıyor</string>
     <string name="dosing_device_card_unavailable_detail">Canlı dozaj verisi hazırlanamadı</string>
     <string name="dosing_device_card_offline_detail">Cihaz yeniden bağlandığında canlı dozaj verileri gösterilecek</string>
-    <string name="dosing_device_card_active">AKTİF</string>
-    <string name="dosing_device_card_inactive">PASİF</string>
     <string name="dosing_device_card_daily">GÜNLÜK</string>
     <string name="dosing_device_card_next">SONRAKİ</string>
     <string name="dosing_device_card_reservoir">HAZNE</string>
