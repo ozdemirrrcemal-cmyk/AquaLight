@@ -60,5 +60,6 @@
     <string name="device_settings_update_notification_rollback_message">%1$s rejected the update and returned to version %2$s.</string>
     <string name="device_settings_update_notification_timeout_title">Update recovery needs attention</string>
     <string name="device_settings_update_notification_timeout_message">%1$s did not reconnect within the protected update window.</string>
+    <string name="device_settings_ota_outcome_rollback_recovered">The update was rolled back safely. The previous working firmware is running.</string>
     <string name="device_settings_ota_failure_post_restart_timeout">The device did not reconnect after the update. Retry the connection.</string>
 </resources>
