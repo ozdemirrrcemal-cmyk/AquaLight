@@ -135,7 +135,6 @@
 
     <string name="device_dosing_hourly_hero_eyebrow">24 saatlik zamanlama</string>
     <string name="device_dosing_hourly_hero_title">Dengeli dozaj, her saat bir doz</string>
-    <string name="device_dosing_hourly_hero_description">AquaLight günlük dozu 24 eşit doza böler; seçtiğiniz saatte başlar ve sonraki dozları birer saat arayla uygular.</string>
     <string name="device_dosing_hourly_summary_section">Dağıtım özeti</string>
     <string name="device_dosing_hourly_daily_dose_value_format">%1$s mL/gün</string>
     <string name="device_dosing_hourly_daily_amount_description">Dozaj Planı ekranında belirlenen günlük dozu kullanır.</string>
@@ -146,16 +145,9 @@
     <string name="device_dosing_hourly_average_dose_format">≈%1$s mL</string>
     <string name="device_dosing_hourly_average_dose_description">Günlük doz 24 doza eşit olarak dağıtılır.</string>
     <string name="device_dosing_hourly_timing_section">Saatlik zamanlama</string>
-    <string name="device_dosing_hourly_start_time_title">İlk doz saati</string>
-    <string name="device_dosing_hourly_start_time_description">İlk doz bu saatte başlar; sonraki 23 doz saatlik devam eder.</string>
     <string name="device_dosing_hourly_window_title">İlk ve son doz</string>
     <string name="device_dosing_hourly_window_format">%1$s – %2$s</string>
-    <string name="device_dosing_hourly_window_description">24 doz birer saat arayla uygulanır; son doz ertesi güne kalabilir.</string>
-    <string name="device_dosing_hourly_next_day_time_format">%1$s · +1 gün</string>
     <string name="device_dosing_hourly_use_action">Saatlik dağıtımı kullan</string>
-    <string name="device_dosing_hourly_start_time_picker_title">İlk doz saatini seçin</string>
-    <string name="device_dosing_hourly_start_time_picker_message">İlk doz saatini seçin. Sonraki 23 doz birer saat arayla devam eder.</string>
-    <string name="device_dosing_hourly_start_time_picker_confirm">Saati uygula</string>
 
     <string name="device_dosing_schedule_add">Ekle</string>
     <string name="device_dosing_schedule_validation_section">Programı kontrol et</string>
