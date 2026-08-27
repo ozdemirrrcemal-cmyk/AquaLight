@@ -36,7 +36,7 @@ class DeviceDosingV1ContractTest {
     }
 
     @Test
-    fun `request serializers preserve omission null and arbitrary day time`() {
+    fun `request serializers preserve omission null and hourly minute contract`() {
         val clearName = DeviceDosingV1ConfigApplyRequest(
             channelKey = CHANNEL,
             expectedRevision = 9,
@@ -51,10 +51,11 @@ class DeviceDosingV1ContractTest {
                 weekdays = DeviceDosingV1Weekdays(List(7) { true }),
                 config = DeviceDosingV1ProgramConfig.Hourly24(
                     dailyDose = DeviceDosingV1Amount.fromMilliliters(2.4),
-                    startTimeMillis = 36_900_000
+                    minuteOfHour = 15
                 )
             )
         ).toJson()
+        val hourlyConfig = hourly.getJSONObject("program").getJSONObject("config")
 
         assertEquals(
             setOf("channelKey", "expectedRevision", "displayName"),
@@ -62,11 +63,49 @@ class DeviceDosingV1ContractTest {
         )
         assertTrue(clearName.isNull("displayName"))
         assertEquals(setOf("channelKey"), calibrationDefault.keys().asSequence().toSet())
-        assertEquals(
-            36_900_000L,
-            hourly.getJSONObject("program").getJSONObject("config").getLong("startTimeMs")
-        )
+        assertEquals(setOf("dailyDoseMl", "minuteOfHour"), hourlyConfig.keys().asSequence().toSet())
+        assertEquals(15, hourlyConfig.getInt("minuteOfHour"))
+        assertFalse(hourlyConfig.has("startTimeMs"))
         assertFalse(hourly.getJSONObject("program").has("missedDoseRecoveryEnabled"))
+    }
+
+    @Test
+    fun `hourly minute range matches firmware and old start time shape is rejected`() {
+        DeviceDosingV1ProgramConfig.Hourly24(
+            dailyDose = DeviceDosingV1Amount.fromMilliliters(2.4),
+            minuteOfHour = 0
+        )
+        DeviceDosingV1ProgramConfig.Hourly24(
+            dailyDose = DeviceDosingV1Amount.fromMilliliters(2.4),
+            minuteOfHour = 59
+        )
+        assertThrows(IllegalArgumentException::class.java) {
+            DeviceDosingV1ProgramConfig.Hourly24(
+                dailyDose = DeviceDosingV1Amount.fromMilliliters(2.4),
+                minuteOfHour = -1
+            )
+        }
+        assertThrows(IllegalArgumentException::class.java) {
+            DeviceDosingV1ProgramConfig.Hourly24(
+                dailyDose = DeviceDosingV1Amount.fromMilliliters(2.4),
+                minuteOfHour = 60
+            )
+        }
+
+        val obsolete = DeviceDosingV1TestFixtures.channelDetail()
+            .also { detail ->
+                detail.getJSONObject("program")
+                    .getJSONObject("config")
+                    .remove("minuteOfHour")
+                detail.getJSONObject("program")
+                    .getJSONObject("config")
+                    .put("startTimeMs", 36_900_000)
+            }
+        assertThrows(IllegalArgumentException::class.java) {
+            DeviceDosingV1StatusParser.parseChannel(
+                DeviceDosingV1TestFixtures.channelStatus(obsolete)
+            )
+        }
     }
 
     @Test

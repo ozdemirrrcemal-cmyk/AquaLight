@@ -120,7 +120,7 @@ sealed interface DeviceDosingV1ProgramSnapshotConfig {
 
     data class Hourly24(
         val dailyDoseMilliliters: Double,
-        val startTimeMillis: Long
+        val minuteOfHour: Int
     ) : DeviceDosingV1ProgramSnapshotConfig
 
     data class CustomPeriod(

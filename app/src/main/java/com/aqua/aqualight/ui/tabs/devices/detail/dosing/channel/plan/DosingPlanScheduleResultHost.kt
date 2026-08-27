@@ -63,12 +63,12 @@ private fun bindHourlyScheduleResult(
         val expected = result.getString(DeviceDosingHourlyScheduleContract.RESULT_KEY) ==
             DeviceDosingHourlyScheduleContract.RESULT_SAVED &&
             result.getString(DeviceDosingHourlyScheduleContract.RESULT_SLOT_ID) == host.slotId
-        val startTimeMs = result.getLong(
-            DeviceDosingHourlyScheduleContract.RESULT_START_TIME_MS,
-            INVALID_START_TIME_MS
+        val minuteOfHour = result.getInt(
+            DeviceDosingHourlyScheduleContract.RESULT_MINUTE_OF_HOUR,
+            INVALID_MINUTE_OF_HOUR
         )
-        if (expected && DeviceDosingHourlyScheduleContract.isValidStartTime(startTimeMs)) {
-            host.updateSchedule(DosingPlanScheduleUpdate.Hourly(startTimeMs))
+        if (expected && DeviceDosingHourlyScheduleContract.isValidMinuteOfHour(minuteOfHour)) {
+            host.updateSchedule(DosingPlanScheduleUpdate.Hourly(minuteOfHour))
         }
     }
 }
@@ -125,3 +125,4 @@ private fun bindTimerScheduleResult(
 }
 
 private const val INVALID_START_TIME_MS = -1L
+private const val INVALID_MINUTE_OF_HOUR = -1

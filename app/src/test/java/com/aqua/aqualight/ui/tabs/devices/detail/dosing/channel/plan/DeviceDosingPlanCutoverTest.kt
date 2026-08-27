@@ -220,7 +220,7 @@ private fun stage10Programs(): List<DeviceDosingProgram> {
         DeviceDosingProgram(
             enabled = false,
             weekdays = weekdays,
-            schedule = DeviceDosingProgramSchedule.Hourly24(24_000L, 3_600_000L),
+            schedule = DeviceDosingProgramSchedule.Hourly24(24_000L, 15),
             missedDoseRecoveryEnabled = false
         ),
         DeviceDosingProgram(

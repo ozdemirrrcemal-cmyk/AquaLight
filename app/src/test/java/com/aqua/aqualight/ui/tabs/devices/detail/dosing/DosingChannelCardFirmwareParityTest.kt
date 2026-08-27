@@ -102,7 +102,7 @@ class DosingChannelCardFirmwareParityTest {
             weekdays = List(7) { true },
             schedule = DeviceDosingProgramSchedule.Hourly24(
                 dailyDoseMicroliters = 24_000L,
-                startTimeMillis = 0L
+                minuteOfHour = 0
             ),
             missedDoseRecoveryEnabled = false
         ),

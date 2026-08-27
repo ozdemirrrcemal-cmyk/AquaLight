@@ -1,48 +1,31 @@
 package com.aqua.aqualight.ui.tabs.devices.detail.dosing.channel.schedule.hourly
 
-/** Typed UI boundary for the firmware's 24-dose hourly schedule mode. */
+/** Typed UI boundary for firmware Hourly24: exactly one minute shared by all 24 local hours. */
 internal object DeviceDosingHourlyScheduleContract {
     const val RESULT_REQUEST_KEY = "dosing_hourly_schedule_result"
     const val RESULT_KEY = "dosing_hourly_schedule_result_state"
-    const val RESULT_START_TIME_MS = "dosing_hourly_schedule_start_time_ms"
+    const val RESULT_MINUTE_OF_HOUR = "dosing_hourly_schedule_minute_of_hour"
     const val RESULT_SLOT_ID = "dosing_hourly_schedule_slot_id"
     const val RESULT_SAVED = "saved"
 
     const val DOSES_PER_DAY = 24
     const val MINUTES_PER_HOUR = 60
-    const val MINUTES_PER_DAY = 24 * MINUTES_PER_HOUR
-    const val MILLIS_PER_MINUTE = 60_000L
-    const val MILLIS_PER_HOUR = MINUTES_PER_HOUR * MILLIS_PER_MINUTE
-    const val MILLIS_PER_DAY = MINUTES_PER_DAY * MILLIS_PER_MINUTE
-    const val LAST_MILLISECOND_OF_DAY = MILLIS_PER_DAY - 1L
 
-    fun isValidStartTime(startTimeMs: Long): Boolean =
-        startTimeMs in 0L..LAST_MILLISECOND_OF_DAY
+    fun isValidMinuteOfHour(minuteOfHour: Int): Boolean =
+        minuteOfHour in 0 until MINUTES_PER_HOUR
 
-    fun minutesOfDay(startTimeMs: Long): Int {
-        require(isValidStartTime(startTimeMs)) {
-            "Hourly startTimeMs must stay inside one local day."
+    fun firstDoseMinutesOfDay(minuteOfHour: Int): Int {
+        require(isValidMinuteOfHour(minuteOfHour)) {
+            "Hourly minuteOfHour must be between 0 and 59."
         }
-        return (startTimeMs / MILLIS_PER_MINUTE).toInt()
+        return minuteOfHour
     }
 
-    fun startTimeMs(minutesOfDay: Int): Long {
-        require(minutesOfDay in 0 until MINUTES_PER_DAY) {
-            "minutesOfDay must stay inside one local day."
+    fun lastDoseMinutesOfDay(minuteOfHour: Int): Int {
+        require(isValidMinuteOfHour(minuteOfHour)) {
+            "Hourly minuteOfHour must be between 0 and 59."
         }
-        return minutesOfDay * MILLIS_PER_MINUTE
-    }
-
-    fun lastDoseTimeMs(startTimeMs: Long): Long {
-        require(isValidStartTime(startTimeMs)) {
-            "Hourly startTimeMs must stay inside one local day."
-        }
-        return (startTimeMs + (DOSES_PER_DAY - 1L) * MILLIS_PER_HOUR) % MILLIS_PER_DAY
-    }
-
-    fun lastDoseFallsOnNextDay(startTimeMs: Long): Boolean {
-        require(isValidStartTime(startTimeMs))
-        return startTimeMs + (DOSES_PER_DAY - 1L) * MILLIS_PER_HOUR >= MILLIS_PER_DAY
+        return (DOSES_PER_DAY - 1) * MINUTES_PER_HOUR + minuteOfHour
     }
 
     fun dailyDoseMl(dailyDoseMicroliters: Long): Double {

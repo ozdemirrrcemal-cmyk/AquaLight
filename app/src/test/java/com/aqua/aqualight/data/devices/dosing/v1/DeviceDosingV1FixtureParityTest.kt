@@ -43,21 +43,27 @@ class DeviceDosingV1FixtureParityTest {
     }
 
     @Test
-    fun `program apply fixture matches the final handler response`() {
+    fun `program apply fixture matches calendar day hourly handler contract`() {
         val fixture = resourceJson("aql_dosing_program_v1.json")
         val successFields = fixture
             .getJSONObject("programApply")
             .getJSONArray("successFields")
+        val hourly = fixture.getJSONObject("examples").getJSONObject("hourly24")
+        val config = hourly.getJSONObject("config")
+        val invariants = hourly.getJSONObject("invariants")
 
         assertEquals(
             listOf("operation", "channelKey", "saved", "event", "channel"),
             List(successFields.length(), successFields::getString)
         )
-        assertEquals(36_900_000L, fixture
-            .getJSONObject("examples")
-            .getJSONObject("hourly24")
-            .getJSONObject("config")
-            .getLong("startTimeMs"))
+        assertEquals(15, config.getInt("minuteOfHour"))
+        assertFalse(config.has("startTimeMs"))
+        assertEquals(24, invariants.getInt("occurrenceCount"))
+        assertEquals(900_000L, invariants.getJSONObject("first").getLong("timeMs"))
+        assertEquals(83_700_000L, invariants.getJSONObject("last").getLong("timeMs"))
+        assertEquals(0, invariants.getJSONObject("first").getInt("programDayOffset"))
+        assertEquals(0, invariants.getJSONObject("last").getInt("programDayOffset"))
+        assertTrue(invariants.getBoolean("allOccurrencesStayOnSelectedCalendarDay"))
     }
 
     @Test
@@ -122,9 +128,9 @@ class DeviceDosingV1FixtureParityTest {
     private companion object {
         const val PIN_FIXTURE = "aql_android_dosing_v1_pin.json"
         const val CHANNEL_STATUS_FIXTURE = "aql_dosing_channel_status_v1.json"
-        const val FIRMWARE_COMMIT = "4a5366c887bb7f5cf33f32b2f33083620e585ed2"
+        const val FIRMWARE_COMMIT = "8a652abe071fd4a805bbf8b4f19b03c9312ec1b9"
         const val STATUS_CODEC_PATH = "src/modules/dosing/AqlDosingStatusCodec.hpp"
-        const val DERIVED_CHANNEL_STATUS_BLOB = "aa6721ab881de34419c09e5769d70366af36d3d5"
+        const val DERIVED_CHANNEL_STATUS_BLOB = "ea7e8d0ae8a846441edd51e9d24a26fbf9da65db"
 
         val PINNED_SOURCE_BLOBS = linkedMapOf(
             "src/api/v1/commands/AqlDosingCommands.hpp" to
@@ -132,23 +138,23 @@ class DeviceDosingV1FixtureParityTest {
             "src/api/v1/commands/AqlDosingProgressCommands.hpp" to
                 "8700e785bdd2e747abea3b09eff97755e2addad0",
             "src/modules/dosing/AqlDosingProgramApiCodec.hpp" to
-                "7f4eb5d41108a962bc9476fef6a3895327c1d26e",
+                "33f4dead13c82f7966d58c1ba74054e181dab40c",
             STATUS_CODEC_PATH to "77524043931c58bb90d3e84f628f64acca97d3a2",
             "src/modules/dosing/AqlDosingSchedulingMetadataCodec.hpp" to
                 "cab751e2d508651d17550c48314707524053f995",
             "src/modules/dosing/AqlDosingRuntimeEvent.hpp" to
                 "0b40b1eff35af48976f95fedba5a2854885f2439",
             "src/modules/dosing/AqlDosingRuntimeService.hpp" to
-                "e501cf0ae1a4f84a9a716bac91b0f668066653ce"
+                "aa43e46ad16c8552c29e3526101f8e8474dee769"
         )
 
         val PINNED_FIXTURE_BLOBS = linkedMapOf(
             "aql_dosing_calibration_v1.json" to
                 "bb7ce3da02db64e6c83ef755ca416a137e5bab60",
             "aql_dosing_persistence_v1.json" to
-                "a6f3a38c0b701493139858a76d674296640a0dd0",
+                "fcdb64581dd7e944f4bb9710e6ec9eaad40f8bb6",
             "aql_dosing_program_v1.json" to
-                "809a64d12a577be7757d8570e400009c9636adad",
+                "ee09ae4231899511aa04ad970f78f3232b0db2e8",
             "aql_dosing_progress_budget_v1.json" to
                 "a9f71db11191d42d76e2951bb09f305229140399",
             "aql_dosing_scheduling_metadata_v1.json" to
@@ -161,11 +167,11 @@ class DeviceDosingV1FixtureParityTest {
             "aql_dosing_calibration_v1.json" to
                 "34b789082bc4d8417dc938184e60d97c183b52531224dc32e25fdcf46332bef5",
             CHANNEL_STATUS_FIXTURE to
-                "ac48a094e5127e54a3a51a66a1487f81ecb5993241fa0ccb7f5669cef7af752e",
+                "5af13c967c57208be8ee774fbe614de493b29df4c9700df0a2d611a7f7abd9ce",
             "aql_dosing_persistence_v1.json" to
-                "767a9e08e6cf71a221470958b616790f3ddd223dfd77033fde03708899fea880",
+                "72f38f699c07f55774dbc9ff7de72bac06f6bd1868779cc3774ef241b813ef1e",
             "aql_dosing_program_v1.json" to
-                "caa84b8484e47ad67b59748d9e18a5ff09b3266d2b439d463a250b283808c3b1",
+                "484b69b418b2225c62ebebbba5ace647742004096a1e942b970033708b30a65d",
             "aql_dosing_progress_budget_v1.json" to
                 "42c84529351a2aee5b6d29ae2e2934fd427a96808bb294cbff54ac10287f482d",
             "aql_dosing_scheduling_metadata_v1.json" to

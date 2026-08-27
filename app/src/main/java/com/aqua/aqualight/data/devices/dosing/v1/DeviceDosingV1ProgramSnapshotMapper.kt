@@ -80,7 +80,7 @@ internal object DeviceDosingV1ProgramSnapshotMapper {
                 require(snapshot.mode.raw == PROGRAM_MODE_HOURLY_24)
                 DeviceDosingProgramSchedule.Hourly24(
                     DeviceDosingV1AmountMapper.toMicroliters(config.dailyDoseMilliliters),
-                    config.startTimeMillis
+                    config.minuteOfHour
                 )
             }
             is DeviceDosingV1ProgramSnapshotConfig.CustomPeriods -> {
@@ -128,7 +128,7 @@ internal object DeviceDosingV1ProgramSnapshotMapper {
                 dailyDose = DeviceDosingV1AmountMapper.toWireAmount(
                     schedule.dailyDoseMicroliters
                 ),
-                startTimeMillis = schedule.startTimeMillis
+                minuteOfHour = schedule.minuteOfHour
             )
             is DeviceDosingProgramSchedule.CustomPeriods ->
                 DeviceDosingV1ProgramConfig.CustomPeriods(

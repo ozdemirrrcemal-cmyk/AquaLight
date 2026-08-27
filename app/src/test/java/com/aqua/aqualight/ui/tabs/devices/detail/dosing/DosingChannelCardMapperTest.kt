@@ -395,7 +395,7 @@ class DosingChannelCardMapperTest {
         weekdays = listOf(true, true, true, true, true, false, false),
         schedule = DeviceDosingProgramSchedule.Hourly24(
             dailyDoseMicroliters = 24_000L,
-            startTimeMillis = 36_900_000L
+            minuteOfHour = 15
         ),
         missedDoseRecoveryEnabled = true
     )

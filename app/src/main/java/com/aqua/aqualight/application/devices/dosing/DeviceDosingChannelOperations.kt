@@ -130,7 +130,7 @@ sealed interface DeviceDosingProgramSchedule {
 
     data class Hourly24(
         val dailyDoseMicroliters: Long,
-        val startTimeMillis: Long
+        val minuteOfHour: Int
     ) : DeviceDosingProgramSchedule {
         override val mode: DeviceDosingProgramMode = DeviceDosingProgramMode.HOURLY_24
     }
@@ -181,7 +181,8 @@ private fun DeviceDosingProgramSchedule.isValidFor(
             totalMicroliters = dailyDoseMicroliters,
             count = HOURLY_DOSE_COUNT,
             policy = policy
-        ) && isDosingTime(startTimeMillis) && policy.maxEventsPerChannel >= HOURLY_DOSE_COUNT
+        ) && minuteOfHour in 0 until MINUTES_PER_HOUR &&
+            policy.maxEventsPerChannel >= HOURLY_DOSE_COUNT
     is DeviceDosingProgramSchedule.CustomPeriods -> isValidFor(policy)
     is DeviceDosingProgramSchedule.Timer -> isValidFor(policy)
 }
@@ -511,4 +512,5 @@ private fun validDistributedAmount(
 private const val DOSING_PROGRESS_PERCENT_SCALE = 100.0
 private const val WEEKDAY_COUNT = 7
 private const val HOURLY_DOSE_COUNT = 24
+private const val MINUTES_PER_HOUR = 60
 private const val MILLIS_PER_DAY = 86_400_000L

@@ -9,7 +9,7 @@ import com.aqua.aqualight.ui.tabs.devices.detail.dosing.channel.schedule.timer.D
 internal data class DosingPlanDraft(
     val distributedDailyDoseMicroliters: Long = DEFAULT_DAILY_DOSE_MICROLITERS,
     val singleDoseStartTimeMs: Long = DEFAULT_SINGLE_DOSE_START_TIME_MS,
-    val hourlyStartTimeMs: Long = DEFAULT_HOURLY_START_TIME_MS,
+    val hourlyMinuteOfHour: Int = DEFAULT_HOURLY_MINUTE_OF_HOUR,
     val customPeriods: List<DeviceDosingCustomPeriod> = emptyList(),
     val timerDoses: List<DeviceDosingTimerDose> = emptyList(),
     val selectedScheduleMode: DosingPlanScheduleMode = DosingPlanScheduleMode.SINGLE,
@@ -26,7 +26,7 @@ internal data class DosingPlanDraft(
     fun writeTo(outState: Bundle) {
         outState.putLong(STATE_DAILY_DOSE_MICROLITERS, distributedDailyDoseMicroliters)
         outState.putLong(STATE_SINGLE_DOSE_START_TIME_MS, singleDoseStartTimeMs)
-        outState.putLong(STATE_HOURLY_START_TIME_MS, hourlyStartTimeMs)
+        outState.putInt(STATE_HOURLY_MINUTE_OF_HOUR, hourlyMinuteOfHour)
         outState.putString(
             STATE_CUSTOM_PERIODS_DRAFT,
             DeviceDosingCustomScheduleContract.encodeDraft(customPeriods)
@@ -52,9 +52,9 @@ internal data class DosingPlanDraft(
                     STATE_SINGLE_DOSE_START_TIME_MS,
                     DEFAULT_SINGLE_DOSE_START_TIME_MS
                 ),
-                hourlyStartTimeMs = savedInstanceState.getLong(
-                    STATE_HOURLY_START_TIME_MS,
-                    DEFAULT_HOURLY_START_TIME_MS
+                hourlyMinuteOfHour = savedInstanceState.getInt(
+                    STATE_HOURLY_MINUTE_OF_HOUR,
+                    DEFAULT_HOURLY_MINUTE_OF_HOUR
                 ),
                 customPeriods = savedInstanceState.getString(STATE_CUSTOM_PERIODS_DRAFT)
                     ?.let(DeviceDosingCustomScheduleContract::decodeDraft)
@@ -79,7 +79,7 @@ internal data class DosingPlanDraft(
 
         private const val STATE_DAILY_DOSE_MICROLITERS = "daily_dose_microliters"
         private const val STATE_SINGLE_DOSE_START_TIME_MS = "single_dose_start_time_ms"
-        private const val STATE_HOURLY_START_TIME_MS = "hourly_start_time_ms"
+        private const val STATE_HOURLY_MINUTE_OF_HOUR = "hourly_minute_of_hour"
         private const val STATE_CUSTOM_PERIODS_DRAFT = "custom_periods_draft"
         private const val STATE_TIMER_DOSES_DRAFT = "timer_doses_draft"
         private const val STATE_SELECTED_SCHEDULE_MODE = "selected_schedule_mode"
@@ -87,7 +87,7 @@ internal data class DosingPlanDraft(
         private const val STATE_SCHEDULE_WEEKDAYS = "schedule_weekdays"
         private const val DEFAULT_DAILY_DOSE_MICROLITERS = 0L
         private const val DEFAULT_SINGLE_DOSE_START_TIME_MS = 0L
-        private const val DEFAULT_HOURLY_START_TIME_MS = 0L
+        private const val DEFAULT_HOURLY_MINUTE_OF_HOUR = 0
         private const val DEFAULT_SCHEDULE_ENABLED = true
     }
 }

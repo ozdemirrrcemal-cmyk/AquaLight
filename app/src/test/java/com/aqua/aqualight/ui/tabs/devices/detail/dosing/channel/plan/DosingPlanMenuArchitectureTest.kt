@@ -132,7 +132,7 @@ class DosingPlanMenuArchitectureTest {
     }
 
     @Test
-    fun `hourly editor reuses the shared channel shell and central time of day picker`() {
+    fun `hourly editor reuses the shared channel shell and central minute picker`() {
         val fragment = source(
             "app/src/main/java/com/aqua/aqualight/ui/tabs/devices/detail/dosing/channel/" +
                 "schedule/hourly/DeviceDosingHourlyScheduleFragment.kt"
@@ -144,11 +144,12 @@ class DosingPlanMenuArchitectureTest {
         val navigation = source("app/src/main/res/navigation/nav_app.xml")
 
         assertTrue(fragment.contains("setupSelectedPump("))
-        assertTrue(fragment.contains("SelectionMode.TIME_OF_DAY"))
-        assertFalse(fragment.contains("SelectionMode.MINUTE_OF_HOUR"))
+        assertTrue(fragment.contains("SelectionMode.MINUTE_OF_HOUR"))
+        assertFalse(fragment.contains("SelectionMode.TIME_OF_DAY"))
         assertTrue(fragment.contains("AquaTimePickerBottomSheet.show("))
         assertTrue(screen.contains("AquaDeviceMenuHeroCard("))
         assertTrue(screen.contains("AquaDeviceMenuEditableValueRow("))
+        assertTrue(screen.contains("minuteOfHour"))
         assertTrue(navigation.contains("deviceDosingHourlyScheduleFragment"))
         assertFalse(screen.contains("DosingPumpDevice("))
     }

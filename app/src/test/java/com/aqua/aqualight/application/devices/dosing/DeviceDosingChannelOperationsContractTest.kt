@@ -8,22 +8,47 @@ import org.junit.Test
 class DeviceDosingChannelOperationsContractTest {
 
     @Test
-    fun `hourly program accepts a full-day firmware start without rounding`() {
+    fun `hourly program accepts only the firmware minute of hour range`() {
+        val policy = DeviceDosingSchedulingPolicy()
         val program = program(
             schedule = DeviceDosingProgramSchedule.Hourly24(
                 dailyDoseMicroliters = 24_000L,
-                startTimeMillis = 36_900_123L
+                minuteOfHour = 15
             )
         )
 
-        assertTrue(program.isValidFor(DeviceDosingSchedulingPolicy()))
+        assertTrue(program.isValidFor(policy))
+        assertTrue(
+            program.copy(
+                schedule = DeviceDosingProgramSchedule.Hourly24(
+                    dailyDoseMicroliters = 24_000L,
+                    minuteOfHour = 0
+                )
+            ).isValidFor(policy)
+        )
+        assertTrue(
+            program.copy(
+                schedule = DeviceDosingProgramSchedule.Hourly24(
+                    dailyDoseMicroliters = 24_000L,
+                    minuteOfHour = 59
+                )
+            ).isValidFor(policy)
+        )
         assertFalse(
             program.copy(
                 schedule = DeviceDosingProgramSchedule.Hourly24(
                     dailyDoseMicroliters = 24_000L,
-                    startTimeMillis = 86_400_000L
+                    minuteOfHour = -1
                 )
-            ).isValidFor(DeviceDosingSchedulingPolicy())
+            ).isValidFor(policy)
+        )
+        assertFalse(
+            program.copy(
+                schedule = DeviceDosingProgramSchedule.Hourly24(
+                    dailyDoseMicroliters = 24_000L,
+                    minuteOfHour = 60
+                )
+            ).isValidFor(policy)
         )
     }
 

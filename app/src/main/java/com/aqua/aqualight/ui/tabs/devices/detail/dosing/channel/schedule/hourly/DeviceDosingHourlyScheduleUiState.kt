@@ -5,6 +5,6 @@ import androidx.compose.runtime.Immutable
 @Immutable
 internal data class DeviceDosingHourlyScheduleUiState(
     val dailyDoseMicroliters: Long,
-    val startTimeMs: Long,
+    val minuteOfHour: Int,
     val actionEnabled: Boolean = true
 )

@@ -37,13 +37,15 @@ class DeviceDosingV1ChannelDetailCutoverTest {
         val request = gateway.requests.single { it.action == DeviceDosingV1Contract.Action.PROGRAM_APPLY }
         val payload = JSONObject(request.data)
         val program = payload.getJSONObject("program")
+        val config = program.getJSONObject("config")
         assertEquals(7L, payload.getLong("expectedRevision"))
         assertTrue(program.getBoolean("enabled"))
         assertEquals(7, program.getJSONArray("weekdays").length())
         assertEquals("hourly24", program.getString("mode"))
         assertTrue(program.getBoolean("missedDoseRecoveryEnabled"))
-        assertEquals(2.4, program.getJSONObject("config").getDouble("dailyDoseMl"), 0.0)
-        assertEquals(36_900_000L, program.getJSONObject("config").getLong("startTimeMs"))
+        assertEquals(2.4, config.getDouble("dailyDoseMl"), 0.0)
+        assertEquals(15, config.getInt("minuteOfHour"))
+        assertFalse(config.has("startTimeMs"))
         assertTrue(
             (result as DeviceDosingChannelOperationResult.Success)
                 .snapshot.program?.missedDoseRecoveryEnabled == true

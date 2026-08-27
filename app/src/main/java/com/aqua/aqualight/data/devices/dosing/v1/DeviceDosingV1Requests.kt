@@ -100,12 +100,14 @@ sealed interface DeviceDosingV1ProgramConfig {
 
     data class Hourly24(
         val dailyDose: DeviceDosingV1Amount,
-        val startTimeMillis: Long
+        val minuteOfHour: Int
     ) : DeviceDosingV1ProgramConfig {
         override val mode = "hourly24"
 
         init {
-            requireDosingTime(startTimeMillis, "startTimeMillis")
+            require(minuteOfHour in 0 until MINUTES_PER_HOUR) {
+                "minuteOfHour must be between 0 and 59."
+            }
         }
     }
 
@@ -355,7 +357,7 @@ private fun DeviceDosingV1ProgramConfig.toJson(): JSONObject = when (this) {
         .put("startTimeMs", startTimeMillis)
     is DeviceDosingV1ProgramConfig.Hourly24 -> JSONObject()
         .put("dailyDoseMl", dailyDose.milliliters)
-        .put("startTimeMs", startTimeMillis)
+        .put("minuteOfHour", minuteOfHour)
     is DeviceDosingV1ProgramConfig.CustomPeriods -> JSONObject()
         .put("dailyDoseMl", dailyDose.milliliters)
         .put(
@@ -396,3 +398,5 @@ private fun requireDosingTime(value: Long, field: String) {
         "$field must be within the local firmware day."
     }
 }
+
+private const val MINUTES_PER_HOUR = 60

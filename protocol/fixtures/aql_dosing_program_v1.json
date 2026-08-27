@@ -47,15 +47,15 @@
       "missedDoseRecoveryEnabled": false,
       "config": {
         "dailyDoseMl": 2.4,
-        "startTimeMs": 36900000
+        "minuteOfHour": 15
       },
       "invariants": {
         "occurrenceCount": 24,
         "spacingMs": 3600000,
-        "first": {"programDayOffset": 0, "timeMs": 36900000},
-        "lastBeforeMidnight": {"programDayOffset": 0, "timeMs": 83700000},
-        "firstAfterMidnight": {"programDayOffset": 1, "timeMs": 900000},
-        "last": {"programDayOffset": 1, "timeMs": 33300000},
+        "first": {"programDayOffset": 0, "timeMs": 900000},
+        "last": {"programDayOffset": 0, "timeMs": 83700000},
+        "allOccurrencesStayOnSelectedCalendarDay": true,
+        "weekdayBelongsToPhysicalCalendarDay": true,
         "totalAmountMl": 2.4
       }
     },

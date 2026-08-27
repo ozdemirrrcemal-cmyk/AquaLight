@@ -65,7 +65,7 @@
             "weekdays": [true, true, true, true, true, true, true],
             "mode": "hourly24",
             "missedDoseRecoveryEnabled": false,
-            "config": {"dailyDoseMl": 2.4, "startTimeMs": 900000}
+            "config": {"dailyDoseMl": 2.4, "minuteOfHour": 15}
           }
         },
         {

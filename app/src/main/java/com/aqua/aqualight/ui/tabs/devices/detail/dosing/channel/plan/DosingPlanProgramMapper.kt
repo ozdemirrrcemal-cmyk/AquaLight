@@ -19,7 +19,7 @@ internal fun DosingPlanDraft.toApplicationProgram(
         )
         DosingPlanScheduleMode.HOURLY -> DeviceDosingProgramSchedule.Hourly24(
             dailyDoseMicroliters = distributedDailyDoseMicroliters,
-            startTimeMillis = hourlyStartTimeMs
+            minuteOfHour = hourlyMinuteOfHour
         )
         DosingPlanScheduleMode.CUSTOM -> DeviceDosingProgramSchedule.CustomPeriods(
             dailyDoseMicroliters = distributedDailyDoseMicroliters,
@@ -43,7 +43,7 @@ internal fun DeviceDosingProgram.toPlanDraft(): DosingPlanDraft {
         )
         is DeviceDosingProgramSchedule.Hourly24 -> DosingPlanDraft(
             distributedDailyDoseMicroliters = value.dailyDoseMicroliters,
-            hourlyStartTimeMs = value.startTimeMillis,
+            hourlyMinuteOfHour = value.minuteOfHour,
             selectedScheduleMode = DosingPlanScheduleMode.HOURLY,
             scheduleEnabled = enabled,
             recurrenceState = recurrence

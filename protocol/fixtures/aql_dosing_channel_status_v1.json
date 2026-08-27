@@ -43,7 +43,7 @@
       "missedDoseRecoveryEnabled": false,
       "config": {
         "dailyDoseMl": 2.4,
-        "startTimeMs": 36900000
+        "minuteOfHour": 15
       }
     },
     "usageToday": {

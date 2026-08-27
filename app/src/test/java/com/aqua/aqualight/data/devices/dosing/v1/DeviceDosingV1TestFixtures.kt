@@ -295,9 +295,12 @@ internal object DeviceDosingV1TestFixtures {
 
     private fun program(mode: String): JSONObject {
         val config = when (mode) {
-            "single", "hourly24" -> JSONObject()
+            "single" -> JSONObject()
                 .put("dailyDoseMl", 2.4)
                 .put("startTimeMs", 36_900_000)
+            "hourly24" -> JSONObject()
+                .put("dailyDoseMl", 2.4)
+                .put("minuteOfHour", 15)
             "customPeriods" -> JSONObject()
                 .put("dailyDoseMl", 6.0)
                 .put(

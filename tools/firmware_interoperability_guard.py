@@ -6,7 +6,7 @@ from __future__ import annotations
 import firmware_interoperability_guard_core as guard
 
 
-guard.FIRMWARE_COMMIT = "4a5366c887bb7f5cf33f32b2f33083620e585ed2"
+guard.FIRMWARE_COMMIT = "8a652abe071fd4a805bbf8b4f19b03c9312ec1b9"
 guard.REQUEST_CONTRACT_BLOBS = dict(guard.REQUEST_CONTRACT_BLOBS)
 guard.REQUEST_CONTRACT_BLOBS["src/api/v1/commands/AqlTimeCommands.hpp"] = (
     "ee6e87ab0e1152ffd3d9004fe8b5c7e380488a4f"

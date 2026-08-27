@@ -335,17 +335,21 @@ object DeviceDosingV1StatusParser {
         data: JSONObject
     ): DeviceDosingV1ProgramSnapshotConfig = when (mode.raw) {
         "single" -> {
-            data.requireDosingKeys(DAILY_CONFIG_KEYS, "single dosing config")
+            data.requireDosingKeys(SINGLE_CONFIG_KEYS, "single dosing config")
             DeviceDosingV1ProgramSnapshotConfig.Single(
                 dailyDoseMilliliters = data.requireDosingDouble("dailyDoseMl", minimum = 0.0),
                 startTimeMillis = data.requireDosingTime("startTimeMs")
             )
         }
         "hourly24" -> {
-            data.requireDosingKeys(DAILY_CONFIG_KEYS, "hourly24 dosing config")
+            data.requireDosingKeys(HOURLY_CONFIG_KEYS, "hourly24 dosing config")
             DeviceDosingV1ProgramSnapshotConfig.Hourly24(
                 dailyDoseMilliliters = data.requireDosingDouble("dailyDoseMl", minimum = 0.0),
-                startTimeMillis = data.requireDosingTime("startTimeMs")
+                minuteOfHour = data.requireDosingInt(
+                    "minuteOfHour",
+                    minimum = 0,
+                    maximum = 59
+                )
             )
         }
         "customPeriods" -> {
@@ -574,7 +578,8 @@ object DeviceDosingV1StatusParser {
     private val PROGRAM_KEYS = setOf(
         "enabled", "weekdays", "mode", "missedDoseRecoveryEnabled", "config"
     )
-    private val DAILY_CONFIG_KEYS = setOf("dailyDoseMl", "startTimeMs")
+    private val SINGLE_CONFIG_KEYS = setOf("dailyDoseMl", "startTimeMs")
+    private val HOURLY_CONFIG_KEYS = setOf("dailyDoseMl", "minuteOfHour")
     private val CUSTOM_CONFIG_KEYS = setOf("dailyDoseMl", "periods")
     private val CUSTOM_PERIOD_KEYS = setOf("startTimeMs", "endTimeMs", "doseCount")
     private val TIMER_CONFIG_KEYS = setOf("events")

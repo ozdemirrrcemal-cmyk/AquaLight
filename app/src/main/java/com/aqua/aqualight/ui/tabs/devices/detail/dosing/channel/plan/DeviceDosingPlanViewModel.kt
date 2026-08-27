@@ -158,7 +158,7 @@ internal class DeviceDosingPlanViewModel(
                     selectedScheduleMode = DosingPlanScheduleMode.SINGLE
                 )
                 is DosingPlanScheduleUpdate.Hourly -> state.copy(
-                    hourlyStartTimeMs = scheduleUpdate.startTimeMs,
+                    hourlyMinuteOfHour = scheduleUpdate.minuteOfHour,
                     selectedScheduleMode = DosingPlanScheduleMode.HOURLY
                 )
                 is DosingPlanScheduleUpdate.Custom -> state.copy(

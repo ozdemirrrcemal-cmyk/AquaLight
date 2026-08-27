@@ -24,7 +24,7 @@ class DeviceDosingV1RepositoryContractTest {
             weekdays = DeviceDosingV1Weekdays(List(7) { true }),
             config = DeviceDosingV1ProgramConfig.Hourly24(
                 dailyDose = DeviceDosingV1Amount.fromMilliliters(2.4),
-                startTimeMillis = 36_900_000
+                minuteOfHour = 15
             ),
             missedDoseRecoveryEnabled = false
         )

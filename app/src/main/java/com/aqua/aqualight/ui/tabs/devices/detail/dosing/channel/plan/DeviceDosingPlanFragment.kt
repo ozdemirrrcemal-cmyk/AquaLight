@@ -169,7 +169,7 @@ class DeviceDosingPlanFragment :
                     pumpCount = args.pumpCount,
                     channelNumber = args.channelNumber,
                     dailyDoseMicroliters = draft.distributedDailyDoseMicroliters,
-                    startTimeMs = draft.hourlyStartTimeMs
+                    minuteOfHour = draft.hourlyMinuteOfHour
                 )
             DosingPlanScheduleMode.CUSTOM -> DeviceDosingPlanFragmentDirections
                 .actionDeviceDosingPlanFragmentToDeviceDosingCustomScheduleFragment(
@@ -319,7 +319,7 @@ private fun rejectionMessage(reason: DeviceDosingChannelRejection): Int = when (
 
 private fun DosingPlanDraft.hasSubMinuteTiming(mode: DosingPlanScheduleMode): Boolean = when (mode) {
     DosingPlanScheduleMode.SINGLE -> singleDoseStartTimeMs.hasSubMinutePrecision()
-    DosingPlanScheduleMode.HOURLY -> hourlyStartTimeMs.hasSubMinutePrecision()
+    DosingPlanScheduleMode.HOURLY -> false
     DosingPlanScheduleMode.CUSTOM -> customPeriods.any { period ->
         period.startTimeMs.hasSubMinutePrecision() || period.endTimeMs.hasSubMinutePrecision()
     }
