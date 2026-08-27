@@ -135,7 +135,6 @@
 
     <string name="device_dosing_hourly_hero_eyebrow">24-hour schedule</string>
     <string name="device_dosing_hourly_hero_title">Balanced dosing, one dose every hour</string>
-    <string name="device_dosing_hourly_hero_description">AquaLight divides the daily dose into 24 equal doses, starting at the time you choose and continuing at one-hour intervals.</string>
     <string name="device_dosing_hourly_summary_section">Distribution summary</string>
     <string name="device_dosing_hourly_daily_dose_value_format">%1$s mL/day</string>
     <string name="device_dosing_hourly_daily_amount_description">Uses the daily dose set on the Dosing Plan screen.</string>
@@ -146,16 +145,9 @@
     <string name="device_dosing_hourly_average_dose_format">≈%1$s mL</string>
     <string name="device_dosing_hourly_average_dose_description">The daily dose is divided equally across 24 doses.</string>
     <string name="device_dosing_hourly_timing_section">Hourly timing</string>
-    <string name="device_dosing_hourly_start_time_title">First dose time</string>
-    <string name="device_dosing_hourly_start_time_description">The first dose starts at this time; the next 23 follow hourly.</string>
     <string name="device_dosing_hourly_window_title">First and last dose</string>
     <string name="device_dosing_hourly_window_format">%1$s – %2$s</string>
-    <string name="device_dosing_hourly_window_description">All 24 doses are applied one hour apart; the last dose may fall on the next day.</string>
-    <string name="device_dosing_hourly_next_day_time_format">%1$s · +1 day</string>
     <string name="device_dosing_hourly_use_action">Use hourly distribution</string>
-    <string name="device_dosing_hourly_start_time_picker_title">Select first dose time</string>
-    <string name="device_dosing_hourly_start_time_picker_message">Choose the first dose time. The next 23 doses follow at one-hour intervals.</string>
-    <string name="device_dosing_hourly_start_time_picker_confirm">Apply time</string>
 
     <string name="device_dosing_schedule_add">Add</string>
     <string name="device_dosing_schedule_validation_section">Check schedule</string>
