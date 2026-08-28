@@ -191,17 +191,15 @@ internal class DeviceDosingV1StateOwner(
         if (current != null && channel.revision < current.revision) {
             return@synchronized DeviceDosingV1CommitDisposition.STALE_REVISION
         }
-        val projection = device.global?.let { global ->
-            mutationProjection(
-                current = current,
-                global = global,
-                detail = channel,
-                lowLevelAlertEnabled = lowLevelAlertLedger.isEnabled(
-                    token.deviceUid.value,
-                    DeviceDosingV1SlotKeyMapper.slotId(token.channelKey)
-                )
+        val projection = mutationProjection(
+            current = current,
+            global = device.global,
+            detail = channel,
+            lowLevelAlertEnabled = lowLevelAlertLedger.isEnabled(
+                token.deviceUid.value,
+                DeviceDosingV1SlotKeyMapper.slotId(token.channelKey)
             )
-        }
+        )
         publish(
             token.deviceUid,
             device.copy(
@@ -467,7 +465,7 @@ private fun OwnedDosingChannelState.authoritativeCalibration(): DeviceDosingCali
 
 private fun mutationProjection(
     current: OwnedDosingChannelState?,
-    global: DeviceDosingV1GlobalStatus,
+    global: DeviceDosingV1GlobalStatus?,
     detail: DeviceDosingV1ChannelDetail,
     lowLevelAlertEnabled: Boolean
 ): DeviceDosingV1MappedSnapshots? = current?.let { state ->

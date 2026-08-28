@@ -279,7 +279,6 @@
     <string name="device_dosing_calibration_prime_title">Hortumu sıvıyla doldurun</string>
     <string name="device_dosing_calibration_prime_description">Emiş hortumunu sıvı kabına, çıkış hortumunu atık kabına yerleştirin. Sıvı kesintisiz ve hava kabarcığı olmadan akana kadar düğmeyi basılı tutun.</string>
     <string name="device_dosing_calibration_run_title">Kalibrasyon dozunu toplayın</string>
-    <string name="device_dosing_calibration_run_description">Çıkış hortumunu temiz ve kuru dereceli silindire yerleştirin. Başlattığınızda pompa 5 saniye çalışır. İşlem tamamlanana kadar silindiri sabit tutun.</string>
     <string name="device_dosing_calibration_measure_title">Ölçülen hacmi girin</string>
     <string name="device_dosing_calibration_measure_description">Silindiri düz bir zemine yerleştirin. Sıvı seviyesini göz hizasında okuyun ve değeri 0,05 ml hassasiyetle girin.</string>
     <string name="device_dosing_calibration_verify_title">4,00 ml test dozunu uygulayın</string>
