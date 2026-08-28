@@ -512,8 +512,10 @@ object DeviceDosingV1StatusParser {
             )
         }.also { occurrences ->
             val canonicalIndexes = occurrences.map(DeviceDosingV1Occurrence::index)
-            require(canonicalIndexes.zipWithNext().all { (previous, next) -> previous < next }) {
-                "Progress occurrence indexes must preserve firmware canonical order."
+            require(canonicalIndexes.zipWithNext().all { (previous, next) ->
+                next == previous + 1
+            }) {
+                "Progress occurrence indexes must preserve the contiguous firmware canonical suffix."
             }
             require(occurrences.map(DeviceDosingV1Occurrence::eventId).distinct().size == occurrences.size)
         }
