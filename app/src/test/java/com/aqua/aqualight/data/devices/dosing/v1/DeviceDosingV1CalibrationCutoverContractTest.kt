@@ -12,10 +12,26 @@ class DeviceDosingV1CalibrationCutoverContractTest {
     fun `calibration requests pin product duration verification dose and final identity commit`() {
         val fixture = fixture()
         val commands = fixture.getJSONObject("commands")
-        val firmwareStart = commands.getJSONObject("start").getJSONObject("request")
-        val firmwareVerification = commands.getJSONObject("verify").getJSONObject("request")
-        val firmwareConfirm = commands.getJSONObject("confirm").getJSONObject("request")
+        assertProductCollectionDuration(commands.getJSONObject("start").getJSONObject("request"))
+        assertVerificationDose(
+            fixture = fixture,
+            firmwareVerification = commands.getJSONObject("verify").getJSONObject("request")
+        )
+        assertFinalIdentityCommit(
+            fixture = fixture,
+            firmwareConfirm = commands.getJSONObject("confirm").getJSONObject("request")
+        )
+    }
 
+    @Test
+    fun `firmware restart explicitly discards pending calibration session`() {
+        assertTrue(
+            fixture().getJSONObject("invariants")
+                .getBoolean("firmwareRestartDiscardsPendingSession")
+        )
+    }
+
+    private fun assertProductCollectionDuration(firmwareStart: JSONObject) {
         // The pinned firmware default remains 5 seconds. AquaLight deliberately requests the
         // shorter product collection window instead of changing the wire contract itself.
         assertEquals(
@@ -23,22 +39,18 @@ class DeviceDosingV1CalibrationCutoverContractTest {
             firmwareStart.getLong("durationMs")
         )
         val productDuration = DeviceDosingCalibrationConstraints().calibrationRunDurationMs
-        assertEquals(3_000L, productDuration)
+        assertEquals(PRODUCT_CALIBRATION_DURATION_MS, productDuration)
         assertTrue(
             productDuration in DeviceDosingV1Contract.Limit.MIN_CALIBRATION_DURATION_MS..
                 DeviceDosingV1Contract.Limit.MAX_CALIBRATION_DURATION_MS
         )
-        assertEquals(
-            DeviceDosingV1Contract.Limit.VERIFICATION_DOSE_ML,
-            fixture.getDouble("verificationDoseMl"),
-            0.0
-        )
 
-        val start = DeviceDosingV1CalibrationStartRequest(
+        val request = DeviceDosingV1CalibrationStartRequest(
             channelKey = CHANNEL,
             durationMillis = productDuration
         ).toJson()
-        assertEquals(productDuration, start.getLong("durationMs"))
+        assertEquals(productDuration, request.getLong("durationMs"))
+
         val adapterSource = source(
             "app/src/main/java/com/aqua/aqualight/data/devices/dosing/v1/" +
                 "DeviceDosingV1CalibrationOperationsAdapter.kt"
@@ -46,7 +58,17 @@ class DeviceDosingV1CalibrationCutoverContractTest {
         val startOperation = adapterSource.substringAfter("override suspend fun start(")
             .substringBefore("override suspend fun finish(")
         assertTrue(startOperation.contains("durationMillis = constraints.calibrationRunDurationMs"))
+    }
 
+    private fun assertVerificationDose(
+        fixture: JSONObject,
+        firmwareVerification: JSONObject
+    ) {
+        assertEquals(
+            DeviceDosingV1Contract.Limit.VERIFICATION_DOSE_ML,
+            fixture.getDouble("verificationDoseMl"),
+            0.0
+        )
         val verification = DeviceDosingV1DoseNowRequest(
             channelKey = CHANNEL,
             amount = DeviceDosingV1Amount.fromMilliliters(
@@ -65,7 +87,12 @@ class DeviceDosingV1CalibrationCutoverContractTest {
             verification.getDouble("amountMl"),
             0.0
         )
+    }
 
+    private fun assertFinalIdentityCommit(
+        fixture: JSONObject,
+        firmwareConfirm: JSONObject
+    ) {
         val confirm = DeviceDosingV1CalibrationConfirmRequest(
             channelKey = CHANNEL,
             displayName = " Trace Elements "
@@ -75,14 +102,6 @@ class DeviceDosingV1CalibrationCutoverContractTest {
         assertTrue(
             fixture.getJSONObject("invariants")
                 .getBoolean("confirmCommitsDisplayNameWithCalibration")
-        )
-    }
-
-    @Test
-    fun `firmware restart explicitly discards pending calibration session`() {
-        assertTrue(
-            fixture().getJSONObject("invariants")
-                .getBoolean("firmwareRestartDiscardsPendingSession")
         )
     }
 
@@ -105,6 +124,7 @@ class DeviceDosingV1CalibrationCutoverContractTest {
 
     private companion object {
         const val FIXTURE = "aql_dosing_calibration_v1.json"
+        const val PRODUCT_CALIBRATION_DURATION_MS = 3_000L
         val CHANNEL = DeviceDosingV1ChannelKey.from("channel1")
     }
 }

@@ -52,32 +52,18 @@ internal object DeviceDosingV1CalibrationSnapshotMapper {
         current: DeviceDosingCalibrationSnapshot,
         detail: DeviceDosingV1ChannelDetail
     ): DeviceDosingCalibrationSnapshot? {
-        val pendingVerificationComplete =
-            current.sessionPhase == DeviceDosingCalibrationSessionPhase.PENDING_VERIFICATION &&
-                current.verificationDoseStarted &&
-                current.verificationDoseComplete &&
-                current.pendingDoseMsPerMl > 0L
-        val calibration = detail.calibration
-        val terminalConfirmedState =
-            calibration.state.raw == CALIBRATION_IDLE &&
-                calibration.confirmed &&
-                calibration.doseMillisPerMilliliter > 0.0 &&
-                calibration.lastCalibratedAt > 0L &&
-                calibration.pendingDoseMillisPerMilliliter == 0.0 &&
-                !calibration.verificationDoseStarted &&
-                !calibration.verificationDoseComplete &&
-                !detail.activeRun.active
-        val calibrationAdvanced =
-            !current.calibrated || calibration.lastCalibratedAt != current.lastCalibratedAt
-        if (!pendingVerificationComplete || !terminalConfirmedState || !calibrationAdvanced) {
-            return null
-        }
+        val transitionValid = listOf(
+            current.isCompletedPendingVerification(),
+            detail.isTerminalConfirmedCalibration(),
+            current.isCalibrationAdvancedBy(detail)
+        ).all { valid -> valid }
+        if (!transitionValid) return null
 
         return current.copy(
             channelNumber = detail.index + 1,
             channelTitle = detail.effectiveName,
             calibrated = true,
-            lastCalibratedAt = calibration.lastCalibratedAt,
+            lastCalibratedAt = detail.calibration.lastCalibratedAt,
             sessionPhase = DeviceDosingCalibrationSessionPhase.IDLE,
             startedAtUptimeMs = 0L,
             durationMs = 0L,
@@ -89,6 +75,28 @@ internal object DeviceDosingV1CalibrationSnapshotMapper {
             manualActive = false
         )
     }
+
+    private fun DeviceDosingCalibrationSnapshot.isCompletedPendingVerification(): Boolean = listOf(
+        sessionPhase == DeviceDosingCalibrationSessionPhase.PENDING_VERIFICATION,
+        verificationDoseStarted,
+        verificationDoseComplete,
+        pendingDoseMsPerMl > 0L
+    ).all { valid -> valid }
+
+    private fun DeviceDosingV1ChannelDetail.isTerminalConfirmedCalibration(): Boolean = listOf(
+        calibration.state.raw == CALIBRATION_IDLE,
+        calibration.confirmed,
+        calibration.doseMillisPerMilliliter > 0.0,
+        calibration.lastCalibratedAt > 0L,
+        calibration.pendingDoseMillisPerMilliliter == 0.0,
+        !calibration.verificationDoseStarted,
+        !calibration.verificationDoseComplete,
+        !activeRun.active
+    ).all { valid -> valid }
+
+    private fun DeviceDosingCalibrationSnapshot.isCalibrationAdvancedBy(
+        detail: DeviceDosingV1ChannelDetail
+    ): Boolean = !calibrated || detail.calibration.lastCalibratedAt != lastCalibratedAt
 
     private fun calibrationStartedAtUptime(detail: DeviceDosingV1ChannelDetail): Long =
         detail.lastRuntimeEvent.occurredAtMillis.takeIf {

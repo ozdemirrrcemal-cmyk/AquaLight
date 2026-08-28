@@ -71,10 +71,13 @@ internal object DeviceDosingV1SnapshotMapper {
      * semantics require a coherent envelope uptime. The one safe exception is a durable terminal
      * calibration-confirm ACK: once the prior pending verification and the new confirmed/idle
      * channel document prove the transition, there is no remaining runtime clock to reconstruct.
+     * Controls are re-derived from the ACK detail plus the last validated global capability state
+     * so a completed calibration cannot leave a stale pre-confirm editability gate behind.
      */
     fun projectMutation(
         current: DeviceDosingV1MappedSnapshots,
         detail: DeviceDosingV1ChannelDetail,
+        global: DeviceDosingV1GlobalStatus,
         lowLevelAlertEnabled: Boolean
     ): DeviceDosingV1MappedSnapshots {
         require(detail.index + 1 == current.channel.channelNumber)
@@ -92,6 +95,7 @@ internal object DeviceDosingV1SnapshotMapper {
                 lowLevelAlertEnabled
             ),
             activeRun = DeviceDosingV1ChannelSnapshotMapper.activeRun(detail),
+            controls = DeviceDosingV1ChannelSnapshotMapper.controls(detail, global),
             usageToday = DeviceDosingV1ChannelSnapshotMapper.usage(detail)
         )
         val projectedCalibration =

@@ -1,5 +1,3 @@
-@file:Suppress("MagicNumber")
-
 package com.aqua.aqualight.ui.tabs.devices.detail.dosing.presentation.card
 
 import com.aqua.aqualight.application.devices.dosing.DeviceDosingCustomPeriodDraft
@@ -12,56 +10,58 @@ class DosingCustomPeriodProgressMarkerTest {
 
     @Test
     fun `custom period shows cumulative amount at every visible occurrence within marker budget`() {
-        val amounts = listOf(0.25, 0.25, 0.25)
-        val occurrences = amounts.map { amount ->
-            DosingProgressOccurrenceUiState(
-                amountMl = amount,
-                visualState = DosingOccurrenceVisualState.PENDING
-            )
-        }.withDoseFractions(amounts.sum())
+        val amounts = List(VISIBLE_OCCURRENCE_COUNT) { DOSE_AMOUNT_ML }
+        val occurrences = amounts.toPendingOccurrences()
 
-        val markers = customPeriodProgram(doseCount = 3).toProgressMarkers(
+        val markers = customPeriodProgram(doseCount = VISIBLE_OCCURRENCE_COUNT).toProgressMarkers(
             occurrences = occurrences,
             totalAmountMl = amounts.sum()
         )
 
-        assertEquals(listOf(0.25, 0.50, 0.75), markers.map { it.cumulativeAmountMl })
-        assertEquals(1f / 3f, markers[0].positionFraction, POSITION_DELTA)
-        assertEquals(2f / 3f, markers[1].positionFraction, POSITION_DELTA)
-        assertEquals(1f, markers[2].positionFraction, POSITION_DELTA)
+        assertEquals(amounts.runningCumulativeAmounts(), markers.map { it.cumulativeAmountMl })
+        assertEquals(
+            occurrences.map { it.endFraction },
+            markers.map { it.positionFraction }
+        )
     }
 
     @Test
     fun `custom period keeps shared six marker cap for dense schedules`() {
-        val amounts = List(8) { 0.25 }
-        val occurrences = amounts.map { amount ->
+        val amounts = List(DENSE_OCCURRENCE_COUNT) { DOSE_AMOUNT_ML }
+        val markers = customPeriodProgram(doseCount = DENSE_OCCURRENCE_COUNT).toProgressMarkers(
+            occurrences = amounts.toPendingOccurrences(),
+            totalAmountMl = amounts.sum()
+        )
+
+        assertEquals(MAX_PROGRESS_MARKER_COUNT, markers.size)
+        assertEquals(amounts.sum(), markers.last().cumulativeAmountMl, AMOUNT_DELTA)
+    }
+
+    private fun List<Double>.toPendingOccurrences(): List<DosingProgressOccurrenceUiState> =
+        map { amount ->
             DosingProgressOccurrenceUiState(
                 amountMl = amount,
                 visualState = DosingOccurrenceVisualState.PENDING
             )
-        }.withDoseFractions(amounts.sum())
+        }.withDoseFractions(sum())
 
-        val markers = customPeriodProgram(doseCount = 8).toProgressMarkers(
-            occurrences = occurrences,
-            totalAmountMl = amounts.sum()
-        )
-
-        assertEquals(6, markers.size)
-        assertEquals(
-            listOf(0.50, 0.75, 1.00, 1.50, 1.75, 2.00),
-            markers.map { it.cumulativeAmountMl }
-        )
+    private fun List<Double>.runningCumulativeAmounts(): List<Double> {
+        var cumulative = 0.0
+        return map { amount ->
+            cumulative += amount
+            cumulative
+        }
     }
 
     private fun customPeriodProgram(doseCount: Int) = DeviceDosingProgram(
         enabled = true,
-        weekdays = List(7) { true },
+        weekdays = List(DOSING_WEEKDAY_COUNT) { true },
         schedule = DeviceDosingProgramSchedule.CustomPeriods(
-            dailyDoseMicroliters = doseCount * 250L,
+            dailyDoseMicroliters = doseCount * DOSE_AMOUNT_MICROLITERS,
             periods = listOf(
                 DeviceDosingCustomPeriodDraft(
-                    startTimeMs = 21L * 60L * 60L * 1_000L,
-                    endTimeMs = 23L * 60L * 60L * 1_000L,
+                    startTimeMs = CUSTOM_PERIOD_START_MS,
+                    endTimeMs = CUSTOM_PERIOD_END_MS,
                     doseCount = doseCount
                 )
             )
@@ -70,6 +70,14 @@ class DosingCustomPeriodProgressMarkerTest {
     )
 
     private companion object {
-        const val POSITION_DELTA = 0.0001f
+        const val VISIBLE_OCCURRENCE_COUNT = 3
+        const val DENSE_OCCURRENCE_COUNT = 8
+        const val MAX_PROGRESS_MARKER_COUNT = 6
+        const val DOSING_WEEKDAY_COUNT = 7
+        const val DOSE_AMOUNT_ML = 0.25
+        const val DOSE_AMOUNT_MICROLITERS = 250L
+        const val CUSTOM_PERIOD_START_MS = 75_600_000L
+        const val CUSTOM_PERIOD_END_MS = 82_800_000L
+        const val AMOUNT_DELTA = 0.0
     }
 }

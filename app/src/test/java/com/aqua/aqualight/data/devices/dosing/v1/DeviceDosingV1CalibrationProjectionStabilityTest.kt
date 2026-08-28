@@ -68,9 +68,10 @@ class DeviceDosingV1CalibrationProjectionStabilityTest {
         // A mutation ACK never becomes authoritative state by itself, but the owner may retain a
         // committed presentation projection while coherent readback proceeds in the background.
         assertNull(owner.reads.currentCalibration(DEVICE_UID, CHANNEL_KEY))
-        val committed = requireNotNull(
+        val continuation = requireNotNull(
             owner.reads.committedMutationContinuation(DEVICE_UID, CHANNEL_KEY)
-        ).calibration
+        )
+        val committed = continuation.calibration
         assertEquals(DeviceDosingCalibrationSessionPhase.IDLE, committed.sessionPhase)
         assertTrue(committed.calibrated)
         assertEquals("Trace Elements", committed.channelTitle)
@@ -80,6 +81,7 @@ class DeviceDosingV1CalibrationProjectionStabilityTest {
         assertFalse(committed.verificationDoseComplete)
         assertFalse(committed.manualActive)
         assertEquals(ENVELOPE_UPTIME_MS, committed.deviceUptimeMs)
+        assertTrue(continuation.channel.controls.programEditable)
     }
 
     @Test
