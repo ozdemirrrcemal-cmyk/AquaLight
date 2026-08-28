@@ -183,12 +183,15 @@ private val DeviceDosingCalibrationSnapshot.isSafeForCalibrationExit: Boolean
 data class DeviceDosingCalibrationConstraints(
     val minMeasuredMl: Double = 0.05,
     val maxMeasuredMl: Double = 1_000.0,
-    val primeSafetyTimeoutMs: Long = 30_000L
+    val primeSafetyTimeoutMs: Long = 30_000L,
+    /** Product-selected raw collection run; the later verification dose remains amount-based. */
+    val calibrationRunDurationMs: Long = 3_000L
 ) {
     init {
         require(minMeasuredMl.isFinite() && minMeasuredMl > 0.0)
         require(maxMeasuredMl.isFinite() && maxMeasuredMl >= minMeasuredMl)
         require(primeSafetyTimeoutMs > 0L)
+        require(calibrationRunDurationMs > 0L)
     }
 }
 

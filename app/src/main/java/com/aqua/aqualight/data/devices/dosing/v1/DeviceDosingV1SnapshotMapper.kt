@@ -67,17 +67,32 @@ internal object DeviceDosingV1SnapshotMapper {
      * Projects the full channel document returned by a mutation ACK for presentation continuity.
      *
      * The previous progress document is retained until readback, so this projection remains
-     * non-authoritative. Calibration runtime is intentionally not projected: its elapsed-time
-     * semantics require the envelope uptime that exists only in a coherent status readback. Mixing
-     * a new run-start timestamp from the ACK with the previous envelope uptime can make a newly
-     * started calibration look already complete.
+     * non-authoritative. Active calibration runtime is also preserved because its elapsed-time
+     * semantics require a coherent envelope uptime. The one safe exception is a durable terminal
+     * calibration-confirm ACK: once the prior pending verification and the new confirmed/idle
+     * channel document prove the transition, there is no remaining runtime clock to reconstruct.
+     * Controls remain byte-for-byte equivalent to the previous projection for every ordinary
+     * mutation ACK. Only a proven terminal calibration confirmation may refresh controls from the
+     * last validated global capability state, preventing calibration completion from leaving the
+     * pre-confirm editability gate behind without changing other mutation behavior.
      */
     fun projectMutation(
         current: DeviceDosingV1MappedSnapshots,
         detail: DeviceDosingV1ChannelDetail,
+        global: DeviceDosingV1GlobalStatus?,
         lowLevelAlertEnabled: Boolean
     ): DeviceDosingV1MappedSnapshots {
         require(detail.index + 1 == current.channel.channelNumber)
+        val committedCalibration =
+            DeviceDosingV1CalibrationSnapshotMapper.projectCommittedConfirmation(
+                current = current.calibration,
+                detail = detail
+            )
+        val projectedControls = if (committedCalibration != null && global != null) {
+            DeviceDosingV1ChannelSnapshotMapper.controls(detail, global)
+        } else {
+            current.channel.controls
+        }
         val projectedChannel = current.channel.copy(
             channelTitle = detail.effectiveName,
             revision = detail.revision,
@@ -92,11 +107,13 @@ internal object DeviceDosingV1SnapshotMapper {
                 lowLevelAlertEnabled
             ),
             activeRun = DeviceDosingV1ChannelSnapshotMapper.activeRun(detail),
+            controls = projectedControls,
             usageToday = DeviceDosingV1ChannelSnapshotMapper.usage(detail)
         )
+        val projectedCalibration = committedCalibration ?: current.calibration
         return DeviceDosingV1MappedSnapshots(
             channel = projectedChannel,
-            calibration = current.calibration
+            calibration = projectedCalibration
         )
     }
 

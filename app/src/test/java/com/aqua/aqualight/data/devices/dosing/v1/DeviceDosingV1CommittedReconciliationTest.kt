@@ -425,12 +425,17 @@ class DeviceDosingV1CommittedReconciliationTest {
     }
 
     @Test
-    fun `calibration confirmation exposes current snapshot before first switch mutation`() =
+    fun `calibration confirmation continuation feeds first switch mutation without readback`() =
         runTest {
             val gateway = ScriptedGateway().apply {
-                enqueueRefresh(revision = 7L, missedDoseRecoveryEnabled = false)
+                enqueuePendingVerificationRefresh(revision = 7L, missedDoseRecoveryEnabled = false)
                 enqueueCalibrationConfirm()
-                enqueueRefresh(revision = 8L, missedDoseRecoveryEnabled = false)
+                enqueueDelayedGlobalReadback(
+                    revision = 8L,
+                    programEnabled = true,
+                    missedDoseRecoveryEnabled = false,
+                    delayMillis = 10_000L
+                )
                 enqueueProgramMutation(revision = 9L, missedDoseRecoveryEnabled = true)
                 enqueueRefresh(revision = 9L, missedDoseRecoveryEnabled = true)
             }
@@ -447,7 +452,11 @@ class DeviceDosingV1CommittedReconciliationTest {
             )
 
             assertTrue(calibration is DeviceDosingCalibrationResult.Success)
-            assertEquals(8L, adapter.channelOperations.current(DEVICE_UID.value, SLOT_ID)?.revision)
+            assertNull(adapter.channelOperations.current(DEVICE_UID.value, SLOT_ID))
+            val committed = adapter.channelOperations.observeAll(DEVICE_UID.value).first().single()
+            assertEquals(8L, committed.revision)
+            assertTrue(committed.calibrated)
+            assertTrue(committed.controls.programEditable)
 
             val switchResult = adapter.channelOperations.setMissedDoseRecoveryEnabled(
                 DEVICE_UID.value,
@@ -456,7 +465,15 @@ class DeviceDosingV1CommittedReconciliationTest {
             )
 
             assertEquals(DeviceDosingChannelCommittedResult(9L), switchResult)
-            val actionsBeforeBackground = gateway.actions.take(8)
+            assertEquals(0L, testScheduler.currentTime)
+            assertProgramRequests(
+                gateway = gateway,
+                expectedRevisions = listOf(8L),
+                expectedRecoveryValues = listOf(true)
+            )
+
+            testScheduler.runCurrent()
+            assertEquals(9L, adapter.currentChannel(DEVICE_UID.value, SLOT_ID)?.revision)
             assertEquals(
                 listOf(
                     DeviceDosingV1Contract.Action.STATUS_GET,
@@ -464,11 +481,12 @@ class DeviceDosingV1CommittedReconciliationTest {
                     DeviceDosingV1Contract.Action.PROGRESS_GET,
                     DeviceDosingV1Contract.Action.CALIBRATION_CONFIRM,
                     DeviceDosingV1Contract.Action.STATUS_GET,
+                    DeviceDosingV1Contract.Action.PROGRAM_APPLY,
                     DeviceDosingV1Contract.Action.STATUS_GET,
-                    DeviceDosingV1Contract.Action.PROGRESS_GET,
-                    DeviceDosingV1Contract.Action.PROGRAM_APPLY
+                    DeviceDosingV1Contract.Action.STATUS_GET,
+                    DeviceDosingV1Contract.Action.PROGRESS_GET
                 ),
-                actionsBeforeBackground
+                gateway.actions
             )
         }
 
@@ -513,6 +531,21 @@ class DeviceDosingV1CommittedReconciliationTest {
             missedDoseRecoveryEnabled: Boolean = false
         ) {
             val (global, channel, progress) = fixtureState(
+                revision,
+                programEnabled,
+                missedDoseRecoveryEnabled
+            )
+            enqueueSuccess(DeviceDosingV1Contract.Action.STATUS_GET, global)
+            enqueueSuccess(DeviceDosingV1Contract.Action.STATUS_GET, channel)
+            enqueueSuccess(DeviceDosingV1Contract.Action.PROGRESS_GET, progress)
+        }
+
+        fun enqueuePendingVerificationRefresh(
+            revision: Long,
+            programEnabled: Boolean = true,
+            missedDoseRecoveryEnabled: Boolean = false
+        ) {
+            val (global, channel, progress) = pendingVerificationFixtureState(
                 revision,
                 programEnabled,
                 missedDoseRecoveryEnabled
@@ -626,6 +659,9 @@ class DeviceDosingV1CommittedReconciliationTest {
         val DEVICE_UID = DeviceUid("AQL-DOSING-COMMIT-TEST")
         const val SLOT_ID = "dosing:channel1"
         val GENERATION = DeviceRuntimeConnectionGeneration(1L)
+        const val PENDING_CALIBRATION_DURATION_MS = 3_000L
+        const val PENDING_MEASURED_ML = 4.8
+        const val PENDING_DOSE_MS_PER_ML = 625.0
 
         fun fixtureState(
             revision: Long,
@@ -665,6 +701,31 @@ class DeviceDosingV1CommittedReconciliationTest {
                 DeviceDosingV1TestFixtures.progressStatus()
             ).copy(revision = revision, programEnabled = programEnabled)
             return FixtureState(global, channel, progress)
+        }
+
+        fun pendingVerificationFixtureState(
+            revision: Long,
+            programEnabled: Boolean,
+            missedDoseRecoveryEnabled: Boolean
+        ): FixtureState {
+            val state = fixtureState(revision, programEnabled, missedDoseRecoveryEnabled)
+            val detail = state.channel.channel
+            val pendingCalibration = detail.calibration.copy(
+                confirmed = false,
+                doseMillisPerMilliliter = 0.0,
+                lastCalibratedAt = 0L,
+                state = DeviceDosingV1WireValue("pendingVerification"),
+                durationMillis = PENDING_CALIBRATION_DURATION_MS,
+                measuredMilliliters = PENDING_MEASURED_ML,
+                pendingDoseMillisPerMilliliter = PENDING_DOSE_MS_PER_ML,
+                verificationDoseStarted = true,
+                verificationDoseComplete = true
+            )
+            return state.copy(
+                channel = state.channel.copy(
+                    channel = detail.copy(calibration = pendingCalibration)
+                )
+            )
         }
 
         fun <T> success(

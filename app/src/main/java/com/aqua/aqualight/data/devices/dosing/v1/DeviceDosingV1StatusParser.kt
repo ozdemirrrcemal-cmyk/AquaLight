@@ -511,7 +511,10 @@ object DeviceDosingV1StatusParser {
                 status = dosingWireValue(item.requireDosingString("status"))
             )
         }.also { occurrences ->
-            require(occurrences.map(DeviceDosingV1Occurrence::index) == occurrences.indices.toList())
+            val canonicalIndexes = occurrences.map(DeviceDosingV1Occurrence::index)
+            require(canonicalIndexes.zipWithNext().all { (previous, next) -> previous < next }) {
+                "Progress occurrence indexes must preserve firmware canonical order."
+            }
             require(occurrences.map(DeviceDosingV1Occurrence::eventId).distinct().size == occurrences.size)
         }
 

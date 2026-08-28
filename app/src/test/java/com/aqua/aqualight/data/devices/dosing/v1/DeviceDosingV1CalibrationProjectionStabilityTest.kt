@@ -6,6 +6,7 @@ import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.test.runTest
 import org.json.JSONObject
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Test
@@ -34,6 +35,53 @@ class DeviceDosingV1CalibrationProjectionStabilityTest {
         assertNull(owner.reads.currentCalibration(DEVICE_UID, CHANNEL_KEY))
         assertEquals(before, owner.reads.observeCalibration(DEVICE_UID, CHANNEL_KEY).first())
         assertEquals(DeviceDosingCalibrationSessionPhase.IDLE, before.sessionPhase)
+    }
+
+    @Test
+    fun `terminal calibration confirmation ack projects committed idle state safely`() = runTest {
+        val owner = DeviceDosingV1StateOwner()
+        commit(owner, pendingVerificationState())
+        val pending = requireNotNull(
+            owner.reads.currentCalibration(DEVICE_UID, CHANNEL_KEY)
+        )
+        assertEquals(DeviceDosingCalibrationSessionPhase.PENDING_VERIFICATION, pending.sessionPhase)
+        assertTrue(pending.verificationDoseComplete)
+        assertFalse(pending.calibrated)
+
+        val confirm = DeviceDosingV1MutationParser.parseCalibrationConfirm(
+            DeviceDosingV1TestFixtures.calibrationConfirm().also { mutation ->
+                mutation.getJSONObject("channel")
+                    .put("displayName", "Trace Elements")
+                    .put("effectiveName", "Trace Elements")
+            }
+        )
+
+        assertEquals(
+            DeviceDosingV1CommitDisposition.APPLIED,
+            owner.recordMutation(
+                token = owner.beginRequest(DEVICE_UID, CHANNEL_KEY),
+                connectionGeneration = CONNECTION_GENERATION,
+                channel = confirm.channel
+            )
+        )
+
+        // A mutation ACK never becomes authoritative state by itself, but the owner may retain a
+        // committed presentation projection while coherent readback proceeds in the background.
+        assertNull(owner.reads.currentCalibration(DEVICE_UID, CHANNEL_KEY))
+        val continuation = requireNotNull(
+            owner.reads.committedMutationContinuation(DEVICE_UID, CHANNEL_KEY)
+        )
+        val committed = continuation.calibration
+        assertEquals(DeviceDosingCalibrationSessionPhase.IDLE, committed.sessionPhase)
+        assertTrue(committed.calibrated)
+        assertEquals("Trace Elements", committed.channelTitle)
+        assertTrue(committed.lastCalibratedAt > 0L)
+        assertEquals(0L, committed.pendingDoseMsPerMl)
+        assertFalse(committed.verificationDoseStarted)
+        assertFalse(committed.verificationDoseComplete)
+        assertFalse(committed.manualActive)
+        assertEquals(ENVELOPE_UPTIME_MS, committed.deviceUptimeMs)
+        assertTrue(continuation.channel.controls.programEditable)
     }
 
     @Test
@@ -87,6 +135,30 @@ class DeviceDosingV1CalibrationProjectionStabilityTest {
         )
     }
 
+    private fun pendingVerificationState(): FixtureState {
+        val channel = DeviceDosingV1TestFixtures.channelStatus().also { status ->
+            status.getJSONObject("channel").getJSONObject("calibration")
+                .put("confirmed", false)
+                .put("doseMsPerMl", 0.0)
+                .put("lastCalibratedAt", 0)
+                .put("state", "pendingVerification")
+                .put("durationMs", CALIBRATION_DURATION_MS)
+                .put("measuredMl", 4.8)
+                .put("pendingDoseMsPerMl", 625)
+                .put("verificationDoseStarted", true)
+                .put("verificationDoseComplete", true)
+        }
+        return FixtureState(
+            global = DeviceDosingV1StatusParser.parseGlobal(
+                DeviceDosingV1TestFixtures.globalStatus()
+            ),
+            channel = DeviceDosingV1StatusParser.parseChannel(channel),
+            progress = DeviceDosingV1StatusParser.parseProgress(
+                DeviceDosingV1TestFixtures.progressStatus()
+            )
+        )
+    }
+
     private fun runningCalibrationStartMutation(): JSONObject =
         DeviceDosingV1TestFixtures.calibrationStart().also { mutation ->
             mutation.getJSONObject("channel")
@@ -123,7 +195,7 @@ class DeviceDosingV1CalibrationProjectionStabilityTest {
         const val ENVELOPE_UPTIME_MS = 123_456L
         const val AUTHORITATIVE_RUN_STARTED_AT_MS = 122_000L
         const val FUTURE_RUN_STARTED_AT_MS = 123_500L
-        const val CALIBRATION_DURATION_MS = 5_000L
+        const val CALIBRATION_DURATION_MS = 3_000L
         const val RUN_EVENT_SEQUENCE = 12L
     }
 }

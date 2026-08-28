@@ -7,7 +7,8 @@ internal val DeviceDosingCalibrationSnapshot.hasActiveCalibrationSession: Boolea
  * Proves that a pending, completed verification became one committed calibration transaction.
  *
  * The display-name draft is accepted only as part of the firmware confirmation transaction; it is
- * never treated as persisted identity before this authoritative transition is observed.
+ * never treated as persisted identity before the central state owner exposes a validated committed
+ * transition from the firmware ACK or a later authoritative readback.
  */
 internal fun DeviceDosingCalibrationSnapshot.isCommittedCalibrationTransitionFrom(
     previous: DeviceDosingCalibrationSnapshot?,

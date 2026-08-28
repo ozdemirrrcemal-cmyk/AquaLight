@@ -193,10 +193,12 @@ internal class DeviceDosingV1StateOwner(
         }
         val projection = mutationProjection(
             current = current,
-            deviceUid = token.deviceUid,
-            channelKey = token.channelKey,
+            global = device.global,
             detail = channel,
-            lowLevelAlertLedger = lowLevelAlertLedger
+            lowLevelAlertEnabled = lowLevelAlertLedger.isEnabled(
+                token.deviceUid.value,
+                DeviceDosingV1SlotKeyMapper.slotId(token.channelKey)
+            )
         )
         publish(
             token.deviceUid,
@@ -463,10 +465,9 @@ private fun OwnedDosingChannelState.authoritativeCalibration(): DeviceDosingCali
 
 private fun mutationProjection(
     current: OwnedDosingChannelState?,
-    deviceUid: DeviceUid,
-    channelKey: DeviceDosingV1ChannelKey,
+    global: DeviceDosingV1GlobalStatus?,
     detail: DeviceDosingV1ChannelDetail,
-    lowLevelAlertLedger: DeviceDosingLowLevelAlertLedger
+    lowLevelAlertEnabled: Boolean
 ): DeviceDosingV1MappedSnapshots? = current?.let { state ->
     val channel = state.channel
     val calibration = state.calibration
@@ -477,10 +478,8 @@ private fun mutationProjection(
             DeviceDosingV1SnapshotMapper.projectMutation(
                 current = DeviceDosingV1MappedSnapshots(channel, calibration),
                 detail = detail,
-                lowLevelAlertEnabled = lowLevelAlertLedger.isEnabled(
-                    deviceUid.value,
-                    DeviceDosingV1SlotKeyMapper.slotId(channelKey)
-                )
+                global = global,
+                lowLevelAlertEnabled = lowLevelAlertEnabled
             )
         }.getOrNull()
     }

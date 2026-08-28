@@ -279,7 +279,7 @@
     <string name="device_dosing_calibration_prime_title">Fill the tubing with liquid</string>
     <string name="device_dosing_calibration_prime_description">Place the intake tube in the liquid reservoir and the outlet tube in a waste cup. Press and hold the button until liquid flows continuously with no air bubbles.</string>
     <string name="device_dosing_calibration_run_title">Collect the calibration dose</string>
-    <string name="device_dosing_calibration_run_description">Place the outlet tube in a clean, dry graduated cylinder. When you start, the pump runs for 5 seconds. Keep the cylinder still until the process is complete.</string>
+    <string name="device_dosing_calibration_run_description">Place the outlet tube in a clean, dry graduated cylinder. When you start, the pump runs for 3 seconds. Keep the cylinder still until the process is complete.</string>
     <string name="device_dosing_calibration_measure_title">Enter the measured volume</string>
     <string name="device_dosing_calibration_measure_description">Place the cylinder on a level surface. Read the liquid level at eye level and enter the value to the nearest 0.05 ml.</string>
     <string name="device_dosing_calibration_verify_title">Apply the 4.00 ml test dose</string>
