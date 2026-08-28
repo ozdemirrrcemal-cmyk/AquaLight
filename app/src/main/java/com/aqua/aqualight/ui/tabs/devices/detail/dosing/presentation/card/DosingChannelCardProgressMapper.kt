@@ -45,7 +45,6 @@ internal fun DeviceDosingChannelSnapshot.toProgramProgressUiState(): DosingProgr
         customPeriods = customPeriods,
         markers = configuredProgram.toProgressMarkers(
             occurrences = occurrences,
-            customPeriods = customPeriods,
             totalAmountMl = scheduledAmountTodayMl
         ),
         nextDose = progress.nextScheduledOccurrence()?.toNextDoseUiState(),

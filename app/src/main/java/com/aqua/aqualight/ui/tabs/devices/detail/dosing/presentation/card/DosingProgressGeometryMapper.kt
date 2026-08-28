@@ -20,7 +20,6 @@ internal fun List<DosingProgressOccurrenceUiState>.withDoseFractions(
 
 internal fun DeviceDosingProgram.toProgressMarkers(
     occurrences: List<DosingProgressOccurrenceUiState>,
-    customPeriods: List<DosingCustomPeriodProgressUiState>,
     totalAmountMl: Double
 ): List<DosingProgressMarkerUiState> {
     if (
@@ -30,14 +29,9 @@ internal fun DeviceDosingProgram.toProgressMarkers(
     ) {
         return emptyList()
     }
-    val candidateIndexes = when (schedule) {
-        is DeviceDosingProgramSchedule.CustomPeriods -> customPeriods
-            .runningFold(0) { total, period -> total + period.occurrences.size }
-            .drop(1)
-            .map { count -> count - 1 }
-        else -> occurrences.indices.toList()
-    }
-    val markerIndexes = candidateIndexes.evenlySampled(MAX_PROGRESS_MARKERS)
+    // Every visible firmware occurrence is a marker candidate in distributed modes, including
+    // Custom Periods. Dense schedules still use the shared marker cap below to avoid label crowding.
+    val markerIndexes = occurrences.indices.toList().evenlySampled(MAX_PROGRESS_MARKERS)
     var cumulativeAmountMl = 0.0
     return occurrences.mapIndexedNotNull { index, occurrence ->
         cumulativeAmountMl += occurrence.amountMl
