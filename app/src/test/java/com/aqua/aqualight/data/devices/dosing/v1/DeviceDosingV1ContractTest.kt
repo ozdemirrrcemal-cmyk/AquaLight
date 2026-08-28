@@ -205,6 +205,18 @@ class DeviceDosingV1ContractTest {
     }
 
     @Test
+    fun `progress rejects a gap in the firmware canonical suffix`() {
+        val malformed = JSONObject(DeviceDosingV1TestFixtures.progressStatus().toString()).also { status ->
+            status.getJSONArray("occurrences").getJSONObject(0).put("index", 14)
+            status.getJSONArray("occurrences").getJSONObject(1).put("index", 16)
+        }
+
+        assertThrows(IllegalArgumentException::class.java) {
+            DeviceDosingV1StatusParser.parseProgress(malformed)
+        }
+    }
+
+    @Test
     fun `program apply accepts handler shape and rejects obsolete fixture fields`() {
         val canonical = DeviceDosingV1TestFixtures.savedMutation(
             DeviceDosingV1Contract.Literal.PROGRAM_APPLY
