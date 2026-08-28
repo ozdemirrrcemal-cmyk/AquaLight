@@ -28,7 +28,7 @@ internal val DeviceDosingCalibrationStep.descriptionRes: Int
         DeviceDosingCalibrationStep.NAME -> R.string.device_dosing_calibration_name_description
         DeviceDosingCalibrationStep.PRIME -> R.string.device_dosing_calibration_prime_description
         DeviceDosingCalibrationStep.CALIBRATION_RUN ->
-            R.string.device_dosing_calibration_run_description_product
+            R.string.device_dosing_calibration_run_description
         DeviceDosingCalibrationStep.MEASUREMENT -> R.string.device_dosing_calibration_measure_description
         DeviceDosingCalibrationStep.VERIFICATION -> R.string.device_dosing_calibration_verify_description
         DeviceDosingCalibrationStep.CONFIRMATION -> R.string.device_dosing_calibration_confirm_description
