@@ -27,7 +27,7 @@ class DeviceDosingV1CalibrationConfirmationPolicyTest {
     }
 
     @Test
-    fun `final calibration identity commit is not gated by standalone display name editing`() {
+    fun `final calibration identity commit uses persisted central mutation path`() {
         val source = source(
             "app/src/main/java/com/aqua/aqualight/data/devices/dosing/v1/" +
                 "DeviceDosingV1CalibrationOperationsAdapter.kt"
@@ -35,10 +35,15 @@ class DeviceDosingV1CalibrationConfirmationPolicyTest {
         val confirm = source.substringAfter("override suspend fun confirm(")
             .substringBefore("override suspend fun cancel(")
 
+        assertTrue(confirm.contains("mutationCoordinator.mutatePersisted("))
+        assertTrue(confirm.contains("DeviceDosingV1PersistedMutation("))
+        assertFalse(confirm.contains("mutationCoordinator.mutateRuntime("))
         assertTrue(confirm.contains("requireCalibrationMutation(baseline.controls.calibrationEditable)"))
         assertFalse(confirm.contains("displayNameEditable"))
         assertTrue(confirm.contains("adapter.repository.confirmCalibration("))
         assertTrue(confirm.contains("DeviceDosingV1CalibrationConfirmRequest("))
+        assertTrue(confirm.contains("toCalibrationConfirmationResult("))
+        assertTrue(source.contains("isCommittedCalibrationTransitionFrom("))
     }
 
     private fun source(relativePath: String): String = File(repositoryRoot(), relativePath).readText()

@@ -67,10 +67,10 @@ internal object DeviceDosingV1SnapshotMapper {
      * Projects the full channel document returned by a mutation ACK for presentation continuity.
      *
      * The previous progress document is retained until readback, so this projection remains
-     * non-authoritative. Calibration runtime is intentionally not projected: its elapsed-time
-     * semantics require the envelope uptime that exists only in a coherent status readback. Mixing
-     * a new run-start timestamp from the ACK with the previous envelope uptime can make a newly
-     * started calibration look already complete.
+     * non-authoritative. Active calibration runtime is also preserved because its elapsed-time
+     * semantics require a coherent envelope uptime. The one safe exception is a durable terminal
+     * calibration-confirm ACK: once the prior pending verification and the new confirmed/idle
+     * channel document prove the transition, there is no remaining runtime clock to reconstruct.
      */
     fun projectMutation(
         current: DeviceDosingV1MappedSnapshots,
@@ -94,9 +94,14 @@ internal object DeviceDosingV1SnapshotMapper {
             activeRun = DeviceDosingV1ChannelSnapshotMapper.activeRun(detail),
             usageToday = DeviceDosingV1ChannelSnapshotMapper.usage(detail)
         )
+        val projectedCalibration =
+            DeviceDosingV1CalibrationSnapshotMapper.projectCommittedConfirmation(
+                current = current.calibration,
+                detail = detail
+            ) ?: current.calibration
         return DeviceDosingV1MappedSnapshots(
             channel = projectedChannel,
-            calibration = current.calibration
+            calibration = projectedCalibration
         )
     }
 

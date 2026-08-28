@@ -5,7 +5,9 @@ import com.aqua.aqualight.application.devices.dosing.DeviceDosingCalibrationOper
 import com.aqua.aqualight.application.devices.dosing.DeviceDosingCalibrationResult
 import com.aqua.aqualight.application.devices.dosing.DeviceDosingCalibrationSnapshot
 import com.aqua.aqualight.application.devices.dosing.DeviceDosingChannelRejection
+import com.aqua.aqualight.application.devices.dosing.isCommittedCalibrationTransitionFrom
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.first
 
 /** Application calibration boundary backed exclusively by the central v1 state adapter. */
 @Suppress("TooManyFunctions") // This class implements the complete application boundary verbatim.
@@ -60,7 +62,7 @@ internal class DeviceDosingV1CalibrationOperationsAdapter(
                 uid,
                 DeviceDosingV1CalibrationStartRequest(
                     channelKey = channelKey,
-                    durationMillis = DeviceDosingV1Contract.Limit.DEFAULT_CALIBRATION_DURATION_MS
+                    durationMillis = constraints.calibrationRunDurationMs
                 )
             )
         },
@@ -118,24 +120,35 @@ internal class DeviceDosingV1CalibrationOperationsAdapter(
         deviceUid: String,
         slotId: String,
         displayName: String
-    ): DeviceDosingCalibrationResult = adapter.mutationCoordinator.mutateRuntime(
-        deviceUid = deviceUid,
-        slotId = slotId,
-        execute = { uid, channelKey, _, baseline ->
-            // Final identity persistence belongs to the calibration transaction itself. Standalone
-            // display-name editing remains blocked while calibration is open, but that generic
-            // config guard must never block the firmware-owned pending-verification confirmation.
-            requireCalibrationMutation(baseline.controls.calibrationEditable)
-            adapter.repository.confirmCalibration(
-                uid,
-                DeviceDosingV1CalibrationConfirmRequest(
-                    channelKey = channelKey,
-                    displayName = displayName
-                )
+    ): DeviceDosingCalibrationResult {
+        val previousSnapshot = adapter.stateAccess.observeCalibration(deviceUid, slotId).first()
+        val result = adapter.mutationCoordinator.mutatePersisted(
+            deviceUid = deviceUid,
+            slotId = slotId,
+            mutation = DeviceDosingV1PersistedMutation(
+                execute = { uid, channelKey, _, baseline ->
+                    // Calibration confirmation is a durable firmware transaction: it commits the
+                    // coefficient, timestamp, display name and channel revision atomically.
+                    requireCalibrationMutation(baseline.controls.calibrationEditable)
+                    adapter.repository.confirmCalibration(
+                        uid,
+                        DeviceDosingV1CalibrationConfirmRequest(
+                            channelKey = channelKey,
+                            displayName = displayName
+                        )
+                    )
+                },
+                channel = DeviceDosingV1CalibrationConfirmResult::channel
             )
-        },
-        channel = DeviceDosingV1CalibrationConfirmResult::channel
-    ).toCalibrationResult()
+        )
+        return result.toCalibrationConfirmationResult(
+            stateAccess = adapter.stateAccess,
+            deviceUid = deviceUid,
+            slotId = slotId,
+            previousSnapshot = previousSnapshot,
+            expectedDisplayName = displayName
+        )
+    }
 
     override suspend fun cancel(
         deviceUid: String,
@@ -171,12 +184,11 @@ private fun <T> DeviceDosingV1MutationResult<T>.toCalibrationResult(
         snapshot = state.calibration,
         operationDurationMs = operationDuration(value)
     )
-    // Replay-safe assignment reconciliation is not enabled for calibration workflows.
+    // Replay-safe assignment reconciliation is not enabled for calibration runtime workflows.
     is DeviceDosingV1MutationResult.Reconciled -> DeviceDosingCalibrationResult.Rejected(
         DeviceDosingCalibrationFailure.INTERNAL
     )
-    // Calibration commands are runtime mutations and cannot legitimately produce Committed.
-    // Keep this defensive path fail-closed if that contract ever changes unexpectedly.
+    // Runtime calibration commands never have a durable-ACK-only completion state.
     is DeviceDosingV1MutationResult.Committed -> DeviceDosingCalibrationResult.Rejected(
         DeviceDosingCalibrationFailure.INTERNAL
     )
@@ -189,6 +201,48 @@ private fun <T> DeviceDosingV1MutationResult<T>.toCalibrationResult(
     is DeviceDosingV1MutationResult.LocallyRejected -> DeviceDosingCalibrationResult.Rejected(
         reason.toCalibrationFailure()
     )
+    DeviceDosingV1MutationResult.Malformed,
+    DeviceDosingV1MutationResult.RejectedStale -> DeviceDosingCalibrationResult.Rejected(
+        DeviceDosingCalibrationFailure.INTERNAL
+    )
+}
+
+private suspend fun DeviceDosingV1MutationResult<DeviceDosingV1CalibrationConfirmResult>
+    .toCalibrationConfirmationResult(
+        stateAccess: DeviceDosingV1StateAccess,
+        deviceUid: String,
+        slotId: String,
+        previousSnapshot: DeviceDosingCalibrationSnapshot?,
+        expectedDisplayName: String
+    ): DeviceDosingCalibrationResult = when (this) {
+    is DeviceDosingV1MutationResult.Success -> DeviceDosingCalibrationResult.Success(
+        state.calibration
+    )
+    is DeviceDosingV1MutationResult.Committed -> {
+        // Durable ACK is sufficient only when the single central state owner can prove the exact
+        // pending-verification -> confirmed/idle transition from its committed presentation.
+        val committedSnapshot = stateAccess.observeCalibration(deviceUid, slotId).first()
+        if (
+            committedSnapshot?.isCommittedCalibrationTransitionFrom(
+                previous = previousSnapshot,
+                expectedDisplayName = expectedDisplayName
+            ) == true
+        ) {
+            DeviceDosingCalibrationResult.Success(committedSnapshot)
+        } else {
+            DeviceDosingCalibrationResult.Rejected(DeviceDosingCalibrationFailure.INTERNAL)
+        }
+    }
+    is DeviceDosingV1MutationResult.Failed -> DeviceDosingCalibrationResult.Rejected(
+        DeviceDosingCalibrationFailureMapper.map(outcome)
+    )
+    DeviceDosingV1MutationResult.Conflict -> DeviceDosingCalibrationResult.Rejected(
+        DeviceDosingCalibrationFailure.CALIBRATION_STATE_MISMATCH
+    )
+    is DeviceDosingV1MutationResult.LocallyRejected -> DeviceDosingCalibrationResult.Rejected(
+        reason.toCalibrationFailure()
+    )
+    is DeviceDosingV1MutationResult.Reconciled,
     DeviceDosingV1MutationResult.Malformed,
     DeviceDosingV1MutationResult.RejectedStale -> DeviceDosingCalibrationResult.Rejected(
         DeviceDosingCalibrationFailure.INTERNAL

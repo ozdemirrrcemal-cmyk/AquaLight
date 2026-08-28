@@ -1,0 +1,4 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="device_dosing_calibration_run_description_product">Place the outlet tube in a clean, dry graduated cylinder. When you start, the pump runs for 3 seconds. Keep the cylinder still until the process is complete.</string>
+</resources>
