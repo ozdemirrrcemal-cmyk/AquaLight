@@ -23,7 +23,10 @@ internal fun DeviceDosingChannelSnapshot.toProgramProgressUiState(): DosingProgr
     val occurrences = progress.occurrences
         .map(DeviceDosingOccurrenceProgress::toUiState)
         .withDoseFractions(scheduledAmountTodayMl)
-    val customPeriods = configuredProgram.toCustomPeriodUiStates(occurrences)
+    val customPeriods = configuredProgram.toCustomPeriodUiStates(
+        compiledOccurrences = progress.occurrences,
+        uiOccurrences = occurrences
+    )
     val scheduledToday = configuredProgram.enabled &&
         progress.scheduleState == DeviceDosingScheduleState.ACTIVE &&
         progress.totalOccurrences > 0 &&
@@ -93,15 +96,26 @@ private fun DeviceDosingOccurrenceProgress.toNextDoseUiState() = DosingNextDoseU
 )
 
 private fun DeviceDosingProgram.toCustomPeriodUiStates(
-    occurrences: List<DosingProgressOccurrenceUiState>
+    compiledOccurrences: List<DeviceDosingOccurrenceProgress>,
+    uiOccurrences: List<DosingProgressOccurrenceUiState>
 ): List<DosingCustomPeriodProgressUiState> {
     val periods = (schedule as? DeviceDosingProgramSchedule.CustomPeriods)?.periods
-    if (occurrences.isEmpty() || periods == null) return emptyList()
-    var cursor = 0
+    if (uiOccurrences.isEmpty() || periods == null) return emptyList()
+    require(compiledOccurrences.size == uiOccurrences.size)
+
+    // occurrence.index is firmware's canonical program-day identity. Activation-day progress may
+    // expose only a suffix, so visible array position must never be used to choose a custom period.
+    val visibleOccurrences = compiledOccurrences.zip(uiOccurrences)
+    var canonicalStartIndex = 0
     return periods.map { period ->
-        DosingCustomPeriodProgressUiState(
-            occurrences = occurrences.drop(cursor).take(period.doseCount)
-        ).also { cursor += period.doseCount }
+        val canonicalEndIndex = canonicalStartIndex + period.doseCount
+        val periodOccurrences = visibleOccurrences
+            .filter { (compiledOccurrence, _) ->
+                compiledOccurrence.index in canonicalStartIndex until canonicalEndIndex
+            }
+            .map { (_, uiOccurrence) -> uiOccurrence }
+        canonicalStartIndex = canonicalEndIndex
+        DosingCustomPeriodProgressUiState(occurrences = periodOccurrences)
     }
 }
 
