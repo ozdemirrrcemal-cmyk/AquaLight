@@ -471,6 +471,9 @@ class DeviceDosingV1CommittedReconciliationTest {
                 expectedRevisions = listOf(8L),
                 expectedRecoveryValues = listOf(true)
             )
+
+            testScheduler.runCurrent()
+            assertEquals(9L, adapter.currentChannel(DEVICE_UID.value, SLOT_ID)?.revision)
             assertEquals(
                 listOf(
                     DeviceDosingV1Contract.Action.STATUS_GET,
@@ -478,13 +481,13 @@ class DeviceDosingV1CommittedReconciliationTest {
                     DeviceDosingV1Contract.Action.PROGRESS_GET,
                     DeviceDosingV1Contract.Action.CALIBRATION_CONFIRM,
                     DeviceDosingV1Contract.Action.STATUS_GET,
-                    DeviceDosingV1Contract.Action.PROGRAM_APPLY
+                    DeviceDosingV1Contract.Action.PROGRAM_APPLY,
+                    DeviceDosingV1Contract.Action.STATUS_GET,
+                    DeviceDosingV1Contract.Action.STATUS_GET,
+                    DeviceDosingV1Contract.Action.PROGRESS_GET
                 ),
                 gateway.actions
             )
-
-            testScheduler.runCurrent()
-            assertEquals(9L, adapter.currentChannel(DEVICE_UID.value, SLOT_ID)?.revision)
         }
 
     private fun assertProgramRequests(
