@@ -430,6 +430,12 @@ class DeviceDosingV1CommittedReconciliationTest {
             val gateway = ScriptedGateway().apply {
                 enqueuePendingVerificationRefresh(revision = 7L, missedDoseRecoveryEnabled = false)
                 enqueueCalibrationConfirm()
+                enqueueDelayedGlobalReadback(
+                    revision = 8L,
+                    programEnabled = true,
+                    missedDoseRecoveryEnabled = false,
+                    delayMillis = 10_000L
+                )
                 enqueueProgramMutation(revision = 9L, missedDoseRecoveryEnabled = true)
                 enqueueRefresh(revision = 9L, missedDoseRecoveryEnabled = true)
             }
@@ -459,6 +465,7 @@ class DeviceDosingV1CommittedReconciliationTest {
             )
 
             assertEquals(DeviceDosingChannelCommittedResult(9L), switchResult)
+            assertEquals(0L, testScheduler.currentTime)
             assertProgramRequests(
                 gateway = gateway,
                 expectedRevisions = listOf(8L),
@@ -470,6 +477,7 @@ class DeviceDosingV1CommittedReconciliationTest {
                     DeviceDosingV1Contract.Action.STATUS_GET,
                     DeviceDosingV1Contract.Action.PROGRESS_GET,
                     DeviceDosingV1Contract.Action.CALIBRATION_CONFIRM,
+                    DeviceDosingV1Contract.Action.STATUS_GET,
                     DeviceDosingV1Contract.Action.PROGRAM_APPLY
                 ),
                 gateway.actions
