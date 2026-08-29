@@ -129,7 +129,13 @@ class DeviceProvisioningProgressFragment : Fragment(R.layout.fragment_device_pro
                             openAddedDevice(event.device)
                         }
                         is DeviceProvisioningProgressEvent.ShowAddedDeviceUnavailable -> {
-                            showAddedDeviceUnavailable(event)
+                            val baseActivity = activity as? BaseActivity
+                            val navController = findNavController()
+                            navController.popBackStack(R.id.devicesFragment, false)
+                            baseActivity?.showDeviceOfflineDialog(
+                                deviceTitle = event.title,
+                                messageRes = event.messageRes
+                            )
                         }
                         DeviceProvisioningProgressEvent.ExitProvisioning -> {
                             val navController = findNavController()
@@ -234,7 +240,7 @@ class DeviceProvisioningProgressFragment : Fragment(R.layout.fragment_device_pro
 
     private fun openAddedDevice(device: ProvisionedDevice) {
         if (!isAdded || _binding == null) {
-            viewModel.onDeviceNavigationFinished(device.deviceUid, committed = false)
+            viewModel.preparedNavigation.finish(device.deviceUid, committed = false)
             return
         }
 
@@ -251,7 +257,7 @@ class DeviceProvisioningProgressFragment : Fragment(R.layout.fragment_device_pro
             navController.navigate(directions)
             committed = true
         } finally {
-            viewModel.onDeviceNavigationFinished(device.deviceUid, committed)
+            viewModel.preparedNavigation.finish(device.deviceUid, committed)
             committingPreparedNavigation = false
         }
     }
@@ -283,21 +289,9 @@ class DeviceProvisioningProgressFragment : Fragment(R.layout.fragment_device_pro
             )
     }
 
-    private fun showAddedDeviceUnavailable(
-        event: DeviceProvisioningProgressEvent.ShowAddedDeviceUnavailable
-    ) {
-        val baseActivity = activity as? BaseActivity
-        val navController = findNavController()
-        navController.popBackStack(R.id.devicesFragment, false)
-        baseActivity?.showDeviceOfflineDialog(
-            deviceTitle = event.title,
-            messageRes = event.messageRes
-        )
-    }
-
     override fun onDestroyView() {
         if (!committingPreparedNavigation) {
-            viewModel.onNavigationHostDestroyed()
+            viewModel.preparedNavigation.abandonAll()
         }
         _binding = null
         super.onDestroyView()

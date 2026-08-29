@@ -3,9 +3,7 @@ package com.aqua.aqualight.ui.tabs.devices.add
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.aqua.aqualight.R
-import com.aqua.aqualight.application.devices.DeviceMenuOpenResult
 import com.aqua.aqualight.application.devices.DeviceMenuOpenUseCase
-import com.aqua.aqualight.application.devices.DeviceMenuUnavailableReason
 import com.aqua.aqualight.application.devices.provisioning.PreparedProvisioningRegistration
 import com.aqua.aqualight.application.devices.provisioning.ProvisionedDevice
 import com.aqua.aqualight.application.devices.provisioning.ProvisioningProgressOperations
@@ -14,8 +12,6 @@ import com.aqua.aqualight.application.devices.provisioning.ProvisioningSessionSn
 import com.aqua.aqualight.application.devices.provisioning.ProvisioningTransportEvent
 import com.aqua.aqualight.application.devices.provisioning.ProvisioningVerifiedDeviceInfo
 import com.aqua.aqualight.application.text.AppTextResolver
-import com.aqua.aqualight.ui.common.devicepresence.DeviceMenuUnavailableMessageMapper
-import java.util.concurrent.CancellationException
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
@@ -30,7 +26,7 @@ import kotlinx.coroutines.launch
 
 class DeviceProvisioningProgressViewModel(
     private val operations: ProvisioningProgressOperations,
-    private val menuOpenUseCase: DeviceMenuOpenUseCase,
+    menuOpenUseCase: DeviceMenuOpenUseCase,
     private val textResolver: AppTextResolver
 ) : ViewModel() {
 
@@ -42,6 +38,13 @@ class DeviceProvisioningProgressViewModel(
 
     private val _events = Channel<DeviceProvisioningProgressEvent>(Channel.BUFFERED)
     val events = _events.receiveAsFlow()
+
+    internal val preparedNavigation = DeviceProvisioningPreparedNavigation(
+        menuOpenUseCase = menuOpenUseCase,
+        textResolver = textResolver,
+        uiState = _uiState,
+        events = _events
+    )
 
     private var boundSessionId: String? = null
     private var activeSession: ProvisioningSessionSnapshot? = null
@@ -60,7 +63,6 @@ class DeviceProvisioningProgressViewModel(
     private var pendingAddedDevice: ProvisionedDevice? = null
     private var pendingPreparedRegistration: PreparedProvisioningRegistration? = null
     private var pendingSavedDeviceUid: String? = null
-    private var pendingMenuOpen: DeviceMenuOpenResult.Ready? = null
 
     fun bind(sessionId: String) {
         if (sessionId.isBlank() || boundSessionId == sessionId) return
@@ -342,7 +344,7 @@ class DeviceProvisioningProgressViewModel(
                         if (exitRequested) {
                             _events.send(DeviceProvisioningProgressEvent.ExitProvisioning)
                         } else {
-                            openCommittedDevice(device)
+                            preparedNavigation.open(device)
                         }
                     }
                     .onFailure { error ->
@@ -372,82 +374,6 @@ class DeviceProvisioningProgressViewModel(
                 wifiCredentialFailure = null
             )
         }
-    }
-
-    private suspend fun openCommittedDevice(device: ProvisionedDevice) {
-        try {
-            when (val result = menuOpenUseCase.resolve(device.deviceUid)) {
-                is DeviceMenuOpenResult.Ready -> {
-                    pendingMenuOpen = result
-                    _events.send(
-                        DeviceProvisioningProgressEvent.OpenAddedDevice(
-                            device = device.copy(
-                                title = result.access.title.ifBlank { device.title },
-                                family = result.access.family
-                            )
-                        )
-                    )
-                }
-                is DeviceMenuOpenResult.Unavailable -> {
-                    renderCommittedDeviceMenuUnavailable()
-                    _events.send(
-                        DeviceProvisioningProgressEvent.ShowAddedDeviceUnavailable(
-                            title = result.title.ifBlank { device.title },
-                            messageRes = DeviceMenuUnavailableMessageMapper.messageRes(result.reason)
-                        )
-                    )
-                }
-            }
-        } catch (error: Throwable) {
-            abandonPendingNavigation(device.deviceUid)
-            if (error is CancellationException) throw error
-            renderCommittedDeviceMenuUnavailable()
-            _events.send(
-                DeviceProvisioningProgressEvent.ShowAddedDeviceUnavailable(
-                    title = device.title,
-                    messageRes = DeviceMenuUnavailableMessageMapper.messageRes(
-                        DeviceMenuUnavailableReason.CURRENT_LIVENESS_NOT_PROVEN
-                    )
-                )
-            )
-        }
-    }
-
-    fun onDeviceNavigationFinished(
-        deviceUid: String,
-        committed: Boolean
-    ) {
-        val pending = pendingMenuOpen?.takeIf { ready ->
-            ready.access.deviceUid == deviceUid
-        }
-        if (pending != null) {
-            if (!committed) menuOpenUseCase.abandon(pending)
-            pendingMenuOpen = null
-        }
-    }
-
-    fun onNavigationHostDestroyed() {
-        pendingMenuOpen?.let(menuOpenUseCase::abandon)
-        pendingMenuOpen = null
-    }
-
-    private fun abandonPendingNavigation(deviceUid: String) {
-        val pending = pendingMenuOpen?.takeIf { ready ->
-            ready.access.deviceUid == deviceUid
-        } ?: return
-        menuOpenUseCase.abandon(pending)
-        pendingMenuOpen = null
-    }
-
-    private fun renderCommittedDeviceMenuUnavailable() {
-        _uiState.value = _uiState.value.copy(
-            stepThree = string(R.string.device_provisioning_step_setup_complete),
-            canStart = false,
-            buttonText = string(R.string.device_provisioning_unavailable),
-            showProgress = false,
-            isCancelling = false,
-            wifiCredentialFailure = null
-        )
     }
 
     private fun reduceTransportEvent(
