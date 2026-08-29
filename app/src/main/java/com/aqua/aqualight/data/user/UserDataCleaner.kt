@@ -114,9 +114,7 @@ class UserDataCleaner private constructor(
                 .clearAllTasks(ownerUid = targetOwnerUid)
         }
 
-        runStep(Step.AQUARIUM_TANKS) {
-            tankDataStoreManager.clearAllTanks(ownerUid = targetOwnerUid)
-        }
+        runStep(Step.AQUARIUM_TANKS) { tankDataStoreManager.clearAllTanks(targetOwnerUid) }
 
         runStep(Step.DEVICE_ASSIGNMENTS) {
             TankDeviceAssignmentStore.get(appContext)
