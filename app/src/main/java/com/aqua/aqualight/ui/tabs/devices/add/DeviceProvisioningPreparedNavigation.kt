@@ -35,7 +35,16 @@ internal class DeviceProvisioningPreparedNavigation(
                 wifiCredentialFailure = null
             )
         }
-        events.send(event)
+
+        var delivered = false
+        try {
+            events.send(event)
+            delivered = true
+        } finally {
+            if (!delivered && event is DeviceProvisioningProgressEvent.OpenAddedDevice) {
+                abandonAll()
+            }
+        }
     }
 
     fun finish(deviceUid: String, committed: Boolean) {
