@@ -146,6 +146,8 @@ internal class OwnerViewModelFactory(
                             ownerUidProvider = { graph.ownerUid }
                         )
                     ),
+                    menuOpenUseCase = createDeviceMenuOpenUseCase(graph, repository),
+                    routeResolver = DeviceRouteResolver(),
                     textResolver = appTextResolver
                 )
 

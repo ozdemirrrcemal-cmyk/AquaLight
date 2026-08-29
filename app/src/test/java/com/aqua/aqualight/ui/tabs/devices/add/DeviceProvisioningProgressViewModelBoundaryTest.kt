@@ -1,6 +1,13 @@
 package com.aqua.aqualight.ui.tabs.devices.add
 
 import com.aqua.aqualight.R
+import com.aqua.aqualight.application.devices.DeviceControlSurfacePreparationOperations
+import com.aqua.aqualight.application.devices.DeviceControlSurfacePreparationRequest
+import com.aqua.aqualight.application.devices.DeviceControlSurfacePreparationResult
+import com.aqua.aqualight.application.devices.DeviceMenuAccessOperations
+import com.aqua.aqualight.application.devices.DeviceMenuAccessResult
+import com.aqua.aqualight.application.devices.DeviceMenuOpenUseCase
+import com.aqua.aqualight.application.devices.DeviceMenuUnavailableReason
 import com.aqua.aqualight.application.devices.OwnerDeviceFamily
 import com.aqua.aqualight.application.devices.provisioning.PreparedProvisioningRegistration
 import com.aqua.aqualight.application.devices.provisioning.ProvisionedDevice
@@ -11,6 +18,8 @@ import com.aqua.aqualight.application.devices.provisioning.ProvisioningSessionSn
 import com.aqua.aqualight.application.devices.provisioning.ProvisioningTransportEvent
 import com.aqua.aqualight.application.devices.provisioning.ProvisioningVerifiedDeviceInfo
 import com.aqua.aqualight.application.text.AppTextResolver
+import com.aqua.aqualight.ui.tabs.devices.route.DeviceRouteResolver
+import com.aqua.aqualight.ui.tabs.devices.route.DeviceRouteTarget
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.Flow
@@ -96,22 +105,84 @@ class DeviceProvisioningProgressViewModelBoundaryTest {
     }
 
     @Test
-    fun `runtime handoff and completion commit prepared registration`() = runTest {
+    fun `completion commits registration then resolves route through central menu preparation`() = runTest {
         val operations = FakeProvisioningOperations(session())
-        val viewModel = viewModel(operations)
+        val menuAccess = FakeDeviceMenuAccessOperations()
+        val surfacePreparation = FakeControlSurfacePreparationOperations()
+        val viewModel = viewModel(operations, menuAccess, surfacePreparation)
         viewModel.bind("session-1")
         viewModel.startProvisioning()
 
         operations.emit(ProvisioningTransportEvent.RuntimeHandoffReceived(handoff()))
         operations.emit(ProvisioningTransportEvent.Completed)
-        val event = viewModel.events.first() as DeviceProvisioningProgressEvent.OpenAddedDevice
+        val event = viewModel.events.first() as DeviceProvisioningProgressEvent.OpenAddedDeviceRoute
 
         assertEquals(1, operations.prepareCalls)
         assertEquals(1, operations.finalizeCalls)
         assertEquals(1, operations.commitCalls)
-        assertEquals("device-1", event.device.deviceUid)
-        assertEquals(OwnerDeviceFamily.LIGHT, event.device.family)
+        assertEquals(1, menuAccess.resolveCalls)
+        assertEquals(1, surfacePreparation.prepareCalls)
+        assertEquals(
+            DeviceControlSurfacePreparationRequest(
+                deviceUid = "device-1",
+                family = OwnerDeviceFamily.DOSING
+            ),
+            surfacePreparation.lastRequest
+        )
+        assertEquals("device-1", event.route.deviceUid)
+        assertEquals(DeviceRouteTarget.DOSING_ROOT, event.route.target)
         assertTrue(operations.removedSessions.contains("session-1"))
+
+        viewModel.onDeviceNavigationFinished("device-1", committed = true)
+        assertEquals(0, surfacePreparation.discardCalls)
+    }
+
+    @Test
+    fun `abandoned post provisioning navigation discards prepared handoff`() = runTest {
+        val operations = FakeProvisioningOperations(session())
+        val surfacePreparation = FakeControlSurfacePreparationOperations()
+        val viewModel = viewModel(
+            operations = operations,
+            surfacePreparation = surfacePreparation
+        )
+        viewModel.bind("session-1")
+        viewModel.startProvisioning()
+
+        operations.emit(ProvisioningTransportEvent.RuntimeHandoffReceived(handoff()))
+        operations.emit(ProvisioningTransportEvent.Completed)
+        val event = viewModel.events.first() as DeviceProvisioningProgressEvent.OpenAddedDeviceRoute
+
+        viewModel.onDeviceNavigationFinished(event.route.deviceUid, committed = false)
+
+        assertEquals(1, surfacePreparation.discardCalls)
+        assertEquals("device-1", surfacePreparation.discardedDeviceUid)
+        assertEquals(OwnerDeviceFamily.DOSING, surfacePreparation.discardedFamily)
+    }
+
+    @Test
+    fun `unavailable prepared surface never emits an unprepared device route`() = runTest {
+        val operations = FakeProvisioningOperations(session())
+        val surfacePreparation = FakeControlSurfacePreparationOperations(
+            result = DeviceControlSurfacePreparationResult.Unavailable(
+                DeviceMenuUnavailableReason.CURRENT_LIVENESS_NOT_PROVEN
+            )
+        )
+        val viewModel = viewModel(
+            operations = operations,
+            surfacePreparation = surfacePreparation
+        )
+        viewModel.bind("session-1")
+        viewModel.startProvisioning()
+
+        operations.emit(ProvisioningTransportEvent.RuntimeHandoffReceived(handoff()))
+        operations.emit(ProvisioningTransportEvent.Completed)
+        val event = viewModel.events.first() as
+            DeviceProvisioningProgressEvent.ShowAddedDeviceUnavailable
+
+        assertEquals(1, operations.commitCalls)
+        assertEquals(1, surfacePreparation.prepareCalls)
+        assertEquals(R.string.device_menu_offline_message, event.messageRes)
+        assertFalse(viewModel.uiState.value.showProgress)
     }
 
     @Test
@@ -129,11 +200,20 @@ class DeviceProvisioningProgressViewModelBoundaryTest {
         assertFalse(viewModel.uiState.value.showProgress)
     }
 
-    private fun viewModel(operations: FakeProvisioningOperations) =
-        DeviceProvisioningProgressViewModel(
-            operations = operations,
-            textResolver = FakeTextResolver
-        )
+    private fun viewModel(
+        operations: FakeProvisioningOperations,
+        menuAccess: FakeDeviceMenuAccessOperations = FakeDeviceMenuAccessOperations(),
+        surfacePreparation: FakeControlSurfacePreparationOperations =
+            FakeControlSurfacePreparationOperations()
+    ) = DeviceProvisioningProgressViewModel(
+        operations = operations,
+        menuOpenUseCase = DeviceMenuOpenUseCase(
+            menuAccessOperations = menuAccess,
+            controlSurfacePreparationOperations = surfacePreparation
+        ),
+        routeResolver = DeviceRouteResolver(),
+        textResolver = FakeTextResolver
+    )
 
     private fun session() = ProvisioningSessionSnapshot(
         sessionId = "session-1",
@@ -142,7 +222,7 @@ class DeviceProvisioningProgressViewModelBoundaryTest {
         bleName = "AquaLight-Setup",
         deviceTitle = "AquaLight Test",
         deviceSerial = "AQL-TEST-001",
-        deviceModel = "AQL-Light",
+        deviceModel = "AQL-Dose-Pro-4",
         wifiSsid = "Test WiFi",
         createdAtMillis = 1L
     )
@@ -165,7 +245,8 @@ class DeviceProvisioningProgressViewModelBoundaryTest {
     )
 
     private class FakeProvisioningOperations(
-        private val session: ProvisioningSessionSnapshot?
+        private val session: ProvisioningSessionSnapshot?,
+        private val provisionedFamily: OwnerDeviceFamily = OwnerDeviceFamily.DOSING
     ) : ProvisioningProgressOperations {
         override val ownerUid: String = "owner-a"
         private val eventFlow = MutableSharedFlow<ProvisioningTransportEvent>(
@@ -226,7 +307,7 @@ class DeviceProvisioningProgressViewModelBoundaryTest {
                     device = ProvisionedDevice(
                         deviceUid = handoff.deviceUid,
                         title = verifiedDeviceInfo?.title ?: "AquaLight Test",
-                        family = OwnerDeviceFamily.LIGHT
+                        family = provisionedFamily
                     )
                 )
             )
@@ -256,6 +337,49 @@ class DeviceProvisioningProgressViewModelBoundaryTest {
 
         suspend fun emit(event: ProvisioningTransportEvent) {
             eventFlow.emit(event)
+        }
+    }
+
+    private class FakeDeviceMenuAccessOperations(
+        private val family: OwnerDeviceFamily = OwnerDeviceFamily.DOSING
+    ) : DeviceMenuAccessOperations {
+        var resolveCalls = 0
+
+        override suspend fun resolve(deviceUid: String): DeviceMenuAccessResult {
+            resolveCalls += 1
+            return DeviceMenuAccessResult.Available(
+                deviceUid = deviceUid,
+                title = "AquaLight Test",
+                family = family
+            )
+        }
+    }
+
+    private class FakeControlSurfacePreparationOperations(
+        private val result: DeviceControlSurfacePreparationResult =
+            DeviceControlSurfacePreparationResult.Ready
+    ) : DeviceControlSurfacePreparationOperations {
+        var prepareCalls = 0
+        var discardCalls = 0
+        var lastRequest: DeviceControlSurfacePreparationRequest? = null
+        var discardedDeviceUid: String? = null
+        var discardedFamily: OwnerDeviceFamily? = null
+
+        override suspend fun prepare(
+            request: DeviceControlSurfacePreparationRequest
+        ): DeviceControlSurfacePreparationResult {
+            prepareCalls += 1
+            lastRequest = request
+            return result
+        }
+
+        override fun discardFreshPreparation(
+            deviceUid: String,
+            family: OwnerDeviceFamily
+        ) {
+            discardCalls += 1
+            discardedDeviceUid = deviceUid
+            discardedFamily = family
         }
     }
 
