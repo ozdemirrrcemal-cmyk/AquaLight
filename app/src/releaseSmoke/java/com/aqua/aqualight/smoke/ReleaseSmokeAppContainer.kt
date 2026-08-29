@@ -181,6 +181,7 @@ private class ReleaseSmokeViewModelFactory(
         modelClass.isAssignableFrom(DeviceProvisioningProgressViewModel::class.java) ->
             DeviceProvisioningProgressViewModel(
                 operations = DefaultProvisioningProgressOperations(appContext),
+                menuOpenUseCase = deviceMenuOpenUseCase,
                 textResolver = appTextResolver
             )
 

@@ -14,6 +14,8 @@ import androidx.navigation.NavDirections
 import androidx.navigation.fragment.findNavController
 import androidx.navigation.fragment.navArgs
 import com.aqua.aqualight.R
+import com.aqua.aqualight.application.devices.OwnerDeviceFamily
+import com.aqua.aqualight.application.devices.provisioning.ProvisionedDevice
 import com.aqua.aqualight.base.BaseActivity
 import com.aqua.aqualight.composition.requireAppContainer
 import com.aqua.aqualight.databinding.FragmentDeviceProvisioningProgressBinding
@@ -22,8 +24,6 @@ import com.aqua.aqualight.ui.common.header.AquaHeaderConfig
 import com.aqua.aqualight.ui.common.header.setupAquaHeader
 import com.aqua.aqualight.ui.common.permission.CapabilityPermissionCoordinator
 import com.aqua.aqualight.ui.tabs.devices.DevicesFragmentDirections
-import com.aqua.aqualight.ui.tabs.devices.route.DeviceRoute
-import com.aqua.aqualight.ui.tabs.devices.route.DeviceRouteTarget
 import com.aqua.aqualight.utils.DialogManager
 import com.aqua.aqualight.utils.DialogType
 import kotlinx.coroutines.launch
@@ -125,8 +125,8 @@ class DeviceProvisioningProgressFragment : Fragment(R.layout.fragment_device_pro
             viewLifecycleOwner.repeatOnLifecycle(Lifecycle.State.STARTED) {
                 viewModel.events.collect { event ->
                     when (event) {
-                        is DeviceProvisioningProgressEvent.OpenAddedDeviceRoute -> {
-                            openAddedDeviceRoute(event.route)
+                        is DeviceProvisioningProgressEvent.OpenAddedDevice -> {
+                            openAddedDevice(event.device)
                         }
                         is DeviceProvisioningProgressEvent.ShowAddedDeviceUnavailable -> {
                             showAddedDeviceUnavailable(event)
@@ -232,13 +232,13 @@ class DeviceProvisioningProgressFragment : Fragment(R.layout.fragment_device_pro
             DeviceWifiProvisioningResult.FIELD_PASSWORD
     }
 
-    private fun openAddedDeviceRoute(route: DeviceRoute) {
+    private fun openAddedDevice(device: ProvisionedDevice) {
         if (!isAdded || _binding == null) {
-            viewModel.onDeviceNavigationFinished(route.deviceUid, committed = false)
+            viewModel.onDeviceNavigationFinished(device.deviceUid, committed = false)
             return
         }
 
-        val directions = route.toDevicesDestination()
+        val directions = device.toDevicesDestination()
         val navController = findNavController()
         var committed = false
         committingPreparedNavigation = true
@@ -251,36 +251,34 @@ class DeviceProvisioningProgressFragment : Fragment(R.layout.fragment_device_pro
             navController.navigate(directions)
             committed = true
         } finally {
-            viewModel.onDeviceNavigationFinished(route.deviceUid, committed)
+            viewModel.onDeviceNavigationFinished(device.deviceUid, committed)
             committingPreparedNavigation = false
         }
     }
 
-    private fun DeviceRoute.toDevicesDestination(): NavDirections = when (target) {
-        DeviceRouteTarget.LIGHT_ROOT ->
+    private fun ProvisionedDevice.toDevicesDestination(): NavDirections = when (family) {
+        OwnerDeviceFamily.LIGHT ->
             DevicesFragmentDirections.actionDevicesFragmentToDeviceLightRootFragment(
                 deviceUid = deviceUid
             )
-        DeviceRouteTarget.DOSING_ROOT ->
+        OwnerDeviceFamily.DOSING ->
             DevicesFragmentDirections.actionDevicesFragmentToDeviceDosingRootFragment(
                 deviceUid = deviceUid
             )
-        DeviceRouteTarget.TIMER_ROOT ->
+        OwnerDeviceFamily.TIMER ->
             DevicesFragmentDirections.actionDevicesFragmentToDeviceTimerRootFragment(
                 deviceUid = deviceUid
             )
-        DeviceRouteTarget.COOLING_ROOT ->
+        OwnerDeviceFamily.COOLING ->
             DevicesFragmentDirections.actionDevicesFragmentToDeviceCoolingRootFragment(
                 deviceUid = deviceUid
             )
-        DeviceRouteTarget.UNSUPPORTED ->
+        OwnerDeviceFamily.UNKNOWN ->
             DevicesFragmentDirections.actionDevicesFragmentToUnsupportedDeviceFragment(
-                deviceTitle = unsupportedTitle.ifBlank {
-                    getString(R.string.device_menu_default_title)
+                deviceTitle = title.ifBlank {
+                    getString(R.string.device_wifi_default_device_name)
                 },
-                message = messageRes.takeIf { it != 0 }
-                    ?.let { getString(it) }
-                    .orEmpty(),
+                message = getString(R.string.device_unsupported_family_message),
                 deviceUid = deviceUid
             )
     }

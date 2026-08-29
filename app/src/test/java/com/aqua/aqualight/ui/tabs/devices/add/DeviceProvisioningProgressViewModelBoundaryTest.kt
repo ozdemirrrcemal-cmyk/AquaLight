@@ -18,8 +18,6 @@ import com.aqua.aqualight.application.devices.provisioning.ProvisioningSessionSn
 import com.aqua.aqualight.application.devices.provisioning.ProvisioningTransportEvent
 import com.aqua.aqualight.application.devices.provisioning.ProvisioningVerifiedDeviceInfo
 import com.aqua.aqualight.application.text.AppTextResolver
-import com.aqua.aqualight.ui.tabs.devices.route.DeviceRouteResolver
-import com.aqua.aqualight.ui.tabs.devices.route.DeviceRouteTarget
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.Flow
@@ -105,9 +103,14 @@ class DeviceProvisioningProgressViewModelBoundaryTest {
     }
 
     @Test
-    fun `completion commits registration then resolves route through central menu preparation`() = runTest {
-        val operations = FakeProvisioningOperations(session())
-        val menuAccess = FakeDeviceMenuAccessOperations()
+    fun `runtime handoff and completion commit prepared registration`() = runTest {
+        val operations = FakeProvisioningOperations(
+            session = session(),
+            provisionedFamily = OwnerDeviceFamily.LIGHT
+        )
+        val menuAccess = FakeDeviceMenuAccessOperations(
+            family = OwnerDeviceFamily.DOSING
+        )
         val surfacePreparation = FakeControlSurfacePreparationOperations()
         val viewModel = viewModel(operations, menuAccess, surfacePreparation)
         viewModel.bind("session-1")
@@ -115,7 +118,7 @@ class DeviceProvisioningProgressViewModelBoundaryTest {
 
         operations.emit(ProvisioningTransportEvent.RuntimeHandoffReceived(handoff()))
         operations.emit(ProvisioningTransportEvent.Completed)
-        val event = viewModel.events.first() as DeviceProvisioningProgressEvent.OpenAddedDeviceRoute
+        val event = viewModel.events.first() as DeviceProvisioningProgressEvent.OpenAddedDevice
 
         assertEquals(1, operations.prepareCalls)
         assertEquals(1, operations.finalizeCalls)
@@ -129,8 +132,9 @@ class DeviceProvisioningProgressViewModelBoundaryTest {
             ),
             surfacePreparation.lastRequest
         )
-        assertEquals("device-1", event.route.deviceUid)
-        assertEquals(DeviceRouteTarget.DOSING_ROOT, event.route.target)
+        assertEquals("device-1", event.device.deviceUid)
+        assertEquals("AquaLight Test", event.device.title)
+        assertEquals(OwnerDeviceFamily.DOSING, event.device.family)
         assertTrue(operations.removedSessions.contains("session-1"))
 
         viewModel.onDeviceNavigationFinished("device-1", committed = true)
@@ -150,9 +154,9 @@ class DeviceProvisioningProgressViewModelBoundaryTest {
 
         operations.emit(ProvisioningTransportEvent.RuntimeHandoffReceived(handoff()))
         operations.emit(ProvisioningTransportEvent.Completed)
-        val event = viewModel.events.first() as DeviceProvisioningProgressEvent.OpenAddedDeviceRoute
+        val event = viewModel.events.first() as DeviceProvisioningProgressEvent.OpenAddedDevice
 
-        viewModel.onDeviceNavigationFinished(event.route.deviceUid, committed = false)
+        viewModel.onDeviceNavigationFinished(event.device.deviceUid, committed = false)
 
         assertEquals(1, surfacePreparation.discardCalls)
         assertEquals("device-1", surfacePreparation.discardedDeviceUid)
@@ -211,7 +215,6 @@ class DeviceProvisioningProgressViewModelBoundaryTest {
             menuAccessOperations = menuAccess,
             controlSurfacePreparationOperations = surfacePreparation
         ),
-        routeResolver = DeviceRouteResolver(),
         textResolver = FakeTextResolver
     )
 

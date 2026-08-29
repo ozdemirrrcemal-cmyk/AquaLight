@@ -15,7 +15,6 @@ import com.aqua.aqualight.application.devices.provisioning.ProvisioningTransport
 import com.aqua.aqualight.application.devices.provisioning.ProvisioningVerifiedDeviceInfo
 import com.aqua.aqualight.application.text.AppTextResolver
 import com.aqua.aqualight.ui.common.devicepresence.DeviceMenuUnavailableMessageMapper
-import com.aqua.aqualight.ui.tabs.devices.route.DeviceRouteResolver
 import java.util.concurrent.CancellationException
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -32,7 +31,6 @@ import kotlinx.coroutines.launch
 class DeviceProvisioningProgressViewModel(
     private val operations: ProvisioningProgressOperations,
     private val menuOpenUseCase: DeviceMenuOpenUseCase,
-    private val routeResolver: DeviceRouteResolver,
     private val textResolver: AppTextResolver
 ) : ViewModel() {
 
@@ -382,8 +380,11 @@ class DeviceProvisioningProgressViewModel(
                 is DeviceMenuOpenResult.Ready -> {
                     pendingMenuOpen = result
                     _events.send(
-                        DeviceProvisioningProgressEvent.OpenAddedDeviceRoute(
-                            route = routeResolver.resolve(result.access)
+                        DeviceProvisioningProgressEvent.OpenAddedDevice(
+                            device = device.copy(
+                                title = result.access.title.ifBlank { device.title },
+                                family = result.access.family
+                            )
                         )
                     )
                 }

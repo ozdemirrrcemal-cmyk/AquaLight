@@ -1,11 +1,11 @@
 package com.aqua.aqualight.ui.tabs.devices.add
 
 import androidx.annotation.StringRes
-import com.aqua.aqualight.ui.tabs.devices.route.DeviceRoute
+import com.aqua.aqualight.application.devices.provisioning.ProvisionedDevice
 
 sealed interface DeviceProvisioningProgressEvent {
-    data class OpenAddedDeviceRoute(
-        val route: DeviceRoute
+    data class OpenAddedDevice(
+        val device: ProvisionedDevice
     ) : DeviceProvisioningProgressEvent
 
     data class ShowAddedDeviceUnavailable(

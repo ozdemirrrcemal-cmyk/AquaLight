@@ -147,7 +147,6 @@ internal class OwnerViewModelFactory(
                         )
                     ),
                     menuOpenUseCase = createDeviceMenuOpenUseCase(graph, repository),
-                    routeResolver = DeviceRouteResolver(),
                     textResolver = appTextResolver
                 )
 

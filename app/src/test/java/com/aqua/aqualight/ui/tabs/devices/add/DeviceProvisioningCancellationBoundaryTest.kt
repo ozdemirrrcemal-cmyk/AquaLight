@@ -16,7 +16,6 @@ import com.aqua.aqualight.application.devices.provisioning.ProvisioningSessionSn
 import com.aqua.aqualight.application.devices.provisioning.ProvisioningTransportEvent
 import com.aqua.aqualight.application.devices.provisioning.ProvisioningVerifiedDeviceInfo
 import com.aqua.aqualight.application.text.AppTextResolver
-import com.aqua.aqualight.ui.tabs.devices.route.DeviceRouteResolver
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.Flow
@@ -90,7 +89,6 @@ class DeviceProvisioningCancellationBoundaryTest {
                 menuAccessOperations = UnusedDeviceMenuAccessOperations,
                 controlSurfacePreparationOperations = UnusedControlSurfacePreparationOperations
             ),
-            routeResolver = DeviceRouteResolver(),
             textResolver = FakeTextResolver
         )
 
