@@ -2,6 +2,7 @@ package com.aqua.aqualight.ui.tabs.devices.detail.dosing.channel.calibration
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
@@ -15,6 +16,7 @@ import androidx.compose.ui.Modifier
 import com.aqua.aqualight.ui.common.flow.AquaGuidedFlowGeometry
 import com.aqua.aqualight.ui.common.flow.aquaGuidedFlowColors
 
+@OptIn(ExperimentalLayoutApi::class)
 @Composable
 internal fun DeviceDosingCalibrationScreen(
     state: DeviceDosingCalibrationUiState,
