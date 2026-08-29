@@ -261,19 +261,21 @@ private class DeviceFirmwareUpdateStateMapper {
             is DeviceOtaState.Starting -> selectedPlan = state.plan
             else -> Unit
         }
-        val content = when (state) {
-            is DeviceOtaState.UpToDate -> state.releaseContent
-            is DeviceOtaState.UpdateAvailable -> state.plan.releaseContent
-            is DeviceOtaState.Starting -> state.plan.releaseContent
-            is DeviceOtaState.InProgress -> state.releaseContent
-            is DeviceOtaState.RestartRequired -> state.releaseContent
-            is DeviceOtaState.Succeeded -> state.releaseContent
-            is DeviceOtaState.RolledBack -> state.releaseContent
-            is DeviceOtaState.PostRestartTimeout -> state.releaseContent
-            is DeviceOtaState.UnexpectedFirmware -> state.releaseContent
-            else -> DeviceFirmwareReleaseContent.EMPTY
-        }
+        val content = state.releaseContentOrEmpty()
         if (content.isPresent) retainedReleaseContent = content
+    }
+
+    private fun DeviceOtaState.releaseContentOrEmpty(): DeviceFirmwareReleaseContent = when (this) {
+        is DeviceOtaState.UpToDate -> releaseContent
+        is DeviceOtaState.UpdateAvailable -> plan.releaseContent
+        is DeviceOtaState.Starting -> plan.releaseContent
+        is DeviceOtaState.InProgress -> releaseContent
+        is DeviceOtaState.RestartRequired -> releaseContent
+        is DeviceOtaState.Succeeded -> releaseContent
+        is DeviceOtaState.RolledBack -> releaseContent
+        is DeviceOtaState.PostRestartTimeout -> releaseContent
+        is DeviceOtaState.UnexpectedFirmware -> releaseContent
+        else -> DeviceFirmwareReleaseContent.EMPTY
     }
 
     private fun DeviceFirmwareUpdateUiState.withPlan(

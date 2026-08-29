@@ -481,42 +481,50 @@ internal class DeviceOtaCoordinator(
             }
             val activeSelection = selected?.copy(runtimeGeneration = generation)
             if (activeSelection != null) selectedPlans[deviceUid] = activeSelection
-            val releaseContent = activeSelection?.applicationPlan?.releaseContent
-                ?: DeviceFirmwareReleaseContent.EMPTY
-            val targetVersion = snapshot.targetVersion.ifBlank {
-                activeSelection?.dataPlan?.targetVersion.orEmpty()
-            }
             armRestartVerification(deviceUid, snapshot, activeSelection)
-            state.value = when {
-                snapshot.phase == DeviceFirmwareOtaPhase.IDLE &&
-                    activeSelection != null &&
-                    state.value is DeviceOtaState.UpdateAvailable -> {
-                    // A recovery status probe preserves the exact signed plan selected immediately
-                    // beforehand. A historical failed terminal status is handled above for the same
-                    // reason: it has no correlation to the newly prepared installation attempt.
-                    DeviceOtaState.UpdateAvailable(activeSelection.applicationPlan)
-                }
-                snapshot.phase == DeviceFirmwareOtaPhase.IDLE &&
-                    state.value is DeviceOtaState.Starting -> state.value
-                snapshot.phase == DeviceFirmwareOtaPhase.IDLE &&
-                    state.value is DeviceOtaState.Recovering &&
-                    activeSelection != null -> DeviceOtaState.Failed(
-                    deviceUid = deviceUid.value,
-                    failure = DeviceOtaFailureMapper.connection(
-                        "Recovered firmware reported no active OTA operation."
-                    )
-                )
-                else -> DeviceOtaStateMapper.map(
-                    snapshot = snapshot,
-                    deviceUid = deviceUid,
-                    targetVersion = targetVersion,
-                    releaseContent = releaseContent
-                )
-            }
+            state.value = snapshotState(
+                deviceUid = deviceUid,
+                snapshot = snapshot,
+                activeSelection = activeSelection,
+                currentState = state.value
+            )
             if (state.value is DeviceOtaState.Failed) clearPlanState(deviceUid)
             verifyCurrentFirmwareIfReady(deviceUid, snapshot, activeSelection)
         }
         return null
+    }
+
+    private fun snapshotState(
+        deviceUid: DeviceUid,
+        snapshot: DeviceFirmwareOtaSnapshot,
+        activeSelection: SelectedPlan?,
+        currentState: DeviceOtaState
+    ): DeviceOtaState = when {
+        snapshot.phase == DeviceFirmwareOtaPhase.IDLE &&
+            activeSelection != null &&
+            currentState is DeviceOtaState.UpdateAvailable -> {
+            // Preserve the exact signed plan selected immediately before a recovery status probe.
+            DeviceOtaState.UpdateAvailable(activeSelection.applicationPlan)
+        }
+        snapshot.phase == DeviceFirmwareOtaPhase.IDLE &&
+            currentState is DeviceOtaState.Starting -> currentState
+        snapshot.phase == DeviceFirmwareOtaPhase.IDLE &&
+            currentState is DeviceOtaState.Recovering &&
+            activeSelection != null -> DeviceOtaState.Failed(
+            deviceUid = deviceUid.value,
+            failure = DeviceOtaFailureMapper.connection(
+                "Recovered firmware reported no active OTA operation."
+            )
+        )
+        else -> DeviceOtaStateMapper.map(
+            snapshot = snapshot,
+            deviceUid = deviceUid,
+            targetVersion = snapshot.targetVersion.ifBlank {
+                activeSelection?.dataPlan?.targetVersion.orEmpty()
+            },
+            releaseContent = activeSelection?.applicationPlan?.releaseContent
+                ?: DeviceFirmwareReleaseContent.EMPTY
+        )
     }
 
     private fun armRestartVerification(

@@ -353,7 +353,18 @@ abstract class DeviceFamilySettingsFragment : Fragment(R.layout.fragment_device_
             opensDetails = true,
             strokeColorRes = R.color.aqua_accent_primary
         )
-        is DeviceSettingsUpdateActionState.Failed -> FirmwareActionPresentation(
+        is DeviceSettingsUpdateActionState.Failed -> toFailedFirmwareActionPresentation()
+        is DeviceSettingsUpdateActionState.PostUpdateAttention ->
+            toPostUpdatePresentation()
+        DeviceSettingsUpdateActionState.Unsupported -> FirmwareActionPresentation(
+            titleText = getString(R.string.device_settings_update_status_unsupported),
+            subtitleText = getString(R.string.device_settings_update_unsupported_status),
+            enabled = false
+        )
+    }
+
+    private fun DeviceSettingsUpdateActionState.Failed.toFailedFirmwareActionPresentation() =
+        FirmwareActionPresentation(
             titleText = getString(
                 if (failure.canRetryAvailabilityCheck) {
                     R.string.device_settings_retry_update_check_action
@@ -368,7 +379,9 @@ abstract class DeviceFamilySettingsFragment : Fragment(R.layout.fragment_device_
             opensDetails = !failure.canRetryAvailabilityCheck,
             strokeColorRes = R.color.aqua_status_danger
         )
-        is DeviceSettingsUpdateActionState.PostUpdateAttention -> FirmwareActionPresentation(
+
+    private fun DeviceSettingsUpdateActionState.PostUpdateAttention.toPostUpdatePresentation() =
+        FirmwareActionPresentation(
             titleText = getString(R.string.device_settings_update_needs_attention_title),
             subtitleText = getString(
                 when (kind) {
@@ -384,12 +397,6 @@ abstract class DeviceFamilySettingsFragment : Fragment(R.layout.fragment_device_
             opensDetails = true,
             strokeColorRes = R.color.aqua_content_warning
         )
-        DeviceSettingsUpdateActionState.Unsupported -> FirmwareActionPresentation(
-            titleText = getString(R.string.device_settings_update_status_unsupported),
-            subtitleText = getString(R.string.device_settings_update_unsupported_status),
-            enabled = false
-        )
-    }
 
     private fun installedFirmwareDescription(installedVersion: String): CharSequence {
         return if (installedVersion.isBlank()) {

@@ -29,7 +29,7 @@ import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
 import org.junit.Test
 
-@Suppress("LongMethod", "MagicNumber", "MaxLineLength")
+@Suppress("LargeClass", "LongMethod", "MagicNumber", "MaxLineLength")
 class DeviceOtaCoordinatorTest {
 
     @Test

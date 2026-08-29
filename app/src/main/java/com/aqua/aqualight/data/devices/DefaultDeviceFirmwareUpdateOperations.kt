@@ -190,16 +190,16 @@ internal class DefaultDeviceFirmwareUpdateOperations(
         }
     }
 
-    private fun requireDeviceUid(value: String): DeviceUid {
-        val normalized = value.trim()
-        require(normalized.isNotBlank()) { "Device uid is missing." }
-        return DeviceUid(normalized)
-    }
-
     private data class NotificationEmission(
         val key: String,
         val state: DeviceOtaState
     )
+}
+
+private fun requireDeviceUid(value: String): DeviceUid {
+    val normalized = value.trim()
+    require(normalized.isNotBlank()) { "Device uid is missing." }
+    return DeviceUid(normalized)
 }
 
 internal fun <T> Result<T>.rethrowFatalOrCancellation(): Result<T> {

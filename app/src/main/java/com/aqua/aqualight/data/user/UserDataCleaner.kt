@@ -127,26 +127,7 @@ class UserDataCleaner private constructor(
             clearProvisioningData(targetOwnerUid)
         }
 
-        runStep(Step.KNOWN_DEVICES) {
-            DeviceKnownStore(
-                context = appContext,
-                ownerUid = targetOwnerUid
-            ).clearOwnerData()
-        }
-
-        runStep(Step.OTA_TRANSACTIONS) {
-            SharedPreferencesDeviceOtaTransactionStore.create(
-                context = appContext,
-                ownerUid = targetOwnerUid
-            ).clearOwner()
-        }
-
-        runStep(Step.DEVICE_CREDENTIALS) {
-            DeviceCredentialStore(
-                context = appContext,
-                ownerUid = targetOwnerUid
-            ).clearOwner()
-        }
+        clearDeviceStores(targetOwnerUid) { step, block -> runStep(step, block) }
 
         runStep(Step.APP_OWNED_FILES) {
             clearAppOwnedUserFiles(
@@ -165,6 +146,30 @@ class UserDataCleaner private constructor(
         }
 
         return CleanupResult(issues = issues.toList())
+    }
+
+    private suspend fun clearDeviceStores(
+        ownerUid: String,
+        runStep: suspend (Step, suspend () -> Unit) -> Unit
+    ) {
+        runStep(Step.KNOWN_DEVICES) {
+            DeviceKnownStore(
+                context = appContext,
+                ownerUid = ownerUid
+            ).clearOwnerData()
+        }
+        runStep(Step.OTA_TRANSACTIONS) {
+            SharedPreferencesDeviceOtaTransactionStore.create(
+                context = appContext,
+                ownerUid = ownerUid
+            ).clearOwner()
+        }
+        runStep(Step.DEVICE_CREDENTIALS) {
+            DeviceCredentialStore(
+                context = appContext,
+                ownerUid = ownerUid
+            ).clearOwner()
+        }
     }
 
     private suspend fun clearProvisioningData(ownerUid: String) {
