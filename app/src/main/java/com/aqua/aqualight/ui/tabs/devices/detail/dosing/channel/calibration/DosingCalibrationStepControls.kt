@@ -6,6 +6,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.res.stringResource
 import com.aqua.aqualight.R
 import com.aqua.aqualight.ui.common.flow.AquaGuidedFlowButton
@@ -18,16 +19,31 @@ internal fun CalibrationStepControls(
     colors: AquaGuidedFlowColors,
     onAction: (DeviceDosingCalibrationAction) -> Unit
 ) {
+    val focusManager = LocalFocusManager.current
+    val submitName = {
+        focusManager.clearFocus()
+        if (!state.isLoading && !state.isBusy && state.displayName.isNotBlank()) {
+            onAction(DeviceDosingCalibrationAction.SaveDisplayName)
+        }
+    }
+    val submitMeasurement = {
+        focusManager.clearFocus()
+        if (!state.isLoading && !state.isBusy && state.measuredMl.isNotBlank()) {
+            onAction(DeviceDosingCalibrationAction.SaveMeasurement)
+        }
+    }
+
     androidx.compose.foundation.layout.Column(
         verticalArrangement = Arrangement.spacedBy(CALIBRATION_CONTROL_GAP)
     ) {
         when (state.step) {
-            DeviceDosingCalibrationStep.NAME -> CalibrationNameControls(state, colors, onAction)
+            DeviceDosingCalibrationStep.NAME ->
+                CalibrationNameControls(state, colors, onAction, submitName)
             DeviceDosingCalibrationStep.PRIME -> CalibrationPrimeControls(state, colors, onAction)
             DeviceDosingCalibrationStep.CALIBRATION_RUN ->
                 CalibrationRunControls(state, colors, onAction)
             DeviceDosingCalibrationStep.MEASUREMENT ->
-                CalibrationMeasurementControls(state, colors, onAction)
+                CalibrationMeasurementControls(state, colors, onAction, submitMeasurement)
             DeviceDosingCalibrationStep.VERIFICATION ->
                 CalibrationVerificationControls(state, colors, onAction)
             DeviceDosingCalibrationStep.CONFIRMATION ->
@@ -40,7 +56,8 @@ internal fun CalibrationStepControls(
 private fun CalibrationNameControls(
     state: DeviceDosingCalibrationUiState,
     colors: AquaGuidedFlowColors,
-    onAction: (DeviceDosingCalibrationAction) -> Unit
+    onAction: (DeviceDosingCalibrationAction) -> Unit,
+    onSubmit: () -> Unit
 ) {
     CalibrationTextField(
         model = CalibrationTextFieldModel(
@@ -52,11 +69,12 @@ private fun CalibrationNameControls(
         colors = colors,
         onValueChange = { value ->
             onAction(DeviceDosingCalibrationAction.DisplayNameChanged(value))
-        }
+        },
+        onImeDone = onSubmit
     )
     AquaGuidedFlowButton(
         text = calibrationActionText(state, R.string.device_dosing_calibration_continue),
-        onClick = { onAction(DeviceDosingCalibrationAction.SaveDisplayName) },
+        onClick = onSubmit,
         enabled = !state.isLoading && !state.isBusy && state.displayName.isNotBlank(),
         modifier = Modifier.fillMaxWidth()
     )
@@ -102,7 +120,8 @@ private fun CalibrationRunControls(
 private fun CalibrationMeasurementControls(
     state: DeviceDosingCalibrationUiState,
     colors: AquaGuidedFlowColors,
-    onAction: (DeviceDosingCalibrationAction) -> Unit
+    onAction: (DeviceDosingCalibrationAction) -> Unit,
+    onSubmit: () -> Unit
 ) {
     CalibrationTextField(
         model = CalibrationTextFieldModel(
@@ -115,11 +134,12 @@ private fun CalibrationMeasurementControls(
         colors = colors,
         onValueChange = { value ->
             onAction(DeviceDosingCalibrationAction.MeasuredMlChanged(value))
-        }
+        },
+        onImeDone = onSubmit
     )
     AquaGuidedFlowButton(
         text = calibrationActionText(state, R.string.device_dosing_calibration_save_measurement),
-        onClick = { onAction(DeviceDosingCalibrationAction.SaveMeasurement) },
+        onClick = onSubmit,
         enabled = !state.isLoading && !state.isBusy && state.measuredMl.isNotBlank(),
         modifier = Modifier.fillMaxWidth()
     )

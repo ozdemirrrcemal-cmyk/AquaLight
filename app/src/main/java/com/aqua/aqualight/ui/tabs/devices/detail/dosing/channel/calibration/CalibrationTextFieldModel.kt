@@ -20,6 +20,7 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.BasicText
 import androidx.compose.foundation.text.BasicTextField
+import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -38,6 +39,7 @@ import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.role
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.input.KeyboardType
+import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.style.TextAlign
 import com.aqua.aqualight.R
 import com.aqua.aqualight.ui.common.flow.AquaGuidedFlowColors
@@ -57,7 +59,8 @@ internal data class CalibrationTextFieldModel(
 internal fun CalibrationTextField(
     model: CalibrationTextFieldModel,
     colors: AquaGuidedFlowColors,
-    onValueChange: (String) -> Unit
+    onValueChange: (String) -> Unit,
+    onImeDone: () -> Unit
 ) {
     val typography = aquaGuidedFlowTypography(colors)
     val shape = RoundedCornerShape(AquaGuidedFlowGeometry.controlRadius)
@@ -83,7 +86,11 @@ internal fun CalibrationTextField(
                 modifier = Modifier.fillMaxWidth(),
                 enabled = model.enabled,
                 textStyle = typography.label,
-                keyboardOptions = KeyboardOptions(keyboardType = model.keyboardType),
+                keyboardOptions = KeyboardOptions(
+                    keyboardType = model.keyboardType,
+                    imeAction = ImeAction.Done
+                ),
+                keyboardActions = KeyboardActions(onDone = { onImeDone() }),
                 cursorBrush = SolidColor(colors.accent),
                 singleLine = true
             )
