@@ -3,7 +3,7 @@
   "schema": "aql.android.dosing-v1.pin.v1",
   "firmware": {
     "repository": "ozdemirrrcemal-cmyk/AquaLight-Firmware",
-    "commit": "ad1132320e60cbf1f047171300f6fd3b2bb68139",
+    "commit": "dc89a37262ba982c577db0812eeb8f94ffd18e12",
     "sources": {
       "src/api/v1/commands/AqlDosingCommands.hpp": "5c0201f9a4e09f93f4dd54af8c1fba9dec167105",
       "src/api/v1/commands/AqlDosingProgressCommands.hpp": "8700e785bdd2e747abea3b09eff97755e2addad0",
@@ -48,7 +48,7 @@
       "blob": "ea7e8d0ae8a846441edd51e9d24a26fbf9da65db",
       "derivedFrom": "src/modules/dosing/AqlDosingStatusCodec.hpp",
       "sourceBlob": "29a989b9f008a6ca39fb8ac7182915e87e794855",
-      "firmwareCommit": "ad1132320e60cbf1f047171300f6fd3b2bb68139"
+      "firmwareCommit": "dc89a37262ba982c577db0812eeb8f94ffd18e12"
     }
   }
 }

@@ -29,7 +29,7 @@ import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
 import org.junit.Test
 
-@Suppress("LongMethod", "MaxLineLength")
+@Suppress("LongMethod", "MagicNumber", "MaxLineLength")
 class DeviceOtaCoordinatorTest {
 
     @Test
@@ -192,7 +192,7 @@ class DeviceOtaCoordinatorTest {
     }
 
     @Test
-    fun `reconnected old firmware fails final installed version proof`() = runTest {
+    fun `reconnected old firmware proves rollback and quarantines exact release`() = runTest {
         val typedEvents = MutableSharedFlow<DeviceRuntimeTypedEvent>(extraBufferCapacity = 8)
         val snapshots = MutableStateFlow(mapOf(DEVICE_UID to snapshot()))
         val coordinator = DeviceOtaCoordinator(
@@ -231,12 +231,173 @@ class DeviceOtaCoordinatorTest {
         )
         runCurrent()
 
-        val failed = coordinator.observe(DEVICE_UID).value as DeviceOtaState.Failed
-        assertTrue(failed.failure.diagnosticMessage.contains("firmware version"))
-        assertEquals(DeviceOtaFailureReason.INCOMPATIBLE_FIRMWARE, failed.failure.reason)
-        assertFalse(failed.failure.recoverable)
+        val rolledBack = coordinator.observe(DEVICE_UID).value as DeviceOtaState.RolledBack
+        assertEquals("1.0.0", rolledBack.previousVersion)
+        assertEquals("2.0.0", rolledBack.rejectedVersion)
+
+        val repeated = coordinator.checkAvailability(DEVICE_UID, MANIFEST_URL, true).getOrThrow()
+        assertTrue(repeated is DeviceOtaState.RolledBack)
         coordinator.close()
     }
+
+    @Test
+    fun `durable post restart transaction survives coordinator recreation`() = runTest {
+        val store = InMemoryDeviceOtaTransactionStore()
+        val typedEvents = MutableSharedFlow<DeviceRuntimeTypedEvent>(extraBufferCapacity = 8)
+        val firstSnapshots = MutableStateFlow(mapOf(DEVICE_UID to snapshot()))
+        val first = DeviceOtaCoordinator(
+            snapshotProvider = { deviceUid -> firstSnapshots.value[deviceUid] },
+            connectRuntime = { Result.success(Unit) },
+            updaterProvider = { updater(RecordingGateway()) },
+            runtimeLifecycleEvents = null,
+            runtimeTypedEvents = typedEvents,
+            snapshotUpdates = firstSnapshots,
+            transactionStore = store,
+            dispatcher = StandardTestDispatcher(testScheduler),
+            restartWaitMillis = 1_000L
+        )
+        runCurrent()
+        val plan = (
+            first.checkAvailability(DEVICE_UID, MANIFEST_URL, true).getOrThrow()
+                as DeviceOtaState.UpdateAvailable
+            ).plan
+        first.startUpdate(plan)
+        typedEvents.tryEmit(
+            otaEvent(
+                DeviceRuntimeTypedEvent.Type.FIRMWARE_OTA_COMPLETED,
+                "completed-before-process-death",
+                otaEventData(
+                    "succeeded",
+                    active = false,
+                    progressPermille = 1_000,
+                    restartRequired = true,
+                    restartScheduled = true
+                )
+            )
+        )
+        runCurrent()
+        assertEquals(1, store.activeTransactions().size)
+        first.close()
+
+        val restoredSnapshots = MutableStateFlow(
+            mapOf(
+                DEVICE_UID to snapshot().copy(
+                    firmwareVersion = "2.0.0",
+                    runtimeMetadataGeneration = 8L
+                )
+            )
+        )
+        val restored = DeviceOtaCoordinator(
+            snapshotProvider = { deviceUid -> restoredSnapshots.value[deviceUid] },
+            connectRuntime = { Result.success(Unit) },
+            updaterProvider = { updater(RecordingGateway()) },
+            runtimeLifecycleEvents = null,
+            snapshotUpdates = restoredSnapshots,
+            transactionStore = store,
+            dispatcher = StandardTestDispatcher(testScheduler),
+            restartWaitMillis = 1_000L
+        )
+        runCurrent()
+
+        assertTrue(restored.observe(DEVICE_UID).value is DeviceOtaState.Succeeded)
+        assertTrue(store.activeTransactions().isEmpty())
+        restored.close()
+    }
+
+    @Test
+    fun `post restart recovery reaches terminal timeout and explicit retry rearms it`() = runTest {
+        var now = 1_000L
+        val store = InMemoryDeviceOtaTransactionStore()
+        val typedEvents = MutableSharedFlow<DeviceRuntimeTypedEvent>(extraBufferCapacity = 8)
+        val snapshots = MutableStateFlow(mapOf(DEVICE_UID to snapshot()))
+        val coordinator = DeviceOtaCoordinator(
+            snapshotProvider = { deviceUid -> snapshots.value[deviceUid] },
+            connectRuntime = { Result.success(Unit) },
+            recoverRuntime = { Result.failure(IllegalStateException("offline")) },
+            updaterProvider = { updater(RecordingGateway()) },
+            runtimeLifecycleEvents = null,
+            runtimeTypedEvents = typedEvents,
+            snapshotUpdates = snapshots,
+            transactionStore = store,
+            dispatcher = StandardTestDispatcher(testScheduler),
+            restartWaitMillis = 0L,
+            discoverySettleMillis = 0L,
+            recoveryAttemptDelayMillis = 100L,
+            recoveryWindowMillis = 100L,
+            nowEpochMillis = { now }
+        )
+        runCurrent()
+        val plan = (
+            coordinator.checkAvailability(DEVICE_UID, MANIFEST_URL, true).getOrThrow()
+                as DeviceOtaState.UpdateAvailable
+            ).plan
+        coordinator.startUpdate(plan)
+        typedEvents.tryEmit(
+            otaEvent(
+                DeviceRuntimeTypedEvent.Type.FIRMWARE_OTA_COMPLETED,
+                "completed-timeout",
+                otaEventData(
+                    "succeeded",
+                    active = false,
+                    progressPermille = 1_000,
+                    restartRequired = true,
+                    restartScheduled = true
+                )
+            )
+        )
+        runCurrent()
+        now = 1_100L
+        testScheduler.advanceTimeBy(100L)
+        runCurrent()
+
+        assertTrue(coordinator.observe(DEVICE_UID).value is DeviceOtaState.PostRestartTimeout)
+        val retry = coordinator.retryPostRestartConnection(DEVICE_UID)
+        assertTrue(retry.isSuccess)
+        assertTrue(coordinator.observe(DEVICE_UID).value is DeviceOtaState.Recovering)
+        assertEquals(1_200L, store.active(DEVICE_UID)?.recoveryDeadlineEpochMillis)
+        coordinator.close()
+    }
+
+    @Test
+    fun `restored uncertain start with idle firmware terminates instead of recovering forever`() =
+        runTest {
+            val store = InMemoryDeviceOtaTransactionStore()
+            val first = DeviceOtaCoordinator(
+                snapshotProvider = { snapshot() },
+                connectRuntime = { Result.success(Unit) },
+                updaterProvider = { updater(RecordingGateway()) },
+                runtimeLifecycleEvents = null,
+                transactionStore = store
+            )
+            val plan = (
+                first.checkAvailability(DEVICE_UID, MANIFEST_URL, true).getOrThrow()
+                    as DeviceOtaState.UpdateAvailable
+                ).plan
+            first.startUpdate(plan)
+            first.close()
+
+            val lifecycle = MutableSharedFlow<DeviceRuntimeLifecycleEvent>(extraBufferCapacity = 8)
+            val gateway = RecordingGateway().apply {
+                statusData = otaStatusData(otaSnapshot("idle", active = false, progressPermille = 0))
+            }
+            val restored = DeviceOtaCoordinator(
+                snapshotProvider = { snapshot() },
+                connectRuntime = { Result.success(Unit) },
+                updaterProvider = { updater(gateway) },
+                runtimeLifecycleEvents = lifecycle,
+                transactionStore = store,
+                dispatcher = StandardTestDispatcher(testScheduler),
+                restartWaitMillis = 1_000L
+            )
+            runCurrent()
+
+            lifecycle.tryEmit(DeviceRuntimeLifecycleEvent.Authenticated(DEVICE_UID))
+            runCurrent()
+
+            assertTrue(restored.observe(DEVICE_UID).value is DeviceOtaState.Failed)
+            assertTrue(store.activeTransactions().isEmpty())
+            restored.close()
+        }
 
     @Test
     fun `metadata generation change expires a prepared plan before start`() = runTest {

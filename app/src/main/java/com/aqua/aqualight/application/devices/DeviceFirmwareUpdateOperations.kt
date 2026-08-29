@@ -38,6 +38,10 @@ interface DeviceFirmwareUpdateOperations {
 
     suspend fun requestStatus(deviceUid: String): DeviceFirmwareCommandResult
 
+    /** Re-arms the bounded post-restart recovery window after an explicit user action. */
+    suspend fun retryPostRestartConnection(deviceUid: String): DeviceFirmwareCommandResult =
+        requestStatus(deviceUid)
+
     suspend fun clearStatus(deviceUid: String): DeviceFirmwareCommandResult
 
     fun close() = Unit
@@ -201,6 +205,30 @@ sealed interface DeviceOtaState {
     data class Succeeded(
         override val deviceUid: String,
         val targetVersion: String,
+        val releaseContent: DeviceFirmwareReleaseContent
+    ) : DeviceOtaState
+
+    /** The bootloader rejected the new image and safely returned to the known-good version. */
+    data class RolledBack(
+        override val deviceUid: String,
+        val previousVersion: String,
+        val rejectedVersion: String,
+        val releaseContent: DeviceFirmwareReleaseContent
+    ) : DeviceOtaState
+
+    /** Android could not prove either success or rollback inside the bounded recovery window. */
+    data class PostRestartTimeout(
+        override val deviceUid: String,
+        val previousVersion: String,
+        val targetVersion: String,
+        val releaseContent: DeviceFirmwareReleaseContent
+    ) : DeviceOtaState
+
+    /** The device returned with a valid identity but a version unrelated to this OTA attempt. */
+    data class UnexpectedFirmware(
+        override val deviceUid: String,
+        val expectedVersion: String,
+        val observedVersion: String,
         val releaseContent: DeviceFirmwareReleaseContent
     ) : DeviceOtaState
 

@@ -37,6 +37,9 @@ class DeviceFirmwareUpdateStateCoverageTest {
             DeviceOtaState.Recovering(DEVICE_UID, "2.0.0", 500),
             DeviceOtaState.RestartRequired(DEVICE_UID, "2.0.0", true, content),
             DeviceOtaState.Succeeded(DEVICE_UID, "2.0.0", content),
+            DeviceOtaState.RolledBack(DEVICE_UID, "1.0.0", "2.0.0", content),
+            DeviceOtaState.PostRestartTimeout(DEVICE_UID, "1.0.0", "2.0.0", content),
+            DeviceOtaState.UnexpectedFirmware(DEVICE_UID, "2.0.0", "1.5.0", content),
             DeviceOtaState.Failed(DEVICE_UID, failure)
         )
 
@@ -46,7 +49,7 @@ class DeviceFirmwareUpdateStateCoverageTest {
         assertEquals("Güvenli güncelleme", content.title)
         assertEquals(
             DeviceOtaFailureReason.INTEGRITY_CHECK_FAILED,
-            (states[10] as DeviceOtaState.Failed).failure.reason
+            (states[13] as DeviceOtaState.Failed).failure.reason
         )
         assertFalse(DeviceFirmwareReleaseContent.EMPTY.isPresent)
     }

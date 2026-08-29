@@ -1,3 +1,5 @@
+@file:Suppress("LargeClass", "LongMethod")
+
 package com.aqua.aqualight.data.devices.runtime.modules.firmware
 
 import com.aqua.aqualight.application.devices.DeviceFirmwareCommandResult as AppCommandResult
@@ -40,12 +42,16 @@ internal class DeviceOtaCoordinator(
     snapshotUpdates: StateFlow<Map<DeviceUid, DeviceSnapshot>>? = null,
     private val recoverRuntime: (DeviceUid) -> Result<Unit> = connectRuntime,
     private val refreshDiscovery: suspend () -> Unit = {},
+    private val transactionStore: DeviceOtaTransactionStore = InMemoryDeviceOtaTransactionStore(),
     dispatcher: CoroutineDispatcher = Dispatchers.Default,
     private val restartWaitMillis: Long = DEFAULT_RESTART_WAIT_MILLIS,
-    private val discoverySettleMillis: Long = DEFAULT_DISCOVERY_SETTLE_MILLIS
+    private val discoverySettleMillis: Long = DEFAULT_DISCOVERY_SETTLE_MILLIS,
+    private val recoveryAttemptDelayMillis: Long = DEFAULT_RECOVERY_ATTEMPT_DELAY_MILLIS,
+    private val recoveryWindowMillis: Long = DEFAULT_RECOVERY_WINDOW_MILLIS,
+    private val nowEpochMillis: () -> Long = System::currentTimeMillis
 ) : Closeable {
 
-    private data class SelectedPlan(
+    internal data class SelectedPlan(
         val dataPlan: DeviceFirmwareUpdatePlan,
         val applicationPlan: PreparedDeviceFirmwareUpdate,
         val runtimeGeneration: DeviceRuntimeConnectionGeneration? = null
@@ -71,6 +77,8 @@ internal class DeviceOtaCoordinator(
     init {
         require(restartWaitMillis >= 0L)
         require(discoverySettleMillis >= 0L)
+        require(recoveryAttemptDelayMillis > 0L)
+        require(recoveryWindowMillis > 0L)
         runtimeLifecycleEvents?.let { events ->
             scope.launch { events.collect(::processLifecycleEvent) }
         }
@@ -80,6 +88,7 @@ internal class DeviceOtaCoordinator(
         snapshotUpdates?.let { updates ->
             scope.launch { updates.collect(::processSnapshotUpdates) }
         }
+        transactionStore.activeTransactions().forEach(::restoreTransaction)
     }
 
     fun observe(deviceUid: DeviceUid): StateFlow<DeviceOtaState> = stateFlow(deviceUid).asStateFlow()
@@ -155,12 +164,24 @@ internal class DeviceOtaCoordinator(
         ).also { clearPlanState(deviceUid) }
         is DeviceFirmwareAvailability.UpdateAvailable -> {
             val applicationPlan = availability.plan.toApplicationPlan()
-            pendingVersionVerification.remove(deviceUid)
-            selectedPlans[deviceUid] = SelectedPlan(
-                dataPlan = availability.plan,
-                applicationPlan = applicationPlan
-            )
-            DeviceOtaState.UpdateAvailable(applicationPlan)
+            val quarantine = transactionStore.quarantine(deviceUid)
+                ?.takeIf { quarantine -> quarantine.matches(applicationPlan) }
+            if (quarantine != null) {
+                clearPlanState(deviceUid, clearJournal = false)
+                DeviceOtaState.RolledBack(
+                    deviceUid = deviceUid.value,
+                    previousVersion = quarantine.previousVersion,
+                    rejectedVersion = quarantine.rejectedVersion,
+                    releaseContent = applicationPlan.releaseContent
+                )
+            } else {
+                pendingVersionVerification.remove(deviceUid)
+                selectedPlans[deviceUid] = SelectedPlan(
+                    dataPlan = availability.plan,
+                    applicationPlan = applicationPlan
+                )
+                DeviceOtaState.UpdateAvailable(applicationPlan)
+            }
         }
     }
 
@@ -225,6 +246,19 @@ internal class DeviceOtaCoordinator(
                 publishFailure = true
             )
         }
+        runCatching {
+            transactionStore.saveActive(
+                DeviceOtaTransaction(
+                    plan = selected.applicationPlan,
+                    startedAtEpochMillis = nowEpochMillis().coerceAtLeast(1L)
+                )
+            )
+        }.exceptionOrNull()?.let { error ->
+            rejectStart(
+                failure = DeviceOtaFailureMapper.internal(error.message.orEmpty()),
+                publishFailure = true
+            )
+        }
         return StartContext(selected, updater)
     }
 
@@ -272,7 +306,15 @@ internal class DeviceOtaCoordinator(
                     } ?: outcome.toApplicationResult()
                 }
             }
-            else -> handleCommandFailure(deviceUid, outcome, preserveRecovery = false)
+            else -> {
+                val failure = DeviceOtaFailureMapper.command(outcome)
+                if (outcome.mayHaveStartedOta()) {
+                    markRuntimeUnavailable(deviceUid)
+                    outcome.toApplicationResult(failure)
+                } else {
+                    handleCommandFailure(deviceUid, outcome, preserveRecovery = false)
+                }
+            }
         }
 
     private fun handleStartPreparationFailure(
@@ -292,9 +334,13 @@ internal class DeviceOtaCoordinator(
         connectedUpdater(deviceUid).fold(
             onSuccess = { updater -> applyStatusOutcome(deviceUid, updater.requestOtaStatus(deviceUid)) },
             onFailure = { error ->
+                val failure = DeviceOtaFailureMapper.connection(error.message.orEmpty())
+                if (stateFlow(deviceUid).value is DeviceOtaState.Recovering) {
+                    scheduleRecovery(deviceUid)
+                }
                 AppCommandResult(
                     sent = false,
-                    failure = DeviceOtaFailureMapper.connection(error.message.orEmpty())
+                    failure = failure
                 )
             }
         )
@@ -452,6 +498,14 @@ internal class DeviceOtaCoordinator(
                 }
                 snapshot.phase == DeviceFirmwareOtaPhase.IDLE &&
                     state.value is DeviceOtaState.Starting -> state.value
+                snapshot.phase == DeviceFirmwareOtaPhase.IDLE &&
+                    state.value is DeviceOtaState.Recovering &&
+                    activeSelection != null -> DeviceOtaState.Failed(
+                    deviceUid = deviceUid.value,
+                    failure = DeviceOtaFailureMapper.connection(
+                        "Recovered firmware reported no active OTA operation."
+                    )
+                )
                 else -> DeviceOtaStateMapper.map(
                     snapshot = snapshot,
                     deviceUid = deviceUid,
@@ -459,6 +513,7 @@ internal class DeviceOtaCoordinator(
                     releaseContent = releaseContent
                 )
             }
+            if (state.value is DeviceOtaState.Failed) clearPlanState(deviceUid)
             verifyCurrentFirmwareIfReady(deviceUid, snapshot, activeSelection)
         }
         return null
@@ -475,6 +530,11 @@ internal class DeviceOtaCoordinator(
             selected != null
         ) {
             pendingVersionVerification[deviceUid] = selected
+            armRecoveryDeadline(
+                deviceUid = deviceUid,
+                plan = selected.applicationPlan,
+                awaitingVersionVerification = true
+            )
             if (snapshot.restartScheduled) scheduleRecovery(deviceUid)
         }
     }
@@ -503,6 +563,18 @@ internal class DeviceOtaCoordinator(
             }
             return
         }
+        selectedPlans[deviceUid]?.let { selected ->
+            snapshotProvider(deviceUid)?.takeIf { snapshot ->
+                snapshot.hasValidatedRuntimeMetadata &&
+                    snapshot.runtimeMetadataGeneration !=
+                    selected.dataPlan.runtimeMetadataGeneration &&
+                    snapshot.matchesProductIdentity(selected.dataPlan) &&
+                    snapshot.firmwareVersion == selected.dataPlan.targetVersion
+            }?.let { snapshot ->
+                completeInstalledFirmwareVerification(deviceUid, selected)
+                return
+            }
+        }
         if (stateFlow(deviceUid).value.requiresOtaStatusRecovery) {
             scope.launch { requestStatus(deviceUid) }
         }
@@ -512,13 +584,24 @@ internal class DeviceOtaCoordinator(
         val current = stateFlow(deviceUid).value
         if (
             !current.requiresRuntimeRecovery &&
-            !pendingVersionVerification.containsKey(deviceUid)
+            !pendingVersionVerification.containsKey(deviceUid) &&
+            transactionStore.active(deviceUid) == null
         ) {
             return
         }
+        val selected = pendingVersionVerification[deviceUid] ?: selectedPlans[deviceUid]
+        if (selected != null) {
+            armRecoveryDeadline(
+                deviceUid = deviceUid,
+                plan = selected.applicationPlan,
+                awaitingVersionVerification = pendingVersionVerification.containsKey(deviceUid)
+            )
+        }
         stateFlow(deviceUid).value = DeviceOtaState.Recovering(
             deviceUid = deviceUid.value,
-            targetVersion = current.targetVersionOrEmpty,
+            targetVersion = current.targetVersionOrEmpty.ifBlank {
+                selected?.dataPlan?.targetVersion.orEmpty()
+            },
             progressPermille = current.progressPermilleOrZero
         )
         scheduleRecovery(deviceUid)
@@ -529,17 +612,28 @@ internal class DeviceOtaCoordinator(
             if (recoveryJobs[deviceUid]?.isActive == true) return
             val job = scope.launch {
                 if (restartWaitMillis > 0L) delay(restartWaitMillis)
-                if (pendingVersionVerification.containsKey(deviceUid)) {
+                while (transactionStore.active(deviceUid) != null) {
+                    val transaction = transactionStore.active(deviceUid) ?: return@launch
+                    if (hasRecoveryTimedOut(transaction)) {
+                        publishRecoveryTimeout(deviceUid, transaction)
+                        return@launch
+                    }
                     val current = stateFlow(deviceUid).value
                     stateFlow(deviceUid).value = DeviceOtaState.Recovering(
                         deviceUid = deviceUid.value,
-                        targetVersion = current.targetVersionOrEmpty,
+                        targetVersion = transaction.plan.targetVersion,
                         progressPermille = current.progressPermilleOrZero
                     )
+                    runCatching { refreshDiscovery() }
+                    if (discoverySettleMillis > 0L) delay(discoverySettleMillis)
+                    recoverRuntime(deviceUid)
+                    val remaining = transaction.recoveryDeadlineEpochMillis - nowEpochMillis()
+                    if (remaining <= 0L) {
+                        publishRecoveryTimeout(deviceUid, transaction)
+                        return@launch
+                    }
+                    delay(minOf(recoveryAttemptDelayMillis, remaining))
                 }
-                runCatching { refreshDiscovery() }
-                if (discoverySettleMillis > 0L) delay(discoverySettleMillis)
-                recoverRuntime(deviceUid)
             }
             recoveryJobs[deviceUid] = job
             job.invokeOnCompletion { recoveryJobs.remove(deviceUid, job) }
@@ -553,9 +647,15 @@ internal class DeviceOtaCoordinator(
             snapshot.hasValidatedRuntimeMetadata &&
             snapshot.runtimeMetadataGeneration != selected.dataPlan.runtimeMetadataGeneration
         ) {
-            val error = DeviceOtaValidator.installedFirmwareError(snapshot, selected.dataPlan)
-            if (error == null) completeInstalledFirmwareVerification(deviceUid, selected)
-            else fail(deviceUid, DeviceOtaFailureMapper.incompatible(error))
+            when {
+                !snapshot.matchesProductIdentity(selected.dataPlan) ->
+                    publishUnexpectedFirmware(deviceUid, selected, snapshot.firmwareVersion)
+                snapshot.firmwareVersion == selected.dataPlan.targetVersion ->
+                    completeInstalledFirmwareVerification(deviceUid, selected)
+                snapshot.firmwareVersion == selected.dataPlan.currentVersion ->
+                    completeRollbackVerification(deviceUid, selected)
+                else -> publishUnexpectedFirmware(deviceUid, selected, snapshot.firmwareVersion)
+            }
         }
     }
 
@@ -566,11 +666,104 @@ internal class DeviceOtaCoordinator(
         pendingVersionVerification.remove(deviceUid)
         selectedPlans.remove(deviceUid)
         recoveryJobs.remove(deviceUid)?.cancel()
+        transactionStore.clearActive(deviceUid)
         stateFlow(deviceUid).value = DeviceOtaState.Succeeded(
             deviceUid = deviceUid.value,
             targetVersion = selected.dataPlan.targetVersion,
             releaseContent = selected.applicationPlan.releaseContent
         )
+    }
+
+    private fun completeRollbackVerification(
+        deviceUid: DeviceUid,
+        selected: SelectedPlan
+    ) {
+        transactionStore.saveQuarantine(
+            DeviceOtaQuarantine(
+                deviceUid = deviceUid.value,
+                previousVersion = selected.dataPlan.currentVersion,
+                rejectedVersion = selected.dataPlan.targetVersion,
+                productKey = selected.dataPlan.productKey,
+                hardwareRevision = selected.dataPlan.hardwareRevision,
+                manifestTag = selected.dataPlan.manifestTag,
+                sha256 = selected.dataPlan.firmware.sha256,
+                recordedAtEpochMillis = nowEpochMillis().coerceAtLeast(1L)
+            )
+        )
+        clearPlanState(deviceUid)
+        stateFlow(deviceUid).value = DeviceOtaState.RolledBack(
+            deviceUid = deviceUid.value,
+            previousVersion = selected.dataPlan.currentVersion,
+            rejectedVersion = selected.dataPlan.targetVersion,
+            releaseContent = selected.applicationPlan.releaseContent
+        )
+    }
+
+    private fun publishUnexpectedFirmware(
+        deviceUid: DeviceUid,
+        selected: SelectedPlan,
+        observedVersion: String
+    ) {
+        clearPlanState(deviceUid)
+        stateFlow(deviceUid).value = DeviceOtaState.UnexpectedFirmware(
+            deviceUid = deviceUid.value,
+            expectedVersion = selected.dataPlan.targetVersion,
+            observedVersion = observedVersion,
+            releaseContent = selected.applicationPlan.releaseContent
+        )
+    }
+
+    private fun armRecoveryDeadline(
+        deviceUid: DeviceUid,
+        plan: PreparedDeviceFirmwareUpdate,
+        awaitingVersionVerification: Boolean = false
+    ): DeviceOtaTransaction {
+        val current = transactionStore.active(deviceUid) ?: DeviceOtaTransaction(
+            plan = plan,
+            startedAtEpochMillis = nowEpochMillis().coerceAtLeast(1L)
+        )
+        val armed = current.copy(
+            recoveryDeadlineEpochMillis = current.recoveryDeadlineEpochMillis.takeIf { it > 0L }
+                ?: (nowEpochMillis() + recoveryWindowMillis),
+            awaitingVersionVerification = current.awaitingVersionVerification ||
+                awaitingVersionVerification
+        )
+        if (armed == current) return current
+        return armed.also(transactionStore::saveActive)
+    }
+
+    private fun hasRecoveryTimedOut(transaction: DeviceOtaTransaction): Boolean =
+        transaction.recoveryDeadlineEpochMillis > 0L &&
+            nowEpochMillis() >= transaction.recoveryDeadlineEpochMillis
+
+    private fun publishRecoveryTimeout(
+        deviceUid: DeviceUid,
+        transaction: DeviceOtaTransaction
+    ) {
+        stateFlow(deviceUid).value = DeviceOtaState.PostRestartTimeout(
+            deviceUid = deviceUid.value,
+            previousVersion = transaction.plan.currentVersion,
+            targetVersion = transaction.plan.targetVersion,
+            releaseContent = transaction.plan.releaseContent
+        )
+    }
+
+    fun retryPostRestartConnection(deviceUid: DeviceUid): AppCommandResult {
+        val transaction = transactionStore.active(deviceUid) ?: return AppCommandResult(
+            sent = false,
+            failure = DeviceOtaFailureMapper.protocol("No recoverable OTA transaction exists.")
+        )
+        transaction.copy(
+            recoveryDeadlineEpochMillis = nowEpochMillis() + recoveryWindowMillis
+        ).also(transactionStore::saveActive)
+        recoveryJobs.remove(deviceUid)?.cancel()
+        stateFlow(deviceUid).value = DeviceOtaState.Recovering(
+            deviceUid = deviceUid.value,
+            targetVersion = transaction.plan.targetVersion,
+            progressPermille = 0
+        )
+        scheduleRecovery(deviceUid)
+        return AppCommandResult(sent = true)
     }
 
     private fun handleCommandFailure(
@@ -579,7 +772,9 @@ internal class DeviceOtaCoordinator(
         preserveRecovery: Boolean
     ): AppCommandResult {
         val failure = DeviceOtaFailureMapper.command(outcome)
-        if (!(preserveRecovery && failure.recoverable)) {
+        if (preserveRecovery && failure.recoverable) {
+            scheduleRecovery(deviceUid)
+        } else {
             fail(deviceUid, failure)
         }
         return outcome.toApplicationResult(failure)
@@ -587,7 +782,8 @@ internal class DeviceOtaCoordinator(
 
     private fun hasActiveOperation(deviceUid: DeviceUid): Boolean =
         stateFlow(deviceUid).value.isActiveOtaState ||
-            pendingVersionVerification.containsKey(deviceUid)
+            pendingVersionVerification.containsKey(deviceUid) ||
+            transactionStore.active(deviceUid) != null
 
     private fun startLock(deviceUid: DeviceUid): Mutex {
         val candidate = Mutex()
@@ -597,18 +793,52 @@ internal class DeviceOtaCoordinator(
     private fun stateFlow(deviceUid: DeviceUid): MutableStateFlow<DeviceOtaState> =
         states.getOrPut(deviceUid) { MutableStateFlow(DeviceOtaState.Idle(deviceUid.value)) }
 
-    private fun clearPlanState(deviceUid: DeviceUid) {
+    private fun restoreTransaction(transaction: DeviceOtaTransaction) {
+        val deviceUid = runCatching { DeviceUid(transaction.plan.deviceUid) }.getOrElse {
+            return
+        }
+        val selected = transaction.plan.toSelectedPlan()
+        selectedPlans[deviceUid] = selected
+        val armed = if (transaction.isWaitingForPostRestartVerification) {
+            pendingVersionVerification[deviceUid] = selected
+            transaction
+        } else {
+            armRecoveryDeadline(deviceUid, transaction.plan)
+        }
+        states[deviceUid] = MutableStateFlow(
+            if (hasRecoveryTimedOut(armed)) {
+                DeviceOtaState.PostRestartTimeout(
+                    deviceUid = deviceUid.value,
+                    previousVersion = armed.plan.currentVersion,
+                    targetVersion = armed.plan.targetVersion,
+                    releaseContent = armed.plan.releaseContent
+                )
+            } else {
+                DeviceOtaState.Recovering(
+                    deviceUid = deviceUid.value,
+                    targetVersion = armed.plan.targetVersion,
+                    progressPermille = 0
+                )
+            }
+        )
+        if (!hasRecoveryTimedOut(armed)) scheduleRecovery(deviceUid)
+    }
+
+    private fun clearPlanState(
+        deviceUid: DeviceUid,
+        clearJournal: Boolean = true
+    ) {
         selectedPlans.remove(deviceUid)
         pendingVersionVerification.remove(deviceUid)
         recoveryJobs.remove(deviceUid)?.cancel()
+        if (clearJournal) transactionStore.clearActive(deviceUid)
     }
 
     private fun fail(
         deviceUid: DeviceUid,
         failure: DeviceOtaFailure
     ) {
-        pendingVersionVerification.remove(deviceUid)
-        recoveryJobs.remove(deviceUid)?.cancel()
+        clearPlanState(deviceUid)
         stateFlow(deviceUid).value = DeviceOtaState.Failed(
             deviceUid = deviceUid.value,
             failure = failure
@@ -627,6 +857,9 @@ internal class DeviceOtaCoordinator(
     private companion object {
         const val DEFAULT_RESTART_WAIT_MILLIS = 1_000L
         const val DEFAULT_DISCOVERY_SETTLE_MILLIS = 750L
+        // One attempt must outlive the 8 s socket + 5 s auth + 10 s metadata budgets.
+        const val DEFAULT_RECOVERY_ATTEMPT_DELAY_MILLIS = 30_000L
+        const val DEFAULT_RECOVERY_WINDOW_MILLIS = 120_000L
     }
 }
 
@@ -650,6 +883,46 @@ private fun DeviceFirmwareUpdatePlan.toApplicationPlan(): PreparedDeviceFirmware
         runtimeMetadataGeneration = runtimeMetadataGeneration,
         manifestTag = manifestTag,
         releaseContent = releaseContent
+    )
+
+private fun PreparedDeviceFirmwareUpdate.toSelectedPlan(): DeviceOtaCoordinator.SelectedPlan =
+    DeviceOtaCoordinator.SelectedPlan(
+        dataPlan = DeviceFirmwareUpdatePlan(
+            deviceUid = DeviceUid(deviceUid),
+            currentVersion = currentVersion,
+            targetVersion = targetVersion,
+            channel = channel,
+            env = environment,
+            productKey = productKey,
+            productId = productId,
+            model = model,
+            hardwareRevision = hardwareRevision,
+            displayName = displayName,
+            firmware = DeviceFirmwareAsset(
+                version = targetVersion,
+                filename = filename,
+                url = downloadUrl,
+                sha256 = sha256,
+                size = sizeBytes,
+                format = "bin",
+                otaSlotCompatible = true
+            ),
+            payload = DeviceFirmwareOtaStartPayload(
+                url = downloadUrl,
+                version = targetVersion,
+                sha256 = sha256,
+                expectedSize = sizeBytes,
+                productKey = productKey,
+                productId = productId,
+                model = model,
+                hardwareRevision = hardwareRevision,
+                applyNow = applyNow
+            ),
+            runtimeMetadataGeneration = runtimeMetadataGeneration,
+            manifestTag = manifestTag,
+            releaseContent = releaseContent
+        ),
+        applicationPlan = this
     )
 
 private fun DeviceFirmwareOtaStartRequestEcho.matches(
@@ -698,6 +971,18 @@ private val DeviceOtaState.progressPermilleOrZero: Int
         is DeviceOtaState.Recovering -> progressPermille
         else -> 0
     }
+
+private fun DeviceSnapshot.matchesProductIdentity(plan: DeviceFirmwareUpdatePlan): Boolean =
+    product.productKey == plan.productKey &&
+        product.productId == plan.productId &&
+        product.model == plan.model &&
+        product.hardwareRevision == plan.hardwareRevision
+
+private fun DeviceRuntimeCommandOutcome<*>.mayHaveStartedOta(): Boolean = when (this) {
+    is DeviceRuntimeCommandOutcome.Timeout -> true
+    is DeviceRuntimeCommandOutcome.Cancelled -> messageId.isNotBlank()
+    else -> false
+}
 
 private fun DeviceRuntimeCommandOutcome<*>.toApplicationResult(
     failure: DeviceOtaFailure? = null

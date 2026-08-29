@@ -131,6 +131,46 @@ class DeviceFirmwareUpdateViewModelTest {
         assertTrue(viewModel.uiState.value.mode.isActive)
     }
 
+    @Test
+    fun `rollback and bounded timeout have distinct terminal actions`() {
+        val plan = preparedPlan()
+        val firmware = FakeFirmwareOperations(plan)
+        val viewModel = DeviceFirmwareUpdateViewModel(
+            rootOperations = FakeRootOperations(deviceSnapshot()),
+            firmwareUpdateOperations = firmware,
+            manifestUrl = MANIFEST_URL
+        )
+        viewModel.bind(DEVICE_UID)
+
+        firmware.emit(
+            DeviceOtaState.RolledBack(
+                DEVICE_UID,
+                plan.currentVersion,
+                plan.targetVersion,
+                plan.releaseContent
+            )
+        )
+        assertEquals(DeviceFirmwareUpdateMode.ROLLED_BACK, viewModel.uiState.value.mode)
+        assertEquals("1.0.0", viewModel.uiState.value.currentVersion)
+
+        firmware.emit(
+            DeviceOtaState.PostRestartTimeout(
+                DEVICE_UID,
+                plan.currentVersion,
+                plan.targetVersion,
+                plan.releaseContent
+            )
+        )
+        assertEquals(
+            DeviceFirmwareUpdateMode.POST_RESTART_TIMEOUT,
+            viewModel.uiState.value.mode
+        )
+        viewModel.retry()
+
+        assertEquals(1, firmware.reconnectCalls)
+        assertEquals(1, firmware.checkCalls)
+    }
+
     private class FakeRootOperations(
         snapshot: DeviceRootSnapshot
     ) : DeviceRootOperations {
@@ -150,6 +190,7 @@ class DeviceFirmwareUpdateViewModelTest {
         val startedPlans = mutableListOf<PreparedDeviceFirmwareUpdate>()
         var checkCalls = 0
         var statusCalls = 0
+        var reconnectCalls = 0
 
         override fun observe(deviceUid: String): StateFlow<DeviceOtaState> = state
 
@@ -183,6 +224,14 @@ class DeviceFirmwareUpdateViewModelTest {
         override suspend fun requestStatus(deviceUid: String): DeviceFirmwareCommandResult {
             statusCalls += 1
             return DeviceFirmwareCommandResult(sent = true, messageId = "status-1")
+        }
+
+        override suspend fun retryPostRestartConnection(
+            deviceUid: String
+        ): DeviceFirmwareCommandResult {
+            reconnectCalls += 1
+            state.value = DeviceOtaState.Recovering(deviceUid, plan.targetVersion, 0)
+            return DeviceFirmwareCommandResult(sent = true)
         }
 
         override suspend fun clearStatus(deviceUid: String): DeviceFirmwareCommandResult =

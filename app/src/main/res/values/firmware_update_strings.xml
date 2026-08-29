@@ -11,6 +11,9 @@
     <string name="device_settings_update_hero_title_recovering">Reconnecting securely</string>
     <string name="device_settings_update_hero_title_restarting">Restarting your device</string>
     <string name="device_settings_update_hero_title_succeeded">Update installed successfully</string>
+    <string name="device_settings_update_hero_title_rolled_back">Device recovered safely</string>
+    <string name="device_settings_update_hero_title_post_restart_timeout">Device did not reconnect</string>
+    <string name="device_settings_update_hero_title_unexpected_firmware">Unexpected software version</string>
     <string name="device_settings_update_hero_title_up_to_date">Your device is up to date</string>
     <string name="device_settings_update_hero_title_failed">The update needs attention</string>
     <string name="device_settings_update_hero_title_unsupported">No compatible update is available</string>
@@ -25,6 +28,9 @@
     <string name="device_settings_update_hero_summary_restarting">The device is restarting and will reconnect automatically after verification.</string>
     <string name="device_settings_update_hero_summary_succeeded_version">Version %1$s was installed and verified successfully.</string>
     <string name="device_settings_update_hero_summary_succeeded">The new software was installed and verified successfully.</string>
+    <string name="device_settings_update_hero_summary_rolled_back">The new image did not pass startup validation. The device returned to its previous working software, and this exact release has been blocked from reinstalling.</string>
+    <string name="device_settings_update_hero_summary_post_restart_timeout">AquaLight could not verify the device within 120 seconds. Keep it powered and on the same network, then try reconnecting. If it still does not return, contact support for factory recovery.</string>
+    <string name="device_settings_update_hero_summary_unexpected_firmware">The reconnected version or product identity did not match this update attempt. Do not retry the same update; contact support.</string>
     <string name="device_settings_update_hero_summary_up_to_date_version">Version %1$s is the latest compatible signed release for this device.</string>
     <string name="device_settings_update_hero_summary_up_to_date">The latest compatible signed release is already installed.</string>
     <string name="device_settings_update_hero_summary_unsupported">AquaLight could not find a compatible signed release for this device profile.</string>

@@ -78,7 +78,13 @@ class DeviceFirmwareUpdateViewModel(
 
     fun retry() {
         if (operationJob?.isActive == true) return
-        refreshAndRecover()
+        if (_uiState.value.mode == DeviceFirmwareUpdateMode.POST_RESTART_TIMEOUT) {
+            operationJob = viewModelScope.launch {
+                firmwareUpdateOperations.retryPostRestartConnection(boundDeviceUid)
+            }
+        } else {
+            refreshAndRecover()
+        }
     }
 
     fun refreshActiveStatus() {
@@ -222,6 +228,25 @@ private class DeviceFirmwareUpdateStateMapper {
             phase = null,
             progressPermille = COMPLETE_PROGRESS_PERMILLE
         )
+        is DeviceOtaState.RolledBack -> common.copy(
+            mode = DeviceFirmwareUpdateMode.ROLLED_BACK,
+            currentVersion = state.previousVersion,
+            targetVersion = state.rejectedVersion,
+            phase = null,
+            progressPermille = COMPLETE_PROGRESS_PERMILLE
+        )
+        is DeviceOtaState.PostRestartTimeout -> common.copy(
+            mode = DeviceFirmwareUpdateMode.POST_RESTART_TIMEOUT,
+            currentVersion = state.previousVersion,
+            targetVersion = state.targetVersion,
+            phase = null
+        )
+        is DeviceOtaState.UnexpectedFirmware -> common.copy(
+            mode = DeviceFirmwareUpdateMode.UNEXPECTED_FIRMWARE,
+            currentVersion = state.observedVersion,
+            targetVersion = state.expectedVersion,
+            phase = null
+        )
         is DeviceOtaState.Failed -> common.copy(
             mode = DeviceFirmwareUpdateMode.FAILED,
             phase = null,
@@ -243,6 +268,9 @@ private class DeviceFirmwareUpdateStateMapper {
             is DeviceOtaState.InProgress -> state.releaseContent
             is DeviceOtaState.RestartRequired -> state.releaseContent
             is DeviceOtaState.Succeeded -> state.releaseContent
+            is DeviceOtaState.RolledBack -> state.releaseContent
+            is DeviceOtaState.PostRestartTimeout -> state.releaseContent
+            is DeviceOtaState.UnexpectedFirmware -> state.releaseContent
             else -> DeviceFirmwareReleaseContent.EMPTY
         }
         if (content.isPresent) retainedReleaseContent = content
@@ -277,6 +305,9 @@ enum class DeviceFirmwareUpdateMode {
     RECOVERING,
     RESTARTING,
     SUCCEEDED,
+    ROLLED_BACK,
+    POST_RESTART_TIMEOUT,
+    UNEXPECTED_FIRMWARE,
     UP_TO_DATE,
     FAILED,
     UNSUPPORTED;

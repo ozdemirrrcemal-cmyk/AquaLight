@@ -23,6 +23,7 @@ import com.aqua.aqualight.data.auth.OwnerSessionStateMachine
 import com.aqua.aqualight.data.care.CareTaskDataStoreManager
 import com.aqua.aqualight.data.devices.DefaultDeviceFirmwareUpdateOperations
 import com.aqua.aqualight.data.devices.DefaultDeviceRootOperations
+import com.aqua.aqualight.data.devices.runtime.modules.firmware.SharedPreferencesDeviceOtaTransactionStore
 import com.aqua.aqualight.data.devices.dosing.DefaultDeviceDosingChannelNavigationOperations
 import com.aqua.aqualight.data.devices.dosing.SharedPreferencesDeviceDosingLowLevelAlertLedger
 import com.aqua.aqualight.data.devices.dosing.v1.DeviceDosingV1ProductionRuntime
@@ -271,6 +272,10 @@ internal class ActiveOwnerDependencyGraphResolver(
     ): DeviceFirmwareUpdateOperations {
         return DefaultDeviceFirmwareUpdateOperations(
             devicesRepository = dependencies.devicesRepository,
+            transactionStore = SharedPreferencesDeviceOtaTransactionStore.create(
+                context = appContext,
+                ownerUid = dependencies.ownerUid
+            ),
             statePublisher = { state, deviceName ->
                 deviceFirmwareNotifications.publishOtaState(
                     ownerUid = dependencies.ownerUid,

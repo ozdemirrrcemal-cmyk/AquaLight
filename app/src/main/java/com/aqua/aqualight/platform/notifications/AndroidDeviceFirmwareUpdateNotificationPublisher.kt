@@ -261,6 +261,9 @@ internal class AndroidDeviceFirmwareUpdateNotificationPublisher(
 private fun DeviceOtaState.clearsAvailability(): Boolean = when (this) {
     is DeviceOtaState.Idle,
     is DeviceOtaState.Unsupported,
-    is DeviceOtaState.UpToDate -> true
+    is DeviceOtaState.UpToDate,
+    is DeviceOtaState.RolledBack,
+    is DeviceOtaState.PostRestartTimeout,
+    is DeviceOtaState.UnexpectedFirmware -> true
     else -> false
 }

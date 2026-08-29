@@ -10,6 +10,7 @@ import com.aqua.aqualight.data.devices.provisioning.repository.AqlProvisioningHa
 import com.aqua.aqualight.data.devices.provisioning.store.AqlProvisioningDraftStore
 import com.aqua.aqualight.data.devices.provisioning.store.AqlProvisioningQrSecretStore
 import com.aqua.aqualight.data.devices.provisioning.store.ProvisioningCommitRecoveryStore
+import com.aqua.aqualight.data.devices.runtime.modules.firmware.SharedPreferencesDeviceOtaTransactionStore
 import com.aqua.aqualight.data.devices.store.DeviceCredentialStore
 import com.aqua.aqualight.data.devices.store.DeviceKnownStore
 import com.aqua.aqualight.data.notifications.NotificationPlatform
@@ -30,6 +31,7 @@ class UserDataCleaner private constructor(
         DEVICE_ASSIGNMENTS,
         PROVISIONING_SESSIONS,
         KNOWN_DEVICES,
+        OTA_TRANSACTIONS,
         DEVICE_CREDENTIALS,
         APP_OWNED_FILES,
         USER_PREFERENCES
@@ -130,6 +132,13 @@ class UserDataCleaner private constructor(
                 context = appContext,
                 ownerUid = targetOwnerUid
             ).clearOwnerData()
+        }
+
+        runStep(Step.OTA_TRANSACTIONS) {
+            SharedPreferencesDeviceOtaTransactionStore.create(
+                context = appContext,
+                ownerUid = targetOwnerUid
+            ).clearOwner()
         }
 
         runStep(Step.DEVICE_CREDENTIALS) {

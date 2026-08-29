@@ -229,7 +229,8 @@ class DeviceFamilySettingsViewModel(
             DeviceSettingsUpdateActionState.Checking,
             DeviceSettingsUpdateActionState.Unsupported -> Unit
             is DeviceSettingsUpdateActionState.UpdateAvailable,
-            is DeviceSettingsUpdateActionState.UpdateInProgress ->
+            is DeviceSettingsUpdateActionState.UpdateInProgress,
+            is DeviceSettingsUpdateActionState.PostUpdateAttention ->
                 eventChannel.trySend(DeviceFamilySettingsEvent.OpenFirmwareUpdate)
             is DeviceSettingsUpdateActionState.Failed -> {
                 if (state.failure.canRetryAvailabilityCheck) {
@@ -364,6 +365,17 @@ class DeviceFamilySettingsViewModel(
             is DeviceOtaState.Unsupported -> DeviceSettingsUpdateActionState.Unsupported
             is DeviceOtaState.UpToDate,
             is DeviceOtaState.Succeeded -> DeviceSettingsUpdateActionState.UpToDate
+            is DeviceOtaState.RolledBack -> DeviceSettingsUpdateActionState.PostUpdateAttention(
+                DeviceSettingsUpdateAttention.ROLLED_BACK
+            )
+            is DeviceOtaState.PostRestartTimeout ->
+                DeviceSettingsUpdateActionState.PostUpdateAttention(
+                    DeviceSettingsUpdateAttention.CONNECTION_TIMEOUT
+                )
+            is DeviceOtaState.UnexpectedFirmware ->
+                DeviceSettingsUpdateActionState.PostUpdateAttention(
+                    DeviceSettingsUpdateAttention.UNEXPECTED_FIRMWARE
+                )
             is DeviceOtaState.UpdateAvailable -> DeviceSettingsUpdateActionState.UpdateAvailable(
                 state.plan.targetVersion
             )
@@ -517,7 +529,17 @@ sealed interface DeviceSettingsUpdateActionState {
         val failure: DeviceOtaFailure
     ) : DeviceSettingsUpdateActionState
 
+    data class PostUpdateAttention(
+        val kind: DeviceSettingsUpdateAttention
+    ) : DeviceSettingsUpdateActionState
+
     data object Unsupported : DeviceSettingsUpdateActionState
+}
+
+enum class DeviceSettingsUpdateAttention {
+    ROLLED_BACK,
+    CONNECTION_TIMEOUT,
+    UNEXPECTED_FIRMWARE
 }
 
 internal val DeviceOtaFailure.canRetryAvailabilityCheck: Boolean
@@ -533,6 +555,7 @@ private fun DeviceSettingsUpdateActionState.allowsAvailabilityCheck(
     DeviceSettingsUpdateActionState.Checking,
     is DeviceSettingsUpdateActionState.UpdateAvailable,
     is DeviceSettingsUpdateActionState.UpdateInProgress,
+    is DeviceSettingsUpdateActionState.PostUpdateAttention,
     DeviceSettingsUpdateActionState.Unsupported -> false
 }
 

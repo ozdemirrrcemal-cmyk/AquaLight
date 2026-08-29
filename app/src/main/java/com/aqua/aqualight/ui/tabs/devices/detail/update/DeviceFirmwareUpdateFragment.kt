@@ -63,7 +63,10 @@ class DeviceFirmwareUpdateFragment : Fragment(R.layout.fragment_device_firmware_
             when (latestState.mode) {
                 DeviceFirmwareUpdateMode.AVAILABLE -> viewModel.installUpdate()
                 DeviceFirmwareUpdateMode.FAILED -> handleFailedAction()
+                DeviceFirmwareUpdateMode.POST_RESTART_TIMEOUT -> viewModel.retry()
                 DeviceFirmwareUpdateMode.SUCCEEDED,
+                DeviceFirmwareUpdateMode.ROLLED_BACK,
+                DeviceFirmwareUpdateMode.UNEXPECTED_FIRMWARE,
                 DeviceFirmwareUpdateMode.UP_TO_DATE,
                 DeviceFirmwareUpdateMode.UNSUPPORTED -> findNavController().navigateUp()
                 else -> Unit

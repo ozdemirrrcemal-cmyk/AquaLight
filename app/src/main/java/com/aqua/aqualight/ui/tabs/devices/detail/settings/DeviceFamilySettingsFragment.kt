@@ -368,6 +368,22 @@ abstract class DeviceFamilySettingsFragment : Fragment(R.layout.fragment_device_
             opensDetails = !failure.canRetryAvailabilityCheck,
             strokeColorRes = R.color.aqua_status_danger
         )
+        is DeviceSettingsUpdateActionState.PostUpdateAttention -> FirmwareActionPresentation(
+            titleText = getString(R.string.device_settings_update_needs_attention_title),
+            subtitleText = getString(
+                when (kind) {
+                    DeviceSettingsUpdateAttention.ROLLED_BACK ->
+                        R.string.device_settings_update_card_rolled_back_description
+                    DeviceSettingsUpdateAttention.CONNECTION_TIMEOUT ->
+                        R.string.device_settings_update_card_timeout_description
+                    DeviceSettingsUpdateAttention.UNEXPECTED_FIRMWARE ->
+                        R.string.device_settings_update_card_unexpected_description
+                }
+            ),
+            enabled = true,
+            opensDetails = true,
+            strokeColorRes = R.color.aqua_content_warning
+        )
         DeviceSettingsUpdateActionState.Unsupported -> FirmwareActionPresentation(
             titleText = getString(R.string.device_settings_update_status_unsupported),
             subtitleText = getString(R.string.device_settings_update_unsupported_status),
