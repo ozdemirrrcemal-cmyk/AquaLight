@@ -139,9 +139,7 @@ class UserDataCleaner private constructor(
 
         if (clearUserPreferences) {
             runStep(Step.USER_PREFERENCES) {
-                userPreferencesManager.clearUserDataForOwner(
-                    ownerUid = targetOwnerUid
-                )
+                userPreferencesManager.clearUserDataForOwner(targetOwnerUid)
             }
         }
 
