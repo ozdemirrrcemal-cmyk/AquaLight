@@ -139,11 +139,20 @@ for token in (
 
 for token in (
     "object DeviceOtaValidator",
-    "snapshot.firmwareVersion != plan.targetVersion",
     "snapshot.sha256Actual.equals(plan.firmware.sha256",
 ):
     if token not in ota_validation:
         errors.append(f"{OTA_VALIDATION.relative_to(ROOT)}: OTA validation token is missing: {token}")
+
+for token in (
+    "snapshot.firmwareVersion == selected.dataPlan.targetVersion",
+    "snapshot.firmwareVersion == selected.dataPlan.currentVersion",
+    "publishUnexpectedFirmware(deviceUid, selected, snapshot.firmwareVersion)",
+):
+    if token not in ota_coordinator:
+        errors.append(
+            f"{OTA_COORDINATOR.relative_to(ROOT)}: post-restart OTA outcome token is missing: {token}"
+        )
 
 for token in (
     "fun DeviceSnapshot.toDeviceRootSnapshot",
