@@ -720,7 +720,6 @@ class DeviceProvisioningProgressViewModel(
         textResolver.get(resId, *args)
 
     override fun onCleared() {
-        onNavigationHostDestroyed()
         startJob?.cancel()
         transportEventsJob?.cancel()
         handoffSaveJob?.cancel()
