@@ -223,6 +223,18 @@
     </fragment>
 
     <fragment
+        android:id="@+id/deviceCoolingTemperatureHistoryFragment"
+        android:name="com.aqua.aqualight.ui.tabs.devices.detail.cooling.history.DeviceCoolingTemperatureHistoryFragment"
+        android:label="@string/device_cooling_history_title"
+        tools:layout="@layout/fragment_device_cooling_temperature_history">
+        <argument
+            android:name="deviceUid"
+            app:argType="string" />
+        <deepLink
+            app:uri="aqualight://app/device/{deviceUid}/cooling/history" />
+    </fragment>
+
+    <fragment
         android:id="@+id/deviceCoolingAutomaticSettingsFragment"
         android:name="com.aqua.aqualight.ui.tabs.devices.detail.cooling.settings.DeviceCoolingAutomaticSettingsFragment"
         android:label="@string/device_cooling_automatic_settings_title"
