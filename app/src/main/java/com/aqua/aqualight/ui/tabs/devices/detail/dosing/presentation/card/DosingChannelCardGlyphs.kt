@@ -11,7 +11,7 @@ import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.StrokeJoin
 import androidx.compose.ui.graphics.drawscope.DrawScope
 import androidx.compose.ui.graphics.drawscope.Stroke
-import androidx.compose.ui.unit.dp
+import com.aqua.aqualight.ui.common.dosing.AquaDosingCardGeometry
 import kotlin.math.cos
 import kotlin.math.sin
 
@@ -392,15 +392,15 @@ private val CUSTOM_SEGMENT_ALPHAS = listOf(
     CUSTOM_SECOND_ALPHA,
     CUSTOM_THIRD_ALPHA
 )
-private val GLYPH_STROKE = 1.45.dp
-private val BADGE_OUTLINE_WIDTH = 1.10.dp
-private val BADGE_PLUS_WIDTH = 1.55.dp
-private val MANUAL_PLUS_WIDTH = 1.35.dp
-private val NEXT_DOSE_GLYPH_STROKE = 1.25.dp
-private val NEXT_DOSE_CENTER_DOT_RADIUS = 0.65.dp
-private val CALENDAR_CORNER_RADIUS = 2.5.dp
-private val CALENDAR_DOT_RADIUS = 1.1.dp
-private val MODE_STROKE = 1.25.dp
-private val CLOCK_TICK_WIDTH = 1.dp
-private val TIMER_EVENT_RADIUS = 1.25.dp
-private val CUSTOM_CORNER_RADIUS = 2.dp
+private val GLYPH_STROKE = AquaDosingCardGeometry.glyphStroke
+private val BADGE_OUTLINE_WIDTH = AquaDosingCardGeometry.badgeOutlineWidth
+private val BADGE_PLUS_WIDTH = AquaDosingCardGeometry.badgePlusWidth
+private val MANUAL_PLUS_WIDTH = AquaDosingCardGeometry.manualPlusWidth
+private val NEXT_DOSE_GLYPH_STROKE = AquaDosingCardGeometry.nextDoseGlyphStroke
+private val NEXT_DOSE_CENTER_DOT_RADIUS = AquaDosingCardGeometry.nextDoseCenterDotRadius
+private val CALENDAR_CORNER_RADIUS = AquaDosingCardGeometry.calendarCornerRadius
+private val CALENDAR_DOT_RADIUS = AquaDosingCardGeometry.calendarDotRadius
+private val MODE_STROKE = AquaDosingCardGeometry.modeStroke
+private val CLOCK_TICK_WIDTH = AquaDosingCardGeometry.clockTickWidth
+private val TIMER_EVENT_RADIUS = AquaDosingCardGeometry.timerEventRadius
+private val CUSTOM_CORNER_RADIUS = AquaDosingCardGeometry.customCornerRadius

@@ -28,9 +28,9 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Dp
-import androidx.compose.ui.unit.dp
 import com.aqua.aqualight.R
 import com.aqua.aqualight.ui.common.devicecard.AquaDeviceCardTypography
+import com.aqua.aqualight.ui.common.dosing.AquaDosingCardGeometry
 
 @Composable
 internal fun DosingDoseRail(
@@ -81,9 +81,9 @@ private fun DosingDoseRailBody(
                 ?.endFraction
                 ?.coerceIn(0f, 1f)
                 ?: state.completionFraction.coerceIn(0f, 1f)
-            val maximumTagStart = (maxWidth - VALUE_TAG_WIDTH).coerceAtLeast(0.dp)
+            val maximumTagStart = (maxWidth - VALUE_TAG_WIDTH).coerceAtLeast(Dp.Zero)
             val tagStart = (maxWidth * deliveredFraction - VALUE_TAG_WIDTH / 2)
-                .coerceIn(0.dp, maximumTagStart)
+                .coerceIn(Dp.Zero, maximumTagStart)
             DosingDeliveredValueTag(
                 label = deliveredLabel,
                 palette = palette,
@@ -202,12 +202,12 @@ private fun DosingProgressMarkerLabel(
 ) {
     val markerCenter = availableWidth * marker.positionFraction.coerceIn(0f, 1f)
     val halfLabelWidth = MARKER_LABEL_WIDTH / 2
-    val maximumMarkerStart = (availableWidth - MARKER_LABEL_WIDTH).coerceAtLeast(0.dp)
+    val maximumMarkerStart = (availableWidth - MARKER_LABEL_WIDTH).coerceAtLeast(Dp.Zero)
     val unclampedMarkerStart = markerCenter - halfLabelWidth
-    val markerStart = unclampedMarkerStart.coerceIn(0.dp, maximumMarkerStart)
+    val markerStart = unclampedMarkerStart.coerceIn(Dp.Zero, maximumMarkerStart)
     val markerTextAlign = when {
         availableWidth <= MARKER_LABEL_WIDTH -> TextAlign.Center
-        unclampedMarkerStart < 0.dp -> TextAlign.Start
+        unclampedMarkerStart < Dp.Zero -> TextAlign.Start
         unclampedMarkerStart > maximumMarkerStart -> TextAlign.End
         else -> TextAlign.Center
     }
@@ -298,22 +298,22 @@ internal data class DosingDoseRailGrouping(
     val gap: Dp = DEFAULT_GROUP_GAP
 )
 
-private val VALUE_TAG_WIDTH = 56.dp
-private val VALUE_TAG_MIN_WIDTH = 42.dp
-private val VALUE_TAG_HEIGHT = 16.dp
-private val VALUE_TAG_POINTER_WIDTH = 7.dp
-private val VALUE_TAG_POINTER_HEIGHT = 4.dp
-private val VALUE_TAG_CORNER_RADIUS = 5.dp
-private val VALUE_TAG_OUTLINE_WIDTH = 0.75.dp
-private val VALUE_TAG_HORIZONTAL_PADDING = 5.dp
-private val MARKER_SCALE_HEIGHT = 18.dp
-private val MARKER_ACCENT_WIDTH = 5.dp
-private val MARKER_ACCENT_HEIGHT = 1.5.dp
-private val MARKER_ACCENT_TOP = 2.dp
-private val MARKER_LABEL_TOP = 4.dp
-private val MARKER_LABEL_WIDTH = 44.dp
-private val SEGMENT_GAP = 1.dp
-private val DEFAULT_GROUP_GAP = 4.dp
-private val RAIL_CORNER_RADIUS = 4.dp
-private val SEGMENT_CORNER_RADIUS = 2.dp
+private val VALUE_TAG_WIDTH = AquaDosingCardGeometry.valueTagWidth
+private val VALUE_TAG_MIN_WIDTH = AquaDosingCardGeometry.valueTagMinimumWidth
+private val VALUE_TAG_HEIGHT = AquaDosingCardGeometry.valueTagHeight
+private val VALUE_TAG_POINTER_WIDTH = AquaDosingCardGeometry.valueTagPointerWidth
+private val VALUE_TAG_POINTER_HEIGHT = AquaDosingCardGeometry.valueTagPointerHeight
+private val VALUE_TAG_CORNER_RADIUS = AquaDosingCardGeometry.valueTagCornerRadius
+private val VALUE_TAG_OUTLINE_WIDTH = AquaDosingCardGeometry.valueTagOutlineWidth
+private val VALUE_TAG_HORIZONTAL_PADDING = AquaDosingCardGeometry.valueTagHorizontalPadding
+private val MARKER_SCALE_HEIGHT = AquaDosingCardGeometry.markerScaleHeight
+private val MARKER_ACCENT_WIDTH = AquaDosingCardGeometry.markerAccentWidth
+private val MARKER_ACCENT_HEIGHT = AquaDosingCardGeometry.markerAccentHeight
+private val MARKER_ACCENT_TOP = AquaDosingCardGeometry.markerAccentTop
+private val MARKER_LABEL_TOP = AquaDosingCardGeometry.markerLabelTop
+private val MARKER_LABEL_WIDTH = AquaDosingCardGeometry.markerLabelWidth
+private val SEGMENT_GAP = AquaDosingCardGeometry.segmentGap
+private val DEFAULT_GROUP_GAP = AquaDosingCardGeometry.defaultGroupGap
+private val RAIL_CORNER_RADIUS = AquaDosingCardGeometry.railCornerRadius
+private val SEGMENT_CORNER_RADIUS = AquaDosingCardGeometry.segmentCornerRadius
 private const val MARKER_ACCENT_ALPHA = 0.72f

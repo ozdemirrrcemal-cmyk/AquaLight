@@ -2,8 +2,8 @@ package com.aqua.aqualight.ui.tabs.devices.detail.dosing.presentation.card
 
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.unit.dp
 import com.aqua.aqualight.ui.common.devicecard.AquaDeviceCardTypography
+import com.aqua.aqualight.ui.common.dosing.AquaDosingCardGeometry
 
 @Composable
 internal fun DosingSingleProgramProgress(
@@ -75,5 +75,5 @@ private fun DosingProgramProgressUiState.hourlyGroupBreaks(): Set<Int> =
     (HOURLY_GROUP_SIZE until totalOccurrences step HOURLY_GROUP_SIZE).toSet()
 
 private const val HOURLY_GROUP_SIZE = 4
-private val HOURLY_GROUP_GAP = 2.dp
-private val CUSTOM_GROUP_GAP = 6.dp
+private val HOURLY_GROUP_GAP = AquaDosingCardGeometry.hourlyGroupGap
+private val CUSTOM_GROUP_GAP = AquaDosingCardGeometry.customGroupGap

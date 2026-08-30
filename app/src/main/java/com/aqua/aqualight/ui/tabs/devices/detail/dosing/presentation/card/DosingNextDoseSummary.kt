@@ -13,11 +13,11 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.style.TextOverflow
-import androidx.compose.ui.unit.dp
 import com.aqua.aqualight.R
 import com.aqua.aqualight.i18n.LocaleFormatter
 import com.aqua.aqualight.ui.common.devicecard.AquaDeviceCardColors
 import com.aqua.aqualight.ui.common.devicecard.AquaDeviceCardTypography
+import com.aqua.aqualight.ui.common.dosing.AquaDosingCardGeometry
 
 @Composable
 internal fun DosingNextDoseSummary(
@@ -66,5 +66,5 @@ internal fun DosingNextDoseSummary(
 
 private const val MILLIS_PER_MINUTE = 60_000L
 private const val NEXT_DAY_OFFSET = 1
-private val NEXT_DOSE_GLYPH_SIZE = 16.dp
-private val NEXT_DOSE_TEXT_GAP = 6.dp
+private val NEXT_DOSE_GLYPH_SIZE = AquaDosingCardGeometry.nextDoseGlyphSize
+private val NEXT_DOSE_TEXT_GAP = AquaDosingCardGeometry.nextDoseTextGap

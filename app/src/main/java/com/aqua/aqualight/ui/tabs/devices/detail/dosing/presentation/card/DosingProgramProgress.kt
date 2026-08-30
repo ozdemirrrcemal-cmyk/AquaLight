@@ -24,10 +24,10 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.style.TextOverflow
-import androidx.compose.ui.unit.dp
 import com.aqua.aqualight.R
 import com.aqua.aqualight.ui.common.devicecard.AquaDeviceCardColors
 import com.aqua.aqualight.ui.common.devicecard.AquaDeviceCardTypography
+import com.aqua.aqualight.ui.common.dosing.AquaDosingCardGeometry
 
 @Composable
 internal fun DosingProgramProgress(
@@ -261,14 +261,14 @@ private const val DISABLED_ALPHA = 0.48f
 private const val DISABLED_PENDING_ALPHA = 0.24f
 private const val PENDING_ALPHA = 0.36f
 private const val COMPLETED_ALPHA = 0.76f
-internal val PROGRESS_RAIL_HEIGHT = 16.dp
-internal val PROGRESS_CORNER_RADIUS = 8.dp
-internal val PROGRESS_OUTLINE_WIDTH = 1.dp
-internal val PROGRESS_VALUE_TAG_AREA_HEIGHT = 20.dp
-private val NEXT_DOSE_TO_PROGRESS_GAP = 4.dp
-private val PROGRESS_TO_MANUAL_GAP = 8.dp
-private val MANUAL_PILL_MIN_WIDTH = 78.dp
-private val MANUAL_PILL_MAX_WIDTH = 92.dp
+internal val PROGRESS_RAIL_HEIGHT = AquaDosingCardGeometry.progressRailHeight
+internal val PROGRESS_CORNER_RADIUS = AquaDosingCardGeometry.progressCornerRadius
+internal val PROGRESS_OUTLINE_WIDTH = AquaDosingCardGeometry.progressOutlineWidth
+internal val PROGRESS_VALUE_TAG_AREA_HEIGHT = AquaDosingCardGeometry.progressValueTagAreaHeight
+private val NEXT_DOSE_TO_PROGRESS_GAP = AquaDosingCardGeometry.nextDoseToProgressGap
+private val PROGRESS_TO_MANUAL_GAP = AquaDosingCardGeometry.progressToManualGap
+private val MANUAL_PILL_MIN_WIDTH = AquaDosingCardGeometry.manualPillMinimumWidth
+private val MANUAL_PILL_MAX_WIDTH = AquaDosingCardGeometry.manualPillMaximumWidth
 private val MANUAL_PILL_HEIGHT = PROGRESS_RAIL_HEIGHT
 private val MANUAL_PILL_CORNER_RADIUS = PROGRESS_CORNER_RADIUS
-private val MANUAL_HORIZONTAL_PADDING = 7.dp
+private val MANUAL_HORIZONTAL_PADDING = AquaDosingCardGeometry.manualHorizontalPadding

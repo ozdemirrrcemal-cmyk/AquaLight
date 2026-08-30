@@ -22,7 +22,6 @@ import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.style.TextOverflow
-import androidx.compose.ui.unit.dp
 import com.aqua.aqualight.R
 import com.aqua.aqualight.ui.common.devicecard.AquaDeviceCardColors
 import com.aqua.aqualight.ui.common.devicecard.AquaDeviceCardGeometry
@@ -30,6 +29,7 @@ import com.aqua.aqualight.ui.common.devicecard.AquaDeviceCardSurface
 import com.aqua.aqualight.ui.common.devicecard.AquaDeviceCardTypography
 import com.aqua.aqualight.ui.common.devicecard.aquaDeviceCardColors
 import com.aqua.aqualight.ui.common.devicecard.aquaDeviceCardTypography
+import com.aqua.aqualight.ui.common.dosing.AquaDosingCardGeometry
 
 @Composable
 internal fun DosingChannelCard(
@@ -155,10 +155,10 @@ private fun DosingChannelEmptyState(
 private const val EMPTY_BACKGROUND_ALPHA = 0.10f
 private const val EMPTY_OUTLINE_ALPHA = 0.34f
 private const val EMPTY_DESCRIPTION_MAX_LINES = 2
-private val CHANNEL_CARD_MIN_HEIGHT = 104.dp
-private val EMPTY_VERTICAL_PADDING = 4.dp
-private val EMPTY_CONTENT_GAP = 12.dp
-private val EMPTY_TEXT_GAP = 2.dp
-private val EMPTY_ICON_SIZE = 44.dp
-private val EMPTY_ICON_CORNER_RADIUS = 14.dp
-private val EMPTY_GLYPH_SIZE = 28.dp
+private val CHANNEL_CARD_MIN_HEIGHT = AquaDosingCardGeometry.channelCardMinimumHeight
+private val EMPTY_VERTICAL_PADDING = AquaDosingCardGeometry.emptyVerticalPadding
+private val EMPTY_CONTENT_GAP = AquaDosingCardGeometry.emptyContentGap
+private val EMPTY_TEXT_GAP = AquaDosingCardGeometry.emptyTextGap
+private val EMPTY_ICON_SIZE = AquaDosingCardGeometry.emptyIconSize
+private val EMPTY_ICON_CORNER_RADIUS = AquaDosingCardGeometry.emptyIconCornerRadius
+private val EMPTY_GLYPH_SIZE = AquaDosingCardGeometry.emptyGlyphSize

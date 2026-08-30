@@ -22,7 +22,6 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.Immutable
 import androidx.compose.runtime.getValue
@@ -37,8 +36,9 @@ import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.semantics.stateDescription
-import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.Dp
 import com.aqua.aqualight.R
+import com.aqua.aqualight.ui.common.dosing.AquaDosingPumpGeometry
 
 @Immutable
 data class DosingPumpHeadUiState(
@@ -134,7 +134,7 @@ private fun DosingPumpDeck(
                 (maxWidth - PUMP_SPACING) / DOSING_PRO_2_PUMP_COUNT.toFloat()
             )
         } else {
-            0.dp
+            Dp.Zero
         }
 
         Row(
@@ -226,7 +226,7 @@ private fun DosingPumpHead(
 @Composable
 private fun DosingPumpFace(
     visualState: DosingPumpVisualState?,
-    hubSize: androidx.compose.ui.unit.Dp
+    hubSize: Dp
 ) {
     Box(
         modifier = Modifier
@@ -252,7 +252,7 @@ private fun DosingPumpFace(
 @Composable
 private fun DosingPumpHub(
     visualState: DosingPumpVisualState?,
-    hubSize: androidx.compose.ui.unit.Dp
+    hubSize: Dp
 ) {
     Box(
         modifier = Modifier
@@ -331,33 +331,18 @@ private const val HUB_SIZE_RATIO = 0.42f
 private const val INDICATOR_CANVAS_RATIO = 0.82f
 private const val RUNNING_PULSE_DURATION_MS = 1_450
 private const val ERROR_PULSE_DURATION_MS = 720
-private const val DOSING_PRO_2_PUMP_HEAD_MAX_SIZE_DP = 104
-private const val DEVICE_OUTER_CORNER_RADIUS_DP = 30
-private const val DEVICE_INNER_CORNER_RADIUS_DP = 24
-private const val DEVICE_DECK_CORNER_RADIUS_DP = 20
-private const val PUMP_OUTER_CORNER_RADIUS_DP = 20
-private const val PUMP_FACE_CORNER_RADIUS_DP = 15
-private const val DEVICE_SHADOW_ELEVATION_DP = 18
-private const val PUMP_SHADOW_ELEVATION_DP = 8
-private const val HUB_SHADOW_ELEVATION_DP = 5
-private const val DEVICE_EDGE_WIDTH_DP = 1
-private const val DEVICE_OUTER_INSET_DP = 7
-private const val DEVICE_INNER_INSET_DP = 7
-private const val DEVICE_DECK_INSET_DP = 9
-private const val PUMP_FRAME_INSET_DP = 7
-private const val PUMP_SPACING_DP = 8
-private val DOSING_PRO_2_PUMP_HEAD_MAX_SIZE = DOSING_PRO_2_PUMP_HEAD_MAX_SIZE_DP.dp
-private val DEVICE_OUTER_SHAPE = RoundedCornerShape(DEVICE_OUTER_CORNER_RADIUS_DP.dp)
-private val DEVICE_INNER_SHAPE = RoundedCornerShape(DEVICE_INNER_CORNER_RADIUS_DP.dp)
-private val DEVICE_DECK_SHAPE = RoundedCornerShape(DEVICE_DECK_CORNER_RADIUS_DP.dp)
-private val PUMP_OUTER_SHAPE = RoundedCornerShape(PUMP_OUTER_CORNER_RADIUS_DP.dp)
-private val PUMP_FACE_SHAPE = RoundedCornerShape(PUMP_FACE_CORNER_RADIUS_DP.dp)
-private val DEVICE_SHADOW_ELEVATION = DEVICE_SHADOW_ELEVATION_DP.dp
-private val PUMP_SHADOW_ELEVATION = PUMP_SHADOW_ELEVATION_DP.dp
-private val HUB_SHADOW_ELEVATION = HUB_SHADOW_ELEVATION_DP.dp
-private val DEVICE_EDGE_WIDTH = DEVICE_EDGE_WIDTH_DP.dp
-private val DEVICE_OUTER_INSET = DEVICE_OUTER_INSET_DP.dp
-private val DEVICE_INNER_INSET = DEVICE_INNER_INSET_DP.dp
-private val DEVICE_DECK_INSET = DEVICE_DECK_INSET_DP.dp
-private val PUMP_FRAME_INSET = PUMP_FRAME_INSET_DP.dp
-private val PUMP_SPACING = PUMP_SPACING_DP.dp
+private val DOSING_PRO_2_PUMP_HEAD_MAX_SIZE = AquaDosingPumpGeometry.pro2PumpHeadMaximumSize
+private val DEVICE_OUTER_SHAPE = AquaDosingPumpGeometry.deviceOuterShape
+private val DEVICE_INNER_SHAPE = AquaDosingPumpGeometry.deviceInnerShape
+private val DEVICE_DECK_SHAPE = AquaDosingPumpGeometry.deviceDeckShape
+private val PUMP_OUTER_SHAPE = AquaDosingPumpGeometry.pumpOuterShape
+private val PUMP_FACE_SHAPE = AquaDosingPumpGeometry.pumpFaceShape
+private val DEVICE_SHADOW_ELEVATION = AquaDosingPumpGeometry.deviceShadowElevation
+private val PUMP_SHADOW_ELEVATION = AquaDosingPumpGeometry.pumpShadowElevation
+private val HUB_SHADOW_ELEVATION = AquaDosingPumpGeometry.hubShadowElevation
+private val DEVICE_EDGE_WIDTH = AquaDosingPumpGeometry.deviceEdgeWidth
+private val DEVICE_OUTER_INSET = AquaDosingPumpGeometry.deviceOuterInset
+private val DEVICE_INNER_INSET = AquaDosingPumpGeometry.deviceInnerInset
+private val DEVICE_DECK_INSET = AquaDosingPumpGeometry.deviceDeckInset
+private val PUMP_FRAME_INSET = AquaDosingPumpGeometry.pumpFrameInset
+private val PUMP_SPACING = AquaDosingPumpGeometry.pumpSpacing

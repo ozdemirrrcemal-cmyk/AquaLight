@@ -7,12 +7,11 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.shadow
-import androidx.compose.ui.unit.dp
+import com.aqua.aqualight.ui.common.dosing.AquaDosingPumpGeometry
 
 /**
  * Compact rendering of the black inner pump face used by the dosing device artwork.
@@ -66,9 +65,6 @@ internal fun DosingPumpFaceIcon(
 
 private const val HUB_SIZE_RATIO = 0.42f
 private const val INDICATOR_CANVAS_RATIO = 0.82f
-private const val ICON_FACE_CORNER_RADIUS_DP = 15
-private const val HUB_SHADOW_ELEVATION_DP = 5
-private const val ICON_EDGE_WIDTH_DP = 1
-private val ICON_FACE_SHAPE = RoundedCornerShape(ICON_FACE_CORNER_RADIUS_DP.dp)
-private val HUB_SHADOW_ELEVATION = HUB_SHADOW_ELEVATION_DP.dp
-private val ICON_EDGE_WIDTH = ICON_EDGE_WIDTH_DP.dp
+private val ICON_FACE_SHAPE = AquaDosingPumpGeometry.pumpFaceShape
+private val HUB_SHADOW_ELEVATION = AquaDosingPumpGeometry.hubShadowElevation
+private val ICON_EDGE_WIDTH = AquaDosingPumpGeometry.deviceEdgeWidth

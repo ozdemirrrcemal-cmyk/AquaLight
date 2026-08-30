@@ -18,10 +18,10 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.style.TextOverflow
-import androidx.compose.ui.unit.dp
 import com.aqua.aqualight.R
 import com.aqua.aqualight.ui.common.devicecard.AquaDeviceCardColors
 import com.aqua.aqualight.ui.common.devicecard.AquaDeviceCardTypography
+import com.aqua.aqualight.ui.common.dosing.AquaDosingCardGeometry
 
 @Composable
 internal fun DosingReservoirSummary(
@@ -136,10 +136,10 @@ private const val LEVEL_LINE_Y = 0.45f
 private const val INNER_INSET_MULTIPLIER = 1.6f
 private const val FILL_ALPHA = 0.88f
 private const val LEVEL_LINE_ALPHA = 0.85f
-private val RESERVOIR_GAP = 6.dp
-private val RESERVOIR_ICON_SIZE = 16.dp
-private val RESERVOIR_STROKE = 1.35.dp
-private val LEVEL_LINE_WIDTH = 1.dp
-private val BODY_CORNER_RADIUS = 2.5.dp
-private val FILL_CORNER_RADIUS = 1.5.dp
-private val CAP_CORNER_RADIUS = 1.dp
+private val RESERVOIR_GAP = AquaDosingCardGeometry.reservoirGap
+private val RESERVOIR_ICON_SIZE = AquaDosingCardGeometry.reservoirIconSize
+private val RESERVOIR_STROKE = AquaDosingCardGeometry.reservoirStroke
+private val LEVEL_LINE_WIDTH = AquaDosingCardGeometry.reservoirLevelLineWidth
+private val BODY_CORNER_RADIUS = AquaDosingCardGeometry.reservoirBodyCornerRadius
+private val FILL_CORNER_RADIUS = AquaDosingCardGeometry.reservoirFillCornerRadius
+private val CAP_CORNER_RADIUS = AquaDosingCardGeometry.reservoirCapCornerRadius

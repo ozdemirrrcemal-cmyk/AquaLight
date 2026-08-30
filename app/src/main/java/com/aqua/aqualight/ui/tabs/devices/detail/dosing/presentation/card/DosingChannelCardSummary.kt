@@ -13,10 +13,10 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.style.TextOverflow
-import androidx.compose.ui.unit.dp
 import com.aqua.aqualight.R
 import com.aqua.aqualight.ui.common.devicecard.AquaDeviceCardColors
 import com.aqua.aqualight.ui.common.devicecard.AquaDeviceCardTypography
+import com.aqua.aqualight.ui.common.dosing.AquaDosingCardGeometry
 
 @Composable
 internal fun DosingChannelSummary(
@@ -265,7 +265,7 @@ private fun DosingProgramModeUiState.compactLabelRes(): Int = when (this) {
 private const val DAY_SEPARATOR = " · "
 private const val SUMMARY_LEADING_COLUMN_WEIGHT = 0.92f
 private const val SUMMARY_TRAILING_COLUMN_WEIGHT = 1.08f
-private val SUMMARY_ROW_GAP = 5.dp
-private val SUMMARY_COLUMN_GAP = 18.dp
-private val SUMMARY_ICON_GAP = 6.dp
-private val SUMMARY_ICON_SIZE = 16.dp
+private val SUMMARY_ROW_GAP = AquaDosingCardGeometry.summaryRowGap
+private val SUMMARY_COLUMN_GAP = AquaDosingCardGeometry.summaryColumnGap
+private val SUMMARY_ICON_GAP = AquaDosingCardGeometry.summaryIconGap
+private val SUMMARY_ICON_SIZE = AquaDosingCardGeometry.summaryIconSize

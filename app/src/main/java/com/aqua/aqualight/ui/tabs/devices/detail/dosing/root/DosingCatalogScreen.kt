@@ -12,7 +12,7 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.unit.dp
+import com.aqua.aqualight.ui.common.dosing.AquaDosingCatalogGeometry
 import com.aqua.aqualight.ui.tabs.devices.detail.dosing.presentation.card.DosingChannelCard
 import com.aqua.aqualight.ui.tabs.devices.detail.dosing.presentation.card.DosingChannelCardUiState
 import com.aqua.aqualight.ui.tabs.devices.detail.dosing.presentation.pump.DosingPumpHeadUiState
@@ -93,15 +93,8 @@ internal fun DeviceDosingCatalogScreen(
     }
 }
 
-private const val SCREEN_HORIZONTAL_PADDING_DP = 16
-private const val SCREEN_TOP_PADDING_DP = 12
-private const val SCREEN_BOTTOM_PADDING_DP = 24
-private const val CHANNEL_CARD_SPACING_DP = 10
-private const val DEVICE_TO_CARDS_EXTRA_SPACING_DP = 4
-private const val CARD_LIST_TOP_PADDING_DP =
-    CHANNEL_CARD_SPACING_DP * 2 + DEVICE_TO_CARDS_EXTRA_SPACING_DP
-private val SCREEN_HORIZONTAL_PADDING = SCREEN_HORIZONTAL_PADDING_DP.dp
-private val SCREEN_TOP_PADDING = SCREEN_TOP_PADDING_DP.dp
-private val SCREEN_BOTTOM_PADDING = SCREEN_BOTTOM_PADDING_DP.dp
-private val CHANNEL_CARD_SPACING = CHANNEL_CARD_SPACING_DP.dp
-private val CARD_LIST_TOP_PADDING = CARD_LIST_TOP_PADDING_DP.dp
+private val SCREEN_HORIZONTAL_PADDING = AquaDosingCatalogGeometry.screenHorizontalPadding
+private val SCREEN_TOP_PADDING = AquaDosingCatalogGeometry.screenTopPadding
+private val SCREEN_BOTTOM_PADDING = AquaDosingCatalogGeometry.screenBottomPadding
+private val CHANNEL_CARD_SPACING = AquaDosingCatalogGeometry.channelCardSpacing
+private val CARD_LIST_TOP_PADDING = AquaDosingCatalogGeometry.cardListTopPadding

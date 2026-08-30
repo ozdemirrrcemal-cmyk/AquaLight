@@ -24,7 +24,9 @@ Resources move through three layers:
    `Widget.Aqua.BottomSheet.*`, `Widget.Aqua.Dialog.*`, selection-row, chip, and toolbar styles.
 
 Direct primitive use is acceptable only while preserving an existing exact visual value during
-migration. New UI must introduce or reuse a semantic/component token.
+migration. New UI must introduce or reuse a semantic/component token. Compose-only component
+contracts live under `ui/common` in audited `*ComposeStyle.kt` files; feature packages consume
+their typed `Dp`, shape, color, brush and typography tokens and never declare raw visual values.
 
 ## Naming standard
 
@@ -52,5 +54,7 @@ labels follow the same rule.
 ## Enforcement
 
 `python3 tools/design_system_resource_guard.py` rejects raw XML copy, colors, dp/sp values outside
-their primitive files, raw Kotlin palette/dp/text-size values, legacy button styles, duplicate
-resources in one configuration, and catalog copy that bypasses `@StringRes`.
+their primitive files, raw feature-owned Kotlin palette/dp/text-size values, legacy button styles,
+duplicate resources in one configuration, and catalog copy that bypasses `@StringRes`. Dosing
+Compose UI additionally fails when a feature file declares a local `.dp` conversion or ARGB value
+instead of consuming `AquaDosingComposeStyle`.

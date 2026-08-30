@@ -4,7 +4,7 @@ import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.drawscope.DrawScope
 import androidx.compose.ui.graphics.drawscope.Stroke
-import androidx.compose.ui.unit.dp
+import com.aqua.aqualight.ui.common.dosing.AquaDosingPumpGeometry
 
 internal fun DrawScope.drawPumpIndicator(visualState: DosingPumpVisualState) {
     val center = Offset(size.width / 2f, size.height / 2f)
@@ -74,5 +74,4 @@ private const val GLOW_MIDDLE_ALPHA = 0.20f
 private const val GLOW_INNER_ALPHA = 0.34f
 private const val GLOW_MIDDLE_RADIUS_RATIO = 0.72f
 private const val GLOW_INNER_RADIUS_RATIO = 0.50f
-private const val INDICATOR_EDGE_WIDTH_DP = 1
-private val INDICATOR_EDGE_WIDTH = INDICATOR_EDGE_WIDTH_DP.dp
+private val INDICATOR_EDGE_WIDTH = AquaDosingPumpGeometry.indicatorEdgeWidth

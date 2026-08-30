@@ -7,7 +7,7 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.unit.dp
+import com.aqua.aqualight.ui.common.dosing.AquaDosingPumpGeometry
 
 @Composable
 internal fun DosingPumpSection(
@@ -71,11 +71,7 @@ internal fun exactDosingPumpCountOrNull(pumpCount: Int): Int? = when (pumpCount)
 
 private const val DOSING_PRO_2_PUMP_COUNT = 2
 private const val DOSING_PRO_4_PUMP_COUNT = 4
-private const val SCREEN_HORIZONTAL_PADDING_DP = 16
-private const val SCREEN_TOP_PADDING_DP = 12
-private const val DOSING_PRO_2_MAX_WIDTH_DP = 360
-private const val DOSING_PRO_4_MAX_WIDTH_DP = 760
-private val SCREEN_HORIZONTAL_PADDING = SCREEN_HORIZONTAL_PADDING_DP.dp
-private val SCREEN_TOP_PADDING = SCREEN_TOP_PADDING_DP.dp
-private val DOSING_PRO_2_MAX_WIDTH = DOSING_PRO_2_MAX_WIDTH_DP.dp
-private val DOSING_PRO_4_MAX_WIDTH = DOSING_PRO_4_MAX_WIDTH_DP.dp
+private val SCREEN_HORIZONTAL_PADDING = AquaDosingPumpGeometry.sectionHorizontalPadding
+private val SCREEN_TOP_PADDING = AquaDosingPumpGeometry.sectionTopPadding
+private val DOSING_PRO_2_MAX_WIDTH = AquaDosingPumpGeometry.pro2MaximumWidth
+private val DOSING_PRO_4_MAX_WIDTH = AquaDosingPumpGeometry.pro4MaximumWidth
