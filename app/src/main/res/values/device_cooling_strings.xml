@@ -1,4 +1,43 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="device_cooling_open_settings_description">Open device settings</string>
+    <string name="device_cooling_temperature_sensor">Temperature Sensor</string>
+    <string name="device_cooling_current_temperature_value">25.6 °C</string>
+    <string name="device_cooling_target_temperature_value">26.0 °C</string>
+    <string name="device_cooling_temperature">Temperature</string>
+    <string name="device_cooling_temperature_chart_description">Temperature history for the last 24 hours. Current temperature 25.6 degrees Celsius; target 26 degrees Celsius.</string>
+    <string name="device_cooling_now">Now</string>
+    <string name="device_cooling_target">Target</string>
+    <string name="device_cooling_chart_24_hours">−24 h</string>
+    <string name="device_cooling_chart_18_hours">−18 h</string>
+    <string name="device_cooling_chart_12_hours">−12 h</string>
+    <string name="device_cooling_chart_6_hours">−6 h</string>
+    <string name="device_cooling_chart_now">Now</string>
+    <string name="device_cooling_fan_speed">Fan Speed</string>
+    <string name="device_cooling_fan_percent" formatted="false">60%</string>
+    <string name="device_cooling_fan_mode">Fan Mode</string>
+    <string name="device_cooling_mode_automatic">Automatic</string>
+    <string name="device_cooling_mode_manual">Manual</string>
+    <string name="device_cooling_mode_program">Program</string>
+    <string name="device_cooling_power">Power</string>
+    <string name="device_cooling_power_value">12.4 W</string>
+    <string name="device_cooling_estimated_consumption">Estimated Consumption</string>
+    <string name="device_cooling_consumption_value">0.30 kWh / day</string>
+    <string name="device_cooling_status">Status</string>
+    <string name="device_cooling_status_fan">Fan</string>
+    <string name="device_cooling_status_sensors">Sensors</string>
+    <string name="device_cooling_status_connection">Connection</string>
+    <string name="device_cooling_status_alarm">Alarm</string>
+    <string name="device_cooling_status_running">Running</string>
+    <string name="device_cooling_status_normal">Normal</string>
+    <string name="device_cooling_status_none">None</string>
+    <string name="device_cooling_profile">Cooling Profile</string>
+    <string name="device_cooling_profile_quiet">Quiet</string>
+    <string name="device_cooling_profile_balanced">Balanced</string>
+    <string name="device_cooling_profile_performance">Performance</string>
+    <string name="device_cooling_profile_boost">Boost</string>
+    <string name="device_cooling_manual_fan_speed">Manual Fan Speed</string>
+    <string name="device_cooling_manual_only">Only in Manual mode</string>
+    <string name="device_cooling_range_minimum" formatted="false">0%</string>
+    <string name="device_cooling_range_maximum" formatted="false">100%</string>
 </resources>
