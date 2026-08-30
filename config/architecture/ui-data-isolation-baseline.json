@@ -1,0 +1,85 @@
+{
+  "schemaVersion": 1,
+  "capturedFromMainSha": "87b3a49a2022c7c6c33780c70b51f90fe92b9be1",
+  "policy": "Legacy UI-to-data dependency edges are frozen. New edges are forbidden; removed edges must be deleted from this baseline.",
+  "uiToData": {
+    "app/src/main/java/com/aqua/aqualight/ui/auth/state/AuthActionState.kt": [
+      "com.aqua.aqualight.data.auth.AuthUiText"
+    ],
+    "app/src/main/java/com/aqua/aqualight/ui/auth/viewmodel/ChangeEmailViewModel.kt": [
+      "com.aqua.aqualight.data.auth.AuthErrorMapper",
+      "com.aqua.aqualight.data.auth.AuthUiText"
+    ],
+    "app/src/main/java/com/aqua/aqualight/ui/auth/viewmodel/ChangePasswordViewModel.kt": [
+      "com.aqua.aqualight.data.auth.AuthErrorMapper",
+      "com.aqua.aqualight.data.auth.AuthUiText"
+    ],
+    "app/src/main/java/com/aqua/aqualight/ui/auth/viewmodel/LoginViewModel.kt": [
+      "com.aqua.aqualight.data.auth.AuthErrorMapper",
+      "com.aqua.aqualight.data.auth.AuthUiText"
+    ],
+    "app/src/main/java/com/aqua/aqualight/ui/auth/viewmodel/RegisterViewModel.kt": [
+      "com.aqua.aqualight.data.auth.AuthErrorMapper",
+      "com.aqua.aqualight.data.auth.AuthUiText"
+    ],
+    "app/src/main/java/com/aqua/aqualight/ui/auth/viewmodel/ResetPasswordViewModel.kt": [
+      "com.aqua.aqualight.data.auth.AuthErrorMapper",
+      "com.aqua.aqualight.data.auth.AuthUiText"
+    ],
+    "app/src/main/java/com/aqua/aqualight/ui/auth/viewmodel/SignInViewModel.kt": [
+      "com.aqua.aqualight.data.auth.AuthErrorMapper",
+      "com.aqua.aqualight.data.auth.AuthUiText"
+    ],
+    "app/src/main/java/com/aqua/aqualight/ui/common/devicecard/DeviceFamilyIconMapper.kt": [
+      "com.aqua.aqualight.data.devices.model.DeviceFamily"
+    ],
+    "app/src/main/java/com/aqua/aqualight/ui/common/devicepresence/DevicePresencePresentationMapper.kt": [
+      "com.aqua.aqualight.data.devices.model.DeviceOnlineState"
+    ],
+    "app/src/main/java/com/aqua/aqualight/ui/main/MainActivity.kt": [
+      "com.aqua.aqualight.data.auth.AppSessionCoordinator",
+      "com.aqua.aqualight.data.recovery.LocalDataRecoveryTracker"
+    ],
+    "app/src/main/java/com/aqua/aqualight/ui/navigation/CareTaskNotificationRoutePolicy.kt": [
+      "com.aqua.aqualight.data.user.UserDataScope"
+    ],
+    "app/src/main/java/com/aqua/aqualight/ui/navigation/DeviceFirmwareNotificationRoutePolicy.kt": [
+      "com.aqua.aqualight.data.user.UserDataScope"
+    ],
+    "app/src/main/java/com/aqua/aqualight/ui/tabs/aquarium/careprofile/CareProfileCalculator.kt": [
+      "com.aqua.aqualight.data.aquarium.catalog.material.MaterialCategoryCatalog"
+    ],
+    "app/src/main/java/com/aqua/aqualight/ui/tabs/aquarium/create/materials/MaterialPickerFragment.kt": [
+      "com.aqua.aqualight.data.aquarium.catalog.material.AquariumMaterial",
+      "com.aqua.aqualight.data.aquarium.catalog.material.MaterialCatalog"
+    ],
+    "app/src/main/java/com/aqua/aqualight/ui/tabs/aquarium/create/plants/PlantPickerFragment.kt": [
+      "com.aqua.aqualight.data.aquarium.catalog.plant.AquariumPlant",
+      "com.aqua.aqualight.data.aquarium.catalog.plant.PlantCatalog"
+    ],
+    "app/src/main/java/com/aqua/aqualight/ui/tabs/aquarium/create/steps/TankMaterialFragment.kt": [
+      "com.aqua.aqualight.data.aquarium.catalog.material.MaterialCategory",
+      "com.aqua.aqualight.data.aquarium.catalog.material.MaterialCategoryCatalog"
+    ],
+    "app/src/main/java/com/aqua/aqualight/ui/tabs/aquarium/detail/TankDetailLifeFragment.kt": [
+      "com.aqua.aqualight.data.aquarium.catalog.livestock.LivestockCategories"
+    ],
+    "app/src/main/java/com/aqua/aqualight/ui/tabs/aquarium/detail/TankDetailLivestockFormFragment.kt": [
+      "com.aqua.aqualight.data.aquarium.catalog.livestock.LivestockCategories",
+      "com.aqua.aqualight.data.aquarium.util.AquariumIdGenerator"
+    ],
+    "app/src/main/java/com/aqua/aqualight/ui/tabs/aquarium/detail/TankDetailTankFragment.kt": [
+      "com.aqua.aqualight.data.aquarium.catalog.material.MaterialCategoryCatalog"
+    ],
+    "app/src/main/java/com/aqua/aqualight/ui/tabs/aquarium/detail/settings/TankSettingsDetailsFragment.kt": [
+      "com.aqua.aqualight.data.aquarium.catalog.material.MaterialCategoryCatalog"
+    ],
+    "app/src/main/java/com/aqua/aqualight/ui/tabs/aquarium/export/TankPdfExporter.kt": [
+      "com.aqua.aqualight.data.aquarium.catalog.material.MaterialCategoryCatalog"
+    ],
+    "app/src/main/java/com/aqua/aqualight/ui/tabs/aquarium/materials/MaterialSelectionMapper.kt": [
+      "com.aqua.aqualight.data.aquarium.catalog.material.AquariumMaterial",
+      "com.aqua.aqualight.data.aquarium.catalog.material.MaterialCatalog"
+    ]
+  }
+}
