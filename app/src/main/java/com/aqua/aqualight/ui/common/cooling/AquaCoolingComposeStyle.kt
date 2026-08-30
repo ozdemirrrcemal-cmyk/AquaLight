@@ -132,11 +132,12 @@ object AquaCoolingHistoryGeometry {
     val sourceDotSize = 6.dp
     val sourceGap = 6.dp
 
-    val messageCardMinimumHeight = 142.dp
-    val messageGap = 8.dp
+    // Read state is supplementary; chart/summary/table remain visible underneath it.
+    val messageCardMinimumHeight = 96.dp
+    val messageGap = 7.dp
     val retryShape = RoundedCornerShape(18.dp)
     val retryHorizontalPadding = 14.dp
-    val retryVerticalPadding = 8.dp
+    val retryVerticalPadding = 7.dp
 }
 
 object AquaCoolingDashboardTypography {
