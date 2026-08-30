@@ -5,6 +5,7 @@ import com.aqua.aqualight.application.devices.dosing.DeviceDosingCardOperations
 import com.aqua.aqualight.application.devices.dosing.DeviceDosingChannelOperations
 import com.aqua.aqualight.application.devices.dosing.DeviceDosingLowLevelAlertTextResolver
 import com.aqua.aqualight.application.devices.dosing.DeviceDosingReconciledChannelOperations
+import com.aqua.aqualight.application.notifications.NotificationDeliveryRetrySignal
 import com.aqua.aqualight.application.notifications.NotificationDispatchUseCase
 import com.aqua.aqualight.data.devices.dosing.DeviceDosingLowLevelAlertLedger
 import com.aqua.aqualight.data.devices.dosing.DeviceDosingLowLevelAlertMonitor
@@ -79,7 +80,8 @@ internal class DeviceDosingV1ProductionRuntime(
                         .forEach { device ->
                             launch {
                                 alertMonitor.monitor(
-                                    channelOperations.observeAll(device.deviceUid.value)
+                                    snapshots = channelOperations.observeAll(device.deviceUid.value),
+                                    deliveryRetrySignals = NotificationDeliveryRetrySignal.observe()
                                 )
                             }
                         }

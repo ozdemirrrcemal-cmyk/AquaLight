@@ -3,6 +3,7 @@ package com.aqua.aqualight.data.auth
 import androidx.lifecycle.DefaultLifecycleObserver
 import androidx.lifecycle.LifecycleOwner
 import com.aqua.aqualight.application.notifications.AppProcessForegroundState
+import com.aqua.aqualight.application.notifications.NotificationDeliveryRetrySignal
 
 /**
  * Converts Android's process lifecycle into the one foreground boundary used by device presence.
@@ -16,6 +17,7 @@ internal class AppProcessLifecycleObserver(
 
     override fun onStart(owner: LifecycleOwner) {
         AppProcessForegroundState.update(true)
+        NotificationDeliveryRetrySignal.requestRetry()
         controller.enterForeground()
     }
 

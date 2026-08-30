@@ -5,6 +5,7 @@ import androidx.lifecycle.lifecycleScope
 import com.aqua.aqualight.application.notifications.NotificationCategory
 import com.aqua.aqualight.application.notifications.NotificationChannelState
 import com.aqua.aqualight.application.notifications.NotificationDeliveryReadiness
+import com.aqua.aqualight.application.notifications.NotificationDeliveryRetrySignal
 import com.aqua.aqualight.application.notifications.NotificationPreferenceUseCase
 import com.aqua.aqualight.platform.permissions.AppCapability
 import com.aqua.aqualight.ui.common.permission.CapabilityPermissionCoordinator
@@ -269,6 +270,7 @@ class NotificationEnablementCoordinator(
                 enabled = true
             )
         }
+        NotificationDeliveryRetrySignal.requestRetry()
         if (operationGate.isCurrent(ticket)) {
             callbacks.onStateChanged(
                 ticket.actionToken,
