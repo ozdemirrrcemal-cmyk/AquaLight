@@ -27,9 +27,7 @@ class DeviceCoolingTemperatureHistoryViewModel(
         if (deviceUid.isBlank()) {
             loadJob?.cancel()
             boundDeviceUid = ""
-            _uiState.value = DeviceCoolingTemperatureHistoryUiState(
-                loadState = DeviceCoolingTemperatureHistoryLoadState.UNAVAILABLE
-            )
+            _uiState.value = DeviceCoolingTemperatureHistoryUiState()
             return
         }
         if (boundDeviceUid == deviceUid) return
@@ -42,7 +40,8 @@ class DeviceCoolingTemperatureHistoryViewModel(
         if (_uiState.value.selectedRange == range) return
         _uiState.value = _uiState.value.copy(
             selectedRange = range,
-            snapshot = null
+            snapshot = null,
+            loadState = DeviceCoolingTemperatureHistoryLoadState.CONTENT
         )
         loadSelectedRange()
     }
@@ -57,10 +56,6 @@ class DeviceCoolingTemperatureHistoryViewModel(
         val range = _uiState.value.selectedRange
         loadJob?.cancel()
         loadJob = viewModelScope.launch {
-            _uiState.value = _uiState.value.copy(
-                loadState = DeviceCoolingTemperatureHistoryLoadState.LOADING,
-                snapshot = null
-            )
             when (val result = operations.loadTemperatureHistory(deviceUid, range)) {
                 is DeviceCoolingTemperatureHistoryLoadResult.Loaded -> {
                     if (boundDeviceUid != deviceUid || _uiState.value.selectedRange != range) {
@@ -71,18 +66,14 @@ class DeviceCoolingTemperatureHistoryViewModel(
                         snapshot = result.snapshot
                     )
                 }
-                DeviceCoolingTemperatureHistoryLoadResult.Unsupported -> {
-                    if (boundDeviceUid == deviceUid && _uiState.value.selectedRange == range) {
-                        _uiState.value = _uiState.value.copy(
-                            loadState = DeviceCoolingTemperatureHistoryLoadState.UNSUPPORTED,
-                            snapshot = null
-                        )
-                    }
-                }
+                DeviceCoolingTemperatureHistoryLoadResult.Unsupported,
                 DeviceCoolingTemperatureHistoryLoadResult.Unavailable -> {
                     if (boundDeviceUid == deviceUid && _uiState.value.selectedRange == range) {
+                        // Device connectivity is gated before this destination is entered. A
+                        // history capability/read failure must not create a second connection UI.
+                        // The chart, summaries and table stay visible without invented values.
                         _uiState.value = _uiState.value.copy(
-                            loadState = DeviceCoolingTemperatureHistoryLoadState.UNAVAILABLE,
+                            loadState = DeviceCoolingTemperatureHistoryLoadState.CONTENT,
                             snapshot = null
                         )
                     }
@@ -97,7 +88,7 @@ data class DeviceCoolingTemperatureHistoryUiState(
     val selectedRange: DeviceCoolingTemperatureHistoryRange =
         DeviceCoolingTemperatureHistoryRange.HOURS_24,
     val loadState: DeviceCoolingTemperatureHistoryLoadState =
-        DeviceCoolingTemperatureHistoryLoadState.IDLE,
+        DeviceCoolingTemperatureHistoryLoadState.CONTENT,
     val snapshot: DeviceCoolingTemperatureHistorySnapshot? = null
 )
 
