@@ -108,11 +108,13 @@ class UnsavedChangesExitGuardHostFragment : Fragment() {
         super.onViewCreated(view, savedInstanceState)
         guard = UnsavedChangesExitGuard.attach(
             fragment = this,
-            requestKey = REQUEST_KEY,
-            actionId = ACTION_ID,
-            hasUnsavedChanges = { dirty },
-            isExitBlocked = { blocked },
-            exit = { exitCount += 1 }
+            configuration = UnsavedChangesExitGuard.Configuration(
+                requestKey = REQUEST_KEY,
+                actionId = ACTION_ID,
+                hasUnsavedChanges = { dirty },
+                isExitBlocked = { blocked },
+                exit = { exitCount += 1 }
+            )
         )
     }
 

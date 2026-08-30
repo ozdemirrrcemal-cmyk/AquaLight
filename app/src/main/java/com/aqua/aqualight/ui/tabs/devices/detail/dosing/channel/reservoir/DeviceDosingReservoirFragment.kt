@@ -161,16 +161,20 @@ class DeviceDosingReservoirFragment :
     private fun setupUnsavedChangesExitGuard() {
         unsavedChangesExitGuard = UnsavedChangesExitGuard.attach(
             fragment = this,
-            requestKey = UNSAVED_CHANGES_REQUEST_KEY,
-            actionId = ACTION_EXIT_WITHOUT_SAVING,
-            hasUnsavedChanges = { viewModel.currentEditorState().dirty },
-            isExitBlocked = { viewModel.currentEditorState().operationInProgress },
-            exit = {
-                val navController = findNavController()
-                if (navController.currentDestination?.id == R.id.deviceDosingReservoirFragment) {
-                    navController.navigateUp()
+            configuration = UnsavedChangesExitGuard.Configuration(
+                requestKey = UNSAVED_CHANGES_REQUEST_KEY,
+                actionId = ACTION_EXIT_WITHOUT_SAVING,
+                hasUnsavedChanges = { viewModel.currentEditorState().dirty },
+                isExitBlocked = { viewModel.currentEditorState().operationInProgress },
+                exit = {
+                    val navController = findNavController()
+                    if (
+                        navController.currentDestination?.id == R.id.deviceDosingReservoirFragment
+                    ) {
+                        navController.navigateUp()
+                    }
                 }
-            }
+            )
         )
     }
 

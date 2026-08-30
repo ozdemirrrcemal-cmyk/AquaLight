@@ -19,6 +19,14 @@ class UnsavedChangesExitGuard private constructor(
     private val exit: () -> Unit
 ) {
 
+    data class Configuration(
+        val requestKey: String,
+        val actionId: String,
+        val hasUnsavedChanges: () -> Boolean,
+        val isExitBlocked: () -> Boolean = { false },
+        val exit: () -> Unit
+    )
+
     fun requestExit() {
         if (isExitBlocked()) return
         if (!hasUnsavedChanges()) {
@@ -55,22 +63,18 @@ class UnsavedChangesExitGuard private constructor(
     companion object {
         fun attach(
             fragment: Fragment,
-            requestKey: String,
-            actionId: String,
-            hasUnsavedChanges: () -> Boolean,
-            isExitBlocked: () -> Boolean = { false },
-            exit: () -> Unit
+            configuration: Configuration
         ): UnsavedChangesExitGuard {
             val guard = UnsavedChangesExitGuard(
                 fragment = fragment,
-                requestKey = requestKey,
-                actionId = actionId,
-                hasUnsavedChanges = hasUnsavedChanges,
-                isExitBlocked = isExitBlocked,
-                exit = exit
+                requestKey = configuration.requestKey,
+                actionId = configuration.actionId,
+                hasUnsavedChanges = configuration.hasUnsavedChanges,
+                isExitBlocked = configuration.isExitBlocked,
+                exit = configuration.exit
             )
             fragment.childFragmentManager.setFragmentResultListener(
-                requestKey,
+                configuration.requestKey,
                 fragment.viewLifecycleOwner
             ) { _, result ->
                 guard.handleResult(

@@ -52,7 +52,21 @@ class DeviceDosingPlanFragment :
                 ?.getLong(STATE_BASE_REVISION),
             restoredDraftDirty = savedInstanceState?.getBoolean(STATE_DRAFT_DIRTY, false) == true
         )
-        setupUnsavedChangesExitGuard()
+        unsavedChangesExitGuard = UnsavedChangesExitGuard.attach(
+            fragment = this,
+            configuration = UnsavedChangesExitGuard.Configuration(
+                requestKey = UNSAVED_CHANGES_REQUEST_KEY,
+                actionId = ACTION_EXIT_WITHOUT_SAVING,
+                hasUnsavedChanges = { viewModel.currentEditorState.draftDirty },
+                isExitBlocked = { viewModel.currentEditorState.operationInProgress },
+                exit = {
+                    val navController = findNavController()
+                    if (navController.currentDestination?.id == R.id.deviceDosingPlanFragment) {
+                        navController.navigateUp()
+                    }
+                }
+            )
+        )
         setupDailyDoseResult()
         bindDosingPlanScheduleResults(
             host = DosingPlanScheduleResultHost(
@@ -120,22 +134,6 @@ class DeviceDosingPlanFragment :
                 )
             }
         }
-    }
-
-    private fun setupUnsavedChangesExitGuard() {
-        unsavedChangesExitGuard = UnsavedChangesExitGuard.attach(
-            fragment = this,
-            requestKey = UNSAVED_CHANGES_REQUEST_KEY,
-            actionId = ACTION_EXIT_WITHOUT_SAVING,
-            hasUnsavedChanges = { viewModel.currentEditorState.draftDirty },
-            isExitBlocked = { viewModel.currentEditorState.operationInProgress },
-            exit = {
-                val navController = findNavController()
-                if (navController.currentDestination?.id == R.id.deviceDosingPlanFragment) {
-                    navController.navigateUp()
-                }
-            }
-        )
     }
 
     private fun setupDailyDoseResult() {
