@@ -48,10 +48,9 @@ import kotlin.math.roundToInt
 /**
  * Automatic Cooling editor.
  *
- * Firmware availability is presented as a compact state banner. The actual editor structure stays
- * visible at all times so the product layout remains inspectable even before a device/firmware
- * implements the Cooling contract. Missing values are rendered as unavailable and writes stay
- * disabled until an authoritative editable firmware snapshot arrives.
+ * Connectivity is gated before this destination is entered. The screen therefore owns only the
+ * automatic-control surface; missing firmware values are rendered as unavailable and writes remain
+ * disabled until an authoritative editable snapshot arrives.
  */
 @Composable
 internal fun DeviceCoolingAutomaticSettingsScreen(
@@ -59,7 +58,6 @@ internal fun DeviceCoolingAutomaticSettingsScreen(
     onStartTemperatureClick: () -> Unit,
     onMaximumTemperatureClick: () -> Unit,
     onSave: () -> Unit,
-    onRetry: () -> Unit,
     modifier: Modifier = Modifier
 ) {
     val colors = aquaCoolingDashboardColors()
@@ -75,30 +73,6 @@ internal fun DeviceCoolingAutomaticSettingsScreen(
         ),
         verticalArrangement = Arrangement.spacedBy(AquaCoolingAutomaticGeometry.sectionGap)
     ) {
-        when (state.loadState) {
-            DeviceCoolingAutomaticLoadState.LOADING -> item(key = "load-state") {
-                AutomaticMessageCard(
-                    title = stringResource(R.string.device_cooling_automatic_loading_title),
-                    message = stringResource(R.string.device_cooling_automatic_loading_message),
-                    colors = colors,
-                    typography = typography
-                )
-            }
-
-            DeviceCoolingAutomaticLoadState.ERROR -> item(key = "load-state") {
-                AutomaticMessageCard(
-                    title = stringResource(R.string.device_cooling_automatic_unavailable_title),
-                    message = stringResource(R.string.device_cooling_automatic_unavailable_message),
-                    colors = colors,
-                    typography = typography,
-                    actionLabel = stringResource(R.string.device_cooling_history_retry),
-                    onAction = onRetry
-                )
-            }
-
-            DeviceCoolingAutomaticLoadState.CONTENT -> Unit
-        }
-
         item(key = "live") {
             AutomaticLiveStatusCard(state, colors, typography)
         }
@@ -110,9 +84,6 @@ internal fun DeviceCoolingAutomaticSettingsScreen(
                 onStartTemperatureClick = onStartTemperatureClick,
                 onMaximumTemperatureClick = onMaximumTemperatureClick
             )
-        }
-        item(key = "behavior") {
-            AutomaticBehaviorCard(state, colors, typography)
         }
         if (state.saveState == DeviceCoolingAutomaticSaveState.ERROR) {
             item(key = "save-error") {
@@ -474,104 +445,6 @@ private fun AutomaticTemperatureRangeVisual(
 }
 
 @Composable
-private fun AutomaticBehaviorCard(
-    state: DeviceCoolingAutomaticSettingsUiState,
-    colors: AquaDeviceCardColors,
-    typography: AquaDeviceCardTypography
-) {
-    val start = state.draftStartTemperatureC?.takeIf(Double::isFinite)
-    val maximum = state.draftMaximumSpeedTemperatureC?.takeIf(Double::isFinite)
-    val unavailable = stringResource(R.string.device_cooling_value_unavailable)
-
-    AquaCoolingDashboardCardSurface(
-        modifier = Modifier
-            .fillMaxWidth()
-            .heightIn(min = AquaCoolingAutomaticGeometry.behaviorCardMinimumHeight)
-    ) {
-        Column(modifier = Modifier.fillMaxWidth()) {
-            BasicText(
-                text = stringResource(R.string.device_cooling_automatic_behavior_title),
-                style = typography.title.copy(color = colors.primaryText)
-            )
-            Spacer(modifier = Modifier.height(AquaCoolingAutomaticGeometry.editorRowGap))
-            AutomaticBehaviorRow(
-                range = start?.let {
-                    stringResource(R.string.device_cooling_automatic_below_format, it)
-                } ?: unavailable,
-                behavior = stringResource(R.string.device_cooling_automatic_behavior_off),
-                colors = colors,
-                typography = typography
-            )
-            AutomaticBehaviorDivider(colors)
-            AutomaticBehaviorRow(
-                range = if (start != null && maximum != null) {
-                    stringResource(
-                        R.string.device_cooling_automatic_between_format,
-                        start,
-                        maximum
-                    )
-                } else {
-                    unavailable
-                },
-                behavior = stringResource(R.string.device_cooling_automatic_behavior_gradual),
-                colors = colors,
-                typography = typography
-            )
-            AutomaticBehaviorDivider(colors)
-            AutomaticBehaviorRow(
-                range = maximum?.let {
-                    stringResource(R.string.device_cooling_automatic_above_format, it)
-                } ?: unavailable,
-                behavior = stringResource(R.string.device_cooling_automatic_behavior_maximum),
-                colors = colors,
-                typography = typography
-            )
-        }
-    }
-}
-
-@Composable
-private fun AutomaticBehaviorRow(
-    range: String,
-    behavior: String,
-    colors: AquaDeviceCardColors,
-    typography: AquaDeviceCardTypography
-) {
-    Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(vertical = AquaCoolingAutomaticGeometry.behaviorRowVerticalPadding),
-        verticalAlignment = Alignment.CenterVertically
-    ) {
-        BasicText(
-            text = range,
-            style = typography.caption.copy(color = colors.secondaryText),
-            modifier = Modifier.weight(1f),
-            maxLines = 1
-        )
-        BasicText(
-            text = behavior,
-            style = typography.caption.copy(
-                color = colors.primaryText,
-                textAlign = TextAlign.End
-            ),
-            modifier = Modifier.weight(1f),
-            maxLines = 1
-        )
-    }
-}
-
-@Composable
-private fun AutomaticBehaviorDivider(colors: AquaDeviceCardColors) {
-    Box(
-        modifier = Modifier
-            .fillMaxWidth()
-            .height(AquaCoolingAutomaticGeometry.behaviorDividerHeight)
-            .background(colors.outline.copy(alpha = AquaCoolingAutomaticAlpha.divider))
-    )
-}
-
-@Composable
 private fun AutomaticSaveButton(
     state: DeviceCoolingAutomaticSettingsUiState,
     colors: AquaDeviceCardColors,
@@ -611,61 +484,6 @@ private fun AutomaticSaveButton(
             ),
             maxLines = 1
         )
-    }
-}
-
-@Composable
-private fun AutomaticMessageCard(
-    title: String,
-    message: String,
-    colors: AquaDeviceCardColors,
-    typography: AquaDeviceCardTypography,
-    actionLabel: String? = null,
-    onAction: (() -> Unit)? = null
-) {
-    AquaCoolingDashboardCardSurface(
-        modifier = Modifier
-            .fillMaxWidth()
-            .heightIn(min = AquaCoolingAutomaticGeometry.messageCardMinimumHeight)
-    ) {
-        Column(
-            modifier = Modifier.fillMaxWidth(),
-            verticalArrangement = Arrangement.spacedBy(AquaCoolingAutomaticGeometry.messageGap)
-        ) {
-            BasicText(
-                text = title,
-                style = typography.title.copy(color = colors.primaryText)
-            )
-            BasicText(
-                text = message,
-                style = typography.caption.copy(color = colors.secondaryText)
-            )
-            if (actionLabel != null && onAction != null) {
-                val shape = AquaCoolingAutomaticGeometry.retryShape
-                Box(
-                    modifier = Modifier
-                        .clip(shape)
-                        .background(
-                            colors.accent.copy(alpha = AquaCoolingAutomaticAlpha.retryBackground)
-                        )
-                        .border(
-                            width = AquaCoolingDashboardGeometry.chartGridStrokeWidth,
-                            color = colors.accent,
-                            shape = shape
-                        )
-                        .clickable(role = Role.Button, onClick = onAction)
-                        .padding(
-                            horizontal = AquaCoolingAutomaticGeometry.retryHorizontalPadding,
-                            vertical = AquaCoolingAutomaticGeometry.retryVerticalPadding
-                        )
-                ) {
-                    BasicText(
-                        text = actionLabel,
-                        style = typography.caption.copy(color = colors.accent)
-                    )
-                }
-            }
-        }
     }
 }
 
