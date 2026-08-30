@@ -4,14 +4,19 @@ import android.os.Bundle
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.platform.ViewCompositionStrategy
 import androidx.fragment.app.viewModels
+import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.lifecycle.lifecycleScope
+import androidx.lifecycle.repeatOnLifecycle
 import androidx.navigation.fragment.navArgs
 import com.aqua.aqualight.R
 import com.aqua.aqualight.ui.common.bottomsheet.AquaTimePickerBottomSheet
 import com.aqua.aqualight.ui.common.bottomsheet.IntegerStepperBottomSheet
+import com.aqua.aqualight.ui.common.header.AquaHeaderPrimaryAction
 import kotlin.math.ceil
 import kotlin.math.floor
 import kotlin.math.roundToInt
+import kotlinx.coroutines.launch
 
 class DeviceCoolingProgramSettingsFragment : DeviceCoolingModeSettingsFragment(
     R.string.device_cooling_program_settings_title
@@ -23,9 +28,16 @@ class DeviceCoolingProgramSettingsFragment : DeviceCoolingModeSettingsFragment(
     override val destinationDeviceUid: String
         get() = args.deviceUid
 
+    override fun modeSettingsPrimaryAction(): AquaHeaderPrimaryAction = AquaHeaderPrimaryAction(
+        text = getString(R.string.device_cooling_program_save),
+        contentDescription = getString(R.string.device_cooling_program_save),
+        onClick = viewModel::saveDraft
+    )
+
     override fun onModeSettingsViewCreated(savedInstanceState: Bundle?) {
         super.onModeSettingsViewCreated(savedInstanceState)
         registerPickerResults()
+        bindHeaderSaveState()
         modeSettingsBinding.coolingModeSettingsCompose.apply {
             setViewCompositionStrategy(ViewCompositionStrategy.DisposeOnViewTreeLifecycleDestroyed)
             setContent {
@@ -38,10 +50,27 @@ class DeviceCoolingProgramSettingsFragment : DeviceCoolingModeSettingsFragment(
                     onEndTimeClick = ::showEndTimeSheet,
                     onStartTemperatureClick = ::showStartTemperatureSheet,
                     onMaximumTemperatureClick = ::showMaximumTemperatureSheet,
-                    onFanLimitClick = ::showFanLimitSheet,
-                    onSave = viewModel::saveDraft
+                    onFanLimitClick = ::showFanLimitSheet
                 )
             }
+        }
+    }
+
+    private fun bindHeaderSaveState() {
+        renderHeaderSaveState(viewModel.uiState.value.hasChanges)
+        viewLifecycleOwner.lifecycleScope.launch {
+            viewLifecycleOwner.repeatOnLifecycle(Lifecycle.State.STARTED) {
+                viewModel.uiState.collect { state ->
+                    renderHeaderSaveState(state.hasChanges)
+                }
+            }
+        }
+    }
+
+    private fun renderHeaderSaveState(enabled: Boolean) {
+        modeSettingsBinding.appHeader.btnPrimaryAction.apply {
+            isEnabled = enabled
+            alpha = if (enabled) HEADER_ACTION_ENABLED_ALPHA else HEADER_ACTION_DISABLED_ALPHA
         }
     }
 
@@ -244,6 +273,8 @@ class DeviceCoolingProgramSettingsFragment : DeviceCoolingModeSettingsFragment(
         const val MINUTES_PER_HOUR = 60
         const val TEMPERATURE_DISPLAY_SCALE = 0.1
         const val TEMPERATURE_STEP_UNITS = 5
+        const val HEADER_ACTION_ENABLED_ALPHA = 1f
+        const val HEADER_ACTION_DISABLED_ALPHA = 0.45f
         const val REQUEST_START_TIME = "cooling_program_start_time"
         const val REQUEST_END_TIME = "cooling_program_end_time"
         const val REQUEST_START_TEMPERATURE = "cooling_program_start_temperature"
