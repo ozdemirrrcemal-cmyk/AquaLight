@@ -1,3 +1,5 @@
+@file:Suppress("LongMethod", "MagicNumber", "ReturnCount")
+
 package com.aqua.aqualight.ui.tabs.devices.detail.cooling
 
 import androidx.compose.foundation.Canvas
@@ -172,7 +174,7 @@ private fun smoothPath(points: List<Offset>): Path {
     path.moveTo(points.first().x, points.first().y)
     if (points.size == 1) return path
 
-    points.indices.dropLast(1).forEach { index ->
+    for (index in 0 until points.lastIndex) {
         val p0 = points.getOrElse(index - 1) { points[index] }
         val p1 = points[index]
         val p2 = points[index + 1]

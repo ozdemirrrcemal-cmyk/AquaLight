@@ -1,3 +1,5 @@
+@file:Suppress("LongMethod", "UnusedPrivateMember")
+
 package com.aqua.aqualight.ui.tabs.devices.detail.cooling
 
 import androidx.compose.foundation.background

@@ -1,3 +1,11 @@
+@file:Suppress(
+    "LongMethod",
+    "MagicNumber",
+    "MatchingDeclarationName",
+    "MaxLineLength",
+    "TooManyFunctions"
+)
+
 package com.aqua.aqualight.ui.tabs.devices.detail.cooling
 
 import androidx.compose.animation.core.LinearEasing
