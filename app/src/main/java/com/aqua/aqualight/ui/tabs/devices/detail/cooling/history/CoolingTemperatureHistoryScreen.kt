@@ -6,7 +6,6 @@ import android.content.Context
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -44,7 +43,6 @@ import com.aqua.aqualight.application.devices.cooling.DeviceCoolingDailyTemperat
 import com.aqua.aqualight.application.devices.cooling.DeviceCoolingTemperatureHistoryPoint
 import com.aqua.aqualight.application.devices.cooling.DeviceCoolingTemperatureHistoryRange
 import com.aqua.aqualight.i18n.LocaleFormatter
-import com.aqua.aqualight.ui.common.cooling.AquaCoolingDashboardAlpha
 import com.aqua.aqualight.ui.common.cooling.AquaCoolingDashboardCardSurface
 import com.aqua.aqualight.ui.common.cooling.AquaCoolingDashboardGeometry
 import com.aqua.aqualight.ui.common.cooling.AquaCoolingDashboardPalette
@@ -61,15 +59,14 @@ import kotlin.math.floor
 /**
  * Firmware-backed Cooling history surface.
  *
- * Range controls, chart, summary metrics and the daily table remain visible while firmware data is
- * loading, unsupported or temporarily unavailable. Missing measurements are represented only by
- * unavailable placeholders; no local or synthetic history is invented for design/runtime fallback.
+ * Connectivity is gated before this destination is entered. Range controls, chart, summary metrics
+ * and the daily table therefore remain the only product surface; missing measurements are rendered
+ * as unavailable placeholders and no synthetic history is invented.
  */
 @Composable
 internal fun DeviceCoolingTemperatureHistoryScreen(
     state: DeviceCoolingTemperatureHistoryUiState,
     onRangeSelected: (DeviceCoolingTemperatureHistoryRange) -> Unit,
-    onRetry: () -> Unit,
     modifier: Modifier = Modifier
 ) {
     val colors = aquaCoolingDashboardColors()
@@ -94,43 +91,6 @@ internal fun DeviceCoolingTemperatureHistoryScreen(
                 typography = typography
             )
         }
-
-        when (state.loadState) {
-            DeviceCoolingTemperatureHistoryLoadState.IDLE,
-            DeviceCoolingTemperatureHistoryLoadState.LOADING -> item(key = "load-state") {
-                CoolingHistoryMessageCard(
-                    title = stringResource(R.string.device_cooling_history_loading_title),
-                    message = stringResource(R.string.device_cooling_history_loading_message),
-                    colors = colors,
-                    typography = typography
-                )
-            }
-
-            DeviceCoolingTemperatureHistoryLoadState.UNSUPPORTED -> item(key = "load-state") {
-                CoolingHistoryMessageCard(
-                    title = stringResource(R.string.device_cooling_history_unsupported_title),
-                    message = stringResource(R.string.device_cooling_history_unsupported_message),
-                    colors = colors,
-                    typography = typography,
-                    actionLabel = stringResource(R.string.device_cooling_history_retry),
-                    onAction = onRetry
-                )
-            }
-
-            DeviceCoolingTemperatureHistoryLoadState.UNAVAILABLE -> item(key = "load-state") {
-                CoolingHistoryMessageCard(
-                    title = stringResource(R.string.device_cooling_history_unavailable_title),
-                    message = stringResource(R.string.device_cooling_history_unavailable_message),
-                    colors = colors,
-                    typography = typography,
-                    actionLabel = stringResource(R.string.device_cooling_history_retry),
-                    onAction = onRetry
-                )
-            }
-
-            DeviceCoolingTemperatureHistoryLoadState.CONTENT -> Unit
-        }
-
         item(key = "chart") {
             CoolingHistoryChartCard(
                 points = snapshot?.points.orEmpty(),
@@ -695,53 +655,6 @@ private fun HistoryDivider(colors: AquaDeviceCardColors) {
             .height(AquaCoolingHistoryGeometry.tableDividerHeight)
             .background(colors.mediaOutline.copy(alpha = AquaCoolingHistoryAlpha.divider))
     )
-}
-
-@Composable
-private fun CoolingHistoryMessageCard(
-    title: String,
-    message: String,
-    colors: AquaDeviceCardColors,
-    typography: AquaDeviceCardTypography,
-    actionLabel: String? = null,
-    onAction: (() -> Unit)? = null
-) {
-    AquaCoolingDashboardCardSurface(
-        modifier = Modifier
-            .fillMaxWidth()
-            .heightIn(min = AquaCoolingHistoryGeometry.messageCardMinimumHeight)
-    ) {
-        Column(
-            modifier = Modifier.fillMaxWidth(),
-            verticalArrangement = Arrangement.spacedBy(AquaCoolingHistoryGeometry.messageGap)
-        ) {
-            BasicText(text = title, style = typography.title.copy(color = colors.primaryText))
-            BasicText(text = message, style = typography.caption.copy(color = colors.secondaryText))
-            if (actionLabel != null && onAction != null) {
-                val shape = AquaCoolingHistoryGeometry.retryShape
-                BasicText(
-                    text = actionLabel,
-                    style = typography.body.copy(
-                        color = colors.accent,
-                        textAlign = TextAlign.Center
-                    ),
-                    modifier = Modifier
-                        .clip(shape)
-                        .background(colors.accent.copy(alpha = AquaCoolingHistoryAlpha.retryBackground))
-                        .border(
-                            width = AquaCoolingDashboardGeometry.chartGridStrokeWidth,
-                            color = colors.accent.copy(alpha = AquaCoolingDashboardAlpha.selectedOutline),
-                            shape = shape
-                        )
-                        .clickable(role = Role.Button, onClick = onAction)
-                        .padding(
-                            horizontal = AquaCoolingHistoryGeometry.retryHorizontalPadding,
-                            vertical = AquaCoolingHistoryGeometry.retryVerticalPadding
-                        )
-                )
-            }
-        }
-    }
 }
 
 @Composable
