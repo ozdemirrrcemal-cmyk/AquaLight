@@ -17,6 +17,7 @@ import com.aqua.aqualight.data.devices.DefaultDeviceFamilySettingsOperations
 import com.aqua.aqualight.data.devices.DefaultDeviceRootOperations
 import com.aqua.aqualight.data.devices.DefaultDeviceStatusOperations
 import com.aqua.aqualight.data.devices.DefaultOwnerDevicesOperations
+import com.aqua.aqualight.data.devices.cooling.DefaultDeviceCoolingTemperatureHistoryOperations
 import com.aqua.aqualight.data.devices.menu.DefaultDeviceMenuAccessOperations
 import com.aqua.aqualight.data.devices.provisioning.DefaultProvisioningDiscoveryOperations
 import com.aqua.aqualight.data.devices.provisioning.DefaultProvisioningProgressOperations
@@ -37,6 +38,7 @@ import com.aqua.aqualight.ui.tabs.devices.add.DeviceProvisioningProgressViewMode
 import com.aqua.aqualight.ui.tabs.devices.add.DeviceQrScanViewModel
 import com.aqua.aqualight.ui.tabs.devices.detail.common.DeviceRootOverviewViewModel
 import com.aqua.aqualight.ui.tabs.devices.detail.cooling.DeviceCoolingRootViewModel
+import com.aqua.aqualight.ui.tabs.devices.detail.cooling.history.DeviceCoolingTemperatureHistoryViewModel
 import com.aqua.aqualight.ui.tabs.devices.detail.dosing.channel.calibration.DeviceDosingChannelCalibrationViewModel
 import com.aqua.aqualight.ui.tabs.devices.detail.dosing.channel.detail.DeviceDosingChannelDetailViewModel
 import com.aqua.aqualight.ui.tabs.devices.detail.dosing.channel.plan.DeviceDosingPlanViewModel
@@ -193,6 +195,11 @@ internal class OwnerViewModelFactory(
             DeviceCoolingRootViewModel::class.java ->
                 DeviceCoolingRootViewModel(DefaultDeviceRootOperations(repository))
 
+            DeviceCoolingTemperatureHistoryViewModel::class.java ->
+                DeviceCoolingTemperatureHistoryViewModel(
+                    DefaultDeviceCoolingTemperatureHistoryOperations(repository)
+                )
+
             DeviceTimerRootViewModel::class.java ->
                 DeviceTimerRootViewModel(DefaultDeviceRootOperations(repository))
 
@@ -310,6 +317,7 @@ internal class OwnerViewModelFactory(
             MaintenanceViewModel::class.java,
             DeviceLightRootViewModel::class.java,
             DeviceCoolingRootViewModel::class.java,
+            DeviceCoolingTemperatureHistoryViewModel::class.java,
             DeviceTimerRootViewModel::class.java,
             DeviceDosingRootViewModel::class.java,
             DeviceDosingChannelCalibrationViewModel::class.java,
