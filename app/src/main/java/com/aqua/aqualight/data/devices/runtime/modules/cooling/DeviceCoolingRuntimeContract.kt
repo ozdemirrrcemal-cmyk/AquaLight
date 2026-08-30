@@ -8,6 +8,7 @@ object DeviceCoolingRuntimeContract {
     object Action {
         const val STATUS_GET = "status.get"
         const val CONFIG_APPLY = "config.apply"
+        const val HISTORY_GET = "history.get"
     }
 
     object Field {
@@ -18,7 +19,9 @@ object DeviceCoolingRuntimeContract {
         const val RULE_COUNT = "ruleCount"
         const val MODE = "mode"
         const val MIN_TEMPERATURE_C = "minTemperatureC"
+        const val AVG_TEMPERATURE_C = "avgTemperatureC"
         const val MAX_TEMPERATURE_C = "maxTemperatureC"
+        const val TEMPERATURE_C = "temperatureC"
         const val FIXED_SENSOR_INDEX = "fixedSensorIndex"
         const val UPTIME_MS = "uptimeMs"
         const val TEMPERATURE = "temperature"
@@ -28,6 +31,13 @@ object DeviceCoolingRuntimeContract {
         const val SAVE = "save"
         const val FAN_KEY = "fanKey"
         const val DISPLAY_NAME = "displayName"
+        const val RANGE = "range"
+        const val GENERATED_AT_MS = "generatedAtMs"
+        const val SAMPLED_AT_MS = "sampledAtMs"
+        const val DAY_START_AT_MS = "dayStartAtMs"
+        const val SUMMARY = "summary"
+        const val SAMPLES = "samples"
+        const val DAYS = "days"
     }
 
     object Limit {
@@ -38,6 +48,8 @@ object DeviceCoolingRuntimeContract {
         const val MAX_FAN_DISPLAY_NAME_BYTES = 32
         const val MAX_SENSOR_INDEX = 7
         const val MAX_FAN_COUNT = 8
+        const val MAX_HISTORY_SAMPLE_COUNT = 4096
+        const val MAX_HISTORY_DAY_COUNT = 31
     }
 
     object Literal {
