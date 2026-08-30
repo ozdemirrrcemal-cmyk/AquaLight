@@ -51,6 +51,9 @@ object AquaCoolingDashboardGeometry {
 
     val compactCardMinimumHeight = 146.dp
     val statusCardMinimumHeight = 112.dp
+    val telemetryContentGap = 5.dp
+    val powerGlyphContainerSize = 28.dp
+    val powerGlyphSize = 15.dp
     val gaugeSize = 84.dp
     val gaugeStrokeWidth = 8.dp
     val gaugeInnerGap = 3.dp
