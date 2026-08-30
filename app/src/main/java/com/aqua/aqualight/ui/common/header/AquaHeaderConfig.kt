@@ -27,6 +27,7 @@ data class AquaHeaderStatusIcon(
 data class AquaHeaderPrimaryAction(
     val text: String,
     val contentDescription: String? = null,
+    val enabled: Boolean = true,
     val onClick: () -> Unit
 )
 
