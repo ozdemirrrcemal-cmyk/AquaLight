@@ -15,7 +15,6 @@ import com.aqua.aqualight.databinding.FragmentDeviceCoolingRootBinding
 import com.aqua.aqualight.ui.common.header.AquaHeaderAction
 import com.aqua.aqualight.ui.common.header.AquaHeaderConfig
 import com.aqua.aqualight.ui.common.header.setupAquaHeader
-import com.aqua.aqualight.ui.common.text.resolve
 import kotlinx.coroutines.launch
 
 class DeviceCoolingRootFragment : Fragment(R.layout.fragment_device_cooling_root) {
@@ -31,27 +30,30 @@ class DeviceCoolingRootFragment : Fragment(R.layout.fragment_device_cooling_root
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
         _binding = FragmentDeviceCoolingRootBinding.bind(view)
+
         viewModel.bind(args.deviceUid)
-        setupHeader(
-            title = viewModel.uiState.value.title.ifBlank {
-                getString(R.string.device_family_cooling)
-            }
-        )
+        setupHeader(viewModel.uiState.value)
         observeViewModel()
     }
 
-    private fun setupHeader(title: String) {
+    private fun setupHeader(state: DeviceCoolingRootUiState) {
         binding.appHeader.setupAquaHeader(
             fragment = this,
             config = AquaHeaderConfig(
-                titleOverride = title,
-                onBackClick = { findNavController().navigateUp() },
+                titleOverride = state.title.ifBlank {
+                    getString(R.string.device_family_cooling)
+                },
+                onBackClick = {
+                    findNavController().navigateUp()
+                },
+                statusIcon = state.connectionVisualState.toWifiHeaderStatusIcon(requireContext()),
                 actions = listOf(
                     AquaHeaderAction(
                         iconRes = R.drawable.ic_settings,
                         contentDescription = getString(
                             R.string.device_cooling_open_settings_description
                         ),
+                        enabled = state.contentEnabled,
                         onClick = ::openSettings
                     )
                 )
@@ -60,6 +62,8 @@ class DeviceCoolingRootFragment : Fragment(R.layout.fragment_device_cooling_root
     }
 
     private fun openSettings() {
+        if (!viewModel.uiState.value.contentEnabled) return
+
         val navController = findNavController()
         if (navController.currentDestination?.id != R.id.deviceCoolingRootFragment) return
         navController.navigate(
@@ -73,46 +77,12 @@ class DeviceCoolingRootFragment : Fragment(R.layout.fragment_device_cooling_root
     private fun observeViewModel() {
         viewLifecycleOwner.lifecycleScope.launch {
             viewLifecycleOwner.repeatOnLifecycle(Lifecycle.State.STARTED) {
-                viewModel.uiState.collect { state -> renderState(state) }
+                viewModel.uiState.collect { state ->
+                    if (_binding == null) return@collect
+                    setupHeader(state)
+                }
             }
         }
-    }
-
-    private fun renderState(state: DeviceCoolingRootUiState) {
-        if (_binding == null) return
-        val context = requireContext()
-        val unknown = getString(R.string.device_unknown)
-        val title = state.title.ifBlank { getString(R.string.device_family_cooling) }
-        setupHeader(title = title)
-        binding.tvProductName.text = title
-        binding.tvDeviceUid.text = state.deviceUid.ifBlank {
-            getString(R.string.device_unknown_device)
-        }
-        binding.tvConnectionStatus.setText(state.connectionStatusRes)
-        binding.tvIp.text = getString(R.string.device_ip_value, state.ipText.ifBlank { unknown })
-        binding.tvFirmware.text = getString(
-            R.string.device_firmware_value,
-            state.firmwareText.ifBlank { unknown }
-        )
-        binding.tvModel.text = getString(
-            R.string.device_model_value,
-            state.modelText.ifBlank { unknown }
-        )
-        binding.tvPrimaryCount.text = getString(
-            R.string.device_labeled_value,
-            getString(state.primaryCountLabelRes),
-            state.primaryCountText.ifBlank { unknown }
-        )
-        binding.tvFeatures.text = getString(
-            R.string.device_features_value,
-            context.resolve(state.featuresText)
-        )
-        binding.tvPrimarySectionTitle.setText(state.primarySectionTitleRes)
-        binding.tvPrimarySectionPlaceholder.text = context.resolve(state.primarySectionPlaceholder)
-        binding.tvSecondarySectionTitle.setText(state.secondarySectionTitleRes)
-        binding.tvSecondarySectionPlaceholder.text = context.resolve(
-            state.secondarySectionPlaceholder
-        )
     }
 
     override fun onDestroyView() {
