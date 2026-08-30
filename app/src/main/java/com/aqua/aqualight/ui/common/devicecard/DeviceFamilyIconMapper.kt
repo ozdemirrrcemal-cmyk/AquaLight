@@ -13,7 +13,7 @@ object DeviceFamilyIconMapper {
             DeviceFamily.LIGHT -> R.drawable.ic_device_light
             DeviceFamily.TIMER -> R.drawable.ic_device_timer
             DeviceFamily.DOSING -> R.drawable.img_dosing_pump_4ch
-            DeviceFamily.COOLING -> R.drawable.ic_device_cooling
+            DeviceFamily.COOLING -> R.drawable.img_device_cooling_fan
             DeviceFamily.UNKNOWN -> R.drawable.ic_device_aqua_ster
         }
     }
@@ -24,7 +24,7 @@ object DeviceFamilyIconMapper {
             OwnerDeviceFamily.LIGHT -> R.drawable.ic_device_light
             OwnerDeviceFamily.TIMER -> R.drawable.ic_device_timer
             OwnerDeviceFamily.DOSING -> R.drawable.img_dosing_pump_4ch
-            OwnerDeviceFamily.COOLING -> R.drawable.ic_device_cooling
+            OwnerDeviceFamily.COOLING -> R.drawable.img_device_cooling_fan
             OwnerDeviceFamily.UNKNOWN -> R.drawable.ic_device_aqua_ster
         }
     }
