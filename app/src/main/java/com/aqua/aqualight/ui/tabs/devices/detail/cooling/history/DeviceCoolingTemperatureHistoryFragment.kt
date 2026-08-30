@@ -51,8 +51,7 @@ class DeviceCoolingTemperatureHistoryFragment :
                 val state by viewModel.uiState.collectAsStateWithLifecycle()
                 DeviceCoolingTemperatureHistoryScreen(
                     state = state,
-                    onRangeSelected = viewModel::selectRange,
-                    onRetry = viewModel::retry
+                    onRangeSelected = viewModel::selectRange
                 )
             }
         }
