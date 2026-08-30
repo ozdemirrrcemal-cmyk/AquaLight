@@ -36,6 +36,8 @@ import com.aqua.aqualight.ui.common.cooling.AquaCoolingTemperatureChartSpec
 import com.aqua.aqualight.ui.common.devicecard.AquaDeviceCardColors
 import com.aqua.aqualight.ui.common.devicecard.AquaDeviceCardGeometry
 import com.aqua.aqualight.ui.common.devicecard.AquaDeviceCardTypography
+import kotlin.math.ceil
+import kotlin.math.floor
 
 @Composable
 internal fun CoolingTemperatureCard(
@@ -107,82 +109,159 @@ private fun CoolingTemperatureChart(
     typography: AquaDeviceCardTypography,
     modifier: Modifier = Modifier
 ) {
-    val chartShape = RoundedCornerShape(AquaCoolingDashboardGeometry.temperatureChartCornerRadius)
-    Column(modifier = modifier) {
-        Box(
-            modifier = Modifier
-                .fillMaxWidth()
-                .height(AquaCoolingDashboardGeometry.temperatureChartHeight)
-                .clip(chartShape)
-                .background(
-                    colors.mediaSurface.copy(alpha = AquaCoolingDashboardAlpha.chartBackground)
+    val chartValues = historyC
+        .asSequence()
+        .filter(Double::isFinite)
+        .map(Double::toFloat)
+        .toList()
+    val scale = temperatureChartScale(chartValues)
+
+    Row(
+        modifier = modifier.fillMaxWidth(),
+        verticalAlignment = Alignment.Top
+    ) {
+        TemperatureYAxis(
+            scale = scale,
+            colors = colors,
+            typography = typography
+        )
+        Spacer(modifier = Modifier.width(AquaCoolingDashboardGeometry.temperatureYAxisGap))
+        Column(modifier = Modifier.weight(1f)) {
+            CoolingTemperaturePlot(
+                values = chartValues,
+                scale = scale,
+                colors = colors,
+                typography = typography
+            )
+            Spacer(modifier = Modifier.height(AquaDeviceCardGeometry.compactGap))
+            TemperatureTimeAxis(colors = colors, typography = typography)
+        }
+    }
+}
+
+@Composable
+private fun TemperatureYAxis(
+    scale: TemperatureChartScale,
+    colors: AquaDeviceCardColors,
+    typography: AquaDeviceCardTypography
+) {
+    Column(
+        modifier = Modifier
+            .width(AquaCoolingDashboardGeometry.temperatureYAxisWidth)
+            .height(AquaCoolingDashboardGeometry.temperatureChartHeight),
+        horizontalAlignment = Alignment.End,
+        verticalArrangement = Arrangement.SpaceBetween
+    ) {
+        scale.axisValues().forEach { value ->
+            BasicText(
+                text = stringResource(
+                    R.string.device_cooling_temperature_axis_value_format,
+                    value
                 ),
-            contentAlignment = Alignment.Center
-        ) {
-            Canvas(modifier = Modifier.fillMaxSize()) {
-                val horizontalPadding = AquaCoolingDashboardGeometry.temperatureChartPadding.toPx()
-                val verticalPadding = horizontalPadding
-                val plotWidth = (size.width - horizontalPadding * 2f).coerceAtLeast(1f)
-                val plotHeight = (size.height - verticalPadding * 2f).coerceAtLeast(1f)
-                val gridColor = colors.secondaryText.copy(alpha = AquaCoolingDashboardAlpha.chartGrid)
-                val gridStroke = AquaCoolingDashboardGeometry.chartGridStrokeWidth.toPx()
-                val gridCount = AquaCoolingTemperatureChartSpec.horizontalGridLineCount
-                repeat(gridCount) { index ->
-                    val fraction = index.toFloat() / (gridCount - 1).coerceAtLeast(1)
-                    val y = verticalPadding + plotHeight * fraction
-                    drawLine(
-                        color = gridColor,
-                        start = Offset(horizontalPadding, y),
-                        end = Offset(horizontalPadding + plotWidth, y),
-                        strokeWidth = gridStroke
-                    )
-                }
+                style = typography.micro.copy(
+                    color = colors.secondaryText,
+                    textAlign = TextAlign.End
+                ),
+                maxLines = 1
+            )
+        }
+    }
+}
 
-                if (historyC.size >= 2) {
-                    drawTemperatureHistory(
-                        values = historyC.map(Double::toFloat),
-                        horizontalPadding = horizontalPadding,
-                        verticalPadding = verticalPadding,
-                        plotWidth = plotWidth,
-                        plotHeight = plotHeight,
-                        colors = colors
-                    )
-                }
+@Composable
+private fun CoolingTemperaturePlot(
+    values: List<Float>,
+    scale: TemperatureChartScale,
+    colors: AquaDeviceCardColors,
+    typography: AquaDeviceCardTypography
+) {
+    val chartShape = RoundedCornerShape(AquaCoolingDashboardGeometry.temperatureChartCornerRadius)
+    Box(
+        modifier = Modifier
+            .fillMaxWidth()
+            .height(AquaCoolingDashboardGeometry.temperatureChartHeight)
+            .clip(chartShape)
+            .background(colors.mediaSurface.copy(alpha = AquaCoolingDashboardAlpha.chartBackground)),
+        contentAlignment = Alignment.Center
+    ) {
+        Canvas(modifier = Modifier.fillMaxSize()) {
+            val horizontalPadding = AquaCoolingDashboardGeometry.temperatureChartPadding.toPx()
+            val verticalPadding = horizontalPadding
+            val plotWidth = (size.width - horizontalPadding * 2f).coerceAtLeast(1f)
+            val plotHeight = (size.height - verticalPadding * 2f).coerceAtLeast(1f)
+            val gridColor = colors.secondaryText.copy(alpha = AquaCoolingDashboardAlpha.chartGrid)
+            val gridStroke = AquaCoolingDashboardGeometry.chartGridStrokeWidth.toPx()
+            val gridCount = AquaCoolingTemperatureChartSpec.horizontalGridLineCount
+
+            repeat(gridCount) { index ->
+                val fraction = index.toFloat() / (gridCount - 1).coerceAtLeast(1)
+                val y = verticalPadding + plotHeight * fraction
+                drawLine(
+                    color = gridColor,
+                    start = Offset(horizontalPadding, y),
+                    end = Offset(horizontalPadding + plotWidth, y),
+                    strokeWidth = gridStroke
+                )
             }
+            drawLine(
+                color = gridColor,
+                start = Offset(horizontalPadding, verticalPadding),
+                end = Offset(horizontalPadding, verticalPadding + plotHeight),
+                strokeWidth = gridStroke
+            )
 
-            if (historyC.size < 2) {
-                BasicText(
-                    text = stringResource(R.string.device_cooling_temperature_history_empty),
-                    style = typography.micro.copy(
-                        color = colors.secondaryText,
-                        textAlign = TextAlign.Center
-                    ),
-                    modifier = Modifier.padding(
-                        horizontal = AquaCoolingDashboardGeometry.temperatureChartPadding
-                    )
+            if (values.size >= 2) {
+                drawTemperatureHistory(
+                    values = values,
+                    scale = scale,
+                    horizontalPadding = horizontalPadding,
+                    verticalPadding = verticalPadding,
+                    plotWidth = plotWidth,
+                    plotHeight = plotHeight,
+                    colors = colors
                 )
             }
         }
-        Spacer(modifier = Modifier.height(AquaDeviceCardGeometry.compactGap))
-        Row(modifier = Modifier.fillMaxWidth()) {
-            ChartAxisLabel(
-                text = stringResource(R.string.device_cooling_chart_24h_start),
-                style = typography.micro.copy(color = colors.secondaryText),
-                modifier = Modifier.weight(1f)
-            )
-            ChartAxisLabel(
-                text = stringResource(R.string.device_cooling_chart_12h),
+
+        if (values.size < 2) {
+            BasicText(
+                text = stringResource(R.string.device_cooling_temperature_history_empty),
                 style = typography.micro.copy(
                     color = colors.secondaryText,
                     textAlign = TextAlign.Center
                 ),
-                modifier = Modifier.weight(1f)
+                modifier = Modifier.padding(
+                    horizontal = AquaCoolingDashboardGeometry.temperatureChartPadding
+                )
             )
+        }
+    }
+}
+
+@Composable
+private fun TemperatureTimeAxis(
+    colors: AquaDeviceCardColors,
+    typography: AquaDeviceCardTypography
+) {
+    val labels = listOf(
+        stringResource(R.string.device_cooling_chart_24h_start),
+        stringResource(R.string.device_cooling_chart_18h),
+        stringResource(R.string.device_cooling_chart_12h),
+        stringResource(R.string.device_cooling_chart_6h),
+        stringResource(R.string.device_cooling_chart_now)
+    )
+    Row(modifier = Modifier.fillMaxWidth()) {
+        labels.forEachIndexed { index, label ->
+            val alignment = when (index) {
+                0 -> TextAlign.Start
+                labels.lastIndex -> TextAlign.End
+                else -> TextAlign.Center
+            }
             ChartAxisLabel(
-                text = stringResource(R.string.device_cooling_chart_now),
+                text = label,
                 style = typography.micro.copy(
                     color = colors.secondaryText,
-                    textAlign = TextAlign.End
+                    textAlign = alignment
                 ),
                 modifier = Modifier.weight(1f)
             )
@@ -192,24 +271,18 @@ private fun CoolingTemperatureChart(
 
 private fun androidx.compose.ui.graphics.drawscope.DrawScope.drawTemperatureHistory(
     values: List<Float>,
+    scale: TemperatureChartScale,
     horizontalPadding: Float,
     verticalPadding: Float,
     plotWidth: Float,
     plotHeight: Float,
     colors: AquaDeviceCardColors
 ) {
-    val rawMin = values.minOrNull() ?: return
-    val rawMax = values.maxOrNull() ?: return
-    val rawSpan = rawMax - rawMin
-    val span = rawSpan.coerceAtLeast(AquaCoolingTemperatureChartSpec.minimumVerticalSpanC)
-    val center = (rawMin + rawMax) / 2f
-    val minValue = center - span / 2f - AquaCoolingTemperatureChartSpec.verticalPaddingC
-    val maxValue = center + span / 2f + AquaCoolingTemperatureChartSpec.verticalPaddingC
-    val valueSpan = (maxValue - minValue).coerceAtLeast(1f)
+    val valueSpan = (scale.maximumC - scale.minimumC).coerceAtLeast(1f)
     val denominator = values.lastIndex.coerceAtLeast(1).toFloat()
     val points = values.mapIndexed { index, value ->
         val x = horizontalPadding + plotWidth * (index / denominator)
-        val normalized = ((value - minValue) / valueSpan).coerceIn(0f, 1f)
+        val normalized = ((value - scale.minimumC) / valueSpan).coerceIn(0f, 1f)
         Offset(x, verticalPadding + plotHeight * (1f - normalized))
     }
     val path = smoothPath(points)
@@ -240,6 +313,38 @@ private fun androidx.compose.ui.graphics.drawscope.DrawScope.drawTemperatureHist
         radius = AquaCoolingDashboardGeometry.chartPointRadius.toPx(),
         center = points.last()
     )
+}
+
+private fun temperatureChartScale(values: List<Float>): TemperatureChartScale {
+    var minimum = AquaCoolingTemperatureChartSpec.defaultMinimumC
+    var maximum = AquaCoolingTemperatureChartSpec.defaultMaximumC
+    val step = AquaCoolingTemperatureChartSpec.expansionStepC
+
+    values.minOrNull()?.let { rawMinimum ->
+        if (rawMinimum < minimum) {
+            minimum = floor(rawMinimum / step).toFloat() * step
+        }
+    }
+    values.maxOrNull()?.let { rawMaximum ->
+        if (rawMaximum > maximum) {
+            maximum = ceil(rawMaximum / step).toFloat() * step
+        }
+    }
+    if (maximum <= minimum) {
+        maximum = minimum + step * (AquaCoolingTemperatureChartSpec.horizontalGridLineCount - 1)
+    }
+    return TemperatureChartScale(minimumC = minimum, maximumC = maximum)
+}
+
+private data class TemperatureChartScale(
+    val minimumC: Float,
+    val maximumC: Float
+) {
+    fun axisValues(): List<Float> {
+        val count = AquaCoolingTemperatureChartSpec.horizontalGridLineCount
+        val interval = (maximumC - minimumC) / (count - 1).coerceAtLeast(1)
+        return List(count) { index -> maximumC - interval * index }
+    }
 }
 
 private fun smoothPath(points: List<Offset>): Path {
