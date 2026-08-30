@@ -21,8 +21,7 @@ class DeviceCoolingProgramSettingsViewModel : ViewModel() {
     private val _uiState = MutableStateFlow(
         DeviceCoolingProgramSettingsUiState(
             slots = initialSlots,
-            persistedSlots = initialSlots,
-            selectedSlotId = initialSlots.first().id
+            persistedSlots = initialSlots
         )
     )
     val uiState: StateFlow<DeviceCoolingProgramSettingsUiState> = _uiState.asStateFlow()
@@ -31,8 +30,13 @@ class DeviceCoolingProgramSettingsViewModel : ViewModel() {
 
     fun selectSlot(slotId: String) {
         _uiState.update { state ->
-            if (state.slots.none { slot -> slot.id == slotId }) state
-            else state.copy(selectedSlotId = slotId)
+            if (state.slots.none { slot -> slot.id == slotId }) {
+                state
+            } else {
+                state.copy(
+                    selectedSlotId = if (state.selectedSlotId == slotId) null else slotId
+                )
+            }
         }
     }
 
