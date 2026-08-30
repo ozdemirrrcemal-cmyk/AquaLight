@@ -10,6 +10,8 @@ Rules:
    on the shared root UI architecture guarded by device_root_ui_architecture_guard.
 4. Family-owned Dosing and Cooling implementations must remain strictly isolated;
    cross-family dependencies are rejected by device_family_isolation_guard.
+5. UI and data layers are mutually isolated repository-wide; direct dependencies
+   in either direction are rejected by ui_data_layer_isolation_guard.
 
 Intentional exceptions: BottomSheet/FragmentResult/manual child-fragment bundles
 are not nav graph destinations and are outside Safe Args scope.
@@ -20,6 +22,7 @@ import xml.etree.ElementTree as ET
 
 from device_family_isolation_guard import validate_repository as validate_family_isolation
 from device_root_ui_architecture_guard import validate_repository as validate_device_root_ui
+from ui_data_layer_isolation_guard import validate_repository as validate_ui_data_isolation
 
 ROOT = Path(__file__).resolve().parents[1]
 SOURCE_ROOT = ROOT / "app" / "src" / "main" / "java"
@@ -82,6 +85,10 @@ violations.extend(
     f"device-family isolation: {error}"
     for error in validate_family_isolation(ROOT)
 )
+violations.extend(
+    f"UI/data layer isolation: {error}"
+    for error in validate_ui_data_isolation(ROOT)
+)
 
 if violations:
     print("Navigation guard failed:")
@@ -90,6 +97,6 @@ if violations:
     sys.exit(1)
 
 print(
-    "Navigation guard passed: Safe Args, shared device-root UI and device-family isolation "
-    "contracts are enforced."
+    "Navigation guard passed: Safe Args, shared device-root UI, device-family isolation "
+    "and UI/data layer isolation contracts are enforced."
 )
