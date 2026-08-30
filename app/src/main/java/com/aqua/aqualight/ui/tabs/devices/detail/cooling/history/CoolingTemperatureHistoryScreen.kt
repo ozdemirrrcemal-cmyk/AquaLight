@@ -17,11 +17,9 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.selection.selectable
-import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.BasicText
 import androidx.compose.runtime.Composable
@@ -193,40 +191,17 @@ private fun CoolingHistoryChartCard(
             modifier = Modifier.fillMaxWidth(),
             verticalArrangement = Arrangement.spacedBy(AquaCoolingHistoryGeometry.chartAxisGap)
         ) {
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                Column(modifier = Modifier.weight(1f)) {
-                    BasicText(
-                        text = stringResource(R.string.device_cooling_history_chart_title),
-                        style = typography.title.copy(color = colors.primaryText),
-                        maxLines = 1
-                    )
-                    BasicText(
-                        text = stringResource(R.string.device_cooling_history_chart_subtitle),
-                        style = typography.micro.copy(color = colors.secondaryText),
-                        maxLines = 1
-                    )
-                }
-                Row(
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.spacedBy(AquaCoolingHistoryGeometry.sourceGap)
-                ) {
-                    Box(
-                        modifier = Modifier
-                            .size(AquaCoolingHistoryGeometry.sourceDotSize)
-                            .clip(CircleShape)
-                            .background(
-                                colors.accent.copy(alpha = AquaCoolingHistoryAlpha.sourceDot)
-                            )
-                    )
-                    BasicText(
-                        text = stringResource(R.string.device_cooling_history_firmware_source),
-                        style = typography.micro.copy(color = colors.secondaryText),
-                        maxLines = 1
-                    )
-                }
+            Column(modifier = Modifier.fillMaxWidth()) {
+                BasicText(
+                    text = stringResource(R.string.device_cooling_history_chart_title),
+                    style = typography.title.copy(color = colors.primaryText),
+                    maxLines = 1
+                )
+                BasicText(
+                    text = stringResource(R.string.device_cooling_history_chart_subtitle),
+                    style = typography.micro.copy(color = colors.secondaryText),
+                    maxLines = 1
+                )
             }
             CoolingHistoryChart(
                 points = points,
