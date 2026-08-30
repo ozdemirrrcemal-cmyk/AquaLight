@@ -55,18 +55,12 @@ class DeviceCoolingAutomaticSettingsViewModel(
     fun refresh() {
         val deviceUid = boundDeviceUid.takeIf(String::isNotBlank) ?: return
         refreshJob?.cancel()
-        _uiState.update { state ->
-            if (state.loadState == DeviceCoolingAutomaticLoadState.CONTENT) state
-            else state.copy(loadState = DeviceCoolingAutomaticLoadState.LOADING)
-        }
         refreshJob = viewModelScope.launch {
-            val result = operations.refreshAutomaticSettings(deviceUid)
-            if (boundDeviceUid != deviceUid) return@launch
-            if (result.isFailure && !_uiState.value.hasFirmwareSnapshot) {
-                _uiState.update { state ->
-                    state.copy(loadState = DeviceCoolingAutomaticLoadState.ERROR)
-                }
-            }
+            operations.refreshAutomaticSettings(deviceUid)
+            // Device connectivity is gated before this destination is entered. A transient read
+            // failure therefore never replaces the editor with a synthetic error/retry surface.
+            // Existing authoritative values remain visible; otherwise the structural editor keeps
+            // unavailable placeholders until the runtime state flow publishes a valid snapshot.
         }
     }
 
@@ -152,7 +146,7 @@ enum class DeviceCoolingAutomaticSaveState {
 
 data class DeviceCoolingAutomaticSettingsUiState(
     val deviceUid: String = "",
-    val loadState: DeviceCoolingAutomaticLoadState = DeviceCoolingAutomaticLoadState.LOADING,
+    val loadState: DeviceCoolingAutomaticLoadState = DeviceCoolingAutomaticLoadState.CONTENT,
     val saveState: DeviceCoolingAutomaticSaveState = DeviceCoolingAutomaticSaveState.IDLE,
     val editable: Boolean = false,
     val persistedStartTemperatureC: Double? = null,
@@ -190,7 +184,7 @@ private fun DeviceCoolingAutomaticSettingsUiState.withSnapshot(
     val policy = snapshot.policy
     if (!snapshot.available || start == null || maximum == null || policy == null) {
         return copy(
-            loadState = DeviceCoolingAutomaticLoadState.ERROR,
+            loadState = DeviceCoolingAutomaticLoadState.CONTENT,
             editable = false,
             tankTemperatureC = snapshot.tankTemperatureC,
             fanPercentNow = snapshot.fanPercentNow
