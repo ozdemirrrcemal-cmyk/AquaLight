@@ -102,6 +102,16 @@ object LocaleFormatter {
         return formatDate(timeMillis, appLocale(context))
     }
 
+    /** Formats a compact weekday label such as Mon / Pzt for charts and calendars. */
+    fun formatWeekdayShort(context: Context, timeMillis: Long): String {
+        return formatWeekdayShort(timeMillis, appLocale(context))
+    }
+
+    /** Formats a compact day-month label such as 30 Aug / 30 Ağu. */
+    fun formatDayMonthShort(context: Context, timeMillis: Long): String {
+        return formatDayMonthShort(timeMillis, appLocale(context))
+    }
+
     /** Formats a calendar-only value without converting it through a timezone-dependent instant. */
     fun formatDateEpochDay(context: Context, epochDay: Long): String {
         return formatDateEpochDay(epochDay, appLocale(context))
@@ -202,6 +212,14 @@ object LocaleFormatter {
         ).format(Date(timeMillis))
     }
 
+    internal fun formatWeekdayShort(timeMillis: Long, locale: Locale): String {
+        return SimpleDateFormat(WEEKDAY_SHORT_PATTERN, locale).format(Date(timeMillis))
+    }
+
+    internal fun formatDayMonthShort(timeMillis: Long, locale: Locale): String {
+        return SimpleDateFormat(DAY_MONTH_SHORT_PATTERN, locale).format(Date(timeMillis))
+    }
+
     internal fun formatDateEpochDay(epochDay: Long, locale: Locale): String {
         return DateTimeFormatter.ofLocalizedDate(FormatStyle.MEDIUM)
             .withLocale(locale)
@@ -248,4 +266,6 @@ object LocaleFormatter {
     private const val MINUTES_PER_HOUR = 60
     private const val MINUTES_PER_DAY = 24 * MINUTES_PER_HOUR
     private const val TIME_OF_DAY_24_HOUR_PATTERN = "HH:mm"
+    private const val WEEKDAY_SHORT_PATTERN = "EEE"
+    private const val DAY_MONTH_SHORT_PATTERN = "d MMM"
 }
