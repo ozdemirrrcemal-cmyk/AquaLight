@@ -17,6 +17,7 @@ import com.aqua.aqualight.data.devices.DefaultDeviceFamilySettingsOperations
 import com.aqua.aqualight.data.devices.DefaultDeviceRootOperations
 import com.aqua.aqualight.data.devices.DefaultDeviceStatusOperations
 import com.aqua.aqualight.data.devices.DefaultOwnerDevicesOperations
+import com.aqua.aqualight.data.devices.cooling.DefaultDeviceCoolingAutomaticSettingsOperations
 import com.aqua.aqualight.data.devices.cooling.DefaultDeviceCoolingTemperatureHistoryOperations
 import com.aqua.aqualight.data.devices.menu.DefaultDeviceMenuAccessOperations
 import com.aqua.aqualight.data.devices.provisioning.DefaultProvisioningDiscoveryOperations
@@ -39,6 +40,7 @@ import com.aqua.aqualight.ui.tabs.devices.add.DeviceQrScanViewModel
 import com.aqua.aqualight.ui.tabs.devices.detail.common.DeviceRootOverviewViewModel
 import com.aqua.aqualight.ui.tabs.devices.detail.cooling.DeviceCoolingRootViewModel
 import com.aqua.aqualight.ui.tabs.devices.detail.cooling.history.DeviceCoolingTemperatureHistoryViewModel
+import com.aqua.aqualight.ui.tabs.devices.detail.cooling.settings.DeviceCoolingAutomaticSettingsViewModel
 import com.aqua.aqualight.ui.tabs.devices.detail.dosing.channel.calibration.DeviceDosingChannelCalibrationViewModel
 import com.aqua.aqualight.ui.tabs.devices.detail.dosing.channel.detail.DeviceDosingChannelDetailViewModel
 import com.aqua.aqualight.ui.tabs.devices.detail.dosing.channel.plan.DeviceDosingPlanViewModel
@@ -195,12 +197,20 @@ internal class OwnerViewModelFactory(
             DeviceCoolingRootViewModel::class.java ->
                 DeviceCoolingRootViewModel(
                     operations = DefaultDeviceRootOperations(repository),
-                    historyOperations = DefaultDeviceCoolingTemperatureHistoryOperations(repository)
+                    historyOperations = DefaultDeviceCoolingTemperatureHistoryOperations(repository),
+                    automaticSettingsOperations = DefaultDeviceCoolingAutomaticSettingsOperations(
+                        repository
+                    )
                 )
 
             DeviceCoolingTemperatureHistoryViewModel::class.java ->
                 DeviceCoolingTemperatureHistoryViewModel(
                     DefaultDeviceCoolingTemperatureHistoryOperations(repository)
+                )
+
+            DeviceCoolingAutomaticSettingsViewModel::class.java ->
+                DeviceCoolingAutomaticSettingsViewModel(
+                    DefaultDeviceCoolingAutomaticSettingsOperations(repository)
                 )
 
             DeviceTimerRootViewModel::class.java ->
@@ -321,6 +331,7 @@ internal class OwnerViewModelFactory(
             DeviceLightRootViewModel::class.java,
             DeviceCoolingRootViewModel::class.java,
             DeviceCoolingTemperatureHistoryViewModel::class.java,
+            DeviceCoolingAutomaticSettingsViewModel::class.java,
             DeviceTimerRootViewModel::class.java,
             DeviceDosingRootViewModel::class.java,
             DeviceDosingChannelCalibrationViewModel::class.java,
