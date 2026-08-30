@@ -35,6 +35,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.unit.dp
 import com.aqua.aqualight.R
 import com.aqua.aqualight.i18n.LocaleFormatter
 import com.aqua.aqualight.ui.common.cooling.AquaCoolingDashboardCardSurface
