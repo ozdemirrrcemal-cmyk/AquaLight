@@ -9,8 +9,11 @@
     <string name="device_cooling_room_temperature_label">Oda</string>
     <string name="device_cooling_humidity_label">Nem</string>
     <string name="device_cooling_chart_24h_start">−24 sa</string>
+    <string name="device_cooling_chart_18h">−18 sa</string>
     <string name="device_cooling_chart_12h">−12 sa</string>
+    <string name="device_cooling_chart_6h">−6 sa</string>
     <string name="device_cooling_chart_now">Şimdi</string>
+    <string name="device_cooling_temperature_axis_value_format">%1$.0f °C</string>
 
     <string name="device_cooling_fan_speed_title">Fan Hızı</string>
     <string name="device_cooling_fan_mode_title">Fan Modu</string>
