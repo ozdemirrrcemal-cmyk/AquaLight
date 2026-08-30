@@ -25,6 +25,15 @@ class DeviceFamilyIsolationGuardTest(unittest.TestCase):
         )
         self.assertEqual(0, result.returncode, result.stderr)
 
+    def test_navigation_guard_keeps_family_isolation_in_ci_chain(self) -> None:
+        navigation_guard = (ROOT / "tools/navigation_guard.py").read_text(encoding="utf-8")
+        self.assertIn(
+            "from device_family_isolation_guard import validate_repository as "
+            "validate_family_isolation",
+            navigation_guard,
+        )
+        self.assertIn("for error in validate_family_isolation(ROOT)", navigation_guard)
+
     def test_family_code_can_depend_on_shared_device_contracts(self) -> None:
         with tempfile.TemporaryDirectory() as directory:
             repository = Path(directory)
