@@ -94,10 +94,20 @@ object AppRouteNavigator {
         }
     }
 
+    fun openCoolingTemperatureHistory(
+        navController: NavController,
+        deviceUid: String
+    ): AppRouteOpenResult = openCoolingDetailDestination(
+        navController = navController,
+        deviceUid = deviceUid,
+        path = PATH_HISTORY,
+        destinationId = R.id.deviceCoolingTemperatureHistoryFragment
+    )
+
     fun openCoolingAutomaticSettings(
         navController: NavController,
         deviceUid: String
-    ): AppRouteOpenResult = openCoolingModeSettings(
+    ): AppRouteOpenResult = openCoolingDetailDestination(
         navController = navController,
         deviceUid = deviceUid,
         path = PATH_AUTOMATIC,
@@ -107,7 +117,7 @@ object AppRouteNavigator {
     fun openCoolingProgramSettings(
         navController: NavController,
         deviceUid: String
-    ): AppRouteOpenResult = openCoolingModeSettings(
+    ): AppRouteOpenResult = openCoolingDetailDestination(
         navController = navController,
         deviceUid = deviceUid,
         path = PATH_PROGRAM,
@@ -169,7 +179,7 @@ object AppRouteNavigator {
         }
     }
 
-    private fun openCoolingModeSettings(
+    private fun openCoolingDetailDestination(
         navController: NavController,
         deviceUid: String,
         path: String,
@@ -277,6 +287,7 @@ object AppRouteNavigator {
     private const val PATH_DEVICE = "device"
     private const val PATH_FIRMWARE_UPDATE = "firmware-update"
     private const val PATH_COOLING = "cooling"
+    private const val PATH_HISTORY = "history"
     private const val PATH_AUTOMATIC = "automatic"
     private const val PATH_PROGRAM = "program"
     private const val PATH_DOSING = "dosing"
