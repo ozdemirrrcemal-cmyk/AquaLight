@@ -193,7 +193,10 @@ internal class OwnerViewModelFactory(
                 )
 
             DeviceCoolingRootViewModel::class.java ->
-                DeviceCoolingRootViewModel(DefaultDeviceRootOperations(repository))
+                DeviceCoolingRootViewModel(
+                    operations = DefaultDeviceRootOperations(repository),
+                    historyOperations = DefaultDeviceCoolingTemperatureHistoryOperations(repository)
+                )
 
             DeviceCoolingTemperatureHistoryViewModel::class.java ->
                 DeviceCoolingTemperatureHistoryViewModel(
