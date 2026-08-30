@@ -1,5 +1,6 @@
 package com.aqua.aqualight.data.devices.dosing
 
+import com.aqua.aqualight.application.devices.dosing.DeviceDosingChannelSnapshot
 import com.aqua.aqualight.application.devices.dosing.DeviceDosingLowLevelAlertCopy
 import com.aqua.aqualight.application.notifications.CareReminderNotification
 import com.aqua.aqualight.application.notifications.DeviceAlertNotification
@@ -12,11 +13,11 @@ import com.aqua.aqualight.application.notifications.NotificationPermissionPolicy
 import com.aqua.aqualight.application.notifications.NotificationPreferenceRepository
 import com.aqua.aqualight.application.notifications.NotificationRenderer
 import com.aqua.aqualight.ui.tabs.devices.detail.dosing.channel.sampleDosingChannelSnapshot
+import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.test.ExperimentalCoroutinesApi
 import kotlinx.coroutines.test.runCurrent
 import kotlinx.coroutines.test.runTest
 import org.junit.Assert.assertEquals
