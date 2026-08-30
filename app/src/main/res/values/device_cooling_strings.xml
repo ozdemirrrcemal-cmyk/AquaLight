@@ -1,6 +1,9 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
+    <string name="device_cooling_unknown_device">Unknown cooling device</string>
     <string name="device_cooling_open_settings_description">Open device settings</string>
+    <string name="device_cooling_connection_online_description">Cooling device is online</string>
+    <string name="device_cooling_connection_offline_description">Cooling device is offline</string>
     <string name="device_cooling_temperature_sensor">Temperature Sensor</string>
     <string name="device_cooling_current_temperature_value">25.6 °C</string>
     <string name="device_cooling_target_temperature_value">26.0 °C</string>
@@ -31,6 +34,8 @@
     <string name="device_cooling_status_running">Running</string>
     <string name="device_cooling_status_normal">Normal</string>
     <string name="device_cooling_status_none">None</string>
+    <string name="device_cooling_status_online">Online</string>
+    <string name="device_cooling_status_offline">Offline</string>
     <string name="device_cooling_profile">Cooling Profile</string>
     <string name="device_cooling_profile_quiet">Quiet</string>
     <string name="device_cooling_profile_balanced">Balanced</string>

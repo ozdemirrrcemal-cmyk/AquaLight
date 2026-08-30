@@ -1,6 +1,9 @@
 package com.aqua.aqualight.ui.tabs.devices.detail
 
 import com.aqua.aqualight.R
+import com.aqua.aqualight.application.devices.DeviceControlSurfacePreparationOperations
+import com.aqua.aqualight.application.devices.DeviceControlSurfacePreparationRequest
+import com.aqua.aqualight.application.devices.DeviceControlSurfacePreparationResult
 import com.aqua.aqualight.application.devices.DeviceRootCapability
 import com.aqua.aqualight.application.devices.DeviceRootCatalogState
 import com.aqua.aqualight.application.devices.DeviceRootMenuFeature
@@ -16,6 +19,7 @@ import com.aqua.aqualight.ui.tabs.devices.detail.common.DeviceRootOverviewViewMo
 import com.aqua.aqualight.ui.tabs.devices.detail.cooling.DeviceCoolingRootViewModel
 import com.aqua.aqualight.ui.tabs.devices.detail.light.DeviceLightRootViewModel
 import com.aqua.aqualight.ui.tabs.devices.detail.timer.DeviceTimerRootViewModel
+import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.Flow
@@ -25,6 +29,7 @@ import kotlinx.coroutines.test.UnconfinedTestDispatcher
 import kotlinx.coroutines.test.resetMain
 import kotlinx.coroutines.test.setMain
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
 import org.junit.Rule
 import org.junit.Test
@@ -83,7 +88,10 @@ class DeviceRootViewModelBoundaryTest {
         val operations = FakeDeviceRootOperations(rootSnapshot())
         val light = DeviceLightRootViewModel(operations)
         val timer = DeviceTimerRootViewModel(operations)
-        val cooling = DeviceCoolingRootViewModel(operations)
+        val cooling = DeviceCoolingRootViewModel(
+            operations,
+            ReadyControlSurfacePreparationOperations()
+        )
 
         light.bind("device-1")
         timer.bind("device-1")
@@ -110,10 +118,14 @@ class DeviceRootViewModelBoundaryTest {
                     DeviceRootCapability.FAN,
                     DeviceRootCapability.TEMPERATURE
                 ),
-                fanOutputCount = COOLING_FAN_COUNT
+                fanOutputCount = COOLING_FAN_COUNT,
+                temperatureSensorCount = COOLING_SENSOR_COUNT
             )
         )
-        val viewModel = DeviceCoolingRootViewModel(operations)
+        val viewModel = DeviceCoolingRootViewModel(
+            operations,
+            ReadyControlSurfacePreparationOperations()
+        )
 
         viewModel.bind("device-1")
 
@@ -122,6 +134,30 @@ class DeviceRootViewModelBoundaryTest {
             DeviceConnectionVisualState.ONLINE,
             viewModel.uiState.value.connectionVisualState
         )
+        assertTrue(viewModel.uiState.value.contentEnabled)
+    }
+
+    @Test
+    fun `cooling root blocks restored surface until central preparation completes`() {
+        val operations = FakeDeviceRootOperations(
+            rootSnapshot(title = "Cool Pro 2 Fan").copy(
+                family = OwnerDeviceFamily.COOLING,
+                fanOutputCount = 2,
+                temperatureSensorCount = COOLING_SENSOR_COUNT
+            )
+        )
+        val preparation = BlockingControlSurfacePreparationOperations()
+        val viewModel = DeviceCoolingRootViewModel(operations, preparation)
+
+        viewModel.bind("device-1")
+
+        assertTrue(viewModel.uiState.value.showBlockingPreparation)
+        assertFalse(viewModel.uiState.value.contentEnabled)
+        assertEquals(OwnerDeviceFamily.COOLING, preparation.requestedFamily)
+
+        preparation.completeReady()
+
+        assertFalse(viewModel.uiState.value.showBlockingPreparation)
         assertTrue(viewModel.uiState.value.contentEnabled)
     }
 
@@ -183,6 +219,32 @@ class DeviceRootViewModelBoundaryTest {
         }
     }
 
+    private class ReadyControlSurfacePreparationOperations :
+        DeviceControlSurfacePreparationOperations {
+
+        override suspend fun prepare(
+            request: DeviceControlSurfacePreparationRequest
+        ): DeviceControlSurfacePreparationResult = DeviceControlSurfacePreparationResult.Ready
+    }
+
+    private class BlockingControlSurfacePreparationOperations :
+        DeviceControlSurfacePreparationOperations {
+
+        private val result = CompletableDeferred<DeviceControlSurfacePreparationResult>()
+        var requestedFamily: OwnerDeviceFamily? = null
+
+        override suspend fun prepare(
+            request: DeviceControlSurfacePreparationRequest
+        ): DeviceControlSurfacePreparationResult {
+            requestedFamily = request.family
+            return result.await()
+        }
+
+        fun completeReady() {
+            result.complete(DeviceControlSurfacePreparationResult.Ready)
+        }
+    }
+
     class MainDispatcherRule(
         private val dispatcher: TestDispatcher = UnconfinedTestDispatcher()
     ) : TestWatcher() {
@@ -197,3 +259,4 @@ class DeviceRootViewModelBoundaryTest {
 }
 
 private const val COOLING_FAN_COUNT = 3
+private const val COOLING_SENSOR_COUNT = 1

@@ -4,6 +4,7 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxScope
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.runtime.Composable
@@ -41,6 +42,7 @@ data class AquaDeviceCardColors(
 @Immutable
 data class AquaDeviceCardTypography(
     val title: TextStyle,
+    val compactTitle: TextStyle,
     val body: TextStyle,
     val caption: TextStyle,
     val micro: TextStyle
@@ -50,6 +52,7 @@ object AquaDeviceCardGeometry {
     val cornerRadius = CARD_CORNER_RADIUS_DP.dp
     val contentHorizontalPadding = CONTENT_HORIZONTAL_PADDING_DP.dp
     val contentVerticalPadding = CONTENT_VERTICAL_PADDING_DP.dp
+    val compactContentPadding = COMPACT_CONTENT_PADDING_DP.dp
     val outlineWidth = OUTLINE_WIDTH_DP.dp
     val markerSize = MARKER_SIZE_DP.dp
     val markerCornerRadius = MARKER_CORNER_RADIUS_DP.dp
@@ -85,6 +88,12 @@ fun aquaDeviceCardTypography(colors: AquaDeviceCardColors): AquaDeviceCardTypogr
             fontSize = TITLE_FONT_SIZE_SP.sp,
             lineHeight = TITLE_LINE_HEIGHT_SP.sp
         ),
+        compactTitle = TextStyle(
+            color = colors.primaryText,
+            fontFamily = InterSemiBold,
+            fontSize = COMPACT_TITLE_FONT_SIZE_SP.sp,
+            lineHeight = COMPACT_TITLE_LINE_HEIGHT_SP.sp
+        ),
         body = TextStyle(
             color = colors.primaryText,
             fontFamily = InterMedium,
@@ -108,6 +117,10 @@ fun aquaDeviceCardTypography(colors: AquaDeviceCardColors): AquaDeviceCardTypogr
 @Composable
 fun AquaDeviceCardSurface(
     modifier: Modifier = Modifier,
+    contentPadding: PaddingValues = PaddingValues(
+        horizontal = AquaDeviceCardGeometry.contentHorizontalPadding,
+        vertical = AquaDeviceCardGeometry.contentVerticalPadding
+    ),
     content: @Composable BoxScope.() -> Unit
 ) {
     val colors = aquaDeviceCardColors()
@@ -121,10 +134,7 @@ fun AquaDeviceCardSurface(
                 color = colors.outline,
                 shape = shape
             )
-            .padding(
-                horizontal = AquaDeviceCardGeometry.contentHorizontalPadding,
-                vertical = AquaDeviceCardGeometry.contentVerticalPadding
-            ),
+            .padding(contentPadding),
         content = content
     )
 }
@@ -132,6 +142,7 @@ fun AquaDeviceCardSurface(
 private const val CARD_CORNER_RADIUS_DP = 18
 private const val CONTENT_HORIZONTAL_PADDING_DP = 14
 private const val CONTENT_VERTICAL_PADDING_DP = 12
+private const val COMPACT_CONTENT_PADDING_DP = 10
 private const val OUTLINE_WIDTH_DP = 1
 private const val MARKER_SIZE_DP = 22
 private const val MARKER_CORNER_RADIUS_DP = 7
@@ -142,6 +153,8 @@ private const val CONTENT_GAP_DP = 10
 private const val COMPACT_GAP_DP = 7
 private const val TITLE_FONT_SIZE_SP = 15
 private const val TITLE_LINE_HEIGHT_SP = 18
+private const val COMPACT_TITLE_FONT_SIZE_SP = 11
+private const val COMPACT_TITLE_LINE_HEIGHT_SP = 14
 private const val BODY_FONT_SIZE_SP = 12
 private const val BODY_LINE_HEIGHT_SP = 16
 private const val CAPTION_FONT_SIZE_SP = 11

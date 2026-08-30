@@ -58,6 +58,7 @@ internal data class OwnerDependencyGraph(
     val careTaskStore: CareTaskDataStoreManager,
     val userDataArchiveOperations: UserDataArchiveOperations,
     val provisioningDraftOperations: ProvisioningDraftOperations,
+    val controlSurfacePreparationOperations: DeviceControlSurfacePreparationOperations,
     val dosingOperations: OwnerDosingOperations
 )
 
@@ -66,8 +67,7 @@ internal data class OwnerDosingOperations(
     val channelOperations: DeviceDosingChannelOperations,
     val cardOperations: DeviceDosingCardOperations,
     val calibrationOperations: DeviceDosingCalibrationOperations,
-    val navigationOperations: DeviceDosingChannelNavigationOperations,
-    val controlSurfacePreparationOperations: DeviceControlSurfacePreparationOperations
+    val navigationOperations: DeviceDosingChannelNavigationOperations
 )
 
 internal fun interface OwnerDependencyGraphResolver {
@@ -204,6 +204,12 @@ internal class ActiveOwnerDependencyGraphResolver(
             mediaGateway = mediaGateway,
             reconcileCareReminders = notificationPreferenceUseCase::reconcileOwner
         )
+        val dosingOperations = createDosingOperations(dependencies)
+        val controlSurfacePreparationOperations =
+            DefaultDeviceControlSurfacePreparationOperations(
+                rootOperations = DefaultDeviceRootOperations(dependencies.devicesRepository),
+                dosingChannelOperations = dosingOperations.channelOperations
+            )
         return OwnerDependencyGraph(
             ownerUid = dependencies.ownerUid,
             sessionGeneration = dependencies.sessionGeneration,
@@ -232,7 +238,8 @@ internal class ActiveOwnerDependencyGraphResolver(
                     ownerUidProvider = ownerUidProvider
                 )
             ),
-            dosingOperations = createDosingOperations(dependencies)
+            controlSurfacePreparationOperations = controlSurfacePreparationOperations,
+            dosingOperations = dosingOperations
         )
     }
 
@@ -258,12 +265,7 @@ internal class ActiveOwnerDependencyGraphResolver(
             navigationOperations = DefaultDeviceDosingChannelNavigationOperations(
                 rootOperations = rootOperations,
                 channelOperations = channelOperations
-            ),
-            controlSurfacePreparationOperations =
-                DefaultDeviceControlSurfacePreparationOperations(
-                    rootOperations = rootOperations,
-                    dosingChannelOperations = channelOperations
-                )
+            )
         )
     }
 

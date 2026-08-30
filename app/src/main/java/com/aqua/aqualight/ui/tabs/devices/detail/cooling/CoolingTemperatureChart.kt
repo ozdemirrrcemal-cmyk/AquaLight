@@ -28,6 +28,9 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.aqua.aqualight.R
+import com.aqua.aqualight.ui.common.cooling.AquaCoolingGeometry
+import com.aqua.aqualight.ui.common.cooling.AquaCoolingPalette
+import com.aqua.aqualight.ui.common.cooling.aquaCoolingTextStyle
 
 @Composable
 internal fun CoolingTemperatureChart(modifier: Modifier = Modifier) {
@@ -35,16 +38,16 @@ internal fun CoolingTemperatureChart(modifier: Modifier = Modifier) {
     CoolingDashboardCard(
         modifier = modifier
             .fillMaxWidth()
-            .height(CHART_CARD_HEIGHT),
+            .height(AquaCoolingGeometry.chartCardHeight),
         contentPadding = PaddingValues(0.dp)
     ) {
         BasicText(
             text = stringResource(R.string.device_cooling_temperature),
             modifier = Modifier.padding(start = 10.dp, top = 9.dp, end = 10.dp),
-            style = coolingTextStyle(
+            style = aquaCoolingTextStyle(
                 size = 12.sp,
                 lineHeight = 15.sp,
-                color = CoolingDashboardPalette.textPrimary,
+                color = AquaCoolingPalette.textPrimary,
                 semiBold = true
             )
         )
@@ -80,10 +83,10 @@ private fun CoolingTemperatureCanvas(modifier: Modifier = Modifier) {
         stringResource(R.string.device_cooling_chart_6_hours),
         stringResource(R.string.device_cooling_chart_now)
     )
-    val labelStyle = coolingTextStyle(
+    val labelStyle = aquaCoolingTextStyle(
         size = 7.sp,
         lineHeight = 9.sp,
-        color = CoolingDashboardPalette.textSecondary
+        color = AquaCoolingPalette.textSecondary
     )
 
     Canvas(modifier = modifier) {
@@ -101,7 +104,7 @@ private fun CoolingTemperatureCanvas(modifier: Modifier = Modifier) {
         yValues.forEach { value ->
             val y = yPosition(value)
             drawLine(
-                color = CoolingDashboardPalette.outlineSoft.copy(alpha = 0.75f),
+                color = AquaCoolingPalette.outlineSoft.copy(alpha = 0.75f),
                 start = Offset(left, y),
                 end = Offset(left + graphWidth, y),
                 strokeWidth = 0.75.dp.toPx()
@@ -116,7 +119,7 @@ private fun CoolingTemperatureCanvas(modifier: Modifier = Modifier) {
 
         val targetY = yPosition(PLACEHOLDER_TARGET)
         drawLine(
-            color = CoolingDashboardPalette.textSecondary.copy(alpha = 0.9f),
+            color = AquaCoolingPalette.textSecondary.copy(alpha = 0.9f),
             start = Offset(left, targetY),
             end = Offset(left + graphWidth, targetY),
             strokeWidth = 0.9.dp.toPx(),
@@ -124,13 +127,13 @@ private fun CoolingTemperatureCanvas(modifier: Modifier = Modifier) {
         )
 
         drawLine(
-            color = CoolingDashboardPalette.outlineSoft,
+            color = AquaCoolingPalette.outlineSoft,
             start = Offset(left, top),
             end = Offset(left, graphBottom),
             strokeWidth = 0.8.dp.toPx()
         )
         drawLine(
-            color = CoolingDashboardPalette.outlineSoft,
+            color = AquaCoolingPalette.outlineSoft,
             start = Offset(left, graphBottom),
             end = Offset(left + graphWidth, graphBottom),
             strokeWidth = 0.8.dp.toPx()
@@ -145,12 +148,12 @@ private fun CoolingTemperatureCanvas(modifier: Modifier = Modifier) {
         val curve = smoothPath(points)
         drawPath(
             path = curve,
-            color = CoolingDashboardPalette.accent.copy(alpha = 0.18f),
+            color = AquaCoolingPalette.accent.copy(alpha = 0.18f),
             style = Stroke(width = 4.5.dp.toPx(), cap = StrokeCap.Round)
         )
         drawPath(
             path = curve,
-            color = CoolingDashboardPalette.accent,
+            color = AquaCoolingPalette.accent,
             style = Stroke(width = 1.35.dp.toPx(), cap = StrokeCap.Round)
         )
 
@@ -205,10 +208,10 @@ private fun CoolingTemperatureMetrics(modifier: Modifier = Modifier) {
         BasicText(
             text = stringResource(R.string.device_cooling_current_temperature_value),
             modifier = Modifier.fillMaxWidth(),
-            style = coolingTextStyle(
+            style = aquaCoolingTextStyle(
                 size = 15.sp,
                 lineHeight = 19.sp,
-                color = CoolingDashboardPalette.textPrimary,
+                color = AquaCoolingPalette.textPrimary,
                 semiBold = true,
                 textAlign = TextAlign.End
             )
@@ -218,10 +221,10 @@ private fun CoolingTemperatureMetrics(modifier: Modifier = Modifier) {
             modifier = Modifier
                 .fillMaxWidth()
                 .padding(top = 2.dp),
-            style = coolingTextStyle(
+            style = aquaCoolingTextStyle(
                 size = 8.sp,
                 lineHeight = 10.sp,
-                color = CoolingDashboardPalette.textSecondary,
+                color = AquaCoolingPalette.textSecondary,
                 textAlign = TextAlign.End
             )
         )
@@ -230,10 +233,10 @@ private fun CoolingTemperatureMetrics(modifier: Modifier = Modifier) {
             modifier = Modifier
                 .fillMaxWidth()
                 .padding(top = 20.dp),
-            style = coolingTextStyle(
+            style = aquaCoolingTextStyle(
                 size = 15.sp,
                 lineHeight = 19.sp,
-                color = CoolingDashboardPalette.textPrimary,
+                color = AquaCoolingPalette.textPrimary,
                 semiBold = true,
                 textAlign = TextAlign.End
             )
@@ -243,17 +246,16 @@ private fun CoolingTemperatureMetrics(modifier: Modifier = Modifier) {
             modifier = Modifier
                 .fillMaxWidth()
                 .padding(top = 2.dp),
-            style = coolingTextStyle(
+            style = aquaCoolingTextStyle(
                 size = 8.sp,
                 lineHeight = 10.sp,
-                color = CoolingDashboardPalette.textSecondary,
+                color = AquaCoolingPalette.textSecondary,
                 textAlign = TextAlign.End
             )
         )
     }
 }
 
-private val CHART_CARD_HEIGHT = 146.dp
 private const val CHART_MIN = 21f
 private const val CHART_MAX = 30f
 private const val PLACEHOLDER_TARGET = 26f

@@ -128,6 +128,35 @@ class DefaultDeviceControlSurfacePreparationOperationsTest {
         assertEquals(1, channels.refreshCalls)
     }
 
+    @Test
+    fun `validated Cool Pro creates a family scoped preparation handoff`() = runTest {
+        val operations = DefaultDeviceControlSurfacePreparationOperations(
+            rootOperations = FakeRootOperations(coolingRootSnapshot()),
+            dosingChannelOperations = FakeChannelOperations()
+        )
+
+        val result = operations.prepare(
+            DeviceControlSurfacePreparationRequest(
+                deviceUid = COOLING_DEVICE_UID,
+                family = OwnerDeviceFamily.COOLING
+            )
+        )
+
+        assertTrue(result is DeviceControlSurfacePreparationResult.Ready)
+        assertTrue(
+            operations.consumeFreshPreparation(
+                COOLING_DEVICE_UID,
+                OwnerDeviceFamily.COOLING
+            )
+        )
+        assertFalse(
+            operations.consumeFreshPreparation(
+                COOLING_DEVICE_UID,
+                OwnerDeviceFamily.COOLING
+            )
+        )
+    }
+
     private fun preparation(
         channelCount: Int,
         channels: FakeChannelOperations
@@ -188,8 +217,19 @@ class DefaultDeviceControlSurfacePreparationOperationsTest {
 
     private companion object {
         const val DEVICE_UID = "dose-pro-4"
+        const val COOLING_DEVICE_UID = "cool-pro-3f"
     }
 }
+
+private fun coolingRootSnapshot() = DeviceRootSnapshot(
+    deviceUid = "cool-pro-3f",
+    title = "Cool Pro 3 Fan",
+    availability = OwnerDeviceAvailability.REACHABLE,
+    family = OwnerDeviceFamily.COOLING,
+    catalogState = DeviceRootCatalogState.VALID,
+    fanOutputCount = 3,
+    temperatureSensorCount = 1
+)
 
 private fun rootSnapshot(channelCount: Int) = DeviceRootSnapshot(
     deviceUid = "dose-pro-4",

@@ -3,6 +3,7 @@ package com.aqua.aqualight.debug.devices
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import com.aqua.aqualight.BuildConfig
+import com.aqua.aqualight.application.devices.DeviceControlSurfacePreparationOperations
 import com.aqua.aqualight.application.devices.DeviceMenuOpenUseCase
 import com.aqua.aqualight.composition.AppContainer
 import com.aqua.aqualight.composition.OwnerDependencyGraph
@@ -46,6 +47,8 @@ private class DebugDeviceFixtureViewModelFactory(
 ) : ViewModelProvider.Factory {
 
     private val fixtures = DebugDeviceFixtureCatalog()
+    private var preparationGeneration: Long = Long.MIN_VALUE
+    private var cachedPreparationOperations: DeviceControlSurfacePreparationOperations? = null
 
     override fun <T : ViewModel> create(modelClass: Class<T>): T {
         val viewModel: ViewModel = when (modelClass) {
@@ -53,7 +56,12 @@ private class DebugDeviceFixtureViewModelFactory(
             DeviceLightRootViewModel::class.java ->
                 DeviceLightRootViewModel(rootOperations(requireGraph()))
             DeviceCoolingRootViewModel::class.java ->
-                DeviceCoolingRootViewModel(rootOperations(requireGraph()))
+                requireGraph().let { graph ->
+                    DeviceCoolingRootViewModel(
+                        operations = rootOperations(graph),
+                        controlSurfacePreparationOperations = preparationOperations(graph)
+                    )
+                }
             DeviceTimerRootViewModel::class.java ->
                 DeviceTimerRootViewModel(rootOperations(requireGraph()))
             DeviceRootOverviewViewModel::class.java ->
@@ -95,7 +103,7 @@ private class DebugDeviceFixtureViewModelFactory(
                     fixtures = fixtures
                 ),
                 controlSurfacePreparationOperations =
-                    graph.dosingOperations.controlSurfacePreparationOperations
+                    preparationOperations(graph)
             ),
             routeResolver = DeviceRouteResolver()
         )
@@ -122,6 +130,22 @@ private class DebugDeviceFixtureViewModelFactory(
         delegate = DefaultDeviceRootOperations(graph.devicesRepository),
         fixtures = fixtures
     )
+
+    private fun preparationOperations(
+        graph: OwnerDependencyGraph
+    ): DeviceControlSurfacePreparationOperations {
+        val current = cachedPreparationOperations
+        if (current != null && preparationGeneration == graph.sessionGeneration) return current
+        return DebugFixtureControlSurfacePreparationOperations(
+            delegate = graph.controlSurfacePreparationOperations,
+            rootOperations = rootOperations(graph),
+            dosingChannelOperations = graph.dosingOperations.channelOperations,
+            fixtures = fixtures
+        ).also { operations ->
+            preparationGeneration = graph.sessionGeneration
+            cachedPreparationOperations = operations
+        }
+    }
 
     private fun firmwareOperations(graph: OwnerDependencyGraph) =
         DebugFixtureFirmwareUpdateOperations(

@@ -191,7 +191,11 @@ internal class OwnerViewModelFactory(
                 )
 
             DeviceCoolingRootViewModel::class.java ->
-                DeviceCoolingRootViewModel(DefaultDeviceRootOperations(repository))
+                DeviceCoolingRootViewModel(
+                    operations = DefaultDeviceRootOperations(repository),
+                    controlSurfacePreparationOperations =
+                        graph.controlSurfacePreparationOperations
+                )
 
             DeviceTimerRootViewModel::class.java ->
                 DeviceTimerRootViewModel(DefaultDeviceRootOperations(repository))
@@ -201,7 +205,8 @@ internal class OwnerViewModelFactory(
                     operations = DefaultDeviceRootOperations(repository),
                     channelNavigationOperations = dosing.navigationOperations,
                     channelOperations = dosing.channelOperations,
-                    controlSurfacePreparationOperations = dosing.controlSurfacePreparationOperations
+                    controlSurfacePreparationOperations =
+                        graph.controlSurfacePreparationOperations
                 )
             }
 
@@ -273,7 +278,7 @@ internal class OwnerViewModelFactory(
         repository: DevicesRepository
     ): DeviceMenuOpenUseCase = DeviceMenuOpenUseCase(
         menuAccessOperations = DefaultDeviceMenuAccessOperations.create(repository),
-        controlSurfacePreparationOperations = graph.dosingOperations.controlSurfacePreparationOperations
+        controlSurfacePreparationOperations = graph.controlSurfacePreparationOperations
     )
 
     private fun createOwnerDevicesOperations(

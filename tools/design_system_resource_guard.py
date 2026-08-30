@@ -45,6 +45,12 @@ DOSING_COMPOSE_STYLE = (
     JAVA / "com" / "aqua" / "aqualight" / "ui" / "common" / "dosing" /
     "AquaDosingComposeStyle.kt"
 )
+COOLING_UI_ROOT = JAVA / "com" / "aqua" / "aqualight" / "ui" / "tabs" / "devices" / "detail" / "cooling"
+COOLING_COMPOSE_STYLE = (
+    JAVA / "com" / "aqua" / "aqualight" / "ui" / "common" / "cooling" /
+    "AquaCoolingComposeStyle.kt"
+)
+COOLING_STRING_REFERENCE = re.compile(r"R\.string\.([A-Za-z0-9_]+)")
 
 UI_COPY_ATTRIBUTE_NAMES = {
     "text",
@@ -233,6 +239,20 @@ def validate_kotlin(errors: list[str]) -> None:
                         f"raw user-facing Kotlin copy: {match.group(0)}"
                     )
 
+        if path.is_relative_to(COOLING_UI_ROOT):
+            for match in COOLING_STRING_REFERENCE.finditer(text):
+                if not match.group(1).startswith("device_cooling_"):
+                    errors.append(
+                        f"{relative(path)}:{line_number(text, match.start())}: "
+                        f"Cooling UI string must live in device_cooling_strings.xml: "
+                        f"{match.group(0)}"
+                    )
+            if "object AquaCoolingPalette" in text or "fun aquaCoolingTextStyle" in text:
+                errors.append(
+                    f"{relative(path)}: Cooling style declarations must live in the central "
+                    "AquaCoolingComposeStyle contract"
+                )
+
         if path.is_relative_to(catalog_root):
             for match in re.finditer(r"\b(?:name|brand|categoryTitle)\s*=\s*\"", text):
                 errors.append(
@@ -246,6 +266,26 @@ def validate_kotlin(errors: list[str]) -> None:
     if not DOSING_COMPOSE_STYLE.is_file():
         errors.append(
             f"{relative(DOSING_COMPOSE_STYLE)}: missing central Dosing Compose style contract"
+        )
+    if not COOLING_COMPOSE_STYLE.is_file():
+        errors.append(
+            f"{relative(COOLING_COMPOSE_STYLE)}: missing central Cooling Compose style contract"
+        )
+
+
+def validate_cooling_contract(errors: list[str]) -> None:
+    root_layout = RES / "layout" / "fragment_device_cooling_root.xml"
+    layout_text = root_layout.read_text(encoding="utf-8") if root_layout.exists() else ""
+    if "@layout/layout_aqua_header" not in layout_text:
+        errors.append(
+            f"{relative(root_layout)}: Cooling root must use the central AquaHeader layout"
+        )
+
+    components = COOLING_UI_ROOT / "CoolingDashboardComponents.kt"
+    component_text = components.read_text(encoding="utf-8") if components.exists() else ""
+    if "AquaDeviceCardSurface" not in component_text:
+        errors.append(
+            f"{relative(components)}: Cooling cards must use the central AquaDeviceCardSurface"
         )
 
 
@@ -288,6 +328,7 @@ def main() -> int:
     errors: list[str] = []
     validate_xml(errors)
     validate_kotlin(errors)
+    validate_cooling_contract(errors)
     validate_dynamic_resource_contract(errors)
     validate_theme_contract(errors)
 

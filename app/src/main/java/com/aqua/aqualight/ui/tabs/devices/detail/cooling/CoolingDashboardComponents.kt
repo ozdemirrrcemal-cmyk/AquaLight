@@ -18,7 +18,6 @@ import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -41,14 +40,12 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.geometry.CornerRadius
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.PathEffect
 import androidx.compose.ui.graphics.StrokeCap
@@ -56,122 +53,23 @@ import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.drawscope.rotate
 import androidx.compose.ui.graphics.drawscope.withTransform
 import androidx.compose.ui.layout.ContentScale
-import androidx.compose.ui.res.colorResource
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.semantics.contentDescription
-import androidx.compose.ui.semantics.semantics
-import androidx.compose.ui.text.TextStyle
-import androidx.compose.ui.text.font.Font
-import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.aqua.aqualight.R
-import com.aqua.aqualight.ui.common.devicepresence.DeviceConnectionVisualState
+import com.aqua.aqualight.ui.common.cooling.AquaCoolingGeometry
+import com.aqua.aqualight.ui.common.cooling.AquaCoolingPalette
+import com.aqua.aqualight.ui.common.cooling.aquaCoolingTextStyle
+import com.aqua.aqualight.ui.common.devicecard.AquaDeviceCardGeometry
+import com.aqua.aqualight.ui.common.devicecard.AquaDeviceCardSurface
+import com.aqua.aqualight.ui.common.devicecard.aquaDeviceCardColors
+import com.aqua.aqualight.ui.common.devicecard.aquaDeviceCardTypography
 import kotlin.math.PI
 import kotlin.math.cos
 import kotlin.math.sin
-
-internal object CoolingDashboardPalette {
-    val surface = Color(0xFF061827)
-    val surfaceRaised = Color(0xFF0B2032)
-    val outline = Color(0xFF294052)
-    val outlineSoft = Color(0xFF183143)
-    val textPrimary = Color(0xFFE8E8FB)
-    val textSecondary = Color(0xFFB5B5CC)
-    val textMuted = Color(0xFF828A9B)
-    val accent = Color(0xFF1474FF)
-    val cyan = Color(0xFF40C7F4)
-    val success = Color(0xFF61C86C)
-    val disabled = Color(0xFF263A49)
-}
-
-private val InterRegular = FontFamily(Font(R.font.inter_regular))
-private val InterSemiBold = FontFamily(Font(R.font.inter_semibold))
-
-@Composable
-internal fun CoolingDashboardHeader(
-    title: String,
-    connectionVisualState: DeviceConnectionVisualState,
-    settingsEnabled: Boolean,
-    onBackClick: () -> Unit,
-    onSettingsClick: () -> Unit,
-    modifier: Modifier = Modifier
-) {
-    val backDescription = stringResource(R.string.signin_back_button)
-    val settingsDescription = stringResource(R.string.device_cooling_open_settings_description)
-    val connectionDescription = stringResource(connectionVisualState.accessibilityLabelRes)
-    Row(
-        modifier = modifier
-            .fillMaxWidth()
-            .height(COOLING_HEADER_HEIGHT)
-            .padding(horizontal = 8.dp),
-        verticalAlignment = Alignment.CenterVertically
-    ) {
-        CoolingHeaderIcon(
-            iconRes = R.drawable.ic_back,
-            contentDescription = backDescription,
-            onClick = onBackClick
-        )
-        Row(
-            modifier = Modifier
-                .weight(1f)
-                .padding(start = 2.dp),
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            BasicText(
-                text = title,
-                modifier = Modifier.weight(1f, fill = false),
-                style = coolingTextStyle(
-                    size = 17.sp,
-                    lineHeight = 21.sp,
-                    color = CoolingDashboardPalette.textPrimary,
-                    semiBold = true
-                ),
-                maxLines = 1,
-                overflow = TextOverflow.Ellipsis
-            )
-            Image(
-                painter = painterResource(R.drawable.ic_status_wifi),
-                contentDescription = connectionDescription,
-                colorFilter = ColorFilter.tint(
-                    colorResource(connectionVisualState.tintColorRes)
-                ),
-                modifier = Modifier
-                    .padding(start = 8.dp)
-                    .size(16.dp)
-            )
-        }
-        CoolingHeaderIcon(
-            iconRes = R.drawable.ic_settings,
-            contentDescription = settingsDescription,
-            enabled = settingsEnabled,
-            onClick = onSettingsClick
-        )
-    }
-}
-
-@Composable
-private fun CoolingHeaderIcon(
-    iconRes: Int,
-    contentDescription: String,
-    onClick: () -> Unit,
-    enabled: Boolean = true
-) {
-    Image(
-        painter = painterResource(iconRes),
-        contentDescription = null,
-        colorFilter = ColorFilter.tint(CoolingDashboardPalette.textPrimary),
-        modifier = Modifier
-            .size(COOLING_HEADER_TOUCH_SIZE)
-            .alpha(if (enabled) 1f else HEADER_DISABLED_ALPHA)
-            .semantics { this.contentDescription = contentDescription }
-            .clickable(enabled = enabled, onClick = onClick)
-            .padding(COOLING_HEADER_ICON_PADDING)
-    )
-}
 
 @Composable
 internal fun CoolingAquariumHero(
@@ -197,14 +95,14 @@ internal fun CoolingAquariumHero(
         ),
         label = "cooling-water-phase"
     )
-    val shape = RoundedCornerShape(CARD_RADIUS)
+    val shape = RoundedCornerShape(AquaDeviceCardGeometry.cornerRadius)
     Box(
         modifier = modifier
             .fillMaxWidth()
-            .height(HERO_HEIGHT)
+            .height(AquaCoolingGeometry.heroHeight)
             .clip(shape)
-            .background(CoolingDashboardPalette.surface)
-            .border(1.dp, CoolingDashboardPalette.outline, shape)
+            .background(AquaCoolingPalette.surface)
+            .border(1.dp, AquaCoolingPalette.outline, shape)
     ) {
         Image(
             painter = painterResource(R.drawable.cooling_dashboard_aquarium),
@@ -297,7 +195,7 @@ private fun CoolingWaterOverlay(
             )
             drawPath(
                 path = path,
-                color = CoolingDashboardPalette.accent.copy(alpha = 0.18f),
+                color = AquaCoolingPalette.accent.copy(alpha = 0.18f),
                 style = Stroke(width = 4.dp.toPx(), cap = StrokeCap.Round)
             )
             drawPath(
@@ -436,26 +334,26 @@ private fun CoolingSensorBadge(modifier: Modifier = Modifier) {
         ) {
             CoolingGlyph(
                 type = CoolingGlyphType.SNOWFLAKE,
-                color = CoolingDashboardPalette.textPrimary,
+                color = AquaCoolingPalette.textPrimary,
                 modifier = Modifier.size(15.dp)
             )
         }
         Column(modifier = Modifier.padding(start = 7.dp)) {
             BasicText(
                 text = stringResource(R.string.device_cooling_temperature_sensor),
-                style = coolingTextStyle(
+                style = aquaCoolingTextStyle(
                     size = 8.sp,
                     lineHeight = 10.sp,
-                    color = CoolingDashboardPalette.textPrimary
+                    color = AquaCoolingPalette.textPrimary
                 )
             )
             BasicText(
                 text = stringResource(R.string.device_cooling_current_temperature_value),
                 modifier = Modifier.padding(top = 2.dp),
-                style = coolingTextStyle(
+                style = aquaCoolingTextStyle(
                     size = 13.sp,
                     lineHeight = 16.sp,
-                    color = CoolingDashboardPalette.textPrimary,
+                    color = AquaCoolingPalette.textPrimary,
                     semiBold = true
                 )
             )
@@ -476,7 +374,7 @@ internal fun CoolingFanGaugeCard(modifier: Modifier = Modifier) {
             Canvas(modifier = Modifier.size(76.dp)) {
                 val stroke = 8.dp.toPx()
                 drawArc(
-                    color = CoolingDashboardPalette.disabled,
+                    color = AquaCoolingPalette.disabled,
                     startAngle = 135f,
                     sweepAngle = 270f,
                     useCenter = false,
@@ -485,9 +383,9 @@ internal fun CoolingFanGaugeCard(modifier: Modifier = Modifier) {
                 drawArc(
                     brush = Brush.sweepGradient(
                         colors = listOf(
-                            CoolingDashboardPalette.cyan,
-                            CoolingDashboardPalette.accent,
-                            CoolingDashboardPalette.accent
+                            AquaCoolingPalette.cyan,
+                            AquaCoolingPalette.accent,
+                            AquaCoolingPalette.accent
                         )
                     ),
                     startAngle = 135f,
@@ -499,20 +397,20 @@ internal fun CoolingFanGaugeCard(modifier: Modifier = Modifier) {
             Column(horizontalAlignment = Alignment.CenterHorizontally) {
                 BasicText(
                     text = stringResource(R.string.device_cooling_fan_percent),
-                    style = coolingTextStyle(
+                    style = aquaCoolingTextStyle(
                         size = 20.sp,
                         lineHeight = 24.sp,
-                        color = CoolingDashboardPalette.textPrimary,
+                        color = AquaCoolingPalette.textPrimary,
                         semiBold = true
                     )
                 )
                 BasicText(
                     text = stringResource(R.string.device_cooling_mode_automatic),
                     modifier = Modifier.padding(top = 1.dp),
-                    style = coolingTextStyle(
+                    style = aquaCoolingTextStyle(
                         size = 9.sp,
                         lineHeight = 12.sp,
-                        color = CoolingDashboardPalette.cyan
+                        color = AquaCoolingPalette.cyan
                     )
                 )
             }
@@ -557,7 +455,7 @@ private fun CoolingModeOption(text: String, selected: Boolean) {
             .background(if (selected) Color(0xFF0D2133) else Color.Transparent)
             .border(
                 1.dp,
-                if (selected) Color(0xFF405267) else CoolingDashboardPalette.outlineSoft,
+                if (selected) Color(0xFF405267) else AquaCoolingPalette.outlineSoft,
                 RoundedCornerShape(14.dp)
             )
             .padding(horizontal = 8.dp),
@@ -570,9 +468,9 @@ private fun CoolingModeOption(text: String, selected: Boolean) {
                 .border(
                     width = 2.dp,
                     color = if (selected) {
-                        CoolingDashboardPalette.accent
+                        AquaCoolingPalette.accent
                     } else {
-                        CoolingDashboardPalette.textMuted
+                        AquaCoolingPalette.textMuted
                     },
                     shape = CircleShape
                 ),
@@ -583,17 +481,17 @@ private fun CoolingModeOption(text: String, selected: Boolean) {
                     modifier = Modifier
                         .size(6.dp)
                         .clip(CircleShape)
-                        .background(CoolingDashboardPalette.accent)
+                        .background(AquaCoolingPalette.accent)
                 )
             }
         }
         BasicText(
             text = text,
             modifier = Modifier.padding(start = 7.dp),
-            style = coolingTextStyle(
+            style = aquaCoolingTextStyle(
                 size = 10.sp,
                 lineHeight = 13.sp,
-                color = CoolingDashboardPalette.textPrimary
+                color = AquaCoolingPalette.textPrimary
             ),
             maxLines = 1,
             overflow = TextOverflow.Ellipsis
@@ -610,7 +508,7 @@ internal fun CoolingPowerCard(modifier: Modifier = Modifier) {
                 .fillMaxWidth()
                 .weight(1f)
                 .padding(top = 6.dp),
-            verticalArrangement = Arrangement.SpaceBetween
+            verticalArrangement = Arrangement.Center
         ) {
             Row(
                 verticalAlignment = Alignment.CenterVertically
@@ -619,43 +517,43 @@ internal fun CoolingPowerCard(modifier: Modifier = Modifier) {
                     modifier = Modifier
                         .size(26.dp)
                         .clip(CircleShape)
-                        .background(CoolingDashboardPalette.surfaceRaised)
-                        .border(1.dp, CoolingDashboardPalette.outline, CircleShape),
+                        .background(AquaCoolingPalette.surfaceRaised)
+                        .border(1.dp, AquaCoolingPalette.outline, CircleShape),
                     contentAlignment = Alignment.Center
                 ) {
                     CoolingGlyph(
                         type = CoolingGlyphType.LIGHTNING,
-                        color = CoolingDashboardPalette.textPrimary,
+                        color = AquaCoolingPalette.textPrimary,
                         modifier = Modifier.size(15.dp)
                     )
                 }
                 BasicText(
                     text = stringResource(R.string.device_cooling_power_value),
                     modifier = Modifier.padding(start = 6.dp),
-                    style = coolingTextStyle(
+                    style = aquaCoolingTextStyle(
                         size = 13.sp,
                         lineHeight = 16.sp,
-                        color = CoolingDashboardPalette.textPrimary,
+                        color = AquaCoolingPalette.textPrimary,
                         semiBold = true
                     )
                 )
             }
-            Column {
+            Column(modifier = Modifier.padding(top = 10.dp)) {
                 BasicText(
                     text = stringResource(R.string.device_cooling_estimated_consumption),
-                    style = coolingTextStyle(
+                    style = aquaCoolingTextStyle(
                         size = 9.sp,
                         lineHeight = 12.sp,
-                        color = CoolingDashboardPalette.textSecondary
+                        color = AquaCoolingPalette.textSecondary
                     )
                 )
                 BasicText(
                     text = stringResource(R.string.device_cooling_consumption_value),
                     modifier = Modifier.padding(top = 2.dp),
-                    style = coolingTextStyle(
+                    style = aquaCoolingTextStyle(
                         size = 13.sp,
                         lineHeight = 16.sp,
-                        color = CoolingDashboardPalette.textPrimary
+                        color = AquaCoolingPalette.textPrimary
                     )
                 )
             }
@@ -692,7 +590,13 @@ internal fun CoolingStatusCard(
             CoolingStatusRow(
                 glyph = CoolingGlyphType.LINK,
                 label = stringResource(R.string.device_cooling_status_connection),
-                value = stringResource(if (isOnline) R.string.device_online else R.string.device_offline),
+                value = stringResource(
+                    if (isOnline) {
+                        R.string.device_cooling_status_online
+                    } else {
+                        R.string.device_cooling_status_offline
+                    }
+                ),
                 success = isOnline
             )
             CoolingStatusRow(
@@ -718,7 +622,7 @@ private fun CoolingStatusRow(
     ) {
         CoolingGlyph(
             type = glyph,
-            color = CoolingDashboardPalette.textPrimary,
+            color = AquaCoolingPalette.textPrimary,
             modifier = Modifier.size(13.dp)
         )
         BasicText(
@@ -726,10 +630,10 @@ private fun CoolingStatusRow(
             modifier = Modifier
                 .padding(start = 6.dp)
                 .weight(1f),
-            style = coolingTextStyle(
+            style = aquaCoolingTextStyle(
                 size = 9.sp,
                 lineHeight = 12.sp,
-                color = CoolingDashboardPalette.textSecondary
+                color = AquaCoolingPalette.textSecondary
             ),
             maxLines = 1,
             overflow = TextOverflow.Ellipsis
@@ -737,13 +641,13 @@ private fun CoolingStatusRow(
         BasicText(
             text = value,
             modifier = Modifier.padding(start = 5.dp),
-            style = coolingTextStyle(
+            style = aquaCoolingTextStyle(
                 size = 9.sp,
                 lineHeight = 12.sp,
                 color = if (success) {
-                    CoolingDashboardPalette.success
+                    AquaCoolingPalette.success
                 } else {
-                    CoolingDashboardPalette.textMuted
+                    AquaCoolingPalette.textMuted
                 },
                 textAlign = TextAlign.End
             ),
@@ -805,11 +709,11 @@ private fun CoolingProfileChip(
             .fillMaxHeight()
             .clip(RoundedCornerShape(13.dp))
             .background(
-                if (selected) CoolingDashboardPalette.accent.copy(alpha = 0.82f) else Color.Transparent
+                if (selected) AquaCoolingPalette.accent.copy(alpha = 0.82f) else Color.Transparent
             )
             .border(
                 1.dp,
-                if (selected) CoolingDashboardPalette.accent else CoolingDashboardPalette.outline,
+                if (selected) AquaCoolingPalette.accent else AquaCoolingPalette.outline,
                 RoundedCornerShape(13.dp)
             )
             .padding(horizontal = 3.dp, vertical = 3.dp),
@@ -818,16 +722,16 @@ private fun CoolingProfileChip(
     ) {
         CoolingGlyph(
             type = glyph,
-            color = CoolingDashboardPalette.textPrimary,
+            color = AquaCoolingPalette.textPrimary,
             modifier = Modifier.size(16.dp)
         )
         BasicText(
             text = text,
             modifier = Modifier.padding(top = 2.dp),
-            style = coolingTextStyle(
+            style = aquaCoolingTextStyle(
                 size = 8.sp,
                 lineHeight = 10.sp,
-                color = CoolingDashboardPalette.textPrimary,
+                color = AquaCoolingPalette.textPrimary,
                 textAlign = TextAlign.Center
             ),
             maxLines = 1,
@@ -843,10 +747,10 @@ internal fun CoolingManualFanCard(modifier: Modifier = Modifier) {
         BasicText(
             text = stringResource(R.string.device_cooling_manual_only),
             modifier = Modifier.padding(top = 1.dp),
-            style = coolingTextStyle(
+            style = aquaCoolingTextStyle(
                 size = 8.sp,
                 lineHeight = 10.sp,
-                color = CoolingDashboardPalette.textSecondary
+                color = AquaCoolingPalette.textSecondary
             )
         )
         Row(
@@ -858,10 +762,10 @@ internal fun CoolingManualFanCard(modifier: Modifier = Modifier) {
             BasicText(
                 text = stringResource(R.string.device_cooling_range_minimum),
                 modifier = Modifier.padding(bottom = 2.dp),
-                style = coolingTextStyle(
+                style = aquaCoolingTextStyle(
                     size = 9.sp,
                     lineHeight = 12.sp,
-                    color = CoolingDashboardPalette.textSecondary
+                    color = AquaCoolingPalette.textSecondary
                 )
             )
             Column(
@@ -872,10 +776,10 @@ internal fun CoolingManualFanCard(modifier: Modifier = Modifier) {
             ) {
                 BasicText(
                     text = stringResource(R.string.device_cooling_fan_percent),
-                    style = coolingTextStyle(
+                    style = aquaCoolingTextStyle(
                         size = 10.sp,
                         lineHeight = 13.sp,
-                        color = CoolingDashboardPalette.textPrimary,
+                        color = AquaCoolingPalette.textPrimary,
                         semiBold = true
                     )
                 )
@@ -889,10 +793,10 @@ internal fun CoolingManualFanCard(modifier: Modifier = Modifier) {
             BasicText(
                 text = stringResource(R.string.device_cooling_range_maximum),
                 modifier = Modifier.padding(bottom = 2.dp),
-                style = coolingTextStyle(
+                style = aquaCoolingTextStyle(
                     size = 9.sp,
                     lineHeight = 12.sp,
-                    color = CoolingDashboardPalette.textSecondary
+                    color = AquaCoolingPalette.textSecondary
                 )
             )
         }
@@ -911,7 +815,7 @@ private fun CoolingDisabledSlider(
         val endX = size.width - radius
         val thumbX = startX + (endX - startX) * progress
         drawLine(
-            color = CoolingDashboardPalette.disabled,
+            color = AquaCoolingPalette.disabled,
             start = Offset(startX, centerY),
             end = Offset(endX, centerY),
             strokeWidth = 3.dp.toPx(),
@@ -919,7 +823,7 @@ private fun CoolingDisabledSlider(
         )
         drawLine(
             brush = Brush.horizontalGradient(
-                colors = listOf(CoolingDashboardPalette.accent, CoolingDashboardPalette.cyan)
+                colors = listOf(AquaCoolingPalette.accent, AquaCoolingPalette.cyan)
             ),
             start = Offset(startX, centerY),
             end = Offset(thumbX, centerY),
@@ -927,7 +831,7 @@ private fun CoolingDisabledSlider(
             cap = StrokeCap.Round
         )
         drawCircle(
-            color = CoolingDashboardPalette.textPrimary,
+            color = AquaCoolingPalette.textPrimary,
             radius = radius,
             center = Offset(thumbX, centerY)
         )
@@ -937,30 +841,26 @@ private fun CoolingDisabledSlider(
 @Composable
 internal fun CoolingDashboardCard(
     modifier: Modifier = Modifier,
-    contentPadding: PaddingValues = PaddingValues(10.dp),
+    contentPadding: PaddingValues = PaddingValues(
+        AquaDeviceCardGeometry.compactContentPadding
+    ),
     content: @Composable ColumnScope.() -> Unit
 ) {
-    val shape = RoundedCornerShape(CARD_RADIUS)
-    Column(
-        modifier = modifier
-            .clip(shape)
-            .background(CoolingDashboardPalette.surface)
-            .border(1.dp, CoolingDashboardPalette.outline, shape)
-            .padding(contentPadding),
-        content = content
-    )
+    AquaDeviceCardSurface(
+        modifier = modifier,
+        contentPadding = contentPadding
+    ) {
+        Column(modifier = Modifier.fillMaxSize(), content = content)
+    }
 }
 
 @Composable
 private fun CoolingCardTitle(text: String) {
+    val colors = aquaDeviceCardColors()
+    val typography = aquaDeviceCardTypography(colors)
     BasicText(
         text = text,
-        style = coolingTextStyle(
-            size = 11.sp,
-            lineHeight = 14.sp,
-            color = CoolingDashboardPalette.textPrimary,
-            semiBold = true
-        ),
+        style = typography.compactTitle,
         maxLines = 1,
         overflow = TextOverflow.Ellipsis
     )
@@ -1145,20 +1045,6 @@ private fun CoolingGlyph(
     }
 }
 
-internal fun coolingTextStyle(
-    size: androidx.compose.ui.unit.TextUnit,
-    lineHeight: androidx.compose.ui.unit.TextUnit,
-    color: Color,
-    semiBold: Boolean = false,
-    textAlign: TextAlign = TextAlign.Start
-): TextStyle = TextStyle(
-    color = color,
-    fontFamily = if (semiBold) InterSemiBold else InterRegular,
-    fontSize = size,
-    lineHeight = lineHeight,
-    textAlign = textAlign
-)
-
 private enum class CoolingGlyphType {
     SNOWFLAKE,
     LIGHTNING,
@@ -1171,12 +1057,6 @@ private enum class CoolingGlyphType {
     ROCKET
 }
 
-private val HERO_HEIGHT = 228.dp
-private val CARD_RADIUS = 16.dp
-private val COOLING_HEADER_HEIGHT = 50.dp
-private val COOLING_HEADER_TOUCH_SIZE = 40.dp
-private val COOLING_HEADER_ICON_PADDING = 9.dp
-private const val HEADER_DISABLED_ALPHA = 0.42f
 private const val PLACEHOLDER_FAN_FRACTION = 0.60f
 private const val FAN_ROTATION_DURATION_MS = 1_500
 private const val WATER_WAVE_DURATION_MS = 2_400

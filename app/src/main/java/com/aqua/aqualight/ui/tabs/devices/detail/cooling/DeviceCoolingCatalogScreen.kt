@@ -21,8 +21,8 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.disabled
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.tooling.preview.Preview
-import androidx.compose.ui.unit.dp
 import com.aqua.aqualight.R
+import com.aqua.aqualight.ui.common.cooling.AquaCoolingGeometry
 import com.aqua.aqualight.ui.common.devicepresence.DeviceConnectionVisualState
 
 /**
@@ -34,23 +34,13 @@ import com.aqua.aqualight.ui.common.devicepresence.DeviceConnectionVisualState
 @Composable
 internal fun DeviceCoolingCatalogScreen(
     state: DeviceCoolingRootUiState,
-    onBackClick: () -> Unit,
-    onSettingsClick: () -> Unit,
     modifier: Modifier = Modifier
 ) {
-    val fallbackTitle = stringResource(R.string.device_unknown_device)
     Column(
         modifier = modifier
             .fillMaxSize()
             .background(colorResource(R.color.background_color))
     ) {
-        CoolingDashboardHeader(
-            title = state.title.ifBlank { fallbackTitle },
-            connectionVisualState = state.connectionVisualState,
-            settingsEnabled = state.contentEnabled,
-            onBackClick = onBackClick,
-            onSettingsClick = onSettingsClick
-        )
         LazyColumn(
             modifier = Modifier
                 .fillMaxWidth()
@@ -64,12 +54,12 @@ internal fun DeviceCoolingCatalogScreen(
                     if (!state.contentEnabled) disabled()
                 },
             contentPadding = PaddingValues(
-                start = SCREEN_HORIZONTAL_PADDING,
-                top = SCREEN_TOP_PADDING,
-                end = SCREEN_HORIZONTAL_PADDING,
-                bottom = SCREEN_BOTTOM_PADDING
+                start = AquaCoolingGeometry.screenHorizontalPadding,
+                top = AquaCoolingGeometry.screenTopPadding,
+                end = AquaCoolingGeometry.screenHorizontalPadding,
+                bottom = AquaCoolingGeometry.screenBottomPadding
             ),
-            verticalArrangement = Arrangement.spacedBy(SECTION_GAP)
+            verticalArrangement = Arrangement.spacedBy(AquaCoolingGeometry.sectionGap)
         ) {
             item(key = "cooling-hero") {
                 CoolingAquariumHero(fanRunning = true)
@@ -79,7 +69,7 @@ internal fun DeviceCoolingCatalogScreen(
             }
             item(key = "summary-cards") {
                 CoolingSummaryCards(
-                    isOnline = state.connectionStatusRes == R.string.device_online
+                    isOnline = state.connectionVisualState == DeviceConnectionVisualState.ONLINE
                 )
             }
             item(key = "profile-and-manual") {
@@ -92,64 +82,64 @@ internal fun DeviceCoolingCatalogScreen(
 @Composable
 private fun CoolingSummaryCards(isOnline: Boolean) {
     BoxWithConstraints(modifier = Modifier.fillMaxWidth()) {
-        if (maxWidth >= FOUR_CARD_MIN_WIDTH) {
+        if (maxWidth >= AquaCoolingGeometry.fourCardMinWidth) {
             Row(
                 modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(CARD_GAP)
+                horizontalArrangement = Arrangement.spacedBy(AquaCoolingGeometry.cardGap)
             ) {
                 CoolingFanGaugeCard(
                     modifier = Modifier
                         .weight(FAN_GAUGE_WEIGHT)
-                        .height(SUMMARY_CARD_HEIGHT)
+                        .height(AquaCoolingGeometry.summaryCardHeight)
                 )
                 CoolingFanModeCard(
                     modifier = Modifier
                         .weight(FAN_MODE_WEIGHT)
-                        .height(SUMMARY_CARD_HEIGHT)
+                        .height(AquaCoolingGeometry.summaryCardHeight)
                 )
                 CoolingPowerCard(
                     modifier = Modifier
                         .weight(POWER_WEIGHT)
-                        .height(SUMMARY_CARD_HEIGHT)
+                        .height(AquaCoolingGeometry.summaryCardHeight)
                 )
                 CoolingStatusCard(
                     isOnline = isOnline,
                     modifier = Modifier
                         .weight(STATUS_WEIGHT)
-                        .height(SUMMARY_CARD_HEIGHT)
+                        .height(AquaCoolingGeometry.summaryCardHeight)
                 )
             }
         } else {
-            Column(verticalArrangement = Arrangement.spacedBy(CARD_GAP)) {
+            Column(verticalArrangement = Arrangement.spacedBy(AquaCoolingGeometry.cardGap)) {
                 Row(
                     modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.spacedBy(CARD_GAP)
+                    horizontalArrangement = Arrangement.spacedBy(AquaCoolingGeometry.cardGap)
                 ) {
                     CoolingFanGaugeCard(
                         modifier = Modifier
                             .weight(1f)
-                            .height(SUMMARY_CARD_HEIGHT)
+                            .height(AquaCoolingGeometry.summaryCardHeight)
                     )
                     CoolingFanModeCard(
                         modifier = Modifier
                             .weight(1f)
-                            .height(SUMMARY_CARD_HEIGHT)
+                            .height(AquaCoolingGeometry.summaryCardHeight)
                     )
                 }
                 Row(
                     modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.spacedBy(CARD_GAP)
+                    horizontalArrangement = Arrangement.spacedBy(AquaCoolingGeometry.cardGap)
                 ) {
                     CoolingPowerCard(
                         modifier = Modifier
                             .weight(1f)
-                            .height(SUMMARY_CARD_HEIGHT)
+                            .height(AquaCoolingGeometry.summaryCardHeight)
                     )
                     CoolingStatusCard(
                         isOnline = isOnline,
                         modifier = Modifier
                             .weight(1f)
-                            .height(SUMMARY_CARD_HEIGHT)
+                            .height(AquaCoolingGeometry.summaryCardHeight)
                     )
                 }
             }
@@ -160,33 +150,33 @@ private fun CoolingSummaryCards(isOnline: Boolean) {
 @Composable
 private fun CoolingProfileAndManualControls() {
     BoxWithConstraints(modifier = Modifier.fillMaxWidth()) {
-        if (maxWidth >= BOTTOM_ROW_MIN_WIDTH) {
+        if (maxWidth >= AquaCoolingGeometry.bottomRowMinWidth) {
             Row(
                 modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(CARD_GAP)
+                horizontalArrangement = Arrangement.spacedBy(AquaCoolingGeometry.cardGap)
             ) {
                 CoolingProfileCard(
                     modifier = Modifier
                         .weight(PROFILE_WEIGHT)
-                        .height(BOTTOM_CARD_HEIGHT)
+                        .height(AquaCoolingGeometry.bottomCardHeight)
                 )
                 CoolingManualFanCard(
                     modifier = Modifier
                         .weight(MANUAL_WEIGHT)
-                        .height(BOTTOM_CARD_HEIGHT)
+                        .height(AquaCoolingGeometry.bottomCardHeight)
                 )
             }
         } else {
-            Column(verticalArrangement = Arrangement.spacedBy(CARD_GAP)) {
+            Column(verticalArrangement = Arrangement.spacedBy(AquaCoolingGeometry.cardGap)) {
                 CoolingProfileCard(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .height(BOTTOM_CARD_HEIGHT)
+                    .height(AquaCoolingGeometry.bottomCardHeight)
                 )
                 CoolingManualFanCard(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .height(BOTTOM_CARD_HEIGHT)
+                    .height(AquaCoolingGeometry.bottomCardHeight)
                 )
             }
         }
@@ -198,25 +188,13 @@ private fun CoolingProfileAndManualControls() {
 private fun DeviceCoolingCatalogScreenPreview() {
     DeviceCoolingCatalogScreen(
         state = DeviceCoolingRootUiState(
-            title = stringResource(R.string.device_unknown_device),
-            connectionStatusRes = R.string.device_online,
+            title = stringResource(R.string.device_cooling_unknown_device),
             connectionVisualState = DeviceConnectionVisualState.ONLINE,
             contentEnabled = true
-        ),
-        onBackClick = {},
-        onSettingsClick = {}
+        )
     )
 }
 
-private val SCREEN_HORIZONTAL_PADDING = 16.dp
-private val SCREEN_TOP_PADDING = 6.dp
-private val SCREEN_BOTTOM_PADDING = 14.dp
-private val SECTION_GAP = 8.dp
-private val CARD_GAP = 8.dp
-private val SUMMARY_CARD_HEIGHT = 132.dp
-private val BOTTOM_CARD_HEIGHT = 76.dp
-private val FOUR_CARD_MIN_WIDTH = 456.dp
-private val BOTTOM_ROW_MIN_WIDTH = 440.dp
 private const val FAN_GAUGE_WEIGHT = 0.96f
 private const val FAN_MODE_WEIGHT = 1.02f
 private const val POWER_WEIGHT = 0.9f
