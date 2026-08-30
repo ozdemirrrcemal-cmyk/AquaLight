@@ -17,23 +17,6 @@ internal object DeviceOtaValidator {
         validateTransferIdentity(snapshot, plan) ?: validateCompletedTransfer(snapshot, plan)
     }
 
-    fun installedFirmwareError(
-        snapshot: DeviceSnapshot,
-        plan: DeviceFirmwareUpdatePlan
-    ): String? = when {
-        snapshot.product.productKey != plan.productKey ->
-            "Reconnected device productKey differs after OTA restart."
-        snapshot.product.productId != plan.productId ->
-            "Reconnected device productId differs after OTA restart."
-        snapshot.product.model != plan.model ->
-            "Reconnected device model differs after OTA restart."
-        snapshot.product.hardwareRevision != plan.hardwareRevision ->
-            "Reconnected device hardwareRevision differs after OTA restart."
-        snapshot.firmwareVersion != plan.targetVersion ->
-            "Reconnected firmware version does not match the installed OTA target."
-        else -> null
-    }
-
     fun planAgainstSnapshot(
         plan: DeviceFirmwareUpdatePlan,
         snapshot: DeviceSnapshot

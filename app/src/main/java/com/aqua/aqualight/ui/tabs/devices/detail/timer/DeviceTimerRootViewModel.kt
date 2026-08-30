@@ -26,31 +26,30 @@ class DeviceTimerRootViewModel(
     private var boundDeviceUid: String = ""
     private var observeJob: Job? = null
 
-    fun bind(deviceUidText: String, fallbackTitle: String) {
+    fun bind(deviceUidText: String) {
         val deviceUid = deviceUidText.trim()
         if (deviceUid.isBlank()) {
             observeJob?.cancel()
             boundDeviceUid = ""
-            _uiState.value = emptyState(fallbackTitle, "")
+            _uiState.value = emptyState("")
             return
         }
         if (boundDeviceUid == deviceUid) return
 
         boundDeviceUid = deviceUid
         observeJob?.cancel()
-        _uiState.value = operations.current(deviceUid)?.toRootUiState(fallbackTitle)
-            ?: emptyState(fallbackTitle, deviceUid)
+        _uiState.value = operations.current(deviceUid)?.toRootUiState()
+            ?: emptyState(deviceUid)
         operations.connect(deviceUid)
         observeJob = viewModelScope.launch {
             operations.observe(deviceUid).collect { snapshot ->
-                _uiState.value = snapshot?.toRootUiState(fallbackTitle)
-                    ?: emptyState(fallbackTitle, deviceUid)
+                _uiState.value = snapshot?.toRootUiState()
+                    ?: emptyState(deviceUid)
             }
         }
     }
 
-    private fun emptyState(title: String, deviceUid: String) = DeviceTimerRootUiState(
-        title = title,
+    private fun emptyState(deviceUid: String) = DeviceTimerRootUiState(
         deviceUid = deviceUid,
         connectionStatusRes = R.string.device_offline,
         primaryCountLabelRes = KIND.primaryCountLabelRes,
@@ -60,10 +59,10 @@ class DeviceTimerRootViewModel(
         secondarySectionPlaceholder = AquaUiText.Resource(KIND.secondarySectionPlaceholderRes)
     )
 
-    private fun DeviceRootSnapshot.toRootUiState(fallbackTitle: String): DeviceTimerRootUiState {
+    private fun DeviceRootSnapshot.toRootUiState(): DeviceTimerRootUiState {
         val menuSections = DeviceRootMenuMapper.overview(kind = KIND, snapshot = this)
         return DeviceTimerRootUiState(
-            title = title.ifBlank { fallbackTitle },
+            title = title,
             deviceUid = deviceUid,
             connectionStatusRes = DeviceRootPresentationMapper.availabilityLabelRes(this),
             ipText = ipAddress,

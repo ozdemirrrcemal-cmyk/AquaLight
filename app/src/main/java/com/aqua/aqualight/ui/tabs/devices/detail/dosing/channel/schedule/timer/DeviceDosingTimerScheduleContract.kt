@@ -1,0 +1,92 @@
+package com.aqua.aqualight.ui.tabs.devices.detail.dosing.channel.schedule.timer
+
+import com.aqua.aqualight.application.devices.dosing.DeviceDosingScheduleDraftLimits
+import com.aqua.aqualight.application.devices.dosing.DeviceDosingScheduleTimeDraftPolicy
+import com.aqua.aqualight.application.devices.dosing.DeviceDosingTimerDoseDraft
+import com.aqua.aqualight.application.devices.dosing.DeviceDosingTimerScheduleDraftPolicy
+import com.aqua.aqualight.application.devices.dosing.DeviceDosingTimerScheduleValidationError
+
+internal typealias DeviceDosingTimerDose = DeviceDosingTimerDoseDraft
+
+/** UI transport boundary; timer validity is owned by application policy. */
+internal object DeviceDosingTimerScheduleContract {
+    const val RESULT_REQUEST_KEY = "dosing_timer_schedule_result"
+    const val RESULT_KEY = "dosing_timer_schedule_result_state"
+    const val RESULT_DOSES_DRAFT = "dosing_timer_schedule_doses_draft"
+    const val RESULT_SLOT_ID = "dosing_timer_schedule_slot_id"
+    const val RESULT_SAVED = "saved"
+
+    const val MAX_DOSES_PER_DAY = DeviceDosingScheduleDraftLimits.MAX_DOSES_PER_DAY
+    const val MILLIS_PER_MINUTE = DeviceDosingScheduleDraftLimits.MILLIS_PER_MINUTE
+    const val MINUTES_PER_DAY = DeviceDosingScheduleDraftLimits.MINUTES_PER_DAY
+    const val LAST_MINUTE_START_MS = DeviceDosingScheduleDraftLimits.LAST_MINUTE_START_MS
+
+    enum class ValidationError { INVALID_DOSE, TOO_MANY_DOSES, DUPLICATE_TIME, TOTAL_OVERFLOW }
+
+    fun startTimeMs(minutesOfDay: Int): Long =
+        DeviceDosingScheduleTimeDraftPolicy.startTimeMs(minutesOfDay)
+
+    fun minutesOfDay(timeMs: Long): Int =
+        DeviceDosingScheduleTimeDraftPolicy.minutesOfDay(timeMs)
+
+    fun isValidTime(timeMs: Long): Boolean =
+        DeviceDosingScheduleTimeDraftPolicy.isValidTime(timeMs)
+
+    fun validate(
+        doses: List<DeviceDosingTimerDose>,
+        maxEventsPerChannel: Int = MAX_DOSES_PER_DAY
+    ): ValidationError? = DeviceDosingTimerScheduleDraftPolicy.validate(
+        doses,
+        maxEventsPerChannel
+    )?.toUiError()
+
+    fun normalize(
+        doses: List<DeviceDosingTimerDose>,
+        maxEventsPerChannel: Int = MAX_DOSES_PER_DAY
+    ): List<DeviceDosingTimerDose> = DeviceDosingTimerScheduleDraftPolicy.normalize(
+        doses,
+        maxEventsPerChannel
+    )
+
+    fun totalDoseMicroliters(doses: List<DeviceDosingTimerDose>): Long =
+        DeviceDosingTimerScheduleDraftPolicy.totalDoseMicroliters(doses)
+
+    fun encodeDraft(
+        doses: List<DeviceDosingTimerDose>,
+        maxEventsPerChannel: Int = MAX_DOSES_PER_DAY
+    ): String = normalize(doses, maxEventsPerChannel).joinToString(DOSE_SEPARATOR) { dose ->
+        listOf(dose.startTimeMs, dose.amountMicroliters).joinToString(FIELD_SEPARATOR)
+    }
+
+    fun decodeDraft(
+        encoded: String,
+        maxEventsPerChannel: Int = MAX_DOSES_PER_DAY
+    ): List<DeviceDosingTimerDose>? = when {
+        encoded.isBlank() -> emptyList()
+        else -> runCatching { decodeTimerDoses(encoded) }.getOrNull()
+            ?.takeIf { doses -> validate(doses, maxEventsPerChannel) == null }
+            ?.let { doses -> normalize(doses, maxEventsPerChannel) }
+    }
+}
+
+private fun DeviceDosingTimerScheduleValidationError.toUiError() = when (this) {
+    DeviceDosingTimerScheduleValidationError.INVALID_DOSE ->
+        DeviceDosingTimerScheduleContract.ValidationError.INVALID_DOSE
+    DeviceDosingTimerScheduleValidationError.TOO_MANY_DOSES ->
+        DeviceDosingTimerScheduleContract.ValidationError.TOO_MANY_DOSES
+    DeviceDosingTimerScheduleValidationError.DUPLICATE_TIME ->
+        DeviceDosingTimerScheduleContract.ValidationError.DUPLICATE_TIME
+    DeviceDosingTimerScheduleValidationError.TOTAL_OVERFLOW ->
+        DeviceDosingTimerScheduleContract.ValidationError.TOTAL_OVERFLOW
+}
+
+private fun decodeTimerDoses(encoded: String): List<DeviceDosingTimerDose> =
+    encoded.split(DOSE_SEPARATOR).map { entry ->
+        val fields = entry.split(FIELD_SEPARATOR)
+        require(fields.size == DOSE_FIELD_COUNT)
+        DeviceDosingTimerDose(fields[0].toLong(), fields[1].toLong())
+    }
+
+private const val DOSE_SEPARATOR = ";"
+private const val FIELD_SEPARATOR = ":"
+private const val DOSE_FIELD_COUNT = 2

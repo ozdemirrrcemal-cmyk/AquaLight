@@ -78,7 +78,10 @@ object AqlWsContract {
     const val ACTION_TIMER_CHANNEL_SET = "channel.set"
 
     const val ACTION_DOSING_STATUS_GET = ACTION_STATUS_GET
+    const val ACTION_DOSING_PROGRESS_GET = "progress.get"
     const val ACTION_DOSING_CONFIG_APPLY = ACTION_CONFIG_APPLY
+    const val ACTION_DOSING_PROGRAM_APPLY = "program.apply"
+    const val ACTION_DOSING_CHANNEL_RESET = "channel.reset"
     const val ACTION_DOSING_PRIME_START = "prime.start"
     const val ACTION_DOSING_PRIME_STOP = "prime.stop"
     const val ACTION_DOSING_CALIBRATION_START = "calibration.start"
@@ -174,8 +177,11 @@ object AqlWsContract {
         commandKey(MODULE_TIMER, ACTION_TIMER_STATUS_GET),
         commandKey(MODULE_TIMER, ACTION_TIMER_CONFIG_APPLY),
         commandKey(MODULE_TIMER, ACTION_TIMER_CHANNEL_SET),
-        commandKey(MODULE_DOSING, ACTION_DOSING_CONFIG_APPLY),
         commandKey(MODULE_DOSING, ACTION_DOSING_STATUS_GET),
+        commandKey(MODULE_DOSING, ACTION_DOSING_PROGRESS_GET),
+        commandKey(MODULE_DOSING, ACTION_DOSING_CONFIG_APPLY),
+        commandKey(MODULE_DOSING, ACTION_DOSING_PROGRAM_APPLY),
+        commandKey(MODULE_DOSING, ACTION_DOSING_CHANNEL_RESET),
         commandKey(MODULE_DOSING, ACTION_DOSING_PRIME_START),
         commandKey(MODULE_DOSING, ACTION_DOSING_PRIME_STOP),
         commandKey(MODULE_DOSING, ACTION_DOSING_CALIBRATION_START),

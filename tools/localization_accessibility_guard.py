@@ -256,12 +256,12 @@ def validate_icon_descriptions(errors: list[str]) -> None:
                     "requires a content description"
                 )
 
-    binding_path = JAVA / "com/aqua/aqualight/ui/common/header/AquaHeaderBindingExt.kt"
+    binding_path = JAVA / "com/aqua/aqualight/ui/common/header/AquaHeaderComponentBinder.kt"
     binding = binding_path.read_text(encoding="utf-8")
     assignments = (
         ("button.contentDescription", "action.contentDescription"),
-        ("btnFilledIconAction.contentDescription", "filledIconAction.contentDescription"),
-        ("btnCardIconAction.contentDescription", "cardIconAction.contentDescription"),
+        ("binding.btnFilledIconAction.contentDescription", "action.contentDescription"),
+        ("binding.btnCardIconAction.contentDescription", "action.contentDescription"),
     )
     for target, source in assignments:
         if target not in binding or source not in binding:

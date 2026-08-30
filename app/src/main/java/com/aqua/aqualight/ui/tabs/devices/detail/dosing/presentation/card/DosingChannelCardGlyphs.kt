@@ -1,0 +1,406 @@
+package com.aqua.aqualight.ui.tabs.devices.detail.dosing.presentation.card
+
+import androidx.compose.foundation.Canvas
+import androidx.compose.runtime.Composable
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.geometry.CornerRadius
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.geometry.Size
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.StrokeCap
+import androidx.compose.ui.graphics.StrokeJoin
+import androidx.compose.ui.graphics.drawscope.DrawScope
+import androidx.compose.ui.graphics.drawscope.Stroke
+import com.aqua.aqualight.ui.common.dosing.AquaDosingCardGeometry
+import kotlin.math.cos
+import kotlin.math.sin
+
+@Composable
+internal fun DosingMetricGlyph(
+    type: DosingMetricGlyphType,
+    tint: Color,
+    modifier: Modifier = Modifier
+) {
+    Canvas(modifier = modifier) {
+        when (type) {
+            DosingMetricGlyphType.DOSE -> drawDoseGlyph(tint)
+            DosingMetricGlyphType.DAYS -> drawCalendarGlyph(tint)
+        }
+    }
+}
+
+@Composable
+internal fun DosingProgramModeGlyph(
+    mode: DosingProgramModeUiState,
+    tint: Color,
+    modifier: Modifier = Modifier
+) {
+    Canvas(modifier = modifier) {
+        when (mode) {
+            DosingProgramModeUiState.SINGLE -> {
+                val center = Offset(size.width / 2f, size.height / 2f)
+                drawCircle(
+                    color = tint.copy(alpha = MODE_RING_ALPHA),
+                    radius = size.minDimension * MODE_RING_RADIUS,
+                    center = center,
+                    style = Stroke(width = MODE_STROKE.toPx())
+                )
+                drawCircle(
+                    color = tint,
+                    radius = size.minDimension * MODE_CORE_RADIUS,
+                    center = center
+                )
+            }
+            DosingProgramModeUiState.HOURLY_24 -> drawClockModeGlyph(tint, showEvents = false)
+            DosingProgramModeUiState.CUSTOM_PERIODS -> {
+                CUSTOM_SEGMENTS.forEachIndexed { index, segment ->
+                    drawRoundRect(
+                        color = tint.copy(alpha = CUSTOM_SEGMENT_ALPHAS[index]),
+                        topLeft = Offset(size.width * segment.first, size.height * CUSTOM_TOP_Y),
+                        size = Size(size.width * segment.second, size.height * CUSTOM_HEIGHT),
+                        cornerRadius = CornerRadius(CUSTOM_CORNER_RADIUS.toPx())
+                    )
+                }
+            }
+            DosingProgramModeUiState.TIMER -> drawClockModeGlyph(tint, showEvents = true)
+        }
+    }
+}
+
+@Composable
+internal fun DosingEmptyStateGlyph(
+    tint: Color,
+    badgeSurface: Color,
+    modifier: Modifier = Modifier
+) {
+    Canvas(modifier = modifier) {
+        drawDoseGlyph(tint)
+        drawPlusBadge(
+            color = tint,
+            surface = badgeSurface,
+            center = Offset(size.width * BADGE_CENTER_X, size.height * BADGE_CENTER_Y),
+            radius = size.minDimension * BADGE_RADIUS
+        )
+    }
+}
+
+@Composable
+internal fun DosingManualDoseGlyph(
+    tint: Color,
+    modifier: Modifier = Modifier
+) {
+    Canvas(modifier = modifier) {
+        drawDoseGlyph(tint)
+        val center = Offset(size.width * BADGE_CENTER_X, size.height * BADGE_CENTER_Y)
+        val arm = size.minDimension * MANUAL_PLUS_ARM
+        drawLine(
+            color = tint,
+            start = Offset(center.x - arm, center.y),
+            end = Offset(center.x + arm, center.y),
+            strokeWidth = MANUAL_PLUS_WIDTH.toPx(),
+            cap = StrokeCap.Round
+        )
+        drawLine(
+            color = tint,
+            start = Offset(center.x, center.y - arm),
+            end = Offset(center.x, center.y + arm),
+            strokeWidth = MANUAL_PLUS_WIDTH.toPx(),
+            cap = StrokeCap.Round
+        )
+    }
+}
+
+@Composable
+internal fun DosingNextDoseGlyph(
+    tint: Color,
+    modifier: Modifier = Modifier
+) {
+    Canvas(modifier = modifier) {
+        drawNextDoseGlyph(tint)
+    }
+}
+
+private fun DrawScope.drawNextDoseGlyph(color: Color) {
+    val stroke = NEXT_DOSE_GLYPH_STROKE.toPx()
+    val center = Offset(
+        x = size.width * NEXT_DOSE_CLOCK_CENTER_X,
+        y = size.height * NEXT_DOSE_CLOCK_CENTER_Y
+    )
+    val radius = size.minDimension * NEXT_DOSE_CLOCK_RADIUS
+
+    drawCircle(
+        color = color,
+        radius = radius,
+        center = center,
+        style = Stroke(width = stroke)
+    )
+    drawLine(
+        color = color,
+        start = center,
+        end = Offset(center.x, center.y - radius * NEXT_DOSE_MINUTE_HAND_LENGTH),
+        strokeWidth = stroke,
+        cap = StrokeCap.Round
+    )
+    drawLine(
+        color = color,
+        start = center,
+        end = Offset(center.x + radius * NEXT_DOSE_HOUR_HAND_LENGTH, center.y),
+        strokeWidth = stroke,
+        cap = StrokeCap.Round
+    )
+    drawCircle(
+        color = color,
+        radius = NEXT_DOSE_CENTER_DOT_RADIUS.toPx(),
+        center = center
+    )
+
+    val arrowY = size.height * NEXT_DOSE_ARROW_CENTER_Y
+    val arrowEnd = Offset(size.width * NEXT_DOSE_ARROW_END_X, arrowY)
+    val arrowWingX = size.width * NEXT_DOSE_ARROW_WING_X
+    drawLine(
+        color = color,
+        start = Offset(size.width * NEXT_DOSE_ARROW_START_X, arrowY),
+        end = arrowEnd,
+        strokeWidth = stroke,
+        cap = StrokeCap.Round
+    )
+    drawLine(
+        color = color,
+        start = Offset(arrowWingX, size.height * NEXT_DOSE_ARROW_TOP_Y),
+        end = arrowEnd,
+        strokeWidth = stroke,
+        cap = StrokeCap.Round
+    )
+    drawLine(
+        color = color,
+        start = Offset(arrowWingX, size.height * NEXT_DOSE_ARROW_BOTTOM_Y),
+        end = arrowEnd,
+        strokeWidth = stroke,
+        cap = StrokeCap.Round
+    )
+}
+
+private fun DrawScope.drawDoseGlyph(color: Color) {
+    drawPath(
+        path = dosingDropPath(),
+        color = color,
+        style = Stroke(
+            width = GLYPH_STROKE.toPx(),
+            cap = StrokeCap.Round,
+            join = StrokeJoin.Round
+        )
+    )
+    drawCircle(
+        color = color.copy(alpha = HIGHLIGHT_ALPHA),
+        radius = size.minDimension * HIGHLIGHT_RADIUS,
+        center = Offset(size.width * HIGHLIGHT_X, size.height * HIGHLIGHT_Y)
+    )
+}
+
+private fun DrawScope.drawPlusBadge(
+    color: Color,
+    surface: Color,
+    center: Offset,
+    radius: Float
+) {
+    val arm = size.minDimension * BADGE_PLUS_ARM
+    drawCircle(color = surface, radius = radius, center = center)
+    drawCircle(
+        color = color.copy(alpha = BADGE_OUTLINE_ALPHA),
+        radius = radius,
+        center = center,
+        style = Stroke(width = BADGE_OUTLINE_WIDTH.toPx())
+    )
+    drawLine(
+        color = color,
+        start = Offset(center.x - arm, center.y),
+        end = Offset(center.x + arm, center.y),
+        strokeWidth = BADGE_PLUS_WIDTH.toPx(),
+        cap = StrokeCap.Round
+    )
+    drawLine(
+        color = color,
+        start = Offset(center.x, center.y - arm),
+        end = Offset(center.x, center.y + arm),
+        strokeWidth = BADGE_PLUS_WIDTH.toPx(),
+        cap = StrokeCap.Round
+    )
+}
+
+private fun DrawScope.drawCalendarGlyph(color: Color) {
+    val stroke = GLYPH_STROKE.toPx()
+    val left = size.width * CALENDAR_LEFT_X
+    val top = size.height * CALENDAR_TOP_Y
+    val width = size.width * CALENDAR_WIDTH
+    val height = size.height * CALENDAR_HEIGHT
+    drawRoundRect(
+        color = color,
+        topLeft = Offset(left, top),
+        size = Size(width, height),
+        cornerRadius = CornerRadius(CALENDAR_CORNER_RADIUS.toPx()),
+        style = Stroke(width = stroke)
+    )
+    drawLine(
+        color = color,
+        start = Offset(left, size.height * CALENDAR_HEADER_Y),
+        end = Offset(left + width, size.height * CALENDAR_HEADER_Y),
+        strokeWidth = stroke,
+        cap = StrokeCap.Round
+    )
+    CALENDAR_BINDERS.forEach { x ->
+        drawLine(
+            color = color,
+            start = Offset(size.width * x, size.height * CALENDAR_BINDER_TOP_Y),
+            end = Offset(size.width * x, size.height * CALENDAR_BINDER_BOTTOM_Y),
+            strokeWidth = stroke,
+            cap = StrokeCap.Round
+        )
+    }
+    CALENDAR_DOTS.forEach { x ->
+        drawCircle(
+            color = color,
+            radius = CALENDAR_DOT_RADIUS.toPx(),
+            center = Offset(size.width * x, size.height * CALENDAR_DOT_Y)
+        )
+    }
+}
+
+private fun DrawScope.drawClockModeGlyph(color: Color, showEvents: Boolean) {
+    val center = Offset(size.width / 2f, size.height / 2f)
+    val radius = size.minDimension * CLOCK_RADIUS
+    drawCircle(
+        color = color,
+        radius = radius,
+        center = center,
+        style = Stroke(width = MODE_STROKE.toPx())
+    )
+    if (showEvents) {
+        TIMER_EVENT_ANGLES.forEach { angle ->
+            val radians = Math.toRadians(angle.toDouble())
+            drawCircle(
+                color = color,
+                radius = TIMER_EVENT_RADIUS.toPx(),
+                center = Offset(
+                    x = center.x + cos(radians).toFloat() * radius * TIMER_EVENT_DISTANCE,
+                    y = center.y + sin(radians).toFloat() * radius * TIMER_EVENT_DISTANCE
+                )
+            )
+        }
+    } else {
+        CLOCK_TICK_ANGLES.forEach { angle ->
+            val radians = Math.toRadians(angle.toDouble())
+            val startDistance = radius * CLOCK_TICK_START
+            drawLine(
+                color = color,
+                start = Offset(
+                    center.x + cos(radians).toFloat() * startDistance,
+                    center.y + sin(radians).toFloat() * startDistance
+                ),
+                end = Offset(
+                    center.x + cos(radians).toFloat() * radius,
+                    center.y + sin(radians).toFloat() * radius
+                ),
+                strokeWidth = CLOCK_TICK_WIDTH.toPx(),
+                cap = StrokeCap.Round
+            )
+        }
+    }
+}
+
+private const val HIGHLIGHT_ALPHA = 0.72f
+private const val HIGHLIGHT_RADIUS = 0.065f
+private const val HIGHLIGHT_X = 0.39f
+private const val HIGHLIGHT_Y = 0.61f
+private const val BADGE_CENTER_X = 0.73f
+private const val BADGE_CENTER_Y = 0.72f
+private const val BADGE_RADIUS = 0.20f
+private const val BADGE_PLUS_ARM = 0.075f
+private const val MANUAL_PLUS_ARM = 0.10f
+private const val BADGE_OUTLINE_ALPHA = 0.70f
+private const val NEXT_DOSE_CLOCK_CENTER_X = 0.34f
+private const val NEXT_DOSE_CLOCK_CENTER_Y = 0.50f
+private const val NEXT_DOSE_CLOCK_RADIUS = 0.28f
+private const val NEXT_DOSE_MINUTE_HAND_LENGTH = 0.58f
+private const val NEXT_DOSE_HOUR_HAND_LENGTH = 0.45f
+private const val NEXT_DOSE_ARROW_START_X = 0.68f
+private const val NEXT_DOSE_ARROW_END_X = 0.93f
+private const val NEXT_DOSE_ARROW_WING_X = 0.81f
+private const val NEXT_DOSE_ARROW_CENTER_Y = 0.50f
+private const val NEXT_DOSE_ARROW_TOP_Y = 0.37f
+private const val NEXT_DOSE_ARROW_BOTTOM_Y = 0.63f
+private const val CALENDAR_LEFT_X = 0.10f
+private const val CALENDAR_TOP_Y = 0.18f
+private const val CALENDAR_WIDTH = 0.80f
+private const val CALENDAR_HEIGHT = 0.70f
+private const val CALENDAR_HEADER_Y = 0.40f
+private const val CALENDAR_BINDER_TOP_Y = 0.08f
+private const val CALENDAR_BINDER_BOTTOM_Y = 0.28f
+private const val CALENDAR_DOT_Y = 0.62f
+private const val MODE_RING_ALPHA = 0.42f
+private const val MODE_RING_RADIUS = 0.40f
+private const val MODE_CORE_RADIUS = 0.17f
+private const val CLOCK_RADIUS = 0.40f
+private const val CLOCK_TICK_START = 0.72f
+private const val TIMER_EVENT_DISTANCE = 0.68f
+private const val CUSTOM_TOP_Y = 0.27f
+private const val CUSTOM_HEIGHT = 0.46f
+private const val CALENDAR_BINDER_LEFT_X = 0.32f
+private const val CALENDAR_BINDER_RIGHT_X = 0.68f
+private const val CALENDAR_DOT_LEFT_X = 0.30f
+private const val CALENDAR_DOT_CENTER_X = 0.50f
+private const val CALENDAR_DOT_RIGHT_X = 0.70f
+private const val CLOCK_TOP_ANGLE = 0f
+private const val CLOCK_RIGHT_ANGLE = 90f
+private const val CLOCK_BOTTOM_ANGLE = 180f
+private const val CLOCK_LEFT_ANGLE = 270f
+private const val TIMER_TOP_ANGLE = -90f
+private const val TIMER_RIGHT_ANGLE = 20f
+private const val TIMER_LEFT_ANGLE = 145f
+private const val CUSTOM_FIRST_START_X = 0.08f
+private const val CUSTOM_FIRST_WIDTH = 0.23f
+private const val CUSTOM_SECOND_START_X = 0.38f
+private const val CUSTOM_SECOND_WIDTH = 0.19f
+private const val CUSTOM_THIRD_START_X = 0.64f
+private const val CUSTOM_THIRD_WIDTH = 0.28f
+private const val CUSTOM_FIRST_ALPHA = 0.72f
+private const val CUSTOM_SECOND_ALPHA = 1f
+private const val CUSTOM_THIRD_ALPHA = 0.84f
+private val CALENDAR_BINDERS = listOf(CALENDAR_BINDER_LEFT_X, CALENDAR_BINDER_RIGHT_X)
+private val CALENDAR_DOTS = listOf(
+    CALENDAR_DOT_LEFT_X,
+    CALENDAR_DOT_CENTER_X,
+    CALENDAR_DOT_RIGHT_X
+)
+private val CLOCK_TICK_ANGLES = listOf(
+    CLOCK_TOP_ANGLE,
+    CLOCK_RIGHT_ANGLE,
+    CLOCK_BOTTOM_ANGLE,
+    CLOCK_LEFT_ANGLE
+)
+private val TIMER_EVENT_ANGLES = listOf(
+    TIMER_TOP_ANGLE,
+    TIMER_RIGHT_ANGLE,
+    TIMER_LEFT_ANGLE
+)
+private val CUSTOM_SEGMENTS = listOf(
+    CUSTOM_FIRST_START_X to CUSTOM_FIRST_WIDTH,
+    CUSTOM_SECOND_START_X to CUSTOM_SECOND_WIDTH,
+    CUSTOM_THIRD_START_X to CUSTOM_THIRD_WIDTH
+)
+private val CUSTOM_SEGMENT_ALPHAS = listOf(
+    CUSTOM_FIRST_ALPHA,
+    CUSTOM_SECOND_ALPHA,
+    CUSTOM_THIRD_ALPHA
+)
+private val GLYPH_STROKE = AquaDosingCardGeometry.glyphStroke
+private val BADGE_OUTLINE_WIDTH = AquaDosingCardGeometry.badgeOutlineWidth
+private val BADGE_PLUS_WIDTH = AquaDosingCardGeometry.badgePlusWidth
+private val MANUAL_PLUS_WIDTH = AquaDosingCardGeometry.manualPlusWidth
+private val NEXT_DOSE_GLYPH_STROKE = AquaDosingCardGeometry.nextDoseGlyphStroke
+private val NEXT_DOSE_CENTER_DOT_RADIUS = AquaDosingCardGeometry.nextDoseCenterDotRadius
+private val CALENDAR_CORNER_RADIUS = AquaDosingCardGeometry.calendarCornerRadius
+private val CALENDAR_DOT_RADIUS = AquaDosingCardGeometry.calendarDotRadius
+private val MODE_STROKE = AquaDosingCardGeometry.modeStroke
+private val CLOCK_TICK_WIDTH = AquaDosingCardGeometry.clockTickWidth
+private val TIMER_EVENT_RADIUS = AquaDosingCardGeometry.timerEventRadius
+private val CUSTOM_CORNER_RADIUS = AquaDosingCardGeometry.customCornerRadius

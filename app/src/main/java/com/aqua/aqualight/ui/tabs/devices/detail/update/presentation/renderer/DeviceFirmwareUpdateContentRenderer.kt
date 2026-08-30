@@ -230,6 +230,9 @@ internal class DeviceFirmwareUpdateContentRenderer(
     private companion object {
         val TERMINAL_ERROR_MODES = setOf(
             DeviceFirmwareUpdateMode.FAILED,
+            DeviceFirmwareUpdateMode.ROLLED_BACK,
+            DeviceFirmwareUpdateMode.POST_RESTART_TIMEOUT,
+            DeviceFirmwareUpdateMode.UNEXPECTED_FIRMWARE,
             DeviceFirmwareUpdateMode.UNSUPPORTED
         )
         val INDETERMINATE_MODES = setOf(
@@ -244,6 +247,9 @@ internal class DeviceFirmwareUpdateContentRenderer(
             DeviceFirmwareUpdateMode.RECOVERING,
             DeviceFirmwareUpdateMode.RESTARTING,
             DeviceFirmwareUpdateMode.SUCCEEDED,
+            DeviceFirmwareUpdateMode.ROLLED_BACK,
+            DeviceFirmwareUpdateMode.POST_RESTART_TIMEOUT,
+            DeviceFirmwareUpdateMode.UNEXPECTED_FIRMWARE,
             DeviceFirmwareUpdateMode.UP_TO_DATE,
             DeviceFirmwareUpdateMode.FAILED
         )

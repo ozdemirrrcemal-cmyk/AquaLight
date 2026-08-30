@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="device_dosing_hourly_calendar_day_hero_description">AquaLight divides the daily dose across 24 hourly slots on each selected day. Choose the minute used in every hour.</string>
+    <string name="device_dosing_hourly_minute_of_hour_title">Minute of each hour</string>
+    <string name="device_dosing_hourly_minute_of_hour_description">Each selected day uses this minute for all 24 hourly doses.</string>
+    <string name="device_dosing_hourly_same_day_window_description">All 24 doses stay on the same selected calendar day.</string>
+    <string name="device_dosing_hourly_minute_of_hour_picker_title">Select dose minute</string>
+    <string name="device_dosing_hourly_minute_of_hour_picker_message">Choose the minute used in every hour. AquaLight schedules 00:mm through 23:mm on each selected day.</string>
+    <string name="device_dosing_hourly_minute_of_hour_picker_confirm">Apply minute</string>
+    <string name="device_dosing_hourly_minute_value_format">:%1$02d</string>
+</resources>

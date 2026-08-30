@@ -73,6 +73,15 @@ internal object DeviceFirmwareUpdateHeroPresentationMapper {
         when (state.mode) {
             DeviceFirmwareUpdateMode.AVAILABLE -> availableSummary(state)
             DeviceFirmwareUpdateMode.SUCCEEDED -> succeededSummary(state.targetVersion)
+            DeviceFirmwareUpdateMode.ROLLED_BACK -> DeviceFirmwareUpdateText(
+                R.string.device_settings_update_hero_summary_rolled_back
+            )
+            DeviceFirmwareUpdateMode.POST_RESTART_TIMEOUT -> DeviceFirmwareUpdateText(
+                R.string.device_settings_update_hero_summary_post_restart_timeout
+            )
+            DeviceFirmwareUpdateMode.UNEXPECTED_FIRMWARE -> DeviceFirmwareUpdateText(
+                R.string.device_settings_update_hero_summary_unexpected_firmware
+            )
             DeviceFirmwareUpdateMode.UP_TO_DATE -> upToDateSummary(state.currentVersion)
             DeviceFirmwareUpdateMode.FAILED -> DeviceFirmwareUpdateText(
                 state.failure?.let { failure ->
@@ -120,8 +129,11 @@ internal object DeviceFirmwareUpdateHeroPresentationMapper {
 
     @ColorRes
     private fun statusColorRes(state: DeviceFirmwareUpdateUiState): Int = when (state.mode) {
-        DeviceFirmwareUpdateMode.FAILED -> R.color.aqua_status_danger
-        DeviceFirmwareUpdateMode.UNSUPPORTED -> R.color.aqua_content_warning
+        DeviceFirmwareUpdateMode.FAILED,
+        DeviceFirmwareUpdateMode.POST_RESTART_TIMEOUT,
+        DeviceFirmwareUpdateMode.UNEXPECTED_FIRMWARE -> R.color.aqua_status_danger
+        DeviceFirmwareUpdateMode.UNSUPPORTED,
+        DeviceFirmwareUpdateMode.ROLLED_BACK -> R.color.aqua_content_warning
         DeviceFirmwareUpdateMode.AVAILABLE -> if (state.releaseContent.mandatory) {
             R.color.aqua_content_warning
         } else {
@@ -135,8 +147,12 @@ internal object DeviceFirmwareUpdateHeroPresentationMapper {
     @ColorRes
     private fun statusBackgroundColorRes(state: DeviceFirmwareUpdateUiState): Int =
         when (state.mode) {
-            DeviceFirmwareUpdateMode.FAILED -> R.color.aqua_aquarium_fragment_button_outline
-            DeviceFirmwareUpdateMode.UNSUPPORTED ->
+            DeviceFirmwareUpdateMode.FAILED,
+            DeviceFirmwareUpdateMode.POST_RESTART_TIMEOUT,
+            DeviceFirmwareUpdateMode.UNEXPECTED_FIRMWARE ->
+                R.color.aqua_aquarium_fragment_button_outline
+            DeviceFirmwareUpdateMode.UNSUPPORTED,
+            DeviceFirmwareUpdateMode.ROLLED_BACK ->
                 R.color.aqua_bg_maintenance_profile_percent_warning_fill
             DeviceFirmwareUpdateMode.AVAILABLE -> if (state.releaseContent.mandatory) {
                 R.color.aqua_bg_maintenance_profile_percent_warning_fill
@@ -155,11 +171,14 @@ internal object DeviceFirmwareUpdateHeroPresentationMapper {
                 R.drawable.ic_check_24,
                 R.color.aqua_status_success
             )
-            DeviceFirmwareUpdateMode.FAILED -> DeviceFirmwareUpdateIconPresentation(
+            DeviceFirmwareUpdateMode.FAILED,
+            DeviceFirmwareUpdateMode.POST_RESTART_TIMEOUT,
+            DeviceFirmwareUpdateMode.UNEXPECTED_FIRMWARE -> DeviceFirmwareUpdateIconPresentation(
                 R.drawable.ic_error,
                 R.color.aqua_status_danger
             )
-            DeviceFirmwareUpdateMode.UNSUPPORTED -> DeviceFirmwareUpdateIconPresentation(
+            DeviceFirmwareUpdateMode.UNSUPPORTED,
+            DeviceFirmwareUpdateMode.ROLLED_BACK -> DeviceFirmwareUpdateIconPresentation(
                 R.drawable.ic_warning,
                 R.color.aqua_content_warning
             )
@@ -177,6 +196,12 @@ internal object DeviceFirmwareUpdateHeroPresentationMapper {
         DeviceFirmwareUpdateMode.RECOVERING to R.string.device_settings_update_hero_title_recovering,
         DeviceFirmwareUpdateMode.RESTARTING to R.string.device_settings_update_hero_title_restarting,
         DeviceFirmwareUpdateMode.SUCCEEDED to R.string.device_settings_update_hero_title_succeeded,
+        DeviceFirmwareUpdateMode.ROLLED_BACK to
+            R.string.device_settings_update_hero_title_rolled_back,
+        DeviceFirmwareUpdateMode.POST_RESTART_TIMEOUT to
+            R.string.device_settings_update_hero_title_post_restart_timeout,
+        DeviceFirmwareUpdateMode.UNEXPECTED_FIRMWARE to
+            R.string.device_settings_update_hero_title_unexpected_firmware,
         DeviceFirmwareUpdateMode.UP_TO_DATE to R.string.device_settings_update_hero_title_up_to_date,
         DeviceFirmwareUpdateMode.FAILED to R.string.device_settings_update_hero_title_failed,
         DeviceFirmwareUpdateMode.UNSUPPORTED to R.string.device_settings_update_hero_title_unsupported
@@ -200,6 +225,12 @@ internal object DeviceFirmwareUpdateHeroPresentationMapper {
         DeviceFirmwareUpdateMode.RECOVERING to R.string.device_settings_update_status_recovering,
         DeviceFirmwareUpdateMode.RESTARTING to R.string.device_settings_update_status_restarting,
         DeviceFirmwareUpdateMode.SUCCEEDED to R.string.device_settings_update_status_succeeded,
+        DeviceFirmwareUpdateMode.ROLLED_BACK to
+            R.string.device_settings_update_status_rolled_back,
+        DeviceFirmwareUpdateMode.POST_RESTART_TIMEOUT to
+            R.string.device_settings_update_status_post_restart_timeout,
+        DeviceFirmwareUpdateMode.UNEXPECTED_FIRMWARE to
+            R.string.device_settings_update_status_unexpected_firmware,
         DeviceFirmwareUpdateMode.UP_TO_DATE to R.string.device_settings_update_status_up_to_date,
         DeviceFirmwareUpdateMode.FAILED to R.string.device_settings_update_status_failed,
         DeviceFirmwareUpdateMode.UNSUPPORTED to R.string.device_settings_update_status_unsupported

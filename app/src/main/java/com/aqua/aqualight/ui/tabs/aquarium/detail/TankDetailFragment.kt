@@ -97,7 +97,9 @@ class TankDetailFragment :
                 actions = listOf(
                     AquaHeaderAction(
                         iconRes = R.drawable.ic_edit_24,
-                        contentDescription = getString(R.string.aquarium_content_desc_edit_tank),
+                        contentDescription = getString(
+                            R.string.aquarium_content_desc_edit_tank
+                        ),
                         onClick = {
                             openTankSettings()
                         }
@@ -351,46 +353,44 @@ class TankDetailFragment :
 
     override fun onTankDetailDeviceClicked(
         route: DeviceRoute
-    ) {
+    ): Boolean {
         selectedTab = TankDetailTab.DEVICES
         saveSelectedTabState(
             tab = TankDetailTab.DEVICES
         )
 
-        openDeviceRoute(route)
+        return openDeviceRoute(route)
     }
 
     private fun openDeviceRoute(
         route: DeviceRoute
-    ) {
+    ): Boolean {
         val directions = when (route.target) {
             DeviceRouteTarget.LIGHT_ROOT ->
                 TankDetailFragmentDirections.actionTankDetailFragmentToDeviceLightRootFragment(
-                    deviceUid = route.deviceUid,
-                    deviceTitle = route.title.ifBlank { getString(route.titleRes) }
+                    deviceUid = route.deviceUid
                 )
 
             DeviceRouteTarget.DOSING_ROOT ->
                 TankDetailFragmentDirections.actionTankDetailFragmentToDeviceDosingRootFragment(
-                    deviceUid = route.deviceUid,
-                    deviceTitle = route.title.ifBlank { getString(route.titleRes) }
+                    deviceUid = route.deviceUid
                 )
 
             DeviceRouteTarget.TIMER_ROOT ->
                 TankDetailFragmentDirections.actionTankDetailFragmentToDeviceTimerRootFragment(
-                    deviceUid = route.deviceUid,
-                    deviceTitle = route.title.ifBlank { getString(route.titleRes) }
+                    deviceUid = route.deviceUid
                 )
 
             DeviceRouteTarget.COOLING_ROOT ->
                 TankDetailFragmentDirections.actionTankDetailFragmentToDeviceCoolingRootFragment(
-                    deviceUid = route.deviceUid,
-                    deviceTitle = route.title.ifBlank { getString(route.titleRes) }
+                    deviceUid = route.deviceUid
                 )
 
             DeviceRouteTarget.UNSUPPORTED ->
                 TankDetailFragmentDirections.actionTankDetailFragmentToUnsupportedDeviceFragment(
-                    deviceTitle = route.title.ifBlank { getString(route.titleRes) },
+                    deviceTitle = route.unsupportedTitle.ifBlank {
+                        getString(R.string.device_menu_default_title)
+                    },
                     message = route.messageRes.takeIf { it != 0 }
                         ?.let { getString(it) }
                         .orEmpty(),
@@ -398,17 +398,20 @@ class TankDetailFragment :
                 )
         }
 
-        navigateFromTankDetail(directions)
+        return navigateFromTankDetail(directions)
     }
 
     private fun navigateFromTankDetail(
         directions: NavDirections
-    ) {
+    ): Boolean {
         val navController =
             findNavController()
 
-        if (navController.currentDestination?.id != R.id.tankDetailFragment) {
-            return
+        if (
+            navController.currentDestination?.id != R.id.tankDetailFragment ||
+            parentFragmentManager.isStateSaved
+        ) {
+            return false
         }
 
         saveSelectedTabState(
@@ -418,6 +421,7 @@ class TankDetailFragment :
         navController.navigate(
             directions
         )
+        return true
     }
 
     private fun observeTank() {

@@ -1,0 +1,32 @@
+package com.aqua.aqualight.ui.tabs.devices.detail.dosing.channel.calibration
+
+import com.aqua.aqualight.ui.common.dosing.AquaDosingCalibrationGeometry
+
+internal const val ILLUSTRATION_TRANSITION_MILLIS = 320
+internal const val CALIBRATION_RUN_DURATION_MILLIS = 3_000
+internal const val DEFAULT_VERIFICATION_DURATION_MILLIS = 4_000
+internal const val DEFAULT_ILLUSTRATION_DURATION_MILLIS = 900
+internal const val VERIFICATION_DOSE_ML = 4L
+internal const val MIN_ILLUSTRATION_OPERATION_MILLIS = 700L
+internal const val MAX_ILLUSTRATION_OPERATION_MILLIS = 15_000L
+internal const val CALIBRATION_MILLIS_PER_SECOND = 1_000.0
+
+internal val CALIBRATION_SCREEN_TOP_PADDING = AquaDosingCalibrationGeometry.screenTopPadding
+internal val CALIBRATION_PROGRESS_CONTENT_GAP = AquaDosingCalibrationGeometry.progressContentGap
+internal val CALIBRATION_COPY_GAP = AquaDosingCalibrationGeometry.copyGap
+internal val CALIBRATION_PROGRESS_SEGMENT_GAP = AquaDosingCalibrationGeometry.progressSegmentGap
+internal val CALIBRATION_PROGRESS_SEGMENT_HEIGHT =
+    AquaDosingCalibrationGeometry.progressSegmentHeight
+internal val CALIBRATION_CONTROL_GAP = AquaDosingCalibrationGeometry.controlGap
+internal val CALIBRATION_CONFIRMATION_GAP = AquaDosingCalibrationGeometry.confirmationGap
+internal val CALIBRATION_TEXT_FIELD_HORIZONTAL_PADDING =
+    AquaDosingCalibrationGeometry.textFieldHorizontalPadding
+internal val CALIBRATION_TEXT_FIELD_VERTICAL_PADDING =
+    AquaDosingCalibrationGeometry.textFieldVerticalPadding
+internal val CALIBRATION_PRIME_HORIZONTAL_PADDING =
+    AquaDosingCalibrationGeometry.primeHorizontalPadding
+internal val CALIBRATION_PRIME_VERTICAL_PADDING = AquaDosingCalibrationGeometry.primeVerticalPadding
+internal val CALIBRATION_PRIME_DOT_SIZE = AquaDosingCalibrationGeometry.primeDotSize
+internal val CALIBRATION_INLINE_GAP = AquaDosingCalibrationGeometry.inlineGap
+internal val CALIBRATION_COUNTDOWN_GAP = AquaDosingCalibrationGeometry.countdownGap
+internal val CALIBRATION_ILLUSTRATION_HEIGHT = AquaDosingCalibrationGeometry.illustrationHeight

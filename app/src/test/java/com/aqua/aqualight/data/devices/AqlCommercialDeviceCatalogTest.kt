@@ -149,8 +149,7 @@ class AqlCommercialDeviceCatalogTest {
                 cooling = profile.capabilities.cooling,
                 temperature = profile.capabilities.temperature,
                 timerApi = family == com.aqua.aqualight.data.devices.model.DeviceFamily.TIMER,
-                timerEngine = family == com.aqua.aqualight.data.devices.model.DeviceFamily.TIMER ||
-                    family == com.aqua.aqualight.data.devices.model.DeviceFamily.DOSING,
+                timerEngine = family == com.aqua.aqualight.data.devices.model.DeviceFamily.TIMER,
                 dosing = family == com.aqua.aqualight.data.devices.model.DeviceFamily.DOSING,
                 network = true,
                 discovery = true,

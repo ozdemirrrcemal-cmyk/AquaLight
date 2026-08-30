@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <plurals name="dosing_device_card_channel_summary">
+        <item quantity="one">%1$d kanal · %2$d aktif</item>
+        <item quantity="other">%1$d kanal · %2$d aktif</item>
+    </plurals>
+    <string name="dosing_device_card_loading">Dozaj durumu hazırlanıyor</string>
+    <string name="dosing_device_card_unavailable">Dozaj verisi kullanılamıyor</string>
+    <string name="dosing_device_card_offline">Dozaj cihazı çevrimdışı</string>
+    <string name="dosing_device_card_loading_detail">Dozaj kanalları merkezi cihaz durumundan hazırlanıyor</string>
+    <string name="dosing_device_card_unavailable_detail">Canlı dozaj verisi hazırlanamadı</string>
+    <string name="dosing_device_card_offline_detail">Cihaz yeniden bağlandığında canlı dozaj verileri gösterilecek</string>
+    <string name="dosing_device_card_daily">GÜNLÜK</string>
+    <string name="dosing_device_card_next">SONRAKİ</string>
+    <string name="dosing_device_card_reservoir">HAZNE</string>
+    <string name="dosing_device_card_ml_value">%1$s mL</string>
+    <string name="dosing_device_card_metric_empty">—</string>
+    <string name="dosing_device_card_program_off">Program kapalı</string>
+    <string name="dosing_device_card_daily_plan">günlük plan</string>
+    <string name="dosing_device_card_next_unavailable">Sıradaki doz yok</string>
+    <string name="dosing_device_card_reservoir_tracking_off">Takip kapalı</string>
+    <string name="dosing_device_card_reservoir_low">Seviye düşük</string>
+    <plurals name="dosing_device_card_remaining_days">
+        <item quantity="one">≈%1$d gün</item>
+        <item quantity="other">≈%1$d gün</item>
+    </plurals>
+    <string name="dosing_device_card_reservoir_uncertain">Tahmin bekleniyor</string>
+    <string name="dosing_device_card_reservoir_estimate_unavailable">Tahmin kullanılamıyor</string>
+    <string name="dosing_device_card_accessibility">%1$s. %2$s. %3$s.</string>
+</resources>

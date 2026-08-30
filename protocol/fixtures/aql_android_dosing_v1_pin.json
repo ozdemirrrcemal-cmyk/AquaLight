@@ -1,0 +1,54 @@
+{
+  "fixtureVersion": 1,
+  "schema": "aql.android.dosing-v1.pin.v1",
+  "firmware": {
+    "repository": "ozdemirrrcemal-cmyk/AquaLight-Firmware",
+    "commit": "e669313ecc2a7f959b566e3051cfd3b67247ccbd",
+    "sources": {
+      "src/api/v1/commands/AqlDosingCommands.hpp": "5c0201f9a4e09f93f4dd54af8c1fba9dec167105",
+      "src/api/v1/commands/AqlDosingProgressCommands.hpp": "8700e785bdd2e747abea3b09eff97755e2addad0",
+      "src/modules/dosing/AqlDosingProgramApiCodec.hpp": "33f4dead13c82f7966d58c1ba74054e181dab40c",
+      "src/modules/dosing/AqlDosingStatusCodec.hpp": "29a989b9f008a6ca39fb8ac7182915e87e794855",
+      "src/modules/dosing/AqlDosingSchedulingMetadataCodec.hpp": "cab751e2d508651d17550c48314707524053f995",
+      "src/modules/dosing/AqlDosingRuntimeEvent.hpp": "0b40b1eff35af48976f95fedba5a2854885f2439",
+      "src/modules/dosing/AqlDosingRuntimeService.hpp": "aa43e46ad16c8552c29e3526101f8e8474dee769"
+    }
+  },
+  "contract": {
+    "schema": "aqualight.dosing.v1",
+    "schemaVersion": 1,
+    "productionWiring": true,
+    "authenticatedActions": [
+      "dosing.status.get",
+      "dosing.progress.get",
+      "dosing.config.apply",
+      "dosing.program.apply",
+      "dosing.channel.reset",
+      "dosing.prime.start",
+      "dosing.prime.stop",
+      "dosing.calibration.start",
+      "dosing.calibration.finish",
+      "dosing.calibration.confirm",
+      "dosing.calibration.cancel",
+      "dosing.dose.now",
+      "dosing.dose.stop",
+      "dosing.reservoir.refill"
+    ]
+  },
+  "fixtures": {
+    "aql_dosing_calibration_v1.json": "bb7ce3da02db64e6c83ef755ca416a137e5bab60",
+    "aql_dosing_persistence_v1.json": "fcdb64581dd7e944f4bb9710e6ec9eaad40f8bb6",
+    "aql_dosing_program_v1.json": "ee09ae4231899511aa04ad970f78f3232b0db2e8",
+    "aql_dosing_progress_budget_v1.json": "a9f71db11191d42d76e2951bb09f305229140399",
+    "aql_dosing_scheduling_metadata_v1.json": "ef1d2c344c12606bb6aaf322142af8179eae0869",
+    "aql_dosing_status_budget_v1.json": "f62cc6d2bf9644020498e9eaca80f1c90c4b87e0"
+  },
+  "derivedFixtures": {
+    "aql_dosing_channel_status_v1.json": {
+      "blob": "ea7e8d0ae8a846441edd51e9d24a26fbf9da65db",
+      "derivedFrom": "src/modules/dosing/AqlDosingStatusCodec.hpp",
+      "sourceBlob": "29a989b9f008a6ca39fb8ac7182915e87e794855",
+      "firmwareCommit": "e669313ecc2a7f959b566e3051cfd3b67247ccbd"
+    }
+  }
+}

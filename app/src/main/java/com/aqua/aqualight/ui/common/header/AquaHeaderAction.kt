@@ -5,5 +5,6 @@ import androidx.annotation.DrawableRes
 data class AquaHeaderAction(
     @DrawableRes val iconRes: Int,
     val contentDescription: String,
-    val onClick: () -> Unit
+    val onClick: () -> Unit,
+    val enabled: Boolean = true
 )

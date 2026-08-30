@@ -31,12 +31,13 @@ class DeviceCoolingRootFragment : Fragment(R.layout.fragment_device_cooling_root
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
         _binding = FragmentDeviceCoolingRootBinding.bind(view)
-        setupHeader(title = args.deviceTitle.ifBlank { getString(R.string.device_family_cooling) })
-        observeViewModel()
-        viewModel.bind(
-            deviceUidText = args.deviceUid,
-            fallbackTitle = args.deviceTitle
+        viewModel.bind(args.deviceUid)
+        setupHeader(
+            title = viewModel.uiState.value.title.ifBlank {
+                getString(R.string.device_family_cooling)
+            }
         )
+        observeViewModel()
     }
 
     private fun setupHeader(title: String) {

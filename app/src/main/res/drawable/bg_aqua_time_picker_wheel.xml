@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<shape xmlns:android="http://schemas.android.com/apk/res/android">
+    <solid android:color="@color/aqua_bottom_sheet_surface_elevated" />
+    <stroke
+        android:width="@dimen/aqua_size_1"
+        android:color="@color/aqua_bottom_sheet_outline" />
+    <corners android:radius="@dimen/aqua_size_20" />
+</shape>

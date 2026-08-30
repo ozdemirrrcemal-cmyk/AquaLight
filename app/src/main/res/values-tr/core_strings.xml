@@ -118,6 +118,13 @@
     <string name="settings_notifications_subtitle_disabled">Bu hesap için AquaLight bildirimleri kapalı.</string>
     <string name="settings_notifications_subtitle_system_blocked">AquaLight içinde etkin, ancak Android tarafından engellenmiş. Bildirim ayarlarını açmak için bu karta dokunun.</string>
     <string name="settings_notifications_subtitle_channel_blocked">AquaLight içinde etkin, ancak bir veya daha fazla bildirim kategorisi engellenmiş. Kategori ayarlarını düzeltmek için bu karta dokunun.</string>
+    <string name="notification_feature_enabled_android_blocked">AquaLight içinde açık, ancak Android tarafından engellenmiş.</string>
+    <string name="notification_feature_enabled_android_blocked_tap_to_fix">AquaLight içinde açık, ancak Android tarafından engellenmiş. Bildirim erişimini düzeltmek için dokunun.</string>
+    <string name="notification_feature_owner_preference_disabled">Bu özellik açık, ancak AquaLight bildirimleri kapalı.</string>
+    <string name="notification_feature_owner_preference_disabled_tap_to_enable">Bu özellik açık, ancak AquaLight bildirimleri kapalı. Bildirimleri açmak için dokunun.</string>
+    <string name="notification_feature_enable_action">Bildirimleri aç</string>
+    <string name="notification_feature_open_settings_action">Ayarlara git</string>
+    <string name="notification_feature_access_check_failed">Bildirim erişimi kontrol edilemedi. Lütfen yeniden deneyin.</string>
 
     <!-- Compact accessibility copy -->
     <string name="maintenance_tab_next">Sonraki</string>

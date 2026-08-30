@@ -10,4 +10,11 @@
     <string name="settings_notifications_subtitle_disabled">AquaLight notifications are turned off for this account.</string>
     <string name="settings_notifications_subtitle_system_blocked">Enabled in AquaLight, but blocked by Android. Tap this card to open notification settings.</string>
     <string name="settings_notifications_subtitle_channel_blocked">Enabled in AquaLight, but one or more notification categories are blocked. Tap this card to repair the category settings.</string>
+    <string name="notification_feature_enabled_android_blocked">Enabled in AquaLight, but blocked by Android.</string>
+    <string name="notification_feature_enabled_android_blocked_tap_to_fix">Enabled in AquaLight, but blocked by Android. Tap to fix notification access.</string>
+    <string name="notification_feature_owner_preference_disabled">This feature is on, but AquaLight notifications are off.</string>
+    <string name="notification_feature_owner_preference_disabled_tap_to_enable">This feature is on, but AquaLight notifications are off. Tap to enable notifications.</string>
+    <string name="notification_feature_enable_action">Enable notifications</string>
+    <string name="notification_feature_open_settings_action">Go to settings</string>
+    <string name="notification_feature_access_check_failed">Notification access could not be checked. Please try again.</string>
 </resources>

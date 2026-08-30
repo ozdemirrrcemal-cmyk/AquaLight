@@ -3,6 +3,7 @@ package com.aqua.aqualight.ui.tabs.devices.add
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.aqua.aqualight.R
+import com.aqua.aqualight.application.devices.DeviceMenuOpenUseCase
 import com.aqua.aqualight.application.devices.provisioning.PreparedProvisioningRegistration
 import com.aqua.aqualight.application.devices.provisioning.ProvisionedDevice
 import com.aqua.aqualight.application.devices.provisioning.ProvisioningProgressOperations
@@ -25,17 +26,26 @@ import kotlinx.coroutines.launch
 
 class DeviceProvisioningProgressViewModel(
     private val operations: ProvisioningProgressOperations,
+    menuOpenUseCase: DeviceMenuOpenUseCase,
     private val textResolver: AppTextResolver
 ) : ViewModel() {
 
     private val ownerUid = operations.ownerUid
     private val presenter = ProvisioningProgressPresenter(textResolver)
+    private val reducer = DeviceProvisioningProgressReducer(presenter, textResolver)
 
     private val _uiState = MutableStateFlow(initialState())
     val uiState: StateFlow<DeviceProvisioningProgressUiState> = _uiState.asStateFlow()
 
     private val _events = Channel<DeviceProvisioningProgressEvent>(Channel.BUFFERED)
     val events = _events.receiveAsFlow()
+
+    internal val preparedNavigation = DeviceProvisioningPreparedNavigation(
+        menuOpenUseCase = menuOpenUseCase,
+        textResolver = textResolver,
+        uiState = _uiState,
+        events = _events
+    )
 
     private var boundSessionId: String? = null
     private var activeSession: ProvisioningSessionSnapshot? = null
@@ -335,7 +345,7 @@ class DeviceProvisioningProgressViewModel(
                         if (exitRequested) {
                             _events.send(DeviceProvisioningProgressEvent.ExitProvisioning)
                         } else {
-                            _events.send(DeviceProvisioningProgressEvent.OpenAddedDevice(device))
+                            preparedNavigation.open(device)
                         }
                     }
                     .onFailure { error ->
@@ -369,87 +379,11 @@ class DeviceProvisioningProgressViewModel(
 
     private fun reduceTransportEvent(
         event: ProvisioningTransportEvent
-    ): DeviceProvisioningProgressUiState = when (event) {
-        is ProvisioningTransportEvent.Connecting -> _uiState.value.copy(
-            title = string(R.string.device_provisioning_connecting_title),
-            message = string(R.string.device_provisioning_connecting_message),
-            stepThree = string(R.string.device_provisioning_connecting_step),
-            canStart = false,
-            buttonText = string(R.string.device_provisioning_running),
-            showProgress = true,
-            wifiCredentialFailure = null
-        )
-        is ProvisioningTransportEvent.Connected -> _uiState.value.copy(
-            title = string(R.string.device_provisioning_device_found_title),
-            message = string(R.string.device_provisioning_prepare_service_message),
-            stepThree = string(R.string.device_provisioning_bluetooth_connected_step),
-            showProgress = true,
-            wifiCredentialFailure = null
-        )
-        ProvisioningTransportEvent.ServicesDiscovered -> _uiState.value.copy(
-            title = string(R.string.device_provisioning_secure_session_title),
-            message = string(R.string.device_provisioning_secure_session_message),
-            stepThree = string(R.string.device_provisioning_secure_session_step),
-            showProgress = true,
-            wifiCredentialFailure = null
-        )
-        ProvisioningTransportEvent.StartSessionWritten -> _uiState.value.copy(
-            title = string(R.string.device_provisioning_session_started_title),
-            message = string(R.string.device_provisioning_sending_wifi_message),
-            stepThree = string(R.string.device_provisioning_sending_wifi_step),
-            showProgress = true,
-            wifiCredentialFailure = null
-        )
-        ProvisioningTransportEvent.WifiCredentialsWritten -> _uiState.value.copy(
-            title = string(R.string.device_provisioning_wifi_sent_title),
-            message = string(R.string.device_provisioning_wifi_connecting_message),
-            stepThree = string(R.string.device_provisioning_wifi_connecting_step),
-            showProgress = true,
-            wifiCredentialFailure = null
-        )
-        is ProvisioningTransportEvent.StatusReceived -> {
-            val presentation = presenter.status(event.statusMessage)
-            _uiState.value.copy(
-                title = presentation.title,
-                message = presentation.message,
-                stepThree = presentation.step,
-                showProgress = presentation.showProgress,
-                canStart = presentation.canRetry,
-                buttonText = string(R.string.device_provisioning_try_again),
-                wifiCredentialFailure = presentation.wifiCredentialFailure
-            )
-        }
-        is ProvisioningTransportEvent.DeviceInfoVerified,
-        is ProvisioningTransportEvent.RuntimeHandoffReceived,
-        ProvisioningTransportEvent.Completed,
-        ProvisioningTransportEvent.FinalizeSetupWritten -> _uiState.value
-        is ProvisioningTransportEvent.Failed -> _uiState.value.copy(
-            title = string(R.string.device_provisioning_failed_title),
-            message = presenter.friendlyTransportError(event.message),
-            stepThree = string(R.string.device_provisioning_setup_stopped),
-            canStart = true,
-            buttonText = string(R.string.device_provisioning_start_again),
-            showProgress = false,
-            requiresFreshDeviceSelection = true,
-            wifiCredentialFailure = null
-        )
-        ProvisioningTransportEvent.Disconnected -> {
-            if (setupCompleted) {
-                _uiState.value.copy(wifiCredentialFailure = null)
-            } else {
-                _uiState.value.copy(
-                    title = string(R.string.device_provisioning_connection_closed_title),
-                    message = string(R.string.device_provisioning_connection_closed_message),
-                    stepThree = string(R.string.device_provisioning_connection_closed_step),
-                    canStart = true,
-                    buttonText = string(R.string.device_provisioning_start_again),
-                    showProgress = false,
-                    requiresFreshDeviceSelection = true,
-                    wifiCredentialFailure = null
-                )
-            }
-        }
-    }
+    ): DeviceProvisioningProgressUiState = reducer.reduce(
+        current = _uiState.value,
+        event = event,
+        setupCompleted = setupCompleted
+    )
 
     private fun renderRuntimeHandoffReceived() {
         _uiState.value = _uiState.value.copy(

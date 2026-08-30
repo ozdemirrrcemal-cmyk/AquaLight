@@ -4,11 +4,16 @@ import androidx.annotation.StringRes
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.aqua.aqualight.R
-import com.aqua.aqualight.application.devices.DeviceMenuAccessOperations
-import com.aqua.aqualight.application.devices.DeviceMenuAccessResult
+import com.aqua.aqualight.application.devices.DeviceMenuOpenResult
+import com.aqua.aqualight.application.devices.DeviceMenuOpenUseCase
 import com.aqua.aqualight.application.devices.DeviceMenuUnavailableReason
+import com.aqua.aqualight.application.devices.OwnerDeviceAvailability
+import com.aqua.aqualight.application.devices.OwnerDeviceFamily
 import com.aqua.aqualight.application.devices.RemoveDeviceFromTankResult
 import com.aqua.aqualight.application.devices.TankDeviceAssignmentOperations
+import com.aqua.aqualight.application.devices.TankDeviceListItem
+import com.aqua.aqualight.application.devices.dosing.DeviceDosingCardOperations
+import com.aqua.aqualight.application.devices.dosing.DeviceDosingCardState
 import com.aqua.aqualight.ui.common.devicecard.DeviceCompactSnapshotMapper
 import com.aqua.aqualight.ui.common.devicepresence.DeviceMenuUnavailableMessageMapper
 import com.aqua.aqualight.ui.tabs.devices.route.DeviceRoute
@@ -22,14 +27,16 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 
 class TankDetailDevicesViewModel(
     private val assignmentOperations: TankDeviceAssignmentOperations,
-    private val menuAccessOperations: DeviceMenuAccessOperations,
-    private val routeResolver: DeviceRouteResolver
+    private val menuOpenUseCase: DeviceMenuOpenUseCase,
+    private val routeResolver: DeviceRouteResolver,
+    private val dosingCardOperations: DeviceDosingCardOperations? = null
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(TankDetailDevicesUiState())
@@ -40,40 +47,44 @@ class TankDetailDevicesViewModel(
 
     private val openingDeviceId = MutableStateFlow<String?>(null)
     private val removingDevice = MutableStateFlow(false)
+    private val dosingCardStates = MutableStateFlow<Map<String, DeviceDosingCardState>>(emptyMap())
+    private val spotlightRotation = DosingSpotlightRotationController(viewModelScope)
+
+    private val dosingObserverJobs = mutableMapOf<String, Job>()
     private var boundTankId: Long = 0L
     private var observeJob: Job? = null
     private var menuOpenJob: Job? = null
+    private var pendingMenuOpen: DeviceMenuOpenResult.Ready? = null
 
     fun bind(tankId: Long) {
         if (tankId <= 0L || boundTankId == tankId) return
 
+        dosingObserverJobs.values.forEach(Job::cancel)
+        dosingObserverJobs.clear()
+        dosingCardStates.value = emptyMap()
+        spotlightRotation.updateChannelCounts(emptyMap())
         boundTankId = tankId
         assignmentOperations.start(viewModelScope)
         observeJob?.cancel()
+
+        val assignedDevices = assignmentOperations.assignedDevices(tankId)
+            .onEach(::syncDosingObservers)
+        val interactionState = observeInteractionState(
+            openingDeviceId = openingDeviceId,
+            removingDevice = removingDevice
+        )
+        val dosingPresentationState = observeDosingPresentationState(
+            dosingCardStates = dosingCardStates,
+            spotlightIndices = spotlightRotation.indices
+        )
+
         observeJob = viewModelScope.launch {
             combine(
-                assignmentOperations.assignedDevices(tankId),
-                openingDeviceId,
-                removingDevice
-            ) { devices, currentOpeningDeviceId, isRemovingDevice ->
-                val items = devices.map { device ->
-                    TankAssignedDeviceItem(
-                        deviceUid = device.deviceUid,
-                        title = device.displayName,
-                        card = DeviceCompactSnapshotMapper.map(device).copy(
-                            isBusy = currentOpeningDeviceId == device.deviceUid
-                        )
-                    )
-                }
-                TankDetailDevicesUiState(
-                    devices = items,
-                    isEmpty = items.isEmpty(),
-                    isLoading = false,
-                    openingDeviceId = currentOpeningDeviceId,
-                    isOpeningDeviceMenu = currentOpeningDeviceId != null,
-                    isRemovingDevice = isRemovingDevice
-                )
-            }.catch {
+                assignedDevices,
+                interactionState,
+                dosingPresentationState,
+                ::buildTankDetailDevicesUiState
+            ).catch {
                 _uiState.update { current ->
                     current.copy(
                         devices = emptyList(),
@@ -88,50 +99,90 @@ class TankDetailDevicesViewModel(
         }
     }
 
+    fun onDevicesSurfaceVisibilityChanged(visible: Boolean) {
+        spotlightRotation.setVisible(visible)
+    }
+
     fun onDeviceClicked(deviceUid: String) {
-        if (deviceUid.isBlank() || removingDevice.value) return
-        if (openingDeviceId.value == deviceUid) return
+        if (
+            deviceUid.isBlank() ||
+            removingDevice.value ||
+            openingDeviceId.value != null
+        ) {
+            return
+        }
 
         menuOpenJob?.cancel()
         openingDeviceId.value = deviceUid
         menuOpenJob = viewModelScope.launch {
-            val result = try {
-                menuAccessOperations.resolve(deviceUid)
-            } catch (error: Throwable) {
-                if (error is CancellationException) throw error
-                DeviceMenuAccessResult.Unavailable(
-                    title = "",
-                    reason = DeviceMenuUnavailableReason.CURRENT_LIVENESS_NOT_PROVEN
-                )
-            } finally {
-                if (openingDeviceId.value == deviceUid) {
-                    openingDeviceId.value = null
-                }
-            }
-
-            when (result) {
-                is DeviceMenuAccessResult.Available ->
-                    _events.send(
-                        TankDetailDevicesEvent.OpenDeviceRoute(
-                            route = routeResolver.resolve(result)
-                        )
-                    )
-                is DeviceMenuAccessResult.Unavailable ->
-                    _events.send(
-                        TankDetailDevicesEvent.ShowDeviceUnavailable(
-                            title = result.title,
-                            messageRes = DeviceMenuUnavailableMessageMapper.messageRes(
-                                result.reason
+            try {
+                when (val result = menuOpenUseCase.resolve(deviceUid)) {
+                    is DeviceMenuOpenResult.Ready -> {
+                        pendingMenuOpen = result
+                        _events.send(
+                            TankDetailDevicesEvent.OpenDeviceRoute(
+                                route = routeResolver.resolve(result.access)
                             )
                         )
+                    }
+                    is DeviceMenuOpenResult.Unavailable -> {
+                        clearMenuOpen(deviceUid)
+                        _events.send(result.toUnavailableEvent())
+                    }
+                }
+            } catch (error: Throwable) {
+                abandonPendingNavigation(deviceUid)
+                clearMenuOpen(deviceUid)
+                if (error is CancellationException) throw error
+                _events.send(
+                    TankDetailDevicesEvent.ShowDeviceUnavailable(
+                        title = _uiState.value.devices
+                            .firstOrNull { device -> device.deviceUid == deviceUid }
+                            ?.title
+                            .orEmpty(),
+                        messageRes = DeviceMenuUnavailableMessageMapper.messageRes(
+                            DeviceMenuUnavailableReason.CURRENT_LIVENESS_NOT_PROVEN
+                        )
                     )
+                )
             }
         }
     }
 
+    fun onDeviceNavigationFinished(
+        deviceUid: String,
+        committed: Boolean
+    ) {
+        val pending = pendingMenuOpen?.takeIf { ready ->
+            ready.access.deviceUid == deviceUid
+        }
+        if (pending != null) {
+            if (!committed) menuOpenUseCase.abandon(pending)
+            pendingMenuOpen = null
+        }
+        clearMenuOpen(deviceUid)
+    }
+
+    fun onNavigationHostDestroyed() {
+        spotlightRotation.setVisible(false)
+        menuOpenJob?.cancel()
+        pendingMenuOpen?.let(menuOpenUseCase::abandon)
+        pendingMenuOpen = null
+        openingDeviceId.value = null
+    }
+
     fun removeDeviceFromTank(deviceUid: String) {
         val tankId = boundTankId
-        if (!canRemoveDevice(tankId, deviceUid)) return
+        if (
+            !isDeviceRemovalAllowed(
+                tankId = tankId,
+                deviceUid = deviceUid,
+                isRemovingDevice = removingDevice.value,
+                openingDeviceId = openingDeviceId.value
+            )
+        ) {
+            return
+        }
 
         viewModelScope.launch {
             removingDevice.value = true
@@ -151,10 +202,67 @@ class TankDetailDevicesViewModel(
         }
     }
 
-    private fun canRemoveDevice(tankId: Long, deviceUid: String): Boolean {
-        val requestIsValid = tankId > 0L && deviceUid.isNotBlank()
-        val operationsAreIdle = !removingDevice.value && openingDeviceId.value == null
-        return requestIsValid && operationsAreIdle
+    private fun syncDosingObservers(devices: List<TankDeviceListItem>) {
+        val assignedDosingDeviceIds = devices
+            .asSequence()
+            .filter { device -> device.family == OwnerDeviceFamily.DOSING }
+            .map(TankDeviceListItem::deviceUid)
+            .toSet()
+        val reachableDosingDeviceIds = devices
+            .asSequence()
+            .filter { device ->
+                device.family == OwnerDeviceFamily.DOSING &&
+                    device.availability == OwnerDeviceAvailability.REACHABLE
+            }
+            .map(TankDeviceListItem::deviceUid)
+            .toSet()
+        val operations = dosingCardOperations
+
+        (dosingObserverJobs.keys - reachableDosingDeviceIds).forEach { deviceUid ->
+            dosingObserverJobs.remove(deviceUid)?.cancel()
+        }
+        val removedDosingDeviceIds = dosingCardStates.value.keys - assignedDosingDeviceIds
+        if (removedDosingDeviceIds.isNotEmpty()) {
+            dosingCardStates.update { states -> states - removedDosingDeviceIds }
+        }
+        spotlightRotation.updateChannelCounts(dosingCardStates.value.toSpotlightChannelCounts())
+
+        if (operations != null) {
+            reachableDosingDeviceIds
+                .filterNot(dosingObserverJobs::containsKey)
+                .forEach { deviceUid ->
+                    dosingObserverJobs[deviceUid] = viewModelScope.launch {
+                        operations.observe(deviceUid).collect { state ->
+                            updateDosingCardState(
+                                deviceUid = deviceUid,
+                                state = state
+                            )
+                        }
+                    }
+                }
+        }
+    }
+
+    private fun updateDosingCardState(
+        deviceUid: String,
+        state: DeviceDosingCardState
+    ) {
+        dosingCardStates.update { states -> states + (deviceUid to state) }
+        spotlightRotation.updateChannelCounts(dosingCardStates.value.toSpotlightChannelCounts())
+    }
+
+    private fun abandonPendingNavigation(deviceUid: String) {
+        val pending = pendingMenuOpen?.takeIf { ready ->
+            ready.access.deviceUid == deviceUid
+        } ?: return
+        menuOpenUseCase.abandon(pending)
+        pendingMenuOpen = null
+    }
+
+    private fun clearMenuOpen(deviceUid: String) {
+        if (openingDeviceId.value == deviceUid) {
+            openingDeviceId.value = null
+        }
     }
 }
 
@@ -178,3 +286,98 @@ sealed interface TankDetailDevicesEvent {
     data object ShowRemoveFailed : TankDetailDevicesEvent
     data object ShowLoadFailed : TankDetailDevicesEvent
 }
+
+private data class TankDeviceInteractionState(
+    val openingDeviceId: String?,
+    val isRemovingDevice: Boolean
+)
+
+private data class TankDosingPresentationState(
+    val states: Map<String, DeviceDosingCardState>,
+    val spotlightIndices: Map<String, Int>
+)
+
+private fun observeInteractionState(
+    openingDeviceId: Flow<String?>,
+    removingDevice: Flow<Boolean>
+): Flow<TankDeviceInteractionState> = combine(
+    openingDeviceId,
+    removingDevice
+) { currentOpeningDeviceId, isRemovingDevice ->
+    TankDeviceInteractionState(
+        openingDeviceId = currentOpeningDeviceId,
+        isRemovingDevice = isRemovingDevice
+    )
+}
+
+private fun observeDosingPresentationState(
+    dosingCardStates: Flow<Map<String, DeviceDosingCardState>>,
+    spotlightIndices: Flow<Map<String, Int>>
+): Flow<TankDosingPresentationState> = combine(
+    dosingCardStates,
+    spotlightIndices
+) { states, indices ->
+    TankDosingPresentationState(
+        states = states,
+        spotlightIndices = indices
+    )
+}
+
+private fun buildTankDetailDevicesUiState(
+    devices: List<TankDeviceListItem>,
+    interaction: TankDeviceInteractionState,
+    dosingPresentation: TankDosingPresentationState
+): TankDetailDevicesUiState {
+    val items = devices.map { device ->
+        val compactCard = DeviceCompactSnapshotMapper.map(device)
+        val dosingState = dosingPresentation.states[device.deviceUid]
+        val dosingCard = if (device.family == OwnerDeviceFamily.DOSING) {
+            compactCard.toDosingSpotlightCardUi(
+                state = dosingState,
+                selectedIndex = dosingPresentation.spotlightIndices[device.deviceUid] ?: 0
+            )
+        } else {
+            null
+        }
+        TankAssignedDeviceItem(
+            deviceUid = device.deviceUid,
+            title = device.displayName,
+            card = compactCard,
+            dosingCard = dosingCard
+        )
+    }
+    return TankDetailDevicesUiState(
+        devices = items,
+        isEmpty = items.isEmpty(),
+        isLoading = false,
+        openingDeviceId = interaction.openingDeviceId,
+        isOpeningDeviceMenu = interaction.openingDeviceId != null,
+        isRemovingDevice = interaction.isRemovingDevice
+    )
+}
+
+private fun Map<String, DeviceDosingCardState>.toSpotlightChannelCounts(): Map<String, Int> =
+    mapNotNull { (deviceUid, state) ->
+        (state as? DeviceDosingCardState.Ready)
+            ?.summary
+            ?.channels
+            ?.size
+            ?.let { count -> deviceUid to count }
+    }.toMap()
+
+private fun isDeviceRemovalAllowed(
+    tankId: Long,
+    deviceUid: String,
+    isRemovingDevice: Boolean,
+    openingDeviceId: String?
+): Boolean {
+    val requestIsValid = tankId > 0L && deviceUid.isNotBlank()
+    val operationsAreIdle = !isRemovingDevice && openingDeviceId == null
+    return requestIsValid && operationsAreIdle
+}
+
+private fun DeviceMenuOpenResult.Unavailable.toUnavailableEvent() =
+    TankDetailDevicesEvent.ShowDeviceUnavailable(
+        title = title,
+        messageRes = DeviceMenuUnavailableMessageMapper.messageRes(reason)
+    )

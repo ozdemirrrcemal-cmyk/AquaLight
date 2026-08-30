@@ -16,6 +16,7 @@ import androidx.navigation.fragment.navArgs
 import com.aqua.aqualight.R
 import com.aqua.aqualight.application.devices.OwnerDeviceFamily
 import com.aqua.aqualight.application.devices.provisioning.ProvisionedDevice
+import com.aqua.aqualight.base.BaseActivity
 import com.aqua.aqualight.composition.requireAppContainer
 import com.aqua.aqualight.databinding.FragmentDeviceProvisioningProgressBinding
 import com.aqua.aqualight.platform.permissions.AppCapability
@@ -45,6 +46,7 @@ class DeviceProvisioningProgressFragment : Fragment(R.layout.fragment_device_pro
 
     private var autoStartRequested = false
     private var wifiFailureReturned = false
+    private var committingPreparedNavigation = false
 
     override fun onViewCreated(
         view: View,
@@ -125,6 +127,15 @@ class DeviceProvisioningProgressFragment : Fragment(R.layout.fragment_device_pro
                     when (event) {
                         is DeviceProvisioningProgressEvent.OpenAddedDevice -> {
                             openAddedDevice(event.device)
+                        }
+                        is DeviceProvisioningProgressEvent.ShowAddedDeviceUnavailable -> {
+                            val baseActivity = activity as? BaseActivity
+                            val navController = findNavController()
+                            navController.popBackStack(R.id.devicesFragment, false)
+                            baseActivity?.showDeviceOfflineDialog(
+                                deviceTitle = event.title,
+                                messageRes = event.messageRes
+                            )
                         }
                         DeviceProvisioningProgressEvent.ExitProvisioning -> {
                             val navController = findNavController()
@@ -228,31 +239,45 @@ class DeviceProvisioningProgressFragment : Fragment(R.layout.fragment_device_pro
     }
 
     private fun openAddedDevice(device: ProvisionedDevice) {
+        if (!isAdded || _binding == null) {
+            viewModel.preparedNavigation.finish(device.deviceUid, committed = false)
+            return
+        }
+
+        val directions = device.toDevicesDestination()
         val navController = findNavController()
-        navController.popBackStack(R.id.devicesFragment, false)
-        navController.navigate(device.toDevicesDestination())
+        var committed = false
+        committingPreparedNavigation = true
+        try {
+            val returnedToDevices = navController.popBackStack(R.id.devicesFragment, false)
+            val devicesHostReady =
+                returnedToDevices && navController.currentDestination?.id == R.id.devicesFragment
+            if (!devicesHostReady) return
+
+            navController.navigate(directions)
+            committed = true
+        } finally {
+            viewModel.preparedNavigation.finish(device.deviceUid, committed)
+            committingPreparedNavigation = false
+        }
     }
 
     private fun ProvisionedDevice.toDevicesDestination(): NavDirections = when (family) {
         OwnerDeviceFamily.LIGHT ->
             DevicesFragmentDirections.actionDevicesFragmentToDeviceLightRootFragment(
-                deviceUid = deviceUid,
-                deviceTitle = title
+                deviceUid = deviceUid
             )
         OwnerDeviceFamily.DOSING ->
             DevicesFragmentDirections.actionDevicesFragmentToDeviceDosingRootFragment(
-                deviceUid = deviceUid,
-                deviceTitle = title
+                deviceUid = deviceUid
             )
         OwnerDeviceFamily.TIMER ->
             DevicesFragmentDirections.actionDevicesFragmentToDeviceTimerRootFragment(
-                deviceUid = deviceUid,
-                deviceTitle = title
+                deviceUid = deviceUid
             )
         OwnerDeviceFamily.COOLING ->
             DevicesFragmentDirections.actionDevicesFragmentToDeviceCoolingRootFragment(
-                deviceUid = deviceUid,
-                deviceTitle = title
+                deviceUid = deviceUid
             )
         OwnerDeviceFamily.UNKNOWN ->
             DevicesFragmentDirections.actionDevicesFragmentToUnsupportedDeviceFragment(
@@ -265,6 +290,9 @@ class DeviceProvisioningProgressFragment : Fragment(R.layout.fragment_device_pro
     }
 
     override fun onDestroyView() {
+        if (!committingPreparedNavigation) {
+            viewModel.preparedNavigation.abandonAll()
+        }
         _binding = null
         super.onDestroyView()
     }

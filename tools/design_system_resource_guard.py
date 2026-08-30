@@ -19,6 +19,10 @@ TOOLS_NS = "http://schemas.android.com/tools"
 HEX_LITERAL = re.compile(r"#[0-9A-Fa-f]{3,8}\b")
 RAW_DIMENSION = re.compile(r"(?<![\w@])(?:-?\d+(?:\.\d+)?)(?:dp|sp)\b")
 RAW_DP_CALL = re.compile(r"(?<![\w.])-?\d+(?:\.\d+)?f?\.dp\(\)")
+RAW_COMPOSE_DP = re.compile(
+    r"(?<![\w.])(?:-?\d+(?:\.\d+)?|[A-Za-z_][A-Za-z0-9_]*)\.dp\b"
+)
+RAW_KOTLIN_ARGB = re.compile(r"\b0x[0-9A-Fa-f]{6,8}\b")
 RAW_TEXT_SIZE = re.compile(r"\btextSize\s*=\s*\d+(?:\.\d+)?f?\b")
 RAW_UI_COPY = re.compile(
     r"\b(?:text|title|subtitle|message|description|contentDescription)\s*=\s*"
@@ -34,6 +38,12 @@ KOTLIN_COLOR_CONSTANT = re.compile(r"\bColor\.(?:WHITE|BLACK|TRANSPARENT)\b")
 VISIBLE_SYMBOL_LITERAL = re.compile(r'"[^"\n]*(?:✓|W/L/H|L/gal)[^"\n]*"')
 VISIBLE_UNIT_INTERPOLATION = re.compile(
     r'"[^"\n]*\$(?:\{[^}]+}|[A-Za-z_][A-Za-z0-9_]*)[^"\n]*(?:\sW|\sL|\sH|\sgal)[^"\n]*"'
+)
+
+DOSING_UI_ROOT = JAVA / "com" / "aqua" / "aqualight" / "ui" / "tabs" / "devices" / "detail" / "dosing"
+DOSING_COMPOSE_STYLE = (
+    JAVA / "com" / "aqua" / "aqualight" / "ui" / "common" / "dosing" /
+    "AquaDosingComposeStyle.kt"
 )
 
 UI_COPY_ATTRIBUTE_NAMES = {
@@ -187,6 +197,21 @@ def validate_kotlin(errors: list[str]) -> None:
         add_matches(errors, path, text, LEGACY_STYLE, "legacy button style")
         add_matches(errors, path, text, VISIBLE_SYMBOL_LITERAL, "visible symbol/unit literal must use a resource")
         add_matches(errors, path, text, VISIBLE_UNIT_INTERPOLATION, "visible formatted unit must use a resource")
+        if path.is_relative_to(DOSING_UI_ROOT):
+            add_matches(
+                errors,
+                path,
+                text,
+                RAW_COMPOSE_DP,
+                "Dosing Compose dimension bypasses the central style contract",
+            )
+            add_matches(
+                errors,
+                path,
+                text,
+                RAW_KOTLIN_ARGB,
+                "Dosing Compose color bypasses the central style contract",
+            )
         if "getIdentifier(" in text:
             errors.append(f"{relative(path)}: dynamic resource lookup requires an explicit audited contract")
         if "Color.parseColor(" in text or "Color.rgb(" in text or "Color.argb(" in text:
@@ -217,6 +242,11 @@ def validate_kotlin(errors: list[str]) -> None:
                 errors.append(
                     f"{relative(path)}:{line_number(text, match.start())}: catalog chip copy must use string resources"
                 )
+
+    if not DOSING_COMPOSE_STYLE.is_file():
+        errors.append(
+            f"{relative(DOSING_COMPOSE_STYLE)}: missing central Dosing Compose style contract"
+        )
 
 
 def validate_dynamic_resource_contract(errors: list[str]) -> None:

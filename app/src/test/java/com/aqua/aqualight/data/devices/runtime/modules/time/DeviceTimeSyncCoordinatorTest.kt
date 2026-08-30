@@ -4,6 +4,7 @@ import com.aqua.aqualight.data.devices.model.DeviceUid
 import com.aqua.aqualight.data.devices.runtime.core.DeviceRuntimeCommandOutcome
 import com.aqua.aqualight.data.devices.runtime.core.DeviceRuntimeConnectionGeneration
 import java.util.concurrent.atomic.AtomicInteger
+import java.util.concurrent.atomic.AtomicReference
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.async
 import kotlinx.coroutines.runBlocking
@@ -13,99 +14,391 @@ import org.junit.Test
 
 class DeviceTimeSyncCoordinatorTest {
     @Test
-    fun `synchronizes one confirmed phone snapshot per device session`() = runBlocking {
-        val calls = AtomicInteger(0)
-        val coordinator = DeviceTimeSyncCoordinator(
-            syncPhoneNow = { deviceUid ->
-                calls.incrementAndGet()
-                success(deviceUid)
+    fun `ready rtc with matching phone policy is not rewritten`() = runBlocking {
+        val statusCalls = AtomicInteger(0)
+        val syncCalls = AtomicInteger(0)
+        val deviceUid = DeviceUid("device-time-current")
+        val generation = AtomicReference(GENERATION_ONE)
+        val coordinator = coordinator(
+            generation = generation,
+            requestStatus = { uid, expectedGeneration ->
+                statusCalls.incrementAndGet()
+                statusSuccess(uid, status(), expectedGeneration)
+            },
+            syncPhoneNow = { uid, expectedGeneration ->
+                syncCalls.incrementAndGet()
+                syncSuccess(uid, expectedGeneration)
             }
         )
-        val deviceUid = DeviceUid("device-time-once")
 
-        val first = coordinator.syncPhoneNowIfNeeded(deviceUid)
-        val second = coordinator.syncPhoneNowIfNeeded(deviceUid)
+        val decision = coordinator.syncPhoneNowIfNeeded(deviceUid, GENERATION_ONE)
 
-        assertTrue(first is DeviceTimeSyncDecision.Attempted)
-        assertTrue(second is DeviceTimeSyncDecision.Skipped)
-        assertEquals(1, calls.get())
+        assertTrue(decision is DeviceTimeSyncDecision.Skipped)
+        assertEquals(1, statusCalls.get())
+        assertEquals(0, syncCalls.get())
     }
 
     @Test
-    fun `failed outcome does not mark session synchronized and allows retry`() = runBlocking {
-        val calls = AtomicInteger(0)
-        val coordinator = DeviceTimeSyncCoordinator(
-            syncPhoneNow = { deviceUid ->
-                calls.incrementAndGet()
-                DeviceRuntimeCommandOutcome.NotConnected(
-                    deviceUid = deviceUid,
-                    module = DeviceTimeRuntimeContract.MODULE,
-                    action = DeviceTimeRuntimeContract.Action.PHONE_SYNC
+    fun `rtc not ready uses existing phone sync without persistent save`() = runBlocking {
+        val syncCalls = AtomicInteger(0)
+        val deviceUid = DeviceUid("device-time-rtc-recovery")
+        val generation = AtomicReference(GENERATION_ONE)
+        val coordinator = coordinator(
+            generation = generation,
+            requestStatus = { uid, expectedGeneration ->
+                statusSuccess(uid, status().copy(timeSet = false), expectedGeneration)
+            },
+            syncPhoneNow = { uid, expectedGeneration ->
+                syncCalls.incrementAndGet()
+                syncSuccess(uid, expectedGeneration)
+            }
+        )
+
+        val decision = coordinator.syncPhoneNowIfNeeded(deviceUid, GENERATION_ONE)
+
+        assertTrue(decision is DeviceTimeSyncDecision.Attempted)
+        assertEquals(1, syncCalls.get())
+    }
+
+    @Test
+    fun `timezone or auto sync policy drift uses existing phone sync`() = runBlocking {
+        val syncCalls = AtomicInteger(0)
+        val deviceUid = DeviceUid("device-time-zone-drift")
+        val generation = AtomicReference(GENERATION_ONE)
+        val coordinator = coordinator(
+            generation = generation,
+            requestStatus = { uid, expectedGeneration ->
+                statusSuccess(
+                    uid,
+                    status().copy(
+                        timezoneId = "UTC",
+                        posixTimeZone = "UTC0",
+                        utcOffsetMinutes = 0,
+                        autoSyncNtpEnabled = false
+                    ),
+                    expectedGeneration
                 )
+            },
+            syncPhoneNow = { uid, expectedGeneration ->
+                syncCalls.incrementAndGet()
+                syncSuccess(uid, expectedGeneration)
             }
         )
-        val deviceUid = DeviceUid("device-time-retry")
 
-        val first = coordinator.syncPhoneNowIfNeeded(deviceUid)
-        val second = coordinator.syncPhoneNowIfNeeded(deviceUid)
-
-        assertTrue(first is DeviceTimeSyncDecision.Attempted)
-        assertTrue(second is DeviceTimeSyncDecision.Attempted)
-        assertEquals(2, calls.get())
+        assertTrue(
+            coordinator.syncPhoneNowIfNeeded(
+                deviceUid,
+                GENERATION_ONE
+            ) is DeviceTimeSyncDecision.Attempted
+        )
+        assertEquals(1, syncCalls.get())
     }
 
     @Test
-    fun `concurrent request is skipped while one broker command is pending`() = runBlocking {
+    fun `transient status failure retries status first within the same generation`() =
+        runBlocking {
+            val statusCalls = AtomicInteger(0)
+            val syncCalls = AtomicInteger(0)
+            val delayCalls = AtomicInteger(0)
+            val deviceUid = DeviceUid("device-time-status-retry")
+            val generation = AtomicReference(GENERATION_ONE)
+            val coordinator = coordinator(
+                generation = generation,
+                requestStatus = { uid, expectedGeneration ->
+                    if (statusCalls.incrementAndGet() == 1) {
+                        DeviceRuntimeCommandOutcome.NotConnected(
+                            deviceUid = uid,
+                            module = DeviceTimeRuntimeContract.MODULE,
+                            action = DeviceTimeRuntimeContract.Action.STATUS_GET
+                        )
+                    } else {
+                        statusSuccess(
+                            uid,
+                            status().copy(timeSet = false),
+                            expectedGeneration
+                        )
+                    }
+                },
+                syncPhoneNow = { uid, expectedGeneration ->
+                    syncCalls.incrementAndGet()
+                    syncSuccess(uid, expectedGeneration)
+                },
+                retryDelay = { delayCalls.incrementAndGet() }
+            )
+
+            val decision = coordinator.syncPhoneNowIfNeeded(deviceUid, GENERATION_ONE)
+
+            assertTrue(decision is DeviceTimeSyncDecision.Attempted)
+            assertEquals(2, statusCalls.get())
+            assertEquals(1, syncCalls.get())
+            assertEquals(1, delayCalls.get())
+        }
+
+    @Test
+    fun `transient sync failure rechecks status before retrying mutation`() = runBlocking {
+        val calls = mutableListOf<String>()
+        val syncCalls = AtomicInteger(0)
+        val deviceUid = DeviceUid("device-time-sync-retry")
+        val generation = AtomicReference(GENERATION_ONE)
+        val coordinator = coordinator(
+            generation = generation,
+            requestStatus = { uid, expectedGeneration ->
+                calls += "status"
+                statusSuccess(uid, status().copy(timeSet = false), expectedGeneration)
+            },
+            syncPhoneNow = { uid, expectedGeneration ->
+                calls += "sync"
+                if (syncCalls.incrementAndGet() == 1) {
+                    DeviceRuntimeCommandOutcome.SendFailed(
+                        deviceUid = uid,
+                        module = DeviceTimeRuntimeContract.MODULE,
+                        action = DeviceTimeRuntimeContract.Action.PHONE_SYNC,
+                        messageId = "failed-sync-message-id",
+                        generation = expectedGeneration
+                    )
+                } else {
+                    syncSuccess(uid, expectedGeneration)
+                }
+            },
+            retryDelay = { }
+        )
+
+        val decision = coordinator.syncPhoneNowIfNeeded(deviceUid, GENERATION_ONE)
+
+        assertTrue(decision is DeviceTimeSyncDecision.Attempted)
+        assertEquals(listOf("status", "sync", "status", "sync"), calls)
+    }
+
+    @Test
+    fun `non transient firmware sync failure is not retried`() = runBlocking {
+        val statusCalls = AtomicInteger(0)
+        val syncCalls = AtomicInteger(0)
+        val delayCalls = AtomicInteger(0)
+        val deviceUid = DeviceUid("device-time-hard-sync-failure")
+        val generation = AtomicReference(GENERATION_ONE)
+        val coordinator = coordinator(
+            generation = generation,
+            requestStatus = { uid, expectedGeneration ->
+                statusCalls.incrementAndGet()
+                statusSuccess(uid, status().copy(timeSet = false), expectedGeneration)
+            },
+            syncPhoneNow = { uid, expectedGeneration ->
+                syncCalls.incrementAndGet()
+                DeviceRuntimeCommandOutcome.FirmwareError(
+                    deviceUid = uid,
+                    module = DeviceTimeRuntimeContract.MODULE,
+                    action = DeviceTimeRuntimeContract.Action.PHONE_SYNC,
+                    messageId = "firmware-sync-error-message-id",
+                    generation = expectedGeneration,
+                    statusCode = 503,
+                    code = "rtcUnavailable",
+                    field = "rtc",
+                    message = "RTC is unavailable."
+                )
+            },
+            retryDelay = { delayCalls.incrementAndGet() }
+        )
+
+        val decision = coordinator.syncPhoneNowIfNeeded(deviceUid, GENERATION_ONE)
+
+        assertTrue(decision is DeviceTimeSyncDecision.Attempted)
+        assertEquals(1, statusCalls.get())
+        assertEquals(1, syncCalls.get())
+        assertEquals(0, delayCalls.get())
+    }
+
+    @Test
+    fun `non transient firmware status failure is not retried`() = runBlocking {
+        val statusCalls = AtomicInteger(0)
+        val syncCalls = AtomicInteger(0)
+        val delayCalls = AtomicInteger(0)
+        val deviceUid = DeviceUid("device-time-hard-failure")
+        val generation = AtomicReference(GENERATION_ONE)
+        val coordinator = coordinator(
+            generation = generation,
+            requestStatus = { uid, expectedGeneration ->
+                statusCalls.incrementAndGet()
+                DeviceRuntimeCommandOutcome.FirmwareError(
+                    deviceUid = uid,
+                    module = DeviceTimeRuntimeContract.MODULE,
+                    action = DeviceTimeRuntimeContract.Action.STATUS_GET,
+                    messageId = "firmware-error-message-id",
+                    generation = expectedGeneration,
+                    statusCode = 503,
+                    code = "rtcUnavailable",
+                    field = "rtc",
+                    message = "RTC is unavailable."
+                )
+            },
+            syncPhoneNow = { uid, expectedGeneration ->
+                syncCalls.incrementAndGet()
+                syncSuccess(uid, expectedGeneration)
+            },
+            retryDelay = { delayCalls.incrementAndGet() }
+        )
+
+        val decision = coordinator.syncPhoneNowIfNeeded(deviceUid, GENERATION_ONE)
+
+        assertTrue(decision is DeviceTimeSyncDecision.Skipped)
+        assertEquals(1, statusCalls.get())
+        assertEquals(0, syncCalls.get())
+        assertEquals(0, delayCalls.get())
+    }
+
+    @Test
+    fun `transient status retry is bounded to three status reads`() = runBlocking {
+        val statusCalls = AtomicInteger(0)
+        val delayCalls = AtomicInteger(0)
+        val deviceUid = DeviceUid("device-time-bounded-retry")
+        val generation = AtomicReference(GENERATION_ONE)
+        val coordinator = coordinator(
+            generation = generation,
+            requestStatus = { uid, _ ->
+                statusCalls.incrementAndGet()
+                DeviceRuntimeCommandOutcome.NotConnected(
+                    deviceUid = uid,
+                    module = DeviceTimeRuntimeContract.MODULE,
+                    action = DeviceTimeRuntimeContract.Action.STATUS_GET
+                )
+            },
+            syncPhoneNow = { uid, expectedGeneration ->
+                syncSuccess(uid, expectedGeneration)
+            },
+            retryDelay = { delayCalls.incrementAndGet() }
+        )
+
+        val decision = coordinator.syncPhoneNowIfNeeded(deviceUid, GENERATION_ONE)
+
+        assertTrue(decision is DeviceTimeSyncDecision.Skipped)
+        assertEquals(3, statusCalls.get())
+        assertEquals(2, delayCalls.get())
+    }
+
+    @Test
+    fun `concurrent duplicate is skipped for the same generation`() = runBlocking {
         val entered = CompletableDeferred<Unit>()
         val release = CompletableDeferred<Unit>()
-        val calls = AtomicInteger(0)
+        val statusCalls = AtomicInteger(0)
+        val syncCalls = AtomicInteger(0)
         val deviceUid = DeviceUid("device-time-race")
-        val coordinator = DeviceTimeSyncCoordinator(
-            syncPhoneNow = { uid ->
-                calls.incrementAndGet()
+        val generation = AtomicReference(GENERATION_ONE)
+        val coordinator = coordinator(
+            generation = generation,
+            requestStatus = { uid, expectedGeneration ->
+                statusCalls.incrementAndGet()
                 entered.complete(Unit)
                 release.await()
-                success(uid)
+                statusSuccess(uid, status().copy(timeSet = false), expectedGeneration)
+            },
+            syncPhoneNow = { uid, expectedGeneration ->
+                syncCalls.incrementAndGet()
+                syncSuccess(uid, expectedGeneration)
             }
         )
 
-        val first = async { coordinator.syncPhoneNowIfNeeded(deviceUid) }
+        val first = async {
+            coordinator.syncPhoneNowIfNeeded(deviceUid, GENERATION_ONE)
+        }
         entered.await()
-        val second = coordinator.syncPhoneNowIfNeeded(deviceUid, force = true)
+        val second = coordinator.syncPhoneNowIfNeeded(deviceUid, GENERATION_ONE)
         release.complete(Unit)
 
         assertTrue(second is DeviceTimeSyncDecision.Skipped)
         assertTrue(first.await() is DeviceTimeSyncDecision.Attempted)
-        assertEquals(1, calls.get())
+        assertEquals(1, statusCalls.get())
+        assertEquals(1, syncCalls.get())
     }
 
     @Test
-    fun `clearing session memory allows synchronization again`() = runBlocking {
-        val calls = AtomicInteger(0)
-        val deviceUid = DeviceUid("device-time-clear")
-        val coordinator = DeviceTimeSyncCoordinator(
-            syncPhoneNow = { uid ->
-                calls.incrementAndGet()
-                success(uid)
+    fun `new generation is not blocked and stale status cannot sync it`() = runBlocking {
+        val oldStatusEntered = CompletableDeferred<Unit>()
+        val releaseOldStatus = CompletableDeferred<Unit>()
+        val syncedGenerations = mutableListOf<DeviceRuntimeConnectionGeneration>()
+        val deviceUid = DeviceUid("device-time-generation-change")
+        val generation = AtomicReference(GENERATION_ONE)
+        val coordinator = coordinator(
+            generation = generation,
+            requestStatus = { uid, expectedGeneration ->
+                if (expectedGeneration == GENERATION_ONE) {
+                    oldStatusEntered.complete(Unit)
+                    releaseOldStatus.await()
+                }
+                statusSuccess(
+                    uid,
+                    status().copy(timeSet = false),
+                    expectedGeneration
+                )
+            },
+            syncPhoneNow = { uid, expectedGeneration ->
+                syncedGenerations += expectedGeneration
+                syncSuccess(uid, expectedGeneration)
             }
         )
 
-        coordinator.syncPhoneNowIfNeeded(deviceUid)
-        coordinator.clearSessionMemory(deviceUid)
-        coordinator.syncPhoneNowIfNeeded(deviceUid)
+        val oldDecision = async {
+            coordinator.syncPhoneNowIfNeeded(deviceUid, GENERATION_ONE)
+        }
+        oldStatusEntered.await()
+        generation.set(GENERATION_TWO)
 
-        assertEquals(2, calls.get())
+        val newDecision = coordinator.syncPhoneNowIfNeeded(deviceUid, GENERATION_TWO)
+        releaseOldStatus.complete(Unit)
+
+        assertTrue(newDecision is DeviceTimeSyncDecision.Attempted)
+        assertTrue(oldDecision.await() is DeviceTimeSyncDecision.Skipped)
+        assertEquals(listOf(GENERATION_TWO), syncedGenerations)
     }
 
-    private fun success(
-        deviceUid: DeviceUid
+    private fun coordinator(
+        generation: AtomicReference<DeviceRuntimeConnectionGeneration>,
+        requestStatus: suspend (
+            DeviceUid,
+            DeviceRuntimeConnectionGeneration
+        ) -> DeviceRuntimeCommandOutcome<DeviceTimeStatus>?,
+        syncPhoneNow: suspend (
+            DeviceUid,
+            DeviceRuntimeConnectionGeneration
+        ) -> DeviceRuntimeCommandOutcome<DeviceTimeMutationResult>?,
+        retryDelay: suspend (Long) -> Unit = { }
+    ): DeviceTimeSyncCoordinator = DeviceTimeSyncCoordinator(
+        requestStatus = requestStatus,
+        syncPhoneNow = syncPhoneNow,
+        currentConnectionGeneration = { generation.get() },
+        currentTimeZoneSnapshot = {
+            DeviceTimeZoneSnapshot(
+                timezoneId = "Europe/Istanbul",
+                posixTimeZone = "TRT-3",
+                utcOffsetMinutes = 180
+            )
+        },
+        retryDelay = retryDelay
+    )
+
+    private fun statusSuccess(
+        deviceUid: DeviceUid,
+        status: DeviceTimeStatus,
+        generation: DeviceRuntimeConnectionGeneration
+    ): DeviceRuntimeCommandOutcome.Success<DeviceTimeStatus> =
+        DeviceRuntimeCommandOutcome.Success(
+            deviceUid = deviceUid,
+            module = DeviceTimeRuntimeContract.MODULE,
+            action = DeviceTimeRuntimeContract.Action.STATUS_GET,
+            messageId = "status-message-id",
+            generation = generation,
+            statusCode = 200,
+            value = status
+        )
+
+    private fun syncSuccess(
+        deviceUid: DeviceUid,
+        generation: DeviceRuntimeConnectionGeneration
     ): DeviceRuntimeCommandOutcome.Success<DeviceTimeMutationResult> =
         DeviceRuntimeCommandOutcome.Success(
             deviceUid = deviceUid,
             module = DeviceTimeRuntimeContract.MODULE,
             action = DeviceTimeRuntimeContract.Action.PHONE_SYNC,
-            messageId = "message-id",
-            generation = DeviceRuntimeConnectionGeneration(1L),
+            messageId = "sync-message-id",
+            generation = generation,
             statusCode = 200,
             value = DeviceTimeMutationResult(
                 operation = "phoneSync",
@@ -127,8 +420,13 @@ class DeviceTimeSyncCoordinatorTest {
         autoSyncGadgetEnabled = true,
         ntpServerPrimary = "pool.ntp.org",
         ntpServerSecondary = "time.nist.gov",
-        lastSyncSource = "phone",
-        lastSyncEpochMillis = 1_754_041_600_000L,
+        lastSyncSource = "rtc",
+        lastSyncEpochMillis = 0L,
         lastSyncUptimeMs = 5_000L
     )
+
+    private companion object {
+        val GENERATION_ONE = DeviceRuntimeConnectionGeneration(1L)
+        val GENERATION_TWO = DeviceRuntimeConnectionGeneration(2L)
+    }
 }

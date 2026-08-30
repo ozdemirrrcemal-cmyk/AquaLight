@@ -10,6 +10,7 @@ import com.aqua.aqualight.data.devices.provisioning.repository.AqlProvisioningHa
 import com.aqua.aqualight.data.devices.provisioning.store.AqlProvisioningDraftStore
 import com.aqua.aqualight.data.devices.provisioning.store.AqlProvisioningQrSecretStore
 import com.aqua.aqualight.data.devices.provisioning.store.ProvisioningCommitRecoveryStore
+import com.aqua.aqualight.data.devices.runtime.modules.firmware.SharedPreferencesDeviceOtaTransactionStore
 import com.aqua.aqualight.data.devices.store.DeviceCredentialStore
 import com.aqua.aqualight.data.devices.store.DeviceKnownStore
 import com.aqua.aqualight.data.notifications.NotificationPlatform
@@ -30,6 +31,7 @@ class UserDataCleaner private constructor(
         DEVICE_ASSIGNMENTS,
         PROVISIONING_SESSIONS,
         KNOWN_DEVICES,
+        OTA_TRANSACTIONS,
         DEVICE_CREDENTIALS,
         APP_OWNED_FILES,
         USER_PREFERENCES
@@ -112,9 +114,7 @@ class UserDataCleaner private constructor(
                 .clearAllTasks(ownerUid = targetOwnerUid)
         }
 
-        runStep(Step.AQUARIUM_TANKS) {
-            tankDataStoreManager.clearAllTanks(ownerUid = targetOwnerUid)
-        }
+        runStep(Step.AQUARIUM_TANKS) { tankDataStoreManager.clearAllTanks(targetOwnerUid) }
 
         runStep(Step.DEVICE_ASSIGNMENTS) {
             TankDeviceAssignmentStore.get(appContext)
@@ -125,19 +125,7 @@ class UserDataCleaner private constructor(
             clearProvisioningData(targetOwnerUid)
         }
 
-        runStep(Step.KNOWN_DEVICES) {
-            DeviceKnownStore(
-                context = appContext,
-                ownerUid = targetOwnerUid
-            ).clearOwnerData()
-        }
-
-        runStep(Step.DEVICE_CREDENTIALS) {
-            DeviceCredentialStore(
-                context = appContext,
-                ownerUid = targetOwnerUid
-            ).clearOwner()
-        }
+        clearDeviceStores(targetOwnerUid) { step, block -> runStep(step, block) }
 
         runStep(Step.APP_OWNED_FILES) {
             clearAppOwnedUserFiles(
@@ -149,13 +137,35 @@ class UserDataCleaner private constructor(
 
         if (clearUserPreferences) {
             runStep(Step.USER_PREFERENCES) {
-                userPreferencesManager.clearUserDataForOwner(
-                    ownerUid = targetOwnerUid
-                )
+                userPreferencesManager.clearUserDataForOwner(targetOwnerUid)
             }
         }
 
         return CleanupResult(issues = issues.toList())
+    }
+
+    private suspend fun clearDeviceStores(
+        ownerUid: String,
+        runStep: suspend (Step, suspend () -> Unit) -> Unit
+    ) {
+        runStep(Step.KNOWN_DEVICES) {
+            DeviceKnownStore(
+                context = appContext,
+                ownerUid = ownerUid
+            ).clearOwnerData()
+        }
+        runStep(Step.OTA_TRANSACTIONS) {
+            SharedPreferencesDeviceOtaTransactionStore.create(
+                context = appContext,
+                ownerUid = ownerUid
+            ).clearOwner()
+        }
+        runStep(Step.DEVICE_CREDENTIALS) {
+            DeviceCredentialStore(
+                context = appContext,
+                ownerUid = ownerUid
+            ).clearOwner()
+        }
     }
 
     private suspend fun clearProvisioningData(ownerUid: String) {

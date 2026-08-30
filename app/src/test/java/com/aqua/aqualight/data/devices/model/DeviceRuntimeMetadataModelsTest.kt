@@ -117,24 +117,24 @@ class DeviceRuntimeMetadataModelsTest {
         assertNull(DeviceRuntimeModuleKey.fromWireExact("timerapi"))
         assertNull(DeviceRuntimeModuleKey.fromWireExact(" timerApi"))
 
-        val dosingModules = DeviceRuntimeModules(
+        val engineOnlyModules = DeviceRuntimeModules(
             light = false,
             cooling = false,
             temperature = false,
             timerApi = false,
             timerEngine = true,
-            dosing = true,
+            dosing = false,
             network = true,
             discovery = true,
             firmware = true,
             system = true
         )
 
-        assertFalse(dosingModules.exposesStandaloneTimerApi)
-        assertTrue(dosingModules.usesInternalTimerEngine)
-        assertTrue(DeviceRuntimeModuleKey.TIMER_ENGINE in dosingModules.enabled)
-        assertFalse(DeviceRuntimeModuleKey.TIMER_API in dosingModules.enabled)
-        assertTrue(DeviceRuntimeModuleKey.DOSING in dosingModules.enabled)
+        assertFalse(engineOnlyModules.exposesStandaloneTimerApi)
+        assertTrue(engineOnlyModules.usesInternalTimerEngine)
+        assertTrue(DeviceRuntimeModuleKey.TIMER_ENGINE in engineOnlyModules.enabled)
+        assertFalse(DeviceRuntimeModuleKey.TIMER_API in engineOnlyModules.enabled)
+        assertFalse(DeviceRuntimeModuleKey.DOSING in engineOnlyModules.enabled)
     }
 
     @Test
@@ -193,7 +193,7 @@ class DeviceRuntimeMetadataModelsTest {
         cooling = capabilities.cooling,
         temperature = capabilities.temperature,
         timerApi = family == DeviceFamily.TIMER,
-        timerEngine = family == DeviceFamily.TIMER || family == DeviceFamily.DOSING,
+        timerEngine = family == DeviceFamily.TIMER,
         dosing = family == DeviceFamily.DOSING,
         network = true,
         discovery = true,

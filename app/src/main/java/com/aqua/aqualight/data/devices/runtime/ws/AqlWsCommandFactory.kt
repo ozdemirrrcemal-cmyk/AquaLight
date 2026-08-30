@@ -74,23 +74,14 @@ object AqlWsCommandFactory {
             action = AqlWsContract.ACTION_TIMER_STATUS_GET
         )
     }
-
-    fun dosingStatus(): AqlWsOutgoingMessage.Command {
-        return command(
-            module = AqlWsContract.MODULE_DOSING,
-            action = AqlWsContract.ACTION_DOSING_STATUS_GET
-        )
-    }
-
-    fun command(
-        module: String,
-        action: String,
-        data: JSONObject = JSONObject()
-    ): AqlWsOutgoingMessage.Command {
-        return AqlWsOutgoingMessage.Command(
-            module = module,
-            action = action,
-            data = data
-        )
-    }
 }
+
+private fun command(
+    module: String,
+    action: String,
+    data: JSONObject = JSONObject()
+): AqlWsOutgoingMessage.Command = AqlWsOutgoingMessage.Command(
+    module = module,
+    action = action,
+    data = data
+)

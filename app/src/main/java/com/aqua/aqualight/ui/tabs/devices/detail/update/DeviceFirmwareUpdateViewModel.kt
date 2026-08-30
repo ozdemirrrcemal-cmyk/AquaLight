@@ -78,7 +78,13 @@ class DeviceFirmwareUpdateViewModel(
 
     fun retry() {
         if (operationJob?.isActive == true) return
-        refreshAndRecover()
+        if (_uiState.value.mode == DeviceFirmwareUpdateMode.POST_RESTART_TIMEOUT) {
+            operationJob = viewModelScope.launch {
+                firmwareUpdateOperations.retryPostRestartConnection(boundDeviceUid)
+            }
+        } else {
+            refreshAndRecover()
+        }
     }
 
     fun refreshActiveStatus() {
@@ -222,6 +228,25 @@ private class DeviceFirmwareUpdateStateMapper {
             phase = null,
             progressPermille = COMPLETE_PROGRESS_PERMILLE
         )
+        is DeviceOtaState.RolledBack -> common.copy(
+            mode = DeviceFirmwareUpdateMode.ROLLED_BACK,
+            currentVersion = state.previousVersion,
+            targetVersion = state.rejectedVersion,
+            phase = null,
+            progressPermille = COMPLETE_PROGRESS_PERMILLE
+        )
+        is DeviceOtaState.PostRestartTimeout -> common.copy(
+            mode = DeviceFirmwareUpdateMode.POST_RESTART_TIMEOUT,
+            currentVersion = state.previousVersion,
+            targetVersion = state.targetVersion,
+            phase = null
+        )
+        is DeviceOtaState.UnexpectedFirmware -> common.copy(
+            mode = DeviceFirmwareUpdateMode.UNEXPECTED_FIRMWARE,
+            currentVersion = state.observedVersion,
+            targetVersion = state.expectedVersion,
+            phase = null
+        )
         is DeviceOtaState.Failed -> common.copy(
             mode = DeviceFirmwareUpdateMode.FAILED,
             phase = null,
@@ -236,16 +261,21 @@ private class DeviceFirmwareUpdateStateMapper {
             is DeviceOtaState.Starting -> selectedPlan = state.plan
             else -> Unit
         }
-        val content = when (state) {
-            is DeviceOtaState.UpToDate -> state.releaseContent
-            is DeviceOtaState.UpdateAvailable -> state.plan.releaseContent
-            is DeviceOtaState.Starting -> state.plan.releaseContent
-            is DeviceOtaState.InProgress -> state.releaseContent
-            is DeviceOtaState.RestartRequired -> state.releaseContent
-            is DeviceOtaState.Succeeded -> state.releaseContent
-            else -> DeviceFirmwareReleaseContent.EMPTY
-        }
+        val content = state.releaseContentOrEmpty()
         if (content.isPresent) retainedReleaseContent = content
+    }
+
+    private fun DeviceOtaState.releaseContentOrEmpty(): DeviceFirmwareReleaseContent = when (this) {
+        is DeviceOtaState.UpToDate -> releaseContent
+        is DeviceOtaState.UpdateAvailable -> plan.releaseContent
+        is DeviceOtaState.Starting -> plan.releaseContent
+        is DeviceOtaState.InProgress -> releaseContent
+        is DeviceOtaState.RestartRequired -> releaseContent
+        is DeviceOtaState.Succeeded -> releaseContent
+        is DeviceOtaState.RolledBack -> releaseContent
+        is DeviceOtaState.PostRestartTimeout -> releaseContent
+        is DeviceOtaState.UnexpectedFirmware -> releaseContent
+        else -> DeviceFirmwareReleaseContent.EMPTY
     }
 
     private fun DeviceFirmwareUpdateUiState.withPlan(
@@ -277,6 +307,9 @@ enum class DeviceFirmwareUpdateMode {
     RECOVERING,
     RESTARTING,
     SUCCEEDED,
+    ROLLED_BACK,
+    POST_RESTART_TIMEOUT,
+    UNEXPECTED_FIRMWARE,
     UP_TO_DATE,
     FAILED,
     UNSUPPORTED;

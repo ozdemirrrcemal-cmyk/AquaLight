@@ -3,6 +3,7 @@ package com.aqua.aqualight.composition
 import android.content.Context
 import androidx.lifecycle.ViewModel
 import com.aqua.aqualight.BuildConfig
+import com.aqua.aqualight.application.devices.DeviceMenuOpenUseCase
 import com.aqua.aqualight.application.notifications.NotificationPreferenceUseCase
 import com.aqua.aqualight.application.user.UserProfileOperations
 import com.aqua.aqualight.data.aquarium.DefaultAquariumTankOperations
@@ -36,7 +37,11 @@ import com.aqua.aqualight.ui.tabs.devices.add.DeviceProvisioningProgressViewMode
 import com.aqua.aqualight.ui.tabs.devices.add.DeviceQrScanViewModel
 import com.aqua.aqualight.ui.tabs.devices.detail.common.DeviceRootOverviewViewModel
 import com.aqua.aqualight.ui.tabs.devices.detail.cooling.DeviceCoolingRootViewModel
-import com.aqua.aqualight.ui.tabs.devices.detail.dosing.DeviceDosingRootViewModel
+import com.aqua.aqualight.ui.tabs.devices.detail.dosing.channel.calibration.DeviceDosingChannelCalibrationViewModel
+import com.aqua.aqualight.ui.tabs.devices.detail.dosing.channel.detail.DeviceDosingChannelDetailViewModel
+import com.aqua.aqualight.ui.tabs.devices.detail.dosing.channel.plan.DeviceDosingPlanViewModel
+import com.aqua.aqualight.ui.tabs.devices.detail.dosing.channel.reservoir.DeviceDosingReservoirViewModel
+import com.aqua.aqualight.ui.tabs.devices.detail.dosing.root.DeviceDosingRootViewModel
 import com.aqua.aqualight.ui.tabs.devices.detail.light.DeviceLightRootViewModel
 import com.aqua.aqualight.ui.tabs.devices.detail.settings.DeviceFamilySettingsViewModel
 import com.aqua.aqualight.ui.tabs.devices.detail.timer.DeviceTimerRootViewModel
@@ -99,7 +104,7 @@ internal class OwnerViewModelFactory(
             DevicesViewModel::class.java ->
                 DevicesViewModel(
                     operations = createOwnerDevicesOperations(graph, repository, assignments),
-                    menuAccessOperations = DefaultDeviceMenuAccessOperations.create(repository),
+                    menuOpenUseCase = createDeviceMenuOpenUseCase(graph, repository),
                     routeResolver = DeviceRouteResolver()
                 )
 
@@ -141,6 +146,7 @@ internal class OwnerViewModelFactory(
                             ownerUidProvider = { graph.ownerUid }
                         )
                     ),
+                    menuOpenUseCase = createDeviceMenuOpenUseCase(graph, repository),
                     textResolver = appTextResolver
                 )
 
@@ -161,12 +167,9 @@ internal class OwnerViewModelFactory(
                                     snapshots = snapshots
                                 )
                             },
-                            removeDeviceAssignmentsForTank =
-                                assignments::removeAssignmentsForTank,
-                            cancelCareTaskReminder =
-                                notificationPreferenceUseCase::cancelCareTask,
-                            reconcileCareReminders =
-                                notificationPreferenceUseCase::reconcileOwner
+                            removeDeviceAssignmentsForTank = assignments::removeAssignmentsForTank,
+                            cancelCareTaskReminder = notificationPreferenceUseCase::cancelCareTask,
+                            reconcileCareReminders = notificationPreferenceUseCase::reconcileOwner
                         ),
                         notificationPreferences = notificationPreferenceUseCase
                     )
@@ -193,8 +196,34 @@ internal class OwnerViewModelFactory(
             DeviceTimerRootViewModel::class.java ->
                 DeviceTimerRootViewModel(DefaultDeviceRootOperations(repository))
 
-            DeviceDosingRootViewModel::class.java ->
-                DeviceDosingRootViewModel(DefaultDeviceRootOperations(repository))
+            DeviceDosingRootViewModel::class.java -> graph.dosingOperations.let { dosing ->
+                DeviceDosingRootViewModel(
+                    operations = DefaultDeviceRootOperations(repository),
+                    channelNavigationOperations = dosing.navigationOperations,
+                    channelOperations = dosing.channelOperations,
+                    controlSurfacePreparationOperations = dosing.controlSurfacePreparationOperations
+                )
+            }
+
+            DeviceDosingChannelCalibrationViewModel::class.java ->
+                DeviceDosingChannelCalibrationViewModel(
+                    operations = graph.dosingOperations.calibrationOperations
+                )
+
+            DeviceDosingChannelDetailViewModel::class.java ->
+                DeviceDosingChannelDetailViewModel(
+                    operations = graph.dosingOperations.channelOperations
+                )
+
+            DeviceDosingPlanViewModel::class.java ->
+                DeviceDosingPlanViewModel(
+                    operations = graph.dosingOperations.channelOperations
+                )
+
+            DeviceDosingReservoirViewModel::class.java ->
+                DeviceDosingReservoirViewModel(
+                    operations = graph.dosingOperations.channelOperations
+                )
 
             DeviceRootOverviewViewModel::class.java ->
                 DeviceRootOverviewViewModel(DefaultDeviceRootOperations(repository))
@@ -219,8 +248,9 @@ internal class OwnerViewModelFactory(
                         assignmentRepository = assignments,
                         devicesRepository = repository
                     ),
-                    menuAccessOperations = DefaultDeviceMenuAccessOperations.create(repository),
-                    routeResolver = DeviceRouteResolver()
+                    menuOpenUseCase = createDeviceMenuOpenUseCase(graph, repository),
+                    routeResolver = DeviceRouteResolver(),
+                    dosingCardOperations = graph.dosingOperations.cardOperations
                 )
 
             TankDeviceSelectViewModel::class.java ->
@@ -237,6 +267,14 @@ internal class OwnerViewModelFactory(
         @Suppress("UNCHECKED_CAST")
         return viewModel as T
     }
+
+    private fun createDeviceMenuOpenUseCase(
+        graph: OwnerDependencyGraph,
+        repository: DevicesRepository
+    ): DeviceMenuOpenUseCase = DeviceMenuOpenUseCase(
+        menuAccessOperations = DefaultDeviceMenuAccessOperations.create(repository),
+        controlSurfacePreparationOperations = graph.dosingOperations.controlSurfacePreparationOperations
+    )
 
     private fun createOwnerDevicesOperations(
         graph: OwnerDependencyGraph,
@@ -274,6 +312,10 @@ internal class OwnerViewModelFactory(
             DeviceCoolingRootViewModel::class.java,
             DeviceTimerRootViewModel::class.java,
             DeviceDosingRootViewModel::class.java,
+            DeviceDosingChannelCalibrationViewModel::class.java,
+            DeviceDosingChannelDetailViewModel::class.java,
+            DeviceDosingPlanViewModel::class.java,
+            DeviceDosingReservoirViewModel::class.java,
             DeviceRootOverviewViewModel::class.java,
             DeviceFamilySettingsViewModel::class.java,
             DeviceFirmwareUpdateViewModel::class.java,

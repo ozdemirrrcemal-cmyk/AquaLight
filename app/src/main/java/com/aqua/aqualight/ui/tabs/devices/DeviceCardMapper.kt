@@ -3,8 +3,8 @@ package com.aqua.aqualight.ui.tabs.devices
 import com.aqua.aqualight.application.devices.OwnerDeviceAvailability
 import com.aqua.aqualight.application.devices.OwnerDeviceListItem
 import com.aqua.aqualight.ui.common.devicecard.DeviceCompactCardUi
-import com.aqua.aqualight.ui.common.devicecard.DeviceCompactStatusStyle
 import com.aqua.aqualight.ui.common.devicecard.DeviceFamilyIconMapper
+import com.aqua.aqualight.ui.common.devicepresence.DeviceConnectionVisualState
 
 object DeviceCardMapper {
 
@@ -26,9 +26,9 @@ object DeviceCardMapper {
                 supportingText = supportingText,
                 iconRes = DeviceFamilyIconMapper.iconFor(device.family),
                 statusStyle = if (isReachable) {
-                    DeviceCompactStatusStyle.ONLINE
+                    DeviceConnectionVisualState.ONLINE
                 } else {
-                    DeviceCompactStatusStyle.OFFLINE
+                    DeviceConnectionVisualState.OFFLINE
                 },
                 actionText = "",
                 showAction = false

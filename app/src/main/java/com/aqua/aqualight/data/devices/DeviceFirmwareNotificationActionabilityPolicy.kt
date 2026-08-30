@@ -43,6 +43,18 @@ object DeviceFirmwareNotificationActionabilityPolicy {
             expectedTargetVersion,
             state.targetVersion
         )
+        is DeviceOtaState.RolledBack -> targetMatches(
+            expectedTargetVersion,
+            state.rejectedVersion
+        )
+        is DeviceOtaState.PostRestartTimeout -> targetMatches(
+            expectedTargetVersion,
+            state.targetVersion
+        )
+        is DeviceOtaState.UnexpectedFirmware -> targetMatches(
+            expectedTargetVersion,
+            state.expectedVersion
+        )
         is DeviceOtaState.Failed ->
             state.failure.stage == DeviceOtaFailureStage.UPDATE_EXECUTION
         is DeviceOtaState.Idle,

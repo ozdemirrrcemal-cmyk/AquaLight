@@ -1,3 +1,5 @@
+@file:Suppress("CyclomaticComplexMethod")
+
 package com.aqua.aqualight.ui.tabs.devices.detail.update.presentation.mapper
 
 import androidx.annotation.StringRes
@@ -26,6 +28,11 @@ internal object DeviceFirmwareUpdateProgressPresentationMapper {
         DeviceFirmwareUpdateMode.RECOVERING -> R.string.device_settings_update_phase_recovering
         DeviceFirmwareUpdateMode.RESTARTING -> R.string.device_settings_update_phase_restarting
         DeviceFirmwareUpdateMode.SUCCEEDED -> R.string.device_settings_update_phase_succeeded
+        DeviceFirmwareUpdateMode.ROLLED_BACK -> R.string.device_settings_update_phase_rolled_back
+        DeviceFirmwareUpdateMode.POST_RESTART_TIMEOUT ->
+            R.string.device_settings_update_phase_post_restart_timeout
+        DeviceFirmwareUpdateMode.UNEXPECTED_FIRMWARE ->
+            R.string.device_settings_update_phase_unexpected_firmware
         DeviceFirmwareUpdateMode.UP_TO_DATE -> R.string.device_settings_update_phase_up_to_date
         DeviceFirmwareUpdateMode.FAILED -> when {
             state.failure?.stage == DeviceOtaFailureStage.AVAILABILITY_CHECK ->
@@ -44,11 +51,14 @@ internal object DeviceFirmwareUpdateProgressPresentationMapper {
                 R.drawable.ic_check_24,
                 R.color.aqua_status_success
             )
-            DeviceFirmwareUpdateMode.FAILED -> DeviceFirmwareUpdateIconPresentation(
+            DeviceFirmwareUpdateMode.FAILED,
+            DeviceFirmwareUpdateMode.POST_RESTART_TIMEOUT,
+            DeviceFirmwareUpdateMode.UNEXPECTED_FIRMWARE -> DeviceFirmwareUpdateIconPresentation(
                 R.drawable.ic_error,
                 R.color.aqua_status_danger
             )
-            DeviceFirmwareUpdateMode.UNSUPPORTED -> DeviceFirmwareUpdateIconPresentation(
+            DeviceFirmwareUpdateMode.UNSUPPORTED,
+            DeviceFirmwareUpdateMode.ROLLED_BACK -> DeviceFirmwareUpdateIconPresentation(
                 R.drawable.ic_warning,
                 R.color.aqua_content_warning
             )
@@ -75,10 +85,17 @@ internal object DeviceFirmwareUpdateProgressPresentationMapper {
                 enabled = false
             )
             DeviceFirmwareUpdateMode.SUCCEEDED,
+            DeviceFirmwareUpdateMode.ROLLED_BACK,
+            DeviceFirmwareUpdateMode.UNEXPECTED_FIRMWARE,
             DeviceFirmwareUpdateMode.UP_TO_DATE -> DeviceFirmwareUpdateActionPresentation(
                 R.string.device_settings_update_done_action,
                 enabled = true
             )
+            DeviceFirmwareUpdateMode.POST_RESTART_TIMEOUT ->
+                DeviceFirmwareUpdateActionPresentation(
+                    R.string.device_settings_update_reconnect_action,
+                    enabled = true
+                )
             DeviceFirmwareUpdateMode.FAILED -> DeviceFirmwareUpdateActionPresentation(
                 textRes = if (state.failure?.recoverable == true) {
                     R.string.device_settings_retry_update_action

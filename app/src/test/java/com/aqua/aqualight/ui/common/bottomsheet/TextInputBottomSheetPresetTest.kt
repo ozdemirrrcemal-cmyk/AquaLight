@@ -1,6 +1,8 @@
 package com.aqua.aqualight.ui.common.bottomsheet
 
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
+import org.junit.Assert.assertTrue
 import org.junit.Test
 
 class TextInputBottomSheetPresetTest {
@@ -27,5 +29,23 @@ class TextInputBottomSheetPresetTest {
                 presetResultValue = ""
             )
         )
+    }
+
+    @Test
+    fun `positive numeric validation accepts comma decimal input`() {
+        assertTrue(
+            isTextInputValueValid(
+                value = "2,50",
+                required = true,
+                minimumNumericValueExclusive = 0.0
+            )
+        )
+    }
+
+    @Test
+    fun `positive numeric validation rejects empty zero and non numeric input`() {
+        assertFalse(isTextInputValueValid("", required = true, minimumNumericValueExclusive = 0.0))
+        assertFalse(isTextInputValueValid("0", required = true, minimumNumericValueExclusive = 0.0))
+        assertFalse(isTextInputValueValid("dose", required = true, minimumNumericValueExclusive = 0.0))
     }
 }

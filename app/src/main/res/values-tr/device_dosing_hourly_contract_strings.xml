@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="device_dosing_hourly_calendar_day_hero_description">AquaLight günlük dozu seçili her günde 24 saatlik doza böler. Her saatte kullanılacak dakikayı siz seçersiniz.</string>
+    <string name="device_dosing_hourly_minute_of_hour_title">Her saatin dakikası</string>
+    <string name="device_dosing_hourly_minute_of_hour_description">Seçili her günde 24 doz, her saatin seçtiğiniz dakikasında uygulanır.</string>
+    <string name="device_dosing_hourly_same_day_window_description">24 dozun tamamı aynı seçili takvim günü içinde uygulanır.</string>
+    <string name="device_dosing_hourly_minute_of_hour_picker_title">Doz dakikasını seçin</string>
+    <string name="device_dosing_hourly_minute_of_hour_picker_message">Her saatte kullanılacak dakikayı seçin. AquaLight seçili her günde 24 dozu aynı dakika değerinde planlar.</string>
+    <string name="device_dosing_hourly_minute_of_hour_picker_confirm">Dakikayı uygula</string>
+    <string name="device_dosing_hourly_minute_value_format">:%1$02d</string>
+</resources>

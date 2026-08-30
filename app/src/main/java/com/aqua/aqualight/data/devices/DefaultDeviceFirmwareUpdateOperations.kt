@@ -9,6 +9,8 @@ import com.aqua.aqualight.application.devices.PreparedDeviceFirmwareUpdate
 import com.aqua.aqualight.data.devices.model.DeviceUid
 import com.aqua.aqualight.data.devices.repository.DevicesRepository
 import com.aqua.aqualight.data.devices.runtime.modules.firmware.DeviceOtaCoordinator
+import com.aqua.aqualight.data.devices.runtime.modules.firmware.DeviceOtaTransactionStore
+import com.aqua.aqualight.data.devices.runtime.modules.firmware.InMemoryDeviceOtaTransactionStore
 import com.aqua.aqualight.i18n.AppLanguageController
 import java.util.Locale
 import java.util.concurrent.CancellationException
@@ -30,6 +32,7 @@ import kotlinx.coroutines.sync.withLock
 internal class DefaultDeviceFirmwareUpdateOperations(
     private val devicesRepository: DevicesRepository,
     private val statePublisher: suspend (DeviceOtaState, String) -> Unit = { _, _ -> },
+    transactionStore: DeviceOtaTransactionStore = InMemoryDeviceOtaTransactionStore(),
     private val availabilityRefreshPolicy: DeviceFirmwareAvailabilityRefreshPolicy =
         DeviceFirmwareAvailabilityRefreshPolicy()
 ) : DeviceFirmwareUpdateOperations, AutoCloseable {
@@ -49,7 +52,8 @@ internal class DefaultDeviceFirmwareUpdateOperations(
         updaterProvider = { devicesRepository.runtimeModules()?.firmwareUpdate },
         runtimeLifecycleEvents = devicesRepository.runtimeLifecycleEvents(),
         runtimeTypedEvents = devicesRepository.typedRuntimeEvents(),
-        snapshotUpdates = devicesRepository.snapshots
+        snapshotUpdates = devicesRepository.snapshots,
+        transactionStore = transactionStore
     )
 
     private val localeRefreshJob = operationsScope.launch {
@@ -147,6 +151,11 @@ internal class DefaultDeviceFirmwareUpdateOperations(
     override suspend fun requestStatus(deviceUid: String): DeviceFirmwareCommandResult =
         coordinator.requestStatus(requireDeviceUid(deviceUid))
 
+    override suspend fun retryPostRestartConnection(
+        deviceUid: String
+    ): DeviceFirmwareCommandResult =
+        coordinator.retryPostRestartConnection(requireDeviceUid(deviceUid))
+
     override suspend fun clearStatus(deviceUid: String): DeviceFirmwareCommandResult =
         coordinator.clearStatus(requireDeviceUid(deviceUid))
 
@@ -181,16 +190,16 @@ internal class DefaultDeviceFirmwareUpdateOperations(
         }
     }
 
-    private fun requireDeviceUid(value: String): DeviceUid {
-        val normalized = value.trim()
-        require(normalized.isNotBlank()) { "Device uid is missing." }
-        return DeviceUid(normalized)
-    }
-
     private data class NotificationEmission(
         val key: String,
         val state: DeviceOtaState
     )
+}
+
+private fun requireDeviceUid(value: String): DeviceUid {
+    val normalized = value.trim()
+    require(normalized.isNotBlank()) { "Device uid is missing." }
+    return DeviceUid(normalized)
 }
 
 internal fun <T> Result<T>.rethrowFatalOrCancellation(): Result<T> {
@@ -286,6 +295,9 @@ private fun DeviceOtaState.requiresReleaseContentRelocalization(
     val currentLocale = when (this) {
         is DeviceOtaState.UpToDate -> releaseContent.localeTag
         is DeviceOtaState.UpdateAvailable -> plan.releaseContent.localeTag
+        is DeviceOtaState.RolledBack -> releaseContent.localeTag
+        is DeviceOtaState.PostRestartTimeout -> releaseContent.localeTag
+        is DeviceOtaState.UnexpectedFirmware -> releaseContent.localeTag
         else -> null
     }.releaseLocaleOrNull()
 
@@ -315,7 +327,10 @@ private fun DeviceOtaState.allowsPassiveAvailabilityRefresh(): Boolean = when (t
     is DeviceOtaState.InProgress,
     is DeviceOtaState.Recovering,
     is DeviceOtaState.RestartRequired,
-    is DeviceOtaState.Succeeded -> false
+    is DeviceOtaState.Succeeded,
+    is DeviceOtaState.RolledBack,
+    is DeviceOtaState.PostRestartTimeout,
+    is DeviceOtaState.UnexpectedFirmware -> false
 }
 
 private fun DeviceOtaState.notificationKey(): String? = when (this) {
@@ -326,6 +341,10 @@ private fun DeviceOtaState.notificationKey(): String? = when (this) {
         "recovering:$targetVersion:${progressPermille.toNotificationProgressPercent()}"
     is DeviceOtaState.RestartRequired -> "restart:$targetVersion:$restartScheduled"
     is DeviceOtaState.Succeeded -> "succeeded:$targetVersion"
+    is DeviceOtaState.RolledBack -> "rolled_back:$previousVersion:$rejectedVersion"
+    is DeviceOtaState.PostRestartTimeout -> "post_restart_timeout:$targetVersion"
+    is DeviceOtaState.UnexpectedFirmware ->
+        "unexpected_firmware:$expectedVersion:$observedVersion"
     is DeviceOtaState.Failed -> if (
         failure.stage == DeviceOtaFailureStage.UPDATE_EXECUTION
     ) {

@@ -1,5 +1,11 @@
 package com.aqua.aqualight.ui.tabs.devices.add
 
+import com.aqua.aqualight.application.devices.DeviceControlSurfacePreparationOperations
+import com.aqua.aqualight.application.devices.DeviceControlSurfacePreparationRequest
+import com.aqua.aqualight.application.devices.DeviceControlSurfacePreparationResult
+import com.aqua.aqualight.application.devices.DeviceMenuAccessOperations
+import com.aqua.aqualight.application.devices.DeviceMenuAccessResult
+import com.aqua.aqualight.application.devices.DeviceMenuOpenUseCase
 import com.aqua.aqualight.application.devices.OwnerDeviceFamily
 import com.aqua.aqualight.application.devices.provisioning.PreparedProvisioningRegistration
 import com.aqua.aqualight.application.devices.provisioning.ProvisionedDevice
@@ -79,6 +85,10 @@ class DeviceProvisioningCancellationBoundaryTest {
     private fun viewModel(operations: FakeOperations) =
         DeviceProvisioningProgressViewModel(
             operations = operations,
+            menuOpenUseCase = DeviceMenuOpenUseCase(
+                menuAccessOperations = UnusedDeviceMenuAccessOperations,
+                controlSurfacePreparationOperations = UnusedControlSurfacePreparationOperations
+            ),
             textResolver = FakeTextResolver
         )
 
@@ -181,6 +191,19 @@ class DeviceProvisioningCancellationBoundaryTest {
         suspend fun emit(event: ProvisioningTransportEvent) {
             eventFlow.emit(event)
         }
+    }
+
+    private object UnusedDeviceMenuAccessOperations : DeviceMenuAccessOperations {
+        override suspend fun resolve(deviceUid: String): DeviceMenuAccessResult =
+            error("Device menu access is not expected in cancellation tests.")
+    }
+
+    private object UnusedControlSurfacePreparationOperations :
+        DeviceControlSurfacePreparationOperations {
+        override suspend fun prepare(
+            request: DeviceControlSurfacePreparationRequest
+        ): DeviceControlSurfacePreparationResult =
+            error("Control-surface preparation is not expected in cancellation tests.")
     }
 
     private object FakeTextResolver : AppTextResolver {

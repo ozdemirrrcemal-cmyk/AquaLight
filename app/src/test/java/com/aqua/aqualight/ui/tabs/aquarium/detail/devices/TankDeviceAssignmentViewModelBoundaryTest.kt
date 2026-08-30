@@ -2,19 +2,26 @@ package com.aqua.aqualight.ui.tabs.aquarium.detail.devices
 
 import com.aqua.aqualight.application.devices.AssignDeviceToTankResult
 import com.aqua.aqualight.application.devices.AvailableTankDevicesSnapshot
+import com.aqua.aqualight.application.devices.DeviceControlSurfacePreparationOperations
+import com.aqua.aqualight.application.devices.DeviceControlSurfacePreparationRequest
+import com.aqua.aqualight.application.devices.DeviceControlSurfacePreparationResult
 import com.aqua.aqualight.application.devices.DeviceMenuAccessOperations
 import com.aqua.aqualight.application.devices.DeviceMenuAccessResult
+import com.aqua.aqualight.application.devices.DeviceMenuOpenUseCase
 import com.aqua.aqualight.application.devices.DeviceMenuUnavailableReason
 import com.aqua.aqualight.application.devices.OwnerDeviceAvailability
 import com.aqua.aqualight.application.devices.OwnerDeviceFamily
 import com.aqua.aqualight.application.devices.RemoveDeviceFromTankResult
 import com.aqua.aqualight.application.devices.TankDeviceAssignmentOperations
 import com.aqua.aqualight.application.devices.TankDeviceListItem
+import com.aqua.aqualight.application.devices.dosing.DeviceDosingCardOperations
+import com.aqua.aqualight.application.devices.dosing.DeviceDosingCardState
+import com.aqua.aqualight.ui.common.devicepresence.DeviceConnectionVisualState
 import com.aqua.aqualight.ui.tabs.aquarium.detail.devices.select.TankDeviceSelectEmptyReason
 import com.aqua.aqualight.ui.tabs.aquarium.detail.devices.select.TankDeviceSelectEvent
 import com.aqua.aqualight.ui.tabs.aquarium.detail.devices.select.TankDeviceSelectViewModel
-import com.aqua.aqualight.ui.common.devicecard.DeviceCompactStatusStyle
 import com.aqua.aqualight.ui.tabs.devices.route.DeviceRouteResolver
+import com.aqua.aqualight.ui.tabs.devices.route.DeviceRouteTarget
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -46,11 +53,7 @@ class TankDeviceAssignmentViewModelBoundaryTest {
         val operations = FakeTankDeviceAssignmentOperations(
             assigned = listOf(device("device-1"))
         )
-        val viewModel = TankDetailDevicesViewModel(
-            assignmentOperations = operations,
-            menuAccessOperations = FakeMenuAccessOperations(),
-            routeResolver = DeviceRouteResolver()
-        )
+        val viewModel = createTankDetailViewModel(operations)
 
         viewModel.bind(10L)
 
@@ -59,7 +62,82 @@ class TankDeviceAssignmentViewModelBoundaryTest {
         assertFalse(state.isEmpty)
         assertEquals("device-1", state.devices.single().deviceUid)
         assertEquals("AquaLight device-1", state.devices.single().card.displayName)
-        assertEquals(DeviceCompactStatusStyle.ONLINE, state.devices.single().card.statusStyle)
+        assertEquals(DeviceConnectionVisualState.ONLINE, state.devices.single().card.statusStyle)
+    }
+
+    @Test
+    fun `tank detail observes dosing card application boundary when device is reachable`() {
+        val cardOperations = FakeDeviceDosingCardOperations()
+        val operations = FakeTankDeviceAssignmentOperations(
+            assigned = listOf(
+                device(
+                    uid = "dose-1",
+                    family = OwnerDeviceFamily.DOSING
+                )
+            )
+        )
+        val viewModel = createTankDetailViewModel(
+            operations = operations,
+            dosingCardOperations = cardOperations
+        )
+
+        viewModel.bind(10L)
+
+        assertEquals(listOf("dose-1"), cardOperations.observeRequests)
+    }
+
+    @Test
+    fun `tank detail does not activate dosing card observation while device is unreachable`() {
+        val cardOperations = FakeDeviceDosingCardOperations()
+        val operations = FakeTankDeviceAssignmentOperations(
+            assigned = listOf(
+                device(
+                    uid = "dose-1",
+                    family = OwnerDeviceFamily.DOSING,
+                    availability = OwnerDeviceAvailability.UNREACHABLE
+                )
+            )
+        )
+        val viewModel = createTankDetailViewModel(
+            operations = operations,
+            dosingCardOperations = cardOperations
+        )
+
+        viewModel.bind(10L)
+
+        assertTrue(cardOperations.observeRequests.isEmpty())
+    }
+
+    @Test
+    fun `tank detail menu open uses shared preparation contract before route`() = runTest {
+        val preparation = FakePreparationOperations()
+        val viewModel = createTankDetailViewModel(
+            operations = FakeTankDeviceAssignmentOperations(
+                assigned = listOf(device("device-1"))
+            ),
+            menuAccess = FakeMenuAccessOperations(
+                DeviceMenuAccessResult.Available(
+                    deviceUid = "device-1",
+                    title = "Dose Pro 4",
+                    family = OwnerDeviceFamily.DOSING
+                )
+            ),
+            preparation = preparation
+        )
+        viewModel.bind(10L)
+
+        viewModel.onDeviceClicked("device-1")
+        val event = viewModel.events.first() as TankDetailDevicesEvent.OpenDeviceRoute
+
+        assertEquals("device-1", preparation.lastRequest?.deviceUid)
+        assertEquals(OwnerDeviceFamily.DOSING, preparation.lastRequest?.family)
+        assertEquals(DeviceRouteTarget.DOSING_ROOT, event.route.target)
+        assertTrue(viewModel.uiState.value.isOpeningDeviceMenu)
+
+        viewModel.onDeviceNavigationFinished("device-1", committed = false)
+
+        assertEquals("device-1" to OwnerDeviceFamily.DOSING, preparation.lastDiscardRequest)
+        assertFalse(viewModel.uiState.value.isOpeningDeviceMenu)
     }
 
     @Test
@@ -69,11 +147,7 @@ class TankDeviceAssignmentViewModelBoundaryTest {
         ).apply {
             removeResult = RemoveDeviceFromTankResult.FAILURE
         }
-        val viewModel = TankDetailDevicesViewModel(
-            assignmentOperations = operations,
-            menuAccessOperations = FakeMenuAccessOperations(),
-            routeResolver = DeviceRouteResolver()
-        )
+        val viewModel = createTankDetailViewModel(operations)
         viewModel.bind(10L)
 
         viewModel.removeDeviceFromTank("device-1")
@@ -122,12 +196,31 @@ class TankDeviceAssignmentViewModelBoundaryTest {
         assertEquals(10L to "device-1", operations.lastAssignRequest)
     }
 
-    private fun device(uid: String) = TankDeviceListItem(
+    private fun createTankDetailViewModel(
+        operations: TankDeviceAssignmentOperations,
+        menuAccess: DeviceMenuAccessOperations = FakeMenuAccessOperations(),
+        preparation: DeviceControlSurfacePreparationOperations = FakePreparationOperations(),
+        dosingCardOperations: DeviceDosingCardOperations? = null
+    ): TankDetailDevicesViewModel = TankDetailDevicesViewModel(
+        assignmentOperations = operations,
+        menuOpenUseCase = DeviceMenuOpenUseCase(
+            menuAccessOperations = menuAccess,
+            controlSurfacePreparationOperations = preparation
+        ),
+        routeResolver = DeviceRouteResolver(),
+        dosingCardOperations = dosingCardOperations
+    )
+
+    private fun device(
+        uid: String,
+        family: OwnerDeviceFamily = OwnerDeviceFamily.LIGHT,
+        availability: OwnerDeviceAvailability = OwnerDeviceAvailability.REACHABLE
+    ) = TankDeviceListItem(
         deviceUid = uid,
         displayName = "AquaLight $uid",
         serialText = "AQL-$uid",
-        family = OwnerDeviceFamily.LIGHT,
-        availability = OwnerDeviceAvailability.REACHABLE
+        family = family,
+        availability = availability
     )
 
     private class FakeTankDeviceAssignmentOperations(
@@ -174,12 +267,41 @@ class TankDeviceAssignmentViewModelBoundaryTest {
         }
     }
 
-    private class FakeMenuAccessOperations : DeviceMenuAccessOperations {
-        override suspend fun resolve(deviceUid: String): DeviceMenuAccessResult =
-            DeviceMenuAccessResult.Unavailable(
-                title = "",
-                reason = DeviceMenuUnavailableReason.CURRENT_LIVENESS_NOT_PROVEN
-            )
+    private class FakeDeviceDosingCardOperations : DeviceDosingCardOperations {
+        val observeRequests = mutableListOf<String>()
+
+        override fun observe(deviceUid: String): Flow<DeviceDosingCardState> {
+            observeRequests += deviceUid
+            return MutableStateFlow(DeviceDosingCardState.Preparing)
+        }
+    }
+
+    private class FakeMenuAccessOperations(
+        private val result: DeviceMenuAccessResult = DeviceMenuAccessResult.Unavailable(
+            title = "",
+            reason = DeviceMenuUnavailableReason.CURRENT_LIVENESS_NOT_PROVEN
+        )
+    ) : DeviceMenuAccessOperations {
+        override suspend fun resolve(deviceUid: String): DeviceMenuAccessResult = result
+    }
+
+    private class FakePreparationOperations : DeviceControlSurfacePreparationOperations {
+        var lastRequest: DeviceControlSurfacePreparationRequest? = null
+        var lastDiscardRequest: Pair<String, OwnerDeviceFamily>? = null
+
+        override suspend fun prepare(
+            request: DeviceControlSurfacePreparationRequest
+        ): DeviceControlSurfacePreparationResult {
+            lastRequest = request
+            return DeviceControlSurfacePreparationResult.Ready
+        }
+
+        override fun discardFreshPreparation(
+            deviceUid: String,
+            family: OwnerDeviceFamily
+        ) {
+            lastDiscardRequest = deviceUid to family
+        }
     }
 
     class MainDispatcherRule(

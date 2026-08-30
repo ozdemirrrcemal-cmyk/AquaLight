@@ -3,11 +3,25 @@
     <!-- Common component copy -->
     <string name="common_confirm_action_title">Confirm action</string>
     <string name="common_confirm_action_message">Are you sure you want to continue?</string>
+    <string name="common_unsaved_changes_exit_title">Leave without saving?</string>
+    <string name="common_unsaved_changes_exit_message">Your changes on this screen have not been saved. If you leave, they will be lost.</string>
+    <string name="common_unsaved_changes_exit_action">Leave</string>
+    <string name="common_unsaved_changes_continue_action">Stay</string>
     <string name="common_clear_search_description">Clear search</string>
     <string name="common_not_available_symbol" translatable="false">-</string>
     <string name="common_not_available_double_symbol" translatable="false">--</string>
     <string name="common_not_available_em_dash" translatable="false">—</string>
     <string name="common_list_separator" translatable="false">,\u0020</string>
+    <string name="common_time_picker_hour">Hour</string>
+    <string name="common_time_picker_minute">Minute</string>
+    <string name="common_time_picker_24_hour_format">24-hour format</string>
+    <string name="common_time_picker_hour_value_description">Hour %1$d</string>
+    <string name="common_time_picker_minute_value_description">Minute %1$d</string>
+    <string name="common_time_picker_selected_time_description">Selected time: %1$s</string>
+    <string name="common_time_picker_minute_of_hour_preview" translatable="false">:%1$02d</string>
+    <string name="common_time_picker_selected_minute_of_hour_description">Selected minute of every hour: %1$d</string>
+    <string name="common_time_picker_minute_of_hour_hint">Runs once every hour at the selected minute</string>
+    <string name="common_time_separator" translatable="false">:</string>
 
     <!-- Navigation -->
     <string name="navigation_auth_label">Auth</string>
@@ -35,6 +49,8 @@
     <string name="device_unavailable_message">This device is not available.</string>
     <string name="device_online">Online</string>
     <string name="device_offline">Offline</string>
+    <string name="device_connection_online_content_description">Device online</string>
+    <string name="device_connection_offline_content_description">Device offline</string>
     <string name="device_serial_value">Serial: %1$s</string>
     <string name="device_ip_value">IP: %1$s</string>
     <string name="device_firmware_value">Firmware: %1$s</string>

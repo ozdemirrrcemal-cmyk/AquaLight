@@ -6,6 +6,7 @@ import com.aqua.aqualight.application.devices.DeviceMenuUnavailableReason
 import com.aqua.aqualight.application.devices.DeviceRootCatalogState
 import com.aqua.aqualight.application.devices.OwnerDeviceAvailability
 import com.aqua.aqualight.data.devices.catalog.AqlCommercialDeviceCatalog
+import com.aqua.aqualight.data.devices.model.DeviceFamily
 import kotlinx.coroutines.test.runTest
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
@@ -16,16 +17,17 @@ import org.junit.Test
 class DebugDeviceFixtureCatalogTest {
 
     @Test
-    fun fixturesCoverEveryCommercialProductExactlyOnce() {
+    fun fixturesExcludeDosingAndCoverEveryOtherCommercialProductExactlyOnce() {
         val fixtures = DebugDeviceFixtureCatalog()
         val expectedProductKeys = AqlCommercialDeviceCatalog.products
+            .filterNot { product -> product.family == DeviceFamily.DOSING }
             .map { product -> product.productKey.value }
         val actualProductKeys = fixtures.snapshots
             .map { snapshot -> snapshot.product.productKey }
 
-        assertEquals(9, expectedProductKeys.size)
         assertEquals(expectedProductKeys, actualProductKeys)
         assertEquals(expectedProductKeys.toSet().size, actualProductKeys.toSet().size)
+        assertTrue(fixtures.snapshots.none { snapshot -> snapshot.product.family == DeviceFamily.DOSING })
 
         fixtures.snapshots.forEach { snapshot ->
             assertTrue(snapshot.runtimeMetadataGeneration > 0L)
@@ -37,9 +39,10 @@ class DebugDeviceFixtureCatalogTest {
 
     @Test
     fun fixtureCardsAreClearlyMarkedAndReachable() {
-        val items = DebugDeviceFixtureCatalog().listItems()
+        val fixtures = DebugDeviceFixtureCatalog()
+        val items = fixtures.listItems()
 
-        assertEquals(9, items.size)
+        assertEquals(fixtures.snapshots.size, items.size)
         items.forEach { item ->
             assertTrue(item.deviceUid.startsWith("DEBUG-FIXTURE-"))
             assertTrue(item.displayName.endsWith("[TEST]"))

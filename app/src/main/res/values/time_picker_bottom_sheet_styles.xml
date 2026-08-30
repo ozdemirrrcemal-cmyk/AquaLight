@@ -1,0 +1,55 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+
+    <style name="Widget.Aqua.BottomSheet.TimePicker.WheelSurface" parent="">
+        <item name="android:layout_width">match_parent</item>
+        <item name="android:layout_height">@dimen/aqua_size_240</item>
+        <item name="android:background">@drawable/bg_aqua_time_picker_wheel</item>
+        <item name="android:clipChildren">false</item>
+        <item name="android:clipToPadding">false</item>
+    </style>
+
+    <style name="TextAppearance.Aqua.BottomSheet.TimePicker.Preview"
+        parent="TextAppearance.Material3.HeadlineLarge">
+        <item name="fontFamily">@font/inter_semibold</item>
+        <item name="android:fontFamily">@font/inter_semibold</item>
+        <item name="android:textColor">@color/aqua_card_state_active</item>
+        <item name="android:textSize">@dimen/aqua_text_size_display</item>
+        <item name="android:includeFontPadding">false</item>
+    </style>
+
+    <style name="TextAppearance.Aqua.BottomSheet.TimePicker.Label"
+        parent="TextAppearance.Material3.LabelMedium">
+        <item name="fontFamily">@font/inter_semibold</item>
+        <item name="android:fontFamily">@font/inter_semibold</item>
+        <item name="android:textColor">@color/aqua_bottom_sheet_text_secondary</item>
+        <item name="android:textSize">@dimen/aqua_text_size_caption</item>
+        <item name="android:includeFontPadding">false</item>
+    </style>
+
+    <style name="TextAppearance.Aqua.BottomSheet.TimePicker.WheelValue"
+        parent="TextAppearance.Material3.TitleLarge">
+        <item name="fontFamily">@font/inter_regular</item>
+        <item name="android:fontFamily">@font/inter_regular</item>
+        <item name="android:textColor">@color/aqua_bottom_sheet_text_secondary</item>
+        <item name="android:textSize">@dimen/aqua_text_size_title_medium</item>
+        <item name="android:includeFontPadding">false</item>
+    </style>
+
+    <style name="TextAppearance.Aqua.BottomSheet.TimePicker.WheelValue.Selected"
+        parent="TextAppearance.Aqua.BottomSheet.TimePicker.WheelValue">
+        <item name="fontFamily">@font/inter_semibold</item>
+        <item name="android:fontFamily">@font/inter_semibold</item>
+        <item name="android:textColor">@color/aqua_card_state_active</item>
+        <item name="android:textSize">@dimen/aqua_text_size_display</item>
+    </style>
+
+    <style name="TextAppearance.Aqua.BottomSheet.TimePicker.Separator"
+        parent="TextAppearance.Aqua.BottomSheet.TimePicker.WheelValue.Selected" />
+
+    <style name="TextAppearance.Aqua.BottomSheet.TimePicker.Hint"
+        parent="TextAppearance.Aqua.BottomSheet.RowSubtitle">
+        <item name="android:gravity">center</item>
+    </style>
+
+</resources>

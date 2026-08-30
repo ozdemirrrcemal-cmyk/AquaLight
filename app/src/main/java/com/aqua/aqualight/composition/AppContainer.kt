@@ -65,9 +65,14 @@ interface AppContainer {
     val googleIdentityClient: GoogleIdentityClient
 }
 
+/** Internal access for source-set decorators that must share the exact production owner graph. */
+internal fun interface OwnerDependencyGraphAccess {
+    fun requireActiveOwnerGraph(): OwnerDependencyGraph
+}
+
 internal class DefaultAppContainer(
     context: Context
-) : AppContainer {
+) : AppContainer, OwnerDependencyGraphAccess {
 
     private val appContext = context.applicationContext
     private val notificationPlatform by lazy(LazyThreadSafetyMode.SYNCHRONIZED) {
@@ -139,9 +144,13 @@ internal class DefaultAppContainer(
             context = appContext,
             deviceFirmwareNotifications = notificationPlatform.deviceFirmwareUpdates,
             notificationPreferenceUseCase = notificationPreferenceUseCase,
+            notificationDispatchUseCase = notificationDispatchUseCase,
             userPreferencesManager = userPreferencesManager
         )
     }
+
+    override fun requireActiveOwnerGraph(): OwnerDependencyGraph =
+        ownerGraphResolver.requireActive()
 
     override val deviceFirmwareNotificationRouteOperations:
         DeviceFirmwareNotificationRouteOperations by lazy(

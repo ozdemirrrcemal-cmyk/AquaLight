@@ -31,12 +31,13 @@ class DeviceTimerRootFragment : Fragment(R.layout.fragment_device_timer_root) {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
         _binding = FragmentDeviceTimerRootBinding.bind(view)
-        setupHeader(title = args.deviceTitle.ifBlank { getString(R.string.device_family_timer) })
-        observeViewModel()
-        viewModel.bind(
-            deviceUidText = args.deviceUid,
-            fallbackTitle = args.deviceTitle
+        viewModel.bind(args.deviceUid)
+        setupHeader(
+            title = viewModel.uiState.value.title.ifBlank {
+                getString(R.string.device_family_timer)
+            }
         )
+        observeViewModel()
     }
 
     private fun setupHeader(title: String) {

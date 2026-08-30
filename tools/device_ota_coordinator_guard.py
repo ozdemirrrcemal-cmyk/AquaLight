@@ -12,6 +12,8 @@ FILES = {
     "runtime_contract": SOURCE / "data/devices/runtime/modules/firmware/DeviceFirmwareRuntimeContract.kt",
     "adapter": SOURCE / "data/devices/DefaultDeviceFirmwareUpdateOperations.kt",
     "coordinator": SOURCE / "data/devices/runtime/modules/firmware/DeviceOtaCoordinator.kt",
+    "transaction_store": SOURCE / "data/devices/runtime/modules/firmware/DeviceOtaTransactionStore.kt",
+    "encrypted_store": SOURCE / "data/devices/runtime/modules/firmware/SharedPreferencesDeviceOtaTransactionStore.kt",
     "runtime": SOURCE / "data/devices/runtime/modules/firmware/DeviceFirmwareRuntimeRepository.kt",
     "validation": SOURCE / "data/devices/runtime/modules/firmware/DeviceOtaValidation.kt",
     "planner": SOURCE / "data/devices/runtime/modules/firmware/DeviceFirmwareUpdatePlanner.kt",
@@ -81,6 +83,10 @@ require_tokens(
         "suspend fun checkAvailability(",
         "runtimeMetadataGeneration: Long",
         "releaseContent: DeviceFirmwareReleaseContent",
+        "data class RolledBack(",
+        "data class PostRestartTimeout(",
+        "data class UnexpectedFirmware(",
+        "suspend fun retryPostRestartConnection(",
     ),
 )
 require_tokens(
@@ -92,6 +98,8 @@ require_tokens(
         "coordinator.startUpdate(plan)",
         "coordinator.requestStatus(",
         "coordinator.clearStatus(",
+        "coordinator.retryPostRestartConnection(",
+        "transactionStore = transactionStore",
         "recoverRuntime = devicesRepository::replaceRuntimeAfterControlFailure",
         "runtimeLifecycleEvents = devicesRepository.runtimeLifecycleEvents()",
         "runtimeTypedEvents = devicesRepository.typedRuntimeEvents()",
@@ -120,6 +128,36 @@ require_tokens(
         "recoverRuntime(deviceUid)",
         "DeviceRuntimeLifecycleEvent.Authenticated",
         "DeviceRuntimeLifecycleEvent.Unavailable",
+        "snapshot.firmwareVersion == selected.dataPlan.targetVersion",
+        "snapshot.firmwareVersion == selected.dataPlan.currentVersion",
+        "DeviceOtaState.RolledBack",
+        "DeviceOtaState.PostRestartTimeout",
+        "DeviceOtaState.UnexpectedFirmware",
+        "DEFAULT_RECOVERY_ATTEMPT_DELAY_MILLIS = 30_000L",
+        "DEFAULT_RECOVERY_WINDOW_MILLIS = 120_000L",
+        "transactionStore.saveQuarantine(",
+        "transactionStore.activeTransactions().forEach(::restoreTransaction)",
+    ),
+)
+require_tokens(
+    "transaction_store",
+    (
+        "data class DeviceOtaTransaction(",
+        "val awaitingVersionVerification: Boolean",
+        "data class DeviceOtaQuarantine(",
+        "fun matches(plan: PreparedDeviceFirmwareUpdate)",
+        "fun activeTransactions(): List<DeviceOtaTransaction>",
+    ),
+)
+require_tokens(
+    "encrypted_store",
+    (
+        "EncryptedSharedPreferences.create(",
+        "MasterKey.KeyScheme.AES256_GCM",
+        "PrefKeyEncryptionScheme.AES256_SIV",
+        "PrefValueEncryptionScheme.AES256_GCM",
+        ".commitOrThrow()",
+        "fun clearOwner()",
     ),
 )
 require_tokens(
@@ -147,7 +185,6 @@ require_tokens(
         "snapshot.contentLength != plan.firmware.size.toLong()",
         "snapshot.sha256Actual.equals(plan.firmware.sha256",
         "snapshot.bytesWritten != plan.firmware.size.toLong()",
-        "snapshot.firmwareVersion != plan.targetVersion",
         "object DeviceOtaStateMapper",
     ),
 )

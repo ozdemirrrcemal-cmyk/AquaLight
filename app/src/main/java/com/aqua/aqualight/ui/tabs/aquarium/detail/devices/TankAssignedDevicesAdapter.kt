@@ -6,66 +6,147 @@ import androidx.recyclerview.widget.DiffUtil
 import androidx.recyclerview.widget.ListAdapter
 import androidx.recyclerview.widget.RecyclerView
 import com.aqua.aqualight.databinding.ItemDeviceCompactCardBinding
+import com.aqua.aqualight.databinding.ItemDosingDeviceSpotlightCardBinding
 import com.aqua.aqualight.ui.common.devicecard.DeviceCompactCardBinder
 import com.aqua.aqualight.ui.common.devicecard.DeviceCompactCardUi
 
 data class TankAssignedDeviceItem(
     val deviceUid: String,
     val title: String,
-    val card: DeviceCompactCardUi
+    val card: DeviceCompactCardUi,
+    val dosingCard: DosingDeviceSpotlightCardUi? = null
 )
 
 class TankAssignedDevicesAdapter(
     private val onDeviceClick: (TankAssignedDeviceItem) -> Unit,
     private val onDeviceLongClick: (TankAssignedDeviceItem) -> Unit
-) : ListAdapter<TankAssignedDeviceItem, TankAssignedDevicesAdapter.ViewHolder>(DiffCallback) {
+) : ListAdapter<TankAssignedDeviceItem, RecyclerView.ViewHolder>(DiffCallback) {
+
+    override fun getItemViewType(position: Int): Int {
+        return if (getItem(position).dosingCard != null) {
+            VIEW_TYPE_DOSING_SPOTLIGHT
+        } else {
+            VIEW_TYPE_COMPACT
+        }
+    }
 
     override fun onCreateViewHolder(
         parent: ViewGroup,
         viewType: Int
-    ): ViewHolder {
-        val binding = ItemDeviceCompactCardBinding.inflate(
-            LayoutInflater.from(parent.context),
-            parent,
-            false
-        )
-
-        return ViewHolder(
-            binding = binding,
-            onDeviceClick = onDeviceClick,
-            onDeviceLongClick = onDeviceLongClick
-        )
+    ): RecyclerView.ViewHolder {
+        val inflater = LayoutInflater.from(parent.context)
+        return when (viewType) {
+            VIEW_TYPE_DOSING_SPOTLIGHT -> DosingViewHolder(
+                binding = ItemDosingDeviceSpotlightCardBinding.inflate(
+                    inflater,
+                    parent,
+                    false
+                ),
+                onDeviceClick = onDeviceClick,
+                onDeviceLongClick = onDeviceLongClick
+            )
+            else -> CompactViewHolder(
+                binding = ItemDeviceCompactCardBinding.inflate(
+                    inflater,
+                    parent,
+                    false
+                ),
+                onDeviceClick = onDeviceClick,
+                onDeviceLongClick = onDeviceLongClick
+            )
+        }
     }
 
     override fun onBindViewHolder(
-        holder: ViewHolder,
+        holder: RecyclerView.ViewHolder,
         position: Int
     ) {
-        holder.bind(getItem(position))
+        val item = getItem(position)
+        when (holder) {
+            is DosingViewHolder -> holder.bind(item)
+            is CompactViewHolder -> holder.bind(item)
+        }
     }
 
-    class ViewHolder(
+    private class CompactViewHolder(
         private val binding: ItemDeviceCompactCardBinding,
         private val onDeviceClick: (TankAssignedDeviceItem) -> Unit,
         private val onDeviceLongClick: (TankAssignedDeviceItem) -> Unit
     ) : RecyclerView.ViewHolder(binding.root) {
 
-        fun bind(
-            item: TankAssignedDeviceItem
-        ) {
+        fun bind(item: TankAssignedDeviceItem) {
             DeviceCompactCardBinder.bind(
                 binding = binding,
                 item = item.card
             )
+            bindInteractions(
+                item = item,
+                onDeviceClick = onDeviceClick,
+                onDeviceLongClick = onDeviceLongClick
+            )
+        }
 
+        private fun bindInteractions(
+            item: TankAssignedDeviceItem,
+            onDeviceClick: (TankAssignedDeviceItem) -> Unit,
+            onDeviceLongClick: (TankAssignedDeviceItem) -> Unit
+        ) {
             binding.root.setOnClickListener {
                 onDeviceClick(item)
             }
-
             binding.root.setOnLongClickListener {
                 onDeviceLongClick(item)
                 true
             }
+        }
+    }
+
+    private class DosingViewHolder(
+        private val binding: ItemDosingDeviceSpotlightCardBinding,
+        private val onDeviceClick: (TankAssignedDeviceItem) -> Unit,
+        private val onDeviceLongClick: (TankAssignedDeviceItem) -> Unit
+    ) : RecyclerView.ViewHolder(binding.root) {
+
+        private var lastSpotlightIndex: Int? = null
+
+        init {
+            DosingDeviceSpotlightCardBinder.prepare(binding)
+        }
+
+        fun bind(item: TankAssignedDeviceItem) {
+            val dosingCard = requireNotNull(item.dosingCard)
+            val animateSpotlight = lastSpotlightIndex != null &&
+                lastSpotlightIndex != dosingCard.selectedIndex
+
+            DosingDeviceSpotlightCardBinder.bind(
+                binding = binding,
+                item = dosingCard
+            )
+
+            if (animateSpotlight) {
+                binding.spotlightContent.animate().cancel()
+                binding.spotlightContent.alpha = SPOTLIGHT_FADE_START_ALPHA
+                binding.spotlightContent.animate()
+                    .alpha(1f)
+                    .setDuration(SPOTLIGHT_FADE_DURATION_MILLIS)
+                    .start()
+            } else {
+                binding.spotlightContent.alpha = 1f
+            }
+            lastSpotlightIndex = dosingCard.selectedIndex
+
+            binding.root.setOnClickListener {
+                onDeviceClick(item)
+            }
+            binding.root.setOnLongClickListener {
+                onDeviceLongClick(item)
+                true
+            }
+        }
+
+        private companion object {
+            const val SPOTLIGHT_FADE_START_ALPHA = 0.25f
+            const val SPOTLIGHT_FADE_DURATION_MILLIS = 260L
         }
     }
 
@@ -83,5 +164,10 @@ class TankAssignedDevicesAdapter(
         ): Boolean {
             return oldItem == newItem
         }
+    }
+
+    private companion object {
+        const val VIEW_TYPE_COMPACT = 0
+        const val VIEW_TYPE_DOSING_SPOTLIGHT = 1
     }
 }

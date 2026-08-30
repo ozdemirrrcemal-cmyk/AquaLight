@@ -1,0 +1,165 @@
+package com.aqua.aqualight.ui.tabs.devices.detail.dosing.presentation.card
+
+import androidx.compose.foundation.background
+import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.heightIn
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.text.BasicText
+import androidx.compose.runtime.Composable
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.text.style.TextOverflow
+import com.aqua.aqualight.R
+import com.aqua.aqualight.ui.common.devicecard.AquaDeviceCardColors
+import com.aqua.aqualight.ui.common.devicecard.AquaDeviceCardGeometry
+import com.aqua.aqualight.ui.common.devicecard.AquaDeviceCardSurface
+import com.aqua.aqualight.ui.common.devicecard.AquaDeviceCardTypography
+import com.aqua.aqualight.ui.common.devicecard.aquaDeviceCardColors
+import com.aqua.aqualight.ui.common.devicecard.aquaDeviceCardTypography
+import com.aqua.aqualight.ui.common.dosing.AquaDosingCardGeometry
+
+@Composable
+internal fun DosingChannelCard(
+    state: DosingChannelCardUiState,
+    enabled: Boolean,
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier
+) {
+    val colors = aquaDeviceCardColors()
+    val typography = aquaDeviceCardTypography(colors)
+    val visualState = state.visualState
+    val stateLabel = visualState?.let { stateValue -> stringResource(stateValue.labelRes) }
+    val semanticModifier = if (stateLabel == null) {
+        Modifier
+    } else {
+        val cardDescription = stringResource(
+            R.string.device_dosing_channel_card_content_description,
+            state.channelNumber,
+            state.displayName,
+            stateLabel
+        )
+        Modifier.semantics { contentDescription = cardDescription }
+    }
+
+    AquaDeviceCardSurface(
+        modifier = modifier
+            .fillMaxWidth()
+            .heightIn(min = CHANNEL_CARD_MIN_HEIGHT)
+            .then(semanticModifier)
+            .clickable(enabled = enabled, role = Role.Button, onClick = onClick)
+    ) {
+        DosingChannelCardContent(state, colors, typography, stateLabel)
+    }
+}
+
+@Composable
+private fun DosingChannelCardContent(
+    state: DosingChannelCardUiState,
+    colors: AquaDeviceCardColors,
+    typography: AquaDeviceCardTypography,
+    stateLabel: String?
+) {
+    Column(
+        modifier = Modifier.fillMaxWidth(),
+        verticalArrangement = Arrangement.spacedBy(AquaDeviceCardGeometry.compactGap)
+    ) {
+        DosingChannelHeader(
+            state = state,
+            colors = colors,
+            typography = typography,
+            stateLabel = stateLabel
+        )
+        when (state.visualState) {
+            null -> Unit
+            DosingChannelVisualState.NOT_CONFIGURED -> DosingChannelEmptyState(
+                title = stringResource(R.string.device_dosing_channel_calibration_required),
+                description = stringResource(
+                    R.string.device_dosing_channel_calibration_required_description
+                ),
+                colors = colors,
+                typography = typography
+            )
+            else -> {
+                DosingChannelSummary(state, colors, typography)
+                DosingProgramProgress(state.programProgress, colors, typography)
+            }
+        }
+    }
+}
+
+@Composable
+private fun DosingChannelEmptyState(
+    title: String,
+    description: String,
+    colors: AquaDeviceCardColors,
+    typography: AquaDeviceCardTypography
+) {
+    val shape = RoundedCornerShape(EMPTY_ICON_CORNER_RADIUS)
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(vertical = EMPTY_VERTICAL_PADDING),
+        horizontalArrangement = Arrangement.spacedBy(EMPTY_CONTENT_GAP),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        Box(
+            modifier = Modifier
+                .size(EMPTY_ICON_SIZE)
+                .clip(shape)
+                .background(colors.accent.copy(alpha = EMPTY_BACKGROUND_ALPHA))
+                .border(
+                    width = AquaDeviceCardGeometry.outlineWidth,
+                    color = colors.accent.copy(alpha = EMPTY_OUTLINE_ALPHA),
+                    shape = shape
+                ),
+            contentAlignment = Alignment.Center
+        ) {
+            DosingEmptyStateGlyph(
+                tint = colors.accent,
+                badgeSurface = colors.mediaSurface,
+                modifier = Modifier.size(EMPTY_GLYPH_SIZE)
+            )
+        }
+        Column(
+            modifier = Modifier.weight(1f),
+            verticalArrangement = Arrangement.spacedBy(EMPTY_TEXT_GAP)
+        ) {
+            BasicText(
+                text = title,
+                style = typography.body.copy(color = colors.primaryText),
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis
+            )
+            BasicText(
+                text = description,
+                style = typography.caption.copy(color = colors.secondaryText),
+                maxLines = EMPTY_DESCRIPTION_MAX_LINES,
+                overflow = TextOverflow.Ellipsis
+            )
+        }
+    }
+}
+
+private const val EMPTY_BACKGROUND_ALPHA = 0.10f
+private const val EMPTY_OUTLINE_ALPHA = 0.34f
+private const val EMPTY_DESCRIPTION_MAX_LINES = 2
+private val CHANNEL_CARD_MIN_HEIGHT = AquaDosingCardGeometry.channelCardMinimumHeight
+private val EMPTY_VERTICAL_PADDING = AquaDosingCardGeometry.emptyVerticalPadding
+private val EMPTY_CONTENT_GAP = AquaDosingCardGeometry.emptyContentGap
+private val EMPTY_TEXT_GAP = AquaDosingCardGeometry.emptyTextGap
+private val EMPTY_ICON_SIZE = AquaDosingCardGeometry.emptyIconSize
+private val EMPTY_ICON_CORNER_RADIUS = AquaDosingCardGeometry.emptyIconCornerRadius
+private val EMPTY_GLYPH_SIZE = AquaDosingCardGeometry.emptyGlyphSize

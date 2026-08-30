@@ -27,7 +27,7 @@ class DeviceRuntimeModulesParserTest {
 
         val dosing = MODULE_FIXTURES.single { fixture -> fixture.family == DeviceFamily.DOSING }
         assertFalse(dosing.modules.timerApi)
-        assertTrue(dosing.modules.timerEngine)
+        assertFalse(dosing.modules.timerEngine)
     }
 
     @Test
@@ -215,7 +215,7 @@ class DeviceRuntimeModulesParserTest {
                 displayName = "Dose Pro 2",
                 modules = DEFAULT_FIXTURE.modules.copy(
                     light = false,
-                    timerEngine = true,
+                    timerEngine = false,
                     dosing = true
                 )
             ),

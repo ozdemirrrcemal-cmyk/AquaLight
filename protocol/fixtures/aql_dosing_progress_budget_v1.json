@@ -1,0 +1,10 @@
+{
+  "fixtureVersion": 1,
+  "schema": "aqualight.dosing.v1",
+  "transportBudgetBytes": 4096,
+  "minimumHeadroomBytes": 200,
+  "channelKeyMaximumBytes": 24,
+  "maximumStorageIssueBytes": 127,
+  "maximumOccurrences": 24,
+  "expectedSerializedBytes": 3552
+}

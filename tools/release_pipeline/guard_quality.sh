@@ -49,6 +49,7 @@ python3 -m unittest discover \
 
 for guard in \
   architecture_guard.py \
+  dosing_architecture_guard.py \
   session_startup_guard.py \
   composition_root_guard.py \
   ui_dependency_construction_guard.py \

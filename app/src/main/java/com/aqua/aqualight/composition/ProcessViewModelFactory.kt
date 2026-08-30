@@ -5,12 +5,14 @@ import com.aqua.aqualight.ui.tabs.aquarium.detail.TankDetailViewModel
 
 /**
  * ViewModels that do not require authenticated-owner state.
+ *
+ * Dosing child editors live here only while they own local drafts. Editors backed by an
+ * authenticated application boundary belong to OwnerViewModelFactory.
  */
 internal class ProcessViewModelFactory : ScopedViewModelFactory {
 
-    override fun supports(modelClass: Class<out ViewModel>): Boolean {
-        return modelClass == TankDetailViewModel::class.java
-    }
+    override fun supports(modelClass: Class<out ViewModel>): Boolean =
+        modelClass == TankDetailViewModel::class.java
 
     override fun <T : ViewModel> create(modelClass: Class<T>): T {
         val viewModel: ViewModel = when (modelClass) {

@@ -1,0 +1,163 @@
+package com.aqua.aqualight.ui.tabs.devices.detail.dosing.channel.schedule.timer
+
+import android.os.Bundle
+import android.view.View
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.setValue
+import androidx.compose.ui.platform.ComposeView
+import androidx.compose.ui.platform.ViewCompositionStrategy
+import androidx.core.os.bundleOf
+import androidx.navigation.fragment.findNavController
+import androidx.navigation.fragment.navArgs
+import com.aqua.aqualight.R
+import com.aqua.aqualight.ui.tabs.devices.detail.dosing.channel.common.DeviceDosingChannelDestinationFragment
+
+/** Draft editor for independent Timer doses whose amounts define the daily total. */
+class DeviceDosingTimerScheduleFragment :
+    DeviceDosingChannelDestinationFragment(R.layout.fragment_device_dosing_channel_detail) {
+
+    private val args: DeviceDosingTimerScheduleFragmentArgs by navArgs()
+    private var doses by mutableStateOf<List<DeviceDosingTimerDose>>(emptyList())
+    private var validationMessageRes by mutableStateOf<Int?>(null)
+    private lateinit var editor: DeviceDosingTimerScheduleEditor
+
+    override val destinationTitle: String
+        get() = getString(R.string.device_dosing_detail_schedule_timer)
+
+    override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
+        super.onViewCreated(view, savedInstanceState)
+        val argumentDoses = if (args.maxEventsPerChannel > 0) {
+            DeviceDosingTimerScheduleContract.decodeDraft(
+                encoded = args.dosesDraft,
+                maxEventsPerChannel = args.maxEventsPerChannel
+            )
+        } else {
+            null
+        }
+        if (argumentDoses == null) {
+            findNavController().navigateUp()
+            return
+        }
+
+        doses = restoreTimerDoses(
+            savedInstanceState = savedInstanceState,
+            argumentDoses = argumentDoses,
+            maxEventsPerChannel = args.maxEventsPerChannel
+        )
+        validationMessageRes = savedInstanceState
+            ?.getInt(STATE_VALIDATION_MESSAGE_RES, NO_MESSAGE_RES)
+            ?.takeUnless { messageRes -> messageRes == NO_MESSAGE_RES }
+        editor = DeviceDosingTimerScheduleEditor(
+            host = DeviceDosingTimerScheduleEditorHost(
+                fragment = this,
+                slotId = args.slotId,
+                maxEventsPerChannel = args.maxEventsPerChannel,
+                doses = { doses },
+                updateDoses = { updated -> doses = updated },
+                updateValidation = { messageRes -> validationMessageRes = messageRes }
+            ),
+            savedInstanceState = savedInstanceState
+        ).also { scheduleEditor -> scheduleEditor.bindResults(viewLifecycleOwner) }
+
+        setupSelectedPump(
+            view = view,
+            deviceUid = args.deviceUid,
+            slotId = args.slotId,
+            pumpCount = args.pumpCount,
+            channelNumber = args.channelNumber
+        )
+        setupContent(view)
+    }
+
+    override fun onSaveInstanceState(outState: Bundle) {
+        outState.putString(
+            STATE_DOSES_DRAFT,
+            DeviceDosingTimerScheduleContract.encodeDraft(
+                doses = doses,
+                maxEventsPerChannel = args.maxEventsPerChannel
+            )
+        )
+        outState.putInt(STATE_VALIDATION_MESSAGE_RES, validationMessageRes ?: NO_MESSAGE_RES)
+        if (::editor.isInitialized) editor.saveState(outState)
+        super.onSaveInstanceState(outState)
+    }
+
+    private fun setupContent(view: View) {
+        view.findViewById<ComposeView>(R.id.channelDetailContent).apply {
+            setViewCompositionStrategy(ViewCompositionStrategy.DisposeOnViewTreeLifecycleDestroyed)
+            setContent {
+                DeviceDosingTimerScheduleScreen(
+                    state = DeviceDosingTimerScheduleUiState(
+                        doses = doses,
+                        maxEventsPerChannel = args.maxEventsPerChannel,
+                        validationMessage = validationMessageRes?.let(::getString)
+                    ),
+                    onAction = ::handleScheduleAction
+                )
+            }
+        }
+    }
+
+    private fun handleScheduleAction(action: DeviceDosingTimerScheduleAction) {
+        when (action) {
+            DeviceDosingTimerScheduleAction.Add -> editor.beginAdd()
+            is DeviceDosingTimerScheduleAction.Edit -> editor.beginEdit(action.index)
+            is DeviceDosingTimerScheduleAction.Remove -> removeDose(action.index)
+            DeviceDosingTimerScheduleAction.Save -> saveDraft()
+        }
+    }
+
+    private fun removeDose(index: Int) {
+        if (index !in doses.indices) return
+        doses = doses.filterIndexed { candidateIndex, _ -> candidateIndex != index }
+        validationMessageRes = null
+    }
+
+    private fun saveDraft() {
+        val navController = findNavController()
+        val canSave =
+            navController.currentDestination?.id == R.id.deviceDosingTimerScheduleFragment &&
+                doses.isNotEmpty() &&
+                DeviceDosingTimerScheduleContract.validate(
+                    doses = doses,
+                    maxEventsPerChannel = args.maxEventsPerChannel
+                ) == null
+        if (!canSave) return
+
+        parentFragmentManager.setFragmentResult(
+            DeviceDosingTimerScheduleContract.RESULT_REQUEST_KEY,
+            bundleOf(
+                DeviceDosingTimerScheduleContract.RESULT_KEY to
+                    DeviceDosingTimerScheduleContract.RESULT_SAVED,
+                DeviceDosingTimerScheduleContract.RESULT_SLOT_ID to args.slotId,
+                DeviceDosingTimerScheduleContract.RESULT_DOSES_DRAFT to
+                    DeviceDosingTimerScheduleContract.encodeDraft(
+                        doses = doses,
+                        maxEventsPerChannel = args.maxEventsPerChannel
+                    )
+            )
+        )
+        navController.navigateUp()
+    }
+
+    private companion object {
+        const val STATE_DOSES_DRAFT = "timer_schedule_doses_draft"
+        const val STATE_VALIDATION_MESSAGE_RES = "timer_schedule_validation_message_res"
+        const val NO_MESSAGE_RES = 0
+    }
+}
+
+private fun restoreTimerDoses(
+    savedInstanceState: Bundle?,
+    argumentDoses: List<DeviceDosingTimerDose>,
+    maxEventsPerChannel: Int
+): List<DeviceDosingTimerDose> = savedInstanceState
+    ?.getString("timer_schedule_doses_draft")
+    ?.let { encoded ->
+        DeviceDosingTimerScheduleContract.decodeDraft(
+            encoded = encoded,
+            maxEventsPerChannel = maxEventsPerChannel
+        )
+    }
+    ?: argumentDoses

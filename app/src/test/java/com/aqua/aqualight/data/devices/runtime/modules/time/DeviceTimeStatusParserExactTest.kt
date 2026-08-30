@@ -49,7 +49,42 @@ class DeviceTimeStatusParserExactTest {
         )
     }
 
-    private fun statusJson(timeSet: Boolean): JSONObject = JSONObject()
+    @Test
+    fun `synced status rejects a year outside mandatory rtc range`() {
+        assertTrue(
+            runCatching {
+                DeviceTimeStatusParser.parseExact(
+                    statusJson(timeSet = true, year = 2100)
+                )
+            }.isFailure
+        )
+    }
+
+    @Test
+    fun `status rejects an invalid calendar date`() {
+        assertTrue(
+            runCatching {
+                DeviceTimeStatusParser.parseExact(
+                    statusJson(timeSet = true, year = 2026, month = 2, day = 29)
+                )
+            }.isFailure
+        )
+    }
+
+    @Test
+    fun `status rejects a protocol v2 selector or extra field`() {
+        val invalid = statusJson(timeSet = true)
+            .put("statusSchemaVersion", 2)
+
+        assertTrue(runCatching { DeviceTimeStatusParser.parseExact(invalid) }.isFailure)
+    }
+
+    private fun statusJson(
+        timeSet: Boolean,
+        year: Int = if (timeSet) 2026 else 1970,
+        month: Int = 8,
+        day: Int = 1
+    ): JSONObject = JSONObject()
         .put("timeSet", timeSet)
         .put("timeString", if (timeSet) "2026-08-01 12:00:00" else "1970-01-01 00:00:00")
         .put("uptime", "00:00:05")
@@ -69,9 +104,9 @@ class DeviceTimeStatusParserExactTest {
         .put(
             "parts",
             JSONObject()
-                .put("year", if (timeSet) 2026 else 1970)
-                .put("month", 8)
-                .put("day", 1)
+                .put("year", year)
+                .put("month", month)
+                .put("day", day)
                 .put("weekday", 7)
                 .put("hour", 12)
                 .put("minute", 0)

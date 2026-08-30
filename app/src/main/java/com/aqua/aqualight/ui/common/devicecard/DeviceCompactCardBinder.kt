@@ -20,13 +20,7 @@ object DeviceCompactCardBinder {
             item.deviceUid.ifBlank { context.getString(R.string.device_unknown) }
         }
         val supporting = item.supportingText.trim()
-        val presenceText = context.getString(
-            if (item.statusStyle == DeviceCompactStatusStyle.ONLINE) {
-                R.string.device_online
-            } else {
-                R.string.device_offline
-            }
-        )
+        val presenceText = context.getString(item.statusStyle.accessibilityLabelRes)
         val checkingText = context.getString(R.string.device_menu_checking_accessibility)
 
         binding.tvDeviceName.text = name
@@ -40,7 +34,7 @@ object DeviceCompactCardBinder {
         binding.ivDeviceIcon.contentDescription = name
 
         binding.ivPresenceIcon.imageTintList = ColorStateList.valueOf(
-            presenceIconColor(binding, item.statusStyle)
+            ContextCompat.getColor(context, item.statusStyle.tintColorRes)
         )
         binding.ivPresenceIcon.contentDescription = presenceText
         binding.ivPresenceIcon.isVisible = !item.isBusy && !item.showAction
@@ -74,18 +68,5 @@ object DeviceCompactCardBinder {
                 trailingText
             )
         }
-    }
-
-    private fun presenceIconColor(
-        binding: ItemDeviceCompactCardBinding,
-        style: DeviceCompactStatusStyle
-    ): Int {
-        val colorRes = when (style) {
-            DeviceCompactStatusStyle.ONLINE -> R.color.aqua_accent_positive
-            DeviceCompactStatusStyle.CONNECTING,
-            DeviceCompactStatusStyle.WARNING,
-            DeviceCompactStatusStyle.OFFLINE -> R.color.aqua_device_compact_card_binder_color
-        }
-        return ContextCompat.getColor(binding.root.context, colorRes)
     }
 }

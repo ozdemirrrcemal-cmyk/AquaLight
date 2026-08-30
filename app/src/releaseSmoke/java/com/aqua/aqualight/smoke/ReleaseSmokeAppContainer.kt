@@ -6,6 +6,10 @@ import androidx.lifecycle.ViewModelProvider
 import com.aqua.aqualight.application.auth.AccountSecurityOperations
 import com.aqua.aqualight.application.auth.AuthenticatedOwnerIdentity
 import com.aqua.aqualight.application.auth.SessionExitOperations
+import com.aqua.aqualight.application.devices.DeviceControlSurfacePreparationOperations
+import com.aqua.aqualight.application.devices.DeviceControlSurfacePreparationRequest
+import com.aqua.aqualight.application.devices.DeviceControlSurfacePreparationResult
+import com.aqua.aqualight.application.devices.DeviceMenuOpenUseCase
 import com.aqua.aqualight.application.devices.provisioning.ProvisioningDraftOperations
 import com.aqua.aqualight.application.feedback.FeedbackSubmissionUseCase
 import com.aqua.aqualight.application.notifications.NotificationDispatchUseCase
@@ -51,7 +55,6 @@ import com.aqua.aqualight.ui.tabs.devices.add.DeviceProvisioningProgressViewMode
 import com.aqua.aqualight.ui.tabs.devices.add.DeviceQrScanViewModel
 import com.aqua.aqualight.ui.tabs.devices.detail.common.DeviceRootOverviewViewModel
 import com.aqua.aqualight.ui.tabs.devices.detail.cooling.DeviceCoolingRootViewModel
-import com.aqua.aqualight.ui.tabs.devices.detail.dosing.DeviceDosingRootViewModel
 import com.aqua.aqualight.ui.tabs.devices.detail.light.DeviceLightRootViewModel
 import com.aqua.aqualight.ui.tabs.devices.detail.timer.DeviceTimerRootViewModel
 import com.aqua.aqualight.ui.tabs.devices.route.DeviceRouteResolver
@@ -60,6 +63,12 @@ import com.aqua.aqualight.ui.tabs.settings.SettingsViewModel
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 
+/**
+ * CI-only release-smoke container.
+ *
+ * Dosing is intentionally absent: Dosing acceptance runs only through the real production owner
+ * composition against physical devices, never through a smoke or fixture implementation.
+ */
 internal class ReleaseSmokeAppContainer(context: Context) : AppContainer {
     private val profileOperations = SmokeUserProfileOperations()
 
@@ -127,6 +136,10 @@ private class ReleaseSmokeViewModelFactory(
     )
     private val maintenanceTextResolver = AndroidMaintenanceTextResolver(appContext)
     private val appTextResolver = AndroidAppTextResolver(appContext)
+    private val deviceMenuOpenUseCase = DeviceMenuOpenUseCase(
+        menuAccessOperations = DefaultDeviceMenuAccessOperations.create(devicesRepository),
+        controlSurfacePreparationOperations = ReleaseSmokeControlSurfacePreparationOperations
+    )
 
     override fun <T : ViewModel> create(modelClass: Class<T>): T {
         val viewModel = createPrimaryViewModel(modelClass)
@@ -168,6 +181,7 @@ private class ReleaseSmokeViewModelFactory(
         modelClass.isAssignableFrom(DeviceProvisioningProgressViewModel::class.java) ->
             DeviceProvisioningProgressViewModel(
                 operations = DefaultProvisioningProgressOperations(appContext),
+                menuOpenUseCase = deviceMenuOpenUseCase,
                 textResolver = appTextResolver
             )
 
@@ -193,7 +207,7 @@ private class ReleaseSmokeViewModelFactory(
                     assignmentRepository = assignmentRepository
                 )
             ),
-            menuAccessOperations = DefaultDeviceMenuAccessOperations.create(devicesRepository),
+            menuOpenUseCase = deviceMenuOpenUseCase,
             routeResolver = DeviceRouteResolver()
         )
 
@@ -238,9 +252,6 @@ private class ReleaseSmokeViewModelFactory(
         modelClass.isAssignableFrom(DeviceTimerRootViewModel::class.java) ->
             DeviceTimerRootViewModel(DefaultDeviceRootOperations(devicesRepository))
 
-        modelClass.isAssignableFrom(DeviceDosingRootViewModel::class.java) ->
-            DeviceDosingRootViewModel(DefaultDeviceRootOperations(devicesRepository))
-
         modelClass.isAssignableFrom(DeviceRootOverviewViewModel::class.java) ->
             DeviceRootOverviewViewModel(DefaultDeviceRootOperations(devicesRepository))
 
@@ -256,7 +267,7 @@ private class ReleaseSmokeViewModelFactory(
                     assignmentRepository = assignmentRepository,
                     devicesRepository = devicesRepository
                 ),
-                menuAccessOperations = DefaultDeviceMenuAccessOperations.create(devicesRepository),
+                menuOpenUseCase = deviceMenuOpenUseCase,
                 routeResolver = DeviceRouteResolver()
             )
 
@@ -274,6 +285,13 @@ private class ReleaseSmokeViewModelFactory(
     private companion object {
         const val SMOKE_OWNER_UID = "release-smoke-owner"
     }
+}
+
+private object ReleaseSmokeControlSurfacePreparationOperations :
+    DeviceControlSurfacePreparationOperations {
+    override suspend fun prepare(
+        request: DeviceControlSurfacePreparationRequest
+    ): DeviceControlSurfacePreparationResult = DeviceControlSurfacePreparationResult.Ready
 }
 
 private class SmokeUserProfileOperations : UserProfileOperations {

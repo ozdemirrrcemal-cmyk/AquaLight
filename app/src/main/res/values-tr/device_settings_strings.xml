@@ -19,6 +19,9 @@
     <string name="device_settings_update_in_progress_status">Firmware %1$s · %2$d%%</string>
     <string name="device_settings_retry_update_check_action">Tekrar dene</string>
     <string name="device_settings_update_needs_attention_title">Güncelleme için işlem gerekiyor</string>
+    <string name="device_settings_update_card_rolled_back_description">Cihaz önceki yazılımını güvenle geri yükledi. Başka bir güncellemeden önce ayrıntıları açın.</string>
+    <string name="device_settings_update_card_timeout_description">Cihaz güncellemeden sonra yeniden bağlanmadı. Kurtarma ayrıntılarını açın.</string>
+    <string name="device_settings_update_card_unexpected_description">Cihaz beklenmeyen bir sürümle döndü. Ayrıntıları açıp destek alın.</string>
     <string name="device_settings_update_unsupported_status">Bu cihaz yazılım güncellemelerini desteklemiyor.</string>
     <string name="device_settings_update_card_content_description">%1$s. %2$s</string>
     <string name="device_settings_update_card_open_details_description">%1$s. %2$s. Güncelleme ayrıntılarını açın.</string>
@@ -69,6 +72,9 @@
     <string name="device_settings_update_status_recovering">Yeniden bağlanılıyor</string>
     <string name="device_settings_update_status_restarting">Cihaz yeniden başlatılıyor</string>
     <string name="device_settings_update_status_succeeded">Güncelleme tamamlandı</string>
+    <string name="device_settings_update_status_rolled_back">Önceki sürüm geri yüklendi</string>
+    <string name="device_settings_update_status_post_restart_timeout">Bağlantı zaman aşımına uğradı</string>
+    <string name="device_settings_update_status_unexpected_firmware">Sürüm incelenmeli</string>
     <string name="device_settings_update_status_up_to_date">Yazılım güncel</string>
     <string name="device_settings_update_status_failed">Güncelleme başarısız</string>
     <string name="device_settings_update_status_unsupported">Güncelleme kullanılamıyor</string>
@@ -89,6 +95,9 @@
     <string name="device_settings_update_phase_recovering">Cihazın güvenli biçimde yeniden bağlanması bekleniyor…</string>
     <string name="device_settings_update_phase_restarting">Cihaz yeni yazılımla yeniden başlatılıyor…</string>
     <string name="device_settings_update_phase_succeeded">Hedef sürüm yeniden başlatma sonrasında doğrulandı.</string>
+    <string name="device_settings_update_phase_rolled_back">Bootloader önceki çalışan sürümü geri yükledi. Bu sürüm bu cihaza yeniden önerilmeyecek.</string>
+    <string name="device_settings_update_phase_post_restart_timeout">120 saniye içinde cihazdan kimliği doğrulanmış yanıt alınamadı.</string>
+    <string name="device_settings_update_phase_unexpected_firmware">Kimliği doğrulanan cihaz beklenmeyen bir sürüm veya ürün kimliğiyle döndü.</string>
     <string name="device_settings_update_phase_up_to_date">En yeni uyumlu yazılım zaten yüklü.</string>
     <string name="device_settings_update_phase_failed_recoverable">Güncelleme güvenli biçimde durduruldu. Aşağıdaki özel nedeni giderip tekrar deneyin.</string>
     <string name="device_settings_update_phase_failed_terminal">Güncelleme güvenli biçimde durduruldu. Yeni bir denemeden önce aşağıdaki özel nedeni inceleyin.</string>
@@ -101,6 +110,7 @@
     <string name="device_settings_update_done_action">Tamam</string>
     <string name="device_settings_update_close_action">Kapat</string>
     <string name="device_settings_update_active_action">Güncelleme sürüyor</string>
+    <string name="device_settings_update_reconnect_action">Yeniden bağlanmayı dene</string>
     <string name="device_settings_update_action_loading">Hazırlanıyor…</string>
     <string name="device_settings_update_release_change_description">Sürüm yeniliği: %1$s</string>
     <string name="device_settings_update_release_warning_description">Güncelleme uyarısı: %1$s</string>
@@ -112,6 +122,10 @@
     <string name="device_settings_update_notification_success_message">%1$s artık %2$s sürümünü kullanıyor.</string>
     <string name="device_settings_update_notification_failure_title">Yazılım güncellemesi için işlem gerekiyor</string>
     <string name="device_settings_update_notification_failure_message">%1$s güncellemesinin ayrıntılarını incelemek için AquaLight’ı açın.</string>
+    <string name="device_settings_update_notification_rollback_title">Cihaz güncellemeden sonra kurtarıldı</string>
+    <string name="device_settings_update_notification_rollback_message">%1$s güvenle %2$s sürümüne döndü. Reddedilen güncelleme engellendi.</string>
+    <string name="device_settings_update_notification_timeout_title">Cihaz yeniden bağlanmadı</string>
+    <string name="device_settings_update_notification_timeout_message">%1$s cihazına yeniden bağlanmak veya kurtarma seçeneklerini incelemek için AquaLight’ı açın.</string>
 
     <string name="device_settings_light_protection_section">Işık koruması</string>
     <string name="device_settings_light_temperature_threshold_label">Sıcaklık koruma eşiği</string>

@@ -19,6 +19,9 @@
     <string name="device_settings_update_in_progress_status">Firmware %1$s · %2$d%%</string>
     <string name="device_settings_retry_update_check_action">Try again</string>
     <string name="device_settings_update_needs_attention_title">Update needs attention</string>
+    <string name="device_settings_update_card_rolled_back_description">The device safely restored its previous software. Open details before another update.</string>
+    <string name="device_settings_update_card_timeout_description">The device did not reconnect after the update. Open recovery details.</string>
+    <string name="device_settings_update_card_unexpected_description">The device returned with an unexpected version. Open details and contact support.</string>
     <string name="device_settings_update_unsupported_status">This device does not support software updates.</string>
     <string name="device_settings_update_card_content_description">%1$s. %2$s</string>
     <string name="device_settings_update_card_open_details_description">%1$s. %2$s. Open update details.</string>
@@ -69,6 +72,9 @@
     <string name="device_settings_update_status_recovering">Reconnecting</string>
     <string name="device_settings_update_status_restarting">Restarting device</string>
     <string name="device_settings_update_status_succeeded">Update complete</string>
+    <string name="device_settings_update_status_rolled_back">Previous version restored</string>
+    <string name="device_settings_update_status_post_restart_timeout">Connection timed out</string>
+    <string name="device_settings_update_status_unexpected_firmware">Version needs review</string>
     <string name="device_settings_update_status_up_to_date">Software is up to date</string>
     <string name="device_settings_update_status_failed">Update failed</string>
     <string name="device_settings_update_status_unsupported">Update unavailable</string>
@@ -89,6 +95,9 @@
     <string name="device_settings_update_phase_recovering">Waiting for the device to reconnect securely…</string>
     <string name="device_settings_update_phase_restarting">The device is restarting with the new software…</string>
     <string name="device_settings_update_phase_succeeded">The target version was verified after restart.</string>
+    <string name="device_settings_update_phase_rolled_back">The bootloader restored the previous working version. This release will not be offered again on this device.</string>
+    <string name="device_settings_update_phase_post_restart_timeout">No authenticated device response was received within 120 seconds.</string>
+    <string name="device_settings_update_phase_unexpected_firmware">The authenticated device returned with an unexpected version or product identity.</string>
     <string name="device_settings_update_phase_up_to_date">The latest compatible software is already installed.</string>
     <string name="device_settings_update_phase_failed_recoverable">The update stopped safely. Resolve the specific cause below and try again.</string>
     <string name="device_settings_update_phase_failed_terminal">The update stopped safely. Review the specific cause below before another attempt.</string>
@@ -101,6 +110,7 @@
     <string name="device_settings_update_done_action">Done</string>
     <string name="device_settings_update_close_action">Close</string>
     <string name="device_settings_update_active_action">Update in progress</string>
+    <string name="device_settings_update_reconnect_action">Try reconnecting</string>
     <string name="device_settings_update_action_loading">Preparing…</string>
     <string name="device_settings_update_release_change_description">Release change: %1$s</string>
     <string name="device_settings_update_release_warning_description">Update warning: %1$s</string>
@@ -112,6 +122,10 @@
     <string name="device_settings_update_notification_success_message">%1$s is now running version %2$s.</string>
     <string name="device_settings_update_notification_failure_title">Software update needs attention</string>
     <string name="device_settings_update_notification_failure_message">Open AquaLight to review the update for %1$s.</string>
+    <string name="device_settings_update_notification_rollback_title">Device recovered after update</string>
+    <string name="device_settings_update_notification_rollback_message">%1$s returned safely to version %2$s. The rejected update was blocked.</string>
+    <string name="device_settings_update_notification_timeout_title">Device did not reconnect</string>
+    <string name="device_settings_update_notification_timeout_message">Open AquaLight to reconnect to %1$s or review recovery options.</string>
 
     <string name="device_settings_light_protection_section">Light protection</string>
     <string name="device_settings_light_temperature_threshold_label">Temperature protection threshold</string>

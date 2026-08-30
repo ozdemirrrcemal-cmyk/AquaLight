@@ -1,0 +1,271 @@
+package com.aqua.aqualight.ui.tabs.devices.detail.dosing.presentation.card
+
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.text.BasicText
+import androidx.compose.runtime.Composable
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.text.style.TextOverflow
+import com.aqua.aqualight.R
+import com.aqua.aqualight.ui.common.devicecard.AquaDeviceCardColors
+import com.aqua.aqualight.ui.common.devicecard.AquaDeviceCardTypography
+import com.aqua.aqualight.ui.common.dosing.AquaDosingCardGeometry
+
+@Composable
+internal fun DosingChannelSummary(
+    state: DosingChannelCardUiState,
+    colors: AquaDeviceCardColors,
+    typography: AquaDeviceCardTypography
+) {
+    val visualState = state.visualState
+    if (visualState != null) {
+        Column(
+            modifier = Modifier.fillMaxWidth(),
+            verticalArrangement = Arrangement.spacedBy(SUMMARY_ROW_GAP)
+        ) {
+            if (visualState == DosingChannelVisualState.PROGRAM_NOT_CONFIGURED) {
+                DosingProgramSummary(
+                    visualState = visualState,
+                    progress = state.programProgress,
+                    colors = colors,
+                    typography = typography
+                )
+            } else {
+                DosingScheduleMetricsRow(
+                    state = state,
+                    colors = colors,
+                    typography = typography
+                )
+                DosingProgramAndReservoirRow(
+                    state = state,
+                    visualState = visualState,
+                    colors = colors,
+                    typography = typography
+                )
+            }
+        }
+    }
+}
+
+@Composable
+private fun DosingScheduleMetricsRow(
+    state: DosingChannelCardUiState,
+    colors: AquaDeviceCardColors,
+    typography: AquaDeviceCardTypography
+) {
+    Row(
+        modifier = Modifier.fillMaxWidth(),
+        horizontalArrangement = Arrangement.spacedBy(SUMMARY_COLUMN_GAP),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        DosingMetricSummary(
+            icon = DosingMetricGlyphType.DOSE,
+            label = stringResource(
+                R.string.device_dosing_plan_daily_dose_value_format,
+                state.programProgress.dailyDoseMl
+            ),
+            colors = colors,
+            typography = typography,
+            modifier = Modifier.weight(SUMMARY_LEADING_COLUMN_WEIGHT)
+        )
+        DosingMetricSummary(
+            icon = DosingMetricGlyphType.DAYS,
+            label = state.scheduleDays.summaryLabel(),
+            colors = colors,
+            typography = typography,
+            modifier = Modifier.weight(SUMMARY_TRAILING_COLUMN_WEIGHT)
+        )
+    }
+}
+
+@Composable
+private fun DosingProgramAndReservoirRow(
+    state: DosingChannelCardUiState,
+    visualState: DosingChannelVisualState,
+    colors: AquaDeviceCardColors,
+    typography: AquaDeviceCardTypography
+) {
+    Row(
+        modifier = Modifier.fillMaxWidth(),
+        horizontalArrangement = Arrangement.spacedBy(SUMMARY_COLUMN_GAP),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        DosingProgramSummary(
+            visualState = visualState,
+            progress = state.programProgress,
+            colors = colors,
+            typography = typography,
+            modifier = Modifier.weight(SUMMARY_LEADING_COLUMN_WEIGHT)
+        )
+        state.reservoir?.let { reservoir ->
+            DosingReservoirSummary(
+                state = reservoir,
+                colors = colors,
+                typography = typography,
+                modifier = Modifier.weight(SUMMARY_TRAILING_COLUMN_WEIGHT)
+            )
+        }
+    }
+}
+
+@Composable
+private fun DosingMetricSummary(
+    icon: DosingMetricGlyphType,
+    label: String,
+    colors: AquaDeviceCardColors,
+    typography: AquaDeviceCardTypography,
+    modifier: Modifier = Modifier
+) {
+    val iconTint = colors.secondaryText
+    Row(
+        modifier = modifier,
+        horizontalArrangement = Arrangement.spacedBy(SUMMARY_ICON_GAP),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        if (icon == DosingMetricGlyphType.DOSE) {
+            DosingLeadingIconSlot {
+                DosingMetricGlyph(
+                    type = icon,
+                    tint = iconTint,
+                    modifier = Modifier.size(SUMMARY_ICON_SIZE)
+                )
+            }
+        } else {
+            DosingMetricGlyph(
+                type = icon,
+                tint = iconTint,
+                modifier = Modifier.size(SUMMARY_ICON_SIZE)
+            )
+        }
+        BasicText(
+            text = label,
+            modifier = Modifier.weight(1f),
+            style = typography.caption.copy(color = colors.primaryText),
+            maxLines = 1,
+            overflow = TextOverflow.Ellipsis
+        )
+    }
+}
+
+@Composable
+private fun DosingProgramSummary(
+    visualState: DosingChannelVisualState,
+    progress: DosingProgramProgressUiState,
+    colors: AquaDeviceCardColors,
+    typography: AquaDeviceCardTypography,
+    modifier: Modifier = Modifier
+) {
+    val mode = progress.mode
+    if (mode == null) {
+        if (visualState == DosingChannelVisualState.PROGRAM_NOT_CONFIGURED) {
+            DosingProgramSetupSummary(
+                colors = colors,
+                typography = typography,
+                modifier = modifier
+            )
+        }
+        return
+    }
+
+    val automaticDosingOff = visualState == DosingChannelVisualState.AUTOMATIC_DOSING_OFF
+    val label = when {
+        automaticDosingOff -> stringResource(visualState.labelRes)
+        progress.scheduledToday && progress.totalOccurrences > 0 -> stringResource(
+            R.string.device_dosing_channel_mode_progress_format,
+            progress.completedOccurrences,
+            progress.totalOccurrences,
+            stringResource(mode.compactLabelRes())
+        )
+        else -> stringResource(
+            R.string.device_dosing_channel_no_dose_today_format,
+            stringResource(mode.compactLabelRes())
+        )
+    }
+    val programTint = if (automaticDosingOff) colors.warning else colors.secondaryText
+    val programTextColor = if (automaticDosingOff) colors.warning else colors.primaryText
+    Row(
+        modifier = modifier,
+        horizontalArrangement = Arrangement.spacedBy(SUMMARY_ICON_GAP),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        DosingLeadingIconSlot {
+            DosingProgramModeGlyph(
+                mode = mode,
+                tint = programTint,
+                modifier = Modifier.size(SUMMARY_ICON_SIZE)
+            )
+        }
+        BasicText(
+            text = label,
+            modifier = Modifier.weight(1f),
+            style = typography.caption.copy(color = programTextColor),
+            maxLines = 1,
+            overflow = TextOverflow.Ellipsis
+        )
+    }
+}
+
+@Composable
+private fun DosingProgramSetupSummary(
+    colors: AquaDeviceCardColors,
+    typography: AquaDeviceCardTypography,
+    modifier: Modifier = Modifier
+) {
+    val title = stringResource(R.string.device_dosing_channel_program_empty_title)
+    val description = stringResource(R.string.device_dosing_channel_program_empty_description)
+    Row(
+        modifier = modifier.semantics(mergeDescendants = true) {
+            contentDescription = "$title. $description"
+        },
+        horizontalArrangement = Arrangement.spacedBy(SUMMARY_ICON_GAP),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        DosingLeadingIconSlot {
+            DosingEmptyStateGlyph(
+                tint = colors.accent,
+                badgeSurface = colors.mediaSurface,
+                modifier = Modifier.size(SUMMARY_ICON_SIZE)
+            )
+        }
+        BasicText(
+            text = title,
+            modifier = Modifier.weight(1f),
+            style = typography.caption.copy(color = colors.primaryText),
+            maxLines = 1,
+            overflow = TextOverflow.Ellipsis
+        )
+    }
+}
+
+@Composable
+private fun DosingScheduleDaysUiState.summaryLabel(): String = when {
+    selectedDays.isEmpty() -> stringResource(R.string.device_dosing_channel_no_days_selected)
+    isEveryDay -> stringResource(R.string.device_dosing_channel_every_day)
+    isWeekdays -> stringResource(R.string.device_dosing_channel_weekdays)
+    isWeekend -> stringResource(R.string.device_dosing_channel_weekend)
+    else -> selectedDays
+        .map { day -> stringResource(day.shortLabelRes) }
+        .joinToString(separator = DAY_SEPARATOR)
+}
+
+private fun DosingProgramModeUiState.compactLabelRes(): Int = when (this) {
+    DosingProgramModeUiState.SINGLE -> R.string.device_dosing_channel_mode_single
+    DosingProgramModeUiState.HOURLY_24 -> R.string.device_dosing_channel_mode_hourly
+    DosingProgramModeUiState.CUSTOM_PERIODS -> R.string.device_dosing_channel_mode_custom
+    DosingProgramModeUiState.TIMER -> R.string.device_dosing_channel_mode_timer
+}
+
+private const val DAY_SEPARATOR = " · "
+private const val SUMMARY_LEADING_COLUMN_WEIGHT = 0.92f
+private const val SUMMARY_TRAILING_COLUMN_WEIGHT = 1.08f
+private val SUMMARY_ROW_GAP = AquaDosingCardGeometry.summaryRowGap
+private val SUMMARY_COLUMN_GAP = AquaDosingCardGeometry.summaryColumnGap
+private val SUMMARY_ICON_GAP = AquaDosingCardGeometry.summaryIconGap
+private val SUMMARY_ICON_SIZE = AquaDosingCardGeometry.summaryIconSize

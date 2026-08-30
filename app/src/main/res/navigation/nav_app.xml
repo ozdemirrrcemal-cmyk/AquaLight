@@ -1,7 +1,264 @@
-<?xml version='1.0' encoding='utf-8'?>
-<navigation xmlns:android="http://schemas.android.com/apk/res/android" xmlns:app="http://schemas.android.com/apk/res-auto" android:id="@+id/nav_app" app:startDestination="@id/nav_aquarium">
-  <include app:graph="@navigation/nav_aquarium"/>
-  <include app:graph="@navigation/nav_maintenance"/>
-  <include app:graph="@navigation/nav_devices"/>
-  <include app:graph="@navigation/nav_settings"/>
+<?xml version="1.0" encoding="utf-8"?>
+<navigation xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/nav_app"
+    app:startDestination="@id/nav_aquarium">
+
+    <include app:graph="@navigation/nav_aquarium" />
+    <include app:graph="@navigation/nav_maintenance" />
+    <include app:graph="@navigation/nav_devices" />
+    <include app:graph="@navigation/nav_settings" />
+
+    <fragment
+        android:id="@+id/deviceDosingChannelCalibrationFragment"
+        android:name="com.aqua.aqualight.ui.tabs.devices.detail.dosing.channel.calibration.DeviceDosingChannelCalibrationFragment"
+        android:label="@string/device_menu_calibration_title"
+        tools:layout="@layout/fragment_device_dosing_channel_calibration">
+        <argument
+            android:name="deviceUid"
+            app:argType="string" />
+        <argument
+            android:name="slotId"
+            app:argType="string" />
+        <argument
+            android:name="pumpCount"
+            app:argType="integer" />
+        <argument
+            android:name="channelNumber"
+            app:argType="integer" />
+        <argument
+            android:name="recalibration"
+            android:defaultValue="false"
+            app:argType="boolean" />
+        <deepLink
+            app:uri="aqualight://app/device/{deviceUid}/dosing/channel/{slotId}/calibration?pumpCount={pumpCount}&amp;channelNumber={channelNumber}" />
+    </fragment>
+
+    <fragment
+        android:id="@+id/deviceDosingChannelDetailFragment"
+        android:name="com.aqua.aqualight.ui.tabs.devices.detail.dosing.channel.detail.DeviceDosingChannelDetailFragment"
+        android:label="@string/device_family_dosing"
+        tools:layout="@layout/fragment_device_dosing_channel_detail">
+        <argument
+            android:name="deviceUid"
+            app:argType="string" />
+        <argument
+            android:name="slotId"
+            app:argType="string" />
+        <argument
+            android:name="pumpCount"
+            app:argType="integer" />
+        <argument
+            android:name="channelNumber"
+            app:argType="integer" />
+        <argument
+            android:name="lastCalibratedAtEpochSeconds"
+            app:argType="long" />
+        <deepLink
+            app:uri="aqualight://app/device/{deviceUid}/dosing/channel/{slotId}/detail?pumpCount={pumpCount}&amp;channelNumber={channelNumber}&amp;lastCalibratedAtEpochSeconds={lastCalibratedAtEpochSeconds}" />
+        <action
+            android:id="@+id/action_deviceDosingChannelDetailFragment_to_deviceDosingChannelCalibrationFragment"
+            app:destination="@id/deviceDosingChannelCalibrationFragment"
+            app:enterAnim="@anim/nav_slide_in_right"
+            app:exitAnim="@anim/nav_slide_out_left"
+            app:popEnterAnim="@anim/nav_slide_in_left"
+            app:popExitAnim="@anim/nav_slide_out_right" />
+        <action
+            android:id="@+id/action_deviceDosingChannelDetailFragment_to_deviceDosingPlanFragment"
+            app:destination="@id/deviceDosingPlanFragment"
+            app:enterAnim="@anim/nav_slide_in_right"
+            app:exitAnim="@anim/nav_slide_out_left"
+            app:popEnterAnim="@anim/nav_slide_in_left"
+            app:popExitAnim="@anim/nav_slide_out_right" />
+        <action
+            android:id="@+id/action_deviceDosingChannelDetailFragment_to_deviceDosingReservoirFragment"
+            app:destination="@id/deviceDosingReservoirFragment"
+            app:enterAnim="@anim/nav_slide_in_right"
+            app:exitAnim="@anim/nav_slide_out_left"
+            app:popEnterAnim="@anim/nav_slide_in_left"
+            app:popExitAnim="@anim/nav_slide_out_right" />
+    </fragment>
+
+    <fragment
+        android:id="@+id/deviceDosingPlanFragment"
+        android:name="com.aqua.aqualight.ui.tabs.devices.detail.dosing.channel.plan.DeviceDosingPlanFragment"
+        android:label="@string/device_dosing_detail_plan_title"
+        tools:layout="@layout/fragment_device_dosing_channel_detail">
+        <argument
+            android:name="deviceUid"
+            app:argType="string" />
+        <argument
+            android:name="slotId"
+            app:argType="string" />
+        <argument
+            android:name="pumpCount"
+            app:argType="integer" />
+        <argument
+            android:name="channelNumber"
+            app:argType="integer" />
+        <action
+            android:id="@+id/action_deviceDosingPlanFragment_to_deviceDosingSingleScheduleFragment"
+            app:destination="@id/deviceDosingSingleScheduleFragment"
+            app:enterAnim="@anim/nav_slide_in_right"
+            app:exitAnim="@anim/nav_slide_out_left"
+            app:popEnterAnim="@anim/nav_slide_in_left"
+            app:popExitAnim="@anim/nav_slide_out_right" />
+        <action
+            android:id="@+id/action_deviceDosingPlanFragment_to_deviceDosingHourlyScheduleFragment"
+            app:destination="@id/deviceDosingHourlyScheduleFragment"
+            app:enterAnim="@anim/nav_slide_in_right"
+            app:exitAnim="@anim/nav_slide_out_left"
+            app:popEnterAnim="@anim/nav_slide_in_left"
+            app:popExitAnim="@anim/nav_slide_out_right" />
+        <action
+            android:id="@+id/action_deviceDosingPlanFragment_to_deviceDosingCustomScheduleFragment"
+            app:destination="@id/deviceDosingCustomScheduleFragment"
+            app:enterAnim="@anim/nav_slide_in_right"
+            app:exitAnim="@anim/nav_slide_out_left"
+            app:popEnterAnim="@anim/nav_slide_in_left"
+            app:popExitAnim="@anim/nav_slide_out_right" />
+        <action
+            android:id="@+id/action_deviceDosingPlanFragment_to_deviceDosingTimerScheduleFragment"
+            app:destination="@id/deviceDosingTimerScheduleFragment"
+            app:enterAnim="@anim/nav_slide_in_right"
+            app:exitAnim="@anim/nav_slide_out_left"
+            app:popEnterAnim="@anim/nav_slide_in_left"
+            app:popExitAnim="@anim/nav_slide_out_right" />
+    </fragment>
+
+    <fragment
+        android:id="@+id/deviceDosingReservoirFragment"
+        android:name="com.aqua.aqualight.ui.tabs.devices.detail.dosing.channel.reservoir.DeviceDosingReservoirFragment"
+        android:label="@string/device_dosing_detail_reservoir_title"
+        tools:layout="@layout/fragment_device_dosing_channel_detail">
+        <argument
+            android:name="deviceUid"
+            app:argType="string" />
+        <argument
+            android:name="slotId"
+            app:argType="string" />
+        <argument
+            android:name="pumpCount"
+            app:argType="integer" />
+        <argument
+            android:name="channelNumber"
+            app:argType="integer" />
+    </fragment>
+
+    <fragment
+        android:id="@+id/deviceDosingSingleScheduleFragment"
+        android:name="com.aqua.aqualight.ui.tabs.devices.detail.dosing.channel.schedule.single.DeviceDosingSingleScheduleFragment"
+        android:label="@string/device_dosing_single_title"
+        tools:layout="@layout/fragment_device_dosing_channel_detail">
+        <argument
+            android:name="deviceUid"
+            app:argType="string" />
+        <argument
+            android:name="slotId"
+            app:argType="string" />
+        <argument
+            android:name="pumpCount"
+            app:argType="integer" />
+        <argument
+            android:name="channelNumber"
+            app:argType="integer" />
+        <argument
+            android:name="dailyDoseMicroliters"
+            android:defaultValue="0L"
+            app:argType="long" />
+        <argument
+            android:name="startTimeMs"
+            android:defaultValue="0L"
+            app:argType="long" />
+    </fragment>
+
+    <fragment
+        android:id="@+id/deviceDosingHourlyScheduleFragment"
+        android:name="com.aqua.aqualight.ui.tabs.devices.detail.dosing.channel.schedule.hourly.DeviceDosingHourlyScheduleFragment"
+        android:label="@string/device_dosing_detail_schedule_hourly"
+        tools:layout="@layout/fragment_device_dosing_channel_detail">
+        <argument
+            android:name="deviceUid"
+            app:argType="string" />
+        <argument
+            android:name="slotId"
+            app:argType="string" />
+        <argument
+            android:name="pumpCount"
+            app:argType="integer" />
+        <argument
+            android:name="channelNumber"
+            app:argType="integer" />
+        <argument
+            android:name="dailyDoseMicroliters"
+            android:defaultValue="0L"
+            app:argType="long" />
+        <argument
+            android:name="minuteOfHour"
+            android:defaultValue="0"
+            app:argType="integer" />
+    </fragment>
+
+    <fragment
+        android:id="@+id/deviceDosingCustomScheduleFragment"
+        android:name="com.aqua.aqualight.ui.tabs.devices.detail.dosing.channel.schedule.custom.DeviceDosingCustomScheduleFragment"
+        android:label="@string/device_dosing_detail_schedule_custom"
+        tools:layout="@layout/fragment_device_dosing_channel_detail">
+        <argument
+            android:name="deviceUid"
+            app:argType="string" />
+        <argument
+            android:name="slotId"
+            app:argType="string" />
+        <argument
+            android:name="pumpCount"
+            app:argType="integer" />
+        <argument
+            android:name="channelNumber"
+            app:argType="integer" />
+        <argument
+            android:name="dailyDoseMicroliters"
+            android:defaultValue="0L"
+            app:argType="long" />
+        <argument
+            android:name="periodsDraft"
+            android:defaultValue=""
+            app:argType="string" />
+        <argument
+            android:name="maxEventsPerChannel"
+            android:defaultValue="24"
+            app:argType="integer" />
+        <argument
+            android:name="maxCustomPeriodsPerChannel"
+            android:defaultValue="24"
+            app:argType="integer" />
+    </fragment>
+
+    <fragment
+        android:id="@+id/deviceDosingTimerScheduleFragment"
+        android:name="com.aqua.aqualight.ui.tabs.devices.detail.dosing.channel.schedule.timer.DeviceDosingTimerScheduleFragment"
+        android:label="@string/device_dosing_detail_schedule_timer"
+        tools:layout="@layout/fragment_device_dosing_channel_detail">
+        <argument
+            android:name="deviceUid"
+            app:argType="string" />
+        <argument
+            android:name="slotId"
+            app:argType="string" />
+        <argument
+            android:name="pumpCount"
+            app:argType="integer" />
+        <argument
+            android:name="channelNumber"
+            app:argType="integer" />
+        <argument
+            android:name="dosesDraft"
+            android:defaultValue=""
+            app:argType="string" />
+        <argument
+            android:name="maxEventsPerChannel"
+            android:defaultValue="24"
+            app:argType="integer" />
+    </fragment>
 </navigation>

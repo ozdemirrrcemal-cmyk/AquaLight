@@ -1,0 +1,211 @@
+package com.aqua.aqualight.ui.tabs.devices.detail.dosing.channel.calibration
+
+import com.aqua.aqualight.application.devices.dosing.DeviceDosingCalibrationConstraints
+import com.aqua.aqualight.application.devices.dosing.DeviceDosingDisplayNamePolicy
+import com.aqua.aqualight.application.devices.dosing.DeviceDosingDisplayNameRejection
+import com.aqua.aqualight.application.devices.dosing.DeviceDosingDisplayNameValidation
+
+internal sealed interface DosingCalibrationOperation {
+    data object Refresh : DosingCalibrationOperation
+    data object PrimeStart : DosingCalibrationOperation
+    data object PrimeStop : DosingCalibrationOperation
+    data object ContinueFromPrime : DosingCalibrationOperation
+    data object StartCalibration : DosingCalibrationOperation
+    data class FinishMeasurement(val measuredMl: Double) : DosingCalibrationOperation
+    data object StartVerification : DosingCalibrationOperation
+    data class ConfirmVerification(val displayName: String) : DosingCalibrationOperation
+    data object RejectVerification : DosingCalibrationOperation
+}
+
+internal enum class DosingCalibrationPrimeDirective {
+    START,
+    STOP
+}
+
+internal data class DosingCalibrationActionDecision(
+    val state: DeviceDosingCalibrationUiState,
+    val operation: DosingCalibrationOperation? = null,
+    val primeDirective: DosingCalibrationPrimeDirective? = null,
+    val markLocalProgress: Boolean = false
+)
+
+internal fun reduceDosingCalibrationAction(
+    state: DeviceDosingCalibrationUiState,
+    primeRequested: Boolean,
+    action: DeviceDosingCalibrationAction,
+    constraints: DeviceDosingCalibrationConstraints
+): DosingCalibrationActionDecision = when (action) {
+    is DeviceDosingCalibrationAction.DisplayNameChanged -> DosingCalibrationActionDecision(
+        state = if (state.isBusy) {
+            state
+        } else {
+            state.updateInput { input ->
+                input.copy(displayName = action.value)
+            }.copy(error = null)
+        }
+    )
+    DeviceDosingCalibrationAction.SaveDisplayName -> saveDisplayNameDecision(state)
+    DeviceDosingCalibrationAction.PrimePressed -> primePressedDecision(state, primeRequested)
+    DeviceDosingCalibrationAction.PrimeReleased -> primeReleasedDecision(state, primeRequested)
+    DeviceDosingCalibrationAction.PrimeContinue -> operationDecision(
+        state = state,
+        operation = DosingCalibrationOperation.ContinueFromPrime,
+        nextState = state
+            .updateProgress { progress ->
+                progress.copy(isBusy = true, isPumpActive = false)
+            }
+            .copy(error = null)
+    )
+    DeviceDosingCalibrationAction.StartCalibration -> busyOperationDecision(
+        state,
+        DosingCalibrationOperation.StartCalibration
+    )
+    is DeviceDosingCalibrationAction.MeasuredMlChanged -> DosingCalibrationActionDecision(
+        state = if (state.isBusy) {
+            state
+        } else {
+            state.updateInput { input ->
+                input.copy(measuredMl = sanitizeMeasurement(action.value))
+            }.copy(error = null)
+        }
+    )
+    DeviceDosingCalibrationAction.SaveMeasurement ->
+        saveMeasurementDecision(state, constraints)
+    DeviceDosingCalibrationAction.StartVerification -> busyOperationDecision(
+        state,
+        DosingCalibrationOperation.StartVerification
+    )
+    DeviceDosingCalibrationAction.AcceptVerification -> confirmDisplayNameDecision(state)
+    DeviceDosingCalibrationAction.RejectVerification -> busyOperationDecision(
+        state,
+        DosingCalibrationOperation.RejectVerification
+    )
+}
+
+private fun saveDisplayNameDecision(
+    state: DeviceDosingCalibrationUiState
+): DosingCalibrationActionDecision = when (
+    val validation = DeviceDosingDisplayNamePolicy.validateRequired(state.displayName)
+) {
+    is DeviceDosingDisplayNameValidation.Accepted -> DosingCalibrationActionDecision(
+        state = state
+            .updateInput { input -> input.copy(displayName = validation.normalizedValue) }
+            .updateProgress { progress ->
+                progress.copy(
+                    isLoading = false,
+                    isBusy = false,
+                    step = DeviceDosingCalibrationStep.PRIME
+                )
+            }
+            .copy(error = null),
+        markLocalProgress = true
+    )
+    is DeviceDosingDisplayNameValidation.Rejected -> DosingCalibrationActionDecision(
+        state = state.copy(error = validation.reason.toCalibrationError())
+    )
+}
+
+private fun confirmDisplayNameDecision(
+    state: DeviceDosingCalibrationUiState
+): DosingCalibrationActionDecision = when (
+    val validation = DeviceDosingDisplayNamePolicy.validateRequired(state.displayName)
+) {
+    is DeviceDosingDisplayNameValidation.Accepted -> busyOperationDecision(
+        state.updateInput { input -> input.copy(displayName = validation.normalizedValue) },
+        DosingCalibrationOperation.ConfirmVerification(validation.normalizedValue)
+    )
+    is DeviceDosingDisplayNameValidation.Rejected -> DosingCalibrationActionDecision(
+        state = state.copy(error = validation.reason.toCalibrationError())
+    )
+}
+
+private fun DeviceDosingDisplayNameRejection.toCalibrationError(): DeviceDosingCalibrationError =
+    when (this) {
+        DeviceDosingDisplayNameRejection.REQUIRED ->
+            DeviceDosingCalibrationError.DISPLAY_NAME_REQUIRED
+        DeviceDosingDisplayNameRejection.CONTROL_CHARACTER ->
+            DeviceDosingCalibrationError.DISPLAY_NAME_CONTROL_CHARACTER
+        DeviceDosingDisplayNameRejection.TOO_LONG ->
+            DeviceDosingCalibrationError.DISPLAY_NAME_TOO_LONG
+    }
+
+private fun primePressedDecision(
+    state: DeviceDosingCalibrationUiState,
+    primeRequested: Boolean
+): DosingCalibrationActionDecision {
+    val canStart = state.step == DeviceDosingCalibrationStep.PRIME && !primeRequested
+    return if (!canStart) {
+        DosingCalibrationActionDecision(state)
+    } else {
+        DosingCalibrationActionDecision(
+            state = state
+                .updateProgress { progress -> progress.copy(isPumpActive = true) }
+                .copy(error = null),
+            operation = DosingCalibrationOperation.PrimeStart,
+            primeDirective = DosingCalibrationPrimeDirective.START
+        )
+    }
+}
+
+private fun primeReleasedDecision(
+    state: DeviceDosingCalibrationUiState,
+    primeRequested: Boolean
+): DosingCalibrationActionDecision {
+    val canStop = primeRequested || state.isPumpActive
+    return if (!canStop) {
+        DosingCalibrationActionDecision(state)
+    } else {
+        DosingCalibrationActionDecision(
+            state = state.updateProgress { progress -> progress.copy(isPumpActive = false) },
+            operation = DosingCalibrationOperation.PrimeStop,
+            primeDirective = DosingCalibrationPrimeDirective.STOP
+        )
+    }
+}
+
+private fun saveMeasurementDecision(
+    state: DeviceDosingCalibrationUiState,
+    constraints: DeviceDosingCalibrationConstraints
+): DosingCalibrationActionDecision {
+    val measuredMl = state.measuredMl
+        .trim()
+        .replace(',', '.')
+        .toDoubleOrNull()
+        ?.takeIf(Double::isFinite)
+    return if (measuredMl == null ||
+        measuredMl !in constraints.minMeasuredMl..constraints.maxMeasuredMl
+    ) {
+        DosingCalibrationActionDecision(
+            state = state.copy(error = DeviceDosingCalibrationError.INVALID_MEASUREMENT)
+        )
+    } else {
+        busyOperationDecision(state, DosingCalibrationOperation.FinishMeasurement(measuredMl))
+    }
+}
+
+private fun busyOperationDecision(
+    state: DeviceDosingCalibrationUiState,
+    operation: DosingCalibrationOperation
+): DosingCalibrationActionDecision = operationDecision(
+    state = state,
+    operation = operation,
+    nextState = state
+        .updateProgress { progress -> progress.copy(isBusy = true) }
+        .copy(error = null)
+)
+
+private fun operationDecision(
+    state: DeviceDosingCalibrationUiState,
+    operation: DosingCalibrationOperation,
+    nextState: DeviceDosingCalibrationUiState
+): DosingCalibrationActionDecision = if (state.isBusy) {
+    DosingCalibrationActionDecision(state)
+} else {
+    DosingCalibrationActionDecision(state = nextState, operation = operation)
+}
+
+private fun sanitizeMeasurement(value: String): String = value
+    .filter { character -> character.isDigit() || character == '.' || character == ',' }
+    .take(MAX_MEASUREMENT_CHARACTERS)
+
+internal const val MAX_MEASUREMENT_CHARACTERS = 8

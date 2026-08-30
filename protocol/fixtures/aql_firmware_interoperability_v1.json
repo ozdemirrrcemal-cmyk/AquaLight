@@ -3,10 +3,10 @@
   "schema": "aql.android-firmware.interoperability.v1",
   "firmware": {
     "repository": "ozdemirrrcemal-cmyk/AquaLight-Firmware",
-    "commit": "38e8812c1bcecf948ebab85979bff21a24f4b79c",
+    "commit": "e669313ecc2a7f959b566e3051cfd3b67247ccbd",
     "commandNames": {
       "path": "src/api/v1/commands/AqlCommandNames.hpp",
-      "blobSha": "3f93db851c8c6c31bec2284bc295fabde0d87220"
+      "blobSha": "7bff40576bb77450c662181e2b09b5be961e6809"
     },
     "eventContract": {
       "path": "src/contracts/AqlWebSocketContract.hpp",
@@ -16,26 +16,27 @@
       "src/api/v1/commands/AqlDeviceCommands.hpp": "a78d6355555afea780fdb62809bc9107d7122698",
       "src/api/v1/commands/AqlNetworkCommands.hpp": "529a3b341e81a48d33b9036343dbb0b9f2844fb6",
       "src/api/v1/commands/AqlSecurityCommands.hpp": "1c16c3e7c6d1456b1802f494d91c104347ad09aa",
-      "src/api/v1/commands/AqlTimeCommands.hpp": "d8d82bf9edd1a2669d4a2fb0eaf7e6f105e3fc8a",
+      "src/api/v1/commands/AqlTimeCommands.hpp": "ee6e87ab0e1152ffd3d9004fe8b5c7e380488a4f",
       "src/api/v1/commands/AqlLightCommands.hpp": "57e576a2e02a5fc8347fca16be6b0cbf0e540a1b",
       "src/api/v1/commands/AqlLightTemperatureProtectionCommands.hpp": "e3d44b0c1cad994378b12ce5b9003fd7a94d4f44",
       "src/api/v1/commands/AqlCoolingCommands.hpp": "a4b6c390e4af6f28f2c844cef1d7429eb0206718",
       "src/api/v1/commands/AqlTimerCommands.hpp": "77e5299511fe67e07d7cc1ffbd0114ff7316677b",
-      "src/api/v1/commands/AqlDosingCommands.hpp": "1d84bc0eaadb77f9041978c2ce46c7042c158009",
+      "src/api/v1/commands/AqlDosingCommands.hpp": "5c0201f9a4e09f93f4dd54af8c1fba9dec167105",
+      "src/api/v1/commands/AqlDosingProgressCommands.hpp": "8700e785bdd2e747abea3b09eff97755e2addad0",
       "src/api/v1/commands/AqlFirmwareCommands.hpp": "8b1107d159ca3ff026754c8a06bd1e75fb608c37",
-      "src/modules/timer/AqlTimerService.hpp": "ca37e6722e4e9d214e5efd6fc089d5e64db2490a",
+      "src/modules/timer/AqlTimerService.hpp": "27dd1a51d532f9deef91ee2da86a4b3055fd001f",
       "src/security/AqlSecurityService.hpp": "484906dbdd833d6ad7505ae1755748d239fc0805"
     }
   },
   "fixtures": {
     "aql_ws_v1_golden.json": {
-      "sha256": "765cd113b848d4b17c173e513b714b806466ec994483a34c19970e7a1b984591",
-      "firmwareBlobSha": "d6d62d76970d7a17bcaceec9d4b308c3deb47b8b",
+      "sha256": "175676bc085cdc146b28d37301d632f60977f2753cb7923387266974c81c3818",
+      "firmwareBlobSha": "8dc8cf1b854df8f86f3ff73cc5c4040270a1b784",
       "byteIdenticalWithFirmware": true
     },
     "aql_cooling_temperature_telemetry_v1.json": {
-      "sha256": "020ff7e2b2fe94ad6aa7795e549cac5a926a40ac372855b475e32aecf7685213",
-      "firmwareBlobSha": "a44b8639576a56bbcad9175b36c1a61676357879",
+      "sha256": "b55264e9f0d3e8fea16a869848db612c7f4e3be166f6f1211fb1556f594bef5a",
+      "firmwareBlobSha": "cd73c587714d95febdb6b3176da1763f6df8fc1f",
       "byteIdenticalWithFirmware": true
     },
     "aql_product_catalog_v1.json": {
@@ -57,13 +58,13 @@
     "firmware.ota.completed",
     "system.restarting"
   ],
+  "androidDisconnectedModules": [],
   "requestCoverage": {
     "payloadlessCommands": [
       "cooling.status.get",
       "device.capabilities.get",
       "device.identity.get",
       "device.status.get",
-      "dosing.status.get",
       "firmware.ota.clear",
       "firmware.ota.status",
       "firmware.status.get",
@@ -85,39 +86,6 @@
       ],
       "device.name.set": [
         "DeviceNameSetRequest"
-      ],
-      "dosing.calibration.cancel": [
-        "DeviceDosingChannelKeyPayload"
-      ],
-      "dosing.calibration.confirm": [
-        "DeviceDosingChannelKeyPayload"
-      ],
-      "dosing.calibration.finish": [
-        "DeviceDosingCalibrationFinishPayload"
-      ],
-      "dosing.calibration.start": [
-        "DeviceDosingCalibrationStartPayload"
-      ],
-      "dosing.config.apply": [
-        "DeviceDosingConfigApplyPayload",
-        "DeviceDosingChannelConfig",
-        "DeviceDosingChannelDosingConfig",
-        "DeviceDosingScheduleConfig"
-      ],
-      "dosing.dose.now": [
-        "DeviceDosingDoseNowPayload"
-      ],
-      "dosing.dose.stop": [
-        "DeviceDosingChannelKeyPayload"
-      ],
-      "dosing.prime.start": [
-        "DeviceDosingChannelKeyPayload"
-      ],
-      "dosing.prime.stop": [
-        "DeviceDosingChannelKeyPayload"
-      ],
-      "dosing.reservoir.refill": [
-        "DeviceDosingChannelKeyPayload"
       ],
       "firmware.ota.start": [
         "DeviceFirmwareOtaStartPayload"
@@ -162,111 +130,182 @@
   "serializers": {
     "DeviceCoolingConfigApplyPayload": {
       "source": "app/src/main/java/com/aqua/aqualight/data/devices/runtime/modules/cooling/DeviceCoolingModels.kt",
-      "fields": ["mode", "minTemperatureC", "maxTemperatureC", "fans", "save"]
+      "fields": [
+        "mode",
+        "minTemperatureC",
+        "maxTemperatureC",
+        "fans",
+        "save"
+      ]
     },
     "DeviceCoolingFanDisplayNamePayload": {
       "source": "app/src/main/java/com/aqua/aqualight/data/devices/runtime/modules/cooling/DeviceCoolingModels.kt",
-      "fields": ["fanKey", "displayName"]
-    },
-    "DeviceDosingCalibrationFinishPayload": {
-      "source": "app/src/main/java/com/aqua/aqualight/data/devices/runtime/modules/dosing/DeviceDosingModels.kt",
-      "fields": ["channelKey", "measuredMl"]
-    },
-    "DeviceDosingCalibrationStartPayload": {
-      "source": "app/src/main/java/com/aqua/aqualight/data/devices/runtime/modules/dosing/DeviceDosingModels.kt",
-      "fields": ["channelKey", "durationMs"]
-    },
-    "DeviceDosingChannelConfig": {
-      "source": "app/src/main/java/com/aqua/aqualight/data/devices/runtime/modules/dosing/DeviceDosingModels.kt",
-      "fields": ["channelKey", "displayName", "regime", "dosing"]
-    },
-    "DeviceDosingChannelDosingConfig": {
-      "source": "app/src/main/java/com/aqua/aqualight/data/devices/runtime/modules/dosing/DeviceDosingModels.kt",
-      "fields": ["doseMsPerMl", "lastCalibratedAt", "reservoirTrackingEnabled", "reservoirCapacityMl"]
-    },
-    "DeviceDosingChannelKeyPayload": {
-      "source": "app/src/main/java/com/aqua/aqualight/data/devices/runtime/modules/dosing/DeviceDosingModels.kt",
-      "fields": ["channelKey"]
-    },
-    "DeviceDosingConfigApplyPayload": {
-      "source": "app/src/main/java/com/aqua/aqualight/data/devices/runtime/modules/dosing/DeviceDosingModels.kt",
-      "fields": ["channels", "schedules", "save"]
-    },
-    "DeviceDosingDoseNowPayload": {
-      "source": "app/src/main/java/com/aqua/aqualight/data/devices/runtime/modules/dosing/DeviceDosingModels.kt",
-      "fields": ["channelKey", "amountMl", "usePendingCalibration"]
-    },
-    "DeviceDosingScheduleConfig": {
-      "source": "app/src/main/java/com/aqua/aqualight/data/devices/runtime/modules/dosing/DeviceDosingModels.kt",
-      "fields": ["enabled", "name", "channelKey", "weekdays", "startTimeMs", "intervalOnMs", "intervalOffMs", "repeatCount", "amountMl"]
+      "fields": [
+        "fanKey",
+        "displayName"
+      ]
     },
     "DeviceFirmwareOtaStartPayload": {
       "source": "app/src/main/java/com/aqua/aqualight/data/devices/runtime/modules/firmware/DeviceFirmwareModels.kt",
-      "fields": ["url", "version", "sha256", "expectedSize", "applyNow", "productKey", "productId", "model", "hardwareRevision", "allowInsecureHttp"]
+      "fields": [
+        "url",
+        "version",
+        "sha256",
+        "expectedSize",
+        "applyNow",
+        "productKey",
+        "productId",
+        "model",
+        "hardwareRevision",
+        "allowInsecureHttp"
+      ]
     },
     "DeviceLightChannelRegimeSetPayload": {
       "source": "app/src/main/java/com/aqua/aqualight/data/devices/runtime/modules/light/DeviceLightModels.kt",
-      "fields": ["channelKey", "regime", "save"]
+      "fields": [
+        "channelKey",
+        "regime",
+        "save"
+      ]
     },
     "DeviceLightManualChannelPayload": {
       "source": "app/src/main/java/com/aqua/aqualight/data/devices/runtime/modules/light/DeviceLightModels.kt",
-      "fields": ["channelKey", "percent", "value"]
+      "fields": [
+        "channelKey",
+        "percent",
+        "value"
+      ]
     },
     "DeviceLightManualSetPayload": {
       "source": "app/src/main/java/com/aqua/aqualight/data/devices/runtime/modules/light/DeviceLightModels.kt",
-      "fields": ["clear", "durationMs", "channels"]
+      "fields": [
+        "clear",
+        "durationMs",
+        "channels"
+      ]
     },
     "DeviceLightProgramApplyPayload": {
       "source": "app/src/main/java/com/aqua/aqualight/data/devices/runtime/modules/light/DeviceLightModels.kt",
-      "fields": ["channelKey", "points", "save", "programIndex"]
+      "fields": [
+        "channelKey",
+        "points",
+        "save",
+        "programIndex"
+      ]
     },
     "DeviceLightProgramDeletePayload": {
       "source": "app/src/main/java/com/aqua/aqualight/data/devices/runtime/modules/light/DeviceLightModels.kt",
-      "fields": ["programIndex", "save"]
+      "fields": [
+        "programIndex",
+        "save"
+      ]
     },
     "DeviceLightProgramPointPayload": {
       "source": "app/src/main/java/com/aqua/aqualight/data/devices/runtime/modules/light/DeviceLightModels.kt",
-      "fields": ["timeMs", "time", "percent", "value"]
+      "fields": [
+        "timeMs",
+        "time",
+        "percent",
+        "value"
+      ]
     },
     "DeviceLightTemperatureProtectionSetPayload": {
       "source": "app/src/main/java/com/aqua/aqualight/data/devices/runtime/modules/light/DeviceLightTemperatureProtectionModels.kt",
-      "fields": ["thresholdC", "save"]
+      "fields": [
+        "thresholdC",
+        "save"
+      ]
     },
     "DeviceManualRtcPayload": {
       "source": "app/src/main/java/com/aqua/aqualight/data/devices/runtime/modules/time/DeviceTimeModels.kt",
-      "fields": ["parts", "timezoneId", "posixTimeZone", "utcOffsetMinutes", "save"]
+      "fields": [
+        "parts",
+        "timezoneId",
+        "posixTimeZone",
+        "utcOffsetMinutes",
+        "save"
+      ]
     },
     "DeviceManualRtcPayload.parts": {
       "source": "app/src/main/java/com/aqua/aqualight/data/devices/runtime/modules/time/DeviceTimeModels.kt",
-      "fields": ["year", "month", "day", "weekday", "hour", "minute", "second"]
+      "fields": [
+        "year",
+        "month",
+        "day",
+        "weekday",
+        "hour",
+        "minute",
+        "second"
+      ]
     },
     "DeviceNameSetRequest": {
       "source": "app/src/main/java/com/aqua/aqualight/data/devices/runtime/modules/device/DeviceCommonRuntimeModels.kt",
-      "fields": ["customName", "save"]
+      "fields": [
+        "customName",
+        "save"
+      ]
     },
     "DevicePhoneSyncPayload": {
       "source": "app/src/main/java/com/aqua/aqualight/data/devices/runtime/modules/time/DeviceTimeModels.kt",
-      "fields": ["epochMillis", "timezoneId", "posixTimeZone", "utcOffsetMinutes", "ntpEnabled", "gadgetSyncEnabled", "save"]
+      "fields": [
+        "epochMillis",
+        "timezoneId",
+        "posixTimeZone",
+        "utcOffsetMinutes",
+        "ntpEnabled",
+        "gadgetSyncEnabled",
+        "save"
+      ]
     },
     "DeviceTimeConfigApplyPayload": {
       "source": "app/src/main/java/com/aqua/aqualight/data/devices/runtime/modules/time/DeviceTimeModels.kt",
-      "fields": ["timezoneId", "posixTimeZone", "utcOffsetMinutes", "ntpEnabled", "gadgetSyncEnabled", "ntpServerPrimary", "ntpServerSecondary", "save"]
+      "fields": [
+        "timezoneId",
+        "posixTimeZone",
+        "utcOffsetMinutes",
+        "ntpEnabled",
+        "gadgetSyncEnabled",
+        "ntpServerPrimary",
+        "ntpServerSecondary",
+        "save"
+      ]
     },
     "DeviceTimerChannelConfig": {
       "source": "app/src/main/java/com/aqua/aqualight/data/devices/runtime/modules/timer/DeviceTimerModels.kt",
-      "fields": ["channelKey", "displayName", "regime"]
+      "fields": [
+        "channelKey",
+        "displayName",
+        "regime"
+      ]
     },
     "DeviceTimerChannelSetPayload": {
       "source": "app/src/main/java/com/aqua/aqualight/data/devices/runtime/modules/timer/DeviceTimerModels.kt",
-      "fields": ["channelKey", "regime", "save"]
+      "fields": [
+        "channelKey",
+        "regime",
+        "save"
+      ]
     },
     "DeviceTimerConfigApplyPayload": {
       "source": "app/src/main/java/com/aqua/aqualight/data/devices/runtime/modules/timer/DeviceTimerModels.kt",
-      "fields": ["channels", "schedules", "save"]
+      "fields": [
+        "channels",
+        "schedules",
+        "save"
+      ]
     },
     "DeviceTimerScheduleConfig": {
       "source": "app/src/main/java/com/aqua/aqualight/data/devices/runtime/modules/timer/DeviceTimerModels.kt",
-      "fields": ["enabled", "name", "channelKey", "weekdays", "startTimeMs", "intervalOnMs", "intervalOffMs", "repeatCount"]
+      "fields": [
+        "enabled",
+        "name",
+        "channelKey",
+        "weekdays",
+        "startTimeMs",
+        "intervalOnMs",
+        "intervalOffMs",
+        "repeatCount"
+      ]
     }
   },
   "hardwareOwnedForbiddenRequestFields": [

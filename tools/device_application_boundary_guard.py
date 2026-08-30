@@ -9,6 +9,8 @@ SOURCE = ROOT / "app/src/main/java/com/aqua/aqualight"
 
 OWNER_CONTRACT = SOURCE / "application/devices/OwnerDevicesOperations.kt"
 MENU_CONTRACT = SOURCE / "application/devices/DeviceMenuAccessOperations.kt"
+MENU_OPEN_USE_CASE = SOURCE / "application/devices/DeviceMenuOpenUseCase.kt"
+PREPARATION_CONTRACT = SOURCE / "application/devices/DeviceControlSurfacePreparationOperations.kt"
 STATUS_CONTRACT = SOURCE / "application/devices/DeviceStatusOperations.kt"
 OWNER_ADAPTER = SOURCE / "data/devices/DefaultOwnerDevicesOperations.kt"
 STATUS_ADAPTER = SOURCE / "data/devices/DefaultDeviceStatusOperations.kt"
@@ -26,6 +28,8 @@ OBSOLETE_UI_GATE = SOURCE / "ui/tabs/devices/route/DeviceMenuOpenGate.kt"
 FACTORY = SOURCE / "composition/OwnerViewModelFactory.kt"
 SMOKE_FACTORY = ROOT / "app/src/releaseSmoke/java/com/aqua/aqualight/smoke/ReleaseSmokeAppContainer.kt"
 DEVICES_TEST = ROOT / "app/src/test/java/com/aqua/aqualight/ui/tabs/devices/DevicesViewModelBoundaryTest.kt"
+TANK_DEVICES_TEST = ROOT / "app/src/test/java/com/aqua/aqualight/ui/tabs/aquarium/detail/devices/TankDeviceAssignmentViewModelBoundaryTest.kt"
+PREPARATION_TEST = ROOT / "app/src/test/java/com/aqua/aqualight/data/devices/menu/DefaultDeviceControlSurfacePreparationOperationsTest.kt"
 STATUS_TEST = ROOT / "app/src/test/java/com/aqua/aqualight/ui/tabs/settings/device/DeviceStatusViewModelBoundaryTest.kt"
 SETTINGS_TEST = ROOT / "app/src/test/java/com/aqua/aqualight/ui/tabs/settings/SettingsViewModelBoundaryTest.kt"
 AUTH_POLICY_TEST = ROOT / "app/src/test/java/com/aqua/aqualight/data/devices/menu/DeviceMenuAuthenticationPolicyTest.kt"
@@ -45,6 +49,8 @@ def read(path: Path) -> str:
 
 owner_contract = read(OWNER_CONTRACT)
 menu_contract = read(MENU_CONTRACT)
+menu_open_use_case = read(MENU_OPEN_USE_CASE)
+preparation_contract = read(PREPARATION_CONTRACT)
 status_contract = read(STATUS_CONTRACT)
 owner_adapter = read(OWNER_ADAPTER)
 status_adapter = read(STATUS_ADAPTER)
@@ -61,6 +67,8 @@ route_resolver = read(ROUTE_RESOLVER)
 factory = read(FACTORY)
 smoke_factory = read(SMOKE_FACTORY)
 devices_test = read(DEVICES_TEST)
+tank_devices_test = read(TANK_DEVICES_TEST)
+preparation_test = read(PREPARATION_TEST)
 status_test = read(STATUS_TEST)
 settings_test = read(SETTINGS_TEST)
 auth_policy_test = read(AUTH_POLICY_TEST)
@@ -95,6 +103,37 @@ for token, reason in (
         errors.append(f"{MENU_CONTRACT.relative_to(ROOT)}: {reason}: {token}")
 
 for token, reason in (
+    ("class DeviceMenuOpenUseCase", "all menu entry points need one application use-case"),
+    ("private val menuAccessOperations: DeviceMenuAccessOperations", "liveness must stay inside the menu-open use-case"),
+    (
+        "private val controlSurfacePreparationOperations: DeviceControlSurfacePreparationOperations",
+        "family preparation must stay inside the menu-open use-case",
+    ),
+    ("menuAccessOperations.resolve(deviceUid)", "menu-open must prove current access before routing"),
+    (
+        "controlSurfacePreparationOperations.prepare(",
+        "menu-open must prepare the authoritative family surface before routing",
+    ),
+    ("DeviceMenuOpenResult.Ready(access)", "prepared access needs a typed ready result"),
+    ("fun abandon(ready: DeviceMenuOpenResult.Ready)", "abandoned navigation needs an explicit handoff cleanup"),
+    (
+        "controlSurfacePreparationOperations.discardFreshPreparation(",
+        "abandoned navigation must invalidate fresh preparation",
+    ),
+):
+    if token not in menu_open_use_case:
+        errors.append(f"{MENU_OPEN_USE_CASE.relative_to(ROOT)}: {reason}: {token}")
+
+for token, reason in (
+    ("interface DeviceControlSurfacePreparationOperations", "surface preparation needs an application contract"),
+    ("suspend fun prepare(", "surface preparation must be explicit"),
+    ("fun consumeFreshPreparation(", "destinations need a one-shot preparation handoff"),
+    ("fun discardFreshPreparation(", "abandoned handoffs need deterministic invalidation"),
+):
+    if token not in preparation_contract:
+        errors.append(f"{PREPARATION_CONTRACT.relative_to(ROOT)}: {reason}: {token}")
+
+for token, reason in (
     ("interface DeviceStatusOperations", "status access needs a read-only application contract"),
     ("val statuses: Flow<List<OwnerDeviceStatusSnapshot>>", "status observation must expose application DTOs"),
     ("data class OwnerDeviceStatusSnapshot", "status UI needs a stable application DTO"),
@@ -106,6 +145,8 @@ for token, reason in (
 for path, text in (
     (OWNER_CONTRACT, owner_contract),
     (MENU_CONTRACT, menu_contract),
+    (MENU_OPEN_USE_CASE, menu_open_use_case),
+    (PREPARATION_CONTRACT, preparation_contract),
     (STATUS_CONTRACT, status_contract),
 ):
     for forbidden in (
@@ -210,22 +251,27 @@ for path, text in (
     (TANK_DEVICES_VIEW_MODEL, tank_devices_view_model),
 ):
     for token in (
-        "private val menuAccessOperations: DeviceMenuAccessOperations",
-        "menuAccessOperations.resolve(deviceUid)",
-        "routeResolver.resolve(result)",
+        "private val menuOpenUseCase: DeviceMenuOpenUseCase",
+        "menuOpenUseCase.resolve(deviceUid)",
+        "routeResolver.resolve(result.access)",
+        "menuOpenUseCase.abandon(",
     ):
         if token not in text:
             errors.append(
-                f"{path.relative_to(ROOT)}: typed device-menu UI wiring is missing: {token}"
+                f"{path.relative_to(ROOT)}: shared device-menu application wiring is missing: {token}"
             )
     for forbidden in (
         "DeviceMenuOpenGate",
         "DeviceMenuOpenGateResult",
+        "DeviceMenuAccessOperations",
+        "DeviceControlSurfacePreparationOperations",
+        "menuAccessOperations.resolve(deviceUid)",
+        "controlSurfacePreparationOperations.prepare(",
         "import com.aqua.aqualight.data.devices.menu.",
     ):
         if forbidden in text:
             errors.append(
-                f"{path.relative_to(ROOT)}: device-menu implementation leaked into UI: {forbidden}"
+                f"{path.relative_to(ROOT)}: device-menu application boundary was bypassed: {forbidden}"
             )
 
 for token, reason in (
@@ -314,7 +360,10 @@ for path, text in ((FACTORY, factory), (SMOKE_FACTORY, smoke_factory)):
         "DefaultOwnerDevicesOperations(",
         "DefaultDeviceStatusOperations(",
         "DefaultDeviceMenuAccessOperations.create(",
+        "DeviceMenuOpenUseCase(",
+        "menuOpenUseCase =",
         "menuAccessOperations =",
+        "controlSurfacePreparationOperations =",
         "routeResolver = DeviceRouteResolver()",
     ):
         if token not in text:
@@ -334,10 +383,29 @@ for token, reason in (
     ("FakeDeviceMenuAccessOperations", "DevicesViewModel needs a deterministic menu fake"),
     ("device cards are rendered from one application boundary", "card rendering needs boundary coverage"),
     ("available device menu result is mapped to UI route", "menu routing needs boundary coverage"),
+    (
+        "abandoned prepared navigation discards one shot handoff",
+        "abandoned menu navigation needs deterministic cleanup coverage",
+    ),
     ("partial delete keeps only failed devices selected", "partial deletion needs regression coverage"),
 ):
     if token not in devices_test:
         errors.append(f"{DEVICES_TEST.relative_to(ROOT)}: {reason}: {token}")
+
+for token, reason in (
+    (
+        "tank detail menu open uses shared preparation contract before route",
+        "Tank Detail must prove the same menu-open contract before routing",
+    ),
+    ("FakePreparationOperations", "Tank Detail needs a deterministic preparation fake"),
+):
+    if token not in tank_devices_test:
+        errors.append(f"{TANK_DEVICES_TEST.relative_to(ROOT)}: {reason}: {token}")
+
+if "abandoned preparation handoff is discarded idempotently" not in preparation_test:
+    errors.append(
+        f"{PREPARATION_TEST.relative_to(ROOT)}: abandoned preparation cleanup coverage is missing"
+    )
 
 for path, text, required_tokens in (
     (

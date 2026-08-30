@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<shape xmlns:android="http://schemas.android.com/apk/res/android">
+    <solid android:color="@color/aqua_bottom_sheet_neutral" />
+    <stroke
+        android:width="@dimen/aqua_size_1_5"
+        android:color="@color/aqua_card_state_active" />
+    <corners android:radius="@dimen/aqua_size_14" />
+</shape>
