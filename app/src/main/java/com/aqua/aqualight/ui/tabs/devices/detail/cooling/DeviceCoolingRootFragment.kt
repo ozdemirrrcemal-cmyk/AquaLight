@@ -2,6 +2,7 @@ package com.aqua.aqualight.ui.tabs.devices.detail.cooling
 
 import android.os.Bundle
 import android.view.View
+import androidx.compose.ui.platform.ViewCompositionStrategy
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.viewModels
 import androidx.lifecycle.Lifecycle
@@ -33,6 +34,7 @@ class DeviceCoolingRootFragment : Fragment(R.layout.fragment_device_cooling_root
 
         viewModel.bind(args.deviceUid)
         setupHeader(viewModel.uiState.value)
+        setupHeroContent()
         observeViewModel()
     }
 
@@ -59,6 +61,20 @@ class DeviceCoolingRootFragment : Fragment(R.layout.fragment_device_cooling_root
                 )
             )
         )
+    }
+
+    /**
+     * Hero-only visual branch: 72% is intentionally a presentation fixture matching the approved
+     * concept. The composable already accepts a normalized runtime speed and can be wired directly
+     * to the Cooling telemetry/control state when that contract is exposed by the root ViewModel.
+     */
+    private fun setupHeroContent() {
+        binding.coolingHeroCompose.apply {
+            setViewCompositionStrategy(ViewCompositionStrategy.DisposeOnViewTreeLifecycleDestroyed)
+            setContent {
+                CoolingHero(fanSpeed = HERO_PRESENTATION_FAN_SPEED)
+            }
+        }
     }
 
     private fun openSettings() {
@@ -90,3 +106,5 @@ class DeviceCoolingRootFragment : Fragment(R.layout.fragment_device_cooling_root
         super.onDestroyView()
     }
 }
+
+private const val HERO_PRESENTATION_FAN_SPEED = 0.72f
