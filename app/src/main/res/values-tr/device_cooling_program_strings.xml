@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="device_cooling_program_active_title">Şu an aktif</string>
+    <string name="device_cooling_program_outside_automatic">Program dışı • Otomatik soğutma</string>
+    <string name="device_cooling_program_active_format">%1$s • %2$s</string>
+    <string name="device_cooling_program_timeline_title">24 Saatlik Plan</string>
+    <string name="device_cooling_program_slots_title">Zaman Dilimleri</string>
+    <string name="device_cooling_program_fan_limit">Fan Hız Limiti</string>
+    <string name="device_cooling_program_add_slot">+ Zaman Dilimi Ekle</string>
+    <string name="device_cooling_program_editor_title">Zaman Dilimi Ayarları</string>
+    <string name="device_cooling_program_start_time">Başlangıç</string>
+    <string name="device_cooling_program_end_time">Bitiş</string>
+    <string name="device_cooling_program_label_quiet">Sessiz</string>
+    <string name="device_cooling_program_label_intensive">Yoğun Soğutma</string>
+    <string name="device_cooling_program_label_night">Gece</string>
+    <string name="device_cooling_program_label_custom">Özel</string>
+    <string name="device_cooling_program_axis_00">00</string>
+    <string name="device_cooling_program_axis_08">08</string>
+    <string name="device_cooling_program_axis_14">14</string>
+    <string name="device_cooling_program_axis_20">20</string>
+    <string name="device_cooling_program_axis_24">24</string>
+    <string name="device_cooling_program_time_range_format">%1$s – %2$s</string>
+    <string name="device_cooling_program_save">Programı Kaydet</string>
+    <string name="device_cooling_program_saved">Program Kaydedildi</string>
+
+    <string name="device_cooling_program_start_time_sheet_title">Başlangıç Saati</string>
+    <string name="device_cooling_program_start_time_sheet_message">Bu soğutma zaman diliminin başlayacağı saati seç.</string>
+    <string name="device_cooling_program_end_time_sheet_title">Bitiş Saati</string>
+    <string name="device_cooling_program_end_time_sheet_message">Bu soğutma zaman diliminin biteceği saati seç.</string>
+    <string name="device_cooling_program_start_temperature_sheet_helper">Bu zaman diliminde fanın soğutmaya başlayacağı su sıcaklığını seç.</string>
+    <string name="device_cooling_program_max_temperature_sheet_helper">Bu zaman diliminde fanın hız limitine ulaşacağı sıcaklığı seç.</string>
+    <string name="device_cooling_program_fan_limit_sheet_title">Fan Hız Limiti</string>
+    <string name="device_cooling_program_fan_limit_sheet_helper">Bu zaman diliminin kullanabileceği en yüksek fan çıkışını belirle.</string>
+    <string name="device_cooling_program_fan_limit_value_format">%1$d%%</string>
+    <string name="device_cooling_program_fan_limit_decrease">Fan hız limitini azalt</string>
+    <string name="device_cooling_program_fan_limit_increase">Fan hız limitini artır</string>
+</resources>
