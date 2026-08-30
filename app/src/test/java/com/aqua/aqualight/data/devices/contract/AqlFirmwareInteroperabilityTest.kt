@@ -481,7 +481,7 @@ class AqlFirmwareInteroperabilityTest {
         const val COOLING_FIXTURE = "aql_cooling_temperature_telemetry_v1.json"
         const val PRODUCT_CATALOG_FIXTURE = "aql_product_catalog_v1.json"
         const val DOSING_PIN_FIXTURE = "aql_android_dosing_v1_pin.json"
-        const val FIRMWARE_COMMIT = "dc89a37262ba982c577db0812eeb8f94ffd18e12"
+        const val FIRMWARE_COMMIT = "e669313ecc2a7f959b566e3051cfd3b67247ccbd"
 
         val WEEKDAYS = listOf(true, false, false, false, false, false, false)
     }

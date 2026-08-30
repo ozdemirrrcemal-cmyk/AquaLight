@@ -128,7 +128,7 @@ class DeviceDosingV1FixtureParityTest {
     private companion object {
         const val PIN_FIXTURE = "aql_android_dosing_v1_pin.json"
         const val CHANNEL_STATUS_FIXTURE = "aql_dosing_channel_status_v1.json"
-        const val FIRMWARE_COMMIT = "dc89a37262ba982c577db0812eeb8f94ffd18e12"
+        const val FIRMWARE_COMMIT = "e669313ecc2a7f959b566e3051cfd3b67247ccbd"
         const val STATUS_CODEC_PATH = "src/modules/dosing/AqlDosingStatusCodec.hpp"
         const val DERIVED_CHANNEL_STATUS_BLOB = "ea7e8d0ae8a846441edd51e9d24a26fbf9da65db"
 

@@ -5,9 +5,13 @@
 - Android base: `agent/centralized-device-open-preparation-android-20260829` at
   `317eaee2ee4213d8bb21f961c0b9a62c35e21aed`.
 - Rollback-capable firmware: `AquaLight-Firmware/main` at
-  `dc89a37262ba982c577db0812eeb8f94ffd18e12`.
+  `e669313ecc2a7f959b566e3051cfd3b67247ccbd`.
 - The firmware WebSocket and signed-manifest schemas are unchanged. Android continues to verify
   the existing authenticated runtime metadata rather than introducing a new wire field.
+- Physical failing-image, healthy-image, rollback/quarantine, and post-restart timeout/retry
+  acceptance was confirmed by the release operator on 2026-08-30 for this commercial integration.
+  The protected production release pipeline remains responsible for recording its required manual
+  acceptance artifact before finalizing customer release bytes.
 
 ## Android recovery contract
 
@@ -37,8 +41,8 @@ artifact remains eligible.
 Automated Android acceptance requires unit tests, static-analysis/architecture guards, Android
 lint, Debug/Staging builds, emulator integration, and installable APK evidence on one exact commit.
 
-Commercial release still requires physical evidence because CI cannot prove ESP32 bootloader
-behavior:
+Commercial release also requires physical evidence because CI cannot prove ESP32 bootloader
+behavior. The acceptance procedure is:
 
 1. USB-flash the rollback-capable full factory image.
 2. Install a deliberately failing signed OTA image and verify Android reports `RolledBack` with the
@@ -49,5 +53,5 @@ behavior:
 5. Power off or isolate the test device after restart and verify `PostRestartTimeout` appears after
    120 seconds with an enabled reconnect action.
 
-These checks do not change the normal stable-release workflow; they are the physical evidence that
-must be collected before promoting the signed manifest to customers.
+These checks do not change the normal stable-release workflow. Their completion must still be
+represented by the protected manual-acceptance evidence consumed by the production finalize job.
