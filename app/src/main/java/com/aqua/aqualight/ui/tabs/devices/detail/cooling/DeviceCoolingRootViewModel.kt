@@ -7,6 +7,9 @@ import com.aqua.aqualight.application.devices.DeviceRootOperations
 import com.aqua.aqualight.application.devices.DeviceRootSnapshot
 import com.aqua.aqualight.application.devices.OwnerDeviceAvailability
 import com.aqua.aqualight.application.devices.OwnerDeviceFamily
+import com.aqua.aqualight.application.devices.cooling.DeviceCoolingTemperatureHistoryLoadResult
+import com.aqua.aqualight.application.devices.cooling.DeviceCoolingTemperatureHistoryOperations
+import com.aqua.aqualight.application.devices.cooling.DeviceCoolingTemperatureHistoryRange
 import com.aqua.aqualight.ui.common.devicepresence.DeviceConnectionVisualState
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -16,7 +19,8 @@ import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 
 class DeviceCoolingRootViewModel(
-    private val operations: DeviceRootOperations
+    private val operations: DeviceRootOperations,
+    private val historyOperations: DeviceCoolingTemperatureHistoryOperations? = null
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(DeviceCoolingRootUiState())
@@ -24,11 +28,13 @@ class DeviceCoolingRootViewModel(
 
     private var boundDeviceUid: String = ""
     private var observeJob: Job? = null
+    private var historyJob: Job? = null
 
     fun bind(deviceUidText: String) {
         val deviceUid = deviceUidText.trim()
         if (deviceUid.isBlank()) {
             observeJob?.cancel()
+            historyJob?.cancel()
             boundDeviceUid = ""
             _uiState.value = DeviceCoolingRootUiState()
             return
@@ -37,11 +43,13 @@ class DeviceCoolingRootViewModel(
 
         boundDeviceUid = deviceUid
         observeJob?.cancel()
+        historyJob?.cancel()
         _uiState.value = DeviceCoolingRootUiState(deviceUid = deviceUid)
         operations.current(deviceUid)?.let { snapshot ->
             _uiState.value = snapshot.toRootUiState(_uiState.value)
         }
         operations.connect(deviceUid)
+        loadOverviewHistory(deviceUid)
         observeJob = viewModelScope.launch {
             operations.observe(deviceUid).collect { snapshot ->
                 if (boundDeviceUid != deviceUid) return@collect
@@ -96,6 +104,26 @@ class DeviceCoolingRootViewModel(
         _uiState.update { state ->
             if (!state.contentEnabled || state.selectedProfile == profile) state
             else state.copy(selectedProfile = profile)
+        }
+    }
+
+    private fun loadOverviewHistory(deviceUid: String) {
+        val history = historyOperations ?: return
+        historyJob = viewModelScope.launch {
+            val result = history.loadTemperatureHistory(
+                deviceUid = deviceUid,
+                range = DeviceCoolingTemperatureHistoryRange.HOURS_24
+            )
+            if (boundDeviceUid != deviceUid) return@launch
+            if (result is DeviceCoolingTemperatureHistoryLoadResult.Loaded) {
+                _uiState.update { state ->
+                    state.copy(
+                        temperatureHistoryC = result.snapshot.points.map { point ->
+                            point.temperatureC
+                        }
+                    )
+                }
+            }
         }
     }
 
