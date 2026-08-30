@@ -38,7 +38,7 @@ object AquaCoolingDashboardGeometry {
 
     val optionShape = RoundedCornerShape(12.dp)
     val optionHorizontalPadding = 10.dp
-    val optionVerticalPadding = 8.dp
+    val optionVerticalPadding = 16.dp
     val optionGap = 6.dp
     val radioSize = 18.dp
     val radioStrokeWidth = 1.5.dp
@@ -56,9 +56,9 @@ object AquaCoolingDashboardGeometry {
     val controlDividerHeight = 1.dp
     val editShape = RoundedCornerShape(11.dp)
     val editHorizontalPadding = 12.dp
-    val editVerticalPadding = 8.dp
+    val editVerticalPadding = 16.dp
 
-    val sliderTouchHeight = 44.dp
+    val sliderTouchHeight = 48.dp
     val sliderTrackHeight = 6.dp
     val sliderThumbRadius = 9.dp
     val sliderThumbOutlineWidth = 2.dp
