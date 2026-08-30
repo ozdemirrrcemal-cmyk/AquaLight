@@ -16,6 +16,8 @@ import com.aqua.aqualight.ui.common.header.AquaHeaderPrimaryAction
 import kotlin.math.ceil
 import kotlin.math.floor
 import kotlin.math.roundToInt
+import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
 
 class DeviceCoolingProgramSettingsFragment : DeviceCoolingModeSettingsFragment(
@@ -31,6 +33,7 @@ class DeviceCoolingProgramSettingsFragment : DeviceCoolingModeSettingsFragment(
     override fun modeSettingsPrimaryAction(): AquaHeaderPrimaryAction = AquaHeaderPrimaryAction(
         text = getString(R.string.device_cooling_program_save),
         contentDescription = getString(R.string.device_cooling_program_save),
+        enabled = viewModel.uiState.value.hasChanges,
         onClick = viewModel::saveDraft
     )
 
@@ -57,20 +60,13 @@ class DeviceCoolingProgramSettingsFragment : DeviceCoolingModeSettingsFragment(
     }
 
     private fun bindHeaderSaveState() {
-        renderHeaderSaveState(viewModel.uiState.value.hasChanges)
         viewLifecycleOwner.lifecycleScope.launch {
             viewLifecycleOwner.repeatOnLifecycle(Lifecycle.State.STARTED) {
-                viewModel.uiState.collect { state ->
-                    renderHeaderSaveState(state.hasChanges)
-                }
+                viewModel.uiState
+                    .map(DeviceCoolingProgramSettingsUiState::hasChanges)
+                    .distinctUntilChanged()
+                    .collect { refreshModeSettingsHeader() }
             }
-        }
-    }
-
-    private fun renderHeaderSaveState(enabled: Boolean) {
-        modeSettingsBinding.appHeader.btnPrimaryAction.apply {
-            isEnabled = enabled
-            alpha = if (enabled) HEADER_ACTION_ENABLED_ALPHA else HEADER_ACTION_DISABLED_ALPHA
         }
     }
 
@@ -273,8 +269,6 @@ class DeviceCoolingProgramSettingsFragment : DeviceCoolingModeSettingsFragment(
         const val MINUTES_PER_HOUR = 60
         const val TEMPERATURE_DISPLAY_SCALE = 0.1
         const val TEMPERATURE_STEP_UNITS = 5
-        const val HEADER_ACTION_ENABLED_ALPHA = 1f
-        const val HEADER_ACTION_DISABLED_ALPHA = 0.45f
         const val REQUEST_START_TIME = "cooling_program_start_time"
         const val REQUEST_END_TIME = "cooling_program_end_time"
         const val REQUEST_START_TEMPERATURE = "cooling_program_start_temperature"
