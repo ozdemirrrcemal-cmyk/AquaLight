@@ -16,7 +16,7 @@ import com.aqua.aqualight.application.devices.TankDeviceAssignmentOperations
 import com.aqua.aqualight.application.devices.TankDeviceListItem
 import com.aqua.aqualight.application.devices.dosing.DeviceDosingCardOperations
 import com.aqua.aqualight.application.devices.dosing.DeviceDosingCardState
-import com.aqua.aqualight.ui.common.devicecard.DeviceCompactStatusStyle
+import com.aqua.aqualight.ui.common.devicepresence.DeviceConnectionVisualState
 import com.aqua.aqualight.ui.tabs.aquarium.detail.devices.select.TankDeviceSelectEmptyReason
 import com.aqua.aqualight.ui.tabs.aquarium.detail.devices.select.TankDeviceSelectEvent
 import com.aqua.aqualight.ui.tabs.aquarium.detail.devices.select.TankDeviceSelectViewModel
@@ -62,7 +62,7 @@ class TankDeviceAssignmentViewModelBoundaryTest {
         assertFalse(state.isEmpty)
         assertEquals("device-1", state.devices.single().deviceUid)
         assertEquals("AquaLight device-1", state.devices.single().card.displayName)
-        assertEquals(DeviceCompactStatusStyle.ONLINE, state.devices.single().card.statusStyle)
+        assertEquals(DeviceConnectionVisualState.ONLINE, state.devices.single().card.statusStyle)
     }
 
     @Test

@@ -49,6 +49,8 @@
     <string name="device_unavailable_message">This device is not available.</string>
     <string name="device_online">Online</string>
     <string name="device_offline">Offline</string>
+    <string name="device_connection_online_content_description">Device online</string>
+    <string name="device_connection_offline_content_description">Device offline</string>
     <string name="device_serial_value">Serial: %1$s</string>
     <string name="device_ip_value">IP: %1$s</string>
     <string name="device_firmware_value">Firmware: %1$s</string>

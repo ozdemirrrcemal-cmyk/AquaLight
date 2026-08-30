@@ -27,6 +27,7 @@ import com.aqua.aqualight.application.devices.dosing.DeviceDosingRuntimeReason
 import com.aqua.aqualight.application.devices.dosing.DeviceDosingSchedulingPolicy
 import com.aqua.aqualight.data.devices.dosing.UnavailableDeviceDosingChannelNavigationOperations
 import com.aqua.aqualight.data.devices.dosing.UnavailableDeviceDosingChannelOperations
+import com.aqua.aqualight.ui.common.devicepresence.DeviceConnectionVisualState
 import com.aqua.aqualight.ui.tabs.devices.detail.dosing.presentation.pump.DosingPumpVisualState
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -82,20 +83,33 @@ class DeviceDosingRootReadPathTest {
                 channelNames(viewModel)
             )
             assertFalse(channels.refreshAllCalled)
+            assertTrue(viewModel.uiState.value.contentEnabled)
+            assertEquals(
+                DeviceConnectionVisualState.ONLINE,
+                viewModel.uiState.value.connectionVisualState
+            )
         }
 
     @Test
     fun `stale preparation marker cannot skip authoritative refresh`() = runTest(dispatcher) {
         val channels = FakeChannelOperations()
+        val preparation = FakePreparationOperations(
+            fresh = true,
+            onPrepare = { request ->
+                channels.refreshAll(request.deviceUid)
+                DeviceControlSurfacePreparationResult.Ready
+            }
+        )
         val viewModel = viewModel(
             rootOperations = FakeRootOperations(rootSnapshot(channelCount = 4)),
             channelOperations = channels,
-            preparationOperations = FakePreparationOperations(fresh = true)
+            preparationOperations = preparation
         )
 
         viewModel.bind(DEVICE_UID)
 
         assertTrue(channels.refreshAllCalled)
+        assertEquals(1, preparation.prepareCalls)
         assertEquals(
             listOf("Catalog 1", "Catalog 2", "Catalog 3", "Catalog 4"),
             channelNames(viewModel)
@@ -145,25 +159,28 @@ class DeviceDosingRootReadPathTest {
         }
 
     @Test
-    fun `reconnect clears authoritative cards to topology-only bootstrap`() = runTest(dispatcher) {
-        val channels = FakeChannelOperations()
-        val viewModel = viewModel(channelCount = 2, channelOperations = channels)
-        viewModel.bind(DEVICE_UID)
-        channels.emit(
-            listOf(
-                channelSnapshot(channelNumber = 1, pumpCount = 2, active = true),
-                channelSnapshot(channelNumber = 2, pumpCount = 2)
+    fun `reconnect preserves authoritative cards as disabled stale presentation`() =
+        runTest(dispatcher) {
+            val channels = FakeChannelOperations()
+            val viewModel = viewModel(channelCount = 2, channelOperations = channels)
+            viewModel.bind(DEVICE_UID)
+            channels.emit(
+                listOf(
+                    channelSnapshot(channelNumber = 1, pumpCount = 2, active = true),
+                    channelSnapshot(channelNumber = 2, pumpCount = 2)
+                )
             )
-        )
+            assertTrue(viewModel.uiState.value.contentEnabled)
 
-        channels.emit(emptyList())
+            channels.emit(emptyList())
 
-        assertEquals(listOf("Catalog 1", "Catalog 2"), channelNames(viewModel))
-        assertTrue(viewModel.uiState.value.pumpStates.isEmpty())
-        viewModel.uiState.value.channels.forEach { channel ->
-            assertNull(channel.visualState)
+            assertEquals(listOf("Authoritative 1", "Authoritative 2"), channelNames(viewModel))
+            assertFalse(viewModel.uiState.value.contentEnabled)
+            assertEquals(
+                DeviceConnectionVisualState.OFFLINE,
+                viewModel.uiState.value.connectionVisualState
+            )
         }
-    }
 
     @Test
     fun `four channel root orders a complete authoritative set by physical channel`() =
@@ -210,6 +227,8 @@ class DeviceDosingRootReadPathTest {
             assertEquals(4, reconnecting.pumpCount)
             assertEquals(validated.channels, reconnecting.channels)
             assertEquals(validated.pumpStates, reconnecting.pumpStates)
+            assertFalse(reconnecting.contentEnabled)
+            assertEquals(DeviceConnectionVisualState.OFFLINE, reconnecting.connectionVisualState)
             assertEquals(
                 listOf(
                     "Authoritative 1",
@@ -272,8 +291,12 @@ class DeviceDosingRootReadPathTest {
     private fun viewModel(
         rootOperations: DeviceRootOperations,
         channelOperations: DeviceDosingChannelOperations,
-        preparationOperations: DeviceControlSurfacePreparationOperations =
-            FakePreparationOperations()
+        preparationOperations: DeviceControlSurfacePreparationOperations = FakePreparationOperations(
+            onPrepare = { request ->
+                channelOperations.refreshAll(request.deviceUid)
+                DeviceControlSurfacePreparationResult.Ready
+            }
+        )
     ) = DeviceDosingRootViewModel(
         operations = rootOperations,
         channelNavigationOperations = UnavailableDeviceDosingChannelNavigationOperations,
@@ -285,11 +308,23 @@ class DeviceDosingRootReadPathTest {
         viewModel.uiState.value.channels.map { channel -> channel.displayName }
 
     private class FakePreparationOperations(
-        private var fresh: Boolean = false
+        private var fresh: Boolean = false,
+        private val result: DeviceControlSurfacePreparationResult =
+            DeviceControlSurfacePreparationResult.Ready,
+        private val onPrepare: suspend (
+            DeviceControlSurfacePreparationRequest
+        ) -> DeviceControlSurfacePreparationResult = { result }
     ) : DeviceControlSurfacePreparationOperations {
+        var prepareCalls: Int = 0
+
         override suspend fun prepare(
             request: DeviceControlSurfacePreparationRequest
-        ): DeviceControlSurfacePreparationResult = DeviceControlSurfacePreparationResult.Ready
+        ): DeviceControlSurfacePreparationResult {
+            prepareCalls += 1
+            return onPrepare(request).also { outcome ->
+                if (outcome == DeviceControlSurfacePreparationResult.Ready) fresh = true
+            }
+        }
 
         override fun consumeFreshPreparation(
             deviceUid: String,

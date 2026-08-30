@@ -22,6 +22,11 @@ object AquaDosingCatalogGeometry {
     val cardListTopPadding = 24.dp
 }
 
+object AquaDosingInteractionStyle {
+    const val enabledContentAlpha = 1f
+    const val disabledContentAlpha = 0.42f
+}
+
 object AquaDosingPumpGeometry {
     val zero = 0.dp
     val sectionHorizontalPadding = 16.dp

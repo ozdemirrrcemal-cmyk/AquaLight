@@ -1,13 +1,14 @@
 package com.aqua.aqualight.ui.common.header
 
 import androidx.annotation.ColorInt
+import androidx.annotation.ColorRes
 import androidx.annotation.DrawableRes
 
 data class AquaHeaderConfig(
     val titleOverride: String? = null,
     val showBackButton: Boolean = true,
     val onBackClick: (() -> Unit)? = null,
-    @DrawableRes val statusIconRes: Int? = null,
+    val statusIcon: AquaHeaderStatusIcon? = null,
     val primaryAction: AquaHeaderPrimaryAction? = null,
     val filledIconAction: AquaHeaderFilledIconAction? = null,
     val cardIconAction: AquaHeaderCardIconAction? = null,
@@ -15,6 +16,12 @@ data class AquaHeaderConfig(
     val scoreBadge: AquaHeaderScoreBadge? = null,
     val searchField: AquaHeaderSearchField? = null,
     val actions: List<AquaHeaderAction> = emptyList()
+)
+
+data class AquaHeaderStatusIcon(
+    @DrawableRes val iconRes: Int,
+    @ColorRes val tintColorRes: Int,
+    val contentDescription: String
 )
 
 data class AquaHeaderPrimaryAction(

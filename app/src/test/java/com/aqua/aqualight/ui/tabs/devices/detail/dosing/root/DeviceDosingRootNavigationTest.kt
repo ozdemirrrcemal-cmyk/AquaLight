@@ -1,15 +1,25 @@
 package com.aqua.aqualight.ui.tabs.devices.detail.dosing.root
 
+import com.aqua.aqualight.application.devices.DeviceChannelSlots
+import com.aqua.aqualight.application.devices.DeviceChannelWireKey
 import com.aqua.aqualight.application.devices.DeviceControlSurfacePreparationOperations
 import com.aqua.aqualight.application.devices.DeviceControlSurfacePreparationRequest
 import com.aqua.aqualight.application.devices.DeviceControlSurfacePreparationResult
+import com.aqua.aqualight.application.devices.DeviceDosingChannelSlot
+import com.aqua.aqualight.application.devices.DeviceRootCatalogState
 import com.aqua.aqualight.application.devices.DeviceRootOperations
+import com.aqua.aqualight.application.devices.DeviceRootRoute
 import com.aqua.aqualight.application.devices.DeviceRootSnapshot
+import com.aqua.aqualight.application.devices.DeviceSlotIndex
 import com.aqua.aqualight.application.devices.OwnerDeviceAvailability
+import com.aqua.aqualight.application.devices.OwnerDeviceFamily
+import com.aqua.aqualight.application.devices.dosing.DeviceDosingChannelOperations
+import com.aqua.aqualight.application.devices.dosing.DeviceDosingChannelSnapshot
 import com.aqua.aqualight.application.devices.dosing.DeviceDosingChannelDestination
 import com.aqua.aqualight.application.devices.dosing.DeviceDosingChannelNavigationOperations
 import com.aqua.aqualight.application.devices.dosing.DeviceDosingChannelNavigationTarget
 import com.aqua.aqualight.data.devices.dosing.UnavailableDeviceDosingChannelOperations
+import com.aqua.aqualight.ui.tabs.devices.detail.dosing.channel.sampleDosingChannelSnapshot
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.Flow
@@ -53,7 +63,7 @@ class DeviceDosingRootNavigationTest {
         val viewModel = DeviceDosingRootViewModel(
             operations = FakeRootOperations(),
             channelNavigationOperations = navigationOperations,
-            channelOperations = UnavailableDeviceDosingChannelOperations,
+            channelOperations = FakeChannelOperations(),
             controlSurfacePreparationOperations = FakePreparationOperations()
         )
         viewModel.bind(deviceUidText = DEVICE_UID)
@@ -71,7 +81,7 @@ class DeviceDosingRootNavigationTest {
         val viewModel = DeviceDosingRootViewModel(
             operations = rootOperations,
             channelNavigationOperations = FakeChannelNavigationOperations(null),
-            channelOperations = UnavailableDeviceDosingChannelOperations,
+            channelOperations = FakeChannelOperations(),
             controlSurfacePreparationOperations = FakePreparationOperations()
         )
 
@@ -85,9 +95,37 @@ class DeviceDosingRootNavigationTest {
     }
 
     private class FakePreparationOperations : DeviceControlSurfacePreparationOperations {
+        private var fresh = true
+
         override suspend fun prepare(
             request: DeviceControlSurfacePreparationRequest
         ): DeviceControlSurfacePreparationResult = DeviceControlSurfacePreparationResult.Ready
+
+        override fun consumeFreshPreparation(
+            deviceUid: String,
+            family: OwnerDeviceFamily
+        ): Boolean = fresh.also { fresh = false }
+    }
+
+    private class FakeChannelOperations :
+        DeviceDosingChannelOperations by UnavailableDeviceDosingChannelOperations {
+        private val snapshots = listOf(
+            sampleDosingChannelSnapshot().copy(
+                slotId = SLOT_ID,
+                channelNumber = 1,
+                channelTitle = "Channel 1"
+            ),
+            sampleDosingChannelSnapshot()
+        )
+        private val stream = MutableStateFlow(snapshots)
+
+        override fun observeAll(deviceUid: String): Flow<List<DeviceDosingChannelSnapshot>> =
+            stream
+
+        override fun current(deviceUid: String, slotId: String): DeviceDosingChannelSnapshot? =
+            snapshots.singleOrNull { snapshot ->
+                snapshot.deviceUid == deviceUid && snapshot.slotId == slotId
+            }
     }
 
     private class FakeChannelNavigationOperations(
@@ -124,12 +162,34 @@ class DeviceDosingRootNavigationTest {
         private fun snapshot(title: String) = DeviceRootSnapshot(
             deviceUid = DEVICE_UID,
             title = title,
-            availability = OwnerDeviceAvailability.REACHABLE
+            availability = OwnerDeviceAvailability.REACHABLE,
+            family = OwnerDeviceFamily.DOSING,
+            catalogState = DeviceRootCatalogState.VALID,
+            dosingChannelCount = CHANNEL_COUNT,
+            channelSlots = DeviceChannelSlots(
+                lightChannels = emptyList(),
+                timerChannels = emptyList(),
+                dosingChannels = List(CHANNEL_COUNT) { index ->
+                    DeviceDosingChannelSlot(
+                        index = DeviceSlotIndex(index),
+                        wireKey = DeviceChannelWireKey("channel${index + 1}"),
+                        defaultDisplayName = "Channel ${index + 1}",
+                        displayNameEditable = true
+                    )
+                },
+                fanOutputs = emptyList(),
+                temperatureSensors = emptyList()
+            ),
+            allowedRoutes = setOf(
+                DeviceRootRoute.DOSING_CHANNELS,
+                DeviceRootRoute.DOSING_CALIBRATION
+            )
         )
     }
 
     private companion object {
         const val DEVICE_UID = "device-1"
         const val SLOT_ID = "dosing:channel1"
+        const val CHANNEL_COUNT = 2
     }
 }

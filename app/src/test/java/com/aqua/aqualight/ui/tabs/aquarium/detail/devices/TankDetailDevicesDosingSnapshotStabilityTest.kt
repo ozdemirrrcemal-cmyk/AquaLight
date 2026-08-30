@@ -18,7 +18,7 @@ import com.aqua.aqualight.application.devices.dosing.DeviceDosingCardChannelSumm
 import com.aqua.aqualight.application.devices.dosing.DeviceDosingCardOperations
 import com.aqua.aqualight.application.devices.dosing.DeviceDosingCardState
 import com.aqua.aqualight.application.devices.dosing.DeviceDosingCardSummary
-import com.aqua.aqualight.ui.common.devicecard.DeviceCompactStatusStyle
+import com.aqua.aqualight.ui.common.devicepresence.DeviceConnectionVisualState
 import com.aqua.aqualight.ui.tabs.devices.route.DeviceRouteResolver
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -56,20 +56,20 @@ class TankDetailDevicesDosingSnapshotStabilityTest {
         val viewModel = createViewModel(assignments, cardOperations)
 
         viewModel.bind(TANK_ID)
-        assertReadyCard(viewModel, DeviceCompactStatusStyle.ONLINE)
+        assertReadyCard(viewModel, DeviceConnectionVisualState.ONLINE)
 
         assignments.updateAssigned(
             listOf(dosingDevice(OwnerDeviceAvailability.UNREACHABLE))
         )
 
-        assertReadyCard(viewModel, DeviceCompactStatusStyle.OFFLINE)
+        assertReadyCard(viewModel, DeviceConnectionVisualState.OFFLINE)
         assertEquals(listOf(DEVICE_UID), cardOperations.observeRequests)
 
         assignments.updateAssigned(
             listOf(dosingDevice(OwnerDeviceAvailability.REACHABLE))
         )
 
-        assertReadyCard(viewModel, DeviceCompactStatusStyle.ONLINE)
+        assertReadyCard(viewModel, DeviceConnectionVisualState.ONLINE)
         assertEquals(listOf(DEVICE_UID, DEVICE_UID), cardOperations.observeRequests)
     }
 
@@ -84,7 +84,7 @@ class TankDetailDevicesDosingSnapshotStabilityTest {
         val viewModel = createViewModel(assignments, cardOperations)
 
         viewModel.bind(TANK_ID)
-        assertReadyCard(viewModel, DeviceCompactStatusStyle.ONLINE)
+        assertReadyCard(viewModel, DeviceConnectionVisualState.ONLINE)
 
         assignments.updateAssigned(emptyList())
         assertTrue(viewModel.uiState.value.devices.isEmpty())
@@ -115,7 +115,7 @@ class TankDetailDevicesDosingSnapshotStabilityTest {
 
     private fun assertReadyCard(
         viewModel: TankDetailDevicesViewModel,
-        expectedStatus: DeviceCompactStatusStyle
+        expectedStatus: DeviceConnectionVisualState
     ) {
         val item = viewModel.uiState.value.devices.single()
         val dosingCard = requireNotNull(item.dosingCard)

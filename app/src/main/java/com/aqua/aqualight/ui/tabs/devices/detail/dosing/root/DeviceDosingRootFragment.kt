@@ -16,9 +16,11 @@ import com.aqua.aqualight.R
 import com.aqua.aqualight.base.BaseActivity
 import com.aqua.aqualight.composition.requireAppContainer
 import com.aqua.aqualight.databinding.FragmentDeviceDosingRootBinding
+import com.aqua.aqualight.ui.common.devicepresence.DeviceMenuUnavailableMessageMapper
 import com.aqua.aqualight.ui.common.header.AquaHeaderAction
 import com.aqua.aqualight.ui.common.header.AquaHeaderConfig
 import com.aqua.aqualight.ui.common.header.setupAquaHeader
+import com.aqua.aqualight.ui.common.loading.setFragmentGlobalLoading
 import com.aqua.aqualight.ui.navigation.AppRouteNavigator
 import kotlinx.coroutines.launch
 
@@ -38,31 +40,33 @@ class DeviceDosingRootFragment : Fragment(R.layout.fragment_device_dosing_root) 
         _binding = FragmentDeviceDosingRootBinding.bind(view)
 
         viewModel.bind(args.deviceUid)
-        setupHeader(
-            title = viewModel.uiState.value.title.ifBlank {
-                getString(R.string.device_family_dosing)
-            }
-        )
+        setFragmentGlobalLoading(viewModel.uiState.value.showBlockingPreparation)
+        setupHeader(viewModel.uiState.value)
         setupPumpContent()
-        observeHeaderTitle()
+        observeRootState()
         observeChannelNavigation()
         observeChannelNavigationFailures()
+        observeSurfaceUnavailable()
     }
 
-    private fun setupHeader(title: String) {
+    private fun setupHeader(state: DeviceDosingRootUiState) {
         binding.appHeader.setupAquaHeader(
             fragment = this,
             config = AquaHeaderConfig(
-                titleOverride = title,
+                titleOverride = state.title.ifBlank {
+                    getString(R.string.device_family_dosing)
+                },
                 onBackClick = {
                     findNavController().navigateUp()
                 },
+                statusIcon = state.connectionVisualState.toWifiHeaderStatusIcon(requireContext()),
                 actions = listOf(
                     AquaHeaderAction(
                         iconRes = R.drawable.ic_settings,
                         contentDescription = getString(
                             R.string.device_dosing_open_settings_description
                         ),
+                        enabled = state.contentEnabled,
                         onClick = ::openSettings
                     )
                 )
@@ -71,6 +75,7 @@ class DeviceDosingRootFragment : Fragment(R.layout.fragment_device_dosing_root) 
     }
 
     private fun openSettings() {
+        if (!viewModel.uiState.value.contentEnabled) return
         val navController = findNavController()
         if (navController.currentDestination?.id != R.id.deviceDosingRootFragment) return
         navController.navigate(
@@ -90,6 +95,7 @@ class DeviceDosingRootFragment : Fragment(R.layout.fragment_device_dosing_root) 
                     pumpCount = state.pumpCount,
                     channels = state.channels,
                     onChannelClick = viewModel::openChannel,
+                    contentEnabled = state.contentEnabled,
                     pumpStates = state.pumpStates
                 )
             }
@@ -122,13 +128,31 @@ class DeviceDosingRootFragment : Fragment(R.layout.fragment_device_dosing_root) 
         }
     }
 
-    private fun observeHeaderTitle() {
+    private fun observeRootState() {
         viewLifecycleOwner.lifecycleScope.launch {
             viewLifecycleOwner.repeatOnLifecycle(Lifecycle.State.STARTED) {
                 viewModel.uiState.collect { state ->
                     if (_binding == null) return@collect
-                    setupHeader(
-                        title = state.title.ifBlank { getString(R.string.device_family_dosing) }
+                    setupHeader(state)
+                    setFragmentGlobalLoading(state.showBlockingPreparation)
+                }
+            }
+        }
+    }
+
+    private fun observeSurfaceUnavailable() {
+        viewLifecycleOwner.lifecycleScope.launch {
+            viewLifecycleOwner.repeatOnLifecycle(Lifecycle.State.STARTED) {
+                viewModel.surfaceUnavailableEvents.collect { reason ->
+                    if (_binding == null) return@collect
+                    setFragmentGlobalLoading(false)
+                    val navController = findNavController()
+                    if (navController.currentDestination?.id == R.id.deviceDosingRootFragment) {
+                        navController.navigateUp()
+                    }
+                    (activity as? BaseActivity)?.showSnackBar(
+                        message = getString(DeviceMenuUnavailableMessageMapper.messageRes(reason)),
+                        type = BaseActivity.SnackType.ERROR
                     )
                 }
             }

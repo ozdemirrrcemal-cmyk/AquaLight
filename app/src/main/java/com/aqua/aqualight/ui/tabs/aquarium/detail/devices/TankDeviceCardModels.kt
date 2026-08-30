@@ -5,12 +5,12 @@ import com.aqua.aqualight.application.devices.dosing.DeviceDosingCardChannelSumm
 import com.aqua.aqualight.application.devices.dosing.DeviceDosingCardState
 import com.aqua.aqualight.application.devices.dosing.DeviceDosingCardSummary
 import com.aqua.aqualight.ui.common.devicecard.DeviceCompactCardUi
-import com.aqua.aqualight.ui.common.devicecard.DeviceCompactStatusStyle
+import com.aqua.aqualight.ui.common.devicepresence.DeviceConnectionVisualState
 
 data class DosingDeviceSpotlightHeaderUi(
     val displayName: String,
     @DrawableRes val iconRes: Int,
-    val statusStyle: DeviceCompactStatusStyle,
+    val statusStyle: DeviceConnectionVisualState,
     val isBusy: Boolean
 )
 

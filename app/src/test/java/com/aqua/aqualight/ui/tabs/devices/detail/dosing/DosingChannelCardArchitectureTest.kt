@@ -30,7 +30,7 @@ class DosingChannelCardArchitectureTest {
     }
 
     @Test
-    fun `topology bootstrap cannot manufacture runtime state or add a second access gate`() {
+    fun `topology bootstrap cannot manufacture runtime state and offline content stays disabled`() {
         val models = source(CARD_SOURCE_ROOT + "DosingChannelCardModels.kt")
         val card = source(CARD_SOURCE_ROOT + "DosingChannelCard.kt")
         val presentation = source(ROOT_SOURCE_ROOT + "DeviceDosingRootChannelPresentation.kt")
@@ -42,9 +42,14 @@ class DosingChannelCardArchitectureTest {
         assertFalse(
             presentation.contains("List(pumpCount) { DosingPumpVisualState.IDLE }")
         )
-        assertTrue(card.contains(".clickable(role = Role.Button, onClick = onClick)"))
+        assertTrue(
+            card.contains(
+                ".clickable(enabled = enabled, role = Role.Button, onClick = onClick)"
+            )
+        )
         assertFalse(card.contains("interactionModifier"))
         assertFalse(rootScreen.contains("channel.visualState != null"))
+        assertTrue(rootScreen.contains("enabled = contentEnabled"))
         assertTrue(pump.contains("val visualState: DosingPumpVisualState? = null"))
         assertTrue(pump.contains("visualState?.let { state -> drawPumpIndicator(state) }"))
     }

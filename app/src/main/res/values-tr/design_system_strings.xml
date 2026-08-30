@@ -38,6 +38,8 @@
     <string name="device_unavailable_message">Bu cihaz kullanılamıyor.</string>
     <string name="device_online">Çevrimiçi</string>
     <string name="device_offline">Çevrimdışı</string>
+    <string name="device_connection_online_content_description">Cihaz çevrimiçi</string>
+    <string name="device_connection_offline_content_description">Cihaz çevrimdışı</string>
     <string name="device_serial_value">Seri numarası: %1$s</string>
     <string name="device_ip_value">IP: %1$s</string>
     <string name="device_firmware_value">Aygıt yazılımı: %1$s</string>

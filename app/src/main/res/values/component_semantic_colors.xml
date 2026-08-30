@@ -3,6 +3,8 @@
     <!-- Semantic/component roles. Primitive palette values are referenced only in color-definition layers. -->
     <color name="aqua_accent_aqua">@color/aqua_palette_hex_64ffda</color>
     <color name="aqua_accent_positive">@color/aqua_palette_hex_5fd6b4</color>
+    <color name="aqua_device_connection_online">@color/aqua_accent_positive</color>
+    <color name="aqua_device_connection_offline">@color/aqua_palette_hex_7b8794</color>
     <color name="aqua_accent_primary">@color/aqua_palette_hex_2196f3</color>
     <color name="aqua_add_activity_icon_circle_surface">@color/aqua_palette_hex_eaf4ff</color>
     <color name="aqua_add_care_task_fragment_color">@color/aqua_palette_hex_35506d</color>
@@ -82,7 +84,6 @@
     <color name="aqua_content_tertiary">@color/aqua_palette_hex_b8c7d9</color>
     <color name="aqua_content_warning">@color/aqua_palette_hex_e0a84c</color>
     <color name="aqua_device_card_adapter_color">@color/aqua_palette_hex_22354d</color>
-    <color name="aqua_device_compact_card_binder_color">@color/aqua_palette_hex_7b8794</color>
     <color name="aqua_device_scan_pulse_view_color">@color/aqua_palette_hex_3364ffda</color>
     <color name="aqua_device_status_adapter_color">@color/aqua_palette_hex_7b8794</color>
     <color name="aqua_fragment_plant_tag_background">@color/aqua_palette_hex_22000000</color>

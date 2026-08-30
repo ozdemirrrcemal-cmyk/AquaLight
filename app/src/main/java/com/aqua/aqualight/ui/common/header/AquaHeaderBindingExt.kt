@@ -42,18 +42,29 @@ fun LayoutAquaHeaderBinding.setupAquaHeader(
         btnBack.setOnClickListener(null)
     }
 
-    if (config.statusIconRes == null) {
+    val statusIcon = config.statusIcon
+    if (statusIcon == null) {
         imgStatusIcon.visibility =
             View.GONE
 
         imgStatusIcon.setImageDrawable(null)
+        imgStatusIcon.imageTintList = null
+        imgStatusIcon.contentDescription = null
     } else {
         imgStatusIcon.visibility =
             View.VISIBLE
 
         imgStatusIcon.setImageResource(
-            config.statusIconRes
+            statusIcon.iconRes
         )
+
+        imgStatusIcon.imageTintList =
+            ColorStateList.valueOf(
+                ContextCompat.getColor(fragment.requireContext(), statusIcon.tintColorRes)
+            )
+
+        imgStatusIcon.contentDescription =
+            statusIcon.contentDescription
     }
 
     val actionButtons =
@@ -84,6 +95,12 @@ fun LayoutAquaHeaderBinding.setupAquaHeader(
 
             button.contentDescription =
                 null
+
+            button.isEnabled =
+                true
+
+            button.alpha =
+                ACTION_ENABLED_ALPHA
         } else {
             button.visibility =
                 View.VISIBLE
@@ -95,9 +112,19 @@ fun LayoutAquaHeaderBinding.setupAquaHeader(
             button.contentDescription =
                 action.contentDescription
 
-            button.setOnClickListener {
-                action.onClick()
-            }
+            button.isEnabled =
+                action.enabled
+
+            button.alpha =
+                if (action.enabled) ACTION_ENABLED_ALPHA else ACTION_DISABLED_ALPHA
+
+            button.setOnClickListener(
+                if (action.enabled) {
+                    View.OnClickListener { action.onClick() }
+                } else {
+                    null
+                }
+            )
         }
     }
 
@@ -117,7 +144,7 @@ fun LayoutAquaHeaderBinding.setupAquaHeader(
             true
 
         btnFilledIconAction.alpha =
-            1f
+            ACTION_ENABLED_ALPHA
 
         btnFilledIconAction.setOnClickListener(null)
     } else {
@@ -136,9 +163,9 @@ fun LayoutAquaHeaderBinding.setupAquaHeader(
 
         btnFilledIconAction.alpha =
             if (filledIconAction.enabled) {
-                1f
+                ACTION_ENABLED_ALPHA
             } else {
-                0.45f
+                ACTION_DISABLED_ALPHA
             }
 
         btnFilledIconAction.setOnClickListener(
@@ -172,7 +199,7 @@ fun LayoutAquaHeaderBinding.setupAquaHeader(
             true
 
         btnCardIconAction.alpha =
-            1f
+            ACTION_ENABLED_ALPHA
 
         btnCardIconAction.setOnClickListener(null)
 
@@ -204,9 +231,9 @@ fun LayoutAquaHeaderBinding.setupAquaHeader(
 
         btnCardIconAction.alpha =
             if (cardIconAction.enabled) {
-                1f
+                ACTION_ENABLED_ALPHA
             } else {
-                0.45f
+                ACTION_DISABLED_ALPHA
             }
 
         ivCardIconAction.setImageResource(
@@ -247,7 +274,7 @@ fun LayoutAquaHeaderBinding.setupAquaHeader(
             true
 
         btnPillTextAction.alpha =
-            1f
+            ACTION_ENABLED_ALPHA
 
         btnPillTextAction.setOnClickListener(null)
     } else {
@@ -274,9 +301,9 @@ fun LayoutAquaHeaderBinding.setupAquaHeader(
 
         btnPillTextAction.alpha =
             if (pillTextAction.enabled) {
-                1f
+                ACTION_ENABLED_ALPHA
             } else {
-                0.45f
+                ACTION_DISABLED_ALPHA
             }
 
         btnPillTextAction.setOnClickListener(
@@ -472,6 +499,8 @@ fun LayoutAquaHeaderBinding.setupAquaHeader(
     }
 }
 
+private const val ACTION_ENABLED_ALPHA = 1f
+private const val ACTION_DISABLED_ALPHA = 0.45f
 
 private fun Fragment.resolveCardIconActionBackgroundColor(
     tone: AquaHeaderCardIconTone
@@ -498,4 +527,3 @@ private fun Fragment.resolveCardIconActionStrokeColor(
 
     return ContextCompat.getColor(requireContext(), colorRes)
 }
-

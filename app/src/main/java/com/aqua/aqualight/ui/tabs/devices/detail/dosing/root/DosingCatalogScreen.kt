@@ -12,7 +12,11 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.alpha
+import androidx.compose.ui.semantics.disabled
+import androidx.compose.ui.semantics.semantics
 import com.aqua.aqualight.ui.common.dosing.AquaDosingCatalogGeometry
+import com.aqua.aqualight.ui.common.dosing.AquaDosingInteractionStyle
 import com.aqua.aqualight.ui.tabs.devices.detail.dosing.presentation.card.DosingChannelCard
 import com.aqua.aqualight.ui.tabs.devices.detail.dosing.presentation.card.DosingChannelCardUiState
 import com.aqua.aqualight.ui.tabs.devices.detail.dosing.presentation.pump.DosingPumpHeadUiState
@@ -32,6 +36,7 @@ internal fun DeviceDosingCatalogScreen(
     pumpCount: Int,
     channels: List<DosingChannelCardUiState>,
     onChannelClick: (String) -> Unit,
+    contentEnabled: Boolean,
     modifier: Modifier = Modifier,
     pumpStates: List<DosingPumpVisualState> = emptyList()
 ) {
@@ -48,16 +53,33 @@ internal fun DeviceDosingCatalogScreen(
         )
     }
 
-    Column(modifier = modifier.fillMaxSize()) {
+    Column(
+        modifier = modifier
+            .fillMaxSize()
+            .alpha(
+                if (contentEnabled) {
+                    AquaDosingInteractionStyle.enabledContentAlpha
+                } else {
+                    AquaDosingInteractionStyle.disabledContentAlpha
+                }
+            )
+            .semantics {
+                if (!contentEnabled) disabled()
+            }
+    ) {
         DosingPumpSection(
             pumpCount = exactPumpCount,
             pumpHeads = pumpHeads,
-            onPumpClick = { channelNumber ->
-                channels.firstOrNull { channel ->
-                    channel.channelNumber == channelNumber
-                }?.let { channel ->
-                    onChannelClick(channel.slotId)
+            onPumpClick = if (contentEnabled) {
+                { channelNumber ->
+                    channels.firstOrNull { channel ->
+                        channel.channelNumber == channelNumber
+                    }?.let { channel ->
+                        onChannelClick(channel.slotId)
+                    }
                 }
+            } else {
+                null
             },
             modifier = Modifier.padding(
                 start = SCREEN_HORIZONTAL_PADDING,
@@ -85,6 +107,7 @@ internal fun DeviceDosingCatalogScreen(
             ) { channel ->
                 DosingChannelCard(
                     state = channel,
+                    enabled = contentEnabled,
                     onClick = { onChannelClick(channel.slotId) },
                     modifier = Modifier.fillMaxWidth()
                 )

@@ -16,7 +16,7 @@ import com.aqua.aqualight.application.devices.dosing.DeviceDosingCardReservoirSu
 import com.aqua.aqualight.application.devices.dosing.DeviceDosingCardSummary
 import com.aqua.aqualight.databinding.ItemDosingDeviceSpotlightCardBinding
 import com.aqua.aqualight.ui.common.devicecard.AquaDeviceCardGeometry
-import com.aqua.aqualight.ui.common.devicecard.DeviceCompactStatusStyle
+import com.aqua.aqualight.ui.common.devicepresence.DeviceConnectionVisualState
 import com.aqua.aqualight.ui.tabs.devices.detail.dosing.presentation.pump.DosingPumpFaceIcon
 import java.util.Locale
 
@@ -36,7 +36,7 @@ object DosingDeviceSpotlightCardBinder {
     ) {
         val context = binding.root.context
         val header = item.header
-        val online = header.statusStyle == DeviceCompactStatusStyle.ONLINE
+        val online = header.statusStyle == DeviceConnectionVisualState.ONLINE
         val displayName = header.displayName.trim().ifBlank {
             context.getString(R.string.device_menu_default_title)
         }
@@ -65,15 +65,10 @@ object DosingDeviceSpotlightCardBinder {
         binding.ivDeviceIcon.clearColorFilter()
         binding.ivDeviceIcon.contentDescription = displayName
         binding.ivPresenceIcon.imageTintList = ColorStateList.valueOf(
-            ContextCompat.getColor(
-                context,
-                if (online) R.color.aqua_accent_positive
-                else R.color.aqua_device_compact_card_binder_color
-            )
+            ContextCompat.getColor(context, header.statusStyle.tintColorRes)
         )
-        binding.ivPresenceIcon.contentDescription = context.getString(
-            if (online) R.string.device_online else R.string.device_offline
-        )
+        binding.ivPresenceIcon.contentDescription =
+            context.getString(header.statusStyle.accessibilityLabelRes)
         binding.ivPresenceIcon.isVisible = !header.isBusy
         binding.progressCardAction.isVisible = header.isBusy
         binding.root.isEnabled = !header.isBusy

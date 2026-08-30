@@ -34,6 +34,7 @@ import com.aqua.aqualight.ui.common.dosing.AquaDosingCardGeometry
 @Composable
 internal fun DosingChannelCard(
     state: DosingChannelCardUiState,
+    enabled: Boolean,
     onClick: () -> Unit,
     modifier: Modifier = Modifier
 ) {
@@ -58,7 +59,7 @@ internal fun DosingChannelCard(
             .fillMaxWidth()
             .heightIn(min = CHANNEL_CARD_MIN_HEIGHT)
             .then(semanticModifier)
-            .clickable(role = Role.Button, onClick = onClick)
+            .clickable(enabled = enabled, role = Role.Button, onClick = onClick)
     ) {
         DosingChannelCardContent(state, colors, typography, stateLabel)
     }

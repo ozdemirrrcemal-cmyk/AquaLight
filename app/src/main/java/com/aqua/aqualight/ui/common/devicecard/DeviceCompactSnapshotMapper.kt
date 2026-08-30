@@ -3,6 +3,7 @@ package com.aqua.aqualight.ui.common.devicecard
 import com.aqua.aqualight.application.devices.OwnerDeviceAvailability
 import com.aqua.aqualight.application.devices.OwnerDeviceFamily
 import com.aqua.aqualight.application.devices.TankDeviceListItem
+import com.aqua.aqualight.ui.common.devicepresence.DeviceConnectionVisualState
 
 object DeviceCompactSnapshotMapper {
 
@@ -20,9 +21,9 @@ object DeviceCompactSnapshotMapper {
             supportingText = supportingText,
             iconRes = DeviceFamilyIconMapper.iconFor(device.family),
             statusStyle = if (isReachable) {
-                DeviceCompactStatusStyle.ONLINE
+                DeviceConnectionVisualState.ONLINE
             } else {
-                DeviceCompactStatusStyle.OFFLINE
+                DeviceConnectionVisualState.OFFLINE
             },
             actionText = actionText,
             showAction = showAction
