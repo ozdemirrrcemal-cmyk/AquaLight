@@ -10,7 +10,7 @@ import com.aqua.aqualight.databinding.FragmentDeviceCoolingModeSettingsBinding
 import com.aqua.aqualight.ui.common.header.AquaHeaderConfig
 import com.aqua.aqualight.ui.common.header.setupAquaHeader
 
-/** Shared empty destination shell for Cooling mode editors. */
+/** Shared destination shell that keeps every Cooling mode editor on the central AquaHeader host. */
 abstract class DeviceCoolingModeSettingsFragment(
     @StringRes private val titleRes: Int
 ) : Fragment(R.layout.fragment_device_cooling_mode_settings) {
@@ -18,20 +18,24 @@ abstract class DeviceCoolingModeSettingsFragment(
     protected abstract val destinationDeviceUid: String
 
     private var _binding: FragmentDeviceCoolingModeSettingsBinding? = null
-    private val binding get() = _binding!!
+    protected val modeSettingsBinding: FragmentDeviceCoolingModeSettingsBinding
+        get() = checkNotNull(_binding)
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
         check(destinationDeviceUid.isNotBlank()) { "Cooling destination deviceUid must not be blank." }
         _binding = FragmentDeviceCoolingModeSettingsBinding.bind(view)
-        binding.appHeader.setupAquaHeader(
+        modeSettingsBinding.appHeader.setupAquaHeader(
             fragment = this,
             config = AquaHeaderConfig(
                 titleOverride = getString(titleRes),
                 onBackClick = { findNavController().navigateUp() }
             )
         )
+        onModeSettingsViewCreated(savedInstanceState)
     }
+
+    protected open fun onModeSettingsViewCreated(savedInstanceState: Bundle?) = Unit
 
     override fun onDestroyView() {
         _binding = null
