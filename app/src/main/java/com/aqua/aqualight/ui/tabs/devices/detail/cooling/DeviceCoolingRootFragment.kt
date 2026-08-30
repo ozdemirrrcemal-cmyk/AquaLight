@@ -2,9 +2,12 @@ package com.aqua.aqualight.ui.tabs.devices.detail.cooling
 
 import android.os.Bundle
 import android.view.View
+import androidx.compose.runtime.getValue
+import androidx.compose.ui.platform.ViewCompositionStrategy
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.viewModels
 import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.repeatOnLifecycle
 import androidx.navigation.fragment.findNavController
@@ -15,6 +18,7 @@ import com.aqua.aqualight.databinding.FragmentDeviceCoolingRootBinding
 import com.aqua.aqualight.ui.common.header.AquaHeaderAction
 import com.aqua.aqualight.ui.common.header.AquaHeaderConfig
 import com.aqua.aqualight.ui.common.header.setupAquaHeader
+import com.aqua.aqualight.ui.navigation.AppRouteNavigator
 import kotlinx.coroutines.launch
 
 class DeviceCoolingRootFragment : Fragment(R.layout.fragment_device_cooling_root) {
@@ -33,6 +37,7 @@ class DeviceCoolingRootFragment : Fragment(R.layout.fragment_device_cooling_root
 
         viewModel.bind(args.deviceUid)
         setupHeader(viewModel.uiState.value)
+        setupDashboardContent()
         observeViewModel()
     }
 
@@ -58,6 +63,39 @@ class DeviceCoolingRootFragment : Fragment(R.layout.fragment_device_cooling_root
                     )
                 )
             )
+        )
+    }
+
+    private fun setupDashboardContent() {
+        binding.coolingDashboardCompose.apply {
+            setViewCompositionStrategy(ViewCompositionStrategy.DisposeOnViewTreeLifecycleDestroyed)
+            setContent {
+                val state by viewModel.uiState.collectAsStateWithLifecycle()
+                DeviceCoolingDashboardScreen(
+                    state = state,
+                    onModeSelected = viewModel::selectMode,
+                    onProfileSelected = viewModel::selectProfile,
+                    onManualFanPercentChanged = viewModel::updateManualFanPercent,
+                    onAutomaticSettingsClick = ::openAutomaticSettings,
+                    onProgramSettingsClick = ::openProgramSettings
+                )
+            }
+        }
+    }
+
+    private fun openAutomaticSettings() {
+        if (!viewModel.uiState.value.contentEnabled) return
+        AppRouteNavigator.openCoolingAutomaticSettings(
+            navController = findNavController(),
+            deviceUid = args.deviceUid
+        )
+    }
+
+    private fun openProgramSettings() {
+        if (!viewModel.uiState.value.contentEnabled) return
+        AppRouteNavigator.openCoolingProgramSettings(
+            navController = findNavController(),
+            deviceUid = args.deviceUid
         )
     }
 
