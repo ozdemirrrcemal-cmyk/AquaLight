@@ -28,6 +28,24 @@ class DeviceCoolingRuntimeRepository internal constructor(
         )
     ).recordSuccess { status -> stateStore.recordStatus(deviceUid, status) }
 
+    suspend fun requestHistory(
+        deviceUid: DeviceUid,
+        range: DeviceCoolingHistoryRange
+    ): DeviceRuntimeCommandOutcome<DeviceCoolingHistorySnapshot> = gateway.execute(
+        deviceUid,
+        jsonCommand(
+            action = DeviceCoolingRuntimeContract.Action.HISTORY_GET,
+            dataFactory = { DeviceCoolingHistoryGetPayload(range).toJson() },
+            parser = { data ->
+                DeviceCoolingHistoryParser.parse(data).also { snapshot ->
+                    require(snapshot.range == range) {
+                        "Firmware returned a different cooling history range."
+                    }
+                }
+            }
+        )
+    )
+
     suspend fun applyConfig(
         deviceUid: DeviceUid,
         payload: DeviceCoolingConfigApplyPayload
