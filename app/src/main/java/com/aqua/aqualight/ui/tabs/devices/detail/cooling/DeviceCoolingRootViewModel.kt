@@ -12,6 +12,7 @@ import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 
 class DeviceCoolingRootViewModel(
@@ -38,28 +39,53 @@ class DeviceCoolingRootViewModel(
         observeJob?.cancel()
         _uiState.value = DeviceCoolingRootUiState(deviceUid = deviceUid)
         operations.current(deviceUid)?.let { snapshot ->
-            _uiState.value = snapshot.toRootUiState()
+            _uiState.value = snapshot.toRootUiState(_uiState.value)
         }
         operations.connect(deviceUid)
         observeJob = viewModelScope.launch {
             operations.observe(deviceUid).collect { snapshot ->
                 if (boundDeviceUid != deviceUid) return@collect
-                _uiState.value = snapshot?.toRootUiState()
+                _uiState.value = snapshot?.toRootUiState(_uiState.value)
                     ?: _uiState.value.copy(
                         deviceUid = deviceUid,
                         connectionVisualState = DeviceConnectionVisualState.OFFLINE,
-                        contentEnabled = false
+                        contentEnabled = false,
+                        fanOutputCount = 0,
+                        temperatureSensorCount = 0
                     )
             }
         }
     }
 
-    private fun DeviceRootSnapshot.toRootUiState(): DeviceCoolingRootUiState {
+    fun selectMode(mode: CoolingControlMode) {
+        _uiState.update { state ->
+            if (!state.contentEnabled || state.selectedMode == mode) state
+            else state.copy(selectedMode = mode)
+        }
+    }
+
+    fun updateManualFanPercent(percent: Int) {
+        _uiState.update { state ->
+            if (!state.contentEnabled) state
+            else state.copy(manualFanPercent = percent.coerceIn(MIN_PERCENT, MAX_PERCENT))
+        }
+    }
+
+    fun selectProfile(profile: CoolingProfile) {
+        _uiState.update { state ->
+            if (!state.contentEnabled || state.selectedProfile == profile) state
+            else state.copy(selectedProfile = profile)
+        }
+    }
+
+    private fun DeviceRootSnapshot.toRootUiState(
+        previous: DeviceCoolingRootUiState
+    ): DeviceCoolingRootUiState {
         val contentEnabled =
             family == OwnerDeviceFamily.COOLING &&
                 availability == OwnerDeviceAvailability.REACHABLE &&
                 catalogState == DeviceRootCatalogState.VALID
-        return DeviceCoolingRootUiState(
+        return previous.copy(
             title = title,
             deviceUid = deviceUid,
             connectionVisualState = if (contentEnabled) {
@@ -67,14 +93,55 @@ class DeviceCoolingRootViewModel(
             } else {
                 DeviceConnectionVisualState.OFFLINE
             },
-            contentEnabled = contentEnabled
+            contentEnabled = contentEnabled,
+            fanOutputCount = fanOutputCount,
+            temperatureSensorCount = temperatureSensorCount
         )
     }
+
+    private companion object {
+        const val MIN_PERCENT = 0
+        const val MAX_PERCENT = 100
+    }
+}
+
+enum class CoolingControlMode {
+    AUTOMATIC,
+    MANUAL,
+    PROGRAM
+}
+
+enum class CoolingProfile {
+    QUIET,
+    BALANCED,
+    PERFORMANCE,
+    BOOST
 }
 
 data class DeviceCoolingRootUiState(
     val title: String = "",
     val deviceUid: String = "",
     val connectionVisualState: DeviceConnectionVisualState = DeviceConnectionVisualState.OFFLINE,
-    val contentEnabled: Boolean = false
-)
+    val contentEnabled: Boolean = false,
+    val selectedMode: CoolingControlMode = CoolingControlMode.AUTOMATIC,
+    val selectedProfile: CoolingProfile = CoolingProfile.BALANCED,
+    val manualFanPercent: Int = 60,
+    val autoStartTemperatureC: Double = 25.0,
+    val autoMaxTemperatureC: Double = 27.0,
+    val fanPercentNow: Int? = null,
+    val tankTemperatureC: Double? = null,
+    val roomTemperatureC: Double? = null,
+    val humidityPercent: Double? = null,
+    val powerWatts: Double? = null,
+    val estimatedKwhPerDay: Double? = null,
+    val temperatureHistoryC: List<Double> = emptyList(),
+    val fanOutputCount: Int = 0,
+    val temperatureSensorCount: Int = 0
+) {
+    val displayedFanPercent: Int?
+        get() = if (selectedMode == CoolingControlMode.MANUAL) {
+            manualFanPercent
+        } else {
+            fanPercentNow
+        }
+}
