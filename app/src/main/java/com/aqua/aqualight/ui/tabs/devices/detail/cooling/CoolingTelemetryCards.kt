@@ -1,10 +1,12 @@
 package com.aqua.aqualight.ui.tabs.devices.detail.cooling
 
+import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.size
@@ -14,15 +16,18 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextOverflow
 import com.aqua.aqualight.R
 import com.aqua.aqualight.ui.common.cooling.AquaCoolingDashboardAlpha
+import com.aqua.aqualight.ui.common.cooling.AquaCoolingDashboardCardSurface
 import com.aqua.aqualight.ui.common.cooling.AquaCoolingDashboardGeometry
+import com.aqua.aqualight.ui.common.cooling.AquaCoolingDashboardPalette
 import com.aqua.aqualight.ui.common.cooling.AquaCoolingDashboardTypography
 import com.aqua.aqualight.ui.common.devicecard.AquaDeviceCardColors
 import com.aqua.aqualight.ui.common.devicecard.AquaDeviceCardGeometry
-import com.aqua.aqualight.ui.common.devicecard.AquaDeviceCardSurface
 import com.aqua.aqualight.ui.common.devicecard.AquaDeviceCardTypography
 
 @Composable
@@ -32,36 +37,67 @@ internal fun CoolingPowerCard(
     typography: AquaDeviceCardTypography,
     modifier: Modifier = Modifier
 ) {
-    AquaDeviceCardSurface(
-        modifier = modifier.heightIn(
-            min = AquaCoolingDashboardGeometry.statusCardMinimumHeight
-        )
+    AquaCoolingDashboardCardSurface(
+        modifier = modifier.heightIn(min = AquaCoolingDashboardGeometry.statusCardMinimumHeight)
     ) {
         Column(
             modifier = Modifier.fillMaxWidth(),
-            verticalArrangement = Arrangement.spacedBy(AquaDeviceCardGeometry.contentGap)
+            verticalArrangement = Arrangement.spacedBy(AquaDeviceCardGeometry.compactGap)
         ) {
             BasicText(
                 text = stringResource(R.string.device_cooling_power_title),
                 style = typography.title
             )
-            BasicText(
-                text = coolingPowerText(state.powerWatts),
-                style = typography.title.copy(
-                    color = colors.primaryText,
-                    fontSize = AquaCoolingDashboardTypography.metricValueSize
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(AquaDeviceCardGeometry.compactGap)
+            ) {
+                CoolingPowerGlyph(colors)
+                BasicText(
+                    text = coolingPowerText(state.powerWatts),
+                    style = typography.title.copy(
+                        color = colors.primaryText,
+                        fontSize = AquaCoolingDashboardTypography.metricValueSize
+                    ),
+                    maxLines = 1
                 )
-            )
-            Column(verticalArrangement = Arrangement.spacedBy(AquaDeviceCardGeometry.compactGap)) {
+            }
+            Column(verticalArrangement = Arrangement.spacedBy(AquaCoolingDashboardGeometry.statusRowGap)) {
                 BasicText(
                     text = stringResource(R.string.device_cooling_estimated_consumption),
-                    style = typography.caption.copy(color = colors.secondaryText)
+                    style = typography.micro.copy(color = colors.secondaryText)
                 )
                 BasicText(
                     text = coolingEnergyText(state.estimatedKwhPerDay),
-                    style = typography.body.copy(color = colors.primaryText)
+                    style = typography.body.copy(color = colors.primaryText),
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis
                 )
             }
+        }
+    }
+}
+
+@Composable
+private fun CoolingPowerGlyph(colors: AquaDeviceCardColors) {
+    Box(
+        modifier = Modifier
+            .size(30.dp)
+            .clip(CircleShape)
+            .background(colors.mediaSurface),
+        contentAlignment = Alignment.Center
+    ) {
+        Canvas(modifier = Modifier.size(16.dp)) {
+            val path = Path().apply {
+                moveTo(size.width * 0.57f, 0f)
+                lineTo(size.width * 0.25f, size.height * 0.53f)
+                lineTo(size.width * 0.48f, size.height * 0.53f)
+                lineTo(size.width * 0.40f, size.height)
+                lineTo(size.width * 0.78f, size.height * 0.40f)
+                lineTo(size.width * 0.54f, size.height * 0.40f)
+                close()
+            }
+            drawPath(path = path, color = colors.primaryText)
         }
     }
 }
@@ -75,10 +111,8 @@ internal fun CoolingStatusCard(
 ) {
     val ready = stringResource(R.string.device_cooling_status_ready)
     val unavailable = stringResource(R.string.device_cooling_value_unavailable)
-    AquaDeviceCardSurface(
-        modifier = modifier.heightIn(
-            min = AquaCoolingDashboardGeometry.statusCardMinimumHeight
-        )
+    AquaCoolingDashboardCardSurface(
+        modifier = modifier.heightIn(min = AquaCoolingDashboardGeometry.statusCardMinimumHeight)
     ) {
         Column(
             modifier = Modifier.fillMaxWidth(),
@@ -147,9 +181,7 @@ private fun CoolingStatusRow(
         )
         Row(
             verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(
-                AquaCoolingDashboardGeometry.statusValueGap
-            )
+            horizontalArrangement = Arrangement.spacedBy(AquaCoolingDashboardGeometry.statusValueGap)
         ) {
             if (showDot) {
                 Box(
@@ -157,15 +189,22 @@ private fun CoolingStatusRow(
                         .size(AquaCoolingDashboardGeometry.statusDotSize)
                         .clip(CircleShape)
                         .background(
-                            (if (positive) colors.accent else colors.secondaryText)
-                                .copy(alpha = AquaCoolingDashboardAlpha.statusDot)
+                            (if (positive) {
+                                AquaCoolingDashboardPalette.success
+                            } else {
+                                colors.secondaryText
+                            }).copy(alpha = AquaCoolingDashboardAlpha.statusDot)
                         )
                 )
             }
             BasicText(
                 text = value,
                 style = typography.micro.copy(
-                    color = if (positive) colors.primaryText else colors.secondaryText
+                    color = if (positive) {
+                        AquaCoolingDashboardPalette.success
+                    } else {
+                        colors.secondaryText
+                    }
                 ),
                 maxLines = 1,
                 overflow = TextOverflow.Ellipsis
