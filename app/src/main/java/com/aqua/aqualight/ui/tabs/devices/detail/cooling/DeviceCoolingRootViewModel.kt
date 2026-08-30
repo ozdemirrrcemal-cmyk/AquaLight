@@ -1,15 +1,13 @@
 package com.aqua.aqualight.ui.tabs.devices.detail.cooling
 
-import androidx.annotation.StringRes
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.aqua.aqualight.R
+import com.aqua.aqualight.application.devices.DeviceRootCatalogState
 import com.aqua.aqualight.application.devices.DeviceRootOperations
 import com.aqua.aqualight.application.devices.DeviceRootSnapshot
-import com.aqua.aqualight.ui.common.text.AquaUiText
-import com.aqua.aqualight.ui.tabs.devices.detail.common.DeviceRootKind
-import com.aqua.aqualight.ui.tabs.devices.detail.common.DeviceRootMenuMapper
-import com.aqua.aqualight.ui.tabs.devices.detail.common.DeviceRootPresentationMapper
+import com.aqua.aqualight.application.devices.OwnerDeviceAvailability
+import com.aqua.aqualight.application.devices.OwnerDeviceFamily
+import com.aqua.aqualight.ui.common.devicepresence.DeviceConnectionVisualState
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -31,75 +29,52 @@ class DeviceCoolingRootViewModel(
         if (deviceUid.isBlank()) {
             observeJob?.cancel()
             boundDeviceUid = ""
-            _uiState.value = emptyState("")
+            _uiState.value = DeviceCoolingRootUiState()
             return
         }
         if (boundDeviceUid == deviceUid) return
 
         boundDeviceUid = deviceUid
         observeJob?.cancel()
-        _uiState.value = operations.current(deviceUid)?.toRootUiState()
-            ?: emptyState(deviceUid)
+        _uiState.value = DeviceCoolingRootUiState(deviceUid = deviceUid)
+        operations.current(deviceUid)?.let { snapshot ->
+            _uiState.value = snapshot.toRootUiState()
+        }
         operations.connect(deviceUid)
         observeJob = viewModelScope.launch {
             operations.observe(deviceUid).collect { snapshot ->
+                if (boundDeviceUid != deviceUid) return@collect
                 _uiState.value = snapshot?.toRootUiState()
-                    ?: emptyState(deviceUid)
+                    ?: _uiState.value.copy(
+                        deviceUid = deviceUid,
+                        connectionVisualState = DeviceConnectionVisualState.OFFLINE,
+                        contentEnabled = false
+                    )
             }
         }
     }
 
-    private fun emptyState(deviceUid: String) = DeviceCoolingRootUiState(
-        deviceUid = deviceUid,
-        connectionStatusRes = R.string.device_offline,
-        primaryCountLabelRes = KIND.primaryCountLabelRes,
-        primarySectionTitleRes = KIND.primarySectionTitleRes,
-        primarySectionPlaceholder = AquaUiText.Resource(KIND.primarySectionPlaceholderRes),
-        secondarySectionTitleRes = KIND.secondarySectionTitleRes,
-        secondarySectionPlaceholder = AquaUiText.Resource(KIND.secondarySectionPlaceholderRes)
-    )
-
     private fun DeviceRootSnapshot.toRootUiState(): DeviceCoolingRootUiState {
-        val menuSections = DeviceRootMenuMapper.overview(kind = KIND, snapshot = this)
+        val contentEnabled =
+            family == OwnerDeviceFamily.COOLING &&
+                availability == OwnerDeviceAvailability.REACHABLE &&
+                catalogState == DeviceRootCatalogState.VALID
         return DeviceCoolingRootUiState(
             title = title,
             deviceUid = deviceUid,
-            connectionStatusRes = DeviceRootPresentationMapper.availabilityLabelRes(this),
-            ipText = ipAddress,
-            firmwareText = firmwareLabel,
-            modelText = modelLabel,
-            primaryCountLabelRes = KIND.primaryCountLabelRes,
-            primaryCountText = fanOutputCount.takeIf { it > 0 }?.toString().orEmpty(),
-            featuresText = DeviceRootPresentationMapper.overviewFeatureText(this, KIND),
-            primarySectionTitleRes = KIND.primarySectionTitleRes,
-            primarySectionPlaceholder = menuSections.primaryText(KIND.primarySectionPlaceholderRes),
-            secondarySectionTitleRes = KIND.secondarySectionTitleRes,
-            secondarySectionPlaceholder = menuSections.secondaryText(KIND.secondarySectionPlaceholderRes)
+            connectionVisualState = if (contentEnabled) {
+                DeviceConnectionVisualState.ONLINE
+            } else {
+                DeviceConnectionVisualState.OFFLINE
+            },
+            contentEnabled = contentEnabled
         )
-    }
-
-    private companion object {
-        val KIND = DeviceRootKind.COOLING
     }
 }
 
 data class DeviceCoolingRootUiState(
     val title: String = "",
     val deviceUid: String = "",
-    @StringRes val connectionStatusRes: Int = R.string.device_offline,
-    val ipText: String = "",
-    val firmwareText: String = "",
-    val modelText: String = "",
-    @StringRes val primaryCountLabelRes: Int = R.string.device_fan_outputs_label,
-    val primaryCountText: String = "",
-    val featuresText: AquaUiText = AquaUiText.Resource(R.string.device_unknown),
-    @StringRes val primarySectionTitleRes: Int = R.string.device_menu_fan_control_title,
-    val primarySectionPlaceholder: AquaUiText = AquaUiText.Resource(
-        R.string.device_menu_fan_control_preparing
-    ),
-    @StringRes val secondarySectionTitleRes: Int =
-        R.string.device_menu_temperature_automation_title,
-    val secondarySectionPlaceholder: AquaUiText = AquaUiText.Resource(
-        R.string.device_menu_temperature_automation_preparing
-    )
+    val connectionVisualState: DeviceConnectionVisualState = DeviceConnectionVisualState.OFFLINE,
+    val contentEnabled: Boolean = false
 )
