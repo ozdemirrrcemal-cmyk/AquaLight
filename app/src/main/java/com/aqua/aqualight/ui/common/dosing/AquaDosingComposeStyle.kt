@@ -23,6 +23,7 @@ object AquaDosingCatalogGeometry {
 }
 
 object AquaDosingPumpGeometry {
+    val zero = 0.dp
     val sectionHorizontalPadding = 16.dp
     val sectionTopPadding = 12.dp
     val pro2MaximumWidth = 360.dp
@@ -64,6 +65,7 @@ object AquaDosingCalibrationGeometry {
 }
 
 object AquaDosingCardGeometry {
+    val zero = 0.dp
     val channelCardMinimumHeight = 104.dp
     val emptyVerticalPadding = 4.dp
     val emptyContentGap = 12.dp

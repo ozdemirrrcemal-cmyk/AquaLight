@@ -134,7 +134,7 @@ private fun DosingPumpDeck(
                 (maxWidth - PUMP_SPACING) / DOSING_PRO_2_PUMP_COUNT.toFloat()
             )
         } else {
-            Dp.Zero
+            AquaDosingPumpGeometry.zero
         }
 
         Row(

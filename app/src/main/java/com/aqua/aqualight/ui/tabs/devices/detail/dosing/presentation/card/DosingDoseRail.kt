@@ -81,9 +81,11 @@ private fun DosingDoseRailBody(
                 ?.endFraction
                 ?.coerceIn(0f, 1f)
                 ?: state.completionFraction.coerceIn(0f, 1f)
-            val maximumTagStart = (maxWidth - VALUE_TAG_WIDTH).coerceAtLeast(Dp.Zero)
+            val maximumTagStart = (maxWidth - VALUE_TAG_WIDTH).coerceAtLeast(
+                AquaDosingCardGeometry.zero
+            )
             val tagStart = (maxWidth * deliveredFraction - VALUE_TAG_WIDTH / 2)
-                .coerceIn(Dp.Zero, maximumTagStart)
+                .coerceIn(AquaDosingCardGeometry.zero, maximumTagStart)
             DosingDeliveredValueTag(
                 label = deliveredLabel,
                 palette = palette,
@@ -202,12 +204,14 @@ private fun DosingProgressMarkerLabel(
 ) {
     val markerCenter = availableWidth * marker.positionFraction.coerceIn(0f, 1f)
     val halfLabelWidth = MARKER_LABEL_WIDTH / 2
-    val maximumMarkerStart = (availableWidth - MARKER_LABEL_WIDTH).coerceAtLeast(Dp.Zero)
+    val maximumMarkerStart = (availableWidth - MARKER_LABEL_WIDTH).coerceAtLeast(
+        AquaDosingCardGeometry.zero
+    )
     val unclampedMarkerStart = markerCenter - halfLabelWidth
-    val markerStart = unclampedMarkerStart.coerceIn(Dp.Zero, maximumMarkerStart)
+    val markerStart = unclampedMarkerStart.coerceIn(AquaDosingCardGeometry.zero, maximumMarkerStart)
     val markerTextAlign = when {
         availableWidth <= MARKER_LABEL_WIDTH -> TextAlign.Center
-        unclampedMarkerStart < Dp.Zero -> TextAlign.Start
+        unclampedMarkerStart < AquaDosingCardGeometry.zero -> TextAlign.Start
         unclampedMarkerStart > maximumMarkerStart -> TextAlign.End
         else -> TextAlign.Center
     }
