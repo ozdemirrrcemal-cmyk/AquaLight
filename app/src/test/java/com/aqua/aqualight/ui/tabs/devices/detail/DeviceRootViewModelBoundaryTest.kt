@@ -9,6 +9,7 @@ import com.aqua.aqualight.application.devices.DeviceRootRouteResolver
 import com.aqua.aqualight.application.devices.DeviceRootSnapshot
 import com.aqua.aqualight.application.devices.OwnerDeviceAvailability
 import com.aqua.aqualight.application.devices.OwnerDeviceFamily
+import com.aqua.aqualight.ui.common.devicepresence.DeviceConnectionVisualState
 import com.aqua.aqualight.ui.common.text.AquaUiText
 import com.aqua.aqualight.ui.tabs.devices.detail.common.DeviceRootKind
 import com.aqua.aqualight.ui.tabs.devices.detail.common.DeviceRootOverviewViewModel
@@ -97,6 +98,31 @@ class DeviceRootViewModelBoundaryTest {
         assertEquals("My Aquarium Controller", light.uiState.value.title)
         assertEquals("My Aquarium Controller", timer.uiState.value.title)
         assertEquals("My Aquarium Controller", cooling.uiState.value.title)
+    }
+
+    @Test
+    fun `cooling root enables controls only for reachable validated cooling catalog`() {
+        val operations = FakeDeviceRootOperations(
+            rootSnapshot(title = "Cool Pro 3 Fan").copy(
+                family = OwnerDeviceFamily.COOLING,
+                capabilities = setOf(
+                    DeviceRootCapability.COOLING,
+                    DeviceRootCapability.FAN,
+                    DeviceRootCapability.TEMPERATURE
+                ),
+                fanOutputCount = 3
+            )
+        )
+        val viewModel = DeviceCoolingRootViewModel(operations)
+
+        viewModel.bind("device-1")
+
+        assertEquals("Cool Pro 3 Fan", viewModel.uiState.value.title)
+        assertEquals(
+            DeviceConnectionVisualState.ONLINE,
+            viewModel.uiState.value.connectionVisualState
+        )
+        assertTrue(viewModel.uiState.value.contentEnabled)
     }
 
     private fun rootSnapshot(

@@ -18,14 +18,12 @@ import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -48,7 +46,6 @@ import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.PathEffect
 import androidx.compose.ui.graphics.StrokeCap
@@ -58,8 +55,6 @@ import androidx.compose.ui.graphics.drawscope.withTransform
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.semantics.contentDescription
-import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.Font
 import androidx.compose.ui.text.font.FontFamily
@@ -89,98 +84,6 @@ internal object CoolingDashboardPalette {
 
 private val InterRegular = FontFamily(Font(R.font.inter_regular))
 private val InterSemiBold = FontFamily(Font(R.font.inter_semibold))
-
-@Composable
-internal fun CoolingDashboardHeader(
-    isOnline: Boolean,
-    onBackClick: () -> Unit,
-    onSettingsClick: () -> Unit,
-    modifier: Modifier = Modifier
-) {
-    Row(
-        modifier = modifier
-            .fillMaxWidth()
-            .height(HEADER_HEIGHT)
-            .padding(horizontal = 16.dp),
-        verticalAlignment = Alignment.CenterVertically
-    ) {
-        CoolingHeaderIcon(
-            iconRes = R.drawable.ic_back,
-            contentDescription = stringResource(R.string.change_email_back_button_desc),
-            onClick = onBackClick
-        )
-        Row(
-            modifier = Modifier
-                .weight(1f)
-                .padding(start = 12.dp),
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            BasicText(
-                text = stringResource(R.string.device_family_cooling),
-                style = coolingTextStyle(
-                    size = 20.sp,
-                    lineHeight = 25.sp,
-                    color = CoolingDashboardPalette.textPrimary,
-                    semiBold = true
-                ),
-                maxLines = 1,
-                overflow = TextOverflow.Ellipsis
-            )
-            Spacer(modifier = Modifier.width(14.dp))
-            Box(
-                modifier = Modifier
-                    .size(8.dp)
-                    .clip(CircleShape)
-                    .background(
-                        if (isOnline) {
-                            CoolingDashboardPalette.success
-                        } else {
-                            CoolingDashboardPalette.textMuted
-                        }
-                    )
-            )
-            BasicText(
-                text = stringResource(
-                    if (isOnline) R.string.device_online else R.string.device_offline
-                ),
-                modifier = Modifier.padding(start = 7.dp),
-                style = coolingTextStyle(
-                    size = 11.sp,
-                    lineHeight = 14.sp,
-                    color = CoolingDashboardPalette.textSecondary
-                )
-            )
-        }
-        CoolingHeaderIcon(
-            iconRes = R.drawable.ic_settings,
-            contentDescription = stringResource(R.string.device_cooling_open_settings_description),
-            onClick = onSettingsClick
-        )
-    }
-}
-
-@Composable
-private fun CoolingHeaderIcon(
-    iconRes: Int,
-    contentDescription: String,
-    onClick: () -> Unit
-) {
-    Box(
-        modifier = Modifier
-            .size(48.dp)
-            .clip(CircleShape)
-            .clickable(onClick = onClick)
-            .semantics { this.contentDescription = contentDescription },
-        contentAlignment = Alignment.Center
-    ) {
-        Image(
-            painter = painterResource(iconRes),
-            contentDescription = null,
-            modifier = Modifier.size(23.dp),
-            colorFilter = ColorFilter.tint(CoolingDashboardPalette.textPrimary)
-        )
-    }
-}
 
 @Composable
 internal fun CoolingAquariumHero(
@@ -453,8 +356,8 @@ private fun CoolingSensorBadge(modifier: Modifier = Modifier) {
             BasicText(
                 text = stringResource(R.string.device_cooling_temperature_sensor),
                 style = coolingTextStyle(
-                    size = 9.sp,
-                    lineHeight = 12.sp,
+                    size = 8.sp,
+                    lineHeight = 10.sp,
                     color = CoolingDashboardPalette.textPrimary
                 )
             )
@@ -462,8 +365,8 @@ private fun CoolingSensorBadge(modifier: Modifier = Modifier) {
                 text = stringResource(R.string.device_cooling_current_temperature_value),
                 modifier = Modifier.padding(top = 2.dp),
                 style = coolingTextStyle(
-                    size = 15.sp,
-                    lineHeight = 19.sp,
+                    size = 13.sp,
+                    lineHeight = 16.sp,
                     color = CoolingDashboardPalette.textPrimary,
                     semiBold = true
                 )
@@ -482,8 +385,8 @@ internal fun CoolingFanGaugeCard(modifier: Modifier = Modifier) {
                 .weight(1f),
             contentAlignment = Alignment.Center
         ) {
-            Canvas(modifier = Modifier.size(86.dp)) {
-                val stroke = 10.dp.toPx()
+            Canvas(modifier = Modifier.size(76.dp)) {
+                val stroke = 8.dp.toPx()
                 drawArc(
                     color = CoolingDashboardPalette.disabled,
                     startAngle = 135f,
@@ -509,18 +412,18 @@ internal fun CoolingFanGaugeCard(modifier: Modifier = Modifier) {
                 BasicText(
                     text = stringResource(R.string.device_cooling_fan_percent),
                     style = coolingTextStyle(
-                        size = 24.sp,
-                        lineHeight = 29.sp,
+                        size = 20.sp,
+                        lineHeight = 24.sp,
                         color = CoolingDashboardPalette.textPrimary,
                         semiBold = true
                     )
                 )
                 BasicText(
                     text = stringResource(R.string.device_cooling_mode_automatic),
-                    modifier = Modifier.padding(top = 2.dp),
+                    modifier = Modifier.padding(top = 1.dp),
                     style = coolingTextStyle(
-                        size = 11.sp,
-                        lineHeight = 14.sp,
+                        size = 9.sp,
+                        lineHeight = 12.sp,
                         color = CoolingDashboardPalette.cyan
                     )
                 )
@@ -536,8 +439,8 @@ internal fun CoolingFanModeCard(modifier: Modifier = Modifier) {
         Column(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(top = 7.dp),
-            verticalArrangement = Arrangement.spacedBy(5.dp)
+                .padding(top = 6.dp),
+            verticalArrangement = Arrangement.spacedBy(4.dp)
         ) {
             CoolingModeOption(
                 text = stringResource(R.string.device_cooling_mode_automatic),
@@ -560,20 +463,20 @@ private fun CoolingModeOption(text: String, selected: Boolean) {
     Row(
         modifier = Modifier
             .fillMaxWidth()
-            .height(27.dp)
-            .clip(RoundedCornerShape(14.dp))
+            .height(24.dp)
+            .clip(RoundedCornerShape(12.dp))
             .background(if (selected) Color(0xFF0D2133) else Color.Transparent)
             .border(
                 1.dp,
                 if (selected) Color(0xFF405267) else CoolingDashboardPalette.outlineSoft,
-                RoundedCornerShape(14.dp)
+                RoundedCornerShape(12.dp)
             )
-            .padding(horizontal = 10.dp),
+            .padding(horizontal = 8.dp),
         verticalAlignment = Alignment.CenterVertically
     ) {
         Box(
             modifier = Modifier
-                .size(14.dp)
+                .size(12.dp)
                 .clip(CircleShape)
                 .border(
                     width = 2.dp,
@@ -589,7 +492,7 @@ private fun CoolingModeOption(text: String, selected: Boolean) {
             if (selected) {
                 Box(
                     modifier = Modifier
-                        .size(6.dp)
+                        .size(5.dp)
                         .clip(CircleShape)
                         .background(CoolingDashboardPalette.accent)
                 )
@@ -597,10 +500,10 @@ private fun CoolingModeOption(text: String, selected: Boolean) {
         }
         BasicText(
             text = text,
-            modifier = Modifier.padding(start = 9.dp),
+            modifier = Modifier.padding(start = 7.dp),
             style = coolingTextStyle(
-                size = 12.sp,
-                lineHeight = 16.sp,
+                size = 10.sp,
+                lineHeight = 13.sp,
                 color = CoolingDashboardPalette.textPrimary
             ),
             maxLines = 1,
@@ -614,12 +517,12 @@ internal fun CoolingPowerCard(modifier: Modifier = Modifier) {
     CoolingDashboardCard(modifier = modifier) {
         CoolingCardTitle(text = stringResource(R.string.device_cooling_power))
         Row(
-            modifier = Modifier.padding(top = 10.dp),
+            modifier = Modifier.padding(top = 8.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
             Box(
                 modifier = Modifier
-                    .size(29.dp)
+                    .size(26.dp)
                     .clip(CircleShape)
                     .background(CoolingDashboardPalette.surfaceRaised)
                     .border(1.dp, CoolingDashboardPalette.outline, CircleShape),
@@ -628,35 +531,35 @@ internal fun CoolingPowerCard(modifier: Modifier = Modifier) {
                 CoolingGlyph(
                     type = CoolingGlyphType.LIGHTNING,
                     color = CoolingDashboardPalette.textPrimary,
-                    modifier = Modifier.size(17.dp)
+                    modifier = Modifier.size(15.dp)
                 )
             }
             BasicText(
                 text = stringResource(R.string.device_cooling_power_value),
                 modifier = Modifier.padding(start = 6.dp),
                 style = coolingTextStyle(
-                    size = 15.sp,
-                    lineHeight = 19.sp,
+                    size = 13.sp,
+                    lineHeight = 16.sp,
                     color = CoolingDashboardPalette.textPrimary,
                     semiBold = true
                 )
             )
         }
-        Spacer(modifier = Modifier.weight(1f))
         BasicText(
             text = stringResource(R.string.device_cooling_estimated_consumption),
+            modifier = Modifier.padding(top = 10.dp),
             style = coolingTextStyle(
-                size = 10.sp,
-                lineHeight = 13.sp,
+                size = 9.sp,
+                lineHeight = 12.sp,
                 color = CoolingDashboardPalette.textSecondary
             )
         )
         BasicText(
             text = stringResource(R.string.device_cooling_consumption_value),
-            modifier = Modifier.padding(top = 4.dp),
+            modifier = Modifier.padding(top = 2.dp),
             style = coolingTextStyle(
-                size = 15.sp,
-                lineHeight = 19.sp,
+                size = 13.sp,
+                lineHeight = 16.sp,
                 color = CoolingDashboardPalette.textPrimary
             )
         )
@@ -673,8 +576,8 @@ internal fun CoolingStatusCard(
         Column(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(top = 7.dp),
-            verticalArrangement = Arrangement.spacedBy(6.dp)
+                .padding(top = 6.dp),
+            verticalArrangement = Arrangement.spacedBy(5.dp)
         ) {
             CoolingStatusRow(
                 glyph = CoolingGlyphType.FAN,
@@ -718,16 +621,16 @@ private fun CoolingStatusRow(
         CoolingGlyph(
             type = glyph,
             color = CoolingDashboardPalette.textPrimary,
-            modifier = Modifier.size(15.dp)
+            modifier = Modifier.size(13.dp)
         )
         BasicText(
             text = label,
             modifier = Modifier
-                .padding(start = 7.dp)
+                .padding(start = 6.dp)
                 .weight(1f),
             style = coolingTextStyle(
-                size = 10.sp,
-                lineHeight = 13.sp,
+                size = 9.sp,
+                lineHeight = 12.sp,
                 color = CoolingDashboardPalette.textSecondary
             ),
             maxLines = 1,
@@ -737,8 +640,8 @@ private fun CoolingStatusRow(
             text = value,
             modifier = Modifier.padding(start = 5.dp),
             style = coolingTextStyle(
-                size = 10.sp,
-                lineHeight = 13.sp,
+                size = 9.sp,
+                lineHeight = 12.sp,
                 color = if (success) {
                     CoolingDashboardPalette.success
                 } else {
@@ -760,8 +663,8 @@ internal fun CoolingProfileCard(modifier: Modifier = Modifier) {
             modifier = Modifier
                 .fillMaxWidth()
                 .weight(1f)
-                .padding(top = 6.dp),
-            horizontalArrangement = Arrangement.spacedBy(6.dp),
+                .padding(top = 5.dp),
+            horizontalArrangement = Arrangement.spacedBy(5.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
             CoolingProfileChip(
@@ -811,18 +714,18 @@ private fun CoolingProfileChip(
                 if (selected) CoolingDashboardPalette.accent else CoolingDashboardPalette.outline,
                 RoundedCornerShape(13.dp)
             )
-            .padding(horizontal = 3.dp, vertical = 4.dp),
+            .padding(horizontal = 3.dp, vertical = 3.dp),
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.Center
     ) {
         CoolingGlyph(
             type = glyph,
             color = CoolingDashboardPalette.textPrimary,
-            modifier = Modifier.size(18.dp)
+            modifier = Modifier.size(16.dp)
         )
         BasicText(
             text = text,
-            modifier = Modifier.padding(top = 4.dp),
+            modifier = Modifier.padding(top = 2.dp),
             style = coolingTextStyle(
                 size = 8.sp,
                 lineHeight = 10.sp,
@@ -841,10 +744,10 @@ internal fun CoolingManualFanCard(modifier: Modifier = Modifier) {
         CoolingCardTitle(text = stringResource(R.string.device_cooling_manual_fan_speed))
         BasicText(
             text = stringResource(R.string.device_cooling_manual_only),
-            modifier = Modifier.padding(top = 2.dp),
+            modifier = Modifier.padding(top = 1.dp),
             style = coolingTextStyle(
-                size = 9.sp,
-                lineHeight = 12.sp,
+                size = 8.sp,
+                lineHeight = 10.sp,
                 color = CoolingDashboardPalette.textSecondary
             )
         )
@@ -856,10 +759,10 @@ internal fun CoolingManualFanCard(modifier: Modifier = Modifier) {
         ) {
             BasicText(
                 text = stringResource(R.string.device_cooling_range_minimum),
-                modifier = Modifier.padding(bottom = 3.dp),
+                modifier = Modifier.padding(bottom = 2.dp),
                 style = coolingTextStyle(
-                    size = 10.sp,
-                    lineHeight = 13.sp,
+                    size = 9.sp,
+                    lineHeight = 12.sp,
                     color = CoolingDashboardPalette.textSecondary
                 )
             )
@@ -872,8 +775,8 @@ internal fun CoolingManualFanCard(modifier: Modifier = Modifier) {
                 BasicText(
                     text = stringResource(R.string.device_cooling_fan_percent),
                     style = coolingTextStyle(
-                        size = 11.sp,
-                        lineHeight = 14.sp,
+                        size = 10.sp,
+                        lineHeight = 13.sp,
                         color = CoolingDashboardPalette.textPrimary,
                         semiBold = true
                     )
@@ -882,162 +785,19 @@ internal fun CoolingManualFanCard(modifier: Modifier = Modifier) {
                     progress = PLACEHOLDER_FAN_FRACTION,
                     modifier = Modifier
                         .fillMaxWidth()
-                        .height(23.dp)
+                        .height(18.dp)
                 )
             }
             BasicText(
                 text = stringResource(R.string.device_cooling_range_maximum),
-                modifier = Modifier.padding(bottom = 3.dp),
+                modifier = Modifier.padding(bottom = 2.dp),
                 style = coolingTextStyle(
-                    size = 10.sp,
-                    lineHeight = 13.sp,
+                    size = 9.sp,
+                    lineHeight = 12.sp,
                     color = CoolingDashboardPalette.textSecondary
                 )
             )
         }
-    }
-}
-
-@Composable
-internal fun CoolingDashboardBottomNavigation(modifier: Modifier = Modifier) {
-    Column(
-        modifier = modifier
-            .fillMaxWidth()
-            .height(BOTTOM_NAV_HEIGHT)
-            .background(CoolingDashboardPalette.background)
-    ) {
-        Box(
-            modifier = Modifier
-                .fillMaxWidth()
-                .height(1.dp)
-                .background(CoolingDashboardPalette.outlineSoft)
-        )
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .weight(1f)
-        ) {
-            CoolingBottomNavigationItem(
-                type = CoolingBottomNavigationType.STATUS,
-                label = stringResource(R.string.device_cooling_nav_status),
-                selected = true,
-                modifier = Modifier.weight(1f)
-            )
-            CoolingBottomNavigationItem(
-                type = CoolingBottomNavigationType.PROGRAM,
-                label = stringResource(R.string.device_cooling_nav_program),
-                selected = false,
-                modifier = Modifier.weight(1f)
-            )
-            CoolingBottomNavigationItem(
-                type = CoolingBottomNavigationType.SETTINGS,
-                label = stringResource(R.string.device_cooling_nav_settings),
-                selected = false,
-                modifier = Modifier.weight(1f)
-            )
-        }
-    }
-}
-
-@Composable
-private fun CoolingBottomNavigationItem(
-    type: CoolingBottomNavigationType,
-    label: String,
-    selected: Boolean,
-    modifier: Modifier = Modifier
-) {
-    val color = if (selected) {
-        CoolingDashboardPalette.accent
-    } else {
-        CoolingDashboardPalette.textSecondary
-    }
-    Column(
-        modifier = modifier.fillMaxHeight(),
-        horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.Center
-    ) {
-        Canvas(modifier = Modifier.size(19.dp)) {
-            val stroke = 1.25.dp.toPx()
-            when (type) {
-                CoolingBottomNavigationType.STATUS -> {
-                    val squareSize = size.minDimension * 0.36f
-                    val gap = size.minDimension * 0.13f
-                    val start = (size.minDimension - squareSize * 2f - gap) / 2f
-                    repeat(2) { row ->
-                        repeat(2) { column ->
-                            drawRoundRect(
-                                color = color,
-                                topLeft = Offset(
-                                    start + column * (squareSize + gap),
-                                    start + row * (squareSize + gap)
-                                ),
-                                size = Size(squareSize, squareSize),
-                                cornerRadius = CornerRadius(1.5.dp.toPx())
-                            )
-                        }
-                    }
-                }
-
-                CoolingBottomNavigationType.PROGRAM -> {
-                    drawRoundRect(
-                        color = color,
-                        topLeft = Offset(size.width * 0.16f, size.height * 0.20f),
-                        size = Size(size.width * 0.68f, size.height * 0.67f),
-                        cornerRadius = CornerRadius(2.dp.toPx()),
-                        style = Stroke(stroke)
-                    )
-                    drawLine(
-                        color = color,
-                        start = Offset(size.width * 0.16f, size.height * 0.38f),
-                        end = Offset(size.width * 0.84f, size.height * 0.38f),
-                        strokeWidth = stroke
-                    )
-                    listOf(0.34f, 0.66f).forEach { x ->
-                        drawLine(
-                            color = color,
-                            start = Offset(size.width * x, size.height * 0.11f),
-                            end = Offset(size.width * x, size.height * 0.28f),
-                            strokeWidth = stroke,
-                            cap = StrokeCap.Round
-                        )
-                    }
-                }
-
-                CoolingBottomNavigationType.SETTINGS -> {
-                    listOf(0.26f, 0.50f, 0.74f).forEachIndexed { index, y ->
-                        val thumbX = listOf(0.63f, 0.38f, 0.69f)[index]
-                        drawLine(
-                            color = color,
-                            start = Offset(size.width * 0.12f, size.height * y),
-                            end = Offset(size.width * 0.88f, size.height * y),
-                            strokeWidth = stroke,
-                            cap = StrokeCap.Round
-                        )
-                        drawCircle(
-                            color = CoolingDashboardPalette.background,
-                            radius = 2.7.dp.toPx(),
-                            center = Offset(size.width * thumbX, size.height * y)
-                        )
-                        drawCircle(
-                            color = color,
-                            radius = 2.7.dp.toPx(),
-                            center = Offset(size.width * thumbX, size.height * y),
-                            style = Stroke(stroke)
-                        )
-                    }
-                }
-            }
-        }
-        BasicText(
-            text = label,
-            modifier = Modifier.padding(top = 4.dp),
-            style = coolingTextStyle(
-                size = 10.sp,
-                lineHeight = 13.sp,
-                color = color,
-                textAlign = TextAlign.Center
-            )
-        )
     }
 }
 
@@ -1048,7 +808,7 @@ private fun CoolingDisabledSlider(
 ) {
     Canvas(modifier = modifier) {
         val centerY = size.height / 2f
-        val radius = 7.dp.toPx()
+        val radius = 6.dp.toPx()
         val startX = radius
         val endX = size.width - radius
         val thumbX = startX + (endX - startX) * progress
@@ -1056,7 +816,7 @@ private fun CoolingDisabledSlider(
             color = CoolingDashboardPalette.disabled,
             start = Offset(startX, centerY),
             end = Offset(endX, centerY),
-            strokeWidth = 4.dp.toPx(),
+            strokeWidth = 3.dp.toPx(),
             cap = StrokeCap.Round
         )
         drawLine(
@@ -1065,7 +825,7 @@ private fun CoolingDisabledSlider(
             ),
             start = Offset(startX, centerY),
             end = Offset(thumbX, centerY),
-            strokeWidth = 4.dp.toPx(),
+            strokeWidth = 3.dp.toPx(),
             cap = StrokeCap.Round
         )
         drawCircle(
@@ -1079,7 +839,7 @@ private fun CoolingDisabledSlider(
 @Composable
 internal fun CoolingDashboardCard(
     modifier: Modifier = Modifier,
-    contentPadding: PaddingValues = PaddingValues(12.dp),
+    contentPadding: PaddingValues = PaddingValues(10.dp),
     content: @Composable ColumnScope.() -> Unit
 ) {
     val shape = RoundedCornerShape(CARD_RADIUS)
@@ -1098,8 +858,8 @@ private fun CoolingCardTitle(text: String) {
     BasicText(
         text = text,
         style = coolingTextStyle(
-            size = 12.sp,
-            lineHeight = 15.sp,
+            size = 11.sp,
+            lineHeight = 14.sp,
             color = CoolingDashboardPalette.textPrimary,
             semiBold = true
         ),
@@ -1313,15 +1073,7 @@ private enum class CoolingGlyphType {
     ROCKET
 }
 
-private enum class CoolingBottomNavigationType {
-    STATUS,
-    PROGRAM,
-    SETTINGS
-}
-
-private val HEADER_HEIGHT = 56.dp
 private val HERO_HEIGHT = 228.dp
-private val BOTTOM_NAV_HEIGHT = 59.dp
 private val CARD_RADIUS = 16.dp
 private const val PLACEHOLDER_FAN_FRACTION = 0.60f
 private const val FAN_ROTATION_DURATION_MS = 1_500

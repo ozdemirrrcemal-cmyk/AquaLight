@@ -5,7 +5,11 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.aqua.aqualight.R
 import com.aqua.aqualight.application.devices.DeviceRootOperations
+import com.aqua.aqualight.application.devices.DeviceRootCatalogState
 import com.aqua.aqualight.application.devices.DeviceRootSnapshot
+import com.aqua.aqualight.application.devices.OwnerDeviceAvailability
+import com.aqua.aqualight.application.devices.OwnerDeviceFamily
+import com.aqua.aqualight.ui.common.devicepresence.DeviceConnectionVisualState
 import com.aqua.aqualight.ui.common.text.AquaUiText
 import com.aqua.aqualight.ui.tabs.devices.detail.common.DeviceRootKind
 import com.aqua.aqualight.ui.tabs.devices.detail.common.DeviceRootMenuMapper
@@ -52,6 +56,8 @@ class DeviceCoolingRootViewModel(
     private fun emptyState(deviceUid: String) = DeviceCoolingRootUiState(
         deviceUid = deviceUid,
         connectionStatusRes = R.string.device_offline,
+        connectionVisualState = DeviceConnectionVisualState.OFFLINE,
+        contentEnabled = false,
         primaryCountLabelRes = KIND.primaryCountLabelRes,
         primarySectionTitleRes = KIND.primarySectionTitleRes,
         primarySectionPlaceholder = AquaUiText.Resource(KIND.primarySectionPlaceholderRes),
@@ -61,10 +67,21 @@ class DeviceCoolingRootViewModel(
 
     private fun DeviceRootSnapshot.toRootUiState(): DeviceCoolingRootUiState {
         val menuSections = DeviceRootMenuMapper.overview(kind = KIND, snapshot = this)
+        val contentEnabled =
+            availability == OwnerDeviceAvailability.REACHABLE &&
+                catalogState == DeviceRootCatalogState.VALID &&
+                family == OwnerDeviceFamily.COOLING
+        val connectionVisualState = if (contentEnabled) {
+            DeviceConnectionVisualState.ONLINE
+        } else {
+            DeviceConnectionVisualState.OFFLINE
+        }
         return DeviceCoolingRootUiState(
             title = title,
             deviceUid = deviceUid,
-            connectionStatusRes = DeviceRootPresentationMapper.availabilityLabelRes(this),
+            connectionStatusRes = connectionVisualState.statusLabelRes,
+            connectionVisualState = connectionVisualState,
+            contentEnabled = contentEnabled,
             ipText = ipAddress,
             firmwareText = firmwareLabel,
             modelText = modelLabel,
@@ -87,6 +104,8 @@ data class DeviceCoolingRootUiState(
     val title: String = "",
     val deviceUid: String = "",
     @StringRes val connectionStatusRes: Int = R.string.device_offline,
+    val connectionVisualState: DeviceConnectionVisualState = DeviceConnectionVisualState.OFFLINE,
+    val contentEnabled: Boolean = false,
     val ipText: String = "",
     val firmwareText: String = "",
     val modelText: String = "",

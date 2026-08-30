@@ -15,6 +15,9 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.alpha
+import androidx.compose.ui.semantics.disabled
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.aqua.aqualight.R
@@ -28,20 +31,17 @@ import com.aqua.aqualight.R
 @Composable
 internal fun DeviceCoolingCatalogScreen(
     state: DeviceCoolingRootUiState,
-    onBackClick: () -> Unit,
-    onSettingsClick: () -> Unit,
     modifier: Modifier = Modifier
 ) {
     Column(
         modifier = modifier
             .fillMaxSize()
             .background(CoolingDashboardPalette.background)
+            .alpha(if (state.contentEnabled) CONTENT_ENABLED_ALPHA else CONTENT_DISABLED_ALPHA)
+            .semantics {
+                if (!state.contentEnabled) disabled()
+            }
     ) {
-        CoolingDashboardHeader(
-            isOnline = state.connectionStatusRes == R.string.device_online,
-            onBackClick = onBackClick,
-            onSettingsClick = onSettingsClick
-        )
         LazyColumn(
             modifier = Modifier
                 .fillMaxWidth()
@@ -69,7 +69,6 @@ internal fun DeviceCoolingCatalogScreen(
                 CoolingProfileAndManualControls()
             }
         }
-        CoolingDashboardBottomNavigation()
     }
 }
 
@@ -181,19 +180,20 @@ private fun CoolingProfileAndManualControls() {
 @Composable
 private fun DeviceCoolingCatalogScreenPreview() {
     DeviceCoolingCatalogScreen(
-        state = DeviceCoolingRootUiState(connectionStatusRes = R.string.device_online),
-        onBackClick = {},
-        onSettingsClick = {}
+        state = DeviceCoolingRootUiState(
+            connectionStatusRes = R.string.device_online,
+            contentEnabled = true
+        )
     )
 }
 
 private val SCREEN_HORIZONTAL_PADDING = 16.dp
-private val SCREEN_TOP_PADDING = 4.dp
-private val SCREEN_BOTTOM_PADDING = 4.dp
+private val SCREEN_TOP_PADDING = 6.dp
+private val SCREEN_BOTTOM_PADDING = 14.dp
 private val SECTION_GAP = 8.dp
 private val CARD_GAP = 8.dp
-private val SUMMARY_CARD_HEIGHT = 141.dp
-private val BOTTOM_CARD_HEIGHT = 86.dp
+private val SUMMARY_CARD_HEIGHT = 126.dp
+private val BOTTOM_CARD_HEIGHT = 76.dp
 private val FOUR_CARD_MIN_WIDTH = 456.dp
 private val BOTTOM_ROW_MIN_WIDTH = 440.dp
 private const val FAN_GAUGE_WEIGHT = 0.96f
@@ -202,3 +202,5 @@ private const val POWER_WEIGHT = 0.9f
 private const val STATUS_WEIGHT = 1.08f
 private const val PROFILE_WEIGHT = 1.08f
 private const val MANUAL_WEIGHT = 1f
+private const val CONTENT_ENABLED_ALPHA = 1f
+private const val CONTENT_DISABLED_ALPHA = 0.42f

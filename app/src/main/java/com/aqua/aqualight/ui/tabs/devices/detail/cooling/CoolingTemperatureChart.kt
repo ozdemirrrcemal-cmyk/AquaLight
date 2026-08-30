@@ -40,10 +40,10 @@ internal fun CoolingTemperatureChart(modifier: Modifier = Modifier) {
     ) {
         BasicText(
             text = stringResource(R.string.device_cooling_temperature),
-            modifier = Modifier.padding(start = 12.dp, top = 11.dp, end = 12.dp),
+            modifier = Modifier.padding(start = 10.dp, top = 9.dp, end = 10.dp),
             style = coolingTextStyle(
-                size = 14.sp,
-                lineHeight = 18.sp,
+                size = 12.sp,
+                lineHeight = 15.sp,
                 color = CoolingDashboardPalette.textPrimary,
                 semiBold = true
             )
@@ -52,7 +52,7 @@ internal fun CoolingTemperatureChart(modifier: Modifier = Modifier) {
             modifier = Modifier
                 .fillMaxWidth()
                 .weight(1f)
-                .padding(start = 7.dp, end = 9.dp, bottom = 8.dp)
+                .padding(start = 6.dp, end = 8.dp, bottom = 7.dp)
         ) {
             CoolingTemperatureCanvas(
                 modifier = Modifier
@@ -62,9 +62,9 @@ internal fun CoolingTemperatureChart(modifier: Modifier = Modifier) {
             )
             CoolingTemperatureMetrics(
                 modifier = Modifier
-                    .width(83.dp)
+                    .width(70.dp)
                     .fillMaxHeight()
-                    .padding(start = 9.dp, top = 2.dp)
+                    .padding(start = 7.dp, top = 1.dp)
             )
         }
     }
@@ -81,16 +81,16 @@ private fun CoolingTemperatureCanvas(modifier: Modifier = Modifier) {
         stringResource(R.string.device_cooling_chart_now)
     )
     val labelStyle = coolingTextStyle(
-        size = 8.sp,
-        lineHeight = 10.sp,
+        size = 7.sp,
+        lineHeight = 9.sp,
         color = CoolingDashboardPalette.textSecondary
     )
 
     Canvas(modifier = modifier) {
-        val left = 36.dp.toPx()
+        val left = 32.dp.toPx()
         val right = 4.dp.toPx()
-        val top = 8.dp.toPx()
-        val bottom = 20.dp.toPx()
+        val top = 6.dp.toPx()
+        val bottom = 18.dp.toPx()
         val graphWidth = size.width - left - right
         val graphHeight = size.height - top - bottom
         val graphBottom = top + graphHeight
@@ -204,9 +204,10 @@ private fun CoolingTemperatureMetrics(modifier: Modifier = Modifier) {
     Column(modifier = modifier) {
         BasicText(
             text = stringResource(R.string.device_cooling_current_temperature_value),
+            modifier = Modifier.fillMaxWidth(),
             style = coolingTextStyle(
-                size = 20.sp,
-                lineHeight = 24.sp,
+                size = 15.sp,
+                lineHeight = 19.sp,
                 color = CoolingDashboardPalette.textPrimary,
                 semiBold = true,
                 textAlign = TextAlign.End
@@ -216,10 +217,10 @@ private fun CoolingTemperatureMetrics(modifier: Modifier = Modifier) {
             text = stringResource(R.string.device_cooling_now),
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(top = 3.dp),
+                .padding(top = 2.dp),
             style = coolingTextStyle(
-                size = 9.sp,
-                lineHeight = 12.sp,
+                size = 8.sp,
+                lineHeight = 10.sp,
                 color = CoolingDashboardPalette.textSecondary,
                 textAlign = TextAlign.End
             )
@@ -228,10 +229,10 @@ private fun CoolingTemperatureMetrics(modifier: Modifier = Modifier) {
             text = stringResource(R.string.device_cooling_target_temperature_value),
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(top = 29.dp),
+                .padding(top = 20.dp),
             style = coolingTextStyle(
-                size = 16.sp,
-                lineHeight = 20.sp,
+                size = 15.sp,
+                lineHeight = 19.sp,
                 color = CoolingDashboardPalette.textPrimary,
                 semiBold = true,
                 textAlign = TextAlign.End
@@ -241,10 +242,10 @@ private fun CoolingTemperatureMetrics(modifier: Modifier = Modifier) {
             text = stringResource(R.string.device_cooling_target),
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(top = 3.dp),
+                .padding(top = 2.dp),
             style = coolingTextStyle(
-                size = 9.sp,
-                lineHeight = 12.sp,
+                size = 8.sp,
+                lineHeight = 10.sp,
                 color = CoolingDashboardPalette.textSecondary,
                 textAlign = TextAlign.End
             )
@@ -252,7 +253,7 @@ private fun CoolingTemperatureMetrics(modifier: Modifier = Modifier) {
     }
 }
 
-private val CHART_CARD_HEIGHT = 158.dp
+private val CHART_CARD_HEIGHT = 146.dp
 private const val CHART_MIN = 21f
 private const val CHART_MAX = 30f
 private const val PLACEHOLDER_TARGET = 26f
