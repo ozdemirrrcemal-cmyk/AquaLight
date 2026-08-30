@@ -42,6 +42,7 @@ import com.aqua.aqualight.application.devices.cooling.DeviceCoolingDailyTemperat
 import com.aqua.aqualight.application.devices.cooling.DeviceCoolingTemperatureHistoryPoint
 import com.aqua.aqualight.application.devices.cooling.DeviceCoolingTemperatureHistoryRange
 import com.aqua.aqualight.application.devices.cooling.DeviceCoolingTemperatureHistorySnapshot
+import com.aqua.aqualight.ui.common.cooling.AquaCoolingDashboardAlpha
 import com.aqua.aqualight.ui.common.cooling.AquaCoolingDashboardCardSurface
 import com.aqua.aqualight.ui.common.cooling.AquaCoolingDashboardGeometry
 import com.aqua.aqualight.ui.common.cooling.AquaCoolingDashboardPalette
@@ -443,12 +444,7 @@ private fun androidx.compose.ui.graphics.drawscope.DrawScope.drawHistorySeries(
         )
     }
     val linePath = smoothHistoryPath(offsets)
-    val areaPath = Path().apply {
-        addPath(linePath)
-        lineTo(offsets.last().x, verticalPadding + plotHeight)
-        lineTo(offsets.first().x, verticalPadding + plotHeight)
-        close()
-    }
+    val areaPath = historyAreaPath(offsets, verticalPadding + plotHeight)
     drawPath(areaPath, colors.accent.copy(alpha = AquaCoolingHistoryAlpha.chartArea))
     drawPath(
         path = linePath,
@@ -788,6 +784,27 @@ private fun smoothHistoryPath(points: List<Offset>): Path {
             current.y
         )
     }
+    return path
+}
+
+private fun historyAreaPath(points: List<Offset>, bottomY: Float): Path {
+    val path = Path()
+    if (points.isEmpty()) return path
+    path.moveTo(points.first().x, bottomY)
+    path.lineTo(points.first().x, points.first().y)
+    points.zipWithNext().forEach { (previous, current) ->
+        val middleX = (previous.x + current.x) / 2f
+        path.cubicTo(
+            middleX,
+            previous.y,
+            middleX,
+            current.y,
+            current.x,
+            current.y
+        )
+    }
+    path.lineTo(points.last().x, bottomY)
+    path.close()
     return path
 }
 
