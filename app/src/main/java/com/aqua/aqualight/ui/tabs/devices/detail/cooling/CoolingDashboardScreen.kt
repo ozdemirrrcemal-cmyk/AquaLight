@@ -22,6 +22,7 @@ internal fun DeviceCoolingDashboardScreen(
     onModeSelected: (CoolingControlMode) -> Unit,
     onProfileSelected: (CoolingProfile) -> Unit,
     onManualFanPercentChanged: (Int) -> Unit,
+    onTemperatureHistoryClick: () -> Unit,
     onAutomaticSettingsClick: () -> Unit,
     onProgramSettingsClick: () -> Unit,
     modifier: Modifier = Modifier
@@ -50,7 +51,13 @@ internal fun DeviceCoolingDashboardScreen(
         verticalArrangement = Arrangement.spacedBy(AquaCoolingDashboardGeometry.cardGap)
     ) {
         item(key = "temperature") {
-            CoolingTemperatureCard(state, colors, typography)
+            CoolingTemperatureCard(
+                state = state,
+                colors = colors,
+                typography = typography,
+                enabled = state.contentEnabled,
+                onClick = onTemperatureHistoryClick
+            )
         }
         item(key = "fan") {
             Row(
