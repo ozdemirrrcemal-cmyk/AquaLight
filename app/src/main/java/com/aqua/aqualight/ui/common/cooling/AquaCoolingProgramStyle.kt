@@ -10,40 +10,37 @@ object AquaCoolingProgramGeometry {
     val screenBottomPadding = 28.dp
     val sectionGap = 10.dp
 
-    val activeCardMinimumHeight = 76.dp
-    val activeRowGap = 5.dp
+    val activeCardMinimumHeight = 62.dp
+    val activeRowGap = 4.dp
     val activeDotSize = 7.dp
 
-    val timelineCardMinimumHeight = 132.dp
-    val timelineHeight = 54.dp
+    val timelineCardMinimumHeight = 124.dp
+    val timelineHeight = 48.dp
     val timelineTrackHeight = 8.dp
     val timelineMarkerRadius = 3.dp
     val timelineNowStrokeWidth = 2.dp
-    val timelineAxisGap = 7.dp
+    val timelineAxisGap = 6.dp
     val timelineLegendGap = 8.dp
 
-    val slotCardMinimumHeight = 124.dp
-    val slotGap = 8.dp
-    val slotHeaderGap = 5.dp
-    val slotMetricGap = 5.dp
+    val slotHeaderShape = RoundedCornerShape(10.dp)
+    val slotHeaderVerticalPadding = 2.dp
+    val slotHeaderGap = 7.dp
+    val slotMetricGap = 6.dp
     val slotChevronWidth = 18.dp
     val slotChevronHeight = 18.dp
+    val selectedSlotOutlineWidth = 1.dp
+    val chevronStrokeWidth = 1.6.dp
 
-    val addActionHeight = 44.dp
-    val addActionShape = RoundedCornerShape(14.dp)
-    val addActionHorizontalPadding = 14.dp
+    val inlineActionShape = RoundedCornerShape(10.dp)
+    val inlineActionHorizontalPadding = 8.dp
+    val inlineActionVerticalPadding = 4.dp
 
-    val editorCardMinimumHeight = 274.dp
-    val editorRowShape = RoundedCornerShape(13.dp)
+    val expandedSectionTopGap = 5.dp
+    val expandedDividerHeight = 1.dp
+    val editorRowShape = RoundedCornerShape(12.dp)
     val editorRowHorizontalPadding = 10.dp
-    val editorRowVerticalPadding = 10.dp
+    val editorRowVerticalPadding = 9.dp
     val editorRowGap = 7.dp
-    val editorChevronWidth = 18.dp
-    val editorChevronHeight = 18.dp
-
-    val saveActionHeight = 48.dp
-    val saveActionShape = RoundedCornerShape(14.dp)
-    val saveActionHorizontalPadding = 16.dp
 }
 
 object AquaCoolingProgramAlpha {
@@ -55,11 +52,8 @@ object AquaCoolingProgramAlpha {
     const val timelineCustom = 0.82f
     const val timelineNow = 0.92f
     const val slotSelectedOutline = 0.84f
-    const val slotSelectedBackground = 0.07f
     const val editorRowBackground = 0.58f
     const val editorRowOutline = 0.78f
-    const val addBackground = 0.07f
-    const val addOutline = 0.52f
-    const val saveEnabled = 0.92f
-    const val saveDisabled = 0.30f
+    const val expandedDivider = 0.46f
+    const val inlineActionDisabled = 0.40f
 }
