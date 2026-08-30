@@ -18,6 +18,7 @@ import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -40,12 +41,14 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.geometry.CornerRadius
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.PathEffect
 import androidx.compose.ui.graphics.StrokeCap
@@ -53,8 +56,11 @@ import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.drawscope.rotate
 import androidx.compose.ui.graphics.drawscope.withTransform
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.res.colorResource
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.Font
 import androidx.compose.ui.text.font.FontFamily
@@ -63,6 +69,7 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.aqua.aqualight.R
+import com.aqua.aqualight.ui.common.devicepresence.DeviceConnectionVisualState
 import kotlin.math.PI
 import kotlin.math.cos
 import kotlin.math.sin
@@ -84,6 +91,88 @@ internal object CoolingDashboardPalette {
 
 private val InterRegular = FontFamily(Font(R.font.inter_regular))
 private val InterSemiBold = FontFamily(Font(R.font.inter_semibold))
+
+@Composable
+internal fun CoolingDashboardHeader(
+    title: String,
+    connectionVisualState: DeviceConnectionVisualState,
+    settingsEnabled: Boolean,
+    onBackClick: () -> Unit,
+    onSettingsClick: () -> Unit,
+    modifier: Modifier = Modifier
+) {
+    val backDescription = stringResource(R.string.signin_back_button)
+    val settingsDescription = stringResource(R.string.device_cooling_open_settings_description)
+    val connectionDescription = stringResource(connectionVisualState.accessibilityLabelRes)
+    Row(
+        modifier = modifier
+            .fillMaxWidth()
+            .height(COOLING_HEADER_HEIGHT)
+            .padding(horizontal = 8.dp),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        CoolingHeaderIcon(
+            iconRes = R.drawable.ic_back,
+            contentDescription = backDescription,
+            onClick = onBackClick
+        )
+        Row(
+            modifier = Modifier
+                .weight(1f)
+                .padding(start = 2.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            BasicText(
+                text = title,
+                modifier = Modifier.weight(1f, fill = false),
+                style = coolingTextStyle(
+                    size = 17.sp,
+                    lineHeight = 21.sp,
+                    color = CoolingDashboardPalette.textPrimary,
+                    semiBold = true
+                ),
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis
+            )
+            Image(
+                painter = painterResource(R.drawable.ic_status_wifi),
+                contentDescription = connectionDescription,
+                colorFilter = ColorFilter.tint(
+                    colorResource(connectionVisualState.tintColorRes)
+                ),
+                modifier = Modifier
+                    .padding(start = 8.dp)
+                    .size(16.dp)
+            )
+        }
+        CoolingHeaderIcon(
+            iconRes = R.drawable.ic_settings,
+            contentDescription = settingsDescription,
+            enabled = settingsEnabled,
+            onClick = onSettingsClick
+        )
+    }
+}
+
+@Composable
+private fun CoolingHeaderIcon(
+    iconRes: Int,
+    contentDescription: String,
+    onClick: () -> Unit,
+    enabled: Boolean = true
+) {
+    Image(
+        painter = painterResource(iconRes),
+        contentDescription = null,
+        colorFilter = ColorFilter.tint(CoolingDashboardPalette.textPrimary),
+        modifier = Modifier
+            .size(COOLING_HEADER_TOUCH_SIZE)
+            .alpha(if (enabled) 1f else HEADER_DISABLED_ALPHA)
+            .semantics { this.contentDescription = contentDescription }
+            .clickable(enabled = enabled, onClick = onClick)
+            .padding(COOLING_HEADER_ICON_PADDING)
+    )
+}
 
 @Composable
 internal fun CoolingAquariumHero(
@@ -1075,6 +1164,10 @@ private enum class CoolingGlyphType {
 
 private val HERO_HEIGHT = 228.dp
 private val CARD_RADIUS = 16.dp
+private val COOLING_HEADER_HEIGHT = 50.dp
+private val COOLING_HEADER_TOUCH_SIZE = 40.dp
+private val COOLING_HEADER_ICON_PADDING = 9.dp
+private const val HEADER_DISABLED_ALPHA = 0.42f
 private const val PLACEHOLDER_FAN_FRACTION = 0.60f
 private const val FAN_ROTATION_DURATION_MS = 1_500
 private const val WATER_WAVE_DURATION_MS = 2_400

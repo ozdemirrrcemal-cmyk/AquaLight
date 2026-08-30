@@ -16,11 +16,13 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.disabled
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.aqua.aqualight.R
+import com.aqua.aqualight.ui.common.devicepresence.DeviceConnectionVisualState
 
 /**
  * Shared visual shell for every Cool Pro catalog variant (1F, 2F and 3F).
@@ -31,21 +33,35 @@ import com.aqua.aqualight.R
 @Composable
 internal fun DeviceCoolingCatalogScreen(
     state: DeviceCoolingRootUiState,
+    onBackClick: () -> Unit,
+    onSettingsClick: () -> Unit,
     modifier: Modifier = Modifier
 ) {
+    val fallbackTitle = stringResource(R.string.device_unknown_device)
     Column(
         modifier = modifier
             .fillMaxSize()
             .background(CoolingDashboardPalette.background)
-            .alpha(if (state.contentEnabled) CONTENT_ENABLED_ALPHA else CONTENT_DISABLED_ALPHA)
-            .semantics {
-                if (!state.contentEnabled) disabled()
-            }
     ) {
+        CoolingDashboardHeader(
+            title = state.title.ifBlank { fallbackTitle },
+            connectionVisualState = state.connectionVisualState,
+            settingsEnabled = state.contentEnabled,
+            onBackClick = onBackClick,
+            onSettingsClick = onSettingsClick
+        )
         LazyColumn(
             modifier = Modifier
                 .fillMaxWidth()
-                .weight(1f),
+                .weight(1f)
+                .alpha(if (state.contentEnabled) {
+                    CONTENT_ENABLED_ALPHA
+                } else {
+                    CONTENT_DISABLED_ALPHA
+                })
+                .semantics {
+                    if (!state.contentEnabled) disabled()
+                },
             contentPadding = PaddingValues(
                 start = SCREEN_HORIZONTAL_PADDING,
                 top = SCREEN_TOP_PADDING,
@@ -181,9 +197,13 @@ private fun CoolingProfileAndManualControls() {
 private fun DeviceCoolingCatalogScreenPreview() {
     DeviceCoolingCatalogScreen(
         state = DeviceCoolingRootUiState(
+            title = stringResource(R.string.device_unknown_device),
             connectionStatusRes = R.string.device_online,
+            connectionVisualState = DeviceConnectionVisualState.ONLINE,
             contentEnabled = true
-        )
+        ),
+        onBackClick = {},
+        onSettingsClick = {}
     )
 }
 
