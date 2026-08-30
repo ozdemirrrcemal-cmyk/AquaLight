@@ -93,6 +93,52 @@ object AquaCoolingDashboardGeometry {
     val statusValueGap = 5.dp
 }
 
+object AquaCoolingHistoryGeometry {
+    val screenHorizontalPadding = AquaCoolingDashboardGeometry.screenHorizontalPadding
+    val screenTopPadding = 10.dp
+    val screenBottomPadding = 28.dp
+    val sectionGap = 10.dp
+
+    val rangeContainerShape = RoundedCornerShape(16.dp)
+    val rangeContainerPadding = 4.dp
+    val rangeSegmentShape = RoundedCornerShape(12.dp)
+    val rangeSegmentVerticalPadding = 9.dp
+    val rangeSegmentHorizontalPadding = 6.dp
+    val rangeSegmentGap = 4.dp
+
+    val chartCardMinimumHeight = 270.dp
+    val chartHeight = 210.dp
+    val chartCornerRadius = 12.dp
+    val chartPadding = 8.dp
+    val chartYAxisWidth = 35.dp
+    val chartYAxisGap = 5.dp
+    val chartGridStrokeWidth = 1.dp
+    val chartLineStrokeWidth = 2.4.dp
+    val chartGlowStrokeWidth = 7.dp
+    val chartPointRadius = 3.dp
+    val chartAxisGap = 7.dp
+
+    val summaryGap = 8.dp
+    val summaryCardMinimumHeight = 72.dp
+    val summaryValueSize = 18.sp
+
+    val tableHeaderVerticalPadding = 8.dp
+    val tableRowVerticalPadding = 10.dp
+    val tableColumnGap = 6.dp
+    val tableDividerHeight = 1.dp
+    val tableDateWeight = 1.35f
+    val tableValueWeight = 1f
+
+    val sourceDotSize = 6.dp
+    val sourceGap = 6.dp
+
+    val messageCardMinimumHeight = 142.dp
+    val messageGap = 8.dp
+    val retryShape = RoundedCornerShape(18.dp)
+    val retryHorizontalPadding = 14.dp
+    val retryVerticalPadding = 8.dp
+}
+
 object AquaCoolingDashboardTypography {
     val titleSize = 13.sp
     val titleLineHeight = 16.sp
@@ -126,6 +172,18 @@ object AquaCoolingDashboardAlpha {
     const val detailActionBackground = 0.08f
     const val detailActionOutline = 0.34f
     const val statusDot = 0.96f
+}
+
+object AquaCoolingHistoryAlpha {
+    const val rangeSelectedBackground = 0.92f
+    const val rangeIdleBackground = 0.44f
+    const val chartBackground = 0.20f
+    const val chartGrid = 0.18f
+    const val chartGlow = 0.20f
+    const val chartArea = 0.10f
+    const val divider = 0.54f
+    const val sourceDot = 0.96f
+    const val retryBackground = 0.10f
 }
 
 /** Colors sampled toward the approved compact Cooling references; global screen color is untouched. */
