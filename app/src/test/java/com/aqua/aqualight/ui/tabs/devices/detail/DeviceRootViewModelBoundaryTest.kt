@@ -9,6 +9,7 @@ import com.aqua.aqualight.application.devices.DeviceRootRouteResolver
 import com.aqua.aqualight.application.devices.DeviceRootSnapshot
 import com.aqua.aqualight.application.devices.OwnerDeviceAvailability
 import com.aqua.aqualight.application.devices.OwnerDeviceFamily
+import com.aqua.aqualight.ui.common.devicepresence.DeviceConnectionVisualState
 import com.aqua.aqualight.ui.common.text.AquaUiText
 import com.aqua.aqualight.ui.tabs.devices.detail.common.DeviceRootKind
 import com.aqua.aqualight.ui.tabs.devices.detail.common.DeviceRootOverviewViewModel
@@ -24,6 +25,7 @@ import kotlinx.coroutines.test.UnconfinedTestDispatcher
 import kotlinx.coroutines.test.resetMain
 import kotlinx.coroutines.test.setMain
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
 import org.junit.Rule
 import org.junit.Test
@@ -99,6 +101,35 @@ class DeviceRootViewModelBoundaryTest {
         assertEquals("My Aquarium Controller", cooling.uiState.value.title)
     }
 
+    @Test
+    fun `cooling root uses shared fail closed connection gate`() {
+        val operations = FakeDeviceRootOperations(
+            DeviceRootSnapshot(
+                deviceUid = "device-1",
+                title = "Cooling Pro",
+                availability = OwnerDeviceAvailability.REACHABLE,
+                family = OwnerDeviceFamily.COOLING,
+                catalogState = DeviceRootCatalogState.VALID,
+                capabilities = setOf(
+                    DeviceRootCapability.COOLING,
+                    DeviceRootCapability.FAN,
+                    DeviceRootCapability.TEMPERATURE
+                )
+            )
+        )
+        val viewModel = DeviceCoolingRootViewModel(operations)
+
+        viewModel.bind("device-1")
+
+        assertEquals(DeviceConnectionVisualState.ONLINE, viewModel.uiState.value.connectionVisualState)
+        assertTrue(viewModel.uiState.value.contentEnabled)
+
+        operations.publishAvailability(OwnerDeviceAvailability.UNREACHABLE)
+
+        assertEquals(DeviceConnectionVisualState.OFFLINE, viewModel.uiState.value.connectionVisualState)
+        assertFalse(viewModel.uiState.value.contentEnabled)
+    }
+
     private fun rootSnapshot(
         capabilities: Set<DeviceRootCapability> = setOf(DeviceRootCapability.DOSING),
         menuFeatures: Set<DeviceRootMenuFeature> = setOf(
@@ -154,6 +185,11 @@ class DeviceRootViewModelBoundaryTest {
         fun publishTitle(title: String) {
             val current = snapshots.value ?: return
             snapshots.value = current.copy(title = title)
+        }
+
+        fun publishAvailability(availability: OwnerDeviceAvailability) {
+            val current = snapshots.value ?: return
+            snapshots.value = current.copy(availability = availability)
         }
     }
 
