@@ -58,8 +58,8 @@
 
     <string name="device_cooling_value_unavailable">—</string>
     <string name="device_cooling_temperature_value_format">%1$.1f °C</string>
-    <string name="device_cooling_humidity_value_format">%%1$.0f</string>
-    <string name="device_cooling_percent_value_format">%%%1$d</string>
+    <string name="device_cooling_humidity_value_format">%1$.0f%%</string>
+    <string name="device_cooling_percent_value_format">%1$d%%</string>
     <string name="device_cooling_power_value_format">%1$.1f W</string>
     <string name="device_cooling_energy_value_format">%1$.2f kWh / gün</string>
 </resources>
