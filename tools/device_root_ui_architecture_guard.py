@@ -31,14 +31,29 @@ COOLING_VIEW_MODEL = Path(
     "app/src/main/java/com/aqua/aqualight/ui/tabs/devices/detail/cooling/"
     "DeviceCoolingRootViewModel.kt"
 )
-DOSING_LAYOUT = Path("app/src/main/res/layout/fragment_device_dosing_root.xml")
-COOLING_LAYOUT = Path("app/src/main/res/layout/fragment_device_cooling_root.xml")
+COOLING_UI_ROOT = Path(
+    "app/src/main/java/com/aqua/aqualight/ui/tabs/devices/detail/cooling"
+)
+LAYOUT_ROOT = Path("app/src/main/res/layout")
+DOSING_LAYOUT = LAYOUT_ROOT / "fragment_device_dosing_root.xml"
+COOLING_LAYOUT = LAYOUT_ROOT / "fragment_device_cooling_root.xml"
 
 HARD_CODED_ANDROID_TEXT = re.compile(
     r'android:text="(?!@string/|@plurals/|@\{|\?)[^\"]+"'
 )
 RAW_COLOR = re.compile(r'android:(?:background|textColor|tint)="#[0-9A-Fa-f]{3,8}"')
 RAW_TEXT_SIZE = re.compile(r'android:textSize="[0-9.]+sp"')
+HARD_CODED_COMPOSE_TEXT = re.compile(r'\bText\s*\(\s*"[^"$]+"')
+HARD_CODED_CONTENT_DESCRIPTION = re.compile(r'\bcontentDescription\s*=\s*"[^"$]+"')
+
+COOLING_UI_FORBIDDEN = (
+    "import com.aqua.aqualight.data.",
+    "import com.aqua.aqualight.platform.",
+    "DevicesRepository",
+    "DeviceSnapshot",
+    "runtimeModules()",
+    "connectRuntime(",
+)
 
 
 def _read(repository_root: Path, relative_path: Path, errors: list[str]) -> str:
@@ -113,6 +128,25 @@ def validate_header_contract(
     return errors
 
 
+def validate_resource_usage(relative_path: Path, source: str) -> list[str]:
+    errors: list[str] = []
+    for pattern, reason in (
+        (HARD_CODED_ANDROID_TEXT, "Cooling/root XML must use String resources"),
+        (RAW_COLOR, "Cooling/root XML must use central color resources"),
+        (RAW_TEXT_SIZE, "Cooling/root XML must use central dimension/text resources"),
+    ):
+        if pattern.search(source):
+            errors.append(f"{relative_path}: {reason}")
+
+    for forbidden, reason in (
+        ("MaterialToolbar", "device-root layouts must not define a parallel toolbar"),
+        ("androidx.appcompat.widget.Toolbar", "device-root layouts must not define a parallel toolbar"),
+    ):
+        if forbidden in source:
+            errors.append(f"{relative_path}: {reason}: {forbidden}")
+    return errors
+
+
 def validate_layout_contract(relative_path: Path, source: str) -> list[str]:
     errors: list[str] = []
     for token, reason in (
@@ -121,21 +155,41 @@ def validate_layout_contract(relative_path: Path, source: str) -> list[str]:
         ('android:id="@+id/appHeader"', "root header id must stay canonical"),
     ):
         _require(relative_path, source, errors, token, reason)
+    errors.extend(validate_resource_usage(relative_path, source))
+    return errors
 
-    for pattern, reason in (
-        (HARD_CODED_ANDROID_TEXT, "root content must use String resources"),
-        (RAW_COLOR, "root content must use central color resources"),
-        (RAW_TEXT_SIZE, "root content must use central dimension/text resources"),
-    ):
-        if pattern.search(source):
-            errors.append(f"{relative_path}: {reason}")
 
-    for forbidden, reason in (
-        ("MaterialToolbar", "root layout must not define a parallel toolbar"),
-        ("androidx.appcompat.widget.Toolbar", "root layout must not define a parallel toolbar"),
-    ):
-        if forbidden in source:
-            errors.append(f"{relative_path}: {reason}: {forbidden}")
+def validate_cooling_feature_boundaries(repository_root: Path) -> list[str]:
+    errors: list[str] = []
+    cooling_root = repository_root / COOLING_UI_ROOT
+    if not cooling_root.is_dir():
+        return [f"{COOLING_UI_ROOT}: Cooling UI root is missing"]
+
+    for path in sorted(cooling_root.rglob("*.kt")):
+        source = path.read_text(encoding="utf-8", errors="ignore")
+        relative_path = path.relative_to(repository_root)
+        for forbidden in COOLING_UI_FORBIDDEN:
+            if forbidden in source:
+                errors.append(
+                    f"{relative_path}: Cooling UI bypasses shared application boundaries: {forbidden}"
+                )
+        for pattern, reason in (
+            (HARD_CODED_COMPOSE_TEXT, "Cooling Compose copy must use String resources"),
+            (
+                HARD_CODED_CONTENT_DESCRIPTION,
+                "Cooling accessibility copy must use String resources",
+            ),
+        ):
+            if pattern.search(source):
+                errors.append(f"{relative_path}: {reason}")
+
+    layout_root = repository_root / LAYOUT_ROOT
+    if layout_root.is_dir():
+        for path in sorted(layout_root.glob("*cooling*.xml")):
+            if path == repository_root / COOLING_LAYOUT:
+                continue
+            source = path.read_text(encoding="utf-8", errors="ignore")
+            errors.extend(validate_resource_usage(path.relative_to(repository_root), source))
     return errors
 
 
@@ -271,20 +325,9 @@ def validate_repository(repository_root: Path = ROOT) -> list[str]:
     ):
         _require(COOLING_VIEW_MODEL, cooling_view_model, errors, token, reason)
 
-    for forbidden in (
-        "import com.aqua.aqualight.data.",
-        "import com.aqua.aqualight.platform.",
-        "DevicesRepository",
-        "DeviceSnapshot",
-        "connectRuntime(",
-    ):
-        if forbidden in cooling_view_model:
-            errors.append(
-                f"{COOLING_VIEW_MODEL}: Cooling root bypasses the shared application boundary: {forbidden}"
-            )
-
     errors.extend(validate_layout_contract(DOSING_LAYOUT, dosing_layout))
     errors.extend(validate_layout_contract(COOLING_LAYOUT, cooling_layout))
+    errors.extend(validate_cooling_feature_boundaries(repository_root))
     return errors
 
 
