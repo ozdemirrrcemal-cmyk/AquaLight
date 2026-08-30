@@ -33,22 +33,24 @@ object AquaCoolingDashboardGeometry {
     val splitCardGap = 8.dp
 
     val cardCornerRadius = 16.dp
-    val cardHorizontalPadding = 12.dp
-    val cardVerticalPadding = 10.dp
+    val cardHorizontalPadding = 10.dp
+    val cardVerticalPadding = 9.dp
 
     val temperatureCardMinimumHeight = 154.dp
     val temperatureChartHeight = 96.dp
     val temperatureChartCornerRadius = 10.dp
     val temperatureChartPadding = 6.dp
-    val temperatureMetricWidth = 74.dp
-    val temperatureMetricGap = 8.dp
+    val temperatureYAxisWidth = 31.dp
+    val temperatureYAxisGap = 3.dp
+    val temperatureMetricWidth = 56.dp
+    val temperatureMetricGap = 5.dp
     val chartGridStrokeWidth = 1.dp
     val chartLineStrokeWidth = 2.2.dp
     val chartGlowStrokeWidth = 6.dp
     val chartPointRadius = 2.7.dp
 
     val compactCardMinimumHeight = 146.dp
-    val statusCardMinimumHeight = 130.dp
+    val statusCardMinimumHeight = 112.dp
     val gaugeSize = 84.dp
     val gaugeStrokeWidth = 8.dp
     val gaugeInnerGap = 3.dp
@@ -71,9 +73,11 @@ object AquaCoolingDashboardGeometry {
     val controlCardMinimumHeight = 104.dp
     val controlRowVerticalPadding = 3.dp
     val controlDividerHeight = 1.dp
-    val editShape = RoundedCornerShape(18.dp)
-    val editHorizontalPadding = 11.dp
-    val editVerticalPadding = 7.dp
+
+    val detailActionShape = RoundedCornerShape(10.dp)
+    val detailActionSize = 30.dp
+    val detailActionGlyphSize = 12.dp
+    val detailActionStrokeWidth = 1.8.dp
 
     val sliderTouchHeight = 40.dp
     val sliderTrackHeight = 5.dp
@@ -82,7 +86,7 @@ object AquaCoolingDashboardGeometry {
     val sliderLabelGap = 6.dp
 
     val statusDotSize = 6.dp
-    val statusRowGap = 6.dp
+    val statusRowGap = 5.dp
     val statusValueGap = 5.dp
 }
 
@@ -116,7 +120,8 @@ object AquaCoolingDashboardAlpha {
     const val chartGlow = 0.18f
     const val trackInactive = 0.22f
     const val trackActive = 1f
-    const val editBackground = 0.10f
+    const val detailActionBackground = 0.08f
+    const val detailActionOutline = 0.34f
     const val statusDot = 0.96f
 }
 
@@ -208,7 +213,8 @@ object AquaCoolingProfileGlyphSpec {
 }
 
 object AquaCoolingTemperatureChartSpec {
-    const val minimumVerticalSpanC = 4f
-    const val verticalPaddingC = 1f
+    const val defaultMinimumC = 21f
+    const val defaultMaximumC = 30f
+    const val expansionStepC = 3f
     const val horizontalGridLineCount = 4
 }
