@@ -40,4 +40,7 @@
     <string name="device_cooling_manual_only">Only in Manual mode</string>
     <string name="device_cooling_range_minimum" formatted="false">0%</string>
     <string name="device_cooling_range_maximum" formatted="false">100%</string>
+    <string name="device_cooling_nav_status">Status</string>
+    <string name="device_cooling_nav_program">Program</string>
+    <string name="device_cooling_nav_settings">Settings</string>
 </resources>

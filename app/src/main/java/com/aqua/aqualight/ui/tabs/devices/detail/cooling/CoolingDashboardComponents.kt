@@ -1,5 +1,11 @@
 package com.aqua.aqualight.ui.tabs.devices.detail.cooling
 
+import androidx.compose.animation.core.LinearEasing
+import androidx.compose.animation.core.RepeatMode
+import androidx.compose.animation.core.animateFloat
+import androidx.compose.animation.core.infiniteRepeatable
+import androidx.compose.animation.core.rememberInfiniteTransition
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
@@ -16,6 +22,7 @@ import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
@@ -24,17 +31,22 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.BasicText
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.geometry.CornerRadius
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.graphics.Path
+import androidx.compose.ui.graphics.PathEffect
 import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.drawscope.Stroke
+import androidx.compose.ui.graphics.drawscope.rotate
+import androidx.compose.ui.graphics.drawscope.withTransform
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
@@ -48,6 +60,7 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.aqua.aqualight.R
+import kotlin.math.PI
 import kotlin.math.cos
 import kotlin.math.sin
 
@@ -97,8 +110,8 @@ internal fun CoolingDashboardHeader(
             BasicText(
                 text = stringResource(R.string.device_family_cooling),
                 style = coolingTextStyle(
-                    size = 25.sp,
-                    lineHeight = 31.sp,
+                    size = 20.sp,
+                    lineHeight = 25.sp,
                     color = CoolingDashboardPalette.textPrimary,
                     semiBold = true
                 ),
@@ -124,8 +137,8 @@ internal fun CoolingDashboardHeader(
                 ),
                 modifier = Modifier.padding(start = 7.dp),
                 style = coolingTextStyle(
-                    size = 13.sp,
-                    lineHeight = 17.sp,
+                    size = 11.sp,
+                    lineHeight = 14.sp,
                     color = CoolingDashboardPalette.textSecondary
                 )
             )
@@ -155,14 +168,36 @@ private fun CoolingHeaderIcon(
         Image(
             painter = painterResource(iconRes),
             contentDescription = null,
-            modifier = Modifier.size(27.dp),
+            modifier = Modifier.size(23.dp),
             colorFilter = ColorFilter.tint(CoolingDashboardPalette.textPrimary)
         )
     }
 }
 
 @Composable
-internal fun CoolingAquariumHero(modifier: Modifier = Modifier) {
+internal fun CoolingAquariumHero(
+    fanRunning: Boolean,
+    modifier: Modifier = Modifier
+) {
+    val motion = rememberInfiniteTransition(label = "cooling-hero-motion")
+    val fanRotation by motion.animateFloat(
+        initialValue = 0f,
+        targetValue = 360f,
+        animationSpec = infiniteRepeatable(
+            animation = tween(durationMillis = FAN_ROTATION_DURATION_MS, easing = LinearEasing),
+            repeatMode = RepeatMode.Restart
+        ),
+        label = "cooling-fan-rotation"
+    )
+    val waterPhase by motion.animateFloat(
+        initialValue = 0f,
+        targetValue = (2f * PI).toFloat(),
+        animationSpec = infiniteRepeatable(
+            animation = tween(durationMillis = WATER_WAVE_DURATION_MS, easing = LinearEasing),
+            repeatMode = RepeatMode.Restart
+        ),
+        label = "cooling-water-phase"
+    )
     val shape = RoundedCornerShape(CARD_RADIUS)
     Box(
         modifier = modifier
@@ -173,7 +208,7 @@ internal fun CoolingAquariumHero(modifier: Modifier = Modifier) {
             .border(1.dp, CoolingDashboardPalette.outline, shape)
     ) {
         Image(
-            painter = painterResource(R.drawable.nature_aquarium),
+            painter = painterResource(R.drawable.cooling_dashboard_aquarium),
             contentDescription = null,
             modifier = Modifier.fillMaxSize(),
             contentScale = ContentScale.Crop
@@ -183,79 +218,200 @@ internal fun CoolingAquariumHero(modifier: Modifier = Modifier) {
                 .fillMaxSize()
                 .background(
                     Brush.verticalGradient(
-                        0f to Color(0xD2000B18),
-                        0.35f to Color(0xA500162A),
-                        1f to Color(0xE800101D)
+                        0f to Color(0x2B00101D),
+                        0.55f to Color.Transparent,
+                        1f to Color(0x65000A12)
                     )
                 )
         )
-        CoolingWaterOverlay(modifier = Modifier.fillMaxSize())
-        Image(
-            painter = painterResource(R.drawable.ic_device_cooling),
-            contentDescription = null,
+        CoolingWaterOverlay(
+            fanRunning = fanRunning,
+            phase = if (fanRunning) waterPhase else 0f,
+            modifier = Modifier.fillMaxSize()
+        )
+        CoolingFanAssembly(
+            rotationDegrees = if (fanRunning) fanRotation else 0f,
             modifier = Modifier
                 .align(Alignment.TopStart)
-                .padding(start = 7.dp, top = 8.dp)
-                .width(144.dp)
-                .height(108.dp),
-            contentScale = ContentScale.Crop
+                .padding(start = 7.dp, top = 11.dp)
+                .width(112.dp)
+                .height(84.dp)
         )
         CoolingSensorBadge(
             modifier = Modifier
                 .align(Alignment.Center)
-                .padding(start = 116.dp, top = 2.dp)
+                .offset(x = 92.dp, y = (-24).dp)
         )
     }
 }
 
 @Composable
-private fun CoolingWaterOverlay(modifier: Modifier = Modifier) {
+private fun CoolingWaterOverlay(
+    fanRunning: Boolean,
+    phase: Float,
+    modifier: Modifier = Modifier
+) {
     Canvas(modifier = modifier) {
-        val top = size.height * 0.15f
-        repeat(4) { index ->
+        val top = size.height * 0.070f
+        repeat(WATER_LINE_COUNT) { index ->
             val path = Path()
-            val y = top + index * size.height * 0.018f
+            val linePhase = phase + index * 0.62f
+            val wave = sin(linePhase) * if (fanRunning) 4.5f else 1.5f
+            val y = top + index * size.height * 0.017f + wave
             path.moveTo(0f, y)
             path.cubicTo(
                 size.width * 0.18f,
-                y - 7f,
+                y - 6f - cos(linePhase) * 3f,
                 size.width * 0.34f,
-                y + 8f,
+                y + 7f + sin(linePhase + 0.8f) * 3f,
                 size.width * 0.51f,
                 y
             )
             path.cubicTo(
                 size.width * 0.68f,
-                y - 6f,
+                y - 5f - sin(linePhase + 1.4f) * 3f,
                 size.width * 0.85f,
-                y + 7f,
-                size.width,
-                y - 1f
+                y + 6f + cos(linePhase + 0.3f) * 3f,
+                size.width + 12f,
+                y + sin(linePhase + 2.1f) * 2f
             )
             drawPath(
                 path = path,
-                color = Color(0xFF88BFFF).copy(alpha = 0.55f - index * 0.08f),
-                style = Stroke(width = 1.1.dp.toPx(), cap = StrokeCap.Round)
+                color = Color(0xFF9BC8FF).copy(alpha = 0.66f - index * 0.09f),
+                style = Stroke(width = 1.05.dp.toPx(), cap = StrokeCap.Round)
             )
         }
 
-        repeat(5) { index ->
+        if (!fanRunning) return@Canvas
+        repeat(AIRFLOW_LINE_COUNT) { index ->
             val path = Path()
-            val startX = size.width * 0.17f
-            val startY = size.height * (0.36f + index * 0.015f)
+            val startX = size.width * 0.210f
+            val startY = size.height * (0.300f + index * 0.014f)
             path.moveTo(startX, startY)
             path.cubicTo(
                 size.width * 0.26f,
-                size.height * (0.43f + index * 0.018f),
-                size.width * 0.24f,
-                size.height * (0.63f + index * 0.012f),
-                size.width * 0.39f,
-                size.height * (0.72f + index * 0.01f)
+                size.height * (0.36f + index * 0.017f),
+                size.width * 0.25f,
+                size.height * (0.54f + index * 0.011f),
+                size.width * 0.430f,
+                size.height * (0.62f + index * 0.009f)
             )
             drawPath(
                 path = path,
-                color = CoolingDashboardPalette.accent.copy(alpha = 0.64f - index * 0.08f),
-                style = Stroke(width = 1.dp.toPx(), cap = StrokeCap.Round)
+                color = CoolingDashboardPalette.accent.copy(alpha = 0.18f),
+                style = Stroke(width = 4.dp.toPx(), cap = StrokeCap.Round)
+            )
+            drawPath(
+                path = path,
+                color = Color(0xFF1E70FF).copy(alpha = 0.82f - index * 0.09f),
+                style = Stroke(
+                    width = 1.dp.toPx(),
+                    cap = StrokeCap.Round,
+                    pathEffect = PathEffect.dashPathEffect(
+                        intervals = floatArrayOf(18f, 7f),
+                        phase = -phase * 18f - index * 5f
+                    )
+                )
+            )
+        }
+    }
+}
+
+@Composable
+private fun CoolingFanAssembly(
+    rotationDegrees: Float,
+    modifier: Modifier = Modifier
+) {
+    Canvas(modifier = modifier) {
+        val housingWidth = size.width * 0.78f
+        val housingHeight = size.height * 0.88f
+        val housingTop = size.height * 0.05f
+        val center = Offset(housingWidth * 0.50f, housingTop + housingHeight * 0.52f)
+        val fanRadius = housingHeight * 0.39f
+
+        drawRoundRect(
+            brush = Brush.verticalGradient(
+                colors = listOf(Color(0xFF4B5561), Color(0xFF171D24), Color(0xFF080B0F))
+            ),
+            topLeft = Offset(0f, housingTop),
+            size = Size(housingWidth, housingHeight),
+            cornerRadius = CornerRadius(8.dp.toPx())
+        )
+        drawRoundRect(
+            color = Color(0xFF77828F).copy(alpha = 0.65f),
+            topLeft = Offset(1.dp.toPx(), housingTop + 1.dp.toPx()),
+            size = Size(housingWidth - 2.dp.toPx(), housingHeight - 2.dp.toPx()),
+            cornerRadius = CornerRadius(8.dp.toPx()),
+            style = Stroke(width = 1.dp.toPx())
+        )
+        drawRoundRect(
+            brush = Brush.horizontalGradient(
+                colors = listOf(Color(0xFF11161C), Color(0xFF242C35), Color(0xFF070A0E))
+            ),
+            topLeft = Offset(housingWidth * 0.76f, housingTop + housingHeight * 0.20f),
+            size = Size(size.width * 0.23f, housingHeight * 0.62f),
+            cornerRadius = CornerRadius(7.dp.toPx())
+        )
+
+        drawCircle(color = Color(0xFF05080C), radius = fanRadius * 1.06f, center = center)
+        drawCircle(
+            color = Color(0xFF3DE6FF).copy(alpha = 0.32f),
+            radius = fanRadius * 1.01f,
+            center = center,
+            style = Stroke(width = 5.dp.toPx())
+        )
+        drawCircle(
+            color = Color(0xFF43E6FF),
+            radius = fanRadius * 0.99f,
+            center = center,
+            style = Stroke(width = 1.3.dp.toPx())
+        )
+
+        withTransform({ rotate(degrees = rotationDegrees, pivot = center) }) {
+            repeat(FAN_BLADE_COUNT) { bladeIndex ->
+                rotate(degrees = bladeIndex * (360f / FAN_BLADE_COUNT), pivot = center) {
+                    drawOval(
+                        brush = Brush.verticalGradient(
+                            colors = listOf(Color(0xFF4D5964), Color(0xFF080B0F))
+                        ),
+                        topLeft = Offset(
+                            center.x - fanRadius * 0.19f,
+                            center.y - fanRadius * 0.82f
+                        ),
+                        size = Size(fanRadius * 0.38f, fanRadius * 0.72f)
+                    )
+                }
+            }
+        }
+        drawCircle(
+            brush = Brush.radialGradient(
+                colors = listOf(Color(0xFF46515C), Color(0xFF0A0D12)),
+                center = center,
+                radius = fanRadius * 0.34f
+            ),
+            radius = fanRadius * 0.30f,
+            center = center
+        )
+        drawCircle(
+            color = Color(0xFF687480),
+            radius = fanRadius * 0.30f,
+            center = center,
+            style = Stroke(width = 1.dp.toPx())
+        )
+
+        val boltInset = housingHeight * 0.13f
+        listOf(
+            Offset(boltInset, housingTop + boltInset),
+            Offset(housingWidth - boltInset, housingTop + boltInset),
+            Offset(boltInset, housingTop + housingHeight - boltInset),
+            Offset(housingWidth - boltInset, housingTop + housingHeight - boltInset)
+        ).forEach { boltCenter ->
+            drawCircle(color = Color(0xFF080A0D), radius = 4.dp.toPx(), center = boltCenter)
+            drawCircle(
+                color = Color(0xFF65707A),
+                radius = 4.dp.toPx(),
+                center = boltCenter,
+                style = Stroke(width = 1.dp.toPx())
             )
         }
     }
@@ -265,16 +421,16 @@ private fun CoolingWaterOverlay(modifier: Modifier = Modifier) {
 private fun CoolingSensorBadge(modifier: Modifier = Modifier) {
     Row(
         modifier = modifier
-            .widthIn(min = 174.dp)
+            .widthIn(min = 112.dp)
             .clip(RoundedCornerShape(14.dp))
             .background(Color(0xC8071421))
             .border(1.dp, Color(0xFF536172), RoundedCornerShape(14.dp))
-            .padding(horizontal = 12.dp, vertical = 10.dp),
+            .padding(horizontal = 8.dp, vertical = 7.dp),
         verticalAlignment = Alignment.CenterVertically
     ) {
         Box(
             modifier = Modifier
-                .size(38.dp)
+                .size(25.dp)
                 .clip(CircleShape)
                 .border(1.dp, Color(0xFF657184), CircleShape),
             contentAlignment = Alignment.Center
@@ -282,24 +438,24 @@ private fun CoolingSensorBadge(modifier: Modifier = Modifier) {
             CoolingGlyph(
                 type = CoolingGlyphType.SNOWFLAKE,
                 color = CoolingDashboardPalette.textPrimary,
-                modifier = Modifier.size(22.dp)
+                modifier = Modifier.size(15.dp)
             )
         }
-        Column(modifier = Modifier.padding(start = 11.dp)) {
+        Column(modifier = Modifier.padding(start = 7.dp)) {
             BasicText(
                 text = stringResource(R.string.device_cooling_temperature_sensor),
                 style = coolingTextStyle(
-                    size = 13.sp,
-                    lineHeight = 17.sp,
+                    size = 9.sp,
+                    lineHeight = 12.sp,
                     color = CoolingDashboardPalette.textPrimary
                 )
             )
             BasicText(
                 text = stringResource(R.string.device_cooling_current_temperature_value),
-                modifier = Modifier.padding(top = 4.dp),
+                modifier = Modifier.padding(top = 2.dp),
                 style = coolingTextStyle(
-                    size = 19.sp,
-                    lineHeight = 24.sp,
+                    size = 15.sp,
+                    lineHeight = 19.sp,
                     color = CoolingDashboardPalette.textPrimary,
                     semiBold = true
                 )
@@ -372,8 +528,8 @@ internal fun CoolingFanModeCard(modifier: Modifier = Modifier) {
         Column(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(top = 10.dp),
-            verticalArrangement = Arrangement.spacedBy(7.dp)
+                .padding(top = 7.dp),
+            verticalArrangement = Arrangement.spacedBy(5.dp)
         ) {
             CoolingModeOption(
                 text = stringResource(R.string.device_cooling_mode_automatic),
@@ -396,20 +552,20 @@ private fun CoolingModeOption(text: String, selected: Boolean) {
     Row(
         modifier = Modifier
             .fillMaxWidth()
-            .height(37.dp)
-            .clip(RoundedCornerShape(18.dp))
+            .height(27.dp)
+            .clip(RoundedCornerShape(14.dp))
             .background(if (selected) Color(0xFF0D2133) else Color.Transparent)
             .border(
                 1.dp,
                 if (selected) Color(0xFF405267) else CoolingDashboardPalette.outlineSoft,
-                RoundedCornerShape(18.dp)
+                RoundedCornerShape(14.dp)
             )
             .padding(horizontal = 10.dp),
         verticalAlignment = Alignment.CenterVertically
     ) {
         Box(
             modifier = Modifier
-                .size(17.dp)
+                .size(14.dp)
                 .clip(CircleShape)
                 .border(
                     width = 2.dp,
@@ -425,7 +581,7 @@ private fun CoolingModeOption(text: String, selected: Boolean) {
             if (selected) {
                 Box(
                     modifier = Modifier
-                        .size(7.dp)
+                        .size(6.dp)
                         .clip(CircleShape)
                         .background(CoolingDashboardPalette.accent)
                 )
@@ -450,7 +606,7 @@ internal fun CoolingPowerCard(modifier: Modifier = Modifier) {
     CoolingDashboardCard(modifier = modifier) {
         CoolingCardTitle(text = stringResource(R.string.device_cooling_power))
         Row(
-            modifier = Modifier.padding(top = 17.dp),
+            modifier = Modifier.padding(top = 10.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
             Box(
@@ -509,8 +665,8 @@ internal fun CoolingStatusCard(
         Column(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(top = 11.dp),
-            verticalArrangement = Arrangement.spacedBy(10.dp)
+                .padding(top = 7.dp),
+            verticalArrangement = Arrangement.spacedBy(6.dp)
         ) {
             CoolingStatusRow(
                 glyph = CoolingGlyphType.FAN,
@@ -596,7 +752,7 @@ internal fun CoolingProfileCard(modifier: Modifier = Modifier) {
             modifier = Modifier
                 .fillMaxWidth()
                 .weight(1f)
-                .padding(top = 10.dp),
+                .padding(top = 6.dp),
             horizontalArrangement = Arrangement.spacedBy(6.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
@@ -647,7 +803,7 @@ private fun CoolingProfileChip(
                 if (selected) CoolingDashboardPalette.accent else CoolingDashboardPalette.outline,
                 RoundedCornerShape(13.dp)
             )
-            .padding(horizontal = 3.dp, vertical = 7.dp),
+            .padding(horizontal = 3.dp, vertical = 4.dp),
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.Center
     ) {
@@ -735,6 +891,149 @@ internal fun CoolingManualFanCard(modifier: Modifier = Modifier) {
 }
 
 @Composable
+internal fun CoolingDashboardBottomNavigation(modifier: Modifier = Modifier) {
+    Column(
+        modifier = modifier
+            .fillMaxWidth()
+            .height(BOTTOM_NAV_HEIGHT)
+            .background(CoolingDashboardPalette.background)
+    ) {
+        Box(
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(1.dp)
+                .background(CoolingDashboardPalette.outlineSoft)
+        )
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .weight(1f)
+        ) {
+            CoolingBottomNavigationItem(
+                type = CoolingBottomNavigationType.STATUS,
+                label = stringResource(R.string.device_cooling_nav_status),
+                selected = true,
+                modifier = Modifier.weight(1f)
+            )
+            CoolingBottomNavigationItem(
+                type = CoolingBottomNavigationType.PROGRAM,
+                label = stringResource(R.string.device_cooling_nav_program),
+                selected = false,
+                modifier = Modifier.weight(1f)
+            )
+            CoolingBottomNavigationItem(
+                type = CoolingBottomNavigationType.SETTINGS,
+                label = stringResource(R.string.device_cooling_nav_settings),
+                selected = false,
+                modifier = Modifier.weight(1f)
+            )
+        }
+    }
+}
+
+@Composable
+private fun CoolingBottomNavigationItem(
+    type: CoolingBottomNavigationType,
+    label: String,
+    selected: Boolean,
+    modifier: Modifier = Modifier
+) {
+    val color = if (selected) {
+        CoolingDashboardPalette.accent
+    } else {
+        CoolingDashboardPalette.textSecondary
+    }
+    Column(
+        modifier = modifier.fillMaxHeight(),
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.Center
+    ) {
+        Canvas(modifier = Modifier.size(19.dp)) {
+            val stroke = 1.25.dp.toPx()
+            when (type) {
+                CoolingBottomNavigationType.STATUS -> {
+                    val squareSize = size.minDimension * 0.36f
+                    val gap = size.minDimension * 0.13f
+                    val start = (size.minDimension - squareSize * 2f - gap) / 2f
+                    repeat(2) { row ->
+                        repeat(2) { column ->
+                            drawRoundRect(
+                                color = color,
+                                topLeft = Offset(
+                                    start + column * (squareSize + gap),
+                                    start + row * (squareSize + gap)
+                                ),
+                                size = Size(squareSize, squareSize),
+                                cornerRadius = CornerRadius(1.5.dp.toPx())
+                            )
+                        }
+                    }
+                }
+
+                CoolingBottomNavigationType.PROGRAM -> {
+                    drawRoundRect(
+                        color = color,
+                        topLeft = Offset(size.width * 0.16f, size.height * 0.20f),
+                        size = Size(size.width * 0.68f, size.height * 0.67f),
+                        cornerRadius = CornerRadius(2.dp.toPx()),
+                        style = Stroke(stroke)
+                    )
+                    drawLine(
+                        color = color,
+                        start = Offset(size.width * 0.16f, size.height * 0.38f),
+                        end = Offset(size.width * 0.84f, size.height * 0.38f),
+                        strokeWidth = stroke
+                    )
+                    listOf(0.34f, 0.66f).forEach { x ->
+                        drawLine(
+                            color = color,
+                            start = Offset(size.width * x, size.height * 0.11f),
+                            end = Offset(size.width * x, size.height * 0.28f),
+                            strokeWidth = stroke,
+                            cap = StrokeCap.Round
+                        )
+                    }
+                }
+
+                CoolingBottomNavigationType.SETTINGS -> {
+                    listOf(0.26f, 0.50f, 0.74f).forEachIndexed { index, y ->
+                        val thumbX = listOf(0.63f, 0.38f, 0.69f)[index]
+                        drawLine(
+                            color = color,
+                            start = Offset(size.width * 0.12f, size.height * y),
+                            end = Offset(size.width * 0.88f, size.height * y),
+                            strokeWidth = stroke,
+                            cap = StrokeCap.Round
+                        )
+                        drawCircle(
+                            color = CoolingDashboardPalette.background,
+                            radius = 2.7.dp.toPx(),
+                            center = Offset(size.width * thumbX, size.height * y)
+                        )
+                        drawCircle(
+                            color = color,
+                            radius = 2.7.dp.toPx(),
+                            center = Offset(size.width * thumbX, size.height * y),
+                            style = Stroke(stroke)
+                        )
+                    }
+                }
+            }
+        }
+        BasicText(
+            text = label,
+            modifier = Modifier.padding(top = 4.dp),
+            style = coolingTextStyle(
+                size = 10.sp,
+                lineHeight = 13.sp,
+                color = color,
+                textAlign = TextAlign.Center
+            )
+        )
+    }
+}
+
+@Composable
 private fun CoolingDisabledSlider(
     progress: Float,
     modifier: Modifier = Modifier
@@ -791,8 +1090,8 @@ private fun CoolingCardTitle(text: String) {
     BasicText(
         text = text,
         style = coolingTextStyle(
-            size = 14.sp,
-            lineHeight = 18.sp,
+            size = 12.sp,
+            lineHeight = 15.sp,
             color = CoolingDashboardPalette.textPrimary,
             semiBold = true
         ),
@@ -1006,7 +1305,19 @@ private enum class CoolingGlyphType {
     ROCKET
 }
 
-private val HEADER_HEIGHT = 68.dp
+private enum class CoolingBottomNavigationType {
+    STATUS,
+    PROGRAM,
+    SETTINGS
+}
+
+private val HEADER_HEIGHT = 56.dp
 private val HERO_HEIGHT = 228.dp
+private val BOTTOM_NAV_HEIGHT = 59.dp
 private val CARD_RADIUS = 16.dp
 private const val PLACEHOLDER_FAN_FRACTION = 0.60f
+private const val FAN_ROTATION_DURATION_MS = 1_500
+private const val WATER_WAVE_DURATION_MS = 2_400
+private const val WATER_LINE_COUNT = 4
+private const val AIRFLOW_LINE_COUNT = 5
+private const val FAN_BLADE_COUNT = 6

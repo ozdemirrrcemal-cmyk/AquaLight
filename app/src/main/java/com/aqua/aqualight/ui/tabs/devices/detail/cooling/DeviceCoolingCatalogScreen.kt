@@ -41,7 +41,9 @@ internal fun DeviceCoolingCatalogScreen(
             onSettingsClick = onSettingsClick
         )
         LazyColumn(
-            modifier = Modifier.fillMaxSize(),
+            modifier = Modifier
+                .fillMaxWidth()
+                .weight(1f),
             contentPadding = PaddingValues(
                 start = SCREEN_HORIZONTAL_PADDING,
                 top = SCREEN_TOP_PADDING,
@@ -51,7 +53,7 @@ internal fun DeviceCoolingCatalogScreen(
             verticalArrangement = Arrangement.spacedBy(SECTION_GAP)
         ) {
             item(key = "cooling-hero") {
-                CoolingAquariumHero()
+                CoolingAquariumHero(fanRunning = true)
             }
             item(key = "temperature-chart") {
                 CoolingTemperatureChart()
@@ -65,6 +67,7 @@ internal fun DeviceCoolingCatalogScreen(
                 CoolingProfileAndManualControls()
             }
         }
+        CoolingDashboardBottomNavigation()
     }
 }
 
@@ -172,7 +175,7 @@ private fun CoolingProfileAndManualControls() {
     }
 }
 
-@Preview(widthDp = 512, heightDp = 920, backgroundColor = 0xFF00101C, showBackground = true)
+@Preview(widthDp = 512, heightDp = 768, backgroundColor = 0xFF00101C, showBackground = true)
 @Composable
 private fun DeviceCoolingCatalogScreenPreview() {
     DeviceCoolingCatalogScreen(
@@ -183,12 +186,12 @@ private fun DeviceCoolingCatalogScreenPreview() {
 }
 
 private val SCREEN_HORIZONTAL_PADDING = 16.dp
-private val SCREEN_TOP_PADDING = 12.dp
-private val SCREEN_BOTTOM_PADDING = 28.dp
-private val SECTION_GAP = 10.dp
+private val SCREEN_TOP_PADDING = 4.dp
+private val SCREEN_BOTTOM_PADDING = 4.dp
+private val SECTION_GAP = 8.dp
 private val CARD_GAP = 8.dp
-private val SUMMARY_CARD_HEIGHT = 176.dp
-private val BOTTOM_CARD_HEIGHT = 106.dp
+private val SUMMARY_CARD_HEIGHT = 141.dp
+private val BOTTOM_CARD_HEIGHT = 86.dp
 private val FOUR_CARD_MIN_WIDTH = 456.dp
 private val BOTTOM_ROW_MIN_WIDTH = 440.dp
 private const val FAN_GAUGE_WEIGHT = 0.96f
