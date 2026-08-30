@@ -2,6 +2,10 @@
 <resources>
     <string name="common_confirm_action_title">İşlemi onaylayın</string>
     <string name="common_confirm_action_message">Devam etmek istediğinizden emin misiniz?</string>
+    <string name="common_unsaved_changes_exit_title">Kaydetmeden çıkılsın mı?</string>
+    <string name="common_unsaved_changes_exit_message">Bu ekrandaki değişiklikler henüz kaydedilmedi. Çıkarsanız yaptığınız değişiklikler kaybolacak.</string>
+    <string name="common_unsaved_changes_exit_action">Çık</string>
+    <string name="common_unsaved_changes_continue_action">Ekranda kal</string>
     <string name="common_clear_search_description">Aramayı temizle</string>
     <string name="common_time_picker_hour">Saat</string>
     <string name="common_time_picker_minute">Dakika</string>

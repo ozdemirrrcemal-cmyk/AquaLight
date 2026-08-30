@@ -20,6 +20,7 @@ import com.aqua.aqualight.application.notifications.NotificationCategory
 import com.aqua.aqualight.base.BaseActivity
 import com.aqua.aqualight.composition.requireAppContainer
 import com.aqua.aqualight.ui.common.bottomsheet.TextInputBottomSheet
+import com.aqua.aqualight.ui.common.dialog.UnsavedChangesExitGuard
 import com.aqua.aqualight.ui.common.loading.setFragmentGlobalLoading
 import com.aqua.aqualight.ui.common.notification.NotificationEnablementCallbacks
 import com.aqua.aqualight.ui.common.notification.NotificationEnablementCoordinator
@@ -42,6 +43,7 @@ class DeviceDosingReservoirFragment :
         requireContext().requireAppContainer().defaultViewModelFactory
     }
     private val appContainer by lazy { requireContext().requireAppContainer() }
+    private lateinit var unsavedChangesExitGuard: UnsavedChangesExitGuard
     private val notificationEnablementCoordinator = NotificationEnablementCoordinator(
         fragment = this,
         instanceKey = "dosing-reservoir-low-level-alert",
@@ -98,6 +100,7 @@ class DeviceDosingReservoirFragment :
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
         viewModel.bind(deviceUidText = args.deviceUid, slotIdText = args.slotId)
+        setupUnsavedChangesExitGuard()
         setupReservoirCapacityResult()
         setupSelectedPump(
             view = view,
@@ -110,6 +113,8 @@ class DeviceDosingReservoirFragment :
         observeOperationLoading()
         setupContent(view)
     }
+
+    override fun onBackRequested() = unsavedChangesExitGuard.requestExit()
 
     override fun onResume() {
         super.onResume()
@@ -151,6 +156,22 @@ class DeviceDosingReservoirFragment :
                 )
             }
         }
+    }
+
+    private fun setupUnsavedChangesExitGuard() {
+        unsavedChangesExitGuard = UnsavedChangesExitGuard.attach(
+            fragment = this,
+            requestKey = UNSAVED_CHANGES_REQUEST_KEY,
+            actionId = ACTION_EXIT_WITHOUT_SAVING,
+            hasUnsavedChanges = { viewModel.currentEditorState().dirty },
+            isExitBlocked = { viewModel.currentEditorState().operationInProgress },
+            exit = {
+                val navController = findNavController()
+                if (navController.currentDestination?.id == R.id.deviceDosingReservoirFragment) {
+                    navController.navigateUp()
+                }
+            }
+        )
     }
 
     private fun formatCapacity(microliters: Long): String = getString(
@@ -309,3 +330,5 @@ private val DeviceDosingChannelRejection.messageRes: Int
 private const val RESERVOIR_CAPACITY_REQUEST_KEY = "dosing_reservoir_capacity_input"
 private const val RESERVOIR_CAPACITY_PAYLOAD_ID = "reservoir_capacity"
 private const val ACTION_ENABLE_LOW_LEVEL_ALERT = "enable-dosing-low-level-alert"
+private const val UNSAVED_CHANGES_REQUEST_KEY = "dosing_reservoir_unsaved_changes"
+private const val ACTION_EXIT_WITHOUT_SAVING = "exit_dosing_reservoir_without_saving"

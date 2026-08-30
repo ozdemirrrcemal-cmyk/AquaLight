@@ -18,6 +18,7 @@ import com.aqua.aqualight.application.devices.dosing.DeviceDosingChannelRejectio
 import com.aqua.aqualight.base.BaseActivity
 import com.aqua.aqualight.composition.requireAppContainer
 import com.aqua.aqualight.ui.common.bottomsheet.TextInputBottomSheet
+import com.aqua.aqualight.ui.common.dialog.UnsavedChangesExitGuard
 import com.aqua.aqualight.ui.common.loading.setFragmentGlobalLoading
 import com.aqua.aqualight.ui.tabs.devices.detail.dosing.channel.common.DeviceDosingChannelDestinationFragment
 import com.aqua.aqualight.ui.tabs.devices.detail.dosing.channel.schedule.DeviceDosingScheduleAmountContract
@@ -35,6 +36,7 @@ class DeviceDosingPlanFragment :
     private val viewModel: DeviceDosingPlanViewModel by viewModels {
         requireContext().requireAppContainer().defaultViewModelFactory
     }
+    private lateinit var unsavedChangesExitGuard: UnsavedChangesExitGuard
 
     override val destinationTitle: String
         get() = getString(R.string.device_dosing_detail_plan_title)
@@ -50,6 +52,7 @@ class DeviceDosingPlanFragment :
                 ?.getLong(STATE_BASE_REVISION),
             restoredDraftDirty = savedInstanceState?.getBoolean(STATE_DRAFT_DIRTY, false) == true
         )
+        setupUnsavedChangesExitGuard()
         setupDailyDoseResult()
         bindDosingPlanScheduleResults(
             host = DosingPlanScheduleResultHost(
@@ -71,6 +74,8 @@ class DeviceDosingPlanFragment :
         observeSaveLoading()
         setupContent(view)
     }
+
+    override fun onBackRequested() = unsavedChangesExitGuard.requestExit()
 
     override fun onSaveInstanceState(outState: Bundle) {
         val editorState = viewModel.currentEditorState
@@ -115,6 +120,22 @@ class DeviceDosingPlanFragment :
                 )
             }
         }
+    }
+
+    private fun setupUnsavedChangesExitGuard() {
+        unsavedChangesExitGuard = UnsavedChangesExitGuard.attach(
+            fragment = this,
+            requestKey = UNSAVED_CHANGES_REQUEST_KEY,
+            actionId = ACTION_EXIT_WITHOUT_SAVING,
+            hasUnsavedChanges = { viewModel.currentEditorState.draftDirty },
+            isExitBlocked = { viewModel.currentEditorState.operationInProgress },
+            exit = {
+                val navController = findNavController()
+                if (navController.currentDestination?.id == R.id.deviceDosingPlanFragment) {
+                    navController.navigateUp()
+                }
+            }
+        )
     }
 
     private fun setupDailyDoseResult() {
@@ -293,6 +314,8 @@ class DeviceDosingPlanFragment :
         const val DAILY_DOSE_INPUT_MAX_LENGTH = 12
         const val STATE_BASE_REVISION = "dosing_plan_base_revision"
         const val STATE_DRAFT_DIRTY = "dosing_plan_draft_dirty"
+        const val UNSAVED_CHANGES_REQUEST_KEY = "dosing_plan_unsaved_changes"
+        const val ACTION_EXIT_WITHOUT_SAVING = "exit_dosing_plan_without_saving"
     }
 }
 
