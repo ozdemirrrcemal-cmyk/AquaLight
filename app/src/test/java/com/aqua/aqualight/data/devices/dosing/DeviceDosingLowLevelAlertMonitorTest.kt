@@ -55,7 +55,7 @@ class DeviceDosingLowLevelAlertMonitorTest {
     }
 
     @Test
-    fun `owner preference is consumed while android delivery block remains retryable`() = runTest {
+    fun `owner preference block is consumed without a historical alert`() = runTest {
         val snapshot = sampleDosingChannelSnapshot().copy(
             reservoir = sampleDosingChannelSnapshot().reservoir.copy(
                 lowLevelAlertEnabled = true,
@@ -77,6 +77,24 @@ class DeviceDosingLowLevelAlertMonitorTest {
         ownerBlocked.reconcile(low)
         assertEquals(0, ownerBlockedRenderer.deviceAlerts.size)
 
+        val ownerReadyRenderer = RecordingRenderer()
+        monitor(
+            ownerBlockedLedger,
+            dispatchUseCase(renderer = ownerReadyRenderer)
+        ).reconcile(low)
+
+        assertEquals(0, ownerReadyRenderer.deviceAlerts.size)
+    }
+
+    @Test
+    fun `android delivery block keeps the same low transition retryable`() = runTest {
+        val snapshot = sampleDosingChannelSnapshot().copy(
+            reservoir = sampleDosingChannelSnapshot().reservoir.copy(
+                lowLevelAlertEnabled = true,
+                lowLevelActive = false
+            )
+        )
+        val low = snapshot.copy(reservoir = snapshot.reservoir.copy(lowLevelActive = true))
         val androidBlockedLedger = InMemoryDeviceDosingLowLevelAlertLedger().apply {
             setEnabled(DEVICE_UID, SLOT_ID, true)
         }
@@ -89,13 +107,6 @@ class DeviceDosingLowLevelAlertMonitorTest {
         androidBlocked.reconcile(low)
         androidBlocked.reconcile(low)
         assertEquals(0, androidBlockedRenderer.deviceAlerts.size)
-
-        val ownerReadyRenderer = RecordingRenderer()
-        monitor(
-            ownerBlockedLedger,
-            dispatchUseCase(renderer = ownerReadyRenderer)
-        ).reconcile(low)
-        assertEquals(0, ownerReadyRenderer.deviceAlerts.size)
 
         val androidReadyRenderer = RecordingRenderer()
         val androidReady = monitor(
