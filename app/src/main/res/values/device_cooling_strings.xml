@@ -9,8 +9,11 @@
     <string name="device_cooling_room_temperature_label">Room</string>
     <string name="device_cooling_humidity_label">Humidity</string>
     <string name="device_cooling_chart_24h_start">−24 h</string>
+    <string name="device_cooling_chart_18h">−18 h</string>
     <string name="device_cooling_chart_12h">−12 h</string>
+    <string name="device_cooling_chart_6h">−6 h</string>
     <string name="device_cooling_chart_now">Now</string>
+    <string name="device_cooling_temperature_axis_value_format">%1$.0f °C</string>
 
     <string name="device_cooling_fan_speed_title">Fan Speed</string>
     <string name="device_cooling_fan_mode_title">Fan Mode</string>
