@@ -5,6 +5,7 @@
     <string name="device_cooling_temperature_title">Sıcaklık</string>
     <string name="device_cooling_temperature_history_caption">Son 24 saat</string>
     <string name="device_cooling_temperature_history_empty">Sıcaklık geçmişi burada görünecek</string>
+    <string name="device_cooling_view_history_description">Sıcaklık geçmişini aç</string>
     <string name="device_cooling_tank_temperature_label">Su</string>
     <string name="device_cooling_room_temperature_label">Oda</string>
     <string name="device_cooling_humidity_label">Nem</string>
@@ -14,6 +15,31 @@
     <string name="device_cooling_chart_6h">−6 sa</string>
     <string name="device_cooling_chart_now">Şimdi</string>
     <string name="device_cooling_temperature_axis_value_format">%1$.0f °C</string>
+
+    <string name="device_cooling_history_title">Sıcaklık Geçmişi</string>
+    <string name="device_cooling_history_range_24h">24 Saat</string>
+    <string name="device_cooling_history_range_7d">7 Gün</string>
+    <string name="device_cooling_history_range_30d">30 Gün</string>
+    <string name="device_cooling_history_chart_title">Su Sıcaklığı</string>
+    <string name="device_cooling_history_chart_subtitle">Seçilen aralıktaki ölçülen sıcaklık</string>
+    <string name="device_cooling_history_firmware_source">Cihaz firmware’i</string>
+    <string name="device_cooling_history_minimum">Minimum</string>
+    <string name="device_cooling_history_average">Ortalama</string>
+    <string name="device_cooling_history_maximum">Maksimum</string>
+    <string name="device_cooling_history_daily_title">Günlük Geçmiş</string>
+    <string name="device_cooling_history_date">Tarih</string>
+    <string name="device_cooling_history_minimum_short">Min</string>
+    <string name="device_cooling_history_average_short">Ort.</string>
+    <string name="device_cooling_history_maximum_short">Maks.</string>
+    <string name="device_cooling_history_no_samples">Bu dönem için sıcaklık ölçümü yok</string>
+    <string name="device_cooling_history_daily_empty">Firmware günlük özetleri sağladığında burada görünecek</string>
+    <string name="device_cooling_history_loading_title">Geçmiş yükleniyor</string>
+    <string name="device_cooling_history_loading_message">Sıcaklık geçmişi doğrudan cihaz firmware’inden okunuyor…</string>
+    <string name="device_cooling_history_unsupported_title">Geçmiş henüz kullanılamıyor</string>
+    <string name="device_cooling_history_unsupported_message">Bu firmware henüz sıcaklık geçmişi sağlamıyor. Yerel veya tahmini veri kullanılmıyor.</string>
+    <string name="device_cooling_history_unavailable_title">Geçmiş okunamadı</string>
+    <string name="device_cooling_history_unavailable_message">Cihaz geçmiş verisini döndürmedi. Bağlantıyı kontrol edip tekrar dene.</string>
+    <string name="device_cooling_history_retry">Tekrar Dene</string>
 
     <string name="device_cooling_fan_speed_title">Fan Hızı</string>
     <string name="device_cooling_fan_mode_title">Fan Modu</string>
