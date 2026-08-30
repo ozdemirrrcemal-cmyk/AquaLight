@@ -2,6 +2,7 @@
 
 package com.aqua.aqualight.ui.tabs.devices.detail.cooling.history
 
+import android.content.Context
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -32,6 +33,7 @@ import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.drawscope.Stroke
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.TextStyle
@@ -41,7 +43,7 @@ import com.aqua.aqualight.R
 import com.aqua.aqualight.application.devices.cooling.DeviceCoolingDailyTemperatureSummary
 import com.aqua.aqualight.application.devices.cooling.DeviceCoolingTemperatureHistoryPoint
 import com.aqua.aqualight.application.devices.cooling.DeviceCoolingTemperatureHistoryRange
-import com.aqua.aqualight.application.devices.cooling.DeviceCoolingTemperatureHistorySnapshot
+import com.aqua.aqualight.i18n.LocaleFormatter
 import com.aqua.aqualight.ui.common.cooling.AquaCoolingDashboardAlpha
 import com.aqua.aqualight.ui.common.cooling.AquaCoolingDashboardCardSurface
 import com.aqua.aqualight.ui.common.cooling.AquaCoolingDashboardGeometry
@@ -53,13 +55,16 @@ import com.aqua.aqualight.ui.common.cooling.aquaCoolingDashboardColors
 import com.aqua.aqualight.ui.common.cooling.aquaCoolingDashboardTypography
 import com.aqua.aqualight.ui.common.devicecard.AquaDeviceCardColors
 import com.aqua.aqualight.ui.common.devicecard.AquaDeviceCardTypography
-import java.text.DateFormat
-import java.text.SimpleDateFormat
-import java.util.Date
-import java.util.Locale
 import kotlin.math.ceil
 import kotlin.math.floor
 
+/**
+ * Firmware-backed Cooling history surface.
+ *
+ * Range controls, chart, summary metrics and the daily table remain visible while firmware data is
+ * loading, unsupported or temporarily unavailable. Missing measurements are represented only by
+ * unavailable placeholders; no local or synthetic history is invented for design/runtime fallback.
+ */
 @Composable
 internal fun DeviceCoolingTemperatureHistoryScreen(
     state: DeviceCoolingTemperatureHistoryUiState,
@@ -69,6 +74,7 @@ internal fun DeviceCoolingTemperatureHistoryScreen(
 ) {
     val colors = aquaCoolingDashboardColors()
     val typography = aquaCoolingDashboardTypography(colors)
+    val snapshot = state.snapshot
 
     LazyColumn(
         modifier = modifier.fillMaxSize(),
@@ -91,7 +97,7 @@ internal fun DeviceCoolingTemperatureHistoryScreen(
 
         when (state.loadState) {
             DeviceCoolingTemperatureHistoryLoadState.IDLE,
-            DeviceCoolingTemperatureHistoryLoadState.LOADING -> item(key = "loading") {
+            DeviceCoolingTemperatureHistoryLoadState.LOADING -> item(key = "load-state") {
                 CoolingHistoryMessageCard(
                     title = stringResource(R.string.device_cooling_history_loading_title),
                     message = stringResource(R.string.device_cooling_history_loading_message),
@@ -99,7 +105,8 @@ internal fun DeviceCoolingTemperatureHistoryScreen(
                     typography = typography
                 )
             }
-            DeviceCoolingTemperatureHistoryLoadState.UNSUPPORTED -> item(key = "unsupported") {
+
+            DeviceCoolingTemperatureHistoryLoadState.UNSUPPORTED -> item(key = "load-state") {
                 CoolingHistoryMessageCard(
                     title = stringResource(R.string.device_cooling_history_unsupported_title),
                     message = stringResource(R.string.device_cooling_history_unsupported_message),
@@ -109,7 +116,8 @@ internal fun DeviceCoolingTemperatureHistoryScreen(
                     onAction = onRetry
                 )
             }
-            DeviceCoolingTemperatureHistoryLoadState.UNAVAILABLE -> item(key = "unavailable") {
+
+            DeviceCoolingTemperatureHistoryLoadState.UNAVAILABLE -> item(key = "load-state") {
                 CoolingHistoryMessageCard(
                     title = stringResource(R.string.device_cooling_history_unavailable_title),
                     message = stringResource(R.string.device_cooling_history_unavailable_message),
@@ -119,32 +127,33 @@ internal fun DeviceCoolingTemperatureHistoryScreen(
                     onAction = onRetry
                 )
             }
-            DeviceCoolingTemperatureHistoryLoadState.CONTENT -> {
-                val snapshot = state.snapshot
-                if (snapshot != null) {
-                    item(key = "chart") {
-                        CoolingHistoryChartCard(
-                            snapshot = snapshot,
-                            colors = colors,
-                            typography = typography
-                        )
-                    }
-                    item(key = "summary") {
-                        CoolingHistorySummaryRow(
-                            snapshot = snapshot,
-                            colors = colors,
-                            typography = typography
-                        )
-                    }
-                    item(key = "daily") {
-                        CoolingDailyHistoryCard(
-                            days = snapshot.dailySummaries,
-                            colors = colors,
-                            typography = typography
-                        )
-                    }
-                }
-            }
+
+            DeviceCoolingTemperatureHistoryLoadState.CONTENT -> Unit
+        }
+
+        item(key = "chart") {
+            CoolingHistoryChartCard(
+                points = snapshot?.points.orEmpty(),
+                range = snapshot?.range ?: state.selectedRange,
+                colors = colors,
+                typography = typography
+            )
+        }
+        item(key = "summary") {
+            CoolingHistorySummaryRow(
+                minimumTemperatureC = snapshot?.minimumTemperatureC,
+                averageTemperatureC = snapshot?.averageTemperatureC,
+                maximumTemperatureC = snapshot?.maximumTemperatureC,
+                colors = colors,
+                typography = typography
+            )
+        }
+        item(key = "daily") {
+            CoolingDailyHistoryCard(
+                days = snapshot?.dailySummaries.orEmpty(),
+                colors = colors,
+                typography = typography
+            )
         }
     }
 }
@@ -210,7 +219,8 @@ private fun CoolingHistoryRangeSelector(
 
 @Composable
 private fun CoolingHistoryChartCard(
-    snapshot: DeviceCoolingTemperatureHistorySnapshot,
+    points: List<DeviceCoolingTemperatureHistoryPoint>,
+    range: DeviceCoolingTemperatureHistoryRange,
     colors: AquaDeviceCardColors,
     typography: AquaDeviceCardTypography
 ) {
@@ -259,8 +269,8 @@ private fun CoolingHistoryChartCard(
                 }
             }
             CoolingHistoryChart(
-                points = snapshot.points,
-                range = snapshot.range,
+                points = points,
+                range = range,
                 colors = colors,
                 typography = typography
             )
@@ -275,7 +285,9 @@ private fun CoolingHistoryChart(
     colors: AquaDeviceCardColors,
     typography: AquaDeviceCardTypography
 ) {
-    val validPoints = points.filter { point -> point.temperatureC.isFinite() }
+    val validPoints = points.filter { point ->
+        point.temperatureC.isFinite() && point.sampledAtEpochMillis >= 0L
+    }.sortedBy(DeviceCoolingTemperatureHistoryPoint::sampledAtEpochMillis)
     val scale = historyTemperatureScale(validPoints.map { point -> point.temperatureC.toFloat() })
 
     Row(modifier = Modifier.fillMaxWidth(), verticalAlignment = Alignment.Top) {
@@ -387,18 +399,22 @@ private fun HistoryTimeAxis(
     colors: AquaDeviceCardColors,
     typography: AquaDeviceCardTypography
 ) {
+    val context = LocalContext.current
     val first = points.firstOrNull()?.sampledAtEpochMillis
     val last = points.lastOrNull()?.sampledAtEpochMillis
     val labels = if (first != null && last != null && last >= first) {
         List(HISTORY_VERTICAL_GRID_COUNT) { index ->
             val fraction = index.toDouble() / (HISTORY_VERTICAL_GRID_COUNT - 1)
             formatHistoryTick(
+                context = context,
                 epochMillis = first + ((last - first) * fraction).toLong(),
                 range = range
             )
         }
     } else {
-        List(HISTORY_VERTICAL_GRID_COUNT) { stringResource(R.string.device_cooling_value_unavailable) }
+        List(HISTORY_VERTICAL_GRID_COUNT) {
+            stringResource(R.string.device_cooling_value_unavailable)
+        }
     }
     Row(modifier = Modifier.fillMaxWidth()) {
         labels.forEachIndexed { index, label ->
@@ -413,7 +429,8 @@ private fun HistoryTimeAxis(
                     }
                 ),
                 modifier = Modifier.weight(1f),
-                maxLines = 1
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis
             )
         }
     }
@@ -476,7 +493,9 @@ private fun androidx.compose.ui.graphics.drawscope.DrawScope.drawHistorySeries(
 
 @Composable
 private fun CoolingHistorySummaryRow(
-    snapshot: DeviceCoolingTemperatureHistorySnapshot,
+    minimumTemperatureC: Double?,
+    averageTemperatureC: Double?,
+    maximumTemperatureC: Double?,
     colors: AquaDeviceCardColors,
     typography: AquaDeviceCardTypography
 ) {
@@ -486,14 +505,14 @@ private fun CoolingHistorySummaryRow(
     ) {
         HistorySummaryMetric(
             label = stringResource(R.string.device_cooling_history_minimum),
-            value = historyTemperatureText(snapshot.minimumTemperatureC),
+            value = historyTemperatureText(minimumTemperatureC),
             colors = colors,
             typography = typography,
             modifier = Modifier.weight(1f)
         )
         HistorySummaryMetric(
             label = stringResource(R.string.device_cooling_history_average),
-            value = historyTemperatureText(snapshot.averageTemperatureC),
+            value = historyTemperatureText(averageTemperatureC),
             colors = colors,
             typography = typography,
             modifier = Modifier.weight(1f),
@@ -501,7 +520,7 @@ private fun CoolingHistorySummaryRow(
         )
         HistorySummaryMetric(
             label = stringResource(R.string.device_cooling_history_maximum),
-            value = historyTemperatureText(snapshot.maximumTemperatureC),
+            value = historyTemperatureText(maximumTemperatureC),
             colors = colors,
             typography = typography,
             modifier = Modifier.weight(1f)
@@ -620,6 +639,7 @@ private fun DailyHistoryRow(
     colors: AquaDeviceCardColors,
     typography: AquaDeviceCardTypography
 ) {
+    val context = LocalContext.current
     Row(
         modifier = Modifier
             .fillMaxWidth()
@@ -628,7 +648,7 @@ private fun DailyHistoryRow(
         verticalAlignment = Alignment.CenterVertically
     ) {
         TableCell(
-            text = formatHistoryDate(day.dayStartEpochMillis),
+            text = LocaleFormatter.formatDate(context, day.dayStartEpochMillis),
             style = typography.body.copy(color = colors.primaryText),
             modifier = Modifier.weight(AquaCoolingHistoryGeometry.tableDateWeight),
             alignment = TextAlign.Start
@@ -809,18 +829,16 @@ private fun historyAreaPath(points: List<Offset>, bottomY: Float): Path {
 }
 
 private fun formatHistoryTick(
+    context: Context,
     epochMillis: Long,
     range: DeviceCoolingTemperatureHistoryRange
-): String {
-    val pattern = when (range) {
-        DeviceCoolingTemperatureHistoryRange.HOURS_24 -> "HH:mm"
-        DeviceCoolingTemperatureHistoryRange.DAYS_7 -> "EEE"
-        DeviceCoolingTemperatureHistoryRange.DAYS_30 -> "d MMM"
-    }
-    return SimpleDateFormat(pattern, Locale.getDefault()).format(Date(epochMillis))
+): String = when (range) {
+    DeviceCoolingTemperatureHistoryRange.HOURS_24 ->
+        LocaleFormatter.formatTime(context, epochMillis)
+    DeviceCoolingTemperatureHistoryRange.DAYS_7 ->
+        LocaleFormatter.formatWeekdayShort(context, epochMillis)
+    DeviceCoolingTemperatureHistoryRange.DAYS_30 ->
+        LocaleFormatter.formatDayMonthShort(context, epochMillis)
 }
-
-private fun formatHistoryDate(epochMillis: Long): String =
-    DateFormat.getDateInstance(DateFormat.MEDIUM, Locale.getDefault()).format(Date(epochMillis))
 
 private const val HISTORY_VERTICAL_GRID_COUNT = 5
