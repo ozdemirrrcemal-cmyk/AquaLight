@@ -37,11 +37,12 @@ object AquaCoolingAutomaticGeometry {
     val actionShape = RoundedCornerShape(14.dp)
     val actionHorizontalPadding = 16.dp
 
-    val messageCardMinimumHeight = 136.dp
-    val messageGap = 8.dp
+    // Connection/read state is a compact banner; it must never replace the editor layout.
+    val messageCardMinimumHeight = 92.dp
+    val messageGap = 7.dp
     val retryShape = RoundedCornerShape(18.dp)
     val retryHorizontalPadding = 14.dp
-    val retryVerticalPadding = 8.dp
+    val retryVerticalPadding = 7.dp
 }
 
 object AquaCoolingAutomaticAlpha {
