@@ -59,15 +59,36 @@ class DeviceCoolingRootViewModel(
 
     fun selectMode(mode: CoolingControlMode) {
         _uiState.update { state ->
-            if (!state.contentEnabled || state.selectedMode == mode) state
-            else state.copy(selectedMode = mode)
+            if (!state.contentEnabled || state.selectedMode == mode) {
+                state
+            } else {
+                state.copy(
+                    selectedMode = mode,
+                    fanPercentNow = if (mode == CoolingControlMode.MANUAL) {
+                        state.manualFanPercent
+                    } else {
+                        null
+                    }
+                )
+            }
         }
     }
 
     fun updateManualFanPercent(percent: Int) {
         _uiState.update { state ->
-            if (!state.contentEnabled) state
-            else state.copy(manualFanPercent = percent.coerceIn(MIN_PERCENT, MAX_PERCENT))
+            if (!state.contentEnabled) {
+                state
+            } else {
+                val clamped = percent.coerceIn(MIN_PERCENT, MAX_PERCENT)
+                state.copy(
+                    manualFanPercent = clamped,
+                    fanPercentNow = if (state.selectedMode == CoolingControlMode.MANUAL) {
+                        clamped
+                    } else {
+                        state.fanPercentNow
+                    }
+                )
+            }
         }
     }
 
@@ -137,11 +158,4 @@ data class DeviceCoolingRootUiState(
     val temperatureHistoryC: List<Double> = emptyList(),
     val fanOutputCount: Int = 0,
     val temperatureSensorCount: Int = 0
-) {
-    val displayedFanPercent: Int?
-        get() = if (selectedMode == CoolingControlMode.MANUAL) {
-            manualFanPercent
-        } else {
-            fanPercentNow
-        }
-}
+)
