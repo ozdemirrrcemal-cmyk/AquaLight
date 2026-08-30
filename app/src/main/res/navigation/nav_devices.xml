@@ -223,6 +223,30 @@
     </fragment>
 
     <fragment
+        android:id="@+id/deviceCoolingAutomaticSettingsFragment"
+        android:name="com.aqua.aqualight.ui.tabs.devices.detail.cooling.settings.DeviceCoolingAutomaticSettingsFragment"
+        android:label="@string/device_cooling_automatic_settings_title"
+        tools:layout="@layout/fragment_device_cooling_mode_settings">
+        <argument
+            android:name="deviceUid"
+            app:argType="string" />
+        <deepLink
+            app:uri="aqualight://app/device/{deviceUid}/cooling/automatic" />
+    </fragment>
+
+    <fragment
+        android:id="@+id/deviceCoolingProgramSettingsFragment"
+        android:name="com.aqua.aqualight.ui.tabs.devices.detail.cooling.settings.DeviceCoolingProgramSettingsFragment"
+        android:label="@string/device_cooling_program_settings_title"
+        tools:layout="@layout/fragment_device_cooling_mode_settings">
+        <argument
+            android:name="deviceUid"
+            app:argType="string" />
+        <deepLink
+            app:uri="aqualight://app/device/{deviceUid}/cooling/program" />
+    </fragment>
+
+    <fragment
         android:id="@+id/deviceLightSettingsFragment"
         android:name="com.aqua.aqualight.ui.tabs.devices.detail.light.settings.DeviceLightSettingsFragment"
         android:label="@string/device_settings_title"
