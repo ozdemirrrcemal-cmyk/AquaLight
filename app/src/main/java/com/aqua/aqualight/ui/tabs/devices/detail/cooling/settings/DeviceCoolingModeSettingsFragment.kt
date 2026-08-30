@@ -8,6 +8,7 @@ import androidx.navigation.fragment.findNavController
 import com.aqua.aqualight.R
 import com.aqua.aqualight.databinding.FragmentDeviceCoolingModeSettingsBinding
 import com.aqua.aqualight.ui.common.header.AquaHeaderConfig
+import com.aqua.aqualight.ui.common.header.AquaHeaderPrimaryAction
 import com.aqua.aqualight.ui.common.header.setupAquaHeader
 
 /** Shared destination shell that keeps every Cooling mode editor on the central AquaHeader host. */
@@ -25,14 +26,21 @@ abstract class DeviceCoolingModeSettingsFragment(
         super.onViewCreated(view, savedInstanceState)
         check(destinationDeviceUid.isNotBlank()) { "Cooling destination deviceUid must not be blank." }
         _binding = FragmentDeviceCoolingModeSettingsBinding.bind(view)
+        refreshModeSettingsHeader()
+        onModeSettingsViewCreated(savedInstanceState)
+    }
+
+    protected open fun modeSettingsPrimaryAction(): AquaHeaderPrimaryAction? = null
+
+    protected fun refreshModeSettingsHeader() {
         modeSettingsBinding.appHeader.setupAquaHeader(
             fragment = this,
             config = AquaHeaderConfig(
                 titleOverride = getString(titleRes),
-                onBackClick = { findNavController().navigateUp() }
+                onBackClick = { findNavController().navigateUp() },
+                primaryAction = modeSettingsPrimaryAction()
             )
         )
-        onModeSettingsViewCreated(savedInstanceState)
     }
 
     protected open fun onModeSettingsViewCreated(savedInstanceState: Bundle?) = Unit
