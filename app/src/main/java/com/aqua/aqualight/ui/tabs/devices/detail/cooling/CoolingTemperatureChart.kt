@@ -20,7 +20,6 @@ import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
-import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.drawText
 import androidx.compose.ui.text.rememberTextMeasurer
 import androidx.compose.ui.text.style.TextAlign
@@ -79,10 +78,10 @@ private fun CoolingTemperatureCanvas(modifier: Modifier = Modifier) {
         stringResource(R.string.device_cooling_chart_6_hours),
         stringResource(R.string.device_cooling_chart_now)
     )
-    val labelStyle = TextStyle(
-        color = CoolingDashboardPalette.textSecondary,
-        fontSize = 8.sp,
-        lineHeight = 10.sp
+    val labelStyle = coolingTextStyle(
+        size = 8.sp,
+        lineHeight = 10.sp,
+        color = CoolingDashboardPalette.textSecondary
     )
 
     Canvas(modifier = modifier) {
@@ -105,11 +104,7 @@ private fun CoolingTemperatureCanvas(modifier: Modifier = Modifier) {
                 end = Offset(left + graphWidth, y),
                 strokeWidth = 0.75.dp.toPx()
             )
-            val label = if (value == CHART_MAX) {
-                "${value.toInt()} °C"
-            } else {
-                "${value.toInt()} °C"
-            }
+            val label = "${value.toInt()} °C"
             val measured = textMeasurer.measure(label, labelStyle)
             drawText(
                 textLayoutResult = measured,

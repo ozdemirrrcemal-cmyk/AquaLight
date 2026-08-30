@@ -101,7 +101,9 @@ internal fun CoolingDashboardHeader(
                     lineHeight = 31.sp,
                     color = CoolingDashboardPalette.textPrimary,
                     semiBold = true
-                )
+                ),
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis
             )
             Spacer(modifier = Modifier.width(14.dp))
             Box(
@@ -144,7 +146,7 @@ private fun CoolingHeaderIcon(
 ) {
     Box(
         modifier = Modifier
-            .size(44.dp)
+            .size(48.dp)
             .clip(CircleShape)
             .clickable(onClick = onClick)
             .semantics { this.contentDescription = contentDescription },
