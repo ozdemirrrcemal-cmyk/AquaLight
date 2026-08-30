@@ -1,3 +1,5 @@
+@file:Suppress("MagicNumber")
+
 package com.aqua.aqualight.ui.tabs.devices.detail.cooling
 
 import androidx.compose.foundation.Canvas
