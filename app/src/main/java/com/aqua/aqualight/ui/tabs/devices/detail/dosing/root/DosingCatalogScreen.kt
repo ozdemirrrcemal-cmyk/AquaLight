@@ -100,7 +100,8 @@ private fun DosingCatalogContent(
         DosingChannelList(
             channels = state.channels,
             contentEnabled = state.contentEnabled,
-            onChannelClick = onChannelClick
+            onChannelClick = onChannelClick,
+            modifier = Modifier.weight(1f)
         )
     }
 }
@@ -109,12 +110,11 @@ private fun DosingCatalogContent(
 private fun DosingChannelList(
     channels: List<DosingChannelCardUiState>,
     contentEnabled: Boolean,
-    onChannelClick: (String) -> Unit
+    onChannelClick: (String) -> Unit,
+    modifier: Modifier
 ) {
     LazyColumn(
-        modifier = Modifier
-            .fillMaxWidth()
-            .weight(1f),
+        modifier = modifier.fillMaxWidth(),
         contentPadding = PaddingValues(
             start = SCREEN_HORIZONTAL_PADDING,
             top = CARD_LIST_TOP_PADDING,
