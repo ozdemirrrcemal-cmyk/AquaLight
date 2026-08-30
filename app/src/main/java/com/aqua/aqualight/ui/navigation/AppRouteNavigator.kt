@@ -94,6 +94,26 @@ object AppRouteNavigator {
         }
     }
 
+    fun openCoolingAutomaticSettings(
+        navController: NavController,
+        deviceUid: String
+    ): AppRouteOpenResult = openCoolingModeSettings(
+        navController = navController,
+        deviceUid = deviceUid,
+        path = PATH_AUTOMATIC,
+        destinationId = R.id.deviceCoolingAutomaticSettingsFragment
+    )
+
+    fun openCoolingProgramSettings(
+        navController: NavController,
+        deviceUid: String
+    ): AppRouteOpenResult = openCoolingModeSettings(
+        navController = navController,
+        deviceUid = deviceUid,
+        path = PATH_PROGRAM,
+        destinationId = R.id.deviceCoolingProgramSettingsFragment
+    )
+
     fun openDosingChannel(
         navController: NavController,
         target: DeviceDosingChannelNavigationTarget
@@ -143,6 +163,43 @@ object AppRouteNavigator {
                         )
                     ),
                     dosingChannelRouteOptions()
+                )
+                AppRouteOpenResult.OPENED
+            }
+        }
+    }
+
+    private fun openCoolingModeSettings(
+        navController: NavController,
+        deviceUid: String,
+        path: String,
+        destinationId: Int
+    ): AppRouteOpenResult {
+        val normalizedDeviceUid = deviceUid.trim()
+        val currentDeviceUid = navController.currentBackStackEntry
+            ?.arguments
+            ?.getString(ARG_DEVICE_UID)
+            .orEmpty()
+            .trim()
+        return when {
+            normalizedDeviceUid.isBlank() -> AppRouteOpenResult.REJECTED
+            navController.currentDestination?.id == destinationId &&
+                currentDeviceUid == normalizedDeviceUid -> AppRouteOpenResult.ALREADY_OPEN
+            navController.currentDestination?.id != coolingRootDestinationId ->
+                AppRouteOpenResult.REJECTED
+            else -> {
+                navController.navigate(
+                    deepLinkRequest(
+                        uri = Uri.Builder()
+                            .scheme(SCHEME)
+                            .authority(AUTHORITY)
+                            .appendPath(PATH_DEVICE)
+                            .appendPath(normalizedDeviceUid)
+                            .appendPath(PATH_COOLING)
+                            .appendPath(path)
+                            .build()
+                    ),
+                    standardRouteOptions()
                 )
                 AppRouteOpenResult.OPENED
             }
@@ -219,6 +276,9 @@ object AppRouteNavigator {
     private const val PATH_CARE_TASK = "care-task"
     private const val PATH_DEVICE = "device"
     private const val PATH_FIRMWARE_UPDATE = "firmware-update"
+    private const val PATH_COOLING = "cooling"
+    private const val PATH_AUTOMATIC = "automatic"
+    private const val PATH_PROGRAM = "program"
     private const val PATH_DOSING = "dosing"
     private const val PATH_CHANNEL = "channel"
     private const val PATH_CALIBRATION = "calibration"
@@ -233,6 +293,7 @@ object AppRouteNavigator {
 
     private val firmwareDestinationId = R.id.deviceFirmwareUpdateFragment
     private val dosingRootDestinationId = R.id.deviceDosingRootFragment
+    private val coolingRootDestinationId = R.id.deviceCoolingRootFragment
 
     private val DeviceDosingChannelDestination.destinationId: Int
         get() = when (this) {
