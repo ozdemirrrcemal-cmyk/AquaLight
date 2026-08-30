@@ -4,7 +4,6 @@ package com.aqua.aqualight.ui.tabs.devices.detail.cooling
 
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
-import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -31,11 +30,11 @@ import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.style.TextAlign
 import com.aqua.aqualight.R
 import com.aqua.aqualight.ui.common.cooling.AquaCoolingDashboardAlpha
+import com.aqua.aqualight.ui.common.cooling.AquaCoolingDashboardCardSurface
 import com.aqua.aqualight.ui.common.cooling.AquaCoolingDashboardGeometry
 import com.aqua.aqualight.ui.common.cooling.AquaCoolingTemperatureChartSpec
 import com.aqua.aqualight.ui.common.devicecard.AquaDeviceCardColors
 import com.aqua.aqualight.ui.common.devicecard.AquaDeviceCardGeometry
-import com.aqua.aqualight.ui.common.devicecard.AquaDeviceCardSurface
 import com.aqua.aqualight.ui.common.devicecard.AquaDeviceCardTypography
 
 @Composable
@@ -44,14 +43,14 @@ internal fun CoolingTemperatureCard(
     colors: AquaDeviceCardColors,
     typography: AquaDeviceCardTypography
 ) {
-    AquaDeviceCardSurface(
+    AquaCoolingDashboardCardSurface(
         modifier = Modifier
             .fillMaxWidth()
             .heightIn(min = AquaCoolingDashboardGeometry.temperatureCardMinimumHeight)
     ) {
         Column(
             modifier = Modifier.fillMaxWidth(),
-            verticalArrangement = Arrangement.spacedBy(AquaDeviceCardGeometry.contentGap)
+            verticalArrangement = Arrangement.spacedBy(AquaDeviceCardGeometry.compactGap)
         ) {
             CoolingSectionHeader(
                 title = stringResource(R.string.device_cooling_temperature_title),
@@ -73,12 +72,8 @@ internal fun CoolingTemperatureCard(
                     modifier = Modifier.weight(1f)
                 )
                 Column(
-                    modifier = Modifier.width(
-                        AquaCoolingDashboardGeometry.temperatureMetricWidth
-                    ),
-                    verticalArrangement = Arrangement.spacedBy(
-                        AquaDeviceCardGeometry.contentGap
-                    )
+                    modifier = Modifier.width(AquaCoolingDashboardGeometry.temperatureMetricWidth),
+                    verticalArrangement = Arrangement.spacedBy(AquaDeviceCardGeometry.compactGap)
                 ) {
                     CoolingMetric(
                         label = stringResource(R.string.device_cooling_tank_temperature_label),
@@ -121,23 +116,15 @@ private fun CoolingTemperatureChart(
                 .clip(chartShape)
                 .background(
                     colors.mediaSurface.copy(alpha = AquaCoolingDashboardAlpha.chartBackground)
-                )
-                .border(
-                    width = AquaDeviceCardGeometry.outlineWidth,
-                    color = colors.mediaOutline,
-                    shape = chartShape
                 ),
             contentAlignment = Alignment.Center
         ) {
             Canvas(modifier = Modifier.fillMaxSize()) {
-                val horizontalPadding =
-                    AquaCoolingDashboardGeometry.temperatureChartPadding.toPx()
+                val horizontalPadding = AquaCoolingDashboardGeometry.temperatureChartPadding.toPx()
                 val verticalPadding = horizontalPadding
                 val plotWidth = (size.width - horizontalPadding * 2f).coerceAtLeast(1f)
                 val plotHeight = (size.height - verticalPadding * 2f).coerceAtLeast(1f)
-                val gridColor = colors.secondaryText.copy(
-                    alpha = AquaCoolingDashboardAlpha.chartGrid
-                )
+                val gridColor = colors.secondaryText.copy(alpha = AquaCoolingDashboardAlpha.chartGrid)
                 val gridStroke = AquaCoolingDashboardGeometry.chartGridStrokeWidth.toPx()
                 val gridCount = AquaCoolingTemperatureChartSpec.horizontalGridLineCount
                 repeat(gridCount) { index ->
@@ -166,7 +153,7 @@ private fun CoolingTemperatureChart(
             if (historyC.size < 2) {
                 BasicText(
                     text = stringResource(R.string.device_cooling_temperature_history_empty),
-                    style = typography.caption.copy(
+                    style = typography.micro.copy(
                         color = colors.secondaryText,
                         textAlign = TextAlign.Center
                     ),
@@ -180,17 +167,23 @@ private fun CoolingTemperatureChart(
         Row(modifier = Modifier.fillMaxWidth()) {
             ChartAxisLabel(
                 text = stringResource(R.string.device_cooling_chart_24h_start),
-                style = typography.micro,
+                style = typography.micro.copy(color = colors.secondaryText),
                 modifier = Modifier.weight(1f)
             )
             ChartAxisLabel(
                 text = stringResource(R.string.device_cooling_chart_12h),
-                style = typography.micro.copy(textAlign = TextAlign.Center),
+                style = typography.micro.copy(
+                    color = colors.secondaryText,
+                    textAlign = TextAlign.Center
+                ),
                 modifier = Modifier.weight(1f)
             )
             ChartAxisLabel(
                 text = stringResource(R.string.device_cooling_chart_now),
-                style = typography.micro.copy(textAlign = TextAlign.End),
+                style = typography.micro.copy(
+                    color = colors.secondaryText,
+                    textAlign = TextAlign.End
+                ),
                 modifier = Modifier.weight(1f)
             )
         }
@@ -214,15 +207,21 @@ private fun androidx.compose.ui.graphics.drawscope.DrawScope.drawTemperatureHist
     val maxValue = center + span / 2f + AquaCoolingTemperatureChartSpec.verticalPaddingC
     val valueSpan = (maxValue - minValue).coerceAtLeast(1f)
     val denominator = values.lastIndex.coerceAtLeast(1).toFloat()
-    val path = Path()
-
-    values.forEachIndexed { index, value ->
+    val points = values.mapIndexed { index, value ->
         val x = horizontalPadding + plotWidth * (index / denominator)
         val normalized = ((value - minValue) / valueSpan).coerceIn(0f, 1f)
-        val y = verticalPadding + plotHeight * (1f - normalized)
-        if (index == 0) path.moveTo(x, y) else path.lineTo(x, y)
+        Offset(x, verticalPadding + plotHeight * (1f - normalized))
     }
+    val path = smoothPath(points)
 
+    drawPath(
+        path = path,
+        color = colors.accent.copy(alpha = AquaCoolingDashboardAlpha.chartGlow),
+        style = Stroke(
+            width = AquaCoolingDashboardGeometry.chartGlowStrokeWidth.toPx(),
+            cap = StrokeCap.Round
+        )
+    )
     drawPath(
         path = path,
         color = colors.accent.copy(alpha = AquaCoolingDashboardAlpha.chartLine),
@@ -231,17 +230,34 @@ private fun androidx.compose.ui.graphics.drawscope.DrawScope.drawTemperatureHist
             cap = StrokeCap.Round
         )
     )
-
-    val finalValue = values.last()
-    val finalNormalized = ((finalValue - minValue) / valueSpan).coerceIn(0f, 1f)
+    drawCircle(
+        color = colors.primaryText,
+        radius = AquaCoolingDashboardGeometry.chartPointRadius.toPx() + 1f,
+        center = points.last()
+    )
     drawCircle(
         color = colors.accent,
         radius = AquaCoolingDashboardGeometry.chartPointRadius.toPx(),
-        center = Offset(
-            horizontalPadding + plotWidth,
-            verticalPadding + plotHeight * (1f - finalNormalized)
-        )
+        center = points.last()
     )
+}
+
+private fun smoothPath(points: List<Offset>): Path {
+    val path = Path()
+    if (points.isEmpty()) return path
+    path.moveTo(points.first().x, points.first().y)
+    points.zipWithNext().forEach { (previous, current) ->
+        val middleX = (previous.x + current.x) / 2f
+        path.cubicTo(
+            middleX,
+            previous.y,
+            middleX,
+            current.y,
+            current.x,
+            current.y
+        )
+    }
+    return path
 }
 
 @Composable
