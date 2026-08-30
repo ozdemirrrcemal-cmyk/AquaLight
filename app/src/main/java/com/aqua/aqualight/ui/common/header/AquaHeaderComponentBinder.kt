@@ -4,7 +4,6 @@ import android.content.res.ColorStateList
 import android.text.Editable
 import android.text.TextWatcher
 import android.view.View
-import android.widget.ImageButton
 import androidx.core.content.ContextCompat
 import androidx.fragment.app.Fragment
 import androidx.navigation.fragment.findNavController
@@ -73,25 +72,23 @@ internal object AquaHeaderComponentBinder {
             binding.btnActionTwo,
             binding.btnActionThree
         ).forEachIndexed { index, button ->
-            bindActionButton(button, actions.getOrNull(index))
-        }
-    }
-
-    private fun bindActionButton(button: ImageButton, action: AquaHeaderAction?) {
-        if (action == null) {
-            button.visibility = View.GONE
-            button.setOnClickListener(null)
-            button.setImageDrawable(null)
-            button.contentDescription = null
-            button.isEnabled = true
-            button.alpha = ACTION_ENABLED_ALPHA
-        } else {
-            button.visibility = View.VISIBLE
-            button.setImageResource(action.iconRes)
-            button.contentDescription = action.contentDescription
-            button.isEnabled = action.enabled
-            button.alpha = if (action.enabled) ACTION_ENABLED_ALPHA else ACTION_DISABLED_ALPHA
-            button.setOnClickListener { action.onClick() }
+            val action = actions.getOrNull(index)
+            if (action == null) {
+                button.visibility = View.GONE
+                button.setOnClickListener(null)
+                button.setImageDrawable(null)
+                button.contentDescription = null
+                button.isEnabled = true
+                button.alpha = ACTION_ENABLED_ALPHA
+            } else {
+                button.visibility = View.VISIBLE
+                button.setImageResource(action.iconRes)
+                button.contentDescription = action.contentDescription
+                button.isEnabled = action.enabled
+                button.alpha =
+                    if (action.enabled) ACTION_ENABLED_ALPHA else ACTION_DISABLED_ALPHA
+                button.setOnClickListener { action.onClick() }
+            }
         }
     }
 
