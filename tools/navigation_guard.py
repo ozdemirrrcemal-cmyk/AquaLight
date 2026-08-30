@@ -12,6 +12,7 @@ Rules:
    cross-family dependencies are rejected by device_family_isolation_guard.
 5. UI and data layers are mutually isolated repository-wide; direct dependencies
    in either direction are rejected by ui_data_layer_isolation_guard.
+6. Cooling Compose hero rendering must remain reference-driven and family-owned.
 
 Intentional exceptions: BottomSheet/FragmentResult/manual child-fragment bundles
 are not nav graph destinations and are outside Safe Args scope.
@@ -20,6 +21,7 @@ from pathlib import Path
 import sys
 import xml.etree.ElementTree as ET
 
+from cooling_compose_architecture_guard import validate_repository as validate_cooling_compose
 from device_family_isolation_guard import validate_repository as validate_family_isolation
 from device_root_ui_architecture_guard import validate_repository as validate_device_root_ui
 from ui_data_layer_isolation_guard import validate_repository as validate_ui_data_isolation
@@ -32,9 +34,7 @@ violations: list[str] = []
 for path in SOURCE_ROOT.rglob("*.kt"):
     text = path.read_text(encoding="utf-8")
     if "R.id.action_" in text:
-        violations.append(
-            f"raw action reference: {path.relative_to(ROOT)}"
-        )
+        violations.append(f"raw action reference: {path.relative_to(ROOT)}")
 
 ANDROID_NS = "{http://schemas.android.com/apk/res/android}"
 manual_arg_tokens = (
@@ -47,9 +47,7 @@ for nav_path in NAV_ROOT.glob("*.xml"):
     try:
         graph = ET.parse(nav_path).getroot()
     except ET.ParseError as exc:
-        violations.append(
-            f"invalid navigation XML: {nav_path.relative_to(ROOT)}: {exc}"
-        )
+        violations.append(f"invalid navigation XML: {nav_path.relative_to(ROOT)}: {exc}")
         continue
 
     for fragment in graph.iter("fragment"):
@@ -67,9 +65,7 @@ for nav_path in NAV_ROOT.glob("*.xml"):
 
         text = source_path.read_text(encoding="utf-8")
         if "by navArgs()" not in text:
-            violations.append(
-                f"missing navArgs delegate: {source_path.relative_to(ROOT)}"
-            )
+            violations.append(f"missing navArgs delegate: {source_path.relative_to(ROOT)}")
 
         for token in manual_arg_tokens:
             if token in text:
@@ -89,6 +85,10 @@ violations.extend(
     f"UI/data layer isolation: {error}"
     for error in validate_ui_data_isolation(ROOT)
 )
+violations.extend(
+    f"Cooling Compose architecture: {error}"
+    for error in validate_cooling_compose(ROOT)
+)
 
 if violations:
     print("Navigation guard failed:")
@@ -97,6 +97,6 @@ if violations:
     sys.exit(1)
 
 print(
-    "Navigation guard passed: Safe Args, shared device-root UI, device-family isolation "
-    "and UI/data layer isolation contracts are enforced."
+    "Navigation guard passed: Safe Args, shared device-root UI, device-family isolation, "
+    "UI/data isolation and Cooling Compose contracts are enforced."
 )

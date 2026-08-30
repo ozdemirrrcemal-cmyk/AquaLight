@@ -67,7 +67,8 @@ class DeviceCoolingRootViewModel(
             } else {
                 DeviceConnectionVisualState.OFFLINE
             },
-            contentEnabled = contentEnabled
+            contentEnabled = contentEnabled,
+            fanSpeedPercent = null
         )
     }
 }
@@ -76,5 +77,6 @@ data class DeviceCoolingRootUiState(
     val title: String = "",
     val deviceUid: String = "",
     val connectionVisualState: DeviceConnectionVisualState = DeviceConnectionVisualState.OFFLINE,
-    val contentEnabled: Boolean = false
+    val contentEnabled: Boolean = false,
+    val fanSpeedPercent: Int? = null
 )
