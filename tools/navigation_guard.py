@@ -8,6 +8,8 @@ Rules:
    arguments through Safe Args navArgs(), not requireArguments()/arguments.
 3. Device-root entry, header, connection-state and resource ownership must remain
    on the shared root UI architecture guarded by device_root_ui_architecture_guard.
+4. Family-owned Dosing and Cooling implementations must remain strictly isolated;
+   cross-family dependencies are rejected by device_family_isolation_guard.
 
 Intentional exceptions: BottomSheet/FragmentResult/manual child-fragment bundles
 are not nav graph destinations and are outside Safe Args scope.
@@ -16,6 +18,7 @@ from pathlib import Path
 import sys
 import xml.etree.ElementTree as ET
 
+from device_family_isolation_guard import validate_repository as validate_family_isolation
 from device_root_ui_architecture_guard import validate_repository as validate_device_root_ui
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -75,6 +78,10 @@ violations.extend(
     f"device-root UI architecture: {error}"
     for error in validate_device_root_ui(ROOT)
 )
+violations.extend(
+    f"device-family isolation: {error}"
+    for error in validate_family_isolation(ROOT)
+)
 
 if violations:
     print("Navigation guard failed:")
@@ -82,4 +89,7 @@ if violations:
         print(f" - {violation}")
     sys.exit(1)
 
-print("Navigation guard passed: Safe Args and shared device-root UI contracts are enforced.")
+print(
+    "Navigation guard passed: Safe Args, shared device-root UI and device-family isolation "
+    "contracts are enforced."
+)
