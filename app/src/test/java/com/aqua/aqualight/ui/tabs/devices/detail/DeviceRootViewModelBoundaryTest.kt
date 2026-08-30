@@ -110,7 +110,7 @@ class DeviceRootViewModelBoundaryTest {
                     DeviceRootCapability.FAN,
                     DeviceRootCapability.TEMPERATURE
                 ),
-                fanOutputCount = 3
+                fanOutputCount = COOLING_FAN_COUNT
             )
         )
         val viewModel = DeviceCoolingRootViewModel(operations)
@@ -195,3 +195,5 @@ class DeviceRootViewModelBoundaryTest {
         }
     }
 }
+
+private const val COOLING_FAN_COUNT = 3
