@@ -100,6 +100,14 @@ object AquaCoolingGaugeSpec {
     const val maximumPercent = 100
 }
 
+object AquaCoolingProfileGlyphSpec {
+    const val quietRadiusFraction = 0.20f
+    const val balancedRadiusFraction = 0.29f
+    const val performanceRadiusFraction = 0.37f
+    const val boostRadiusFraction = 0.44f
+    val centerDotRadius = 1.5.dp
+}
+
 object AquaCoolingTemperatureChartSpec {
     const val minimumVerticalSpanC = 4f
     const val verticalPaddingC = 1f
