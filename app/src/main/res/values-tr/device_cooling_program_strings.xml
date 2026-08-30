@@ -6,7 +6,7 @@
     <string name="device_cooling_program_timeline_title">24 Saatlik Plan</string>
     <string name="device_cooling_program_slots_title">Zaman Dilimleri</string>
     <string name="device_cooling_program_fan_limit">Fan Hız Limiti</string>
-    <string name="device_cooling_program_add_slot">+ Zaman Dilimi Ekle</string>
+    <string name="device_cooling_program_add_slot">+ Ekle</string>
     <string name="device_cooling_program_editor_title">Zaman Dilimi Ayarları</string>
     <string name="device_cooling_program_start_time">Başlangıç</string>
     <string name="device_cooling_program_end_time">Bitiş</string>
@@ -20,7 +20,7 @@
     <string name="device_cooling_program_axis_20">20</string>
     <string name="device_cooling_program_axis_24">24</string>
     <string name="device_cooling_program_time_range_format">%1$s – %2$s</string>
-    <string name="device_cooling_program_save">Programı Kaydet</string>
+    <string name="device_cooling_program_save">Kaydet</string>
     <string name="device_cooling_program_saved">Program Kaydedildi</string>
 
     <string name="device_cooling_program_start_time_sheet_title">Başlangıç Saati</string>
