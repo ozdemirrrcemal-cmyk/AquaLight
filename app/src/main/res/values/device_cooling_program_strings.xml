@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="device_cooling_program_active_title">Active Now</string>
+    <string name="device_cooling_program_outside_automatic">Outside program • Automatic cooling</string>
+    <string name="device_cooling_program_active_format">%1$s • %2$s</string>
+    <string name="device_cooling_program_timeline_title">24-Hour Plan</string>
+    <string name="device_cooling_program_slots_title">Time Periods</string>
+    <string name="device_cooling_program_fan_limit">Fan Speed Limit</string>
+    <string name="device_cooling_program_add_slot">+ Add Time Period</string>
+    <string name="device_cooling_program_editor_title">Time Period Settings</string>
+    <string name="device_cooling_program_start_time">Start</string>
+    <string name="device_cooling_program_end_time">End</string>
+    <string name="device_cooling_program_label_quiet">Quiet</string>
+    <string name="device_cooling_program_label_intensive">Intensive Cooling</string>
+    <string name="device_cooling_program_label_night">Night</string>
+    <string name="device_cooling_program_label_custom">Custom</string>
+    <string name="device_cooling_program_axis_00">00</string>
+    <string name="device_cooling_program_axis_08">08</string>
+    <string name="device_cooling_program_axis_14">14</string>
+    <string name="device_cooling_program_axis_20">20</string>
+    <string name="device_cooling_program_axis_24">24</string>
+    <string name="device_cooling_program_time_range_format">%1$s – %2$s</string>
+    <string name="device_cooling_program_save">Save Program</string>
+    <string name="device_cooling_program_saved">Program Saved</string>
+
+    <string name="device_cooling_program_start_time_sheet_title">Start Time</string>
+    <string name="device_cooling_program_start_time_sheet_message">Choose when this cooling period starts.</string>
+    <string name="device_cooling_program_end_time_sheet_title">End Time</string>
+    <string name="device_cooling_program_end_time_sheet_message">Choose when this cooling period ends.</string>
+    <string name="device_cooling_program_start_temperature_sheet_helper">Choose the water temperature at which this period begins cooling.</string>
+    <string name="device_cooling_program_max_temperature_sheet_helper">Choose the temperature at which this period reaches its fan speed limit.</string>
+    <string name="device_cooling_program_fan_limit_sheet_title">Fan Speed Limit</string>
+    <string name="device_cooling_program_fan_limit_sheet_helper">Set the highest fan output this time period may use.</string>
+    <string name="device_cooling_program_fan_limit_value_format">%1$d%%</string>
+    <string name="device_cooling_program_fan_limit_decrease">Decrease fan speed limit</string>
+    <string name="device_cooling_program_fan_limit_increase">Increase fan speed limit</string>
+</resources>
