@@ -13,6 +13,7 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -46,9 +47,7 @@ internal fun CoolingTemperatureCard(
     AquaDeviceCardSurface(
         modifier = Modifier
             .fillMaxWidth()
-            .height(
-                AquaCoolingDashboardGeometry.temperatureCardMinimumHeight
-            )
+            .heightIn(min = AquaCoolingDashboardGeometry.temperatureCardMinimumHeight)
     ) {
         Column(
             modifier = Modifier.fillMaxWidth(),
