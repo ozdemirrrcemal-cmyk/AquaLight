@@ -76,11 +76,20 @@ class DeviceCoolingRootFragment : Fragment(R.layout.fragment_device_cooling_root
                     onModeSelected = viewModel::selectMode,
                     onProfileSelected = viewModel::selectProfile,
                     onManualFanPercentChanged = viewModel::updateManualFanPercent,
+                    onTemperatureHistoryClick = ::openTemperatureHistory,
                     onAutomaticSettingsClick = ::openAutomaticSettings,
                     onProgramSettingsClick = ::openProgramSettings
                 )
             }
         }
+    }
+
+    private fun openTemperatureHistory() {
+        if (!viewModel.uiState.value.contentEnabled) return
+        AppRouteNavigator.openCoolingTemperatureHistory(
+            navController = findNavController(),
+            deviceUid = args.deviceUid
+        )
     }
 
     private fun openAutomaticSettings() {
