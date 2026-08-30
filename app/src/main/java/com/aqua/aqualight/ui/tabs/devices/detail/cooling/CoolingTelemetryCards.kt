@@ -20,7 +20,6 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextOverflow
-import androidx.compose.ui.unit.dp
 import com.aqua.aqualight.R
 import com.aqua.aqualight.ui.common.cooling.AquaCoolingDashboardAlpha
 import com.aqua.aqualight.ui.common.cooling.AquaCoolingDashboardCardSurface
@@ -28,7 +27,6 @@ import com.aqua.aqualight.ui.common.cooling.AquaCoolingDashboardGeometry
 import com.aqua.aqualight.ui.common.cooling.AquaCoolingDashboardPalette
 import com.aqua.aqualight.ui.common.cooling.AquaCoolingDashboardTypography
 import com.aqua.aqualight.ui.common.devicecard.AquaDeviceCardColors
-import com.aqua.aqualight.ui.common.devicecard.AquaDeviceCardGeometry
 import com.aqua.aqualight.ui.common.devicecard.AquaDeviceCardTypography
 
 @Composable
@@ -43,7 +41,9 @@ internal fun CoolingPowerCard(
     ) {
         Column(
             modifier = Modifier.fillMaxWidth(),
-            verticalArrangement = Arrangement.spacedBy(AquaDeviceCardGeometry.compactGap)
+            verticalArrangement = Arrangement.spacedBy(
+                AquaCoolingDashboardGeometry.telemetryContentGap
+            )
         ) {
             BasicText(
                 text = stringResource(R.string.device_cooling_power_title),
@@ -51,7 +51,9 @@ internal fun CoolingPowerCard(
             )
             Row(
                 verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.spacedBy(AquaDeviceCardGeometry.compactGap)
+                horizontalArrangement = Arrangement.spacedBy(
+                    AquaCoolingDashboardGeometry.telemetryContentGap
+                )
             ) {
                 CoolingPowerGlyph(colors)
                 BasicText(
@@ -63,7 +65,11 @@ internal fun CoolingPowerCard(
                     maxLines = 1
                 )
             }
-            Column(verticalArrangement = Arrangement.spacedBy(AquaCoolingDashboardGeometry.statusRowGap)) {
+            Column(
+                verticalArrangement = Arrangement.spacedBy(
+                    AquaCoolingDashboardGeometry.statusRowGap
+                )
+            ) {
                 BasicText(
                     text = stringResource(R.string.device_cooling_estimated_consumption),
                     style = typography.micro.copy(color = colors.secondaryText)
@@ -83,12 +89,12 @@ internal fun CoolingPowerCard(
 private fun CoolingPowerGlyph(colors: AquaDeviceCardColors) {
     Box(
         modifier = Modifier
-            .size(30.dp)
+            .size(AquaCoolingDashboardGeometry.powerGlyphContainerSize)
             .clip(CircleShape)
             .background(colors.mediaSurface),
         contentAlignment = Alignment.Center
     ) {
-        Canvas(modifier = Modifier.size(16.dp)) {
+        Canvas(modifier = Modifier.size(AquaCoolingDashboardGeometry.powerGlyphSize)) {
             val path = Path().apply {
                 moveTo(size.width * 0.57f, 0f)
                 lineTo(size.width * 0.25f, size.height * 0.53f)
