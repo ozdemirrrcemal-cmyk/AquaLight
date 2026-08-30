@@ -13,8 +13,8 @@ import androidx.compose.ui.semantics.disabled
 import androidx.compose.ui.semantics.semantics
 import com.aqua.aqualight.ui.common.cooling.AquaCoolingDashboardGeometry
 import com.aqua.aqualight.ui.common.cooling.AquaCoolingInteractionStyle
-import com.aqua.aqualight.ui.common.devicecard.aquaDeviceCardColors
-import com.aqua.aqualight.ui.common.devicecard.aquaDeviceCardTypography
+import com.aqua.aqualight.ui.common.cooling.aquaCoolingDashboardColors
+import com.aqua.aqualight.ui.common.cooling.aquaCoolingDashboardTypography
 
 @Composable
 internal fun DeviceCoolingDashboardScreen(
@@ -26,8 +26,8 @@ internal fun DeviceCoolingDashboardScreen(
     onProgramSettingsClick: () -> Unit,
     modifier: Modifier = Modifier
 ) {
-    val colors = aquaDeviceCardColors()
-    val typography = aquaDeviceCardTypography(colors)
+    val colors = aquaCoolingDashboardColors()
+    val typography = aquaCoolingDashboardTypography(colors)
     val contentAlpha = if (state.contentEnabled) {
         AquaCoolingInteractionStyle.enabledContentAlpha
     } else {
