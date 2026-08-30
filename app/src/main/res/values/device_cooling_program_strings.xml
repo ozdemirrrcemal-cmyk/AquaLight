@@ -6,7 +6,7 @@
     <string name="device_cooling_program_timeline_title">24-Hour Plan</string>
     <string name="device_cooling_program_slots_title">Time Periods</string>
     <string name="device_cooling_program_fan_limit">Fan Speed Limit</string>
-    <string name="device_cooling_program_add_slot">+ Add Time Period</string>
+    <string name="device_cooling_program_add_slot">+ Add</string>
     <string name="device_cooling_program_editor_title">Time Period Settings</string>
     <string name="device_cooling_program_start_time">Start</string>
     <string name="device_cooling_program_end_time">End</string>
@@ -20,7 +20,7 @@
     <string name="device_cooling_program_axis_20">20</string>
     <string name="device_cooling_program_axis_24">24</string>
     <string name="device_cooling_program_time_range_format">%1$s – %2$s</string>
-    <string name="device_cooling_program_save">Save Program</string>
+    <string name="device_cooling_program_save">Save</string>
     <string name="device_cooling_program_saved">Program Saved</string>
 
     <string name="device_cooling_program_start_time_sheet_title">Start Time</string>
