@@ -75,7 +75,6 @@ import kotlin.math.cos
 import kotlin.math.sin
 
 internal object CoolingDashboardPalette {
-    val background = Color(0xFF00101C)
     val surface = Color(0xFF061827)
     val surfaceRaised = Color(0xFF0B2032)
     val outline = Color(0xFF294052)
@@ -528,8 +527,9 @@ internal fun CoolingFanModeCard(modifier: Modifier = Modifier) {
         Column(
             modifier = Modifier
                 .fillMaxWidth()
+                .weight(1f)
                 .padding(top = 6.dp),
-            verticalArrangement = Arrangement.spacedBy(4.dp)
+            verticalArrangement = Arrangement.SpaceBetween
         ) {
             CoolingModeOption(
                 text = stringResource(R.string.device_cooling_mode_automatic),
@@ -552,20 +552,20 @@ private fun CoolingModeOption(text: String, selected: Boolean) {
     Row(
         modifier = Modifier
             .fillMaxWidth()
-            .height(24.dp)
-            .clip(RoundedCornerShape(12.dp))
+            .height(28.dp)
+            .clip(RoundedCornerShape(14.dp))
             .background(if (selected) Color(0xFF0D2133) else Color.Transparent)
             .border(
                 1.dp,
                 if (selected) Color(0xFF405267) else CoolingDashboardPalette.outlineSoft,
-                RoundedCornerShape(12.dp)
+                RoundedCornerShape(14.dp)
             )
             .padding(horizontal = 8.dp),
         verticalAlignment = Alignment.CenterVertically
     ) {
         Box(
             modifier = Modifier
-                .size(12.dp)
+                .size(14.dp)
                 .clip(CircleShape)
                 .border(
                     width = 2.dp,
@@ -581,7 +581,7 @@ private fun CoolingModeOption(text: String, selected: Boolean) {
             if (selected) {
                 Box(
                     modifier = Modifier
-                        .size(5.dp)
+                        .size(6.dp)
                         .clip(CircleShape)
                         .background(CoolingDashboardPalette.accent)
                 )
@@ -605,53 +605,61 @@ private fun CoolingModeOption(text: String, selected: Boolean) {
 internal fun CoolingPowerCard(modifier: Modifier = Modifier) {
     CoolingDashboardCard(modifier = modifier) {
         CoolingCardTitle(text = stringResource(R.string.device_cooling_power))
-        Row(
-            modifier = Modifier.padding(top = 8.dp),
-            verticalAlignment = Alignment.CenterVertically
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .weight(1f)
+                .padding(top = 6.dp),
+            verticalArrangement = Arrangement.SpaceBetween
         ) {
-            Box(
-                modifier = Modifier
-                    .size(26.dp)
-                    .clip(CircleShape)
-                    .background(CoolingDashboardPalette.surfaceRaised)
-                    .border(1.dp, CoolingDashboardPalette.outline, CircleShape),
-                contentAlignment = Alignment.Center
+            Row(
+                verticalAlignment = Alignment.CenterVertically
             ) {
-                CoolingGlyph(
-                    type = CoolingGlyphType.LIGHTNING,
-                    color = CoolingDashboardPalette.textPrimary,
-                    modifier = Modifier.size(15.dp)
+                Box(
+                    modifier = Modifier
+                        .size(26.dp)
+                        .clip(CircleShape)
+                        .background(CoolingDashboardPalette.surfaceRaised)
+                        .border(1.dp, CoolingDashboardPalette.outline, CircleShape),
+                    contentAlignment = Alignment.Center
+                ) {
+                    CoolingGlyph(
+                        type = CoolingGlyphType.LIGHTNING,
+                        color = CoolingDashboardPalette.textPrimary,
+                        modifier = Modifier.size(15.dp)
+                    )
+                }
+                BasicText(
+                    text = stringResource(R.string.device_cooling_power_value),
+                    modifier = Modifier.padding(start = 6.dp),
+                    style = coolingTextStyle(
+                        size = 13.sp,
+                        lineHeight = 16.sp,
+                        color = CoolingDashboardPalette.textPrimary,
+                        semiBold = true
+                    )
                 )
             }
-            BasicText(
-                text = stringResource(R.string.device_cooling_power_value),
-                modifier = Modifier.padding(start = 6.dp),
-                style = coolingTextStyle(
-                    size = 13.sp,
-                    lineHeight = 16.sp,
-                    color = CoolingDashboardPalette.textPrimary,
-                    semiBold = true
+            Column {
+                BasicText(
+                    text = stringResource(R.string.device_cooling_estimated_consumption),
+                    style = coolingTextStyle(
+                        size = 9.sp,
+                        lineHeight = 12.sp,
+                        color = CoolingDashboardPalette.textSecondary
+                    )
                 )
-            )
+                BasicText(
+                    text = stringResource(R.string.device_cooling_consumption_value),
+                    modifier = Modifier.padding(top = 2.dp),
+                    style = coolingTextStyle(
+                        size = 13.sp,
+                        lineHeight = 16.sp,
+                        color = CoolingDashboardPalette.textPrimary
+                    )
+                )
+            }
         }
-        BasicText(
-            text = stringResource(R.string.device_cooling_estimated_consumption),
-            modifier = Modifier.padding(top = 10.dp),
-            style = coolingTextStyle(
-                size = 9.sp,
-                lineHeight = 12.sp,
-                color = CoolingDashboardPalette.textSecondary
-            )
-        )
-        BasicText(
-            text = stringResource(R.string.device_cooling_consumption_value),
-            modifier = Modifier.padding(top = 2.dp),
-            style = coolingTextStyle(
-                size = 13.sp,
-                lineHeight = 16.sp,
-                color = CoolingDashboardPalette.textPrimary
-            )
-        )
     }
 }
 
@@ -665,8 +673,9 @@ internal fun CoolingStatusCard(
         Column(
             modifier = Modifier
                 .fillMaxWidth()
+                .weight(1f)
                 .padding(top = 6.dp),
-            verticalArrangement = Arrangement.spacedBy(5.dp)
+            verticalArrangement = Arrangement.SpaceBetween
         ) {
             CoolingStatusRow(
                 glyph = CoolingGlyphType.FAN,

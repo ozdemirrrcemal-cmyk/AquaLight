@@ -16,6 +16,7 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
+import androidx.compose.ui.res.colorResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.disabled
 import androidx.compose.ui.semantics.semantics
@@ -41,7 +42,7 @@ internal fun DeviceCoolingCatalogScreen(
     Column(
         modifier = modifier
             .fillMaxSize()
-            .background(CoolingDashboardPalette.background)
+            .background(colorResource(R.color.background_color))
     ) {
         CoolingDashboardHeader(
             title = state.title.ifBlank { fallbackTitle },
@@ -212,7 +213,7 @@ private val SCREEN_TOP_PADDING = 6.dp
 private val SCREEN_BOTTOM_PADDING = 14.dp
 private val SECTION_GAP = 8.dp
 private val CARD_GAP = 8.dp
-private val SUMMARY_CARD_HEIGHT = 126.dp
+private val SUMMARY_CARD_HEIGHT = 132.dp
 private val BOTTOM_CARD_HEIGHT = 76.dp
 private val FOUR_CARD_MIN_WIDTH = 456.dp
 private val BOTTOM_ROW_MIN_WIDTH = 440.dp
