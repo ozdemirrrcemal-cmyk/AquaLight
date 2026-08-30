@@ -92,11 +92,8 @@ class DeviceDosingRootFragment : Fragment(R.layout.fragment_device_dosing_root) 
             setContent {
                 val state by viewModel.uiState.collectAsStateWithLifecycle()
                 DeviceDosingCatalogScreen(
-                    pumpCount = state.pumpCount,
-                    channels = state.channels,
-                    onChannelClick = viewModel::openChannel,
-                    contentEnabled = state.contentEnabled,
-                    pumpStates = state.pumpStates
+                    state = state,
+                    onChannelClick = viewModel::openChannel
                 )
             }
         }

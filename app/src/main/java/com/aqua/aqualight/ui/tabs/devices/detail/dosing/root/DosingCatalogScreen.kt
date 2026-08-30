@@ -21,7 +21,6 @@ import com.aqua.aqualight.ui.tabs.devices.detail.dosing.presentation.card.Dosing
 import com.aqua.aqualight.ui.tabs.devices.detail.dosing.presentation.card.DosingChannelCardUiState
 import com.aqua.aqualight.ui.tabs.devices.detail.dosing.presentation.pump.DosingPumpHeadUiState
 import com.aqua.aqualight.ui.tabs.devices.detail.dosing.presentation.pump.DosingPumpSection
-import com.aqua.aqualight.ui.tabs.devices.detail.dosing.presentation.pump.DosingPumpVisualState
 import com.aqua.aqualight.ui.tabs.devices.detail.dosing.presentation.pump.exactDosingPumpCountOrNull
 
 /**
@@ -33,46 +32,57 @@ import com.aqua.aqualight.ui.tabs.devices.detail.dosing.presentation.pump.exactD
  */
 @Composable
 internal fun DeviceDosingCatalogScreen(
-    pumpCount: Int,
-    channels: List<DosingChannelCardUiState>,
+    state: DeviceDosingRootUiState,
     onChannelClick: (String) -> Unit,
-    contentEnabled: Boolean,
-    modifier: Modifier = Modifier,
-    pumpStates: List<DosingPumpVisualState> = emptyList()
+    modifier: Modifier = Modifier
 ) {
-    val exactPumpCount = exactDosingPumpCountOrNull(pumpCount)
+    val exactPumpCount = exactDosingPumpCountOrNull(state.pumpCount)
     if (exactPumpCount == null) {
         Box(modifier = modifier.fillMaxSize())
         return
     }
 
+    DosingCatalogContent(
+        state = state,
+        exactPumpCount = exactPumpCount,
+        onChannelClick = onChannelClick,
+        modifier = modifier
+    )
+}
+
+@Composable
+private fun DosingCatalogContent(
+    state: DeviceDosingRootUiState,
+    exactPumpCount: Int,
+    onChannelClick: (String) -> Unit,
+    modifier: Modifier
+) {
     val pumpHeads = List(exactPumpCount) { index ->
         DosingPumpHeadUiState(
             channelNumber = index + 1,
-            visualState = pumpStates.getOrNull(index)
+            visualState = state.pumpStates.getOrNull(index)
         )
     }
-
     Column(
         modifier = modifier
             .fillMaxSize()
             .alpha(
-                if (contentEnabled) {
+                if (state.contentEnabled) {
                     AquaDosingInteractionStyle.enabledContentAlpha
                 } else {
                     AquaDosingInteractionStyle.disabledContentAlpha
                 }
             )
             .semantics {
-                if (!contentEnabled) disabled()
+                if (!state.contentEnabled) disabled()
             }
     ) {
         DosingPumpSection(
             pumpCount = exactPumpCount,
             pumpHeads = pumpHeads,
-            onPumpClick = if (contentEnabled) {
+            onPumpClick = if (state.contentEnabled) {
                 { channelNumber ->
-                    channels.firstOrNull { channel ->
+                    state.channels.firstOrNull { channel ->
                         channel.channelNumber == channelNumber
                     }?.let { channel ->
                         onChannelClick(channel.slotId)
@@ -87,31 +97,43 @@ internal fun DeviceDosingCatalogScreen(
                 end = SCREEN_HORIZONTAL_PADDING
             )
         )
+        DosingChannelList(
+            channels = state.channels,
+            contentEnabled = state.contentEnabled,
+            onChannelClick = onChannelClick
+        )
+    }
+}
 
-        LazyColumn(
-            modifier = Modifier
-                .fillMaxWidth()
-                .weight(1f),
-            contentPadding = PaddingValues(
-                start = SCREEN_HORIZONTAL_PADDING,
-                top = CARD_LIST_TOP_PADDING,
-                end = SCREEN_HORIZONTAL_PADDING,
-                bottom = SCREEN_BOTTOM_PADDING
-            ),
-            verticalArrangement = Arrangement.spacedBy(CHANNEL_CARD_SPACING),
-            horizontalAlignment = Alignment.CenterHorizontally
-        ) {
-            items(
-                items = channels,
-                key = DosingChannelCardUiState::slotId
-            ) { channel ->
-                DosingChannelCard(
-                    state = channel,
-                    enabled = contentEnabled,
-                    onClick = { onChannelClick(channel.slotId) },
-                    modifier = Modifier.fillMaxWidth()
-                )
-            }
+@Composable
+private fun DosingChannelList(
+    channels: List<DosingChannelCardUiState>,
+    contentEnabled: Boolean,
+    onChannelClick: (String) -> Unit
+) {
+    LazyColumn(
+        modifier = Modifier
+            .fillMaxWidth()
+            .weight(1f),
+        contentPadding = PaddingValues(
+            start = SCREEN_HORIZONTAL_PADDING,
+            top = CARD_LIST_TOP_PADDING,
+            end = SCREEN_HORIZONTAL_PADDING,
+            bottom = SCREEN_BOTTOM_PADDING
+        ),
+        verticalArrangement = Arrangement.spacedBy(CHANNEL_CARD_SPACING),
+        horizontalAlignment = Alignment.CenterHorizontally
+    ) {
+        items(
+            items = channels,
+            key = DosingChannelCardUiState::slotId
+        ) { channel ->
+            DosingChannelCard(
+                state = channel,
+                enabled = contentEnabled,
+                onClick = { onChannelClick(channel.slotId) },
+                modifier = Modifier.fillMaxWidth()
+            )
         }
     }
 }

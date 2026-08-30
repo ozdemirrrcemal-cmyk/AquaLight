@@ -41,7 +41,7 @@ object DosingDeviceSpotlightCardBinder {
             context.getString(R.string.device_menu_default_title)
         }
 
-        bindHeader(binding, header, online, displayName)
+        bindHeader(binding, header, displayName)
         bindSpotlight(binding, item, online)
         bindAccessibility(
             binding = binding,
@@ -55,7 +55,6 @@ object DosingDeviceSpotlightCardBinder {
     private fun bindHeader(
         binding: ItemDosingDeviceSpotlightCardBinding,
         header: DosingDeviceSpotlightHeaderUi,
-        online: Boolean,
         displayName: String
     ) {
         val context = binding.root.context
