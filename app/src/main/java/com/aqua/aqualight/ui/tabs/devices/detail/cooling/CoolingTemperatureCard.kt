@@ -4,6 +4,7 @@ package com.aqua.aqualight.ui.tabs.devices.detail.cooling
 
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -26,6 +27,9 @@ import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.style.TextAlign
 import com.aqua.aqualight.R
@@ -43,12 +47,17 @@ import kotlin.math.floor
 internal fun CoolingTemperatureCard(
     state: DeviceCoolingRootUiState,
     colors: AquaDeviceCardColors,
-    typography: AquaDeviceCardTypography
+    typography: AquaDeviceCardTypography,
+    enabled: Boolean,
+    onClick: () -> Unit
 ) {
+    val historyDescription = stringResource(R.string.device_cooling_view_history_description)
     AquaCoolingDashboardCardSurface(
         modifier = Modifier
             .fillMaxWidth()
             .heightIn(min = AquaCoolingDashboardGeometry.temperatureCardMinimumHeight)
+            .semantics { contentDescription = historyDescription }
+            .clickable(enabled = enabled, role = Role.Button, onClick = onClick)
     ) {
         Column(
             modifier = Modifier.fillMaxWidth(),
