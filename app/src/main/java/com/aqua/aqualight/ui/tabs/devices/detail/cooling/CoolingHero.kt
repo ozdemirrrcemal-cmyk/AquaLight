@@ -9,7 +9,7 @@ import androidx.compose.foundation.layout.heightIn
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.mutableLongStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.withFrameNanos
@@ -52,7 +52,7 @@ internal fun CoolingHero(
 ) {
     val speed = fanSpeed.coerceIn(0f, 1f)
     val water = remember { CoolingWaterHeightField(WATER_COLUMNS, WATER_ROWS) }
-    var frameNanos by remember { mutableStateOf(0L) }
+    var frameNanos by remember { mutableLongStateOf(0L) }
 
     LaunchedEffect(water, speed) {
         var previousFrameNanos = 0L
@@ -167,8 +167,6 @@ private fun DrawScope.drawWaterPlane(
         )
     )
 
-    // A restrained bounced aquarium-light reflection keeps the surface photographic without
-    // introducing fish/plants into the hero itself.
     drawOval(
         brush = Brush.radialGradient(
             colors = listOf(
@@ -187,12 +185,9 @@ private fun DrawScope.drawWaterReflections(
     water: CoolingWaterHeightField,
     fanSpeed: Float
 ) {
-    val w = size.width
-    val h = size.height
     val liveAlpha = 0.22f + fanSpeed * 0.78f
 
-    // The highlights are calculated from the physical field's local surface gradient. They are not
-    // independent sine-wave decorations; specular strength follows the simulated wave normals.
+    // Specular strength follows the simulated surface normal instead of an independent wave path.
     for (row in 1 until water.rows - 1 step 2) {
         for (column in 1 until water.columns - 2) {
             val slopeX = water.slopeX(column, row)
@@ -240,8 +235,6 @@ private fun DrawScope.drawWaterReflections(
         style = Stroke(width = 0.7f, cap = StrokeCap.Round)
     )
 
-    // A few broader light tracks are still field-derived, but soften the dense micro speculars so
-    // the result reads as moving water rather than a wire mesh.
     for (row in 4 until water.rows - 2 step 6) {
         val track = Path()
         var started = false
@@ -273,7 +266,6 @@ private fun DrawScope.drawAquariumGlass(
     water: CoolingWaterHeightField,
     fanSpeed: Float
 ) {
-    val w = size.width
     val h = size.height
     val leftTop = waterScreenPoint(water, 0, 0, fanSpeed)
     val rightTop = waterScreenPoint(water, water.columns - 1, 0, fanSpeed)
@@ -803,9 +795,9 @@ private class CoolingWaterHeightField(
     ) {
         for (row in 1 until rows - 1) {
             for (column in 1 until columns - 1) {
-                val index = index(column, row)
-                val currentHeight = heights[index]
-                val currentVelocity = velocities[index]
+                val cellIndex = index(column, row)
+                val currentHeight = heights[cellIndex]
+                val currentVelocity = velocities[cellIndex]
                 val laplacian =
                     heights[index(column - 1, row)] +
                         heights[index(column + 1, row)] +
@@ -837,7 +829,7 @@ private class CoolingWaterHeightField(
                 ).toFloat()
                 val edgeBlend = (edgeDistance / EDGE_ABSORBER_CELLS).coerceIn(0f, 1f)
                 val absorber = lerp(EDGE_ABSORPTION, 1f, edgeBlend)
-                nextVelocities[index] = (
+                nextVelocities[cellIndex] = (
                     currentVelocity + acceleration * deltaSeconds
                     ) * absorber
             }
@@ -845,10 +837,10 @@ private class CoolingWaterHeightField(
 
         for (row in 1 until rows - 1) {
             for (column in 1 until columns - 1) {
-                val index = index(column, row)
-                velocities[index] = nextVelocities[index]
-                heights[index] = (
-                    heights[index] + velocities[index] * deltaSeconds
+                val cellIndex = index(column, row)
+                velocities[cellIndex] = nextVelocities[cellIndex]
+                heights[cellIndex] = (
+                    heights[cellIndex] + velocities[cellIndex] * deltaSeconds
                     ).coerceIn(-MAX_WATER_HEIGHT, MAX_WATER_HEIGHT)
             }
         }
@@ -868,10 +860,10 @@ private class CoolingWaterHeightField(
     }
 
     private fun clearCell(column: Int, row: Int) {
-        val index = index(column, row)
-        heights[index] = 0f
-        velocities[index] = 0f
-        nextVelocities[index] = 0f
+        val cellIndex = index(column, row)
+        heights[cellIndex] = 0f
+        velocities[cellIndex] = 0f
+        nextVelocities[cellIndex] = 0f
     }
 
     private fun index(column: Int, row: Int): Int = row * columns + column
