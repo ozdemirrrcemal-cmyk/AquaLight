@@ -30,7 +30,7 @@ object AquaCoolingDashboardGeometry {
     val chartLineStrokeWidth = 2.dp
     val chartPointRadius = 2.5.dp
 
-    val compactCardMinimumHeight = 146.dp
+    val compactCardMinimumHeight = 210.dp
     val statusCardMinimumHeight = 146.dp
     val gaugeSize = 102.dp
     val gaugeStrokeWidth = 9.dp
