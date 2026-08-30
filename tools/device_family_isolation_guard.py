@@ -107,14 +107,14 @@ def validate_repository(repository_root: Path = ROOT) -> list[str]:
 
             other_family = "cooling" if family == "dosing" else "dosing"
             source = path.read_text(encoding="utf-8", errors="ignore")
+            code = _strip_comments_and_literals(source)
 
-            for reference in _cross_family_package_references(source, other_family):
+            for reference in _cross_family_package_references(code, other_family):
                 errors.append(
                     f"{relative_path}: {family} {layer} implementation must not depend on "
                     f"{other_family} implementation package: {reference}"
                 )
 
-            code = _strip_comments_and_literals(source)
             match = FAMILY_IDENTIFIER[other_family].search(code)
             if match is not None:
                 errors.append(
