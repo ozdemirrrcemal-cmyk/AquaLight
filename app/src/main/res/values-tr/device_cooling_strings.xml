@@ -117,7 +117,6 @@
     <string name="device_cooling_program_axis_24">24</string>
     <string name="device_cooling_program_time_range_format">%1$s – %2$s</string>
     <string name="device_cooling_program_save">Kaydet</string>
-    <string name="device_cooling_program_schedule_overlap">Seçtiğiniz saat aralığı başka bir programla çakışıyor.</string>
     <string name="device_cooling_program_start_time_sheet_title">Başlangıç Saati</string>
     <string name="device_cooling_program_start_time_sheet_message">Bu zaman diliminin başlayacağı saati seç.</string>
     <string name="device_cooling_program_end_time_sheet_title">Bitiş Saati</string>
