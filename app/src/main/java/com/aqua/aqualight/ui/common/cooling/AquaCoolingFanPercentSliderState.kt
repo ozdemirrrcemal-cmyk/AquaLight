@@ -4,5 +4,7 @@ package com.aqua.aqualight.ui.common.cooling
 internal data class AquaCoolingFanPercentSliderState(
     val percent: Int,
     val enabled: Boolean,
-    val stepPercent: Int = 1
+    val stepPercent: Int = 1,
+    val minimumPercent: Int = AquaCoolingGaugeSpec.minimumPercent,
+    val maximumPercent: Int = AquaCoolingGaugeSpec.maximumPercent
 )
