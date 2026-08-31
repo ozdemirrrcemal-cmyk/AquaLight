@@ -9,70 +9,101 @@ import org.junit.Test
 class DeviceCoolingProgramSettingsViewModelTest {
 
     @Test
-    fun rejectsPartiallyOverlappingProgramRange() {
+    fun startsWithoutFixedProgramPeriods() {
         val viewModel = DeviceCoolingProgramSettingsViewModel()
 
-        assertTrue(viewModel.updateEndTime(INTENSIVE_SLOT_ID, hour(16)))
-        assertFalse(viewModel.updateStartTime(INTENSIVE_SLOT_ID, hour(12)))
+        assertTrue(viewModel.uiState.value.slots.isEmpty())
+        assertFalse(viewModel.uiState.value.hasChanges)
+    }
 
-        val intensive = viewModel.slot(INTENSIVE_SLOT_ID)
-        assertEquals(hour(14), intensive.startMinutes)
-        assertEquals(hour(16), intensive.endMinutes)
+    @Test
+    fun rejectsPartiallyOverlappingProgramRange() {
+        val viewModel = DeviceCoolingProgramSettingsViewModel()
+        viewModel.addTimeSlot()
+        viewModel.addTimeSlot()
+        configurePeriod(viewModel, FIRST_PERIOD_ID, hour(8), hour(14))
+        configurePeriod(viewModel, SECOND_PERIOD_ID, hour(14), hour(16))
+
+        assertFalse(viewModel.updateStartTime(SECOND_PERIOD_ID, hour(12)))
+
+        val second = viewModel.slot(SECOND_PERIOD_ID)
+        assertEquals(hour(14), second.startMinutes)
+        assertEquals(hour(16), second.endMinutes)
     }
 
     @Test
     fun allowsProgramsToTouchAtTheirBoundaries() {
         val viewModel = DeviceCoolingProgramSettingsViewModel()
+        viewModel.addTimeSlot()
+        viewModel.addTimeSlot()
+        configurePeriod(viewModel, FIRST_PERIOD_ID, hour(8), hour(14))
+        configurePeriod(viewModel, SECOND_PERIOD_ID, hour(14), hour(20))
         val boundary = hour(14) + 30
 
-        assertTrue(viewModel.updateStartTime(INTENSIVE_SLOT_ID, boundary))
-        assertTrue(viewModel.updateEndTime(QUIET_SLOT_ID, boundary))
+        assertTrue(viewModel.updateStartTime(SECOND_PERIOD_ID, boundary))
+        assertTrue(viewModel.updateEndTime(FIRST_PERIOD_ID, boundary))
 
-        assertEquals(boundary, viewModel.slot(QUIET_SLOT_ID).endMinutes)
-        assertEquals(boundary, viewModel.slot(INTENSIVE_SLOT_ID).startMinutes)
+        assertEquals(boundary, viewModel.slot(FIRST_PERIOD_ID).endMinutes)
+        assertEquals(boundary, viewModel.slot(SECOND_PERIOD_ID).startMinutes)
     }
 
     @Test
     fun handlesOvernightRangesWhenCheckingOverlap() {
         val viewModel = DeviceCoolingProgramSettingsViewModel()
-
         viewModel.addTimeSlot()
-        assertTrue(viewModel.updateStartTime(CUSTOM_SLOT_ID, hour(23) + 30))
-        assertTrue(viewModel.updateEndTime(CUSTOM_SLOT_ID, hour(8)))
+        viewModel.addTimeSlot()
+        configurePeriod(viewModel, FIRST_PERIOD_ID, hour(8), hour(14))
 
-        val adjacentOvernight = viewModel.slot(CUSTOM_SLOT_ID)
+        assertTrue(viewModel.updateStartTime(SECOND_PERIOD_ID, hour(23) + 30))
+        assertTrue(viewModel.updateEndTime(SECOND_PERIOD_ID, hour(8)))
+
+        val adjacentOvernight = viewModel.slot(SECOND_PERIOD_ID)
         assertEquals(hour(23) + 30, adjacentOvernight.startMinutes)
         assertEquals(hour(8), adjacentOvernight.endMinutes)
 
-        assertFalse(viewModel.updateEndTime(CUSTOM_SLOT_ID, hour(9)))
-
-        assertEquals(hour(8), viewModel.slot(CUSTOM_SLOT_ID).endMinutes)
+        assertFalse(viewModel.updateEndTime(SECOND_PERIOD_ID, hour(9)))
+        assertEquals(hour(8), viewModel.slot(SECOND_PERIOD_ID).endMinutes)
     }
 
     @Test
-    fun deletesPersistedCustomProgramAndMarksDraftDirty() {
+    fun deletesPersistedUserPeriodAndMarksDraftDirty() {
         val viewModel = DeviceCoolingProgramSettingsViewModel()
 
         viewModel.addTimeSlot()
         viewModel.saveDraft()
         assertFalse(viewModel.uiState.value.hasChanges)
 
-        assertTrue(viewModel.deleteTimeSlot(CUSTOM_SLOT_ID))
+        assertTrue(viewModel.deleteTimeSlot(FIRST_PERIOD_ID))
 
-        assertFalse(viewModel.uiState.value.slots.any { slot -> slot.id == CUSTOM_SLOT_ID })
+        assertTrue(viewModel.uiState.value.slots.isEmpty())
         assertNull(viewModel.uiState.value.selectedSlotId)
         assertTrue(viewModel.uiState.value.hasChanges)
         assertEquals(DeviceCoolingProgramSaveState.IDLE, viewModel.uiState.value.saveState)
     }
 
     @Test
-    fun doesNotDeleteBuiltInPrograms() {
+    fun fanLimitIsClampedAndSnappedToFivePercentSteps() {
         val viewModel = DeviceCoolingProgramSettingsViewModel()
+        viewModel.addTimeSlot()
 
-        assertFalse(viewModel.deleteTimeSlot(QUIET_SLOT_ID))
+        viewModel.updateFanLimit(FIRST_PERIOD_ID, 63)
+        assertEquals(65, viewModel.slot(FIRST_PERIOD_ID).fanLimitPercent)
 
-        assertEquals(DeviceCoolingProgramSlotLabel.QUIET, viewModel.slot(QUIET_SLOT_ID).label)
-        assertFalse(viewModel.uiState.value.hasChanges)
+        viewModel.updateFanLimit(FIRST_PERIOD_ID, -20)
+        assertEquals(0, viewModel.slot(FIRST_PERIOD_ID).fanLimitPercent)
+
+        viewModel.updateFanLimit(FIRST_PERIOD_ID, 120)
+        assertEquals(100, viewModel.slot(FIRST_PERIOD_ID).fanLimitPercent)
+    }
+
+    private fun configurePeriod(
+        viewModel: DeviceCoolingProgramSettingsViewModel,
+        slotId: String,
+        startMinutes: Int,
+        endMinutes: Int
+    ) {
+        assertTrue(viewModel.updateStartTime(slotId, startMinutes))
+        assertTrue(viewModel.updateEndTime(slotId, endMinutes))
     }
 
     private fun DeviceCoolingProgramSettingsViewModel.slot(
@@ -80,9 +111,8 @@ class DeviceCoolingProgramSettingsViewModelTest {
     ): DeviceCoolingProgramSlot = uiState.value.slots.first { slot -> slot.id == slotId }
 
     private companion object {
-        const val QUIET_SLOT_ID = "quiet"
-        const val INTENSIVE_SLOT_ID = "intensive"
-        const val CUSTOM_SLOT_ID = "custom-1"
+        const val FIRST_PERIOD_ID = "period-1"
+        const val SECOND_PERIOD_ID = "period-2"
         const val MINUTES_PER_HOUR = 60
 
         fun hour(value: Int): Int = value * MINUTES_PER_HOUR
