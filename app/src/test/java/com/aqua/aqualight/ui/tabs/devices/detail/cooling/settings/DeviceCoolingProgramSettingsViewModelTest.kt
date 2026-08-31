@@ -2,6 +2,7 @@ package com.aqua.aqualight.ui.tabs.devices.detail.cooling.settings
 
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
+import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Test
 
@@ -46,6 +47,32 @@ class DeviceCoolingProgramSettingsViewModelTest {
         assertFalse(viewModel.updateEndTime(CUSTOM_SLOT_ID, hour(9)))
 
         assertEquals(hour(8), viewModel.slot(CUSTOM_SLOT_ID).endMinutes)
+    }
+
+    @Test
+    fun deletesPersistedCustomProgramAndMarksDraftDirty() {
+        val viewModel = DeviceCoolingProgramSettingsViewModel()
+
+        viewModel.addTimeSlot()
+        viewModel.saveDraft()
+        assertFalse(viewModel.uiState.value.hasChanges)
+
+        assertTrue(viewModel.deleteTimeSlot(CUSTOM_SLOT_ID))
+
+        assertFalse(viewModel.uiState.value.slots.any { slot -> slot.id == CUSTOM_SLOT_ID })
+        assertNull(viewModel.uiState.value.selectedSlotId)
+        assertTrue(viewModel.uiState.value.hasChanges)
+        assertEquals(DeviceCoolingProgramSaveState.IDLE, viewModel.uiState.value.saveState)
+    }
+
+    @Test
+    fun doesNotDeleteBuiltInPrograms() {
+        val viewModel = DeviceCoolingProgramSettingsViewModel()
+
+        assertFalse(viewModel.deleteTimeSlot(QUIET_SLOT_ID))
+
+        assertEquals(DeviceCoolingProgramSlotLabel.QUIET, viewModel.slot(QUIET_SLOT_ID).label)
+        assertFalse(viewModel.uiState.value.hasChanges)
     }
 
     private fun DeviceCoolingProgramSettingsViewModel.slot(
