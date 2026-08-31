@@ -72,9 +72,9 @@ class DeviceCoolingAutomaticSettingsFragment : DeviceCoolingModeSettingsFragment
 
     private fun showStartTemperatureSheet() {
         val state = viewModel.uiState.value
-        val policy = state.policy ?: return
-        val current = state.draftStartTemperatureC ?: return
-        val maximum = state.draftMaximumSpeedTemperatureC ?: return
+        val policy = state.editorPolicy ?: return
+        val current = state.editorStartTemperatureC ?: return
+        val maximum = state.editorMaximumSpeedTemperatureC ?: return
         if (!state.editable) return
 
         val minimumUnits = toUnits(policy.startMinimumC)
@@ -113,9 +113,9 @@ class DeviceCoolingAutomaticSettingsFragment : DeviceCoolingModeSettingsFragment
 
     private fun showMaximumTemperatureSheet() {
         val state = viewModel.uiState.value
-        val policy = state.policy ?: return
-        val current = state.draftMaximumSpeedTemperatureC ?: return
-        val start = state.draftStartTemperatureC ?: return
+        val policy = state.editorPolicy ?: return
+        val current = state.editorMaximumSpeedTemperatureC ?: return
+        val start = state.editorStartTemperatureC ?: return
         if (!state.editable) return
 
         val minimumValue = maxOf(policy.maximumSpeedMinimumC, start + policy.minimumGapC)
