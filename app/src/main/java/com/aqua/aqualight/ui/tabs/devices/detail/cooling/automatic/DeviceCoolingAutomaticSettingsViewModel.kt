@@ -214,10 +214,8 @@ data class DeviceCoolingAutomaticSettingsUiState(
 private fun DeviceCoolingAutomaticSettingsUiState.withSnapshot(
     snapshot: DeviceCoolingAutomaticSettingsSnapshot
 ): DeviceCoolingAutomaticSettingsUiState {
-    val start = snapshot.startTemperatureC
-    val maximum = snapshot.maximumSpeedTemperatureC
-    val policy = snapshot.policy
-    if (!snapshot.available || start == null || maximum == null || policy == null) {
+    val configuration = snapshot.completeConfiguration
+    if (!snapshot.available || configuration == null) {
         return copy(
             loadState = DeviceCoolingAutomaticLoadState.CONTENT,
             editable = BuildConfig.DEBUG,
@@ -226,6 +224,8 @@ private fun DeviceCoolingAutomaticSettingsUiState.withSnapshot(
             fanPercentNow = snapshot.fanPercentNow
         )
     }
+    val start = configuration.startTemperatureC
+    val maximum = configuration.maximumSpeedTemperatureC
     val preserveTemperatureDraft = hasFirmwareSnapshot && hasTemperatureChanges
     val preserveSilentModeDraft = silentModeFirmwareBacked && hasSilentModeChanges
     val incomingSilentMode = snapshot.silentModeEnabled
@@ -249,9 +249,29 @@ private fun DeviceCoolingAutomaticSettingsUiState.withSnapshot(
         silentModeMaximumFanPercent = snapshot.silentModeMaximumFanPercent,
         tankTemperatureC = snapshot.tankTemperatureC,
         fanPercentNow = snapshot.fanPercentNow,
-        policy = policy
+        policy = configuration.policy
     )
 }
+
+private val DeviceCoolingAutomaticSettingsSnapshot.completeConfiguration:
+    AutomaticSnapshotConfiguration?
+    get() = startTemperatureC?.let { start ->
+        maximumSpeedTemperatureC?.let { maximum ->
+            policy?.let { temperaturePolicy ->
+                AutomaticSnapshotConfiguration(
+                    startTemperatureC = start,
+                    maximumSpeedTemperatureC = maximum,
+                    policy = temperaturePolicy
+                )
+            }
+        }
+    }
+
+private data class AutomaticSnapshotConfiguration(
+    val startTemperatureC: Double,
+    val maximumSpeedTemperatureC: Double,
+    val policy: DeviceCoolingAutomaticTemperaturePolicy
+)
 
 private fun Double.isValidStart(
     policy: DeviceCoolingAutomaticTemperaturePolicy,

@@ -1,12 +1,5 @@
 package com.aqua.aqualight.ui.tabs.devices.detail.cooling.automatic
 
-internal data class PendingAutomaticSettingsSave(
-    val deviceUid: String,
-    val startTemperatureC: Double,
-    val maximumSpeedTemperatureC: Double,
-    val silentModeEnabled: Boolean?
-)
-
 internal fun DeviceCoolingAutomaticSettingsUiState.pendingSave(
     boundDeviceUid: String
 ): PendingAutomaticSettingsSave? = if (!canSave) {

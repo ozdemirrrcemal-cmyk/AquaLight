@@ -15,16 +15,7 @@ import com.aqua.aqualight.ui.common.cooling.AquaCoolingDashboardGeometry
 import com.aqua.aqualight.ui.common.cooling.AquaCoolingInteractionStyle
 import com.aqua.aqualight.ui.common.cooling.aquaCoolingDashboardColors
 import com.aqua.aqualight.ui.common.cooling.aquaCoolingDashboardTypography
-import com.aqua.aqualight.ui.tabs.devices.detail.cooling.root.CoolingControlMode
 import com.aqua.aqualight.ui.tabs.devices.detail.cooling.root.DeviceCoolingRootUiState
-
-internal data class DeviceCoolingDashboardActions(
-    val onModeSelected: (CoolingControlMode) -> Unit,
-    val onManualFanPercentChanged: (Int) -> Unit,
-    val onTemperatureHistoryClick: () -> Unit,
-    val onAutomaticSettingsClick: () -> Unit,
-    val onProgramSettingsClick: () -> Unit
-)
 
 @Composable
 internal fun DeviceCoolingDashboardScreen(

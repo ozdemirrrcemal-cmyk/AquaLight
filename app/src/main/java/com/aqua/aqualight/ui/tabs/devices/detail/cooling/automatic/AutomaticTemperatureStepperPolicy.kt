@@ -4,13 +4,6 @@ import kotlin.math.ceil
 import kotlin.math.floor
 import kotlin.math.roundToInt
 
-internal data class AutomaticTemperatureStepperBounds(
-    val initialValue: Int,
-    val minimumValue: Int,
-    val maximumValue: Int,
-    val step: Int
-)
-
 internal fun startTemperatureStepperBounds(
     state: DeviceCoolingAutomaticSettingsUiState
 ): AutomaticTemperatureStepperBounds? = state.editorPolicy?.let { policy ->

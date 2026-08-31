@@ -41,13 +41,6 @@ import com.aqua.aqualight.ui.common.devicecard.AquaDeviceCardColors
 import com.aqua.aqualight.ui.common.devicecard.AquaDeviceCardTypography
 import com.aqua.aqualight.ui.common.devicemenu.AquaDeviceMenuToggle
 
-internal data class DeviceCoolingAutomaticSettingsActions(
-    val onStartTemperatureClick: () -> Unit,
-    val onMaximumTemperatureClick: () -> Unit,
-    val onSilentModeChanged: (Boolean) -> Unit,
-    val onSave: () -> Unit
-)
-
 private data class AutomaticScreenVisuals(
     val colors: AquaDeviceCardColors,
     val typography: AquaDeviceCardTypography
