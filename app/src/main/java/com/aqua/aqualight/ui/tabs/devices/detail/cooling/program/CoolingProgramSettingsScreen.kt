@@ -61,7 +61,8 @@ import java.time.LocalTime
 
 private data class ProgramSlotCardModel(
     val slot: DeviceCoolingProgramSlot,
-    val selected: Boolean
+    val selected: Boolean,
+    val fanLimitStepPercent: Int
 )
 
 private data class ProgramSlotCardActions(
@@ -78,6 +79,9 @@ internal fun DeviceCoolingProgramSettingsScreen(
     actions: DeviceCoolingProgramSettingsActions,
     modifier: Modifier = Modifier
 ) {
+    val policy = requireNotNull(state.policy) {
+        "Cooling Program content requires an authoritative application policy."
+    }
     val colors = aquaCoolingDashboardColors()
     val typography = aquaCoolingDashboardTypography(colors)
     val context = LocalContext.current
@@ -123,7 +127,8 @@ internal fun DeviceCoolingProgramSettingsScreen(
                 ProgramSlotCard(
                     model = ProgramSlotCardModel(
                         slot = slot,
-                        selected = slotIndex == state.selectedSlotIndex
+                        selected = slotIndex == state.selectedSlotIndex,
+                        fanLimitStepPercent = policy.fanPercentStep
                     ),
                     context = context,
                     colors = colors,
@@ -394,6 +399,7 @@ private fun ProgramSlotCard(
                 )
                 ProgramFanLimitEditor(
                     value = slot.fanLimitPercent,
+                    stepPercent = model.fanLimitStepPercent,
                     colors = colors,
                     typography = typography,
                     onValueChange = actions.onFanLimitChange
@@ -481,6 +487,7 @@ private fun ProgramEditorHeader(
 @Composable
 private fun ProgramFanLimitEditor(
     value: Int,
+    stepPercent: Int,
     colors: AquaDeviceCardColors,
     typography: AquaDeviceCardTypography,
     onValueChange: (Int) -> Unit
@@ -530,7 +537,7 @@ private fun ProgramFanLimitEditor(
             state = AquaCoolingFanPercentSliderState(
                 percent = value,
                 enabled = true,
-                stepPercent = DeviceCoolingProgramPolicy.fanLimitStepPercent
+                stepPercent = stepPercent
             ),
             colors = colors,
             onValueChanged = onValueChange
