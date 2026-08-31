@@ -290,6 +290,9 @@ dependencies {
     implementation "androidx.lifecycle:lifecycle-runtime-compose:2.10.0"
     debugImplementation "androidx.compose.ui:ui-tooling"
 
+    // Realtime 3D cooling fan - SceneView over Google Filament
+    implementation "io.github.sceneview:sceneview:3.3.0"
+
     // Navigation
     implementation "androidx.navigation:navigation-fragment-ktx:2.9.8"
     implementation "androidx.navigation:navigation-ui-ktx:2.9.8"
