@@ -83,12 +83,8 @@ private fun programAvailabilityContent(
         messageRes = R.string.device_cooling_program_loading_message,
         retryAvailable = false
     )
-    DeviceCoolingProgramLoadState.UNSUPPORTED -> ProgramAvailabilityContent(
-        titleRes = R.string.device_cooling_program_unsupported_title,
-        messageRes = R.string.device_cooling_program_unsupported_message,
-        retryAvailable = false
-    )
-    DeviceCoolingProgramLoadState.UNAVAILABLE -> ProgramAvailabilityContent(
+    DeviceCoolingProgramLoadState.UNAVAILABLE,
+    DeviceCoolingProgramLoadState.NOT_CONNECTED -> ProgramAvailabilityContent(
         titleRes = R.string.device_cooling_program_unavailable_title,
         messageRes = R.string.device_cooling_program_unavailable_message,
         retryAvailable = true
