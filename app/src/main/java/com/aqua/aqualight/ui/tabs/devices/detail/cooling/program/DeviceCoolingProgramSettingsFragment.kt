@@ -54,7 +54,7 @@ class DeviceCoolingProgramSettingsFragment : DeviceCoolingModeSettingsFragment(
                         actions = DeviceCoolingProgramSettingsActions(
                             onSlotClick = viewModel::selectSlot,
                             onAddSlot = viewModel::addTimeSlot,
-                            onDeleteSlot = { slotId -> viewModel.deleteTimeSlot(slotId) },
+                            onDeleteSlot = viewModel::deleteTimeSlot,
                             onStartTimeClick = ::showStartTimeSheet,
                             onEndTimeClick = ::showEndTimeSheet,
                             onFanLimitChange = viewModel::updateFanLimit
@@ -88,7 +88,7 @@ class DeviceCoolingProgramSettingsFragment : DeviceCoolingModeSettingsFragment(
                     .map { state -> state.saveState }
                     .distinctUntilChanged()
                     .collect { saveState ->
-                        if (saveState == DeviceCoolingProgramSaveState.ERROR) {
+                        if (saveState.isFailure) {
                             (activity as? BaseActivity)?.showSnackBar(
                                 getString(R.string.device_cooling_program_save_failed),
                                 BaseActivity.SnackType.WARNING
@@ -100,13 +100,13 @@ class DeviceCoolingProgramSettingsFragment : DeviceCoolingModeSettingsFragment(
     }
 
     private fun registerPickerResults() {
-        registerTimeResult(REQUEST_START_TIME) { slotId, minutesOfDay ->
-            if (!viewModel.updateStartTime(slotId, minutesOfDay)) {
+        registerTimeResult(REQUEST_START_TIME) { slotIndex, minutesOfDay ->
+            if (!viewModel.updateStartTime(slotIndex, minutesOfDay)) {
                 showScheduleValidationWarning()
             }
         }
-        registerTimeResult(REQUEST_END_TIME) { slotId, minutesOfDay ->
-            if (!viewModel.updateEndTime(slotId, minutesOfDay)) {
+        registerTimeResult(REQUEST_END_TIME) { slotIndex, minutesOfDay ->
+            if (!viewModel.updateEndTime(slotIndex, minutesOfDay)) {
                 showScheduleValidationWarning()
             }
         }
@@ -114,7 +114,7 @@ class DeviceCoolingProgramSettingsFragment : DeviceCoolingModeSettingsFragment(
 
     private fun registerTimeResult(
         requestKey: String,
-        onSelected: (String, Int) -> Unit
+        onSelected: (Int, Int) -> Unit
     ) {
         parentFragmentManager.setFragmentResultListener(requestKey, viewLifecycleOwner) { _, result ->
             if (result.getString(AquaTimePickerBottomSheet.RESULT_KEY) !=
@@ -122,10 +122,11 @@ class DeviceCoolingProgramSettingsFragment : DeviceCoolingModeSettingsFragment(
             ) {
                 return@setFragmentResultListener
             }
-            val slotId = result.getString(AquaTimePickerBottomSheet.RESULT_PAYLOAD_ID).orEmpty()
-            if (slotId.isBlank()) return@setFragmentResultListener
+            val slotIndex = result.getString(AquaTimePickerBottomSheet.RESULT_PAYLOAD_ID)
+                ?.toIntOrNull()
+                ?: return@setFragmentResultListener
             onSelected(
-                slotId,
+                slotIndex,
                 result.getInt(AquaTimePickerBottomSheet.RESULT_MINUTES_OF_DAY)
             )
         }
@@ -138,10 +139,10 @@ class DeviceCoolingProgramSettingsFragment : DeviceCoolingModeSettingsFragment(
         )
     }
 
-    private fun showStartTimeSheet(slotId: String) {
-        val slot = findSlot(slotId) ?: return
+    private fun showStartTimeSheet(slotIndex: Int) {
+        val slot = findSlot(slotIndex) ?: return
         showTimeSheet(
-            slotId = slotId,
+            slotIndex = slotIndex,
             minutesOfDay = slot.startMinutes,
             requestKey = REQUEST_START_TIME,
             titleRes = R.string.device_cooling_program_start_time_sheet_title,
@@ -149,10 +150,10 @@ class DeviceCoolingProgramSettingsFragment : DeviceCoolingModeSettingsFragment(
         )
     }
 
-    private fun showEndTimeSheet(slotId: String) {
-        val slot = findSlot(slotId) ?: return
+    private fun showEndTimeSheet(slotIndex: Int) {
+        val slot = findSlot(slotIndex) ?: return
         showTimeSheet(
-            slotId = slotId,
+            slotIndex = slotIndex,
             minutesOfDay = slot.endMinutes,
             requestKey = REQUEST_END_TIME,
             titleRes = R.string.device_cooling_program_end_time_sheet_title,
@@ -161,7 +162,7 @@ class DeviceCoolingProgramSettingsFragment : DeviceCoolingModeSettingsFragment(
     }
 
     private fun showTimeSheet(
-        slotId: String,
+        slotIndex: Int,
         minutesOfDay: Int,
         requestKey: String,
         titleRes: Int,
@@ -178,18 +179,30 @@ class DeviceCoolingProgramSettingsFragment : DeviceCoolingModeSettingsFragment(
                 cancelText = getString(R.string.device_cooling_automatic_stepper_cancel),
                 resultTarget = AquaTimePickerBottomSheet.ResultTarget(
                     requestKey = requestKey,
-                    payloadId = slotId
+                    payloadId = slotIndex.toString()
                 )
             )
         )
     }
 
-    private fun findSlot(slotId: String): DeviceCoolingProgramSlot? =
-        viewModel.uiState.value.slots.firstOrNull { slot -> slot.id == slotId }
+    private fun findSlot(slotIndex: Int): DeviceCoolingProgramSlot? =
+        viewModel.uiState.value.slots.getOrNull(slotIndex)
 
     private companion object {
         const val MINUTES_PER_HOUR = 60
         const val REQUEST_START_TIME = "cooling_program_start_time"
         const val REQUEST_END_TIME = "cooling_program_end_time"
+
+        val DeviceCoolingProgramSaveState.isFailure: Boolean
+            get() = when (this) {
+                DeviceCoolingProgramSaveState.UNAVAILABLE,
+                DeviceCoolingProgramSaveState.NOT_CONNECTED,
+                DeviceCoolingProgramSaveState.REJECTED,
+                DeviceCoolingProgramSaveState.VALIDATION_ERROR,
+                DeviceCoolingProgramSaveState.ERROR -> true
+                DeviceCoolingProgramSaveState.IDLE,
+                DeviceCoolingProgramSaveState.SAVING,
+                DeviceCoolingProgramSaveState.SAVED -> false
+            }
     }
 }
