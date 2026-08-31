@@ -20,7 +20,6 @@ object AquaCoolingProgramGeometry {
     val timelineMarkerRadius = 3.dp
     val timelineNowStrokeWidth = 2.dp
     val timelineAxisGap = 6.dp
-    val timelineLegendGap = 8.dp
 
     val slotHeaderShape = RoundedCornerShape(10.dp)
     val slotHeaderVerticalPadding = 2.dp
@@ -41,19 +40,22 @@ object AquaCoolingProgramGeometry {
     val editorRowHorizontalPadding = 10.dp
     val editorRowVerticalPadding = 9.dp
     val editorRowGap = 7.dp
+
+    val fanLimitSliderHeight = 36.dp
+    val fanLimitTrackHeight = 6.dp
+    val fanLimitThumbRadius = 8.dp
+    val fanLimitThumbOutlineWidth = 2.dp
 }
 
 object AquaCoolingProgramAlpha {
     const val activeDot = 0.96f
     const val timelineTrack = 0.22f
-    const val timelineQuiet = 0.50f
-    const val timelineIntensive = 1f
-    const val timelineNight = 0.68f
-    const val timelineCustom = 0.82f
+    const val timelinePeriod = 0.88f
     const val timelineNow = 0.92f
     const val slotSelectedOutline = 0.84f
     const val editorRowBackground = 0.58f
     const val editorRowOutline = 0.78f
     const val expandedDivider = 0.46f
     const val inlineActionDisabled = 0.40f
+    const val fanLimitInactiveTrack = 0.30f
 }
