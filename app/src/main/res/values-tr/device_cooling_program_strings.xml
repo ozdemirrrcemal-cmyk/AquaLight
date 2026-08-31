@@ -22,6 +22,7 @@
     <string name="device_cooling_program_time_range_format">%1$s – %2$s</string>
     <string name="device_cooling_program_save">Kaydet</string>
     <string name="device_cooling_program_saved">Program Kaydedildi</string>
+    <string name="device_cooling_program_schedule_overlap">Seçtiğiniz saat aralığı başka bir programla çakışıyor.</string>
 
     <string name="device_cooling_program_start_time_sheet_title">Başlangıç Saati</string>
     <string name="device_cooling_program_start_time_sheet_message">Bu soğutma zaman diliminin başlayacağı saati seç.</string>
