@@ -22,7 +22,6 @@
     <string name="device_cooling_history_range_30d">30 Days</string>
     <string name="device_cooling_history_chart_title">Tank Temperature</string>
     <string name="device_cooling_history_chart_subtitle">Measured temperature over the selected period</string>
-    <string name="device_cooling_history_firmware_source">Device firmware</string>
     <string name="device_cooling_history_minimum">Lowest</string>
     <string name="device_cooling_history_average">Average</string>
     <string name="device_cooling_history_maximum">Highest</string>
@@ -33,13 +32,6 @@
     <string name="device_cooling_history_maximum_short">High</string>
     <string name="device_cooling_history_no_samples">No temperature samples for this period</string>
     <string name="device_cooling_history_daily_empty">Daily summaries will appear when the firmware provides them</string>
-    <string name="device_cooling_history_loading_title">Loading history</string>
-    <string name="device_cooling_history_loading_message">Reading temperature history directly from the device firmware…</string>
-    <string name="device_cooling_history_unsupported_title">History is not available yet</string>
-    <string name="device_cooling_history_unsupported_message">This firmware does not provide temperature history yet. No local or estimated data is substituted.</string>
-    <string name="device_cooling_history_unavailable_title">History could not be read</string>
-    <string name="device_cooling_history_unavailable_message">The device did not return history data. Check the connection and try again.</string>
-    <string name="device_cooling_history_retry">Try Again</string>
 
     <string name="device_cooling_fan_speed_title">Fan Speed</string>
     <string name="device_cooling_fan_mode_title">Fan Mode</string>
@@ -72,7 +64,6 @@
     <string name="device_cooling_program_not_configured">No program configured</string>
     <string name="device_cooling_program_not_configured_hint">Create a schedule to control fan speed by time</string>
 
-    <string name="device_cooling_edit">Edit</string>
     <string name="device_cooling_edit_automatic_description">Edit automatic fan settings</string>
     <string name="device_cooling_edit_program_description">Edit fan program</string>
 
@@ -93,17 +84,6 @@
     <string name="device_cooling_automatic_silent_mode_description">Limits automatic fan output to %1$d%% for quieter operation.</string>
     <string name="device_cooling_automatic_silent_mode_preview">Firmware support is pending. This switch is a local preview and is not sent to the device.</string>
     <string name="device_cooling_automatic_silent_mode_toggle_description">Toggle Silent Mode</string>
-    <string name="device_cooling_automatic_behavior_title">Operating Behavior</string>
-    <string name="device_cooling_automatic_below_format">Below %1$.1f °C</string>
-    <string name="device_cooling_automatic_between_format">%1$.1f – %2$.1f °C</string>
-    <string name="device_cooling_automatic_above_format">%1$.1f °C and above</string>
-    <string name="device_cooling_automatic_behavior_off">Fan off</string>
-    <string name="device_cooling_automatic_behavior_gradual">Speed increases gradually</string>
-    <string name="device_cooling_automatic_behavior_maximum">Maximum speed</string>
-    <string name="device_cooling_automatic_loading_title">Loading automatic settings</string>
-    <string name="device_cooling_automatic_loading_message">Reading the automatic temperature range from the device firmware…</string>
-    <string name="device_cooling_automatic_unavailable_title">Automatic settings could not be read</string>
-    <string name="device_cooling_automatic_unavailable_message">The device did not return an editable automatic temperature range. Check the connection and try again.</string>
     <string name="device_cooling_automatic_save">Save</string>
     <string name="device_cooling_automatic_saving">Saving…</string>
     <string name="device_cooling_automatic_saved">Saved</string>
@@ -124,7 +104,6 @@
     <string name="device_cooling_program_timeline_title">24-Hour Plan</string>
     <string name="device_cooling_program_slots_title">Time Periods</string>
     <string name="device_cooling_program_fan_limit">Fan Speed Limit</string>
-    <string name="device_cooling_program_fan_limit_slider_description">Adjust fan speed limit</string>
     <string name="device_cooling_program_add_slot">+ Add</string>
     <string name="device_cooling_program_editor_title">Time Period Settings</string>
     <string name="device_cooling_program_more_actions">More time period actions</string>
@@ -138,7 +117,6 @@
     <string name="device_cooling_program_axis_24">24</string>
     <string name="device_cooling_program_time_range_format">%1$s – %2$s</string>
     <string name="device_cooling_program_save">Save</string>
-    <string name="device_cooling_program_saved">Program Saved</string>
     <string name="device_cooling_program_schedule_overlap">The selected time range overlaps with another program.</string>
     <string name="device_cooling_program_start_time_sheet_title">Start Time</string>
     <string name="device_cooling_program_start_time_sheet_message">Choose when this time period starts.</string>

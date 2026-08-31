@@ -22,7 +22,6 @@
     <string name="device_cooling_history_range_30d">30 Gün</string>
     <string name="device_cooling_history_chart_title">Su Sıcaklığı</string>
     <string name="device_cooling_history_chart_subtitle">Seçilen aralıktaki ölçülen sıcaklık</string>
-    <string name="device_cooling_history_firmware_source">Cihaz firmware’i</string>
     <string name="device_cooling_history_minimum">En Düşük</string>
     <string name="device_cooling_history_average">Ortalama</string>
     <string name="device_cooling_history_maximum">En Yüksek</string>
@@ -33,13 +32,6 @@
     <string name="device_cooling_history_maximum_short">Yüksek</string>
     <string name="device_cooling_history_no_samples">Bu dönem için sıcaklık ölçümü yok</string>
     <string name="device_cooling_history_daily_empty">Firmware günlük özetleri sağladığında burada görünecek</string>
-    <string name="device_cooling_history_loading_title">Geçmiş yükleniyor</string>
-    <string name="device_cooling_history_loading_message">Sıcaklık geçmişi doğrudan cihaz firmware’inden okunuyor…</string>
-    <string name="device_cooling_history_unsupported_title">Geçmiş henüz kullanılamıyor</string>
-    <string name="device_cooling_history_unsupported_message">Bu firmware henüz sıcaklık geçmişi sağlamıyor. Yerel veya tahmini veri kullanılmıyor.</string>
-    <string name="device_cooling_history_unavailable_title">Geçmiş okunamadı</string>
-    <string name="device_cooling_history_unavailable_message">Cihaz geçmiş verisini döndürmedi. Bağlantıyı kontrol edip tekrar dene.</string>
-    <string name="device_cooling_history_retry">Tekrar Dene</string>
 
     <string name="device_cooling_fan_speed_title">Fan Hızı</string>
     <string name="device_cooling_fan_mode_title">Fan Modu</string>
@@ -72,7 +64,6 @@
     <string name="device_cooling_program_not_configured">Program ayarlanmadı</string>
     <string name="device_cooling_program_not_configured_hint">Fan hızını zamana göre kontrol etmek için program oluştur</string>
 
-    <string name="device_cooling_edit">Düzenle</string>
     <string name="device_cooling_edit_automatic_description">Otomatik fan ayarlarını düzenle</string>
     <string name="device_cooling_edit_program_description">Fan programını düzenle</string>
 
@@ -93,17 +84,6 @@
     <string name="device_cooling_automatic_silent_mode_description">Daha sessiz çalışma için otomatik fan çıkışını %1$d%% ile sınırlar.</string>
     <string name="device_cooling_automatic_silent_mode_preview">Firmware desteği bekleniyor. Bu anahtar şimdilik yalnızca yerel önizlemedir ve cihaza gönderilmez.</string>
     <string name="device_cooling_automatic_silent_mode_toggle_description">Sessiz Modu aç veya kapat</string>
-    <string name="device_cooling_automatic_behavior_title">Çalışma Davranışı</string>
-    <string name="device_cooling_automatic_below_format">%1$.1f °C altı</string>
-    <string name="device_cooling_automatic_between_format">%1$.1f – %2$.1f °C</string>
-    <string name="device_cooling_automatic_above_format">%1$.1f °C ve üzeri</string>
-    <string name="device_cooling_automatic_behavior_off">Fan kapalı</string>
-    <string name="device_cooling_automatic_behavior_gradual">Hız kademeli artar</string>
-    <string name="device_cooling_automatic_behavior_maximum">Maksimum hız</string>
-    <string name="device_cooling_automatic_loading_title">Otomatik ayarlar yükleniyor</string>
-    <string name="device_cooling_automatic_loading_message">Otomatik sıcaklık aralığı doğrudan cihaz firmware’inden okunuyor…</string>
-    <string name="device_cooling_automatic_unavailable_title">Otomatik ayarlar okunamadı</string>
-    <string name="device_cooling_automatic_unavailable_message">Cihaz düzenlenebilir otomatik sıcaklık aralığını döndürmedi. Bağlantıyı kontrol edip tekrar dene.</string>
     <string name="device_cooling_automatic_save">Kaydet</string>
     <string name="device_cooling_automatic_saving">Kaydediliyor…</string>
     <string name="device_cooling_automatic_saved">Kaydedildi</string>
@@ -124,7 +104,6 @@
     <string name="device_cooling_program_timeline_title">24 Saatlik Plan</string>
     <string name="device_cooling_program_slots_title">Zaman Dilimleri</string>
     <string name="device_cooling_program_fan_limit">Fan Hız Limiti</string>
-    <string name="device_cooling_program_fan_limit_slider_description">Fan hız limitini ayarla</string>
     <string name="device_cooling_program_add_slot">+ Ekle</string>
     <string name="device_cooling_program_editor_title">Zaman Dilimi Ayarları</string>
     <string name="device_cooling_program_more_actions">Diğer zaman dilimi işlemleri</string>
@@ -138,7 +117,6 @@
     <string name="device_cooling_program_axis_24">24</string>
     <string name="device_cooling_program_time_range_format">%1$s – %2$s</string>
     <string name="device_cooling_program_save">Kaydet</string>
-    <string name="device_cooling_program_saved">Program Kaydedildi</string>
     <string name="device_cooling_program_schedule_overlap">Seçtiğiniz saat aralığı başka bir programla çakışıyor.</string>
     <string name="device_cooling_program_start_time_sheet_title">Başlangıç Saati</string>
     <string name="device_cooling_program_start_time_sheet_message">Bu zaman diliminin başlayacağı saati seç.</string>
