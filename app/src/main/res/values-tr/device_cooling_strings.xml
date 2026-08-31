@@ -59,12 +59,6 @@
     <string name="device_cooling_status_online">Çevrimiçi</string>
     <string name="device_cooling_status_offline">Çevrimdışı</string>
 
-    <string name="device_cooling_profile_title">Soğutma Profili</string>
-    <string name="device_cooling_profile_quiet">Sessiz</string>
-    <string name="device_cooling_profile_balanced">Dengeli</string>
-    <string name="device_cooling_profile_performance">Performans</string>
-    <string name="device_cooling_profile_boost">Boost</string>
-
     <string name="device_cooling_manual_card_title">Manuel Fan Hızı</string>
     <string name="device_cooling_manual_card_subtitle">Yalnız Manuel modda kullanılabilir</string>
 
@@ -95,6 +89,10 @@
     <string name="device_cooling_automatic_zone_off">Kapalı</string>
     <string name="device_cooling_automatic_zone_gradual">Kademeli</string>
     <string name="device_cooling_automatic_zone_maximum">Maksimum</string>
+    <string name="device_cooling_automatic_silent_mode_title">Sessiz Mod</string>
+    <string name="device_cooling_automatic_silent_mode_description">Daha sessiz çalışma için otomatik fan çıkışını %1$d%% ile sınırlar.</string>
+    <string name="device_cooling_automatic_silent_mode_preview">Firmware desteği bekleniyor. Bu anahtar şimdilik yalnızca yerel önizlemedir ve cihaza gönderilmez.</string>
+    <string name="device_cooling_automatic_silent_mode_toggle_description">Sessiz Modu aç veya kapat</string>
     <string name="device_cooling_automatic_behavior_title">Çalışma Davranışı</string>
     <string name="device_cooling_automatic_below_format">%1$.1f °C altı</string>
     <string name="device_cooling_automatic_between_format">%1$.1f – %2$.1f °C</string>

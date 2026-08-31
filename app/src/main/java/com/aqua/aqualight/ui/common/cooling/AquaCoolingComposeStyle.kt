@@ -66,13 +66,6 @@ object AquaCoolingDashboardGeometry {
     val radioStrokeWidth = 1.5.dp
     val radioDotRadius = 4.dp
 
-    val profileShape = RoundedCornerShape(14.dp)
-    val profileMinimumHeight = 48.dp
-    val profileHorizontalPadding = 5.dp
-    val profileVerticalPadding = 6.dp
-    val profileGap = 7.dp
-    val profileGlyphSize = 17.dp
-
     val controlCardMinimumHeight = 104.dp
     val controlRowVerticalPadding = 3.dp
     val controlDividerHeight = 1.dp
@@ -163,7 +156,6 @@ object AquaCoolingInteractionStyle {
 object AquaCoolingDashboardAlpha {
     const val selectedBackground = 0.08f
     const val selectedOutline = 0.72f
-    const val profileSelectedBackground = 0.88f
     const val chartBackground = 0.16f
     const val chartGrid = 0.17f
     const val chartLine = 1f
@@ -264,14 +256,6 @@ object AquaCoolingGaugeSpec {
     const val sweepAngle = 250f
     const val minimumPercent = 0
     const val maximumPercent = 100
-}
-
-object AquaCoolingProfileGlyphSpec {
-    const val quietRadiusFraction = 0.20f
-    const val balancedRadiusFraction = 0.29f
-    const val performanceRadiusFraction = 0.37f
-    const val boostRadiusFraction = 0.44f
-    val centerDotRadius = 1.5.dp
 }
 
 object AquaCoolingTemperatureChartSpec {

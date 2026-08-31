@@ -29,6 +29,9 @@ object AquaCoolingAutomaticGeometry {
     val rangeTrackHorizontalPadding = 8.dp
     val rangeLegendGap = 5.dp
 
+    val silentModeCardMinimumHeight = 104.dp
+    val silentModeContentGap = 8.dp
+
     val behaviorCardMinimumHeight = 126.dp
     val behaviorRowVerticalPadding = 7.dp
     val behaviorDividerHeight = 1.dp

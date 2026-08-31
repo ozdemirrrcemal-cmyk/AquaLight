@@ -37,7 +37,6 @@ import com.aqua.aqualight.ui.common.cooling.AquaCoolingDashboardGeometry
 import com.aqua.aqualight.ui.common.cooling.AquaCoolingDashboardTypography
 import com.aqua.aqualight.ui.common.cooling.AquaCoolingFanPercentSlider
 import com.aqua.aqualight.ui.common.cooling.AquaCoolingGaugeSpec
-import com.aqua.aqualight.ui.common.cooling.AquaCoolingProfileGlyphSpec
 import com.aqua.aqualight.ui.common.devicecard.AquaDeviceCardColors
 import com.aqua.aqualight.ui.common.devicecard.AquaDeviceCardGeometry
 import com.aqua.aqualight.ui.common.devicecard.AquaDeviceCardTypography
@@ -229,118 +228,6 @@ private fun CoolingModeOption(
             ),
             maxLines = 1,
             overflow = TextOverflow.Ellipsis
-        )
-    }
-}
-
-@Composable
-internal fun CoolingProfileCard(
-    selectedProfile: CoolingProfile,
-    enabled: Boolean,
-    colors: AquaDeviceCardColors,
-    typography: AquaDeviceCardTypography,
-    onProfileSelected: (CoolingProfile) -> Unit
-) {
-    AquaCoolingDashboardCardSurface(modifier = Modifier.fillMaxWidth()) {
-        Column(
-            modifier = Modifier.fillMaxWidth(),
-            verticalArrangement = Arrangement.spacedBy(AquaDeviceCardGeometry.compactGap)
-        ) {
-            BasicText(
-                text = stringResource(R.string.device_cooling_profile_title),
-                style = typography.title
-            )
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(AquaCoolingDashboardGeometry.profileGap)
-            ) {
-                CoolingProfile.entries.forEach { profile ->
-                    CoolingProfileOption(
-                        profile = profile,
-                        selected = profile == selectedProfile,
-                        enabled = enabled,
-                        colors = colors,
-                        typography = typography,
-                        onClick = { onProfileSelected(profile) },
-                        modifier = Modifier.weight(1f)
-                    )
-                }
-            }
-        }
-    }
-}
-
-@Composable
-private fun CoolingProfileOption(
-    profile: CoolingProfile,
-    selected: Boolean,
-    enabled: Boolean,
-    colors: AquaDeviceCardColors,
-    typography: AquaDeviceCardTypography,
-    onClick: () -> Unit,
-    modifier: Modifier = Modifier
-) {
-    val shape = AquaCoolingDashboardGeometry.profileShape
-    Column(
-        modifier = modifier
-            .heightIn(min = AquaCoolingDashboardGeometry.profileMinimumHeight)
-            .clip(shape)
-            .background(
-                if (selected) {
-                    colors.accent.copy(alpha = AquaCoolingDashboardAlpha.profileSelectedBackground)
-                } else {
-                    colors.mediaSurface
-                }
-            )
-            .border(
-                width = AquaDeviceCardGeometry.outlineWidth,
-                color = if (selected) colors.accent else colors.mediaOutline,
-                shape = shape
-            )
-            .selectable(
-                selected = selected,
-                enabled = enabled,
-                role = Role.RadioButton,
-                onClick = onClick
-            )
-            .padding(
-                horizontal = AquaCoolingDashboardGeometry.profileHorizontalPadding,
-                vertical = AquaCoolingDashboardGeometry.profileVerticalPadding
-            ),
-        horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.Center
-    ) {
-        Canvas(modifier = Modifier.size(AquaCoolingDashboardGeometry.profileGlyphSize)) {
-            val lineColor = if (selected) colors.primaryText else colors.secondaryText
-            val stroke = AquaDeviceCardGeometry.outlineWidth.toPx()
-            val center = Offset(size.width / 2f, size.height / 2f)
-            val radiusFraction = when (profile) {
-                CoolingProfile.QUIET -> AquaCoolingProfileGlyphSpec.quietRadiusFraction
-                CoolingProfile.BALANCED -> AquaCoolingProfileGlyphSpec.balancedRadiusFraction
-                CoolingProfile.PERFORMANCE -> AquaCoolingProfileGlyphSpec.performanceRadiusFraction
-                CoolingProfile.BOOST -> AquaCoolingProfileGlyphSpec.boostRadiusFraction
-            }
-            drawCircle(
-                color = lineColor,
-                radius = size.minDimension * radiusFraction,
-                center = center,
-                style = Stroke(stroke)
-            )
-            drawCircle(
-                color = lineColor,
-                radius = AquaCoolingProfileGlyphSpec.centerDotRadius.toPx(),
-                center = center
-            )
-        }
-        BasicText(
-            text = coolingProfileLabel(profile),
-            style = typography.micro.copy(
-                color = if (selected) colors.primaryText else colors.secondaryText,
-                textAlign = TextAlign.Center
-            ),
-            maxLines = 1,
-            overflow = TextOverflow.Ellipsis,
-            modifier = Modifier.fillMaxWidth()
         )
     }
 }

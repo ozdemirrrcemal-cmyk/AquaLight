@@ -20,7 +20,6 @@ import com.aqua.aqualight.ui.common.cooling.aquaCoolingDashboardTypography
 internal fun DeviceCoolingDashboardScreen(
     state: DeviceCoolingRootUiState,
     onModeSelected: (CoolingControlMode) -> Unit,
-    onProfileSelected: (CoolingProfile) -> Unit,
     onManualFanPercentChanged: (Int) -> Unit,
     onTemperatureHistoryClick: () -> Unit,
     onAutomaticSettingsClick: () -> Unit,
@@ -102,15 +101,6 @@ internal fun DeviceCoolingDashboardScreen(
                     modifier = Modifier.weight(1f)
                 )
             }
-        }
-        item(key = "profile") {
-            CoolingProfileCard(
-                selectedProfile = state.selectedProfile,
-                enabled = state.contentEnabled,
-                colors = colors,
-                typography = typography,
-                onProfileSelected = onProfileSelected
-            )
         }
         item(key = "mode-control") {
             CoolingModeControlCard(

@@ -59,12 +59,6 @@
     <string name="device_cooling_status_online">Online</string>
     <string name="device_cooling_status_offline">Offline</string>
 
-    <string name="device_cooling_profile_title">Cooling Profile</string>
-    <string name="device_cooling_profile_quiet">Quiet</string>
-    <string name="device_cooling_profile_balanced">Balanced</string>
-    <string name="device_cooling_profile_performance">Performance</string>
-    <string name="device_cooling_profile_boost">Boost</string>
-
     <string name="device_cooling_manual_card_title">Manual Fan Speed</string>
     <string name="device_cooling_manual_card_subtitle">Available in Manual mode</string>
 
@@ -95,6 +89,10 @@
     <string name="device_cooling_automatic_zone_off">Off</string>
     <string name="device_cooling_automatic_zone_gradual">Gradual</string>
     <string name="device_cooling_automatic_zone_maximum">Maximum</string>
+    <string name="device_cooling_automatic_silent_mode_title">Silent Mode</string>
+    <string name="device_cooling_automatic_silent_mode_description">Limits automatic fan output to %1$d%% for quieter operation.</string>
+    <string name="device_cooling_automatic_silent_mode_preview">Firmware support is pending. This switch is a local preview and is not sent to the device.</string>
+    <string name="device_cooling_automatic_silent_mode_toggle_description">Toggle Silent Mode</string>
     <string name="device_cooling_automatic_behavior_title">Operating Behavior</string>
     <string name="device_cooling_automatic_below_format">Below %1$.1f °C</string>
     <string name="device_cooling_automatic_between_format">%1$.1f – %2$.1f °C</string>

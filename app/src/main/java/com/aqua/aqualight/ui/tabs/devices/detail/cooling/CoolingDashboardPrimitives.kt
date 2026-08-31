@@ -101,11 +101,3 @@ internal fun coolingModeLabel(mode: CoolingControlMode): String = when (mode) {
     CoolingControlMode.MANUAL -> stringResource(R.string.device_cooling_mode_manual)
     CoolingControlMode.PROGRAM -> stringResource(R.string.device_cooling_mode_program)
 }
-
-@Composable
-internal fun coolingProfileLabel(profile: CoolingProfile): String = when (profile) {
-    CoolingProfile.QUIET -> stringResource(R.string.device_cooling_profile_quiet)
-    CoolingProfile.BALANCED -> stringResource(R.string.device_cooling_profile_balanced)
-    CoolingProfile.PERFORMANCE -> stringResource(R.string.device_cooling_profile_performance)
-    CoolingProfile.BOOST -> stringResource(R.string.device_cooling_profile_boost)
-}

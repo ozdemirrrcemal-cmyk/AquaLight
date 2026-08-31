@@ -37,6 +37,7 @@ class DeviceCoolingAutomaticSettingsFragment : DeviceCoolingModeSettingsFragment
                     state = state,
                     onStartTemperatureClick = ::showStartTemperatureSheet,
                     onMaximumTemperatureClick = ::showMaximumTemperatureSheet,
+                    onSilentModeChanged = viewModel::updateSilentMode,
                     onSave = viewModel::save
                 )
             }

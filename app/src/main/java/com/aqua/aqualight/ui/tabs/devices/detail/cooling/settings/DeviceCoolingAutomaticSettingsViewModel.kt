@@ -3,6 +3,7 @@ package com.aqua.aqualight.ui.tabs.devices.detail.cooling.settings
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.aqua.aqualight.BuildConfig
+import com.aqua.aqualight.application.devices.cooling.DEVICE_COOLING_AUTOMATIC_SILENT_MODE_MAXIMUM_FAN_PERCENT
 import com.aqua.aqualight.application.devices.cooling.DeviceCoolingAutomaticSettingsOperations
 import com.aqua.aqualight.application.devices.cooling.DeviceCoolingAutomaticSettingsSnapshot
 import com.aqua.aqualight.application.devices.cooling.DeviceCoolingAutomaticTemperaturePolicy
@@ -89,22 +90,39 @@ class DeviceCoolingAutomaticSettingsViewModel(
         }
     }
 
+    fun updateSilentMode(enabled: Boolean) {
+        _uiState.update { state ->
+            if (!state.silentModeEditable || state.draftSilentModeEnabled == enabled) {
+                state
+            } else {
+                state.copy(
+                    draftSilentModeEnabled = enabled,
+                    saveState = DeviceCoolingAutomaticSaveState.IDLE
+                )
+            }
+        }
+    }
+
     fun save() {
         val state = _uiState.value
         val deviceUid = boundDeviceUid.takeIf(String::isNotBlank) ?: return
         val start = state.draftStartTemperatureC ?: return
         val maximum = state.draftMaximumSpeedTemperatureC ?: return
         if (!state.canSave) return
+        val requestedSilentMode = state.persistedSilentModeEnabled?.let {
+            state.draftSilentModeEnabled
+        }
 
         saveJob?.cancel()
         _uiState.update { current ->
             current.copy(saveState = DeviceCoolingAutomaticSaveState.SAVING)
         }
         saveJob = viewModelScope.launch {
-            val result = operations.saveAutomaticTemperatureRange(
+            val result = operations.saveAutomaticSettings(
                 deviceUid = deviceUid,
                 startTemperatureC = start,
-                maximumSpeedTemperatureC = maximum
+                maximumSpeedTemperatureC = maximum,
+                silentModeEnabled = requestedSilentMode
             )
             if (boundDeviceUid != deviceUid) return@launch
             _uiState.update { current ->
@@ -114,6 +132,10 @@ class DeviceCoolingAutomaticSettingsViewModel(
                         persistedMaximumSpeedTemperatureC = maximum,
                         draftStartTemperatureC = start,
                         draftMaximumSpeedTemperatureC = maximum,
+                        persistedSilentModeEnabled = requestedSilentMode
+                            ?: current.persistedSilentModeEnabled,
+                        draftSilentModeEnabled = requestedSilentMode
+                            ?: current.draftSilentModeEnabled,
                         saveState = DeviceCoolingAutomaticSaveState.SAVED
                     )
                 } else {
@@ -154,6 +176,10 @@ data class DeviceCoolingAutomaticSettingsUiState(
     val persistedMaximumSpeedTemperatureC: Double? = null,
     val draftStartTemperatureC: Double? = null,
     val draftMaximumSpeedTemperatureC: Double? = null,
+    val persistedSilentModeEnabled: Boolean? = null,
+    val draftSilentModeEnabled: Boolean = false,
+    val silentModeMaximumFanPercent: Int =
+        DEVICE_COOLING_AUTOMATIC_SILENT_MODE_MAXIMUM_FAN_PERCENT,
     val tankTemperatureC: Double? = null,
     val fanPercentNow: Double? = null,
     val policy: DeviceCoolingAutomaticTemperaturePolicy? = null
@@ -179,12 +205,30 @@ data class DeviceCoolingAutomaticSettingsUiState(
         get() = draftMaximumSpeedTemperatureC
             ?: DEBUG_PREVIEW_MAXIMUM_TEMPERATURE_C.takeIf { BuildConfig.DEBUG }
 
-    val hasChanges: Boolean
+    val silentModeFirmwareBacked: Boolean
+        get() = persistedSilentModeEnabled != null
+
+    /** Silent Mode is interactive in debug while the firmware contract is still pending. */
+    val silentModeEditable: Boolean
+        get() = (silentModeFirmwareBacked && editable) || BuildConfig.DEBUG
+
+    val hasTemperatureChanges: Boolean
         get() = !sameTemperature(persistedStartTemperatureC, draftStartTemperatureC) ||
             !sameTemperature(
                 persistedMaximumSpeedTemperatureC,
                 draftMaximumSpeedTemperatureC
             )
+
+    val hasSilentModeChanges: Boolean
+        get() = persistedSilentModeEnabled?.let { persisted ->
+            persisted != draftSilentModeEnabled
+        } == true
+
+    val hasPreviewOnlySilentModeChange: Boolean
+        get() = !silentModeFirmwareBacked && draftSilentModeEnabled
+
+    val hasChanges: Boolean
+        get() = hasTemperatureChanges || hasSilentModeChanges
 
     val canSave: Boolean
         get() = loadState == DeviceCoolingAutomaticLoadState.CONTENT &&
@@ -204,23 +248,33 @@ private fun DeviceCoolingAutomaticSettingsUiState.withSnapshot(
         return copy(
             loadState = DeviceCoolingAutomaticLoadState.CONTENT,
             editable = BuildConfig.DEBUG,
+            silentModeMaximumFanPercent = snapshot.silentModeMaximumFanPercent,
             tankTemperatureC = snapshot.tankTemperatureC,
             fanPercentNow = snapshot.fanPercentNow
         )
     }
-    // A local debug-preview draft must never override the first authoritative firmware snapshot.
-    val preserveDraft = hasFirmwareSnapshot && hasChanges
+    // A local draft must never override the first authoritative firmware snapshot.
+    val preserveTemperatureDraft = hasFirmwareSnapshot && hasTemperatureChanges
+    val preserveSilentModeDraft = silentModeFirmwareBacked && hasSilentModeChanges
+    val incomingSilentMode = snapshot.silentModeEnabled
     return copy(
         loadState = DeviceCoolingAutomaticLoadState.CONTENT,
         editable = snapshot.editable,
         persistedStartTemperatureC = start,
         persistedMaximumSpeedTemperatureC = maximum,
-        draftStartTemperatureC = if (preserveDraft) draftStartTemperatureC else start,
-        draftMaximumSpeedTemperatureC = if (preserveDraft) {
+        draftStartTemperatureC = if (preserveTemperatureDraft) draftStartTemperatureC else start,
+        draftMaximumSpeedTemperatureC = if (preserveTemperatureDraft) {
             draftMaximumSpeedTemperatureC
         } else {
             maximum
         },
+        persistedSilentModeEnabled = incomingSilentMode,
+        draftSilentModeEnabled = when {
+            incomingSilentMode == null -> draftSilentModeEnabled
+            preserveSilentModeDraft -> draftSilentModeEnabled
+            else -> incomingSilentMode
+        },
+        silentModeMaximumFanPercent = snapshot.silentModeMaximumFanPercent,
         tankTemperatureC = snapshot.tankTemperatureC,
         fanPercentNow = snapshot.fanPercentNow,
         policy = policy

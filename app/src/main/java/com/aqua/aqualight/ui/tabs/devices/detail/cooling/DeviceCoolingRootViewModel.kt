@@ -111,13 +111,6 @@ class DeviceCoolingRootViewModel(
         }
     }
 
-    fun selectProfile(profile: CoolingProfile) {
-        _uiState.update { state ->
-            if (!state.contentEnabled || state.selectedProfile == profile) state
-            else state.copy(selectedProfile = profile)
-        }
-    }
-
     private fun observeAutomaticSettings(deviceUid: String) {
         val automatic = automaticSettingsOperations ?: return
         automaticObserveJob = viewModelScope.launch {
@@ -211,20 +204,12 @@ enum class CoolingControlMode {
     PROGRAM
 }
 
-enum class CoolingProfile {
-    QUIET,
-    BALANCED,
-    PERFORMANCE,
-    BOOST
-}
-
 data class DeviceCoolingRootUiState(
     val title: String = "",
     val deviceUid: String = "",
     val connectionVisualState: DeviceConnectionVisualState = DeviceConnectionVisualState.OFFLINE,
     val contentEnabled: Boolean = false,
     val selectedMode: CoolingControlMode = CoolingControlMode.AUTOMATIC,
-    val selectedProfile: CoolingProfile = CoolingProfile.BALANCED,
     val manualFanPercent: Int = 60,
     val autoStartTemperatureC: Double = 25.0,
     val autoMaxTemperatureC: Double = 27.0,

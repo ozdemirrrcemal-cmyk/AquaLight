@@ -19,6 +19,7 @@ import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.selection.toggleable
 import androidx.compose.foundation.text.BasicText
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
@@ -41,6 +42,7 @@ import com.aqua.aqualight.ui.common.cooling.aquaCoolingDashboardColors
 import com.aqua.aqualight.ui.common.cooling.aquaCoolingDashboardTypography
 import com.aqua.aqualight.ui.common.devicecard.AquaDeviceCardColors
 import com.aqua.aqualight.ui.common.devicecard.AquaDeviceCardTypography
+import com.aqua.aqualight.ui.common.devicemenu.AquaDeviceMenuToggle
 import kotlin.math.ceil
 import kotlin.math.floor
 import kotlin.math.roundToInt
@@ -57,6 +59,7 @@ internal fun DeviceCoolingAutomaticSettingsScreen(
     state: DeviceCoolingAutomaticSettingsUiState,
     onStartTemperatureClick: () -> Unit,
     onMaximumTemperatureClick: () -> Unit,
+    onSilentModeChanged: (Boolean) -> Unit,
     onSave: () -> Unit,
     modifier: Modifier = Modifier
 ) {
@@ -83,6 +86,14 @@ internal fun DeviceCoolingAutomaticSettingsScreen(
                 typography = typography,
                 onStartTemperatureClick = onStartTemperatureClick,
                 onMaximumTemperatureClick = onMaximumTemperatureClick
+            )
+        }
+        item(key = "silent-mode") {
+            AutomaticSilentModeCard(
+                state = state,
+                colors = colors,
+                typography = typography,
+                onCheckedChange = onSilentModeChanged
             )
         }
         if (state.saveState == DeviceCoolingAutomaticSaveState.ERROR) {
@@ -231,6 +242,70 @@ private fun AutomaticTemperatureRangeCard(
                 maximumTemperatureC = state.draftMaximumSpeedTemperatureC,
                 colors = colors,
                 typography = typography
+            )
+        }
+    }
+}
+
+@Composable
+private fun AutomaticSilentModeCard(
+    state: DeviceCoolingAutomaticSettingsUiState,
+    colors: AquaDeviceCardColors,
+    typography: AquaDeviceCardTypography,
+    onCheckedChange: (Boolean) -> Unit
+) {
+    val enabled = state.silentModeEditable
+    AquaCoolingDashboardCardSurface(
+        modifier = Modifier
+            .fillMaxWidth()
+            .heightIn(min = AquaCoolingAutomaticGeometry.silentModeCardMinimumHeight)
+    ) {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .toggleable(
+                    value = state.draftSilentModeEnabled,
+                    enabled = enabled,
+                    role = Role.Switch,
+                    onValueChange = onCheckedChange
+                )
+                .alpha(if (enabled) 1f else 0.55f),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(
+                AquaCoolingAutomaticGeometry.silentModeContentGap
+            )
+        ) {
+            Column(
+                modifier = Modifier.weight(1f),
+                verticalArrangement = Arrangement.spacedBy(
+                    AquaCoolingAutomaticGeometry.silentModeContentGap / 2
+                )
+            ) {
+                BasicText(
+                    text = stringResource(R.string.device_cooling_automatic_silent_mode_title),
+                    style = typography.title.copy(color = colors.primaryText)
+                )
+                BasicText(
+                    text = stringResource(
+                        R.string.device_cooling_automatic_silent_mode_description,
+                        state.silentModeMaximumFanPercent
+                    ),
+                    style = typography.micro.copy(color = colors.secondaryText)
+                )
+                if (!state.silentModeFirmwareBacked) {
+                    BasicText(
+                        text = stringResource(
+                            R.string.device_cooling_automatic_silent_mode_preview
+                        ),
+                        style = typography.micro.copy(color = colors.warning)
+                    )
+                }
+            }
+            AquaDeviceMenuToggle(
+                checked = state.draftSilentModeEnabled,
+                contentDescription = stringResource(
+                    R.string.device_cooling_automatic_silent_mode_toggle_description
+                )
             )
         }
     }
