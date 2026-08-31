@@ -104,6 +104,24 @@ class DeviceCoolingProgramSettingsViewModel : ViewModel() {
         }
     }
 
+    fun deleteTimeSlot(slotId: String): Boolean {
+        var deleted = false
+        _uiState.update { state ->
+            val slot = state.slots.firstOrNull { candidate -> candidate.id == slotId }
+            if (slot?.label != DeviceCoolingProgramSlotLabel.CUSTOM) {
+                state
+            } else {
+                deleted = true
+                state.copy(
+                    slots = state.slots.filterNot { candidate -> candidate.id == slotId },
+                    selectedSlotId = state.selectedSlotId.takeUnless { selected -> selected == slotId },
+                    saveState = DeviceCoolingProgramSaveState.IDLE
+                )
+            }
+        }
+        return deleted
+    }
+
     fun saveDraft() {
         _uiState.update { state ->
             if (!state.hasChanges) state
