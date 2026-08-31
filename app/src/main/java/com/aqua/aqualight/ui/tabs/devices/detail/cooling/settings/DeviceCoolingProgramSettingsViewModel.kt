@@ -40,19 +40,17 @@ class DeviceCoolingProgramSettingsViewModel : ViewModel() {
         }
     }
 
-    fun updateStartTime(slotId: String, minutesOfDay: Int) {
+    fun updateStartTime(slotId: String, minutesOfDay: Int): Boolean =
         updateSlot(slotId, rejectScheduleOverlap = true) { slot ->
             val normalized = minutesOfDay.coerceIn(0, MINUTES_PER_DAY - 1)
             if (normalized == slot.endMinutes) slot else slot.copy(startMinutes = normalized)
         }
-    }
 
-    fun updateEndTime(slotId: String, minutesOfDay: Int) {
+    fun updateEndTime(slotId: String, minutesOfDay: Int): Boolean =
         updateSlot(slotId, rejectScheduleOverlap = true) { slot ->
             val normalized = minutesOfDay.coerceIn(0, MINUTES_PER_DAY - 1)
             if (normalized == slot.startMinutes) slot else slot.copy(endMinutes = normalized)
         }
-    }
 
     fun updateStartTemperature(slotId: String, temperatureC: Double) {
         updateSlot(slotId) { slot ->
@@ -120,21 +118,32 @@ class DeviceCoolingProgramSettingsViewModel : ViewModel() {
         slotId: String,
         rejectScheduleOverlap: Boolean = false,
         transform: (DeviceCoolingProgramSlot) -> DeviceCoolingProgramSlot
-    ) {
+    ): Boolean {
+        var accepted = true
         _uiState.update { state ->
             val updated = state.slots.map { slot ->
                 if (slot.id == slotId) transform(slot) else slot
             }
             when {
-                updated == state.slots -> state
-                rejectScheduleOverlap && updated.hasScheduleOverlapFor(slotId) -> state
-                else -> state.copy(
-                    slots = updated.sortedBy(DeviceCoolingProgramSlot::startMinutes),
-                    selectedSlotId = slotId,
-                    saveState = DeviceCoolingProgramSaveState.IDLE
-                )
+                updated == state.slots -> {
+                    accepted = true
+                    state
+                }
+                rejectScheduleOverlap && updated.hasScheduleOverlapFor(slotId) -> {
+                    accepted = false
+                    state
+                }
+                else -> {
+                    accepted = true
+                    state.copy(
+                        slots = updated.sortedBy(DeviceCoolingProgramSlot::startMinutes),
+                        selectedSlotId = slotId,
+                        saveState = DeviceCoolingProgramSaveState.IDLE
+                    )
+                }
             }
         }
+        return accepted
     }
 }
 
