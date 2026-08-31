@@ -124,8 +124,9 @@ internal fun DeviceCoolingProgramSettingsScreen(
                 onAddSlot = actions.onAddSlot
             )
         }
-        state.slots.forEachIndexed { slotIndex, slot ->
-            item(key = "slot-$slotIndex") {
+        state.slotItems.forEachIndexed { slotIndex, slotItem ->
+            item(key = slotItem.uiKey) {
+                val slot = slotItem.slot
                 ProgramSlotCard(
                     model = ProgramSlotCardModel(
                         slot = slot,
@@ -402,10 +403,7 @@ private fun ProgramSlotCard(
                     onClick = actions.onEndTimeClick
                 )
                 ProgramFanLimitEditor(
-                    value = slot.fanLimitPercent,
-                    minimumPercent = model.minimumFanPercent,
-                    maximumPercent = model.maximumFanPercent,
-                    stepPercent = model.fanLimitStepPercent,
+                    model = model,
                     colors = colors,
                     typography = typography,
                     onValueChange = actions.onFanLimitChange
@@ -492,14 +490,12 @@ private fun ProgramEditorHeader(
 
 @Composable
 private fun ProgramFanLimitEditor(
-    value: Int,
-    minimumPercent: Int,
-    maximumPercent: Int,
-    stepPercent: Int,
+    model: ProgramSlotCardModel,
     colors: AquaDeviceCardColors,
     typography: AquaDeviceCardTypography,
     onValueChange: (Int) -> Unit
 ) {
+    val value = model.slot.fanLimitPercent
     Column(
         modifier = Modifier
             .fillMaxWidth()
@@ -545,9 +541,9 @@ private fun ProgramFanLimitEditor(
             state = AquaCoolingFanPercentSliderState(
                 percent = value,
                 enabled = true,
-                stepPercent = stepPercent,
-                minimumPercent = minimumPercent,
-                maximumPercent = maximumPercent
+                stepPercent = model.fanLimitStepPercent,
+                minimumPercent = model.minimumFanPercent,
+                maximumPercent = model.maximumFanPercent
             ),
             colors = colors,
             onValueChanged = onValueChange

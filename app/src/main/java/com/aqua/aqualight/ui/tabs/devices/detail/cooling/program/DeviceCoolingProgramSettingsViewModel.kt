@@ -26,6 +26,7 @@ class DeviceCoolingProgramSettingsViewModel(
     private val _uiState = MutableStateFlow(DeviceCoolingProgramSettingsUiState())
     val uiState: StateFlow<DeviceCoolingProgramSettingsUiState> = _uiState.asStateFlow()
 
+    private val slotUiIdentity = CoolingProgramSlotUiIdentity()
     private var boundDeviceUid: String? = null
     private var loadJob: Job? = null
     private var saveJob: Job? = null
@@ -47,7 +48,7 @@ class DeviceCoolingProgramSettingsViewModel(
 
     fun selectSlot(slotIndex: Int) {
         val state = _uiState.value
-        if (!state.isEditable || slotIndex !in state.slots.indices) return
+        if (!state.isEditable || slotIndex !in state.slotItems.indices) return
         _uiState.value = state.copy(
             selectedSlotIndex = if (state.selectedSlotIndex == slotIndex) null else slotIndex
         )
@@ -64,7 +65,9 @@ class DeviceCoolingProgramSettingsViewModel(
                     policy = policy,
                     slotIndex = slotIndex,
                     startMinutes = minutesOfDay
-                )
+                ),
+                slotUiIdentity = slotUiIdentity,
+                selectedUiKey = state.slotItems.getOrNull(slotIndex)?.uiKey
             )
         } else {
             false
@@ -82,7 +85,9 @@ class DeviceCoolingProgramSettingsViewModel(
                     policy = policy,
                     slotIndex = slotIndex,
                     endMinutes = minutesOfDay
-                )
+                ),
+                slotUiIdentity = slotUiIdentity,
+                selectedUiKey = state.slotItems.getOrNull(slotIndex)?.uiKey
             )
         } else {
             false
@@ -100,7 +105,9 @@ class DeviceCoolingProgramSettingsViewModel(
                     policy = policy,
                     slotIndex = slotIndex,
                     percent = percent
-                )
+                ),
+                slotUiIdentity = slotUiIdentity,
+                selectedUiKey = state.slotItems.getOrNull(slotIndex)?.uiKey
             )
         }
     }
@@ -111,7 +118,9 @@ class DeviceCoolingProgramSettingsViewModel(
         if (state.isEditable && policy != null && state.canAddSlot) {
             _uiState.applyEdit(
                 state = state,
-                result = CoolingProgramSchedule.addSlot(state.slots, policy)
+                result = CoolingProgramSchedule.addSlot(state.slots, policy),
+                slotUiIdentity = slotUiIdentity,
+                selectedUiKey = slotUiIdentity.allocateKey()
             )
         }
     }
@@ -126,7 +135,8 @@ class DeviceCoolingProgramSettingsViewModel(
                     slots = state.slots,
                     policy = policy,
                     slotIndex = slotIndex
-                )
+                ),
+                slotUiIdentity = slotUiIdentity
             )
         } else {
             false
@@ -146,7 +156,9 @@ class DeviceCoolingProgramSettingsViewModel(
         saveJob?.cancel()
         saveJob = viewModelScope.launch {
             when (val result = operations.saveProgram(deviceUid, draft)) {
-                is CoolingProgramSaveResult.Saved -> _uiState.applySavedSnapshot(result)
+                is CoolingProgramSaveResult.Saved -> {
+                    _uiState.applySavedSnapshot(result, slotUiIdentity)
+                }
                 CoolingProgramSaveResult.Unsupported -> _uiState.updateSaveState(
                     DeviceCoolingProgramSaveState.UNSUPPORTED
                 )
@@ -174,7 +186,9 @@ class DeviceCoolingProgramSettingsViewModel(
         )
         loadJob = viewModelScope.launch {
             when (val result = operations.readProgram(deviceUid)) {
-                is CoolingProgramReadResult.Loaded -> _uiState.applyLoadedSnapshot(result)
+                is CoolingProgramReadResult.Loaded -> {
+                    _uiState.applyLoadedSnapshot(result, slotUiIdentity)
+                }
                 CoolingProgramReadResult.Unsupported -> {
                     _uiState.value = DeviceCoolingProgramSettingsUiState(
                         loadState = DeviceCoolingProgramLoadState.UNSUPPORTED
@@ -198,13 +212,16 @@ class DeviceCoolingProgramSettingsViewModel(
 data class DeviceCoolingProgramSettingsUiState(
     val loadState: DeviceCoolingProgramLoadState = DeviceCoolingProgramLoadState.IDLE,
     val policy: CoolingProgramPolicy? = null,
-    val slots: List<DeviceCoolingProgramSlot> = emptyList(),
+    val slotItems: List<DeviceCoolingProgramSlotUiItem> = emptyList(),
     val baselineSlots: List<DeviceCoolingProgramSlot> = emptyList(),
     val selectedSlotIndex: Int? = null,
     val saveState: DeviceCoolingProgramSaveState = DeviceCoolingProgramSaveState.IDLE
 ) {
+    val slots: List<DeviceCoolingProgramSlot>
+        get() = slotItems.map(DeviceCoolingProgramSlotUiItem::slot)
+
     val selectedSlot: DeviceCoolingProgramSlot?
-        get() = selectedSlotIndex?.let(slots::getOrNull)
+        get() = selectedSlotIndex?.let(slotItems::getOrNull)?.slot
 
     val hasChanges: Boolean
         get() = loadState == DeviceCoolingProgramLoadState.CONTENT && slots != baselineSlots
@@ -212,7 +229,7 @@ data class DeviceCoolingProgramSettingsUiState(
     val canAddSlot: Boolean
         get() = loadState == DeviceCoolingProgramLoadState.CONTENT &&
             saveState != DeviceCoolingProgramSaveState.SAVING &&
-            policy?.let { devicePolicy -> slots.size < devicePolicy.maximumSlotCount } == true
+            policy?.let { devicePolicy -> slotItems.size < devicePolicy.maximumSlotCount } == true
 
     val canSave: Boolean
         get() = hasChanges && saveState != DeviceCoolingProgramSaveState.SAVING
@@ -253,11 +270,18 @@ private val DeviceCoolingProgramSettingsUiState.isEditable: Boolean
 
 private fun MutableStateFlow<DeviceCoolingProgramSettingsUiState>.applyEdit(
     state: DeviceCoolingProgramSettingsUiState,
-    result: CoolingProgramEditResult
+    result: CoolingProgramEditResult,
+    slotUiIdentity: CoolingProgramSlotUiIdentity,
+    selectedUiKey: Long? = null
 ): Boolean = when (result) {
     is CoolingProgramEditResult.Updated -> {
         value = state.copy(
-            slots = result.slots,
+            slotItems = slotUiIdentity.reconcile(
+                previousItems = state.slotItems,
+                updatedSlots = result.slots,
+                selectedSlotIndex = result.selectedSlotIndex,
+                selectedUiKey = selectedUiKey
+            ),
             selectedSlotIndex = result.selectedSlotIndex,
             saveState = DeviceCoolingProgramSaveState.IDLE
         )
@@ -267,7 +291,8 @@ private fun MutableStateFlow<DeviceCoolingProgramSettingsUiState>.applyEdit(
 }
 
 private fun MutableStateFlow<DeviceCoolingProgramSettingsUiState>.applyLoadedSnapshot(
-    result: CoolingProgramReadResult.Loaded
+    result: CoolingProgramReadResult.Loaded,
+    slotUiIdentity: CoolingProgramSlotUiIdentity
 ) {
     val snapshot = result.snapshot
     value = if (
@@ -278,7 +303,7 @@ private fun MutableStateFlow<DeviceCoolingProgramSettingsUiState>.applyLoadedSna
         DeviceCoolingProgramSettingsUiState(
             loadState = DeviceCoolingProgramLoadState.CONTENT,
             policy = snapshot.policy,
-            slots = ordered,
+            slotItems = slotUiIdentity.createItems(ordered),
             baselineSlots = ordered
         )
     } else {
@@ -289,7 +314,8 @@ private fun MutableStateFlow<DeviceCoolingProgramSettingsUiState>.applyLoadedSna
 }
 
 private fun MutableStateFlow<DeviceCoolingProgramSettingsUiState>.applySavedSnapshot(
-    result: CoolingProgramSaveResult.Saved
+    result: CoolingProgramSaveResult.Saved,
+    slotUiIdentity: CoolingProgramSlotUiIdentity
 ) {
     val snapshot = result.snapshot
     val current = value
@@ -301,12 +327,24 @@ private fun MutableStateFlow<DeviceCoolingProgramSettingsUiState>.applySavedSnap
         return
     }
 
+    val selectedUiKey = current.selectedSlotIndex
+        ?.let(current.slotItems::getOrNull)
+        ?.uiKey
     val savedSlots = snapshot.slots.sortedBy(CoolingProgramSlot::startMinutes)
+    val savedItems = slotUiIdentity.reconcile(
+        previousItems = current.slotItems,
+        updatedSlots = savedSlots,
+        selectedSlotIndex = null,
+        selectedUiKey = null
+    )
+    val selectedSlotIndex = selectedUiKey?.let { key ->
+        savedItems.indexOfFirst { item -> item.uiKey == key }.takeIf { index -> index >= 0 }
+    }
     value = current.copy(
         policy = snapshot.policy,
-        slots = savedSlots,
+        slotItems = savedItems,
         baselineSlots = savedSlots,
-        selectedSlotIndex = current.selectedSlotIndex?.takeIf(savedSlots.indices::contains),
+        selectedSlotIndex = selectedSlotIndex,
         saveState = DeviceCoolingProgramSaveState.SAVED
     )
 }
