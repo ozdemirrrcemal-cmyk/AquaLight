@@ -6,7 +6,7 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:background="@color/background_color"
-    tools:context=".ui.tabs.devices.detail.cooling.DeviceCoolingRootFragment">
+    tools:context=".ui.tabs.devices.detail.cooling.root.DeviceCoolingRootFragment">
 
     <include
         android:id="@+id/appHeader"

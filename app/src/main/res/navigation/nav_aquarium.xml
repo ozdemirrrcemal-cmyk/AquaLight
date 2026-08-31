@@ -341,7 +341,7 @@
 
     <fragment
         android:id="@+id/deviceCoolingRootFragment"
-        android:name="com.aqua.aqualight.ui.tabs.devices.detail.cooling.DeviceCoolingRootFragment"
+        android:name="com.aqua.aqualight.ui.tabs.devices.detail.cooling.root.DeviceCoolingRootFragment"
         android:label="@string/device_family_cooling"
         tools:layout="@layout/fragment_device_cooling_root">
         <argument
