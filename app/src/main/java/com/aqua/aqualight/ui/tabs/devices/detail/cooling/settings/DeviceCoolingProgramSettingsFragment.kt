@@ -10,6 +10,7 @@ import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.repeatOnLifecycle
 import androidx.navigation.fragment.navArgs
 import com.aqua.aqualight.R
+import com.aqua.aqualight.base.BaseActivity
 import com.aqua.aqualight.ui.common.bottomsheet.AquaTimePickerBottomSheet
 import com.aqua.aqualight.ui.common.bottomsheet.IntegerStepperBottomSheet
 import com.aqua.aqualight.ui.common.header.AquaHeaderPrimaryAction
@@ -71,8 +72,16 @@ class DeviceCoolingProgramSettingsFragment : DeviceCoolingModeSettingsFragment(
     }
 
     private fun registerPickerResults() {
-        registerTimeResult(REQUEST_START_TIME, viewModel::updateStartTime)
-        registerTimeResult(REQUEST_END_TIME, viewModel::updateEndTime)
+        registerTimeResult(REQUEST_START_TIME) { slotId, minutesOfDay ->
+            if (!viewModel.updateStartTime(slotId, minutesOfDay)) {
+                showScheduleOverlapWarning()
+            }
+        }
+        registerTimeResult(REQUEST_END_TIME) { slotId, minutesOfDay ->
+            if (!viewModel.updateEndTime(slotId, minutesOfDay)) {
+                showScheduleOverlapWarning()
+            }
+        }
         registerStepperResult(REQUEST_START_TEMPERATURE) { slotId, value ->
             viewModel.updateStartTemperature(slotId, value * TEMPERATURE_DISPLAY_SCALE)
         }
@@ -117,6 +126,13 @@ class DeviceCoolingProgramSettingsFragment : DeviceCoolingModeSettingsFragment(
             if (slotId.isBlank()) return@setFragmentResultListener
             onSaved(slotId, result.getInt(IntegerStepperBottomSheet.RESULT_VALUE))
         }
+    }
+
+    private fun showScheduleOverlapWarning() {
+        (activity as? BaseActivity)?.showSnackBar(
+            getString(R.string.device_cooling_program_schedule_overlap),
+            BaseActivity.SnackType.WARNING
+        )
     }
 
     private fun showStartTimeSheet(slotId: String) {
