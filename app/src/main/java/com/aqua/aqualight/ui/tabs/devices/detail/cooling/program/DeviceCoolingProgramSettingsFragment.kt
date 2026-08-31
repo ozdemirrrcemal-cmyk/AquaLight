@@ -74,7 +74,7 @@ class DeviceCoolingProgramSettingsFragment : DeviceCoolingModeSettingsFragment(
         viewLifecycleOwner.lifecycleScope.launch {
             viewLifecycleOwner.repeatOnLifecycle(Lifecycle.State.STARTED) {
                 viewModel.uiState
-                    .map(DeviceCoolingProgramSettingsUiState::canSave)
+                    .map { state -> state.canSave }
                     .distinctUntilChanged()
                     .collect { refreshModeSettingsHeader() }
             }
@@ -85,7 +85,7 @@ class DeviceCoolingProgramSettingsFragment : DeviceCoolingModeSettingsFragment(
         viewLifecycleOwner.lifecycleScope.launch {
             viewLifecycleOwner.repeatOnLifecycle(Lifecycle.State.STARTED) {
                 viewModel.uiState
-                    .map(DeviceCoolingProgramSettingsUiState::saveState)
+                    .map { state -> state.saveState }
                     .distinctUntilChanged()
                     .collect { saveState ->
                         if (saveState == DeviceCoolingProgramSaveState.ERROR) {
