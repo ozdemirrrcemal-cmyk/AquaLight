@@ -51,6 +51,13 @@ internal fun DeviceCoolingDashboardScreen(
         ),
         verticalArrangement = Arrangement.spacedBy(AquaCoolingDashboardGeometry.cardGap)
     ) {
+        item(key = "fan-visual") {
+            CoolingFanRealtimeCard(
+                fanPercent = state.fanPercentNow,
+                colors = colors,
+                modifier = Modifier.fillMaxWidth()
+            )
+        }
         item(key = "temperature") {
             CoolingTemperatureCard(
                 state = state,
