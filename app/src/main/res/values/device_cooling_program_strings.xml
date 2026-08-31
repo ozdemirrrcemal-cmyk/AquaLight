@@ -22,6 +22,7 @@
     <string name="device_cooling_program_time_range_format">%1$s – %2$s</string>
     <string name="device_cooling_program_save">Save</string>
     <string name="device_cooling_program_saved">Program Saved</string>
+    <string name="device_cooling_program_schedule_overlap">The selected time range overlaps with another program.</string>
 
     <string name="device_cooling_program_start_time_sheet_title">Start Time</string>
     <string name="device_cooling_program_start_time_sheet_message">Choose when this cooling period starts.</string>
