@@ -62,6 +62,8 @@ import java.time.LocalTime
 private data class ProgramSlotCardModel(
     val slot: DeviceCoolingProgramSlot,
     val selected: Boolean,
+    val minimumFanPercent: Int,
+    val maximumFanPercent: Int,
     val fanLimitStepPercent: Int
 )
 
@@ -128,6 +130,8 @@ internal fun DeviceCoolingProgramSettingsScreen(
                     model = ProgramSlotCardModel(
                         slot = slot,
                         selected = slotIndex == state.selectedSlotIndex,
+                        minimumFanPercent = policy.minimumFanPercent,
+                        maximumFanPercent = policy.maximumFanPercent,
                         fanLimitStepPercent = policy.fanPercentStep
                     ),
                     context = context,
@@ -399,6 +403,8 @@ private fun ProgramSlotCard(
                 )
                 ProgramFanLimitEditor(
                     value = slot.fanLimitPercent,
+                    minimumPercent = model.minimumFanPercent,
+                    maximumPercent = model.maximumFanPercent,
                     stepPercent = model.fanLimitStepPercent,
                     colors = colors,
                     typography = typography,
@@ -487,6 +493,8 @@ private fun ProgramEditorHeader(
 @Composable
 private fun ProgramFanLimitEditor(
     value: Int,
+    minimumPercent: Int,
+    maximumPercent: Int,
     stepPercent: Int,
     colors: AquaDeviceCardColors,
     typography: AquaDeviceCardTypography,
@@ -537,7 +545,9 @@ private fun ProgramFanLimitEditor(
             state = AquaCoolingFanPercentSliderState(
                 percent = value,
                 enabled = true,
-                stepPercent = stepPercent
+                stepPercent = stepPercent,
+                minimumPercent = minimumPercent,
+                maximumPercent = maximumPercent
             ),
             colors = colors,
             onValueChanged = onValueChange
