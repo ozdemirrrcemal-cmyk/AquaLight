@@ -1,6 +1,8 @@
 package com.aqua.aqualight.ui.tabs.devices.detail.cooling.settings
 
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
+import org.junit.Assert.assertTrue
 import org.junit.Test
 
 class DeviceCoolingProgramSettingsViewModelTest {
@@ -9,8 +11,8 @@ class DeviceCoolingProgramSettingsViewModelTest {
     fun rejectsPartiallyOverlappingProgramRange() {
         val viewModel = DeviceCoolingProgramSettingsViewModel()
 
-        viewModel.updateEndTime(INTENSIVE_SLOT_ID, hour(16))
-        viewModel.updateStartTime(INTENSIVE_SLOT_ID, hour(12))
+        assertTrue(viewModel.updateEndTime(INTENSIVE_SLOT_ID, hour(16)))
+        assertFalse(viewModel.updateStartTime(INTENSIVE_SLOT_ID, hour(12)))
 
         val intensive = viewModel.slot(INTENSIVE_SLOT_ID)
         assertEquals(hour(14), intensive.startMinutes)
@@ -22,8 +24,8 @@ class DeviceCoolingProgramSettingsViewModelTest {
         val viewModel = DeviceCoolingProgramSettingsViewModel()
         val boundary = hour(14) + 30
 
-        viewModel.updateStartTime(INTENSIVE_SLOT_ID, boundary)
-        viewModel.updateEndTime(QUIET_SLOT_ID, boundary)
+        assertTrue(viewModel.updateStartTime(INTENSIVE_SLOT_ID, boundary))
+        assertTrue(viewModel.updateEndTime(QUIET_SLOT_ID, boundary))
 
         assertEquals(boundary, viewModel.slot(QUIET_SLOT_ID).endMinutes)
         assertEquals(boundary, viewModel.slot(INTENSIVE_SLOT_ID).startMinutes)
@@ -34,14 +36,14 @@ class DeviceCoolingProgramSettingsViewModelTest {
         val viewModel = DeviceCoolingProgramSettingsViewModel()
 
         viewModel.addTimeSlot()
-        viewModel.updateStartTime(CUSTOM_SLOT_ID, hour(23) + 30)
-        viewModel.updateEndTime(CUSTOM_SLOT_ID, hour(8))
+        assertTrue(viewModel.updateStartTime(CUSTOM_SLOT_ID, hour(23) + 30))
+        assertTrue(viewModel.updateEndTime(CUSTOM_SLOT_ID, hour(8)))
 
         val adjacentOvernight = viewModel.slot(CUSTOM_SLOT_ID)
         assertEquals(hour(23) + 30, adjacentOvernight.startMinutes)
         assertEquals(hour(8), adjacentOvernight.endMinutes)
 
-        viewModel.updateEndTime(CUSTOM_SLOT_ID, hour(9))
+        assertFalse(viewModel.updateEndTime(CUSTOM_SLOT_ID, hour(9)))
 
         assertEquals(hour(8), viewModel.slot(CUSTOM_SLOT_ID).endMinutes)
     }
