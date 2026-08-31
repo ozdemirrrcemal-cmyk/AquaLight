@@ -33,7 +33,7 @@ internal class DefaultDeviceCoolingTemperatureHistoryOperations(
         ?.takeIf { uid -> devicesRepository.currentDevice(uid) != null }
         ?.let { uid ->
             devicesRepository.runtimeModules()?.let { modules ->
-                CoolingHistoryRuntime(uid = uid, modules = modules)
+                CoolingHistoryRuntime(deviceUid = uid, modules = modules)
             }
         }
 
