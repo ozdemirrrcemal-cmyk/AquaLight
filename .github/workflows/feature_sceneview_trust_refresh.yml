@@ -1,0 +1,120 @@
+name: Feature SceneView Trust Refresh
+
+on:
+  push:
+    branches:
+      - feature/cooling-fan-realtime-3d
+
+permissions:
+  contents: write
+
+env:
+  GRADLE_OPTS: >-
+    -Dorg.gradle.jvmargs="-Xmx4g -XX:+UseParallelGC -Dfile.encoding=UTF-8"
+    -Dorg.gradle.daemon=false
+
+jobs:
+  refresh:
+    if: contains(github.event.head_commit.message, '[sceneview-trust-refresh]')
+    runs-on: ubuntu-latest
+    timeout-minutes: 120
+
+    steps:
+      - name: Checkout feature branch
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          ref: feature/cooling-fan-realtime-3d
+
+      - name: Provision Firebase fixtures
+        uses: ./.github/actions/provision-dependabot-firebase
+
+      - name: Validate Gradle Wrapper
+        uses: gradle/actions/wrapper-validation@d9c87d481d55275bb5441eef3fe0e46805f9ef70 # v3.5.0
+
+      - name: Install JDK 17
+        uses: actions/setup-java@03ad4de0992f5dab5e18fcb136590ce7c4a0ac95 # v5.6.0
+        with:
+          distribution: temurin
+          java-version: "17"
+          cache: gradle
+
+      - name: Set up Android SDK
+        uses: android-actions/setup-android@40fd30fb8d7440372e1316f5d1809ec01dcd3699 # v4.0.1
+        with:
+          cmdline-tools-version: "15859902"
+
+      - name: Install Android SDK packages
+        shell: bash
+        run: |
+          set +o pipefail
+          yes | sdkmanager --licenses >/dev/null
+          set -o pipefail
+          sdkmanager "platform-tools" "platforms;android-36"
+          sdkmanager "build-tools;36.0.0" || sdkmanager "build-tools;36.0.1"
+          chmod +x ./gradlew
+
+      - name: Generate CI-only signing keys
+        shell: bash
+        run: |
+          set -Eeuo pipefail
+          mkdir -p ~/.android
+          if [[ ! -s ~/.android/debug.keystore ]]; then
+            keytool -genkeypair -noprompt \
+              -keystore ~/.android/debug.keystore \
+              -storepass android \
+              -alias AndroidDebugKey \
+              -keypass android \
+              -keyalg RSA \
+              -keysize 2048 \
+              -validity 10000 \
+              -storetype JKS \
+              -dname "CN=Android,O=AquaLight,C=TR"
+          fi
+          keytool -genkeypair -noprompt \
+            -keystore release-key.jks \
+            -storepass aqualight-ci \
+            -alias aqualight-ci \
+            -keypass aqualight-ci \
+            -keyalg RSA \
+            -keysize 2048 \
+            -validity 1 \
+            -storetype JKS \
+            -dname "CN=AquaLight Feature CI,O=AquaLight,C=TR"
+
+      - name: Regenerate dependency trust state
+        env:
+          CI: "true"
+          RELEASE_KEYSTORE_PASSWORD: aqualight-ci
+          RELEASE_KEY_ALIAS: aqualight-ci
+          RELEASE_KEY_PASSWORD: aqualight-ci
+        shell: bash
+        run: |
+          set -Eeuo pipefail
+          common=(--write-locks --write-verification-metadata sha256 --no-daemon --stacktrace)
+          ./gradlew :app:dependencies "${common[@]}"
+          ./gradlew :app:assembleDebug :app:assembleReleaseSmoke "${common[@]}"
+          ./gradlew :app:createDebugUnitTestCoverageReport "${common[@]}"
+          ./gradlew :app:lintDebug "${common[@]}"
+          python3 tools/verify_dependency_integrity.py \
+            --lockfile app/gradle.lockfile \
+            --metadata gradle/verification-metadata.xml \
+            --summary build/reports/sceneview-trust-refresh.json
+
+      - name: Commit refreshed lock and verification metadata
+        shell: bash
+        run: |
+          set -Eeuo pipefail
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add app/gradle.lockfile gradle/verification-metadata.xml
+          if git diff --cached --quiet; then
+            echo "Gradle trust state is already current."
+            exit 0
+          fi
+          git commit -m "chore(deps): refresh SceneView trust state"
+          git push origin HEAD:feature/cooling-fan-realtime-3d
+
+      - name: Remove CI-only release keystore
+        if: always()
+        shell: bash
+        run: rm -f release-key.jks
