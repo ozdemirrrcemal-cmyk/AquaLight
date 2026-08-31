@@ -9,15 +9,14 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 
 /**
- * UI draft state for the Cooling multi-period program editor.
+ * UI draft state for user-defined Cooling working periods.
  *
- * The schedule contract is intentionally isolated from firmware transport for this design pass.
- * Every control is live and testable now; a firmware-backed operations boundary can replace the
- * in-memory baseline without changing the screen or the shared bottom sheets.
+ * A program period owns only its start/end time and fan speed limit. Preset types and temperature
+ * thresholds are intentionally not part of this presentation contract or firmware/user settings.
  */
 class DeviceCoolingProgramSettingsViewModel : ViewModel() {
 
-    private val initialSlots = defaultProgramSlots()
+    private val initialSlots = emptyList<DeviceCoolingProgramSlot>()
     private val _uiState = MutableStateFlow(
         DeviceCoolingProgramSettingsUiState(
             slots = initialSlots,
@@ -26,7 +25,7 @@ class DeviceCoolingProgramSettingsViewModel : ViewModel() {
     )
     val uiState: StateFlow<DeviceCoolingProgramSettingsUiState> = _uiState.asStateFlow()
 
-    private var nextCustomSlotNumber = 1
+    private var nextSlotNumber = 1
 
     fun selectSlot(slotId: String) {
         _uiState.update { state ->
@@ -52,34 +51,9 @@ class DeviceCoolingProgramSettingsViewModel : ViewModel() {
             if (normalized == slot.startMinutes) slot else slot.copy(endMinutes = normalized)
         }
 
-    fun updateStartTemperature(slotId: String, temperatureC: Double) {
-        updateSlot(slotId) { slot ->
-            val value = temperatureC.coerceIn(
-                DeviceCoolingProgramPolicy.minimumTemperatureC,
-                slot.maximumSpeedTemperatureC - DeviceCoolingProgramPolicy.minimumTemperatureGapC
-            )
-            slot.copy(startTemperatureC = value)
-        }
-    }
-
-    fun updateMaximumSpeedTemperature(slotId: String, temperatureC: Double) {
-        updateSlot(slotId) { slot ->
-            val value = temperatureC.coerceIn(
-                slot.startTemperatureC + DeviceCoolingProgramPolicy.minimumTemperatureGapC,
-                DeviceCoolingProgramPolicy.maximumTemperatureC
-            )
-            slot.copy(maximumSpeedTemperatureC = value)
-        }
-    }
-
     fun updateFanLimit(slotId: String, percent: Int) {
         updateSlot(slotId) { slot ->
-            slot.copy(
-                fanLimitPercent = percent.coerceIn(
-                    DeviceCoolingProgramPolicy.minimumFanLimitPercent,
-                    DeviceCoolingProgramPolicy.maximumFanLimitPercent
-                )
-            )
+            slot.copy(fanLimitPercent = snapFanLimit(percent))
         }
     }
 
@@ -88,13 +62,10 @@ class DeviceCoolingProgramSettingsViewModel : ViewModel() {
             if (!state.canAddSlot) return@update state
             val window = findNextFreeWindow(state.slots) ?: return@update state
             val newSlot = DeviceCoolingProgramSlot(
-                id = "custom-${nextCustomSlotNumber++}",
-                label = DeviceCoolingProgramSlotLabel.CUSTOM,
+                id = "period-${nextSlotNumber++}",
                 startMinutes = window.first,
                 endMinutes = window.second,
-                startTemperatureC = 25.0,
-                maximumSpeedTemperatureC = 27.0,
-                fanLimitPercent = 60
+                fanLimitPercent = DeviceCoolingProgramPolicy.maximumFanLimitPercent
             )
             state.copy(
                 slots = (state.slots + newSlot).sortedBy(DeviceCoolingProgramSlot::startMinutes),
@@ -107,13 +78,12 @@ class DeviceCoolingProgramSettingsViewModel : ViewModel() {
     fun deleteTimeSlot(slotId: String): Boolean {
         var deleted = false
         _uiState.update { state ->
-            val slot = state.slots.firstOrNull { candidate -> candidate.id == slotId }
-            if (slot?.label != DeviceCoolingProgramSlotLabel.CUSTOM) {
+            if (state.slots.none { slot -> slot.id == slotId }) {
                 state
             } else {
                 deleted = true
                 state.copy(
-                    slots = state.slots.filterNot { candidate -> candidate.id == slotId },
+                    slots = state.slots.filterNot { slot -> slot.id == slotId },
                     selectedSlotId = state.selectedSlotId.takeUnless { selected -> selected == slotId },
                     saveState = DeviceCoolingProgramSaveState.IDLE
                 )
@@ -188,11 +158,8 @@ data class DeviceCoolingProgramSettingsUiState(
 
 data class DeviceCoolingProgramSlot(
     val id: String,
-    val label: DeviceCoolingProgramSlotLabel,
     val startMinutes: Int,
     val endMinutes: Int,
-    val startTemperatureC: Double,
-    val maximumSpeedTemperatureC: Double,
     val fanLimitPercent: Int
 ) {
     init {
@@ -200,9 +167,6 @@ data class DeviceCoolingProgramSlot(
         require(startMinutes in 0 until MINUTES_PER_DAY)
         require(endMinutes in 0 until MINUTES_PER_DAY)
         require(startMinutes != endMinutes)
-        require(startTemperatureC.isFinite())
-        require(maximumSpeedTemperatureC.isFinite())
-        require(maximumSpeedTemperatureC > startTemperatureC)
         require(fanLimitPercent in 0..100)
     }
 
@@ -213,58 +177,29 @@ data class DeviceCoolingProgramSlot(
     }
 }
 
-enum class DeviceCoolingProgramSlotLabel {
-    QUIET,
-    INTENSIVE,
-    NIGHT,
-    CUSTOM
-}
-
 enum class DeviceCoolingProgramSaveState {
     IDLE,
     SAVED
 }
 
 object DeviceCoolingProgramPolicy {
-    const val minimumTemperatureC = 0.0
-    const val maximumTemperatureC = 90.0
-    const val temperatureStepC = 0.5
-    const val minimumTemperatureGapC = 0.5
     const val minimumFanLimitPercent = 0
     const val maximumFanLimitPercent = 100
     const val fanLimitStepPercent = 5
     const val maximumSlotCount = 6
 }
 
-private fun defaultProgramSlots(): List<DeviceCoolingProgramSlot> = listOf(
-    DeviceCoolingProgramSlot(
-        id = "quiet",
-        label = DeviceCoolingProgramSlotLabel.QUIET,
-        startMinutes = 8 * MINUTES_PER_HOUR,
-        endMinutes = 14 * MINUTES_PER_HOUR,
-        startTemperatureC = 25.0,
-        maximumSpeedTemperatureC = 27.0,
-        fanLimitPercent = 60
-    ),
-    DeviceCoolingProgramSlot(
-        id = "intensive",
-        label = DeviceCoolingProgramSlotLabel.INTENSIVE,
-        startMinutes = 14 * MINUTES_PER_HOUR,
-        endMinutes = 20 * MINUTES_PER_HOUR,
-        startTemperatureC = 24.5,
-        maximumSpeedTemperatureC = 26.5,
-        fanLimitPercent = 100
-    ),
-    DeviceCoolingProgramSlot(
-        id = "night",
-        label = DeviceCoolingProgramSlotLabel.NIGHT,
-        startMinutes = 20 * MINUTES_PER_HOUR,
-        endMinutes = 23 * MINUTES_PER_HOUR + 30,
-        startTemperatureC = 25.5,
-        maximumSpeedTemperatureC = 27.5,
-        fanLimitPercent = 40
+private fun snapFanLimit(percent: Int): Int {
+    val bounded = percent.coerceIn(
+        DeviceCoolingProgramPolicy.minimumFanLimitPercent,
+        DeviceCoolingProgramPolicy.maximumFanLimitPercent
     )
-)
+    val step = DeviceCoolingProgramPolicy.fanLimitStepPercent
+    return (((bounded + step / 2) / step) * step).coerceIn(
+        DeviceCoolingProgramPolicy.minimumFanLimitPercent,
+        DeviceCoolingProgramPolicy.maximumFanLimitPercent
+    )
+}
 
 private fun List<DeviceCoolingProgramSlot>.hasScheduleOverlapFor(slotId: String): Boolean {
     val candidate = firstOrNull { slot -> slot.id == slotId } ?: return false
