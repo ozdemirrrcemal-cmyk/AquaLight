@@ -52,21 +52,39 @@ import com.aqua.aqualight.ui.common.cooling.AquaCoolingDashboardCardSurface
 import com.aqua.aqualight.ui.common.cooling.AquaCoolingDashboardGeometry
 import com.aqua.aqualight.ui.common.cooling.AquaCoolingDashboardPalette
 import com.aqua.aqualight.ui.common.cooling.AquaCoolingFanPercentSlider
+import com.aqua.aqualight.ui.common.cooling.AquaCoolingFanPercentSliderState
 import com.aqua.aqualight.ui.common.cooling.aquaCoolingDashboardColors
 import com.aqua.aqualight.ui.common.cooling.aquaCoolingDashboardTypography
 import com.aqua.aqualight.ui.common.devicecard.AquaDeviceCardColors
 import com.aqua.aqualight.ui.common.devicecard.AquaDeviceCardTypography
 import java.time.LocalTime
 
+internal data class DeviceCoolingProgramSettingsActions(
+    val onSlotClick: (String) -> Unit,
+    val onAddSlot: () -> Unit,
+    val onDeleteSlot: (String) -> Unit,
+    val onStartTimeClick: (String) -> Unit,
+    val onEndTimeClick: (String) -> Unit,
+    val onFanLimitChange: (String, Int) -> Unit
+)
+
+private data class ProgramSlotCardModel(
+    val slot: DeviceCoolingProgramSlot,
+    val selected: Boolean
+)
+
+private data class ProgramSlotCardActions(
+    val onHeaderClick: () -> Unit,
+    val onDeleteClick: () -> Unit,
+    val onStartTimeClick: () -> Unit,
+    val onEndTimeClick: () -> Unit,
+    val onFanLimitChange: (Int) -> Unit
+)
+
 @Composable
 internal fun DeviceCoolingProgramSettingsScreen(
     state: DeviceCoolingProgramSettingsUiState,
-    onSlotClick: (String) -> Unit,
-    onAddSlot: () -> Unit,
-    onDeleteSlot: (String) -> Unit,
-    onStartTimeClick: (String) -> Unit,
-    onEndTimeClick: (String) -> Unit,
-    onFanLimitChange: (String, Int) -> Unit,
+    actions: DeviceCoolingProgramSettingsActions,
     modifier: Modifier = Modifier
 ) {
     val colors = aquaCoolingDashboardColors()
@@ -106,22 +124,28 @@ internal fun DeviceCoolingProgramSettingsScreen(
                 canAddSlot = state.canAddSlot,
                 colors = colors,
                 typography = typography,
-                onAddSlot = onAddSlot
+                onAddSlot = actions.onAddSlot
             )
         }
         state.slots.forEach { slot ->
             item(key = "slot-${slot.id}") {
                 ProgramSlotCard(
-                    slot = slot,
-                    selected = slot.id == state.selectedSlotId,
+                    model = ProgramSlotCardModel(
+                        slot = slot,
+                        selected = slot.id == state.selectedSlotId
+                    ),
                     context = context,
                     colors = colors,
                     typography = typography,
-                    onHeaderClick = { onSlotClick(slot.id) },
-                    onDeleteClick = { onDeleteSlot(slot.id) },
-                    onStartTimeClick = { onStartTimeClick(slot.id) },
-                    onEndTimeClick = { onEndTimeClick(slot.id) },
-                    onFanLimitChange = { percent -> onFanLimitChange(slot.id, percent) }
+                    actions = ProgramSlotCardActions(
+                        onHeaderClick = { actions.onSlotClick(slot.id) },
+                        onDeleteClick = { actions.onDeleteSlot(slot.id) },
+                        onStartTimeClick = { actions.onStartTimeClick(slot.id) },
+                        onEndTimeClick = { actions.onEndTimeClick(slot.id) },
+                        onFanLimitChange = { percent ->
+                            actions.onFanLimitChange(slot.id, percent)
+                        }
+                    )
                 )
             }
         }
@@ -301,17 +325,14 @@ private fun ProgramSlotsHeader(
 
 @Composable
 private fun ProgramSlotCard(
-    slot: DeviceCoolingProgramSlot,
-    selected: Boolean,
+    model: ProgramSlotCardModel,
     context: Context,
     colors: AquaDeviceCardColors,
     typography: AquaDeviceCardTypography,
-    onHeaderClick: () -> Unit,
-    onDeleteClick: () -> Unit,
-    onStartTimeClick: () -> Unit,
-    onEndTimeClick: () -> Unit,
-    onFanLimitChange: (Int) -> Unit
+    actions: ProgramSlotCardActions
 ) {
+    val slot = model.slot
+    val selected = model.selected
     val shape = RoundedCornerShape(AquaCoolingDashboardGeometry.cardCornerRadius)
     val selectedModifier = if (selected) {
         Modifier.border(
@@ -336,7 +357,7 @@ private fun ProgramSlotCard(
                 modifier = Modifier
                     .fillMaxWidth()
                     .clip(AquaCoolingProgramGeometry.slotHeaderShape)
-                    .clickable(role = Role.Button, onClick = onHeaderClick)
+                    .clickable(role = Role.Button, onClick = actions.onHeaderClick)
                     .padding(vertical = AquaCoolingProgramGeometry.slotHeaderVerticalPadding),
                 verticalAlignment = Alignment.CenterVertically
             ) {
@@ -364,27 +385,27 @@ private fun ProgramSlotCard(
                 ProgramEditorHeader(
                     colors = colors,
                     typography = typography,
-                    onDeleteClick = onDeleteClick
+                    onDeleteClick = actions.onDeleteClick
                 )
                 ProgramEditorRow(
                     label = stringResource(R.string.device_cooling_program_start_time),
                     value = formatProgramTime(context, slot.startMinutes),
                     colors = colors,
                     typography = typography,
-                    onClick = onStartTimeClick
+                    onClick = actions.onStartTimeClick
                 )
                 ProgramEditorRow(
                     label = stringResource(R.string.device_cooling_program_end_time),
                     value = formatProgramTime(context, slot.endMinutes),
                     colors = colors,
                     typography = typography,
-                    onClick = onEndTimeClick
+                    onClick = actions.onEndTimeClick
                 )
                 ProgramFanLimitEditor(
                     value = slot.fanLimitPercent,
                     colors = colors,
                     typography = typography,
-                    onValueChange = onFanLimitChange
+                    onValueChange = actions.onFanLimitChange
                 )
             }
         }
@@ -515,10 +536,12 @@ private fun ProgramFanLimitEditor(
             )
         }
         AquaCoolingFanPercentSlider(
-            percent = value,
-            enabled = true,
+            state = AquaCoolingFanPercentSliderState(
+                percent = value,
+                enabled = true,
+                stepPercent = DeviceCoolingProgramPolicy.fanLimitStepPercent
+            ),
             colors = colors,
-            stepPercent = DeviceCoolingProgramPolicy.fanLimitStepPercent,
             onValueChanged = onValueChange
         )
     }

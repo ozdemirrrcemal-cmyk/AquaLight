@@ -46,7 +46,8 @@ class DeviceRootViewModelBoundaryTest {
         assertEquals(AquaUiText.Dynamic("AquaLight Dosing"), state.title)
         assertEquals(AquaUiText.Resource(R.string.device_online), state.connectionStatus)
         assertEquals(AquaUiText.Dynamic("4"), state.primaryCountText)
-        assertTrue((state.featuresText as AquaUiText.Joined).parts.contains(AquaUiText.Resource(R.string.device_feature_dosing)))
+        val featureParts = (state.featuresText as AquaUiText.Joined).parts
+        assertTrue(featureParts.contains(AquaUiText.Resource(R.string.device_feature_dosing)))
         assertTrue(state.primarySectionPlaceholder is AquaUiText.Joined)
         assertEquals("device-1", operations.lastObservedUid)
     }
@@ -84,14 +85,20 @@ class DeviceRootViewModelBoundaryTest {
 
     @Test
     fun `cooling root uses shared fail closed connection gate`() {
-        val operations = FakeDeviceRootOperations(DeviceRootSnapshot(
-            deviceUid = "device-1",
-            title = "Cooling Pro",
-            availability = OwnerDeviceAvailability.REACHABLE,
-            family = OwnerDeviceFamily.COOLING,
-            catalogState = DeviceRootCatalogState.VALID,
-            capabilities = setOf(DeviceRootCapability.COOLING, DeviceRootCapability.FAN, DeviceRootCapability.TEMPERATURE)
-        ))
+        val operations = FakeDeviceRootOperations(
+            DeviceRootSnapshot(
+                deviceUid = "device-1",
+                title = "Cooling Pro",
+                availability = OwnerDeviceAvailability.REACHABLE,
+                family = OwnerDeviceFamily.COOLING,
+                catalogState = DeviceRootCatalogState.VALID,
+                capabilities = setOf(
+                    DeviceRootCapability.COOLING,
+                    DeviceRootCapability.FAN,
+                    DeviceRootCapability.TEMPERATURE
+                )
+            )
+        )
         val viewModel = DeviceCoolingRootViewModel(operations)
         viewModel.bind("device-1")
         assertEquals(DeviceConnectionVisualState.ONLINE, viewModel.uiState.value.connectionVisualState)
@@ -103,10 +110,17 @@ class DeviceRootViewModelBoundaryTest {
 
     private fun rootSnapshot(
         capabilities: Set<DeviceRootCapability> = setOf(DeviceRootCapability.DOSING),
-        menuFeatures: Set<DeviceRootMenuFeature> = setOf(DeviceRootMenuFeature.DOSING_CHANNELS, DeviceRootMenuFeature.DOSING_SCHEDULES),
+        menuFeatures: Set<DeviceRootMenuFeature> = setOf(
+            DeviceRootMenuFeature.DOSING_CHANNELS,
+            DeviceRootMenuFeature.DOSING_SCHEDULES
+        ),
         title: String = "AquaLight Dosing"
     ): DeviceRootSnapshot {
-        val family = if (DeviceRootCapability.DOSING in capabilities) OwnerDeviceFamily.DOSING else OwnerDeviceFamily.LIGHT
+        val family = if (DeviceRootCapability.DOSING in capabilities) {
+            OwnerDeviceFamily.DOSING
+        } else {
+            OwnerDeviceFamily.LIGHT
+        }
         val routes = menuFeatures.mapNotNullTo(linkedSetOf()) { DeviceRootRouteResolver.resolve(family, it) }
         return DeviceRootSnapshot(
             deviceUid = "device-1",

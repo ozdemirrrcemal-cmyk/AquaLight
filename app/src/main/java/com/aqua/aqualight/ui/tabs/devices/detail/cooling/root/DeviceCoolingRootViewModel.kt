@@ -173,8 +173,8 @@ class DeviceCoolingRootViewModel(
     }
 
     private companion object {
-        const val MIN_PERCENT = 0
-        const val MAX_PERCENT = 100
+        const val MIN_PERCENT = COOLING_MIN_PERCENT
+        const val MAX_PERCENT = COOLING_MAX_PERCENT
     }
 }
 
@@ -185,7 +185,7 @@ private fun DeviceCoolingRootUiState.withAutomaticSnapshot(
     val firmwareFanPercent = snapshot.fanPercentNow
         ?.takeIf(Double::isFinite)
         ?.roundToInt()
-        ?.coerceIn(0, 100)
+        ?.coerceIn(COOLING_MIN_PERCENT, COOLING_MAX_PERCENT)
     return copy(
         autoStartTemperatureC = snapshot.startTemperatureC ?: autoStartTemperatureC,
         autoMaxTemperatureC = snapshot.maximumSpeedTemperatureC ?: autoMaxTemperatureC,
@@ -197,6 +197,9 @@ private fun DeviceCoolingRootUiState.withAutomaticSnapshot(
         }
     )
 }
+
+private const val COOLING_MIN_PERCENT = 0
+private const val COOLING_MAX_PERCENT = 100
 
 enum class CoolingControlMode {
     AUTOMATIC,

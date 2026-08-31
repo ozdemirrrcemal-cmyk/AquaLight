@@ -4,6 +4,7 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.text.BasicText
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
@@ -72,6 +73,37 @@ internal fun CoolingMetric(
             ),
             maxLines = 1,
             overflow = TextOverflow.Ellipsis
+        )
+    }
+}
+
+@Composable
+internal fun CoolingControlValueRow(
+    label: String,
+    value: String,
+    colors: AquaDeviceCardColors,
+    typography: AquaDeviceCardTypography
+) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(vertical = AquaCoolingDashboardGeometry.controlRowVerticalPadding),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        BasicText(
+            text = label,
+            style = typography.caption.copy(color = colors.secondaryText),
+            modifier = Modifier.weight(1f),
+            maxLines = 1,
+            overflow = TextOverflow.Ellipsis
+        )
+        BasicText(
+            text = value,
+            style = typography.body.copy(
+                color = colors.primaryText,
+                fontSize = AquaCoolingDashboardTypography.controlValueSize
+            ),
+            maxLines = 1
         )
     }
 }

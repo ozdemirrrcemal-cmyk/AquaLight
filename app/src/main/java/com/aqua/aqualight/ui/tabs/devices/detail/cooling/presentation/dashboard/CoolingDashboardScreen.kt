@@ -18,14 +18,18 @@ import com.aqua.aqualight.ui.common.cooling.aquaCoolingDashboardTypography
 import com.aqua.aqualight.ui.tabs.devices.detail.cooling.root.CoolingControlMode
 import com.aqua.aqualight.ui.tabs.devices.detail.cooling.root.DeviceCoolingRootUiState
 
+internal data class DeviceCoolingDashboardActions(
+    val onModeSelected: (CoolingControlMode) -> Unit,
+    val onManualFanPercentChanged: (Int) -> Unit,
+    val onTemperatureHistoryClick: () -> Unit,
+    val onAutomaticSettingsClick: () -> Unit,
+    val onProgramSettingsClick: () -> Unit
+)
+
 @Composable
 internal fun DeviceCoolingDashboardScreen(
     state: DeviceCoolingRootUiState,
-    onModeSelected: (CoolingControlMode) -> Unit,
-    onManualFanPercentChanged: (Int) -> Unit,
-    onTemperatureHistoryClick: () -> Unit,
-    onAutomaticSettingsClick: () -> Unit,
-    onProgramSettingsClick: () -> Unit,
+    actions: DeviceCoolingDashboardActions,
     modifier: Modifier = Modifier
 ) {
     val colors = aquaCoolingDashboardColors()
@@ -57,52 +61,14 @@ internal fun DeviceCoolingDashboardScreen(
                 colors = colors,
                 typography = typography,
                 enabled = state.contentEnabled,
-                onClick = onTemperatureHistoryClick
+                onClick = actions.onTemperatureHistoryClick
             )
         }
         item(key = "fan") {
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(
-                    AquaCoolingDashboardGeometry.splitCardGap
-                )
-            ) {
-                CoolingFanSpeedCard(
-                    state = state,
-                    colors = colors,
-                    typography = typography,
-                    modifier = Modifier.weight(1f)
-                )
-                CoolingModeCard(
-                    selectedMode = state.selectedMode,
-                    enabled = state.contentEnabled,
-                    colors = colors,
-                    typography = typography,
-                    onModeSelected = onModeSelected,
-                    modifier = Modifier.weight(1f)
-                )
-            }
+            CoolingFanAndModeRow(state = state, actions = actions)
         }
         item(key = "power-status") {
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(
-                    AquaCoolingDashboardGeometry.splitCardGap
-                )
-            ) {
-                CoolingPowerCard(
-                    state = state,
-                    colors = colors,
-                    typography = typography,
-                    modifier = Modifier.weight(1f)
-                )
-                CoolingStatusCard(
-                    state = state,
-                    colors = colors,
-                    typography = typography,
-                    modifier = Modifier.weight(1f)
-                )
-            }
+            CoolingPowerAndStatusRow(state = state)
         }
         item(key = "mode-control") {
             CoolingModeControlCard(
@@ -110,10 +76,61 @@ internal fun DeviceCoolingDashboardScreen(
                 enabled = state.contentEnabled,
                 colors = colors,
                 typography = typography,
-                onManualFanPercentChanged = onManualFanPercentChanged,
-                onAutomaticSettingsClick = onAutomaticSettingsClick,
-                onProgramSettingsClick = onProgramSettingsClick
+                onManualFanPercentChanged = actions.onManualFanPercentChanged,
+                onAutomaticSettingsClick = actions.onAutomaticSettingsClick,
+                onProgramSettingsClick = actions.onProgramSettingsClick
             )
         }
+    }
+}
+
+@Composable
+private fun CoolingFanAndModeRow(
+    state: DeviceCoolingRootUiState,
+    actions: DeviceCoolingDashboardActions
+) {
+    val colors = aquaCoolingDashboardColors()
+    val typography = aquaCoolingDashboardTypography(colors)
+    Row(
+        modifier = Modifier.fillMaxWidth(),
+        horizontalArrangement = Arrangement.spacedBy(AquaCoolingDashboardGeometry.splitCardGap)
+    ) {
+        CoolingFanSpeedCard(
+            state = state,
+            colors = colors,
+            typography = typography,
+            modifier = Modifier.weight(1f)
+        )
+        CoolingModeCard(
+            selectedMode = state.selectedMode,
+            enabled = state.contentEnabled,
+            colors = colors,
+            typography = typography,
+            onModeSelected = actions.onModeSelected,
+            modifier = Modifier.weight(1f)
+        )
+    }
+}
+
+@Composable
+private fun CoolingPowerAndStatusRow(state: DeviceCoolingRootUiState) {
+    val colors = aquaCoolingDashboardColors()
+    val typography = aquaCoolingDashboardTypography(colors)
+    Row(
+        modifier = Modifier.fillMaxWidth(),
+        horizontalArrangement = Arrangement.spacedBy(AquaCoolingDashboardGeometry.splitCardGap)
+    ) {
+        CoolingPowerCard(
+            state = state,
+            colors = colors,
+            typography = typography,
+            modifier = Modifier.weight(1f)
+        )
+        CoolingStatusCard(
+            state = state,
+            colors = colors,
+            typography = typography,
+            modifier = Modifier.weight(1f)
+        )
     }
 }

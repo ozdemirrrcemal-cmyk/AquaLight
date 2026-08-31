@@ -35,15 +35,29 @@ import com.aqua.aqualight.R
 import com.aqua.aqualight.ui.common.cooling.AquaCoolingDashboardCardSurface
 import com.aqua.aqualight.ui.common.cooling.AquaCoolingDashboardGeometry
 import com.aqua.aqualight.ui.common.cooling.AquaCoolingDashboardPalette
-import com.aqua.aqualight.ui.common.cooling.AquaCoolingTemperatureChartSpec
 import com.aqua.aqualight.ui.common.cooling.aquaCoolingDashboardColors
 import com.aqua.aqualight.ui.common.cooling.aquaCoolingDashboardTypography
 import com.aqua.aqualight.ui.common.devicecard.AquaDeviceCardColors
 import com.aqua.aqualight.ui.common.devicecard.AquaDeviceCardTypography
 import com.aqua.aqualight.ui.common.devicemenu.AquaDeviceMenuToggle
-import kotlin.math.ceil
-import kotlin.math.floor
-import kotlin.math.roundToInt
+
+internal data class DeviceCoolingAutomaticSettingsActions(
+    val onStartTemperatureClick: () -> Unit,
+    val onMaximumTemperatureClick: () -> Unit,
+    val onSilentModeChanged: (Boolean) -> Unit,
+    val onSave: () -> Unit
+)
+
+private data class AutomaticScreenVisuals(
+    val colors: AquaDeviceCardColors,
+    val typography: AquaDeviceCardTypography
+)
+
+private data class AutomaticEditorRowContent(
+    val title: String,
+    val helper: String,
+    val value: String
+)
 
 /**
  * Automatic Cooling editor.
@@ -55,14 +69,12 @@ import kotlin.math.roundToInt
 @Composable
 internal fun DeviceCoolingAutomaticSettingsScreen(
     state: DeviceCoolingAutomaticSettingsUiState,
-    onStartTemperatureClick: () -> Unit,
-    onMaximumTemperatureClick: () -> Unit,
-    onSilentModeChanged: (Boolean) -> Unit,
-    onSave: () -> Unit,
+    actions: DeviceCoolingAutomaticSettingsActions,
     modifier: Modifier = Modifier
 ) {
     val colors = aquaCoolingDashboardColors()
     val typography = aquaCoolingDashboardTypography(colors)
+    val visuals = AutomaticScreenVisuals(colors = colors, typography = typography)
 
     LazyColumn(
         modifier = modifier.fillMaxSize(),
@@ -80,10 +92,8 @@ internal fun DeviceCoolingAutomaticSettingsScreen(
         item(key = "range") {
             AutomaticTemperatureRangeCard(
                 state = state,
-                colors = colors,
-                typography = typography,
-                onStartTemperatureClick = onStartTemperatureClick,
-                onMaximumTemperatureClick = onMaximumTemperatureClick
+                visuals = visuals,
+                actions = actions
             )
         }
         item(key = "silent-mode") {
@@ -91,7 +101,7 @@ internal fun DeviceCoolingAutomaticSettingsScreen(
                 state = state,
                 colors = colors,
                 typography = typography,
-                onCheckedChange = onSilentModeChanged
+                onCheckedChange = actions.onSilentModeChanged
             )
         }
         if (state.saveState == DeviceCoolingAutomaticSaveState.ERROR) {
@@ -110,7 +120,7 @@ internal fun DeviceCoolingAutomaticSettingsScreen(
                 state = state,
                 colors = colors,
                 typography = typography,
-                onSave = onSave
+                onSave = actions.onSave
             )
         }
     }
@@ -142,22 +152,19 @@ private fun AutomaticLiveStatusCard(
                 AutomaticLiveMetric(
                     label = stringResource(R.string.device_cooling_automatic_water_temperature),
                     value = automaticTemperatureText(state.tankTemperatureC),
-                    colors = colors,
-                    typography = typography,
+                    visuals = AutomaticScreenVisuals(colors, typography),
                     modifier = Modifier.weight(1f)
                 )
                 AutomaticLiveMetric(
                     label = stringResource(R.string.device_cooling_automatic_fan_output),
                     value = automaticFanPercentText(state.fanPercentNow),
-                    colors = colors,
-                    typography = typography,
+                    visuals = AutomaticScreenVisuals(colors, typography),
                     modifier = Modifier.weight(1f)
                 )
                 AutomaticLiveMetric(
                     label = stringResource(R.string.device_cooling_automatic_status),
                     value = automaticRuntimeStatusText(state.fanPercentNow),
-                    colors = colors,
-                    typography = typography,
+                    visuals = AutomaticScreenVisuals(colors, typography),
                     valueColor = if ((state.fanPercentNow ?: 0.0) > 0.5) {
                         AquaCoolingDashboardPalette.success
                     } else {
@@ -174,11 +181,12 @@ private fun AutomaticLiveStatusCard(
 private fun AutomaticLiveMetric(
     label: String,
     value: String,
-    colors: AquaDeviceCardColors,
-    typography: AquaDeviceCardTypography,
+    visuals: AutomaticScreenVisuals,
     modifier: Modifier = Modifier,
-    valueColor: androidx.compose.ui.graphics.Color = colors.primaryText
+    valueColor: androidx.compose.ui.graphics.Color = visuals.colors.primaryText
 ) {
+    val colors = visuals.colors
+    val typography = visuals.typography
     Column(
         modifier = modifier.padding(vertical = AquaCoolingAutomaticGeometry.liveMetricVerticalPadding),
         verticalArrangement = Arrangement.spacedBy(AquaCoolingAutomaticGeometry.liveMetricGap / 2)
@@ -199,11 +207,11 @@ private fun AutomaticLiveMetric(
 @Composable
 private fun AutomaticTemperatureRangeCard(
     state: DeviceCoolingAutomaticSettingsUiState,
-    colors: AquaDeviceCardColors,
-    typography: AquaDeviceCardTypography,
-    onStartTemperatureClick: () -> Unit,
-    onMaximumTemperatureClick: () -> Unit
+    visuals: AutomaticScreenVisuals,
+    actions: DeviceCoolingAutomaticSettingsActions
 ) {
+    val colors = visuals.colors
+    val typography = visuals.typography
     AquaCoolingDashboardCardSurface(
         modifier = Modifier
             .fillMaxWidth()
@@ -218,22 +226,24 @@ private fun AutomaticTemperatureRangeCard(
                 style = typography.title.copy(color = colors.primaryText)
             )
             AutomaticEditorRow(
-                title = stringResource(R.string.device_cooling_fan_start_temperature),
-                helper = stringResource(R.string.device_cooling_automatic_start_helper),
-                value = automaticTemperatureText(state.draftStartTemperatureC),
+                content = AutomaticEditorRowContent(
+                    title = stringResource(R.string.device_cooling_fan_start_temperature),
+                    helper = stringResource(R.string.device_cooling_automatic_start_helper),
+                    value = automaticTemperatureText(state.draftStartTemperatureC)
+                ),
                 enabled = state.editable,
-                colors = colors,
-                typography = typography,
-                onClick = onStartTemperatureClick
+                visuals = visuals,
+                onClick = actions.onStartTemperatureClick
             )
             AutomaticEditorRow(
-                title = stringResource(R.string.device_cooling_max_speed_temperature),
-                helper = stringResource(R.string.device_cooling_automatic_max_helper),
-                value = automaticTemperatureText(state.draftMaximumSpeedTemperatureC),
+                content = AutomaticEditorRowContent(
+                    title = stringResource(R.string.device_cooling_max_speed_temperature),
+                    helper = stringResource(R.string.device_cooling_automatic_max_helper),
+                    value = automaticTemperatureText(state.draftMaximumSpeedTemperatureC)
+                ),
                 enabled = state.editable,
-                colors = colors,
-                typography = typography,
-                onClick = onMaximumTemperatureClick
+                visuals = visuals,
+                onClick = actions.onMaximumTemperatureClick
             )
             AutomaticTemperatureRangeVisual(
                 startTemperatureC = state.draftStartTemperatureC,
@@ -311,14 +321,13 @@ private fun AutomaticSilentModeCard(
 
 @Composable
 private fun AutomaticEditorRow(
-    title: String,
-    helper: String,
-    value: String,
+    content: AutomaticEditorRowContent,
     enabled: Boolean,
-    colors: AquaDeviceCardColors,
-    typography: AquaDeviceCardTypography,
+    visuals: AutomaticScreenVisuals,
     onClick: () -> Unit
 ) {
+    val colors = visuals.colors
+    val typography = visuals.typography
     val shape = AquaCoolingAutomaticGeometry.editorRowShape
     Row(
         modifier = Modifier
@@ -349,18 +358,18 @@ private fun AutomaticEditorRow(
             verticalArrangement = Arrangement.spacedBy(AquaCoolingAutomaticGeometry.editorRowGap / 2)
         ) {
             BasicText(
-                text = title,
+                text = content.title,
                 style = typography.body.copy(color = colors.primaryText),
                 maxLines = 1
             )
             BasicText(
-                text = helper,
+                text = content.helper,
                 style = typography.micro.copy(color = colors.secondaryText),
                 maxLines = 2
             )
         }
         BasicText(
-            text = value,
+            text = content.value,
             style = typography.body.copy(
                 color = colors.primaryText,
                 textAlign = TextAlign.End
@@ -397,123 +406,6 @@ private fun AutomaticChevron(colors: AquaDeviceCardColors) {
             strokeWidth = 2f,
             cap = StrokeCap.Round
         )
-    }
-}
-
-@Composable
-private fun AutomaticTemperatureRangeVisual(
-    startTemperatureC: Double?,
-    maximumTemperatureC: Double?,
-    colors: AquaDeviceCardColors,
-    typography: AquaDeviceCardTypography
-) {
-    val start = startTemperatureC?.takeIf(Double::isFinite)
-    val maximum = maximumTemperatureC?.takeIf(Double::isFinite)
-    val hasRange = start != null && maximum != null && maximum > start
-    val lowerBound = if (hasRange) {
-        floor(checkNotNull(start) - RANGE_VISUAL_MARGIN_C)
-    } else {
-        AquaCoolingTemperatureChartSpec.defaultMinimumC.toDouble()
-    }
-    val upperBound = if (hasRange) {
-        ceil(checkNotNull(maximum) + RANGE_VISUAL_MARGIN_C).coerceAtLeast(lowerBound + 1.0)
-    } else {
-        AquaCoolingTemperatureChartSpec.defaultMaximumC.toDouble()
-    }
-    val span = (upperBound - lowerBound).coerceAtLeast(1.0)
-
-    Column(
-        modifier = Modifier.fillMaxWidth(),
-        verticalArrangement = Arrangement.spacedBy(AquaCoolingAutomaticGeometry.rangeLegendGap)
-    ) {
-        Box(
-            modifier = Modifier
-                .fillMaxWidth()
-                .height(AquaCoolingAutomaticGeometry.rangeVisualHeight)
-        ) {
-            Canvas(modifier = Modifier.fillMaxSize()) {
-                val horizontalPadding = AquaCoolingAutomaticGeometry.rangeTrackHorizontalPadding.toPx()
-                val trackWidth = (size.width - horizontalPadding * 2f).coerceAtLeast(1f)
-                val y = size.height * 0.52f
-                val trackStroke = AquaCoolingAutomaticGeometry.rangeTrackHeight.toPx()
-
-                drawLine(
-                    color = colors.secondaryText.copy(
-                        alpha = AquaCoolingAutomaticAlpha.rangeInactiveTrack
-                    ),
-                    start = Offset(horizontalPadding, y),
-                    end = Offset(horizontalPadding + trackWidth, y),
-                    strokeWidth = trackStroke,
-                    cap = StrokeCap.Round
-                )
-
-                if (start != null && maximum != null && maximum > start) {
-                    val startFraction = ((start - lowerBound) / span)
-                        .toFloat()
-                        .coerceIn(0f, 1f)
-                    val maximumFraction = ((maximum - lowerBound) / span)
-                        .toFloat()
-                        .coerceIn(0f, 1f)
-                    val startX = horizontalPadding + trackWidth * startFraction
-                    val maximumX = horizontalPadding + trackWidth * maximumFraction
-
-                    drawLine(
-                        color = colors.accent.copy(alpha = AquaCoolingAutomaticAlpha.rangeActiveTrack),
-                        start = Offset(startX, y),
-                        end = Offset(maximumX, y),
-                        strokeWidth = trackStroke,
-                        cap = StrokeCap.Round
-                    )
-                    listOf(startX, maximumX).forEach { x ->
-                        drawCircle(
-                            color = colors.primaryText,
-                            radius = AquaCoolingAutomaticGeometry.rangeMarkerRadius.toPx() +
-                                AquaCoolingAutomaticGeometry.rangeMarkerOutlineWidth.toPx(),
-                            center = Offset(x, y)
-                        )
-                        drawCircle(
-                            color = colors.accent.copy(
-                                alpha = AquaCoolingAutomaticAlpha.rangeMarkerFill
-                            ),
-                            radius = AquaCoolingAutomaticGeometry.rangeMarkerRadius.toPx(),
-                            center = Offset(x, y)
-                        )
-                    }
-                }
-            }
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .align(Alignment.TopCenter),
-                horizontalArrangement = Arrangement.SpaceBetween
-            ) {
-                BasicText(
-                    text = automaticAxisTemperatureText(lowerBound),
-                    style = typography.micro.copy(color = colors.secondaryText)
-                )
-                BasicText(
-                    text = automaticAxisTemperatureText(upperBound),
-                    style = typography.micro.copy(color = colors.secondaryText)
-                )
-            }
-        }
-        Row(modifier = Modifier.fillMaxWidth()) {
-            listOf(
-                stringResource(R.string.device_cooling_automatic_zone_off),
-                stringResource(R.string.device_cooling_automatic_zone_gradual),
-                stringResource(R.string.device_cooling_automatic_zone_maximum)
-            ).forEach { label ->
-                BasicText(
-                    text = label,
-                    style = typography.micro.copy(
-                        color = colors.secondaryText,
-                        textAlign = TextAlign.Center
-                    ),
-                    modifier = Modifier.weight(1f),
-                    maxLines = 1
-                )
-            }
-        }
     }
 }
 
@@ -559,31 +451,3 @@ private fun AutomaticSaveButton(
         )
     }
 }
-
-@Composable
-private fun automaticTemperatureText(value: Double?): String = if (value?.isFinite() == true) {
-    stringResource(R.string.device_cooling_temperature_value_format, value)
-} else {
-    stringResource(R.string.device_cooling_value_unavailable)
-}
-
-@Composable
-private fun automaticFanPercentText(value: Double?): String = if (value?.isFinite() == true) {
-    stringResource(R.string.device_cooling_percent_value_format, value.roundToInt().coerceIn(0, 100))
-} else {
-    stringResource(R.string.device_cooling_value_unavailable)
-}
-
-@Composable
-private fun automaticRuntimeStatusText(fanPercent: Double?): String = when {
-    fanPercent == null || !fanPercent.isFinite() ->
-        stringResource(R.string.device_cooling_value_unavailable)
-    fanPercent > 0.5 -> stringResource(R.string.device_cooling_automatic_status_cooling)
-    else -> stringResource(R.string.device_cooling_automatic_status_waiting)
-}
-
-@Composable
-private fun automaticAxisTemperatureText(value: Double): String =
-    stringResource(R.string.device_cooling_temperature_axis_value_format, value)
-
-private const val RANGE_VISUAL_MARGIN_C = 3.0

@@ -51,6 +51,8 @@ interface DeviceCoolingAutomaticSettingsOperations {
 }
 
 const val DEVICE_COOLING_AUTOMATIC_SILENT_MODE_MAXIMUM_FAN_PERCENT = 50
+const val DEVICE_COOLING_FAN_PERCENT_MINIMUM = 0
+const val DEVICE_COOLING_FAN_PERCENT_MAXIMUM = 100
 
 data class DeviceCoolingAutomaticSettingsSnapshot(
     val available: Boolean = false,
@@ -67,7 +69,10 @@ data class DeviceCoolingAutomaticSettingsSnapshot(
     val policy: DeviceCoolingAutomaticTemperaturePolicy? = null
 ) {
     init {
-        require(silentModeMaximumFanPercent in 1..100)
+        require(
+            silentModeMaximumFanPercent in
+                (DEVICE_COOLING_FAN_PERCENT_MINIMUM + 1)..DEVICE_COOLING_FAN_PERCENT_MAXIMUM
+        )
     }
 }
 

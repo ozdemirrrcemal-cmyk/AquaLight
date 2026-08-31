@@ -9,6 +9,7 @@ import com.aqua.aqualight.application.devices.cooling.DeviceCoolingTemperatureHi
 import com.aqua.aqualight.data.devices.model.DeviceUid
 import com.aqua.aqualight.data.devices.repository.DevicesRepository
 import com.aqua.aqualight.data.devices.runtime.core.DeviceRuntimeCommandOutcome
+import com.aqua.aqualight.data.devices.runtime.modules.DeviceRuntimeModuleProvider
 import com.aqua.aqualight.data.devices.runtime.modules.cooling.DeviceCoolingHistoryRange
 import com.aqua.aqualight.data.devices.runtime.modules.cooling.DeviceCoolingHistorySnapshot
 import kotlinx.coroutines.delay
@@ -21,47 +22,60 @@ internal class DefaultDeviceCoolingTemperatureHistoryOperations(
     override suspend fun loadTemperatureHistory(
         deviceUid: String,
         range: DeviceCoolingTemperatureHistoryRange
-    ): DeviceCoolingTemperatureHistoryLoadResult {
-        val uid = deviceUid.trim().takeIf(String::isNotBlank)?.let(::DeviceUid)
-            ?: return DeviceCoolingTemperatureHistoryLoadResult.Unavailable
-        if (devicesRepository.currentDevice(uid) == null) {
-            return DeviceCoolingTemperatureHistoryLoadResult.Unavailable
-        }
-        val modules = devicesRepository.runtimeModules()
-            ?: return DeviceCoolingTemperatureHistoryLoadResult.Unavailable
+    ): DeviceCoolingTemperatureHistoryLoadResult = resolveRuntime(deviceUid)
+        ?.load(range)
+        ?: DeviceCoolingTemperatureHistoryLoadResult.Unavailable
 
-        devicesRepository.connectRuntime(uid).getOrElse {
-            return DeviceCoolingTemperatureHistoryLoadResult.Unavailable
+    private fun resolveRuntime(deviceUid: String): CoolingHistoryRuntime? = deviceUid
+        .trim()
+        .takeIf(String::isNotBlank)
+        ?.let(::DeviceUid)
+        ?.takeIf { uid -> devicesRepository.currentDevice(uid) != null }
+        ?.let { uid ->
+            devicesRepository.runtimeModules()?.let { modules ->
+                CoolingHistoryRuntime(uid = uid, modules = modules)
+            }
         }
-        val outcome = requestWithRetry {
+
+    private suspend fun CoolingHistoryRuntime.load(
+        range: DeviceCoolingTemperatureHistoryRange
+    ): DeviceCoolingTemperatureHistoryLoadResult = if (
+        devicesRepository.connectRuntime(deviceUid).isFailure
+    ) {
+        DeviceCoolingTemperatureHistoryLoadResult.Unavailable
+    } else {
+        requestWithRetry {
             modules.cooling.requestHistory(
-                deviceUid = uid,
+                deviceUid = deviceUid,
                 range = range.toRuntimeRange()
             )
-        }
-        return when (outcome) {
-            is DeviceRuntimeCommandOutcome.Success ->
-                DeviceCoolingTemperatureHistoryLoadResult.Loaded(
-                    outcome.value.toApplicationSnapshot()
-                )
-            is DeviceRuntimeCommandOutcome.UnsupportedByDevice ->
-                DeviceCoolingTemperatureHistoryLoadResult.Unsupported
-            is DeviceRuntimeCommandOutcome.FirmwareError -> {
-                if (outcome.code.isUnsupportedHistoryCode()) {
-                    DeviceCoolingTemperatureHistoryLoadResult.Unsupported
-                } else {
-                    DeviceCoolingTemperatureHistoryLoadResult.Unavailable
-                }
-            }
-            is DeviceRuntimeCommandOutcome.NotConnected,
-            is DeviceRuntimeCommandOutcome.NotAuthenticated,
-            is DeviceRuntimeCommandOutcome.SendFailed,
-            is DeviceRuntimeCommandOutcome.Timeout,
-            is DeviceRuntimeCommandOutcome.ProtocolError,
-            is DeviceRuntimeCommandOutcome.Cancelled ->
-                DeviceCoolingTemperatureHistoryLoadResult.Unavailable
-        }
+        }.toLoadResult()
     }
+}
+
+private data class CoolingHistoryRuntime(
+    val deviceUid: DeviceUid,
+    val modules: DeviceRuntimeModuleProvider
+)
+
+private fun DeviceRuntimeCommandOutcome<DeviceCoolingHistorySnapshot>.toLoadResult():
+    DeviceCoolingTemperatureHistoryLoadResult = when (this) {
+    is DeviceRuntimeCommandOutcome.Success ->
+        DeviceCoolingTemperatureHistoryLoadResult.Loaded(value.toApplicationSnapshot())
+    is DeviceRuntimeCommandOutcome.UnsupportedByDevice ->
+        DeviceCoolingTemperatureHistoryLoadResult.Unsupported
+    is DeviceRuntimeCommandOutcome.FirmwareError -> if (code.isUnsupportedHistoryCode()) {
+        DeviceCoolingTemperatureHistoryLoadResult.Unsupported
+    } else {
+        DeviceCoolingTemperatureHistoryLoadResult.Unavailable
+    }
+    is DeviceRuntimeCommandOutcome.NotConnected,
+    is DeviceRuntimeCommandOutcome.NotAuthenticated,
+    is DeviceRuntimeCommandOutcome.SendFailed,
+    is DeviceRuntimeCommandOutcome.Timeout,
+    is DeviceRuntimeCommandOutcome.ProtocolError,
+    is DeviceRuntimeCommandOutcome.Cancelled ->
+        DeviceCoolingTemperatureHistoryLoadResult.Unavailable
 }
 
 private suspend fun requestWithRetry(

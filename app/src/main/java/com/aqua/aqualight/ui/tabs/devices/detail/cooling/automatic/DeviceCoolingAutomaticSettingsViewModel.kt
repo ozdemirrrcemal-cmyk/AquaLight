@@ -100,14 +100,7 @@ class DeviceCoolingAutomaticSettingsViewModel(
     }
 
     fun save() {
-        val state = _uiState.value
-        val deviceUid = boundDeviceUid.takeIf(String::isNotBlank) ?: return
-        val start = state.draftStartTemperatureC ?: return
-        val maximum = state.draftMaximumSpeedTemperatureC ?: return
-        if (!state.canSave) return
-        val requestedSilentMode = state.persistedSilentModeEnabled?.let {
-            state.draftSilentModeEnabled
-        }
+        val request = _uiState.value.pendingSave(boundDeviceUid) ?: return
 
         saveJob?.cancel()
         _uiState.update { current ->
@@ -115,27 +108,14 @@ class DeviceCoolingAutomaticSettingsViewModel(
         }
         saveJob = viewModelScope.launch {
             val result = operations.saveAutomaticSettings(
-                deviceUid = deviceUid,
-                startTemperatureC = start,
-                maximumSpeedTemperatureC = maximum,
-                silentModeEnabled = requestedSilentMode
+                deviceUid = request.deviceUid,
+                startTemperatureC = request.startTemperatureC,
+                maximumSpeedTemperatureC = request.maximumSpeedTemperatureC,
+                silentModeEnabled = request.silentModeEnabled
             )
-            if (boundDeviceUid != deviceUid) return@launch
-            _uiState.update { current ->
-                if (result.isSuccess) {
-                    current.copy(
-                        persistedStartTemperatureC = start,
-                        persistedMaximumSpeedTemperatureC = maximum,
-                        draftStartTemperatureC = start,
-                        draftMaximumSpeedTemperatureC = maximum,
-                        persistedSilentModeEnabled = requestedSilentMode
-                            ?: current.persistedSilentModeEnabled,
-                        draftSilentModeEnabled = requestedSilentMode
-                            ?: current.draftSilentModeEnabled,
-                        saveState = DeviceCoolingAutomaticSaveState.SAVED
-                    )
-                } else {
-                    current.copy(saveState = DeviceCoolingAutomaticSaveState.ERROR)
+            if (boundDeviceUid == request.deviceUid) {
+                _uiState.update { current ->
+                    current.afterSave(request = request, successful = result.isSuccess)
                 }
             }
         }
@@ -220,10 +200,13 @@ data class DeviceCoolingAutomaticSettingsUiState(
     val hasChanges: Boolean
         get() = hasTemperatureChanges || hasSilentModeChanges
 
-    val canSave: Boolean
+    private val hasSavePrerequisites: Boolean
         get() = loadState == DeviceCoolingAutomaticLoadState.CONTENT &&
             editable &&
-            hasFirmwareSnapshot &&
+            hasFirmwareSnapshot
+
+    val canSave: Boolean
+        get() = hasSavePrerequisites &&
             hasChanges &&
             saveState != DeviceCoolingAutomaticSaveState.SAVING
 }

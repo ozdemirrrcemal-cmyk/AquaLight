@@ -10,9 +10,6 @@ import com.aqua.aqualight.R
 import com.aqua.aqualight.composition.requireAppContainer
 import com.aqua.aqualight.ui.common.bottomsheet.IntegerStepperBottomSheet
 import com.aqua.aqualight.ui.tabs.devices.detail.cooling.common.DeviceCoolingModeSettingsFragment
-import kotlin.math.ceil
-import kotlin.math.floor
-import kotlin.math.roundToInt
 
 class DeviceCoolingAutomaticSettingsFragment : DeviceCoolingModeSettingsFragment(
     R.string.device_cooling_automatic_settings_title
@@ -36,10 +33,12 @@ class DeviceCoolingAutomaticSettingsFragment : DeviceCoolingModeSettingsFragment
                 val state by viewModel.uiState.collectAsStateWithLifecycle()
                 DeviceCoolingAutomaticSettingsScreen(
                     state = state,
-                    onStartTemperatureClick = ::showStartTemperatureSheet,
-                    onMaximumTemperatureClick = ::showMaximumTemperatureSheet,
-                    onSilentModeChanged = viewModel::updateSilentMode,
-                    onSave = viewModel::save
+                    actions = DeviceCoolingAutomaticSettingsActions(
+                        onStartTemperatureClick = ::showStartTemperatureSheet,
+                        onMaximumTemperatureClick = ::showMaximumTemperatureSheet,
+                        onSilentModeChanged = viewModel::updateSilentMode,
+                        onSave = viewModel::save
+                    )
                 )
             }
         }
@@ -54,7 +53,8 @@ class DeviceCoolingAutomaticSettingsFragment : DeviceCoolingModeSettingsFragment
                 IntegerStepperBottomSheet.RESULT_SAVED
             ) {
                 viewModel.updateStartTemperature(
-                    result.getInt(IntegerStepperBottomSheet.RESULT_VALUE) * DISPLAY_SCALE
+                    result.getInt(IntegerStepperBottomSheet.RESULT_VALUE) *
+                        AUTOMATIC_TEMPERATURE_DISPLAY_SCALE
                 )
             }
         }
@@ -66,82 +66,50 @@ class DeviceCoolingAutomaticSettingsFragment : DeviceCoolingModeSettingsFragment
                 IntegerStepperBottomSheet.RESULT_SAVED
             ) {
                 viewModel.updateMaximumSpeedTemperature(
-                    result.getInt(IntegerStepperBottomSheet.RESULT_VALUE) * DISPLAY_SCALE
+                    result.getInt(IntegerStepperBottomSheet.RESULT_VALUE) *
+                        AUTOMATIC_TEMPERATURE_DISPLAY_SCALE
                 )
             }
         }
     }
 
     private fun showStartTemperatureSheet() {
-        val state = viewModel.uiState.value
-        val policy = state.editorPolicy ?: return
-        val current = state.editorStartTemperatureC ?: return
-        val maximum = state.editorMaximumSpeedTemperatureC ?: return
-        if (!state.editable) return
-
-        val minimumUnits = toUnits(policy.startMinimumC)
-        val maximumUnits = floorToStepUnits(
-            value = minOf(policy.startMaximumC, maximum - policy.minimumGapC),
-            origin = policy.startMinimumC,
-            step = policy.stepC
-        )
-        val stepUnits = toUnits(policy.stepC).coerceAtLeast(1)
-        if (maximumUnits < minimumUnits) return
-        IntegerStepperBottomSheet.show(
-            fragmentManager = parentFragmentManager,
-            title = getString(R.string.device_cooling_automatic_start_sheet_title),
-            helperText = getString(R.string.device_cooling_automatic_start_sheet_helper),
-            valueFormat = getString(R.string.device_cooling_automatic_stepper_value_format),
-            initialValue = snapToStepUnits(
-                value = current,
-                minimum = policy.startMinimumC,
-                step = policy.stepC
-            ).coerceIn(minimumUnits, maximumUnits),
-            minValue = minimumUnits,
-            maxValue = maximumUnits,
-            step = stepUnits,
-            saveText = getString(R.string.device_cooling_automatic_stepper_apply),
-            cancelText = getString(R.string.device_cooling_automatic_stepper_cancel),
-            decreaseContentDescription = getString(
-                R.string.device_cooling_automatic_stepper_decrease
-            ),
-            increaseContentDescription = getString(
-                R.string.device_cooling_automatic_stepper_increase
-            ),
-            requestKey = REQUEST_START_TEMPERATURE,
-            displayScale = DISPLAY_SCALE
-        )
+        startTemperatureStepperBounds(viewModel.uiState.value)?.let { bounds ->
+            showTemperatureSheet(
+                bounds = bounds,
+                titleRes = R.string.device_cooling_automatic_start_sheet_title,
+                helperRes = R.string.device_cooling_automatic_start_sheet_helper,
+                requestKey = REQUEST_START_TEMPERATURE
+            )
+        }
     }
 
     private fun showMaximumTemperatureSheet() {
-        val state = viewModel.uiState.value
-        val policy = state.editorPolicy ?: return
-        val current = state.editorMaximumSpeedTemperatureC ?: return
-        val start = state.editorStartTemperatureC ?: return
-        if (!state.editable) return
+        maximumTemperatureStepperBounds(viewModel.uiState.value)?.let { bounds ->
+            showTemperatureSheet(
+                bounds = bounds,
+                titleRes = R.string.device_cooling_automatic_max_sheet_title,
+                helperRes = R.string.device_cooling_automatic_max_sheet_helper,
+                requestKey = REQUEST_MAXIMUM_TEMPERATURE
+            )
+        }
+    }
 
-        val minimumValue = maxOf(policy.maximumSpeedMinimumC, start + policy.minimumGapC)
-        val minimumUnits = ceilToStepUnits(
-            value = minimumValue,
-            origin = policy.maximumSpeedMinimumC,
-            step = policy.stepC
-        )
-        val maximumUnits = toUnits(policy.maximumSpeedMaximumC)
-        val stepUnits = toUnits(policy.stepC).coerceAtLeast(1)
-        if (minimumUnits > maximumUnits) return
+    private fun showTemperatureSheet(
+        bounds: AutomaticTemperatureStepperBounds,
+        titleRes: Int,
+        helperRes: Int,
+        requestKey: String
+    ) {
         IntegerStepperBottomSheet.show(
             fragmentManager = parentFragmentManager,
-            title = getString(R.string.device_cooling_automatic_max_sheet_title),
-            helperText = getString(R.string.device_cooling_automatic_max_sheet_helper),
+            title = getString(titleRes),
+            helperText = getString(helperRes),
             valueFormat = getString(R.string.device_cooling_automatic_stepper_value_format),
-            initialValue = snapToStepUnits(
-                value = current,
-                minimum = policy.maximumSpeedMinimumC,
-                step = policy.stepC
-            ).coerceIn(minimumUnits, maximumUnits),
-            minValue = minimumUnits,
-            maxValue = maximumUnits,
-            step = stepUnits,
+            initialValue = bounds.initialValue,
+            minValue = bounds.minimumValue,
+            maxValue = bounds.maximumValue,
+            step = bounds.step,
             saveText = getString(R.string.device_cooling_automatic_stepper_apply),
             cancelText = getString(R.string.device_cooling_automatic_stepper_cancel),
             decreaseContentDescription = getString(
@@ -150,30 +118,12 @@ class DeviceCoolingAutomaticSettingsFragment : DeviceCoolingModeSettingsFragment
             increaseContentDescription = getString(
                 R.string.device_cooling_automatic_stepper_increase
             ),
-            requestKey = REQUEST_MAXIMUM_TEMPERATURE,
-            displayScale = DISPLAY_SCALE
+            requestKey = requestKey,
+            displayScale = AUTOMATIC_TEMPERATURE_DISPLAY_SCALE
         )
     }
 
-    private fun toUnits(value: Double): Int = (value / DISPLAY_SCALE).roundToInt()
-
-    private fun snapToStepUnits(value: Double, minimum: Double, step: Double): Int {
-        val steps = ((value - minimum) / step).roundToInt()
-        return toUnits(minimum + steps * step)
-    }
-
-    private fun floorToStepUnits(value: Double, origin: Double, step: Double): Int {
-        val steps = floor((value - origin) / step).toInt()
-        return toUnits(origin + steps * step)
-    }
-
-    private fun ceilToStepUnits(value: Double, origin: Double, step: Double): Int {
-        val steps = ceil((value - origin) / step).toInt()
-        return toUnits(origin + steps * step)
-    }
-
     private companion object {
-        const val DISPLAY_SCALE = 0.1
         const val REQUEST_START_TEMPERATURE = "cooling_automatic_start_temperature"
         const val REQUEST_MAXIMUM_TEMPERATURE = "cooling_automatic_maximum_temperature"
     }

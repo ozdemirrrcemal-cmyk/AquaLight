@@ -131,57 +131,69 @@ internal fun CoolingStatusCard(
                 style = typography.title
             )
             CoolingStatusRow(
-                label = stringResource(R.string.device_cooling_status_fan),
-                value = if (state.fanOutputCount > 0) ready else unavailable,
-                positive = state.fanOutputCount > 0,
+                model = CoolingStatusRowModel(
+                    label = stringResource(R.string.device_cooling_status_fan),
+                    value = if (state.fanOutputCount > 0) ready else unavailable,
+                    positive = state.fanOutputCount > 0
+                ),
                 colors = colors,
                 typography = typography
             )
             CoolingStatusRow(
-                label = stringResource(R.string.device_cooling_status_sensors),
-                value = if (state.temperatureSensorCount > 0) ready else unavailable,
-                positive = state.temperatureSensorCount > 0,
+                model = CoolingStatusRowModel(
+                    label = stringResource(R.string.device_cooling_status_sensors),
+                    value = if (state.temperatureSensorCount > 0) ready else unavailable,
+                    positive = state.temperatureSensorCount > 0
+                ),
                 colors = colors,
                 typography = typography
             )
             CoolingStatusRow(
-                label = stringResource(R.string.device_cooling_status_connection),
-                value = if (state.contentEnabled) {
-                    stringResource(R.string.device_cooling_status_online)
-                } else {
-                    stringResource(R.string.device_cooling_status_offline)
-                },
-                positive = state.contentEnabled,
+                model = CoolingStatusRowModel(
+                    label = stringResource(R.string.device_cooling_status_connection),
+                    value = if (state.contentEnabled) {
+                        stringResource(R.string.device_cooling_status_online)
+                    } else {
+                        stringResource(R.string.device_cooling_status_offline)
+                    },
+                    positive = state.contentEnabled
+                ),
                 colors = colors,
                 typography = typography
             )
             CoolingStatusRow(
-                label = stringResource(R.string.device_cooling_status_alarm),
-                value = unavailable,
-                positive = false,
+                model = CoolingStatusRowModel(
+                    label = stringResource(R.string.device_cooling_status_alarm),
+                    value = unavailable,
+                    positive = false,
+                    showDot = false
+                ),
                 colors = colors,
-                typography = typography,
-                showDot = false
+                typography = typography
             )
         }
     }
 }
 
+private data class CoolingStatusRowModel(
+    val label: String,
+    val value: String,
+    val positive: Boolean,
+    val showDot: Boolean = true
+)
+
 @Composable
 private fun CoolingStatusRow(
-    label: String,
-    value: String,
-    positive: Boolean,
+    model: CoolingStatusRowModel,
     colors: AquaDeviceCardColors,
-    typography: AquaDeviceCardTypography,
-    showDot: Boolean = true
+    typography: AquaDeviceCardTypography
 ) {
     Row(
         modifier = Modifier.fillMaxWidth(),
         verticalAlignment = Alignment.CenterVertically
     ) {
         BasicText(
-            text = label,
+            text = model.label,
             style = typography.caption.copy(color = colors.secondaryText),
             modifier = Modifier.weight(1f),
             maxLines = 1,
@@ -191,13 +203,13 @@ private fun CoolingStatusRow(
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.spacedBy(AquaCoolingDashboardGeometry.statusValueGap)
         ) {
-            if (showDot) {
+            if (model.showDot) {
                 Box(
                     modifier = Modifier
                         .size(AquaCoolingDashboardGeometry.statusDotSize)
                         .clip(CircleShape)
                         .background(
-                            (if (positive) {
+                            (if (model.positive) {
                                 AquaCoolingDashboardPalette.success
                             } else {
                                 colors.secondaryText
@@ -206,9 +218,9 @@ private fun CoolingStatusRow(
                 )
             }
             BasicText(
-                text = value,
+                text = model.value,
                 style = typography.micro.copy(
-                    color = if (positive) {
+                    color = if (model.positive) {
                         AquaCoolingDashboardPalette.success
                     } else {
                         colors.secondaryText

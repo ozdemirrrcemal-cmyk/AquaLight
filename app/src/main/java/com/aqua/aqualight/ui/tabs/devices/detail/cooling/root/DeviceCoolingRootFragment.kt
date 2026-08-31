@@ -18,7 +18,8 @@ import com.aqua.aqualight.databinding.FragmentDeviceCoolingRootBinding
 import com.aqua.aqualight.ui.common.header.AquaHeaderAction
 import com.aqua.aqualight.ui.common.header.AquaHeaderConfig
 import com.aqua.aqualight.ui.common.header.setupAquaHeader
-import com.aqua.aqualight.ui.navigation.AppRouteNavigator
+import com.aqua.aqualight.ui.navigation.DeviceCoolingRouteNavigator
+import com.aqua.aqualight.ui.tabs.devices.detail.cooling.presentation.dashboard.DeviceCoolingDashboardActions
 import com.aqua.aqualight.ui.tabs.devices.detail.cooling.presentation.dashboard.DeviceCoolingDashboardScreen
 import kotlinx.coroutines.launch
 
@@ -74,11 +75,13 @@ class DeviceCoolingRootFragment : Fragment(R.layout.fragment_device_cooling_root
                 val state by viewModel.uiState.collectAsStateWithLifecycle()
                 DeviceCoolingDashboardScreen(
                     state = state,
-                    onModeSelected = viewModel::selectMode,
-                    onManualFanPercentChanged = viewModel::updateManualFanPercent,
-                    onTemperatureHistoryClick = ::openTemperatureHistory,
-                    onAutomaticSettingsClick = ::openAutomaticSettings,
-                    onProgramSettingsClick = ::openProgramSettings
+                    actions = DeviceCoolingDashboardActions(
+                        onModeSelected = viewModel::selectMode,
+                        onManualFanPercentChanged = viewModel::updateManualFanPercent,
+                        onTemperatureHistoryClick = ::openTemperatureHistory,
+                        onAutomaticSettingsClick = ::openAutomaticSettings,
+                        onProgramSettingsClick = ::openProgramSettings
+                    )
                 )
             }
         }
@@ -86,7 +89,7 @@ class DeviceCoolingRootFragment : Fragment(R.layout.fragment_device_cooling_root
 
     private fun openTemperatureHistory() {
         if (!viewModel.uiState.value.contentEnabled) return
-        AppRouteNavigator.openCoolingTemperatureHistory(
+        DeviceCoolingRouteNavigator.openTemperatureHistory(
             navController = findNavController(),
             deviceUid = args.deviceUid
         )
@@ -94,7 +97,7 @@ class DeviceCoolingRootFragment : Fragment(R.layout.fragment_device_cooling_root
 
     private fun openAutomaticSettings() {
         if (!viewModel.uiState.value.contentEnabled) return
-        AppRouteNavigator.openCoolingAutomaticSettings(
+        DeviceCoolingRouteNavigator.openAutomaticSettings(
             navController = findNavController(),
             deviceUid = args.deviceUid
         )
@@ -102,7 +105,7 @@ class DeviceCoolingRootFragment : Fragment(R.layout.fragment_device_cooling_root
 
     private fun openProgramSettings() {
         if (!viewModel.uiState.value.contentEnabled) return
-        AppRouteNavigator.openCoolingProgramSettings(
+        DeviceCoolingRouteNavigator.openProgramSettings(
             navController = findNavController(),
             deviceUid = args.deviceUid
         )

@@ -36,6 +36,7 @@ import com.aqua.aqualight.ui.common.cooling.AquaCoolingDashboardCardSurface
 import com.aqua.aqualight.ui.common.cooling.AquaCoolingDashboardGeometry
 import com.aqua.aqualight.ui.common.cooling.AquaCoolingDashboardTypography
 import com.aqua.aqualight.ui.common.cooling.AquaCoolingFanPercentSlider
+import com.aqua.aqualight.ui.common.cooling.AquaCoolingFanPercentSliderState
 import com.aqua.aqualight.ui.common.cooling.AquaCoolingGaugeSpec
 import com.aqua.aqualight.ui.common.devicecard.AquaDeviceCardColors
 import com.aqua.aqualight.ui.common.devicecard.AquaDeviceCardGeometry
@@ -301,8 +302,10 @@ private fun CoolingManualControlCard(
                 style = typography.micro.copy(color = colors.secondaryText)
             )
             AquaCoolingFanPercentSlider(
-                percent = clamped,
-                enabled = enabled,
+                state = AquaCoolingFanPercentSliderState(
+                    percent = clamped,
+                    enabled = enabled
+                ),
                 colors = colors,
                 onValueChanged = onValueChanged
             )
@@ -501,36 +504,5 @@ private fun CoolingDetailAction(
                 cap = StrokeCap.Round
             )
         }
-    }
-}
-
-@Composable
-private fun CoolingControlValueRow(
-    label: String,
-    value: String,
-    colors: AquaDeviceCardColors,
-    typography: AquaDeviceCardTypography
-) {
-    Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(vertical = AquaCoolingDashboardGeometry.controlRowVerticalPadding),
-        verticalAlignment = Alignment.CenterVertically
-    ) {
-        BasicText(
-            text = label,
-            style = typography.caption.copy(color = colors.secondaryText),
-            modifier = Modifier.weight(1f),
-            maxLines = 1,
-            overflow = TextOverflow.Ellipsis
-        )
-        BasicText(
-            text = value,
-            style = typography.body.copy(
-                color = colors.primaryText,
-                fontSize = AquaCoolingDashboardTypography.controlValueSize
-            ),
-            maxLines = 1
-        )
     }
 }

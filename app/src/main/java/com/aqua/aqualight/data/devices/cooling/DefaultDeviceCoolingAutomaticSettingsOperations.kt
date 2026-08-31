@@ -3,6 +3,8 @@ package com.aqua.aqualight.data.devices.cooling
 import com.aqua.aqualight.application.devices.cooling.DeviceCoolingAutomaticSettingsOperations
 import com.aqua.aqualight.application.devices.cooling.DeviceCoolingAutomaticSettingsSnapshot
 import com.aqua.aqualight.application.devices.cooling.DeviceCoolingAutomaticTemperaturePolicy
+import com.aqua.aqualight.application.devices.cooling.DEVICE_COOLING_FAN_PERCENT_MAXIMUM
+import com.aqua.aqualight.application.devices.cooling.DEVICE_COOLING_FAN_PERCENT_MINIMUM
 import com.aqua.aqualight.data.devices.model.DeviceUid
 import com.aqua.aqualight.data.devices.repository.DevicesRepository
 import com.aqua.aqualight.data.devices.runtime.core.DeviceRuntimeCommandOutcome
@@ -23,22 +25,20 @@ internal class DefaultDeviceCoolingAutomaticSettingsOperations(
 
     override fun observeAutomaticSettings(
         deviceUid: String
-    ): Flow<DeviceCoolingAutomaticSettingsSnapshot> {
-        val uid = deviceUid.toDeviceUidOrNull() ?: return flowOf(DeviceCoolingAutomaticSettingsSnapshot())
-        val modules = devicesRepository.runtimeModules()
-            ?: return flowOf(DeviceCoolingAutomaticSettingsSnapshot())
-        return modules.cooling.states
-            .map { states -> states[uid]?.status.toAutomaticSnapshot() }
-            .distinctUntilChanged()
-    }
+    ): Flow<DeviceCoolingAutomaticSettingsSnapshot> = deviceUid.toDeviceUidOrNull()
+        ?.let { uid ->
+            devicesRepository.runtimeModules()?.cooling?.states?.map { states ->
+                states[uid]?.status.toAutomaticSnapshot()
+            }
+        }
+        ?.distinctUntilChanged()
+        ?: flowOf(DeviceCoolingAutomaticSettingsSnapshot())
 
     override fun currentAutomaticSettings(
         deviceUid: String
-    ): DeviceCoolingAutomaticSettingsSnapshot {
-        val uid = deviceUid.toDeviceUidOrNull() ?: return DeviceCoolingAutomaticSettingsSnapshot()
-        val modules = devicesRepository.runtimeModules() ?: return DeviceCoolingAutomaticSettingsSnapshot()
-        return modules.cooling.states.value[uid]?.status.toAutomaticSnapshot()
-    }
+    ): DeviceCoolingAutomaticSettingsSnapshot = deviceUid.toDeviceUidOrNull()
+        ?.let { uid -> devicesRepository.runtimeModules()?.cooling?.states?.value?.get(uid)?.status }
+        .toAutomaticSnapshot()
 
     override suspend fun refreshAutomaticSettings(deviceUid: String): Result<Unit> = runCatching {
         val uid = requireRegisteredDeviceUid(deviceUid)
@@ -101,7 +101,10 @@ private fun DeviceCoolingStatus?.toAutomaticSnapshot(): DeviceCoolingAutomaticSe
         .firstOrNull()
         ?.percentNow
         ?.takeIf(Double::isFinite)
-        ?.coerceIn(0.0, 100.0)
+        ?.coerceIn(
+            DEVICE_COOLING_FAN_PERCENT_MINIMUM.toDouble(),
+            DEVICE_COOLING_FAN_PERCENT_MAXIMUM.toDouble()
+        )
     val available = status.supported && status.fanSupported && status.temperatureSupported
     return DeviceCoolingAutomaticSettingsSnapshot(
         available = available,

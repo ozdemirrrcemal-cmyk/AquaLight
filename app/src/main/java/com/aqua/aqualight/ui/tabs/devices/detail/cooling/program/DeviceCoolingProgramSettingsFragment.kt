@@ -45,12 +45,14 @@ class DeviceCoolingProgramSettingsFragment : DeviceCoolingModeSettingsFragment(
                 val state by viewModel.uiState.collectAsStateWithLifecycle()
                 DeviceCoolingProgramSettingsScreen(
                     state = state,
-                    onSlotClick = viewModel::selectSlot,
-                    onAddSlot = viewModel::addTimeSlot,
-                    onDeleteSlot = { slotId -> viewModel.deleteTimeSlot(slotId) },
-                    onStartTimeClick = ::showStartTimeSheet,
-                    onEndTimeClick = ::showEndTimeSheet,
-                    onFanLimitChange = viewModel::updateFanLimit
+                    actions = DeviceCoolingProgramSettingsActions(
+                        onSlotClick = viewModel::selectSlot,
+                        onAddSlot = viewModel::addTimeSlot,
+                        onDeleteSlot = { slotId -> viewModel.deleteTimeSlot(slotId) },
+                        onStartTimeClick = ::showStartTimeSheet,
+                        onEndTimeClick = ::showEndTimeSheet,
+                        onFanLimitChange = viewModel::updateFanLimit
+                    )
                 )
             }
         }
