@@ -118,23 +118,23 @@ internal fun DeviceCoolingProgramSettingsScreen(
                 onAddSlot = actions.onAddSlot
             )
         }
-        state.slots.forEach { slot ->
-            item(key = "slot-${slot.id}") {
+        state.slots.forEachIndexed { slotIndex, slot ->
+            item(key = "slot-$slotIndex") {
                 ProgramSlotCard(
                     model = ProgramSlotCardModel(
                         slot = slot,
-                        selected = slot.id == state.selectedSlotId
+                        selected = slotIndex == state.selectedSlotIndex
                     ),
                     context = context,
                     colors = colors,
                     typography = typography,
                     actions = ProgramSlotCardActions(
-                        onHeaderClick = { actions.onSlotClick(slot.id) },
-                        onDeleteClick = { actions.onDeleteSlot(slot.id) },
-                        onStartTimeClick = { actions.onStartTimeClick(slot.id) },
-                        onEndTimeClick = { actions.onEndTimeClick(slot.id) },
+                        onHeaderClick = { actions.onSlotClick(slotIndex) },
+                        onDeleteClick = { actions.onDeleteSlot(slotIndex) },
+                        onStartTimeClick = { actions.onStartTimeClick(slotIndex) },
+                        onEndTimeClick = { actions.onEndTimeClick(slotIndex) },
                         onFanLimitChange = { percent ->
-                            actions.onFanLimitChange(slot.id, percent)
+                            actions.onFanLimitChange(slotIndex, percent)
                         }
                     )
                 )
