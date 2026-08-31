@@ -35,8 +35,14 @@ internal fun AquaCoolingFanPercentSlider(
     modifier: Modifier = Modifier
 ) {
     require(state.stepPercent > 0)
+    require(state.minimumPercent in AquaCoolingGaugeSpec.minimumPercent..AquaCoolingGaugeSpec.maximumPercent)
+    require(state.maximumPercent in state.minimumPercent..AquaCoolingGaugeSpec.maximumPercent)
     var widthPx by remember { mutableFloatStateOf(0f) }
-    val range = FanPercentSliderRange(stepPercent = state.stepPercent)
+    val range = FanPercentSliderRange(
+        minimum = state.minimumPercent,
+        maximum = state.maximumPercent,
+        stepPercent = state.stepPercent
+    )
     val clamped = range.snap(state.percent)
     val stateText = stringResource(R.string.device_cooling_percent_value_format, clamped)
     val interaction = FanPercentSliderInteraction(
@@ -163,8 +169,8 @@ private data class FanPercentSliderInteraction(
 }
 
 private data class FanPercentSliderRange(
-    val minimum: Int = AquaCoolingGaugeSpec.minimumPercent,
-    val maximum: Int = AquaCoolingGaugeSpec.maximumPercent,
+    val minimum: Int,
+    val maximum: Int,
     val stepPercent: Int
 ) {
     val span: Int = (maximum - minimum).coerceAtLeast(1)
