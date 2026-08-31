@@ -22,10 +22,10 @@ import io.github.sceneview.Scene
 import io.github.sceneview.SurfaceType
 import io.github.sceneview.math.Position
 import io.github.sceneview.math.Rotation
+import io.github.sceneview.math.Size
 import io.github.sceneview.rememberCameraNode
 import io.github.sceneview.rememberEngine
-import io.github.sceneview.rememberModelInstance
-import io.github.sceneview.rememberModelLoader
+import io.github.sceneview.rememberMaterialLoader
 import io.github.sceneview.rememberNode
 import kotlinx.coroutines.currentCoroutineContext
 import kotlinx.coroutines.isActive
@@ -40,11 +40,13 @@ internal fun CoolingFanRealtimeCard(
     val resolvedPercent = fanPercent
         ?.coerceIn(CoolingFanVisualSpec.minimumPercent, CoolingFanVisualSpec.maximumPercent)
         ?: CoolingFanVisualSpec.previewPercent
-    val visualRpm = fanPercent?.let {
-        CoolingFanVisualSpec.minimumVisualRpm +
+    val visualRpm = when {
+        fanPercent == null -> CoolingFanVisualSpec.previewVisualRpm
+        resolvedPercent == CoolingFanVisualSpec.minimumPercent -> CoolingFanVisualSpec.stoppedVisualRpm
+        else -> CoolingFanVisualSpec.minimumVisualRpm +
             (CoolingFanVisualSpec.maximumVisualRpm - CoolingFanVisualSpec.minimumVisualRpm) *
             resolvedPercent.toFloat() / CoolingFanVisualSpec.maximumPercent.toFloat()
-    } ?: CoolingFanVisualSpec.previewVisualRpm
+    }
 
     var rotorAngleDegrees by remember { mutableFloatStateOf(CoolingFanVisualSpec.initialRotorAngle) }
 
@@ -91,9 +93,9 @@ private fun CoolingFanScene(
     modifier: Modifier = Modifier
 ) {
     val engine = rememberEngine()
-    val modelLoader = rememberModelLoader(engine)
+    val materialLoader = rememberMaterialLoader(engine)
     val targetNode = rememberNode(engine) {
-        position = Position(z = CoolingFanVisualSpec.cameraTargetZ)
+        position = Position(y = CoolingFanVisualSpec.cameraTargetY)
     }
     val cameraNode = rememberCameraNode(engine) {
         position = Position(
@@ -103,35 +105,144 @@ private fun CoolingFanScene(
         )
         lookAt(targetNode)
     }
-    val bodyInstance = rememberModelInstance(
-        modelLoader = modelLoader,
-        assetFileLocation = CoolingFanVisualSpec.bodyAssetPath
-    )
-    val rotorInstance = rememberModelInstance(
-        modelLoader = modelLoader,
-        assetFileLocation = CoolingFanVisualSpec.rotorAssetPath
-    )
+    val graphite = remember(materialLoader) {
+        materialLoader.createColorInstance(
+            color = Color(CoolingFanVisualSpec.graphiteColor),
+            metallic = CoolingFanVisualSpec.graphiteMetallic,
+            roughness = CoolingFanVisualSpec.graphiteRoughness
+        )
+    }
+    val machinedMetal = remember(materialLoader) {
+        materialLoader.createColorInstance(
+            color = Color(CoolingFanVisualSpec.machinedMetalColor),
+            metallic = CoolingFanVisualSpec.machinedMetallic,
+            roughness = CoolingFanVisualSpec.machinedMetalRoughness
+        )
+    }
+    val deepBlack = remember(materialLoader) {
+        materialLoader.createColorInstance(
+            color = Color(CoolingFanVisualSpec.deepBlackColor),
+            metallic = CoolingFanVisualSpec.deepBlackMetallic,
+            roughness = CoolingFanVisualSpec.deepBlackRoughness
+        )
+    }
+    val aqua = remember(materialLoader) {
+        materialLoader.createColorInstance(
+            color = Color(CoolingFanVisualSpec.aquaColor),
+            metallic = CoolingFanVisualSpec.aquaMetallic,
+            roughness = CoolingFanVisualSpec.aquaRoughness
+        )
+    }
 
     Scene(
         modifier = modifier,
         surfaceType = SurfaceType.TextureSurface,
         engine = engine,
-        modelLoader = modelLoader,
+        materialLoader = materialLoader,
         cameraNode = cameraNode,
         cameraManipulator = null,
         isOpaque = false,
         onGestureListener = null
     ) {
-        bodyInstance?.let { instance ->
-            ModelNode(modelInstance = instance)
-        }
-        rotorInstance?.let { instance ->
-            ModelNode(
-                modelInstance = instance,
-                position = Position(y = CoolingFanVisualSpec.rotorCenterY),
-                rotation = Rotation(z = rotorAngleDegrees)
+        CubeNode(
+            size = Size(x = 2.55f, y = 0.40f, z = 1.58f),
+            materialInstance = graphite
+        )
+        CubeNode(
+            size = Size(x = 2.38f, y = 0.035f, z = 1.44f),
+            materialInstance = machinedMetal,
+            position = Position(y = 0.218f)
+        )
+
+        CylinderNode(
+            radius = 0.76f,
+            height = 0.038f,
+            sideCount = CoolingFanVisualSpec.roundSideCount,
+            materialInstance = machinedMetal,
+            position = Position(y = 0.255f, z = -0.03f)
+        )
+        CylinderNode(
+            radius = 0.725f,
+            height = 0.035f,
+            sideCount = CoolingFanVisualSpec.roundSideCount,
+            materialInstance = aqua,
+            position = Position(y = 0.278f, z = -0.03f)
+        )
+        CylinderNode(
+            radius = 0.675f,
+            height = 0.043f,
+            sideCount = CoolingFanVisualSpec.roundSideCount,
+            materialInstance = deepBlack,
+            position = Position(y = 0.300f, z = -0.03f)
+        )
+
+        Node(
+            position = Position(y = 0.334f, z = -0.03f),
+            rotation = Rotation(y = rotorAngleDegrees)
+        ) {
+            repeat(CoolingFanVisualSpec.bladeCount) { bladeIndex ->
+                val bladeRotation = bladeIndex * CoolingFanVisualSpec.bladeStepDegrees +
+                    CoolingFanVisualSpec.bladePitchDegrees
+                Node(rotation = Rotation(y = bladeRotation)) {
+                    CubeNode(
+                        size = Size(x = 0.56f, y = 0.042f, z = 0.18f),
+                        materialInstance = deepBlack,
+                        position = Position(x = 0.35f),
+                        rotation = Rotation(y = CoolingFanVisualSpec.bladeSkewDegrees)
+                    )
+                }
+            }
+            CylinderNode(
+                radius = 0.18f,
+                height = 0.075f,
+                sideCount = CoolingFanVisualSpec.roundSideCount,
+                materialInstance = machinedMetal,
+                position = Position(y = 0.035f)
             )
         }
+
+        CubeNode(
+            size = Size(x = 1.92f, y = 0.33f, z = 0.045f),
+            materialInstance = deepBlack,
+            position = Position(y = -0.03f, z = 0.808f)
+        )
+        listOf(-0.17f, 0.17f).forEach { y ->
+            CubeNode(
+                size = Size(x = 2.02f, y = 0.045f, z = 0.05f),
+                materialInstance = machinedMetal,
+                position = Position(y = y, z = 0.835f)
+            )
+        }
+        listOf(-0.72f, -0.36f, 0f, 0.36f, 0.72f).forEach { x ->
+            CubeNode(
+                size = Size(x = 0.018f, y = 0.27f, z = 0.024f),
+                materialInstance = machinedMetal,
+                position = Position(x = x, y = -0.03f, z = 0.842f)
+            )
+        }
+        listOf(-0.12f, -0.06f, 0f, 0.06f, 0.12f).forEach { y ->
+            CubeNode(
+                size = Size(x = 1.84f, y = 0.014f, z = 0.024f),
+                materialInstance = machinedMetal,
+                position = Position(y = y - 0.03f, z = 0.844f)
+            )
+        }
+
+        CubeNode(
+            size = Size(x = 0.78f, y = 0.20f, z = 0.58f),
+            materialInstance = graphite,
+            position = Position(x = 0.55f, y = -0.31f, z = 0.20f)
+        )
+        CubeNode(
+            size = Size(x = 0.30f, y = 0.76f, z = 0.40f),
+            materialInstance = graphite,
+            position = Position(x = 0.55f, y = -0.74f, z = 0.20f)
+        )
+        CubeNode(
+            size = Size(x = 0.72f, y = 0.14f, z = 0.72f),
+            materialInstance = machinedMetal,
+            position = Position(x = 0.55f, y = -1.19f, z = 0.20f)
+        )
     }
 }
 
@@ -150,7 +261,7 @@ private fun CoolingAirflowOverlay(
 
     Canvas(modifier = modifier) {
         val phaseRadians = phaseDegrees / CoolingFanVisualSpec.fullRotationDegrees *
-            (CoolingFanVisualSpec.twoPi).toFloat()
+            CoolingFanVisualSpec.twoPi.toFloat()
         val originY = size.height * CoolingFanVisualSpec.airflowOriginYFraction
         val endY = size.height * CoolingFanVisualSpec.airflowEndYFraction
         val startX = size.width * CoolingFanVisualSpec.airflowStartXFraction
@@ -184,9 +295,7 @@ private fun CoolingAirflowOverlay(
                         (CoolingFanVisualSpec.airflowLeadingAlpha -
                             streamFraction * CoolingFanVisualSpec.airflowTrailingAlphaReduction)
                 ),
-                style = Stroke(
-                    width = CoolingFanVisualSpec.airflowStrokeWidth.toPx()
-                )
+                style = Stroke(width = CoolingFanVisualSpec.airflowStrokeWidth.toPx())
             )
         }
     }
@@ -207,14 +316,29 @@ private object CoolingFanVisualSpec {
     const val nanosecondsPerSecond = 1_000_000_000f
     const val maximumFrameDeltaSeconds = 0.05f
 
-    const val bodyAssetPath = "models/cooling_fan_body.glb"
-    const val rotorAssetPath = "models/cooling_fan_rotor.glb"
-    const val rotorCenterY = 0.12f
+    const val bladeCount = 6
+    const val bladeStepDegrees = fullRotationDegrees / bladeCount
+    const val bladePitchDegrees = 12f
+    const val bladeSkewDegrees = 18f
+    const val roundSideCount = 36
 
-    const val cameraX = 2.65f
-    const val cameraY = -4.15f
-    const val cameraZ = 2.55f
-    const val cameraTargetZ = -0.30f
+    const val cameraX = 2.80f
+    const val cameraY = 2.45f
+    const val cameraZ = 4.25f
+    const val cameraTargetY = -0.28f
+
+    const val graphiteColor = 0xFF202832
+    const val machinedMetalColor = 0xFF65707D
+    const val deepBlackColor = 0xFF040A10
+    const val aquaColor = 0xFF21D7F3
+    const val graphiteMetallic = 0.90f
+    const val graphiteRoughness = 0.23f
+    const val machinedMetallic = 0.96f
+    const val machinedMetalRoughness = 0.16f
+    const val deepBlackMetallic = 0.72f
+    const val deepBlackRoughness = 0.18f
+    const val aquaMetallic = 0.30f
+    const val aquaRoughness = 0.14f
 
     val cardHeight = 224.dp
 
