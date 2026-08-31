@@ -119,8 +119,8 @@ object AquaCoolingHistoryGeometry {
     val tableRowVerticalPadding = 10.dp
     val tableColumnGap = 6.dp
     val tableDividerHeight = 1.dp
-    val tableDateWeight = 1.35f
-    val tableValueWeight = 1f
+    const val tableDateWeight = 1.35f
+    const val tableValueWeight = 1f
 
     val sourceDotSize = 6.dp
     val sourceGap = 6.dp
