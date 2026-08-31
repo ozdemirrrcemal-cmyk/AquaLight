@@ -197,7 +197,8 @@ private fun DeviceCoolingMode.toProductMode(): DeviceCoolingControlMode = when (
     DeviceCoolingMode.OFF -> DeviceCoolingControlMode.MANUAL
 }
 
-private fun Double.toSafePercentOrNull(): Int? = takeIf(Double::isFinite)
+private fun Double?.toSafePercentOrNull(): Int? = this
+    ?.takeIf(Double::isFinite)
     ?.roundToInt()
     ?.coerceIn(MINIMUM_PERCENT, MAXIMUM_PERCENT)
 
