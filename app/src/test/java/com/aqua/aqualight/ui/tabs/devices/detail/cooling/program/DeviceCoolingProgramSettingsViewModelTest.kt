@@ -1,105 +1,163 @@
 package com.aqua.aqualight.ui.tabs.devices.detail.cooling.program
 
+import com.aqua.aqualight.application.devices.cooling.CoolingProgramCapabilities
+import com.aqua.aqualight.application.devices.cooling.CoolingProgramDraftSlotIdFactory
+import com.aqua.aqualight.application.devices.cooling.CoolingProgramReadResult
+import com.aqua.aqualight.application.devices.cooling.CoolingProgramSaveResult
+import com.aqua.aqualight.application.devices.cooling.CoolingProgramSlot
+import com.aqua.aqualight.application.devices.cooling.CoolingProgramSnapshot
+import com.aqua.aqualight.application.devices.cooling.DeviceCoolingProgramOperations
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.test.UnconfinedTestDispatcher
+import kotlinx.coroutines.test.resetMain
+import kotlinx.coroutines.test.runTest
+import kotlinx.coroutines.test.setMain
+import org.junit.After
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
-import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
+import org.junit.Before
 import org.junit.Test
 
+@OptIn(ExperimentalCoroutinesApi::class)
 class DeviceCoolingProgramSettingsViewModelTest {
+    private val dispatcher = UnconfinedTestDispatcher()
 
-    @Test
-    fun startsWithoutFixedProgramPeriods() {
-        val viewModel = DeviceCoolingProgramSettingsViewModel()
-        assertTrue(viewModel.uiState.value.slots.isEmpty())
-        assertFalse(viewModel.uiState.value.hasChanges)
+    @Before
+    fun setUp() {
+        Dispatchers.setMain(dispatcher)
+    }
+
+    @After
+    fun tearDown() {
+        Dispatchers.resetMain()
     }
 
     @Test
-    fun rejectsPartiallyOverlappingProgramRange() {
-        val viewModel = DeviceCoolingProgramSettingsViewModel()
-        viewModel.addTimeSlot()
-        viewModel.addTimeSlot()
-        configurePeriod(viewModel, FIRST_PERIOD_ID, hour(8), hour(14))
-        configurePeriod(viewModel, SECOND_PERIOD_ID, hour(14), hour(16))
-        assertFalse(viewModel.updateStartTime(SECOND_PERIOD_ID, hour(12)))
-        val second = viewModel.slot(SECOND_PERIOD_ID)
-        assertEquals(hour(14), second.startMinutes)
-        assertEquals(hour(16), second.endMinutes)
+    fun unavailableProgramDoesNotExposeEditableFakeState() = runTest(dispatcher) {
+        val viewModel = createViewModel(
+            readResult = CoolingProgramReadResult.Unavailable
+        )
+
+        viewModel.bind(DEVICE_UID)
+
+        val state = viewModel.uiState.value
+        assertEquals(DeviceCoolingProgramLoadState.UNAVAILABLE, state.loadState)
+        assertTrue(state.slots.isEmpty())
+        assertFalse(state.hasChanges)
+        assertFalse(state.canAddSlot)
+        assertFalse(state.canSave)
     }
 
     @Test
-    fun allowsProgramsToTouchAtTheirBoundaries() {
-        val viewModel = DeviceCoolingProgramSettingsViewModel()
+    fun reportedCapabilitiesDriveFanSnappingAndSlotLimit() = runTest(dispatcher) {
+        val capabilities = capabilities(maximumSlotCount = 1, fanLimitStepPercent = 10)
+        val viewModel = createViewModel(
+            readResult = CoolingProgramReadResult.Loaded(
+                CoolingProgramSnapshot(emptyList(), capabilities)
+            )
+        )
+
+        viewModel.bind(DEVICE_UID)
         viewModel.addTimeSlot()
+        viewModel.updateFanLimit(FIRST_SLOT_ID, 63)
         viewModel.addTimeSlot()
-        configurePeriod(viewModel, FIRST_PERIOD_ID, hour(8), hour(14))
-        configurePeriod(viewModel, SECOND_PERIOD_ID, hour(14), hour(20))
-        val boundary = hour(14) + 30
-        assertTrue(viewModel.updateStartTime(SECOND_PERIOD_ID, boundary))
-        assertTrue(viewModel.updateEndTime(FIRST_PERIOD_ID, boundary))
-        assertEquals(boundary, viewModel.slot(FIRST_PERIOD_ID).endMinutes)
-        assertEquals(boundary, viewModel.slot(SECOND_PERIOD_ID).startMinutes)
+
+        assertEquals(1, viewModel.uiState.value.slots.size)
+        assertEquals(60, viewModel.slot(FIRST_SLOT_ID).fanLimitPercent)
+        assertFalse(viewModel.uiState.value.canAddSlot)
     }
 
     @Test
-    fun handlesOvernightRangesWhenCheckingOverlap() {
-        val viewModel = DeviceCoolingProgramSettingsViewModel()
-        viewModel.addTimeSlot()
-        viewModel.addTimeSlot()
-        configurePeriod(viewModel, FIRST_PERIOD_ID, hour(8), hour(14))
-        assertTrue(viewModel.updateStartTime(SECOND_PERIOD_ID, hour(23) + 30))
-        assertTrue(viewModel.updateEndTime(SECOND_PERIOD_ID, hour(8)))
-        val adjacentOvernight = viewModel.slot(SECOND_PERIOD_ID)
-        assertEquals(hour(23) + 30, adjacentOvernight.startMinutes)
-        assertEquals(hour(8), adjacentOvernight.endMinutes)
-        assertFalse(viewModel.updateEndTime(SECOND_PERIOD_ID, hour(9)))
-        assertEquals(hour(8), viewModel.slot(SECOND_PERIOD_ID).endMinutes)
+    fun crossMidnightEditIsRejected() = runTest(dispatcher) {
+        val capabilities = capabilities()
+        val original = CoolingProgramSlot(
+            id = FIRST_SLOT_ID,
+            startMinutes = hour(8),
+            endMinutes = hour(14),
+            fanLimitPercent = 60
+        )
+        val viewModel = createViewModel(
+            readResult = CoolingProgramReadResult.Loaded(
+                CoolingProgramSnapshot(listOf(original), capabilities)
+            )
+        )
+
+        viewModel.bind(DEVICE_UID)
+
+        assertFalse(viewModel.updateEndTime(FIRST_SLOT_ID, hour(7)))
+        assertEquals(hour(14), viewModel.slot(FIRST_SLOT_ID).endMinutes)
     }
 
     @Test
-    fun deletesPersistedUserPeriodAndMarksDraftDirty() {
-        val viewModel = DeviceCoolingProgramSettingsViewModel()
+    fun unavailableSaveNeverMarksDraftAsPersisted() = runTest(dispatcher) {
+        val capabilities = capabilities()
+        val viewModel = createViewModel(
+            readResult = CoolingProgramReadResult.Loaded(
+                CoolingProgramSnapshot(emptyList(), capabilities)
+            ),
+            saveResult = CoolingProgramSaveResult.Unavailable
+        )
+
+        viewModel.bind(DEVICE_UID)
         viewModel.addTimeSlot()
-        viewModel.saveDraft()
-        assertFalse(viewModel.uiState.value.hasChanges)
-        assertTrue(viewModel.deleteTimeSlot(FIRST_PERIOD_ID))
-        assertTrue(viewModel.uiState.value.slots.isEmpty())
-        assertNull(viewModel.uiState.value.selectedSlotId)
         assertTrue(viewModel.uiState.value.hasChanges)
-        assertEquals(DeviceCoolingProgramSaveState.IDLE, viewModel.uiState.value.saveState)
+
+        viewModel.saveDraft()
+
+        val state = viewModel.uiState.value
+        assertEquals(DeviceCoolingProgramSaveState.ERROR, state.saveState)
+        assertTrue(state.hasChanges)
+        assertTrue(state.persistedSlots.isEmpty())
     }
 
-    @Test
-    fun fanLimitIsClampedAndSnappedToFivePercentSteps() {
-        val viewModel = DeviceCoolingProgramSettingsViewModel()
-        viewModel.addTimeSlot()
-        viewModel.updateFanLimit(FIRST_PERIOD_ID, 63)
-        assertEquals(65, viewModel.slot(FIRST_PERIOD_ID).fanLimitPercent)
-        viewModel.updateFanLimit(FIRST_PERIOD_ID, -20)
-        assertEquals(0, viewModel.slot(FIRST_PERIOD_ID).fanLimitPercent)
-        viewModel.updateFanLimit(FIRST_PERIOD_ID, 120)
-        assertEquals(100, viewModel.slot(FIRST_PERIOD_ID).fanLimitPercent)
+    private fun createViewModel(
+        readResult: CoolingProgramReadResult,
+        saveResult: CoolingProgramSaveResult = CoolingProgramSaveResult.Unavailable
+    ): DeviceCoolingProgramSettingsViewModel = DeviceCoolingProgramSettingsViewModel(
+        operations = FakeCoolingProgramOperations(readResult, saveResult),
+        draftSlotIdFactory = SequenceSlotIdFactory()
+    )
+
+    private fun DeviceCoolingProgramSettingsViewModel.slot(slotId: String): CoolingProgramSlot =
+        uiState.value.slots.first { slot -> slot.id == slotId }
+
+    private fun capabilities(
+        maximumSlotCount: Int = 6,
+        fanLimitStepPercent: Int = 10
+    ): CoolingProgramCapabilities = CoolingProgramCapabilities(
+        minimumSlotCount = 0,
+        maximumSlotCount = maximumSlotCount,
+        minimumFanLimitPercent = 0,
+        maximumFanLimitPercent = 100,
+        fanLimitStepPercent = fanLimitStepPercent,
+        minimumSlotDurationMinutes = 15
+    )
+
+    private class FakeCoolingProgramOperations(
+        private val readResult: CoolingProgramReadResult,
+        private val saveResult: CoolingProgramSaveResult
+    ) : DeviceCoolingProgramOperations {
+        override suspend fun readProgram(deviceUid: String): CoolingProgramReadResult = readResult
+
+        override suspend fun saveProgram(
+            deviceUid: String,
+            slots: List<CoolingProgramSlot>
+        ): CoolingProgramSaveResult = saveResult
     }
 
-    private fun configurePeriod(
-        viewModel: DeviceCoolingProgramSettingsViewModel,
-        slotId: String,
-        startMinutes: Int,
-        endMinutes: Int
-    ) {
-        assertTrue(viewModel.updateStartTime(slotId, startMinutes))
-        assertTrue(viewModel.updateEndTime(slotId, endMinutes))
-    }
+    private class SequenceSlotIdFactory : CoolingProgramDraftSlotIdFactory {
+        private var next = 1
 
-    private fun DeviceCoolingProgramSettingsViewModel.slot(
-        slotId: String
-    ): DeviceCoolingProgramSlot = uiState.value.slots.first { slot -> slot.id == slotId }
+        override fun create(): String = "slot-${next++}"
+    }
 
     private companion object {
-        const val FIRST_PERIOD_ID = "period-1"
-        const val SECOND_PERIOD_ID = "period-2"
+        const val DEVICE_UID = "cooling-device"
+        const val FIRST_SLOT_ID = "slot-1"
         const val MINUTES_PER_HOUR = 60
+
         fun hour(value: Int): Int = value * MINUTES_PER_HOUR
     }
 }

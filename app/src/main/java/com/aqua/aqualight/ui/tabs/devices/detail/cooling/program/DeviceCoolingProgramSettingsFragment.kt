@@ -11,6 +11,7 @@ import androidx.lifecycle.repeatOnLifecycle
 import androidx.navigation.fragment.navArgs
 import com.aqua.aqualight.R
 import com.aqua.aqualight.base.BaseActivity
+import com.aqua.aqualight.composition.requireAppContainer
 import com.aqua.aqualight.ui.common.bottomsheet.AquaTimePickerBottomSheet
 import com.aqua.aqualight.ui.common.header.AquaHeaderPrimaryAction
 import com.aqua.aqualight.ui.tabs.devices.detail.cooling.common.DeviceCoolingModeSettingsFragment
@@ -23,7 +24,9 @@ class DeviceCoolingProgramSettingsFragment : DeviceCoolingModeSettingsFragment(
 ) {
 
     private val args: DeviceCoolingProgramSettingsFragmentArgs by navArgs()
-    private val viewModel: DeviceCoolingProgramSettingsViewModel by viewModels()
+    private val viewModel: DeviceCoolingProgramSettingsViewModel by viewModels {
+        requireContext().requireAppContainer().defaultViewModelFactory
+    }
 
     override val destinationDeviceUid: String
         get() = args.deviceUid
@@ -31,7 +34,7 @@ class DeviceCoolingProgramSettingsFragment : DeviceCoolingModeSettingsFragment(
     override fun modeSettingsPrimaryAction(): AquaHeaderPrimaryAction = AquaHeaderPrimaryAction(
         text = getString(R.string.device_cooling_program_save),
         contentDescription = getString(R.string.device_cooling_program_save),
-        enabled = viewModel.uiState.value.hasChanges,
+        enabled = viewModel.uiState.value.canSave,
         onClick = viewModel::saveDraft
     )
 
@@ -39,21 +42,30 @@ class DeviceCoolingProgramSettingsFragment : DeviceCoolingModeSettingsFragment(
         super.onModeSettingsViewCreated(savedInstanceState)
         registerPickerResults()
         bindHeaderSaveState()
+        bindSaveFeedback()
+        viewModel.bind(destinationDeviceUid)
         modeSettingsBinding.coolingModeSettingsCompose.apply {
             setViewCompositionStrategy(ViewCompositionStrategy.DisposeOnViewTreeLifecycleDestroyed)
             setContent {
                 val state by viewModel.uiState.collectAsStateWithLifecycle()
-                DeviceCoolingProgramSettingsScreen(
-                    state = state,
-                    actions = DeviceCoolingProgramSettingsActions(
-                        onSlotClick = viewModel::selectSlot,
-                        onAddSlot = viewModel::addTimeSlot,
-                        onDeleteSlot = { slotId -> viewModel.deleteTimeSlot(slotId) },
-                        onStartTimeClick = ::showStartTimeSheet,
-                        onEndTimeClick = ::showEndTimeSheet,
-                        onFanLimitChange = viewModel::updateFanLimit
+                if (state.loadState == DeviceCoolingProgramLoadState.CONTENT) {
+                    DeviceCoolingProgramSettingsScreen(
+                        state = state,
+                        actions = DeviceCoolingProgramSettingsActions(
+                            onSlotClick = viewModel::selectSlot,
+                            onAddSlot = viewModel::addTimeSlot,
+                            onDeleteSlot = { slotId -> viewModel.deleteTimeSlot(slotId) },
+                            onStartTimeClick = ::showStartTimeSheet,
+                            onEndTimeClick = ::showEndTimeSheet,
+                            onFanLimitChange = viewModel::updateFanLimit
+                        )
                     )
-                )
+                } else {
+                    DeviceCoolingProgramAvailabilityScreen(
+                        loadState = state.loadState,
+                        onRetry = viewModel::retry
+                    )
+                }
             }
         }
     }
@@ -62,9 +74,27 @@ class DeviceCoolingProgramSettingsFragment : DeviceCoolingModeSettingsFragment(
         viewLifecycleOwner.lifecycleScope.launch {
             viewLifecycleOwner.repeatOnLifecycle(Lifecycle.State.STARTED) {
                 viewModel.uiState
-                    .map { state: DeviceCoolingProgramSettingsUiState -> state.hasChanges }
+                    .map(DeviceCoolingProgramSettingsUiState::canSave)
                     .distinctUntilChanged()
-                    .collect { _: Boolean -> refreshModeSettingsHeader() }
+                    .collect { refreshModeSettingsHeader() }
+            }
+        }
+    }
+
+    private fun bindSaveFeedback() {
+        viewLifecycleOwner.lifecycleScope.launch {
+            viewLifecycleOwner.repeatOnLifecycle(Lifecycle.State.STARTED) {
+                viewModel.uiState
+                    .map(DeviceCoolingProgramSettingsUiState::saveState)
+                    .distinctUntilChanged()
+                    .collect { saveState ->
+                        if (saveState == DeviceCoolingProgramSaveState.ERROR) {
+                            (activity as? BaseActivity)?.showSnackBar(
+                                getString(R.string.device_cooling_program_save_failed),
+                                BaseActivity.SnackType.WARNING
+                            )
+                        }
+                    }
             }
         }
     }
@@ -72,12 +102,12 @@ class DeviceCoolingProgramSettingsFragment : DeviceCoolingModeSettingsFragment(
     private fun registerPickerResults() {
         registerTimeResult(REQUEST_START_TIME) { slotId, minutesOfDay ->
             if (!viewModel.updateStartTime(slotId, minutesOfDay)) {
-                showScheduleOverlapWarning()
+                showScheduleValidationWarning()
             }
         }
         registerTimeResult(REQUEST_END_TIME) { slotId, minutesOfDay ->
             if (!viewModel.updateEndTime(slotId, minutesOfDay)) {
-                showScheduleOverlapWarning()
+                showScheduleValidationWarning()
             }
         }
     }
@@ -101,9 +131,9 @@ class DeviceCoolingProgramSettingsFragment : DeviceCoolingModeSettingsFragment(
         }
     }
 
-    private fun showScheduleOverlapWarning() {
+    private fun showScheduleValidationWarning() {
         (activity as? BaseActivity)?.showSnackBar(
-            getString(R.string.device_cooling_program_schedule_overlap),
+            getString(R.string.device_cooling_program_schedule_invalid),
             BaseActivity.SnackType.WARNING
         )
     }

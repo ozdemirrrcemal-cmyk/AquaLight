@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="device_cooling_program_loading_title">Loading Fan Program</string>
+    <string name="device_cooling_program_loading_message">Reading the current program from the device.</string>
+    <string name="device_cooling_program_unavailable_title">Fan Program unavailable</string>
+    <string name="device_cooling_program_unavailable_message">Program settings are currently unavailable for this device.</string>
+    <string name="device_cooling_program_unsupported_title">Fan Program not supported</string>
+    <string name="device_cooling_program_unsupported_message">This device does not support Fan Program.</string>
+    <string name="device_cooling_program_load_failed_title">Fan Program could not be loaded</string>
+    <string name="device_cooling_program_load_failed_message">Try again when the device is available.</string>
+    <string name="device_cooling_program_retry">Retry</string>
+    <string name="device_cooling_program_save_failed">The fan program could not be saved. Try again.</string>
+    <string name="device_cooling_program_schedule_invalid">The selected time range is invalid or overlaps another program.</string>
+</resources>

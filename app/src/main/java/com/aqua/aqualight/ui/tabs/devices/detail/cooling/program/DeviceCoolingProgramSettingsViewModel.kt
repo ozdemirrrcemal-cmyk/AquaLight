@@ -1,141 +1,261 @@
-@file:Suppress("MagicNumber")
-
 package com.aqua.aqualight.ui.tabs.devices.detail.cooling.program
 
 import androidx.lifecycle.ViewModel
+import androidx.lifecycle.viewModelScope
+import com.aqua.aqualight.application.devices.cooling.CoolingProgramCapabilities
+import com.aqua.aqualight.application.devices.cooling.CoolingProgramDraftSlotIdFactory
+import com.aqua.aqualight.application.devices.cooling.CoolingProgramEditResult
+import com.aqua.aqualight.application.devices.cooling.CoolingProgramReadResult
+import com.aqua.aqualight.application.devices.cooling.CoolingProgramSaveResult
+import com.aqua.aqualight.application.devices.cooling.CoolingProgramSchedule
+import com.aqua.aqualight.application.devices.cooling.CoolingProgramSlot
+import com.aqua.aqualight.application.devices.cooling.DeviceCoolingProgramOperations
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
-import kotlinx.coroutines.flow.update
+import kotlinx.coroutines.launch
+
+typealias DeviceCoolingProgramSlot = CoolingProgramSlot
 
 /**
- * UI draft state for user-defined Cooling working periods.
- *
- * A program period owns only its start/end time and fan speed limit. Preset types and temperature
- * thresholds are intentionally not part of this presentation contract or firmware/user settings.
+ * Presentation-only slider resolution. Device limits and snapping come from loaded application
+ * capabilities; this value never represents a firmware or hardware constraint.
  */
-class DeviceCoolingProgramSettingsViewModel : ViewModel() {
+object DeviceCoolingProgramPolicy {
+    const val fanLimitStepPercent = 1
+}
 
-    private val initialSlots = emptyList<DeviceCoolingProgramSlot>()
-    private val _uiState = MutableStateFlow(
-        DeviceCoolingProgramSettingsUiState(
-            slots = initialSlots,
-            persistedSlots = initialSlots
-        )
-    )
+class DeviceCoolingProgramSettingsViewModel(
+    private val operations: DeviceCoolingProgramOperations,
+    private val draftSlotIdFactory: CoolingProgramDraftSlotIdFactory
+) : ViewModel() {
+
+    private val _uiState = MutableStateFlow(DeviceCoolingProgramSettingsUiState())
     val uiState: StateFlow<DeviceCoolingProgramSettingsUiState> = _uiState.asStateFlow()
 
-    private var nextSlotNumber = 1
+    private var boundDeviceUid: String? = null
+    private var loadJob: Job? = null
+    private var saveJob: Job? = null
 
-    fun selectSlot(slotId: String) {
-        _uiState.update { state ->
-            if (state.slots.none { slot -> slot.id == slotId }) {
-                state
-            } else {
-                state.copy(
-                    selectedSlotId = if (state.selectedSlotId == slotId) null else slotId
-                )
-            }
+    fun bind(deviceUid: String) {
+        val normalized = deviceUid.trim()
+        if (normalized.isEmpty()) return
+        if (boundDeviceUid == normalized && _uiState.value.loadState != DeviceCoolingProgramLoadState.IDLE) {
+            return
         }
+        boundDeviceUid = normalized
+        saveJob?.cancel()
+        loadProgram(normalized)
     }
 
-    fun updateStartTime(slotId: String, minutesOfDay: Int): Boolean =
-        updateSlot(slotId, rejectScheduleOverlap = true) { slot ->
-            val normalized = minutesOfDay.coerceIn(0, MINUTES_PER_DAY - 1)
-            if (normalized == slot.endMinutes) slot else slot.copy(startMinutes = normalized)
-        }
+    fun retry() {
+        boundDeviceUid?.let(::loadProgram)
+    }
 
-    fun updateEndTime(slotId: String, minutesOfDay: Int): Boolean =
-        updateSlot(slotId, rejectScheduleOverlap = true) { slot ->
-            val normalized = minutesOfDay.coerceIn(0, MINUTES_PER_DAY - 1)
-            if (normalized == slot.startMinutes) slot else slot.copy(endMinutes = normalized)
-        }
+    fun selectSlot(slotId: String) {
+        val state = editableState() ?: return
+        if (state.slots.none { slot -> slot.id == slotId }) return
+        _uiState.value = state.copy(
+            selectedSlotId = if (state.selectedSlotId == slotId) null else slotId
+        )
+    }
+
+    fun updateStartTime(slotId: String, minutesOfDay: Int): Boolean {
+        val state = editableState() ?: return false
+        val capabilities = state.capabilities ?: return false
+        return applyEditResult(
+            state = state,
+            slotId = slotId,
+            result = CoolingProgramSchedule.updateStartTime(
+                slots = state.slots,
+                capabilities = capabilities,
+                slotId = slotId,
+                startMinutes = minutesOfDay
+            )
+        )
+    }
+
+    fun updateEndTime(slotId: String, minutesOfDay: Int): Boolean {
+        val state = editableState() ?: return false
+        val capabilities = state.capabilities ?: return false
+        return applyEditResult(
+            state = state,
+            slotId = slotId,
+            result = CoolingProgramSchedule.updateEndTime(
+                slots = state.slots,
+                capabilities = capabilities,
+                slotId = slotId,
+                endMinutes = minutesOfDay
+            )
+        )
+    }
 
     fun updateFanLimit(slotId: String, percent: Int) {
-        updateSlot(slotId) { slot ->
-            slot.copy(fanLimitPercent = snapFanLimit(percent))
-        }
+        val state = editableState() ?: return
+        val capabilities = state.capabilities ?: return
+        applyEditResult(
+            state = state,
+            slotId = slotId,
+            result = CoolingProgramSchedule.updateFanLimit(
+                slots = state.slots,
+                capabilities = capabilities,
+                slotId = slotId,
+                percent = percent
+            )
+        )
     }
 
     fun addTimeSlot() {
-        _uiState.update { state ->
-            if (!state.canAddSlot) return@update state
-            val window = findNextFreeWindow(state.slots) ?: return@update state
-            val newSlot = DeviceCoolingProgramSlot(
-                id = "period-${nextSlotNumber++}",
-                startMinutes = window.first,
-                endMinutes = window.second,
-                fanLimitPercent = DeviceCoolingProgramPolicy.maximumFanLimitPercent
-            )
-            state.copy(
-                slots = (state.slots + newSlot).sortedBy(DeviceCoolingProgramSlot::startMinutes),
-                selectedSlotId = newSlot.id,
-                saveState = DeviceCoolingProgramSaveState.IDLE
-            )
-        }
+        val state = editableState() ?: return
+        val capabilities = state.capabilities ?: return
+        if (!state.canAddSlot) return
+        val newSlotId = draftSlotIdFactory.create()
+        val result = CoolingProgramSchedule.addSlot(
+            slots = state.slots,
+            capabilities = capabilities,
+            newSlotId = newSlotId
+        )
+        applyEditResult(state = state, slotId = newSlotId, result = result)
     }
 
     fun deleteTimeSlot(slotId: String): Boolean {
-        var deleted = false
-        _uiState.update { state ->
-            if (state.slots.none { slot -> slot.id == slotId }) {
-                state
-            } else {
-                deleted = true
-                state.copy(
-                    slots = state.slots.filterNot { slot -> slot.id == slotId },
+        val state = editableState() ?: return false
+        val capabilities = state.capabilities ?: return false
+        return when (
+            val result = CoolingProgramSchedule.deleteSlot(
+                slots = state.slots,
+                capabilities = capabilities,
+                slotId = slotId
+            )
+        ) {
+            is CoolingProgramEditResult.Updated -> {
+                _uiState.value = state.copy(
+                    slots = result.slots,
                     selectedSlotId = state.selectedSlotId.takeUnless { selected -> selected == slotId },
                     saveState = DeviceCoolingProgramSaveState.IDLE
                 )
+                true
             }
+            is CoolingProgramEditResult.Rejected -> false
         }
-        return deleted
     }
 
     fun saveDraft() {
-        _uiState.update { state ->
-            if (!state.hasChanges) state
-            else state.copy(
-                persistedSlots = state.slots,
-                saveState = DeviceCoolingProgramSaveState.SAVED
-            )
+        val deviceUid = boundDeviceUid ?: return
+        val state = _uiState.value
+        val capabilities = state.capabilities ?: return
+        if (!state.canSave || !CoolingProgramSchedule.isValidProgram(state.slots, capabilities)) {
+            return
         }
-    }
-
-    private fun updateSlot(
-        slotId: String,
-        rejectScheduleOverlap: Boolean = false,
-        transform: (DeviceCoolingProgramSlot) -> DeviceCoolingProgramSlot
-    ): Boolean {
-        var accepted = true
-        _uiState.update { state ->
-            val updated = state.slots.map { slot ->
-                if (slot.id == slotId) transform(slot) else slot
-            }
-            when {
-                updated == state.slots -> {
-                    accepted = true
-                    state
+        val draft = state.slots
+        _uiState.value = state.copy(saveState = DeviceCoolingProgramSaveState.SAVING)
+        saveJob?.cancel()
+        saveJob = viewModelScope.launch {
+            when (val result = operations.saveProgram(deviceUid, draft)) {
+                is CoolingProgramSaveResult.Saved -> applySavedSnapshot(result)
+                CoolingProgramSaveResult.Unsupported -> {
+                    _uiState.value = DeviceCoolingProgramSettingsUiState(
+                        loadState = DeviceCoolingProgramLoadState.UNSUPPORTED,
+                        saveState = DeviceCoolingProgramSaveState.ERROR
+                    )
                 }
-                rejectScheduleOverlap && updated.hasScheduleOverlapFor(slotId) -> {
-                    accepted = false
-                    state
-                }
-                else -> {
-                    accepted = true
-                    state.copy(
-                        slots = updated.sortedBy(DeviceCoolingProgramSlot::startMinutes),
-                        selectedSlotId = slotId,
-                        saveState = DeviceCoolingProgramSaveState.IDLE
+                CoolingProgramSaveResult.Unavailable,
+                CoolingProgramSaveResult.InvalidConfiguration -> {
+                    _uiState.value = _uiState.value.copy(
+                        saveState = DeviceCoolingProgramSaveState.ERROR
                     )
                 }
             }
         }
-        return accepted
+    }
+
+    private fun loadProgram(deviceUid: String) {
+        loadJob?.cancel()
+        saveJob?.cancel()
+        _uiState.value = DeviceCoolingProgramSettingsUiState(
+            loadState = DeviceCoolingProgramLoadState.LOADING
+        )
+        loadJob = viewModelScope.launch {
+            when (val result = operations.readProgram(deviceUid)) {
+                is CoolingProgramReadResult.Loaded -> applyLoadedSnapshot(result)
+                CoolingProgramReadResult.Unsupported -> {
+                    _uiState.value = DeviceCoolingProgramSettingsUiState(
+                        loadState = DeviceCoolingProgramLoadState.UNSUPPORTED
+                    )
+                }
+                CoolingProgramReadResult.Unavailable -> {
+                    _uiState.value = DeviceCoolingProgramSettingsUiState(
+                        loadState = DeviceCoolingProgramLoadState.UNAVAILABLE
+                    )
+                }
+            }
+        }
+    }
+
+    private fun applyLoadedSnapshot(result: CoolingProgramReadResult.Loaded) {
+        val snapshot = result.snapshot
+        _uiState.value = if (
+            CoolingProgramSchedule.isValidProgram(snapshot.slots, snapshot.capabilities)
+        ) {
+            DeviceCoolingProgramSettingsUiState(
+                loadState = DeviceCoolingProgramLoadState.CONTENT,
+                capabilities = snapshot.capabilities,
+                slots = snapshot.slots.sortedBy(CoolingProgramSlot::startMinutes),
+                persistedSlots = snapshot.slots.sortedBy(CoolingProgramSlot::startMinutes)
+            )
+        } else {
+            DeviceCoolingProgramSettingsUiState(
+                loadState = DeviceCoolingProgramLoadState.ERROR
+            )
+        }
+    }
+
+    private fun applySavedSnapshot(result: CoolingProgramSaveResult.Saved) {
+        val snapshot = result.snapshot
+        val current = _uiState.value
+        if (!CoolingProgramSchedule.isValidProgram(snapshot.slots, snapshot.capabilities)) {
+            _uiState.value = current.copy(saveState = DeviceCoolingProgramSaveState.ERROR)
+            return
+        }
+        val savedSlots = snapshot.slots.sortedBy(CoolingProgramSlot::startMinutes)
+        _uiState.value = current.copy(
+            capabilities = snapshot.capabilities,
+            slots = savedSlots,
+            persistedSlots = savedSlots,
+            selectedSlotId = current.selectedSlotId?.takeIf { selectedId ->
+                savedSlots.any { slot -> slot.id == selectedId }
+            },
+            saveState = DeviceCoolingProgramSaveState.SAVED
+        )
+    }
+
+    private fun editableState(): DeviceCoolingProgramSettingsUiState? =
+        _uiState.value.takeIf { state ->
+            state.loadState == DeviceCoolingProgramLoadState.CONTENT &&
+                state.saveState != DeviceCoolingProgramSaveState.SAVING
+        }
+
+    private fun applyEditResult(
+        state: DeviceCoolingProgramSettingsUiState,
+        slotId: String,
+        result: CoolingProgramEditResult
+    ): Boolean = when (result) {
+        is CoolingProgramEditResult.Updated -> {
+            _uiState.value = state.copy(
+                slots = result.slots,
+                selectedSlotId = slotId,
+                saveState = DeviceCoolingProgramSaveState.IDLE
+            )
+            true
+        }
+        is CoolingProgramEditResult.Rejected -> false
     }
 }
 
 data class DeviceCoolingProgramSettingsUiState(
+    val loadState: DeviceCoolingProgramLoadState = DeviceCoolingProgramLoadState.IDLE,
+    val capabilities: CoolingProgramCapabilities? = null,
     val slots: List<DeviceCoolingProgramSlot> = emptyList(),
     val persistedSlots: List<DeviceCoolingProgramSlot> = emptyList(),
     val selectedSlotId: String? = null,
@@ -145,92 +265,36 @@ data class DeviceCoolingProgramSettingsUiState(
         get() = slots.firstOrNull { slot -> slot.id == selectedSlotId }
 
     val hasChanges: Boolean
-        get() = slots != persistedSlots
+        get() = loadState == DeviceCoolingProgramLoadState.CONTENT && slots != persistedSlots
 
     val canAddSlot: Boolean
-        get() = slots.size < DeviceCoolingProgramPolicy.maximumSlotCount
+        get() = loadState == DeviceCoolingProgramLoadState.CONTENT &&
+            saveState != DeviceCoolingProgramSaveState.SAVING &&
+            capabilities?.let { policy -> slots.size < policy.maximumSlotCount } == true
 
-    fun activeSlotAt(minutesOfDay: Int): DeviceCoolingProgramSlot? {
-        val minute = minutesOfDay.coerceIn(0, MINUTES_PER_DAY - 1)
-        return slots.firstOrNull { slot -> slot.contains(minute) }
-    }
+    val canSave: Boolean
+        get() = hasChanges && saveState != DeviceCoolingProgramSaveState.SAVING
+
+    fun activeSlotAt(minutesOfDay: Int): DeviceCoolingProgramSlot? =
+        if (loadState == DeviceCoolingProgramLoadState.CONTENT) {
+            CoolingProgramSchedule.activeSlotAt(slots, minutesOfDay)
+        } else {
+            null
+        }
 }
 
-data class DeviceCoolingProgramSlot(
-    val id: String,
-    val startMinutes: Int,
-    val endMinutes: Int,
-    val fanLimitPercent: Int
-) {
-    init {
-        require(id.isNotBlank())
-        require(startMinutes in 0 until MINUTES_PER_DAY)
-        require(endMinutes in 0 until MINUTES_PER_DAY)
-        require(startMinutes != endMinutes)
-        require(fanLimitPercent in 0..100)
-    }
-
-    fun contains(minutesOfDay: Int): Boolean = if (startMinutes < endMinutes) {
-        minutesOfDay in startMinutes until endMinutes
-    } else {
-        minutesOfDay >= startMinutes || minutesOfDay < endMinutes
-    }
+enum class DeviceCoolingProgramLoadState {
+    IDLE,
+    LOADING,
+    CONTENT,
+    UNSUPPORTED,
+    UNAVAILABLE,
+    ERROR
 }
 
 enum class DeviceCoolingProgramSaveState {
     IDLE,
-    SAVED
+    SAVING,
+    SAVED,
+    ERROR
 }
-
-object DeviceCoolingProgramPolicy {
-    const val minimumFanLimitPercent = 0
-    const val maximumFanLimitPercent = 100
-    const val fanLimitStepPercent = 5
-    const val maximumSlotCount = 6
-}
-
-private fun snapFanLimit(percent: Int): Int {
-    val bounded = percent.coerceIn(
-        DeviceCoolingProgramPolicy.minimumFanLimitPercent,
-        DeviceCoolingProgramPolicy.maximumFanLimitPercent
-    )
-    val step = DeviceCoolingProgramPolicy.fanLimitStepPercent
-    return (((bounded + step / 2) / step) * step).coerceIn(
-        DeviceCoolingProgramPolicy.minimumFanLimitPercent,
-        DeviceCoolingProgramPolicy.maximumFanLimitPercent
-    )
-}
-
-private fun List<DeviceCoolingProgramSlot>.hasScheduleOverlapFor(slotId: String): Boolean {
-    val candidate = firstOrNull { slot -> slot.id == slotId } ?: return false
-    return any { other -> other.id != slotId && candidate.overlaps(other) }
-}
-
-private fun DeviceCoolingProgramSlot.overlaps(other: DeviceCoolingProgramSlot): Boolean =
-    contains(other.startMinutes) || other.contains(startMinutes)
-
-private fun findNextFreeWindow(
-    slots: List<DeviceCoolingProgramSlot>
-): Pair<Int, Int>? {
-    val occupied = BooleanArray(MINUTES_PER_DAY)
-    slots.forEach { slot ->
-        var minute = slot.startMinutes
-        while (minute != slot.endMinutes) {
-            occupied[minute] = true
-            minute = (minute + 1) % MINUTES_PER_DAY
-        }
-    }
-
-    for (start in 0..(MINUTES_PER_DAY - NEW_SLOT_DURATION_MINUTES) step NEW_SLOT_SCAN_STEP_MINUTES) {
-        val end = start + NEW_SLOT_DURATION_MINUTES
-        if ((start until end).all { minute -> !occupied[minute] }) {
-            return start to end
-        }
-    }
-    return null
-}
-
-private const val MINUTES_PER_HOUR = 60
-private const val MINUTES_PER_DAY = 24 * MINUTES_PER_HOUR
-private const val NEW_SLOT_DURATION_MINUTES = 60
-private const val NEW_SLOT_SCAN_STEP_MINUTES = 30
