@@ -8,6 +8,8 @@
     <string name="device_cooling_program_fan_limit">Fan Speed Limit</string>
     <string name="device_cooling_program_add_slot">+ Add</string>
     <string name="device_cooling_program_editor_title">Time Period Settings</string>
+    <string name="device_cooling_program_more_actions">More time period actions</string>
+    <string name="device_cooling_program_delete_slot">Delete time period</string>
     <string name="device_cooling_program_start_time">Start</string>
     <string name="device_cooling_program_end_time">End</string>
     <string name="device_cooling_program_label_quiet">Quiet</string>
