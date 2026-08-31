@@ -19,11 +19,6 @@ import kotlinx.coroutines.launch
 
 typealias DeviceCoolingProgramSlot = CoolingProgramSlot
 
-/** UI drag resolution only; authoritative fan-step snapping is owned by CoolingProgramPolicy. */
-object DeviceCoolingProgramPolicy {
-    const val fanLimitStepPercent = 1
-}
-
 class DeviceCoolingProgramSettingsViewModel(
     private val operations: DeviceCoolingProgramOperations
 ) : ViewModel() {
