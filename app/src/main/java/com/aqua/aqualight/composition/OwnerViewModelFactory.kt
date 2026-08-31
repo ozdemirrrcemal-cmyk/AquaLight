@@ -4,7 +4,6 @@ import android.content.Context
 import androidx.lifecycle.ViewModel
 import com.aqua.aqualight.BuildConfig
 import com.aqua.aqualight.application.devices.DeviceMenuOpenUseCase
-import com.aqua.aqualight.application.devices.cooling.UuidCoolingProgramDraftSlotIdFactory
 import com.aqua.aqualight.application.notifications.NotificationPreferenceUseCase
 import com.aqua.aqualight.application.user.UserProfileOperations
 import com.aqua.aqualight.data.aquarium.DefaultAquariumTankOperations
@@ -19,8 +18,8 @@ import com.aqua.aqualight.data.devices.DefaultDeviceRootOperations
 import com.aqua.aqualight.data.devices.DefaultDeviceStatusOperations
 import com.aqua.aqualight.data.devices.DefaultOwnerDevicesOperations
 import com.aqua.aqualight.data.devices.cooling.DefaultDeviceCoolingAutomaticSettingsOperations
-import com.aqua.aqualight.data.devices.cooling.DefaultDeviceCoolingProgramOperations
 import com.aqua.aqualight.data.devices.cooling.DefaultDeviceCoolingTemperatureHistoryOperations
+import com.aqua.aqualight.data.devices.cooling.program.DefaultDeviceCoolingProgramOperations
 import com.aqua.aqualight.data.devices.menu.DefaultDeviceMenuAccessOperations
 import com.aqua.aqualight.data.devices.provisioning.DefaultProvisioningDiscoveryOperations
 import com.aqua.aqualight.data.devices.provisioning.DefaultProvisioningProgressOperations
@@ -183,8 +182,7 @@ internal class OwnerViewModelFactory(
                 )
             DeviceCoolingProgramSettingsViewModel::class.java ->
                 DeviceCoolingProgramSettingsViewModel(
-                    operations = DefaultDeviceCoolingProgramOperations(),
-                    draftSlotIdFactory = UuidCoolingProgramDraftSlotIdFactory()
+                    operations = DefaultDeviceCoolingProgramOperations()
                 )
             DeviceTimerRootViewModel::class.java ->
                 DeviceTimerRootViewModel(DefaultDeviceRootOperations(repository))
