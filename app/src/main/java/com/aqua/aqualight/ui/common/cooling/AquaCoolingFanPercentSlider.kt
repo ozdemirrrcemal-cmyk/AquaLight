@@ -26,7 +26,7 @@ import com.aqua.aqualight.R
 import com.aqua.aqualight.ui.common.devicecard.AquaDeviceCardColors
 import kotlin.math.roundToInt
 
-/** Shared Cooling fan-percent slider used by manual and scheduled control surfaces. */
+/** Shared Cooling fan-percent slider using the dashboard's manual-control interaction contract. */
 @Composable
 fun AquaCoolingFanPercentSlider(
     percent: Int,
