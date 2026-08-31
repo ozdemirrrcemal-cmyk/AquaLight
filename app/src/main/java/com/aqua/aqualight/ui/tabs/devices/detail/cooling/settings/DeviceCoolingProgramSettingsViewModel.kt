@@ -41,14 +41,14 @@ class DeviceCoolingProgramSettingsViewModel : ViewModel() {
     }
 
     fun updateStartTime(slotId: String, minutesOfDay: Int) {
-        updateSlot(slotId) { slot ->
+        updateSlot(slotId, rejectScheduleOverlap = true) { slot ->
             val normalized = minutesOfDay.coerceIn(0, MINUTES_PER_DAY - 1)
             if (normalized == slot.endMinutes) slot else slot.copy(startMinutes = normalized)
         }
     }
 
     fun updateEndTime(slotId: String, minutesOfDay: Int) {
-        updateSlot(slotId) { slot ->
+        updateSlot(slotId, rejectScheduleOverlap = true) { slot ->
             val normalized = minutesOfDay.coerceIn(0, MINUTES_PER_DAY - 1)
             if (normalized == slot.startMinutes) slot else slot.copy(endMinutes = normalized)
         }
@@ -118,18 +118,22 @@ class DeviceCoolingProgramSettingsViewModel : ViewModel() {
 
     private fun updateSlot(
         slotId: String,
+        rejectScheduleOverlap: Boolean = false,
         transform: (DeviceCoolingProgramSlot) -> DeviceCoolingProgramSlot
     ) {
         _uiState.update { state ->
             val updated = state.slots.map { slot ->
                 if (slot.id == slotId) transform(slot) else slot
             }
-            if (updated == state.slots) state
-            else state.copy(
-                slots = updated.sortedBy(DeviceCoolingProgramSlot::startMinutes),
-                selectedSlotId = slotId,
-                saveState = DeviceCoolingProgramSaveState.IDLE
-            )
+            when {
+                updated == state.slots -> state
+                rejectScheduleOverlap && updated.hasScheduleOverlapFor(slotId) -> state
+                else -> state.copy(
+                    slots = updated.sortedBy(DeviceCoolingProgramSlot::startMinutes),
+                    selectedSlotId = slotId,
+                    saveState = DeviceCoolingProgramSaveState.IDLE
+                )
+            }
         }
     }
 }
@@ -234,6 +238,14 @@ private fun defaultProgramSlots(): List<DeviceCoolingProgramSlot> = listOf(
         fanLimitPercent = 40
     )
 )
+
+private fun List<DeviceCoolingProgramSlot>.hasScheduleOverlapFor(slotId: String): Boolean {
+    val candidate = firstOrNull { slot -> slot.id == slotId } ?: return false
+    return any { other -> other.id != slotId && candidate.overlaps(other) }
+}
+
+private fun DeviceCoolingProgramSlot.overlaps(other: DeviceCoolingProgramSlot): Boolean =
+    contains(other.startMinutes) || other.contains(startMinutes)
 
 private fun findNextFreeWindow(
     slots: List<DeviceCoolingProgramSlot>
