@@ -7,6 +7,8 @@ import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.gestures.detectHorizontalDragGestures
+import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -36,12 +38,16 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.drawscope.DrawScope
+import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.semantics.ProgressBarRangeInfo
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.progressBarRangeInfo
 import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.semantics.setProgress
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.window.Popup
@@ -58,6 +64,7 @@ import com.aqua.aqualight.ui.common.cooling.aquaCoolingDashboardTypography
 import com.aqua.aqualight.ui.common.devicecard.AquaDeviceCardColors
 import com.aqua.aqualight.ui.common.devicecard.AquaDeviceCardTypography
 import java.time.LocalTime
+import kotlin.math.roundToInt
 
 @Composable
 internal fun DeviceCoolingProgramSettingsScreen(
@@ -67,9 +74,7 @@ internal fun DeviceCoolingProgramSettingsScreen(
     onDeleteSlot: (String) -> Unit,
     onStartTimeClick: (String) -> Unit,
     onEndTimeClick: (String) -> Unit,
-    onStartTemperatureClick: (String) -> Unit,
-    onMaximumTemperatureClick: (String) -> Unit,
-    onFanLimitClick: (String) -> Unit,
+    onFanLimitChange: (String, Int) -> Unit,
     modifier: Modifier = Modifier
 ) {
     val colors = aquaCoolingDashboardColors()
@@ -125,9 +130,7 @@ internal fun DeviceCoolingProgramSettingsScreen(
                     onDeleteClick = { onDeleteSlot(slot.id) },
                     onStartTimeClick = { onStartTimeClick(slot.id) },
                     onEndTimeClick = { onEndTimeClick(slot.id) },
-                    onStartTemperatureClick = { onStartTemperatureClick(slot.id) },
-                    onMaximumTemperatureClick = { onMaximumTemperatureClick(slot.id) },
-                    onFanLimitClick = { onFanLimitClick(slot.id) }
+                    onFanLimitChange = { percent -> onFanLimitChange(slot.id, percent) }
                 )
             }
         }
@@ -160,13 +163,13 @@ private fun ProgramActiveCard(
                 )
                 BasicText(
                     text = if (activeSlot == null) {
-                        stringResource(R.string.device_cooling_program_outside_automatic)
+                        stringResource(R.string.device_cooling_program_no_active_period)
                     } else {
-                        stringResource(
-                            R.string.device_cooling_program_active_format,
-                            formatProgramTimeRange(context, activeSlot),
-                            programSlotLabel(activeSlot.label)
-                        )
+                        buildString {
+                            append(formatProgramTimeRange(context, activeSlot))
+                            append(" • ")
+                            append(programSlotSummary(activeSlot))
+                        }
                     },
                     style = typography.caption.copy(color = colors.secondaryText),
                     maxLines = 1
@@ -176,7 +179,13 @@ private fun ProgramActiveCard(
                 modifier = Modifier
                     .size(AquaCoolingProgramGeometry.activeDotSize)
                     .clip(CircleShape)
-                    .background(colors.accent.copy(alpha = AquaCoolingProgramAlpha.activeDot))
+                    .background(
+                        if (activeSlot == null) {
+                            colors.secondaryText.copy(alpha = AquaCoolingProgramAlpha.timelineTrack)
+                        } else {
+                            colors.accent.copy(alpha = AquaCoolingProgramAlpha.activeDot)
+                        }
+                    )
             )
         }
     }
@@ -251,24 +260,6 @@ private fun ProgramTimelineCard(
                     )
                 }
             }
-            if (slots.isNotEmpty()) {
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.spacedBy(AquaCoolingProgramGeometry.timelineLegendGap)
-                ) {
-                    slots.take(MAX_TIMELINE_LEGEND_ITEMS).forEach { slot ->
-                        BasicText(
-                            text = programSlotLabel(slot.label),
-                            style = typography.micro.copy(
-                                color = colors.secondaryText,
-                                textAlign = TextAlign.Center
-                            ),
-                            modifier = Modifier.weight(1f),
-                            maxLines = 1
-                        )
-                    }
-                }
-            }
         }
     }
 }
@@ -280,15 +271,9 @@ private fun DrawScope.drawProgramSlot(
     width: Float,
     colors: AquaDeviceCardColors
 ) {
-    val alpha = when (slot.label) {
-        DeviceCoolingProgramSlotLabel.QUIET -> AquaCoolingProgramAlpha.timelineQuiet
-        DeviceCoolingProgramSlotLabel.INTENSIVE -> AquaCoolingProgramAlpha.timelineIntensive
-        DeviceCoolingProgramSlotLabel.NIGHT -> AquaCoolingProgramAlpha.timelineNight
-        DeviceCoolingProgramSlotLabel.CUSTOM -> AquaCoolingProgramAlpha.timelineCustom
-    }
     val startX = width * (slot.startMinutes.toFloat() / MINUTES_PER_DAY)
     val endX = width * (slot.endMinutes.toFloat() / MINUTES_PER_DAY)
-    val color = colors.accent.copy(alpha = alpha)
+    val color = colors.accent.copy(alpha = AquaCoolingProgramAlpha.timelinePeriod)
     if (slot.startMinutes < slot.endMinutes) {
         drawLine(color, Offset(startX, y), Offset(endX, y), trackStroke, StrokeCap.Round)
     } else {
@@ -342,9 +327,7 @@ private fun ProgramSlotCard(
     onDeleteClick: () -> Unit,
     onStartTimeClick: () -> Unit,
     onEndTimeClick: () -> Unit,
-    onStartTemperatureClick: () -> Unit,
-    onMaximumTemperatureClick: () -> Unit,
-    onFanLimitClick: () -> Unit
+    onFanLimitChange: (Int) -> Unit
 ) {
     val shape = RoundedCornerShape(AquaCoolingDashboardGeometry.cardCornerRadius)
     val selectedModifier = if (selected) {
@@ -379,12 +362,6 @@ private fun ProgramSlotCard(
                     style = typography.title.copy(
                         color = if (selected) colors.accent else colors.primaryText
                     ),
-                    maxLines = 1
-                )
-                Spacer(modifier = Modifier.width(AquaCoolingProgramGeometry.slotHeaderGap))
-                BasicText(
-                    text = programSlotLabel(slot.label),
-                    style = typography.micro.copy(color = colors.secondaryText),
                     modifier = Modifier.weight(1f),
                     maxLines = 1
                 )
@@ -402,7 +379,6 @@ private fun ProgramSlotCard(
                 ProgramDivider(colors)
                 Spacer(modifier = Modifier.height(AquaCoolingProgramGeometry.expandedSectionTopGap))
                 ProgramEditorHeader(
-                    deletable = slot.label == DeviceCoolingProgramSlotLabel.CUSTOM,
                     colors = colors,
                     typography = typography,
                     onDeleteClick = onDeleteClick
@@ -421,29 +397,11 @@ private fun ProgramSlotCard(
                     typography = typography,
                     onClick = onEndTimeClick
                 )
-                ProgramEditorRow(
-                    label = stringResource(R.string.device_cooling_fan_start_temperature),
-                    value = programTemperatureText(slot.startTemperatureC),
+                ProgramFanLimitSlider(
+                    value = slot.fanLimitPercent,
                     colors = colors,
                     typography = typography,
-                    onClick = onStartTemperatureClick
-                )
-                ProgramEditorRow(
-                    label = stringResource(R.string.device_cooling_max_speed_temperature),
-                    value = programTemperatureText(slot.maximumSpeedTemperatureC),
-                    colors = colors,
-                    typography = typography,
-                    onClick = onMaximumTemperatureClick
-                )
-                ProgramEditorRow(
-                    label = stringResource(R.string.device_cooling_program_fan_limit),
-                    value = stringResource(
-                        R.string.device_cooling_percent_value_format,
-                        slot.fanLimitPercent
-                    ),
-                    colors = colors,
-                    typography = typography,
-                    onClick = onFanLimitClick
+                    onValueChange = onFanLimitChange
                 )
             }
         }
@@ -452,7 +410,6 @@ private fun ProgramSlotCard(
 
 @Composable
 private fun ProgramEditorHeader(
-    deletable: Boolean,
     colors: AquaDeviceCardColors,
     typography: AquaDeviceCardTypography,
     onDeleteClick: () -> Unit
@@ -473,55 +430,53 @@ private fun ProgramEditorHeader(
             modifier = Modifier.weight(1f),
             maxLines = 1
         )
-        if (deletable) {
-            Box {
-                Box(
-                    modifier = Modifier
-                        .width(AquaCoolingProgramGeometry.slotChevronWidth)
-                        .height(AquaCoolingProgramGeometry.slotChevronHeight)
-                        .clip(AquaCoolingProgramGeometry.inlineActionShape)
-                        .clickable(
-                            role = Role.Button,
-                            onClick = { menuExpanded = !menuExpanded }
-                        )
-                        .semantics { contentDescription = moreActionsDescription },
-                    contentAlignment = Alignment.Center
+        Box {
+            Box(
+                modifier = Modifier
+                    .width(AquaCoolingProgramGeometry.slotChevronWidth)
+                    .height(AquaCoolingProgramGeometry.slotChevronHeight)
+                    .clip(AquaCoolingProgramGeometry.inlineActionShape)
+                    .clickable(
+                        role = Role.Button,
+                        onClick = { menuExpanded = !menuExpanded }
+                    )
+                    .semantics { contentDescription = moreActionsDescription },
+                contentAlignment = Alignment.Center
+            ) {
+                BasicText(
+                    text = "⋮",
+                    style = typography.title.copy(color = colors.secondaryText),
+                    maxLines = 1
+                )
+            }
+            if (menuExpanded) {
+                Popup(
+                    alignment = Alignment.TopEnd,
+                    offset = IntOffset(0, menuOffsetY),
+                    onDismissRequest = { menuExpanded = false },
+                    properties = PopupProperties(focusable = true)
                 ) {
                     BasicText(
-                        text = "⋮",
-                        style = typography.title.copy(color = colors.secondaryText),
+                        text = stringResource(R.string.device_cooling_program_delete_slot),
+                        style = typography.body.copy(color = colors.danger),
+                        modifier = Modifier
+                            .clip(AquaCoolingProgramGeometry.editorRowShape)
+                            .background(colors.surface)
+                            .border(
+                                width = AquaCoolingDashboardGeometry.chartGridStrokeWidth,
+                                color = colors.outline,
+                                shape = AquaCoolingProgramGeometry.editorRowShape
+                            )
+                            .clickable(role = Role.Button) {
+                                menuExpanded = false
+                                onDeleteClick()
+                            }
+                            .padding(
+                                horizontal = AquaCoolingProgramGeometry.editorRowHorizontalPadding,
+                                vertical = AquaCoolingProgramGeometry.editorRowVerticalPadding
+                            ),
                         maxLines = 1
                     )
-                }
-                if (menuExpanded) {
-                    Popup(
-                        alignment = Alignment.TopEnd,
-                        offset = IntOffset(0, menuOffsetY),
-                        onDismissRequest = { menuExpanded = false },
-                        properties = PopupProperties(focusable = true)
-                    ) {
-                        BasicText(
-                            text = stringResource(R.string.device_cooling_program_delete_slot),
-                            style = typography.body.copy(color = colors.danger),
-                            modifier = Modifier
-                                .clip(AquaCoolingProgramGeometry.editorRowShape)
-                                .background(colors.surface)
-                                .border(
-                                    width = AquaCoolingDashboardGeometry.chartGridStrokeWidth,
-                                    color = colors.outline,
-                                    shape = AquaCoolingProgramGeometry.editorRowShape
-                                )
-                                .clickable(role = Role.Button) {
-                                    menuExpanded = false
-                                    onDeleteClick()
-                                }
-                                .padding(
-                                    horizontal = AquaCoolingProgramGeometry.editorRowHorizontalPadding,
-                                    vertical = AquaCoolingProgramGeometry.editorRowVerticalPadding
-                                ),
-                            maxLines = 1
-                        )
-                    }
                 }
             }
         }
@@ -529,11 +484,158 @@ private fun ProgramEditorHeader(
 }
 
 @Composable
+private fun ProgramFanLimitSlider(
+    value: Int,
+    colors: AquaDeviceCardColors,
+    typography: AquaDeviceCardTypography,
+    onValueChange: (Int) -> Unit
+) {
+    val description = stringResource(R.string.device_cooling_program_fan_limit_slider_description)
+    val density = LocalDensity.current
+    val thumbInsetPx = with(density) {
+        (AquaCoolingProgramGeometry.fanLimitThumbRadius +
+            AquaCoolingProgramGeometry.fanLimitThumbOutlineWidth).toPx()
+    }
+    val min = DeviceCoolingProgramPolicy.minimumFanLimitPercent
+    val max = DeviceCoolingProgramPolicy.maximumFanLimitPercent
+    val step = DeviceCoolingProgramPolicy.fanLimitStepPercent
+
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clip(AquaCoolingProgramGeometry.editorRowShape)
+            .background(
+                AquaCoolingDashboardPalette.insetSurface.copy(
+                    alpha = AquaCoolingProgramAlpha.editorRowBackground
+                )
+            )
+            .border(
+                width = AquaCoolingDashboardGeometry.chartGridStrokeWidth,
+                color = AquaCoolingDashboardPalette.insetOutline.copy(
+                    alpha = AquaCoolingProgramAlpha.editorRowOutline
+                ),
+                shape = AquaCoolingProgramGeometry.editorRowShape
+            )
+            .padding(
+                horizontal = AquaCoolingProgramGeometry.editorRowHorizontalPadding,
+                vertical = AquaCoolingProgramGeometry.editorRowVerticalPadding
+            ),
+        verticalArrangement = Arrangement.spacedBy(AquaCoolingProgramGeometry.editorRowGap)
+    ) {
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            BasicText(
+                text = stringResource(R.string.device_cooling_program_fan_limit),
+                style = typography.body.copy(color = colors.primaryText),
+                modifier = Modifier.weight(1f),
+                maxLines = 1
+            )
+            BasicText(
+                text = stringResource(R.string.device_cooling_percent_value_format, value),
+                style = typography.body.copy(
+                    color = colors.primaryText,
+                    textAlign = TextAlign.End
+                ),
+                maxLines = 1
+            )
+        }
+        Box(
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(AquaCoolingProgramGeometry.fanLimitSliderHeight)
+                .semantics {
+                    contentDescription = description
+                    progressBarRangeInfo = ProgressBarRangeInfo(
+                        current = value.toFloat(),
+                        range = min.toFloat()..max.toFloat(),
+                        steps = ((max - min) / step) - 1
+                    )
+                    setProgress { target ->
+                        onValueChange(snapFanLimit(target.roundToInt()))
+                        true
+                    }
+                }
+                .pointerInput(thumbInsetPx) {
+                    detectTapGestures { offset ->
+                        onValueChange(
+                            fanLimitForPosition(
+                                x = offset.x,
+                                width = size.width.toFloat(),
+                                inset = thumbInsetPx
+                            )
+                        )
+                    }
+                }
+                .pointerInput(thumbInsetPx) {
+                    detectHorizontalDragGestures(
+                        onDragStart = { offset ->
+                            onValueChange(
+                                fanLimitForPosition(
+                                    x = offset.x,
+                                    width = size.width.toFloat(),
+                                    inset = thumbInsetPx
+                                )
+                            )
+                        },
+                        onHorizontalDrag = { change, _ ->
+                            onValueChange(
+                                fanLimitForPosition(
+                                    x = change.position.x,
+                                    width = size.width.toFloat(),
+                                    inset = thumbInsetPx
+                                )
+                            )
+                        }
+                    )
+                },
+            contentAlignment = Alignment.Center
+        ) {
+            Canvas(modifier = Modifier.fillMaxSize()) {
+                val inset = AquaCoolingProgramGeometry.fanLimitThumbRadius.toPx() +
+                    AquaCoolingProgramGeometry.fanLimitThumbOutlineWidth.toPx()
+                val trackStart = inset
+                val trackEnd = (size.width - inset).coerceAtLeast(trackStart)
+                val fraction = ((value - min).toFloat() / (max - min).toFloat()).coerceIn(0f, 1f)
+                val thumbX = trackStart + (trackEnd - trackStart) * fraction
+                val y = size.height / 2f
+                val stroke = AquaCoolingProgramGeometry.fanLimitTrackHeight.toPx()
+
+                drawLine(
+                    color = colors.secondaryText.copy(
+                        alpha = AquaCoolingProgramAlpha.fanLimitInactiveTrack
+                    ),
+                    start = Offset(trackStart, y),
+                    end = Offset(trackEnd, y),
+                    strokeWidth = stroke,
+                    cap = StrokeCap.Round
+                )
+                drawLine(
+                    color = colors.accent,
+                    start = Offset(trackStart, y),
+                    end = Offset(thumbX, y),
+                    strokeWidth = stroke,
+                    cap = StrokeCap.Round
+                )
+                drawCircle(
+                    color = colors.primaryText,
+                    radius = AquaCoolingProgramGeometry.fanLimitThumbRadius.toPx() +
+                        AquaCoolingProgramGeometry.fanLimitThumbOutlineWidth.toPx(),
+                    center = Offset(thumbX, y)
+                )
+                drawCircle(
+                    color = colors.accent,
+                    radius = AquaCoolingProgramGeometry.fanLimitThumbRadius.toPx(),
+                    center = Offset(thumbX, y)
+                )
+            }
+        }
+    }
+}
+
+@Composable
 private fun programSlotSummary(slot: DeviceCoolingProgramSlot): String = buildString {
-    append(programTemperatureText(slot.startTemperatureC))
-    append(" → ")
-    append(programTemperatureText(slot.maximumSpeedTemperatureC))
-    append(" • ")
     append(stringResource(R.string.device_cooling_program_fan_limit))
     append(" ")
     append(stringResource(R.string.device_cooling_percent_value_format, slot.fanLimitPercent))
@@ -646,18 +748,6 @@ private fun ProgramDivider(colors: AquaDeviceCardColors) {
 }
 
 @Composable
-private fun programSlotLabel(label: DeviceCoolingProgramSlotLabel): String = when (label) {
-    DeviceCoolingProgramSlotLabel.QUIET ->
-        stringResource(R.string.device_cooling_program_label_quiet)
-    DeviceCoolingProgramSlotLabel.INTENSIVE ->
-        stringResource(R.string.device_cooling_program_label_intensive)
-    DeviceCoolingProgramSlotLabel.NIGHT ->
-        stringResource(R.string.device_cooling_program_label_night)
-    DeviceCoolingProgramSlotLabel.CUSTOM ->
-        stringResource(R.string.device_cooling_program_label_custom)
-}
-
-@Composable
 private fun timelineAxisLabels(): List<String> = listOf(
     stringResource(R.string.device_cooling_program_axis_00),
     stringResource(R.string.device_cooling_program_axis_08),
@@ -665,10 +755,6 @@ private fun timelineAxisLabels(): List<String> = listOf(
     stringResource(R.string.device_cooling_program_axis_20),
     stringResource(R.string.device_cooling_program_axis_24)
 )
-
-@Composable
-private fun programTemperatureText(value: Double): String =
-    stringResource(R.string.device_cooling_temperature_value_format, value)
 
 private fun formatProgramTimeRange(
     context: Context,
@@ -682,6 +768,21 @@ private fun formatProgramTimeRange(
 private fun formatProgramTime(context: Context, minutesOfDay: Int): String =
     LocaleFormatter.formatTimeOfDay24Hour(context, minutesOfDay)
 
+private fun fanLimitForPosition(x: Float, width: Float, inset: Float): Int {
+    val usableWidth = (width - inset * 2f).coerceAtLeast(1f)
+    val fraction = ((x - inset) / usableWidth).coerceIn(0f, 1f)
+    val min = DeviceCoolingProgramPolicy.minimumFanLimitPercent
+    val max = DeviceCoolingProgramPolicy.maximumFanLimitPercent
+    return snapFanLimit((min + (max - min) * fraction).roundToInt())
+}
+
+private fun snapFanLimit(value: Int): Int {
+    val min = DeviceCoolingProgramPolicy.minimumFanLimitPercent
+    val max = DeviceCoolingProgramPolicy.maximumFanLimitPercent
+    val step = DeviceCoolingProgramPolicy.fanLimitStepPercent
+    val bounded = value.coerceIn(min, max)
+    return (((bounded + step / 2) / step) * step).coerceIn(min, max)
+}
+
 private const val MINUTES_PER_HOUR = 60
 private const val MINUTES_PER_DAY = 24 * MINUTES_PER_HOUR
-private const val MAX_TIMELINE_LEGEND_ITEMS = 3
