@@ -1,4 +1,4 @@
-package com.aqua.aqualight.ui.tabs.devices.detail.cooling.root
+package com.aqua.aqualight.ui.tabs.devices.detail.cooling.presentation.dashboard
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -15,6 +15,7 @@ import com.aqua.aqualight.ui.common.cooling.AquaCoolingDashboardTypography
 import com.aqua.aqualight.ui.common.devicecard.AquaDeviceCardColors
 import com.aqua.aqualight.ui.common.devicecard.AquaDeviceCardGeometry
 import com.aqua.aqualight.ui.common.devicecard.AquaDeviceCardTypography
+import com.aqua.aqualight.ui.tabs.devices.detail.cooling.root.CoolingControlMode
 
 @Composable
 internal fun CoolingSectionHeader(

@@ -1,6 +1,6 @@
 @file:Suppress("MagicNumber")
 
-package com.aqua.aqualight.ui.tabs.devices.detail.cooling.root
+package com.aqua.aqualight.ui.tabs.devices.detail.cooling.presentation.dashboard
 
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
@@ -28,6 +28,7 @@ import com.aqua.aqualight.ui.common.cooling.AquaCoolingDashboardPalette
 import com.aqua.aqualight.ui.common.cooling.AquaCoolingDashboardTypography
 import com.aqua.aqualight.ui.common.devicecard.AquaDeviceCardColors
 import com.aqua.aqualight.ui.common.devicecard.AquaDeviceCardTypography
+import com.aqua.aqualight.ui.tabs.devices.detail.cooling.root.DeviceCoolingRootUiState
 
 @Composable
 internal fun CoolingPowerCard(

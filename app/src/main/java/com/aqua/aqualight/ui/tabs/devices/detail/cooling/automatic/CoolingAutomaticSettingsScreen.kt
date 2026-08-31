@@ -32,8 +32,6 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.style.TextAlign
 import com.aqua.aqualight.R
-import com.aqua.aqualight.ui.common.cooling.AquaCoolingAutomaticAlpha
-import com.aqua.aqualight.ui.common.cooling.AquaCoolingAutomaticGeometry
 import com.aqua.aqualight.ui.common.cooling.AquaCoolingDashboardCardSurface
 import com.aqua.aqualight.ui.common.cooling.AquaCoolingDashboardGeometry
 import com.aqua.aqualight.ui.common.cooling.AquaCoolingDashboardPalette

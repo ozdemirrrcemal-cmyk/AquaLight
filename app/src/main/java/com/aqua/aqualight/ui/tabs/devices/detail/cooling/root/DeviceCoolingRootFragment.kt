@@ -19,6 +19,7 @@ import com.aqua.aqualight.ui.common.header.AquaHeaderAction
 import com.aqua.aqualight.ui.common.header.AquaHeaderConfig
 import com.aqua.aqualight.ui.common.header.setupAquaHeader
 import com.aqua.aqualight.ui.navigation.AppRouteNavigator
+import com.aqua.aqualight.ui.tabs.devices.detail.cooling.presentation.dashboard.DeviceCoolingDashboardScreen
 import kotlinx.coroutines.launch
 
 class DeviceCoolingRootFragment : Fragment(R.layout.fragment_device_cooling_root) {

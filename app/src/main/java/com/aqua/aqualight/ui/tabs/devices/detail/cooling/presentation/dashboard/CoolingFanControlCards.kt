@@ -1,6 +1,6 @@
 @file:Suppress("LongMethod", "LongParameterList", "MagicNumber")
 
-package com.aqua.aqualight.ui.tabs.devices.detail.cooling.root
+package com.aqua.aqualight.ui.tabs.devices.detail.cooling.presentation.dashboard
 
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
@@ -40,6 +40,8 @@ import com.aqua.aqualight.ui.common.cooling.AquaCoolingGaugeSpec
 import com.aqua.aqualight.ui.common.devicecard.AquaDeviceCardColors
 import com.aqua.aqualight.ui.common.devicecard.AquaDeviceCardGeometry
 import com.aqua.aqualight.ui.common.devicecard.AquaDeviceCardTypography
+import com.aqua.aqualight.ui.tabs.devices.detail.cooling.root.CoolingControlMode
+import com.aqua.aqualight.ui.tabs.devices.detail.cooling.root.DeviceCoolingRootUiState
 
 @Composable
 internal fun CoolingFanSpeedCard(

@@ -1,7 +1,8 @@
-package com.aqua.aqualight.ui.common.cooling
+package com.aqua.aqualight.ui.tabs.devices.detail.cooling.program
 
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.ui.unit.dp
+import com.aqua.aqualight.ui.common.cooling.AquaCoolingDashboardGeometry
 
 /** Central visual contract for the Cooling multi-period program editor. */
 object AquaCoolingProgramGeometry {

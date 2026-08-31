@@ -1,7 +1,8 @@
-package com.aqua.aqualight.ui.common.cooling
+package com.aqua.aqualight.ui.tabs.devices.detail.cooling.automatic
 
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.ui.unit.dp
+import com.aqua.aqualight.ui.common.cooling.AquaCoolingDashboardGeometry
 
 /** Central geometry/alpha contract for the Cooling automatic temperature editor. */
 object AquaCoolingAutomaticGeometry {
