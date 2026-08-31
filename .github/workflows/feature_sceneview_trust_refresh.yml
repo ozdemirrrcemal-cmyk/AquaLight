@@ -9,9 +9,15 @@ permissions:
   contents: write
 
 env:
+  CI: "true"
   GRADLE_OPTS: >-
     -Dorg.gradle.jvmargs="-Xmx4g -XX:+UseParallelGC -Dfile.encoding=UTF-8"
     -Dorg.gradle.daemon=false
+  AQL_FIREBASE_DEBUG_CONFIG_BASE64: ${{ secrets.AQL_FIREBASE_DEBUG_CONFIG_BASE64 }}
+  AQL_FIREBASE_STAGING_CONFIG_BASE64: ${{ secrets.AQL_FIREBASE_STAGING_CONFIG_BASE64 }}
+  AQL_FIREBASE_RELEASE_SMOKE_CONFIG_BASE64: ${{ secrets.AQL_FIREBASE_RELEASE_SMOKE_CONFIG_BASE64 }}
+  AQL_OTA_MANIFEST_PUBLIC_KEY_PEM: ${{ secrets.AQL_OTA_MANIFEST_PUBLIC_KEY_PEM }}
+  AQL_OTA_MANIFEST_KEY_ID: ${{ secrets.AQL_OTA_MANIFEST_KEY_ID }}
 
 jobs:
   refresh:
@@ -24,9 +30,6 @@ jobs:
         uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
         with:
           ref: feature/cooling-fan-realtime-3d
-
-      - name: Provision Firebase fixtures
-        uses: ./.github/actions/provision-dependabot-firebase
 
       - name: Validate Gradle Wrapper
         uses: gradle/actions/wrapper-validation@d9c87d481d55275bb5441eef3fe0e46805f9ef70 # v3.5.0
@@ -81,9 +84,23 @@ jobs:
             -storetype JKS \
             -dname "CN=AquaLight Feature CI,O=AquaLight,C=TR"
 
+      - name: Verify Firebase inputs
+        shell: bash
+        run: |
+          set -Eeuo pipefail
+          for name in \
+            AQL_FIREBASE_DEBUG_CONFIG_BASE64 \
+            AQL_FIREBASE_STAGING_CONFIG_BASE64 \
+            AQL_FIREBASE_RELEASE_SMOKE_CONFIG_BASE64; do
+            value="${!name:-}"
+            if [[ -z "${value//[[:space:]]/}" ]]; then
+              echo "Required Firebase CI input is missing: ${name}" >&2
+              exit 1
+            fi
+          done
+
       - name: Regenerate dependency trust state
         env:
-          CI: "true"
           RELEASE_KEYSTORE_PASSWORD: aqualight-ci
           RELEASE_KEY_ALIAS: aqualight-ci
           RELEASE_KEY_PASSWORD: aqualight-ci
