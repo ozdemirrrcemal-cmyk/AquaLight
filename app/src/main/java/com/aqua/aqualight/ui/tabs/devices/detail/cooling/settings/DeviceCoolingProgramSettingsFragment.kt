@@ -50,6 +50,7 @@ class DeviceCoolingProgramSettingsFragment : DeviceCoolingModeSettingsFragment(
                     state = state,
                     onSlotClick = viewModel::selectSlot,
                     onAddSlot = viewModel::addTimeSlot,
+                    onDeleteSlot = { slotId -> viewModel.deleteTimeSlot(slotId) },
                     onStartTimeClick = ::showStartTimeSheet,
                     onEndTimeClick = ::showEndTimeSheet,
                     onStartTemperatureClick = ::showStartTemperatureSheet,
