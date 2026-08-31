@@ -2,6 +2,7 @@ package com.aqua.aqualight.ui.tabs.devices.detail.cooling.settings
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.aqua.aqualight.BuildConfig
 import com.aqua.aqualight.application.devices.cooling.DeviceCoolingAutomaticSettingsOperations
 import com.aqua.aqualight.application.devices.cooling.DeviceCoolingAutomaticSettingsSnapshot
 import com.aqua.aqualight.application.devices.cooling.DeviceCoolingAutomaticTemperaturePolicy
@@ -66,8 +67,8 @@ class DeviceCoolingAutomaticSettingsViewModel(
 
     fun updateStartTemperature(value: Double) {
         _uiState.update { state ->
-            val policy = state.policy ?: return@update state
-            val maximum = state.draftMaximumSpeedTemperatureC ?: return@update state
+            val policy = state.editorPolicy ?: return@update state
+            val maximum = state.editorMaximumSpeedTemperatureC ?: return@update state
             if (!value.isValidStart(policy, maximum)) state
             else state.copy(
                 draftStartTemperatureC = value,
@@ -78,8 +79,8 @@ class DeviceCoolingAutomaticSettingsViewModel(
 
     fun updateMaximumSpeedTemperature(value: Double) {
         _uiState.update { state ->
-            val policy = state.policy ?: return@update state
-            val start = state.draftStartTemperatureC ?: return@update state
+            val policy = state.editorPolicy ?: return@update state
+            val start = state.editorStartTemperatureC ?: return@update state
             if (!value.isValidMaximum(policy, start)) state
             else state.copy(
                 draftMaximumSpeedTemperatureC = value,
@@ -148,7 +149,7 @@ data class DeviceCoolingAutomaticSettingsUiState(
     val deviceUid: String = "",
     val loadState: DeviceCoolingAutomaticLoadState = DeviceCoolingAutomaticLoadState.CONTENT,
     val saveState: DeviceCoolingAutomaticSaveState = DeviceCoolingAutomaticSaveState.IDLE,
-    val editable: Boolean = false,
+    val editable: Boolean = BuildConfig.DEBUG,
     val persistedStartTemperatureC: Double? = null,
     val persistedMaximumSpeedTemperatureC: Double? = null,
     val draftStartTemperatureC: Double? = null,
@@ -162,6 +163,22 @@ data class DeviceCoolingAutomaticSettingsUiState(
             persistedMaximumSpeedTemperatureC != null &&
             policy != null
 
+    /**
+     * Debug builds keep the shared bottom sheets inspectable before firmware publishes an editable
+     * Cooling snapshot. These values are editor-only fallbacks: they are never treated as persisted
+     * device state and [canSave] still requires an authoritative firmware snapshot.
+     */
+    val editorPolicy: DeviceCoolingAutomaticTemperaturePolicy?
+        get() = policy ?: DEBUG_PREVIEW_POLICY.takeIf { BuildConfig.DEBUG }
+
+    val editorStartTemperatureC: Double?
+        get() = draftStartTemperatureC
+            ?: DEBUG_PREVIEW_START_TEMPERATURE_C.takeIf { BuildConfig.DEBUG }
+
+    val editorMaximumSpeedTemperatureC: Double?
+        get() = draftMaximumSpeedTemperatureC
+            ?: DEBUG_PREVIEW_MAXIMUM_TEMPERATURE_C.takeIf { BuildConfig.DEBUG }
+
     val hasChanges: Boolean
         get() = !sameTemperature(persistedStartTemperatureC, draftStartTemperatureC) ||
             !sameTemperature(
@@ -172,6 +189,7 @@ data class DeviceCoolingAutomaticSettingsUiState(
     val canSave: Boolean
         get() = loadState == DeviceCoolingAutomaticLoadState.CONTENT &&
             editable &&
+            hasFirmwareSnapshot &&
             hasChanges &&
             saveState != DeviceCoolingAutomaticSaveState.SAVING
 }
@@ -185,12 +203,13 @@ private fun DeviceCoolingAutomaticSettingsUiState.withSnapshot(
     if (!snapshot.available || start == null || maximum == null || policy == null) {
         return copy(
             loadState = DeviceCoolingAutomaticLoadState.CONTENT,
-            editable = false,
+            editable = BuildConfig.DEBUG,
             tankTemperatureC = snapshot.tankTemperatureC,
             fanPercentNow = snapshot.fanPercentNow
         )
     }
-    val preserveDraft = hasChanges
+    // A local debug-preview draft must never override the first authoritative firmware snapshot.
+    val preserveDraft = hasFirmwareSnapshot && hasChanges
     return copy(
         loadState = DeviceCoolingAutomaticLoadState.CONTENT,
         editable = snapshot.editable,
@@ -227,4 +246,14 @@ private fun sameTemperature(first: Double?, second: Double?): Boolean = when {
     else -> abs(first - second) <= TEMPERATURE_EPSILON
 }
 
+private val DEBUG_PREVIEW_POLICY = DeviceCoolingAutomaticTemperaturePolicy(
+    startMinimumC = 18.0,
+    startMaximumC = 30.0,
+    maximumSpeedMinimumC = 18.5,
+    maximumSpeedMaximumC = 32.0,
+    stepC = 0.5,
+    minimumGapC = 0.5
+)
+private const val DEBUG_PREVIEW_START_TEMPERATURE_C = 25.0
+private const val DEBUG_PREVIEW_MAXIMUM_TEMPERATURE_C = 27.0
 private const val TEMPERATURE_EPSILON = 0.000_001
