@@ -64,7 +64,7 @@ private data class ProgramSlotCardModel(
     val selected: Boolean,
     val minimumFanPercent: Int,
     val maximumFanPercent: Int,
-    val fanLimitStepPercent: Int
+    val fanPercentStep: Int
 )
 
 private data class ProgramSlotCardActions(
@@ -72,7 +72,8 @@ private data class ProgramSlotCardActions(
     val onDeleteClick: () -> Unit,
     val onStartTimeClick: () -> Unit,
     val onEndTimeClick: () -> Unit,
-    val onFanLimitChange: (Int) -> Unit
+    val onFanOnTemperatureClick: () -> Unit,
+    val onTargetFanPercentChange: (Int) -> Unit
 )
 
 @Composable
@@ -133,7 +134,7 @@ internal fun DeviceCoolingProgramSettingsScreen(
                         selected = slotIndex == state.selectedSlotIndex,
                         minimumFanPercent = policy.minimumFanPercent,
                         maximumFanPercent = policy.maximumFanPercent,
-                        fanLimitStepPercent = policy.fanPercentStep
+                        fanPercentStep = policy.fanPercentStep
                     ),
                     context = context,
                     colors = colors,
@@ -143,8 +144,11 @@ internal fun DeviceCoolingProgramSettingsScreen(
                         onDeleteClick = { actions.onDeleteSlot(slotIndex) },
                         onStartTimeClick = { actions.onStartTimeClick(slotIndex) },
                         onEndTimeClick = { actions.onEndTimeClick(slotIndex) },
-                        onFanLimitChange = { percent ->
-                            actions.onFanLimitChange(slotIndex, percent)
+                        onFanOnTemperatureClick = {
+                            actions.onFanOnTemperatureClick(slotIndex)
+                        },
+                        onTargetFanPercentChange = { percent ->
+                            actions.onTargetFanPercentChange(slotIndex, percent)
                         }
                     )
                 )
@@ -282,12 +286,7 @@ private fun DrawScope.drawProgramSlot(
     val startX = width * (slot.startMinutes.toFloat() / MINUTES_PER_DAY)
     val endX = width * (slot.endMinutes.toFloat() / MINUTES_PER_DAY)
     val color = colors.accent.copy(alpha = AquaCoolingProgramAlpha.timelinePeriod)
-    if (slot.startMinutes < slot.endMinutes) {
-        drawLine(color, Offset(startX, y), Offset(endX, y), trackStroke, StrokeCap.Round)
-    } else {
-        drawLine(color, Offset(startX, y), Offset(width, y), trackStroke, StrokeCap.Round)
-        drawLine(color, Offset(0f, y), Offset(endX, y), trackStroke, StrokeCap.Round)
-    }
+    drawLine(color, Offset(startX, y), Offset(endX, y), trackStroke, StrokeCap.Round)
 }
 
 @Composable
@@ -402,11 +401,21 @@ private fun ProgramSlotCard(
                     typography = typography,
                     onClick = actions.onEndTimeClick
                 )
-                ProgramFanLimitEditor(
+                ProgramEditorRow(
+                    label = stringResource(R.string.device_cooling_program_fan_on_temperature),
+                    value = stringResource(
+                        R.string.device_cooling_temperature_value_format,
+                        slot.fanOnTemperatureC
+                    ),
+                    colors = colors,
+                    typography = typography,
+                    onClick = actions.onFanOnTemperatureClick
+                )
+                ProgramFanSpeedEditor(
                     model = model,
                     colors = colors,
                     typography = typography,
-                    onValueChange = actions.onFanLimitChange
+                    onValueChange = actions.onTargetFanPercentChange
                 )
             }
         }
@@ -489,13 +498,13 @@ private fun ProgramEditorHeader(
 }
 
 @Composable
-private fun ProgramFanLimitEditor(
+private fun ProgramFanSpeedEditor(
     model: ProgramSlotCardModel,
     colors: AquaDeviceCardColors,
     typography: AquaDeviceCardTypography,
     onValueChange: (Int) -> Unit
 ) {
-    val value = model.slot.fanLimitPercent
+    val value = model.slot.targetFanPercent
     Column(
         modifier = Modifier
             .fillMaxWidth()
@@ -523,7 +532,7 @@ private fun ProgramFanLimitEditor(
             verticalAlignment = Alignment.CenterVertically
         ) {
             BasicText(
-                text = stringResource(R.string.device_cooling_program_fan_limit),
+                text = stringResource(R.string.device_cooling_program_fan_speed),
                 style = typography.body.copy(color = colors.primaryText),
                 modifier = Modifier.weight(1f),
                 maxLines = 1
@@ -541,7 +550,7 @@ private fun ProgramFanLimitEditor(
             state = AquaCoolingFanPercentSliderState(
                 percent = value,
                 enabled = true,
-                stepPercent = model.fanLimitStepPercent,
+                stepPercent = model.fanPercentStep,
                 minimumPercent = model.minimumFanPercent,
                 maximumPercent = model.maximumFanPercent
             ),
@@ -553,9 +562,13 @@ private fun ProgramFanLimitEditor(
 
 @Composable
 private fun programSlotSummary(slot: DeviceCoolingProgramSlot): String = buildString {
-    append(stringResource(R.string.device_cooling_program_fan_limit))
+    append(stringResource(R.string.device_cooling_program_fan_speed))
     append(" ")
-    append(stringResource(R.string.device_cooling_percent_value_format, slot.fanLimitPercent))
+    append(stringResource(R.string.device_cooling_percent_value_format, slot.targetFanPercent))
+    append(" • ")
+    append(stringResource(R.string.device_cooling_program_fan_on_temperature))
+    append(" ")
+    append(stringResource(R.string.device_cooling_temperature_value_format, slot.fanOnTemperatureC))
 }
 
 @Composable

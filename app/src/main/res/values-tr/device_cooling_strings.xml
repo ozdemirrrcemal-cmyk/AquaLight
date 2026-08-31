@@ -62,7 +62,7 @@
 
     <string name="device_cooling_program_card_title">Fan Programı</string>
     <string name="device_cooling_program_not_configured">Program ayarlanmadı</string>
-    <string name="device_cooling_program_not_configured_hint">Fan hızını zamana göre kontrol etmek için program oluştur</string>
+    <string name="device_cooling_program_not_configured_hint">Zaman dilimlerini fan başlangıç sıcaklığı ve sabit fan hızıyla ayarla</string>
 
     <string name="device_cooling_edit_automatic_description">Otomatik fan ayarlarını düzenle</string>
     <string name="device_cooling_edit_program_description">Fan programını düzenle</string>
@@ -103,7 +103,8 @@
     <string name="device_cooling_program_no_active_period">Aktif zaman dilimi yok</string>
     <string name="device_cooling_program_timeline_title">24 Saatlik Plan</string>
     <string name="device_cooling_program_slots_title">Zaman Dilimleri</string>
-    <string name="device_cooling_program_fan_limit">Fan Hız Limiti</string>
+    <string name="device_cooling_program_fan_speed">Fan Hızı</string>
+    <string name="device_cooling_program_fan_on_temperature">Fan Başlangıç Sıcaklığı</string>
     <string name="device_cooling_program_add_slot">+ Ekle</string>
     <string name="device_cooling_program_editor_title">Zaman Dilimi Ayarları</string>
     <string name="device_cooling_program_more_actions">Diğer zaman dilimi işlemleri</string>
@@ -121,6 +122,8 @@
     <string name="device_cooling_program_start_time_sheet_message">Bu zaman diliminin başlayacağı saati seç.</string>
     <string name="device_cooling_program_end_time_sheet_title">Bitiş Saati</string>
     <string name="device_cooling_program_end_time_sheet_message">Bu zaman diliminin biteceği saati seç.</string>
+    <string name="device_cooling_program_fan_on_temperature_sheet_title">Fan Başlangıç Sıcaklığı</string>
+    <string name="device_cooling_program_fan_on_temperature_sheet_helper">Bu zaman dilimi içinde su bu sıcaklığa ulaştığında fan seçilen program hızında çalışır.</string>
 
     <string name="device_cooling_value_unavailable">—</string>
     <string name="device_cooling_temperature_value_format">%1$.1f °C</string>

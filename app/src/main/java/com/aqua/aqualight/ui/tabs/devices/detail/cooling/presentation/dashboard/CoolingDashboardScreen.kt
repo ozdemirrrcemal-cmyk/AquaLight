@@ -64,7 +64,7 @@ internal fun DeviceCoolingDashboardScreen(
         item(key = "mode-control") {
             CoolingModeControlCard(
                 state = state,
-                enabled = state.contentEnabled,
+                enabled = state.contentEnabled && state.controlAvailable,
                 colors = colors,
                 typography = typography,
                 onManualFanPercentChanged = actions.onManualFanPercentChanged,
@@ -94,7 +94,8 @@ private fun CoolingFanAndModeRow(
         )
         CoolingModeCard(
             selectedMode = state.selectedMode,
-            enabled = state.contentEnabled,
+            supportedModes = state.supportedModes,
+            enabled = state.contentEnabled && state.controlAvailable && state.modeSelectionWritable,
             colors = colors,
             typography = typography,
             onModeSelected = actions.onModeSelected,

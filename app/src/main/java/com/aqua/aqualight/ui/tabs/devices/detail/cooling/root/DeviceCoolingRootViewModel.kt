@@ -12,8 +12,11 @@ import com.aqua.aqualight.application.devices.cooling.DeviceCoolingAutomaticSett
 import com.aqua.aqualight.application.devices.cooling.DeviceCoolingTemperatureHistoryLoadResult
 import com.aqua.aqualight.application.devices.cooling.DeviceCoolingTemperatureHistoryOperations
 import com.aqua.aqualight.application.devices.cooling.DeviceCoolingTemperatureHistoryRange
+import com.aqua.aqualight.application.devices.cooling.control.DeviceCoolingControlMode
+import com.aqua.aqualight.application.devices.cooling.control.DeviceCoolingControlOperations
+import com.aqua.aqualight.application.devices.cooling.control.DeviceCoolingControlResult
+import com.aqua.aqualight.application.devices.cooling.control.DeviceCoolingManualFanCapabilities
 import com.aqua.aqualight.ui.common.devicepresence.DeviceConnectionVisualState
-import kotlin.math.roundToInt
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -21,8 +24,11 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 
+typealias CoolingControlMode = DeviceCoolingControlMode
+
 class DeviceCoolingRootViewModel(
     private val operations: DeviceRootOperations,
+    private val controlOperations: DeviceCoolingControlOperations,
     private val historyOperations: DeviceCoolingTemperatureHistoryOperations? = null,
     private val automaticSettingsOperations: DeviceCoolingAutomaticSettingsOperations? = null
 ) : ViewModel() {
@@ -35,6 +41,9 @@ class DeviceCoolingRootViewModel(
     private var historyJob: Job? = null
     private var automaticObserveJob: Job? = null
     private var automaticRefreshJob: Job? = null
+    private var controlObserveJob: Job? = null
+    private var controlRefreshJob: Job? = null
+    private var controlMutationJob: Job? = null
 
     fun bind(deviceUidText: String) {
         val deviceUid = deviceUidText.trim()
@@ -52,6 +61,9 @@ class DeviceCoolingRootViewModel(
         operations.current(deviceUid)?.let { snapshot ->
             _uiState.value = snapshot.toRootUiState(_uiState.value)
         }
+        _uiState.value = _uiState.value.withControlReadResult(
+            controlOperations.currentControl(deviceUid)
+        )
         automaticSettingsOperations
             ?.currentAutomaticSettings(deviceUid)
             ?.takeIf { snapshot -> snapshot.loaded }
@@ -60,6 +72,8 @@ class DeviceCoolingRootViewModel(
             }
         operations.connect(deviceUid)
         loadOverviewHistory(deviceUid)
+        observeCoolingControl(deviceUid)
+        refreshCoolingControl(deviceUid)
         observeAutomaticSettings(deviceUid)
         observeJob = viewModelScope.launch {
             operations.observe(deviceUid).collect { snapshot ->
@@ -77,36 +91,62 @@ class DeviceCoolingRootViewModel(
     }
 
     fun selectMode(mode: CoolingControlMode) {
-        _uiState.update { state ->
-            if (!state.contentEnabled || state.selectedMode == mode) {
-                state
-            } else {
-                state.copy(
-                    selectedMode = mode,
-                    fanPercentNow = if (mode == CoolingControlMode.MANUAL) {
-                        state.manualFanPercent
-                    } else {
-                        state.fanPercentNow
-                    }
-                )
+        val state = _uiState.value
+        if (
+            !state.contentEnabled ||
+            !state.controlAvailable ||
+            !state.modeSelectionWritable ||
+            mode !in state.supportedModes ||
+            state.selectedMode == mode
+        ) {
+            return
+        }
+        val deviceUid = boundDeviceUid.takeIf(String::isNotBlank) ?: return
+        controlMutationJob?.cancel()
+        controlMutationJob = viewModelScope.launch {
+            val result = controlOperations.setMode(deviceUid, mode)
+            if (boundDeviceUid == deviceUid) {
+                _uiState.update { current -> current.withControlMutationResult(result) }
             }
         }
     }
 
     fun updateManualFanPercent(percent: Int) {
-        _uiState.update { state ->
-            if (!state.contentEnabled) {
-                state
-            } else {
-                val clamped = percent.coerceIn(MIN_PERCENT, MAX_PERCENT)
-                state.copy(
-                    manualFanPercent = clamped,
-                    fanPercentNow = if (state.selectedMode == CoolingControlMode.MANUAL) {
-                        clamped
-                    } else {
-                        state.fanPercentNow
-                    }
-                )
+        val state = _uiState.value
+        val capabilities = state.manualFanCapabilities
+        if (
+            !state.contentEnabled ||
+            !state.controlAvailable ||
+            state.selectedMode != CoolingControlMode.MANUAL ||
+            capabilities?.writable != true
+        ) {
+            return
+        }
+        val deviceUid = boundDeviceUid.takeIf(String::isNotBlank) ?: return
+        val bounded = percent.coerceIn(capabilities.minimumPercent, capabilities.maximumPercent)
+        controlMutationJob?.cancel()
+        controlMutationJob = viewModelScope.launch {
+            val result = controlOperations.setManualFanPercent(deviceUid, bounded)
+            if (boundDeviceUid == deviceUid) {
+                _uiState.update { current -> current.withControlMutationResult(result) }
+            }
+        }
+    }
+
+    private fun observeCoolingControl(deviceUid: String) {
+        controlObserveJob = viewModelScope.launch {
+            controlOperations.observeControl(deviceUid).collect { result ->
+                if (boundDeviceUid != deviceUid) return@collect
+                _uiState.update { state -> state.withControlReadResult(result) }
+            }
+        }
+    }
+
+    private fun refreshCoolingControl(deviceUid: String) {
+        controlRefreshJob = viewModelScope.launch {
+            val result = controlOperations.refreshControl(deviceUid)
+            if (boundDeviceUid == deviceUid) {
+                _uiState.update { state -> state.withControlReadResult(result) }
             }
         }
     }
@@ -149,6 +189,9 @@ class DeviceCoolingRootViewModel(
         historyJob?.cancel()
         automaticObserveJob?.cancel()
         automaticRefreshJob?.cancel()
+        controlObserveJob?.cancel()
+        controlRefreshJob?.cancel()
+        controlMutationJob?.cancel()
     }
 
     private fun DeviceRootSnapshot.toRootUiState(
@@ -171,40 +214,52 @@ class DeviceCoolingRootViewModel(
             temperatureSensorCount = temperatureSensorCount
         )
     }
+}
 
-    private companion object {
-        const val MIN_PERCENT = COOLING_MIN_PERCENT
-        const val MAX_PERCENT = COOLING_MAX_PERCENT
-    }
+private fun DeviceCoolingRootUiState.withControlReadResult(
+    result: DeviceCoolingControlResult
+): DeviceCoolingRootUiState = when (result) {
+    is DeviceCoolingControlResult.Available -> withControlSnapshot(result)
+    is DeviceCoolingControlResult.Failed -> copy(
+        controlAvailable = false,
+        modeSelectionWritable = false,
+        manualFanCapabilities = manualFanCapabilities?.copy(writable = false),
+        fanPercentNow = null,
+        tankTemperatureC = null
+    )
+}
+
+private fun DeviceCoolingRootUiState.withControlMutationResult(
+    result: DeviceCoolingControlResult
+): DeviceCoolingRootUiState = when (result) {
+    is DeviceCoolingControlResult.Available -> withControlSnapshot(result)
+    is DeviceCoolingControlResult.Failed -> this
+}
+
+private fun DeviceCoolingRootUiState.withControlSnapshot(
+    result: DeviceCoolingControlResult.Available
+): DeviceCoolingRootUiState {
+    val snapshot = result.snapshot
+    return copy(
+        controlAvailable = true,
+        selectedMode = snapshot.mode,
+        supportedModes = snapshot.capabilities.supportedModes,
+        modeSelectionWritable = snapshot.capabilities.modeSelectionWritable,
+        manualFanCapabilities = snapshot.capabilities.manualFan,
+        manualFanPercent = snapshot.manualFanPercent,
+        fanPercentNow = snapshot.actualFanPercent,
+        tankTemperatureC = snapshot.tankTemperatureC
+    )
 }
 
 private fun DeviceCoolingRootUiState.withAutomaticSnapshot(
     snapshot: DeviceCoolingAutomaticSettingsSnapshot
 ): DeviceCoolingRootUiState {
     if (!snapshot.available) return this
-    val firmwareFanPercent = snapshot.fanPercentNow
-        ?.takeIf(Double::isFinite)
-        ?.roundToInt()
-        ?.coerceIn(COOLING_MIN_PERCENT, COOLING_MAX_PERCENT)
     return copy(
         autoStartTemperatureC = snapshot.startTemperatureC ?: autoStartTemperatureC,
-        autoMaxTemperatureC = snapshot.maximumSpeedTemperatureC ?: autoMaxTemperatureC,
-        tankTemperatureC = snapshot.tankTemperatureC ?: tankTemperatureC,
-        fanPercentNow = if (selectedMode == CoolingControlMode.MANUAL) {
-            fanPercentNow
-        } else {
-            firmwareFanPercent ?: fanPercentNow
-        }
+        autoMaxTemperatureC = snapshot.maximumSpeedTemperatureC ?: autoMaxTemperatureC
     )
-}
-
-private const val COOLING_MIN_PERCENT = 0
-private const val COOLING_MAX_PERCENT = 100
-
-enum class CoolingControlMode {
-    AUTOMATIC,
-    MANUAL,
-    PROGRAM
 }
 
 data class DeviceCoolingRootUiState(
@@ -212,8 +267,12 @@ data class DeviceCoolingRootUiState(
     val deviceUid: String = "",
     val connectionVisualState: DeviceConnectionVisualState = DeviceConnectionVisualState.OFFLINE,
     val contentEnabled: Boolean = false,
-    val selectedMode: CoolingControlMode = CoolingControlMode.AUTOMATIC,
-    val manualFanPercent: Int = 60,
+    val controlAvailable: Boolean = false,
+    val selectedMode: CoolingControlMode? = null,
+    val supportedModes: Set<CoolingControlMode> = emptySet(),
+    val modeSelectionWritable: Boolean = false,
+    val manualFanCapabilities: DeviceCoolingManualFanCapabilities? = null,
+    val manualFanPercent: Int? = null,
     val autoStartTemperatureC: Double = 25.0,
     val autoMaxTemperatureC: Double = 27.0,
     val fanPercentNow: Int? = null,

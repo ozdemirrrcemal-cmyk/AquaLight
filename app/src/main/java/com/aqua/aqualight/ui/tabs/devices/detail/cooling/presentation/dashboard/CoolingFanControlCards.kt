@@ -31,6 +31,7 @@ import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import com.aqua.aqualight.R
+import com.aqua.aqualight.application.devices.cooling.control.DeviceCoolingManualFanCapabilities
 import com.aqua.aqualight.ui.common.cooling.AquaCoolingDashboardAlpha
 import com.aqua.aqualight.ui.common.cooling.AquaCoolingDashboardCardSurface
 import com.aqua.aqualight.ui.common.cooling.AquaCoolingDashboardGeometry
@@ -137,7 +138,8 @@ private fun CoolingFanGauge(
 
 @Composable
 internal fun CoolingModeCard(
-    selectedMode: CoolingControlMode,
+    selectedMode: CoolingControlMode?,
+    supportedModes: Set<CoolingControlMode>,
     enabled: Boolean,
     colors: AquaDeviceCardColors,
     typography: AquaDeviceCardTypography,
@@ -159,7 +161,7 @@ internal fun CoolingModeCard(
                 CoolingModeOption(
                     mode = mode,
                     selected = mode == selectedMode,
-                    enabled = enabled,
+                    enabled = enabled && mode in supportedModes,
                     colors = colors,
                     typography = typography,
                     onClick = { onModeSelected(mode) }
@@ -248,6 +250,7 @@ internal fun CoolingModeControlCard(
     when (state.selectedMode) {
         CoolingControlMode.MANUAL -> CoolingManualControlCard(
             percent = state.manualFanPercent,
+            capabilities = state.manualFanCapabilities,
             enabled = enabled,
             colors = colors,
             typography = typography,
@@ -267,18 +270,20 @@ internal fun CoolingModeControlCard(
             typography = typography,
             onOpenClick = onProgramSettingsClick
         )
+        null -> CoolingUnavailableControlCard(colors = colors, typography = typography)
     }
 }
 
 @Composable
 private fun CoolingManualControlCard(
-    percent: Int,
+    percent: Int?,
+    capabilities: DeviceCoolingManualFanCapabilities?,
     enabled: Boolean,
     colors: AquaDeviceCardColors,
     typography: AquaDeviceCardTypography,
     onValueChanged: (Int) -> Unit
 ) {
-    val clamped = percent.coerceIn(
+    val clamped = percent?.coerceIn(
         AquaCoolingGaugeSpec.minimumPercent,
         AquaCoolingGaugeSpec.maximumPercent
     )
@@ -293,7 +298,9 @@ private fun CoolingManualControlCard(
         ) {
             CoolingSectionHeader(
                 title = stringResource(R.string.device_cooling_manual_card_title),
-                trailing = stringResource(R.string.device_cooling_percent_value_format, clamped),
+                trailing = clamped?.let { value ->
+                    stringResource(R.string.device_cooling_percent_value_format, value)
+                } ?: stringResource(R.string.device_cooling_value_unavailable),
                 colors = colors,
                 typography = typography
             )
@@ -301,34 +308,40 @@ private fun CoolingManualControlCard(
                 text = stringResource(R.string.device_cooling_manual_card_subtitle),
                 style = typography.micro.copy(color = colors.secondaryText)
             )
-            AquaCoolingFanPercentSlider(
-                state = AquaCoolingFanPercentSliderState(
-                    percent = clamped,
-                    enabled = enabled
-                ),
-                colors = colors,
-                onValueChanged = onValueChanged
-            )
-            Row(modifier = Modifier.fillMaxWidth()) {
-                BasicText(
-                    text = stringResource(
-                        R.string.device_cooling_percent_value_format,
-                        AquaCoolingGaugeSpec.minimumPercent
+            val step = capabilities?.stepPercent
+            if (clamped != null && capabilities != null && step != null) {
+                AquaCoolingFanPercentSlider(
+                    state = AquaCoolingFanPercentSliderState(
+                        percent = clamped,
+                        enabled = enabled && capabilities.writable,
+                        stepPercent = step,
+                        minimumPercent = capabilities.minimumPercent,
+                        maximumPercent = capabilities.maximumPercent
                     ),
-                    style = typography.micro.copy(color = colors.secondaryText),
-                    modifier = Modifier.weight(1f)
+                    colors = colors,
+                    onValueChanged = onValueChanged
                 )
-                BasicText(
-                    text = stringResource(
-                        R.string.device_cooling_percent_value_format,
-                        AquaCoolingGaugeSpec.maximumPercent
-                    ),
-                    style = typography.micro.copy(
-                        color = colors.secondaryText,
-                        textAlign = TextAlign.End
-                    ),
-                    modifier = Modifier.weight(1f)
-                )
+                Row(modifier = Modifier.fillMaxWidth()) {
+                    BasicText(
+                        text = stringResource(
+                            R.string.device_cooling_percent_value_format,
+                            capabilities.minimumPercent
+                        ),
+                        style = typography.micro.copy(color = colors.secondaryText),
+                        modifier = Modifier.weight(1f)
+                    )
+                    BasicText(
+                        text = stringResource(
+                            R.string.device_cooling_percent_value_format,
+                            capabilities.maximumPercent
+                        ),
+                        style = typography.micro.copy(
+                            color = colors.secondaryText,
+                            textAlign = TextAlign.End
+                        ),
+                        modifier = Modifier.weight(1f)
+                    )
+                }
             }
         }
     }
@@ -429,6 +442,25 @@ private fun CoolingProgramControlCard(
                 overflow = TextOverflow.Ellipsis
             )
         }
+    }
+}
+
+@Composable
+private fun CoolingUnavailableControlCard(
+    colors: AquaDeviceCardColors,
+    typography: AquaDeviceCardTypography
+) {
+    AquaCoolingDashboardCardSurface(
+        modifier = Modifier
+            .fillMaxWidth()
+            .heightIn(min = AquaCoolingDashboardGeometry.controlCardMinimumHeight)
+    ) {
+        CoolingSectionHeader(
+            title = stringResource(R.string.device_cooling_fan_mode_title),
+            trailing = stringResource(R.string.device_cooling_value_unavailable),
+            colors = colors,
+            typography = typography
+        )
     }
 }
 

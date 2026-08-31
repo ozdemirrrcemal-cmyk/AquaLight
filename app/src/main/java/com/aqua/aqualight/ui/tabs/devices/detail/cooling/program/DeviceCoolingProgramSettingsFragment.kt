@@ -13,6 +13,7 @@ import com.aqua.aqualight.R
 import com.aqua.aqualight.base.BaseActivity
 import com.aqua.aqualight.composition.requireAppContainer
 import com.aqua.aqualight.ui.common.bottomsheet.AquaTimePickerBottomSheet
+import com.aqua.aqualight.ui.common.bottomsheet.IntegerStepperBottomSheet
 import com.aqua.aqualight.ui.common.header.AquaHeaderPrimaryAction
 import com.aqua.aqualight.ui.tabs.devices.detail.cooling.common.DeviceCoolingModeSettingsFragment
 import kotlinx.coroutines.flow.distinctUntilChanged
@@ -57,7 +58,8 @@ class DeviceCoolingProgramSettingsFragment : DeviceCoolingModeSettingsFragment(
                             onDeleteSlot = viewModel::deleteTimeSlot,
                             onStartTimeClick = ::showStartTimeSheet,
                             onEndTimeClick = ::showEndTimeSheet,
-                            onFanLimitChange = viewModel::updateFanLimit
+                            onFanOnTemperatureClick = ::showFanOnTemperatureSheet,
+                            onTargetFanPercentChange = viewModel::updateTargetFanPercent
                         )
                     )
                 } else {
@@ -107,6 +109,24 @@ class DeviceCoolingProgramSettingsFragment : DeviceCoolingModeSettingsFragment(
         }
         registerTimeResult(REQUEST_END_TIME) { slotIndex, minutesOfDay ->
             if (!viewModel.updateEndTime(slotIndex, minutesOfDay)) {
+                showScheduleValidationWarning()
+            }
+        }
+        parentFragmentManager.setFragmentResultListener(
+            REQUEST_FAN_ON_TEMPERATURE,
+            viewLifecycleOwner
+        ) { _, result ->
+            if (result.getString(IntegerStepperBottomSheet.RESULT_KEY) !=
+                IntegerStepperBottomSheet.RESULT_SAVED
+            ) {
+                return@setFragmentResultListener
+            }
+            val slotIndex = result.getString(IntegerStepperBottomSheet.RESULT_PAYLOAD_ID)
+                ?.toIntOrNull()
+                ?: return@setFragmentResultListener
+            val temperatureC = result.getInt(IntegerStepperBottomSheet.RESULT_VALUE) *
+                PROGRAM_TEMPERATURE_DISPLAY_SCALE
+            if (!viewModel.updateFanOnTemperature(slotIndex, temperatureC)) {
                 showScheduleValidationWarning()
             }
         }
@@ -161,6 +181,31 @@ class DeviceCoolingProgramSettingsFragment : DeviceCoolingModeSettingsFragment(
         )
     }
 
+    private fun showFanOnTemperatureSheet(slotIndex: Int) {
+        val bounds = fanOnTemperatureStepperBounds(viewModel.uiState.value, slotIndex) ?: return
+        IntegerStepperBottomSheet.show(
+            fragmentManager = parentFragmentManager,
+            title = getString(R.string.device_cooling_program_fan_on_temperature_sheet_title),
+            helperText = getString(R.string.device_cooling_program_fan_on_temperature_sheet_helper),
+            valueFormat = getString(R.string.device_cooling_automatic_stepper_value_format),
+            initialValue = bounds.initialValue,
+            minValue = bounds.minimumValue,
+            maxValue = bounds.maximumValue,
+            step = bounds.step,
+            saveText = getString(R.string.device_cooling_automatic_stepper_apply),
+            cancelText = getString(R.string.device_cooling_automatic_stepper_cancel),
+            decreaseContentDescription = getString(
+                R.string.device_cooling_automatic_stepper_decrease
+            ),
+            increaseContentDescription = getString(
+                R.string.device_cooling_automatic_stepper_increase
+            ),
+            requestKey = REQUEST_FAN_ON_TEMPERATURE,
+            payloadId = slotIndex.toString(),
+            displayScale = PROGRAM_TEMPERATURE_DISPLAY_SCALE
+        )
+    }
+
     private fun showTimeSheet(
         slotIndex: Int,
         minutesOfDay: Int,
@@ -189,6 +234,7 @@ class DeviceCoolingProgramSettingsFragment : DeviceCoolingModeSettingsFragment(
         const val MINUTES_PER_HOUR = 60
         const val REQUEST_START_TIME = "cooling_program_start_time"
         const val REQUEST_END_TIME = "cooling_program_end_time"
+        const val REQUEST_FAN_ON_TEMPERATURE = "cooling_program_fan_on_temperature"
     }
 }
 

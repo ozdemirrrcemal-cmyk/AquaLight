@@ -130,8 +130,9 @@ internal fun coolingEnergyText(value: Double?): String = value?.let { energy ->
 } ?: stringResource(R.string.device_cooling_value_unavailable)
 
 @Composable
-internal fun coolingModeLabel(mode: CoolingControlMode): String = when (mode) {
+internal fun coolingModeLabel(mode: CoolingControlMode?): String = when (mode) {
     CoolingControlMode.AUTOMATIC -> stringResource(R.string.device_cooling_mode_automatic)
     CoolingControlMode.MANUAL -> stringResource(R.string.device_cooling_mode_manual)
     CoolingControlMode.PROGRAM -> stringResource(R.string.device_cooling_mode_program)
+    null -> stringResource(R.string.device_cooling_value_unavailable)
 }

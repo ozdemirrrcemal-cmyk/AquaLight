@@ -1,10 +1,13 @@
 package com.aqua.aqualight.application.devices.cooling.program
 
+import kotlin.math.round
+
 enum class CoolingProgramEditRejection {
     SLOT_NOT_FOUND,
     MAXIMUM_SLOT_COUNT_REACHED,
     NO_FREE_WINDOW,
     INVALID_TIME_RANGE,
+    INVALID_FAN_ON_TEMPERATURE,
     OVERLAP,
     INVALID_PROGRAM
 }
@@ -42,7 +45,8 @@ object CoolingProgramSchedule {
                 val newSlot = CoolingProgramSlot(
                     startMinutes = window.first,
                     endMinutes = window.second,
-                    fanLimitPercent = policy.minimumFanPercent
+                    fanOnTemperatureC = policy.fanOnTemperature.defaultC,
+                    targetFanPercent = policy.minimumFanPercent
                 )
                 validatedUpdate(
                     slots = slots + newSlot,
@@ -114,7 +118,7 @@ object CoolingProgramSchedule {
         }
     }
 
-    fun updateFanLimit(
+    fun updateTargetFanPercent(
         slots: List<CoolingProgramSlot>,
         policy: CoolingProgramPolicy,
         slotIndex: Int,
@@ -128,7 +132,32 @@ object CoolingProgramSchedule {
                 slots = slots,
                 policy = policy,
                 slotIndex = slotIndex,
-                replacement = slot.copy(fanLimitPercent = snapFanPercent(percent, policy))
+                replacement = slot.copy(targetFanPercent = snapFanPercent(percent, policy))
+            )
+        }
+    }
+
+    fun updateFanOnTemperature(
+        slots: List<CoolingProgramSlot>,
+        policy: CoolingProgramPolicy,
+        slotIndex: Int,
+        temperatureC: Double
+    ): CoolingProgramEditResult {
+        val slot = slots.getOrNull(slotIndex)
+        return when {
+            slot == null -> CoolingProgramEditResult.Rejected(
+                CoolingProgramEditRejection.SLOT_NOT_FOUND
+            )
+            !temperatureC.isFinite() -> CoolingProgramEditResult.Rejected(
+                CoolingProgramEditRejection.INVALID_FAN_ON_TEMPERATURE
+            )
+            else -> replaceSlot(
+                slots = slots,
+                policy = policy,
+                slotIndex = slotIndex,
+                replacement = slot.copy(
+                    fanOnTemperatureC = snapFanOnTemperature(temperatureC, policy)
+                )
             )
         }
     }
@@ -192,6 +221,17 @@ private fun snapFanPercent(
     val roundedSteps = (offset + policy.fanPercentStep / 2) / policy.fanPercentStep
     return (policy.minimumFanPercent + roundedSteps * policy.fanPercentStep)
         .coerceAtMost(policy.maximumFanPercent)
+}
+
+private fun snapFanOnTemperature(
+    temperatureC: Double,
+    policy: CoolingProgramPolicy
+): Double {
+    val temperaturePolicy = policy.fanOnTemperature
+    val bounded = temperatureC.coerceIn(temperaturePolicy.minimumC, temperaturePolicy.maximumC)
+    val steps = round((bounded - temperaturePolicy.minimumC) / temperaturePolicy.stepC)
+    return (temperaturePolicy.minimumC + steps * temperaturePolicy.stepC)
+        .coerceIn(temperaturePolicy.minimumC, temperaturePolicy.maximumC)
 }
 
 private fun findNextFreeWindow(

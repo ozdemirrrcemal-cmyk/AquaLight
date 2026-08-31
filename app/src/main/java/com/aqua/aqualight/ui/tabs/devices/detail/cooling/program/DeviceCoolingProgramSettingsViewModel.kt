@@ -94,13 +94,33 @@ class DeviceCoolingProgramSettingsViewModel(
         }
     }
 
-    fun updateFanLimit(slotIndex: Int, percent: Int) {
+    fun updateFanOnTemperature(slotIndex: Int, temperatureC: Double): Boolean {
+        val state = _uiState.value
+        val policy = state.policy
+        return if (state.isEditable && policy != null) {
+            _uiState.applyEdit(
+                state = state,
+                result = CoolingProgramSchedule.updateFanOnTemperature(
+                    slots = state.slots,
+                    policy = policy,
+                    slotIndex = slotIndex,
+                    temperatureC = temperatureC
+                ),
+                slotUiIdentity = slotUiIdentity,
+                selectedUiKey = state.slotItems.getOrNull(slotIndex)?.uiKey
+            )
+        } else {
+            false
+        }
+    }
+
+    fun updateTargetFanPercent(slotIndex: Int, percent: Int) {
         val state = _uiState.value
         val policy = state.policy
         if (state.isEditable && policy != null) {
             _uiState.applyEdit(
                 state = state,
-                result = CoolingProgramSchedule.updateFanLimit(
+                result = CoolingProgramSchedule.updateTargetFanPercent(
                     slots = state.slots,
                     policy = policy,
                     slotIndex = slotIndex,

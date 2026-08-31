@@ -1,11 +1,12 @@
 package com.aqua.aqualight.ui.tabs.devices.detail.cooling.program
 
-/** Event boundary between the program editor and its Fragment/ViewModel host. */
+/** Interaction callbacks for the Program settings surface. */
 internal data class DeviceCoolingProgramSettingsActions(
     val onSlotClick: (Int) -> Unit,
     val onAddSlot: () -> Unit,
     val onDeleteSlot: (Int) -> Unit,
     val onStartTimeClick: (Int) -> Unit,
     val onEndTimeClick: (Int) -> Unit,
-    val onFanLimitChange: (Int, Int) -> Unit
+    val onFanOnTemperatureClick: (Int) -> Unit,
+    val onTargetFanPercentChange: (Int, Int) -> Unit
 )

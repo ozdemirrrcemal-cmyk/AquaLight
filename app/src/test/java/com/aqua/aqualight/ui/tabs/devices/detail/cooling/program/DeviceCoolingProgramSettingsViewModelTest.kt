@@ -1,5 +1,7 @@
 package com.aqua.aqualight.ui.tabs.devices.detail.cooling.program
 
+import com.aqua.aqualight.application.devices.cooling.program.CoolingProgramFanOnTemperaturePolicy
+import com.aqua.aqualight.application.devices.cooling.program.CoolingProgramFanPolicy
 import com.aqua.aqualight.application.devices.cooling.program.CoolingProgramPolicy
 import com.aqua.aqualight.application.devices.cooling.program.CoolingProgramReadResult
 import com.aqua.aqualight.application.devices.cooling.program.CoolingProgramSaveResult
@@ -35,9 +37,7 @@ class DeviceCoolingProgramSettingsViewModelTest {
 
     @Test
     fun unavailableProgramDoesNotExposeEditableFakeState() = runTest(dispatcher) {
-        val viewModel = createViewModel(
-            readResult = CoolingProgramReadResult.Unavailable
-        )
+        val viewModel = createViewModel(readResult = CoolingProgramReadResult.Unavailable)
 
         viewModel.bind(DEVICE_UID)
 
@@ -51,9 +51,7 @@ class DeviceCoolingProgramSettingsViewModelTest {
 
     @Test
     fun unsupportedProgramPreservesCapabilitySemantics() = runTest(dispatcher) {
-        val viewModel = createViewModel(
-            readResult = CoolingProgramReadResult.Unsupported
-        )
+        val viewModel = createViewModel(readResult = CoolingProgramReadResult.Unsupported)
 
         viewModel.bind(DEVICE_UID)
 
@@ -61,7 +59,7 @@ class DeviceCoolingProgramSettingsViewModelTest {
     }
 
     @Test
-    fun reportedPolicyDrivesFanSnappingAndSlotLimit() = runTest(dispatcher) {
+    fun reportedPolicyDrivesFanAndTemperatureSnappingAndSlotLimit() = runTest(dispatcher) {
         val policy = policy(maximumSlotCount = 1, fanPercentStep = 10)
         val viewModel = createViewModel(
             readResult = CoolingProgramReadResult.Loaded(
@@ -71,21 +69,19 @@ class DeviceCoolingProgramSettingsViewModelTest {
 
         viewModel.bind(DEVICE_UID)
         viewModel.addTimeSlot()
-        viewModel.updateFanLimit(FIRST_SLOT_INDEX, 63)
+        viewModel.updateTargetFanPercent(FIRST_SLOT_INDEX, 63)
+        viewModel.updateFanOnTemperature(FIRST_SLOT_INDEX, 25.3)
         viewModel.addTimeSlot()
 
         assertEquals(1, viewModel.uiState.value.slots.size)
-        assertEquals(60, viewModel.slot(FIRST_SLOT_INDEX).fanLimitPercent)
+        assertEquals(60, viewModel.slot(FIRST_SLOT_INDEX).targetFanPercent)
+        assertEquals(25.5, viewModel.slot(FIRST_SLOT_INDEX).fanOnTemperatureC, 0.0)
         assertFalse(viewModel.uiState.value.canAddSlot)
     }
 
     @Test
     fun sameDayEditRejectsEndBeforeStart() = runTest(dispatcher) {
-        val original = CoolingProgramSlot(
-            startMinutes = hour(8),
-            endMinutes = hour(14),
-            fanLimitPercent = 60
-        )
+        val original = slot(startMinutes = hour(8), endMinutes = hour(14))
         val viewModel = createViewModel(
             readResult = CoolingProgramReadResult.Loaded(
                 CoolingProgramSnapshot(listOf(original), policy())
@@ -123,10 +119,10 @@ class DeviceCoolingProgramSettingsViewModelTest {
     @Test
     fun savedResultIsTheOnlyPathThatAdvancesPersistenceBaseline() = runTest(dispatcher) {
         val policy = policy()
-        val persisted = CoolingProgramSlot(
+        val persisted = slot(
             startMinutes = hour(8),
             endMinutes = hour(14),
-            fanLimitPercent = 70
+            targetFanPercent = 70
         )
         val viewModel = createViewModel(
             readResult = CoolingProgramReadResult.Loaded(
@@ -158,15 +154,35 @@ class DeviceCoolingProgramSettingsViewModelTest {
     private fun DeviceCoolingProgramSettingsViewModel.slot(slotIndex: Int): CoolingProgramSlot =
         uiState.value.slots[slotIndex]
 
+    private fun slot(
+        startMinutes: Int,
+        endMinutes: Int,
+        fanOnTemperatureC: Double = 25.0,
+        targetFanPercent: Int = 60
+    ): CoolingProgramSlot = CoolingProgramSlot(
+        startMinutes = startMinutes,
+        endMinutes = endMinutes,
+        fanOnTemperatureC = fanOnTemperatureC,
+        targetFanPercent = targetFanPercent
+    )
+
     private fun policy(
         maximumSlotCount: Int = 6,
         fanPercentStep: Int = 10
     ): CoolingProgramPolicy = CoolingProgramPolicy(
         maximumSlotCount = maximumSlotCount,
-        minimumFanPercent = 0,
-        maximumFanPercent = 100,
-        fanPercentStep = fanPercentStep,
-        minimumSlotDurationMinutes = 15
+        minimumSlotDurationMinutes = 15,
+        fan = CoolingProgramFanPolicy(
+            minimumPercent = 0,
+            maximumPercent = 100,
+            stepPercent = fanPercentStep
+        ),
+        fanOnTemperature = CoolingProgramFanOnTemperaturePolicy(
+            minimumC = 15.0,
+            maximumC = 40.0,
+            stepC = 0.5,
+            defaultC = 25.0
+        )
     )
 
     private class FakeCoolingProgramOperations(

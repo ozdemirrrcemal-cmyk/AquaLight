@@ -7,11 +7,17 @@ internal const val COOLING_PROGRAM_HOURS_PER_DAY = 24
 internal const val COOLING_PROGRAM_MINUTES_PER_DAY =
     COOLING_PROGRAM_HOURS_PER_DAY * COOLING_PROGRAM_MINUTES_PER_HOUR
 
-/** Product-level fan program period. Fan output is expressed as percentage above data/runtime. */
+/**
+ * Product-level fan program period.
+ *
+ * During this same-day period, the fan starts when the tank reaches [fanOnTemperatureC]
+ * and runs at the fixed [targetFanPercent] selected by the user.
+ */
 data class CoolingProgramSlot(
     val startMinutes: Int,
     val endMinutes: Int,
-    val fanLimitPercent: Int
+    val fanOnTemperatureC: Double,
+    val targetFanPercent: Int
 ) {
     init {
         require(startMinutes in 0 until COOLING_PROGRAM_MINUTES_PER_DAY)
@@ -19,7 +25,8 @@ data class CoolingProgramSlot(
         require(startMinutes < endMinutes) {
             "Cooling program periods must stay within one calendar day."
         }
-        require(fanLimitPercent in PERCENT_MINIMUM..PERCENT_MAXIMUM)
+        require(fanOnTemperatureC.isFinite())
+        require(targetFanPercent in PERCENT_MINIMUM..PERCENT_MAXIMUM)
     }
 }
 

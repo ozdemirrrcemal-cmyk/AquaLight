@@ -9,6 +9,10 @@ import com.aqua.aqualight.application.devices.DeviceRootRouteResolver
 import com.aqua.aqualight.application.devices.DeviceRootSnapshot
 import com.aqua.aqualight.application.devices.OwnerDeviceAvailability
 import com.aqua.aqualight.application.devices.OwnerDeviceFamily
+import com.aqua.aqualight.application.devices.cooling.control.DeviceCoolingControlFailure
+import com.aqua.aqualight.application.devices.cooling.control.DeviceCoolingControlMode
+import com.aqua.aqualight.application.devices.cooling.control.DeviceCoolingControlOperations
+import com.aqua.aqualight.application.devices.cooling.control.DeviceCoolingControlResult
 import com.aqua.aqualight.ui.common.devicepresence.DeviceConnectionVisualState
 import com.aqua.aqualight.ui.common.text.AquaUiText
 import com.aqua.aqualight.ui.tabs.devices.detail.common.DeviceRootKind
@@ -20,6 +24,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.test.TestDispatcher
 import kotlinx.coroutines.test.UnconfinedTestDispatcher
 import kotlinx.coroutines.test.resetMain
@@ -70,7 +75,7 @@ class DeviceRootViewModelBoundaryTest {
         val operations = FakeDeviceRootOperations(rootSnapshot())
         val light = DeviceLightRootViewModel(operations)
         val timer = DeviceTimerRootViewModel(operations)
-        val cooling = DeviceCoolingRootViewModel(operations)
+        val cooling = coolingViewModel(operations)
         light.bind("device-1")
         timer.bind("device-1")
         cooling.bind("device-1")
@@ -99,7 +104,7 @@ class DeviceRootViewModelBoundaryTest {
                 )
             )
         )
-        val viewModel = DeviceCoolingRootViewModel(operations)
+        val viewModel = coolingViewModel(operations)
         viewModel.bind("device-1")
         assertEquals(DeviceConnectionVisualState.ONLINE, viewModel.uiState.value.connectionVisualState)
         assertTrue(viewModel.uiState.value.contentEnabled)
@@ -107,6 +112,12 @@ class DeviceRootViewModelBoundaryTest {
         assertEquals(DeviceConnectionVisualState.OFFLINE, viewModel.uiState.value.connectionVisualState)
         assertFalse(viewModel.uiState.value.contentEnabled)
     }
+
+    private fun coolingViewModel(operations: DeviceRootOperations): DeviceCoolingRootViewModel =
+        DeviceCoolingRootViewModel(
+            operations = operations,
+            controlOperations = UnavailableCoolingControlOperations
+        )
 
     private fun rootSnapshot(
         capabilities: Set<DeviceRootCapability> = setOf(DeviceRootCapability.DOSING),
@@ -163,5 +174,28 @@ class DeviceRootViewModelBoundaryTest {
     class MainDispatcherRule(private val dispatcher: TestDispatcher = UnconfinedTestDispatcher()) : TestWatcher() {
         override fun starting(description: Description) = Dispatchers.setMain(dispatcher)
         override fun finished(description: Description) = Dispatchers.resetMain()
+    }
+
+    private object UnavailableCoolingControlOperations : DeviceCoolingControlOperations {
+        private val unavailable = DeviceCoolingControlResult.Failed(
+            DeviceCoolingControlFailure.Unavailable
+        )
+
+        override fun observeControl(deviceUid: String): Flow<DeviceCoolingControlResult> =
+            flowOf(unavailable)
+
+        override fun currentControl(deviceUid: String): DeviceCoolingControlResult = unavailable
+
+        override suspend fun refreshControl(deviceUid: String): DeviceCoolingControlResult = unavailable
+
+        override suspend fun setMode(
+            deviceUid: String,
+            mode: DeviceCoolingControlMode
+        ): DeviceCoolingControlResult = unavailable
+
+        override suspend fun setManualFanPercent(
+            deviceUid: String,
+            percent: Int
+        ): DeviceCoolingControlResult = unavailable
     }
 }

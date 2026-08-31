@@ -45,10 +45,10 @@ class CoolingProgramScheduleTest {
     }
 
     @Test
-    fun fanLimitSnapsToReportedPolicyStep() {
-        val original = slot(hour(8), hour(14), fanLimitPercent = 60)
+    fun targetFanPercentSnapsToReportedPolicyStep() {
+        val original = slot(hour(8), hour(14), targetFanPercent = 60)
 
-        val result = CoolingProgramSchedule.updateFanLimit(
+        val result = CoolingProgramSchedule.updateTargetFanPercent(
             slots = listOf(original),
             policy = policy(fanPercentStep = 10),
             slotIndex = 0,
@@ -57,7 +57,35 @@ class CoolingProgramScheduleTest {
 
         assertTrue(result is CoolingProgramEditResult.Updated)
         val updated = (result as CoolingProgramEditResult.Updated).slots.single()
-        assertEquals(70, updated.fanLimitPercent)
+        assertEquals(70, updated.targetFanPercent)
+    }
+
+    @Test
+    fun fanOnTemperatureSnapsToReportedPolicyStep() {
+        val original = slot(hour(8), hour(14), fanOnTemperatureC = 25.0)
+
+        val result = CoolingProgramSchedule.updateFanOnTemperature(
+            slots = listOf(original),
+            policy = policy(fanOnTemperatureStepC = 0.5),
+            slotIndex = 0,
+            temperatureC = 25.3
+        )
+
+        assertTrue(result is CoolingProgramEditResult.Updated)
+        val updated = (result as CoolingProgramEditResult.Updated).slots.single()
+        assertEquals(25.5, updated.fanOnTemperatureC, 0.0)
+    }
+
+    @Test
+    fun addedPeriodUsesAuthoritativeTemperatureDefault() {
+        val result = CoolingProgramSchedule.addSlot(
+            slots = emptyList(),
+            policy = policy(defaultFanOnTemperatureC = 26.0)
+        )
+
+        assertTrue(result is CoolingProgramEditResult.Updated)
+        val slot = (result as CoolingProgramEditResult.Updated).slots.single()
+        assertEquals(26.0, slot.fanOnTemperatureC, 0.0)
     }
 
     @Test
@@ -78,22 +106,34 @@ class CoolingProgramScheduleTest {
     private fun slot(
         startMinutes: Int,
         endMinutes: Int,
-        fanLimitPercent: Int = 60
+        fanOnTemperatureC: Double = 25.0,
+        targetFanPercent: Int = 60
     ): CoolingProgramSlot = CoolingProgramSlot(
         startMinutes = startMinutes,
         endMinutes = endMinutes,
-        fanLimitPercent = fanLimitPercent
+        fanOnTemperatureC = fanOnTemperatureC,
+        targetFanPercent = targetFanPercent
     )
 
     private fun policy(
         maximumSlotCount: Int = 6,
-        fanPercentStep: Int = 5
+        fanPercentStep: Int = 5,
+        fanOnTemperatureStepC: Double = 0.5,
+        defaultFanOnTemperatureC: Double = 25.0
     ): CoolingProgramPolicy = CoolingProgramPolicy(
         maximumSlotCount = maximumSlotCount,
-        minimumFanPercent = 0,
-        maximumFanPercent = 100,
-        fanPercentStep = fanPercentStep,
-        minimumSlotDurationMinutes = 15
+        minimumSlotDurationMinutes = 15,
+        fan = CoolingProgramFanPolicy(
+            minimumPercent = 0,
+            maximumPercent = 100,
+            stepPercent = fanPercentStep
+        ),
+        fanOnTemperature = CoolingProgramFanOnTemperaturePolicy(
+            minimumC = 15.0,
+            maximumC = 40.0,
+            stepC = fanOnTemperatureStepC,
+            defaultC = defaultFanOnTemperatureC
+        )
     )
 
     private companion object {

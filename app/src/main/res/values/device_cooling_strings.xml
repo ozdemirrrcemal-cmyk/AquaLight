@@ -62,7 +62,7 @@
 
     <string name="device_cooling_program_card_title">Fan Program</string>
     <string name="device_cooling_program_not_configured">No program configured</string>
-    <string name="device_cooling_program_not_configured_hint">Create a schedule to control fan speed by time</string>
+    <string name="device_cooling_program_not_configured_hint">Create time periods with a fan-on temperature and fixed fan speed</string>
 
     <string name="device_cooling_edit_automatic_description">Edit automatic fan settings</string>
     <string name="device_cooling_edit_program_description">Edit fan program</string>
@@ -103,7 +103,8 @@
     <string name="device_cooling_program_no_active_period">No active time period</string>
     <string name="device_cooling_program_timeline_title">24-Hour Plan</string>
     <string name="device_cooling_program_slots_title">Time Periods</string>
-    <string name="device_cooling_program_fan_limit">Fan Speed Limit</string>
+    <string name="device_cooling_program_fan_speed">Fan Speed</string>
+    <string name="device_cooling_program_fan_on_temperature">Fan On Temperature</string>
     <string name="device_cooling_program_add_slot">+ Add</string>
     <string name="device_cooling_program_editor_title">Time Period Settings</string>
     <string name="device_cooling_program_more_actions">More time period actions</string>
@@ -121,6 +122,8 @@
     <string name="device_cooling_program_start_time_sheet_message">Choose when this time period starts.</string>
     <string name="device_cooling_program_end_time_sheet_title">End Time</string>
     <string name="device_cooling_program_end_time_sheet_message">Choose when this time period ends.</string>
+    <string name="device_cooling_program_fan_on_temperature_sheet_title">Fan On Temperature</string>
+    <string name="device_cooling_program_fan_on_temperature_sheet_helper">During this time period, the fan starts at the selected program speed when the tank reaches this temperature.</string>
 
     <string name="device_cooling_value_unavailable">—</string>
     <string name="device_cooling_temperature_value_format">%1$.1f °C</string>

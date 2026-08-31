@@ -1,5 +1,7 @@
 package com.aqua.aqualight.ui.tabs.devices.detail.cooling.program
 
+import com.aqua.aqualight.application.devices.cooling.program.CoolingProgramFanOnTemperaturePolicy
+import com.aqua.aqualight.application.devices.cooling.program.CoolingProgramFanPolicy
 import com.aqua.aqualight.application.devices.cooling.program.CoolingProgramPolicy
 import com.aqua.aqualight.application.devices.cooling.program.CoolingProgramReadResult
 import com.aqua.aqualight.application.devices.cooling.program.CoolingProgramSaveResult
@@ -34,16 +36,8 @@ class DeviceCoolingProgramSlotUiLifecycleTest {
 
     @Test
     fun presentationKeysSurviveEditAddAndDeleteIndexChanges() = runTest(dispatcher) {
-        val first = CoolingProgramSlot(
-            startMinutes = hour(8),
-            endMinutes = hour(10),
-            fanLimitPercent = 50
-        )
-        val second = CoolingProgramSlot(
-            startMinutes = hour(12),
-            endMinutes = hour(14),
-            fanLimitPercent = 60
-        )
+        val first = slot(hour(8), hour(10), targetFanPercent = 50)
+        val second = slot(hour(12), hour(14), targetFanPercent = 60)
         val viewModel = DeviceCoolingProgramSettingsViewModel(
             operations = RecordingCoolingProgramOperations(
                 readResult = CoolingProgramReadResult.Loaded(
@@ -57,8 +51,12 @@ class DeviceCoolingProgramSlotUiLifecycleTest {
         val firstKey = initialItems[0].uiKey
         val secondKey = initialItems[1].uiKey
 
-        viewModel.updateFanLimit(SECOND_SLOT_INDEX, 73)
-        val editedSecond = second.copy(fanLimitPercent = 70)
+        viewModel.updateTargetFanPercent(SECOND_SLOT_INDEX, 73)
+        viewModel.updateFanOnTemperature(SECOND_SLOT_INDEX, 25.6)
+        val editedSecond = second.copy(
+            targetFanPercent = 70,
+            fanOnTemperatureC = 25.5
+        )
         assertEquals(secondKey, viewModel.uiState.value.slotItems[SECOND_SLOT_INDEX].uiKey)
 
         viewModel.addTimeSlot()
@@ -97,12 +95,31 @@ class DeviceCoolingProgramSlotUiLifecycleTest {
         assertEquals(draftSlots, operations.lastSavedSlots)
     }
 
+    private fun slot(
+        startMinutes: Int,
+        endMinutes: Int,
+        targetFanPercent: Int
+    ): CoolingProgramSlot = CoolingProgramSlot(
+        startMinutes = startMinutes,
+        endMinutes = endMinutes,
+        fanOnTemperatureC = 25.0,
+        targetFanPercent = targetFanPercent
+    )
+
     private fun policy(): CoolingProgramPolicy = CoolingProgramPolicy(
         maximumSlotCount = 6,
-        minimumFanPercent = 0,
-        maximumFanPercent = 100,
-        fanPercentStep = 10,
-        minimumSlotDurationMinutes = 15
+        minimumSlotDurationMinutes = 15,
+        fan = CoolingProgramFanPolicy(
+            minimumPercent = 0,
+            maximumPercent = 100,
+            stepPercent = 10
+        ),
+        fanOnTemperature = CoolingProgramFanOnTemperaturePolicy(
+            minimumC = 15.0,
+            maximumC = 40.0,
+            stepC = 0.5,
+            defaultC = 25.0
+        )
     )
 
     private class RecordingCoolingProgramOperations(
