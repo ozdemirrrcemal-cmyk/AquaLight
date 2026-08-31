@@ -8,6 +8,8 @@
     <string name="device_cooling_program_fan_limit">Fan Hız Limiti</string>
     <string name="device_cooling_program_add_slot">+ Ekle</string>
     <string name="device_cooling_program_editor_title">Zaman Dilimi Ayarları</string>
+    <string name="device_cooling_program_more_actions">Diğer zaman dilimi işlemleri</string>
+    <string name="device_cooling_program_delete_slot">Zaman dilimini sil</string>
     <string name="device_cooling_program_start_time">Başlangıç</string>
     <string name="device_cooling_program_end_time">Bitiş</string>
     <string name="device_cooling_program_label_quiet">Sessiz</string>
