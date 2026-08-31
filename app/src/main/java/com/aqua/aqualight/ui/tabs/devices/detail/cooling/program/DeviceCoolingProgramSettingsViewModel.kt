@@ -1,6 +1,6 @@
 @file:Suppress("MagicNumber")
 
-package com.aqua.aqualight.ui.tabs.devices.detail.cooling.settings.program
+package com.aqua.aqualight.ui.tabs.devices.detail.cooling.program
 
 import androidx.lifecycle.ViewModel
 import kotlinx.coroutines.flow.MutableStateFlow

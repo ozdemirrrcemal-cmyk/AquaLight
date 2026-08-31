@@ -25,7 +25,7 @@ TEST = ROOT / "app/src/test/java/com/aqua/aqualight/ui/tabs/devices/detail/Devic
 ROOT_VIEW_MODELS = (
     SOURCE / "ui/tabs/devices/detail/common/DeviceRootOverviewViewModel.kt",
     SOURCE / "ui/tabs/devices/detail/light/DeviceLightRootViewModel.kt",
-    SOURCE / "ui/tabs/devices/detail/cooling/DeviceCoolingRootViewModel.kt",
+    SOURCE / "ui/tabs/devices/detail/cooling/root/DeviceCoolingRootViewModel.kt",
     SOURCE / "ui/tabs/devices/detail/timer/DeviceTimerRootViewModel.kt",
     SOURCE / "ui/tabs/devices/detail/dosing/root/DeviceDosingRootViewModel.kt",
 )
@@ -254,8 +254,6 @@ for path, text in ((FACTORY, factory), (SMOKE_FACTORY, smoke_factory)):
         if token not in text:
             errors.append(f"{path.relative_to(ROOT)}: production/smoke root binding is missing: {token}")
 
-# Dosing has one commercial path only. Production must own the root binding; release-smoke must not
-# recreate Dosing through a fake/fail-closed implementation.
 if "DeviceDosingRootViewModel(" not in factory:
     errors.append(f"{FACTORY.relative_to(ROOT)}: production Dosing root binding is missing")
 if "DeviceDosingRootViewModel(" in smoke_factory:

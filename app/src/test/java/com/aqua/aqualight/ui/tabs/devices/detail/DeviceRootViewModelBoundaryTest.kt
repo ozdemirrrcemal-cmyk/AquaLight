@@ -13,7 +13,7 @@ import com.aqua.aqualight.ui.common.devicepresence.DeviceConnectionVisualState
 import com.aqua.aqualight.ui.common.text.AquaUiText
 import com.aqua.aqualight.ui.tabs.devices.detail.common.DeviceRootKind
 import com.aqua.aqualight.ui.tabs.devices.detail.common.DeviceRootOverviewViewModel
-import com.aqua.aqualight.ui.tabs.devices.detail.cooling.DeviceCoolingRootViewModel
+import com.aqua.aqualight.ui.tabs.devices.detail.cooling.root.DeviceCoolingRootViewModel
 import com.aqua.aqualight.ui.tabs.devices.detail.light.DeviceLightRootViewModel
 import com.aqua.aqualight.ui.tabs.devices.detail.timer.DeviceTimerRootViewModel
 import kotlinx.coroutines.Dispatchers
@@ -34,7 +34,6 @@ import org.junit.runner.Description
 
 @OptIn(ExperimentalCoroutinesApi::class)
 class DeviceRootViewModelBoundaryTest {
-
     @get:Rule
     val mainDispatcherRule = MainDispatcherRule()
 
@@ -42,38 +41,24 @@ class DeviceRootViewModelBoundaryTest {
     fun `overview renders application root snapshot without repository models`() {
         val operations = FakeDeviceRootOperations(rootSnapshot())
         val viewModel = DeviceRootOverviewViewModel(operations)
-
-        viewModel.bind(
-            kind = DeviceRootKind.DOSING,
-            deviceUidText = "device-1",
-            fallbackTitle = "Fallback"
-        )
-
+        viewModel.bind(DeviceRootKind.DOSING, "device-1", "Fallback")
         val state = viewModel.uiState.value
         assertEquals(AquaUiText.Dynamic("AquaLight Dosing"), state.title)
         assertEquals(AquaUiText.Resource(R.string.device_online), state.connectionStatus)
         assertEquals(AquaUiText.Dynamic("4"), state.primaryCountText)
-        assertTrue(
-            (state.featuresText as AquaUiText.Joined).parts.contains(
-                AquaUiText.Resource(R.string.device_feature_dosing)
-            )
-        )
+        assertTrue((state.featuresText as AquaUiText.Joined).parts.contains(AquaUiText.Resource(R.string.device_feature_dosing)))
         assertTrue(state.primarySectionPlaceholder is AquaUiText.Joined)
         assertEquals("device-1", operations.lastObservedUid)
     }
 
     @Test
     fun `light root exposes only the device title state`() {
-        val operations = FakeDeviceRootOperations(
-            rootSnapshot(
-                capabilities = setOf(DeviceRootCapability.MANUAL_LIGHT),
-                menuFeatures = setOf(DeviceRootMenuFeature.DEVICE_SETTINGS)
-            )
-        )
+        val operations = FakeDeviceRootOperations(rootSnapshot(
+            capabilities = setOf(DeviceRootCapability.MANUAL_LIGHT),
+            menuFeatures = setOf(DeviceRootMenuFeature.DEVICE_SETTINGS)
+        ))
         val viewModel = DeviceLightRootViewModel(operations)
-
-        viewModel.bind(deviceUidText = "device-1")
-
+        viewModel.bind("device-1")
         assertEquals("AquaLight Dosing", viewModel.uiState.value.title)
         assertEquals("device-1", operations.lastObservedUid)
         assertEquals("device-1", operations.lastConnectedUid)
@@ -85,17 +70,13 @@ class DeviceRootViewModelBoundaryTest {
         val light = DeviceLightRootViewModel(operations)
         val timer = DeviceTimerRootViewModel(operations)
         val cooling = DeviceCoolingRootViewModel(operations)
-
         light.bind("device-1")
         timer.bind("device-1")
         cooling.bind("device-1")
-
         assertEquals("AquaLight Dosing", light.uiState.value.title)
         assertEquals("AquaLight Dosing", timer.uiState.value.title)
         assertEquals("AquaLight Dosing", cooling.uiState.value.title)
-
         operations.publishTitle("My Aquarium Controller")
-
         assertEquals("My Aquarium Controller", light.uiState.value.title)
         assertEquals("My Aquarium Controller", timer.uiState.value.title)
         assertEquals("My Aquarium Controller", cooling.uiState.value.title)
@@ -103,49 +84,30 @@ class DeviceRootViewModelBoundaryTest {
 
     @Test
     fun `cooling root uses shared fail closed connection gate`() {
-        val operations = FakeDeviceRootOperations(
-            DeviceRootSnapshot(
-                deviceUid = "device-1",
-                title = "Cooling Pro",
-                availability = OwnerDeviceAvailability.REACHABLE,
-                family = OwnerDeviceFamily.COOLING,
-                catalogState = DeviceRootCatalogState.VALID,
-                capabilities = setOf(
-                    DeviceRootCapability.COOLING,
-                    DeviceRootCapability.FAN,
-                    DeviceRootCapability.TEMPERATURE
-                )
-            )
-        )
+        val operations = FakeDeviceRootOperations(DeviceRootSnapshot(
+            deviceUid = "device-1",
+            title = "Cooling Pro",
+            availability = OwnerDeviceAvailability.REACHABLE,
+            family = OwnerDeviceFamily.COOLING,
+            catalogState = DeviceRootCatalogState.VALID,
+            capabilities = setOf(DeviceRootCapability.COOLING, DeviceRootCapability.FAN, DeviceRootCapability.TEMPERATURE)
+        ))
         val viewModel = DeviceCoolingRootViewModel(operations)
-
         viewModel.bind("device-1")
-
         assertEquals(DeviceConnectionVisualState.ONLINE, viewModel.uiState.value.connectionVisualState)
         assertTrue(viewModel.uiState.value.contentEnabled)
-
         operations.publishAvailability(OwnerDeviceAvailability.UNREACHABLE)
-
         assertEquals(DeviceConnectionVisualState.OFFLINE, viewModel.uiState.value.connectionVisualState)
         assertFalse(viewModel.uiState.value.contentEnabled)
     }
 
     private fun rootSnapshot(
         capabilities: Set<DeviceRootCapability> = setOf(DeviceRootCapability.DOSING),
-        menuFeatures: Set<DeviceRootMenuFeature> = setOf(
-            DeviceRootMenuFeature.DOSING_CHANNELS,
-            DeviceRootMenuFeature.DOSING_SCHEDULES
-        ),
+        menuFeatures: Set<DeviceRootMenuFeature> = setOf(DeviceRootMenuFeature.DOSING_CHANNELS, DeviceRootMenuFeature.DOSING_SCHEDULES),
         title: String = "AquaLight Dosing"
     ): DeviceRootSnapshot {
-        val family = if (DeviceRootCapability.DOSING in capabilities) {
-            OwnerDeviceFamily.DOSING
-        } else {
-            OwnerDeviceFamily.LIGHT
-        }
-        val routes = menuFeatures.mapNotNullTo(linkedSetOf()) { feature ->
-            DeviceRootRouteResolver.resolve(family, feature)
-        }
+        val family = if (DeviceRootCapability.DOSING in capabilities) OwnerDeviceFamily.DOSING else OwnerDeviceFamily.LIGHT
+        val routes = menuFeatures.mapNotNullTo(linkedSetOf()) { DeviceRootRouteResolver.resolve(family, it) }
         return DeviceRootSnapshot(
             deviceUid = "device-1",
             title = title,
@@ -163,45 +125,29 @@ class DeviceRootViewModelBoundaryTest {
         )
     }
 
-    private inner class FakeDeviceRootOperations(
-        initialSnapshot: DeviceRootSnapshot?
-    ) : DeviceRootOperations {
+    private inner class FakeDeviceRootOperations(initialSnapshot: DeviceRootSnapshot?) : DeviceRootOperations {
         private val snapshots = MutableStateFlow(initialSnapshot)
-        var lastObservedUid: String = ""
-        var lastConnectedUid: String = ""
-
+        var lastObservedUid = ""
+        var lastConnectedUid = ""
         override fun observe(deviceUid: String): Flow<DeviceRootSnapshot?> {
             lastObservedUid = deviceUid
             return snapshots
         }
-
         override fun current(deviceUid: String): DeviceRootSnapshot? = snapshots.value
-
         override fun connect(deviceUid: String): Result<Unit> {
             lastConnectedUid = deviceUid
             return Result.success(Unit)
         }
-
         fun publishTitle(title: String) {
-            val current = snapshots.value ?: return
-            snapshots.value = current.copy(title = title)
+            snapshots.value = snapshots.value?.copy(title = title)
         }
-
         fun publishAvailability(availability: OwnerDeviceAvailability) {
-            val current = snapshots.value ?: return
-            snapshots.value = current.copy(availability = availability)
+            snapshots.value = snapshots.value?.copy(availability = availability)
         }
     }
 
-    class MainDispatcherRule(
-        private val dispatcher: TestDispatcher = UnconfinedTestDispatcher()
-    ) : TestWatcher() {
-        override fun starting(description: Description) {
-            Dispatchers.setMain(dispatcher)
-        }
-
-        override fun finished(description: Description) {
-            Dispatchers.resetMain()
-        }
+    class MainDispatcherRule(private val dispatcher: TestDispatcher = UnconfinedTestDispatcher()) : TestWatcher() {
+        override fun starting(description: Description) = Dispatchers.setMain(dispatcher)
+        override fun finished(description: Description) = Dispatchers.resetMain()
     }
 }

@@ -1,4 +1,4 @@
-package com.aqua.aqualight.ui.tabs.devices.detail.cooling.settings.automatic
+package com.aqua.aqualight.ui.tabs.devices.detail.cooling.automatic
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
@@ -59,10 +59,6 @@ class DeviceCoolingAutomaticSettingsViewModel(
         refreshJob?.cancel()
         refreshJob = viewModelScope.launch {
             operations.refreshAutomaticSettings(deviceUid)
-            // Device connectivity is gated before this destination is entered. A transient read
-            // failure therefore never replaces the editor with a synthetic error/retry surface.
-            // Existing authoritative values remain visible; otherwise the structural editor keeps
-            // unavailable placeholders until the runtime state flow publishes a valid snapshot.
         }
     }
 
@@ -189,11 +185,6 @@ data class DeviceCoolingAutomaticSettingsUiState(
             persistedMaximumSpeedTemperatureC != null &&
             policy != null
 
-    /**
-     * Debug builds keep the shared bottom sheets inspectable before firmware publishes an editable
-     * Cooling snapshot. These values are editor-only fallbacks: they are never treated as persisted
-     * device state and [canSave] still requires an authoritative firmware snapshot.
-     */
     val editorPolicy: DeviceCoolingAutomaticTemperaturePolicy?
         get() = policy ?: DEBUG_PREVIEW_POLICY.takeIf { BuildConfig.DEBUG }
 
@@ -208,7 +199,6 @@ data class DeviceCoolingAutomaticSettingsUiState(
     val silentModeFirmwareBacked: Boolean
         get() = persistedSilentModeEnabled != null
 
-    /** Silent Mode is interactive in debug while the firmware contract is still pending. */
     val silentModeEditable: Boolean
         get() = (silentModeFirmwareBacked && editable) || BuildConfig.DEBUG
 
@@ -253,7 +243,6 @@ private fun DeviceCoolingAutomaticSettingsUiState.withSnapshot(
             fanPercentNow = snapshot.fanPercentNow
         )
     }
-    // A local draft must never override the first authoritative firmware snapshot.
     val preserveTemperatureDraft = hasFirmwareSnapshot && hasTemperatureChanges
     val preserveSilentModeDraft = silentModeFirmwareBacked && hasSilentModeChanges
     val incomingSilentMode = snapshot.silentModeEnabled

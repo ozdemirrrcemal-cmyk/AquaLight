@@ -1,4 +1,4 @@
-package com.aqua.aqualight.ui.tabs.devices.detail.cooling
+package com.aqua.aqualight.ui.tabs.devices.detail.cooling.root
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.PaddingValues

@@ -1,4 +1,4 @@
-package com.aqua.aqualight.ui.tabs.devices.detail.cooling.settings
+package com.aqua.aqualight.ui.tabs.devices.detail.cooling.common
 
 import android.os.Bundle
 import android.view.View

@@ -1,4 +1,4 @@
-package com.aqua.aqualight.ui.tabs.devices.detail.cooling.settings.automatic
+package com.aqua.aqualight.ui.tabs.devices.detail.cooling.automatic
 
 import com.aqua.aqualight.application.devices.cooling.DeviceCoolingAutomaticTemperaturePolicy
 import org.junit.Assert.assertFalse

@@ -54,7 +54,7 @@ import com.aqua.aqualight.ui.tabs.devices.add.DeviceAddViewModel
 import com.aqua.aqualight.ui.tabs.devices.add.DeviceProvisioningProgressViewModel
 import com.aqua.aqualight.ui.tabs.devices.add.DeviceQrScanViewModel
 import com.aqua.aqualight.ui.tabs.devices.detail.common.DeviceRootOverviewViewModel
-import com.aqua.aqualight.ui.tabs.devices.detail.cooling.DeviceCoolingRootViewModel
+import com.aqua.aqualight.ui.tabs.devices.detail.cooling.root.DeviceCoolingRootViewModel
 import com.aqua.aqualight.ui.tabs.devices.detail.light.DeviceLightRootViewModel
 import com.aqua.aqualight.ui.tabs.devices.detail.timer.DeviceTimerRootViewModel
 import com.aqua.aqualight.ui.tabs.devices.route.DeviceRouteResolver
@@ -157,9 +157,7 @@ private class ReleaseSmokeViewModelFactory(
                 userProfileOperations = profileOperations,
                 deviceStatusOperations = DefaultDeviceStatusOperations(devicesRepository)
             )
-
         modelClass.isAssignableFrom(DevicesViewModel::class.java) -> createDevicesViewModel()
-
         modelClass.isAssignableFrom(DeviceAddViewModel::class.java) ->
             DeviceAddViewModel(
                 discoveryOperations = DefaultProvisioningDiscoveryOperations.create(
@@ -168,7 +166,6 @@ private class ReleaseSmokeViewModelFactory(
                 ),
                 textResolver = appTextResolver
             )
-
         modelClass.isAssignableFrom(DeviceQrScanViewModel::class.java) ->
             DeviceQrScanViewModel(
                 discoveryOperations = DefaultProvisioningDiscoveryOperations.create(
@@ -177,23 +174,18 @@ private class ReleaseSmokeViewModelFactory(
                 ),
                 textResolver = appTextResolver
             )
-
         modelClass.isAssignableFrom(DeviceProvisioningProgressViewModel::class.java) ->
             DeviceProvisioningProgressViewModel(
                 operations = DefaultProvisioningProgressOperations(appContext),
                 menuOpenUseCase = deviceMenuOpenUseCase,
                 textResolver = appTextResolver
             )
-
-        modelClass.isAssignableFrom(AquariumTankViewModel::class.java) ->
-            createAquariumTankViewModel()
-
+        modelClass.isAssignableFrom(AquariumTankViewModel::class.java) -> createAquariumTankViewModel()
         modelClass.isAssignableFrom(MaintenanceViewModel::class.java) ->
             MaintenanceViewModel(
                 operations = maintenanceOperations,
                 textResolver = maintenanceTextResolver
             )
-
         else -> null
     }
 
@@ -228,8 +220,7 @@ private class ReleaseSmokeViewModelFactory(
                             snapshots = snapshots
                         )
                     },
-                    removeDeviceAssignmentsForTank =
-                        assignmentRepository::removeAssignmentsForTank,
+                    removeDeviceAssignmentsForTank = assignmentRepository::removeAssignmentsForTank,
                     cancelCareTaskReminder = notificationPreferences::cancelCareTask,
                     reconcileCareReminders = notificationPreferences::reconcileOwner,
                     ownerUidProvider = { SMOKE_OWNER_UID }
@@ -242,19 +233,13 @@ private class ReleaseSmokeViewModelFactory(
         modelClass: Class<out ViewModel>
     ): ViewModel? = when {
         modelClass.isAssignableFrom(DeviceLightRootViewModel::class.java) ->
-            DeviceLightRootViewModel(
-                rootOperations = DefaultDeviceRootOperations(devicesRepository)
-            )
-
+            DeviceLightRootViewModel(rootOperations = DefaultDeviceRootOperations(devicesRepository))
         modelClass.isAssignableFrom(DeviceCoolingRootViewModel::class.java) ->
             DeviceCoolingRootViewModel(DefaultDeviceRootOperations(devicesRepository))
-
         modelClass.isAssignableFrom(DeviceTimerRootViewModel::class.java) ->
             DeviceTimerRootViewModel(DefaultDeviceRootOperations(devicesRepository))
-
         modelClass.isAssignableFrom(DeviceRootOverviewViewModel::class.java) ->
             DeviceRootOverviewViewModel(DefaultDeviceRootOperations(devicesRepository))
-
         else -> null
     }
 
@@ -270,7 +255,6 @@ private class ReleaseSmokeViewModelFactory(
                 menuOpenUseCase = deviceMenuOpenUseCase,
                 routeResolver = DeviceRouteResolver()
             )
-
         modelClass.isAssignableFrom(TankDeviceSelectViewModel::class.java) ->
             TankDeviceSelectViewModel(
                 assignmentOperations = DefaultTankDeviceAssignmentOperations(
@@ -278,7 +262,6 @@ private class ReleaseSmokeViewModelFactory(
                     devicesRepository = devicesRepository
                 )
             )
-
         else -> null
     }
 

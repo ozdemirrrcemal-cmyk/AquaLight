@@ -1,6 +1,6 @@
 @file:Suppress("LongMethod", "MagicNumber", "TooManyFunctions")
 
-package com.aqua.aqualight.ui.tabs.devices.detail.cooling.settings.program
+package com.aqua.aqualight.ui.tabs.devices.detail.cooling.program
 
 import android.content.Context
 import androidx.compose.foundation.Canvas
