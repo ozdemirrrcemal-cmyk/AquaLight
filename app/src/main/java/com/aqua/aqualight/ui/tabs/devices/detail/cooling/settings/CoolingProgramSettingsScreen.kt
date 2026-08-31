@@ -7,8 +7,6 @@ import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.gestures.detectHorizontalDragGestures
-import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -38,16 +36,12 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.drawscope.DrawScope
-import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.semantics.ProgressBarRangeInfo
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.contentDescription
-import androidx.compose.ui.semantics.progressBarRangeInfo
 import androidx.compose.ui.semantics.semantics
-import androidx.compose.ui.semantics.setProgress
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.window.Popup
@@ -57,6 +51,7 @@ import com.aqua.aqualight.i18n.LocaleFormatter
 import com.aqua.aqualight.ui.common.cooling.AquaCoolingDashboardCardSurface
 import com.aqua.aqualight.ui.common.cooling.AquaCoolingDashboardGeometry
 import com.aqua.aqualight.ui.common.cooling.AquaCoolingDashboardPalette
+import com.aqua.aqualight.ui.common.cooling.AquaCoolingFanPercentSlider
 import com.aqua.aqualight.ui.common.cooling.AquaCoolingProgramAlpha
 import com.aqua.aqualight.ui.common.cooling.AquaCoolingProgramGeometry
 import com.aqua.aqualight.ui.common.cooling.aquaCoolingDashboardColors
@@ -64,7 +59,6 @@ import com.aqua.aqualight.ui.common.cooling.aquaCoolingDashboardTypography
 import com.aqua.aqualight.ui.common.devicecard.AquaDeviceCardColors
 import com.aqua.aqualight.ui.common.devicecard.AquaDeviceCardTypography
 import java.time.LocalTime
-import kotlin.math.roundToInt
 
 @Composable
 internal fun DeviceCoolingProgramSettingsScreen(
@@ -82,7 +76,6 @@ internal fun DeviceCoolingProgramSettingsScreen(
     val context = LocalContext.current
     val now = LocalTime.now()
     val nowMinutes = now.hour * MINUTES_PER_HOUR + now.minute
-    val activeSlot = state.activeSlotAt(nowMinutes)
 
     LazyColumn(
         modifier = modifier.fillMaxSize(),
@@ -96,7 +89,7 @@ internal fun DeviceCoolingProgramSettingsScreen(
     ) {
         item(key = "active") {
             ProgramActiveCard(
-                activeSlot = activeSlot,
+                activeSlot = state.activeSlotAt(nowMinutes),
                 context = context,
                 colors = colors,
                 typography = typography
@@ -162,15 +155,13 @@ private fun ProgramActiveCard(
                     style = typography.title.copy(color = colors.primaryText)
                 )
                 BasicText(
-                    text = if (activeSlot == null) {
-                        stringResource(R.string.device_cooling_program_no_active_period)
-                    } else {
+                    text = activeSlot?.let { slot ->
                         buildString {
-                            append(formatProgramTimeRange(context, activeSlot))
+                            append(formatProgramTimeRange(context, slot))
                             append(" • ")
-                            append(programSlotSummary(activeSlot))
+                            append(programSlotSummary(slot))
                         }
-                    },
+                    } ?: stringResource(R.string.device_cooling_program_no_active_period),
                     style = typography.caption.copy(color = colors.secondaryText),
                     maxLines = 1
                 )
@@ -226,13 +217,7 @@ private fun ProgramTimelineCard(
                     cap = StrokeCap.Round
                 )
                 slots.forEach { slot ->
-                    drawProgramSlot(
-                        slot = slot,
-                        y = y,
-                        trackStroke = trackStroke,
-                        width = size.width,
-                        colors = colors
-                    )
+                    drawProgramSlot(slot, y, trackStroke, size.width, colors)
                 }
                 val nowX = size.width * (nowMinutes.toFloat() / MINUTES_PER_DAY)
                 drawLine(
@@ -397,7 +382,7 @@ private fun ProgramSlotCard(
                     typography = typography,
                     onClick = onEndTimeClick
                 )
-                ProgramFanLimitSlider(
+                ProgramFanLimitEditor(
                     value = slot.fanLimitPercent,
                     colors = colors,
                     typography = typography,
@@ -484,22 +469,12 @@ private fun ProgramEditorHeader(
 }
 
 @Composable
-private fun ProgramFanLimitSlider(
+private fun ProgramFanLimitEditor(
     value: Int,
     colors: AquaDeviceCardColors,
     typography: AquaDeviceCardTypography,
     onValueChange: (Int) -> Unit
 ) {
-    val description = stringResource(R.string.device_cooling_program_fan_limit_slider_description)
-    val density = LocalDensity.current
-    val thumbInsetPx = with(density) {
-        (AquaCoolingProgramGeometry.fanLimitThumbRadius +
-            AquaCoolingProgramGeometry.fanLimitThumbOutlineWidth).toPx()
-    }
-    val min = DeviceCoolingProgramPolicy.minimumFanLimitPercent
-    val max = DeviceCoolingProgramPolicy.maximumFanLimitPercent
-    val step = DeviceCoolingProgramPolicy.fanLimitStepPercent
-
     Column(
         modifier = Modifier
             .fillMaxWidth()
@@ -541,96 +516,13 @@ private fun ProgramFanLimitSlider(
                 maxLines = 1
             )
         }
-        Box(
-            modifier = Modifier
-                .fillMaxWidth()
-                .height(AquaCoolingProgramGeometry.fanLimitSliderHeight)
-                .semantics {
-                    contentDescription = description
-                    progressBarRangeInfo = ProgressBarRangeInfo(
-                        current = value.toFloat(),
-                        range = min.toFloat()..max.toFloat(),
-                        steps = ((max - min) / step) - 1
-                    )
-                    setProgress { target ->
-                        onValueChange(snapFanLimit(target.roundToInt()))
-                        true
-                    }
-                }
-                .pointerInput(thumbInsetPx) {
-                    detectTapGestures { offset ->
-                        onValueChange(
-                            fanLimitForPosition(
-                                x = offset.x,
-                                width = size.width.toFloat(),
-                                inset = thumbInsetPx
-                            )
-                        )
-                    }
-                }
-                .pointerInput(thumbInsetPx) {
-                    detectHorizontalDragGestures(
-                        onDragStart = { offset ->
-                            onValueChange(
-                                fanLimitForPosition(
-                                    x = offset.x,
-                                    width = size.width.toFloat(),
-                                    inset = thumbInsetPx
-                                )
-                            )
-                        },
-                        onHorizontalDrag = { change, _ ->
-                            onValueChange(
-                                fanLimitForPosition(
-                                    x = change.position.x,
-                                    width = size.width.toFloat(),
-                                    inset = thumbInsetPx
-                                )
-                            )
-                        }
-                    )
-                },
-            contentAlignment = Alignment.Center
-        ) {
-            Canvas(modifier = Modifier.fillMaxSize()) {
-                val inset = AquaCoolingProgramGeometry.fanLimitThumbRadius.toPx() +
-                    AquaCoolingProgramGeometry.fanLimitThumbOutlineWidth.toPx()
-                val trackStart = inset
-                val trackEnd = (size.width - inset).coerceAtLeast(trackStart)
-                val fraction = ((value - min).toFloat() / (max - min).toFloat()).coerceIn(0f, 1f)
-                val thumbX = trackStart + (trackEnd - trackStart) * fraction
-                val y = size.height / 2f
-                val stroke = AquaCoolingProgramGeometry.fanLimitTrackHeight.toPx()
-
-                drawLine(
-                    color = colors.secondaryText.copy(
-                        alpha = AquaCoolingProgramAlpha.fanLimitInactiveTrack
-                    ),
-                    start = Offset(trackStart, y),
-                    end = Offset(trackEnd, y),
-                    strokeWidth = stroke,
-                    cap = StrokeCap.Round
-                )
-                drawLine(
-                    color = colors.accent,
-                    start = Offset(trackStart, y),
-                    end = Offset(thumbX, y),
-                    strokeWidth = stroke,
-                    cap = StrokeCap.Round
-                )
-                drawCircle(
-                    color = colors.primaryText,
-                    radius = AquaCoolingProgramGeometry.fanLimitThumbRadius.toPx() +
-                        AquaCoolingProgramGeometry.fanLimitThumbOutlineWidth.toPx(),
-                    center = Offset(thumbX, y)
-                )
-                drawCircle(
-                    color = colors.accent,
-                    radius = AquaCoolingProgramGeometry.fanLimitThumbRadius.toPx(),
-                    center = Offset(thumbX, y)
-                )
-            }
-        }
+        AquaCoolingFanPercentSlider(
+            percent = value,
+            enabled = true,
+            colors = colors,
+            stepPercent = DeviceCoolingProgramPolicy.fanLimitStepPercent,
+            onValueChanged = onValueChange
+        )
     }
 }
 
@@ -767,22 +659,6 @@ private fun formatProgramTimeRange(
 
 private fun formatProgramTime(context: Context, minutesOfDay: Int): String =
     LocaleFormatter.formatTimeOfDay24Hour(context, minutesOfDay)
-
-private fun fanLimitForPosition(x: Float, width: Float, inset: Float): Int {
-    val usableWidth = (width - inset * 2f).coerceAtLeast(1f)
-    val fraction = ((x - inset) / usableWidth).coerceIn(0f, 1f)
-    val min = DeviceCoolingProgramPolicy.minimumFanLimitPercent
-    val max = DeviceCoolingProgramPolicy.maximumFanLimitPercent
-    return snapFanLimit((min + (max - min) * fraction).roundToInt())
-}
-
-private fun snapFanLimit(value: Int): Int {
-    val min = DeviceCoolingProgramPolicy.minimumFanLimitPercent
-    val max = DeviceCoolingProgramPolicy.maximumFanLimitPercent
-    val step = DeviceCoolingProgramPolicy.fanLimitStepPercent
-    val bounded = value.coerceIn(min, max)
-    return (((bounded + step / 2) / step) * step).coerceIn(min, max)
-}
 
 private const val MINUTES_PER_HOUR = 60
 private const val MINUTES_PER_DAY = 24 * MINUTES_PER_HOUR
