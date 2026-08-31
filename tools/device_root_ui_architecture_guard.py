@@ -24,11 +24,11 @@ DOSING_FRAGMENT = Path(
     "DeviceDosingRootFragment.kt"
 )
 COOLING_FRAGMENT = Path(
-    "app/src/main/java/com/aqua/aqualight/ui/tabs/devices/detail/cooling/"
+    "app/src/main/java/com/aqua/aqualight/ui/tabs/devices/detail/cooling/root/"
     "DeviceCoolingRootFragment.kt"
 )
 COOLING_VIEW_MODEL = Path(
-    "app/src/main/java/com/aqua/aqualight/ui/tabs/devices/detail/cooling/"
+    "app/src/main/java/com/aqua/aqualight/ui/tabs/devices/detail/cooling/root/"
     "DeviceCoolingRootViewModel.kt"
 )
 COOLING_UI_ROOT = Path(
