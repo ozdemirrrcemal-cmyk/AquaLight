@@ -5,6 +5,7 @@ sealed interface CoolingProgramReadResult {
         val snapshot: CoolingProgramSnapshot
     ) : CoolingProgramReadResult
 
+    data object Unsupported : CoolingProgramReadResult
     data object Unavailable : CoolingProgramReadResult
     data object NotConnected : CoolingProgramReadResult
 }
@@ -14,6 +15,7 @@ sealed interface CoolingProgramSaveResult {
         val snapshot: CoolingProgramSnapshot
     ) : CoolingProgramSaveResult
 
+    data object Unsupported : CoolingProgramSaveResult
     data object Unavailable : CoolingProgramSaveResult
     data object NotConnected : CoolingProgramSaveResult
     data object Rejected : CoolingProgramSaveResult

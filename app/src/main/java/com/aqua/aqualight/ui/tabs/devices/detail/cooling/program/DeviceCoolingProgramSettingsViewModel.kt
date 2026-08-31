@@ -19,11 +19,6 @@ import kotlinx.coroutines.launch
 
 typealias DeviceCoolingProgramSlot = CoolingProgramSlot
 
-/** Presentation-only slider resolution; authoritative snapping comes from loaded device policy. */
-object DeviceCoolingProgramPolicy {
-    const val fanLimitStepPercent = 1
-}
-
 class DeviceCoolingProgramSettingsViewModel(
     private val operations: DeviceCoolingProgramOperations
 ) : ViewModel() {
@@ -51,113 +46,120 @@ class DeviceCoolingProgramSettingsViewModel(
     }
 
     fun selectSlot(slotIndex: Int) {
-        val state = editableState() ?: return
-        if (slotIndex !in state.slots.indices) return
+        val state = _uiState.value
+        if (!state.isEditable || slotIndex !in state.slots.indices) return
         _uiState.value = state.copy(
             selectedSlotIndex = if (state.selectedSlotIndex == slotIndex) null else slotIndex
         )
     }
 
     fun updateStartTime(slotIndex: Int, minutesOfDay: Int): Boolean {
-        val state = editableState() ?: return false
-        val policy = state.policy ?: return false
-        return applyEditResult(
-            state = state,
-            result = CoolingProgramSchedule.updateStartTime(
-                slots = state.slots,
-                policy = policy,
-                slotIndex = slotIndex,
-                startMinutes = minutesOfDay
+        val state = _uiState.value
+        val policy = state.policy
+        return if (state.isEditable && policy != null) {
+            _uiState.applyEdit(
+                state = state,
+                result = CoolingProgramSchedule.updateStartTime(
+                    slots = state.slots,
+                    policy = policy,
+                    slotIndex = slotIndex,
+                    startMinutes = minutesOfDay
+                )
             )
-        )
+        } else {
+            false
+        }
     }
 
     fun updateEndTime(slotIndex: Int, minutesOfDay: Int): Boolean {
-        val state = editableState() ?: return false
-        val policy = state.policy ?: return false
-        return applyEditResult(
-            state = state,
-            result = CoolingProgramSchedule.updateEndTime(
-                slots = state.slots,
-                policy = policy,
-                slotIndex = slotIndex,
-                endMinutes = minutesOfDay
+        val state = _uiState.value
+        val policy = state.policy
+        return if (state.isEditable && policy != null) {
+            _uiState.applyEdit(
+                state = state,
+                result = CoolingProgramSchedule.updateEndTime(
+                    slots = state.slots,
+                    policy = policy,
+                    slotIndex = slotIndex,
+                    endMinutes = minutesOfDay
+                )
             )
-        )
+        } else {
+            false
+        }
     }
 
     fun updateFanLimit(slotIndex: Int, percent: Int) {
-        val state = editableState() ?: return
-        val policy = state.policy ?: return
-        applyEditResult(
-            state = state,
-            result = CoolingProgramSchedule.updateFanLimit(
-                slots = state.slots,
-                policy = policy,
-                slotIndex = slotIndex,
-                percent = percent
+        val state = _uiState.value
+        val policy = state.policy
+        if (state.isEditable && policy != null) {
+            _uiState.applyEdit(
+                state = state,
+                result = CoolingProgramSchedule.updateFanLimit(
+                    slots = state.slots,
+                    policy = policy,
+                    slotIndex = slotIndex,
+                    percent = percent
+                )
             )
-        )
+        }
     }
 
     fun addTimeSlot() {
-        val state = editableState() ?: return
-        val policy = state.policy ?: return
-        if (!state.canAddSlot) return
-        applyEditResult(
-            state = state,
-            result = CoolingProgramSchedule.addSlot(state.slots, policy)
-        )
+        val state = _uiState.value
+        val policy = state.policy
+        if (state.isEditable && policy != null && state.canAddSlot) {
+            _uiState.applyEdit(
+                state = state,
+                result = CoolingProgramSchedule.addSlot(state.slots, policy)
+            )
+        }
     }
 
     fun deleteTimeSlot(slotIndex: Int): Boolean {
-        val state = editableState() ?: return false
-        val policy = state.policy ?: return false
-        return when (
-            val result = CoolingProgramSchedule.deleteSlot(
-                slots = state.slots,
-                policy = policy,
-                slotIndex = slotIndex
-            )
-        ) {
-            is CoolingProgramEditResult.Updated -> {
-                _uiState.value = state.copy(
-                    slots = result.slots,
-                    selectedSlotIndex = null,
-                    saveState = DeviceCoolingProgramSaveState.IDLE
+        val state = _uiState.value
+        val policy = state.policy
+        return if (state.isEditable && policy != null) {
+            _uiState.applyEdit(
+                state = state,
+                result = CoolingProgramSchedule.deleteSlot(
+                    slots = state.slots,
+                    policy = policy,
+                    slotIndex = slotIndex
                 )
-                true
-            }
-            is CoolingProgramEditResult.Rejected -> false
+            )
+        } else {
+            false
         }
     }
 
     fun saveDraft() {
-        val deviceUid = boundDeviceUid ?: return
+        val deviceUid = boundDeviceUid
         val state = _uiState.value
-        val policy = state.policy ?: return
-        if (!state.canSave || CoolingProgramValidation.validate(state.slots, policy) !=
-            CoolingProgramValidationResult.Valid
-        ) {
-            return
-        }
+        val policy = state.policy
+        val validDraft = policy != null &&
+            CoolingProgramValidation.validate(state.slots, policy) == CoolingProgramValidationResult.Valid
+        if (deviceUid == null || !state.canSave || !validDraft) return
 
         val draft = state.slots
         _uiState.value = state.copy(saveState = DeviceCoolingProgramSaveState.SAVING)
         saveJob?.cancel()
         saveJob = viewModelScope.launch {
             when (val result = operations.saveProgram(deviceUid, draft)) {
-                is CoolingProgramSaveResult.Saved -> applySavedSnapshot(result)
-                CoolingProgramSaveResult.Unavailable -> updateSaveState(
+                is CoolingProgramSaveResult.Saved -> _uiState.applySavedSnapshot(result)
+                CoolingProgramSaveResult.Unsupported -> _uiState.updateSaveState(
+                    DeviceCoolingProgramSaveState.UNSUPPORTED
+                )
+                CoolingProgramSaveResult.Unavailable -> _uiState.updateSaveState(
                     DeviceCoolingProgramSaveState.UNAVAILABLE
                 )
-                CoolingProgramSaveResult.NotConnected -> updateSaveState(
+                CoolingProgramSaveResult.NotConnected -> _uiState.updateSaveState(
                     DeviceCoolingProgramSaveState.NOT_CONNECTED
                 )
-                CoolingProgramSaveResult.Rejected -> updateSaveState(
+                CoolingProgramSaveResult.Rejected -> _uiState.updateSaveState(
                     DeviceCoolingProgramSaveState.REJECTED
                 )
-                CoolingProgramSaveResult.InvalidConfiguration -> updateSaveState(
+                CoolingProgramSaveResult.InvalidConfiguration -> _uiState.updateSaveState(
                     DeviceCoolingProgramSaveState.VALIDATION_ERROR
                 )
             }
@@ -172,7 +174,12 @@ class DeviceCoolingProgramSettingsViewModel(
         )
         loadJob = viewModelScope.launch {
             when (val result = operations.readProgram(deviceUid)) {
-                is CoolingProgramReadResult.Loaded -> applyLoadedSnapshot(result)
+                is CoolingProgramReadResult.Loaded -> _uiState.applyLoadedSnapshot(result)
+                CoolingProgramReadResult.Unsupported -> {
+                    _uiState.value = DeviceCoolingProgramSettingsUiState(
+                        loadState = DeviceCoolingProgramLoadState.UNSUPPORTED
+                    )
+                }
                 CoolingProgramReadResult.Unavailable -> {
                     _uiState.value = DeviceCoolingProgramSettingsUiState(
                         loadState = DeviceCoolingProgramLoadState.UNAVAILABLE
@@ -185,72 +192,6 @@ class DeviceCoolingProgramSettingsViewModel(
                 }
             }
         }
-    }
-
-    private fun applyLoadedSnapshot(result: CoolingProgramReadResult.Loaded) {
-        val snapshot = result.snapshot
-        _uiState.value = if (
-            CoolingProgramValidation.validate(snapshot.slots, snapshot.policy) ==
-            CoolingProgramValidationResult.Valid
-        ) {
-            val ordered = snapshot.slots.sortedBy(CoolingProgramSlot::startMinutes)
-            DeviceCoolingProgramSettingsUiState(
-                loadState = DeviceCoolingProgramLoadState.CONTENT,
-                policy = snapshot.policy,
-                slots = ordered,
-                baselineSlots = ordered
-            )
-        } else {
-            DeviceCoolingProgramSettingsUiState(
-                loadState = DeviceCoolingProgramLoadState.ERROR
-            )
-        }
-    }
-
-    private fun applySavedSnapshot(result: CoolingProgramSaveResult.Saved) {
-        val snapshot = result.snapshot
-        val current = _uiState.value
-        if (
-            CoolingProgramValidation.validate(snapshot.slots, snapshot.policy) !=
-            CoolingProgramValidationResult.Valid
-        ) {
-            updateSaveState(DeviceCoolingProgramSaveState.ERROR)
-            return
-        }
-
-        val savedSlots = snapshot.slots.sortedBy(CoolingProgramSlot::startMinutes)
-        _uiState.value = current.copy(
-            policy = snapshot.policy,
-            slots = savedSlots,
-            baselineSlots = savedSlots,
-            selectedSlotIndex = current.selectedSlotIndex?.takeIf(savedSlots.indices::contains),
-            saveState = DeviceCoolingProgramSaveState.SAVED
-        )
-    }
-
-    private fun updateSaveState(saveState: DeviceCoolingProgramSaveState) {
-        _uiState.value = _uiState.value.copy(saveState = saveState)
-    }
-
-    private fun editableState(): DeviceCoolingProgramSettingsUiState? =
-        _uiState.value.takeIf { state ->
-            state.loadState == DeviceCoolingProgramLoadState.CONTENT &&
-                state.saveState != DeviceCoolingProgramSaveState.SAVING
-        }
-
-    private fun applyEditResult(
-        state: DeviceCoolingProgramSettingsUiState,
-        result: CoolingProgramEditResult
-    ): Boolean = when (result) {
-        is CoolingProgramEditResult.Updated -> {
-            _uiState.value = state.copy(
-                slots = result.slots,
-                selectedSlotIndex = result.selectedSlotIndex,
-                saveState = DeviceCoolingProgramSaveState.IDLE
-            )
-            true
-        }
-        is CoolingProgramEditResult.Rejected -> false
     }
 }
 
@@ -288,6 +229,7 @@ enum class DeviceCoolingProgramLoadState {
     IDLE,
     LOADING,
     CONTENT,
+    UNSUPPORTED,
     UNAVAILABLE,
     NOT_CONNECTED,
     ERROR
@@ -297,9 +239,80 @@ enum class DeviceCoolingProgramSaveState {
     IDLE,
     SAVING,
     SAVED,
+    UNSUPPORTED,
     UNAVAILABLE,
     NOT_CONNECTED,
     REJECTED,
     VALIDATION_ERROR,
     ERROR
+}
+
+private val DeviceCoolingProgramSettingsUiState.isEditable: Boolean
+    get() = loadState == DeviceCoolingProgramLoadState.CONTENT &&
+        saveState != DeviceCoolingProgramSaveState.SAVING
+
+private fun MutableStateFlow<DeviceCoolingProgramSettingsUiState>.applyEdit(
+    state: DeviceCoolingProgramSettingsUiState,
+    result: CoolingProgramEditResult
+): Boolean = when (result) {
+    is CoolingProgramEditResult.Updated -> {
+        value = state.copy(
+            slots = result.slots,
+            selectedSlotIndex = result.selectedSlotIndex,
+            saveState = DeviceCoolingProgramSaveState.IDLE
+        )
+        true
+    }
+    is CoolingProgramEditResult.Rejected -> false
+}
+
+private fun MutableStateFlow<DeviceCoolingProgramSettingsUiState>.applyLoadedSnapshot(
+    result: CoolingProgramReadResult.Loaded
+) {
+    val snapshot = result.snapshot
+    value = if (
+        CoolingProgramValidation.validate(snapshot.slots, snapshot.policy) ==
+        CoolingProgramValidationResult.Valid
+    ) {
+        val ordered = snapshot.slots.sortedBy(CoolingProgramSlot::startMinutes)
+        DeviceCoolingProgramSettingsUiState(
+            loadState = DeviceCoolingProgramLoadState.CONTENT,
+            policy = snapshot.policy,
+            slots = ordered,
+            baselineSlots = ordered
+        )
+    } else {
+        DeviceCoolingProgramSettingsUiState(
+            loadState = DeviceCoolingProgramLoadState.ERROR
+        )
+    }
+}
+
+private fun MutableStateFlow<DeviceCoolingProgramSettingsUiState>.applySavedSnapshot(
+    result: CoolingProgramSaveResult.Saved
+) {
+    val snapshot = result.snapshot
+    val current = value
+    if (
+        CoolingProgramValidation.validate(snapshot.slots, snapshot.policy) !=
+        CoolingProgramValidationResult.Valid
+    ) {
+        updateSaveState(DeviceCoolingProgramSaveState.ERROR)
+        return
+    }
+
+    val savedSlots = snapshot.slots.sortedBy(CoolingProgramSlot::startMinutes)
+    value = current.copy(
+        policy = snapshot.policy,
+        slots = savedSlots,
+        baselineSlots = savedSlots,
+        selectedSlotIndex = current.selectedSlotIndex?.takeIf(savedSlots.indices::contains),
+        saveState = DeviceCoolingProgramSaveState.SAVED
+    )
+}
+
+private fun MutableStateFlow<DeviceCoolingProgramSettingsUiState>.updateSaveState(
+    saveState: DeviceCoolingProgramSaveState
+) {
+    value = value.copy(saveState = saveState)
 }

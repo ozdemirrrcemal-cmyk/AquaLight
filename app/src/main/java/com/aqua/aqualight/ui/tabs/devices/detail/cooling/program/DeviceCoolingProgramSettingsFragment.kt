@@ -140,7 +140,7 @@ class DeviceCoolingProgramSettingsFragment : DeviceCoolingModeSettingsFragment(
     }
 
     private fun showStartTimeSheet(slotIndex: Int) {
-        val slot = findSlot(slotIndex) ?: return
+        val slot = viewModel.slotAt(slotIndex) ?: return
         showTimeSheet(
             slotIndex = slotIndex,
             minutesOfDay = slot.startMinutes,
@@ -151,7 +151,7 @@ class DeviceCoolingProgramSettingsFragment : DeviceCoolingModeSettingsFragment(
     }
 
     private fun showEndTimeSheet(slotIndex: Int) {
-        val slot = findSlot(slotIndex) ?: return
+        val slot = viewModel.slotAt(slotIndex) ?: return
         showTimeSheet(
             slotIndex = slotIndex,
             minutesOfDay = slot.endMinutes,
@@ -185,24 +185,25 @@ class DeviceCoolingProgramSettingsFragment : DeviceCoolingModeSettingsFragment(
         )
     }
 
-    private fun findSlot(slotIndex: Int): DeviceCoolingProgramSlot? =
-        viewModel.uiState.value.slots.getOrNull(slotIndex)
-
     private companion object {
         const val MINUTES_PER_HOUR = 60
         const val REQUEST_START_TIME = "cooling_program_start_time"
         const val REQUEST_END_TIME = "cooling_program_end_time"
-
-        val DeviceCoolingProgramSaveState.isFailure: Boolean
-            get() = when (this) {
-                DeviceCoolingProgramSaveState.UNAVAILABLE,
-                DeviceCoolingProgramSaveState.NOT_CONNECTED,
-                DeviceCoolingProgramSaveState.REJECTED,
-                DeviceCoolingProgramSaveState.VALIDATION_ERROR,
-                DeviceCoolingProgramSaveState.ERROR -> true
-                DeviceCoolingProgramSaveState.IDLE,
-                DeviceCoolingProgramSaveState.SAVING,
-                DeviceCoolingProgramSaveState.SAVED -> false
-            }
     }
 }
+
+private fun DeviceCoolingProgramSettingsViewModel.slotAt(slotIndex: Int): DeviceCoolingProgramSlot? =
+    uiState.value.slots.getOrNull(slotIndex)
+
+private val DeviceCoolingProgramSaveState.isFailure: Boolean
+    get() = when (this) {
+        DeviceCoolingProgramSaveState.UNSUPPORTED,
+        DeviceCoolingProgramSaveState.UNAVAILABLE,
+        DeviceCoolingProgramSaveState.NOT_CONNECTED,
+        DeviceCoolingProgramSaveState.REJECTED,
+        DeviceCoolingProgramSaveState.VALIDATION_ERROR,
+        DeviceCoolingProgramSaveState.ERROR -> true
+        DeviceCoolingProgramSaveState.IDLE,
+        DeviceCoolingProgramSaveState.SAVING,
+        DeviceCoolingProgramSaveState.SAVED -> false
+    }

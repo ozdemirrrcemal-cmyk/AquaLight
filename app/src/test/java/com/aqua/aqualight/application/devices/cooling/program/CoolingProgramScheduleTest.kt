@@ -1,4 +1,4 @@
-package com.aqua.aqualight.application.devices.cooling
+package com.aqua.aqualight.application.devices.cooling.program
 
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
@@ -10,31 +10,31 @@ class CoolingProgramScheduleTest {
     @Test
     fun adjacentPeriodsAreValid() {
         val slots = listOf(
-            slot("morning", hour(8), hour(14)),
-            slot("evening", hour(14), hour(20))
+            slot(hour(8), hour(14)),
+            slot(hour(14), hour(20))
         )
 
-        assertTrue(CoolingProgramSchedule.isValidProgram(slots, capabilities()))
+        assertTrue(CoolingProgramSchedule.isValidProgram(slots, policy()))
     }
 
     @Test
     fun overlappingPeriodsAreInvalid() {
         val slots = listOf(
-            slot("morning", hour(8), hour(14)),
-            slot("evening", hour(13), hour(20))
+            slot(hour(8), hour(14)),
+            slot(hour(13), hour(20))
         )
 
-        assertFalse(CoolingProgramSchedule.isValidProgram(slots, capabilities()))
+        assertFalse(CoolingProgramSchedule.isValidProgram(slots, policy()))
     }
 
     @Test
-    fun crossMidnightUpdateIsRejected() {
-        val original = slot("period", hour(8), hour(14))
+    fun sameDayPeriodRejectsEndBeforeStart() {
+        val original = slot(hour(8), hour(14))
 
         val result = CoolingProgramSchedule.updateEndTime(
             slots = listOf(original),
-            capabilities = capabilities(),
-            slotId = original.id,
+            policy = policy(),
+            slotIndex = 0,
             endMinutes = hour(7)
         )
 
@@ -45,13 +45,13 @@ class CoolingProgramScheduleTest {
     }
 
     @Test
-    fun fanLimitSnapsToReportedCapabilityStep() {
-        val original = slot("period", hour(8), hour(14), fanLimitPercent = 60)
+    fun fanLimitSnapsToReportedPolicyStep() {
+        val original = slot(hour(8), hour(14), fanLimitPercent = 60)
 
         val result = CoolingProgramSchedule.updateFanLimit(
             slots = listOf(original),
-            capabilities = capabilities(fanLimitStepPercent = 10),
-            slotId = original.id,
+            policy = policy(fanPercentStep = 10),
+            slotIndex = 0,
             percent = 66
         )
 
@@ -61,41 +61,38 @@ class CoolingProgramScheduleTest {
     }
 
     @Test
-    fun duplicateDraftIdentityIsRejected() {
-        val original = slot("period", hour(8), hour(14))
-
+    fun maximumSlotCountRejectsAdditionalPeriod() {
         val result = CoolingProgramSchedule.addSlot(
-            slots = listOf(original),
-            capabilities = capabilities(),
-            newSlotId = original.id
+            slots = listOf(slot(hour(8), hour(14))),
+            policy = policy(maximumSlotCount = 1)
         )
 
         assertEquals(
-            CoolingProgramEditResult.Rejected(CoolingProgramEditRejection.DUPLICATE_SLOT_ID),
+            CoolingProgramEditResult.Rejected(
+                CoolingProgramEditRejection.MAXIMUM_SLOT_COUNT_REACHED
+            ),
             result
         )
     }
 
     private fun slot(
-        id: String,
         startMinutes: Int,
         endMinutes: Int,
         fanLimitPercent: Int = 60
     ): CoolingProgramSlot = CoolingProgramSlot(
-        id = id,
         startMinutes = startMinutes,
         endMinutes = endMinutes,
         fanLimitPercent = fanLimitPercent
     )
 
-    private fun capabilities(
-        fanLimitStepPercent: Int = 5
-    ): CoolingProgramCapabilities = CoolingProgramCapabilities(
-        minimumSlotCount = 0,
-        maximumSlotCount = 6,
-        minimumFanLimitPercent = 0,
-        maximumFanLimitPercent = 100,
-        fanLimitStepPercent = fanLimitStepPercent,
+    private fun policy(
+        maximumSlotCount: Int = 6,
+        fanPercentStep: Int = 5
+    ): CoolingProgramPolicy = CoolingProgramPolicy(
+        maximumSlotCount = maximumSlotCount,
+        minimumFanPercent = 0,
+        maximumFanPercent = 100,
+        fanPercentStep = fanPercentStep,
         minimumSlotDurationMinutes = 15
     )
 
