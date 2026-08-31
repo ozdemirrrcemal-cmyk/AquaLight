@@ -25,6 +25,10 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.BasicText
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
@@ -33,9 +37,15 @@ import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.drawscope.DrawScope
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.unit.IntOffset
+import androidx.compose.ui.window.Popup
+import androidx.compose.ui.window.PopupProperties
 import com.aqua.aqualight.R
 import com.aqua.aqualight.i18n.LocaleFormatter
 import com.aqua.aqualight.ui.common.cooling.AquaCoolingDashboardCardSurface
@@ -54,6 +64,7 @@ internal fun DeviceCoolingProgramSettingsScreen(
     state: DeviceCoolingProgramSettingsUiState,
     onSlotClick: (String) -> Unit,
     onAddSlot: () -> Unit,
+    onDeleteSlot: (String) -> Unit,
     onStartTimeClick: (String) -> Unit,
     onEndTimeClick: (String) -> Unit,
     onStartTemperatureClick: (String) -> Unit,
@@ -111,6 +122,7 @@ internal fun DeviceCoolingProgramSettingsScreen(
                     colors = colors,
                     typography = typography,
                     onHeaderClick = { onSlotClick(slot.id) },
+                    onDeleteClick = { onDeleteSlot(slot.id) },
                     onStartTimeClick = { onStartTimeClick(slot.id) },
                     onEndTimeClick = { onEndTimeClick(slot.id) },
                     onStartTemperatureClick = { onStartTemperatureClick(slot.id) },
@@ -327,6 +339,7 @@ private fun ProgramSlotCard(
     colors: AquaDeviceCardColors,
     typography: AquaDeviceCardTypography,
     onHeaderClick: () -> Unit,
+    onDeleteClick: () -> Unit,
     onStartTimeClick: () -> Unit,
     onEndTimeClick: () -> Unit,
     onStartTemperatureClick: () -> Unit,
@@ -388,6 +401,12 @@ private fun ProgramSlotCard(
                 Spacer(modifier = Modifier.height(AquaCoolingProgramGeometry.expandedSectionTopGap))
                 ProgramDivider(colors)
                 Spacer(modifier = Modifier.height(AquaCoolingProgramGeometry.expandedSectionTopGap))
+                ProgramEditorHeader(
+                    deletable = slot.label == DeviceCoolingProgramSlotLabel.CUSTOM,
+                    colors = colors,
+                    typography = typography,
+                    onDeleteClick = onDeleteClick
+                )
                 ProgramEditorRow(
                     label = stringResource(R.string.device_cooling_program_start_time),
                     value = formatProgramTime(context, slot.startMinutes),
@@ -426,6 +445,84 @@ private fun ProgramSlotCard(
                     typography = typography,
                     onClick = onFanLimitClick
                 )
+            }
+        }
+    }
+}
+
+@Composable
+private fun ProgramEditorHeader(
+    deletable: Boolean,
+    colors: AquaDeviceCardColors,
+    typography: AquaDeviceCardTypography,
+    onDeleteClick: () -> Unit
+) {
+    var menuExpanded by remember { mutableStateOf(false) }
+    val menuOffsetY = with(LocalDensity.current) {
+        AquaCoolingProgramGeometry.slotChevronHeight.roundToPx()
+    }
+    val moreActionsDescription = stringResource(R.string.device_cooling_program_more_actions)
+
+    Row(
+        modifier = Modifier.fillMaxWidth(),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        BasicText(
+            text = stringResource(R.string.device_cooling_program_editor_title),
+            style = typography.body.copy(color = colors.primaryText),
+            modifier = Modifier.weight(1f),
+            maxLines = 1
+        )
+        if (deletable) {
+            Box {
+                Box(
+                    modifier = Modifier
+                        .width(AquaCoolingProgramGeometry.slotChevronWidth)
+                        .height(AquaCoolingProgramGeometry.slotChevronHeight)
+                        .clip(AquaCoolingProgramGeometry.inlineActionShape)
+                        .clickable(
+                            role = Role.Button,
+                            onClick = { menuExpanded = !menuExpanded }
+                        )
+                        .semantics { contentDescription = moreActionsDescription },
+                    contentAlignment = Alignment.Center
+                ) {
+                    BasicText(
+                        text = "⋮",
+                        style = typography.title.copy(color = colors.secondaryText),
+                        maxLines = 1
+                    )
+                }
+                if (menuExpanded) {
+                    Popup(
+                        alignment = Alignment.TopEnd,
+                        offset = IntOffset(0, menuOffsetY),
+                        onDismissRequest = { menuExpanded = false },
+                        properties = PopupProperties(focusable = true)
+                    ) {
+                        BasicText(
+                            text = stringResource(R.string.device_cooling_program_delete_slot),
+                            style = typography.body.copy(color = colors.danger),
+                            modifier = Modifier
+                                .clip(AquaCoolingProgramGeometry.editorRowShape)
+                                .background(colors.surface)
+                                .border(
+                                    width = AquaCoolingDashboardGeometry.chartGridStrokeWidth,
+                                    color = colors.outline,
+                                    shape = AquaCoolingProgramGeometry.editorRowShape
+                                )
+                                .clickable(role = Role.Button) {
+                                    menuExpanded = false
+                                    onDeleteClick()
+                                }
+                                .padding(
+                                    horizontal = AquaCoolingProgramGeometry.editorRowHorizontalPadding,
+                                    vertical = AquaCoolingProgramGeometry.editorRowVerticalPadding
+                                ),
+                            maxLines = 1
+                        )
+                    }
+                }
             }
         }
     }
