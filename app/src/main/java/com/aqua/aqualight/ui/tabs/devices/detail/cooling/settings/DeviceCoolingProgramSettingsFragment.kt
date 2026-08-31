@@ -63,9 +63,9 @@ class DeviceCoolingProgramSettingsFragment : DeviceCoolingModeSettingsFragment(
         viewLifecycleOwner.lifecycleScope.launch {
             viewLifecycleOwner.repeatOnLifecycle(Lifecycle.State.STARTED) {
                 viewModel.uiState
-                    .map(DeviceCoolingProgramSettingsUiState::hasChanges)
+                    .map { state: DeviceCoolingProgramSettingsUiState -> state.hasChanges }
                     .distinctUntilChanged()
-                    .collect { refreshModeSettingsHeader() }
+                    .collect { _: Boolean -> refreshModeSettingsHeader() }
             }
         }
     }
