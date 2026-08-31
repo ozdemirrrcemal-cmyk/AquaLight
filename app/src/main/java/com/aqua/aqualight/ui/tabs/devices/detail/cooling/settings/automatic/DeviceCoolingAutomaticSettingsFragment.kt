@@ -1,4 +1,4 @@
-package com.aqua.aqualight.ui.tabs.devices.detail.cooling.settings
+package com.aqua.aqualight.ui.tabs.devices.detail.cooling.settings.automatic
 
 import android.os.Bundle
 import androidx.compose.runtime.getValue
@@ -9,6 +9,7 @@ import androidx.navigation.fragment.navArgs
 import com.aqua.aqualight.R
 import com.aqua.aqualight.composition.requireAppContainer
 import com.aqua.aqualight.ui.common.bottomsheet.IntegerStepperBottomSheet
+import com.aqua.aqualight.ui.tabs.devices.detail.cooling.settings.DeviceCoolingModeSettingsFragment
 import kotlin.math.ceil
 import kotlin.math.floor
 import kotlin.math.roundToInt

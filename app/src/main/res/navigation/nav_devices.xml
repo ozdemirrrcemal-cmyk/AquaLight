@@ -236,7 +236,7 @@
 
     <fragment
         android:id="@+id/deviceCoolingAutomaticSettingsFragment"
-        android:name="com.aqua.aqualight.ui.tabs.devices.detail.cooling.settings.DeviceCoolingAutomaticSettingsFragment"
+        android:name="com.aqua.aqualight.ui.tabs.devices.detail.cooling.settings.automatic.DeviceCoolingAutomaticSettingsFragment"
         android:label="@string/device_cooling_automatic_settings_title"
         tools:layout="@layout/fragment_device_cooling_mode_settings">
         <argument
@@ -248,7 +248,7 @@
 
     <fragment
         android:id="@+id/deviceCoolingProgramSettingsFragment"
-        android:name="com.aqua.aqualight.ui.tabs.devices.detail.cooling.settings.DeviceCoolingProgramSettingsFragment"
+        android:name="com.aqua.aqualight.ui.tabs.devices.detail.cooling.settings.program.DeviceCoolingProgramSettingsFragment"
         android:label="@string/device_cooling_program_settings_title"
         tools:layout="@layout/fragment_device_cooling_mode_settings">
         <argument

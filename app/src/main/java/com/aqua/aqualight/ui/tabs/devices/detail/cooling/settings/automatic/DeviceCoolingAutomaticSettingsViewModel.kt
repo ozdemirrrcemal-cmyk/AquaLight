@@ -1,4 +1,4 @@
-package com.aqua.aqualight.ui.tabs.devices.detail.cooling.settings
+package com.aqua.aqualight.ui.tabs.devices.detail.cooling.settings.automatic
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope

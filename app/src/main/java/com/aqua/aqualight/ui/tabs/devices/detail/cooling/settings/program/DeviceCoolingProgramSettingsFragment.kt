@@ -1,4 +1,4 @@
-package com.aqua.aqualight.ui.tabs.devices.detail.cooling.settings
+package com.aqua.aqualight.ui.tabs.devices.detail.cooling.settings.program
 
 import android.os.Bundle
 import androidx.compose.runtime.getValue
@@ -13,6 +13,7 @@ import com.aqua.aqualight.R
 import com.aqua.aqualight.base.BaseActivity
 import com.aqua.aqualight.ui.common.bottomsheet.AquaTimePickerBottomSheet
 import com.aqua.aqualight.ui.common.header.AquaHeaderPrimaryAction
+import com.aqua.aqualight.ui.tabs.devices.detail.cooling.settings.DeviceCoolingModeSettingsFragment
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch

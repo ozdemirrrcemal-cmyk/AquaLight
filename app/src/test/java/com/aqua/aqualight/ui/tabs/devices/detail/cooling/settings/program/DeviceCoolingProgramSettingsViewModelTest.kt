@@ -1,4 +1,4 @@
-package com.aqua.aqualight.ui.tabs.devices.detail.cooling.settings
+package com.aqua.aqualight.ui.tabs.devices.detail.cooling.settings.program
 
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
