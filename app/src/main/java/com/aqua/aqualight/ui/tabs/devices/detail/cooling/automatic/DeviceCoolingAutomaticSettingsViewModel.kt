@@ -2,7 +2,6 @@ package com.aqua.aqualight.ui.tabs.devices.detail.cooling.automatic
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.aqua.aqualight.BuildConfig
 import com.aqua.aqualight.application.devices.cooling.DEVICE_COOLING_AUTOMATIC_SILENT_MODE_MAXIMUM_FAN_PERCENT
 import com.aqua.aqualight.application.devices.cooling.DeviceCoolingAutomaticSettingsOperations
 import com.aqua.aqualight.application.devices.cooling.DeviceCoolingAutomaticSettingsSnapshot
@@ -147,7 +146,7 @@ data class DeviceCoolingAutomaticSettingsUiState(
     val deviceUid: String = "",
     val loadState: DeviceCoolingAutomaticLoadState = DeviceCoolingAutomaticLoadState.CONTENT,
     val saveState: DeviceCoolingAutomaticSaveState = DeviceCoolingAutomaticSaveState.IDLE,
-    val editable: Boolean = BuildConfig.DEBUG,
+    val editable: Boolean = false,
     val persistedStartTemperatureC: Double? = null,
     val persistedMaximumSpeedTemperatureC: Double? = null,
     val draftStartTemperatureC: Double? = null,
@@ -166,21 +165,19 @@ data class DeviceCoolingAutomaticSettingsUiState(
             policy != null
 
     val editorPolicy: DeviceCoolingAutomaticTemperaturePolicy?
-        get() = policy ?: DEBUG_PREVIEW_POLICY.takeIf { BuildConfig.DEBUG }
+        get() = policy
 
     val editorStartTemperatureC: Double?
         get() = draftStartTemperatureC
-            ?: DEBUG_PREVIEW_START_TEMPERATURE_C.takeIf { BuildConfig.DEBUG }
 
     val editorMaximumSpeedTemperatureC: Double?
         get() = draftMaximumSpeedTemperatureC
-            ?: DEBUG_PREVIEW_MAXIMUM_TEMPERATURE_C.takeIf { BuildConfig.DEBUG }
 
     val silentModeFirmwareBacked: Boolean
         get() = persistedSilentModeEnabled != null
 
     val silentModeEditable: Boolean
-        get() = (silentModeFirmwareBacked && editable) || BuildConfig.DEBUG
+        get() = silentModeFirmwareBacked && editable
 
     val hasTemperatureChanges: Boolean
         get() = !sameTemperature(persistedStartTemperatureC, draftStartTemperatureC) ||
@@ -193,9 +190,6 @@ data class DeviceCoolingAutomaticSettingsUiState(
         get() = persistedSilentModeEnabled?.let { persisted ->
             persisted != draftSilentModeEnabled
         } == true
-
-    val hasPreviewOnlySilentModeChange: Boolean
-        get() = !silentModeFirmwareBacked && draftSilentModeEnabled
 
     val hasChanges: Boolean
         get() = hasTemperatureChanges || hasSilentModeChanges
@@ -218,7 +212,7 @@ private fun DeviceCoolingAutomaticSettingsUiState.withSnapshot(
     if (!snapshot.available || configuration == null) {
         return copy(
             loadState = DeviceCoolingAutomaticLoadState.CONTENT,
-            editable = BuildConfig.DEBUG,
+            editable = false,
             silentModeMaximumFanPercent = snapshot.silentModeMaximumFanPercent,
             tankTemperatureC = snapshot.tankTemperatureC,
             fanPercentNow = snapshot.fanPercentNow
@@ -292,14 +286,4 @@ private fun sameTemperature(first: Double?, second: Double?): Boolean = when {
     else -> abs(first - second) <= TEMPERATURE_EPSILON
 }
 
-private val DEBUG_PREVIEW_POLICY = DeviceCoolingAutomaticTemperaturePolicy(
-    startMinimumC = 18.0,
-    startMaximumC = 30.0,
-    maximumSpeedMinimumC = 18.5,
-    maximumSpeedMaximumC = 32.0,
-    stepC = 0.5,
-    minimumGapC = 0.5
-)
-private const val DEBUG_PREVIEW_START_TEMPERATURE_C = 25.0
-private const val DEBUG_PREVIEW_MAXIMUM_TEMPERATURE_C = 27.0
 private const val TEMPERATURE_EPSILON = 0.000_001
