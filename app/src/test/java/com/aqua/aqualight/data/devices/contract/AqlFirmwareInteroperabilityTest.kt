@@ -198,14 +198,14 @@ class AqlFirmwareInteroperabilityTest {
     }
 
     @Test
-    fun `all four families and nine commercial SKUs match the firmware export`() {
+    fun `all four families and seven commercial SKUs match the firmware export`() {
         val fixtureProducts = productCatalog.getJSONArray("products").asObjectList()
         val fixtureProfiles = productCatalog.getJSONObject("profiles")
         val actualProducts = AqlCommercialDeviceCatalog.products.associateBy {
             product -> product.productKey.value
         }
 
-        assertEquals(9, fixtureProducts.size)
+        assertEquals(7, fixtureProducts.size)
         assertEquals(
             fixtureProducts.mapTo(linkedSetOf()) { it.getString("productKey") },
             actualProducts.keys
@@ -481,7 +481,7 @@ class AqlFirmwareInteroperabilityTest {
         const val COOLING_FIXTURE = "aql_cooling_temperature_telemetry_v1.json"
         const val PRODUCT_CATALOG_FIXTURE = "aql_product_catalog_v1.json"
         const val DOSING_PIN_FIXTURE = "aql_android_dosing_v1_pin.json"
-        const val FIRMWARE_COMMIT = "e669313ecc2a7f959b566e3051cfd3b67247ccbd"
+        const val FIRMWARE_COMMIT = "1bf5d94af804acd87d4a5ed25971abc0fd9f048d"
 
         val WEEKDAYS = listOf(true, false, false, false, false, false, false)
     }
