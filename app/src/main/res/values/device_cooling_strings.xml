@@ -82,6 +82,7 @@
     <string name="device_cooling_automatic_zone_maximum">Maximum</string>
     <string name="device_cooling_automatic_silent_mode_title">Silent Mode</string>
     <string name="device_cooling_automatic_silent_mode_description">Limits automatic fan output to %1$d%% for quieter operation.</string>
+    <string name="device_cooling_automatic_silent_mode_unavailable">Not available on the connected firmware.</string>
     <string name="device_cooling_automatic_silent_mode_preview">Firmware support is pending. This switch is a local preview and is not sent to the device.</string>
     <string name="device_cooling_automatic_silent_mode_toggle_description">Toggle Silent Mode</string>
     <string name="device_cooling_automatic_save">Save</string>
