@@ -31,8 +31,8 @@ typealias CoolingControlMode = DeviceCoolingControlMode
 class DeviceCoolingRootViewModel(
     private val operations: DeviceRootOperations,
     private val controlOperations: DeviceCoolingControlOperations,
-    private val historyOperations: DeviceCoolingTemperatureHistoryOperations? = null,
-    private val automaticSettingsOperations: DeviceCoolingAutomaticSettingsOperations? = null
+    private val historyOperations: DeviceCoolingTemperatureHistoryOperations,
+    private val automaticSettingsOperations: DeviceCoolingAutomaticSettingsOperations
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(DeviceCoolingRootUiState())
@@ -81,8 +81,8 @@ class DeviceCoolingRootViewModel(
         )
 
         automaticSettingsOperations
-            ?.currentAutomaticSettings(deviceUid)
-            ?.toRootAutomaticSummaryOrNull()
+            .currentAutomaticSettings(deviceUid)
+            .toRootAutomaticSummaryOrNull()
             ?.let { summary ->
                 lastAuthoritativeAutomaticSummary = summary
                 initialState = initialState.withAutomaticSummary(summary)
@@ -191,9 +191,8 @@ class DeviceCoolingRootViewModel(
     }
 
     private fun observeAutomaticSettings(deviceUid: String) {
-        val automatic = automaticSettingsOperations ?: return
         automaticObserveJob = viewModelScope.launch(start = CoroutineStart.UNDISPATCHED) {
-            automatic.observeAutomaticSettings(deviceUid).collect { snapshot ->
+            automaticSettingsOperations.observeAutomaticSettings(deviceUid).collect { snapshot ->
                 if (boundDeviceUid != deviceUid) return@collect
                 snapshot.toRootAutomaticSummaryOrNull()?.let { summary ->
                     lastAuthoritativeAutomaticSummary = summary
@@ -204,14 +203,13 @@ class DeviceCoolingRootViewModel(
             }
         }
         automaticRefreshJob = viewModelScope.launch {
-            automatic.refreshAutomaticSettings(deviceUid)
+            automaticSettingsOperations.refreshAutomaticSettings(deviceUid)
         }
     }
 
     private fun loadOverviewHistory(deviceUid: String) {
-        val history = historyOperations ?: return
         historyJob = viewModelScope.launch {
-            val result = history.loadTemperatureHistory(
+            val result = historyOperations.loadTemperatureHistory(
                 deviceUid = deviceUid,
                 range = DeviceCoolingTemperatureHistoryRange.HOURS_24
             )
