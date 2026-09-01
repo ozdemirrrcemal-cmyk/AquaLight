@@ -77,6 +77,7 @@ private fun CoolingDashboardPreview() {
             onModeSelected = {},
             onTemperatureHistoryClick = {},
             onAutomaticSettingsClick = {},
+            onManualSettingsClick = {},
             onProgramSettingsClick = {}
         ),
         modifier = Modifier.background(colorResource(R.color.background_color))

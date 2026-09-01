@@ -102,11 +102,6 @@ data class DeviceCoolingRootUiState(
     val modeSelectionWritable: Boolean
         get() = controlWriteEnabled && controlPresentation?.modeSelectionWritable == true
 
-    val manualFanCapabilities: DeviceCoolingManualFanCapabilities?
-        get() = controlPresentation?.manualFanCapabilities?.let { capabilities ->
-            if (controlWriteEnabled) capabilities else capabilities.copy(writable = false)
-        }
-
     val manualFanPercent: Int?
         get() = controlPresentation?.manualFanPercent
 

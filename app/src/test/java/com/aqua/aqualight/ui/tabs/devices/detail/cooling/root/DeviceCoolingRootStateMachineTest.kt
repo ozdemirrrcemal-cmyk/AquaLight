@@ -105,7 +105,6 @@ class DeviceCoolingRootStateMachineTest {
 
         assertFalse(state.controlWriteEnabled)
         assertFalse(state.modeSelectionWritable)
-        assertFalse(state.manualFanCapabilities?.writable ?: true)
     }
 
     private companion object {

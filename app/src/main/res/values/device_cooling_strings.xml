@@ -82,6 +82,12 @@
     <string name="device_cooling_manual_settings_description">Open manual fan settings</string>
     <string name="device_cooling_edit_program_description">Edit fan program</string>
 
+    <string name="device_cooling_manual_settings_title">Manual Fan</string>
+    <string name="device_cooling_manual_target_title">Target Fan Speed</string>
+    <string name="device_cooling_manual_target_description">Changing this target does not change the active operating mode.</string>
+    <string name="device_cooling_manual_read_only">The connected firmware does not allow the manual target to be changed.</string>
+    <string name="device_cooling_manual_write_failed">The manual target could not be saved to the device. Try again.</string>
+
     <string name="device_cooling_automatic_settings_title">Automatic Fan</string>
     <string name="device_cooling_automatic_live_status_title">Live Status</string>
     <string name="device_cooling_automatic_water_temperature">Water Temperature</string>

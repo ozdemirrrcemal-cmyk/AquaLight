@@ -26,6 +26,16 @@ object DeviceCoolingRouteNavigator {
         destinationId = R.id.deviceCoolingAutomaticSettingsFragment
     )
 
+    fun openManualSettings(
+        navController: NavController,
+        deviceUid: String
+    ): AppRouteOpenResult = open(
+        navController = navController,
+        deviceUid = deviceUid,
+        path = PATH_MANUAL,
+        destinationId = R.id.deviceCoolingManualSettingsFragment
+    )
+
     fun openProgramSettings(
         navController: NavController,
         deviceUid: String
@@ -50,5 +60,6 @@ object DeviceCoolingRouteNavigator {
 
     private const val PATH_HISTORY = "history"
     private const val PATH_AUTOMATIC = "automatic"
+    private const val PATH_MANUAL = "manual"
     private const val PATH_PROGRAM = "program"
 }

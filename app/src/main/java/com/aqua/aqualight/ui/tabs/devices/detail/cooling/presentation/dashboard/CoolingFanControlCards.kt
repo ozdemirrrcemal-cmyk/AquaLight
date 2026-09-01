@@ -319,6 +319,7 @@ internal fun CoolingModeSettingsCard(
     colors: AquaDeviceCardColors,
     typography: AquaDeviceCardTypography,
     onAutomaticSettingsClick: () -> Unit,
+    onManualSettingsClick: () -> Unit,
     onProgramSettingsClick: () -> Unit
 ) {
     AquaCoolingDashboardCardSurface(
@@ -368,7 +369,7 @@ internal fun CoolingModeSettingsCard(
                             R.string.device_cooling_manual_settings_description
                         ),
                         selected = state.selectedMode == CoolingControlMode.MANUAL,
-                        onClick = null
+                        onClick = onManualSettingsClick
                     ),
                     enabled = enabled && CoolingControlMode.MANUAL in state.supportedModes,
                     colors = colors,

@@ -2,6 +2,15 @@
 <resources>
     <string name="device_cooling_state_retry">Tekrar dene</string>
 
+    <string name="device_cooling_manual_loading_title">Manuel ayarlar yükleniyor</string>
+    <string name="device_cooling_manual_loading_message">Cihazın doğrulanmış manuel hedefi bekleniyor.</string>
+    <string name="device_cooling_manual_unsupported_title">Manuel ayarlar desteklenmiyor</string>
+    <string name="device_cooling_manual_unsupported_message">Bağlı firmware yazılabilir bir manuel hedef sağlamıyor.</string>
+    <string name="device_cooling_manual_unavailable_title">Manuel ayarlar kullanılamıyor</string>
+    <string name="device_cooling_manual_unavailable_message">Manuel hedef şu anda okunamıyor. Tekrar deneyin.</string>
+    <string name="device_cooling_manual_invalid_title">Manuel ayarlar geçersiz</string>
+    <string name="device_cooling_manual_invalid_message">Cihaz eksik bir manuel yapılandırma döndürdü. Yenilemeyi tekrar deneyin.</string>
+
     <string name="device_cooling_history_loading_title">Geçmiş yükleniyor</string>
     <string name="device_cooling_history_loading_message">Cihazdan sıcaklık geçmişi bekleniyor.</string>
     <string name="device_cooling_history_refreshing_title">Geçmiş yenileniyor</string>

@@ -84,29 +84,6 @@ class DeviceCoolingRootViewModelTest {
         assertEquals(40, viewModel.uiState.value.manualFanPercent)
     }
 
-    @Test
-    fun manualFanMutationUsesOnlyReturnedAuthoritativePercent() = runTest(dispatcher) {
-        val control = FakeControlOperations(
-            initial = available(
-                mode = DeviceCoolingControlMode.MANUAL,
-                manualFanPercent = 40,
-                manualWritable = true
-            ),
-            manualMutation = available(
-                mode = DeviceCoolingControlMode.MANUAL,
-                manualFanPercent = 70,
-                manualWritable = true
-            )
-        )
-        val viewModel = createViewModel(control)
-
-        viewModel.bind(DEVICE_UID)
-        viewModel.updateManualFanPercent(73)
-
-        assertEquals(73, control.lastRequestedManualPercent)
-        assertEquals(70, viewModel.uiState.value.manualFanPercent)
-    }
-
     private fun createViewModel(control: DeviceCoolingControlOperations) = DeviceCoolingRootViewModel(
         operations = FakeRootOperations(),
         controlOperations = control,
@@ -131,12 +108,9 @@ class DeviceCoolingRootViewModelTest {
 
     private class FakeControlOperations(
         private val initial: DeviceCoolingControlResult,
-        private val modeMutation: DeviceCoolingControlResult = initial,
-        private val manualMutation: DeviceCoolingControlResult = initial
+        private val modeMutation: DeviceCoolingControlResult = initial
     ) : DeviceCoolingControlOperations {
         var lastRequestedMode: DeviceCoolingControlMode? = null
-            private set
-        var lastRequestedManualPercent: Int? = null
             private set
 
         override fun observeControl(deviceUid: String): Flow<DeviceCoolingControlResult> =
@@ -157,10 +131,7 @@ class DeviceCoolingRootViewModelTest {
         override suspend fun setManualFanPercent(
             deviceUid: String,
             percent: Int
-        ): DeviceCoolingControlResult {
-            lastRequestedManualPercent = percent
-            return manualMutation
-        }
+        ): DeviceCoolingControlResult = initial
     }
 
     private object UnavailableHistoryOperations : DeviceCoolingTemperatureHistoryOperations {

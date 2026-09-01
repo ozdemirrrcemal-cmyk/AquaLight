@@ -13,7 +13,6 @@ import com.aqua.aqualight.application.devices.cooling.DeviceCoolingTemperatureHi
 import com.aqua.aqualight.application.devices.cooling.DeviceCoolingTemperatureHistoryRange
 import com.aqua.aqualight.application.devices.cooling.control.DeviceCoolingControlOperations
 import com.aqua.aqualight.application.devices.cooling.control.DeviceCoolingControlResult
-import com.aqua.aqualight.application.devices.cooling.control.DeviceCoolingManualFanCapabilities
 import com.aqua.aqualight.ui.common.devicepresence.DeviceConnectionVisualState
 import com.aqua.aqualight.ui.tabs.devices.detail.cooling.common.CoolingDataState
 import com.aqua.aqualight.ui.tabs.devices.detail.cooling.common.CoolingMutationState
@@ -94,25 +93,6 @@ class DeviceCoolingRootViewModel(
         val deviceUid = boundDeviceUid.takeIf(String::isNotBlank) ?: return
         launchControlMutation(deviceUid) {
             controlOperations.setMode(deviceUid, mode)
-        }
-    }
-
-    fun updateManualFanPercent(percent: Int) {
-        val state = _uiState.value
-        val capabilities = state.manualFanCapabilities
-        val deviceUid = boundDeviceUid.takeIf(String::isNotBlank)
-        if (
-            capabilities != null &&
-            deviceUid != null &&
-            state.canWriteManualFan(capabilities)
-        ) {
-            val bounded = percent.coerceIn(
-                capabilities.minimumPercent,
-                capabilities.maximumPercent
-            )
-            launchControlMutation(deviceUid) {
-                controlOperations.setManualFanPercent(deviceUid, bounded)
-            }
         }
     }
 
@@ -267,14 +247,6 @@ private fun DeviceCoolingRootUiState.canSelectMode(mode: CoolingControlMode): Bo
     val interactionReady = contentEnabled && controlWriteEnabled
     val modeAllowed = modeSelectionWritable && mode in supportedModes
     return interactionReady && modeAllowed && selectedMode != mode
-}
-
-private fun DeviceCoolingRootUiState.canWriteManualFan(
-    capabilities: DeviceCoolingManualFanCapabilities
-): Boolean {
-    val interactionReady = contentEnabled && controlWriteEnabled
-    val manualModeSelected = selectedMode == CoolingControlMode.MANUAL
-    return interactionReady && manualModeSelected && capabilities.writable
 }
 
 private fun DeviceCoolingRootUiState.afterControlMutation(

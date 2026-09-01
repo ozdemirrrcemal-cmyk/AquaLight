@@ -80,6 +80,12 @@
     <string name="device_cooling_manual_settings_description">Manuel fan ayarlarını aç</string>
     <string name="device_cooling_edit_program_description">Fan programını düzenle</string>
 
+    <string name="device_cooling_manual_settings_title">Manuel Fan</string>
+    <string name="device_cooling_manual_target_title">Hedef Fan Hızı</string>
+    <string name="device_cooling_manual_target_description">Bu hedefi değiştirmek etkin çalışma modunu değiştirmez.</string>
+    <string name="device_cooling_manual_read_only">Bağlı firmware manuel hedefin değiştirilmesine izin vermiyor.</string>
+    <string name="device_cooling_manual_write_failed">Manuel hedef cihaza kaydedilemedi. Tekrar deneyin.</string>
+
     <string name="device_cooling_automatic_settings_title">Otomatik Fan</string>
     <string name="device_cooling_automatic_live_status_title">Anlık Durum</string>
     <string name="device_cooling_automatic_water_temperature">Su Sıcaklığı</string>

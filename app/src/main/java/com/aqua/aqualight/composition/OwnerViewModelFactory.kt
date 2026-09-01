@@ -42,6 +42,7 @@ import com.aqua.aqualight.ui.tabs.devices.add.DeviceQrScanViewModel
 import com.aqua.aqualight.ui.tabs.devices.detail.common.DeviceRootOverviewViewModel
 import com.aqua.aqualight.ui.tabs.devices.detail.cooling.automatic.DeviceCoolingAutomaticSettingsViewModel
 import com.aqua.aqualight.ui.tabs.devices.detail.cooling.history.DeviceCoolingTemperatureHistoryViewModel
+import com.aqua.aqualight.ui.tabs.devices.detail.cooling.manual.DeviceCoolingManualSettingsViewModel
 import com.aqua.aqualight.ui.tabs.devices.detail.cooling.program.DeviceCoolingProgramSettingsViewModel
 import com.aqua.aqualight.ui.tabs.devices.detail.cooling.root.DeviceCoolingRootViewModel
 import com.aqua.aqualight.ui.tabs.devices.detail.dosing.channel.calibration.DeviceDosingChannelCalibrationViewModel
@@ -182,6 +183,10 @@ internal class OwnerViewModelFactory(
                 DeviceCoolingAutomaticSettingsViewModel(
                     DefaultDeviceCoolingAutomaticSettingsOperations(repository)
                 )
+            DeviceCoolingManualSettingsViewModel::class.java ->
+                DeviceCoolingManualSettingsViewModel(
+                    DefaultDeviceCoolingControlOperations(repository)
+                )
             DeviceCoolingProgramSettingsViewModel::class.java ->
                 DeviceCoolingProgramSettingsViewModel(
                     operations = DefaultDeviceCoolingProgramOperations()
@@ -270,6 +275,7 @@ internal class OwnerViewModelFactory(
             DeviceCoolingRootViewModel::class.java,
             DeviceCoolingTemperatureHistoryViewModel::class.java,
             DeviceCoolingAutomaticSettingsViewModel::class.java,
+            DeviceCoolingManualSettingsViewModel::class.java,
             DeviceCoolingProgramSettingsViewModel::class.java,
             DeviceTimerRootViewModel::class.java,
             DeviceDosingRootViewModel::class.java,

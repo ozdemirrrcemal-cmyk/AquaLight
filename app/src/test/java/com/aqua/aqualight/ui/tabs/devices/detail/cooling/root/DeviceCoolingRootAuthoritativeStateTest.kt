@@ -119,7 +119,6 @@ class DeviceCoolingRootAuthoritativeStateTest {
             assertEquals(25.4, stale.tankTemperatureC ?: 0.0, 0.0)
             assertFalse(stale.controlAvailable)
             assertFalse(stale.modeSelectionWritable)
-            assertFalse(stale.manualFanCapabilities?.writable ?: true)
             val controlState = stale.controlState as CoolingDataState.Content<
                 CoolingControlPresentation,
                 DeviceCoolingControlFailure

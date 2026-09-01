@@ -2,6 +2,15 @@
 <resources>
     <string name="device_cooling_state_retry">Retry</string>
 
+    <string name="device_cooling_manual_loading_title">Loading manual settings</string>
+    <string name="device_cooling_manual_loading_message">Waiting for the device’s authoritative manual target.</string>
+    <string name="device_cooling_manual_unsupported_title">Manual settings not supported</string>
+    <string name="device_cooling_manual_unsupported_message">The connected firmware does not provide a writable manual target.</string>
+    <string name="device_cooling_manual_unavailable_title">Manual settings unavailable</string>
+    <string name="device_cooling_manual_unavailable_message">The manual target cannot be read right now. Try again.</string>
+    <string name="device_cooling_manual_invalid_title">Manual settings are invalid</string>
+    <string name="device_cooling_manual_invalid_message">The device returned an incomplete manual configuration. Try refreshing it.</string>
+
     <string name="device_cooling_history_loading_title">Loading history</string>
     <string name="device_cooling_history_loading_message">Waiting for temperature history from the device.</string>
     <string name="device_cooling_history_refreshing_title">Refreshing history</string>
