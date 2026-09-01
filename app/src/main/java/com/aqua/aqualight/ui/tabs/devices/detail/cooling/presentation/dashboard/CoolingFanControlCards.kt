@@ -349,8 +349,8 @@ private fun CoolingManualControlCard(
 
 @Composable
 private fun CoolingAutomaticControlCard(
-    startTemperatureC: Double,
-    maxTemperatureC: Double,
+    startTemperatureC: Double?,
+    maxTemperatureC: Double?,
     enabled: Boolean,
     colors: AquaDeviceCardColors,
     typography: AquaDeviceCardTypography,
