@@ -8,13 +8,14 @@ import org.junit.Test
 class DeviceCoolingAutomaticSettingsUiStateTest {
 
     @Test
-    fun unsupportedSilentModeIsPreviewOnlyAndDoesNotEnableSave() {
+    fun unsupportedSilentModeIsNotEditableAndDoesNotEnableSave() {
         val state = editableState(
             persistedSilentModeEnabled = null,
             draftSilentModeEnabled = true
         )
 
-        assertTrue(state.hasPreviewOnlySilentModeChange)
+        assertFalse(state.silentModeFirmwareBacked)
+        assertFalse(state.silentModeEditable)
         assertFalse(state.hasSilentModeChanges)
         assertFalse(state.hasChanges)
         assertFalse(state.canSave)
@@ -27,7 +28,8 @@ class DeviceCoolingAutomaticSettingsUiStateTest {
             draftSilentModeEnabled = true
         )
 
-        assertFalse(state.hasPreviewOnlySilentModeChange)
+        assertTrue(state.silentModeFirmwareBacked)
+        assertTrue(state.silentModeEditable)
         assertTrue(state.hasSilentModeChanges)
         assertTrue(state.hasChanges)
         assertTrue(state.canSave)
