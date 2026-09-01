@@ -1,5 +1,6 @@
 package com.aqua.aqualight.ui.tabs.devices.detail.cooling.history
 
+import androidx.annotation.StringRes
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
@@ -29,23 +30,22 @@ import com.aqua.aqualight.ui.common.cooling.aquaCoolingDashboardColors
 import com.aqua.aqualight.ui.common.cooling.aquaCoolingDashboardTypography
 import com.aqua.aqualight.ui.common.devicecard.AquaDeviceCardColors
 import com.aqua.aqualight.ui.common.devicecard.AquaDeviceCardTypography
+import com.aqua.aqualight.ui.tabs.devices.detail.cooling.common.CoolingDataFreshness
+import com.aqua.aqualight.ui.tabs.devices.detail.cooling.common.CoolingDataState
+import com.aqua.aqualight.ui.tabs.devices.detail.cooling.common.CoolingStateMessageCard
 
-/**
- * Firmware-backed Cooling history surface.
- *
- * Connectivity is gated before this destination is entered. Range controls, chart, summary metrics
- * and the daily table therefore remain the only product surface; missing measurements are rendered
- * as unavailable placeholders and no synthetic history is invented.
- */
+/** Firmware-backed Cooling history surface with explicit typed read-state presentation. */
 @Composable
 internal fun DeviceCoolingTemperatureHistoryScreen(
     state: DeviceCoolingTemperatureHistoryUiState,
     onRangeSelected: (DeviceCoolingTemperatureHistoryRange) -> Unit,
+    onRetry: () -> Unit,
     modifier: Modifier = Modifier
 ) {
     val colors = aquaCoolingDashboardColors()
     val typography = aquaCoolingDashboardTypography(colors)
     val snapshot = state.snapshot
+    val message = historyStateMessage(state)
 
     LazyColumn(
         modifier = modifier.fillMaxSize(),
@@ -57,40 +57,115 @@ internal fun DeviceCoolingTemperatureHistoryScreen(
         ),
         verticalArrangement = Arrangement.spacedBy(AquaCoolingHistoryGeometry.sectionGap)
     ) {
-        item(key = "range") {
-            CoolingHistoryRangeSelector(
-                selectedRange = state.selectedRange,
-                onRangeSelected = onRangeSelected,
-                colors = colors,
-                typography = typography
-            )
+        message?.let { content ->
+            item(key = "state") {
+                CoolingStateMessageCard(
+                    title = stringResource(content.titleRes),
+                    message = stringResource(content.messageRes),
+                    retryLabel = if (content.retryAvailable) {
+                        stringResource(R.string.device_cooling_state_retry)
+                    } else {
+                        null
+                    },
+                    onRetry = onRetry.takeIf { content.retryAvailable }
+                )
+            }
         }
-        item(key = "chart") {
-            CoolingHistoryChartCard(
-                points = snapshot?.points.orEmpty(),
-                range = snapshot?.range ?: state.selectedRange,
-                colors = colors,
-                typography = typography
-            )
-        }
-        item(key = "summary") {
-            CoolingHistorySummaryRow(
-                minimumTemperatureC = snapshot?.minimumTemperatureC,
-                averageTemperatureC = snapshot?.averageTemperatureC,
-                maximumTemperatureC = snapshot?.maximumTemperatureC,
-                colors = colors,
-                typography = typography
-            )
-        }
-        item(key = "daily") {
-            CoolingDailyHistoryCard(
-                days = snapshot?.dailySummaries.orEmpty(),
-                colors = colors,
-                typography = typography
-            )
+
+        if (snapshot != null) {
+            item(key = "range") {
+                CoolingHistoryRangeSelector(
+                    selectedRange = state.selectedRange,
+                    onRangeSelected = onRangeSelected,
+                    colors = colors,
+                    typography = typography
+                )
+            }
+            if (state.dataState !is CoolingDataState.Empty) {
+                item(key = "chart") {
+                    CoolingHistoryChartCard(
+                        points = snapshot.points,
+                        range = snapshot.range,
+                        colors = colors,
+                        typography = typography
+                    )
+                }
+                item(key = "summary") {
+                    CoolingHistorySummaryRow(
+                        minimumTemperatureC = snapshot.minimumTemperatureC,
+                        averageTemperatureC = snapshot.averageTemperatureC,
+                        maximumTemperatureC = snapshot.maximumTemperatureC,
+                        colors = colors,
+                        typography = typography
+                    )
+                }
+                item(key = "daily") {
+                    CoolingDailyHistoryCard(
+                        days = snapshot.dailySummaries,
+                        colors = colors,
+                        typography = typography
+                    )
+                }
+            }
         }
     }
 }
+
+private data class HistoryStateMessage(
+    @StringRes val titleRes: Int,
+    @StringRes val messageRes: Int,
+    val retryAvailable: Boolean
+)
+
+private fun historyStateMessage(
+    state: DeviceCoolingTemperatureHistoryUiState
+): HistoryStateMessage? = when (val dataState = state.dataState) {
+    CoolingDataState.Initial,
+    CoolingDataState.Loading -> HistoryStateMessage(
+        titleRes = R.string.device_cooling_history_loading_title,
+        messageRes = R.string.device_cooling_history_loading_message,
+        retryAvailable = false
+    )
+    is CoolingDataState.Content -> dataState.freshness.historyMessage()
+    is CoolingDataState.Empty -> when (dataState.freshness) {
+        CoolingDataFreshness.CURRENT -> HistoryStateMessage(
+            titleRes = R.string.device_cooling_history_empty_title,
+            messageRes = R.string.device_cooling_history_empty_message,
+            retryAvailable = false
+        )
+        CoolingDataFreshness.REFRESHING -> refreshingHistoryMessage()
+        CoolingDataFreshness.STALE -> staleHistoryMessage()
+    }
+    CoolingDataState.Unsupported -> HistoryStateMessage(
+        titleRes = R.string.device_cooling_history_unsupported_title,
+        messageRes = R.string.device_cooling_history_unsupported_message,
+        retryAvailable = false
+    )
+    CoolingDataState.Unavailable,
+    is CoolingDataState.OperationError -> HistoryStateMessage(
+        titleRes = R.string.device_cooling_history_unavailable_title,
+        messageRes = R.string.device_cooling_history_unavailable_message,
+        retryAvailable = true
+    )
+}
+
+private fun CoolingDataFreshness.historyMessage(): HistoryStateMessage? = when (this) {
+    CoolingDataFreshness.CURRENT -> null
+    CoolingDataFreshness.REFRESHING -> refreshingHistoryMessage()
+    CoolingDataFreshness.STALE -> staleHistoryMessage()
+}
+
+private fun refreshingHistoryMessage() = HistoryStateMessage(
+    titleRes = R.string.device_cooling_history_refreshing_title,
+    messageRes = R.string.device_cooling_history_refreshing_message,
+    retryAvailable = false
+)
+
+private fun staleHistoryMessage() = HistoryStateMessage(
+    titleRes = R.string.device_cooling_history_stale_title,
+    messageRes = R.string.device_cooling_history_stale_message,
+    retryAvailable = true
+)
 
 @Composable
 private fun CoolingHistoryRangeSelector(

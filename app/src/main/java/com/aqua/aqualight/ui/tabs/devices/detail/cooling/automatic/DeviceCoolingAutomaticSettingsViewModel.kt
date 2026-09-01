@@ -2,13 +2,9 @@ package com.aqua.aqualight.ui.tabs.devices.detail.cooling.automatic
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.aqua.aqualight.application.devices.cooling.DEVICE_COOLING_AUTOMATIC_SILENT_MODE_MAXIMUM_FAN_PERCENT
 import com.aqua.aqualight.application.devices.cooling.DeviceCoolingAutomaticCommandResult
-import com.aqua.aqualight.application.devices.cooling.DeviceCoolingAutomaticFailure
 import com.aqua.aqualight.application.devices.cooling.DeviceCoolingAutomaticSettingsOperations
-import com.aqua.aqualight.application.devices.cooling.DeviceCoolingAutomaticSettingsSnapshot
-import com.aqua.aqualight.application.devices.cooling.DeviceCoolingAutomaticTemperaturePolicy
-import kotlin.math.abs
+import com.aqua.aqualight.ui.tabs.devices.detail.cooling.common.CoolingMutationState
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -40,7 +36,7 @@ class DeviceCoolingAutomaticSettingsViewModel(
         observeJob?.cancel()
         refreshJob?.cancel()
         saveJob?.cancel()
-        _uiState.value = DeviceCoolingAutomaticSettingsUiState(deviceUid = deviceUid)
+        _uiState.value = DeviceCoolingAutomaticSettingsUiState(deviceUid = deviceUid).beginRefresh()
 
         val current = operations.currentAutomaticSettings(deviceUid)
         if (current.loaded) {
@@ -58,83 +54,49 @@ class DeviceCoolingAutomaticSettingsViewModel(
     fun refresh() {
         val deviceUid = boundDeviceUid.takeIf(String::isNotBlank) ?: return
         refreshJob?.cancel()
-        _uiState.update { state ->
-            if (state.hasFirmwareSnapshot) {
-                state.copy(loadFailure = null)
-            } else {
-                state.copy(
-                    loadState = DeviceCoolingAutomaticLoadState.LOADING,
-                    loadFailure = null
-                )
-            }
-        }
+        _uiState.update(DeviceCoolingAutomaticSettingsUiState::beginRefresh)
         refreshJob = viewModelScope.launch {
             val result = operations.refreshAutomaticSettings(deviceUid)
-            if (boundDeviceUid == deviceUid && result is DeviceCoolingAutomaticCommandResult.Failed) {
-                _uiState.update { state ->
-                    state.copy(
-                        loadState = if (state.hasFirmwareSnapshot) {
-                            DeviceCoolingAutomaticLoadState.CONTENT
-                        } else {
-                            DeviceCoolingAutomaticLoadState.ERROR
-                        },
-                        editable = false,
-                        loadFailure = result.failure
-                    )
+            if (boundDeviceUid != deviceUid) return@launch
+            when (result) {
+                DeviceCoolingAutomaticCommandResult.Success -> {
+                    val current = operations.currentAutomaticSettings(deviceUid)
+                    _uiState.update { state -> state.withSnapshot(current) }
+                }
+                is DeviceCoolingAutomaticCommandResult.Failed -> {
+                    _uiState.update { state -> state.afterRefreshFailure(result.failure) }
                 }
             }
         }
     }
 
     fun updateStartTemperature(value: Double) {
-        _uiState.update { state ->
-            val policy = state.editorPolicy ?: return@update state
-            val maximum = state.editorMaximumSpeedTemperatureC ?: return@update state
-            if (!value.isValidStart(policy, maximum)) state
-            else state.copy(
-                draftStartTemperatureC = value,
-                saveState = DeviceCoolingAutomaticSaveState.IDLE,
-                saveFailure = null
-            )
-        }
+        _uiState.update { state -> state.withUpdatedStartTemperature(value) }
     }
 
     fun updateMaximumSpeedTemperature(value: Double) {
-        _uiState.update { state ->
-            val policy = state.editorPolicy ?: return@update state
-            val start = state.editorStartTemperatureC ?: return@update state
-            if (!value.isValidMaximum(policy, start)) state
-            else state.copy(
-                draftMaximumSpeedTemperatureC = value,
-                saveState = DeviceCoolingAutomaticSaveState.IDLE,
-                saveFailure = null
-            )
-        }
+        _uiState.update { state -> state.withUpdatedMaximumTemperature(value) }
     }
 
     fun updateSilentMode(enabled: Boolean) {
-        _uiState.update { state ->
-            if (!state.silentModeEditable || state.draftSilentModeEnabled == enabled) {
-                state
-            } else {
-                state.copy(
-                    draftSilentModeEnabled = enabled,
-                    saveState = DeviceCoolingAutomaticSaveState.IDLE,
-                    saveFailure = null
-                )
-            }
-        }
+        _uiState.update { state -> state.withUpdatedSilentMode(enabled) }
     }
 
     fun save() {
-        val request = _uiState.value.pendingSave(boundDeviceUid) ?: return
+        val state = _uiState.value
+        val request = state.pendingSave(boundDeviceUid)
+        if (request == null) {
+            if (state.hasChanges && state.isCurrentAuthoritative) {
+                _uiState.update { current ->
+                    current.copy(mutationState = CoolingMutationState.ValidationError)
+                }
+            }
+            return
+        }
 
         saveJob?.cancel()
         _uiState.update { current ->
-            current.copy(
-                saveState = DeviceCoolingAutomaticSaveState.SAVING,
-                saveFailure = null
-            )
+            current.copy(mutationState = CoolingMutationState.Saving)
         }
         saveJob = viewModelScope.launch {
             val result = operations.saveAutomaticSettings(
@@ -157,170 +119,3 @@ class DeviceCoolingAutomaticSettingsViewModel(
         _uiState.value = DeviceCoolingAutomaticSettingsUiState()
     }
 }
-
-enum class DeviceCoolingAutomaticLoadState {
-    LOADING,
-    CONTENT,
-    ERROR
-}
-
-enum class DeviceCoolingAutomaticSaveState {
-    IDLE,
-    SAVING,
-    SAVED,
-    ERROR
-}
-
-data class DeviceCoolingAutomaticSettingsUiState(
-    val deviceUid: String = "",
-    val loadState: DeviceCoolingAutomaticLoadState = DeviceCoolingAutomaticLoadState.LOADING,
-    val saveState: DeviceCoolingAutomaticSaveState = DeviceCoolingAutomaticSaveState.IDLE,
-    val loadFailure: DeviceCoolingAutomaticFailure? = null,
-    val saveFailure: DeviceCoolingAutomaticFailure? = null,
-    val editable: Boolean = false,
-    val persistedStartTemperatureC: Double? = null,
-    val persistedMaximumSpeedTemperatureC: Double? = null,
-    val draftStartTemperatureC: Double? = null,
-    val draftMaximumSpeedTemperatureC: Double? = null,
-    val persistedSilentModeEnabled: Boolean? = null,
-    val draftSilentModeEnabled: Boolean = false,
-    val silentModeMaximumFanPercent: Int =
-        DEVICE_COOLING_AUTOMATIC_SILENT_MODE_MAXIMUM_FAN_PERCENT,
-    val tankTemperatureC: Double? = null,
-    val fanPercentNow: Double? = null,
-    val policy: DeviceCoolingAutomaticTemperaturePolicy? = null
-) {
-    val hasFirmwareSnapshot: Boolean
-        get() = persistedStartTemperatureC != null &&
-            persistedMaximumSpeedTemperatureC != null &&
-            policy != null
-
-    val editorPolicy: DeviceCoolingAutomaticTemperaturePolicy?
-        get() = policy
-
-    val editorStartTemperatureC: Double?
-        get() = draftStartTemperatureC
-
-    val editorMaximumSpeedTemperatureC: Double?
-        get() = draftMaximumSpeedTemperatureC
-
-    val silentModeFirmwareBacked: Boolean
-        get() = persistedSilentModeEnabled != null
-
-    val silentModeEditable: Boolean
-        get() = silentModeFirmwareBacked && editable
-
-    val hasTemperatureChanges: Boolean
-        get() = !sameTemperature(persistedStartTemperatureC, draftStartTemperatureC) ||
-            !sameTemperature(
-                persistedMaximumSpeedTemperatureC,
-                draftMaximumSpeedTemperatureC
-            )
-
-    val hasSilentModeChanges: Boolean
-        get() = persistedSilentModeEnabled?.let { persisted ->
-            persisted != draftSilentModeEnabled
-        } == true
-
-    val hasChanges: Boolean
-        get() = hasTemperatureChanges || hasSilentModeChanges
-
-    private val hasSavePrerequisites: Boolean
-        get() = loadState == DeviceCoolingAutomaticLoadState.CONTENT &&
-            editable &&
-            hasFirmwareSnapshot
-
-    val canSave: Boolean
-        get() = hasSavePrerequisites &&
-            hasChanges &&
-            saveState != DeviceCoolingAutomaticSaveState.SAVING
-}
-
-private fun DeviceCoolingAutomaticSettingsUiState.withSnapshot(
-    snapshot: DeviceCoolingAutomaticSettingsSnapshot
-): DeviceCoolingAutomaticSettingsUiState {
-    val configuration = snapshot.completeConfiguration
-    if (!snapshot.available || configuration == null) {
-        return copy(
-            loadState = DeviceCoolingAutomaticLoadState.CONTENT,
-            loadFailure = if (snapshot.available) {
-                DeviceCoolingAutomaticFailure.InvalidConfiguration
-            } else {
-                DeviceCoolingAutomaticFailure.Unsupported
-            },
-            editable = false,
-            silentModeMaximumFanPercent = snapshot.silentModeMaximumFanPercent,
-            tankTemperatureC = snapshot.tankTemperatureC,
-            fanPercentNow = snapshot.fanPercentNow
-        )
-    }
-    val start = configuration.startTemperatureC
-    val maximum = configuration.maximumSpeedTemperatureC
-    val preserveTemperatureDraft = hasFirmwareSnapshot && hasTemperatureChanges
-    val preserveSilentModeDraft = silentModeFirmwareBacked && hasSilentModeChanges
-    val incomingSilentMode = snapshot.silentModeEnabled
-    return copy(
-        loadState = DeviceCoolingAutomaticLoadState.CONTENT,
-        loadFailure = null,
-        editable = snapshot.editable,
-        persistedStartTemperatureC = start,
-        persistedMaximumSpeedTemperatureC = maximum,
-        draftStartTemperatureC = if (preserveTemperatureDraft) draftStartTemperatureC else start,
-        draftMaximumSpeedTemperatureC = if (preserveTemperatureDraft) {
-            draftMaximumSpeedTemperatureC
-        } else {
-            maximum
-        },
-        persistedSilentModeEnabled = incomingSilentMode,
-        draftSilentModeEnabled = when {
-            incomingSilentMode == null -> draftSilentModeEnabled
-            preserveSilentModeDraft -> draftSilentModeEnabled
-            else -> incomingSilentMode
-        },
-        silentModeMaximumFanPercent = snapshot.silentModeMaximumFanPercent,
-        tankTemperatureC = snapshot.tankTemperatureC,
-        fanPercentNow = snapshot.fanPercentNow,
-        policy = configuration.policy
-    )
-}
-
-private val DeviceCoolingAutomaticSettingsSnapshot.completeConfiguration:
-    AutomaticSnapshotConfiguration?
-    get() = startTemperatureC?.let { start ->
-        maximumSpeedTemperatureC?.let { maximum ->
-            policy?.let { temperaturePolicy ->
-                AutomaticSnapshotConfiguration(
-                    startTemperatureC = start,
-                    maximumSpeedTemperatureC = maximum,
-                    policy = temperaturePolicy
-                )
-            }
-        }
-    }
-
-private data class AutomaticSnapshotConfiguration(
-    val startTemperatureC: Double,
-    val maximumSpeedTemperatureC: Double,
-    val policy: DeviceCoolingAutomaticTemperaturePolicy
-)
-
-private fun Double.isValidStart(
-    policy: DeviceCoolingAutomaticTemperaturePolicy,
-    maximum: Double
-): Boolean = isFinite() &&
-    this in policy.startMinimumC..policy.startMaximumC &&
-    maximum - this >= policy.minimumGapC - TEMPERATURE_EPSILON
-
-private fun Double.isValidMaximum(
-    policy: DeviceCoolingAutomaticTemperaturePolicy,
-    start: Double
-): Boolean = isFinite() &&
-    this in policy.maximumSpeedMinimumC..policy.maximumSpeedMaximumC &&
-    this - start >= policy.minimumGapC - TEMPERATURE_EPSILON
-
-private fun sameTemperature(first: Double?, second: Double?): Boolean = when {
-    first == null || second == null -> first == second
-    else -> abs(first - second) <= TEMPERATURE_EPSILON
-}
-
-private const val TEMPERATURE_EPSILON = 0.000_001

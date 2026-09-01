@@ -2,9 +2,14 @@ package com.aqua.aqualight.ui.tabs.devices.detail.cooling.automatic
 
 import com.aqua.aqualight.application.devices.cooling.DeviceCoolingAutomaticCommandResult
 import com.aqua.aqualight.application.devices.cooling.DeviceCoolingAutomaticFailure
+import com.aqua.aqualight.application.devices.cooling.DeviceCoolingAutomaticSettingsSnapshot
 import com.aqua.aqualight.application.devices.cooling.DeviceCoolingAutomaticTemperaturePolicy
+import com.aqua.aqualight.ui.tabs.devices.detail.cooling.common.CoolingDataFreshness
+import com.aqua.aqualight.ui.tabs.devices.detail.cooling.common.CoolingDataState
+import com.aqua.aqualight.ui.tabs.devices.detail.cooling.common.CoolingMutationState
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
+import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Test
 
@@ -40,16 +45,8 @@ class DeviceCoolingAutomaticSettingsUiStateTest {
 
     @Test
     fun typedSaveFailurePreservesPersistedBaselineAndFailureReason() {
-        val state = editableState(
-            persistedSilentModeEnabled = null,
-            draftSilentModeEnabled = false
-        ).copy(draftStartTemperatureC = 25.5)
-        val request = PendingAutomaticSettingsSave(
-            deviceUid = "cooling-device",
-            startTemperatureC = 25.5,
-            maximumSpeedTemperatureC = 27.0,
-            silentModeEnabled = null
-        )
+        val state = editableState(null, false).copy(draftStartTemperatureC = 25.5)
+        val request = pendingRequest(startTemperatureC = 25.5)
 
         val updated = state.afterSave(
             request = request,
@@ -62,43 +59,129 @@ class DeviceCoolingAutomaticSettingsUiStateTest {
         assertEquals(25.5, updated.draftStartTemperatureC ?: 0.0, 0.0)
         assertEquals(DeviceCoolingAutomaticSaveState.ERROR, updated.saveState)
         assertEquals(DeviceCoolingAutomaticFailure.ReadOnly, updated.saveFailure)
+        assertTrue(updated.mutationState is CoolingMutationState.OperationError)
     }
 
     @Test
     fun typedSaveSuccessAdvancesPersistedBaseline() {
-        val state = editableState(
-            persistedSilentModeEnabled = null,
-            draftSilentModeEnabled = false
-        ).copy(draftStartTemperatureC = 25.5)
-        val request = PendingAutomaticSettingsSave(
-            deviceUid = "cooling-device",
-            startTemperatureC = 25.5,
-            maximumSpeedTemperatureC = 27.0,
-            silentModeEnabled = null
-        )
+        val state = editableState(null, false).copy(draftStartTemperatureC = 25.5)
 
         val updated = state.afterSave(
-            request = request,
+            request = pendingRequest(startTemperatureC = 25.5),
             result = DeviceCoolingAutomaticCommandResult.Success
         )
 
         assertEquals(25.5, updated.persistedStartTemperatureC ?: 0.0, 0.0)
         assertEquals(DeviceCoolingAutomaticSaveState.SAVED, updated.saveState)
-        assertEquals(null, updated.saveFailure)
+        assertNull(updated.saveFailure)
+        assertEquals(CoolingMutationState.Saved, updated.mutationState)
+    }
+
+    @Test
+    fun invalidConfigurationSaveBecomesValidationError() {
+        val state = editableState(null, false).copy(draftStartTemperatureC = 25.5)
+
+        val updated = state.afterSave(
+            pendingRequest(startTemperatureC = 25.5),
+            DeviceCoolingAutomaticCommandResult.Failed(
+                DeviceCoolingAutomaticFailure.InvalidConfiguration
+            )
+        )
+
+        assertEquals(CoolingMutationState.ValidationError, updated.mutationState)
+        assertEquals(DeviceCoolingAutomaticFailure.InvalidConfiguration, updated.saveFailure)
+    }
+
+    @Test
+    fun refreshKeepsAuthoritativeSnapshotWithoutFlickerAndDisablesWrites() {
+        val refreshing = editableState(null, false).beginRefresh()
+        val data = refreshing.dataState as CoolingDataState.Content<
+            DeviceCoolingAutomaticSettingsSnapshot,
+            DeviceCoolingAutomaticFailure
+            >
+
+        assertEquals(CoolingDataFreshness.REFRESHING, data.freshness)
+        assertEquals(25.0, refreshing.persistedStartTemperatureC ?: 0.0, 0.0)
+        assertEquals(27.0, refreshing.persistedMaximumSpeedTemperatureC ?: 0.0, 0.0)
+        assertFalse(refreshing.editable)
+        assertFalse(refreshing.canSave)
+    }
+
+    @Test
+    fun transientRefreshFailureKeepsLastAuthoritativeSnapshotStale() {
+        val stale = editableState(null, false)
+            .beginRefresh()
+            .afterRefreshFailure(DeviceCoolingAutomaticFailure.TemporaryFailure)
+        val data = stale.dataState as CoolingDataState.Content<
+            DeviceCoolingAutomaticSettingsSnapshot,
+            DeviceCoolingAutomaticFailure
+            >
+
+        assertEquals(CoolingDataFreshness.STALE, data.freshness)
+        assertEquals(DeviceCoolingAutomaticFailure.TemporaryFailure, data.refreshFailure)
+        assertEquals(25.0, stale.persistedStartTemperatureC ?: 0.0, 0.0)
+        assertFalse(stale.editable)
+    }
+
+    @Test
+    fun partialIncomingSnapshotCannotReplaceLastValidatedConfiguration() {
+        val current = editableState(null, false)
+        val partial = current.withSnapshot(
+            automaticSnapshot().copy(
+                startTemperatureC = 26.0,
+                maximumSpeedTemperatureC = null
+            )
+        )
+        val data = partial.dataState as CoolingDataState.Content<
+            DeviceCoolingAutomaticSettingsSnapshot,
+            DeviceCoolingAutomaticFailure
+            >
+
+        assertEquals(CoolingDataFreshness.STALE, data.freshness)
+        assertEquals(DeviceCoolingAutomaticFailure.InvalidConfiguration, data.refreshFailure)
+        assertEquals(25.0, partial.persistedStartTemperatureC ?: 0.0, 0.0)
+        assertEquals(27.0, partial.persistedMaximumSpeedTemperatureC ?: 0.0, 0.0)
+        assertFalse(partial.editable)
+    }
+
+    @Test
+    fun unsupportedRefreshIsTerminalAndClearsOldConfiguration() {
+        val unsupported = editableState(null, false)
+            .beginRefresh()
+            .afterRefreshFailure(DeviceCoolingAutomaticFailure.Unsupported)
+
+        assertEquals(CoolingDataState.Unsupported, unsupported.dataState)
+        assertNull(unsupported.persistedStartTemperatureC)
+        assertNull(unsupported.persistedMaximumSpeedTemperatureC)
+        assertFalse(unsupported.editable)
     }
 
     private fun editableState(
         persistedSilentModeEnabled: Boolean?,
         draftSilentModeEnabled: Boolean
-    ): DeviceCoolingAutomaticSettingsUiState = DeviceCoolingAutomaticSettingsUiState(
-        loadState = DeviceCoolingAutomaticLoadState.CONTENT,
+    ): DeviceCoolingAutomaticSettingsUiState {
+        val snapshot = automaticSnapshot().copy(
+            silentModeEnabled = persistedSilentModeEnabled
+        )
+        return DeviceCoolingAutomaticSettingsUiState(
+            dataState = CoolingDataState.Content(snapshot),
+            editable = true,
+            persistedStartTemperatureC = 25.0,
+            persistedMaximumSpeedTemperatureC = 27.0,
+            draftStartTemperatureC = 25.0,
+            draftMaximumSpeedTemperatureC = 27.0,
+            persistedSilentModeEnabled = persistedSilentModeEnabled,
+            draftSilentModeEnabled = draftSilentModeEnabled,
+            policy = snapshot.policy
+        )
+    }
+
+    private fun automaticSnapshot() = DeviceCoolingAutomaticSettingsSnapshot(
+        available = true,
+        loaded = true,
         editable = true,
-        persistedStartTemperatureC = 25.0,
-        persistedMaximumSpeedTemperatureC = 27.0,
-        draftStartTemperatureC = 25.0,
-        draftMaximumSpeedTemperatureC = 27.0,
-        persistedSilentModeEnabled = persistedSilentModeEnabled,
-        draftSilentModeEnabled = draftSilentModeEnabled,
+        startTemperatureC = 25.0,
+        maximumSpeedTemperatureC = 27.0,
         policy = DeviceCoolingAutomaticTemperaturePolicy(
             startMinimumC = 18.0,
             startMaximumC = 30.0,
@@ -108,4 +191,15 @@ class DeviceCoolingAutomaticSettingsUiStateTest {
             minimumGapC = 0.5
         )
     )
+
+    private fun pendingRequest(startTemperatureC: Double) = PendingAutomaticSettingsSave(
+        deviceUid = DEVICE_UID,
+        startTemperatureC = startTemperatureC,
+        maximumSpeedTemperatureC = 27.0,
+        silentModeEnabled = null
+    )
+
+    private companion object {
+        const val DEVICE_UID = "cooling-device"
+    }
 }

@@ -1,6 +1,8 @@
 package com.aqua.aqualight.ui.tabs.devices.detail.cooling.automatic
 
 import com.aqua.aqualight.application.devices.cooling.DeviceCoolingAutomaticCommandResult
+import com.aqua.aqualight.application.devices.cooling.DeviceCoolingAutomaticFailure
+import com.aqua.aqualight.ui.tabs.devices.detail.cooling.common.CoolingMutationState
 
 internal fun DeviceCoolingAutomaticSettingsUiState.pendingSave(
     boundDeviceUid: String
@@ -36,11 +38,13 @@ internal fun DeviceCoolingAutomaticSettingsUiState.afterSave(
         draftMaximumSpeedTemperatureC = request.maximumSpeedTemperatureC,
         persistedSilentModeEnabled = request.silentModeEnabled ?: persistedSilentModeEnabled,
         draftSilentModeEnabled = request.silentModeEnabled ?: draftSilentModeEnabled,
-        saveState = DeviceCoolingAutomaticSaveState.SAVED,
-        saveFailure = null
+        mutationState = CoolingMutationState.Saved
     )
     is DeviceCoolingAutomaticCommandResult.Failed -> copy(
-        saveState = DeviceCoolingAutomaticSaveState.ERROR,
-        saveFailure = result.failure
+        mutationState = if (result.failure == DeviceCoolingAutomaticFailure.InvalidConfiguration) {
+            CoolingMutationState.ValidationError
+        } else {
+            CoolingMutationState.OperationError(result.failure)
+        }
     )
 }

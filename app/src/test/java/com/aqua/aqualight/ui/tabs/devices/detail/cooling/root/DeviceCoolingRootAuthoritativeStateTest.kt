@@ -7,6 +7,7 @@ import com.aqua.aqualight.application.devices.DeviceRootSnapshot
 import com.aqua.aqualight.application.devices.OwnerDeviceAvailability
 import com.aqua.aqualight.application.devices.OwnerDeviceFamily
 import com.aqua.aqualight.application.devices.cooling.DeviceCoolingAutomaticCommandResult
+import com.aqua.aqualight.application.devices.cooling.DeviceCoolingAutomaticFailure
 import com.aqua.aqualight.application.devices.cooling.DeviceCoolingAutomaticSettingsOperations
 import com.aqua.aqualight.application.devices.cooling.DeviceCoolingAutomaticSettingsSnapshot
 import com.aqua.aqualight.application.devices.cooling.DeviceCoolingTemperatureHistoryLoadResult
@@ -19,6 +20,8 @@ import com.aqua.aqualight.application.devices.cooling.control.DeviceCoolingContr
 import com.aqua.aqualight.application.devices.cooling.control.DeviceCoolingControlResult
 import com.aqua.aqualight.application.devices.cooling.control.DeviceCoolingControlSnapshot
 import com.aqua.aqualight.application.devices.cooling.control.DeviceCoolingManualFanCapabilities
+import com.aqua.aqualight.ui.tabs.devices.detail.cooling.common.CoolingDataFreshness
+import com.aqua.aqualight.ui.tabs.devices.detail.cooling.common.CoolingDataState
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.Flow
@@ -117,6 +120,11 @@ class DeviceCoolingRootAuthoritativeStateTest {
             assertFalse(stale.controlAvailable)
             assertFalse(stale.modeSelectionWritable)
             assertFalse(stale.manualFanCapabilities?.writable ?: true)
+            val controlState = stale.controlState as CoolingDataState.Content<
+                CoolingControlPresentation,
+                DeviceCoolingControlFailure
+                >
+            assertEquals(CoolingDataFreshness.STALE, controlState.freshness)
         }
 
     @Test
@@ -141,6 +149,11 @@ class DeviceCoolingRootAuthoritativeStateTest {
             val state = viewModel.uiState.value
             assertEquals(25.0, state.autoStartTemperatureC ?: 0.0, 0.0)
             assertEquals(27.0, state.autoMaxTemperatureC ?: 0.0, 0.0)
+            val automaticState = state.automaticSummaryState as CoolingDataState.Content<
+                CoolingAutomaticSummaryPresentation,
+                DeviceCoolingAutomaticFailure
+                >
+            assertEquals(CoolingDataFreshness.STALE, automaticState.freshness)
         }
 
     @Test
@@ -274,7 +287,15 @@ class DeviceCoolingRootAuthoritativeStateTest {
             loaded = true,
             editable = true,
             startTemperatureC = 25.0,
-            maximumSpeedTemperatureC = 27.0
+            maximumSpeedTemperatureC = 27.0,
+            policy = com.aqua.aqualight.application.devices.cooling.DeviceCoolingAutomaticTemperaturePolicy(
+                startMinimumC = 18.0,
+                startMaximumC = 30.0,
+                maximumSpeedMinimumC = 18.5,
+                maximumSpeedMaximumC = 32.0,
+                stepC = 0.5,
+                minimumGapC = 0.5
+            )
         )
     }
 }

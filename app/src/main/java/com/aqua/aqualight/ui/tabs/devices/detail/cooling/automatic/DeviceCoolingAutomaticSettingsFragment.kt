@@ -31,13 +31,14 @@ class DeviceCoolingAutomaticSettingsFragment : DeviceCoolingModeSettingsFragment
             setViewCompositionStrategy(ViewCompositionStrategy.DisposeOnViewTreeLifecycleDestroyed)
             setContent {
                 val state by viewModel.uiState.collectAsStateWithLifecycle()
-                DeviceCoolingAutomaticSettingsScreen(
+                DeviceCoolingAutomaticStateScreen(
                     state = state,
                     actions = DeviceCoolingAutomaticSettingsActions(
                         onStartTemperatureClick = ::showStartTemperatureSheet,
                         onMaximumTemperatureClick = ::showMaximumTemperatureSheet,
                         onSilentModeChanged = viewModel::updateSilentMode,
-                        onSave = viewModel::save
+                        onSave = viewModel::save,
+                        onRetry = viewModel::refresh
                     )
                 )
             }
