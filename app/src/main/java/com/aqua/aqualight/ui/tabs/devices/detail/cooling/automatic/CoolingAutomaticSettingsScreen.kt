@@ -296,7 +296,7 @@ private fun AutomaticSilentModeCard(
                 if (!state.silentModeFirmwareBacked) {
                     BasicText(
                         text = stringResource(
-                            R.string.device_cooling_automatic_silent_mode_preview
+                            R.string.device_cooling_automatic_silent_mode_unavailable
                         ),
                         style = typography.micro.copy(color = colors.warning)
                     )
