@@ -37,7 +37,7 @@ FIRMWARE_REPOSITORY = "ozdemirrrcemal-cmyk/AquaLight-Firmware"
 FIRMWARE_COMMIT = "a0403bf408fcf898ae94a9178eba34efdc2af9bc"
 COMMAND_NAMES_BLOB = "7bff40576bb77450c662181e2b09b5be961e6809"
 EVENT_CONTRACT_BLOB = "f71cbe76679fd425d6697c89800975e00e9edee5"
-PRODUCT_CATALOG_EXPORT_COMMIT = "cf2222e58e6c69a729071a5d1205497b3fceaa70"
+PRODUCT_CATALOG_EXPORT_COMMIT = "1bf5d94af804acd87d4a5ed25971abc0fd9f048d"
 REQUEST_CONTRACT_BLOBS = {
     "src/api/v1/commands/AqlDeviceCommands.hpp": (
         "a78d6355555afea780fdb62809bc9107d7122698"
@@ -92,7 +92,7 @@ EXPECTED_FIXTURES = {
         True,
     ),
     "aql_product_catalog_v1.json": (
-        "333a3192c5212c277bced7a891f8e492511b8804a4484412c17a7124b8752716",
+        "7c211c866112a73bc2793e00f06434def1bf98ffb5985e3134379d71981a1444",
         None,
         False,
     ),
@@ -431,7 +431,7 @@ def verify_product_matrix() -> None:
     require(isinstance(source, dict), "product catalog source pin is missing")
     require(source.get("commit") == PRODUCT_CATALOG_EXPORT_COMMIT, "catalog source commit drifted")
     require(isinstance(products, list), "product catalog product matrix is missing")
-    require(len(products) == 9, "product catalog must contain exactly nine SKUs")
+    require(len(products) == 7, "product catalog must contain exactly seven SKUs")
     require(
         {product.get("family") for product in products} == {"light", "timer", "dosing", "cooling"},
         "product catalog must contain all four commercial families",
@@ -474,7 +474,7 @@ def main() -> int:
     print(
         "Firmware interoperability guard passed: 44 command names, 44 connected "
         "Android commands (30 core + 14 feature-owned Dosing v1), 11/11 events, "
-        "core request serializers, byte-identical shared fixtures and 9/9 SKUs."
+        "core request serializers, byte-identical shared fixtures and 7/7 SKUs."
     )
     return 0
 
