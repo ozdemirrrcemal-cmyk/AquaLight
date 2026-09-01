@@ -8,6 +8,9 @@ import com.aqua.aqualight.application.devices.OwnerDeviceAvailability
 import com.aqua.aqualight.application.devices.OwnerDeviceFamily
 import com.aqua.aqualight.application.devices.cooling.DeviceCoolingAutomaticSettingsOperations
 import com.aqua.aqualight.application.devices.cooling.DeviceCoolingAutomaticSettingsSnapshot
+import com.aqua.aqualight.application.devices.cooling.DeviceCoolingTemperatureHistoryLoadResult
+import com.aqua.aqualight.application.devices.cooling.DeviceCoolingTemperatureHistoryOperations
+import com.aqua.aqualight.application.devices.cooling.DeviceCoolingTemperatureHistoryRange
 import com.aqua.aqualight.application.devices.cooling.control.DeviceCoolingControlCapabilities
 import com.aqua.aqualight.application.devices.cooling.control.DeviceCoolingControlFailure
 import com.aqua.aqualight.application.devices.cooling.control.DeviceCoolingControlMode
@@ -52,6 +55,7 @@ class DeviceCoolingRootAuthoritativeStateTest {
             controlOperations = FakeControlOperations(
                 DeviceCoolingControlResult.Failed(DeviceCoolingControlFailure.Unavailable)
             ),
+            historyOperations = UnavailableHistoryOperations,
             automaticSettingsOperations = FakeAutomaticOperations(
                 DeviceCoolingAutomaticSettingsSnapshot()
             )
@@ -74,6 +78,7 @@ class DeviceCoolingRootAuthoritativeStateTest {
         val viewModel = DeviceCoolingRootViewModel(
             operations = FakeRootOperations(),
             controlOperations = FakeControlOperations(availableControl()),
+            historyOperations = UnavailableHistoryOperations,
             automaticSettingsOperations = FakeAutomaticOperations(availableAutomatic())
         )
 
@@ -96,6 +101,7 @@ class DeviceCoolingRootAuthoritativeStateTest {
             val viewModel = DeviceCoolingRootViewModel(
                 operations = FakeRootOperations(),
                 controlOperations = control,
+                historyOperations = UnavailableHistoryOperations,
                 automaticSettingsOperations = FakeAutomaticOperations(availableAutomatic())
             )
             viewModel.bind(DEVICE_UID)
@@ -119,6 +125,7 @@ class DeviceCoolingRootAuthoritativeStateTest {
             val viewModel = DeviceCoolingRootViewModel(
                 operations = FakeRootOperations(),
                 controlOperations = FakeControlOperations(availableControl()),
+                historyOperations = UnavailableHistoryOperations,
                 automaticSettingsOperations = automatic
             )
             viewModel.bind(DEVICE_UID)
@@ -141,6 +148,7 @@ class DeviceCoolingRootAuthoritativeStateTest {
         val viewModel = DeviceCoolingRootViewModel(
             operations = root,
             controlOperations = FakeControlOperations(availableControl()),
+            historyOperations = UnavailableHistoryOperations,
             automaticSettingsOperations = FakeAutomaticOperations(availableAutomatic())
         )
         viewModel.bind(DEVICE_UID)
@@ -187,6 +195,14 @@ class DeviceCoolingRootAuthoritativeStateTest {
         fun emit(result: DeviceCoolingControlResult) {
             results.value = result
         }
+    }
+
+    private object UnavailableHistoryOperations : DeviceCoolingTemperatureHistoryOperations {
+        override suspend fun loadTemperatureHistory(
+            deviceUid: String,
+            range: DeviceCoolingTemperatureHistoryRange
+        ): DeviceCoolingTemperatureHistoryLoadResult =
+            DeviceCoolingTemperatureHistoryLoadResult.Unavailable
     }
 
     private class FakeAutomaticOperations(
