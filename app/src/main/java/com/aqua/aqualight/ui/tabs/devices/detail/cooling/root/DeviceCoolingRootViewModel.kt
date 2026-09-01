@@ -279,7 +279,7 @@ private fun DeviceCoolingRootUiState.withControlPresentation(
         selectedMode = availableSnapshot.mode,
         supportedModes = availableSnapshot.capabilities.supportedModes,
         modeSelectionWritable = current && availableSnapshot.capabilities.modeSelectionWritable,
-        manualFanCapabilities = availableSnapshot.capabilities.manual?.let { capabilities ->
+        manualFanCapabilities = availableSnapshot.capabilities.manualFan?.let { capabilities ->
             if (current) capabilities else capabilities.copy(writable = false)
         },
         manualFanPercent = availableSnapshot.manualFanPercent,
