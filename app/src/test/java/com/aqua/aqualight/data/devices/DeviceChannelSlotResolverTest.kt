@@ -16,7 +16,7 @@ import org.junit.Test
 class DeviceChannelSlotResolverTest {
 
     @Test
-    fun `all nine products resolve exact firmware channel topology`() {
+    fun `all seven products resolve exact firmware channel topology`() {
         assertEquals(EXPECTED.keys, AqlCommercialDeviceCatalog.products.mapTo(linkedSetOf()) {
             product -> product.productKey.value
         })
@@ -106,7 +106,7 @@ class DeviceChannelSlotResolverTest {
         val wrgb = DeviceChannelSlotResolver.resolve(product("LIGHT_WRGB_PRO_ELITE"))
         val timer = DeviceChannelSlotResolver.resolve(product("TIMER_RELAY_PRO_4"))
         val dosing = DeviceChannelSlotResolver.resolve(product("DOSING_DOSE_PRO_4"))
-        val cooling = DeviceChannelSlotResolver.resolve(product("COOLING_COOL_PRO_3F"))
+        val cooling = DeviceChannelSlotResolver.resolve(product("COOLING_COOL_PRO_1F"))
 
         assertFalse(wrgb.fanOutputs.any { it.displayNameEditable })
         assertTrue(timer.timerChannels.all { it.displayNameEditable })
@@ -183,20 +183,6 @@ class DeviceChannelSlotResolverTest {
             ),
             "COOLING_COOL_PRO_1F" to ExpectedSlots(
                 fanCount = 1,
-                temperatureCount = 1,
-                fanEditable = true,
-                fanRoute = DeviceRootRoute.COOLING_CONTROL,
-                temperatureRoute = DeviceRootRoute.COOLING_TEMPERATURE
-            ),
-            "COOLING_COOL_PRO_2F" to ExpectedSlots(
-                fanCount = 2,
-                temperatureCount = 1,
-                fanEditable = true,
-                fanRoute = DeviceRootRoute.COOLING_CONTROL,
-                temperatureRoute = DeviceRootRoute.COOLING_TEMPERATURE
-            ),
-            "COOLING_COOL_PRO_3F" to ExpectedSlots(
-                fanCount = 3,
                 temperatureCount = 1,
                 fanEditable = true,
                 fanRoute = DeviceRootRoute.COOLING_CONTROL,
