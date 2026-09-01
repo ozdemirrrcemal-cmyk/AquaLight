@@ -6,6 +6,11 @@ import com.aqua.aqualight.application.devices.DeviceRootRoute
 import com.aqua.aqualight.application.devices.DeviceRootSnapshot
 import com.aqua.aqualight.application.devices.OwnerDeviceAvailability
 import com.aqua.aqualight.application.devices.OwnerDeviceFamily
+import com.aqua.aqualight.application.devices.cooling.DeviceCoolingAutomaticSettingsOperations
+import com.aqua.aqualight.application.devices.cooling.DeviceCoolingAutomaticSettingsSnapshot
+import com.aqua.aqualight.application.devices.cooling.DeviceCoolingTemperatureHistoryLoadResult
+import com.aqua.aqualight.application.devices.cooling.DeviceCoolingTemperatureHistoryOperations
+import com.aqua.aqualight.application.devices.cooling.DeviceCoolingTemperatureHistoryRange
 import com.aqua.aqualight.application.devices.cooling.control.DeviceCoolingControlCapabilities
 import com.aqua.aqualight.application.devices.cooling.control.DeviceCoolingControlFailure
 import com.aqua.aqualight.application.devices.cooling.control.DeviceCoolingControlMode
@@ -47,10 +52,7 @@ class DeviceCoolingRootViewModelTest {
             initial = available(mode = DeviceCoolingControlMode.AUTOMATIC),
             modeMutation = DeviceCoolingControlResult.Failed(DeviceCoolingControlFailure.Unsupported)
         )
-        val viewModel = DeviceCoolingRootViewModel(
-            operations = FakeRootOperations(),
-            controlOperations = control
-        )
+        val viewModel = createViewModel(control)
 
         viewModel.bind(DEVICE_UID)
         viewModel.selectMode(DeviceCoolingControlMode.MANUAL)
@@ -71,10 +73,7 @@ class DeviceCoolingRootViewModelTest {
                 manualFanPercent = 40
             )
         )
-        val viewModel = DeviceCoolingRootViewModel(
-            operations = FakeRootOperations(),
-            controlOperations = control
-        )
+        val viewModel = createViewModel(control)
 
         viewModel.bind(DEVICE_UID)
         viewModel.selectMode(DeviceCoolingControlMode.MANUAL)
@@ -97,10 +96,7 @@ class DeviceCoolingRootViewModelTest {
                 manualWritable = true
             )
         )
-        val viewModel = DeviceCoolingRootViewModel(
-            operations = FakeRootOperations(),
-            controlOperations = control
-        )
+        val viewModel = createViewModel(control)
 
         viewModel.bind(DEVICE_UID)
         viewModel.updateManualFanPercent(73)
@@ -108,6 +104,13 @@ class DeviceCoolingRootViewModelTest {
         assertEquals(73, control.lastRequestedManualPercent)
         assertEquals(70, viewModel.uiState.value.manualFanPercent)
     }
+
+    private fun createViewModel(control: DeviceCoolingControlOperations) = DeviceCoolingRootViewModel(
+        operations = FakeRootOperations(),
+        controlOperations = control,
+        historyOperations = UnavailableHistoryOperations,
+        automaticSettingsOperations = UnavailableAutomaticOperations
+    )
 
     private class FakeRootOperations : DeviceRootOperations {
         private val snapshot = DeviceRootSnapshot(
@@ -156,6 +159,35 @@ class DeviceCoolingRootViewModelTest {
             lastRequestedManualPercent = percent
             return manualMutation
         }
+    }
+
+    private object UnavailableHistoryOperations : DeviceCoolingTemperatureHistoryOperations {
+        override suspend fun loadTemperatureHistory(
+            deviceUid: String,
+            range: DeviceCoolingTemperatureHistoryRange
+        ): DeviceCoolingTemperatureHistoryLoadResult =
+            DeviceCoolingTemperatureHistoryLoadResult.Unavailable
+    }
+
+    private object UnavailableAutomaticOperations : DeviceCoolingAutomaticSettingsOperations {
+        private val snapshot = DeviceCoolingAutomaticSettingsSnapshot()
+
+        override fun observeAutomaticSettings(
+            deviceUid: String
+        ): Flow<DeviceCoolingAutomaticSettingsSnapshot> = flowOf(snapshot)
+
+        override fun currentAutomaticSettings(
+            deviceUid: String
+        ): DeviceCoolingAutomaticSettingsSnapshot = snapshot
+
+        override suspend fun refreshAutomaticSettings(deviceUid: String): Result<Unit> =
+            Result.success(Unit)
+
+        override suspend fun saveAutomaticTemperatureRange(
+            deviceUid: String,
+            startTemperatureC: Double,
+            maximumSpeedTemperatureC: Double
+        ): Result<Unit> = Result.failure(UnsupportedOperationException())
     }
 
     private companion object {
