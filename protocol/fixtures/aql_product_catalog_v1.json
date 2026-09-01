@@ -3,7 +3,7 @@
   "schema": "aql.product.catalog.fixture.v1",
   "source": {
     "repository": "ozdemirrrcemal-cmyk/AquaLight-Firmware",
-    "commit": "cf2222e58e6c69a729071a5d1205497b3fceaa70",
+    "commit": "1bf5d94af804acd87d4a5ed25971abc0fd9f048d",
     "catalogPath": "src/product/AqlProductCatalog.hpp",
     "exporterPath": "tools/aql_export_product_catalog.cpp"
   },
@@ -356,46 +356,6 @@
       "limits": {
         "lightChannelCount": 0,
         "fanOutputCount": 1,
-        "temperatureSensorCount": 1,
-        "timerChannelCount": 0,
-        "dosingChannelCount": 0
-      }
-    },
-    {
-      "profile": "coolingCoolPro",
-      "env": "cooling_cool_pro_2f",
-      "productKey": "COOLING_COOL_PRO_2F",
-      "productId": "com.aqualight.cooling.cool_pro_2f",
-      "family": "cooling",
-      "line": "cool_pro",
-      "model": "cool_pro_2f",
-      "displayName": "Cool Pro 2 Fan",
-      "skuId": "com.aqualight.cooling.cool_pro_2f.global.black",
-      "skuCode": "AQL-C-CP2F-GLB-BLK",
-      "hardwareRevision": "2.0",
-      "limits": {
-        "lightChannelCount": 0,
-        "fanOutputCount": 2,
-        "temperatureSensorCount": 1,
-        "timerChannelCount": 0,
-        "dosingChannelCount": 0
-      }
-    },
-    {
-      "profile": "coolingCoolPro",
-      "env": "cooling_cool_pro_3f",
-      "productKey": "COOLING_COOL_PRO_3F",
-      "productId": "com.aqualight.cooling.cool_pro_3f",
-      "family": "cooling",
-      "line": "cool_pro",
-      "model": "cool_pro_3f",
-      "displayName": "Cool Pro 3 Fan",
-      "skuId": "com.aqualight.cooling.cool_pro_3f.global.black",
-      "skuCode": "AQL-C-CP3F-GLB-BLK",
-      "hardwareRevision": "2.0",
-      "limits": {
-        "lightChannelCount": 0,
-        "fanOutputCount": 3,
         "temperatureSensorCount": 1,
         "timerChannelCount": 0,
         "dosingChannelCount": 0
