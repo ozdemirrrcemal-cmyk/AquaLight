@@ -27,7 +27,7 @@ import com.aqua.aqualight.ui.tabs.devices.detail.cooling.root.DeviceCoolingRootU
     uiMode = Configuration.UI_MODE_NIGHT_YES
 )
 @Composable
-private fun CoolingDashboardPreview() {
+internal fun CoolingDashboardPreview() {
     DeviceCoolingDashboardScreen(
         state = DeviceCoolingRootUiState(
             contentEnabled = true,

@@ -76,22 +76,23 @@ class DeviceCoolingManualSettingsViewModel(
 
     fun updateTargetPercent(percent: Int) {
         val state = _uiState.value
-        val capabilities = state.capabilities ?: return
-        val deviceUid = boundDeviceUid.takeIf(String::isNotBlank) ?: return
-        if (!state.canWrite) return
+        val capabilities = state.capabilities
+        val deviceUid = boundDeviceUid.takeIf(String::isNotBlank)
 
-        val bounded = percent.coerceIn(
-            capabilities.minimumPercent,
-            capabilities.maximumPercent
-        )
-        mutationJob?.cancel()
-        _uiState.update { current ->
-            current.copy(mutationState = CoolingMutationState.Saving)
-        }
-        mutationJob = viewModelScope.launch {
-            val result = operations.setManualFanPercent(deviceUid, bounded)
-            if (boundDeviceUid != deviceUid) return@launch
-            _uiState.update { current -> current.afterMutation(result) }
+        if (capabilities != null && deviceUid != null && state.canWrite) {
+            val bounded = percent.coerceIn(
+                capabilities.minimumPercent,
+                capabilities.maximumPercent
+            )
+            mutationJob?.cancel()
+            _uiState.update { current ->
+                current.copy(mutationState = CoolingMutationState.Saving)
+            }
+            mutationJob = viewModelScope.launch {
+                val result = operations.setManualFanPercent(deviceUid, bounded)
+                if (boundDeviceUid != deviceUid) return@launch
+                _uiState.update { current -> current.afterMutation(result) }
+            }
         }
     }
 

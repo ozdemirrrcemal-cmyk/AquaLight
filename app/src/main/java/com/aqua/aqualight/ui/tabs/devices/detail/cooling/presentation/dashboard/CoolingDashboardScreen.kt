@@ -67,9 +67,7 @@ internal fun DeviceCoolingDashboardScreen(
                 enabled = state.contentEnabled && state.controlAvailable,
                 colors = colors,
                 typography = typography,
-                onAutomaticSettingsClick = actions.onAutomaticSettingsClick,
-                onManualSettingsClick = actions.onManualSettingsClick,
-                onProgramSettingsClick = actions.onProgramSettingsClick
+                actions = actions
             )
         }
     }
