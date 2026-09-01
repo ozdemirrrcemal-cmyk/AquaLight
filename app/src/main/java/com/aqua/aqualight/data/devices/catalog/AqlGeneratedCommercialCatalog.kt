@@ -1,6 +1,6 @@
 // GENERATED FILE. DO NOT EDIT.
 // Source: protocol/fixtures/aql_product_catalog_v1.json
-// Source firmware commit: cf2222e58e6c69a729071a5d1205497b3fceaa70
+// Source firmware commit: 1bf5d94af804acd87d4a5ed25971abc0fd9f048d
 
 package com.aqua.aqualight.data.devices.catalog
 
@@ -361,44 +361,6 @@ internal val AQL_GENERATED_COMMERCIAL_PRODUCTS: List<AqlCommercialCatalogProduct
         limits = DeviceLimitSet(
             lightChannelCount = 0,
             fanOutputCount = 1,
-            temperatureSensorCount = 1,
-            timerChannelCount = 0,
-            dosingChannelCount = 0,
-        ),
-        profile = PROFILE_COOLING_COOL_PRO,
-    ),
-    AqlCommercialCatalogProduct(
-        productKey = DeviceProductKey("COOLING_COOL_PRO_2F"),
-        productId = DeviceProductId("com.aqualight.cooling.cool_pro_2f"),
-        family = DeviceFamily.COOLING,
-        line = DeviceProductLine("cool_pro"),
-        model = DeviceProductModel("cool_pro_2f"),
-        displayName = "Cool Pro 2 Fan",
-        skuId = DeviceSkuId("com.aqualight.cooling.cool_pro_2f.global.black"),
-        skuCode = DeviceSkuCode("AQL-C-CP2F-GLB-BLK"),
-        hardwareRevision = DeviceHardwareRevision("2.0"),
-        limits = DeviceLimitSet(
-            lightChannelCount = 0,
-            fanOutputCount = 2,
-            temperatureSensorCount = 1,
-            timerChannelCount = 0,
-            dosingChannelCount = 0,
-        ),
-        profile = PROFILE_COOLING_COOL_PRO,
-    ),
-    AqlCommercialCatalogProduct(
-        productKey = DeviceProductKey("COOLING_COOL_PRO_3F"),
-        productId = DeviceProductId("com.aqualight.cooling.cool_pro_3f"),
-        family = DeviceFamily.COOLING,
-        line = DeviceProductLine("cool_pro"),
-        model = DeviceProductModel("cool_pro_3f"),
-        displayName = "Cool Pro 3 Fan",
-        skuId = DeviceSkuId("com.aqualight.cooling.cool_pro_3f.global.black"),
-        skuCode = DeviceSkuCode("AQL-C-CP3F-GLB-BLK"),
-        hardwareRevision = DeviceHardwareRevision("2.0"),
-        limits = DeviceLimitSet(
-            lightChannelCount = 0,
-            fanOutputCount = 3,
             temperatureSensorCount = 1,
             timerChannelCount = 0,
             dosingChannelCount = 0,
