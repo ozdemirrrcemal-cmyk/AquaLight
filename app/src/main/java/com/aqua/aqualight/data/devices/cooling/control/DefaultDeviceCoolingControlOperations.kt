@@ -7,9 +7,12 @@ import com.aqua.aqualight.application.devices.cooling.control.DeviceCoolingContr
 import com.aqua.aqualight.application.devices.cooling.control.DeviceCoolingControlResult
 import com.aqua.aqualight.application.devices.cooling.control.DeviceCoolingControlSnapshot
 import com.aqua.aqualight.application.devices.cooling.control.DeviceCoolingManualFanCapabilities
+import com.aqua.aqualight.data.devices.catalog.AqlCommercialCatalogValidation
+import com.aqua.aqualight.data.devices.catalog.AqlCommercialDeviceCatalog
 import com.aqua.aqualight.data.devices.model.DeviceUid
 import com.aqua.aqualight.data.devices.repository.DevicesRepository
 import com.aqua.aqualight.data.devices.runtime.core.DeviceRuntimeCommandOutcome
+import com.aqua.aqualight.data.devices.runtime.modules.cooling.DeviceCoolingFanStatus
 import com.aqua.aqualight.data.devices.runtime.modules.cooling.DeviceCoolingMode
 import com.aqua.aqualight.data.devices.runtime.modules.cooling.DeviceCoolingRuntimeRepository
 import com.aqua.aqualight.data.devices.runtime.modules.cooling.DeviceCoolingStatus
@@ -34,13 +37,16 @@ internal class DefaultDeviceCoolingControlOperations(
     override fun observeControl(deviceUid: String): Flow<DeviceCoolingControlResult> {
         val access = resolveRuntime(deviceUid) ?: return flowOf(invalidRuntimeResult(deviceUid))
         return access.runtime.states
-            .map { states -> states[access.deviceUid]?.status.toControlResult() }
+            .map { states ->
+                states[access.deviceUid]?.status.toControlResult(access.expectedFanOutputCount)
+            }
             .distinctUntilChanged()
     }
 
     override fun currentControl(deviceUid: String): DeviceCoolingControlResult {
         val access = resolveRuntime(deviceUid) ?: return invalidRuntimeResult(deviceUid)
-        return access.runtime.states.value[access.deviceUid]?.status.toControlResult()
+        return access.runtime.states.value[access.deviceUid]?.status
+            .toControlResult(access.expectedFanOutputCount)
     }
 
     override suspend fun refreshControl(deviceUid: String): DeviceCoolingControlResult {
@@ -68,20 +74,27 @@ internal class DefaultDeviceCoolingControlOperations(
     }
 
     private fun resolveRuntime(deviceUid: String): CoolingRuntimeAccess? {
-        val uid = deviceUid.trim().takeIf(String::isNotEmpty)?.let(::DeviceUid)
-        return uid
-            ?.takeIf { validUid -> devicesRepository.currentDevice(validUid) != null }
-            ?.let { validUid ->
-                devicesRepository.runtimeModules()?.cooling?.let { runtime ->
-                    CoolingRuntimeAccess(validUid, runtime)
-                }
-            }
+        val uid = deviceUid.trim().takeIf(String::isNotEmpty)?.let(::DeviceUid) ?: return null
+        val snapshot = devicesRepository.currentDevice(uid) ?: return null
+        val catalogProduct = when (
+            val validation = AqlCommercialDeviceCatalog.validateSnapshot(snapshot)
+        ) {
+            is AqlCommercialCatalogValidation.Valid -> validation.product
+            is AqlCommercialCatalogValidation.Invalid -> return null
+        }
+        val runtime = devicesRepository.runtimeModules()?.cooling ?: return null
+        return CoolingRuntimeAccess(
+            deviceUid = uid,
+            runtime = runtime,
+            expectedFanOutputCount = catalogProduct.limits.fanOutputCount
+        )
     }
 }
 
 private class CoolingRuntimeAccess(
     val deviceUid: DeviceUid,
-    val runtime: DeviceCoolingRuntimeRepository
+    val runtime: DeviceCoolingRuntimeRepository,
+    val expectedFanOutputCount: Int
 ) {
     var lastStatusFailure: DeviceCoolingControlResult =
         DeviceCoolingControlResult.Failed(DeviceCoolingControlFailure.Unavailable)
@@ -100,33 +113,40 @@ private class CoolingRuntimeAccess(
 
     suspend fun refreshStatus(): DeviceCoolingControlResult =
         when (val outcome = runtime.requestStatus(deviceUid)) {
-            is DeviceRuntimeCommandOutcome.Success -> outcome.value.toControlResult()
+            is DeviceRuntimeCommandOutcome.Success ->
+                outcome.value.toControlResult(expectedFanOutputCount)
             else -> outcome.toFailureResult()
         }
 
     suspend fun setMode(mode: DeviceCoolingControlMode): DeviceCoolingControlResult {
         val status = if (mode == DeviceCoolingControlMode.PROGRAM) null else loadStatus()
-        val capabilities = status
-            ?.takeIf { loaded -> loaded.fanSupported && loaded.fans.isNotEmpty() }
-            ?.toControlCapabilities()
+        val fan = status
+            ?.takeIf { loaded -> loaded.supported && loaded.fanSupported }
+            ?.authoritativeSingleFanOrNull(expectedFanOutputCount)
+        val capabilities = if (status != null && fan != null) {
+            status.toControlCapabilities(fan)
+        } else {
+            null
+        }
         return when {
             mode == DeviceCoolingControlMode.PROGRAM -> unsupportedResult()
             status == null -> lastStatusFailure
-            capabilities == null ->
+            fan == null || capabilities == null ->
                 DeviceCoolingControlResult.Failed(DeviceCoolingControlFailure.InvalidData)
             !capabilities.modeSelectionWritable -> unsupportedResult()
             mode !in capabilities.supportedModes -> unsupportedResult()
-            else -> applyModeMutation(status, mode)
+            else -> applyModeMutation(status, fan, mode)
         }
     }
 
     private suspend fun applyModeMutation(
         status: DeviceCoolingStatus,
+        fan: DeviceCoolingFanStatus,
         mode: DeviceCoolingControlMode
     ): DeviceCoolingControlResult = when (mode) {
         DeviceCoolingControlMode.AUTOMATIC -> mutationResult(runtime.setAuto(deviceUid))
         DeviceCoolingControlMode.MANUAL -> mutationResult(
-            if (status.manualTargetPercent() > 0) {
+            if (status.manualTargetPercent(fan) > 0) {
                 runtime.setOn(deviceUid)
             } else {
                 runtime.setOff(deviceUid)
@@ -155,16 +175,17 @@ private fun invalidRuntimeResult(deviceUid: String): DeviceCoolingControlResult 
 private fun unsupportedResult(): DeviceCoolingControlResult =
     DeviceCoolingControlResult.Failed(DeviceCoolingControlFailure.Unsupported)
 
-private fun DeviceCoolingStatus?.toControlResult(): DeviceCoolingControlResult {
+internal fun DeviceCoolingStatus?.toControlResult(
+    expectedFanOutputCount: Int
+): DeviceCoolingControlResult {
     val status = this
     return when {
         status == null -> DeviceCoolingControlResult.Failed(DeviceCoolingControlFailure.Unavailable)
         !status.supported || !status.fanSupported -> unsupportedResult()
-        status.fans.isEmpty() ->
-            DeviceCoolingControlResult.Failed(DeviceCoolingControlFailure.InvalidData)
         else -> {
-            val fan = status.fans.first()
-            val capabilities = status.toControlCapabilities()
+            val fan = status.authoritativeSingleFanOrNull(expectedFanOutputCount)
+                ?: return DeviceCoolingControlResult.Failed(DeviceCoolingControlFailure.InvalidData)
+            val capabilities = status.toControlCapabilities(fan)
             val tankTemperature = status.temperature
                 .takeIf { temperature -> temperature.readingValid }
                 ?.temperatureC
@@ -172,7 +193,7 @@ private fun DeviceCoolingStatus?.toControlResult(): DeviceCoolingControlResult {
             DeviceCoolingControlResult.Available(
                 DeviceCoolingControlSnapshot(
                     mode = status.mode.toProductMode(),
-                    manualFanPercent = status.manualTargetPercent(),
+                    manualFanPercent = status.manualTargetPercent(fan),
                     actualFanPercent = fan.percentNow.toSafePercentOrNull(),
                     tankTemperatureC = tankTemperature,
                     capabilities = capabilities
@@ -182,18 +203,26 @@ private fun DeviceCoolingStatus?.toControlResult(): DeviceCoolingControlResult {
     }
 }
 
-private fun DeviceCoolingStatus.toControlCapabilities(): DeviceCoolingControlCapabilities {
-    val fan = fans.firstOrNull()
-    val manualCapabilities = fan?.let {
-        val minimum = ceil(it.percentMin).toInt().coerceIn(MINIMUM_PERCENT, MAXIMUM_PERCENT)
-        val maximum = floor(it.percentMax).toInt().coerceIn(minimum, MAXIMUM_PERCENT)
-        DeviceCoolingManualFanCapabilities(
-            minimumPercent = minimum,
-            maximumPercent = maximum,
-            stepPercent = null,
-            writable = false
-        )
-    }
+private fun DeviceCoolingStatus.authoritativeSingleFanOrNull(
+    expectedFanOutputCount: Int
+): DeviceCoolingFanStatus? {
+    if (expectedFanOutputCount != SINGLE_FAN_OUTPUT_COUNT) return null
+    if (fanOutputCount != expectedFanOutputCount) return null
+    if (fans.size != expectedFanOutputCount) return null
+    return fans.single()
+}
+
+private fun DeviceCoolingStatus.toControlCapabilities(
+    fan: DeviceCoolingFanStatus
+): DeviceCoolingControlCapabilities {
+    val minimum = ceil(fan.percentMin).toInt().coerceIn(MINIMUM_PERCENT, MAXIMUM_PERCENT)
+    val maximum = floor(fan.percentMax).toInt().coerceIn(minimum, MAXIMUM_PERCENT)
+    val manualCapabilities = DeviceCoolingManualFanCapabilities(
+        minimumPercent = minimum,
+        maximumPercent = maximum,
+        stepPercent = null,
+        writable = false
+    )
     return DeviceCoolingControlCapabilities(
         supportedModes = setOf(
             DeviceCoolingControlMode.AUTOMATIC,
@@ -206,10 +235,10 @@ private fun DeviceCoolingStatus.toControlCapabilities(): DeviceCoolingControlCap
     )
 }
 
-private fun DeviceCoolingStatus.manualTargetPercent(): Int = when (mode) {
+private fun DeviceCoolingStatus.manualTargetPercent(fan: DeviceCoolingFanStatus): Int = when (mode) {
     DeviceCoolingMode.OFF -> MINIMUM_PERCENT
     DeviceCoolingMode.AUTO,
-    DeviceCoolingMode.ON -> fans.firstOrNull()?.percentManual.toSafePercentOrNull() ?: MINIMUM_PERCENT
+    DeviceCoolingMode.ON -> fan.percentManual.toSafePercentOrNull() ?: MINIMUM_PERCENT
 }
 
 private fun DeviceCoolingMode.toProductMode(): DeviceCoolingControlMode = when (this) {
@@ -238,5 +267,6 @@ private fun DeviceRuntimeCommandOutcome<*>.toFailureResult(): DeviceCoolingContr
         }
     )
 
+private const val SINGLE_FAN_OUTPUT_COUNT = 1
 private const val MINIMUM_PERCENT = 0
 private const val MAXIMUM_PERCENT = 100
