@@ -74,20 +74,25 @@ internal class DefaultDeviceCoolingControlOperations(
     }
 
     private fun resolveRuntime(deviceUid: String): CoolingRuntimeAccess? {
-        val uid = deviceUid.trim().takeIf(String::isNotEmpty)?.let(::DeviceUid) ?: return null
-        val snapshot = devicesRepository.currentDevice(uid) ?: return null
+        val uid = deviceUid.trim().takeIf(String::isNotEmpty)?.let(::DeviceUid)
+        val snapshot = uid?.let(devicesRepository::currentDevice)
         val catalogProduct = when (
-            val validation = AqlCommercialDeviceCatalog.validateSnapshot(snapshot)
+            val validation = snapshot?.let(AqlCommercialDeviceCatalog::validateSnapshot)
         ) {
             is AqlCommercialCatalogValidation.Valid -> validation.product
-            is AqlCommercialCatalogValidation.Invalid -> return null
+            is AqlCommercialCatalogValidation.Invalid,
+            null -> null
         }
-        val runtime = devicesRepository.runtimeModules()?.cooling ?: return null
-        return CoolingRuntimeAccess(
-            deviceUid = uid,
-            runtime = runtime,
-            expectedFanOutputCount = catalogProduct.limits.fanOutputCount
-        )
+        val runtime = devicesRepository.runtimeModules()?.cooling
+        return if (uid != null && catalogProduct != null && runtime != null) {
+            CoolingRuntimeAccess(
+                deviceUid = uid,
+                runtime = runtime,
+                expectedFanOutputCount = catalogProduct.limits.fanOutputCount
+            )
+        } else {
+            null
+        }
     }
 }
 
@@ -206,10 +211,10 @@ internal fun DeviceCoolingStatus?.toControlResult(
 private fun DeviceCoolingStatus.authoritativeSingleFanOrNull(
     expectedFanOutputCount: Int
 ): DeviceCoolingFanStatus? {
-    if (expectedFanOutputCount != SINGLE_FAN_OUTPUT_COUNT) return null
-    if (fanOutputCount != expectedFanOutputCount) return null
-    if (fans.size != expectedFanOutputCount) return null
-    return fans.single()
+    val topologyMatches = expectedFanOutputCount == SINGLE_FAN_OUTPUT_COUNT &&
+        fanOutputCount == expectedFanOutputCount &&
+        fans.size == expectedFanOutputCount
+    return if (topologyMatches) fans.singleOrNull() else null
 }
 
 private fun DeviceCoolingStatus.toControlCapabilities(
