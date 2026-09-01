@@ -34,7 +34,7 @@ INTEROPERABILITY_TEST_PATH = (
 )
 
 FIRMWARE_REPOSITORY = "ozdemirrrcemal-cmyk/AquaLight-Firmware"
-FIRMWARE_COMMIT = "a0403bf408fcf898ae94a9178eba34efdc2af9bc"
+FIRMWARE_COMMIT = "1bf5d94af804acd87d4a5ed25971abc0fd9f048d"
 COMMAND_NAMES_BLOB = "7bff40576bb77450c662181e2b09b5be961e6809"
 EVENT_CONTRACT_BLOB = "f71cbe76679fd425d6697c89800975e00e9edee5"
 PRODUCT_CATALOG_EXPORT_COMMIT = "1bf5d94af804acd87d4a5ed25971abc0fd9f048d"
@@ -49,7 +49,7 @@ REQUEST_CONTRACT_BLOBS = {
         "1c16c3e7c6d1456b1802f494d91c104347ad09aa"
     ),
     "src/api/v1/commands/AqlTimeCommands.hpp": (
-        "d8d82bf9edd1a2669d4a2fb0eaf7e6f105e3fc8a"
+        "ee6e87ab0e1152ffd3d9004fe8b5c7e380488a4f"
     ),
     "src/api/v1/commands/AqlLightCommands.hpp": (
         "57e576a2e02a5fc8347fca16be6b0cbf0e540a1b"
@@ -64,7 +64,7 @@ REQUEST_CONTRACT_BLOBS = {
         "77e5299511fe67e07d7cc1ffbd0114ff7316677b"
     ),
     "src/api/v1/commands/AqlDosingCommands.hpp": (
-        "ab747617b774c467c1e54e6f302e564507a32928"
+        "5c0201f9a4e09f93f4dd54af8c1fba9dec167105"
     ),
     "src/api/v1/commands/AqlDosingProgressCommands.hpp": (
         "8700e785bdd2e747abea3b09eff97755e2addad0"
@@ -73,7 +73,7 @@ REQUEST_CONTRACT_BLOBS = {
         "8b1107d159ca3ff026754c8a06bd1e75fb608c37"
     ),
     "src/modules/timer/AqlTimerService.hpp": (
-        "c0c9c717fbe5b0b4ae25034a98a503d80adb4fdb"
+        "27dd1a51d532f9deef91ee2da86a4b3055fd001f"
     ),
     "src/security/AqlSecurityService.hpp": (
         "484906dbdd833d6ad7505ae1755748d239fc0805"
