@@ -4,7 +4,7 @@
   "firmware": {
     "repository": "ozdemirrrcemal-cmyk/AquaLight-Firmware",
     "branch": "main",
-    "commit": "38e8812c1bcecf948ebab85979bff21a24f4b79c",
+    "commit": "1bf5d94af804acd87d4a5ed25971abc0fd9f048d",
     "commandSource": "src/api/v1/commands/AqlFirmwareCommands.hpp",
     "eventSource": "src/server/AqlRealtimeServer.cpp",
     "otaServiceSource": "src/modules/firmware/AqlOtaService.hpp"
