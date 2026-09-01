@@ -67,6 +67,18 @@ class DeviceFirmwareManifestUrlResolverTest {
     }
 
     @Test
+    fun `rejects blank and whitespace padded manifest templates`() {
+        for (template in listOf("", " $DEVICE_FIRMWARE_MANIFEST_URL")) {
+            assertThrows(IllegalArgumentException::class.java) {
+                DeviceFirmwareManifestUrlResolver.resolve(
+                    template = template,
+                    productKey = "COOLING_COOL_PRO_1F"
+                )
+            }
+        }
+    }
+
+    @Test
     fun `rejects unknown or non canonical product keys`() {
         for (
             productKey in listOf(
