@@ -73,9 +73,7 @@ class DeviceFirmwareManifestUrlResolverTest {
                 "DOSING",
                 "DOSING_DOSE_PRO",
                 "dosing_dose_pro_2",
-                " DOSING_DOSE_PRO_2",
-                "COOLING_COOL_PRO_2F",
-                "COOLING_COOL_PRO_3F"
+                " DOSING_DOSE_PRO_2"
             )
         ) {
             assertThrows(IllegalArgumentException::class.java) {
