@@ -34,16 +34,15 @@ class DeviceCoolingProgramSettingsViewModel(
     fun bind(deviceUid: String) {
         val normalized = deviceUid.trim()
         if (normalized.isEmpty()) return
-        if (boundDeviceUid == normalized && _uiState.value.loadState != DeviceCoolingProgramLoadState.IDLE) {
+        if (
+            boundDeviceUid == normalized &&
+            _uiState.value.loadState.keepsExistingBinding
+        ) {
             return
         }
         boundDeviceUid = normalized
         saveJob?.cancel()
         loadProgram(normalized)
-    }
-
-    fun retry() {
-        boundDeviceUid?.let(::loadProgram)
     }
 
     fun selectSlot(slotIndex: Int) {
@@ -283,6 +282,10 @@ enum class DeviceCoolingProgramSaveState {
     VALIDATION_ERROR,
     ERROR
 }
+
+private val DeviceCoolingProgramLoadState.keepsExistingBinding: Boolean
+    get() = this == DeviceCoolingProgramLoadState.LOADING ||
+        this == DeviceCoolingProgramLoadState.CONTENT
 
 private val DeviceCoolingProgramSettingsUiState.isEditable: Boolean
     get() = loadState == DeviceCoolingProgramLoadState.CONTENT &&

@@ -92,13 +92,9 @@ class DeviceCoolingRootViewModel(
 
     fun selectMode(mode: CoolingControlMode) {
         val state = _uiState.value
-        if (
-            !state.contentEnabled ||
-            !state.controlAvailable ||
-            !state.modeSelectionWritable ||
-            mode !in state.supportedModes ||
-            state.selectedMode == mode
-        ) {
+        val selectionEnabled =
+            state.contentEnabled && state.controlAvailable && state.modeSelectionWritable
+        if (!selectionEnabled || mode !in state.supportedModes || state.selectedMode == mode) {
             return
         }
         val deviceUid = boundDeviceUid.takeIf(String::isNotBlank) ?: return
@@ -114,9 +110,9 @@ class DeviceCoolingRootViewModel(
     fun updateManualFanPercent(percent: Int) {
         val state = _uiState.value
         val capabilities = state.manualFanCapabilities
+        val controlsEnabled = state.contentEnabled && state.controlAvailable
         if (
-            !state.contentEnabled ||
-            !state.controlAvailable ||
+            !controlsEnabled ||
             state.selectedMode != CoolingControlMode.MANUAL ||
             capabilities?.writable != true
         ) {

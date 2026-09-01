@@ -446,25 +446,6 @@ private fun CoolingProgramControlCard(
 }
 
 @Composable
-private fun CoolingUnavailableControlCard(
-    colors: AquaDeviceCardColors,
-    typography: AquaDeviceCardTypography
-) {
-    AquaCoolingDashboardCardSurface(
-        modifier = Modifier
-            .fillMaxWidth()
-            .heightIn(min = AquaCoolingDashboardGeometry.controlCardMinimumHeight)
-    ) {
-        CoolingSectionHeader(
-            title = stringResource(R.string.device_cooling_fan_mode_title),
-            trailing = stringResource(R.string.device_cooling_value_unavailable),
-            colors = colors,
-            typography = typography
-        )
-    }
-}
-
-@Composable
 private fun CoolingDetailHeader(
     title: String,
     enabled: Boolean,

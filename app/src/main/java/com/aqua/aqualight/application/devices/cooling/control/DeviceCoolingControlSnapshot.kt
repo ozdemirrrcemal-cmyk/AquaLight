@@ -1,5 +1,8 @@
 package com.aqua.aqualight.application.devices.cooling.control
 
+private const val MINIMUM_PERCENT = 0
+private const val MAXIMUM_PERCENT = 100
+
 data class DeviceCoolingControlSnapshot(
     val mode: DeviceCoolingControlMode,
     val manualFanPercent: Int?,
@@ -9,8 +12,8 @@ data class DeviceCoolingControlSnapshot(
 ) {
     init {
         require(mode in capabilities.supportedModes)
-        require(manualFanPercent == null || manualFanPercent in 0..100)
-        require(actualFanPercent == null || actualFanPercent in 0..100)
+        require(manualFanPercent == null || manualFanPercent in MINIMUM_PERCENT..MAXIMUM_PERCENT)
+        require(actualFanPercent == null || actualFanPercent in MINIMUM_PERCENT..MAXIMUM_PERCENT)
         require(tankTemperatureC == null || tankTemperatureC.isFinite())
     }
 }

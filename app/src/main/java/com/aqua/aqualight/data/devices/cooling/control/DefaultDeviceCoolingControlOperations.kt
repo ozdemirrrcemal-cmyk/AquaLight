@@ -51,53 +51,31 @@ internal class DefaultDeviceCoolingControlOperations(
     override suspend fun setMode(
         deviceUid: String,
         mode: DeviceCoolingControlMode
-    ): DeviceCoolingControlResult {
-        val access = resolveRuntime(deviceUid) ?: return invalidRuntimeResult(deviceUid)
-        if (mode == DeviceCoolingControlMode.PROGRAM) {
-            return unsupportedResult()
-        }
-        val status = access.loadStatus() ?: return access.lastStatusFailure
-        if (!status.fanSupported || status.fans.isEmpty()) {
-            return DeviceCoolingControlResult.Failed(DeviceCoolingControlFailure.InvalidData)
-        }
-        val capabilities = status.toControlCapabilities()
-        if (!capabilities.modeSelectionWritable || mode !in capabilities.supportedModes) {
-            return unsupportedResult()
-        }
-
-        val mutation = when (mode) {
-            DeviceCoolingControlMode.AUTOMATIC -> access.runtime.setAuto(access.deviceUid)
-            DeviceCoolingControlMode.MANUAL -> {
-                if (status.manualTargetPercent() > 0) {
-                    access.runtime.setOn(access.deviceUid)
-                } else {
-                    access.runtime.setOff(access.deviceUid)
-                }
-            }
-            DeviceCoolingControlMode.PROGRAM -> error("PROGRAM is rejected before firmware mapping.")
-        }
-        return when (mutation) {
-            is DeviceRuntimeCommandOutcome.Success -> access.refreshStatus()
-            else -> mutation.toFailureResult()
-        }
-    }
+    ): DeviceCoolingControlResult =
+        resolveRuntime(deviceUid)?.setMode(mode) ?: invalidRuntimeResult(deviceUid)
 
     override suspend fun setManualFanPercent(
         deviceUid: String,
         percent: Int
     ): DeviceCoolingControlResult {
-        if (percent !in MINIMUM_PERCENT..MAXIMUM_PERCENT) {
-            return DeviceCoolingControlResult.Failed(DeviceCoolingControlFailure.InvalidData)
+        val access = resolveRuntime(deviceUid)
+        return when {
+            percent !in MINIMUM_PERCENT..MAXIMUM_PERCENT ->
+                DeviceCoolingControlResult.Failed(DeviceCoolingControlFailure.InvalidData)
+            access == null -> invalidRuntimeResult(deviceUid)
+            else -> unsupportedResult()
         }
-        if (resolveRuntime(deviceUid) == null) return invalidRuntimeResult(deviceUid)
-        return unsupportedResult()
     }
 
     private fun resolveRuntime(deviceUid: String): CoolingRuntimeAccess? {
-        val uid = deviceUid.trim().takeIf(String::isNotEmpty)?.let(::DeviceUid) ?: return null
-        if (devicesRepository.currentDevice(uid) == null) return null
-        val runtime = devicesRepository.runtimeModules()?.cooling ?: return null
-        return CoolingRuntimeAccess(uid, runtime)
+        val uid = deviceUid.trim().takeIf(String::isNotEmpty)?.let(::DeviceUid)
+        return uid
+            ?.takeIf { validUid -> devicesRepository.currentDevice(validUid) != null }
+            ?.let { validUid ->
+                devicesRepository.runtimeModules()?.cooling?.let { runtime ->
+                    CoolingRuntimeAccess(validUid, runtime)
+                }
+            }
     }
 }
 
@@ -125,6 +103,44 @@ private class CoolingRuntimeAccess(
             is DeviceRuntimeCommandOutcome.Success -> outcome.value.toControlResult()
             else -> outcome.toFailureResult()
         }
+
+    suspend fun setMode(mode: DeviceCoolingControlMode): DeviceCoolingControlResult {
+        val status = if (mode == DeviceCoolingControlMode.PROGRAM) null else loadStatus()
+        val capabilities = status
+            ?.takeIf { loaded -> loaded.fanSupported && loaded.fans.isNotEmpty() }
+            ?.toControlCapabilities()
+        return when {
+            mode == DeviceCoolingControlMode.PROGRAM -> unsupportedResult()
+            status == null -> lastStatusFailure
+            capabilities == null ->
+                DeviceCoolingControlResult.Failed(DeviceCoolingControlFailure.InvalidData)
+            !capabilities.modeSelectionWritable -> unsupportedResult()
+            mode !in capabilities.supportedModes -> unsupportedResult()
+            else -> applyModeMutation(status, mode)
+        }
+    }
+
+    private suspend fun applyModeMutation(
+        status: DeviceCoolingStatus,
+        mode: DeviceCoolingControlMode
+    ): DeviceCoolingControlResult = when (mode) {
+        DeviceCoolingControlMode.AUTOMATIC -> mutationResult(runtime.setAuto(deviceUid))
+        DeviceCoolingControlMode.MANUAL -> mutationResult(
+            if (status.manualTargetPercent() > 0) {
+                runtime.setOn(deviceUid)
+            } else {
+                runtime.setOff(deviceUid)
+            }
+        )
+        DeviceCoolingControlMode.PROGRAM -> unsupportedResult()
+    }
+
+    private suspend fun mutationResult(
+        outcome: DeviceRuntimeCommandOutcome<*>
+    ): DeviceCoolingControlResult = when (outcome) {
+        is DeviceRuntimeCommandOutcome.Success -> refreshStatus()
+        else -> outcome.toFailureResult()
+    }
 }
 
 private fun invalidRuntimeResult(deviceUid: String): DeviceCoolingControlResult =
@@ -141,24 +157,29 @@ private fun unsupportedResult(): DeviceCoolingControlResult =
 
 private fun DeviceCoolingStatus?.toControlResult(): DeviceCoolingControlResult {
     val status = this
-        ?: return DeviceCoolingControlResult.Failed(DeviceCoolingControlFailure.Unavailable)
-    if (!status.supported || !status.fanSupported) return unsupportedResult()
-    val fan = status.fans.firstOrNull()
-        ?: return DeviceCoolingControlResult.Failed(DeviceCoolingControlFailure.InvalidData)
-    val capabilities = status.toControlCapabilities()
-    val tankTemperature = status.temperature
-        .takeIf { temperature -> temperature.readingValid }
-        ?.temperatureC
-        ?.takeIf(Double::isFinite)
-    return DeviceCoolingControlResult.Available(
-        DeviceCoolingControlSnapshot(
-            mode = status.mode.toProductMode(),
-            manualFanPercent = status.manualTargetPercent(),
-            actualFanPercent = fan.percentNow.toSafePercentOrNull(),
-            tankTemperatureC = tankTemperature,
-            capabilities = capabilities
-        )
-    )
+    return when {
+        status == null -> DeviceCoolingControlResult.Failed(DeviceCoolingControlFailure.Unavailable)
+        !status.supported || !status.fanSupported -> unsupportedResult()
+        status.fans.isEmpty() ->
+            DeviceCoolingControlResult.Failed(DeviceCoolingControlFailure.InvalidData)
+        else -> {
+            val fan = status.fans.first()
+            val capabilities = status.toControlCapabilities()
+            val tankTemperature = status.temperature
+                .takeIf { temperature -> temperature.readingValid }
+                ?.temperatureC
+                ?.takeIf(Double::isFinite)
+            DeviceCoolingControlResult.Available(
+                DeviceCoolingControlSnapshot(
+                    mode = status.mode.toProductMode(),
+                    manualFanPercent = status.manualTargetPercent(),
+                    actualFanPercent = fan.percentNow.toSafePercentOrNull(),
+                    tankTemperatureC = tankTemperature,
+                    capabilities = capabilities
+                )
+            )
+        }
+    }
 }
 
 private fun DeviceCoolingStatus.toControlCapabilities(): DeviceCoolingControlCapabilities {

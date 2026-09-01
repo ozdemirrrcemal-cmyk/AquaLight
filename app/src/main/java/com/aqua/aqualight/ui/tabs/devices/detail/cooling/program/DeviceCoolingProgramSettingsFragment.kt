@@ -65,7 +65,7 @@ class DeviceCoolingProgramSettingsFragment : DeviceCoolingModeSettingsFragment(
                 } else {
                     DeviceCoolingProgramAvailabilityScreen(
                         loadState = state.loadState,
-                        onRetry = viewModel::retry
+                        onRetry = { viewModel.bind(destinationDeviceUid) }
                     )
                 }
             }
@@ -152,13 +152,6 @@ class DeviceCoolingProgramSettingsFragment : DeviceCoolingModeSettingsFragment(
         }
     }
 
-    private fun showScheduleValidationWarning() {
-        (activity as? BaseActivity)?.showSnackBar(
-            getString(R.string.device_cooling_program_schedule_invalid),
-            BaseActivity.SnackType.WARNING
-        )
-    }
-
     private fun showStartTimeSheet(slotIndex: Int) {
         val slot = viewModel.slotAt(slotIndex) ?: return
         showTimeSheet(
@@ -236,6 +229,13 @@ class DeviceCoolingProgramSettingsFragment : DeviceCoolingModeSettingsFragment(
         const val REQUEST_END_TIME = "cooling_program_end_time"
         const val REQUEST_FAN_ON_TEMPERATURE = "cooling_program_fan_on_temperature"
     }
+}
+
+private fun DeviceCoolingProgramSettingsFragment.showScheduleValidationWarning() {
+    (activity as? BaseActivity)?.showSnackBar(
+        getString(R.string.device_cooling_program_schedule_invalid),
+        BaseActivity.SnackType.WARNING
+    )
 }
 
 private fun DeviceCoolingProgramSettingsViewModel.slotAt(slotIndex: Int): DeviceCoolingProgramSlot? =
