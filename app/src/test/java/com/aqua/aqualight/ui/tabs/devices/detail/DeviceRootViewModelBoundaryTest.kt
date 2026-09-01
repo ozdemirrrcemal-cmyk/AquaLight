@@ -9,6 +9,8 @@ import com.aqua.aqualight.application.devices.DeviceRootRouteResolver
 import com.aqua.aqualight.application.devices.DeviceRootSnapshot
 import com.aqua.aqualight.application.devices.OwnerDeviceAvailability
 import com.aqua.aqualight.application.devices.OwnerDeviceFamily
+import com.aqua.aqualight.application.devices.cooling.DeviceCoolingAutomaticCommandResult
+import com.aqua.aqualight.application.devices.cooling.DeviceCoolingAutomaticFailure
 import com.aqua.aqualight.application.devices.cooling.DeviceCoolingAutomaticSettingsOperations
 import com.aqua.aqualight.application.devices.cooling.DeviceCoolingAutomaticSettingsSnapshot
 import com.aqua.aqualight.application.devices.cooling.DeviceCoolingTemperatureHistoryLoadResult
@@ -225,13 +227,18 @@ class DeviceRootViewModelBoundaryTest {
             deviceUid: String
         ): DeviceCoolingAutomaticSettingsSnapshot = snapshot
 
-        override suspend fun refreshAutomaticSettings(deviceUid: String): Result<Unit> =
-            Result.success(Unit)
+        override suspend fun refreshAutomaticSettings(
+            deviceUid: String
+        ): DeviceCoolingAutomaticCommandResult = DeviceCoolingAutomaticCommandResult.Failed(
+            DeviceCoolingAutomaticFailure.Unavailable
+        )
 
         override suspend fun saveAutomaticTemperatureRange(
             deviceUid: String,
             startTemperatureC: Double,
             maximumSpeedTemperatureC: Double
-        ): Result<Unit> = Result.failure(UnsupportedOperationException())
+        ): DeviceCoolingAutomaticCommandResult = DeviceCoolingAutomaticCommandResult.Failed(
+            DeviceCoolingAutomaticFailure.Unsupported
+        )
     }
 }

@@ -6,6 +6,7 @@ import com.aqua.aqualight.application.devices.DeviceRootRoute
 import com.aqua.aqualight.application.devices.DeviceRootSnapshot
 import com.aqua.aqualight.application.devices.OwnerDeviceAvailability
 import com.aqua.aqualight.application.devices.OwnerDeviceFamily
+import com.aqua.aqualight.application.devices.cooling.DeviceCoolingAutomaticCommandResult
 import com.aqua.aqualight.application.devices.cooling.DeviceCoolingAutomaticSettingsOperations
 import com.aqua.aqualight.application.devices.cooling.DeviceCoolingAutomaticSettingsSnapshot
 import com.aqua.aqualight.application.devices.cooling.DeviceCoolingTemperatureHistoryLoadResult
@@ -218,14 +219,15 @@ class DeviceCoolingRootAuthoritativeStateTest {
             deviceUid: String
         ): DeviceCoolingAutomaticSettingsSnapshot = snapshots.value
 
-        override suspend fun refreshAutomaticSettings(deviceUid: String): Result<Unit> =
-            Result.success(Unit)
+        override suspend fun refreshAutomaticSettings(
+            deviceUid: String
+        ): DeviceCoolingAutomaticCommandResult = DeviceCoolingAutomaticCommandResult.Success
 
         override suspend fun saveAutomaticTemperatureRange(
             deviceUid: String,
             startTemperatureC: Double,
             maximumSpeedTemperatureC: Double
-        ): Result<Unit> = Result.success(Unit)
+        ): DeviceCoolingAutomaticCommandResult = DeviceCoolingAutomaticCommandResult.Success
 
         fun emit(snapshot: DeviceCoolingAutomaticSettingsSnapshot) {
             snapshots.value = snapshot

@@ -5,21 +5,23 @@ import kotlinx.coroutines.flow.Flow
 /**
  * Owner-scoped application boundary for the Cooling automatic temperature editor.
  *
- * Presentation receives firmware-backed values and edit policy only. WebSocket transport,
- * firmware payloads and persistence details remain behind the data implementation.
+ * Presentation receives firmware-backed values, edit policy and typed operation semantics only.
+ * WebSocket transport, firmware payloads, exceptions and persistence details remain behind data.
  */
 interface DeviceCoolingAutomaticSettingsOperations {
     fun observeAutomaticSettings(deviceUid: String): Flow<DeviceCoolingAutomaticSettingsSnapshot>
 
     fun currentAutomaticSettings(deviceUid: String): DeviceCoolingAutomaticSettingsSnapshot
 
-    suspend fun refreshAutomaticSettings(deviceUid: String): Result<Unit>
+    suspend fun refreshAutomaticSettings(
+        deviceUid: String
+    ): DeviceCoolingAutomaticCommandResult
 
     suspend fun saveAutomaticTemperatureRange(
         deviceUid: String,
         startTemperatureC: Double,
         maximumSpeedTemperatureC: Double
-    ): Result<Unit>
+    ): DeviceCoolingAutomaticCommandResult
 
     /**
      * Future-ready Automatic Cooling save contract.
@@ -34,12 +36,10 @@ interface DeviceCoolingAutomaticSettingsOperations {
         startTemperatureC: Double,
         maximumSpeedTemperatureC: Double,
         silentModeEnabled: Boolean?
-    ): Result<Unit> {
+    ): DeviceCoolingAutomaticCommandResult {
         if (silentModeEnabled != null) {
-            return Result.failure(
-                UnsupportedOperationException(
-                    "Silent Mode is not supported by the current Cooling firmware contract."
-                )
+            return DeviceCoolingAutomaticCommandResult.Failed(
+                DeviceCoolingAutomaticFailure.Unsupported
             )
         }
         return saveAutomaticTemperatureRange(

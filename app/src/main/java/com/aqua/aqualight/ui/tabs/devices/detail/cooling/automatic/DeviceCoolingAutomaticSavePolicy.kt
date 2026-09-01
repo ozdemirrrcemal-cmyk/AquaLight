@@ -1,5 +1,7 @@
 package com.aqua.aqualight.ui.tabs.devices.detail.cooling.automatic
 
+import com.aqua.aqualight.application.devices.cooling.DeviceCoolingAutomaticCommandResult
+
 internal fun DeviceCoolingAutomaticSettingsUiState.pendingSave(
     boundDeviceUid: String
 ): PendingAutomaticSettingsSave? = if (!canSave) {
@@ -25,17 +27,20 @@ internal fun DeviceCoolingAutomaticSettingsUiState.pendingSave(
 
 internal fun DeviceCoolingAutomaticSettingsUiState.afterSave(
     request: PendingAutomaticSettingsSave,
-    successful: Boolean
-): DeviceCoolingAutomaticSettingsUiState = if (successful) {
-    copy(
+    result: DeviceCoolingAutomaticCommandResult
+): DeviceCoolingAutomaticSettingsUiState = when (result) {
+    DeviceCoolingAutomaticCommandResult.Success -> copy(
         persistedStartTemperatureC = request.startTemperatureC,
         persistedMaximumSpeedTemperatureC = request.maximumSpeedTemperatureC,
         draftStartTemperatureC = request.startTemperatureC,
         draftMaximumSpeedTemperatureC = request.maximumSpeedTemperatureC,
         persistedSilentModeEnabled = request.silentModeEnabled ?: persistedSilentModeEnabled,
         draftSilentModeEnabled = request.silentModeEnabled ?: draftSilentModeEnabled,
-        saveState = DeviceCoolingAutomaticSaveState.SAVED
+        saveState = DeviceCoolingAutomaticSaveState.SAVED,
+        saveFailure = null
     )
-} else {
-    copy(saveState = DeviceCoolingAutomaticSaveState.ERROR)
+    is DeviceCoolingAutomaticCommandResult.Failed -> copy(
+        saveState = DeviceCoolingAutomaticSaveState.ERROR,
+        saveFailure = result.failure
+    )
 }

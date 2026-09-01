@@ -3,6 +3,8 @@ package com.aqua.aqualight.ui.tabs.devices.detail.cooling.automatic
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.aqua.aqualight.application.devices.cooling.DEVICE_COOLING_AUTOMATIC_SILENT_MODE_MAXIMUM_FAN_PERCENT
+import com.aqua.aqualight.application.devices.cooling.DeviceCoolingAutomaticCommandResult
+import com.aqua.aqualight.application.devices.cooling.DeviceCoolingAutomaticFailure
 import com.aqua.aqualight.application.devices.cooling.DeviceCoolingAutomaticSettingsOperations
 import com.aqua.aqualight.application.devices.cooling.DeviceCoolingAutomaticSettingsSnapshot
 import com.aqua.aqualight.application.devices.cooling.DeviceCoolingAutomaticTemperaturePolicy
@@ -56,8 +58,31 @@ class DeviceCoolingAutomaticSettingsViewModel(
     fun refresh() {
         val deviceUid = boundDeviceUid.takeIf(String::isNotBlank) ?: return
         refreshJob?.cancel()
+        _uiState.update { state ->
+            if (state.hasFirmwareSnapshot) {
+                state.copy(loadFailure = null)
+            } else {
+                state.copy(
+                    loadState = DeviceCoolingAutomaticLoadState.LOADING,
+                    loadFailure = null
+                )
+            }
+        }
         refreshJob = viewModelScope.launch {
-            operations.refreshAutomaticSettings(deviceUid)
+            val result = operations.refreshAutomaticSettings(deviceUid)
+            if (boundDeviceUid == deviceUid && result is DeviceCoolingAutomaticCommandResult.Failed) {
+                _uiState.update { state ->
+                    state.copy(
+                        loadState = if (state.hasFirmwareSnapshot) {
+                            DeviceCoolingAutomaticLoadState.CONTENT
+                        } else {
+                            DeviceCoolingAutomaticLoadState.ERROR
+                        },
+                        editable = false,
+                        loadFailure = result.failure
+                    )
+                }
+            }
         }
     }
 
@@ -68,7 +93,8 @@ class DeviceCoolingAutomaticSettingsViewModel(
             if (!value.isValidStart(policy, maximum)) state
             else state.copy(
                 draftStartTemperatureC = value,
-                saveState = DeviceCoolingAutomaticSaveState.IDLE
+                saveState = DeviceCoolingAutomaticSaveState.IDLE,
+                saveFailure = null
             )
         }
     }
@@ -80,7 +106,8 @@ class DeviceCoolingAutomaticSettingsViewModel(
             if (!value.isValidMaximum(policy, start)) state
             else state.copy(
                 draftMaximumSpeedTemperatureC = value,
-                saveState = DeviceCoolingAutomaticSaveState.IDLE
+                saveState = DeviceCoolingAutomaticSaveState.IDLE,
+                saveFailure = null
             )
         }
     }
@@ -92,7 +119,8 @@ class DeviceCoolingAutomaticSettingsViewModel(
             } else {
                 state.copy(
                     draftSilentModeEnabled = enabled,
-                    saveState = DeviceCoolingAutomaticSaveState.IDLE
+                    saveState = DeviceCoolingAutomaticSaveState.IDLE,
+                    saveFailure = null
                 )
             }
         }
@@ -103,7 +131,10 @@ class DeviceCoolingAutomaticSettingsViewModel(
 
         saveJob?.cancel()
         _uiState.update { current ->
-            current.copy(saveState = DeviceCoolingAutomaticSaveState.SAVING)
+            current.copy(
+                saveState = DeviceCoolingAutomaticSaveState.SAVING,
+                saveFailure = null
+            )
         }
         saveJob = viewModelScope.launch {
             val result = operations.saveAutomaticSettings(
@@ -113,9 +144,7 @@ class DeviceCoolingAutomaticSettingsViewModel(
                 silentModeEnabled = request.silentModeEnabled
             )
             if (boundDeviceUid == request.deviceUid) {
-                _uiState.update { current ->
-                    current.afterSave(request = request, successful = result.isSuccess)
-                }
+                _uiState.update { current -> current.afterSave(request, result) }
             }
         }
     }
@@ -144,8 +173,10 @@ enum class DeviceCoolingAutomaticSaveState {
 
 data class DeviceCoolingAutomaticSettingsUiState(
     val deviceUid: String = "",
-    val loadState: DeviceCoolingAutomaticLoadState = DeviceCoolingAutomaticLoadState.CONTENT,
+    val loadState: DeviceCoolingAutomaticLoadState = DeviceCoolingAutomaticLoadState.LOADING,
     val saveState: DeviceCoolingAutomaticSaveState = DeviceCoolingAutomaticSaveState.IDLE,
+    val loadFailure: DeviceCoolingAutomaticFailure? = null,
+    val saveFailure: DeviceCoolingAutomaticFailure? = null,
     val editable: Boolean = false,
     val persistedStartTemperatureC: Double? = null,
     val persistedMaximumSpeedTemperatureC: Double? = null,
@@ -212,6 +243,11 @@ private fun DeviceCoolingAutomaticSettingsUiState.withSnapshot(
     if (!snapshot.available || configuration == null) {
         return copy(
             loadState = DeviceCoolingAutomaticLoadState.CONTENT,
+            loadFailure = if (snapshot.available) {
+                DeviceCoolingAutomaticFailure.InvalidConfiguration
+            } else {
+                DeviceCoolingAutomaticFailure.Unsupported
+            },
             editable = false,
             silentModeMaximumFanPercent = snapshot.silentModeMaximumFanPercent,
             tankTemperatureC = snapshot.tankTemperatureC,
@@ -225,6 +261,7 @@ private fun DeviceCoolingAutomaticSettingsUiState.withSnapshot(
     val incomingSilentMode = snapshot.silentModeEnabled
     return copy(
         loadState = DeviceCoolingAutomaticLoadState.CONTENT,
+        loadFailure = null,
         editable = snapshot.editable,
         persistedStartTemperatureC = start,
         persistedMaximumSpeedTemperatureC = maximum,
