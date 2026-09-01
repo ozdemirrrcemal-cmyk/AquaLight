@@ -8,7 +8,7 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[2]
 FIXTURE_PATH = ROOT / "protocol/fixtures/aql_product_catalog_v1.json"
 CURRENT_FIRMWARE_COMMIT = (
-    "cf2222e58e6c69a729071a5d1205497b3fceaa70"
+    "1bf5d94af804acd87d4a5ed25971abc0fd9f048d"
 )
 
 EXPECTED_PRODUCTS = {
@@ -47,16 +47,6 @@ EXPECTED_PRODUCTS = {
         "cool_pro_1f",
         (0, 1, 1, 0, 0),
     ),
-    "COOLING_COOL_PRO_2F": (
-        "cooling",
-        "cool_pro_2f",
-        (0, 2, 1, 0, 0),
-    ),
-    "COOLING_COOL_PRO_3F": (
-        "cooling",
-        "cool_pro_3f",
-        (0, 3, 1, 0, 0),
-    ),
 }
 
 
@@ -73,7 +63,7 @@ class CurrentFirmwareCatalogFixtureTest(unittest.TestCase):
             self.fixture["source"]["commit"],
         )
 
-    def test_all_nine_products_match_exact_identity_and_limits(self) -> None:
+    def test_all_seven_products_match_exact_identity_and_limits(self) -> None:
         products = {
             product["productKey"]: product
             for product in self.fixture["products"]
