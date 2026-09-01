@@ -11,6 +11,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.LazyListScope
 import androidx.compose.foundation.selection.selectable
 import androidx.compose.foundation.text.BasicText
 import androidx.compose.runtime.Composable
@@ -44,8 +45,6 @@ internal fun DeviceCoolingTemperatureHistoryScreen(
 ) {
     val colors = aquaCoolingDashboardColors()
     val typography = aquaCoolingDashboardTypography(colors)
-    val snapshot = state.snapshot
-    val message = historyStateMessage(state)
 
     LazyColumn(
         modifier = modifier.fillMaxSize(),
@@ -57,55 +56,71 @@ internal fun DeviceCoolingTemperatureHistoryScreen(
         ),
         verticalArrangement = Arrangement.spacedBy(AquaCoolingHistoryGeometry.sectionGap)
     ) {
-        message?.let { content ->
-            item(key = "state") {
-                CoolingStateMessageCard(
-                    title = stringResource(content.titleRes),
-                    message = stringResource(content.messageRes),
-                    retryLabel = if (content.retryAvailable) {
-                        stringResource(R.string.device_cooling_state_retry)
-                    } else {
-                        null
-                    },
-                    onRetry = onRetry.takeIf { content.retryAvailable }
-                )
-            }
-        }
+        historyStateItem(historyStateMessage(state), onRetry)
+        historySnapshotItems(state, onRangeSelected, colors, typography)
+    }
+}
 
-        if (snapshot != null) {
-            item(key = "range") {
-                CoolingHistoryRangeSelector(
-                    selectedRange = state.selectedRange,
-                    onRangeSelected = onRangeSelected,
+private fun LazyListScope.historyStateItem(
+    message: HistoryStateMessage?,
+    onRetry: () -> Unit
+) {
+    message?.let { content ->
+        item(key = "state") {
+            CoolingStateMessageCard(
+                title = stringResource(content.titleRes),
+                message = stringResource(content.messageRes),
+                retryLabel = if (content.retryAvailable) {
+                    stringResource(R.string.device_cooling_state_retry)
+                } else {
+                    null
+                },
+                onRetry = onRetry.takeIf { content.retryAvailable }
+            )
+        }
+    }
+}
+
+private fun LazyListScope.historySnapshotItems(
+    state: DeviceCoolingTemperatureHistoryUiState,
+    onRangeSelected: (DeviceCoolingTemperatureHistoryRange) -> Unit,
+    colors: AquaDeviceCardColors,
+    typography: AquaDeviceCardTypography
+) {
+    val snapshot = state.snapshot
+    if (snapshot != null) {
+        item(key = "range") {
+            CoolingHistoryRangeSelector(
+                selectedRange = state.selectedRange,
+                onRangeSelected = onRangeSelected,
+                colors = colors,
+                typography = typography
+            )
+        }
+        if (state.dataState !is CoolingDataState.Empty) {
+            item(key = "chart") {
+                CoolingHistoryChartCard(
+                    points = snapshot.points,
+                    range = snapshot.range,
                     colors = colors,
                     typography = typography
                 )
             }
-            if (state.dataState !is CoolingDataState.Empty) {
-                item(key = "chart") {
-                    CoolingHistoryChartCard(
-                        points = snapshot.points,
-                        range = snapshot.range,
-                        colors = colors,
-                        typography = typography
-                    )
-                }
-                item(key = "summary") {
-                    CoolingHistorySummaryRow(
-                        minimumTemperatureC = snapshot.minimumTemperatureC,
-                        averageTemperatureC = snapshot.averageTemperatureC,
-                        maximumTemperatureC = snapshot.maximumTemperatureC,
-                        colors = colors,
-                        typography = typography
-                    )
-                }
-                item(key = "daily") {
-                    CoolingDailyHistoryCard(
-                        days = snapshot.dailySummaries,
-                        colors = colors,
-                        typography = typography
-                    )
-                }
+            item(key = "summary") {
+                CoolingHistorySummaryRow(
+                    minimumTemperatureC = snapshot.minimumTemperatureC,
+                    averageTemperatureC = snapshot.averageTemperatureC,
+                    maximumTemperatureC = snapshot.maximumTemperatureC,
+                    colors = colors,
+                    typography = typography
+                )
+            }
+            item(key = "daily") {
+                CoolingDailyHistoryCard(
+                    days = snapshot.dailySummaries,
+                    colors = colors,
+                    typography = typography
+                )
             }
         }
     }

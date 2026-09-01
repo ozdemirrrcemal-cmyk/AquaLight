@@ -8,13 +8,15 @@ import com.aqua.aqualight.ui.tabs.devices.detail.cooling.common.CoolingDataState
 internal fun DeviceCoolingAutomaticSettingsSnapshot.toRootAutomaticState(
     previous: CoolingDataState<CoolingAutomaticSummaryPresentation, DeviceCoolingAutomaticFailure>
 ): CoolingDataState<CoolingAutomaticSummaryPresentation, DeviceCoolingAutomaticFailure> {
-    if (!loaded) return previous.keepAutomaticValueOrLoading()
-    if (!available) return CoolingDataState.Unsupported
     val summary = toRootAutomaticSummaryOrNull()
-        ?: return previous.afterAutomaticReadFailure(
+    return when {
+        !loaded -> previous.keepAutomaticValueOrLoading()
+        !available -> CoolingDataState.Unsupported
+        summary == null -> previous.afterAutomaticReadFailure(
             DeviceCoolingAutomaticFailure.InvalidConfiguration
         )
-    return CoolingDataState.Content(summary)
+        else -> CoolingDataState.Content(summary)
+    }
 }
 
 internal fun DeviceCoolingAutomaticSettingsSnapshot.toRootAutomaticStateAfterRefresh(

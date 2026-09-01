@@ -6,9 +6,12 @@ import com.aqua.aqualight.ui.tabs.devices.detail.cooling.common.CoolingMutationS
 internal fun DeviceCoolingAutomaticSettingsUiState.withUpdatedStartTemperature(
     value: Double
 ): DeviceCoolingAutomaticSettingsUiState {
-    val temperaturePolicy = editorPolicy ?: return this
-    val maximum = editorMaximumSpeedTemperatureC ?: return this
-    return if (value.isValidStart(temperaturePolicy, maximum)) {
+    val temperaturePolicy = editorPolicy
+    val maximum = editorMaximumSpeedTemperatureC
+    val valid = temperaturePolicy != null &&
+        maximum != null &&
+        value.isValidStart(temperaturePolicy, maximum)
+    return if (valid) {
         copy(
             draftStartTemperatureC = value,
             mutationState = CoolingMutationState.Idle
@@ -21,9 +24,12 @@ internal fun DeviceCoolingAutomaticSettingsUiState.withUpdatedStartTemperature(
 internal fun DeviceCoolingAutomaticSettingsUiState.withUpdatedMaximumTemperature(
     value: Double
 ): DeviceCoolingAutomaticSettingsUiState {
-    val temperaturePolicy = editorPolicy ?: return this
-    val start = editorStartTemperatureC ?: return this
-    return if (value.isValidMaximum(temperaturePolicy, start)) {
+    val temperaturePolicy = editorPolicy
+    val start = editorStartTemperatureC
+    val valid = temperaturePolicy != null &&
+        start != null &&
+        value.isValidMaximum(temperaturePolicy, start)
+    return if (valid) {
         copy(
             draftMaximumSpeedTemperatureC = value,
             mutationState = CoolingMutationState.Idle

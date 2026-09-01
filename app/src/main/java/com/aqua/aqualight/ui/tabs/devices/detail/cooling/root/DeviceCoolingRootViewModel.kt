@@ -105,13 +105,20 @@ class DeviceCoolingRootViewModel(
 
     fun updateManualFanPercent(percent: Int) {
         val state = _uiState.value
-        val capabilities = state.manualFanCapabilities ?: return
-        if (!state.canWriteManualFan(capabilities)) return
-
-        val deviceUid = boundDeviceUid.takeIf(String::isNotBlank) ?: return
-        val bounded = percent.coerceIn(capabilities.minimumPercent, capabilities.maximumPercent)
-        launchControlMutation(deviceUid) {
-            controlOperations.setManualFanPercent(deviceUid, bounded)
+        val capabilities = state.manualFanCapabilities
+        val deviceUid = boundDeviceUid.takeIf(String::isNotBlank)
+        if (
+            capabilities != null &&
+            deviceUid != null &&
+            state.canWriteManualFan(capabilities)
+        ) {
+            val bounded = percent.coerceIn(
+                capabilities.minimumPercent,
+                capabilities.maximumPercent
+            )
+            launchControlMutation(deviceUid) {
+                controlOperations.setManualFanPercent(deviceUid, bounded)
+            }
         }
     }
 
@@ -221,27 +228,27 @@ class DeviceCoolingRootViewModel(
         controlRefreshJob?.cancel()
         controlMutationJob?.cancel()
     }
+}
 
-    private fun DeviceRootSnapshot.toRootUiState(
-        previous: DeviceCoolingRootUiState
-    ): DeviceCoolingRootUiState {
-        val contentEnabled =
-            family == OwnerDeviceFamily.COOLING &&
-                availability == OwnerDeviceAvailability.REACHABLE &&
-                catalogState == DeviceRootCatalogState.VALID
-        return previous.copy(
-            title = title,
-            deviceUid = deviceUid,
-            connectionVisualState = if (contentEnabled) {
-                DeviceConnectionVisualState.ONLINE
-            } else {
-                DeviceConnectionVisualState.OFFLINE
-            },
-            contentEnabled = contentEnabled,
-            fanOutputCount = fanOutputCount,
-            temperatureSensorCount = temperatureSensorCount
-        )
-    }
+private fun DeviceRootSnapshot.toRootUiState(
+    previous: DeviceCoolingRootUiState
+): DeviceCoolingRootUiState {
+    val contentEnabled =
+        family == OwnerDeviceFamily.COOLING &&
+            availability == OwnerDeviceAvailability.REACHABLE &&
+            catalogState == DeviceRootCatalogState.VALID
+    return previous.copy(
+        title = title,
+        deviceUid = deviceUid,
+        connectionVisualState = if (contentEnabled) {
+            DeviceConnectionVisualState.ONLINE
+        } else {
+            DeviceConnectionVisualState.OFFLINE
+        },
+        contentEnabled = contentEnabled,
+        fanOutputCount = fanOutputCount,
+        temperatureSensorCount = temperatureSensorCount
+    )
 }
 
 private fun DeviceCoolingRootUiState.canSelectMode(mode: CoolingControlMode): Boolean {

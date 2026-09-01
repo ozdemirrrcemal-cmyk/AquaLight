@@ -23,9 +23,9 @@ import com.aqua.aqualight.ui.common.cooling.aquaCoolingDashboardTypography
 internal fun CoolingStateMessageCard(
     title: String,
     message: String,
+    modifier: Modifier = Modifier,
     retryLabel: String? = null,
-    onRetry: (() -> Unit)? = null,
-    modifier: Modifier = Modifier
+    onRetry: (() -> Unit)? = null
 ) {
     val colors = aquaCoolingDashboardColors()
     val typography = aquaCoolingDashboardTypography(colors)

@@ -28,34 +28,27 @@ internal fun DeviceCoolingAutomaticSettingsUiState.afterRefreshFailure(
 internal fun DeviceCoolingAutomaticSettingsUiState.withSnapshot(
     snapshot: DeviceCoolingAutomaticSettingsSnapshot
 ): DeviceCoolingAutomaticSettingsUiState {
-    if (!snapshot.loaded) return this
-    if (!snapshot.available) {
-        return clearAutomaticConfiguration(
+    val configuration = snapshot.completeConfiguration
+    return when {
+        !snapshot.loaded -> this
+        !snapshot.available -> clearAutomaticConfiguration(
             dataState = CoolingDataState.Unsupported,
             snapshot = snapshot
         )
+        configuration != null -> applyCompleteSnapshot(snapshot, configuration)
+        hasFirmwareSnapshot -> copy(
+            dataState = dataState.preserveAutomaticOrResolveFailure(
+                DeviceCoolingAutomaticFailure.InvalidConfiguration
+            ),
+            editable = false
+        )
+        else -> clearAutomaticConfiguration(
+            dataState = CoolingDataState.OperationError(
+                DeviceCoolingAutomaticFailure.InvalidConfiguration
+            ),
+            snapshot = snapshot
+        )
     }
-
-    val configuration = snapshot.completeConfiguration
-    if (configuration == null) {
-        return if (hasFirmwareSnapshot) {
-            copy(
-                dataState = dataState.preserveAutomaticOrResolveFailure(
-                    DeviceCoolingAutomaticFailure.InvalidConfiguration
-                ),
-                editable = false
-            )
-        } else {
-            clearAutomaticConfiguration(
-                dataState = CoolingDataState.OperationError(
-                    DeviceCoolingAutomaticFailure.InvalidConfiguration
-                ),
-                snapshot = snapshot
-            )
-        }
-    }
-
-    return applyCompleteSnapshot(snapshot, configuration)
 }
 
 private fun DeviceCoolingAutomaticSettingsUiState.applyCompleteSnapshot(
