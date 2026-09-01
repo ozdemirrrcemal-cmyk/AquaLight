@@ -46,7 +46,7 @@ MANIFEST_PARSER_PATH = (
 
 EXPECTED_FIRMWARE_REPOSITORY = "ozdemirrrcemal-cmyk/AquaLight-Firmware"
 EXPECTED_FIRMWARE_BRANCH = "main"
-EXPECTED_FIRMWARE_COMMIT = "38e8812c1bcecf948ebab85979bff21a24f4b79c"
+EXPECTED_FIRMWARE_COMMIT = "1bf5d94af804acd87d4a5ed25971abc0fd9f048d"
 
 
 class GuardFailure(AssertionError):
