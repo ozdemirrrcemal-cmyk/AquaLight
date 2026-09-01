@@ -77,7 +77,6 @@ class DeviceCoolingRootFragment : Fragment(R.layout.fragment_device_cooling_root
                     state = state,
                     actions = DeviceCoolingDashboardActions(
                         onModeSelected = viewModel::selectMode,
-                        onManualFanPercentChanged = viewModel::updateManualFanPercent,
                         onTemperatureHistoryClick = ::openTemperatureHistory,
                         onAutomaticSettingsClick = ::openAutomaticSettings,
                         onProgramSettingsClick = ::openProgramSettings

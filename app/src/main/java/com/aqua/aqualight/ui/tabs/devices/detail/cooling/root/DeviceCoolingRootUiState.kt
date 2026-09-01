@@ -31,6 +31,26 @@ data class CoolingHistoryOverviewPresentation(
     val temperaturesC: List<Double>
 )
 
+enum class CoolingHealthState {
+    READY,
+    WARNING,
+    FAULT,
+    UNKNOWN
+}
+
+data class CoolingDashboardOverviewPresentation(
+    val roomTemperatureC: Double?,
+    val humidityPercent: Double?,
+    val powerWatts: Double?,
+    val estimatedKwhPerDay: Double?,
+    val roomTemperatureHistoryC: List<Double>,
+    val programSlotCount: Int?,
+    val nextProgramStartMinutesOfDay: Int?,
+    val fanHealth: CoolingHealthState,
+    val sensorHealth: CoolingHealthState,
+    val activeAlarmCount: Int?
+)
+
 data class DeviceCoolingRootUiState(
     val title: String = "",
     val deviceUid: String = "",
@@ -46,10 +66,10 @@ data class DeviceCoolingRootUiState(
         > = CoolingDataState.Initial,
     val historyState: CoolingDataState<CoolingHistoryOverviewPresentation, Nothing> =
         CoolingDataState.Initial,
-    val roomTemperatureC: Double? = null,
-    val humidityPercent: Double? = null,
-    val powerWatts: Double? = null,
-    val estimatedKwhPerDay: Double? = null,
+    val dashboardOverviewState: CoolingDataState<
+        CoolingDashboardOverviewPresentation,
+        Nothing
+        > = CoolingDataState.Initial,
     val fanOutputCount: Int = 0,
     val temperatureSensorCount: Int = 0
 ) {
@@ -104,4 +124,37 @@ data class DeviceCoolingRootUiState(
 
     val temperatureHistoryC: List<Double>
         get() = historyState.authoritativeValueOrNull?.temperaturesC.orEmpty()
+
+    private val dashboardOverview: CoolingDashboardOverviewPresentation?
+        get() = dashboardOverviewState.authoritativeValueOrNull
+
+    val roomTemperatureC: Double?
+        get() = dashboardOverview?.roomTemperatureC
+
+    val humidityPercent: Double?
+        get() = dashboardOverview?.humidityPercent
+
+    val powerWatts: Double?
+        get() = dashboardOverview?.powerWatts
+
+    val estimatedKwhPerDay: Double?
+        get() = dashboardOverview?.estimatedKwhPerDay
+
+    val roomTemperatureHistoryC: List<Double>
+        get() = dashboardOverview?.roomTemperatureHistoryC.orEmpty()
+
+    val programSlotCount: Int?
+        get() = dashboardOverview?.programSlotCount
+
+    val nextProgramStartMinutesOfDay: Int?
+        get() = dashboardOverview?.nextProgramStartMinutesOfDay
+
+    val fanHealth: CoolingHealthState
+        get() = dashboardOverview?.fanHealth ?: CoolingHealthState.UNKNOWN
+
+    val sensorHealth: CoolingHealthState
+        get() = dashboardOverview?.sensorHealth ?: CoolingHealthState.UNKNOWN
+
+    val activeAlarmCount: Int?
+        get() = dashboardOverview?.activeAlarmCount
 }

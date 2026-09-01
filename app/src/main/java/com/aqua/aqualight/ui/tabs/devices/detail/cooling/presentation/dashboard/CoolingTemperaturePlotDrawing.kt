@@ -1,7 +1,10 @@
 package com.aqua.aqualight.ui.tabs.devices.detail.cooling.presentation.dashboard
 
 import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Path
+import androidx.compose.ui.graphics.PathEffect
 import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.drawscope.DrawScope
 import androidx.compose.ui.graphics.drawscope.Stroke
@@ -16,11 +19,25 @@ internal fun DrawScope.drawTemperatureHistory(
     values: List<Float>,
     scale: TemperatureChartScale,
     viewport: TemperaturePlotViewport,
-    colors: AquaDeviceCardColors
+    lineColor: Color,
+    drawArea: Boolean
 ) {
     val points = temperatureHistoryOffsets(values, scale, viewport)
-    drawTemperatureSeries(path = smoothTemperaturePath(points), colors = colors)
-    drawTemperatureEndpoint(offset = points.last(), colors = colors)
+    if (drawArea) {
+        drawTemperatureArea(
+            path = smoothTemperatureAreaPath(
+                points = points,
+                bottomY = viewport.verticalPadding + viewport.height
+            ),
+            lineColor = lineColor,
+            viewport = viewport
+        )
+    }
+    drawTemperatureSeries(
+        path = smoothTemperaturePath(points),
+        lineColor = lineColor,
+        emphasized = drawArea
+    )
 }
 
 internal fun DrawScope.drawTemperatureGrid(
@@ -29,6 +46,12 @@ internal fun DrawScope.drawTemperatureGrid(
 ) {
     val gridColor = colors.secondaryText.copy(alpha = AquaCoolingDashboardAlpha.chartGrid)
     val gridStroke = AquaCoolingDashboardGeometry.chartGridStrokeWidth.toPx()
+    val dashEffect = PathEffect.dashPathEffect(
+        floatArrayOf(
+            AquaCoolingDashboardGeometry.chartGridDashLength.toPx(),
+            AquaCoolingDashboardGeometry.chartGridDashGap.toPx()
+        )
+    )
     val gridCount = AquaCoolingTemperatureChartSpec.horizontalGridLineCount
     repeat(gridCount) { index ->
         val fraction = index.toFloat() / (gridCount - 1).coerceAtLeast(1)
@@ -37,7 +60,8 @@ internal fun DrawScope.drawTemperatureGrid(
             color = gridColor,
             start = Offset(viewport.horizontalPadding, y),
             end = Offset(viewport.horizontalPadding + viewport.width, y),
-            strokeWidth = gridStroke
+            strokeWidth = gridStroke,
+            pathEffect = dashEffect
         )
     }
     drawLine(
@@ -101,39 +125,48 @@ private fun temperatureHistoryOffsets(
 
 private fun DrawScope.drawTemperatureSeries(
     path: Path,
-    colors: AquaDeviceCardColors
+    lineColor: Color,
+    emphasized: Boolean
 ) {
-    drawPath(
-        path = path,
-        color = colors.accent.copy(alpha = AquaCoolingDashboardAlpha.chartGlow),
-        style = Stroke(
-            width = AquaCoolingDashboardGeometry.chartGlowStrokeWidth.toPx(),
-            cap = StrokeCap.Round
+    if (emphasized) {
+        drawPath(
+            path = path,
+            color = lineColor.copy(alpha = AquaCoolingDashboardAlpha.chartGlow),
+            style = Stroke(
+                width = AquaCoolingDashboardGeometry.chartGlowStrokeWidth.toPx(),
+                cap = StrokeCap.Round
+            )
         )
-    )
+    }
     drawPath(
         path = path,
-        color = colors.accent.copy(alpha = AquaCoolingDashboardAlpha.chartLine),
+        color = lineColor.copy(alpha = AquaCoolingDashboardAlpha.chartLine),
         style = Stroke(
-            width = AquaCoolingDashboardGeometry.chartLineStrokeWidth.toPx(),
+            width = if (emphasized) {
+                AquaCoolingDashboardGeometry.chartLineStrokeWidth.toPx()
+            } else {
+                AquaCoolingDashboardGeometry.chartSecondaryLineStrokeWidth.toPx()
+            },
             cap = StrokeCap.Round
         )
     )
 }
 
-private fun DrawScope.drawTemperatureEndpoint(
-    offset: Offset,
-    colors: AquaDeviceCardColors
+private fun DrawScope.drawTemperatureArea(
+    path: Path,
+    lineColor: Color,
+    viewport: TemperaturePlotViewport
 ) {
-    drawCircle(
-        color = colors.primaryText,
-        radius = AquaCoolingDashboardGeometry.chartPointRadius.toPx() + 1f,
-        center = offset
-    )
-    drawCircle(
-        color = colors.accent,
-        radius = AquaCoolingDashboardGeometry.chartPointRadius.toPx(),
-        center = offset
+    drawPath(
+        path = path,
+        brush = Brush.verticalGradient(
+            colors = listOf(
+                lineColor.copy(alpha = AquaCoolingDashboardAlpha.chartAreaTop),
+                lineColor.copy(alpha = AquaCoolingDashboardAlpha.chartAreaBottom)
+            ),
+            startY = viewport.verticalPadding,
+            endY = viewport.verticalPadding + viewport.height
+        )
     )
 }
 
@@ -153,4 +186,13 @@ private fun smoothTemperaturePath(points: List<Offset>): Path {
         )
     }
     return path
+}
+
+private fun smoothTemperatureAreaPath(points: List<Offset>, bottomY: Float): Path {
+    if (points.isEmpty()) return Path()
+    return smoothTemperaturePath(points).apply {
+        lineTo(points.last().x, bottomY)
+        lineTo(points.first().x, bottomY)
+        close()
+    }
 }

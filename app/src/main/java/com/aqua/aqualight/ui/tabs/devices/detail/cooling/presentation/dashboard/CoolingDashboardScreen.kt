@@ -61,13 +61,12 @@ internal fun DeviceCoolingDashboardScreen(
         item(key = "power-status") {
             CoolingPowerAndStatusRow(state = state)
         }
-        item(key = "mode-control") {
-            CoolingModeControlCard(
+        item(key = "mode-settings") {
+            CoolingModeSettingsCard(
                 state = state,
                 enabled = state.contentEnabled && state.controlAvailable,
                 colors = colors,
                 typography = typography,
-                onManualFanPercentChanged = actions.onManualFanPercentChanged,
                 onAutomaticSettingsClick = actions.onAutomaticSettingsClick,
                 onProgramSettingsClick = actions.onProgramSettingsClick
             )
@@ -93,8 +92,7 @@ private fun CoolingFanAndModeRow(
             modifier = Modifier.weight(1f)
         )
         CoolingModeCard(
-            selectedMode = state.selectedMode,
-            supportedModes = state.supportedModes,
+            state = state,
             enabled = state.contentEnabled && state.controlAvailable && state.modeSelectionWritable,
             colors = colors,
             typography = typography,

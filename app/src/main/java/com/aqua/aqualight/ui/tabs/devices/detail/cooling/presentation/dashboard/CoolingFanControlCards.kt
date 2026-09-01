@@ -12,10 +12,12 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.selection.selectable
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.text.BasicText
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
@@ -24,6 +26,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.drawscope.Stroke
+import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.contentDescription
@@ -31,14 +34,15 @@ import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import com.aqua.aqualight.R
-import com.aqua.aqualight.application.devices.cooling.control.DeviceCoolingManualFanCapabilities
 import com.aqua.aqualight.ui.common.cooling.AquaCoolingDashboardAlpha
 import com.aqua.aqualight.ui.common.cooling.AquaCoolingDashboardCardSurface
 import com.aqua.aqualight.ui.common.cooling.AquaCoolingDashboardGeometry
+import com.aqua.aqualight.ui.common.cooling.AquaCoolingDashboardIcon
+import com.aqua.aqualight.ui.common.cooling.AquaCoolingDashboardIconKind
+import com.aqua.aqualight.ui.common.cooling.AquaCoolingDashboardPalette
 import com.aqua.aqualight.ui.common.cooling.AquaCoolingDashboardTypography
-import com.aqua.aqualight.ui.common.cooling.AquaCoolingFanPercentSlider
-import com.aqua.aqualight.ui.common.cooling.AquaCoolingFanPercentSliderState
 import com.aqua.aqualight.ui.common.cooling.AquaCoolingGaugeSpec
+import com.aqua.aqualight.ui.common.cooling.AquaCoolingSelectionIndicator
 import com.aqua.aqualight.ui.common.devicecard.AquaDeviceCardColors
 import com.aqua.aqualight.ui.common.devicecard.AquaDeviceCardGeometry
 import com.aqua.aqualight.ui.common.devicecard.AquaDeviceCardTypography
@@ -69,12 +73,6 @@ internal fun CoolingFanSpeedCard(
                 percent = state.fanPercentNow,
                 colors = colors,
                 typography = typography
-            )
-            BasicText(
-                text = coolingModeLabel(state.selectedMode),
-                style = typography.micro.copy(color = colors.secondaryText),
-                maxLines = 1,
-                overflow = TextOverflow.Ellipsis
             )
         }
     }
@@ -123,23 +121,65 @@ private fun CoolingFanGauge(
                 )
             }
         }
-        BasicText(
-            text = clamped?.let { value ->
-                stringResource(R.string.device_cooling_percent_value_format, value)
-            } ?: stringResource(R.string.device_cooling_value_unavailable),
-            style = typography.title.copy(
-                color = colors.primaryText,
-                fontSize = AquaCoolingDashboardTypography.gaugeValueSize,
-                textAlign = TextAlign.Center
+        Column(
+            modifier = Modifier.padding(top = AquaCoolingDashboardGeometry.gaugeCaptionTopPadding),
+            horizontalAlignment = Alignment.CenterHorizontally
+        ) {
+            BasicText(
+                text = clamped?.let { value ->
+                    stringResource(R.string.device_cooling_percent_value_format, value)
+                } ?: stringResource(R.string.device_cooling_value_unavailable),
+                style = typography.title.copy(
+                    color = colors.primaryText,
+                    fontSize = AquaCoolingDashboardTypography.gaugeValueSize,
+                    textAlign = TextAlign.Center
+                )
             )
-        )
+            BasicText(
+                text = stringResource(R.string.device_cooling_fan_speed_caption),
+                style = typography.caption.copy(
+                    color = colors.secondaryText,
+                    fontSize = AquaCoolingDashboardTypography.gaugeCaptionSize,
+                    textAlign = TextAlign.Center
+                )
+            )
+        }
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .align(Alignment.BottomCenter)
+                .padding(bottom = AquaCoolingDashboardGeometry.gaugeLabelsBottomPadding)
+        ) {
+            BasicText(
+                text = stringResource(
+                    R.string.device_cooling_percent_value_format,
+                    AquaCoolingGaugeSpec.minimumPercent
+                ),
+                style = typography.micro.copy(
+                    color = colors.secondaryText,
+                    fontSize = AquaCoolingDashboardTypography.gaugeScaleSize
+                ),
+                modifier = Modifier.weight(1f)
+            )
+            BasicText(
+                text = stringResource(
+                    R.string.device_cooling_percent_value_format,
+                    AquaCoolingGaugeSpec.maximumPercent
+                ),
+                style = typography.micro.copy(
+                    color = colors.secondaryText,
+                    fontSize = AquaCoolingDashboardTypography.gaugeScaleSize,
+                    textAlign = TextAlign.End
+                ),
+                modifier = Modifier.weight(1f)
+            )
+        }
     }
 }
 
 @Composable
 internal fun CoolingModeCard(
-    selectedMode: CoolingControlMode?,
-    supportedModes: Set<CoolingControlMode>,
+    state: DeviceCoolingRootUiState,
     enabled: Boolean,
     colors: AquaDeviceCardColors,
     typography: AquaDeviceCardTypography,
@@ -154,17 +194,24 @@ internal fun CoolingModeCard(
             verticalArrangement = Arrangement.spacedBy(AquaCoolingDashboardGeometry.optionGap)
         ) {
             BasicText(
-                text = stringResource(R.string.device_cooling_fan_mode_title),
+                text = stringResource(R.string.device_cooling_operating_mode_title),
                 style = typography.title
             )
             CoolingControlMode.entries.forEach { mode ->
                 CoolingModeOption(
                     mode = mode,
-                    selected = mode == selectedMode,
-                    enabled = enabled && mode in supportedModes,
+                    selected = mode == state.selectedMode,
+                    enabled = enabled && mode in state.supportedModes,
                     colors = colors,
                     typography = typography,
                     onClick = { onModeSelected(mode) }
+                )
+            }
+            if (state.selectedMode != null) {
+                CoolingActiveModeSummary(
+                    fanPercent = state.fanPercentNow,
+                    colors = colors,
+                    typography = typography
                 )
             }
         }
@@ -214,18 +261,12 @@ private fun CoolingModeOption(
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(AquaCoolingDashboardGeometry.optionGap)
     ) {
-        Canvas(modifier = Modifier.size(AquaCoolingDashboardGeometry.radioSize)) {
-            drawCircle(
-                color = if (selected) colors.accent else colors.secondaryText,
-                style = Stroke(width = AquaCoolingDashboardGeometry.radioStrokeWidth.toPx())
-            )
-            if (selected) {
-                drawCircle(
-                    color = colors.accent,
-                    radius = AquaCoolingDashboardGeometry.radioDotRadius.toPx()
-                )
-            }
-        }
+        AquaCoolingSelectionIndicator(
+            selected = selected,
+            selectedColor = colors.accent,
+            idleColor = colors.secondaryText,
+            modifier = Modifier.size(AquaCoolingDashboardGeometry.radioSize)
+        )
         BasicText(
             text = coolingModeLabel(mode),
             style = typography.body.copy(
@@ -238,284 +279,292 @@ private fun CoolingModeOption(
 }
 
 @Composable
-internal fun CoolingModeControlCard(
-    state: DeviceCoolingRootUiState,
-    enabled: Boolean,
+private fun CoolingActiveModeSummary(
+    fanPercent: Int?,
     colors: AquaDeviceCardColors,
-    typography: AquaDeviceCardTypography,
-    onManualFanPercentChanged: (Int) -> Unit,
-    onAutomaticSettingsClick: () -> Unit,
-    onProgramSettingsClick: () -> Unit
+    typography: AquaDeviceCardTypography
 ) {
-    when (state.selectedMode) {
-        CoolingControlMode.MANUAL -> CoolingManualControlCard(
-            percent = state.manualFanPercent,
-            capabilities = state.manualFanCapabilities,
-            enabled = enabled,
-            colors = colors,
-            typography = typography,
-            onValueChanged = onManualFanPercentChanged
+    Row(
+        modifier = Modifier.padding(top = AquaCoolingDashboardGeometry.modeStatusTopPadding),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(AquaCoolingDashboardGeometry.modeStatusGap)
+    ) {
+        Box(
+            modifier = Modifier
+                .size(AquaCoolingDashboardGeometry.modeStatusDotSize)
+                .clip(CircleShape)
+                .background(AquaCoolingDashboardPalette.success)
         )
-        CoolingControlMode.AUTOMATIC -> CoolingAutomaticControlCard(
-            startTemperatureC = state.autoStartTemperatureC,
-            maxTemperatureC = state.autoMaxTemperatureC,
-            enabled = enabled,
-            colors = colors,
-            typography = typography,
-            onOpenClick = onAutomaticSettingsClick
+        BasicText(
+            text = stringResource(R.string.device_cooling_mode_active),
+            style = typography.body.copy(color = AquaCoolingDashboardPalette.success)
         )
-        CoolingControlMode.PROGRAM -> CoolingProgramControlCard(
-            enabled = enabled,
-            colors = colors,
-            typography = typography,
-            onOpenClick = onProgramSettingsClick
+        BasicText(
+            text = stringResource(R.string.device_cooling_inline_separator),
+            style = typography.micro.copy(color = colors.secondaryText)
         )
-        null -> CoolingUnavailableControlCard(colors = colors, typography = typography)
+        BasicText(
+            text = fanPercent?.let { value ->
+                stringResource(R.string.device_cooling_percent_value_format, value)
+            } ?: stringResource(R.string.device_cooling_value_unavailable),
+            style = typography.body.copy(color = colors.accent)
+        )
     }
 }
 
 @Composable
-private fun CoolingManualControlCard(
-    percent: Int?,
-    capabilities: DeviceCoolingManualFanCapabilities?,
+internal fun CoolingModeSettingsCard(
+    state: DeviceCoolingRootUiState,
     enabled: Boolean,
     colors: AquaDeviceCardColors,
     typography: AquaDeviceCardTypography,
-    onValueChanged: (Int) -> Unit
+    onAutomaticSettingsClick: () -> Unit,
+    onProgramSettingsClick: () -> Unit
 ) {
-    val clamped = percent?.coerceIn(
-        AquaCoolingGaugeSpec.minimumPercent,
-        AquaCoolingGaugeSpec.maximumPercent
-    )
     AquaCoolingDashboardCardSurface(
         modifier = Modifier
             .fillMaxWidth()
-            .heightIn(min = AquaCoolingDashboardGeometry.controlCardMinimumHeight)
+            .heightIn(min = AquaCoolingDashboardGeometry.modeSettingsCardMinimumHeight)
     ) {
-        Column(
-            modifier = Modifier.fillMaxWidth(),
-            verticalArrangement = Arrangement.spacedBy(AquaDeviceCardGeometry.compactGap)
-        ) {
-            CoolingSectionHeader(
-                title = stringResource(R.string.device_cooling_manual_card_title),
-                trailing = clamped?.let { value ->
-                    stringResource(R.string.device_cooling_percent_value_format, value)
-                } ?: stringResource(R.string.device_cooling_value_unavailable),
-                colors = colors,
-                typography = typography
+        Column(modifier = Modifier.fillMaxWidth()) {
+            BasicText(
+                text = stringResource(R.string.device_cooling_mode_settings_title),
+                style = typography.title
             )
             BasicText(
-                text = stringResource(R.string.device_cooling_manual_card_subtitle),
-                style = typography.micro.copy(color = colors.secondaryText)
-            )
-            val step = capabilities?.stepPercent
-            if (clamped != null && capabilities != null && step != null) {
-                AquaCoolingFanPercentSlider(
-                    state = AquaCoolingFanPercentSliderState(
-                        percent = clamped,
-                        enabled = enabled && capabilities.writable,
-                        stepPercent = step,
-                        minimumPercent = capabilities.minimumPercent,
-                        maximumPercent = capabilities.maximumPercent
-                    ),
-                    colors = colors,
-                    onValueChanged = onValueChanged
+                text = stringResource(R.string.device_cooling_mode_settings_description),
+                style = typography.caption.copy(color = colors.secondaryText),
+                modifier = Modifier.padding(
+                    top = AquaCoolingDashboardGeometry.modeSettingsHeaderGap
                 )
-                Row(modifier = Modifier.fillMaxWidth()) {
-                    BasicText(
-                        text = stringResource(
-                            R.string.device_cooling_percent_value_format,
-                            capabilities.minimumPercent
+            )
+            Column(
+                modifier = Modifier.padding(
+                    top = AquaCoolingDashboardGeometry.modeSettingsContentTopPadding
+                )
+            ) {
+                CoolingModeSettingsRow(
+                    model = CoolingModeSettingsRowModel(
+                        mode = CoolingControlMode.AUTOMATIC,
+                        icon = AquaCoolingDashboardIconKind.AUTOMATIC,
+                        value = coolingAutomaticRangeText(state),
+                        contentDescription = stringResource(
+                            R.string.device_cooling_edit_automatic_description
                         ),
-                        style = typography.micro.copy(color = colors.secondaryText),
-                        modifier = Modifier.weight(1f)
-                    )
-                    BasicText(
-                        text = stringResource(
-                            R.string.device_cooling_percent_value_format,
-                            capabilities.maximumPercent
+                        selected = state.selectedMode == CoolingControlMode.AUTOMATIC,
+                        onClick = onAutomaticSettingsClick
+                    ),
+                    enabled = enabled && CoolingControlMode.AUTOMATIC in state.supportedModes,
+                    colors = colors,
+                    typography = typography
+                )
+                CoolingModeSettingsDivider(colors)
+                CoolingModeSettingsRow(
+                    model = CoolingModeSettingsRowModel(
+                        mode = CoolingControlMode.MANUAL,
+                        icon = AquaCoolingDashboardIconKind.MANUAL,
+                        value = coolingManualTargetText(state.manualFanPercent),
+                        contentDescription = stringResource(
+                            R.string.device_cooling_manual_settings_description
                         ),
-                        style = typography.micro.copy(
-                            color = colors.secondaryText,
-                            textAlign = TextAlign.End
+                        selected = state.selectedMode == CoolingControlMode.MANUAL,
+                        onClick = null
+                    ),
+                    enabled = enabled && CoolingControlMode.MANUAL in state.supportedModes,
+                    colors = colors,
+                    typography = typography
+                )
+                CoolingModeSettingsDivider(colors)
+                CoolingModeSettingsRow(
+                    model = CoolingModeSettingsRowModel(
+                        mode = CoolingControlMode.PROGRAM,
+                        icon = AquaCoolingDashboardIconKind.PROGRAM,
+                        value = coolingProgramSummaryText(state),
+                        contentDescription = stringResource(
+                            R.string.device_cooling_edit_program_description
                         ),
-                        modifier = Modifier.weight(1f)
-                    )
-                }
+                        selected = state.selectedMode == CoolingControlMode.PROGRAM,
+                        onClick = onProgramSettingsClick
+                    ),
+                    enabled = enabled && CoolingControlMode.PROGRAM in state.supportedModes,
+                    colors = colors,
+                    typography = typography
+                )
             }
         }
     }
 }
 
-@Composable
-private fun CoolingAutomaticControlCard(
-    startTemperatureC: Double?,
-    maxTemperatureC: Double?,
-    enabled: Boolean,
-    colors: AquaDeviceCardColors,
-    typography: AquaDeviceCardTypography,
-    onOpenClick: () -> Unit
-) {
-    AquaCoolingDashboardCardSurface(
-        modifier = Modifier
-            .fillMaxWidth()
-            .heightIn(min = AquaCoolingDashboardGeometry.controlCardMinimumHeight)
-    ) {
-        Column(
-            modifier = Modifier.fillMaxWidth(),
-            verticalArrangement = Arrangement.spacedBy(AquaDeviceCardGeometry.compactGap)
-        ) {
-            CoolingDetailHeader(
-                title = stringResource(R.string.device_cooling_automatic_card_title),
-                enabled = enabled,
-                colors = colors,
-                typography = typography,
-                contentDescriptionText = stringResource(
-                    R.string.device_cooling_edit_automatic_description
-                ),
-                onClick = onOpenClick
-            )
-            BasicText(
-                text = stringResource(R.string.device_cooling_automatic_card_subtitle),
-                style = typography.micro.copy(color = colors.secondaryText),
-                maxLines = 1,
-                overflow = TextOverflow.Ellipsis
-            )
-            CoolingControlValueRow(
-                label = stringResource(R.string.device_cooling_fan_start_temperature),
-                value = coolingTemperatureText(startTemperatureC),
-                colors = colors,
-                typography = typography
-            )
-            CoolingControlValueRow(
-                label = stringResource(R.string.device_cooling_max_speed_temperature),
-                value = coolingTemperatureText(maxTemperatureC),
-                colors = colors,
-                typography = typography
-            )
-            BasicText(
-                text = stringResource(R.string.device_cooling_automatic_range_help),
-                style = typography.micro.copy(color = colors.secondaryText),
-                maxLines = 1,
-                overflow = TextOverflow.Ellipsis
-            )
-        }
-    }
-}
+private data class CoolingModeSettingsRowModel(
+    val mode: CoolingControlMode,
+    val icon: AquaCoolingDashboardIconKind,
+    val value: String,
+    val contentDescription: String,
+    val selected: Boolean,
+    val onClick: (() -> Unit)?
+)
 
 @Composable
-private fun CoolingProgramControlCard(
+private fun CoolingModeSettingsRow(
+    model: CoolingModeSettingsRowModel,
     enabled: Boolean,
     colors: AquaDeviceCardColors,
-    typography: AquaDeviceCardTypography,
-    onOpenClick: () -> Unit
+    typography: AquaDeviceCardTypography
 ) {
-    AquaCoolingDashboardCardSurface(
-        modifier = Modifier
-            .fillMaxWidth()
-            .heightIn(min = AquaCoolingDashboardGeometry.controlCardMinimumHeight)
-    ) {
-        Column(
-            modifier = Modifier.fillMaxWidth(),
-            verticalArrangement = Arrangement.spacedBy(AquaDeviceCardGeometry.compactGap)
-        ) {
-            CoolingDetailHeader(
-                title = stringResource(R.string.device_cooling_program_card_title),
+    val interaction = if (model.onClick != null) {
+        Modifier
+            .clickable(
                 enabled = enabled,
-                colors = colors,
-                typography = typography,
-                contentDescriptionText = stringResource(
-                    R.string.device_cooling_edit_program_description
-                ),
-                onClick = onOpenClick
+                role = Role.Button,
+                onClick = model.onClick
             )
-            BasicText(
-                text = stringResource(R.string.device_cooling_program_not_configured),
-                style = typography.body.copy(color = colors.primaryText),
-                maxLines = 1,
-                overflow = TextOverflow.Ellipsis
-            )
-            BasicText(
-                text = stringResource(R.string.device_cooling_program_not_configured_hint),
-                style = typography.micro.copy(color = colors.secondaryText),
-                maxLines = 1,
-                overflow = TextOverflow.Ellipsis
-            )
-        }
+            .semantics { contentDescription = model.contentDescription }
+    } else {
+        Modifier
     }
-}
-
-@Composable
-private fun CoolingDetailHeader(
-    title: String,
-    enabled: Boolean,
-    colors: AquaDeviceCardColors,
-    typography: AquaDeviceCardTypography,
-    contentDescriptionText: String,
-    onClick: () -> Unit
-) {
     Row(
-        modifier = Modifier.fillMaxWidth(),
+        modifier = Modifier
+            .fillMaxWidth()
+            .heightIn(min = AquaCoolingDashboardGeometry.modeSettingsRowHeight)
+            .then(interaction),
         verticalAlignment = Alignment.CenterVertically
     ) {
-        BasicText(
-            text = title,
-            style = typography.title.copy(color = colors.primaryText),
-            modifier = Modifier.weight(1f),
-            maxLines = 1,
-            overflow = TextOverflow.Ellipsis
-        )
-        CoolingDetailAction(
-            enabled = enabled,
-            colors = colors,
-            contentDescriptionText = contentDescriptionText,
-            onClick = onClick
-        )
-    }
-}
-
-@Composable
-private fun CoolingDetailAction(
-    enabled: Boolean,
-    colors: AquaDeviceCardColors,
-    contentDescriptionText: String,
-    onClick: () -> Unit
-) {
-    val shape = AquaCoolingDashboardGeometry.detailActionShape
-    Box(
-        modifier = Modifier
-            .size(AquaCoolingDashboardGeometry.detailActionSize)
-            .clip(shape)
-            .background(
-                colors.accent.copy(alpha = AquaCoolingDashboardAlpha.detailActionBackground)
+        Box(
+            modifier = Modifier
+                .size(AquaCoolingDashboardGeometry.modeSettingsRowIconContainerSize)
+                .clip(CircleShape)
+                .background(
+                    colors.accent.copy(
+                        alpha = AquaCoolingDashboardAlpha.iconContainerBackground
+                    )
+                )
+                .border(
+                    width = AquaDeviceCardGeometry.outlineWidth,
+                    color = colors.accent.copy(
+                        alpha = AquaCoolingDashboardAlpha.iconContainerOutline
+                    ),
+                    shape = CircleShape
+                ),
+            contentAlignment = Alignment.Center
+        ) {
+            AquaCoolingDashboardIcon(
+                kind = model.icon,
+                tint = colors.accent,
+                modifier = Modifier.size(AquaCoolingDashboardGeometry.modeSettingsRowIconSize)
             )
-            .border(
-                width = AquaDeviceCardGeometry.outlineWidth,
-                color = colors.accent.copy(alpha = AquaCoolingDashboardAlpha.detailActionOutline),
-                shape = shape
+        }
+        Column(
+            modifier = Modifier
+                .padding(start = AquaCoolingDashboardGeometry.modeSettingsRowIconGap)
+                .weight(1f),
+            verticalArrangement = Arrangement.spacedBy(
+                AquaCoolingDashboardGeometry.modeSettingsRowValueGap
             )
-            .clickable(enabled = enabled, role = Role.Button, onClick = onClick)
-            .semantics { contentDescription = contentDescriptionText },
-        contentAlignment = Alignment.Center
-    ) {
-        Canvas(modifier = Modifier.size(AquaCoolingDashboardGeometry.detailActionGlyphSize)) {
-            val tint = if (enabled) colors.accent else colors.secondaryText
-            val strokeWidth = AquaCoolingDashboardGeometry.detailActionStrokeWidth.toPx()
-            val center = Offset(size.width * 0.58f, size.height * 0.50f)
-            drawLine(
-                color = tint,
-                start = Offset(size.width * 0.34f, size.height * 0.22f),
-                end = center,
-                strokeWidth = strokeWidth,
-                cap = StrokeCap.Round
+        ) {
+            BasicText(
+                text = coolingModeLabel(model.mode),
+                style = typography.body.copy(
+                    color = colors.primaryText,
+                    fontSize = AquaCoolingDashboardTypography.modeSettingsTitleSize
+                ),
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis
             )
-            drawLine(
-                color = tint,
-                start = center,
-                end = Offset(size.width * 0.34f, size.height * 0.78f),
-                strokeWidth = strokeWidth,
-                cap = StrokeCap.Round
+            BasicText(
+                text = model.value,
+                style = typography.caption.copy(
+                    color = colors.secondaryText,
+                    fontSize = AquaCoolingDashboardTypography.modeSettingsValueSize
+                ),
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis
+            )
+        }
+        Row(
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(
+                AquaCoolingDashboardGeometry.modeSettingsTrailingGap
+            )
+        ) {
+            if (model.selected) {
+                Box(
+                    modifier = Modifier
+                        .clip(AquaCoolingDashboardGeometry.activeChipShape)
+                        .background(
+                            AquaCoolingDashboardPalette.success.copy(
+                                alpha = AquaCoolingDashboardAlpha.activeChipBackground
+                            )
+                        )
+                        .padding(
+                            horizontal = AquaCoolingDashboardGeometry.activeChipHorizontalPadding,
+                            vertical = AquaCoolingDashboardGeometry.activeChipVerticalPadding
+                        )
+                ) {
+                    BasicText(
+                        text = stringResource(R.string.device_cooling_mode_active_uppercase),
+                        style = typography.micro.copy(
+                            color = AquaCoolingDashboardPalette.success,
+                            fontSize = AquaCoolingDashboardTypography.activeChipSize
+                        )
+                    )
+                }
+            }
+            AquaCoolingDashboardIcon(
+                kind = AquaCoolingDashboardIconKind.CHEVRON,
+                tint = colors.primaryText,
+                modifier = Modifier.size(AquaCoolingDashboardGeometry.modeSettingsChevronSize),
+                strokeWidth = AquaCoolingDashboardGeometry.modeSettingsChevronStrokeWidth
             )
         }
     }
 }
+
+@Composable
+private fun CoolingModeSettingsDivider(colors: AquaDeviceCardColors) {
+    Box(
+        modifier = Modifier
+            .fillMaxWidth()
+            .height(AquaCoolingDashboardGeometry.modeSettingsDividerHeight)
+            .background(colors.outline.copy(alpha = AquaCoolingDashboardAlpha.divider))
+    )
+}
+
+@Composable
+private fun coolingAutomaticRangeText(state: DeviceCoolingRootUiState): String {
+    val minimum = state.autoStartTemperatureC
+    val maximum = state.autoMaxTemperatureC
+    return if (minimum != null && maximum != null) {
+        stringResource(
+            R.string.device_cooling_temperature_range_value_format,
+            minimum,
+            maximum
+        )
+    } else {
+        stringResource(R.string.device_cooling_value_unavailable)
+    }
+}
+
+@Composable
+private fun coolingManualTargetText(percent: Int?): String = percent?.let { value ->
+    stringResource(R.string.device_cooling_manual_target_value_format, value)
+} ?: stringResource(R.string.device_cooling_manual_target_unavailable)
+
+@Composable
+private fun coolingProgramSummaryText(state: DeviceCoolingRootUiState): String {
+    val count = state.programSlotCount
+        ?: return stringResource(R.string.device_cooling_value_unavailable)
+    if (count == 0) return stringResource(R.string.device_cooling_program_not_configured)
+    val periods = pluralStringResource(
+        R.plurals.device_cooling_program_period_count,
+        count,
+        count
+    )
+    val nextStart = state.nextProgramStartMinutesOfDay
+        ?: return periods
+    val hours = nextStart / MINUTES_PER_HOUR
+    val minutes = nextStart % MINUTES_PER_HOUR
+    val time = stringResource(R.string.device_cooling_time_value_format, hours, minutes)
+    return stringResource(R.string.device_cooling_program_summary_with_next, periods, time)
+}
+
+private const val MINUTES_PER_HOUR = 60

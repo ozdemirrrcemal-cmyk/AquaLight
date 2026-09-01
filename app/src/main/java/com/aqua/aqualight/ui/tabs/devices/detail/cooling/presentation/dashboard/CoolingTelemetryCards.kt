@@ -1,14 +1,15 @@
-@file:Suppress("MagicNumber")
+@file:Suppress("LongMethod")
 
 package com.aqua.aqualight.ui.tabs.devices.detail.cooling.presentation.dashboard
 
-import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.CircleShape
@@ -17,17 +18,21 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Path
+import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextOverflow
 import com.aqua.aqualight.R
 import com.aqua.aqualight.ui.common.cooling.AquaCoolingDashboardAlpha
 import com.aqua.aqualight.ui.common.cooling.AquaCoolingDashboardCardSurface
 import com.aqua.aqualight.ui.common.cooling.AquaCoolingDashboardGeometry
+import com.aqua.aqualight.ui.common.cooling.AquaCoolingDashboardIcon
+import com.aqua.aqualight.ui.common.cooling.AquaCoolingDashboardIconKind
 import com.aqua.aqualight.ui.common.cooling.AquaCoolingDashboardPalette
 import com.aqua.aqualight.ui.common.cooling.AquaCoolingDashboardTypography
 import com.aqua.aqualight.ui.common.devicecard.AquaDeviceCardColors
+import com.aqua.aqualight.ui.common.devicecard.AquaDeviceCardGeometry
 import com.aqua.aqualight.ui.common.devicecard.AquaDeviceCardTypography
+import com.aqua.aqualight.ui.tabs.devices.detail.cooling.root.CoolingHealthState
 import com.aqua.aqualight.ui.tabs.devices.detail.cooling.root.DeviceCoolingRootUiState
 
 @Composable
@@ -51,36 +56,60 @@ internal fun CoolingPowerCard(
                 style = typography.title
             )
             Row(
+                modifier = Modifier.fillMaxWidth(),
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.spacedBy(
-                    AquaCoolingDashboardGeometry.telemetryContentGap
+                    AquaCoolingDashboardGeometry.powerContentGap
                 )
             ) {
                 CoolingPowerGlyph(colors)
-                BasicText(
-                    text = coolingPowerText(state.powerWatts),
-                    style = typography.title.copy(
-                        color = colors.primaryText,
-                        fontSize = AquaCoolingDashboardTypography.metricValueSize
-                    ),
-                    maxLines = 1
-                )
-            }
-            Column(
-                verticalArrangement = Arrangement.spacedBy(
-                    AquaCoolingDashboardGeometry.statusRowGap
-                )
-            ) {
-                BasicText(
-                    text = stringResource(R.string.device_cooling_estimated_consumption),
-                    style = typography.micro.copy(color = colors.secondaryText)
-                )
-                BasicText(
-                    text = coolingEnergyText(state.estimatedKwhPerDay),
-                    style = typography.body.copy(color = colors.primaryText),
-                    maxLines = 1,
-                    overflow = TextOverflow.Ellipsis
-                )
+                Column(
+                    modifier = Modifier.weight(1f),
+                    verticalArrangement = Arrangement.spacedBy(
+                        AquaCoolingDashboardGeometry.powerValueGap
+                    )
+                ) {
+                    Row(verticalAlignment = Alignment.Bottom) {
+                        BasicText(
+                            text = coolingPowerNumberText(state.powerWatts),
+                            style = typography.title.copy(
+                                color = colors.primaryText,
+                                fontSize = AquaCoolingDashboardTypography.powerValueSize
+                            ),
+                            maxLines = 1
+                        )
+                        if (state.powerWatts != null) {
+                            BasicText(
+                                text = stringResource(R.string.device_cooling_power_unit),
+                                style = typography.body.copy(
+                                    color = colors.primaryText,
+                                    fontSize = AquaCoolingDashboardTypography.powerUnitSize
+                                ),
+                                maxLines = 1
+                            )
+                        }
+                    }
+                    BasicText(
+                        text = stringResource(R.string.device_cooling_estimated_consumption),
+                        style = typography.micro.copy(color = colors.secondaryText),
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis
+                    )
+                    Box(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(AquaCoolingDashboardGeometry.powerDividerHeight)
+                            .background(
+                                colors.outline.copy(alpha = AquaCoolingDashboardAlpha.divider)
+                            )
+                    )
+                    BasicText(
+                        text = coolingEnergyText(state.estimatedKwhPerDay),
+                        style = typography.body.copy(color = colors.secondaryText),
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis
+                    )
+                }
             }
         }
     }
@@ -92,21 +121,19 @@ private fun CoolingPowerGlyph(colors: AquaDeviceCardColors) {
         modifier = Modifier
             .size(AquaCoolingDashboardGeometry.powerGlyphContainerSize)
             .clip(CircleShape)
-            .background(colors.mediaSurface),
+            .background(colors.mediaSurface.copy(alpha = AquaCoolingDashboardAlpha.chartBackground))
+            .border(
+                width = AquaDeviceCardGeometry.outlineWidth,
+                color = colors.outline,
+                shape = CircleShape
+            ),
         contentAlignment = Alignment.Center
     ) {
-        Canvas(modifier = Modifier.size(AquaCoolingDashboardGeometry.powerGlyphSize)) {
-            val path = Path().apply {
-                moveTo(size.width * 0.57f, 0f)
-                lineTo(size.width * 0.25f, size.height * 0.53f)
-                lineTo(size.width * 0.48f, size.height * 0.53f)
-                lineTo(size.width * 0.40f, size.height)
-                lineTo(size.width * 0.78f, size.height * 0.40f)
-                lineTo(size.width * 0.54f, size.height * 0.40f)
-                close()
-            }
-            drawPath(path = path, color = colors.primaryText)
-        }
+        AquaCoolingDashboardIcon(
+            kind = AquaCoolingDashboardIconKind.POWER,
+            tint = colors.accent,
+            modifier = Modifier.size(AquaCoolingDashboardGeometry.powerGlyphSize)
+        )
     }
 }
 
@@ -117,8 +144,6 @@ internal fun CoolingStatusCard(
     typography: AquaDeviceCardTypography,
     modifier: Modifier = Modifier
 ) {
-    val ready = stringResource(R.string.device_cooling_status_ready)
-    val unavailable = stringResource(R.string.device_cooling_value_unavailable)
     AquaCoolingDashboardCardSurface(
         modifier = modifier.heightIn(min = AquaCoolingDashboardGeometry.statusCardMinimumHeight)
     ) {
@@ -127,23 +152,19 @@ internal fun CoolingStatusCard(
             verticalArrangement = Arrangement.spacedBy(AquaCoolingDashboardGeometry.statusRowGap)
         ) {
             BasicText(
-                text = stringResource(R.string.device_cooling_status_title),
+                text = stringResource(R.string.device_cooling_system_status_title),
                 style = typography.title
             )
             CoolingStatusRow(
-                model = CoolingStatusRowModel(
-                    label = stringResource(R.string.device_cooling_status_fan),
-                    value = if (state.fanOutputCount > 0) ready else unavailable,
-                    positive = state.fanOutputCount > 0
+                model = state.fanHealth.toStatusRowModel(
+                    label = stringResource(R.string.device_cooling_status_fan)
                 ),
                 colors = colors,
                 typography = typography
             )
             CoolingStatusRow(
-                model = CoolingStatusRowModel(
-                    label = stringResource(R.string.device_cooling_status_sensors),
-                    value = if (state.temperatureSensorCount > 0) ready else unavailable,
-                    positive = state.temperatureSensorCount > 0
+                model = state.sensorHealth.toStatusRowModel(
+                    label = stringResource(R.string.device_cooling_status_sensors)
                 ),
                 colors = colors,
                 typography = typography
@@ -156,18 +177,17 @@ internal fun CoolingStatusCard(
                     } else {
                         stringResource(R.string.device_cooling_status_offline)
                     },
-                    positive = state.contentEnabled
+                    tone = if (state.contentEnabled) {
+                        CoolingStatusTone.SUCCESS
+                    } else {
+                        CoolingStatusTone.NEUTRAL
+                    }
                 ),
                 colors = colors,
                 typography = typography
             )
             CoolingStatusRow(
-                model = CoolingStatusRowModel(
-                    label = stringResource(R.string.device_cooling_status_alarm),
-                    value = unavailable,
-                    positive = false,
-                    showDot = false
-                ),
+                model = coolingAlarmStatusRow(state.activeAlarmCount),
                 colors = colors,
                 typography = typography
             )
@@ -178,9 +198,62 @@ internal fun CoolingStatusCard(
 private data class CoolingStatusRowModel(
     val label: String,
     val value: String,
-    val positive: Boolean,
-    val showDot: Boolean = true
+    val tone: CoolingStatusTone
 )
+
+private enum class CoolingStatusTone {
+    SUCCESS,
+    WARNING,
+    DANGER,
+    NEUTRAL
+}
+
+@Composable
+private fun CoolingHealthState.toStatusRowModel(label: String): CoolingStatusRowModel = when (this) {
+    CoolingHealthState.READY -> CoolingStatusRowModel(
+        label = label,
+        value = stringResource(R.string.device_cooling_status_ready),
+        tone = CoolingStatusTone.SUCCESS
+    )
+    CoolingHealthState.WARNING -> CoolingStatusRowModel(
+        label = label,
+        value = stringResource(R.string.device_cooling_status_warning),
+        tone = CoolingStatusTone.WARNING
+    )
+    CoolingHealthState.FAULT -> CoolingStatusRowModel(
+        label = label,
+        value = stringResource(R.string.device_cooling_status_fault),
+        tone = CoolingStatusTone.DANGER
+    )
+    CoolingHealthState.UNKNOWN -> CoolingStatusRowModel(
+        label = label,
+        value = stringResource(R.string.device_cooling_value_unavailable),
+        tone = CoolingStatusTone.NEUTRAL
+    )
+}
+
+@Composable
+private fun coolingAlarmStatusRow(activeAlarmCount: Int?): CoolingStatusRowModel = when {
+    activeAlarmCount == null -> CoolingStatusRowModel(
+        label = stringResource(R.string.device_cooling_status_alarm),
+        value = stringResource(R.string.device_cooling_value_unavailable),
+        tone = CoolingStatusTone.NEUTRAL
+    )
+    activeAlarmCount == 0 -> CoolingStatusRowModel(
+        label = stringResource(R.string.device_cooling_status_alarm),
+        value = stringResource(R.string.device_cooling_status_no_alarm),
+        tone = CoolingStatusTone.NEUTRAL
+    )
+    else -> CoolingStatusRowModel(
+        label = stringResource(R.string.device_cooling_status_alarm),
+        value = pluralStringResource(
+            R.plurals.device_cooling_active_alarm_count,
+            activeAlarmCount,
+            activeAlarmCount
+        ),
+        tone = CoolingStatusTone.DANGER
+    )
+}
 
 @Composable
 private fun CoolingStatusRow(
@@ -188,6 +261,12 @@ private fun CoolingStatusRow(
     colors: AquaDeviceCardColors,
     typography: AquaDeviceCardTypography
 ) {
+    val toneColor = when (model.tone) {
+        CoolingStatusTone.SUCCESS -> AquaCoolingDashboardPalette.success
+        CoolingStatusTone.WARNING -> colors.warning
+        CoolingStatusTone.DANGER -> colors.danger
+        CoolingStatusTone.NEUTRAL -> colors.secondaryText
+    }
     Row(
         modifier = Modifier.fillMaxWidth(),
         verticalAlignment = Alignment.CenterVertically
@@ -201,30 +280,21 @@ private fun CoolingStatusRow(
         )
         Row(
             verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(AquaCoolingDashboardGeometry.statusValueGap)
+            horizontalArrangement = Arrangement.spacedBy(
+                AquaCoolingDashboardGeometry.statusValueGap
+            )
         ) {
-            if (model.showDot) {
-                Box(
-                    modifier = Modifier
-                        .size(AquaCoolingDashboardGeometry.statusDotSize)
-                        .clip(CircleShape)
-                        .background(
-                            (if (model.positive) {
-                                AquaCoolingDashboardPalette.success
-                            } else {
-                                colors.secondaryText
-                            }).copy(alpha = AquaCoolingDashboardAlpha.statusDot)
-                        )
-                )
-            }
+            Box(
+                modifier = Modifier
+                    .size(AquaCoolingDashboardGeometry.statusDotSize)
+                    .clip(CircleShape)
+                    .background(toneColor.copy(alpha = AquaCoolingDashboardAlpha.statusDot))
+            )
             BasicText(
                 text = model.value,
                 style = typography.micro.copy(
-                    color = if (model.positive) {
-                        AquaCoolingDashboardPalette.success
-                    } else {
-                        colors.secondaryText
-                    }
+                    color = toneColor,
+                    fontSize = AquaCoolingDashboardTypography.statusValueSize
                 ),
                 maxLines = 1,
                 overflow = TextOverflow.Ellipsis

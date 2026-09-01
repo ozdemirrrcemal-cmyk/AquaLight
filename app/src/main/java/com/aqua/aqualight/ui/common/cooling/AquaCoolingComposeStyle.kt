@@ -26,60 +26,84 @@ import com.aqua.aqualight.ui.common.devicecard.aquaDeviceCardTypography
  * individual composables never invent visual constants.
  */
 object AquaCoolingDashboardGeometry {
-    val screenHorizontalPadding = 16.dp
-    val screenTopPadding = 10.dp
+    val screenHorizontalPadding = 12.dp
+    val screenTopPadding = 8.dp
     val screenBottomPadding = 24.dp
-    val cardGap = 8.dp
+    val cardGap = 9.dp
     val splitCardGap = 8.dp
 
-    val cardCornerRadius = 16.dp
-    val cardHorizontalPadding = 10.dp
-    val cardVerticalPadding = 9.dp
+    val cardCornerRadius = 14.dp
+    val cardHorizontalPadding = 12.dp
+    val cardVerticalPadding = 10.dp
 
-    val temperatureCardMinimumHeight = 154.dp
-    val temperatureChartHeight = 96.dp
-    val temperatureChartCornerRadius = 10.dp
-    val temperatureChartPadding = 6.dp
-    val temperatureYAxisWidth = 31.dp
-    val temperatureYAxisGap = 3.dp
-    val temperatureMetricWidth = 56.dp
-    val temperatureMetricGap = 5.dp
+    val temperatureCardMinimumHeight = 170.dp
+    val temperatureChartHeight = 100.dp
+    val temperatureChartPadding = 3.dp
+    val temperatureYAxisWidth = 30.dp
+    val temperatureYAxisGap = 5.dp
+    val temperatureMetricWidth = 72.dp
+    val temperatureMetricGap = 8.dp
+    val temperatureMetricRowHeight = 38.dp
+    val temperatureMetricIconSize = 16.dp
+    val temperatureMetricIconGap = 5.dp
+    val temperatureMetricDividerWidth = 1.dp
+    val temperatureMetricDividerHeight = 115.dp
+    val temperatureMetricRowDividerHeight = 1.dp
+    val temperatureMetricRowDividerInset = 2.dp
     val chartGridStrokeWidth = 1.dp
-    val chartLineStrokeWidth = 2.2.dp
-    val chartGlowStrokeWidth = 6.dp
-    val chartPointRadius = 2.7.dp
+    val chartGridDashLength = 2.dp
+    val chartGridDashGap = 2.dp
+    val chartLineStrokeWidth = 1.8.dp
+    val chartSecondaryLineStrokeWidth = 1.5.dp
+    val chartGlowStrokeWidth = 5.dp
 
-    val compactCardMinimumHeight = 146.dp
-    val statusCardMinimumHeight = 112.dp
-    val telemetryContentGap = 5.dp
-    val powerGlyphContainerSize = 28.dp
-    val powerGlyphSize = 15.dp
-    val gaugeSize = 84.dp
-    val gaugeStrokeWidth = 8.dp
-    val gaugeInnerGap = 3.dp
+    val compactCardMinimumHeight = 165.dp
+    val statusCardMinimumHeight = 116.dp
+    val telemetryContentGap = 6.dp
+    val powerGlyphContainerSize = 48.dp
+    val powerGlyphSize = 24.dp
+    val powerContentGap = 12.dp
+    val powerDividerHeight = 1.dp
+    val powerValueGap = 3.dp
+    val gaugeSize = 117.dp
+    val gaugeStrokeWidth = 9.dp
+    val gaugeInnerGap = 4.dp
+    val gaugeCaptionTopPadding = 26.dp
+    val gaugeLabelsBottomPadding = 3.dp
 
-    val optionShape = RoundedCornerShape(20.dp)
+    val optionShape = RoundedCornerShape(18.dp)
     val optionHorizontalPadding = 9.dp
-    val optionVerticalPadding = 7.dp
-    val optionGap = 6.dp
-    val radioSize = 16.dp
+    val optionVerticalPadding = 5.dp
+    val optionGap = 5.dp
+    val radioSize = 17.dp
     val radioStrokeWidth = 1.5.dp
-    val radioDotRadius = 4.dp
+    val radioCheckStrokeWidth = 1.8.dp
+    val modeStatusDotSize = 7.dp
+    val modeStatusGap = 7.dp
+    val modeStatusTopPadding = 2.dp
 
-    val controlCardMinimumHeight = 104.dp
-    val controlRowVerticalPadding = 3.dp
-    val controlDividerHeight = 1.dp
+    val modeSettingsCardMinimumHeight = 174.dp
+    val modeSettingsHeaderGap = 1.dp
+    val modeSettingsContentTopPadding = 4.dp
+    val modeSettingsRowHeight = 39.dp
+    val modeSettingsRowIconContainerSize = 28.dp
+    val modeSettingsRowIconSize = 18.dp
+    val modeSettingsRowIconGap = 10.dp
+    val modeSettingsRowValueGap = 1.dp
+    val modeSettingsDividerHeight = 1.dp
+    val modeSettingsChevronSize = 12.dp
+    val modeSettingsChevronStrokeWidth = 1.8.dp
+    val modeSettingsTrailingGap = 8.dp
+    val activeChipShape = RoundedCornerShape(7.dp)
+    val activeChipHorizontalPadding = 8.dp
+    val activeChipVerticalPadding = 4.dp
 
-    val detailActionShape = RoundedCornerShape(10.dp)
-    val detailActionSize = 30.dp
-    val detailActionGlyphSize = 12.dp
-    val detailActionStrokeWidth = 1.8.dp
+    val dashboardIconStrokeWidth = 1.7.dp
 
     val sliderTouchHeight = 40.dp
     val sliderTrackHeight = 5.dp
     val sliderThumbRadius = 8.dp
     val sliderThumbOutlineWidth = 2.dp
-    val sliderLabelGap = 6.dp
 
     val statusDotSize = 6.dp
     val statusRowGap = 5.dp
@@ -142,10 +166,16 @@ object AquaCoolingDashboardTypography {
     val captionLineHeight = 13.sp
     val microSize = 9.5.sp
     val microLineHeight = 12.sp
-    val metricValueSize = 18.sp
-    val gaugeValueSize = 21.sp
-    val controlValueSize = 13.sp
-    val compactValueSize = 14.sp
+    val gaugeValueSize = 30.sp
+    val gaugeCaptionSize = 10.sp
+    val gaugeScaleSize = 9.sp
+    val temperatureMetricValueSize = 14.sp
+    val powerValueSize = 18.sp
+    val powerUnitSize = 11.sp
+    val statusValueSize = 9.5.sp
+    val modeSettingsTitleSize = 12.sp
+    val modeSettingsValueSize = 10.5.sp
+    val activeChipSize = 9.sp
 }
 
 object AquaCoolingInteractionStyle {
@@ -160,11 +190,14 @@ object AquaCoolingDashboardAlpha {
     const val chartGrid = 0.17f
     const val chartLine = 1f
     const val chartGlow = 0.18f
+    const val chartAreaTop = 0.22f
+    const val chartAreaBottom = 0f
     const val trackInactive = 0.22f
-    const val trackActive = 1f
-    const val detailActionBackground = 0.08f
-    const val detailActionOutline = 0.34f
     const val statusDot = 0.96f
+    const val iconContainerBackground = 0.08f
+    const val iconContainerOutline = 0.42f
+    const val activeChipBackground = 0.20f
+    const val divider = 0.72f
 }
 
 object AquaCoolingHistoryAlpha {
@@ -252,8 +285,8 @@ fun AquaCoolingDashboardCardSurface(
 }
 
 object AquaCoolingGaugeSpec {
-    const val startAngle = 145f
-    const val sweepAngle = 250f
+    const val startAngle = 150f
+    const val sweepAngle = 240f
     const val minimumPercent = 0
     const val maximumPercent = 100
 }

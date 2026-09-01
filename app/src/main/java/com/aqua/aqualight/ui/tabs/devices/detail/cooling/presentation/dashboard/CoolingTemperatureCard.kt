@@ -13,23 +13,26 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.BasicText
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.style.TextOverflow
 import com.aqua.aqualight.R
 import com.aqua.aqualight.ui.common.cooling.AquaCoolingDashboardAlpha
 import com.aqua.aqualight.ui.common.cooling.AquaCoolingDashboardCardSurface
 import com.aqua.aqualight.ui.common.cooling.AquaCoolingDashboardGeometry
+import com.aqua.aqualight.ui.common.cooling.AquaCoolingDashboardIcon
+import com.aqua.aqualight.ui.common.cooling.AquaCoolingDashboardIconKind
+import com.aqua.aqualight.ui.common.cooling.AquaCoolingDashboardTypography
 import com.aqua.aqualight.ui.common.devicecard.AquaDeviceCardColors
 import com.aqua.aqualight.ui.common.devicecard.AquaDeviceCardGeometry
 import com.aqua.aqualight.ui.common.devicecard.AquaDeviceCardTypography
@@ -66,65 +69,139 @@ internal fun CoolingTemperatureCard(
                 horizontalArrangement = Arrangement.spacedBy(
                     AquaCoolingDashboardGeometry.temperatureMetricGap
                 ),
-                verticalAlignment = Alignment.CenterVertically
+                verticalAlignment = Alignment.Top
             ) {
                 CoolingTemperatureChart(
-                    historyC = state.temperatureHistoryC,
+                    tankHistoryC = state.temperatureHistoryC,
+                    roomHistoryC = state.roomTemperatureHistoryC,
                     colors = colors,
                     typography = typography,
                     modifier = Modifier.weight(1f)
                 )
-                CoolingTemperatureMetrics(state, colors, typography)
+                CoolingTemperatureMetricsPanel(
+                    state = state,
+                    colors = colors,
+                    typography = typography
+                )
             }
         }
     }
 }
 
 @Composable
-private fun CoolingTemperatureMetrics(
+private fun CoolingTemperatureMetricsPanel(
     state: DeviceCoolingRootUiState,
     colors: AquaDeviceCardColors,
     typography: AquaDeviceCardTypography
 ) {
-    Column(
+    Row(
         modifier = Modifier.width(AquaCoolingDashboardGeometry.temperatureMetricWidth),
-        verticalArrangement = Arrangement.spacedBy(AquaDeviceCardGeometry.compactGap)
+        horizontalArrangement = Arrangement.spacedBy(
+            AquaCoolingDashboardGeometry.temperatureMetricGap
+        )
     ) {
-        CoolingMetric(
-            label = stringResource(R.string.device_cooling_tank_temperature_label),
-            value = coolingTemperatureText(state.tankTemperatureC),
-            colors = colors,
-            typography = typography,
-            primary = true
+        Box(
+            modifier = Modifier
+                .width(AquaCoolingDashboardGeometry.temperatureMetricDividerWidth)
+                .height(AquaCoolingDashboardGeometry.temperatureMetricDividerHeight)
+                .background(colors.outline.copy(alpha = AquaCoolingDashboardAlpha.divider))
         )
-        CoolingMetric(
-            label = stringResource(R.string.device_cooling_room_temperature_label),
-            value = coolingTemperatureText(state.roomTemperatureC),
-            colors = colors,
-            typography = typography
-        )
-        CoolingMetric(
-            label = stringResource(R.string.device_cooling_humidity_label),
-            value = coolingHumidityText(state.humidityPercent),
-            colors = colors,
-            typography = typography
-        )
+        Column(modifier = Modifier.weight(1f)) {
+            CoolingTemperatureMetricRow(
+                icon = AquaCoolingDashboardIconKind.WATER,
+                label = stringResource(R.string.device_cooling_tank_temperature_label),
+                value = coolingTemperatureText(state.tankTemperatureC),
+                accent = true,
+                colors = colors,
+                typography = typography
+            )
+            CoolingTemperatureMetricDivider(colors)
+            CoolingTemperatureMetricRow(
+                icon = AquaCoolingDashboardIconKind.ROOM,
+                label = stringResource(R.string.device_cooling_room_temperature_label),
+                value = coolingTemperatureText(state.roomTemperatureC),
+                accent = false,
+                colors = colors,
+                typography = typography
+            )
+            CoolingTemperatureMetricDivider(colors)
+            CoolingTemperatureMetricRow(
+                icon = AquaCoolingDashboardIconKind.HUMIDITY,
+                label = stringResource(R.string.device_cooling_humidity_label),
+                value = coolingHumidityText(state.humidityPercent),
+                accent = false,
+                colors = colors,
+                typography = typography
+            )
+        }
     }
 }
 
 @Composable
+private fun CoolingTemperatureMetricRow(
+    icon: AquaCoolingDashboardIconKind,
+    label: String,
+    value: String,
+    accent: Boolean,
+    colors: AquaDeviceCardColors,
+    typography: AquaDeviceCardTypography
+) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .heightIn(min = AquaCoolingDashboardGeometry.temperatureMetricRowHeight),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(
+            AquaCoolingDashboardGeometry.temperatureMetricIconGap
+        )
+    ) {
+        AquaCoolingDashboardIcon(
+            kind = icon,
+            tint = if (accent) colors.accent else colors.primaryText,
+            modifier = Modifier.size(AquaCoolingDashboardGeometry.temperatureMetricIconSize)
+        )
+        Column(modifier = Modifier.weight(1f)) {
+            BasicText(
+                text = label,
+                style = typography.micro.copy(color = colors.secondaryText),
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis
+            )
+            BasicText(
+                text = value,
+                style = typography.body.copy(
+                    color = if (accent) colors.accent else colors.primaryText,
+                    fontSize = AquaCoolingDashboardTypography.temperatureMetricValueSize
+                ),
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis
+            )
+        }
+    }
+}
+
+@Composable
+private fun CoolingTemperatureMetricDivider(colors: AquaDeviceCardColors) {
+    Box(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(horizontal = AquaCoolingDashboardGeometry.temperatureMetricRowDividerInset)
+            .height(AquaCoolingDashboardGeometry.temperatureMetricRowDividerHeight)
+            .background(colors.outline.copy(alpha = AquaCoolingDashboardAlpha.divider))
+    )
+}
+
+@Composable
 private fun CoolingTemperatureChart(
-    historyC: List<Double>,
+    tankHistoryC: List<Double>,
+    roomHistoryC: List<Double>,
     colors: AquaDeviceCardColors,
     typography: AquaDeviceCardTypography,
     modifier: Modifier = Modifier
 ) {
-    val chartValues = historyC
-        .asSequence()
-        .filter(Double::isFinite)
-        .map(Double::toFloat)
-        .toList()
-    val scale = temperatureChartScale(chartValues)
+    val tankValues = tankHistoryC.toChartValues()
+    val roomValues = roomHistoryC.toChartValues()
+    val scale = temperatureChartScale(tankValues + roomValues)
 
     Row(
         modifier = modifier.fillMaxWidth(),
@@ -138,7 +215,8 @@ private fun CoolingTemperatureChart(
         Spacer(modifier = Modifier.width(AquaCoolingDashboardGeometry.temperatureYAxisGap))
         Column(modifier = Modifier.weight(1f)) {
             CoolingTemperaturePlot(
-                values = chartValues,
+                tankValues = tankValues,
+                roomValues = roomValues,
                 scale = scale,
                 colors = colors,
                 typography = typography
@@ -148,6 +226,11 @@ private fun CoolingTemperatureChart(
         }
     }
 }
+
+private fun List<Double>.toChartValues(): List<Float> = asSequence()
+    .filter(Double::isFinite)
+    .map(Double::toFloat)
+    .toList()
 
 @Composable
 private fun TemperatureYAxis(
@@ -180,18 +263,16 @@ private fun TemperatureYAxis(
 
 @Composable
 private fun CoolingTemperaturePlot(
-    values: List<Float>,
+    tankValues: List<Float>,
+    roomValues: List<Float>,
     scale: TemperatureChartScale,
     colors: AquaDeviceCardColors,
     typography: AquaDeviceCardTypography
 ) {
-    val chartShape = RoundedCornerShape(AquaCoolingDashboardGeometry.temperatureChartCornerRadius)
     Box(
         modifier = Modifier
             .fillMaxWidth()
-            .height(AquaCoolingDashboardGeometry.temperatureChartHeight)
-            .clip(chartShape)
-            .background(colors.mediaSurface.copy(alpha = AquaCoolingDashboardAlpha.chartBackground)),
+            .height(AquaCoolingDashboardGeometry.temperatureChartHeight),
         contentAlignment = Alignment.Center
     ) {
         Canvas(modifier = Modifier.fillMaxSize()) {
@@ -203,18 +284,29 @@ private fun CoolingTemperaturePlot(
                 height = (size.height - horizontalPadding * 2f).coerceAtLeast(1f)
             )
             drawTemperatureGrid(viewport = viewport, colors = colors)
-
-            if (values.size >= 2) {
+            if (tankValues.size >= MINIMUM_CHART_POINT_COUNT) {
                 drawTemperatureHistory(
-                    values = values,
+                    values = tankValues,
                     scale = scale,
                     viewport = viewport,
-                    colors = colors
+                    lineColor = colors.accent,
+                    drawArea = true
+                )
+            }
+            if (roomValues.size >= MINIMUM_CHART_POINT_COUNT) {
+                drawTemperatureHistory(
+                    values = roomValues,
+                    scale = scale,
+                    viewport = viewport,
+                    lineColor = colors.primaryText,
+                    drawArea = false
                 )
             }
         }
 
-        if (values.size < 2) {
+        if (tankValues.size < MINIMUM_CHART_POINT_COUNT &&
+            roomValues.size < MINIMUM_CHART_POINT_COUNT
+        ) {
             CoolingTemperatureEmptyState(colors = colors, typography = typography)
         }
     }
@@ -281,3 +373,5 @@ private fun ChartAxisLabel(
         maxLines = 1
     )
 }
+
+private const val MINIMUM_CHART_POINT_COUNT = 2

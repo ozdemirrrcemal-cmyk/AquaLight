@@ -9,10 +9,10 @@
     <string name="device_cooling_tank_temperature_label">Su</string>
     <string name="device_cooling_room_temperature_label">Oda</string>
     <string name="device_cooling_humidity_label">Nem</string>
-    <string name="device_cooling_chart_24h_start">−24 sa</string>
-    <string name="device_cooling_chart_18h">−18 sa</string>
-    <string name="device_cooling_chart_12h">−12 sa</string>
-    <string name="device_cooling_chart_6h">−6 sa</string>
+    <string name="device_cooling_chart_24h_start">24 sa</string>
+    <string name="device_cooling_chart_18h">18 sa</string>
+    <string name="device_cooling_chart_12h">12 sa</string>
+    <string name="device_cooling_chart_6h">6 sa</string>
     <string name="device_cooling_chart_now">Şimdi</string>
     <string name="device_cooling_temperature_axis_value_format">%1$.0f °C</string>
 
@@ -34,37 +34,50 @@
     <string name="device_cooling_history_daily_empty">Firmware günlük özetleri sağladığında burada görünecek</string>
 
     <string name="device_cooling_fan_speed_title">Fan Hızı</string>
-    <string name="device_cooling_fan_mode_title">Fan Modu</string>
+    <string name="device_cooling_fan_speed_caption">Fan hızı</string>
+    <string name="device_cooling_operating_mode_title">Çalışma Modu</string>
     <string name="device_cooling_mode_automatic">Otomatik</string>
     <string name="device_cooling_mode_manual">Manuel</string>
     <string name="device_cooling_mode_program">Program</string>
+    <string name="device_cooling_mode_active">Aktif</string>
+    <string name="device_cooling_mode_active_uppercase">AKTİF</string>
+
+    <string name="device_cooling_mode_settings_title">Mod Ayarları</string>
+    <string name="device_cooling_mode_settings_description">Ayarları modu değiştirmeden düzenleyin</string>
+    <string name="device_cooling_manual_target_value_format">Hedef %1$d%%</string>
+    <string name="device_cooling_manual_target_unavailable">Hedef —</string>
+    <string name="device_cooling_temperature_range_value_format">%1$.1f–%2$.1f °C</string>
+    <string name="device_cooling_program_summary_with_next">%1$s • Sonraki %2$s</string>
+    <plurals name="device_cooling_program_period_count">
+        <item quantity="one">%1$d zaman aralığı</item>
+        <item quantity="other">%1$d zaman aralığı</item>
+    </plurals>
 
     <string name="device_cooling_power_title">Güç</string>
     <string name="device_cooling_estimated_consumption">Tahmini tüketim</string>
 
-    <string name="device_cooling_status_title">Durum</string>
+    <string name="device_cooling_system_status_title">Sistem Durumu</string>
     <string name="device_cooling_status_fan">Fan</string>
     <string name="device_cooling_status_sensors">Sensörler</string>
     <string name="device_cooling_status_connection">Bağlantı</string>
     <string name="device_cooling_status_alarm">Alarm</string>
     <string name="device_cooling_status_ready">Hazır</string>
+    <string name="device_cooling_status_warning">Uyarı</string>
+    <string name="device_cooling_status_fault">Arızalı</string>
     <string name="device_cooling_status_online">Çevrimiçi</string>
     <string name="device_cooling_status_offline">Çevrimdışı</string>
+    <string name="device_cooling_status_no_alarm">Yok</string>
+    <plurals name="device_cooling_active_alarm_count">
+        <item quantity="one">%1$d alarm</item>
+        <item quantity="other">%1$d alarm</item>
+    </plurals>
 
-    <string name="device_cooling_manual_card_title">Manuel Fan Hızı</string>
-    <string name="device_cooling_manual_card_subtitle">Yalnız Manuel modda kullanılabilir</string>
-
-    <string name="device_cooling_automatic_card_title">Otomatik Fan</string>
-    <string name="device_cooling_automatic_card_subtitle">Fan hızı su sıcaklığına göre ayarlanır</string>
     <string name="device_cooling_fan_start_temperature">Fan Başlangıç Sıcaklığı</string>
     <string name="device_cooling_max_speed_temperature">Maksimum Hız Sıcaklığı</string>
-    <string name="device_cooling_automatic_range_help">Fan hızı bu iki sıcaklık arasında kademeli olarak artar</string>
 
-    <string name="device_cooling_program_card_title">Fan Programı</string>
     <string name="device_cooling_program_not_configured">Program ayarlanmadı</string>
-    <string name="device_cooling_program_not_configured_hint">Zaman dilimlerini fan başlangıç sıcaklığı ve sabit fan hızıyla ayarla</string>
-
     <string name="device_cooling_edit_automatic_description">Otomatik fan ayarlarını düzenle</string>
+    <string name="device_cooling_manual_settings_description">Manuel fan ayarlarını aç</string>
     <string name="device_cooling_edit_program_description">Fan programını düzenle</string>
 
     <string name="device_cooling_automatic_settings_title">Otomatik Fan</string>
@@ -129,6 +142,6 @@
     <string name="device_cooling_temperature_value_format">%1$.1f °C</string>
     <string name="device_cooling_humidity_value_format">%1$.0f%%</string>
     <string name="device_cooling_percent_value_format">%1$d%%</string>
-    <string name="device_cooling_power_value_format">%1$.1f W</string>
-    <string name="device_cooling_energy_value_format">%1$.2f kWh / gün</string>
+    <string name="device_cooling_power_number_format">%1$.3f</string>
+    <string name="device_cooling_energy_value_format">%1$.4f kWh/gün</string>
 </resources>
