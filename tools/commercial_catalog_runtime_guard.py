@@ -71,12 +71,12 @@ require(
 
 require("// GENERATED FILE. DO NOT EDIT." in generated_catalog, "generated catalog header is missing")
 require(
-    "cf2222e58e6c69a729071a5d1205497b3fceaa70" in generated_catalog,
+    "1bf5d94af804acd87d4a5ed25971abc0fd9f048d" in generated_catalog,
     "generated catalog must remain pinned to the firmware merge commit",
 )
 require(
-    generated_catalog.count("    AqlCommercialCatalogProduct(") == 9,
-    "generated catalog must contain exactly nine product rows",
+    generated_catalog.count("    AqlCommercialCatalogProduct(") == 7,
+    "generated catalog must contain exactly seven product rows",
 )
 for token in (
     "data class AqlCommercialCatalogProfile",
@@ -176,8 +176,6 @@ for product_key in (
     "DOSING_DOSE_PRO_2",
     "DOSING_DOSE_PRO_4",
     "COOLING_COOL_PRO_1F",
-    "COOLING_COOL_PRO_2F",
-    "COOLING_COOL_PRO_3F",
 ):
     require(product_key in slot_resolver, f"channel-slot shape is missing: {product_key}")
 for forbidden in (
