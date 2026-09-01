@@ -9,6 +9,11 @@ import com.aqua.aqualight.application.devices.DeviceRootRouteResolver
 import com.aqua.aqualight.application.devices.DeviceRootSnapshot
 import com.aqua.aqualight.application.devices.OwnerDeviceAvailability
 import com.aqua.aqualight.application.devices.OwnerDeviceFamily
+import com.aqua.aqualight.application.devices.cooling.DeviceCoolingAutomaticSettingsOperations
+import com.aqua.aqualight.application.devices.cooling.DeviceCoolingAutomaticSettingsSnapshot
+import com.aqua.aqualight.application.devices.cooling.DeviceCoolingTemperatureHistoryLoadResult
+import com.aqua.aqualight.application.devices.cooling.DeviceCoolingTemperatureHistoryOperations
+import com.aqua.aqualight.application.devices.cooling.DeviceCoolingTemperatureHistoryRange
 import com.aqua.aqualight.application.devices.cooling.control.DeviceCoolingControlFailure
 import com.aqua.aqualight.application.devices.cooling.control.DeviceCoolingControlMode
 import com.aqua.aqualight.application.devices.cooling.control.DeviceCoolingControlOperations
@@ -116,7 +121,9 @@ class DeviceRootViewModelBoundaryTest {
     private fun coolingViewModel(operations: DeviceRootOperations): DeviceCoolingRootViewModel =
         DeviceCoolingRootViewModel(
             operations = operations,
-            controlOperations = UnavailableCoolingControlOperations
+            controlOperations = UnavailableCoolingControlOperations,
+            historyOperations = UnavailableCoolingHistoryOperations,
+            automaticSettingsOperations = UnavailableCoolingAutomaticOperations
         )
 
     private fun rootSnapshot(
@@ -197,5 +204,34 @@ class DeviceRootViewModelBoundaryTest {
             deviceUid: String,
             percent: Int
         ): DeviceCoolingControlResult = unavailable
+    }
+
+    private object UnavailableCoolingHistoryOperations : DeviceCoolingTemperatureHistoryOperations {
+        override suspend fun loadTemperatureHistory(
+            deviceUid: String,
+            range: DeviceCoolingTemperatureHistoryRange
+        ): DeviceCoolingTemperatureHistoryLoadResult =
+            DeviceCoolingTemperatureHistoryLoadResult.Unavailable
+    }
+
+    private object UnavailableCoolingAutomaticOperations : DeviceCoolingAutomaticSettingsOperations {
+        private val snapshot = DeviceCoolingAutomaticSettingsSnapshot()
+
+        override fun observeAutomaticSettings(
+            deviceUid: String
+        ): Flow<DeviceCoolingAutomaticSettingsSnapshot> = flowOf(snapshot)
+
+        override fun currentAutomaticSettings(
+            deviceUid: String
+        ): DeviceCoolingAutomaticSettingsSnapshot = snapshot
+
+        override suspend fun refreshAutomaticSettings(deviceUid: String): Result<Unit> =
+            Result.success(Unit)
+
+        override suspend fun saveAutomaticTemperatureRange(
+            deviceUid: String,
+            startTemperatureC: Double,
+            maximumSpeedTemperatureC: Double
+        ): Result<Unit> = Result.failure(UnsupportedOperationException())
     }
 }
