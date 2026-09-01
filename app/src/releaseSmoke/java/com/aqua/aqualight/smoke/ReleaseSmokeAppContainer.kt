@@ -32,6 +32,8 @@ import com.aqua.aqualight.data.care.integrity.snapshotTasksForIntegrity
 import com.aqua.aqualight.data.devices.DefaultDeviceRootOperations
 import com.aqua.aqualight.data.devices.DefaultDeviceStatusOperations
 import com.aqua.aqualight.data.devices.DefaultOwnerDevicesOperations
+import com.aqua.aqualight.data.devices.cooling.DefaultDeviceCoolingAutomaticSettingsOperations
+import com.aqua.aqualight.data.devices.cooling.DefaultDeviceCoolingTemperatureHistoryOperations
 import com.aqua.aqualight.data.devices.cooling.control.DefaultDeviceCoolingControlOperations
 import com.aqua.aqualight.data.devices.menu.DefaultDeviceMenuAccessOperations
 import com.aqua.aqualight.data.devices.provisioning.DefaultProvisioningDiscoveryOperations
@@ -238,7 +240,10 @@ private class ReleaseSmokeViewModelFactory(
         modelClass.isAssignableFrom(DeviceCoolingRootViewModel::class.java) ->
             DeviceCoolingRootViewModel(
                 operations = DefaultDeviceRootOperations(devicesRepository),
-                controlOperations = DefaultDeviceCoolingControlOperations(devicesRepository)
+                controlOperations = DefaultDeviceCoolingControlOperations(devicesRepository),
+                historyOperations = DefaultDeviceCoolingTemperatureHistoryOperations(devicesRepository),
+                automaticSettingsOperations =
+                    DefaultDeviceCoolingAutomaticSettingsOperations(devicesRepository)
             )
         modelClass.isAssignableFrom(DeviceTimerRootViewModel::class.java) ->
             DeviceTimerRootViewModel(DefaultDeviceRootOperations(devicesRepository))
