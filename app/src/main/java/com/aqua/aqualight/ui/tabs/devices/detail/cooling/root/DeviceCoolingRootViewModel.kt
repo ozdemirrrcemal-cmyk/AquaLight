@@ -36,13 +36,7 @@ class DeviceCoolingRootViewModel(
     val uiState: StateFlow<DeviceCoolingRootUiState> = _uiState.asStateFlow()
 
     private var boundDeviceUid = ""
-    private var observeJob: Job? = null
-    private var historyJob: Job? = null
-    private var automaticObserveJob: Job? = null
-    private var automaticRefreshJob: Job? = null
-    private var controlObserveJob: Job? = null
-    private var controlRefreshJob: Job? = null
-    private var controlMutationJob: Job? = null
+    private val jobs = DeviceCoolingRootJobs()
 
     fun bind(deviceUidText: String) {
         val deviceUid = deviceUidText.trim()
@@ -53,7 +47,7 @@ class DeviceCoolingRootViewModel(
         if (boundDeviceUid == deviceUid) return
 
         boundDeviceUid = deviceUid
-        cancelJobs()
+        jobs.cancelAll()
 
         var initialState = DeviceCoolingRootUiState(
             deviceUid = deviceUid,
@@ -80,7 +74,7 @@ class DeviceCoolingRootViewModel(
         observeCoolingControl(deviceUid)
         refreshCoolingControl(deviceUid)
         observeAutomaticSettings(deviceUid)
-        observeJob = viewModelScope.launch {
+        jobs.observeJob = viewModelScope.launch {
             operations.observe(deviceUid).collect { snapshot ->
                 if (boundDeviceUid != deviceUid) return@collect
                 _uiState.update { current ->
@@ -126,11 +120,11 @@ class DeviceCoolingRootViewModel(
         deviceUid: String,
         request: suspend () -> DeviceCoolingControlResult
     ) {
-        controlMutationJob?.cancel()
+        jobs.controlMutationJob?.cancel()
         _uiState.update { state ->
             state.copy(controlMutationState = CoolingMutationState.Saving)
         }
-        controlMutationJob = viewModelScope.launch {
+        jobs.controlMutationJob = viewModelScope.launch {
             val result = request()
             if (boundDeviceUid == deviceUid) {
                 _uiState.update { state -> state.afterControlMutation(result) }
@@ -139,7 +133,7 @@ class DeviceCoolingRootViewModel(
     }
 
     private fun observeCoolingControl(deviceUid: String) {
-        controlObserveJob = viewModelScope.launch(start = CoroutineStart.UNDISPATCHED) {
+        jobs.controlObserveJob = viewModelScope.launch(start = CoroutineStart.UNDISPATCHED) {
             controlOperations.observeControl(deviceUid).collect { result ->
                 if (boundDeviceUid != deviceUid) return@collect
                 _uiState.update { state ->
@@ -153,7 +147,7 @@ class DeviceCoolingRootViewModel(
         _uiState.update { state ->
             state.copy(controlState = state.controlState.beginControlRefresh())
         }
-        controlRefreshJob = viewModelScope.launch {
+        jobs.controlRefreshJob = viewModelScope.launch {
             val result = controlOperations.refreshControl(deviceUid)
             if (boundDeviceUid != deviceUid) return@launch
             _uiState.update { state ->
@@ -163,7 +157,7 @@ class DeviceCoolingRootViewModel(
     }
 
     private fun observeAutomaticSettings(deviceUid: String) {
-        automaticObserveJob = viewModelScope.launch(start = CoroutineStart.UNDISPATCHED) {
+        jobs.automaticObserveJob = viewModelScope.launch(start = CoroutineStart.UNDISPATCHED) {
             automaticSettingsOperations.observeAutomaticSettings(deviceUid).collect { snapshot ->
                 if (boundDeviceUid != deviceUid) return@collect
                 _uiState.update { state ->
@@ -184,7 +178,7 @@ class DeviceCoolingRootViewModel(
                 automaticSummaryState = state.automaticSummaryState.beginAutomaticRefresh()
             )
         }
-        automaticRefreshJob = viewModelScope.launch {
+        jobs.automaticRefreshJob = viewModelScope.launch {
             val result = automaticSettingsOperations.refreshAutomaticSettings(deviceUid)
             if (boundDeviceUid != deviceUid) return@launch
             _uiState.update { state ->
@@ -201,7 +195,7 @@ class DeviceCoolingRootViewModel(
     }
 
     private fun loadOverviewHistory(deviceUid: String) {
-        historyJob = viewModelScope.launch {
+        jobs.historyJob = viewModelScope.launch {
             val result = historyOperations.loadTemperatureHistory(
                 deviceUid = deviceUid,
                 range = DeviceCoolingTemperatureHistoryRange.HOURS_24
@@ -214,12 +208,22 @@ class DeviceCoolingRootViewModel(
     }
 
     private fun clearBinding() {
-        cancelJobs()
+        jobs.cancelAll()
         boundDeviceUid = ""
         _uiState.value = DeviceCoolingRootUiState()
     }
+}
 
-    private fun cancelJobs() {
+private class DeviceCoolingRootJobs {
+    var observeJob: Job? = null
+    var historyJob: Job? = null
+    var automaticObserveJob: Job? = null
+    var automaticRefreshJob: Job? = null
+    var controlObserveJob: Job? = null
+    var controlRefreshJob: Job? = null
+    var controlMutationJob: Job? = null
+
+    fun cancelAll() {
         observeJob?.cancel()
         historyJob?.cancel()
         automaticObserveJob?.cancel()
@@ -227,6 +231,14 @@ class DeviceCoolingRootViewModel(
         controlObserveJob?.cancel()
         controlRefreshJob?.cancel()
         controlMutationJob?.cancel()
+
+        observeJob = null
+        historyJob = null
+        automaticObserveJob = null
+        automaticRefreshJob = null
+        controlObserveJob = null
+        controlRefreshJob = null
+        controlMutationJob = null
     }
 }
 
