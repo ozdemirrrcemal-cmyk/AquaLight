@@ -8,7 +8,7 @@ import org.junit.Test
 class DeviceFirmwareManifestUrlResolverTest {
 
     @Test
-    fun `resolves a distinct stable channel for all nine commercial products`() {
+    fun `resolves a distinct stable channel for all seven commercial products`() {
         val productKeys = listOf(
             "LIGHT_WRGB_PRO_ELITE",
             "LIGHT_RGB_PRO_SLIM",
@@ -16,9 +16,7 @@ class DeviceFirmwareManifestUrlResolverTest {
             "TIMER_RELAY_PRO_4",
             "DOSING_DOSE_PRO_2",
             "DOSING_DOSE_PRO_4",
-            "COOLING_COOL_PRO_1F",
-            "COOLING_COOL_PRO_2F",
-            "COOLING_COOL_PRO_3F"
+            "COOLING_COOL_PRO_1F"
         )
 
         val resolved = productKeys.associateWith { productKey ->
@@ -28,7 +26,7 @@ class DeviceFirmwareManifestUrlResolverTest {
             )
         }
 
-        assertEquals(9, resolved.values.toSet().size)
+        assertEquals(7, resolved.values.toSet().size)
         assertEquals(
             DEVICE_FIRMWARE_PRODUCT_ENVIRONMENTS,
             productKeys.map { it.lowercase() }.toSet()
@@ -75,7 +73,9 @@ class DeviceFirmwareManifestUrlResolverTest {
                 "DOSING",
                 "DOSING_DOSE_PRO",
                 "dosing_dose_pro_2",
-                " DOSING_DOSE_PRO_2"
+                " DOSING_DOSE_PRO_2",
+                "COOLING_COOL_PRO_2F",
+                "COOLING_COOL_PRO_3F"
             )
         ) {
             assertThrows(IllegalArgumentException::class.java) {
