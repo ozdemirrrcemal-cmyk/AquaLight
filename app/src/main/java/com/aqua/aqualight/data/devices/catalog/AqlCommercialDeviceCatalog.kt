@@ -139,7 +139,7 @@ internal object AqlCommercialDeviceCatalog {
         else -> null
     }
 
-    private const val EXPECTED_PRODUCT_COUNT = 9
+    private const val EXPECTED_PRODUCT_COUNT = 7
 }
 
 private data class ReportedCatalogProduct(
