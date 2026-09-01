@@ -82,6 +82,7 @@
     <string name="device_cooling_automatic_zone_maximum">Maksimum</string>
     <string name="device_cooling_automatic_silent_mode_title">Sessiz Mod</string>
     <string name="device_cooling_automatic_silent_mode_description">Daha sessiz çalışma için otomatik fan çıkışını %1$d%% ile sınırlar.</string>
+    <string name="device_cooling_automatic_silent_mode_unavailable">Bağlı firmware sürümünde kullanılamıyor.</string>
     <string name="device_cooling_automatic_silent_mode_preview">Firmware desteği bekleniyor. Bu anahtar şimdilik yalnızca yerel önizlemedir ve cihaza gönderilmez.</string>
     <string name="device_cooling_automatic_silent_mode_toggle_description">Sessiz Modu aç veya kapat</string>
     <string name="device_cooling_automatic_save">Kaydet</string>
