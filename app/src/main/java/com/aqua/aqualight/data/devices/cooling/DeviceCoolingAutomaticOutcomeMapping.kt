@@ -25,10 +25,7 @@ internal fun DeviceRuntimeCommandOutcome<DeviceCoolingConfigApplyResult>.toAutom
     requestedMaximumC: Double
 ): DeviceCoolingAutomaticCommandResult = when (this) {
     is DeviceRuntimeCommandOutcome.Success -> if (
-        value.saveRequested &&
-        value.saved &&
-        abs(value.config.minTemperatureC - requestedStartC) <= AUTOMATIC_RESULT_EPSILON &&
-        abs(value.config.maxTemperatureC - requestedMaximumC) <= AUTOMATIC_RESULT_EPSILON
+        value.matchesSavedAutomaticRange(requestedStartC, requestedMaximumC)
     ) {
         DeviceCoolingAutomaticCommandResult.Success
     } else {
@@ -64,6 +61,17 @@ internal suspend fun requestAutomaticStatusWithRetry(
         outcome = request()
     }
     return outcome
+}
+
+private fun DeviceCoolingConfigApplyResult.matchesSavedAutomaticRange(
+    requestedStartC: Double,
+    requestedMaximumC: Double
+): Boolean {
+    val persistenceConfirmed = saveRequested && saved
+    val startMatches = abs(config.minTemperatureC - requestedStartC) <= AUTOMATIC_RESULT_EPSILON
+    val maximumMatches =
+        abs(config.maxTemperatureC - requestedMaximumC) <= AUTOMATIC_RESULT_EPSILON
+    return persistenceConfirmed && startMatches && maximumMatches
 }
 
 private fun DeviceRuntimeCommandOutcome<*>.isAutomaticTransientReadFailure(): Boolean = when (this) {
