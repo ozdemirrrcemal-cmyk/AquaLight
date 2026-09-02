@@ -51,16 +51,25 @@ class CoolingHeroPresentationTest {
         val presentation = state(fanPercent = 60, alarmCount = 1).toCoolingHeroPresentation()
 
         assertEquals(CoolingHeroVisualStatus.ATTENTION, presentation.status)
+        assertTrue(presentation.isCooling)
+    }
+
+    @Test
+    fun `fan fault prevents false motion even when output is retained`() {
+        val presentation = state(
+            fanPercent = 60,
+            fanHealth = CoolingHealthState.FAULT
+        ).toCoolingHeroPresentation()
+
+        assertEquals(CoolingHeroVisualStatus.ATTENTION, presentation.status)
         assertFalse(presentation.isCooling)
     }
 
     @Test
     fun `offline root never animates retained telemetry`() {
-        val presentation = state(
-            fanPercent = 60,
-            connection = DeviceConnectionVisualState.OFFLINE,
-            contentEnabled = false
-        ).toCoolingHeroPresentation()
+        val presentation = state(fanPercent = 60, contentEnabled = false)
+            .copy(connectionVisualState = DeviceConnectionVisualState.OFFLINE)
+            .toCoolingHeroPresentation()
 
         assertEquals(CoolingHeroVisualStatus.OFFLINE, presentation.status)
         assertFalse(presentation.isCooling)
@@ -70,10 +79,10 @@ class CoolingHeroPresentationTest {
         fanPercent: Int,
         freshness: CoolingDataFreshness = CoolingDataFreshness.CURRENT,
         alarmCount: Int = 0,
-        connection: DeviceConnectionVisualState = DeviceConnectionVisualState.ONLINE,
+        fanHealth: CoolingHealthState = CoolingHealthState.READY,
         contentEnabled: Boolean = true
     ): DeviceCoolingRootUiState = DeviceCoolingRootUiState(
-        connectionVisualState = connection,
+        connectionVisualState = DeviceConnectionVisualState.ONLINE,
         contentEnabled = contentEnabled,
         controlState = CoolingDataState.Content(
             value = CoolingControlPresentation(
@@ -96,7 +105,7 @@ class CoolingHeroPresentationTest {
                 roomTemperatureHistoryC = emptyList(),
                 programSlotCount = null,
                 nextProgramStartMinutesOfDay = null,
-                fanHealth = CoolingHealthState.READY,
+                fanHealth = fanHealth,
                 sensorHealth = CoolingHealthState.READY,
                 activeAlarmCount = alarmCount
             )

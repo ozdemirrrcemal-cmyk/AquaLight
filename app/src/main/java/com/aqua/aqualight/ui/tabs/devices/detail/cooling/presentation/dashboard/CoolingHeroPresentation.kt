@@ -17,11 +17,9 @@ internal data class CoolingHeroPresentation(
     val status: CoolingHeroVisualStatus,
     val fanPercent: Int?,
     val temperatureC: Double?,
-    val mode: CoolingControlMode?
-) {
+    val mode: CoolingControlMode?,
     val isCooling: Boolean
-        get() = status == CoolingHeroVisualStatus.COOLING
-
+) {
     val motionIntensity: Float
         get() = if (isCooling) {
             fanPercent.orZero().coerceIn(MINIMUM_PERCENT, MAXIMUM_PERCENT) / MAXIMUM_PERCENT_FLOAT
@@ -30,13 +28,15 @@ internal data class CoolingHeroPresentation(
         }
 }
 
-internal fun DeviceCoolingRootUiState.toCoolingHeroPresentation(): CoolingHeroPresentation =
-    CoolingHeroPresentation(
+internal fun DeviceCoolingRootUiState.toCoolingHeroPresentation(): CoolingHeroPresentation {
+    return CoolingHeroPresentation(
         status = resolveCoolingHeroStatus(),
         fanPercent = fanPercentNow,
         temperatureC = tankTemperatureC,
-        mode = selectedMode
+        mode = selectedMode,
+        isCooling = hasCurrentFanMotion()
     )
+}
 
 private fun DeviceCoolingRootUiState.resolveCoolingHeroStatus(): CoolingHeroVisualStatus = when {
     connectionVisualState != DeviceConnectionVisualState.ONLINE || !contentEnabled ->
@@ -54,6 +54,13 @@ private fun DeviceCoolingRootUiState.hasCoolingAttentionState(): Boolean =
 
 private fun CoolingHealthState.requiresAttention(): Boolean =
     this == CoolingHealthState.FAULT || this == CoolingHealthState.WARNING
+
+private fun DeviceCoolingRootUiState.hasCurrentFanMotion(): Boolean {
+    val hasLiveControl = connectionVisualState == DeviceConnectionVisualState.ONLINE &&
+        contentEnabled && controlAvailable
+    return hasLiveControl && fanHealth != CoolingHealthState.FAULT &&
+        fanPercentNow.orZero() > MINIMUM_PERCENT
+}
 
 private fun Int?.orZero(): Int = this ?: 0
 
