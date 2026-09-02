@@ -3,7 +3,6 @@ package com.aqua.aqualight.ui.tabs.devices.detail.dosing.channel.calibration
 import com.aqua.aqualight.ui.common.dosing.AquaDosingCalibrationGeometry
 
 internal const val ILLUSTRATION_TRANSITION_MILLIS = 320
-internal const val CALIBRATION_RUN_DURATION_MILLIS = 3_000
 internal const val DEFAULT_VERIFICATION_DURATION_MILLIS = 4_000
 internal const val DEFAULT_ILLUSTRATION_DURATION_MILLIS = 900
 internal const val VERIFICATION_DOSE_ML = 4L

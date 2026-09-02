@@ -30,6 +30,9 @@ internal fun reduceDosingCalibrationSnapshot(
                 step = recoveryStep,
                 isPumpActive = snapshot.manualActive,
                 remainingMs = remainingMs,
+                operationDurationMs = snapshot.durationMs.takeIf {
+                    snapshot.sessionPhase == DeviceDosingCalibrationSessionPhase.RUNNING
+                } ?: 0L,
                 candidateDoseMsPerMl = snapshot.pendingDoseMsPerMl.takeIf { it > 0L }
             )
         }

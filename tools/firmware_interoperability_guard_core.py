@@ -35,6 +35,7 @@ INTEROPERABILITY_TEST_PATH = (
 
 FIRMWARE_REPOSITORY = "ozdemirrrcemal-cmyk/AquaLight-Firmware"
 FIRMWARE_COMMIT = "1bf5d94af804acd87d4a5ed25971abc0fd9f048d"
+DOSING_FIRMWARE_COMMIT = FIRMWARE_COMMIT
 COMMAND_NAMES_BLOB = "7bff40576bb77450c662181e2b09b5be961e6809"
 EVENT_CONTRACT_BLOB = "f71cbe76679fd425d6697c89800975e00e9edee5"
 PRODUCT_CATALOG_EXPORT_COMMIT = "1bf5d94af804acd87d4a5ed25971abc0fd9f048d"
@@ -337,8 +338,16 @@ def verify_command_and_event_coverage(interoperability: dict[str, Any]) -> None:
     require(isinstance(dosing_firmware, dict), "Dosing firmware pin is missing")
     require(isinstance(dosing_contract, dict), "Dosing contract pin is missing")
     require(
-        dosing_firmware.get("commit") == FIRMWARE_COMMIT,
-        "Dosing firmware pin must match the global firmware revision",
+        dosing_firmware.get("repository") == FIRMWARE_REPOSITORY,
+        "Dosing firmware repository drifted",
+    )
+    require(
+        dosing_firmware.get("commit") == DOSING_FIRMWARE_COMMIT,
+        "Dosing feature firmware revision drifted",
+    )
+    require(
+        dosing_firmware.get("coreInteroperabilityCommit") == FIRMWARE_COMMIT,
+        "Dosing feature pin must declare its reviewed core interoperability revision",
     )
     require(
         dosing_contract.get("productionWiring") is True,

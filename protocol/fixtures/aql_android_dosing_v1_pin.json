@@ -3,15 +3,16 @@
   "schema": "aql.android.dosing-v1.pin.v1",
   "firmware": {
     "repository": "ozdemirrrcemal-cmyk/AquaLight-Firmware",
-    "commit": "1bf5d94af804acd87d4a5ed25971abc0fd9f048d",
+    "commit": "fa147211749c2dcb2f56e15a617a00010e071984",
+    "coreInteroperabilityCommit": "1bf5d94af804acd87d4a5ed25971abc0fd9f048d",
     "sources": {
-      "src/api/v1/commands/AqlDosingCommands.hpp": "5c0201f9a4e09f93f4dd54af8c1fba9dec167105",
+      "src/api/v1/commands/AqlDosingCommands.hpp": "34cfc3287485f6a46a73b47f061a5456cde9aa9d",
       "src/api/v1/commands/AqlDosingProgressCommands.hpp": "8700e785bdd2e747abea3b09eff97755e2addad0",
       "src/modules/dosing/AqlDosingProgramApiCodec.hpp": "33f4dead13c82f7966d58c1ba74054e181dab40c",
       "src/modules/dosing/AqlDosingStatusCodec.hpp": "29a989b9f008a6ca39fb8ac7182915e87e794855",
       "src/modules/dosing/AqlDosingSchedulingMetadataCodec.hpp": "cab751e2d508651d17550c48314707524053f995",
-      "src/modules/dosing/AqlDosingRuntimeEvent.hpp": "0b40b1eff35af48976f95fedba5a2854885f2439",
-      "src/modules/dosing/AqlDosingRuntimeService.hpp": "aa43e46ad16c8552c29e3526101f8e8474dee769"
+      "src/modules/dosing/AqlDosingRuntimeEvent.hpp": "90069dde7897eb815a321845661934c6e1db823c",
+      "src/modules/dosing/AqlDosingRuntimeService.hpp": "bb868c59f0719f57c05930601fd4d014466a75a2"
     }
   },
   "contract": {
@@ -36,7 +37,7 @@
     ]
   },
   "fixtures": {
-    "aql_dosing_calibration_v1.json": "bb7ce3da02db64e6c83ef755ca416a137e5bab60",
+    "aql_dosing_calibration_v1.json": "fd297d250f8493998b41430d6a0cc2098a1e22e9",
     "aql_dosing_persistence_v1.json": "fcdb64581dd7e944f4bb9710e6ec9eaad40f8bb6",
     "aql_dosing_program_v1.json": "ee09ae4231899511aa04ad970f78f3232b0db2e8",
     "aql_dosing_progress_budget_v1.json": "a9f71db11191d42d76e2951bb09f305229140399",
@@ -48,7 +49,7 @@
       "blob": "ea7e8d0ae8a846441edd51e9d24a26fbf9da65db",
       "derivedFrom": "src/modules/dosing/AqlDosingStatusCodec.hpp",
       "sourceBlob": "29a989b9f008a6ca39fb8ac7182915e87e794855",
-      "firmwareCommit": "1bf5d94af804acd87d4a5ed25971abc0fd9f048d"
+      "firmwareCommit": "fa147211749c2dcb2f56e15a617a00010e071984"
     }
   }
 }

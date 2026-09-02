@@ -83,8 +83,12 @@ class AqlFirmwareInteroperabilityTest {
 
         val dosingPin = loadJsonFixture(DOSING_PIN_FIXTURE)
         assertEquals(
-            FIRMWARE_COMMIT,
+            DOSING_FIRMWARE_COMMIT,
             dosingPin.getJSONObject("firmware").getString("commit")
+        )
+        assertEquals(
+            FIRMWARE_COMMIT,
+            dosingPin.getJSONObject("firmware").getString("coreInteroperabilityCommit")
         )
         val dosingContract = dosingPin.getJSONObject("contract")
         assertTrue(dosingContract.getBoolean("productionWiring"))
@@ -482,6 +486,7 @@ class AqlFirmwareInteroperabilityTest {
         const val PRODUCT_CATALOG_FIXTURE = "aql_product_catalog_v1.json"
         const val DOSING_PIN_FIXTURE = "aql_android_dosing_v1_pin.json"
         const val FIRMWARE_COMMIT = "1bf5d94af804acd87d4a5ed25971abc0fd9f048d"
+        const val DOSING_FIRMWARE_COMMIT = "fa147211749c2dcb2f56e15a617a00010e071984"
 
         val WEEKDAYS = listOf(true, false, false, false, false, false, false)
     }

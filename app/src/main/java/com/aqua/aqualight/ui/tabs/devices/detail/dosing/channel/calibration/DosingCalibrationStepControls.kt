@@ -107,7 +107,7 @@ private fun CalibrationRunControls(
     colors: AquaGuidedFlowColors,
     onAction: (DeviceDosingCalibrationAction) -> Unit
 ) {
-    if (state.isBusy) CountdownMetric(state.remainingMs, colors)
+    if (state.isBusy && state.remainingMs > 0L) CountdownMetric(state.remainingMs, colors)
     AquaGuidedFlowButton(
         text = calibrationActionText(state, R.string.device_dosing_calibration_start_collection),
         onClick = { onAction(DeviceDosingCalibrationAction.StartCalibration) },
@@ -151,7 +151,7 @@ private fun CalibrationVerificationControls(
     colors: AquaGuidedFlowColors,
     onAction: (DeviceDosingCalibrationAction) -> Unit
 ) {
-    if (state.isBusy) CountdownMetric(state.remainingMs, colors)
+    if (state.isBusy && state.remainingMs > 0L) CountdownMetric(state.remainingMs, colors)
     AquaGuidedFlowButton(
         text = calibrationActionText(state, R.string.device_dosing_calibration_dispense_test),
         onClick = { onAction(DeviceDosingCalibrationAction.StartVerification) },

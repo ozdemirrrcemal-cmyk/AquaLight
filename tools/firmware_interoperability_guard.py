@@ -7,6 +7,7 @@ import firmware_interoperability_guard_core as guard
 
 
 guard.FIRMWARE_COMMIT = "1bf5d94af804acd87d4a5ed25971abc0fd9f048d"
+guard.DOSING_FIRMWARE_COMMIT = "fa147211749c2dcb2f56e15a617a00010e071984"
 guard.REQUEST_CONTRACT_BLOBS = dict(guard.REQUEST_CONTRACT_BLOBS)
 guard.REQUEST_CONTRACT_BLOBS["src/api/v1/commands/AqlTimeCommands.hpp"] = (
     "ee6e87ab0e1152ffd3d9004fe8b5c7e380488a4f"

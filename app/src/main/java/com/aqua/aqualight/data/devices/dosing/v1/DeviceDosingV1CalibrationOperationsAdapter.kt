@@ -60,10 +60,7 @@ internal class DeviceDosingV1CalibrationOperationsAdapter(
             requireCalibrationMutation(baseline.controls.calibrationEditable)
             adapter.repository.startCalibration(
                 uid,
-                DeviceDosingV1CalibrationStartRequest(
-                    channelKey = channelKey,
-                    durationMillis = constraints.calibrationRunDurationMs
-                )
+                DeviceDosingV1CalibrationStartRequest(channelKey = channelKey)
             )
         },
         channel = DeviceDosingV1CalibrationStartResult::channel

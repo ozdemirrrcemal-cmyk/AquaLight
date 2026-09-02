@@ -33,6 +33,7 @@ data class DosingCalibrationProgressState(
     val step: DeviceDosingCalibrationStep = DeviceDosingCalibrationStep.NAME,
     val isPumpActive: Boolean = false,
     val remainingMs: Long = 0L,
+    val operationDurationMs: Long = 0L,
     val candidateDoseMsPerMl: Long? = null
 )
 
@@ -57,6 +58,7 @@ data class DeviceDosingCalibrationUiState(
     val step: DeviceDosingCalibrationStep get() = progress.step
     val isPumpActive: Boolean get() = progress.isPumpActive
     val remainingMs: Long get() = progress.remainingMs
+    val operationDurationMs: Long get() = progress.operationDurationMs
     val candidateDoseMsPerMl: Long? get() = progress.candidateDoseMsPerMl
     val pumpCount: Int get() = channel.pumpCount
     val channelNumber: Int get() = channel.channelNumber

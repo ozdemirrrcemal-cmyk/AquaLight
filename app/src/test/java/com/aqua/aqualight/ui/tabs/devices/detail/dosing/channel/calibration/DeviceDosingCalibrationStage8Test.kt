@@ -50,6 +50,8 @@ class DeviceDosingCalibrationStage8Test {
             assertTrue(viewModel.uiState.value.isBusy)
             assertTrue(viewModel.uiState.value.isPumpActive)
             assertEquals(1_500L, viewModel.uiState.value.remainingMs)
+            assertEquals(2_000L, viewModel.uiState.value.operationDurationMs)
+            assertEquals(2_000, viewModel.uiState.value.illustrationOperationDurationMillis())
             val refreshesBeforeDeadline = operations.refreshes
             operations.completeCalibrationOnRefresh = true
 
@@ -360,7 +362,7 @@ class DeviceDosingCalibrationStage8Test {
         fun idleSnapshot() = snapshot()
 
         fun runningSnapshot(remainingMs: Long): DeviceDosingCalibrationSnapshot {
-            val durationMs = 5_000L
+            val durationMs = 2_000L
             val uptimeMs = 12_000L
             return snapshot().copy(
                 deviceUptimeMs = uptimeMs,
@@ -373,9 +375,9 @@ class DeviceDosingCalibrationStage8Test {
 
         fun activeVerificationSnapshot(remainingMs: Long) = snapshot().copy(
             sessionPhase = DeviceDosingCalibrationSessionPhase.PENDING_VERIFICATION,
-            durationMs = 5_000L,
+            durationMs = 2_000L,
             measuredMl = 4.0,
-            pendingDoseMsPerMl = 1_250L,
+            pendingDoseMsPerMl = 500L,
             verificationDoseStarted = true,
             verificationDoseComplete = false,
             verificationDoseRemainingMs = remainingMs,

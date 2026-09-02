@@ -500,6 +500,7 @@ private fun markCalibrationSnapshotUnavailable(
                 isBusy = false,
                 isPumpActive = false,
                 remainingMs = 0L,
+                operationDurationMs = 0L,
                 candidateDoseMsPerMl = null
             )
         }
