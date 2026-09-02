@@ -130,7 +130,7 @@ object DeviceLightThermalV1ResponseParser {
             status.topology.temperatureSensorCount ==
                 DeviceLightThermalV1Contract.TEMPERATURE_SENSOR_CAPACITY
         )
-        StructureParser.validateFanKeys(status.fans)
+        FanValidator.validateKeys(status.fans)
         return status
     }
 
@@ -180,7 +180,7 @@ object DeviceLightThermalV1ResponseParser {
         ).also { telemetry ->
             require(telemetry.schema == DeviceLightThermalV1Contract.SCHEMA)
             require(telemetry.productKey == DeviceLightThermalV1Contract.PRODUCT_KEY)
-            StructureParser.validateFanKeys(telemetry.fans)
+            FanValidator.validateKeys(telemetry.fans)
         }
     }
 
@@ -294,36 +294,8 @@ object DeviceLightThermalV1ResponseParser {
                     DeviceLightThermalV1Contract.FAN_PERCENT_MINIMUM,
                     DeviceLightThermalV1Contract.FAN_PERCENT_MAXIMUM
                 ),
-                hardware = DeviceLightThermalFanHardware(
-                    editable = hardware.requireThermalBoolean("editable"),
-                    gpio = hardware.requireThermalInt(
-                        "gpio",
-                        DeviceLightThermalV1Contract.GPIO_MINIMUM,
-                        DeviceLightThermalV1Contract.GPIO_MAXIMUM
-                    ),
-                    ledcChannel = hardware.requireThermalInt(
-                        "ledcChannel",
-                        DeviceLightThermalV1Contract.LEDC_CHANNEL_MINIMUM,
-                        DeviceLightThermalV1Contract.LEDC_CHANNEL_MAXIMUM
-                    ),
-                    pwmFrequencyHz = hardware.requireThermalInt(
-                        "pwmFrequencyHz",
-                        DeviceLightThermalV1Contract.PWM_FREQUENCY_MINIMUM_HZ,
-                        Int.MAX_VALUE
-                    ),
-                    pwmResolutionBits =
-                        hardware.requireThermalInt(
-                            "pwmResolutionBits",
-                            DeviceLightThermalV1Contract.PWM_RESOLUTION_MINIMUM_BITS,
-                            DeviceLightThermalV1Contract.PWM_RESOLUTION_MAXIMUM_BITS
-                        ),
-                    invert = hardware.requireThermalBoolean("invert"),
-                    pwmOutputHealth = hardware.requireThermalText("pwmOutputHealth"),
-                    health = hardware.requireThermalText("health"),
-                    physicalFeedbackAvailable =
-                        hardware.requireThermalBoolean("physicalFeedbackAvailable")
-                )
-            ).also(::validateFan)
+                hardware = FanHardwareParser.parseStatusHardware(hardware)
+            ).also(FanValidator::validate)
         }
 
         private fun parseEventFan(data: JSONObject): DeviceLightThermalFan {
@@ -357,7 +329,7 @@ object DeviceLightThermalV1ResponseParser {
                     physicalFeedbackAvailable =
                         data.requireThermalBoolean("physicalFeedbackAvailable")
                 )
-            ).also(::validateFan)
+            ).also(FanValidator::validate)
         }
 
         fun parseRuntime(data: JSONObject): DeviceLightThermalRuntime {
@@ -380,7 +352,45 @@ object DeviceLightThermalV1ResponseParser {
             }
         }
 
-        private fun validateFan(fan: DeviceLightThermalFan) {
+        fun parseMode(value: String): DeviceLightThermalMode =
+            DeviceLightThermalMode.entries.singleOrNull { it.wireValue == value }
+                ?: error("Unknown light thermal mode: $value")
+    }
+
+    private object FanHardwareParser {
+        fun parseStatusHardware(hardware: JSONObject): DeviceLightThermalFanHardware =
+            DeviceLightThermalFanHardware(
+                editable = hardware.requireThermalBoolean("editable"),
+                gpio = hardware.requireThermalInt(
+                    "gpio",
+                    DeviceLightThermalV1Contract.GPIO_MINIMUM,
+                    DeviceLightThermalV1Contract.GPIO_MAXIMUM
+                ),
+                ledcChannel = hardware.requireThermalInt(
+                    "ledcChannel",
+                    DeviceLightThermalV1Contract.LEDC_CHANNEL_MINIMUM,
+                    DeviceLightThermalV1Contract.LEDC_CHANNEL_MAXIMUM
+                ),
+                pwmFrequencyHz = hardware.requireThermalInt(
+                    "pwmFrequencyHz",
+                    DeviceLightThermalV1Contract.PWM_FREQUENCY_MINIMUM_HZ,
+                    Int.MAX_VALUE
+                ),
+                pwmResolutionBits = hardware.requireThermalInt(
+                    "pwmResolutionBits",
+                    DeviceLightThermalV1Contract.PWM_RESOLUTION_MINIMUM_BITS,
+                    DeviceLightThermalV1Contract.PWM_RESOLUTION_MAXIMUM_BITS
+                ),
+                invert = hardware.requireThermalBoolean("invert"),
+                pwmOutputHealth = hardware.requireThermalText("pwmOutputHealth"),
+                health = hardware.requireThermalText("health"),
+                physicalFeedbackAvailable =
+                    hardware.requireThermalBoolean("physicalFeedbackAvailable")
+            )
+    }
+
+    private object FanValidator {
+        fun validate(fan: DeviceLightThermalFan) {
             require(fan.regime in setOf("Auto", "On", "Off"))
             require(fan.hardware.pwmOutputHealth in setOf("OK", "FAULT"))
             require(fan.hardware.health in setOf("UNVERIFIED", "HARDWARE_FAULT"))
@@ -388,7 +398,7 @@ object DeviceLightThermalV1ResponseParser {
             fan.hardware.editable?.let { require(!it) }
         }
 
-        fun validateFanKeys(fans: List<DeviceLightThermalFan>) {
+        fun validateKeys(fans: List<DeviceLightThermalFan>) {
             require(
                 fans.map(DeviceLightThermalFan::fanKey) == listOf(
                     DeviceLightThermalV1Contract.FAN_1_KEY,
@@ -396,11 +406,6 @@ object DeviceLightThermalV1ResponseParser {
                 )
             )
         }
-
-        fun parseMode(value: String): DeviceLightThermalMode =
-            DeviceLightThermalMode.entries.singleOrNull { it.wireValue == value }
-                ?: error("Unknown light thermal mode: $value")
-
     }
 
     private val STATUS_KEYS = setOf(
