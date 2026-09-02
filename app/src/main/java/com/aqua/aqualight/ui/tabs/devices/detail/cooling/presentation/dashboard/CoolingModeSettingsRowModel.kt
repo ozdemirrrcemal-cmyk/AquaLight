@@ -70,12 +70,12 @@ private fun coolingManualTargetText(percent: Int?): String = percent?.let { valu
 
 @Composable
 private fun coolingProgramSummaryText(state: DeviceCoolingRootUiState): String {
-    val count = state.programSlotCount
+    val slotCount = state.programSlotCount
     return when {
-        count == null -> stringResource(R.string.device_cooling_value_unavailable)
-        count == 0 -> stringResource(R.string.device_cooling_program_not_configured)
+        slotCount == null -> stringResource(R.string.device_cooling_value_unavailable)
+        slotCount == 0 -> stringResource(R.string.device_cooling_program_not_configured)
         else -> coolingConfiguredProgramSummaryText(
-            count = count,
+            count = slotCount,
             nextStartMinutesOfDay = state.nextProgramStartMinutesOfDay
         )
     }

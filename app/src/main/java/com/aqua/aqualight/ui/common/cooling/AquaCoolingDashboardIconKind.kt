@@ -53,41 +53,6 @@ fun AquaCoolingDashboardIcon(
     }
 }
 
-@Composable
-fun AquaCoolingSelectionIndicator(
-    selected: Boolean,
-    selectedColor: Color,
-    idleColor: Color,
-    modifier: Modifier = Modifier
-) {
-    Canvas(modifier = modifier) {
-        val outline = AquaCoolingDashboardGeometry.radioStrokeWidth.toPx()
-        if (selected) {
-            drawCircle(color = selectedColor)
-            val checkStroke = AquaCoolingDashboardGeometry.radioCheckStrokeWidth.toPx()
-            drawLine(
-                color = AquaCoolingDashboardPalette.primaryText,
-                start = Offset(size.width * 0.29f, size.height * 0.51f),
-                end = Offset(size.width * 0.45f, size.height * 0.67f),
-                strokeWidth = checkStroke,
-                cap = StrokeCap.Round
-            )
-            drawLine(
-                color = AquaCoolingDashboardPalette.primaryText,
-                start = Offset(size.width * 0.45f, size.height * 0.67f),
-                end = Offset(size.width * 0.72f, size.height * 0.34f),
-                strokeWidth = checkStroke,
-                cap = StrokeCap.Round
-            )
-        } else {
-            drawCircle(
-                color = idleColor,
-                style = Stroke(width = outline)
-            )
-        }
-    }
-}
-
 private fun DrawScope.drawWaterIcon(color: Color, stroke: Stroke) {
     val drop = Path().apply {
         moveTo(size.width * 0.50f, size.height * 0.06f)
