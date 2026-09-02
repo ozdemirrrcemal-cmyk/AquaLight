@@ -1,6 +1,6 @@
 // GENERATED FILE. DO NOT EDIT.
 // Source: protocol/fixtures/aql_product_catalog_v1.json
-// Source firmware commit: 1bf5d94af804acd87d4a5ed25971abc0fd9f048d
+// Source firmware commit: 980b03f0d83cdeb997698fc6b207064aa709cec8
 
 package com.aqua.aqualight.data.devices.catalog
 

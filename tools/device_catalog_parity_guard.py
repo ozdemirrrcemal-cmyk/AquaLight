@@ -15,8 +15,8 @@ CONTRACT_PATH = ROOT / "app/src/main/java/com/aqua/aqualight/data/devices/contra
 MAPPING_PATH = ROOT / "app/src/main/java/com/aqua/aqualight/data/devices/DeviceApplicationMapping.kt"
 RESOLVER_PATH = ROOT / "app/src/main/java/com/aqua/aqualight/data/devices/DeviceRootMenuFeatureResolver.kt"
 
-FIXTURE_SHA256 = "7c211c866112a73bc2793e00f06434def1bf98ffb5985e3134379d71981a1444"
-FIRMWARE_MERGE_COMMIT = "1bf5d94af804acd87d4a5ed25971abc0fd9f048d"
+FIXTURE_SHA256 = "8ed588f11c28d7ad537623082e60bf98aed973eeb1aa0b01f582eade2126f63b"
+FIRMWARE_MERGE_COMMIT = "980b03f0d83cdeb997698fc6b207064aa709cec8"
 
 CAPABILITY_KEYS = {
     "light",

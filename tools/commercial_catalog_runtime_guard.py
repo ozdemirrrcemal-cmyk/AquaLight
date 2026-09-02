@@ -71,8 +71,8 @@ require(
 
 require("// GENERATED FILE. DO NOT EDIT." in generated_catalog, "generated catalog header is missing")
 require(
-    "1bf5d94af804acd87d4a5ed25971abc0fd9f048d" in generated_catalog,
-    "generated catalog must remain pinned to the firmware merge commit",
+    "980b03f0d83cdeb997698fc6b207064aa709cec8" in generated_catalog,
+    "generated catalog must remain pinned to the golden firmware commit",
 )
 require(
     generated_catalog.count("    AqlCommercialCatalogProduct(") == 7,

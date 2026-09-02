@@ -1,0 +1,228 @@
+{
+  "schema": "aql.cooling.v1",
+  "schemaVersion": 1,
+  "product": {
+    "productKey": "COOLING_COOL_PRO_1F",
+    "fanOutputCapacity": 1,
+    "sensorSlotCapacity": 2,
+    "programSlotCapacity": 8
+  },
+  "topology": {
+    "fans": [
+      {
+        "fanKey": "fan1",
+        "outputKind": "PWM_DUTY_PERCENT",
+        "rpmAvailable": false,
+        "powerSource": "ESTIMATED",
+        "ratedPowerWatts": 0.5
+      }
+    ],
+    "sensorSlots": [
+      {
+        "sensorKey": "water",
+        "role": "AQUARIUM_WATER",
+        "driver": "DS18B20",
+        "bus": "ONE_WIRE",
+        "measurements": ["TEMPERATURE_C"],
+        "requiredForProduct": true,
+        "requiredForControl": true
+      },
+      {
+        "sensorKey": "ambient",
+        "role": "ROOM_AMBIENT",
+        "driver": "SHT40-AD1F",
+        "bus": "I2C",
+        "address": 68,
+        "measurements": ["TEMPERATURE_C", "RELATIVE_HUMIDITY_PERCENT"],
+        "requiredForProduct": true,
+        "requiredForControl": false
+      }
+    ]
+  },
+  "policy": {
+    "controlModes": ["AUTOMATIC", "MANUAL", "PROGRAM"],
+    "temperature": {
+      "minimumC": 0.0,
+      "maximumC": 40.0,
+      "stepC": 0.5,
+      "minimumAutomaticGapC": 0.5,
+      "hysteresisC": 0.5
+    },
+    "fanPercent": {
+      "minimum": 0.0,
+      "maximum": 100.0,
+      "step": 1.0
+    },
+    "silentMode": {
+      "supported": true,
+      "maximumPercent": 50.0,
+      "appliesTo": ["AUTOMATIC", "PROGRAM"]
+    },
+    "manual": {
+      "persistent": true,
+      "survivesRestart": true,
+      "zeroPercentStopsImmediately": true,
+      "clearedOnControlModeExit": true,
+      "disconnectDoesNotStop": true,
+      "allowedWhenWaterSensorFaulted": true
+    },
+    "program": {
+      "maximumSlotCount": 8,
+      "timeStepMinutes": 5,
+      "minimumDurationMinutes": 15,
+      "crossMidnightSlotsSupported": false,
+      "requiresTrustedDeviceClock": true,
+      "scheduleBasis": "LOCAL_WALL_CLOCK_DAILY",
+      "programActivation": "CONTROL_MODE_PROGRAM",
+      "currentMinuteOfDaySource": "FIRMWARE_TRUSTED_DEVICE_CLOCK",
+      "activeSlotAuthority": "FIRMWARE",
+      "timeAuthority": "AqlTimeService",
+      "startBoundary": "INCLUSIVE",
+      "endBoundary": "EXCLUSIVE",
+      "endMinuteMaximum": 1440,
+      "dstPolicy": {
+        "springForward": "SKIPPED_LOCAL_MINUTES_DO_NOT_RUN",
+        "fallBack": "STATE_IS_REEVALUATED_FROM_CURRENT_LOCAL_MINUTE"
+      }
+    },
+    "failSafe": {
+      "waterSensorFaultPercent": 0.0,
+      "automaticDisabledOnWaterSensorFault": true,
+      "programDisabledOnWaterSensorFault": true,
+      "criticalAlarm": "WATER_SENSOR_FAULT"
+    },
+    "history": {
+      "sensorKey": "water",
+      "ranges": ["24h", "7d", "30d"],
+      "chartSources": {
+        "24h": "SAMPLES",
+        "7d": "SAMPLES",
+        "30d": "DAILY_AVERAGE"
+      },
+      "captureIntervalMinutes": 30,
+      "persistent": true
+    },
+    "power": {
+      "source": "ESTIMATED",
+      "ratedPowerWatts": 0.5
+    },
+    "actuationSnapshot": {
+      "immutable": true,
+      "wireFields": [
+        "decisionSequence",
+        "evaluatedAtMs",
+        "configRevision",
+        "programRevision",
+        "inputSampleSequence",
+        "timeGeneration",
+        "activeProgramSlotIndex",
+        "targetPercent",
+        "outputPercent",
+        "operatingState",
+        "controlReason"
+      ],
+      "outputAvailability": "OUTPUT_PERCENT_NULL_WHEN_PWM_WRITE_NOT_APPLIED",
+      "outputWriteFailure": {
+        "commandError": "HARDWARE_ERROR",
+        "persistAttempted": false,
+        "outputPercent": null,
+        "powerWatts": null
+      }
+    },
+    "fanTelemetry": {
+      "pwmOutputHealth": ["OK", "FAULT"],
+      "physicalHealth": ["UNVERIFIED", "HARDWARE_FAULT"],
+      "rpm": null
+    },
+    "alarmModel": {
+      "fields": ["code", "severity", "active", "latched", "affectedKey", "reason"],
+      "codes": [
+        "WATER_SENSOR_FAULT",
+        "AMBIENT_SENSOR_FAULT",
+        "FAN_HARDWARE_FAULT",
+        "CLOCK_UNSYNCED",
+        "HISTORY_STORAGE_FAULT",
+        "CONFIG_STORAGE_FAULT"
+      ]
+    },
+    "healthSummary": {
+      "fields": ["fanHealth", "sensorHealth", "activeAlarmCount", "highestAlarmSeverity"],
+      "fanHealth": ["UNVERIFIED", "HARDWARE_FAULT"],
+      "sensorHealth": ["OK", "WARNING", "CRITICAL"],
+      "highestAlarmSeverity": ["NONE", "WARNING", "CRITICAL"]
+    }
+  },
+  "commands": {
+    "cooling.status.get": [],
+    "cooling.config.apply": [
+      "expectedConfigRevision",
+      "controlMode",
+      "startTemperatureC",
+      "fullSpeedTemperatureC",
+      "silentModeEnabled"
+    ],
+    "cooling.manual.apply": ["expectedConfigRevision", "fanKey", "targetPercent"],
+    "cooling.program.get": [],
+    "cooling.program.apply": ["expectedProgramRevision", "slots"],
+    "cooling.history.get": ["range"]
+  },
+  "events": [
+    "cooling.status.changed",
+    "cooling.telemetry.changed"
+  ],
+  "manualRuntime": {
+    "statusControlFields": ["manualActive", "manualTargetPercent"],
+    "telemetryEventFields": ["manualActive", "manualTargetPercent"],
+    "applyResponseFields": ["configRevision", "manualActive", "manualTargetPercent"]
+  },
+  "persistence": {
+    "schema": "aql.config.cooling.v1",
+    "atomic": true,
+    "exactCoolingFields": [
+      "contract",
+      "controlMode",
+      "manualTargetPercent",
+      "startTemperatureC",
+      "fullSpeedTemperatureC",
+      "silentModeEnabled",
+      "configRevision",
+      "program"
+    ],
+    "manualTargetInvariant": "ZERO_OUTSIDE_MANUAL"
+  },
+  "compatibility": {
+    "legacyPayloadAccepted": false,
+    "legacySchemaAccepted": false,
+    "fallbackAccepted": false
+  },
+  "operatingStates": ["IDLE", "COOLING", "MANUAL", "PROGRAM", "FAULT"],
+  "sensorHealth": ["OK", "MISSING", "TOPOLOGY_INVALID", "CRC_ERROR", "STALE", "OUT_OF_RANGE", "WARMING_UP", "IO_ERROR"],
+  "errors": [
+    "BAD_REQUEST",
+    "MISSING_FIELD",
+    "INVALID_VALUE",
+    "CONFLICT",
+    "HARDWARE_ERROR",
+    "STORAGE_ERROR",
+    "CLOCK_UNSYNCED"
+  ],
+  "authority": {
+    "firmware": [
+      "catalog",
+      "topology",
+      "policy",
+      "validation",
+      "controlDecision",
+      "persistentManualTarget",
+      "activeProgramSlot",
+      "sensorHealth",
+      "healthSummary",
+      "powerEstimate",
+      "alarms",
+      "history",
+      "historyChartSource"
+    ],
+    "android": ["rendering", "localization", "unitFormatting", "unsavedUserDraft"]
+  }
+}
+

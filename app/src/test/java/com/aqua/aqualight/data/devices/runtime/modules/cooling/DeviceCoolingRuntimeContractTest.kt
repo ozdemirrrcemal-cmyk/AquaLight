@@ -105,22 +105,46 @@ class DeviceCoolingRuntimeContractTest {
     }
 
     @Test
-    fun `firmware telemetry fixture keeps exact field order and command count`() {
+    fun `golden Cooling V1 telemetry fixture keeps exact field order and command count`() {
         val fixture = JSONObject(readFirmwareTelemetryFixture())
 
-        assertEquals(44, fixture.getInt("commandCount"))
-        assertEquals("temperature.changed", fixture.getString("event"))
+        assertEquals(50, fixture.getInt("commandCount"))
+        assertEquals("cooling.telemetry.changed", fixture.getString("event"))
         assertEquals(
-            listOf("sensorIndex", "readingValid", "temperatureC", "sampledAtMs"),
-            List(fixture.getJSONArray("exactFields").length()) { index ->
-                fixture.getJSONArray("exactFields").getString(index)
+            listOf(
+                "schema",
+                "schemaVersion",
+                "catalogSha256",
+                "configRevision",
+                "programRevision",
+                "uptimeMs",
+                "decisionSequence",
+                "evaluatedAtMs",
+                "inputSampleSequence",
+                "timeGeneration",
+                "controlMode",
+                "operatingState",
+                "controlReason",
+                "manualActive",
+                "manualTargetPercent",
+                "clockReady",
+                "currentMinuteOfDay",
+                "activeProgramSlotIndex",
+                "sensors",
+                "fan",
+                "power",
+                "alarms",
+                "healthSummary"
+            ),
+            List(fixture.getJSONArray("requiredRootFields").length()) { index ->
+                fixture.getJSONArray("requiredRootFields").getString(index)
             }
         )
     }
 }
 
 private const val FIRMWARE_TELEMETRY_FIXTURE =
-    "protocol/fixtures/aql_cooling_temperature_telemetry_v1.json"
+    "protocol/fixtures/aql_cooling_telemetry_v1.json"
 
 private fun readFirmwareTelemetryFixture(): String {
     val workingDirectory = File(System.getProperty("user.dir")).canonicalFile

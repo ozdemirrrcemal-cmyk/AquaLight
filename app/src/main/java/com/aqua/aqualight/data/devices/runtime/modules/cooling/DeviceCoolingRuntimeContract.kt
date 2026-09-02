@@ -3,7 +3,6 @@ package com.aqua.aqualight.data.devices.runtime.modules.cooling
 object DeviceCoolingRuntimeContract {
     const val MODULE = "cooling"
     const val STATUS_EVENT = "cooling.status.changed"
-    const val TEMPERATURE_EVENT = "temperature.changed"
 
     object Action {
         const val STATUS_GET = "status.get"

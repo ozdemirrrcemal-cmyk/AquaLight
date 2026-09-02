@@ -8,7 +8,7 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[2]
 FIXTURE_PATH = ROOT / "protocol/fixtures/aql_product_catalog_v1.json"
 CURRENT_FIRMWARE_COMMIT = (
-    "1bf5d94af804acd87d4a5ed25971abc0fd9f048d"
+    "980b03f0d83cdeb997698fc6b207064aa709cec8"
 )
 
 EXPECTED_PRODUCTS = {

@@ -4,7 +4,7 @@
   "firmware": {
     "repository": "ozdemirrrcemal-cmyk/AquaLight-Firmware",
     "commit": "fa147211749c2dcb2f56e15a617a00010e071984",
-    "coreInteroperabilityCommit": "1bf5d94af804acd87d4a5ed25971abc0fd9f048d",
+    "coreInteroperabilityCommit": "980b03f0d83cdeb997698fc6b207064aa709cec8",
     "sources": {
       "src/api/v1/commands/AqlDosingCommands.hpp": "34cfc3287485f6a46a73b47f061a5456cde9aa9d",
       "src/api/v1/commands/AqlDosingProgressCommands.hpp": "8700e785bdd2e747abea3b09eff97755e2addad0",

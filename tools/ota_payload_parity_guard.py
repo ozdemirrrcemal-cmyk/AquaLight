@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Fail closed when Android OTA payload parsing drifts from firmware main."""
+"""Fail closed when Android OTA payload parsing drifts from pinned firmware."""
 
 from __future__ import annotations
 
@@ -45,8 +45,8 @@ MANIFEST_PARSER_PATH = (
 )
 
 EXPECTED_FIRMWARE_REPOSITORY = "ozdemirrrcemal-cmyk/AquaLight-Firmware"
-EXPECTED_FIRMWARE_BRANCH = "main"
-EXPECTED_FIRMWARE_COMMIT = "1bf5d94af804acd87d4a5ed25971abc0fd9f048d"
+EXPECTED_FIRMWARE_BRANCH = "feature/cooling-contract-v1"
+EXPECTED_FIRMWARE_COMMIT = "980b03f0d83cdeb997698fc6b207064aa709cec8"
 
 
 class GuardFailure(AssertionError):
@@ -133,11 +133,11 @@ def verify_fixture_pins(fixture: dict[str, Any]) -> None:
     )
     require(
         firmware.get("branch") == EXPECTED_FIRMWARE_BRANCH,
-        "OTA fixture must remain pinned to firmware main",
+        "OTA fixture firmware branch drifted",
     )
     require(
         firmware.get("commit") == EXPECTED_FIRMWARE_COMMIT,
-        "OTA fixture firmware main commit drifted",
+        "OTA fixture firmware commit drifted",
     )
 
 
@@ -155,11 +155,11 @@ def verify_event_names(
     runtime_events = string_constants(runtime_event_block)
     require(
         runtime_events.get("OTA_PROGRESS") == event_names["progress"],
-        "Android OTA progress payload name differs from firmware main",
+        "Android OTA progress payload name differs from pinned firmware",
     )
     require(
         runtime_events.get("OTA_COMPLETED") == event_names["completed"],
-        "Android OTA completed payload name differs from firmware main",
+        "Android OTA completed payload name differs from pinned firmware",
     )
 
     action_constants = string_constants(event_contract)
@@ -374,4 +374,4 @@ def verify() -> None:
 
 if __name__ == "__main__":
     verify()
-    print("Android OTA payload contract matches pinned AquaLight-Firmware/main.")
+    print("Android OTA payload contract matches the pinned AquaLight-Firmware revision.")

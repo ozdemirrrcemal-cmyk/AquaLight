@@ -34,9 +34,21 @@ data class DeviceRuntimeTypedEvent(
             AqlWsContract.MODULE_LIGHT,
             AqlWsEventContract.ACTION_STATUS_CHANGED
         ),
+        LIGHT_THERMAL_STATUS_CHANGED(
+            AqlWsContract.MODULE_LIGHT,
+            AqlWsEventContract.ACTION_LIGHT_THERMAL_STATUS_CHANGED
+        ),
+        LIGHT_THERMAL_TELEMETRY_CHANGED(
+            AqlWsContract.MODULE_LIGHT,
+            AqlWsEventContract.ACTION_LIGHT_THERMAL_TELEMETRY_CHANGED
+        ),
         COOLING_STATUS_CHANGED(
             AqlWsContract.MODULE_COOLING,
             AqlWsEventContract.ACTION_STATUS_CHANGED
+        ),
+        COOLING_TELEMETRY_CHANGED(
+            AqlWsContract.MODULE_COOLING,
+            AqlWsEventContract.ACTION_COOLING_TELEMETRY_CHANGED
         ),
         TIMER_STATUS_CHANGED(
             AqlWsContract.MODULE_TIMER,
@@ -45,10 +57,6 @@ data class DeviceRuntimeTypedEvent(
         DOSING_STATUS_CHANGED(
             AqlWsContract.MODULE_DOSING,
             AqlWsEventContract.ACTION_STATUS_CHANGED
-        ),
-        TEMPERATURE_CHANGED(
-            AqlWsEventContract.MODULE_TEMPERATURE,
-            AqlWsEventContract.ACTION_TEMPERATURE_CHANGED
         ),
         TIME_STATUS_CHANGED(
             AqlWsContract.MODULE_TIME,

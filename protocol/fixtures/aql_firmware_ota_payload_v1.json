@@ -3,8 +3,8 @@
   "schema": "aql.android-firmware.ota-payload.v1",
   "firmware": {
     "repository": "ozdemirrrcemal-cmyk/AquaLight-Firmware",
-    "branch": "main",
-    "commit": "1bf5d94af804acd87d4a5ed25971abc0fd9f048d",
+    "branch": "feature/cooling-contract-v1",
+    "commit": "980b03f0d83cdeb997698fc6b207064aa709cec8",
     "commandSource": "src/api/v1/commands/AqlFirmwareCommands.hpp",
     "eventSource": "src/server/AqlRealtimeServer.cpp",
     "otaServiceSource": "src/modules/firmware/AqlOtaService.hpp"

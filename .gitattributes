@@ -4,3 +4,8 @@
 # These are explicitly windows files and should use crlf
 *.bat           text eol=crlf
 
+# Firmware golden fixtures are mirrored byte-for-byte, including their final blank line.
+protocol/fixtures/aql_ws_v1_golden.json whitespace=-blank-at-eof
+protocol/fixtures/aql_cooling_contract_v1.json whitespace=-blank-at-eof
+protocol/fixtures/aql_cooling_telemetry_v1.json whitespace=-blank-at-eof
+protocol/fixtures/aql_light_thermal_contract_v1.json whitespace=-blank-at-eof

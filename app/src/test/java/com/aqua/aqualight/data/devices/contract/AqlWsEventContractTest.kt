@@ -14,10 +14,12 @@ class AqlWsEventContractTest {
             "device.status.changed",
             "network.state.changed",
             "light.status.changed",
+            "light.thermal.status.changed",
+            "light.thermal.telemetry.changed",
             "cooling.status.changed",
+            "cooling.telemetry.changed",
             "timer.status.changed",
             "dosing.status.changed",
-            "temperature.changed",
             "time.status.changed",
             "firmware.ota.progress",
             "firmware.ota.completed",
@@ -30,7 +32,7 @@ class AqlWsEventContractTest {
             DeviceRuntimeTypedEvent.Type.values()
                 .mapTo(linkedSetOf()) { type -> "${type.module}.${type.action}" }
         )
-        assertEquals(11, AqlWsEventContract.definitions().size)
+        assertEquals(13, AqlWsEventContract.definitions().size)
     }
 
     @Test

@@ -4,15 +4,15 @@ import com.aqua.aqualight.data.devices.model.DeviceUid
 import com.aqua.aqualight.data.devices.runtime.events.DeviceRuntimeEventPayload
 import com.aqua.aqualight.data.devices.runtime.events.DeviceRuntimeTypedEvent
 
-/** Applies validated Cooling and temperature events to one shared device state. */
+/** Applies legacy production Cooling events until Contract V1 is connected to UI state. */
 internal class DeviceCoolingTypedEventReducer(
     private val stateStore: DeviceCoolingRuntimeStateStore
 ) {
     fun apply(event: DeviceRuntimeTypedEvent): DeviceCoolingEventApplyResult = when (event.type) {
         DeviceRuntimeTypedEvent.Type.COOLING_STATUS_CHANGED ->
             guarded { applyCooling(event.deviceUid, event.payload) }
-        DeviceRuntimeTypedEvent.Type.TEMPERATURE_CHANGED ->
-            guarded { applyTemperature(event.deviceUid, event.payload) }
+        DeviceRuntimeTypedEvent.Type.COOLING_TELEMETRY_CHANGED ->
+            DeviceCoolingEventApplyResult.Ignored
         else -> DeviceCoolingEventApplyResult.Ignored
     }
 
@@ -33,19 +33,6 @@ internal class DeviceCoolingTypedEventReducer(
             )
             true
         }
-    }
-
-    private fun applyTemperature(
-        deviceUid: DeviceUid,
-        payload: DeviceRuntimeEventPayload
-    ): Boolean {
-        require(payload is DeviceRuntimeEventPayload.Snapshot) {
-            "temperature.changed must contain an exact snapshot payload."
-        }
-        return stateStore.recordTemperature(
-            deviceUid,
-            DeviceCoolingTemperatureParser.parse(payload.data)
-        )
     }
 
     private fun guarded(block: () -> Boolean): DeviceCoolingEventApplyResult =

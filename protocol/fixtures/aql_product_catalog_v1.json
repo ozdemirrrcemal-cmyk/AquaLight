@@ -3,7 +3,7 @@
   "schema": "aql.product.catalog.fixture.v1",
   "source": {
     "repository": "ozdemirrrcemal-cmyk/AquaLight-Firmware",
-    "commit": "1bf5d94af804acd87d4a5ed25971abc0fd9f048d",
+    "commit": "980b03f0d83cdeb997698fc6b207064aa709cec8",
     "catalogPath": "src/product/AqlProductCatalog.hpp",
     "exporterPath": "tools/aql_export_product_catalog.cpp"
   },
