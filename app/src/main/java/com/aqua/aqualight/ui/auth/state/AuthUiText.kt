@@ -5,8 +5,7 @@ import androidx.annotation.StringRes
 
 sealed class AuthUiText {
     data class Resource(
-        @StringRes val resId: Int,
-        val args: List<String> = emptyList()
+        @StringRes val resId: Int
     ) : AuthUiText()
 
     data class Plain(
@@ -17,13 +16,7 @@ sealed class AuthUiText {
         context: Context
     ): String {
         return when (this) {
-            is Resource -> {
-                if (args.isEmpty()) {
-                    context.getString(resId)
-                } else {
-                    context.getString(resId, *args.toTypedArray())
-                }
-            }
+            is Resource -> context.getString(resId)
 
             is Plain -> value
         }

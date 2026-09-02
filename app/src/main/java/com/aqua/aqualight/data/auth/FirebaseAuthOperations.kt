@@ -99,18 +99,16 @@ internal class FirebaseAuthOperations(
     }
 
     private suspend fun execute(block: suspend () -> Unit) {
-        try {
-            block()
-        } catch (error: CancellationException) {
-            throw error
-        } catch (error: AuthOperationException) {
-            throw error
-        } catch (error: Throwable) {
-            throw AuthOperationException(
-                failure = error.toAuthOperationFailure(),
-                cause = error
+        val failure = runCatching { block() }.exceptionOrNull() ?: return
+        val translatedFailure = when (failure) {
+            is CancellationException,
+            is AuthOperationException -> failure
+            else -> AuthOperationException(
+                failure = failure.toAuthOperationFailure(),
+                cause = failure
             )
         }
+        throw translatedFailure
     }
 }
 

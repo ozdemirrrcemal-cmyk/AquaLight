@@ -130,7 +130,10 @@ internal fun requireCoolingFanPercent(value: Double) {
 
 private fun requireAligned(value: Double, origin: Double, step: Double) {
     val scaled = (value - origin) / step
-    require(kotlin.math.abs(scaled - kotlin.math.round(scaled)) <= 0.0001) {
+    require(
+        kotlin.math.abs(scaled - kotlin.math.round(scaled)) <=
+            DeviceCoolingV1Contract.Limit.ALIGNMENT_EPSILON
+    ) {
         "$value is not aligned to firmware step $step."
     }
 }

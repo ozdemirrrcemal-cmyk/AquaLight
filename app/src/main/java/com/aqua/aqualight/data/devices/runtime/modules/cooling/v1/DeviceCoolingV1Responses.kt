@@ -1,6 +1,5 @@
 package com.aqua.aqualight.data.devices.runtime.modules.cooling.v1
 
-import org.json.JSONArray
 import org.json.JSONObject
 
 data class DeviceCoolingV1ConfigSnapshot(
@@ -200,13 +199,13 @@ object DeviceCoolingV1ResponseParser {
         val contract = data.requireObject("contract")
         contract.requireExactKeys(CONTRACT_KEYS, "cooling contract")
         data.requireObject("topology").requireExactKeys(TOPOLOGY_KEYS, "cooling topology")
-        parseConfig(data.requireObject("config"))
+        ConfigParser.parseConfig(data.requireObject("config"))
         data.requireObject("program").requireExactKeys(PROGRAM_STATUS_KEYS, "cooling program status")
         data.requireObject("control").requireExactKeys(CONTROL_KEYS, "cooling control")
         data.requireObject("policy").requireExactKeys(POLICY_KEYS, "cooling policy")
         data.requireObject("telemetry").requireExactKeys(STATUS_TELEMETRY_KEYS, "cooling telemetry")
-        data.requireArray("alarms").objects().forEach(::parseAlarm)
-        parseHealthSummary(data.requireObject("healthSummary"))
+        data.requireArray("alarms").objects().forEach(TelemetryParser::parseAlarm)
+        TelemetryParser.parseHealthSummary(data.requireObject("healthSummary"))
         data.requireObject("history").requireExactKeys(STATUS_HISTORY_KEYS, "cooling history")
         return DeviceCoolingV1StatusDocument(
             schema = data.requireText("schema"),
@@ -232,7 +231,7 @@ object DeviceCoolingV1ResponseParser {
             operation = data.requireText("operation"),
             saved = data.requireBoolean("saved"),
             event = data.requireText("event"),
-            config = parseConfig(data.requireObject("config"))
+            config = ConfigParser.parseConfig(data.requireObject("config"))
         ).also { result ->
             require(result.command == "cooling.config.apply")
             require(result.operation == "configApply")
@@ -264,7 +263,7 @@ object DeviceCoolingV1ResponseParser {
 
     fun parseProgram(data: JSONObject): DeviceCoolingV1ProgramSnapshot {
         data.requireExactKeys(PROGRAM_KEYS, "cooling program")
-        val slots = data.requireArray("slots").objects().map(::parseProgramSlot)
+        val slots = data.requireArray("slots").objects().map(ConfigParser::parseProgramSlot)
         return DeviceCoolingV1ProgramSnapshot(
             programRevision = data.requireRevision("programRevision"),
             clockReady = data.requireBoolean("clockReady"),
@@ -278,7 +277,7 @@ object DeviceCoolingV1ResponseParser {
                 0,
                 DeviceCoolingV1Contract.Limit.PROGRAM_SLOT_CAPACITY - 1
             ),
-            policy = parseProgramPolicy(data.requireObject("policy")),
+            policy = ConfigParser.parseProgramPolicy(data.requireObject("policy")),
             slots = slots
         ).also { program ->
             require(program.clockReady == (program.currentMinuteOfDay != null))
@@ -313,9 +312,9 @@ object DeviceCoolingV1ResponseParser {
             range = range,
             chartSource = chartSource,
             generatedAtMs = data.requireNonNegativeLong("generatedAtMs"),
-            summary = parseHistorySummary(data.requireObject("summary")),
-            samples = data.requireArray("samples").objects().map(::parseHistorySample),
-            days = data.requireArray("days").objects().map(::parseHistoryDay)
+            summary = HistoryParser.parseSummary(data.requireObject("summary")),
+            samples = data.requireArray("samples").objects().map(HistoryParser::parseSample),
+            days = data.requireArray("days").objects().map(HistoryParser::parseDay)
         )
         require(
             history.chartSource == if (range == DeviceCoolingV1HistoryRange.DAYS_30) {
@@ -362,11 +361,15 @@ object DeviceCoolingV1ResponseParser {
                 0,
                 DeviceCoolingV1Contract.Limit.PROGRAM_SLOT_CAPACITY - 1
             ),
-            sensors = data.requireArray("sensors").objects().map { parseSensor(it, false) },
-            fan = parseFan(data.requireObject("fan")),
-            power = parsePower(data.requireObject("power")),
-            alarms = data.requireArray("alarms").objects().map(::parseAlarm),
-            healthSummary = parseHealthSummary(data.requireObject("healthSummary"))
+            sensors = data.requireArray("sensors").objects().map {
+                TelemetryParser.parseSensor(it, includesPresent = false)
+            },
+            fan = TelemetryParser.parseFan(data.requireObject("fan")),
+            power = TelemetryParser.parsePower(data.requireObject("power")),
+            alarms = data.requireArray("alarms").objects().map(TelemetryParser::parseAlarm),
+            healthSummary = TelemetryParser.parseHealthSummary(
+                data.requireObject("healthSummary")
+            )
         )
         require(telemetry.schema == DeviceCoolingV1Contract.SCHEMA)
         require(telemetry.catalogSha256 == DeviceCoolingV1Contract.CATALOG_SHA256)
@@ -381,234 +384,318 @@ object DeviceCoolingV1ResponseParser {
         return telemetry
     }
 
-    private fun parseConfig(data: JSONObject): DeviceCoolingV1ConfigSnapshot {
-        data.requireExactKeys(CONFIG_KEYS, "cooling config")
-        return DeviceCoolingV1ConfigSnapshot(
-            configRevision = data.requireRevision("configRevision"),
-            controlMode = enumValue(
-                data.requireText("controlMode"),
-                DeviceCoolingV1ControlMode::wireValue
-            ),
-            manualTargetPercent = data.requirePercent("manualTargetPercent"),
-            startTemperatureC = data.requireTemperature("startTemperatureC"),
-            fullSpeedTemperatureC = data.requireTemperature("fullSpeedTemperatureC"),
-            silentModeEnabled = data.requireBoolean("silentModeEnabled")
-        ).also { config ->
-            require(
-                config.fullSpeedTemperatureC - config.startTemperatureC >=
-                    DeviceCoolingV1Contract.Limit.MINIMUM_AUTOMATIC_GAP_C
-            )
-            if (config.controlMode != DeviceCoolingV1ControlMode.MANUAL) {
-                require(config.manualTargetPercent == 0.0)
+    private object ConfigParser {
+        fun parseConfig(data: JSONObject): DeviceCoolingV1ConfigSnapshot {
+            data.requireExactKeys(CONFIG_KEYS, "cooling config")
+            return DeviceCoolingV1ConfigSnapshot(
+                configRevision = data.requireRevision("configRevision"),
+                controlMode = enumValue(
+                    data.requireText("controlMode"),
+                    DeviceCoolingV1ControlMode::wireValue
+                ),
+                manualTargetPercent = data.requirePercent("manualTargetPercent"),
+                startTemperatureC = data.requireTemperature("startTemperatureC"),
+                fullSpeedTemperatureC = data.requireTemperature("fullSpeedTemperatureC"),
+                silentModeEnabled = data.requireBoolean("silentModeEnabled")
+            ).also { config ->
+                require(
+                    config.fullSpeedTemperatureC - config.startTemperatureC >=
+                        DeviceCoolingV1Contract.Limit.MINIMUM_AUTOMATIC_GAP_C
+                )
+                if (config.controlMode != DeviceCoolingV1ControlMode.MANUAL) {
+                    require(config.manualTargetPercent == 0.0)
+                }
             }
         }
-    }
 
-    private fun parseProgramSlot(data: JSONObject): DeviceCoolingV1ProgramSlot {
-        data.requireExactKeys(PROGRAM_SLOT_KEYS, "cooling program slot")
-        val payload = DeviceCoolingV1ProgramSlotPayload(
-            startMinute = data.requireInt(
-                "startMinute",
-                0,
-                DeviceCoolingV1Contract.Limit.MINUTES_PER_DAY - 1
-            ),
-            endMinute = data.requireInt(
-                "endMinute",
-                1,
-                DeviceCoolingV1Contract.Limit.MINUTES_PER_DAY
-            ),
-            fanOnTemperatureC = data.requireTemperature("fanOnTemperatureC"),
-            fanPercent = data.requirePercent("fanPercent")
-        )
-        return DeviceCoolingV1ProgramSlot(
-            payload.startMinute,
-            payload.endMinute,
-            payload.fanOnTemperatureC,
-            payload.fanPercent
-        )
-    }
-
-    private fun parseProgramPolicy(data: JSONObject): DeviceCoolingV1ProgramPolicy {
-        data.requireExactKeys(PROGRAM_POLICY_KEYS, "cooling program policy")
-        val policy = DeviceCoolingV1ProgramPolicy(
-            maximumSlotCount = data.requireInt("maximumSlotCount", 1, 8),
-            timeStepMinutes = data.requireInt("timeStepMinutes", 1, 1_440),
-            minimumDurationMinutes = data.requireInt("minimumDurationMinutes", 1, 1_440),
-            crossMidnightSlotsSupported = data.requireBoolean("crossMidnightSlotsSupported"),
-            requiresTrustedDeviceClock = data.requireBoolean("requiresTrustedDeviceClock"),
-            scheduleBasis = data.requireText("scheduleBasis"),
-            programActivation = data.requireText("programActivation"),
-            timeAuthority = data.requireText("timeAuthority"),
-            currentMinuteOfDaySource = data.requireText("currentMinuteOfDaySource"),
-            activeSlotAuthority = data.requireText("activeSlotAuthority"),
-            startBoundary = data.requireText("startBoundary"),
-            endBoundary = data.requireText("endBoundary"),
-            endMinuteMaximum = data.requireInt("endMinuteMaximum", 1, 1_440),
-            fan = parseFanPolicy(data.requireObject("fan")),
-            fanOnTemperature = parseTemperaturePolicy(data.requireObject("fanOnTemperature"))
-        )
-        require(policy.maximumSlotCount == DeviceCoolingV1Contract.Limit.PROGRAM_SLOT_CAPACITY)
-        require(policy.timeStepMinutes == DeviceCoolingV1Contract.Limit.PROGRAM_TIME_STEP_MINUTES)
-        require(
-            policy.minimumDurationMinutes ==
-                DeviceCoolingV1Contract.Limit.PROGRAM_MINIMUM_DURATION_MINUTES
-        )
-        require(!policy.crossMidnightSlotsSupported)
-        require(policy.requiresTrustedDeviceClock)
-        require(policy.scheduleBasis == "LOCAL_WALL_CLOCK_DAILY")
-        require(policy.programActivation == "CONTROL_MODE_PROGRAM")
-        require(policy.timeAuthority == "AqlTimeService")
-        require(policy.currentMinuteOfDaySource == "FIRMWARE_TRUSTED_DEVICE_CLOCK")
-        require(policy.activeSlotAuthority == "FIRMWARE")
-        require(policy.startBoundary == "INCLUSIVE")
-        require(policy.endBoundary == "EXCLUSIVE")
-        require(policy.endMinuteMaximum == DeviceCoolingV1Contract.Limit.MINUTES_PER_DAY)
-        return policy
-    }
-
-    private fun parseFanPolicy(data: JSONObject): DeviceCoolingV1FanPolicy {
-        data.requireExactKeys(FAN_POLICY_KEYS, "cooling fan policy")
-        return DeviceCoolingV1FanPolicy(
-            minimumPercent = data.requirePercent("minimumPercent"),
-            maximumPercent = data.requirePercent("maximumPercent"),
-            stepPercent = data.requireDouble("stepPercent", 0.0, 100.0)
-        )
-    }
-
-    private fun parseTemperaturePolicy(data: JSONObject): DeviceCoolingV1TemperaturePolicy {
-        data.requireExactKeys(TEMPERATURE_POLICY_KEYS, "cooling temperature policy")
-        return DeviceCoolingV1TemperaturePolicy(
-            minimumC = data.requireTemperature("minimumC"),
-            maximumC = data.requireTemperature("maximumC"),
-            stepC = data.requireDouble("stepC", 0.0, 40.0),
-            defaultC = data.requireTemperature("defaultC")
-        )
-    }
-
-    private fun parseSensor(
-        data: JSONObject,
-        includesPresent: Boolean
-    ): DeviceCoolingV1SensorTelemetry {
-        val sensorKey = data.requireText("sensorKey")
-        val expectedKeys = when {
-            sensorKey == DeviceCoolingV1Contract.AMBIENT_SENSOR_KEY ->
-                (if (includesPresent) STATUS_SENSOR_KEYS else EVENT_SENSOR_KEYS) +
-                    "humidityPercent"
-            else -> if (includesPresent) STATUS_SENSOR_KEYS else EVENT_SENSOR_KEYS
-        }
-        data.requireExactKeys(expectedKeys, "cooling sensor telemetry")
-        val readingValid = data.requireBoolean("readingValid")
-        val temperature = data.requireNullableDouble("temperatureC", -40.0, 125.0)
-        val humidity = if (data.has("humidityPercent")) {
-            data.requireNullableDouble("humidityPercent", 0.0, 100.0)
-        } else {
-            null
-        }
-        require(readingValid == (temperature != null))
-        if (sensorKey == DeviceCoolingV1Contract.AMBIENT_SENSOR_KEY) {
-            require(readingValid == (humidity != null))
-        }
-        return DeviceCoolingV1SensorTelemetry(
-            sensorKey = sensorKey,
-            present = if (includesPresent) data.requireBoolean("present") else null,
-            health = data.requireText("health"),
-            readingValid = readingValid,
-            temperatureC = temperature,
-            humidityPercent = humidity,
-            sampledAtMs = data.requireNonNegativeLong("sampledAtMs")
-        )
-    }
-
-    private fun parseFan(data: JSONObject): DeviceCoolingV1FanTelemetry {
-        data.requireExactKeys(FAN_KEYS, "cooling fan telemetry")
-        return DeviceCoolingV1FanTelemetry(
-            fanKey = data.requireText("fanKey"),
-            targetPercent = data.requirePercent("targetPercent"),
-            outputPercent = data.requireNullableDouble("outputPercent", 0.0, 100.0),
-            rpm = data.requireNullableDouble("rpm", 0.0),
-            pwmOutputHealth = data.requireText("pwmOutputHealth"),
-            health = data.requireText("health")
-        ).also { fan ->
-            require(fan.fanKey == DeviceCoolingV1Contract.FAN_KEY)
-            require(fan.rpm == null)
-            require(fan.pwmOutputHealth in setOf("OK", "FAULT"))
-            require(fan.health in setOf("UNVERIFIED", "HARDWARE_FAULT"))
-            require((fan.outputPercent == null) == (fan.pwmOutputHealth == "FAULT"))
-        }
-    }
-
-    private fun parsePower(data: JSONObject): DeviceCoolingV1PowerTelemetry {
-        val available = data.requireBoolean("available")
-        data.requireExactKeys(
-            if (available) POWER_AVAILABLE_KEYS else POWER_UNAVAILABLE_KEYS,
-            "cooling power telemetry"
-        )
-        return DeviceCoolingV1PowerTelemetry(
-            source = data.requireText("source"),
-            available = available,
-            ratedPowerWatts = data.requireNullableDouble("ratedPowerWatts", 0.0),
-            powerWatts = data.requireNullableDouble("powerWatts", 0.0),
-            estimatedKwhPerDay = data.requireNullableDouble("estimatedKwhPerDay", 0.0),
-            reason = if (available) null else data.requireText("reason")
-        ).also { power ->
-            require(power.source == "ESTIMATED")
-            require(
-                power.available == (
-                    power.ratedPowerWatts != null &&
-                        power.powerWatts != null &&
-                        power.estimatedKwhPerDay != null
-                    )
+        fun parseProgramSlot(data: JSONObject): DeviceCoolingV1ProgramSlot {
+            data.requireExactKeys(PROGRAM_SLOT_KEYS, "cooling program slot")
+            val payload = DeviceCoolingV1ProgramSlotPayload(
+                startMinute = data.requireInt(
+                    "startMinute",
+                    0,
+                    DeviceCoolingV1Contract.Limit.MINUTES_PER_DAY - 1
+                ),
+                endMinute = data.requireInt(
+                    "endMinute",
+                    1,
+                    DeviceCoolingV1Contract.Limit.MINUTES_PER_DAY
+                ),
+                fanOnTemperatureC = data.requireTemperature("fanOnTemperatureC"),
+                fanPercent = data.requirePercent("fanPercent")
+            )
+            return DeviceCoolingV1ProgramSlot(
+                payload.startMinute,
+                payload.endMinute,
+                payload.fanOnTemperatureC,
+                payload.fanPercent
             )
         }
+
+        fun parseProgramPolicy(data: JSONObject): DeviceCoolingV1ProgramPolicy {
+            data.requireExactKeys(PROGRAM_POLICY_KEYS, "cooling program policy")
+            val limit = DeviceCoolingV1Contract.Limit
+            val policy = DeviceCoolingV1ProgramPolicy(
+                maximumSlotCount = data.requireInt(
+                    "maximumSlotCount",
+                    limit.PROGRAM_SLOT_COUNT_MINIMUM,
+                    limit.PROGRAM_SLOT_CAPACITY
+                ),
+                timeStepMinutes = data.requireInt(
+                    "timeStepMinutes",
+                    limit.END_MINUTE_MINIMUM,
+                    limit.MINUTES_PER_DAY
+                ),
+                minimumDurationMinutes = data.requireInt(
+                    "minimumDurationMinutes",
+                    limit.END_MINUTE_MINIMUM,
+                    limit.MINUTES_PER_DAY
+                ),
+                crossMidnightSlotsSupported = data.requireBoolean("crossMidnightSlotsSupported"),
+                requiresTrustedDeviceClock = data.requireBoolean("requiresTrustedDeviceClock"),
+                scheduleBasis = data.requireText("scheduleBasis"),
+                programActivation = data.requireText("programActivation"),
+                timeAuthority = data.requireText("timeAuthority"),
+                currentMinuteOfDaySource = data.requireText("currentMinuteOfDaySource"),
+                activeSlotAuthority = data.requireText("activeSlotAuthority"),
+                startBoundary = data.requireText("startBoundary"),
+                endBoundary = data.requireText("endBoundary"),
+                endMinuteMaximum = data.requireInt(
+                    "endMinuteMaximum",
+                    limit.END_MINUTE_MINIMUM,
+                    limit.MINUTES_PER_DAY
+                ),
+                fan = parseFanPolicy(data.requireObject("fan")),
+                fanOnTemperature = parseTemperaturePolicy(data.requireObject("fanOnTemperature"))
+            )
+            require(policy.maximumSlotCount == DeviceCoolingV1Contract.Limit.PROGRAM_SLOT_CAPACITY)
+            require(policy.timeStepMinutes == DeviceCoolingV1Contract.Limit.PROGRAM_TIME_STEP_MINUTES)
+            require(
+                policy.minimumDurationMinutes ==
+                    DeviceCoolingV1Contract.Limit.PROGRAM_MINIMUM_DURATION_MINUTES
+            )
+            require(!policy.crossMidnightSlotsSupported)
+            require(policy.requiresTrustedDeviceClock)
+            require(policy.scheduleBasis == "LOCAL_WALL_CLOCK_DAILY")
+            require(policy.programActivation == "CONTROL_MODE_PROGRAM")
+            require(policy.timeAuthority == "AqlTimeService")
+            require(policy.currentMinuteOfDaySource == "FIRMWARE_TRUSTED_DEVICE_CLOCK")
+            require(policy.activeSlotAuthority == "FIRMWARE")
+            require(policy.startBoundary == "INCLUSIVE")
+            require(policy.endBoundary == "EXCLUSIVE")
+            require(policy.endMinuteMaximum == DeviceCoolingV1Contract.Limit.MINUTES_PER_DAY)
+            return policy
+        }
+
+        private fun parseFanPolicy(data: JSONObject): DeviceCoolingV1FanPolicy {
+            data.requireExactKeys(FAN_POLICY_KEYS, "cooling fan policy")
+            return DeviceCoolingV1FanPolicy(
+                minimumPercent = data.requirePercent("minimumPercent"),
+                maximumPercent = data.requirePercent("maximumPercent"),
+                stepPercent = data.requireDouble(
+                    "stepPercent",
+                    DeviceCoolingV1Contract.Limit.FAN_PERCENT_MINIMUM,
+                    DeviceCoolingV1Contract.Limit.FAN_PERCENT_MAXIMUM
+                )
+            )
+        }
+
+        private fun parseTemperaturePolicy(data: JSONObject): DeviceCoolingV1TemperaturePolicy {
+            data.requireExactKeys(TEMPERATURE_POLICY_KEYS, "cooling temperature policy")
+            return DeviceCoolingV1TemperaturePolicy(
+                minimumC = data.requireTemperature("minimumC"),
+                maximumC = data.requireTemperature("maximumC"),
+                stepC = data.requireDouble(
+                    "stepC",
+                    DeviceCoolingV1Contract.Limit.TEMPERATURE_MINIMUM_C,
+                    DeviceCoolingV1Contract.Limit.TEMPERATURE_MAXIMUM_C
+                ),
+                defaultC = data.requireTemperature("defaultC")
+            )
+        }
+
     }
 
-    private fun parseAlarm(data: JSONObject): DeviceCoolingV1Alarm {
-        data.requireExactKeys(ALARM_KEYS, "cooling alarm")
-        return DeviceCoolingV1Alarm(
-            code = data.requireText("code"),
-            severity = data.requireText("severity"),
-            active = data.requireBoolean("active"),
-            latched = data.requireBoolean("latched"),
-            affectedKey = data.requireText("affectedKey"),
-            reason = data.requireText("reason")
-        )
+    private object TelemetryParser {
+        fun parseSensor(
+            data: JSONObject,
+            includesPresent: Boolean
+        ): DeviceCoolingV1SensorTelemetry {
+            val sensorKey = data.requireText("sensorKey")
+            val expectedKeys = when {
+                sensorKey == DeviceCoolingV1Contract.AMBIENT_SENSOR_KEY ->
+                    (if (includesPresent) STATUS_SENSOR_KEYS else EVENT_SENSOR_KEYS) +
+                        "humidityPercent"
+                else -> if (includesPresent) STATUS_SENSOR_KEYS else EVENT_SENSOR_KEYS
+            }
+            data.requireExactKeys(expectedKeys, "cooling sensor telemetry")
+            val readingValid = data.requireBoolean("readingValid")
+            val limit = DeviceCoolingV1Contract.Limit
+            val temperature = data.requireNullableDouble(
+                "temperatureC",
+                limit.SENSOR_READING_MINIMUM_C,
+                limit.SENSOR_READING_MAXIMUM_C
+            )
+            val humidity = if (data.has("humidityPercent")) {
+                data.requireNullableDouble(
+                    "humidityPercent",
+                    limit.HUMIDITY_PERCENT_MINIMUM,
+                    limit.HUMIDITY_PERCENT_MAXIMUM
+                )
+            } else {
+                null
+            }
+            require(readingValid == (temperature != null))
+            if (sensorKey == DeviceCoolingV1Contract.AMBIENT_SENSOR_KEY) {
+                require(readingValid == (humidity != null))
+            }
+            return DeviceCoolingV1SensorTelemetry(
+                sensorKey = sensorKey,
+                present = if (includesPresent) data.requireBoolean("present") else null,
+                health = data.requireText("health"),
+                readingValid = readingValid,
+                temperatureC = temperature,
+                humidityPercent = humidity,
+                sampledAtMs = data.requireNonNegativeLong("sampledAtMs")
+            )
+        }
+
+        fun parseFan(data: JSONObject): DeviceCoolingV1FanTelemetry {
+            data.requireExactKeys(FAN_KEYS, "cooling fan telemetry")
+            return DeviceCoolingV1FanTelemetry(
+                fanKey = data.requireText("fanKey"),
+                targetPercent = data.requirePercent("targetPercent"),
+                outputPercent = data.requireNullableDouble(
+                    "outputPercent",
+                    DeviceCoolingV1Contract.Limit.FAN_PERCENT_MINIMUM,
+                    DeviceCoolingV1Contract.Limit.FAN_PERCENT_MAXIMUM
+                ),
+                rpm = data.requireNullableDouble(
+                    "rpm",
+                    DeviceCoolingV1Contract.Limit.FAN_RPM_MINIMUM
+                ),
+                pwmOutputHealth = data.requireText("pwmOutputHealth"),
+                health = data.requireText("health")
+            ).also { fan ->
+                require(fan.fanKey == DeviceCoolingV1Contract.FAN_KEY)
+                require(fan.rpm == null)
+                require(fan.pwmOutputHealth in setOf("OK", "FAULT"))
+                require(fan.health in setOf("UNVERIFIED", "HARDWARE_FAULT"))
+                require((fan.outputPercent == null) == (fan.pwmOutputHealth == "FAULT"))
+            }
+        }
+
+        fun parsePower(data: JSONObject): DeviceCoolingV1PowerTelemetry {
+            val available = data.requireBoolean("available")
+            data.requireExactKeys(
+                if (available) POWER_AVAILABLE_KEYS else POWER_UNAVAILABLE_KEYS,
+                "cooling power telemetry"
+            )
+            return DeviceCoolingV1PowerTelemetry(
+                source = data.requireText("source"),
+                available = available,
+                ratedPowerWatts = data.requireNullableDouble("ratedPowerWatts", 0.0),
+                powerWatts = data.requireNullableDouble("powerWatts", 0.0),
+                estimatedKwhPerDay = data.requireNullableDouble("estimatedKwhPerDay", 0.0),
+                reason = if (available) null else data.requireText("reason")
+            ).also { power ->
+                require(power.source == "ESTIMATED")
+                require(
+                    power.available == (
+                        power.ratedPowerWatts != null &&
+                            power.powerWatts != null &&
+                            power.estimatedKwhPerDay != null
+                        )
+                )
+            }
+        }
+
+        fun parseAlarm(data: JSONObject): DeviceCoolingV1Alarm {
+            data.requireExactKeys(ALARM_KEYS, "cooling alarm")
+            return DeviceCoolingV1Alarm(
+                code = data.requireText("code"),
+                severity = data.requireText("severity"),
+                active = data.requireBoolean("active"),
+                latched = data.requireBoolean("latched"),
+                affectedKey = data.requireText("affectedKey"),
+                reason = data.requireText("reason")
+            )
+        }
+
+        fun parseHealthSummary(data: JSONObject): DeviceCoolingV1HealthSummary {
+            data.requireExactKeys(HEALTH_SUMMARY_KEYS, "cooling health summary")
+            return DeviceCoolingV1HealthSummary(
+                fanHealth = data.requireText("fanHealth"),
+                sensorHealth = data.requireText("sensorHealth"),
+                activeAlarmCount = data.requireInt(
+                    "activeAlarmCount",
+                    0,
+                    DeviceCoolingV1Contract.Limit.ACTIVE_ALARM_COUNT_MAXIMUM
+                ),
+                highestAlarmSeverity = data.requireText("highestAlarmSeverity")
+            )
+        }
+
     }
 
-    private fun parseHealthSummary(data: JSONObject): DeviceCoolingV1HealthSummary {
-        data.requireExactKeys(HEALTH_SUMMARY_KEYS, "cooling health summary")
-        return DeviceCoolingV1HealthSummary(
-            fanHealth = data.requireText("fanHealth"),
-            sensorHealth = data.requireText("sensorHealth"),
-            activeAlarmCount = data.requireInt("activeAlarmCount", 0, 6),
-            highestAlarmSeverity = data.requireText("highestAlarmSeverity")
-        )
-    }
+    private object HistoryParser {
+        fun parseSummary(data: JSONObject): DeviceCoolingV1HistorySummary {
+            data.requireExactKeys(HISTORY_SUMMARY_KEYS, "cooling history summary")
+            val limit = DeviceCoolingV1Contract.Limit
+            return DeviceCoolingV1HistorySummary(
+                minimumTemperatureC = data.requireNullableDouble(
+                    "minTemperatureC",
+                    limit.SENSOR_READING_MINIMUM_C,
+                    limit.SENSOR_READING_MAXIMUM_C
+                ),
+                averageTemperatureC = data.requireNullableDouble(
+                    "avgTemperatureC",
+                    limit.SENSOR_READING_MINIMUM_C,
+                    limit.SENSOR_READING_MAXIMUM_C
+                ),
+                maximumTemperatureC = data.requireNullableDouble(
+                    "maxTemperatureC",
+                    limit.SENSOR_READING_MINIMUM_C,
+                    limit.SENSOR_READING_MAXIMUM_C
+                )
+            )
+        }
 
-    private fun parseHistorySummary(data: JSONObject): DeviceCoolingV1HistorySummary {
-        data.requireExactKeys(HISTORY_SUMMARY_KEYS, "cooling history summary")
-        return DeviceCoolingV1HistorySummary(
-            minimumTemperatureC = data.requireNullableDouble("minTemperatureC", -40.0, 125.0),
-            averageTemperatureC = data.requireNullableDouble("avgTemperatureC", -40.0, 125.0),
-            maximumTemperatureC = data.requireNullableDouble("maxTemperatureC", -40.0, 125.0)
-        )
-    }
+        fun parseSample(data: JSONObject): DeviceCoolingV1HistorySample {
+            data.requireExactKeys(HISTORY_SAMPLE_KEYS, "cooling history sample")
+            return DeviceCoolingV1HistorySample(
+                sampledAtMs = data.requireNonNegativeLong("sampledAtMs"),
+                temperatureC = data.requireDouble(
+                    "temperatureC",
+                    DeviceCoolingV1Contract.Limit.SENSOR_READING_MINIMUM_C,
+                    DeviceCoolingV1Contract.Limit.SENSOR_READING_MAXIMUM_C
+                )
+            )
+        }
 
-    private fun parseHistorySample(data: JSONObject): DeviceCoolingV1HistorySample {
-        data.requireExactKeys(HISTORY_SAMPLE_KEYS, "cooling history sample")
-        return DeviceCoolingV1HistorySample(
-            sampledAtMs = data.requireNonNegativeLong("sampledAtMs"),
-            temperatureC = data.requireDouble("temperatureC", -40.0, 125.0)
-        )
-    }
+        fun parseDay(data: JSONObject): DeviceCoolingV1HistoryDay {
+            data.requireExactKeys(HISTORY_DAY_KEYS, "cooling history day")
+            val limit = DeviceCoolingV1Contract.Limit
+            return DeviceCoolingV1HistoryDay(
+                dayStartAtMs = data.requireNonNegativeLong("dayStartAtMs"),
+                minimumTemperatureC = data.requireDouble(
+                    "minTemperatureC",
+                    limit.SENSOR_READING_MINIMUM_C,
+                    limit.SENSOR_READING_MAXIMUM_C
+                ),
+                averageTemperatureC = data.requireDouble(
+                    "avgTemperatureC",
+                    limit.SENSOR_READING_MINIMUM_C,
+                    limit.SENSOR_READING_MAXIMUM_C
+                ),
+                maximumTemperatureC = data.requireDouble(
+                    "maxTemperatureC",
+                    limit.SENSOR_READING_MINIMUM_C,
+                    limit.SENSOR_READING_MAXIMUM_C
+                )
+            )
+        }
 
-    private fun parseHistoryDay(data: JSONObject): DeviceCoolingV1HistoryDay {
-        data.requireExactKeys(HISTORY_DAY_KEYS, "cooling history day")
-        return DeviceCoolingV1HistoryDay(
-            dayStartAtMs = data.requireNonNegativeLong("dayStartAtMs"),
-            minimumTemperatureC = data.requireDouble("minTemperatureC", -40.0, 125.0),
-            averageTemperatureC = data.requireDouble("avgTemperatureC", -40.0, 125.0),
-            maximumTemperatureC = data.requireDouble("maxTemperatureC", -40.0, 125.0)
-        )
     }
 
     private val CONFIG_APPLY_KEYS = setOf("command", "operation", "saved", "event", "config")
@@ -700,89 +787,3 @@ object DeviceCoolingV1ResponseParser {
         "chartSources"
     )
 }
-
-private fun JSONObject.requireExactKeys(expected: Set<String>, label: String) {
-    val actual = keys().asSequence().toSet()
-    require(actual == expected) {
-        "$label keys differ from firmware; expected=$expected actual=$actual"
-    }
-}
-
-private fun JSONObject.requireObject(key: String): JSONObject =
-    get(key) as? JSONObject ?: error("$key must be an object.")
-
-private fun JSONObject.requireArray(key: String): JSONArray =
-    get(key) as? JSONArray ?: error("$key must be an array.")
-
-private fun JSONObject.requireText(key: String): String =
-    (get(key) as? String)?.also { value ->
-        require(value.isNotEmpty() && value.none(Char::isISOControl))
-        require(value == value.trim())
-    } ?: error("$key must be a canonical string.")
-
-private fun JSONObject.requireBoolean(key: String): Boolean =
-    get(key) as? Boolean ?: error("$key must be boolean.")
-
-private fun JSONObject.requireInt(key: String, minimum: Int, maximum: Int): Int {
-    val value = get(key) as? Number ?: error("$key must be integer.")
-    val long = value.toLong()
-    require(value.toDouble().isFinite() && value.toDouble() == long.toDouble())
-    require(long in minimum.toLong()..maximum.toLong())
-    return long.toInt()
-}
-
-private fun JSONObject.requireNullableInt(key: String, minimum: Int, maximum: Int): Int? =
-    if (get(key) === JSONObject.NULL) null else requireInt(key, minimum, maximum)
-
-private fun JSONObject.requireNonNegativeLong(key: String): Long {
-    val value = get(key) as? Number ?: error("$key must be integer.")
-    val long = value.toLong()
-    require(value.toDouble().isFinite() && value.toDouble() == long.toDouble())
-    require(long >= 0L)
-    return long
-}
-
-private fun JSONObject.requireRevision(key: String): Long =
-    requireNonNegativeLong(key).also { requireRevision(it, key) }
-
-private fun JSONObject.requireDouble(
-    key: String,
-    minimum: Double,
-    maximum: Double = Double.MAX_VALUE
-): Double = (get(key) as? Number)?.toDouble()?.also { value ->
-    require(value.isFinite() && value in minimum..maximum)
-} ?: error("$key must be numeric.")
-
-private fun JSONObject.requireNullableDouble(
-    key: String,
-    minimum: Double,
-    maximum: Double = Double.MAX_VALUE
-): Double? = if (get(key) === JSONObject.NULL) {
-    null
-} else {
-    requireDouble(key, minimum, maximum)
-}
-
-private fun JSONObject.requireTemperature(key: String): Double =
-    requireDouble(
-        key,
-        DeviceCoolingV1Contract.Limit.TEMPERATURE_MINIMUM_C,
-        DeviceCoolingV1Contract.Limit.TEMPERATURE_MAXIMUM_C
-    ).also(::requireCoolingTemperature)
-
-private fun JSONObject.requirePercent(key: String): Double =
-    requireDouble(
-        key,
-        DeviceCoolingV1Contract.Limit.FAN_PERCENT_MINIMUM,
-        DeviceCoolingV1Contract.Limit.FAN_PERCENT_MAXIMUM
-    ).also(::requireCoolingFanPercent)
-
-private fun JSONArray.objects(): List<JSONObject> = List(length()) { index ->
-    get(index) as? JSONObject ?: error("[$index] must be an object.")
-}
-
-private inline fun <reified T : Enum<T>> enumValue(
-    value: String,
-    wireValue: (T) -> String
-): T = enumValues<T>().singleOrNull { wireValue(it) == value }
-    ?: error("Unknown enum value: $value")

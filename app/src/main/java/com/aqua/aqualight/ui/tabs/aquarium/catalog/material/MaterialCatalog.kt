@@ -4,6 +4,8 @@ import android.content.Context
 
 object MaterialCatalog {
 
+    private const val POPULAR_KEYWORD_LIMIT = 4
+
     val definitions: List<AquariumMaterialDefinition> =
         FertilizerCatalog.definitions +
             DecorationCatalog.definitions +
@@ -62,6 +64,6 @@ object MaterialCatalog {
             .map { it.trim() }
             .filter { it.isNotBlank() }
             .distinctBy { it.lowercase() }
-            .take(4)
+            .take(POPULAR_KEYWORD_LIMIT)
     }
 }

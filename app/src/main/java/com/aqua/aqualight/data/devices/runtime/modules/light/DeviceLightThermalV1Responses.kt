@@ -108,15 +108,20 @@ object DeviceLightThermalV1ResponseParser {
             schemaVersion = data.requireThermalInt("schemaVersion", 1, 1),
             productKey = data.requireThermalText("productKey"),
             uptimeMs = data.requireThermalLong("uptimeMs"),
-            topology = parseTopology(data.requireThermalObject("topology")),
-            config = parseConfig(data.requireThermalObject("config")),
-            temperature = parseTemperature(data.requireThermalObject("temperature")),
-            lightProtection = parseProtection(
+            topology = StructureParser.parseTopology(data.requireThermalObject("topology")),
+            config = StructureParser.parseConfig(data.requireThermalObject("config")),
+            temperature = StructureParser.parseTemperature(
+                data.requireThermalObject("temperature")
+            ),
+            lightProtection = StructureParser.parseProtection(
                 data.requireThermalObject("lightProtection"),
                 statusShape = true
             ),
-            fans = parseFans(data.requireThermalArray("fans"), statusShape = true),
-            runtime = parseRuntime(data.requireThermalObject("runtime"))
+            fans = StructureParser.parseFans(
+                data.requireThermalArray("fans"),
+                statusShape = true
+            ),
+            runtime = StructureParser.parseRuntime(data.requireThermalObject("runtime"))
         )
         require(status.schema == DeviceLightThermalV1Contract.SCHEMA)
         require(status.productKey == DeviceLightThermalV1Contract.PRODUCT_KEY)
@@ -125,7 +130,7 @@ object DeviceLightThermalV1ResponseParser {
             status.topology.temperatureSensorCount ==
                 DeviceLightThermalV1Contract.TEMPERATURE_SENSOR_CAPACITY
         )
-        validateFanKeys(status.fans)
+        StructureParser.validateFanKeys(status.fans)
         return status
     }
 
@@ -157,174 +162,246 @@ object DeviceLightThermalV1ResponseParser {
             schemaVersion = data.requireThermalInt("schemaVersion", 1, 1),
             productKey = data.requireThermalText("productKey"),
             uptimeMs = data.requireThermalLong("uptimeMs"),
-            mode = parseMode(data.requireThermalText("mode")),
+            mode = StructureParser.parseMode(data.requireThermalText("mode")),
             sensorFailSafeActive = data.requireThermalBoolean("sensorFailSafeActive"),
             automaticOutputCycleHealthy =
                 data.requireThermalBoolean("automaticOutputCycleHealthy"),
-            temperature = parseTemperature(data.requireThermalObject("temperature")),
-            lightProtection = parseProtection(
+            temperature = StructureParser.parseTemperature(
+                data.requireThermalObject("temperature")
+            ),
+            lightProtection = StructureParser.parseProtection(
                 data.requireThermalObject("lightProtection"),
                 statusShape = false
             ),
-            fans = parseFans(data.requireThermalArray("fans"), statusShape = false)
+            fans = StructureParser.parseFans(
+                data.requireThermalArray("fans"),
+                statusShape = false
+            )
         ).also { telemetry ->
             require(telemetry.schema == DeviceLightThermalV1Contract.SCHEMA)
             require(telemetry.productKey == DeviceLightThermalV1Contract.PRODUCT_KEY)
-            validateFanKeys(telemetry.fans)
+            StructureParser.validateFanKeys(telemetry.fans)
         }
     }
 
-    private fun parseTopology(data: JSONObject): DeviceLightThermalTopology {
-        data.requireThermalKeys(TOPOLOGY_KEYS, "light thermal topology")
-        return DeviceLightThermalTopology(
-            fanOutputCount = data.requireThermalInt("fanOutputCount", 0, 2),
-            temperatureSensorCount = data.requireThermalInt("temperatureSensorCount", 0, 1)
-        )
-    }
-
-    private fun parseConfig(data: JSONObject): DeviceLightThermalConfig {
-        data.requireThermalKeys(CONFIG_KEYS, "light thermal config")
-        val config = DeviceLightThermalConfig(
-            mode = parseMode(data.requireThermalText("mode")),
-            minTemperatureC = data.requireThermalDouble("minTemperatureC", 0.0, 80.0),
-            maxTemperatureC = data.requireThermalDouble("maxTemperatureC", 1.0, 90.0)
-        )
-        require(config.minTemperatureC < config.maxTemperatureC)
-        return config
-    }
-
-    private fun parseTemperature(data: JSONObject): DeviceLightThermalTemperature {
-        data.requireThermalKeys(TEMPERATURE_KEYS, "light thermal temperature")
-        val valid = data.requireThermalBoolean("readingValid")
-        val temperature = data.requireThermalNullableDouble("temperatureC", -40.0, 125.0)
-        require(valid == (temperature != null))
-        return DeviceLightThermalTemperature(
-            sensorKey = data.requireThermalText("sensorKey"),
-            sensorIndex = data.requireThermalInt("sensorIndex", -1, 7),
-            readingValid = valid,
-            temperatureC = temperature,
-            sampledAtMs = data.requireThermalLong("sampledAtMs")
-        ).also { sample ->
-            require(sample.sensorKey == DeviceLightThermalV1Contract.FIXTURE_SENSOR_KEY)
-        }
-    }
-
-    private fun parseProtection(
-        data: JSONObject,
-        statusShape: Boolean
-    ): DeviceLightThermalProtection {
-        data.requireThermalKeys(
-            if (statusShape) PROTECTION_STATUS_KEYS else PROTECTION_EVENT_KEYS,
-            "light thermal protection"
-        )
-        return DeviceLightThermalProtection(
-            enabled = if (statusShape) data.requireThermalBoolean("enabled") else null,
-            active = data.requireThermalBoolean("active"),
-            thresholdC = data.requireThermalDouble("thresholdC", 50.0, 70.0)
-        )
-    }
-
-    private fun parseFans(data: JSONArray, statusShape: Boolean): List<DeviceLightThermalFan> =
-        List(data.length()) { index ->
-            val item = data.get(index) as? JSONObject ?: error("fans[$index] must be an object.")
-            if (statusShape) parseStatusFan(item) else parseEventFan(item)
-        }
-
-    private fun parseStatusFan(data: JSONObject): DeviceLightThermalFan {
-        data.requireThermalKeys(FAN_STATUS_KEYS, "light thermal status fan")
-        val hardware = data.requireThermalObject("hardware")
-        hardware.requireThermalKeys(FAN_HARDWARE_KEYS, "light thermal fan hardware")
-        return DeviceLightThermalFan(
-            fanKey = data.requireThermalText("fanKey"),
-            index = data.requireThermalInt("index", 0, 1),
-            name = data.requireThermalText("name"),
-            regime = data.requireThermalText("regime"),
-            valueNow = data.requireThermalDouble("valueNow", 0.0, 1.0),
-            valueAuto = data.requireThermalDouble("valueAuto", 0.0, 1.0),
-            percentNow = data.requireThermalDouble("percentNow", 0.0, 100.0),
-            percentAuto = data.requireThermalDouble("percentAuto", 0.0, 100.0),
-            hardware = DeviceLightThermalFanHardware(
-                editable = hardware.requireThermalBoolean("editable"),
-                gpio = hardware.requireThermalInt("gpio", 0, 48),
-                ledcChannel = hardware.requireThermalInt("ledcChannel", 0, 15),
-                pwmFrequencyHz = hardware.requireThermalInt("pwmFrequencyHz", 1, Int.MAX_VALUE),
-                pwmResolutionBits =
-                    hardware.requireThermalInt("pwmResolutionBits", 1, 16),
-                invert = hardware.requireThermalBoolean("invert"),
-                pwmOutputHealth = hardware.requireThermalText("pwmOutputHealth"),
-                health = hardware.requireThermalText("health"),
-                physicalFeedbackAvailable =
-                    hardware.requireThermalBoolean("physicalFeedbackAvailable")
+    private object StructureParser {
+        fun parseTopology(data: JSONObject): DeviceLightThermalTopology {
+            data.requireThermalKeys(TOPOLOGY_KEYS, "light thermal topology")
+            return DeviceLightThermalTopology(
+                fanOutputCount = data.requireThermalInt("fanOutputCount", 0, 2),
+                temperatureSensorCount = data.requireThermalInt("temperatureSensorCount", 0, 1)
             )
-        ).also(::validateFan)
-    }
-
-    private fun parseEventFan(data: JSONObject): DeviceLightThermalFan {
-        data.requireThermalKeys(FAN_EVENT_KEYS, "light thermal telemetry fan")
-        return DeviceLightThermalFan(
-            fanKey = data.requireThermalText("fanKey"),
-            index = null,
-            name = null,
-            regime = data.requireThermalText("regime"),
-            valueNow = null,
-            valueAuto = null,
-            percentNow = data.requireThermalDouble("percentNow", 0.0, 100.0),
-            percentAuto = data.requireThermalDouble("percentAuto", 0.0, 100.0),
-            hardware = DeviceLightThermalFanHardware(
-                editable = null,
-                gpio = null,
-                ledcChannel = null,
-                pwmFrequencyHz = null,
-                pwmResolutionBits = null,
-                invert = null,
-                pwmOutputHealth = data.requireThermalText("pwmOutputHealth"),
-                health = data.requireThermalText("health"),
-                physicalFeedbackAvailable =
-                    data.requireThermalBoolean("physicalFeedbackAvailable")
-            )
-        ).also(::validateFan)
-    }
-
-    private fun parseRuntime(data: JSONObject): DeviceLightThermalRuntime {
-        data.requireThermalKeys(RUNTIME_KEYS, "light thermal runtime")
-        return DeviceLightThermalRuntime(
-            event = data.requireThermalText("event"),
-            statusEvent = data.requireThermalText("statusEvent"),
-            sensorFailSafeActive = data.requireThermalBoolean("sensorFailSafeActive"),
-            automaticOutputCycleHealthy =
-                data.requireThermalBoolean("automaticOutputCycleHealthy"),
-            hardwareEditable = data.requireThermalBoolean("hardwareEditable"),
-            fanMappingEditable = data.requireThermalBoolean("fanMappingEditable"),
-            sensorMappingEditable = data.requireThermalBoolean("sensorMappingEditable")
-        ).also { runtime ->
-            require(runtime.event == DeviceLightThermalV1Contract.Event.TELEMETRY_CHANGED)
-            require(runtime.statusEvent == DeviceLightThermalV1Contract.Event.STATUS_CHANGED)
-            require(!runtime.hardwareEditable)
-            require(!runtime.fanMappingEditable)
-            require(!runtime.sensorMappingEditable)
         }
-    }
 
-    private fun validateFan(fan: DeviceLightThermalFan) {
-        require(fan.regime in setOf("Auto", "On", "Off"))
-        require(fan.hardware.pwmOutputHealth in setOf("OK", "FAULT"))
-        require(fan.hardware.health in setOf("UNVERIFIED", "HARDWARE_FAULT"))
-        require(!fan.hardware.physicalFeedbackAvailable)
-        fan.hardware.editable?.let { require(!it) }
-    }
-
-    private fun validateFanKeys(fans: List<DeviceLightThermalFan>) {
-        require(
-            fans.map(DeviceLightThermalFan::fanKey) == listOf(
-                DeviceLightThermalV1Contract.FAN_1_KEY,
-                DeviceLightThermalV1Contract.FAN_2_KEY
+        fun parseConfig(data: JSONObject): DeviceLightThermalConfig {
+            data.requireThermalKeys(CONFIG_KEYS, "light thermal config")
+            val config = DeviceLightThermalConfig(
+                mode = parseMode(data.requireThermalText("mode")),
+                minTemperatureC = data.requireThermalDouble(
+                    "minTemperatureC",
+                    DeviceLightThermalV1Contract.CONFIG_MINIMUM_TEMPERATURE_C,
+                    DeviceLightThermalV1Contract.CONFIG_MAXIMUM_MIN_TEMPERATURE_C
+                ),
+                maxTemperatureC = data.requireThermalDouble(
+                    "maxTemperatureC",
+                    DeviceLightThermalV1Contract.CONFIG_MINIMUM_MAX_TEMPERATURE_C,
+                    DeviceLightThermalV1Contract.CONFIG_MAXIMUM_TEMPERATURE_C
+                )
             )
-        )
-    }
+            require(config.minTemperatureC < config.maxTemperatureC)
+            return config
+        }
 
-    private fun parseMode(value: String): DeviceLightThermalMode =
-        DeviceLightThermalMode.entries.singleOrNull { it.wireValue == value }
-            ?: error("Unknown light thermal mode: $value")
+        fun parseTemperature(data: JSONObject): DeviceLightThermalTemperature {
+            data.requireThermalKeys(TEMPERATURE_KEYS, "light thermal temperature")
+            val valid = data.requireThermalBoolean("readingValid")
+            val temperature = data.requireThermalNullableDouble(
+                "temperatureC",
+                DeviceLightThermalV1Contract.SENSOR_READING_MINIMUM_C,
+                DeviceLightThermalV1Contract.SENSOR_READING_MAXIMUM_C
+            )
+            require(valid == (temperature != null))
+            return DeviceLightThermalTemperature(
+                sensorKey = data.requireThermalText("sensorKey"),
+                sensorIndex = data.requireThermalInt(
+                    "sensorIndex",
+                    DeviceLightThermalV1Contract.SENSOR_INDEX_UNAVAILABLE,
+                    DeviceLightThermalV1Contract.SENSOR_INDEX_MAXIMUM
+                ),
+                readingValid = valid,
+                temperatureC = temperature,
+                sampledAtMs = data.requireThermalLong("sampledAtMs")
+            ).also { sample ->
+                require(sample.sensorKey == DeviceLightThermalV1Contract.FIXTURE_SENSOR_KEY)
+            }
+        }
+
+        fun parseProtection(
+            data: JSONObject,
+            statusShape: Boolean
+        ): DeviceLightThermalProtection {
+            data.requireThermalKeys(
+                if (statusShape) PROTECTION_STATUS_KEYS else PROTECTION_EVENT_KEYS,
+                "light thermal protection"
+            )
+            return DeviceLightThermalProtection(
+                enabled = if (statusShape) data.requireThermalBoolean("enabled") else null,
+                active = data.requireThermalBoolean("active"),
+                thresholdC = data.requireThermalDouble(
+                    "thresholdC",
+                    DeviceLightThermalV1Contract.PROTECTION_THRESHOLD_MINIMUM_C,
+                    DeviceLightThermalV1Contract.PROTECTION_THRESHOLD_MAXIMUM_C
+                )
+            )
+        }
+
+        fun parseFans(data: JSONArray, statusShape: Boolean): List<DeviceLightThermalFan> =
+            List(data.length()) { index ->
+                val item = data.get(index) as? JSONObject ?: error("fans[$index] must be an object.")
+                if (statusShape) parseStatusFan(item) else parseEventFan(item)
+            }
+
+        private fun parseStatusFan(data: JSONObject): DeviceLightThermalFan {
+            data.requireThermalKeys(FAN_STATUS_KEYS, "light thermal status fan")
+            val hardware = data.requireThermalObject("hardware")
+            hardware.requireThermalKeys(FAN_HARDWARE_KEYS, "light thermal fan hardware")
+            return DeviceLightThermalFan(
+                fanKey = data.requireThermalText("fanKey"),
+                index = data.requireThermalInt(
+                    "index",
+                    DeviceLightThermalV1Contract.FAN_INDEX_MINIMUM,
+                    DeviceLightThermalV1Contract.FAN_INDEX_MAXIMUM
+                ),
+                name = data.requireThermalText("name"),
+                regime = data.requireThermalText("regime"),
+                valueNow = data.requireThermalDouble(
+                    "valueNow",
+                    DeviceLightThermalV1Contract.NORMALIZED_OUTPUT_MINIMUM,
+                    DeviceLightThermalV1Contract.NORMALIZED_OUTPUT_MAXIMUM
+                ),
+                valueAuto = data.requireThermalDouble(
+                    "valueAuto",
+                    DeviceLightThermalV1Contract.NORMALIZED_OUTPUT_MINIMUM,
+                    DeviceLightThermalV1Contract.NORMALIZED_OUTPUT_MAXIMUM
+                ),
+                percentNow = data.requireThermalDouble(
+                    "percentNow",
+                    DeviceLightThermalV1Contract.FAN_PERCENT_MINIMUM,
+                    DeviceLightThermalV1Contract.FAN_PERCENT_MAXIMUM
+                ),
+                percentAuto = data.requireThermalDouble(
+                    "percentAuto",
+                    DeviceLightThermalV1Contract.FAN_PERCENT_MINIMUM,
+                    DeviceLightThermalV1Contract.FAN_PERCENT_MAXIMUM
+                ),
+                hardware = DeviceLightThermalFanHardware(
+                    editable = hardware.requireThermalBoolean("editable"),
+                    gpio = hardware.requireThermalInt(
+                        "gpio",
+                        DeviceLightThermalV1Contract.GPIO_MINIMUM,
+                        DeviceLightThermalV1Contract.GPIO_MAXIMUM
+                    ),
+                    ledcChannel = hardware.requireThermalInt(
+                        "ledcChannel",
+                        DeviceLightThermalV1Contract.LEDC_CHANNEL_MINIMUM,
+                        DeviceLightThermalV1Contract.LEDC_CHANNEL_MAXIMUM
+                    ),
+                    pwmFrequencyHz = hardware.requireThermalInt(
+                        "pwmFrequencyHz",
+                        DeviceLightThermalV1Contract.PWM_FREQUENCY_MINIMUM_HZ,
+                        Int.MAX_VALUE
+                    ),
+                    pwmResolutionBits =
+                        hardware.requireThermalInt(
+                            "pwmResolutionBits",
+                            DeviceLightThermalV1Contract.PWM_RESOLUTION_MINIMUM_BITS,
+                            DeviceLightThermalV1Contract.PWM_RESOLUTION_MAXIMUM_BITS
+                        ),
+                    invert = hardware.requireThermalBoolean("invert"),
+                    pwmOutputHealth = hardware.requireThermalText("pwmOutputHealth"),
+                    health = hardware.requireThermalText("health"),
+                    physicalFeedbackAvailable =
+                        hardware.requireThermalBoolean("physicalFeedbackAvailable")
+                )
+            ).also(::validateFan)
+        }
+
+        private fun parseEventFan(data: JSONObject): DeviceLightThermalFan {
+            data.requireThermalKeys(FAN_EVENT_KEYS, "light thermal telemetry fan")
+            return DeviceLightThermalFan(
+                fanKey = data.requireThermalText("fanKey"),
+                index = null,
+                name = null,
+                regime = data.requireThermalText("regime"),
+                valueNow = null,
+                valueAuto = null,
+                percentNow = data.requireThermalDouble(
+                    "percentNow",
+                    DeviceLightThermalV1Contract.FAN_PERCENT_MINIMUM,
+                    DeviceLightThermalV1Contract.FAN_PERCENT_MAXIMUM
+                ),
+                percentAuto = data.requireThermalDouble(
+                    "percentAuto",
+                    DeviceLightThermalV1Contract.FAN_PERCENT_MINIMUM,
+                    DeviceLightThermalV1Contract.FAN_PERCENT_MAXIMUM
+                ),
+                hardware = DeviceLightThermalFanHardware(
+                    editable = null,
+                    gpio = null,
+                    ledcChannel = null,
+                    pwmFrequencyHz = null,
+                    pwmResolutionBits = null,
+                    invert = null,
+                    pwmOutputHealth = data.requireThermalText("pwmOutputHealth"),
+                    health = data.requireThermalText("health"),
+                    physicalFeedbackAvailable =
+                        data.requireThermalBoolean("physicalFeedbackAvailable")
+                )
+            ).also(::validateFan)
+        }
+
+        fun parseRuntime(data: JSONObject): DeviceLightThermalRuntime {
+            data.requireThermalKeys(RUNTIME_KEYS, "light thermal runtime")
+            return DeviceLightThermalRuntime(
+                event = data.requireThermalText("event"),
+                statusEvent = data.requireThermalText("statusEvent"),
+                sensorFailSafeActive = data.requireThermalBoolean("sensorFailSafeActive"),
+                automaticOutputCycleHealthy =
+                    data.requireThermalBoolean("automaticOutputCycleHealthy"),
+                hardwareEditable = data.requireThermalBoolean("hardwareEditable"),
+                fanMappingEditable = data.requireThermalBoolean("fanMappingEditable"),
+                sensorMappingEditable = data.requireThermalBoolean("sensorMappingEditable")
+            ).also { runtime ->
+                require(runtime.event == DeviceLightThermalV1Contract.Event.TELEMETRY_CHANGED)
+                require(runtime.statusEvent == DeviceLightThermalV1Contract.Event.STATUS_CHANGED)
+                require(!runtime.hardwareEditable)
+                require(!runtime.fanMappingEditable)
+                require(!runtime.sensorMappingEditable)
+            }
+        }
+
+        private fun validateFan(fan: DeviceLightThermalFan) {
+            require(fan.regime in setOf("Auto", "On", "Off"))
+            require(fan.hardware.pwmOutputHealth in setOf("OK", "FAULT"))
+            require(fan.hardware.health in setOf("UNVERIFIED", "HARDWARE_FAULT"))
+            require(!fan.hardware.physicalFeedbackAvailable)
+            fan.hardware.editable?.let { require(!it) }
+        }
+
+        fun validateFanKeys(fans: List<DeviceLightThermalFan>) {
+            require(
+                fans.map(DeviceLightThermalFan::fanKey) == listOf(
+                    DeviceLightThermalV1Contract.FAN_1_KEY,
+                    DeviceLightThermalV1Contract.FAN_2_KEY
+                )
+            )
+        }
+
+        fun parseMode(value: String): DeviceLightThermalMode =
+            DeviceLightThermalMode.entries.singleOrNull { it.wireValue == value }
+                ?: error("Unknown light thermal mode: $value")
+
+    }
 
     private val STATUS_KEYS = setOf(
         "schema", "schemaVersion", "productKey", "uptimeMs", "topology", "config",

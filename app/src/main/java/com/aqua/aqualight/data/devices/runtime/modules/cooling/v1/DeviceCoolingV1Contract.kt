@@ -28,20 +28,30 @@ object DeviceCoolingV1Contract {
 
     object Limit {
         const val UINT32_MAX = 4_294_967_295L
+        const val ALIGNMENT_EPSILON = 0.0001
         const val FAN_OUTPUT_CAPACITY = 1
         const val SENSOR_SLOT_CAPACITY = 2
         const val PROGRAM_SLOT_CAPACITY = 8
+        const val PROGRAM_SLOT_COUNT_MINIMUM = 1
         const val MINUTES_PER_DAY = 1_440
+        const val MINUTE_MINIMUM = 0
+        const val END_MINUTE_MINIMUM = 1
         const val PROGRAM_TIME_STEP_MINUTES = 5
         const val PROGRAM_MINIMUM_DURATION_MINUTES = 15
         const val TEMPERATURE_MINIMUM_C = 0.0
         const val TEMPERATURE_MAXIMUM_C = 40.0
         const val TEMPERATURE_STEP_C = 0.5
+        const val SENSOR_READING_MINIMUM_C = -40.0
+        const val SENSOR_READING_MAXIMUM_C = 125.0
+        const val HUMIDITY_PERCENT_MINIMUM = 0.0
+        const val HUMIDITY_PERCENT_MAXIMUM = 100.0
         const val MINIMUM_AUTOMATIC_GAP_C = 0.5
         const val FAN_PERCENT_MINIMUM = 0.0
         const val FAN_PERCENT_MAXIMUM = 100.0
         const val FAN_PERCENT_STEP = 1.0
+        const val FAN_RPM_MINIMUM = 0.0
         const val SILENT_MODE_MAXIMUM_PERCENT = 50.0
+        const val ACTIVE_ALARM_COUNT_MAXIMUM = 6
         const val SENSOR_STALE_AFTER_MS = 10_000L
     }
 }
