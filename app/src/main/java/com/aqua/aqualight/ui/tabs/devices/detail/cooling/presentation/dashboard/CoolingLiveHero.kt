@@ -41,7 +41,7 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.contentDescription
-import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.semantics.clearAndSetSemantics
 import com.aqua.aqualight.R
 import com.aqua.aqualight.ui.common.cooling.AquaCoolingDashboardAlpha
 import com.aqua.aqualight.ui.common.cooling.AquaCoolingDashboardGeometry
@@ -79,7 +79,7 @@ internal fun CoolingLiveHero(
             .clip(shape)
             .background(colors.surface)
             .border(AquaCoolingDashboardGeometry.liveHeroOutlineWidth, colors.outline, shape)
-            .semantics(mergeDescendants = true) { contentDescription = description }
+            .clearAndSetSemantics { contentDescription = description }
     ) {
         CoolingHeroScene(presentation, motionPhase)
         CoolingHeroDevice(
