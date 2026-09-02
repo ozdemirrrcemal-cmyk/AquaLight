@@ -69,8 +69,7 @@ private fun CalibrationNameControls(
         colors = colors,
         onValueChange = { value ->
             onAction(DeviceDosingCalibrationAction.DisplayNameChanged(value))
-        },
-        onImeDone = onSubmit
+        }
     )
     AquaGuidedFlowButton(
         text = calibrationActionText(state, R.string.device_dosing_calibration_continue),
@@ -134,8 +133,7 @@ private fun CalibrationMeasurementControls(
         colors = colors,
         onValueChange = { value ->
             onAction(DeviceDosingCalibrationAction.MeasuredMlChanged(value))
-        },
-        onImeDone = onSubmit
+        }
     )
     AquaGuidedFlowButton(
         text = calibrationActionText(state, R.string.device_dosing_calibration_save_measurement),
