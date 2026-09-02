@@ -35,9 +35,11 @@ import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.res.booleanResource
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.contentDescription
@@ -60,7 +62,10 @@ internal fun CoolingLiveHero(
     modifier: Modifier = Modifier
 ) {
     val presentation = state.toCoolingHeroPresentation()
-    val motionPhase = coolingHeroMotionPhase(presentation)
+    val motion = presentation.resolveMotion(
+        allowWaitingMotion = booleanResource(R.bool.device_cooling_waiting_motion_enabled)
+    )
+    val motionPhase = coolingHeroMotionPhase(motion)
     val statusLabel = stringResource(presentation.status.labelResource())
     val temperatureText = coolingTemperatureText(presentation.temperatureC)
     val detailText = coolingHeroDetailText(presentation)
@@ -81,9 +86,10 @@ internal fun CoolingLiveHero(
             .border(AquaCoolingDashboardGeometry.liveHeroOutlineWidth, colors.outline, shape)
             .clearAndSetSemantics { contentDescription = description }
     ) {
-        CoolingHeroScene(presentation, motionPhase)
+        CoolingHeroScene(presentation, motion, motionPhase)
         CoolingHeroDevice(
             presentation = presentation,
+            motion = motion,
             motionPhase = motionPhase,
             modifier = Modifier
                 .width(maxWidth * DEVICE_WIDTH_FRACTION)
@@ -105,11 +111,15 @@ internal fun CoolingLiveHero(
 }
 
 @Composable
-private fun CoolingHeroScene(presentation: CoolingHeroPresentation, motionPhase: Float) {
+private fun CoolingHeroScene(
+    presentation: CoolingHeroPresentation,
+    motion: CoolingHeroMotion,
+    motionPhase: Float
+) {
     Canvas(modifier = Modifier.fillMaxSize()) {
         drawCoolingHeroScene(
             motionPhase = motionPhase,
-            motionIntensity = presentation.motionIntensity,
+            motionIntensity = motion.intensity,
             status = presentation.status
         )
     }
@@ -118,6 +128,7 @@ private fun CoolingHeroScene(presentation: CoolingHeroPresentation, motionPhase:
 @Composable
 private fun CoolingHeroDevice(
     presentation: CoolingHeroPresentation,
+    motion: CoolingHeroMotion,
     motionPhase: Float,
     modifier: Modifier
 ) {
@@ -130,7 +141,7 @@ private fun CoolingHeroDevice(
                 .fillMaxSize()
                 .alpha(presentation.deviceAlpha())
         )
-        if (presentation.isCooling) {
+        if (motion.isActive) {
             Canvas(modifier = Modifier.fillMaxSize()) {
                 val ringTopLeft = Offset(
                     size.width * FAN_RING_LEFT_FRACTION,
@@ -174,7 +185,17 @@ private fun BoxScope.CoolingHeroStatusPanel(
             .padding(start = AquaCoolingDashboardGeometry.liveHeroStatusPanelStartPadding)
             .width(AquaCoolingDashboardGeometry.liveHeroStatusPanelWidth)
             .clip(panelShape)
-            .background(colors.surface.copy(alpha = AquaCoolingDashboardAlpha.liveHeroPanel))
+            .background(
+                brush = Brush.verticalGradient(
+                    colors = listOf(
+                        colors.surface.copy(alpha = AquaCoolingDashboardAlpha.liveHeroPanelTop),
+                        colors.mediaSurface.copy(
+                            alpha = AquaCoolingDashboardAlpha.liveHeroPanelBottom
+                        )
+                    )
+                ),
+                shape = panelShape
+            )
             .border(
                 AquaCoolingDashboardGeometry.liveHeroOutlineWidth,
                 colors.outline.copy(alpha = AquaCoolingDashboardAlpha.liveHeroPanelOutline),
@@ -256,11 +277,11 @@ private fun coolingHeroDetailText(presentation: CoolingHeroPresentation): String
 }
 
 @Composable
-private fun coolingHeroMotionPhase(presentation: CoolingHeroPresentation): Float {
-    if (!presentation.isCooling) return NO_MOTION
+private fun coolingHeroMotionPhase(motion: CoolingHeroMotion): Float {
+    if (!motion.isActive) return NO_MOTION
     val duration = (
         SLOWEST_MOTION_MILLIS -
-            (SLOWEST_MOTION_MILLIS - FASTEST_MOTION_MILLIS) * presentation.motionIntensity
+            (SLOWEST_MOTION_MILLIS - FASTEST_MOTION_MILLIS) * motion.intensity
         ).toInt()
     val transition = rememberInfiniteTransition(label = "cooling-hero-motion")
     val phase by transition.animateFloat(

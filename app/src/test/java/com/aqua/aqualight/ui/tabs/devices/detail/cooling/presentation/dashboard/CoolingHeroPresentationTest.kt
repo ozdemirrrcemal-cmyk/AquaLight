@@ -47,6 +47,28 @@ class CoolingHeroPresentationTest {
     }
 
     @Test
+    fun `enabled waiting state motion starts before first telemetry`() {
+        val motion = state(
+            fanPercent = 0,
+            freshness = CoolingDataFreshness.STALE
+        ).toCoolingHeroPresentation().resolveMotion(allowWaitingMotion = true)
+
+        assertTrue(motion.isActive)
+        assertEquals(WAITING_MOTION_INTENSITY, motion.intensity, NO_DELTA)
+    }
+
+    @Test
+    fun `disabled waiting state motion does not imply live cooling`() {
+        val motion = state(
+            fanPercent = 0,
+            freshness = CoolingDataFreshness.STALE
+        ).toCoolingHeroPresentation().resolveMotion(allowWaitingMotion = false)
+
+        assertFalse(motion.isActive)
+        assertEquals(NO_MOTION, motion.intensity, NO_DELTA)
+    }
+
+    @Test
     fun `alarm takes precedence over live fan output`() {
         val presentation = state(fanPercent = 60, alarmCount = 1).toCoolingHeroPresentation()
 
@@ -115,6 +137,7 @@ class CoolingHeroPresentationTest {
     private companion object {
         const val TANK_TEMPERATURE_C = 25.6
         const val EXPECTED_SIXTY_PERCENT_INTENSITY = 0.6f
+        const val WAITING_MOTION_INTENSITY = 0.58f
         const val NO_MOTION = 0f
         const val NO_DELTA = 0f
     }

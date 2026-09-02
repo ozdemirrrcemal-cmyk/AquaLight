@@ -28,6 +28,19 @@ internal data class CoolingHeroPresentation(
         }
 }
 
+internal data class CoolingHeroMotion(
+    val isActive: Boolean,
+    val intensity: Float
+)
+
+internal fun CoolingHeroPresentation.resolveMotion(allowWaitingMotion: Boolean): CoolingHeroMotion {
+    val waitingMotion = allowWaitingMotion && status == CoolingHeroVisualStatus.WAITING_FOR_DATA
+    return CoolingHeroMotion(
+        isActive = isCooling || waitingMotion,
+        intensity = if (waitingMotion) WAITING_MOTION_INTENSITY else motionIntensity
+    )
+}
+
 internal fun DeviceCoolingRootUiState.toCoolingHeroPresentation(): CoolingHeroPresentation {
     return CoolingHeroPresentation(
         status = resolveCoolingHeroStatus(),
@@ -69,3 +82,4 @@ private const val MAXIMUM_PERCENT = 100
 private const val MAXIMUM_PERCENT_FLOAT = 100f
 private const val NO_MOTION = 0f
 private const val NO_ALARMS = 0
+private const val WAITING_MOTION_INTENSITY = 0.58f
