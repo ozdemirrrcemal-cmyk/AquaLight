@@ -489,8 +489,13 @@ internal class DeviceOtaCoordinator(
                 currentState = state.value
             )
             // A completed image whose exact runtime restore failed still needs post-restart
-            // version proof. Only a firmware transfer failure closes the OTA transaction here.
-            if (snapshot.phase == DeviceFirmwareOtaPhase.FAILED) clearPlanState(deviceUid)
+            // version proof. Every other mapped failure closes the OTA transaction here.
+            if (
+                state.value is DeviceOtaState.Failed &&
+                snapshot.phase != DeviceFirmwareOtaPhase.SUCCEEDED
+            ) {
+                clearPlanState(deviceUid)
+            }
             verifyCurrentFirmwareIfReady(deviceUid, snapshot, activeSelection)
         }
         return null
