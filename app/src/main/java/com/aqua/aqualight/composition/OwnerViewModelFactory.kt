@@ -202,7 +202,10 @@ internal class OwnerViewModelFactory(
                 )
             }
             DeviceDosingChannelCalibrationViewModel::class.java ->
-                DeviceDosingChannelCalibrationViewModel(graph.dosingOperations.calibrationOperations)
+                DeviceDosingChannelCalibrationViewModel(
+                    operations = graph.dosingOperations.calibrationOperations,
+                    draftOperations = graph.dosingOperations.calibrationDraftOperations
+                )
             DeviceDosingChannelDetailViewModel::class.java ->
                 DeviceDosingChannelDetailViewModel(graph.dosingOperations.channelOperations)
             DeviceDosingPlanViewModel::class.java ->

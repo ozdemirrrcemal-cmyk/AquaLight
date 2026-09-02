@@ -215,6 +215,7 @@ class DeviceDosingCalibrationStage8Test {
     private fun viewModel(operations: Stage8CalibrationOperations) =
         DeviceDosingChannelCalibrationViewModel(
             operations = operations,
+            draftOperations = FakeDosingCalibrationDraftOperations(),
             clock = DeviceDosingCalibrationClock { dispatcher.scheduler.currentTime }
         )
 

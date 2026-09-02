@@ -109,6 +109,7 @@ class DosingCalibrationExitConcurrencyTest {
     private fun viewModel(operations: DeviceDosingCalibrationOperations) =
         DeviceDosingChannelCalibrationViewModel(
             operations = operations,
+            draftOperations = FakeDosingCalibrationDraftOperations(),
             clock = DeviceDosingCalibrationClock { dispatcher.scheduler.currentTime }
         )
 

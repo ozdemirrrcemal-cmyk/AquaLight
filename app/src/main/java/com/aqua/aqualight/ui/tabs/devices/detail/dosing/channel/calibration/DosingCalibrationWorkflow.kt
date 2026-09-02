@@ -1,5 +1,6 @@
 package com.aqua.aqualight.ui.tabs.devices.detail.dosing.channel.calibration
 
+import com.aqua.aqualight.application.devices.dosing.DeviceDosingCalibrationDraftOperations
 import com.aqua.aqualight.application.devices.dosing.DeviceDosingCalibrationFailure
 import com.aqua.aqualight.application.devices.dosing.DeviceDosingCalibrationOperations
 import com.aqua.aqualight.application.devices.dosing.DeviceDosingCalibrationResult
@@ -19,6 +20,7 @@ import kotlinx.coroutines.sync.withLock
 
 internal class DosingCalibrationWorkflow(
     private val operations: DeviceDosingCalibrationOperations,
+    private val draftOperations: DeviceDosingCalibrationDraftOperations,
     clock: DeviceDosingCalibrationClock,
     private val scope: CoroutineScope
 ) {
@@ -48,15 +50,24 @@ internal class DosingCalibrationWorkflow(
 
         session.observeJob?.cancel()
         session.reset(normalized)
-        session.nameDraftInitialized = normalized.restoredDisplayNameDraft != null
+        var draftLoadFailed = false
+        val restoredDraft = normalized.restoredDisplayNameDraft
+            ?: runCatching {
+                draftOperations.loadDisplayName(normalized.deviceUid, normalized.slotId)
+            }.getOrElse {
+                draftLoadFailed = true
+                null
+            }
+        session.nameDraftInitialized = restoredDraft != null
         mutableUiState.value = DeviceDosingCalibrationUiState(
             channel = DosingCalibrationChannelState(
                 pumpCount = normalized.pumpCount,
                 channelNumber = normalized.channelNumber
             ),
             input = DosingCalibrationInputState(
-                displayName = normalized.restoredDisplayNameDraft.orEmpty()
-            )
+                displayName = restoredDraft.orEmpty()
+            ),
+            error = DeviceDosingCalibrationError.STORAGE.takeIf { draftLoadFailed }
         )
         session.observeJob = scope.launch {
             operations.observe(normalized.deviceUid, normalized.slotId).collect { snapshot ->
@@ -85,17 +96,32 @@ internal class DosingCalibrationWorkflow(
             action = action,
             constraints = operations.constraints
         )
-        mutableUiState.value = decision.state
-        if (action is DeviceDosingCalibrationAction.DisplayNameChanged) {
-            session.nameDraftInitialized = true
+        val shouldPersistDraft =
+            action == DeviceDosingCalibrationAction.SaveDisplayName && decision.markLocalProgress
+        val draftPersisted = !shouldPersistDraft || runCatching {
+            draftOperations.saveDisplayName(
+                deviceUid = route.deviceUid,
+                slotId = route.slotId,
+                displayName = decision.state.displayName
+            )
+        }.isSuccess
+        if (!draftPersisted) {
+            mutableUiState.value = mutableUiState.value.copy(
+                error = DeviceDosingCalibrationError.STORAGE
+            )
+        } else {
+            mutableUiState.value = decision.state
+            if (action is DeviceDosingCalibrationAction.DisplayNameChanged) {
+                session.nameDraftInitialized = true
+            }
+            if (decision.markLocalProgress) session.hasLocalProgress = true
+            session.applyPrimeDirective(decision.primeDirective, ::startPrimeSafetyWindow)
+            if (decision.operation == DosingCalibrationOperation.ContinueFromPrime) {
+                session.primeRequested = false
+                session.primeSafetyJob?.cancel()
+            }
+            decision.operation?.let { operation -> execute(operation, route) }
         }
-        if (decision.markLocalProgress) session.hasLocalProgress = true
-        session.applyPrimeDirective(decision.primeDirective, ::startPrimeSafetyWindow)
-        if (decision.operation == DosingCalibrationOperation.ContinueFromPrime) {
-            session.primeRequested = false
-            session.primeSafetyJob?.cancel()
-        }
-        decision.operation?.let { operation -> execute(operation, route) }
     }
 
     fun requestExit() {
@@ -120,6 +146,18 @@ internal class DosingCalibrationWorkflow(
                 when (result) {
                     is DeviceDosingCalibrationResult.Success -> {
                         session.acceptedAuthoritativeSnapshot(result.snapshot)
+                        val draftCleared = runCatching {
+                            draftOperations.clearDisplayName(route.deviceUid, route.slotId)
+                        }.isSuccess
+                        if (!draftCleared) {
+                            session.operationRejected()
+                            session.exiting = false
+                            mutableUiState.value = mutableUiState.value.withCalibrationFailure(
+                                error = DeviceDosingCalibrationError.STORAGE,
+                                authoritativeSnapshot = result.snapshot
+                            )
+                            return@launch
+                        }
                         session.completionEmitted = true
                         eventChannel.send(DeviceDosingCalibrationEvent.Exit)
                     }
@@ -268,6 +306,11 @@ internal class DosingCalibrationWorkflow(
         transition.state?.let { state -> mutableUiState.value = state }
         if (transition.applySnapshot) applySnapshot(snapshot, previousSnapshot)
         if (transition.emitCompleted && !session.exiting && !session.completionEmitted) {
+            session.route?.let { route ->
+                runCatching {
+                    draftOperations.clearDisplayName(route.deviceUid, route.slotId)
+                }
+            }
             session.completionEmitted = true
             eventChannel.send(DeviceDosingCalibrationEvent.Completed(snapshot.toDetailTarget()))
         }
@@ -301,6 +344,9 @@ internal class DosingCalibrationWorkflow(
                 previousSnapshot = previousSnapshot
             )
         ) {
+            runCatching {
+                draftOperations.clearDisplayName(route.deviceUid, route.slotId)
+            }
             DosingCalibrationSnapshotReconciliation.completeFromSnapshot(
                 session = session,
                 eventChannel = eventChannel,

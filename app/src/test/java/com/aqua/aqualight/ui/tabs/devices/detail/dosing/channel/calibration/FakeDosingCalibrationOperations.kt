@@ -1,5 +1,6 @@
 package com.aqua.aqualight.ui.tabs.devices.detail.dosing.channel.calibration
 
+import com.aqua.aqualight.application.devices.dosing.DeviceDosingCalibrationDraftOperations
 import com.aqua.aqualight.application.devices.dosing.DeviceDosingCalibrationOperations
 import com.aqua.aqualight.application.devices.dosing.DeviceDosingCalibrationResult
 import com.aqua.aqualight.application.devices.dosing.DeviceDosingCalibrationSessionPhase
@@ -7,6 +8,33 @@ import com.aqua.aqualight.application.devices.dosing.DeviceDosingCalibrationSnap
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
+
+internal class FakeDosingCalibrationDraftOperations : DeviceDosingCalibrationDraftOperations {
+    private val names = mutableMapOf<Pair<String, String>, String>()
+
+    var failLoads = false
+    var failSaves = false
+    var failClears = false
+
+    override fun loadDisplayName(deviceUid: String, slotId: String): String? {
+        check(!failLoads) { "Draft load failed." }
+        return names[deviceUid to slotId]
+    }
+
+    override fun saveDisplayName(deviceUid: String, slotId: String, displayName: String) {
+        check(!failSaves) { "Draft save failed." }
+        names[deviceUid to slotId] = displayName
+    }
+
+    override fun clearDisplayName(deviceUid: String, slotId: String) {
+        check(!failClears) { "Draft clear failed." }
+        names.remove(deviceUid to slotId)
+    }
+
+    fun seed(deviceUid: String, slotId: String, displayName: String) {
+        names[deviceUid to slotId] = displayName
+    }
+}
 
 internal class FakeDosingCalibrationOperations(
     initial: DeviceDosingCalibrationSnapshot
