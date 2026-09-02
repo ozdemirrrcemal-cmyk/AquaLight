@@ -5,8 +5,8 @@ import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
 import com.aqua.aqualight.R
 import com.aqua.aqualight.ui.common.cooling.AquaCoolingDashboardIconKind
-import com.aqua.aqualight.ui.tabs.devices.detail.cooling.root.CoolingControlMode
-import com.aqua.aqualight.ui.tabs.devices.detail.cooling.root.DeviceCoolingRootUiState
+import com.aqua.aqualight.ui.tabs.devices.detail.cooling.presentation.root.CoolingControlMode
+import com.aqua.aqualight.ui.tabs.devices.detail.cooling.presentation.root.DeviceCoolingRootUiState
 
 internal data class CoolingModeSettingsRowModel(
     val mode: CoolingControlMode,

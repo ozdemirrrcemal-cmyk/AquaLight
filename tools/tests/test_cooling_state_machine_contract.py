@@ -3,7 +3,9 @@ import unittest
 
 
 ROOT = Path(__file__).resolve().parents[2]
-COOLING = ROOT / "app/src/main/java/com/aqua/aqualight/ui/tabs/devices/detail/cooling"
+COOLING = ROOT / (
+    "app/src/main/java/com/aqua/aqualight/ui/tabs/devices/detail/cooling/presentation"
+)
 
 
 class CoolingStateMachineContractTest(unittest.TestCase):

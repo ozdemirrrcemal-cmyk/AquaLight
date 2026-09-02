@@ -10,14 +10,14 @@ import androidx.compose.ui.res.colorResource
 import androidx.compose.ui.tooling.preview.Preview
 import com.aqua.aqualight.R
 import com.aqua.aqualight.application.devices.cooling.control.DeviceCoolingManualFanCapabilities
-import com.aqua.aqualight.ui.tabs.devices.detail.cooling.common.CoolingDataState
-import com.aqua.aqualight.ui.tabs.devices.detail.cooling.root.CoolingAutomaticSummaryPresentation
-import com.aqua.aqualight.ui.tabs.devices.detail.cooling.root.CoolingControlMode
-import com.aqua.aqualight.ui.tabs.devices.detail.cooling.root.CoolingControlPresentation
-import com.aqua.aqualight.ui.tabs.devices.detail.cooling.root.CoolingDashboardOverviewPresentation
-import com.aqua.aqualight.ui.tabs.devices.detail.cooling.root.CoolingHealthState
-import com.aqua.aqualight.ui.tabs.devices.detail.cooling.root.CoolingHistoryOverviewPresentation
-import com.aqua.aqualight.ui.tabs.devices.detail.cooling.root.DeviceCoolingRootUiState
+import com.aqua.aqualight.ui.tabs.devices.detail.cooling.presentation.common.CoolingDataState
+import com.aqua.aqualight.ui.tabs.devices.detail.cooling.presentation.root.CoolingAutomaticSummaryPresentation
+import com.aqua.aqualight.ui.tabs.devices.detail.cooling.presentation.root.CoolingControlMode
+import com.aqua.aqualight.ui.tabs.devices.detail.cooling.presentation.root.CoolingControlPresentation
+import com.aqua.aqualight.ui.tabs.devices.detail.cooling.presentation.root.CoolingDashboardOverviewPresentation
+import com.aqua.aqualight.ui.tabs.devices.detail.cooling.presentation.root.CoolingHealthState
+import com.aqua.aqualight.ui.tabs.devices.detail.cooling.presentation.root.CoolingHistoryOverviewPresentation
+import com.aqua.aqualight.ui.tabs.devices.detail.cooling.presentation.root.DeviceCoolingRootUiState
 
 @Preview(
     name = "Cooling dashboard",

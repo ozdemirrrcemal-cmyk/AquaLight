@@ -1,6 +1,7 @@
 import importlib.util
 import subprocess
 import sys
+import tempfile
 import unittest
 from pathlib import Path
 
@@ -51,6 +52,44 @@ class DeviceRootUiArchitectureGuardTest(unittest.TestCase):
         errors = GUARD.validate_layout_contract(Path("root.xml"), source)
 
         self.assertTrue(any("parallel toolbar" in error for error in errors), errors)
+
+    def test_cooling_code_outside_presentation_root_is_rejected(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary_directory:
+            repository_root = Path(temporary_directory)
+            legacy_file = repository_root / GUARD.COOLING_UI_ROOT / "automatic/Legacy.kt"
+            legacy_file.parent.mkdir(parents=True)
+            legacy_file.write_text(
+                "package com.aqua.aqualight.ui.tabs.devices.detail.cooling.automatic\n",
+                encoding="utf-8",
+            )
+
+            errors = GUARD.validate_cooling_feature_boundaries(repository_root)
+
+        self.assertTrue(
+            any("must live below" in error for error in errors),
+            errors,
+        )
+
+    def test_cooling_package_must_match_presentation_path(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary_directory:
+            repository_root = Path(temporary_directory)
+            root_file = (
+                repository_root
+                / GUARD.COOLING_PRESENTATION_ROOT
+                / "root/DeviceCoolingRootFragment.kt"
+            )
+            root_file.parent.mkdir(parents=True)
+            root_file.write_text(
+                "package com.aqua.aqualight.ui.tabs.devices.detail.cooling.root\n",
+                encoding="utf-8",
+            )
+
+            errors = GUARD.validate_cooling_feature_boundaries(repository_root)
+
+        self.assertTrue(
+            any("Package must match" in error for error in errors),
+            errors,
+        )
 
 
 if __name__ == "__main__":

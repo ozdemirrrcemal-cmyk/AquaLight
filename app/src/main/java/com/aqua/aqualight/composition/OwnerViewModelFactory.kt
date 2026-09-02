@@ -40,11 +40,11 @@ import com.aqua.aqualight.ui.tabs.devices.add.DeviceAddViewModel
 import com.aqua.aqualight.ui.tabs.devices.add.DeviceProvisioningProgressViewModel
 import com.aqua.aqualight.ui.tabs.devices.add.DeviceQrScanViewModel
 import com.aqua.aqualight.ui.tabs.devices.detail.common.DeviceRootOverviewViewModel
-import com.aqua.aqualight.ui.tabs.devices.detail.cooling.automatic.DeviceCoolingAutomaticSettingsViewModel
-import com.aqua.aqualight.ui.tabs.devices.detail.cooling.history.DeviceCoolingTemperatureHistoryViewModel
-import com.aqua.aqualight.ui.tabs.devices.detail.cooling.manual.DeviceCoolingManualSettingsViewModel
-import com.aqua.aqualight.ui.tabs.devices.detail.cooling.program.DeviceCoolingProgramSettingsViewModel
-import com.aqua.aqualight.ui.tabs.devices.detail.cooling.root.DeviceCoolingRootViewModel
+import com.aqua.aqualight.ui.tabs.devices.detail.cooling.presentation.automatic.DeviceCoolingAutomaticSettingsViewModel
+import com.aqua.aqualight.ui.tabs.devices.detail.cooling.presentation.history.DeviceCoolingTemperatureHistoryViewModel
+import com.aqua.aqualight.ui.tabs.devices.detail.cooling.presentation.manual.DeviceCoolingManualSettingsViewModel
+import com.aqua.aqualight.ui.tabs.devices.detail.cooling.presentation.program.DeviceCoolingProgramSettingsViewModel
+import com.aqua.aqualight.ui.tabs.devices.detail.cooling.presentation.root.DeviceCoolingRootViewModel
 import com.aqua.aqualight.ui.tabs.devices.detail.dosing.channel.calibration.DeviceDosingChannelCalibrationViewModel
 import com.aqua.aqualight.ui.tabs.devices.detail.dosing.channel.detail.DeviceDosingChannelDetailViewModel
 import com.aqua.aqualight.ui.tabs.devices.detail.dosing.channel.plan.DeviceDosingPlanViewModel

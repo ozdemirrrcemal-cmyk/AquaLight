@@ -1,6 +1,6 @@
 package com.aqua.aqualight.ui.tabs.devices.detail.cooling.presentation.dashboard
 
-import com.aqua.aqualight.ui.tabs.devices.detail.cooling.root.CoolingControlMode
+import com.aqua.aqualight.ui.tabs.devices.detail.cooling.presentation.root.CoolingControlMode
 
 /** Event boundary between the Cooling dashboard and its Fragment/ViewModel host. */
 internal data class DeviceCoolingDashboardActions(

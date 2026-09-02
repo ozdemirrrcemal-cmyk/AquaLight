@@ -24,16 +24,30 @@ DOSING_FRAGMENT = Path(
     "DeviceDosingRootFragment.kt"
 )
 COOLING_FRAGMENT = Path(
-    "app/src/main/java/com/aqua/aqualight/ui/tabs/devices/detail/cooling/root/"
+    "app/src/main/java/com/aqua/aqualight/ui/tabs/devices/detail/cooling/presentation/root/"
     "DeviceCoolingRootFragment.kt"
 )
 COOLING_VIEW_MODEL = Path(
-    "app/src/main/java/com/aqua/aqualight/ui/tabs/devices/detail/cooling/root/"
+    "app/src/main/java/com/aqua/aqualight/ui/tabs/devices/detail/cooling/presentation/root/"
     "DeviceCoolingRootViewModel.kt"
 )
 COOLING_UI_ROOT = Path(
     "app/src/main/java/com/aqua/aqualight/ui/tabs/devices/detail/cooling"
 )
+COOLING_PRESENTATION_ROOT = COOLING_UI_ROOT / "presentation"
+COOLING_PRESENTATION_AREAS = frozenset(
+    {
+        "automatic",
+        "common",
+        "dashboard",
+        "history",
+        "manual",
+        "program",
+        "root",
+        "settings",
+    }
+)
+MAIN_SOURCE_ROOT = Path("app/src/main/java")
 LAYOUT_ROOT = Path("app/src/main/res/layout")
 DOSING_LAYOUT = LAYOUT_ROOT / "fragment_device_dosing_root.xml"
 COOLING_LAYOUT = LAYOUT_ROOT / "fragment_device_cooling_root.xml"
@@ -165,9 +179,41 @@ def validate_cooling_feature_boundaries(repository_root: Path) -> list[str]:
     if not cooling_root.is_dir():
         return [f"{COOLING_UI_ROOT}: Cooling UI root is missing"]
 
+    presentation_root = repository_root / COOLING_PRESENTATION_ROOT
+    if not presentation_root.is_dir():
+        errors.append(
+            f"{COOLING_PRESENTATION_ROOT}: Cooling presentation root is missing"
+        )
+
     for path in sorted(cooling_root.rglob("*.kt")):
         source = path.read_text(encoding="utf-8", errors="ignore")
         relative_path = path.relative_to(repository_root)
+        relative_to_cooling = path.relative_to(cooling_root)
+        if (
+            len(relative_to_cooling.parts) < 3
+            or relative_to_cooling.parts[0] != "presentation"
+        ):
+            errors.append(
+                f"{relative_path}: Cooling presentation code must live below "
+                f"{COOLING_PRESENTATION_ROOT}"
+            )
+        elif relative_to_cooling.parts[1] not in COOLING_PRESENTATION_AREAS:
+            errors.append(
+                f"{relative_path}: Unknown Cooling presentation area: "
+                f"{relative_to_cooling.parts[1]}"
+            )
+
+        package_match = re.search(r"^package\s+([\w.]+)", source, re.MULTILINE)
+        expected_package = ".".join(
+            path.parent.relative_to(repository_root / MAIN_SOURCE_ROOT).parts
+        )
+        if package_match is None or package_match.group(1) != expected_package:
+            actual_package = package_match.group(1) if package_match else "<missing>"
+            errors.append(
+                f"{relative_path}: Package must match Cooling presentation path: "
+                f"expected {expected_package}, found {actual_package}"
+            )
+
         for forbidden in COOLING_UI_FORBIDDEN:
             if forbidden in source:
                 errors.append(

@@ -199,7 +199,7 @@
 
     <fragment
         android:id="@+id/deviceCoolingRootFragment"
-        android:name="com.aqua.aqualight.ui.tabs.devices.detail.cooling.root.DeviceCoolingRootFragment"
+        android:name="com.aqua.aqualight.ui.tabs.devices.detail.cooling.presentation.root.DeviceCoolingRootFragment"
         android:label="@string/device_family_cooling"
         tools:layout="@layout/fragment_device_cooling_root">
         <argument android:name="deviceUid" app:argType="string" />
@@ -214,7 +214,7 @@
 
     <fragment
         android:id="@+id/deviceCoolingTemperatureHistoryFragment"
-        android:name="com.aqua.aqualight.ui.tabs.devices.detail.cooling.history.DeviceCoolingTemperatureHistoryFragment"
+        android:name="com.aqua.aqualight.ui.tabs.devices.detail.cooling.presentation.history.DeviceCoolingTemperatureHistoryFragment"
         android:label="@string/device_cooling_history_title"
         tools:layout="@layout/fragment_device_cooling_temperature_history">
         <argument android:name="deviceUid" app:argType="string" />
@@ -223,7 +223,7 @@
 
     <fragment
         android:id="@+id/deviceCoolingAutomaticSettingsFragment"
-        android:name="com.aqua.aqualight.ui.tabs.devices.detail.cooling.automatic.DeviceCoolingAutomaticSettingsFragment"
+        android:name="com.aqua.aqualight.ui.tabs.devices.detail.cooling.presentation.automatic.DeviceCoolingAutomaticSettingsFragment"
         android:label="@string/device_cooling_automatic_settings_title"
         tools:layout="@layout/fragment_device_cooling_mode_settings">
         <argument android:name="deviceUid" app:argType="string" />
@@ -232,7 +232,7 @@
 
     <fragment
         android:id="@+id/deviceCoolingManualSettingsFragment"
-        android:name="com.aqua.aqualight.ui.tabs.devices.detail.cooling.manual.DeviceCoolingManualSettingsFragment"
+        android:name="com.aqua.aqualight.ui.tabs.devices.detail.cooling.presentation.manual.DeviceCoolingManualSettingsFragment"
         android:label="@string/device_cooling_manual_settings_title"
         tools:layout="@layout/fragment_device_cooling_mode_settings">
         <argument android:name="deviceUid" app:argType="string" />
@@ -241,7 +241,7 @@
 
     <fragment
         android:id="@+id/deviceCoolingProgramSettingsFragment"
-        android:name="com.aqua.aqualight.ui.tabs.devices.detail.cooling.program.DeviceCoolingProgramSettingsFragment"
+        android:name="com.aqua.aqualight.ui.tabs.devices.detail.cooling.presentation.program.DeviceCoolingProgramSettingsFragment"
         android:label="@string/device_cooling_program_settings_title"
         tools:layout="@layout/fragment_device_cooling_mode_settings">
         <argument android:name="deviceUid" app:argType="string" />
@@ -274,7 +274,7 @@
 
     <fragment
         android:id="@+id/deviceCoolingSettingsFragment"
-        android:name="com.aqua.aqualight.ui.tabs.devices.detail.cooling.settings.DeviceCoolingSettingsFragment"
+        android:name="com.aqua.aqualight.ui.tabs.devices.detail.cooling.presentation.settings.DeviceCoolingSettingsFragment"
         android:label="@string/device_settings_title"
         tools:layout="@layout/fragment_device_family_settings">
         <argument android:name="deviceUid" app:argType="string" />

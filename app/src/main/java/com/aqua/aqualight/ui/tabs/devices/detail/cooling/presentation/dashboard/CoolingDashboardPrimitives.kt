@@ -11,7 +11,7 @@ import androidx.compose.ui.text.style.TextOverflow
 import com.aqua.aqualight.R
 import com.aqua.aqualight.ui.common.devicecard.AquaDeviceCardColors
 import com.aqua.aqualight.ui.common.devicecard.AquaDeviceCardTypography
-import com.aqua.aqualight.ui.tabs.devices.detail.cooling.root.CoolingControlMode
+import com.aqua.aqualight.ui.tabs.devices.detail.cooling.presentation.root.CoolingControlMode
 
 @Composable
 internal fun CoolingSectionHeader(

@@ -5,7 +5,7 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    tools:context=".ui.tabs.devices.detail.cooling.history.DeviceCoolingTemperatureHistoryFragment">
+    tools:context=".ui.tabs.devices.detail.cooling.presentation.history.DeviceCoolingTemperatureHistoryFragment">
 
     <include
         android:id="@+id/appHeader"

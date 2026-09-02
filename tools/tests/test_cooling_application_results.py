@@ -4,7 +4,9 @@ import unittest
 
 ROOT = Path(__file__).resolve().parents[2]
 COOLING_APPLICATION_ROOT = ROOT / "app/src/main/java/com/aqua/aqualight/application/devices/cooling"
-COOLING_PRESENTATION_ROOT = ROOT / "app/src/main/java/com/aqua/aqualight/ui/tabs/devices/detail/cooling"
+COOLING_PRESENTATION_ROOT = ROOT / (
+    "app/src/main/java/com/aqua/aqualight/ui/tabs/devices/detail/cooling/presentation"
+)
 
 PRESENTATION_FORBIDDEN_TOKENS = {
     "DeviceRuntimeCommandOutcome": "runtime outcomes must be mapped in data adapters",

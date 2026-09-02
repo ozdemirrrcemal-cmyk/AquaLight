@@ -25,7 +25,8 @@ TEST = ROOT / "app/src/test/java/com/aqua/aqualight/ui/tabs/devices/detail/Devic
 ROOT_VIEW_MODELS = (
     SOURCE / "ui/tabs/devices/detail/common/DeviceRootOverviewViewModel.kt",
     SOURCE / "ui/tabs/devices/detail/light/DeviceLightRootViewModel.kt",
-    SOURCE / "ui/tabs/devices/detail/cooling/root/DeviceCoolingRootViewModel.kt",
+    SOURCE
+    / "ui/tabs/devices/detail/cooling/presentation/root/DeviceCoolingRootViewModel.kt",
     SOURCE / "ui/tabs/devices/detail/timer/DeviceTimerRootViewModel.kt",
     SOURCE / "ui/tabs/devices/detail/dosing/root/DeviceDosingRootViewModel.kt",
 )

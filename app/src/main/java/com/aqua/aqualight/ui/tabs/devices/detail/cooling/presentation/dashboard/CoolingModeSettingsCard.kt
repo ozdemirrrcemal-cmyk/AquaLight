@@ -35,8 +35,8 @@ import com.aqua.aqualight.ui.common.cooling.AquaCoolingDashboardTypography
 import com.aqua.aqualight.ui.common.devicecard.AquaDeviceCardColors
 import com.aqua.aqualight.ui.common.devicecard.AquaDeviceCardGeometry
 import com.aqua.aqualight.ui.common.devicecard.AquaDeviceCardTypography
-import com.aqua.aqualight.ui.tabs.devices.detail.cooling.root.CoolingControlMode
-import com.aqua.aqualight.ui.tabs.devices.detail.cooling.root.DeviceCoolingRootUiState
+import com.aqua.aqualight.ui.tabs.devices.detail.cooling.presentation.root.CoolingControlMode
+import com.aqua.aqualight.ui.tabs.devices.detail.cooling.presentation.root.DeviceCoolingRootUiState
 
 @Composable
 internal fun CoolingModeSettingsCard(
