@@ -68,13 +68,17 @@ data class DeviceLightThermalConfigApplyPayload(
         minTemperatureC?.let { value ->
             require(
                 value.isFinite() &&
-                    value in CONFIG_MINIMUM_TEMPERATURE_C..CONFIG_MAXIMUM_MIN_TEMPERATURE_C
+                    value in
+                    DeviceLightThermalV1Contract.CONFIG_MINIMUM_TEMPERATURE_C..
+                    DeviceLightThermalV1Contract.CONFIG_MAXIMUM_MIN_TEMPERATURE_C
             )
         }
         maxTemperatureC?.let { value ->
             require(
                 value.isFinite() &&
-                    value in CONFIG_MINIMUM_MAX_TEMPERATURE_C..CONFIG_MAXIMUM_TEMPERATURE_C
+                    value in
+                    DeviceLightThermalV1Contract.CONFIG_MINIMUM_MAX_TEMPERATURE_C..
+                    DeviceLightThermalV1Contract.CONFIG_MAXIMUM_TEMPERATURE_C
             )
         }
         if (minTemperatureC != null && maxTemperatureC != null) {
