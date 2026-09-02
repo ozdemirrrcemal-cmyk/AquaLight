@@ -1,5 +1,6 @@
 package com.aqua.aqualight.data.auth
 
+import com.aqua.aqualight.application.auth.AppSessionState
 import java.util.concurrent.CopyOnWriteArrayList
 import java.util.concurrent.atomic.AtomicInteger
 import kotlinx.coroutines.Dispatchers
@@ -27,11 +28,11 @@ class AppSessionCoordinatorTest {
         try {
             coordinator.start()
             val state = coordinator.awaitState {
-                it is AppSessionCoordinator.State.Authenticated
+                it is AppSessionState.Authenticated
             }
 
             assertEquals(
-                AppSessionCoordinator.State.Authenticated("owner-a"),
+                AppSessionState.Authenticated("owner-a"),
                 state
             )
             assertEquals(1, resolveCount.get())
@@ -55,7 +56,7 @@ class AppSessionCoordinatorTest {
             coordinator.start()
 
             coordinator.awaitState {
-                it == AppSessionCoordinator.State.Authenticated("owner-a")
+                it == AppSessionState.Authenticated("owner-a")
             }
 
             assertEquals(1, resolveCount.get())
@@ -74,18 +75,18 @@ class AppSessionCoordinatorTest {
         try {
             coordinator.start()
             coordinator.awaitState {
-                it == AppSessionCoordinator.State.Authenticated("owner-a")
+                it == AppSessionState.Authenticated("owner-a")
             }
 
             provider.setOwner(null)
             provider.setOwner("owner-b")
 
             val finalState = coordinator.awaitState {
-                it == AppSessionCoordinator.State.Authenticated("owner-b")
+                it == AppSessionState.Authenticated("owner-b")
             }
 
             assertEquals(
-                AppSessionCoordinator.State.Authenticated("owner-b"),
+                AppSessionState.Authenticated("owner-b"),
                 finalState
             )
         } finally {
@@ -103,15 +104,15 @@ class AppSessionCoordinatorTest {
         try {
             coordinator.start()
             coordinator.awaitState {
-                it is AppSessionCoordinator.State.Authenticated
+                it is AppSessionState.Authenticated
             }
 
             provider.setOwner(null)
 
             assertEquals(
-                AppSessionCoordinator.State.Unauthenticated,
+                AppSessionState.Unauthenticated,
                 coordinator.awaitState {
-                    it == AppSessionCoordinator.State.Unauthenticated
+                    it == AppSessionState.Unauthenticated
                 }
             )
         } finally {
@@ -129,7 +130,7 @@ class AppSessionCoordinatorTest {
         try {
             coordinator.start()
             coordinator.awaitState {
-                it is AppSessionCoordinator.State.Authenticated
+                it is AppSessionState.Authenticated
             }
 
             provider.validationAction = {
@@ -144,9 +145,9 @@ class AppSessionCoordinatorTest {
             coordinator.enterForeground()
 
             assertEquals(
-                AppSessionCoordinator.State.Unauthenticated,
+                AppSessionState.Unauthenticated,
                 coordinator.awaitState {
-                    it == AppSessionCoordinator.State.Unauthenticated
+                    it == AppSessionState.Unauthenticated
                 }
             )
         } finally {
@@ -190,7 +191,7 @@ class AppSessionCoordinatorTest {
 
         first.start()
         first.awaitState {
-            it == AppSessionCoordinator.State.Authenticated("owner-a")
+            it == AppSessionState.Authenticated("owner-a")
         }
         first.close()
 
@@ -202,9 +203,9 @@ class AppSessionCoordinatorTest {
         try {
             recreated.start()
             assertEquals(
-                AppSessionCoordinator.State.Authenticated("owner-b"),
+                AppSessionState.Authenticated("owner-b"),
                 recreated.awaitState {
-                    it == AppSessionCoordinator.State.Authenticated("owner-b")
+                    it == AppSessionState.Authenticated("owner-b")
                 }
             )
         } finally {
@@ -223,11 +224,11 @@ class AppSessionCoordinatorTest {
         try {
             coordinator.start()
             val state = coordinator.awaitState {
-                it is AppSessionCoordinator.State.Failure
+                it is AppSessionState.Failure
             }
 
-            assertTrue(state is AppSessionCoordinator.State.Failure)
-            state as AppSessionCoordinator.State.Failure
+            assertTrue(state is AppSessionState.Failure)
+            state as AppSessionState.Failure
             assertEquals("owner-a", state.ownerUid)
             assertTrue(state.error === expected)
         } finally {
@@ -252,8 +253,8 @@ class AppSessionCoordinatorTest {
     }
 
     private suspend fun AppSessionCoordinator.awaitState(
-        predicate: (AppSessionCoordinator.State) -> Boolean
-    ): AppSessionCoordinator.State {
+        predicate: (AppSessionState) -> Boolean
+    ): AppSessionState {
         return withTimeout(5_000L) {
             state.first(predicate)
         }

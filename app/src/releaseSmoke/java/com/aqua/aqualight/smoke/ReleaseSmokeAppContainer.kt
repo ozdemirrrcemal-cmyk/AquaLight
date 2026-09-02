@@ -4,6 +4,7 @@ import android.content.Context
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import com.aqua.aqualight.application.auth.AccountSecurityOperations
+import com.aqua.aqualight.application.auth.AppSessionOperations
 import com.aqua.aqualight.application.auth.AuthenticatedOwnerIdentity
 import com.aqua.aqualight.application.auth.SessionExitOperations
 import com.aqua.aqualight.application.devices.DeviceControlSurfacePreparationOperations
@@ -14,6 +15,7 @@ import com.aqua.aqualight.application.devices.provisioning.ProvisioningDraftOper
 import com.aqua.aqualight.application.feedback.FeedbackSubmissionUseCase
 import com.aqua.aqualight.application.notifications.NotificationDispatchUseCase
 import com.aqua.aqualight.application.notifications.NotificationPreferenceUseCase
+import com.aqua.aqualight.application.user.LocalDataRecoveryOperations
 import com.aqua.aqualight.application.user.UserAddressInput
 import com.aqua.aqualight.application.user.UserProfileOperations
 import com.aqua.aqualight.application.user.UserProfileSnapshot
@@ -25,6 +27,7 @@ import com.aqua.aqualight.data.aquarium.devices.DefaultTankDeviceAssignmentOpera
 import com.aqua.aqualight.data.aquarium.devices.TankDeviceAssignmentRepository
 import com.aqua.aqualight.data.aquarium.devices.TankDeviceAssignmentStore
 import com.aqua.aqualight.data.aquarium.store.AquariumTankDataStoreManager
+import com.aqua.aqualight.data.auth.AppSessionCoordinator
 import com.aqua.aqualight.data.care.CareTaskDataStoreManager
 import com.aqua.aqualight.data.care.DefaultMaintenanceOperations
 import com.aqua.aqualight.data.care.integrity.restoreTaskSnapshotsForIntegrity
@@ -41,6 +44,7 @@ import com.aqua.aqualight.data.devices.provisioning.DefaultProvisioningProgressO
 import com.aqua.aqualight.data.devices.remove.OwnerDeviceDataCleaner
 import com.aqua.aqualight.data.devices.repository.DevicesRepository
 import com.aqua.aqualight.data.notifications.NotificationPlatform
+import com.aqua.aqualight.data.recovery.DefaultLocalDataRecoveryOperations
 import com.aqua.aqualight.data.user.StartupAppearanceCache
 import com.aqua.aqualight.data.user.UserPreferencesManager
 import com.aqua.aqualight.platform.auth.GoogleIdentityClient
@@ -73,6 +77,10 @@ import kotlinx.coroutines.flow.MutableStateFlow
  * composition against physical devices, never through a smoke or fixture implementation.
  */
 internal class ReleaseSmokeAppContainer(context: Context) : AppContainer {
+    override val appSessionOperations: AppSessionOperations =
+        AppSessionCoordinator.create(context.applicationContext)
+    override val localDataRecoveryOperations: LocalDataRecoveryOperations =
+        DefaultLocalDataRecoveryOperations
     private val profileOperations = SmokeUserProfileOperations()
 
     override val defaultViewModelFactory: ViewModelProvider.Factory =

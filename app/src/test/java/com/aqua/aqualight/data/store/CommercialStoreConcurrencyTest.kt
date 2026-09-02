@@ -4,7 +4,7 @@ import androidx.datastore.core.DataStoreFactory
 import com.aqua.aqualight.data.aquarium.store.AquariumTanksSerializer
 import com.aqua.aqualight.data.aquarium.store.StoredTank
 import com.aqua.aqualight.data.aquarium.store.TankStoreRules
-import com.aqua.aqualight.data.aquarium.util.AquariumIdGenerator
+import com.aqua.aqualight.application.aquarium.AquariumIdGenerator
 import com.aqua.aqualight.data.care.CareTaskStoreRules
 import com.aqua.aqualight.data.care.CareTasksCommercialSerializer
 import com.aqua.aqualight.data.care.StoredCareTask

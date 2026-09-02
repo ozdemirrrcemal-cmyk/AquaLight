@@ -1,14 +1,7 @@
 #!/usr/bin/env python3
-"""Prevent new direct dependencies between AquaLight UI and data layers.
-
-Data -> UI is zero-tolerance.
-UI -> data is also forbidden for all new dependency edges. A small, explicit
-baseline freezes legacy UI -> data edges that pre-date this guard; the baseline
-may shrink as debt is removed but must not be used for new dependencies.
-"""
+"""Enforce a zero-tolerance boundary between AquaLight UI and data layers."""
 from __future__ import annotations
 
-import json
 import re
 import sys
 from pathlib import Path
@@ -18,7 +11,6 @@ ROOT = Path(__file__).resolve().parents[1]
 SOURCE_ROOT = Path("app/src/main/java/com/aqua/aqualight")
 UI_ROOT = SOURCE_ROOT / "ui"
 DATA_ROOT = SOURCE_ROOT / "data"
-BASELINE_PATH = Path("config/architecture/ui-data-isolation-baseline.json")
 
 NON_CODE = re.compile(
     r'""".*?"""|"(?:\\.|[^"\\])*"|\'(?:\\.|[^\'\\])*\'|//[^\n]*|/\*.*?\*/',
@@ -67,76 +59,19 @@ def _collect_edges(
     return edges
 
 
-def _load_ui_to_data_baseline(repository_root: Path) -> dict[str, set[str]]:
-    path = repository_root / BASELINE_PATH
-    if not path.is_file():
-        return {}
-
-    try:
-        payload = json.loads(path.read_text(encoding="utf-8"))
-    except (OSError, json.JSONDecodeError) as exc:
-        raise ValueError(f"cannot read UI/data isolation baseline: {exc}") from exc
-
-    if payload.get("schemaVersion") != 1:
-        raise ValueError("UI/data isolation baseline schemaVersion must be 1")
-
-    raw_edges = payload.get("uiToData")
-    if not isinstance(raw_edges, dict):
-        raise ValueError("UI/data isolation baseline uiToData must be an object")
-
-    baseline: dict[str, set[str]] = {}
-    for source_path, references in raw_edges.items():
-        if not isinstance(source_path, str) or not isinstance(references, list):
-            raise ValueError("UI/data isolation baseline entries must map paths to lists")
-        if not source_path.startswith(UI_ROOT.as_posix() + "/"):
-            raise ValueError(f"baseline path is outside UI layer: {source_path}")
-        values = set()
-        for reference in references:
-            if not isinstance(reference, str) or not DATA_REFERENCE.fullmatch(reference):
-                raise ValueError(
-                    f"invalid UI -> data baseline reference for {source_path}: {reference!r}"
-                )
-            values.add(reference)
-        if values:
-            baseline[source_path] = values
-    return baseline
-
-
-def _edge_set(edges: dict[str, set[str]]) -> set[tuple[str, str]]:
-    return {
-        (source_path, reference)
-        for source_path, references in edges.items()
-        for reference in references
-    }
-
-
 def validate_repository(repository_root: Path = ROOT) -> list[str]:
     errors: list[str] = []
-
-    try:
-        legacy_ui_to_data = _load_ui_to_data_baseline(repository_root)
-    except ValueError as exc:
-        return [str(exc)]
 
     current_ui_to_data = _collect_edges(
         repository_root=repository_root,
         source_root=UI_ROOT,
         forbidden_pattern=DATA_REFERENCE,
     )
-    current_ui_edges = _edge_set(current_ui_to_data)
-    baseline_ui_edges = _edge_set(legacy_ui_to_data)
-
-    for source_path, reference in sorted(current_ui_edges - baseline_ui_edges):
-        errors.append(
-            f"{source_path}: UI layer must not add a dependency on data layer: {reference}"
-        )
-
-    # Baseline is debt, not an allowlist for eternity. When an existing edge is
-    # removed, require the baseline to shrink in the same change.
-    for source_path, reference in sorted(baseline_ui_edges - current_ui_edges):
-        errors.append(
-            f"{source_path}: stale UI -> data baseline edge must be removed: {reference}"
-        )
+    for source_path, references in sorted(current_ui_to_data.items()):
+        for reference in sorted(references):
+            errors.append(
+                f"{source_path}: UI layer must not depend on data layer: {reference}"
+            )
 
     current_data_to_ui = _collect_edges(
         repository_root=repository_root,
@@ -161,8 +96,7 @@ def main() -> int:
         return 1
 
     print(
-        "UI/data layer isolation guard passed: data -> UI is zero-tolerance and "
-        "no new UI -> data dependency edges were introduced."
+        "UI/data layer isolation guard passed: UI and data have no direct dependencies."
     )
     return 0
 

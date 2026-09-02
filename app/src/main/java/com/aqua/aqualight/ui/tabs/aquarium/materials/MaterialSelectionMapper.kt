@@ -2,8 +2,8 @@ package com.aqua.aqualight.ui.tabs.aquarium.materials
 
 import android.content.Context
 import com.aqua.aqualight.application.aquarium.AquariumMaterialSelection
-import com.aqua.aqualight.data.aquarium.catalog.material.AquariumMaterial
-import com.aqua.aqualight.data.aquarium.catalog.material.MaterialCatalog
+import com.aqua.aqualight.ui.tabs.aquarium.catalog.material.AquariumMaterial
+import com.aqua.aqualight.ui.tabs.aquarium.catalog.material.MaterialCatalog
 import java.util.UUID
 
 object MaterialSelectionMapper {

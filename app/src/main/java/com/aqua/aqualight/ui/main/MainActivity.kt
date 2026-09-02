@@ -9,10 +9,10 @@ import androidx.lifecycle.repeatOnLifecycle
 import androidx.navigation.NavController
 import androidx.navigation.fragment.NavHostFragment
 import com.aqua.aqualight.R
+import com.aqua.aqualight.application.auth.AppSessionState
+import com.aqua.aqualight.application.user.LocalDataRecoveryArea
 import com.aqua.aqualight.base.BaseActivity
 import com.aqua.aqualight.composition.requireAppContainer
-import com.aqua.aqualight.data.auth.AppSessionCoordinator
-import com.aqua.aqualight.data.recovery.LocalDataRecoveryTracker
 import com.aqua.aqualight.databinding.ActivityMainBinding
 import com.aqua.aqualight.ui.navigation.AppDestinationContract
 import com.aqua.aqualight.utils.DialogManager
@@ -37,7 +37,7 @@ class MainActivity : BaseActivity() {
     private lateinit var navigationCoordinator: MainNavigationCoordinator
 
     private val appSessionCoordinator by lazy {
-        AppSessionCoordinator.create(applicationContext)
+        requireAppContainer().appSessionOperations
     }
 
     private var isAuthenticated: Boolean = false
@@ -143,15 +143,15 @@ class MainActivity : BaseActivity() {
     }
 
     private fun renderSessionState(
-        state: AppSessionCoordinator.State
+        state: AppSessionState
     ) {
         when (state) {
-            AppSessionCoordinator.State.Starting -> {
+            AppSessionState.Starting -> {
                 binding.navHost.isVisible = false
                 binding.bottomNav.isVisible = false
             }
 
-            is AppSessionCoordinator.State.Authenticated -> {
+            is AppSessionState.Authenticated -> {
                 val sessionKey = "authenticated:${state.ownerUid}"
                 val graphMustBeReplaced =
                     renderedSessionKey != sessionKey ||
@@ -176,7 +176,7 @@ class MainActivity : BaseActivity() {
                 navigationCoordinator.syncBottomBarState(navController.currentDestination)
             }
 
-            AppSessionCoordinator.State.Unauthenticated -> {
+            AppSessionState.Unauthenticated -> {
                 val sessionKey = "unauthenticated"
                 isAuthenticated = false
                 activeOwnerUid = ""
@@ -193,7 +193,7 @@ class MainActivity : BaseActivity() {
                 navigationCoordinator.syncBottomBarState(navController.currentDestination)
             }
 
-            is AppSessionCoordinator.State.Failure -> {
+            is AppSessionState.Failure -> {
                 isAuthenticated = false
                 activeOwnerUid = ""
 
@@ -229,20 +229,22 @@ class MainActivity : BaseActivity() {
     private fun showLocalDataRecoveryIfNeeded() {
         if (!isAuthenticated) return
 
-        val recoveredAreas = LocalDataRecoveryTracker.consumeRecoveredAreas()
+        val recoveredAreas = requireAppContainer()
+            .localDataRecoveryOperations
+            .consumeRecoveredAreas()
         if (recoveredAreas.isEmpty()) return
 
         val messageRes = when (recoveredAreas) {
-            setOf(LocalDataRecoveryTracker.Area.AQUARIUM_TANKS) ->
+            setOf(LocalDataRecoveryArea.AQUARIUM_TANKS) ->
                 R.string.local_data_recovery_tanks_message
 
-            setOf(LocalDataRecoveryTracker.Area.CARE_TASKS) ->
+            setOf(LocalDataRecoveryArea.CARE_TASKS) ->
                 R.string.local_data_recovery_care_tasks_message
 
-            setOf(LocalDataRecoveryTracker.Area.KNOWN_DEVICES) ->
+            setOf(LocalDataRecoveryArea.KNOWN_DEVICES) ->
                 R.string.local_data_recovery_devices_message
 
-            setOf(LocalDataRecoveryTracker.Area.TANK_DEVICE_ASSIGNMENTS) ->
+            setOf(LocalDataRecoveryArea.TANK_DEVICE_ASSIGNMENTS) ->
                 R.string.local_data_recovery_assignments_message
 
             else -> R.string.local_data_recovery_combined_message

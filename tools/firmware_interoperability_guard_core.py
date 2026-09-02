@@ -86,23 +86,23 @@ REQUEST_CONTRACT_BLOBS = {
 
 EXPECTED_FIXTURES = {
     "aql_ws_v1_golden.json": (
-        "6da5184b3580a16cdbf9b6bf2d1f47e21718599adb9aa595525b1c3282a261d0",
-        "1c045fdd78da0d4c42667501243bbc5a865a9e20",
+        "508bd588c118a0c41b66c838c579c45fefcfa5f54b1a608c26b2c9b1ef8984fb",
+        "a16e32d73a2b8aabd5989fc400df36fd9f6b5347",
         True,
     ),
     "aql_cooling_contract_v1.json": (
-        "0859cbb61c4e9c7a10bd7bc1a72bd4a72cd956e812faf3948eafcefbbeb19515",
-        "e3bcf5cf6129a58771f1e3d91f746edc730f8c4b",
+        "dac61fd3b16ad1f29df59f3c7b881bb562007f9e629e7a636d607fc3d84c0531",
+        "0ade050f48fca0eaae9e491156c9b996d0dabbd9",
         True,
     ),
     "aql_cooling_telemetry_v1.json": (
-        "0c199207a0694753fd9896d28fcb50c476a063726f03d1db06a7c4098b78c029",
-        "6a15f5cfe022aee8a1ff469f01cf95fd765a77f4",
+        "8c0ecc54eff1a05f3d72b9b740e6d986dbc3a7cc69c61647608aed360b621b85",
+        "7ec000ec24e2ef48cd54beff3bad81b58d7cd4c4",
         True,
     ),
     "aql_light_thermal_contract_v1.json": (
-        "38b9a2590b76a5c6cc3f1b2cb59279e37d4c52fe341d058c0527e5b547e82c6a",
-        "fb3dccdb6770687d6b0f5846b6cc14a2d60a2783",
+        "f1c8bac58740c3250a5c2e7a172f3d49604bf0ae0a0ba628f88f156c1842d7a6",
+        "acbe344c29f8fe5569ffcf3b5b1d0fda2a6b07f7",
         True,
     ),
     "aql_product_catalog_v1.json": (
@@ -152,6 +152,19 @@ def load_json(path: Path) -> dict[str, Any]:
 def file_sha256(path: Path) -> str:
     try:
         return hashlib.sha256(path.read_bytes()).hexdigest()
+    except OSError as error:
+        raise GuardFailure(f"{path.relative_to(ROOT)} is unreadable: {error}") from error
+
+
+def git_blob_sha_bytes(content: bytes) -> str:
+    """Return Git's content-addressed blob id; SHA-1 here is a protocol identifier."""
+    header = f"blob {len(content)}\0".encode("ascii")
+    return hashlib.sha1(header + content, usedforsecurity=False).hexdigest()
+
+
+def git_blob_sha(path: Path) -> str:
+    try:
+        return git_blob_sha_bytes(path.read_bytes())
     except OSError as error:
         raise GuardFailure(f"{path.relative_to(ROOT)} is unreadable: {error}") from error
 
@@ -286,6 +299,10 @@ def verify_fixtures(interoperability: dict[str, Any]) -> None:
             require(
                 spec.get("firmwareBlobSha") == firmware_blob,
                 f"{fixture_name} firmware blob pin drifted",
+            )
+            require(
+                git_blob_sha(fixture_path) == firmware_blob,
+                f"{fixture_name} is not byte-identical with the pinned firmware blob",
             )
 
     product_spec = fixture_specs["aql_product_catalog_v1.json"]

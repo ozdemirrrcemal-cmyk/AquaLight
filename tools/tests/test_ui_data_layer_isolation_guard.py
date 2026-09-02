@@ -1,5 +1,4 @@
 import importlib.util
-import json
 import subprocess
 import sys
 import tempfile
@@ -32,7 +31,7 @@ class UiDataLayerIsolationGuardTest(unittest.TestCase):
             "package com.aqua.aqualight.ui\n"
             "import com.aqua.aqualight.data.devices.repository.DevicesRepository\n"
             "internal class ExampleScreen\n",
-            "UI layer must not add a dependency on data layer",
+            "UI layer must not depend on data layer",
         )
 
     def test_ui_fully_qualified_data_reference_is_rejected(self) -> None:
@@ -40,7 +39,7 @@ class UiDataLayerIsolationGuardTest(unittest.TestCase):
             "app/src/main/java/com/aqua/aqualight/ui/ExampleViewModel.kt",
             "package com.aqua.aqualight.ui\n"
             "private val repository: com.aqua.aqualight.data.devices.repository.DevicesRepository? = null\n",
-            "UI layer must not add a dependency on data layer",
+            "UI layer must not depend on data layer",
         )
 
     def test_data_import_of_ui_is_rejected(self) -> None:
@@ -86,58 +85,6 @@ class UiDataLayerIsolationGuardTest(unittest.TestCase):
 
             self.assertEqual([], GUARD.validate_repository(repository))
 
-    def test_legacy_ui_data_edge_is_frozen_by_baseline(self) -> None:
-        with tempfile.TemporaryDirectory() as directory:
-            repository = Path(directory)
-            source_path = "app/src/main/java/com/aqua/aqualight/ui/LegacyViewModel.kt"
-            reference = "com.aqua.aqualight.data.legacy.LegacyRepository"
-            self._write(
-                repository,
-                source_path,
-                "package com.aqua.aqualight.ui\n"
-                f"import {reference}\n"
-                "internal class LegacyViewModel\n",
-            )
-            self._write_baseline(repository, {source_path: [reference]})
-
-            self.assertEqual([], GUARD.validate_repository(repository))
-
-    def test_new_ui_data_edge_beside_legacy_baseline_is_rejected(self) -> None:
-        with tempfile.TemporaryDirectory() as directory:
-            repository = Path(directory)
-            source_path = "app/src/main/java/com/aqua/aqualight/ui/LegacyViewModel.kt"
-            legacy = "com.aqua.aqualight.data.legacy.LegacyRepository"
-            new_edge = "com.aqua.aqualight.data.devices.repository.DevicesRepository"
-            self._write(
-                repository,
-                source_path,
-                "package com.aqua.aqualight.ui\n"
-                f"import {legacy}\n"
-                f"import {new_edge}\n"
-                "internal class LegacyViewModel\n",
-            )
-            self._write_baseline(repository, {source_path: [legacy]})
-
-            errors = GUARD.validate_repository(repository)
-            self.assertTrue(any(new_edge in error for error in errors), errors)
-
-    def test_removed_legacy_edge_requires_baseline_to_shrink(self) -> None:
-        with tempfile.TemporaryDirectory() as directory:
-            repository = Path(directory)
-            source_path = "app/src/main/java/com/aqua/aqualight/ui/LegacyViewModel.kt"
-            legacy = "com.aqua.aqualight.data.legacy.LegacyRepository"
-            self._write(
-                repository,
-                source_path,
-                "package com.aqua.aqualight.ui\n"
-                "import com.aqua.aqualight.application.devices.DeviceRootOperations\n"
-                "internal class LegacyViewModel\n",
-            )
-            self._write_baseline(repository, {source_path: [legacy]})
-
-            errors = GUARD.validate_repository(repository)
-            self.assertTrue(any("stale UI -> data baseline edge" in error for error in errors), errors)
-
     def test_comments_and_strings_do_not_create_false_dependencies(self) -> None:
         with tempfile.TemporaryDirectory() as directory:
             repository = Path(directory)
@@ -174,23 +121,6 @@ class UiDataLayerIsolationGuardTest(unittest.TestCase):
         path = repository / relative_path
         path.parent.mkdir(parents=True, exist_ok=True)
         path.write_text(source, encoding="utf-8")
-
-    @staticmethod
-    def _write_baseline(repository: Path, edges: dict[str, list[str]]) -> None:
-        path = repository / "config/architecture/ui-data-isolation-baseline.json"
-        path.parent.mkdir(parents=True, exist_ok=True)
-        path.write_text(
-            json.dumps(
-                {
-                    "schemaVersion": 1,
-                    "uiToData": edges,
-                },
-                indent=2,
-                sort_keys=True,
-            ),
-            encoding="utf-8",
-        )
-
 
 if __name__ == "__main__":
     unittest.main()
