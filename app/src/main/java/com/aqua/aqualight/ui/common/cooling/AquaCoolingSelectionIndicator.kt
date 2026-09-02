@@ -22,15 +22,27 @@ fun AquaCoolingSelectionIndicator(
             val checkStroke = AquaCoolingDashboardGeometry.radioCheckStrokeWidth.toPx()
             drawLine(
                 color = AquaCoolingDashboardPalette.primaryText,
-                start = Offset(size.width * 0.29f, size.height * 0.51f),
-                end = Offset(size.width * 0.45f, size.height * 0.67f),
+                start = Offset(
+                    size.width * CHECK_START_X_FRACTION,
+                    size.height * CHECK_START_Y_FRACTION
+                ),
+                end = Offset(
+                    size.width * CHECK_MIDDLE_X_FRACTION,
+                    size.height * CHECK_MIDDLE_Y_FRACTION
+                ),
                 strokeWidth = checkStroke,
                 cap = StrokeCap.Round
             )
             drawLine(
                 color = AquaCoolingDashboardPalette.primaryText,
-                start = Offset(size.width * 0.45f, size.height * 0.67f),
-                end = Offset(size.width * 0.72f, size.height * 0.34f),
+                start = Offset(
+                    size.width * CHECK_MIDDLE_X_FRACTION,
+                    size.height * CHECK_MIDDLE_Y_FRACTION
+                ),
+                end = Offset(
+                    size.width * CHECK_END_X_FRACTION,
+                    size.height * CHECK_END_Y_FRACTION
+                ),
                 strokeWidth = checkStroke,
                 cap = StrokeCap.Round
             )
@@ -42,3 +54,10 @@ fun AquaCoolingSelectionIndicator(
         }
     }
 }
+
+private const val CHECK_START_X_FRACTION = 0.29f
+private const val CHECK_START_Y_FRACTION = 0.51f
+private const val CHECK_MIDDLE_X_FRACTION = 0.45f
+private const val CHECK_MIDDLE_Y_FRACTION = 0.67f
+private const val CHECK_END_X_FRACTION = 0.72f
+private const val CHECK_END_Y_FRACTION = 0.34f
