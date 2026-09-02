@@ -21,9 +21,8 @@ internal fun DrawScope.drawCoolingHeroScene(
     drawWaterBody(motionPhase, motionIntensity)
     if (motionIntensity > NO_MOTION) {
         drawAirflow(motionPhase, motionIntensity)
-        drawLocalRipples(motionPhase, motionIntensity)
+        drawWaterReflection(motionPhase, motionIntensity)
     }
-    drawWaterHighlights(motionPhase, motionIntensity)
     drawGlassTank()
 }
 
@@ -128,70 +127,10 @@ private fun DrawScope.drawWaterSurfaceSheen(motionPhase: Float, motionIntensity:
     }
     drawPath(
         path = surface,
-        color = AquaCoolingDashboardPalette.primaryText.copy(
-            alpha = AquaCoolingDashboardAlpha.liveHeroWaterEdge
+        color = AquaCoolingDashboardPalette.accent.copy(
+            alpha = AquaCoolingDashboardAlpha.liveHeroWaterSurface
         ),
         style = Stroke(width = WATER_SURFACE_STROKE, cap = StrokeCap.Round)
-    )
-}
-
-private fun DrawScope.drawWaterHighlights(motionPhase: Float, motionIntensity: Float) {
-    val dynamicAmplitude = BASE_WAVE_AMPLITUDE +
-        ACTIVE_WAVE_AMPLITUDE * motionIntensity
-    drawWave(
-        CoolingWaveSpec(
-            baseY = size.height * PRIMARY_WAVE_Y,
-            amplitude = size.height * dynamicAmplitude,
-            cycles = PRIMARY_WAVE_CYCLES,
-            phase = motionPhase,
-            color = AquaCoolingDashboardPalette.primaryText.copy(
-                alpha = AquaCoolingDashboardAlpha.liveHeroWavePrimary
-            ),
-            strokeWidth = PRIMARY_WAVE_STROKE
-        )
-    )
-    drawWave(
-        CoolingWaveSpec(
-            baseY = size.height * SECONDARY_WAVE_Y,
-            amplitude = size.height * SECONDARY_WAVE_AMPLITUDE,
-            cycles = SECONDARY_WAVE_CYCLES,
-            phase = motionPhase + SECONDARY_PHASE_OFFSET,
-            color = AquaCoolingDashboardPalette.accent.copy(
-                alpha = AquaCoolingDashboardAlpha.liveHeroWaveSecondary
-            ),
-            strokeWidth = SECONDARY_WAVE_STROKE
-        )
-    )
-    drawWave(
-        CoolingWaveSpec(
-            baseY = size.height * DEEP_WAVE_Y,
-            amplitude = size.height * DEEP_WAVE_AMPLITUDE,
-            cycles = DEEP_WAVE_CYCLES,
-            phase = motionPhase + DEEP_PHASE_OFFSET,
-            color = AquaCoolingDashboardPalette.primaryText.copy(alpha = DEEP_WAVE_ALPHA),
-            strokeWidth = DEEP_WAVE_STROKE
-        )
-    )
-}
-
-private fun DrawScope.drawWave(spec: CoolingWaveSpec) {
-    val path = Path()
-    for (index in 0..WAVE_SEGMENTS) {
-        val progress = index.toFloat() / WAVE_SEGMENTS
-        val x = size.width * progress
-        val radians = progress * spec.cycles * FULL_CIRCLE_RADIANS +
-            spec.phase * FULL_CIRCLE_RADIANS
-        val secondaryRadians = progress * spec.cycles * WAVE_DETAIL_FREQUENCY *
-            FULL_CIRCLE_RADIANS - spec.phase * DOUBLE_PHASE_RADIANS + WAVE_DETAIL_PHASE_OFFSET
-        val wave = sin(radians.toDouble()).toFloat() * PRIMARY_WAVE_WEIGHT +
-            sin(secondaryRadians.toDouble()).toFloat() * SECONDARY_WAVE_WEIGHT
-        val y = spec.baseY + wave * spec.amplitude
-        if (index == FIRST_SEGMENT) path.moveTo(x, y) else path.lineTo(x, y)
-    }
-    drawPath(
-        path = path,
-        color = spec.color,
-        style = Stroke(width = spec.strokeWidth, cap = StrokeCap.Round)
     )
 }
 
@@ -225,25 +164,31 @@ private fun DrawScope.drawAirflow(motionPhase: Float, motionIntensity: Float) {
     }
 }
 
-private fun DrawScope.drawLocalRipples(motionPhase: Float, motionIntensity: Float) {
-    repeat(RIPPLE_COUNT) { index ->
-        val progress = (motionPhase + index.toFloat() / RIPPLE_COUNT) % UNIT_FLOAT
-        val radiusX = size.width * (
-            RIPPLE_START_WIDTH + progress * RIPPLE_WIDTH_EXPANSION
-            )
-        val radiusY = size.height * (
-            RIPPLE_START_HEIGHT + progress * RIPPLE_HEIGHT_EXPANSION
-            )
-        val center = Offset(size.width * RIPPLE_CENTER_X, size.height * RIPPLE_CENTER_Y)
-        drawOval(
-            color = AquaCoolingDashboardPalette.accent.copy(
-                alpha = (UNIT_FLOAT - progress) * RIPPLE_ALPHA * motionIntensity
+private fun DrawScope.drawWaterReflection(motionPhase: Float, motionIntensity: Float) {
+    val pulse = REFLECTION_PULSE_BASE + REFLECTION_PULSE_RANGE *
+        (sin((motionPhase * FULL_CIRCLE_RADIANS).toDouble()).toFloat() + UNIT_FLOAT) /
+        DIAMETER_MULTIPLIER
+    val radiusX = size.width * REFLECTION_RADIUS_X * pulse
+    val radiusY = size.height * REFLECTION_RADIUS_Y * pulse
+    val center = Offset(size.width * REFLECTION_CENTER_X, size.height * REFLECTION_CENTER_Y)
+    drawOval(
+        brush = Brush.radialGradient(
+            colors = listOf(
+                AquaCoolingDashboardPalette.primaryText.copy(
+                    alpha = AquaCoolingDashboardAlpha.liveHeroWaterReflection * motionIntensity
+                ),
+                AquaCoolingDashboardPalette.accent.copy(
+                    alpha = AquaCoolingDashboardAlpha.liveHeroWaterReflection *
+                        REFLECTION_ACCENT_ALPHA_MULTIPLIER * motionIntensity
+                ),
+                Color.Transparent
             ),
-            topLeft = Offset(center.x - radiusX, center.y - radiusY),
-            size = Size(radiusX * DIAMETER_MULTIPLIER, radiusY * DIAMETER_MULTIPLIER),
-            style = Stroke(width = RIPPLE_STROKE)
-        )
-    }
+            center = center,
+            radius = radiusX
+        ),
+        topLeft = Offset(center.x - radiusX, center.y - radiusY),
+        size = Size(radiusX * DIAMETER_MULTIPLIER, radiusY * DIAMETER_MULTIPLIER)
+    )
 }
 
 private fun DrawScope.drawGlassTank() {
@@ -284,37 +229,15 @@ private fun DrawScope.drawGlassTank() {
             endY = size.height
         )
     )
-    drawPath(
-        path = pane,
-        color = AquaCoolingDashboardPalette.primaryText.copy(
-            alpha = AquaCoolingDashboardAlpha.liveHeroGlassEdge
-        ),
-        style = Stroke(width = GLASS_EDGE_STROKE, cap = StrokeCap.Round)
-    )
     drawLine(
         color = AquaCoolingDashboardPalette.primaryText.copy(
-            alpha = AquaCoolingDashboardAlpha.liveHeroWaterEdge
+            alpha = AquaCoolingDashboardAlpha.liveHeroGlassEdge
         ),
         start = topLeft,
         end = topRight,
         strokeWidth = GLASS_EDGE_STROKE
     )
-    drawLine(
-        color = AquaCoolingDashboardPalette.accent.copy(alpha = GLASS_EDGE_GLOW_ALPHA),
-        start = topLeft.copy(y = topLeft.y + GLASS_EDGE_GAP),
-        end = topRight.copy(y = topRight.y + GLASS_EDGE_GAP),
-        strokeWidth = GLASS_EDGE_GLOW_STROKE
-    )
 }
-
-private data class CoolingWaveSpec(
-    val baseY: Float,
-    val amplitude: Float,
-    val cycles: Float,
-    val phase: Float,
-    val color: Color,
-    val strokeWidth: Float
-)
 
 private const val ORIGIN = 0f
 private const val NO_MOTION = 0f
@@ -341,25 +264,6 @@ private const val WATER_GRADIENT_MID_STOP = 0.58f
 private const val WATER_GRADIENT_BOTTOM_STOP = 1f
 private const val PRIMARY_WAVE_WEIGHT = 0.72f
 private const val SECONDARY_WAVE_WEIGHT = 0.28f
-private const val BASE_WAVE_AMPLITUDE = 0.008f
-private const val ACTIVE_WAVE_AMPLITUDE = 0.014f
-private const val PRIMARY_WAVE_Y = 0.665f
-private const val PRIMARY_WAVE_CYCLES = 3.2f
-private const val PRIMARY_WAVE_STROKE = 1.7f
-private const val SECONDARY_WAVE_Y = 0.735f
-private const val SECONDARY_WAVE_AMPLITUDE = 0.012f
-private const val SECONDARY_WAVE_CYCLES = 2.4f
-private const val SECONDARY_PHASE_OFFSET = 0.38f
-private const val SECONDARY_WAVE_STROKE = 1.2f
-private const val DEEP_WAVE_Y = 0.84f
-private const val DEEP_WAVE_AMPLITUDE = 0.009f
-private const val DEEP_WAVE_CYCLES = 4.1f
-private const val DEEP_PHASE_OFFSET = 0.67f
-private const val DEEP_WAVE_ALPHA = 0.13f
-private const val DEEP_WAVE_STROKE = 1f
-private const val WAVE_DETAIL_FREQUENCY = 1.85f
-private const val WAVE_DETAIL_PHASE_OFFSET = 0.72f
-private const val WAVE_SEGMENTS = 48
 private const val FIRST_SEGMENT = 0
 private const val AIRFLOW_LINE_COUNT = 4
 private const val AIRFLOW_LINE_SPACING = 0.019f
@@ -374,19 +278,14 @@ private const val AIRFLOW_CONTROL_TWO_Y = 0.59f
 private const val AIRFLOW_TARGET_X = 0.45f
 private const val AIRFLOW_TARGET_Y = 0.67f
 private const val AIRFLOW_STROKE = 1.1f
-private const val RIPPLE_COUNT = 3
-private const val RIPPLE_CENTER_X = 0.45f
-private const val RIPPLE_CENTER_Y = 0.70f
-private const val RIPPLE_START_WIDTH = 0.035f
-private const val RIPPLE_WIDTH_EXPANSION = 0.12f
-private const val RIPPLE_START_HEIGHT = 0.009f
-private const val RIPPLE_HEIGHT_EXPANSION = 0.028f
-private const val RIPPLE_ALPHA = 0.36f
-private const val RIPPLE_STROKE = 1.3f
+private const val REFLECTION_CENTER_X = 0.46f
+private const val REFLECTION_CENTER_Y = 0.70f
+private const val REFLECTION_RADIUS_X = 0.13f
+private const val REFLECTION_RADIUS_Y = 0.026f
+private const val REFLECTION_PULSE_BASE = 0.92f
+private const val REFLECTION_PULSE_RANGE = 0.08f
+private const val REFLECTION_ACCENT_ALPHA_MULTIPLIER = 0.55f
 private const val GLASS_EDGE_STROKE = 1.2f
-private const val GLASS_EDGE_GAP = 3f
-private const val GLASS_EDGE_GLOW_ALPHA = 0.20f
-private const val GLASS_EDGE_GLOW_STROKE = 0.8f
 private const val GLASS_HORIZONTAL_INSET = 0.018f
 private const val GLASS_TOP_GAP_FRACTION = 0.012f
 private const val GLASS_BOTTOM_LEFT_Y = 0.975f

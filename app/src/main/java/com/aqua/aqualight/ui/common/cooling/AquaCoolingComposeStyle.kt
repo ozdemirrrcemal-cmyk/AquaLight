@@ -119,7 +119,6 @@ object AquaCoolingDashboardGeometry {
     val liveHeroDeviceTopOffset = 3.dp
     val liveHeroDeviceEndOffset = 7.dp
     val liveHeroOutlineWidth = 1.dp
-    val liveHeroDeviceHighlightWidth = 1.5.dp
 }
 
 object AquaCoolingHistoryGeometry {
@@ -220,15 +219,13 @@ object AquaCoolingDashboardAlpha {
     const val liveHeroDeviceUnavailable = 0.66f
     const val liveHeroDeviceOffline = 0.42f
     const val liveHeroAtmosphere = 0.28f
-    const val liveHeroWater = 0.40f
-    const val liveHeroWaterDepth = 0.24f
-    const val liveHeroWaterEdge = 0.56f
-    const val liveHeroWavePrimary = 0.42f
-    const val liveHeroWaveSecondary = 0.22f
-    const val liveHeroGlassPane = 0.07f
-    const val liveHeroGlassEdge = 0.34f
-    const val liveHeroAirflow = 0.14f
-    const val liveHeroDeviceGlow = 0.24f
+    const val liveHeroWater = 0.30f
+    const val liveHeroWaterDepth = 0.18f
+    const val liveHeroWaterSurface = 0.24f
+    const val liveHeroWaterReflection = 0.10f
+    const val liveHeroGlassPane = 0.04f
+    const val liveHeroGlassEdge = 0.24f
+    const val liveHeroAirflow = 0.10f
 }
 
 object AquaCoolingHistoryAlpha {

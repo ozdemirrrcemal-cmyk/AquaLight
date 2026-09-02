@@ -33,11 +33,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.geometry.Offset
-import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Brush
-import androidx.compose.ui.graphics.StrokeCap
-import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.booleanResource
 import androidx.compose.ui.res.painterResource
@@ -65,7 +61,7 @@ internal fun CoolingLiveHero(
     val motion = presentation.resolveMotion(
         allowWaitingMotion = booleanResource(R.bool.device_cooling_waiting_motion_enabled)
     )
-    val motionPhase = coolingHeroMotionPhase(motion)
+    val motionPhases = coolingHeroMotionPhases(motion)
     val statusLabel = stringResource(presentation.status.labelResource())
     val temperatureText = coolingTemperatureText(presentation.temperatureC)
     val detailText = coolingHeroDetailText(presentation)
@@ -86,11 +82,11 @@ internal fun CoolingLiveHero(
             .border(AquaCoolingDashboardGeometry.liveHeroOutlineWidth, colors.outline, shape)
             .clearAndSetSemantics { contentDescription = description }
     ) {
-        CoolingHeroScene(presentation, motion, motionPhase)
+        CoolingHeroScene(presentation, motion, motionPhases.water)
         CoolingHeroDevice(
             presentation = presentation,
             motion = motion,
-            motionPhase = motionPhase,
+            fanMotionPhase = motionPhases.fan,
             modifier = Modifier
                 .width(maxWidth * DEVICE_WIDTH_FRACTION)
                 .aspectRatio(DEVICE_ASPECT_RATIO)
@@ -103,7 +99,7 @@ internal fun CoolingLiveHero(
         CoolingHeroStatusPanel(
             presentation = presentation,
             copy = copy,
-            motionPhase = motionPhase,
+            motionPhase = motionPhases.water,
             colors = colors,
             typography = typography
         )
@@ -129,7 +125,7 @@ private fun CoolingHeroScene(
 private fun CoolingHeroDevice(
     presentation: CoolingHeroPresentation,
     motion: CoolingHeroMotion,
-    motionPhase: Float,
+    fanMotionPhase: Float,
     modifier: Modifier
 ) {
     Box(modifier = modifier) {
@@ -143,27 +139,9 @@ private fun CoolingHeroDevice(
         )
         if (motion.isActive) {
             Canvas(modifier = Modifier.fillMaxSize()) {
-                val ringTopLeft = Offset(
-                    size.width * FAN_RING_LEFT_FRACTION,
-                    size.height * FAN_RING_TOP_FRACTION
-                )
-                val ringSize = Size(
-                    size.width * FAN_RING_WIDTH_FRACTION,
-                    size.height * FAN_RING_HEIGHT_FRACTION
-                )
-                drawArc(
-                    color = AquaCoolingDashboardPalette.accent.copy(
-                        alpha = AquaCoolingDashboardAlpha.liveHeroDeviceGlow
-                    ),
-                    startAngle = motionPhase * FULL_ROTATION_DEGREES,
-                    sweepAngle = FAN_RING_HIGHLIGHT_DEGREES,
-                    useCenter = false,
-                    topLeft = ringTopLeft,
-                    size = ringSize,
-                    style = Stroke(
-                        width = AquaCoolingDashboardGeometry.liveHeroDeviceHighlightWidth.toPx(),
-                        cap = StrokeCap.Round
-                    )
+                drawCoolingFanRotor(
+                    rotationPhase = fanMotionPhase,
+                    motionIntensity = motion.intensity
                 )
             }
         }
@@ -277,23 +255,36 @@ private fun coolingHeroDetailText(presentation: CoolingHeroPresentation): String
 }
 
 @Composable
-private fun coolingHeroMotionPhase(motion: CoolingHeroMotion): Float {
-    if (!motion.isActive) return NO_MOTION
-    val duration = (
-        SLOWEST_MOTION_MILLIS -
-            (SLOWEST_MOTION_MILLIS - FASTEST_MOTION_MILLIS) * motion.intensity
+private fun coolingHeroMotionPhases(motion: CoolingHeroMotion): CoolingHeroMotionPhases {
+    if (!motion.isActive) return CoolingHeroMotionPhases(NO_MOTION, NO_MOTION)
+    val waterDuration = (
+        SLOWEST_WATER_MOTION_MILLIS -
+            (SLOWEST_WATER_MOTION_MILLIS - FASTEST_WATER_MOTION_MILLIS) * motion.intensity
+        ).toInt()
+    val fanDuration = (
+        SLOWEST_FAN_MOTION_MILLIS -
+            (SLOWEST_FAN_MOTION_MILLIS - FASTEST_FAN_MOTION_MILLIS) * motion.intensity
         ).toInt()
     val transition = rememberInfiniteTransition(label = "cooling-hero-motion")
-    val phase by transition.animateFloat(
+    val waterPhase by transition.animateFloat(
         initialValue = NO_MOTION,
         targetValue = UNIT_FLOAT,
         animationSpec = infiniteRepeatable(
-            animation = tween(durationMillis = duration, easing = LinearEasing),
+            animation = tween(durationMillis = waterDuration, easing = LinearEasing),
             repeatMode = RepeatMode.Restart
         ),
-        label = "cooling-hero-phase"
+        label = "cooling-hero-water-phase"
     )
-    return phase
+    val fanPhase by transition.animateFloat(
+        initialValue = NO_MOTION,
+        targetValue = UNIT_FLOAT,
+        animationSpec = infiniteRepeatable(
+            animation = tween(durationMillis = fanDuration, easing = LinearEasing),
+            repeatMode = RepeatMode.Restart
+        ),
+        label = "cooling-hero-fan-phase"
+    )
+    return CoolingHeroMotionPhases(waterPhase, fanPhase)
 }
 
 @StringRes
@@ -328,20 +319,21 @@ private data class CoolingHeroCopy(
     val detailText: String
 )
 
+private data class CoolingHeroMotionPhases(
+    val water: Float,
+    val fan: Float
+)
+
 private const val DEVICE_WIDTH_FRACTION = 0.62f
 private const val DEVICE_ASPECT_RATIO = 1.3128655f
-private const val FAN_RING_LEFT_FRACTION = 0.25f
-private const val FAN_RING_TOP_FRACTION = 0.10f
-private const val FAN_RING_WIDTH_FRACTION = 0.44f
-private const val FAN_RING_HEIGHT_FRACTION = 0.37f
-private const val FAN_RING_HIGHLIGHT_DEGREES = 72f
-private const val FULL_ROTATION_DEGREES = 360f
 private const val FULL_CIRCLE_RADIANS = 6.2831855f
 private const val PULSE_BASE_ALPHA = 0.72f
 private const val PULSE_RANGE_ALPHA = 0.28f
 private const val HALF_DIVISOR = 2f
-private const val SLOWEST_MOTION_MILLIS = 5400
-private const val FASTEST_MOTION_MILLIS = 3000
+private const val SLOWEST_WATER_MOTION_MILLIS = 5400
+private const val FASTEST_WATER_MOTION_MILLIS = 3000
+private const val SLOWEST_FAN_MOTION_MILLIS = 1150
+private const val FASTEST_FAN_MOTION_MILLIS = 620
 private const val MINIMUM_PERCENT = 0
 private const val MAXIMUM_PERCENT = 100
 private const val NO_MOTION = 0f
