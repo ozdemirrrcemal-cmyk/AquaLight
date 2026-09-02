@@ -2,6 +2,11 @@
 <resources>
     <string name="device_cooling_open_settings_description">Open device settings</string>
 
+    <string name="device_cooling_hero_waiting_for_data">Waiting for live data</string>
+    <string name="device_cooling_hero_fan_mode_format">Fan %1$d%% • %2$s</string>
+    <string name="device_cooling_hero_fan_unavailable">Fan —</string>
+    <string name="device_cooling_hero_content_description">Cooling device status: %1$s. Water temperature: %2$s. %3$s.</string>
+
     <string name="device_cooling_temperature_title">Temperature</string>
     <string name="device_cooling_temperature_history_caption">Last 24 hours</string>
     <string name="device_cooling_temperature_history_empty">Temperature history will appear here</string>

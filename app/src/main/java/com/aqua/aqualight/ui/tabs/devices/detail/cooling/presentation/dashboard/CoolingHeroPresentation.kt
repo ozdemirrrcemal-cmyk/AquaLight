@@ -1,0 +1,64 @@
+package com.aqua.aqualight.ui.tabs.devices.detail.cooling.presentation.dashboard
+
+import com.aqua.aqualight.ui.common.devicepresence.DeviceConnectionVisualState
+import com.aqua.aqualight.ui.tabs.devices.detail.cooling.presentation.root.CoolingControlMode
+import com.aqua.aqualight.ui.tabs.devices.detail.cooling.presentation.root.CoolingHealthState
+import com.aqua.aqualight.ui.tabs.devices.detail.cooling.presentation.root.DeviceCoolingRootUiState
+
+internal enum class CoolingHeroVisualStatus {
+    COOLING,
+    STANDBY,
+    ATTENTION,
+    WAITING_FOR_DATA,
+    OFFLINE
+}
+
+internal data class CoolingHeroPresentation(
+    val status: CoolingHeroVisualStatus,
+    val fanPercent: Int?,
+    val temperatureC: Double?,
+    val mode: CoolingControlMode?
+) {
+    val isCooling: Boolean
+        get() = status == CoolingHeroVisualStatus.COOLING
+
+    val motionIntensity: Float
+        get() = if (isCooling) {
+            fanPercent.orZero().coerceIn(MINIMUM_PERCENT, MAXIMUM_PERCENT) / MAXIMUM_PERCENT_FLOAT
+        } else {
+            NO_MOTION
+        }
+}
+
+internal fun DeviceCoolingRootUiState.toCoolingHeroPresentation(): CoolingHeroPresentation =
+    CoolingHeroPresentation(
+        status = resolveCoolingHeroStatus(),
+        fanPercent = fanPercentNow,
+        temperatureC = tankTemperatureC,
+        mode = selectedMode
+    )
+
+private fun DeviceCoolingRootUiState.resolveCoolingHeroStatus(): CoolingHeroVisualStatus = when {
+    connectionVisualState != DeviceConnectionVisualState.ONLINE || !contentEnabled ->
+        CoolingHeroVisualStatus.OFFLINE
+    hasCoolingAttentionState() -> CoolingHeroVisualStatus.ATTENTION
+    !controlAvailable -> CoolingHeroVisualStatus.WAITING_FOR_DATA
+    fanPercentNow.orZero() > MINIMUM_PERCENT -> CoolingHeroVisualStatus.COOLING
+    else -> CoolingHeroVisualStatus.STANDBY
+}
+
+private fun DeviceCoolingRootUiState.hasCoolingAttentionState(): Boolean =
+    fanHealth.requiresAttention() ||
+        sensorHealth.requiresAttention() ||
+        activeAlarmCount.orZero() > NO_ALARMS
+
+private fun CoolingHealthState.requiresAttention(): Boolean =
+    this == CoolingHealthState.FAULT || this == CoolingHealthState.WARNING
+
+private fun Int?.orZero(): Int = this ?: 0
+
+private const val MINIMUM_PERCENT = 0
+private const val MAXIMUM_PERCENT = 100
+private const val MAXIMUM_PERCENT_FLOAT = 100f
+private const val NO_MOTION = 0f
+private const val NO_ALARMS = 0

@@ -108,6 +108,18 @@ object AquaCoolingDashboardGeometry {
     val statusDotSize = 6.dp
     val statusRowGap = 5.dp
     val statusValueGap = 5.dp
+
+    val liveHeroHeight = 196.dp
+    val liveHeroStatusPanelWidth = 116.dp
+    val liveHeroStatusPanelStartPadding = 14.dp
+    val liveHeroStatusPanelVerticalPadding = 10.dp
+    val liveHeroStatusPanelHorizontalPadding = 11.dp
+    val liveHeroStatusGap = 5.dp
+    val liveHeroStatusDotSize = 7.dp
+    val liveHeroDeviceTopOffset = 3.dp
+    val liveHeroDeviceEndOffset = 7.dp
+    val liveHeroOutlineWidth = 1.dp
+    val liveHeroDeviceHighlightWidth = 1.5.dp
 }
 
 object AquaCoolingHistoryGeometry {
@@ -176,6 +188,9 @@ object AquaCoolingDashboardTypography {
     val modeSettingsTitleSize = 12.sp
     val modeSettingsValueSize = 10.5.sp
     val activeChipSize = 9.sp
+    val liveHeroStatusSize = 10.sp
+    val liveHeroTemperatureSize = 25.sp
+    val liveHeroDetailSize = 10.5.sp
 }
 
 object AquaCoolingInteractionStyle {
@@ -198,6 +213,18 @@ object AquaCoolingDashboardAlpha {
     const val iconContainerOutline = 0.42f
     const val activeChipBackground = 0.20f
     const val divider = 0.72f
+    const val liveHeroPanel = 0.78f
+    const val liveHeroPanelOutline = 0.56f
+    const val liveHeroDeviceStandby = 0.90f
+    const val liveHeroDeviceUnavailable = 0.66f
+    const val liveHeroDeviceOffline = 0.42f
+    const val liveHeroAtmosphere = 0.28f
+    const val liveHeroWater = 0.72f
+    const val liveHeroWaterEdge = 0.48f
+    const val liveHeroWavePrimary = 0.58f
+    const val liveHeroWaveSecondary = 0.28f
+    const val liveHeroAirflow = 0.14f
+    const val liveHeroDeviceGlow = 0.24f
 }
 
 object AquaCoolingHistoryAlpha {

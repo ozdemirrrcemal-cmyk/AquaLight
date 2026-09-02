@@ -10,6 +10,7 @@ import androidx.compose.ui.res.colorResource
 import androidx.compose.ui.tooling.preview.Preview
 import com.aqua.aqualight.R
 import com.aqua.aqualight.application.devices.cooling.control.DeviceCoolingManualFanCapabilities
+import com.aqua.aqualight.ui.common.devicepresence.DeviceConnectionVisualState
 import com.aqua.aqualight.ui.tabs.devices.detail.cooling.presentation.common.CoolingDataState
 import com.aqua.aqualight.ui.tabs.devices.detail.cooling.presentation.root.CoolingAutomaticSummaryPresentation
 import com.aqua.aqualight.ui.tabs.devices.detail.cooling.presentation.root.CoolingControlMode
@@ -31,6 +32,7 @@ internal fun CoolingDashboardPreview() {
     DeviceCoolingDashboardScreen(
         state = DeviceCoolingRootUiState(
             contentEnabled = true,
+            connectionVisualState = DeviceConnectionVisualState.ONLINE,
             controlState = CoolingDataState.Content(
                 value = CoolingControlPresentation(
                     selectedMode = CoolingControlMode.MANUAL,

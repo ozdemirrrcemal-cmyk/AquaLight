@@ -46,6 +46,13 @@ internal fun DeviceCoolingDashboardScreen(
         ),
         verticalArrangement = Arrangement.spacedBy(AquaCoolingDashboardGeometry.cardGap)
     ) {
+        item(key = "live-hero") {
+            CoolingLiveHero(
+                state = state,
+                colors = colors,
+                typography = typography
+            )
+        }
         item(key = "temperature") {
             CoolingTemperatureCard(
                 state = state,
