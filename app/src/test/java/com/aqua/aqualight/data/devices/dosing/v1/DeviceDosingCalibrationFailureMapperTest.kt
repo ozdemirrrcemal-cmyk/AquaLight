@@ -56,6 +56,18 @@ class DeviceDosingCalibrationFailureMapperTest {
     }
 
     @Test
+    fun `unconfirmed calibration stop remains distinct from a start failure`() {
+        assertEquals(
+            DeviceDosingCalibrationFailure.OUTPUT_STOP_UNCONFIRMED,
+            mapFirmware(
+                code = "HARDWARE_ERROR",
+                field = "pump",
+                message = "calibration output could not be proven physically off"
+            )
+        )
+    }
+
+    @Test
     fun `firmware busy guards map to operation in progress`() {
         assertEquals(
             DeviceDosingCalibrationFailure.OPERATION_IN_PROGRESS,

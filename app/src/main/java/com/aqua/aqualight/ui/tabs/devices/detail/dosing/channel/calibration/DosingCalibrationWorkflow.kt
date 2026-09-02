@@ -128,7 +128,7 @@ internal class DosingCalibrationWorkflow(
                         session.exiting = false
                         mutableUiState.value = mutableUiState.value.withCalibrationFailure(
                             error = result.failure.toCalibrationError(),
-                            hasAuthoritativeSnapshot = session.latestSnapshot != null
+                            authoritativeSnapshot = session.latestSnapshot
                         )
                     }
                 }
@@ -249,7 +249,7 @@ internal class DosingCalibrationWorkflow(
                 session.operationRejected()
                 mutableUiState.value = mutableUiState.value.withCalibrationFailure(
                     error = result.failure.toCalibrationError(),
-                    hasAuthoritativeSnapshot = session.latestSnapshot != null
+                    authoritativeSnapshot = session.latestSnapshot
                 )
             }
         }
@@ -507,12 +507,12 @@ private fun markCalibrationSnapshotUnavailable(
 
 private fun DeviceDosingCalibrationUiState.withCalibrationFailure(
     error: DeviceDosingCalibrationError,
-    hasAuthoritativeSnapshot: Boolean
+    authoritativeSnapshot: DeviceDosingCalibrationSnapshot?
 ): DeviceDosingCalibrationUiState = updateProgress { progress ->
     progress.copy(
-        isLoading = !hasAuthoritativeSnapshot,
+        isLoading = authoritativeSnapshot == null,
         isBusy = false,
-        isPumpActive = false
+        isPumpActive = authoritativeSnapshot?.manualActive ?: false
     )
 }.copy(error = error)
 
@@ -521,6 +521,8 @@ internal fun DeviceDosingCalibrationFailure.toCalibrationError(): DeviceDosingCa
         DeviceDosingCalibrationFailure.CONNECTION -> DeviceDosingCalibrationError.CONNECTION
         DeviceDosingCalibrationFailure.STORAGE -> DeviceDosingCalibrationError.STORAGE
         DeviceDosingCalibrationFailure.HARDWARE -> DeviceDosingCalibrationError.HARDWARE
+        DeviceDosingCalibrationFailure.OUTPUT_STOP_UNCONFIRMED ->
+            DeviceDosingCalibrationError.OUTPUT_STOP_UNCONFIRMED
         DeviceDosingCalibrationFailure.OPERATION_IN_PROGRESS ->
             DeviceDosingCalibrationError.OPERATION_IN_PROGRESS
         DeviceDosingCalibrationFailure.DEVICE_TIME_NOT_READY ->

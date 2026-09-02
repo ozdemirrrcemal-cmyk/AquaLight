@@ -170,6 +170,34 @@ class DeviceDosingChannelCalibrationViewModelTest {
         }
 
     @Test
+    fun `failed physical prime stop keeps the authoritative pump active`() = runTest(dispatcher) {
+        val operations = FakeDosingCalibrationOperations(calibrationSnapshot())
+        val viewModel = viewModel(operations)
+
+        bind(viewModel)
+        advanceUntilIdle()
+        viewModel.onAction(DeviceDosingCalibrationAction.DisplayNameChanged("Trace Elements"))
+        viewModel.onAction(DeviceDosingCalibrationAction.SaveDisplayName)
+        runCurrent()
+        viewModel.onAction(DeviceDosingCalibrationAction.PrimePressed)
+        runCurrent()
+        assertTrue(viewModel.uiState.value.isPumpActive)
+
+        operations.primeStopResult = DeviceDosingCalibrationResult.Rejected(
+            DeviceDosingCalibrationFailure.OUTPUT_STOP_UNCONFIRMED
+        )
+        viewModel.onAction(DeviceDosingCalibrationAction.PrimeReleased)
+        runCurrent()
+
+        assertEquals(
+            DeviceDosingCalibrationError.OUTPUT_STOP_UNCONFIRMED,
+            viewModel.uiState.value.error
+        )
+        assertTrue(viewModel.uiState.value.isPumpActive)
+        assertEquals(1, operations.primeStops)
+    }
+
+    @Test
     fun `mutation invalidation does not replace the active calibration screen with loading state`() =
         runTest(dispatcher) {
             val operations = FakeDosingCalibrationOperations(calibrationSnapshot())
@@ -206,6 +234,8 @@ class DeviceDosingChannelCalibrationViewModelTest {
                 DeviceDosingCalibrationError.CONNECTION,
             DeviceDosingCalibrationFailure.STORAGE to DeviceDosingCalibrationError.STORAGE,
             DeviceDosingCalibrationFailure.HARDWARE to DeviceDosingCalibrationError.HARDWARE,
+            DeviceDosingCalibrationFailure.OUTPUT_STOP_UNCONFIRMED to
+                DeviceDosingCalibrationError.OUTPUT_STOP_UNCONFIRMED,
             DeviceDosingCalibrationFailure.OPERATION_IN_PROGRESS to
                 DeviceDosingCalibrationError.OPERATION_IN_PROGRESS,
             DeviceDosingCalibrationFailure.DEVICE_TIME_NOT_READY to
@@ -218,6 +248,7 @@ class DeviceDosingChannelCalibrationViewModelTest {
                 DeviceDosingCalibrationError.OPERATION_FAILED
         )
 
+        assertEquals(DeviceDosingCalibrationFailure.entries.toSet(), expected.keys)
         expected.forEach { (failure, presentation) ->
             assertEquals(presentation, failure.toCalibrationError())
         }

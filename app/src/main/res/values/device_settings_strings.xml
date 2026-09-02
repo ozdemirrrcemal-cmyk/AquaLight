@@ -52,6 +52,7 @@
     <string name="device_settings_update_error_download_failed">The device reported an unclassified firmware download failure.</string>
     <string name="device_settings_update_error_integrity_check">The downloaded firmware failed integrity verification. The update was not applied.</string>
     <string name="device_settings_update_error_safe_mode">The device could not enter update safe mode. Keep it powered on and try again.</string>
+    <string name="device_settings_update_error_safe_mode_restore">The device could not restore its exact pre-update output state, so runtime control remains paused. Disconnect and reconnect device power before using it again.</string>
     <string name="device_settings_update_error_flash_write">The device could not write the firmware to internal storage. Keep it powered on and contact support.</string>
     <string name="device_settings_update_error_security_validation">The secure firmware connection could not be verified. The update was not applied.</string>
     <string name="device_settings_update_error_protocol_mismatch">The app and device do not agree on the update protocol. Update the app before trying again.</string>

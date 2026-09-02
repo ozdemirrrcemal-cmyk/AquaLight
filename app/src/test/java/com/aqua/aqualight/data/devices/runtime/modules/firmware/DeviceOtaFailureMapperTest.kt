@@ -69,6 +69,19 @@ class DeviceOtaFailureMapperTest {
     }
 
     @Test
+    fun `failed exact-state restore maps to terminal physical restart guidance`() {
+        val failure = DeviceOtaFailureMapper.snapshot(
+            failedSnapshot(
+                field = DeviceFirmwareRuntimeContract.ErrorField.SAFE_MODE_RESTORE,
+                message = "exact pre-OTA runtime restore failed"
+            )
+        )
+
+        assertEquals(DeviceOtaFailureReason.SAFE_MODE_RESTORE_FAILED, failure.reason)
+        assertFalse(failure.recoverable)
+    }
+
+    @Test
     fun `failed snapshot http 404 maps to unavailable official release`() {
         val failure = DeviceOtaFailureMapper.snapshot(
             failedSnapshot(

@@ -478,6 +478,7 @@ enum class DeviceDosingChannelRejection {
     NOT_CALIBRATED,
     BUSY,
     CONFLICT,
+    OUTPUT_STOP_UNCONFIRMED,
     UNSAFE,
     UNKNOWN
 }

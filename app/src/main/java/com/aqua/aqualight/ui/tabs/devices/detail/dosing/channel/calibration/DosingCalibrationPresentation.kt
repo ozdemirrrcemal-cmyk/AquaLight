@@ -63,6 +63,8 @@ internal val DeviceDosingCalibrationError.messageRes: Int
         DeviceDosingCalibrationError.CONNECTION -> R.string.device_dosing_calibration_connection_error
         DeviceDosingCalibrationError.STORAGE -> R.string.device_dosing_calibration_storage_error
         DeviceDosingCalibrationError.HARDWARE -> R.string.device_dosing_calibration_hardware_error
+        DeviceDosingCalibrationError.OUTPUT_STOP_UNCONFIRMED ->
+            R.string.device_dosing_error_output_stop_unconfirmed
         DeviceDosingCalibrationError.OPERATION_IN_PROGRESS ->
             R.string.device_dosing_calibration_operation_in_progress
         DeviceDosingCalibrationError.DEVICE_TIME_NOT_READY ->

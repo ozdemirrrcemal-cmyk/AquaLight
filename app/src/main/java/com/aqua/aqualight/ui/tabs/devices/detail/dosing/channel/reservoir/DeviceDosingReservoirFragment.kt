@@ -327,6 +327,8 @@ private val DeviceDosingChannelRejection.messageRes: Int
             R.string.device_dosing_detail_error_calibration_required
         DeviceDosingChannelRejection.BUSY -> R.string.device_dosing_detail_error_busy
         DeviceDosingChannelRejection.CONFLICT -> R.string.device_dosing_detail_error_state_changed
+        DeviceDosingChannelRejection.OUTPUT_STOP_UNCONFIRMED ->
+            R.string.device_dosing_error_output_stop_unconfirmed
         DeviceDosingChannelRejection.UNSAFE -> R.string.device_dosing_detail_error_safety_blocked
         DeviceDosingChannelRejection.UNKNOWN -> R.string.device_dosing_detail_operation_failed
     }

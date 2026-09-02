@@ -270,6 +270,7 @@
     <string name="device_dosing_detail_error_busy">Başka bir dozaj işlemi etkin. Tekrar denemeden önce kanalın güncel durumunu kontrol edin.</string>
     <string name="device_dosing_detail_error_state_changed">Kanal durumu cihazda değişti. AquaLight güncel durumu yeniledi; kontrol edip tekrar deneyin.</string>
     <string name="device_dosing_detail_error_safety_blocked">Cihaz bu değişikliği güvenlik nedeniyle engelledi. Tekrar denemeden önce kanalın güncel durumunu kontrol edin.</string>
+    <string name="device_dosing_error_output_stop_unconfirmed">Pompanın kapandığı doğrulanamadı. Cihazı yeniden kullanmadan önce enerjisini kesin ve dozaj çıkışını kontrol edin.</string>
     <string name="device_dosing_detail_error_unavailable">Bu işlem bağlı cihazda kullanılamıyor.</string>
     <string name="device_dosing_detail_operation_failed">Dozaj değişikliği uygulanamadı. Tekrar deneyin.</string>
 

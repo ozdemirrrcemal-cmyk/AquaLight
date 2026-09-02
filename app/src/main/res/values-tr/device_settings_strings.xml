@@ -52,6 +52,7 @@
     <string name="device_settings_update_error_download_failed">Cihaz sınıflandırılamayan bir firmware indirme hatası bildirdi.</string>
     <string name="device_settings_update_error_integrity_check">İndirilen yazılımın bütünlüğü doğrulanamadı. Güncelleme uygulanmadı.</string>
     <string name="device_settings_update_error_safe_mode">Cihaz güncelleme için güvenli moda geçemedi. Cihazı açık tutup tekrar deneyin.</string>
+    <string name="device_settings_update_error_safe_mode_restore">Cihaz güncelleme öncesindeki kesin çıkış durumunu geri yükleyemediği için çalışma kontrolü duraklatıldı. Yeniden kullanmadan önce cihazın enerjisini kesip yeniden verin.</string>
     <string name="device_settings_update_error_flash_write">Cihaz yazılımı dahili belleğe yazamadı. Cihazı kapatmayın ve destek alın.</string>
     <string name="device_settings_update_error_security_validation">Güvenli yazılım bağlantısı doğrulanamadı. Güncelleme uygulanmadı.</string>
     <string name="device_settings_update_error_protocol_mismatch">Uygulama ile cihazın güncelleme protokolü uyuşmuyor. Tekrar denemeden önce uygulamayı güncelleyin.</string>

@@ -254,6 +254,8 @@ private fun DeviceDosingChannelRejection.toCalibrationFailure(): DeviceDosingCal
         DeviceDosingChannelRejection.BUSY -> DeviceDosingCalibrationFailure.OPERATION_IN_PROGRESS
         DeviceDosingChannelRejection.CONFLICT ->
             DeviceDosingCalibrationFailure.CALIBRATION_STATE_MISMATCH
+        DeviceDosingChannelRejection.OUTPUT_STOP_UNCONFIRMED ->
+            DeviceDosingCalibrationFailure.OUTPUT_STOP_UNCONFIRMED
         else -> DeviceDosingCalibrationFailure.INTERNAL
     }
 

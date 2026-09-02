@@ -85,4 +85,19 @@ object DeviceDosingV1Contract {
         const val CALIBRATION_CANCEL = "calibrationCancel"
         const val RESERVOIR_REFILL = "reservoirRefill"
     }
+
+    /** Exact firmware identities for a pump output whose OFF write was not proven. */
+    object OutputStopFailure {
+        private const val FIELD = "pump"
+
+        private val MESSAGES = setOf(
+            "dosing output could not be proven physically off",
+            "dosing output could not be proven physically off before channel reset",
+            "calibration output could not be proven physically off",
+            "dosing output could not be proven physically off after calibration cancel"
+        )
+
+        fun matches(field: String, message: String): Boolean =
+            field == FIELD && message in MESSAGES
+    }
 }

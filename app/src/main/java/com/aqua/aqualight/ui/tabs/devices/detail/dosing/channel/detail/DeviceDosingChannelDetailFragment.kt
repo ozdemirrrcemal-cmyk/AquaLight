@@ -281,6 +281,8 @@ class DeviceDosingChannelDetailFragment :
             DeviceDosingChannelDetailFailure.BUSY -> R.string.device_dosing_detail_error_busy
             DeviceDosingChannelDetailFailure.STATE_CHANGED ->
                 R.string.device_dosing_detail_error_state_changed
+            DeviceDosingChannelDetailFailure.OUTPUT_STOP_UNCONFIRMED ->
+                R.string.device_dosing_error_output_stop_unconfirmed
             DeviceDosingChannelDetailFailure.SAFETY_BLOCKED ->
                 R.string.device_dosing_detail_error_safety_blocked
             DeviceDosingChannelDetailFailure.UNAVAILABLE ->

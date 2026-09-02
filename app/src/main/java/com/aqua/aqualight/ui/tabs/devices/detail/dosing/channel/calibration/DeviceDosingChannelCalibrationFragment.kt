@@ -134,5 +134,6 @@ private fun DeviceDosingCalibrationError.snackType(): BaseActivity.SnackType = w
     DeviceDosingCalibrationError.CONNECTION,
     DeviceDosingCalibrationError.STORAGE,
     DeviceDosingCalibrationError.HARDWARE,
+    DeviceDosingCalibrationError.OUTPUT_STOP_UNCONFIRMED,
     DeviceDosingCalibrationError.OPERATION_FAILED -> BaseActivity.SnackType.ERROR
 }

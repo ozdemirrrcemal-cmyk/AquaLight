@@ -101,6 +101,48 @@ class DeviceDosingV1CalibrationProjectionStabilityTest {
         assertTrue(calibration.deviceUptimeMs >= calibration.startedAtUptimeMs)
     }
 
+    @Test
+    fun `expired run remains active until firmware proves the physical output is off`() = runTest {
+        val owner = DeviceDosingV1StateOwner()
+        val global = DeviceDosingV1StatusParser.parseGlobal(
+            DeviceDosingV1TestFixtures.globalStatus().also { status ->
+                status.getJSONArray("channels").getJSONObject(0).put("active", true)
+            }
+        )
+        val channel = DeviceDosingV1StatusParser.parseChannel(
+            DeviceDosingV1TestFixtures.channelStatus().also { status ->
+                status.getJSONObject("channel").apply {
+                    markCalibrationRunning(AUTHORITATIVE_RUN_STARTED_AT_MS)
+                    getJSONObject("activeRun")
+                        .put("active", true)
+                        .put("source", "calibration")
+                        .put("targetAmountMl", 0.0)
+                        .put("remainingMs", 0)
+                    getJSONObject("lastRuntimeEvent")
+                        .put("valid", true)
+                        .put("kind", "fault")
+                        .put("reason", "hardwareStopFailed")
+                        .put("source", "calibration")
+                }
+            }
+        )
+        commit(
+            owner,
+            FixtureState(
+                global = global,
+                channel = channel,
+                progress = DeviceDosingV1StatusParser.parseProgress(
+                    DeviceDosingV1TestFixtures.progressStatus()
+                )
+            )
+        )
+
+        val calibration = requireNotNull(
+            owner.reads.currentCalibration(DEVICE_UID, CHANNEL_KEY)
+        )
+        assertTrue(calibration.manualActive)
+    }
+
     private fun commit(
         owner: DeviceDosingV1StateOwner,
         state: FixtureState

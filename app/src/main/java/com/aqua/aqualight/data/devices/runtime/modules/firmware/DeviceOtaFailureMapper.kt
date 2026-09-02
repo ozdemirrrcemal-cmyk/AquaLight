@@ -361,6 +361,10 @@ private val SAFE_MODE_FAILED = DeviceOtaFailureDisposition(
     DeviceOtaFailureReason.SAFE_MODE_FAILED,
     recoverable = true
 )
+private val SAFE_MODE_RESTORE_FAILED = DeviceOtaFailureDisposition(
+    DeviceOtaFailureReason.SAFE_MODE_RESTORE_FAILED,
+    recoverable = false
+)
 private val SECURITY_VALIDATION_FAILED = DeviceOtaFailureDisposition(
     DeviceOtaFailureReason.SECURITY_VALIDATION_FAILED,
     recoverable = false
@@ -484,6 +488,7 @@ private val INVALID_VALUE_FIELD_DISPOSITIONS = mapOf(
 
 private val SNAPSHOT_FIELD_DISPOSITIONS = mapOf(
     DeviceFirmwareRuntimeContract.ErrorField.SAFE_MODE to SAFE_MODE_FAILED,
+    DeviceFirmwareRuntimeContract.ErrorField.SAFE_MODE_RESTORE to SAFE_MODE_RESTORE_FAILED,
     DeviceFirmwareRuntimeContract.ErrorField.TLS to SECURITY_VALIDATION_FAILED,
     DeviceFirmwareRuntimeContract.ErrorField.EXPECTED_SIZE to INSUFFICIENT_SPACE,
     DeviceFirmwareRuntimeContract.ErrorField.SHA256 to INTEGRITY_CHECK_FAILED,

@@ -67,6 +67,8 @@ class DeviceRootPresentationMapperTest {
                 R.string.device_settings_update_error_integrity_check,
             DeviceOtaFailureReason.SAFE_MODE_FAILED to
                 R.string.device_settings_update_error_safe_mode,
+            DeviceOtaFailureReason.SAFE_MODE_RESTORE_FAILED to
+                R.string.device_settings_update_error_safe_mode_restore,
             DeviceOtaFailureReason.FLASH_WRITE_FAILED to
                 R.string.device_settings_update_error_flash_write,
             DeviceOtaFailureReason.SECURITY_VALIDATION_FAILED to

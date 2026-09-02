@@ -32,8 +32,14 @@ internal object DeviceDosingChannelFailureMapper {
         error: DeviceRuntimeCommandOutcome.FirmwareError
     ): DeviceDosingChannelRejection = when (error.code) {
         FirmwareCode.DEVICE_BUSY -> DeviceDosingChannelRejection.BUSY
-        FirmwareCode.STORAGE_ERROR,
-        FirmwareCode.HARDWARE_ERROR -> DeviceDosingChannelRejection.UNSAFE
+        FirmwareCode.STORAGE_ERROR -> DeviceDosingChannelRejection.UNSAFE
+        FirmwareCode.HARDWARE_ERROR -> if (
+            DeviceDosingV1Contract.OutputStopFailure.matches(error.field, error.message)
+        ) {
+            DeviceDosingChannelRejection.OUTPUT_STOP_UNCONFIRMED
+        } else {
+            DeviceDosingChannelRejection.UNSAFE
+        }
         FirmwareCode.INVALID_VALUE -> mapInvalidValue(error)
         FirmwareCode.NOT_FOUND -> if (
             error.field == FirmwareField.CHANNEL_KEY &&

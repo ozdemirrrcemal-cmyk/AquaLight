@@ -60,6 +60,7 @@ object DeviceDosingV1WireValues {
         "storageIoFailure",
         "stateEpochMismatch",
         "hardwareStartFailed",
+        "hardwareStopFailed",
         "accountingFailed"
     )
     val SCHEDULE_STATES = setOf("active", "noSchedule")

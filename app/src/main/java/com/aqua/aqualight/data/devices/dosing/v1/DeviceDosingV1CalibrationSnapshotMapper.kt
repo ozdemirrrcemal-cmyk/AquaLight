@@ -37,7 +37,9 @@ internal object DeviceDosingV1CalibrationSnapshotMapper {
         verificationDoseStarted = detail.calibration.verificationDoseStarted,
         verificationDoseComplete = detail.calibration.verificationDoseComplete,
         verificationDoseRemainingMs = verificationRemainingMillis(detail),
-        manualActive = detail.activeRun.active && detail.activeRun.remainingMillis > 0L
+        // Active remains authoritative even after the deadline: only a proven physical OFF write
+        // allows firmware to close the run.
+        manualActive = detail.activeRun.active
     )
 
     /**
