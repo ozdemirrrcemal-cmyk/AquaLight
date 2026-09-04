@@ -10,8 +10,11 @@ import com.aqua.aqualight.application.notifications.NotificationDispatchUseCase
 import com.aqua.aqualight.data.devices.dosing.DeviceDosingLowLevelAlertLedger
 import com.aqua.aqualight.data.devices.dosing.DeviceDosingLowLevelAlertMonitor
 import com.aqua.aqualight.data.devices.model.DeviceFamily
+import com.aqua.aqualight.data.devices.model.DeviceUid
 import com.aqua.aqualight.data.devices.repository.DevicesRepository
+import com.aqua.aqualight.data.devices.runtime.core.DeviceRuntimeConnectionGeneration
 import com.aqua.aqualight.data.devices.runtime.events.DeviceRuntimeLifecycleEvent
+import java.util.concurrent.ConcurrentHashMap
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.CoroutineStart
 import kotlinx.coroutines.Dispatchers
@@ -44,6 +47,8 @@ internal class DeviceDosingV1ProductionRuntime(
     private val lifecycleEvents = requireNotNull(devicesRepository.runtimeLifecycleEvents()) {
         "Device runtime lifecycle is unavailable for production Dosing composition."
     }
+    private val refreshedRuntimeGenerations =
+        ConcurrentHashMap<DeviceUid, DeviceRuntimeConnectionGeneration>()
     private val stateOwner = DeviceDosingV1StateOwner(lowLevelAlertLedger)
     private val adapter = DeviceDosingV1StateAdapter(
         repository = DeviceDosingV1Repository(runtimeModules.commandGateway),
@@ -70,6 +75,19 @@ internal class DeviceDosingV1ProductionRuntime(
             lifecycleEvents.collect(::consumeLifecycle)
         }
         runtimeScope.launch(start = CoroutineStart.UNDISPATCHED) {
+            runtimeModules.dosing.runtimeReadyGenerations.collect { readyGenerations ->
+                readyGenerations.forEach { (deviceUid, generation) ->
+                    if (
+                        devicesRepository.currentDevice(deviceUid)?.product?.family ==
+                        DeviceFamily.DOSING &&
+                        refreshedRuntimeGenerations.put(deviceUid, generation) != generation
+                    ) {
+                        launch { channelOperations.refreshAll(deviceUid.value) }
+                    }
+                }
+            }
+        }
+        runtimeScope.launch(start = CoroutineStart.UNDISPATCHED) {
             devicesRepository.typedRuntimeEvents().collect { event -> adapter.consume(event) }
         }
         runtimeScope.launch(start = CoroutineStart.UNDISPATCHED) {
@@ -90,13 +108,10 @@ internal class DeviceDosingV1ProductionRuntime(
         }
     }
 
-    private suspend fun consumeLifecycle(event: DeviceRuntimeLifecycleEvent) {
+    private fun consumeLifecycle(event: DeviceRuntimeLifecycleEvent) {
         adapter.consume(event)
-        if (
-            event is DeviceRuntimeLifecycleEvent.Authenticated &&
-            devicesRepository.currentDevice(event.deviceUid)?.product?.family == DeviceFamily.DOSING
-        ) {
-            channelOperations.refreshAll(event.deviceUid.value)
+        if (event is DeviceRuntimeLifecycleEvent.Unavailable) {
+            refreshedRuntimeGenerations.remove(event.deviceUid)
         }
     }
 
