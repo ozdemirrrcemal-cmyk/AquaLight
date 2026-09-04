@@ -91,8 +91,10 @@ internal class DeviceRuntimeGenerationAuthority {
         states[deviceUid] = current.copy(authoritative = false)
     }
 
-    fun clear(deviceUid: DeviceUid) = synchronized(lock) {
-        states.remove(deviceUid)
+    fun clear(deviceUid: DeviceUid) {
+        synchronized(lock) {
+            states.remove(deviceUid)
+        }
     }
 }
 
