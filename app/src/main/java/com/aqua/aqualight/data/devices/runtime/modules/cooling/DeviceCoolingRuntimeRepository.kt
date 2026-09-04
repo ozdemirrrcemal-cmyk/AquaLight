@@ -34,6 +34,12 @@ class DeviceCoolingRuntimeRepository internal constructor(
 
     val states: StateFlow<Map<DeviceUid, DeviceCoolingRuntimeState>> = stateOwner.states
 
+    internal fun currentState(deviceUid: DeviceUid): DeviceCoolingRuntimeState? =
+        states.value[deviceUid]
+
+    internal fun currentAuthoritativeState(deviceUid: DeviceUid): DeviceCoolingRuntimeState? =
+        stateOwner.currentAuthoritativeState(deviceUid)
+
     internal fun beginGeneration(
         deviceUid: DeviceUid,
         generation: DeviceRuntimeConnectionGeneration
