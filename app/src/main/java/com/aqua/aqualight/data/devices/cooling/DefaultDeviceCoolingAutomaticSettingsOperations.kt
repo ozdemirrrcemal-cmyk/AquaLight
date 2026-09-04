@@ -10,4 +10,5 @@ import com.aqua.aqualight.data.devices.repository.DevicesRepository
  */
 internal class DefaultDeviceCoolingAutomaticSettingsOperations(
     @Suppress("UNUSED_PARAMETER") devicesRepository: DevicesRepository
-) : DeviceCoolingAutomaticSettingsOperations by DisconnectedDeviceCoolingOperations
+) : DeviceCoolingAutomaticSettingsOperations by
+    DisconnectedDeviceCoolingAutomaticSettingsOperations
