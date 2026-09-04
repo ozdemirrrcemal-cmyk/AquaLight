@@ -84,13 +84,15 @@ enum class DeviceOtaFailureStage {
     UPDATE_EXECUTION
 }
 
-/** Stable user-facing OTA failure categories derived from the exact firmware contract. */
+/** Stable user-facing OTA failure categories derived from release and firmware contracts. */
 enum class DeviceOtaFailureReason {
     CHECK_FAILED,
     CONNECTION,
     AUTHENTICATION,
     DEVICE_BUSY,
     UNSUPPORTED,
+    RELEASE_CONNECTION_FAILED,
+    DEVICE_NETWORK_UNAVAILABLE,
     RELEASE_UNAVAILABLE,
     RELEASE_ACCESS_DENIED,
     RELEASE_RATE_LIMITED,

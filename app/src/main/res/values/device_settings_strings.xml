@@ -25,17 +25,19 @@
     <string name="device_settings_update_unsupported_status">This device does not support software updates.</string>
     <string name="device_settings_update_card_content_description">%1$s. %2$s</string>
     <string name="device_settings_update_card_open_details_description">%1$s. %2$s. Open update details.</string>
-    <string name="device_settings_update_error_check_failed">Update information could not be verified. Check the internet connection and try again.</string>
+    <string name="device_settings_update_error_check_failed">Update information could not be verified safely. The update was not applied. Try again; contact support if the problem continues.</string>
     <string name="device_settings_update_error_connection">The app could not connect to the device. Keep it powered on and on the same network, then try again.</string>
     <string name="device_settings_update_error_authentication">A secure session with the device could not be established. Reconnect to the device and try again.</string>
     <string name="device_settings_update_error_device_busy">The device is already handling an update operation. Try again after it finishes.</string>
+    <string name="device_settings_update_error_release_connection_failed">The app could not reach the official update service. Check this phone’s internet connection and try again.</string>
+    <string name="device_settings_update_error_device_network_unavailable">The device Wi-Fi connection is not ready for the update or was lost while preparing it. Make sure the device is connected to the internet and try again.</string>
     <string name="device_settings_update_error_release_unavailable">The selected firmware file is missing from the official release.</string>
     <string name="device_settings_update_error_release_access_denied">The official release server denied access to the firmware file.</string>
     <string name="device_settings_update_error_release_rate_limited">The official release server temporarily limited download requests. Wait briefly and try again.</string>
     <string name="device_settings_update_error_release_redirect_failed">The official release redirected the download to an unsupported or invalid destination.</string>
     <string name="device_settings_update_error_release_request_rejected">The official release server rejected the firmware download request.</string>
     <string name="device_settings_update_error_release_server_unavailable">The official release server is temporarily unavailable. Try again later.</string>
-    <string name="device_settings_update_error_incompatible_firmware">The available firmware is not compatible with this device model or hardware revision.</string>
+    <string name="device_settings_update_error_incompatible_firmware">This update is not compatible with the device identity, hardware revision, or currently installed firmware version.</string>
     <string name="device_settings_update_error_insufficient_space">The firmware package does not fit in the device update partition.</string>
     <string name="device_settings_update_error_download_connection_failed">The device could not establish a secure connection to the official release server. Device time, DNS, TLS trust or internet access may be unavailable.</string>
     <string name="device_settings_update_error_download_send_failed">The device connected to the release server but could not send the firmware download request.</string>
@@ -54,8 +56,8 @@
     <string name="device_settings_update_error_safe_mode">The device could not enter update safe mode. Keep it powered on and try again.</string>
     <string name="device_settings_update_error_safe_mode_restore">The device could not restore its exact pre-update output state, so runtime control remains paused. Disconnect and reconnect device power before using it again.</string>
     <string name="device_settings_update_error_flash_write">The device could not write the firmware to internal storage. Keep it powered on and contact support.</string>
-    <string name="device_settings_update_error_security_validation">The secure firmware connection could not be verified. The update was not applied.</string>
-    <string name="device_settings_update_error_protocol_mismatch">The app and device do not agree on the update protocol. Update the app before trying again.</string>
+    <string name="device_settings_update_error_security_validation">Update security validation failed. Device time, TLS trust, or signed package metadata could not be verified, so the update was not applied.</string>
+    <string name="device_settings_update_error_protocol_mismatch">The update information sent by the app does not match the device OTA contract. Check for updates again; update the app if the problem continues.</string>
     <string name="device_settings_update_error_device_internal">The device could not complete the update. Keep it powered on and try again; contact support if it continues.</string>
 
     <string name="device_settings_change_name_title">Change device name</string>

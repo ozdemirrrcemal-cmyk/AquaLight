@@ -21,6 +21,10 @@ class DeviceRootPresentationMapperTest {
                 R.string.device_settings_update_error_device_busy,
             DeviceOtaFailureReason.UNSUPPORTED to
                 R.string.device_settings_update_unsupported_status,
+            DeviceOtaFailureReason.RELEASE_CONNECTION_FAILED to
+                R.string.device_settings_update_error_release_connection_failed,
+            DeviceOtaFailureReason.DEVICE_NETWORK_UNAVAILABLE to
+                R.string.device_settings_update_error_device_network_unavailable,
             DeviceOtaFailureReason.RELEASE_UNAVAILABLE to
                 R.string.device_settings_update_error_release_unavailable,
             DeviceOtaFailureReason.RELEASE_ACCESS_DENIED to

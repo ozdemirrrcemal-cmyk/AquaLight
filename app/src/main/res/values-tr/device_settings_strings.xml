@@ -25,17 +25,19 @@
     <string name="device_settings_update_unsupported_status">Bu cihaz yazılım güncellemelerini desteklemiyor.</string>
     <string name="device_settings_update_card_content_description">%1$s. %2$s</string>
     <string name="device_settings_update_card_open_details_description">%1$s. %2$s. Güncelleme ayrıntılarını açın.</string>
-    <string name="device_settings_update_error_check_failed">Güncelleme bilgileri doğrulanamadı. İnternet bağlantınızı kontrol edip tekrar deneyin.</string>
+    <string name="device_settings_update_error_check_failed">Güncelleme bilgileri güvenli biçimde doğrulanamadı. Güncelleme uygulanmadı. Tekrar deneyin; sorun sürerse destek alın.</string>
     <string name="device_settings_update_error_connection">Uygulama cihazla bağlantı kuramadı. Cihazı açık ve aynı ağda tutup tekrar deneyin.</string>
     <string name="device_settings_update_error_authentication">Cihazla güvenli oturum kurulamadı. Cihaza yeniden bağlanıp tekrar deneyin.</string>
     <string name="device_settings_update_error_device_busy">Cihaz şu anda başka bir güncelleme işlemi yürütüyor. İşlem tamamlandıktan sonra tekrar deneyin.</string>
+    <string name="device_settings_update_error_release_connection_failed">Uygulama resmî güncelleme hizmetine ulaşamadı. Telefonun internet bağlantısını kontrol edip tekrar deneyin.</string>
+    <string name="device_settings_update_error_device_network_unavailable">Cihazın Wi-Fi bağlantısı güncelleme için hazır değil veya güncelleme hazırlanırken kesildi. Cihazın internete bağlı olduğundan emin olup tekrar deneyin.</string>
     <string name="device_settings_update_error_release_unavailable">Seçilen firmware dosyası resmî sürümde bulunmuyor.</string>
     <string name="device_settings_update_error_release_access_denied">Resmî sürüm sunucusu firmware dosyasına erişimi reddetti.</string>
     <string name="device_settings_update_error_release_rate_limited">Resmî sürüm sunucusu indirme isteklerini geçici olarak sınırladı. Kısa süre bekleyip tekrar deneyin.</string>
     <string name="device_settings_update_error_release_redirect_failed">Resmî sürüm, indirmeyi desteklenmeyen veya geçersiz bir adrese yönlendirdi.</string>
     <string name="device_settings_update_error_release_request_rejected">Resmî sürüm sunucusu firmware indirme isteğini reddetti.</string>
     <string name="device_settings_update_error_release_server_unavailable">Resmî sürüm sunucusuna geçici olarak ulaşılamıyor. Daha sonra tekrar deneyin.</string>
-    <string name="device_settings_update_error_incompatible_firmware">Bulunan yazılım bu cihaz modeli veya donanım revizyonuyla uyumlu değil.</string>
+    <string name="device_settings_update_error_incompatible_firmware">Bu güncelleme cihazın ürün kimliği, donanım revizyonu veya yüklü firmware sürümüyle uyumlu değil.</string>
     <string name="device_settings_update_error_insufficient_space">Yazılım paketi cihazın güncelleme bölümüne sığmıyor.</string>
     <string name="device_settings_update_error_download_connection_failed">Cihaz resmî sürüm sunucusuyla güvenli bağlantı kuramadı. Cihaz saati, DNS, TLS güven zinciri veya internet erişimi hazır olmayabilir.</string>
     <string name="device_settings_update_error_download_send_failed">Cihaz sürüm sunucusuna bağlandı ancak firmware indirme isteğini gönderemedi.</string>
@@ -54,8 +56,8 @@
     <string name="device_settings_update_error_safe_mode">Cihaz güncelleme için güvenli moda geçemedi. Cihazı açık tutup tekrar deneyin.</string>
     <string name="device_settings_update_error_safe_mode_restore">Cihaz güncelleme öncesindeki kesin çıkış durumunu geri yükleyemediği için çalışma kontrolü duraklatıldı. Yeniden kullanmadan önce cihazın enerjisini kesip yeniden verin.</string>
     <string name="device_settings_update_error_flash_write">Cihaz yazılımı dahili belleğe yazamadı. Cihazı kapatmayın ve destek alın.</string>
-    <string name="device_settings_update_error_security_validation">Güvenli yazılım bağlantısı doğrulanamadı. Güncelleme uygulanmadı.</string>
-    <string name="device_settings_update_error_protocol_mismatch">Uygulama ile cihazın güncelleme protokolü uyuşmuyor. Tekrar denemeden önce uygulamayı güncelleyin.</string>
+    <string name="device_settings_update_error_security_validation">Güncellemenin güvenlik doğrulaması başarısız oldu. Cihaz saati, TLS güven zinciri veya imzalı paket bilgileri doğrulanamadığı için güncelleme uygulanmadı.</string>
+    <string name="device_settings_update_error_protocol_mismatch">Uygulamanın gönderdiği güncelleme bilgileri cihazın OTA sözleşmesiyle uyuşmuyor. Güncellemeleri yeniden denetleyin; sorun sürerse uygulamayı güncelleyin.</string>
     <string name="device_settings_update_error_device_internal">Cihaz güncellemeyi tamamlayamadı. Cihazı açık tutup tekrar deneyin; sorun sürerse destek alın.</string>
 
     <string name="device_settings_change_name_title">Cihaz adını değiştir</string>
