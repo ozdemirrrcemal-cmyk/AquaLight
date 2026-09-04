@@ -142,6 +142,10 @@ internal class DeviceRuntimeDomainBootstrapCoordinator(
         }
     }
 
+    fun clearAll() = synchronized(lock) {
+        _readiness.value = emptyMap()
+    }
+
     private fun isCurrent(
         deviceUid: DeviceUid,
         generation: DeviceRuntimeConnectionGeneration
