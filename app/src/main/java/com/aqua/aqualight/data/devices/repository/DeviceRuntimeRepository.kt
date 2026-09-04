@@ -10,6 +10,10 @@ import com.aqua.aqualight.data.devices.model.DeviceRuntimeMetadataGenerationStat
 import com.aqua.aqualight.data.devices.model.DeviceRuntimeMetadataReduction
 import com.aqua.aqualight.data.devices.model.DeviceSnapshot
 import com.aqua.aqualight.data.devices.model.DeviceUid
+import com.aqua.aqualight.data.devices.runtime.bootstrap.DeviceRuntimeBootstrapContext
+import com.aqua.aqualight.data.devices.runtime.bootstrap.DeviceRuntimeBootstrapPlanFactory
+import com.aqua.aqualight.data.devices.runtime.bootstrap.DeviceRuntimeDomainBootstrapCoordinator
+import com.aqua.aqualight.data.devices.runtime.bootstrap.DeviceRuntimeReadiness
 import com.aqua.aqualight.data.devices.runtime.core.DeviceRuntimeCommand
 import com.aqua.aqualight.data.devices.runtime.core.DeviceRuntimeCommandExecutor
 import com.aqua.aqualight.data.devices.runtime.core.DeviceRuntimeCommandGateway
@@ -132,6 +136,11 @@ class DeviceRuntimeRepository(
         }
     }
 
+    private data class RuntimeDomainBootstrapJob(
+        val generation: DeviceRuntimeConnectionGeneration,
+        val job: Job
+    )
+
     private val lifecycleLock = Any()
     private val repositoryJob = SupervisorJob()
     private val repositoryScope = CoroutineScope(repositoryJob + dispatcher)
@@ -139,6 +148,7 @@ class DeviceRuntimeRepository(
     private val sessions = ConcurrentHashMap<DeviceUid, RuntimeSession>()
     private val retiredDeviceUids = ConcurrentHashMap.newKeySet<DeviceUid>()
     private val metadataTimeoutJobs = ConcurrentHashMap<DeviceUid, Job>()
+    private val domainBootstrapJobs = ConcurrentHashMap<DeviceUid, RuntimeDomainBootstrapJob>()
     private val runtimeGenerationCounter = AtomicLong(0L)
 
     internal val metadataBootstrapCoordinator = DeviceRuntimeMetadataBootstrapCoordinator()
@@ -153,6 +163,12 @@ class DeviceRuntimeRepository(
         revokeLocalCredential = ::revokeLocalCredentialAndSession,
         timerAccessProvider = ::currentTimerRuntimeAccess
     )
+
+    private val domainBootstrapCoordinator = DeviceRuntimeDomainBootstrapCoordinator(
+        ports = runtimeModules.domainBootstrapPorts,
+        currentConnectionGeneration = ::currentConnectionGeneration
+    )
+    internal val runtimeReadiness = domainBootstrapCoordinator.readiness
 
     private val timeSyncCoordinator = DeviceTimeSyncCoordinator(
         requestStatus = { deviceUid, generation ->
@@ -224,6 +240,8 @@ class DeviceRuntimeRepository(
 
             if (session.connectionStarted) {
                 val previousGeneration = session.generation
+                cancelDomainBootstrap(deviceUid, previousGeneration)
+                runtimeModules.invalidateRuntimeAuthority(deviceUid, previousGeneration)
                 commandExecutor.cancelGeneration(
                     deviceUid = deviceUid,
                     generation = previousGeneration,
@@ -246,6 +264,8 @@ class DeviceRuntimeRepository(
         }
         cancelMetadataTimeout(snapshot.deviceUid)
         detached?.let { session ->
+            cancelDomainBootstrap(session.deviceUid, session.generation)
+            runtimeModules.invalidateRuntimeAuthority(session.deviceUid, session.generation)
             commandExecutor.cancelGeneration(
                 deviceUid = session.deviceUid,
                 generation = session.generation,
@@ -382,6 +402,8 @@ class DeviceRuntimeRepository(
             sessions.values.toList()
         }
         activeSessions.forEach { session ->
+            cancelDomainBootstrap(session.deviceUid, session.generation)
+            runtimeModules.invalidateRuntimeAuthority(session.deviceUid, session.generation)
             rejectActiveGeneration(session.deviceUid, "localNetwork")
             commandExecutor.cancelGeneration(
                 deviceUid = session.deviceUid,
@@ -414,9 +436,15 @@ class DeviceRuntimeRepository(
 
     private suspend fun revokeLocalCredentialAndSession(deviceUid: DeviceUid): Result<Unit> {
         val session = detachSessionWithoutRetirement(deviceUid)
+        session?.let { current ->
+            cancelDomainBootstrap(deviceUid, current.generation)
+            runtimeModules.invalidateRuntimeAuthority(deviceUid, current.generation)
+        } ?: cancelDomainBootstrap(deviceUid)
         commandExecutor.cancelDevice(deviceUid, COMMAND_CANCELLED_CREDENTIAL_REVOKED)
         cancelMetadataTimeout(deviceUid)
         metadataBootstrapCoordinator.clear(deviceUid)
+        domainBootstrapCoordinator.clear(deviceUid)
+        runtimeModules.clearRuntimeState(deviceUid)
         timeSyncCoordinator.clearSessionMemory(deviceUid)
 
         val tokenFailure = runCatching { clearToken(deviceUid) }.exceptionOrNull()
@@ -445,18 +473,26 @@ class DeviceRuntimeRepository(
 
     suspend fun retire(deviceUid: DeviceUid) {
         val session = detachSessionForRetirement(deviceUid)
+        session?.let { current -> cancelDomainBootstrap(deviceUid, current.generation) }
+            ?: cancelDomainBootstrap(deviceUid)
         commandExecutor.cancelDevice(deviceUid, COMMAND_CANCELLED_DEVICE_RETIRED)
         cancelMetadataTimeout(deviceUid)
         metadataBootstrapCoordinator.clear(deviceUid)
+        domainBootstrapCoordinator.clear(deviceUid)
+        runtimeModules.clearRuntimeState(deviceUid)
         timeSyncCoordinator.clearSessionMemory(deviceUid)
         session?.shutdown()
     }
 
     fun close(deviceUid: DeviceUid) {
         val session = detachSessionForRetirement(deviceUid)
+        session?.let { current -> cancelDomainBootstrap(deviceUid, current.generation) }
+            ?: cancelDomainBootstrap(deviceUid)
         commandExecutor.cancelDevice(deviceUid, COMMAND_CANCELLED_DEVICE_CLOSED)
         cancelMetadataTimeout(deviceUid)
         metadataBootstrapCoordinator.clear(deviceUid)
+        domainBootstrapCoordinator.clear(deviceUid)
+        runtimeModules.clearRuntimeState(deviceUid)
         timeSyncCoordinator.clearSessionMemory(deviceUid)
         session?.close()
     }
@@ -465,24 +501,30 @@ class DeviceRuntimeRepository(
         val activeSessions = beginRepositoryClose() ?: return
         commandExecutor.cancelAll(COMMAND_CANCELLED_REPOSITORY_CLOSED)
         cancelAllMetadataTimeouts()
+        cancelAllDomainBootstraps()
         metadataBootstrapCoordinator.clearAll()
-        repositoryJob.cancel()
+        domainBootstrapCoordinator.clearAll()
         activeSessions.forEach { session ->
+            runtimeModules.clearRuntimeState(session.deviceUid)
             timeSyncCoordinator.clearSessionMemory(session.deviceUid)
-            session.close()
         }
+        repositoryJob.cancel()
+        activeSessions.forEach(RuntimeSession::close)
     }
 
     suspend fun shutdown() {
         val activeSessions = beginRepositoryClose()
         commandExecutor.cancelAll(COMMAND_CANCELLED_REPOSITORY_SHUTDOWN)
         cancelAllMetadataTimeouts()
+        cancelAllDomainBootstraps()
         metadataBootstrapCoordinator.clearAll()
-        repositoryJob.cancel()
+        domainBootstrapCoordinator.clearAll()
         activeSessions?.forEach { session ->
+            runtimeModules.clearRuntimeState(session.deviceUid)
             timeSyncCoordinator.clearSessionMemory(session.deviceUid)
-            session.shutdown()
         }
+        repositoryJob.cancel()
+        activeSessions?.forEach { session -> session.shutdown() }
         tokenLifecycleMutex.withLock { }
         repositoryJob.join()
     }
@@ -517,12 +559,8 @@ class DeviceRuntimeRepository(
     ): DeviceRuntimeMetadataUpdate {
         return when (val validation = AqlCommercialDeviceCatalog.validate(state.metadata)) {
             is AqlCommercialCatalogValidation.Valid -> {
-                val connectionGeneration = currentConnectionGeneration(state.deviceUid)
-                if (connectionGeneration != null) repositoryScope.launch {
-                    timeSyncCoordinator.syncPhoneNowIfNeeded(
-                        deviceUid = state.deviceUid,
-                        generation = connectionGeneration
-                    )
+                currentConnectionGeneration(state.deviceUid)?.let { connectionGeneration ->
+                    startDomainBootstrap(state, connectionGeneration)
                 }
                 DeviceRuntimeMetadataUpdate.Ready(state)
             }
@@ -541,8 +579,64 @@ class DeviceRuntimeRepository(
         }
     }
 
+    private fun startDomainBootstrap(
+        state: DeviceRuntimeMetadataGenerationState.Ready,
+        connectionGeneration: DeviceRuntimeConnectionGeneration
+    ) {
+        cancelDomainBootstrap(state.deviceUid)
+        runtimeModules.beginRuntimeGeneration(state.deviceUid, connectionGeneration)
+        val context = DeviceRuntimeBootstrapContext(
+            deviceUid = state.deviceUid,
+            connectionGeneration = connectionGeneration,
+            metadataGeneration = state.generation,
+            metadata = state.metadata
+        )
+        val plan = DeviceRuntimeBootstrapPlanFactory.create(state.metadata)
+        lateinit var registration: RuntimeDomainBootstrapJob
+        val job = repositoryScope.launch(start = CoroutineStart.LAZY) {
+            val readiness = domainBootstrapCoordinator.hydrate(context, plan)
+            if (
+                readiness is DeviceRuntimeReadiness.Ready &&
+                readiness.generation == connectionGeneration
+            ) {
+                timeSyncCoordinator.syncPhoneNowIfNeeded(
+                    deviceUid = state.deviceUid,
+                    generation = connectionGeneration
+                )
+            }
+        }
+        registration = RuntimeDomainBootstrapJob(connectionGeneration, job)
+        domainBootstrapJobs.put(state.deviceUid, registration)?.job?.cancel()
+        job.invokeOnCompletion {
+            domainBootstrapJobs.remove(state.deviceUid, registration)
+        }
+        job.start()
+    }
+
+    private fun cancelDomainBootstrap(
+        deviceUid: DeviceUid,
+        generation: DeviceRuntimeConnectionGeneration? = null
+    ) {
+        val registration = domainBootstrapJobs[deviceUid]
+        if (
+            registration != null &&
+            (generation == null || registration.generation == generation) &&
+            domainBootstrapJobs.remove(deviceUid, registration)
+        ) {
+            registration.job.cancel()
+        }
+        domainBootstrapCoordinator.invalidate(deviceUid, generation)
+    }
+
+    private fun cancelAllDomainBootstraps() {
+        domainBootstrapJobs.values.forEach { registration -> registration.job.cancel() }
+        domainBootstrapJobs.clear()
+    }
+
     private fun disconnectMetadataFailure(deviceUid: DeviceUid) {
         val session = sessions[deviceUid] ?: return
+        cancelDomainBootstrap(deviceUid, session.generation)
+        runtimeModules.invalidateRuntimeAuthority(deviceUid, session.generation)
         commandExecutor.cancelGeneration(
             deviceUid = deviceUid,
             generation = session.generation,
@@ -556,6 +650,10 @@ class DeviceRuntimeRepository(
     }
 
     private fun rejectActiveGeneration(deviceUid: DeviceUid, field: String) {
+        currentConnectionGeneration(deviceUid)?.let { generation ->
+            cancelDomainBootstrap(deviceUid, generation)
+            runtimeModules.invalidateRuntimeAuthority(deviceUid, generation)
+        }
         cancelMetadataTimeout(deviceUid)
         val state = metadataBootstrapCoordinator.currentState(deviceUid) ?: return
         if (state is DeviceRuntimeMetadataGenerationState.Rejected) return
@@ -711,8 +809,12 @@ class DeviceRuntimeRepository(
         session: RuntimeSession,
         event: AqlWsEvent
     ): Boolean = when (event) {
-        is AqlWsEvent.Opened -> true
+        is AqlWsEvent.Opened -> {
+            runtimeModules.beginRuntimeGeneration(session.deviceUid, session.generation)
+            true
+        }
         is AqlWsEvent.Authenticated -> {
+            runtimeModules.beginRuntimeGeneration(session.deviceUid, session.generation)
             if (!sendAuthenticatedBootstrap(session)) {
                 session.wsClient.disconnect(reason = METADATA_BOOTSTRAP_FAILED_REASON)
             }
@@ -726,6 +828,8 @@ class DeviceRuntimeRepository(
             ) == DeviceRuntimeCompletionDisposition.UNMATCHED
         }
         is AqlWsEvent.Closed -> {
+            cancelDomainBootstrap(session.deviceUid, session.generation)
+            runtimeModules.invalidateRuntimeAuthority(session.deviceUid, session.generation)
             commandExecutor.cancelGeneration(
                 deviceUid = session.deviceUid,
                 generation = session.generation,
@@ -735,6 +839,8 @@ class DeviceRuntimeRepository(
             true
         }
         is AqlWsEvent.Failure -> {
+            cancelDomainBootstrap(session.deviceUid, session.generation)
+            runtimeModules.invalidateRuntimeAuthority(session.deviceUid, session.generation)
             commandExecutor.cancelGeneration(
                 deviceUid = session.deviceUid,
                 generation = session.generation,
