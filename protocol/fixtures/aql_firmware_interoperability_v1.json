@@ -3,30 +3,30 @@
   "schema": "aql.android-firmware.interoperability.v1",
   "firmware": {
     "repository": "ozdemirrrcemal-cmyk/AquaLight-Firmware",
-    "commit": "980b03f0d83cdeb997698fc6b207064aa709cec8",
+    "commit": "2e3688f266d7ed34a6773badafcd62af73cf4aac",
     "commandNames": {
       "path": "src/api/v1/commands/AqlCommandNames.hpp",
-      "blobSha": "8fbd5743e58f76f9123e63441313246aae91814d"
+      "blobSha": "4a7b548008235c3cd3e07d760327a477bbf2c6d4"
     },
     "eventContract": {
       "path": "src/contracts/AqlWebSocketContract.hpp",
-      "blobSha": "96bcb0b45c0d39e46dc3f586507f95dca9909640"
+      "blobSha": "5e87fd043c0efaa849ed3ba8e5be9ce6f2727e24"
     },
     "requestContractBlobs": {
-      "src/api/v1/commands/AqlDeviceCommands.hpp": "c5dc9982d5c8894fa74cec51c53e7c7d8af16f53",
-      "src/api/v1/commands/AqlNetworkCommands.hpp": "913db695e24051585d8179b6f6fecbce74293a86",
-      "src/api/v1/commands/AqlSecurityCommands.hpp": "75f7f41e4400d28c629775dc533560319cdf8977",
-      "src/api/v1/commands/AqlTimeCommands.hpp": "ce33b52d75d2f1c26c08ce8bc64356be3812bcc7",
-      "src/api/v1/commands/AqlLightCommands.hpp": "ce59a843375913b7d315b2cd68bdf40445df55bd",
-      "src/api/v1/commands/AqlLightTemperatureProtectionCommands.hpp": "f48588d88bb902139d3545002a0ae8c40a5795c1",
-      "src/api/v1/commands/AqlLightThermalCommands.hpp": "b71a5415082b7d23deab8cb86aa81885a01c24f3",
-      "src/api/v1/commands/AqlCoolingCommands.hpp": "50f209416d7b97efdd69b81274205dcf09777363",
-      "src/api/v1/commands/AqlTimerCommands.hpp": "0e442d40293d0a68bb5016840bd52b7c001489a6",
-      "src/api/v1/commands/AqlDosingCommands.hpp": "c293c9317db26492ca2a7ab4251ce0b23d787fa7",
-      "src/api/v1/commands/AqlDosingProgressCommands.hpp": "92fd314e10c90a8d8f77434dc9d2b52ec9896341",
-      "src/api/v1/commands/AqlFirmwareCommands.hpp": "6cf2e4e56947a0b6b641e55765b8b6f685004fbb",
-      "src/modules/timer/AqlTimerService.hpp": "0e8bbb20a92afbe7b5500fba51a1d03f4dfb0064",
-      "src/security/AqlSecurityService.hpp": "14d3d58740c6f8e2efebdf640298288a99c78715"
+      "src/api/v1/commands/AqlDeviceCommands.hpp": "a78d6355555afea780fdb62809bc9107d7122698",
+      "src/api/v1/commands/AqlNetworkCommands.hpp": "529a3b341e81a48d33b9036343dbb0b9f2844fb6",
+      "src/api/v1/commands/AqlSecurityCommands.hpp": "1c16c3e7c6d1456b1802f494d91c104347ad09aa",
+      "src/api/v1/commands/AqlTimeCommands.hpp": "ee6e87ab0e1152ffd3d9004fe8b5c7e380488a4f",
+      "src/api/v1/commands/AqlLightCommands.hpp": "40f4a888232b8630a07f7bde51d555ccf24961ed",
+      "src/api/v1/commands/AqlLightTemperatureProtectionCommands.hpp": "e3f04116d2f6ae77e0a1adfd7112773a3e1d06fe",
+      "src/api/v1/commands/AqlLightThermalCommands.hpp": "10f5e03237b16ad4bf0a26b64c2715e0985d094e",
+      "src/api/v1/commands/AqlCoolingCommands.hpp": "4df542d5106fce2810e64559667685c1c2ecfd69",
+      "src/api/v1/commands/AqlTimerCommands.hpp": "5951757f9eeebf81fce647ba9e94b35fe01c13a5",
+      "src/api/v1/commands/AqlDosingCommands.hpp": "34cfc3287485f6a46a73b47f061a5456cde9aa9d",
+      "src/api/v1/commands/AqlDosingProgressCommands.hpp": "8700e785bdd2e747abea3b09eff97755e2addad0",
+      "src/api/v1/commands/AqlFirmwareCommands.hpp": "8b1107d159ca3ff026754c8a06bd1e75fb608c37",
+      "src/modules/timer/AqlTimerService.hpp": "3b852245ccfe84ddb28d4bc664e8e125fd5f11ca",
+      "src/security/AqlSecurityService.hpp": "484906dbdd833d6ad7505ae1755748d239fc0805"
     }
   },
   "fixtures": {
