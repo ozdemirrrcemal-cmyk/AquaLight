@@ -75,5 +75,6 @@ class DeviceRuntimeModuleProvider internal constructor(
         lightThermalStateStore.clear(deviceUid)
         coolingStateStore.clear(deviceUid)
         timerStateStore.clear(deviceUid)
+        dosing.clearRuntimeState(deviceUid)
     }
 }
