@@ -44,8 +44,12 @@ import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.async
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableSharedFlow
+import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharedFlow
+import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asSharedFlow
+import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.joinAll
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.Mutex
@@ -142,6 +146,7 @@ class DeviceRuntimeRepository(
     private val runtimeGenerationCounter = AtomicLong(0L)
 
     internal val metadataBootstrapCoordinator = DeviceRuntimeMetadataBootstrapCoordinator()
+    private val domainBootstrapCoordinator = DeviceRuntimeDomainBootstrapCoordinator()
 
     private val commandExecutor = DeviceRuntimeCommandExecutor(
         sessionProvider = ::currentCommandSession,
@@ -181,6 +186,12 @@ class DeviceRuntimeRepository(
     )
     val lifecycleEvents: SharedFlow<DeviceRuntimeLifecycleEvent> =
         _lifecycleEvents.asSharedFlow()
+
+    private val _runtimeReadiness = MutableStateFlow<Map<DeviceUid, DeviceRuntimeSessionReadiness>>(
+        emptyMap()
+    )
+    internal val runtimeReadiness: StateFlow<Map<DeviceUid, DeviceRuntimeSessionReadiness>> =
+        _runtimeReadiness.asStateFlow()
 
     @Volatile
     private var closed: Boolean = false
@@ -229,6 +240,8 @@ class DeviceRuntimeRepository(
                     generation = previousGeneration,
                     reason = COMMAND_CANCELLED_CONNECTION_REPLACED
                 )
+                domainBootstrapCoordinator.clear(deviceUid)
+                clearRuntimeReadiness(deviceUid)
                 session.generation = nextRuntimeGeneration()
             } else {
                 session.connectionStarted = true
@@ -254,6 +267,8 @@ class DeviceRuntimeRepository(
             session.close()
         }
         metadataBootstrapCoordinator.clear(snapshot.deviceUid)
+        domainBootstrapCoordinator.clear(snapshot.deviceUid)
+        clearRuntimeReadiness(snapshot.deviceUid)
         return connect(snapshot)
     }
 
@@ -305,7 +320,7 @@ class DeviceRuntimeRepository(
     }
 
     /**
-     * Starts a time command only while [generation] is still the current authenticated session.
+     * Starts a runtime command only while [generation] is still the current authenticated session.
      * UNDISPATCHED execution reaches command dispatch while the same lifecycle locks are held, so
      * a reconnect cannot move an old status decision onto a replacement socket generation.
      */
@@ -383,6 +398,8 @@ class DeviceRuntimeRepository(
         }
         activeSessions.forEach { session ->
             rejectActiveGeneration(session.deviceUid, "localNetwork")
+            rejectRuntimeReadiness(session.deviceUid, session.generation, "localNetwork")
+            domainBootstrapCoordinator.clear(session.deviceUid)
             commandExecutor.cancelGeneration(
                 deviceUid = session.deviceUid,
                 generation = session.generation,
@@ -417,6 +434,8 @@ class DeviceRuntimeRepository(
         commandExecutor.cancelDevice(deviceUid, COMMAND_CANCELLED_CREDENTIAL_REVOKED)
         cancelMetadataTimeout(deviceUid)
         metadataBootstrapCoordinator.clear(deviceUid)
+        domainBootstrapCoordinator.clear(deviceUid)
+        clearRuntimeReadiness(deviceUid)
         timeSyncCoordinator.clearSessionMemory(deviceUid)
 
         val tokenFailure = runCatching { clearToken(deviceUid) }.exceptionOrNull()
@@ -448,6 +467,8 @@ class DeviceRuntimeRepository(
         commandExecutor.cancelDevice(deviceUid, COMMAND_CANCELLED_DEVICE_RETIRED)
         cancelMetadataTimeout(deviceUid)
         metadataBootstrapCoordinator.clear(deviceUid)
+        domainBootstrapCoordinator.clear(deviceUid)
+        clearRuntimeReadiness(deviceUid)
         timeSyncCoordinator.clearSessionMemory(deviceUid)
         session?.shutdown()
     }
@@ -457,6 +478,8 @@ class DeviceRuntimeRepository(
         commandExecutor.cancelDevice(deviceUid, COMMAND_CANCELLED_DEVICE_CLOSED)
         cancelMetadataTimeout(deviceUid)
         metadataBootstrapCoordinator.clear(deviceUid)
+        domainBootstrapCoordinator.clear(deviceUid)
+        clearRuntimeReadiness(deviceUid)
         timeSyncCoordinator.clearSessionMemory(deviceUid)
         session?.close()
     }
@@ -466,6 +489,8 @@ class DeviceRuntimeRepository(
         commandExecutor.cancelAll(COMMAND_CANCELLED_REPOSITORY_CLOSED)
         cancelAllMetadataTimeouts()
         metadataBootstrapCoordinator.clearAll()
+        domainBootstrapCoordinator.clearAll()
+        _runtimeReadiness.value = emptyMap()
         repositoryJob.cancel()
         activeSessions.forEach { session ->
             timeSyncCoordinator.clearSessionMemory(session.deviceUid)
@@ -478,6 +503,8 @@ class DeviceRuntimeRepository(
         commandExecutor.cancelAll(COMMAND_CANCELLED_REPOSITORY_SHUTDOWN)
         cancelAllMetadataTimeouts()
         metadataBootstrapCoordinator.clearAll()
+        domainBootstrapCoordinator.clearAll()
+        _runtimeReadiness.value = emptyMap()
         repositoryJob.cancel()
         activeSessions?.forEach { session ->
             timeSyncCoordinator.clearSessionMemory(session.deviceUid)
@@ -494,6 +521,10 @@ class DeviceRuntimeRepository(
         is DeviceRuntimeMetadataReduction.IgnoredStale -> DeviceRuntimeMetadataUpdate.Unmatched
         is DeviceRuntimeMetadataReduction.Rejected -> {
             cancelMetadataTimeout(deviceUid)
+            currentConnectionGeneration(deviceUid)?.let { generation ->
+                rejectRuntimeReadiness(deviceUid, generation, "metadataRejected")
+            }
+            domainBootstrapCoordinator.clear(deviceUid)
             disconnectMetadataFailure(deviceUid)
             DeviceRuntimeMetadataUpdate.Rejected(reduction.state)
         }
@@ -506,6 +537,10 @@ class DeviceRuntimeRepository(
             }
             is DeviceRuntimeMetadataGenerationState.Rejected -> {
                 cancelMetadataTimeout(deviceUid)
+                currentConnectionGeneration(deviceUid)?.let { generation ->
+                    rejectRuntimeReadiness(deviceUid, generation, "metadataRejected")
+                }
+                domainBootstrapCoordinator.clear(deviceUid)
                 disconnectMetadataFailure(deviceUid)
                 DeviceRuntimeMetadataUpdate.Rejected(state)
             }
@@ -518,11 +553,21 @@ class DeviceRuntimeRepository(
         return when (val validation = AqlCommercialDeviceCatalog.validate(state.metadata)) {
             is AqlCommercialCatalogValidation.Valid -> {
                 val connectionGeneration = currentConnectionGeneration(state.deviceUid)
-                if (connectionGeneration != null) repositoryScope.launch {
-                    timeSyncCoordinator.syncPhoneNowIfNeeded(
+                if (connectionGeneration != null) {
+                    val plan = DeviceRuntimeDomainBootstrapPlanResolver.resolve(
                         deviceUid = state.deviceUid,
-                        generation = connectionGeneration
+                        connectionGeneration = connectionGeneration,
+                        metadataGeneration = state.generation,
+                        product = validation.product
                     )
+                    setRuntimeReadiness(
+                        DeviceRuntimeSessionReadiness.MetadataReady(
+                            deviceUid = state.deviceUid,
+                            connectionGeneration = connectionGeneration,
+                            metadataGeneration = state.generation
+                        )
+                    )
+                    repositoryScope.launch { runDomainBootstrap(plan) }
                 }
                 DeviceRuntimeMetadataUpdate.Ready(state)
             }
@@ -535,10 +580,147 @@ class DeviceRuntimeRepository(
                         field = "${validation.failure.code}:${validation.failure.field}"
                     )
                 )
+                currentConnectionGeneration(state.deviceUid)?.let { generation ->
+                    rejectRuntimeReadiness(state.deviceUid, generation, "catalogValidationFailed")
+                }
+                domainBootstrapCoordinator.clear(state.deviceUid)
                 disconnectMetadataFailure(state.deviceUid)
                 DeviceRuntimeMetadataUpdate.Rejected(rejected)
             }
         }
+    }
+
+    private suspend fun runDomainBootstrap(plan: DeviceRuntimeDomainBootstrapPlan) {
+        val accepted = runIfCurrentAuthenticatedGeneration(
+            deviceUid = plan.deviceUid,
+            generation = plan.connectionGeneration
+        ) {
+            setRuntimeReadiness(DeviceRuntimeSessionReadiness.DomainBootstrapping(plan))
+        }
+        if (!accepted) return
+
+        when (
+            val result = domainBootstrapCoordinator.run(plan) { step ->
+                executeDomainBootstrapStepWithRetry(plan, step)
+            }
+        ) {
+            is DeviceRuntimeDomainBootstrapResult.Completed -> {
+                val stillCurrent = runIfCurrentAuthenticatedGeneration(
+                    deviceUid = plan.deviceUid,
+                    generation = plan.connectionGeneration
+                ) {
+                    setRuntimeReadiness(DeviceRuntimeSessionReadiness.RuntimeReady(plan))
+                }
+                if (stillCurrent) {
+                    timeSyncCoordinator.syncPhoneNowIfNeeded(
+                        deviceUid = plan.deviceUid,
+                        generation = plan.connectionGeneration
+                    )
+                }
+            }
+            is DeviceRuntimeDomainBootstrapResult.Failed -> {
+                rejectDomainBootstrap(result)
+            }
+            is DeviceRuntimeDomainBootstrapResult.Stale,
+            is DeviceRuntimeDomainBootstrapResult.AlreadyStarted -> Unit
+        }
+    }
+
+    private suspend fun executeDomainBootstrapStepWithRetry(
+        plan: DeviceRuntimeDomainBootstrapPlan,
+        step: DeviceRuntimeDomainBootstrapStep
+    ): DeviceRuntimeCommandOutcome<*>? {
+        var outcome = executeDomainBootstrapStep(plan, step)
+        if (outcome is DeviceRuntimeCommandOutcome.Timeout ||
+            outcome is DeviceRuntimeCommandOutcome.SendFailed
+        ) {
+            delay(DOMAIN_BOOTSTRAP_RETRY_DELAY_MILLIS)
+            outcome = executeDomainBootstrapStep(plan, step)
+        }
+        return outcome
+    }
+
+    private suspend fun executeDomainBootstrapStep(
+        plan: DeviceRuntimeDomainBootstrapPlan,
+        step: DeviceRuntimeDomainBootstrapStep
+    ): DeviceRuntimeCommandOutcome<*>? = when (step) {
+        DeviceRuntimeDomainBootstrapStep.LIGHT_STATUS ->
+            executeIfCurrentAuthenticatedGeneration(
+                plan.deviceUid,
+                plan.connectionGeneration
+            ) { runtimeModules.light.requestStatus(plan.deviceUid) }
+        DeviceRuntimeDomainBootstrapStep.LIGHT_THERMAL_STATUS ->
+            executeIfCurrentAuthenticatedGeneration(
+                plan.deviceUid,
+                plan.connectionGeneration
+            ) { runtimeModules.lightThermal.requestStatus(plan.deviceUid) }
+        DeviceRuntimeDomainBootstrapStep.COOLING_STATUS ->
+            executeIfCurrentAuthenticatedGeneration(
+                plan.deviceUid,
+                plan.connectionGeneration
+            ) { runtimeModules.cooling.requestStatus(plan.deviceUid) }
+        DeviceRuntimeDomainBootstrapStep.TIMER_STATUS ->
+            executeIfCurrentAuthenticatedGeneration(
+                plan.deviceUid,
+                plan.connectionGeneration
+            ) { runtimeModules.timer.requestStatus(plan.deviceUid) }
+        DeviceRuntimeDomainBootstrapStep.DOSING_STATUS ->
+            executeIfCurrentAuthenticatedGeneration(
+                plan.deviceUid,
+                plan.connectionGeneration
+            ) { runtimeModules.dosing.requestStatus(plan.deviceUid) }
+    }
+
+    private fun rejectDomainBootstrap(result: DeviceRuntimeDomainBootstrapResult.Failed) {
+        val plan = result.plan
+        val reason = "${result.step}:${result.outcome.javaClass.simpleName}"
+        val current = runIfCurrentAuthenticatedGeneration(
+            deviceUid = plan.deviceUid,
+            generation = plan.connectionGeneration
+        ) {
+            rejectRuntimeReadiness(plan.deviceUid, plan.connectionGeneration, reason)
+        }
+        if (!current) return
+        disconnectDomainBootstrapFailure(plan.deviceUid, plan.connectionGeneration)
+    }
+
+    private fun disconnectDomainBootstrapFailure(
+        deviceUid: DeviceUid,
+        generation: DeviceRuntimeConnectionGeneration
+    ) {
+        val session = sessions[deviceUid] ?: return
+        synchronized(session) {
+            if (!isCurrentSession(session) || session.generation != generation) return
+            if (session.wsClient.connectionState.value !is AqlWsConnectionState.Authenticated) return
+            commandExecutor.cancelGeneration(
+                deviceUid = deviceUid,
+                generation = generation,
+                reason = COMMAND_CANCELLED_DOMAIN_BOOTSTRAP_FAILURE
+            )
+            session.wsClient.disconnect(reason = DOMAIN_BOOTSTRAP_FAILED_REASON)
+        }
+    }
+
+    private fun setRuntimeReadiness(readiness: DeviceRuntimeSessionReadiness) {
+        _runtimeReadiness.update { current -> current + (readiness.deviceUid to readiness) }
+    }
+
+    private fun rejectRuntimeReadiness(
+        deviceUid: DeviceUid,
+        generation: DeviceRuntimeConnectionGeneration,
+        reason: String
+    ) {
+        setRuntimeReadiness(
+            DeviceRuntimeSessionReadiness.Rejected(
+                deviceUid = deviceUid,
+                connectionGeneration = generation,
+                reason = reason
+            )
+        )
+    }
+
+    private fun clearRuntimeReadiness(deviceUid: DeviceUid) {
+        _runtimeReadiness.update { current -> current - deviceUid }
     }
 
     private fun disconnectMetadataFailure(deviceUid: DeviceUid) {
@@ -579,6 +761,8 @@ class DeviceRuntimeRepository(
                 generation = generation
             )
             if (rejected != null) {
+                rejectRuntimeReadiness(session.deviceUid, session.generation, "metadataTimeout")
+                domainBootstrapCoordinator.clear(session.deviceUid)
                 disconnectMetadataFailure(session.deviceUid)
             }
         }
@@ -713,7 +897,19 @@ class DeviceRuntimeRepository(
     ): Boolean = when (event) {
         is AqlWsEvent.Opened -> true
         is AqlWsEvent.Authenticated -> {
+            domainBootstrapCoordinator.clear(session.deviceUid)
+            setRuntimeReadiness(
+                DeviceRuntimeSessionReadiness.CollectingSharedMetadata(
+                    deviceUid = session.deviceUid,
+                    connectionGeneration = session.generation
+                )
+            )
             if (!sendAuthenticatedBootstrap(session)) {
+                rejectRuntimeReadiness(
+                    session.deviceUid,
+                    session.generation,
+                    "metadataBootstrapDispatchFailed"
+                )
                 session.wsClient.disconnect(reason = METADATA_BOOTSTRAP_FAILED_REASON)
             }
             true
@@ -732,6 +928,8 @@ class DeviceRuntimeRepository(
                 reason = COMMAND_CANCELLED_SOCKET_CLOSED
             )
             rejectActiveGeneration(event.deviceUid, "closed")
+            rejectRuntimeReadiness(event.deviceUid, session.generation, "closed")
+            domainBootstrapCoordinator.clear(event.deviceUid)
             true
         }
         is AqlWsEvent.Failure -> {
@@ -741,6 +939,8 @@ class DeviceRuntimeRepository(
                 reason = COMMAND_CANCELLED_SOCKET_FAILURE
             )
             rejectActiveGeneration(event.deviceUid, "failure")
+            rejectRuntimeReadiness(event.deviceUid, session.generation, "failure")
+            domainBootstrapCoordinator.clear(event.deviceUid)
             true
         }
     }
@@ -766,7 +966,9 @@ class DeviceRuntimeRepository(
         private const val EVENT_BUFFER_CAPACITY = 256
         private const val LOCAL_NETWORK_UNAVAILABLE_REASON = "local network unavailable"
         private const val METADATA_BOOTSTRAP_FAILED_REASON = "metadata bootstrap failed"
+        private const val DOMAIN_BOOTSTRAP_FAILED_REASON = "domain bootstrap failed"
         private const val METADATA_BOOTSTRAP_TIMEOUT_MILLIS = 10_000L
+        private const val DOMAIN_BOOTSTRAP_RETRY_DELAY_MILLIS = 250L
         private const val COMMAND_CANCELLED_CONNECTION_REPLACED = "runtime connection replaced"
         private const val COMMAND_CANCELLED_NETWORK_ROUTE_CHANGED = "local network route changed"
         private const val COMMAND_CANCELLED_LOCAL_NETWORK_LOSS = "local network unavailable"
@@ -776,6 +978,7 @@ class DeviceRuntimeRepository(
         private const val COMMAND_CANCELLED_REPOSITORY_CLOSED = "runtime repository closed"
         private const val COMMAND_CANCELLED_REPOSITORY_SHUTDOWN = "runtime repository shutdown"
         private const val COMMAND_CANCELLED_METADATA_FAILURE = "metadata bootstrap failed"
+        private const val COMMAND_CANCELLED_DOMAIN_BOOTSTRAP_FAILURE = "domain bootstrap failed"
         private const val COMMAND_CANCELLED_TRANSPORT_UNAVAILABLE = "runtime transport unavailable"
         private const val COMMAND_CANCELLED_SOCKET_CLOSED = "runtime socket closed"
         private const val COMMAND_CANCELLED_SOCKET_FAILURE = "runtime socket failure"
