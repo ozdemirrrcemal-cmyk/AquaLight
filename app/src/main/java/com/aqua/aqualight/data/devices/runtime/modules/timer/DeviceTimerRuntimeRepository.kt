@@ -3,6 +3,7 @@ package com.aqua.aqualight.data.devices.runtime.modules.timer
 import com.aqua.aqualight.data.devices.model.DeviceUid
 import com.aqua.aqualight.data.devices.runtime.core.DeviceRuntimeCommandGateway
 import com.aqua.aqualight.data.devices.runtime.core.DeviceRuntimeCommandOutcome
+import com.aqua.aqualight.data.devices.runtime.core.DeviceRuntimeConnectionGeneration
 import com.aqua.aqualight.data.devices.runtime.modules.common.DeviceRuntimeJsonCommand
 import kotlinx.coroutines.flow.StateFlow
 import org.json.JSONObject
@@ -14,6 +15,21 @@ class DeviceTimerRuntimeRepository internal constructor(
 ) {
     val states: StateFlow<Map<DeviceUid, DeviceTimerRuntimeState>> = stateStore.states
 
+    internal fun beginGeneration(
+        deviceUid: DeviceUid,
+        generation: DeviceRuntimeConnectionGeneration
+    ): Boolean = stateStore.beginGeneration(deviceUid, generation)
+
+    internal fun invalidate(
+        deviceUid: DeviceUid,
+        generation: DeviceRuntimeConnectionGeneration? = null
+    ) = stateStore.invalidate(deviceUid, generation)
+
+    internal fun isAuthoritative(
+        deviceUid: DeviceUid,
+        generation: DeviceRuntimeConnectionGeneration
+    ): Boolean = stateStore.isAuthoritative(deviceUid, generation)
+
     suspend fun requestStatus(
         deviceUid: DeviceUid
     ): DeviceRuntimeCommandOutcome<DeviceTimerStatus> {
@@ -21,7 +37,7 @@ class DeviceTimerRuntimeRepository internal constructor(
         if (!access.supportsApi) {
             return timerUnsupported(deviceUid, DeviceTimerRuntimeContract.Action.STATUS_GET)
         }
-        return gateway.execute(
+        val outcome = gateway.execute(
             deviceUid,
             timerJsonCommand(
                 action = DeviceTimerRuntimeContract.Action.STATUS_GET,
@@ -31,7 +47,11 @@ class DeviceTimerRuntimeRepository internal constructor(
                     }
                 }
             )
-        ).recordSuccess { status -> stateStore.recordStatus(deviceUid, status) }
+        )
+        if (outcome is DeviceRuntimeCommandOutcome.Success) {
+            stateStore.recordStatus(deviceUid, outcome.generation, outcome.value)
+        }
+        return outcome
     }
 
     suspend fun applyConfig(
@@ -42,8 +62,8 @@ class DeviceTimerRuntimeRepository internal constructor(
         if (configUnsupported(payload, access)) {
             return timerUnsupported(deviceUid, DeviceTimerRuntimeContract.Action.CONFIG_APPLY)
         }
-        val status = states.value[deviceUid]?.status
-        return gateway.execute(
+        val status = stateStore.currentAuthoritativeState(deviceUid)?.status
+        val outcome = gateway.execute(
             deviceUid,
             timerJsonCommand(
                 action = DeviceTimerRuntimeContract.Action.CONFIG_APPLY,
@@ -62,7 +82,16 @@ class DeviceTimerRuntimeRepository internal constructor(
                     }
                 }
             )
-        ).recordSuccess { result -> stateStore.recordConfig(deviceUid, result) }
+        )
+        if (
+            outcome is DeviceRuntimeCommandOutcome.Success &&
+            !stateStore.recordConfig(deviceUid, outcome.generation, outcome.value)
+        ) {
+            // A successful mutation must never patch a retained snapshot from another session.
+            // Re-establish firmware truth automatically on the current connection instead.
+            requestStatus(deviceUid)
+        }
+        return outcome
     }
 
     suspend fun setChannel(
@@ -73,8 +102,8 @@ class DeviceTimerRuntimeRepository internal constructor(
         if (!access.supportsApi || !access.supportsChannelState) {
             return timerUnsupported(deviceUid, DeviceTimerRuntimeContract.Action.CHANNEL_SET)
         }
-        val status = states.value[deviceUid]?.status
-        return gateway.execute(
+        val status = stateStore.currentAuthoritativeState(deviceUid)?.status
+        val outcome = gateway.execute(
             deviceUid,
             timerJsonCommand(
                 action = DeviceTimerRuntimeContract.Action.CHANNEL_SET,
@@ -93,7 +122,14 @@ class DeviceTimerRuntimeRepository internal constructor(
                     }
                 }
             )
-        ).recordSuccess { result -> stateStore.recordChannel(deviceUid, result) }
+        )
+        if (
+            outcome is DeviceRuntimeCommandOutcome.Success &&
+            !stateStore.recordChannel(deviceUid, outcome.generation, outcome.value)
+        ) {
+            requestStatus(deviceUid)
+        }
+        return outcome
     }
 
     suspend fun setChannelRegime(
@@ -178,17 +214,24 @@ class DeviceTimerRuntimeRepository internal constructor(
     }
 
     private suspend fun ensureConfigBaseline(deviceUid: DeviceUid): TimerConfigBaseline =
-        states.value[deviceUid]?.config?.let(TimerConfigBaseline::Ready) ?: when (
-            val status = requestStatus(deviceUid)
-        ) {
-            is DeviceRuntimeCommandOutcome.Success -> TimerConfigBaseline.Ready(
-                requireNotNull(states.value[deviceUid]?.config) {
-                    "Successful Timer status did not publish a config baseline."
-                }
-            )
-            else -> TimerConfigBaseline.Failed(status)
-        }
-
+        stateStore.currentAuthoritativeState(deviceUid)?.config?.let(TimerConfigBaseline::Ready)
+            ?: when (val status = requestStatus(deviceUid)) {
+                is DeviceRuntimeCommandOutcome.Success -> stateStore
+                    .currentAuthoritativeState(deviceUid)
+                    ?.config
+                    ?.let(TimerConfigBaseline::Ready)
+                    ?: TimerConfigBaseline.Failed(
+                        DeviceRuntimeCommandOutcome.Cancelled(
+                            deviceUid = deviceUid,
+                            module = status.module,
+                            action = status.action,
+                            messageId = status.messageId,
+                            generation = status.generation,
+                            reason = "Timer status completed outside the authoritative generation."
+                        )
+                    )
+                else -> TimerConfigBaseline.Failed(status)
+            }
 }
 
 private sealed interface TimerConfigBaseline {
@@ -228,12 +271,6 @@ private fun timerUnsupported(
         module = DeviceTimerRuntimeContract.MODULE,
         action = action
     )
-
-private fun <T> DeviceRuntimeCommandOutcome<T>.recordSuccess(
-    recorder: (T) -> Unit
-): DeviceRuntimeCommandOutcome<T> = also { outcome ->
-    if (outcome is DeviceRuntimeCommandOutcome.Success) recorder(outcome.value)
-}
 
 @Suppress("UNCHECKED_CAST")
 private fun <T> DeviceRuntimeCommandOutcome<*>.asFailure(): DeviceRuntimeCommandOutcome<T> {
