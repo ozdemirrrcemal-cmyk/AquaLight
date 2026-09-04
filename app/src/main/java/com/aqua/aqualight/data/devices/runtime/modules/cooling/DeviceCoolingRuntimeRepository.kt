@@ -28,17 +28,11 @@ import kotlinx.coroutines.flow.StateFlow
  */
 class DeviceCoolingRuntimeRepository internal constructor(
     gateway: DeviceRuntimeCommandGateway,
-    private val stateOwner: DeviceCoolingRuntimeStateOwner = DeviceCoolingRuntimeStateOwner()
+    internal val stateOwner: DeviceCoolingRuntimeStateOwner = DeviceCoolingRuntimeStateOwner()
 ) {
     private val protocol = DeviceCoolingV1RuntimeRepository(gateway)
 
     val states: StateFlow<Map<DeviceUid, DeviceCoolingRuntimeState>> = stateOwner.states
-
-    internal fun currentState(deviceUid: DeviceUid): DeviceCoolingRuntimeState? =
-        states.value[deviceUid]
-
-    internal fun currentAuthoritativeState(deviceUid: DeviceUid): DeviceCoolingRuntimeState? =
-        stateOwner.currentAuthoritativeState(deviceUid)
 
     internal fun beginGeneration(
         deviceUid: DeviceUid,
@@ -51,11 +45,6 @@ class DeviceCoolingRuntimeRepository internal constructor(
     ) = stateOwner.invalidate(deviceUid, generation)
 
     internal fun clear(deviceUid: DeviceUid) = stateOwner.clear(deviceUid)
-
-    internal fun isAuthoritative(
-        deviceUid: DeviceUid,
-        generation: DeviceRuntimeConnectionGeneration
-    ): Boolean = stateOwner.isAuthoritative(deviceUid, generation)
 
     suspend fun requestStatus(
         deviceUid: DeviceUid
@@ -71,13 +60,13 @@ class DeviceCoolingRuntimeRepository internal constructor(
         deviceUid: DeviceUid,
         payload: DeviceCoolingV1ConfigApplyPayload
     ): DeviceRuntimeCommandOutcome<DeviceCoolingV1ConfigApplyResult> =
-        protocol.applyConfig(deviceUid, payload).reconcileAfterMutation(deviceUid)
+        protocol.applyConfig(deviceUid, payload).reconcileAfterMutation(deviceUid, ::requestStatus)
 
     suspend fun applyManual(
         deviceUid: DeviceUid,
         payload: DeviceCoolingV1ManualApplyPayload
     ): DeviceRuntimeCommandOutcome<DeviceCoolingV1ManualApplyResult> =
-        protocol.applyManual(deviceUid, payload).reconcileAfterMutation(deviceUid)
+        protocol.applyManual(deviceUid, payload).reconcileAfterMutation(deviceUid, ::requestStatus)
 
     suspend fun requestProgram(
         deviceUid: DeviceUid
@@ -88,7 +77,7 @@ class DeviceCoolingRuntimeRepository internal constructor(
         deviceUid: DeviceUid,
         payload: DeviceCoolingV1ProgramApplyPayload
     ): DeviceRuntimeCommandOutcome<DeviceCoolingV1ProgramApplyResult> =
-        protocol.applyProgram(deviceUid, payload).reconcileAfterMutation(deviceUid)
+        protocol.applyProgram(deviceUid, payload).reconcileAfterMutation(deviceUid, ::requestStatus)
 
     suspend fun requestHistory(
         deviceUid: DeviceUid,
@@ -104,49 +93,65 @@ class DeviceCoolingRuntimeRepository internal constructor(
             else -> Unit
         }
     }
+}
 
-    private suspend fun consumeStatusEvent(event: DeviceRuntimeTypedEvent) {
-        when (val payload = event.payload) {
-            is DeviceRuntimeEventPayload.Snapshot -> runCatching {
-                DeviceCoolingV1ResponseParser.parseStatus(payload.data)
-            }.onSuccess { status ->
-                stateOwner.recordStatus(event.deviceUid, event.generation, status)
-            }.onFailure {
-                requestStatus(event.deviceUid)
-            }
-            is DeviceRuntimeEventPayload.CommandResult -> requestStatus(event.deviceUid)
+internal fun DeviceCoolingRuntimeRepository.currentState(
+    deviceUid: DeviceUid
+): DeviceCoolingRuntimeState? = states.value[deviceUid]
+
+internal fun DeviceCoolingRuntimeRepository.currentAuthoritativeState(
+    deviceUid: DeviceUid
+): DeviceCoolingRuntimeState? = stateOwner.currentAuthoritativeState(deviceUid)
+
+internal fun DeviceCoolingRuntimeRepository.isAuthoritative(
+    deviceUid: DeviceUid,
+    generation: DeviceRuntimeConnectionGeneration
+): Boolean = stateOwner.isAuthoritative(deviceUid, generation)
+
+private suspend fun DeviceCoolingRuntimeRepository.consumeStatusEvent(event: DeviceRuntimeTypedEvent) {
+    when (val payload = event.payload) {
+        is DeviceRuntimeEventPayload.Snapshot -> runCatching {
+            DeviceCoolingV1ResponseParser.parseStatus(payload.data)
+        }.onSuccess { status ->
+            stateOwner.recordStatus(event.deviceUid, event.generation, status)
+        }.onFailure {
+            requestStatus(event.deviceUid)
         }
+        is DeviceRuntimeEventPayload.CommandResult -> requestStatus(event.deviceUid)
+    }
+}
+
+private suspend fun DeviceCoolingRuntimeRepository.consumeTelemetryEvent(
+    event: DeviceRuntimeTypedEvent
+) {
+    val telemetry = when (val payload = event.payload) {
+        is DeviceRuntimeEventPayload.Snapshot -> runCatching {
+            DeviceCoolingV1ResponseParser.parseTelemetry(payload.data)
+        }.getOrNull()
+        is DeviceRuntimeEventPayload.CommandResult -> null
+    }
+    if (telemetry != null && stateOwner.recordTelemetry(event.deviceUid, event.generation, telemetry)) {
+        return
     }
 
-    private suspend fun consumeTelemetryEvent(event: DeviceRuntimeTypedEvent) {
-        val telemetry = when (val payload = event.payload) {
-            is DeviceRuntimeEventPayload.Snapshot -> runCatching {
-                DeviceCoolingV1ResponseParser.parseTelemetry(payload.data)
-            }.getOrNull()
-            is DeviceRuntimeEventPayload.CommandResult -> null
-        }
-        if (telemetry != null && stateOwner.recordTelemetry(event.deviceUid, event.generation, telemetry)) {
-            return
-        }
-
-        // Missing/stale baseline is reconciled automatically. An event from an older generation is
-        // never replayed onto the newly hydrated state.
-        val status = requestStatus(event.deviceUid)
-        if (
-            telemetry != null &&
-            status is DeviceRuntimeCommandOutcome.Success &&
-            status.generation == event.generation
-        ) {
-            stateOwner.recordTelemetry(event.deviceUid, event.generation, telemetry)
-        }
+    // Missing/stale baseline is reconciled automatically. An event from an older generation is
+    // never replayed onto the newly hydrated state.
+    val status = requestStatus(event.deviceUid)
+    if (
+        telemetry != null &&
+        status is DeviceRuntimeCommandOutcome.Success &&
+        status.generation == event.generation
+    ) {
+        stateOwner.recordTelemetry(event.deviceUid, event.generation, telemetry)
     }
+}
 
-    private suspend fun <T> DeviceRuntimeCommandOutcome<T>.reconcileAfterMutation(
-        deviceUid: DeviceUid
-    ): DeviceRuntimeCommandOutcome<T> {
-        if (this is DeviceRuntimeCommandOutcome.Success) {
-            requestStatus(deviceUid)
-        }
-        return this
+private suspend fun <T> DeviceRuntimeCommandOutcome<T>.reconcileAfterMutation(
+    deviceUid: DeviceUid,
+    requestStatus: suspend (DeviceUid) -> DeviceRuntimeCommandOutcome<*>
+): DeviceRuntimeCommandOutcome<T> {
+    if (this is DeviceRuntimeCommandOutcome.Success) {
+        requestStatus(deviceUid)
     }
+    return this
 }

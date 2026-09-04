@@ -12,7 +12,10 @@ import com.aqua.aqualight.data.devices.repository.DevicesRepository
 import com.aqua.aqualight.data.devices.runtime.core.DeviceRuntimeCommandOutcome
 import com.aqua.aqualight.data.devices.runtime.modules.cooling.DeviceCoolingRuntimeRepository
 import com.aqua.aqualight.data.devices.runtime.modules.cooling.DeviceCoolingRuntimeState
+import com.aqua.aqualight.data.devices.runtime.modules.cooling.currentAuthoritativeState
+import com.aqua.aqualight.data.devices.runtime.modules.cooling.currentState
 import com.aqua.aqualight.data.devices.runtime.modules.cooling.v1.DeviceCoolingV1ConfigApplyPayload
+import com.aqua.aqualight.data.devices.runtime.modules.cooling.v1.DeviceCoolingV1ConfigSnapshot
 import com.aqua.aqualight.data.devices.runtime.modules.cooling.v1.DeviceCoolingV1Contract
 import kotlin.math.abs
 import kotlinx.coroutines.flow.Flow
@@ -34,27 +37,32 @@ internal class DefaultDeviceCoolingAutomaticSettingsOperations(
         deviceUid: String
     ): Flow<DeviceCoolingAutomaticSettingsSnapshot> {
         val uid = deviceUid.toCoolingUidOrNull()
-            ?: return flowOf(DeviceCoolingAutomaticSettingsSnapshot())
-        val runtime = devicesRepository.runtimeModules()?.cooling
-            ?: return flowOf(DeviceCoolingAutomaticSettingsSnapshot())
-        return combine(
-            devicesRepository.observeDevice(uid),
-            runtime.states
-        ) { device, states ->
-            projectAutomatic(device, states[uid])
-        }.distinctUntilChanged()
+        val runtime = uid?.let { devicesRepository.runtimeModules()?.cooling }
+        return if (uid == null || runtime == null) {
+            flowOf(DeviceCoolingAutomaticSettingsSnapshot())
+        } else {
+            combine(
+                devicesRepository.observeDevice(uid),
+                runtime.states
+            ) { device, states ->
+                projectAutomatic(device, states[uid])
+            }.distinctUntilChanged()
+        }
     }
 
     override fun currentAutomaticSettings(
         deviceUid: String
     ): DeviceCoolingAutomaticSettingsSnapshot {
-        val uid = deviceUid.toCoolingUidOrNull() ?: return DeviceCoolingAutomaticSettingsSnapshot()
-        val runtime = devicesRepository.runtimeModules()?.cooling
-            ?: return DeviceCoolingAutomaticSettingsSnapshot()
-        return projectAutomatic(
-            devicesRepository.currentDevice(uid),
-            runtime.currentState(uid)
-        )
+        val uid = deviceUid.toCoolingUidOrNull()
+        val runtime = uid?.let { devicesRepository.runtimeModules()?.cooling }
+        return if (uid == null || runtime == null) {
+            DeviceCoolingAutomaticSettingsSnapshot()
+        } else {
+            projectAutomatic(
+                devicesRepository.currentDevice(uid),
+                runtime.currentState(uid)
+            )
+        }
     }
 
     /** Compatibility boundary only. Runtime bootstrap owns status freshness; no command is sent. */
@@ -99,51 +107,75 @@ internal class DefaultDeviceCoolingAutomaticSettingsOperations(
         startTemperatureC: Double,
         maximumSpeedTemperatureC: Double,
         silentModeEnabled: Boolean?
+    ): DeviceCoolingAutomaticCommandResult = when (val resolved = resolveAutomaticRuntime(deviceUid)) {
+        is AutomaticRuntime.Failed -> failed(resolved.failure)
+        is AutomaticRuntime.Ready -> saveAutomaticConfig(
+            resolved = resolved,
+            startTemperatureC = startTemperatureC,
+            maximumSpeedTemperatureC = maximumSpeedTemperatureC,
+            silentModeEnabled = silentModeEnabled
+        )
+    }
+
+    private suspend fun saveAutomaticConfig(
+        resolved: AutomaticRuntime.Ready,
+        startTemperatureC: Double,
+        maximumSpeedTemperatureC: Double,
+        silentModeEnabled: Boolean?
     ): DeviceCoolingAutomaticCommandResult {
-        val resolved = resolveAutomaticRuntime(deviceUid)
-        if (resolved is AutomaticRuntime.Failed) return failed(resolved.failure)
-        resolved as AutomaticRuntime.Ready
         val config = resolved.runtime.currentAuthoritativeState(resolved.deviceUid)?.config
-            ?: return failed(DeviceCoolingAutomaticFailure.NotConnected)
-        val payload = runCatching {
-            DeviceCoolingV1ConfigApplyPayload(
-                expectedConfigRevision = config.configRevision,
-                startTemperatureC = startTemperatureC,
-                fullSpeedTemperatureC = maximumSpeedTemperatureC,
-                silentModeEnabled = silentModeEnabled
-            )
-        }.getOrElse { return failed(DeviceCoolingAutomaticFailure.InvalidConfiguration) }
-        return when (val outcome = resolved.runtime.applyConfig(resolved.deviceUid, payload)) {
-            is DeviceRuntimeCommandOutcome.Success -> {
-                val committed = resolved.runtime
-                    .currentAuthoritativeState(resolved.deviceUid)
-                    ?.config
-                if (
-                    committed != null &&
-                    committed.startTemperatureC.sameCoolingValue(startTemperatureC) &&
-                    committed.fullSpeedTemperatureC.sameCoolingValue(maximumSpeedTemperatureC) &&
-                    (silentModeEnabled == null || committed.silentModeEnabled == silentModeEnabled)
-                ) {
-                    DeviceCoolingAutomaticCommandResult.Success
-                } else {
-                    failed(DeviceCoolingAutomaticFailure.TemporaryFailure)
+        return if (config == null) {
+            failed(DeviceCoolingAutomaticFailure.NotConnected)
+        } else {
+            runCatching {
+                DeviceCoolingV1ConfigApplyPayload(
+                    expectedConfigRevision = config.configRevision,
+                    startTemperatureC = startTemperatureC,
+                    fullSpeedTemperatureC = maximumSpeedTemperatureC,
+                    silentModeEnabled = silentModeEnabled
+                )
+            }.fold(
+                onSuccess = { payload ->
+                    when (val outcome = resolved.runtime.applyConfig(resolved.deviceUid, payload)) {
+                        is DeviceRuntimeCommandOutcome.Success -> {
+                            val committed = resolved.runtime
+                                .currentAuthoritativeState(resolved.deviceUid)
+                                ?.config
+                            if (
+                                committed?.matchesAutomaticRequest(
+                                    startTemperatureC,
+                                    maximumSpeedTemperatureC,
+                                    silentModeEnabled
+                                ) == true
+                            ) {
+                                DeviceCoolingAutomaticCommandResult.Success
+                            } else {
+                                failed(DeviceCoolingAutomaticFailure.TemporaryFailure)
+                            }
+                        }
+                        else -> outcome.toAutomaticFailure()
+                    }
+                },
+                onFailure = {
+                    failed(DeviceCoolingAutomaticFailure.InvalidConfiguration)
                 }
-            }
-            else -> outcome.toAutomaticFailure()
+            )
         }
     }
 
     private fun resolveAutomaticRuntime(deviceUid: String): AutomaticRuntime {
         val uid = deviceUid.toCoolingUidOrNull()
-            ?: return AutomaticRuntime.Failed(DeviceCoolingAutomaticFailure.Unavailable)
-        val device = devicesRepository.currentDevice(uid)
-            ?: return AutomaticRuntime.Failed(DeviceCoolingAutomaticFailure.Unavailable)
-        if (!device.isCoolingV1()) {
-            return AutomaticRuntime.Failed(DeviceCoolingAutomaticFailure.Unsupported)
+        val device = uid?.let { currentUid -> devicesRepository.currentDevice(currentUid) }
+        val runtime = uid?.let { devicesRepository.runtimeModules()?.cooling }
+        return when {
+            uid == null || device == null ->
+                AutomaticRuntime.Failed(DeviceCoolingAutomaticFailure.Unavailable)
+            !device.isCoolingV1() ->
+                AutomaticRuntime.Failed(DeviceCoolingAutomaticFailure.Unsupported)
+            runtime == null ->
+                AutomaticRuntime.Failed(DeviceCoolingAutomaticFailure.Unavailable)
+            else -> AutomaticRuntime.Ready(uid, runtime)
         }
-        val runtime = devicesRepository.runtimeModules()?.cooling
-            ?: return AutomaticRuntime.Failed(DeviceCoolingAutomaticFailure.Unavailable)
-        return AutomaticRuntime.Ready(uid, runtime)
     }
 }
 
@@ -189,6 +221,19 @@ private fun projectAutomatic(
             policy = COOLING_V1_AUTOMATIC_POLICY
         )
     }
+}
+
+private fun DeviceCoolingV1ConfigSnapshot.matchesAutomaticRequest(
+    startTemperatureC: Double,
+    maximumSpeedTemperatureC: Double,
+    requestedSilentModeEnabled: Boolean?
+): Boolean {
+    val temperaturesMatch =
+        this.startTemperatureC.sameCoolingValue(startTemperatureC) &&
+            fullSpeedTemperatureC.sameCoolingValue(maximumSpeedTemperatureC)
+    val silentModeMatches =
+        requestedSilentModeEnabled == null || silentModeEnabled == requestedSilentModeEnabled
+    return temperaturesMatch && silentModeMatches
 }
 
 private fun DeviceSnapshot.isCoolingV1(): Boolean =

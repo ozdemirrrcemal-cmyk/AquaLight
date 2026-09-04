@@ -81,36 +81,43 @@ internal class DeviceCoolingRuntimeStateOwner {
         generation: DeviceRuntimeConnectionGeneration,
         status: DeviceCoolingV1StatusDocument
     ): Boolean {
-        val config = runCatching { status.toConfigSnapshot() }.getOrNull() ?: return false
-        val embeddedTelemetry = runCatching { status.toTelemetrySnapshot() }.getOrNull() ?: return false
-        return synchronized(lock) {
-            val wasAuthoritative = authority.isAuthoritative(deviceUid, generation)
-            val current = _states.value[deviceUid]
-            if (wasAuthoritative && current?.status?.isNewerThan(status) == true) {
-                return@synchronized false
-            }
-            if (!authority.acceptAuthoritativeSnapshot(deviceUid, generation)) {
-                return@synchronized false
-            }
-            val selectedTelemetry = current
-                ?.telemetry
-                ?.takeIf { telemetry ->
-                    wasAuthoritative &&
-                        telemetry.isCoherentWith(status) &&
-                        telemetry.isNewerThan(embeddedTelemetry)
+        val projection = runCatching {
+            status.toConfigSnapshot() to status.toTelemetrySnapshot()
+        }.getOrNull()
+        return if (projection == null) {
+            false
+        } else {
+            val (config, embeddedTelemetry) = projection
+            synchronized(lock) {
+                val wasAuthoritative = authority.isAuthoritative(deviceUid, generation)
+                val current = _states.value[deviceUid]
+                val staleStatus = wasAuthoritative && current?.status?.isNewerThan(status) == true
+                when {
+                    staleStatus -> false
+                    !authority.acceptAuthoritativeSnapshot(deviceUid, generation) -> false
+                    else -> {
+                        val selectedTelemetry = current
+                            ?.telemetry
+                            ?.takeIf { telemetry ->
+                                wasAuthoritative &&
+                                    telemetry.isCoherentWith(status) &&
+                                    telemetry.isNewerThan(embeddedTelemetry)
+                            }
+                            ?: embeddedTelemetry
+                        publish(
+                            deviceUid,
+                            DeviceCoolingRuntimeState(
+                                connectionGeneration = generation,
+                                authoritative = true,
+                                status = status,
+                                config = config,
+                                telemetry = selectedTelemetry
+                            )
+                        )
+                        true
+                    }
                 }
-                ?: embeddedTelemetry
-            publish(
-                deviceUid,
-                DeviceCoolingRuntimeState(
-                    connectionGeneration = generation,
-                    authoritative = true,
-                    status = status,
-                    config = config,
-                    telemetry = selectedTelemetry
-                )
-            )
-            true
+            }
         }
     }
 

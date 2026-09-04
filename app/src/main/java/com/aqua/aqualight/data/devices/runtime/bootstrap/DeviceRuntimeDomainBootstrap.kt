@@ -59,52 +59,51 @@ internal interface DeviceRuntimeDomainBootstrapPort {
  * Version-pinned domain adapters are selected only for the exact commercial product they mirror.
  */
 internal object DeviceRuntimeBootstrapPlanFactory {
-    fun create(metadata: DeviceRuntimeMetadata): DeviceRuntimeBootstrapPlan {
-        val modules = metadata.modules
-        val capabilities = metadata.capabilities.capabilities
-        val features = metadata.capabilities.supportedFeatures
-        val productKey = metadata.identity.productKey.value
-        return DeviceRuntimeBootstrapPlan(
-            buildList {
-                if (
-                    modules.light &&
-                    capabilities.light &&
-                    AqlDeviceFeatureKey.LIGHT_CONTROL in features
-                ) {
-                    add(DeviceRuntimeDomain.LIGHT)
-                }
-                if (
-                    modules.light &&
-                    AqlDeviceFeatureKey.LIGHT_TEMPERATURE_PROTECTION in features
-                ) {
-                    add(DeviceRuntimeDomain.LIGHT_PROTECTION)
-                }
-                if (
-                    modules.light &&
-                    capabilities.temperature &&
-                    capabilities.fan &&
-                    productKey == LIGHT_THERMAL_V1_PRODUCT_KEY
-                ) {
-                    add(DeviceRuntimeDomain.LIGHT_THERMAL)
-                }
-                if (
-                    modules.cooling &&
-                    capabilities.cooling &&
-                    AqlDeviceFeatureKey.COOLING_CONTROL in features &&
-                    productKey == COOLING_V1_PRODUCT_KEY
-                ) {
-                    add(DeviceRuntimeDomain.COOLING)
-                }
-                if (
-                    modules.timerApi &&
-                    capabilities.standaloneTimer &&
-                    AqlDeviceFeatureKey.TIMER_CONTROL in features
-                ) {
-                    add(DeviceRuntimeDomain.TIMER)
-                }
-            }
+    fun create(metadata: DeviceRuntimeMetadata): DeviceRuntimeBootstrapPlan =
+        DeviceRuntimeBootstrapPlan(
+            domains = listOfNotNull(
+                DeviceRuntimeDomain.LIGHT.takeIf { metadata.supportsLightRuntime() },
+                DeviceRuntimeDomain.LIGHT_PROTECTION.takeIf {
+                    metadata.supportsLightProtectionRuntime()
+                },
+                DeviceRuntimeDomain.LIGHT_THERMAL.takeIf {
+                    metadata.supportsLightThermalRuntime()
+                },
+                DeviceRuntimeDomain.COOLING.takeIf { metadata.supportsCoolingRuntime() },
+                DeviceRuntimeDomain.TIMER.takeIf { metadata.supportsTimerRuntime() }
+            )
         )
-    }
+}
+
+private fun DeviceRuntimeMetadata.supportsLightRuntime(): Boolean {
+    val moduleAvailable = modules.light
+    val capabilityAvailable = capabilities.capabilities.light
+    val featureAvailable = AqlDeviceFeatureKey.LIGHT_CONTROL in capabilities.supportedFeatures
+    return moduleAvailable && capabilityAvailable && featureAvailable
+}
+
+private fun DeviceRuntimeMetadata.supportsLightProtectionRuntime(): Boolean =
+    modules.light &&
+        AqlDeviceFeatureKey.LIGHT_TEMPERATURE_PROTECTION in capabilities.supportedFeatures
+
+private fun DeviceRuntimeMetadata.supportsLightThermalRuntime(): Boolean {
+    val thermalCapabilities =
+        capabilities.capabilities.temperature && capabilities.capabilities.fan
+    val productSupported = identity.productKey.value == LIGHT_THERMAL_V1_PRODUCT_KEY
+    return modules.light && thermalCapabilities && productSupported
+}
+
+private fun DeviceRuntimeMetadata.supportsCoolingRuntime(): Boolean {
+    val coolingAvailable = modules.cooling && capabilities.capabilities.cooling
+    val featureAvailable = AqlDeviceFeatureKey.COOLING_CONTROL in capabilities.supportedFeatures
+    val productSupported = identity.productKey.value == COOLING_V1_PRODUCT_KEY
+    return coolingAvailable && featureAvailable && productSupported
+}
+
+private fun DeviceRuntimeMetadata.supportsTimerRuntime(): Boolean {
+    val timerAvailable = modules.timerApi && capabilities.capabilities.standaloneTimer
+    val featureAvailable = AqlDeviceFeatureKey.TIMER_CONTROL in capabilities.supportedFeatures
+    return timerAvailable && featureAvailable
 }
 
 private const val LIGHT_THERMAL_V1_PRODUCT_KEY = "LIGHT_WRGB_PRO_ELITE"

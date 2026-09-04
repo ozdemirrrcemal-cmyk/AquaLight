@@ -10,7 +10,7 @@ import org.json.JSONObject
 
 class DeviceTimerRuntimeRepository internal constructor(
     private val gateway: DeviceRuntimeCommandGateway,
-    private val stateStore: DeviceTimerRuntimeStateStore,
+    internal val stateStore: DeviceTimerRuntimeStateStore,
     private val accessProvider: (DeviceUid) -> DeviceTimerRuntimeAccess
 ) {
     val states: StateFlow<Map<DeviceUid, DeviceTimerRuntimeState>> = stateStore.states
@@ -24,11 +24,6 @@ class DeviceTimerRuntimeRepository internal constructor(
         deviceUid: DeviceUid,
         generation: DeviceRuntimeConnectionGeneration? = null
     ) = stateStore.invalidate(deviceUid, generation)
-
-    internal fun isAuthoritative(
-        deviceUid: DeviceUid,
-        generation: DeviceRuntimeConnectionGeneration
-    ): Boolean = stateStore.isAuthoritative(deviceUid, generation)
 
     suspend fun requestStatus(
         deviceUid: DeviceUid
@@ -193,46 +188,53 @@ class DeviceTimerRuntimeRepository internal constructor(
         require(scheduleIndex in current.indices) { "Unknown Timer schedule index: $scheduleIndex" }
         current.filterIndexed { index, _ -> index != scheduleIndex }
     }
-
-    private suspend fun mutateSchedules(
-        deviceUid: DeviceUid,
-        save: Boolean,
-        transform: (List<DeviceTimerScheduleConfig>) -> List<DeviceTimerScheduleConfig>
-    ): DeviceRuntimeCommandOutcome<DeviceTimerConfigApplyResult> {
-        val baseline = when (val result = ensureConfigBaseline(deviceUid)) {
-            is TimerConfigBaseline.Ready -> result.config
-            is TimerConfigBaseline.Failed -> return result.outcome.asFailure()
-        }
-        val current = baseline.schedules.map(DeviceTimerScheduleConfigSnapshot::toPayload)
-        return applyConfig(
-            deviceUid,
-            DeviceTimerConfigApplyPayload(
-                schedules = transform(current),
-                save = save
-            )
-        )
-    }
-
-    private suspend fun ensureConfigBaseline(deviceUid: DeviceUid): TimerConfigBaseline =
-        stateStore.currentAuthoritativeState(deviceUid)?.config?.let(TimerConfigBaseline::Ready)
-            ?: when (val status = requestStatus(deviceUid)) {
-                is DeviceRuntimeCommandOutcome.Success -> stateStore
-                    .currentAuthoritativeState(deviceUid)
-                    ?.config
-                    ?.let(TimerConfigBaseline::Ready)
-                    ?: TimerConfigBaseline.Failed(
-                        DeviceRuntimeCommandOutcome.Cancelled(
-                            deviceUid = deviceUid,
-                            module = status.module,
-                            action = status.action,
-                            messageId = status.messageId,
-                            generation = status.generation,
-                            reason = "Timer status completed outside the authoritative generation."
-                        )
-                    )
-                else -> TimerConfigBaseline.Failed(status)
-            }
 }
+
+internal fun DeviceTimerRuntimeRepository.isAuthoritative(
+    deviceUid: DeviceUid,
+    generation: DeviceRuntimeConnectionGeneration
+): Boolean = stateStore.isAuthoritative(deviceUid, generation)
+
+private suspend fun DeviceTimerRuntimeRepository.mutateSchedules(
+    deviceUid: DeviceUid,
+    save: Boolean,
+    transform: (List<DeviceTimerScheduleConfig>) -> List<DeviceTimerScheduleConfig>
+): DeviceRuntimeCommandOutcome<DeviceTimerConfigApplyResult> {
+    val baseline = when (val result = ensureConfigBaseline(deviceUid)) {
+        is TimerConfigBaseline.Ready -> result.config
+        is TimerConfigBaseline.Failed -> return result.outcome.asFailure()
+    }
+    val current = baseline.schedules.map(DeviceTimerScheduleConfigSnapshot::toPayload)
+    return applyConfig(
+        deviceUid,
+        DeviceTimerConfigApplyPayload(
+            schedules = transform(current),
+            save = save
+        )
+    )
+}
+
+private suspend fun DeviceTimerRuntimeRepository.ensureConfigBaseline(
+    deviceUid: DeviceUid
+): TimerConfigBaseline =
+    stateStore.currentAuthoritativeState(deviceUid)?.config?.let(TimerConfigBaseline::Ready)
+        ?: when (val status = requestStatus(deviceUid)) {
+            is DeviceRuntimeCommandOutcome.Success -> stateStore
+                .currentAuthoritativeState(deviceUid)
+                ?.config
+                ?.let(TimerConfigBaseline::Ready)
+                ?: TimerConfigBaseline.Failed(
+                    DeviceRuntimeCommandOutcome.Cancelled(
+                        deviceUid = deviceUid,
+                        module = status.module,
+                        action = status.action,
+                        messageId = status.messageId,
+                        generation = status.generation,
+                        reason = "Timer status completed outside the authoritative generation."
+                    )
+                )
+            else -> TimerConfigBaseline.Failed(status)
+        }
 
 private sealed interface TimerConfigBaseline {
     data class Ready(val config: DeviceTimerConfigSnapshot) : TimerConfigBaseline

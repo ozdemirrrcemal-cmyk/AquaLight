@@ -2,7 +2,6 @@ package com.aqua.aqualight.data.devices.runtime.bootstrap
 
 import com.aqua.aqualight.data.devices.model.DeviceUid
 import com.aqua.aqualight.data.devices.runtime.core.DeviceRuntimeConnectionGeneration
-import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -56,71 +55,110 @@ internal class DeviceRuntimeDomainBootstrapCoordinator(
         plan: DeviceRuntimeBootstrapPlan
     ): DeviceRuntimeReadiness {
         val generation = context.connectionGeneration
-        if (!isCurrent(context.deviceUid, generation)) {
-            return publish(context.deviceUid, DeviceRuntimeReadiness.Stale(generation))
-        }
-        publish(
-            context.deviceUid,
-            DeviceRuntimeReadiness.Hydrating(
-                generation = generation,
-                requiredDomains = plan.domains,
-                completedDomains = emptyList()
+        return if (!isCurrent(context.deviceUid, generation)) {
+            publish(context.deviceUid, DeviceRuntimeReadiness.Stale(generation))
+        } else {
+            publish(
+                context.deviceUid,
+                DeviceRuntimeReadiness.Hydrating(
+                    generation = generation,
+                    requiredDomains = plan.domains,
+                    completedDomains = emptyList()
+                )
             )
-        )
+            hydrateCurrentGeneration(context, plan, generation)
+        }
+    }
+
+    private suspend fun hydrateCurrentGeneration(
+        context: DeviceRuntimeBootstrapContext,
+        plan: DeviceRuntimeBootstrapPlan,
+        generation: DeviceRuntimeConnectionGeneration
+    ): DeviceRuntimeReadiness {
         val completed = ArrayList<DeviceRuntimeDomain>(plan.domains.size)
-        try {
+        return try {
+            var terminalReadiness: DeviceRuntimeReadiness? = null
             for (domain in plan.domains) {
-                if (!isCurrent(context.deviceUid, generation)) {
-                    return publish(context.deviceUid, DeviceRuntimeReadiness.Stale(generation))
-                }
-                val port = checkNotNull(portsByDomain[domain]) {
-                    "Missing runtime bootstrap port for $domain."
-                }
-                when (val result = port.hydrate(context)) {
-                    is DeviceRuntimeDomainHydrationResult.Hydrated -> {
-                        if (
-                            result.generation != generation ||
-                            !isCurrent(context.deviceUid, generation)
-                        ) {
-                            return publish(
-                                context.deviceUid,
-                                DeviceRuntimeReadiness.Stale(generation)
-                            )
-                        }
-                        completed += domain
-                        publish(
-                            context.deviceUid,
-                            DeviceRuntimeReadiness.Hydrating(
-                                generation = generation,
-                                requiredDomains = plan.domains,
-                                completedDomains = completed.toList()
-                            )
-                        )
-                    }
-                    is DeviceRuntimeDomainHydrationResult.Failed -> return publish(
-                        context.deviceUid,
-                        DeviceRuntimeReadiness.Failed(generation, result.domain)
-                    )
-                    is DeviceRuntimeDomainHydrationResult.RejectedStale -> return publish(
-                        context.deviceUid,
-                        DeviceRuntimeReadiness.Stale(generation)
-                    )
-                }
+                if (terminalReadiness != null) break
+                terminalReadiness = hydrateDomain(
+                    context = context,
+                    domain = domain,
+                    requiredDomains = plan.domains,
+                    completedDomains = completed
+                )
             }
-        } catch (cancellation: CancellationException) {
+            terminalReadiness ?: finalReadiness(context.deviceUid, generation, completed)
+        } finally {
             if (!isCurrent(context.deviceUid, generation)) {
                 publish(context.deviceUid, DeviceRuntimeReadiness.Stale(generation))
             }
-            throw cancellation
         }
-        return if (isCurrent(context.deviceUid, generation)) {
+    }
+
+    private suspend fun hydrateDomain(
+        context: DeviceRuntimeBootstrapContext,
+        domain: DeviceRuntimeDomain,
+        requiredDomains: List<DeviceRuntimeDomain>,
+        completedDomains: MutableList<DeviceRuntimeDomain>
+    ): DeviceRuntimeReadiness? {
+        val generation = context.connectionGeneration
+        return if (!isCurrent(context.deviceUid, generation)) {
+            publish(context.deviceUid, DeviceRuntimeReadiness.Stale(generation))
+        } else {
+            val port = checkNotNull(portsByDomain[domain]) {
+                "Missing runtime bootstrap port for $domain."
+            }
+            when (val result = port.hydrate(context)) {
+                is DeviceRuntimeDomainHydrationResult.Hydrated -> onHydrated(
+                    context = context,
+                    result = result,
+                    requiredDomains = requiredDomains,
+                    completedDomains = completedDomains
+                )
+                is DeviceRuntimeDomainHydrationResult.Failed -> publish(
+                    context.deviceUid,
+                    DeviceRuntimeReadiness.Failed(generation, result.domain)
+                )
+                is DeviceRuntimeDomainHydrationResult.RejectedStale -> publish(
+                    context.deviceUid,
+                    DeviceRuntimeReadiness.Stale(generation)
+                )
+            }
+        }
+    }
+
+    private fun onHydrated(
+        context: DeviceRuntimeBootstrapContext,
+        result: DeviceRuntimeDomainHydrationResult.Hydrated,
+        requiredDomains: List<DeviceRuntimeDomain>,
+        completedDomains: MutableList<DeviceRuntimeDomain>
+    ): DeviceRuntimeReadiness? {
+        val generation = context.connectionGeneration
+        val stale = result.generation != generation || !isCurrent(context.deviceUid, generation)
+        return if (stale) {
+            publish(context.deviceUid, DeviceRuntimeReadiness.Stale(generation))
+        } else {
+            completedDomains += result.domain
             publish(
                 context.deviceUid,
-                DeviceRuntimeReadiness.Ready(generation, completed.toList())
+                DeviceRuntimeReadiness.Hydrating(
+                    generation = generation,
+                    requiredDomains = requiredDomains,
+                    completedDomains = completedDomains.toList()
+                )
             )
-        } else {
-            publish(context.deviceUid, DeviceRuntimeReadiness.Stale(generation))
+            null
         }
+    }
+
+    private fun finalReadiness(
+        deviceUid: DeviceUid,
+        generation: DeviceRuntimeConnectionGeneration,
+        completedDomains: List<DeviceRuntimeDomain>
+    ): DeviceRuntimeReadiness = if (isCurrent(deviceUid, generation)) {
+        publish(deviceUid, DeviceRuntimeReadiness.Ready(generation, completedDomains.toList()))
+    } else {
+        publish(deviceUid, DeviceRuntimeReadiness.Stale(generation))
     }
 
     fun invalidate(
@@ -128,11 +166,12 @@ internal class DeviceRuntimeDomainBootstrapCoordinator(
         generation: DeviceRuntimeConnectionGeneration? = null
     ) {
         synchronized(lock) {
-            val current = _readiness.value[deviceUid] ?: return@synchronized
-            if (generation != null && current.generation != generation) return@synchronized
-            _readiness.value = _readiness.value + (
-                deviceUid to DeviceRuntimeReadiness.Stale(current.generation)
-            )
+            val current = _readiness.value[deviceUid]
+            if (current != null && (generation == null || current.generation == generation)) {
+                _readiness.value = _readiness.value + (
+                    deviceUid to DeviceRuntimeReadiness.Stale(current.generation)
+                )
+            }
         }
     }
 
@@ -156,13 +195,13 @@ internal class DeviceRuntimeDomainBootstrapCoordinator(
         readiness: DeviceRuntimeReadiness
     ): DeviceRuntimeReadiness = synchronized(lock) {
         val previous = _readiness.value[deviceUid]
-        if (
-            previous != null &&
+        val previousIsNewer = previous != null &&
             previous.generation.value > readiness.generation.value
-        ) {
-            return@synchronized previous
+        if (previousIsNewer) {
+            checkNotNull(previous)
+        } else {
+            _readiness.value = _readiness.value + (deviceUid to readiness)
+            readiness
         }
-        _readiness.value = _readiness.value + (deviceUid to readiness)
-        readiness
     }
 }

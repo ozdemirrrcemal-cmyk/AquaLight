@@ -10,7 +10,7 @@ import org.json.JSONObject
 
 class DeviceLightRuntimeRepository internal constructor(
     private val gateway: DeviceRuntimeCommandGateway,
-    private val stateStore: DeviceLightRuntimeStateStore
+    internal val stateStore: DeviceLightRuntimeStateStore
 ) {
     constructor(gateway: DeviceRuntimeCommandGateway) : this(
         gateway = gateway,
@@ -28,11 +28,6 @@ class DeviceLightRuntimeRepository internal constructor(
         deviceUid: DeviceUid,
         generation: DeviceRuntimeConnectionGeneration? = null
     ) = stateStore.invalidate(deviceUid, generation)
-
-    internal fun isAuthoritative(
-        deviceUid: DeviceUid,
-        generation: DeviceRuntimeConnectionGeneration
-    ): Boolean = stateStore.isStatusAuthoritative(deviceUid, generation)
 
     suspend fun requestStatus(
         deviceUid: DeviceUid
@@ -214,25 +209,30 @@ class DeviceLightRuntimeRepository internal constructor(
             save = save
         )
     )
-
-    private fun <T> jsonCommand(
-        action: String,
-        dataFactory: () -> JSONObject = ::JSONObject,
-        parser: (JSONObject) -> T
-    ): DeviceRuntimeJsonCommand<T> = DeviceRuntimeJsonCommand(
-        module = DeviceLightRuntimeContract.MODULE,
-        action = action,
-        dataFactory = dataFactory,
-        successParser = parser
-    )
-
-    private fun unsupported(
-        deviceUid: DeviceUid,
-        action: String
-    ): DeviceRuntimeCommandOutcome.UnsupportedByDevice =
-        DeviceRuntimeCommandOutcome.UnsupportedByDevice(
-            deviceUid = deviceUid,
-            module = DeviceLightRuntimeContract.MODULE,
-            action = action
-        )
 }
+
+internal fun DeviceLightRuntimeRepository.isAuthoritative(
+    deviceUid: DeviceUid,
+    generation: DeviceRuntimeConnectionGeneration
+): Boolean = stateStore.isStatusAuthoritative(deviceUid, generation)
+
+private fun <T> jsonCommand(
+    action: String,
+    dataFactory: () -> JSONObject = ::JSONObject,
+    parser: (JSONObject) -> T
+): DeviceRuntimeJsonCommand<T> = DeviceRuntimeJsonCommand(
+    module = DeviceLightRuntimeContract.MODULE,
+    action = action,
+    dataFactory = dataFactory,
+    successParser = parser
+)
+
+private fun unsupported(
+    deviceUid: DeviceUid,
+    action: String
+): DeviceRuntimeCommandOutcome.UnsupportedByDevice =
+    DeviceRuntimeCommandOutcome.UnsupportedByDevice(
+        deviceUid = deviceUid,
+        module = DeviceLightRuntimeContract.MODULE,
+        action = action
+    )

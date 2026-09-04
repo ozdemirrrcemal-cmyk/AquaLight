@@ -11,6 +11,7 @@ import com.aqua.aqualight.data.devices.runtime.core.DeviceRuntimeConnectionGener
 import com.aqua.aqualight.data.devices.runtime.events.DeviceRuntimeEventPayload
 import com.aqua.aqualight.data.devices.runtime.events.DeviceRuntimeTypedEvent
 import com.aqua.aqualight.data.devices.runtime.modules.cooling.DeviceCoolingRuntimeRepository
+import com.aqua.aqualight.data.devices.runtime.modules.cooling.isAuthoritative as isCoolingAuthoritative
 import com.aqua.aqualight.data.devices.runtime.modules.device.DeviceCommonRuntimeRepository
 import com.aqua.aqualight.data.devices.runtime.modules.firmware.DeviceFirmwareRuntimeRepository
 import com.aqua.aqualight.data.devices.runtime.modules.firmware.DeviceFirmwareUpdatePlanner
@@ -22,6 +23,7 @@ import com.aqua.aqualight.data.devices.runtime.modules.light.DeviceLightRuntimeS
 import com.aqua.aqualight.data.devices.runtime.modules.light.DeviceLightTemperatureProtectionRuntimeRepository
 import com.aqua.aqualight.data.devices.runtime.modules.light.DeviceLightThermalRuntimeRepository
 import com.aqua.aqualight.data.devices.runtime.modules.light.DeviceLightTypedEventReducer
+import com.aqua.aqualight.data.devices.runtime.modules.light.isAuthoritative as isLightAuthoritative
 import com.aqua.aqualight.data.devices.runtime.modules.network.DeviceNetworkRuntimeRepository
 import com.aqua.aqualight.data.devices.runtime.modules.security.DeviceSecurityRuntimeRepository
 import com.aqua.aqualight.data.devices.runtime.modules.time.DeviceTimeRuntimeRepository
@@ -30,6 +32,7 @@ import com.aqua.aqualight.data.devices.runtime.modules.timer.DeviceTimerRuntimeA
 import com.aqua.aqualight.data.devices.runtime.modules.timer.DeviceTimerRuntimeRepository
 import com.aqua.aqualight.data.devices.runtime.modules.timer.DeviceTimerRuntimeStateStore
 import com.aqua.aqualight.data.devices.runtime.modules.timer.DeviceTimerTypedEventReducer
+import com.aqua.aqualight.data.devices.runtime.modules.timer.isAuthoritative as isTimerAuthoritative
 import com.aqua.aqualight.i18n.AppLanguageController
 import kotlinx.coroutines.delay
 
@@ -77,7 +80,9 @@ class DeviceRuntimeModuleProvider internal constructor(
         CommandBootstrapPort(
             domain = DeviceRuntimeDomain.LIGHT,
             request = light::requestStatus,
-            isAuthoritative = light::isAuthoritative
+            isAuthoritative = { deviceUid, generation ->
+                light.isLightAuthoritative(deviceUid, generation)
+            }
         ),
         CommandBootstrapPort(
             domain = DeviceRuntimeDomain.LIGHT_PROTECTION,
@@ -92,12 +97,16 @@ class DeviceRuntimeModuleProvider internal constructor(
         CommandBootstrapPort(
             domain = DeviceRuntimeDomain.COOLING,
             request = cooling::requestStatus,
-            isAuthoritative = cooling::isAuthoritative
+            isAuthoritative = { deviceUid, generation ->
+                cooling.isCoolingAuthoritative(deviceUid, generation)
+            }
         ),
         CommandBootstrapPort(
             domain = DeviceRuntimeDomain.TIMER,
             request = timer::requestStatus,
-            isAuthoritative = timer::isAuthoritative
+            isAuthoritative = { deviceUid, generation ->
+                timer.isTimerAuthoritative(deviceUid, generation)
+            }
         )
     )
 
@@ -170,10 +179,11 @@ private class CommandBootstrapPort(
         context: DeviceRuntimeBootstrapContext
     ): DeviceRuntimeDomainHydrationResult {
         var outcome = request(context.deviceUid)
-        for (attempt in 1 until DOMAIN_BOOTSTRAP_MAX_ATTEMPTS) {
-            if (!outcome.isTransientBootstrapFailure()) break
+        var remainingAttempts = DOMAIN_BOOTSTRAP_MAX_ATTEMPTS - 1
+        while (outcome.isTransientBootstrapFailure() && remainingAttempts > 0) {
             delay(DOMAIN_BOOTSTRAP_RETRY_DELAY_MILLIS)
             outcome = request(context.deviceUid)
+            remainingAttempts -= 1
         }
         return when {
             outcome !is DeviceRuntimeCommandOutcome.Success<*> ->
