@@ -13,6 +13,8 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 
 data class DeviceCoolingRuntimeState(
+    val connectionGeneration: DeviceRuntimeConnectionGeneration? = null,
+    val authoritative: Boolean = false,
     val status: DeviceCoolingV1StatusDocument? = null,
     val config: DeviceCoolingV1ConfigSnapshot? = null,
     val telemetry: DeviceCoolingV1Telemetry? = null
@@ -34,12 +36,30 @@ internal class DeviceCoolingRuntimeStateOwner {
     fun beginGeneration(
         deviceUid: DeviceUid,
         generation: DeviceRuntimeConnectionGeneration
-    ): Boolean = authority.beginGeneration(deviceUid, generation)
+    ): Boolean = synchronized(lock) {
+        if (!authority.beginGeneration(deviceUid, generation)) return@synchronized false
+        val current = _states.value[deviceUid]
+        val next = (current ?: DeviceCoolingRuntimeState()).copy(
+            connectionGeneration = generation,
+            authoritative = authority.isAuthoritative(deviceUid, generation)
+        )
+        if (next != current) publish(deviceUid, next)
+        true
+    }
 
     fun invalidate(
         deviceUid: DeviceUid,
         generation: DeviceRuntimeConnectionGeneration? = null
-    ) = authority.invalidate(deviceUid, generation)
+    ) = synchronized(lock) {
+        authority.invalidate(deviceUid, generation)
+        val current = _states.value[deviceUid] ?: return@synchronized
+        if (
+            generation == null ||
+            current.connectionGeneration == generation
+        ) {
+            publish(deviceUid, current.copy(authoritative = false))
+        }
+    }
 
     fun isAuthoritative(
         deviceUid: DeviceUid,
@@ -48,7 +68,12 @@ internal class DeviceCoolingRuntimeStateOwner {
 
     fun currentAuthoritativeState(deviceUid: DeviceUid): DeviceCoolingRuntimeState? =
         synchronized(lock) {
-            _states.value[deviceUid]?.takeIf { authority.isAuthoritative(deviceUid) }
+            _states.value[deviceUid]?.takeIf { state ->
+                state.authoritative &&
+                    state.connectionGeneration?.let { generation ->
+                        authority.isAuthoritative(deviceUid, generation)
+                    } == true
+            }
         }
 
     fun recordStatus(
@@ -56,8 +81,8 @@ internal class DeviceCoolingRuntimeStateOwner {
         generation: DeviceRuntimeConnectionGeneration,
         status: DeviceCoolingV1StatusDocument
     ): Boolean {
-        val config = runCatching(status::toConfigSnapshot).getOrNull() ?: return false
-        val embeddedTelemetry = runCatching(status::toTelemetrySnapshot).getOrNull() ?: return false
+        val config = runCatching { status.toConfigSnapshot() }.getOrNull() ?: return false
+        val embeddedTelemetry = runCatching { status.toTelemetrySnapshot() }.getOrNull() ?: return false
         return synchronized(lock) {
             val wasAuthoritative = authority.isAuthoritative(deviceUid, generation)
             val current = _states.value[deviceUid]
@@ -75,8 +100,11 @@ internal class DeviceCoolingRuntimeStateOwner {
                         telemetry.isNewerThan(embeddedTelemetry)
                 }
                 ?: embeddedTelemetry
-            _states.value = _states.value + (
-                deviceUid to DeviceCoolingRuntimeState(
+            publish(
+                deviceUid,
+                DeviceCoolingRuntimeState(
+                    connectionGeneration = generation,
+                    authoritative = true,
                     status = status,
                     config = config,
                     telemetry = selectedTelemetry
@@ -93,13 +121,16 @@ internal class DeviceCoolingRuntimeStateOwner {
     ): Boolean = synchronized(lock) {
         if (!authority.acceptsPatch(deviceUid, generation)) return@synchronized false
         val current = _states.value[deviceUid] ?: return@synchronized false
+        if (!current.authoritative || current.connectionGeneration != generation) {
+            return@synchronized false
+        }
         val status = current.status ?: return@synchronized false
         if (!telemetry.isCoherentWith(status)) return@synchronized false
         val previous = current.telemetry
         if (previous != null && !telemetry.isNewerThan(previous)) {
             return@synchronized false
         }
-        _states.value = _states.value + (deviceUid to current.copy(telemetry = telemetry))
+        publish(deviceUid, current.copy(telemetry = telemetry))
         true
     }
 
@@ -109,6 +140,10 @@ internal class DeviceCoolingRuntimeStateOwner {
             _states.value = _states.value.toMutableMap().apply { remove(deviceUid) }.toMap()
         }
         authority.clear(deviceUid)
+    }
+
+    private fun publish(deviceUid: DeviceUid, state: DeviceCoolingRuntimeState) {
+        _states.value = _states.value + (deviceUid to state)
     }
 }
 
