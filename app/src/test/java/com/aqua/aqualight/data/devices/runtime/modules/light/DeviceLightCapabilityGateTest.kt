@@ -4,6 +4,7 @@ import com.aqua.aqualight.data.devices.model.DeviceUid
 import com.aqua.aqualight.data.devices.runtime.core.DeviceRuntimeCommand
 import com.aqua.aqualight.data.devices.runtime.core.DeviceRuntimeCommandGateway
 import com.aqua.aqualight.data.devices.runtime.core.DeviceRuntimeCommandOutcome
+import com.aqua.aqualight.data.devices.runtime.core.DeviceRuntimeConnectionGeneration
 import kotlinx.coroutines.runBlocking
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
@@ -18,7 +19,11 @@ class DeviceLightCapabilityGateTest {
             status.put("manualSupported", false)
             status.getJSONObject("runtime").put("supportsManualSet", false)
         }
-        store.recordStatus(DEVICE_UID, DeviceLightStatusParser.parse(unsupported))
+        store.recordStatus(
+            DEVICE_UID,
+            GENERATION,
+            DeviceLightStatusParser.parse(unsupported)
+        )
         val repository = DeviceLightRuntimeRepository(gateway, store)
 
         val outcome = repository.setManual(
@@ -85,5 +90,6 @@ class DeviceLightCapabilityGateTest {
 
     private companion object {
         val DEVICE_UID = DeviceUid("AQL-LIGHT-GATE")
+        val GENERATION = DeviceRuntimeConnectionGeneration(1L)
     }
 }
