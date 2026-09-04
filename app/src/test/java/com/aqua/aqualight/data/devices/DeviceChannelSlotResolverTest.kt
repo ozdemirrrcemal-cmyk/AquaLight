@@ -111,7 +111,7 @@ class DeviceChannelSlotResolverTest {
         assertFalse(wrgb.fanOutputs.any { it.displayNameEditable })
         assertTrue(timer.timerChannels.all { it.displayNameEditable })
         assertTrue(dosing.dosingChannels.all { it.displayNameEditable })
-        assertTrue(cooling.fanOutputs.all { it.displayNameEditable })
+        assertFalse(cooling.fanOutputs.any { it.displayNameEditable })
     }
 
     private fun product(productKey: String): AqlCommercialCatalogProduct =
@@ -183,8 +183,8 @@ class DeviceChannelSlotResolverTest {
             ),
             "COOLING_COOL_PRO_1F" to ExpectedSlots(
                 fanCount = 1,
-                temperatureCount = 1,
-                fanEditable = true,
+                temperatureCount = 2,
+                fanEditable = false,
                 fanRoute = DeviceRootRoute.COOLING_CONTROL,
                 temperatureRoute = DeviceRootRoute.COOLING_TEMPERATURE
             )

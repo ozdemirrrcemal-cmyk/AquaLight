@@ -8,7 +8,7 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[2]
 FIXTURE_PATH = ROOT / "protocol/fixtures/aql_product_catalog_v1.json"
 CURRENT_FIRMWARE_COMMIT = (
-    "980b03f0d83cdeb997698fc6b207064aa709cec8"
+    "2e3688f266d7ed34a6773badafcd62af73cf4aac"
 )
 
 EXPECTED_PRODUCTS = {
@@ -45,8 +45,42 @@ EXPECTED_PRODUCTS = {
     "COOLING_COOL_PRO_1F": (
         "cooling",
         "cool_pro_1f",
-        (0, 1, 1, 0, 0),
+        (0, 1, 2, 0, 0),
     ),
+}
+
+EXPECTED_WRGB_FEATURES = {
+    "WIFI_SETUP",
+    "LAN_DISCOVERY",
+    "LIGHT_CONTROL",
+    "LIGHT_QUICK_SETUP",
+    "LIGHT_PRESETS",
+    "LIGHT_MOONLIGHT",
+    "LIGHT_ACCLIMATION",
+    "LIGHT_TEMPERATURE_PROTECTION",
+    "LIGHT_FAN_CONTROL",
+    "TEMPERATURE_READ",
+    "OTA_UPDATE",
+}
+EXPECTED_COOLING_FEATURES = {
+    "WIFI_SETUP",
+    "LAN_DISCOVERY",
+    "COOLING_CONTROL",
+    "COOLING_PROGRAM",
+    "COOLING_HISTORY",
+    "COOLING_SILENT_MODE",
+    "COOLING_POWER_ESTIMATE",
+    "TEMPERATURE_READ",
+    "ROOM_AMBIENT_READ",
+    "HUMIDITY_READ",
+    "OTA_UPDATE",
+}
+EXPECTED_COOLING_SCREENS = {
+    "OVERVIEW",
+    "COOLING_CONTROL",
+    "COOLING_PROGRAM",
+    "COOLING_HISTORY",
+    "ADVANCED",
 }
 
 
@@ -99,7 +133,7 @@ class CurrentFirmwareCatalogFixtureTest(unittest.TestCase):
             "DOSING_CHANNEL_DISPLAY_NAME",
             profiles["dosingDosePro"]["supportedFeatures"],
         )
-        self.assertIn(
+        self.assertNotIn(
             "COOLING_FAN_DISPLAY_NAME",
             profiles["coolingCoolPro"]["supportedFeatures"],
         )
@@ -112,14 +146,17 @@ class CurrentFirmwareCatalogFixtureTest(unittest.TestCase):
             profiles["timerRelayPro"]["supportedFeatures"],
         )
 
-    def test_wrgb_has_one_family_specific_fan_destination(self) -> None:
-        screens = set(
-            self.fixture["profiles"]["lightWrgbProElite"][
-                "supportedScreens"
-            ]
-        )
-        self.assertIn("LIGHT_FAN_CONTROL", screens)
-        self.assertNotIn("COOLING_CONTROL", screens)
+    def test_wrgb_feature_and_screen_contract_matches_firmware_exactly(self) -> None:
+        profile = self.fixture["profiles"]["lightWrgbProElite"]
+        self.assertEqual(EXPECTED_WRGB_FEATURES, set(profile["supportedFeatures"]))
+        self.assertIn("LIGHT_FAN_CONTROL", profile["supportedScreens"])
+        self.assertNotIn("COOLING_CONTROL", profile["supportedFeatures"])
+        self.assertNotIn("COOLING_CONTROL", profile["supportedScreens"])
+
+    def test_cooling_feature_and_screen_contract_matches_firmware_exactly(self) -> None:
+        profile = self.fixture["profiles"]["coolingCoolPro"]
+        self.assertEqual(EXPECTED_COOLING_FEATURES, set(profile["supportedFeatures"]))
+        self.assertEqual(EXPECTED_COOLING_SCREENS, set(profile["supportedScreens"]))
 
 
 if __name__ == "__main__":

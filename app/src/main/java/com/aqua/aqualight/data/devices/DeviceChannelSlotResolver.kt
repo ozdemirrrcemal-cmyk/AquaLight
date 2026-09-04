@@ -181,7 +181,7 @@ private val SLOT_SHAPES: Map<String, CommercialSlotShape> = mapOf(
     ),
     "COOLING_COOL_PRO_1F" to CommercialSlotShape(
         family = DeviceFamily.COOLING,
-        limits = DeviceLimitSet(NO_SLOTS, ONE_SLOT, ONE_SLOT, NO_SLOTS, NO_SLOTS),
+        limits = DeviceLimitSet(NO_SLOTS, ONE_SLOT, TWO_SLOTS, NO_SLOTS, NO_SLOTS),
         fanRoute = DeviceRootRoute.COOLING_CONTROL,
         temperatureRoute = DeviceRootRoute.COOLING_TEMPERATURE
     )
