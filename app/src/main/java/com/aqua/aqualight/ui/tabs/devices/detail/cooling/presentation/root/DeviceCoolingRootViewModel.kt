@@ -64,14 +64,13 @@ class DeviceCoolingRootViewModel(
                 .toRootAutomaticState(initialState.automaticSummaryState)
         )
 
-        // Match Dosing: publish one state assembled from current authoritative snapshots before
-        // Compose starts collecting. Missing data remains typed Loading/Unavailable, never a fake.
+        // Runtime/domain bootstrap owns live control freshness. Publish the current authoritative
+        // snapshot first and then observe; screen entry must never trigger status.get.
         _uiState.value = initialState
 
         operations.connect(deviceUid)
         loadOverviewHistory(deviceUid)
         observeCoolingControl(deviceUid)
-        refreshCoolingControl(deviceUid)
         observeAutomaticSettings(deviceUid)
         jobs.observeJob = viewModelScope.launch {
             operations.observe(deviceUid).collect { snapshot ->
@@ -119,19 +118,6 @@ class DeviceCoolingRootViewModel(
                 _uiState.update { state ->
                     state.copy(controlState = result.toRootControlState(state.controlState))
                 }
-            }
-        }
-    }
-
-    private fun refreshCoolingControl(deviceUid: String) {
-        _uiState.update { state ->
-            state.copy(controlState = state.controlState.beginControlRefresh())
-        }
-        jobs.controlRefreshJob = viewModelScope.launch {
-            val result = controlOperations.refreshControl(deviceUid)
-            if (boundDeviceUid != deviceUid) return@launch
-            _uiState.update { state ->
-                state.copy(controlState = result.toRootControlState(state.controlState))
             }
         }
     }
@@ -200,7 +186,6 @@ private class DeviceCoolingRootJobs {
     var automaticObserveJob: Job? = null
     var automaticRefreshJob: Job? = null
     var controlObserveJob: Job? = null
-    var controlRefreshJob: Job? = null
     var controlMutationJob: Job? = null
 
     fun cancelAll() {
@@ -209,7 +194,6 @@ private class DeviceCoolingRootJobs {
         automaticObserveJob?.cancel()
         automaticRefreshJob?.cancel()
         controlObserveJob?.cancel()
-        controlRefreshJob?.cancel()
         controlMutationJob?.cancel()
 
         observeJob = null
@@ -217,7 +201,6 @@ private class DeviceCoolingRootJobs {
         automaticObserveJob = null
         automaticRefreshJob = null
         controlObserveJob = null
-        controlRefreshJob = null
         controlMutationJob = null
     }
 }
