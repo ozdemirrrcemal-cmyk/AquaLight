@@ -39,8 +39,13 @@ class DeviceRuntimeBootstrapPlanFactoryTest {
         )
         assertEquals(
             listOf(DeviceRuntimeDomain.COOLING),
-            plan("COOLING_COOL_PRO")
+            plan("COOLING_COOL_PRO_1F")
         )
+        // The current strict Cooling V1 adapter mirrors 1F only. 2F/3F fail closed until their
+        // pinned protocol adapters exist instead of receiving a structurally wrong status.get.
+        assertEquals(emptyList<DeviceRuntimeDomain>(), plan("COOLING_COOL_PRO_2F"))
+        assertEquals(emptyList<DeviceRuntimeDomain>(), plan("COOLING_COOL_PRO_3F"))
+
         // Dosing deliberately remains in its existing owner-scoped production runtime. This plan
         // must not create a second Dosing state owner or duplicate its authenticated refresh.
         assertEquals(emptyList<DeviceRuntimeDomain>(), plan("DOSING_DOSE_PRO_4"))
