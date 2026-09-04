@@ -32,6 +32,8 @@ class DeviceLightThermalRuntimeRepository internal constructor(
         generation: DeviceRuntimeConnectionGeneration? = null
     ) = stateOwner.invalidate(deviceUid, generation)
 
+    internal fun clear(deviceUid: DeviceUid) = stateOwner.clear(deviceUid)
+
     internal fun isAuthoritative(
         deviceUid: DeviceUid,
         generation: DeviceRuntimeConnectionGeneration
