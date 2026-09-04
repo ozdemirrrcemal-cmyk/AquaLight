@@ -42,6 +42,11 @@ internal class DeviceTimerRuntimeStateStore {
         generation: DeviceRuntimeConnectionGeneration
     ): Boolean = authority.isAuthoritative(deviceUid, generation)
 
+    fun currentAuthoritativeState(deviceUid: DeviceUid): DeviceTimerRuntimeState? =
+        synchronized(lock) {
+            _states.value[deviceUid]?.takeIf { authority.isAuthoritative(deviceUid) }
+        }
+
     fun recordStatus(
         deviceUid: DeviceUid,
         generation: DeviceRuntimeConnectionGeneration,
