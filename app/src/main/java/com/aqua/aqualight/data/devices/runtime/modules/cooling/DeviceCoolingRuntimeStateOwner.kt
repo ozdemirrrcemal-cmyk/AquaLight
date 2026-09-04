@@ -2,8 +2,11 @@ package com.aqua.aqualight.data.devices.runtime.modules.cooling
 
 import com.aqua.aqualight.data.devices.model.DeviceUid
 import com.aqua.aqualight.data.devices.runtime.core.DeviceRuntimeConnectionGeneration
+import com.aqua.aqualight.data.devices.runtime.modules.cooling.v1.DeviceCoolingV1ConfigSnapshot
 import com.aqua.aqualight.data.devices.runtime.modules.cooling.v1.DeviceCoolingV1StatusDocument
 import com.aqua.aqualight.data.devices.runtime.modules.cooling.v1.DeviceCoolingV1Telemetry
+import com.aqua.aqualight.data.devices.runtime.modules.cooling.v1.toConfigSnapshot
+import com.aqua.aqualight.data.devices.runtime.modules.cooling.v1.toTelemetrySnapshot
 import com.aqua.aqualight.data.devices.runtime.state.DeviceRuntimeGenerationAuthority
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -11,6 +14,7 @@ import kotlinx.coroutines.flow.asStateFlow
 
 data class DeviceCoolingRuntimeState(
     val status: DeviceCoolingV1StatusDocument? = null,
+    val config: DeviceCoolingV1ConfigSnapshot? = null,
     val telemetry: DeviceCoolingV1Telemetry? = null
 )
 
@@ -51,26 +55,35 @@ internal class DeviceCoolingRuntimeStateOwner {
         deviceUid: DeviceUid,
         generation: DeviceRuntimeConnectionGeneration,
         status: DeviceCoolingV1StatusDocument
-    ): Boolean = synchronized(lock) {
-        val current = _states.value[deviceUid]
-        if (
-            authority.isAuthoritative(deviceUid, generation) &&
-            current?.status?.isNewerThan(status) == true
-        ) {
-            return@synchronized false
-        }
-        if (!authority.acceptAuthoritativeSnapshot(deviceUid, generation)) {
-            return@synchronized false
-        }
-        _states.value = _states.value + (
-            deviceUid to DeviceCoolingRuntimeState(
-                status = status,
-                telemetry = current
-                    ?.telemetry
-                    ?.takeIf { telemetry -> telemetry.isCoherentWith(status) }
+    ): Boolean {
+        val config = runCatching(status::toConfigSnapshot).getOrNull() ?: return false
+        val embeddedTelemetry = runCatching(status::toTelemetrySnapshot).getOrNull() ?: return false
+        return synchronized(lock) {
+            val wasAuthoritative = authority.isAuthoritative(deviceUid, generation)
+            val current = _states.value[deviceUid]
+            if (wasAuthoritative && current?.status?.isNewerThan(status) == true) {
+                return@synchronized false
+            }
+            if (!authority.acceptAuthoritativeSnapshot(deviceUid, generation)) {
+                return@synchronized false
+            }
+            val selectedTelemetry = current
+                ?.telemetry
+                ?.takeIf { telemetry ->
+                    wasAuthoritative &&
+                        telemetry.isCoherentWith(status) &&
+                        telemetry.isNewerThan(embeddedTelemetry)
+                }
+                ?: embeddedTelemetry
+            _states.value = _states.value + (
+                deviceUid to DeviceCoolingRuntimeState(
+                    status = status,
+                    config = config,
+                    telemetry = selectedTelemetry
+                )
             )
-        )
-        true
+            true
+        }
     }
 
     fun recordTelemetry(
@@ -83,13 +96,7 @@ internal class DeviceCoolingRuntimeStateOwner {
         val status = current.status ?: return@synchronized false
         if (!telemetry.isCoherentWith(status)) return@synchronized false
         val previous = current.telemetry
-        if (
-            previous != null &&
-            (
-                telemetry.uptimeMs < previous.uptimeMs ||
-                    telemetry.decisionSequence <= previous.decisionSequence
-                )
-        ) {
+        if (previous != null && !telemetry.isNewerThan(previous)) {
             return@synchronized false
         }
         _states.value = _states.value + (deviceUid to current.copy(telemetry = telemetry))
@@ -122,3 +129,11 @@ private fun DeviceCoolingV1Telemetry.isCoherentWith(
 ): Boolean =
     configRevision == status.configRevision &&
         programRevision == status.programRevision
+
+private fun DeviceCoolingV1Telemetry.isNewerThan(
+    previous: DeviceCoolingV1Telemetry
+): Boolean = when {
+    uptimeMs > previous.uptimeMs -> true
+    uptimeMs < previous.uptimeMs -> false
+    else -> decisionSequence > previous.decisionSequence
+}
