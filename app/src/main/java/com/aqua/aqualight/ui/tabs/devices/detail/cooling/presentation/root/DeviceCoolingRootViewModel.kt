@@ -7,7 +7,6 @@ import com.aqua.aqualight.application.devices.DeviceRootOperations
 import com.aqua.aqualight.application.devices.DeviceRootSnapshot
 import com.aqua.aqualight.application.devices.OwnerDeviceAvailability
 import com.aqua.aqualight.application.devices.OwnerDeviceFamily
-import com.aqua.aqualight.application.devices.cooling.DeviceCoolingAutomaticCommandResult
 import com.aqua.aqualight.application.devices.cooling.DeviceCoolingAutomaticSettingsOperations
 import com.aqua.aqualight.application.devices.cooling.DeviceCoolingTemperatureHistoryOperations
 import com.aqua.aqualight.application.devices.cooling.DeviceCoolingTemperatureHistoryRange
@@ -64,8 +63,8 @@ class DeviceCoolingRootViewModel(
                 .toRootAutomaticState(initialState.automaticSummaryState)
         )
 
-        // Runtime/domain bootstrap owns live control freshness. Publish the current authoritative
-        // snapshot first and then observe; screen entry must never trigger status.get.
+        // Runtime/domain bootstrap owns live Cooling freshness. Screen entry only seeds the last
+        // presentation snapshot and observes the central owner; it never requests status.
         _uiState.value = initialState
 
         operations.connect(deviceUid)
@@ -135,29 +134,6 @@ class DeviceCoolingRootViewModel(
                 }
             }
         }
-        refreshAutomaticSettings(deviceUid)
-    }
-
-    private fun refreshAutomaticSettings(deviceUid: String) {
-        _uiState.update { state ->
-            state.copy(
-                automaticSummaryState = state.automaticSummaryState.beginAutomaticRefresh()
-            )
-        }
-        jobs.automaticRefreshJob = viewModelScope.launch {
-            val result = automaticSettingsOperations.refreshAutomaticSettings(deviceUid)
-            if (boundDeviceUid != deviceUid) return@launch
-            _uiState.update { state ->
-                val next = when (result) {
-                    DeviceCoolingAutomaticCommandResult.Success ->
-                        automaticSettingsOperations.currentAutomaticSettings(deviceUid)
-                            .toRootAutomaticStateAfterRefresh(state.automaticSummaryState)
-                    is DeviceCoolingAutomaticCommandResult.Failed ->
-                        state.automaticSummaryState.afterAutomaticReadFailure(result.failure)
-                }
-                state.copy(automaticSummaryState = next)
-            }
-        }
     }
 
     private fun loadOverviewHistory(deviceUid: String) {
@@ -184,7 +160,6 @@ private class DeviceCoolingRootJobs {
     var observeJob: Job? = null
     var historyJob: Job? = null
     var automaticObserveJob: Job? = null
-    var automaticRefreshJob: Job? = null
     var controlObserveJob: Job? = null
     var controlMutationJob: Job? = null
 
@@ -192,14 +167,12 @@ private class DeviceCoolingRootJobs {
         observeJob?.cancel()
         historyJob?.cancel()
         automaticObserveJob?.cancel()
-        automaticRefreshJob?.cancel()
         controlObserveJob?.cancel()
         controlMutationJob?.cancel()
 
         observeJob = null
         historyJob = null
         automaticObserveJob = null
-        automaticRefreshJob = null
         controlObserveJob = null
         controlMutationJob = null
     }
