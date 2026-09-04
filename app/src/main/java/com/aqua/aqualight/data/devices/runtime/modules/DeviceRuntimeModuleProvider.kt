@@ -16,9 +16,9 @@ import com.aqua.aqualight.data.devices.runtime.modules.firmware.DeviceFirmwareRu
 import com.aqua.aqualight.data.devices.runtime.modules.firmware.DeviceFirmwareUpdatePlanner
 import com.aqua.aqualight.data.devices.runtime.modules.firmware.DeviceFirmwareUpdateRepository
 import com.aqua.aqualight.data.devices.runtime.modules.light.DeviceLightEventApplyResult
+import com.aqua.aqualight.data.devices.runtime.modules.light.DeviceLightRuntimeContract
 import com.aqua.aqualight.data.devices.runtime.modules.light.DeviceLightRuntimeRepository
 import com.aqua.aqualight.data.devices.runtime.modules.light.DeviceLightRuntimeStateStore
-import com.aqua.aqualight.data.devices.runtime.modules.light.DeviceLightRuntimeContract
 import com.aqua.aqualight.data.devices.runtime.modules.light.DeviceLightTemperatureProtectionRuntimeRepository
 import com.aqua.aqualight.data.devices.runtime.modules.light.DeviceLightThermalRuntimeRepository
 import com.aqua.aqualight.data.devices.runtime.modules.light.DeviceLightTypedEventReducer
@@ -154,8 +154,8 @@ class DeviceRuntimeModuleProvider internal constructor(
     /** Permanent owner cleanup only; socket lifecycle must use [invalidateRuntimeAuthority]. */
     internal fun clearRuntimeState(deviceUid: DeviceUid) {
         lightStateStore.clear(deviceUid)
-        lightThermal.invalidate(deviceUid)
-        cooling.invalidate(deviceUid)
+        lightThermal.clear(deviceUid)
+        cooling.clear(deviceUid)
         timerStateStore.clear(deviceUid)
     }
 }
