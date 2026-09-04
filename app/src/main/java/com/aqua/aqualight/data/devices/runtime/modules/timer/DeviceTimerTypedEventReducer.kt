@@ -4,7 +4,7 @@ import com.aqua.aqualight.data.devices.model.DeviceUid
 import com.aqua.aqualight.data.devices.runtime.events.DeviceRuntimeEventPayload
 import com.aqua.aqualight.data.devices.runtime.events.DeviceRuntimeTypedEvent
 
-/** Applies validated `timer.status.changed` payloads to the shared Timer state. */
+/** Applies validated `timer.status.changed` payloads to the single Timer state owner. */
 internal class DeviceTimerTypedEventReducer(
     private val stateStore: DeviceTimerRuntimeStateStore,
     private val accessProvider: (DeviceUid) -> DeviceTimerRuntimeAccess
@@ -22,37 +22,32 @@ internal class DeviceTimerTypedEventReducer(
     private fun applyValidatedEvent(
         event: DeviceRuntimeTypedEvent,
         access: DeviceTimerRuntimeAccess
-    ): DeviceTimerEventApplyResult {
-        return runCatching { applyPayload(event.deviceUid, event.payload, access) }.fold(
-            onSuccess = { applied ->
-                if (applied) DeviceTimerEventApplyResult.Applied
-                else DeviceTimerEventApplyResult.Ignored
-            },
-            onFailure = { error ->
-                DeviceTimerEventApplyResult.Malformed(error.message.orEmpty())
-            }
-        )
-    }
+    ): DeviceTimerEventApplyResult = runCatching {
+        applyPayload(event, access)
+    }.fold(
+        onSuccess = { applied ->
+            if (applied) DeviceTimerEventApplyResult.Applied
+            else DeviceTimerEventApplyResult.Ignored
+        },
+        onFailure = { error ->
+            DeviceTimerEventApplyResult.Malformed(error.message.orEmpty())
+        }
+    )
 
     private fun applyPayload(
-        deviceUid: DeviceUid,
-        payload: DeviceRuntimeEventPayload,
+        event: DeviceRuntimeTypedEvent,
         access: DeviceTimerRuntimeAccess
-    ): Boolean = when (payload) {
+    ): Boolean = when (val payload = event.payload) {
         is DeviceRuntimeEventPayload.Snapshot -> {
             val status = DeviceTimerStatusParser.parse(payload.data)
             DeviceTimerCommandValidation.validateStatus(status, access)
-            stateStore.recordStatus(deviceUid, status)
+            stateStore.recordStatus(event.deviceUid, event.generation, status)
         }
-        is DeviceRuntimeEventPayload.CommandResult -> applyCommandResult(
-            deviceUid,
-            payload,
-            access
-        )
+        is DeviceRuntimeEventPayload.CommandResult -> applyCommandResult(event, payload, access)
     }
 
     private fun applyCommandResult(
-        deviceUid: DeviceUid,
+        event: DeviceRuntimeTypedEvent,
         payload: DeviceRuntimeEventPayload.CommandResult,
         access: DeviceTimerRuntimeAccess
     ): Boolean {
@@ -64,23 +59,19 @@ internal class DeviceTimerTypedEventReducer(
                 val result = DeviceTimerMutationParser.parseConfigApply(payload.result)
                 DeviceTimerCommandValidation.validateConfigSnapshot(
                     result.config,
-                    stateStore.states.value[deviceUid]?.status,
+                    stateStore.currentAuthoritativeState(event.deviceUid)?.status,
                     access
                 )
-                stateStore.recordConfig(
-                    deviceUid,
-                    result
-                )
-                true
+                stateStore.recordConfig(event.deviceUid, event.generation, result)
             }
             DeviceTimerRuntimeContract.Action.CHANNEL_SET -> {
                 val result = DeviceTimerMutationParser.parseChannelSet(payload.result)
                 DeviceTimerCommandValidation.validateChannelSnapshot(
                     result,
-                    stateStore.states.value[deviceUid]?.status,
+                    stateStore.currentAuthoritativeState(event.deviceUid)?.status,
                     access
                 )
-                stateStore.recordChannel(deviceUid, result)
+                stateStore.recordChannel(event.deviceUid, event.generation, result)
             }
             else -> false
         }
