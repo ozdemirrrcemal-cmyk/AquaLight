@@ -67,7 +67,7 @@ internal class DeviceCoolingRuntimeStateOwner {
                 status = status,
                 telemetry = current
                     ?.telemetry
-                    ?.takeIf { telemetry -> telemetry.isCompatibleWith(status) }
+                    ?.takeIf { telemetry -> telemetry.isCoherentWith(status) }
             )
         )
         true
@@ -81,7 +81,7 @@ internal class DeviceCoolingRuntimeStateOwner {
         if (!authority.acceptsPatch(deviceUid, generation)) return@synchronized false
         val current = _states.value[deviceUid] ?: return@synchronized false
         val status = current.status ?: return@synchronized false
-        if (!telemetry.isCompatibleWith(status)) return@synchronized false
+        if (!telemetry.isCoherentWith(status)) return@synchronized false
         val previous = current.telemetry
         if (
             previous != null &&
@@ -116,8 +116,9 @@ private fun DeviceCoolingV1StatusDocument.isNewerThan(
     else -> false
 }
 
-private fun DeviceCoolingV1Telemetry.isCompatibleWith(
+/** Telemetry is projected only against the exact status document revisions that produced it. */
+private fun DeviceCoolingV1Telemetry.isCoherentWith(
     status: DeviceCoolingV1StatusDocument
 ): Boolean =
-    configRevision >= status.configRevision &&
-        programRevision >= status.programRevision
+    configRevision == status.configRevision &&
+        programRevision == status.programRevision
