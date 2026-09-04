@@ -19,72 +19,78 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flowOf
 
 /**
- * Explicit cutover boundary while the legacy Cooling transport is removed.
+ * Explicit cutover boundaries while the legacy Cooling transport is removed.
  *
- * This object never reads or writes WebSocket state. It keeps presentation on the
- * stable application interfaces until the strict aql.cooling.v1 data connection
- * is wired in a separate change.
+ * These objects never read or write WebSocket state. They keep presentation on the
+ * stable application interfaces until strict aql.cooling.v1 wiring is connected.
  */
-internal object DisconnectedDeviceCoolingOperations :
-    DeviceCoolingAutomaticSettingsOperations,
-    DeviceCoolingTemperatureHistoryOperations,
-    DeviceCoolingControlOperations,
-    DeviceCoolingProgramOperations {
+internal object DisconnectedDeviceCoolingAutomaticSettingsOperations :
+    DeviceCoolingAutomaticSettingsOperations {
 
-    private val automaticSnapshot = DeviceCoolingAutomaticSettingsSnapshot()
-    private val controlUnavailable =
-        DeviceCoolingControlResult.Failed(DeviceCoolingControlFailure.Unavailable)
+    private val snapshot = DeviceCoolingAutomaticSettingsSnapshot()
 
     override fun observeAutomaticSettings(
         deviceUid: String
-    ): Flow<DeviceCoolingAutomaticSettingsSnapshot> = flowOf(automaticSnapshot)
+    ): Flow<DeviceCoolingAutomaticSettingsSnapshot> = flowOf(snapshot)
 
     override fun currentAutomaticSettings(
         deviceUid: String
-    ): DeviceCoolingAutomaticSettingsSnapshot = automaticSnapshot
+    ): DeviceCoolingAutomaticSettingsSnapshot = snapshot
 
     override suspend fun refreshAutomaticSettings(
         deviceUid: String
-    ): DeviceCoolingAutomaticCommandResult = automaticUnavailable()
+    ): DeviceCoolingAutomaticCommandResult = unavailable()
 
     override suspend fun saveAutomaticTemperatureRange(
         deviceUid: String,
         startTemperatureC: Double,
         maximumSpeedTemperatureC: Double
-    ): DeviceCoolingAutomaticCommandResult = automaticUnavailable()
+    ): DeviceCoolingAutomaticCommandResult = unavailable()
 
     override suspend fun saveAutomaticSettings(
         deviceUid: String,
         startTemperatureC: Double,
         maximumSpeedTemperatureC: Double,
         silentModeEnabled: Boolean?
-    ): DeviceCoolingAutomaticCommandResult = automaticUnavailable()
+    ): DeviceCoolingAutomaticCommandResult = unavailable()
+
+    private fun unavailable(): DeviceCoolingAutomaticCommandResult =
+        DeviceCoolingAutomaticCommandResult.Failed(DeviceCoolingAutomaticFailure.Unavailable)
+}
+
+internal object DisconnectedDeviceCoolingTemperatureHistoryOperations :
+    DeviceCoolingTemperatureHistoryOperations {
 
     override suspend fun loadTemperatureHistory(
         deviceUid: String,
         range: DeviceCoolingTemperatureHistoryRange
     ): DeviceCoolingTemperatureHistoryLoadResult =
         DeviceCoolingTemperatureHistoryLoadResult.Unavailable
+}
+
+internal object DisconnectedDeviceCoolingControlOperations : DeviceCoolingControlOperations {
+    private val unavailable =
+        DeviceCoolingControlResult.Failed(DeviceCoolingControlFailure.Unavailable)
 
     override fun observeControl(deviceUid: String): Flow<DeviceCoolingControlResult> =
-        flowOf(controlUnavailable)
+        flowOf(unavailable)
 
-    override fun currentControl(deviceUid: String): DeviceCoolingControlResult =
-        controlUnavailable
+    override fun currentControl(deviceUid: String): DeviceCoolingControlResult = unavailable
 
-    override suspend fun refreshControl(deviceUid: String): DeviceCoolingControlResult =
-        controlUnavailable
+    override suspend fun refreshControl(deviceUid: String): DeviceCoolingControlResult = unavailable
 
     override suspend fun setMode(
         deviceUid: String,
         mode: DeviceCoolingControlMode
-    ): DeviceCoolingControlResult = controlUnavailable
+    ): DeviceCoolingControlResult = unavailable
 
     override suspend fun setManualFanPercent(
         deviceUid: String,
         percent: Int
-    ): DeviceCoolingControlResult = controlUnavailable
+    ): DeviceCoolingControlResult = unavailable
+}
 
+internal object DisconnectedDeviceCoolingProgramOperations : DeviceCoolingProgramOperations {
     override suspend fun readProgram(deviceUid: String): CoolingProgramReadResult =
         CoolingProgramReadResult.Unavailable
 
@@ -92,7 +98,4 @@ internal object DisconnectedDeviceCoolingOperations :
         deviceUid: String,
         slots: List<CoolingProgramSlot>
     ): CoolingProgramSaveResult = CoolingProgramSaveResult.Unavailable
-
-    private fun automaticUnavailable(): DeviceCoolingAutomaticCommandResult =
-        DeviceCoolingAutomaticCommandResult.Failed(DeviceCoolingAutomaticFailure.Unavailable)
 }
