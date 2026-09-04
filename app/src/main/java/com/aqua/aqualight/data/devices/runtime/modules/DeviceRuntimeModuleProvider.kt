@@ -3,9 +3,6 @@ package com.aqua.aqualight.data.devices.runtime.modules
 import com.aqua.aqualight.data.devices.model.DeviceUid
 import com.aqua.aqualight.data.devices.runtime.core.DeviceRuntimeCommandGateway
 import com.aqua.aqualight.data.devices.runtime.events.DeviceRuntimeTypedEvent
-import com.aqua.aqualight.data.devices.runtime.modules.cooling.DeviceCoolingRuntimeRepository
-import com.aqua.aqualight.data.devices.runtime.modules.cooling.DeviceCoolingRuntimeStateStore
-import com.aqua.aqualight.data.devices.runtime.modules.cooling.DeviceCoolingTypedEventReducer
 import com.aqua.aqualight.data.devices.runtime.modules.device.DeviceCommonRuntimeRepository
 import com.aqua.aqualight.data.devices.runtime.modules.firmware.DeviceFirmwareRuntimeRepository
 import com.aqua.aqualight.data.devices.runtime.modules.firmware.DeviceFirmwareUpdatePlanner
@@ -31,8 +28,6 @@ class DeviceRuntimeModuleProvider internal constructor(
 ) {
     private val lightStateStore = DeviceLightRuntimeStateStore()
     private val lightEventReducer = DeviceLightTypedEventReducer(lightStateStore)
-    private val coolingStateStore = DeviceCoolingRuntimeStateStore()
-    private val coolingEventReducer = DeviceCoolingTypedEventReducer(coolingStateStore)
     private val timerStateStore = DeviceTimerRuntimeStateStore()
     private val timerEventReducer = DeviceTimerTypedEventReducer(
         timerStateStore,
@@ -53,20 +48,17 @@ class DeviceRuntimeModuleProvider internal constructor(
     )
 
     val timer = DeviceTimerRuntimeRepository(commandGateway, timerStateStore, timerAccessProvider)
-    val cooling = DeviceCoolingRuntimeRepository(commandGateway, coolingStateStore)
     val light = DeviceLightRuntimeRepository(commandGateway, lightStateStore)
     val lightTemperatureProtection =
         DeviceLightTemperatureProtectionRuntimeRepository(commandGateway, lightStateStore)
 
     internal fun acceptTypedRuntimeEvent(event: DeviceRuntimeTypedEvent) {
         lightEventReducer.apply(event)
-        coolingEventReducer.apply(event)
         timerEventReducer.apply(event)
     }
 
     internal fun clearRuntimeState(deviceUid: DeviceUid) {
         lightStateStore.clear(deviceUid)
-        coolingStateStore.clear(deviceUid)
         timerStateStore.clear(deviceUid)
     }
 }
