@@ -31,6 +31,7 @@ import com.aqua.aqualight.data.devices.runtime.modules.timer.DeviceTimerRuntimeR
 import com.aqua.aqualight.data.devices.runtime.modules.timer.DeviceTimerRuntimeStateStore
 import com.aqua.aqualight.data.devices.runtime.modules.timer.DeviceTimerTypedEventReducer
 import com.aqua.aqualight.i18n.AppLanguageController
+import kotlinx.coroutines.delay
 
 /**
  * Owner-scoped runtime module composition.
@@ -168,7 +169,12 @@ private class CommandBootstrapPort(
     override suspend fun hydrate(
         context: DeviceRuntimeBootstrapContext
     ): DeviceRuntimeDomainHydrationResult {
-        val outcome = request(context.deviceUid)
+        var outcome = request(context.deviceUid)
+        repeat(DOMAIN_BOOTSTRAP_MAX_ATTEMPTS - 1) {
+            if (!outcome.isTransientBootstrapFailure()) return@repeat
+            delay(DOMAIN_BOOTSTRAP_RETRY_DELAY_MILLIS)
+            outcome = request(context.deviceUid)
+        }
         return when {
             outcome !is DeviceRuntimeCommandOutcome.Success<*> ->
                 DeviceRuntimeDomainHydrationResult.Failed(domain, outcome)
@@ -183,3 +189,18 @@ private class CommandBootstrapPort(
         }
     }
 }
+
+private fun DeviceRuntimeCommandOutcome<*>.isTransientBootstrapFailure(): Boolean = when (this) {
+    is DeviceRuntimeCommandOutcome.NotConnected,
+    is DeviceRuntimeCommandOutcome.NotAuthenticated,
+    is DeviceRuntimeCommandOutcome.SendFailed,
+    is DeviceRuntimeCommandOutcome.Timeout,
+    is DeviceRuntimeCommandOutcome.Cancelled -> true
+    is DeviceRuntimeCommandOutcome.Success,
+    is DeviceRuntimeCommandOutcome.UnsupportedByDevice,
+    is DeviceRuntimeCommandOutcome.FirmwareError,
+    is DeviceRuntimeCommandOutcome.ProtocolError -> false
+}
+
+private const val DOMAIN_BOOTSTRAP_MAX_ATTEMPTS = 8
+private const val DOMAIN_BOOTSTRAP_RETRY_DELAY_MILLIS = 250L
