@@ -39,6 +39,14 @@ internal class DeviceRuntimeGenerationAuthority {
         }
     }
 
+    fun currentGeneration(deviceUid: DeviceUid): DeviceRuntimeConnectionGeneration? =
+        synchronized(lock) { states[deviceUid]?.generation }
+
+    fun isCurrentGeneration(
+        deviceUid: DeviceUid,
+        generation: DeviceRuntimeConnectionGeneration
+    ): Boolean = synchronized(lock) { states[deviceUid]?.generation == generation }
+
     /** Accepts a complete domain snapshot and makes that generation authoritative. */
     fun acceptAuthoritativeSnapshot(
         deviceUid: DeviceUid,
