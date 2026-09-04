@@ -54,12 +54,16 @@ internal interface DeviceRuntimeDomainBootstrapPort {
     ): DeviceRuntimeDomainHydrationResult
 }
 
-/** Pure catalog-derived planner. Screen/navigation state is intentionally not consulted. */
+/**
+ * Pure catalog-derived planner. Screen/navigation state is intentionally not consulted.
+ * Version-pinned domain adapters are selected only for the exact commercial product they mirror.
+ */
 internal object DeviceRuntimeBootstrapPlanFactory {
     fun create(metadata: DeviceRuntimeMetadata): DeviceRuntimeBootstrapPlan {
         val modules = metadata.modules
         val capabilities = metadata.capabilities.capabilities
         val features = metadata.capabilities.supportedFeatures
+        val productKey = metadata.identity.productKey.value
         return DeviceRuntimeBootstrapPlan(
             buildList {
                 if (
@@ -79,14 +83,15 @@ internal object DeviceRuntimeBootstrapPlanFactory {
                     modules.light &&
                     capabilities.temperature &&
                     capabilities.fan &&
-                    metadata.identity.productKey.value == LIGHT_THERMAL_V1_PRODUCT_KEY
+                    productKey == LIGHT_THERMAL_V1_PRODUCT_KEY
                 ) {
                     add(DeviceRuntimeDomain.LIGHT_THERMAL)
                 }
                 if (
                     modules.cooling &&
                     capabilities.cooling &&
-                    AqlDeviceFeatureKey.COOLING_CONTROL in features
+                    AqlDeviceFeatureKey.COOLING_CONTROL in features &&
+                    productKey == COOLING_V1_PRODUCT_KEY
                 ) {
                     add(DeviceRuntimeDomain.COOLING)
                 }
@@ -103,3 +108,4 @@ internal object DeviceRuntimeBootstrapPlanFactory {
 }
 
 private const val LIGHT_THERMAL_V1_PRODUCT_KEY = "LIGHT_WRGB_PRO_ELITE"
+private const val COOLING_V1_PRODUCT_KEY = "COOLING_COOL_PRO_1F"
