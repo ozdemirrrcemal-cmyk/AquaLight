@@ -7,12 +7,15 @@ import com.aqua.aqualight.data.devices.runtime.modules.cooling.DeviceCoolingRunt
 import com.aqua.aqualight.data.devices.runtime.modules.cooling.DeviceCoolingRuntimeStateStore
 import com.aqua.aqualight.data.devices.runtime.modules.cooling.DeviceCoolingTypedEventReducer
 import com.aqua.aqualight.data.devices.runtime.modules.device.DeviceCommonRuntimeRepository
+import com.aqua.aqualight.data.devices.runtime.modules.dosing.DeviceDosingRuntimeRepository
 import com.aqua.aqualight.data.devices.runtime.modules.firmware.DeviceFirmwareRuntimeRepository
 import com.aqua.aqualight.data.devices.runtime.modules.firmware.DeviceFirmwareUpdatePlanner
 import com.aqua.aqualight.data.devices.runtime.modules.firmware.DeviceFirmwareUpdateRepository
 import com.aqua.aqualight.data.devices.runtime.modules.light.DeviceLightRuntimeRepository
 import com.aqua.aqualight.data.devices.runtime.modules.light.DeviceLightRuntimeStateStore
 import com.aqua.aqualight.data.devices.runtime.modules.light.DeviceLightTemperatureProtectionRuntimeRepository
+import com.aqua.aqualight.data.devices.runtime.modules.light.DeviceLightThermalRuntimeRepository
+import com.aqua.aqualight.data.devices.runtime.modules.light.DeviceLightThermalRuntimeStateStore
 import com.aqua.aqualight.data.devices.runtime.modules.light.DeviceLightTypedEventReducer
 import com.aqua.aqualight.data.devices.runtime.modules.network.DeviceNetworkRuntimeRepository
 import com.aqua.aqualight.data.devices.runtime.modules.security.DeviceSecurityRuntimeRepository
@@ -31,6 +34,7 @@ class DeviceRuntimeModuleProvider internal constructor(
 ) {
     private val lightStateStore = DeviceLightRuntimeStateStore()
     private val lightEventReducer = DeviceLightTypedEventReducer(lightStateStore)
+    private val lightThermalStateStore = DeviceLightThermalRuntimeStateStore()
     private val coolingStateStore = DeviceCoolingRuntimeStateStore()
     private val coolingEventReducer = DeviceCoolingTypedEventReducer(coolingStateStore)
     private val timerStateStore = DeviceTimerRuntimeStateStore()
@@ -55,8 +59,10 @@ class DeviceRuntimeModuleProvider internal constructor(
     val timer = DeviceTimerRuntimeRepository(commandGateway, timerStateStore, timerAccessProvider)
     val cooling = DeviceCoolingRuntimeRepository(commandGateway, coolingStateStore)
     val light = DeviceLightRuntimeRepository(commandGateway, lightStateStore)
+    val lightThermal = DeviceLightThermalRuntimeRepository(commandGateway, lightThermalStateStore)
     val lightTemperatureProtection =
         DeviceLightTemperatureProtectionRuntimeRepository(commandGateway, lightStateStore)
+    val dosing = DeviceDosingRuntimeRepository(commandGateway)
 
     internal fun acceptTypedRuntimeEvent(event: DeviceRuntimeTypedEvent) {
         lightEventReducer.apply(event)
@@ -66,6 +72,7 @@ class DeviceRuntimeModuleProvider internal constructor(
 
     internal fun clearRuntimeState(deviceUid: DeviceUid) {
         lightStateStore.clear(deviceUid)
+        lightThermalStateStore.clear(deviceUid)
         coolingStateStore.clear(deviceUid)
         timerStateStore.clear(deviceUid)
     }
