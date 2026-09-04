@@ -610,6 +610,12 @@ class DeviceRuntimeRepository(
                     generation = plan.connectionGeneration
                 ) {
                     setRuntimeReadiness(DeviceRuntimeSessionReadiness.RuntimeReady(plan))
+                    if (DeviceRuntimeDomainBootstrapStep.DOSING_STATUS in plan.steps) {
+                        runtimeModules.dosing.markRuntimeReady(
+                            deviceUid = plan.deviceUid,
+                            generation = plan.connectionGeneration
+                        )
+                    }
                 }
                 if (stillCurrent) {
                     timeSyncCoordinator.syncPhoneNowIfNeeded(
