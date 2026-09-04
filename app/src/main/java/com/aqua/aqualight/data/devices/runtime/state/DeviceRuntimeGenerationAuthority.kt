@@ -47,6 +47,9 @@ internal class DeviceRuntimeGenerationAuthority {
         generation: DeviceRuntimeConnectionGeneration
     ): Boolean = synchronized(lock) { states[deviceUid]?.generation == generation }
 
+    fun isAuthoritative(deviceUid: DeviceUid): Boolean =
+        synchronized(lock) { states[deviceUid]?.authoritative == true }
+
     /** Accepts a complete domain snapshot and makes that generation authoritative. */
     fun acceptAuthoritativeSnapshot(
         deviceUid: DeviceUid,
