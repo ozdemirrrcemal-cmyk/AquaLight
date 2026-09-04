@@ -21,6 +21,11 @@ RUNTIME_REPOSITORY_PATH = (
     / "app/src/main/java/com/aqua/aqualight/data/devices/repository/"
     / "DeviceRuntimeRepository.kt"
 )
+DOMAIN_BOOTSTRAP_LIFECYCLE_PATH = (
+    ROOT
+    / "app/src/main/java/com/aqua/aqualight/data/devices/runtime/bootstrap/"
+    / "DeviceRuntimeDomainBootstrapLifecycle.kt"
+)
 PARSER_TEST_PATH = (
     ROOT
     / "app/src/test/java/com/aqua/aqualight/data/devices/runtime/modules/time/"
@@ -85,6 +90,7 @@ def verify() -> None:
     parser = read(PARSER_PATH)
     coordinator = read(COORDINATOR_PATH)
     runtime_repository = read(RUNTIME_REPOSITORY_PATH)
+    domain_bootstrap_lifecycle = read(DOMAIN_BOOTSTRAP_LIFECYCLE_PATH)
     parser_test = read(PARSER_TEST_PATH)
     coordinator_test = read(COORDINATOR_TEST_PATH)
 
@@ -143,11 +149,25 @@ def verify() -> None:
         "CoroutineStart.UNDISPATCHED",
         "runtimeModules.time.requestStatus(deviceUid)",
         "runtimeModules.time.syncPhoneNow(deviceUid = deviceUid, save = false)",
-        "generation = connectionGeneration",
+        "currentConnectionGeneration(state.deviceUid)?.let { connectionGeneration ->",
+        "startDomainBootstrap(state, connectionGeneration)",
+        "syncAfterHydration = { deviceUid, generation ->",
+        "timeSyncCoordinator.syncPhoneNowIfNeeded(deviceUid, generation)",
     ):
         require(
             fragment in runtime_repository,
-            f"generation-bound RTC dispatch policy missing: {fragment}",
+            f"generation-bound RTC repository policy missing: {fragment}",
+        )
+
+    for fragment in (
+        "beginRuntimeGeneration(state.deviceUid, connectionGeneration)",
+        "connectionGeneration = connectionGeneration",
+        "readiness.generation == connectionGeneration",
+        "syncAfterHydration(state.deviceUid, connectionGeneration)",
+    ):
+        require(
+            fragment in domain_bootstrap_lifecycle,
+            f"generation-bound RTC lifecycle policy missing: {fragment}",
         )
 
     require(
