@@ -170,8 +170,8 @@ private class CommandBootstrapPort(
         context: DeviceRuntimeBootstrapContext
     ): DeviceRuntimeDomainHydrationResult {
         var outcome = request(context.deviceUid)
-        repeat(DOMAIN_BOOTSTRAP_MAX_ATTEMPTS - 1) {
-            if (!outcome.isTransientBootstrapFailure()) return@repeat
+        for (attempt in 1 until DOMAIN_BOOTSTRAP_MAX_ATTEMPTS) {
+            if (!outcome.isTransientBootstrapFailure()) break
             delay(DOMAIN_BOOTSTRAP_RETRY_DELAY_MILLIS)
             outcome = request(context.deviceUid)
         }
