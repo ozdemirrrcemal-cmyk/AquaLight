@@ -12,7 +12,6 @@ import com.aqua.aqualight.data.devices.model.DeviceUid
 import com.aqua.aqualight.data.devices.repository.DevicesRepository
 import com.aqua.aqualight.data.devices.runtime.core.DeviceRuntimeCommandOutcome
 import com.aqua.aqualight.data.devices.runtime.modules.DeviceRuntimeModuleProvider
-import com.aqua.aqualight.data.devices.runtime.modules.cooling.DeviceCoolingRuntimeState
 import com.aqua.aqualight.data.devices.runtime.modules.light.DeviceLightTemperatureProtectionSetPayload
 import com.aqua.aqualight.data.devices.runtime.modules.light.DeviceLightTemperatureProtectionStatus
 import java.util.concurrent.ConcurrentHashMap
@@ -49,15 +48,13 @@ internal class DefaultDeviceLightProtectionOperations(
             }.distinctUntilChanged()
             else -> combine(
                 devicesRepository.observeDevice(uid),
-                modules.cooling.states,
                 modules.lightTemperatureProtection.states
-            ) { device, coolingStates, protectionStates ->
+            ) { device, protectionStates ->
                 toDeviceLightProtectionSnapshot(
                     available = availabilityResolver.resolve(
                         deviceUid = uid,
                         declaredAvailability = device.lightProtectionAvailabilityOrNull()
                     ),
-                    coolingState = coolingStates[uid],
                     protectionStatus = protectionStates[uid]
                 )
             }.distinctUntilChanged()
@@ -81,7 +78,6 @@ internal class DefaultDeviceLightProtectionOperations(
         } else {
             toDeviceLightProtectionSnapshot(
                 available = available,
-                coolingState = modules.cooling.states.value[uid],
                 protectionStatus = modules.lightTemperatureProtection.currentStatus(uid)
             )
         }
@@ -104,12 +100,6 @@ internal class DefaultDeviceLightProtectionOperations(
         requestStatusWithRetry {
             modules.lightTemperatureProtection.requestStatus(uid)
         }.requireSuccessValue()
-
-        // Current temperature is useful but not authoritative for threshold editing. A device that
-        // exposes protection without a readable Cooling snapshot still keeps its threshold usable.
-        requestStatusWithRetry {
-            modules.cooling.requestStatus(uid)
-        }
         Unit
     }
 
@@ -207,20 +197,14 @@ internal class DeviceLightProtectionAvailabilityResolver {
 
 internal fun toDeviceLightProtectionSnapshot(
     available: Boolean,
-    coolingState: DeviceCoolingRuntimeState?,
     protectionStatus: DeviceLightTemperatureProtectionStatus?
 ): DeviceLightProtectionSnapshot {
     if (!available) return DeviceLightProtectionSnapshot()
 
-    val temperature = coolingState
-        ?.temperature
-        ?.takeIf { reading -> reading.readingValid }
-        ?.temperatureC
-        ?.takeIf(Double::isFinite)
     val protection = protectionStatus?.temperatureProtection
     return DeviceLightProtectionSnapshot(
         available = true,
-        currentTemperatureCelsius = temperature,
+        currentTemperatureCelsius = null,
         thresholdCelsius = protection?.thresholdC?.takeIf(Double::isFinite),
         thresholdPolicy = protectionStatus.toThresholdPolicy(),
         loaded = protectionStatus != null
