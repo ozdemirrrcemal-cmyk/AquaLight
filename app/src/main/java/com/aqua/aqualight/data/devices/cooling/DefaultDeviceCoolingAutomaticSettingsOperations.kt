@@ -4,6 +4,7 @@ import com.aqua.aqualight.application.devices.cooling.DeviceCoolingAutomaticComm
 import com.aqua.aqualight.application.devices.cooling.DeviceCoolingAutomaticFailure
 import com.aqua.aqualight.application.devices.cooling.DeviceCoolingAutomaticSettingsOperations
 import com.aqua.aqualight.application.devices.cooling.DeviceCoolingAutomaticSettingsSnapshot
+import com.aqua.aqualight.application.devices.cooling.DeviceCoolingAutomaticTemperaturePolicy
 import com.aqua.aqualight.data.devices.model.DeviceFamily
 import com.aqua.aqualight.data.devices.model.DeviceSnapshot
 import com.aqua.aqualight.data.devices.model.DeviceUid
@@ -70,10 +71,34 @@ internal class DefaultDeviceCoolingAutomaticSettingsOperations(
         }
     }
 
-    override suspend fun updateAutomaticTemperatures(
+    override suspend fun saveAutomaticTemperatureRange(
         deviceUid: String,
         startTemperatureC: Double,
         maximumSpeedTemperatureC: Double
+    ): DeviceCoolingAutomaticCommandResult = saveAutomaticConfig(
+        deviceUid = deviceUid,
+        startTemperatureC = startTemperatureC,
+        maximumSpeedTemperatureC = maximumSpeedTemperatureC,
+        silentModeEnabled = null
+    )
+
+    override suspend fun saveAutomaticSettings(
+        deviceUid: String,
+        startTemperatureC: Double,
+        maximumSpeedTemperatureC: Double,
+        silentModeEnabled: Boolean?
+    ): DeviceCoolingAutomaticCommandResult = saveAutomaticConfig(
+        deviceUid = deviceUid,
+        startTemperatureC = startTemperatureC,
+        maximumSpeedTemperatureC = maximumSpeedTemperatureC,
+        silentModeEnabled = silentModeEnabled
+    )
+
+    private suspend fun saveAutomaticConfig(
+        deviceUid: String,
+        startTemperatureC: Double,
+        maximumSpeedTemperatureC: Double,
+        silentModeEnabled: Boolean?
     ): DeviceCoolingAutomaticCommandResult {
         val resolved = resolveAutomaticRuntime(deviceUid)
         if (resolved is AutomaticRuntime.Failed) return failed(resolved.failure)
@@ -84,7 +109,8 @@ internal class DefaultDeviceCoolingAutomaticSettingsOperations(
             DeviceCoolingV1ConfigApplyPayload(
                 expectedConfigRevision = config.configRevision,
                 startTemperatureC = startTemperatureC,
-                fullSpeedTemperatureC = maximumSpeedTemperatureC
+                fullSpeedTemperatureC = maximumSpeedTemperatureC,
+                silentModeEnabled = silentModeEnabled
             )
         }.getOrElse { return failed(DeviceCoolingAutomaticFailure.InvalidConfiguration) }
         return when (val outcome = resolved.runtime.applyConfig(resolved.deviceUid, payload)) {
@@ -95,7 +121,8 @@ internal class DefaultDeviceCoolingAutomaticSettingsOperations(
                 if (
                     committed != null &&
                     committed.startTemperatureC.sameCoolingValue(startTemperatureC) &&
-                    committed.fullSpeedTemperatureC.sameCoolingValue(maximumSpeedTemperatureC)
+                    committed.fullSpeedTemperatureC.sameCoolingValue(maximumSpeedTemperatureC) &&
+                    (silentModeEnabled == null || committed.silentModeEnabled == silentModeEnabled)
                 ) {
                     DeviceCoolingAutomaticCommandResult.Success
                 } else {
@@ -141,23 +168,27 @@ private fun projectAutomatic(
     state?.config == null -> DeviceCoolingAutomaticSettingsSnapshot(
         available = true,
         loaded = false,
-        configWritable = false
+        editable = false
     )
-    else -> DeviceCoolingAutomaticSettingsSnapshot(
-        available = true,
-        startTemperatureC = state.config.startTemperatureC,
-        maximumSpeedTemperatureC = state.config.fullSpeedTemperatureC,
-        minimumStartTemperatureC = DeviceCoolingV1Contract.Limit.TEMPERATURE_MINIMUM_C,
-        maximumStartTemperatureC = DeviceCoolingV1Contract.Limit.TEMPERATURE_MAXIMUM_C -
-            DeviceCoolingV1Contract.Limit.MINIMUM_AUTOMATIC_GAP_C,
-        minimumMaximumSpeedTemperatureC = DeviceCoolingV1Contract.Limit.TEMPERATURE_MINIMUM_C +
-            DeviceCoolingV1Contract.Limit.MINIMUM_AUTOMATIC_GAP_C,
-        maximumMaximumSpeedTemperatureC = DeviceCoolingV1Contract.Limit.TEMPERATURE_MAXIMUM_C,
-        temperatureStepC = DeviceCoolingV1Contract.Limit.TEMPERATURE_STEP_C,
-        minimumTemperatureGapC = DeviceCoolingV1Contract.Limit.MINIMUM_AUTOMATIC_GAP_C,
-        loaded = true,
-        configWritable = state.authoritative
-    )
+    else -> {
+        val waterTemperature = state.telemetry
+            ?.sensors
+            ?.firstOrNull { sensor ->
+                sensor.sensorKey == DeviceCoolingV1Contract.WATER_SENSOR_KEY && sensor.readingValid
+            }
+            ?.temperatureC
+        DeviceCoolingAutomaticSettingsSnapshot(
+            available = true,
+            loaded = true,
+            editable = state.authoritative,
+            startTemperatureC = state.config.startTemperatureC,
+            maximumSpeedTemperatureC = state.config.fullSpeedTemperatureC,
+            tankTemperatureC = waterTemperature,
+            fanPercentNow = state.telemetry?.fan?.outputPercent,
+            silentModeEnabled = state.config.silentModeEnabled,
+            policy = COOLING_V1_AUTOMATIC_POLICY
+        )
+    }
 }
 
 private fun DeviceSnapshot.isCoolingV1(): Boolean =
@@ -188,3 +219,14 @@ private fun failed(failure: DeviceCoolingAutomaticFailure): DeviceCoolingAutomat
 
 private fun Double.sameCoolingValue(other: Double): Boolean =
     abs(this - other) <= DeviceCoolingV1Contract.Limit.ALIGNMENT_EPSILON
+
+private val COOLING_V1_AUTOMATIC_POLICY = DeviceCoolingAutomaticTemperaturePolicy(
+    startMinimumC = DeviceCoolingV1Contract.Limit.TEMPERATURE_MINIMUM_C,
+    startMaximumC = DeviceCoolingV1Contract.Limit.TEMPERATURE_MAXIMUM_C -
+        DeviceCoolingV1Contract.Limit.MINIMUM_AUTOMATIC_GAP_C,
+    maximumSpeedMinimumC = DeviceCoolingV1Contract.Limit.TEMPERATURE_MINIMUM_C +
+        DeviceCoolingV1Contract.Limit.MINIMUM_AUTOMATIC_GAP_C,
+    maximumSpeedMaximumC = DeviceCoolingV1Contract.Limit.TEMPERATURE_MAXIMUM_C,
+    stepC = DeviceCoolingV1Contract.Limit.TEMPERATURE_STEP_C,
+    minimumGapC = DeviceCoolingV1Contract.Limit.MINIMUM_AUTOMATIC_GAP_C
+)
