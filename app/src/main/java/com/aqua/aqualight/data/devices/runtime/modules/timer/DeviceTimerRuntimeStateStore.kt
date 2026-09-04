@@ -1,6 +1,8 @@
 package com.aqua.aqualight.data.devices.runtime.modules.timer
 
 import com.aqua.aqualight.data.devices.model.DeviceUid
+import com.aqua.aqualight.data.devices.runtime.core.DeviceRuntimeConnectionGeneration
+import com.aqua.aqualight.data.devices.runtime.state.DeviceRuntimeGenerationAuthority
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -12,72 +14,112 @@ data class DeviceTimerRuntimeState(
     val requiresStatusRefresh: Boolean = false
 )
 
-/** Device-isolated Timer state reduced from correlated replies and typed events. */
+/**
+ * The single Timer runtime state owner.
+ *
+ * Presentation snapshots survive socket churn, but only the current connection generation may
+ * establish authority or patch them. Uptime freshness is deliberately scoped to an already
+ * authoritative generation so a device reboot may establish a lower-uptime baseline on reconnect.
+ */
 internal class DeviceTimerRuntimeStateStore {
     private val lock = Any()
+    private val authority = DeviceRuntimeGenerationAuthority()
     private val _states = MutableStateFlow<Map<DeviceUid, DeviceTimerRuntimeState>>(emptyMap())
     val states: StateFlow<Map<DeviceUid, DeviceTimerRuntimeState>> = _states.asStateFlow()
 
-    fun recordStatus(deviceUid: DeviceUid, status: DeviceTimerStatus): Boolean =
-        synchronized(lock) {
-            val current = _states.value[deviceUid]
-            val currentStatus = current?.status
-            if (
-                currentStatus != null &&
-                !isNewerTimerSample(status.uptimeMs, currentStatus.uptimeMs)
-            ) {
-                return@synchronized false
-            }
-            _states.value = _states.value + (
-                deviceUid to DeviceTimerRuntimeState(
-                    status = status,
-                    config = status.toConfigSnapshot(),
-                    requiresStatusRefresh = false
-                )
-                )
-            true
-        }
+    fun beginGeneration(
+        deviceUid: DeviceUid,
+        generation: DeviceRuntimeConnectionGeneration
+    ): Boolean = authority.beginGeneration(deviceUid, generation)
 
-    fun recordConfig(deviceUid: DeviceUid, result: DeviceTimerConfigApplyResult) {
-        synchronized(lock) {
-            val current = _states.value[deviceUid] ?: DeviceTimerRuntimeState()
-            val updatedStatus = current.status?.applyConfig(result.config)
-            require(current.status == null || updatedStatus != null) {
-                "Timer config snapshot cannot be reconciled with current status."
-            }
-            _states.value = _states.value + (
-                deviceUid to current.copy(
-                    status = updatedStatus,
-                    config = result.config,
-                    requiresStatusRefresh = true
-                )
-                )
+    fun invalidate(
+        deviceUid: DeviceUid,
+        generation: DeviceRuntimeConnectionGeneration? = null
+    ) = authority.invalidate(deviceUid, generation)
+
+    fun isAuthoritative(
+        deviceUid: DeviceUid,
+        generation: DeviceRuntimeConnectionGeneration
+    ): Boolean = authority.isAuthoritative(deviceUid, generation)
+
+    fun recordStatus(
+        deviceUid: DeviceUid,
+        generation: DeviceRuntimeConnectionGeneration,
+        status: DeviceTimerStatus
+    ): Boolean = synchronized(lock) {
+        val current = _states.value[deviceUid]
+        val currentStatus = current?.status
+        if (
+            authority.isAuthoritative(deviceUid, generation) &&
+            currentStatus != null &&
+            !isNewerTimerSample(status.uptimeMs, currentStatus.uptimeMs)
+        ) {
+            return@synchronized false
         }
+        if (!authority.acceptAuthoritativeSnapshot(deviceUid, generation)) {
+            return@synchronized false
+        }
+        _states.value = _states.value + (
+            deviceUid to DeviceTimerRuntimeState(
+                status = status,
+                config = status.toConfigSnapshot(),
+                requiresStatusRefresh = false
+            )
+        )
+        true
     }
 
-    fun recordChannel(deviceUid: DeviceUid, result: DeviceTimerChannelSetResult): Boolean =
-        synchronized(lock) {
-            val current = _states.value[deviceUid] ?: return@synchronized false
-            val currentStatus = current.status ?: return@synchronized false
-            val updatedStatus = currentStatus.replaceChannel(result.channel)
-                ?: return@synchronized false
-            val baselineConfig = current.config ?: currentStatus.toConfigSnapshot()
-            val updatedConfig = baselineConfig.replaceChannelRegime(result.channel)
-                ?: return@synchronized false
-            _states.value = _states.value + (
-                deviceUid to current.copy(
-                    status = updatedStatus,
-                    config = updatedConfig,
-                    requiresStatusRefresh = true
-                )
-                )
-            true
+    fun recordConfig(
+        deviceUid: DeviceUid,
+        generation: DeviceRuntimeConnectionGeneration,
+        result: DeviceTimerConfigApplyResult
+    ): Boolean = synchronized(lock) {
+        if (!authority.acceptsPatch(deviceUid, generation)) return@synchronized false
+        val current = _states.value[deviceUid] ?: return@synchronized false
+        val updatedStatus = current.status?.applyConfig(result.config)
+        require(current.status == null || updatedStatus != null) {
+            "Timer config snapshot cannot be reconciled with current status."
         }
+        _states.value = _states.value + (
+            deviceUid to current.copy(
+                status = updatedStatus,
+                config = result.config,
+                requiresStatusRefresh = true
+            )
+        )
+        true
+    }
 
+    fun recordChannel(
+        deviceUid: DeviceUid,
+        generation: DeviceRuntimeConnectionGeneration,
+        result: DeviceTimerChannelSetResult
+    ): Boolean = synchronized(lock) {
+        if (!authority.acceptsPatch(deviceUid, generation)) return@synchronized false
+        val current = _states.value[deviceUid] ?: return@synchronized false
+        val currentStatus = current.status ?: return@synchronized false
+        val updatedStatus = currentStatus.replaceChannel(result.channel)
+            ?: return@synchronized false
+        val baselineConfig = current.config ?: currentStatus.toConfigSnapshot()
+        val updatedConfig = baselineConfig.replaceChannelRegime(result.channel)
+            ?: return@synchronized false
+        _states.value = _states.value + (
+            deviceUid to current.copy(
+                status = updatedStatus,
+                config = updatedConfig,
+                requiresStatusRefresh = true
+            )
+        )
+        true
+    }
+
+    /** Permanent owner cleanup only. Socket lifecycle uses [invalidate], never destructive clear. */
     fun clear(deviceUid: DeviceUid) {
         synchronized(lock) {
-            if (deviceUid !in _states.value) return
-            _states.value = _states.value.toMutableMap().apply { remove(deviceUid) }.toMap()
+            if (deviceUid in _states.value) {
+                _states.value = _states.value.toMutableMap().apply { remove(deviceUid) }.toMap()
+            }
+            authority.clear(deviceUid)
         }
     }
 }
