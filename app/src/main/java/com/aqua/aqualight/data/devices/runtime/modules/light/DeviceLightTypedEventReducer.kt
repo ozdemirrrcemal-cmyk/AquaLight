@@ -1,10 +1,9 @@
 package com.aqua.aqualight.data.devices.runtime.modules.light
 
-import com.aqua.aqualight.data.devices.model.DeviceUid
 import com.aqua.aqualight.data.devices.runtime.events.DeviceRuntimeEventPayload
 import com.aqua.aqualight.data.devices.runtime.events.DeviceRuntimeTypedEvent
 
-/** Applies validated `light.status.changed` payloads to the shared current-state store. */
+/** Applies validated `light.status.changed` payloads to the single Light state owner. */
 internal class DeviceLightTypedEventReducer(
     private val stateStore: DeviceLightRuntimeStateStore
 ) {
@@ -12,7 +11,7 @@ internal class DeviceLightTypedEventReducer(
         if (event.type != DeviceRuntimeTypedEvent.Type.LIGHT_STATUS_CHANGED) {
             return DeviceLightEventApplyResult.Ignored
         }
-        return runCatching { applyPayload(event.deviceUid, event.payload) }.fold(
+        return runCatching { applyPayload(event) }.fold(
             onSuccess = { applied ->
                 if (applied) DeviceLightEventApplyResult.Applied
                 else DeviceLightEventApplyResult.Ignored
@@ -23,19 +22,17 @@ internal class DeviceLightTypedEventReducer(
         )
     }
 
-    private fun applyPayload(
-        deviceUid: DeviceUid,
-        payload: DeviceRuntimeEventPayload
-    ): Boolean = when (payload) {
-        is DeviceRuntimeEventPayload.Snapshot -> {
-            stateStore.recordStatus(deviceUid, DeviceLightStatusParser.parse(payload.data))
-            true
-        }
-        is DeviceRuntimeEventPayload.CommandResult -> applyCommandResult(deviceUid, payload)
+    private fun applyPayload(event: DeviceRuntimeTypedEvent): Boolean = when (val payload = event.payload) {
+        is DeviceRuntimeEventPayload.Snapshot -> stateStore.recordStatus(
+            event.deviceUid,
+            event.generation,
+            DeviceLightStatusParser.parse(payload.data)
+        )
+        is DeviceRuntimeEventPayload.CommandResult -> applyCommandResult(event, payload)
     }
 
     private fun applyCommandResult(
-        deviceUid: DeviceUid,
+        event: DeviceRuntimeTypedEvent,
         payload: DeviceRuntimeEventPayload.CommandResult
     ): Boolean {
         require(payload.commandModule == DeviceLightRuntimeContract.MODULE) {
@@ -43,28 +40,35 @@ internal class DeviceLightTypedEventReducer(
         }
         return when (payload.commandAction) {
             DeviceLightRuntimeContract.Action.MANUAL_SET -> stateStore.recordManual(
-                deviceUid,
+                event.deviceUid,
+                event.generation,
                 DeviceLightMutationParser.parseManual(payload.result)
             )
             DeviceLightRuntimeContract.Action.CHANNEL_REGIME_SET ->
                 stateStore.recordChannelRegime(
-                    deviceUid,
+                    event.deviceUid,
+                    event.generation,
                     DeviceLightMutationParser.parseChannelRegime(payload.result)
                 )
             DeviceLightRuntimeContract.Action.PROGRAM_APPLY -> stateStore.recordProgramApply(
-                deviceUid,
+                event.deviceUid,
+                event.generation,
                 DeviceLightMutationParser.parseProgramApply(payload.result)
             )
             DeviceLightRuntimeContract.Action.PROGRAM_DELETE -> stateStore.recordProgramDelete(
-                deviceUid,
+                event.deviceUid,
+                event.generation,
                 DeviceLightMutationParser.parseProgramDelete(payload.result)
             )
             DeviceLightRuntimeContract.Action.TEMPERATURE_PROTECTION_SET -> {
                 val parsed = DeviceLightTemperatureProtectionParser
                     .parseSetResult(payload.result)
                     .getOrThrow()
-                stateStore.recordTemperatureProtection(deviceUid, parsed.status)
-                true
+                stateStore.recordTemperatureProtection(
+                    event.deviceUid,
+                    event.generation,
+                    parsed.status
+                )
             }
             else -> false
         }
