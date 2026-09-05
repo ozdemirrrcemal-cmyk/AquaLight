@@ -73,7 +73,7 @@ object AquaCoolingDashboardGeometry {
 
     val optionShape = RoundedCornerShape(18.dp)
     val optionHorizontalPadding = 9.dp
-    val optionVerticalPadding = 5.dp
+    val optionVerticalPadding = 6.dp
     val optionGap = 5.dp
     val radioSize = 17.dp
     val radioStrokeWidth = 1.5.dp
@@ -85,7 +85,7 @@ object AquaCoolingDashboardGeometry {
     val modeSettingsCardMinimumHeight = 174.dp
     val modeSettingsHeaderGap = 1.dp
     val modeSettingsContentTopPadding = 4.dp
-    val modeSettingsRowHeight = 39.dp
+    val modeSettingsRowHeight = 41.dp
     val modeSettingsRowIconContainerSize = 28.dp
     val modeSettingsRowIconSize = 18.dp
     val modeSettingsRowIconGap = 10.dp
