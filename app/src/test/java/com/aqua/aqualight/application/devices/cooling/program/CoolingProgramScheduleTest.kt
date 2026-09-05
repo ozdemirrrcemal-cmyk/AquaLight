@@ -45,6 +45,37 @@ class CoolingProgramScheduleTest {
     }
 
     @Test
+    fun firmwareEndOfDayBoundaryIsValid() {
+        val slot = slot(hour(23), MINUTES_PER_DAY)
+
+        assertTrue(CoolingProgramSchedule.isValidProgram(listOf(slot), policy()))
+    }
+
+    @Test
+    fun timeEditRejectsValueOutsideFirmwareStep() {
+        val original = slot(hour(8), hour(14))
+
+        val result = CoolingProgramSchedule.updateStartTime(
+            slots = listOf(original),
+            policy = policy(timeStepMinutes = 5),
+            slotIndex = 0,
+            startMinutes = hour(8) + 1
+        )
+
+        assertEquals(
+            CoolingProgramEditResult.Rejected(CoolingProgramEditRejection.INVALID_TIME_RANGE),
+            result
+        )
+    }
+
+    @Test
+    fun validationRejectsSlotOutsideFirmwareStep() {
+        val offStep = slot(hour(8) + 1, hour(14))
+
+        assertFalse(CoolingProgramSchedule.isValidProgram(listOf(offStep), policy(timeStepMinutes = 5)))
+    }
+
+    @Test
     fun targetFanPercentSnapsToReportedPolicyStep() {
         val original = slot(hour(8), hour(14), targetFanPercent = 60)
 
@@ -117,11 +148,13 @@ class CoolingProgramScheduleTest {
 
     private fun policy(
         maximumSlotCount: Int = 6,
+        timeStepMinutes: Int = 5,
         fanPercentStep: Int = 5,
         fanOnTemperatureStepC: Double = 0.5,
         defaultFanOnTemperatureC: Double = 25.0
     ): CoolingProgramPolicy = CoolingProgramPolicy(
         maximumSlotCount = maximumSlotCount,
+        timeStepMinutes = timeStepMinutes,
         minimumSlotDurationMinutes = 15,
         fan = CoolingProgramFanPolicy(
             minimumPercent = 0,
@@ -138,6 +171,7 @@ class CoolingProgramScheduleTest {
 
     private companion object {
         const val MINUTES_PER_HOUR = 60
+        const val MINUTES_PER_DAY = 24 * MINUTES_PER_HOUR
 
         fun hour(value: Int): Int = value * MINUTES_PER_HOUR
     }
