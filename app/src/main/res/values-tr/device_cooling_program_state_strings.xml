@@ -9,6 +9,5 @@
     <string name="device_cooling_program_load_failed_title">Fan Programı yüklenemedi</string>
     <string name="device_cooling_program_load_failed_message">Cihaz kullanılabilir olduğunda tekrar dene.</string>
     <string name="device_cooling_program_retry">Tekrar Dene</string>
-    <string name="device_cooling_program_save_failed">Fan programı kaydedilemedi. Tekrar dene.</string>
     <string name="device_cooling_program_schedule_invalid">Seçilen saat aralığı geçersiz veya başka bir programla çakışıyor.</string>
 </resources>
