@@ -9,13 +9,11 @@ import com.aqua.aqualight.ui.tabs.devices.detail.cooling.presentation.root.Devic
 
 @Composable
 internal fun CoolingAlarmMessagesCard(state: DeviceCoolingRootUiState) {
-    val messages = state.activeAlarmCodes
-        .distinct()
-        .mapNotNull { code ->
-            code.toCommercialCoolingAlarmMessageRes()?.let { messageRes ->
-                stringResource(messageRes)
-            }
-        }
+    val messages = mutableListOf<String>()
+    for (code in state.activeAlarmCodes.distinct()) {
+        val messageRes = code.toCommercialCoolingAlarmMessageRes() ?: continue
+        messages += stringResource(messageRes)
+    }
     if (messages.isEmpty()) return
 
     CoolingStateMessageCard(
