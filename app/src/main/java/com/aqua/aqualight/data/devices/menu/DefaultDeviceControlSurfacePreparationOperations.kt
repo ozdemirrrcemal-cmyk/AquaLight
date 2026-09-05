@@ -76,24 +76,25 @@ internal class DefaultDeviceControlSurfacePreparationOperations(
         val preparedSurface = PreparedSurface(deviceUid, OwnerDeviceFamily.COOLING)
         freshlyPreparedSurfaces.remove(preparedSurface)
         val root = rootOperations.current(deviceUid)
-        if (root == null) {
-            return unavailable(DeviceMenuUnavailableReason.DEVICE_NOT_REGISTERED)
+        val result = when {
+            root == null -> unavailable(DeviceMenuUnavailableReason.DEVICE_NOT_REGISTERED)
+            !root.matchesCoolingCatalog() ->
+                unavailable(DeviceMenuUnavailableReason.COMMERCIAL_PRODUCT_MISMATCH)
+            else -> {
+                val authoritative = withTimeoutOrNull(COOLING_SURFACE_PREPARATION_TIMEOUT_MS) {
+                    coolingControlOperations.observeControl(deviceUid)
+                        .filterIsInstance<DeviceCoolingControlResult.Available>()
+                        .first()
+                }
+                if (authoritative == null) {
+                    unavailable(DeviceMenuUnavailableReason.CURRENT_LIVENESS_NOT_PROVEN)
+                } else {
+                    freshlyPreparedSurfaces += preparedSurface
+                    DeviceControlSurfacePreparationResult.Ready
+                }
+            }
         }
-        if (!root.matchesCoolingCatalog()) {
-            return unavailable(DeviceMenuUnavailableReason.COMMERCIAL_PRODUCT_MISMATCH)
-        }
-
-        val authoritative = withTimeoutOrNull(COOLING_SURFACE_PREPARATION_TIMEOUT_MS) {
-            coolingControlOperations.observeControl(deviceUid)
-                .filterIsInstance<DeviceCoolingControlResult.Available>()
-                .first()
-        }
-        return if (authoritative == null) {
-            unavailable(DeviceMenuUnavailableReason.CURRENT_LIVENESS_NOT_PROVEN)
-        } else {
-            freshlyPreparedSurfaces += preparedSurface
-            DeviceControlSurfacePreparationResult.Ready
-        }
+        return result
     }
 
     override fun consumeFreshPreparation(

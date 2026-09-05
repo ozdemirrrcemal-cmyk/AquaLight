@@ -209,7 +209,6 @@ internal class ActiveOwnerDependencyGraphResolver(
             reconcileCareReminders = notificationPreferenceUseCase::reconcileOwner
         )
         val dosingOperations = createDosingOperations(dependencies)
-        val rootOperations = DefaultDeviceRootOperations(dependencies.devicesRepository)
         return OwnerDependencyGraph(
             ownerUid = dependencies.ownerUid,
             sessionGeneration = dependencies.sessionGeneration,
@@ -238,17 +237,25 @@ internal class ActiveOwnerDependencyGraphResolver(
                     ownerUidProvider = ownerUidProvider
                 )
             ),
-            controlSurfacePreparationOperations =
-                DefaultDeviceControlSurfacePreparationOperations(
-                    rootOperations = rootOperations,
-                    dosingChannelOperations = dosingOperations.channelOperations,
-                    coolingControlOperations = DefaultDeviceCoolingControlOperations(
-                        dependencies.devicesRepository
-                    )
-                ),
+            controlSurfacePreparationOperations = createControlSurfacePreparationOperations(
+                dependencies = dependencies,
+                dosingOperations = dosingOperations
+            ),
             dosingOperations = dosingOperations
         )
     }
+
+    private fun createControlSurfacePreparationOperations(
+        dependencies: ActiveOwnerDependencies,
+        dosingOperations: OwnerDosingOperations
+    ): DeviceControlSurfacePreparationOperations =
+        DefaultDeviceControlSurfacePreparationOperations(
+            rootOperations = DefaultDeviceRootOperations(dependencies.devicesRepository),
+            dosingChannelOperations = dosingOperations.channelOperations,
+            coolingControlOperations = DefaultDeviceCoolingControlOperations(
+                dependencies.devicesRepository
+            )
+        )
 
     private fun createDosingOperations(
         dependencies: ActiveOwnerDependencies
