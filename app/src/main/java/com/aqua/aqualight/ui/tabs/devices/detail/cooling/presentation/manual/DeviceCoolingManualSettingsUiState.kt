@@ -1,6 +1,7 @@
 package com.aqua.aqualight.ui.tabs.devices.detail.cooling.presentation.manual
 
 import com.aqua.aqualight.application.devices.cooling.control.DeviceCoolingControlFailure
+import com.aqua.aqualight.application.devices.cooling.control.DeviceCoolingControlMode
 import com.aqua.aqualight.application.devices.cooling.control.DeviceCoolingManualFanCapabilities
 import com.aqua.aqualight.ui.tabs.devices.detail.cooling.presentation.common.CoolingDataState
 import com.aqua.aqualight.ui.tabs.devices.detail.cooling.presentation.common.CoolingMutationState
@@ -26,8 +27,12 @@ data class DeviceCoolingManualSettingsUiState(
     val capabilities: DeviceCoolingManualFanCapabilities?
         get() = presentation?.manualFanCapabilities
 
+    val isManualMode: Boolean
+        get() = presentation?.selectedMode == DeviceCoolingControlMode.MANUAL
+
     val canWrite: Boolean
         get() = controlState.isCurrentAuthoritative &&
+            isManualMode &&
             mutationState != CoolingMutationState.Saving &&
             targetPercent != null &&
             capabilities?.writable == true &&
