@@ -27,8 +27,8 @@ internal object DeviceCoolingV1FailureMapper {
         }
     }
 
-    private fun DeviceRuntimeCommandOutcome.FirmwareError.hasExpectedStatus(): Boolean =
-        statusCode == when (code) {
+    private fun DeviceRuntimeCommandOutcome.FirmwareError.hasExpectedStatus(): Boolean {
+        val expectedStatus = when (code) {
             FirmwareCode.BAD_REQUEST -> HTTP_BAD_REQUEST
             FirmwareCode.MISSING_FIELD,
             FirmwareCode.INVALID_VALUE -> HTTP_UNPROCESSABLE_ENTITY
@@ -39,6 +39,8 @@ internal object DeviceCoolingV1FailureMapper {
             FirmwareCode.STORAGE_ERROR -> HTTP_INTERNAL_ERROR
             else -> return true
         }
+        return statusCode == expectedStatus
+    }
 
     private fun mapInvalidValue(
         error: DeviceRuntimeCommandOutcome.FirmwareError
