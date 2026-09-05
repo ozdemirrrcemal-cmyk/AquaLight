@@ -1,5 +1,7 @@
 package com.aqua.aqualight.application.devices.cooling.program
 
+import com.aqua.aqualight.application.devices.cooling.DeviceCoolingCommandFailure
+
 sealed interface CoolingProgramReadResult {
     data class Loaded(
         val snapshot: CoolingProgramSnapshot
@@ -8,6 +10,9 @@ sealed interface CoolingProgramReadResult {
     data object Unsupported : CoolingProgramReadResult
     data object Unavailable : CoolingProgramReadResult
     data object NotConnected : CoolingProgramReadResult
+    data class Rejected(
+        val reason: DeviceCoolingCommandFailure
+    ) : CoolingProgramReadResult
 }
 
 sealed interface CoolingProgramSaveResult {
@@ -18,6 +23,8 @@ sealed interface CoolingProgramSaveResult {
     data object Unsupported : CoolingProgramSaveResult
     data object Unavailable : CoolingProgramSaveResult
     data object NotConnected : CoolingProgramSaveResult
-    data object Rejected : CoolingProgramSaveResult
+    data class Rejected(
+        val reason: DeviceCoolingCommandFailure
+    ) : CoolingProgramSaveResult
     data object InvalidConfiguration : CoolingProgramSaveResult
 }
