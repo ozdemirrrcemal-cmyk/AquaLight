@@ -159,7 +159,7 @@ private fun DeviceCoolingAutomaticFailure.toAutomaticTerminalDataState(): Coolin
     DeviceCoolingAutomaticFailure.TemporaryFailure -> CoolingDataState.Unavailable
     DeviceCoolingAutomaticFailure.ReadOnly,
     DeviceCoolingAutomaticFailure.InvalidConfiguration,
-    DeviceCoolingAutomaticFailure.Rejected -> CoolingDataState.OperationError(this)
+    is DeviceCoolingAutomaticFailure.Rejected -> CoolingDataState.OperationError(this)
 }
 
 private val DeviceCoolingAutomaticSettingsSnapshot.completeConfiguration:
