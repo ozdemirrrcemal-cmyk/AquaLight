@@ -58,22 +58,25 @@ private data class AutomaticStateMessage(
 
 private fun automaticStateMessage(
     state: DeviceCoolingAutomaticSettingsUiState
-): AutomaticStateMessage? = when (val dataState = state.dataState) {
-    CoolingDataState.Initial,
-    CoolingDataState.Loading -> automaticLoadingMessage()
-    is CoolingDataState.Content -> contentAutomaticMessage(state, dataState.freshness)
-    is CoolingDataState.Empty -> AutomaticStateMessage(
-        titleRes = R.string.device_cooling_automatic_invalid_title,
-        messageRes = R.string.device_cooling_automatic_invalid_message,
-        retryAvailable = true
-    )
-    CoolingDataState.Unsupported -> AutomaticStateMessage(
-        titleRes = R.string.device_cooling_automatic_unsupported_title,
-        messageRes = R.string.device_cooling_automatic_unsupported_message,
-        retryAvailable = false
-    )
-    CoolingDataState.Unavailable -> automaticUnavailableMessage()
-    is CoolingDataState.OperationError -> dataState.failure.toAutomaticErrorMessage()
+): AutomaticStateMessage? {
+    state.saveFailure?.let { return it.toAutomaticErrorMessage() }
+    return when (val dataState = state.dataState) {
+        CoolingDataState.Initial,
+        CoolingDataState.Loading -> automaticLoadingMessage()
+        is CoolingDataState.Content -> contentAutomaticMessage(state, dataState.freshness)
+        is CoolingDataState.Empty -> AutomaticStateMessage(
+            titleRes = R.string.device_cooling_automatic_invalid_title,
+            messageRes = R.string.device_cooling_automatic_invalid_message,
+            retryAvailable = true
+        )
+        CoolingDataState.Unsupported -> AutomaticStateMessage(
+            titleRes = R.string.device_cooling_automatic_unsupported_title,
+            messageRes = R.string.device_cooling_automatic_unsupported_message,
+            retryAvailable = false
+        )
+        CoolingDataState.Unavailable -> automaticUnavailableMessage()
+        is CoolingDataState.OperationError -> dataState.failure.toAutomaticErrorMessage()
+    }
 }
 
 private fun contentAutomaticMessage(
