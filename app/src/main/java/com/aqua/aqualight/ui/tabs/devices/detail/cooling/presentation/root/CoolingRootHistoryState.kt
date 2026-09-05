@@ -18,5 +18,6 @@ internal fun DeviceCoolingTemperatureHistoryLoadResult.toRootHistoryState(): Coo
         }
     }
     DeviceCoolingTemperatureHistoryLoadResult.Unsupported -> CoolingDataState.Unsupported
-    DeviceCoolingTemperatureHistoryLoadResult.Unavailable -> CoolingDataState.Unavailable
+    DeviceCoolingTemperatureHistoryLoadResult.Unavailable,
+    is DeviceCoolingTemperatureHistoryLoadResult.Rejected -> CoolingDataState.Unavailable
 }
