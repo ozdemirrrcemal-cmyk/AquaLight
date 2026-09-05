@@ -1,5 +1,6 @@
 package com.aqua.aqualight.data.devices.cooling.program
 
+import com.aqua.aqualight.application.devices.cooling.DeviceCoolingCommandFailure
 import com.aqua.aqualight.application.devices.cooling.program.CoolingProgramFanOnTemperaturePolicy
 import com.aqua.aqualight.application.devices.cooling.program.CoolingProgramFanPolicy
 import com.aqua.aqualight.application.devices.cooling.program.CoolingProgramPolicy
@@ -10,6 +11,7 @@ import com.aqua.aqualight.application.devices.cooling.program.CoolingProgramSnap
 import com.aqua.aqualight.application.devices.cooling.program.CoolingProgramValidation
 import com.aqua.aqualight.application.devices.cooling.program.CoolingProgramValidationResult
 import com.aqua.aqualight.application.devices.cooling.program.DeviceCoolingProgramOperations
+import com.aqua.aqualight.data.devices.cooling.v1.DeviceCoolingV1FailureMapper
 import com.aqua.aqualight.data.devices.model.DeviceFamily
 import com.aqua.aqualight.data.devices.model.DeviceSnapshot
 import com.aqua.aqualight.data.devices.model.DeviceUid
@@ -87,15 +89,19 @@ private suspend fun ProgramRuntimeResolution.Ready.readProgram(): CoolingProgram
                 runCatching(outcome.value::toApplicationSnapshot)
                     .fold(
                         onSuccess = CoolingProgramReadResult::Loaded,
-                        onFailure = { CoolingProgramReadResult.Unavailable }
+                        onFailure = {
+                            CoolingProgramReadResult.Rejected(DeviceCoolingCommandFailure.PROTOCOL_ERROR)
+                        }
                     )
             }
         }
         is DeviceRuntimeCommandOutcome.NotConnected,
         is DeviceRuntimeCommandOutcome.NotAuthenticated -> CoolingProgramReadResult.NotConnected
         is DeviceRuntimeCommandOutcome.UnsupportedByDevice -> CoolingProgramReadResult.Unsupported
-        is DeviceRuntimeCommandOutcome.FirmwareError,
-        is DeviceRuntimeCommandOutcome.ProtocolError,
+        is DeviceRuntimeCommandOutcome.FirmwareError ->
+            CoolingProgramReadResult.Rejected(DeviceCoolingV1FailureMapper.map(outcome))
+        is DeviceRuntimeCommandOutcome.ProtocolError ->
+            CoolingProgramReadResult.Rejected(DeviceCoolingCommandFailure.PROTOCOL_ERROR)
         is DeviceRuntimeCommandOutcome.SendFailed,
         is DeviceRuntimeCommandOutcome.Timeout,
         is DeviceRuntimeCommandOutcome.Cancelled -> CoolingProgramReadResult.Unavailable
@@ -117,8 +123,9 @@ private suspend fun ProgramRuntimeResolution.Ready.saveProgram(
         is DeviceRuntimeCommandOutcome.UnsupportedByDevice ->
             return CoolingProgramSaveResult.Unsupported
         is DeviceRuntimeCommandOutcome.FirmwareError ->
-            return CoolingProgramSaveResult.Rejected
-        is DeviceRuntimeCommandOutcome.ProtocolError,
+            return CoolingProgramSaveResult.Rejected(DeviceCoolingV1FailureMapper.map(outcome))
+        is DeviceRuntimeCommandOutcome.ProtocolError ->
+            return CoolingProgramSaveResult.Rejected(DeviceCoolingCommandFailure.PROTOCOL_ERROR)
         is DeviceRuntimeCommandOutcome.SendFailed,
         is DeviceRuntimeCommandOutcome.Timeout,
         is DeviceRuntimeCommandOutcome.Cancelled ->
@@ -156,18 +163,22 @@ private suspend fun ProgramRuntimeResolution.Ready.saveProgram(
                         if (committed == requested) {
                             CoolingProgramSaveResult.Saved(snapshot.copy(slots = committed))
                         } else {
-                            CoolingProgramSaveResult.Unavailable
+                            CoolingProgramSaveResult.Rejected(DeviceCoolingCommandFailure.PROTOCOL_ERROR)
                         }
                     },
-                    onFailure = { CoolingProgramSaveResult.InvalidConfiguration }
+                    onFailure = {
+                        CoolingProgramSaveResult.Rejected(DeviceCoolingCommandFailure.PROTOCOL_ERROR)
+                    }
                 )
             }
         }
         is DeviceRuntimeCommandOutcome.NotConnected,
         is DeviceRuntimeCommandOutcome.NotAuthenticated -> CoolingProgramSaveResult.NotConnected
         is DeviceRuntimeCommandOutcome.UnsupportedByDevice -> CoolingProgramSaveResult.Unsupported
-        is DeviceRuntimeCommandOutcome.FirmwareError -> CoolingProgramSaveResult.Rejected
-        is DeviceRuntimeCommandOutcome.ProtocolError -> CoolingProgramSaveResult.InvalidConfiguration
+        is DeviceRuntimeCommandOutcome.FirmwareError ->
+            CoolingProgramSaveResult.Rejected(DeviceCoolingV1FailureMapper.map(outcome))
+        is DeviceRuntimeCommandOutcome.ProtocolError ->
+            CoolingProgramSaveResult.Rejected(DeviceCoolingCommandFailure.PROTOCOL_ERROR)
         is DeviceRuntimeCommandOutcome.SendFailed,
         is DeviceRuntimeCommandOutcome.Timeout,
         is DeviceRuntimeCommandOutcome.Cancelled -> CoolingProgramSaveResult.Unavailable
@@ -183,7 +194,10 @@ private fun DeviceCoolingV1ProgramSnapshot.toApplicationSnapshot(): CoolingProgr
     ) { "Firmware returned a Cooling program outside the reported policy." }
     return CoolingProgramSnapshot(
         slots = applicationSlots,
-        policy = applicationPolicy
+        policy = applicationPolicy,
+        clockReady = clockReady,
+        currentMinuteOfDay = currentMinuteOfDay,
+        activeSlotIndex = activeSlotIndex
     )
 }
 
@@ -193,6 +207,7 @@ private fun DeviceCoolingV1ProgramPolicy.toApplicationPolicy(): CoolingProgramPo
     val fanPercentStep = fan.stepPercent.toExactPercentInt()
     return CoolingProgramPolicy(
         maximumSlotCount = maximumSlotCount,
+        timeStepMinutes = timeStepMinutes,
         minimumSlotDurationMinutes = minimumDurationMinutes,
         fan = CoolingProgramFanPolicy(
             minimumPercent = minimumFanPercent,
