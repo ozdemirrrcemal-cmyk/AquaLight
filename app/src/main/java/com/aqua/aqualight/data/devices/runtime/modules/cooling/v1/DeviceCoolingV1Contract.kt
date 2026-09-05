@@ -26,7 +26,7 @@ object DeviceCoolingV1Contract {
         const val TELEMETRY_CHANGED = "cooling.telemetry.changed"
     }
 
-    /** Exact `errors` catalog from the pinned firmware Cooling V1 fixture. */
+    /** Exact effective Cooling V1 rejection catalog: shared fixture plus command-local emissions. */
     object Error {
         const val BAD_REQUEST = "BAD_REQUEST"
         const val MISSING_FIELD = "MISSING_FIELD"
