@@ -1,5 +1,11 @@
 package com.aqua.aqualight.data.devices.cooling.control
 
+import com.aqua.aqualight.application.devices.cooling.DeviceCoolingAlarmCode
+import com.aqua.aqualight.application.devices.cooling.DeviceCoolingAlarmSeverity
+import com.aqua.aqualight.application.devices.cooling.DeviceCoolingAlarmSnapshot
+import com.aqua.aqualight.application.devices.cooling.DeviceCoolingFanHealth
+import com.aqua.aqualight.application.devices.cooling.DeviceCoolingSensorHealth
+import com.aqua.aqualight.application.devices.cooling.DeviceCoolingTelemetrySnapshot
 import com.aqua.aqualight.application.devices.cooling.control.DeviceCoolingControlCapabilities
 import com.aqua.aqualight.application.devices.cooling.control.DeviceCoolingControlFailure
 import com.aqua.aqualight.application.devices.cooling.control.DeviceCoolingControlMode
@@ -17,10 +23,12 @@ import com.aqua.aqualight.data.devices.runtime.modules.cooling.DeviceCoolingRunt
 import com.aqua.aqualight.data.devices.runtime.modules.cooling.DeviceCoolingRuntimeState
 import com.aqua.aqualight.data.devices.runtime.modules.cooling.currentAuthoritativeState
 import com.aqua.aqualight.data.devices.runtime.modules.cooling.currentState
+import com.aqua.aqualight.data.devices.runtime.modules.cooling.v1.DeviceCoolingV1Alarm
 import com.aqua.aqualight.data.devices.runtime.modules.cooling.v1.DeviceCoolingV1ConfigApplyPayload
 import com.aqua.aqualight.data.devices.runtime.modules.cooling.v1.DeviceCoolingV1Contract
 import com.aqua.aqualight.data.devices.runtime.modules.cooling.v1.DeviceCoolingV1ControlMode
 import com.aqua.aqualight.data.devices.runtime.modules.cooling.v1.DeviceCoolingV1ManualApplyPayload
+import com.aqua.aqualight.data.devices.runtime.modules.cooling.v1.DeviceCoolingV1Telemetry
 import kotlin.math.roundToInt
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.combine
@@ -190,9 +198,54 @@ private fun DeviceCoolingRuntimeState.toControlSnapshot(): DeviceCoolingControlS
         manualFanPercent = config.manualTargetPercent.toIntPercentOrNull(),
         actualFanPercent = live?.fan?.outputPercent?.toIntPercentOrNull(),
         tankTemperatureC = waterTemperature,
-        capabilities = COOLING_V1_CONTROL_CAPABILITIES
+        capabilities = COOLING_V1_CONTROL_CAPABILITIES,
+        telemetry = live?.toApplicationTelemetrySnapshot()
     )
 }
+
+private fun DeviceCoolingV1Telemetry.toApplicationTelemetrySnapshot(): DeviceCoolingTelemetrySnapshot {
+    val ambient = sensors.firstOrNull { sensor ->
+        sensor.sensorKey == DeviceCoolingV1Contract.AMBIENT_SENSOR_KEY
+    }
+    return DeviceCoolingTelemetrySnapshot(
+        roomTemperatureC = ambient?.temperatureC.takeIf { ambient?.readingValid == true },
+        humidityPercent = ambient?.humidityPercent.takeIf { ambient?.readingValid == true },
+        powerWatts = power.powerWatts,
+        estimatedKwhPerDay = power.estimatedKwhPerDay,
+        fanHealth = when (healthSummary.fanHealth) {
+            "UNVERIFIED" -> DeviceCoolingFanHealth.UNVERIFIED
+            "HARDWARE_FAULT" -> DeviceCoolingFanHealth.HARDWARE_FAULT
+            else -> DeviceCoolingFanHealth.UNKNOWN
+        },
+        sensorHealth = when (healthSummary.sensorHealth) {
+            "OK" -> DeviceCoolingSensorHealth.OK
+            "WARNING" -> DeviceCoolingSensorHealth.WARNING
+            "CRITICAL" -> DeviceCoolingSensorHealth.CRITICAL
+            else -> DeviceCoolingSensorHealth.UNKNOWN
+        },
+        alarms = alarms.map(DeviceCoolingV1Alarm::toApplicationAlarm)
+    )
+}
+
+private fun DeviceCoolingV1Alarm.toApplicationAlarm(): DeviceCoolingAlarmSnapshot =
+    DeviceCoolingAlarmSnapshot(
+        code = when (code) {
+            "WATER_SENSOR_FAULT" -> DeviceCoolingAlarmCode.WATER_SENSOR_FAULT
+            "AMBIENT_SENSOR_FAULT" -> DeviceCoolingAlarmCode.AMBIENT_SENSOR_FAULT
+            "FAN_HARDWARE_FAULT" -> DeviceCoolingAlarmCode.FAN_HARDWARE_FAULT
+            "CLOCK_UNSYNCED" -> DeviceCoolingAlarmCode.CLOCK_UNSYNCED
+            "HISTORY_STORAGE_FAULT" -> DeviceCoolingAlarmCode.HISTORY_STORAGE_FAULT
+            "CONFIG_STORAGE_FAULT" -> DeviceCoolingAlarmCode.CONFIG_STORAGE_FAULT
+            else -> DeviceCoolingAlarmCode.UNKNOWN
+        },
+        severity = when (severity) {
+            "WARNING" -> DeviceCoolingAlarmSeverity.WARNING
+            "CRITICAL" -> DeviceCoolingAlarmSeverity.CRITICAL
+            else -> DeviceCoolingAlarmSeverity.UNKNOWN
+        },
+        active = active,
+        latched = latched
+    )
 
 private fun DeviceSnapshot.isSupportedCoolingV1(): Boolean =
     product.family == DeviceFamily.COOLING &&
