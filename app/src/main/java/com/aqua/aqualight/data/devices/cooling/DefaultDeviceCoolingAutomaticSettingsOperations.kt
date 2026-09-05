@@ -5,6 +5,7 @@ import com.aqua.aqualight.application.devices.cooling.DeviceCoolingAutomaticFail
 import com.aqua.aqualight.application.devices.cooling.DeviceCoolingAutomaticSettingsOperations
 import com.aqua.aqualight.application.devices.cooling.DeviceCoolingAutomaticSettingsSnapshot
 import com.aqua.aqualight.application.devices.cooling.DeviceCoolingAutomaticTemperaturePolicy
+import com.aqua.aqualight.data.devices.cooling.v1.DeviceCoolingV1FailureMapper
 import com.aqua.aqualight.data.devices.model.DeviceFamily
 import com.aqua.aqualight.data.devices.model.DeviceSnapshot
 import com.aqua.aqualight.data.devices.model.DeviceUid
@@ -250,9 +251,14 @@ private fun DeviceRuntimeCommandOutcome<*>.toAutomaticFailure(): DeviceCoolingAu
         is DeviceRuntimeCommandOutcome.NotConnected,
         is DeviceRuntimeCommandOutcome.NotAuthenticated -> failed(DeviceCoolingAutomaticFailure.NotConnected)
         is DeviceRuntimeCommandOutcome.UnsupportedByDevice -> failed(DeviceCoolingAutomaticFailure.Unsupported)
-        is DeviceRuntimeCommandOutcome.FirmwareError -> failed(DeviceCoolingAutomaticFailure.Rejected)
-        is DeviceRuntimeCommandOutcome.ProtocolError ->
-            failed(DeviceCoolingAutomaticFailure.InvalidConfiguration)
+        is DeviceRuntimeCommandOutcome.FirmwareError -> failed(
+            DeviceCoolingAutomaticFailure.Rejected(DeviceCoolingV1FailureMapper.map(this))
+        )
+        is DeviceRuntimeCommandOutcome.ProtocolError -> failed(
+            DeviceCoolingAutomaticFailure.Rejected(
+                com.aqua.aqualight.application.devices.cooling.DeviceCoolingCommandFailure.PROTOCOL_ERROR
+            )
+        )
         is DeviceRuntimeCommandOutcome.SendFailed,
         is DeviceRuntimeCommandOutcome.Timeout,
         is DeviceRuntimeCommandOutcome.Cancelled ->
