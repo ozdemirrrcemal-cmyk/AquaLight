@@ -8,7 +8,9 @@ sealed interface DeviceCoolingAutomaticFailure {
     data object NotConnected : DeviceCoolingAutomaticFailure
     data object InvalidConfiguration : DeviceCoolingAutomaticFailure
     data object TemporaryFailure : DeviceCoolingAutomaticFailure
-    data object Rejected : DeviceCoolingAutomaticFailure
+    data class Rejected(
+        val reason: DeviceCoolingCommandFailure
+    ) : DeviceCoolingAutomaticFailure
 }
 
 /** Typed result for Automatic Cooling commands that do not return a payload. */
