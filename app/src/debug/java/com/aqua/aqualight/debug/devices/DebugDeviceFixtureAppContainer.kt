@@ -78,10 +78,7 @@ private class DebugDeviceFixtureViewModelFactory(
         val repository = graph.devicesRepository
         return DeviceCoolingRootViewModel(
             operations = rootOperations(graph),
-            controlOperations = DebugFixtureCoolingControlOperations(
-                delegate = DefaultDeviceCoolingControlOperations(repository),
-                fixtures = fixtures
-            ),
+            controlOperations = DefaultDeviceCoolingControlOperations(repository),
             historyOperations = DefaultDeviceCoolingTemperatureHistoryOperations(repository),
             automaticSettingsOperations = DefaultDeviceCoolingAutomaticSettingsOperations(repository)
         )
