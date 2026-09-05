@@ -508,8 +508,8 @@ fun AquaDeviceMenuChoiceChip(
 fun AquaDeviceMenuToggle(
     checked: Boolean,
     contentDescription: String,
-    activeColor: Color? = null,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    activeColor: Color? = null
 ) {
     val colors = aquaDeviceMenuColors()
     val resolvedActiveColor = activeColor ?: colors.accent
