@@ -34,9 +34,10 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.graphics.ImageBitmap
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.booleanResource
-import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.res.imageResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.clearAndSetSemantics
@@ -128,20 +129,27 @@ private fun CoolingHeroDevice(
     fanMotionPhase: Float,
     modifier: Modifier
 ) {
+    val deviceImage = ImageBitmap.imageResource(R.drawable.ic_device_cooling)
+    val deviceAlpha = presentation.deviceAlpha()
+
     Box(modifier = modifier) {
         Image(
-            painter = painterResource(R.drawable.ic_device_cooling),
+            bitmap = deviceImage,
             contentDescription = null,
             contentScale = ContentScale.Fit,
             modifier = Modifier
                 .fillMaxSize()
-                .alpha(presentation.deviceAlpha())
+                .alpha(deviceAlpha)
         )
         if (motion.isActive) {
-            Canvas(modifier = Modifier.fillMaxSize()) {
+            Canvas(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .alpha(deviceAlpha)
+            ) {
                 drawCoolingFanRotor(
-                    rotationPhase = fanMotionPhase,
-                    motionIntensity = motion.intensity
+                    deviceImage = deviceImage,
+                    rotationPhase = fanMotionPhase
                 )
             }
         }
