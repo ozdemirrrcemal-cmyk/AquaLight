@@ -46,10 +46,48 @@ class AquaTimePickerBottomSheetTest {
     }
 
     @Test
-    fun `invalid clock values are rejected`() {
+    fun `end of day maps to 1440 only when explicitly enabled`() {
+        assertEquals(
+            1_440,
+            timePickerMinutesOfDay(hour = 24, minute = 0, allowEndOfDay = true)
+        )
         assertThrows(IllegalArgumentException::class.java) {
             timePickerMinutesOfDay(hour = 24, minute = 0)
         }
+        assertThrows(IllegalArgumentException::class.java) {
+            timePickerMinutesOfDay(hour = 24, minute = 1, allowEndOfDay = true)
+        }
+    }
+
+    @Test
+    fun `end of day request requires exactly 24 00`() {
+        AquaTimePickerBottomSheet.Request(
+            title = "Select end time",
+            message = "End of period",
+            initialHour = 24,
+            initialMinute = 0,
+            allowEndOfDay = true,
+            confirmText = "Apply",
+            cancelText = "Cancel",
+            resultTarget = AquaTimePickerBottomSheet.ResultTarget("end-time-result")
+        )
+
+        assertThrows(IllegalArgumentException::class.java) {
+            AquaTimePickerBottomSheet.Request(
+                title = "Select end time",
+                message = "End of period",
+                initialHour = 24,
+                initialMinute = 5,
+                allowEndOfDay = true,
+                confirmText = "Apply",
+                cancelText = "Cancel",
+                resultTarget = AquaTimePickerBottomSheet.ResultTarget("end-time-result")
+            )
+        }
+    }
+
+    @Test
+    fun `invalid clock values are rejected`() {
         assertThrows(IllegalArgumentException::class.java) {
             timePickerMinutesOfDay(hour = 0, minute = 60)
         }
