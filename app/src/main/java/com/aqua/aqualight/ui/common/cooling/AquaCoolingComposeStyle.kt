@@ -1,5 +1,3 @@
-@file:Suppress("MagicNumber")
-
 package com.aqua.aqualight.ui.common.cooling
 
 import androidx.compose.foundation.shape.RoundedCornerShape

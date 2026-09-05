@@ -1,5 +1,3 @@
-@file:Suppress("LongMethod", "LongParameterList", "MagicNumber")
-
 package com.aqua.aqualight.ui.tabs.devices.detail.cooling.presentation.dashboard
 
 import androidx.compose.foundation.Canvas

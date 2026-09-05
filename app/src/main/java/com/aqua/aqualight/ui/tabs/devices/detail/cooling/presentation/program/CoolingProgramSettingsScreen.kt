@@ -1,5 +1,3 @@
-@file:Suppress("LongMethod", "MagicNumber", "TooManyFunctions")
-
 package com.aqua.aqualight.ui.tabs.devices.detail.cooling.presentation.program
 
 import android.content.Context

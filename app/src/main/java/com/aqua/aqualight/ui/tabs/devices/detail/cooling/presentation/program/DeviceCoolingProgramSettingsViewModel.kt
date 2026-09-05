@@ -287,9 +287,6 @@ data class DeviceCoolingProgramSettingsUiState(
     val canSave: Boolean
         get() = hasChanges && mutationState != CoolingMutationState.Saving
 
-    @Suppress("UNUSED_PARAMETER")
-    fun activeSlotAt(minutesOfDay: Int): DeviceCoolingProgramSlot? = authoritativeActiveSlot
-
     private val hasLoadedProgram: Boolean
         get() = dataState is CoolingDataState.Content || dataState is CoolingDataState.Empty
 }

@@ -1,5 +1,3 @@
-@file:Suppress("LongMethod")
-
 package com.aqua.aqualight.ui.tabs.devices.detail.cooling.presentation.dashboard
 
 import androidx.compose.foundation.background
