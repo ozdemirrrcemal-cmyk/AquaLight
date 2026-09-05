@@ -21,7 +21,7 @@ data class CoolingProgramSlot(
 ) {
     init {
         require(startMinutes in 0 until COOLING_PROGRAM_MINUTES_PER_DAY)
-        require(endMinutes in 1 until COOLING_PROGRAM_MINUTES_PER_DAY)
+        require(endMinutes in 1..COOLING_PROGRAM_MINUTES_PER_DAY)
         require(startMinutes < endMinutes) {
             "Cooling program periods must stay within one calendar day."
         }
@@ -32,5 +32,17 @@ data class CoolingProgramSlot(
 
 data class CoolingProgramSnapshot(
     val slots: List<CoolingProgramSlot>,
-    val policy: CoolingProgramPolicy
-)
+    val policy: CoolingProgramPolicy,
+    val clockReady: Boolean,
+    val currentMinuteOfDay: Int?,
+    val activeSlotIndex: Int?
+) {
+    init {
+        require(clockReady == (currentMinuteOfDay != null))
+        require(currentMinuteOfDay == null || currentMinuteOfDay in 0 until COOLING_PROGRAM_MINUTES_PER_DAY)
+        require(activeSlotIndex == null || activeSlotIndex in slots.indices)
+    }
+
+    val activeSlot: CoolingProgramSlot?
+        get() = activeSlotIndex?.let(slots::getOrNull)
+}
