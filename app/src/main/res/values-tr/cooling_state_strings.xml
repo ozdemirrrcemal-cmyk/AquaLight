@@ -5,7 +5,7 @@
     <string name="device_cooling_manual_loading_title">Manuel ayarlar yükleniyor</string>
     <string name="device_cooling_manual_loading_message">Cihazın doğrulanmış manuel hedefi bekleniyor.</string>
     <string name="device_cooling_manual_unsupported_title">Manuel ayarlar desteklenmiyor</string>
-    <string name="device_cooling_manual_unsupported_message">Bağlı firmware yazılabilir bir manuel hedef sağlamıyor.</string>
+    <string name="device_cooling_manual_unsupported_message">Bağlı cihaz yazılabilir bir manuel hedef sağlamıyor.</string>
     <string name="device_cooling_manual_unavailable_title">Manuel ayarlar kullanılamıyor</string>
     <string name="device_cooling_manual_unavailable_message">Manuel hedef şu anda okunamıyor. Tekrar deneyin.</string>
     <string name="device_cooling_manual_invalid_title">Manuel ayarlar geçersiz</string>
@@ -20,7 +20,7 @@
     <string name="device_cooling_history_empty_title">Henüz geçmiş yok</string>
     <string name="device_cooling_history_empty_message">Cihaz bu zaman aralığı için sıcaklık ölçümü döndürmedi.</string>
     <string name="device_cooling_history_unsupported_title">Geçmiş desteklenmiyor</string>
-    <string name="device_cooling_history_unsupported_message">Bağlı firmware sıcaklık geçmişi sağlamıyor.</string>
+    <string name="device_cooling_history_unsupported_message">Bağlı cihaz sıcaklık geçmişi sağlamıyor.</string>
     <string name="device_cooling_history_unavailable_title">Geçmiş kullanılamıyor</string>
     <string name="device_cooling_history_unavailable_message">Sıcaklık geçmişi şu anda okunamıyor. Tekrar deneyin.</string>
 
@@ -31,9 +31,9 @@
     <string name="device_cooling_automatic_stale_title">Otomatik ayarların yenilenmesi gerekiyor</string>
     <string name="device_cooling_automatic_stale_message">Son doğrulanmış ayarlar gösteriliyor. Yenileme başarılı olana kadar düzenleme kapalıdır.</string>
     <string name="device_cooling_automatic_read_only_title">Otomatik ayarlar salt okunur</string>
-    <string name="device_cooling_automatic_read_only_message">Bağlı firmware bu ayarları sağlıyor ancak düzenlenmelerine izin vermiyor.</string>
+    <string name="device_cooling_automatic_read_only_message">Bağlı cihaz bu ayarları sağlıyor ancak düzenlenmelerine izin vermiyor.</string>
     <string name="device_cooling_automatic_unsupported_title">Otomatik ayarlar desteklenmiyor</string>
-    <string name="device_cooling_automatic_unsupported_message">Bağlı firmware bu otomatik yapılandırmayı sağlamıyor.</string>
+    <string name="device_cooling_automatic_unsupported_message">Bağlı cihaz bu otomatik yapılandırmayı sağlamıyor.</string>
     <string name="device_cooling_automatic_unavailable_title">Otomatik ayarlar kullanılamıyor</string>
     <string name="device_cooling_automatic_unavailable_message">Otomatik ayarlar şu anda okunamıyor. Tekrar deneyin.</string>
     <string name="device_cooling_automatic_invalid_title">Otomatik ayarlar geçersiz</string>
