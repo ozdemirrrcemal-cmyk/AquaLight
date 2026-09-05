@@ -13,6 +13,7 @@ import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.drawscope.Stroke
+import androidx.compose.ui.res.colorResource
 import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.contentDescription
@@ -30,7 +31,10 @@ internal fun DosingReservoirSummary(
     typography: AquaDeviceCardTypography,
     modifier: Modifier = Modifier
 ) {
-    val color = state.tone.color(colors)
+    val statusColor = state.tone.statusColorOrNull(colors)
+    val indicatorColor = statusColor
+        ?: colorResource(R.color.aqua_card_device_dosing_progress)
+    val labelColor = statusColor ?: colors.primaryText
     val label = state.estimatedRemainingDays?.let { days ->
         pluralStringResource(
             R.plurals.device_dosing_channel_reservoir_days_format,
@@ -53,14 +57,14 @@ internal fun DosingReservoirSummary(
     ) {
         DosingReservoirGlyph(
             fillFraction = state.fillFraction,
-            color = color,
+            color = indicatorColor,
             outlineColor = colors.secondaryText,
             modifier = Modifier.size(RESERVOIR_ICON_SIZE)
         )
         BasicText(
             text = label,
             modifier = Modifier.weight(1f),
-            style = typography.caption.copy(color = color),
+            style = typography.caption.copy(color = labelColor),
             maxLines = 1,
             overflow = TextOverflow.Ellipsis
         )
@@ -117,11 +121,13 @@ private fun DosingReservoirGlyph(
     }
 }
 
-private fun DosingReservoirTone.color(colors: AquaDeviceCardColors): Color = when (this) {
-    DosingReservoirTone.NORMAL -> colors.accent
+private fun DosingReservoirTone.statusColorOrNull(
+    colors: AquaDeviceCardColors
+): Color? = when (this) {
+    DosingReservoirTone.NORMAL -> null
     DosingReservoirTone.WARNING -> colors.warning
-    DosingReservoirTone.CRITICAL,
-    DosingReservoirTone.UNCERTAIN -> colors.danger
+    DosingReservoirTone.CRITICAL -> colors.danger
+    DosingReservoirTone.UNCERTAIN -> colors.secondaryText
 }
 
 private const val BODY_LEFT = 0.18f

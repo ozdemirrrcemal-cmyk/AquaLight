@@ -279,40 +279,53 @@ private fun AutomaticSilentModeCard(
                 AquaCoolingAutomaticGeometry.silentModeContentGap
             )
         ) {
-            Column(
-                modifier = Modifier.weight(1f),
-                verticalArrangement = Arrangement.spacedBy(
-                    AquaCoolingAutomaticGeometry.silentModeContentGap / 2
-                )
-            ) {
-                BasicText(
-                    text = stringResource(R.string.device_cooling_automatic_silent_mode_title),
-                    style = typography.title.copy(color = colors.primaryText)
-                )
-                state.silentModeMaximumFanPercent?.let { maximumPercent ->
-                    BasicText(
-                        text = stringResource(
-                            R.string.device_cooling_automatic_silent_mode_description,
-                            maximumPercent
-                        ),
-                        style = typography.micro.copy(color = colors.secondaryText)
-                    )
-                }
-                if (!state.silentModeFirmwareBacked) {
-                    BasicText(
-                        text = stringResource(
-                            R.string.device_cooling_automatic_silent_mode_unavailable
-                        ),
-                        style = typography.micro.copy(color = colors.warning)
-                    )
-                }
-            }
+            AutomaticSilentModeCopy(
+                state = state,
+                colors = colors,
+                typography = typography,
+                modifier = Modifier.weight(1f)
+            )
             AquaDeviceMenuToggle(
                 checked = state.draftSilentModeEnabled,
                 contentDescription = stringResource(
                     R.string.device_cooling_automatic_silent_mode_toggle_description
                 ),
                 activeColor = colors.accent
+            )
+        }
+    }
+}
+
+@Composable
+private fun AutomaticSilentModeCopy(
+    state: DeviceCoolingAutomaticSettingsUiState,
+    colors: AquaDeviceCardColors,
+    typography: AquaDeviceCardTypography,
+    modifier: Modifier = Modifier
+) {
+    Column(
+        modifier = modifier,
+        verticalArrangement = Arrangement.spacedBy(
+            AquaCoolingAutomaticGeometry.silentModeContentGap / 2
+        )
+    ) {
+        BasicText(
+            text = stringResource(R.string.device_cooling_automatic_silent_mode_title),
+            style = typography.title.copy(color = colors.primaryText)
+        )
+        state.silentModeMaximumFanPercent?.let { maximumPercent ->
+            BasicText(
+                text = stringResource(
+                    R.string.device_cooling_automatic_silent_mode_description,
+                    maximumPercent
+                ),
+                style = typography.micro.copy(color = colors.secondaryText)
+            )
+        }
+        if (!state.silentModeFirmwareBacked) {
+            BasicText(
+                text = stringResource(R.string.device_cooling_automatic_silent_mode_unavailable),
+                style = typography.micro.copy(color = colors.warning)
             )
         }
     }

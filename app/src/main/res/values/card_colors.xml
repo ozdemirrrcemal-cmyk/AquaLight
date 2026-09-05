@@ -27,6 +27,7 @@
     <color name="aqua_card_device_outline">@color/aqua_palette_hex_2c3e52</color>
     <color name="aqua_card_device_media_outline">@color/aqua_palette_hex_30485f</color>
     <color name="aqua_card_device_cooling_accent">@color/aqua_palette_hex_1474ff</color>
+    <color name="aqua_card_device_dosing_progress">@color/aqua_palette_hex_55d6c2</color>
 
     <!-- Device detail/root section cards -->
     <color name="aqua_card_device_section_surface">@color/aqua_palette_hex_061727</color>
