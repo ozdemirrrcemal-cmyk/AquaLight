@@ -2,6 +2,7 @@ package com.aqua.aqualight.ui.tabs.devices.detail.cooling.presentation.history
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.aqua.aqualight.application.devices.cooling.DeviceCoolingCommandFailure
 import com.aqua.aqualight.application.devices.cooling.DeviceCoolingTemperatureHistoryLoadResult
 import com.aqua.aqualight.application.devices.cooling.DeviceCoolingTemperatureHistoryOperations
 import com.aqua.aqualight.application.devices.cooling.DeviceCoolingTemperatureHistoryRange
@@ -72,11 +73,7 @@ class DeviceCoolingTemperatureHistoryViewModel(
 
             val current = _uiState.value
             val nextDataState = current.dataState.afterHistoryLoad(result)
-            val resolvedRange = when {
-                result is DeviceCoolingTemperatureHistoryLoadResult.Unavailable ->
-                    nextDataState.authoritativeValueOrNull?.range ?: range
-                else -> range
-            }
+            val resolvedRange = nextDataState.authoritativeValueOrNull?.range ?: range
             _uiState.value = current.copy(
                 selectedRange = resolvedRange,
                 dataState = nextDataState
@@ -91,8 +88,11 @@ class DeviceCoolingTemperatureHistoryViewModel(
     }
 }
 
-enum class DeviceCoolingTemperatureHistoryFailure {
-    UNAVAILABLE
+sealed interface DeviceCoolingTemperatureHistoryFailure {
+    data object Unavailable : DeviceCoolingTemperatureHistoryFailure
+    data class Rejected(
+        val reason: DeviceCoolingCommandFailure
+    ) : DeviceCoolingTemperatureHistoryFailure
 }
 
 data class DeviceCoolingTemperatureHistoryUiState(
@@ -117,7 +117,8 @@ enum class DeviceCoolingTemperatureHistoryLoadState {
     CONTENT,
     REFRESHING,
     UNSUPPORTED,
-    UNAVAILABLE
+    UNAVAILABLE,
+    ERROR
 }
 
 private fun CoolingDataState<
@@ -129,8 +130,8 @@ private fun CoolingDataState<
     is CoolingDataState.Content -> freshness.toHistoryLoadedState()
     is CoolingDataState.Empty -> freshness.toHistoryLoadedState()
     CoolingDataState.Unsupported -> DeviceCoolingTemperatureHistoryLoadState.UNSUPPORTED
-    CoolingDataState.Unavailable,
-    is CoolingDataState.OperationError -> DeviceCoolingTemperatureHistoryLoadState.UNAVAILABLE
+    CoolingDataState.Unavailable -> DeviceCoolingTemperatureHistoryLoadState.UNAVAILABLE
+    is CoolingDataState.OperationError -> DeviceCoolingTemperatureHistoryLoadState.ERROR
 }
 
 private fun CoolingDataFreshness.toHistoryLoadedState(): DeviceCoolingTemperatureHistoryLoadState =
@@ -171,7 +172,12 @@ private fun CoolingDataState<
     when (result) {
         is DeviceCoolingTemperatureHistoryLoadResult.Loaded -> result.snapshot.toHistoryDataState()
         DeviceCoolingTemperatureHistoryLoadResult.Unsupported -> CoolingDataState.Unsupported
-        DeviceCoolingTemperatureHistoryLoadResult.Unavailable -> preserveHistoryOnUnavailable()
+        DeviceCoolingTemperatureHistoryLoadResult.Unavailable -> preserveHistoryOnFailure(
+            DeviceCoolingTemperatureHistoryFailure.Unavailable
+        )
+        is DeviceCoolingTemperatureHistoryLoadResult.Rejected -> preserveHistoryOnFailure(
+            DeviceCoolingTemperatureHistoryFailure.Rejected(result.reason)
+        )
     }
 
 private fun DeviceCoolingTemperatureHistorySnapshot.toHistoryDataState(): CoolingDataState<
@@ -194,21 +200,24 @@ private fun DeviceCoolingTemperatureHistorySnapshot.hasHistoryMeasurements(): Bo
 private fun CoolingDataState<
     DeviceCoolingTemperatureHistorySnapshot,
     DeviceCoolingTemperatureHistoryFailure
-    >.preserveHistoryOnUnavailable(): CoolingDataState<
-    DeviceCoolingTemperatureHistorySnapshot,
-    DeviceCoolingTemperatureHistoryFailure
-    > = when (this) {
-    is CoolingDataState.Content -> copy(
-        freshness = CoolingDataFreshness.STALE,
-        refreshFailure = DeviceCoolingTemperatureHistoryFailure.UNAVAILABLE
-    )
-    is CoolingDataState.Empty -> copy(
-        freshness = CoolingDataFreshness.STALE,
-        refreshFailure = DeviceCoolingTemperatureHistoryFailure.UNAVAILABLE
-    )
-    CoolingDataState.Initial,
-    CoolingDataState.Loading,
-    CoolingDataState.Unavailable,
-    CoolingDataState.Unsupported,
-    is CoolingDataState.OperationError -> CoolingDataState.Unavailable
-}
+    >.preserveHistoryOnFailure(
+    failure: DeviceCoolingTemperatureHistoryFailure
+): CoolingDataState<DeviceCoolingTemperatureHistorySnapshot, DeviceCoolingTemperatureHistoryFailure> =
+    when (this) {
+        is CoolingDataState.Content -> copy(
+            freshness = CoolingDataFreshness.STALE,
+            refreshFailure = failure
+        )
+        is CoolingDataState.Empty -> copy(
+            freshness = CoolingDataFreshness.STALE,
+            refreshFailure = failure
+        )
+        CoolingDataState.Initial,
+        CoolingDataState.Loading,
+        CoolingDataState.Unavailable,
+        CoolingDataState.Unsupported,
+        is CoolingDataState.OperationError -> when (failure) {
+            DeviceCoolingTemperatureHistoryFailure.Unavailable -> CoolingDataState.Unavailable
+            is DeviceCoolingTemperatureHistoryFailure.Rejected -> CoolingDataState.OperationError(failure)
+        }
+    }
