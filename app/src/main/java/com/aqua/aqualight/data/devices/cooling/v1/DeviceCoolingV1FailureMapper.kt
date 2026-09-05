@@ -6,13 +6,14 @@ import com.aqua.aqualight.data.devices.runtime.core.DeviceRuntimeCommandOutcome
 /**
  * Maps the pinned Cool Pro 1F firmware rejection contract into stable application semantics.
  *
- * Matching intentionally uses the complete firmware identity where a code is not specific enough.
- * Presentation never receives raw firmware prose.
+ * Matching intentionally validates the complete firmware identity: HTTP status, code and the
+ * relevant field/message pair. Presentation never receives raw firmware prose.
  */
 internal object DeviceCoolingV1FailureMapper {
 
-    fun map(error: DeviceRuntimeCommandOutcome.FirmwareError): DeviceCoolingCommandFailure =
-        when (error.code) {
+    fun map(error: DeviceRuntimeCommandOutcome.FirmwareError): DeviceCoolingCommandFailure {
+        if (!error.hasExpectedStatus()) return DeviceCoolingCommandFailure.PROTOCOL_ERROR
+        return when (error.code) {
             FirmwareCode.CONFLICT -> DeviceCoolingCommandFailure.CONFLICT
             FirmwareCode.BAD_REQUEST,
             FirmwareCode.MISSING_FIELD -> DeviceCoolingCommandFailure.INVALID_REQUEST
@@ -23,6 +24,20 @@ internal object DeviceCoolingV1FailureMapper {
             FirmwareCode.STORAGE_ERROR -> DeviceCoolingCommandFailure.STORAGE_FAILURE
             FirmwareCode.CLOCK_UNSYNCED -> DeviceCoolingCommandFailure.CLOCK_UNSYNCED
             else -> DeviceCoolingCommandFailure.UNKNOWN_REJECTION
+        }
+    }
+
+    private fun DeviceRuntimeCommandOutcome.FirmwareError.hasExpectedStatus(): Boolean =
+        statusCode == when (code) {
+            FirmwareCode.BAD_REQUEST -> HTTP_BAD_REQUEST
+            FirmwareCode.MISSING_FIELD,
+            FirmwareCode.INVALID_VALUE -> HTTP_UNPROCESSABLE_ENTITY
+            FirmwareCode.NOT_FOUND -> HTTP_NOT_FOUND
+            FirmwareCode.CONFLICT -> HTTP_CONFLICT
+            FirmwareCode.HARDWARE_ERROR,
+            FirmwareCode.CLOCK_UNSYNCED -> HTTP_SERVICE_UNAVAILABLE
+            FirmwareCode.STORAGE_ERROR -> HTTP_INTERNAL_ERROR
+            else -> return true
         }
 
     private fun mapInvalidValue(
@@ -104,6 +119,13 @@ internal object DeviceCoolingV1FailureMapper {
         FirmwareField.EXPECTED_CONFIG_REVISION,
         FirmwareField.EXPECTED_PROGRAM_REVISION
     )
+
+    private const val HTTP_BAD_REQUEST = 400
+    private const val HTTP_NOT_FOUND = 404
+    private const val HTTP_CONFLICT = 409
+    private const val HTTP_UNPROCESSABLE_ENTITY = 422
+    private const val HTTP_INTERNAL_ERROR = 500
+    private const val HTTP_SERVICE_UNAVAILABLE = 503
 
     private const val MANUAL_MODE_REQUIRED_MESSAGE =
         "manual output requires MANUAL control mode"
