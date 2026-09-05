@@ -140,7 +140,7 @@ private fun CoolingMutationState<DeviceCoolingAutomaticFailure>.toAutomaticSaveS
     CoolingMutationState.Saving -> DeviceCoolingAutomaticSaveState.SAVING
     CoolingMutationState.Saved -> DeviceCoolingAutomaticSaveState.SAVED
     CoolingMutationState.ValidationError,
-    is CoolingMutationState.OperationError -> DeviceCoolingAutomaticSaveState.ERROR
+    is CoolingMutationState.OperationError -> DeviceCoolingAutomaticSaveState.IDLE
 }
 
 private fun CoolingDataState<

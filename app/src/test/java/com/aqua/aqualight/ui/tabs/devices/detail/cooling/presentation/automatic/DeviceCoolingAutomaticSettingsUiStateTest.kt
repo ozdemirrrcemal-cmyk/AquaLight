@@ -57,7 +57,7 @@ class DeviceCoolingAutomaticSettingsUiStateTest {
 
         assertEquals(25.0, updated.persistedStartTemperatureC ?: 0.0, 0.0)
         assertEquals(25.5, updated.draftStartTemperatureC ?: 0.0, 0.0)
-        assertEquals(DeviceCoolingAutomaticSaveState.ERROR, updated.saveState)
+        assertEquals(DeviceCoolingAutomaticSaveState.IDLE, updated.saveState)
         assertEquals(DeviceCoolingAutomaticFailure.ReadOnly, updated.saveFailure)
         assertTrue(updated.mutationState is CoolingMutationState.OperationError)
     }
@@ -88,6 +88,7 @@ class DeviceCoolingAutomaticSettingsUiStateTest {
             )
         )
 
+        assertEquals(DeviceCoolingAutomaticSaveState.IDLE, updated.saveState)
         assertEquals(CoolingMutationState.ValidationError, updated.mutationState)
         assertEquals(DeviceCoolingAutomaticFailure.InvalidConfiguration, updated.saveFailure)
     }
