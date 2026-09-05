@@ -3,6 +3,7 @@
 
 from __future__ import annotations
 
+import cooling_v1_contract_guard as cooling_guard
 import firmware_interoperability_guard_core as guard
 
 
@@ -38,4 +39,7 @@ guard.EXPECTED_FIXTURES["aql_product_catalog_v1.json"] = (
 
 
 if __name__ == "__main__":
-    raise SystemExit(guard.main())
+    interoperability_result = guard.main()
+    if interoperability_result != 0:
+        raise SystemExit(interoperability_result)
+    raise SystemExit(cooling_guard.main())

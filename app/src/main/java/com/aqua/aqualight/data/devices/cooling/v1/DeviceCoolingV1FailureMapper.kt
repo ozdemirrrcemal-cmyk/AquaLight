@@ -2,6 +2,7 @@ package com.aqua.aqualight.data.devices.cooling.v1
 
 import com.aqua.aqualight.application.devices.cooling.DeviceCoolingCommandFailure
 import com.aqua.aqualight.data.devices.runtime.core.DeviceRuntimeCommandOutcome
+import com.aqua.aqualight.data.devices.runtime.modules.cooling.v1.DeviceCoolingV1Contract
 
 /**
  * Maps the pinned Cool Pro 1F firmware rejection contract into stable application semantics.
@@ -14,29 +15,29 @@ internal object DeviceCoolingV1FailureMapper {
     fun map(error: DeviceRuntimeCommandOutcome.FirmwareError): DeviceCoolingCommandFailure {
         if (!error.hasExpectedStatus()) return DeviceCoolingCommandFailure.PROTOCOL_ERROR
         return when (error.code) {
-            FirmwareCode.CONFLICT -> DeviceCoolingCommandFailure.CONFLICT
-            FirmwareCode.BAD_REQUEST,
-            FirmwareCode.MISSING_FIELD -> DeviceCoolingCommandFailure.INVALID_REQUEST
+            DeviceCoolingV1Contract.Error.CONFLICT -> DeviceCoolingCommandFailure.CONFLICT
+            DeviceCoolingV1Contract.Error.BAD_REQUEST,
+            DeviceCoolingV1Contract.Error.MISSING_FIELD -> DeviceCoolingCommandFailure.INVALID_REQUEST
 
-            FirmwareCode.INVALID_VALUE -> mapInvalidValue(error)
-            FirmwareCode.NOT_FOUND -> mapNotFound(error)
-            FirmwareCode.HARDWARE_ERROR -> mapHardware(error)
-            FirmwareCode.STORAGE_ERROR -> DeviceCoolingCommandFailure.STORAGE_FAILURE
-            FirmwareCode.CLOCK_UNSYNCED -> DeviceCoolingCommandFailure.CLOCK_UNSYNCED
+            DeviceCoolingV1Contract.Error.INVALID_VALUE -> mapInvalidValue(error)
+            COMMAND_LOCAL_NOT_FOUND -> mapNotFound(error)
+            DeviceCoolingV1Contract.Error.HARDWARE_ERROR -> mapHardware(error)
+            DeviceCoolingV1Contract.Error.STORAGE_ERROR -> DeviceCoolingCommandFailure.STORAGE_FAILURE
+            DeviceCoolingV1Contract.Error.CLOCK_UNSYNCED -> DeviceCoolingCommandFailure.CLOCK_UNSYNCED
             else -> DeviceCoolingCommandFailure.UNKNOWN_REJECTION
         }
     }
 
     private fun DeviceRuntimeCommandOutcome.FirmwareError.hasExpectedStatus(): Boolean {
         val expectedStatus = when (code) {
-            FirmwareCode.BAD_REQUEST -> HTTP_BAD_REQUEST
-            FirmwareCode.MISSING_FIELD,
-            FirmwareCode.INVALID_VALUE -> HTTP_UNPROCESSABLE_ENTITY
-            FirmwareCode.NOT_FOUND -> HTTP_NOT_FOUND
-            FirmwareCode.CONFLICT -> HTTP_CONFLICT
-            FirmwareCode.HARDWARE_ERROR,
-            FirmwareCode.CLOCK_UNSYNCED -> HTTP_SERVICE_UNAVAILABLE
-            FirmwareCode.STORAGE_ERROR -> HTTP_INTERNAL_ERROR
+            DeviceCoolingV1Contract.Error.BAD_REQUEST -> HTTP_BAD_REQUEST
+            DeviceCoolingV1Contract.Error.MISSING_FIELD,
+            DeviceCoolingV1Contract.Error.INVALID_VALUE -> HTTP_UNPROCESSABLE_ENTITY
+            COMMAND_LOCAL_NOT_FOUND -> HTTP_NOT_FOUND
+            DeviceCoolingV1Contract.Error.CONFLICT -> HTTP_CONFLICT
+            DeviceCoolingV1Contract.Error.HARDWARE_ERROR,
+            DeviceCoolingV1Contract.Error.CLOCK_UNSYNCED -> HTTP_SERVICE_UNAVAILABLE
+            DeviceCoolingV1Contract.Error.STORAGE_ERROR -> HTTP_INTERNAL_ERROR
             else -> return true
         }
         return statusCode == expectedStatus
@@ -89,17 +90,6 @@ internal object DeviceCoolingV1FailureMapper {
         DeviceCoolingCommandFailure.HARDWARE_FAILURE
     }
 
-    private object FirmwareCode {
-        const val BAD_REQUEST = "BAD_REQUEST"
-        const val MISSING_FIELD = "MISSING_FIELD"
-        const val INVALID_VALUE = "INVALID_VALUE"
-        const val NOT_FOUND = "NOT_FOUND"
-        const val CONFLICT = "CONFLICT"
-        const val HARDWARE_ERROR = "HARDWARE_ERROR"
-        const val STORAGE_ERROR = "STORAGE_ERROR"
-        const val CLOCK_UNSYNCED = "CLOCK_UNSYNCED"
-    }
-
     private object FirmwareField {
         const val DATA = "data"
         const val CONTROL_MODE = "controlMode"
@@ -122,6 +112,7 @@ internal object DeviceCoolingV1FailureMapper {
         FirmwareField.EXPECTED_PROGRAM_REVISION
     )
 
+    private const val COMMAND_LOCAL_NOT_FOUND = "NOT_FOUND"
     private const val HTTP_BAD_REQUEST = 400
     private const val HTTP_NOT_FOUND = 404
     private const val HTTP_CONFLICT = 409

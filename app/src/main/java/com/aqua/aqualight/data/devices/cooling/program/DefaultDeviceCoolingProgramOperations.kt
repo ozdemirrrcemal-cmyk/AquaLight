@@ -22,6 +22,7 @@ import com.aqua.aqualight.data.devices.runtime.modules.cooling.currentAuthoritat
 import com.aqua.aqualight.data.devices.runtime.modules.cooling.isAuthoritative
 import com.aqua.aqualight.data.devices.runtime.modules.cooling.v1.DeviceCoolingV1Contract
 import com.aqua.aqualight.data.devices.runtime.modules.cooling.v1.DeviceCoolingV1ProgramApplyPayload
+import com.aqua.aqualight.data.devices.runtime.modules.cooling.v1.DeviceCoolingV1ProgramApplyResult
 import com.aqua.aqualight.data.devices.runtime.modules.cooling.v1.DeviceCoolingV1ProgramPolicy
 import com.aqua.aqualight.data.devices.runtime.modules.cooling.v1.DeviceCoolingV1ProgramSlot
 import com.aqua.aqualight.data.devices.runtime.modules.cooling.v1.DeviceCoolingV1ProgramSlotPayload
@@ -74,104 +75,108 @@ private sealed interface ProgramRuntimeResolution {
     data class Ready(
         val deviceUid: DeviceUid,
         val runtime: DeviceCoolingRuntimeRepository
-    ) : ProgramRuntimeResolution
+    ) : ProgramRuntimeResolution {
+
+        suspend fun readProgram(): CoolingProgramReadResult =
+            when (val outcome = runtime.requestProgram(deviceUid)) {
+                is DeviceRuntimeCommandOutcome.Success -> {
+                    if (!runtime.isAuthoritative(deviceUid, outcome.generation)) {
+                        CoolingProgramReadResult.NotConnected
+                    } else {
+                        runCatching(outcome.value::toApplicationSnapshot).fold(
+                            onSuccess = CoolingProgramReadResult::Loaded,
+                            onFailure = {
+                                CoolingProgramReadResult.Rejected(
+                                    DeviceCoolingCommandFailure.PROTOCOL_ERROR
+                                )
+                            }
+                        )
+                    }
+                }
+                is DeviceRuntimeCommandOutcome.NotConnected,
+                is DeviceRuntimeCommandOutcome.NotAuthenticated ->
+                    CoolingProgramReadResult.NotConnected
+                is DeviceRuntimeCommandOutcome.UnsupportedByDevice ->
+                    CoolingProgramReadResult.Unsupported
+                is DeviceRuntimeCommandOutcome.FirmwareError ->
+                    CoolingProgramReadResult.Rejected(DeviceCoolingV1FailureMapper.map(outcome))
+                is DeviceRuntimeCommandOutcome.ProtocolError ->
+                    CoolingProgramReadResult.Rejected(DeviceCoolingCommandFailure.PROTOCOL_ERROR)
+                is DeviceRuntimeCommandOutcome.SendFailed,
+                is DeviceRuntimeCommandOutcome.Timeout,
+                is DeviceRuntimeCommandOutcome.Cancelled -> CoolingProgramReadResult.Unavailable
+            }
+
+        suspend fun saveProgram(slots: List<CoolingProgramSlot>): CoolingProgramSaveResult =
+            when (val preflight = requestSavePreflight()) {
+                is ProgramSavePreflight.Failed -> preflight.result
+                is ProgramSavePreflight.Ready -> applyProgram(preflight.program, slots)
+            }
+
+        private suspend fun requestSavePreflight(): ProgramSavePreflight =
+            when (val outcome = runtime.requestProgram(deviceUid)) {
+                is DeviceRuntimeCommandOutcome.Success -> if (
+                    runtime.isAuthoritative(deviceUid, outcome.generation)
+                ) {
+                    ProgramSavePreflight.Ready(outcome.value)
+                } else {
+                    ProgramSavePreflight.Failed(CoolingProgramSaveResult.NotConnected)
+                }
+                is DeviceRuntimeCommandOutcome.NotConnected,
+                is DeviceRuntimeCommandOutcome.NotAuthenticated ->
+                    ProgramSavePreflight.Failed(CoolingProgramSaveResult.NotConnected)
+                is DeviceRuntimeCommandOutcome.UnsupportedByDevice ->
+                    ProgramSavePreflight.Failed(CoolingProgramSaveResult.Unsupported)
+                is DeviceRuntimeCommandOutcome.FirmwareError -> ProgramSavePreflight.Failed(
+                    CoolingProgramSaveResult.Rejected(DeviceCoolingV1FailureMapper.map(outcome))
+                )
+                is DeviceRuntimeCommandOutcome.ProtocolError -> ProgramSavePreflight.Failed(
+                    CoolingProgramSaveResult.Rejected(DeviceCoolingCommandFailure.PROTOCOL_ERROR)
+                )
+                is DeviceRuntimeCommandOutcome.SendFailed,
+                is DeviceRuntimeCommandOutcome.Timeout,
+                is DeviceRuntimeCommandOutcome.Cancelled ->
+                    ProgramSavePreflight.Failed(CoolingProgramSaveResult.Unavailable)
+            }
+
+        private suspend fun applyProgram(
+            currentProgram: DeviceCoolingV1ProgramSnapshot,
+            slots: List<CoolingProgramSlot>
+        ): CoolingProgramSaveResult {
+            val payload = currentProgram.toApplyPayloadOrNull(slots)
+            return payload?.let { validPayload ->
+                ProgramSaveResultProjector.project(
+                    outcome = runtime.applyProgram(deviceUid, validPayload),
+                    runtime = runtime,
+                    deviceUid = deviceUid,
+                    requestedSlots = slots
+                )
+            } ?: CoolingProgramSaveResult.InvalidConfiguration
+        }
+    }
 
     data object Unsupported : ProgramRuntimeResolution
     data object Unavailable : ProgramRuntimeResolution
 }
 
-private suspend fun ProgramRuntimeResolution.Ready.readProgram(): CoolingProgramReadResult =
-    when (val outcome = runtime.requestProgram(deviceUid)) {
-        is DeviceRuntimeCommandOutcome.Success -> {
-            if (!runtime.isAuthoritative(deviceUid, outcome.generation)) {
-                CoolingProgramReadResult.NotConnected
-            } else {
-                runCatching(outcome.value::toApplicationSnapshot)
-                    .fold(
-                        onSuccess = CoolingProgramReadResult::Loaded,
-                        onFailure = {
-                            CoolingProgramReadResult.Rejected(DeviceCoolingCommandFailure.PROTOCOL_ERROR)
-                        }
-                    )
-            }
-        }
-        is DeviceRuntimeCommandOutcome.NotConnected,
-        is DeviceRuntimeCommandOutcome.NotAuthenticated -> CoolingProgramReadResult.NotConnected
-        is DeviceRuntimeCommandOutcome.UnsupportedByDevice -> CoolingProgramReadResult.Unsupported
-        is DeviceRuntimeCommandOutcome.FirmwareError ->
-            CoolingProgramReadResult.Rejected(DeviceCoolingV1FailureMapper.map(outcome))
-        is DeviceRuntimeCommandOutcome.ProtocolError ->
-            CoolingProgramReadResult.Rejected(DeviceCoolingCommandFailure.PROTOCOL_ERROR)
-        is DeviceRuntimeCommandOutcome.SendFailed,
-        is DeviceRuntimeCommandOutcome.Timeout,
-        is DeviceRuntimeCommandOutcome.Cancelled -> CoolingProgramReadResult.Unavailable
-    }
+private sealed interface ProgramSavePreflight {
+    data class Ready(val program: DeviceCoolingV1ProgramSnapshot) : ProgramSavePreflight
+    data class Failed(val result: CoolingProgramSaveResult) : ProgramSavePreflight
+}
 
-private suspend fun ProgramRuntimeResolution.Ready.saveProgram(
-    slots: List<CoolingProgramSlot>
-): CoolingProgramSaveResult {
-    val currentProgram = when (val outcome = runtime.requestProgram(deviceUid)) {
-        is DeviceRuntimeCommandOutcome.Success -> {
-            if (!runtime.isAuthoritative(deviceUid, outcome.generation)) {
-                return CoolingProgramSaveResult.NotConnected
-            }
-            outcome.value
-        }
-        is DeviceRuntimeCommandOutcome.NotConnected,
-        is DeviceRuntimeCommandOutcome.NotAuthenticated ->
-            return CoolingProgramSaveResult.NotConnected
-        is DeviceRuntimeCommandOutcome.UnsupportedByDevice ->
-            return CoolingProgramSaveResult.Unsupported
-        is DeviceRuntimeCommandOutcome.FirmwareError ->
-            return CoolingProgramSaveResult.Rejected(DeviceCoolingV1FailureMapper.map(outcome))
-        is DeviceRuntimeCommandOutcome.ProtocolError ->
-            return CoolingProgramSaveResult.Rejected(DeviceCoolingCommandFailure.PROTOCOL_ERROR)
-        is DeviceRuntimeCommandOutcome.SendFailed,
-        is DeviceRuntimeCommandOutcome.Timeout,
-        is DeviceRuntimeCommandOutcome.Cancelled ->
-            return CoolingProgramSaveResult.Unavailable
-    }
-
-    val payload = runCatching {
-        val policy = currentProgram.toApplicationSnapshot().policy
-        require(
-            CoolingProgramValidation.validate(slots, policy) == CoolingProgramValidationResult.Valid
-        ) { "Cooling program draft violates the authoritative device policy." }
-        DeviceCoolingV1ProgramApplyPayload(
-            expectedProgramRevision = currentProgram.programRevision,
-            slots = slots.map(CoolingProgramSlot::toV1Payload)
+private object ProgramSaveResultProjector {
+    fun project(
+        outcome: DeviceRuntimeCommandOutcome<DeviceCoolingV1ProgramApplyResult>,
+        runtime: DeviceCoolingRuntimeRepository,
+        deviceUid: DeviceUid,
+        requestedSlots: List<CoolingProgramSlot>
+    ): CoolingProgramSaveResult = when (outcome) {
+        is DeviceRuntimeCommandOutcome.Success -> committedResult(
+            outcome = outcome,
+            runtime = runtime,
+            deviceUid = deviceUid,
+            requestedSlots = requestedSlots
         )
-    }.getOrElse {
-        return CoolingProgramSaveResult.InvalidConfiguration
-    }
-
-    return when (val outcome = runtime.applyProgram(deviceUid, payload)) {
-        is DeviceRuntimeCommandOutcome.Success -> {
-            val authoritativeState = runtime.currentAuthoritativeState(deviceUid)
-            val committedRevision = outcome.value.program.programRevision
-            if (
-                !runtime.isAuthoritative(deviceUid, outcome.generation) ||
-                authoritativeState?.connectionGeneration != outcome.generation ||
-                authoritativeState.status?.programRevision != committedRevision
-            ) {
-                CoolingProgramSaveResult.Unavailable
-            } else {
-                runCatching(outcome.value.program::toApplicationSnapshot).fold(
-                    onSuccess = { snapshot ->
-                        val requested = slots.sortedBy(CoolingProgramSlot::startMinutes)
-                        val committed = snapshot.slots.sortedBy(CoolingProgramSlot::startMinutes)
-                        if (committed == requested) {
-                            CoolingProgramSaveResult.Saved(snapshot.copy(slots = committed))
-                        } else {
-                            CoolingProgramSaveResult.Rejected(DeviceCoolingCommandFailure.PROTOCOL_ERROR)
-                        }
-                    },
-                    onFailure = {
-                        CoolingProgramSaveResult.Rejected(DeviceCoolingCommandFailure.PROTOCOL_ERROR)
-                    }
-                )
-            }
-        }
         is DeviceRuntimeCommandOutcome.NotConnected,
         is DeviceRuntimeCommandOutcome.NotAuthenticated -> CoolingProgramSaveResult.NotConnected
         is DeviceRuntimeCommandOutcome.UnsupportedByDevice -> CoolingProgramSaveResult.Unsupported
@@ -183,7 +188,57 @@ private suspend fun ProgramRuntimeResolution.Ready.saveProgram(
         is DeviceRuntimeCommandOutcome.Timeout,
         is DeviceRuntimeCommandOutcome.Cancelled -> CoolingProgramSaveResult.Unavailable
     }
+
+    private fun committedResult(
+        outcome: DeviceRuntimeCommandOutcome.Success<DeviceCoolingV1ProgramApplyResult>,
+        runtime: DeviceCoolingRuntimeRepository,
+        deviceUid: DeviceUid,
+        requestedSlots: List<CoolingProgramSlot>
+    ): CoolingProgramSaveResult {
+        val authoritativeState = runtime.currentAuthoritativeState(deviceUid)
+        val committedRevision = outcome.value.program.programRevision
+        val committedByAuthority = runtime.isAuthoritative(deviceUid, outcome.generation) &&
+            authoritativeState?.connectionGeneration == outcome.generation &&
+            authoritativeState.status?.programRevision == committedRevision
+        return if (committedByAuthority) {
+            committedSnapshotResult(outcome.value.program, requestedSlots)
+        } else {
+            CoolingProgramSaveResult.Unavailable
+        }
+    }
+
+    private fun committedSnapshotResult(
+        program: DeviceCoolingV1ProgramSnapshot,
+        requestedSlots: List<CoolingProgramSlot>
+    ): CoolingProgramSaveResult = runCatching(program::toApplicationSnapshot).fold(
+        onSuccess = { snapshot ->
+            val requested = requestedSlots.sortedBy(CoolingProgramSlot::startMinutes)
+            val committed = snapshot.slots.sortedBy(CoolingProgramSlot::startMinutes)
+            if (committed == requested) {
+                CoolingProgramSaveResult.Saved(snapshot.copy(slots = committed))
+            } else {
+                CoolingProgramSaveResult.Rejected(DeviceCoolingCommandFailure.PROTOCOL_ERROR)
+            }
+        },
+        onFailure = {
+            CoolingProgramSaveResult.Rejected(DeviceCoolingCommandFailure.PROTOCOL_ERROR)
+        }
+    )
 }
+
+private fun DeviceCoolingV1ProgramSnapshot.toApplyPayloadOrNull(
+    slots: List<CoolingProgramSlot>
+): DeviceCoolingV1ProgramApplyPayload? = runCatching {
+    val applicationPolicy = toApplicationSnapshot().policy
+    require(
+        CoolingProgramValidation.validate(slots, applicationPolicy) ==
+            CoolingProgramValidationResult.Valid
+    ) { "Cooling program draft violates the authoritative device policy." }
+    DeviceCoolingV1ProgramApplyPayload(
+        expectedProgramRevision = programRevision,
+        slots = slots.map(CoolingProgramSlot::toV1Payload)
+    )
+}.getOrNull()
 
 private fun DeviceCoolingV1ProgramSnapshot.toApplicationSnapshot(): CoolingProgramSnapshot {
     val applicationPolicy = policy.toApplicationPolicy()
@@ -242,7 +297,9 @@ private fun CoolingProgramSlot.toV1Payload(): DeviceCoolingV1ProgramSlotPayload 
 private fun Double.toExactPercentInt(): Int {
     require(isFinite())
     val rounded = roundToInt()
-    require(rounded in 0..100)
+    val minimum = DeviceCoolingV1Contract.Limit.FAN_PERCENT_MINIMUM.toInt()
+    val maximum = DeviceCoolingV1Contract.Limit.FAN_PERCENT_MAXIMUM.toInt()
+    require(rounded in minimum..maximum)
     require(abs(this - rounded.toDouble()) <= DeviceCoolingV1Contract.Limit.ALIGNMENT_EPSILON)
     return rounded
 }

@@ -67,33 +67,6 @@ class AquaTimePickerBottomSheet : BottomSheetDialogFragment(
         val hourWheel = view.findViewById<RecyclerView>(R.id.rvAquaTimePickerHour)
         val minuteWheel = view.findViewById<RecyclerView>(R.id.rvAquaTimePickerMinute)
         configureSelectionMode(view, selectionMode)
-        fun renderSelection() {
-            val formatted = when (selectionMode) {
-                SelectionMode.TIME_OF_DAY -> if (selectedHour == END_OF_DAY_HOUR) {
-                    END_OF_DAY_DISPLAY
-                } else {
-                    LocaleFormatter.formatTimeOfDay24Hour(
-                        context = requireContext(),
-                        minutesOfDay = timePickerMinutesOfDay(selectedHour, selectedMinute)
-                    )
-                }
-                SelectionMode.MINUTE_OF_HOUR -> getString(
-                    R.string.common_time_picker_minute_of_hour_preview,
-                    selectedMinute
-                )
-            }
-            selection.text = formatted
-            selection.contentDescription = when (selectionMode) {
-                SelectionMode.TIME_OF_DAY -> getString(
-                    R.string.common_time_picker_selected_time_description,
-                    formatted
-                )
-                SelectionMode.MINUTE_OF_HOUR -> getString(
-                    R.string.common_time_picker_selected_minute_of_hour_description,
-                    selectedMinute
-                )
-            }
-        }
 
         lateinit var selectMinuteValue: (Int) -> Unit
         selectMinuteValue = bindWheel(
@@ -107,7 +80,7 @@ class AquaTimePickerBottomSheet : BottomSheetDialogFragment(
                     minuteWheel.post { selectMinuteValue(0) }
                 } else {
                     selectedMinute = minute
-                    renderSelection()
+                    renderSelection(selection, selectionMode)
                 }
             }
         )
@@ -124,7 +97,7 @@ class AquaTimePickerBottomSheet : BottomSheetDialogFragment(
                         selectedMinute = 0
                         selectMinuteValue(0)
                     }
-                    renderSelection()
+                    renderSelection(selection, selectionMode)
                 }
             )
         }
@@ -143,7 +116,35 @@ class AquaTimePickerBottomSheet : BottomSheetDialogFragment(
                 dismiss()
             }
         }
-        renderSelection()
+        renderSelection(selection, selectionMode)
+    }
+
+    private fun renderSelection(selection: TextView, selectionMode: SelectionMode) {
+        val formatted = when (selectionMode) {
+            SelectionMode.TIME_OF_DAY -> if (selectedHour == END_OF_DAY_HOUR) {
+                END_OF_DAY_DISPLAY
+            } else {
+                LocaleFormatter.formatTimeOfDay24Hour(
+                    context = requireContext(),
+                    minutesOfDay = timePickerMinutesOfDay(selectedHour, selectedMinute)
+                )
+            }
+            SelectionMode.MINUTE_OF_HOUR -> getString(
+                R.string.common_time_picker_minute_of_hour_preview,
+                selectedMinute
+            )
+        }
+        selection.text = formatted
+        selection.contentDescription = when (selectionMode) {
+            SelectionMode.TIME_OF_DAY -> getString(
+                R.string.common_time_picker_selected_time_description,
+                formatted
+            )
+            SelectionMode.MINUTE_OF_HOUR -> getString(
+                R.string.common_time_picker_selected_minute_of_hour_description,
+                selectedMinute
+            )
+        }
     }
 
     private fun configureSelectionMode(view: View, selectionMode: SelectionMode) {

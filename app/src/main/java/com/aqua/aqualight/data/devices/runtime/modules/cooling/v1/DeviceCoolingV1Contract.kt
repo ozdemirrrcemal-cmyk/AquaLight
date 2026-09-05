@@ -26,6 +26,17 @@ object DeviceCoolingV1Contract {
         const val TELEMETRY_CHANGED = "cooling.telemetry.changed"
     }
 
+    /** Exact `errors` catalog from the pinned firmware Cooling V1 fixture. */
+    object Error {
+        const val BAD_REQUEST = "BAD_REQUEST"
+        const val MISSING_FIELD = "MISSING_FIELD"
+        const val INVALID_VALUE = "INVALID_VALUE"
+        const val CONFLICT = "CONFLICT"
+        const val HARDWARE_ERROR = "HARDWARE_ERROR"
+        const val STORAGE_ERROR = "STORAGE_ERROR"
+        const val CLOCK_UNSYNCED = "CLOCK_UNSYNCED"
+    }
+
     object Limit {
         const val UINT32_MAX = 4_294_967_295L
         const val ALIGNMENT_EPSILON = 0.0001

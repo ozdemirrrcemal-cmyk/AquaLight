@@ -76,7 +76,7 @@ internal fun CoolingDataState<
     DeviceCoolingAutomaticFailure.TemporaryFailure,
     DeviceCoolingAutomaticFailure.ReadOnly,
     DeviceCoolingAutomaticFailure.InvalidConfiguration,
-    DeviceCoolingAutomaticFailure.Rejected -> preserveAutomaticOrResolveFailure(failure)
+    is DeviceCoolingAutomaticFailure.Rejected -> preserveAutomaticOrResolveFailure(failure)
 }
 
 private fun CoolingDataState<
@@ -124,5 +124,5 @@ private fun DeviceCoolingAutomaticFailure.toAutomaticTerminalState(): CoolingDat
     DeviceCoolingAutomaticFailure.TemporaryFailure -> CoolingDataState.Unavailable
     DeviceCoolingAutomaticFailure.ReadOnly,
     DeviceCoolingAutomaticFailure.InvalidConfiguration,
-    DeviceCoolingAutomaticFailure.Rejected -> CoolingDataState.OperationError(this)
+    is DeviceCoolingAutomaticFailure.Rejected -> CoolingDataState.OperationError(this)
 }

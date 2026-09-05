@@ -1,6 +1,7 @@
 package com.aqua.aqualight.ui.tabs.devices.detail.cooling.presentation.program
 
 import android.os.Bundle
+import androidx.annotation.StringRes
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.platform.ViewCompositionStrategy
 import androidx.fragment.app.viewModels
@@ -163,10 +164,12 @@ class DeviceCoolingProgramSettingsFragment : DeviceCoolingModeSettingsFragment(
         showTimeSheet(
             slotIndex = slotIndex,
             minutesOfDay = slot.startMinutes,
-            requestKey = REQUEST_START_TIME,
-            titleRes = R.string.device_cooling_program_start_time_sheet_title,
-            messageRes = R.string.device_cooling_program_start_time_sheet_message,
-            allowEndOfDay = false
+            spec = TimeSheetSpec(
+                requestKey = REQUEST_START_TIME,
+                titleRes = R.string.device_cooling_program_start_time_sheet_title,
+                messageRes = R.string.device_cooling_program_start_time_sheet_message,
+                allowEndOfDay = false
+            )
         )
     }
 
@@ -175,10 +178,12 @@ class DeviceCoolingProgramSettingsFragment : DeviceCoolingModeSettingsFragment(
         showTimeSheet(
             slotIndex = slotIndex,
             minutesOfDay = slot.endMinutes,
-            requestKey = REQUEST_END_TIME,
-            titleRes = R.string.device_cooling_program_end_time_sheet_title,
-            messageRes = R.string.device_cooling_program_end_time_sheet_message,
-            allowEndOfDay = true
+            spec = TimeSheetSpec(
+                requestKey = REQUEST_END_TIME,
+                titleRes = R.string.device_cooling_program_end_time_sheet_title,
+                messageRes = R.string.device_cooling_program_end_time_sheet_message,
+                allowEndOfDay = true
+            )
         )
     }
 
@@ -210,23 +215,28 @@ class DeviceCoolingProgramSettingsFragment : DeviceCoolingModeSettingsFragment(
     private fun showTimeSheet(
         slotIndex: Int,
         minutesOfDay: Int,
-        requestKey: String,
-        titleRes: Int,
-        messageRes: Int,
-        allowEndOfDay: Boolean
+        spec: TimeSheetSpec
     ) {
         AquaTimePickerBottomSheet.show(
             fragmentManager = parentFragmentManager,
             request = AquaTimePickerBottomSheet.Request(
-                title = getString(titleRes),
-                message = getString(messageRes),
-                initialHour = if (minutesOfDay == MINUTES_PER_DAY) 24 else minutesOfDay / MINUTES_PER_HOUR,
-                initialMinute = if (minutesOfDay == MINUTES_PER_DAY) 0 else minutesOfDay % MINUTES_PER_HOUR,
-                allowEndOfDay = allowEndOfDay,
+                title = getString(spec.titleRes),
+                message = getString(spec.messageRes),
+                initialHour = if (minutesOfDay == MINUTES_PER_DAY) {
+                    HOURS_PER_DAY
+                } else {
+                    minutesOfDay / MINUTES_PER_HOUR
+                },
+                initialMinute = if (minutesOfDay == MINUTES_PER_DAY) {
+                    0
+                } else {
+                    minutesOfDay % MINUTES_PER_HOUR
+                },
+                allowEndOfDay = spec.allowEndOfDay,
                 confirmText = getString(R.string.device_cooling_automatic_stepper_apply),
                 cancelText = getString(R.string.device_cooling_automatic_stepper_cancel),
                 resultTarget = AquaTimePickerBottomSheet.ResultTarget(
-                    requestKey = requestKey,
+                    requestKey = spec.requestKey,
                     payloadId = slotIndex.toString()
                 )
             )
@@ -235,12 +245,20 @@ class DeviceCoolingProgramSettingsFragment : DeviceCoolingModeSettingsFragment(
 
     private companion object {
         const val MINUTES_PER_HOUR = 60
-        const val MINUTES_PER_DAY = 24 * MINUTES_PER_HOUR
+        const val HOURS_PER_DAY = 24
+        const val MINUTES_PER_DAY = HOURS_PER_DAY * MINUTES_PER_HOUR
         const val REQUEST_START_TIME = "cooling_program_start_time"
         const val REQUEST_END_TIME = "cooling_program_end_time"
         const val REQUEST_FAN_ON_TEMPERATURE = "cooling_program_fan_on_temperature"
     }
 }
+
+private data class TimeSheetSpec(
+    val requestKey: String,
+    @StringRes val titleRes: Int,
+    @StringRes val messageRes: Int,
+    val allowEndOfDay: Boolean
+)
 
 private fun DeviceCoolingProgramSettingsFragment.showScheduleValidationWarning() {
     (activity as? BaseActivity)?.showSnackBar(
