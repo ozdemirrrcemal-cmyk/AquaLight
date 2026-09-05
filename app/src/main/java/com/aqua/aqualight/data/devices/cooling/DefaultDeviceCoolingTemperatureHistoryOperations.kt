@@ -1,11 +1,13 @@
 package com.aqua.aqualight.data.devices.cooling
 
+import com.aqua.aqualight.application.devices.cooling.DeviceCoolingCommandFailure
 import com.aqua.aqualight.application.devices.cooling.DeviceCoolingDailyTemperatureSummary
 import com.aqua.aqualight.application.devices.cooling.DeviceCoolingTemperatureHistoryLoadResult
 import com.aqua.aqualight.application.devices.cooling.DeviceCoolingTemperatureHistoryOperations
 import com.aqua.aqualight.application.devices.cooling.DeviceCoolingTemperatureHistoryPoint
 import com.aqua.aqualight.application.devices.cooling.DeviceCoolingTemperatureHistoryRange
 import com.aqua.aqualight.application.devices.cooling.DeviceCoolingTemperatureHistorySnapshot
+import com.aqua.aqualight.data.devices.cooling.v1.DeviceCoolingV1FailureMapper
 import com.aqua.aqualight.data.devices.model.DeviceFamily
 import com.aqua.aqualight.data.devices.model.DeviceSnapshot
 import com.aqua.aqualight.data.devices.model.DeviceUid
@@ -54,7 +56,11 @@ internal class DefaultDeviceCoolingTemperatureHistoryOperations(
                             outcome.value.toApplicationSnapshot(expectedRange = range)
                         }.fold(
                             onSuccess = DeviceCoolingTemperatureHistoryLoadResult::Loaded,
-                            onFailure = { DeviceCoolingTemperatureHistoryLoadResult.Unavailable }
+                            onFailure = {
+                                DeviceCoolingTemperatureHistoryLoadResult.Rejected(
+                                    DeviceCoolingCommandFailure.PROTOCOL_ERROR
+                                )
+                            }
                         )
                     }
                 }
@@ -62,12 +68,18 @@ internal class DefaultDeviceCoolingTemperatureHistoryOperations(
                     DeviceCoolingTemperatureHistoryLoadResult.Unsupported
                 is DeviceRuntimeCommandOutcome.NotConnected,
                 is DeviceRuntimeCommandOutcome.NotAuthenticated,
-                is DeviceRuntimeCommandOutcome.FirmwareError,
-                is DeviceRuntimeCommandOutcome.ProtocolError,
                 is DeviceRuntimeCommandOutcome.SendFailed,
                 is DeviceRuntimeCommandOutcome.Timeout,
                 is DeviceRuntimeCommandOutcome.Cancelled ->
                     DeviceCoolingTemperatureHistoryLoadResult.Unavailable
+                is DeviceRuntimeCommandOutcome.FirmwareError ->
+                    DeviceCoolingTemperatureHistoryLoadResult.Rejected(
+                        DeviceCoolingV1FailureMapper.map(outcome)
+                    )
+                is DeviceRuntimeCommandOutcome.ProtocolError ->
+                    DeviceCoolingTemperatureHistoryLoadResult.Rejected(
+                        DeviceCoolingCommandFailure.PROTOCOL_ERROR
+                    )
             }
         }
     }
