@@ -25,6 +25,7 @@ import com.aqua.aqualight.ui.common.text.AquaUiText
 import com.aqua.aqualight.ui.tabs.devices.detail.common.DeviceRootKind
 import com.aqua.aqualight.ui.tabs.devices.detail.common.DeviceRootOverviewViewModel
 import com.aqua.aqualight.ui.tabs.devices.detail.cooling.presentation.root.DeviceCoolingRootViewModel
+import com.aqua.aqualight.ui.tabs.devices.detail.cooling.presentation.root.PreparedCoolingSurfaceOperations
 import com.aqua.aqualight.ui.tabs.devices.detail.light.DeviceLightRootViewModel
 import com.aqua.aqualight.ui.tabs.devices.detail.timer.DeviceTimerRootViewModel
 import kotlinx.coroutines.Dispatchers
@@ -125,7 +126,8 @@ class DeviceRootViewModelBoundaryTest {
             operations = operations,
             controlOperations = UnavailableCoolingControlOperations,
             historyOperations = UnavailableCoolingHistoryOperations,
-            automaticSettingsOperations = UnavailableCoolingAutomaticOperations
+            automaticSettingsOperations = UnavailableCoolingAutomaticOperations,
+            controlSurfacePreparationOperations = PreparedCoolingSurfaceOperations
         )
 
     private fun rootSnapshot(

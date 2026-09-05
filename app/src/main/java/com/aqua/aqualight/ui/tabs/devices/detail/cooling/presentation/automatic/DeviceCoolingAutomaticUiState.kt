@@ -53,6 +53,9 @@ data class DeviceCoolingAutomaticSettingsUiState(
     val saveState: DeviceCoolingAutomaticSaveState
         get() = mutationState.toAutomaticSaveState()
 
+    val operationInProgress: Boolean
+        get() = mutationState == CoolingMutationState.Saving
+
     val loadFailure: DeviceCoolingAutomaticFailure?
         get() = dataState.automaticLoadFailureOrNull()
 

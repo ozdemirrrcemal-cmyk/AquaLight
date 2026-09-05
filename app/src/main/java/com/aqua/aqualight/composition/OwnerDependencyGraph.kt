@@ -24,6 +24,7 @@ import com.aqua.aqualight.data.auth.OwnerSessionStateMachine
 import com.aqua.aqualight.data.care.CareTaskDataStoreManager
 import com.aqua.aqualight.data.devices.DefaultDeviceFirmwareUpdateOperations
 import com.aqua.aqualight.data.devices.DefaultDeviceRootOperations
+import com.aqua.aqualight.data.devices.cooling.control.DefaultDeviceCoolingControlOperations
 import com.aqua.aqualight.data.devices.dosing.DefaultDeviceDosingChannelNavigationOperations
 import com.aqua.aqualight.data.devices.dosing.SharedPreferencesDeviceDosingCalibrationDraftStore
 import com.aqua.aqualight.data.devices.dosing.SharedPreferencesDeviceDosingLowLevelAlertLedger
@@ -60,6 +61,7 @@ internal data class OwnerDependencyGraph(
     val careTaskStore: CareTaskDataStoreManager,
     val userDataArchiveOperations: UserDataArchiveOperations,
     val provisioningDraftOperations: ProvisioningDraftOperations,
+    val controlSurfacePreparationOperations: DeviceControlSurfacePreparationOperations,
     val dosingOperations: OwnerDosingOperations
 )
 
@@ -69,8 +71,7 @@ internal data class OwnerDosingOperations(
     val cardOperations: DeviceDosingCardOperations,
     val calibrationOperations: DeviceDosingCalibrationOperations,
     val calibrationDraftOperations: DeviceDosingCalibrationDraftOperations,
-    val navigationOperations: DeviceDosingChannelNavigationOperations,
-    val controlSurfacePreparationOperations: DeviceControlSurfacePreparationOperations
+    val navigationOperations: DeviceDosingChannelNavigationOperations
 )
 
 internal fun interface OwnerDependencyGraphResolver {
@@ -207,6 +208,8 @@ internal class ActiveOwnerDependencyGraphResolver(
             mediaGateway = mediaGateway,
             reconcileCareReminders = notificationPreferenceUseCase::reconcileOwner
         )
+        val dosingOperations = createDosingOperations(dependencies)
+        val rootOperations = DefaultDeviceRootOperations(dependencies.devicesRepository)
         return OwnerDependencyGraph(
             ownerUid = dependencies.ownerUid,
             sessionGeneration = dependencies.sessionGeneration,
@@ -235,7 +238,15 @@ internal class ActiveOwnerDependencyGraphResolver(
                     ownerUidProvider = ownerUidProvider
                 )
             ),
-            dosingOperations = createDosingOperations(dependencies)
+            controlSurfacePreparationOperations =
+                DefaultDeviceControlSurfacePreparationOperations(
+                    rootOperations = rootOperations,
+                    dosingChannelOperations = dosingOperations.channelOperations,
+                    coolingControlOperations = DefaultDeviceCoolingControlOperations(
+                        dependencies.devicesRepository
+                    )
+                ),
+            dosingOperations = dosingOperations
         )
     }
 
@@ -253,7 +264,6 @@ internal class ActiveOwnerDependencyGraphResolver(
             alertTextResolver = AndroidDeviceDosingLowLevelAlertTextResolver(appContext)
         ).also(dependencies.devicesRepository::registerOwnerScopedResource)
         val channelOperations = runtime.channelOperations
-        val rootOperations = DefaultDeviceRootOperations(dependencies.devicesRepository)
         return OwnerDosingOperations(
             channelOperations = channelOperations,
             cardOperations = runtime.cardOperations,
@@ -263,14 +273,9 @@ internal class ActiveOwnerDependencyGraphResolver(
                 ownerUid = dependencies.ownerUid
             ),
             navigationOperations = DefaultDeviceDosingChannelNavigationOperations(
-                rootOperations = rootOperations,
+                rootOperations = DefaultDeviceRootOperations(dependencies.devicesRepository),
                 channelOperations = channelOperations
-            ),
-            controlSurfacePreparationOperations =
-                DefaultDeviceControlSurfacePreparationOperations(
-                    rootOperations = rootOperations,
-                    dosingChannelOperations = channelOperations
-                )
+            )
         )
     }
 

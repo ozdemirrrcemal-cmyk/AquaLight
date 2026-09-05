@@ -30,6 +30,9 @@ data class DeviceCoolingManualSettingsUiState(
     val isManualMode: Boolean
         get() = presentation?.selectedMode == DeviceCoolingControlMode.MANUAL
 
+    val operationInProgress: Boolean
+        get() = mutationState == CoolingMutationState.Saving
+
     val canWrite: Boolean
         get() = controlState.isCurrentAuthoritative &&
             isManualMode &&

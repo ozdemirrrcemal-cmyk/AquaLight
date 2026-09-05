@@ -62,7 +62,8 @@ class DeviceCoolingRootAuthoritativeStateTest {
             historyOperations = UnavailableHistoryOperations,
             automaticSettingsOperations = FakeAutomaticOperations(
                 DeviceCoolingAutomaticSettingsSnapshot()
-            )
+            ),
+            controlSurfacePreparationOperations = PreparedCoolingSurfaceOperations
         )
 
         viewModel.bind(DEVICE_UID)
@@ -83,7 +84,8 @@ class DeviceCoolingRootAuthoritativeStateTest {
             operations = FakeRootOperations(),
             controlOperations = FakeControlOperations(availableControl()),
             historyOperations = UnavailableHistoryOperations,
-            automaticSettingsOperations = FakeAutomaticOperations(availableAutomatic())
+            automaticSettingsOperations = FakeAutomaticOperations(availableAutomatic()),
+            controlSurfacePreparationOperations = PreparedCoolingSurfaceOperations
         )
 
         viewModel.bind(DEVICE_UID)
@@ -106,7 +108,8 @@ class DeviceCoolingRootAuthoritativeStateTest {
                 operations = FakeRootOperations(),
                 controlOperations = control,
                 historyOperations = UnavailableHistoryOperations,
-                automaticSettingsOperations = FakeAutomaticOperations(availableAutomatic())
+                automaticSettingsOperations = FakeAutomaticOperations(availableAutomatic()),
+                controlSurfacePreparationOperations = PreparedCoolingSurfaceOperations
             )
             viewModel.bind(DEVICE_UID)
 
@@ -134,7 +137,8 @@ class DeviceCoolingRootAuthoritativeStateTest {
                 operations = FakeRootOperations(),
                 controlOperations = FakeControlOperations(availableControl()),
                 historyOperations = UnavailableHistoryOperations,
-                automaticSettingsOperations = automatic
+                automaticSettingsOperations = automatic,
+                controlSurfacePreparationOperations = PreparedCoolingSurfaceOperations
             )
             viewModel.bind(DEVICE_UID)
 
@@ -162,7 +166,8 @@ class DeviceCoolingRootAuthoritativeStateTest {
             operations = root,
             controlOperations = FakeControlOperations(availableControl()),
             historyOperations = UnavailableHistoryOperations,
-            automaticSettingsOperations = FakeAutomaticOperations(availableAutomatic())
+            automaticSettingsOperations = FakeAutomaticOperations(availableAutomatic()),
+            controlSurfacePreparationOperations = PreparedCoolingSurfaceOperations
         )
         viewModel.bind(DEVICE_UID)
 

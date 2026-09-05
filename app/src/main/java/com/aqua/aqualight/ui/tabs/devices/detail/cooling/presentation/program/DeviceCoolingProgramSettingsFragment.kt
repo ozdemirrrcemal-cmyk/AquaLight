@@ -16,6 +16,7 @@ import com.aqua.aqualight.composition.requireAppContainer
 import com.aqua.aqualight.ui.common.bottomsheet.AquaTimePickerBottomSheet
 import com.aqua.aqualight.ui.common.bottomsheet.IntegerStepperBottomSheet
 import com.aqua.aqualight.ui.common.header.AquaHeaderPrimaryAction
+import com.aqua.aqualight.ui.common.loading.setFragmentGlobalLoading
 import com.aqua.aqualight.ui.tabs.devices.detail.cooling.presentation.common.DeviceCoolingModeSettingsFragment
 import com.aqua.aqualight.ui.tabs.devices.detail.cooling.presentation.common.toCommercialCoolingError
 import kotlinx.coroutines.flow.distinctUntilChanged
@@ -44,7 +45,7 @@ class DeviceCoolingProgramSettingsFragment : DeviceCoolingModeSettingsFragment(
     override fun onModeSettingsViewCreated(savedInstanceState: Bundle?) {
         super.onModeSettingsViewCreated(savedInstanceState)
         registerPickerResults()
-        bindHeaderSaveState()
+        bindHeaderAndLoadingState()
         bindSaveFeedback()
         viewModel.bind(destinationDeviceUid)
         modeSettingsBinding.coolingModeSettingsCompose.apply {
@@ -75,13 +76,16 @@ class DeviceCoolingProgramSettingsFragment : DeviceCoolingModeSettingsFragment(
         }
     }
 
-    private fun bindHeaderSaveState() {
+    private fun bindHeaderAndLoadingState() {
         viewLifecycleOwner.lifecycleScope.launch {
             viewLifecycleOwner.repeatOnLifecycle(Lifecycle.State.STARTED) {
                 viewModel.uiState
-                    .map { state -> state.canSave }
+                    .map { state -> state.canSave to state.operationInProgress }
                     .distinctUntilChanged()
-                    .collect { refreshModeSettingsHeader() }
+                    .collect { (_, loading) ->
+                        refreshModeSettingsHeader()
+                        setFragmentGlobalLoading(loading)
+                    }
             }
         }
     }

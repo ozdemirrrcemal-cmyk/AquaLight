@@ -80,7 +80,8 @@ private class DebugDeviceFixtureViewModelFactory(
             operations = rootOperations(graph),
             controlOperations = DefaultDeviceCoolingControlOperations(repository),
             historyOperations = DefaultDeviceCoolingTemperatureHistoryOperations(repository),
-            automaticSettingsOperations = DefaultDeviceCoolingAutomaticSettingsOperations(repository)
+            automaticSettingsOperations = DefaultDeviceCoolingAutomaticSettingsOperations(repository),
+            controlSurfacePreparationOperations = graph.controlSurfacePreparationOperations
         )
     }
 
@@ -108,7 +109,7 @@ private class DebugDeviceFixtureViewModelFactory(
                     fixtures = fixtures
                 ),
                 controlSurfacePreparationOperations =
-                    graph.dosingOperations.controlSurfacePreparationOperations
+                    graph.controlSurfacePreparationOperations
             ),
             routeResolver = DeviceRouteResolver()
         )

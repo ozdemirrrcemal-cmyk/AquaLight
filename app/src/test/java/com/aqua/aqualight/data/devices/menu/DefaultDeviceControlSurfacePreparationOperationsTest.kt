@@ -5,12 +5,20 @@ import com.aqua.aqualight.application.devices.DeviceChannelWireKey
 import com.aqua.aqualight.application.devices.DeviceControlSurfacePreparationRequest
 import com.aqua.aqualight.application.devices.DeviceControlSurfacePreparationResult
 import com.aqua.aqualight.application.devices.DeviceDosingChannelSlot
+import com.aqua.aqualight.application.devices.DeviceFanOutputSlot
 import com.aqua.aqualight.application.devices.DeviceRootCatalogState
 import com.aqua.aqualight.application.devices.DeviceRootOperations
+import com.aqua.aqualight.application.devices.DeviceRootRoute
 import com.aqua.aqualight.application.devices.DeviceRootSnapshot
 import com.aqua.aqualight.application.devices.DeviceSlotIndex
+import com.aqua.aqualight.application.devices.DeviceTemperatureSensorSlot
 import com.aqua.aqualight.application.devices.OwnerDeviceAvailability
 import com.aqua.aqualight.application.devices.OwnerDeviceFamily
+import com.aqua.aqualight.application.devices.cooling.control.DeviceCoolingControlCapabilities
+import com.aqua.aqualight.application.devices.cooling.control.DeviceCoolingControlMode
+import com.aqua.aqualight.application.devices.cooling.control.DeviceCoolingControlOperations
+import com.aqua.aqualight.application.devices.cooling.control.DeviceCoolingControlResult
+import com.aqua.aqualight.application.devices.cooling.control.DeviceCoolingControlSnapshot
 import com.aqua.aqualight.application.devices.dosing.DeviceDosingActiveRun
 import com.aqua.aqualight.application.devices.dosing.DeviceDosingChannelControls
 import com.aqua.aqualight.application.devices.dosing.DeviceDosingChannelOperations
@@ -20,6 +28,7 @@ import com.aqua.aqualight.application.devices.dosing.DeviceDosingDailyUsageSnaps
 import com.aqua.aqualight.application.devices.dosing.DeviceDosingReservoirSnapshot
 import com.aqua.aqualight.application.devices.dosing.DeviceDosingRuntimeReason
 import com.aqua.aqualight.application.devices.dosing.DeviceDosingSchedulingPolicy
+import com.aqua.aqualight.data.devices.cooling.DisconnectedDeviceCoolingControlOperations
 import com.aqua.aqualight.data.devices.dosing.UnavailableDeviceDosingChannelOperations
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -128,12 +137,45 @@ class DefaultDeviceControlSurfacePreparationOperationsTest {
         assertEquals(1, channels.refreshCalls)
     }
 
+    @Test
+    fun `Cooling menu waits for central authoritative runtime before ready`() = runTest {
+        val cooling = FakeCoolingControlOperations(availableCoolingControl())
+        val operations = DefaultDeviceControlSurfacePreparationOperations(
+            rootOperations = FakeRootOperations(coolingRootSnapshot()),
+            dosingChannelOperations = FakeChannelOperations(),
+            coolingControlOperations = cooling
+        )
+
+        val result = operations.prepare(
+            DeviceControlSurfacePreparationRequest(
+                deviceUid = COOLING_DEVICE_UID,
+                family = OwnerDeviceFamily.COOLING
+            )
+        )
+
+        assertTrue(result is DeviceControlSurfacePreparationResult.Ready)
+        assertEquals(1, cooling.observeCalls)
+        assertTrue(
+            operations.consumeFreshPreparation(
+                COOLING_DEVICE_UID,
+                OwnerDeviceFamily.COOLING
+            )
+        )
+        assertFalse(
+            operations.consumeFreshPreparation(
+                COOLING_DEVICE_UID,
+                OwnerDeviceFamily.DOSING
+            )
+        )
+    }
+
     private fun preparation(
         channelCount: Int,
         channels: FakeChannelOperations
     ) = DefaultDeviceControlSurfacePreparationOperations(
         rootOperations = FakeRootOperations(rootSnapshot(channelCount)),
-        dosingChannelOperations = channels
+        dosingChannelOperations = channels,
+        coolingControlOperations = DisconnectedDeviceCoolingControlOperations
     )
 
     private fun request() = DeviceControlSurfacePreparationRequest(
@@ -186,8 +228,34 @@ class DefaultDeviceControlSurfacePreparationOperationsTest {
             authoritativeSnapshots
     }
 
+    private class FakeCoolingControlOperations(
+        private val result: DeviceCoolingControlResult
+    ) : DeviceCoolingControlOperations {
+        var observeCalls: Int = 0
+
+        override fun observeControl(deviceUid: String): Flow<DeviceCoolingControlResult> {
+            observeCalls += 1
+            return MutableStateFlow(result)
+        }
+
+        override fun currentControl(deviceUid: String): DeviceCoolingControlResult = result
+
+        override suspend fun refreshControl(deviceUid: String): DeviceCoolingControlResult = result
+
+        override suspend fun setMode(
+            deviceUid: String,
+            mode: DeviceCoolingControlMode
+        ): DeviceCoolingControlResult = result
+
+        override suspend fun setManualFanPercent(
+            deviceUid: String,
+            percent: Int
+        ): DeviceCoolingControlResult = result
+    }
+
     private companion object {
         const val DEVICE_UID = "dose-pro-4"
+        const val COOLING_DEVICE_UID = "cool-pro-1f"
     }
 }
 
@@ -237,3 +305,49 @@ private fun snapshots(count: Int): List<DeviceDosingChannelSnapshot> =
             usageToday = DeviceDosingDailyUsageSnapshot()
         )
     }
+
+private fun coolingRootSnapshot() = DeviceRootSnapshot(
+    deviceUid = "cool-pro-1f",
+    title = "Cool Pro 1F",
+    availability = OwnerDeviceAvailability.REACHABLE,
+    family = OwnerDeviceFamily.COOLING,
+    catalogState = DeviceRootCatalogState.VALID,
+    fanOutputCount = 1,
+    temperatureSensorCount = 1,
+    channelSlots = DeviceChannelSlots(
+        lightChannels = emptyList(),
+        timerChannels = emptyList(),
+        dosingChannels = emptyList(),
+        fanOutputs = listOf(
+            DeviceFanOutputSlot(
+                index = DeviceSlotIndex(0),
+                wireKey = DeviceChannelWireKey("fan1"),
+                defaultDisplayName = "Fan 1",
+                displayNameEditable = false,
+                route = DeviceRootRoute.COOLING_CONTROL
+            )
+        ),
+        temperatureSensors = listOf(
+            DeviceTemperatureSensorSlot(
+                index = DeviceSlotIndex(0),
+                defaultDisplayName = "Temperature 1",
+                route = DeviceRootRoute.COOLING_TEMPERATURE
+            )
+        )
+    )
+)
+
+private fun availableCoolingControl(): DeviceCoolingControlResult =
+    DeviceCoolingControlResult.Available(
+        DeviceCoolingControlSnapshot(
+            mode = DeviceCoolingControlMode.AUTOMATIC,
+            manualFanPercent = null,
+            actualFanPercent = null,
+            tankTemperatureC = null,
+            capabilities = DeviceCoolingControlCapabilities(
+                supportedModes = setOf(DeviceCoolingControlMode.AUTOMATIC),
+                modeSelectionWritable = true,
+                manualFan = null
+            )
+        )
+    )

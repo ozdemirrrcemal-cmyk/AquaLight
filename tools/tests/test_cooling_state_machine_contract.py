@@ -80,6 +80,24 @@ class CoolingStateMachineContractTest(unittest.TestCase):
             self.assertIn(token, history)
             self.assertIn(token, automatic)
 
+    def test_cooling_mutations_and_cold_root_use_central_loading(self) -> None:
+        fragments = (
+            "root/DeviceCoolingRootFragment.kt",
+            "automatic/DeviceCoolingAutomaticSettingsFragment.kt",
+            "manual/DeviceCoolingManualSettingsFragment.kt",
+            "program/DeviceCoolingProgramSettingsFragment.kt",
+        )
+        for relative_path in fragments:
+            with self.subTest(fragment=relative_path):
+                text = (COOLING / relative_path).read_text(encoding="utf-8")
+                self.assertIn("setFragmentGlobalLoading", text)
+
+        root_state = (COOLING / "root/DeviceCoolingRootUiState.kt").read_text(
+            encoding="utf-8"
+        )
+        self.assertIn("surfacePreparationPending", root_state)
+        self.assertIn("showGlobalLoading", root_state)
+
 
 if __name__ == "__main__":
     unittest.main()

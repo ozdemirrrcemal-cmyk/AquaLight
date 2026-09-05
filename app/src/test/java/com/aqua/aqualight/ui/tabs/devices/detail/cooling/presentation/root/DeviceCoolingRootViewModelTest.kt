@@ -88,7 +88,8 @@ class DeviceCoolingRootViewModelTest {
         operations = FakeRootOperations(),
         controlOperations = control,
         historyOperations = UnavailableHistoryOperations,
-        automaticSettingsOperations = UnavailableAutomaticOperations
+        automaticSettingsOperations = UnavailableAutomaticOperations,
+        controlSurfacePreparationOperations = PreparedCoolingSurfaceOperations
     )
 
     private class FakeRootOperations : DeviceRootOperations {

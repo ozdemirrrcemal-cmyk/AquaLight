@@ -13,11 +13,14 @@ import androidx.lifecycle.repeatOnLifecycle
 import androidx.navigation.fragment.findNavController
 import androidx.navigation.fragment.navArgs
 import com.aqua.aqualight.R
+import com.aqua.aqualight.base.BaseActivity
 import com.aqua.aqualight.composition.requireAppContainer
 import com.aqua.aqualight.databinding.FragmentDeviceCoolingRootBinding
+import com.aqua.aqualight.ui.common.devicepresence.DeviceMenuUnavailableMessageMapper
 import com.aqua.aqualight.ui.common.header.AquaHeaderAction
 import com.aqua.aqualight.ui.common.header.AquaHeaderConfig
 import com.aqua.aqualight.ui.common.header.setupAquaHeader
+import com.aqua.aqualight.ui.common.loading.setFragmentGlobalLoading
 import com.aqua.aqualight.ui.navigation.DeviceCoolingRouteNavigator
 import com.aqua.aqualight.ui.tabs.devices.detail.cooling.presentation.dashboard.DeviceCoolingDashboardActions
 import com.aqua.aqualight.ui.tabs.devices.detail.cooling.presentation.dashboard.DeviceCoolingDashboardScreen
@@ -38,6 +41,7 @@ class DeviceCoolingRootFragment : Fragment(R.layout.fragment_device_cooling_root
         _binding = FragmentDeviceCoolingRootBinding.bind(view)
 
         viewModel.bind(args.deviceUid)
+        setFragmentGlobalLoading(viewModel.uiState.value.showGlobalLoading)
         setupHeader(viewModel.uiState.value)
         setupDashboardContent()
         observeViewModel()
@@ -135,9 +139,30 @@ class DeviceCoolingRootFragment : Fragment(R.layout.fragment_device_cooling_root
     private fun observeViewModel() {
         viewLifecycleOwner.lifecycleScope.launch {
             viewLifecycleOwner.repeatOnLifecycle(Lifecycle.State.STARTED) {
-                viewModel.uiState.collect { state ->
-                    if (_binding == null) return@collect
-                    setupHeader(state)
+                launch {
+                    viewModel.uiState.collect { state ->
+                        if (_binding == null) return@collect
+                        setupHeader(state)
+                        setFragmentGlobalLoading(state.showGlobalLoading)
+                    }
+                }
+                launch {
+                    viewModel.surfaceUnavailableEvents.collect { reason ->
+                        if (_binding == null) return@collect
+                        setFragmentGlobalLoading(false)
+                        val navController = findNavController()
+                        if (navController.currentDestination?.id ==
+                            R.id.deviceCoolingRootFragment
+                        ) {
+                            navController.navigateUp()
+                        }
+                        (activity as? BaseActivity)?.showSnackBar(
+                            message = getString(
+                                DeviceMenuUnavailableMessageMapper.messageRes(reason)
+                            ),
+                            type = BaseActivity.SnackType.ERROR
+                        )
+                    }
                 }
             }
         }

@@ -112,6 +112,19 @@ class DeviceCoolingRootStateMachineTest {
 
         assertFalse(state.controlWriteEnabled)
         assertFalse(state.modeSelectionWritable)
+        assertTrue(state.showGlobalLoading)
+    }
+
+    @Test
+    fun `cold surface preparation blocks globally until authority is available`() {
+        val cold = DeviceCoolingRootUiState(surfacePreparationPending = true)
+        val warm = DeviceCoolingRootUiState(
+            surfacePreparationPending = true,
+            controlState = availableControl().toRootControlState(CoolingDataState.Initial)
+        )
+
+        assertTrue(cold.showGlobalLoading)
+        assertFalse(warm.showGlobalLoading)
     }
 
     @Test

@@ -13,7 +13,6 @@ import com.aqua.aqualight.data.devices.runtime.core.DeviceRuntimeCommandOutcome
 import com.aqua.aqualight.data.devices.runtime.modules.cooling.DeviceCoolingRuntimeRepository
 import com.aqua.aqualight.data.devices.runtime.modules.cooling.DeviceCoolingRuntimeState
 import com.aqua.aqualight.data.devices.runtime.modules.cooling.currentAuthoritativeState
-import com.aqua.aqualight.data.devices.runtime.modules.cooling.currentState
 import com.aqua.aqualight.data.devices.runtime.modules.cooling.v1.DeviceCoolingV1ConfigApplyPayload
 import com.aqua.aqualight.data.devices.runtime.modules.cooling.v1.DeviceCoolingV1Contract
 import com.aqua.aqualight.data.devices.runtime.modules.cooling.v1.DeviceCoolingV1ControlMode
@@ -54,17 +53,15 @@ internal class DefaultDeviceCoolingControlOperations(
         return if (uid == null || runtime == null) {
             DeviceCoolingControlResult.Failed(DeviceCoolingControlFailure.Unavailable)
         } else {
-            // Current seeds presentation before collection starts. A retained snapshot may be shown
-            // here; the first observe emission immediately marks it stale if authority is revoked.
             projectRead(
                 device = devicesRepository.currentDevice(uid),
-                state = runtime.currentState(uid),
-                requireAuthority = false
+                state = runtime.currentAuthoritativeState(uid),
+                requireAuthority = true
             )
         }
     }
 
-    /** Compatibility boundary only; current-state freshness is runtime-owned and never polled here. */
+    /** Re-reads central authority without issuing a duplicate firmware status command. */
     override suspend fun refreshControl(deviceUid: String): DeviceCoolingControlResult =
         currentControl(deviceUid)
 

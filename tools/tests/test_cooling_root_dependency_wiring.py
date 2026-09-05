@@ -27,6 +27,7 @@ class CoolingRootDependencyWiringTest(unittest.TestCase):
             "private val controlOperations: DeviceCoolingControlOperations,",
             "private val historyOperations: DeviceCoolingTemperatureHistoryOperations,",
             "private val automaticSettingsOperations: DeviceCoolingAutomaticSettingsOperations",
+            "private val controlSurfacePreparationOperations:",
         ):
             self.assertIn(token, text)
 
@@ -53,6 +54,7 @@ class CoolingRootDependencyWiringTest(unittest.TestCase):
                     text,
                 )
                 self.assertIn("DefaultDeviceCoolingAutomaticSettingsOperations(", text)
+                self.assertIn("controlSurfacePreparationOperations =", text)
 
 
 if __name__ == "__main__":

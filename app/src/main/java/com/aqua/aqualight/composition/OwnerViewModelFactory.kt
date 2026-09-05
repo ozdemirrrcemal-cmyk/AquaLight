@@ -173,7 +173,8 @@ internal class OwnerViewModelFactory(
                 operations = DefaultDeviceRootOperations(repository),
                 controlOperations = DefaultDeviceCoolingControlOperations(repository),
                 historyOperations = DefaultDeviceCoolingTemperatureHistoryOperations(repository),
-                automaticSettingsOperations = DefaultDeviceCoolingAutomaticSettingsOperations(repository)
+                automaticSettingsOperations = DefaultDeviceCoolingAutomaticSettingsOperations(repository),
+                controlSurfacePreparationOperations = graph.controlSurfacePreparationOperations
             )
             DeviceCoolingTemperatureHistoryViewModel::class.java ->
                 DeviceCoolingTemperatureHistoryViewModel(
@@ -198,7 +199,7 @@ internal class OwnerViewModelFactory(
                     operations = DefaultDeviceRootOperations(repository),
                     channelNavigationOperations = dosing.navigationOperations,
                     channelOperations = dosing.channelOperations,
-                    controlSurfacePreparationOperations = dosing.controlSurfacePreparationOperations
+                    controlSurfacePreparationOperations = graph.controlSurfacePreparationOperations
                 )
             }
             DeviceDosingChannelCalibrationViewModel::class.java ->
@@ -244,7 +245,7 @@ internal class OwnerViewModelFactory(
         repository: DevicesRepository
     ): DeviceMenuOpenUseCase = DeviceMenuOpenUseCase(
         menuAccessOperations = DefaultDeviceMenuAccessOperations.create(repository),
-        controlSurfacePreparationOperations = graph.dosingOperations.controlSurfacePreparationOperations
+        controlSurfacePreparationOperations = graph.controlSurfacePreparationOperations
     )
 
     private fun createOwnerDevicesOperations(

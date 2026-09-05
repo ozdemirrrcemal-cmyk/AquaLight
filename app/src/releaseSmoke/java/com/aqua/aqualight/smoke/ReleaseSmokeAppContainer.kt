@@ -251,7 +251,9 @@ private class ReleaseSmokeViewModelFactory(
                 controlOperations = DefaultDeviceCoolingControlOperations(devicesRepository),
                 historyOperations = DefaultDeviceCoolingTemperatureHistoryOperations(devicesRepository),
                 automaticSettingsOperations =
-                    DefaultDeviceCoolingAutomaticSettingsOperations(devicesRepository)
+                    DefaultDeviceCoolingAutomaticSettingsOperations(devicesRepository),
+                controlSurfacePreparationOperations =
+                    ReleaseSmokeControlSurfacePreparationOperations
             )
         modelClass.isAssignableFrom(DeviceTimerRootViewModel::class.java) ->
             DeviceTimerRootViewModel(DefaultDeviceRootOperations(devicesRepository))

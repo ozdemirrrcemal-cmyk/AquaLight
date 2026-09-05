@@ -80,6 +80,7 @@ data class DeviceCoolingRootUiState(
         CoolingDashboardOverviewPresentation,
         Nothing
         > = CoolingDataState.Initial,
+    val surfacePreparationPending: Boolean = false,
     val fanOutputCount: Int = 0,
     val temperatureSensorCount: Int = 0
 ) {
@@ -102,6 +103,10 @@ data class DeviceCoolingRootUiState(
 
     val controlWriteEnabled: Boolean
         get() = controlAvailable && controlMutationState != CoolingMutationState.Saving
+
+    val showGlobalLoading: Boolean
+        get() = (surfacePreparationPending && !controlAvailable) ||
+            controlMutationState == CoolingMutationState.Saving
 
     val selectedMode: CoolingControlMode?
         get() = controlPresentation?.selectedMode

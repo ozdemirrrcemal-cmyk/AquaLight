@@ -2,6 +2,10 @@ package com.aqua.aqualight.ui.tabs.devices.detail.cooling.presentation.root
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.aqua.aqualight.application.devices.DeviceControlSurfacePreparationOperations
+import com.aqua.aqualight.application.devices.DeviceControlSurfacePreparationRequest
+import com.aqua.aqualight.application.devices.DeviceControlSurfacePreparationResult
+import com.aqua.aqualight.application.devices.DeviceMenuUnavailableReason
 import com.aqua.aqualight.application.devices.DeviceRootCatalogState
 import com.aqua.aqualight.application.devices.DeviceRootOperations
 import com.aqua.aqualight.application.devices.DeviceRootSnapshot
@@ -15,11 +19,15 @@ import com.aqua.aqualight.application.devices.cooling.control.DeviceCoolingContr
 import com.aqua.aqualight.ui.common.devicepresence.DeviceConnectionVisualState
 import com.aqua.aqualight.ui.tabs.devices.detail.cooling.presentation.common.CoolingDataState
 import com.aqua.aqualight.ui.tabs.devices.detail.cooling.presentation.common.CoolingMutationState
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineStart
 import kotlinx.coroutines.Job
+import kotlinx.coroutines.channels.Channel
+import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 
@@ -27,11 +35,17 @@ class DeviceCoolingRootViewModel(
     private val operations: DeviceRootOperations,
     private val controlOperations: DeviceCoolingControlOperations,
     private val historyOperations: DeviceCoolingTemperatureHistoryOperations,
-    private val automaticSettingsOperations: DeviceCoolingAutomaticSettingsOperations
+    private val automaticSettingsOperations: DeviceCoolingAutomaticSettingsOperations,
+    private val controlSurfacePreparationOperations: DeviceControlSurfacePreparationOperations
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(DeviceCoolingRootUiState())
     val uiState: StateFlow<DeviceCoolingRootUiState> = _uiState.asStateFlow()
+    private val surfaceUnavailableEventChannel = Channel<DeviceMenuUnavailableReason>(
+        capacity = Channel.BUFFERED
+    )
+    val surfaceUnavailableEvents: Flow<DeviceMenuUnavailableReason> =
+        surfaceUnavailableEventChannel.receiveAsFlow()
 
     private var boundDeviceUid = ""
     private val jobs = DeviceCoolingRootJobs()
@@ -44,6 +58,11 @@ class DeviceCoolingRootViewModel(
         }
         if (boundDeviceUid == deviceUid) return
 
+        val preparedHandoff = controlSurfacePreparationOperations.consumeFreshPreparation(
+            deviceUid = deviceUid,
+            family = OwnerDeviceFamily.COOLING
+        )
+
         boundDeviceUid = deviceUid
         jobs.cancelAll()
 
@@ -54,6 +73,7 @@ class DeviceCoolingRootViewModel(
         operations.current(deviceUid)?.let { snapshot ->
             initialState = snapshot.toRootUiState(initialState)
         }
+        operations.connect(deviceUid)
         val initialControl = controlOperations.currentControl(deviceUid)
         initialState = initialState.copy(
             controlState = initialControl.toRootControlState(
@@ -64,14 +84,16 @@ class DeviceCoolingRootViewModel(
             ),
             automaticSummaryState = automaticSettingsOperations
                 .currentAutomaticSettings(deviceUid)
-                .toRootAutomaticState(initialState.automaticSummaryState)
+                .toRootAutomaticState(initialState.automaticSummaryState),
+            surfacePreparationPending = !(
+                preparedHandoff && initialControl is DeviceCoolingControlResult.Available
+                )
         )
 
         // Runtime/domain bootstrap owns live Cooling freshness. Screen entry only seeds the last
         // presentation snapshot and observes the central owner; it never requests status.
         _uiState.value = initialState
 
-        operations.connect(deviceUid)
         loadOverviewHistory(deviceUid)
         observeCoolingControl(deviceUid)
         observeAutomaticSettings(deviceUid)
@@ -86,6 +108,9 @@ class DeviceCoolingRootViewModel(
                     )
                 }
             }
+        }
+        if (initialState.surfacePreparationPending) {
+            prepareRestoredSurface(deviceUid)
         }
     }
 
@@ -158,6 +183,58 @@ class DeviceCoolingRootViewModel(
         }
     }
 
+    private fun prepareRestoredSurface(deviceUid: String) {
+        if (jobs.surfacePreparationJob?.isActive == true) return
+        _uiState.update { state -> state.copy(surfacePreparationPending = true) }
+        jobs.surfacePreparationJob = viewModelScope.launch {
+            val result = try {
+                controlSurfacePreparationOperations.prepare(
+                    DeviceControlSurfacePreparationRequest(
+                        deviceUid = deviceUid,
+                        family = OwnerDeviceFamily.COOLING
+                    )
+                )
+            } catch (cancellation: CancellationException) {
+                throw cancellation
+            } catch (_: Exception) {
+                DeviceControlSurfacePreparationResult.Unavailable(
+                    DeviceMenuUnavailableReason.CURRENT_LIVENESS_NOT_PROVEN
+                )
+            }
+            if (boundDeviceUid != deviceUid) return@launch
+
+            when (result) {
+                DeviceControlSurfacePreparationResult.Ready -> {
+                    controlSurfacePreparationOperations.consumeFreshPreparation(
+                        deviceUid = deviceUid,
+                        family = OwnerDeviceFamily.COOLING
+                    )
+                    when (val control = controlOperations.currentControl(deviceUid)) {
+                        is DeviceCoolingControlResult.Available -> _uiState.update { state ->
+                            state.copy(
+                                controlState = control.toRootControlState(state.controlState),
+                                dashboardOverviewState = control.toRootDashboardOverviewState(
+                                    state.dashboardOverviewState
+                                ),
+                                surfacePreparationPending = false
+                            )
+                        }
+                        is DeviceCoolingControlResult.Failed -> finishUnavailablePreparation()
+                    }
+                }
+                is DeviceControlSurfacePreparationResult.Unavailable ->
+                    finishUnavailablePreparation(result.reason)
+            }
+        }
+    }
+
+    private suspend fun finishUnavailablePreparation(
+        reason: DeviceMenuUnavailableReason = DeviceMenuUnavailableReason.CURRENT_LIVENESS_NOT_PROVEN
+    ) {
+        _uiState.update { state -> state.copy(surfacePreparationPending = false) }
+        surfaceUnavailableEventChannel.send(reason)
+    }
+
     private fun clearBinding() {
         jobs.cancelAll()
         boundDeviceUid = ""
@@ -171,6 +248,7 @@ private class DeviceCoolingRootJobs {
     var automaticObserveJob: Job? = null
     var controlObserveJob: Job? = null
     var controlMutationJob: Job? = null
+    var surfacePreparationJob: Job? = null
 
     fun cancelAll() {
         observeJob?.cancel()
@@ -178,12 +256,14 @@ private class DeviceCoolingRootJobs {
         automaticObserveJob?.cancel()
         controlObserveJob?.cancel()
         controlMutationJob?.cancel()
+        surfacePreparationJob?.cancel()
 
         observeJob = null
         historyJob = null
         automaticObserveJob = null
         controlObserveJob = null
         controlMutationJob = null
+        surfacePreparationJob = null
     }
 }
 
