@@ -29,7 +29,7 @@ class CoolingHeroPresentationTest {
     fun `manual target never overrides applied fan output for animation`() {
         val presentation = state(
             fanPercent = 35,
-            manualFanPercent = 90
+            options = HeroStateOptions(manualFanPercent = 90)
         ).toCoolingHeroPresentation()
 
         assertEquals(35, presentation.fanPercent)
@@ -57,7 +57,7 @@ class CoolingHeroPresentationTest {
     fun `stale telemetry remains visible without pretending the fan is moving`() {
         val presentation = state(
             fanPercent = 60,
-            freshness = CoolingDataFreshness.STALE
+            options = HeroStateOptions(freshness = CoolingDataFreshness.STALE)
         ).toCoolingHeroPresentation()
 
         assertEquals(CoolingHeroVisualStatus.WAITING_FOR_DATA, presentation.status)
@@ -69,7 +69,7 @@ class CoolingHeroPresentationTest {
     fun `enabled waiting state motion starts before first telemetry`() {
         val motion = state(
             fanPercent = 0,
-            freshness = CoolingDataFreshness.STALE
+            options = HeroStateOptions(freshness = CoolingDataFreshness.STALE)
         ).toCoolingHeroPresentation().resolveMotion(allowWaitingMotion = true)
 
         assertTrue(motion.isActive)
@@ -80,7 +80,7 @@ class CoolingHeroPresentationTest {
     fun `disabled waiting state motion does not imply live cooling`() {
         val motion = state(
             fanPercent = 0,
-            freshness = CoolingDataFreshness.STALE
+            options = HeroStateOptions(freshness = CoolingDataFreshness.STALE)
         ).toCoolingHeroPresentation().resolveMotion(allowWaitingMotion = false)
 
         assertFalse(motion.isActive)
@@ -89,7 +89,10 @@ class CoolingHeroPresentationTest {
 
     @Test
     fun `alarm takes precedence over live fan output`() {
-        val presentation = state(fanPercent = 60, alarmCount = 1).toCoolingHeroPresentation()
+        val presentation = state(
+            fanPercent = 60,
+            options = HeroStateOptions(alarmCount = 1)
+        ).toCoolingHeroPresentation()
 
         assertEquals(CoolingHeroVisualStatus.ATTENTION, presentation.status)
         assertTrue(presentation.isCooling)
@@ -99,7 +102,7 @@ class CoolingHeroPresentationTest {
     fun `fan fault prevents false motion even when output is retained`() {
         val presentation = state(
             fanPercent = 60,
-            fanHealth = CoolingHealthState.FAULT
+            options = HeroStateOptions(fanHealth = CoolingHealthState.FAULT)
         ).toCoolingHeroPresentation()
 
         assertEquals(CoolingHeroVisualStatus.ATTENTION, presentation.status)
@@ -108,7 +111,10 @@ class CoolingHeroPresentationTest {
 
     @Test
     fun `offline root never animates retained telemetry`() {
-        val presentation = state(fanPercent = 60, contentEnabled = false)
+        val presentation = state(
+            fanPercent = 60,
+            options = HeroStateOptions(contentEnabled = false)
+        )
             .copy(connectionVisualState = DeviceConnectionVisualState.OFFLINE)
             .toCoolingHeroPresentation()
 
@@ -118,25 +124,21 @@ class CoolingHeroPresentationTest {
 
     private fun state(
         fanPercent: Int,
-        manualFanPercent: Int? = null,
-        freshness: CoolingDataFreshness = CoolingDataFreshness.CURRENT,
-        alarmCount: Int = 0,
-        fanHealth: CoolingHealthState = CoolingHealthState.READY,
-        contentEnabled: Boolean = true
+        options: HeroStateOptions = HeroStateOptions()
     ): DeviceCoolingRootUiState = DeviceCoolingRootUiState(
         connectionVisualState = DeviceConnectionVisualState.ONLINE,
-        contentEnabled = contentEnabled,
+        contentEnabled = options.contentEnabled,
         controlState = CoolingDataState.Content(
             value = CoolingControlPresentation(
                 selectedMode = DeviceCoolingControlMode.AUTOMATIC,
                 supportedModes = setOf(DeviceCoolingControlMode.AUTOMATIC),
                 modeSelectionWritable = true,
                 manualFanCapabilities = null,
-                manualFanPercent = manualFanPercent,
+                manualFanPercent = options.manualFanPercent,
                 actualFanPercent = fanPercent,
                 tankTemperatureC = TANK_TEMPERATURE_C
             ),
-            freshness = freshness
+            freshness = options.freshness
         ),
         dashboardOverviewState = CoolingDataState.Content(
             CoolingDashboardOverviewPresentation(
@@ -147,11 +149,19 @@ class CoolingHeroPresentationTest {
                 roomTemperatureHistoryC = emptyList(),
                 programSlotCount = null,
                 nextProgramStartMinutesOfDay = null,
-                fanHealth = fanHealth,
+                fanHealth = options.fanHealth,
                 sensorHealth = CoolingHealthState.READY,
-                activeAlarmCount = alarmCount
+                activeAlarmCount = options.alarmCount
             )
         )
+    )
+
+    private data class HeroStateOptions(
+        val manualFanPercent: Int? = null,
+        val freshness: CoolingDataFreshness = CoolingDataFreshness.CURRENT,
+        val alarmCount: Int = 0,
+        val fanHealth: CoolingHealthState = CoolingHealthState.READY,
+        val contentEnabled: Boolean = true
     )
 
     private companion object {
