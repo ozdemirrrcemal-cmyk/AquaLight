@@ -6,6 +6,11 @@ sealed interface CoolingProgramValidationError {
         val maximumCount: Int
     ) : CoolingProgramValidationError
 
+    data class SlotTimeOffStep(
+        val slotIndex: Int,
+        val timeStepMinutes: Int
+    ) : CoolingProgramValidationError
+
     data class SlotTooShort(
         val slotIndex: Int,
         val durationMinutes: Int,
@@ -86,6 +91,17 @@ private fun MutableList<CoolingProgramValidationError>.addSlotErrors(
     slot: CoolingProgramSlot,
     policy: CoolingProgramPolicy
 ) {
+    if (
+        slot.startMinutes % policy.timeStepMinutes != 0 ||
+        slot.endMinutes % policy.timeStepMinutes != 0
+    ) {
+        add(
+            CoolingProgramValidationError.SlotTimeOffStep(
+                slotIndex = index,
+                timeStepMinutes = policy.timeStepMinutes
+            )
+        )
+    }
     val duration = slot.endMinutes - slot.startMinutes
     if (duration < policy.minimumSlotDurationMinutes) {
         add(
