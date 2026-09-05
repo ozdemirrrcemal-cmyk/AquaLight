@@ -2,6 +2,7 @@ package com.aqua.aqualight.ui.tabs.devices.detail.cooling.presentation.program
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.aqua.aqualight.application.devices.cooling.DeviceCoolingCommandFailure
 import com.aqua.aqualight.application.devices.cooling.program.CoolingProgramEditResult
 import com.aqua.aqualight.application.devices.cooling.program.CoolingProgramPolicy
 import com.aqua.aqualight.application.devices.cooling.program.CoolingProgramReadResult
@@ -173,12 +174,18 @@ class DeviceCoolingProgramSettingsViewModel(
             CoolingProgramValidation.validate(state.slots, policy) == CoolingProgramValidationResult.Valid
         if (deviceUid == null || !state.canSave) return
         if (!validDraft) {
-            _uiState.value = state.copy(mutationState = CoolingMutationState.ValidationError)
+            _uiState.value = state.copy(
+                mutationState = CoolingMutationState.ValidationError,
+                commandFailure = DeviceCoolingCommandFailure.INVALID_CONFIGURATION
+            )
             return
         }
 
         val draft = state.slots
-        _uiState.value = state.copy(mutationState = CoolingMutationState.Saving)
+        _uiState.value = state.copy(
+            mutationState = CoolingMutationState.Saving,
+            commandFailure = null
+        )
         saveJob?.cancel()
         saveJob = viewModelScope.launch {
             _uiState.applySaveResult(
@@ -224,7 +231,11 @@ data class DeviceCoolingProgramSettingsUiState(
     val policy: CoolingProgramPolicy? = null,
     val slotItems: List<DeviceCoolingProgramSlotUiItem> = emptyList(),
     val baselineSlots: List<DeviceCoolingProgramSlot> = emptyList(),
-    val selectedSlotIndex: Int? = null
+    val selectedSlotIndex: Int? = null,
+    val commandFailure: DeviceCoolingCommandFailure? = null,
+    val clockReady: Boolean = false,
+    val currentMinuteOfDay: Int? = null,
+    val authoritativeActiveSlot: DeviceCoolingProgramSlot? = null
 ) {
     val loadState: DeviceCoolingProgramLoadState
         get() = when (val state = dataState) {
@@ -273,12 +284,8 @@ data class DeviceCoolingProgramSettingsUiState(
     val canSave: Boolean
         get() = hasChanges && mutationState != CoolingMutationState.Saving
 
-    fun activeSlotAt(minutesOfDay: Int): DeviceCoolingProgramSlot? =
-        if (hasLoadedProgram) {
-            CoolingProgramSchedule.activeSlotAt(slots, minutesOfDay)
-        } else {
-            null
-        }
+    @Suppress("UNUSED_PARAMETER")
+    fun activeSlotAt(minutesOfDay: Int): DeviceCoolingProgramSlot? = authoritativeActiveSlot
 
     private val hasLoadedProgram: Boolean
         get() = dataState is CoolingDataState.Content || dataState is CoolingDataState.Empty
@@ -329,7 +336,8 @@ private fun MutableStateFlow<DeviceCoolingProgramSettingsUiState>.applyEdit(
                 selectedUiKey = selectedUiKey
             ),
             selectedSlotIndex = result.selectedSlotIndex,
-            mutationState = CoolingMutationState.Idle
+            mutationState = CoolingMutationState.Idle,
+            commandFailure = null
         )
         true
     }
@@ -353,6 +361,12 @@ private fun MutableStateFlow<DeviceCoolingProgramSettingsUiState>.applyReadResul
                 DeviceCoolingProgramLoadFailure.NOT_CONNECTED
             )
         )
+        is CoolingProgramReadResult.Rejected -> DeviceCoolingProgramSettingsUiState(
+            dataState = CoolingDataState.OperationError(
+                DeviceCoolingProgramLoadFailure.INVALID_DATA
+            ),
+            commandFailure = result.reason
+        )
     }
 }
 
@@ -365,7 +379,8 @@ private fun CoolingProgramReadResult.Loaded.toProgramUiState(
         return DeviceCoolingProgramSettingsUiState(
             dataState = CoolingDataState.OperationError(
                 DeviceCoolingProgramLoadFailure.INVALID_DATA
-            )
+            ),
+            commandFailure = DeviceCoolingCommandFailure.PROTOCOL_ERROR
         )
     }
 
@@ -384,7 +399,10 @@ private fun CoolingProgramReadResult.Loaded.toProgramUiState(
         dataState = dataState,
         policy = snapshot.policy,
         slotItems = slotUiIdentity.createItems(ordered),
-        baselineSlots = ordered
+        baselineSlots = ordered,
+        clockReady = snapshot.clockReady,
+        currentMinuteOfDay = snapshot.currentMinuteOfDay,
+        authoritativeActiveSlot = snapshot.activeSlot
     )
 }
 
@@ -403,11 +421,15 @@ private fun MutableStateFlow<DeviceCoolingProgramSettingsUiState>.applySaveResul
         CoolingProgramSaveResult.NotConnected -> updateMutationFailure(
             DeviceCoolingProgramSaveFailure.NOT_CONNECTED
         )
-        CoolingProgramSaveResult.Rejected -> updateMutationFailure(
-            DeviceCoolingProgramSaveFailure.REJECTED
+        is CoolingProgramSaveResult.Rejected -> updateMutationFailure(
+            failure = DeviceCoolingProgramSaveFailure.REJECTED,
+            commandFailure = result.reason
         )
         CoolingProgramSaveResult.InvalidConfiguration -> {
-            value = value.copy(mutationState = CoolingMutationState.ValidationError)
+            value = value.copy(
+                mutationState = CoolingMutationState.ValidationError,
+                commandFailure = DeviceCoolingCommandFailure.INVALID_CONFIGURATION
+            )
         }
     }
 }
@@ -422,7 +444,10 @@ private fun MutableStateFlow<DeviceCoolingProgramSettingsUiState>.applySavedSnap
         CoolingProgramValidation.validate(snapshot.slots, snapshot.policy) !=
         CoolingProgramValidationResult.Valid
     ) {
-        updateMutationFailure(DeviceCoolingProgramSaveFailure.INVALID_DATA)
+        updateMutationFailure(
+            DeviceCoolingProgramSaveFailure.INVALID_DATA,
+            DeviceCoolingCommandFailure.PROTOCOL_ERROR
+        )
         return
     }
 
@@ -451,12 +476,20 @@ private fun MutableStateFlow<DeviceCoolingProgramSettingsUiState>.applySavedSnap
         slotItems = savedItems,
         baselineSlots = savedSlots,
         selectedSlotIndex = selectedSlotIndex,
-        mutationState = CoolingMutationState.Saved
+        mutationState = CoolingMutationState.Saved,
+        commandFailure = null,
+        clockReady = snapshot.clockReady,
+        currentMinuteOfDay = snapshot.currentMinuteOfDay,
+        authoritativeActiveSlot = snapshot.activeSlot
     )
 }
 
 private fun MutableStateFlow<DeviceCoolingProgramSettingsUiState>.updateMutationFailure(
-    failure: DeviceCoolingProgramSaveFailure
+    failure: DeviceCoolingProgramSaveFailure,
+    commandFailure: DeviceCoolingCommandFailure? = null
 ) {
-    value = value.copy(mutationState = CoolingMutationState.OperationError(failure))
+    value = value.copy(
+        mutationState = CoolingMutationState.OperationError(failure),
+        commandFailure = commandFailure
+    )
 }
