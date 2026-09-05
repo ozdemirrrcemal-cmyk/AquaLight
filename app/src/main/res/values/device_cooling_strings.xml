@@ -31,7 +31,7 @@
     <string name="device_cooling_history_average_short">Avg</string>
     <string name="device_cooling_history_maximum_short">High</string>
     <string name="device_cooling_history_no_samples">No temperature samples for this period</string>
-    <string name="device_cooling_history_daily_empty">Daily summaries will appear when the firmware provides them</string>
+    <string name="device_cooling_history_daily_empty">Daily summaries will appear when the device provides them</string>
 
     <string name="device_cooling_fan_speed_title">Fan Speed</string>
     <string name="device_cooling_fan_speed_caption">Fan speed</string>
@@ -84,8 +84,8 @@
 
     <string name="device_cooling_manual_settings_title">Manual Fan</string>
     <string name="device_cooling_manual_target_title">Target Fan Speed</string>
-    <string name="device_cooling_manual_target_description">Changing this target does not change the active operating mode.</string>
-    <string name="device_cooling_manual_read_only">The connected firmware does not allow the manual target to be changed.</string>
+    <string name="device_cooling_manual_target_description">Fan speed can be changed while Manual mode is active. Switching to Automatic or Program clears the saved manual target.</string>
+    <string name="device_cooling_manual_read_only">Switch to Manual mode to change the fan target.</string>
     <string name="device_cooling_manual_write_failed">The manual target could not be saved to the device. Try again.</string>
 
     <string name="device_cooling_automatic_settings_title">Automatic Fan</string>
@@ -103,7 +103,7 @@
     <string name="device_cooling_automatic_zone_maximum">Maximum</string>
     <string name="device_cooling_automatic_silent_mode_title">Silent Mode</string>
     <string name="device_cooling_automatic_silent_mode_description">Limits automatic fan output to %1$d%% for quieter operation.</string>
-    <string name="device_cooling_automatic_silent_mode_unavailable">Not available on the connected firmware.</string>
+    <string name="device_cooling_automatic_silent_mode_unavailable">Not available on this device.</string>
     <string name="device_cooling_automatic_silent_mode_toggle_description">Toggle Silent Mode</string>
     <string name="device_cooling_automatic_save">Save</string>
     <string name="device_cooling_automatic_saving">Saving…</string>
@@ -145,6 +145,43 @@
     <string name="device_cooling_program_end_time_sheet_message">Choose when this time period ends.</string>
     <string name="device_cooling_program_fan_on_temperature_sheet_title">Fan On Temperature</string>
     <string name="device_cooling_program_fan_on_temperature_sheet_helper">During this time period, the fan starts at the selected program speed when the tank reaches this temperature.</string>
+
+    <!-- Centralized commercial Cooling errors. Raw firmware messages are never shown to customers. -->
+    <string name="device_cooling_error_conflict_title">Settings changed on the device</string>
+    <string name="device_cooling_error_conflict_message">The device has newer settings. Refresh the screen and try your change again.</string>
+    <string name="device_cooling_error_invalid_request_title">Change could not be applied</string>
+    <string name="device_cooling_error_invalid_request_message">The device could not accept this request. Refresh the screen and try again.</string>
+    <string name="device_cooling_error_invalid_configuration_title">Review the cooling settings</string>
+    <string name="device_cooling_error_invalid_configuration_message">One or more values are outside the limits reported by the device. Review the settings and try again.</string>
+    <string name="device_cooling_error_manual_mode_required_title">Manual mode required</string>
+    <string name="device_cooling_error_manual_mode_required_message">Switch the device to Manual mode before changing the fan target.</string>
+    <string name="device_cooling_error_hardware_unavailable_title">Cooling fan unavailable</string>
+    <string name="device_cooling_error_hardware_unavailable_message">The cooling fan output is not available right now. Check the device and try again.</string>
+    <string name="device_cooling_error_hardware_failure_title">Cooling output could not be applied</string>
+    <string name="device_cooling_error_hardware_failure_message">The device could not safely apply the fan output, so the new setting was not kept. Check the device and try again.</string>
+    <string name="device_cooling_error_storage_failure_title">Setting could not be stored</string>
+    <string name="device_cooling_error_storage_failure_message">The device could not safely save this change. The previous setting remains in effect. Try again.</string>
+    <string name="device_cooling_error_clock_unsynced_title">Device time needs attention</string>
+    <string name="device_cooling_error_clock_unsynced_message">This information needs the device clock to be synchronized. Check the device time settings and try again.</string>
+    <string name="device_cooling_error_protocol_title">Device response could not be verified</string>
+    <string name="device_cooling_error_protocol_message">AquaLight could not verify the cooling data returned by the device. Refresh the connection and try again.</string>
+    <string name="device_cooling_error_rejected_title">Change was not accepted</string>
+    <string name="device_cooling_error_rejected_message">The device did not accept this change. Refresh the screen and try again.</string>
+    <string name="device_cooling_error_unsupported_title">Cooling feature not supported</string>
+    <string name="device_cooling_error_unsupported_message">This cooling feature is not supported by the connected device.</string>
+    <string name="device_cooling_error_unavailable_title">Cooling controls unavailable</string>
+    <string name="device_cooling_error_unavailable_message">Cooling controls are temporarily unavailable. Check the device connection and try again.</string>
+    <string name="device_cooling_error_not_connected_title">Device is offline</string>
+    <string name="device_cooling_error_not_connected_message">Reconnect the device, then try again.</string>
+    <string name="device_cooling_error_read_only_title">Cooling settings are read-only</string>
+    <string name="device_cooling_error_read_only_message">These settings can be viewed but cannot be changed on this device.</string>
+
+    <string name="device_cooling_alarm_water_sensor_fault">Water temperature sensor needs attention. Automatic and Program cooling are paused for safety.</string>
+    <string name="device_cooling_alarm_ambient_sensor_fault">Room temperature and humidity sensing needs attention. Water-based cooling can continue.</string>
+    <string name="device_cooling_alarm_fan_hardware_fault">The cooling fan output needs attention. Cooling output is unavailable until the device recovers.</string>
+    <string name="device_cooling_alarm_clock_unsynced">Device time is not synchronized. Program cooling and time-based history may be unavailable.</string>
+    <string name="device_cooling_alarm_history_storage_fault">Temperature history storage needs attention. Live cooling can continue.</string>
+    <string name="device_cooling_alarm_config_storage_fault">Cooling settings storage needs attention. The device is using a safe fallback state.</string>
 
     <string name="device_cooling_value_unavailable">—</string>
     <string name="device_cooling_temperature_value_format">%1$.1f °C</string>
