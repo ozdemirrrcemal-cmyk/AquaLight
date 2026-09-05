@@ -47,15 +47,20 @@ data class CoolingProgramFanOnTemperaturePolicy(
 /** Device-reported limits used by the fan program editor. No production defaults live here. */
 data class CoolingProgramPolicy(
     val maximumSlotCount: Int,
+    val timeStepMinutes: Int,
     val minimumSlotDurationMinutes: Int,
     val fan: CoolingProgramFanPolicy,
     val fanOnTemperature: CoolingProgramFanOnTemperaturePolicy
 ) {
     init {
         require(maximumSlotCount >= MINIMUM_POSITIVE_VALUE)
+        require(timeStepMinutes in MINIMUM_POSITIVE_VALUE..COOLING_PROGRAM_MINUTES_PER_DAY)
         require(
-            minimumSlotDurationMinutes in MINIMUM_POSITIVE_VALUE until COOLING_PROGRAM_MINUTES_PER_DAY
+            minimumSlotDurationMinutes in MINIMUM_POSITIVE_VALUE..COOLING_PROGRAM_MINUTES_PER_DAY
         )
+        require(minimumSlotDurationMinutes % timeStepMinutes == 0) {
+            "Minimum program duration must align with the reported time step."
+        }
     }
 
     val minimumFanPercent: Int
