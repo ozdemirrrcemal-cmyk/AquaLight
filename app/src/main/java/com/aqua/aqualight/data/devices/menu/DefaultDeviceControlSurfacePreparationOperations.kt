@@ -114,7 +114,15 @@ internal class DefaultDeviceControlSurfacePreparationOperations(
         family: OwnerDeviceFamily
     ): Boolean {
         if (family !in PREPARED_FAMILIES) return false
-        return freshlyPreparedSurfaces.remove(PreparedSurface(deviceUid.trim(), family))
+        val requestedSurface = PreparedSurface(deviceUid.trim(), family)
+        val storedSurface = freshlyPreparedSurfaces.firstOrNull { surface ->
+            surface == requestedSurface
+        }
+        return if (storedSurface == null) {
+            false
+        } else {
+            freshlyPreparedSurfaces.remove(storedSurface)
+        }
     }
 
     private fun hasAuthoritativeSurface(
