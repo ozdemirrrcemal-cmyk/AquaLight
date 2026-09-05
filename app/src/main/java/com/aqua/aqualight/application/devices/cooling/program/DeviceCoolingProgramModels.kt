@@ -33,9 +33,9 @@ data class CoolingProgramSlot(
 data class CoolingProgramSnapshot(
     val slots: List<CoolingProgramSlot>,
     val policy: CoolingProgramPolicy,
-    val clockReady: Boolean,
-    val currentMinuteOfDay: Int?,
-    val activeSlotIndex: Int?
+    val clockReady: Boolean = false,
+    val currentMinuteOfDay: Int? = null,
+    val activeSlotIndex: Int? = null
 ) {
     init {
         require(clockReady == (currentMinuteOfDay != null))
