@@ -21,10 +21,10 @@ import androidx.compose.ui.text.style.TextOverflow
 import com.aqua.aqualight.R
 import com.aqua.aqualight.application.devices.cooling.DeviceCoolingDailyTemperatureSummary
 import com.aqua.aqualight.i18n.LocaleFormatter
-import com.aqua.aqualight.ui.common.cooling.AquaCoolingDashboardCardSurface
 import com.aqua.aqualight.ui.common.cooling.AquaCoolingHistoryAlpha
 import com.aqua.aqualight.ui.common.cooling.AquaCoolingHistoryGeometry
 import com.aqua.aqualight.ui.common.devicecard.AquaDeviceCardColors
+import com.aqua.aqualight.ui.common.devicecard.AquaDeviceCardSurface
 import com.aqua.aqualight.ui.common.devicecard.AquaDeviceCardTypography
 
 private data class HistorySummaryMetricModel(
@@ -83,7 +83,7 @@ private fun HistorySummaryMetric(
     typography: AquaDeviceCardTypography,
     modifier: Modifier
 ) {
-    AquaCoolingDashboardCardSurface(
+    AquaDeviceCardSurface(
         modifier = modifier.heightIn(min = AquaCoolingHistoryGeometry.summaryCardMinimumHeight)
     ) {
         Column(
@@ -114,7 +114,7 @@ internal fun CoolingDailyHistoryCard(
     colors: AquaDeviceCardColors,
     typography: AquaDeviceCardTypography
 ) {
-    AquaCoolingDashboardCardSurface(modifier = Modifier.fillMaxWidth()) {
+    AquaDeviceCardSurface(modifier = Modifier.fillMaxWidth()) {
         Column(modifier = Modifier.fillMaxWidth()) {
             BasicText(
                 text = stringResource(R.string.device_cooling_history_daily_title),

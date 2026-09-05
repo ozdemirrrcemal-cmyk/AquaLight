@@ -28,10 +28,10 @@ import com.aqua.aqualight.R
 import com.aqua.aqualight.application.devices.cooling.DeviceCoolingTemperatureHistoryPoint
 import com.aqua.aqualight.application.devices.cooling.DeviceCoolingTemperatureHistoryRange
 import com.aqua.aqualight.i18n.LocaleFormatter
-import com.aqua.aqualight.ui.common.cooling.AquaCoolingDashboardCardSurface
 import com.aqua.aqualight.ui.common.cooling.AquaCoolingHistoryAlpha
 import com.aqua.aqualight.ui.common.cooling.AquaCoolingHistoryGeometry
 import com.aqua.aqualight.ui.common.devicecard.AquaDeviceCardColors
+import com.aqua.aqualight.ui.common.devicecard.AquaDeviceCardSurface
 import com.aqua.aqualight.ui.common.devicecard.AquaDeviceCardTypography
 
 @Composable
@@ -41,7 +41,7 @@ internal fun CoolingHistoryChartCard(
     colors: AquaDeviceCardColors,
     typography: AquaDeviceCardTypography
 ) {
-    AquaCoolingDashboardCardSurface(
+    AquaDeviceCardSurface(
         modifier = Modifier
             .fillMaxWidth()
             .heightIn(min = AquaCoolingHistoryGeometry.chartCardMinimumHeight)

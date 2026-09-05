@@ -2,28 +2,24 @@
 
 package com.aqua.aqualight.ui.common.cooling
 
-import androidx.compose.foundation.background
-import androidx.compose.foundation.border
-import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.BoxScope
-import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.runtime.Composable
-import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.res.colorResource
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.aqua.aqualight.R
 import com.aqua.aqualight.ui.common.devicecard.AquaDeviceCardColors
+import com.aqua.aqualight.ui.common.devicecard.AquaDeviceCardGeometry
 import com.aqua.aqualight.ui.common.devicecard.AquaDeviceCardTypography
+import com.aqua.aqualight.ui.common.devicecard.aquaDeviceCardColors
 import com.aqua.aqualight.ui.common.devicecard.aquaDeviceCardTypography
 
 /**
  * Central visual contract for the Cooling control surface.
  *
- * The application background remains owned by the global Android theme. Cooling owns only its
- * feature-local card surfaces, blue operational accent, compact geometry and type scale here so
- * individual composables never invent visual constants.
+ * The application background and shared card visuals remain owned by the global design system.
+ * Cooling owns only its blue operational accent, feature layout and compact type scale here so
+ * individual composables never invent visual constants or a parallel card surface.
  */
 object AquaCoolingDashboardGeometry {
     val screenHorizontalPadding = 12.dp
@@ -32,9 +28,9 @@ object AquaCoolingDashboardGeometry {
     val cardGap = 9.dp
     val splitCardGap = 8.dp
 
-    val cardCornerRadius = 14.dp
-    val cardHorizontalPadding = 12.dp
-    val cardVerticalPadding = 10.dp
+    val cardCornerRadius = AquaDeviceCardGeometry.cornerRadius
+    val cardHorizontalPadding = AquaDeviceCardGeometry.contentHorizontalPadding
+    val cardVerticalPadding = AquaDeviceCardGeometry.contentVerticalPadding
 
     val temperatureCardMinimumHeight = 170.dp
     val temperatureChartHeight = 100.dp
@@ -240,31 +236,9 @@ object AquaCoolingHistoryAlpha {
     const val retryBackground = 0.10f
 }
 
-/** Colors sampled toward the approved compact Cooling references; global screen color is untouched. */
-object AquaCoolingDashboardPalette {
-    val cardSurface = Color(0xFF061727)
-    val cardOutline = Color(0xFF2C3E52)
-    val insetSurface = Color(0xFF081C2B)
-    val insetOutline = Color(0xFF30485F)
-    val primaryText = Color(0xFFE3ECFC)
-    val secondaryText = Color(0xFFA6AFBD)
-    val accent = Color(0xFF1474FF)
-    val warning = Color(0xFFF5B942)
-    val danger = Color(0xFFFF6574)
-    val success = Color(0xFF68C86B)
-}
-
 @Composable
-fun aquaCoolingDashboardColors(): AquaDeviceCardColors = AquaDeviceCardColors(
-    surface = AquaCoolingDashboardPalette.cardSurface,
-    outline = AquaCoolingDashboardPalette.cardOutline,
-    mediaSurface = AquaCoolingDashboardPalette.insetSurface,
-    mediaOutline = AquaCoolingDashboardPalette.insetOutline,
-    primaryText = AquaCoolingDashboardPalette.primaryText,
-    secondaryText = AquaCoolingDashboardPalette.secondaryText,
-    accent = AquaCoolingDashboardPalette.accent,
-    warning = AquaCoolingDashboardPalette.warning,
-    danger = AquaCoolingDashboardPalette.danger
+fun aquaCoolingDashboardColors(): AquaDeviceCardColors = aquaDeviceCardColors().copy(
+    accent = colorResource(R.color.aqua_card_device_cooling_accent)
 )
 
 fun aquaCoolingDashboardTypography(colors: AquaDeviceCardColors): AquaDeviceCardTypography {
@@ -286,29 +260,6 @@ fun aquaCoolingDashboardTypography(colors: AquaDeviceCardColors): AquaDeviceCard
             fontSize = AquaCoolingDashboardTypography.microSize,
             lineHeight = AquaCoolingDashboardTypography.microLineHeight
         )
-    )
-}
-
-@Composable
-fun AquaCoolingDashboardCardSurface(
-    modifier: Modifier = Modifier,
-    content: @Composable BoxScope.() -> Unit
-) {
-    val shape = RoundedCornerShape(AquaCoolingDashboardGeometry.cardCornerRadius)
-    Box(
-        modifier = modifier
-            .clip(shape)
-            .background(AquaCoolingDashboardPalette.cardSurface)
-            .border(
-                width = 1.dp,
-                color = AquaCoolingDashboardPalette.cardOutline,
-                shape = shape
-            )
-            .padding(
-                horizontal = AquaCoolingDashboardGeometry.cardHorizontalPadding,
-                vertical = AquaCoolingDashboardGeometry.cardVerticalPadding
-            ),
-        content = content
     )
 }
 

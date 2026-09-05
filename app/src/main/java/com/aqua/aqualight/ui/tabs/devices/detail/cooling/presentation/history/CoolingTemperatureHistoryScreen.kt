@@ -24,7 +24,6 @@ import androidx.compose.ui.text.style.TextAlign
 import com.aqua.aqualight.R
 import com.aqua.aqualight.application.devices.cooling.DeviceCoolingTemperatureHistoryRange
 import com.aqua.aqualight.ui.common.cooling.AquaCoolingDashboardGeometry
-import com.aqua.aqualight.ui.common.cooling.AquaCoolingDashboardPalette
 import com.aqua.aqualight.ui.common.cooling.AquaCoolingHistoryAlpha
 import com.aqua.aqualight.ui.common.cooling.AquaCoolingHistoryGeometry
 import com.aqua.aqualight.ui.common.cooling.aquaCoolingDashboardColors
@@ -217,10 +216,10 @@ private fun CoolingHistoryRangeSelector(
         modifier = Modifier
             .fillMaxWidth()
             .clip(shape)
-            .background(AquaCoolingDashboardPalette.insetSurface)
+            .background(colors.mediaSurface)
             .border(
                 width = AquaCoolingDashboardGeometry.chartGridStrokeWidth,
-                color = AquaCoolingDashboardPalette.insetOutline,
+                color = colors.mediaOutline,
                 shape = shape
             )
             .padding(AquaCoolingHistoryGeometry.rangeContainerPadding),

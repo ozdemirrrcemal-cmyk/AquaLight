@@ -54,7 +54,7 @@ internal fun CoolingLiveHero(
             .background(colors.surface)
             .border(AquaCoolingDashboardGeometry.liveHeroOutlineWidth, colors.outline, shape)
     ) {
-        CoolingHeroScene(presentation, motion, motionPhases.water)
+        CoolingHeroScene(presentation, motion, motionPhases.water, colors)
         CoolingHeroDevice(
             presentation = presentation,
             motion = motion,
@@ -75,13 +75,15 @@ internal fun CoolingLiveHero(
 private fun CoolingHeroScene(
     presentation: CoolingHeroPresentation,
     motion: CoolingHeroMotion,
-    motionPhase: Float
+    motionPhase: Float,
+    colors: AquaDeviceCardColors
 ) {
     Canvas(modifier = Modifier.fillMaxSize()) {
         drawCoolingHeroScene(
             motionPhase = motionPhase,
             motionIntensity = motion.intensity,
-            status = presentation.status
+            status = presentation.status,
+            colors = colors
         )
     }
 }

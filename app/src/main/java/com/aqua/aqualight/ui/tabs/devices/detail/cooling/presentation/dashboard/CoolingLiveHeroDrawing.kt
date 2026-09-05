@@ -10,45 +10,49 @@ import androidx.compose.ui.graphics.drawscope.DrawScope
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.drawscope.clipPath
 import com.aqua.aqualight.ui.common.cooling.AquaCoolingDashboardAlpha
-import com.aqua.aqualight.ui.common.cooling.AquaCoolingDashboardPalette
+import com.aqua.aqualight.ui.common.devicecard.AquaDeviceCardColors
 import kotlin.math.sin
 
 internal fun DrawScope.drawCoolingHeroScene(
     motionPhase: Float,
     motionIntensity: Float,
-    status: CoolingHeroVisualStatus
+    status: CoolingHeroVisualStatus,
+    colors: AquaDeviceCardColors
 ) {
-    drawCoolingAtmosphere(status)
+    drawCoolingAtmosphere(status, colors)
     clipPath(glassTankPath(-WATER_CLIP_HEADROOM_FRACTION)) {
-        drawWaterBody(motionPhase, motionIntensity)
+        drawWaterBody(motionPhase, motionIntensity, colors)
         if (motionIntensity > NO_MOTION) {
-            drawWaterReflection(motionPhase, motionIntensity)
+            drawWaterReflection(motionPhase, motionIntensity, colors)
         }
     }
     if (motionIntensity > NO_MOTION) {
-        drawAirflow(motionPhase, motionIntensity)
+        drawAirflow(motionPhase, motionIntensity, colors)
     }
-    drawGlassTank()
+    drawGlassTank(colors)
 }
 
-private fun DrawScope.drawCoolingAtmosphere(status: CoolingHeroVisualStatus) {
+private fun DrawScope.drawCoolingAtmosphere(
+    status: CoolingHeroVisualStatus,
+    colors: AquaDeviceCardColors
+) {
     drawRect(
         brush = Brush.linearGradient(
             colors = listOf(
                 Color.Black,
-                AquaCoolingDashboardPalette.cardSurface,
-                AquaCoolingDashboardPalette.insetSurface
+                colors.surface,
+                colors.mediaSurface
             ),
             start = Offset.Zero,
             end = Offset(size.width, size.height)
         )
     )
     val glowColor = when (status) {
-        CoolingHeroVisualStatus.ATTENTION -> AquaCoolingDashboardPalette.warning
+        CoolingHeroVisualStatus.ATTENTION -> colors.warning
         CoolingHeroVisualStatus.OFFLINE,
-        CoolingHeroVisualStatus.WAITING_FOR_DATA -> AquaCoolingDashboardPalette.secondaryText
+        CoolingHeroVisualStatus.WAITING_FOR_DATA -> colors.secondaryText
         CoolingHeroVisualStatus.COOLING,
-        CoolingHeroVisualStatus.STANDBY -> AquaCoolingDashboardPalette.accent
+        CoolingHeroVisualStatus.STANDBY -> colors.accent
     }
     drawCircle(
         brush = Brush.radialGradient(
@@ -64,7 +68,11 @@ private fun DrawScope.drawCoolingAtmosphere(status: CoolingHeroVisualStatus) {
     )
 }
 
-private fun DrawScope.drawWaterBody(motionPhase: Float, motionIntensity: Float) {
+private fun DrawScope.drawWaterBody(
+    motionPhase: Float,
+    motionIntensity: Float,
+    colors: AquaDeviceCardColors
+) {
     val waterTop = size.height * WATER_TOP_FRACTION
     val water = Path().apply {
         repeat(WATER_SURFACE_SEGMENTS + 1) { index ->
@@ -82,14 +90,14 @@ private fun DrawScope.drawWaterBody(motionPhase: Float, motionIntensity: Float) 
     drawPath(
         path = water,
         brush = Brush.verticalGradient(
-            WATER_GRADIENT_SURFACE_STOP to AquaCoolingDashboardPalette.accent.copy(
+            WATER_GRADIENT_SURFACE_STOP to colors.accent.copy(
                 alpha = AquaCoolingDashboardAlpha.liveHeroWater
             ),
-            WATER_GRADIENT_SHALLOW_STOP to AquaCoolingDashboardPalette.accent.copy(
+            WATER_GRADIENT_SHALLOW_STOP to colors.accent.copy(
                 alpha = AquaCoolingDashboardAlpha.liveHeroWaterDepth
             ),
-            WATER_GRADIENT_TRANSITION_STOP to AquaCoolingDashboardPalette.insetSurface,
-            WATER_GRADIENT_MID_STOP to AquaCoolingDashboardPalette.cardSurface,
+            WATER_GRADIENT_TRANSITION_STOP to colors.mediaSurface,
+            WATER_GRADIENT_MID_STOP to colors.surface,
             WATER_GRADIENT_BOTTOM_STOP to Color.Black,
             startY = waterTop,
             endY = size.height
@@ -100,11 +108,11 @@ private fun DrawScope.drawWaterBody(motionPhase: Float, motionIntensity: Float) 
         brush = Brush.linearGradient(
             colors = listOf(
                 Color.Transparent,
-                AquaCoolingDashboardPalette.primaryText.copy(
+                colors.primaryText.copy(
                     alpha = AquaCoolingDashboardAlpha.liveHeroWaterReflection *
                         WATER_VOLUME_HIGHLIGHT_ALPHA_MULTIPLIER
                 ),
-                AquaCoolingDashboardPalette.accent.copy(
+                colors.accent.copy(
                     alpha = AquaCoolingDashboardAlpha.liveHeroWaterReflection *
                         WATER_VOLUME_ACCENT_ALPHA_MULTIPLIER
                 ),
@@ -114,7 +122,7 @@ private fun DrawScope.drawWaterBody(motionPhase: Float, motionIntensity: Float) 
             end = Offset(size.width * WATER_HIGHLIGHT_END_X, size.height)
         )
     )
-    drawWaterSurfaceSheen(motionPhase, motionIntensity)
+    drawWaterSurfaceSheen(motionPhase, motionIntensity, colors)
 }
 
 private fun DrawScope.waterSurfaceY(
@@ -140,7 +148,11 @@ private fun DrawScope.waterSurfaceY(
         )
 }
 
-private fun DrawScope.drawWaterSurfaceSheen(motionPhase: Float, motionIntensity: Float) {
+private fun DrawScope.drawWaterSurfaceSheen(
+    motionPhase: Float,
+    motionIntensity: Float,
+    colors: AquaDeviceCardColors
+) {
     val surface = Path()
     repeat(WATER_SURFACE_SEGMENTS + 1) { index ->
         val progress = index.toFloat() / WATER_SURFACE_SEGMENTS
@@ -151,7 +163,7 @@ private fun DrawScope.drawWaterSurfaceSheen(motionPhase: Float, motionIntensity:
     }
     drawPath(
         path = surface,
-        color = AquaCoolingDashboardPalette.accent.copy(
+        color = colors.accent.copy(
             alpha = AquaCoolingDashboardAlpha.liveHeroWaterSurface *
                 WATER_SURFACE_GLOW_ALPHA_MULTIPLIER
         ),
@@ -159,14 +171,18 @@ private fun DrawScope.drawWaterSurfaceSheen(motionPhase: Float, motionIntensity:
     )
     drawPath(
         path = surface,
-        color = AquaCoolingDashboardPalette.primaryText.copy(
+        color = colors.primaryText.copy(
             alpha = AquaCoolingDashboardAlpha.liveHeroWaterSurface
         ),
         style = Stroke(width = WATER_SURFACE_STROKE, cap = StrokeCap.Round)
     )
 }
 
-private fun DrawScope.drawAirflow(motionPhase: Float, motionIntensity: Float) {
+private fun DrawScope.drawAirflow(
+    motionPhase: Float,
+    motionIntensity: Float,
+    colors: AquaDeviceCardColors
+) {
     repeat(AIRFLOW_LINE_COUNT) { index ->
         val offset = index * AIRFLOW_LINE_SPACING
         val drift = sin(
@@ -188,7 +204,7 @@ private fun DrawScope.drawAirflow(motionPhase: Float, motionIntensity: Float) {
         }
         drawPath(
             path = airflow,
-            color = AquaCoolingDashboardPalette.primaryText.copy(
+            color = colors.primaryText.copy(
                 alpha = AquaCoolingDashboardAlpha.liveHeroAirflow * motionIntensity
             ),
             style = Stroke(width = AIRFLOW_STROKE, cap = StrokeCap.Round)
@@ -196,7 +212,11 @@ private fun DrawScope.drawAirflow(motionPhase: Float, motionIntensity: Float) {
     }
 }
 
-private fun DrawScope.drawWaterReflection(motionPhase: Float, motionIntensity: Float) {
+private fun DrawScope.drawWaterReflection(
+    motionPhase: Float,
+    motionIntensity: Float,
+    colors: AquaDeviceCardColors
+) {
     val pulse = REFLECTION_PULSE_BASE + REFLECTION_PULSE_RANGE *
         (sin((motionPhase * FULL_CIRCLE_RADIANS).toDouble()).toFloat() + UNIT_FLOAT) /
         DIAMETER_MULTIPLIER
@@ -206,10 +226,10 @@ private fun DrawScope.drawWaterReflection(motionPhase: Float, motionIntensity: F
     drawOval(
         brush = Brush.radialGradient(
             colors = listOf(
-                AquaCoolingDashboardPalette.primaryText.copy(
+                colors.primaryText.copy(
                     alpha = AquaCoolingDashboardAlpha.liveHeroWaterReflection * motionIntensity
                 ),
-                AquaCoolingDashboardPalette.accent.copy(
+                colors.accent.copy(
                     alpha = AquaCoolingDashboardAlpha.liveHeroWaterReflection *
                         REFLECTION_ACCENT_ALPHA_MULTIPLIER * motionIntensity
                 ),
@@ -223,7 +243,7 @@ private fun DrawScope.drawWaterReflection(motionPhase: Float, motionIntensity: F
     )
 }
 
-private fun DrawScope.drawGlassTank() {
+private fun DrawScope.drawGlassTank(colors: AquaDeviceCardColors) {
     val waterTop = size.height * WATER_TOP_FRACTION
     val topLeft = Offset(
         size.width * GLASS_HORIZONTAL_INSET,
@@ -253,7 +273,7 @@ private fun DrawScope.drawGlassTank() {
         brush = Brush.verticalGradient(
             colors = listOf(
                 Color.Transparent,
-                AquaCoolingDashboardPalette.primaryText.copy(
+                colors.primaryText.copy(
                     alpha = AquaCoolingDashboardAlpha.liveHeroGlassPane
                 )
             ),
@@ -262,7 +282,7 @@ private fun DrawScope.drawGlassTank() {
         )
     )
     drawLine(
-        color = AquaCoolingDashboardPalette.primaryText.copy(
+        color = colors.primaryText.copy(
             alpha = AquaCoolingDashboardAlpha.liveHeroGlassEdge
         ),
         start = topLeft,

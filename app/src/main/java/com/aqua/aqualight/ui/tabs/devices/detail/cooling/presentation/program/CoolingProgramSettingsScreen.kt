@@ -48,14 +48,13 @@ import androidx.compose.ui.window.Popup
 import androidx.compose.ui.window.PopupProperties
 import com.aqua.aqualight.R
 import com.aqua.aqualight.i18n.LocaleFormatter
-import com.aqua.aqualight.ui.common.cooling.AquaCoolingDashboardCardSurface
 import com.aqua.aqualight.ui.common.cooling.AquaCoolingDashboardGeometry
-import com.aqua.aqualight.ui.common.cooling.AquaCoolingDashboardPalette
 import com.aqua.aqualight.ui.common.cooling.AquaCoolingFanPercentSlider
 import com.aqua.aqualight.ui.common.cooling.AquaCoolingFanPercentSliderState
 import com.aqua.aqualight.ui.common.cooling.aquaCoolingDashboardColors
 import com.aqua.aqualight.ui.common.cooling.aquaCoolingDashboardTypography
 import com.aqua.aqualight.ui.common.devicecard.AquaDeviceCardColors
+import com.aqua.aqualight.ui.common.devicecard.AquaDeviceCardSurface
 import com.aqua.aqualight.ui.common.devicecard.AquaDeviceCardTypography
 
 private data class ProgramSlotCardModel(
@@ -162,7 +161,7 @@ private fun ProgramActiveCard(
     colors: AquaDeviceCardColors,
     typography: AquaDeviceCardTypography
 ) {
-    AquaCoolingDashboardCardSurface(
+    AquaDeviceCardSurface(
         modifier = Modifier
             .fillMaxWidth()
             .heightIn(min = AquaCoolingProgramGeometry.activeCardMinimumHeight)
@@ -214,7 +213,7 @@ private fun ProgramTimelineCard(
     colors: AquaDeviceCardColors,
     typography: AquaDeviceCardTypography
 ) {
-    AquaCoolingDashboardCardSurface(
+    AquaDeviceCardSurface(
         modifier = Modifier
             .fillMaxWidth()
             .heightIn(min = AquaCoolingProgramGeometry.timelineCardMinimumHeight)
@@ -344,7 +343,7 @@ private fun ProgramSlotCard(
         Modifier
     }
 
-    AquaCoolingDashboardCardSurface(
+    AquaDeviceCardSurface(
         modifier = Modifier
             .fillMaxWidth()
             .then(selectedModifier)
@@ -510,13 +509,13 @@ private fun ProgramFanSpeedEditor(
             .fillMaxWidth()
             .clip(AquaCoolingProgramGeometry.editorRowShape)
             .background(
-                AquaCoolingDashboardPalette.insetSurface.copy(
+                colors.mediaSurface.copy(
                     alpha = AquaCoolingProgramAlpha.editorRowBackground
                 )
             )
             .border(
                 width = AquaCoolingDashboardGeometry.chartGridStrokeWidth,
-                color = AquaCoolingDashboardPalette.insetOutline.copy(
+                color = colors.mediaOutline.copy(
                     alpha = AquaCoolingProgramAlpha.editorRowOutline
                 ),
                 shape = AquaCoolingProgramGeometry.editorRowShape
@@ -585,13 +584,13 @@ private fun ProgramEditorRow(
             .fillMaxWidth()
             .clip(shape)
             .background(
-                AquaCoolingDashboardPalette.insetSurface.copy(
+                colors.mediaSurface.copy(
                     alpha = AquaCoolingProgramAlpha.editorRowBackground
                 )
             )
             .border(
                 width = AquaCoolingDashboardGeometry.chartGridStrokeWidth,
-                color = AquaCoolingDashboardPalette.insetOutline.copy(
+                color = colors.mediaOutline.copy(
                     alpha = AquaCoolingProgramAlpha.editorRowOutline
                 ),
                 shape = shape

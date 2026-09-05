@@ -17,7 +17,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
 import com.aqua.aqualight.R
-import com.aqua.aqualight.ui.common.cooling.AquaCoolingDashboardCardSurface
 import com.aqua.aqualight.ui.common.cooling.AquaCoolingDashboardGeometry
 import com.aqua.aqualight.ui.common.cooling.AquaCoolingDashboardTypography
 import com.aqua.aqualight.ui.common.cooling.AquaCoolingFanPercentSlider
@@ -25,6 +24,7 @@ import com.aqua.aqualight.ui.common.cooling.AquaCoolingFanPercentSliderState
 import com.aqua.aqualight.ui.common.cooling.aquaCoolingDashboardColors
 import com.aqua.aqualight.ui.common.cooling.aquaCoolingDashboardTypography
 import com.aqua.aqualight.ui.common.devicecard.AquaDeviceCardGeometry
+import com.aqua.aqualight.ui.common.devicecard.AquaDeviceCardSurface
 import com.aqua.aqualight.ui.tabs.devices.detail.cooling.presentation.common.CoolingDataState
 import com.aqua.aqualight.ui.tabs.devices.detail.cooling.presentation.common.CoolingMutationState
 import com.aqua.aqualight.ui.tabs.devices.detail.cooling.presentation.common.CoolingStateMessageCard
@@ -54,7 +54,7 @@ internal fun DeviceCoolingManualSettingsScreen(
             val percent = state.targetPercent
             val capabilities = state.capabilities
             if (percent != null && capabilities != null) {
-                AquaCoolingDashboardCardSurface(
+                AquaDeviceCardSurface(
                     modifier = Modifier
                         .fillMaxWidth()
                         .heightIn(

@@ -23,13 +23,13 @@ import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.style.TextOverflow
 import com.aqua.aqualight.R
 import com.aqua.aqualight.ui.common.cooling.AquaCoolingDashboardAlpha
-import com.aqua.aqualight.ui.common.cooling.AquaCoolingDashboardCardSurface
 import com.aqua.aqualight.ui.common.cooling.AquaCoolingDashboardGeometry
 import com.aqua.aqualight.ui.common.cooling.AquaCoolingDashboardIcon
 import com.aqua.aqualight.ui.common.cooling.AquaCoolingDashboardIconKind
 import com.aqua.aqualight.ui.common.cooling.AquaCoolingDashboardTypography
 import com.aqua.aqualight.ui.common.devicecard.AquaDeviceCardColors
 import com.aqua.aqualight.ui.common.devicecard.AquaDeviceCardGeometry
+import com.aqua.aqualight.ui.common.devicecard.AquaDeviceCardSurface
 import com.aqua.aqualight.ui.common.devicecard.AquaDeviceCardTypography
 import com.aqua.aqualight.ui.tabs.devices.detail.cooling.presentation.root.DeviceCoolingRootUiState
 
@@ -42,7 +42,7 @@ internal fun CoolingTemperatureCard(
     onClick: () -> Unit
 ) {
     val historyDescription = stringResource(R.string.device_cooling_view_history_description)
-    AquaCoolingDashboardCardSurface(
+    AquaDeviceCardSurface(
         modifier = Modifier
             .fillMaxWidth()
             .heightIn(min = AquaCoolingDashboardGeometry.temperatureCardMinimumHeight)

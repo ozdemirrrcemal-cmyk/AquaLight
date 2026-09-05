@@ -2,7 +2,7 @@
 <resources>
     <style name="Widget.Aqua.Card" parent="Widget.MaterialComponents.CardView">
         <item name="cardBackgroundColor">@color/aqua_card_surface</item>
-        <item name="cardCornerRadius">@dimen/aqua_size_18</item>
+        <item name="cardCornerRadius">@dimen/aqua_size_14</item>
         <item name="cardElevation">@dimen/aqua_size_0</item>
         <item name="cardUseCompatPadding">false</item>
         <item name="strokeColor">@color/aqua_card_outline</item>
@@ -18,21 +18,21 @@
 
     <style name="Widget.Aqua.Card.Grouped" parent="Widget.Aqua.Card">
         <item name="cardBackgroundColor">@color/aqua_card_surface_grouped</item>
-        <item name="cardCornerRadius">@dimen/aqua_size_18</item>
+        <item name="cardCornerRadius">@dimen/aqua_size_14</item>
         <item name="strokeColor">@color/aqua_card_outline</item>
         <item name="strokeWidth">@dimen/aqua_size_1</item>
     </style>
 
     <style name="Widget.Aqua.Card.Metric" parent="Widget.Aqua.Card">
         <item name="cardBackgroundColor">@color/aqua_card_metric_surface</item>
-        <item name="cardCornerRadius">@dimen/aqua_size_16</item>
+        <item name="cardCornerRadius">@dimen/aqua_size_14</item>
         <item name="strokeColor">@color/aqua_card_metric_outline</item>
         <item name="strokeWidth">@dimen/aqua_size_1</item>
     </style>
 
     <style name="Widget.Aqua.Card.Device" parent="Widget.Aqua.Card">
         <item name="cardBackgroundColor">@color/aqua_card_device_surface</item>
-        <item name="cardCornerRadius">@dimen/aqua_size_24</item>
+        <item name="cardCornerRadius">@dimen/aqua_size_14</item>
         <item name="cardElevation">@dimen/aqua_size_0</item>
         <item name="strokeColor">@color/aqua_card_device_outline</item>
         <item name="strokeWidth">@dimen/aqua_size_1</item>
@@ -40,7 +40,7 @@
 
     <style name="Widget.Aqua.Card.Device.Media" parent="Widget.Aqua.Card">
         <item name="cardBackgroundColor">@color/aqua_card_device_media_surface</item>
-        <item name="cardCornerRadius">@dimen/aqua_size_18</item>
+        <item name="cardCornerRadius">@dimen/aqua_size_14</item>
         <item name="cardElevation">@dimen/aqua_size_0</item>
         <item name="strokeColor">@color/aqua_card_device_media_outline</item>
         <item name="strokeWidth">@dimen/aqua_size_1</item>
@@ -48,7 +48,7 @@
 
     <style name="Widget.Aqua.Card.Device.Section" parent="Widget.Aqua.Card">
         <item name="cardBackgroundColor">@color/aqua_card_device_section_surface</item>
-        <item name="cardCornerRadius">@dimen/aqua_size_20</item>
+        <item name="cardCornerRadius">@dimen/aqua_size_14</item>
         <item name="cardElevation">@dimen/aqua_size_0</item>
         <item name="strokeColor">@color/aqua_card_device_section_outline</item>
         <item name="strokeWidth">@dimen/aqua_size_1</item>
@@ -65,7 +65,7 @@
 
     <style name="Widget.Aqua.Card.Form" parent="Widget.Aqua.Card">
         <item name="cardBackgroundColor">@color/aqua_card_form_surface</item>
-        <item name="cardCornerRadius">@dimen/aqua_size_22</item>
+        <item name="cardCornerRadius">@dimen/aqua_size_14</item>
         <item name="cardElevation">@dimen/aqua_size_0</item>
         <item name="strokeColor">@color/aqua_card_form_outline</item>
         <item name="strokeWidth">@dimen/aqua_size_1</item>
@@ -73,7 +73,7 @@
 
     <style name="Widget.Aqua.Card.Info" parent="Widget.Aqua.Card">
         <item name="cardBackgroundColor">@color/aqua_card_info_surface</item>
-        <item name="cardCornerRadius">@dimen/aqua_size_18</item>
+        <item name="cardCornerRadius">@dimen/aqua_size_14</item>
         <item name="cardElevation">@dimen/aqua_size_0</item>
         <item name="strokeColor">@color/aqua_card_info_outline</item>
         <item name="strokeWidth">@dimen/aqua_size_1</item>
@@ -89,7 +89,7 @@
 
     <style name="Widget.Aqua.Card.PhotoOverlay" parent="Widget.Aqua.Card">
         <item name="cardBackgroundColor">@color/aqua_card_photo_overlay_surface</item>
-        <item name="cardCornerRadius">@dimen/aqua_size_18</item>
+        <item name="cardCornerRadius">@dimen/aqua_size_14</item>
         <item name="cardElevation">@dimen/aqua_size_0</item>
         <item name="strokeColor">@color/aqua_card_photo_overlay_outline</item>
         <item name="strokeWidth">@dimen/aqua_size_1</item>

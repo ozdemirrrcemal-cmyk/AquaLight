@@ -30,14 +30,13 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import com.aqua.aqualight.R
 import com.aqua.aqualight.ui.common.cooling.AquaCoolingDashboardAlpha
-import com.aqua.aqualight.ui.common.cooling.AquaCoolingDashboardCardSurface
 import com.aqua.aqualight.ui.common.cooling.AquaCoolingDashboardGeometry
-import com.aqua.aqualight.ui.common.cooling.AquaCoolingDashboardPalette
 import com.aqua.aqualight.ui.common.cooling.AquaCoolingDashboardTypography
 import com.aqua.aqualight.ui.common.cooling.AquaCoolingGaugeSpec
 import com.aqua.aqualight.ui.common.cooling.AquaCoolingSelectionIndicator
 import com.aqua.aqualight.ui.common.devicecard.AquaDeviceCardColors
 import com.aqua.aqualight.ui.common.devicecard.AquaDeviceCardGeometry
+import com.aqua.aqualight.ui.common.devicecard.AquaDeviceCardSurface
 import com.aqua.aqualight.ui.common.devicecard.AquaDeviceCardTypography
 import com.aqua.aqualight.ui.tabs.devices.detail.cooling.presentation.root.CoolingControlMode
 import com.aqua.aqualight.ui.tabs.devices.detail.cooling.presentation.root.DeviceCoolingRootUiState
@@ -49,7 +48,7 @@ internal fun CoolingFanSpeedCard(
     typography: AquaDeviceCardTypography,
     modifier: Modifier = Modifier
 ) {
-    AquaCoolingDashboardCardSurface(
+    AquaDeviceCardSurface(
         modifier = modifier.heightIn(min = AquaCoolingDashboardGeometry.compactCardMinimumHeight)
     ) {
         Column(
@@ -179,7 +178,7 @@ internal fun CoolingModeCard(
     onModeSelected: (CoolingControlMode) -> Unit,
     modifier: Modifier = Modifier
 ) {
-    AquaCoolingDashboardCardSurface(
+    AquaDeviceCardSurface(
         modifier = modifier.heightIn(min = AquaCoolingDashboardGeometry.compactCardMinimumHeight)
     ) {
         Column(
@@ -258,6 +257,7 @@ private fun CoolingModeOption(
             selected = selected,
             selectedColor = colors.accent,
             idleColor = colors.secondaryText,
+            checkColor = colors.primaryText,
             modifier = Modifier.size(AquaCoolingDashboardGeometry.radioSize)
         )
         BasicText(
@@ -286,11 +286,11 @@ private fun CoolingActiveModeSummary(
             modifier = Modifier
                 .size(AquaCoolingDashboardGeometry.modeStatusDotSize)
                 .clip(CircleShape)
-                .background(AquaCoolingDashboardPalette.success)
+                .background(colors.success)
         )
         BasicText(
             text = stringResource(R.string.device_cooling_mode_active),
-            style = typography.body.copy(color = AquaCoolingDashboardPalette.success)
+            style = typography.body.copy(color = colors.success)
         )
         BasicText(
             text = stringResource(R.string.device_cooling_inline_separator),

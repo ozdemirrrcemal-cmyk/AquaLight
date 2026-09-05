@@ -12,11 +12,11 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.semantics.Role
-import com.aqua.aqualight.ui.common.cooling.AquaCoolingDashboardCardSurface
 import com.aqua.aqualight.ui.common.cooling.AquaCoolingHistoryAlpha
 import com.aqua.aqualight.ui.common.cooling.AquaCoolingHistoryGeometry
 import com.aqua.aqualight.ui.common.cooling.aquaCoolingDashboardColors
 import com.aqua.aqualight.ui.common.cooling.aquaCoolingDashboardTypography
+import com.aqua.aqualight.ui.common.devicecard.AquaDeviceCardSurface
 
 /** Shared presentation for typed Cooling read states. */
 @Composable
@@ -29,7 +29,7 @@ internal fun CoolingStateMessageCard(
 ) {
     val colors = aquaCoolingDashboardColors()
     val typography = aquaCoolingDashboardTypography(colors)
-    AquaCoolingDashboardCardSurface(
+    AquaDeviceCardSurface(
         modifier = modifier
             .fillMaxWidth()
             .heightIn(min = AquaCoolingHistoryGeometry.messageCardMinimumHeight)

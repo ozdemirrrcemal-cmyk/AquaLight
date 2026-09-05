@@ -16,9 +16,9 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
 import com.aqua.aqualight.R
 import com.aqua.aqualight.application.devices.cooling.DeviceCoolingCommandFailure
-import com.aqua.aqualight.ui.common.cooling.AquaCoolingDashboardCardSurface
 import com.aqua.aqualight.ui.common.cooling.aquaCoolingDashboardColors
 import com.aqua.aqualight.ui.common.cooling.aquaCoolingDashboardTypography
+import com.aqua.aqualight.ui.common.devicecard.AquaDeviceCardSurface
 import com.aqua.aqualight.ui.tabs.devices.detail.cooling.presentation.common.toCommercialCoolingError
 
 @Composable
@@ -41,7 +41,7 @@ internal fun DeviceCoolingProgramAvailabilityScreen(
             .padding(horizontal = AquaCoolingProgramGeometry.screenHorizontalPadding),
         contentAlignment = Alignment.Center
     ) {
-        AquaCoolingDashboardCardSurface(modifier = Modifier.fillMaxWidth()) {
+        AquaDeviceCardSurface(modifier = Modifier.fillMaxWidth()) {
             Column(
                 modifier = Modifier.fillMaxWidth(),
                 verticalArrangement = Arrangement.spacedBy(AquaCoolingProgramGeometry.sectionGap)

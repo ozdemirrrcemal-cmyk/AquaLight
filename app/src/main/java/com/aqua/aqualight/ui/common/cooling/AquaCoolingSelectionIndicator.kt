@@ -13,6 +13,7 @@ fun AquaCoolingSelectionIndicator(
     selected: Boolean,
     selectedColor: Color,
     idleColor: Color,
+    checkColor: Color,
     modifier: Modifier = Modifier
 ) {
     Canvas(modifier = modifier) {
@@ -21,7 +22,7 @@ fun AquaCoolingSelectionIndicator(
             drawCircle(color = selectedColor)
             val checkStroke = AquaCoolingDashboardGeometry.radioCheckStrokeWidth.toPx()
             drawLine(
-                color = AquaCoolingDashboardPalette.primaryText,
+                color = checkColor,
                 start = Offset(
                     size.width * CHECK_START_X_FRACTION,
                     size.height * CHECK_START_Y_FRACTION
@@ -34,7 +35,7 @@ fun AquaCoolingSelectionIndicator(
                 cap = StrokeCap.Round
             )
             drawLine(
-                color = AquaCoolingDashboardPalette.primaryText,
+                color = checkColor,
                 start = Offset(
                     size.width * CHECK_MIDDLE_X_FRACTION,
                     size.height * CHECK_MIDDLE_Y_FRACTION

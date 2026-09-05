@@ -23,14 +23,13 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextOverflow
 import com.aqua.aqualight.R
 import com.aqua.aqualight.ui.common.cooling.AquaCoolingDashboardAlpha
-import com.aqua.aqualight.ui.common.cooling.AquaCoolingDashboardCardSurface
 import com.aqua.aqualight.ui.common.cooling.AquaCoolingDashboardGeometry
 import com.aqua.aqualight.ui.common.cooling.AquaCoolingDashboardIcon
 import com.aqua.aqualight.ui.common.cooling.AquaCoolingDashboardIconKind
-import com.aqua.aqualight.ui.common.cooling.AquaCoolingDashboardPalette
 import com.aqua.aqualight.ui.common.cooling.AquaCoolingDashboardTypography
 import com.aqua.aqualight.ui.common.devicecard.AquaDeviceCardColors
 import com.aqua.aqualight.ui.common.devicecard.AquaDeviceCardGeometry
+import com.aqua.aqualight.ui.common.devicecard.AquaDeviceCardSurface
 import com.aqua.aqualight.ui.common.devicecard.AquaDeviceCardTypography
 import com.aqua.aqualight.ui.tabs.devices.detail.cooling.presentation.root.CoolingHealthState
 import com.aqua.aqualight.ui.tabs.devices.detail.cooling.presentation.root.DeviceCoolingRootUiState
@@ -42,7 +41,7 @@ internal fun CoolingPowerCard(
     typography: AquaDeviceCardTypography,
     modifier: Modifier = Modifier
 ) {
-    AquaCoolingDashboardCardSurface(
+    AquaDeviceCardSurface(
         modifier = modifier.heightIn(min = AquaCoolingDashboardGeometry.statusCardMinimumHeight)
     ) {
         Column(
@@ -144,7 +143,7 @@ internal fun CoolingStatusCard(
     typography: AquaDeviceCardTypography,
     modifier: Modifier = Modifier
 ) {
-    AquaCoolingDashboardCardSurface(
+    AquaDeviceCardSurface(
         modifier = modifier.heightIn(min = AquaCoolingDashboardGeometry.statusCardMinimumHeight)
     ) {
         Column(
@@ -262,7 +261,7 @@ private fun CoolingStatusRow(
     typography: AquaDeviceCardTypography
 ) {
     val toneColor = when (model.tone) {
-        CoolingStatusTone.SUCCESS -> AquaCoolingDashboardPalette.success
+        CoolingStatusTone.SUCCESS -> colors.success
         CoolingStatusTone.WARNING -> colors.warning
         CoolingStatusTone.DANGER -> colors.danger
         CoolingStatusTone.NEUTRAL -> colors.secondaryText

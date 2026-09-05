@@ -33,12 +33,11 @@ import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.style.TextAlign
 import com.aqua.aqualight.R
 import com.aqua.aqualight.application.devices.cooling.control.DeviceCoolingOperatingState
-import com.aqua.aqualight.ui.common.cooling.AquaCoolingDashboardCardSurface
 import com.aqua.aqualight.ui.common.cooling.AquaCoolingDashboardGeometry
-import com.aqua.aqualight.ui.common.cooling.AquaCoolingDashboardPalette
 import com.aqua.aqualight.ui.common.cooling.aquaCoolingDashboardColors
 import com.aqua.aqualight.ui.common.cooling.aquaCoolingDashboardTypography
 import com.aqua.aqualight.ui.common.devicecard.AquaDeviceCardColors
+import com.aqua.aqualight.ui.common.devicecard.AquaDeviceCardSurface
 import com.aqua.aqualight.ui.common.devicecard.AquaDeviceCardTypography
 import com.aqua.aqualight.ui.common.devicemenu.AquaDeviceMenuToggle
 
@@ -126,7 +125,7 @@ private fun AutomaticLiveStatusCard(
     colors: AquaDeviceCardColors,
     typography: AquaDeviceCardTypography
 ) {
-    AquaCoolingDashboardCardSurface(
+    AquaDeviceCardSurface(
         modifier = Modifier
             .fillMaxWidth()
             .heightIn(min = AquaCoolingAutomaticGeometry.liveCardMinimumHeight)
@@ -162,7 +161,7 @@ private fun AutomaticLiveStatusCard(
                     valueColor = when (state.operatingState) {
                         DeviceCoolingOperatingState.COOLING,
                         DeviceCoolingOperatingState.MANUAL,
-                        DeviceCoolingOperatingState.PROGRAM -> AquaCoolingDashboardPalette.success
+                        DeviceCoolingOperatingState.PROGRAM -> colors.success
                         DeviceCoolingOperatingState.FAULT -> colors.warning
                         DeviceCoolingOperatingState.IDLE,
                         null -> colors.secondaryText
@@ -209,7 +208,7 @@ private fun AutomaticTemperatureRangeCard(
 ) {
     val colors = visuals.colors
     val typography = visuals.typography
-    AquaCoolingDashboardCardSurface(
+    AquaDeviceCardSurface(
         modifier = Modifier
             .fillMaxWidth()
             .heightIn(min = AquaCoolingAutomaticGeometry.rangeCardMinimumHeight)
@@ -260,7 +259,7 @@ private fun AutomaticSilentModeCard(
     onCheckedChange: (Boolean) -> Unit
 ) {
     val enabled = state.silentModeEditable
-    AquaCoolingDashboardCardSurface(
+    AquaDeviceCardSurface(
         modifier = Modifier
             .fillMaxWidth()
             .heightIn(min = AquaCoolingAutomaticGeometry.silentModeCardMinimumHeight)
@@ -312,7 +311,8 @@ private fun AutomaticSilentModeCard(
                 checked = state.draftSilentModeEnabled,
                 contentDescription = stringResource(
                     R.string.device_cooling_automatic_silent_mode_toggle_description
-                )
+                ),
+                activeColor = colors.accent
             )
         }
     }
@@ -333,13 +333,13 @@ private fun AutomaticEditorRow(
             .fillMaxWidth()
             .clip(shape)
             .background(
-                AquaCoolingDashboardPalette.insetSurface.copy(
+                colors.mediaSurface.copy(
                     alpha = AquaCoolingAutomaticAlpha.rowBackground
                 )
             )
             .border(
                 width = AquaCoolingDashboardGeometry.chartGridStrokeWidth,
-                color = AquaCoolingDashboardPalette.insetOutline.copy(
+                color = colors.mediaOutline.copy(
                     alpha = AquaCoolingAutomaticAlpha.rowOutline
                 ),
                 shape = shape
