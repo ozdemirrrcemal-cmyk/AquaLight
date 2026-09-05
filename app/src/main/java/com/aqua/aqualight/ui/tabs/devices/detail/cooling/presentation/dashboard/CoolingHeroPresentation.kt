@@ -1,7 +1,6 @@
 package com.aqua.aqualight.ui.tabs.devices.detail.cooling.presentation.dashboard
 
 import com.aqua.aqualight.ui.common.devicepresence.DeviceConnectionVisualState
-import com.aqua.aqualight.ui.tabs.devices.detail.cooling.presentation.root.CoolingControlMode
 import com.aqua.aqualight.ui.tabs.devices.detail.cooling.presentation.root.CoolingHealthState
 import com.aqua.aqualight.ui.tabs.devices.detail.cooling.presentation.root.DeviceCoolingRootUiState
 
@@ -16,8 +15,6 @@ internal enum class CoolingHeroVisualStatus {
 internal data class CoolingHeroPresentation(
     val status: CoolingHeroVisualStatus,
     val fanPercent: Int?,
-    val temperatureC: Double?,
-    val mode: CoolingControlMode?,
     val isCooling: Boolean
 ) {
     val motionIntensity: Float
@@ -45,8 +42,6 @@ internal fun DeviceCoolingRootUiState.toCoolingHeroPresentation(): CoolingHeroPr
     return CoolingHeroPresentation(
         status = resolveCoolingHeroStatus(),
         fanPercent = fanPercentNow,
-        temperatureC = tankTemperatureC,
-        mode = selectedMode,
         isCooling = hasCurrentFanMotion()
     )
 }

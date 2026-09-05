@@ -49,8 +49,7 @@ internal fun DeviceCoolingDashboardScreen(
         item(key = "live-hero") {
             CoolingLiveHero(
                 state = state,
-                colors = colors,
-                typography = typography
+                colors = colors
             )
         }
         item(key = "temperature") {
