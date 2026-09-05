@@ -374,21 +374,11 @@ private fun AutomaticEditorRow(
             ),
         verticalAlignment = Alignment.CenterVertically
     ) {
-        Column(
-            modifier = Modifier.weight(1f),
-            verticalArrangement = Arrangement.spacedBy(AquaCoolingAutomaticGeometry.editorRowGap / 2)
-        ) {
-            BasicText(
-                text = content.title,
-                style = typography.body.copy(color = colors.primaryText),
-                maxLines = 1
-            )
-            BasicText(
-                text = content.helper,
-                style = typography.micro.copy(color = colors.secondaryText),
-                maxLines = 2
-            )
-        }
+        AutomaticEditorCopy(
+            content = content,
+            visuals = visuals,
+            modifier = Modifier.weight(1f)
+        )
         BasicText(
             text = content.value,
             style = typography.body.copy(
@@ -399,6 +389,29 @@ private fun AutomaticEditorRow(
         )
         Spacer(modifier = Modifier.width(AquaCoolingAutomaticGeometry.editorRowGap))
         AutomaticChevron(colors = colors)
+    }
+}
+
+@Composable
+private fun AutomaticEditorCopy(
+    content: AutomaticEditorRowContent,
+    visuals: AutomaticScreenVisuals,
+    modifier: Modifier = Modifier
+) {
+    Column(
+        modifier = modifier,
+        verticalArrangement = Arrangement.spacedBy(AquaCoolingAutomaticGeometry.editorRowGap / 2)
+    ) {
+        BasicText(
+            text = content.title,
+            style = visuals.typography.body.copy(color = visuals.colors.primaryText),
+            maxLines = 1
+        )
+        BasicText(
+            text = content.helper,
+            style = visuals.typography.micro.copy(color = visuals.colors.secondaryText),
+            maxLines = 2
+        )
     }
 }
 
