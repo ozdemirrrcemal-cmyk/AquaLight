@@ -26,6 +26,25 @@ class CoolingHeroPresentationTest {
     }
 
     @Test
+    fun `manual target never overrides applied fan output for animation`() {
+        val presentation = state(
+            fanPercent = 35,
+            manualFanPercent = 90
+        ).toCoolingHeroPresentation()
+
+        assertEquals(35, presentation.fanPercent)
+        assertEquals(EXPECTED_THIRTY_FIVE_PERCENT_INTENSITY, presentation.motionIntensity, NO_DELTA)
+        assertTrue(presentation.isCooling)
+    }
+
+    @Test
+    fun `fan rotation period follows applied output proportionally`() {
+        assertEquals(FULL_OUTPUT_PERIOD_MILLIS, fanMotionDurationMillis(1f))
+        assertEquals(HALF_OUTPUT_PERIOD_MILLIS, fanMotionDurationMillis(0.5f))
+        assertEquals(QUARTER_OUTPUT_PERIOD_MILLIS, fanMotionDurationMillis(0.25f))
+    }
+
+    @Test
     fun `zero fan output keeps the scene calmly ready`() {
         val presentation = state(fanPercent = 0).toCoolingHeroPresentation()
 
@@ -99,6 +118,7 @@ class CoolingHeroPresentationTest {
 
     private fun state(
         fanPercent: Int,
+        manualFanPercent: Int? = null,
         freshness: CoolingDataFreshness = CoolingDataFreshness.CURRENT,
         alarmCount: Int = 0,
         fanHealth: CoolingHealthState = CoolingHealthState.READY,
@@ -112,7 +132,7 @@ class CoolingHeroPresentationTest {
                 supportedModes = setOf(DeviceCoolingControlMode.AUTOMATIC),
                 modeSelectionWritable = true,
                 manualFanCapabilities = null,
-                manualFanPercent = null,
+                manualFanPercent = manualFanPercent,
                 actualFanPercent = fanPercent,
                 tankTemperatureC = TANK_TEMPERATURE_C
             ),
@@ -137,7 +157,11 @@ class CoolingHeroPresentationTest {
     private companion object {
         const val TANK_TEMPERATURE_C = 25.6
         const val EXPECTED_SIXTY_PERCENT_INTENSITY = 0.6f
+        const val EXPECTED_THIRTY_FIVE_PERCENT_INTENSITY = 0.35f
         const val WAITING_MOTION_INTENSITY = 0.58f
+        const val FULL_OUTPUT_PERIOD_MILLIS = 620
+        const val HALF_OUTPUT_PERIOD_MILLIS = 1240
+        const val QUARTER_OUTPUT_PERIOD_MILLIS = 2480
         const val NO_MOTION = 0f
         const val NO_DELTA = 0f
     }
