@@ -171,6 +171,7 @@ class DeviceCoolingProgramSettingsViewModelTest {
         fanPercentStep: Int = 10
     ): CoolingProgramPolicy = CoolingProgramPolicy(
         maximumSlotCount = maximumSlotCount,
+        timeStepMinutes = 15,
         minimumSlotDurationMinutes = 15,
         fan = CoolingProgramFanPolicy(
             minimumPercent = 0,

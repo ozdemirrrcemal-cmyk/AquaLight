@@ -1,5 +1,6 @@
 package com.aqua.aqualight.ui.tabs.devices.detail.cooling.presentation.manual
 
+import com.aqua.aqualight.application.devices.cooling.DeviceCoolingCommandFailure
 import com.aqua.aqualight.application.devices.cooling.control.DeviceCoolingControlCapabilities
 import com.aqua.aqualight.application.devices.cooling.control.DeviceCoolingControlFailure
 import com.aqua.aqualight.application.devices.cooling.control.DeviceCoolingControlMode
@@ -66,7 +67,7 @@ class DeviceCoolingManualSettingsViewModelTest {
                 manualFanPercent = 40
             ),
             mutation = DeviceCoolingControlResult.Failed(
-                DeviceCoolingControlFailure.Rejected
+                DeviceCoolingControlFailure.Rejected(DeviceCoolingCommandFailure.HARDWARE_FAILURE)
             )
         )
         val viewModel = DeviceCoolingManualSettingsViewModel(operations)

@@ -84,7 +84,7 @@ class DeviceCoolingTemperatureHistoryViewModelTest {
             DeviceCoolingTemperatureHistoryFailure
             >
         assertEquals(CoolingDataFreshness.STALE, data.freshness)
-        assertEquals(DeviceCoolingTemperatureHistoryFailure.UNAVAILABLE, data.refreshFailure)
+        assertEquals(DeviceCoolingTemperatureHistoryFailure.Unavailable, data.refreshFailure)
         assertEquals(first, state.snapshot)
         assertEquals(DeviceCoolingTemperatureHistoryRange.HOURS_24, state.selectedRange)
         assertEquals(

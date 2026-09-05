@@ -115,6 +115,7 @@ class DeviceCoolingProgramStateMachineTest {
 
     private fun policy(): CoolingProgramPolicy = CoolingProgramPolicy(
         maximumSlotCount = 6,
+        timeStepMinutes = 15,
         minimumSlotDurationMinutes = 15,
         fan = CoolingProgramFanPolicy(
             minimumPercent = 0,
