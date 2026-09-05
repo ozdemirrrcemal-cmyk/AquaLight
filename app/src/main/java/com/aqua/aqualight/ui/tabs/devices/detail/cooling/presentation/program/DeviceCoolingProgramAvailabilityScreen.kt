@@ -15,13 +15,16 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
 import com.aqua.aqualight.R
+import com.aqua.aqualight.application.devices.cooling.DeviceCoolingCommandFailure
 import com.aqua.aqualight.ui.common.cooling.AquaCoolingDashboardCardSurface
 import com.aqua.aqualight.ui.common.cooling.aquaCoolingDashboardColors
 import com.aqua.aqualight.ui.common.cooling.aquaCoolingDashboardTypography
+import com.aqua.aqualight.ui.tabs.devices.detail.cooling.presentation.common.toCommercialCoolingError
 
 @Composable
 internal fun DeviceCoolingProgramAvailabilityScreen(
     loadState: DeviceCoolingProgramLoadState,
+    commandFailure: DeviceCoolingCommandFailure?,
     onRetry: () -> Unit,
     modifier: Modifier = Modifier
 ) {
@@ -29,7 +32,8 @@ internal fun DeviceCoolingProgramAvailabilityScreen(
 
     val colors = aquaCoolingDashboardColors()
     val typography = aquaCoolingDashboardTypography(colors)
-    val content = programAvailabilityContent(loadState)
+    val content = commandFailure?.toProgramAvailabilityContent()
+        ?: programAvailabilityContent(loadState)
 
     Box(
         modifier = modifier
@@ -73,6 +77,15 @@ private data class ProgramAvailabilityContent(
     val messageRes: Int,
     val retryAvailable: Boolean
 )
+
+private fun DeviceCoolingCommandFailure.toProgramAvailabilityContent(): ProgramAvailabilityContent {
+    val message = toCommercialCoolingError()
+    return ProgramAvailabilityContent(
+        titleRes = message.titleRes,
+        messageRes = message.messageRes,
+        retryAvailable = true
+    )
+}
 
 private fun programAvailabilityContent(
     loadState: DeviceCoolingProgramLoadState
