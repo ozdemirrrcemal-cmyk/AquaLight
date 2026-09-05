@@ -146,7 +146,6 @@ class CoolingHeroPresentationTest {
                 humidityPercent = null,
                 powerWatts = null,
                 estimatedKwhPerDay = null,
-                roomTemperatureHistoryC = emptyList(),
                 programSlotCount = null,
                 nextProgramStartMinutesOfDay = null,
                 fanHealth = options.fanHealth,
