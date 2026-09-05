@@ -59,24 +59,30 @@ class DeviceCoolingRuntimeRepository internal constructor(
     suspend fun applyConfig(
         deviceUid: DeviceUid,
         payload: DeviceCoolingV1ConfigApplyPayload
-    ): DeviceRuntimeCommandOutcome<DeviceCoolingV1ConfigApplyResult> = reconcileAfterMutation(
-        deviceUid = deviceUid,
-        mutation = protocol.applyConfig(deviceUid, payload)
-    ) { result, status ->
-        status.config == result.config
-    }
+    ): DeviceRuntimeCommandOutcome<DeviceCoolingV1ConfigApplyResult> = protocol
+        .applyConfig(deviceUid, payload)
+        .reconcileAfterMutation(
+            deviceUid = deviceUid,
+            stateOwner = stateOwner,
+            requestStatus = ::requestStatus
+        ) { result, status ->
+            status.config == result.config
+        }
 
     suspend fun applyManual(
         deviceUid: DeviceUid,
         payload: DeviceCoolingV1ManualApplyPayload
-    ): DeviceRuntimeCommandOutcome<DeviceCoolingV1ManualApplyResult> = reconcileAfterMutation(
-        deviceUid = deviceUid,
-        mutation = protocol.applyManual(deviceUid, payload)
-    ) { result, status ->
-        status.configRevision == result.configRevision &&
-            status.config.manualTargetPercent == result.manualTargetPercent &&
-            status.control.manualActive == result.manualActive
-    }
+    ): DeviceRuntimeCommandOutcome<DeviceCoolingV1ManualApplyResult> = protocol
+        .applyManual(deviceUid, payload)
+        .reconcileAfterMutation(
+            deviceUid = deviceUid,
+            stateOwner = stateOwner,
+            requestStatus = ::requestStatus
+        ) { result, status ->
+            status.configRevision == result.configRevision &&
+                status.config.manualTargetPercent == result.manualTargetPercent &&
+                status.control.manualActive == result.manualActive
+        }
 
     suspend fun requestProgram(
         deviceUid: DeviceUid
@@ -86,12 +92,15 @@ class DeviceCoolingRuntimeRepository internal constructor(
     suspend fun applyProgram(
         deviceUid: DeviceUid,
         payload: DeviceCoolingV1ProgramApplyPayload
-    ): DeviceRuntimeCommandOutcome<DeviceCoolingV1ProgramApplyResult> = reconcileAfterMutation(
-        deviceUid = deviceUid,
-        mutation = protocol.applyProgram(deviceUid, payload)
-    ) { result, status ->
-        status.programRevision == result.program.programRevision
-    }
+    ): DeviceRuntimeCommandOutcome<DeviceCoolingV1ProgramApplyResult> = protocol
+        .applyProgram(deviceUid, payload)
+        .reconcileAfterMutation(
+            deviceUid = deviceUid,
+            stateOwner = stateOwner,
+            requestStatus = ::requestStatus
+        ) { result, status ->
+            status.programRevision == result.program.programRevision
+        }
 
     suspend fun requestHistory(
         deviceUid: DeviceUid,
@@ -105,49 +114,6 @@ class DeviceCoolingRuntimeRepository internal constructor(
             DeviceRuntimeTypedEvent.Type.COOLING_STATUS_CHANGED -> consumeStatusEvent(event)
             DeviceRuntimeTypedEvent.Type.COOLING_TELEMETRY_CHANGED -> consumeTelemetryEvent(event)
             else -> Unit
-        }
-    }
-
-    /**
-     * A persisted mutation ACK makes the cached snapshot potentially stale. Success is exposed to
-     * callers only after the same connection generation returns, and the central owner accepts, a
-     * status document that confirms the mutation. A failed readback revokes that generation's
-     * authority so no adapter can accidentally project the pre-mutation snapshot as current.
-     */
-    private suspend fun <T> reconcileAfterMutation(
-        deviceUid: DeviceUid,
-        mutation: DeviceRuntimeCommandOutcome<T>,
-        confirmsMutation: (T, DeviceCoolingV1StatusDocument) -> Boolean
-    ): DeviceRuntimeCommandOutcome<T> {
-        if (mutation !is DeviceRuntimeCommandOutcome.Success) return mutation
-
-        return when (val readback = requestStatus(deviceUid)) {
-            is DeviceRuntimeCommandOutcome.Success -> {
-                val acceptedState = stateOwner.currentAuthoritativeState(deviceUid)
-                val sameGeneration = readback.generation == mutation.generation
-                val acceptedReadback = acceptedState?.connectionGeneration == readback.generation &&
-                    acceptedState.status == readback.value
-                val verified = sameGeneration &&
-                    acceptedReadback &&
-                    confirmsMutation(mutation.value, readback.value)
-                if (verified) mutation else readback.toReconciliationFailure()
-            }
-            is DeviceRuntimeCommandOutcome.NotConnected ->
-                readback.afterFailedReadback(stateOwner, mutation)
-            is DeviceRuntimeCommandOutcome.NotAuthenticated ->
-                readback.afterFailedReadback(stateOwner, mutation)
-            is DeviceRuntimeCommandOutcome.UnsupportedByDevice ->
-                readback.afterFailedReadback(stateOwner, mutation)
-            is DeviceRuntimeCommandOutcome.SendFailed ->
-                readback.afterFailedReadback(stateOwner, mutation)
-            is DeviceRuntimeCommandOutcome.Timeout ->
-                readback.afterFailedReadback(stateOwner, mutation)
-            is DeviceRuntimeCommandOutcome.FirmwareError ->
-                readback.afterFailedReadback(stateOwner, mutation)
-            is DeviceRuntimeCommandOutcome.ProtocolError ->
-                readback.afterFailedReadback(stateOwner, mutation)
-            is DeviceRuntimeCommandOutcome.Cancelled ->
-                readback.afterFailedReadback(stateOwner, mutation)
         }
     }
 }
@@ -201,6 +167,62 @@ private suspend fun DeviceCoolingRuntimeRepository.consumeTelemetryEvent(
     ) {
         stateOwner.recordTelemetry(event.deviceUid, event.generation, telemetry)
     }
+}
+
+/**
+ * A persisted mutation ACK makes the cached snapshot potentially stale. Success is exposed only
+ * after the same connection generation returns, and the central owner accepts, a status document
+ * that confirms the mutation. Failed readback revokes that generation's authority.
+ */
+private suspend fun <T> DeviceRuntimeCommandOutcome<T>.reconcileAfterMutation(
+    deviceUid: DeviceUid,
+    stateOwner: DeviceCoolingRuntimeStateOwner,
+    requestStatus: suspend (DeviceUid) ->
+        DeviceRuntimeCommandOutcome<DeviceCoolingV1StatusDocument>,
+    confirmsMutation: (T, DeviceCoolingV1StatusDocument) -> Boolean
+): DeviceRuntimeCommandOutcome<T> {
+    val mutation = this as? DeviceRuntimeCommandOutcome.Success ?: return this
+
+    return when (val readback = requestStatus(deviceUid)) {
+        is DeviceRuntimeCommandOutcome.Success -> if (
+            mutation.isVerifiedBy(deviceUid, stateOwner, readback, confirmsMutation)
+        ) {
+            mutation
+        } else {
+            readback.toReconciliationFailure()
+        }
+        is DeviceRuntimeCommandOutcome.NotConnected ->
+            readback.afterFailedReadback(stateOwner, mutation)
+        is DeviceRuntimeCommandOutcome.NotAuthenticated ->
+            readback.afterFailedReadback(stateOwner, mutation)
+        is DeviceRuntimeCommandOutcome.UnsupportedByDevice ->
+            readback.afterFailedReadback(stateOwner, mutation)
+        is DeviceRuntimeCommandOutcome.SendFailed ->
+            readback.afterFailedReadback(stateOwner, mutation)
+        is DeviceRuntimeCommandOutcome.Timeout ->
+            readback.afterFailedReadback(stateOwner, mutation)
+        is DeviceRuntimeCommandOutcome.FirmwareError ->
+            readback.afterFailedReadback(stateOwner, mutation)
+        is DeviceRuntimeCommandOutcome.ProtocolError ->
+            readback.afterFailedReadback(stateOwner, mutation)
+        is DeviceRuntimeCommandOutcome.Cancelled ->
+            readback.afterFailedReadback(stateOwner, mutation)
+    }
+}
+
+private fun <T> DeviceRuntimeCommandOutcome.Success<T>.isVerifiedBy(
+    deviceUid: DeviceUid,
+    stateOwner: DeviceCoolingRuntimeStateOwner,
+    readback: DeviceRuntimeCommandOutcome.Success<DeviceCoolingV1StatusDocument>,
+    confirmsMutation: (T, DeviceCoolingV1StatusDocument) -> Boolean
+): Boolean {
+    val acceptedState = stateOwner.currentAuthoritativeState(deviceUid)
+    val sameGeneration = readback.generation == generation
+    val acceptedReadback = acceptedState?.connectionGeneration == readback.generation &&
+        acceptedState.status == readback.value
+    return sameGeneration &&
+        acceptedReadback &&
+        confirmsMutation(value, readback.value)
 }
 
 private fun DeviceRuntimeCommandOutcome.Success<DeviceCoolingV1StatusDocument>

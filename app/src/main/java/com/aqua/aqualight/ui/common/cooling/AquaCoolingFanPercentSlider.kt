@@ -33,8 +33,8 @@ internal fun AquaCoolingFanPercentSlider(
     state: AquaCoolingFanPercentSliderState,
     colors: AquaDeviceCardColors,
     onValueChanged: (Int) -> Unit,
-    onValueChangeFinished: () -> Unit = {},
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    onValueChangeFinished: () -> Unit = {}
 ) {
     require(state.stepPercent > 0)
     require(state.minimumPercent in AquaCoolingGaugeSpec.minimumPercent..AquaCoolingGaugeSpec.maximumPercent)
