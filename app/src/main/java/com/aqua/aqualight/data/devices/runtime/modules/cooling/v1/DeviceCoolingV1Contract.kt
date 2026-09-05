@@ -31,6 +31,7 @@ object DeviceCoolingV1Contract {
         const val BAD_REQUEST = "BAD_REQUEST"
         const val MISSING_FIELD = "MISSING_FIELD"
         const val INVALID_VALUE = "INVALID_VALUE"
+        const val NOT_FOUND = "NOT_FOUND"
         const val CONFLICT = "CONFLICT"
         const val HARDWARE_ERROR = "HARDWARE_ERROR"
         const val STORAGE_ERROR = "STORAGE_ERROR"
