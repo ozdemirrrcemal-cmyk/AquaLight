@@ -35,9 +35,10 @@ class DeviceDosingPrimeHoldStabilityContractTest {
             "app/src/main/java/com/aqua/aqualight/ui/tabs/devices/detail/dosing/channel/" +
                 "calibration/DeviceDosingCalibrationScreen.kt"
         )
+        val normalizedScreen = screen.replace(Regex("\\s+"), " ")
 
         assertTrue(
-            screen.contains(
+            normalizedScreen.contains(
                 "userScrollEnabled = state.step != DeviceDosingCalibrationStep.PRIME || " +
                     "!state.isPumpActive"
             )
