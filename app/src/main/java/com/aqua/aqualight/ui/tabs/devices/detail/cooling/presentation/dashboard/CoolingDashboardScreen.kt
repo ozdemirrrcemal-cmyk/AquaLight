@@ -102,6 +102,11 @@ private fun CoolingScrollableDashboardContent(
         item(key = "power-status") {
             CoolingPowerAndStatusRow(state = state)
         }
+        if (state.activeAlarmCodes.isNotEmpty()) {
+            item(key = "alarm-messages") {
+                CoolingAlarmMessagesCard(state)
+            }
+        }
         item(key = "mode-settings") {
             CoolingModeSettingsCard(
                 state = state,
