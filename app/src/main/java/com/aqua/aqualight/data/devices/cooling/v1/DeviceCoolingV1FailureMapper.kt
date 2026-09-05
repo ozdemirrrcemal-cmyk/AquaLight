@@ -20,9 +20,9 @@ internal object DeviceCoolingV1FailureMapper {
             DeviceCoolingV1Contract.Error.MISSING_FIELD -> DeviceCoolingCommandFailure.INVALID_REQUEST
 
             DeviceCoolingV1Contract.Error.INVALID_VALUE -> mapInvalidValue(error)
-            COMMAND_LOCAL_NOT_FOUND -> mapNotFound(error)
+            DeviceCoolingV1Contract.Error.NOT_FOUND -> mapNotFound(error)
             DeviceCoolingV1Contract.Error.HARDWARE_ERROR -> mapHardware(error)
-            DeviceCoolingV1Contract.Error.STORAGE_ERROR -> DeviceCoolingCommandFailure.STORAGE_FAILURE
+            DeviceCoolingV1Contract.Error.STORAGE_ERROR -> mapStorage(error)
             DeviceCoolingV1Contract.Error.CLOCK_UNSYNCED -> DeviceCoolingCommandFailure.CLOCK_UNSYNCED
             else -> DeviceCoolingCommandFailure.UNKNOWN_REJECTION
         }
@@ -33,7 +33,7 @@ internal object DeviceCoolingV1FailureMapper {
             DeviceCoolingV1Contract.Error.BAD_REQUEST -> HTTP_BAD_REQUEST
             DeviceCoolingV1Contract.Error.MISSING_FIELD,
             DeviceCoolingV1Contract.Error.INVALID_VALUE -> HTTP_UNPROCESSABLE_ENTITY
-            COMMAND_LOCAL_NOT_FOUND -> HTTP_NOT_FOUND
+            DeviceCoolingV1Contract.Error.NOT_FOUND -> HTTP_NOT_FOUND
             DeviceCoolingV1Contract.Error.CONFLICT -> HTTP_CONFLICT
             DeviceCoolingV1Contract.Error.HARDWARE_ERROR,
             DeviceCoolingV1Contract.Error.CLOCK_UNSYNCED -> HTTP_SERVICE_UNAVAILABLE
@@ -90,6 +90,17 @@ internal object DeviceCoolingV1FailureMapper {
         DeviceCoolingCommandFailure.HARDWARE_FAILURE
     }
 
+    private fun mapStorage(
+        error: DeviceRuntimeCommandOutcome.FirmwareError
+    ): DeviceCoolingCommandFailure = if (
+        error.field == FirmwareField.HISTORY &&
+        error.message == HISTORY_READ_MESSAGE
+    ) {
+        DeviceCoolingCommandFailure.HISTORY_UNAVAILABLE
+    } else {
+        DeviceCoolingCommandFailure.STORAGE_FAILURE
+    }
+
     private object FirmwareField {
         const val DATA = "data"
         const val CONTROL_MODE = "controlMode"
@@ -103,6 +114,7 @@ internal object DeviceCoolingV1FailureMapper {
         const val SLOTS = "slots"
         const val PROGRAM = "program"
         const val RANGE = "range"
+        const val HISTORY = "history"
     }
 
     private val CONFIGURATION_FIELDS = setOf(
@@ -112,7 +124,6 @@ internal object DeviceCoolingV1FailureMapper {
         FirmwareField.EXPECTED_PROGRAM_REVISION
     )
 
-    private const val COMMAND_LOCAL_NOT_FOUND = "NOT_FOUND"
     private const val HTTP_BAD_REQUEST = 400
     private const val HTTP_NOT_FOUND = 404
     private const val HTTP_CONFLICT = 409
@@ -127,4 +138,5 @@ internal object DeviceCoolingV1FailureMapper {
     private const val HISTORY_RANGE_MESSAGE = "range must be 24h, 7d, or 30d"
     private const val FAN_NOT_FOUND_MESSAGE = "only the catalog fan1 output exists"
     private const val FAN_UNAVAILABLE_MESSAGE = "catalog fan1 output is unavailable"
+    private const val HISTORY_READ_MESSAGE = "cooling history could not be read"
 }
