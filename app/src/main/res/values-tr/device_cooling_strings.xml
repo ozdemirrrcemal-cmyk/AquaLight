@@ -159,6 +159,8 @@
     <string name="device_cooling_error_hardware_failure_message">Cihaz fan çıkışını güvenli biçimde uygulayamadığı için yeni ayar kaydedilmedi. Cihazı kontrol edip tekrar deneyin.</string>
     <string name="device_cooling_error_storage_failure_title">Ayar cihazda saklanamadı</string>
     <string name="device_cooling_error_storage_failure_message">Cihaz bu değişikliği güvenli biçimde kaydedemedi. Önceki ayar geçerli kalır. Tekrar deneyin.</string>
+    <string name="device_cooling_error_history_unavailable_title">Soğutma geçmişi yüklenemedi</string>
+    <string name="device_cooling_error_history_unavailable_message">Cihaz kayıtlı soğutma geçmişini okuyamadı. Tekrar deneyin.</string>
     <string name="device_cooling_error_clock_unsynced_title">Cihaz saatini kontrol edin</string>
     <string name="device_cooling_error_clock_unsynced_message">Bu bilgi için cihaz saatinin senkronize olması gerekiyor. Cihazın saat ayarlarını kontrol edip tekrar deneyin.</string>
     <string name="device_cooling_error_protocol_title">Cihaz yanıtı doğrulanamadı</string>
@@ -174,12 +176,12 @@
     <string name="device_cooling_error_read_only_title">Soğutma ayarları salt okunur</string>
     <string name="device_cooling_error_read_only_message">Bu ayarlar görüntülenebilir ancak bu cihazda değiştirilemez.</string>
 
-    <string name="device_cooling_alarm_water_sensor_fault">Su sıcaklığı sensörünü kontrol edin. Güvenlik için Otomatik ve Program soğutma duraklatıldı.</string>
-    <string name="device_cooling_alarm_ambient_sensor_fault">Oda sıcaklığı ve nem sensörünü kontrol edin. Suya dayalı soğutma çalışmaya devam edebilir.</string>
+    <string name="device_cooling_alarm_water_sensor_fault">Su sıcaklığı sensörünü kontrol edin. Otomatik ve Program soğutması güvenlik için duraklatıldı.</string>
+    <string name="device_cooling_alarm_ambient_sensor_fault">Oda sıcaklığı ve nem algılamasını kontrol edin. Su sıcaklığına bağlı soğutma devam edebilir.</string>
     <string name="device_cooling_alarm_fan_hardware_fault">Soğutma fanı çıkışını kontrol edin. Cihaz toparlanana kadar soğutma çıkışı kullanılamaz.</string>
     <string name="device_cooling_alarm_clock_unsynced">Cihaz saati senkronize değil. Program soğutması ve zamana bağlı geçmiş kullanılamayabilir.</string>
-    <string name="device_cooling_alarm_history_storage_fault">Sıcaklık geçmişi depolamasını kontrol edin. Anlık soğutma çalışmaya devam edebilir.</string>
-    <string name="device_cooling_alarm_config_storage_fault">Soğutma ayarları depolamasını kontrol edin. Cihaz güvenli bir yedek durumda çalışıyor.</string>
+    <string name="device_cooling_alarm_history_storage_fault">Sıcaklık geçmişi depolamasını kontrol edin. Anlık soğutma devam edebilir.</string>
+    <string name="device_cooling_alarm_config_storage_fault">Soğutma ayarları depolamasını kontrol edin. Cihaz güvenli yedek durumunu kullanıyor.</string>
 
     <string name="device_cooling_value_unavailable">—</string>
     <string name="device_cooling_temperature_value_format">%1$.1f °C</string>
