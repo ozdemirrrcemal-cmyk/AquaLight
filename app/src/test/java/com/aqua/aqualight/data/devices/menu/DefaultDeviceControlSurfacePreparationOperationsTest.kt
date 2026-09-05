@@ -15,6 +15,7 @@ import com.aqua.aqualight.application.devices.DeviceTemperatureSensorSlot
 import com.aqua.aqualight.application.devices.OwnerDeviceAvailability
 import com.aqua.aqualight.application.devices.OwnerDeviceFamily
 import com.aqua.aqualight.application.devices.cooling.control.DeviceCoolingControlCapabilities
+import com.aqua.aqualight.application.devices.cooling.control.DeviceCoolingControlFailure
 import com.aqua.aqualight.application.devices.cooling.control.DeviceCoolingControlMode
 import com.aqua.aqualight.application.devices.cooling.control.DeviceCoolingControlOperations
 import com.aqua.aqualight.application.devices.cooling.control.DeviceCoolingControlResult
@@ -29,6 +30,7 @@ import com.aqua.aqualight.application.devices.dosing.DeviceDosingReservoirSnapsh
 import com.aqua.aqualight.application.devices.dosing.DeviceDosingRuntimeReason
 import com.aqua.aqualight.application.devices.dosing.DeviceDosingSchedulingPolicy
 import com.aqua.aqualight.data.devices.cooling.DisconnectedDeviceCoolingControlOperations
+import com.aqua.aqualight.data.devices.cooling.control.RefreshingDeviceCoolingControlOperations
 import com.aqua.aqualight.data.devices.dosing.UnavailableDeviceDosingChannelOperations
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -169,6 +171,30 @@ class DefaultDeviceControlSurfacePreparationOperationsTest {
         )
     }
 
+    @Test
+    fun `online Cooling menu actively fills the same authoritative boundary as Dosing`() = runTest {
+        val cooling = FakeCoolingControlOperations(
+            observedResult = unavailableCoolingControl(),
+            refreshedResult = availableCoolingControl()
+        )
+        val operations = DefaultDeviceControlSurfacePreparationOperations(
+            rootOperations = FakeRootOperations(coolingRootSnapshot()),
+            dosingChannelOperations = FakeChannelOperations(),
+            coolingControlOperations = RefreshingDeviceCoolingControlOperations(cooling)
+        )
+
+        val result = operations.prepare(
+            DeviceControlSurfacePreparationRequest(
+                deviceUid = COOLING_DEVICE_UID,
+                family = OwnerDeviceFamily.COOLING
+            )
+        )
+
+        assertTrue(result is DeviceControlSurfacePreparationResult.Ready)
+        assertEquals(1, cooling.refreshCalls)
+        assertEquals(0, cooling.observeCalls)
+    }
+
     private fun preparation(
         channelCount: Int,
         channels: FakeChannelOperations
@@ -229,28 +255,33 @@ class DefaultDeviceControlSurfacePreparationOperationsTest {
     }
 
     private class FakeCoolingControlOperations(
-        private val result: DeviceCoolingControlResult
+        private val observedResult: DeviceCoolingControlResult,
+        private val refreshedResult: DeviceCoolingControlResult = observedResult
     ) : DeviceCoolingControlOperations {
         var observeCalls: Int = 0
+        var refreshCalls: Int = 0
 
         override fun observeControl(deviceUid: String): Flow<DeviceCoolingControlResult> {
             observeCalls += 1
-            return MutableStateFlow(result)
+            return MutableStateFlow(observedResult)
         }
 
-        override fun currentControl(deviceUid: String): DeviceCoolingControlResult = result
+        override fun currentControl(deviceUid: String): DeviceCoolingControlResult = observedResult
 
-        override suspend fun refreshControl(deviceUid: String): DeviceCoolingControlResult = result
+        override suspend fun refreshControl(deviceUid: String): DeviceCoolingControlResult {
+            refreshCalls += 1
+            return refreshedResult
+        }
 
         override suspend fun setMode(
             deviceUid: String,
             mode: DeviceCoolingControlMode
-        ): DeviceCoolingControlResult = result
+        ): DeviceCoolingControlResult = observedResult
 
         override suspend fun setManualFanPercent(
             deviceUid: String,
             percent: Int
-        ): DeviceCoolingControlResult = result
+        ): DeviceCoolingControlResult = observedResult
     }
 
     private companion object {
@@ -351,3 +382,6 @@ private fun availableCoolingControl(): DeviceCoolingControlResult =
             )
         )
     )
+
+private fun unavailableCoolingControl(): DeviceCoolingControlResult =
+    DeviceCoolingControlResult.Failed(DeviceCoolingControlFailure.Unavailable)

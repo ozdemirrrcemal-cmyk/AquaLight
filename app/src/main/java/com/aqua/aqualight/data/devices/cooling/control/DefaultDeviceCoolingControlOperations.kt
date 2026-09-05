@@ -25,8 +25,8 @@ import kotlinx.coroutines.flow.flowOf
 /**
  * Cool Pro 1F application adapter over the single central Cooling runtime owner.
  *
- * Runtime bootstrap and typed events own freshness. This adapter never issues a status read because
- * a screen appeared; it only observes current authority and executes explicit user mutations.
+ * Runtime bootstrap and typed events own background freshness. Explicit application refresh
+ * boundaries may request a current status document; presentation only observes central authority.
  */
 internal class DefaultDeviceCoolingControlOperations(
     private val devicesRepository: DevicesRepository
@@ -61,28 +61,32 @@ internal class DefaultDeviceCoolingControlOperations(
         }
     }
 
-    /** Re-reads central authority without issuing a duplicate firmware status command. */
     override suspend fun refreshControl(deviceUid: String): DeviceCoolingControlResult =
-        currentControl(deviceUid)
+        when (val resolved = resolveRuntime(deviceUid)) {
+            is RuntimeResolution.Failed -> DeviceCoolingControlResult.Failed(resolved.failure)
+            is RuntimeResolution.Ready -> resolved.runtime
+                .requestStatus(resolved.deviceUid)
+                .toControlResult(resolved.runtime, resolved.deviceUid)
+        }
 
     override suspend fun setMode(
         deviceUid: String,
         mode: DeviceCoolingControlMode
-    ): DeviceCoolingControlResult = when (val resolved = resolveWritableRuntime(deviceUid)) {
-        is WritableRuntime.Failed -> DeviceCoolingControlResult.Failed(resolved.failure)
-        is WritableRuntime.Ready -> setMode(resolved, mode)
+    ): DeviceCoolingControlResult = when (val resolved = resolveRuntime(deviceUid)) {
+        is RuntimeResolution.Failed -> DeviceCoolingControlResult.Failed(resolved.failure)
+        is RuntimeResolution.Ready -> setMode(resolved, mode)
     }
 
     override suspend fun setManualFanPercent(
         deviceUid: String,
         percent: Int
-    ): DeviceCoolingControlResult = when (val resolved = resolveWritableRuntime(deviceUid)) {
-        is WritableRuntime.Failed -> DeviceCoolingControlResult.Failed(resolved.failure)
-        is WritableRuntime.Ready -> setManualFanPercent(resolved, percent)
+    ): DeviceCoolingControlResult = when (val resolved = resolveRuntime(deviceUid)) {
+        is RuntimeResolution.Failed -> DeviceCoolingControlResult.Failed(resolved.failure)
+        is RuntimeResolution.Ready -> setManualFanPercent(resolved, percent)
     }
 
     private suspend fun setMode(
-        resolved: WritableRuntime.Ready,
+        resolved: RuntimeResolution.Ready,
         mode: DeviceCoolingControlMode
     ): DeviceCoolingControlResult {
         val config = resolved.runtime.currentAuthoritativeState(resolved.deviceUid)?.config
@@ -98,7 +102,7 @@ internal class DefaultDeviceCoolingControlOperations(
                 onSuccess = { payload ->
                     resolved.runtime
                         .applyConfig(resolved.deviceUid, payload)
-                        .toMutationResult(resolved.runtime, resolved.deviceUid)
+                        .toControlResult(resolved.runtime, resolved.deviceUid)
                 },
                 onFailure = {
                     DeviceCoolingControlResult.Failed(DeviceCoolingControlFailure.InvalidData)
@@ -108,7 +112,7 @@ internal class DefaultDeviceCoolingControlOperations(
     }
 
     private suspend fun setManualFanPercent(
-        resolved: WritableRuntime.Ready,
+        resolved: RuntimeResolution.Ready,
         percent: Int
     ): DeviceCoolingControlResult {
         val config = resolved.runtime.currentAuthoritativeState(resolved.deviceUid)?.config
@@ -124,7 +128,7 @@ internal class DefaultDeviceCoolingControlOperations(
                 onSuccess = { payload ->
                     resolved.runtime
                         .applyManual(resolved.deviceUid, payload)
-                        .toMutationResult(resolved.runtime, resolved.deviceUid)
+                        .toControlResult(resolved.runtime, resolved.deviceUid)
                 },
                 onFailure = {
                     DeviceCoolingControlResult.Failed(DeviceCoolingControlFailure.InvalidData)
@@ -133,29 +137,29 @@ internal class DefaultDeviceCoolingControlOperations(
         }
     }
 
-    private fun resolveWritableRuntime(deviceUid: String): WritableRuntime {
+    private fun resolveRuntime(deviceUid: String): RuntimeResolution {
         val uid = deviceUid.toDeviceUidOrNull()
         val device = uid?.let { currentUid -> devicesRepository.currentDevice(currentUid) }
         val runtime = uid?.let { devicesRepository.runtimeModules()?.cooling }
         return when {
             uid == null || device == null ->
-                WritableRuntime.Failed(DeviceCoolingControlFailure.Unavailable)
+                RuntimeResolution.Failed(DeviceCoolingControlFailure.Unavailable)
             !device.isSupportedCoolingV1() ->
-                WritableRuntime.Failed(DeviceCoolingControlFailure.Unsupported)
+                RuntimeResolution.Failed(DeviceCoolingControlFailure.Unsupported)
             runtime == null ->
-                WritableRuntime.Failed(DeviceCoolingControlFailure.Unavailable)
-            else -> WritableRuntime.Ready(uid, runtime)
+                RuntimeResolution.Failed(DeviceCoolingControlFailure.Unavailable)
+            else -> RuntimeResolution.Ready(uid, runtime)
         }
     }
 }
 
-private sealed interface WritableRuntime {
+private sealed interface RuntimeResolution {
     data class Ready(
         val deviceUid: DeviceUid,
         val runtime: DeviceCoolingRuntimeRepository
-    ) : WritableRuntime
+    ) : RuntimeResolution
 
-    data class Failed(val failure: DeviceCoolingControlFailure) : WritableRuntime
+    data class Failed(val failure: DeviceCoolingControlFailure) : RuntimeResolution
 }
 
 private fun projectRead(
@@ -188,7 +192,7 @@ private fun String.toDeviceUidOrNull(): DeviceUid? = trim()
     .takeIf(String::isNotBlank)
     ?.let(::DeviceUid)
 
-private suspend fun DeviceRuntimeCommandOutcome<*>.toMutationResult(
+private suspend fun DeviceRuntimeCommandOutcome<*>.toControlResult(
     runtime: DeviceCoolingRuntimeRepository,
     deviceUid: DeviceUid
 ): DeviceCoolingControlResult = when (this) {

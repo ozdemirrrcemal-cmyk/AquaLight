@@ -25,6 +25,7 @@ import com.aqua.aqualight.data.care.CareTaskDataStoreManager
 import com.aqua.aqualight.data.devices.DefaultDeviceFirmwareUpdateOperations
 import com.aqua.aqualight.data.devices.DefaultDeviceRootOperations
 import com.aqua.aqualight.data.devices.cooling.control.DefaultDeviceCoolingControlOperations
+import com.aqua.aqualight.data.devices.cooling.control.RefreshingDeviceCoolingControlOperations
 import com.aqua.aqualight.data.devices.dosing.DefaultDeviceDosingChannelNavigationOperations
 import com.aqua.aqualight.data.devices.dosing.SharedPreferencesDeviceDosingCalibrationDraftStore
 import com.aqua.aqualight.data.devices.dosing.SharedPreferencesDeviceDosingLowLevelAlertLedger
@@ -252,8 +253,8 @@ internal class ActiveOwnerDependencyGraphResolver(
         DefaultDeviceControlSurfacePreparationOperations(
             rootOperations = DefaultDeviceRootOperations(dependencies.devicesRepository),
             dosingChannelOperations = dosingOperations.channelOperations,
-            coolingControlOperations = DefaultDeviceCoolingControlOperations(
-                dependencies.devicesRepository
+            coolingControlOperations = RefreshingDeviceCoolingControlOperations(
+                DefaultDeviceCoolingControlOperations(dependencies.devicesRepository)
             )
         )
 
