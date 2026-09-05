@@ -13,6 +13,7 @@ import com.aqua.aqualight.data.devices.model.DeviceSnapshot
 import com.aqua.aqualight.data.devices.model.DeviceUid
 import com.aqua.aqualight.data.devices.repository.DevicesRepository
 import com.aqua.aqualight.data.devices.runtime.core.DeviceRuntimeCommandOutcome
+import com.aqua.aqualight.data.devices.runtime.modules.cooling.DeviceCoolingRuntimeRepository
 import com.aqua.aqualight.data.devices.runtime.modules.cooling.currentAuthoritativeState
 import com.aqua.aqualight.data.devices.runtime.modules.cooling.isAuthoritative
 import com.aqua.aqualight.data.devices.runtime.modules.cooling.v1.DeviceCoolingV1ChartSource
@@ -35,76 +36,130 @@ internal class DefaultDeviceCoolingTemperatureHistoryOperations(
     override suspend fun loadTemperatureHistory(
         deviceUid: String,
         range: DeviceCoolingTemperatureHistoryRange
-    ): DeviceCoolingTemperatureHistoryLoadResult {
+    ): DeviceCoolingTemperatureHistoryLoadResult = when (
+        val resolution = resolveHistoryRequest(deviceUid, range)
+    ) {
+        is HistoryRequestResolution.Rejected -> resolution.result
+        is HistoryRequestResolution.Ready -> loadResolvedHistory(resolution, range)
+    }
+
+    private fun resolveHistoryRequest(
+        deviceUid: String,
+        range: DeviceCoolingTemperatureHistoryRange
+    ): HistoryRequestResolution {
         val uid = deviceUid.toCoolingHistoryUidOrNull()
         val device = uid?.let(devicesRepository::currentDevice)
         val runtime = uid?.let { devicesRepository.runtimeModules()?.cooling }
         return when {
-            uid == null || device == null -> DeviceCoolingTemperatureHistoryLoadResult.Unavailable
+            uid == null || device == null -> HistoryRequestResolution.Rejected(
+                DeviceCoolingTemperatureHistoryLoadResult.Unavailable
+            )
             !device.isSupportedCoolingHistoryV1() ->
-                DeviceCoolingTemperatureHistoryLoadResult.Unsupported
-            runtime == null -> DeviceCoolingTemperatureHistoryLoadResult.Unavailable
-            else -> {
-                val requestedRange = range.toV1()
-                val status = runtime.currentAuthoritativeState(uid)?.status
-                    ?: return DeviceCoolingTemperatureHistoryLoadResult.Unavailable
-                val expectedChartSource = status.history.chartSources[requestedRange]
-                    ?: return DeviceCoolingTemperatureHistoryLoadResult.Unsupported
-                when (
-                    val outcome = runtime.requestHistory(
-                        uid,
-                        DeviceCoolingV1HistoryGetPayload(requestedRange)
-                    )
-                ) {
-                    is DeviceRuntimeCommandOutcome.Success -> {
-                        if (!runtime.isAuthoritative(uid, outcome.generation)) {
-                            DeviceCoolingTemperatureHistoryLoadResult.Unavailable
-                        } else {
-                            runCatching {
-                                val currentAuthority = runtime.currentAuthoritativeState(uid)
-                                require(
-                                    currentAuthority?.connectionGeneration == outcome.generation
-                                )
-                                require(
-                                    currentAuthority.status
-                                        ?.history
-                                        ?.chartSources
-                                        ?.get(requestedRange) == expectedChartSource
-                                )
-                                outcome.value.toApplicationSnapshot(
-                                    expectedRange = range,
-                                    expectedChartSource = expectedChartSource
-                                )
-                            }.fold(
-                                onSuccess = DeviceCoolingTemperatureHistoryLoadResult::Loaded,
-                                onFailure = {
-                                    DeviceCoolingTemperatureHistoryLoadResult.Rejected(
-                                        DeviceCoolingCommandFailure.PROTOCOL_ERROR
-                                    )
-                                }
-                            )
-                        }
-                    }
-                    is DeviceRuntimeCommandOutcome.UnsupportedByDevice ->
-                        DeviceCoolingTemperatureHistoryLoadResult.Unsupported
-                    is DeviceRuntimeCommandOutcome.NotConnected,
-                    is DeviceRuntimeCommandOutcome.NotAuthenticated,
-                    is DeviceRuntimeCommandOutcome.SendFailed,
-                    is DeviceRuntimeCommandOutcome.Timeout,
-                    is DeviceRuntimeCommandOutcome.Cancelled ->
-                        DeviceCoolingTemperatureHistoryLoadResult.Unavailable
-                    is DeviceRuntimeCommandOutcome.FirmwareError ->
-                        DeviceCoolingTemperatureHistoryLoadResult.Rejected(
-                            DeviceCoolingV1FailureMapper.map(outcome)
-                        )
-                    is DeviceRuntimeCommandOutcome.ProtocolError ->
-                        DeviceCoolingTemperatureHistoryLoadResult.Rejected(
-                            DeviceCoolingCommandFailure.PROTOCOL_ERROR
-                        )
-                }
-            }
+                HistoryRequestResolution.Rejected(
+                    DeviceCoolingTemperatureHistoryLoadResult.Unsupported
+                )
+            runtime == null -> HistoryRequestResolution.Rejected(
+                DeviceCoolingTemperatureHistoryLoadResult.Unavailable
+            )
+            else -> resolveAuthoritativeHistoryPolicy(uid, runtime, range)
         }
     }
+
+    private fun resolveAuthoritativeHistoryPolicy(
+        uid: DeviceUid,
+        runtime: DeviceCoolingRuntimeRepository,
+        range: DeviceCoolingTemperatureHistoryRange
+    ): HistoryRequestResolution {
+        val requestedRange = range.toV1()
+        val status = runtime.currentAuthoritativeState(uid)?.status
+        val chartSource = status?.history?.chartSources?.get(requestedRange)
+        return when {
+            status == null -> HistoryRequestResolution.Rejected(
+                DeviceCoolingTemperatureHistoryLoadResult.Unavailable
+            )
+            chartSource == null -> HistoryRequestResolution.Rejected(
+                DeviceCoolingTemperatureHistoryLoadResult.Unsupported
+            )
+            else -> HistoryRequestResolution.Ready(
+                uid = uid,
+                runtime = runtime,
+                requestedRange = requestedRange,
+                expectedChartSource = chartSource
+            )
+        }
+    }
+
+    private suspend fun loadResolvedHistory(
+        request: HistoryRequestResolution.Ready,
+        range: DeviceCoolingTemperatureHistoryRange
+    ): DeviceCoolingTemperatureHistoryLoadResult = when (
+        val outcome = request.runtime.requestHistory(
+            request.uid,
+            DeviceCoolingV1HistoryGetPayload(request.requestedRange)
+        )
+    ) {
+        is DeviceRuntimeCommandOutcome.Success -> request.mapSuccess(outcome, range)
+        is DeviceRuntimeCommandOutcome.UnsupportedByDevice ->
+            DeviceCoolingTemperatureHistoryLoadResult.Unsupported
+        is DeviceRuntimeCommandOutcome.NotConnected,
+        is DeviceRuntimeCommandOutcome.NotAuthenticated,
+        is DeviceRuntimeCommandOutcome.SendFailed,
+        is DeviceRuntimeCommandOutcome.Timeout,
+        is DeviceRuntimeCommandOutcome.Cancelled ->
+            DeviceCoolingTemperatureHistoryLoadResult.Unavailable
+        is DeviceRuntimeCommandOutcome.FirmwareError ->
+            DeviceCoolingTemperatureHistoryLoadResult.Rejected(
+                DeviceCoolingV1FailureMapper.map(outcome)
+            )
+        is DeviceRuntimeCommandOutcome.ProtocolError ->
+            DeviceCoolingTemperatureHistoryLoadResult.Rejected(
+                DeviceCoolingCommandFailure.PROTOCOL_ERROR
+            )
+    }
+
+    private fun HistoryRequestResolution.Ready.mapSuccess(
+        outcome: DeviceRuntimeCommandOutcome.Success<DeviceCoolingV1History>,
+        range: DeviceCoolingTemperatureHistoryRange
+    ): DeviceCoolingTemperatureHistoryLoadResult = if (
+        !runtime.isAuthoritative(uid, outcome.generation)
+    ) {
+        DeviceCoolingTemperatureHistoryLoadResult.Unavailable
+    } else {
+        runCatching {
+            val currentAuthority = runtime.currentAuthoritativeState(uid)
+            require(currentAuthority?.connectionGeneration == outcome.generation)
+            require(
+                currentAuthority.status
+                    ?.history
+                    ?.chartSources
+                    ?.get(requestedRange) == expectedChartSource
+            )
+            outcome.value.toApplicationSnapshot(
+                expectedRange = range,
+                expectedChartSource = expectedChartSource
+            )
+        }.fold(
+            onSuccess = DeviceCoolingTemperatureHistoryLoadResult::Loaded,
+            onFailure = {
+                DeviceCoolingTemperatureHistoryLoadResult.Rejected(
+                    DeviceCoolingCommandFailure.PROTOCOL_ERROR
+                )
+            }
+        )
+    }
+}
+
+private sealed interface HistoryRequestResolution {
+    data class Ready(
+        val uid: DeviceUid,
+        val runtime: DeviceCoolingRuntimeRepository,
+        val requestedRange: DeviceCoolingV1HistoryRange,
+        val expectedChartSource: DeviceCoolingV1ChartSource
+    ) : HistoryRequestResolution
+
+    data class Rejected(
+        val result: DeviceCoolingTemperatureHistoryLoadResult
+    ) : HistoryRequestResolution
 }
 
 private fun DeviceCoolingV1History.toApplicationSnapshot(
