@@ -9,6 +9,5 @@
     <string name="device_cooling_program_load_failed_title">Fan Program could not be loaded</string>
     <string name="device_cooling_program_load_failed_message">Try again when the device is available.</string>
     <string name="device_cooling_program_retry">Retry</string>
-    <string name="device_cooling_program_save_failed">The fan program could not be saved. Try again.</string>
     <string name="device_cooling_program_schedule_invalid">The selected time range is invalid or overlaps another program.</string>
 </resources>
