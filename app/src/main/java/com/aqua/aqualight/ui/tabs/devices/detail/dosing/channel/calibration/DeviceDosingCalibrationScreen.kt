@@ -22,7 +22,6 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
-import com.aqua.aqualight.ui.common.flow.AquaGuidedFlowColors
 import com.aqua.aqualight.ui.common.flow.AquaGuidedFlowGeometry
 import com.aqua.aqualight.ui.common.flow.aquaGuidedFlowColors
 
@@ -55,7 +54,6 @@ internal fun DeviceDosingCalibrationScreen(
         PinnedCalibrationPump(state)
         CalibrationScrollableSteps(
             state = state,
-            colors = colors,
             listState = listState,
             formBringIntoViewRequester = formBringIntoViewRequester,
             onAction = onAction,
@@ -81,12 +79,12 @@ private fun PinnedCalibrationPump(state: DeviceDosingCalibrationUiState) {
 @Composable
 private fun CalibrationScrollableSteps(
     state: DeviceDosingCalibrationUiState,
-    colors: AquaGuidedFlowColors,
     listState: LazyListState,
     formBringIntoViewRequester: BringIntoViewRequester,
     onAction: (DeviceDosingCalibrationAction) -> Unit,
     modifier: Modifier
 ) {
+    val colors = aquaGuidedFlowColors()
     LazyColumn(
         state = listState,
         modifier = modifier
