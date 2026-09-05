@@ -114,28 +114,36 @@ class DeviceCoolingManualSettingsViewModel(
         while (continueWriting && boundDeviceUid == deviceUid) {
             val targetPercent = pendingTargetPercent
             pendingTargetPercent = null
-            when {
-                targetPercent == null -> continueWriting = false
-                targetPercent == _uiState.value.authoritativeTargetPercent -> {
-                    _uiState.update { state -> state.afterRedundantCommit(targetPercent) }
-                }
-                else -> {
-                    _uiState.update { state ->
-                        state.copy(mutationState = CoolingMutationState.Saving)
-                    }
-                    val result = operations.setManualFanPercent(deviceUid, targetPercent)
-                    if (boundDeviceUid == deviceUid) {
-                        _uiState.update { state -> state.afterMutation(result, targetPercent) }
-                        if (result is DeviceCoolingControlResult.Failed) {
-                            pendingTargetPercent = null
-                            continueWriting = false
-                        }
-                    } else {
-                        continueWriting = false
-                    }
-                }
+            continueWriting = if (targetPercent == null) {
+                false
+            } else {
+                writePendingTarget(deviceUid, targetPercent)
             }
         }
+    }
+
+    private suspend fun writePendingTarget(deviceUid: String, targetPercent: Int): Boolean =
+        if (targetPercent == _uiState.value.authoritativeTargetPercent) {
+            _uiState.update { state -> state.afterRedundantCommit(targetPercent) }
+            true
+        } else {
+            executeManualWrite(deviceUid, targetPercent)
+        }
+
+    private suspend fun executeManualWrite(deviceUid: String, targetPercent: Int): Boolean {
+        _uiState.update { state ->
+            state.copy(mutationState = CoolingMutationState.Saving)
+        }
+        val result = operations.setManualFanPercent(deviceUid, targetPercent)
+        val remainsBound = boundDeviceUid == deviceUid
+        if (remainsBound) {
+            _uiState.update { state -> state.afterMutation(result, targetPercent) }
+        }
+        val canContinue = remainsBound && result is DeviceCoolingControlResult.Available
+        if (!canContinue) {
+            pendingTargetPercent = null
+        }
+        return canContinue
     }
 
     private fun clearBinding() {
