@@ -219,10 +219,10 @@ object AquaCoolingDashboardAlpha {
     const val liveHeroDeviceUnavailable = 0.66f
     const val liveHeroDeviceOffline = 0.42f
     const val liveHeroAtmosphere = 0.28f
-    const val liveHeroWater = 0.30f
-    const val liveHeroWaterDepth = 0.18f
-    const val liveHeroWaterSurface = 0.24f
-    const val liveHeroWaterReflection = 0.10f
+    const val liveHeroWater = 0.38f
+    const val liveHeroWaterDepth = 0.24f
+    const val liveHeroWaterSurface = 0.36f
+    const val liveHeroWaterReflection = 0.13f
     const val liveHeroGlassPane = 0.04f
     const val liveHeroGlassEdge = 0.24f
     const val liveHeroAirflow = 0.10f
