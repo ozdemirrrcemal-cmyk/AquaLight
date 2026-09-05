@@ -51,7 +51,7 @@ private fun CoolingDataState<CoolingControlPresentation, DeviceCoolingControlFai
     DeviceCoolingControlFailure.Unsupported -> CoolingDataState.Unsupported
     DeviceCoolingControlFailure.Unavailable,
     DeviceCoolingControlFailure.NotConnected,
-    DeviceCoolingControlFailure.Rejected,
+    is DeviceCoolingControlFailure.Rejected,
     DeviceCoolingControlFailure.InvalidData -> preserveControlOrResolveFailure(failure)
 }
 
@@ -81,6 +81,6 @@ private fun DeviceCoolingControlFailure.toControlTerminalState(): CoolingDataSta
     DeviceCoolingControlFailure.Unsupported -> CoolingDataState.Unsupported
     DeviceCoolingControlFailure.Unavailable,
     DeviceCoolingControlFailure.NotConnected -> CoolingDataState.Unavailable
-    DeviceCoolingControlFailure.Rejected,
+    is DeviceCoolingControlFailure.Rejected,
     DeviceCoolingControlFailure.InvalidData -> CoolingDataState.OperationError(this)
 }
