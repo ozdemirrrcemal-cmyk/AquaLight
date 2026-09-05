@@ -30,7 +30,8 @@ import com.aqua.aqualight.ui.tabs.devices.detail.dosing.presentation.pump.exactD
 internal fun CalibrationPump(
     pumpCount: Int,
     channelNumber: Int,
-    active: Boolean
+    active: Boolean,
+    modifier: Modifier = Modifier
 ) {
     val exactCount = exactDosingPumpCountOrNull(pumpCount) ?: return
     val pumpHeads = remember(exactCount, channelNumber, active) {
@@ -48,7 +49,8 @@ internal fun CalibrationPump(
     DosingPumpSection(
         pumpCount = exactCount,
         pumpHeads = pumpHeads,
-        onPumpClick = null
+        onPumpClick = null,
+        modifier = modifier
     )
 }
 

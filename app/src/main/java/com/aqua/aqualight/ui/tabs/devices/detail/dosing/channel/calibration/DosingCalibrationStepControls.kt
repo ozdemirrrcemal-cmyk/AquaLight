@@ -17,7 +17,8 @@ import com.aqua.aqualight.ui.common.flow.AquaGuidedFlowGeometry
 internal fun CalibrationStepControls(
     state: DeviceDosingCalibrationUiState,
     colors: AquaGuidedFlowColors,
-    onAction: (DeviceDosingCalibrationAction) -> Unit
+    onAction: (DeviceDosingCalibrationAction) -> Unit,
+    modifier: Modifier = Modifier
 ) {
     val focusManager = LocalFocusManager.current
     val submitName = {
@@ -34,6 +35,7 @@ internal fun CalibrationStepControls(
     }
 
     androidx.compose.foundation.layout.Column(
+        modifier = modifier,
         verticalArrangement = Arrangement.spacedBy(CALIBRATION_CONTROL_GAP)
     ) {
         when (state.step) {

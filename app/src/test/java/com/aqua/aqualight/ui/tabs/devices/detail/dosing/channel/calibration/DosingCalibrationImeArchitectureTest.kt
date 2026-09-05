@@ -21,7 +21,11 @@ class DosingCalibrationImeArchitectureTest {
         assertTrue(manifest.contains("android:windowSoftInputMode=\"adjustResize\""))
         assertTrue(screen.contains(".imePadding()"))
         assertTrue(screen.contains("WindowInsets.isImeVisible"))
-        assertTrue(screen.contains("animateScrollToItem(CALIBRATION_FORM_ITEM_INDEX)"))
+        assertTrue(screen.contains("formBringIntoViewRequester.bringIntoView()"))
+        assertTrue(screen.contains("Modifier.bringIntoViewRequester"))
+        assertTrue(screen.contains(".weight(1f)"))
+        assertTrue(screen.indexOf("CalibrationPump(") < screen.indexOf("LazyColumn("))
+        assertFalse(screen.contains("animateScrollToItem(CALIBRATION_FORM_ITEM_INDEX)"))
     }
 
     @Test
