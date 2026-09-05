@@ -13,12 +13,16 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.disabled
 import androidx.compose.ui.semantics.semantics
 import com.aqua.aqualight.ui.common.cooling.AquaCoolingDashboardGeometry
 import com.aqua.aqualight.ui.common.cooling.AquaCoolingInteractionStyle
 import com.aqua.aqualight.ui.common.cooling.aquaCoolingDashboardColors
 import com.aqua.aqualight.ui.common.cooling.aquaCoolingDashboardTypography
+import com.aqua.aqualight.ui.tabs.devices.detail.cooling.presentation.common.CoolingMutationState
+import com.aqua.aqualight.ui.tabs.devices.detail.cooling.presentation.common.CoolingStateMessageCard
+import com.aqua.aqualight.ui.tabs.devices.detail.cooling.presentation.common.toCommercialCoolingError
 import com.aqua.aqualight.ui.tabs.devices.detail.cooling.presentation.root.DeviceCoolingRootUiState
 
 @Composable
@@ -73,6 +77,16 @@ private fun CoolingScrollableDashboardContent(
         contentPadding = PaddingValues(bottom = AquaCoolingDashboardGeometry.screenBottomPadding),
         verticalArrangement = Arrangement.spacedBy(AquaCoolingDashboardGeometry.cardGap)
     ) {
+        val mutation = state.controlMutationState
+        if (mutation is CoolingMutationState.OperationError) {
+            item(key = "control-error") {
+                val copy = mutation.failure.toCommercialCoolingError()
+                CoolingStateMessageCard(
+                    title = stringResource(copy.titleRes),
+                    message = stringResource(copy.messageRes)
+                )
+            }
+        }
         item(key = "temperature") {
             CoolingTemperatureCard(
                 state = state,
