@@ -80,11 +80,10 @@ class CoolingStateMachineContractTest(unittest.TestCase):
             self.assertIn(token, history)
             self.assertIn(token, automatic)
 
-    def test_cooling_mutations_and_cold_root_use_central_loading(self) -> None:
+    def test_blocking_cooling_mutations_and_cold_root_use_central_loading(self) -> None:
         fragments = (
             "root/DeviceCoolingRootFragment.kt",
             "automatic/DeviceCoolingAutomaticSettingsFragment.kt",
-            "manual/DeviceCoolingManualSettingsFragment.kt",
             "program/DeviceCoolingProgramSettingsFragment.kt",
         )
         for relative_path in fragments:
@@ -97,6 +96,20 @@ class CoolingStateMachineContractTest(unittest.TestCase):
         )
         self.assertIn("surfacePreparationPending", root_state)
         self.assertIn("showGlobalLoading", root_state)
+
+    def test_manual_slider_commits_on_gesture_end_without_global_loading(self) -> None:
+        fragment = (COOLING / "manual/DeviceCoolingManualSettingsFragment.kt").read_text(
+            encoding="utf-8"
+        )
+        slider = (
+            ROOT
+            / "app/src/main/java/com/aqua/aqualight/ui/common/cooling/"
+            "AquaCoolingFanPercentSlider.kt"
+        ).read_text(encoding="utf-8")
+
+        self.assertNotIn("setFragmentGlobalLoading", fragment)
+        self.assertIn("onTargetPercentChangeFinished", fragment)
+        self.assertIn("onDragEnd = interaction::finishChange", slider)
 
 
 if __name__ == "__main__":

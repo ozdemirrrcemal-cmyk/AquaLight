@@ -11,10 +11,12 @@ import com.aqua.aqualight.application.devices.cooling.control.DeviceCoolingManua
 import com.aqua.aqualight.ui.tabs.devices.detail.cooling.presentation.common.CoolingMutationState
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.test.UnconfinedTestDispatcher
 import kotlinx.coroutines.test.resetMain
+import kotlinx.coroutines.test.runCurrent
 import kotlinx.coroutines.test.runTest
 import kotlinx.coroutines.test.setMain
 import org.junit.After
@@ -55,6 +57,7 @@ class DeviceCoolingManualSettingsViewModelTest {
 
         viewModel.bind(DEVICE_UID)
         viewModel.updateTargetPercent(73)
+        viewModel.commitTargetPercent()
 
         assertNull(operations.lastRequestedPercent)
         assertEquals(40, viewModel.uiState.value.targetPercent)
@@ -62,7 +65,7 @@ class DeviceCoolingManualSettingsViewModelTest {
     }
 
     @Test
-    fun failedWriteNeverOptimisticallyChangesTheAuthoritativeTarget() = runTest(dispatcher) {
+    fun failedWriteKeepsTheDraftStableWithoutChangingAuthoritativeData() = runTest(dispatcher) {
         val operations = FakeControlOperations(
             initial = available(
                 mode = DeviceCoolingControlMode.MANUAL,
@@ -77,11 +80,69 @@ class DeviceCoolingManualSettingsViewModelTest {
         viewModel.bind(DEVICE_UID)
         viewModel.updateTargetPercent(65)
 
+        assertNull(operations.lastRequestedPercent)
+        assertEquals(65, viewModel.uiState.value.targetPercent)
+        assertEquals(40, viewModel.uiState.value.authoritativeTargetPercent)
+
+        viewModel.commitTargetPercent()
+
         assertEquals(65, operations.lastRequestedPercent)
-        assertEquals(40, viewModel.uiState.value.targetPercent)
+        assertEquals(65, viewModel.uiState.value.targetPercent)
+        assertEquals(40, viewModel.uiState.value.authoritativeTargetPercent)
         assertTrue(
             viewModel.uiState.value.mutationState is CoolingMutationState.OperationError
         )
+    }
+
+    @Test
+    fun rapidGesturesStayInteractiveAndConflateToTheLatestReleasedValue() = runTest(dispatcher) {
+        val operations = QueuedControlOperations(
+            initial = available(
+                mode = DeviceCoolingControlMode.MANUAL,
+                manualFanPercent = 40
+            )
+        )
+        val viewModel = DeviceCoolingManualSettingsViewModel(operations)
+
+        viewModel.bind(DEVICE_UID)
+        viewModel.updateTargetPercent(60)
+
+        assertTrue(operations.requestedPercents.isEmpty())
+        assertEquals(60, viewModel.uiState.value.targetPercent)
+
+        viewModel.commitTargetPercent()
+
+        assertEquals(listOf(60), operations.requestedPercents)
+        assertTrue(viewModel.uiState.value.canWrite)
+        assertTrue(viewModel.uiState.value.mutationState is CoolingMutationState.Saving)
+
+        viewModel.updateTargetPercent(80)
+        viewModel.commitTargetPercent()
+        operations.respond(
+            available(
+                mode = DeviceCoolingControlMode.MANUAL,
+                manualFanPercent = 60
+            )
+        )
+        runCurrent()
+
+        assertEquals(listOf(60, 80), operations.requestedPercents)
+        assertEquals(80, viewModel.uiState.value.targetPercent)
+        assertEquals(60, viewModel.uiState.value.authoritativeTargetPercent)
+
+        operations.respond(
+            available(
+                mode = DeviceCoolingControlMode.MANUAL,
+                manualFanPercent = 80
+            )
+        )
+        runCurrent()
+
+        assertEquals(80, viewModel.uiState.value.targetPercent)
+        assertEquals(80, viewModel.uiState.value.authoritativeTargetPercent)
+        assertNull(viewModel.uiState.value.draftTargetPercent)
+        assertTrue(viewModel.uiState.value.canWrite)
+        assertTrue(viewModel.uiState.value.mutationState is CoolingMutationState.Saved)
     }
 
     private class FakeControlOperations(
@@ -111,6 +172,39 @@ class DeviceCoolingManualSettingsViewModelTest {
         ): DeviceCoolingControlResult {
             lastRequestedPercent = percent
             return mutation
+        }
+    }
+
+    private class QueuedControlOperations(
+        private val initial: DeviceCoolingControlResult
+    ) : DeviceCoolingControlOperations {
+        private val responses = Channel<DeviceCoolingControlResult>(Channel.UNLIMITED)
+        val requestedPercents = mutableListOf<Int>()
+
+        override fun observeControl(deviceUid: String): Flow<DeviceCoolingControlResult> =
+            flowOf(initial)
+
+        override fun currentControl(deviceUid: String): DeviceCoolingControlResult = initial
+
+        override suspend fun refreshControl(
+            deviceUid: String
+        ): DeviceCoolingControlResult = initial
+
+        override suspend fun setMode(
+            deviceUid: String,
+            mode: DeviceCoolingControlMode
+        ): DeviceCoolingControlResult = initial
+
+        override suspend fun setManualFanPercent(
+            deviceUid: String,
+            percent: Int
+        ): DeviceCoolingControlResult {
+            requestedPercents += percent
+            return responses.receive()
+        }
+
+        suspend fun respond(result: DeviceCoolingControlResult) {
+            responses.send(result)
         }
     }
 

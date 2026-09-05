@@ -27,6 +27,7 @@ class DeviceCoolingManualSettingsViewModel(
     private var observeJob: Job? = null
     private var refreshJob: Job? = null
     private var mutationJob: Job? = null
+    private var pendingTargetPercent: Int? = null
 
     fun bind(deviceUidText: String) {
         val deviceUid = deviceUidText.trim()
@@ -84,14 +85,54 @@ class DeviceCoolingManualSettingsViewModel(
                 capabilities.minimumPercent,
                 capabilities.maximumPercent
             )
-            mutationJob?.cancel()
             _uiState.update { current ->
-                current.copy(mutationState = CoolingMutationState.Saving)
+                current.copy(
+                    draftTargetPercent = bounded,
+                    mutationState = current.mutationState.afterDraftChange()
+                )
             }
-            mutationJob = viewModelScope.launch {
-                val result = operations.setManualFanPercent(deviceUid, bounded)
-                if (boundDeviceUid != deviceUid) return@launch
-                _uiState.update { current -> current.afterMutation(result) }
+        }
+    }
+
+    fun commitTargetPercent() {
+        val state = _uiState.value
+        val deviceUid = boundDeviceUid.takeIf(String::isNotBlank)
+        val targetPercent = state.draftTargetPercent
+        if (deviceUid != null && targetPercent != null && state.canWrite) {
+            pendingTargetPercent = targetPercent
+            if (mutationJob?.isActive != true) {
+                mutationJob = viewModelScope.launch {
+                    writePendingTargets(deviceUid)
+                }
+            }
+        }
+    }
+
+    private suspend fun writePendingTargets(deviceUid: String) {
+        var continueWriting = true
+        while (continueWriting && boundDeviceUid == deviceUid) {
+            val targetPercent = pendingTargetPercent
+            pendingTargetPercent = null
+            when {
+                targetPercent == null -> continueWriting = false
+                targetPercent == _uiState.value.authoritativeTargetPercent -> {
+                    _uiState.update { state -> state.afterRedundantCommit(targetPercent) }
+                }
+                else -> {
+                    _uiState.update { state ->
+                        state.copy(mutationState = CoolingMutationState.Saving)
+                    }
+                    val result = operations.setManualFanPercent(deviceUid, targetPercent)
+                    if (boundDeviceUid == deviceUid) {
+                        _uiState.update { state -> state.afterMutation(result, targetPercent) }
+                        if (result is DeviceCoolingControlResult.Failed) {
+                            pendingTargetPercent = null
+                            continueWriting = false
+                        }
+                    } else {
+                        continueWriting = false
+                    }
+                }
             }
         }
     }
@@ -106,6 +147,7 @@ class DeviceCoolingManualSettingsViewModel(
         observeJob?.cancel()
         refreshJob?.cancel()
         mutationJob?.cancel()
+        pendingTargetPercent = null
         observeJob = null
         refreshJob = null
         mutationJob = null
@@ -113,13 +155,35 @@ class DeviceCoolingManualSettingsViewModel(
 }
 
 private fun DeviceCoolingManualSettingsUiState.afterMutation(
-    result: DeviceCoolingControlResult
+    result: DeviceCoolingControlResult,
+    committedTargetPercent: Int
 ): DeviceCoolingManualSettingsUiState = when (result) {
     is DeviceCoolingControlResult.Available -> copy(
         controlState = result.toRootControlState(controlState),
-        mutationState = CoolingMutationState.Saved
+        mutationState = CoolingMutationState.Saved,
+        draftTargetPercent = draftTargetPercent.takeUnless {
+            it == committedTargetPercent
+        }
     )
     is DeviceCoolingControlResult.Failed -> copy(
         mutationState = CoolingMutationState.OperationError(result.failure)
     )
 }
+
+private fun DeviceCoolingManualSettingsUiState.afterRedundantCommit(
+    committedTargetPercent: Int
+): DeviceCoolingManualSettingsUiState = copy(
+    mutationState = CoolingMutationState.Saved,
+    draftTargetPercent = draftTargetPercent.takeUnless {
+        it == committedTargetPercent
+    }
+)
+
+private fun CoolingMutationState<DeviceCoolingControlFailure>.afterDraftChange():
+    CoolingMutationState<DeviceCoolingControlFailure> = when (this) {
+        is CoolingMutationState.OperationError -> CoolingMutationState.Idle
+        CoolingMutationState.Idle,
+        CoolingMutationState.Saving,
+        CoolingMutationState.Saved,
+        CoolingMutationState.ValidationError -> this
+    }

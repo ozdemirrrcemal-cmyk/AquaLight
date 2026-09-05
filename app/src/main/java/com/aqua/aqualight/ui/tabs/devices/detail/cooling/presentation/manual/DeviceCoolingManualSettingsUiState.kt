@@ -16,13 +16,17 @@ data class DeviceCoolingManualSettingsUiState(
         DeviceCoolingControlFailure
         > = CoolingDataState.Initial,
     val mutationState: CoolingMutationState<DeviceCoolingControlFailure> =
-        CoolingMutationState.Idle
+        CoolingMutationState.Idle,
+    val draftTargetPercent: Int? = null
 ) {
     private val presentation: CoolingControlPresentation?
         get() = controlState.authoritativeValueOrNull
 
-    val targetPercent: Int?
+    val authoritativeTargetPercent: Int?
         get() = presentation?.manualFanPercent
+
+    val targetPercent: Int?
+        get() = draftTargetPercent ?: authoritativeTargetPercent
 
     val capabilities: DeviceCoolingManualFanCapabilities?
         get() = presentation?.manualFanCapabilities
@@ -30,13 +34,9 @@ data class DeviceCoolingManualSettingsUiState(
     val isManualMode: Boolean
         get() = presentation?.selectedMode == DeviceCoolingControlMode.MANUAL
 
-    val operationInProgress: Boolean
-        get() = mutationState == CoolingMutationState.Saving
-
     val canWrite: Boolean
         get() = controlState.isCurrentAuthoritative &&
             isManualMode &&
-            mutationState != CoolingMutationState.Saving &&
             targetPercent != null &&
             capabilities?.writable == true &&
             capabilities?.stepPercent != null

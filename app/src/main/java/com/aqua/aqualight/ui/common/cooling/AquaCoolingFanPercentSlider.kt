@@ -9,6 +9,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
@@ -32,6 +33,7 @@ internal fun AquaCoolingFanPercentSlider(
     state: AquaCoolingFanPercentSliderState,
     colors: AquaDeviceCardColors,
     onValueChanged: (Int) -> Unit,
+    onValueChangeFinished: () -> Unit = {},
     modifier: Modifier = Modifier
 ) {
     require(state.stepPercent > 0)
@@ -45,11 +47,14 @@ internal fun AquaCoolingFanPercentSlider(
     )
     val clamped = range.snap(state.percent)
     val stateText = stringResource(R.string.device_cooling_percent_value_format, clamped)
+    val currentOnValueChanged = rememberUpdatedState(onValueChanged)
+    val currentOnValueChangeFinished = rememberUpdatedState(onValueChangeFinished)
     val interaction = FanPercentSliderInteraction(
         enabled = state.enabled,
         widthPx = widthPx,
         range = range,
-        onValueChanged = onValueChanged
+        onValueChanged = { value -> currentOnValueChanged.value(value) },
+        onValueChangeFinished = { currentOnValueChangeFinished.value() }
     )
 
     Canvas(
@@ -70,11 +75,13 @@ private fun Modifier.fanSliderTapInput(
 ): Modifier = pointerInput(
     interaction.enabled,
     interaction.widthPx,
-    interaction.range,
-    interaction.onValueChanged
+    interaction.range
 ) {
     if (interaction.enabled) {
-        detectTapGestures { offset -> interaction.updateFromPosition(offset.x) }
+        detectTapGestures { offset ->
+            interaction.updateFromPosition(offset.x)
+            interaction.finishChange()
+        }
     }
 }
 
@@ -83,12 +90,13 @@ private fun Modifier.fanSliderDragInput(
 ): Modifier = pointerInput(
     interaction.enabled,
     interaction.widthPx,
-    interaction.range,
-    interaction.onValueChanged
+    interaction.range
 ) {
     if (interaction.enabled) {
         detectHorizontalDragGestures(
             onDragStart = { offset -> interaction.updateFromPosition(offset.x) },
+            onDragEnd = interaction::finishChange,
+            onDragCancel = interaction::finishChange,
             onHorizontalDrag = { change, _ -> interaction.updateFromPosition(change.position.x) }
         )
     }
@@ -108,6 +116,7 @@ private fun Modifier.fanSliderSemantics(
     if (interaction.enabled) {
         setProgress { requested ->
             interaction.onValueChanged(interaction.range.snap(requested.roundToInt()))
+            interaction.finishChange()
             true
         }
     } else {
@@ -161,10 +170,15 @@ private data class FanPercentSliderInteraction(
     val enabled: Boolean,
     val widthPx: Float,
     val range: FanPercentSliderRange,
-    val onValueChanged: (Int) -> Unit
+    val onValueChanged: (Int) -> Unit,
+    val onValueChangeFinished: () -> Unit
 ) {
     fun updateFromPosition(positionX: Float) {
         onValueChanged(range.percentAt(positionX = positionX, widthPx = widthPx))
+    }
+
+    fun finishChange() {
+        onValueChangeFinished()
     }
 }
 

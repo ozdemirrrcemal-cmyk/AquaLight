@@ -34,6 +34,7 @@ import com.aqua.aqualight.ui.tabs.devices.detail.cooling.presentation.common.toC
 internal fun DeviceCoolingManualSettingsScreen(
     state: DeviceCoolingManualSettingsUiState,
     onTargetPercentChanged: (Int) -> Unit,
+    onTargetPercentChangeFinished: () -> Unit,
     onRetry: () -> Unit,
     modifier: Modifier = Modifier
 ) {
@@ -97,7 +98,8 @@ internal fun DeviceCoolingManualSettingsScreen(
                                     maximumPercent = capabilities.maximumPercent
                                 ),
                                 colors = colors,
-                                onValueChanged = onTargetPercentChanged
+                                onValueChanged = onTargetPercentChanged,
+                                onValueChangeFinished = onTargetPercentChangeFinished
                             )
                             Row(modifier = Modifier.fillMaxWidth()) {
                                 BasicText(
