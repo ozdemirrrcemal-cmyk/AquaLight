@@ -1,5 +1,6 @@
 package com.aqua.aqualight.application.devices.cooling
 
+import com.aqua.aqualight.application.devices.cooling.control.DeviceCoolingOperatingState
 import kotlinx.coroutines.flow.Flow
 
 /**
@@ -23,14 +24,7 @@ interface DeviceCoolingAutomaticSettingsOperations {
         maximumSpeedTemperatureC: Double
     ): DeviceCoolingAutomaticCommandResult
 
-    /**
-     * Future-ready Automatic Cooling save contract.
-     *
-     * A null [silentModeEnabled] means the connected firmware does not expose Silent Mode yet.
-     * Existing implementations keep using the proven temperature-range persistence path. Once
-     * firmware support lands, the data adapter can override this method and persist the complete
-     * Automatic settings payload atomically without changing presentation code.
-     */
+    /** A null [silentModeEnabled] means firmware policy does not expose writable Silent Mode. */
     suspend fun saveAutomaticSettings(
         deviceUid: String,
         startTemperatureC: Double,
@@ -50,7 +44,6 @@ interface DeviceCoolingAutomaticSettingsOperations {
     }
 }
 
-const val DEVICE_COOLING_AUTOMATIC_SILENT_MODE_MAXIMUM_FAN_PERCENT = 50
 const val DEVICE_COOLING_FAN_PERCENT_MINIMUM = 0
 const val DEVICE_COOLING_FAN_PERCENT_MAXIMUM = 100
 
@@ -62,15 +55,16 @@ data class DeviceCoolingAutomaticSettingsSnapshot(
     val maximumSpeedTemperatureC: Double? = null,
     val tankTemperatureC: Double? = null,
     val fanPercentNow: Double? = null,
-    /** Null until the firmware exposes an authoritative Silent Mode value. */
+    val operatingState: DeviceCoolingOperatingState? = null,
+    /** Null when firmware policy does not support Silent Mode. */
     val silentModeEnabled: Boolean? = null,
-    val silentModeMaximumFanPercent: Int =
-        DEVICE_COOLING_AUTOMATIC_SILENT_MODE_MAXIMUM_FAN_PERCENT,
+    val silentModeMaximumFanPercent: Int? = null,
     val policy: DeviceCoolingAutomaticTemperaturePolicy? = null
 ) {
     init {
         require(
-            silentModeMaximumFanPercent in
+            silentModeMaximumFanPercent == null ||
+                silentModeMaximumFanPercent in
                 (DEVICE_COOLING_FAN_PERCENT_MINIMUM + 1)..DEVICE_COOLING_FAN_PERCENT_MAXIMUM
         )
     }

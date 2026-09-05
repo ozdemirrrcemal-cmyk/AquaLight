@@ -1,9 +1,9 @@
 package com.aqua.aqualight.ui.tabs.devices.detail.cooling.presentation.automatic
 
-import com.aqua.aqualight.application.devices.cooling.DEVICE_COOLING_AUTOMATIC_SILENT_MODE_MAXIMUM_FAN_PERCENT
 import com.aqua.aqualight.application.devices.cooling.DeviceCoolingAutomaticFailure
 import com.aqua.aqualight.application.devices.cooling.DeviceCoolingAutomaticSettingsSnapshot
 import com.aqua.aqualight.application.devices.cooling.DeviceCoolingAutomaticTemperaturePolicy
+import com.aqua.aqualight.application.devices.cooling.control.DeviceCoolingOperatingState
 import com.aqua.aqualight.ui.tabs.devices.detail.cooling.presentation.common.CoolingDataFreshness
 import com.aqua.aqualight.ui.tabs.devices.detail.cooling.presentation.common.CoolingDataState
 import com.aqua.aqualight.ui.tabs.devices.detail.cooling.presentation.common.CoolingMutationState
@@ -41,10 +41,10 @@ data class DeviceCoolingAutomaticSettingsUiState(
     val draftMaximumSpeedTemperatureC: Double? = null,
     val persistedSilentModeEnabled: Boolean? = null,
     val draftSilentModeEnabled: Boolean = false,
-    val silentModeMaximumFanPercent: Int =
-        DEVICE_COOLING_AUTOMATIC_SILENT_MODE_MAXIMUM_FAN_PERCENT,
+    val silentModeMaximumFanPercent: Int? = null,
     val tankTemperatureC: Double? = null,
     val fanPercentNow: Double? = null,
+    val operatingState: DeviceCoolingOperatingState? = null,
     val policy: DeviceCoolingAutomaticTemperaturePolicy? = null
 ) {
     val loadState: DeviceCoolingAutomaticLoadState
@@ -85,7 +85,7 @@ data class DeviceCoolingAutomaticSettingsUiState(
         get() = draftMaximumSpeedTemperatureC
 
     val silentModeFirmwareBacked: Boolean
-        get() = persistedSilentModeEnabled != null
+        get() = persistedSilentModeEnabled != null && silentModeMaximumFanPercent != null
 
     val silentModeEditable: Boolean
         get() = silentModeFirmwareBacked && editable && isCurrentAuthoritative

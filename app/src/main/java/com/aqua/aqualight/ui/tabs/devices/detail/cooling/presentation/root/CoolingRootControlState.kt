@@ -1,8 +1,8 @@
 package com.aqua.aqualight.ui.tabs.devices.detail.cooling.presentation.root
 
+import com.aqua.aqualight.application.devices.cooling.DeviceCoolingAlarmSeverity
 import com.aqua.aqualight.application.devices.cooling.DeviceCoolingFanHealth
 import com.aqua.aqualight.application.devices.cooling.DeviceCoolingSensorHealth
-import com.aqua.aqualight.application.devices.cooling.DeviceCoolingTelemetrySnapshot
 import com.aqua.aqualight.application.devices.cooling.control.DeviceCoolingControlFailure
 import com.aqua.aqualight.application.devices.cooling.control.DeviceCoolingControlResult
 import com.aqua.aqualight.application.devices.cooling.control.DeviceCoolingControlSnapshot
@@ -17,7 +17,12 @@ internal fun DeviceCoolingControlSnapshot.toRootControlPresentation(): CoolingCo
         manualFanCapabilities = capabilities.manualFan,
         manualFanPercent = manualFanPercent,
         actualFanPercent = actualFanPercent,
-        tankTemperatureC = tankTemperatureC
+        tankTemperatureC = tankTemperatureC,
+        operatingState = operatingState,
+        controlReason = controlReason,
+        targetFanPercent = targetFanPercent,
+        manualActive = manualActive,
+        programRuntime = programRuntime
     )
 
 internal fun DeviceCoolingControlResult.toRootControlState(
@@ -32,10 +37,9 @@ internal fun DeviceCoolingControlResult.toRootControlState(
 internal fun DeviceCoolingControlResult.toRootDashboardOverviewState(
     previous: CoolingDataState<CoolingDashboardOverviewPresentation, Nothing>
 ): CoolingDataState<CoolingDashboardOverviewPresentation, Nothing> = when (this) {
-    is DeviceCoolingControlResult.Available -> snapshot.telemetry
-        ?.toRootDashboardOverview()
-        ?.let { overview -> CoolingDataState.Content(overview) }
-        ?: previous
+    is DeviceCoolingControlResult.Available -> CoolingDataState.Content(
+        snapshot.toRootDashboardOverview()
+    )
     is DeviceCoolingControlResult.Failed -> previous
 }
 
@@ -57,26 +61,31 @@ internal fun CoolingDataState<CoolingControlPresentation, DeviceCoolingControlFa
         is CoolingDataState.OperationError -> CoolingDataState.Loading
     }
 
-private fun DeviceCoolingTelemetrySnapshot.toRootDashboardOverview():
+private fun DeviceCoolingControlSnapshot.toRootDashboardOverview():
     CoolingDashboardOverviewPresentation {
-    val active = activeAlarms
+    val live = telemetry
+    val active = live?.activeAlarms.orEmpty()
     return CoolingDashboardOverviewPresentation(
-        roomTemperatureC = roomTemperatureC,
-        humidityPercent = humidityPercent,
-        powerWatts = powerWatts,
-        estimatedKwhPerDay = estimatedKwhPerDay,
-        fanHealth = when (fanHealth) {
+        roomTemperatureC = live?.roomTemperatureC,
+        humidityPercent = live?.humidityPercent,
+        powerWatts = live?.powerWatts,
+        estimatedKwhPerDay = live?.estimatedKwhPerDay,
+        programSlotCount = programRuntime?.slotCount,
+        fanHealth = when (live?.fanHealth) {
             DeviceCoolingFanHealth.UNVERIFIED,
-            DeviceCoolingFanHealth.UNKNOWN -> CoolingHealthState.UNKNOWN
+            DeviceCoolingFanHealth.UNKNOWN,
+            null -> CoolingHealthState.UNKNOWN
             DeviceCoolingFanHealth.HARDWARE_FAULT -> CoolingHealthState.FAULT
         },
-        sensorHealth = when (sensorHealth) {
+        sensorHealth = when (live?.sensorHealth) {
             DeviceCoolingSensorHealth.OK -> CoolingHealthState.READY
             DeviceCoolingSensorHealth.WARNING -> CoolingHealthState.WARNING
             DeviceCoolingSensorHealth.CRITICAL -> CoolingHealthState.FAULT
-            DeviceCoolingSensorHealth.UNKNOWN -> CoolingHealthState.UNKNOWN
+            DeviceCoolingSensorHealth.UNKNOWN,
+            null -> CoolingHealthState.UNKNOWN
         },
-        activeAlarmCount = active.size,
+        activeAlarmCount = live?.activeAlarmCount,
+        highestAlarmSeverity = live?.highestAlarmSeverity ?: DeviceCoolingAlarmSeverity.UNKNOWN,
         activeAlarmCodes = active.map { alarm -> alarm.code }
     )
 }

@@ -1,5 +1,6 @@
 package com.aqua.aqualight.ui.tabs.devices.detail.cooling.presentation.dashboard
 
+import com.aqua.aqualight.application.devices.cooling.control.DeviceCoolingOperatingState
 import com.aqua.aqualight.ui.common.devicepresence.DeviceConnectionVisualState
 import com.aqua.aqualight.ui.tabs.devices.detail.cooling.presentation.root.CoolingHealthState
 import com.aqua.aqualight.ui.tabs.devices.detail.cooling.presentation.root.DeviceCoolingRootUiState
@@ -51,8 +52,10 @@ private fun DeviceCoolingRootUiState.resolveCoolingHeroStatus(): CoolingHeroVisu
         CoolingHeroVisualStatus.OFFLINE
     hasCoolingAttentionState() -> CoolingHeroVisualStatus.ATTENTION
     !controlAvailable -> CoolingHeroVisualStatus.WAITING_FOR_DATA
-    fanPercentNow.orZero() > MINIMUM_PERCENT -> CoolingHeroVisualStatus.COOLING
-    else -> CoolingHeroVisualStatus.STANDBY
+    operatingState == DeviceCoolingOperatingState.FAULT -> CoolingHeroVisualStatus.ATTENTION
+    operatingState == null -> CoolingHeroVisualStatus.WAITING_FOR_DATA
+    operatingState == DeviceCoolingOperatingState.IDLE -> CoolingHeroVisualStatus.STANDBY
+    else -> CoolingHeroVisualStatus.COOLING
 }
 
 private fun DeviceCoolingRootUiState.hasCoolingAttentionState(): Boolean =
@@ -67,6 +70,7 @@ private fun DeviceCoolingRootUiState.hasCurrentFanMotion(): Boolean {
     val hasLiveControl = connectionVisualState == DeviceConnectionVisualState.ONLINE &&
         contentEnabled && controlAvailable
     return hasLiveControl && fanHealth != CoolingHealthState.FAULT &&
+        operatingState in ACTIVE_OPERATING_STATES &&
         fanPercentNow.orZero() > MINIMUM_PERCENT
 }
 
@@ -78,3 +82,9 @@ private const val MAXIMUM_PERCENT_FLOAT = 100f
 private const val NO_MOTION = 0f
 private const val NO_ALARMS = 0
 private const val WAITING_MOTION_INTENSITY = 0.58f
+
+private val ACTIVE_OPERATING_STATES = setOf(
+    DeviceCoolingOperatingState.COOLING,
+    DeviceCoolingOperatingState.MANUAL,
+    DeviceCoolingOperatingState.PROGRAM
+)

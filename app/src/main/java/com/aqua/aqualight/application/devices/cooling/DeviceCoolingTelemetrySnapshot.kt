@@ -8,7 +8,10 @@ data class DeviceCoolingTelemetrySnapshot(
     val estimatedKwhPerDay: Double?,
     val fanHealth: DeviceCoolingFanHealth,
     val sensorHealth: DeviceCoolingSensorHealth,
-    val alarms: List<DeviceCoolingAlarmSnapshot>
+    val alarms: List<DeviceCoolingAlarmSnapshot>,
+    /** Firmware healthSummary value; never recomputed from [alarms]. */
+    val activeAlarmCount: Int? = null,
+    val highestAlarmSeverity: DeviceCoolingAlarmSeverity = DeviceCoolingAlarmSeverity.UNKNOWN
 ) {
     val activeAlarms: List<DeviceCoolingAlarmSnapshot>
         get() = alarms.filter(DeviceCoolingAlarmSnapshot::active)
@@ -45,6 +48,7 @@ enum class DeviceCoolingAlarmCode {
 }
 
 enum class DeviceCoolingAlarmSeverity {
+    NONE,
     WARNING,
     CRITICAL,
     UNKNOWN

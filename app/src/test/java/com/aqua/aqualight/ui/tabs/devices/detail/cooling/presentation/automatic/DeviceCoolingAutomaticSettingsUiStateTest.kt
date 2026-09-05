@@ -173,6 +173,7 @@ class DeviceCoolingAutomaticSettingsUiStateTest {
             draftMaximumSpeedTemperatureC = 27.0,
             persistedSilentModeEnabled = persistedSilentModeEnabled,
             draftSilentModeEnabled = draftSilentModeEnabled,
+            silentModeMaximumFanPercent = snapshot.silentModeMaximumFanPercent,
             policy = snapshot.policy
         )
     }
@@ -183,6 +184,7 @@ class DeviceCoolingAutomaticSettingsUiStateTest {
         editable = true,
         startTemperatureC = 25.0,
         maximumSpeedTemperatureC = 27.0,
+        silentModeMaximumFanPercent = 50,
         policy = DeviceCoolingAutomaticTemperaturePolicy(
             startMinimumC = 18.0,
             startMaximumC = 30.0,

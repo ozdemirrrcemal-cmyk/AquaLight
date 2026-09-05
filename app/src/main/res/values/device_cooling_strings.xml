@@ -48,7 +48,6 @@
     <string name="device_cooling_manual_target_value_format">Target %1$d%%</string>
     <string name="device_cooling_manual_target_unavailable">Target —</string>
     <string name="device_cooling_temperature_range_value_format">%1$.1f–%2$.1f °C</string>
-    <string name="device_cooling_program_summary_with_next">%1$s • Next %2$s</string>
     <string name="device_cooling_time_value_format" translatable="false">%1$02d:%2$02d</string>
     <plurals name="device_cooling_program_period_count">
         <item quantity="one">%1$d time period</item>

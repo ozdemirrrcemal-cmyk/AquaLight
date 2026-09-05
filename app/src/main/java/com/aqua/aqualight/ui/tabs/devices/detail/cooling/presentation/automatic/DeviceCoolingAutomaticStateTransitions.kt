@@ -82,6 +82,7 @@ private fun DeviceCoolingAutomaticSettingsUiState.applyCompleteSnapshot(
         silentModeMaximumFanPercent = snapshot.silentModeMaximumFanPercent,
         tankTemperatureC = snapshot.tankTemperatureC,
         fanPercentNow = snapshot.fanPercentNow,
+        operatingState = snapshot.operatingState,
         policy = configuration.policy
     )
 }
@@ -142,10 +143,10 @@ private fun DeviceCoolingAutomaticSettingsUiState.clearAutomaticConfiguration(
     draftMaximumSpeedTemperatureC = null,
     persistedSilentModeEnabled = snapshot?.silentModeEnabled,
     draftSilentModeEnabled = snapshot?.silentModeEnabled ?: false,
-    silentModeMaximumFanPercent = snapshot?.silentModeMaximumFanPercent
-        ?: silentModeMaximumFanPercent,
+    silentModeMaximumFanPercent = snapshot?.silentModeMaximumFanPercent,
     tankTemperatureC = snapshot?.tankTemperatureC,
     fanPercentNow = snapshot?.fanPercentNow,
+    operatingState = snapshot?.operatingState,
     policy = null
 )
 

@@ -5,6 +5,7 @@ import com.aqua.aqualight.application.devices.cooling.DeviceCoolingAutomaticFail
 import com.aqua.aqualight.application.devices.cooling.DeviceCoolingAutomaticSettingsOperations
 import com.aqua.aqualight.application.devices.cooling.DeviceCoolingAutomaticSettingsSnapshot
 import com.aqua.aqualight.application.devices.cooling.DeviceCoolingAutomaticTemperaturePolicy
+import com.aqua.aqualight.application.devices.cooling.control.DeviceCoolingOperatingState
 import com.aqua.aqualight.data.devices.cooling.v1.DeviceCoolingV1FailureMapper
 import com.aqua.aqualight.data.devices.model.DeviceFamily
 import com.aqua.aqualight.data.devices.model.DeviceSnapshot
@@ -18,7 +19,9 @@ import com.aqua.aqualight.data.devices.runtime.modules.cooling.currentState
 import com.aqua.aqualight.data.devices.runtime.modules.cooling.v1.DeviceCoolingV1ConfigApplyPayload
 import com.aqua.aqualight.data.devices.runtime.modules.cooling.v1.DeviceCoolingV1ConfigSnapshot
 import com.aqua.aqualight.data.devices.runtime.modules.cooling.v1.DeviceCoolingV1Contract
+import com.aqua.aqualight.data.devices.runtime.modules.cooling.v1.DeviceCoolingV1OperatingState
 import kotlin.math.abs
+import kotlin.math.roundToInt
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.distinctUntilChanged
@@ -198,7 +201,7 @@ private fun projectAutomatic(
         available = false,
         loaded = true
     )
-    state?.config == null -> DeviceCoolingAutomaticSettingsSnapshot(
+    state?.config == null || state.status == null -> DeviceCoolingAutomaticSettingsSnapshot(
         available = true,
         loaded = false,
         editable = false
@@ -210,6 +213,9 @@ private fun projectAutomatic(
                 sensor.sensorKey == DeviceCoolingV1Contract.WATER_SENSOR_KEY && sensor.readingValid
             }
             ?.temperatureC
+        val statusPolicy = state.status.policy
+        val automaticPolicy = statusPolicy.temperature
+        val silentModeSupported = statusPolicy.silentMode.supported
         DeviceCoolingAutomaticSettingsSnapshot(
             available = true,
             loaded = true,
@@ -218,10 +224,31 @@ private fun projectAutomatic(
             maximumSpeedTemperatureC = state.config.fullSpeedTemperatureC,
             tankTemperatureC = waterTemperature,
             fanPercentNow = state.telemetry?.fan?.outputPercent,
-            silentModeEnabled = state.config.silentModeEnabled,
-            policy = COOLING_V1_AUTOMATIC_POLICY
+            operatingState = (state.telemetry?.operatingState ?: state.status.control.operatingState)
+                .toApplicationOperatingState(),
+            silentModeEnabled = state.config.silentModeEnabled.takeIf { silentModeSupported },
+            silentModeMaximumFanPercent = statusPolicy.silentMode.maximumPercent
+                .roundToInt()
+                .takeIf { silentModeSupported },
+            policy = DeviceCoolingAutomaticTemperaturePolicy(
+                startMinimumC = automaticPolicy.minimumC,
+                startMaximumC = automaticPolicy.maximumC - automaticPolicy.minimumGapC,
+                maximumSpeedMinimumC = automaticPolicy.minimumC + automaticPolicy.minimumGapC,
+                maximumSpeedMaximumC = automaticPolicy.maximumC,
+                stepC = automaticPolicy.stepC,
+                minimumGapC = automaticPolicy.minimumGapC
+            )
         )
     }
+}
+
+private fun DeviceCoolingV1OperatingState.toApplicationOperatingState():
+    DeviceCoolingOperatingState = when (this) {
+    DeviceCoolingV1OperatingState.IDLE -> DeviceCoolingOperatingState.IDLE
+    DeviceCoolingV1OperatingState.COOLING -> DeviceCoolingOperatingState.COOLING
+    DeviceCoolingV1OperatingState.MANUAL -> DeviceCoolingOperatingState.MANUAL
+    DeviceCoolingV1OperatingState.PROGRAM -> DeviceCoolingOperatingState.PROGRAM
+    DeviceCoolingV1OperatingState.FAULT -> DeviceCoolingOperatingState.FAULT
 }
 
 private fun DeviceCoolingV1ConfigSnapshot.matchesAutomaticRequest(
@@ -270,14 +297,3 @@ private fun failed(failure: DeviceCoolingAutomaticFailure): DeviceCoolingAutomat
 
 private fun Double.sameCoolingValue(other: Double): Boolean =
     abs(this - other) <= DeviceCoolingV1Contract.Limit.ALIGNMENT_EPSILON
-
-private val COOLING_V1_AUTOMATIC_POLICY = DeviceCoolingAutomaticTemperaturePolicy(
-    startMinimumC = DeviceCoolingV1Contract.Limit.TEMPERATURE_MINIMUM_C,
-    startMaximumC = DeviceCoolingV1Contract.Limit.TEMPERATURE_MAXIMUM_C -
-        DeviceCoolingV1Contract.Limit.MINIMUM_AUTOMATIC_GAP_C,
-    maximumSpeedMinimumC = DeviceCoolingV1Contract.Limit.TEMPERATURE_MINIMUM_C +
-        DeviceCoolingV1Contract.Limit.MINIMUM_AUTOMATIC_GAP_C,
-    maximumSpeedMaximumC = DeviceCoolingV1Contract.Limit.TEMPERATURE_MAXIMUM_C,
-    stepC = DeviceCoolingV1Contract.Limit.TEMPERATURE_STEP_C,
-    minimumGapC = DeviceCoolingV1Contract.Limit.MINIMUM_AUTOMATIC_GAP_C
-)

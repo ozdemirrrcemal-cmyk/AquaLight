@@ -74,29 +74,10 @@ private fun coolingProgramSummaryText(state: DeviceCoolingRootUiState): String {
     return when {
         slotCount == null -> stringResource(R.string.device_cooling_value_unavailable)
         slotCount == 0 -> stringResource(R.string.device_cooling_program_not_configured)
-        else -> coolingConfiguredProgramSummaryText(
-            count = slotCount,
-            nextStartMinutesOfDay = state.nextProgramStartMinutesOfDay
+        else -> pluralStringResource(
+            R.plurals.device_cooling_program_period_count,
+            slotCount,
+            slotCount
         )
     }
 }
-
-@Composable
-private fun coolingConfiguredProgramSummaryText(
-    count: Int,
-    nextStartMinutesOfDay: Int?
-): String {
-    val periods = pluralStringResource(
-        R.plurals.device_cooling_program_period_count,
-        count,
-        count
-    )
-    return nextStartMinutesOfDay?.let { nextStart ->
-        val hours = nextStart / MINUTES_PER_HOUR
-        val minutes = nextStart % MINUTES_PER_HOUR
-        val time = stringResource(R.string.device_cooling_time_value_format, hours, minutes)
-        stringResource(R.string.device_cooling_program_summary_with_next, periods, time)
-    } ?: periods
-}
-
-private const val MINUTES_PER_HOUR = 60

@@ -1,6 +1,7 @@
 package com.aqua.aqualight.ui.tabs.devices.detail.cooling.presentation.dashboard
 
 import com.aqua.aqualight.application.devices.cooling.control.DeviceCoolingControlMode
+import com.aqua.aqualight.application.devices.cooling.control.DeviceCoolingOperatingState
 import com.aqua.aqualight.ui.common.devicepresence.DeviceConnectionVisualState
 import com.aqua.aqualight.ui.tabs.devices.detail.cooling.presentation.common.CoolingDataFreshness
 import com.aqua.aqualight.ui.tabs.devices.detail.cooling.presentation.common.CoolingDataState
@@ -46,11 +47,33 @@ class CoolingHeroPresentationTest {
 
     @Test
     fun `zero fan output keeps the scene calmly ready`() {
-        val presentation = state(fanPercent = 0).toCoolingHeroPresentation()
+        val presentation = state(
+            fanPercent = 0,
+            options = HeroStateOptions(operatingState = DeviceCoolingOperatingState.IDLE)
+        ).toCoolingHeroPresentation()
 
         assertEquals(CoolingHeroVisualStatus.STANDBY, presentation.status)
         assertFalse(presentation.isCooling)
         assertEquals(NO_MOTION, presentation.motionIntensity, NO_DELTA)
+    }
+
+    @Test
+    fun `positive retained output cannot override firmware idle state`() {
+        val presentation = state(
+            fanPercent = 60,
+            options = HeroStateOptions(operatingState = DeviceCoolingOperatingState.IDLE)
+        ).toCoolingHeroPresentation()
+
+        assertEquals(CoolingHeroVisualStatus.STANDBY, presentation.status)
+        assertFalse(presentation.isCooling)
+    }
+
+    @Test
+    fun `firmware cooling state is preserved while motion still reflects applied output`() {
+        val presentation = state(fanPercent = 0).toCoolingHeroPresentation()
+
+        assertEquals(CoolingHeroVisualStatus.COOLING, presentation.status)
+        assertFalse(presentation.isCooling)
     }
 
     @Test
@@ -136,7 +159,8 @@ class CoolingHeroPresentationTest {
                 manualFanCapabilities = null,
                 manualFanPercent = options.manualFanPercent,
                 actualFanPercent = fanPercent,
-                tankTemperatureC = TANK_TEMPERATURE_C
+                tankTemperatureC = TANK_TEMPERATURE_C,
+                operatingState = options.operatingState
             ),
             freshness = options.freshness
         ),
@@ -147,7 +171,6 @@ class CoolingHeroPresentationTest {
                 powerWatts = null,
                 estimatedKwhPerDay = null,
                 programSlotCount = null,
-                nextProgramStartMinutesOfDay = null,
                 fanHealth = options.fanHealth,
                 sensorHealth = CoolingHealthState.READY,
                 activeAlarmCount = options.alarmCount
@@ -160,7 +183,8 @@ class CoolingHeroPresentationTest {
         val freshness: CoolingDataFreshness = CoolingDataFreshness.CURRENT,
         val alarmCount: Int = 0,
         val fanHealth: CoolingHealthState = CoolingHealthState.READY,
-        val contentEnabled: Boolean = true
+        val contentEnabled: Boolean = true,
+        val operatingState: DeviceCoolingOperatingState = DeviceCoolingOperatingState.COOLING
     )
 
     private companion object {

@@ -170,7 +170,7 @@ private fun DeviceCoolingV1Telemetry.isCoherentWith(
     status: DeviceCoolingV1StatusDocument
 ): Boolean =
     configRevision == status.configRevision &&
-        programRevision == status.programRevision
+        programRevision == status.program.evaluatedProgramRevision
 
 private fun DeviceCoolingV1Telemetry.isNewerThan(
     previous: DeviceCoolingV1Telemetry

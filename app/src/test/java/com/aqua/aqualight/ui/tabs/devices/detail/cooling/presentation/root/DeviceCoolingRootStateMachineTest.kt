@@ -2,6 +2,12 @@ package com.aqua.aqualight.ui.tabs.devices.detail.cooling.presentation.root
 
 import com.aqua.aqualight.application.devices.cooling.DeviceCoolingAutomaticFailure
 import com.aqua.aqualight.application.devices.cooling.DeviceCoolingAutomaticSettingsSnapshot
+import com.aqua.aqualight.application.devices.cooling.DeviceCoolingAlarmCode
+import com.aqua.aqualight.application.devices.cooling.DeviceCoolingAlarmSeverity
+import com.aqua.aqualight.application.devices.cooling.DeviceCoolingAlarmSnapshot
+import com.aqua.aqualight.application.devices.cooling.DeviceCoolingFanHealth
+import com.aqua.aqualight.application.devices.cooling.DeviceCoolingSensorHealth
+import com.aqua.aqualight.application.devices.cooling.DeviceCoolingTelemetrySnapshot
 import com.aqua.aqualight.application.devices.cooling.DeviceCoolingTemperatureHistoryLoadResult
 import com.aqua.aqualight.application.devices.cooling.DeviceCoolingTemperatureHistoryRange
 import com.aqua.aqualight.application.devices.cooling.DeviceCoolingTemperatureHistorySnapshot
@@ -11,6 +17,7 @@ import com.aqua.aqualight.application.devices.cooling.control.DeviceCoolingContr
 import com.aqua.aqualight.application.devices.cooling.control.DeviceCoolingControlResult
 import com.aqua.aqualight.application.devices.cooling.control.DeviceCoolingControlSnapshot
 import com.aqua.aqualight.application.devices.cooling.control.DeviceCoolingManualFanCapabilities
+import com.aqua.aqualight.application.devices.cooling.control.DeviceCoolingProgramRuntimeSnapshot
 import com.aqua.aqualight.ui.tabs.devices.detail.cooling.presentation.common.CoolingDataFreshness
 import com.aqua.aqualight.ui.tabs.devices.detail.cooling.presentation.common.CoolingDataState
 import com.aqua.aqualight.ui.tabs.devices.detail.cooling.presentation.common.CoolingMutationState
@@ -105,6 +112,52 @@ class DeviceCoolingRootStateMachineTest {
 
         assertFalse(state.controlWriteEnabled)
         assertFalse(state.modeSelectionWritable)
+    }
+
+    @Test
+    fun `dashboard uses firmware alarm count and program status without recomputing`() {
+        val base = (availableControl() as DeviceCoolingControlResult.Available).snapshot
+        val result = DeviceCoolingControlResult.Available(
+            base.copy(
+                telemetry = DeviceCoolingTelemetrySnapshot(
+                    roomTemperatureC = 24.0,
+                    humidityPercent = 50.0,
+                    powerWatts = 0.2,
+                    estimatedKwhPerDay = 0.0048,
+                    fanHealth = DeviceCoolingFanHealth.UNVERIFIED,
+                    sensorHealth = DeviceCoolingSensorHealth.WARNING,
+                    alarms = listOf(
+                        DeviceCoolingAlarmSnapshot(
+                            code = DeviceCoolingAlarmCode.AMBIENT_SENSOR_FAULT,
+                            severity = DeviceCoolingAlarmSeverity.WARNING,
+                            active = true,
+                            latched = false
+                        )
+                    ),
+                    activeAlarmCount = 6,
+                    highestAlarmSeverity = DeviceCoolingAlarmSeverity.CRITICAL
+                ),
+                programRuntime = DeviceCoolingProgramRuntimeSnapshot(
+                    persistedRevision = 4L,
+                    evaluatedRevision = 4L,
+                    slotCount = 3,
+                    clockReady = true,
+                    currentMinuteOfDay = 600,
+                    activeSlotIndex = 1
+                )
+            )
+        )
+
+        val state = result.toRootDashboardOverviewState(CoolingDataState.Initial)
+            as CoolingDataState.Content<CoolingDashboardOverviewPresentation, Nothing>
+
+        assertEquals(6, state.value.activeAlarmCount)
+        assertEquals(3, state.value.programSlotCount)
+        assertEquals(DeviceCoolingAlarmSeverity.CRITICAL, state.value.highestAlarmSeverity)
+        assertEquals(
+            listOf(DeviceCoolingAlarmCode.AMBIENT_SENSOR_FAULT),
+            state.value.activeAlarmCodes
+        )
     }
 
     private companion object {

@@ -32,6 +32,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.style.TextAlign
 import com.aqua.aqualight.R
+import com.aqua.aqualight.application.devices.cooling.control.DeviceCoolingOperatingState
 import com.aqua.aqualight.ui.common.cooling.AquaCoolingDashboardCardSurface
 import com.aqua.aqualight.ui.common.cooling.AquaCoolingDashboardGeometry
 import com.aqua.aqualight.ui.common.cooling.AquaCoolingDashboardPalette
@@ -156,12 +157,15 @@ private fun AutomaticLiveStatusCard(
                 )
                 AutomaticLiveMetric(
                     label = stringResource(R.string.device_cooling_automatic_status),
-                    value = automaticRuntimeStatusText(state.fanPercentNow),
+                    value = automaticRuntimeStatusText(state.operatingState),
                     visuals = AutomaticScreenVisuals(colors, typography),
-                    valueColor = if ((state.fanPercentNow ?: 0.0) > 0.5) {
-                        AquaCoolingDashboardPalette.success
-                    } else {
-                        colors.secondaryText
+                    valueColor = when (state.operatingState) {
+                        DeviceCoolingOperatingState.COOLING,
+                        DeviceCoolingOperatingState.MANUAL,
+                        DeviceCoolingOperatingState.PROGRAM -> AquaCoolingDashboardPalette.success
+                        DeviceCoolingOperatingState.FAULT -> colors.warning
+                        DeviceCoolingOperatingState.IDLE,
+                        null -> colors.secondaryText
                     },
                     modifier = Modifier.weight(1f)
                 )
@@ -286,13 +290,15 @@ private fun AutomaticSilentModeCard(
                     text = stringResource(R.string.device_cooling_automatic_silent_mode_title),
                     style = typography.title.copy(color = colors.primaryText)
                 )
-                BasicText(
-                    text = stringResource(
-                        R.string.device_cooling_automatic_silent_mode_description,
-                        state.silentModeMaximumFanPercent
-                    ),
-                    style = typography.micro.copy(color = colors.secondaryText)
-                )
+                state.silentModeMaximumFanPercent?.let { maximumPercent ->
+                    BasicText(
+                        text = stringResource(
+                            R.string.device_cooling_automatic_silent_mode_description,
+                            maximumPercent
+                        ),
+                        style = typography.micro.copy(color = colors.secondaryText)
+                    )
+                }
                 if (!state.silentModeFirmwareBacked) {
                     BasicText(
                         text = stringResource(

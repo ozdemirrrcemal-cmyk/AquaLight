@@ -11,12 +11,18 @@ data class DeviceCoolingControlSnapshot(
     val actualFanPercent: Int?,
     val tankTemperatureC: Double?,
     val capabilities: DeviceCoolingControlCapabilities,
-    val telemetry: DeviceCoolingTelemetrySnapshot? = null
+    val telemetry: DeviceCoolingTelemetrySnapshot? = null,
+    val operatingState: DeviceCoolingOperatingState? = null,
+    val controlReason: DeviceCoolingControlReason = DeviceCoolingControlReason.UNKNOWN,
+    val targetFanPercent: Int? = null,
+    val manualActive: Boolean? = null,
+    val programRuntime: DeviceCoolingProgramRuntimeSnapshot? = null
 ) {
     init {
         require(mode in capabilities.supportedModes)
         require(manualFanPercent == null || manualFanPercent in MINIMUM_PERCENT..MAXIMUM_PERCENT)
         require(actualFanPercent == null || actualFanPercent in MINIMUM_PERCENT..MAXIMUM_PERCENT)
+        require(targetFanPercent == null || targetFanPercent in MINIMUM_PERCENT..MAXIMUM_PERCENT)
         require(tankTemperatureC == null || tankTemperatureC.isFinite())
     }
 }

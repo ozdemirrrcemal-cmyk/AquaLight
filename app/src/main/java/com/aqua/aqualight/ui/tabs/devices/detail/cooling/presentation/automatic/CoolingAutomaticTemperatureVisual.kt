@@ -18,6 +18,7 @@ import androidx.compose.ui.graphics.drawscope.DrawScope
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
 import com.aqua.aqualight.R
+import com.aqua.aqualight.application.devices.cooling.control.DeviceCoolingOperatingState
 import com.aqua.aqualight.ui.common.cooling.AquaCoolingGaugeSpec
 import com.aqua.aqualight.ui.common.cooling.AquaCoolingTemperatureChartSpec
 import com.aqua.aqualight.ui.common.devicecard.AquaDeviceCardColors
@@ -216,12 +217,19 @@ internal fun automaticFanPercentText(value: Double?): String =
     }
 
 @Composable
-internal fun automaticRuntimeStatusText(fanPercent: Double?): String = when {
-    fanPercent == null || !fanPercent.isFinite() ->
-        stringResource(R.string.device_cooling_value_unavailable)
-    fanPercent > FAN_ACTIVE_THRESHOLD_PERCENT ->
-        stringResource(R.string.device_cooling_automatic_status_cooling)
-    else -> stringResource(R.string.device_cooling_automatic_status_waiting)
+internal fun automaticRuntimeStatusText(operatingState: DeviceCoolingOperatingState?): String =
+    when (operatingState) {
+        DeviceCoolingOperatingState.COOLING ->
+            stringResource(R.string.device_cooling_automatic_status_cooling)
+        DeviceCoolingOperatingState.IDLE ->
+            stringResource(R.string.device_cooling_automatic_status_waiting)
+        DeviceCoolingOperatingState.MANUAL ->
+            stringResource(R.string.device_cooling_mode_manual)
+        DeviceCoolingOperatingState.PROGRAM ->
+            stringResource(R.string.device_cooling_mode_program)
+        DeviceCoolingOperatingState.FAULT ->
+            stringResource(R.string.device_cooling_status_fault)
+        null -> stringResource(R.string.device_cooling_value_unavailable)
 }
 
 @Composable
@@ -231,4 +239,3 @@ private fun automaticAxisTemperatureText(value: Double): String =
 private const val RANGE_VISUAL_MARGIN_C = 3.0
 private const val MINIMUM_RANGE_SPAN_C = 1.0
 private const val RANGE_TRACK_VERTICAL_FRACTION = 0.52f
-private const val FAN_ACTIVE_THRESHOLD_PERCENT = 0.5

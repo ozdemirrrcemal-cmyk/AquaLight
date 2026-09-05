@@ -10,6 +10,7 @@ import androidx.compose.ui.res.colorResource
 import androidx.compose.ui.tooling.preview.Preview
 import com.aqua.aqualight.R
 import com.aqua.aqualight.application.devices.cooling.control.DeviceCoolingManualFanCapabilities
+import com.aqua.aqualight.application.devices.cooling.control.DeviceCoolingOperatingState
 import com.aqua.aqualight.ui.common.devicepresence.DeviceConnectionVisualState
 import com.aqua.aqualight.ui.tabs.devices.detail.cooling.presentation.common.CoolingDataState
 import com.aqua.aqualight.ui.tabs.devices.detail.cooling.presentation.root.CoolingAutomaticSummaryPresentation
@@ -46,7 +47,8 @@ internal fun CoolingDashboardPreview() {
                     ),
                     manualFanPercent = 65,
                     actualFanPercent = 65,
-                    tankTemperatureC = 26.2
+                    tankTemperatureC = 26.2,
+                    operatingState = DeviceCoolingOperatingState.MANUAL
                 )
             ),
             automaticSummaryState = CoolingDataState.Content(
@@ -67,7 +69,6 @@ internal fun CoolingDashboardPreview() {
                     powerWatts = 0.325,
                     estimatedKwhPerDay = 0.0078,
                     programSlotCount = 3,
-                    nextProgramStartMinutesOfDay = 18 * 60,
                     fanHealth = CoolingHealthState.READY,
                     sensorHealth = CoolingHealthState.READY,
                     activeAlarmCount = 0

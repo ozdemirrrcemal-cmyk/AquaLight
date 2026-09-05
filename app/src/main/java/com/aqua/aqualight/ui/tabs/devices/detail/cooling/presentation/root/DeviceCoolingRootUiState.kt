@@ -1,10 +1,14 @@
 package com.aqua.aqualight.ui.tabs.devices.detail.cooling.presentation.root
 
 import com.aqua.aqualight.application.devices.cooling.DeviceCoolingAlarmCode
+import com.aqua.aqualight.application.devices.cooling.DeviceCoolingAlarmSeverity
 import com.aqua.aqualight.application.devices.cooling.DeviceCoolingAutomaticFailure
 import com.aqua.aqualight.application.devices.cooling.control.DeviceCoolingControlFailure
 import com.aqua.aqualight.application.devices.cooling.control.DeviceCoolingControlMode
+import com.aqua.aqualight.application.devices.cooling.control.DeviceCoolingControlReason
 import com.aqua.aqualight.application.devices.cooling.control.DeviceCoolingManualFanCapabilities
+import com.aqua.aqualight.application.devices.cooling.control.DeviceCoolingOperatingState
+import com.aqua.aqualight.application.devices.cooling.control.DeviceCoolingProgramRuntimeSnapshot
 import com.aqua.aqualight.ui.common.devicepresence.DeviceConnectionVisualState
 import com.aqua.aqualight.ui.tabs.devices.detail.cooling.presentation.common.CoolingDataFreshness
 import com.aqua.aqualight.ui.tabs.devices.detail.cooling.presentation.common.CoolingDataState
@@ -20,7 +24,12 @@ data class CoolingControlPresentation(
     val manualFanCapabilities: DeviceCoolingManualFanCapabilities?,
     val manualFanPercent: Int?,
     val actualFanPercent: Int?,
-    val tankTemperatureC: Double?
+    val tankTemperatureC: Double?,
+    val operatingState: DeviceCoolingOperatingState? = null,
+    val controlReason: DeviceCoolingControlReason = DeviceCoolingControlReason.UNKNOWN,
+    val targetFanPercent: Int? = null,
+    val manualActive: Boolean? = null,
+    val programRuntime: DeviceCoolingProgramRuntimeSnapshot? = null
 )
 
 data class CoolingAutomaticSummaryPresentation(
@@ -45,10 +54,10 @@ data class CoolingDashboardOverviewPresentation(
     val powerWatts: Double? = null,
     val estimatedKwhPerDay: Double? = null,
     val programSlotCount: Int? = null,
-    val nextProgramStartMinutesOfDay: Int? = null,
     val fanHealth: CoolingHealthState = CoolingHealthState.UNKNOWN,
     val sensorHealth: CoolingHealthState = CoolingHealthState.UNKNOWN,
     val activeAlarmCount: Int? = null,
+    val highestAlarmSeverity: DeviceCoolingAlarmSeverity = DeviceCoolingAlarmSeverity.UNKNOWN,
     val activeAlarmCodes: List<DeviceCoolingAlarmCode> = emptyList()
 )
 
@@ -112,6 +121,9 @@ data class DeviceCoolingRootUiState(
     val tankTemperatureC: Double?
         get() = controlPresentation?.tankTemperatureC
 
+    val operatingState: DeviceCoolingOperatingState?
+        get() = controlPresentation?.operatingState
+
     val autoStartTemperatureC: Double?
         get() = automaticSummaryState.authoritativeValueOrNull?.startTemperatureC
 
@@ -138,9 +150,6 @@ data class DeviceCoolingRootUiState(
 
     val programSlotCount: Int?
         get() = dashboardOverview?.programSlotCount
-
-    val nextProgramStartMinutesOfDay: Int?
-        get() = dashboardOverview?.nextProgramStartMinutesOfDay
 
     val fanHealth: CoolingHealthState
         get() = dashboardOverview?.fanHealth ?: CoolingHealthState.UNKNOWN

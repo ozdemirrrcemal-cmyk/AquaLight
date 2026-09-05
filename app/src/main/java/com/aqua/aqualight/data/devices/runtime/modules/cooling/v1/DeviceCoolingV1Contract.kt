@@ -62,7 +62,6 @@ object DeviceCoolingV1Contract {
         const val FAN_PERCENT_MAXIMUM = 100.0
         const val FAN_PERCENT_STEP = 1.0
         const val FAN_RPM_MINIMUM = 0.0
-        const val SILENT_MODE_MAXIMUM_PERCENT = 50.0
         const val ACTIVE_ALARM_COUNT_MAXIMUM = 6
         const val SENSOR_STALE_AFTER_MS = 10_000L
     }
