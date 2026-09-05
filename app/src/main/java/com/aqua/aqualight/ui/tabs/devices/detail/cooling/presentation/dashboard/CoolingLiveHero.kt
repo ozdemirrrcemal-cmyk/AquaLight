@@ -39,8 +39,8 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.booleanResource
 import androidx.compose.ui.res.imageResource
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.clearAndSetSemantics
+import androidx.compose.ui.semantics.contentDescription
 import com.aqua.aqualight.R
 import com.aqua.aqualight.ui.common.cooling.AquaCoolingDashboardAlpha
 import com.aqua.aqualight.ui.common.cooling.AquaCoolingDashboardGeometry
@@ -49,7 +49,6 @@ import com.aqua.aqualight.ui.common.cooling.AquaCoolingDashboardTypography
 import com.aqua.aqualight.ui.common.devicecard.AquaDeviceCardColors
 import com.aqua.aqualight.ui.common.devicecard.AquaDeviceCardTypography
 import com.aqua.aqualight.ui.tabs.devices.detail.cooling.presentation.root.DeviceCoolingRootUiState
-import kotlin.math.roundToInt
 import kotlin.math.sin
 
 @Composable
@@ -293,16 +292,6 @@ private fun coolingHeroMotionPhases(motion: CoolingHeroMotion): CoolingHeroMotio
     return CoolingHeroMotionPhases(waterPhase, fanPhase)
 }
 
-/**
- * Fan angular velocity follows the applied PWM output proportionally.
- * At 100% output one visual revolution takes [FULL_OUTPUT_FAN_MOTION_MILLIS]; halving the
- * firmware-reported output doubles the period. The caller invokes this only for active motion.
- */
-internal fun fanMotionDurationMillis(outputIntensity: Float): Int {
-    val normalizedOutput = outputIntensity.coerceIn(MINIMUM_ACTIVE_FAN_INTENSITY, UNIT_FLOAT)
-    return (FULL_OUTPUT_FAN_MOTION_MILLIS / normalizedOutput).roundToInt()
-}
-
 @StringRes
 private fun CoolingHeroVisualStatus.labelResource(): Int = when (this) {
     CoolingHeroVisualStatus.COOLING -> R.string.device_cooling_automatic_status_cooling
@@ -348,8 +337,6 @@ private const val PULSE_RANGE_ALPHA = 0.28f
 private const val HALF_DIVISOR = 2f
 private const val SLOWEST_WATER_MOTION_MILLIS = 5400
 private const val FASTEST_WATER_MOTION_MILLIS = 3000
-private const val FULL_OUTPUT_FAN_MOTION_MILLIS = 620
-private const val MINIMUM_ACTIVE_FAN_INTENSITY = 0.01f
 private const val MINIMUM_PERCENT = 0
 private const val MAXIMUM_PERCENT = 100
 private const val NO_MOTION = 0f
