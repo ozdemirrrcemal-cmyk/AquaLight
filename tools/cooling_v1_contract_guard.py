@@ -24,6 +24,15 @@ FAILURE_MAPPER_PATH = (
 )
 COOLING_COMMAND_PREFIX = "cooling."
 
+# The pinned shared Cooling fixture declares its reusable top-level error catalog,
+# while cooling.manual.apply additionally emits NOT_FOUND for an unknown fanKey.
+# Keep that command-local firmware emission explicit so parity stays fail-closed
+# without mutating the byte-identical firmware fixture.
+COMMAND_LOCAL_FIRMWARE_ERRORS = frozenset({"NOT_FOUND"})
+COMMAND_LOCAL_MAPPER_ROUTES = {
+    "NOT_FOUND": "DeviceCoolingV1Contract.Error.NOT_FOUND -> mapNotFound(error)",
+}
+
 
 class GuardFailure(AssertionError):
     """One deterministic Cooling V1 parity requirement failed."""
@@ -110,11 +119,26 @@ def verify_fixture_parity() -> tuple[int, int, int]:
             "Cooling fixture event catalog and Android event catalog drifted")
 
     errors = require_unique_strings(fixture.get("errors"), "errors")
+    fixture_errors = set(errors)
+    require(
+        fixture_errors.isdisjoint(COMMAND_LOCAL_FIRMWARE_ERRORS),
+        "Cooling command-local firmware errors unexpectedly moved into the shared fixture catalog",
+    )
+    require(
+        set(COMMAND_LOCAL_MAPPER_ROUTES) == set(COMMAND_LOCAL_FIRMWARE_ERRORS),
+        "Cooling command-local firmware error routes drifted",
+    )
+    expected_android_errors = fixture_errors | set(COMMAND_LOCAL_FIRMWARE_ERRORS)
     error_constants = string_constants(extract_object(contract_source, "Error"))
     require(len(error_constants) == len(set(error_constants.values())),
             "Android Cooling error constants contain duplicate wire values")
-    require(set(errors) == set(error_constants.values()),
-            "Cooling fixture error catalog and Android error catalog drifted")
+    require(set(error_constants.values()) == expected_android_errors,
+            "Cooling effective firmware error catalog and Android error catalog drifted")
+    for wire_value, route in COMMAND_LOCAL_MAPPER_ROUTES.items():
+        require(
+            route in mapper_source,
+            f"Cooling failure mapper does not preserve command-local {wire_value} semantics",
+        )
     for name, wire_value in error_constants.items():
         qualified_name = f"DeviceCoolingV1Contract.Error.{name}"
         require(qualified_name in mapper_source,
@@ -122,7 +146,7 @@ def verify_fixture_parity() -> tuple[int, int, int]:
         require(f'"{wire_value}"' not in mapper_source,
                 f"Cooling failure mapper duplicates raw fixture error {wire_value}")
 
-    return len(commands), len(events), len(errors)
+    return len(commands), len(events), len(expected_android_errors)
 
 
 def main() -> int:
@@ -136,7 +160,7 @@ def main() -> int:
         "Cooling V1 parity guard passed: "
         f"{command_count}/{command_count} commands, "
         f"{event_count}/{event_count} events, "
-        f"{error_count}/{error_count} fixture errors."
+        f"{error_count}/{error_count} effective firmware errors."
     )
     return 0
 
