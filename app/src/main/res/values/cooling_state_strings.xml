@@ -5,7 +5,7 @@
     <string name="device_cooling_manual_loading_title">Loading manual settings</string>
     <string name="device_cooling_manual_loading_message">Waiting for the device’s authoritative manual target.</string>
     <string name="device_cooling_manual_unsupported_title">Manual settings not supported</string>
-    <string name="device_cooling_manual_unsupported_message">The connected firmware does not provide a writable manual target.</string>
+    <string name="device_cooling_manual_unsupported_message">The connected device does not provide a writable manual target.</string>
     <string name="device_cooling_manual_unavailable_title">Manual settings unavailable</string>
     <string name="device_cooling_manual_unavailable_message">The manual target cannot be read right now. Try again.</string>
     <string name="device_cooling_manual_invalid_title">Manual settings are invalid</string>
@@ -20,7 +20,7 @@
     <string name="device_cooling_history_empty_title">No history yet</string>
     <string name="device_cooling_history_empty_message">The device returned no temperature measurements for this range.</string>
     <string name="device_cooling_history_unsupported_title">History not supported</string>
-    <string name="device_cooling_history_unsupported_message">The connected firmware does not provide temperature history.</string>
+    <string name="device_cooling_history_unsupported_message">The connected device does not provide temperature history.</string>
     <string name="device_cooling_history_unavailable_title">History unavailable</string>
     <string name="device_cooling_history_unavailable_message">Temperature history cannot be read right now. Try again.</string>
 
@@ -31,9 +31,9 @@
     <string name="device_cooling_automatic_stale_title">Automatic settings need refresh</string>
     <string name="device_cooling_automatic_stale_message">Showing the last confirmed settings. Editing is disabled until refresh succeeds.</string>
     <string name="device_cooling_automatic_read_only_title">Automatic settings are read-only</string>
-    <string name="device_cooling_automatic_read_only_message">The connected firmware provides these settings but does not allow editing them.</string>
+    <string name="device_cooling_automatic_read_only_message">The connected device provides these settings but does not allow editing them.</string>
     <string name="device_cooling_automatic_unsupported_title">Automatic settings not supported</string>
-    <string name="device_cooling_automatic_unsupported_message">The connected firmware does not provide this automatic configuration.</string>
+    <string name="device_cooling_automatic_unsupported_message">The connected device does not provide this automatic configuration.</string>
     <string name="device_cooling_automatic_unavailable_title">Automatic settings unavailable</string>
     <string name="device_cooling_automatic_unavailable_message">Automatic settings cannot be read right now. Try again.</string>
     <string name="device_cooling_automatic_invalid_title">Automatic settings are invalid</string>
