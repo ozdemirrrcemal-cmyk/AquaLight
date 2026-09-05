@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="device_cooling_error_history_unavailable_title">Soğutma geçmişi yüklenemedi</string>
+    <string name="device_cooling_error_history_unavailable_message">Cihaz kayıtlı soğutma geçmişini okuyamadı. Tekrar deneyin.</string>
+</resources>
