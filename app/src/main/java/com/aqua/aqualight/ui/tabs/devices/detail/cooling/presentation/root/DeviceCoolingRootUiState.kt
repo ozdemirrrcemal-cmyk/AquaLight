@@ -44,7 +44,6 @@ data class CoolingDashboardOverviewPresentation(
     val humidityPercent: Double? = null,
     val powerWatts: Double? = null,
     val estimatedKwhPerDay: Double? = null,
-    val roomTemperatureHistoryC: List<Double> = emptyList(),
     val programSlotCount: Int? = null,
     val nextProgramStartMinutesOfDay: Int? = null,
     val fanHealth: CoolingHealthState = CoolingHealthState.UNKNOWN,
@@ -136,9 +135,6 @@ data class DeviceCoolingRootUiState(
 
     val estimatedKwhPerDay: Double?
         get() = dashboardOverview?.estimatedKwhPerDay
-
-    val roomTemperatureHistoryC: List<Double>
-        get() = dashboardOverview?.roomTemperatureHistoryC.orEmpty()
 
     val programSlotCount: Int?
         get() = dashboardOverview?.programSlotCount

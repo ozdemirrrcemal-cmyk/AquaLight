@@ -68,7 +68,6 @@ internal fun CoolingTemperatureCard(
             ) {
                 CoolingTemperatureChart(
                     tankHistoryC = state.temperatureHistoryC,
-                    roomHistoryC = state.roomTemperatureHistoryC,
                     colors = colors,
                     typography = typography,
                     modifier = Modifier.weight(1f)

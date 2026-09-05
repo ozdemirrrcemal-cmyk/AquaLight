@@ -27,14 +27,12 @@ import com.aqua.aqualight.ui.common.devicecard.AquaDeviceCardTypography
 @Composable
 internal fun CoolingTemperatureChart(
     tankHistoryC: List<Double>,
-    roomHistoryC: List<Double>,
     colors: AquaDeviceCardColors,
     typography: AquaDeviceCardTypography,
     modifier: Modifier = Modifier
 ) {
     val tankValues = tankHistoryC.toChartValues()
-    val roomValues = roomHistoryC.toChartValues()
-    val scale = temperatureChartScale(tankValues + roomValues)
+    val scale = temperatureChartScale(tankValues)
 
     Row(
         modifier = modifier.fillMaxWidth(),
@@ -49,7 +47,6 @@ internal fun CoolingTemperatureChart(
         Column(modifier = Modifier.weight(1f)) {
             CoolingTemperaturePlot(
                 tankValues = tankValues,
-                roomValues = roomValues,
                 scale = scale,
                 colors = colors,
                 typography = typography
@@ -97,7 +94,6 @@ private fun TemperatureYAxis(
 @Composable
 private fun CoolingTemperaturePlot(
     tankValues: List<Float>,
-    roomValues: List<Float>,
     scale: TemperatureChartScale,
     colors: AquaDeviceCardColors,
     typography: AquaDeviceCardTypography
@@ -126,20 +122,9 @@ private fun CoolingTemperaturePlot(
                     drawArea = true
                 )
             }
-            if (roomValues.size >= MINIMUM_CHART_POINT_COUNT) {
-                drawTemperatureHistory(
-                    values = roomValues,
-                    scale = scale,
-                    viewport = viewport,
-                    lineColor = colors.primaryText,
-                    drawArea = false
-                )
-            }
         }
 
-        if (tankValues.size < MINIMUM_CHART_POINT_COUNT &&
-            roomValues.size < MINIMUM_CHART_POINT_COUNT
-        ) {
+        if (tankValues.size < MINIMUM_CHART_POINT_COUNT) {
             CoolingTemperatureEmptyState(colors = colors, typography = typography)
         }
     }
