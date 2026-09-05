@@ -28,6 +28,7 @@ import com.aqua.aqualight.ui.common.devicecard.AquaDeviceCardGeometry
 import com.aqua.aqualight.ui.tabs.devices.detail.cooling.presentation.common.CoolingDataState
 import com.aqua.aqualight.ui.tabs.devices.detail.cooling.presentation.common.CoolingMutationState
 import com.aqua.aqualight.ui.tabs.devices.detail.cooling.presentation.common.CoolingStateMessageCard
+import com.aqua.aqualight.ui.tabs.devices.detail.cooling.presentation.common.toCommercialCoolingError
 
 @Composable
 internal fun DeviceCoolingManualSettingsScreen(
@@ -122,18 +123,19 @@ internal fun DeviceCoolingManualSettingsScreen(
                                 )
                             }
                         }
-                        val supportMessage = when {
-                            state.mutationState is CoolingMutationState.OperationError ->
-                                R.string.device_cooling_manual_write_failed
-                            !state.canWrite &&
-                                state.mutationState != CoolingMutationState.Saving ->
-                                R.string.device_cooling_manual_read_only
-                            else -> null
-                        }
+                        val supportMessage = state.manualSupportMessageRes()
                         if (supportMessage != null) {
                             BasicText(
                                 text = stringResource(supportMessage),
-                                style = typography.micro.copy(color = colors.secondaryText)
+                                style = typography.micro.copy(
+                                    color = if (
+                                        state.mutationState is CoolingMutationState.OperationError
+                                    ) {
+                                        colors.danger
+                                    } else {
+                                        colors.secondaryText
+                                    }
+                                )
                             )
                         }
                     }
@@ -142,6 +144,22 @@ internal fun DeviceCoolingManualSettingsScreen(
                 CoolingManualAvailabilityCard(state = state, onRetry = onRetry)
             }
         }
+    }
+}
+
+@StringRes
+private fun DeviceCoolingManualSettingsUiState.manualSupportMessageRes(): Int? = when (
+    val mutation = mutationState
+) {
+    is CoolingMutationState.OperationError -> mutation.failure.toCommercialCoolingError().messageRes
+    CoolingMutationState.Idle,
+    CoolingMutationState.Saving,
+    CoolingMutationState.Saved,
+    CoolingMutationState.ValidationError -> when {
+        !isManualMode -> R.string.device_cooling_error_manual_mode_required_message
+        !canWrite && mutationState != CoolingMutationState.Saving ->
+            R.string.device_cooling_manual_read_only
+        else -> null
     }
 }
 
