@@ -54,9 +54,13 @@ class DeviceCoolingRootViewModel(
         operations.current(deviceUid)?.let { snapshot ->
             initialState = snapshot.toRootUiState(initialState)
         }
+        val initialControl = controlOperations.currentControl(deviceUid)
         initialState = initialState.copy(
-            controlState = controlOperations.currentControl(deviceUid).toRootControlState(
+            controlState = initialControl.toRootControlState(
                 previous = initialState.controlState
+            ),
+            dashboardOverviewState = initialControl.toRootDashboardOverviewState(
+                previous = initialState.dashboardOverviewState
             ),
             automaticSummaryState = automaticSettingsOperations
                 .currentAutomaticSettings(deviceUid)
@@ -115,7 +119,12 @@ class DeviceCoolingRootViewModel(
             controlOperations.observeControl(deviceUid).collect { result ->
                 if (boundDeviceUid != deviceUid) return@collect
                 _uiState.update { state ->
-                    state.copy(controlState = result.toRootControlState(state.controlState))
+                    state.copy(
+                        controlState = result.toRootControlState(state.controlState),
+                        dashboardOverviewState = result.toRootDashboardOverviewState(
+                            state.dashboardOverviewState
+                        )
+                    )
                 }
             }
         }
@@ -210,6 +219,7 @@ private fun DeviceCoolingRootUiState.afterControlMutation(
 ): DeviceCoolingRootUiState = when (result) {
     is DeviceCoolingControlResult.Available -> copy(
         controlState = result.toRootControlState(controlState),
+        dashboardOverviewState = result.toRootDashboardOverviewState(dashboardOverviewState),
         controlMutationState = CoolingMutationState.Saved
     )
     is DeviceCoolingControlResult.Failed -> copy(
