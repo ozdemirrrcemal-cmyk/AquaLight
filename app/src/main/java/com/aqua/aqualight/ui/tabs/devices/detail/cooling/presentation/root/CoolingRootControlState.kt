@@ -1,5 +1,8 @@
 package com.aqua.aqualight.ui.tabs.devices.detail.cooling.presentation.root
 
+import com.aqua.aqualight.application.devices.cooling.DeviceCoolingFanHealth
+import com.aqua.aqualight.application.devices.cooling.DeviceCoolingSensorHealth
+import com.aqua.aqualight.application.devices.cooling.DeviceCoolingTelemetrySnapshot
 import com.aqua.aqualight.application.devices.cooling.control.DeviceCoolingControlFailure
 import com.aqua.aqualight.application.devices.cooling.control.DeviceCoolingControlResult
 import com.aqua.aqualight.application.devices.cooling.control.DeviceCoolingControlSnapshot
@@ -26,6 +29,16 @@ internal fun DeviceCoolingControlResult.toRootControlState(
     is DeviceCoolingControlResult.Failed -> previous.afterControlReadFailure(failure)
 }
 
+internal fun DeviceCoolingControlResult.toRootDashboardOverviewState(
+    previous: CoolingDataState<CoolingDashboardOverviewPresentation, Nothing>
+): CoolingDataState<CoolingDashboardOverviewPresentation, Nothing> = when (this) {
+    is DeviceCoolingControlResult.Available -> snapshot.telemetry
+        ?.toRootDashboardOverview()
+        ?.let { overview -> CoolingDataState.Content(overview) }
+        ?: previous
+    is DeviceCoolingControlResult.Failed -> previous
+}
+
 internal fun CoolingDataState<CoolingControlPresentation, DeviceCoolingControlFailure>
     .beginControlRefresh(): CoolingDataState<CoolingControlPresentation, DeviceCoolingControlFailure> =
     when (this) {
@@ -43,6 +56,30 @@ internal fun CoolingDataState<CoolingControlPresentation, DeviceCoolingControlFa
         CoolingDataState.Unsupported,
         is CoolingDataState.OperationError -> CoolingDataState.Loading
     }
+
+private fun DeviceCoolingTelemetrySnapshot.toRootDashboardOverview():
+    CoolingDashboardOverviewPresentation {
+    val active = activeAlarms
+    return CoolingDashboardOverviewPresentation(
+        roomTemperatureC = roomTemperatureC,
+        humidityPercent = humidityPercent,
+        powerWatts = powerWatts,
+        estimatedKwhPerDay = estimatedKwhPerDay,
+        fanHealth = when (fanHealth) {
+            DeviceCoolingFanHealth.UNVERIFIED,
+            DeviceCoolingFanHealth.UNKNOWN -> CoolingHealthState.UNKNOWN
+            DeviceCoolingFanHealth.HARDWARE_FAULT -> CoolingHealthState.FAULT
+        },
+        sensorHealth = when (sensorHealth) {
+            DeviceCoolingSensorHealth.OK -> CoolingHealthState.READY
+            DeviceCoolingSensorHealth.WARNING -> CoolingHealthState.WARNING
+            DeviceCoolingSensorHealth.CRITICAL -> CoolingHealthState.FAULT
+            DeviceCoolingSensorHealth.UNKNOWN -> CoolingHealthState.UNKNOWN
+        },
+        activeAlarmCount = active.size,
+        activeAlarmCodes = active.map { alarm -> alarm.code }
+    )
+}
 
 private fun CoolingDataState<CoolingControlPresentation, DeviceCoolingControlFailure>
     .afterControlReadFailure(
