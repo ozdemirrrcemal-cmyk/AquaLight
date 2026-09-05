@@ -1,5 +1,7 @@
 package com.aqua.aqualight.application.devices.cooling.control
 
+import com.aqua.aqualight.application.devices.cooling.DeviceCoolingTelemetrySnapshot
+
 private const val MINIMUM_PERCENT = 0
 private const val MAXIMUM_PERCENT = 100
 
@@ -8,7 +10,8 @@ data class DeviceCoolingControlSnapshot(
     val manualFanPercent: Int?,
     val actualFanPercent: Int?,
     val tankTemperatureC: Double?,
-    val capabilities: DeviceCoolingControlCapabilities
+    val capabilities: DeviceCoolingControlCapabilities,
+    val telemetry: DeviceCoolingTelemetrySnapshot? = null
 ) {
     init {
         require(mode in capabilities.supportedModes)
