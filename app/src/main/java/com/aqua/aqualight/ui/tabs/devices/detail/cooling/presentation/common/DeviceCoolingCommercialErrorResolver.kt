@@ -39,6 +39,10 @@ internal object DeviceCoolingCommercialErrorResolver {
                 R.string.device_cooling_error_storage_failure_title,
                 R.string.device_cooling_error_storage_failure_message
             )
+            DeviceCoolingCommandFailure.HISTORY_UNAVAILABLE -> commercialError(
+                R.string.device_cooling_error_history_unavailable_title,
+                R.string.device_cooling_error_history_unavailable_message
+            )
             DeviceCoolingCommandFailure.CLOCK_UNSYNCED -> commercialError(
                 R.string.device_cooling_error_clock_unsynced_title,
                 R.string.device_cooling_error_clock_unsynced_message
