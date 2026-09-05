@@ -28,7 +28,6 @@ internal fun DeviceCoolingDashboardScreen(
     modifier: Modifier = Modifier
 ) {
     val colors = aquaCoolingDashboardColors()
-    val typography = aquaCoolingDashboardTypography(colors)
     val contentAlpha = if (state.contentEnabled) {
         AquaCoolingInteractionStyle.enabledContentAlpha
     } else {
@@ -48,38 +47,17 @@ internal fun DeviceCoolingDashboardScreen(
                 end = AquaCoolingDashboardGeometry.screenHorizontalPadding
             )
     ) {
-        CoolingPinnedDashboardContent(
+        CoolingLiveHero(
             state = state,
-            actions = actions
+            colors = colors
         )
+        Spacer(modifier = Modifier.height(AquaCoolingDashboardGeometry.cardGap))
         CoolingScrollableDashboardContent(
             state = state,
             actions = actions,
             modifier = Modifier.weight(1f)
         )
     }
-}
-
-@Composable
-private fun CoolingPinnedDashboardContent(
-    state: DeviceCoolingRootUiState,
-    actions: DeviceCoolingDashboardActions
-) {
-    val colors = aquaCoolingDashboardColors()
-    val typography = aquaCoolingDashboardTypography(colors)
-    CoolingLiveHero(
-        state = state,
-        colors = colors
-    )
-    Spacer(modifier = Modifier.height(AquaCoolingDashboardGeometry.cardGap))
-    CoolingTemperatureCard(
-        state = state,
-        colors = colors,
-        typography = typography,
-        enabled = state.contentEnabled,
-        onClick = actions.onTemperatureHistoryClick
-    )
-    Spacer(modifier = Modifier.height(AquaCoolingDashboardGeometry.cardGap))
 }
 
 @Composable
@@ -95,6 +73,15 @@ private fun CoolingScrollableDashboardContent(
         contentPadding = PaddingValues(bottom = AquaCoolingDashboardGeometry.screenBottomPadding),
         verticalArrangement = Arrangement.spacedBy(AquaCoolingDashboardGeometry.cardGap)
     ) {
+        item(key = "temperature") {
+            CoolingTemperatureCard(
+                state = state,
+                colors = colors,
+                typography = typography,
+                enabled = state.contentEnabled,
+                onClick = actions.onTemperatureHistoryClick
+            )
+        }
         item(key = "fan") {
             CoolingFanAndModeRow(state = state, actions = actions)
         }
