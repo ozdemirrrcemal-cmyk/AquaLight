@@ -1,10 +1,14 @@
 package com.aqua.aqualight.ui.tabs.devices.detail.cooling.presentation.dashboard
 
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
@@ -31,36 +35,66 @@ internal fun DeviceCoolingDashboardScreen(
         AquaCoolingInteractionStyle.disabledContentAlpha
     }
 
-    LazyColumn(
+    Column(
         modifier = modifier
             .fillMaxSize()
             .alpha(contentAlpha)
             .semantics {
                 if (!state.contentEnabled) disabled()
-            },
-        contentPadding = PaddingValues(
-            start = AquaCoolingDashboardGeometry.screenHorizontalPadding,
-            top = AquaCoolingDashboardGeometry.screenTopPadding,
-            end = AquaCoolingDashboardGeometry.screenHorizontalPadding,
-            bottom = AquaCoolingDashboardGeometry.screenBottomPadding
-        ),
+            }
+            .padding(
+                start = AquaCoolingDashboardGeometry.screenHorizontalPadding,
+                top = AquaCoolingDashboardGeometry.screenTopPadding,
+                end = AquaCoolingDashboardGeometry.screenHorizontalPadding
+            )
+    ) {
+        CoolingPinnedDashboardContent(
+            state = state,
+            actions = actions
+        )
+        CoolingScrollableDashboardContent(
+            state = state,
+            actions = actions,
+            modifier = Modifier.weight(1f)
+        )
+    }
+}
+
+@Composable
+private fun CoolingPinnedDashboardContent(
+    state: DeviceCoolingRootUiState,
+    actions: DeviceCoolingDashboardActions
+) {
+    val colors = aquaCoolingDashboardColors()
+    val typography = aquaCoolingDashboardTypography(colors)
+    CoolingLiveHero(
+        state = state,
+        colors = colors
+    )
+    Spacer(modifier = Modifier.height(AquaCoolingDashboardGeometry.cardGap))
+    CoolingTemperatureCard(
+        state = state,
+        colors = colors,
+        typography = typography,
+        enabled = state.contentEnabled,
+        onClick = actions.onTemperatureHistoryClick
+    )
+    Spacer(modifier = Modifier.height(AquaCoolingDashboardGeometry.cardGap))
+}
+
+@Composable
+private fun CoolingScrollableDashboardContent(
+    state: DeviceCoolingRootUiState,
+    actions: DeviceCoolingDashboardActions,
+    modifier: Modifier
+) {
+    val colors = aquaCoolingDashboardColors()
+    val typography = aquaCoolingDashboardTypography(colors)
+    LazyColumn(
+        modifier = modifier.fillMaxWidth(),
+        contentPadding = PaddingValues(bottom = AquaCoolingDashboardGeometry.screenBottomPadding),
         verticalArrangement = Arrangement.spacedBy(AquaCoolingDashboardGeometry.cardGap)
     ) {
-        item(key = "live-hero") {
-            CoolingLiveHero(
-                state = state,
-                colors = colors
-            )
-        }
-        item(key = "temperature") {
-            CoolingTemperatureCard(
-                state = state,
-                colors = colors,
-                typography = typography,
-                enabled = state.contentEnabled,
-                onClick = actions.onTemperatureHistoryClick
-            )
-        }
         item(key = "fan") {
             CoolingFanAndModeRow(state = state, actions = actions)
         }
