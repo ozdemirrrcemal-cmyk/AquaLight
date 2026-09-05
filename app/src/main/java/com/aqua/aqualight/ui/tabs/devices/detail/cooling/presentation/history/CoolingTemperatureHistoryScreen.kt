@@ -34,8 +34,9 @@ import com.aqua.aqualight.ui.common.devicecard.AquaDeviceCardTypography
 import com.aqua.aqualight.ui.tabs.devices.detail.cooling.presentation.common.CoolingDataFreshness
 import com.aqua.aqualight.ui.tabs.devices.detail.cooling.presentation.common.CoolingDataState
 import com.aqua.aqualight.ui.tabs.devices.detail.cooling.presentation.common.CoolingStateMessageCard
+import com.aqua.aqualight.ui.tabs.devices.detail.cooling.presentation.common.toCommercialCoolingError
 
-/** Firmware-backed Cooling history surface with explicit typed read-state presentation. */
+/** Device-backed Cooling history surface with explicit typed read-state presentation. */
 @Composable
 internal fun DeviceCoolingTemperatureHistoryScreen(
     state: DeviceCoolingTemperatureHistoryUiState,
@@ -132,36 +133,58 @@ private data class HistoryStateMessage(
     val retryAvailable: Boolean
 )
 
-private fun historyStateMessage(
-    state: DeviceCoolingTemperatureHistoryUiState
-): HistoryStateMessage? = when (val dataState = state.dataState) {
-    CoolingDataState.Initial,
-    CoolingDataState.Loading -> HistoryStateMessage(
-        titleRes = R.string.device_cooling_history_loading_title,
-        messageRes = R.string.device_cooling_history_loading_message,
-        retryAvailable = false
-    )
-    is CoolingDataState.Content -> dataState.freshness.historyMessage()
-    is CoolingDataState.Empty -> when (dataState.freshness) {
-        CoolingDataFreshness.CURRENT -> HistoryStateMessage(
-            titleRes = R.string.device_cooling_history_empty_title,
-            messageRes = R.string.device_cooling_history_empty_message,
+private fun historyStateMessage(state: DeviceCoolingTemperatureHistoryUiState): HistoryStateMessage? {
+    state.dataState.typedHistoryFailureOrNull()?.let { failure ->
+        if (failure is DeviceCoolingTemperatureHistoryFailure.Rejected) {
+            val copy = failure.reason.toCommercialCoolingError()
+            return HistoryStateMessage(
+                titleRes = copy.titleRes,
+                messageRes = copy.messageRes,
+                retryAvailable = true
+            )
+        }
+    }
+
+    return when (val dataState = state.dataState) {
+        CoolingDataState.Initial,
+        CoolingDataState.Loading -> HistoryStateMessage(
+            titleRes = R.string.device_cooling_history_loading_title,
+            messageRes = R.string.device_cooling_history_loading_message,
             retryAvailable = false
         )
-        CoolingDataFreshness.REFRESHING -> refreshingHistoryMessage()
-        CoolingDataFreshness.STALE -> staleHistoryMessage()
+        is CoolingDataState.Content -> dataState.freshness.historyMessage()
+        is CoolingDataState.Empty -> when (dataState.freshness) {
+            CoolingDataFreshness.CURRENT -> HistoryStateMessage(
+                titleRes = R.string.device_cooling_history_empty_title,
+                messageRes = R.string.device_cooling_history_empty_message,
+                retryAvailable = false
+            )
+            CoolingDataFreshness.REFRESHING -> refreshingHistoryMessage()
+            CoolingDataFreshness.STALE -> staleHistoryMessage()
+        }
+        CoolingDataState.Unsupported -> HistoryStateMessage(
+            titleRes = R.string.device_cooling_history_unsupported_title,
+            messageRes = R.string.device_cooling_history_unsupported_message,
+            retryAvailable = false
+        )
+        CoolingDataState.Unavailable,
+        is CoolingDataState.OperationError -> HistoryStateMessage(
+            titleRes = R.string.device_cooling_history_unavailable_title,
+            messageRes = R.string.device_cooling_history_unavailable_message,
+            retryAvailable = true
+        )
     }
-    CoolingDataState.Unsupported -> HistoryStateMessage(
-        titleRes = R.string.device_cooling_history_unsupported_title,
-        messageRes = R.string.device_cooling_history_unsupported_message,
-        retryAvailable = false
-    )
+}
+
+private fun CoolingDataState<*, DeviceCoolingTemperatureHistoryFailure>.typedHistoryFailureOrNull():
+    DeviceCoolingTemperatureHistoryFailure? = when (this) {
+    is CoolingDataState.Content -> refreshFailure
+    is CoolingDataState.Empty -> refreshFailure
+    is CoolingDataState.OperationError -> failure
+    CoolingDataState.Initial,
+    CoolingDataState.Loading,
     CoolingDataState.Unavailable,
-    is CoolingDataState.OperationError -> HistoryStateMessage(
-        titleRes = R.string.device_cooling_history_unavailable_title,
-        messageRes = R.string.device_cooling_history_unavailable_message,
-        retryAvailable = true
-    )
+    CoolingDataState.Unsupported -> null
 }
 
 private fun CoolingDataFreshness.historyMessage(): HistoryStateMessage? = when (this) {
