@@ -32,7 +32,6 @@ data class DeviceCoolingManualSettingsUiState(
 
     val canWrite: Boolean
         get() = controlState.isCurrentAuthoritative &&
-            isManualMode &&
             mutationState != CoolingMutationState.Saving &&
             targetPercent != null &&
             capabilities?.writable == true &&
