@@ -25,14 +25,8 @@ internal fun DrawScope.drawCoolingFanRotor(
     deviceImage: ImageBitmap,
     rotationPhase: Float
 ) {
-    if (
-        deviceImage.width <= 0 ||
-        deviceImage.height <= 0 ||
-        size.width <= 0f ||
-        size.height <= 0f
-    ) {
-        return
-    }
+    if (deviceImage.width <= 0 || deviceImage.height <= 0) return
+    if (size.width <= 0f || size.height <= 0f) return
 
     val imageWidth = deviceImage.width.toFloat()
     val imageHeight = deviceImage.height.toFloat()
