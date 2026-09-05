@@ -15,6 +15,7 @@ import androidx.compose.foundation.layout.isImeVisible
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.weight
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.relocation.BringIntoViewRequester
 import androidx.compose.foundation.relocation.bringIntoViewRequester
@@ -22,6 +23,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
+import com.aqua.aqualight.ui.common.flow.AquaGuidedFlowColors
 import com.aqua.aqualight.ui.common.flow.AquaGuidedFlowGeometry
 import com.aqua.aqualight.ui.common.flow.aquaGuidedFlowColors
 
@@ -51,51 +53,74 @@ internal fun DeviceDosingCalibrationScreen(
             .fillMaxSize()
             .background(colors.background)
     ) {
-        CalibrationPump(
-            pumpCount = state.pumpCount,
-            channelNumber = state.channelNumber,
-            active = state.isPumpActive,
-            modifier = Modifier.padding(
-                start = AquaGuidedFlowGeometry.screenHorizontalPadding,
-                top = CALIBRATION_SCREEN_TOP_PADDING,
-                end = AquaGuidedFlowGeometry.screenHorizontalPadding
-            )
+        PinnedCalibrationPump(state)
+        CalibrationScrollableSteps(
+            state = state,
+            colors = colors,
+            listState = listState,
+            formBringIntoViewRequester = formBringIntoViewRequester,
+            onAction = onAction,
+            modifier = Modifier.weight(1f)
         )
-        LazyColumn(
-            state = listState,
-            modifier = Modifier
-                .weight(1f)
-                .fillMaxWidth()
-                .imePadding(),
-            contentPadding = PaddingValues(
-                start = AquaGuidedFlowGeometry.screenHorizontalPadding,
-                top = AquaGuidedFlowGeometry.sectionGap,
-                end = AquaGuidedFlowGeometry.screenHorizontalPadding
-            ),
-            verticalArrangement = Arrangement.spacedBy(AquaGuidedFlowGeometry.sectionGap),
-            userScrollEnabled =
-                state.step != DeviceDosingCalibrationStep.PRIME || !state.isPumpActive
-        ) {
-            item(key = CALIBRATION_PROGRESS_KEY) {
-                CalibrationProgressLabel(step = state.step, colors = colors)
-            }
-            item(key = CALIBRATION_ILLUSTRATION_KEY) {
-                CalibrationIllustrationPanel(state = state, colors = colors)
-            }
-            item(key = CALIBRATION_COPY_KEY) {
-                CalibrationStepCopy(state)
-            }
-            item(key = "$CALIBRATION_CONTROLS_KEY-${state.step.name}") {
-                CalibrationStepControls(
-                    state = state,
-                    colors = colors,
-                    onAction = onAction,
-                    modifier = Modifier.bringIntoViewRequester(formBringIntoViewRequester)
-                )
-            }
-            item(key = CALIBRATION_BOTTOM_SPACE_KEY) {
-                Spacer(Modifier.height(AquaGuidedFlowGeometry.screenBottomPadding))
-            }
+    }
+}
+
+@Composable
+private fun PinnedCalibrationPump(state: DeviceDosingCalibrationUiState) {
+    CalibrationPump(
+        pumpCount = state.pumpCount,
+        channelNumber = state.channelNumber,
+        active = state.isPumpActive,
+        modifier = Modifier.padding(
+            start = AquaGuidedFlowGeometry.screenHorizontalPadding,
+            top = CALIBRATION_SCREEN_TOP_PADDING,
+            end = AquaGuidedFlowGeometry.screenHorizontalPadding
+        )
+    )
+}
+
+@Composable
+private fun CalibrationScrollableSteps(
+    state: DeviceDosingCalibrationUiState,
+    colors: AquaGuidedFlowColors,
+    listState: LazyListState,
+    formBringIntoViewRequester: BringIntoViewRequester,
+    onAction: (DeviceDosingCalibrationAction) -> Unit,
+    modifier: Modifier
+) {
+    LazyColumn(
+        state = listState,
+        modifier = modifier
+            .fillMaxWidth()
+            .imePadding(),
+        contentPadding = PaddingValues(
+            start = AquaGuidedFlowGeometry.screenHorizontalPadding,
+            top = AquaGuidedFlowGeometry.sectionGap,
+            end = AquaGuidedFlowGeometry.screenHorizontalPadding
+        ),
+        verticalArrangement = Arrangement.spacedBy(AquaGuidedFlowGeometry.sectionGap),
+        userScrollEnabled =
+            state.step != DeviceDosingCalibrationStep.PRIME || !state.isPumpActive
+    ) {
+        item(key = CALIBRATION_PROGRESS_KEY) {
+            CalibrationProgressLabel(step = state.step, colors = colors)
+        }
+        item(key = CALIBRATION_ILLUSTRATION_KEY) {
+            CalibrationIllustrationPanel(state = state, colors = colors)
+        }
+        item(key = CALIBRATION_COPY_KEY) {
+            CalibrationStepCopy(state)
+        }
+        item(key = "$CALIBRATION_CONTROLS_KEY-${state.step.name}") {
+            CalibrationStepControls(
+                state = state,
+                colors = colors,
+                onAction = onAction,
+                modifier = Modifier.bringIntoViewRequester(formBringIntoViewRequester)
+            )
+        }
+        item(key = CALIBRATION_BOTTOM_SPACE_KEY) {
+            Spacer(Modifier.height(AquaGuidedFlowGeometry.screenBottomPadding))
         }
     }
 }
