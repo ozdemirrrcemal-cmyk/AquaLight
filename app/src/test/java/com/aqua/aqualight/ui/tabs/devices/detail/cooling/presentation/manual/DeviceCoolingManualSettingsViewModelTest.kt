@@ -19,6 +19,8 @@ import kotlinx.coroutines.test.runTest
 import kotlinx.coroutines.test.setMain
 import org.junit.After
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
+import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
@@ -38,7 +40,7 @@ class DeviceCoolingManualSettingsViewModelTest {
     }
 
     @Test
-    fun manualTargetWriteDoesNotRequireChangingTheActiveMode() = runTest(dispatcher) {
+    fun manualTargetWriteRequiresManualMode() = runTest(dispatcher) {
         val operations = FakeControlOperations(
             initial = available(
                 mode = DeviceCoolingControlMode.AUTOMATIC,
@@ -54,9 +56,9 @@ class DeviceCoolingManualSettingsViewModelTest {
         viewModel.bind(DEVICE_UID)
         viewModel.updateTargetPercent(73)
 
-        assertEquals(73, operations.lastRequestedPercent)
-        assertEquals(70, viewModel.uiState.value.targetPercent)
-        assertTrue(viewModel.uiState.value.canWrite)
+        assertNull(operations.lastRequestedPercent)
+        assertEquals(40, viewModel.uiState.value.targetPercent)
+        assertFalse(viewModel.uiState.value.canWrite)
     }
 
     @Test
@@ -75,6 +77,7 @@ class DeviceCoolingManualSettingsViewModelTest {
         viewModel.bind(DEVICE_UID)
         viewModel.updateTargetPercent(65)
 
+        assertEquals(65, operations.lastRequestedPercent)
         assertEquals(40, viewModel.uiState.value.targetPercent)
         assertTrue(
             viewModel.uiState.value.mutationState is CoolingMutationState.OperationError
