@@ -16,6 +16,7 @@ import com.aqua.aqualight.ui.common.bottomsheet.AquaTimePickerBottomSheet
 import com.aqua.aqualight.ui.common.bottomsheet.IntegerStepperBottomSheet
 import com.aqua.aqualight.ui.common.header.AquaHeaderPrimaryAction
 import com.aqua.aqualight.ui.tabs.devices.detail.cooling.presentation.common.DeviceCoolingModeSettingsFragment
+import com.aqua.aqualight.ui.tabs.devices.detail.cooling.presentation.common.toCommercialCoolingError
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
@@ -65,6 +66,7 @@ class DeviceCoolingProgramSettingsFragment : DeviceCoolingModeSettingsFragment(
                 } else {
                     DeviceCoolingProgramAvailabilityScreen(
                         loadState = state.loadState,
+                        commandFailure = state.commandFailure,
                         onRetry = { viewModel.bind(destinationDeviceUid) }
                     )
                 }
@@ -87,12 +89,16 @@ class DeviceCoolingProgramSettingsFragment : DeviceCoolingModeSettingsFragment(
         viewLifecycleOwner.lifecycleScope.launch {
             viewLifecycleOwner.repeatOnLifecycle(Lifecycle.State.STARTED) {
                 viewModel.uiState
-                    .map { state -> state.saveState }
+                    .map { state -> state.saveState to state.commandFailure }
                     .distinctUntilChanged()
-                    .collect { saveState ->
+                    .collect { (saveState, commandFailure) ->
                         if (saveState.isFailure) {
+                            val messageRes = commandFailure
+                                ?.toCommercialCoolingError()
+                                ?.messageRes
+                                ?: saveState.fallbackCommercialMessageRes()
                             (activity as? BaseActivity)?.showSnackBar(
-                                getString(R.string.device_cooling_program_save_failed),
+                                getString(messageRes),
                                 BaseActivity.SnackType.WARNING
                             )
                         }
@@ -159,7 +165,8 @@ class DeviceCoolingProgramSettingsFragment : DeviceCoolingModeSettingsFragment(
             minutesOfDay = slot.startMinutes,
             requestKey = REQUEST_START_TIME,
             titleRes = R.string.device_cooling_program_start_time_sheet_title,
-            messageRes = R.string.device_cooling_program_start_time_sheet_message
+            messageRes = R.string.device_cooling_program_start_time_sheet_message,
+            allowEndOfDay = false
         )
     }
 
@@ -170,7 +177,8 @@ class DeviceCoolingProgramSettingsFragment : DeviceCoolingModeSettingsFragment(
             minutesOfDay = slot.endMinutes,
             requestKey = REQUEST_END_TIME,
             titleRes = R.string.device_cooling_program_end_time_sheet_title,
-            messageRes = R.string.device_cooling_program_end_time_sheet_message
+            messageRes = R.string.device_cooling_program_end_time_sheet_message,
+            allowEndOfDay = true
         )
     }
 
@@ -204,15 +212,17 @@ class DeviceCoolingProgramSettingsFragment : DeviceCoolingModeSettingsFragment(
         minutesOfDay: Int,
         requestKey: String,
         titleRes: Int,
-        messageRes: Int
+        messageRes: Int,
+        allowEndOfDay: Boolean
     ) {
         AquaTimePickerBottomSheet.show(
             fragmentManager = parentFragmentManager,
             request = AquaTimePickerBottomSheet.Request(
                 title = getString(titleRes),
                 message = getString(messageRes),
-                initialHour = minutesOfDay / MINUTES_PER_HOUR,
-                initialMinute = minutesOfDay % MINUTES_PER_HOUR,
+                initialHour = if (minutesOfDay == MINUTES_PER_DAY) 24 else minutesOfDay / MINUTES_PER_HOUR,
+                initialMinute = if (minutesOfDay == MINUTES_PER_DAY) 0 else minutesOfDay % MINUTES_PER_HOUR,
+                allowEndOfDay = allowEndOfDay,
                 confirmText = getString(R.string.device_cooling_automatic_stepper_apply),
                 cancelText = getString(R.string.device_cooling_automatic_stepper_cancel),
                 resultTarget = AquaTimePickerBottomSheet.ResultTarget(
@@ -225,6 +235,7 @@ class DeviceCoolingProgramSettingsFragment : DeviceCoolingModeSettingsFragment(
 
     private companion object {
         const val MINUTES_PER_HOUR = 60
+        const val MINUTES_PER_DAY = 24 * MINUTES_PER_HOUR
         const val REQUEST_START_TIME = "cooling_program_start_time"
         const val REQUEST_END_TIME = "cooling_program_end_time"
         const val REQUEST_FAN_ON_TEMPERATURE = "cooling_program_fan_on_temperature"
@@ -253,3 +264,16 @@ private val DeviceCoolingProgramSaveState.isFailure: Boolean
         DeviceCoolingProgramSaveState.SAVING,
         DeviceCoolingProgramSaveState.SAVED -> false
     }
+
+private fun DeviceCoolingProgramSaveState.fallbackCommercialMessageRes(): Int = when (this) {
+    DeviceCoolingProgramSaveState.UNSUPPORTED -> R.string.device_cooling_error_unsupported_message
+    DeviceCoolingProgramSaveState.UNAVAILABLE -> R.string.device_cooling_error_unavailable_message
+    DeviceCoolingProgramSaveState.NOT_CONNECTED -> R.string.device_cooling_error_not_connected_message
+    DeviceCoolingProgramSaveState.REJECTED -> R.string.device_cooling_error_rejected_message
+    DeviceCoolingProgramSaveState.VALIDATION_ERROR ->
+        R.string.device_cooling_error_invalid_configuration_message
+    DeviceCoolingProgramSaveState.ERROR -> R.string.device_cooling_error_protocol_message
+    DeviceCoolingProgramSaveState.IDLE,
+    DeviceCoolingProgramSaveState.SAVING,
+    DeviceCoolingProgramSaveState.SAVED -> R.string.device_cooling_error_rejected_message
+}
