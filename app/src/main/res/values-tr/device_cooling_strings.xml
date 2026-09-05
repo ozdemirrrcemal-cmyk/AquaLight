@@ -31,7 +31,7 @@
     <string name="device_cooling_history_average_short">Ort.</string>
     <string name="device_cooling_history_maximum_short">Yüksek</string>
     <string name="device_cooling_history_no_samples">Bu dönem için sıcaklık ölçümü yok</string>
-    <string name="device_cooling_history_daily_empty">Firmware günlük özetleri sağladığında burada görünecek</string>
+    <string name="device_cooling_history_daily_empty">Cihaz günlük özet sağladığında burada görünecek</string>
 
     <string name="device_cooling_fan_speed_title">Fan Hızı</string>
     <string name="device_cooling_fan_speed_caption">Fan hızı</string>
@@ -82,8 +82,8 @@
 
     <string name="device_cooling_manual_settings_title">Manuel Fan</string>
     <string name="device_cooling_manual_target_title">Hedef Fan Hızı</string>
-    <string name="device_cooling_manual_target_description">Bu hedefi değiştirmek etkin çalışma modunu değiştirmez.</string>
-    <string name="device_cooling_manual_read_only">Bağlı firmware manuel hedefin değiştirilmesine izin vermiyor.</string>
+    <string name="device_cooling_manual_target_description">Fan hızı yalnız Manuel mod etkinken değiştirilebilir. Otomatik veya Program moduna geçildiğinde kayıtlı manuel hedef temizlenir.</string>
+    <string name="device_cooling_manual_read_only">Fan hedefini değiştirmek için Manuel moda geçin.</string>
     <string name="device_cooling_manual_write_failed">Manuel hedef cihaza kaydedilemedi. Tekrar deneyin.</string>
 
     <string name="device_cooling_automatic_settings_title">Otomatik Fan</string>
@@ -101,7 +101,7 @@
     <string name="device_cooling_automatic_zone_maximum">Maksimum</string>
     <string name="device_cooling_automatic_silent_mode_title">Sessiz Mod</string>
     <string name="device_cooling_automatic_silent_mode_description">Daha sessiz çalışma için otomatik fan çıkışını %1$d%% ile sınırlar.</string>
-    <string name="device_cooling_automatic_silent_mode_unavailable">Bağlı firmware sürümünde kullanılamıyor.</string>
+    <string name="device_cooling_automatic_silent_mode_unavailable">Bu cihazda kullanılamıyor.</string>
     <string name="device_cooling_automatic_silent_mode_toggle_description">Sessiz Modu aç veya kapat</string>
     <string name="device_cooling_automatic_save">Kaydet</string>
     <string name="device_cooling_automatic_saving">Kaydediliyor…</string>
@@ -143,6 +143,43 @@
     <string name="device_cooling_program_end_time_sheet_message">Bu zaman diliminin biteceği saati seç.</string>
     <string name="device_cooling_program_fan_on_temperature_sheet_title">Fan Başlangıç Sıcaklığı</string>
     <string name="device_cooling_program_fan_on_temperature_sheet_helper">Bu zaman dilimi içinde su bu sıcaklığa ulaştığında fan seçilen program hızında çalışır.</string>
+
+    <!-- Merkezi ticari Cooling hata metinleri. Ham firmware mesajları kullanıcıya gösterilmez. -->
+    <string name="device_cooling_error_conflict_title">Ayarlar cihazda değişti</string>
+    <string name="device_cooling_error_conflict_message">Cihazda daha yeni ayarlar var. Ekranı yenileyip değişikliği tekrar deneyin.</string>
+    <string name="device_cooling_error_invalid_request_title">Değişiklik uygulanamadı</string>
+    <string name="device_cooling_error_invalid_request_message">Cihaz bu isteği kabul edemedi. Ekranı yenileyip tekrar deneyin.</string>
+    <string name="device_cooling_error_invalid_configuration_title">Soğutma ayarlarını kontrol edin</string>
+    <string name="device_cooling_error_invalid_configuration_message">Bir veya daha fazla değer cihazın bildirdiği sınırların dışında. Ayarları kontrol edip tekrar deneyin.</string>
+    <string name="device_cooling_error_manual_mode_required_title">Manuel mod gerekli</string>
+    <string name="device_cooling_error_manual_mode_required_message">Fan hedefini değiştirmeden önce cihazı Manuel moda alın.</string>
+    <string name="device_cooling_error_hardware_unavailable_title">Soğutma fanı kullanılamıyor</string>
+    <string name="device_cooling_error_hardware_unavailable_message">Soğutma fanı çıkışı şu anda kullanılamıyor. Cihazı kontrol edip tekrar deneyin.</string>
+    <string name="device_cooling_error_hardware_failure_title">Soğutma çıkışı uygulanamadı</string>
+    <string name="device_cooling_error_hardware_failure_message">Cihaz fan çıkışını güvenli biçimde uygulayamadığı için yeni ayar kaydedilmedi. Cihazı kontrol edip tekrar deneyin.</string>
+    <string name="device_cooling_error_storage_failure_title">Ayar cihazda saklanamadı</string>
+    <string name="device_cooling_error_storage_failure_message">Cihaz bu değişikliği güvenli biçimde kaydedemedi. Önceki ayar geçerli kalır. Tekrar deneyin.</string>
+    <string name="device_cooling_error_clock_unsynced_title">Cihaz saatini kontrol edin</string>
+    <string name="device_cooling_error_clock_unsynced_message">Bu bilgi için cihaz saatinin senkronize olması gerekiyor. Cihazın saat ayarlarını kontrol edip tekrar deneyin.</string>
+    <string name="device_cooling_error_protocol_title">Cihaz yanıtı doğrulanamadı</string>
+    <string name="device_cooling_error_protocol_message">AquaLight cihazdan gelen soğutma verisini doğrulayamadı. Bağlantıyı yenileyip tekrar deneyin.</string>
+    <string name="device_cooling_error_rejected_title">Değişiklik kabul edilmedi</string>
+    <string name="device_cooling_error_rejected_message">Cihaz bu değişikliği kabul etmedi. Ekranı yenileyip tekrar deneyin.</string>
+    <string name="device_cooling_error_unsupported_title">Soğutma özelliği desteklenmiyor</string>
+    <string name="device_cooling_error_unsupported_message">Bu soğutma özelliği bağlı cihaz tarafından desteklenmiyor.</string>
+    <string name="device_cooling_error_unavailable_title">Soğutma kontrolleri kullanılamıyor</string>
+    <string name="device_cooling_error_unavailable_message">Soğutma kontrolleri geçici olarak kullanılamıyor. Cihaz bağlantısını kontrol edip tekrar deneyin.</string>
+    <string name="device_cooling_error_not_connected_title">Cihaz çevrimdışı</string>
+    <string name="device_cooling_error_not_connected_message">Cihazı yeniden bağlayıp tekrar deneyin.</string>
+    <string name="device_cooling_error_read_only_title">Soğutma ayarları salt okunur</string>
+    <string name="device_cooling_error_read_only_message">Bu ayarlar görüntülenebilir ancak bu cihazda değiştirilemez.</string>
+
+    <string name="device_cooling_alarm_water_sensor_fault">Su sıcaklığı sensörünü kontrol edin. Güvenlik için Otomatik ve Program soğutma duraklatıldı.</string>
+    <string name="device_cooling_alarm_ambient_sensor_fault">Oda sıcaklığı ve nem sensörünü kontrol edin. Suya dayalı soğutma çalışmaya devam edebilir.</string>
+    <string name="device_cooling_alarm_fan_hardware_fault">Soğutma fanı çıkışını kontrol edin. Cihaz toparlanana kadar soğutma çıkışı kullanılamaz.</string>
+    <string name="device_cooling_alarm_clock_unsynced">Cihaz saati senkronize değil. Program soğutması ve zamana bağlı geçmiş kullanılamayabilir.</string>
+    <string name="device_cooling_alarm_history_storage_fault">Sıcaklık geçmişi depolamasını kontrol edin. Anlık soğutma çalışmaya devam edebilir.</string>
+    <string name="device_cooling_alarm_config_storage_fault">Soğutma ayarları depolamasını kontrol edin. Cihaz güvenli bir yedek durumda çalışıyor.</string>
 
     <string name="device_cooling_value_unavailable">—</string>
     <string name="device_cooling_temperature_value_format">%1$.1f °C</string>
