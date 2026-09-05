@@ -161,6 +161,8 @@
     <string name="device_cooling_error_hardware_failure_message">The device could not safely apply the fan output, so the new setting was not kept. Check the device and try again.</string>
     <string name="device_cooling_error_storage_failure_title">Setting could not be stored</string>
     <string name="device_cooling_error_storage_failure_message">The device could not safely save this change. The previous setting remains in effect. Try again.</string>
+    <string name="device_cooling_error_history_unavailable_title">Cooling history could not be loaded</string>
+    <string name="device_cooling_error_history_unavailable_message">The device could not read the stored cooling history. Try again.</string>
     <string name="device_cooling_error_clock_unsynced_title">Device time needs attention</string>
     <string name="device_cooling_error_clock_unsynced_message">This information needs the device clock to be synchronized. Check the device time settings and try again.</string>
     <string name="device_cooling_error_protocol_title">Device response could not be verified</string>
