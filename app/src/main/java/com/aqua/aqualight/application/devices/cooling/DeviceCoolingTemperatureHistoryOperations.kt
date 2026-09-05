@@ -20,6 +20,9 @@ sealed interface DeviceCoolingTemperatureHistoryLoadResult {
 
     data object Unsupported : DeviceCoolingTemperatureHistoryLoadResult
     data object Unavailable : DeviceCoolingTemperatureHistoryLoadResult
+    data class Rejected(
+        val reason: DeviceCoolingCommandFailure
+    ) : DeviceCoolingTemperatureHistoryLoadResult
 }
 
 data class DeviceCoolingTemperatureHistorySnapshot(
