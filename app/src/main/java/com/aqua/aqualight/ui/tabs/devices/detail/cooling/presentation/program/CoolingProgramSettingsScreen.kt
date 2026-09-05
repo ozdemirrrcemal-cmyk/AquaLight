@@ -57,7 +57,6 @@ import com.aqua.aqualight.ui.common.cooling.aquaCoolingDashboardColors
 import com.aqua.aqualight.ui.common.cooling.aquaCoolingDashboardTypography
 import com.aqua.aqualight.ui.common.devicecard.AquaDeviceCardColors
 import com.aqua.aqualight.ui.common.devicecard.AquaDeviceCardTypography
-import java.time.LocalTime
 
 private data class ProgramSlotCardModel(
     val slot: DeviceCoolingProgramSlot,
@@ -88,8 +87,7 @@ internal fun DeviceCoolingProgramSettingsScreen(
     val colors = aquaCoolingDashboardColors()
     val typography = aquaCoolingDashboardTypography(colors)
     val context = LocalContext.current
-    val now = LocalTime.now()
-    val nowMinutes = now.hour * MINUTES_PER_HOUR + now.minute
+    val nowMinutes = state.currentMinuteOfDay
 
     LazyColumn(
         modifier = modifier.fillMaxSize(),
@@ -103,7 +101,7 @@ internal fun DeviceCoolingProgramSettingsScreen(
     ) {
         item(key = "active") {
             ProgramActiveCard(
-                activeSlot = state.activeSlotAt(nowMinutes),
+                activeSlot = state.authoritativeActiveSlot,
                 context = context,
                 colors = colors,
                 typography = typography
@@ -212,7 +210,7 @@ private fun ProgramActiveCard(
 @Composable
 private fun ProgramTimelineCard(
     slots: List<DeviceCoolingProgramSlot>,
-    nowMinutes: Int,
+    nowMinutes: Int?,
     colors: AquaDeviceCardColors,
     typography: AquaDeviceCardTypography
 ) {
@@ -246,19 +244,21 @@ private fun ProgramTimelineCard(
                 slots.forEach { slot ->
                     drawProgramSlot(slot, y, trackStroke, size.width, colors)
                 }
-                val nowX = size.width * (nowMinutes.toFloat() / MINUTES_PER_DAY)
-                drawLine(
-                    color = colors.primaryText.copy(alpha = AquaCoolingProgramAlpha.timelineNow),
-                    start = Offset(nowX, y - trackStroke * 1.35f),
-                    end = Offset(nowX, y + trackStroke * 1.35f),
-                    strokeWidth = AquaCoolingProgramGeometry.timelineNowStrokeWidth.toPx(),
-                    cap = StrokeCap.Round
-                )
-                drawCircle(
-                    color = colors.primaryText,
-                    radius = AquaCoolingProgramGeometry.timelineMarkerRadius.toPx(),
-                    center = Offset(nowX, y)
-                )
+                nowMinutes?.let { minute ->
+                    val nowX = size.width * (minute.toFloat() / MINUTES_PER_DAY)
+                    drawLine(
+                        color = colors.primaryText.copy(alpha = AquaCoolingProgramAlpha.timelineNow),
+                        start = Offset(nowX, y - trackStroke * 1.35f),
+                        end = Offset(nowX, y + trackStroke * 1.35f),
+                        strokeWidth = AquaCoolingProgramGeometry.timelineNowStrokeWidth.toPx(),
+                        cap = StrokeCap.Round
+                    )
+                    drawCircle(
+                        color = colors.primaryText,
+                        radius = AquaCoolingProgramGeometry.timelineMarkerRadius.toPx(),
+                        center = Offset(nowX, y)
+                    )
+                }
             }
             Row(
                 modifier = Modifier.fillMaxWidth(),
