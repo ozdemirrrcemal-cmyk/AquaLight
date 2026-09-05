@@ -2,6 +2,7 @@ package com.aqua.aqualight.ui.tabs.devices.detail.cooling.presentation.manual
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.aqua.aqualight.application.devices.cooling.control.DeviceCoolingControlFailure
 import com.aqua.aqualight.application.devices.cooling.control.DeviceCoolingControlOperations
 import com.aqua.aqualight.application.devices.cooling.control.DeviceCoolingControlResult
 import com.aqua.aqualight.ui.tabs.devices.detail.cooling.presentation.common.CoolingDataState
