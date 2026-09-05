@@ -83,6 +83,7 @@ object CoolingProgramSchedule {
                 CoolingProgramEditRejection.SLOT_NOT_FOUND
             )
             startMinutes !in 0 until slot.endMinutes ||
+                startMinutes % policy.timeStepMinutes != 0 ||
                 slot.endMinutes - startMinutes < policy.minimumSlotDurationMinutes ->
                 CoolingProgramEditResult.Rejected(CoolingProgramEditRejection.INVALID_TIME_RANGE)
             else -> replaceSlot(
@@ -105,7 +106,8 @@ object CoolingProgramSchedule {
             slot == null -> CoolingProgramEditResult.Rejected(
                 CoolingProgramEditRejection.SLOT_NOT_FOUND
             )
-            endMinutes !in 1 until COOLING_PROGRAM_MINUTES_PER_DAY ||
+            endMinutes !in 1..COOLING_PROGRAM_MINUTES_PER_DAY ||
+                endMinutes % policy.timeStepMinutes != 0 ||
                 endMinutes <= slot.startMinutes ||
                 endMinutes - slot.startMinutes < policy.minimumSlotDurationMinutes ->
                 CoolingProgramEditResult.Rejected(CoolingProgramEditRejection.INVALID_TIME_RANGE)
@@ -252,7 +254,7 @@ private fun findNextFreeWindow(
     }
 
     val candidateEnd = candidateStart + durationMinutes
-    return if (candidateEnd < COOLING_PROGRAM_MINUTES_PER_DAY) {
+    return if (candidateEnd <= COOLING_PROGRAM_MINUTES_PER_DAY) {
         candidateStart to candidateEnd
     } else {
         null
