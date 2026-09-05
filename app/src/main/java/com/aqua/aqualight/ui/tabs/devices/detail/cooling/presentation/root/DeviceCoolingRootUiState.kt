@@ -1,5 +1,6 @@
 package com.aqua.aqualight.ui.tabs.devices.detail.cooling.presentation.root
 
+import com.aqua.aqualight.application.devices.cooling.DeviceCoolingAlarmCode
 import com.aqua.aqualight.application.devices.cooling.DeviceCoolingAutomaticFailure
 import com.aqua.aqualight.application.devices.cooling.control.DeviceCoolingControlFailure
 import com.aqua.aqualight.application.devices.cooling.control.DeviceCoolingControlMode
@@ -39,16 +40,17 @@ enum class CoolingHealthState {
 }
 
 data class CoolingDashboardOverviewPresentation(
-    val roomTemperatureC: Double?,
-    val humidityPercent: Double?,
-    val powerWatts: Double?,
-    val estimatedKwhPerDay: Double?,
-    val roomTemperatureHistoryC: List<Double>,
-    val programSlotCount: Int?,
-    val nextProgramStartMinutesOfDay: Int?,
-    val fanHealth: CoolingHealthState,
-    val sensorHealth: CoolingHealthState,
-    val activeAlarmCount: Int?
+    val roomTemperatureC: Double? = null,
+    val humidityPercent: Double? = null,
+    val powerWatts: Double? = null,
+    val estimatedKwhPerDay: Double? = null,
+    val roomTemperatureHistoryC: List<Double> = emptyList(),
+    val programSlotCount: Int? = null,
+    val nextProgramStartMinutesOfDay: Int? = null,
+    val fanHealth: CoolingHealthState = CoolingHealthState.UNKNOWN,
+    val sensorHealth: CoolingHealthState = CoolingHealthState.UNKNOWN,
+    val activeAlarmCount: Int? = null,
+    val activeAlarmCodes: List<DeviceCoolingAlarmCode> = emptyList()
 )
 
 data class DeviceCoolingRootUiState(
@@ -152,4 +154,7 @@ data class DeviceCoolingRootUiState(
 
     val activeAlarmCount: Int?
         get() = dashboardOverview?.activeAlarmCount
+
+    val activeAlarmCodes: List<DeviceCoolingAlarmCode>
+        get() = dashboardOverview?.activeAlarmCodes.orEmpty()
 }
