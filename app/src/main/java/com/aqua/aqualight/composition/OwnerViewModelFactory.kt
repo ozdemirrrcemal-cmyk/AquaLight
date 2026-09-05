@@ -189,7 +189,7 @@ internal class OwnerViewModelFactory(
                 )
             DeviceCoolingProgramSettingsViewModel::class.java ->
                 DeviceCoolingProgramSettingsViewModel(
-                    operations = DefaultDeviceCoolingProgramOperations()
+                    operations = DefaultDeviceCoolingProgramOperations(repository)
                 )
             DeviceTimerRootViewModel::class.java ->
                 DeviceTimerRootViewModel(DefaultDeviceRootOperations(repository))
