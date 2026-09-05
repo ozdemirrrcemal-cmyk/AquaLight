@@ -66,7 +66,6 @@ internal fun CoolingDashboardPreview() {
                     humidityPercent = 56.0,
                     powerWatts = 0.325,
                     estimatedKwhPerDay = 0.0078,
-                    roomTemperatureHistoryC = PREVIEW_ROOM_TEMPERATURES,
                     programSlotCount = 3,
                     nextProgramStartMinutesOfDay = 18 * 60,
                     fanHealth = CoolingHealthState.READY,
@@ -103,23 +102,4 @@ private val PREVIEW_TANK_TEMPERATURES = listOf(
     26.5,
     26.3,
     26.6
-)
-
-private val PREVIEW_ROOM_TEMPERATURES = listOf(
-    24.0,
-    24.3,
-    24.2,
-    24.5,
-    24.3,
-    24.4,
-    24.0,
-    23.6,
-    23.5,
-    23.7,
-    24.0,
-    23.8,
-    24.0,
-    23.7,
-    23.9,
-    23.8
 )
