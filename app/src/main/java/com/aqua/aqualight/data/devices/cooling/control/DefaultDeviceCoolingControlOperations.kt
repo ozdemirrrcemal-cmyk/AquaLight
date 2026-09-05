@@ -7,6 +7,7 @@ import com.aqua.aqualight.application.devices.cooling.control.DeviceCoolingContr
 import com.aqua.aqualight.application.devices.cooling.control.DeviceCoolingControlResult
 import com.aqua.aqualight.application.devices.cooling.control.DeviceCoolingControlSnapshot
 import com.aqua.aqualight.application.devices.cooling.control.DeviceCoolingManualFanCapabilities
+import com.aqua.aqualight.data.devices.cooling.v1.DeviceCoolingV1FailureMapper
 import com.aqua.aqualight.data.devices.model.DeviceFamily
 import com.aqua.aqualight.data.devices.model.DeviceSnapshot
 import com.aqua.aqualight.data.devices.model.DeviceUid
@@ -233,7 +234,9 @@ private suspend fun DeviceRuntimeCommandOutcome<*>.toMutationResult(
     is DeviceRuntimeCommandOutcome.NotConnected,
     is DeviceRuntimeCommandOutcome.NotAuthenticated -> failed(DeviceCoolingControlFailure.NotConnected)
     is DeviceRuntimeCommandOutcome.UnsupportedByDevice -> failed(DeviceCoolingControlFailure.Unsupported)
-    is DeviceRuntimeCommandOutcome.FirmwareError -> failed(DeviceCoolingControlFailure.Rejected)
+    is DeviceRuntimeCommandOutcome.FirmwareError -> failed(
+        DeviceCoolingControlFailure.Rejected(DeviceCoolingV1FailureMapper.map(this))
+    )
     is DeviceRuntimeCommandOutcome.ProtocolError -> failed(DeviceCoolingControlFailure.InvalidData)
     is DeviceRuntimeCommandOutcome.SendFailed,
     is DeviceRuntimeCommandOutcome.Timeout,
