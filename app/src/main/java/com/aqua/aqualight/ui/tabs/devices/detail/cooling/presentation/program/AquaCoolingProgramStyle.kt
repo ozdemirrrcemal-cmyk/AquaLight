@@ -6,6 +6,10 @@ import com.aqua.aqualight.ui.common.cooling.AquaCoolingDashboardGeometry
 
 /** Central visual contract for the Cooling multi-period program editor. */
 object AquaCoolingProgramGeometry {
+    const val timelineCenterFraction = 0.50f
+    const val timelineNowExtentMultiplier = 1.35f
+    const val expandedChevronRotationDegrees = 90f
+
     val screenHorizontalPadding = AquaCoolingDashboardGeometry.screenHorizontalPadding
     val screenTopPadding = 10.dp
     val screenBottomPadding = 28.dp
@@ -49,6 +53,7 @@ object AquaCoolingProgramGeometry {
 }
 
 object AquaCoolingProgramAlpha {
+    const val inlineActionEnabled = 1f
     const val activeDot = 0.96f
     const val timelineTrack = 0.22f
     const val timelinePeriod = 0.88f

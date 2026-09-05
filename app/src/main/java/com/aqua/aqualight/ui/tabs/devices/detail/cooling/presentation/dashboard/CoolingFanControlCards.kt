@@ -32,6 +32,7 @@ import com.aqua.aqualight.ui.common.cooling.AquaCoolingDashboardGeometry
 import com.aqua.aqualight.ui.common.cooling.AquaCoolingDashboardTypography
 import com.aqua.aqualight.ui.common.cooling.AquaCoolingGaugeSpec
 import com.aqua.aqualight.ui.common.cooling.AquaCoolingSelectionIndicator
+import com.aqua.aqualight.ui.common.cooling.aquaCoolingDashboardTypography
 import com.aqua.aqualight.ui.common.devicecard.AquaDeviceCardColors
 import com.aqua.aqualight.ui.common.devicecard.AquaDeviceCardGeometry
 import com.aqua.aqualight.ui.common.devicecard.AquaDeviceCardSurface
@@ -82,88 +83,114 @@ private fun CoolingFanGauge(
         modifier = Modifier.size(AquaCoolingDashboardGeometry.gaugeSize),
         contentAlignment = Alignment.Center
     ) {
-        Canvas(modifier = Modifier.fillMaxSize()) {
-            val stroke = AquaCoolingDashboardGeometry.gaugeStrokeWidth.toPx()
-            val inset = stroke / 2f + AquaCoolingDashboardGeometry.gaugeInnerGap.toPx()
-            val arcSize = androidx.compose.ui.geometry.Size(
-                width = (size.width - inset * 2f).coerceAtLeast(1f),
-                height = (size.height - inset * 2f).coerceAtLeast(1f)
-            )
+        CoolingFanGaugeArc(clamped = clamped, colors = colors)
+        CoolingFanGaugeValue(clamped = clamped, colors = colors, typography = typography)
+        CoolingFanGaugeScale(
+            colors = colors,
+            typography = typography,
+            modifier = Modifier.align(Alignment.BottomCenter)
+        )
+    }
+}
+
+@Composable
+private fun CoolingFanGaugeArc(clamped: Int?, colors: AquaDeviceCardColors) {
+    Canvas(modifier = Modifier.fillMaxSize()) {
+        val stroke = AquaCoolingDashboardGeometry.gaugeStrokeWidth.toPx()
+        val inset = stroke / 2f + AquaCoolingDashboardGeometry.gaugeInnerGap.toPx()
+        val arcSize = androidx.compose.ui.geometry.Size(
+            width = (size.width - inset * 2f).coerceAtLeast(1f),
+            height = (size.height - inset * 2f).coerceAtLeast(1f)
+        )
+        drawArc(
+            color = colors.secondaryText.copy(alpha = AquaCoolingDashboardAlpha.trackInactive),
+            startAngle = AquaCoolingGaugeSpec.startAngle,
+            sweepAngle = AquaCoolingGaugeSpec.sweepAngle,
+            useCenter = false,
+            topLeft = Offset(inset, inset),
+            size = arcSize,
+            style = Stroke(width = stroke, cap = StrokeCap.Round)
+        )
+        clamped?.let { value ->
             drawArc(
-                color = colors.secondaryText.copy(alpha = AquaCoolingDashboardAlpha.trackInactive),
+                color = colors.accent,
                 startAngle = AquaCoolingGaugeSpec.startAngle,
-                sweepAngle = AquaCoolingGaugeSpec.sweepAngle,
+                sweepAngle = AquaCoolingGaugeSpec.sweepAngle * value /
+                    AquaCoolingGaugeSpec.maximumPercent,
                 useCenter = false,
                 topLeft = Offset(inset, inset),
                 size = arcSize,
                 style = Stroke(width = stroke, cap = StrokeCap.Round)
             )
-            clamped?.let { value ->
-                drawArc(
-                    color = colors.accent,
-                    startAngle = AquaCoolingGaugeSpec.startAngle,
-                    sweepAngle = AquaCoolingGaugeSpec.sweepAngle * value /
-                        AquaCoolingGaugeSpec.maximumPercent,
-                    useCenter = false,
-                    topLeft = Offset(inset, inset),
-                    size = arcSize,
-                    style = Stroke(width = stroke, cap = StrokeCap.Round)
-                )
-            }
         }
-        Column(
-            modifier = Modifier.padding(top = AquaCoolingDashboardGeometry.gaugeCaptionTopPadding),
-            horizontalAlignment = Alignment.CenterHorizontally
-        ) {
-            BasicText(
-                text = clamped?.let { value ->
-                    stringResource(R.string.device_cooling_percent_value_format, value)
-                } ?: stringResource(R.string.device_cooling_value_unavailable),
-                style = typography.title.copy(
-                    color = colors.primaryText,
-                    fontSize = AquaCoolingDashboardTypography.gaugeValueSize,
-                    textAlign = TextAlign.Center
-                )
+    }
+}
+
+@Composable
+private fun CoolingFanGaugeValue(
+    clamped: Int?,
+    colors: AquaDeviceCardColors,
+    typography: AquaDeviceCardTypography
+) {
+    Column(
+        modifier = Modifier.padding(top = AquaCoolingDashboardGeometry.gaugeCaptionTopPadding),
+        horizontalAlignment = Alignment.CenterHorizontally
+    ) {
+        BasicText(
+            text = clamped?.let { value ->
+                stringResource(R.string.device_cooling_percent_value_format, value)
+            } ?: stringResource(R.string.device_cooling_value_unavailable),
+            style = typography.title.copy(
+                color = colors.primaryText,
+                fontSize = AquaCoolingDashboardTypography.gaugeValueSize,
+                textAlign = TextAlign.Center
             )
-            BasicText(
-                text = stringResource(R.string.device_cooling_fan_speed_caption),
-                style = typography.caption.copy(
-                    color = colors.secondaryText,
-                    fontSize = AquaCoolingDashboardTypography.gaugeCaptionSize,
-                    textAlign = TextAlign.Center
-                )
+        )
+        BasicText(
+            text = stringResource(R.string.device_cooling_fan_speed_caption),
+            style = typography.caption.copy(
+                color = colors.secondaryText,
+                fontSize = AquaCoolingDashboardTypography.gaugeCaptionSize,
+                textAlign = TextAlign.Center
             )
-        }
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .align(Alignment.BottomCenter)
-                .padding(bottom = AquaCoolingDashboardGeometry.gaugeLabelsBottomPadding)
-        ) {
-            BasicText(
-                text = stringResource(
-                    R.string.device_cooling_percent_value_format,
-                    AquaCoolingGaugeSpec.minimumPercent
-                ),
-                style = typography.micro.copy(
-                    color = colors.secondaryText,
-                    fontSize = AquaCoolingDashboardTypography.gaugeScaleSize
-                ),
-                modifier = Modifier.weight(1f)
-            )
-            BasicText(
-                text = stringResource(
-                    R.string.device_cooling_percent_value_format,
-                    AquaCoolingGaugeSpec.maximumPercent
-                ),
-                style = typography.micro.copy(
-                    color = colors.secondaryText,
-                    fontSize = AquaCoolingDashboardTypography.gaugeScaleSize,
-                    textAlign = TextAlign.End
-                ),
-                modifier = Modifier.weight(1f)
-            )
-        }
+        )
+    }
+}
+
+@Composable
+private fun CoolingFanGaugeScale(
+    colors: AquaDeviceCardColors,
+    typography: AquaDeviceCardTypography,
+    modifier: Modifier = Modifier
+) {
+    Row(
+        modifier = modifier
+            .fillMaxWidth()
+            .padding(bottom = AquaCoolingDashboardGeometry.gaugeLabelsBottomPadding)
+    ) {
+        BasicText(
+            text = stringResource(
+                R.string.device_cooling_percent_value_format,
+                AquaCoolingGaugeSpec.minimumPercent
+            ),
+            style = typography.micro.copy(
+                color = colors.secondaryText,
+                fontSize = AquaCoolingDashboardTypography.gaugeScaleSize
+            ),
+            modifier = Modifier.weight(1f)
+        )
+        BasicText(
+            text = stringResource(
+                R.string.device_cooling_percent_value_format,
+                AquaCoolingGaugeSpec.maximumPercent
+            ),
+            style = typography.micro.copy(
+                color = colors.secondaryText,
+                fontSize = AquaCoolingDashboardTypography.gaugeScaleSize,
+                textAlign = TextAlign.End
+            ),
+            modifier = Modifier.weight(1f)
+        )
     }
 }
 
@@ -172,10 +199,10 @@ internal fun CoolingModeCard(
     state: DeviceCoolingRootUiState,
     enabled: Boolean,
     colors: AquaDeviceCardColors,
-    typography: AquaDeviceCardTypography,
     onModeSelected: (CoolingControlMode) -> Unit,
     modifier: Modifier = Modifier
 ) {
+    val typography = aquaCoolingDashboardTypography(colors)
     AquaDeviceCardSurface(
         modifier = modifier.heightIn(min = AquaCoolingDashboardGeometry.compactCardMinimumHeight)
     ) {
@@ -193,7 +220,6 @@ internal fun CoolingModeCard(
                     selected = mode == state.selectedMode,
                     enabled = enabled && mode in state.supportedModes,
                     colors = colors,
-                    typography = typography,
                     onClick = { onModeSelected(mode) }
                 )
             }
@@ -214,9 +240,9 @@ private fun CoolingModeOption(
     selected: Boolean,
     enabled: Boolean,
     colors: AquaDeviceCardColors,
-    typography: AquaDeviceCardTypography,
     onClick: () -> Unit
 ) {
+    val typography = aquaCoolingDashboardTypography(colors)
     val shape = AquaCoolingDashboardGeometry.optionShape
     Row(
         modifier = Modifier

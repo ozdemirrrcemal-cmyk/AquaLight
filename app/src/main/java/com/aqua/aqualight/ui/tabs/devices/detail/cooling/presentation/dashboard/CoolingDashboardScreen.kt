@@ -140,7 +140,6 @@ private fun CoolingFanAndModeRow(
             state = state,
             enabled = state.contentEnabled && state.controlAvailable && state.modeSelectionWritable,
             colors = colors,
-            typography = typography,
             onModeSelected = actions.onModeSelected,
             modifier = Modifier.weight(1f)
         )

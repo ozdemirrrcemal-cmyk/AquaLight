@@ -57,7 +57,7 @@ internal fun CoolingDashboardPreview() {
             ),
             historyState = CoolingDataState.Content(
                 value = CoolingHistoryOverviewPresentation(
-                    temperaturesC = PREVIEW_TANK_TEMPERATURES
+                    temperaturesC = previewTankTemperatures
                 )
             ),
             dashboardOverviewState = CoolingDataState.Content(
@@ -84,21 +84,38 @@ internal fun CoolingDashboardPreview() {
     )
 }
 
-private val PREVIEW_TANK_TEMPERATURES = listOf(
-    25.8,
-    26.4,
-    26.7,
-    27.1,
-    27.0,
-    27.3,
-    26.9,
-    27.1,
-    26.6,
-    26.2,
-    26.0,
-    26.4,
-    26.7,
-    26.5,
-    26.3,
-    26.6
+private val previewTankTemperatures = listOf(
+    PREVIEW_TEMPERATURE_01_C,
+    PREVIEW_TEMPERATURE_02_C,
+    PREVIEW_TEMPERATURE_03_C,
+    PREVIEW_TEMPERATURE_04_C,
+    PREVIEW_TEMPERATURE_05_C,
+    PREVIEW_TEMPERATURE_06_C,
+    PREVIEW_TEMPERATURE_07_C,
+    PREVIEW_TEMPERATURE_08_C,
+    PREVIEW_TEMPERATURE_09_C,
+    PREVIEW_TEMPERATURE_10_C,
+    PREVIEW_TEMPERATURE_11_C,
+    PREVIEW_TEMPERATURE_12_C,
+    PREVIEW_TEMPERATURE_13_C,
+    PREVIEW_TEMPERATURE_14_C,
+    PREVIEW_TEMPERATURE_15_C,
+    PREVIEW_TEMPERATURE_16_C
 )
+
+private const val PREVIEW_TEMPERATURE_01_C = 25.8
+private const val PREVIEW_TEMPERATURE_02_C = 26.4
+private const val PREVIEW_TEMPERATURE_03_C = 26.7
+private const val PREVIEW_TEMPERATURE_04_C = 27.1
+private const val PREVIEW_TEMPERATURE_05_C = 27.0
+private const val PREVIEW_TEMPERATURE_06_C = 27.3
+private const val PREVIEW_TEMPERATURE_07_C = 26.9
+private const val PREVIEW_TEMPERATURE_08_C = 27.1
+private const val PREVIEW_TEMPERATURE_09_C = 26.6
+private const val PREVIEW_TEMPERATURE_10_C = 26.2
+private const val PREVIEW_TEMPERATURE_11_C = 26.0
+private const val PREVIEW_TEMPERATURE_12_C = 26.4
+private const val PREVIEW_TEMPERATURE_13_C = 26.7
+private const val PREVIEW_TEMPERATURE_14_C = 26.5
+private const val PREVIEW_TEMPERATURE_15_C = 26.3
+private const val PREVIEW_TEMPERATURE_16_C = 26.6

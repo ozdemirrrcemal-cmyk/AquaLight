@@ -4,14 +4,15 @@ import androidx.compose.foundation.Canvas
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
-import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.StrokeJoin
-import androidx.compose.ui.graphics.drawscope.DrawScope
+import androidx.compose.ui.graphics.drawscope.DrawStyle
+import androidx.compose.ui.graphics.drawscope.Fill
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.drawscope.withTransform
+import androidx.compose.ui.graphics.vector.PathParser
 import androidx.compose.ui.unit.Dp
 
 enum class AquaCoolingDashboardIconKind {
@@ -25,6 +26,12 @@ enum class AquaCoolingDashboardIconKind {
     CHEVRON
 }
 
+/**
+ * Draws the Cooling icon family from normalized vector paths.
+ *
+ * Path geometry is declarative data rather than executable coordinate arithmetic. This keeps the
+ * icon contract independently reviewable while preserving a caller-controlled physical stroke.
+ */
 @Composable
 fun AquaCoolingDashboardIcon(
     kind: AquaCoolingDashboardIconKind,
@@ -32,318 +39,76 @@ fun AquaCoolingDashboardIcon(
     modifier: Modifier = Modifier,
     strokeWidth: Dp = AquaCoolingDashboardGeometry.dashboardIconStrokeWidth
 ) {
+    val icon = coolingIconPaths.getValue(kind)
     Canvas(modifier = modifier) {
-        val stroke = Stroke(
-            width = strokeWidth.toPx(),
-            cap = StrokeCap.Round,
-            join = StrokeJoin.Round
-        )
-        when (kind) {
-            AquaCoolingDashboardIconKind.WATER -> drawWaterIcon(tint, stroke)
-            AquaCoolingDashboardIconKind.ROOM -> drawRoomIcon(tint, stroke)
-            AquaCoolingDashboardIconKind.HUMIDITY -> drawHumidityIcon(tint, stroke)
-            AquaCoolingDashboardIconKind.POWER -> drawPowerIcon(tint)
-            AquaCoolingDashboardIconKind.AUTOMATIC -> drawAutomaticIcon(tint, stroke)
-            AquaCoolingDashboardIconKind.MANUAL -> drawManualIcon(tint, stroke)
-            AquaCoolingDashboardIconKind.PROGRAM -> drawProgramIcon(tint, stroke)
-            AquaCoolingDashboardIconKind.CHEVRON -> drawChevronIcon(tint, stroke)
+        withTransform({
+            scale(scaleX = size.width, scaleY = size.height, pivot = Offset.Zero)
+        }) {
+            val style: DrawStyle = if (icon.filled) {
+                Fill
+            } else {
+                Stroke(
+                    width = strokeWidth.toPx() / size.minDimension,
+                    cap = StrokeCap.Round,
+                    join = StrokeJoin.Round
+                )
+            }
+            drawPath(path = icon.path, color = tint, style = style)
         }
     }
 }
 
-private fun DrawScope.drawWaterIcon(color: Color, stroke: Stroke) {
-    val drop = Path().apply {
-        moveTo(size.width * 0.50f, size.height * 0.06f)
-        cubicTo(
-            size.width * 0.43f,
-            size.height * 0.23f,
-            size.width * 0.22f,
-            size.height * 0.47f,
-            size.width * 0.22f,
-            size.height * 0.65f
-        )
-        cubicTo(
-            size.width * 0.22f,
-            size.height * 0.85f,
-            size.width * 0.34f,
-            size.height * 0.95f,
-            size.width * 0.50f,
-            size.height * 0.95f
-        )
-        cubicTo(
-            size.width * 0.67f,
-            size.height * 0.95f,
-            size.width * 0.78f,
-            size.height * 0.84f,
-            size.width * 0.78f,
-            size.height * 0.65f
-        )
-        cubicTo(
-            size.width * 0.78f,
-            size.height * 0.47f,
-            size.width * 0.57f,
-            size.height * 0.23f,
-            size.width * 0.50f,
-            size.height * 0.06f
-        )
-        close()
-    }
-    drawPath(path = drop, color = color, style = stroke)
-}
+private data class CoolingIconPath(
+    val path: Path,
+    val filled: Boolean = false
+)
 
-private fun DrawScope.drawRoomIcon(color: Color, stroke: Stroke) {
-    val roof = Path().apply {
-        moveTo(size.width * 0.08f, size.height * 0.46f)
-        lineTo(size.width * 0.50f, size.height * 0.10f)
-        lineTo(size.width * 0.92f, size.height * 0.46f)
-    }
-    drawPath(path = roof, color = color, style = stroke)
-    drawIconLine(
-        color = color,
-        start = Offset(size.width * 0.18f, size.height * 0.39f),
-        end = Offset(size.width * 0.18f, size.height * 0.90f),
-        stroke = stroke
+private fun coolingIconPath(pathData: String, filled: Boolean = false): CoolingIconPath =
+    CoolingIconPath(
+        path = PathParser().parsePathString(pathData).toPath(),
+        filled = filled
     )
-    drawIconLine(
-        color = color,
-        start = Offset(size.width * 0.82f, size.height * 0.39f),
-        end = Offset(size.width * 0.82f, size.height * 0.90f),
-        stroke = stroke
-    )
-    drawIconLine(
-        color = color,
-        start = Offset(size.width * 0.18f, size.height * 0.90f),
-        end = Offset(size.width * 0.82f, size.height * 0.90f),
-        stroke = stroke
-    )
-    drawRect(
-        color = color,
-        topLeft = Offset(size.width * 0.43f, size.height * 0.61f),
-        size = Size(size.width * 0.20f, size.height * 0.29f),
-        style = stroke
-    )
-}
 
-private fun DrawScope.drawHumidityIcon(color: Color, stroke: Stroke) {
-    val dropBounds = Size(size.width * 0.67f, size.height)
-    withTransform({ scale(dropBounds.width / size.width, dropBounds.height / size.height) }) {
-        drawWaterIcon(color, stroke)
-    }
-    drawCircle(
-        color = color,
-        radius = size.minDimension * 0.07f,
-        center = Offset(size.width * 0.72f, size.height * 0.55f),
-        style = stroke
+private val coolingIconPaths = mapOf(
+    AquaCoolingDashboardIconKind.WATER to coolingIconPath(
+        "M.50,.06 C.43,.23 .22,.47 .22,.65 C.22,.85 .34,.95 .50,.95 " +
+            "C.67,.95 .78,.84 .78,.65 C.78,.47 .57,.23 .50,.06 Z"
+    ),
+    AquaCoolingDashboardIconKind.ROOM to coolingIconPath(
+        "M.08,.46 L.50,.10 .92,.46 M.18,.39 L.18,.90 L.82,.90 L.82,.39 " +
+            "M.43,.90 L.43,.61 .63,.61 .63,.90"
+    ),
+    AquaCoolingDashboardIconKind.HUMIDITY to coolingIconPath(
+        "M.335,.06 C.288,.23 .147,.47 .147,.65 C.147,.85 .228,.95 .335,.95 " +
+            "C.449,.95 .523,.84 .523,.65 C.523,.47 .382,.23 .335,.06 Z " +
+            "M.79,.55 A.07,.07 0 1,1 .65,.55 A.07,.07 0 1,1 .79,.55 " +
+            "M.95,.78 A.07,.07 0 1,1 .81,.78 A.07,.07 0 1,1 .95,.78 " +
+            "M.86,.52 L.73,.82"
+    ),
+    AquaCoolingDashboardIconKind.POWER to coolingIconPath(
+        pathData = "M.58,.03 L.20,.57 .47,.57 .39,.97 .82,.40 .54,.40 Z",
+        filled = true
+    ),
+    AquaCoolingDashboardIconKind.AUTOMATIC to coolingIconPath(
+        "M.86,.50 A.36,.36 0 1,1 .14,.50 A.36,.36 0 1,1 .86,.50 " +
+            "M.37,.68 L.50,.31 .63,.68 M.42,.53 L.58,.53 " +
+            "M.047,.289 A.50,.50 0 0,1 .561,.004"
+    ),
+    AquaCoolingDashboardIconKind.MANUAL to coolingIconPath(
+        "M.34,.54 L.34,.22 C.34,.14 .45,.14 .45,.23 L.45,.12 " +
+            "C.45,.04 .56,.04 .56,.13 L.56,.21 C.56,.13 .67,.13 .67,.22 " +
+            "L.67,.32 C.67,.24 .78,.24 .78,.34 L.78,.61 " +
+            "C.78,.82 .66,.94 .49,.94 C.36,.94 .29,.85 .23,.73 L.12,.51 " +
+            "C.09,.43 .19,.37 .25,.44 Z"
+    ),
+    AquaCoolingDashboardIconKind.PROGRAM to coolingIconPath(
+        "M.20,.18 H.80 Q.90,.18 .90,.28 V.78 Q.90,.88 .80,.88 H.20 " +
+            "Q.10,.88 .10,.78 V.28 Q.10,.18 .20,.18 Z M.10,.38 H.90 " +
+            "M.30,.08 V.28 M.69,.08 V.28 " +
+            "M.85,.67 A.18,.18 0 1,1 .49,.67 A.18,.18 0 1,1 .85,.67 " +
+            "M.67,.67 V.57 M.67,.67 H.76"
+    ),
+    AquaCoolingDashboardIconKind.CHEVRON to coolingIconPath(
+        "M.32,.16 L.68,.50 .32,.84"
     )
-    drawCircle(
-        color = color,
-        radius = size.minDimension * 0.07f,
-        center = Offset(size.width * 0.88f, size.height * 0.78f),
-        style = stroke
-    )
-    drawIconLine(
-        color = color,
-        start = Offset(size.width * 0.86f, size.height * 0.52f),
-        end = Offset(size.width * 0.73f, size.height * 0.82f),
-        stroke = stroke
-    )
-}
-
-private fun DrawScope.drawPowerIcon(color: Color) {
-    val bolt = Path().apply {
-        moveTo(size.width * 0.58f, size.height * 0.03f)
-        lineTo(size.width * 0.20f, size.height * 0.57f)
-        lineTo(size.width * 0.47f, size.height * 0.57f)
-        lineTo(size.width * 0.39f, size.height * 0.97f)
-        lineTo(size.width * 0.82f, size.height * 0.40f)
-        lineTo(size.width * 0.54f, size.height * 0.40f)
-        close()
-    }
-    drawPath(path = bolt, color = color)
-}
-
-private fun DrawScope.drawAutomaticIcon(color: Color, stroke: Stroke) {
-    drawCircle(
-        color = color,
-        radius = size.minDimension * 0.36f,
-        center = center,
-        style = stroke
-    )
-    drawIconLine(
-        color = color,
-        start = Offset(size.width * 0.37f, size.height * 0.68f),
-        end = Offset(size.width * 0.50f, size.height * 0.31f),
-        stroke = stroke
-    )
-    drawIconLine(
-        color = color,
-        start = Offset(size.width * 0.50f, size.height * 0.31f),
-        end = Offset(size.width * 0.63f, size.height * 0.68f),
-        stroke = stroke
-    )
-    drawIconLine(
-        color = color,
-        start = Offset(size.width * 0.42f, size.height * 0.53f),
-        end = Offset(size.width * 0.58f, size.height * 0.53f),
-        stroke = stroke
-    )
-    drawArc(
-        color = color,
-        startAngle = 205f,
-        sweepAngle = 72f,
-        useCenter = false,
-        topLeft = Offset.Zero,
-        size = size,
-        style = stroke
-    )
-}
-
-private fun DrawScope.drawManualIcon(color: Color, stroke: Stroke) {
-    val hand = Path().apply {
-        moveTo(size.width * 0.34f, size.height * 0.54f)
-        lineTo(size.width * 0.34f, size.height * 0.22f)
-        cubicTo(
-            size.width * 0.34f,
-            size.height * 0.14f,
-            size.width * 0.45f,
-            size.height * 0.14f,
-            size.width * 0.45f,
-            size.height * 0.23f
-        )
-        lineTo(size.width * 0.45f, size.height * 0.12f)
-        cubicTo(
-            size.width * 0.45f,
-            size.height * 0.04f,
-            size.width * 0.56f,
-            size.height * 0.04f,
-            size.width * 0.56f,
-            size.height * 0.13f
-        )
-        lineTo(size.width * 0.56f, size.height * 0.21f)
-        cubicTo(
-            size.width * 0.56f,
-            size.height * 0.13f,
-            size.width * 0.67f,
-            size.height * 0.13f,
-            size.width * 0.67f,
-            size.height * 0.22f
-        )
-        lineTo(size.width * 0.67f, size.height * 0.32f)
-        cubicTo(
-            size.width * 0.67f,
-            size.height * 0.24f,
-            size.width * 0.78f,
-            size.height * 0.24f,
-            size.width * 0.78f,
-            size.height * 0.34f
-        )
-        lineTo(size.width * 0.78f, size.height * 0.61f)
-        cubicTo(
-            size.width * 0.78f,
-            size.height * 0.82f,
-            size.width * 0.66f,
-            size.height * 0.94f,
-            size.width * 0.49f,
-            size.height * 0.94f
-        )
-        cubicTo(
-            size.width * 0.36f,
-            size.height * 0.94f,
-            size.width * 0.29f,
-            size.height * 0.85f,
-            size.width * 0.23f,
-            size.height * 0.73f
-        )
-        lineTo(size.width * 0.12f, size.height * 0.51f)
-        cubicTo(
-            size.width * 0.09f,
-            size.height * 0.43f,
-            size.width * 0.19f,
-            size.height * 0.37f,
-            size.width * 0.25f,
-            size.height * 0.44f
-        )
-        close()
-    }
-    drawPath(path = hand, color = color, style = stroke)
-}
-
-private fun DrawScope.drawProgramIcon(color: Color, stroke: Stroke) {
-    drawRoundRect(
-        color = color,
-        topLeft = Offset(size.width * 0.10f, size.height * 0.18f),
-        size = Size(size.width * 0.80f, size.height * 0.70f),
-        cornerRadius = androidx.compose.ui.geometry.CornerRadius(
-            size.width * 0.10f,
-            size.height * 0.10f
-        ),
-        style = stroke
-    )
-    drawIconLine(
-        color = color,
-        start = Offset(size.width * 0.10f, size.height * 0.38f),
-        end = Offset(size.width * 0.90f, size.height * 0.38f),
-        stroke = stroke
-    )
-    drawIconLine(
-        color = color,
-        start = Offset(size.width * 0.30f, size.height * 0.08f),
-        end = Offset(size.width * 0.30f, size.height * 0.28f),
-        stroke = stroke
-    )
-    drawIconLine(
-        color = color,
-        start = Offset(size.width * 0.69f, size.height * 0.08f),
-        end = Offset(size.width * 0.69f, size.height * 0.28f),
-        stroke = stroke
-    )
-    val clockCenter = Offset(size.width * 0.67f, size.height * 0.67f)
-    drawCircle(
-        color = color,
-        radius = size.minDimension * 0.18f,
-        center = clockCenter,
-        style = stroke
-    )
-    drawIconLine(
-        color = color,
-        start = clockCenter,
-        end = Offset(clockCenter.x, clockCenter.y - size.height * 0.10f),
-        stroke = stroke
-    )
-    drawIconLine(
-        color = color,
-        start = clockCenter,
-        end = Offset(clockCenter.x + size.width * 0.09f, clockCenter.y),
-        stroke = stroke
-    )
-}
-
-private fun DrawScope.drawChevronIcon(color: Color, stroke: Stroke) {
-    drawIconLine(
-        color = color,
-        start = Offset(size.width * 0.32f, size.height * 0.16f),
-        end = Offset(size.width * 0.68f, size.height * 0.50f),
-        stroke = stroke
-    )
-    drawIconLine(
-        color = color,
-        start = Offset(size.width * 0.68f, size.height * 0.50f),
-        end = Offset(size.width * 0.32f, size.height * 0.84f),
-        stroke = stroke
-    )
-}
-
-private fun DrawScope.drawIconLine(
-    color: Color,
-    start: Offset,
-    end: Offset,
-    stroke: Stroke
-) {
-    drawLine(
-        color = color,
-        start = start,
-        end = end,
-        strokeWidth = stroke.width,
-        cap = stroke.cap
-    )
-}
+)

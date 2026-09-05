@@ -53,6 +53,23 @@ class DeviceRootUiArchitectureGuardTest(unittest.TestCase):
 
         self.assertTrue(any("parallel toolbar" in error for error in errors), errors)
 
+    def test_shell_owned_root_must_not_paint_a_duplicate_background(self) -> None:
+        source = """<?xml version="1.0" encoding="utf-8"?>
+<FrameLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    android:background="@color/background_color">
+    <include android:id="@+id/appHeader" layout="@layout/layout_aqua_header" />
+</FrameLayout>
+"""
+
+        errors = GUARD.validate_layout_contract(
+            Path("root.xml"),
+            source,
+            background_owned_by_shell=True,
+        )
+
+        self.assertTrue(any("duplicate surface" in error for error in errors), errors)
+
     def test_cooling_code_outside_presentation_root_is_rejected(self) -> None:
         with tempfile.TemporaryDirectory() as temporary_directory:
             repository_root = Path(temporary_directory)

@@ -19,7 +19,6 @@ import com.aqua.aqualight.application.devices.cooling.control.DeviceCoolingContr
 import com.aqua.aqualight.ui.common.devicepresence.DeviceConnectionVisualState
 import com.aqua.aqualight.ui.tabs.devices.detail.cooling.presentation.common.CoolingDataState
 import com.aqua.aqualight.ui.tabs.devices.detail.cooling.presentation.common.CoolingMutationState
-import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineStart
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.channels.Channel
@@ -187,20 +186,12 @@ class DeviceCoolingRootViewModel(
         if (jobs.surfacePreparationJob?.isActive == true) return
         _uiState.update { state -> state.copy(surfacePreparationPending = true) }
         jobs.surfacePreparationJob = viewModelScope.launch {
-            val result = try {
-                controlSurfacePreparationOperations.prepare(
-                    DeviceControlSurfacePreparationRequest(
-                        deviceUid = deviceUid,
-                        family = OwnerDeviceFamily.COOLING
-                    )
+            val result = controlSurfacePreparationOperations.prepare(
+                DeviceControlSurfacePreparationRequest(
+                    deviceUid = deviceUid,
+                    family = OwnerDeviceFamily.COOLING
                 )
-            } catch (cancellation: CancellationException) {
-                throw cancellation
-            } catch (_: Exception) {
-                DeviceControlSurfacePreparationResult.Unavailable(
-                    DeviceMenuUnavailableReason.CURRENT_LIVENESS_NOT_PROVEN
-                )
-            }
+            )
             if (boundDeviceUid != deviceUid) return@launch
 
             when (result) {

@@ -22,6 +22,7 @@ object AquaCoolingAutomaticGeometry {
     val editorRowGap = 7.dp
     val editorChevronWidth = 18.dp
     val editorChevronHeight = 18.dp
+    val editorChevronStrokeWidth = 2.dp
 
     val rangeVisualHeight = 58.dp
     val rangeTrackHeight = 5.dp
@@ -50,6 +51,8 @@ object AquaCoolingAutomaticGeometry {
 }
 
 object AquaCoolingAutomaticAlpha {
+    const val enabledContent = 1f
+    const val disabledContent = 0.55f
     const val rowBackground = 0.58f
     const val rowOutline = 0.78f
     const val rangeInactiveTrack = 0.20f

@@ -22,7 +22,9 @@ import com.aqua.aqualight.ui.common.cooling.AquaCoolingFanPercentSliderState
 import com.aqua.aqualight.ui.common.cooling.aquaCoolingDashboardColors
 import com.aqua.aqualight.ui.common.cooling.aquaCoolingDashboardTypography
 import com.aqua.aqualight.ui.common.devicecard.AquaDeviceCardGeometry
+import com.aqua.aqualight.ui.common.devicecard.AquaDeviceCardColors
 import com.aqua.aqualight.ui.common.devicecard.AquaDeviceCardSurface
+import com.aqua.aqualight.ui.common.devicecard.AquaDeviceCardTypography
 import com.aqua.aqualight.ui.tabs.devices.detail.cooling.presentation.common.CoolingDataState
 import com.aqua.aqualight.ui.tabs.devices.detail.cooling.presentation.common.CoolingMutationState
 import com.aqua.aqualight.ui.tabs.devices.detail.cooling.presentation.common.CoolingStateMessageCard
@@ -36,8 +38,6 @@ internal fun DeviceCoolingManualSettingsScreen(
     onRetry: () -> Unit,
     modifier: Modifier = Modifier
 ) {
-    val colors = aquaCoolingDashboardColors()
-    val typography = aquaCoolingDashboardTypography(colors)
     LazyColumn(
         modifier = modifier.fillMaxSize(),
         contentPadding = PaddingValues(
@@ -49,103 +49,158 @@ internal fun DeviceCoolingManualSettingsScreen(
         verticalArrangement = Arrangement.spacedBy(AquaCoolingDashboardGeometry.cardGap)
     ) {
         item(key = "manual-target") {
-            val percent = state.targetPercent
-            val capabilities = state.capabilities
-            if (percent != null && capabilities != null) {
-                AquaDeviceCardSurface(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .heightIn(
-                            min = AquaCoolingDashboardGeometry.compactCardMinimumHeight
-                        )
-                ) {
-                    Column(
-                        modifier = Modifier.fillMaxWidth(),
-                        verticalArrangement = Arrangement.spacedBy(
-                            AquaDeviceCardGeometry.compactGap
-                        )
-                    ) {
-                        BasicText(
-                            text = stringResource(R.string.device_cooling_manual_target_title),
-                            style = typography.title
-                        )
-                        BasicText(
-                            text = stringResource(
-                                R.string.device_cooling_percent_value_format,
-                                percent
-                            ),
-                            style = typography.title.copy(
-                                color = colors.primaryText,
-                                fontSize = AquaCoolingDashboardTypography.gaugeValueSize
-                            )
-                        )
-                        BasicText(
-                            text = stringResource(
-                                R.string.device_cooling_manual_target_description
-                            ),
-                            style = typography.caption.copy(color = colors.secondaryText)
-                        )
-                        val step = capabilities.stepPercent
-                        if (step != null) {
-                            AquaCoolingFanPercentSlider(
-                                state = AquaCoolingFanPercentSliderState(
-                                    percent = percent,
-                                    enabled = state.canWrite,
-                                    stepPercent = step,
-                                    minimumPercent = capabilities.minimumPercent,
-                                    maximumPercent = capabilities.maximumPercent
-                                ),
-                                colors = colors,
-                                onValueChanged = onTargetPercentChanged,
-                                onValueChangeFinished = onTargetPercentChangeFinished
-                            )
-                            Row(modifier = Modifier.fillMaxWidth()) {
-                                BasicText(
-                                    text = stringResource(
-                                        R.string.device_cooling_percent_value_format,
-                                        capabilities.minimumPercent
-                                    ),
-                                    style = typography.micro.copy(
-                                        color = colors.secondaryText
-                                    ),
-                                    modifier = Modifier.weight(1f)
-                                )
-                                BasicText(
-                                    text = stringResource(
-                                        R.string.device_cooling_percent_value_format,
-                                        capabilities.maximumPercent
-                                    ),
-                                    style = typography.micro.copy(
-                                        color = colors.secondaryText,
-                                        textAlign = TextAlign.End
-                                    ),
-                                    modifier = Modifier.weight(1f)
-                                )
-                            }
-                        }
-                        val supportMessage = state.manualSupportMessageRes()
-                        if (supportMessage != null) {
-                            BasicText(
-                                text = stringResource(supportMessage),
-                                style = typography.micro.copy(
-                                    color = if (
-                                        state.mutationState is CoolingMutationState.OperationError
-                                    ) {
-                                        colors.danger
-                                    } else {
-                                        colors.secondaryText
-                                    }
-                                )
-                            )
-                        }
-                    }
-                }
-            } else {
-                CoolingManualAvailabilityCard(state = state, onRetry = onRetry)
-            }
+            CoolingManualContent(
+                state = state,
+                actions = ManualTargetActions(
+                    onTargetPercentChanged = onTargetPercentChanged,
+                    onTargetPercentChangeFinished = onTargetPercentChangeFinished
+                ),
+                onRetry = onRetry
+            )
         }
     }
 }
+
+@Composable
+private fun CoolingManualContent(
+    state: DeviceCoolingManualSettingsUiState,
+    actions: ManualTargetActions,
+    onRetry: () -> Unit
+) {
+    val percent = state.targetPercent
+    if (percent == null || state.capabilities == null) {
+        CoolingManualAvailabilityCard(state = state, onRetry = onRetry)
+    } else {
+        val colors = aquaCoolingDashboardColors()
+        CoolingManualTargetCard(
+            state = state,
+            percent = percent,
+            visuals = ManualTargetVisuals(
+                colors = colors,
+                typography = aquaCoolingDashboardTypography(colors)
+            ),
+            actions = actions
+        )
+    }
+}
+
+@Composable
+private fun CoolingManualTargetCard(
+    state: DeviceCoolingManualSettingsUiState,
+    percent: Int,
+    visuals: ManualTargetVisuals,
+    actions: ManualTargetActions
+) {
+    AquaDeviceCardSurface(
+        modifier = Modifier
+            .fillMaxWidth()
+            .heightIn(min = AquaCoolingDashboardGeometry.compactCardMinimumHeight)
+    ) {
+        Column(
+            modifier = Modifier.fillMaxWidth(),
+            verticalArrangement = Arrangement.spacedBy(AquaDeviceCardGeometry.compactGap)
+        ) {
+            CoolingManualTargetCopy(percent = percent, visuals = visuals)
+            CoolingManualTargetSlider(
+                state = state,
+                percent = percent,
+                visuals = visuals,
+                actions = actions
+            )
+            CoolingManualSupportMessage(state = state, visuals = visuals)
+        }
+    }
+}
+
+@Composable
+private fun CoolingManualTargetCopy(percent: Int, visuals: ManualTargetVisuals) {
+    BasicText(
+        text = stringResource(R.string.device_cooling_manual_target_title),
+        style = visuals.typography.title
+    )
+    BasicText(
+        text = stringResource(R.string.device_cooling_percent_value_format, percent),
+        style = visuals.typography.title.copy(
+            color = visuals.colors.primaryText,
+            fontSize = AquaCoolingDashboardTypography.gaugeValueSize
+        )
+    )
+    BasicText(
+        text = stringResource(R.string.device_cooling_manual_target_description),
+        style = visuals.typography.caption.copy(color = visuals.colors.secondaryText)
+    )
+}
+
+@Composable
+private fun CoolingManualTargetSlider(
+    state: DeviceCoolingManualSettingsUiState,
+    percent: Int,
+    visuals: ManualTargetVisuals,
+    actions: ManualTargetActions
+) {
+    val capabilities = state.capabilities ?: return
+    val step = capabilities.stepPercent ?: return
+    AquaCoolingFanPercentSlider(
+        state = AquaCoolingFanPercentSliderState(
+            percent = percent,
+            enabled = state.canWrite,
+            stepPercent = step,
+            minimumPercent = capabilities.minimumPercent,
+            maximumPercent = capabilities.maximumPercent
+        ),
+        colors = visuals.colors,
+        onValueChanged = actions.onTargetPercentChanged,
+        onValueChangeFinished = actions.onTargetPercentChangeFinished
+    )
+    Row(modifier = Modifier.fillMaxWidth()) {
+        BasicText(
+            text = stringResource(
+                R.string.device_cooling_percent_value_format,
+                capabilities.minimumPercent
+            ),
+            style = visuals.typography.micro.copy(color = visuals.colors.secondaryText),
+            modifier = Modifier.weight(1f)
+        )
+        BasicText(
+            text = stringResource(
+                R.string.device_cooling_percent_value_format,
+                capabilities.maximumPercent
+            ),
+            style = visuals.typography.micro.copy(
+                color = visuals.colors.secondaryText,
+                textAlign = TextAlign.End
+            ),
+            modifier = Modifier.weight(1f)
+        )
+    }
+}
+
+@Composable
+private fun CoolingManualSupportMessage(
+    state: DeviceCoolingManualSettingsUiState,
+    visuals: ManualTargetVisuals
+) {
+    val supportMessage = state.manualSupportMessageRes() ?: return
+    val textColor = if (state.mutationState is CoolingMutationState.OperationError) {
+        visuals.colors.danger
+    } else {
+        visuals.colors.secondaryText
+    }
+    BasicText(
+        text = stringResource(supportMessage),
+        style = visuals.typography.micro.copy(color = textColor)
+    )
+}
+
+private data class ManualTargetVisuals(
+    val colors: AquaDeviceCardColors,
+    val typography: AquaDeviceCardTypography
+)
+
+private data class ManualTargetActions(
+    val onTargetPercentChanged: (Int) -> Unit,
+    val onTargetPercentChangeFinished: () -> Unit
+)
 
 @StringRes
 private fun DeviceCoolingManualSettingsUiState.manualSupportMessageRes(): Int? = when (

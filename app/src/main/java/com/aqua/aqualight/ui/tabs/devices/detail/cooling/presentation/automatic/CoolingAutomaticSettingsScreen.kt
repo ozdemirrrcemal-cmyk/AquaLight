@@ -1,6 +1,5 @@
 package com.aqua.aqualight.ui.tabs.devices.detail.cooling.presentation.automatic
 
-import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -24,13 +23,13 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.geometry.Offset
-import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.style.TextAlign
 import com.aqua.aqualight.R
 import com.aqua.aqualight.application.devices.cooling.control.DeviceCoolingOperatingState
+import com.aqua.aqualight.ui.common.cooling.AquaCoolingDashboardIcon
+import com.aqua.aqualight.ui.common.cooling.AquaCoolingDashboardIconKind
 import com.aqua.aqualight.ui.common.cooling.AquaCoolingDashboardGeometry
 import com.aqua.aqualight.ui.common.cooling.aquaCoolingDashboardColors
 import com.aqua.aqualight.ui.common.cooling.aquaCoolingDashboardTypography
@@ -271,7 +270,13 @@ private fun AutomaticSilentModeCard(
                     role = Role.Switch,
                     onValueChange = onCheckedChange
                 )
-                .alpha(if (enabled) 1f else 0.55f),
+                .alpha(
+                    if (enabled) {
+                        AquaCoolingAutomaticAlpha.enabledContent
+                    } else {
+                        AquaCoolingAutomaticAlpha.disabledContent
+                    }
+                ),
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.spacedBy(
                 AquaCoolingAutomaticGeometry.silentModeContentGap
@@ -360,7 +365,13 @@ private fun AutomaticEditorRow(
                 horizontal = AquaCoolingAutomaticGeometry.editorRowHorizontalPadding,
                 vertical = AquaCoolingAutomaticGeometry.editorRowVerticalPadding
             )
-            .alpha(if (enabled) 1f else 0.55f),
+            .alpha(
+                if (enabled) {
+                    AquaCoolingAutomaticAlpha.enabledContent
+                } else {
+                    AquaCoolingAutomaticAlpha.disabledContent
+                }
+            ),
         verticalAlignment = Alignment.CenterVertically
     ) {
         Column(
@@ -393,30 +404,14 @@ private fun AutomaticEditorRow(
 
 @Composable
 private fun AutomaticChevron(colors: AquaDeviceCardColors) {
-    Canvas(
+    AquaCoolingDashboardIcon(
+        kind = AquaCoolingDashboardIconKind.CHEVRON,
+        tint = colors.accent,
         modifier = Modifier
             .width(AquaCoolingAutomaticGeometry.editorChevronWidth)
-            .height(AquaCoolingAutomaticGeometry.editorChevronHeight)
-    ) {
-        val x = size.width * 0.38f
-        val top = size.height * 0.28f
-        val middle = size.height * 0.50f
-        val bottom = size.height * 0.72f
-        drawLine(
-            color = colors.accent,
-            start = Offset(x, top),
-            end = Offset(size.width * 0.62f, middle),
-            strokeWidth = 2f,
-            cap = StrokeCap.Round
-        )
-        drawLine(
-            color = colors.accent,
-            start = Offset(size.width * 0.62f, middle),
-            end = Offset(x, bottom),
-            strokeWidth = 2f,
-            cap = StrokeCap.Round
-        )
-    }
+            .height(AquaCoolingAutomaticGeometry.editorChevronHeight),
+        strokeWidth = AquaCoolingAutomaticGeometry.editorChevronStrokeWidth
+    )
 }
 
 @Composable

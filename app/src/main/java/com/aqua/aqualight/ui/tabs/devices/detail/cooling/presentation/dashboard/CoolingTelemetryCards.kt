@@ -52,63 +52,81 @@ internal fun CoolingPowerCard(
                 text = stringResource(R.string.device_cooling_power_title),
                 style = typography.title
             )
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.spacedBy(
-                    AquaCoolingDashboardGeometry.powerContentGap
+            CoolingPowerContent(state = state, colors = colors, typography = typography)
+        }
+    }
+}
+
+@Composable
+private fun CoolingPowerContent(
+    state: DeviceCoolingRootUiState,
+    colors: AquaDeviceCardColors,
+    typography: AquaDeviceCardTypography
+) {
+    Row(
+        modifier = Modifier.fillMaxWidth(),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(AquaCoolingDashboardGeometry.powerContentGap)
+    ) {
+        CoolingPowerGlyph(colors)
+        CoolingPowerValues(
+            state = state,
+            colors = colors,
+            typography = typography,
+            modifier = Modifier.weight(1f)
+        )
+    }
+}
+
+@Composable
+private fun CoolingPowerValues(
+    state: DeviceCoolingRootUiState,
+    colors: AquaDeviceCardColors,
+    typography: AquaDeviceCardTypography,
+    modifier: Modifier = Modifier
+) {
+    Column(
+        modifier = modifier,
+        verticalArrangement = Arrangement.spacedBy(AquaCoolingDashboardGeometry.powerValueGap)
+    ) {
+        Row(verticalAlignment = Alignment.Bottom) {
+            BasicText(
+                text = coolingPowerNumberText(state.powerWatts),
+                style = typography.title.copy(
+                    color = colors.primaryText,
+                    fontSize = AquaCoolingDashboardTypography.powerValueSize
+                ),
+                maxLines = 1
+            )
+            if (state.powerWatts != null) {
+                BasicText(
+                    text = stringResource(R.string.device_cooling_power_unit),
+                    style = typography.body.copy(
+                        color = colors.primaryText,
+                        fontSize = AquaCoolingDashboardTypography.powerUnitSize
+                    ),
+                    maxLines = 1
                 )
-            ) {
-                CoolingPowerGlyph(colors)
-                Column(
-                    modifier = Modifier.weight(1f),
-                    verticalArrangement = Arrangement.spacedBy(
-                        AquaCoolingDashboardGeometry.powerValueGap
-                    )
-                ) {
-                    Row(verticalAlignment = Alignment.Bottom) {
-                        BasicText(
-                            text = coolingPowerNumberText(state.powerWatts),
-                            style = typography.title.copy(
-                                color = colors.primaryText,
-                                fontSize = AquaCoolingDashboardTypography.powerValueSize
-                            ),
-                            maxLines = 1
-                        )
-                        if (state.powerWatts != null) {
-                            BasicText(
-                                text = stringResource(R.string.device_cooling_power_unit),
-                                style = typography.body.copy(
-                                    color = colors.primaryText,
-                                    fontSize = AquaCoolingDashboardTypography.powerUnitSize
-                                ),
-                                maxLines = 1
-                            )
-                        }
-                    }
-                    BasicText(
-                        text = stringResource(R.string.device_cooling_estimated_consumption),
-                        style = typography.micro.copy(color = colors.secondaryText),
-                        maxLines = 1,
-                        overflow = TextOverflow.Ellipsis
-                    )
-                    Box(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .height(AquaCoolingDashboardGeometry.powerDividerHeight)
-                            .background(
-                                colors.outline.copy(alpha = AquaCoolingDashboardAlpha.divider)
-                            )
-                    )
-                    BasicText(
-                        text = coolingEnergyText(state.estimatedKwhPerDay),
-                        style = typography.body.copy(color = colors.secondaryText),
-                        maxLines = 1,
-                        overflow = TextOverflow.Ellipsis
-                    )
-                }
             }
         }
+        BasicText(
+            text = stringResource(R.string.device_cooling_estimated_consumption),
+            style = typography.micro.copy(color = colors.secondaryText),
+            maxLines = 1,
+            overflow = TextOverflow.Ellipsis
+        )
+        Box(
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(AquaCoolingDashboardGeometry.powerDividerHeight)
+                .background(colors.outline.copy(alpha = AquaCoolingDashboardAlpha.divider))
+        )
+        BasicText(
+            text = coolingEnergyText(state.estimatedKwhPerDay),
+            style = typography.body.copy(color = colors.secondaryText),
+            maxLines = 1,
+            overflow = TextOverflow.Ellipsis
+        )
     }
 }
 

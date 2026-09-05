@@ -19,6 +19,7 @@ ROUTE_RESOLVER = Path(
     "app/src/main/java/com/aqua/aqualight/ui/tabs/devices/route/DeviceRouteResolver.kt"
 )
 NAV_DEVICES = Path("app/src/main/res/navigation/nav_devices.xml")
+MAIN_LAYOUT = Path("app/src/main/res/layout/activity_main.xml")
 DOSING_FRAGMENT = Path(
     "app/src/main/java/com/aqua/aqualight/ui/tabs/devices/detail/dosing/root/"
     "DeviceDosingRootFragment.kt"
@@ -161,13 +162,30 @@ def validate_resource_usage(relative_path: Path, source: str) -> list[str]:
     return errors
 
 
-def validate_layout_contract(relative_path: Path, source: str) -> list[str]:
+def validate_layout_contract(
+    relative_path: Path,
+    source: str,
+    *,
+    background_owned_by_shell: bool = False,
+) -> list[str]:
     errors: list[str] = []
-    for token, reason in (
-        ('android:background="@color/background_color"', "root surface must use the central background resource"),
+    background_token = 'android:background="@color/background_color"'
+    required = (
         ('layout="@layout/layout_aqua_header"', "root layout must include the shared AquaHeader layout"),
         ('android:id="@+id/appHeader"', "root header id must stay canonical"),
-    ):
+    )
+    if background_owned_by_shell:
+        if background_token in source:
+            errors.append(
+                f"{relative_path}: shell-owned root must inherit the central background "
+                "instead of painting a duplicate surface"
+            )
+    else:
+        required = (
+            (background_token, "root surface must use the central background resource"),
+            *required,
+        )
+    for token, reason in required:
         _require(relative_path, source, errors, token, reason)
     errors.extend(validate_resource_usage(relative_path, source))
     return errors
@@ -245,11 +263,24 @@ def validate_repository(repository_root: Path = ROOT) -> list[str]:
     devices_fragment = _read(repository_root, DEVICES_FRAGMENT, errors)
     route_resolver = _read(repository_root, ROUTE_RESOLVER, errors)
     nav_devices = _read(repository_root, NAV_DEVICES, errors)
+    main_layout = _read(repository_root, MAIN_LAYOUT, errors)
     dosing_fragment = _read(repository_root, DOSING_FRAGMENT, errors)
     cooling_fragment = _read(repository_root, COOLING_FRAGMENT, errors)
     cooling_view_model = _read(repository_root, COOLING_VIEW_MODEL, errors)
     dosing_layout = _read(repository_root, DOSING_LAYOUT, errors)
     cooling_layout = _read(repository_root, COOLING_LAYOUT, errors)
+
+    for token, reason in (
+        (
+            "com.aqua.aqualight.ui.main.AquaAppShellLayout",
+            "main navigation must remain hosted by the shared app shell",
+        ),
+        (
+            'android:background="@color/background_color"',
+            "the app shell must own the central navigation background",
+        ),
+    ):
+        _require(MAIN_LAYOUT, main_layout, errors, token, reason)
 
     for token, reason in (
         (
@@ -372,7 +403,13 @@ def validate_repository(repository_root: Path = ROOT) -> list[str]:
         _require(COOLING_VIEW_MODEL, cooling_view_model, errors, token, reason)
 
     errors.extend(validate_layout_contract(DOSING_LAYOUT, dosing_layout))
-    errors.extend(validate_layout_contract(COOLING_LAYOUT, cooling_layout))
+    errors.extend(
+        validate_layout_contract(
+            COOLING_LAYOUT,
+            cooling_layout,
+            background_owned_by_shell=True,
+        )
+    )
     errors.extend(validate_cooling_feature_boundaries(repository_root))
     return errors
 
