@@ -12,6 +12,7 @@ import com.aqua.aqualight.application.devices.cooling.DeviceCoolingAutomaticFail
 import com.aqua.aqualight.ui.tabs.devices.detail.cooling.presentation.common.CoolingDataFreshness
 import com.aqua.aqualight.ui.tabs.devices.detail.cooling.presentation.common.CoolingDataState
 import com.aqua.aqualight.ui.tabs.devices.detail.cooling.presentation.common.CoolingStateMessageCard
+import com.aqua.aqualight.ui.tabs.devices.detail.cooling.presentation.common.toCommercialCoolingError
 
 /** Routes typed Automatic read states without discarding the last authoritative editor snapshot. */
 @Composable
@@ -100,28 +101,22 @@ private fun contentAutomaticMessage(
     }
 }
 
-private fun DeviceCoolingAutomaticFailure.toAutomaticErrorMessage(): AutomaticStateMessage =
-    when (this) {
-        DeviceCoolingAutomaticFailure.Unsupported -> AutomaticStateMessage(
-            titleRes = R.string.device_cooling_automatic_unsupported_title,
-            messageRes = R.string.device_cooling_automatic_unsupported_message,
-            retryAvailable = false
-        )
-        DeviceCoolingAutomaticFailure.ReadOnly -> AutomaticStateMessage(
-            titleRes = R.string.device_cooling_automatic_read_only_title,
-            messageRes = R.string.device_cooling_automatic_read_only_message,
-            retryAvailable = false
-        )
-        DeviceCoolingAutomaticFailure.InvalidConfiguration -> AutomaticStateMessage(
-            titleRes = R.string.device_cooling_automatic_invalid_title,
-            messageRes = R.string.device_cooling_automatic_invalid_message,
-            retryAvailable = true
-        )
-        DeviceCoolingAutomaticFailure.Unavailable,
-        DeviceCoolingAutomaticFailure.NotConnected,
-        DeviceCoolingAutomaticFailure.TemporaryFailure,
-        DeviceCoolingAutomaticFailure.Rejected -> automaticUnavailableMessage()
-    }
+private fun DeviceCoolingAutomaticFailure.toAutomaticErrorMessage(): AutomaticStateMessage {
+    val copy = toCommercialCoolingError()
+    return AutomaticStateMessage(
+        titleRes = copy.titleRes,
+        messageRes = copy.messageRes,
+        retryAvailable = when (this) {
+            DeviceCoolingAutomaticFailure.Unsupported,
+            DeviceCoolingAutomaticFailure.ReadOnly -> false
+            DeviceCoolingAutomaticFailure.Unavailable,
+            DeviceCoolingAutomaticFailure.NotConnected,
+            DeviceCoolingAutomaticFailure.InvalidConfiguration,
+            DeviceCoolingAutomaticFailure.TemporaryFailure,
+            is DeviceCoolingAutomaticFailure.Rejected -> true
+        }
+    )
+}
 
 private fun automaticLoadingMessage() = AutomaticStateMessage(
     titleRes = R.string.device_cooling_automatic_loading_title,
