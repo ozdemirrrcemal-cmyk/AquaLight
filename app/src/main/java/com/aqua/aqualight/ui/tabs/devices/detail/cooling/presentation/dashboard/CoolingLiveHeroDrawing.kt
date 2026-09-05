@@ -8,6 +8,7 @@ import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.drawscope.DrawScope
 import androidx.compose.ui.graphics.drawscope.Stroke
+import androidx.compose.ui.graphics.drawscope.clipPath
 import com.aqua.aqualight.ui.common.cooling.AquaCoolingDashboardAlpha
 import com.aqua.aqualight.ui.common.cooling.AquaCoolingDashboardPalette
 import kotlin.math.sin
@@ -18,10 +19,14 @@ internal fun DrawScope.drawCoolingHeroScene(
     status: CoolingHeroVisualStatus
 ) {
     drawCoolingAtmosphere(status)
-    drawWaterBody(motionPhase, motionIntensity)
+    clipPath(glassTankPath(-WATER_CLIP_HEADROOM_FRACTION)) {
+        drawWaterBody(motionPhase, motionIntensity)
+        if (motionIntensity > NO_MOTION) {
+            drawWaterReflection(motionPhase, motionIntensity)
+        }
+    }
     if (motionIntensity > NO_MOTION) {
         drawAirflow(motionPhase, motionIntensity)
-        drawWaterReflection(motionPhase, motionIntensity)
     }
     drawGlassTank()
 }
@@ -80,16 +85,35 @@ private fun DrawScope.drawWaterBody(motionPhase: Float, motionIntensity: Float) 
             WATER_GRADIENT_SURFACE_STOP to AquaCoolingDashboardPalette.accent.copy(
                 alpha = AquaCoolingDashboardAlpha.liveHeroWater
             ),
-            WATER_GRADIENT_TRANSITION_STOP to AquaCoolingDashboardPalette.insetSurface.copy(
+            WATER_GRADIENT_SHALLOW_STOP to AquaCoolingDashboardPalette.accent.copy(
                 alpha = AquaCoolingDashboardAlpha.liveHeroWaterDepth
             ),
+            WATER_GRADIENT_TRANSITION_STOP to AquaCoolingDashboardPalette.insetSurface,
             WATER_GRADIENT_MID_STOP to AquaCoolingDashboardPalette.cardSurface,
             WATER_GRADIENT_BOTTOM_STOP to Color.Black,
             startY = waterTop,
             endY = size.height
         )
     )
-
+    drawPath(
+        path = water,
+        brush = Brush.linearGradient(
+            colors = listOf(
+                Color.Transparent,
+                AquaCoolingDashboardPalette.primaryText.copy(
+                    alpha = AquaCoolingDashboardAlpha.liveHeroWaterReflection *
+                        WATER_VOLUME_HIGHLIGHT_ALPHA_MULTIPLIER
+                ),
+                AquaCoolingDashboardPalette.accent.copy(
+                    alpha = AquaCoolingDashboardAlpha.liveHeroWaterReflection *
+                        WATER_VOLUME_ACCENT_ALPHA_MULTIPLIER
+                ),
+                Color.Transparent
+            ),
+            start = Offset(size.width * WATER_HIGHLIGHT_START_X, waterTop),
+            end = Offset(size.width * WATER_HIGHLIGHT_END_X, size.height)
+        )
+    )
     drawWaterSurfaceSheen(motionPhase, motionIntensity)
 }
 
@@ -128,6 +152,14 @@ private fun DrawScope.drawWaterSurfaceSheen(motionPhase: Float, motionIntensity:
     drawPath(
         path = surface,
         color = AquaCoolingDashboardPalette.accent.copy(
+            alpha = AquaCoolingDashboardAlpha.liveHeroWaterSurface *
+                WATER_SURFACE_GLOW_ALPHA_MULTIPLIER
+        ),
+        style = Stroke(width = WATER_SURFACE_GLOW_STROKE, cap = StrokeCap.Round)
+    )
+    drawPath(
+        path = surface,
+        color = AquaCoolingDashboardPalette.primaryText.copy(
             alpha = AquaCoolingDashboardAlpha.liveHeroWaterSurface
         ),
         style = Stroke(width = WATER_SURFACE_STROKE, cap = StrokeCap.Round)
@@ -239,6 +271,29 @@ private fun DrawScope.drawGlassTank() {
     )
 }
 
+private fun DrawScope.glassTankPath(topGapFraction: Float): Path {
+    val waterTop = size.height * WATER_TOP_FRACTION
+    return Path().apply {
+        moveTo(
+            size.width * GLASS_HORIZONTAL_INSET,
+            waterTop + size.height * (WATER_LEFT_DROP_FRACTION + topGapFraction)
+        )
+        lineTo(
+            size.width * (UNIT_FLOAT - GLASS_HORIZONTAL_INSET),
+            waterTop - size.height * (WATER_RIGHT_LIFT_FRACTION - topGapFraction)
+        )
+        lineTo(
+            size.width * (UNIT_FLOAT - GLASS_HORIZONTAL_INSET),
+            size.height * GLASS_BOTTOM_RIGHT_Y
+        )
+        lineTo(
+            size.width * GLASS_HORIZONTAL_INSET,
+            size.height * GLASS_BOTTOM_LEFT_Y
+        )
+        close()
+    }
+}
+
 private const val ORIGIN = 0f
 private const val NO_MOTION = 0f
 private const val UNIT_FLOAT = 1f
@@ -251,17 +306,25 @@ private const val GLOW_RADIUS = 0.55f
 private const val WATER_TOP_FRACTION = 0.63f
 private const val WATER_LEFT_DROP_FRACTION = 0.06f
 private const val WATER_RIGHT_LIFT_FRACTION = 0.06f
+private const val WATER_CLIP_HEADROOM_FRACTION = 0.014f
 private const val WATER_SURFACE_SEGMENTS = 56
 private const val WATER_SURFACE_PRIMARY_CYCLES = 2.6f
 private const val WATER_SURFACE_SECONDARY_CYCLES = 5.3f
 private const val WATER_SURFACE_PHASE_OFFSET = 1.1f
-private const val WATER_SURFACE_BASE_AMPLITUDE = 0.0035f
-private const val WATER_SURFACE_ACTIVE_AMPLITUDE = 0.008f
-private const val WATER_SURFACE_STROKE = 1.15f
+private const val WATER_SURFACE_BASE_AMPLITUDE = 0.0042f
+private const val WATER_SURFACE_ACTIVE_AMPLITUDE = 0.0092f
+private const val WATER_SURFACE_STROKE = 1.05f
+private const val WATER_SURFACE_GLOW_STROKE = 3.4f
+private const val WATER_SURFACE_GLOW_ALPHA_MULTIPLIER = 0.42f
 private const val WATER_GRADIENT_SURFACE_STOP = 0f
-private const val WATER_GRADIENT_TRANSITION_STOP = 0.16f
-private const val WATER_GRADIENT_MID_STOP = 0.58f
+private const val WATER_GRADIENT_SHALLOW_STOP = 0.11f
+private const val WATER_GRADIENT_TRANSITION_STOP = 0.34f
+private const val WATER_GRADIENT_MID_STOP = 0.72f
 private const val WATER_GRADIENT_BOTTOM_STOP = 1f
+private const val WATER_HIGHLIGHT_START_X = 0.12f
+private const val WATER_HIGHLIGHT_END_X = 0.88f
+private const val WATER_VOLUME_HIGHLIGHT_ALPHA_MULTIPLIER = 0.72f
+private const val WATER_VOLUME_ACCENT_ALPHA_MULTIPLIER = 0.48f
 private const val PRIMARY_WAVE_WEIGHT = 0.72f
 private const val SECONDARY_WAVE_WEIGHT = 0.28f
 private const val FIRST_SEGMENT = 0
