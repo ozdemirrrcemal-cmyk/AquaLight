@@ -63,7 +63,6 @@ internal fun CoolingTemperatureChart(
             colors = colors,
             typography = typography
         )
-        Spacer(modifier = Modifier.width(AquaCoolingDashboardGeometry.temperatureYAxisGap))
         Column(modifier = Modifier.weight(1f)) {
             CoolingTemperaturePlot(
                 chartValues = chartValues,
@@ -120,12 +119,12 @@ private fun CoolingTemperaturePlot(
         contentAlignment = Alignment.Center
     ) {
         Canvas(modifier = Modifier.fillMaxSize()) {
-            val horizontalPadding = AquaCoolingDashboardGeometry.temperatureChartPadding.toPx()
+            val verticalPadding = AquaCoolingDashboardGeometry.temperatureChartPadding.toPx()
             val viewport = TemperaturePlotViewport(
-                horizontalPadding = horizontalPadding,
-                verticalPadding = horizontalPadding,
-                width = (size.width - horizontalPadding * 2f).coerceAtLeast(1f),
-                height = (size.height - horizontalPadding * 2f).coerceAtLeast(1f)
+                horizontalPadding = 0f,
+                verticalPadding = verticalPadding,
+                width = size.width.coerceAtLeast(1f),
+                height = (size.height - verticalPadding * 2f).coerceAtLeast(1f)
             )
             drawTemperatureGrid(viewport = viewport, colors = colors)
             if (chartValues.isNotEmpty()) {
@@ -175,9 +174,7 @@ private fun TemperatureTimeAxis(
         stringResource(R.string.device_cooling_chart_24h_start)
     )
     Layout(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(horizontal = AquaCoolingDashboardGeometry.temperatureChartPadding),
+        modifier = Modifier.fillMaxWidth(),
         content = {
             labels.forEach { label ->
                 ChartAxisLabel(
