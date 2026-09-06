@@ -178,7 +178,7 @@ class DeviceCoolingRootStateMachineTest {
             DeviceCoolingControlSnapshot(
                 mode = DeviceCoolingControlMode.AUTOMATIC,
                 manualFanPercent = 40,
-                actualFanPercent = 35,
+                actualFanPercent = 35.0,
                 tankTemperatureC = 25.4,
                 capabilities = DeviceCoolingControlCapabilities(
                     supportedModes = setOf(

@@ -93,7 +93,7 @@ class DeviceCoolingRootAuthoritativeStateTest {
         val state = viewModel.uiState.value
         assertEquals(DeviceCoolingControlMode.AUTOMATIC, state.selectedMode)
         assertEquals(40, state.manualFanPercent)
-        assertEquals(35, state.fanPercentNow)
+        assertEquals(35.0, state.fanPercentNow ?: 0.0, 0.0)
         assertEquals(25.4, state.tankTemperatureC ?: 0.0, 0.0)
         assertEquals(25.0, state.autoStartTemperatureC ?: 0.0, 0.0)
         assertEquals(27.0, state.autoMaxTemperatureC ?: 0.0, 0.0)
@@ -118,7 +118,7 @@ class DeviceCoolingRootAuthoritativeStateTest {
             val stale = viewModel.uiState.value
             assertEquals(DeviceCoolingControlMode.AUTOMATIC, stale.selectedMode)
             assertEquals(40, stale.manualFanPercent)
-            assertEquals(35, stale.fanPercentNow)
+            assertEquals(35.0, stale.fanPercentNow ?: 0.0, 0.0)
             assertEquals(25.4, stale.tankTemperatureC ?: 0.0, 0.0)
             assertFalse(stale.controlAvailable)
             assertFalse(stale.modeSelectionWritable)
@@ -268,7 +268,7 @@ class DeviceCoolingRootAuthoritativeStateTest {
             DeviceCoolingControlSnapshot(
                 mode = DeviceCoolingControlMode.AUTOMATIC,
                 manualFanPercent = 40,
-                actualFanPercent = 35,
+                actualFanPercent = 35.0,
                 tankTemperatureC = 25.4,
                 capabilities = DeviceCoolingControlCapabilities(
                     supportedModes = setOf(
@@ -298,7 +298,8 @@ class DeviceCoolingRootAuthoritativeStateTest {
                 maximumSpeedMinimumC = 18.5,
                 maximumSpeedMaximumC = 32.0,
                 stepC = 0.5,
-                minimumGapC = 0.5
+                minimumGapC = 0.5,
+                hysteresisC = 0.5
             )
         )
     }

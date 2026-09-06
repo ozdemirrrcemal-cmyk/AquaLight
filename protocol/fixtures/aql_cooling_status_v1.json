@@ -69,7 +69,7 @@
     "controlMode": "AUTOMATIC",
     "operatingState": "COOLING",
     "controlReason": "AUTOMATIC_CURVE",
-    "targetPercent": 40.0,
+    "targetPercent": 37.77778,
     "manualActive": false
   },
   "policy": {
@@ -134,8 +134,8 @@
     ],
     "fan": {
       "fanKey": "fan1",
-      "targetPercent": 40.0,
-      "outputPercent": 40.0,
+      "targetPercent": 37.77778,
+      "outputPercent": 37.77778,
       "rpm": null,
       "pwmOutputHealth": "OK",
       "health": "UNVERIFIED"
@@ -144,8 +144,8 @@
       "source": "ESTIMATED",
       "available": true,
       "ratedPowerWatts": 0.5,
-      "powerWatts": 0.2,
-      "estimatedKwhPerDay": 0.0048
+      "powerWatts": 0.1888889,
+      "estimatedKwhPerDay": 0.004533333
     }
   },
   "alarms": [],

@@ -18,22 +18,35 @@ class CoolingHeroPresentationTest {
 
     @Test
     fun `current positive fan output drives cooling motion`() {
-        val presentation = state(fanPercent = 60).toCoolingHeroPresentation()
+        val presentation = state(fanPercent = 60.0).toCoolingHeroPresentation()
 
         assertEquals(CoolingHeroVisualStatus.COOLING, presentation.status)
-        assertEquals(60, presentation.fanPercent)
+        assertEquals(60.0, presentation.fanPercent ?: 0.0, 0.0)
         assertTrue(presentation.isCooling)
         assertEquals(EXPECTED_SIXTY_PERCENT_INTENSITY, presentation.motionIntensity, NO_DELTA)
     }
 
     @Test
+    fun `fractional automatic output keeps proportional cooling motion`() {
+        val presentation = state(fanPercent = CONTINUOUS_AUTOMATIC_PERCENT)
+            .toCoolingHeroPresentation()
+
+        assertTrue(presentation.isCooling)
+        assertEquals(
+            EXPECTED_CONTINUOUS_AUTOMATIC_INTENSITY,
+            presentation.motionIntensity,
+            NO_DELTA
+        )
+    }
+
+    @Test
     fun `manual target never overrides applied fan output for animation`() {
         val presentation = state(
-            fanPercent = 35,
+            fanPercent = 35.0,
             options = HeroStateOptions(manualFanPercent = 90)
         ).toCoolingHeroPresentation()
 
-        assertEquals(35, presentation.fanPercent)
+        assertEquals(35.0, presentation.fanPercent ?: 0.0, 0.0)
         assertEquals(EXPECTED_THIRTY_FIVE_PERCENT_INTENSITY, presentation.motionIntensity, NO_DELTA)
         assertTrue(presentation.isCooling)
     }
@@ -48,7 +61,7 @@ class CoolingHeroPresentationTest {
     @Test
     fun `zero fan output keeps the scene calmly ready`() {
         val presentation = state(
-            fanPercent = 0,
+            fanPercent = 0.0,
             options = HeroStateOptions(operatingState = DeviceCoolingOperatingState.IDLE)
         ).toCoolingHeroPresentation()
 
@@ -60,7 +73,7 @@ class CoolingHeroPresentationTest {
     @Test
     fun `positive retained output cannot override firmware idle state`() {
         val presentation = state(
-            fanPercent = 60,
+            fanPercent = 60.0,
             options = HeroStateOptions(operatingState = DeviceCoolingOperatingState.IDLE)
         ).toCoolingHeroPresentation()
 
@@ -70,7 +83,7 @@ class CoolingHeroPresentationTest {
 
     @Test
     fun `firmware cooling state is preserved while motion still reflects applied output`() {
-        val presentation = state(fanPercent = 0).toCoolingHeroPresentation()
+        val presentation = state(fanPercent = 0.0).toCoolingHeroPresentation()
 
         assertEquals(CoolingHeroVisualStatus.COOLING, presentation.status)
         assertFalse(presentation.isCooling)
@@ -79,19 +92,19 @@ class CoolingHeroPresentationTest {
     @Test
     fun `stale telemetry remains visible without pretending the fan is moving`() {
         val presentation = state(
-            fanPercent = 60,
+            fanPercent = 60.0,
             options = HeroStateOptions(freshness = CoolingDataFreshness.STALE)
         ).toCoolingHeroPresentation()
 
         assertEquals(CoolingHeroVisualStatus.WAITING_FOR_DATA, presentation.status)
-        assertEquals(60, presentation.fanPercent)
+        assertEquals(60.0, presentation.fanPercent ?: 0.0, 0.0)
         assertFalse(presentation.isCooling)
     }
 
     @Test
     fun `enabled waiting state motion starts before first telemetry`() {
         val motion = state(
-            fanPercent = 0,
+            fanPercent = 0.0,
             options = HeroStateOptions(freshness = CoolingDataFreshness.STALE)
         ).toCoolingHeroPresentation().resolveMotion(allowWaitingMotion = true)
 
@@ -102,7 +115,7 @@ class CoolingHeroPresentationTest {
     @Test
     fun `disabled waiting state motion does not imply live cooling`() {
         val motion = state(
-            fanPercent = 0,
+            fanPercent = 0.0,
             options = HeroStateOptions(freshness = CoolingDataFreshness.STALE)
         ).toCoolingHeroPresentation().resolveMotion(allowWaitingMotion = false)
 
@@ -113,7 +126,7 @@ class CoolingHeroPresentationTest {
     @Test
     fun `alarm takes precedence over live fan output`() {
         val presentation = state(
-            fanPercent = 60,
+            fanPercent = 60.0,
             options = HeroStateOptions(alarmCount = 1)
         ).toCoolingHeroPresentation()
 
@@ -124,7 +137,7 @@ class CoolingHeroPresentationTest {
     @Test
     fun `fan fault prevents false motion even when output is retained`() {
         val presentation = state(
-            fanPercent = 60,
+            fanPercent = 60.0,
             options = HeroStateOptions(fanHealth = CoolingHealthState.FAULT)
         ).toCoolingHeroPresentation()
 
@@ -135,7 +148,7 @@ class CoolingHeroPresentationTest {
     @Test
     fun `offline root never animates retained telemetry`() {
         val presentation = state(
-            fanPercent = 60,
+            fanPercent = 60.0,
             options = HeroStateOptions(contentEnabled = false)
         )
             .copy(connectionVisualState = DeviceConnectionVisualState.OFFLINE)
@@ -146,7 +159,7 @@ class CoolingHeroPresentationTest {
     }
 
     private fun state(
-        fanPercent: Int,
+        fanPercent: Double,
         options: HeroStateOptions = HeroStateOptions()
     ): DeviceCoolingRootUiState = DeviceCoolingRootUiState(
         connectionVisualState = DeviceConnectionVisualState.ONLINE,
@@ -191,6 +204,8 @@ class CoolingHeroPresentationTest {
         const val TANK_TEMPERATURE_C = 25.6
         const val EXPECTED_SIXTY_PERCENT_INTENSITY = 0.6f
         const val EXPECTED_THIRTY_FIVE_PERCENT_INTENSITY = 0.35f
+        const val CONTINUOUS_AUTOMATIC_PERCENT = 35.95
+        const val EXPECTED_CONTINUOUS_AUTOMATIC_INTENSITY = 0.3595f
         const val WAITING_MOTION_INTENSITY = 0.58f
         const val FULL_OUTPUT_PERIOD_MILLIS = 620
         const val HALF_OUTPUT_PERIOD_MILLIS = 1240

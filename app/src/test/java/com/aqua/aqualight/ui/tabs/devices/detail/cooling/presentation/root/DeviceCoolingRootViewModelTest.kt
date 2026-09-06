@@ -180,7 +180,7 @@ class DeviceCoolingRootViewModelTest {
             DeviceCoolingControlSnapshot(
                 mode = mode,
                 manualFanPercent = manualFanPercent,
-                actualFanPercent = manualFanPercent,
+                actualFanPercent = manualFanPercent.toDouble(),
                 tankTemperatureC = 25.0,
                 capabilities = DeviceCoolingControlCapabilities(
                     supportedModes = setOf(

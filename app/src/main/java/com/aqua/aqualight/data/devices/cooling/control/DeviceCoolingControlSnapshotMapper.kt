@@ -26,8 +26,8 @@ internal object DeviceCoolingControlSnapshotMapper {
             val live = state.telemetry
             DeviceCoolingControlSnapshot(
                 mode = (live?.controlMode ?: status.control.controlMode).toApplicationMode(),
-                manualFanPercent = config.manualTargetPercent.toIntPercentOrNull(),
-                actualFanPercent = live?.fan?.outputPercent?.toIntPercentOrNull(),
+                manualFanPercent = config.manualTargetPercent.toWritableIntPercentOrNull(),
+                actualFanPercent = live?.fan?.outputPercent,
                 tankTemperatureC = live.waterTemperatureOrNull(),
                 capabilities = status.toApplicationCapabilities(),
                 telemetry = live?.let(DeviceCoolingTelemetrySnapshotMapper::map),
@@ -35,8 +35,7 @@ internal object DeviceCoolingControlSnapshotMapper {
                     .toApplicationOperatingState(),
                 controlReason = (live?.controlReason ?: status.control.controlReason)
                     .toApplicationControlReason(),
-                targetFanPercent = (live?.fan?.targetPercent ?: status.control.targetPercent)
-                    .toIntPercentOrNull(),
+                targetFanPercent = live?.fan?.targetPercent ?: status.control.targetPercent,
                 manualActive = live?.manualActive ?: status.control.manualActive,
                 programRuntime = status.toApplicationProgramRuntime(live)
             )
@@ -58,9 +57,9 @@ internal object DeviceCoolingControlSnapshotMapper {
         val fanPolicy = policy.fanPercent
         val manualSupported = DeviceCoolingControlMode.MANUAL in supportedModes &&
             topology.fanOutputs.any { fan -> fan.fanKey == DeviceCoolingV1Contract.FAN_KEY }
-        val minimumPercent = fanPolicy.minimumPercent.toIntPercentOrNull()
-        val maximumPercent = fanPolicy.maximumPercent.toIntPercentOrNull()
-        val stepPercent = fanPolicy.stepPercent.toPositiveIntPercentOrNull()
+        val minimumPercent = fanPolicy.minimumPercent.toWritableIntPercentOrNull()
+        val maximumPercent = fanPolicy.maximumPercent.toWritableIntPercentOrNull()
+        val stepPercent = fanPolicy.stepPercent.toPositiveWritableIntPercentOrNull()
         return DeviceCoolingControlCapabilities(
             supportedModes = supportedModes,
             modeSelectionWritable = true,
@@ -112,7 +111,8 @@ internal object DeviceCoolingControlSnapshotMapper {
         DeviceCoolingControlReason.values().firstOrNull { reason -> reason.name == this }
             ?: DeviceCoolingControlReason.UNKNOWN
 
-    private fun Double.toIntPercentOrNull(): Int? {
+    /** Writable Manual policy is discrete; firmware-computed runtime telemetry is not. */
+    private fun Double.toWritableIntPercentOrNull(): Int? {
         val rounded = if (isFinite()) roundToInt() else null
         return rounded?.takeIf { value ->
             value in MIN_PERCENT..MAX_PERCENT &&
@@ -120,8 +120,8 @@ internal object DeviceCoolingControlSnapshotMapper {
         }
     }
 
-    private fun Double.toPositiveIntPercentOrNull(): Int? =
-        toIntPercentOrNull()?.takeIf { it > MIN_PERCENT }
+    private fun Double.toPositiveWritableIntPercentOrNull(): Int? =
+        toWritableIntPercentOrNull()?.takeIf { it > MIN_PERCENT }
 
     private const val MIN_PERCENT = 0
     private const val MAX_PERCENT = 100

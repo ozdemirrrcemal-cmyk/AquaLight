@@ -15,12 +15,13 @@ internal enum class CoolingHeroVisualStatus {
 
 internal data class CoolingHeroPresentation(
     val status: CoolingHeroVisualStatus,
-    val fanPercent: Int?,
+    val fanPercent: Double?,
     val isCooling: Boolean
 ) {
     val motionIntensity: Float
         get() = if (isCooling) {
-            fanPercent.orZero().coerceIn(MINIMUM_PERCENT, MAXIMUM_PERCENT) / MAXIMUM_PERCENT_FLOAT
+            fanPercent.orZero().coerceIn(MINIMUM_PERCENT, MAXIMUM_PERCENT).toFloat() /
+                MAXIMUM_PERCENT_FLOAT
         } else {
             NO_MOTION
         }
@@ -61,7 +62,7 @@ private fun DeviceCoolingRootUiState.resolveCoolingHeroStatus(): CoolingHeroVisu
 private fun DeviceCoolingRootUiState.hasCoolingAttentionState(): Boolean =
     fanHealth.requiresAttention() ||
         sensorHealth.requiresAttention() ||
-        activeAlarmCount.orZero() > NO_ALARMS
+        (activeAlarmCount ?: NO_ALARMS) > NO_ALARMS
 
 private fun CoolingHealthState.requiresAttention(): Boolean =
     this == CoolingHealthState.FAULT || this == CoolingHealthState.WARNING
@@ -74,10 +75,12 @@ private fun DeviceCoolingRootUiState.hasCurrentFanMotion(): Boolean {
         fanPercentNow.orZero() > MINIMUM_PERCENT
 }
 
-private fun Int?.orZero(): Int = this ?: 0
+private fun Double?.orZero(): Double = this?.takeIf { value ->
+    value.isFinite() && value in MINIMUM_PERCENT..MAXIMUM_PERCENT
+} ?: 0.0
 
-private const val MINIMUM_PERCENT = 0
-private const val MAXIMUM_PERCENT = 100
+private const val MINIMUM_PERCENT = 0.0
+private const val MAXIMUM_PERCENT = 100.0
 private const val MAXIMUM_PERCENT_FLOAT = 100f
 private const val NO_MOTION = 0f
 private const val NO_ALARMS = 0

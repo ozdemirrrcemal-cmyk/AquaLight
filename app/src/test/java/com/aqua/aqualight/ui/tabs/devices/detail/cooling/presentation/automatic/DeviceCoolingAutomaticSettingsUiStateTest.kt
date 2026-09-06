@@ -157,6 +157,24 @@ class DeviceCoolingAutomaticSettingsUiStateTest {
         assertFalse(unsupported.editable)
     }
 
+    @Test
+    fun continuousRuntimeFanPercentReachesAutomaticPresentationWithoutQuantization() {
+        val state = DeviceCoolingAutomaticSettingsUiState().withSnapshot(
+            automaticSnapshot().copy(fanPercentNow = CONTINUOUS_AUTOMATIC_PERCENT)
+        )
+
+        assertEquals(CONTINUOUS_AUTOMATIC_PERCENT, state.fanPercentNow ?: 0.0, 0.0)
+    }
+
+    @Test
+    fun invalidRuntimeFanPercentFailsAtApplicationBoundary() {
+        assertTrue(
+            runCatching {
+                automaticSnapshot().copy(fanPercentNow = 100.01)
+            }.isFailure
+        )
+    }
+
     private fun editableState(
         persistedSilentModeEnabled: Boolean?,
         draftSilentModeEnabled: Boolean
@@ -191,7 +209,8 @@ class DeviceCoolingAutomaticSettingsUiStateTest {
             maximumSpeedMinimumC = 18.5,
             maximumSpeedMaximumC = 32.0,
             stepC = 0.5,
-            minimumGapC = 0.5
+            minimumGapC = 0.5,
+            hysteresisC = 0.5
         )
     )
 
@@ -204,5 +223,6 @@ class DeviceCoolingAutomaticSettingsUiStateTest {
 
     private companion object {
         const val DEVICE_UID = "cooling-device"
+        const val CONTINUOUS_AUTOMATIC_PERCENT = 35.95
     }
 }

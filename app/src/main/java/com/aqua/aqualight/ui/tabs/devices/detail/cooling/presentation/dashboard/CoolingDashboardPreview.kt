@@ -45,7 +45,7 @@ internal fun CoolingDashboardPreview() {
                         writable = true
                     ),
                     manualFanPercent = 65,
-                    actualFanPercent = 65,
+                    actualFanPercent = 65.0,
                     tankTemperatureC = 26.2,
                     operatingState = DeviceCoolingOperatingState.MANUAL
                 )

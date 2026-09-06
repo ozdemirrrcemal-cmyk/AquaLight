@@ -19,13 +19,12 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
 import com.aqua.aqualight.R
 import com.aqua.aqualight.application.devices.cooling.control.DeviceCoolingOperatingState
-import com.aqua.aqualight.ui.common.cooling.AquaCoolingGaugeSpec
 import com.aqua.aqualight.ui.common.cooling.AquaCoolingTemperatureChartSpec
 import com.aqua.aqualight.ui.common.devicecard.AquaDeviceCardColors
 import com.aqua.aqualight.ui.common.devicecard.AquaDeviceCardTypography
+import com.aqua.aqualight.ui.tabs.devices.detail.cooling.presentation.common.toCoolingDisplayPercentOrNull
 import kotlin.math.ceil
 import kotlin.math.floor
-import kotlin.math.roundToInt
 
 @Composable
 internal fun AutomaticTemperatureRangeVisual(
@@ -34,6 +33,8 @@ internal fun AutomaticTemperatureRangeVisual(
     colors: AquaDeviceCardColors,
     typography: AquaDeviceCardTypography
 ) {
+    // This is a threshold-only visualization. Runtime fan targets, including the product-specific
+    // minimum running duty, remain firmware-owned and arrive through telemetry.
     val range = automaticTemperatureVisualRange(startTemperatureC, maximumTemperatureC)
     Column(
         modifier = Modifier.fillMaxWidth(),
@@ -203,18 +204,17 @@ internal fun automaticTemperatureText(value: Double?): String =
     }
 
 @Composable
-internal fun automaticFanPercentText(value: Double?): String =
-    if (value?.isFinite() == true) {
+internal fun automaticFanPercentText(value: Double?): String {
+    val displayPercent = value.toCoolingDisplayPercentOrNull()
+    return if (displayPercent != null) {
         stringResource(
             R.string.device_cooling_percent_value_format,
-            value.roundToInt().coerceIn(
-                AquaCoolingGaugeSpec.minimumPercent,
-                AquaCoolingGaugeSpec.maximumPercent
-            )
+            displayPercent
         )
     } else {
         stringResource(R.string.device_cooling_value_unavailable)
     }
+}
 
 @Composable
 internal fun automaticRuntimeStatusText(operatingState: DeviceCoolingOperatingState?): String =

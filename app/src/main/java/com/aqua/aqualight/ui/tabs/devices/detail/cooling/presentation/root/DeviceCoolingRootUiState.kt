@@ -24,11 +24,11 @@ data class CoolingControlPresentation(
     val modeSelectionWritable: Boolean,
     val manualFanCapabilities: DeviceCoolingManualFanCapabilities?,
     val manualFanPercent: Int?,
-    val actualFanPercent: Int?,
+    val actualFanPercent: Double?,
     val tankTemperatureC: Double?,
     val operatingState: DeviceCoolingOperatingState? = null,
     val controlReason: DeviceCoolingControlReason = DeviceCoolingControlReason.UNKNOWN,
-    val targetFanPercent: Int? = null,
+    val targetFanPercent: Double? = null,
     val manualActive: Boolean? = null,
     val programRuntime: DeviceCoolingProgramRuntimeSnapshot? = null
 )
@@ -124,7 +124,7 @@ data class DeviceCoolingRootUiState(
     val manualFanPercent: Int?
         get() = controlPresentation?.manualFanPercent
 
-    val fanPercentNow: Int?
+    val fanPercentNow: Double?
         get() = controlPresentation?.actualFanPercent
 
     val tankTemperatureC: Double?

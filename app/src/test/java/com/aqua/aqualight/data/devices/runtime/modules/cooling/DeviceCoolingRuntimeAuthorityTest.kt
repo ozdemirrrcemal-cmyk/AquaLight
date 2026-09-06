@@ -21,6 +21,8 @@ class DeviceCoolingRuntimeAuthorityTest {
         assertEquals(listOf("water", "ambient"), status.topology.sensorSlots.map { it.sensorKey })
         assertEquals(50.0, status.policy.silentMode.maximumPercent, 0.0)
         assertEquals(0.5, status.policy.temperature.minimumGapC, 0.0)
+        assertEquals(0.5, status.policy.temperature.hysteresisC, 0.0)
+        assertEquals(37.77778, status.control.targetPercent, 0.0)
         assertEquals(DeviceCoolingV1OperatingState.COOLING, status.control.operatingState)
         assertEquals("AUTOMATIC_CURVE", status.control.controlReason)
         assertEquals(2, status.program.slotCount)

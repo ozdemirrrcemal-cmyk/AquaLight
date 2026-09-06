@@ -62,6 +62,7 @@ data class DeviceCoolingAutomaticSettingsSnapshot(
     val policy: DeviceCoolingAutomaticTemperaturePolicy? = null
 ) {
     init {
+        require(fanPercentNow == null || fanPercentNow.isValidCoolingFanPercent())
         require(
             silentModeMaximumFanPercent == null ||
                 silentModeMaximumFanPercent in
@@ -70,18 +71,25 @@ data class DeviceCoolingAutomaticSettingsSnapshot(
     }
 }
 
+private fun Double.isValidCoolingFanPercent(): Boolean =
+    isFinite() && this >= DEVICE_COOLING_FAN_PERCENT_MINIMUM.toDouble() &&
+        this <= DEVICE_COOLING_FAN_PERCENT_MAXIMUM.toDouble()
+
 data class DeviceCoolingAutomaticTemperaturePolicy(
     val startMinimumC: Double,
     val startMaximumC: Double,
     val maximumSpeedMinimumC: Double,
     val maximumSpeedMaximumC: Double,
     val stepC: Double,
-    val minimumGapC: Double
+    val minimumGapC: Double,
+    /** Firmware-owned stop-band width; presentation may explain it but never evaluates it. */
+    val hysteresisC: Double
 ) {
     init {
         require(startMinimumC <= startMaximumC)
         require(maximumSpeedMinimumC <= maximumSpeedMaximumC)
         require(stepC > 0.0)
         require(minimumGapC >= stepC)
+        require(hysteresisC.isFinite() && hysteresisC >= 0.0)
     }
 }

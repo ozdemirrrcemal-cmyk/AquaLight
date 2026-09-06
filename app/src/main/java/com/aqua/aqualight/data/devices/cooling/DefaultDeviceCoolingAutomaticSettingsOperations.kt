@@ -236,7 +236,8 @@ private fun projectAutomatic(
                 maximumSpeedMinimumC = automaticPolicy.minimumC + automaticPolicy.minimumGapC,
                 maximumSpeedMaximumC = automaticPolicy.maximumC,
                 stepC = automaticPolicy.stepC,
-                minimumGapC = automaticPolicy.minimumGapC
+                minimumGapC = automaticPolicy.minimumGapC,
+                hysteresisC = automaticPolicy.hysteresisC
             )
         )
     }

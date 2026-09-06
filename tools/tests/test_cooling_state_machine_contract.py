@@ -229,6 +229,57 @@ class CoolingStateMachineContractTest(unittest.TestCase):
             self.assertNotIn('<string name="device_cooling_mode_active">', strings)
             self.assertNotIn("device_cooling_inline_separator", strings)
 
+    def test_runtime_fan_percent_remains_continuous_until_presentation(self) -> None:
+        application_snapshot = (
+            ROOT
+            / "app/src/main/java/com/aqua/aqualight/application/devices/cooling/control/"
+            "DeviceCoolingControlSnapshot.kt"
+        ).read_text(encoding="utf-8")
+        mapper = (
+            ROOT
+            / "app/src/main/java/com/aqua/aqualight/data/devices/cooling/control/"
+            "DeviceCoolingControlSnapshotMapper.kt"
+        ).read_text(encoding="utf-8")
+        gauge = (COOLING / "dashboard/CoolingFanControlCards.kt").read_text(
+            encoding="utf-8"
+        )
+
+        self.assertIn("val actualFanPercent: Double?", application_snapshot)
+        self.assertIn("val targetFanPercent: Double?", application_snapshot)
+        self.assertIn("actualFanPercent = live?.fan?.outputPercent", mapper)
+        self.assertIn(
+            "targetFanPercent = live?.fan?.targetPercent ?: status.control.targetPercent",
+            mapper,
+        )
+        self.assertNotIn("outputPercent?.toWritableIntPercentOrNull()", mapper)
+        self.assertIn("toCoolingDisplayPercentOrNull()", gauge)
+
+    def test_automatic_copy_matches_firmware_threshold_and_silent_scope(self) -> None:
+        application_policy = (
+            ROOT
+            / "app/src/main/java/com/aqua/aqualight/application/devices/cooling/"
+            "DeviceCoolingAutomaticSettingsOperations.kt"
+        ).read_text(encoding="utf-8")
+        adapter = (
+            ROOT
+            / "app/src/main/java/com/aqua/aqualight/data/devices/cooling/"
+            "DefaultDeviceCoolingAutomaticSettingsOperations.kt"
+        ).read_text(encoding="utf-8")
+
+        self.assertIn("val hysteresisC: Double", application_policy)
+        self.assertIn("hysteresisC = automaticPolicy.hysteresisC", adapter)
+
+        english = (
+            ROOT / "app/src/main/res/values/device_cooling_strings.xml"
+        ).read_text(encoding="utf-8")
+        turkish = (
+            ROOT / "app/src/main/res/values-tr/device_cooling_strings.xml"
+        ).read_text(encoding="utf-8")
+        self.assertIn("exceeds this threshold", english)
+        self.assertIn("Automatic and Program modes", english)
+        self.assertIn("eşiği aşınca", turkish)
+        self.assertIn("Otomatik ve Program modlarında", turkish)
+
     def test_blocking_cooling_mutations_and_cold_root_use_central_loading(self) -> None:
         fragments = (
             "root/DeviceCoolingRootFragment.kt",

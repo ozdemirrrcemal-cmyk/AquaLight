@@ -36,6 +36,7 @@ import com.aqua.aqualight.ui.common.devicecard.AquaDeviceCardColors
 import com.aqua.aqualight.ui.common.devicecard.AquaDeviceCardGeometry
 import com.aqua.aqualight.ui.common.devicecard.AquaDeviceCardSurface
 import com.aqua.aqualight.ui.common.devicecard.AquaDeviceCardTypography
+import com.aqua.aqualight.ui.tabs.devices.detail.cooling.presentation.common.toCoolingDisplayPercentOrNull
 import com.aqua.aqualight.ui.tabs.devices.detail.cooling.presentation.root.CoolingControlMode
 import com.aqua.aqualight.ui.tabs.devices.detail.cooling.presentation.root.DeviceCoolingRootUiState
 
@@ -70,20 +71,21 @@ internal fun CoolingFanSpeedCard(
 
 @Composable
 private fun CoolingFanGauge(
-    percent: Int?,
+    percent: Double?,
     colors: AquaDeviceCardColors,
     typography: AquaDeviceCardTypography
 ) {
-    val clamped = percent?.coerceIn(
-        AquaCoolingGaugeSpec.minimumPercent,
-        AquaCoolingGaugeSpec.maximumPercent
-    )
+    val minimumPercent = AquaCoolingGaugeSpec.minimumPercent.toDouble()
+    val maximumPercent = AquaCoolingGaugeSpec.maximumPercent.toDouble()
+    val validPercent = percent?.takeIf { value ->
+        value.isFinite() && value in minimumPercent..maximumPercent
+    }
     Box(
         modifier = Modifier.size(AquaCoolingDashboardGeometry.gaugeSize),
         contentAlignment = Alignment.Center
     ) {
-        CoolingFanGaugeArc(clamped = clamped, colors = colors)
-        CoolingFanGaugeValue(clamped = clamped, colors = colors, typography = typography)
+        CoolingFanGaugeArc(percent = validPercent, colors = colors)
+        CoolingFanGaugeValue(percent = validPercent, colors = colors, typography = typography)
         CoolingFanGaugeScale(
             colors = colors,
             typography = typography,
@@ -93,7 +95,7 @@ private fun CoolingFanGauge(
 }
 
 @Composable
-private fun CoolingFanGaugeArc(clamped: Int?, colors: AquaDeviceCardColors) {
+private fun CoolingFanGaugeArc(percent: Double?, colors: AquaDeviceCardColors) {
     Canvas(modifier = Modifier.fillMaxSize()) {
         val stroke = AquaCoolingDashboardGeometry.gaugeStrokeWidth.toPx()
         val inset = stroke / 2f + AquaCoolingDashboardGeometry.gaugeInnerGap.toPx()
@@ -110,11 +112,11 @@ private fun CoolingFanGaugeArc(clamped: Int?, colors: AquaDeviceCardColors) {
             size = arcSize,
             style = Stroke(width = stroke, cap = StrokeCap.Round)
         )
-        clamped?.let { value ->
+        percent?.let { value ->
             drawArc(
                 color = colors.accent,
                 startAngle = AquaCoolingGaugeSpec.startAngle,
-                sweepAngle = AquaCoolingGaugeSpec.sweepAngle * value /
+                sweepAngle = AquaCoolingGaugeSpec.sweepAngle * value.toFloat() /
                     AquaCoolingGaugeSpec.maximumPercent,
                 useCenter = false,
                 topLeft = Offset(inset, inset),
@@ -127,18 +129,22 @@ private fun CoolingFanGaugeArc(clamped: Int?, colors: AquaDeviceCardColors) {
 
 @Composable
 private fun CoolingFanGaugeValue(
-    clamped: Int?,
+    percent: Double?,
     colors: AquaDeviceCardColors,
     typography: AquaDeviceCardTypography
 ) {
+    val displayPercent = percent.toCoolingDisplayPercentOrNull()
+    val displayText = if (displayPercent != null) {
+        stringResource(R.string.device_cooling_percent_value_format, displayPercent)
+    } else {
+        stringResource(R.string.device_cooling_value_unavailable)
+    }
     Column(
         modifier = Modifier.padding(top = AquaCoolingDashboardGeometry.gaugeCaptionTopPadding),
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
         BasicText(
-            text = clamped?.let { value ->
-                stringResource(R.string.device_cooling_percent_value_format, value)
-            } ?: stringResource(R.string.device_cooling_value_unavailable),
+            text = displayText,
             style = typography.title.copy(
                 color = colors.primaryText,
                 fontSize = AquaCoolingDashboardTypography.gaugeValueSize,

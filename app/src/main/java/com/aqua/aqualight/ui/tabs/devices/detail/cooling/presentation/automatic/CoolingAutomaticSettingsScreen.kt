@@ -207,6 +207,15 @@ private fun AutomaticTemperatureRangeCard(
 ) {
     val colors = visuals.colors
     val typography = visuals.typography
+    val editorPolicy = state.editorPolicy
+    val startHelper = if (editorPolicy != null) {
+        stringResource(
+            R.string.device_cooling_automatic_start_helper_with_hysteresis,
+            editorPolicy.hysteresisC
+        )
+    } else {
+        stringResource(R.string.device_cooling_automatic_start_helper)
+    }
     AquaDeviceCardSurface(
         modifier = Modifier
             .fillMaxWidth()
@@ -223,7 +232,7 @@ private fun AutomaticTemperatureRangeCard(
             AutomaticEditorRow(
                 content = AutomaticEditorRowContent(
                     title = stringResource(R.string.device_cooling_fan_start_temperature),
-                    helper = stringResource(R.string.device_cooling_automatic_start_helper),
+                    helper = startHelper,
                     value = automaticTemperatureText(state.draftStartTemperatureC)
                 ),
                 enabled = state.editable,

@@ -91,13 +91,14 @@
     <string name="device_cooling_automatic_status_cooling">Cooling</string>
     <string name="device_cooling_automatic_status_waiting">Waiting</string>
     <string name="device_cooling_automatic_range_title">Automatic Temperature Range</string>
-    <string name="device_cooling_automatic_start_helper">The fan starts when the water reaches this temperature.</string>
+    <string name="device_cooling_automatic_start_helper">The fan starts after the water exceeds this threshold.</string>
+    <string name="device_cooling_automatic_start_helper_with_hysteresis">The fan starts after water exceeds this threshold; once running, it stops at %1$.1f °C below the threshold.</string>
     <string name="device_cooling_automatic_max_helper">The fan reaches maximum speed at this temperature.</string>
     <string name="device_cooling_automatic_zone_off">Off</string>
     <string name="device_cooling_automatic_zone_gradual">Gradual</string>
     <string name="device_cooling_automatic_zone_maximum">Maximum</string>
     <string name="device_cooling_automatic_silent_mode_title">Silent Mode</string>
-    <string name="device_cooling_automatic_silent_mode_description">Limits automatic fan output to %1$d%% for quieter operation.</string>
+    <string name="device_cooling_automatic_silent_mode_description">Limits fan output in Automatic and Program modes to %1$d%% for quieter operation.</string>
     <string name="device_cooling_automatic_silent_mode_unavailable">Not available on this device.</string>
     <string name="device_cooling_automatic_silent_mode_toggle_description">Toggle Silent Mode</string>
     <string name="device_cooling_automatic_save">Save</string>
