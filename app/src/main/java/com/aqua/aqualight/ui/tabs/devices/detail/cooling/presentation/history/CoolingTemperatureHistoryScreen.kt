@@ -153,12 +153,8 @@ private fun historyStateMessage(state: DeviceCoolingTemperatureHistoryUiState): 
         )
         is CoolingDataState.Content -> dataState.freshness.historyMessage()
         is CoolingDataState.Empty -> when (dataState.freshness) {
-            CoolingDataFreshness.CURRENT -> HistoryStateMessage(
-                titleRes = R.string.device_cooling_history_empty_title,
-                messageRes = R.string.device_cooling_history_empty_message,
-                retryAvailable = false
-            )
-            CoolingDataFreshness.REFRESHING -> refreshingHistoryMessage()
+            CoolingDataFreshness.CURRENT,
+            CoolingDataFreshness.REFRESHING -> null
             CoolingDataFreshness.STALE -> staleHistoryMessage()
         }
         CoolingDataState.Unsupported -> HistoryStateMessage(
@@ -187,16 +183,10 @@ private fun CoolingDataState<*, DeviceCoolingTemperatureHistoryFailure>.typedHis
 }
 
 private fun CoolingDataFreshness.historyMessage(): HistoryStateMessage? = when (this) {
-    CoolingDataFreshness.CURRENT -> null
-    CoolingDataFreshness.REFRESHING -> refreshingHistoryMessage()
+    CoolingDataFreshness.CURRENT,
+    CoolingDataFreshness.REFRESHING -> null
     CoolingDataFreshness.STALE -> staleHistoryMessage()
 }
-
-private fun refreshingHistoryMessage() = HistoryStateMessage(
-    titleRes = R.string.device_cooling_history_refreshing_title,
-    messageRes = R.string.device_cooling_history_refreshing_message,
-    retryAvailable = false
-)
 
 private fun staleHistoryMessage() = HistoryStateMessage(
     titleRes = R.string.device_cooling_history_stale_title,
