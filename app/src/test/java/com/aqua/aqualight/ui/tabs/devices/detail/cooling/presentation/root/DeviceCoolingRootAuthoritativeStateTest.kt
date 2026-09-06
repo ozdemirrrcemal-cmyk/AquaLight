@@ -76,6 +76,8 @@ class DeviceCoolingRootAuthoritativeStateTest {
         assertNull(state.fanPercentNow)
         assertNull(state.tankTemperatureC)
         assertFalse(state.controlAvailable)
+        assertFalse(state.surfacePreparationPending)
+        assertTrue(state.contentEnabled)
     }
 
     @Test

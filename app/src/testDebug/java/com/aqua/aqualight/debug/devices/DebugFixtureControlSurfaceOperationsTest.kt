@@ -10,7 +10,6 @@ import com.aqua.aqualight.application.devices.DeviceMenuUnavailableReason
 import com.aqua.aqualight.application.devices.DeviceRootOperations
 import com.aqua.aqualight.application.devices.DeviceRootSnapshot
 import com.aqua.aqualight.application.devices.OwnerDeviceFamily
-import com.aqua.aqualight.data.devices.cooling.DisconnectedDeviceCoolingControlOperations
 import com.aqua.aqualight.data.devices.dosing.UnavailableDeviceDosingChannelOperations
 import com.aqua.aqualight.data.devices.menu.DefaultDeviceControlSurfacePreparationOperations
 import com.aqua.aqualight.data.devices.model.DeviceFamily
@@ -27,14 +26,9 @@ class DebugFixtureControlSurfaceOperationsTest {
     @Test
     fun fixtureMenuUsesFixturePreparationAndRetainsOneShotHandoff() = runTest {
         val fixtures = DebugDeviceFixtureCatalog()
-        val cooling = DebugFixtureCoolingControlOperations(
-            DisconnectedDeviceCoolingControlOperations,
-            fixtures
-        )
         val fixturePreparation = DefaultDeviceControlSurfacePreparationOperations(
             rootOperations = DebugFixtureDeviceRootOperations(NoDeviceRootOperations, fixtures),
-            dosingChannelOperations = UnavailableDeviceDosingChannelOperations,
-            coolingControlOperations = cooling
+            dosingChannelOperations = UnavailableDeviceDosingChannelOperations
         )
         val productionPreparation = RecordingPreparationOperations(
             result = unavailableResult(),
