@@ -24,14 +24,10 @@ FAILURE_MAPPER_PATH = (
 )
 COOLING_COMMAND_PREFIX = "cooling."
 
-# The pinned shared Cooling fixture declares its reusable top-level error catalog,
-# while cooling.manual.apply additionally emits NOT_FOUND for an unknown fanKey.
-# Keep that command-local firmware emission explicit so parity stays fail-closed
-# without mutating the byte-identical firmware fixture.
-COMMAND_LOCAL_FIRMWARE_ERRORS = frozenset({"NOT_FOUND"})
-COMMAND_LOCAL_MAPPER_ROUTES = {
-    "NOT_FOUND": "DeviceCoolingV1Contract.Error.NOT_FOUND -> mapNotFound(error)",
-}
+# The pinned shared Cooling fixture declares the complete effective firmware error catalog.
+# No command-local exception remains outside the byte-identical fixture.
+COMMAND_LOCAL_FIRMWARE_ERRORS: frozenset[str] = frozenset()
+COMMAND_LOCAL_MAPPER_ROUTES: dict[str, str] = {}
 
 
 class GuardFailure(AssertionError):

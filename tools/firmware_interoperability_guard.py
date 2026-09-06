@@ -37,6 +37,12 @@ guard.EXPECTED_FIXTURES["aql_product_catalog_v1.json"] = (
     False,
 )
 
+guard.EXPECTED_FIXTURES["aql_cooling_contract_v1.json"] = (
+    "9197d06f5f2022bdeea288e8455fad98b1fab57ad3325a1f202c50b555c8ddf2",
+    "823fa046921922eb97573cb01c086de0b76fb350",
+    True,
+)
+
 
 if __name__ == "__main__":
     interoperability_result = guard.main()
