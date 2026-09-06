@@ -6,7 +6,7 @@ object DeviceCoolingV1Contract {
     const val SCHEMA_VERSION = 1
     const val CATALOG_VERSION = 1
     const val CATALOG_SHA256 =
-        "dac61fd3b16ad1f29df59f3c7b881bb562007f9e629e7a636d607fc3d84c0531"
+        "9197d06f5f2022bdeea288e8455fad98b1fab57ad3325a1f202c50b555c8ddf2"
     const val PRODUCT_KEY = "COOLING_COOL_PRO_1F"
     const val FAN_KEY = "fan1"
     const val WATER_SENSOR_KEY = "water"

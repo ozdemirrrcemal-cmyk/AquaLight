@@ -74,6 +74,7 @@ class DeviceCoolingV1FixtureParityTest {
             DeviceCoolingV1Contract.Error.BAD_REQUEST,
             DeviceCoolingV1Contract.Error.MISSING_FIELD,
             DeviceCoolingV1Contract.Error.INVALID_VALUE,
+            DeviceCoolingV1Contract.Error.NOT_FOUND,
             DeviceCoolingV1Contract.Error.CONFLICT,
             DeviceCoolingV1Contract.Error.HARDWARE_ERROR,
             DeviceCoolingV1Contract.Error.STORAGE_ERROR,
