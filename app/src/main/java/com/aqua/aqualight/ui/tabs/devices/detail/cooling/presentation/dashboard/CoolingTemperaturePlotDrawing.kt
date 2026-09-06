@@ -25,9 +25,12 @@ internal fun DrawScope.drawTemperatureHistory(
     val segments = temperatureChartSegments(values).map { segment ->
         temperatureHistoryOffsets(segment, scale, viewport)
     }
-    segments.forEach { points ->
-        if (points.size >= 2) {
-            if (drawArea) {
+    val latestPoint = segments.lastOrNull()?.lastOrNull()
+
+    // Keep the area behind every other visual layer.
+    if (drawArea) {
+        segments.forEach { points ->
+            if (points.size >= 2) {
                 drawTemperatureArea(
                     path = smoothTemperatureAreaPath(
                         points = points,
@@ -37,21 +40,33 @@ internal fun DrawScope.drawTemperatureHistory(
                     viewport = viewport
                 )
             }
+        }
+    }
+
+    // Draw the latest-point halo before the series so even a very short recent live segment
+    // remains visibly connected to the latest sample instead of disappearing under the glow.
+    latestPoint?.let { point ->
+        drawTemperaturePointGlow(point, lineColor)
+    }
+
+    segments.forEach { points ->
+        if (points.size >= 2) {
             drawTemperatureSeries(
                 path = smoothTemperaturePath(points),
                 lineColor = lineColor,
                 emphasized = drawArea
             )
         } else {
-            points.singleOrNull()?.let { point ->
-                drawTemperaturePoint(point, lineColor, emphasized = false)
+            points.singleOrNull()?.takeIf { point -> point != latestPoint }?.let { point ->
+                drawTemperaturePointCore(point, lineColor)
             }
         }
     }
+
     // The emphasized point is the latest real sample, which is the right-most point on the
-    // conventional past-to-present time axis. It is not fabricated at the Now boundary.
-    segments.lastOrNull()?.lastOrNull()?.let { latestPoint ->
-        drawTemperaturePoint(latestPoint, lineColor, emphasized = true)
+    // conventional past-to-present time axis. A real missing-data interval stays a real gap.
+    latestPoint?.let { point ->
+        drawTemperaturePointCore(point, lineColor)
     }
 }
 
@@ -184,18 +199,21 @@ private fun DrawScope.drawTemperatureSeries(
     )
 }
 
-private fun DrawScope.drawTemperaturePoint(
+private fun DrawScope.drawTemperaturePointGlow(
     point: Offset,
-    lineColor: Color,
-    emphasized: Boolean
+    lineColor: Color
 ) {
-    if (emphasized) {
-        drawCircle(
-            color = lineColor.copy(alpha = AquaCoolingDashboardAlpha.chartGlow),
-            radius = AquaCoolingDashboardGeometry.chartPointGlowRadius.toPx(),
-            center = point
-        )
-    }
+    drawCircle(
+        color = lineColor.copy(alpha = AquaCoolingDashboardAlpha.chartGlow),
+        radius = AquaCoolingDashboardGeometry.chartPointGlowRadius.toPx(),
+        center = point
+    )
+}
+
+private fun DrawScope.drawTemperaturePointCore(
+    point: Offset,
+    lineColor: Color
+) {
     drawCircle(
         color = lineColor.copy(alpha = AquaCoolingDashboardAlpha.chartLine),
         radius = AquaCoolingDashboardGeometry.chartPointRadius.toPx(),
