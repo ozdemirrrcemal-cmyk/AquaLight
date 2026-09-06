@@ -82,6 +82,7 @@ class DeviceCoolingRootFragment : Fragment(R.layout.fragment_device_cooling_root
                     actions = DeviceCoolingDashboardActions(
                         onModeSelected = viewModel::selectMode,
                         onTemperatureHistoryClick = ::openTemperatureHistory,
+                        onSystemStatusClick = ::openSystemStatus,
                         onAutomaticSettingsClick = ::openAutomaticSettings,
                         onManualSettingsClick = ::openManualSettings,
                         onProgramSettingsClick = ::openProgramSettings
@@ -94,6 +95,14 @@ class DeviceCoolingRootFragment : Fragment(R.layout.fragment_device_cooling_root
     private fun openTemperatureHistory() {
         if (!viewModel.uiState.value.contentEnabled) return
         DeviceCoolingRouteNavigator.openTemperatureHistory(
+            navController = findNavController(),
+            deviceUid = args.deviceUid
+        )
+    }
+
+    private fun openSystemStatus() {
+        if (!viewModel.uiState.value.contentEnabled) return
+        DeviceCoolingRouteNavigator.openSystemStatus(
             navController = findNavController(),
             deviceUid = args.deviceUid
         )

@@ -6,6 +6,8 @@ import com.aqua.aqualight.application.devices.cooling.DeviceCoolingAlarmCode
 import com.aqua.aqualight.application.devices.cooling.DeviceCoolingAlarmSeverity
 import com.aqua.aqualight.application.devices.cooling.DeviceCoolingAlarmSnapshot
 import com.aqua.aqualight.application.devices.cooling.DeviceCoolingFanHealth
+import com.aqua.aqualight.application.devices.cooling.DeviceCoolingFanTelemetrySnapshot
+import com.aqua.aqualight.application.devices.cooling.DeviceCoolingPwmOutputHealth
 import com.aqua.aqualight.application.devices.cooling.DeviceCoolingSensorHealth
 import com.aqua.aqualight.application.devices.cooling.DeviceCoolingTelemetrySnapshot
 import com.aqua.aqualight.application.devices.cooling.DeviceCoolingTemperatureHistoryLoadResult
@@ -148,7 +150,15 @@ class DeviceCoolingRootStateMachineTest {
                         )
                     ),
                     activeAlarmCount = 6,
-                    highestAlarmSeverity = DeviceCoolingAlarmSeverity.CRITICAL
+                    highestAlarmSeverity = DeviceCoolingAlarmSeverity.CRITICAL,
+                    fan = DeviceCoolingFanTelemetrySnapshot(
+                        targetPercent = 40.0,
+                        outputPercent = 40.0,
+                        rpm = null,
+                        rpmAvailable = false,
+                        pwmOutputHealth = DeviceCoolingPwmOutputHealth.OK,
+                        physicalHealth = DeviceCoolingFanHealth.UNVERIFIED
+                    )
                 ),
                 programRuntime = DeviceCoolingProgramRuntimeSnapshot(
                     persistedRevision = 4L,
@@ -167,10 +177,7 @@ class DeviceCoolingRootStateMachineTest {
         assertEquals(6, state.value.activeAlarmCount)
         assertEquals(3, state.value.programSlotCount)
         assertEquals(DeviceCoolingAlarmSeverity.CRITICAL, state.value.highestAlarmSeverity)
-        assertEquals(
-            listOf(DeviceCoolingAlarmCode.AMBIENT_SENSOR_FAULT),
-            state.value.activeAlarmCodes
-        )
+        assertEquals(CoolingHealthState.READY, state.value.fanOutputHealth)
     }
 
     private companion object {

@@ -108,6 +108,24 @@ class DeviceRootUiArchitectureGuardTest(unittest.TestCase):
             errors,
         )
 
+    def test_system_status_is_a_known_cooling_presentation_area(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary_directory:
+            repository_root = Path(temporary_directory)
+            status_file = (
+                repository_root
+                / GUARD.COOLING_PRESENTATION_ROOT
+                / "status/DeviceCoolingSystemStatusScreen.kt"
+            )
+            status_file.parent.mkdir(parents=True)
+            status_file.write_text(
+                "package com.aqua.aqualight.ui.tabs.devices.detail.cooling.presentation.status\n",
+                encoding="utf-8",
+            )
+
+            errors = GUARD.validate_cooling_feature_boundaries(repository_root)
+
+        self.assertFalse(any("Unknown Cooling presentation area" in error for error in errors))
+
 
 if __name__ == "__main__":
     unittest.main()

@@ -1,7 +1,7 @@
 package com.aqua.aqualight.ui.tabs.devices.detail.cooling.presentation.root
 
 import com.aqua.aqualight.application.devices.cooling.DeviceCoolingAlarmSeverity
-import com.aqua.aqualight.application.devices.cooling.DeviceCoolingFanHealth
+import com.aqua.aqualight.application.devices.cooling.DeviceCoolingPwmOutputHealth
 import com.aqua.aqualight.application.devices.cooling.DeviceCoolingSensorHealth
 import com.aqua.aqualight.application.devices.cooling.control.DeviceCoolingControlFailure
 import com.aqua.aqualight.application.devices.cooling.control.DeviceCoolingControlResult
@@ -64,18 +64,17 @@ internal fun CoolingDataState<CoolingControlPresentation, DeviceCoolingControlFa
 private fun DeviceCoolingControlSnapshot.toRootDashboardOverview():
     CoolingDashboardOverviewPresentation {
     val live = telemetry
-    val active = live?.activeAlarms.orEmpty()
     return CoolingDashboardOverviewPresentation(
         roomTemperatureC = live?.roomTemperatureC,
         humidityPercent = live?.humidityPercent,
         powerWatts = live?.powerWatts,
         estimatedKwhPerDay = live?.estimatedKwhPerDay,
         programSlotCount = programRuntime?.slotCount,
-        fanHealth = when (live?.fanHealth) {
-            DeviceCoolingFanHealth.UNVERIFIED,
-            DeviceCoolingFanHealth.UNKNOWN,
+        fanOutputHealth = when (live?.fan?.pwmOutputHealth) {
+            DeviceCoolingPwmOutputHealth.OK -> CoolingHealthState.READY
+            DeviceCoolingPwmOutputHealth.FAULT -> CoolingHealthState.FAULT
+            DeviceCoolingPwmOutputHealth.UNKNOWN,
             null -> CoolingHealthState.UNKNOWN
-            DeviceCoolingFanHealth.HARDWARE_FAULT -> CoolingHealthState.FAULT
         },
         sensorHealth = when (live?.sensorHealth) {
             DeviceCoolingSensorHealth.OK -> CoolingHealthState.READY
@@ -85,8 +84,7 @@ private fun DeviceCoolingControlSnapshot.toRootDashboardOverview():
             null -> CoolingHealthState.UNKNOWN
         },
         activeAlarmCount = live?.activeAlarmCount,
-        highestAlarmSeverity = live?.highestAlarmSeverity ?: DeviceCoolingAlarmSeverity.UNKNOWN,
-        activeAlarmCodes = active.map { alarm -> alarm.code }
+        highestAlarmSeverity = live?.highestAlarmSeverity ?: DeviceCoolingAlarmSeverity.UNKNOWN
     )
 }
 

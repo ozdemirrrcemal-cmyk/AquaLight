@@ -222,6 +222,15 @@
     </fragment>
 
     <fragment
+        android:id="@+id/deviceCoolingSystemStatusFragment"
+        android:name="com.aqua.aqualight.ui.tabs.devices.detail.cooling.presentation.status.DeviceCoolingSystemStatusFragment"
+        android:label="@string/device_cooling_system_status_title"
+        tools:layout="@layout/fragment_device_cooling_system_status">
+        <argument android:name="deviceUid" app:argType="string" />
+        <deepLink app:uri="aqualight://app/device/{deviceUid}/cooling/status" />
+    </fragment>
+
+    <fragment
         android:id="@+id/deviceCoolingAutomaticSettingsFragment"
         android:name="com.aqua.aqualight.ui.tabs.devices.detail.cooling.presentation.automatic.DeviceCoolingAutomaticSettingsFragment"
         android:label="@string/device_cooling_automatic_settings_title"

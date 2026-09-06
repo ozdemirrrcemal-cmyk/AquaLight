@@ -138,7 +138,7 @@ class CoolingHeroPresentationTest {
     fun `fan fault prevents false motion even when output is retained`() {
         val presentation = state(
             fanPercent = 60.0,
-            options = HeroStateOptions(fanHealth = CoolingHealthState.FAULT)
+            options = HeroStateOptions(fanOutputHealth = CoolingHealthState.FAULT)
         ).toCoolingHeroPresentation()
 
         assertEquals(CoolingHeroVisualStatus.ATTENTION, presentation.status)
@@ -184,7 +184,7 @@ class CoolingHeroPresentationTest {
                 powerWatts = null,
                 estimatedKwhPerDay = null,
                 programSlotCount = null,
-                fanHealth = options.fanHealth,
+                fanOutputHealth = options.fanOutputHealth,
                 sensorHealth = CoolingHealthState.READY,
                 activeAlarmCount = options.alarmCount
             )
@@ -195,7 +195,7 @@ class CoolingHeroPresentationTest {
         val manualFanPercent: Int? = null,
         val freshness: CoolingDataFreshness = CoolingDataFreshness.CURRENT,
         val alarmCount: Int = 0,
-        val fanHealth: CoolingHealthState = CoolingHealthState.READY,
+        val fanOutputHealth: CoolingHealthState = CoolingHealthState.READY,
         val contentEnabled: Boolean = true,
         val operatingState: DeviceCoolingOperatingState = DeviceCoolingOperatingState.COOLING
     )

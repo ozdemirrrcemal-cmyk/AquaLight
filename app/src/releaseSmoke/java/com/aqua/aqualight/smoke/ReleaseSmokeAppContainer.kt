@@ -62,6 +62,7 @@ import com.aqua.aqualight.ui.tabs.devices.add.DeviceProvisioningProgressViewMode
 import com.aqua.aqualight.ui.tabs.devices.add.DeviceQrScanViewModel
 import com.aqua.aqualight.ui.tabs.devices.detail.common.DeviceRootOverviewViewModel
 import com.aqua.aqualight.ui.tabs.devices.detail.cooling.presentation.root.DeviceCoolingRootViewModel
+import com.aqua.aqualight.ui.tabs.devices.detail.cooling.presentation.status.DeviceCoolingSystemStatusViewModel
 import com.aqua.aqualight.ui.tabs.devices.detail.light.DeviceLightRootViewModel
 import com.aqua.aqualight.ui.tabs.devices.detail.timer.DeviceTimerRootViewModel
 import com.aqua.aqualight.ui.tabs.devices.route.DeviceRouteResolver
@@ -254,6 +255,11 @@ private class ReleaseSmokeViewModelFactory(
                     DefaultDeviceCoolingAutomaticSettingsOperations(devicesRepository),
                 controlSurfacePreparationOperations =
                     ReleaseSmokeControlSurfacePreparationOperations
+            )
+        modelClass.isAssignableFrom(DeviceCoolingSystemStatusViewModel::class.java) ->
+            DeviceCoolingSystemStatusViewModel(
+                rootOperations = DefaultDeviceRootOperations(devicesRepository),
+                controlOperations = DefaultDeviceCoolingControlOperations(devicesRepository)
             )
         modelClass.isAssignableFrom(DeviceTimerRootViewModel::class.java) ->
             DeviceTimerRootViewModel(DefaultDeviceRootOperations(devicesRepository))

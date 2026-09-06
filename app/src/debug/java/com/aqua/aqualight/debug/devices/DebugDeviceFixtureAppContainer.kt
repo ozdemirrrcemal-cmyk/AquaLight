@@ -20,6 +20,7 @@ import com.aqua.aqualight.data.devices.remove.OwnerDeviceDataCleaner
 import com.aqua.aqualight.ui.tabs.devices.DevicesViewModel
 import com.aqua.aqualight.ui.tabs.devices.detail.common.DeviceRootOverviewViewModel
 import com.aqua.aqualight.ui.tabs.devices.detail.cooling.presentation.root.DeviceCoolingRootViewModel
+import com.aqua.aqualight.ui.tabs.devices.detail.cooling.presentation.status.DeviceCoolingSystemStatusViewModel
 import com.aqua.aqualight.ui.tabs.devices.detail.light.DeviceLightRootViewModel
 import com.aqua.aqualight.ui.tabs.devices.detail.settings.DeviceFamilySettingsViewModel
 import com.aqua.aqualight.ui.tabs.devices.detail.timer.DeviceTimerRootViewModel
@@ -62,6 +63,8 @@ private class DebugDeviceFixtureViewModelFactory(
                 DeviceLightRootViewModel(rootOperations(requireGraph()))
             DeviceCoolingRootViewModel::class.java ->
                 createCoolingRootViewModel(requireGraph())
+            DeviceCoolingSystemStatusViewModel::class.java ->
+                createCoolingSystemStatusViewModel(requireGraph())
             DeviceTimerRootViewModel::class.java ->
                 DeviceTimerRootViewModel(rootOperations(requireGraph()))
             DeviceRootOverviewViewModel::class.java ->
@@ -90,6 +93,13 @@ private class DebugDeviceFixtureViewModelFactory(
             controlSurfacePreparationOperations = controlSurface.preparationOperations
         )
     }
+
+    private fun createCoolingSystemStatusViewModel(
+        graph: OwnerDependencyGraph
+    ): DeviceCoolingSystemStatusViewModel = DeviceCoolingSystemStatusViewModel(
+        rootOperations = rootOperations(graph),
+        controlOperations = controlSurface(graph).coolingControlOperations
+    )
 
     private fun createDevicesViewModel(graph: OwnerDependencyGraph): DevicesViewModel {
         val repository = graph.devicesRepository

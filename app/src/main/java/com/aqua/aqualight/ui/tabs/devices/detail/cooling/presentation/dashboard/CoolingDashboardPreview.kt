@@ -69,7 +69,7 @@ internal fun CoolingDashboardPreview() {
                     powerWatts = 0.325,
                     estimatedKwhPerDay = 0.0078,
                     programSlotCount = 3,
-                    fanHealth = CoolingHealthState.READY,
+                    fanOutputHealth = CoolingHealthState.READY,
                     sensorHealth = CoolingHealthState.READY,
                     activeAlarmCount = 0
                 )
@@ -78,6 +78,7 @@ internal fun CoolingDashboardPreview() {
         actions = DeviceCoolingDashboardActions(
             onModeSelected = {},
             onTemperatureHistoryClick = {},
+            onSystemStatusClick = {},
             onAutomaticSettingsClick = {},
             onManualSettingsClick = {},
             onProgramSettingsClick = {}

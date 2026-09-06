@@ -30,7 +30,16 @@ internal object DeviceCoolingControlSnapshotMapper {
                 actualFanPercent = live?.fan?.outputPercent,
                 tankTemperatureC = live.waterTemperatureOrNull(),
                 capabilities = status.toApplicationCapabilities(),
-                telemetry = live?.let(DeviceCoolingTelemetrySnapshotMapper::map),
+                telemetry = live?.let { telemetry ->
+                    DeviceCoolingTelemetrySnapshotMapper.map(
+                        telemetry = telemetry,
+                        rpmAvailable = status.topology.fanOutputs
+                            .firstOrNull { fan ->
+                                fan.fanKey == DeviceCoolingV1Contract.FAN_KEY
+                            }
+                            ?.rpmAvailable == true
+                    )
+                },
                 operatingState = (live?.operatingState ?: status.control.operatingState)
                     .toApplicationOperatingState(),
                 controlReason = (live?.controlReason ?: status.control.controlReason)

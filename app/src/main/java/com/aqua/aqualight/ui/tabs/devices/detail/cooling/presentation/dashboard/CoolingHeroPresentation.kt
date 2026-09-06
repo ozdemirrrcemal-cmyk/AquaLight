@@ -60,7 +60,7 @@ private fun DeviceCoolingRootUiState.resolveCoolingHeroStatus(): CoolingHeroVisu
 }
 
 private fun DeviceCoolingRootUiState.hasCoolingAttentionState(): Boolean =
-    fanHealth.requiresAttention() ||
+    fanOutputHealth.requiresAttention() ||
         sensorHealth.requiresAttention() ||
         (activeAlarmCount ?: NO_ALARMS) > NO_ALARMS
 
@@ -70,7 +70,7 @@ private fun CoolingHealthState.requiresAttention(): Boolean =
 private fun DeviceCoolingRootUiState.hasCurrentFanMotion(): Boolean {
     val hasLiveControl = connectionVisualState == DeviceConnectionVisualState.ONLINE &&
         contentEnabled && controlAvailable
-    return hasLiveControl && fanHealth != CoolingHealthState.FAULT &&
+    return hasLiveControl && fanOutputHealth != CoolingHealthState.FAULT &&
         operatingState in ACTIVE_OPERATING_STATES &&
         fanPercentNow.orZero() > MINIMUM_PERCENT
 }

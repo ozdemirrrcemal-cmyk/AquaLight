@@ -2,6 +2,7 @@ package com.aqua.aqualight.ui.tabs.devices.detail.cooling.presentation.dashboard
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -18,8 +19,12 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.style.TextOverflow
 import com.aqua.aqualight.R
+import com.aqua.aqualight.application.devices.cooling.DeviceCoolingAlarmSeverity
 import com.aqua.aqualight.ui.common.cooling.AquaCoolingDashboardAlpha
 import com.aqua.aqualight.ui.common.cooling.AquaCoolingDashboardGeometry
 import com.aqua.aqualight.ui.common.cooling.AquaCoolingDashboardIcon
@@ -157,22 +162,43 @@ internal fun CoolingStatusCard(
     state: DeviceCoolingRootUiState,
     colors: AquaDeviceCardColors,
     typography: AquaDeviceCardTypography,
+    enabled: Boolean,
+    onClick: () -> Unit,
     modifier: Modifier = Modifier
 ) {
+    val openDescription = stringResource(R.string.device_cooling_open_system_status_description)
     AquaDeviceCardSurface(
-        modifier = modifier.heightIn(min = AquaCoolingDashboardGeometry.statusCardMinimumHeight)
+        modifier = modifier
+            .heightIn(min = AquaCoolingDashboardGeometry.statusCardMinimumHeight)
+            .semantics { contentDescription = openDescription }
+            .clickable(
+                enabled = enabled,
+                role = Role.Button,
+                onClick = onClick
+            )
     ) {
         Column(
             modifier = Modifier.fillMaxWidth(),
             verticalArrangement = Arrangement.spacedBy(AquaCoolingDashboardGeometry.statusRowGap)
         ) {
-            BasicText(
-                text = stringResource(R.string.device_cooling_system_status_title),
-                style = typography.title
-            )
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                BasicText(
+                    text = stringResource(R.string.device_cooling_system_status_title),
+                    style = typography.title,
+                    modifier = Modifier.weight(1f)
+                )
+                AquaCoolingDashboardIcon(
+                    kind = AquaCoolingDashboardIconKind.CHEVRON,
+                    tint = colors.secondaryText,
+                    modifier = Modifier.size(AquaCoolingDashboardGeometry.modeSettingsChevronSize)
+                )
+            }
             CoolingStatusRow(
-                model = state.fanHealth.toStatusRowModel(
-                    label = stringResource(R.string.device_cooling_status_fan)
+                model = state.fanOutputHealth.toStatusRowModel(
+                    label = stringResource(R.string.device_cooling_status_fan_output)
                 ),
                 colors = colors,
                 typography = typography
@@ -202,7 +228,10 @@ internal fun CoolingStatusCard(
                 typography = typography
             )
             CoolingStatusRow(
-                model = coolingAlarmStatusRow(state.activeAlarmCount),
+                model = coolingAlarmStatusRow(
+                    activeAlarmCount = state.activeAlarmCount,
+                    highestSeverity = state.highestAlarmSeverity
+                ),
                 colors = colors,
                 typography = typography
             )
@@ -248,7 +277,10 @@ private fun CoolingHealthState.toStatusRowModel(label: String): CoolingStatusRow
 }
 
 @Composable
-private fun coolingAlarmStatusRow(activeAlarmCount: Int?): CoolingStatusRowModel = when {
+private fun coolingAlarmStatusRow(
+    activeAlarmCount: Int?,
+    highestSeverity: DeviceCoolingAlarmSeverity
+): CoolingStatusRowModel = when {
     activeAlarmCount == null -> CoolingStatusRowModel(
         label = stringResource(R.string.device_cooling_status_alarm),
         value = stringResource(R.string.device_cooling_value_unavailable),
@@ -256,8 +288,8 @@ private fun coolingAlarmStatusRow(activeAlarmCount: Int?): CoolingStatusRowModel
     )
     activeAlarmCount == 0 -> CoolingStatusRowModel(
         label = stringResource(R.string.device_cooling_status_alarm),
-        value = stringResource(R.string.device_cooling_status_no_alarm),
-        tone = CoolingStatusTone.NEUTRAL
+        value = stringResource(R.string.device_cooling_status_no_active_alarms),
+        tone = CoolingStatusTone.SUCCESS
     )
     else -> CoolingStatusRowModel(
         label = stringResource(R.string.device_cooling_status_alarm),
@@ -266,7 +298,12 @@ private fun coolingAlarmStatusRow(activeAlarmCount: Int?): CoolingStatusRowModel
             activeAlarmCount,
             activeAlarmCount
         ),
-        tone = CoolingStatusTone.DANGER
+        tone = when (highestSeverity) {
+            DeviceCoolingAlarmSeverity.WARNING -> CoolingStatusTone.WARNING
+            DeviceCoolingAlarmSeverity.CRITICAL -> CoolingStatusTone.DANGER
+            DeviceCoolingAlarmSeverity.NONE,
+            DeviceCoolingAlarmSeverity.UNKNOWN -> CoolingStatusTone.NEUTRAL
+        }
     )
 }
 

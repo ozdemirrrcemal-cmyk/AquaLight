@@ -6,6 +6,7 @@ import com.aqua.aqualight.ui.tabs.devices.detail.cooling.presentation.root.Cooli
 internal data class DeviceCoolingDashboardActions(
     val onModeSelected: (CoolingControlMode) -> Unit,
     val onTemperatureHistoryClick: () -> Unit,
+    val onSystemStatusClick: () -> Unit,
     val onAutomaticSettingsClick: () -> Unit,
     val onManualSettingsClick: () -> Unit,
     val onProgramSettingsClick: () -> Unit

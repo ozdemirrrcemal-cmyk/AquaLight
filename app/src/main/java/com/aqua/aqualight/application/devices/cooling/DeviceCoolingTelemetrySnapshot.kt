@@ -12,11 +12,11 @@ data class DeviceCoolingTelemetrySnapshot(
     /** Firmware healthSummary value; never recomputed from [alarms]. */
     val activeAlarmCount: Int? = null,
     val highestAlarmSeverity: DeviceCoolingAlarmSeverity = DeviceCoolingAlarmSeverity.UNKNOWN,
-    val waterTemperatureSample: DeviceCoolingWaterTemperatureSample? = null
-) {
-    val activeAlarms: List<DeviceCoolingAlarmSnapshot>
-        get() = alarms.filter(DeviceCoolingAlarmSnapshot::active)
-}
+    val waterTemperatureSample: DeviceCoolingWaterTemperatureSample? = null,
+    val fan: DeviceCoolingFanTelemetrySnapshot? = null,
+    val sensors: List<DeviceCoolingSensorTelemetrySnapshot> = emptyList(),
+    val power: DeviceCoolingPowerTelemetrySnapshot? = null
+)
 
 /** Identity and timing are passed through from the firmware; Android never derives the value. */
 data class DeviceCoolingWaterTemperatureSample(
@@ -51,7 +51,11 @@ data class DeviceCoolingAlarmSnapshot(
     val code: DeviceCoolingAlarmCode,
     val severity: DeviceCoolingAlarmSeverity,
     val active: Boolean,
-    val latched: Boolean
+    val latched: Boolean,
+    /** Original firmware identity is retained so unknown alarms are never hidden from support. */
+    val diagnosticCode: String = code.name,
+    val affectedKey: String = "",
+    val diagnosticReason: String = ""
 )
 
 enum class DeviceCoolingAlarmCode {

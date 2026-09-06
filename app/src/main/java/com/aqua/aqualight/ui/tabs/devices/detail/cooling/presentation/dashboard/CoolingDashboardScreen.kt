@@ -100,12 +100,7 @@ private fun CoolingScrollableDashboardContent(
             CoolingFanAndModeRow(state = state, actions = actions)
         }
         item(key = "power-status") {
-            CoolingPowerAndStatusRow(state = state)
-        }
-        if (state.activeAlarmCodes.isNotEmpty()) {
-            item(key = "alarm-messages") {
-                CoolingAlarmMessagesCard(state)
-            }
+            CoolingPowerAndStatusRow(state = state, actions = actions)
         }
         item(key = "mode-settings") {
             CoolingModeSettingsCard(
@@ -147,7 +142,10 @@ private fun CoolingFanAndModeRow(
 }
 
 @Composable
-private fun CoolingPowerAndStatusRow(state: DeviceCoolingRootUiState) {
+private fun CoolingPowerAndStatusRow(
+    state: DeviceCoolingRootUiState,
+    actions: DeviceCoolingDashboardActions
+) {
     val colors = aquaCoolingDashboardColors()
     val typography = aquaCoolingDashboardTypography(colors)
     Row(
@@ -164,6 +162,8 @@ private fun CoolingPowerAndStatusRow(state: DeviceCoolingRootUiState) {
             state = state,
             colors = colors,
             typography = typography,
+            enabled = state.contentEnabled,
+            onClick = actions.onSystemStatusClick,
             modifier = Modifier.weight(1f)
         )
     }

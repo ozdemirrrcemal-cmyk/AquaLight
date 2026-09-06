@@ -6,10 +6,8 @@ import com.aqua.aqualight.application.devices.DeviceControlSurfacePreparationOpe
 import com.aqua.aqualight.application.devices.DeviceControlSurfacePreparationRequest
 import com.aqua.aqualight.application.devices.DeviceControlSurfacePreparationResult
 import com.aqua.aqualight.application.devices.DeviceMenuUnavailableReason
-import com.aqua.aqualight.application.devices.DeviceRootCatalogState
 import com.aqua.aqualight.application.devices.DeviceRootOperations
 import com.aqua.aqualight.application.devices.DeviceRootSnapshot
-import com.aqua.aqualight.application.devices.OwnerDeviceAvailability
 import com.aqua.aqualight.application.devices.OwnerDeviceFamily
 import com.aqua.aqualight.application.devices.cooling.DeviceCoolingAutomaticSettingsOperations
 import com.aqua.aqualight.application.devices.cooling.DeviceCoolingTemperatureHistoryLoadResult
@@ -20,6 +18,7 @@ import com.aqua.aqualight.application.devices.cooling.control.DeviceCoolingContr
 import com.aqua.aqualight.ui.common.devicepresence.DeviceConnectionVisualState
 import com.aqua.aqualight.ui.tabs.devices.detail.cooling.presentation.common.CoolingDataState
 import com.aqua.aqualight.ui.tabs.devices.detail.cooling.presentation.common.CoolingMutationState
+import com.aqua.aqualight.ui.tabs.devices.detail.cooling.presentation.common.isCoolingContentAvailable
 import kotlinx.coroutines.CoroutineStart
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.channels.Channel
@@ -331,10 +330,7 @@ private class DeviceCoolingRootJobs {
 private fun DeviceRootSnapshot.toRootUiState(
     previous: DeviceCoolingRootUiState
 ): DeviceCoolingRootUiState {
-    val contentEnabled =
-        family == OwnerDeviceFamily.COOLING &&
-            availability == OwnerDeviceAvailability.REACHABLE &&
-            catalogState == DeviceRootCatalogState.VALID
+    val contentEnabled = isCoolingContentAvailable()
     return previous.copy(
         title = title,
         deviceUid = deviceUid,

@@ -32,6 +32,10 @@ COOLING_VIEW_MODEL = Path(
     "app/src/main/java/com/aqua/aqualight/ui/tabs/devices/detail/cooling/presentation/root/"
     "DeviceCoolingRootViewModel.kt"
 )
+COOLING_AVAILABILITY = Path(
+    "app/src/main/java/com/aqua/aqualight/ui/tabs/devices/detail/cooling/presentation/common/"
+    "CoolingConnectionAvailability.kt"
+)
 COOLING_UI_ROOT = Path(
     "app/src/main/java/com/aqua/aqualight/ui/tabs/devices/detail/cooling"
 )
@@ -46,6 +50,7 @@ COOLING_PRESENTATION_AREAS = frozenset(
         "program",
         "root",
         "settings",
+        "status",
     }
 )
 MAIN_SOURCE_ROOT = Path("app/src/main/java")
@@ -267,6 +272,7 @@ def validate_repository(repository_root: Path = ROOT) -> list[str]:
     dosing_fragment = _read(repository_root, DOSING_FRAGMENT, errors)
     cooling_fragment = _read(repository_root, COOLING_FRAGMENT, errors)
     cooling_view_model = _read(repository_root, COOLING_VIEW_MODEL, errors)
+    cooling_availability = _read(repository_root, COOLING_AVAILABILITY, errors)
     dosing_layout = _read(repository_root, DOSING_LAYOUT, errors)
     cooling_layout = _read(repository_root, COOLING_LAYOUT, errors)
 
@@ -386,14 +392,7 @@ def validate_repository(repository_root: Path = ROOT) -> list[str]:
             "OwnerDeviceFamily.COOLING",
             "Cooling root availability must validate the application-level family",
         ),
-        (
-            "OwnerDeviceAvailability.REACHABLE",
-            "Cooling root availability must use the application-level reachability state",
-        ),
-        (
-            "DeviceRootCatalogState.VALID",
-            "Cooling root availability must fail closed on an invalid commercial catalog",
-        ),
+        ("isCoolingContentAvailable()", "Cooling root must use the shared availability policy"),
         (
             "DeviceConnectionVisualState",
             "Cooling root header state must use the shared connection presentation",
@@ -401,6 +400,22 @@ def validate_repository(repository_root: Path = ROOT) -> list[str]:
         ("contentEnabled", "Cooling root must expose one availability gate to the UI shell"),
     ):
         _require(COOLING_VIEW_MODEL, cooling_view_model, errors, token, reason)
+
+    for token, reason in (
+        (
+            "OwnerDeviceFamily.COOLING",
+            "Cooling availability policy must validate the application-level family",
+        ),
+        (
+            "OwnerDeviceAvailability.REACHABLE",
+            "Cooling availability policy must use the application-level reachability state",
+        ),
+        (
+            "DeviceRootCatalogState.VALID",
+            "Cooling availability policy must fail closed on an invalid commercial catalog",
+        ),
+    ):
+        _require(COOLING_AVAILABILITY, cooling_availability, errors, token, reason)
 
     errors.extend(validate_layout_contract(DOSING_LAYOUT, dosing_layout))
     errors.extend(

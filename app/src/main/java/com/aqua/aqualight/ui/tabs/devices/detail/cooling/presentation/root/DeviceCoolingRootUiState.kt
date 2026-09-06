@@ -1,6 +1,5 @@
 package com.aqua.aqualight.ui.tabs.devices.detail.cooling.presentation.root
 
-import com.aqua.aqualight.application.devices.cooling.DeviceCoolingAlarmCode
 import com.aqua.aqualight.application.devices.cooling.DeviceCoolingAlarmSeverity
 import com.aqua.aqualight.application.devices.cooling.DeviceCoolingAutomaticFailure
 import com.aqua.aqualight.application.devices.cooling.DeviceCoolingTemperatureHistoryPoint
@@ -56,11 +55,10 @@ data class CoolingDashboardOverviewPresentation(
     val powerWatts: Double? = null,
     val estimatedKwhPerDay: Double? = null,
     val programSlotCount: Int? = null,
-    val fanHealth: CoolingHealthState = CoolingHealthState.UNKNOWN,
+    val fanOutputHealth: CoolingHealthState = CoolingHealthState.UNKNOWN,
     val sensorHealth: CoolingHealthState = CoolingHealthState.UNKNOWN,
     val activeAlarmCount: Int? = null,
-    val highestAlarmSeverity: DeviceCoolingAlarmSeverity = DeviceCoolingAlarmSeverity.UNKNOWN,
-    val activeAlarmCodes: List<DeviceCoolingAlarmCode> = emptyList()
+    val highestAlarmSeverity: DeviceCoolingAlarmSeverity = DeviceCoolingAlarmSeverity.UNKNOWN
 )
 
 data class DeviceCoolingRootUiState(
@@ -166,8 +164,8 @@ data class DeviceCoolingRootUiState(
     val programSlotCount: Int?
         get() = dashboardOverview?.programSlotCount
 
-    val fanHealth: CoolingHealthState
-        get() = dashboardOverview?.fanHealth ?: CoolingHealthState.UNKNOWN
+    val fanOutputHealth: CoolingHealthState
+        get() = dashboardOverview?.fanOutputHealth ?: CoolingHealthState.UNKNOWN
 
     val sensorHealth: CoolingHealthState
         get() = dashboardOverview?.sensorHealth ?: CoolingHealthState.UNKNOWN
@@ -175,6 +173,7 @@ data class DeviceCoolingRootUiState(
     val activeAlarmCount: Int?
         get() = dashboardOverview?.activeAlarmCount
 
-    val activeAlarmCodes: List<DeviceCoolingAlarmCode>
-        get() = dashboardOverview?.activeAlarmCodes.orEmpty()
+    val highestAlarmSeverity: DeviceCoolingAlarmSeverity
+        get() = dashboardOverview?.highestAlarmSeverity
+            ?: DeviceCoolingAlarmSeverity.UNKNOWN
 }

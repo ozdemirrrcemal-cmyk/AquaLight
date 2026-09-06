@@ -45,6 +45,7 @@ import com.aqua.aqualight.ui.tabs.devices.detail.cooling.presentation.history.De
 import com.aqua.aqualight.ui.tabs.devices.detail.cooling.presentation.manual.DeviceCoolingManualSettingsViewModel
 import com.aqua.aqualight.ui.tabs.devices.detail.cooling.presentation.program.DeviceCoolingProgramSettingsViewModel
 import com.aqua.aqualight.ui.tabs.devices.detail.cooling.presentation.root.DeviceCoolingRootViewModel
+import com.aqua.aqualight.ui.tabs.devices.detail.cooling.presentation.status.DeviceCoolingSystemStatusViewModel
 import com.aqua.aqualight.ui.tabs.devices.detail.dosing.channel.calibration.DeviceDosingChannelCalibrationViewModel
 import com.aqua.aqualight.ui.tabs.devices.detail.dosing.channel.detail.DeviceDosingChannelDetailViewModel
 import com.aqua.aqualight.ui.tabs.devices.detail.dosing.channel.plan.DeviceDosingPlanViewModel
@@ -180,6 +181,11 @@ internal class OwnerViewModelFactory(
                 DeviceCoolingTemperatureHistoryViewModel(
                     DefaultDeviceCoolingTemperatureHistoryOperations(repository)
                 )
+            DeviceCoolingSystemStatusViewModel::class.java ->
+                DeviceCoolingSystemStatusViewModel(
+                    rootOperations = DefaultDeviceRootOperations(repository),
+                    controlOperations = DefaultDeviceCoolingControlOperations(repository)
+                )
             DeviceCoolingAutomaticSettingsViewModel::class.java ->
                 DeviceCoolingAutomaticSettingsViewModel(
                     DefaultDeviceCoolingAutomaticSettingsOperations(repository)
@@ -278,6 +284,7 @@ internal class OwnerViewModelFactory(
             DeviceLightRootViewModel::class.java,
             DeviceCoolingRootViewModel::class.java,
             DeviceCoolingTemperatureHistoryViewModel::class.java,
+            DeviceCoolingSystemStatusViewModel::class.java,
             DeviceCoolingAutomaticSettingsViewModel::class.java,
             DeviceCoolingManualSettingsViewModel::class.java,
             DeviceCoolingProgramSettingsViewModel::class.java,
