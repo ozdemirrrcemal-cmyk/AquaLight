@@ -14,9 +14,6 @@ import com.aqua.aqualight.application.devices.cooling.control.DeviceCoolingContr
 import com.aqua.aqualight.application.devices.dosing.DeviceDosingChannelOperations
 import com.aqua.aqualight.application.devices.dosing.DeviceDosingChannelSnapshot
 import java.util.concurrent.ConcurrentHashMap
-import kotlinx.coroutines.flow.filterIsInstance
-import kotlinx.coroutines.flow.first
-import kotlinx.coroutines.withTimeoutOrNull
 
 /**
  * Owner-scoped control-surface preparation orchestrator.
@@ -80,18 +77,11 @@ internal class DefaultDeviceControlSurfacePreparationOperations(
             root == null -> unavailable(DeviceMenuUnavailableReason.DEVICE_NOT_REGISTERED)
             !root.matchesCoolingCatalog() ->
                 unavailable(DeviceMenuUnavailableReason.COMMERCIAL_PRODUCT_MISMATCH)
+            coolingControlOperations.refreshControl(deviceUid) !is DeviceCoolingControlResult.Available ->
+                unavailable(DeviceMenuUnavailableReason.CURRENT_LIVENESS_NOT_PROVEN)
             else -> {
-                val authoritative = withTimeoutOrNull(COOLING_SURFACE_PREPARATION_TIMEOUT_MS) {
-                    coolingControlOperations.observeControl(deviceUid)
-                        .filterIsInstance<DeviceCoolingControlResult.Available>()
-                        .first()
-                }
-                if (authoritative == null) {
-                    unavailable(DeviceMenuUnavailableReason.CURRENT_LIVENESS_NOT_PROVEN)
-                } else {
-                    freshlyPreparedSurfaces += preparedSurface
-                    DeviceControlSurfacePreparationResult.Ready
-                }
+                freshlyPreparedSurfaces += preparedSurface
+                DeviceControlSurfacePreparationResult.Ready
             }
         }
         return result
@@ -143,7 +133,6 @@ internal class DefaultDeviceControlSurfacePreparationOperations(
         DeviceControlSurfacePreparationResult.Unavailable(reason)
 
     private companion object {
-        const val COOLING_SURFACE_PREPARATION_TIMEOUT_MS = 8_000L
         val PREPARED_FAMILIES = setOf(OwnerDeviceFamily.DOSING, OwnerDeviceFamily.COOLING)
     }
 }

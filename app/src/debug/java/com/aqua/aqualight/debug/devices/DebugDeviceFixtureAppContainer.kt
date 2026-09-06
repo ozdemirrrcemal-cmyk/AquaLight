@@ -3,7 +3,9 @@ package com.aqua.aqualight.debug.devices
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import com.aqua.aqualight.BuildConfig
+import com.aqua.aqualight.application.devices.DeviceControlSurfacePreparationOperations
 import com.aqua.aqualight.application.devices.DeviceMenuOpenUseCase
+import com.aqua.aqualight.application.devices.cooling.control.DeviceCoolingControlOperations
 import com.aqua.aqualight.composition.AppContainer
 import com.aqua.aqualight.composition.OwnerDependencyGraph
 import com.aqua.aqualight.composition.OwnerDependencyGraphAccess
@@ -12,6 +14,7 @@ import com.aqua.aqualight.data.devices.DefaultOwnerDevicesOperations
 import com.aqua.aqualight.data.devices.cooling.DefaultDeviceCoolingAutomaticSettingsOperations
 import com.aqua.aqualight.data.devices.cooling.DefaultDeviceCoolingTemperatureHistoryOperations
 import com.aqua.aqualight.data.devices.cooling.control.DefaultDeviceCoolingControlOperations
+import com.aqua.aqualight.data.devices.menu.DefaultDeviceControlSurfacePreparationOperations
 import com.aqua.aqualight.data.devices.menu.DefaultDeviceMenuAccessOperations
 import com.aqua.aqualight.data.devices.remove.OwnerDeviceDataCleaner
 import com.aqua.aqualight.ui.tabs.devices.DevicesViewModel
@@ -49,6 +52,8 @@ private class DebugDeviceFixtureViewModelFactory(
 ) : ViewModelProvider.Factory {
 
     private val fixtures = DebugDeviceFixtureCatalog()
+    private var cachedControlSurfaceGraph: OwnerDependencyGraph? = null
+    private var cachedControlSurface: DebugFixtureControlSurface? = null
 
     override fun <T : ViewModel> create(modelClass: Class<T>): T {
         val viewModel: ViewModel = when (modelClass) {
@@ -76,12 +81,13 @@ private class DebugDeviceFixtureViewModelFactory(
 
     private fun createCoolingRootViewModel(graph: OwnerDependencyGraph): DeviceCoolingRootViewModel {
         val repository = graph.devicesRepository
+        val controlSurface = controlSurface(graph)
         return DeviceCoolingRootViewModel(
             operations = rootOperations(graph),
-            controlOperations = DefaultDeviceCoolingControlOperations(repository),
+            controlOperations = controlSurface.coolingControlOperations,
             historyOperations = DefaultDeviceCoolingTemperatureHistoryOperations(repository),
             automaticSettingsOperations = DefaultDeviceCoolingAutomaticSettingsOperations(repository),
-            controlSurfacePreparationOperations = graph.controlSurfacePreparationOperations
+            controlSurfacePreparationOperations = controlSurface.preparationOperations
         )
     }
 
@@ -108,8 +114,7 @@ private class DebugDeviceFixtureViewModelFactory(
                     delegate = DefaultDeviceMenuAccessOperations.create(repository),
                     fixtures = fixtures
                 ),
-                controlSurfacePreparationOperations =
-                    graph.controlSurfacePreparationOperations
+                controlSurfacePreparationOperations = controlSurface(graph).preparationOperations
             ),
             routeResolver = DeviceRouteResolver()
         )
@@ -137,9 +142,48 @@ private class DebugDeviceFixtureViewModelFactory(
         fixtures = fixtures
     )
 
+    private fun controlSurface(graph: OwnerDependencyGraph): DebugFixtureControlSurface {
+        cachedControlSurface?.takeIf { cachedControlSurfaceGraph === graph }?.let { surface ->
+            return surface
+        }
+        return synchronized(this) {
+            cachedControlSurface?.takeIf { cachedControlSurfaceGraph === graph } ?: run {
+                createControlSurface(graph).also { surface ->
+                    cachedControlSurfaceGraph = graph
+                    cachedControlSurface = surface
+                }
+            }
+        }
+    }
+
+    private fun createControlSurface(graph: OwnerDependencyGraph): DebugFixtureControlSurface {
+        val coolingControlOperations = DebugFixtureCoolingControlOperations(
+            delegate = DefaultDeviceCoolingControlOperations(graph.devicesRepository),
+            fixtures = fixtures
+        )
+        val fixturePreparationOperations = DefaultDeviceControlSurfacePreparationOperations(
+            rootOperations = rootOperations(graph),
+            dosingChannelOperations = graph.dosingOperations.channelOperations,
+            coolingControlOperations = coolingControlOperations
+        )
+        return DebugFixtureControlSurface(
+            coolingControlOperations = coolingControlOperations,
+            preparationOperations = DebugFixtureControlSurfacePreparationOperations(
+                delegate = graph.controlSurfacePreparationOperations,
+                fixtureDelegate = fixturePreparationOperations,
+                fixtures = fixtures
+            )
+        )
+    }
+
     private fun firmwareOperations(graph: OwnerDependencyGraph) =
         DebugFixtureFirmwareUpdateOperations(
             delegate = graph.firmwareUpdateOperations,
             fixtures = fixtures
         )
 }
+
+private data class DebugFixtureControlSurface(
+    val coolingControlOperations: DeviceCoolingControlOperations,
+    val preparationOperations: DeviceControlSurfacePreparationOperations
+)

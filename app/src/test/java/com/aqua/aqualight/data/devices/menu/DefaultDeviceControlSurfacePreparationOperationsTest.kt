@@ -30,7 +30,6 @@ import com.aqua.aqualight.application.devices.dosing.DeviceDosingReservoirSnapsh
 import com.aqua.aqualight.application.devices.dosing.DeviceDosingRuntimeReason
 import com.aqua.aqualight.application.devices.dosing.DeviceDosingSchedulingPolicy
 import com.aqua.aqualight.data.devices.cooling.DisconnectedDeviceCoolingControlOperations
-import com.aqua.aqualight.data.devices.cooling.control.RefreshingDeviceCoolingControlOperations
 import com.aqua.aqualight.data.devices.dosing.UnavailableDeviceDosingChannelOperations
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -140,7 +139,7 @@ class DefaultDeviceControlSurfacePreparationOperationsTest {
     }
 
     @Test
-    fun `Cooling menu waits for central authoritative runtime before ready`() = runTest {
+    fun `Cooling menu refreshes central authoritative state before ready`() = runTest {
         val cooling = FakeCoolingControlOperations(availableCoolingControl())
         val operations = DefaultDeviceControlSurfacePreparationOperations(
             rootOperations = FakeRootOperations(coolingRootSnapshot()),
@@ -156,7 +155,8 @@ class DefaultDeviceControlSurfacePreparationOperationsTest {
         )
 
         assertTrue(result is DeviceControlSurfacePreparationResult.Ready)
-        assertEquals(1, cooling.observeCalls)
+        assertEquals(1, cooling.refreshCalls)
+        assertEquals(0, cooling.observeCalls)
         assertTrue(
             operations.consumeFreshPreparation(
                 COOLING_DEVICE_UID,
@@ -172,15 +172,14 @@ class DefaultDeviceControlSurfacePreparationOperationsTest {
     }
 
     @Test
-    fun `online Cooling menu actively fills the same authoritative boundary as Dosing`() = runTest {
+    fun `Cooling refresh failure keeps navigation unavailable`() = runTest {
         val cooling = FakeCoolingControlOperations(
-            observedResult = unavailableCoolingControl(),
-            refreshedResult = availableCoolingControl()
+            DeviceCoolingControlResult.Failed(DeviceCoolingControlFailure.Unavailable)
         )
         val operations = DefaultDeviceControlSurfacePreparationOperations(
             rootOperations = FakeRootOperations(coolingRootSnapshot()),
             dosingChannelOperations = FakeChannelOperations(),
-            coolingControlOperations = RefreshingDeviceCoolingControlOperations(cooling)
+            coolingControlOperations = cooling
         )
 
         val result = operations.prepare(
@@ -190,9 +189,14 @@ class DefaultDeviceControlSurfacePreparationOperationsTest {
             )
         )
 
-        assertTrue(result is DeviceControlSurfacePreparationResult.Ready)
+        assertTrue(result is DeviceControlSurfacePreparationResult.Unavailable)
         assertEquals(1, cooling.refreshCalls)
-        assertEquals(1, cooling.observeCalls)
+        assertFalse(
+            operations.consumeFreshPreparation(
+                COOLING_DEVICE_UID,
+                OwnerDeviceFamily.COOLING
+            )
+        )
     }
 
     private fun preparation(
@@ -255,33 +259,32 @@ class DefaultDeviceControlSurfacePreparationOperationsTest {
     }
 
     private class FakeCoolingControlOperations(
-        private val observedResult: DeviceCoolingControlResult,
-        private val refreshedResult: DeviceCoolingControlResult = observedResult
+        private val result: DeviceCoolingControlResult
     ) : DeviceCoolingControlOperations {
         var observeCalls: Int = 0
         var refreshCalls: Int = 0
 
         override fun observeControl(deviceUid: String): Flow<DeviceCoolingControlResult> {
             observeCalls += 1
-            return MutableStateFlow(observedResult)
+            return MutableStateFlow(result)
         }
 
-        override fun currentControl(deviceUid: String): DeviceCoolingControlResult = observedResult
+        override fun currentControl(deviceUid: String): DeviceCoolingControlResult = result
 
         override suspend fun refreshControl(deviceUid: String): DeviceCoolingControlResult {
             refreshCalls += 1
-            return refreshedResult
+            return result
         }
 
         override suspend fun setMode(
             deviceUid: String,
             mode: DeviceCoolingControlMode
-        ): DeviceCoolingControlResult = observedResult
+        ): DeviceCoolingControlResult = result
 
         override suspend fun setManualFanPercent(
             deviceUid: String,
             percent: Int
-        ): DeviceCoolingControlResult = observedResult
+        ): DeviceCoolingControlResult = result
     }
 
     private companion object {
@@ -382,6 +385,3 @@ private fun availableCoolingControl(): DeviceCoolingControlResult =
             )
         )
     )
-
-private fun unavailableCoolingControl(): DeviceCoolingControlResult =
-    DeviceCoolingControlResult.Failed(DeviceCoolingControlFailure.Unavailable)

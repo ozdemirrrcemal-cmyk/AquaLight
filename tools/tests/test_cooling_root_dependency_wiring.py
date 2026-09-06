@@ -16,6 +16,11 @@ COMPOSITIONS = {
         "app/src/releaseSmoke/java/com/aqua/aqualight/smoke/ReleaseSmokeAppContainer.kt"
     ),
 }
+CONTROL_OPERATION_WIRING = {
+    "production": "controlOperations = DefaultDeviceCoolingControlOperations(",
+    "debug": "controlOperations = controlSurface.coolingControlOperations",
+    "releaseSmoke": "controlOperations = DefaultDeviceCoolingControlOperations(",
+}
 
 
 class CoolingRootDependencyWiringTest(unittest.TestCase):
@@ -44,7 +49,7 @@ class CoolingRootDependencyWiringTest(unittest.TestCase):
             with self.subTest(composition=name):
                 text = path.read_text(encoding="utf-8")
                 self.assertIn("DeviceCoolingRootViewModel(", text)
-                self.assertIn("controlOperations = DefaultDeviceCoolingControlOperations(", text)
+                self.assertIn(CONTROL_OPERATION_WIRING[name], text)
                 self.assertIn(
                     "historyOperations = DefaultDeviceCoolingTemperatureHistoryOperations(",
                     text,
@@ -55,6 +60,17 @@ class CoolingRootDependencyWiringTest(unittest.TestCase):
                 )
                 self.assertIn("DefaultDeviceCoolingAutomaticSettingsOperations(", text)
                 self.assertIn("controlSurfacePreparationOperations =", text)
+
+        debug_text = COMPOSITIONS["debug"].read_text(encoding="utf-8")
+        self.assertIn("DebugFixtureCoolingControlOperations(", debug_text)
+        self.assertIn(
+            "delegate = DefaultDeviceCoolingControlOperations(",
+            debug_text,
+        )
+        self.assertIn(
+            "controlSurfacePreparationOperations = controlSurface.preparationOperations",
+            debug_text,
+        )
 
 
 if __name__ == "__main__":
