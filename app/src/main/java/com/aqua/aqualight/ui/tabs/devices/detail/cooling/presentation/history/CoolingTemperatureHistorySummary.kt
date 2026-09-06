@@ -11,6 +11,7 @@ import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.text.BasicText
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
@@ -114,6 +115,9 @@ internal fun CoolingDailyHistoryCard(
     colors: AquaDeviceCardColors,
     typography: AquaDeviceCardTypography
 ) {
+    val orderedDays = remember(days) {
+        days.sortedByDescending { day -> day.dayStartEpochMillis }
+    }
     AquaDeviceCardSurface(modifier = Modifier.fillMaxWidth()) {
         Column(modifier = Modifier.fillMaxWidth()) {
             BasicText(
@@ -125,7 +129,7 @@ internal fun CoolingDailyHistoryCard(
             )
             DailyTableHeader(colors = colors, typography = typography)
             HistoryDivider(colors)
-            if (days.isEmpty()) {
+            if (orderedDays.isEmpty()) {
                 BasicText(
                     text = stringResource(R.string.device_cooling_history_daily_empty),
                     style = typography.caption.copy(
@@ -137,9 +141,9 @@ internal fun CoolingDailyHistoryCard(
                         .padding(vertical = AquaCoolingHistoryGeometry.messageGap)
                 )
             } else {
-                days.forEachIndexed { index, day ->
+                orderedDays.forEachIndexed { index, day ->
                     DailyHistoryRow(day = day, colors = colors, typography = typography)
-                    if (index != days.lastIndex) HistoryDivider(colors)
+                    if (index != orderedDays.lastIndex) HistoryDivider(colors)
                 }
             }
         }
