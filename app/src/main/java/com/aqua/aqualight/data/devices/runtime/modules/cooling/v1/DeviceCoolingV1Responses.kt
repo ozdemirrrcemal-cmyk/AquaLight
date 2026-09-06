@@ -699,7 +699,7 @@ object DeviceCoolingV1ResponseParser {
                     DeviceCoolingV1OperatingState::name
                 ),
                 controlReason = data.requireText("controlReason"),
-                targetPercent = data.requirePercent("targetPercent"),
+                targetPercent = data.requireRuntimePercent("targetPercent"),
                 manualActive = data.requireBoolean("manualActive")
             )
         }
@@ -1100,7 +1100,7 @@ object DeviceCoolingV1ResponseParser {
             data.requireExactKeys(FAN_KEYS, "cooling fan telemetry")
             return DeviceCoolingV1FanTelemetry(
                 fanKey = data.requireText("fanKey"),
-                targetPercent = data.requirePercent("targetPercent"),
+                targetPercent = data.requireRuntimePercent("targetPercent"),
                 outputPercent = data.requireNullableDouble(
                     "outputPercent",
                     DeviceCoolingV1Contract.Limit.FAN_PERCENT_MINIMUM,

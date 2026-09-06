@@ -8,6 +8,7 @@ import androidx.compose.ui.graphics.PathEffect
 import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.drawscope.DrawScope
 import androidx.compose.ui.graphics.drawscope.Stroke
+import androidx.compose.ui.graphics.drawscope.clipRect
 import com.aqua.aqualight.ui.common.cooling.AquaCoolingDashboardAlpha
 import com.aqua.aqualight.ui.common.cooling.AquaCoolingDashboardGeometry
 import com.aqua.aqualight.ui.common.cooling.AquaCoolingTemperatureChartSpec
@@ -20,36 +21,47 @@ internal fun DrawScope.drawTemperatureHistory(
     scale: TemperatureChartScale,
     viewport: TemperaturePlotViewport,
     lineColor: Color,
-    drawArea: Boolean
+    drawArea: Boolean,
+    revealRightFraction: Float = 1f
 ) {
     val segments = temperatureChartSegments(values).map { segment ->
         temperatureHistoryOffsets(segment, scale, viewport)
     }
-    segments.forEach { points ->
-        if (points.size >= 2) {
-            if (drawArea) {
-                drawTemperatureArea(
-                    path = smoothTemperatureAreaPath(
-                        points = points,
-                        bottomY = viewport.verticalPadding + viewport.height
-                    ),
+    val revealRight = viewport.horizontalPadding +
+        viewport.width * revealRightFraction.coerceIn(0f, 1f) +
+        AquaCoolingDashboardGeometry.chartPointGlowRadius.toPx()
+    clipRect(
+        left = 0f,
+        top = 0f,
+        right = revealRight.coerceAtMost(size.width),
+        bottom = size.height
+    ) {
+        segments.forEach { points ->
+            if (points.size >= 2) {
+                if (drawArea) {
+                    drawTemperatureArea(
+                        path = smoothTemperatureAreaPath(
+                            points = points,
+                            bottomY = viewport.verticalPadding + viewport.height
+                        ),
+                        lineColor = lineColor,
+                        viewport = viewport
+                    )
+                }
+                drawTemperatureSeries(
+                    path = smoothTemperaturePath(points),
                     lineColor = lineColor,
-                    viewport = viewport
+                    emphasized = drawArea
                 )
-            }
-            drawTemperatureSeries(
-                path = smoothTemperaturePath(points),
-                lineColor = lineColor,
-                emphasized = drawArea
-            )
-        } else {
-            points.singleOrNull()?.let { point ->
-                drawTemperaturePoint(point, lineColor, emphasized = false)
+            } else {
+                points.singleOrNull()?.let { point ->
+                    drawTemperaturePoint(point, lineColor, emphasized = false)
+                }
             }
         }
-    }
-    segments.lastOrNull()?.lastOrNull()?.let { endpoint ->
-        drawTemperaturePoint(endpoint, lineColor, emphasized = true)
+        segments.lastOrNull()?.lastOrNull()?.let { endpoint ->
+            drawTemperaturePoint(endpoint, lineColor, emphasized = true)
+        }
     }
 }
 
@@ -77,6 +89,17 @@ internal fun DrawScope.drawTemperatureGrid(
             pathEffect = dashEffect
         )
     }
+    repeat(TIME_AXIS_INTERVAL_COUNT - 1) { index ->
+        val fraction = (index + 1).toFloat() / TIME_AXIS_INTERVAL_COUNT
+        val x = viewport.horizontalPadding + viewport.width * fraction
+        drawLine(
+            color = colors.secondaryText.copy(alpha = AquaCoolingDashboardAlpha.chartTimeGrid),
+            start = Offset(x, viewport.verticalPadding),
+            end = Offset(x, viewport.verticalPadding + viewport.height),
+            strokeWidth = gridStroke,
+            pathEffect = dashEffect
+        )
+    }
     drawLine(
         color = gridColor,
         start = Offset(viewport.horizontalPadding, viewport.verticalPadding),
@@ -84,6 +107,13 @@ internal fun DrawScope.drawTemperatureGrid(
             viewport.horizontalPadding,
             viewport.verticalPadding + viewport.height
         ),
+        strokeWidth = gridStroke
+    )
+    val nowX = viewport.horizontalPadding + viewport.width
+    drawLine(
+        color = colors.accent.copy(alpha = AquaCoolingDashboardAlpha.chartNowGuide),
+        start = Offset(nowX, viewport.verticalPadding),
+        end = Offset(nowX, viewport.verticalPadding + viewport.height),
         strokeWidth = gridStroke
     )
 }
@@ -229,3 +259,5 @@ private fun smoothTemperatureAreaPath(points: List<Offset>, bottomY: Float): Pat
         close()
     }
 }
+
+private const val TIME_AXIS_INTERVAL_COUNT = 4

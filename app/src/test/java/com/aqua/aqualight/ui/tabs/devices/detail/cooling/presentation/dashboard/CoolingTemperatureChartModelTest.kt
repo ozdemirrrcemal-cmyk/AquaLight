@@ -44,6 +44,26 @@ class CoolingTemperatureChartModelTest {
     }
 
     @Test
+    fun liveSeriesIsAlwaysOrderedOldestToNewestWithHeadAtNow() {
+        val oldest = livePoint(sequence = 1L, sampledAt = 1_000L, temperatureC = 24.5)
+        val middle = livePoint(sequence = 2L, sampledAt = 301_000L, temperatureC = 25.0)
+        val head = livePoint(sequence = 3L, sampledAt = 601_000L, temperatureC = 25.5)
+        val values = temperatureChartValues(
+            archivedPoints = emptyList(),
+            historyGeneratedAtEpochMillis = null,
+            liveTimeline = CoolingTemperatureTimelinePresentation(
+                committedLivePoints = listOf(middle, oldest),
+                currentLivePoint = head
+            )
+        )
+
+        assertEquals(listOf(24.5f, 25.0f, 25.5f), values.map { it.temperatureC })
+        assertTrue(values.zipWithNext().all { (left, right) -> left.xFraction <= right.xFraction })
+        assertEquals(1f, values.last().xFraction, 0f)
+        assertEquals(TemperatureChartSource.LIVE, values.last().source)
+    }
+
+    @Test
     fun longMissingIntervalBreaksFalseConnectingLine() {
         val values = listOf(
             TemperatureChartValue(0f, 24f, TemperatureChartSource.ARCHIVE),
@@ -63,12 +83,16 @@ class CoolingTemperatureChartModelTest {
             temperatureC = temperatureC
         )
 
-    private fun livePoint(sequence: Long, sampledAt: Long) =
+    private fun livePoint(
+        sequence: Long,
+        sampledAt: Long,
+        temperatureC: Double = 25.0
+    ) =
         CoolingLiveTemperaturePointPresentation(
             inputSampleSequence = sequence,
             sampledAtUptimeMillis = sampledAt,
             evaluatedAtUptimeMillis = sampledAt + 100L,
-            temperatureC = 25.0
+            temperatureC = temperatureC
         )
 
     private companion object {

@@ -58,3 +58,14 @@ internal fun JSONObject.requirePercent(key: String): Double =
         DeviceCoolingV1Contract.Limit.FAN_PERCENT_MINIMUM,
         DeviceCoolingV1Contract.Limit.FAN_PERCENT_MAXIMUM
     ).also(::requireCoolingFanPercent)
+
+/**
+ * Firmware-computed control output is continuous across the automatic cooling curve.
+ * The catalog step applies to writable Manual/Program values, not runtime telemetry.
+ */
+internal fun JSONObject.requireRuntimePercent(key: String): Double =
+    requireDouble(
+        key,
+        DeviceCoolingV1Contract.Limit.FAN_PERCENT_MINIMUM,
+        DeviceCoolingV1Contract.Limit.FAN_PERCENT_MAXIMUM
+    )

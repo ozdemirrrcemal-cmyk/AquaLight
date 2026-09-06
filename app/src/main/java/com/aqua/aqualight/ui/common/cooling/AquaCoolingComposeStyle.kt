@@ -229,6 +229,8 @@ object AquaCoolingHistoryAlpha {
     const val rangeIdleBackground = 0.44f
     const val chartBackground = 0.20f
     const val chartGrid = 0.18f
+    const val chartTimeGrid = 0.11f
+    const val chartNowGuide = 0.32f
     const val chartGlow = 0.20f
     const val chartArea = 0.10f
     const val divider = 0.54f

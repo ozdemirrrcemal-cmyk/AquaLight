@@ -62,6 +62,33 @@ class DeviceCoolingRuntimeAuthorityTest {
         assertTrue(runCatching { DeviceCoolingV1ResponseParser.parseStatus(invalid) }.isFailure)
     }
 
+    @Test
+    fun `status accepts continuous firmware computed automatic target`() {
+        val runtimeTargetPercent = 35.95
+        val status = statusJson().apply {
+            getJSONObject("control").put("targetPercent", runtimeTargetPercent)
+            getJSONObject("telemetry")
+                .getJSONObject("fan")
+                .put("targetPercent", runtimeTargetPercent)
+                .put("outputPercent", runtimeTargetPercent)
+        }
+
+        val parsed = DeviceCoolingV1ResponseParser.parseStatus(status)
+
+        assertEquals(runtimeTargetPercent, parsed.control.targetPercent, 0.0)
+        assertEquals(runtimeTargetPercent, parsed.telemetry.fan.targetPercent, 0.0)
+    }
+
+    @Test
+    fun `status still rejects firmware runtime target outside physical range`() {
+        val status = statusJson().apply {
+            getJSONObject("control").put("targetPercent", 100.01)
+            getJSONObject("telemetry").getJSONObject("fan").put("targetPercent", 100.01)
+        }
+
+        assertTrue(runCatching { DeviceCoolingV1ResponseParser.parseStatus(status) }.isFailure)
+    }
+
     private fun statusJson(): JSONObject = JSONObject(
         requireNotNull(javaClass.classLoader?.getResourceAsStream(STATUS_FIXTURE)) {
             "Missing fixture resource: $STATUS_FIXTURE"

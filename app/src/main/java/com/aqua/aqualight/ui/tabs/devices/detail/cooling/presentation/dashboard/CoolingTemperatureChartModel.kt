@@ -94,15 +94,16 @@ private fun liveTemperatureChartValues(
     animatedLiveHeadTemperatureC: Float?
 ): List<TemperatureChartValue> {
     val head = liveTimeline.currentLivePoint ?: return emptyList()
-    val uniqueLive = buildList {
-        addAll(liveTimeline.committedLivePoints)
-        if (
-            lastOrNull()?.inputSampleSequence != head.inputSampleSequence ||
-            lastOrNull()?.sampledAtUptimeMillis != head.sampledAtUptimeMillis
-        ) {
-            add(head)
+    val uniqueLive = (liveTimeline.committedLivePoints + head)
+        .distinctBy { point ->
+            point.inputSampleSequence to point.sampledAtUptimeMillis
         }
-    }
+        .sortedWith(
+            compareBy(
+                { point -> point.sampledAtUptimeMillis },
+                { point -> point.inputSampleSequence }
+            )
+        )
     return uniqueLive.mapNotNull { point ->
         val ageMillis = head.sampledAtUptimeMillis - point.sampledAtUptimeMillis
         if (

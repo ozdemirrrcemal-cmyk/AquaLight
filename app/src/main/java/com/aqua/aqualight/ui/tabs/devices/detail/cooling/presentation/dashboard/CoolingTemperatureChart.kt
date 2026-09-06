@@ -1,5 +1,6 @@
 package com.aqua.aqualight.ui.tabs.devices.detail.cooling.presentation.dashboard
 
+import androidx.compose.animation.core.Animatable
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.Canvas
@@ -15,9 +16,13 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.text.BasicText
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.key
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.layout.Layout
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.style.TextAlign
@@ -26,6 +31,7 @@ import com.aqua.aqualight.ui.common.cooling.AquaCoolingDashboardGeometry
 import com.aqua.aqualight.ui.common.devicecard.AquaDeviceCardColors
 import com.aqua.aqualight.ui.common.devicecard.AquaDeviceCardGeometry
 import com.aqua.aqualight.ui.common.devicecard.AquaDeviceCardTypography
+import kotlin.math.roundToInt
 
 @Composable
 internal fun CoolingTemperatureChart(
@@ -51,6 +57,38 @@ internal fun CoolingTemperatureChart(
     val scale = temperatureChartScale(
         chartValues.map(TemperatureChartValue::temperatureC)
     )
+    val revealRightFraction = remember { Animatable(0f) }
+    val seriesHasRendered = remember { mutableStateOf(false) }
+    val liveHead = data.liveTimeline.currentLivePoint
+    val latestArchiveEpochMillis = data.archivedPoints
+        .maxOfOrNull { point -> point.sampledAtEpochMillis }
+    LaunchedEffect(
+        data.historyGeneratedAtEpochMillis,
+        data.archivedPoints.size,
+        latestArchiveEpochMillis,
+        liveHead?.inputSampleSequence,
+        liveHead?.sampledAtUptimeMillis
+    ) {
+        if (chartValues.isEmpty()) {
+            revealRightFraction.snapTo(0f)
+            seriesHasRendered.value = false
+        } else {
+            val target = chartValues.last().xFraction
+            val start = when {
+                chartValues.size == 1 -> target
+                !seriesHasRendered.value -> chartValues.first().xFraction
+                else -> chartValues[chartValues.lastIndex - 1].xFraction
+            }
+            revealRightFraction.snapTo(start)
+            if (target > start) {
+                revealRightFraction.animateTo(
+                    targetValue = target,
+                    animationSpec = tween(durationMillis = SERIES_REVEAL_ANIMATION_MILLIS)
+                )
+            }
+            seriesHasRendered.value = true
+        }
+    }
 
     Row(
         modifier = modifier.fillMaxWidth(),
@@ -67,7 +105,8 @@ internal fun CoolingTemperatureChart(
                 chartValues = chartValues,
                 scale = scale,
                 colors = colors,
-                typography = typography
+                typography = typography,
+                revealRightFraction = revealRightFraction.value
             )
             Spacer(modifier = Modifier.height(AquaDeviceCardGeometry.compactGap))
             TemperatureTimeAxis(colors = colors, typography = typography)
@@ -109,7 +148,8 @@ private fun CoolingTemperaturePlot(
     chartValues: List<TemperatureChartValue>,
     scale: TemperatureChartScale,
     colors: AquaDeviceCardColors,
-    typography: AquaDeviceCardTypography
+    typography: AquaDeviceCardTypography,
+    revealRightFraction: Float
 ) {
     Box(
         modifier = Modifier
@@ -132,7 +172,8 @@ private fun CoolingTemperaturePlot(
                     scale = scale,
                     viewport = viewport,
                     lineColor = colors.accent,
-                    drawArea = true
+                    drawArea = true,
+                    revealRightFraction = revealRightFraction
                 )
             }
         }
@@ -172,21 +213,37 @@ private fun TemperatureTimeAxis(
         stringResource(R.string.device_cooling_chart_6h),
         stringResource(R.string.device_cooling_chart_now)
     )
-    Row(modifier = Modifier.fillMaxWidth()) {
-        labels.forEachIndexed { index, label ->
-            val alignment = when (index) {
-                0 -> TextAlign.Start
-                labels.lastIndex -> TextAlign.End
-                else -> TextAlign.Center
+    Layout(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(horizontal = AquaCoolingDashboardGeometry.temperatureChartPadding),
+        content = {
+            labels.forEach { label ->
+                ChartAxisLabel(
+                    text = label,
+                    style = typography.micro.copy(
+                        color = colors.secondaryText,
+                        textAlign = TextAlign.Center
+                    )
+                )
             }
-            ChartAxisLabel(
-                text = label,
-                style = typography.micro.copy(
-                    color = colors.secondaryText,
-                    textAlign = alignment
-                ),
-                modifier = Modifier.weight(1f)
-            )
+        }
+    ) { measurables, constraints ->
+        val childConstraints = constraints.copy(minWidth = 0, minHeight = 0)
+        val placeables = measurables.map { measurable ->
+            measurable.measure(childConstraints)
+        }
+        val width = constraints.maxWidth
+        val height = placeables.maxOfOrNull { placeable -> placeable.height } ?: 0
+        val intervalCount = (placeables.size - 1).coerceAtLeast(1)
+        layout(width, height) {
+            placeables.forEachIndexed { index, placeable ->
+                val tickCenter = width.toFloat() * index / intervalCount
+                val x = (tickCenter - placeable.width / 2f)
+                    .roundToInt()
+                    .coerceIn(0, (width - placeable.width).coerceAtLeast(0))
+                placeable.place(x, 0)
+            }
         }
     }
 }
@@ -194,15 +251,14 @@ private fun TemperatureTimeAxis(
 @Composable
 private fun ChartAxisLabel(
     text: String,
-    style: TextStyle,
-    modifier: Modifier
+    style: TextStyle
 ) {
     BasicText(
         text = text,
         style = style,
-        modifier = modifier,
         maxLines = 1
     )
 }
 
 private const val LIVE_HEAD_ANIMATION_MILLIS = 250
+private const val SERIES_REVEAL_ANIMATION_MILLIS = 550
