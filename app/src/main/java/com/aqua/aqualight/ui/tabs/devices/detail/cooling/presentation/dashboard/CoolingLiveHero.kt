@@ -33,7 +33,7 @@ import com.aqua.aqualight.ui.common.cooling.AquaCoolingDashboardAlpha
 import com.aqua.aqualight.ui.common.cooling.AquaCoolingDashboardGeometry
 import com.aqua.aqualight.ui.common.cooling.fanMotionDurationMillis
 import com.aqua.aqualight.ui.common.devicecard.AquaDeviceCardColors
-import com.aqua.aqualight.ui.tabs.devices.detail.cooling.presentation.root.DeviceCoolingRootUiState
+import com.aqua.aqualight.ui.tabs.devices.detail.cooling.presentation.common.DeviceCoolingRootUiState
 
 @Composable
 internal fun CoolingLiveHero(

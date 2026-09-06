@@ -1,4 +1,4 @@
-package com.aqua.aqualight.ui.tabs.devices.detail.cooling.presentation.root
+package com.aqua.aqualight.ui.tabs.devices.detail.cooling.presentation.common
 
 import com.aqua.aqualight.application.devices.cooling.DeviceCoolingAlarmSeverity
 import com.aqua.aqualight.application.devices.cooling.DeviceCoolingAutomaticFailure
@@ -10,10 +10,6 @@ import com.aqua.aqualight.application.devices.cooling.control.DeviceCoolingManua
 import com.aqua.aqualight.application.devices.cooling.control.DeviceCoolingOperatingState
 import com.aqua.aqualight.application.devices.cooling.control.DeviceCoolingProgramRuntimeSnapshot
 import com.aqua.aqualight.ui.common.devicepresence.DeviceConnectionVisualState
-import com.aqua.aqualight.ui.tabs.devices.detail.cooling.presentation.common.CoolingDataFreshness
-import com.aqua.aqualight.ui.tabs.devices.detail.cooling.presentation.common.CoolingDataState
-import com.aqua.aqualight.ui.tabs.devices.detail.cooling.presentation.common.CoolingMutationState
-import com.aqua.aqualight.ui.tabs.devices.detail.cooling.presentation.common.authoritativeValueOrNull
 
 typealias CoolingControlMode = DeviceCoolingControlMode
 

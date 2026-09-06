@@ -22,6 +22,7 @@ import com.aqua.aqualight.ui.common.header.AquaHeaderConfig
 import com.aqua.aqualight.ui.common.header.setupAquaHeader
 import com.aqua.aqualight.ui.common.loading.setFragmentGlobalLoading
 import com.aqua.aqualight.ui.navigation.DeviceCoolingRouteNavigator
+import com.aqua.aqualight.ui.tabs.devices.detail.cooling.presentation.common.DeviceCoolingRootUiState
 import com.aqua.aqualight.ui.tabs.devices.detail.cooling.presentation.dashboard.DeviceCoolingDashboardActions
 import com.aqua.aqualight.ui.tabs.devices.detail.cooling.presentation.dashboard.DeviceCoolingDashboardScreen
 import kotlinx.coroutines.launch

@@ -2,6 +2,7 @@ package com.aqua.aqualight.ui.tabs.devices.detail.cooling.presentation.root
 
 import com.aqua.aqualight.application.devices.cooling.DeviceCoolingAutomaticFailure
 import com.aqua.aqualight.application.devices.cooling.DeviceCoolingAutomaticSettingsSnapshot
+import com.aqua.aqualight.ui.tabs.devices.detail.cooling.presentation.common.CoolingAutomaticSummaryPresentation
 import com.aqua.aqualight.ui.tabs.devices.detail.cooling.presentation.common.CoolingDataFreshness
 import com.aqua.aqualight.ui.tabs.devices.detail.cooling.presentation.common.CoolingDataState
 

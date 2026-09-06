@@ -16,9 +16,13 @@ import com.aqua.aqualight.application.devices.cooling.DeviceCoolingTemperatureHi
 import com.aqua.aqualight.application.devices.cooling.control.DeviceCoolingControlOperations
 import com.aqua.aqualight.application.devices.cooling.control.DeviceCoolingControlResult
 import com.aqua.aqualight.ui.common.devicepresence.DeviceConnectionVisualState
+import com.aqua.aqualight.ui.tabs.devices.detail.cooling.presentation.common.CoolingControlMode
 import com.aqua.aqualight.ui.tabs.devices.detail.cooling.presentation.common.CoolingDataState
 import com.aqua.aqualight.ui.tabs.devices.detail.cooling.presentation.common.CoolingMutationState
+import com.aqua.aqualight.ui.tabs.devices.detail.cooling.presentation.common.DeviceCoolingRootUiState
 import com.aqua.aqualight.ui.tabs.devices.detail.cooling.presentation.common.isCoolingContentAvailable
+import com.aqua.aqualight.ui.tabs.devices.detail.cooling.presentation.common.toRootControlState
+import com.aqua.aqualight.ui.tabs.devices.detail.cooling.presentation.common.toRootDashboardOverviewState
 import kotlinx.coroutines.CoroutineStart
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.channels.Channel

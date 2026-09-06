@@ -5,12 +5,12 @@ import com.aqua.aqualight.application.devices.cooling.control.DeviceCoolingOpera
 import com.aqua.aqualight.ui.common.cooling.fanMotionDegreesPerSecond
 import com.aqua.aqualight.ui.common.cooling.fanMotionDurationMillis
 import com.aqua.aqualight.ui.common.devicepresence.DeviceConnectionVisualState
+import com.aqua.aqualight.ui.tabs.devices.detail.cooling.presentation.common.CoolingControlPresentation
+import com.aqua.aqualight.ui.tabs.devices.detail.cooling.presentation.common.CoolingDashboardOverviewPresentation
 import com.aqua.aqualight.ui.tabs.devices.detail.cooling.presentation.common.CoolingDataFreshness
 import com.aqua.aqualight.ui.tabs.devices.detail.cooling.presentation.common.CoolingDataState
-import com.aqua.aqualight.ui.tabs.devices.detail.cooling.presentation.root.CoolingControlPresentation
-import com.aqua.aqualight.ui.tabs.devices.detail.cooling.presentation.root.CoolingDashboardOverviewPresentation
-import com.aqua.aqualight.ui.tabs.devices.detail.cooling.presentation.root.CoolingHealthState
-import com.aqua.aqualight.ui.tabs.devices.detail.cooling.presentation.root.DeviceCoolingRootUiState
+import com.aqua.aqualight.ui.tabs.devices.detail.cooling.presentation.common.CoolingHealthState
+import com.aqua.aqualight.ui.tabs.devices.detail.cooling.presentation.common.DeviceCoolingRootUiState
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue

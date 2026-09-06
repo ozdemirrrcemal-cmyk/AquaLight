@@ -1,7 +1,7 @@
 package com.aqua.aqualight.ui.tabs.devices.detail.cooling.presentation.dashboard
 
 import com.aqua.aqualight.application.devices.cooling.DeviceCoolingTemperatureHistoryPoint
-import com.aqua.aqualight.ui.tabs.devices.detail.cooling.presentation.root.CoolingTemperatureTimelinePresentation
+import com.aqua.aqualight.ui.tabs.devices.detail.cooling.presentation.common.CoolingTemperatureTimelinePresentation
 import kotlin.math.abs
 
 internal const val TEMPERATURE_CHART_WINDOW_MILLIS = 24L * 60L * 60L * 1_000L

@@ -31,7 +31,7 @@ class CoolingStateMachineContractTest(unittest.TestCase):
             self.assertIn(token, text)
 
     def test_root_models_independent_data_sections_and_write_lifecycle(self) -> None:
-        text = (COOLING / "root/DeviceCoolingRootUiState.kt").read_text(encoding="utf-8")
+        text = (COOLING / "common/DeviceCoolingRootUiState.kt").read_text(encoding="utf-8")
         for token in (
             "controlState:",
             "controlMutationState:",
@@ -111,6 +111,9 @@ class CoolingStateMachineContractTest(unittest.TestCase):
         view_model = (
             COOLING / "program/DeviceCoolingProgramSettingsViewModel.kt"
         ).read_text(encoding="utf-8")
+        selection_presentation = (
+            COOLING / "program/CoolingProgramTimeSelectionPresentation.kt"
+        ).read_text(encoding="utf-8")
         fragment = (
             COOLING / "program/DeviceCoolingProgramSettingsFragment.kt"
         ).read_text(encoding="utf-8")
@@ -129,14 +132,17 @@ class CoolingStateMachineContractTest(unittest.TestCase):
         self.assertNotIn("android.", selections)
         self.assertNotIn("com.aqua.aqualight.ui", selections)
         self.assertIn("maxOf(current.endMinutes", schedule)
-        self.assertIn("CoolingProgramTimeSelections.forStartTime(", view_model)
-        self.assertIn("CoolingProgramTimeSelections.forEndTime(", view_model)
+        self.assertIn(".startTimeSelection(", selection_presentation)
+        self.assertIn(".endTimeSelection(", selection_presentation)
+        self.assertIn("CoolingProgramTimeSelections.forStartTime(", selection_presentation)
+        self.assertIn("CoolingProgramTimeSelections.forEndTime(", selection_presentation)
+        self.assertNotIn("CoolingProgramTimeSelections", view_model)
         self.assertIn("selectableMinutesOfDay = selection.selectableMinutesOfDay", fragment)
         self.assertNotIn("devices.detail.cooling", picker)
 
     def test_program_timeline_uses_true_quarter_day_ticks(self) -> None:
-        primitives = (
-            COOLING / "program/CoolingProgramPrimitives.kt"
+        timeline = (
+            COOLING / "program/CoolingProgramTimeline.kt"
         ).read_text(encoding="utf-8")
         for token in (
             "TIMELINE_06_MINUTES",
@@ -144,7 +150,7 @@ class CoolingStateMachineContractTest(unittest.TestCase):
             "TIMELINE_18_MINUTES",
             "ticks[index].minutesOfDay.toFloat() / MINUTES_PER_DAY",
         ):
-            self.assertIn(token, primitives)
+            self.assertIn(token, timeline)
 
         for locale in ("values", "values-tr"):
             strings = (
@@ -384,7 +390,7 @@ class CoolingStateMachineContractTest(unittest.TestCase):
                 text = (COOLING / relative_path).read_text(encoding="utf-8")
                 self.assertIn("dataState == CoolingDataState.Loading", text)
 
-        root_state = (COOLING / "root/DeviceCoolingRootUiState.kt").read_text(
+        root_state = (COOLING / "common/DeviceCoolingRootUiState.kt").read_text(
             encoding="utf-8"
         )
         self.assertIn("surfacePreparationPending", root_state)

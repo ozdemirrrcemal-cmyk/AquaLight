@@ -11,14 +11,14 @@ import com.aqua.aqualight.application.devices.cooling.DeviceCoolingTemperatureHi
 import com.aqua.aqualight.application.devices.cooling.control.DeviceCoolingManualFanCapabilities
 import com.aqua.aqualight.application.devices.cooling.control.DeviceCoolingOperatingState
 import com.aqua.aqualight.ui.common.devicepresence.DeviceConnectionVisualState
+import com.aqua.aqualight.ui.tabs.devices.detail.cooling.presentation.common.CoolingAutomaticSummaryPresentation
+import com.aqua.aqualight.ui.tabs.devices.detail.cooling.presentation.common.CoolingControlMode
+import com.aqua.aqualight.ui.tabs.devices.detail.cooling.presentation.common.CoolingControlPresentation
+import com.aqua.aqualight.ui.tabs.devices.detail.cooling.presentation.common.CoolingDashboardOverviewPresentation
 import com.aqua.aqualight.ui.tabs.devices.detail.cooling.presentation.common.CoolingDataState
-import com.aqua.aqualight.ui.tabs.devices.detail.cooling.presentation.root.CoolingAutomaticSummaryPresentation
-import com.aqua.aqualight.ui.tabs.devices.detail.cooling.presentation.root.CoolingControlMode
-import com.aqua.aqualight.ui.tabs.devices.detail.cooling.presentation.root.CoolingControlPresentation
-import com.aqua.aqualight.ui.tabs.devices.detail.cooling.presentation.root.CoolingDashboardOverviewPresentation
-import com.aqua.aqualight.ui.tabs.devices.detail.cooling.presentation.root.CoolingHealthState
-import com.aqua.aqualight.ui.tabs.devices.detail.cooling.presentation.root.CoolingHistoryOverviewPresentation
-import com.aqua.aqualight.ui.tabs.devices.detail.cooling.presentation.root.DeviceCoolingRootUiState
+import com.aqua.aqualight.ui.tabs.devices.detail.cooling.presentation.common.CoolingHealthState
+import com.aqua.aqualight.ui.tabs.devices.detail.cooling.presentation.common.CoolingHistoryOverviewPresentation
+import com.aqua.aqualight.ui.tabs.devices.detail.cooling.presentation.common.DeviceCoolingRootUiState
 
 @Preview(
     name = "Cooling dashboard",

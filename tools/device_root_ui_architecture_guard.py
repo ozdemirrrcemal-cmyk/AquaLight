@@ -75,6 +75,10 @@ COOLING_UI_FORBIDDEN = (
     "connectRuntime(",
 )
 
+COOLING_ROOT_PACKAGE_IMPORT = (
+    "import com.aqua.aqualight.ui.tabs.devices.detail.cooling.presentation.root."
+)
+
 
 def _read(repository_root: Path, relative_path: Path, errors: list[str]) -> str:
     path = repository_root / relative_path
@@ -224,6 +228,21 @@ def validate_cooling_feature_boundaries(repository_root: Path) -> list[str]:
             errors.append(
                 f"{relative_path}: Unknown Cooling presentation area: "
                 f"{relative_to_cooling.parts[1]}"
+            )
+
+        presentation_area = (
+            relative_to_cooling.parts[1]
+            if len(relative_to_cooling.parts) >= 3
+            and relative_to_cooling.parts[0] == "presentation"
+            else None
+        )
+        if (
+            presentation_area != "root"
+            and COOLING_ROOT_PACKAGE_IMPORT in source
+        ):
+            errors.append(
+                f"{relative_path}: Cooling presentation areas must consume shared models "
+                "from presentation.common instead of depending on presentation.root"
             )
 
         package_match = re.search(r"^package\s+([\w.]+)", source, re.MULTILINE)

@@ -1,4 +1,4 @@
-package com.aqua.aqualight.ui.tabs.devices.detail.cooling.presentation.root
+package com.aqua.aqualight.ui.tabs.devices.detail.cooling.presentation.common
 
 import com.aqua.aqualight.application.devices.cooling.DeviceCoolingAlarmSeverity
 import com.aqua.aqualight.application.devices.cooling.DeviceCoolingPwmOutputHealth
@@ -6,8 +6,6 @@ import com.aqua.aqualight.application.devices.cooling.DeviceCoolingSensorHealth
 import com.aqua.aqualight.application.devices.cooling.control.DeviceCoolingControlFailure
 import com.aqua.aqualight.application.devices.cooling.control.DeviceCoolingControlResult
 import com.aqua.aqualight.application.devices.cooling.control.DeviceCoolingControlSnapshot
-import com.aqua.aqualight.ui.tabs.devices.detail.cooling.presentation.common.CoolingDataFreshness
-import com.aqua.aqualight.ui.tabs.devices.detail.cooling.presentation.common.CoolingDataState
 
 internal fun DeviceCoolingControlSnapshot.toRootControlPresentation(): CoolingControlPresentation =
     CoolingControlPresentation(

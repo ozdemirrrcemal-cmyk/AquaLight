@@ -1,26 +1,12 @@
 package com.aqua.aqualight.ui.tabs.devices.detail.cooling.presentation.root
 
 import com.aqua.aqualight.application.devices.cooling.DeviceCoolingWaterTemperatureSample
+import com.aqua.aqualight.ui.tabs.devices.detail.cooling.presentation.common.CoolingLiveTemperaturePointPresentation
+import com.aqua.aqualight.ui.tabs.devices.detail.cooling.presentation.common.CoolingTemperatureTimelinePresentation
 
 private const val LIVE_POINT_INTERVAL_MILLIS = 5L * 60L * 1_000L
 private const val LIVE_WINDOW_MILLIS = 24L * 60L * 60L * 1_000L
 private const val MAXIMUM_COMMITTED_LIVE_POINTS = 289
-
-data class CoolingLiveTemperaturePointPresentation(
-    val inputSampleSequence: Long,
-    val sampledAtUptimeMillis: Long,
-    val evaluatedAtUptimeMillis: Long,
-    val temperatureC: Double
-)
-
-data class CoolingTemperatureTimelinePresentation(
-    val timeGeneration: Long? = null,
-    val lastInputSampleSequence: Long? = null,
-    val historyAnchorEpochMillis: Long? = null,
-    val historyAnchorEvaluatedAtUptimeMillis: Long? = null,
-    val committedLivePoints: List<CoolingLiveTemperaturePointPresentation> = emptyList(),
-    val currentLivePoint: CoolingLiveTemperaturePointPresentation? = null
-)
 
 internal data class CoolingTemperatureTimelineUpdate(
     val state: CoolingTemperatureTimelinePresentation,

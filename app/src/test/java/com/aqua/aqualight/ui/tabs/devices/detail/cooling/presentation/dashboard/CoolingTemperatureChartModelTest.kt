@@ -1,8 +1,8 @@
 package com.aqua.aqualight.ui.tabs.devices.detail.cooling.presentation.dashboard
 
 import com.aqua.aqualight.application.devices.cooling.DeviceCoolingTemperatureHistoryPoint
-import com.aqua.aqualight.ui.tabs.devices.detail.cooling.presentation.root.CoolingLiveTemperaturePointPresentation
-import com.aqua.aqualight.ui.tabs.devices.detail.cooling.presentation.root.CoolingTemperatureTimelinePresentation
+import com.aqua.aqualight.ui.tabs.devices.detail.cooling.presentation.common.CoolingLiveTemperaturePointPresentation
+import com.aqua.aqualight.ui.tabs.devices.detail.cooling.presentation.common.CoolingTemperatureTimelinePresentation
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.Test

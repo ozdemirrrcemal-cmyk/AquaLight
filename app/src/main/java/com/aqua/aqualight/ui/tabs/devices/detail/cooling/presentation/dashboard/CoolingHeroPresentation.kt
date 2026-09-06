@@ -2,8 +2,8 @@ package com.aqua.aqualight.ui.tabs.devices.detail.cooling.presentation.dashboard
 
 import com.aqua.aqualight.application.devices.cooling.control.DeviceCoolingOperatingState
 import com.aqua.aqualight.ui.common.devicepresence.DeviceConnectionVisualState
-import com.aqua.aqualight.ui.tabs.devices.detail.cooling.presentation.root.CoolingHealthState
-import com.aqua.aqualight.ui.tabs.devices.detail.cooling.presentation.root.DeviceCoolingRootUiState
+import com.aqua.aqualight.ui.tabs.devices.detail.cooling.presentation.common.CoolingHealthState
+import com.aqua.aqualight.ui.tabs.devices.detail.cooling.presentation.common.DeviceCoolingRootUiState
 
 internal enum class CoolingHeroVisualStatus {
     COOLING,

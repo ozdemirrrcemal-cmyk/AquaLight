@@ -126,6 +126,32 @@ class DeviceRootUiArchitectureGuardTest(unittest.TestCase):
 
         self.assertFalse(any("Unknown Cooling presentation area" in error for error in errors))
 
+    def test_cooling_sibling_areas_must_not_depend_on_root_package(self) -> None:
+        for area in ("common", "dashboard", "manual"):
+            with self.subTest(area=area), tempfile.TemporaryDirectory() as temporary_directory:
+                repository_root = Path(temporary_directory)
+                source_file = (
+                    repository_root
+                    / GUARD.COOLING_PRESENTATION_ROOT
+                    / area
+                    / "RootDependent.kt"
+                )
+                source_file.parent.mkdir(parents=True)
+                source_file.write_text(
+                    "package com.aqua.aqualight.ui.tabs.devices.detail.cooling.presentation."
+                    f"{area}\n\n"
+                    "import com.aqua.aqualight.ui.tabs.devices.detail.cooling.presentation."
+                    "root.DeviceCoolingRootUiState\n",
+                    encoding="utf-8",
+                )
+
+                errors = GUARD.validate_cooling_feature_boundaries(repository_root)
+
+            self.assertTrue(
+                any("instead of depending on presentation.root" in error for error in errors),
+                errors,
+            )
+
 
 if __name__ == "__main__":
     unittest.main()

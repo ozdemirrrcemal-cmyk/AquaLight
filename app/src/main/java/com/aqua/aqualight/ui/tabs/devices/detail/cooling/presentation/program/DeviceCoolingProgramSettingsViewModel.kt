@@ -10,8 +10,6 @@ import com.aqua.aqualight.application.devices.cooling.program.CoolingProgramSave
 import com.aqua.aqualight.application.devices.cooling.program.CoolingProgramSchedule
 import com.aqua.aqualight.application.devices.cooling.program.CoolingProgramSlot
 import com.aqua.aqualight.application.devices.cooling.program.CoolingProgramSnapshot
-import com.aqua.aqualight.application.devices.cooling.program.CoolingProgramTimeSelection
-import com.aqua.aqualight.application.devices.cooling.program.CoolingProgramTimeSelections
 import com.aqua.aqualight.application.devices.cooling.program.CoolingProgramValidation
 import com.aqua.aqualight.application.devices.cooling.program.CoolingProgramValidationResult
 import com.aqua.aqualight.application.devices.cooling.program.DeviceCoolingProgramOperations
@@ -96,34 +94,6 @@ class DeviceCoolingProgramSettingsViewModel(
             )
         } else {
             false
-        }
-    }
-
-    fun startTimeSelection(slotIndex: Int): CoolingProgramTimeSelection? {
-        val state = _uiState.value
-        val policy = state.policy
-        return if (state.isEditable && policy != null) {
-            CoolingProgramTimeSelections.forStartTime(
-                slots = state.slots,
-                policy = policy,
-                slotIndex = slotIndex
-            )
-        } else {
-            null
-        }
-    }
-
-    fun endTimeSelection(slotIndex: Int): CoolingProgramTimeSelection? {
-        val state = _uiState.value
-        val policy = state.policy
-        return if (state.isEditable && policy != null) {
-            CoolingProgramTimeSelections.forEndTime(
-                slots = state.slots,
-                policy = policy,
-                slotIndex = slotIndex
-            )
-        } else {
-            null
         }
     }
 
@@ -347,10 +317,6 @@ enum class DeviceCoolingProgramSaveState {
 private val DeviceCoolingProgramLoadState.keepsExistingBinding: Boolean
     get() = this == DeviceCoolingProgramLoadState.LOADING ||
         this == DeviceCoolingProgramLoadState.CONTENT
-
-private val DeviceCoolingProgramSettingsUiState.isEditable: Boolean
-    get() = (dataState is CoolingDataState.Content || dataState is CoolingDataState.Empty) &&
-        mutationState != CoolingMutationState.Saving
 
 private fun MutableStateFlow<DeviceCoolingProgramSettingsUiState>.applyEdit(
     state: DeviceCoolingProgramSettingsUiState,

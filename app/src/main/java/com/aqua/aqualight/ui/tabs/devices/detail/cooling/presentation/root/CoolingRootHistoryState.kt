@@ -3,6 +3,7 @@ package com.aqua.aqualight.ui.tabs.devices.detail.cooling.presentation.root
 import com.aqua.aqualight.application.devices.cooling.DeviceCoolingTemperatureHistoryLoadResult
 import com.aqua.aqualight.ui.tabs.devices.detail.cooling.presentation.common.CoolingDataFreshness
 import com.aqua.aqualight.ui.tabs.devices.detail.cooling.presentation.common.CoolingDataState
+import com.aqua.aqualight.ui.tabs.devices.detail.cooling.presentation.common.CoolingHistoryOverviewPresentation
 
 internal fun DeviceCoolingTemperatureHistoryLoadResult.toRootHistoryState(
     previous: CoolingDataState<CoolingHistoryOverviewPresentation, Nothing> =

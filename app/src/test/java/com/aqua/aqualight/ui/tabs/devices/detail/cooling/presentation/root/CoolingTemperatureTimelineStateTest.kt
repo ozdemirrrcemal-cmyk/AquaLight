@@ -1,6 +1,7 @@
 package com.aqua.aqualight.ui.tabs.devices.detail.cooling.presentation.root
 
 import com.aqua.aqualight.application.devices.cooling.DeviceCoolingWaterTemperatureSample
+import com.aqua.aqualight.ui.tabs.devices.detail.cooling.presentation.common.CoolingTemperatureTimelinePresentation
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue

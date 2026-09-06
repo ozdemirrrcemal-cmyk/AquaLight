@@ -7,8 +7,8 @@ import com.aqua.aqualight.application.devices.cooling.control.DeviceCoolingContr
 import com.aqua.aqualight.application.devices.cooling.control.DeviceCoolingControlResult
 import com.aqua.aqualight.ui.tabs.devices.detail.cooling.presentation.common.CoolingDataState
 import com.aqua.aqualight.ui.tabs.devices.detail.cooling.presentation.common.CoolingMutationState
-import com.aqua.aqualight.ui.tabs.devices.detail.cooling.presentation.root.beginControlRefresh
-import com.aqua.aqualight.ui.tabs.devices.detail.cooling.presentation.root.toRootControlState
+import com.aqua.aqualight.ui.tabs.devices.detail.cooling.presentation.common.beginControlRefresh
+import com.aqua.aqualight.ui.tabs.devices.detail.cooling.presentation.common.toRootControlState
 import kotlinx.coroutines.CoroutineStart
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableStateFlow

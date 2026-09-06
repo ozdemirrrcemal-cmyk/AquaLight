@@ -3,11 +3,11 @@ package com.aqua.aqualight.ui.tabs.devices.detail.cooling.presentation.manual
 import com.aqua.aqualight.application.devices.cooling.control.DeviceCoolingControlFailure
 import com.aqua.aqualight.application.devices.cooling.control.DeviceCoolingControlMode
 import com.aqua.aqualight.application.devices.cooling.control.DeviceCoolingManualFanCapabilities
+import com.aqua.aqualight.ui.tabs.devices.detail.cooling.presentation.common.CoolingControlPresentation
 import com.aqua.aqualight.ui.tabs.devices.detail.cooling.presentation.common.CoolingDataState
 import com.aqua.aqualight.ui.tabs.devices.detail.cooling.presentation.common.CoolingMutationState
 import com.aqua.aqualight.ui.tabs.devices.detail.cooling.presentation.common.authoritativeValueOrNull
 import com.aqua.aqualight.ui.tabs.devices.detail.cooling.presentation.common.isCurrentAuthoritative
-import com.aqua.aqualight.ui.tabs.devices.detail.cooling.presentation.root.CoolingControlPresentation
 
 data class DeviceCoolingManualSettingsUiState(
     val deviceUid: String = "",
