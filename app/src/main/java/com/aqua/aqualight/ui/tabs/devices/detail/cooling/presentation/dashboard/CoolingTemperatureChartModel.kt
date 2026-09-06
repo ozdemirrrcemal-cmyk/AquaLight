@@ -1,7 +1,6 @@
 package com.aqua.aqualight.ui.tabs.devices.detail.cooling.presentation.dashboard
 
 import com.aqua.aqualight.application.devices.cooling.DeviceCoolingTemperatureHistoryPoint
-import com.aqua.aqualight.ui.tabs.devices.detail.cooling.presentation.root.CoolingLiveTemperaturePointPresentation
 import com.aqua.aqualight.ui.tabs.devices.detail.cooling.presentation.root.CoolingTemperatureTimelinePresentation
 import kotlin.math.abs
 
@@ -130,7 +129,7 @@ private fun coalesceArchiveAndLivePositions(
 ): List<TemperatureChartValue> {
     val merged = mutableListOf<TemperatureChartValue>()
     values.forEach { value ->
-        val previous = = merged.lastOrNull()?.takeIf { previous ->
+        val sameTime = merged.lastOrNull()?.takeIf { previous ->
             previous.source != value.source &&
                 abs(previous.xFraction - value.xFraction) <= SAME_POSITION_EPSILON
         }

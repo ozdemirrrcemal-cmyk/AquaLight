@@ -27,7 +27,7 @@ data class DeviceCoolingWaterTemperatureSample(
     val temperatureC: Double
 ) {
     init {
-        require(inputSampleSequence > 0L)
+        require(inputSampleSequence >= 0L)
         require(sampledAtUptimeMillis >= 0L)
         require(timeGeneration >= 0L)
         require(temperatureC.isFinite())

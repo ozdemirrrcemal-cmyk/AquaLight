@@ -43,12 +43,13 @@ internal object DeviceCoolingTelemetrySnapshotMapper {
             ),
             waterTemperatureSample = water
                 ?.takeIf { sensor -> sensor.readingValid }
-                ?.temperatureC
-                ?.takeIf(Double::isFinite)
-                ?.let { temperatureC ->
+                ?.let { sensor ->
+                    val temperatureC = sensor.temperatureC
+                        ?.takeIf(Double::isFinite)
+                        ?: return@let null
                     DeviceCoolingWaterTemperatureSample(
                         inputSampleSequence = telemetry.inputSampleSequence,
-                        sampledAtUptimeMillis = water.sampledAtMs,
+                        sampledAtUptimeMillis = sensor.sampledAtMs,
                         evaluatedAtUptimeMillis = telemetry.evaluatedAtMs,
                         timeGeneration = telemetry.timeGeneration,
                         temperatureC = temperatureC

@@ -21,7 +21,7 @@ class CoolingTemperatureChartModelTest {
             liveTimeline = CoolingTemperatureTimelinePresentation()
         )
 
-        assertEquals(0f, values[[0].xFraction, 0.0001f)
+        assertEquals(0f, values[0].xFraction, 0.0001f)
         assertEquals(0.5f, values[1].xFraction, 0.0001f)
         assertEquals(1f, values[2].xFraction, 0.0001f)
     }

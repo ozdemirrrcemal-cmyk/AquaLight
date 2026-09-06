@@ -7,6 +7,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.colorResource
 import androidx.compose.ui.tooling.preview.Preview
 import com.aqua.aqualight.R
+import com.aqua.aqualight.application.devices.cooling.DeviceCoolingTemperatureHistoryPoint
 import com.aqua.aqualight.application.devices.cooling.control.DeviceCoolingManualFanCapabilities
 import com.aqua.aqualight.application.devices.cooling.control.DeviceCoolingOperatingState
 import com.aqua.aqualight.ui.common.devicepresence.DeviceConnectionVisualState
@@ -57,7 +58,8 @@ internal fun CoolingDashboardPreview() {
             ),
             historyState = CoolingDataState.Content(
                 value = CoolingHistoryOverviewPresentation(
-                    temperaturesC = previewTankTemperatures
+                    generatedAtEpochMillis = PREVIEW_HISTORY_GENERATED_AT_EPOCH_MILLIS,
+                    points = previewTankTemperaturePoints
                 )
             ),
             dashboardOverviewState = CoolingDataState.Content(
@@ -102,6 +104,17 @@ private val previewTankTemperatures = listOf(
     PREVIEW_TEMPERATURE_15_C,
     PREVIEW_TEMPERATURE_16_C
 )
+
+private val previewTankTemperaturePoints = previewTankTemperatures.mapIndexed { index, value ->
+    DeviceCoolingTemperatureHistoryPoint(
+        sampledAtEpochMillis = PREVIEW_HISTORY_GENERATED_AT_EPOCH_MILLIS -
+            (previewTankTemperatures.lastIndex - index) * PREVIEW_HISTORY_INTERVAL_MILLIS,
+        temperatureC = value
+    )
+}
+
+private const val PREVIEW_HISTORY_GENERATED_AT_EPOCH_MILLIS = 1_735_689_600_000L
+private const val PREVIEW_HISTORY_INTERVAL_MILLIS = 90L * 60L * 1_000L
 
 private const val PREVIEW_TEMPERATURE_01_C = 25.8
 private const val PREVIEW_TEMPERATURE_02_C = 26.4
