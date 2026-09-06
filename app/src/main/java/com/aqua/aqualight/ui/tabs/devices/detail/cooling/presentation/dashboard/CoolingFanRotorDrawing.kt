@@ -144,14 +144,13 @@ private val FAN_TEXTURE_PAINT = Paint(
     Paint.ANTI_ALIAS_FLAG or Paint.FILTER_BITMAP_FLAG or Paint.DITHER_FLAG
 )
 
-private const val FAN_CENTER_X = 0.459f
-// Measured from the source artwork's hub rather than the cyan ring's bounding box. The previous
-// value sat roughly seven source pixels high and made the transformed rotor orbit inside the ring.
-private const val FAN_CENTER_Y = 0.299f
+// Calibrated against both the cyan housing ring and the metallic hub in the source artwork.
+private const val FAN_CENTER_X = 0.463f
+private const val FAN_CENTER_Y = 0.278f
 private const val FAN_RADIUS_X = 0.178f
 private const val FAN_RADIUS_Y = 0.099f
-private const val FAN_PLANE_TILT_DEGREES = -6.1f
-private const val FAN_PLANE_TILT_RADIANS = -0.10646508f
+private const val FAN_PLANE_TILT_DEGREES = -6.4f
+private const val FAN_PLANE_TILT_RADIANS = -0.11170107f
 private const val FAN_CLIP_SCALE = 0.985f
 private const val FULL_CIRCLE_RADIANS = 6.2831855f
 private const val HALF_DIVISOR = 2f
