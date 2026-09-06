@@ -105,11 +105,27 @@ private fun parseRuntimeSuccess(
         statusCode = response.statusCode,
         value = pending.parseSuccess(response)
     )
-} catch (_: Throwable) {
+} catch (error: Throwable) {
     protocolError(
         pending,
-        "Successful firmware response did not match the typed command contract."
+        "Successful firmware response did not match the typed command contract. " +
+            error.toProtocolDiagnosticCause()
     )
+}
+
+private fun Throwable.toProtocolDiagnosticCause(): String {
+    val source = stackTrace.firstOrNull { element ->
+        element.className.startsWith("com.aqua.aqualight")
+    }
+    val sourceText = source?.let { element ->
+        "${element.className}.${element.methodName}:${element.lineNumber}"
+    } ?: "unknown"
+    val messageText = message
+        ?.replace('\n', ' ')
+        ?.replace('\r', ' ')
+        ?.take(MAX_PROTOCOL_DIAGNOSTIC_MESSAGE_LENGTH)
+        .orEmpty()
+    return "cause=${javaClass.simpleName}:$messageText; source=$sourceText"
 }
 
 private fun protocolError(
@@ -126,3 +142,5 @@ private fun protocolError(
         reason = reason
     )
 }
+
+private const val MAX_PROTOCOL_DIAGNOSTIC_MESSAGE_LENGTH = 180

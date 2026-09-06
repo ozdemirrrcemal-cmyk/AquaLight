@@ -42,4 +42,4 @@ internal fun formatDeviceMenuDiagnostic(
 private fun String.sanitizedDiagnosticValue(): String =
     replace('\n', ' ').replace('\r', ' ').take(MAX_DIAGNOSTIC_VALUE_LENGTH)
 
-private const val MAX_DIAGNOSTIC_VALUE_LENGTH = 180
+private const val MAX_DIAGNOSTIC_VALUE_LENGTH = 420

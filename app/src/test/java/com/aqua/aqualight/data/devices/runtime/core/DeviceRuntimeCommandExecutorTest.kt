@@ -186,7 +186,10 @@ class DeviceRuntimeCommandExecutorTest {
                 statusCode = 200
             )
         )
-        assertTrue(invalidPayload.awaiting.await() is DeviceRuntimeCommandOutcome.ProtocolError)
+        val invalidPayloadError = invalidPayload.awaiting.await()
+            as DeviceRuntimeCommandOutcome.ProtocolError
+        assertTrue(invalidPayloadError.reason.contains("cause=IllegalArgumentException"))
+        assertTrue(invalidPayloadError.reason.contains("source=com.aqua.aqualight"))
 
         val falseSuccess = pendingExecution()
         falseSuccess.executor.complete(
