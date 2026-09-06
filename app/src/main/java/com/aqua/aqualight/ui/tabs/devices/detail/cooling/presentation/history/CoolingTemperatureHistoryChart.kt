@@ -29,6 +29,7 @@ import com.aqua.aqualight.application.devices.cooling.DeviceCoolingTemperatureHi
 import com.aqua.aqualight.application.devices.cooling.DeviceCoolingTemperatureHistoryRange
 import com.aqua.aqualight.i18n.LocaleFormatter
 import com.aqua.aqualight.ui.common.cooling.AquaCoolingHistoryAlpha
+import com.aqua.aqualight.ui.common.cooling.AquaCoolingHistoryChartSpec
 import com.aqua.aqualight.ui.common.cooling.AquaCoolingHistoryGeometry
 import com.aqua.aqualight.ui.common.devicecard.AquaDeviceCardColors
 import com.aqua.aqualight.ui.common.devicecard.AquaDeviceCardSurface
@@ -113,7 +114,7 @@ private fun CoolingHistoryPlot(
                 width = (size.width - padding * 2f).coerceAtLeast(1f),
                 height = (size.height - padding * 2f).coerceAtLeast(1f)
             )
-            drawHistoryGrid(viewport = viewport, colors = colors)
+            drawHistoryGrid(viewport = viewport, scale = scale, colors = colors)
             if (points.size >= 2) {
                 drawHistorySeries(
                     points = points,
@@ -149,11 +150,16 @@ private fun HistoryYAxis(
         horizontalAlignment = Alignment.End,
         verticalArrangement = Arrangement.SpaceBetween
     ) {
-        scale.axisValues().forEach { value ->
+        scale.axisValues().forEachIndexed { index, value ->
+            val isMajor = index % AquaCoolingHistoryChartSpec.temperatureMajorGridStride == 0
             BasicText(
                 text = stringResource(R.string.device_cooling_temperature_axis_value_format, value),
                 style = typography.micro.copy(
-                    color = colors.secondaryText,
+                    color = if (isMajor) {
+                        colors.secondaryText
+                    } else {
+                        colors.secondaryText.copy(alpha = AquaCoolingHistoryAlpha.axisMinorLabel)
+                    },
                     textAlign = TextAlign.End
                 ),
                 maxLines = 1
@@ -199,18 +205,27 @@ private fun historyTimeLabels(
     val first = points.firstOrNull()?.sampledAtEpochMillis
     val last = points.lastOrNull()?.sampledAtEpochMillis
     return if (first != null && last != null && last >= first) {
-        List(HISTORY_VERTICAL_GRID_COUNT) { index ->
-            val fraction = index.toDouble() / (HISTORY_VERTICAL_GRID_COUNT - 1)
+        historyTimeTickEpochMillis(first, last).map { epochMillis ->
             formatHistoryTick(
                 context = context,
-                epochMillis = first + ((last - first) * fraction).toLong(),
+                epochMillis = epochMillis,
                 range = range
             )
         }
     } else {
-        List(HISTORY_VERTICAL_GRID_COUNT) {
+        List(AquaCoolingHistoryChartSpec.timeAxisLabelCount) {
             stringResource(R.string.device_cooling_value_unavailable)
         }
+    }
+}
+
+internal fun historyTimeTickEpochMillis(first: Long, last: Long): List<Long> {
+    require(last >= first)
+    val count = AquaCoolingHistoryChartSpec.timeAxisLabelCount
+    val timeSpan = last.toDouble() - first.toDouble()
+    return List(count) { index ->
+        val reverseFraction = index.toDouble() / (count - 1).coerceAtLeast(1)
+        (last.toDouble() - timeSpan * reverseFraction).toLong()
     }
 }
 

@@ -246,11 +246,13 @@ object AquaCoolingHistoryAlpha {
     const val rangeIdleBackground = 0.44f
     const val chartBackground = 0.20f
     const val chartGrid = 0.18f
+    const val chartMinorGrid = 0.09f
     const val chartGlow = 0.20f
     const val chartArea = 0.10f
     const val divider = 0.54f
     const val sourceDot = 0.96f
     const val retryBackground = 0.10f
+    const val axisMinorLabel = 0.70f
 }
 
 @Composable
@@ -285,6 +287,12 @@ object AquaCoolingGaugeSpec {
     const val sweepAngle = 240f
     const val minimumPercent = 0
     const val maximumPercent = 100
+}
+
+object AquaCoolingHistoryChartSpec {
+    const val temperatureAxisLabelCount = 10
+    const val temperatureMajorGridStride = 3
+    const val timeAxisLabelCount = 5
 }
 
 object AquaCoolingTemperatureChartSpec {

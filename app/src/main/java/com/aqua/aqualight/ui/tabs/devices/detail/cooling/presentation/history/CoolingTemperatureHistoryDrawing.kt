@@ -7,6 +7,7 @@ import androidx.compose.ui.graphics.drawscope.DrawScope
 import androidx.compose.ui.graphics.drawscope.Stroke
 import com.aqua.aqualight.application.devices.cooling.DeviceCoolingTemperatureHistoryPoint
 import com.aqua.aqualight.ui.common.cooling.AquaCoolingHistoryAlpha
+import com.aqua.aqualight.ui.common.cooling.AquaCoolingHistoryChartSpec
 import com.aqua.aqualight.ui.common.cooling.AquaCoolingHistoryGeometry
 import com.aqua.aqualight.ui.common.cooling.AquaCoolingTemperatureChartSpec
 import com.aqua.aqualight.ui.common.devicecard.AquaDeviceCardColors
@@ -15,26 +16,30 @@ import kotlin.math.floor
 
 internal fun DrawScope.drawHistoryGrid(
     viewport: HistoryPlotViewport,
+    scale: HistoryTemperatureScale,
     colors: AquaDeviceCardColors
 ) {
-    val gridColor = colors.secondaryText.copy(alpha = AquaCoolingHistoryAlpha.chartGrid)
+    val majorGridColor = colors.secondaryText.copy(alpha = AquaCoolingHistoryAlpha.chartGrid)
+    val minorGridColor = colors.secondaryText.copy(alpha = AquaCoolingHistoryAlpha.chartMinorGrid)
     val gridStroke = AquaCoolingHistoryGeometry.chartGridStrokeWidth.toPx()
-    val horizontalGridCount = AquaCoolingTemperatureChartSpec.horizontalGridLineCount
+    val horizontalGridCount = scale.axisValues().size
     repeat(horizontalGridCount) { index ->
         val fraction = index.toFloat() / (horizontalGridCount - 1).coerceAtLeast(1)
         val y = viewport.verticalPadding + viewport.height * fraction
+        val isMajor = index % AquaCoolingHistoryChartSpec.temperatureMajorGridStride == 0
         drawLine(
-            color = gridColor,
+            color = if (isMajor) majorGridColor else minorGridColor,
             start = Offset(viewport.horizontalPadding, y),
             end = Offset(viewport.horizontalPadding + viewport.width, y),
             strokeWidth = gridStroke
         )
     }
-    repeat(HISTORY_VERTICAL_GRID_COUNT) { index ->
-        val fraction = index.toFloat() / (HISTORY_VERTICAL_GRID_COUNT - 1)
+    repeat(AquaCoolingHistoryChartSpec.timeAxisLabelCount) { index ->
+        val fraction = index.toFloat() /
+            (AquaCoolingHistoryChartSpec.timeAxisLabelCount - 1).coerceAtLeast(1)
         val x = viewport.horizontalPadding + viewport.width * fraction
         drawLine(
-            color = gridColor,
+            color = majorGridColor,
             start = Offset(x, viewport.verticalPadding),
             end = Offset(x, viewport.verticalPadding + viewport.height),
             strokeWidth = gridStroke
@@ -52,9 +57,11 @@ internal fun DrawScope.drawHistorySeries(
     val timeSpan = (points.last().sampledAtEpochMillis - firstTime).coerceAtLeast(1L).toDouble()
     val valueSpan = (scale.maximumC - scale.minimumC).coerceAtLeast(1f)
     val offsets = points.map { point ->
-        val xFraction = ((point.sampledAtEpochMillis - firstTime) / timeSpan)
-            .toFloat()
-            .coerceIn(0f, 1f)
+        val xFraction = historyHorizontalFraction(
+            sampledAtEpochMillis = point.sampledAtEpochMillis,
+            firstTime = firstTime,
+            timeSpan = timeSpan
+        )
         val yFraction = ((point.temperatureC.toFloat() - scale.minimumC) / valueSpan)
             .coerceIn(0f, 1f)
         Offset(
@@ -64,6 +71,17 @@ internal fun DrawScope.drawHistorySeries(
     }
     drawHistoryPaths(offsets = offsets, viewport = viewport, colors = colors)
     drawHistoryEndpoint(offset = offsets.last(), colors = colors)
+}
+
+internal fun historyHorizontalFraction(
+    sampledAtEpochMillis: Long,
+    firstTime: Long,
+    timeSpan: Double
+): Float {
+    val chronologicalFraction = ((sampledAtEpochMillis - firstTime) / timeSpan)
+        .toFloat()
+        .coerceIn(0f, 1f)
+    return 1f - chronologicalFraction
 }
 
 private fun DrawScope.drawHistoryPaths(
@@ -131,7 +149,7 @@ internal data class HistoryTemperatureScale(
     val maximumC: Float
 ) {
     fun axisValues(): List<Float> {
-        val count = AquaCoolingTemperatureChartSpec.horizontalGridLineCount
+        val count = AquaCoolingHistoryChartSpec.temperatureAxisLabelCount
         val interval = (maximumC - minimumC) / (count - 1).coerceAtLeast(1)
         return List(count) { index -> maximumC - interval * index }
     }
@@ -182,5 +200,3 @@ private fun historyAreaPath(points: List<Offset>, bottomY: Float): Path {
     path.close()
     return path
 }
-
-internal const val HISTORY_VERTICAL_GRID_COUNT = 5
