@@ -12,6 +12,7 @@ import com.aqua.aqualight.application.devices.DeviceRootSnapshot
 import com.aqua.aqualight.application.devices.OwnerDeviceAvailability
 import com.aqua.aqualight.application.devices.OwnerDeviceFamily
 import com.aqua.aqualight.application.devices.cooling.DeviceCoolingAutomaticSettingsOperations
+import com.aqua.aqualight.application.devices.cooling.DeviceCoolingTemperatureHistoryLoadResult
 import com.aqua.aqualight.application.devices.cooling.DeviceCoolingTemperatureHistoryOperations
 import com.aqua.aqualight.application.devices.cooling.DeviceCoolingTemperatureHistoryRange
 import com.aqua.aqualight.application.devices.cooling.control.DeviceCoolingControlOperations
@@ -47,6 +48,7 @@ class DeviceCoolingRootViewModel(
         surfaceUnavailableEventChannel.receiveAsFlow()
 
     private var boundDeviceUid = ""
+    private var liveHistoryRefreshRequested = false
     private val jobs = DeviceCoolingRootJobs()
 
     fun bind(deviceUidText: String) {
@@ -63,6 +65,7 @@ class DeviceCoolingRootViewModel(
         )
 
         boundDeviceUid = deviceUid
+        liveHistoryRefreshRequested = false
         jobs.cancelAll()
 
         var initialState = DeviceCoolingRootUiState(
@@ -88,6 +91,13 @@ class DeviceCoolingRootViewModel(
                 preparedHandoff && initialControl is DeviceCoolingControlResult.Available
                 )
         )
+        initialControl.liveWaterSampleOrNull()?.let { sample ->
+            initialState = initialState.copy(
+                temperatureTimelineState = initialState.temperatureTimelineState
+                    .accept(sample)
+                    .state
+            )
+        }
 
         // Runtime/domain bootstrap owns live Cooling freshness. Screen entry only seeds the last
         // presentation snapshot and observes the central owner; it never requests status.
@@ -142,12 +152,25 @@ class DeviceCoolingRootViewModel(
         jobs.controlObserveJob = viewModelScope.launch(start = CoroutineStart.UNDISPATCHED) {
             controlOperations.observeControl(deviceUid).collect { result ->
                 if (boundDeviceUid != deviceUid) return@collect
+                val sample = result.liveWaterSampleOrNull()
+                var sourceReset = false
                 _uiState.update { state ->
+                    val timelineUpdate = sample?.let(state.temperatureTimelineState::accept)
+                    sourceReset = timelineUpdate?.sourceReset == true
                     state.copy(
                         controlState = result.toRootControlState(state.controlState),
                         dashboardOverviewState = result.toRootDashboardOverviewState(
                             state.dashboardOverviewState
-                        )
+                        ),
+                        temperatureTimelineState = timelineUpdate
+                            ?.state
+                            ?: state.temperatureTimelineState
+                    )
+                }
+                if (sample != null) {
+                    requestHistoryForLiveSample(
+                        deviceUid = deviceUid,
+                        sourceReset = sourceReset
                     )
                 }
             }
@@ -169,7 +192,8 @@ class DeviceCoolingRootViewModel(
         }
     }
 
-    private fun loadOverviewHistory(deviceUid: String) {
+    private fun loadOverviewHistory(deviceUid: String): Boolean {
+        if (jobs.historyJob?.isActive == true) return false
         jobs.historyJob = viewModelScope.launch {
             val result = historyOperations.loadTemperatureHistory(
                 deviceUid = deviceUid,
@@ -177,8 +201,43 @@ class DeviceCoolingRootViewModel(
             )
             if (boundDeviceUid != deviceUid) return@launch
             _uiState.update { state ->
-                state.copy(historyState = result.toRootHistoryState())
+                val anchoredTimeline = when (result) {
+                    is DeviceCoolingTemperatureHistoryLoadResult.Loaded ->
+                        state.temperatureTimelineState.withHistoryAnchor(
+                            result.snapshot.generatedAtEpochMillis
+                        )
+                    DeviceCoolingTemperatureHistoryLoadResult.Unsupported,
+                    DeviceCoolingTemperatureHistoryLoadResult.Unavailable,
+                    is DeviceCoolingTemperatureHistoryLoadResult.Rejected ->
+                        state.temperatureTimelineState
+                }
+                state.copy(
+                    historyState = result.toRootHistoryState(state.historyState),
+                    temperatureTimelineState = anchoredTimeline
+                )
             }
+        }
+        return true
+    }
+
+    private fun requestHistoryForLiveSample(
+        deviceUid: String,
+        sourceReset: Boolean
+    ) {
+        if (sourceReset) {
+            liveHistoryRefreshRequested = false
+        }
+        val historyNeedsLiveSeed = when (_uiState.value.historyState) {
+            is CoolingDataState.Empty,
+            CoolingDataState.Unavailable -> true
+            is CoolingDataState.Content,
+            CoolingDataState.Initial,
+            CoolingDataState.Loading,
+            CoolingDataState.Unsupported,
+            is CoolingDataState.OperationError -> false
+        }
+        if ((sourceReset || historyNeedsLiveSeed) && !liveHistoryRefreshRequested) {
+            liveHistoryRefreshRequested = loadOverviewHistory(deviceUid)
         }
     }
 
@@ -229,9 +288,16 @@ class DeviceCoolingRootViewModel(
     private fun clearBinding() {
         jobs.cancelAll()
         boundDeviceUid = ""
+        liveHistoryRefreshRequested = false
         _uiState.value = DeviceCoolingRootUiState()
     }
 }
+
+private fun DeviceCoolingControlResult.liveWaterSampleOrNull() =
+    (this as? DeviceCoolingControlResult.Available)
+        ?.snapshot
+        ?.telemetry
+        ?.waterTemperatureSample
 
 private class DeviceCoolingRootJobs {
     var observeJob: Job? = null

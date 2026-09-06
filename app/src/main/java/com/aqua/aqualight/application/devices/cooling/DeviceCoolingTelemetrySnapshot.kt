@@ -11,10 +11,28 @@ data class DeviceCoolingTelemetrySnapshot(
     val alarms: List<DeviceCoolingAlarmSnapshot>,
     /** Firmware healthSummary value; never recomputed from [alarms]. */
     val activeAlarmCount: Int? = null,
-    val highestAlarmSeverity: DeviceCoolingAlarmSeverity = DeviceCoolingAlarmSeverity.UNKNOWN
+    val highestAlarmSeverity: DeviceCoolingAlarmSeverity = DeviceCoolingAlarmSeverity.UNKNOWN,
+    val waterTemperatureSample: DeviceCoolingWaterTemperatureSample? = null
 ) {
     val activeAlarms: List<DeviceCoolingAlarmSnapshot>
         get() = alarms.filter(DeviceCoolingAlarmSnapshot::active)
+}
+
+/** Identity and timing are passed through from the firmware; Android never derives the value. */
+data class DeviceCoolingWaterTemperatureSample(
+    val inputSampleSequence: Long,
+    val sampledAtUptimeMillis: Long,
+    val evaluatedAtUptimeMillis: Long,
+    val timeGeneration: Long,
+    val temperatureC: Double
+) {
+    init {
+        require(inputSampleSequence > 0L)
+        require(sampledAtUptimeMillis >= 0L)
+        require(evaluatedAtUptimeMillis >= sampledAtUptimeMillis)
+        require(timeGeneration >= 0L)
+        require(temperatureC.isFinite())
+    }
 }
 
 enum class DeviceCoolingFanHealth {

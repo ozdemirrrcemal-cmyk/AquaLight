@@ -3,6 +3,7 @@ package com.aqua.aqualight.ui.tabs.devices.detail.cooling.presentation.root
 import com.aqua.aqualight.application.devices.cooling.DeviceCoolingAlarmCode
 import com.aqua.aqualight.application.devices.cooling.DeviceCoolingAlarmSeverity
 import com.aqua.aqualight.application.devices.cooling.DeviceCoolingAutomaticFailure
+import com.aqua.aqualight.application.devices.cooling.DeviceCoolingTemperatureHistoryPoint
 import com.aqua.aqualight.application.devices.cooling.control.DeviceCoolingControlFailure
 import com.aqua.aqualight.application.devices.cooling.control.DeviceCoolingControlMode
 import com.aqua.aqualight.application.devices.cooling.control.DeviceCoolingControlReason
@@ -38,7 +39,8 @@ data class CoolingAutomaticSummaryPresentation(
 )
 
 data class CoolingHistoryOverviewPresentation(
-    val temperaturesC: List<Double>
+    val generatedAtEpochMillis: Long,
+    val points: List<DeviceCoolingTemperatureHistoryPoint>
 )
 
 enum class CoolingHealthState {
@@ -76,6 +78,8 @@ data class DeviceCoolingRootUiState(
         > = CoolingDataState.Initial,
     val historyState: CoolingDataState<CoolingHistoryOverviewPresentation, Nothing> =
         CoolingDataState.Initial,
+    val temperatureTimelineState: CoolingTemperatureTimelinePresentation =
+        CoolingTemperatureTimelinePresentation(),
     val dashboardOverviewState: CoolingDataState<
         CoolingDashboardOverviewPresentation,
         Nothing
@@ -135,8 +139,14 @@ data class DeviceCoolingRootUiState(
     val autoMaxTemperatureC: Double?
         get() = automaticSummaryState.authoritativeValueOrNull?.maximumSpeedTemperatureC
 
+    val temperatureHistoryPoints: List<DeviceCoolingTemperatureHistoryPoint>
+        get() = historyState.authoritativeValueOrNull?.points.orEmpty()
+
+    val temperatureHistoryGeneratedAtEpochMillis: Long?
+        get() = historyState.authoritativeValueOrNull?.generatedAtEpochMillis
+
     val temperatureHistoryC: List<Double>
-        get() = historyState.authoritativeValueOrNull?.temperaturesC.orEmpty()
+        get() = temperatureHistoryPoints.map { point -> point.temperatureC }
 
     private val dashboardOverview: CoolingDashboardOverviewPresentation?
         get() = dashboardOverviewState.authoritativeValueOrNull

@@ -6,6 +6,7 @@ import com.aqua.aqualight.application.devices.cooling.DeviceCoolingAlarmSnapshot
 import com.aqua.aqualight.application.devices.cooling.DeviceCoolingFanHealth
 import com.aqua.aqualight.application.devices.cooling.DeviceCoolingSensorHealth
 import com.aqua.aqualight.application.devices.cooling.DeviceCoolingTelemetrySnapshot
+import com.aqua.aqualight.application.devices.cooling.DeviceCoolingWaterTemperatureSample
 import com.aqua.aqualight.data.devices.runtime.modules.cooling.v1.DeviceCoolingV1Alarm
 import com.aqua.aqualight.data.devices.runtime.modules.cooling.v1.DeviceCoolingV1Contract
 import com.aqua.aqualight.data.devices.runtime.modules.cooling.v1.DeviceCoolingV1Telemetry
@@ -13,6 +14,9 @@ import com.aqua.aqualight.data.devices.runtime.modules.cooling.v1.DeviceCoolingV
 /** Maps firmware telemetry without deriving device-owned health or alarm state on Android. */
 internal object DeviceCoolingTelemetrySnapshotMapper {
     fun map(telemetry: DeviceCoolingV1Telemetry): DeviceCoolingTelemetrySnapshot {
+        val water = telemetry.sensors.firstOrNull { sensor ->
+            sensor.sensorKey == DeviceCoolingV1Contract.WATER_SENSOR_KEY
+        }
         val ambient = telemetry.sensors.firstOrNull { sensor ->
             sensor.sensorKey == DeviceCoolingV1Contract.AMBIENT_SENSOR_KEY
         }
@@ -36,7 +40,20 @@ internal object DeviceCoolingTelemetrySnapshotMapper {
             activeAlarmCount = telemetry.healthSummary.activeAlarmCount,
             highestAlarmSeverity = toApplicationAlarmSeverity(
                 telemetry.healthSummary.highestAlarmSeverity
-            )
+            ),
+            waterTemperatureSample = water
+                ?.takeIf { sensor -> sensor.readingValid }
+                ?.temperatureC
+                ?.takeIf(Double::isFinite)
+                ?.let { temperatureC ->
+                    DeviceCoolingWaterTemperatureSample(
+                        inputSampleSequence = telemetry.inputSampleSequence,
+                        sampledAtUptimeMillis = water.sampledAtMs,
+                        evaluatedAtUptimeMillis = telemetry.evaluatedAtMs,
+                        timeGeneration = telemetry.timeGeneration,
+                        temperatureC = temperatureC
+                    )
+                }
         )
     }
 
