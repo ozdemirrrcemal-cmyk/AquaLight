@@ -2,6 +2,8 @@ package com.aqua.aqualight.ui.tabs.devices.detail.cooling.presentation.dashboard
 
 import com.aqua.aqualight.application.devices.cooling.control.DeviceCoolingControlMode
 import com.aqua.aqualight.application.devices.cooling.control.DeviceCoolingOperatingState
+import com.aqua.aqualight.ui.common.cooling.fanMotionDegreesPerSecond
+import com.aqua.aqualight.ui.common.cooling.fanMotionDurationMillis
 import com.aqua.aqualight.ui.common.devicepresence.DeviceConnectionVisualState
 import com.aqua.aqualight.ui.tabs.devices.detail.cooling.presentation.common.CoolingDataFreshness
 import com.aqua.aqualight.ui.tabs.devices.detail.cooling.presentation.common.CoolingDataState
@@ -56,6 +58,15 @@ class CoolingHeroPresentationTest {
         assertEquals(FULL_OUTPUT_PERIOD_MILLIS, fanMotionDurationMillis(1f))
         assertEquals(HALF_OUTPUT_PERIOD_MILLIS, fanMotionDurationMillis(0.5f))
         assertEquals(QUARTER_OUTPUT_PERIOD_MILLIS, fanMotionDurationMillis(0.25f))
+    }
+
+    @Test
+    fun `fan angular velocity stops at zero and follows output proportionally`() {
+        val fullOutputSpeed = fanMotionDegreesPerSecond(1f)
+
+        assertEquals(NO_MOTION, fanMotionDegreesPerSecond(0f), NO_DELTA)
+        assertEquals(fullOutputSpeed / 2f, fanMotionDegreesPerSecond(0.5f), NO_DELTA)
+        assertTrue(fullOutputSpeed > NO_MOTION)
     }
 
     @Test

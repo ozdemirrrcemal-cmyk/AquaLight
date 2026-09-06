@@ -198,6 +198,8 @@
     <string name="device_cooling_manual_settings_title">Manuel Fan</string>
     <string name="device_cooling_manual_target_title">Hedef Fan Hızı</string>
     <string name="device_cooling_manual_target_description">Fan hızı yalnız Manuel mod etkinken değiştirilebilir. Otomatik veya Program moduna geçildiğinde kayıtlı manuel hedef temizlenir.</string>
+    <string name="device_cooling_manual_fan_preview">Hedef hız önizlemesi</string>
+    <string name="device_cooling_manual_fan_preview_description">Fan önizlemesi, hedef hız %1$d%%</string>
     <string name="device_cooling_manual_read_only">Fan hedefini değiştirmek için Manuel moda geçin.</string>
 
     <string name="device_cooling_automatic_settings_title">Otomatik Fan</string>

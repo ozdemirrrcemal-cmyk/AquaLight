@@ -7,10 +7,12 @@ import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.text.BasicText
 import androidx.compose.runtime.Composable
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
@@ -19,6 +21,7 @@ import com.aqua.aqualight.ui.common.cooling.AquaCoolingDashboardGeometry
 import com.aqua.aqualight.ui.common.cooling.AquaCoolingDashboardTypography
 import com.aqua.aqualight.ui.common.cooling.AquaCoolingFanPercentSlider
 import com.aqua.aqualight.ui.common.cooling.AquaCoolingFanPercentSliderState
+import com.aqua.aqualight.ui.common.cooling.AquaCoolingFanPreview
 import com.aqua.aqualight.ui.common.cooling.aquaCoolingDashboardColors
 import com.aqua.aqualight.ui.common.cooling.aquaCoolingDashboardTypography
 import com.aqua.aqualight.ui.common.devicecard.AquaDeviceCardGeometry
@@ -84,6 +87,7 @@ private fun CoolingManualTargetCard(
             verticalArrangement = Arrangement.spacedBy(AquaDeviceCardGeometry.compactGap)
         ) {
             CoolingManualTargetCopy(percent = percent, visuals = visuals)
+            CoolingManualFanPreview(percent = percent, visuals = visuals)
             CoolingManualTargetSlider(
                 state = state,
                 percent = percent,
@@ -92,6 +96,34 @@ private fun CoolingManualTargetCard(
             )
             CoolingManualSupportMessage(state = state, visuals = visuals)
         }
+    }
+}
+
+@Composable
+private fun CoolingManualFanPreview(percent: Int, visuals: ManualTargetVisuals) {
+    Column(
+        modifier = Modifier.fillMaxWidth(),
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.spacedBy(AquaDeviceCardGeometry.compactGap)
+    ) {
+        AquaCoolingFanPreview(
+            percent = percent,
+            colors = visuals.colors,
+            contentDescription = stringResource(
+                R.string.device_cooling_manual_fan_preview_description,
+                percent
+            ),
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(AquaCoolingDashboardGeometry.manualFanPreviewHeight)
+        )
+        BasicText(
+            text = stringResource(R.string.device_cooling_manual_fan_preview),
+            style = visuals.typography.micro.copy(
+                color = visuals.colors.secondaryText,
+                textAlign = TextAlign.Center
+            )
+        )
     }
 }
 

@@ -198,6 +198,8 @@
     <string name="device_cooling_manual_settings_title">Manual Fan</string>
     <string name="device_cooling_manual_target_title">Target Fan Speed</string>
     <string name="device_cooling_manual_target_description">Fan speed can be changed while Manual mode is active. Switching to Automatic or Program clears the saved manual target.</string>
+    <string name="device_cooling_manual_fan_preview">Target speed preview</string>
+    <string name="device_cooling_manual_fan_preview_description">Fan preview at %1$d%% target speed</string>
     <string name="device_cooling_manual_read_only">Switch to Manual mode to change the fan target.</string>
 
     <string name="device_cooling_automatic_settings_title">Automatic Fan</string>

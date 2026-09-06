@@ -99,6 +99,12 @@ object AquaCoolingDashboardGeometry {
     val sliderThumbRadius = 8.dp
     val sliderThumbOutlineWidth = 2.dp
 
+    val manualFanPreviewHeight = 164.dp
+    val manualFanHousingStrokeWidth = 1.dp
+    val manualFanShroudStrokeWidth = 2.dp
+    val manualFanAccentStrokeWidth = 3.dp
+    val manualFanHubStrokeWidth = 1.dp
+
     val statusDotSize = 6.dp
     val statusRowGap = 5.dp
     val statusValueGap = 5.dp
@@ -203,6 +209,17 @@ object AquaCoolingDashboardAlpha {
     const val chartAreaTop = 0.22f
     const val chartAreaBottom = 0f
     const val trackInactive = 0.22f
+    const val manualFanAmbientIdle = 0.08f
+    const val manualFanAmbientActive = 0.24f
+    const val manualFanHousingCenter = 0.94f
+    const val manualFanHousingEdge = 0.62f
+    const val manualFanShroud = 0.74f
+    const val manualFanRing = 0.46f
+    const val manualFanBladeHighlight = 0.92f
+    const val manualFanBladeAccent = 0.68f
+    const val manualFanBladeShade = 0.52f
+    const val manualFanHubHighlight = 0.90f
+    const val manualFanHubShade = 0.60f
     const val statusDot = 0.96f
     const val iconContainerBackground = 0.08f
     const val iconContainerOutline = 0.42f
