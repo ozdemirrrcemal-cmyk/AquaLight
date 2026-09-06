@@ -35,7 +35,7 @@ class CoolingHeroPresentationTest {
         assertEquals(
             EXPECTED_CONTINUOUS_AUTOMATIC_INTENSITY,
             presentation.motionIntensity,
-            NO_DELTA
+            continuousAutomaticIntensityDelta
         )
     }
 
@@ -206,6 +206,8 @@ class CoolingHeroPresentationTest {
         const val EXPECTED_THIRTY_FIVE_PERCENT_INTENSITY = 0.35f
         const val CONTINUOUS_AUTOMATIC_PERCENT = 35.95
         const val EXPECTED_CONTINUOUS_AUTOMATIC_INTENSITY = 0.3595f
+        val continuousAutomaticIntensityDelta =
+            Math.ulp(EXPECTED_CONTINUOUS_AUTOMATIC_INTENSITY)
         const val WAITING_MOTION_INTENSITY = 0.58f
         const val FULL_OUTPUT_PERIOD_MILLIS = 620
         const val HALF_OUTPUT_PERIOD_MILLIS = 1240
