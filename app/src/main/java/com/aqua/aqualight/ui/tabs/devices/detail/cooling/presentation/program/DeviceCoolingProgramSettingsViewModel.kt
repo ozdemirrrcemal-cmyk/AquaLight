@@ -268,7 +268,8 @@ data class DeviceCoolingProgramSettingsUiState(
         }
 
     val operationInProgress: Boolean
-        get() = mutationState == CoolingMutationState.Saving
+        get() = dataState == CoolingDataState.Loading ||
+            mutationState == CoolingMutationState.Saving
 
     val slots: List<DeviceCoolingProgramSlot>
         get() = slotItems.map(DeviceCoolingProgramSlotUiItem::slot)

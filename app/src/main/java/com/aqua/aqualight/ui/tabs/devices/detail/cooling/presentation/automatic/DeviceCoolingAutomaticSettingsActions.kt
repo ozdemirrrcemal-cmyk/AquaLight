@@ -5,6 +5,5 @@ internal data class DeviceCoolingAutomaticSettingsActions(
     val onStartTemperatureClick: () -> Unit,
     val onMaximumTemperatureClick: () -> Unit,
     val onSilentModeChanged: (Boolean) -> Unit,
-    val onSave: () -> Unit,
-    val onRetry: () -> Unit
+    val onSave: () -> Unit
 )

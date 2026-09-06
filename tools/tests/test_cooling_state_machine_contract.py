@@ -1,4 +1,5 @@
 from pathlib import Path
+import re
 import unittest
 
 
@@ -69,16 +70,109 @@ class CoolingStateMachineContractTest(unittest.TestCase):
         self.assertIn("CoolingDataState.Unavailable", text)
         self.assertIn("CoolingDataState.Unsupported", text)
 
-    def test_terminal_read_states_have_user_visible_presentations(self) -> None:
+    def test_history_keeps_terminal_read_state_presentation(self) -> None:
         history = (COOLING / "history/CoolingTemperatureHistoryScreen.kt").read_text(
-            encoding="utf-8"
-        )
-        automatic = (COOLING / "automatic/DeviceCoolingAutomaticStateScreen.kt").read_text(
             encoding="utf-8"
         )
         for token in ("Unsupported", "Unavailable", "CoolingStateMessageCard"):
             self.assertIn(token, history)
-            self.assertIn(token, automatic)
+
+    def test_mode_editors_rely_on_root_availability_gate(self) -> None:
+        root = (COOLING / "root/DeviceCoolingRootFragment.kt").read_text(
+            encoding="utf-8"
+        )
+        for route in ("openAutomaticSettings", "openManualSettings", "openProgramSettings"):
+            self.assertRegex(
+                root,
+                re.compile(
+                    rf"private fun {route}\(\) \{{\s*"
+                    r"if \(!viewModel\.uiState\.value\.contentEnabled\) return"
+                ),
+            )
+
+        editor_sources = (
+            COOLING / "automatic/DeviceCoolingAutomaticSettingsFragment.kt",
+            COOLING / "manual/DeviceCoolingManualSettingsScreen.kt",
+            COOLING / "program/DeviceCoolingProgramSettingsFragment.kt",
+        )
+        for source in editor_sources:
+            with self.subTest(source=source.name):
+                self.assertNotIn(
+                    "CoolingStateMessageCard",
+                    source.read_text(encoding="utf-8"),
+                )
+
+        self.assertFalse(
+            (COOLING / "automatic/DeviceCoolingAutomaticStateScreen.kt").exists()
+        )
+        self.assertFalse(
+            (COOLING / "program/DeviceCoolingProgramAvailabilityScreen.kt").exists()
+        )
+
+    def test_mode_editor_availability_copy_and_style_are_removed(self) -> None:
+        forbidden_copy = (
+            "device_cooling_manual_loading_",
+            "device_cooling_manual_unsupported_",
+            "device_cooling_manual_unavailable_",
+            "device_cooling_manual_invalid_",
+            "device_cooling_automatic_loading_",
+            "device_cooling_automatic_refreshing_",
+            "device_cooling_automatic_stale_",
+            "device_cooling_automatic_read_only_",
+            "device_cooling_automatic_unsupported_",
+            "device_cooling_automatic_unavailable_",
+            "device_cooling_automatic_invalid_",
+            "device_cooling_program_loading_",
+            "device_cooling_program_unavailable_",
+            "device_cooling_program_unsupported_",
+            "device_cooling_program_load_failed_",
+            "device_cooling_program_retry",
+        )
+        resources = ROOT / "app/src/main/res"
+        for locale in ("values", "values-tr"):
+            locale_copy = "\n".join(
+                path.read_text(encoding="utf-8")
+                for path in sorted((resources / locale).glob("*.xml"))
+            )
+            with self.subTest(locale=locale):
+                for token in forbidden_copy:
+                    self.assertNotIn(token, locale_copy)
+
+                self.assertFalse(
+                    (resources / locale / "device_cooling_program_state_strings.xml").exists()
+                )
+
+        automatic_style = (
+            COOLING / "automatic/AquaCoolingAutomaticStyle.kt"
+        ).read_text(encoding="utf-8")
+        for token in (
+            "messageCardMinimumHeight",
+            "messageGap",
+            "retryShape",
+            "retryHorizontalPadding",
+            "retryVerticalPadding",
+            "retryBackground",
+        ):
+            self.assertNotIn(token, automatic_style)
+
+    def test_mode_editor_mutation_failures_remain_visible_without_cards(self) -> None:
+        automatic = (
+            COOLING / "automatic/CoolingAutomaticSettingsScreen.kt"
+        ).read_text(encoding="utf-8")
+        self.assertIn("state.saveFailure?.let", automatic)
+        self.assertIn("failure.toCommercialCoolingError()", automatic)
+
+        manual = (COOLING / "manual/DeviceCoolingManualSettingsScreen.kt").read_text(
+            encoding="utf-8"
+        )
+        self.assertIn("is CoolingMutationState.OperationError", manual)
+        self.assertIn("toCommercialCoolingError().messageRes", manual)
+
+        program = (
+            COOLING / "program/DeviceCoolingProgramSettingsFragment.kt"
+        ).read_text(encoding="utf-8")
+        self.assertIn("saveState.isFailure", program)
+        self.assertIn("showSnackBar", program)
 
     def test_blocking_cooling_mutations_and_cold_root_use_central_loading(self) -> None:
         fragments = (
@@ -90,6 +184,14 @@ class CoolingStateMachineContractTest(unittest.TestCase):
             with self.subTest(fragment=relative_path):
                 text = (COOLING / relative_path).read_text(encoding="utf-8")
                 self.assertIn("setFragmentGlobalLoading", text)
+
+        for relative_path in (
+            "automatic/DeviceCoolingAutomaticUiState.kt",
+            "program/DeviceCoolingProgramSettingsViewModel.kt",
+        ):
+            with self.subTest(load_state=relative_path):
+                text = (COOLING / relative_path).read_text(encoding="utf-8")
+                self.assertIn("dataState == CoolingDataState.Loading", text)
 
         root_state = (COOLING / "root/DeviceCoolingRootUiState.kt").read_text(
             encoding="utf-8"

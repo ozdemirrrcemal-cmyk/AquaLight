@@ -25,9 +25,7 @@ import com.aqua.aqualight.ui.common.devicecard.AquaDeviceCardGeometry
 import com.aqua.aqualight.ui.common.devicecard.AquaDeviceCardColors
 import com.aqua.aqualight.ui.common.devicecard.AquaDeviceCardSurface
 import com.aqua.aqualight.ui.common.devicecard.AquaDeviceCardTypography
-import com.aqua.aqualight.ui.tabs.devices.detail.cooling.presentation.common.CoolingDataState
 import com.aqua.aqualight.ui.tabs.devices.detail.cooling.presentation.common.CoolingMutationState
-import com.aqua.aqualight.ui.tabs.devices.detail.cooling.presentation.common.CoolingStateMessageCard
 import com.aqua.aqualight.ui.tabs.devices.detail.cooling.presentation.common.toCommercialCoolingError
 
 @Composable
@@ -35,9 +33,19 @@ internal fun DeviceCoolingManualSettingsScreen(
     state: DeviceCoolingManualSettingsUiState,
     onTargetPercentChanged: (Int) -> Unit,
     onTargetPercentChangeFinished: () -> Unit,
-    onRetry: () -> Unit,
     modifier: Modifier = Modifier
 ) {
+    val percent = state.targetPercent ?: return
+    if (state.capabilities == null) return
+    val colors = aquaCoolingDashboardColors()
+    val visuals = ManualTargetVisuals(
+        colors = colors,
+        typography = aquaCoolingDashboardTypography(colors)
+    )
+    val actions = ManualTargetActions(
+        onTargetPercentChanged = onTargetPercentChanged,
+        onTargetPercentChangeFinished = onTargetPercentChangeFinished
+    )
     LazyColumn(
         modifier = modifier.fillMaxSize(),
         contentPadding = PaddingValues(
@@ -49,38 +57,13 @@ internal fun DeviceCoolingManualSettingsScreen(
         verticalArrangement = Arrangement.spacedBy(AquaCoolingDashboardGeometry.cardGap)
     ) {
         item(key = "manual-target") {
-            CoolingManualContent(
+            CoolingManualTargetCard(
                 state = state,
-                actions = ManualTargetActions(
-                    onTargetPercentChanged = onTargetPercentChanged,
-                    onTargetPercentChangeFinished = onTargetPercentChangeFinished
-                ),
-                onRetry = onRetry
+                percent = percent,
+                visuals = visuals,
+                actions = actions
             )
         }
-    }
-}
-
-@Composable
-private fun CoolingManualContent(
-    state: DeviceCoolingManualSettingsUiState,
-    actions: ManualTargetActions,
-    onRetry: () -> Unit
-) {
-    val percent = state.targetPercent
-    if (percent == null || state.capabilities == null) {
-        CoolingManualAvailabilityCard(state = state, onRetry = onRetry)
-    } else {
-        val colors = aquaCoolingDashboardColors()
-        CoolingManualTargetCard(
-            state = state,
-            percent = percent,
-            visuals = ManualTargetVisuals(
-                colors = colors,
-                typography = aquaCoolingDashboardTypography(colors)
-            ),
-            actions = actions
-        )
     }
 }
 
@@ -217,53 +200,3 @@ private fun DeviceCoolingManualSettingsUiState.manualSupportMessageRes(): Int? =
         else -> null
     }
 }
-
-@Composable
-private fun CoolingManualAvailabilityCard(
-    state: DeviceCoolingManualSettingsUiState,
-    onRetry: () -> Unit
-) {
-    val resources = when (state.controlState) {
-        CoolingDataState.Initial,
-        CoolingDataState.Loading -> ManualStateResources(
-            title = R.string.device_cooling_manual_loading_title,
-            message = R.string.device_cooling_manual_loading_message,
-            retry = false
-        )
-        CoolingDataState.Unsupported -> ManualStateResources(
-            title = R.string.device_cooling_manual_unsupported_title,
-            message = R.string.device_cooling_manual_unsupported_message,
-            retry = false
-        )
-        CoolingDataState.Unavailable -> ManualStateResources(
-            title = R.string.device_cooling_manual_unavailable_title,
-            message = R.string.device_cooling_manual_unavailable_message,
-            retry = true
-        )
-        is CoolingDataState.OperationError,
-        is CoolingDataState.Content,
-        is CoolingDataState.Empty -> ManualStateResources(
-            title = R.string.device_cooling_manual_invalid_title,
-            message = R.string.device_cooling_manual_invalid_message,
-            retry = true
-        )
-    }
-    CoolingStateMessageCard(
-        title = stringResource(resources.title),
-        message = stringResource(resources.message),
-        retryLabel = if (resources.retry) {
-            stringResource(R.string.device_cooling_state_retry)
-        } else {
-            null
-        },
-        onRetry = if (resources.retry) onRetry else null
-    )
-}
-
-private data class ManualStateResources(
-    @StringRes
-    val title: Int,
-    @StringRes
-    val message: Int,
-    val retry: Boolean
-)

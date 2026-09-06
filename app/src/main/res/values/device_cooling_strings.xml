@@ -105,7 +105,6 @@
     <string name="device_cooling_automatic_save">Save</string>
     <string name="device_cooling_automatic_saving">Saving…</string>
     <string name="device_cooling_automatic_saved">Saved</string>
-    <string name="device_cooling_automatic_save_failed">The settings could not be saved to the device. Try again.</string>
     <string name="device_cooling_automatic_start_sheet_title">Fan Start Temperature</string>
     <string name="device_cooling_automatic_start_sheet_helper">Choose when the fan should begin cooling. Changes are applied only after you save the Automatic Fan screen.</string>
     <string name="device_cooling_automatic_max_sheet_title">Maximum Speed Temperature</string>
@@ -136,6 +135,7 @@
     <string name="device_cooling_program_axis_24">24</string>
     <string name="device_cooling_program_time_range_format">%1$s – %2$s</string>
     <string name="device_cooling_program_save">Save</string>
+    <string name="device_cooling_program_schedule_invalid">The selected time range is invalid or overlaps another program.</string>
     <string name="device_cooling_program_start_time_sheet_title">Start Time</string>
     <string name="device_cooling_program_start_time_sheet_message">Choose when this time period starts.</string>
     <string name="device_cooling_program_end_time_sheet_title">End Time</string>

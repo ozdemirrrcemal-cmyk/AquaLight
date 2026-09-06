@@ -37,6 +37,7 @@ import com.aqua.aqualight.ui.common.devicecard.AquaDeviceCardColors
 import com.aqua.aqualight.ui.common.devicecard.AquaDeviceCardSurface
 import com.aqua.aqualight.ui.common.devicecard.AquaDeviceCardTypography
 import com.aqua.aqualight.ui.common.devicemenu.AquaDeviceMenuToggle
+import com.aqua.aqualight.ui.tabs.devices.detail.cooling.presentation.common.toCommercialCoolingError
 
 private data class AutomaticScreenVisuals(
     val colors: AquaDeviceCardColors,
@@ -94,10 +95,11 @@ internal fun DeviceCoolingAutomaticSettingsScreen(
                 onCheckedChange = actions.onSilentModeChanged
             )
         }
-        if (state.saveState == DeviceCoolingAutomaticSaveState.ERROR) {
+        state.saveFailure?.let { failure ->
             item(key = "save-error") {
+                val errorCopy = failure.toCommercialCoolingError()
                 BasicText(
-                    text = stringResource(R.string.device_cooling_automatic_save_failed),
+                    text = stringResource(errorCopy.messageRes),
                     style = typography.caption.copy(color = colors.danger),
                     modifier = Modifier.padding(
                         horizontal = AquaCoolingDashboardGeometry.cardHorizontalPadding
@@ -445,8 +447,7 @@ private fun AutomaticSaveButton(
             stringResource(R.string.device_cooling_automatic_saving)
         DeviceCoolingAutomaticSaveState.SAVED ->
             stringResource(R.string.device_cooling_automatic_saved)
-        DeviceCoolingAutomaticSaveState.IDLE,
-        DeviceCoolingAutomaticSaveState.ERROR ->
+        DeviceCoolingAutomaticSaveState.IDLE ->
             stringResource(R.string.device_cooling_automatic_save)
     }
     Box(

@@ -32,8 +32,7 @@ class DeviceCoolingManualSettingsFragment : DeviceCoolingModeSettingsFragment(
                 DeviceCoolingManualSettingsScreen(
                     state = state,
                     onTargetPercentChanged = viewModel::updateTargetPercent,
-                    onTargetPercentChangeFinished = viewModel::commitTargetPercent,
-                    onRetry = viewModel::refresh
+                    onTargetPercentChangeFinished = viewModel::commitTargetPercent
                 )
             }
         }

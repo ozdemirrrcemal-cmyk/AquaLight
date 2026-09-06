@@ -22,8 +22,7 @@ enum class DeviceCoolingAutomaticLoadState {
 enum class DeviceCoolingAutomaticSaveState {
     IDLE,
     SAVING,
-    SAVED,
-    ERROR
+    SAVED
 }
 
 data class DeviceCoolingAutomaticSettingsUiState(
@@ -54,10 +53,8 @@ data class DeviceCoolingAutomaticSettingsUiState(
         get() = mutationState.toAutomaticSaveState()
 
     val operationInProgress: Boolean
-        get() = mutationState == CoolingMutationState.Saving
-
-    val loadFailure: DeviceCoolingAutomaticFailure?
-        get() = dataState.automaticLoadFailureOrNull()
+        get() = dataState == CoolingDataState.Loading ||
+            mutationState == CoolingMutationState.Saving
 
     val saveFailure: DeviceCoolingAutomaticFailure?
         get() = mutationState.automaticSaveFailureOrNull()
@@ -144,19 +141,6 @@ private fun CoolingMutationState<DeviceCoolingAutomaticFailure>.toAutomaticSaveS
     CoolingMutationState.Saved -> DeviceCoolingAutomaticSaveState.SAVED
     CoolingMutationState.ValidationError,
     is CoolingMutationState.OperationError -> DeviceCoolingAutomaticSaveState.IDLE
-}
-
-private fun CoolingDataState<
-    DeviceCoolingAutomaticSettingsSnapshot,
-    DeviceCoolingAutomaticFailure
-    >.automaticLoadFailureOrNull(): DeviceCoolingAutomaticFailure? = when (this) {
-    is CoolingDataState.Content -> refreshFailure
-    is CoolingDataState.Empty -> refreshFailure
-    CoolingDataState.Unsupported -> DeviceCoolingAutomaticFailure.Unsupported
-    CoolingDataState.Unavailable -> DeviceCoolingAutomaticFailure.Unavailable
-    is CoolingDataState.OperationError -> failure
-    CoolingDataState.Initial,
-    CoolingDataState.Loading -> null
 }
 
 private fun CoolingMutationState<DeviceCoolingAutomaticFailure>.automaticSaveFailureOrNull():

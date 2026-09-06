@@ -65,12 +65,6 @@ class DeviceCoolingProgramSettingsFragment : DeviceCoolingModeSettingsFragment(
                             onTargetFanPercentChange = viewModel::updateTargetFanPercent
                         )
                     )
-                } else {
-                    DeviceCoolingProgramAvailabilityScreen(
-                        loadState = state.loadState,
-                        commandFailure = state.commandFailure,
-                        onRetry = { viewModel.bind(destinationDeviceUid) }
-                    )
                 }
             }
         }

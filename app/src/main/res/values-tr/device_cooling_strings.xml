@@ -104,7 +104,6 @@
     <string name="device_cooling_automatic_save">Kaydet</string>
     <string name="device_cooling_automatic_saving">Kaydediliyor…</string>
     <string name="device_cooling_automatic_saved">Kaydedildi</string>
-    <string name="device_cooling_automatic_save_failed">Ayarlar cihaza kaydedilemedi. Tekrar dene.</string>
     <string name="device_cooling_automatic_start_sheet_title">Fan Başlangıç Sıcaklığı</string>
     <string name="device_cooling_automatic_start_sheet_helper">Fanın soğutmaya başlayacağı sıcaklığı seç. Değişiklik, Otomatik Fan ekranında Kaydet seçildikten sonra cihaza uygulanır.</string>
     <string name="device_cooling_automatic_max_sheet_title">Maksimum Hız Sıcaklığı</string>
@@ -135,6 +134,7 @@
     <string name="device_cooling_program_axis_24">24</string>
     <string name="device_cooling_program_time_range_format">%1$s – %2$s</string>
     <string name="device_cooling_program_save">Kaydet</string>
+    <string name="device_cooling_program_schedule_invalid">Seçilen saat aralığı geçersiz veya başka bir programla çakışıyor.</string>
     <string name="device_cooling_program_start_time_sheet_title">Başlangıç Saati</string>
     <string name="device_cooling_program_start_time_sheet_message">Bu zaman diliminin başlayacağı saati seç.</string>
     <string name="device_cooling_program_end_time_sheet_title">Bitiş Saati</string>

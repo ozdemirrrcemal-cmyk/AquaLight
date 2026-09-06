@@ -34,26 +34,27 @@ class DeviceCoolingAutomaticSettingsFragment : DeviceCoolingModeSettingsFragment
         super.onModeSettingsViewCreated(savedInstanceState)
         registerStepperResults()
         viewModel.bind(destinationDeviceUid)
-        observeSaveLoading()
+        observeOperationLoading()
         modeSettingsBinding.coolingModeSettingsCompose.apply {
             setViewCompositionStrategy(ViewCompositionStrategy.DisposeOnViewTreeLifecycleDestroyed)
             setContent {
                 val state by viewModel.uiState.collectAsStateWithLifecycle()
-                DeviceCoolingAutomaticStateScreen(
-                    state = state,
-                    actions = DeviceCoolingAutomaticSettingsActions(
-                        onStartTemperatureClick = ::showStartTemperatureSheet,
-                        onMaximumTemperatureClick = ::showMaximumTemperatureSheet,
-                        onSilentModeChanged = viewModel::updateSilentMode,
-                        onSave = viewModel::save,
-                        onRetry = viewModel::refresh
+                if (state.hasFirmwareSnapshot) {
+                    DeviceCoolingAutomaticSettingsScreen(
+                        state = state,
+                        actions = DeviceCoolingAutomaticSettingsActions(
+                            onStartTemperatureClick = ::showStartTemperatureSheet,
+                            onMaximumTemperatureClick = ::showMaximumTemperatureSheet,
+                            onSilentModeChanged = viewModel::updateSilentMode,
+                            onSave = viewModel::save
+                        )
                     )
-                )
+                }
             }
         }
     }
 
-    private fun observeSaveLoading() {
+    private fun observeOperationLoading() {
         viewLifecycleOwner.lifecycleScope.launch {
             viewLifecycleOwner.repeatOnLifecycle(Lifecycle.State.STARTED) {
                 viewModel.uiState

@@ -48,10 +48,10 @@ class DeviceCoolingAutomaticSettingsViewModel(
                 _uiState.update { state -> state.withSnapshot(snapshot) }
             }
         }
-        refresh()
+        refreshBoundDevice()
     }
 
-    fun refresh() {
+    private fun refreshBoundDevice() {
         val deviceUid = boundDeviceUid.takeIf(String::isNotBlank) ?: return
         refreshJob?.cancel()
         _uiState.update(DeviceCoolingAutomaticSettingsUiState::beginRefresh)

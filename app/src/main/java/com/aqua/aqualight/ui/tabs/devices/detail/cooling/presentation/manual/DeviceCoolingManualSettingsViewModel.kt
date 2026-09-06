@@ -58,10 +58,10 @@ class DeviceCoolingManualSettingsViewModel(
                 }
             }
         }
-        refresh()
+        refreshBoundDevice()
     }
 
-    fun refresh() {
+    private fun refreshBoundDevice() {
         val deviceUid = boundDeviceUid.takeIf(String::isNotBlank) ?: return
         refreshJob?.cancel()
         _uiState.update { state ->
