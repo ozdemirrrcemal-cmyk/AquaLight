@@ -33,6 +33,17 @@
     <string name="device_cooling_history_no_samples">Bu dönem için sıcaklık ölçümü yok</string>
     <string name="device_cooling_history_daily_empty">Cihaz günlük özet sağladığında burada görünecek</string>
 
+    <string name="device_cooling_state_retry">Tekrar dene</string>
+
+    <string name="device_cooling_history_loading_title">Geçmiş yükleniyor</string>
+    <string name="device_cooling_history_loading_message">Cihazdan sıcaklık geçmişi bekleniyor.</string>
+    <string name="device_cooling_history_stale_title">Geçmiş yenilenemedi</string>
+    <string name="device_cooling_history_stale_message">Son doğrulanmış geçmiş gösteriliyor. Yenilemek için tekrar deneyin.</string>
+    <string name="device_cooling_history_unsupported_title">Geçmiş desteklenmiyor</string>
+    <string name="device_cooling_history_unsupported_message">Bağlı cihaz sıcaklık geçmişi sağlamıyor.</string>
+    <string name="device_cooling_history_unavailable_title">Geçmiş kullanılamıyor</string>
+    <string name="device_cooling_history_unavailable_message">Sıcaklık geçmişi şu anda okunamıyor. Tekrar deneyin.</string>
+
     <string name="device_cooling_fan_speed_title">Fan Hızı</string>
     <string name="device_cooling_fan_speed_caption">Fan hızı</string>
     <string name="device_cooling_operating_mode_title">Çalışma Modu</string>
