@@ -101,6 +101,60 @@ class CoolingStateMachineContractTest(unittest.TestCase):
         self.assertIn("CoolingDataState.Unavailable", text)
         self.assertIn("CoolingDataState.Unsupported", text)
 
+    def test_program_time_picker_uses_application_owned_selectable_times(self) -> None:
+        selections = (
+            COOLING_APPLICATION / "program/CoolingProgramTimeSelections.kt"
+        ).read_text(encoding="utf-8")
+        schedule = (
+            COOLING_APPLICATION / "program/CoolingProgramSchedule.kt"
+        ).read_text(encoding="utf-8")
+        view_model = (
+            COOLING / "program/DeviceCoolingProgramSettingsViewModel.kt"
+        ).read_text(encoding="utf-8")
+        fragment = (
+            COOLING / "program/DeviceCoolingProgramSettingsFragment.kt"
+        ).read_text(encoding="utf-8")
+        picker = (
+            ROOT
+            / "app/src/main/java/com/aqua/aqualight/ui/common/bottomsheet/"
+            "AquaTimePickerBottomSheet.kt"
+        ).read_text(encoding="utf-8")
+
+        for token in (
+            "object CoolingProgramTimeSelections",
+            "CoolingProgramSchedule.updateStartTime(",
+            "CoolingProgramSchedule.updateEndTime(",
+        ):
+            self.assertIn(token, selections)
+        self.assertNotIn("android.", selections)
+        self.assertNotIn("com.aqua.aqualight.ui", selections)
+        self.assertIn("maxOf(current.endMinutes", schedule)
+        self.assertIn("CoolingProgramTimeSelections.forStartTime(", view_model)
+        self.assertIn("CoolingProgramTimeSelections.forEndTime(", view_model)
+        self.assertIn("selectableMinutesOfDay = selection.selectableMinutesOfDay", fragment)
+        self.assertNotIn("devices.detail.cooling", picker)
+
+    def test_program_timeline_uses_true_quarter_day_ticks(self) -> None:
+        primitives = (
+            COOLING / "program/CoolingProgramPrimitives.kt"
+        ).read_text(encoding="utf-8")
+        for token in (
+            "TIMELINE_06_MINUTES",
+            "TIMELINE_12_MINUTES",
+            "TIMELINE_18_MINUTES",
+            "ticks[index].minutesOfDay.toFloat() / MINUTES_PER_DAY",
+        ):
+            self.assertIn(token, primitives)
+
+        for locale in ("values", "values-tr"):
+            strings = (
+                ROOT / f"app/src/main/res/{locale}/device_cooling_strings.xml"
+            ).read_text(encoding="utf-8")
+            for valid_axis in ("axis_00", "axis_06", "axis_12", "axis_18", "axis_24"):
+                self.assertIn(f"device_cooling_program_{valid_axis}", strings)
+            for stale_axis in ("axis_08", "axis_14", "axis_20"):
+                self.assertNotIn(f"device_cooling_program_{stale_axis}", strings)
+
     def test_history_keeps_terminal_read_state_presentation(self) -> None:
         history = (COOLING / "history/CoolingTemperatureHistoryScreen.kt").read_text(
             encoding="utf-8"

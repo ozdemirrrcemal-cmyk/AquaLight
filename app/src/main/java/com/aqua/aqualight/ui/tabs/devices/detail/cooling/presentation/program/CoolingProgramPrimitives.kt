@@ -1,6 +1,7 @@
 package com.aqua.aqualight.ui.tabs.devices.detail.cooling.presentation.program
 
 import android.content.Context
+import androidx.annotation.StringRes
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -25,6 +26,7 @@ import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.drawscope.DrawScope
+import androidx.compose.ui.layout.Layout
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
 import com.aqua.aqualight.R
@@ -35,6 +37,7 @@ import com.aqua.aqualight.ui.common.cooling.AquaCoolingDashboardIconKind
 import com.aqua.aqualight.ui.common.devicecard.AquaDeviceCardColors
 import com.aqua.aqualight.ui.common.devicecard.AquaDeviceCardSurface
 import com.aqua.aqualight.ui.common.devicecard.AquaDeviceCardTypography
+import kotlin.math.roundToInt
 
 @Composable
 internal fun ProgramActiveCard(
@@ -109,18 +112,7 @@ internal fun ProgramTimelineCard(
                 style = typography.title.copy(color = colors.primaryText)
             )
             ProgramTimelineTrack(slots = slots, nowMinutes = nowMinutes, colors = colors)
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween
-            ) {
-                timelineAxisLabels().forEach { label ->
-                    BasicText(
-                        text = label,
-                        style = typography.micro.copy(color = colors.secondaryText),
-                        maxLines = 1
-                    )
-                }
-            }
+            ProgramTimelineAxis(colors = colors, typography = typography)
         }
     }
 }
@@ -250,12 +242,51 @@ internal fun ProgramDivider(colors: AquaDeviceCardColors) {
 }
 
 @Composable
-private fun timelineAxisLabels(): List<String> = listOf(
-    stringResource(R.string.device_cooling_program_axis_00),
-    stringResource(R.string.device_cooling_program_axis_08),
-    stringResource(R.string.device_cooling_program_axis_14),
-    stringResource(R.string.device_cooling_program_axis_20),
-    stringResource(R.string.device_cooling_program_axis_24)
+private fun ProgramTimelineAxis(
+    colors: AquaDeviceCardColors,
+    typography: AquaDeviceCardTypography
+) {
+    val ticks = coolingProgramTimelineTicks()
+    Layout(
+        modifier = Modifier.fillMaxWidth(),
+        content = {
+            ticks.forEach { tick ->
+                BasicText(
+                    text = stringResource(tick.labelRes),
+                    style = typography.micro.copy(color = colors.secondaryText),
+                    maxLines = 1
+                )
+            }
+        }
+    ) { measurables, constraints ->
+        val labelConstraints = constraints.copy(minWidth = 0, minHeight = 0)
+        val placeables = measurables.map { measurable -> measurable.measure(labelConstraints) }
+        val width = constraints.maxWidth
+        val height = constraints.constrainHeight(placeables.maxOfOrNull { it.height } ?: 0)
+        layout(width, height) {
+            placeables.forEachIndexed { index, placeable ->
+                val tickCenter = (
+                    width * (ticks[index].minutesOfDay.toFloat() / MINUTES_PER_DAY)
+                ).roundToInt()
+                val left = (tickCenter - placeable.width / 2)
+                    .coerceIn(0, (width - placeable.width).coerceAtLeast(0))
+                placeable.place(left, (height - placeable.height) / 2)
+            }
+        }
+    }
+}
+
+internal data class CoolingProgramTimelineTick(
+    val minutesOfDay: Int,
+    @StringRes val labelRes: Int
+)
+
+internal fun coolingProgramTimelineTicks(): List<CoolingProgramTimelineTick> = listOf(
+    CoolingProgramTimelineTick(0, R.string.device_cooling_program_axis_00),
+    CoolingProgramTimelineTick(TIMELINE_06_MINUTES, R.string.device_cooling_program_axis_06),
+    CoolingProgramTimelineTick(TIMELINE_12_MINUTES, R.string.device_cooling_program_axis_12),
+    CoolingProgramTimelineTick(TIMELINE_18_MINUTES, R.string.device_cooling_program_axis_18),
+    CoolingProgramTimelineTick(MINUTES_PER_DAY, R.string.device_cooling_program_axis_24)
 )
 
 internal fun formatProgramTimeRange(
@@ -272,3 +303,6 @@ internal fun formatProgramTime(context: Context, minutesOfDay: Int): String =
 
 private const val MINUTES_PER_HOUR = 60
 private const val MINUTES_PER_DAY = 24 * MINUTES_PER_HOUR
+private const val TIMELINE_06_MINUTES = 6 * MINUTES_PER_HOUR
+private const val TIMELINE_12_MINUTES = 12 * MINUTES_PER_HOUR
+private const val TIMELINE_18_MINUTES = 18 * MINUTES_PER_HOUR

@@ -11,6 +11,7 @@ import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.repeatOnLifecycle
 import androidx.navigation.fragment.navArgs
 import com.aqua.aqualight.R
+import com.aqua.aqualight.application.devices.cooling.program.CoolingProgramTimeSelection
 import com.aqua.aqualight.base.BaseActivity
 import com.aqua.aqualight.composition.requireAppContainer
 import com.aqua.aqualight.ui.common.bottomsheet.AquaTimePickerBottomSheet
@@ -158,28 +159,38 @@ class DeviceCoolingProgramSettingsFragment : DeviceCoolingModeSettingsFragment(
     }
 
     private fun showStartTimeSheet(slotIndex: Int) {
-        val slot = viewModel.slotAt(slotIndex) ?: return
+        val selection = viewModel.startTimeSelection(slotIndex) ?: return
+        val policy = viewModel.uiState.value.policy ?: return
         showTimeSheet(
             slotIndex = slotIndex,
-            minutesOfDay = slot.startMinutes,
+            selection = selection,
             spec = TimeSheetSpec(
                 requestKey = REQUEST_START_TIME,
                 titleRes = R.string.device_cooling_program_start_time_sheet_title,
-                messageRes = R.string.device_cooling_program_start_time_sheet_message,
+                message = getString(
+                    R.string.device_cooling_program_start_time_sheet_message,
+                    policy.minimumSlotDurationMinutes,
+                    policy.timeStepMinutes
+                ),
                 allowEndOfDay = false
             )
         )
     }
 
     private fun showEndTimeSheet(slotIndex: Int) {
-        val slot = viewModel.slotAt(slotIndex) ?: return
+        val selection = viewModel.endTimeSelection(slotIndex) ?: return
+        val policy = viewModel.uiState.value.policy ?: return
         showTimeSheet(
             slotIndex = slotIndex,
-            minutesOfDay = slot.endMinutes,
+            selection = selection,
             spec = TimeSheetSpec(
                 requestKey = REQUEST_END_TIME,
                 titleRes = R.string.device_cooling_program_end_time_sheet_title,
-                messageRes = R.string.device_cooling_program_end_time_sheet_message,
+                message = getString(
+                    R.string.device_cooling_program_end_time_sheet_message,
+                    policy.minimumSlotDurationMinutes,
+                    policy.timeStepMinutes
+                ),
                 allowEndOfDay = true
             )
         )
@@ -212,14 +223,15 @@ class DeviceCoolingProgramSettingsFragment : DeviceCoolingModeSettingsFragment(
 
     private fun showTimeSheet(
         slotIndex: Int,
-        minutesOfDay: Int,
+        selection: CoolingProgramTimeSelection,
         spec: TimeSheetSpec
     ) {
+        val minutesOfDay = selection.currentMinutesOfDay
         AquaTimePickerBottomSheet.show(
             fragmentManager = parentFragmentManager,
             request = AquaTimePickerBottomSheet.Request(
                 title = getString(spec.titleRes),
-                message = getString(spec.messageRes),
+                message = spec.message,
                 initialHour = if (minutesOfDay == MINUTES_PER_DAY) {
                     HOURS_PER_DAY
                 } else {
@@ -231,6 +243,7 @@ class DeviceCoolingProgramSettingsFragment : DeviceCoolingModeSettingsFragment(
                     minutesOfDay % MINUTES_PER_HOUR
                 },
                 allowEndOfDay = spec.allowEndOfDay,
+                selectableMinutesOfDay = selection.selectableMinutesOfDay,
                 confirmText = getString(R.string.device_cooling_automatic_stepper_apply),
                 cancelText = getString(R.string.device_cooling_automatic_stepper_cancel),
                 resultTarget = AquaTimePickerBottomSheet.ResultTarget(
@@ -254,7 +267,7 @@ class DeviceCoolingProgramSettingsFragment : DeviceCoolingModeSettingsFragment(
 private data class TimeSheetSpec(
     val requestKey: String,
     @StringRes val titleRes: Int,
-    @StringRes val messageRes: Int,
+    val message: String,
     val allowEndOfDay: Boolean
 )
 
@@ -264,9 +277,6 @@ private fun DeviceCoolingProgramSettingsFragment.showScheduleValidationWarning()
         BaseActivity.SnackType.WARNING
     )
 }
-
-private fun DeviceCoolingProgramSettingsViewModel.slotAt(slotIndex: Int): DeviceCoolingProgramSlot? =
-    uiState.value.slots.getOrNull(slotIndex)
 
 private val DeviceCoolingProgramSaveState.isFailure: Boolean
     get() = when (this) {

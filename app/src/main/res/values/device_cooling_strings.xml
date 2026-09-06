@@ -247,17 +247,17 @@
     <string name="device_cooling_program_start_time">Start</string>
     <string name="device_cooling_program_end_time">End</string>
     <string name="device_cooling_program_axis_00">00</string>
-    <string name="device_cooling_program_axis_08">08</string>
-    <string name="device_cooling_program_axis_14">14</string>
-    <string name="device_cooling_program_axis_20">20</string>
+    <string name="device_cooling_program_axis_06">06</string>
+    <string name="device_cooling_program_axis_12">12</string>
+    <string name="device_cooling_program_axis_18">18</string>
     <string name="device_cooling_program_axis_24">24</string>
     <string name="device_cooling_program_time_range_format">%1$s – %2$s</string>
     <string name="device_cooling_program_save">Save</string>
     <string name="device_cooling_program_schedule_invalid">The selected time range is invalid or overlaps another program.</string>
     <string name="device_cooling_program_start_time_sheet_title">Start Time</string>
-    <string name="device_cooling_program_start_time_sheet_message">Choose when this time period starts.</string>
+    <string name="device_cooling_program_start_time_sheet_message">Choose the start time. If needed, the end moves forward to keep at least %1$d minutes. Only valid %2$d-minute times are shown.</string>
     <string name="device_cooling_program_end_time_sheet_title">End Time</string>
-    <string name="device_cooling_program_end_time_sheet_message">Choose when this time period ends.</string>
+    <string name="device_cooling_program_end_time_sheet_message">Choose the end time. The period must be at least %1$d minutes. Only valid %2$d-minute times are shown.</string>
     <string name="device_cooling_program_fan_on_temperature_sheet_title">Fan On Temperature</string>
     <string name="device_cooling_program_fan_on_temperature_sheet_helper">During this time period, the fan starts at the selected program speed when the tank reaches this temperature.</string>
 

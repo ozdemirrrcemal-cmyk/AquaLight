@@ -78,19 +78,26 @@ object CoolingProgramSchedule {
         startMinutes: Int
     ): CoolingProgramEditResult {
         val slot = slots.getOrNull(slotIndex)
+        val adjustedEndMinutes = slot?.let { current ->
+            maxOf(current.endMinutes, startMinutes + policy.minimumSlotDurationMinutes)
+        }
         return when {
             slot == null -> CoolingProgramEditResult.Rejected(
                 CoolingProgramEditRejection.SLOT_NOT_FOUND
             )
-            startMinutes !in 0 until slot.endMinutes ||
+            startMinutes !in 0 until COOLING_PROGRAM_MINUTES_PER_DAY ||
                 startMinutes % policy.timeStepMinutes != 0 ||
-                slot.endMinutes - startMinutes < policy.minimumSlotDurationMinutes ->
+                adjustedEndMinutes == null ||
+                adjustedEndMinutes > COOLING_PROGRAM_MINUTES_PER_DAY ->
                 CoolingProgramEditResult.Rejected(CoolingProgramEditRejection.INVALID_TIME_RANGE)
             else -> replaceSlot(
                 slots = slots,
                 policy = policy,
                 slotIndex = slotIndex,
-                replacement = slot.copy(startMinutes = startMinutes)
+                replacement = slot.copy(
+                    startMinutes = startMinutes,
+                    endMinutes = adjustedEndMinutes
+                )
             )
         }
     }

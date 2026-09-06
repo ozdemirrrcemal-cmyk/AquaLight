@@ -69,6 +69,32 @@ class CoolingProgramScheduleTest {
     }
 
     @Test
+    fun startEditMovesEndOnlyWhenMinimumDurationWouldBeBroken() {
+        val minimumPeriod = slot(startMinutes = 0, endMinutes = 15)
+
+        val moved = CoolingProgramSchedule.updateStartTime(
+            slots = listOf(minimumPeriod),
+            policy = policy(),
+            slotIndex = 0,
+            startMinutes = hour(8)
+        ) as CoolingProgramEditResult.Updated
+
+        assertEquals(hour(8), moved.slots.single().startMinutes)
+        assertEquals(hour(8) + 15, moved.slots.single().endMinutes)
+
+        val longPeriod = slot(startMinutes = hour(8), endMinutes = hour(14))
+        val shortened = CoolingProgramSchedule.updateStartTime(
+            slots = listOf(longPeriod),
+            policy = policy(),
+            slotIndex = 0,
+            startMinutes = hour(10)
+        ) as CoolingProgramEditResult.Updated
+
+        assertEquals(hour(10), shortened.slots.single().startMinutes)
+        assertEquals(hour(14), shortened.slots.single().endMinutes)
+    }
+
+    @Test
     fun validationRejectsSlotOutsideFirmwareStep() {
         val offStep = slot(hour(8) + 1, hour(14))
 

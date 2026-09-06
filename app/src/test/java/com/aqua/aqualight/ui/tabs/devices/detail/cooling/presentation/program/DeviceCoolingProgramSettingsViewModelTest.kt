@@ -95,6 +95,24 @@ class DeviceCoolingProgramSettingsViewModelTest {
     }
 
     @Test
+    fun minimumPeriodCanMoveFromItsStartFieldInOneValidEdit() = runTest(dispatcher) {
+        val original = slot(startMinutes = 0, endMinutes = 15)
+        val viewModel = createViewModel(
+            readResult = CoolingProgramReadResult.Loaded(
+                CoolingProgramSnapshot(listOf(original), policy())
+            )
+        )
+
+        viewModel.bind(DEVICE_UID)
+
+        val selection = requireNotNull(viewModel.startTimeSelection(FIRST_SLOT_INDEX))
+        assertTrue(hour(8) in selection.selectableMinutesOfDay)
+        assertTrue(viewModel.updateStartTime(FIRST_SLOT_INDEX, hour(8)))
+        assertEquals(hour(8), viewModel.slot(FIRST_SLOT_INDEX).startMinutes)
+        assertEquals(hour(8) + 15, viewModel.slot(FIRST_SLOT_INDEX).endMinutes)
+    }
+
+    @Test
     fun unavailableSaveNeverMarksDraftAsPersisted() = runTest(dispatcher) {
         val policy = policy()
         val viewModel = createViewModel(
