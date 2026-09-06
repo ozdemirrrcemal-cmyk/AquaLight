@@ -64,7 +64,12 @@ private class DebugDeviceFixtureViewModelFactory(
             DeviceCoolingRootViewModel::class.java ->
                 createCoolingRootViewModel(requireGraph())
             DeviceCoolingSystemStatusViewModel::class.java ->
-                createCoolingSystemStatusViewModel(requireGraph())
+                requireGraph().let { graph ->
+                    DeviceCoolingSystemStatusViewModel(
+                        rootOperations = rootOperations(graph),
+                        controlOperations = controlSurface(graph).coolingControlOperations
+                    )
+                }
             DeviceTimerRootViewModel::class.java ->
                 DeviceTimerRootViewModel(rootOperations(requireGraph()))
             DeviceRootOverviewViewModel::class.java ->
@@ -93,13 +98,6 @@ private class DebugDeviceFixtureViewModelFactory(
             controlSurfacePreparationOperations = controlSurface.preparationOperations
         )
     }
-
-    private fun createCoolingSystemStatusViewModel(
-        graph: OwnerDependencyGraph
-    ): DeviceCoolingSystemStatusViewModel = DeviceCoolingSystemStatusViewModel(
-        rootOperations = rootOperations(graph),
-        controlOperations = controlSurface(graph).coolingControlOperations
-    )
 
     private fun createDevicesViewModel(graph: OwnerDependencyGraph): DevicesViewModel {
         val repository = graph.devicesRepository

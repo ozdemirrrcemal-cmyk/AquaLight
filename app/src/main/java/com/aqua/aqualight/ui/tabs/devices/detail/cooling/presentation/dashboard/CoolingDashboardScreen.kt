@@ -162,7 +162,6 @@ private fun CoolingPowerAndStatusRow(
             state = state,
             colors = colors,
             typography = typography,
-            enabled = state.contentEnabled,
             onClick = actions.onSystemStatusClick,
             modifier = Modifier.weight(1f)
         )

@@ -162,7 +162,6 @@ internal fun CoolingStatusCard(
     state: DeviceCoolingRootUiState,
     colors: AquaDeviceCardColors,
     typography: AquaDeviceCardTypography,
-    enabled: Boolean,
     onClick: () -> Unit,
     modifier: Modifier = Modifier
 ) {
@@ -172,7 +171,7 @@ internal fun CoolingStatusCard(
             .heightIn(min = AquaCoolingDashboardGeometry.statusCardMinimumHeight)
             .semantics { contentDescription = openDescription }
             .clickable(
-                enabled = enabled,
+                enabled = state.contentEnabled,
                 role = Role.Button,
                 onClick = onClick
             )
@@ -181,62 +180,79 @@ internal fun CoolingStatusCard(
             modifier = Modifier.fillMaxWidth(),
             verticalArrangement = Arrangement.spacedBy(AquaCoolingDashboardGeometry.statusRowGap)
         ) {
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                BasicText(
-                    text = stringResource(R.string.device_cooling_system_status_title),
-                    style = typography.title,
-                    modifier = Modifier.weight(1f)
-                )
-                AquaCoolingDashboardIcon(
-                    kind = AquaCoolingDashboardIconKind.CHEVRON,
-                    tint = colors.secondaryText,
-                    modifier = Modifier.size(AquaCoolingDashboardGeometry.modeSettingsChevronSize)
-                )
-            }
-            CoolingStatusRow(
-                model = state.fanOutputHealth.toStatusRowModel(
-                    label = stringResource(R.string.device_cooling_status_fan_output)
-                ),
-                colors = colors,
-                typography = typography
-            )
-            CoolingStatusRow(
-                model = state.sensorHealth.toStatusRowModel(
-                    label = stringResource(R.string.device_cooling_status_sensors)
-                ),
-                colors = colors,
-                typography = typography
-            )
-            CoolingStatusRow(
-                model = CoolingStatusRowModel(
-                    label = stringResource(R.string.device_cooling_status_connection),
-                    value = if (state.contentEnabled) {
-                        stringResource(R.string.device_cooling_status_online)
-                    } else {
-                        stringResource(R.string.device_cooling_status_offline)
-                    },
-                    tone = if (state.contentEnabled) {
-                        CoolingStatusTone.SUCCESS
-                    } else {
-                        CoolingStatusTone.NEUTRAL
-                    }
-                ),
-                colors = colors,
-                typography = typography
-            )
-            CoolingStatusRow(
-                model = coolingAlarmStatusRow(
-                    activeAlarmCount = state.activeAlarmCount,
-                    highestSeverity = state.highestAlarmSeverity
-                ),
-                colors = colors,
-                typography = typography
-            )
+            CoolingStatusCardHeader(colors = colors, typography = typography)
+            CoolingStatusCardRows(state = state, colors = colors, typography = typography)
         }
     }
+}
+
+@Composable
+private fun CoolingStatusCardHeader(
+    colors: AquaDeviceCardColors,
+    typography: AquaDeviceCardTypography
+) {
+    Row(
+        modifier = Modifier.fillMaxWidth(),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        BasicText(
+            text = stringResource(R.string.device_cooling_system_status_title),
+            style = typography.title,
+            modifier = Modifier.weight(1f)
+        )
+        AquaCoolingDashboardIcon(
+            kind = AquaCoolingDashboardIconKind.CHEVRON,
+            tint = colors.secondaryText,
+            modifier = Modifier.size(AquaCoolingDashboardGeometry.modeSettingsChevronSize)
+        )
+    }
+}
+
+@Composable
+private fun CoolingStatusCardRows(
+    state: DeviceCoolingRootUiState,
+    colors: AquaDeviceCardColors,
+    typography: AquaDeviceCardTypography
+) {
+    CoolingStatusRow(
+        model = state.fanOutputHealth.toStatusRowModel(
+            label = stringResource(R.string.device_cooling_status_fan_output)
+        ),
+        colors = colors,
+        typography = typography
+    )
+    CoolingStatusRow(
+        model = state.sensorHealth.toStatusRowModel(
+            label = stringResource(R.string.device_cooling_status_sensors)
+        ),
+        colors = colors,
+        typography = typography
+    )
+    CoolingStatusRow(
+        model = CoolingStatusRowModel(
+            label = stringResource(R.string.device_cooling_status_connection),
+            value = if (state.contentEnabled) {
+                stringResource(R.string.device_cooling_status_online)
+            } else {
+                stringResource(R.string.device_cooling_status_offline)
+            },
+            tone = if (state.contentEnabled) {
+                CoolingStatusTone.SUCCESS
+            } else {
+                CoolingStatusTone.NEUTRAL
+            }
+        ),
+        colors = colors,
+        typography = typography
+    )
+    CoolingStatusRow(
+        model = coolingAlarmStatusRow(
+            activeAlarmCount = state.activeAlarmCount,
+            highestSeverity = state.highestAlarmSeverity
+        ),
+        colors = colors,
+        typography = typography
+    )
 }
 
 private data class CoolingStatusRowModel(

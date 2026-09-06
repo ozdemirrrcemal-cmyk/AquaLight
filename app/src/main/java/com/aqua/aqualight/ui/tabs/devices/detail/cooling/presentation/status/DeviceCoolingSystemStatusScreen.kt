@@ -74,10 +74,8 @@ private fun LazyListScope.coolingSystemStatusItems(
     item(key = "sensors") {
         CoolingSystemSensorsCard(telemetry = telemetry, visuals = visuals)
     }
-    if (snapshot != null) {
-        item(key = "operation") {
-            CoolingSystemOperationCard(snapshot = snapshot, visuals = visuals)
-        }
+    item(key = "operation") {
+        CoolingSystemOperationCard(snapshot = snapshot, visuals = visuals)
     }
     item(key = "power") {
         CoolingSystemPowerCard(telemetry = telemetry, visuals = visuals)
