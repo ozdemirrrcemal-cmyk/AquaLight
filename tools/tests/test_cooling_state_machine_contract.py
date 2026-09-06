@@ -7,6 +7,7 @@ ROOT = Path(__file__).resolve().parents[2]
 COOLING = ROOT / (
     "app/src/main/java/com/aqua/aqualight/ui/tabs/devices/detail/cooling/presentation"
 )
+COOLING_APPLICATION = ROOT / "app/src/main/java/com/aqua/aqualight/application/devices/cooling"
 
 
 class CoolingStateMachineContractTest(unittest.TestCase):
@@ -60,6 +61,36 @@ class CoolingStateMachineContractTest(unittest.TestCase):
         self.assertIn("mutationState:", text)
         self.assertIn("DeviceCoolingAutomaticLoadState.REFRESHING", text)
         self.assertIn("CoolingMutationState.ValidationError", text)
+
+    def test_automatic_temperature_validation_stays_in_application_boundary(self) -> None:
+        validation = (
+            COOLING_APPLICATION / "DeviceCoolingAutomaticTemperatureValidation.kt"
+        ).read_text(encoding="utf-8")
+        transitions = (
+            COOLING / "automatic/DeviceCoolingAutomaticDraftTransitions.kt"
+        ).read_text(encoding="utf-8")
+
+        for token in (
+            "object DeviceCoolingAutomaticTemperatureValidation",
+            "fun isValidStartTemperature(",
+            "fun isValidMaximumSpeedTemperature(",
+            "policy.minimumGapC - TEMPERATURE_EPSILON",
+        ):
+            self.assertIn(token, validation)
+
+        for token in (
+            "DeviceCoolingAutomaticTemperatureValidation.isValidStartTemperature(",
+            "DeviceCoolingAutomaticTemperatureValidation.isValidMaximumSpeedTemperature(",
+        ):
+            self.assertIn(token, transitions)
+
+        for forbidden in (
+            "private fun Double.isValidStart",
+            "private fun Double.isValidMaximum",
+            "policy.minimumGapC",
+            "TEMPERATURE_EPSILON",
+        ):
+            self.assertNotIn(forbidden, transitions)
 
     def test_program_empty_is_authoritative_not_a_read_failure(self) -> None:
         text = (COOLING / "program/DeviceCoolingProgramSettingsViewModel.kt").read_text(

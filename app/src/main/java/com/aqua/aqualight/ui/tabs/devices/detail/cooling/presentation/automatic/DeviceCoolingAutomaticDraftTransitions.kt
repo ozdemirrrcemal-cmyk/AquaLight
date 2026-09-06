@@ -1,6 +1,6 @@
 package com.aqua.aqualight.ui.tabs.devices.detail.cooling.presentation.automatic
 
-import com.aqua.aqualight.application.devices.cooling.DeviceCoolingAutomaticTemperaturePolicy
+import com.aqua.aqualight.application.devices.cooling.DeviceCoolingAutomaticTemperatureValidation
 import com.aqua.aqualight.ui.tabs.devices.detail.cooling.presentation.common.CoolingMutationState
 
 internal fun DeviceCoolingAutomaticSettingsUiState.withUpdatedStartTemperature(
@@ -10,7 +10,11 @@ internal fun DeviceCoolingAutomaticSettingsUiState.withUpdatedStartTemperature(
     val maximum = editorMaximumSpeedTemperatureC
     val valid = temperaturePolicy != null &&
         maximum != null &&
-        value.isValidStart(temperaturePolicy, maximum)
+        DeviceCoolingAutomaticTemperatureValidation.isValidStartTemperature(
+            value = value,
+            policy = temperaturePolicy,
+            maximumSpeedTemperatureC = maximum
+        )
     return if (valid) {
         copy(
             draftStartTemperatureC = value,
@@ -28,7 +32,11 @@ internal fun DeviceCoolingAutomaticSettingsUiState.withUpdatedMaximumTemperature
     val start = editorStartTemperatureC
     val valid = temperaturePolicy != null &&
         start != null &&
-        value.isValidMaximum(temperaturePolicy, start)
+        DeviceCoolingAutomaticTemperatureValidation.isValidMaximumSpeedTemperature(
+            value = value,
+            policy = temperaturePolicy,
+            startTemperatureC = start
+        )
     return if (valid) {
         copy(
             draftMaximumSpeedTemperatureC = value,
@@ -51,19 +59,3 @@ internal fun DeviceCoolingAutomaticSettingsUiState.withUpdatedSilentMode(
         mutationState = CoolingMutationState.Idle
     )
 }
-
-private fun Double.isValidStart(
-    policy: DeviceCoolingAutomaticTemperaturePolicy,
-    maximum: Double
-): Boolean = isFinite() &&
-    this in policy.startMinimumC..policy.startMaximumC &&
-    maximum - this >= policy.minimumGapC - TEMPERATURE_EPSILON
-
-private fun Double.isValidMaximum(
-    policy: DeviceCoolingAutomaticTemperaturePolicy,
-    start: Double
-): Boolean = isFinite() &&
-    this in policy.maximumSpeedMinimumC..policy.maximumSpeedMaximumC &&
-    this - start >= policy.minimumGapC - TEMPERATURE_EPSILON
-
-private const val TEMPERATURE_EPSILON = 0.000_001
