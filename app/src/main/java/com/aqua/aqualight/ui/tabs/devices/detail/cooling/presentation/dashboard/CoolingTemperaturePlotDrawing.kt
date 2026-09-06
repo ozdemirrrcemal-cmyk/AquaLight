@@ -16,28 +16,41 @@ import kotlin.math.ceil
 import kotlin.math.floor
 
 internal fun DrawScope.drawTemperatureHistory(
-    values: List<Float>,
+    values: List<TemperatureChartValue>,
     scale: TemperatureChartScale,
     viewport: TemperaturePlotViewport,
     lineColor: Color,
     drawArea: Boolean
 ) {
-    val points = temperatureHistoryOffsets(values, scale, viewport)
-    if (drawArea) {
-        drawTemperatureArea(
-            path = smoothTemperatureAreaPath(
-                points = points,
-                bottomY = viewport.verticalPadding + viewport.height
-            ),
-            lineColor = lineColor,
-            viewport = viewport
-        )
+    val segments = temperatureChartSegments(values).map { segment ->
+        temperatureHistoryOffsets(segment, scale, viewport)
     }
-    drawTemperatureSeries(
-        path = smoothTemperaturePath(points),
-        lineColor = lineColor,
-        emphasized = drawArea
-    )
+    segments.forEach { points ->
+        if (points.size >= 2) {
+            if (drawArea) {
+                drawTemperatureArea(
+                    path = smoothTemperatureAreaPath(
+                        points = points,
+                        bottomY = viewport.verticalPadding + viewport.height
+                    ),
+                    lineColor = lineColor,
+                    viewport = viewport
+                )
+            }
+            drawTemperatureSeries(
+                path = smoothTemperaturePath(points),
+                lineColor = lineColor,
+                emphasized = drawArea
+            )
+        } else {
+            points.singleOrNull()?.let { point ->
+                drawTemperaturePoint(point, lineColor, emphasized = false)
+            }
+        }
+    }
+    segments.lastOrNull()?.lastOrNull()?.let { endpoint ->
+        drawTemperaturePoint(endpoint, lineColor, emphasized = true)
+    }
 }
 
 internal fun DrawScope.drawTemperatureGrid(
@@ -110,15 +123,16 @@ internal data class TemperatureChartScale(
 }
 
 private fun temperatureHistoryOffsets(
-    values: List<Float>,
+    values: List<TemperatureChartValue>,
     scale: TemperatureChartScale,
     viewport: TemperaturePlotViewport
 ): List<Offset> {
     val valueSpan = (scale.maximumC - scale.minimumC).coerceAtLeast(1f)
-    val denominator = values.lastIndex.coerceAtLeast(1).toFloat()
-    return values.mapIndexed { index, value ->
-        val x = viewport.horizontalPadding + viewport.width * (index / denominator)
-        val normalized = ((value - scale.minimumC) / valueSpan).coerceIn(0f, 1f)
+    return values.map { value ->
+        val x = viewport.horizontalPadding + viewport.width * value.xFraction
+        val normalized = (
+            (value.temperatureC - scale.minimumC) / valueSpan
+            ).coerceIn(0f, 1f)
         Offset(x, viewport.verticalPadding + viewport.height * (1f - normalized))
     }
 }
@@ -149,6 +163,25 @@ private fun DrawScope.drawTemperatureSeries(
             },
             cap = StrokeCap.Round
         )
+    )
+}
+
+private fun DrawScope.drawTemperaturePoint(
+    point: Offset,
+    lineColor: Color,
+    emphasized: Boolean
+) {
+    if (emphasized) {
+        drawCircle(
+            color = lineColor.copy(alpha = AquaCoolingDashboardAlpha.chartGlow),
+            radius = AquaCoolingDashboardGeometry.chartPointGlowRadius.toPx(),
+            center = point
+        )
+    }
+    drawCircle(
+        color = lineColor.copy(alpha = AquaCoolingDashboardAlpha.chartLine),
+        radius = AquaCoolingDashboardGeometry.chartPointRadius.toPx(),
+        center = point
     )
 }
 

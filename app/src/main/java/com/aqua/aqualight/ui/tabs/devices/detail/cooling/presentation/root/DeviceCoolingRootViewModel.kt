@@ -225,6 +225,7 @@ class DeviceCoolingRootViewModel(
         sourceReset: Boolean
     ) {
         if (sourceReset) {
+            jobs.historyJob?.cancel()
             liveHistoryRefreshRequested = false
         }
         val historyNeedsLiveSeed = when (_uiState.value.historyState) {

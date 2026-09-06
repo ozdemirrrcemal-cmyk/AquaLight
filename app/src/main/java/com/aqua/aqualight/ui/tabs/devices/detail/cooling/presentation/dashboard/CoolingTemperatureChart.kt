@@ -1,5 +1,7 @@
 package com.aqua.aqualight.ui.tabs.devices.detail.cooling.presentation.dashboard
 
+import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -13,26 +15,46 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.text.BasicText
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.key
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.style.TextAlign
 import com.aqua.aqualight.R
+import com.aqua.aqualight.application.devices.cooling.DeviceCoolingTemperatureHistoryPoint
 import com.aqua.aqualight.ui.common.cooling.AquaCoolingDashboardGeometry
 import com.aqua.aqualight.ui.common.devicecard.AquaDeviceCardColors
 import com.aqua.aqualight.ui.common.devicecard.AquaDeviceCardGeometry
 import com.aqua.aqualight.ui.common.devicecard.AquaDeviceCardTypography
+import com.aqua.aqualight.ui.tabs.devices.detail.cooling.presentation.root.CoolingTemperatureTimelinePresentation
 
 @Composable
 internal fun CoolingTemperatureChart(
-    tankHistoryC: List<Double>,
+    archivedPoints: List<DeviceCoolingTemperatureHistoryPoint>,
+    historyGeneratedAtEpochMillis: Long?,
+    liveTimeline: CoolingTemperatureTimelinePresentation,
     colors: AquaDeviceCardColors,
     typography: AquaDeviceCardTypography,
     modifier: Modifier = Modifier
 ) {
-    val tankValues = tankHistoryC.toChartValues()
-    val scale = temperatureChartScale(tankValues)
+    val liveTarget = liveTimeline.currentLivePoint?.temperatureC?.toFloat()
+    val animatedLiveHead = key(liveTarget != null) {
+        animateFloatAsState(
+            targetValue = liveTarget ?: 0f,
+            animationSpec = tween(durationMillis = LIVE_HEAD_ANIMATION_MILLIS),
+            label = "Cooling live temperature"
+        ).value
+    }
+    val chartValues = temperatureChartValues(
+        archivedPoints = archivedPoints,
+        historyGeneratedAtEpochMillis = historyGeneratedAtEpochMillis,
+        liveTimeline = liveTimeline,
+        animatedLiveHeadTemperatureC = liveTarget?.let { animatedLiveHead }
+    )
+    val scale = temperatureChartScale(
+        chartValues.map(TemperatureChartValue::temperatureC)
+    )
 
     Row(
         modifier = modifier.fillMaxWidth(),
@@ -46,7 +68,7 @@ internal fun CoolingTemperatureChart(
         Spacer(modifier = Modifier.width(AquaCoolingDashboardGeometry.temperatureYAxisGap))
         Column(modifier = Modifier.weight(1f)) {
             CoolingTemperaturePlot(
-                tankValues = tankValues,
+                chartValues = chartValues,
                 scale = scale,
                 colors = colors,
                 typography = typography
@@ -56,11 +78,6 @@ internal fun CoolingTemperatureChart(
         }
     }
 }
-
-private fun List<Double>.toChartValues(): List<Float> = asSequence()
-    .filter(Double::isFinite)
-    .map(Double::toFloat)
-    .toList()
 
 @Composable
 private fun TemperatureYAxis(
@@ -93,7 +110,7 @@ private fun TemperatureYAxis(
 
 @Composable
 private fun CoolingTemperaturePlot(
-    tankValues: List<Float>,
+    chartValues: List<TemperatureChartValue>,
     scale: TemperatureChartScale,
     colors: AquaDeviceCardColors,
     typography: AquaDeviceCardTypography
@@ -113,9 +130,9 @@ private fun CoolingTemperaturePlot(
                 height = (size.height - horizontalPadding * 2f).coerceAtLeast(1f)
             )
             drawTemperatureGrid(viewport = viewport, colors = colors)
-            if (tankValues.size >= MINIMUM_CHART_POINT_COUNT) {
+            if (chartValues.isNotEmpty()) {
                 drawTemperatureHistory(
-                    values = tankValues,
+                    values = chartValues,
                     scale = scale,
                     viewport = viewport,
                     lineColor = colors.accent,
@@ -124,7 +141,7 @@ private fun CoolingTemperaturePlot(
             }
         }
 
-        if (tankValues.size < MINIMUM_CHART_POINT_COUNT) {
+        if (chartValues.isEmpty()) {
             CoolingTemperatureEmptyState(colors = colors, typography = typography)
         }
     }
@@ -192,4 +209,4 @@ private fun ChartAxisLabel(
     )
 }
 
-private const val MINIMUM_CHART_POINT_COUNT = 2
+private const val LIVE_HEAD_ANIMATION_MILLIS = 250

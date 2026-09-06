@@ -29,7 +29,6 @@ data class DeviceCoolingWaterTemperatureSample(
     init {
         require(inputSampleSequence > 0L)
         require(sampledAtUptimeMillis >= 0L)
-        require(evaluatedAtUptimeMillis >= sampledAtUptimeMillis)
         require(timeGeneration >= 0L)
         require(temperatureC.isFinite())
     }
