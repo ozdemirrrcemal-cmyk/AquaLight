@@ -192,7 +192,7 @@ class DefaultDeviceControlSurfacePreparationOperationsTest {
 
         assertTrue(result is DeviceControlSurfacePreparationResult.Ready)
         assertEquals(1, cooling.refreshCalls)
-        assertEquals(0, cooling.observeCalls)
+        assertEquals(1, cooling.observeCalls)
     }
 
     private fun preparation(
