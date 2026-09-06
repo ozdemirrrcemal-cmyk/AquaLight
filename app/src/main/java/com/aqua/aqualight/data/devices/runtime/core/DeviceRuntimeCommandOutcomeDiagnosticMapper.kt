@@ -23,8 +23,14 @@ internal fun DeviceRuntimeCommandOutcome<*>.toOperationDiagnostic(
     ),
     response = diagnosticResponse(),
     runtimeState = runtimeState,
-    detail = detailOverride ?: diagnosticDetail()
+    detail = combinedDiagnosticDetail(detailOverride)
 )
+
+private fun DeviceRuntimeCommandOutcome<*>.combinedDiagnosticDetail(
+    detailOverride: String?
+): String? = listOfNotNull(diagnosticDetail(), detailOverride)
+    .joinToString(separator = " | ")
+    .ifBlank { null }
 
 private fun DeviceRuntimeCommandOutcome<*>.diagnosticOutcome(): String = when (this) {
     is DeviceRuntimeCommandOutcome.Success -> "SUCCESS"

@@ -67,4 +67,24 @@ class DeviceRuntimeCommandOutcomeDiagnosticMapperTest {
         assertEquals(200, diagnostic.response?.statusCode)
         assertEquals(false, diagnostic.runtimeState?.authoritative)
     }
+
+    @Test
+    fun `protocol reason is retained beside application failure`() {
+        val diagnostic = DeviceRuntimeCommandOutcome.ProtocolError(
+            deviceUid = DeviceUid("cooling-1"),
+            module = "cooling",
+            action = "status.get",
+            messageId = "message-10",
+            generation = DeviceRuntimeConnectionGeneration(7L),
+            reason = "Missing data.telemetry"
+        ).toOperationDiagnostic(
+            stage = "COOLING_COMMAND",
+            detailOverride = "failure=InvalidData"
+        )
+
+        assertEquals(
+            "Missing data.telemetry | failure=InvalidData",
+            diagnostic.detail
+        )
+    }
 }
