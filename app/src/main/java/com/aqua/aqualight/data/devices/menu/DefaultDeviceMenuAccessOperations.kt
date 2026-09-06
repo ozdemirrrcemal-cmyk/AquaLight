@@ -3,6 +3,8 @@ package com.aqua.aqualight.data.devices.menu
 import com.aqua.aqualight.application.devices.DeviceMenuAccessOperations
 import com.aqua.aqualight.application.devices.DeviceMenuAccessResult
 import com.aqua.aqualight.application.devices.DeviceMenuUnavailableReason
+import com.aqua.aqualight.application.devices.DeviceOperationCommandDiagnostic
+import com.aqua.aqualight.application.devices.DeviceOperationDiagnostic
 import com.aqua.aqualight.data.devices.model.DeviceOnlineState
 import com.aqua.aqualight.data.devices.model.DeviceSnapshot
 import com.aqua.aqualight.data.devices.model.DeviceUid
@@ -10,6 +12,7 @@ import com.aqua.aqualight.data.devices.monitor.DeviceElapsedRealtimeClock
 import com.aqua.aqualight.data.devices.repository.DevicesRepository
 import com.aqua.aqualight.data.devices.repository.recordControlFailure
 import com.aqua.aqualight.data.devices.runtime.core.DeviceRuntimeCommandOutcome
+import com.aqua.aqualight.data.devices.runtime.core.toOperationDiagnostic
 import com.aqua.aqualight.data.devices.runtime.ws.AqlWsConnectionState
 import com.aqua.aqualight.data.devices.toOwnerDeviceFamily
 import java.util.concurrent.ConcurrentHashMap
@@ -39,6 +42,13 @@ internal interface DeviceMenuRuntimePort {
     /** Returns true only after a current-generation proof is committed to the registry. */
     suspend fun proveCurrentLiveness(deviceUid: DeviceUid): Boolean
 
+    fun currentLivenessDiagnostic(deviceUid: DeviceUid): DeviceOperationDiagnostic? = null
+
+    fun recordLivenessDiagnostic(
+        deviceUid: DeviceUid,
+        diagnostic: DeviceOperationDiagnostic
+    ) = Unit
+
     fun recordControlFailure(deviceUid: DeviceUid): DeviceSnapshot? = null
 }
 
@@ -46,6 +56,8 @@ internal interface DeviceMenuRuntimePort {
 internal class RepositoryDeviceMenuRuntimePort(
     private val devicesRepository: DevicesRepository
 ) : DeviceMenuRuntimePort {
+    private val livenessDiagnostics = ConcurrentHashMap<DeviceUid, DeviceOperationDiagnostic>()
+
     override fun currentDevice(deviceUid: DeviceUid): DeviceSnapshot? =
         devicesRepository.currentDevice(deviceUid)
 
@@ -73,12 +85,61 @@ internal class RepositoryDeviceMenuRuntimePort(
         devicesRepository.connectRuntime(deviceUid).isSuccess
 
     override suspend fun proveCurrentLiveness(deviceUid: DeviceUid): Boolean {
-        val outcome = devicesRepository.runtimeModules()?.network?.requestStatus(deviceUid)
-        val success = outcome as? DeviceRuntimeCommandOutcome.Success<*> ?: return false
-        return devicesRepository.recordControlProofIfCurrentGeneration(
+        val network = devicesRepository.runtimeModules()?.network
+        if (network == null) {
+            recordLivenessDiagnostic(
+                deviceUid,
+                DeviceOperationDiagnostic(
+                    stage = "MENU_ACCESS_NETWORK_PROOF",
+                    outcome = "NETWORK_RUNTIME_UNAVAILABLE",
+                    command = DeviceOperationCommandDiagnostic(
+                        deviceUid = deviceUid.value,
+                        module = "network",
+                        action = "status.get"
+                    )
+                )
+            )
+            return false
+        }
+
+        val outcome = network.requestStatus(deviceUid)
+        val success = outcome as? DeviceRuntimeCommandOutcome.Success<*>
+        if (success == null) {
+            recordLivenessDiagnostic(
+                deviceUid,
+                outcome.toOperationDiagnostic(stage = "MENU_ACCESS_NETWORK_PROOF")
+            )
+            return false
+        }
+
+        val accepted = devicesRepository.recordControlProofIfCurrentGeneration(
             deviceUid = deviceUid,
             generation = success.generation
         ) != null
+        if (accepted) {
+            livenessDiagnostics.remove(deviceUid)
+        } else {
+            recordLivenessDiagnostic(
+                deviceUid,
+                success.toOperationDiagnostic(
+                    stage = "MENU_ACCESS_NETWORK_PROOF",
+                    outcomeOverride = "SUCCESS_NOT_ACCEPTED_AS_CURRENT_LIVENESS",
+                    detailOverride = "The response generation was not accepted as the current proof."
+                )
+            )
+        }
+        return accepted
+    }
+
+    override fun currentLivenessDiagnostic(
+        deviceUid: DeviceUid
+    ): DeviceOperationDiagnostic? = livenessDiagnostics[deviceUid]
+
+    override fun recordLivenessDiagnostic(
+        deviceUid: DeviceUid,
+        diagnostic: DeviceOperationDiagnostic
+    ) {
+        livenessDiagnostics[deviceUid] = diagnostic
     }
 
     override fun recordControlFailure(deviceUid: DeviceUid): DeviceSnapshot? =
@@ -215,7 +276,8 @@ internal class DefaultDeviceMenuAccessOperations(
             is VerificationResult.Available -> available(verification.snapshot)
             is VerificationResult.Unavailable -> unavailable(
                 snapshot = runtimePort.currentDevice(deviceUid) ?: initialSnapshot,
-                reason = verification.reason
+                reason = verification.reason,
+                diagnostic = verification.diagnostic
             )
         }
     }
@@ -305,7 +367,10 @@ internal class DefaultDeviceMenuAccessOperations(
         reason: DeviceMenuUnavailableReason
     ): VerificationResult.Unavailable {
         runtimePort.recordControlFailure(deviceUid)
-        return VerificationResult.Unavailable(reason)
+        return VerificationResult.Unavailable(
+            reason = reason,
+            diagnostic = runtimePort.currentLivenessDiagnostic(deviceUid)
+        )
     }
 
     private suspend fun awaitAuthenticatedRuntime(
@@ -351,9 +416,28 @@ internal class DefaultDeviceMenuAccessOperations(
 
     private suspend fun requestFreshRuntimeProof(
         deviceUid: DeviceUid
-    ): Boolean = withTimeoutOrNull(RUNTIME_PROBE_TIMEOUT_MS) {
-        runtimePort.proveCurrentLiveness(deviceUid)
-    } ?: false
+    ): Boolean {
+        val result = withTimeoutOrNull(RUNTIME_PROBE_TIMEOUT_MS) {
+            runtimePort.proveCurrentLiveness(deviceUid)
+        }
+        if (result == null) {
+            runtimePort.recordLivenessDiagnostic(
+                deviceUid,
+                DeviceOperationDiagnostic(
+                    stage = "MENU_ACCESS_PROBE_BUDGET",
+                    outcome = "TIMEOUT",
+                    command = DeviceOperationCommandDiagnostic(
+                        deviceUid = deviceUid.value,
+                        module = "network",
+                        action = "status.get",
+                        timeoutMillis = RUNTIME_PROBE_TIMEOUT_MS
+                    ),
+                    detail = "The common menu liveness proof exceeded its UI budget."
+                )
+            )
+        }
+        return result ?: false
+    }
 
     private fun fastFailureReason(
         snapshot: DeviceSnapshot
@@ -387,11 +471,13 @@ internal class DefaultDeviceMenuAccessOperations(
 
     private fun unavailable(
         snapshot: DeviceSnapshot,
-        reason: DeviceMenuUnavailableReason
+        reason: DeviceMenuUnavailableReason,
+        diagnostic: DeviceOperationDiagnostic? = null
     ): DeviceMenuAccessResult.Unavailable {
         return DeviceMenuAccessResult.Unavailable(
             title = snapshot.title.ifBlank { snapshot.deviceUid.value },
-            reason = reason
+            reason = reason,
+            diagnostic = diagnostic
         )
     }
 
@@ -408,7 +494,8 @@ internal class DefaultDeviceMenuAccessOperations(
     private sealed interface VerificationResult {
         data class Available(val snapshot: DeviceSnapshot) : VerificationResult
         data class Unavailable(
-            val reason: DeviceMenuUnavailableReason
+            val reason: DeviceMenuUnavailableReason,
+            val diagnostic: DeviceOperationDiagnostic? = null
         ) : VerificationResult
     }
 

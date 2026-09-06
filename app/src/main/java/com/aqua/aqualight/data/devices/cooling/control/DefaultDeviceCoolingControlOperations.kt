@@ -1,5 +1,8 @@
 package com.aqua.aqualight.data.devices.cooling.control
 
+import com.aqua.aqualight.application.devices.DeviceOperationCommandDiagnostic
+import com.aqua.aqualight.application.devices.DeviceOperationDiagnostic
+import com.aqua.aqualight.application.devices.DeviceOperationRuntimeStateDiagnostic
 import com.aqua.aqualight.application.devices.cooling.control.DeviceCoolingControlFailure
 import com.aqua.aqualight.application.devices.cooling.control.DeviceCoolingControlMode
 import com.aqua.aqualight.application.devices.cooling.control.DeviceCoolingControlOperations
@@ -10,9 +13,11 @@ import com.aqua.aqualight.data.devices.model.DeviceSnapshot
 import com.aqua.aqualight.data.devices.model.DeviceUid
 import com.aqua.aqualight.data.devices.repository.DevicesRepository
 import com.aqua.aqualight.data.devices.runtime.core.DeviceRuntimeCommandOutcome
+import com.aqua.aqualight.data.devices.runtime.core.toOperationDiagnostic
 import com.aqua.aqualight.data.devices.runtime.modules.cooling.DeviceCoolingRuntimeRepository
 import com.aqua.aqualight.data.devices.runtime.modules.cooling.DeviceCoolingRuntimeState
 import com.aqua.aqualight.data.devices.runtime.modules.cooling.currentAuthoritativeState
+import com.aqua.aqualight.data.devices.runtime.modules.cooling.currentState
 import com.aqua.aqualight.data.devices.runtime.modules.cooling.v1.DeviceCoolingV1ConfigApplyPayload
 import com.aqua.aqualight.data.devices.runtime.modules.cooling.v1.DeviceCoolingV1Contract
 import com.aqua.aqualight.data.devices.runtime.modules.cooling.v1.DeviceCoolingV1ControlMode
@@ -63,7 +68,10 @@ internal class DefaultDeviceCoolingControlOperations(
 
     override suspend fun refreshControl(deviceUid: String): DeviceCoolingControlResult =
         when (val resolved = resolveRuntime(deviceUid)) {
-            is RuntimeResolution.Failed -> DeviceCoolingControlResult.Failed(resolved.failure)
+            is RuntimeResolution.Failed -> DeviceCoolingControlResult.Failed(
+                failure = resolved.failure,
+                diagnostic = resolved.diagnostic
+            )
             is RuntimeResolution.Ready -> resolved.runtime
                 .requestStatus(resolved.deviceUid)
                 .toControlResult(resolved.runtime, resolved.deviceUid)
@@ -73,7 +81,10 @@ internal class DefaultDeviceCoolingControlOperations(
         deviceUid: String,
         mode: DeviceCoolingControlMode
     ): DeviceCoolingControlResult = when (val resolved = resolveRuntime(deviceUid)) {
-        is RuntimeResolution.Failed -> DeviceCoolingControlResult.Failed(resolved.failure)
+        is RuntimeResolution.Failed -> DeviceCoolingControlResult.Failed(
+            failure = resolved.failure,
+            diagnostic = resolved.diagnostic
+        )
         is RuntimeResolution.Ready -> setMode(resolved, mode)
     }
 
@@ -81,7 +92,10 @@ internal class DefaultDeviceCoolingControlOperations(
         deviceUid: String,
         percent: Int
     ): DeviceCoolingControlResult = when (val resolved = resolveRuntime(deviceUid)) {
-        is RuntimeResolution.Failed -> DeviceCoolingControlResult.Failed(resolved.failure)
+        is RuntimeResolution.Failed -> DeviceCoolingControlResult.Failed(
+            failure = resolved.failure,
+            diagnostic = resolved.diagnostic
+        )
         is RuntimeResolution.Ready -> setManualFanPercent(resolved, percent)
     }
 
@@ -143,11 +157,23 @@ internal class DefaultDeviceCoolingControlOperations(
         val runtime = uid?.let { devicesRepository.runtimeModules()?.cooling }
         return when {
             uid == null || device == null ->
-                RuntimeResolution.Failed(DeviceCoolingControlFailure.Unavailable)
+                resolutionFailure(
+                    deviceUid = deviceUid,
+                    failure = DeviceCoolingControlFailure.Unavailable,
+                    outcome = if (uid == null) "INVALID_DEVICE_UID" else "DEVICE_NOT_REGISTERED"
+                )
             !device.isSupportedCoolingV1() ->
-                RuntimeResolution.Failed(DeviceCoolingControlFailure.Unsupported)
+                resolutionFailure(
+                    deviceUid = deviceUid,
+                    failure = DeviceCoolingControlFailure.Unsupported,
+                    outcome = "UNSUPPORTED_COOLING_DEVICE"
+                )
             runtime == null ->
-                RuntimeResolution.Failed(DeviceCoolingControlFailure.Unavailable)
+                resolutionFailure(
+                    deviceUid = deviceUid,
+                    failure = DeviceCoolingControlFailure.Unavailable,
+                    outcome = "COOLING_RUNTIME_UNAVAILABLE"
+                )
             else -> RuntimeResolution.Ready(uid, runtime)
         }
     }
@@ -159,8 +185,29 @@ private sealed interface RuntimeResolution {
         val runtime: DeviceCoolingRuntimeRepository
     ) : RuntimeResolution
 
-    data class Failed(val failure: DeviceCoolingControlFailure) : RuntimeResolution
+    data class Failed(
+        val failure: DeviceCoolingControlFailure,
+        val diagnostic: DeviceOperationDiagnostic
+    ) : RuntimeResolution
 }
+
+private fun resolutionFailure(
+    deviceUid: String,
+    failure: DeviceCoolingControlFailure,
+    outcome: String
+): RuntimeResolution.Failed = RuntimeResolution.Failed(
+    failure = failure,
+    diagnostic = DeviceOperationDiagnostic(
+        stage = "COOLING_RUNTIME_RESOLUTION",
+        outcome = outcome,
+        command = DeviceOperationCommandDiagnostic(
+            deviceUid = deviceUid,
+            module = "cooling",
+            action = "resolve"
+        ),
+        detail = "failure=${failure.diagnosticName()}"
+    )
+)
 
 private fun projectRead(
     device: DeviceSnapshot?,
@@ -196,22 +243,81 @@ private suspend fun DeviceRuntimeCommandOutcome<*>.toControlResult(
     runtime: DeviceCoolingRuntimeRepository,
     deviceUid: DeviceUid
 ): DeviceCoolingControlResult = when (this) {
-    is DeviceRuntimeCommandOutcome.Success -> runtime.currentAuthoritativeState(deviceUid)
-        ?.let(DeviceCoolingControlSnapshotMapper::map)
-        ?.let(DeviceCoolingControlResult::Available)
-        ?: DeviceCoolingControlResult.Failed(DeviceCoolingControlFailure.Unavailable)
-    is DeviceRuntimeCommandOutcome.NotConnected,
+    is DeviceRuntimeCommandOutcome.Success -> toSuccessfulControlResult(runtime, deviceUid)
+    is DeviceRuntimeCommandOutcome.NotConnected ->
+        failed(DeviceCoolingControlFailure.NotConnected)
     is DeviceRuntimeCommandOutcome.NotAuthenticated ->
-        DeviceCoolingControlResult.Failed(DeviceCoolingControlFailure.NotConnected)
+        failed(DeviceCoolingControlFailure.NotConnected)
     is DeviceRuntimeCommandOutcome.UnsupportedByDevice ->
-        DeviceCoolingControlResult.Failed(DeviceCoolingControlFailure.Unsupported)
-    is DeviceRuntimeCommandOutcome.FirmwareError -> DeviceCoolingControlResult.Failed(
+        failed(DeviceCoolingControlFailure.Unsupported)
+    is DeviceRuntimeCommandOutcome.FirmwareError -> failed(
         DeviceCoolingControlFailure.Rejected(DeviceCoolingV1FailureMapper.map(this))
     )
     is DeviceRuntimeCommandOutcome.ProtocolError ->
-        DeviceCoolingControlResult.Failed(DeviceCoolingControlFailure.InvalidData)
-    is DeviceRuntimeCommandOutcome.SendFailed,
-    is DeviceRuntimeCommandOutcome.Timeout,
+        failed(DeviceCoolingControlFailure.InvalidData)
+    is DeviceRuntimeCommandOutcome.SendFailed ->
+        failed(DeviceCoolingControlFailure.Unavailable)
+    is DeviceRuntimeCommandOutcome.Timeout ->
+        failed(DeviceCoolingControlFailure.Unavailable)
     is DeviceRuntimeCommandOutcome.Cancelled ->
-        DeviceCoolingControlResult.Failed(DeviceCoolingControlFailure.Unavailable)
+        failed(DeviceCoolingControlFailure.Unavailable)
+}
+
+private fun DeviceRuntimeCommandOutcome.Success<*>.toSuccessfulControlResult(
+    runtime: DeviceCoolingRuntimeRepository,
+    deviceUid: DeviceUid
+): DeviceCoolingControlResult {
+    val currentState = runtime.currentState(deviceUid)
+    val authoritativeState = runtime.currentAuthoritativeState(deviceUid)
+    val runtimeDiagnostic = DeviceOperationRuntimeStateDiagnostic(
+        connectionGeneration = currentState?.connectionGeneration?.value,
+        authoritative = currentState?.authoritative
+    )
+    return when {
+        currentState == null -> failedAfterSuccess(
+            outcome = "SUCCESS_WITHOUT_RUNTIME_STATE",
+            runtimeState = runtimeDiagnostic
+        )
+        authoritativeState == null -> failedAfterSuccess(
+            outcome = "SUCCESS_NOT_ACCEPTED_AS_AUTHORITATIVE",
+            runtimeState = runtimeDiagnostic
+        )
+        else -> DeviceCoolingControlSnapshotMapper.map(authoritativeState)
+            ?.let(DeviceCoolingControlResult::Available)
+            ?: failedAfterSuccess(
+                outcome = "SUCCESS_SNAPSHOT_MAPPING_FAILED",
+                runtimeState = runtimeDiagnostic
+            )
+    }
+}
+
+private fun DeviceRuntimeCommandOutcome<*>.failed(
+    failure: DeviceCoolingControlFailure
+): DeviceCoolingControlResult.Failed = DeviceCoolingControlResult.Failed(
+    failure = failure,
+    diagnostic = toOperationDiagnostic(
+        stage = "COOLING_COMMAND",
+        detailOverride = "failure=${failure.diagnosticName()}"
+    )
+)
+
+private fun DeviceRuntimeCommandOutcome.Success<*>.failedAfterSuccess(
+    outcome: String,
+    runtimeState: DeviceOperationRuntimeStateDiagnostic
+): DeviceCoolingControlResult.Failed = DeviceCoolingControlResult.Failed(
+    failure = DeviceCoolingControlFailure.Unavailable,
+    diagnostic = toOperationDiagnostic(
+        stage = "COOLING_RUNTIME_OWNER",
+        outcomeOverride = outcome,
+        detailOverride = "The successful response did not produce a renderable authoritative snapshot.",
+        runtimeState = runtimeState
+    )
+)
+
+private fun DeviceCoolingControlFailure.diagnosticName(): String = when (this) {
+    DeviceCoolingControlFailure.Unsupported -> "Unsupported"
+    DeviceCoolingControlFailure.Unavailable -> "Unavailable"
+    DeviceCoolingControlFailure.NotConnected -> "NotConnected"
+    is DeviceCoolingControlFailure.Rejected -> "Rejected"
+    DeviceCoolingControlFailure.InvalidData -> "InvalidData"
 }

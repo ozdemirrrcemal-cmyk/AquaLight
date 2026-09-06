@@ -19,7 +19,8 @@ sealed interface DeviceMenuAccessResult {
 
     data class Unavailable(
         val title: String,
-        val reason: DeviceMenuUnavailableReason
+        val reason: DeviceMenuUnavailableReason,
+        val diagnostic: DeviceOperationDiagnostic? = null
     ) : DeviceMenuAccessResult
 }
 

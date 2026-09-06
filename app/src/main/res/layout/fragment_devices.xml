@@ -28,10 +28,39 @@
         android:clipToPadding="false"
         android:overScrollMode="never"
         android:scrollbars="none"
-        app:layout_constraintTop_toBottomOf="@id/appHeader"
+        app:layout_constraintTop_toBottomOf="@id/cardMenuDiagnostics"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintEnd_toEndOf="parent" />
+
+    <com.google.android.material.card.MaterialCardView
+        android:id="@+id/cardMenuDiagnostics"
+        style="@style/Widget.Aqua.Card"
+        android:layout_width="@dimen/aqua_size_0"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="@dimen/aqua_size_16"
+        android:layout_marginTop="@dimen/aqua_size_8"
+        android:layout_marginEnd="@dimen/aqua_size_16"
+        android:visibility="gone"
+        app:cardBackgroundColor="@color/aqua_surface_deep"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/appHeader"
+        app:strokeColor="@color/aqua_content_warning"
+        tools:visibility="visible">
+
+        <TextView
+            android:id="@+id/tvMenuDiagnostics"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:fontFamily="monospace"
+            android:padding="@dimen/aqua_size_12"
+            android:textColor="@color/aqua_content_primary_soft"
+            android:textIsSelectable="true"
+            android:textSize="@dimen/aqua_text_size_micro_plus"
+            tools:text="MENU OPEN DIAGNOSTIC&#10;stage=COOLING_COMMAND&#10;outcome=TIMEOUT" />
+
+    </com.google.android.material.card.MaterialCardView>
 
     <com.google.android.material.card.MaterialCardView
     style="@style/Widget.Aqua.Card.Inline"

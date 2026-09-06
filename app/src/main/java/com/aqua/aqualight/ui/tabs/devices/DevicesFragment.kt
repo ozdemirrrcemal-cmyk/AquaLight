@@ -134,6 +134,7 @@ class DevicesFragment : Fragment(R.layout.fragment_devices) {
         binding.rvSelectedDevices.setHasFixedSize(false)
         binding.rvSelectedDevices.isVisible = false
         binding.tvEmptyState.isVisible = true
+        binding.cardMenuDiagnostics.isVisible = false
         binding.btnEmptyAddDevice.setOnClickListener {
             openAddDevice()
         }
@@ -192,6 +193,11 @@ class DevicesFragment : Fragment(R.layout.fragment_devices) {
         event: DevicesEvent.ShowDeviceUnavailable
     ) {
         baseActivity()?.clearGlobalLoading(DEVICE_MENU_LOADING_OWNER)
+        binding.tvMenuDiagnostics.text = formatDeviceMenuDiagnostic(
+            reason = event.reason,
+            diagnostic = event.diagnostic
+        )
+        binding.cardMenuDiagnostics.isVisible = true
         baseActivity()?.showDeviceOfflineDialog(
             deviceTitle = event.title,
             messageRes = event.messageRes

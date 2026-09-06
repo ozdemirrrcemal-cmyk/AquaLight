@@ -5,6 +5,7 @@ import com.aqua.aqualight.application.devices.DeviceControlSurfacePreparationReq
 import com.aqua.aqualight.application.devices.DeviceControlSurfacePreparationResult
 import com.aqua.aqualight.application.devices.DeviceDosingChannelSlot
 import com.aqua.aqualight.application.devices.DeviceMenuUnavailableReason
+import com.aqua.aqualight.application.devices.DeviceOperationDiagnostic
 import com.aqua.aqualight.application.devices.DeviceRootCatalogState
 import com.aqua.aqualight.application.devices.DeviceRootOperations
 import com.aqua.aqualight.application.devices.DeviceRootSnapshot
@@ -77,14 +78,29 @@ internal class DefaultDeviceControlSurfacePreparationOperations(
             root == null -> unavailable(DeviceMenuUnavailableReason.DEVICE_NOT_REGISTERED)
             !root.matchesCoolingCatalog() ->
                 unavailable(DeviceMenuUnavailableReason.COMMERCIAL_PRODUCT_MISMATCH)
-            coolingControlOperations.refreshControl(deviceUid) !is DeviceCoolingControlResult.Available ->
-                unavailable(DeviceMenuUnavailableReason.CURRENT_LIVENESS_NOT_PROVEN)
-            else -> {
-                freshlyPreparedSurfaces += preparedSurface
-                DeviceControlSurfacePreparationResult.Ready
-            }
+            else -> prepareCoolingControl(deviceUid, preparedSurface)
         }
         return result
+    }
+
+    private suspend fun prepareCoolingControl(
+        deviceUid: String,
+        preparedSurface: PreparedSurface
+    ): DeviceControlSurfacePreparationResult = when (
+        val control = coolingControlOperations.refreshControl(deviceUid)
+    ) {
+        is DeviceCoolingControlResult.Available -> {
+            freshlyPreparedSurfaces += preparedSurface
+            DeviceControlSurfacePreparationResult.Ready
+        }
+        is DeviceCoolingControlResult.Failed -> unavailable(
+            reason = DeviceMenuUnavailableReason.CURRENT_LIVENESS_NOT_PROVEN,
+            diagnostic = control.diagnostic ?: DeviceOperationDiagnostic(
+                stage = "COOLING_CONTROL_PREPARATION",
+                outcome = "FAILED_WITHOUT_LOWER_LEVEL_DIAGNOSTIC",
+                detail = "failure=${control.failure}"
+            )
+        )
     }
 
     override fun consumeFreshPreparation(
@@ -128,9 +144,10 @@ internal class DefaultDeviceControlSurfacePreparationOperations(
     }
 
     private fun unavailable(
-        reason: DeviceMenuUnavailableReason
+        reason: DeviceMenuUnavailableReason,
+        diagnostic: DeviceOperationDiagnostic? = null
     ): DeviceControlSurfacePreparationResult.Unavailable =
-        DeviceControlSurfacePreparationResult.Unavailable(reason)
+        DeviceControlSurfacePreparationResult.Unavailable(reason, diagnostic)
 
     private companion object {
         val PREPARED_FAMILIES = setOf(OwnerDeviceFamily.DOSING, OwnerDeviceFamily.COOLING)

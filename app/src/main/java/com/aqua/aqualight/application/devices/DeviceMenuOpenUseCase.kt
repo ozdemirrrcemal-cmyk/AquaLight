@@ -17,7 +17,8 @@ class DeviceMenuOpenUseCase(
             is DeviceMenuAccessResult.Available -> prepare(access)
             is DeviceMenuAccessResult.Unavailable -> DeviceMenuOpenResult.Unavailable(
                 title = access.title,
-                reason = access.reason
+                reason = access.reason,
+                diagnostic = access.diagnostic
             )
         }
 
@@ -45,7 +46,8 @@ class DeviceMenuOpenUseCase(
         DeviceControlSurfacePreparationResult.Ready -> DeviceMenuOpenResult.Ready(access)
         is DeviceControlSurfacePreparationResult.Unavailable -> DeviceMenuOpenResult.Unavailable(
             title = access.title,
-            reason = preparation.reason
+            reason = preparation.reason,
+            diagnostic = preparation.diagnostic
         )
     }
 }
@@ -57,6 +59,7 @@ sealed interface DeviceMenuOpenResult {
 
     data class Unavailable(
         val title: String,
-        val reason: DeviceMenuUnavailableReason
+        val reason: DeviceMenuUnavailableReason,
+        val diagnostic: DeviceOperationDiagnostic? = null
     ) : DeviceMenuOpenResult
 }

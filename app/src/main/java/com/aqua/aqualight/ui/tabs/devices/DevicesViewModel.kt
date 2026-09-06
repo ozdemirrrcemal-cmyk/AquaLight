@@ -5,6 +5,7 @@ import androidx.lifecycle.viewModelScope
 import com.aqua.aqualight.application.devices.DeviceMenuOpenResult
 import com.aqua.aqualight.application.devices.DeviceMenuOpenUseCase
 import com.aqua.aqualight.application.devices.DeviceMenuUnavailableReason
+import com.aqua.aqualight.application.devices.DeviceOperationDiagnostic
 import com.aqua.aqualight.application.devices.OwnerDevicesOperations
 import com.aqua.aqualight.ui.common.devicepresence.DeviceMenuUnavailableMessageMapper
 import com.aqua.aqualight.ui.tabs.devices.route.DeviceRouteResolver
@@ -90,6 +91,12 @@ class DevicesViewModel(
                             .orEmpty(),
                         messageRes = DeviceMenuUnavailableMessageMapper.messageRes(
                             DeviceMenuUnavailableReason.CURRENT_LIVENESS_NOT_PROVEN
+                        ),
+                        reason = DeviceMenuUnavailableReason.CURRENT_LIVENESS_NOT_PROVEN,
+                        diagnostic = DeviceOperationDiagnostic(
+                            stage = "DEVICES_VIEW_MODEL",
+                            outcome = "UNEXPECTED_EXCEPTION",
+                            detail = "${error::class.java.name}: ${error.message.orEmpty()}"
                         )
                     )
                 )
@@ -256,5 +263,7 @@ class DevicesViewModel(
 private fun DeviceMenuOpenResult.Unavailable.toUnavailableEvent() =
     DevicesEvent.ShowDeviceUnavailable(
         title = title,
-        messageRes = DeviceMenuUnavailableMessageMapper.messageRes(reason)
+        messageRes = DeviceMenuUnavailableMessageMapper.messageRes(reason),
+        reason = reason,
+        diagnostic = diagnostic
     )

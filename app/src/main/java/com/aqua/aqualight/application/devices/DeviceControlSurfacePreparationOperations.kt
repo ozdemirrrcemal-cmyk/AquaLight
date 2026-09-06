@@ -41,6 +41,7 @@ sealed interface DeviceControlSurfacePreparationResult {
     data object Ready : DeviceControlSurfacePreparationResult
 
     data class Unavailable(
-        val reason: DeviceMenuUnavailableReason
+        val reason: DeviceMenuUnavailableReason,
+        val diagnostic: DeviceOperationDiagnostic? = null
     ) : DeviceControlSurfacePreparationResult
 }
