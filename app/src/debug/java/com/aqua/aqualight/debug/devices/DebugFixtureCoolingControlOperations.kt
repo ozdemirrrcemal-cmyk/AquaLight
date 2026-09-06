@@ -72,7 +72,9 @@ internal class DebugFixtureCoolingControlOperations(
             else -> fixtureState.update { snapshot ->
                 snapshot.copy(
                     manualFanPercent = percent,
-                    actualFanPercent = percent
+                    // Manual writes are discrete, while observed firmware output uses the
+                    // continuous runtime representation shared with production telemetry.
+                    actualFanPercent = percent.toDouble()
                 )
             }
         }
@@ -92,8 +94,8 @@ internal class DebugFixtureCoolingControlOperations(
 
 private fun fixtureSnapshot(): DeviceCoolingControlSnapshot = DeviceCoolingControlSnapshot(
     mode = DeviceCoolingControlMode.AUTOMATIC,
-    manualFanPercent = FIXTURE_FAN_PERCENT,
-    actualFanPercent = FIXTURE_FAN_PERCENT,
+    manualFanPercent = FIXTURE_MANUAL_FAN_PERCENT,
+    actualFanPercent = FIXTURE_RUNTIME_FAN_PERCENT,
     tankTemperatureC = FIXTURE_TANK_TEMPERATURE_C,
     capabilities = FIXTURE_CONTROL_CAPABILITIES
 )
@@ -113,5 +115,6 @@ private val FIXTURE_CONTROL_CAPABILITIES = DeviceCoolingControlCapabilities(
     )
 )
 
-private const val FIXTURE_FAN_PERCENT = 42
+private const val FIXTURE_MANUAL_FAN_PERCENT = 42
+private const val FIXTURE_RUNTIME_FAN_PERCENT = 42.0
 private const val FIXTURE_TANK_TEMPERATURE_C = 25.6
