@@ -145,7 +145,9 @@ private val FAN_TEXTURE_PAINT = Paint(
 )
 
 private const val FAN_CENTER_X = 0.459f
-private const val FAN_CENTER_Y = 0.277f
+// Measured from the source artwork's hub rather than the cyan ring's bounding box. The previous
+// value sat roughly seven source pixels high and made the transformed rotor orbit inside the ring.
+private const val FAN_CENTER_Y = 0.299f
 private const val FAN_RADIUS_X = 0.178f
 private const val FAN_RADIUS_Y = 0.099f
 private const val FAN_PLANE_TILT_DEGREES = -6.1f

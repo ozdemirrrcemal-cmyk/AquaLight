@@ -235,6 +235,9 @@ object AquaCoolingDashboardAlpha {
     const val liveHeroWater = 0.30f
     const val liveHeroWaterDepth = 0.19f
     const val liveHeroWaterSurface = 0.32f
+    const val liveHeroWaterSubsurface = 0.10f
+    const val liveHeroWaterSpecular = 0.22f
+    const val liveHeroWaterCaustic = 0.08f
     const val liveHeroWaterReflection = 0.10f
     const val liveHeroGlassPane = 0.04f
     const val liveHeroGlassEdge = 0.24f

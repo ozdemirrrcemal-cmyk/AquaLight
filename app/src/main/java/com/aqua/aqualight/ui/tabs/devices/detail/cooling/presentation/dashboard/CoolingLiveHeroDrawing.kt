@@ -14,20 +14,37 @@ import com.aqua.aqualight.ui.common.devicecard.AquaDeviceCardColors
 import kotlin.math.sin
 
 internal fun DrawScope.drawCoolingHeroScene(
-    motionPhase: Float,
+    primaryMotionPhase: Float,
+    secondaryMotionPhase: Float,
     motionIntensity: Float,
     status: CoolingHeroVisualStatus,
     colors: AquaDeviceCardColors
 ) {
     drawCoolingAtmosphere(status, colors)
     clipPath(glassTankPath(-WATER_CLIP_HEADROOM_FRACTION)) {
-        drawWaterBody(motionPhase, motionIntensity, colors)
+        drawWaterBody(
+            primaryMotionPhase,
+            secondaryMotionPhase,
+            motionIntensity,
+            colors
+        )
+        drawWaterCaustics(
+            primaryMotionPhase,
+            secondaryMotionPhase,
+            motionIntensity,
+            colors
+        )
         if (motionIntensity > NO_MOTION) {
-            drawWaterReflection(motionPhase, motionIntensity, colors)
+            drawWaterReflection(
+                primaryMotionPhase,
+                secondaryMotionPhase,
+                motionIntensity,
+                colors
+            )
         }
     }
     if (motionIntensity > NO_MOTION) {
-        drawAirflow(motionPhase, motionIntensity, colors)
+        drawAirflow(primaryMotionPhase, motionIntensity, colors)
     }
     drawGlassTank(colors)
 }
@@ -48,7 +65,9 @@ private fun DrawScope.drawCoolingAtmosphere(
         )
     )
     val glowColor = when (status) {
-        CoolingHeroVisualStatus.ATTENTION -> colors.warning
+        // Operational warnings are already explicit in the status cards. A warm full-scene cast
+        // made the blue cooling hardware look yellow, so the hero keeps its physical cool light.
+        CoolingHeroVisualStatus.ATTENTION -> colors.accent
         CoolingHeroVisualStatus.OFFLINE,
         CoolingHeroVisualStatus.WAITING_FOR_DATA -> colors.secondaryText
         CoolingHeroVisualStatus.COOLING,
@@ -69,7 +88,8 @@ private fun DrawScope.drawCoolingAtmosphere(
 }
 
 private fun DrawScope.drawWaterBody(
-    motionPhase: Float,
+    primaryMotionPhase: Float,
+    secondaryMotionPhase: Float,
     motionIntensity: Float,
     colors: AquaDeviceCardColors
 ) {
@@ -79,7 +99,12 @@ private fun DrawScope.drawWaterBody(
             val progress = index.toFloat() / WATER_SURFACE_SEGMENTS
             val point = Offset(
                 x = size.width * progress,
-                y = waterSurfaceY(progress, motionPhase, motionIntensity)
+                y = waterSurfaceY(
+                    progress,
+                    primaryMotionPhase,
+                    secondaryMotionPhase,
+                    motionIntensity
+                )
             )
             if (index == FIRST_SEGMENT) moveTo(point.x, point.y) else lineTo(point.x, point.y)
         }
@@ -122,41 +147,68 @@ private fun DrawScope.drawWaterBody(
             end = Offset(size.width * WATER_HIGHLIGHT_END_X, size.height)
         )
     )
-    drawWaterSurfaceSheen(motionPhase, motionIntensity, colors)
+    drawWaterSubsurfaceRidges(
+        primaryMotionPhase,
+        secondaryMotionPhase,
+        motionIntensity,
+        colors
+    )
+    drawWaterSurfaceSheen(
+        primaryMotionPhase,
+        secondaryMotionPhase,
+        motionIntensity,
+        colors
+    )
 }
 
 private fun DrawScope.waterSurfaceY(
     progress: Float,
-    motionPhase: Float,
+    primaryMotionPhase: Float,
+    secondaryMotionPhase: Float,
     motionIntensity: Float
 ): Float {
     val perspective = WATER_LEFT_DROP_FRACTION * (UNIT_FLOAT - progress) -
         WATER_RIGHT_LIFT_FRACTION * progress
     val primaryWave = sin(
         (progress * WATER_SURFACE_PRIMARY_CYCLES * FULL_CIRCLE_RADIANS +
-            motionPhase * FULL_CIRCLE_RADIANS).toDouble()
+            primaryMotionPhase * FULL_CIRCLE_RADIANS).toDouble()
     ).toFloat()
     val secondaryWave = sin(
         (progress * WATER_SURFACE_SECONDARY_CYCLES * FULL_CIRCLE_RADIANS -
-            motionPhase * DOUBLE_PHASE_RADIANS + WATER_SURFACE_PHASE_OFFSET).toDouble()
+            secondaryMotionPhase * FULL_CIRCLE_RADIANS + WATER_SURFACE_PHASE_OFFSET).toDouble()
+    ).toFloat()
+    val capillaryWave = sin(
+        (progress * WATER_SURFACE_CAPILLARY_CYCLES * FULL_CIRCLE_RADIANS +
+            primaryMotionPhase * DOUBLE_PHASE_RADIANS -
+            secondaryMotionPhase * FULL_CIRCLE_RADIANS).toDouble()
     ).toFloat()
     val amplitude = WATER_SURFACE_BASE_AMPLITUDE +
         WATER_SURFACE_ACTIVE_AMPLITUDE * motionIntensity
     return size.height * (
         WATER_TOP_FRACTION + perspective +
-            amplitude * (primaryWave * PRIMARY_WAVE_WEIGHT + secondaryWave * SECONDARY_WAVE_WEIGHT)
+            amplitude * (
+                primaryWave * PRIMARY_WAVE_WEIGHT +
+                    secondaryWave * SECONDARY_WAVE_WEIGHT +
+                    capillaryWave * CAPILLARY_WAVE_WEIGHT
+                )
         )
 }
 
 private fun DrawScope.drawWaterSurfaceSheen(
-    motionPhase: Float,
+    primaryMotionPhase: Float,
+    secondaryMotionPhase: Float,
     motionIntensity: Float,
     colors: AquaDeviceCardColors
 ) {
     val surface = Path()
     repeat(WATER_SURFACE_SEGMENTS + 1) { index ->
         val progress = index.toFloat() / WATER_SURFACE_SEGMENTS
-        val y = waterSurfaceY(progress, motionPhase, motionIntensity)
+        val y = waterSurfaceY(
+            progress,
+            primaryMotionPhase,
+            secondaryMotionPhase,
+            motionIntensity
+        )
         if (index == FIRST_SEGMENT) surface.moveTo(ORIGIN, y) else {
             surface.lineTo(size.width * progress, y)
         }
@@ -176,7 +228,118 @@ private fun DrawScope.drawWaterSurfaceSheen(
         ),
         style = Stroke(width = WATER_SURFACE_STROKE, cap = StrokeCap.Round)
     )
+    drawWaterSpecularCrests(
+        primaryMotionPhase,
+        secondaryMotionPhase,
+        motionIntensity,
+        colors
+    )
 }
+
+private fun DrawScope.drawWaterSubsurfaceRidges(
+    primaryMotionPhase: Float,
+    secondaryMotionPhase: Float,
+    motionIntensity: Float,
+    colors: AquaDeviceCardColors
+) {
+    repeat(SUBSURFACE_RIDGE_COUNT) { layer ->
+        val depth = size.height * (
+            SUBSURFACE_FIRST_DEPTH_FRACTION + layer * SUBSURFACE_DEPTH_STEP_FRACTION
+            )
+        val ridge = Path()
+        repeat(WATER_SURFACE_SEGMENTS + 1) { index ->
+            val progress = index.toFloat() / WATER_SURFACE_SEGMENTS
+            val phaseOffset = layer * SUBSURFACE_PHASE_STEP
+            val y = waterSurfaceY(
+                progress,
+                wrapDrawingPhase(primaryMotionPhase + phaseOffset),
+                wrapDrawingPhase(secondaryMotionPhase - phaseOffset),
+                motionIntensity
+            ) + depth
+            if (index == FIRST_SEGMENT) ridge.moveTo(ORIGIN, y) else {
+                ridge.lineTo(size.width * progress, y)
+            }
+        }
+        drawPath(
+            path = ridge,
+            color = colors.primaryText.copy(
+                alpha = AquaCoolingDashboardAlpha.liveHeroWaterSubsurface /
+                    (layer + SUBSURFACE_ALPHA_DIVISOR)
+            ),
+            style = Stroke(width = SUBSURFACE_STROKE, cap = StrokeCap.Round)
+        )
+    }
+}
+
+private fun DrawScope.drawWaterSpecularCrests(
+    primaryMotionPhase: Float,
+    secondaryMotionPhase: Float,
+    motionIntensity: Float,
+    colors: AquaDeviceCardColors
+) {
+    repeat(SPECULAR_SAMPLE_COUNT) { index ->
+        val progress = (index + SPECULAR_SAMPLE_OFFSET) / SPECULAR_SAMPLE_COUNT
+        val crest = sin(
+            (progress * SPECULAR_CYCLES * FULL_CIRCLE_RADIANS +
+                primaryMotionPhase * FULL_CIRCLE_RADIANS -
+                secondaryMotionPhase * SPECULAR_SECONDARY_PHASE_SCALE).toDouble()
+        ).toFloat()
+        if (crest > SPECULAR_DRAW_THRESHOLD) {
+            val y = waterSurfaceY(
+                progress,
+                primaryMotionPhase,
+                secondaryMotionPhase,
+                motionIntensity
+            ) - size.height * SPECULAR_VERTICAL_LIFT_FRACTION
+            val halfWidth = size.width * SPECULAR_HALF_WIDTH_FRACTION * crest
+            drawLine(
+                color = colors.primaryText.copy(
+                    alpha = AquaCoolingDashboardAlpha.liveHeroWaterSpecular * crest
+                ),
+                start = Offset(size.width * progress - halfWidth, y),
+                end = Offset(size.width * progress + halfWidth, y),
+                strokeWidth = SPECULAR_STROKE,
+                cap = StrokeCap.Round
+            )
+        }
+    }
+}
+
+private fun DrawScope.drawWaterCaustics(
+    primaryMotionPhase: Float,
+    secondaryMotionPhase: Float,
+    motionIntensity: Float,
+    colors: AquaDeviceCardColors
+) {
+    repeat(CAUSTIC_LINE_COUNT) { line ->
+        val caustic = Path()
+        repeat(CAUSTIC_SEGMENTS + 1) { index ->
+            val progress = index.toFloat() / CAUSTIC_SEGMENTS
+            val x = size.width * progress
+            val wave = sin(
+                (progress * CAUSTIC_CYCLES * FULL_CIRCLE_RADIANS +
+                    primaryMotionPhase * DOUBLE_PHASE_RADIANS +
+                    secondaryMotionPhase * FULL_CIRCLE_RADIANS +
+                    line * CAUSTIC_PHASE_STEP).toDouble()
+            ).toFloat()
+            val y = size.height * (
+                CAUSTIC_START_Y + line * CAUSTIC_LINE_SPACING +
+                    wave * CAUSTIC_AMPLITUDE * (CAUSTIC_IDLE_SCALE + motionIntensity)
+                )
+            if (index == FIRST_SEGMENT) caustic.moveTo(x, y) else caustic.lineTo(x, y)
+        }
+        drawPath(
+            path = caustic,
+            color = colors.accent.copy(
+                alpha = AquaCoolingDashboardAlpha.liveHeroWaterCaustic *
+                    (CAUSTIC_ALPHA_BASE + motionIntensity * CAUSTIC_ACTIVE_ALPHA_RANGE)
+            ),
+            style = Stroke(width = CAUSTIC_STROKE, cap = StrokeCap.Round)
+        )
+    }
+}
+
+private fun wrapDrawingPhase(value: Float): Float = (value + UNIT_FLOAT) % UNIT_FLOAT
 
 private fun DrawScope.drawAirflow(
     motionPhase: Float,
@@ -213,16 +376,23 @@ private fun DrawScope.drawAirflow(
 }
 
 private fun DrawScope.drawWaterReflection(
-    motionPhase: Float,
+    primaryMotionPhase: Float,
+    secondaryMotionPhase: Float,
     motionIntensity: Float,
     colors: AquaDeviceCardColors
 ) {
     val pulse = REFLECTION_PULSE_BASE + REFLECTION_PULSE_RANGE *
-        (sin((motionPhase * FULL_CIRCLE_RADIANS).toDouble()).toFloat() + UNIT_FLOAT) /
+        (sin((primaryMotionPhase * FULL_CIRCLE_RADIANS).toDouble()).toFloat() + UNIT_FLOAT) /
         DIAMETER_MULTIPLIER
     val radiusX = size.width * REFLECTION_RADIUS_X * pulse
     val radiusY = size.height * REFLECTION_RADIUS_Y * pulse
-    val center = Offset(size.width * REFLECTION_CENTER_X, size.height * REFLECTION_CENTER_Y)
+    val reflectionDrift = sin(
+        (secondaryMotionPhase * FULL_CIRCLE_RADIANS).toDouble()
+    ).toFloat() * size.width * REFLECTION_DRIFT_FRACTION
+    val center = Offset(
+        size.width * REFLECTION_CENTER_X + reflectionDrift,
+        size.height * REFLECTION_CENTER_Y
+    )
     drawOval(
         brush = Brush.radialGradient(
             colors = listOf(
@@ -330,6 +500,7 @@ private const val WATER_CLIP_HEADROOM_FRACTION = 0.014f
 private const val WATER_SURFACE_SEGMENTS = 56
 private const val WATER_SURFACE_PRIMARY_CYCLES = 2.6f
 private const val WATER_SURFACE_SECONDARY_CYCLES = 5.3f
+private const val WATER_SURFACE_CAPILLARY_CYCLES = 10.7f
 private const val WATER_SURFACE_PHASE_OFFSET = 1.1f
 private const val WATER_SURFACE_BASE_AMPLITUDE = 0.0042f
 private const val WATER_SURFACE_ACTIVE_AMPLITUDE = 0.0092f
@@ -345,9 +516,35 @@ private const val WATER_HIGHLIGHT_START_X = 0.12f
 private const val WATER_HIGHLIGHT_END_X = 0.88f
 private const val WATER_VOLUME_HIGHLIGHT_ALPHA_MULTIPLIER = 0.72f
 private const val WATER_VOLUME_ACCENT_ALPHA_MULTIPLIER = 0.48f
-private const val PRIMARY_WAVE_WEIGHT = 0.72f
-private const val SECONDARY_WAVE_WEIGHT = 0.28f
+private const val PRIMARY_WAVE_WEIGHT = 0.66f
+private const val SECONDARY_WAVE_WEIGHT = 0.24f
+private const val CAPILLARY_WAVE_WEIGHT = 0.10f
 private const val FIRST_SEGMENT = 0
+private const val SUBSURFACE_RIDGE_COUNT = 3
+private const val SUBSURFACE_FIRST_DEPTH_FRACTION = 0.025f
+private const val SUBSURFACE_DEPTH_STEP_FRACTION = 0.032f
+private const val SUBSURFACE_PHASE_STEP = 0.11f
+private const val SUBSURFACE_ALPHA_DIVISOR = 1f
+private const val SUBSURFACE_STROKE = 0.8f
+private const val SPECULAR_SAMPLE_COUNT = 18
+private const val SPECULAR_SAMPLE_OFFSET = 0.5f
+private const val SPECULAR_CYCLES = 4.2f
+private const val SPECULAR_SECONDARY_PHASE_SCALE = 4.3f
+private const val SPECULAR_DRAW_THRESHOLD = 0.70f
+private const val SPECULAR_VERTICAL_LIFT_FRACTION = 0.002f
+private const val SPECULAR_HALF_WIDTH_FRACTION = 0.012f
+private const val SPECULAR_STROKE = 1.25f
+private const val CAUSTIC_LINE_COUNT = 5
+private const val CAUSTIC_SEGMENTS = 28
+private const val CAUSTIC_CYCLES = 2.4f
+private const val CAUSTIC_PHASE_STEP = 0.82f
+private const val CAUSTIC_START_Y = 0.73f
+private const val CAUSTIC_LINE_SPACING = 0.045f
+private const val CAUSTIC_AMPLITUDE = 0.006f
+private const val CAUSTIC_IDLE_SCALE = 0.35f
+private const val CAUSTIC_ALPHA_BASE = 0.45f
+private const val CAUSTIC_ACTIVE_ALPHA_RANGE = 0.55f
+private const val CAUSTIC_STROKE = 0.75f
 private const val AIRFLOW_LINE_COUNT = 4
 private const val AIRFLOW_LINE_SPACING = 0.019f
 private const val AIRFLOW_PHASE_SPACING = 0.9f
@@ -363,6 +560,7 @@ private const val AIRFLOW_TARGET_Y = 0.67f
 private const val AIRFLOW_STROKE = 1.1f
 private const val REFLECTION_CENTER_X = 0.46f
 private const val REFLECTION_CENTER_Y = 0.70f
+private const val REFLECTION_DRIFT_FRACTION = 0.012f
 private const val REFLECTION_RADIUS_X = 0.13f
 private const val REFLECTION_RADIUS_Y = 0.026f
 private const val REFLECTION_PULSE_BASE = 0.92f

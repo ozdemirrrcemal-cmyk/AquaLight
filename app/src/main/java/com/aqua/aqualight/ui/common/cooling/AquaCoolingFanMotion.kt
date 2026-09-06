@@ -20,7 +20,10 @@ internal fun fanMotionDegreesPerSecond(outputIntensity: Float): Float =
     outputIntensity.coerceIn(NO_OUTPUT_INTENSITY, MAXIMUM_OUTPUT_INTENSITY) *
         FULL_OUTPUT_FAN_DEGREES_PER_SECOND
 
-private const val FULL_OUTPUT_FAN_MOTION_MILLIS = 620f
+// Fast enough to read as a full-power axial fan without creating distracting aliasing on 60 Hz
+// displays. Keeping this below half a second also makes the 100% state visibly distinct from the
+// mid-range speeds while the frame-clock integration preserves continuous acceleration.
+private const val FULL_OUTPUT_FAN_MOTION_MILLIS = 420f
 private const val MILLISECONDS_PER_SECOND = 1_000f
 private const val FULL_ROTATION_DEGREES = 360f
 private const val FULL_OUTPUT_FAN_DEGREES_PER_SECOND =
