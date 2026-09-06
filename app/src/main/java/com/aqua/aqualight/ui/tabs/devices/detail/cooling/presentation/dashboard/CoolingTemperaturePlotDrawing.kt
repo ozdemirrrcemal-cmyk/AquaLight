@@ -8,7 +8,6 @@ import androidx.compose.ui.graphics.PathEffect
 import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.drawscope.DrawScope
 import androidx.compose.ui.graphics.drawscope.Stroke
-import androidx.compose.ui.graphics.drawscope.clipRect
 import com.aqua.aqualight.ui.common.cooling.AquaCoolingDashboardAlpha
 import com.aqua.aqualight.ui.common.cooling.AquaCoolingDashboardGeometry
 import com.aqua.aqualight.ui.common.cooling.AquaCoolingTemperatureChartSpec
@@ -21,47 +20,36 @@ internal fun DrawScope.drawTemperatureHistory(
     scale: TemperatureChartScale,
     viewport: TemperaturePlotViewport,
     lineColor: Color,
-    drawArea: Boolean,
-    revealRightFraction: Float = 1f
+    drawArea: Boolean
 ) {
     val segments = temperatureChartSegments(values).map { segment ->
         temperatureHistoryOffsets(segment, scale, viewport)
     }
-    val revealRight = viewport.horizontalPadding +
-        viewport.width * revealRightFraction.coerceIn(0f, 1f) +
-        AquaCoolingDashboardGeometry.chartPointGlowRadius.toPx()
-    clipRect(
-        left = 0f,
-        top = 0f,
-        right = revealRight.coerceAtMost(size.width),
-        bottom = size.height
-    ) {
-        segments.forEach { points ->
-            if (points.size >= 2) {
-                if (drawArea) {
-                    drawTemperatureArea(
-                        path = smoothTemperatureAreaPath(
-                            points = points,
-                            bottomY = viewport.verticalPadding + viewport.height
-                        ),
-                        lineColor = lineColor,
-                        viewport = viewport
-                    )
-                }
-                drawTemperatureSeries(
-                    path = smoothTemperaturePath(points),
+    segments.forEach { points ->
+        if (points.size >= 2) {
+            if (drawArea) {
+                drawTemperatureArea(
+                    path = smoothTemperatureAreaPath(
+                        points = points,
+                        bottomY = viewport.verticalPadding + viewport.height
+                    ),
                     lineColor = lineColor,
-                    emphasized = drawArea
+                    viewport = viewport
                 )
-            } else {
-                points.singleOrNull()?.let { point ->
-                    drawTemperaturePoint(point, lineColor, emphasized = false)
-                }
+            }
+            drawTemperatureSeries(
+                path = smoothTemperaturePath(points),
+                lineColor = lineColor,
+                emphasized = drawArea
+            )
+        } else {
+            points.singleOrNull()?.let { point ->
+                drawTemperaturePoint(point, lineColor, emphasized = false)
             }
         }
-        segments.lastOrNull()?.lastOrNull()?.let { endpoint ->
-            drawTemperaturePoint(endpoint, lineColor, emphasized = true)
-        }
+    }
+    segments.firstOrNull()?.firstOrNull()?.let { nowPoint ->
+        drawTemperaturePoint(nowPoint, lineColor, emphasized = true)
     }
 }
 
@@ -100,16 +88,14 @@ internal fun DrawScope.drawTemperatureGrid(
             pathEffect = dashEffect
         )
     }
+    val historyBoundaryX = viewport.horizontalPadding + viewport.width
     drawLine(
         color = gridColor,
-        start = Offset(viewport.horizontalPadding, viewport.verticalPadding),
-        end = Offset(
-            viewport.horizontalPadding,
-            viewport.verticalPadding + viewport.height
-        ),
+        start = Offset(historyBoundaryX, viewport.verticalPadding),
+        end = Offset(historyBoundaryX, viewport.verticalPadding + viewport.height),
         strokeWidth = gridStroke
     )
-    val nowX = viewport.horizontalPadding + viewport.width
+    val nowX = viewport.horizontalPadding
     drawLine(
         color = colors.accent.copy(alpha = AquaCoolingDashboardAlpha.chartNowGuide),
         start = Offset(nowX, viewport.verticalPadding),

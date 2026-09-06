@@ -1,6 +1,5 @@
 package com.aqua.aqualight.ui.tabs.devices.detail.cooling.presentation.dashboard
 
-import androidx.compose.animation.core.Animatable
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.Canvas
@@ -16,10 +15,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.text.BasicText
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.key
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.layout.Layout
@@ -57,38 +53,6 @@ internal fun CoolingTemperatureChart(
     val scale = temperatureChartScale(
         chartValues.map(TemperatureChartValue::temperatureC)
     )
-    val revealRightFraction = remember { Animatable(0f) }
-    val seriesHasRendered = remember { mutableStateOf(false) }
-    val liveHead = data.liveTimeline.currentLivePoint
-    val latestArchiveEpochMillis = data.archivedPoints
-        .maxOfOrNull { point -> point.sampledAtEpochMillis }
-    LaunchedEffect(
-        data.historyGeneratedAtEpochMillis,
-        data.archivedPoints.size,
-        latestArchiveEpochMillis,
-        liveHead?.inputSampleSequence,
-        liveHead?.sampledAtUptimeMillis
-    ) {
-        if (chartValues.isEmpty()) {
-            revealRightFraction.snapTo(0f)
-            seriesHasRendered.value = false
-        } else {
-            val target = chartValues.last().xFraction
-            val start = when {
-                chartValues.size == 1 -> target
-                !seriesHasRendered.value -> chartValues.first().xFraction
-                else -> chartValues[chartValues.lastIndex - 1].xFraction
-            }
-            revealRightFraction.snapTo(start)
-            if (target > start) {
-                revealRightFraction.animateTo(
-                    targetValue = target,
-                    animationSpec = tween(durationMillis = SERIES_REVEAL_ANIMATION_MILLIS)
-                )
-            }
-            seriesHasRendered.value = true
-        }
-    }
 
     Row(
         modifier = modifier.fillMaxWidth(),
@@ -105,8 +69,7 @@ internal fun CoolingTemperatureChart(
                 chartValues = chartValues,
                 scale = scale,
                 colors = colors,
-                typography = typography,
-                revealRightFraction = revealRightFraction.value
+                typography = typography
             )
             Spacer(modifier = Modifier.height(AquaDeviceCardGeometry.compactGap))
             TemperatureTimeAxis(colors = colors, typography = typography)
@@ -148,8 +111,7 @@ private fun CoolingTemperaturePlot(
     chartValues: List<TemperatureChartValue>,
     scale: TemperatureChartScale,
     colors: AquaDeviceCardColors,
-    typography: AquaDeviceCardTypography,
-    revealRightFraction: Float
+    typography: AquaDeviceCardTypography
 ) {
     Box(
         modifier = Modifier
@@ -172,8 +134,7 @@ private fun CoolingTemperaturePlot(
                     scale = scale,
                     viewport = viewport,
                     lineColor = colors.accent,
-                    drawArea = true,
-                    revealRightFraction = revealRightFraction
+                    drawArea = true
                 )
             }
         }
@@ -207,11 +168,11 @@ private fun TemperatureTimeAxis(
     typography: AquaDeviceCardTypography
 ) {
     val labels = listOf(
-        stringResource(R.string.device_cooling_chart_24h_start),
-        stringResource(R.string.device_cooling_chart_18h),
-        stringResource(R.string.device_cooling_chart_12h),
+        stringResource(R.string.device_cooling_chart_now),
         stringResource(R.string.device_cooling_chart_6h),
-        stringResource(R.string.device_cooling_chart_now)
+        stringResource(R.string.device_cooling_chart_12h),
+        stringResource(R.string.device_cooling_chart_18h),
+        stringResource(R.string.device_cooling_chart_24h_start)
     )
     Layout(
         modifier = Modifier
@@ -261,4 +222,3 @@ private fun ChartAxisLabel(
 }
 
 private const val LIVE_HEAD_ANIMATION_MILLIS = 250
-private const val SERIES_REVEAL_ANIMATION_MILLIS = 550

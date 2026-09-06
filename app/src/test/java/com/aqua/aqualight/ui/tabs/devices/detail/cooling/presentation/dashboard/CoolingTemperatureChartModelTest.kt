@@ -10,7 +10,7 @@ import org.junit.Test
 class CoolingTemperatureChartModelTest {
 
     @Test
-    fun archiveUsesRealRollingTwentyFourHourPositions() {
+    fun archiveUsesRealRollingTwentyFourHourAgePositions() {
         val values = temperatureChartValues(
             archivedPoints = listOf(
                 historyPoint(NOW - TEMPERATURE_CHART_WINDOW_MILLIS, 24.0),
@@ -21,13 +21,14 @@ class CoolingTemperatureChartModelTest {
             liveTimeline = CoolingTemperatureTimelinePresentation()
         )
 
+        assertEquals(listOf(26f, 25f, 24f), values.map { it.temperatureC })
         assertEquals(0f, values[0].xFraction, 0.0001f)
         assertEquals(0.5f, values[1].xFraction, 0.0001f)
         assertEquals(1f, values[2].xFraction, 0.0001f)
     }
 
     @Test
-    fun firstLiveSampleIsDrawnAtNowWithoutHistory() {
+    fun firstLiveSampleIsDrawnAtNowOnLeftEdgeWithoutHistory() {
         val point = livePoint(sequence = 1L, sampledAt = 10_000L)
         val values = temperatureChartValues(
             archivedPoints = emptyList(),
@@ -39,12 +40,12 @@ class CoolingTemperatureChartModelTest {
         )
 
         assertEquals(1, values.size)
-        assertEquals(1f, values.single().xFraction, 0f)
+        assertEquals(0f, values.single().xFraction, 0f)
         assertEquals(TemperatureChartSource.LIVE, values.single().source)
     }
 
     @Test
-    fun liveSeriesIsAlwaysOrderedOldestToNewestWithHeadAtNow() {
+    fun liveSeriesIsAlwaysOrderedNewestToOldestWithHeadAtNow() {
         val oldest = livePoint(sequence = 1L, sampledAt = 1_000L, temperatureC = 24.5)
         val middle = livePoint(sequence = 2L, sampledAt = 301_000L, temperatureC = 25.0)
         val head = livePoint(sequence = 3L, sampledAt = 601_000L, temperatureC = 25.5)
@@ -57,18 +58,18 @@ class CoolingTemperatureChartModelTest {
             )
         )
 
-        assertEquals(listOf(24.5f, 25.0f, 25.5f), values.map { it.temperatureC })
+        assertEquals(listOf(25.5f, 25.0f, 24.5f), values.map { it.temperatureC })
         assertTrue(values.zipWithNext().all { (left, right) -> left.xFraction <= right.xFraction })
-        assertEquals(1f, values.last().xFraction, 0f)
-        assertEquals(TemperatureChartSource.LIVE, values.last().source)
+        assertEquals(0f, values.first().xFraction, 0f)
+        assertEquals(TemperatureChartSource.LIVE, values.first().source)
     }
 
     @Test
     fun longMissingIntervalBreaksFalseConnectingLine() {
         val values = listOf(
-            TemperatureChartValue(0f, 24f, TemperatureChartSource.ARCHIVE),
+            TemperatureChartValue(0f, 24f, TemperatureChartSource.LIVE),
             TemperatureChartValue(0.25f, 25f, TemperatureChartSource.ARCHIVE),
-            TemperatureChartValue(1f, 26f, TemperatureChartSource.LIVE)
+            TemperatureChartValue(1f, 26f, TemperatureChartSource.ARCHIVE)
         )
 
         val segments = temperatureChartSegments(values)
