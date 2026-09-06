@@ -113,22 +113,11 @@ class CoolingHeroPresentationTest {
     }
 
     @Test
-    fun `enabled waiting state motion starts before first telemetry`() {
+    fun `waiting state motion never implies live cooling`() {
         val motion = state(
             fanPercent = 0.0,
             options = HeroStateOptions(freshness = CoolingDataFreshness.STALE)
-        ).toCoolingHeroPresentation().resolveMotion(allowWaitingMotion = true)
-
-        assertTrue(motion.isActive)
-        assertEquals(WAITING_MOTION_INTENSITY, motion.intensity, NO_DELTA)
-    }
-
-    @Test
-    fun `disabled waiting state motion does not imply live cooling`() {
-        val motion = state(
-            fanPercent = 0.0,
-            options = HeroStateOptions(freshness = CoolingDataFreshness.STALE)
-        ).toCoolingHeroPresentation().resolveMotion(allowWaitingMotion = false)
+        ).toCoolingHeroPresentation().resolveMotion()
 
         assertFalse(motion.isActive)
         assertEquals(NO_MOTION, motion.intensity, NO_DELTA)
@@ -219,7 +208,6 @@ class CoolingHeroPresentationTest {
         const val EXPECTED_CONTINUOUS_AUTOMATIC_INTENSITY = 0.3595f
         val continuousAutomaticIntensityDelta =
             Math.ulp(EXPECTED_CONTINUOUS_AUTOMATIC_INTENSITY)
-        const val WAITING_MOTION_INTENSITY = 0.58f
         const val FULL_OUTPUT_PERIOD_MILLIS = 620
         const val HALF_OUTPUT_PERIOD_MILLIS = 1240
         const val QUARTER_OUTPUT_PERIOD_MILLIS = 2480

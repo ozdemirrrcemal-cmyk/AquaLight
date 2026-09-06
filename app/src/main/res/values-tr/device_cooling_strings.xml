@@ -255,9 +255,15 @@
     <string name="device_cooling_program_save">Kaydet</string>
     <string name="device_cooling_program_schedule_invalid">Seçilen saat aralığı geçersiz veya başka bir programla çakışıyor.</string>
     <string name="device_cooling_program_start_time_sheet_title">Başlangıç Saati</string>
-    <string name="device_cooling_program_start_time_sheet_message">Başlangıç saatini seçin. Gerekirse bitiş, en az %1$d dakikayı korumak için ileri alınır. Yalnızca geçerli %2$d dakikalık adımlar gösterilir.</string>
+    <plurals name="device_cooling_program_start_time_sheet_message">
+        <item quantity="one">Başlangıç saatini seçin. Gerekirse bitiş, en az %1$d dakikayı korumak için ileri alınır. Yalnızca geçerli %2$d dakikalık adımlar gösterilir.</item>
+        <item quantity="other">Başlangıç saatini seçin. Gerekirse bitiş, en az %1$d dakikayı korumak için ileri alınır. Yalnızca geçerli %2$d dakikalık adımlar gösterilir.</item>
+    </plurals>
     <string name="device_cooling_program_end_time_sheet_title">Bitiş Saati</string>
-    <string name="device_cooling_program_end_time_sheet_message">Bitiş saatini seçin. Zaman dilimi en az %1$d dakika olmalıdır. Yalnızca geçerli %2$d dakikalık adımlar gösterilir.</string>
+    <plurals name="device_cooling_program_end_time_sheet_message">
+        <item quantity="one">Bitiş saatini seçin. Zaman dilimi en az %1$d dakika olmalıdır. Yalnızca geçerli %2$d dakikalık adımlar gösterilir.</item>
+        <item quantity="other">Bitiş saatini seçin. Zaman dilimi en az %1$d dakika olmalıdır. Yalnızca geçerli %2$d dakikalık adımlar gösterilir.</item>
+    </plurals>
     <string name="device_cooling_program_fan_on_temperature_sheet_title">Fan Başlangıç Sıcaklığı</string>
     <string name="device_cooling_program_fan_on_temperature_sheet_helper">Bu zaman dilimi içinde su bu sıcaklığa ulaştığında fan seçilen program hızında çalışır.</string>
 

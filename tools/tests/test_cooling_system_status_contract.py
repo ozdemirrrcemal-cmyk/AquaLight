@@ -55,17 +55,13 @@ class CoolingSystemStatusContractTest(unittest.TestCase):
         for locale_keys in keys.values():
             self.assertFalse(any(key.startswith(old_prefix) for key in locale_keys))
 
-    def test_status_route_and_all_runtime_compositions_are_wired(self) -> None:
+    def test_status_route_and_explicit_runtime_compositions_are_wired(self) -> None:
         route = (MAIN / "res/navigation/nav_devices.xml").read_text(encoding="utf-8")
         self.assertIn("deviceCoolingSystemStatusFragment", route)
         self.assertIn("cooling/status", route)
 
         composition_paths = (
             MAIN / "java/com/aqua/aqualight/composition/OwnerViewModelFactory.kt",
-            ROOT / (
-                "app/src/debug/java/com/aqua/aqualight/debug/devices/"
-                "DebugDeviceFixtureAppContainer.kt"
-            ),
             ROOT / "app/src/releaseSmoke/java/com/aqua/aqualight/smoke/ReleaseSmokeAppContainer.kt",
         )
         for path in composition_paths:

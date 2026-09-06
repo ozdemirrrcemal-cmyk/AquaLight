@@ -26,7 +26,6 @@ import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.ImageBitmap
 import androidx.compose.ui.layout.ContentScale
-import androidx.compose.ui.res.booleanResource
 import androidx.compose.ui.res.imageResource
 import com.aqua.aqualight.R
 import com.aqua.aqualight.ui.common.cooling.AquaCoolingDashboardAlpha
@@ -42,9 +41,7 @@ internal fun CoolingLiveHero(
     modifier: Modifier = Modifier
 ) {
     val presentation = state.toCoolingHeroPresentation()
-    val motion = presentation.resolveMotion(
-        allowWaitingMotion = booleanResource(R.bool.device_cooling_waiting_motion_enabled)
-    )
+    val motion = presentation.resolveMotion()
     val motionPhases = coolingHeroMotionPhases(motion)
     val shape = RoundedCornerShape(AquaCoolingDashboardGeometry.cardCornerRadius)
 

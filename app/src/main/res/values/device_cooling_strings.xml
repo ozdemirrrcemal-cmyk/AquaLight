@@ -255,9 +255,15 @@
     <string name="device_cooling_program_save">Save</string>
     <string name="device_cooling_program_schedule_invalid">The selected time range is invalid or overlaps another program.</string>
     <string name="device_cooling_program_start_time_sheet_title">Start Time</string>
-    <string name="device_cooling_program_start_time_sheet_message">Choose the start time. If needed, the end moves forward to keep at least %1$d minutes. Only valid %2$d-minute times are shown.</string>
+    <plurals name="device_cooling_program_start_time_sheet_message">
+        <item quantity="one">Choose the start time. If needed, the end moves forward to keep at least %1$d minute. Only valid %2$d-minute times are shown.</item>
+        <item quantity="other">Choose the start time. If needed, the end moves forward to keep at least %1$d minutes. Only valid %2$d-minute times are shown.</item>
+    </plurals>
     <string name="device_cooling_program_end_time_sheet_title">End Time</string>
-    <string name="device_cooling_program_end_time_sheet_message">Choose the end time. The period must be at least %1$d minutes. Only valid %2$d-minute times are shown.</string>
+    <plurals name="device_cooling_program_end_time_sheet_message">
+        <item quantity="one">Choose the end time. The period must be at least %1$d minute. Only valid %2$d-minute times are shown.</item>
+        <item quantity="other">Choose the end time. The period must be at least %1$d minutes. Only valid %2$d-minute times are shown.</item>
+    </plurals>
     <string name="device_cooling_program_fan_on_temperature_sheet_title">Fan On Temperature</string>
     <string name="device_cooling_program_fan_on_temperature_sheet_helper">During this time period, the fan starts at the selected program speed when the tank reaches this temperature.</string>
 

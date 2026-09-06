@@ -202,8 +202,24 @@ def validate_production_cutover(repository_root: Path, source_root: Path) -> lis
         fixture_catalog = debug_device_root / "DebugDeviceFixtureCatalog.kt"
         if fixture_catalog.is_file():
             fixture_source = fixture_catalog.read_text(encoding="utf-8", errors="ignore")
-            exclusion = ".filterNot { product -> product.family == DeviceFamily.DOSING }"
-            if exclusion not in fixture_source:
+            direct_exclusion = (
+                ".filterNot { product -> product.family == DeviceFamily.DOSING }"
+                in fixture_source
+            )
+            allowlist_match = re.search(
+                r"FIXTURE_FAMILIES\s*=\s*setOf\((?P<families>[^)]*)\)",
+                fixture_source,
+            )
+            filtered_by_allowlist = (
+                ".filter { product -> product.family in FIXTURE_FAMILIES }"
+                in fixture_source
+            )
+            allowlist_excludes_dosing = (
+                filtered_by_allowlist
+                and allowlist_match is not None
+                and "DeviceFamily.DOSING" not in allowlist_match.group("families")
+            )
+            if not direct_exclusion and not allowlist_excludes_dosing:
                 errors.append(
                     f"{relative(fixture_catalog, repository_root)}: Dosing products must be excluded "
                     "from installable debug fixtures"

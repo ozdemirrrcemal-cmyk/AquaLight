@@ -167,8 +167,9 @@ class DeviceCoolingProgramSettingsFragment : DeviceCoolingModeSettingsFragment(
             spec = TimeSheetSpec(
                 requestKey = REQUEST_START_TIME,
                 titleRes = R.string.device_cooling_program_start_time_sheet_title,
-                message = getString(
-                    R.string.device_cooling_program_start_time_sheet_message,
+                message = resources.getQuantityString(
+                    R.plurals.device_cooling_program_start_time_sheet_message,
+                    policy.minimumSlotDurationMinutes,
                     policy.minimumSlotDurationMinutes,
                     policy.timeStepMinutes
                 ),
@@ -186,8 +187,9 @@ class DeviceCoolingProgramSettingsFragment : DeviceCoolingModeSettingsFragment(
             spec = TimeSheetSpec(
                 requestKey = REQUEST_END_TIME,
                 titleRes = R.string.device_cooling_program_end_time_sheet_title,
-                message = getString(
-                    R.string.device_cooling_program_end_time_sheet_message,
+                message = resources.getQuantityString(
+                    R.plurals.device_cooling_program_end_time_sheet_message,
+                    policy.minimumSlotDurationMinutes,
                     policy.minimumSlotDurationMinutes,
                     policy.timeStepMinutes
                 ),

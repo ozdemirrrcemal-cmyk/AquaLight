@@ -9,18 +9,17 @@ ROOT_VIEW_MODEL = ROOT / (
 )
 COMPOSITIONS = {
     "production": ROOT / "app/src/main/java/com/aqua/aqualight/composition/OwnerViewModelFactory.kt",
-    "debug": ROOT / (
-        "app/src/debug/java/com/aqua/aqualight/debug/devices/DebugDeviceFixtureAppContainer.kt"
-    ),
     "releaseSmoke": ROOT / (
         "app/src/releaseSmoke/java/com/aqua/aqualight/smoke/ReleaseSmokeAppContainer.kt"
     ),
 }
 CONTROL_OPERATION_WIRING = {
     "production": "controlOperations = DefaultDeviceCoolingControlOperations(",
-    "debug": "controlOperations = controlSurface.coolingControlOperations",
     "releaseSmoke": "controlOperations = DefaultDeviceCoolingControlOperations(",
 }
+DEBUG_COMPOSITION = ROOT / (
+    "app/src/debug/java/com/aqua/aqualight/debug/devices/DebugDeviceFixtureAppContainer.kt"
+)
 
 
 class CoolingRootDependencyWiringTest(unittest.TestCase):
@@ -44,7 +43,7 @@ class CoolingRootDependencyWiringTest(unittest.TestCase):
         ):
             self.assertNotIn(forbidden, text)
 
-    def test_every_composition_wires_all_root_feature_operations(self) -> None:
+    def test_explicit_runtime_compositions_wire_all_root_feature_operations(self) -> None:
         for name, path in COMPOSITIONS.items():
             with self.subTest(composition=name):
                 text = path.read_text(encoding="utf-8")
@@ -61,16 +60,18 @@ class CoolingRootDependencyWiringTest(unittest.TestCase):
                 self.assertIn("DefaultDeviceCoolingAutomaticSettingsOperations(", text)
                 self.assertIn("controlSurfacePreparationOperations =", text)
 
-        debug_text = COMPOSITIONS["debug"].read_text(encoding="utf-8")
-        self.assertIn("DebugFixtureCoolingControlOperations(", debug_text)
-        self.assertIn(
-            "delegate = DefaultDeviceCoolingControlOperations(",
-            debug_text,
-        )
-        self.assertIn(
-            "controlSurfacePreparationOperations = controlSurface.preparationOperations",
-            debug_text,
-        )
+    def test_debug_composition_does_not_override_cooling_production_wiring(self) -> None:
+        debug_text = DEBUG_COMPOSITION.read_text(encoding="utf-8")
+
+        self.assertIn("else -> return delegate.create(modelClass)", debug_text)
+        for forbidden in (
+            "DeviceCooling",
+            "DebugFixtureCooling",
+            "DefaultDeviceCooling",
+            "coolingControlOperations",
+            "createCooling",
+        ):
+            self.assertNotIn(forbidden, debug_text)
 
 
 if __name__ == "__main__":

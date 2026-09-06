@@ -206,6 +206,44 @@ class DosingArchitectureGuardTest(unittest.TestCase):
 
             self.assertTrue(any("Dosing debug fixture implementation" in error for error in errors), errors)
 
+    def test_debug_fixture_family_allowlist_must_exclude_dosing(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            repository = Path(directory)
+            self._create_minimum_repository(repository)
+            debug_root = repository / "app/src/debug/java/com/aqua/aqualight/debug/devices"
+            debug_root.mkdir(parents=True)
+            (debug_root / "DebugDeviceFixtureCatalog.kt").write_text(
+                ".filter { product -> product.family in FIXTURE_FAMILIES }\n"
+                "private val FIXTURE_FAMILIES = setOf(\n"
+                "    DeviceFamily.LIGHT,\n"
+                "    DeviceFamily.DOSING\n"
+                ")\n",
+                encoding="utf-8",
+            )
+
+            errors = GUARD.validate_repository(repository)
+
+            self.assertTrue(any("Dosing products must be excluded" in error for error in errors), errors)
+
+    def test_debug_fixture_family_allowlist_without_dosing_is_accepted(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            repository = Path(directory)
+            self._create_minimum_repository(repository)
+            debug_root = repository / "app/src/debug/java/com/aqua/aqualight/debug/devices"
+            debug_root.mkdir(parents=True)
+            (debug_root / "DebugDeviceFixtureCatalog.kt").write_text(
+                ".filter { product -> product.family in FIXTURE_FAMILIES }\n"
+                "private val FIXTURE_FAMILIES = setOf(\n"
+                "    DeviceFamily.LIGHT,\n"
+                "    DeviceFamily.TIMER\n"
+                ")\n",
+                encoding="utf-8",
+            )
+
+            errors = GUARD.validate_repository(repository)
+
+            self.assertFalse(any("Dosing products must be excluded" in error for error in errors), errors)
+
     def test_misplaced_application_declaration_is_rejected(self) -> None:
         with tempfile.TemporaryDirectory() as directory:
             repository = Path(directory)

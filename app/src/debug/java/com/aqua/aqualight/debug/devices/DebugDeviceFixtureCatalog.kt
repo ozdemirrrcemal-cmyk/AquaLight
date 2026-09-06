@@ -18,23 +18,18 @@ import com.aqua.aqualight.data.devices.model.DeviceUid
 import com.aqua.aqualight.data.devices.toDeviceRootSnapshot
 import com.aqua.aqualight.data.devices.toOwnerDeviceListItem
 
-/**
- * Installable-Debug-only fixtures for non-Dosing products.
- *
- * Dosing fixtures are deliberately excluded. Dosing acceptance uses physical devices and the same
- * production runtime/state path in every build type.
- */
+/** Installable-Debug-only fixtures for the Light and Timer product families. */
 internal class DebugDeviceFixtureCatalog {
 
     val snapshots: List<DeviceSnapshot> = AqlCommercialDeviceCatalog.products
-        .filterNot { product -> product.family == DeviceFamily.DOSING }
+        .filter { product -> product.family in FIXTURE_FAMILIES }
         .mapIndexed { index, product -> product.toFixtureSnapshot(index) }
 
     private val snapshotsByUid = snapshots.associateBy { snapshot -> snapshot.deviceUid.value }
 
     init {
-        check(snapshots.none { snapshot -> snapshot.product.family == DeviceFamily.DOSING }) {
-            "Dosing debug fixtures are forbidden; Dosing must use the production runtime."
+        check(snapshots.all { snapshot -> snapshot.product.family in FIXTURE_FAMILIES }) {
+            "Debug fixture catalog contains an unsupported device family."
         }
         snapshots.forEach { snapshot ->
             check(snapshot.toDeviceRootSnapshot().catalogState == DeviceRootCatalogState.VALID) {
@@ -129,6 +124,8 @@ internal class DebugDeviceFixtureCatalog {
         dosingChannelCount = limits.dosingChannelCount
     )
 }
+
+private val FIXTURE_FAMILIES = setOf(DeviceFamily.LIGHT, DeviceFamily.TIMER)
 
 private fun fixtureEndpoint(index: Int): DeviceRuntimeEndpoint = DeviceRuntimeEndpoint(
     ip = "192.168.254.${100 + index}",
