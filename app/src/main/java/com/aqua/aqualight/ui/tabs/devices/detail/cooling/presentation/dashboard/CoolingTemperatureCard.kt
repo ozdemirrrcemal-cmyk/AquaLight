@@ -67,10 +67,12 @@ internal fun CoolingTemperatureCard(
                 verticalAlignment = Alignment.Top
             ) {
                 CoolingTemperatureChart(
-                    archivedPoints = state.temperatureHistoryPoints,
-                    historyGeneratedAtEpochMillis =
-                        state.temperatureHistoryGeneratedAtEpochMillis,
-                    liveTimeline = state.temperatureTimelineState,
+                    data = CoolingTemperatureChartData(
+                        archivedPoints = state.temperatureHistoryPoints,
+                        historyGeneratedAtEpochMillis =
+                            state.temperatureHistoryGeneratedAtEpochMillis,
+                        liveTimeline = state.temperatureTimelineState
+                    ),
                     colors = colors,
                     typography = typography,
                     modifier = Modifier.weight(1f)

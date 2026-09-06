@@ -19,6 +19,12 @@ internal data class TemperatureChartValue(
     val source: TemperatureChartSource
 )
 
+internal data class CoolingTemperatureChartData(
+    val archivedPoints: List<DeviceCoolingTemperatureHistoryPoint>,
+    val historyGeneratedAtEpochMillis: Long?,
+    val liveTimeline: CoolingTemperatureTimelinePresentation
+)
+
 internal fun temperatureChartValues(
     archivedPoints: List<DeviceCoolingTemperatureHistoryPoint>,
     historyGeneratedAtEpochMillis: Long?,
@@ -26,81 +32,103 @@ internal fun temperatureChartValues(
     animatedLiveHeadTemperatureC: Float? = null
 ): List<TemperatureChartValue> {
     val currentLive = liveTimeline.currentLivePoint
-    val windowEndEpochMillis = historyGeneratedAtEpochMillis?.let { generatedAt ->
-        val anchorEpoch = liveTimeline.historyAnchorEpochMillis
-        val anchorUptime = liveTimeline.historyAnchorEvaluatedAtUptimeMillis
-        val currentUptime = currentLive?.evaluatedAtUptimeMillis
-        if (anchorEpoch != null && anchorUptime != null && currentUptime != null) {
-            anchorEpoch + (currentUptime - anchorUptime)
-        } else {
-            generatedAt
-        }
-    }
-
-    val archiveValues = if (windowEndEpochMillis == null) {
-        emptyList()
-    } else {
-        val windowStartEpochMillis = windowEndEpochMillis - TEMPERATURE_CHART_WINDOW_MILLIS
-        archivedPoints.mapNotNull { point ->
-            if (
-                point.sampledAtEpochMillis !in
-                windowStartEpochMillis..windowEndEpochMillis ||
-                !point.temperatureC.isFinite()
-            ) {
-                null
-            } else {
-                TemperatureChartValue(
-                    xFraction = (
-                        (point.sampledAtEpochMillis - windowStartEpochMillis).toDouble() /
-                            TEMPERATURE_CHART_WINDOW_MILLIS.toDouble()
-                        ).toFloat().coerceIn(0f, 1f),
-                    temperatureC = point.temperatureC.toFloat(),
-                    source = TemperatureChartSource.ARCHIVE
-                )
-            }
-        }
-    }
-
-    val liveValues = currentLive?.let { head ->
-        val uniqueLive = buildList {
-            addAll(liveTimeline.committedLivePoints)
-            if (
-                lastOrNull()?.inputSampleSequence != head.inputSampleSequence ||
-                lastOrNull()?.sampledAtUptimeMillis != head.sampledAtUptimeMillis
-            ) {
-                add(head)
-            }
-        }
-        uniqueLive.mapNotNull { point ->
-            val ageMillis = head.sampledAtUptimeMillis - point.sampledAtUptimeMillis
-            if (
-                ageMillis !in 0L..TEMPERATURE_CHART_WINDOW_MILLIS ||
-                !point.temperatureC.isFinite()
-            ) {
-                null
-            } else {
-                TemperatureChartValue(
-                    xFraction = (
-                        1.0 - ageMillis.toDouble() /
-                            TEMPERATURE_CHART_WINDOW_MILLIS.toDouble()
-                        ).toFloat().coerceIn(0f, 1f),
-                    temperatureC = if (
-                        point.inputSampleSequence == head.inputSampleSequence &&
-                        point.sampledAtUptimeMillis == head.sampledAtUptimeMillis
-                    ) {
-                        animatedLiveHeadTemperatureC ?: point.temperatureC.toFloat()
-                    } else {
-                        point.temperatureC.toFloat()
-                    },
-                    source = TemperatureChartSource.LIVE
-                )
-            }
-        }
-    }.orEmpty()
+    val windowEndEpochMillis = temperatureChartWindowEnd(
+        historyGeneratedAtEpochMillis = historyGeneratedAtEpochMillis,
+        liveTimeline = liveTimeline
+    )
+    val archiveValues = archivedTemperatureChartValues(
+        points = archivedPoints,
+        windowEndEpochMillis = windowEndEpochMillis
+    )
+    val liveValues = liveTemperatureChartValues(
+        liveTimeline = liveTimeline,
+        animatedLiveHeadTemperatureC = animatedLiveHeadTemperatureC
+    )
 
     return coalesceArchiveAndLivePositions(
         (archiveValues + liveValues).sortedBy(TemperatureChartValue::xFraction)
     )
+}
+
+private fun temperatureChartWindowEnd(
+    historyGeneratedAtEpochMillis: Long?,
+    liveTimeline: CoolingTemperatureTimelinePresentation
+): Long? {
+    val generatedAt = historyGeneratedAtEpochMillis ?: return null
+    val anchorEpoch = liveTimeline.historyAnchorEpochMillis
+    val anchorUptime = liveTimeline.historyAnchorEvaluatedAtUptimeMillis
+    val currentUptime = liveTimeline.currentLivePoint?.evaluatedAtUptimeMillis
+    return if (anchorEpoch != null && anchorUptime != null && currentUptime != null) {
+        anchorEpoch + (currentUptime - anchorUptime)
+    } else {
+        generatedAt
+    }
+}
+
+private fun archivedTemperatureChartValues(
+    points: List<DeviceCoolingTemperatureHistoryPoint>,
+    windowEndEpochMillis: Long?
+): List<TemperatureChartValue> {
+    val windowEnd = windowEndEpochMillis ?: return emptyList()
+    val windowStart = windowEnd - TEMPERATURE_CHART_WINDOW_MILLIS
+    return points.mapNotNull { point ->
+        if (
+            point.sampledAtEpochMillis !in windowStart..windowEnd ||
+            !point.temperatureC.isFinite()
+        ) {
+            null
+        } else {
+            TemperatureChartValue(
+                xFraction = (
+                    (point.sampledAtEpochMillis - windowStart).toDouble() /
+                        TEMPERATURE_CHART_WINDOW_MILLIS.toDouble()
+                    ).toFloat().coerceIn(0f, 1f),
+                temperatureC = point.temperatureC.toFloat(),
+                source = TemperatureChartSource.ARCHIVE
+            )
+        }
+    }
+}
+
+private fun liveTemperatureChartValues(
+    liveTimeline: CoolingTemperatureTimelinePresentation,
+    animatedLiveHeadTemperatureC: Float?
+): List<TemperatureChartValue> {
+    val head = liveTimeline.currentLivePoint ?: return emptyList()
+    val uniqueLive = buildList {
+        addAll(liveTimeline.committedLivePoints)
+        if (
+            lastOrNull()?.inputSampleSequence != head.inputSampleSequence ||
+            lastOrNull()?.sampledAtUptimeMillis != head.sampledAtUptimeMillis
+        ) {
+            add(head)
+        }
+    }
+    return uniqueLive.mapNotNull { point ->
+        val ageMillis = head.sampledAtUptimeMillis - point.sampledAtUptimeMillis
+        if (
+            ageMillis !in 0L..TEMPERATURE_CHART_WINDOW_MILLIS ||
+            !point.temperatureC.isFinite()
+        ) {
+            null
+        } else {
+            TemperatureChartValue(
+                xFraction = (
+                    1.0 - ageMillis.toDouble() /
+                        TEMPERATURE_CHART_WINDOW_MILLIS.toDouble()
+                    ).toFloat().coerceIn(0f, 1f),
+                temperatureC = if (
+                    point.inputSampleSequence == head.inputSampleSequence &&
+                    point.sampledAtUptimeMillis == head.sampledAtUptimeMillis
+                ) {
+                    animatedLiveHeadTemperatureC ?: point.temperatureC.toFloat()
+                } else {
+                    point.temperatureC.toFloat()
+                },
+                source = TemperatureChartSource.LIVE
+            )
+        }
+    }
 }
 
 internal fun temperatureChartSegments(

@@ -91,13 +91,7 @@ class DeviceCoolingRootViewModel(
                 preparedHandoff && initialControl is DeviceCoolingControlResult.Available
                 )
         )
-        initialControl.liveWaterSampleOrNull()?.let { sample ->
-            initialState = initialState.copy(
-                temperatureTimelineState = initialState.temperatureTimelineState
-                    .accept(sample)
-                    .state
-            )
-        }
+        initialState = initialState.withLiveWaterSampleFrom(initialControl)
 
         // Runtime/domain bootstrap owns live Cooling freshness. Screen entry only seeds the last
         // presentation snapshot and observes the central owner; it never requests status.
@@ -299,6 +293,15 @@ private fun DeviceCoolingControlResult.liveWaterSampleOrNull() =
         ?.snapshot
         ?.telemetry
         ?.waterTemperatureSample
+
+private fun DeviceCoolingRootUiState.withLiveWaterSampleFrom(
+    result: DeviceCoolingControlResult
+): DeviceCoolingRootUiState {
+    val sample = result.liveWaterSampleOrNull() ?: return this
+    return copy(
+        temperatureTimelineState = temperatureTimelineState.accept(sample).state
+    )
+}
 
 private class DeviceCoolingRootJobs {
     var observeJob: Job? = null

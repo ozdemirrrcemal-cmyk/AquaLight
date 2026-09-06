@@ -22,23 +22,19 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.style.TextAlign
 import com.aqua.aqualight.R
-import com.aqua.aqualight.application.devices.cooling.DeviceCoolingTemperatureHistoryPoint
 import com.aqua.aqualight.ui.common.cooling.AquaCoolingDashboardGeometry
 import com.aqua.aqualight.ui.common.devicecard.AquaDeviceCardColors
 import com.aqua.aqualight.ui.common.devicecard.AquaDeviceCardGeometry
 import com.aqua.aqualight.ui.common.devicecard.AquaDeviceCardTypography
-import com.aqua.aqualight.ui.tabs.devices.detail.cooling.presentation.root.CoolingTemperatureTimelinePresentation
 
 @Composable
 internal fun CoolingTemperatureChart(
-    archivedPoints: List<DeviceCoolingTemperatureHistoryPoint>,
-    historyGeneratedAtEpochMillis: Long?,
-    liveTimeline: CoolingTemperatureTimelinePresentation,
+    data: CoolingTemperatureChartData,
     colors: AquaDeviceCardColors,
     typography: AquaDeviceCardTypography,
     modifier: Modifier = Modifier
 ) {
-    val liveTarget = liveTimeline.currentLivePoint?.temperatureC?.toFloat()
+    val liveTarget = data.liveTimeline.currentLivePoint?.temperatureC?.toFloat()
     val animatedLiveHead = key(liveTarget != null) {
         animateFloatAsState(
             targetValue = liveTarget ?: 0f,
@@ -47,9 +43,9 @@ internal fun CoolingTemperatureChart(
         ).value
     }
     val chartValues = temperatureChartValues(
-        archivedPoints = archivedPoints,
-        historyGeneratedAtEpochMillis = historyGeneratedAtEpochMillis,
-        liveTimeline = liveTimeline,
+        archivedPoints = data.archivedPoints,
+        historyGeneratedAtEpochMillis = data.historyGeneratedAtEpochMillis,
+        liveTimeline = data.liveTimeline,
         animatedLiveHeadTemperatureC = liveTarget?.let { animatedLiveHead }
     )
     val scale = temperatureChartScale(
