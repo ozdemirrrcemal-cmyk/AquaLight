@@ -13,7 +13,6 @@ import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.selection.selectable
-import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.text.BasicText
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
@@ -223,13 +222,6 @@ internal fun CoolingModeCard(
                     onClick = { onModeSelected(mode) }
                 )
             }
-            if (state.selectedMode != null) {
-                CoolingActiveModeSummary(
-                    fanPercent = state.fanPercentNow,
-                    colors = colors,
-                    typography = typography
-                )
-            }
         }
     }
 }
@@ -291,40 +283,6 @@ private fun CoolingModeOption(
             ),
             maxLines = 1,
             overflow = TextOverflow.Ellipsis
-        )
-    }
-}
-
-@Composable
-private fun CoolingActiveModeSummary(
-    fanPercent: Int?,
-    colors: AquaDeviceCardColors,
-    typography: AquaDeviceCardTypography
-) {
-    Row(
-        modifier = Modifier.padding(top = AquaCoolingDashboardGeometry.modeStatusTopPadding),
-        verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.spacedBy(AquaCoolingDashboardGeometry.modeStatusGap)
-    ) {
-        Box(
-            modifier = Modifier
-                .size(AquaCoolingDashboardGeometry.modeStatusDotSize)
-                .clip(CircleShape)
-                .background(colors.success)
-        )
-        BasicText(
-            text = stringResource(R.string.device_cooling_mode_active),
-            style = typography.body.copy(color = colors.success)
-        )
-        BasicText(
-            text = stringResource(R.string.device_cooling_inline_separator),
-            style = typography.micro.copy(color = colors.secondaryText)
-        )
-        BasicText(
-            text = fanPercent?.let { value ->
-                stringResource(R.string.device_cooling_percent_value_format, value)
-            } ?: stringResource(R.string.device_cooling_value_unavailable),
-            style = typography.body.copy(color = colors.accent)
         )
     }
 }

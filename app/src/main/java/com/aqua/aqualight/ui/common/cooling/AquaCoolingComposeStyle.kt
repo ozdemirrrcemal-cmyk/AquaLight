@@ -35,8 +35,9 @@ object AquaCoolingDashboardGeometry {
     val temperatureChartPadding = 3.dp
     val temperatureYAxisWidth = 30.dp
     val temperatureYAxisGap = 5.dp
-    val temperatureMetricWidth = 72.dp
-    val temperatureMetricGap = 8.dp
+    val temperatureMetricWidth = 76.dp
+    val temperatureChartMetricGap = 4.dp
+    val temperatureMetricContentGap = 8.dp
     val temperatureMetricRowHeight = 38.dp
     val temperatureMetricIconSize = 16.dp
     val temperatureMetricIconGap = 5.dp
@@ -69,14 +70,11 @@ object AquaCoolingDashboardGeometry {
 
     val optionShape = RoundedCornerShape(18.dp)
     val optionHorizontalPadding = 9.dp
-    val optionVerticalPadding = 6.dp
+    val optionVerticalPadding = 8.dp
     val optionGap = 5.dp
-    val radioSize = 17.dp
+    val radioSize = 21.dp
     val radioStrokeWidth = 1.5.dp
     val radioCheckStrokeWidth = 1.8.dp
-    val modeStatusDotSize = 7.dp
-    val modeStatusGap = 7.dp
-    val modeStatusTopPadding = 2.dp
 
     val modeSettingsCardMinimumHeight = 174.dp
     val modeSettingsHeaderGap = 1.dp

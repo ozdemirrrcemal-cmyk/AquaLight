@@ -174,6 +174,61 @@ class CoolingStateMachineContractTest(unittest.TestCase):
         self.assertIn("saveState.isFailure", program)
         self.assertIn("showSnackBar", program)
 
+    def test_dashboard_temperature_metrics_use_compact_unclipped_copy(self) -> None:
+        dashboard = COOLING / "dashboard"
+        card = (dashboard / "CoolingTemperatureCard.kt").read_text(encoding="utf-8")
+        primitives = (dashboard / "CoolingDashboardPrimitives.kt").read_text(
+            encoding="utf-8"
+        )
+        style = (
+            ROOT
+            / "app/src/main/java/com/aqua/aqualight/ui/common/cooling/"
+            "AquaCoolingComposeStyle.kt"
+        ).read_text(encoding="utf-8")
+
+        self.assertEqual(2, card.count("coolingTemperatureMetricText("))
+        self.assertIn("device_cooling_temperature_metric_value_format", primitives)
+        self.assertIn("val temperatureMetricWidth = 76.dp", style)
+        self.assertIn("val temperatureChartMetricGap = 4.dp", style)
+        self.assertIn("val temperatureMetricContentGap = 8.dp", style)
+
+        for locale in ("values", "values-tr"):
+            strings = (
+                ROOT / f"app/src/main/res/{locale}/device_cooling_strings.xml"
+            ).read_text(encoding="utf-8")
+            self.assertIn(
+                '<string name="device_cooling_temperature_metric_value_format">'
+                "%1$.1f°</string>",
+                strings,
+            )
+
+    def test_dashboard_mode_summary_is_removed_and_options_fill_its_space(self) -> None:
+        mode_card = (
+            COOLING / "dashboard/CoolingFanControlCards.kt"
+        ).read_text(encoding="utf-8")
+        style = (
+            ROOT
+            / "app/src/main/java/com/aqua/aqualight/ui/common/cooling/"
+            "AquaCoolingComposeStyle.kt"
+        ).read_text(encoding="utf-8")
+
+        for token in (
+            "CoolingActiveModeSummary",
+            "modeStatusDotSize",
+            "modeStatusGap",
+            "modeStatusTopPadding",
+        ):
+            self.assertNotIn(token, mode_card + style)
+        self.assertIn("val optionVerticalPadding = 8.dp", style)
+        self.assertIn("val radioSize = 21.dp", style)
+
+        for locale in ("values", "values-tr"):
+            strings = (
+                ROOT / f"app/src/main/res/{locale}/device_cooling_strings.xml"
+            ).read_text(encoding="utf-8")
+            self.assertNotIn('<string name="device_cooling_mode_active">', strings)
+            self.assertNotIn("device_cooling_inline_separator", strings)
+
     def test_blocking_cooling_mutations_and_cold_root_use_central_loading(self) -> None:
         fragments = (
             "root/DeviceCoolingRootFragment.kt",

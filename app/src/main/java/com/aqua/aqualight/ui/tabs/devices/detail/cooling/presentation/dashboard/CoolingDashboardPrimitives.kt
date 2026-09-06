@@ -47,6 +47,11 @@ internal fun coolingTemperatureText(value: Double?): String = value?.let { tempe
 } ?: stringResource(R.string.device_cooling_value_unavailable)
 
 @Composable
+internal fun coolingTemperatureMetricText(value: Double?): String = value?.let { temperature ->
+    stringResource(R.string.device_cooling_temperature_metric_value_format, temperature)
+} ?: stringResource(R.string.device_cooling_value_unavailable)
+
+@Composable
 internal fun coolingHumidityText(value: Double?): String = value?.let { humidity ->
     stringResource(R.string.device_cooling_humidity_value_format, humidity)
 } ?: stringResource(R.string.device_cooling_value_unavailable)

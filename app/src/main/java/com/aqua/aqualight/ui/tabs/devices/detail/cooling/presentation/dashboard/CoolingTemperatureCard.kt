@@ -62,7 +62,7 @@ internal fun CoolingTemperatureCard(
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.spacedBy(
-                    AquaCoolingDashboardGeometry.temperatureMetricGap
+                    AquaCoolingDashboardGeometry.temperatureChartMetricGap
                 ),
                 verticalAlignment = Alignment.Top
             ) {
@@ -96,7 +96,7 @@ private fun CoolingTemperatureMetricsPanel(
     Row(
         modifier = Modifier.width(AquaCoolingDashboardGeometry.temperatureMetricWidth),
         horizontalArrangement = Arrangement.spacedBy(
-            AquaCoolingDashboardGeometry.temperatureMetricGap
+            AquaCoolingDashboardGeometry.temperatureMetricContentGap
         )
     ) {
         Box(
@@ -110,7 +110,7 @@ private fun CoolingTemperatureMetricsPanel(
                 metric = CoolingTemperatureMetricModel(
                     icon = AquaCoolingDashboardIconKind.WATER,
                     label = stringResource(R.string.device_cooling_tank_temperature_label),
-                    value = coolingTemperatureText(state.tankTemperatureC),
+                    value = coolingTemperatureMetricText(state.tankTemperatureC),
                     accent = true
                 ),
                 colors = colors,
@@ -121,7 +121,7 @@ private fun CoolingTemperatureMetricsPanel(
                 metric = CoolingTemperatureMetricModel(
                     icon = AquaCoolingDashboardIconKind.ROOM,
                     label = stringResource(R.string.device_cooling_room_temperature_label),
-                    value = coolingTemperatureText(state.roomTemperatureC),
+                    value = coolingTemperatureMetricText(state.roomTemperatureC),
                     accent = false
                 ),
                 colors = colors,

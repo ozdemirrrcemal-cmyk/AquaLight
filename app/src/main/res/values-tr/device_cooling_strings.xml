@@ -39,7 +39,6 @@
     <string name="device_cooling_mode_automatic">Otomatik</string>
     <string name="device_cooling_mode_manual">Manuel</string>
     <string name="device_cooling_mode_program">Program</string>
-    <string name="device_cooling_mode_active">Aktif</string>
     <string name="device_cooling_mode_active_uppercase">AKTİF</string>
 
     <string name="device_cooling_mode_settings_title">Mod Ayarları</string>
@@ -183,6 +182,7 @@
 
     <string name="device_cooling_value_unavailable">—</string>
     <string name="device_cooling_temperature_value_format">%1$.1f °C</string>
+    <string name="device_cooling_temperature_metric_value_format">%1$.1f°</string>
     <string name="device_cooling_humidity_value_format">%1$.0f%%</string>
     <string name="device_cooling_percent_value_format">%1$d%%</string>
     <string name="device_cooling_power_number_format">%1$.3f</string>
