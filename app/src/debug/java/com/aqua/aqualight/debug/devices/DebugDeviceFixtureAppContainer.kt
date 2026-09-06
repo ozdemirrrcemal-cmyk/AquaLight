@@ -163,7 +163,8 @@ private class DebugDeviceFixtureViewModelFactory(
         )
         val fixturePreparationOperations = DefaultDeviceControlSurfacePreparationOperations(
             rootOperations = rootOperations(graph),
-            dosingChannelOperations = graph.dosingOperations.channelOperations
+            dosingChannelOperations = graph.dosingOperations.channelOperations,
+            coolingControlOperations = coolingControlOperations
         )
         return DebugFixtureControlSurface(
             coolingControlOperations = coolingControlOperations,

@@ -84,7 +84,9 @@ class DeviceCoolingRootViewModel(
             automaticSummaryState = automaticSettingsOperations
                 .currentAutomaticSettings(deviceUid)
                 .toRootAutomaticState(initialState.automaticSummaryState),
-            surfacePreparationPending = !preparedHandoff
+            surfacePreparationPending = !(
+                preparedHandoff && initialControl is DeviceCoolingControlResult.Available
+                )
         )
 
         // Runtime/domain bootstrap owns live Cooling freshness. Screen entry only seeds the last
@@ -198,15 +200,17 @@ class DeviceCoolingRootViewModel(
                         deviceUid = deviceUid,
                         family = OwnerDeviceFamily.COOLING
                     )
-                    val control = controlOperations.currentControl(deviceUid)
-                    _uiState.update { state ->
-                        state.copy(
-                            controlState = control.toRootControlState(state.controlState),
-                            dashboardOverviewState = control.toRootDashboardOverviewState(
-                                state.dashboardOverviewState
-                            ),
-                            surfacePreparationPending = false
-                        )
+                    when (val control = controlOperations.currentControl(deviceUid)) {
+                        is DeviceCoolingControlResult.Available -> _uiState.update { state ->
+                            state.copy(
+                                controlState = control.toRootControlState(state.controlState),
+                                dashboardOverviewState = control.toRootDashboardOverviewState(
+                                    state.dashboardOverviewState
+                                ),
+                                surfacePreparationPending = false
+                            )
+                        }
+                        is DeviceCoolingControlResult.Failed -> finishUnavailablePreparation()
                     }
                 }
                 is DeviceControlSurfacePreparationResult.Unavailable ->

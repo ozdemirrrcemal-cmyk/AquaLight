@@ -9,6 +9,8 @@ import com.aqua.aqualight.application.devices.DeviceRootCatalogState
 import com.aqua.aqualight.application.devices.DeviceRootOperations
 import com.aqua.aqualight.application.devices.DeviceRootSnapshot
 import com.aqua.aqualight.application.devices.OwnerDeviceFamily
+import com.aqua.aqualight.application.devices.cooling.control.DeviceCoolingControlOperations
+import com.aqua.aqualight.application.devices.cooling.control.DeviceCoolingControlResult
 import com.aqua.aqualight.application.devices.dosing.DeviceDosingChannelOperations
 import com.aqua.aqualight.application.devices.dosing.DeviceDosingChannelSnapshot
 import java.util.concurrent.ConcurrentHashMap
@@ -16,13 +18,14 @@ import java.util.concurrent.ConcurrentHashMap
 /**
  * Owner-scoped control-surface preparation orchestrator.
  *
- * This class owns no feature state. Dosing prepares its channel-dependent first frame here;
- * Cooling needs only its validated catalog topology because its root screen already observes and
- * represents central runtime control availability.
+ * This class owns no feature state. It coordinates family-specific application boundaries and
+ * declares a surface ready only after the central runtime owner exposes an authoritative first
+ * frame that matches the validated commercial catalog.
  */
 internal class DefaultDeviceControlSurfacePreparationOperations(
     private val rootOperations: DeviceRootOperations,
-    private val dosingChannelOperations: DeviceDosingChannelOperations
+    private val dosingChannelOperations: DeviceDosingChannelOperations,
+    private val coolingControlOperations: DeviceCoolingControlOperations
 ) : DeviceControlSurfacePreparationOperations {
 
     private val freshlyPreparedSurfaces = ConcurrentHashMap.newKeySet<PreparedSurface>()
@@ -74,6 +77,8 @@ internal class DefaultDeviceControlSurfacePreparationOperations(
             root == null -> unavailable(DeviceMenuUnavailableReason.DEVICE_NOT_REGISTERED)
             !root.matchesCoolingCatalog() ->
                 unavailable(DeviceMenuUnavailableReason.COMMERCIAL_PRODUCT_MISMATCH)
+            coolingControlOperations.refreshControl(deviceUid) !is DeviceCoolingControlResult.Available ->
+                unavailable(DeviceMenuUnavailableReason.CURRENT_LIVENESS_NOT_PROVEN)
             else -> {
                 freshlyPreparedSurfaces += preparedSurface
                 DeviceControlSurfacePreparationResult.Ready
