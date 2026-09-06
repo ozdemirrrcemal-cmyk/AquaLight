@@ -262,7 +262,7 @@ private fun ProgramTimelineAxis(
         val labelConstraints = constraints.copy(minWidth = 0, minHeight = 0)
         val placeables = measurables.map { measurable -> measurable.measure(labelConstraints) }
         val width = constraints.maxWidth
-        val height = constraints.constrainHeight(placeables.maxOfOrNull { it.height } ?: 0)
+        val height = placeables.maxOfOrNull { placeable -> placeable.height } ?: 0
         layout(width, height) {
             placeables.forEachIndexed { index, placeable ->
                 val tickCenter = (
