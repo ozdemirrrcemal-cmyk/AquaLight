@@ -44,14 +44,25 @@ internal fun CoolingTemperatureChart(
             label = "Cooling live temperature"
         ).value
     }
-    val chartValues = temperatureChartValues(
+    val rawChartValues = temperatureChartValues(
         archivedPoints = data.archivedPoints,
         historyGeneratedAtEpochMillis = data.historyGeneratedAtEpochMillis,
-        liveTimeline = data.liveTimeline,
-        animatedLiveHeadTemperatureC = liveTarget?.let { animatedLiveHead }
+        liveTimeline = data.liveTimeline
     )
+    val chartValues = if (liveTarget == null) {
+        rawChartValues
+    } else {
+        temperatureChartValues(
+            archivedPoints = data.archivedPoints,
+            historyGeneratedAtEpochMillis = data.historyGeneratedAtEpochMillis,
+            liveTimeline = data.liveTimeline,
+            animatedLiveHeadTemperatureC = animatedLiveHead
+        )
+    }
+    // Axis scaling follows accepted firmware samples, not animation frames. This keeps the Y axis
+    // stable while the live head eases between two real sensor values.
     val scale = temperatureChartScale(
-        chartValues.map(TemperatureChartValue::temperatureC)
+        rawChartValues.map(TemperatureChartValue::temperatureC)
     )
 
     Row(
@@ -120,10 +131,11 @@ private fun CoolingTemperaturePlot(
     ) {
         Canvas(modifier = Modifier.fillMaxSize()) {
             val verticalPadding = AquaCoolingDashboardGeometry.temperatureChartPadding.toPx()
+            val endPadding = AquaCoolingDashboardGeometry.chartPointGlowRadius.toPx()
             val viewport = TemperaturePlotViewport(
                 horizontalPadding = 0f,
                 verticalPadding = verticalPadding,
-                width = size.width.coerceAtLeast(1f),
+                width = (size.width - endPadding).coerceAtLeast(1f),
                 height = (size.height - verticalPadding * 2f).coerceAtLeast(1f)
             )
             drawTemperatureGrid(viewport = viewport, colors = colors)
@@ -167,14 +179,16 @@ private fun TemperatureTimeAxis(
     typography: AquaDeviceCardTypography
 ) {
     val labels = listOf(
-        stringResource(R.string.device_cooling_chart_now),
-        stringResource(R.string.device_cooling_chart_6h),
-        stringResource(R.string.device_cooling_chart_12h),
-        stringResource(R.string.device_cooling_chart_18h),
-        stringResource(R.string.device_cooling_chart_24h_start)
+        "−${stringResource(R.string.device_cooling_chart_24h_start)}",
+        "−${stringResource(R.string.device_cooling_chart_18h)}",
+        "−${stringResource(R.string.device_cooling_chart_12h)}",
+        "−${stringResource(R.string.device_cooling_chart_6h)}",
+        stringResource(R.string.device_cooling_chart_now)
     )
     Layout(
-        modifier = Modifier.fillMaxWidth(),
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(end = AquaCoolingDashboardGeometry.chartPointGlowRadius),
         content = {
             labels.forEach { label ->
                 ChartAxisLabel(

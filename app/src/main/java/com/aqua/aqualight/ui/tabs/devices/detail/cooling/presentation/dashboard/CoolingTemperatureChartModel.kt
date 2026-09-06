@@ -78,9 +78,9 @@ private fun archivedTemperatureChartValues(
             null
         } else {
             TemperatureChartValue(
-                // Age-based X axis: now is the left edge (0f), 24 hours ago is the right edge (1f).
+                // Conventional time-series axis: 24 hours ago is 0f and now is 1f.
                 xFraction = (
-                    (windowEnd - point.sampledAtEpochMillis).toDouble() /
+                    (point.sampledAtEpochMillis - windowStart).toDouble() /
                         TEMPERATURE_CHART_WINDOW_MILLIS.toDouble()
                     ).toFloat().coerceIn(0f, 1f),
                 temperatureC = point.temperatureC.toFloat(),
@@ -115,7 +115,7 @@ private fun liveTemperatureChartValues(
         } else {
             TemperatureChartValue(
                 xFraction = (
-                    ageMillis.toDouble() /
+                    1.0 - ageMillis.toDouble() /
                         TEMPERATURE_CHART_WINDOW_MILLIS.toDouble()
                     ).toFloat().coerceIn(0f, 1f),
                 temperatureC = if (

@@ -48,8 +48,10 @@ internal fun DrawScope.drawTemperatureHistory(
             }
         }
     }
-    segments.firstOrNull()?.firstOrNull()?.let { nowPoint ->
-        drawTemperaturePoint(nowPoint, lineColor, emphasized = true)
+    // The emphasized point is the latest real sample, which is the right-most point on the
+    // conventional past-to-present time axis. It is not fabricated at the Now boundary.
+    segments.lastOrNull()?.lastOrNull()?.let { latestPoint ->
+        drawTemperaturePoint(latestPoint, lineColor, emphasized = true)
     }
 }
 
@@ -88,14 +90,14 @@ internal fun DrawScope.drawTemperatureGrid(
             pathEffect = dashEffect
         )
     }
-    val historyBoundaryX = viewport.horizontalPadding + viewport.width
+    val historyBoundaryX = viewport.horizontalPadding
     drawLine(
         color = gridColor,
         start = Offset(historyBoundaryX, viewport.verticalPadding),
         end = Offset(historyBoundaryX, viewport.verticalPadding + viewport.height),
         strokeWidth = gridStroke
     )
-    val nowX = viewport.horizontalPadding
+    val nowX = viewport.horizontalPadding + viewport.width
     drawLine(
         color = colors.accent.copy(alpha = AquaCoolingDashboardAlpha.chartNowGuide),
         start = Offset(nowX, viewport.verticalPadding),
