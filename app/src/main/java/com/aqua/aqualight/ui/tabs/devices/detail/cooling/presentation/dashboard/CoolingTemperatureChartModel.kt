@@ -31,7 +31,6 @@ internal fun temperatureChartValues(
     liveTimeline: CoolingTemperatureTimelinePresentation,
     animatedLiveHeadTemperatureC: Float? = null
 ): List<TemperatureChartValue> {
-    val currentLive = liveTimeline.currentLivePoint
     val windowEndEpochMillis = temperatureChartWindowEnd(
         historyGeneratedAtEpochMillis = historyGeneratedAtEpochMillis,
         liveTimeline = liveTimeline
