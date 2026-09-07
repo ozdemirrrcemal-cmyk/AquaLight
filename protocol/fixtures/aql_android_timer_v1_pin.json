@@ -1,0 +1,36 @@
+{
+  "fixtureVersion": 1,
+  "schema": "aql.android.timer-v1.pin.v1",
+  "firmware": {
+    "repository": "ozdemirrrcemal-cmyk/AquaLight-Firmware",
+    "commit": "90b6597216d0c697542d5dc12e26647625806d8f",
+    "tree": "276c9edeffbe291d0f0a33daa0e62ecbb35ed56a",
+    "sources": {
+      "src/api/v1/commands/AqlTimerCommands.hpp": "f01a46b6a4982879f57f0d57c19ff50ff9f709f0",
+      "src/modules/timer/AqlTimerService.hpp": "f0b7a64487dec5a14d571966a14274223dc6c743",
+      "src/modules/timer/AqlTimerEventQueue.hpp": "b43ea84c29d834f6508352d4002a2ce314dd777c",
+      "src/modules/timer/AqlTimerScheduleMath.hpp": "ce11604c6d3470a359a48fde2dae6fa94c330468",
+      "src/server/AqlRealtimeServer.cpp": "e177f1290f75de40d19f867b838c92a00dd53cb9",
+      "tools/check_timer_contract_v1.py": "687c23b01c27fac589cf71722c32dcf65f4af645",
+      "docs/ANDROID_FIRMWARE_CONTRACT.md": "a7850ddb7ce754c23a964a58c2ac7faedb63e231"
+    }
+  },
+  "contract": {
+    "schema": "aqualight.timer.v1",
+    "schemaVersion": 1,
+    "fixture": "aql_timer_contract_v1.json",
+    "sha256": "014704279570575925cc8b74650f3b1b14b73fde0c3452c6ed028b7de49111cc",
+    "firmwareBlobSha": "541b2194001fed7abecdd61106d02c8c8a197c2f",
+    "byteIdenticalWithFirmware": true
+  },
+  "wireGolden": {
+    "fixture": "aql_timer_wire_v1_golden.json",
+    "sha256": "d3d43b8e0755751c1f5a291880954eb128fb570fe52e635042c7b0e884260315",
+    "androidBlobSha": "dd104ee7f6a42462b122cd44d605920849678f4e",
+    "derivedFrom": [
+      "src/api/v1/commands/AqlTimerCommands.hpp",
+      "src/modules/timer/AqlTimerService.hpp",
+      "src/server/AqlRealtimeServer.cpp"
+    ]
+  }
+}

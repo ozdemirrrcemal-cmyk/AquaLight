@@ -31,15 +31,22 @@ internal fun JSONObject.requireTimerArray(key: String): JSONArray =
 internal fun JSONObject.requireTimerText(key: String, allowEmpty: Boolean = false): String {
     val value = get(key) as? String ?: error("$key must be a string.")
     require(allowEmpty || value.isNotEmpty()) { "$key must not be empty." }
-    require(value.isEmpty() || (!value.first().isWhitespace() && !value.last().isWhitespace())) {
+    require(value == value.trimTimerAsciiWhitespace()) {
         "$key must not contain surrounding whitespace."
     }
-    require(value.none(Char::isISOControl)) { "$key must not contain control characters." }
+    require(!value.hasTimerForbiddenControlBytes()) {
+        "$key must not contain control characters."
+    }
     return value
 }
 
 internal fun JSONObject.optionalTimerText(key: String): String? =
     if (has(key)) requireTimerText(key) else null
+
+internal fun JSONObject.requireNullableTimerText(key: String): String? {
+    require(has(key)) { "$key is required by the firmware contract." }
+    return if (isNull(key)) null else requireTimerText(key)
+}
 
 internal fun JSONObject.requireTimerBoolean(key: String): Boolean =
     get(key) as? Boolean ?: error("$key must be a boolean.")
@@ -74,6 +81,24 @@ internal fun JSONObject.requireTimerLong(
     }
     require(asLong in minimum..maximum) { "$key is outside its supported range." }
     return asLong
+}
+
+internal fun JSONObject.requireNullableTimerLong(
+    key: String,
+    minimum: Long = Long.MIN_VALUE,
+    maximum: Long = Long.MAX_VALUE
+): Long? {
+    require(has(key)) { "$key is required by the firmware contract." }
+    return if (isNull(key)) null else requireTimerLong(key, minimum, maximum)
+}
+
+internal fun JSONObject.requireNullableTimerInt(
+    key: String,
+    minimum: Int = Int.MIN_VALUE,
+    maximum: Int = Int.MAX_VALUE
+): Int? {
+    require(has(key)) { "$key is required by the firmware contract." }
+    return if (isNull(key)) null else requireTimerInt(key, minimum, maximum)
 }
 
 internal fun JSONObject.requireTimerDouble(

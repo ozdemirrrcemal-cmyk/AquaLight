@@ -70,6 +70,26 @@ class DeviceRuntimeEventRouterTest {
     }
 
     @Test
+    fun `direct Timer event published timestamp remains a snapshot field`() = runBlocking {
+        val router = DeviceRuntimeEventRouter()
+        router.activate(DEVICE_A, GENERATION_ONE)
+        val data = JSONObject()
+            .put("schema", "aqualight.timer.v1")
+            .put("publishedAtMs", 42L)
+            .put("change", JSONObject().put("sequence", 1L))
+
+        val routed = router.route(
+            DEVICE_A,
+            GENERATION_ONE,
+            event("evt-timer", DeviceRuntimeTypedEvent.Type.TIMER_STATUS_CHANGED, data)
+        ) as DeviceRuntimeEventRoutingResult.Routed
+        val payload = routed.event.payload as DeviceRuntimeEventPayload.Snapshot
+
+        assertEquals(42L, payload.data.getLong("publishedAtMs"))
+        assertEquals(1L, payload.data.getJSONObject("change").getLong("sequence"))
+    }
+
+    @Test
     fun `partial command envelope is rejected instead of downgraded to snapshot`() = runBlocking {
         val router = DeviceRuntimeEventRouter()
         router.activate(DEVICE_A, GENERATION_ONE)

@@ -8,7 +8,7 @@ internal object DeviceRuntimeEventPayloadParser {
     fun parse(data: JSONObject): Result {
         val keys = data.keys().asSequence().toSet()
         return when {
-            keys.none(COMMAND_EVENT_FIELDS::contains) -> parseSnapshot(data)
+            keys.none(COMMAND_EVENT_DISCRIMINATOR_FIELDS::contains) -> parseSnapshot(data)
             keys != COMMAND_EVENT_FIELDS -> Result.Invalid(FIELD_DATA)
             else -> parseCommandResult(data)
         }
@@ -94,4 +94,7 @@ internal object DeviceRuntimeEventPayloadParser {
         FIELD_PUBLISHED_AT_MS,
         FIELD_RESULT
     )
+
+    private val COMMAND_EVENT_DISCRIMINATOR_FIELDS = COMMAND_EVENT_FIELDS -
+        FIELD_PUBLISHED_AT_MS
 }

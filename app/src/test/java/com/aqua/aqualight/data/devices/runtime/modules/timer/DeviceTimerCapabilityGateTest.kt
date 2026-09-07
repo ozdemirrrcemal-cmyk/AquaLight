@@ -47,7 +47,11 @@ class DeviceTimerCapabilityGateTest {
         val status = repository.requestStatus(DEVICE_UID)
         val config = repository.applyConfig(
             DEVICE_UID,
-            DeviceTimerConfigApplyPayload(schedules = emptyList())
+            DeviceTimerConfigApplyPayload(
+                channelKey = "channel1",
+                expectedRevision = 0L,
+                schedules = emptyList()
+            )
         )
         val channel = repository.setChannelRegime(
             DEVICE_UID,
@@ -90,7 +94,7 @@ class DeviceTimerCapabilityGateTest {
 
     @Test
     fun `status channel count must match authenticated product metadata`() {
-        val status = DeviceTimerStatusParser.parse(DeviceTimerRuntimeFixtures.status())
+        val status = DeviceTimerStatusParser.parse(DeviceTimerRuntimeFixtures.globalStatus())
         val mismatchedAccess = DeviceTimerRuntimeAccess(
             supportsApi = true,
             channelCount = 4,
@@ -101,7 +105,7 @@ class DeviceTimerCapabilityGateTest {
 
         assertTrue(
             runCatching {
-                DeviceTimerCommandValidation.validateStatus(status, mismatchedAccess)
+                DeviceTimerCommandValidation.validateStatus(status, null, mismatchedAccess)
             }.isFailure
         )
     }

@@ -9,18 +9,12 @@ import kotlinx.coroutines.flow.asStateFlow
 
 data class DeviceTimerRuntimeState(
     val status: DeviceTimerStatus? = null,
-    val config: DeviceTimerConfigSnapshot? = null,
-    /** Mutation replies omit schedule runtime fields; a fresh status snapshot clears this flag. */
+    val channelDetails: Map<String, DeviceTimerStatus> = emptyMap(),
+    val lastEventSequence: Long? = null,
     val requiresStatusRefresh: Boolean = false
 )
 
-/**
- * The single Timer runtime state owner.
- *
- * Presentation snapshots survive socket churn, but only the current connection generation may
- * establish authority or patch them. Uptime freshness is deliberately scoped to an already
- * authoritative generation so a device reboot may establish a lower-uptime baseline on reconnect.
- */
+/** Single generation-authoritative owner for global status, channel detail and runtime events. */
 internal class DeviceTimerRuntimeStateStore {
     private val lock = Any()
     private val authority = DeviceRuntimeGenerationAuthority()
@@ -30,7 +24,15 @@ internal class DeviceTimerRuntimeStateStore {
     fun beginGeneration(
         deviceUid: DeviceUid,
         generation: DeviceRuntimeConnectionGeneration
-    ): Boolean = authority.beginGeneration(deviceUid, generation)
+    ): Boolean = synchronized(lock) {
+        val accepted = authority.beginGeneration(deviceUid, generation)
+        if (accepted) {
+            _states.value[deviceUid]?.let { current ->
+                publish(deviceUid, current.copy(lastEventSequence = null))
+            }
+        }
+        accepted
+    }
 
     fun invalidate(
         deviceUid: DeviceUid,
@@ -54,71 +56,129 @@ internal class DeviceTimerRuntimeStateStore {
     ): Boolean = synchronized(lock) {
         val current = _states.value[deviceUid]
         val currentStatus = current?.status
-        if (
-            authority.isAuthoritative(deviceUid, generation) &&
-            currentStatus != null &&
-            !isNewerTimerSample(status.uptimeMs, currentStatus.uptimeMs)
-        ) {
-            return@synchronized false
+        if (authority.isAuthoritative(deviceUid, generation) && currentStatus != null) {
+            val staleUptime = status.uptimeMs != currentStatus.uptimeMs &&
+                !isNewerTimerCounter(status.uptimeMs, currentStatus.uptimeMs)
+            val staleRevision = status.revision != currentStatus.revision &&
+                !isNewerTimerCounter(status.revision, currentStatus.revision)
+            if (staleUptime || staleRevision) return@synchronized false
         }
         if (!authority.acceptAuthoritativeSnapshot(deviceUid, generation)) {
             return@synchronized false
         }
-        _states.value = _states.value + (
-            deviceUid to DeviceTimerRuntimeState(
-                status = status,
-                config = status.toConfigSnapshot(),
+
+        val baseline = current ?: DeviceTimerRuntimeState()
+        val updated = if (status.channelScoped) {
+            mergeChannelStatus(baseline, status)
+        } else {
+            replaceGlobalStatus(baseline, status)
+        }
+        publish(deviceUid, updated.copy(requiresStatusRefresh = false))
+        true
+    }
+
+    fun recordMutationChannel(
+        deviceUid: DeviceUid,
+        generation: DeviceRuntimeConnectionGeneration,
+        channel: DeviceTimerChannelStatus,
+        revision: Long
+    ): Boolean = synchronized(lock) {
+        if (!authority.acceptsPatch(deviceUid, generation)) return@synchronized false
+        val current = _states.value[deviceUid] ?: return@synchronized false
+        val status = current.status ?: return@synchronized false
+        val previous = status.channels.singleOrNull { it.key == channel.key }
+            ?: return@synchronized false
+        if (!previous.sameTimerChannelIdentity(channel)) return@synchronized false
+        val scheduleCount = status.scheduleCount - previous.scheduleCount + channel.scheduleCount
+        val patchedStatus = status.copy(
+            scheduleCount = scheduleCount,
+            revision = revision,
+            channels = status.channels.map { existing ->
+                if (existing.key == channel.key) channel else existing
+            }
+        )
+        publish(
+            deviceUid,
+            current.copy(
+                status = patchedStatus,
+                channelDetails = current.channelDetails - channel.key,
+                requiresStatusRefresh = true
+            )
+        )
+        true
+    }
+
+    @Suppress("LongMethod", "ReturnCount")
+    fun recordRuntimeEvent(
+        deviceUid: DeviceUid,
+        generation: DeviceRuntimeConnectionGeneration,
+        event: DeviceTimerStatusChangedEvent
+    ): DeviceTimerStateEventResult = synchronized(lock) {
+        if (!authority.acceptsPatch(deviceUid, generation)) {
+            return@synchronized DeviceTimerStateEventResult.RefreshRequired(event.channelKey)
+        }
+        val current = _states.value[deviceUid]
+            ?: return@synchronized DeviceTimerStateEventResult.RefreshRequired(event.channelKey)
+        val previousSequence = current.lastEventSequence
+        if (previousSequence != null) {
+            if (!isNewerTimerCounter(event.change.sequence, previousSequence)) {
+                return@synchronized DeviceTimerStateEventResult.Ignored
+            }
+            if (event.change.sequence != nextTimerSequence(previousSequence)) {
+                publish(
+                    deviceUid,
+                    current.copy(
+                        lastEventSequence = event.change.sequence,
+                        requiresStatusRefresh = true
+                    )
+                )
+                return@synchronized DeviceTimerStateEventResult.RefreshRequired(event.channelKey)
+            }
+        }
+
+        val status = current.status
+        val channel = status?.channels?.singleOrNull { it.key == event.channelKey }
+        if (status == null || channel == null || status.revision != event.revision) {
+            publish(
+                deviceUid,
+                current.copy(
+                    lastEventSequence = event.change.sequence,
+                    requiresStatusRefresh = true
+                )
+            )
+            return@synchronized DeviceTimerStateEventResult.RefreshRequired(event.channelKey)
+        }
+
+        val patchedChannel = channel.withRuntime(event.change)
+        val patchedStatus = status.copy(
+            uptimeMs = newerTimerUptime(status.uptimeMs, event.publishedAtMs),
+            channels = status.channels.map { existing ->
+                if (existing.key == event.channelKey) patchedChannel else existing
+            }
+        )
+        val detail = current.channelDetails[event.channelKey]
+        val details = if (detail?.revision == event.revision) {
+            current.channelDetails + (
+                event.channelKey to detail.copy(
+                    uptimeMs = newerTimerUptime(detail.uptimeMs, event.publishedAtMs),
+                    channels = listOf(patchedChannel)
+                )
+            )
+        } else {
+            current.channelDetails
+        }
+        publish(
+            deviceUid,
+            current.copy(
+                status = patchedStatus,
+                channelDetails = details,
+                lastEventSequence = event.change.sequence,
                 requiresStatusRefresh = false
             )
         )
-        true
+        DeviceTimerStateEventResult.Applied
     }
 
-    fun recordConfig(
-        deviceUid: DeviceUid,
-        generation: DeviceRuntimeConnectionGeneration,
-        result: DeviceTimerConfigApplyResult
-    ): Boolean = synchronized(lock) {
-        if (!authority.acceptsPatch(deviceUid, generation)) return@synchronized false
-        val current = _states.value[deviceUid] ?: return@synchronized false
-        val updatedStatus = current.status?.applyConfig(result.config)
-        require(current.status == null || updatedStatus != null) {
-            "Timer config snapshot cannot be reconciled with current status."
-        }
-        _states.value = _states.value + (
-            deviceUid to current.copy(
-                status = updatedStatus,
-                config = result.config,
-                requiresStatusRefresh = true
-            )
-        )
-        true
-    }
-
-    fun recordChannel(
-        deviceUid: DeviceUid,
-        generation: DeviceRuntimeConnectionGeneration,
-        result: DeviceTimerChannelSetResult
-    ): Boolean = synchronized(lock) {
-        if (!authority.acceptsPatch(deviceUid, generation)) return@synchronized false
-        val current = _states.value[deviceUid] ?: return@synchronized false
-        val currentStatus = current.status ?: return@synchronized false
-        val updatedStatus = currentStatus.replaceChannel(result.channel)
-            ?: return@synchronized false
-        val baselineConfig = current.config ?: currentStatus.toConfigSnapshot()
-        val updatedConfig = baselineConfig.replaceChannelRegime(result.channel)
-            ?: return@synchronized false
-        _states.value = _states.value + (
-            deviceUid to current.copy(
-                status = updatedStatus,
-                config = updatedConfig,
-                requiresStatusRefresh = true
-            )
-        )
-        true
-    }
-
-    /** Permanent owner cleanup only. Socket lifecycle uses [invalidate], never destructive clear. */
     fun clear(deviceUid: DeviceUid) {
         synchronized(lock) {
             if (deviceUid in _states.value) {
@@ -127,116 +187,81 @@ internal class DeviceTimerRuntimeStateStore {
             authority.clear(deviceUid)
         }
     }
-}
 
-private fun DeviceTimerStatus.toConfigSnapshot(): DeviceTimerConfigSnapshot =
-    DeviceTimerConfigSnapshot(
-        channels = channels.mapIndexed { index, channel ->
-            DeviceTimerChannelConfigSnapshot(
-                listIndex = index,
-                channelKey = channel.key,
-                displayNameOverride = channel.displayName.takeUnless { name -> name == channel.name },
-                regime = channel.regime
-            )
-        },
-        schedules = schedules.mapIndexed { index, schedule ->
-            DeviceTimerScheduleConfigSnapshot(
-                listIndex = index,
-                enabled = schedule.enabled,
-                name = schedule.name,
-                channelKey = schedule.channelKey,
-                weekdays = schedule.weekdays.toList(),
-                startTimeMs = schedule.startTimeMs,
-                intervalOnMs = schedule.intervalOnMs,
-                intervalOffMs = schedule.intervalOffMs,
-                repeatCount = schedule.repeatCount
-            )
+    private fun replaceGlobalStatus(
+        current: DeviceTimerRuntimeState,
+        status: DeviceTimerStatus
+    ): DeviceTimerRuntimeState {
+        val retainedDetails = current.channelDetails.filter { (channelKey, detail) ->
+            val channel = status.channels.singleOrNull { it.key == channelKey }
+            detail.revision == status.revision &&
+                channel != null &&
+                channel.scheduleCount == detail.schedules.size
         }
-    )
-
-private fun DeviceTimerStatus.replaceChannel(
-    replacement: DeviceTimerChannelStatusSnapshot
-): DeviceTimerStatus? {
-    val current = channels.getOrNull(replacement.listIndex)
-    if (current?.key != replacement.channel.key) return null
-    return copy(
-        channels = channels.mapIndexed { index, channel ->
-            if (index == replacement.listIndex) replacement.channel else channel
-        }
-    )
-}
-
-private fun DeviceTimerConfigSnapshot.replaceChannelRegime(
-    replacement: DeviceTimerChannelStatusSnapshot
-): DeviceTimerConfigSnapshot? {
-    val current = channels.getOrNull(replacement.listIndex)
-    if (current?.channelKey != replacement.channel.key) return null
-    return copy(
-        channels = channels.mapIndexed { index, channel ->
-            if (index == replacement.listIndex) {
-                channel.copy(regime = replacement.channel.regime)
-            } else {
-                channel
-            }
-        }
-    )
-}
-
-private fun DeviceTimerStatus.applyConfig(
-    replacement: DeviceTimerConfigSnapshot
-): DeviceTimerStatus? {
-    val currentByKey = channels.associateBy(DeviceTimerChannelStatus::key)
-    val replacedChannels = replacement.channels.mapNotNull { config ->
-        currentByKey[config.channelKey]?.let { current ->
-            current.copy(
-                displayName = config.displayNameOverride ?: current.name,
-                regime = config.regime
-            )
-        }
+        return current.copy(status = status, channelDetails = retainedDetails)
     }
-    if (
-        replacedChannels.size != replacement.channels.size ||
-        replacedChannels.size != channels.size
-    ) return null
-    val channelKeys = replacedChannels.mapTo(linkedSetOf(), DeviceTimerChannelStatus::key)
-    val replacedSchedules = replacement.schedules.map { config ->
-        config.toStatus(channelKeys)
+
+    private fun mergeChannelStatus(
+        current: DeviceTimerRuntimeState,
+        detail: DeviceTimerStatus
+    ): DeviceTimerRuntimeState {
+        val channelKey = requireNotNull(detail.selectedChannelKey)
+        val selectedChannel = detail.channels.single()
+        val currentStatus = current.status
+        val mergedStatus = if (currentStatus != null && !currentStatus.channelScoped) {
+            require(currentStatus.channelCount == detail.channelCount)
+            require(currentStatus.maxScheduleCount == detail.maxScheduleCount)
+            val previous = currentStatus.channels.singleOrNull { it.key == channelKey }
+                ?: error("Timer channel-scoped status does not belong to the global snapshot.")
+            require(previous.sameTimerChannelIdentity(selectedChannel))
+            currentStatus.copy(
+                scheduleCount = detail.scheduleCount,
+                revision = detail.revision,
+                lockLoop = detail.lockLoop,
+                uptimeMs = detail.uptimeMs,
+                channels = currentStatus.channels.map { channel ->
+                    if (channel.key == channelKey) selectedChannel else channel
+                },
+                runtime = detail.runtime
+            )
+        } else {
+            detail
+        }
+        val retainedDetails = if (currentStatus?.revision == detail.revision) {
+            current.channelDetails
+        } else {
+            emptyMap()
+        }
+        return current.copy(
+            status = mergedStatus,
+            channelDetails = retainedDetails + (channelKey to detail)
+        )
     }
-    return copy(
-        channelCount = replacedChannels.size,
-        scheduleCount = replacedSchedules.size,
-        lockLoop = false,
-        channels = replacedChannels,
-        schedules = replacedSchedules
-    )
+
+    private fun publish(deviceUid: DeviceUid, state: DeviceTimerRuntimeState) {
+        _states.value = _states.value + (deviceUid to state)
+    }
 }
 
-private fun DeviceTimerScheduleConfigSnapshot.toStatus(
-    channelKeys: Set<String>
-): DeviceTimerScheduleStatus {
-    val isBound = channelKey in channelKeys
-    return DeviceTimerScheduleStatus(
-        index = listIndex,
-        enabled = enabled,
-        runtimeEnabled = enabled &&
-            isBound &&
-            weekdays.any { selected -> selected } &&
-            intervalOnMs > TIMER_NON_NEGATIVE_LONG &&
-            repeatCount > TIMER_MIN_COUNT,
-        name = name,
-        channelKey = channelKey,
-        bound = isBound,
-        group = TIMER_UNAVAILABLE_INDEX,
-        weekdays = weekdays.toList(),
-        startTimeMs = startTimeMs,
-        startTime = timerTimeText(startTimeMs),
-        intervalOnMs = intervalOnMs,
-        intervalOn = timerTimeText(intervalOnMs),
-        intervalOffMs = intervalOffMs,
-        intervalOff = timerTimeText(intervalOffMs),
-        repeatCount = repeatCount,
-        pulseCountRuntime = TIMER_UNAVAILABLE_INDEX,
-        pulseOffPending = false,
-        pulseRemainingMs = TIMER_NON_NEGATIVE_LONG
-    )
+internal sealed interface DeviceTimerStateEventResult {
+    data object Applied : DeviceTimerStateEventResult
+    data object Ignored : DeviceTimerStateEventResult
+    data class RefreshRequired(val channelKey: String) : DeviceTimerStateEventResult
 }
+
+private fun DeviceTimerChannelStatus.withRuntime(
+    change: DeviceTimerStatusChange
+): DeviceTimerChannelStatus = copy(
+    operatingState = change.operatingState,
+    activeSlotId = change.activeSlotId,
+    activeSlotName = change.activeSlotName,
+    nextTransitionType = change.nextTransitionType,
+    nextTransitionAt = change.nextTransitionAt,
+    runtimeReason = change.runtimeReason,
+    clockReady = change.clockReady,
+    temporaryOverrideActive = change.temporaryOverrideActive,
+    temporaryOverrideRemainingMs = change.temporaryOverrideRemainingMs
+)
+
+private fun newerTimerUptime(current: Long, candidate: Long): Long =
+    if (candidate == current || isNewerTimerCounter(candidate, current)) candidate else current

@@ -1,6 +1,8 @@
+@file:Suppress("MagicNumber")
+
 package com.aqua.aqualight.data.devices.runtime.modules.timer
 
-import org.json.JSONArray
+import org.json.JSONObject
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNull
@@ -9,100 +11,189 @@ import org.junit.Test
 
 class DeviceTimerRuntimeContractTest {
     @Test
-    fun `status parser accepts exact standalone Timer snapshot`() {
-        val status = DeviceTimerStatusParser.parse(DeviceTimerRuntimeFixtures.status())
+    fun `firmware fixture command fields and Android serializers are identical`() {
+        val fixture = resourceJson("aql_timer_contract_v1.json")
+        val commands = fixture.getJSONObject("commands")
+        val schedule = DeviceTimerRuntimeFixtures.schedulePayload()
+        val config = DeviceTimerConfigApplyPayload(
+            channelKey = "channel1",
+            expectedRevision = 7L,
+            displayName = DeviceTimerDisplayNameUpdate.Value("Filter"),
+            schedules = listOf(schedule)
+        ).toJson()
+        val channelSet = DeviceTimerChannelSetPayload(
+            channelKey = "channel1",
+            expectedRevision = 7L,
+            regime = DeviceTimerRegime.OFF,
+            durationMs = 300_000L,
+            save = false
+        ).toJson()
 
-        assertTrue(status.supported)
-        assertEquals(2, status.channelCount)
-        assertEquals("Filter", status.channels.first().displayName)
-        assertEquals(DeviceTimerRegime.AUTO, status.channels.first().regime)
-        assertEquals("08:00", status.schedules.single().startTime)
-        assertTrue(status.schedules.single().runtimeEnabled)
-        assertTrue(status.runtime.supportsSchedules)
+        assertEquals(
+            commands.getJSONObject("timer.config.apply")
+                .getJSONArray("requestFields").asStringSet(),
+            config.keySetExact()
+        )
+        assertEquals(
+            commands.getJSONObject("timer.config.apply")
+                .getJSONArray("scheduleFields").asStringSet(),
+            schedule.toJson().keySetExact()
+        )
+        assertEquals(
+            commands.getJSONObject("timer.channel.set")
+                .getJSONArray("requestFields").asStringSet(),
+            channelSet.keySetExact()
+        )
+        assertEquals(
+            setOf("channelKey"),
+            DeviceTimerStatusGetPayload("channel1").toJson().keySetExact()
+        )
     }
 
     @Test
-    fun `status parser rejects extra fields and regime aliases`() {
-        val extra = DeviceTimerRuntimeFixtures.status().put("unexpected", true)
-        val alias = DeviceTimerRuntimeFixtures.status()
-        alias.getJSONArray("channels").getJSONObject(0).put("regime", "schedule")
+    fun `global and channel-scoped golden statuses parse exactly`() {
+        val global = DeviceTimerStatusParser.parse(DeviceTimerRuntimeFixtures.globalStatus())
+        val scoped = DeviceTimerStatusParser.parse(DeviceTimerRuntimeFixtures.channelStatus())
+
+        assertFalse(global.channelScoped)
+        assertFalse(global.schedulesIncluded)
+        assertTrue(global.schedules.isEmpty())
+        assertNull(global.selectedChannelKey)
+        assertTrue(scoped.channelScoped)
+        assertTrue(scoped.schedulesIncluded)
+        assertEquals("channel1", scoped.selectedChannelKey)
+        assertEquals(1, scoped.schedules.single().slotId)
+        assertEquals("12:00", scoped.schedules.single().startTime)
+        assertEquals("18:00", scoped.schedules.single().endTime)
+        assertEquals(DeviceTimerRuntimeReason.SCHEDULE_ACTIVE, scoped.channels.single().runtimeReason)
+    }
+
+    @Test
+    fun `status parser fails closed on extra fields aliases and scope inconsistencies`() {
+        val extra = DeviceTimerRuntimeFixtures.globalStatus().put("unexpected", true)
+        val alias = DeviceTimerRuntimeFixtures.globalStatus().also { status ->
+            status.getJSONArray("channels").getJSONObject(0).put("regime", "schedule")
+        }
+        val missingScopedKey = DeviceTimerRuntimeFixtures.channelStatus()
+            .also { status -> status.remove("selectedChannelKey") }
 
         assertTrue(runCatching { DeviceTimerStatusParser.parse(extra) }.isFailure)
         assertTrue(runCatching { DeviceTimerStatusParser.parse(alias) }.isFailure)
+        assertTrue(runCatching { DeviceTimerStatusParser.parse(missingScopedKey) }.isFailure)
     }
 
     @Test
-    fun `status parser rejects malformed weekdays and derived time text`() {
-        val weekdays = DeviceTimerRuntimeFixtures.status()
-        weekdays.getJSONArray("schedules").getJSONObject(0)
-            .put("weekdays", JSONArray(listOf(true, false)))
-        val time = DeviceTimerRuntimeFixtures.status()
-        time.getJSONArray("schedules").getJSONObject(0).put("startTime", "8:00")
-
-        assertTrue(runCatching { DeviceTimerStatusParser.parse(weekdays) }.isFailure)
-        assertTrue(runCatching { DeviceTimerStatusParser.parse(time) }.isFailure)
-    }
-
-    @Test
-    fun `config payload distinguishes omitted arrays from an empty schedule replacement`() {
-        val deleteAll = DeviceTimerConfigApplyPayload(
-            schedules = emptyList(),
-            save = true
+    fun `status request and channel replacement serializers match firmware field ownership`() {
+        val schedule = DeviceTimerRuntimeFixtures.schedulePayload()
+        val payload = DeviceTimerConfigApplyPayload(
+            channelKey = " CHANNEL1 ",
+            expectedRevision = 7L,
+            displayName = DeviceTimerDisplayNameUpdate.Value(" Return Pump "),
+            schedules = listOf(schedule)
         ).toJson()
 
-        assertEquals(setOf("schedules", "save"), deleteAll.keys().asSequence().toSet())
-        assertEquals(0, deleteAll.getJSONArray("schedules").length())
-        assertFalse(deleteAll.has("channels"))
+        assertEquals(emptySet<String>(), DeviceTimerStatusGetPayload().toJson().keySetExact())
+        assertEquals(
+            setOf("channelKey"),
+            DeviceTimerStatusGetPayload(" CHANNEL1 ").toJson().keySetExact()
+        )
+        assertEquals(
+            setOf("channelKey", "expectedRevision", "displayName", "schedules", "save"),
+            payload.keySetExact()
+        )
+        assertEquals("channel1", payload.getString("channelKey"))
+        assertEquals("Return Pump", payload.getString("displayName"))
+        assertEquals(
+            setOf(
+                "slotId", "enabled", "name", "weekdays", "startTimeMs", "endTimeMs",
+                "spansMidnight"
+            ),
+            payload.getJSONArray("schedules").getJSONObject(0).keySetExact()
+        )
+        assertFalse(payload.getJSONArray("schedules").getJSONObject(0).has("channelKey"))
     }
 
     @Test
-    fun `channel display name payload normalizes names and preserves empty clear command`() {
-        val renamed = DeviceTimerChannelConfig(" CHANNEL1 ", displayName = " Filter Pump ")
-            .toJson()
-        val cleared = DeviceTimerChannelConfig("channel1", displayName = "   ")
-            .toJson()
+    fun `display name clear is explicit JSON null and schedule delete is channel scoped`() {
+        val clear = DeviceTimerConfigApplyPayload(
+            channelKey = "channel1",
+            expectedRevision = 7L,
+            displayName = DeviceTimerDisplayNameUpdate.Clear
+        ).toJson()
+        val delete = DeviceTimerConfigApplyPayload(
+            channelKey = "channel1",
+            expectedRevision = 7L,
+            schedules = emptyList()
+        ).toJson()
 
-        assertEquals(setOf("channelKey", "displayName"), renamed.keys().asSequence().toSet())
-        assertEquals("channel1", renamed.getString("channelKey"))
-        assertEquals("Filter Pump", renamed.getString("displayName"))
-        assertEquals("", cleared.getString("displayName"))
+        assertTrue(clear.isNull("displayName"))
+        assertFalse(clear.has("schedules"))
+        assertEquals(0, delete.getJSONArray("schedules").length())
+        assertFalse(delete.has("displayName"))
     }
 
     @Test
-    fun `config parser keeps absent display override distinct from effective status name`() {
-        val result = DeviceTimerMutationParser.parseConfigApply(
-            DeviceTimerRuntimeFixtures.configApply(channelOneDisplayNameOverride = null)
+    fun `twelve o'clock encodes as whole-minute milliseconds and sub-minute input is rejected`() {
+        assertEquals(43_200_000L, timerScheduleBoundaryMillis(12, 0))
+        assertEquals("12:00", timerTimeText(timerScheduleBoundaryMillis(12, 0)))
+        assertTrue(
+            runCatching {
+                DeviceTimerScheduleConfig(
+                    slotId = 1,
+                    enabled = true,
+                    name = "Invalid",
+                    weekdays = List(7) { true },
+                    startTimeMs = 1_000L,
+                    endTimeMs = 60_000L
+                )
+            }.isFailure
+        )
+    }
+
+    @Test
+    fun `duplicate slots and cross-midnight overlaps are rejected before transport`() {
+        val overnight = DeviceTimerRuntimeFixtures.schedulePayload(
+            slotId = 1,
+            startTimeMs = timerScheduleBoundaryMillis(23, 0),
+            endTimeMs = timerScheduleBoundaryMillis(1, 0),
+            weekdays = listOf(true, false, false, false, false, false, false)
+        )
+        val nextDayOverlap = DeviceTimerRuntimeFixtures.schedulePayload(
+            slotId = 2,
+            startTimeMs = timerScheduleBoundaryMillis(0, 30),
+            endTimeMs = timerScheduleBoundaryMillis(2, 0),
+            weekdays = listOf(false, true, false, false, false, false, false)
         )
 
-        assertNull(result.config.channels.first().displayNameOverride)
+        assertTrue(
+            runCatching {
+                DeviceTimerConfigApplyPayload(
+                    channelKey = "channel1",
+                    expectedRevision = 7L,
+                    schedules = listOf(overnight, overnight)
+                )
+            }.isFailure
+        )
+        assertTrue(
+            runCatching {
+                DeviceTimerConfigApplyPayload(
+                    channelKey = "channel1",
+                    expectedRevision = 7L,
+                    schedules = listOf(overnight, nextDayOverlap)
+                )
+            }.isFailure
+        )
     }
 
-    @Test
-    fun `standalone Timer config rejects dosing amount`() {
-        val response = DeviceTimerRuntimeFixtures.configApply()
-        response.getJSONObject("config")
-            .getJSONArray("schedules")
-            .getJSONObject(0)
-            .put("amountMl", 2.5)
+    private fun JSONObject.keySetExact(): Set<String> =
+        keys().asSequence().toCollection(linkedSetOf())
 
-        assertTrue(runCatching { DeviceTimerMutationParser.parseConfigApply(response) }.isFailure)
-    }
+    private fun org.json.JSONArray.asStringSet(): Set<String> =
+        (0 until length()).mapTo(linkedSetOf()) { index -> getString(index) }
 
-    @Test
-    fun `enabled schedule rejects inert runtime configuration before encoding`() {
-        val failure = runCatching {
-            DeviceTimerScheduleConfig(
-                enabled = true,
-                name = "Invalid",
-                channelKey = "channel1",
-                weekdays = List(7) { false },
-                startTimeMs = 0L,
-                intervalOnMs = 0L,
-                intervalOffMs = 0L,
-                repeatCount = 0
-            )
-        }
-
-        assertTrue(failure.isFailure)
-    }
+    private fun resourceJson(name: String): JSONObject = JSONObject(
+        requireNotNull(javaClass.classLoader?.getResourceAsStream(name)) {
+            "Missing Timer contract fixture: $name"
+        }.use { stream -> stream.readBytes().toString(Charsets.UTF_8) }
+    )
 }
