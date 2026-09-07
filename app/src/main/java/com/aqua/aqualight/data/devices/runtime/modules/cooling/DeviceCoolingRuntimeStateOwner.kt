@@ -5,6 +5,7 @@ import com.aqua.aqualight.data.devices.runtime.core.DeviceRuntimeConnectionGener
 import com.aqua.aqualight.data.devices.runtime.modules.cooling.v1.DeviceCoolingV1ConfigSnapshot
 import com.aqua.aqualight.data.devices.runtime.modules.cooling.v1.DeviceCoolingV1StatusDocument
 import com.aqua.aqualight.data.devices.runtime.modules.cooling.v1.DeviceCoolingV1Telemetry
+import com.aqua.aqualight.data.devices.runtime.modules.cooling.v1.DeviceCoolingV1ProgramSnapshot
 import com.aqua.aqualight.data.devices.runtime.modules.cooling.v1.toConfigSnapshot
 import com.aqua.aqualight.data.devices.runtime.modules.cooling.v1.toTelemetrySnapshot
 import com.aqua.aqualight.data.devices.runtime.state.DeviceRuntimeGenerationAuthority
@@ -17,7 +18,8 @@ data class DeviceCoolingRuntimeState(
     val authoritative: Boolean = false,
     val status: DeviceCoolingV1StatusDocument? = null,
     val config: DeviceCoolingV1ConfigSnapshot? = null,
-    val telemetry: DeviceCoolingV1Telemetry? = null
+    val telemetry: DeviceCoolingV1Telemetry? = null,
+    val programSnapshot: DeviceCoolingV1ProgramSnapshot? = null
 )
 
 /**
@@ -106,13 +108,37 @@ internal class DeviceCoolingRuntimeStateOwner {
                             authoritative = true,
                             status = status,
                             config = config,
-                            telemetry = selectedTelemetry
+                            telemetry = selectedTelemetry,
+                            programSnapshot = current
+                                ?.programSnapshot
+                                ?.takeIf { program ->
+                                    program.programRevision == status.programRevision
+                                }
                         )
                     )
                     true
                 }
             }
         }
+    }
+
+    fun recordProgram(
+        deviceUid: DeviceUid,
+        generation: DeviceRuntimeConnectionGeneration,
+        program: DeviceCoolingV1ProgramSnapshot
+    ): Boolean = synchronized(lock) {
+        if (!authority.acceptsPatch(deviceUid, generation)) return@synchronized false
+        val current = _states.value[deviceUid] ?: return@synchronized false
+        if (
+            !current.authoritative ||
+            current.connectionGeneration != generation ||
+            current.status?.programRevision != program.programRevision
+        ) {
+            return@synchronized false
+        }
+        if (current.programSnapshot == program) return@synchronized true
+        publish(deviceUid, current.copy(programSnapshot = program))
+        true
     }
 
     fun recordTelemetry(

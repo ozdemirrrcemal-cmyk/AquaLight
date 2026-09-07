@@ -317,4 +317,21 @@
     <string name="device_cooling_percent_value_format">%1$d%%</string>
     <string name="device_cooling_power_number_format">%1$.3f</string>
     <string name="device_cooling_energy_value_format">%1$.4f kWh/gün</string>
+
+    <string name="cooling_device_card_water">Su</string>
+    <string name="cooling_device_card_fan">Fan</string>
+    <string name="cooling_device_card_range">Aralık</string>
+    <string name="cooling_device_card_slot">Dilim</string>
+    <string name="cooling_device_card_target">Hedef</string>
+    <string name="cooling_device_card_percent_value">%1$.0f%%</string>
+    <string name="cooling_device_card_slot_value">%1$d / %2$d</string>
+    <string name="cooling_device_card_detail_with_program">%1$s · %2$s</string>
+    <string name="cooling_device_card_program_interval">%1$02d:%2$02d–%3$02d:%4$02d</string>
+    <string name="cooling_device_card_loading">Soğutma verileri yükleniyor</string>
+    <string name="cooling_device_card_offline">Soğutma cihazı çevrimdışı</string>
+    <string name="cooling_device_card_loading_detail">Soğutma verileri hazırlanıyor</string>
+    <string name="cooling_device_card_unavailable_detail">Soğutma verileri geçici olarak kullanılamıyor</string>
+    <string name="cooling_device_card_offline_detail">Anlık soğutma verilerini görmek için cihazı bağlayın</string>
+    <string name="cooling_device_card_accessibility">%1$s. %2$s</string>
+    <string name="cooling_device_card_accessibility_summary">%1$s. %2$s. Su %3$s. Fan %4$s.</string>
 </resources>

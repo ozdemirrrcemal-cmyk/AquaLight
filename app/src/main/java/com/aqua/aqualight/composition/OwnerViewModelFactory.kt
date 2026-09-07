@@ -235,7 +235,8 @@ internal class OwnerViewModelFactory(
                 assignmentOperations = DefaultTankDeviceAssignmentOperations(assignments, repository),
                 menuOpenUseCase = createDeviceMenuOpenUseCase(graph, repository),
                 routeResolver = DeviceRouteResolver(),
-                dosingCardOperations = graph.dosingOperations.cardOperations
+                dosingCardOperations = graph.dosingOperations.cardOperations,
+                coolingCardOperations = graph.coolingCardOperations
             )
             TankDeviceSelectViewModel::class.java -> TankDeviceSelectViewModel(
                 assignmentOperations = DefaultTankDeviceAssignmentOperations(assignments, repository)

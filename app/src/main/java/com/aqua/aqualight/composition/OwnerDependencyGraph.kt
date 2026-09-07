@@ -5,6 +5,7 @@ import com.aqua.aqualight.BuildConfig
 import com.aqua.aqualight.application.auth.AuthenticatedOwnerIdentity
 import com.aqua.aqualight.application.devices.DeviceControlSurfacePreparationOperations
 import com.aqua.aqualight.application.devices.DeviceFirmwareUpdateOperations
+import com.aqua.aqualight.application.devices.cooling.DeviceCoolingCardOperations
 import com.aqua.aqualight.application.devices.dosing.DeviceDosingCalibrationDraftOperations
 import com.aqua.aqualight.application.devices.dosing.DeviceDosingCalibrationOperations
 import com.aqua.aqualight.application.devices.dosing.DeviceDosingCardOperations
@@ -25,6 +26,7 @@ import com.aqua.aqualight.data.care.CareTaskDataStoreManager
 import com.aqua.aqualight.data.devices.DefaultDeviceFirmwareUpdateOperations
 import com.aqua.aqualight.data.devices.DefaultDeviceRootOperations
 import com.aqua.aqualight.data.devices.cooling.control.DefaultDeviceCoolingControlOperations
+import com.aqua.aqualight.data.devices.cooling.DefaultDeviceCoolingCardOperations
 import com.aqua.aqualight.data.devices.dosing.DefaultDeviceDosingChannelNavigationOperations
 import com.aqua.aqualight.data.devices.dosing.SharedPreferencesDeviceDosingCalibrationDraftStore
 import com.aqua.aqualight.data.devices.dosing.SharedPreferencesDeviceDosingLowLevelAlertLedger
@@ -62,6 +64,7 @@ internal data class OwnerDependencyGraph(
     val userDataArchiveOperations: UserDataArchiveOperations,
     val provisioningDraftOperations: ProvisioningDraftOperations,
     val controlSurfacePreparationOperations: DeviceControlSurfacePreparationOperations,
+    val coolingCardOperations: DeviceCoolingCardOperations,
     val dosingOperations: OwnerDosingOperations
 )
 
@@ -240,6 +243,9 @@ internal class ActiveOwnerDependencyGraphResolver(
             controlSurfacePreparationOperations = createControlSurfacePreparationOperations(
                 dependencies = dependencies,
                 dosingOperations = dosingOperations
+            ),
+            coolingCardOperations = DefaultDeviceCoolingCardOperations(
+                dependencies.devicesRepository
             ),
             dosingOperations = dosingOperations
         )

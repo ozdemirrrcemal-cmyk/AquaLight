@@ -4,11 +4,17 @@ import com.aqua.aqualight.data.devices.model.DeviceUid
 import com.aqua.aqualight.data.devices.runtime.core.DeviceRuntimeConnectionGeneration
 import com.aqua.aqualight.data.devices.runtime.modules.cooling.v1.DeviceCoolingV1ChartSource
 import com.aqua.aqualight.data.devices.runtime.modules.cooling.v1.DeviceCoolingV1HistoryRange
+import com.aqua.aqualight.data.devices.runtime.modules.cooling.v1.DeviceCoolingV1FanPolicy
 import com.aqua.aqualight.data.devices.runtime.modules.cooling.v1.DeviceCoolingV1OperatingState
+import com.aqua.aqualight.data.devices.runtime.modules.cooling.v1.DeviceCoolingV1ProgramPolicy
+import com.aqua.aqualight.data.devices.runtime.modules.cooling.v1.DeviceCoolingV1ProgramSlot
+import com.aqua.aqualight.data.devices.runtime.modules.cooling.v1.DeviceCoolingV1ProgramSnapshot
 import com.aqua.aqualight.data.devices.runtime.modules.cooling.v1.DeviceCoolingV1ResponseParser
+import com.aqua.aqualight.data.devices.runtime.modules.cooling.v1.DeviceCoolingV1TemperaturePolicy
 import org.json.JSONObject
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
+import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Test
 
@@ -56,6 +62,28 @@ class DeviceCoolingRuntimeAuthorityTest {
     }
 
     @Test
+    fun `central owner retains only program details matching the authoritative revision`() {
+        val owner = DeviceCoolingRuntimeStateOwner()
+        val status = DeviceCoolingV1ResponseParser.parseStatus(statusJson())
+        val program = programSnapshot(status.programRevision)
+        owner.beginGeneration(DEVICE_UID, GENERATION)
+        assertTrue(owner.recordStatus(DEVICE_UID, GENERATION, status))
+
+        assertTrue(owner.recordProgram(DEVICE_UID, GENERATION, program))
+        assertEquals(program, owner.states.value.getValue(DEVICE_UID).programSnapshot)
+
+        assertTrue(owner.recordStatus(DEVICE_UID, GENERATION, status))
+        assertEquals(program, owner.states.value.getValue(DEVICE_UID).programSnapshot)
+
+        val nextStatus = status.copy(
+            programRevision = status.programRevision + 1,
+            program = status.program.copy(programRevision = status.programRevision + 1)
+        )
+        assertTrue(owner.recordStatus(DEVICE_UID, GENERATION, nextStatus))
+        assertNull(owner.states.value.getValue(DEVICE_UID).programSnapshot)
+    }
+
+    @Test
     fun `nested status contract additions fail closed`() {
         val invalid = statusJson().apply {
             getJSONObject("policy").getJSONObject("silentMode").put("androidFallback", 50)
@@ -96,6 +124,40 @@ class DeviceCoolingRuntimeAuthorityTest {
             "Missing fixture resource: $STATUS_FIXTURE"
         }.use { stream -> stream.readBytes().toString(Charsets.UTF_8) }
     )
+
+    private fun programSnapshot(revision: Long): DeviceCoolingV1ProgramSnapshot =
+        DeviceCoolingV1ProgramSnapshot(
+            programRevision = revision,
+            clockReady = true,
+            currentMinuteOfDay = 500,
+            activeSlotIndex = 0,
+            policy = DeviceCoolingV1ProgramPolicy(
+                maximumSlotCount = 8,
+                timeStepMinutes = 15,
+                minimumDurationMinutes = 15,
+                crossMidnightSlotsSupported = false,
+                requiresTrustedDeviceClock = true,
+                scheduleBasis = "device_local_time",
+                programActivation = "active_slot",
+                timeAuthority = "device",
+                currentMinuteOfDaySource = "device",
+                activeSlotAuthority = "device",
+                startBoundary = "inclusive",
+                endBoundary = "exclusive",
+                endMinuteMaximum = 1_440,
+                fan = DeviceCoolingV1FanPolicy(0.0, 100.0, 1.0),
+                fanOnTemperature = DeviceCoolingV1TemperaturePolicy(
+                    minimumC = 10.0,
+                    maximumC = 40.0,
+                    stepC = 0.1,
+                    defaultC = 25.0
+                )
+            ),
+            slots = listOf(
+                DeviceCoolingV1ProgramSlot(480, 600, 25.0, 50.0),
+                DeviceCoolingV1ProgramSlot(840, 1_080, 26.0, 70.0)
+            )
+        )
 
     private companion object {
         const val STATUS_FIXTURE = "aql_cooling_status_v1.json"
