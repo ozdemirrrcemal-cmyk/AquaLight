@@ -26,18 +26,18 @@
         android:paddingEnd="@dimen/aqua_size_14"
         android:paddingBottom="@dimen/aqua_size_6">
 
-        <LinearLayout
+        <androidx.constraintlayout.widget.ConstraintLayout
             android:layout_width="match_parent"
-            android:layout_height="@dimen/aqua_size_40"
-            android:baselineAligned="false"
-            android:gravity="center_vertical"
-            android:orientation="horizontal">
+            android:layout_height="@dimen/aqua_size_40">
 
             <com.google.android.material.card.MaterialCardView
                 android:id="@+id/deviceIconContainer"
                 style="@style/Widget.Aqua.Card.Device.Media"
                 android:layout_width="@dimen/aqua_size_40"
                 android:layout_height="@dimen/aqua_size_40"
+                app:layout_constraintBottom_toBottomOf="parent"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintTop_toTopOf="parent"
                 app:strokeWidth="@dimen/aqua_size_1">
 
                 <ImageView
@@ -57,18 +57,25 @@
                 android:layout_height="wrap_content"
                 android:layout_marginStart="@dimen/aqua_size_10"
                 android:layout_marginEnd="@dimen/aqua_size_6"
-                android:layout_weight="1"
                 android:ellipsize="end"
                 android:includeFontPadding="false"
                 android:maxLines="1"
                 android:textColor="@color/aqua_content_primary"
                 android:textSize="@dimen/aqua_text_size_card_title"
                 android:textStyle="bold"
+                app:layout_constraintBottom_toBottomOf="parent"
+                app:layout_constraintEnd_toStartOf="@id/devicePresenceContainer"
+                app:layout_constraintStart_toEndOf="@id/deviceIconContainer"
+                app:layout_constraintTop_toTopOf="parent"
                 tools:text="Cool Pro 1F" />
 
             <FrameLayout
+                android:id="@+id/devicePresenceContainer"
                 android:layout_width="@dimen/aqua_size_32"
-                android:layout_height="@dimen/aqua_size_32">
+                android:layout_height="@dimen/aqua_size_32"
+                app:layout_constraintBottom_toBottomOf="parent"
+                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintTop_toTopOf="parent">
 
                 <ImageView
                     android:id="@+id/ivPresenceIcon"
@@ -88,7 +95,7 @@
                     android:contentDescription="@string/device_menu_checking_accessibility"
                     android:visibility="gone" />
             </FrameLayout>
-        </LinearLayout>
+        </androidx.constraintlayout.widget.ConstraintLayout>
 
         <View
             android:layout_width="match_parent"
@@ -114,20 +121,20 @@
             android:layout_height="wrap_content"
             android:orientation="vertical">
 
-            <LinearLayout
+            <androidx.constraintlayout.widget.ConstraintLayout
                 android:layout_width="match_parent"
-                android:layout_height="@dimen/aqua_size_64"
-                android:baselineAligned="false"
-                android:gravity="center_vertical"
-                android:orientation="horizontal">
+                android:layout_height="@dimen/aqua_size_64">
 
                 <LinearLayout
                     android:layout_width="@dimen/aqua_size_0"
                     android:layout_height="wrap_content"
                     android:layout_marginEnd="@dimen/aqua_size_8"
-                    android:layout_weight="1"
                     android:gravity="start"
-                    android:orientation="vertical">
+                    android:orientation="vertical"
+                    app:layout_constraintBottom_toBottomOf="parent"
+                    app:layout_constraintEnd_toStartOf="@id/coolingFan"
+                    app:layout_constraintStart_toStartOf="parent"
+                    app:layout_constraintTop_toTopOf="parent">
 
                     <com.google.android.material.card.MaterialCardView
                         style="@style/Widget.Aqua.Card.Metric"
@@ -167,8 +174,11 @@
                     android:id="@+id/coolingFan"
                     android:layout_width="@dimen/aqua_size_56"
                     android:layout_height="@dimen/aqua_size_56"
-                    android:importantForAccessibility="noHideDescendants" />
-            </LinearLayout>
+                    android:importantForAccessibility="noHideDescendants"
+                    app:layout_constraintBottom_toBottomOf="parent"
+                    app:layout_constraintEnd_toEndOf="parent"
+                    app:layout_constraintTop_toTopOf="parent" />
+            </androidx.constraintlayout.widget.ConstraintLayout>
 
             <LinearLayout
                 android:layout_width="match_parent"
