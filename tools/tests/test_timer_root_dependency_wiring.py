@@ -7,6 +7,14 @@ ROOT_VIEW_MODEL = ROOT / (
     "app/src/main/java/com/aqua/aqualight/ui/tabs/devices/detail/timer/"
     "DeviceTimerRootViewModel.kt"
 )
+RUNTIME_PROVIDER = ROOT / (
+    "app/src/main/java/com/aqua/aqualight/data/devices/runtime/modules/"
+    "DeviceRuntimeModuleProvider.kt"
+)
+TIMER_AUTHORITY = ROOT / (
+    "app/src/main/java/com/aqua/aqualight/data/devices/runtime/modules/timer/"
+    "DeviceTimerRuntimeAuthority.kt"
+)
 COMPOSITIONS = {
     "production": ROOT / "app/src/main/java/com/aqua/aqualight/composition/OwnerViewModelFactory.kt",
     "debug": ROOT / (
@@ -71,6 +79,19 @@ class TimerRootDependencyWiringTest(unittest.TestCase):
             smoke,
         )
         self.assertIn("timerControlOperations = timerControlOperations", smoke)
+
+    def test_timer_bootstrap_keeps_generation_authority_adapter(self) -> None:
+        provider = RUNTIME_PROVIDER.read_text(encoding="utf-8")
+        authority = TIMER_AUTHORITY.read_text(encoding="utf-8")
+
+        self.assertIn(
+            "timer.isTimerAuthoritative(deviceUid, generation)",
+            provider,
+        )
+        self.assertIn(
+            "internal fun DeviceTimerRuntimeRepository.isAuthoritative(",
+            authority,
+        )
 
 
 if __name__ == "__main__":
