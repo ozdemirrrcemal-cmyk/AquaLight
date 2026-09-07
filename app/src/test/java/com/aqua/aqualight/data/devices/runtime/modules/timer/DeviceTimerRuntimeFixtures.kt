@@ -57,11 +57,10 @@ internal object DeviceTimerRuntimeFixtures {
         name: String = "Day Filter",
         startTimeMs: Long = timerScheduleBoundaryMillis(12, 0),
         endTimeMs: Long = timerScheduleBoundaryMillis(18, 0),
-        enabled: Boolean = true,
         weekdays: List<Boolean> = WEEKDAYS
     ): DeviceTimerScheduleConfig = DeviceTimerScheduleConfig(
         slotId = slotId,
-        enabled = enabled,
+        enabled = true,
         name = name,
         weekdays = weekdays,
         startTimeMs = startTimeMs,

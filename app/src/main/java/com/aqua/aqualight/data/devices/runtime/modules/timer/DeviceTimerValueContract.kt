@@ -10,6 +10,8 @@ internal const val TIMER_INACTIVE_VALUE = -1.0
 internal const val TIMER_WEEKDAY_COUNT = 7
 
 private const val TIMER_UINT32_HALF_RANGE = 0x8000_0000L
+private const val TIMER_HOURS_PER_DAY = 24
+private const val TIMER_MINUTES_PER_HOUR = 60
 private const val TIMER_MILLISECONDS_PER_HOUR = 3_600_000L
 private const val TIMER_MILLISECONDS_PER_MINUTE = 60_000L
 private const val TIMER_MILLISECONDS_PER_SECOND = 1_000L
@@ -37,9 +39,12 @@ internal fun nextTimerSequence(current: Long): Long =
     if (current == DeviceTimerRuntimeContract.Limit.UINT32_MAX) 1L else current + 1L
 
 internal fun timerScheduleBoundaryMillis(hour: Int, minute: Int): Long {
-    require(hour in 0..23) { "Timer hour must be inside 00..23." }
-    require(minute in 0..59) { "Timer minute must be inside 00..59." }
-    return (hour * 60L + minute) * TIMER_MILLISECONDS_PER_MINUTE
+    require(hour in 0 until TIMER_HOURS_PER_DAY) { "Timer hour must be inside 00..23." }
+    require(minute in 0 until TIMER_MINUTES_PER_HOUR) {
+        "Timer minute must be inside 00..59."
+    }
+    return (hour * TIMER_MINUTES_PER_HOUR.toLong() + minute) *
+        TIMER_MILLISECONDS_PER_MINUTE
 }
 
 internal fun isTimerScheduleBoundary(milliseconds: Long): Boolean =

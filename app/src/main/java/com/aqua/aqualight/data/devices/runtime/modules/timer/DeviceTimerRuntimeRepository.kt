@@ -62,43 +62,48 @@ class DeviceTimerRuntimeRepository internal constructor(
         payload: DeviceTimerConfigApplyPayload
     ): DeviceRuntimeCommandOutcome<DeviceTimerConfigApplyResult> {
         val access = accessProvider(deviceUid)
-        if (configUnsupported(payload, access)) {
-            return timerUnsupported(deviceUid, DeviceTimerRuntimeContract.Action.CONFIG_APPLY)
-        }
-        val baseline = when (val result = ensureGlobalStatus(deviceUid)) {
-            is TimerStatusBaseline.Ready -> result.status
-            is TimerStatusBaseline.Failed -> return result.outcome.asFailure()
-        }
-        val outcome = gateway.execute(
-            deviceUid,
-            timerJsonCommand(
-                action = DeviceTimerRuntimeContract.Action.CONFIG_APPLY,
-                dataFactory = {
-                    DeviceTimerCommandValidation.validateConfigRequest(payload, baseline, access)
-                    payload.toJson()
-                },
-                parser = { data ->
-                    DeviceTimerMutationParser.parseConfigApply(data).also { result ->
-                        DeviceTimerCommandValidation.validateConfigResult(
-                            payload,
-                            result,
-                            baseline,
-                            access
-                        )
-                    }
+        return if (configUnsupported(payload, access)) {
+            timerUnsupported(deviceUid, DeviceTimerRuntimeContract.Action.CONFIG_APPLY)
+        } else when (val result = ensureGlobalStatus(deviceUid)) {
+            is TimerStatusBaseline.Failed -> result.outcome.asFailure()
+            is TimerStatusBaseline.Ready -> {
+                val baseline = result.status
+                val outcome = gateway.execute(
+                    deviceUid,
+                    timerJsonCommand(
+                        action = DeviceTimerRuntimeContract.Action.CONFIG_APPLY,
+                        dataFactory = {
+                            DeviceTimerCommandValidation.validateConfigRequest(
+                                payload,
+                                baseline,
+                                access
+                            )
+                            payload.toJson()
+                        },
+                        parser = { data ->
+                            DeviceTimerMutationParser.parseConfigApply(data).also { mutation ->
+                                DeviceTimerCommandValidation.validateConfigResult(
+                                    payload,
+                                    mutation,
+                                    baseline,
+                                    access
+                                )
+                            }
+                        }
+                    )
+                )
+                if (outcome is DeviceRuntimeCommandOutcome.Success) {
+                    stateStore.recordMutationChannel(
+                        deviceUid,
+                        outcome.generation,
+                        outcome.value.channel,
+                        outcome.value.revision
+                    )
+                    requestStatus(deviceUid, outcome.value.channelKey)
                 }
-            )
-        )
-        if (outcome is DeviceRuntimeCommandOutcome.Success) {
-            stateStore.recordMutationChannel(
-                deviceUid,
-                outcome.generation,
-                outcome.value.channel,
-                outcome.value.revision
-            )
-            requestStatus(deviceUid, outcome.value.channelKey)
+                outcome
+            }
         }
-        return outcome
     }
 
     suspend fun setChannel(
@@ -106,43 +111,48 @@ class DeviceTimerRuntimeRepository internal constructor(
         payload: DeviceTimerChannelSetPayload
     ): DeviceRuntimeCommandOutcome<DeviceTimerChannelSetResult> {
         val access = accessProvider(deviceUid)
-        if (!access.supportsApi || !access.supportsChannelState) {
-            return timerUnsupported(deviceUid, DeviceTimerRuntimeContract.Action.CHANNEL_SET)
-        }
-        val baseline = when (val result = ensureGlobalStatus(deviceUid)) {
-            is TimerStatusBaseline.Ready -> result.status
-            is TimerStatusBaseline.Failed -> return result.outcome.asFailure()
-        }
-        val outcome = gateway.execute(
-            deviceUid,
-            timerJsonCommand(
-                action = DeviceTimerRuntimeContract.Action.CHANNEL_SET,
-                dataFactory = {
-                    DeviceTimerCommandValidation.validateChannelRequest(payload, baseline, access)
-                    payload.toJson()
-                },
-                parser = { data ->
-                    DeviceTimerMutationParser.parseChannelSet(data).also { result ->
-                        DeviceTimerCommandValidation.validateChannelResult(
-                            payload,
-                            result,
-                            baseline,
-                            access
-                        )
-                    }
+        return if (!access.supportsApi || !access.supportsChannelState) {
+            timerUnsupported(deviceUid, DeviceTimerRuntimeContract.Action.CHANNEL_SET)
+        } else when (val result = ensureGlobalStatus(deviceUid)) {
+            is TimerStatusBaseline.Failed -> result.outcome.asFailure()
+            is TimerStatusBaseline.Ready -> {
+                val baseline = result.status
+                val outcome = gateway.execute(
+                    deviceUid,
+                    timerJsonCommand(
+                        action = DeviceTimerRuntimeContract.Action.CHANNEL_SET,
+                        dataFactory = {
+                            DeviceTimerCommandValidation.validateChannelRequest(
+                                payload,
+                                baseline,
+                                access
+                            )
+                            payload.toJson()
+                        },
+                        parser = { data ->
+                            DeviceTimerMutationParser.parseChannelSet(data).also { mutation ->
+                                DeviceTimerCommandValidation.validateChannelResult(
+                                    payload,
+                                    mutation,
+                                    baseline,
+                                    access
+                                )
+                            }
+                        }
+                    )
+                )
+                if (outcome is DeviceRuntimeCommandOutcome.Success) {
+                    stateStore.recordMutationChannel(
+                        deviceUid,
+                        outcome.generation,
+                        outcome.value.channel,
+                        outcome.value.revision
+                    )
+                    requestStatus(deviceUid, outcome.value.channelKey)
                 }
-            )
-        )
-        if (outcome is DeviceRuntimeCommandOutcome.Success) {
-            stateStore.recordMutationChannel(
-                deviceUid,
-                outcome.generation,
-                outcome.value.channel,
-                outcome.value.revision
-            )
-            requestStatus(deviceUid, outcome.value.channelKey)
+                outcome
+            }
         }
-        return outcome
     }
 
     suspend fun setChannelRegime(
