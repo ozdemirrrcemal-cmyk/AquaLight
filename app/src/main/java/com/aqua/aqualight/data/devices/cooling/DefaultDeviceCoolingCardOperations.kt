@@ -28,33 +28,38 @@ internal class DefaultDeviceCoolingCardOperations(
     private val devicesRepository: DevicesRepository
 ) : DeviceCoolingCardOperations {
 
-    override fun observe(deviceUid: String): Flow<DeviceCoolingCardState> {
-        val uid = deviceUid.trim().takeIf(String::isNotEmpty)?.let(::DeviceUid)
-            ?: return flowOf(
-                DeviceCoolingCardState.Unavailable(
-                    DeviceCoolingCardUnavailableReason.INVALID_DEVICE_UID
-                )
+    override fun observe(deviceUid: String): Flow<DeviceCoolingCardState> =
+        when (val resolution = resolveObservation(deviceUid)) {
+            is CoolingCardObservationResolution.Failed -> flowOf(
+                DeviceCoolingCardState.Unavailable(resolution.reason)
             )
-        val runtime = devicesRepository.runtimeModules()?.cooling
-            ?: return flowOf(
-                DeviceCoolingCardState.Unavailable(
-                    DeviceCoolingCardUnavailableReason.RUNTIME_CONNECTION_FAILED
-                )
-            )
+            is CoolingCardObservationResolution.Ready -> combine(
+                observeCentralPresentation(resolution.deviceUid, resolution.runtime),
+                prepareRuntime(resolution.deviceUid)
+            ) { presentation, preparation ->
+                when (presentation) {
+                    is CoolingCardPresentation.Available ->
+                        DeviceCoolingCardState.Ready(presentation.summary)
+                    CoolingCardPresentation.Missing -> preparation
+                    CoolingCardPresentation.Failed -> DeviceCoolingCardState.Unavailable(
+                        DeviceCoolingCardUnavailableReason.OBSERVATION_FAILED
+                    )
+                }
+            }.distinctUntilChanged()
+        }
 
-        return combine(
-            observeCentralPresentation(uid, runtime),
-            prepareRuntime(uid)
-        ) { presentation, preparation ->
-            when (presentation) {
-                is CoolingCardPresentation.Available ->
-                    DeviceCoolingCardState.Ready(presentation.summary)
-                CoolingCardPresentation.Missing -> preparation
-                CoolingCardPresentation.Failed -> DeviceCoolingCardState.Unavailable(
-                    DeviceCoolingCardUnavailableReason.OBSERVATION_FAILED
-                )
-            }
-        }.distinctUntilChanged()
+    private fun resolveObservation(deviceUid: String): CoolingCardObservationResolution {
+        val uid = deviceUid.trim().takeIf(String::isNotEmpty)?.let(::DeviceUid)
+        val runtime = uid?.let { devicesRepository.runtimeModules()?.cooling }
+        return when {
+            uid == null -> CoolingCardObservationResolution.Failed(
+                DeviceCoolingCardUnavailableReason.INVALID_DEVICE_UID
+            )
+            runtime == null -> CoolingCardObservationResolution.Failed(
+                DeviceCoolingCardUnavailableReason.RUNTIME_CONNECTION_FAILED
+            )
+            else -> CoolingCardObservationResolution.Ready(uid, runtime)
+        }
     }
 
     private fun observeCentralPresentation(
@@ -141,4 +146,15 @@ private sealed interface CoolingCardPresentation {
     data object Missing : CoolingCardPresentation
     data object Failed : CoolingCardPresentation
     data class Available(val summary: DeviceCoolingCardSummary) : CoolingCardPresentation
+}
+
+private sealed interface CoolingCardObservationResolution {
+    data class Ready(
+        val deviceUid: DeviceUid,
+        val runtime: DeviceCoolingRuntimeRepository
+    ) : CoolingCardObservationResolution
+
+    data class Failed(
+        val reason: DeviceCoolingCardUnavailableReason
+    ) : CoolingCardObservationResolution
 }
