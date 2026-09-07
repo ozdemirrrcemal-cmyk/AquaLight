@@ -270,6 +270,7 @@
     <string name="device_dosing_detail_error_busy">Another dosing operation is active. Review the current channel state before trying again.</string>
     <string name="device_dosing_detail_error_state_changed">The channel changed on the device. AquaLight refreshed the latest state; review it and try again.</string>
     <string name="device_dosing_detail_error_safety_blocked">The device blocked this change for safety. Review the current channel state before trying again.</string>
+    <string name="device_dosing_error_output_stop_unconfirmed">The pump could not be confirmed off. Disconnect the device from power and inspect the dosing output before using it again.</string>
     <string name="device_dosing_detail_error_unavailable">This operation is not available for the connected device.</string>
     <string name="device_dosing_detail_operation_failed">The dosing change could not be applied. Try again.</string>
 
@@ -279,7 +280,7 @@
     <string name="device_dosing_calibration_prime_title">Fill the tubing with liquid</string>
     <string name="device_dosing_calibration_prime_description">Place the intake tube in the liquid reservoir and the outlet tube in a waste cup. Press and hold the button until liquid flows continuously with no air bubbles.</string>
     <string name="device_dosing_calibration_run_title">Collect the calibration dose</string>
-    <string name="device_dosing_calibration_run_description">Place the outlet tube in a clean, dry graduated cylinder. When you start, the pump runs for 3 seconds. Keep the cylinder still until the process is complete.</string>
+    <string name="device_dosing_calibration_run_description">Place the outlet tube in a clean, dry graduated cylinder. Start the calibration dose, then keep the tubing and cylinder still until the process is complete.</string>
     <string name="device_dosing_calibration_measure_title">Enter the measured volume</string>
     <string name="device_dosing_calibration_measure_description">Place the cylinder on a level surface. Read the liquid level at eye level and enter the value to the nearest 0.05 ml.</string>
     <string name="device_dosing_calibration_verify_title">Apply the 4.00 ml test dose</string>

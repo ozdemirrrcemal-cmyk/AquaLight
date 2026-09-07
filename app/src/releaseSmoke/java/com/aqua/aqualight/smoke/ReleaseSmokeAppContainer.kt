@@ -4,6 +4,7 @@ import android.content.Context
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import com.aqua.aqualight.application.auth.AccountSecurityOperations
+import com.aqua.aqualight.application.auth.AppSessionOperations
 import com.aqua.aqualight.application.auth.AuthenticatedOwnerIdentity
 import com.aqua.aqualight.application.auth.SessionExitOperations
 import com.aqua.aqualight.application.devices.DeviceControlSurfacePreparationOperations
@@ -14,6 +15,7 @@ import com.aqua.aqualight.application.devices.provisioning.ProvisioningDraftOper
 import com.aqua.aqualight.application.feedback.FeedbackSubmissionUseCase
 import com.aqua.aqualight.application.notifications.NotificationDispatchUseCase
 import com.aqua.aqualight.application.notifications.NotificationPreferenceUseCase
+import com.aqua.aqualight.application.user.LocalDataRecoveryOperations
 import com.aqua.aqualight.application.user.UserAddressInput
 import com.aqua.aqualight.application.user.UserProfileOperations
 import com.aqua.aqualight.application.user.UserProfileSnapshot
@@ -25,6 +27,7 @@ import com.aqua.aqualight.data.aquarium.devices.DefaultTankDeviceAssignmentOpera
 import com.aqua.aqualight.data.aquarium.devices.TankDeviceAssignmentRepository
 import com.aqua.aqualight.data.aquarium.devices.TankDeviceAssignmentStore
 import com.aqua.aqualight.data.aquarium.store.AquariumTankDataStoreManager
+import com.aqua.aqualight.data.auth.AppSessionCoordinator
 import com.aqua.aqualight.data.care.CareTaskDataStoreManager
 import com.aqua.aqualight.data.care.DefaultMaintenanceOperations
 import com.aqua.aqualight.data.care.integrity.restoreTaskSnapshotsForIntegrity
@@ -32,12 +35,16 @@ import com.aqua.aqualight.data.care.integrity.snapshotTasksForIntegrity
 import com.aqua.aqualight.data.devices.DefaultDeviceRootOperations
 import com.aqua.aqualight.data.devices.DefaultDeviceStatusOperations
 import com.aqua.aqualight.data.devices.DefaultOwnerDevicesOperations
+import com.aqua.aqualight.data.devices.cooling.DefaultDeviceCoolingAutomaticSettingsOperations
+import com.aqua.aqualight.data.devices.cooling.DefaultDeviceCoolingTemperatureHistoryOperations
+import com.aqua.aqualight.data.devices.cooling.control.DefaultDeviceCoolingControlOperations
 import com.aqua.aqualight.data.devices.menu.DefaultDeviceMenuAccessOperations
 import com.aqua.aqualight.data.devices.provisioning.DefaultProvisioningDiscoveryOperations
 import com.aqua.aqualight.data.devices.provisioning.DefaultProvisioningProgressOperations
 import com.aqua.aqualight.data.devices.remove.OwnerDeviceDataCleaner
 import com.aqua.aqualight.data.devices.repository.DevicesRepository
 import com.aqua.aqualight.data.notifications.NotificationPlatform
+import com.aqua.aqualight.data.recovery.DefaultLocalDataRecoveryOperations
 import com.aqua.aqualight.data.user.StartupAppearanceCache
 import com.aqua.aqualight.data.user.UserPreferencesManager
 import com.aqua.aqualight.platform.auth.GoogleIdentityClient
@@ -54,7 +61,8 @@ import com.aqua.aqualight.ui.tabs.devices.add.DeviceAddViewModel
 import com.aqua.aqualight.ui.tabs.devices.add.DeviceProvisioningProgressViewModel
 import com.aqua.aqualight.ui.tabs.devices.add.DeviceQrScanViewModel
 import com.aqua.aqualight.ui.tabs.devices.detail.common.DeviceRootOverviewViewModel
-import com.aqua.aqualight.ui.tabs.devices.detail.cooling.DeviceCoolingRootViewModel
+import com.aqua.aqualight.ui.tabs.devices.detail.cooling.presentation.root.DeviceCoolingRootViewModel
+import com.aqua.aqualight.ui.tabs.devices.detail.cooling.presentation.status.DeviceCoolingSystemStatusViewModel
 import com.aqua.aqualight.ui.tabs.devices.detail.light.DeviceLightRootViewModel
 import com.aqua.aqualight.ui.tabs.devices.detail.timer.DeviceTimerRootViewModel
 import com.aqua.aqualight.ui.tabs.devices.route.DeviceRouteResolver
@@ -70,6 +78,10 @@ import kotlinx.coroutines.flow.MutableStateFlow
  * composition against physical devices, never through a smoke or fixture implementation.
  */
 internal class ReleaseSmokeAppContainer(context: Context) : AppContainer {
+    override val appSessionOperations: AppSessionOperations =
+        AppSessionCoordinator.create(context.applicationContext)
+    override val localDataRecoveryOperations: LocalDataRecoveryOperations =
+        DefaultLocalDataRecoveryOperations
     private val profileOperations = SmokeUserProfileOperations()
 
     override val defaultViewModelFactory: ViewModelProvider.Factory =
@@ -157,9 +169,7 @@ private class ReleaseSmokeViewModelFactory(
                 userProfileOperations = profileOperations,
                 deviceStatusOperations = DefaultDeviceStatusOperations(devicesRepository)
             )
-
         modelClass.isAssignableFrom(DevicesViewModel::class.java) -> createDevicesViewModel()
-
         modelClass.isAssignableFrom(DeviceAddViewModel::class.java) ->
             DeviceAddViewModel(
                 discoveryOperations = DefaultProvisioningDiscoveryOperations.create(
@@ -168,7 +178,6 @@ private class ReleaseSmokeViewModelFactory(
                 ),
                 textResolver = appTextResolver
             )
-
         modelClass.isAssignableFrom(DeviceQrScanViewModel::class.java) ->
             DeviceQrScanViewModel(
                 discoveryOperations = DefaultProvisioningDiscoveryOperations.create(
@@ -177,23 +186,18 @@ private class ReleaseSmokeViewModelFactory(
                 ),
                 textResolver = appTextResolver
             )
-
         modelClass.isAssignableFrom(DeviceProvisioningProgressViewModel::class.java) ->
             DeviceProvisioningProgressViewModel(
                 operations = DefaultProvisioningProgressOperations(appContext),
                 menuOpenUseCase = deviceMenuOpenUseCase,
                 textResolver = appTextResolver
             )
-
-        modelClass.isAssignableFrom(AquariumTankViewModel::class.java) ->
-            createAquariumTankViewModel()
-
+        modelClass.isAssignableFrom(AquariumTankViewModel::class.java) -> createAquariumTankViewModel()
         modelClass.isAssignableFrom(MaintenanceViewModel::class.java) ->
             MaintenanceViewModel(
                 operations = maintenanceOperations,
                 textResolver = maintenanceTextResolver
             )
-
         else -> null
     }
 
@@ -228,8 +232,7 @@ private class ReleaseSmokeViewModelFactory(
                             snapshots = snapshots
                         )
                     },
-                    removeDeviceAssignmentsForTank =
-                        assignmentRepository::removeAssignmentsForTank,
+                    removeDeviceAssignmentsForTank = assignmentRepository::removeAssignmentsForTank,
                     cancelCareTaskReminder = notificationPreferences::cancelCareTask,
                     reconcileCareReminders = notificationPreferences::reconcileOwner,
                     ownerUidProvider = { SMOKE_OWNER_UID }
@@ -242,19 +245,26 @@ private class ReleaseSmokeViewModelFactory(
         modelClass: Class<out ViewModel>
     ): ViewModel? = when {
         modelClass.isAssignableFrom(DeviceLightRootViewModel::class.java) ->
-            DeviceLightRootViewModel(
-                rootOperations = DefaultDeviceRootOperations(devicesRepository)
-            )
-
+            DeviceLightRootViewModel(rootOperations = DefaultDeviceRootOperations(devicesRepository))
         modelClass.isAssignableFrom(DeviceCoolingRootViewModel::class.java) ->
-            DeviceCoolingRootViewModel(DefaultDeviceRootOperations(devicesRepository))
-
+            DeviceCoolingRootViewModel(
+                operations = DefaultDeviceRootOperations(devicesRepository),
+                controlOperations = DefaultDeviceCoolingControlOperations(devicesRepository),
+                historyOperations = DefaultDeviceCoolingTemperatureHistoryOperations(devicesRepository),
+                automaticSettingsOperations =
+                    DefaultDeviceCoolingAutomaticSettingsOperations(devicesRepository),
+                controlSurfacePreparationOperations =
+                    ReleaseSmokeControlSurfacePreparationOperations
+            )
+        modelClass.isAssignableFrom(DeviceCoolingSystemStatusViewModel::class.java) ->
+            DeviceCoolingSystemStatusViewModel(
+                rootOperations = DefaultDeviceRootOperations(devicesRepository),
+                controlOperations = DefaultDeviceCoolingControlOperations(devicesRepository)
+            )
         modelClass.isAssignableFrom(DeviceTimerRootViewModel::class.java) ->
             DeviceTimerRootViewModel(DefaultDeviceRootOperations(devicesRepository))
-
         modelClass.isAssignableFrom(DeviceRootOverviewViewModel::class.java) ->
             DeviceRootOverviewViewModel(DefaultDeviceRootOperations(devicesRepository))
-
         else -> null
     }
 
@@ -270,7 +280,6 @@ private class ReleaseSmokeViewModelFactory(
                 menuOpenUseCase = deviceMenuOpenUseCase,
                 routeResolver = DeviceRouteResolver()
             )
-
         modelClass.isAssignableFrom(TankDeviceSelectViewModel::class.java) ->
             TankDeviceSelectViewModel(
                 assignmentOperations = DefaultTankDeviceAssignmentOperations(
@@ -278,7 +287,6 @@ private class ReleaseSmokeViewModelFactory(
                     devicesRepository = devicesRepository
                 )
             )
-
         else -> null
     }
 

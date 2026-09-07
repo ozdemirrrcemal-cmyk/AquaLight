@@ -17,11 +17,11 @@ import org.junit.Test
 class DeviceFirmwareProductIsolationMatrixTest {
 
     @Test
-    fun `all nine product releases are isolated from every other model`() {
+    fun `all seven product releases are isolated from every other model`() {
         val products = AqlCommercialDeviceCatalog.products
         val environments = products.map { it.productKey.value.lowercase() }.toSet()
 
-        assertEquals(9, products.size)
+        assertEquals(7, products.size)
         assertEquals(DEVICE_FIRMWARE_PRODUCT_ENVIRONMENTS, environments)
 
         for (releaseProduct in products) {

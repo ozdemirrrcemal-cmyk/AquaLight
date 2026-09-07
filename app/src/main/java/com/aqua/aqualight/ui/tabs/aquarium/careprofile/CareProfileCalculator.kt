@@ -3,7 +3,7 @@ package com.aqua.aqualight.ui.tabs.aquarium.careprofile
 import android.content.Context
 import com.aqua.aqualight.R
 import com.aqua.aqualight.application.aquarium.AquariumTankSnapshot
-import com.aqua.aqualight.data.aquarium.catalog.material.MaterialCategoryCatalog
+import com.aqua.aqualight.ui.tabs.aquarium.catalog.material.MaterialCategoryCatalog
 import com.aqua.aqualight.ui.tabs.aquarium.common.AquariumDimensionFormatter
 import java.util.Locale
 import kotlin.math.roundToInt

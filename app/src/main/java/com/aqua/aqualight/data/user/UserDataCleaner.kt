@@ -6,6 +6,7 @@ import com.aqua.aqualight.data.aquarium.devices.TankDeviceAssignmentStore
 import com.aqua.aqualight.data.aquarium.store.AquariumTankDataStoreManager
 import com.aqua.aqualight.data.auth.SessionBoundServiceManager
 import com.aqua.aqualight.data.care.CareTaskDataStoreManager
+import com.aqua.aqualight.data.devices.dosing.SharedPreferencesDeviceDosingCalibrationDraftStore
 import com.aqua.aqualight.data.devices.provisioning.repository.AqlProvisioningHandoffSaver
 import com.aqua.aqualight.data.devices.provisioning.store.AqlProvisioningDraftStore
 import com.aqua.aqualight.data.devices.provisioning.store.AqlProvisioningQrSecretStore
@@ -31,6 +32,7 @@ class UserDataCleaner private constructor(
         DEVICE_ASSIGNMENTS,
         PROVISIONING_SESSIONS,
         KNOWN_DEVICES,
+        DOSING_CALIBRATION_DRAFTS,
         OTA_TRANSACTIONS,
         DEVICE_CREDENTIALS,
         APP_OWNED_FILES,
@@ -153,6 +155,12 @@ class UserDataCleaner private constructor(
                 context = appContext,
                 ownerUid = ownerUid
             ).clearOwnerData()
+        }
+        runStep(Step.DOSING_CALIBRATION_DRAFTS) {
+            SharedPreferencesDeviceDosingCalibrationDraftStore.create(
+                context = appContext,
+                ownerUid = ownerUid
+            ).clearOwner()
         }
         runStep(Step.OTA_TRANSACTIONS) {
             SharedPreferencesDeviceOtaTransactionStore.create(

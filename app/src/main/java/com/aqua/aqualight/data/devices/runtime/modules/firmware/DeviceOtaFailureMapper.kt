@@ -16,7 +16,7 @@ internal object DeviceOtaFailureMapper {
                 error.message.orEmpty()
             )
             error.hasIoCause() -> simpleFailure(
-                reason = DeviceOtaFailureReason.CONNECTION,
+                reason = DeviceOtaFailureReason.RELEASE_CONNECTION_FAILED,
                 recoverable = true,
                 message = error.message.orEmpty()
             )
@@ -137,6 +137,10 @@ private object DeviceOtaSnapshotFailureClassifier {
             DeviceFirmwareRuntimeContract.ErrorField.STREAM ->
                 DOWNLOAD_STREAM_INTERRUPTED.toFailure(diagnostics)
             DeviceFirmwareRuntimeContract.ErrorField.SIZE -> sizeFailure(diagnostics)
+            DeviceFirmwareRuntimeContract.ErrorField.WIFI ->
+                DEVICE_NETWORK_UNAVAILABLE.toFailure(diagnostics)
+            DeviceFirmwareRuntimeContract.ErrorField.TLS ->
+                securityFailure(diagnostics)
             else -> {
                 val disposition = SNAPSHOT_FIELD_DISPOSITIONS[snapshot.lastErrorField]
                     ?: DEVICE_INTERNAL
@@ -159,6 +163,22 @@ private object DeviceOtaSnapshotFailureClassifier {
         }
         return disposition.toFailure(diagnostics)
     }
+
+    private fun securityFailure(
+        diagnostics: DeviceOtaFailureDiagnostics
+    ): DeviceOtaFailure {
+        val disposition = if (
+            diagnostics.message.contains(
+                "secure system time was not synchronized",
+                ignoreCase = true
+            )
+        ) {
+            SECURITY_VALIDATION_RETRYABLE
+        } else {
+            SECURITY_VALIDATION_FAILED
+        }
+        return disposition.toFailure(diagnostics)
+    }
 }
 
 private object DeviceManifestHttpFailureClassifier {
@@ -171,12 +191,12 @@ private object DeviceManifestHttpFailureClassifier {
             HTTP_UNAUTHORIZED,
             HTTP_FORBIDDEN -> RELEASE_ACCESS_DENIED
             HTTP_NOT_FOUND -> RELEASE_UNAVAILABLE
-            HTTP_REQUEST_TIMEOUT -> CONNECTION
+            HTTP_REQUEST_TIMEOUT -> RELEASE_CONNECTION_FAILED
             HTTP_TOO_MANY_REQUESTS -> RELEASE_RATE_LIMITED
             in HTTP_REDIRECT_START..HTTP_REDIRECT_END -> RELEASE_REDIRECT_FAILED
             in HTTP_CLIENT_ERROR_START..HTTP_CLIENT_ERROR_END -> RELEASE_REQUEST_REJECTED
             in HTTP_SERVER_ERROR_START..HTTP_SERVER_ERROR_END -> RELEASE_SERVER_UNAVAILABLE
-            else -> CONNECTION
+            else -> RELEASE_CONNECTION_FAILED
         }
         return disposition.toFailure(
             DeviceOtaFailureDiagnostics(
@@ -345,6 +365,14 @@ private val CONNECTION = DeviceOtaFailureDisposition(
     DeviceOtaFailureReason.CONNECTION,
     recoverable = true
 )
+private val RELEASE_CONNECTION_FAILED = DeviceOtaFailureDisposition(
+    DeviceOtaFailureReason.RELEASE_CONNECTION_FAILED,
+    recoverable = true
+)
+private val DEVICE_NETWORK_UNAVAILABLE = DeviceOtaFailureDisposition(
+    DeviceOtaFailureReason.DEVICE_NETWORK_UNAVAILABLE,
+    recoverable = true
+)
 private val INCOMPATIBLE_FIRMWARE = DeviceOtaFailureDisposition(
     DeviceOtaFailureReason.INCOMPATIBLE_FIRMWARE,
     recoverable = false
@@ -361,9 +389,17 @@ private val SAFE_MODE_FAILED = DeviceOtaFailureDisposition(
     DeviceOtaFailureReason.SAFE_MODE_FAILED,
     recoverable = true
 )
+private val SAFE_MODE_RESTORE_FAILED = DeviceOtaFailureDisposition(
+    DeviceOtaFailureReason.SAFE_MODE_RESTORE_FAILED,
+    recoverable = false
+)
 private val SECURITY_VALIDATION_FAILED = DeviceOtaFailureDisposition(
     DeviceOtaFailureReason.SECURITY_VALIDATION_FAILED,
     recoverable = false
+)
+private val SECURITY_VALIDATION_RETRYABLE = DeviceOtaFailureDisposition(
+    DeviceOtaFailureReason.SECURITY_VALIDATION_FAILED,
+    recoverable = true
 )
 private val DOWNLOAD_CONNECTION_FAILED = DeviceOtaFailureDisposition(
     DeviceOtaFailureReason.DOWNLOAD_CONNECTION_FAILED,
@@ -464,28 +500,30 @@ private val FIRMWARE_CODE_DISPOSITIONS = mapOf(
 )
 
 private val INVALID_VALUE_FIELD_DISPOSITIONS = mapOf(
-    DeviceFirmwareRuntimeContract.ErrorField.WIFI to CONNECTION,
+    DeviceFirmwareRuntimeContract.ErrorField.WIFI to DEVICE_NETWORK_UNAVAILABLE,
     DeviceFirmwareRuntimeContract.ErrorField.STATE to DEVICE_BUSY,
-    DeviceFirmwareRuntimeContract.ErrorField.URL to INCOMPATIBLE_FIRMWARE,
+    DeviceFirmwareRuntimeContract.ErrorField.URL to SECURITY_VALIDATION_FAILED,
     DeviceFirmwareRuntimeContract.ErrorField.VERSION to INCOMPATIBLE_FIRMWARE,
     DeviceFirmwareRuntimeContract.ErrorField.PRODUCT_KEY to INCOMPATIBLE_FIRMWARE,
     DeviceFirmwareRuntimeContract.ErrorField.PRODUCT_ID to INCOMPATIBLE_FIRMWARE,
     DeviceFirmwareRuntimeContract.ErrorField.MODEL to INCOMPATIBLE_FIRMWARE,
     DeviceFirmwareRuntimeContract.ErrorField.HARDWARE_REVISION to INCOMPATIBLE_FIRMWARE,
-    DeviceFirmwareRuntimeContract.ErrorField.SHA256 to INTEGRITY_CHECK_FAILED,
-    DeviceFirmwareRuntimeContract.ErrorField.EXPECTED_SIZE to INSUFFICIENT_SPACE,
+    DeviceFirmwareRuntimeContract.ErrorField.SHA256 to SECURITY_VALIDATION_FAILED,
+    DeviceFirmwareRuntimeContract.ErrorField.EXPECTED_SIZE to PROTOCOL_MISMATCH,
     DeviceFirmwareRuntimeContract.ErrorField.SIZE to INSUFFICIENT_SPACE,
     DeviceFirmwareRuntimeContract.ErrorField.SAFE_MODE to SAFE_MODE_FAILED,
     DeviceFirmwareRuntimeContract.ErrorField.TLS to SECURITY_VALIDATION_FAILED,
     DeviceFirmwareRuntimeContract.ErrorField.STREAM to DOWNLOAD_STREAM_INTERRUPTED,
     DeviceFirmwareRuntimeContract.ErrorField.FLASH to FLASH_WRITE_FAILED,
-    DeviceFirmwareRuntimeContract.ErrorField.TASK to DEVICE_INTERNAL_RETRYABLE
+    DeviceFirmwareRuntimeContract.ErrorField.TASK to DEVICE_INTERNAL_RETRYABLE,
+    DeviceFirmwareRuntimeContract.ErrorField.OTA to DEVICE_INTERNAL_RETRYABLE
 )
 
 private val SNAPSHOT_FIELD_DISPOSITIONS = mapOf(
     DeviceFirmwareRuntimeContract.ErrorField.SAFE_MODE to SAFE_MODE_FAILED,
-    DeviceFirmwareRuntimeContract.ErrorField.TLS to SECURITY_VALIDATION_FAILED,
-    DeviceFirmwareRuntimeContract.ErrorField.EXPECTED_SIZE to INSUFFICIENT_SPACE,
+    DeviceFirmwareRuntimeContract.ErrorField.SAFE_MODE_RESTORE to SAFE_MODE_RESTORE_FAILED,
+    DeviceFirmwareRuntimeContract.ErrorField.EXPECTED_SIZE to PROTOCOL_MISMATCH,
     DeviceFirmwareRuntimeContract.ErrorField.SHA256 to INTEGRITY_CHECK_FAILED,
-    DeviceFirmwareRuntimeContract.ErrorField.FLASH to FLASH_WRITE_FAILED
+    DeviceFirmwareRuntimeContract.ErrorField.FLASH to FLASH_WRITE_FAILED,
+    DeviceFirmwareRuntimeContract.ErrorField.TASK to DEVICE_INTERNAL_RETRYABLE
 )

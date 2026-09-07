@@ -1,15 +1,15 @@
 package com.aqua.aqualight.data.devices.dosing.v1
 
-import com.aqua.aqualight.application.devices.dosing.DeviceDosingCalibrationConstraints
 import java.io.File
 import org.json.JSONObject
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
 import org.junit.Test
 
 class DeviceDosingV1CalibrationCutoverContractTest {
     @Test
-    fun `calibration requests pin product duration verification dose and final identity commit`() {
+    fun `calibration uses firmware duration policy verification dose and final identity commit`() {
         val fixture = fixture()
         val commands = fixture.getJSONObject("commands")
         assertProductCollectionDuration(commands.getJSONObject("start").getJSONObject("request"))
@@ -32,24 +32,20 @@ class DeviceDosingV1CalibrationCutoverContractTest {
     }
 
     private fun assertProductCollectionDuration(firmwareStart: JSONObject) {
-        // The pinned firmware default remains 5 seconds. AquaLight deliberately requests the
-        // shorter product collection window instead of changing the wire contract itself.
+        val fixture = fixture()
         assertEquals(
             DeviceDosingV1Contract.Limit.DEFAULT_CALIBRATION_DURATION_MS,
-            firmwareStart.getLong("durationMs")
+            fixture.getLong("defaultCalibrationDurationMs")
         )
-        val productDuration = DeviceDosingCalibrationConstraints().calibrationRunDurationMs
-        assertEquals(PRODUCT_CALIBRATION_DURATION_MS, productDuration)
-        assertTrue(
-            productDuration in DeviceDosingV1Contract.Limit.MIN_CALIBRATION_DURATION_MS..
-                DeviceDosingV1Contract.Limit.MAX_CALIBRATION_DURATION_MS
+        assertFalse(firmwareStart.has("durationMs"))
+        assertEquals(
+            DeviceDosingV1Contract.Limit.DEFAULT_CALIBRATION_DURATION_MS,
+            fixture.getJSONObject("commands").getJSONObject("start")
+                .getLong("responseDurationMs")
         )
 
-        val request = DeviceDosingV1CalibrationStartRequest(
-            channelKey = CHANNEL,
-            durationMillis = productDuration
-        ).toJson()
-        assertEquals(productDuration, request.getLong("durationMs"))
+        val request = DeviceDosingV1CalibrationStartRequest(channelKey = CHANNEL).toJson()
+        assertFalse(request.has("durationMs"))
 
         val adapterSource = source(
             "app/src/main/java/com/aqua/aqualight/data/devices/dosing/v1/" +
@@ -57,7 +53,10 @@ class DeviceDosingV1CalibrationCutoverContractTest {
         )
         val startOperation = adapterSource.substringAfter("override suspend fun start(")
             .substringBefore("override suspend fun finish(")
-        assertTrue(startOperation.contains("durationMillis = constraints.calibrationRunDurationMs"))
+        assertTrue(
+            startOperation.contains("DeviceDosingV1CalibrationStartRequest(channelKey = channelKey)")
+        )
+        assertFalse(startOperation.contains("durationMillis ="))
     }
 
     private fun assertVerificationDose(
@@ -124,7 +123,6 @@ class DeviceDosingV1CalibrationCutoverContractTest {
 
     private companion object {
         const val FIXTURE = "aql_dosing_calibration_v1.json"
-        const val PRODUCT_CALIBRATION_DURATION_MS = 3_000L
         val CHANNEL = DeviceDosingV1ChannelKey.from("channel1")
     }
 }

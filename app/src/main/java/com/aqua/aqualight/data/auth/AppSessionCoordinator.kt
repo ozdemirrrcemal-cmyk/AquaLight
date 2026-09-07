@@ -1,6 +1,8 @@
 package com.aqua.aqualight.data.auth
 
 import android.content.Context
+import com.aqua.aqualight.application.auth.AppSessionOperations
+import com.aqua.aqualight.application.auth.AppSessionState
 import com.aqua.aqualight.data.devices.repository.DevicesRepositoryProvider
 import java.util.concurrent.atomic.AtomicBoolean
 import kotlinx.coroutines.CancellationException
@@ -34,22 +36,7 @@ class AppSessionCoordinator internal constructor(
     dispatcher: CoroutineDispatcher = Dispatchers.Default,
     private val foregroundRuntimeController: ForegroundRuntimeController =
         ForegroundRuntimeController(DevicesRepositoryProvider::setAppForeground)
-) : AppForegroundLifecycleController, AutoCloseable {
-
-    sealed interface State {
-        data object Starting : State
-
-        data class Authenticated(
-            val ownerUid: String
-        ) : State
-
-        data object Unauthenticated : State
-
-        data class Failure(
-            val ownerUid: String?,
-            val error: Throwable
-        ) : State
-    }
+) : AppSessionOperations, AppForegroundLifecycleController, AutoCloseable {
 
     private val coordinatorJob = SupervisorJob()
     private val scope = CoroutineScope(coordinatorJob + dispatcher)
@@ -57,14 +44,14 @@ class AppSessionCoordinator internal constructor(
     private val started = AtomicBoolean(false)
     private val lifecycleLock = Any()
 
-    private val _state = MutableStateFlow<State>(State.Starting)
-    val state: StateFlow<State> = _state.asStateFlow()
+    private val _state = MutableStateFlow<AppSessionState>(AppSessionState.Starting)
+    override val state: StateFlow<AppSessionState> = _state.asStateFlow()
 
     private var ownerObservationJob: Job? = null
     private var validationJob: Job? = null
     private var foregroundConsumerCount: Int = 0
 
-    fun start() {
+    override fun start() {
         if (!started.compareAndSet(false, true)) {
             return
         }
@@ -123,7 +110,7 @@ class AppSessionCoordinator internal constructor(
         }
     }
 
-    fun requestReconcile() {
+    override fun requestReconcile() {
         start()
         scope.launch {
             reconcileCurrentOwner()
@@ -155,7 +142,7 @@ class AppSessionCoordinator internal constructor(
                         throw error
                     }
 
-                    _state.value = State.Failure(
+                    _state.value = AppSessionState.Failure(
                         ownerUid = expectedOwnerUid,
                         error = error
                     )
@@ -172,7 +159,7 @@ class AppSessionCoordinator internal constructor(
                         if (resolution.ownerUid != currentOwnerUid) {
                             continue
                         }
-                        _state.value = State.Authenticated(
+                        _state.value = AppSessionState.Authenticated(
                             ownerUid = resolution.ownerUid
                         )
                     }
@@ -181,14 +168,14 @@ class AppSessionCoordinator internal constructor(
                         if (currentOwnerUid != null) {
                             continue
                         }
-                        _state.value = State.Unauthenticated
+                        _state.value = AppSessionState.Unauthenticated
                     }
                 }
 
                 return@withLock
             }
 
-            _state.value = State.Failure(
+            _state.value = AppSessionState.Failure(
                 ownerUid = ownerProvider.currentOwnerUid(),
                 error = IllegalStateException(
                     "Authentication owner changed repeatedly during startup reconciliation."

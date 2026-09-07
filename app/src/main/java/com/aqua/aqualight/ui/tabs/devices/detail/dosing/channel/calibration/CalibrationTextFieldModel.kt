@@ -33,6 +33,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.contentDescription
@@ -59,11 +60,11 @@ internal data class CalibrationTextFieldModel(
 internal fun CalibrationTextField(
     model: CalibrationTextFieldModel,
     colors: AquaGuidedFlowColors,
-    onValueChange: (String) -> Unit,
-    onImeDone: () -> Unit
+    onValueChange: (String) -> Unit
 ) {
     val typography = aquaGuidedFlowTypography(colors)
     val shape = RoundedCornerShape(AquaGuidedFlowGeometry.controlRadius)
+    val focusManager = LocalFocusManager.current
     Row(
         modifier = Modifier
             .fillMaxWidth()
@@ -90,7 +91,7 @@ internal fun CalibrationTextField(
                     keyboardType = model.keyboardType,
                     imeAction = ImeAction.Done
                 ),
-                keyboardActions = KeyboardActions(onDone = { onImeDone() }),
+                keyboardActions = KeyboardActions(onDone = { focusManager.clearFocus() }),
                 cursorBrush = SolidColor(colors.accent),
                 singleLine = true
             )

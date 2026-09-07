@@ -71,6 +71,7 @@ object DeviceFirmwareRuntimeContract {
         const val SIZE = "size"
         const val TASK = "task"
         const val SAFE_MODE = "safeMode"
+        const val SAFE_MODE_RESTORE = "safeModeRestore"
         const val TLS = "tls"
         const val HTTP_STATUS = "httpStatus"
         const val FLASH = "flash"

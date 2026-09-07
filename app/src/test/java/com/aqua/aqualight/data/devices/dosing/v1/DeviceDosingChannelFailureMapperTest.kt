@@ -117,6 +117,19 @@ class DeviceDosingChannelFailureMapperTest {
         )
     }
 
+    @Test
+    fun `unconfirmed physical stop has dedicated fail-closed semantics`() {
+        assertRejected(
+            DeviceDosingChannelRejection.OUTPUT_STOP_UNCONFIRMED,
+            firmwareError(
+                code = "HARDWARE_ERROR",
+                action = DeviceDosingV1Contract.Action.DOSE_STOP,
+                field = "pump",
+                message = "dosing output could not be proven physically off"
+            )
+        )
+    }
+
     private fun assertRejected(
         expected: DeviceDosingChannelRejection,
         failure: DeviceRuntimeCommandOutcome.FirmwareError

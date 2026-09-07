@@ -97,6 +97,7 @@ class DosingCalibrationCommercialCompletionTest {
     private fun viewModel(operations: FakeDosingCalibrationOperations) =
         DeviceDosingChannelCalibrationViewModel(
             operations = operations,
+            draftOperations = FakeDosingCalibrationDraftOperations(),
             clock = DeviceDosingCalibrationClock { dispatcher.scheduler.currentTime }
         )
 

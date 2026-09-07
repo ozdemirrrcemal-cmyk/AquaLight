@@ -52,7 +52,8 @@
     <color name="settings_divider">@color/aqua_palette_hex_2d3f66</color>
 
     <!-- ⬇️ Bottom Navigation (LIGHT) -->
-    <color name="bottom_nav_background">@color/aqua_palette_hex_1c3252</color>
+    <color name="bottom_nav_background">@color/background_color</color>
+    <color name="bottom_nav_active_indicator">@color/aqua_palette_hex_1c3252</color>
 <color name="crop_toolbar_bg">@color/aqua_palette_hex_0a192f</color>
     <color name="aqua_button_blue">@color/aqua_palette_hex_1e90ff</color>
 <color name="snackbar_success">@color/aqua_palette_hex_1faa59</color>

@@ -15,8 +15,8 @@ CONTRACT_PATH = ROOT / "app/src/main/java/com/aqua/aqualight/data/devices/contra
 MAPPING_PATH = ROOT / "app/src/main/java/com/aqua/aqualight/data/devices/DeviceApplicationMapping.kt"
 RESOLVER_PATH = ROOT / "app/src/main/java/com/aqua/aqualight/data/devices/DeviceRootMenuFeatureResolver.kt"
 
-FIXTURE_SHA256 = "333a3192c5212c277bced7a891f8e492511b8804a4484412c17a7124b8752716"
-FIRMWARE_MERGE_COMMIT = "cf2222e58e6c69a729071a5d1205497b3fceaa70"
+FIXTURE_SHA256 = "5eb7c027ecff23c5fa939ee0a16f62804737b0c9c7b0d9a3ea4b479c4d604a59"
+FIRMWARE_MERGE_COMMIT = "2e3688f266d7ed34a6773badafcd62af73cf4aac"
 
 CAPABILITY_KEYS = {
     "light",
@@ -187,8 +187,8 @@ require(
     "catalog must contain exactly five shared capability profiles",
 )
 require(
-    isinstance(products, list) and len(products) == 9,
-    "catalog must contain exactly nine commercial products",
+    isinstance(products, list) and len(products) == 7,
+    "catalog must contain exactly seven commercial products",
 )
 
 seen_envs: set[str] = set()

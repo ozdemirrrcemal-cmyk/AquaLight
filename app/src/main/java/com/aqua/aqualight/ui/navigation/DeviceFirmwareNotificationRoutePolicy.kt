@@ -1,6 +1,6 @@
 package com.aqua.aqualight.ui.navigation
 
-import com.aqua.aqualight.data.user.UserDataScope
+import com.aqua.aqualight.application.user.OwnerIdentityPolicy
 
 /** Fail-closed owner validation for device firmware notification routes. */
 object DeviceFirmwareNotificationRoutePolicy {
@@ -15,15 +15,14 @@ object DeviceFirmwareNotificationRoutePolicy {
             return false
         }
 
-        val notificationOwner = UserDataScope.normalizeOwnerUid(notificationOwnerUid)
-        val activeOwner = UserDataScope.normalizeOwnerUid(activeOwnerUid)
+        val notificationOwner = OwnerIdentityPolicy.normalize(notificationOwnerUid)
+        val activeOwner = OwnerIdentityPolicy.normalize(activeOwnerUid)
 
         return notificationOwner.isNotBlank() &&
             activeOwner.isNotBlank() &&
-            UserDataScope.belongsToOwner(
+            OwnerIdentityPolicy.belongsToOwner(
                 recordOwnerUid = notificationOwner,
-                ownerUid = activeOwner,
-                includeLegacy = false
+                ownerUid = activeOwner
             )
     }
 }

@@ -1,5 +1,6 @@
 package com.aqua.aqualight.data.user
 
+import com.aqua.aqualight.application.user.OwnerIdentityPolicy
 import com.google.firebase.Firebase
 import com.google.firebase.auth.auth
 import kotlinx.coroutines.asContextElement
@@ -58,7 +59,7 @@ object UserDataScope {
     fun normalizeOwnerUid(
         ownerUid: String?
     ): String {
-        return ownerUid.orEmpty().trim()
+        return OwnerIdentityPolicy.normalize(ownerUid)
     }
 
     fun belongsToOwner(
@@ -70,14 +71,10 @@ object UserDataScope {
             "Ownerless legacy records are not supported by the commercial store contract."
         }
 
-        val normalizedOwnerUid = normalizeOwnerUid(ownerUid)
-        if (normalizedOwnerUid.isBlank()) {
-            return false
-        }
-
-        val normalizedRecordOwnerUid = normalizeOwnerUid(recordOwnerUid)
-        return normalizedRecordOwnerUid.isNotBlank() &&
-            normalizedRecordOwnerUid == normalizedOwnerUid
+        return OwnerIdentityPolicy.belongsToOwner(
+            recordOwnerUid = recordOwnerUid,
+            ownerUid = ownerUid
+        )
     }
 
     fun belongsToCurrentUser(

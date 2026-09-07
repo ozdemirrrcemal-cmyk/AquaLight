@@ -69,15 +69,26 @@ class DeviceLightRuntimeContractTest {
     fun `manual clear uses channel key only and omits duration`() = runBlocking {
         val gateway = QueueGateway(
             mutableMapOf(
+                DeviceLightRuntimeContract.Action.STATUS_GET to
+                    DeviceLightRuntimeFixtures.status(),
                 DeviceLightRuntimeContract.Action.MANUAL_SET to
                     DeviceLightRuntimeFixtures.manualClear()
             )
         )
         val repository = DeviceLightRuntimeRepository(gateway)
+        repository.beginGeneration(DEVICE_UID, RUNTIME_GENERATION)
+        repository.requestStatus(DEVICE_UID).requireSuccess()
 
         repository.clearManual(DEVICE_UID, channelKeys = listOf("white")).requireSuccess()
 
-        val payload = gateway.payloads.single()
+        assertEquals(
+            listOf(
+                DeviceLightRuntimeContract.Action.STATUS_GET,
+                DeviceLightRuntimeContract.Action.MANUAL_SET
+            ),
+            gateway.actions
+        )
+        val payload = gateway.payloads[1]
         assertEquals(setOf("clear", "channels"), payload.keySet())
         assertTrue(payload.getBoolean("clear"))
         val channel = payload.getJSONArray("channels").getJSONObject(0)
@@ -144,7 +155,7 @@ class DeviceLightRuntimeContractTest {
                 module = command.module,
                 action = command.action,
                 messageId = response.id,
-                generation = DeviceRuntimeConnectionGeneration(1L),
+                generation = RUNTIME_GENERATION,
                 statusCode = response.statusCode,
                 value = command.parseSuccess(response)
             )
@@ -153,6 +164,7 @@ class DeviceLightRuntimeContractTest {
 
     private companion object {
         val DEVICE_UID = DeviceUid("AQL-LIGHT-DEVICE")
+        val RUNTIME_GENERATION = DeviceRuntimeConnectionGeneration(1L)
         val EXPECTED_ACTIONS = listOf(
             DeviceLightRuntimeContract.Action.STATUS_GET,
             DeviceLightRuntimeContract.Action.MANUAL_SET,
@@ -174,7 +186,7 @@ class DeviceLightRuntimeContractTest {
 
         fun manualChangedEvent(): DeviceRuntimeTypedEvent = DeviceRuntimeTypedEvent(
             deviceUid = DEVICE_UID,
-            generation = DeviceRuntimeConnectionGeneration(1L),
+            generation = RUNTIME_GENERATION,
             messageId = "event-1",
             type = DeviceRuntimeTypedEvent.Type.LIGHT_STATUS_CHANGED,
             payload = DeviceRuntimeEventPayload.CommandResult(

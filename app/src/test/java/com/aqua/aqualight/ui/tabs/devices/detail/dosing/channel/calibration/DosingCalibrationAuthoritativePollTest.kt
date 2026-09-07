@@ -30,6 +30,7 @@ class DosingCalibrationAuthoritativePollTest {
             val operations = FakeDosingCalibrationOperations(activeVerificationSnapshot())
             val viewModel = DeviceDosingChannelCalibrationViewModel(
                 operations = operations,
+                draftOperations = FakeDosingCalibrationDraftOperations(),
                 clock = DeviceDosingCalibrationClock { dispatcher.scheduler.currentTime }
             )
 

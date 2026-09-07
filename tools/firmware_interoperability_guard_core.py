@@ -34,65 +34,79 @@ INTEROPERABILITY_TEST_PATH = (
 )
 
 FIRMWARE_REPOSITORY = "ozdemirrrcemal-cmyk/AquaLight-Firmware"
-FIRMWARE_COMMIT = "a0403bf408fcf898ae94a9178eba34efdc2af9bc"
-COMMAND_NAMES_BLOB = "7bff40576bb77450c662181e2b09b5be961e6809"
-EVENT_CONTRACT_BLOB = "f71cbe76679fd425d6697c89800975e00e9edee5"
-PRODUCT_CATALOG_EXPORT_COMMIT = "cf2222e58e6c69a729071a5d1205497b3fceaa70"
+FIRMWARE_COMMIT = "980b03f0d83cdeb997698fc6b207064aa709cec8"
+DOSING_FIRMWARE_COMMIT = FIRMWARE_COMMIT
+COMMAND_NAMES_BLOB = "8fbd5743e58f76f9123e63441313246aae91814d"
+EVENT_CONTRACT_BLOB = "96bcb0b45c0d39e46dc3f586507f95dca9909640"
+PRODUCT_CATALOG_EXPORT_COMMIT = FIRMWARE_COMMIT
 REQUEST_CONTRACT_BLOBS = {
     "src/api/v1/commands/AqlDeviceCommands.hpp": (
-        "a78d6355555afea780fdb62809bc9107d7122698"
+        "c5dc9982d5c8894fa74cec51c53e7c7d8af16f53"
     ),
     "src/api/v1/commands/AqlNetworkCommands.hpp": (
-        "529a3b341e81a48d33b9036343dbb0b9f2844fb6"
+        "913db695e24051585d8179b6f6fecbce74293a86"
     ),
     "src/api/v1/commands/AqlSecurityCommands.hpp": (
-        "1c16c3e7c6d1456b1802f494d91c104347ad09aa"
+        "75f7f41e4400d28c629775dc533560319cdf8977"
     ),
     "src/api/v1/commands/AqlTimeCommands.hpp": (
-        "d8d82bf9edd1a2669d4a2fb0eaf7e6f105e3fc8a"
+        "ce33b52d75d2f1c26c08ce8bc64356be3812bcc7"
     ),
     "src/api/v1/commands/AqlLightCommands.hpp": (
-        "57e576a2e02a5fc8347fca16be6b0cbf0e540a1b"
+        "ce59a843375913b7d315b2cd68bdf40445df55bd"
     ),
     "src/api/v1/commands/AqlLightTemperatureProtectionCommands.hpp": (
-        "e3d44b0c1cad994378b12ce5b9003fd7a94d4f44"
+        "f48588d88bb902139d3545002a0ae8c40a5795c1"
+    ),
+    "src/api/v1/commands/AqlLightThermalCommands.hpp": (
+        "b71a5415082b7d23deab8cb86aa81885a01c24f3"
     ),
     "src/api/v1/commands/AqlCoolingCommands.hpp": (
-        "a4b6c390e4af6f28f2c844cef1d7429eb0206718"
+        "50f209416d7b97efdd69b81274205dcf09777363"
     ),
     "src/api/v1/commands/AqlTimerCommands.hpp": (
-        "77e5299511fe67e07d7cc1ffbd0114ff7316677b"
+        "0e442d40293d0a68bb5016840bd52b7c001489a6"
     ),
     "src/api/v1/commands/AqlDosingCommands.hpp": (
-        "ab747617b774c467c1e54e6f302e564507a32928"
+        "c293c9317db26492ca2a7ab4251ce0b23d787fa7"
     ),
     "src/api/v1/commands/AqlDosingProgressCommands.hpp": (
-        "8700e785bdd2e747abea3b09eff97755e2addad0"
+        "92fd314e10c90a8d8f77434dc9d2b52ec9896341"
     ),
     "src/api/v1/commands/AqlFirmwareCommands.hpp": (
-        "8b1107d159ca3ff026754c8a06bd1e75fb608c37"
+        "6cf2e4e56947a0b6b641e55765b8b6f685004fbb"
     ),
     "src/modules/timer/AqlTimerService.hpp": (
-        "c0c9c717fbe5b0b4ae25034a98a503d80adb4fdb"
+        "0e8bbb20a92afbe7b5500fba51a1d03f4dfb0064"
     ),
     "src/security/AqlSecurityService.hpp": (
-        "484906dbdd833d6ad7505ae1755748d239fc0805"
+        "14d3d58740c6f8e2efebdf640298288a99c78715"
     ),
 }
 
 EXPECTED_FIXTURES = {
     "aql_ws_v1_golden.json": (
-        "175676bc085cdc146b28d37301d632f60977f2753cb7923387266974c81c3818",
-        "8dc8cf1b854df8f86f3ff73cc5c4040270a1b784",
+        "508bd588c118a0c41b66c838c579c45fefcfa5f54b1a608c26b2c9b1ef8984fb",
+        "a16e32d73a2b8aabd5989fc400df36fd9f6b5347",
         True,
     ),
-    "aql_cooling_temperature_telemetry_v1.json": (
-        "b55264e9f0d3e8fea16a869848db612c7f4e3be166f6f1211fb1556f594bef5a",
-        "cd73c587714d95febdb6b3176da1763f6df8fc1f",
+    "aql_cooling_contract_v1.json": (
+        "9197d06f5f2022bdeea288e8455fad98b1fab57ad3325a1f202c50b555c8ddf2",
+        "823fa046921922eb97573cb01c086de0b76fb350",
+        True,
+    ),
+    "aql_cooling_telemetry_v1.json": (
+        "8c0ecc54eff1a05f3d72b9b740e6d986dbc3a7cc69c61647608aed360b621b85",
+        "7ec000ec24e2ef48cd54beff3bad81b58d7cd4c4",
+        True,
+    ),
+    "aql_light_thermal_contract_v1.json": (
+        "f1c8bac58740c3250a5c2e7a172f3d49604bf0ae0a0ba628f88f156c1842d7a6",
+        "acbe344c29f8fe5569ffcf3b5b1d0fda2a6b07f7",
         True,
     ),
     "aql_product_catalog_v1.json": (
-        "333a3192c5212c277bced7a891f8e492511b8804a4484412c17a7124b8752716",
+        "8ed588f11c28d7ad537623082e60bf98aed973eeb1aa0b01f582eade2126f63b",
         None,
         False,
     ),
@@ -102,10 +116,12 @@ EXPECTED_EVENTS = {
     "device.status.changed",
     "network.state.changed",
     "light.status.changed",
+    "light.thermal.status.changed",
+    "light.thermal.telemetry.changed",
     "cooling.status.changed",
+    "cooling.telemetry.changed",
     "timer.status.changed",
     "dosing.status.changed",
-    "temperature.changed",
     "time.status.changed",
     "firmware.ota.progress",
     "firmware.ota.completed",
@@ -136,6 +152,19 @@ def load_json(path: Path) -> dict[str, Any]:
 def file_sha256(path: Path) -> str:
     try:
         return hashlib.sha256(path.read_bytes()).hexdigest()
+    except OSError as error:
+        raise GuardFailure(f"{path.relative_to(ROOT)} is unreadable: {error}") from error
+
+
+def git_blob_sha_bytes(content: bytes) -> str:
+    """Return Git's content-addressed blob id; SHA-1 here is a protocol identifier."""
+    header = f"blob {len(content)}\0".encode("ascii")
+    return hashlib.sha1(header + content, usedforsecurity=False).hexdigest()
+
+
+def git_blob_sha(path: Path) -> str:
+    try:
+        return git_blob_sha_bytes(path.read_bytes())
     except OSError as error:
         raise GuardFailure(f"{path.relative_to(ROOT)} is unreadable: {error}") from error
 
@@ -271,6 +300,10 @@ def verify_fixtures(interoperability: dict[str, Any]) -> None:
                 spec.get("firmwareBlobSha") == firmware_blob,
                 f"{fixture_name} firmware blob pin drifted",
             )
+            require(
+                git_blob_sha(fixture_path) == firmware_blob,
+                f"{fixture_name} is not byte-identical with the pinned firmware blob",
+            )
 
     product_spec = fixture_specs["aql_product_catalog_v1.json"]
     require(
@@ -288,12 +321,12 @@ def verify_command_and_event_coverage(interoperability: dict[str, Any]) -> None:
     require(public == [], "WebSocket public command matrix must be empty")
     require(isinstance(authenticated, list), "authenticated command matrix is missing")
     command_set = set(authenticated)
-    require(len(authenticated) == 44, "firmware fixture must contain 44 commands")
-    require(len(command_set) == 44, "firmware fixture command names must be unique")
+    require(len(authenticated) == 50, "firmware fixture must contain 50 commands")
+    require(len(command_set) == 50, "firmware fixture command names must be unique")
 
     ws_source = WS_CONTRACT_PATH.read_text(encoding="utf-8", errors="strict")
     event_source = EVENT_CONTRACT_PATH.read_text(encoding="utf-8", errors="strict")
-    require(android_commands(ws_source) == command_set, "Android 44-command matrix drifted")
+    require(android_commands(ws_source) == command_set, "Android 50-command matrix drifted")
 
     disconnected_modules = interoperability.get("androidDisconnectedModules")
     require(
@@ -337,8 +370,16 @@ def verify_command_and_event_coverage(interoperability: dict[str, Any]) -> None:
     require(isinstance(dosing_firmware, dict), "Dosing firmware pin is missing")
     require(isinstance(dosing_contract, dict), "Dosing contract pin is missing")
     require(
-        dosing_firmware.get("commit") == FIRMWARE_COMMIT,
-        "Dosing firmware pin must match the global firmware revision",
+        dosing_firmware.get("repository") == FIRMWARE_REPOSITORY,
+        "Dosing firmware repository drifted",
+    )
+    require(
+        dosing_firmware.get("commit") == DOSING_FIRMWARE_COMMIT,
+        "Dosing feature firmware revision drifted",
+    )
+    require(
+        dosing_firmware.get("coreInteroperabilityCommit") == FIRMWARE_COMMIT,
+        "Dosing feature pin must declare its reviewed core interoperability revision",
     )
     require(
         dosing_contract.get("productionWiring") is True,
@@ -372,7 +413,7 @@ def verify_command_and_event_coverage(interoperability: dict[str, Any]) -> None:
     )
     require(
         core_coverage | dosing_action_set == command_set,
-        "request coverage plus Dosing v1 pin does not exactly classify all 44 commands",
+        "request coverage plus Dosing v1 pin does not exactly classify all 50 commands",
     )
 
 
@@ -431,7 +472,7 @@ def verify_product_matrix() -> None:
     require(isinstance(source, dict), "product catalog source pin is missing")
     require(source.get("commit") == PRODUCT_CATALOG_EXPORT_COMMIT, "catalog source commit drifted")
     require(isinstance(products, list), "product catalog product matrix is missing")
-    require(len(products) == 9, "product catalog must contain exactly nine SKUs")
+    require(len(products) == 7, "product catalog must contain exactly seven SKUs")
     require(
         {product.get("family") for product in products} == {"light", "timer", "dosing", "cooling"},
         "product catalog must contain all four commercial families",
@@ -472,9 +513,9 @@ def main() -> int:
         return 1
 
     print(
-        "Firmware interoperability guard passed: 44 command names, 44 connected "
-        "Android commands (30 core + 14 feature-owned Dosing v1), 11/11 events, "
-        "core request serializers, byte-identical shared fixtures and 9/9 SKUs."
+        "Firmware interoperability guard passed: 50 command names, 50 connected "
+        "Android commands (36 core + 14 feature-owned Dosing v1), 13/13 events, "
+        "core request serializers, byte-identical shared fixtures and 7/7 SKUs."
     )
     return 0
 

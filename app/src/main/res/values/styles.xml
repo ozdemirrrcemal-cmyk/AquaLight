@@ -27,6 +27,9 @@
 <style name="Widget.Aqua.BottomNav"
     parent="Widget.MaterialComponents.BottomNavigationView">
 
+    <!-- Keep the shared background exact; Material elevation would apply a tonal overlay. -->
+    <item name="elevation">@dimen/aqua_size_0</item>
+
     <!-- 🔹 Toplam yüksekliği aşağı çeken kısım -->
     <item name="android:minHeight">@dimen/aqua_size_56</item>   <!-- 48–56 arası mantıklı -->
     <item name="android:paddingTop">@dimen/aqua_size_2</item>

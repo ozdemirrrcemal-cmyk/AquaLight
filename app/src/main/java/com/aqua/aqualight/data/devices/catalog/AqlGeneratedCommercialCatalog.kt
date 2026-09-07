@@ -1,6 +1,6 @@
 // GENERATED FILE. DO NOT EDIT.
 // Source: protocol/fixtures/aql_product_catalog_v1.json
-// Source firmware commit: cf2222e58e6c69a729071a5d1205497b3fceaa70
+// Source firmware commit: 2e3688f266d7ed34a6773badafcd62af73cf4aac
 
 package com.aqua.aqualight.data.devices.catalog
 
@@ -43,7 +43,6 @@ private val PROFILE_LIGHT_WRGB_PRO_ELITE = AqlCommercialCatalogProfile(
         AqlDeviceFeatureKey.LIGHT_TEMPERATURE_PROTECTION,
         AqlDeviceFeatureKey.LIGHT_FAN_CONTROL,
         AqlDeviceFeatureKey.TEMPERATURE_READ,
-        AqlDeviceFeatureKey.COOLING_CONTROL,
         AqlDeviceFeatureKey.OTA_UPDATE,
     ),
     supportedScreens = setOf(
@@ -214,16 +213,20 @@ private val PROFILE_COOLING_COOL_PRO = AqlCommercialCatalogProfile(
         AqlDeviceFeatureKey.WIFI_SETUP,
         AqlDeviceFeatureKey.LAN_DISCOVERY,
         AqlDeviceFeatureKey.COOLING_CONTROL,
-        AqlDeviceFeatureKey.COOLING_FAN_DISPLAY_NAME,
+        AqlDeviceFeatureKey.COOLING_PROGRAM,
+        AqlDeviceFeatureKey.COOLING_HISTORY,
+        AqlDeviceFeatureKey.COOLING_SILENT_MODE,
+        AqlDeviceFeatureKey.COOLING_POWER_ESTIMATE,
         AqlDeviceFeatureKey.TEMPERATURE_READ,
+        AqlDeviceFeatureKey.ROOM_AMBIENT_READ,
+        AqlDeviceFeatureKey.HUMIDITY_READ,
         AqlDeviceFeatureKey.OTA_UPDATE,
     ),
     supportedScreens = setOf(
         AqlDeviceScreenKey.OVERVIEW,
         AqlDeviceScreenKey.COOLING_CONTROL,
-        AqlDeviceScreenKey.COOLING_RULES,
-        AqlDeviceScreenKey.COOLING_FANS,
-        AqlDeviceScreenKey.COOLING_SENSOR_STATUS,
+        AqlDeviceScreenKey.COOLING_PROGRAM,
+        AqlDeviceScreenKey.COOLING_HISTORY,
         AqlDeviceScreenKey.ADVANCED,
     ),
     expectedMenuFeatureNames = setOf(
@@ -361,45 +364,7 @@ internal val AQL_GENERATED_COMMERCIAL_PRODUCTS: List<AqlCommercialCatalogProduct
         limits = DeviceLimitSet(
             lightChannelCount = 0,
             fanOutputCount = 1,
-            temperatureSensorCount = 1,
-            timerChannelCount = 0,
-            dosingChannelCount = 0,
-        ),
-        profile = PROFILE_COOLING_COOL_PRO,
-    ),
-    AqlCommercialCatalogProduct(
-        productKey = DeviceProductKey("COOLING_COOL_PRO_2F"),
-        productId = DeviceProductId("com.aqualight.cooling.cool_pro_2f"),
-        family = DeviceFamily.COOLING,
-        line = DeviceProductLine("cool_pro"),
-        model = DeviceProductModel("cool_pro_2f"),
-        displayName = "Cool Pro 2 Fan",
-        skuId = DeviceSkuId("com.aqualight.cooling.cool_pro_2f.global.black"),
-        skuCode = DeviceSkuCode("AQL-C-CP2F-GLB-BLK"),
-        hardwareRevision = DeviceHardwareRevision("2.0"),
-        limits = DeviceLimitSet(
-            lightChannelCount = 0,
-            fanOutputCount = 2,
-            temperatureSensorCount = 1,
-            timerChannelCount = 0,
-            dosingChannelCount = 0,
-        ),
-        profile = PROFILE_COOLING_COOL_PRO,
-    ),
-    AqlCommercialCatalogProduct(
-        productKey = DeviceProductKey("COOLING_COOL_PRO_3F"),
-        productId = DeviceProductId("com.aqualight.cooling.cool_pro_3f"),
-        family = DeviceFamily.COOLING,
-        line = DeviceProductLine("cool_pro"),
-        model = DeviceProductModel("cool_pro_3f"),
-        displayName = "Cool Pro 3 Fan",
-        skuId = DeviceSkuId("com.aqualight.cooling.cool_pro_3f.global.black"),
-        skuCode = DeviceSkuCode("AQL-C-CP3F-GLB-BLK"),
-        hardwareRevision = DeviceHardwareRevision("2.0"),
-        limits = DeviceLimitSet(
-            lightChannelCount = 0,
-            fanOutputCount = 3,
-            temperatureSensorCount = 1,
+            temperatureSensorCount = 2,
             timerChannelCount = 0,
             dosingChannelCount = 0,
         ),

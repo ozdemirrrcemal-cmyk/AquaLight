@@ -508,19 +508,21 @@ fun AquaDeviceMenuChoiceChip(
 fun AquaDeviceMenuToggle(
     checked: Boolean,
     contentDescription: String,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    activeColor: Color? = null
 ) {
     val colors = aquaDeviceMenuColors()
+    val resolvedActiveColor = activeColor ?: colors.accent
     val shape = RoundedCornerShape(AquaDeviceMenuGeometry.toggleHeight)
     Box(
         modifier = modifier
             .width(AquaDeviceMenuGeometry.toggleWidth)
             .height(AquaDeviceMenuGeometry.toggleHeight)
             .clip(shape)
-            .background(if (checked) colors.accent else colors.surfaceRaised)
+            .background(if (checked) resolvedActiveColor else colors.surfaceRaised)
             .border(
                 width = AquaDeviceMenuGeometry.surfaceOutlineWidth,
-                color = if (checked) colors.accent else colors.outline,
+                color = if (checked) resolvedActiveColor else colors.outline,
                 shape = shape
             )
             .semantics { this.contentDescription = contentDescription }
@@ -558,7 +560,7 @@ private const val SCREEN_TOP_PADDING_DP = 14
 private const val SCREEN_BOTTOM_PADDING_DP = 28
 private const val SECTION_GAP_DP = 20
 private const val SECTION_LABEL_BOTTOM_SPACING_DP = 8
-private const val SURFACE_RADIUS_DP = 20
+private const val SURFACE_RADIUS_DP = 14
 private const val SURFACE_OUTLINE_WIDTH_DP = 1
 private const val HERO_PADDING_DP = 18
 private const val HERO_CONTENT_GAP_DP = 14

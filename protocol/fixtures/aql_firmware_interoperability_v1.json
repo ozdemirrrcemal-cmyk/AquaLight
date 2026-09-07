@@ -3,45 +3,56 @@
   "schema": "aql.android-firmware.interoperability.v1",
   "firmware": {
     "repository": "ozdemirrrcemal-cmyk/AquaLight-Firmware",
-    "commit": "e669313ecc2a7f959b566e3051cfd3b67247ccbd",
+    "commit": "2e3688f266d7ed34a6773badafcd62af73cf4aac",
     "commandNames": {
       "path": "src/api/v1/commands/AqlCommandNames.hpp",
-      "blobSha": "7bff40576bb77450c662181e2b09b5be961e6809"
+      "blobSha": "4a7b548008235c3cd3e07d760327a477bbf2c6d4"
     },
     "eventContract": {
       "path": "src/contracts/AqlWebSocketContract.hpp",
-      "blobSha": "f71cbe76679fd425d6697c89800975e00e9edee5"
+      "blobSha": "5e87fd043c0efaa849ed3ba8e5be9ce6f2727e24"
     },
     "requestContractBlobs": {
       "src/api/v1/commands/AqlDeviceCommands.hpp": "a78d6355555afea780fdb62809bc9107d7122698",
       "src/api/v1/commands/AqlNetworkCommands.hpp": "529a3b341e81a48d33b9036343dbb0b9f2844fb6",
       "src/api/v1/commands/AqlSecurityCommands.hpp": "1c16c3e7c6d1456b1802f494d91c104347ad09aa",
       "src/api/v1/commands/AqlTimeCommands.hpp": "ee6e87ab0e1152ffd3d9004fe8b5c7e380488a4f",
-      "src/api/v1/commands/AqlLightCommands.hpp": "57e576a2e02a5fc8347fca16be6b0cbf0e540a1b",
-      "src/api/v1/commands/AqlLightTemperatureProtectionCommands.hpp": "e3d44b0c1cad994378b12ce5b9003fd7a94d4f44",
-      "src/api/v1/commands/AqlCoolingCommands.hpp": "a4b6c390e4af6f28f2c844cef1d7429eb0206718",
-      "src/api/v1/commands/AqlTimerCommands.hpp": "77e5299511fe67e07d7cc1ffbd0114ff7316677b",
-      "src/api/v1/commands/AqlDosingCommands.hpp": "5c0201f9a4e09f93f4dd54af8c1fba9dec167105",
+      "src/api/v1/commands/AqlLightCommands.hpp": "40f4a888232b8630a07f7bde51d555ccf24961ed",
+      "src/api/v1/commands/AqlLightTemperatureProtectionCommands.hpp": "e3f04116d2f6ae77e0a1adfd7112773a3e1d06fe",
+      "src/api/v1/commands/AqlLightThermalCommands.hpp": "10f5e03237b16ad4bf0a26b64c2715e0985d094e",
+      "src/api/v1/commands/AqlCoolingCommands.hpp": "4df542d5106fce2810e64559667685c1c2ecfd69",
+      "src/api/v1/commands/AqlTimerCommands.hpp": "5951757f9eeebf81fce647ba9e94b35fe01c13a5",
+      "src/api/v1/commands/AqlDosingCommands.hpp": "34cfc3287485f6a46a73b47f061a5456cde9aa9d",
       "src/api/v1/commands/AqlDosingProgressCommands.hpp": "8700e785bdd2e747abea3b09eff97755e2addad0",
       "src/api/v1/commands/AqlFirmwareCommands.hpp": "8b1107d159ca3ff026754c8a06bd1e75fb608c37",
-      "src/modules/timer/AqlTimerService.hpp": "27dd1a51d532f9deef91ee2da86a4b3055fd001f",
+      "src/modules/timer/AqlTimerService.hpp": "3b852245ccfe84ddb28d4bc664e8e125fd5f11ca",
       "src/security/AqlSecurityService.hpp": "484906dbdd833d6ad7505ae1755748d239fc0805"
     }
   },
   "fixtures": {
     "aql_ws_v1_golden.json": {
-      "sha256": "175676bc085cdc146b28d37301d632f60977f2753cb7923387266974c81c3818",
-      "firmwareBlobSha": "8dc8cf1b854df8f86f3ff73cc5c4040270a1b784",
+      "sha256": "508bd588c118a0c41b66c838c579c45fefcfa5f54b1a608c26b2c9b1ef8984fb",
+      "firmwareBlobSha": "a16e32d73a2b8aabd5989fc400df36fd9f6b5347",
       "byteIdenticalWithFirmware": true
     },
-    "aql_cooling_temperature_telemetry_v1.json": {
-      "sha256": "b55264e9f0d3e8fea16a869848db612c7f4e3be166f6f1211fb1556f594bef5a",
-      "firmwareBlobSha": "cd73c587714d95febdb6b3176da1763f6df8fc1f",
+    "aql_cooling_contract_v1.json": {
+      "sha256": "9197d06f5f2022bdeea288e8455fad98b1fab57ad3325a1f202c50b555c8ddf2",
+      "firmwareBlobSha": "823fa046921922eb97573cb01c086de0b76fb350",
+      "byteIdenticalWithFirmware": true
+    },
+    "aql_cooling_telemetry_v1.json": {
+      "sha256": "8c0ecc54eff1a05f3d72b9b740e6d986dbc3a7cc69c61647608aed360b621b85",
+      "firmwareBlobSha": "7ec000ec24e2ef48cd54beff3bad81b58d7cd4c4",
+      "byteIdenticalWithFirmware": true
+    },
+    "aql_light_thermal_contract_v1.json": {
+      "sha256": "f1c8bac58740c3250a5c2e7a172f3d49604bf0ae0a0ba628f88f156c1842d7a6",
+      "firmwareBlobSha": "acbe344c29f8fe5569ffcf3b5b1d0fda2a6b07f7",
       "byteIdenticalWithFirmware": true
     },
     "aql_product_catalog_v1.json": {
-      "sha256": "333a3192c5212c277bced7a891f8e492511b8804a4484412c17a7124b8752716",
-      "firmwareExportCommit": "cf2222e58e6c69a729071a5d1205497b3fceaa70",
+      "sha256": "5eb7c027ecff23c5fa939ee0a16f62804737b0c9c7b0d9a3ea4b479c4d604a59",
+      "firmwareExportCommit": "2e3688f266d7ed34a6773badafcd62af73cf4aac",
       "byteIdenticalWithFirmware": false
     }
   },
@@ -49,10 +60,12 @@
     "device.status.changed",
     "network.state.changed",
     "light.status.changed",
+    "light.thermal.status.changed",
+    "light.thermal.telemetry.changed",
     "cooling.status.changed",
+    "cooling.telemetry.changed",
     "timer.status.changed",
     "dosing.status.changed",
-    "temperature.changed",
     "time.status.changed",
     "firmware.ota.progress",
     "firmware.ota.completed",
@@ -61,6 +74,7 @@
   "androidDisconnectedModules": [],
   "requestCoverage": {
     "payloadlessCommands": [
+      "cooling.program.get",
       "cooling.status.get",
       "device.capabilities.get",
       "device.identity.get",
@@ -70,6 +84,7 @@
       "firmware.status.get",
       "light.status.get",
       "light.temperature-protection.status.get",
+      "light.thermal.status.get",
       "network.status.get",
       "security.pair",
       "security.reset",
@@ -81,8 +96,17 @@
     ],
     "payloadCommands": {
       "cooling.config.apply": [
-        "DeviceCoolingConfigApplyPayload",
-        "DeviceCoolingFanDisplayNamePayload"
+        "DeviceCoolingV1ConfigApplyPayload"
+      ],
+      "cooling.history.get": [
+        "DeviceCoolingV1HistoryGetPayload"
+      ],
+      "cooling.manual.apply": [
+        "DeviceCoolingV1ManualApplyPayload"
+      ],
+      "cooling.program.apply": [
+        "DeviceCoolingV1ProgramApplyPayload",
+        "DeviceCoolingV1ProgramSlotPayload"
       ],
       "device.name.set": [
         "DeviceNameSetRequest"
@@ -107,6 +131,9 @@
       "light.temperature-protection.set": [
         "DeviceLightTemperatureProtectionSetPayload"
       ],
+      "light.thermal.config.apply": [
+        "DeviceLightThermalConfigApplyPayload"
+      ],
       "time.config.apply": [
         "DeviceTimeConfigApplyPayload"
       ],
@@ -128,21 +155,44 @@
     }
   },
   "serializers": {
-    "DeviceCoolingConfigApplyPayload": {
-      "source": "app/src/main/java/com/aqua/aqualight/data/devices/runtime/modules/cooling/DeviceCoolingModels.kt",
+    "DeviceCoolingV1ConfigApplyPayload": {
+      "source": "app/src/main/java/com/aqua/aqualight/data/devices/runtime/modules/cooling/v1/DeviceCoolingV1Requests.kt",
       "fields": [
-        "mode",
-        "minTemperatureC",
-        "maxTemperatureC",
-        "fans",
-        "save"
+        "expectedConfigRevision",
+        "controlMode",
+        "startTemperatureC",
+        "fullSpeedTemperatureC",
+        "silentModeEnabled"
       ]
     },
-    "DeviceCoolingFanDisplayNamePayload": {
-      "source": "app/src/main/java/com/aqua/aqualight/data/devices/runtime/modules/cooling/DeviceCoolingModels.kt",
+    "DeviceCoolingV1HistoryGetPayload": {
+      "source": "app/src/main/java/com/aqua/aqualight/data/devices/runtime/modules/cooling/v1/DeviceCoolingV1Requests.kt",
       "fields": [
+        "range"
+      ]
+    },
+    "DeviceCoolingV1ManualApplyPayload": {
+      "source": "app/src/main/java/com/aqua/aqualight/data/devices/runtime/modules/cooling/v1/DeviceCoolingV1Requests.kt",
+      "fields": [
+        "expectedConfigRevision",
         "fanKey",
-        "displayName"
+        "targetPercent"
+      ]
+    },
+    "DeviceCoolingV1ProgramApplyPayload": {
+      "source": "app/src/main/java/com/aqua/aqualight/data/devices/runtime/modules/cooling/v1/DeviceCoolingV1Requests.kt",
+      "fields": [
+        "expectedProgramRevision",
+        "slots"
+      ]
+    },
+    "DeviceCoolingV1ProgramSlotPayload": {
+      "source": "app/src/main/java/com/aqua/aqualight/data/devices/runtime/modules/cooling/v1/DeviceCoolingV1Requests.kt",
+      "fields": [
+        "startMinute",
+        "endMinute",
+        "fanOnTemperatureC",
+        "fanPercent"
       ]
     },
     "DeviceFirmwareOtaStartPayload": {
@@ -213,6 +263,15 @@
       "source": "app/src/main/java/com/aqua/aqualight/data/devices/runtime/modules/light/DeviceLightTemperatureProtectionModels.kt",
       "fields": [
         "thresholdC",
+        "save"
+      ]
+    },
+    "DeviceLightThermalConfigApplyPayload": {
+      "source": "app/src/main/java/com/aqua/aqualight/data/devices/runtime/modules/light/DeviceLightThermalV1Contract.kt",
+      "fields": [
+        "mode",
+        "minTemperatureC",
+        "maxTemperatureC",
         "save"
       ]
     },

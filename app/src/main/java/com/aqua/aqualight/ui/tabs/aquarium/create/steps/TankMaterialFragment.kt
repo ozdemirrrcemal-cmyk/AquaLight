@@ -6,8 +6,8 @@ import androidx.fragment.app.Fragment
 import androidx.navigation.fragment.findNavController
 import androidx.navigation.navGraphViewModels
 import com.aqua.aqualight.R
-import com.aqua.aqualight.data.aquarium.catalog.material.MaterialCategory
-import com.aqua.aqualight.data.aquarium.catalog.material.MaterialCategoryCatalog
+import com.aqua.aqualight.ui.tabs.aquarium.catalog.material.MaterialCategory
+import com.aqua.aqualight.ui.tabs.aquarium.catalog.material.MaterialCategoryCatalog
 import com.aqua.aqualight.databinding.FragmentTankMaterialBinding
 import com.aqua.aqualight.ui.common.material.AquaMaterialCategoryRowFactory
 import com.aqua.aqualight.ui.tabs.aquarium.create.CreateTankViewModel

@@ -5,7 +5,7 @@ import android.view.View
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.activityViewModels
 import com.aqua.aqualight.R
-import com.aqua.aqualight.data.aquarium.catalog.material.MaterialCategoryCatalog
+import com.aqua.aqualight.ui.tabs.aquarium.catalog.material.MaterialCategoryCatalog
 import com.aqua.aqualight.application.aquarium.AquariumMaterialSelection
 import com.aqua.aqualight.application.aquarium.AquariumTankSnapshot
 import com.aqua.aqualight.databinding.FragmentTankSettingsDetailsBinding

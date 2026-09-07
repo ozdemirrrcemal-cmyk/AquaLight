@@ -3,144 +3,242 @@ package com.aqua.aqualight.data.devices.runtime.modules.cooling
 import com.aqua.aqualight.data.devices.model.DeviceUid
 import com.aqua.aqualight.data.devices.runtime.core.DeviceRuntimeCommandGateway
 import com.aqua.aqualight.data.devices.runtime.core.DeviceRuntimeCommandOutcome
-import com.aqua.aqualight.data.devices.runtime.modules.common.DeviceRuntimeJsonCommand
+import com.aqua.aqualight.data.devices.runtime.core.DeviceRuntimeConnectionGeneration
+import com.aqua.aqualight.data.devices.runtime.events.DeviceRuntimeEventPayload
+import com.aqua.aqualight.data.devices.runtime.events.DeviceRuntimeTypedEvent
+import com.aqua.aqualight.data.devices.runtime.modules.cooling.v1.DeviceCoolingV1ConfigApplyPayload
+import com.aqua.aqualight.data.devices.runtime.modules.cooling.v1.DeviceCoolingV1ConfigApplyResult
+import com.aqua.aqualight.data.devices.runtime.modules.cooling.v1.DeviceCoolingV1History
+import com.aqua.aqualight.data.devices.runtime.modules.cooling.v1.DeviceCoolingV1HistoryGetPayload
+import com.aqua.aqualight.data.devices.runtime.modules.cooling.v1.DeviceCoolingV1ManualApplyPayload
+import com.aqua.aqualight.data.devices.runtime.modules.cooling.v1.DeviceCoolingV1ManualApplyResult
+import com.aqua.aqualight.data.devices.runtime.modules.cooling.v1.DeviceCoolingV1ProgramApplyPayload
+import com.aqua.aqualight.data.devices.runtime.modules.cooling.v1.DeviceCoolingV1ProgramApplyResult
+import com.aqua.aqualight.data.devices.runtime.modules.cooling.v1.DeviceCoolingV1ProgramSnapshot
+import com.aqua.aqualight.data.devices.runtime.modules.cooling.v1.DeviceCoolingV1ResponseParser
+import com.aqua.aqualight.data.devices.runtime.modules.cooling.v1.DeviceCoolingV1RuntimeRepository
+import com.aqua.aqualight.data.devices.runtime.modules.cooling.v1.DeviceCoolingV1StatusDocument
 import kotlinx.coroutines.flow.StateFlow
-import org.json.JSONObject
 
+/**
+ * Central Cooling runtime facade above the strict V1 protocol repository.
+ *
+ * No UI or screen lifecycle owns freshness. Initial hydration, typed events and mutation readback
+ * converge here and publish only through [DeviceCoolingRuntimeStateOwner].
+ */
 class DeviceCoolingRuntimeRepository internal constructor(
-    private val gateway: DeviceRuntimeCommandGateway,
-    private val stateStore: DeviceCoolingRuntimeStateStore
+    gateway: DeviceRuntimeCommandGateway,
+    internal val stateOwner: DeviceCoolingRuntimeStateOwner = DeviceCoolingRuntimeStateOwner()
 ) {
-    constructor(gateway: DeviceRuntimeCommandGateway) : this(
-        gateway = gateway,
-        stateStore = DeviceCoolingRuntimeStateStore()
-    )
+    private val protocol = DeviceCoolingV1RuntimeRepository(gateway)
 
-    val states: StateFlow<Map<DeviceUid, DeviceCoolingRuntimeState>> = stateStore.states
+    val states: StateFlow<Map<DeviceUid, DeviceCoolingRuntimeState>> = stateOwner.states
+
+    internal fun beginGeneration(
+        deviceUid: DeviceUid,
+        generation: DeviceRuntimeConnectionGeneration
+    ): Boolean = stateOwner.beginGeneration(deviceUid, generation)
+
+    internal fun invalidate(
+        deviceUid: DeviceUid,
+        generation: DeviceRuntimeConnectionGeneration? = null
+    ) = stateOwner.invalidate(deviceUid, generation)
+
+    internal fun clear(deviceUid: DeviceUid) = stateOwner.clear(deviceUid)
 
     suspend fun requestStatus(
         deviceUid: DeviceUid
-    ): DeviceRuntimeCommandOutcome<DeviceCoolingStatus> = gateway.execute(
-        deviceUid,
-        jsonCommand(
-            action = DeviceCoolingRuntimeContract.Action.STATUS_GET,
-            parser = DeviceCoolingStatusParser::parse
-        )
-    ).recordSuccess { status -> stateStore.recordStatus(deviceUid, status) }
+    ): DeviceRuntimeCommandOutcome<DeviceCoolingV1StatusDocument> {
+        val outcome = protocol.requestStatus(deviceUid)
+        if (outcome is DeviceRuntimeCommandOutcome.Success) {
+            stateOwner.recordStatus(deviceUid, outcome.generation, outcome.value)
+        }
+        return outcome
+    }
 
     suspend fun applyConfig(
         deviceUid: DeviceUid,
-        payload: DeviceCoolingConfigApplyPayload
-    ): DeviceRuntimeCommandOutcome<DeviceCoolingConfigApplyResult> {
-        val status = states.value[deviceUid]?.status
-        coolingUnsupportedReason(payload, status)?.let {
-            return coolingUnsupported(deviceUid, DeviceCoolingRuntimeContract.Action.CONFIG_APPLY)
+        payload: DeviceCoolingV1ConfigApplyPayload
+    ): DeviceRuntimeCommandOutcome<DeviceCoolingV1ConfigApplyResult> = protocol
+        .applyConfig(deviceUid, payload)
+        .reconcileAfterMutation(
+            deviceUid = deviceUid,
+            stateOwner = stateOwner,
+            requestStatus = ::requestStatus
+        ) { result, status ->
+            status.config == result.config
         }
-        return gateway.execute(
-            deviceUid,
-            jsonCommand(
-                action = DeviceCoolingRuntimeContract.Action.CONFIG_APPLY,
-                dataFactory = {
-                    DeviceCoolingCommandValidation.validateRequest(payload, status)
-                    payload.toJson()
-                },
-                parser = { data ->
-                    DeviceCoolingMutationParser.parseConfigApply(data).also { result ->
-                        DeviceCoolingCommandValidation.validateResult(payload, result)
-                    }
-                }
-            )
-        ).recordSuccess { result -> stateStore.recordConfig(deviceUid, result) }
+
+    suspend fun applyManual(
+        deviceUid: DeviceUid,
+        payload: DeviceCoolingV1ManualApplyPayload
+    ): DeviceRuntimeCommandOutcome<DeviceCoolingV1ManualApplyResult> = protocol
+        .applyManual(deviceUid, payload)
+        .reconcileAfterMutation(
+            deviceUid = deviceUid,
+            stateOwner = stateOwner,
+            requestStatus = ::requestStatus
+        ) { result, status ->
+            status.configRevision == result.configRevision &&
+                status.config.manualTargetPercent == result.manualTargetPercent &&
+                status.control.manualActive == result.manualActive
+        }
+
+    suspend fun requestProgram(
+        deviceUid: DeviceUid
+    ): DeviceRuntimeCommandOutcome<DeviceCoolingV1ProgramSnapshot> =
+        protocol.requestProgram(deviceUid)
+
+    suspend fun applyProgram(
+        deviceUid: DeviceUid,
+        payload: DeviceCoolingV1ProgramApplyPayload
+    ): DeviceRuntimeCommandOutcome<DeviceCoolingV1ProgramApplyResult> = protocol
+        .applyProgram(deviceUid, payload)
+        .reconcileAfterMutation(
+            deviceUid = deviceUid,
+            stateOwner = stateOwner,
+            requestStatus = ::requestStatus
+        ) { result, status ->
+            status.programRevision == result.program.programRevision
+        }
+
+    suspend fun requestHistory(
+        deviceUid: DeviceUid,
+        payload: DeviceCoolingV1HistoryGetPayload
+    ): DeviceRuntimeCommandOutcome<DeviceCoolingV1History> =
+        protocol.requestHistory(deviceUid, payload)
+
+    /** Typed firmware events are consumed centrally; presentation never initiates state refreshes. */
+    internal suspend fun consume(event: DeviceRuntimeTypedEvent) {
+        when (event.type) {
+            DeviceRuntimeTypedEvent.Type.COOLING_STATUS_CHANGED -> consumeStatusEvent(event)
+            DeviceRuntimeTypedEvent.Type.COOLING_TELEMETRY_CHANGED -> consumeTelemetryEvent(event)
+            else -> Unit
+        }
+    }
+}
+
+internal fun DeviceCoolingRuntimeRepository.currentState(
+    deviceUid: DeviceUid
+): DeviceCoolingRuntimeState? = states.value[deviceUid]
+
+internal fun DeviceCoolingRuntimeRepository.currentAuthoritativeState(
+    deviceUid: DeviceUid
+): DeviceCoolingRuntimeState? = stateOwner.currentAuthoritativeState(deviceUid)
+
+internal fun DeviceCoolingRuntimeRepository.isAuthoritative(
+    deviceUid: DeviceUid,
+    generation: DeviceRuntimeConnectionGeneration
+): Boolean = stateOwner.isAuthoritative(deviceUid, generation)
+
+private suspend fun DeviceCoolingRuntimeRepository.consumeStatusEvent(event: DeviceRuntimeTypedEvent) {
+    when (val payload = event.payload) {
+        is DeviceRuntimeEventPayload.Snapshot -> runCatching {
+            DeviceCoolingV1ResponseParser.parseStatus(payload.data)
+        }.onSuccess { status ->
+            stateOwner.recordStatus(event.deviceUid, event.generation, status)
+        }.onFailure {
+            requestStatus(event.deviceUid)
+        }
+        is DeviceRuntimeEventPayload.CommandResult -> requestStatus(event.deviceUid)
+    }
+}
+
+private suspend fun DeviceCoolingRuntimeRepository.consumeTelemetryEvent(
+    event: DeviceRuntimeTypedEvent
+) {
+    val telemetry = when (val payload = event.payload) {
+        is DeviceRuntimeEventPayload.Snapshot -> runCatching {
+            DeviceCoolingV1ResponseParser.parseTelemetry(payload.data)
+        }.getOrNull()
+        is DeviceRuntimeEventPayload.CommandResult -> null
+    }
+    if (telemetry != null && stateOwner.recordTelemetry(event.deviceUid, event.generation, telemetry)) {
+        return
     }
 
-    suspend fun setMode(
-        deviceUid: DeviceUid,
-        mode: DeviceCoolingMode,
-        save: Boolean = true
-    ): DeviceRuntimeCommandOutcome<DeviceCoolingConfigApplyResult> = applyConfig(
-        deviceUid,
-        DeviceCoolingConfigApplyPayload(mode = mode, save = save)
-    )
-
-    suspend fun setTemperatureRange(
-        deviceUid: DeviceUid,
-        minTemperatureC: Double,
-        maxTemperatureC: Double,
-        save: Boolean = true
-    ): DeviceRuntimeCommandOutcome<DeviceCoolingConfigApplyResult> = applyConfig(
-        deviceUid,
-        DeviceCoolingConfigApplyPayload(
-            minTemperatureC = minTemperatureC,
-            maxTemperatureC = maxTemperatureC,
-            save = save
-        )
-    )
-
-    suspend fun setFanDisplayNames(
-        deviceUid: DeviceUid,
-        fans: List<DeviceCoolingFanDisplayNamePayload>,
-        save: Boolean = true
-    ): DeviceRuntimeCommandOutcome<DeviceCoolingConfigApplyResult> = applyConfig(
-        deviceUid,
-        DeviceCoolingConfigApplyPayload(fans = fans, save = save)
-    )
-
-    suspend fun setAuto(
-        deviceUid: DeviceUid,
-        save: Boolean = true
-    ): DeviceRuntimeCommandOutcome<DeviceCoolingConfigApplyResult> =
-        setMode(deviceUid, DeviceCoolingMode.AUTO, save)
-
-    suspend fun setOn(
-        deviceUid: DeviceUid,
-        save: Boolean = true
-    ): DeviceRuntimeCommandOutcome<DeviceCoolingConfigApplyResult> =
-        setMode(deviceUid, DeviceCoolingMode.ON, save)
-
-    suspend fun setOff(
-        deviceUid: DeviceUid,
-        save: Boolean = true
-    ): DeviceRuntimeCommandOutcome<DeviceCoolingConfigApplyResult> =
-        setMode(deviceUid, DeviceCoolingMode.OFF, save)
-
-    private fun <T> jsonCommand(
-        action: String,
-        dataFactory: () -> JSONObject = ::JSONObject,
-        parser: (JSONObject) -> T
-    ): DeviceRuntimeJsonCommand<T> = DeviceRuntimeJsonCommand(
-        module = DeviceCoolingRuntimeContract.MODULE,
-        action = action,
-        dataFactory = dataFactory,
-        successParser = parser
-    )
+    // Missing/stale baseline is reconciled automatically. An event from an older generation is
+    // never replayed onto the newly hydrated state.
+    val status = requestStatus(event.deviceUid)
+    if (
+        telemetry != null &&
+        status is DeviceRuntimeCommandOutcome.Success &&
+        status.generation == event.generation
+    ) {
+        stateOwner.recordTelemetry(event.deviceUid, event.generation, telemetry)
+    }
 }
 
-private fun coolingUnsupportedReason(
-    payload: DeviceCoolingConfigApplyPayload,
-    status: DeviceCoolingStatus?
-): String? = when {
-    status == null -> null
-    !status.supported || !status.runtime.supportsConfigApply -> "Cooling is unsupported."
-    payload.mode != null && !status.runtime.supportsModeSet -> "Cooling mode is unsupported."
-    (payload.minTemperatureC != null || payload.maxTemperatureC != null) &&
-        !status.runtime.supportsTemperatureRange -> "Temperature range is unsupported."
-    payload.fans.isNotEmpty() && !status.runtime.supportsFanDisplayName ->
-        "Fan display names are unsupported."
-    else -> null
-}
-
-private fun coolingUnsupported(
+/**
+ * A persisted mutation ACK makes the cached snapshot potentially stale. Success is exposed only
+ * after the same connection generation returns, and the central owner accepts, a status document
+ * that confirms the mutation. Failed readback revokes that generation's authority.
+ */
+private suspend fun <T> DeviceRuntimeCommandOutcome<T>.reconcileAfterMutation(
     deviceUid: DeviceUid,
-    action: String
-): DeviceRuntimeCommandOutcome.UnsupportedByDevice =
-    DeviceRuntimeCommandOutcome.UnsupportedByDevice(
+    stateOwner: DeviceCoolingRuntimeStateOwner,
+    requestStatus: suspend (DeviceUid) ->
+        DeviceRuntimeCommandOutcome<DeviceCoolingV1StatusDocument>,
+    confirmsMutation: (T, DeviceCoolingV1StatusDocument) -> Boolean
+): DeviceRuntimeCommandOutcome<T> {
+    val mutation = this as? DeviceRuntimeCommandOutcome.Success ?: return this
+
+    return when (val readback = requestStatus(deviceUid)) {
+        is DeviceRuntimeCommandOutcome.Success -> if (
+            mutation.isVerifiedBy(deviceUid, stateOwner, readback, confirmsMutation)
+        ) {
+            mutation
+        } else {
+            readback.toReconciliationFailure()
+        }
+        is DeviceRuntimeCommandOutcome.NotConnected ->
+            readback.afterFailedReadback(stateOwner, mutation)
+        is DeviceRuntimeCommandOutcome.NotAuthenticated ->
+            readback.afterFailedReadback(stateOwner, mutation)
+        is DeviceRuntimeCommandOutcome.UnsupportedByDevice ->
+            readback.afterFailedReadback(stateOwner, mutation)
+        is DeviceRuntimeCommandOutcome.SendFailed ->
+            readback.afterFailedReadback(stateOwner, mutation)
+        is DeviceRuntimeCommandOutcome.Timeout ->
+            readback.afterFailedReadback(stateOwner, mutation)
+        is DeviceRuntimeCommandOutcome.FirmwareError ->
+            readback.afterFailedReadback(stateOwner, mutation)
+        is DeviceRuntimeCommandOutcome.ProtocolError ->
+            readback.afterFailedReadback(stateOwner, mutation)
+        is DeviceRuntimeCommandOutcome.Cancelled ->
+            readback.afterFailedReadback(stateOwner, mutation)
+    }
+}
+
+private fun <T> DeviceRuntimeCommandOutcome.Success<T>.isVerifiedBy(
+    deviceUid: DeviceUid,
+    stateOwner: DeviceCoolingRuntimeStateOwner,
+    readback: DeviceRuntimeCommandOutcome.Success<DeviceCoolingV1StatusDocument>,
+    confirmsMutation: (T, DeviceCoolingV1StatusDocument) -> Boolean
+): Boolean {
+    val acceptedState = stateOwner.currentAuthoritativeState(deviceUid)
+    val sameGeneration = readback.generation == generation
+    val acceptedReadback = acceptedState?.connectionGeneration == readback.generation &&
+        acceptedState.status == readback.value
+    return sameGeneration &&
+        acceptedReadback &&
+        confirmsMutation(value, readback.value)
+}
+
+private fun DeviceRuntimeCommandOutcome.Success<DeviceCoolingV1StatusDocument>
+    .toReconciliationFailure(): DeviceRuntimeCommandOutcome.ProtocolError =
+    DeviceRuntimeCommandOutcome.ProtocolError(
         deviceUid = deviceUid,
-        module = DeviceCoolingRuntimeContract.MODULE,
-        action = action
+        module = module,
+        action = action,
+        messageId = messageId,
+        generation = generation,
+        reason = "Cooling mutation ACK was not confirmed by authoritative status readback."
     )
 
-private fun <T> DeviceRuntimeCommandOutcome<T>.recordSuccess(
-    recorder: (T) -> Unit
-): DeviceRuntimeCommandOutcome<T> = also { outcome ->
-    if (outcome is DeviceRuntimeCommandOutcome.Success) recorder(outcome.value)
+private fun <T, F : DeviceRuntimeCommandOutcome<Nothing>> F.afterFailedReadback(
+    stateOwner: DeviceCoolingRuntimeStateOwner,
+    mutation: DeviceRuntimeCommandOutcome.Success<T>
+): F = also {
+    stateOwner.invalidate(mutation.deviceUid, mutation.generation)
 }

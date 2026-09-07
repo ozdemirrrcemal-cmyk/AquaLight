@@ -50,11 +50,23 @@ class DeviceOtaAvailabilityFailureMapperTest {
     }
 
     @Test
-    fun `transport failure remains recoverable connection failure`() {
+    fun `phone transport failure maps to release connection guidance`() {
         val failure = DeviceOtaFailureMapper.availability(IOException("offline"))
 
-        assertEquals(DeviceOtaFailureReason.CONNECTION, failure.reason)
+        assertEquals(DeviceOtaFailureReason.RELEASE_CONNECTION_FAILED, failure.reason)
         assertTrue(failure.recoverable)
+        assertEquals(DeviceOtaFailureStage.AVAILABILITY_CHECK, failure.stage)
+    }
+
+    @Test
+    fun `manifest request timeout maps to release connection guidance`() {
+        val failure = DeviceOtaFailureMapper.availability(
+            DeviceFirmwareManifestHttpException(408)
+        )
+
+        assertEquals(DeviceOtaFailureReason.RELEASE_CONNECTION_FAILED, failure.reason)
+        assertTrue(failure.recoverable)
+        assertEquals(408, failure.httpStatus)
         assertEquals(DeviceOtaFailureStage.AVAILABILITY_CHECK, failure.stage)
     }
 

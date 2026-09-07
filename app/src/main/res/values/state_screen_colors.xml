@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <color name="aqua_state_container_surface">@color/aqua_palette_hex_101d2c</color>
+    <color name="aqua_state_container_surface">@color/aqua_palette_hex_061727</color>
     <color name="aqua_state_container_outline">@color/aqua_palette_hex_22354d</color>
     <color name="aqua_state_text_primary">@color/aqua_palette_hex_f2f6fa</color>
     <color name="aqua_state_text_secondary">@color/aqua_palette_hex_90a1b5</color>

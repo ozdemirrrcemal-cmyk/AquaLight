@@ -1,0 +1,97 @@
+{
+  "schema": "aql.light-thermal.v1",
+  "schemaVersion": 1,
+  "product": {
+    "productKey": "LIGHT_WRGB_PRO_ELITE",
+    "feature": "LIGHT_FAN_CONTROL",
+    "screen": "LIGHT_FAN_CONTROL",
+    "fanOutputCapacity": 2,
+    "temperatureSensorCapacity": 1
+  },
+  "topology": {
+    "fans": [
+      {
+        "fanKey": "fan1",
+        "gpio": 15,
+        "ledcChannel": 4,
+        "pwmFrequencyHz": 25000,
+        "pwmResolutionBits": 10
+      },
+      {
+        "fanKey": "fan2",
+        "gpio": 16,
+        "ledcChannel": 5,
+        "pwmFrequencyHz": 25000,
+        "pwmResolutionBits": 10
+      }
+    ],
+    "temperatureSensor": {
+      "sensorKey": "fixture",
+      "sensorIndex": 0,
+      "driver": "DS18B20"
+    }
+  },
+  "config": {
+    "modes": ["Auto", "On", "Off"],
+    "defaults": {
+      "mode": "Auto",
+      "minTemperatureC": 30.0,
+      "maxTemperatureC": 50.0,
+      "lightProtectionThresholdC": 60.0
+    },
+    "limits": {
+      "minTemperatureC": [0.0, 80.0],
+      "maxTemperatureC": [1.0, 90.0],
+      "lightProtectionThresholdC": [50.0, 70.0]
+    }
+  },
+  "automaticControl": {
+    "invalidSensorPolicy": "FAN_100_PERCENT_AND_LIGHT_FAIL_SAFE",
+    "sensorStaleAfterMs": 10000,
+    "sensorFaultFanPercent": 100.0,
+    "sensorFailSafeStateField": "sensorFailSafeActive",
+    "samples": [
+      {"temperatureC": 20.0, "targetPercent": 0.0},
+      {"temperatureC": 30.0, "targetPercent": 0.0},
+      {"temperatureC": 40.0, "targetPercent": 50.0},
+      {"temperatureC": 50.0, "targetPercent": 100.0},
+      {"temperatureC": 60.0, "targetPercent": 100.0}
+    ]
+  },
+  "outputHealth": {
+    "softwarePwmValues": ["OK", "FAULT"],
+    "physicalHealthValues": ["UNVERIFIED", "HARDWARE_FAULT"],
+    "physicalFeedbackAvailable": false,
+    "automaticCycleField": "automaticOutputCycleHealthy"
+  },
+  "commands": {
+    "light.thermal.status.get": [],
+    "light.thermal.config.apply": [
+      "mode",
+      "minTemperatureC",
+      "maxTemperatureC",
+      "save"
+    ],
+    "light.temperature-protection.status.get": [],
+    "light.temperature-protection.set": ["thresholdC", "save"]
+  },
+  "events": [
+    "light.thermal.status.changed",
+    "light.thermal.telemetry.changed"
+  ],
+  "persistence": {
+    "path": "/config/cooling.json",
+    "schema": "aql.config.light-thermal.v1",
+    "rootFields": ["schemaVersion", "schema", "lightThermal"],
+    "lightThermalFields": [
+      "contract",
+      "mode",
+      "minTemperatureC",
+      "maxTemperatureC",
+      "lightProtectionThresholdC"
+    ],
+    "legacyFallback": false,
+    "migration": false,
+    "outputFailureDoesNotInvalidateConfig": true
+  }
+}

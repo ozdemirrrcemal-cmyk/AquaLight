@@ -192,6 +192,71 @@ class DeviceOtaCoordinatorTest {
     }
 
     @Test
+    fun `completed image with failed exact restore stays journaled until reboot proof`() = runTest {
+        val lifecycle = MutableSharedFlow<DeviceRuntimeLifecycleEvent>(extraBufferCapacity = 8)
+        val typedEvents = MutableSharedFlow<DeviceRuntimeTypedEvent>(extraBufferCapacity = 8)
+        val snapshots = MutableStateFlow(mapOf(DEVICE_UID to snapshot()))
+        val gateway = RecordingGateway().apply {
+            startData.getJSONObject("request").put("applyNow", false)
+        }
+        val coordinator = DeviceOtaCoordinator(
+            snapshotProvider = { deviceUid -> snapshots.value[deviceUid] },
+            connectRuntime = { Result.success(Unit) },
+            updaterProvider = { updater(gateway) },
+            runtimeLifecycleEvents = lifecycle,
+            runtimeTypedEvents = typedEvents,
+            snapshotUpdates = snapshots,
+            dispatcher = StandardTestDispatcher(testScheduler)
+        )
+        runCurrent()
+        val plan = (
+            coordinator.checkAvailability(DEVICE_UID, MANIFEST_URL, false).getOrThrow()
+                as DeviceOtaState.UpdateAvailable
+            ).plan
+        assertTrue(coordinator.startUpdate(plan).isSuccess)
+
+        typedEvents.tryEmit(
+            otaEvent(
+                type = DeviceRuntimeTypedEvent.Type.FIRMWARE_OTA_COMPLETED,
+                id = "completed-restore-failure",
+                snapshot = otaEventData(
+                    phase = "succeeded",
+                    active = false,
+                    progressPermille = 1_000,
+                    restartRequired = true
+                )
+                    .put("lastError", "exact pre-OTA runtime restore failed")
+                    .put(
+                        "lastErrorField",
+                        DeviceFirmwareRuntimeContract.ErrorField.SAFE_MODE_RESTORE
+                    )
+            )
+        )
+        runCurrent()
+
+        val failed = coordinator.observe(DEVICE_UID).value as DeviceOtaState.Failed
+        assertEquals(DeviceOtaFailureReason.SAFE_MODE_RESTORE_FAILED, failed.failure.reason)
+        assertFalse(failed.failure.recoverable)
+        assertTrue(
+            coordinator.checkAvailability(DEVICE_UID, MANIFEST_URL, false).isFailure
+        )
+
+        lifecycle.tryEmit(DeviceRuntimeLifecycleEvent.Unavailable(DEVICE_UID))
+        runCurrent()
+        assertTrue(coordinator.observe(DEVICE_UID).value is DeviceOtaState.Recovering)
+
+        snapshots.value = mapOf(
+            DEVICE_UID to snapshot().copy(
+                firmwareVersion = "2.0.0",
+                runtimeMetadataGeneration = 8L
+            )
+        )
+        runCurrent()
+        assertTrue(coordinator.observe(DEVICE_UID).value is DeviceOtaState.Succeeded)
+        coordinator.close()
+    }
+
+    @Test
     fun `reconnected old firmware proves rollback and quarantines exact release`() = runTest {
         val typedEvents = MutableSharedFlow<DeviceRuntimeTypedEvent>(extraBufferCapacity = 8)
         val snapshots = MutableStateFlow(mapOf(DEVICE_UID to snapshot()))

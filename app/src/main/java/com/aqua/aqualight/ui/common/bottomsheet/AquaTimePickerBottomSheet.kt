@@ -40,19 +40,27 @@ class AquaTimePickerBottomSheet : BottomSheetDialogFragment(
                 "selectionMode is required."
             }
         )
+        val allowEndOfDay = args.getBoolean(ARG_ALLOW_END_OF_DAY)
+        val selectableMinutesOfDay = args.getIntArray(ARG_SELECTABLE_MINUTES_OF_DAY)?.toList()
+        val hourValues = timePickerHourValues(selectableMinutesOfDay, allowEndOfDay)
         selectedHour = if (selectionMode == SelectionMode.MINUTE_OF_HOUR) {
             0
         } else {
             restoreTimePickerSelection(
                 savedValue = savedInstanceState?.savedInt(STATE_SELECTED_HOUR),
                 initialValue = args.getInt(ARG_INITIAL_HOUR),
-                range = HOUR_RANGE
+                values = hourValues
             )
+        }
+        val minuteValues = if (selectionMode == SelectionMode.MINUTE_OF_HOUR) {
+            MINUTE_RANGE.toList()
+        } else {
+            timePickerMinuteValues(selectableMinutesOfDay, selectedHour)
         }
         selectedMinute = restoreTimePickerSelection(
             savedValue = savedInstanceState?.savedInt(STATE_SELECTED_MINUTE),
             initialValue = args.getInt(ARG_INITIAL_MINUTE),
-            range = MINUTE_RANGE
+            values = minuteValues
         )
 
         view.findViewById<TextView>(R.id.tvAquaTimePickerTitle).text =
@@ -64,52 +72,37 @@ class AquaTimePickerBottomSheet : BottomSheetDialogFragment(
         val hourWheel = view.findViewById<RecyclerView>(R.id.rvAquaTimePickerHour)
         val minuteWheel = view.findViewById<RecyclerView>(R.id.rvAquaTimePickerMinute)
         configureSelectionMode(view, selectionMode)
-        fun renderSelection() {
-            val formatted = when (selectionMode) {
-                SelectionMode.TIME_OF_DAY -> LocaleFormatter.formatTimeOfDay24Hour(
-                    context = requireContext(),
-                    minutesOfDay = timePickerMinutesOfDay(selectedHour, selectedMinute)
-                )
-                SelectionMode.MINUTE_OF_HOUR -> getString(
-                    R.string.common_time_picker_minute_of_hour_preview,
-                    selectedMinute
-                )
-            }
-            selection.text = formatted
-            selection.contentDescription = when (selectionMode) {
-                SelectionMode.TIME_OF_DAY -> getString(
-                    R.string.common_time_picker_selected_time_description,
-                    formatted
-                )
-                SelectionMode.MINUTE_OF_HOUR -> getString(
-                    R.string.common_time_picker_selected_minute_of_hour_description,
-                    selectedMinute
-                )
-            }
-        }
 
-        if (selectionMode == SelectionMode.TIME_OF_DAY) {
-            bindWheel(
-                recyclerView = hourWheel,
-                values = HOUR_RANGE,
-                initialValue = selectedHour,
-                valueDescriptionRes = R.string.common_time_picker_hour_value_description,
-                onSelected = { hour ->
-                    selectedHour = hour
-                    renderSelection()
-                }
-            )
-        }
-        bindWheel(
+        val minuteBinding = bindWheel(
             recyclerView = minuteWheel,
-            values = MINUTE_RANGE,
+            values = minuteValues,
             initialValue = selectedMinute,
             valueDescriptionRes = R.string.common_time_picker_minute_value_description,
             onSelected = { minute ->
                 selectedMinute = minute
-                renderSelection()
+                renderSelection(selection, selectionMode)
             }
         )
+
+        if (selectionMode == SelectionMode.TIME_OF_DAY) {
+            bindWheel(
+                recyclerView = hourWheel,
+                values = hourValues,
+                initialValue = selectedHour,
+                valueDescriptionRes = R.string.common_time_picker_hour_value_description,
+                onSelected = { hour ->
+                    selectedHour = hour
+                    val allowedMinutes = timePickerMinuteValues(selectableMinutesOfDay, hour)
+                    selectedMinute = restoreTimePickerSelection(
+                        savedValue = selectedMinute,
+                        initialValue = allowedMinutes.first(),
+                        values = allowedMinutes
+                    )
+                    minuteBinding.replaceValues(allowedMinutes, selectedMinute)
+                    renderSelection(selection, selectionMode)
+                }
+            )
+        }
 
         view.findViewById<MaterialButton>(R.id.btnAquaTimePickerCancel).apply {
             text = args.getString(ARG_CANCEL_TEXT).orEmpty()
@@ -125,7 +118,35 @@ class AquaTimePickerBottomSheet : BottomSheetDialogFragment(
                 dismiss()
             }
         }
-        renderSelection()
+        renderSelection(selection, selectionMode)
+    }
+
+    private fun renderSelection(selection: TextView, selectionMode: SelectionMode) {
+        val formatted = when (selectionMode) {
+            SelectionMode.TIME_OF_DAY -> if (selectedHour == END_OF_DAY_HOUR) {
+                END_OF_DAY_DISPLAY
+            } else {
+                LocaleFormatter.formatTimeOfDay24Hour(
+                    context = requireContext(),
+                    minutesOfDay = timePickerMinutesOfDay(selectedHour, selectedMinute)
+                )
+            }
+            SelectionMode.MINUTE_OF_HOUR -> getString(
+                R.string.common_time_picker_minute_of_hour_preview,
+                selectedMinute
+            )
+        }
+        selection.text = formatted
+        selection.contentDescription = when (selectionMode) {
+            SelectionMode.TIME_OF_DAY -> getString(
+                R.string.common_time_picker_selected_time_description,
+                formatted
+            )
+            SelectionMode.MINUTE_OF_HOUR -> getString(
+                R.string.common_time_picker_selected_minute_of_hour_description,
+                selectedMinute
+            )
+        }
     }
 
     private fun configureSelectionMode(view: View, selectionMode: SelectionMode) {
@@ -156,11 +177,11 @@ class AquaTimePickerBottomSheet : BottomSheetDialogFragment(
 
     private fun bindWheel(
         recyclerView: RecyclerView,
-        values: IntRange,
+        values: List<Int>,
         initialValue: Int,
         @StringRes valueDescriptionRes: Int,
         onSelected: (Int) -> Unit
-    ) {
+    ): AquaTimeWheelBinding {
         val layoutManager = LinearLayoutManager(requireContext())
         val snapHelper = LinearSnapHelper()
         lateinit var selectPosition: (Int) -> Unit
@@ -216,15 +237,21 @@ class AquaTimePickerBottomSheet : BottomSheetDialogFragment(
                 }
             }
         )
-        recyclerView.post {
-            selectPosition(adapter.positionOf(initialValue))
-        }
+        val selectValue: (Int) -> Unit = { value -> selectPosition(adapter.positionOf(value)) }
+        recyclerView.post { selectValue(initialValue) }
+        return AquaTimeWheelBinding(
+            replaceValues = { updatedValues, selectedValue ->
+                adapter.replaceValues(updatedValues)
+                recyclerView.post { selectValue(selectedValue) }
+            }
+        )
     }
 
     private fun publish(result: String) {
         if (resultSent) return
         resultSent = true
         val args = requireArguments()
+        val allowEndOfDay = args.getBoolean(ARG_ALLOW_END_OF_DAY)
         parentFragmentManager.setFragmentResult(
             args.getString(ARG_REQUEST_KEY).orEmpty(),
             bundleOf(
@@ -233,7 +260,8 @@ class AquaTimePickerBottomSheet : BottomSheetDialogFragment(
                 RESULT_MINUTE to selectedMinute,
                 RESULT_MINUTES_OF_DAY to timePickerMinutesOfDay(
                     selectedHour,
-                    selectedMinute
+                    selectedMinute,
+                    allowEndOfDay = allowEndOfDay
                 ),
                 RESULT_SELECTION_MODE to args.getString(ARG_SELECTION_MODE).orEmpty(),
                 RESULT_PAYLOAD_ID to args.getString(ARG_PAYLOAD_ID).orEmpty()
@@ -247,15 +275,41 @@ class AquaTimePickerBottomSheet : BottomSheetDialogFragment(
         val initialHour: Int,
         val initialMinute: Int,
         val selectionMode: SelectionMode = SelectionMode.TIME_OF_DAY,
+        val allowEndOfDay: Boolean = false,
+        val selectableMinutesOfDay: List<Int>? = null,
         val confirmText: String,
         val cancelText: String,
         val resultTarget: ResultTarget
     ) {
         init {
-            require(initialHour in HOUR_RANGE) { "initialHour must be between 0 and 23." }
+            val allowedHours = if (allowEndOfDay) END_OF_DAY_HOUR_RANGE else HOUR_RANGE
+            require(initialHour in allowedHours) {
+                "initialHour must be inside the configured time-picker range."
+            }
             require(initialMinute in MINUTE_RANGE) { "initialMinute must be between 0 and 59." }
+            require(!allowEndOfDay || initialHour != END_OF_DAY_HOUR || initialMinute == 0) {
+                "24:00 is the only valid end-of-day value."
+            }
             require(selectionMode != SelectionMode.MINUTE_OF_HOUR || initialHour == 0) {
                 "Minute-of-hour selection must use initialHour 0."
+            }
+            require(selectionMode != SelectionMode.MINUTE_OF_HOUR || !allowEndOfDay) {
+                "End-of-day selection is valid only for time-of-day mode."
+            }
+            selectableMinutesOfDay?.let { selectable ->
+                val maximum = if (allowEndOfDay) MINUTES_PER_DAY else LAST_MINUTE_OF_DAY
+                require(selectionMode == SelectionMode.TIME_OF_DAY) {
+                    "Selectable wall-clock times require time-of-day mode."
+                }
+                require(selectable.isNotEmpty()) { "Selectable wall-clock times cannot be empty." }
+                require(selectable.all { minute -> minute in 0..maximum }) {
+                    "Selectable wall-clock times must stay inside the configured day."
+                }
+                require(
+                    timePickerMinutesOfDay(initialHour, initialMinute, allowEndOfDay) in selectable
+                ) {
+                    "The initial wall-clock time must be selectable."
+                }
             }
             require(resultTarget.requestKey.isNotBlank()) { "requestKey must not be blank." }
         }
@@ -286,6 +340,8 @@ class AquaTimePickerBottomSheet : BottomSheetDialogFragment(
         private const val ARG_INITIAL_HOUR = "arg_initial_hour"
         private const val ARG_INITIAL_MINUTE = "arg_initial_minute"
         private const val ARG_SELECTION_MODE = "arg_selection_mode"
+        private const val ARG_ALLOW_END_OF_DAY = "arg_allow_end_of_day"
+        private const val ARG_SELECTABLE_MINUTES_OF_DAY = "arg_selectable_minutes_of_day"
         private const val ARG_CONFIRM_TEXT = "arg_confirm_text"
         private const val ARG_CANCEL_TEXT = "arg_cancel_text"
         private const val ARG_REQUEST_KEY = "arg_request_key"
@@ -293,7 +349,13 @@ class AquaTimePickerBottomSheet : BottomSheetDialogFragment(
         private const val STATE_SELECTED_HOUR = "state_selected_hour"
         private const val STATE_SELECTED_MINUTE = "state_selected_minute"
         private const val TAG_PREFIX = "AquaTimePickerBottomSheet:"
+        private const val END_OF_DAY_HOUR = 24
+        private const val END_OF_DAY_DISPLAY = "24:00"
+        private const val MINUTES_PER_HOUR = 60
+        private const val MINUTES_PER_DAY = END_OF_DAY_HOUR * MINUTES_PER_HOUR
+        private const val LAST_MINUTE_OF_DAY = MINUTES_PER_DAY - 1
         private val HOUR_RANGE = 0..23
+        private val END_OF_DAY_HOUR_RANGE = 0..END_OF_DAY_HOUR
         private val MINUTE_RANGE = 0..59
 
         fun newInstance(request: Request): AquaTimePickerBottomSheet =
@@ -304,11 +366,19 @@ class AquaTimePickerBottomSheet : BottomSheetDialogFragment(
                     ARG_INITIAL_HOUR to request.initialHour,
                     ARG_INITIAL_MINUTE to request.initialMinute,
                     ARG_SELECTION_MODE to request.selectionMode.name,
+                    ARG_ALLOW_END_OF_DAY to request.allowEndOfDay,
                     ARG_CONFIRM_TEXT to request.confirmText,
                     ARG_CANCEL_TEXT to request.cancelText,
                     ARG_REQUEST_KEY to request.resultTarget.requestKey,
                     ARG_PAYLOAD_ID to request.resultTarget.payloadId
-                )
+                ).apply {
+                    request.selectableMinutesOfDay?.let { selectable ->
+                        putIntArray(
+                            ARG_SELECTABLE_MINUTES_OF_DAY,
+                            selectable.distinct().sorted().toIntArray()
+                        )
+                    }
+                }
             }
 
         fun show(fragmentManager: FragmentManager, request: Request) {
@@ -321,13 +391,18 @@ class AquaTimePickerBottomSheet : BottomSheetDialogFragment(
     }
 }
 
+private data class AquaTimeWheelBinding(
+    val replaceValues: (List<Int>, Int) -> Unit
+)
+
 private class AquaTimeWheelAdapter(
-    private val values: IntRange,
+    values: List<Int>,
     @StringRes private val valueDescriptionRes: Int,
     locale: Locale,
     private val onValueClick: (Int) -> Unit
 ) : RecyclerView.Adapter<AquaTimeWheelAdapter.ValueViewHolder>() {
 
+    private var values = values.toList()
     private var selectedPosition = RecyclerView.NO_POSITION
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): ValueViewHolder {
@@ -361,11 +436,36 @@ private class AquaTimeWheelAdapter(
         }
     }
 
-    override fun getItemCount(): Int = values.count()
+    override fun getItemCount(): Int = values.size
 
-    fun positionOf(value: Int): Int = value.coerceIn(values) - values.first
+    fun positionOf(value: Int): Int {
+        val position = values.indexOf(value)
+        require(position >= 0) { "Selected wheel value must exist in the current options." }
+        return position
+    }
 
-    fun valueAt(position: Int): Int = values.first + position.coerceIn(0, itemCount - 1)
+    fun valueAt(position: Int): Int = values[position.coerceIn(0, itemCount - 1)]
+
+    fun replaceValues(updatedValues: List<Int>) {
+        require(updatedValues.isNotEmpty()) { "Time wheel options cannot be empty." }
+        val previousSize = values.size
+        val normalizedValues = updatedValues.distinct().sorted()
+        values = normalizedValues
+        selectedPosition = RecyclerView.NO_POSITION
+        val sharedSize = minOf(previousSize, normalizedValues.size)
+        if (sharedSize > 0) notifyItemRangeChanged(0, sharedSize)
+        if (normalizedValues.size > previousSize) {
+            notifyItemRangeInserted(
+                previousSize,
+                normalizedValues.size - previousSize
+            )
+        } else if (normalizedValues.size < previousSize) {
+            notifyItemRangeRemoved(
+                normalizedValues.size,
+                previousSize - normalizedValues.size
+            )
+        }
+    }
 
     fun setSelectedPosition(position: Int) {
         if (position == selectedPosition) return
@@ -391,9 +491,58 @@ internal fun restoreTimePickerSelection(
     savedValue: Int?,
     initialValue: Int,
     range: IntRange
-): Int = (savedValue ?: initialValue).coerceIn(range)
+): Int = restoreTimePickerSelection(savedValue, initialValue, range.toList())
 
-internal fun timePickerMinutesOfDay(hour: Int, minute: Int): Int {
+internal fun restoreTimePickerSelection(
+    savedValue: Int?,
+    initialValue: Int,
+    values: List<Int>
+): Int {
+    require(values.isNotEmpty()) { "Time picker options cannot be empty." }
+    val preferred = savedValue ?: initialValue
+    return values.minBy { value -> kotlin.math.abs(value - preferred) }
+}
+
+internal fun timePickerHourValues(
+    selectableMinutesOfDay: List<Int>?,
+    allowEndOfDay: Boolean
+): List<Int> = selectableMinutesOfDay
+    ?.map(::timePickerHour)
+    ?.distinct()
+    ?.sorted()
+    ?: (if (allowEndOfDay) 0..24 else 0..23).toList()
+
+internal fun timePickerMinuteValues(
+    selectableMinutesOfDay: List<Int>?,
+    hour: Int
+): List<Int> = selectableMinutesOfDay
+    ?.filter { minuteOfDay -> timePickerHour(minuteOfDay) == hour }
+    ?.map(::timePickerMinute)
+    ?.distinct()
+    ?.sorted()
+    ?: if (hour == 24) listOf(0) else (0..59).toList()
+
+private fun timePickerHour(minutesOfDay: Int): Int = if (minutesOfDay == 24 * 60) {
+    24
+} else {
+    minutesOfDay / 60
+}
+
+private fun timePickerMinute(minutesOfDay: Int): Int = if (minutesOfDay == 24 * 60) {
+    0
+} else {
+    minutesOfDay % 60
+}
+
+internal fun timePickerMinutesOfDay(
+    hour: Int,
+    minute: Int,
+    allowEndOfDay: Boolean = false
+): Int {
+    if (allowEndOfDay && hour == 24) {
+        require(minute == 0) { "24:00 is the only valid end-of-day value." }
+        return 24 * 60
+    }
     require(hour in 0..23) { "hour must be between 0 and 23." }
     require(minute in 0..59) { "minute must be between 0 and 59." }
     return hour * 60 + minute

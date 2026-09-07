@@ -60,7 +60,7 @@ object DeviceDosingV1Contract {
         const val AMOUNT_QUANTA_PER_ML = 1_000L
         const val AMOUNT_RESOLUTION_ML = 0.001
         const val MIN_CALIBRATION_DURATION_MS = 1_000L
-        const val DEFAULT_CALIBRATION_DURATION_MS = 5_000L
+        const val DEFAULT_CALIBRATION_DURATION_MS = 2_000L
         const val MAX_CALIBRATION_DURATION_MS = 60_000L
         const val VERIFICATION_DOSE_ML = 4.0
         const val MIN_MEASURED_ML = 0.05
@@ -84,5 +84,20 @@ object DeviceDosingV1Contract {
         const val CALIBRATION_CONFIRM = "calibrationConfirm"
         const val CALIBRATION_CANCEL = "calibrationCancel"
         const val RESERVOIR_REFILL = "reservoirRefill"
+    }
+
+    /** Exact firmware identities for a pump output whose OFF write was not proven. */
+    object OutputStopFailure {
+        private const val FIELD = "pump"
+
+        private val MESSAGES = setOf(
+            "dosing output could not be proven physically off",
+            "dosing output could not be proven physically off before channel reset",
+            "calibration output could not be proven physically off",
+            "dosing output could not be proven physically off after calibration cancel"
+        )
+
+        fun matches(field: String, message: String): Boolean =
+            field == FIELD && message in MESSAGES
     }
 }

@@ -4,6 +4,7 @@ import android.content.Context
 import androidx.lifecycle.ViewModelProvider
 import com.aqua.aqualight.app.AquaApp
 import com.aqua.aqualight.application.auth.AccountSecurityOperations
+import com.aqua.aqualight.application.auth.AppSessionOperations
 import com.aqua.aqualight.application.auth.AuthOperations
 import com.aqua.aqualight.application.auth.AuthenticatedOwnerIdentity
 import com.aqua.aqualight.application.auth.SessionExitOperations
@@ -13,8 +14,10 @@ import com.aqua.aqualight.application.devices.provisioning.ProvisioningDraftOper
 import com.aqua.aqualight.application.feedback.FeedbackSubmissionUseCase
 import com.aqua.aqualight.application.notifications.NotificationDispatchUseCase
 import com.aqua.aqualight.application.notifications.NotificationPreferenceUseCase
+import com.aqua.aqualight.application.user.LocalDataRecoveryOperations
 import com.aqua.aqualight.application.user.UserProfileOperations
 import com.aqua.aqualight.application.user.UserSettingsOperations
+import com.aqua.aqualight.data.auth.AppSessionCoordinator
 import com.aqua.aqualight.data.auth.AuthRepository
 import com.aqua.aqualight.data.auth.DefaultSessionExitOperations
 import com.aqua.aqualight.data.auth.FirebaseAccountSecurityOperations
@@ -22,6 +25,7 @@ import com.aqua.aqualight.data.auth.FirebaseAuthOperations
 import com.aqua.aqualight.data.auth.LogoutManager
 import com.aqua.aqualight.data.feedback.FirebaseFeedbackSubmissionOperations
 import com.aqua.aqualight.data.notifications.NotificationPlatform
+import com.aqua.aqualight.data.recovery.DefaultLocalDataRecoveryOperations
 import com.aqua.aqualight.data.user.DefaultUserProfileOperations
 import com.aqua.aqualight.data.user.DefaultUserSettingsOperations
 import com.aqua.aqualight.data.user.StartupAppearanceCache
@@ -42,6 +46,8 @@ import com.aqua.aqualight.ui.auth.viewmodel.AuthViewModelFactory
  * OwnerDependencyGraphResolver after that session barrier has completed.
  */
 interface AppContainer {
+    val appSessionOperations: AppSessionOperations
+    val localDataRecoveryOperations: LocalDataRecoveryOperations
     val startupAppearanceCache: StartupAppearanceCache
     val userPreferencesManager: UserPreferencesManager
     val userSettingsOperations: UserSettingsOperations
@@ -75,6 +81,16 @@ internal class DefaultAppContainer(
 ) : AppContainer, OwnerDependencyGraphAccess {
 
     private val appContext = context.applicationContext
+
+    override val appSessionOperations: AppSessionOperations by lazy(
+        LazyThreadSafetyMode.SYNCHRONIZED
+    ) {
+        AppSessionCoordinator.create(appContext)
+    }
+
+    override val localDataRecoveryOperations: LocalDataRecoveryOperations =
+        DefaultLocalDataRecoveryOperations
+
     private val notificationPlatform by lazy(LazyThreadSafetyMode.SYNCHRONIZED) {
         NotificationPlatform.get(appContext)
     }

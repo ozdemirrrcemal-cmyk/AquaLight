@@ -11,9 +11,7 @@ val DEVICE_FIRMWARE_PRODUCT_ENVIRONMENTS: Set<String> = setOf(
     "timer_relay_pro_4",
     "dosing_dose_pro_2",
     "dosing_dose_pro_4",
-    "cooling_cool_pro_1f",
-    "cooling_cool_pro_2f",
-    "cooling_cool_pro_3f"
+    "cooling_cool_pro_1f"
 )
 
 /**

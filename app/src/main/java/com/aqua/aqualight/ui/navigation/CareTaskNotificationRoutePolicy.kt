@@ -1,6 +1,6 @@
 package com.aqua.aqualight.ui.navigation
 
-import com.aqua.aqualight.data.user.UserDataScope
+import com.aqua.aqualight.application.user.OwnerIdentityPolicy
 
 /** Fail-closed owner validation for care-task notification deep links. */
 object CareTaskNotificationRoutePolicy {
@@ -15,17 +15,16 @@ object CareTaskNotificationRoutePolicy {
             return false
         }
 
-        val notificationOwner = UserDataScope.normalizeOwnerUid(
+        val notificationOwner = OwnerIdentityPolicy.normalize(
             notificationOwnerUid
         )
-        val activeOwner = UserDataScope.normalizeOwnerUid(activeOwnerUid)
+        val activeOwner = OwnerIdentityPolicy.normalize(activeOwnerUid)
 
         return notificationOwner.isNotBlank() &&
             activeOwner.isNotBlank() &&
-            UserDataScope.belongsToOwner(
+            OwnerIdentityPolicy.belongsToOwner(
                 recordOwnerUid = notificationOwner,
-                ownerUid = activeOwner,
-                includeLegacy = false
+                ownerUid = activeOwner
             )
     }
 }

@@ -5,9 +5,13 @@ import com.aqua.aqualight.data.devices.catalog.AqlCommercialDeviceCatalog
 import com.aqua.aqualight.data.devices.catalog.expectedRuntimeModules
 import com.aqua.aqualight.data.devices.model.DeviceFamily
 import com.aqua.aqualight.data.devices.runtime.events.DeviceRuntimeTypedEvent
-import com.aqua.aqualight.data.devices.runtime.modules.cooling.DeviceCoolingConfigApplyPayload
-import com.aqua.aqualight.data.devices.runtime.modules.cooling.DeviceCoolingFanDisplayNamePayload
-import com.aqua.aqualight.data.devices.runtime.modules.cooling.DeviceCoolingMode
+import com.aqua.aqualight.data.devices.runtime.modules.cooling.v1.DeviceCoolingV1ConfigApplyPayload
+import com.aqua.aqualight.data.devices.runtime.modules.cooling.v1.DeviceCoolingV1ControlMode
+import com.aqua.aqualight.data.devices.runtime.modules.cooling.v1.DeviceCoolingV1HistoryGetPayload
+import com.aqua.aqualight.data.devices.runtime.modules.cooling.v1.DeviceCoolingV1HistoryRange
+import com.aqua.aqualight.data.devices.runtime.modules.cooling.v1.DeviceCoolingV1ManualApplyPayload
+import com.aqua.aqualight.data.devices.runtime.modules.cooling.v1.DeviceCoolingV1ProgramApplyPayload
+import com.aqua.aqualight.data.devices.runtime.modules.cooling.v1.DeviceCoolingV1ProgramSlotPayload
 import com.aqua.aqualight.data.devices.runtime.modules.device.DeviceNameSetRequest
 import com.aqua.aqualight.data.devices.runtime.modules.firmware.DeviceFirmwareOtaStartPayload
 import com.aqua.aqualight.data.devices.runtime.modules.light.DeviceLightChannelRegimeSetPayload
@@ -18,6 +22,8 @@ import com.aqua.aqualight.data.devices.runtime.modules.light.DeviceLightProgramD
 import com.aqua.aqualight.data.devices.runtime.modules.light.DeviceLightProgramPointPayload
 import com.aqua.aqualight.data.devices.runtime.modules.light.DeviceLightRegime
 import com.aqua.aqualight.data.devices.runtime.modules.light.DeviceLightTemperatureProtectionSetPayload
+import com.aqua.aqualight.data.devices.runtime.modules.light.DeviceLightThermalConfigApplyPayload
+import com.aqua.aqualight.data.devices.runtime.modules.light.DeviceLightThermalMode
 import com.aqua.aqualight.data.devices.runtime.modules.time.DeviceManualRtcPayload
 import com.aqua.aqualight.data.devices.runtime.modules.time.DevicePhoneSyncPayload
 import com.aqua.aqualight.data.devices.runtime.modules.time.DeviceTimeConfigApplyPayload
@@ -54,7 +60,7 @@ class AqlFirmwareInteroperabilityTest {
         val authenticated = commandAccess.getJSONArray("authenticated").asStringSet()
         val public = commandAccess.getJSONArray("public").asStringSet()
 
-        assertEquals(44, authenticated.size)
+        assertEquals(50, authenticated.size)
         assertTrue(public.isEmpty())
         assertEquals(public, AqlWsContract.publicCommandKeys())
         assertEquals(authenticated, AqlWsContract.authenticatedCommandKeys())
@@ -83,8 +89,12 @@ class AqlFirmwareInteroperabilityTest {
 
         val dosingPin = loadJsonFixture(DOSING_PIN_FIXTURE)
         assertEquals(
-            FIRMWARE_COMMIT,
+            DOSING_FIRMWARE_COMMIT,
             dosingPin.getJSONObject("firmware").getString("commit")
+        )
+        assertEquals(
+            FIRMWARE_COMMIT,
+            dosingPin.getJSONObject("firmware").getString("coreInteroperabilityCommit")
         )
         val dosingContract = dosingPin.getJSONObject("contract")
         assertTrue(dosingContract.getBoolean("productionWiring"))
@@ -115,7 +125,7 @@ class AqlFirmwareInteroperabilityTest {
         val typed = DeviceRuntimeTypedEvent.Type.values()
             .mapTo(linkedSetOf()) { type -> "${type.module}.${type.action}" }
 
-        assertEquals(11, expected.size)
+        assertEquals(13, expected.size)
         assertEquals(expected, AqlWsEventContract.qualifiedNames())
         assertEquals(expected, typed)
 
@@ -190,22 +200,25 @@ class AqlFirmwareInteroperabilityTest {
                 .getJSONObject(WEBSOCKET_FIXTURE)
                 .getBoolean("byteIdenticalWithFirmware")
         )
-        assertTrue(
-            fixtureSpecs
-                .getJSONObject(COOLING_FIXTURE)
-                .getBoolean("byteIdenticalWithFirmware")
-        )
+        listOf(COOLING_CONTRACT_FIXTURE, COOLING_TELEMETRY_FIXTURE, LIGHT_THERMAL_FIXTURE)
+            .forEach { fixtureName ->
+                assertTrue(
+                    fixtureSpecs
+                        .getJSONObject(fixtureName)
+                        .getBoolean("byteIdenticalWithFirmware")
+                )
+            }
     }
 
     @Test
-    fun `all four families and nine commercial SKUs match the firmware export`() {
+    fun `all four families and seven commercial SKUs match the firmware export`() {
         val fixtureProducts = productCatalog.getJSONArray("products").asObjectList()
         val fixtureProfiles = productCatalog.getJSONObject("profiles")
         val actualProducts = AqlCommercialDeviceCatalog.products.associateBy {
             product -> product.productKey.value
         }
 
-        assertEquals(9, fixtureProducts.size)
+        assertEquals(7, fixtureProducts.size)
         assertEquals(
             fixtureProducts.mapTo(linkedSetOf()) { it.getString("productKey") },
             actualProducts.keys
@@ -316,15 +329,33 @@ class AqlFirmwareInteroperabilityTest {
         }
 
     private fun coolingSerializerFields(): Map<String, Set<String>> {
-        val fan = DeviceCoolingFanDisplayNamePayload("fan-1", "Front fan")
+        val slot = DeviceCoolingV1ProgramSlotPayload(
+            startMinute = 480,
+            endMinute = 600,
+            fanOnTemperatureC = 25.0,
+            fanPercent = 50.0
+        )
         return linkedMapOf(
-            "DeviceCoolingConfigApplyPayload" to DeviceCoolingConfigApplyPayload(
-                mode = DeviceCoolingMode.AUTO,
-                minTemperatureC = 24.0,
-                maxTemperatureC = 27.0,
-                fans = listOf(fan)
+            "DeviceCoolingV1ConfigApplyPayload" to DeviceCoolingV1ConfigApplyPayload(
+                expectedConfigRevision = 7L,
+                controlMode = DeviceCoolingV1ControlMode.AUTOMATIC,
+                startTemperatureC = 24.0,
+                fullSpeedTemperatureC = 27.0,
+                silentModeEnabled = true
             ).toJson().keySetExact(),
-            "DeviceCoolingFanDisplayNamePayload" to fan.toJson().keySetExact()
+            "DeviceCoolingV1HistoryGetPayload" to
+                DeviceCoolingV1HistoryGetPayload(DeviceCoolingV1HistoryRange.HOURS_24)
+                    .toJson()
+                    .keySetExact(),
+            "DeviceCoolingV1ManualApplyPayload" to DeviceCoolingV1ManualApplyPayload(
+                expectedConfigRevision = 7L,
+                targetPercent = 50.0
+            ).toJson().keySetExact(),
+            "DeviceCoolingV1ProgramApplyPayload" to DeviceCoolingV1ProgramApplyPayload(
+                expectedProgramRevision = 3L,
+                slots = listOf(slot)
+            ).toJson().keySetExact(),
+            "DeviceCoolingV1ProgramSlotPayload" to slot.toJson().keySetExact()
         )
     }
 
@@ -356,7 +387,13 @@ class AqlFirmwareInteroperabilityTest {
                 DeviceLightProgramDeletePayload(0).toJson().keySetExact(),
             "DeviceLightProgramPointPayload" to unionKeys(pointByMillis, pointByText),
             "DeviceLightTemperatureProtectionSetPayload" to
-                DeviceLightTemperatureProtectionSetPayload(60.0).toJson().keySetExact()
+                DeviceLightTemperatureProtectionSetPayload(60.0).toJson().keySetExact(),
+            "DeviceLightThermalConfigApplyPayload" to DeviceLightThermalConfigApplyPayload(
+                mode = DeviceLightThermalMode.AUTO,
+                minTemperatureC = 35.0,
+                maxTemperatureC = 45.0,
+                save = true
+            ).toJson().keySetExact()
         )
     }
 
@@ -478,10 +515,13 @@ class AqlFirmwareInteroperabilityTest {
     private companion object {
         const val INTEROPERABILITY_FIXTURE = "aql_firmware_interoperability_v1.json"
         const val WEBSOCKET_FIXTURE = "aql_ws_v1_golden.json"
-        const val COOLING_FIXTURE = "aql_cooling_temperature_telemetry_v1.json"
+        const val COOLING_CONTRACT_FIXTURE = "aql_cooling_contract_v1.json"
+        const val COOLING_TELEMETRY_FIXTURE = "aql_cooling_telemetry_v1.json"
+        const val LIGHT_THERMAL_FIXTURE = "aql_light_thermal_contract_v1.json"
         const val PRODUCT_CATALOG_FIXTURE = "aql_product_catalog_v1.json"
         const val DOSING_PIN_FIXTURE = "aql_android_dosing_v1_pin.json"
-        const val FIRMWARE_COMMIT = "e669313ecc2a7f959b566e3051cfd3b67247ccbd"
+        const val FIRMWARE_COMMIT = "2e3688f266d7ed34a6773badafcd62af73cf4aac"
+        const val DOSING_FIRMWARE_COMMIT = "fa147211749c2dcb2f56e15a617a00010e071984"
 
         val WEEKDAYS = listOf(true, false, false, false, false, false, false)
     }

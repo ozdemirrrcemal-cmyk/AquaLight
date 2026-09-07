@@ -25,9 +25,9 @@ import com.aqua.aqualight.i18n.LocaleFormatter
 import com.aqua.aqualight.ui.common.dialog.AppDatePickerDialogFragment
 import com.aqua.aqualight.ui.common.feedback.FeedbackBottomSheet
 import com.aqua.aqualight.ui.tabs.aquarium.AquariumTankViewModel
-import com.aqua.aqualight.data.aquarium.catalog.livestock.LivestockCategories
+import com.aqua.aqualight.ui.tabs.aquarium.catalog.livestock.LivestockCategories
 import com.aqua.aqualight.application.aquarium.AquariumLivestock
-import com.aqua.aqualight.data.aquarium.util.AquariumIdGenerator
+import com.aqua.aqualight.application.aquarium.AquariumIdGenerator
 import kotlinx.coroutines.launch
 import java.util.Calendar
 import android.text.Editable

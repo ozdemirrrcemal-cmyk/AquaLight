@@ -1,45 +1,48 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <!-- AquaCard base: Living Room / Devices device card language -->
-    <color name="aqua_card_surface">@color/aqua_palette_hex_101d2c</color>
-    <color name="aqua_card_surface_elevated">@color/aqua_palette_hex_101d2c</color>
-    <color name="aqua_card_surface_grouped">@color/aqua_palette_hex_101d2c</color>
+    <!-- AquaCard base: shared Cooling-derived card language -->
+    <color name="aqua_card_surface">@color/aqua_palette_hex_061727</color>
+    <color name="aqua_card_surface_elevated">@color/aqua_palette_hex_061727</color>
+    <color name="aqua_card_surface_grouped">@color/aqua_palette_hex_061727</color>
     <color name="aqua_card_surface_pressed">@color/aqua_palette_hex_132943</color>
 
-    <color name="aqua_card_outline">@color/aqua_palette_hex_22354d</color>
-    <color name="aqua_card_outline_subtle">@color/aqua_palette_hex_22354d</color>
-    <color name="aqua_card_divider">@color/aqua_palette_hex_22354d</color>
+    <color name="aqua_card_outline">@color/aqua_palette_hex_2c3e52</color>
+    <color name="aqua_card_outline_subtle">@color/aqua_palette_hex_2c3e52</color>
+    <color name="aqua_card_divider">@color/aqua_palette_hex_2c3e52</color>
 
-    <color name="aqua_card_text_primary">@color/aqua_palette_hex_f4f8fc</color>
-    <color name="aqua_card_text_secondary">@color/aqua_palette_hex_9aaec4</color>
+    <color name="aqua_card_text_primary">@color/aqua_palette_hex_e3ecfc</color>
+    <color name="aqua_card_text_secondary">@color/aqua_palette_hex_a6afbd</color>
 
     <color name="aqua_card_accent">@color/aqua_palette_hex_6489c9</color>
 
     <!-- Shared semantic card-state colors -->
     <color name="aqua_card_state_active">@color/aqua_accent</color>
+    <color name="aqua_card_state_success">@color/aqua_palette_hex_68c86b</color>
     <color name="aqua_card_state_warning">@color/dialog_icon_warning</color>
     <color name="aqua_card_state_danger">@color/dialog_icon_error</color>
 
-    <!-- Device cards: Living Room / Devices reference language -->
-    <color name="aqua_card_device_surface">@color/aqua_palette_hex_101d2c</color>
-    <color name="aqua_card_device_media_surface">@color/aqua_palette_hex_162a3e</color>
-    <color name="aqua_card_device_outline">@color/aqua_palette_hex_22354d</color>
-    <color name="aqua_card_device_media_outline">@color/aqua_palette_hex_2a4663</color>
+    <!-- Device cards: shared surface with device-family accent identity -->
+    <color name="aqua_card_device_surface">@color/aqua_palette_hex_061727</color>
+    <color name="aqua_card_device_media_surface">@color/aqua_palette_hex_081c2b</color>
+    <color name="aqua_card_device_outline">@color/aqua_palette_hex_2c3e52</color>
+    <color name="aqua_card_device_media_outline">@color/aqua_palette_hex_30485f</color>
+    <color name="aqua_card_device_cooling_accent">@color/aqua_palette_hex_1474ff</color>
+    <color name="aqua_card_device_dosing_progress">@color/aqua_palette_hex_55d6c2</color>
 
     <!-- Device detail/root section cards -->
-    <color name="aqua_card_device_section_surface">@color/aqua_palette_hex_101d2c</color>
-    <color name="aqua_card_device_section_outline">@color/aqua_palette_hex_22354d</color>
+    <color name="aqua_card_device_section_surface">@color/aqua_palette_hex_061727</color>
+    <color name="aqua_card_device_section_outline">@color/aqua_palette_hex_2c3e52</color>
     <color name="aqua_card_danger_outline">@color/aqua_palette_hex_7a3344</color>
 
     <!-- Tank / Aquarium cards -->
-    <color name="aqua_card_metric_surface">@color/aqua_palette_hex_101d2c</color>
-    <color name="aqua_card_metric_outline">@color/aqua_palette_hex_22354d</color>
+    <color name="aqua_card_metric_surface">@color/aqua_palette_hex_061727</color>
+    <color name="aqua_card_metric_outline">@color/aqua_palette_hex_2c3e52</color>
 
-    <color name="aqua_card_form_surface">@color/aqua_palette_hex_101d2c</color>
-    <color name="aqua_card_form_outline">@color/aqua_palette_hex_22354d</color>
+    <color name="aqua_card_form_surface">@color/aqua_palette_hex_061727</color>
+    <color name="aqua_card_form_outline">@color/aqua_palette_hex_2c3e52</color>
 
-    <color name="aqua_card_info_surface">@color/aqua_palette_hex_101d2c</color>
-    <color name="aqua_card_info_outline">@color/aqua_palette_hex_22354d</color>
+    <color name="aqua_card_info_surface">@color/aqua_palette_hex_061727</color>
+    <color name="aqua_card_info_outline">@color/aqua_palette_hex_2c3e52</color>
 
     <color name="aqua_card_icon_accent_surface">@color/aqua_palette_hex_1c3252</color>
     <color name="aqua_card_icon_accent_outline">@color/aqua_palette_hex_2d4e78</color>

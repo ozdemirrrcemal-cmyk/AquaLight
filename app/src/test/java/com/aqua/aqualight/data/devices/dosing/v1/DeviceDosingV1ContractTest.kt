@@ -164,6 +164,23 @@ class DeviceDosingV1ContractTest {
     }
 
     @Test
+    fun `hardware stop failure is a known exact runtime event reason`() {
+        val detail = DeviceDosingV1TestFixtures.channelDetail().also { channel ->
+            channel.getJSONObject("lastRuntimeEvent")
+                .put("valid", true)
+                .put("kind", "fault")
+                .put("reason", "hardwareStopFailed")
+                .put("source", "manual")
+        }
+        val event = DeviceDosingV1StatusParser.parseChannel(
+            DeviceDosingV1TestFixtures.channelStatus(detail)
+        ).channel.lastRuntimeEvent
+
+        assertEquals("hardwareStopFailed", event.reason.raw)
+        assertTrue(event.reason.isKnown(DeviceDosingV1WireValues.EVENT_REASONS))
+    }
+
+    @Test
     fun `firmware publishes either its default or persisted user name as effective name`() {
         val defaultName = DeviceDosingV1StatusParser.parseChannel(
             DeviceDosingV1TestFixtures.channelStatus(

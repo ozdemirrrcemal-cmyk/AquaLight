@@ -43,6 +43,7 @@ class CommercialAccountDeletionArchitectureTest {
             "DEVICE_ASSIGNMENTS",
             "PROVISIONING_SESSIONS",
             "KNOWN_DEVICES",
+            "DOSING_CALIBRATION_DRAFTS",
             "OTA_TRANSACTIONS",
             "DEVICE_CREDENTIALS",
             "APP_OWNED_FILES",

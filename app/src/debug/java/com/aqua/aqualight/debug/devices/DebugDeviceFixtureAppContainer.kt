@@ -13,19 +13,13 @@ import com.aqua.aqualight.data.devices.menu.DefaultDeviceMenuAccessOperations
 import com.aqua.aqualight.data.devices.remove.OwnerDeviceDataCleaner
 import com.aqua.aqualight.ui.tabs.devices.DevicesViewModel
 import com.aqua.aqualight.ui.tabs.devices.detail.common.DeviceRootOverviewViewModel
-import com.aqua.aqualight.ui.tabs.devices.detail.cooling.DeviceCoolingRootViewModel
 import com.aqua.aqualight.ui.tabs.devices.detail.light.DeviceLightRootViewModel
 import com.aqua.aqualight.ui.tabs.devices.detail.settings.DeviceFamilySettingsViewModel
 import com.aqua.aqualight.ui.tabs.devices.detail.timer.DeviceTimerRootViewModel
 import com.aqua.aqualight.ui.tabs.devices.detail.update.DeviceFirmwareUpdateViewModel
 import com.aqua.aqualight.ui.tabs.devices.route.DeviceRouteResolver
 
-/**
- * Debug-only AppContainer decorator for non-Dosing catalog fixtures.
- *
- * The decorator shares the exact production owner graph. Dosing is never overridden here, so every
- * Dosing ViewModel uses the production runtime, adapter and canonical state owner in debug builds.
- */
+/** Debug-only AppContainer decorator for catalog-backed Light and Timer fixtures. */
 internal class DebugDeviceFixtureAppContainer(
     private val delegate: AppContainer
 ) : AppContainer by delegate {
@@ -52,8 +46,6 @@ private class DebugDeviceFixtureViewModelFactory(
             DevicesViewModel::class.java -> createDevicesViewModel(requireGraph())
             DeviceLightRootViewModel::class.java ->
                 DeviceLightRootViewModel(rootOperations(requireGraph()))
-            DeviceCoolingRootViewModel::class.java ->
-                DeviceCoolingRootViewModel(rootOperations(requireGraph()))
             DeviceTimerRootViewModel::class.java ->
                 DeviceTimerRootViewModel(rootOperations(requireGraph()))
             DeviceRootOverviewViewModel::class.java ->
@@ -94,8 +86,7 @@ private class DebugDeviceFixtureViewModelFactory(
                     delegate = DefaultDeviceMenuAccessOperations.create(repository),
                     fixtures = fixtures
                 ),
-                controlSurfacePreparationOperations =
-                    graph.dosingOperations.controlSurfacePreparationOperations
+                controlSurfacePreparationOperations = graph.controlSurfacePreparationOperations
             ),
             routeResolver = DeviceRouteResolver()
         )

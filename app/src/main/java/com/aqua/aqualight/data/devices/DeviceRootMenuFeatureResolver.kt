@@ -55,13 +55,11 @@ internal object DeviceRootMenuFeatureResolver {
         private val hasDosingCalibrationContract =
             AqlDeviceFeatureKey.DOSING_CALIBRATION in features &&
                 AqlDeviceScreenKey.DOSING_CALIBRATION in screens
-        private val hasCoolingFanContract = AqlDeviceFeatureKey.COOLING_CONTROL in features &&
-            AqlDeviceScreenKey.COOLING_CONTROL in screens &&
-            AqlDeviceScreenKey.COOLING_FANS in screens
+        private val hasCoolingControlContract = AqlDeviceFeatureKey.COOLING_CONTROL in features &&
+            AqlDeviceScreenKey.COOLING_CONTROL in screens
         private val hasCoolingTemperatureContract =
             AqlDeviceFeatureKey.TEMPERATURE_READ in features &&
-                AqlDeviceScreenKey.COOLING_RULES in screens &&
-                AqlDeviceScreenKey.COOLING_SENSOR_STATUS in screens
+                AqlDeviceScreenKey.COOLING_CONTROL in screens
 
         fun resolveLight(): Set<DeviceRootMenuFeature> = buildSet {
             addIf(
@@ -124,7 +122,7 @@ internal object DeviceRootMenuFeatureResolver {
         fun resolveCooling(): Set<DeviceRootMenuFeature> = buildSet {
             addIf(
                 DeviceRootMenuFeature.COOLING_FANS,
-                hasFanHardware && hasCoolingFanContract
+                hasFanHardware && hasCoolingControlContract
             )
             addIf(
                 DeviceRootMenuFeature.COOLING_TEMPERATURE,

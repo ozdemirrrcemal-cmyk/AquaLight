@@ -15,7 +15,7 @@ import com.aqua.aqualight.data.aquarium.model.TankMaterialSelection
 import com.aqua.aqualight.data.aquarium.model.TankPlantTag
 import com.aqua.aqualight.platform.media.AppMediaScope
 import com.aqua.aqualight.platform.media.AppMediaStorage
-import com.aqua.aqualight.data.aquarium.util.AquariumIdGenerator
+import com.aqua.aqualight.application.aquarium.AquariumIdGenerator
 import com.aqua.aqualight.data.recovery.LocalDataRecoveryTracker
 import com.aqua.aqualight.data.store.StoreInvariantViolation
 import com.aqua.aqualight.data.user.UserDataScope

@@ -40,6 +40,7 @@ enum class DeviceDosingChannelDetailFailure {
     CALIBRATION_REQUIRED,
     BUSY,
     STATE_CHANGED,
+    OUTPUT_STOP_UNCONFIRMED,
     SAFETY_BLOCKED,
     UNAVAILABLE,
     TRY_AGAIN
@@ -310,6 +311,8 @@ internal fun DeviceDosingChannelRejection.toDetailFailure(): DeviceDosingChannel
             DeviceDosingChannelDetailFailure.CALIBRATION_REQUIRED
         DeviceDosingChannelRejection.BUSY -> DeviceDosingChannelDetailFailure.BUSY
         DeviceDosingChannelRejection.CONFLICT -> DeviceDosingChannelDetailFailure.STATE_CHANGED
+        DeviceDosingChannelRejection.OUTPUT_STOP_UNCONFIRMED ->
+            DeviceDosingChannelDetailFailure.OUTPUT_STOP_UNCONFIRMED
         DeviceDosingChannelRejection.UNSAFE -> DeviceDosingChannelDetailFailure.SAFETY_BLOCKED
         DeviceDosingChannelRejection.UNKNOWN -> DeviceDosingChannelDetailFailure.TRY_AGAIN
     }

@@ -33,7 +33,8 @@
     <color name="settings_divider">@color/aqua_palette_hex_223355</color>
 
     <!-- ⬇️ Bottom Navigation -->
-    <color name="bottom_nav_background">@color/aqua_palette_hex_112240</color>
+    <color name="bottom_nav_background">@color/background_color</color>
+    <color name="bottom_nav_active_indicator">@color/aqua_palette_hex_112240</color>
     <color name="crop_toolbar_bg">@color/aqua_palette_hex_0a192f</color>
     <color name="aqua_button_blue">@color/aqua_palette_hex_1e90ff</color>
 

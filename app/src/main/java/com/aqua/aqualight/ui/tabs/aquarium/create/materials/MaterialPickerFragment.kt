@@ -3,7 +3,7 @@ package com.aqua.aqualight.ui.tabs.aquarium.create.materials
 import com.aqua.aqualight.ui.common.text.setTextSizeResource
 import com.aqua.aqualight.application.aquarium.AquariumMaterialSelection
 import com.aqua.aqualight.base.BaseActivity
-import com.aqua.aqualight.data.aquarium.catalog.material.AquariumMaterial
+import com.aqua.aqualight.ui.tabs.aquarium.catalog.material.AquariumMaterial
 import android.graphics.Typeface
 import android.os.Bundle
 import android.text.TextUtils
@@ -28,7 +28,7 @@ import com.aqua.aqualight.ui.tabs.aquarium.AquariumTankViewModel
 import com.aqua.aqualight.ui.common.bottomsheet.TextInputBottomSheet
 import com.aqua.aqualight.ui.tabs.aquarium.materials.MaterialSelectionMapper
 import com.aqua.aqualight.ui.tabs.aquarium.create.CreateTankViewModel
-import com.aqua.aqualight.data.aquarium.catalog.material.MaterialCatalog
+import com.aqua.aqualight.ui.tabs.aquarium.catalog.material.MaterialCatalog
 import com.aqua.aqualight.application.aquarium.AquariumTankSnapshot
 import com.google.android.material.button.MaterialButton
 import com.google.android.material.card.MaterialCardView

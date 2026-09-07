@@ -192,34 +192,21 @@ class DeviceFamilySettingsViewModelTest {
     }
 
     @Test
-    fun `bounds failed refresh attempts and reloads after device reconnect`() {
+    fun `presentation never refreshes Light protection and observes runtime updates`() {
         val operations = FakeDeviceFamilySettingsOperations(
             initialSnapshot = validSnapshot(),
             initialLightProtection = DeviceLightProtectionSnapshot(
                 available = true,
                 loaded = false
             )
-        ).apply {
-            refreshResults.addLast(Result.failure(IllegalStateException("not authenticated")))
-            refreshResults.addLast(Result.failure(IllegalStateException("timeout")))
-            refreshResults.addLast(Result.success(Unit))
-            successfulRefreshSnapshot = lightProtectionSnapshot()
-        }
+        )
         val viewModel = DeviceFamilySettingsViewModel(operations, FakeFirmwareOperations())
 
         viewModel.bind(DEVICE_UID)
 
-        assertEquals(1, operations.refreshCalls)
+        assertEquals(0, operations.refreshCalls)
         assertEquals(
             DeviceLightProtectionLoadState.LOADING,
-            viewModel.uiState.value.lightProtection.loadState
-        )
-
-        mainDispatcherRule.advanceTimeBy(1_000L)
-
-        assertEquals(2, operations.refreshCalls)
-        assertEquals(
-            DeviceLightProtectionLoadState.FAILED,
             viewModel.uiState.value.lightProtection.loadState
         )
 
@@ -230,7 +217,11 @@ class DeviceFamilySettingsViewModelTest {
             validSnapshot().copy(availability = OwnerDeviceAvailability.REACHABLE)
         )
 
-        assertEquals(3, operations.refreshCalls)
+        assertEquals(0, operations.refreshCalls)
+
+        operations.emitLightProtection(lightProtectionSnapshot())
+
+        assertEquals(0, operations.refreshCalls)
         assertEquals(
             DeviceLightProtectionLoadState.READY,
             viewModel.uiState.value.lightProtection.loadState
@@ -336,6 +327,10 @@ class DeviceFamilySettingsViewModelTest {
 
         fun emitDevice(snapshot: DeviceRootSnapshot?) {
             snapshots.value = snapshot
+        }
+
+        fun emitLightProtection(snapshot: DeviceLightProtectionSnapshot) {
+            lightProtection.value = snapshot
         }
     }
 

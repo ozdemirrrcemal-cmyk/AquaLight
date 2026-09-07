@@ -17,16 +17,19 @@ import org.junit.Test
 class DebugDeviceFixtureCatalogTest {
 
     @Test
-    fun fixturesExcludeDosingAndCoverEveryOtherCommercialProductExactlyOnce() {
+    fun fixturesCoverOnlyLightAndTimerCommercialProductsExactlyOnce() {
         val fixtures = DebugDeviceFixtureCatalog()
+        val supportedFamilies = setOf(DeviceFamily.LIGHT, DeviceFamily.TIMER)
         val expectedProductKeys = AqlCommercialDeviceCatalog.products
-            .filterNot { product -> product.family == DeviceFamily.DOSING }
+            .filter { product -> product.family in supportedFamilies }
             .map { product -> product.productKey.value }
         val actualProductKeys = fixtures.snapshots
             .map { snapshot -> snapshot.product.productKey }
 
         assertEquals(expectedProductKeys, actualProductKeys)
         assertEquals(expectedProductKeys.toSet().size, actualProductKeys.toSet().size)
+        assertTrue(fixtures.snapshots.all { snapshot -> snapshot.product.family in supportedFamilies })
+        assertTrue(fixtures.snapshots.none { snapshot -> snapshot.product.family == DeviceFamily.COOLING })
         assertTrue(fixtures.snapshots.none { snapshot -> snapshot.product.family == DeviceFamily.DOSING })
 
         fixtures.snapshots.forEach { snapshot ->

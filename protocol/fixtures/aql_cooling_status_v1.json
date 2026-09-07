@@ -1,0 +1,170 @@
+{
+  "schema": "aql.cooling.v1",
+  "schemaVersion": 1,
+  "uptimeMs": 120000,
+  "contract": {
+    "catalogVersion": 1,
+    "catalogSha256": "9197d06f5f2022bdeea288e8455fad98b1fab57ad3325a1f202c50b555c8ddf2",
+    "productKey": "COOLING_COOL_PRO_1F",
+    "configRevision": 4,
+    "programRevision": 9
+  },
+  "topology": {
+    "fanOutputCapacity": 1,
+    "sensorSlotCapacity": 2,
+    "programSlotCapacity": 8,
+    "fanOutputs": [
+      {
+        "fanKey": "fan1",
+        "outputKind": "PWM_DUTY_PERCENT",
+        "rpmAvailable": false,
+        "hardwareEditable": false
+      }
+    ],
+    "sensorSlots": [
+      {
+        "sensorKey": "water",
+        "role": "AQUARIUM_WATER",
+        "driver": "DS18B20",
+        "bus": "ONE_WIRE",
+        "temperature": true,
+        "relativeHumidity": false,
+        "requiredForProduct": true,
+        "requiredForControl": true
+      },
+      {
+        "sensorKey": "ambient",
+        "role": "ROOM_AMBIENT",
+        "driver": "SHT40-AD1F",
+        "bus": "I2C",
+        "address": 68,
+        "temperature": true,
+        "relativeHumidity": true,
+        "requiredForProduct": true,
+        "requiredForControl": false
+      }
+    ]
+  },
+  "config": {
+    "configRevision": 4,
+    "controlMode": "AUTOMATIC",
+    "manualTargetPercent": 0.0,
+    "startTemperatureC": 25.5,
+    "fullSpeedTemperatureC": 30.0,
+    "silentModeEnabled": true
+  },
+  "program": {
+    "programRevision": 9,
+    "evaluatedProgramRevision": 8,
+    "slotCount": 2,
+    "clockReady": true,
+    "currentMinuteOfDay": 600,
+    "activeSlotIndex": 0
+  },
+  "control": {
+    "decisionSequence": 42,
+    "evaluatedAtMs": 119900,
+    "inputSampleSequence": 40,
+    "timeGeneration": 3,
+    "controlMode": "AUTOMATIC",
+    "operatingState": "COOLING",
+    "controlReason": "AUTOMATIC_CURVE",
+    "targetPercent": 37.77778,
+    "manualActive": false
+  },
+  "policy": {
+    "controlModes": ["AUTOMATIC", "MANUAL", "PROGRAM"],
+    "temperature": {
+      "minimumC": 0.0,
+      "maximumC": 40.0,
+      "stepC": 0.5,
+      "minimumGapC": 0.5,
+      "hysteresisC": 0.5
+    },
+    "fanPercent": {
+      "minimum": 0.0,
+      "maximum": 100.0,
+      "step": 1.0
+    },
+    "silentMode": {
+      "supported": true,
+      "maximumPercent": 50.0
+    },
+    "manual": {
+      "persistent": true,
+      "survivesRestart": true,
+      "zeroPercentStopsImmediately": true,
+      "clearedOnControlModeExit": true,
+      "disconnectDoesNotStop": true,
+      "allowedWhenWaterSensorFaulted": true
+    },
+    "program": {
+      "maximumSlotCount": 8,
+      "timeStepMinutes": 5,
+      "minimumDurationMinutes": 15,
+      "requiresTrustedDeviceClock": true,
+      "programActivation": "CONTROL_MODE_PROGRAM",
+      "startBoundary": "INCLUSIVE",
+      "endBoundary": "EXCLUSIVE",
+      "endMinuteMaximum": 1440
+    },
+    "failSafe": {
+      "waterSensorFaultPercent": 0.0
+    }
+  },
+  "telemetry": {
+    "sensors": [
+      {
+        "sensorKey": "water",
+        "present": true,
+        "health": "OK",
+        "readingValid": true,
+        "temperatureC": 26.0,
+        "sampledAtMs": 119800
+      },
+      {
+        "sensorKey": "ambient",
+        "present": true,
+        "health": "OK",
+        "readingValid": true,
+        "temperatureC": 24.5,
+        "humidityPercent": 52.0,
+        "sampledAtMs": 119800
+      }
+    ],
+    "fan": {
+      "fanKey": "fan1",
+      "targetPercent": 37.77778,
+      "outputPercent": 37.77778,
+      "rpm": null,
+      "pwmOutputHealth": "OK",
+      "health": "UNVERIFIED"
+    },
+    "power": {
+      "source": "ESTIMATED",
+      "available": true,
+      "ratedPowerWatts": 0.5,
+      "powerWatts": 0.1888889,
+      "estimatedKwhPerDay": 0.004533333
+    }
+  },
+  "alarms": [],
+  "healthSummary": {
+    "fanHealth": "UNVERIFIED",
+    "sensorHealth": "OK",
+    "activeAlarmCount": 0,
+    "highestAlarmSeverity": "NONE"
+  },
+  "history": {
+    "sensorKey": "water",
+    "ranges": ["24h", "7d", "30d"],
+    "captureIntervalMinutes": 30,
+    "persistent": true,
+    "storageHealthy": true,
+    "chartSources": {
+      "24h": "SAMPLES",
+      "7d": "SAMPLES",
+      "30d": "DAILY_AVERAGE"
+    }
+  }
+}

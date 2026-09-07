@@ -29,7 +29,7 @@
 
         <!-- Aqua bottom navigation tokens -->
         <item name="aquaBottomNavBackground">@color/bottom_nav_background</item>
-        <item name="aquaBottomNavActiveIndicator">@color/md_theme_dark_secondaryContainer</item>
+        <item name="aquaBottomNavActiveIndicator">@color/bottom_nav_active_indicator</item>
         <item name="aquaBottomNavItemActive">@color/md_theme_dark_onSurface</item>
         <item name="aquaBottomNavItemInactive">@color/md_theme_dark_onSurfaceVariant</item>
 

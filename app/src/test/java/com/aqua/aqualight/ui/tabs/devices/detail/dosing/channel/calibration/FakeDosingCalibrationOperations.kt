@@ -1,5 +1,6 @@
 package com.aqua.aqualight.ui.tabs.devices.detail.dosing.channel.calibration
 
+import com.aqua.aqualight.application.devices.dosing.DeviceDosingCalibrationDraftOperations
 import com.aqua.aqualight.application.devices.dosing.DeviceDosingCalibrationOperations
 import com.aqua.aqualight.application.devices.dosing.DeviceDosingCalibrationResult
 import com.aqua.aqualight.application.devices.dosing.DeviceDosingCalibrationSessionPhase
@@ -7,6 +8,33 @@ import com.aqua.aqualight.application.devices.dosing.DeviceDosingCalibrationSnap
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
+
+internal class FakeDosingCalibrationDraftOperations : DeviceDosingCalibrationDraftOperations {
+    private val names = mutableMapOf<Pair<String, String>, String>()
+
+    var failLoads = false
+    var failSaves = false
+    var failClears = false
+
+    override fun loadDisplayName(deviceUid: String, slotId: String): String? {
+        check(!failLoads) { "Draft load failed." }
+        return names[deviceUid to slotId]
+    }
+
+    override fun saveDisplayName(deviceUid: String, slotId: String, displayName: String) {
+        check(!failSaves) { "Draft save failed." }
+        names[deviceUid to slotId] = displayName
+    }
+
+    override fun clearDisplayName(deviceUid: String, slotId: String) {
+        check(!failClears) { "Draft clear failed." }
+        names.remove(deviceUid to slotId)
+    }
+
+    fun seed(deviceUid: String, slotId: String, displayName: String) {
+        names[deviceUid to slotId] = displayName
+    }
+}
 
 internal class FakeDosingCalibrationOperations(
     initial: DeviceDosingCalibrationSnapshot
@@ -23,6 +51,7 @@ internal class FakeDosingCalibrationOperations(
     var confirms = 0
     var cancels = 0
     var primeStartResult: DeviceDosingCalibrationResult? = null
+    var primeStopResult: DeviceDosingCalibrationResult? = null
     var confirmResult: DeviceDosingCalibrationResult = calibrationSuccess(initial)
     var primeStartBlocker: CompletableDeferred<Unit>? = null
 
@@ -52,9 +81,9 @@ internal class FakeDosingCalibrationOperations(
 
     override suspend fun primeStop(deviceUid: String, slotId: String): DeviceDosingCalibrationResult {
         primeStops += 1
-        val snapshot = current.copy(manualActive = false)
-        state.value = snapshot
-        return calibrationSuccess(snapshot)
+        val result = primeStopResult ?: calibrationSuccess(current.copy(manualActive = false))
+        if (result is DeviceDosingCalibrationResult.Success) state.value = result.snapshot
+        return result
     }
 
     override suspend fun start(deviceUid: String, slotId: String) = calibrationSuccess(current)

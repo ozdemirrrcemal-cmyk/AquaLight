@@ -35,7 +35,7 @@ class DeviceRuntimeEventRouterTest {
             assertEquals(index, (routed.payload as DeviceRuntimeEventPayload.Snapshot).data.getInt("value"))
         }
 
-        assertEquals(11, router.states.value.getValue(DEVICE_A).size)
+        assertEquals(13, router.states.value.getValue(DEVICE_A).size)
     }
 
     @Test
@@ -134,7 +134,7 @@ class DeviceRuntimeEventRouterTest {
             GENERATION_ONE,
             event(
                 "evt-shared",
-                DeviceRuntimeTypedEvent.Type.TEMPERATURE_CHANGED,
+                DeviceRuntimeTypedEvent.Type.COOLING_TELEMETRY_CHANGED,
                 JSONObject().put("celsius", 24.5)
             )
         )
@@ -143,7 +143,7 @@ class DeviceRuntimeEventRouterTest {
             GENERATION_ONE,
             event(
                 "evt-shared",
-                DeviceRuntimeTypedEvent.Type.TEMPERATURE_CHANGED,
+                DeviceRuntimeTypedEvent.Type.COOLING_TELEMETRY_CHANGED,
                 JSONObject().put("celsius", 26.0)
             )
         )

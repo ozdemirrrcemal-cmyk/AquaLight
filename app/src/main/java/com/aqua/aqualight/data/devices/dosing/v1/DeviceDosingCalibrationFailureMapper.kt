@@ -46,13 +46,13 @@ internal object DeviceDosingCalibrationFailureMapper {
 
     private fun mapHardware(
         error: DeviceRuntimeCommandOutcome.FirmwareError
-    ): DeviceDosingCalibrationFailure = if (
-        error.field == FirmwareField.PUMP && error.message == HARDWARE_START_FAILURE
-    ) {
-        DeviceDosingCalibrationFailure.HARDWARE
-    } else {
+    ): DeviceDosingCalibrationFailure = when {
+        DeviceDosingV1Contract.OutputStopFailure.matches(error.field, error.message) ->
+            DeviceDosingCalibrationFailure.OUTPUT_STOP_UNCONFIRMED
+        error.field == FirmwareField.PUMP && error.message == HARDWARE_START_FAILURE ->
+            DeviceDosingCalibrationFailure.HARDWARE
         // The pinned firmware also transports NotReady/InternalFailure as HARDWARE_ERROR.
-        DeviceDosingCalibrationFailure.INTERNAL
+        else -> DeviceDosingCalibrationFailure.INTERNAL
     }
 
     private fun mapInvalidValue(

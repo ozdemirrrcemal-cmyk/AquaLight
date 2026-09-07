@@ -11,7 +11,9 @@
     <color name="aqua_palette_hex_020617">#020617</color>
     <color name="aqua_palette_hex_020711">#020711</color>
     <color name="aqua_palette_hex_041f1f">#041F1F</color>
+    <color name="aqua_palette_hex_061727">#061727</color>
     <color name="aqua_palette_hex_07131f">#07131F</color>
+    <color name="aqua_palette_hex_081c2b">#081C2B</color>
     <color name="aqua_palette_hex_09251d">#09251D</color>
     <color name="aqua_palette_hex_0a192f">#0A192F</color>
     <color name="aqua_palette_hex_0b1120">#0B1120</color>
@@ -20,7 +22,6 @@
     <color name="aqua_palette_hex_0d47a1">#0D47A1</color>
 <color name="aqua_palette_hex_101820">#101820</color>
     <color name="aqua_palette_hex_101828">#101828</color>
-    <color name="aqua_palette_hex_101d2c">#101D2C</color>
     <color name="aqua_palette_hex_10233a">#10233A</color>
 <color name="aqua_palette_hex_10263d">#10263D</color>
     <color name="aqua_palette_hex_10ffffff">#10FFFFFF</color>
@@ -35,6 +36,7 @@
     <color name="aqua_palette_hex_13243a">#13243A</color>
     <color name="aqua_palette_hex_132943">#132943</color>
     <color name="aqua_palette_hex_143a5c">#143A5C</color>
+    <color name="aqua_palette_hex_1474ff">#1474FF</color>
     <color name="aqua_palette_hex_152b45">#152B45</color>
     <color name="aqua_palette_hex_162638">#162638</color>
     <color name="aqua_palette_hex_162a3e">#162A3E</color>
@@ -76,12 +78,14 @@
     <color name="aqua_palette_hex_2b425a">#2B425A</color>
     <color name="aqua_palette_hex_2b6f5a">#2B6F5A</color>
     <color name="aqua_palette_hex_2b93f6">#2B93F6</color>
+    <color name="aqua_palette_hex_2c3e52">#2C3E52</color>
     <color name="aqua_palette_hex_2c4b72">#2C4B72</color>
     <color name="aqua_palette_hex_2d3a4f">#2D3A4F</color>
     <color name="aqua_palette_hex_2d3f66">#2D3F66</color>
     <color name="aqua_palette_hex_2d4d6a">#2D4D6A</color>
     <color name="aqua_palette_hex_2d4e78">#2D4E78</color>
     <color name="aqua_palette_hex_2f7d70">#2F7D70</color>
+    <color name="aqua_palette_hex_30485f">#30485F</color>
 <color name="aqua_palette_hex_321e2a">#321E2A</color>
     <color name="aqua_palette_hex_3300ffff">#3300FFFF</color>
 <color name="aqua_palette_hex_3348556b">#3348556B</color>
@@ -111,6 +115,7 @@
     <color name="aqua_palette_hex_51514c">#51514C</color>
     <color name="aqua_palette_hex_51667f">#51667F</color>
     <color name="aqua_palette_hex_55c7b3">#55C7B3</color>
+    <color name="aqua_palette_hex_55d6c2">#55D6C2</color>
     <color name="aqua_palette_hex_55ffffff">#55FFFFFF</color>
 <color name="aqua_palette_hex_5c6b75">#5C6B75</color>
     <color name="aqua_palette_hex_5c7cfa">#5C7CFA</color>
@@ -123,6 +128,7 @@
     <color name="aqua_palette_hex_667085">#667085</color>
     <color name="aqua_palette_hex_66bb6a">#66BB6A</color>
     <color name="aqua_palette_hex_66c7f4">#66C7F4</color>
+    <color name="aqua_palette_hex_68c86b">#68C86B</color>
     <color name="aqua_palette_hex_6a4d1e">#6A4D1E</color>
     <color name="aqua_palette_hex_6e7f94">#6E7F94</color>
     <color name="aqua_palette_hex_6f829b">#6F829B</color>
@@ -150,6 +156,7 @@
     <color name="aqua_palette_hex_9aaec4">#9AAEC4</color>
 <color name="aqua_palette_hex_a0a0a0">#A0A0A0</color>
     <color name="aqua_palette_hex_a2445f">#A2445F</color>
+    <color name="aqua_palette_hex_a6afbd">#A6AFBD</color>
     <color name="aqua_palette_hex_a6000000">#A6000000</color>
     <color name="aqua_palette_hex_a78bfa">#A78BFA</color>
     <color name="aqua_palette_hex_a7a79b">#A7A79B</color>
@@ -172,6 +179,7 @@
 <color name="aqua_palette_hex_e06a6a">#E06A6A</color>
     <color name="aqua_palette_hex_e0a84c">#E0A84C</color>
     <color name="aqua_palette_hex_e0e6ed">#E0E6ED</color>
+    <color name="aqua_palette_hex_e3ecfc">#E3ECFC</color>
     <color name="aqua_palette_hex_e3f2fd">#E3F2FD</color>
     <color name="aqua_palette_hex_e8eef8">#E8EEF8</color>
     <color name="aqua_palette_hex_ea4335">#EA4335</color>
