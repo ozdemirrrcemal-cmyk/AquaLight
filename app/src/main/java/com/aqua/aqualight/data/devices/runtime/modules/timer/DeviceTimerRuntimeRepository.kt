@@ -189,36 +189,44 @@ class DeviceTimerRuntimeRepository internal constructor(
         channelKey: String,
         displayName: String,
         save: Boolean = true
-    ): DeviceRuntimeCommandOutcome<DeviceTimerConfigApplyResult> = withGlobalStatus(
-        deviceUid
-    ) { status ->
-        applyConfig(
-            deviceUid,
-            DeviceTimerConfigApplyPayload(
-                channelKey = channelKey,
-                expectedRevision = status.revision,
-                displayName = DeviceTimerDisplayNameUpdate.Value(displayName),
-                save = save
+    ): DeviceRuntimeCommandOutcome<DeviceTimerConfigApplyResult> {
+        val access = accessProvider(deviceUid)
+        if (!access.supportsApi || !access.supportsChannelDisplayName) {
+            return timerUnsupported(deviceUid, DeviceTimerRuntimeContract.Action.CONFIG_APPLY)
+        }
+        return withGlobalStatus(deviceUid) { status ->
+            applyConfig(
+                deviceUid,
+                DeviceTimerConfigApplyPayload(
+                    channelKey = channelKey,
+                    expectedRevision = status.revision,
+                    displayName = DeviceTimerDisplayNameUpdate.Value(displayName),
+                    save = save
+                )
             )
-        )
+        }
     }
 
     suspend fun clearChannelDisplayName(
         deviceUid: DeviceUid,
         channelKey: String,
         save: Boolean = true
-    ): DeviceRuntimeCommandOutcome<DeviceTimerConfigApplyResult> = withGlobalStatus(
-        deviceUid
-    ) { status ->
-        applyConfig(
-            deviceUid,
-            DeviceTimerConfigApplyPayload(
-                channelKey = channelKey,
-                expectedRevision = status.revision,
-                displayName = DeviceTimerDisplayNameUpdate.Clear,
-                save = save
+    ): DeviceRuntimeCommandOutcome<DeviceTimerConfigApplyResult> {
+        val access = accessProvider(deviceUid)
+        if (!access.supportsApi || !access.supportsChannelDisplayName) {
+            return timerUnsupported(deviceUid, DeviceTimerRuntimeContract.Action.CONFIG_APPLY)
+        }
+        return withGlobalStatus(deviceUid) { status ->
+            applyConfig(
+                deviceUid,
+                DeviceTimerConfigApplyPayload(
+                    channelKey = channelKey,
+                    expectedRevision = status.revision,
+                    displayName = DeviceTimerDisplayNameUpdate.Clear,
+                    save = save
+                )
             )
-        )
+        }
     }
 
     suspend fun replaceSchedules(
