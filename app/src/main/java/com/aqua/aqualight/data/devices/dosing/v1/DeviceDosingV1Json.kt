@@ -1,5 +1,3 @@
-@file:Suppress("TooManyFunctions")
-
 package com.aqua.aqualight.data.devices.dosing.v1
 
 import org.json.JSONArray

@@ -64,7 +64,6 @@ object DeviceDosingV1EventParser {
             }
         }
 
-    @Suppress("CyclomaticComplexMethod")
     private fun parseMutationChannel(
         action: String,
         result: JSONObject

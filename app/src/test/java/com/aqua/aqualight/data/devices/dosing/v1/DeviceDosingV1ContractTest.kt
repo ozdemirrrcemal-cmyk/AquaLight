@@ -9,7 +9,6 @@ import org.junit.Assert.assertThrows
 import org.junit.Assert.assertTrue
 import org.junit.Test
 
-@Suppress("MagicNumber")
 class DeviceDosingV1ContractTest {
     @Test
     fun `contract exposes exactly fourteen canonical authenticated actions`() {

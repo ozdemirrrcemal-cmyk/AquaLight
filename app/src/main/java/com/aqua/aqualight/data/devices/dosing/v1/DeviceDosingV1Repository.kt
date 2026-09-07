@@ -12,7 +12,6 @@ import org.json.JSONObject
  * The repository performs transport serialization and strict response parsing only. It does not
  * derive occurrence progress, reservoir state, revisions, runtime reasons, or percentages.
  */
-@Suppress("TooManyFunctions")
 class DeviceDosingV1Repository(
     private val gateway: DeviceRuntimeCommandGateway
 ) {

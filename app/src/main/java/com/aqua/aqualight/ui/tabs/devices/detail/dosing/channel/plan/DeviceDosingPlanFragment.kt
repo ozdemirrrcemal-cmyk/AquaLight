@@ -150,7 +150,6 @@ class DeviceDosingPlanFragment :
         }
     }
 
-    @Suppress("LongMethod") // Safe Args keeps the four typed navigation contracts explicit.
     private fun openScheduleEditor(mode: DosingPlanScheduleMode) {
         val editorState = viewModel.currentEditorState
         val draft = editorState.draft

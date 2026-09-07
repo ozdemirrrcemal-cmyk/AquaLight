@@ -13,7 +13,6 @@ import com.aqua.aqualight.data.devices.runtime.core.DeviceRuntimeCommandOutcome
 import kotlinx.coroutines.flow.Flow
 
 /** Application channel boundary backed exclusively by the central v1 state adapter. */
-@Suppress("TooManyFunctions") // This class implements the complete application boundary verbatim.
 internal class DeviceDosingV1ChannelOperationsAdapter(
     private val adapter: DeviceDosingV1StateAdapter
 ) : DeviceDosingChannelOperations,

@@ -5,7 +5,6 @@ import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
 import org.junit.Test
 
-@Suppress("LongMethod")
 class DeviceDosingV1MutationContractTest {
     @Test
     fun `all mutation parsers accept the final handler response shapes`() {

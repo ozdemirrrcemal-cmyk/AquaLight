@@ -436,7 +436,13 @@ def validate_repository(repository_root: Path = ROOT) -> list[str]:
     ):
         _require(COOLING_AVAILABILITY, cooling_availability, errors, token, reason)
 
-    errors.extend(validate_layout_contract(DOSING_LAYOUT, dosing_layout))
+    errors.extend(
+        validate_layout_contract(
+            DOSING_LAYOUT,
+            dosing_layout,
+            background_owned_by_shell=True,
+        )
+    )
     errors.extend(
         validate_layout_contract(
             COOLING_LAYOUT,

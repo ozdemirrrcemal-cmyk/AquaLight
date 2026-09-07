@@ -640,7 +640,6 @@ class DeviceDosingV1CommittedReconciliationTest {
             responses.addLast(Response(action, success(action, value), delayMillis))
         }
 
-        @Suppress("UNCHECKED_CAST")
         override suspend fun <T> execute(
             deviceUid: DeviceUid,
             command: DeviceRuntimeCommand<T>,

@@ -34,7 +34,6 @@ import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
 
 /** Render/input host for the authoritative reservoir editor. */
-@Suppress("TooManyFunctions") // Lifecycle and notification-gated user intents stay local.
 class DeviceDosingReservoirFragment :
     DeviceDosingChannelDestinationFragment(R.layout.fragment_device_dosing_channel_detail) {
 

@@ -3,7 +3,6 @@ package com.aqua.aqualight.data.devices.dosing.v1
 import org.json.JSONArray
 import org.json.JSONObject
 
-@Suppress("LargeClass", "LongMethod", "MagicNumber", "TooManyFunctions")
 object DeviceDosingV1StatusParser {
     private val ENVELOPE_KEYS = setOf(
         "supported", "schema", "schemaVersion", "unit", "channelCount", "uptimeMs",

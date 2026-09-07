@@ -1,5 +1,3 @@
-@file:Suppress("LongParameterList", "TooManyFunctions")
-
 package com.aqua.aqualight.application.devices.dosing
 
 import java.time.LocalDate
@@ -12,7 +10,14 @@ import kotlinx.coroutines.flow.flowOf
  * The UI deliberately works with stable slot ids and exact microliter amounts. A future v1 data
  * adapter owns channel-key translation, optimistic revisions, wire enums, JSON and invalidation.
  */
-interface DeviceDosingChannelOperations {
+interface DeviceDosingChannelOperations :
+    DeviceDosingChannelReadOperations,
+    DeviceDosingProgramOperations,
+    DeviceDosingReservoirOperations,
+    DeviceDosingManualOperations,
+    DeviceDosingResetOperations
+
+interface DeviceDosingChannelReadOperations {
     /** Latest fully authoritative channel snapshot, if the current connection has one. */
     fun current(deviceUid: String, slotId: String): DeviceDosingChannelSnapshot? = null
 
@@ -31,6 +36,9 @@ interface DeviceDosingChannelOperations {
 
     suspend fun refreshAll(deviceUid: String): Boolean = false
 
+}
+
+interface DeviceDosingProgramOperations {
     suspend fun applyProgram(
         deviceUid: String,
         slotId: String,
@@ -43,6 +51,9 @@ interface DeviceDosingChannelOperations {
         enabled: Boolean
     ): DeviceDosingChannelOperationResult
 
+}
+
+interface DeviceDosingReservoirOperations {
     suspend fun applyReservoirSettings(
         deviceUid: String,
         slotId: String,
@@ -54,6 +65,9 @@ interface DeviceDosingChannelOperations {
         slotId: String
     ): DeviceDosingChannelOperationResult
 
+}
+
+interface DeviceDosingManualOperations {
     suspend fun doseNow(
         deviceUid: String,
         slotId: String,
@@ -65,6 +79,9 @@ interface DeviceDosingChannelOperations {
         slotId: String
     ): DeviceDosingChannelOperationResult
 
+}
+
+interface DeviceDosingResetOperations {
     suspend fun reset(
         deviceUid: String,
         slotId: String

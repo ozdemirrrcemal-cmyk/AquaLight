@@ -500,7 +500,6 @@ class DeviceDosingV1StateAdapterTest {
             enqueue(action, success(action, value, generation))
         }
 
-        @Suppress("UNCHECKED_CAST")
         override suspend fun <T> execute(
             deviceUid: DeviceUid,
             command: DeviceRuntimeCommand<T>,

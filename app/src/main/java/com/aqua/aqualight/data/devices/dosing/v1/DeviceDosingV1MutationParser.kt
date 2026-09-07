@@ -2,7 +2,6 @@ package com.aqua.aqualight.data.devices.dosing.v1
 
 import org.json.JSONObject
 
-@Suppress("LongMethod", "TooManyFunctions")
 object DeviceDosingV1MutationParser {
     fun parseConfigApply(data: JSONObject): DeviceDosingV1SavedMutationResult =
         parseSaved(data, DeviceDosingV1Contract.Literal.CHANNEL_CONFIG_APPLY)

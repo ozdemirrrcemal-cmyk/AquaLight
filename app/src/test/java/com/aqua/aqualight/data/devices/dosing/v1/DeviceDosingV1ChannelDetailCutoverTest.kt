@@ -452,7 +452,6 @@ class DeviceDosingV1ChannelDetailCutoverTest {
             )
         }
 
-        @Suppress("UNCHECKED_CAST")
         override suspend fun <T> execute(
             deviceUid: DeviceUid,
             command: DeviceRuntimeCommand<T>,

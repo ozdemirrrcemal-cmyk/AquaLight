@@ -13,7 +13,6 @@ import org.junit.Assert.assertSame
 import org.junit.Assert.assertTrue
 import org.junit.Test
 
-@Suppress("LongMethod", "MagicNumber")
 class DeviceDosingV1RepositoryContractTest {
     @Test
     fun `repository mirrors all fourteen actions without production state ownership`() = runBlocking {
@@ -175,7 +174,6 @@ class DeviceDosingV1RepositoryContractTest {
             )
         }
 
-        @Suppress("CyclomaticComplexMethod") // One exhaustive fake response per firmware action.
         private fun response(action: String, encoded: JSONObject): JSONObject = when (action) {
             DeviceDosingV1Contract.Action.STATUS_GET ->
                 if (encoded.has("channelKey")) {
