@@ -218,11 +218,15 @@ internal object AquaHeaderComponentBinder {
             button.visibility = View.GONE
             button.text = null
             button.contentDescription = null
+            button.isEnabled = true
+            button.alpha = ACTION_ENABLED_ALPHA
             button.setOnClickListener(null)
         } else {
             button.visibility = View.VISIBLE
             button.text = action.text
             button.contentDescription = action.contentDescription
+            button.isEnabled = action.enabled
+            button.alpha = if (action.enabled) ACTION_ENABLED_ALPHA else ACTION_DISABLED_ALPHA
             button.setOnClickListener { action.onClick() }
         }
     }

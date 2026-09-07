@@ -19,6 +19,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.res.colorResource
 import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.contentDescription
@@ -228,10 +229,12 @@ internal data class DosingProgressPalette(
     val tagOutline: Color
 )
 
+@Composable
 private fun dosingProgressPalette(
     colors: AquaDeviceCardColors,
     visualState: DosingDoseProgressVisualState
 ): DosingProgressPalette {
+    val progressColor = colorResource(R.color.aqua_card_device_dosing_progress)
     val disabled = visualState == DosingDoseProgressVisualState.DISABLED
     val error = visualState == DosingDoseProgressVisualState.ERROR
     return DosingProgressPalette(
@@ -240,9 +243,9 @@ private fun dosingProgressPalette(
         completed = when {
             error -> colors.danger
             disabled -> colors.secondaryText.copy(alpha = DISABLED_ALPHA)
-            else -> colors.accent.copy(alpha = COMPLETED_ALPHA)
+            else -> progressColor.copy(alpha = COMPLETED_ALPHA)
         },
-        active = if (error) colors.danger else colors.accent,
+        active = if (error) colors.danger else progressColor,
         pending = colors.secondaryText.copy(
             alpha = if (disabled) DISABLED_PENDING_ALPHA else PENDING_ALPHA
         ),

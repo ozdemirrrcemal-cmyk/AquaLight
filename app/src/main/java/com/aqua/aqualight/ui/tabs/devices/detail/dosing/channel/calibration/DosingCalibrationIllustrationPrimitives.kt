@@ -5,7 +5,6 @@ import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Rect
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Path
-import androidx.compose.ui.graphics.PathEffect
 import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.drawscope.DrawScope
 import androidx.compose.ui.graphics.drawscope.Stroke
@@ -88,19 +87,23 @@ internal fun DrawScope.drawCalibrationTube(
         style = Stroke(width = tubeWidth * TUBE_INNER_SCALE, cap = StrokeCap.Round)
     )
     if (active) {
+        val shimmer = smoothCalibrationFlowWave(flowPhase)
         drawPath(
             path = path,
             color = colors.accent.copy(alpha = TUBE_ACTIVE_ALPHA),
             style = Stroke(
                 width = tubeWidth * TUBE_ACTIVE_SCALE,
-                cap = StrokeCap.Round,
-                pathEffect = PathEffect.dashPathEffect(
-                    intervals = floatArrayOf(
-                        tubeWidth * TUBE_DASH_LENGTH_SCALE,
-                        tubeWidth * TUBE_DASH_GAP_SCALE
-                    ),
-                    phase = -flowPhase * tubeWidth * TUBE_DASH_PHASE_SCALE
-                )
+                cap = StrokeCap.Round
+            )
+        )
+        drawPath(
+            path = path,
+            color = colors.onAccent.copy(
+                alpha = TUBE_HIGHLIGHT_MIN_ALPHA + shimmer * TUBE_HIGHLIGHT_ALPHA_DELTA
+            ),
+            style = Stroke(
+                width = tubeWidth * TUBE_HIGHLIGHT_SCALE,
+                cap = StrokeCap.Round
             )
         )
     } else {
@@ -111,6 +114,9 @@ internal fun DrawScope.drawCalibrationTube(
         )
     }
 }
+
+internal fun smoothCalibrationFlowWave(flowPhase: Float): Float =
+    (sin(flowPhase * FULL_WAVE_RADIANS).toFloat() + ONE) * HALF
 
 internal fun DrawScope.drawCalibrationPump(
     colors: AquaGuidedFlowColors,

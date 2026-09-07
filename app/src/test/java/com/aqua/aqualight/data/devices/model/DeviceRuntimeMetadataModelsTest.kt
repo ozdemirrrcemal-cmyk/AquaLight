@@ -23,11 +23,11 @@ class DeviceRuntimeMetadataModelsTest {
     }
 
     @Test
-    fun `all nine catalog products construct complete typed metadata`() {
+    fun `all seven catalog products construct complete typed metadata`() {
         val profiles = fixture.getJSONObject("profiles")
         val products = fixture.getJSONArray("products")
 
-        assertEquals(9, products.length())
+        assertEquals(7, products.length())
 
         repeat(products.length()) { index ->
             val product = products.getJSONObject(index)

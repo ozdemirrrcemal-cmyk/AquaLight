@@ -13,7 +13,7 @@ import org.junit.Test
 class DeviceOtaFailureMapperTest {
 
     @Test
-    fun `firmware invalid wifi value maps to recoverable connection guidance`() {
+    fun `firmware invalid wifi value maps to device network guidance`() {
         val failure = DeviceOtaFailureMapper.command(
             firmwareError(
                 code = DeviceFirmwareRuntimeContract.ErrorCode.INVALID_VALUE,
@@ -22,9 +22,90 @@ class DeviceOtaFailureMapperTest {
             )
         )
 
-        assertEquals(DeviceOtaFailureReason.CONNECTION, failure.reason)
+        assertEquals(DeviceOtaFailureReason.DEVICE_NETWORK_UNAVAILABLE, failure.reason)
         assertTrue(failure.recoverable)
         assertEquals(DeviceFirmwareRuntimeContract.ErrorField.WIFI, failure.field)
+    }
+
+    @Test
+    fun `failed snapshot wifi disconnect maps to device network guidance`() {
+        val failure = DeviceOtaFailureMapper.snapshot(
+            failedSnapshot(
+                field = DeviceFirmwareRuntimeContract.ErrorField.WIFI,
+                message = "Wi-Fi disconnected while preparing secure OTA"
+            )
+        )
+
+        assertEquals(DeviceOtaFailureReason.DEVICE_NETWORK_UNAVAILABLE, failure.reason)
+        assertTrue(failure.recoverable)
+    }
+
+    @Test
+    fun `invalid release url maps to terminal security validation`() {
+        val failure = DeviceOtaFailureMapper.command(
+            firmwareError(
+                code = DeviceFirmwareRuntimeContract.ErrorCode.INVALID_VALUE,
+                field = DeviceFirmwareRuntimeContract.ErrorField.URL,
+                message = "OTA URL must target the official AquaLight release repository"
+            )
+        )
+
+        assertEquals(DeviceOtaFailureReason.SECURITY_VALIDATION_FAILED, failure.reason)
+        assertFalse(failure.recoverable)
+    }
+
+    @Test
+    fun `invalid expected size maps to terminal ota contract mismatch`() {
+        val failure = DeviceOtaFailureMapper.command(
+            firmwareError(
+                code = DeviceFirmwareRuntimeContract.ErrorCode.INVALID_VALUE,
+                field = DeviceFirmwareRuntimeContract.ErrorField.EXPECTED_SIZE,
+                message = "expectedSize must be greater than zero"
+            )
+        )
+
+        assertEquals(DeviceOtaFailureReason.PROTOCOL_MISMATCH, failure.reason)
+        assertFalse(failure.recoverable)
+    }
+
+    @Test
+    fun `ota task allocation failure stays retryable device internal`() {
+        val failure = DeviceOtaFailureMapper.command(
+            firmwareError(
+                code = DeviceFirmwareRuntimeContract.ErrorCode.INVALID_VALUE,
+                field = DeviceFirmwareRuntimeContract.ErrorField.TASK,
+                message = "failed to create OTA task"
+            )
+        )
+
+        assertEquals(DeviceOtaFailureReason.DEVICE_INTERNAL, failure.reason)
+        assertTrue(failure.recoverable)
+    }
+
+    @Test
+    fun `secure time readiness failure is retryable security validation`() {
+        val failure = DeviceOtaFailureMapper.snapshot(
+            failedSnapshot(
+                field = DeviceFirmwareRuntimeContract.ErrorField.TLS,
+                message = "secure system time was not synchronized before OTA"
+            )
+        )
+
+        assertEquals(DeviceOtaFailureReason.SECURITY_VALIDATION_FAILED, failure.reason)
+        assertTrue(failure.recoverable)
+    }
+
+    @Test
+    fun `missing production tls trust remains terminal security validation`() {
+        val failure = DeviceOtaFailureMapper.snapshot(
+            failedSnapshot(
+                field = DeviceFirmwareRuntimeContract.ErrorField.TLS,
+                message = "OTA TLS root CA is required in production firmware"
+            )
+        )
+
+        assertEquals(DeviceOtaFailureReason.SECURITY_VALIDATION_FAILED, failure.reason)
+        assertFalse(failure.recoverable)
     }
 
     @Test
@@ -65,6 +146,19 @@ class DeviceOtaFailureMapperTest {
         )
 
         assertEquals(DeviceOtaFailureReason.INTEGRITY_CHECK_FAILED, failure.reason)
+        assertFalse(failure.recoverable)
+    }
+
+    @Test
+    fun `failed exact-state restore maps to terminal physical restart guidance`() {
+        val failure = DeviceOtaFailureMapper.snapshot(
+            failedSnapshot(
+                field = DeviceFirmwareRuntimeContract.ErrorField.SAFE_MODE_RESTORE,
+                message = "exact pre-OTA runtime restore failed"
+            )
+        )
+
+        assertEquals(DeviceOtaFailureReason.SAFE_MODE_RESTORE_FAILED, failure.reason)
         assertFalse(failure.recoverable)
     }
 

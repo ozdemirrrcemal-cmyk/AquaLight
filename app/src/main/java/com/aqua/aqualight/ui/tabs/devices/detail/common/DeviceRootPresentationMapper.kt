@@ -119,6 +119,10 @@ private val OTA_FAILURE_MESSAGE_RESOURCES = mapOf(
         R.string.device_settings_update_error_device_busy,
     DeviceOtaFailureReason.UNSUPPORTED to
         R.string.device_settings_update_unsupported_status,
+    DeviceOtaFailureReason.RELEASE_CONNECTION_FAILED to
+        R.string.device_settings_update_error_release_connection_failed,
+    DeviceOtaFailureReason.DEVICE_NETWORK_UNAVAILABLE to
+        R.string.device_settings_update_error_device_network_unavailable,
     DeviceOtaFailureReason.RELEASE_UNAVAILABLE to
         R.string.device_settings_update_error_release_unavailable,
     DeviceOtaFailureReason.RELEASE_ACCESS_DENIED to
@@ -165,6 +169,8 @@ private val OTA_FAILURE_MESSAGE_RESOURCES = mapOf(
         R.string.device_settings_update_error_integrity_check,
     DeviceOtaFailureReason.SAFE_MODE_FAILED to
         R.string.device_settings_update_error_safe_mode,
+    DeviceOtaFailureReason.SAFE_MODE_RESTORE_FAILED to
+        R.string.device_settings_update_error_safe_mode_restore,
     DeviceOtaFailureReason.FLASH_WRITE_FAILED to
         R.string.device_settings_update_error_flash_write,
     DeviceOtaFailureReason.SECURITY_VALIDATION_FAILED to

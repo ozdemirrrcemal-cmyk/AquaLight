@@ -12,11 +12,9 @@ import com.aqua.aqualight.application.devices.DeviceOtaFailureStage
 import com.aqua.aqualight.application.devices.DeviceOtaState
 import com.aqua.aqualight.application.devices.DeviceRootCatalogState
 import com.aqua.aqualight.application.devices.DeviceRootSnapshot
-import com.aqua.aqualight.application.devices.OwnerDeviceAvailability
 import com.aqua.aqualight.application.devices.OwnerDeviceFamily
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.channels.Channel
-import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -30,7 +28,8 @@ import kotlinx.coroutines.launch
  *
  * The ViewModel depends only on owner-scoped application contracts. Repository identities,
  * catalog identities, transport outcomes, firmware payloads and persistence details remain below
- * presentation.
+ * presentation. Runtime freshness is owned below presentation; this ViewModel only observes the
+ * already-running authoritative domain state.
  */
 @Suppress("TooManyFunctions")
 class DeviceFamilySettingsViewModel(
@@ -49,11 +48,9 @@ class DeviceFamilySettingsViewModel(
     private var observeDeviceJob: Job? = null
     private var observeFirmwareJob: Job? = null
     private var observeLightProtectionJob: Job? = null
-    private var lightProtectionRefreshJob: Job? = null
     private var deviceNameUpdateJob: Job? = null
     private var thresholdUpdateJob: Job? = null
     private var updateCheckJob: Job? = null
-    private var lastDeviceAvailability: OwnerDeviceAvailability? = null
     private var automaticFirmwareCheckPending = false
 
     fun bind(deviceUidText: String) {
@@ -68,7 +65,6 @@ class DeviceFamilySettingsViewModel(
         cancelBoundJobs()
         automaticFirmwareCheckPending = true
         val currentSnapshot = settingsOperations.current(deviceUid)
-        lastDeviceAvailability = currentSnapshot?.availability
         _uiState.value = currentSnapshot
             .toInitialDeviceFamilySettingsUiState(deviceUid)
             .withLightProtectionSnapshot(
@@ -91,7 +87,6 @@ class DeviceFamilySettingsViewModel(
                 applyLightProtectionSnapshot(deviceUid, snapshot)
             }
         }
-        requestLightProtectionRefreshIfNeeded(deviceUid)
         startAutomaticFirmwareAvailabilityCheckIfReady(deviceUid, currentSnapshot)
     }
 
@@ -212,11 +207,11 @@ class DeviceFamilySettingsViewModel(
         }
     }
 
-    fun retryLightProtection() {
-        val deviceUid = boundDeviceUid
-        if (deviceUid.isBlank()) return
-        requestLightProtectionRefreshIfNeeded(deviceUid, force = true)
-    }
+    /**
+     * Kept temporarily for the existing Fragment callback surface. Runtime/domain bootstrap owns
+     * freshness; presentation must never issue a status request or retry loop.
+     */
+    fun retryLightProtection() = Unit
 
     fun checkForUpdates() {
         startFirmwareAvailabilityCheck(deviceUid = boundDeviceUid, automatic = false)
@@ -295,66 +290,6 @@ class DeviceFamilySettingsViewModel(
     ) {
         if (boundDeviceUid != deviceUid) return
         _uiState.update { state -> state.withLightProtectionSnapshot(snapshot) }
-        requestLightProtectionRefreshIfNeeded(deviceUid)
-    }
-
-    private fun requestLightProtectionRefreshIfNeeded(
-        deviceUid: String,
-        force: Boolean = false
-    ) {
-        val lightState = _uiState.value.lightProtection
-        val automaticRefreshAllowed = lightState.loadState == DeviceLightProtectionLoadState.IDLE ||
-            lightState.loadState == DeviceLightProtectionLoadState.LOADING
-        val shouldRequest = boundDeviceUid == deviceUid &&
-            _uiState.value.showLightProtectionInventory &&
-            lightProtectionRefreshJob?.isActive != true &&
-            (force || automaticRefreshAllowed)
-        if (!shouldRequest) return
-
-        if (lightState.loadState != DeviceLightProtectionLoadState.READY) {
-            _uiState.update { current ->
-                current.copy(
-                    lightProtection = current.lightProtection.copy(
-                        loadState = DeviceLightProtectionLoadState.LOADING
-                    )
-                )
-            }
-        }
-        lightProtectionRefreshJob = viewModelScope.launch {
-            refreshLightProtectionWithRetry(deviceUid)
-        }
-    }
-
-    private suspend fun refreshLightProtectionWithRetry(deviceUid: String) {
-        var loaded = false
-        for (attempt in 0 until LIGHT_PROTECTION_REFRESH_MAX_ATTEMPTS) {
-            if (attempt > 0) delay(LIGHT_PROTECTION_REFRESH_RETRY_DELAY_MILLIS)
-            if (boundDeviceUid != deviceUid) return
-
-            val result = settingsOperations.refreshLightProtection(deviceUid)
-            if (boundDeviceUid != deviceUid) return
-            if (result.isSuccess) {
-                val snapshot = settingsOperations.currentLightProtection(deviceUid)
-                applyLightProtectionSnapshot(deviceUid, snapshot)
-                loaded = snapshot.loaded ||
-                    _uiState.value.lightProtection.loadState ==
-                    DeviceLightProtectionLoadState.READY
-            }
-            if (loaded) break
-        }
-
-        if (
-            boundDeviceUid == deviceUid &&
-            _uiState.value.lightProtection.loadState != DeviceLightProtectionLoadState.READY
-        ) {
-            _uiState.update { current ->
-                current.copy(
-                    lightProtection = current.lightProtection.copy(
-                        loadState = DeviceLightProtectionLoadState.FAILED
-                    )
-                )
-            }
-        }
     }
 
     private fun applyFirmwareState(state: DeviceOtaState) {
@@ -408,7 +343,6 @@ class DeviceFamilySettingsViewModel(
         DeviceSettingsUpdateActionState.PostUpdateAttention(attention)
 
     private fun applyDeviceSnapshot(deviceUid: String, snapshot: DeviceRootSnapshot?) {
-        val becameReachable = recordAvailability(snapshot?.availability)
         if (snapshot == null || snapshot.catalogState != DeviceRootCatalogState.VALID) {
             preserveStableDeviceInformation(deviceUid, snapshot)
         } else {
@@ -424,18 +358,6 @@ class DeviceFamilySettingsViewModel(
         }
 
         startAutomaticFirmwareAvailabilityCheckIfReady(deviceUid, snapshot)
-        if (becameReachable) {
-            requestLightProtectionRefreshIfNeeded(deviceUid, force = true)
-        }
-    }
-
-    private fun recordAvailability(
-        availability: OwnerDeviceAvailability?
-    ): Boolean {
-        val previous = lastDeviceAvailability
-        if (availability != null) lastDeviceAvailability = availability
-        return previous == OwnerDeviceAvailability.UNREACHABLE &&
-            availability == OwnerDeviceAvailability.REACHABLE
     }
 
     private fun preserveStableDeviceInformation(
@@ -472,7 +394,6 @@ class DeviceFamilySettingsViewModel(
     private fun reset() {
         cancelBoundJobs()
         boundDeviceUid = ""
-        lastDeviceAvailability = null
         automaticFirmwareCheckPending = false
         _uiState.value = DeviceFamilySettingsUiState()
     }
@@ -481,7 +402,6 @@ class DeviceFamilySettingsViewModel(
         observeDeviceJob?.cancel()
         observeFirmwareJob?.cancel()
         observeLightProtectionJob?.cancel()
-        lightProtectionRefreshJob?.cancel()
         deviceNameUpdateJob?.cancel()
         thresholdUpdateJob?.cancel()
         updateCheckJob?.cancel()
@@ -495,8 +415,6 @@ class DeviceFamilySettingsViewModel(
 
     private companion object {
         const val COMPLETE_PROGRESS_PERMILLE = 1_000
-        const val LIGHT_PROTECTION_REFRESH_MAX_ATTEMPTS = 2
-        const val LIGHT_PROTECTION_REFRESH_RETRY_DELAY_MILLIS = 1_000L
     }
 }
 

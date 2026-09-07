@@ -128,13 +128,13 @@ class DeviceDosingV1FixtureParityTest {
     private companion object {
         const val PIN_FIXTURE = "aql_android_dosing_v1_pin.json"
         const val CHANNEL_STATUS_FIXTURE = "aql_dosing_channel_status_v1.json"
-        const val FIRMWARE_COMMIT = "e669313ecc2a7f959b566e3051cfd3b67247ccbd"
+        const val FIRMWARE_COMMIT = "fa147211749c2dcb2f56e15a617a00010e071984"
         const val STATUS_CODEC_PATH = "src/modules/dosing/AqlDosingStatusCodec.hpp"
         const val DERIVED_CHANNEL_STATUS_BLOB = "ea7e8d0ae8a846441edd51e9d24a26fbf9da65db"
 
         val PINNED_SOURCE_BLOBS = linkedMapOf(
             "src/api/v1/commands/AqlDosingCommands.hpp" to
-                "5c0201f9a4e09f93f4dd54af8c1fba9dec167105",
+                "34cfc3287485f6a46a73b47f061a5456cde9aa9d",
             "src/api/v1/commands/AqlDosingProgressCommands.hpp" to
                 "8700e785bdd2e747abea3b09eff97755e2addad0",
             "src/modules/dosing/AqlDosingProgramApiCodec.hpp" to
@@ -143,14 +143,14 @@ class DeviceDosingV1FixtureParityTest {
             "src/modules/dosing/AqlDosingSchedulingMetadataCodec.hpp" to
                 "cab751e2d508651d17550c48314707524053f995",
             "src/modules/dosing/AqlDosingRuntimeEvent.hpp" to
-                "0b40b1eff35af48976f95fedba5a2854885f2439",
+                "90069dde7897eb815a321845661934c6e1db823c",
             "src/modules/dosing/AqlDosingRuntimeService.hpp" to
-                "aa43e46ad16c8552c29e3526101f8e8474dee769"
+                "bb868c59f0719f57c05930601fd4d014466a75a2"
         )
 
         val PINNED_FIXTURE_BLOBS = linkedMapOf(
             "aql_dosing_calibration_v1.json" to
-                "bb7ce3da02db64e6c83ef755ca416a137e5bab60",
+                "fd297d250f8493998b41430d6a0cc2098a1e22e9",
             "aql_dosing_persistence_v1.json" to
                 "fcdb64581dd7e944f4bb9710e6ec9eaad40f8bb6",
             "aql_dosing_program_v1.json" to
@@ -165,7 +165,7 @@ class DeviceDosingV1FixtureParityTest {
 
         val EXPECTED_SHA256 = linkedMapOf(
             "aql_dosing_calibration_v1.json" to
-                "34b789082bc4d8417dc938184e60d97c183b52531224dc32e25fdcf46332bef5",
+                "69c70734db82d7f56011df35d684506f004dc5193db5146fa3a7d9c3f5a71a4e",
             CHANNEL_STATUS_FIXTURE to
                 "5af13c967c57208be8ee774fbe614de493b29df4c9700df0a2d611a7f7abd9ce",
             "aql_dosing_persistence_v1.json" to

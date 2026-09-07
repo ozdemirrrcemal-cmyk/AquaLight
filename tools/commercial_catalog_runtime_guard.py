@@ -3,6 +3,8 @@
 
 from __future__ import annotations
 
+import json
+import re
 import subprocess
 import sys
 from pathlib import Path
@@ -24,6 +26,8 @@ MENU_ACCESS = SOURCE / "data/devices/menu/CommercialDeviceMenuAccessOperations.k
 DEFAULT_MENU_ACCESS = SOURCE / "data/devices/menu/DefaultDeviceMenuAccessOperations.kt"
 MENU_BOUNDARY = SOURCE / "application/devices/DeviceMenuAccessOperations.kt"
 GENERATOR = ROOT / "tools/generate_android_commercial_catalog.py"
+CATALOG_FIXTURE = ROOT / "protocol/fixtures/aql_product_catalog_v1.json"
+EXPECTED_FIRMWARE_REPOSITORY = "ozdemirrrcemal-cmyk/AquaLight-Firmware"
 
 errors: list[str] = []
 
@@ -34,6 +38,18 @@ def read(path: Path) -> str:
     except (OSError, UnicodeError) as exc:
         errors.append(f"{path.relative_to(ROOT)} could not be read: {exc}")
         return ""
+
+
+def read_json(path: Path) -> dict[str, object]:
+    try:
+        value = json.loads(path.read_text(encoding="utf-8", errors="strict"))
+    except (OSError, UnicodeError, json.JSONDecodeError) as exc:
+        errors.append(f"{path.relative_to(ROOT)} could not be parsed: {exc}")
+        return {}
+    if not isinstance(value, dict):
+        errors.append(f"{path.relative_to(ROOT)} root must be a JSON object")
+        return {}
+    return value
 
 
 def require(condition: bool, message: str) -> None:
@@ -55,6 +71,10 @@ ui_mapper = read(UI_MAPPER)
 menu_access = read(MENU_ACCESS)
 default_menu_access = read(DEFAULT_MENU_ACCESS)
 menu_boundary = read(MENU_BOUNDARY)
+fixture = read_json(CATALOG_FIXTURE)
+fixture_source = fixture.get("source")
+source_repository = fixture_source.get("repository") if isinstance(fixture_source, dict) else None
+source_commit = fixture_source.get("commit") if isinstance(fixture_source, dict) else None
 
 check = subprocess.run(
     [sys.executable, str(GENERATOR), "--check"],
@@ -71,12 +91,22 @@ require(
 
 require("// GENERATED FILE. DO NOT EDIT." in generated_catalog, "generated catalog header is missing")
 require(
-    "cf2222e58e6c69a729071a5d1205497b3fceaa70" in generated_catalog,
-    "generated catalog must remain pinned to the firmware merge commit",
+    source_repository == EXPECTED_FIRMWARE_REPOSITORY,
+    "catalog fixture must identify the canonical firmware repository",
 )
+valid_source_commit = (
+    isinstance(source_commit, str)
+    and re.fullmatch(r"[0-9a-f]{40}", source_commit) is not None
+)
+require(valid_source_commit, "catalog fixture source commit must be an exact 40-hex git SHA")
+if valid_source_commit:
+    require(
+        generated_catalog.count(f"// Source firmware commit: {source_commit}") == 1,
+        "generated catalog firmware provenance must exactly match the pinned catalog fixture",
+    )
 require(
-    generated_catalog.count("    AqlCommercialCatalogProduct(") == 9,
-    "generated catalog must contain exactly nine product rows",
+    generated_catalog.count("    AqlCommercialCatalogProduct(") == 7,
+    "generated catalog must contain exactly seven product rows",
 )
 for token in (
     "data class AqlCommercialCatalogProfile",
@@ -176,8 +206,6 @@ for product_key in (
     "DOSING_DOSE_PRO_2",
     "DOSING_DOSE_PRO_4",
     "COOLING_COOL_PRO_1F",
-    "COOLING_COOL_PRO_2F",
-    "COOLING_COOL_PRO_3F",
 ):
     require(product_key in slot_resolver, f"channel-slot shape is missing: {product_key}")
 for forbidden in (

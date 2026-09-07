@@ -287,6 +287,33 @@ class DeviceDosingV1ChannelDetailCutoverTest {
         assertEquals(7, gateway.requests.size)
     }
 
+    @Test
+    fun `failed physical stop refreshes state and never reports the active run as stopped`() =
+        runTest {
+            val gateway = Stage9Gateway().apply {
+                enqueueRefresh(revision = 7L, manualActive = true)
+                enqueueHardwareStopFailure()
+                enqueueRefresh(revision = 7L, manualActive = true)
+            }
+            val adapter = DeviceDosingV1StateAdapter(DeviceDosingV1Repository(gateway))
+            adapter.channelOperations.refresh(DEVICE_UID.value, SLOT_ID)
+
+            val result = adapter.channelOperations.doseStop(DEVICE_UID.value, SLOT_ID)
+
+            assertEquals(
+                DeviceDosingChannelOperationResult.Rejected(
+                    DeviceDosingChannelRejection.OUTPUT_STOP_UNCONFIRMED
+                ),
+                result
+            )
+            val authoritative = requireNotNull(
+                adapter.currentChannel(DEVICE_UID.value, SLOT_ID)
+            )
+            assertTrue(authoritative.activeRun.active)
+            assertEquals(DeviceDosingRunSource.MANUAL, authoritative.activeRun.source)
+            assertEquals(7, gateway.requests.size)
+        }
+
     private class Stage9Gateway : DeviceRuntimeCommandGateway {
         data class Request(val action: String, val data: String)
         private data class Response(
@@ -354,6 +381,23 @@ class DeviceDosingV1ChannelDetailCutoverTest {
                     code = "DEVICE_BUSY",
                     field = "",
                     message = "dosing operation in progress"
+                )
+            )
+        }
+
+        fun enqueueHardwareStopFailure() {
+            enqueue(
+                DeviceDosingV1Contract.Action.DOSE_STOP,
+                DeviceRuntimeCommandOutcome.FirmwareError(
+                    deviceUid = DEVICE_UID,
+                    module = DeviceDosingV1Contract.MODULE,
+                    action = DeviceDosingV1Contract.Action.DOSE_STOP,
+                    messageId = "hardware-stop-failure",
+                    generation = GENERATION,
+                    statusCode = 503,
+                    code = "HARDWARE_ERROR",
+                    field = "pump",
+                    message = "dosing output could not be proven physically off"
                 )
             )
         }

@@ -4,9 +4,9 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.aqua.aqualight.R
 import com.aqua.aqualight.application.auth.AuthOperations
-import com.aqua.aqualight.data.auth.AuthErrorMapper
-import com.aqua.aqualight.data.auth.AuthUiText
 import com.aqua.aqualight.ui.auth.state.AuthActionState
+import com.aqua.aqualight.ui.auth.state.AuthErrorMapper
+import com.aqua.aqualight.ui.auth.state.AuthUiText
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow

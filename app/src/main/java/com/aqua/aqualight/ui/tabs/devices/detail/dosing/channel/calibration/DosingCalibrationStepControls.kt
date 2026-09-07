@@ -17,7 +17,8 @@ import com.aqua.aqualight.ui.common.flow.AquaGuidedFlowGeometry
 internal fun CalibrationStepControls(
     state: DeviceDosingCalibrationUiState,
     colors: AquaGuidedFlowColors,
-    onAction: (DeviceDosingCalibrationAction) -> Unit
+    onAction: (DeviceDosingCalibrationAction) -> Unit,
+    modifier: Modifier = Modifier
 ) {
     val focusManager = LocalFocusManager.current
     val submitName = {
@@ -34,6 +35,7 @@ internal fun CalibrationStepControls(
     }
 
     androidx.compose.foundation.layout.Column(
+        modifier = modifier,
         verticalArrangement = Arrangement.spacedBy(CALIBRATION_CONTROL_GAP)
     ) {
         when (state.step) {
@@ -69,8 +71,7 @@ private fun CalibrationNameControls(
         colors = colors,
         onValueChange = { value ->
             onAction(DeviceDosingCalibrationAction.DisplayNameChanged(value))
-        },
-        onImeDone = onSubmit
+        }
     )
     AquaGuidedFlowButton(
         text = calibrationActionText(state, R.string.device_dosing_calibration_continue),
@@ -107,7 +108,7 @@ private fun CalibrationRunControls(
     colors: AquaGuidedFlowColors,
     onAction: (DeviceDosingCalibrationAction) -> Unit
 ) {
-    if (state.isBusy) CountdownMetric(state.remainingMs, colors)
+    if (state.isBusy && state.remainingMs > 0L) CountdownMetric(state.remainingMs, colors)
     AquaGuidedFlowButton(
         text = calibrationActionText(state, R.string.device_dosing_calibration_start_collection),
         onClick = { onAction(DeviceDosingCalibrationAction.StartCalibration) },
@@ -134,8 +135,7 @@ private fun CalibrationMeasurementControls(
         colors = colors,
         onValueChange = { value ->
             onAction(DeviceDosingCalibrationAction.MeasuredMlChanged(value))
-        },
-        onImeDone = onSubmit
+        }
     )
     AquaGuidedFlowButton(
         text = calibrationActionText(state, R.string.device_dosing_calibration_save_measurement),
@@ -151,7 +151,7 @@ private fun CalibrationVerificationControls(
     colors: AquaGuidedFlowColors,
     onAction: (DeviceDosingCalibrationAction) -> Unit
 ) {
-    if (state.isBusy) CountdownMetric(state.remainingMs, colors)
+    if (state.isBusy && state.remainingMs > 0L) CountdownMetric(state.remainingMs, colors)
     AquaGuidedFlowButton(
         text = calibrationActionText(state, R.string.device_dosing_calibration_dispense_test),
         onClick = { onAction(DeviceDosingCalibrationAction.StartVerification) },

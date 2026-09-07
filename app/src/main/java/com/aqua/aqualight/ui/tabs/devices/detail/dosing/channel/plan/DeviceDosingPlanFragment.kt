@@ -334,6 +334,8 @@ private fun rejectionMessage(reason: DeviceDosingChannelRejection): Int = when (
         R.string.device_dosing_plan_rejected_not_calibrated
     DeviceDosingChannelRejection.BUSY -> R.string.device_dosing_plan_rejected_busy
     DeviceDosingChannelRejection.CONFLICT -> R.string.device_dosing_plan_rejected_conflict
+    DeviceDosingChannelRejection.OUTPUT_STOP_UNCONFIRMED ->
+        R.string.device_dosing_error_output_stop_unconfirmed
     DeviceDosingChannelRejection.UNSAFE -> R.string.device_dosing_plan_rejected_unsafe
     DeviceDosingChannelRejection.UNKNOWN -> R.string.device_dosing_detail_operation_failed
 }

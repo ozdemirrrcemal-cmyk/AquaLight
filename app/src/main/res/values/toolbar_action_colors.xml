@@ -4,7 +4,7 @@
     <color name="aqua_toolbar_action_success_outline">@color/aqua_palette_hex_2a8a5e</color>
     <color name="aqua_toolbar_action_primary_container">@color/aqua_palette_hex_12365a</color>
     <color name="aqua_toolbar_action_primary_outline">@color/aqua_palette_hex_2b93f6</color>
-    <color name="aqua_toolbar_action_neutral_container">@color/aqua_palette_hex_101d2c</color>
+    <color name="aqua_toolbar_action_neutral_container">@color/aqua_palette_hex_061727</color>
     <color name="aqua_toolbar_action_neutral_outline">@color/aqua_palette_hex_22354d</color>
     <color name="aqua_toolbar_action_danger_container">@color/aqua_palette_hex_3a1c29</color>
     <color name="aqua_toolbar_action_danger_outline">@color/aqua_palette_hex_a2445f</color>

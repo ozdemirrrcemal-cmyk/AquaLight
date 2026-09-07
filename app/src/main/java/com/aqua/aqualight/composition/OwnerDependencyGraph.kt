@@ -5,6 +5,7 @@ import com.aqua.aqualight.BuildConfig
 import com.aqua.aqualight.application.auth.AuthenticatedOwnerIdentity
 import com.aqua.aqualight.application.devices.DeviceControlSurfacePreparationOperations
 import com.aqua.aqualight.application.devices.DeviceFirmwareUpdateOperations
+import com.aqua.aqualight.application.devices.dosing.DeviceDosingCalibrationDraftOperations
 import com.aqua.aqualight.application.devices.dosing.DeviceDosingCalibrationOperations
 import com.aqua.aqualight.application.devices.dosing.DeviceDosingCardOperations
 import com.aqua.aqualight.application.devices.dosing.DeviceDosingChannelNavigationOperations
@@ -23,9 +24,11 @@ import com.aqua.aqualight.data.auth.OwnerSessionStateMachine
 import com.aqua.aqualight.data.care.CareTaskDataStoreManager
 import com.aqua.aqualight.data.devices.DefaultDeviceFirmwareUpdateOperations
 import com.aqua.aqualight.data.devices.DefaultDeviceRootOperations
-import com.aqua.aqualight.data.devices.runtime.modules.firmware.SharedPreferencesDeviceOtaTransactionStore
+import com.aqua.aqualight.data.devices.cooling.control.DefaultDeviceCoolingControlOperations
 import com.aqua.aqualight.data.devices.dosing.DefaultDeviceDosingChannelNavigationOperations
+import com.aqua.aqualight.data.devices.dosing.SharedPreferencesDeviceDosingCalibrationDraftStore
 import com.aqua.aqualight.data.devices.dosing.SharedPreferencesDeviceDosingLowLevelAlertLedger
+import com.aqua.aqualight.data.devices.runtime.modules.firmware.SharedPreferencesDeviceOtaTransactionStore
 import com.aqua.aqualight.data.devices.dosing.v1.DeviceDosingV1ProductionRuntime
 import com.aqua.aqualight.data.devices.menu.DefaultDeviceControlSurfacePreparationOperations
 import com.aqua.aqualight.data.devices.provisioning.repository.DefaultProvisioningDraftOperations
@@ -58,6 +61,7 @@ internal data class OwnerDependencyGraph(
     val careTaskStore: CareTaskDataStoreManager,
     val userDataArchiveOperations: UserDataArchiveOperations,
     val provisioningDraftOperations: ProvisioningDraftOperations,
+    val controlSurfacePreparationOperations: DeviceControlSurfacePreparationOperations,
     val dosingOperations: OwnerDosingOperations
 )
 
@@ -66,8 +70,8 @@ internal data class OwnerDosingOperations(
     val channelOperations: DeviceDosingChannelOperations,
     val cardOperations: DeviceDosingCardOperations,
     val calibrationOperations: DeviceDosingCalibrationOperations,
-    val navigationOperations: DeviceDosingChannelNavigationOperations,
-    val controlSurfacePreparationOperations: DeviceControlSurfacePreparationOperations
+    val calibrationDraftOperations: DeviceDosingCalibrationDraftOperations,
+    val navigationOperations: DeviceDosingChannelNavigationOperations
 )
 
 internal fun interface OwnerDependencyGraphResolver {
@@ -204,6 +208,7 @@ internal class ActiveOwnerDependencyGraphResolver(
             mediaGateway = mediaGateway,
             reconcileCareReminders = notificationPreferenceUseCase::reconcileOwner
         )
+        val dosingOperations = createDosingOperations(dependencies)
         return OwnerDependencyGraph(
             ownerUid = dependencies.ownerUid,
             sessionGeneration = dependencies.sessionGeneration,
@@ -232,9 +237,25 @@ internal class ActiveOwnerDependencyGraphResolver(
                     ownerUidProvider = ownerUidProvider
                 )
             ),
-            dosingOperations = createDosingOperations(dependencies)
+            controlSurfacePreparationOperations = createControlSurfacePreparationOperations(
+                dependencies = dependencies,
+                dosingOperations = dosingOperations
+            ),
+            dosingOperations = dosingOperations
         )
     }
+
+    private fun createControlSurfacePreparationOperations(
+        dependencies: ActiveOwnerDependencies,
+        dosingOperations: OwnerDosingOperations
+    ): DeviceControlSurfacePreparationOperations =
+        DefaultDeviceControlSurfacePreparationOperations(
+            rootOperations = DefaultDeviceRootOperations(dependencies.devicesRepository),
+            dosingChannelOperations = dosingOperations.channelOperations,
+            coolingControlOperations = DefaultDeviceCoolingControlOperations(
+                dependencies.devicesRepository
+            )
+        )
 
     private fun createDosingOperations(
         dependencies: ActiveOwnerDependencies
@@ -250,20 +271,18 @@ internal class ActiveOwnerDependencyGraphResolver(
             alertTextResolver = AndroidDeviceDosingLowLevelAlertTextResolver(appContext)
         ).also(dependencies.devicesRepository::registerOwnerScopedResource)
         val channelOperations = runtime.channelOperations
-        val rootOperations = DefaultDeviceRootOperations(dependencies.devicesRepository)
         return OwnerDosingOperations(
             channelOperations = channelOperations,
             cardOperations = runtime.cardOperations,
             calibrationOperations = runtime.calibrationOperations,
-            navigationOperations = DefaultDeviceDosingChannelNavigationOperations(
-                rootOperations = rootOperations,
-                channelOperations = channelOperations
+            calibrationDraftOperations = SharedPreferencesDeviceDosingCalibrationDraftStore.create(
+                context = appContext,
+                ownerUid = dependencies.ownerUid
             ),
-            controlSurfacePreparationOperations =
-                DefaultDeviceControlSurfacePreparationOperations(
-                    rootOperations = rootOperations,
-                    dosingChannelOperations = channelOperations
-                )
+            navigationOperations = DefaultDeviceDosingChannelNavigationOperations(
+                rootOperations = DefaultDeviceRootOperations(dependencies.devicesRepository),
+                channelOperations = channelOperations
+            )
         )
     }
 

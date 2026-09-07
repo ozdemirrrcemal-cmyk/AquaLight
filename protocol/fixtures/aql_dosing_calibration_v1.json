@@ -7,14 +7,15 @@
     "running",
     "pendingVerification"
   ],
+  "defaultCalibrationDurationMs": 2000,
   "verificationDoseMl": 4,
   "commands": {
     "start": {
       "name": "dosing.calibration.start",
       "request": {
-        "channelKey": "channel1",
-        "durationMs": 5000
+        "channelKey": "channel1"
       },
+      "responseDurationMs": 2000,
       "responseState": "running"
     },
     "finish": {
@@ -59,12 +60,12 @@
   "statusShape": {
     "calibration": {
       "confirmed": true,
-      "doseMsPerMl": 1250,
+      "doseMsPerMl": 500,
       "lastCalibratedAt": 1786320000,
       "state": "pendingVerification",
-      "durationMs": 5000,
+      "durationMs": 2000,
       "measuredMl": 4,
-      "pendingDoseMsPerMl": 1250,
+      "pendingDoseMsPerMl": 500,
       "verificationDoseStarted": true,
       "verificationDoseComplete": true
     }

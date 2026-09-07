@@ -1,7 +1,5 @@
 package com.aqua.aqualight.ui.auth.state
 
-import com.aqua.aqualight.data.auth.AuthUiText
-
 sealed interface AuthActionState {
     data object Idle : AuthActionState
     data object Loading : AuthActionState

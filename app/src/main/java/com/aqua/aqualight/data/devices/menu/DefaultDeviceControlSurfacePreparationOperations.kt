@@ -9,6 +9,8 @@ import com.aqua.aqualight.application.devices.DeviceRootCatalogState
 import com.aqua.aqualight.application.devices.DeviceRootOperations
 import com.aqua.aqualight.application.devices.DeviceRootSnapshot
 import com.aqua.aqualight.application.devices.OwnerDeviceFamily
+import com.aqua.aqualight.application.devices.cooling.control.DeviceCoolingControlOperations
+import com.aqua.aqualight.application.devices.cooling.control.DeviceCoolingControlResult
 import com.aqua.aqualight.application.devices.dosing.DeviceDosingChannelOperations
 import com.aqua.aqualight.application.devices.dosing.DeviceDosingChannelSnapshot
 import java.util.concurrent.ConcurrentHashMap
@@ -16,31 +18,33 @@ import java.util.concurrent.ConcurrentHashMap
 /**
  * Owner-scoped control-surface preparation orchestrator.
  *
- * This class owns no Dosing state. It forces a fresh device-wide read through the existing central
- * Dosing operations and declares the surface ready only when those same operations expose the exact
- * authoritative channel set expected by the validated commercial catalog.
+ * This class owns no feature state. It coordinates family-specific application boundaries and
+ * declares a surface ready only after the central runtime owner exposes an authoritative first
+ * frame that matches the validated commercial catalog.
  */
 internal class DefaultDeviceControlSurfacePreparationOperations(
     private val rootOperations: DeviceRootOperations,
-    private val dosingChannelOperations: DeviceDosingChannelOperations
+    private val dosingChannelOperations: DeviceDosingChannelOperations,
+    private val coolingControlOperations: DeviceCoolingControlOperations
 ) : DeviceControlSurfacePreparationOperations {
 
-    private val freshlyPreparedDeviceUids = ConcurrentHashMap.newKeySet<String>()
+    private val freshlyPreparedSurfaces = ConcurrentHashMap.newKeySet<PreparedSurface>()
 
     override suspend fun prepare(
         request: DeviceControlSurfacePreparationRequest
     ): DeviceControlSurfacePreparationResult = when {
         request.deviceUid.trim().isBlank() ->
             unavailable(DeviceMenuUnavailableReason.INVALID_DEVICE_UID)
-        request.family != OwnerDeviceFamily.DOSING ->
-            DeviceControlSurfacePreparationResult.Ready
-        else -> prepareDosing(request.deviceUid.trim())
+        request.family == OwnerDeviceFamily.DOSING -> prepareDosing(request.deviceUid.trim())
+        request.family == OwnerDeviceFamily.COOLING -> prepareCooling(request.deviceUid.trim())
+        else -> DeviceControlSurfacePreparationResult.Ready
     }
 
     private suspend fun prepareDosing(
         deviceUid: String
     ): DeviceControlSurfacePreparationResult {
-        freshlyPreparedDeviceUids.remove(deviceUid)
+        val preparedSurface = PreparedSurface(deviceUid, OwnerDeviceFamily.DOSING)
+        freshlyPreparedSurfaces.remove(preparedSurface)
         val root = rootOperations.current(deviceUid)
         val result = when {
             root == null ->
@@ -56,7 +60,27 @@ internal class DefaultDeviceControlSurfacePreparationOperations(
             !hasAuthoritativeSurface(deviceUid, root.channelSlots.dosingChannels) ->
                 unavailable(DeviceMenuUnavailableReason.CURRENT_LIVENESS_NOT_PROVEN)
             else -> {
-                freshlyPreparedDeviceUids += deviceUid
+                freshlyPreparedSurfaces += preparedSurface
+                DeviceControlSurfacePreparationResult.Ready
+            }
+        }
+        return result
+    }
+
+    private suspend fun prepareCooling(
+        deviceUid: String
+    ): DeviceControlSurfacePreparationResult {
+        val preparedSurface = PreparedSurface(deviceUid, OwnerDeviceFamily.COOLING)
+        freshlyPreparedSurfaces.remove(preparedSurface)
+        val root = rootOperations.current(deviceUid)
+        val result = when {
+            root == null -> unavailable(DeviceMenuUnavailableReason.DEVICE_NOT_REGISTERED)
+            !root.matchesCoolingCatalog() ->
+                unavailable(DeviceMenuUnavailableReason.COMMERCIAL_PRODUCT_MISMATCH)
+            coolingControlOperations.refreshControl(deviceUid) !is DeviceCoolingControlResult.Available ->
+                unavailable(DeviceMenuUnavailableReason.CURRENT_LIVENESS_NOT_PROVEN)
+            else -> {
+                freshlyPreparedSurfaces += preparedSurface
                 DeviceControlSurfacePreparationResult.Ready
             }
         }
@@ -79,8 +103,16 @@ internal class DefaultDeviceControlSurfacePreparationOperations(
         deviceUid: String,
         family: OwnerDeviceFamily
     ): Boolean {
-        if (family != OwnerDeviceFamily.DOSING) return false
-        return freshlyPreparedDeviceUids.remove(deviceUid.trim())
+        if (family !in PREPARED_FAMILIES) return false
+        val requestedSurface = PreparedSurface(deviceUid.trim(), family)
+        val storedSurface = freshlyPreparedSurfaces.firstOrNull { surface ->
+            surface == requestedSurface
+        }
+        return if (storedSurface == null) {
+            false
+        } else {
+            freshlyPreparedSurfaces.remove(storedSurface)
+        }
     }
 
     private fun hasAuthoritativeSurface(
@@ -99,13 +131,30 @@ internal class DefaultDeviceControlSurfacePreparationOperations(
         reason: DeviceMenuUnavailableReason
     ): DeviceControlSurfacePreparationResult.Unavailable =
         DeviceControlSurfacePreparationResult.Unavailable(reason)
+
+    private companion object {
+        val PREPARED_FAMILIES = setOf(OwnerDeviceFamily.DOSING, OwnerDeviceFamily.COOLING)
+    }
 }
+
+private data class PreparedSurface(
+    val deviceUid: String,
+    val family: OwnerDeviceFamily
+)
 
 private fun DeviceRootSnapshot.matchesDosingCatalog(
     expectedSlots: List<DeviceDosingChannelSlot>
 ): Boolean = catalogState == DeviceRootCatalogState.VALID &&
     family == OwnerDeviceFamily.DOSING &&
     dosingChannelCount == expectedSlots.size
+
+private fun DeviceRootSnapshot.matchesCoolingCatalog(): Boolean =
+    catalogState == DeviceRootCatalogState.VALID &&
+        family == OwnerDeviceFamily.COOLING &&
+        channelSlots.fanOutputs.isNotEmpty() &&
+        channelSlots.temperatureSensors.isNotEmpty() &&
+        fanOutputCount == channelSlots.fanOutputs.size &&
+        temperatureSensorCount == channelSlots.temperatureSensors.size
 
 private fun List<DeviceDosingChannelSnapshot>.matches(
     deviceUid: String,

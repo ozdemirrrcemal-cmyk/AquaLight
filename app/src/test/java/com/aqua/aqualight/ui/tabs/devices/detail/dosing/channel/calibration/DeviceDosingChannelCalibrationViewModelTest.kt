@@ -2,6 +2,7 @@ package com.aqua.aqualight.ui.tabs.devices.detail.dosing.channel.calibration
 
 import com.aqua.aqualight.application.devices.dosing.DeviceDosingCalibrationFailure
 import com.aqua.aqualight.application.devices.dosing.DeviceDosingCalibrationResult
+import com.aqua.aqualight.application.devices.dosing.DeviceDosingCalibrationSessionPhase
 import com.aqua.aqualight.application.devices.dosing.DeviceDosingChannelDestination
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.Dispatchers
@@ -62,6 +63,109 @@ class DeviceDosingChannelCalibrationViewModelTest {
         assertEquals(1, operations.primeStops)
         assertFalse(viewModel.uiState.value.isPumpActive)
     }
+
+    @Test
+    fun `persisted name survives process recreation and clears after confirmation`() =
+        runTest(dispatcher) {
+            val drafts = FakeDosingCalibrationDraftOperations()
+            val initialViewModel = viewModel(
+                operations = FakeDosingCalibrationOperations(calibrationSnapshot()),
+                draftOperations = drafts
+            )
+
+            bind(initialViewModel)
+            advanceUntilIdle()
+            initialViewModel.onAction(
+                DeviceDosingCalibrationAction.DisplayNameChanged("Trace Elements")
+            )
+            initialViewModel.onAction(DeviceDosingCalibrationAction.SaveDisplayName)
+            runCurrent()
+
+            assertEquals(DeviceDosingCalibrationStep.PRIME, initialViewModel.uiState.value.step)
+            assertEquals(
+                "Trace Elements",
+                drafts.loadDisplayName("device-1", "channel-1")
+            )
+
+            val resumedOperations = FakeDosingCalibrationOperations(
+                completedVerificationSnapshot()
+            ).apply {
+                confirmResult = calibrationSuccess(
+                    calibratedCalibrationSnapshot().copy(channelTitle = "Trace Elements")
+                )
+            }
+            val resumedViewModel = viewModel(resumedOperations, drafts)
+
+            bind(resumedViewModel)
+            advanceUntilIdle()
+
+            assertEquals(DeviceDosingCalibrationStep.CONFIRMATION, resumedViewModel.uiState.value.step)
+            assertEquals("Trace Elements", resumedViewModel.uiState.value.displayName)
+
+            resumedViewModel.onAction(DeviceDosingCalibrationAction.AcceptVerification)
+            advanceUntilIdle()
+
+            assertTrue(resumedViewModel.events.first() is DeviceDosingCalibrationEvent.Completed)
+            assertEquals("Trace Elements", resumedOperations.confirmedName)
+            assertNull(drafts.loadDisplayName("device-1", "channel-1"))
+        }
+
+    @Test
+    fun `draft persistence failure keeps calibration on the name step`() = runTest(dispatcher) {
+        val drafts = FakeDosingCalibrationDraftOperations().apply { failSaves = true }
+        val viewModel = viewModel(
+            operations = FakeDosingCalibrationOperations(calibrationSnapshot()),
+            draftOperations = drafts
+        )
+
+        bind(viewModel)
+        advanceUntilIdle()
+        viewModel.onAction(DeviceDosingCalibrationAction.DisplayNameChanged("Trace Elements"))
+        viewModel.onAction(DeviceDosingCalibrationAction.SaveDisplayName)
+        runCurrent()
+
+        assertEquals(DeviceDosingCalibrationStep.NAME, viewModel.uiState.value.step)
+        assertEquals(DeviceDosingCalibrationError.STORAGE, viewModel.uiState.value.error)
+    }
+
+    @Test
+    fun `persisted name is isolated from a different dosing channel`() = runTest(dispatcher) {
+        val drafts = FakeDosingCalibrationDraftOperations().apply {
+            seed("device-1", "channel-2", "Channel Two")
+        }
+        val viewModel = viewModel(
+            operations = FakeDosingCalibrationOperations(calibrationSnapshot()),
+            draftOperations = drafts
+        )
+
+        bind(viewModel)
+        advanceUntilIdle()
+
+        assertEquals("", viewModel.uiState.value.displayName)
+    }
+
+    @Test
+    fun `persisted name is restored when firmware recovers at measurement`() =
+        runTest(dispatcher) {
+            val drafts = FakeDosingCalibrationDraftOperations().apply {
+                seed("device-1", "channel-1", "Trace Elements")
+            }
+            val interruptedSnapshot = calibrationSnapshot().copy(
+                sessionPhase = DeviceDosingCalibrationSessionPhase.RUNNING,
+                startedAtUptimeMs = 1_000L,
+                durationMs = 5_000L
+            )
+            val viewModel = viewModel(
+                operations = FakeDosingCalibrationOperations(interruptedSnapshot),
+                draftOperations = drafts
+            )
+
+            bind(viewModel)
+            advanceUntilIdle()
+
+            assertEquals(DeviceDosingCalibrationStep.MEASUREMENT, viewModel.uiState.value.step)
+            assertEquals("Trace Elements", viewModel.uiState.value.displayName)
+        }
 
     @Test
     fun `firmware refresh never overwrites the uncommitted name draft`() = runTest(dispatcher) {
@@ -170,6 +274,34 @@ class DeviceDosingChannelCalibrationViewModelTest {
         }
 
     @Test
+    fun `failed physical prime stop keeps the authoritative pump active`() = runTest(dispatcher) {
+        val operations = FakeDosingCalibrationOperations(calibrationSnapshot())
+        val viewModel = viewModel(operations)
+
+        bind(viewModel)
+        advanceUntilIdle()
+        viewModel.onAction(DeviceDosingCalibrationAction.DisplayNameChanged("Trace Elements"))
+        viewModel.onAction(DeviceDosingCalibrationAction.SaveDisplayName)
+        runCurrent()
+        viewModel.onAction(DeviceDosingCalibrationAction.PrimePressed)
+        runCurrent()
+        assertTrue(viewModel.uiState.value.isPumpActive)
+
+        operations.primeStopResult = DeviceDosingCalibrationResult.Rejected(
+            DeviceDosingCalibrationFailure.OUTPUT_STOP_UNCONFIRMED
+        )
+        viewModel.onAction(DeviceDosingCalibrationAction.PrimeReleased)
+        runCurrent()
+
+        assertEquals(
+            DeviceDosingCalibrationError.OUTPUT_STOP_UNCONFIRMED,
+            viewModel.uiState.value.error
+        )
+        assertTrue(viewModel.uiState.value.isPumpActive)
+        assertEquals(1, operations.primeStops)
+    }
+
+    @Test
     fun `mutation invalidation does not replace the active calibration screen with loading state`() =
         runTest(dispatcher) {
             val operations = FakeDosingCalibrationOperations(calibrationSnapshot())
@@ -206,6 +338,8 @@ class DeviceDosingChannelCalibrationViewModelTest {
                 DeviceDosingCalibrationError.CONNECTION,
             DeviceDosingCalibrationFailure.STORAGE to DeviceDosingCalibrationError.STORAGE,
             DeviceDosingCalibrationFailure.HARDWARE to DeviceDosingCalibrationError.HARDWARE,
+            DeviceDosingCalibrationFailure.OUTPUT_STOP_UNCONFIRMED to
+                DeviceDosingCalibrationError.OUTPUT_STOP_UNCONFIRMED,
             DeviceDosingCalibrationFailure.OPERATION_IN_PROGRESS to
                 DeviceDosingCalibrationError.OPERATION_IN_PROGRESS,
             DeviceDosingCalibrationFailure.DEVICE_TIME_NOT_READY to
@@ -218,6 +352,7 @@ class DeviceDosingChannelCalibrationViewModelTest {
                 DeviceDosingCalibrationError.OPERATION_FAILED
         )
 
+        assertEquals(DeviceDosingCalibrationFailure.entries.toSet(), expected.keys)
         expected.forEach { (failure, presentation) ->
             assertEquals(presentation, failure.toCalibrationError())
         }
@@ -311,7 +446,10 @@ class DeviceDosingChannelCalibrationViewModelTest {
     @Test
     fun `exiting active verification stops dose then discards pending session`() = runTest(dispatcher) {
         val operations = FakeDosingCalibrationOperations(activeVerificationSnapshot())
-        val viewModel = viewModel(operations)
+        val drafts = FakeDosingCalibrationDraftOperations().apply {
+            seed("device-1", "channel-1", "Trace Elements")
+        }
+        val viewModel = viewModel(operations, drafts)
 
         bind(viewModel, restoredName = "Trace Elements")
         // Active verification owns a recurring authoritative poll; settle only immediate work.
@@ -322,11 +460,17 @@ class DeviceDosingChannelCalibrationViewModelTest {
         assertEquals(1, operations.verificationStops)
         assertEquals(1, operations.cancels)
         assertTrue(viewModel.events.first() is DeviceDosingCalibrationEvent.Exit)
+        assertNull(drafts.loadDisplayName("device-1", "channel-1"))
     }
 
-    private fun viewModel(operations: FakeDosingCalibrationOperations) =
+    private fun viewModel(
+        operations: FakeDosingCalibrationOperations,
+        draftOperations: FakeDosingCalibrationDraftOperations =
+            FakeDosingCalibrationDraftOperations()
+    ) =
         DeviceDosingChannelCalibrationViewModel(
             operations = operations,
+            draftOperations = draftOperations,
             clock = DeviceDosingCalibrationClock { dispatcher.scheduler.currentTime }
         )
 

@@ -20,7 +20,8 @@ import kotlinx.coroutines.launch
  * Typed event pipeline for module repositories.
  *
  * Wire events remain inside the data runtime. Only validated typed events are offered to module
- * reducers and higher-level runtime coordinators.
+ * owners and higher-level runtime coordinators. Socket lifecycle revokes generation authority but
+ * never fabricates an empty firmware state, so presentation can retain the last validated snapshot.
  */
 class DeviceRuntimeEventPipeline(
     private val repository: DeviceRuntimeRepository,
@@ -64,7 +65,7 @@ class DeviceRuntimeEventPipeline(
 
     private suspend fun activateCurrent(deviceUid: DeviceUid) {
         currentGeneration(deviceUid)?.let { generation ->
-            repository.runtimeModules.clearRuntimeState(deviceUid)
+            repository.runtimeModules.beginRuntimeGeneration(deviceUid, generation)
             router.activate(deviceUid, generation)
         }
     }
@@ -72,8 +73,8 @@ class DeviceRuntimeEventPipeline(
     private suspend fun deactivateCurrent(deviceUid: DeviceUid) {
         currentGeneration(deviceUid)?.let { generation ->
             router.deactivate(deviceUid, generation)
+            repository.runtimeModules.invalidateRuntimeAuthority(deviceUid, generation)
         }
-        repository.runtimeModules.clearRuntimeState(deviceUid)
     }
 
     private suspend fun routeMessage(event: AqlWsEvent.Message) {

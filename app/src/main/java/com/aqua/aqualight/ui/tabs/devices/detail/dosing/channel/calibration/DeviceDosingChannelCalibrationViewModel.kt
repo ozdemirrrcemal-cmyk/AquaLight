@@ -2,6 +2,7 @@ package com.aqua.aqualight.ui.tabs.devices.detail.dosing.channel.calibration
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.aqua.aqualight.application.devices.dosing.DeviceDosingCalibrationDraftOperations
 import com.aqua.aqualight.application.devices.dosing.DeviceDosingCalibrationOperations
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.Flow
@@ -13,10 +14,12 @@ import kotlinx.coroutines.yield
 /** Public lifecycle facade; the private workflow owns the single calibration UI state source. */
 class DeviceDosingChannelCalibrationViewModel(
     operations: DeviceDosingCalibrationOperations,
+    draftOperations: DeviceDosingCalibrationDraftOperations,
     clock: DeviceDosingCalibrationClock = SystemDeviceDosingCalibrationClock
 ) : ViewModel() {
     private val workflow = DosingCalibrationWorkflow(
         operations = operations,
+        draftOperations = draftOperations,
         clock = clock,
         scope = viewModelScope
     )

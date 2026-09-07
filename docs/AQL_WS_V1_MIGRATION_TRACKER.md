@@ -1,5 +1,11 @@
 # AquaLight WS v1 Migration Tracker
 
+> Historical tracker. Golden firmware `feature/cooling-contract-v1` / commit
+> `980b03f0d83cdeb997698fc6b207064aa709cec8` ile gelen 50-command, 13-event
+> Cooling V1 ve WRGB thermal sözleşmesi için güncel envanter
+> `FIRMWARE_GOLDEN_FIXTURE_980B03F.md` dosyasındadır. Aşağıdaki sayılar ve
+> `temperature.changed` maddeleri önceki migration’ın tarihsel kanıtıdır.
+
 Promoted branch: `integration/aql-ws-v1-commercial` → `main` via PR #192
 Firmware source: `AquaLight-Firmware`
 Target: **41 authenticated commands / 0 public commands**

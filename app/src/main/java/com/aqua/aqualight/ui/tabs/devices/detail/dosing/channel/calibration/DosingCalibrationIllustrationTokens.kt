@@ -13,6 +13,7 @@ internal const val FULL_ROTATION_DEGREES = 360f
 internal const val ROTOR_COUNT = 3
 internal const val ROTOR_STEP_DEGREES = 120f
 internal const val DEGREES_TO_RADIANS = kotlin.math.PI / 180.0
+internal const val FULL_WAVE_RADIANS = kotlin.math.PI * 2.0
 
 internal const val SCENE_LEFT = 0.08f
 internal const val SCENE_RIGHT = 0.92f
@@ -48,9 +49,9 @@ internal const val TUBE_INNER_SCALE = 0.52f
 internal const val TUBE_ACTIVE_SCALE = 0.44f
 internal const val TUBE_IDLE_ALPHA = 0.28f
 internal const val TUBE_ACTIVE_ALPHA = 0.92f
-internal const val TUBE_DASH_LENGTH_SCALE = 2.4f
-internal const val TUBE_DASH_GAP_SCALE = 0.75f
-internal const val TUBE_DASH_PHASE_SCALE = 3.2f
+internal const val TUBE_HIGHLIGHT_SCALE = 0.14f
+internal const val TUBE_HIGHLIGHT_MIN_ALPHA = 0.08f
+internal const val TUBE_HIGHLIGHT_ALPHA_DELTA = 0.10f
 
 internal const val DESTINATION_LEFT = 0.76f
 internal const val DESTINATION_RIGHT = 0.91f

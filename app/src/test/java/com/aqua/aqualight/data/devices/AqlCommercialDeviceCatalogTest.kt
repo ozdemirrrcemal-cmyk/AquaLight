@@ -27,7 +27,7 @@ import org.junit.Test
 class AqlCommercialDeviceCatalogTest {
 
     @Test
-    fun `all nine generated products validate as complete typed runtime metadata`() {
+    fun `all seven generated products validate as complete typed runtime metadata`() {
         AqlCommercialDeviceCatalog.products.forEach { product ->
             val validation = AqlCommercialDeviceCatalog.validate(product.toMetadata())
             assertTrue(validation is AqlCommercialCatalogValidation.Valid)

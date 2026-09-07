@@ -60,10 +60,7 @@ internal class DeviceDosingV1CalibrationOperationsAdapter(
             requireCalibrationMutation(baseline.controls.calibrationEditable)
             adapter.repository.startCalibration(
                 uid,
-                DeviceDosingV1CalibrationStartRequest(
-                    channelKey = channelKey,
-                    durationMillis = constraints.calibrationRunDurationMs
-                )
+                DeviceDosingV1CalibrationStartRequest(channelKey = channelKey)
             )
         },
         channel = DeviceDosingV1CalibrationStartResult::channel
@@ -254,6 +251,8 @@ private fun DeviceDosingChannelRejection.toCalibrationFailure(): DeviceDosingCal
         DeviceDosingChannelRejection.BUSY -> DeviceDosingCalibrationFailure.OPERATION_IN_PROGRESS
         DeviceDosingChannelRejection.CONFLICT ->
             DeviceDosingCalibrationFailure.CALIBRATION_STATE_MISMATCH
+        DeviceDosingChannelRejection.OUTPUT_STOP_UNCONFIRMED ->
+            DeviceDosingCalibrationFailure.OUTPUT_STOP_UNCONFIRMED
         else -> DeviceDosingCalibrationFailure.INTERNAL
     }
 

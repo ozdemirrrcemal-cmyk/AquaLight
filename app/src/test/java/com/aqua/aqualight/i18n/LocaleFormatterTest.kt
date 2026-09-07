@@ -97,6 +97,7 @@ class LocaleFormatterTest {
         assertEquals("00:00", LocaleFormatter.formatTimeOfDay24Hour(0, english))
         assertEquals("09:30", LocaleFormatter.formatTimeOfDay24Hour(570, turkish))
         assertEquals("23:59", LocaleFormatter.formatTimeOfDay24Hour(1_439, english))
+        assertEquals("24:00", LocaleFormatter.formatTimeOfDay24Hour(1_440, turkish))
     }
 
     @Test

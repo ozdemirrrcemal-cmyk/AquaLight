@@ -3,6 +3,7 @@ package com.aqua.aqualight.data.devices.runtime.modules.firmware
 import org.json.JSONArray
 import org.json.JSONObject
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Test
@@ -47,6 +48,79 @@ class DeviceFirmwareOtaContractParserTest {
     }
 
     @Test
+    fun `failed exact-state restore requires and accepts structured restart recovery`() {
+        val parsed = DeviceFirmwareStatusParser.parseOtaSnapshotExact(
+            otaSnapshot()
+                .put("phase", "failed")
+                .put("restartRequired", true)
+                .put("lastError", "exact pre-OTA runtime restore failed")
+                .put(
+                    "lastErrorField",
+                    DeviceFirmwareRuntimeContract.ErrorField.SAFE_MODE_RESTORE
+                )
+        ).getOrThrow()
+
+        assertEquals(DeviceFirmwareOtaPhase.FAILED, parsed.phase)
+        assertTrue(parsed.restartRequired)
+        assertEquals(
+            DeviceFirmwareRuntimeContract.ErrorField.SAFE_MODE_RESTORE,
+            parsed.lastErrorField
+        )
+    }
+
+    @Test
+    fun `restart recovery rejects every non-contract restore shape`() {
+        val failedWithoutRestoreIdentity = otaSnapshot()
+            .put("phase", "failed")
+            .put("restartRequired", true)
+            .put("lastError", "download failed")
+            .put("lastErrorField", "stream")
+        val restoreWithoutRestart = otaSnapshot()
+            .put("phase", "failed")
+            .put("lastError", "exact pre-OTA runtime restore failed")
+            .put("lastErrorField", DeviceFirmwareRuntimeContract.ErrorField.SAFE_MODE_RESTORE)
+        val restoreWithScheduledRestart = otaSnapshot()
+            .put("phase", "succeeded")
+            .put("progressPermille", 1_000)
+            .put("progressPercent", 100.0)
+            .put("restartRequired", true)
+            .put("restartScheduled", true)
+            .put("lastError", "exact pre-OTA runtime restore failed")
+            .put("lastErrorField", DeviceFirmwareRuntimeContract.ErrorField.SAFE_MODE_RESTORE)
+
+        assertTrue(
+            DeviceFirmwareStatusParser.parseOtaSnapshotExact(failedWithoutRestoreIdentity)
+                .isFailure
+        )
+        assertTrue(
+            DeviceFirmwareStatusParser.parseOtaSnapshotExact(restoreWithoutRestart).isFailure
+        )
+        assertTrue(
+            DeviceFirmwareStatusParser.parseOtaSnapshotExact(restoreWithScheduledRestart).isFailure
+        )
+    }
+
+    @Test
+    fun `successful deferred install accepts restore failure only as manual restart recovery`() {
+        val parsed = DeviceFirmwareStatusParser.parseOtaSnapshotExact(
+            otaSnapshot()
+                .put("phase", "succeeded")
+                .put("progressPermille", 1_000)
+                .put("progressPercent", 100.0)
+                .put("restartRequired", true)
+                .put("lastError", "exact pre-OTA runtime restore failed")
+                .put(
+                    "lastErrorField",
+                    DeviceFirmwareRuntimeContract.ErrorField.SAFE_MODE_RESTORE
+                )
+        ).getOrThrow()
+
+        assertEquals(DeviceFirmwareOtaPhase.SUCCEEDED, parsed.phase)
+        assertTrue(parsed.restartRequired)
+        assertFalse(parsed.restartScheduled)
+    }
+
+    @Test
     fun `clear parser accepts compact previous state emitted by firmware`() {
         val parsed = DeviceFirmwareStatusParser.parseOtaClearResultExact(
             JSONObject()
@@ -70,6 +144,32 @@ class DeviceFirmwareOtaContractParserTest {
         assertTrue(parsed.cleared)
         assertEquals(DeviceFirmwareOtaPhase.FAILED, parsed.previous.phase)
         assertEquals(DeviceFirmwareOtaPhase.IDLE, parsed.ota.phase)
+    }
+
+    @Test
+    fun `clear parser preserves structured restore recovery in previous state`() {
+        val previous = JSONObject()
+            .put("phase", "failed")
+            .put("restartRequired", true)
+            .put("restartScheduled", false)
+            .put("targetVersion", "2.0.0")
+            .put("lastError", "exact pre-OTA runtime restore failed")
+            .put("lastErrorField", DeviceFirmwareRuntimeContract.ErrorField.SAFE_MODE_RESTORE)
+        val parsed = DeviceFirmwareStatusParser.parseOtaClearResultExact(
+            JSONObject()
+                .put("operation", "otaClear")
+                .put("cleared", true)
+                .put("runtimeTransport", "websocket")
+                .put("command", "firmware.ota.clear")
+                .put("previous", previous)
+                .put("ota", otaSnapshot().put("targetVersion", "").put("sha256Expected", ""))
+        ).getOrThrow()
+
+        assertTrue(parsed.previous.restartRequired)
+        assertEquals(
+            DeviceFirmwareRuntimeContract.ErrorField.SAFE_MODE_RESTORE,
+            parsed.previous.lastErrorField
+        )
     }
 
     @Test

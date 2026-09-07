@@ -1,0 +1,307 @@
+package com.aqua.aqualight.ui.tabs.devices.detail.cooling.presentation.program
+
+import android.os.Bundle
+import androidx.annotation.StringRes
+import androidx.compose.runtime.getValue
+import androidx.compose.ui.platform.ViewCompositionStrategy
+import androidx.fragment.app.viewModels
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.lifecycle.lifecycleScope
+import androidx.lifecycle.repeatOnLifecycle
+import androidx.navigation.fragment.navArgs
+import com.aqua.aqualight.R
+import com.aqua.aqualight.application.devices.cooling.program.CoolingProgramTimeSelection
+import com.aqua.aqualight.base.BaseActivity
+import com.aqua.aqualight.composition.requireAppContainer
+import com.aqua.aqualight.ui.common.bottomsheet.AquaTimePickerBottomSheet
+import com.aqua.aqualight.ui.common.bottomsheet.IntegerStepperBottomSheet
+import com.aqua.aqualight.ui.common.header.AquaHeaderPrimaryAction
+import com.aqua.aqualight.ui.common.loading.setFragmentGlobalLoading
+import com.aqua.aqualight.ui.tabs.devices.detail.cooling.presentation.common.DeviceCoolingModeSettingsFragment
+import com.aqua.aqualight.ui.tabs.devices.detail.cooling.presentation.common.toCommercialCoolingError
+import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.launch
+
+class DeviceCoolingProgramSettingsFragment : DeviceCoolingModeSettingsFragment(
+    R.string.device_cooling_program_settings_title
+) {
+
+    private val args: DeviceCoolingProgramSettingsFragmentArgs by navArgs()
+    private val viewModel: DeviceCoolingProgramSettingsViewModel by viewModels {
+        requireContext().requireAppContainer().defaultViewModelFactory
+    }
+
+    override val destinationDeviceUid: String
+        get() = args.deviceUid
+
+    override fun modeSettingsPrimaryAction(): AquaHeaderPrimaryAction = AquaHeaderPrimaryAction(
+        text = getString(R.string.device_cooling_program_save),
+        contentDescription = getString(R.string.device_cooling_program_save),
+        enabled = viewModel.uiState.value.canSave,
+        onClick = viewModel::saveDraft
+    )
+
+    override fun onModeSettingsViewCreated(savedInstanceState: Bundle?) {
+        super.onModeSettingsViewCreated(savedInstanceState)
+        registerPickerResults()
+        bindHeaderAndLoadingState()
+        bindSaveFeedback()
+        viewModel.bind(destinationDeviceUid)
+        modeSettingsBinding.coolingModeSettingsCompose.apply {
+            setViewCompositionStrategy(ViewCompositionStrategy.DisposeOnViewTreeLifecycleDestroyed)
+            setContent {
+                val state by viewModel.uiState.collectAsStateWithLifecycle()
+                if (state.loadState == DeviceCoolingProgramLoadState.CONTENT) {
+                    DeviceCoolingProgramSettingsScreen(
+                        state = state,
+                        actions = DeviceCoolingProgramSettingsActions(
+                            onSlotClick = viewModel::selectSlot,
+                            onAddSlot = viewModel::addTimeSlot,
+                            onDeleteSlot = viewModel::deleteTimeSlot,
+                            onStartTimeClick = ::showStartTimeSheet,
+                            onEndTimeClick = ::showEndTimeSheet,
+                            onFanOnTemperatureClick = ::showFanOnTemperatureSheet,
+                            onTargetFanPercentChange = viewModel::updateTargetFanPercent
+                        )
+                    )
+                }
+            }
+        }
+    }
+
+    private fun bindHeaderAndLoadingState() {
+        viewLifecycleOwner.lifecycleScope.launch {
+            viewLifecycleOwner.repeatOnLifecycle(Lifecycle.State.STARTED) {
+                viewModel.uiState
+                    .map { state -> state.canSave to state.operationInProgress }
+                    .distinctUntilChanged()
+                    .collect { (_, loading) ->
+                        refreshModeSettingsHeader()
+                        setFragmentGlobalLoading(loading)
+                    }
+            }
+        }
+    }
+
+    private fun bindSaveFeedback() {
+        viewLifecycleOwner.lifecycleScope.launch {
+            viewLifecycleOwner.repeatOnLifecycle(Lifecycle.State.STARTED) {
+                viewModel.uiState
+                    .map { state -> state.saveState to state.commandFailure }
+                    .distinctUntilChanged()
+                    .collect { (saveState, commandFailure) ->
+                        if (saveState.isFailure) {
+                            val messageRes = commandFailure
+                                ?.toCommercialCoolingError()
+                                ?.messageRes
+                                ?: saveState.fallbackCommercialMessageRes()
+                            (activity as? BaseActivity)?.showSnackBar(
+                                getString(messageRes),
+                                BaseActivity.SnackType.WARNING
+                            )
+                        }
+                    }
+            }
+        }
+    }
+
+    private fun registerPickerResults() {
+        registerTimeResult(REQUEST_START_TIME) { slotIndex, minutesOfDay ->
+            if (!viewModel.updateStartTime(slotIndex, minutesOfDay)) {
+                showScheduleValidationWarning()
+            }
+        }
+        registerTimeResult(REQUEST_END_TIME) { slotIndex, minutesOfDay ->
+            if (!viewModel.updateEndTime(slotIndex, minutesOfDay)) {
+                showScheduleValidationWarning()
+            }
+        }
+        parentFragmentManager.setFragmentResultListener(
+            REQUEST_FAN_ON_TEMPERATURE,
+            viewLifecycleOwner
+        ) { _, result ->
+            if (result.getString(IntegerStepperBottomSheet.RESULT_KEY) !=
+                IntegerStepperBottomSheet.RESULT_SAVED
+            ) {
+                return@setFragmentResultListener
+            }
+            val slotIndex = result.getString(IntegerStepperBottomSheet.RESULT_PAYLOAD_ID)
+                ?.toIntOrNull()
+                ?: return@setFragmentResultListener
+            val temperatureC = result.getInt(IntegerStepperBottomSheet.RESULT_VALUE) *
+                PROGRAM_TEMPERATURE_DISPLAY_SCALE
+            if (!viewModel.updateFanOnTemperature(slotIndex, temperatureC)) {
+                showScheduleValidationWarning()
+            }
+        }
+    }
+
+    private fun registerTimeResult(
+        requestKey: String,
+        onSelected: (Int, Int) -> Unit
+    ) {
+        parentFragmentManager.setFragmentResultListener(requestKey, viewLifecycleOwner) { _, result ->
+            if (result.getString(AquaTimePickerBottomSheet.RESULT_KEY) !=
+                AquaTimePickerBottomSheet.RESULT_SELECTED
+            ) {
+                return@setFragmentResultListener
+            }
+            val slotIndex = result.getString(AquaTimePickerBottomSheet.RESULT_PAYLOAD_ID)
+                ?.toIntOrNull()
+                ?: return@setFragmentResultListener
+            onSelected(
+                slotIndex,
+                result.getInt(AquaTimePickerBottomSheet.RESULT_MINUTES_OF_DAY)
+            )
+        }
+    }
+
+    private fun showStartTimeSheet(slotIndex: Int) {
+        val selection = viewModel.startTimeSelection(slotIndex) ?: return
+        val policy = viewModel.uiState.value.policy ?: return
+        showTimeSheet(
+            slotIndex = slotIndex,
+            selection = selection,
+            spec = TimeSheetSpec(
+                requestKey = REQUEST_START_TIME,
+                titleRes = R.string.device_cooling_program_start_time_sheet_title,
+                message = resources.getQuantityString(
+                    R.plurals.device_cooling_program_start_time_sheet_message,
+                    policy.minimumSlotDurationMinutes,
+                    policy.minimumSlotDurationMinutes,
+                    policy.timeStepMinutes
+                ),
+                allowEndOfDay = false
+            )
+        )
+    }
+
+    private fun showEndTimeSheet(slotIndex: Int) {
+        val selection = viewModel.endTimeSelection(slotIndex) ?: return
+        val policy = viewModel.uiState.value.policy ?: return
+        showTimeSheet(
+            slotIndex = slotIndex,
+            selection = selection,
+            spec = TimeSheetSpec(
+                requestKey = REQUEST_END_TIME,
+                titleRes = R.string.device_cooling_program_end_time_sheet_title,
+                message = resources.getQuantityString(
+                    R.plurals.device_cooling_program_end_time_sheet_message,
+                    policy.minimumSlotDurationMinutes,
+                    policy.minimumSlotDurationMinutes,
+                    policy.timeStepMinutes
+                ),
+                allowEndOfDay = true
+            )
+        )
+    }
+
+    private fun showFanOnTemperatureSheet(slotIndex: Int) {
+        val bounds = fanOnTemperatureStepperBounds(viewModel.uiState.value, slotIndex) ?: return
+        IntegerStepperBottomSheet.show(
+            fragmentManager = parentFragmentManager,
+            title = getString(R.string.device_cooling_program_fan_on_temperature_sheet_title),
+            helperText = getString(R.string.device_cooling_program_fan_on_temperature_sheet_helper),
+            valueFormat = getString(R.string.device_cooling_automatic_stepper_value_format),
+            initialValue = bounds.initialValue,
+            minValue = bounds.minimumValue,
+            maxValue = bounds.maximumValue,
+            step = bounds.step,
+            saveText = getString(R.string.device_cooling_automatic_stepper_apply),
+            cancelText = getString(R.string.device_cooling_automatic_stepper_cancel),
+            decreaseContentDescription = getString(
+                R.string.device_cooling_automatic_stepper_decrease
+            ),
+            increaseContentDescription = getString(
+                R.string.device_cooling_automatic_stepper_increase
+            ),
+            requestKey = REQUEST_FAN_ON_TEMPERATURE,
+            payloadId = slotIndex.toString(),
+            displayScale = PROGRAM_TEMPERATURE_DISPLAY_SCALE
+        )
+    }
+
+    private fun showTimeSheet(
+        slotIndex: Int,
+        selection: CoolingProgramTimeSelection,
+        spec: TimeSheetSpec
+    ) {
+        val minutesOfDay = selection.currentMinutesOfDay
+        AquaTimePickerBottomSheet.show(
+            fragmentManager = parentFragmentManager,
+            request = AquaTimePickerBottomSheet.Request(
+                title = getString(spec.titleRes),
+                message = spec.message,
+                initialHour = if (minutesOfDay == MINUTES_PER_DAY) {
+                    HOURS_PER_DAY
+                } else {
+                    minutesOfDay / MINUTES_PER_HOUR
+                },
+                initialMinute = if (minutesOfDay == MINUTES_PER_DAY) {
+                    0
+                } else {
+                    minutesOfDay % MINUTES_PER_HOUR
+                },
+                allowEndOfDay = spec.allowEndOfDay,
+                selectableMinutesOfDay = selection.selectableMinutesOfDay,
+                confirmText = getString(R.string.device_cooling_automatic_stepper_apply),
+                cancelText = getString(R.string.device_cooling_automatic_stepper_cancel),
+                resultTarget = AquaTimePickerBottomSheet.ResultTarget(
+                    requestKey = spec.requestKey,
+                    payloadId = slotIndex.toString()
+                )
+            )
+        )
+    }
+
+    private companion object {
+        const val MINUTES_PER_HOUR = 60
+        const val HOURS_PER_DAY = 24
+        const val MINUTES_PER_DAY = HOURS_PER_DAY * MINUTES_PER_HOUR
+        const val REQUEST_START_TIME = "cooling_program_start_time"
+        const val REQUEST_END_TIME = "cooling_program_end_time"
+        const val REQUEST_FAN_ON_TEMPERATURE = "cooling_program_fan_on_temperature"
+    }
+}
+
+private data class TimeSheetSpec(
+    val requestKey: String,
+    @StringRes val titleRes: Int,
+    val message: String,
+    val allowEndOfDay: Boolean
+)
+
+private fun DeviceCoolingProgramSettingsFragment.showScheduleValidationWarning() {
+    (activity as? BaseActivity)?.showSnackBar(
+        getString(R.string.device_cooling_program_schedule_invalid),
+        BaseActivity.SnackType.WARNING
+    )
+}
+
+private val DeviceCoolingProgramSaveState.isFailure: Boolean
+    get() = when (this) {
+        DeviceCoolingProgramSaveState.UNSUPPORTED,
+        DeviceCoolingProgramSaveState.UNAVAILABLE,
+        DeviceCoolingProgramSaveState.NOT_CONNECTED,
+        DeviceCoolingProgramSaveState.REJECTED,
+        DeviceCoolingProgramSaveState.VALIDATION_ERROR,
+        DeviceCoolingProgramSaveState.ERROR -> true
+        DeviceCoolingProgramSaveState.IDLE,
+        DeviceCoolingProgramSaveState.SAVING,
+        DeviceCoolingProgramSaveState.SAVED -> false
+    }
+
+private fun DeviceCoolingProgramSaveState.fallbackCommercialMessageRes(): Int = when (this) {
+    DeviceCoolingProgramSaveState.UNSUPPORTED -> R.string.device_cooling_error_unsupported_message
+    DeviceCoolingProgramSaveState.UNAVAILABLE -> R.string.device_cooling_error_unavailable_message
+    DeviceCoolingProgramSaveState.NOT_CONNECTED -> R.string.device_cooling_error_not_connected_message
+    DeviceCoolingProgramSaveState.REJECTED -> R.string.device_cooling_error_rejected_message
+    DeviceCoolingProgramSaveState.VALIDATION_ERROR ->
+        R.string.device_cooling_error_invalid_configuration_message
+    DeviceCoolingProgramSaveState.ERROR -> R.string.device_cooling_error_protocol_message
+    DeviceCoolingProgramSaveState.IDLE,
+    DeviceCoolingProgramSaveState.SAVING,
+    DeviceCoolingProgramSaveState.SAVED -> R.string.device_cooling_error_rejected_message
+}

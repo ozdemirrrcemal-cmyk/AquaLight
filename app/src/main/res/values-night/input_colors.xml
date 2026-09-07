@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <!-- AquaInput base colors -->
-    <color name="aqua_input_background">@color/aqua_palette_hex_101d2c</color>
+    <color name="aqua_input_background">@color/aqua_palette_hex_061727</color>
 
     <color name="aqua_input_stroke_focused">@color/aqua_palette_hex_6489c9</color>
     <color name="aqua_input_stroke_unfocused">@color/aqua_palette_hex_3a5878</color>

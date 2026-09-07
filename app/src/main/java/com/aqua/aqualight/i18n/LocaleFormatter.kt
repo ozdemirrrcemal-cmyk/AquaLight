@@ -102,6 +102,16 @@ object LocaleFormatter {
         return formatDate(timeMillis, appLocale(context))
     }
 
+    /** Formats a compact weekday label such as Mon / Pzt for charts and calendars. */
+    fun formatWeekdayShort(context: Context, timeMillis: Long): String {
+        return formatWeekdayShort(timeMillis, appLocale(context))
+    }
+
+    /** Formats a compact day-month label such as 30 Aug / 30 Ağu. */
+    fun formatDayMonthShort(context: Context, timeMillis: Long): String {
+        return formatDayMonthShort(timeMillis, appLocale(context))
+    }
+
     /** Formats a calendar-only value without converting it through a timezone-dependent instant. */
     fun formatDateEpochDay(context: Context, epochDay: Long): String {
         return formatDateEpochDay(epochDay, appLocale(context))
@@ -125,15 +135,19 @@ object LocaleFormatter {
         )
     }
 
-    /** Formats a wall-clock schedule value without converting it through a timezone. */
+    /**
+     * Formats a wall-clock schedule value without converting it through a timezone.
+     * The exclusive end-of-day boundary is represented as 24:00 when a product contract allows it.
+     */
     fun formatTimeOfDay24Hour(context: Context, minutesOfDay: Int): String {
         return formatTimeOfDay24Hour(minutesOfDay, appLocale(context))
     }
 
     internal fun formatTimeOfDay24Hour(minutesOfDay: Int, locale: Locale): String {
-        require(minutesOfDay in 0 until MINUTES_PER_DAY) {
-            "minutesOfDay must be inside one day."
+        require(minutesOfDay in 0..MINUTES_PER_DAY) {
+            "minutesOfDay must be inside one day or its exclusive 24:00 boundary."
         }
+        if (minutesOfDay == MINUTES_PER_DAY) return END_OF_DAY_TIME
         return DateTimeFormatter.ofPattern(TIME_OF_DAY_24_HOUR_PATTERN, locale)
             .format(LocalTime.of(minutesOfDay / MINUTES_PER_HOUR, minutesOfDay % MINUTES_PER_HOUR))
     }
@@ -202,6 +216,14 @@ object LocaleFormatter {
         ).format(Date(timeMillis))
     }
 
+    internal fun formatWeekdayShort(timeMillis: Long, locale: Locale): String {
+        return SimpleDateFormat(WEEKDAY_SHORT_PATTERN, locale).format(Date(timeMillis))
+    }
+
+    internal fun formatDayMonthShort(timeMillis: Long, locale: Locale): String {
+        return SimpleDateFormat(DAY_MONTH_SHORT_PATTERN, locale).format(Date(timeMillis))
+    }
+
     internal fun formatDateEpochDay(epochDay: Long, locale: Locale): String {
         return DateTimeFormatter.ofLocalizedDate(FormatStyle.MEDIUM)
             .withLocale(locale)
@@ -247,5 +269,8 @@ object LocaleFormatter {
 
     private const val MINUTES_PER_HOUR = 60
     private const val MINUTES_PER_DAY = 24 * MINUTES_PER_HOUR
+    private const val END_OF_DAY_TIME = "24:00"
     private const val TIME_OF_DAY_24_HOUR_PATTERN = "HH:mm"
+    private const val WEEKDAY_SHORT_PATTERN = "EEE"
+    private const val DAY_MONTH_SHORT_PATTERN = "d MMM"
 }

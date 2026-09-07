@@ -12,7 +12,7 @@ import com.google.android.material.bottomsheet.BottomSheetDialogFragment
 import com.google.android.material.button.MaterialButton
 import java.util.Locale
 
-/** Process-safe integer editor for bounded values that must not accept free-form text. */
+/** Process-safe bounded stepper that can also render scaled decimal values without free-form text. */
 class IntegerStepperBottomSheet : BottomSheetDialogFragment(
     R.layout.bottom_sheet_integer_stepper
 ) {
@@ -27,6 +27,9 @@ class IntegerStepperBottomSheet : BottomSheetDialogFragment(
         val minValue = minOf(args.getInt(ARG_MIN_VALUE), args.getInt(ARG_MAX_VALUE))
         val maxValue = maxOf(args.getInt(ARG_MIN_VALUE), args.getInt(ARG_MAX_VALUE))
         val step = args.getInt(ARG_STEP).coerceAtLeast(1)
+        val displayScale = args.getDouble(ARG_DISPLAY_SCALE, DEFAULT_DISPLAY_SCALE)
+            .takeIf { scale -> scale.isFinite() && scale > 0.0 }
+            ?: DEFAULT_DISPLAY_SCALE
         val initialValue = args.getInt(ARG_INITIAL_VALUE).coerceIn(minValue, maxValue)
         val savedValue = savedInstanceState
             ?.takeIf { state -> state.containsKey(STATE_SELECTED_VALUE) }
@@ -75,7 +78,8 @@ class IntegerStepperBottomSheet : BottomSheetDialogFragment(
         fun renderSelection() {
             valueText.text = formatValue(
                 format = args.getString(ARG_VALUE_FORMAT).orEmpty(),
-                value = selectedValue
+                value = selectedValue,
+                displayScale = displayScale
             )
             valueText.contentDescription = valueText.text
             decreaseButton.isEnabled = selectedValue > minValue
@@ -105,11 +109,18 @@ class IntegerStepperBottomSheet : BottomSheetDialogFragment(
         super.onCancel(dialog)
     }
 
-    private fun formatValue(format: String, value: Int): String {
-        if (format.isBlank()) return value.toString()
+    private fun formatValue(format: String, value: Int, displayScale: Double): String {
+        if (format.isBlank()) {
+            val scaled = value * displayScale
+            return if (displayScale == DEFAULT_DISPLAY_SCALE) value.toString() else scaled.toString()
+        }
         return runCatching {
-            String.format(Locale.getDefault(), format, value)
-        }.getOrDefault(value.toString())
+            if (displayScale == DEFAULT_DISPLAY_SCALE) {
+                String.format(Locale.getDefault(), format, value)
+            } else {
+                String.format(Locale.getDefault(), format, value * displayScale)
+            }
+        }.getOrDefault((value * displayScale).toString())
     }
 
     private fun publish(result: String, value: Int) {
@@ -140,6 +151,7 @@ class IntegerStepperBottomSheet : BottomSheetDialogFragment(
         private const val ARG_MIN_VALUE = "arg_min_value"
         private const val ARG_MAX_VALUE = "arg_max_value"
         private const val ARG_STEP = "arg_step"
+        private const val ARG_DISPLAY_SCALE = "arg_display_scale"
         private const val ARG_SAVE_TEXT = "arg_save_text"
         private const val ARG_CANCEL_TEXT = "arg_cancel_text"
         private const val ARG_DECREASE_CONTENT_DESCRIPTION =
@@ -152,6 +164,7 @@ class IntegerStepperBottomSheet : BottomSheetDialogFragment(
             "arg_disable_save_when_unchanged"
         private const val STATE_SELECTED_VALUE = "state_selected_value"
         private const val TAG_PREFIX = "IntegerStepperBottomSheet:"
+        private const val DEFAULT_DISPLAY_SCALE = 1.0
 
         @Suppress("LongParameterList")
         fun show(
@@ -169,10 +182,14 @@ class IntegerStepperBottomSheet : BottomSheetDialogFragment(
             increaseContentDescription: String,
             requestKey: String,
             payloadId: String = "",
-            disableSaveWhenUnchanged: Boolean = false
+            disableSaveWhenUnchanged: Boolean = false,
+            displayScale: Double = DEFAULT_DISPLAY_SCALE
         ) {
             require(minValue <= maxValue) { "Minimum value must not exceed maximum value." }
             require(step > 0) { "Step must be positive." }
+            require(displayScale.isFinite() && displayScale > 0.0) {
+                "Display scale must be finite and positive."
+            }
             val tag = TAG_PREFIX + requestKey
             if (
                 fragmentManager.findFragmentByTag(tag) != null ||
@@ -189,6 +206,7 @@ class IntegerStepperBottomSheet : BottomSheetDialogFragment(
                     ARG_MIN_VALUE to minValue,
                     ARG_MAX_VALUE to maxValue,
                     ARG_STEP to step,
+                    ARG_DISPLAY_SCALE to displayScale,
                     ARG_SAVE_TEXT to saveText,
                     ARG_CANCEL_TEXT to cancelText,
                     ARG_DECREASE_CONTENT_DESCRIPTION to decreaseContentDescription,

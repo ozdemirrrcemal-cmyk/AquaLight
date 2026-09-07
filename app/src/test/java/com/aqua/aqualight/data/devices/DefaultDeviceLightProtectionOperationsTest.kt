@@ -2,8 +2,6 @@ package com.aqua.aqualight.data.devices
 
 import com.aqua.aqualight.application.devices.DeviceLightProtectionThresholdPolicy
 import com.aqua.aqualight.data.devices.model.DeviceUid
-import com.aqua.aqualight.data.devices.runtime.modules.cooling.DeviceCoolingRuntimeState
-import com.aqua.aqualight.data.devices.runtime.modules.cooling.DeviceCoolingTemperatureSnapshot
 import com.aqua.aqualight.data.devices.runtime.modules.light.DeviceLightTemperatureProtectionRuntimeCapabilities
 import com.aqua.aqualight.data.devices.runtime.modules.light.DeviceLightTemperatureProtectionSnapshot
 import com.aqua.aqualight.data.devices.runtime.modules.light.DeviceLightTemperatureProtectionStatus
@@ -16,21 +14,13 @@ import org.junit.Test
 class DefaultDeviceLightProtectionOperationsTest {
 
     @Test
-    fun `maps valid runtime state into application values and edit policy`() {
+    fun `maps light protection state into application values and edit policy`() {
         val snapshot = toDeviceLightProtectionSnapshot(
             available = true,
-            coolingState = DeviceCoolingRuntimeState(
-                temperature = DeviceCoolingTemperatureSnapshot(
-                    sensorIndex = 0,
-                    readingValid = true,
-                    temperatureC = 54.25,
-                    sampledAtMs = 1_000L
-                )
-            ),
             protectionStatus = protectionStatus()
         )
 
-        assertEquals(54.25, snapshot.currentTemperatureCelsius ?: 0.0, 0.0)
+        assertNull(snapshot.currentTemperatureCelsius)
         assertEquals(60.0, snapshot.thresholdCelsius ?: 0.0, 0.0)
         assertEquals(
             DeviceLightProtectionThresholdPolicy(
@@ -45,17 +35,9 @@ class DefaultDeviceLightProtectionOperationsTest {
     }
 
     @Test
-    fun `fails closed for invalid temperature and read only threshold`() {
+    fun `fails closed for read only threshold`() {
         val snapshot = toDeviceLightProtectionSnapshot(
             available = true,
-            coolingState = DeviceCoolingRuntimeState(
-                temperature = DeviceCoolingTemperatureSnapshot(
-                    sensorIndex = 0,
-                    readingValid = false,
-                    temperatureC = 54.25,
-                    sampledAtMs = 1_000L
-                )
-            ),
             protectionStatus = protectionStatus(readOnly = true)
         )
 
@@ -67,14 +49,6 @@ class DefaultDeviceLightProtectionOperationsTest {
     fun `does not expose runtime values when catalog availability is false`() {
         val snapshot = toDeviceLightProtectionSnapshot(
             available = false,
-            coolingState = DeviceCoolingRuntimeState(
-                temperature = DeviceCoolingTemperatureSnapshot(
-                    sensorIndex = 0,
-                    readingValid = true,
-                    temperatureC = 54.25,
-                    sampledAtMs = 1_000L
-                )
-            ),
             protectionStatus = protectionStatus()
         )
 

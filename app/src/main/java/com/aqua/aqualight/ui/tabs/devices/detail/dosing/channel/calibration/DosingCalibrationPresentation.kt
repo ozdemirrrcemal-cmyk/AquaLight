@@ -4,7 +4,11 @@ import androidx.annotation.StringRes
 import com.aqua.aqualight.R
 
 internal fun DeviceDosingCalibrationUiState.illustrationOperationDurationMillis(): Int = when (step) {
-    DeviceDosingCalibrationStep.CALIBRATION_RUN -> CALIBRATION_RUN_DURATION_MILLIS
+    DeviceDosingCalibrationStep.CALIBRATION_RUN -> operationDurationMs
+        .takeIf { it > 0L }
+        ?.coerceIn(MIN_ILLUSTRATION_OPERATION_MILLIS, MAX_ILLUSTRATION_OPERATION_MILLIS)
+        ?.toInt()
+        ?: DEFAULT_ILLUSTRATION_DURATION_MILLIS
     DeviceDosingCalibrationStep.VERIFICATION -> candidateDoseMsPerMl
         ?.times(VERIFICATION_DOSE_ML)
         ?.coerceIn(MIN_ILLUSTRATION_OPERATION_MILLIS, MAX_ILLUSTRATION_OPERATION_MILLIS)
@@ -63,6 +67,8 @@ internal val DeviceDosingCalibrationError.messageRes: Int
         DeviceDosingCalibrationError.CONNECTION -> R.string.device_dosing_calibration_connection_error
         DeviceDosingCalibrationError.STORAGE -> R.string.device_dosing_calibration_storage_error
         DeviceDosingCalibrationError.HARDWARE -> R.string.device_dosing_calibration_hardware_error
+        DeviceDosingCalibrationError.OUTPUT_STOP_UNCONFIRMED ->
+            R.string.device_dosing_error_output_stop_unconfirmed
         DeviceDosingCalibrationError.OPERATION_IN_PROGRESS ->
             R.string.device_dosing_calibration_operation_in_progress
         DeviceDosingCalibrationError.DEVICE_TIME_NOT_READY ->

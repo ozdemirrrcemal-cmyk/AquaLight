@@ -1,6 +1,6 @@
 package com.aqua.aqualight.data.aquarium.model
 
-import com.aqua.aqualight.data.aquarium.util.AquariumIdGenerator
+import com.aqua.aqualight.application.aquarium.AquariumIdGenerator
 
 data class TankPlantTag(
     val id: Long = AquariumIdGenerator.newLong(),

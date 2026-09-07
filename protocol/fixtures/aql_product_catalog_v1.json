@@ -3,7 +3,7 @@
   "schema": "aql.product.catalog.fixture.v1",
   "source": {
     "repository": "ozdemirrrcemal-cmyk/AquaLight-Firmware",
-    "commit": "cf2222e58e6c69a729071a5d1205497b3fceaa70",
+    "commit": "2e3688f266d7ed34a6773badafcd62af73cf4aac",
     "catalogPath": "src/product/AqlProductCatalog.hpp",
     "exporterPath": "tools/aql_export_product_catalog.cpp"
   },
@@ -34,7 +34,6 @@
         "LIGHT_TEMPERATURE_PROTECTION",
         "LIGHT_FAN_CONTROL",
         "TEMPERATURE_READ",
-        "COOLING_CONTROL",
         "OTA_UPDATE"
       ],
       "supportedScreens": [
@@ -201,16 +200,20 @@
         "WIFI_SETUP",
         "LAN_DISCOVERY",
         "COOLING_CONTROL",
-        "COOLING_FAN_DISPLAY_NAME",
+        "COOLING_PROGRAM",
+        "COOLING_HISTORY",
+        "COOLING_SILENT_MODE",
+        "COOLING_POWER_ESTIMATE",
         "TEMPERATURE_READ",
+        "ROOM_AMBIENT_READ",
+        "HUMIDITY_READ",
         "OTA_UPDATE"
       ],
       "supportedScreens": [
         "OVERVIEW",
         "COOLING_CONTROL",
-        "COOLING_RULES",
-        "COOLING_FANS",
-        "COOLING_SENSOR_STATUS",
+        "COOLING_PROGRAM",
+        "COOLING_HISTORY",
         "ADVANCED"
       ],
       "expectedMenuFeatures": [
@@ -356,47 +359,7 @@
       "limits": {
         "lightChannelCount": 0,
         "fanOutputCount": 1,
-        "temperatureSensorCount": 1,
-        "timerChannelCount": 0,
-        "dosingChannelCount": 0
-      }
-    },
-    {
-      "profile": "coolingCoolPro",
-      "env": "cooling_cool_pro_2f",
-      "productKey": "COOLING_COOL_PRO_2F",
-      "productId": "com.aqualight.cooling.cool_pro_2f",
-      "family": "cooling",
-      "line": "cool_pro",
-      "model": "cool_pro_2f",
-      "displayName": "Cool Pro 2 Fan",
-      "skuId": "com.aqualight.cooling.cool_pro_2f.global.black",
-      "skuCode": "AQL-C-CP2F-GLB-BLK",
-      "hardwareRevision": "2.0",
-      "limits": {
-        "lightChannelCount": 0,
-        "fanOutputCount": 2,
-        "temperatureSensorCount": 1,
-        "timerChannelCount": 0,
-        "dosingChannelCount": 0
-      }
-    },
-    {
-      "profile": "coolingCoolPro",
-      "env": "cooling_cool_pro_3f",
-      "productKey": "COOLING_COOL_PRO_3F",
-      "productId": "com.aqualight.cooling.cool_pro_3f",
-      "family": "cooling",
-      "line": "cool_pro",
-      "model": "cool_pro_3f",
-      "displayName": "Cool Pro 3 Fan",
-      "skuId": "com.aqualight.cooling.cool_pro_3f.global.black",
-      "skuCode": "AQL-C-CP3F-GLB-BLK",
-      "hardwareRevision": "2.0",
-      "limits": {
-        "lightChannelCount": 0,
-        "fanOutputCount": 3,
-        "temperatureSensorCount": 1,
+        "temperatureSensorCount": 2,
         "timerChannelCount": 0,
         "dosingChannelCount": 0
       }

@@ -124,7 +124,7 @@ class DosingUiLayerBoundaryTest {
         assertTrue(v1Root.isDirectory)
         assertFalse(provider.contains("DeviceDosingV1"))
         assertFalse(runtimeRepository.contains("DeviceDosingV1"))
-        assertTrue(ownerGraph.contains("dosingOperations = createDosingOperations(dependencies)"))
+        assertTrue(ownerGraph.contains("val dosingOperations = createDosingOperations(dependencies)"))
         assertTrue(ownerGraph.contains("DeviceDosingV1ProductionRuntime("))
         assertTrue(productionRuntime.contains("DeviceDosingV1StateOwner(lowLevelAlertLedger)"))
         assertTrue(

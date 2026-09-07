@@ -127,6 +127,8 @@ object DeviceFirmwareStatusParser {
         val sha256Expected = source.requiredStringAllowEmpty("sha256Expected")
         val sha256Actual = source.requiredStringAllowEmpty("sha256Actual")
         val urlScheme = source.requiredStringAllowEmpty("urlScheme")
+        val lastError = source.requiredStringAllowEmpty("lastError")
+        val lastErrorField = source.requiredStringAllowEmpty("lastErrorField")
 
         require(progressPermille in 0..1_000) { "OTA progressPermille is outside 0..1000." }
         require(abs(progressPercent - progressPermille / 10.0) <= 0.11) {
@@ -152,8 +154,13 @@ object DeviceFirmwareStatusParser {
             DeviceFirmwareOtaPhase.VERIFYING
         )
         require(active == activePhase) { "OTA active flag differs from its exact phase." }
-        require(!restartRequired || phase == DeviceFirmwareOtaPhase.SUCCEEDED)
-        require(!restartScheduled || restartRequired)
+        requireValidRestartState(
+            phase = phase,
+            restartRequired = restartRequired,
+            restartScheduled = restartScheduled,
+            lastError = lastError,
+            lastErrorField = lastErrorField
+        )
         if (active || phase.isTerminal) {
             require(targetVersion.isNotBlank()) { "Active/terminal OTA targetVersion is missing." }
         }
@@ -177,8 +184,8 @@ object DeviceFirmwareStatusParser {
             targetVersion = targetVersion,
             sha256Expected = sha256Expected,
             sha256Actual = sha256Actual,
-            lastError = source.requiredStringAllowEmpty("lastError"),
-            lastErrorField = source.requiredStringAllowEmpty("lastErrorField"),
+            lastError = lastError,
+            lastErrorField = lastErrorField,
             urlScheme = urlScheme,
             httpStatus = httpStatus
         )
@@ -192,8 +199,15 @@ object DeviceFirmwareStatusParser {
         }
         val restartRequired = source.requiredExactBoolean("restartRequired")
         val restartScheduled = source.requiredExactBoolean("restartScheduled")
-        require(!restartRequired || phase == DeviceFirmwareOtaPhase.SUCCEEDED)
-        require(!restartScheduled || restartRequired)
+        val lastError = source.requiredStringAllowEmpty("lastError")
+        val lastErrorField = source.requiredStringAllowEmpty("lastErrorField")
+        requireValidRestartState(
+            phase = phase,
+            restartRequired = restartRequired,
+            restartScheduled = restartScheduled,
+            lastError = lastError,
+            lastErrorField = lastErrorField
+        )
         return DeviceFirmwareOtaSnapshot(
             phase = phase,
             phaseRaw = phaseRaw,
@@ -204,9 +218,39 @@ object DeviceFirmwareStatusParser {
             restartRequired = restartRequired,
             restartScheduled = restartScheduled,
             targetVersion = source.requiredStringAllowEmpty("targetVersion"),
-            lastError = source.requiredStringAllowEmpty("lastError"),
-            lastErrorField = source.requiredStringAllowEmpty("lastErrorField")
+            lastError = lastError,
+            lastErrorField = lastErrorField
         )
+    }
+
+    private fun requireValidRestartState(
+        phase: DeviceFirmwareOtaPhase,
+        restartRequired: Boolean,
+        restartScheduled: Boolean,
+        lastError: String,
+        lastErrorField: String
+    ) {
+        val exactRestoreFailure =
+            lastErrorField == DeviceFirmwareRuntimeContract.ErrorField.SAFE_MODE_RESTORE
+        val restartRequiredPhase = phase == DeviceFirmwareOtaPhase.SUCCEEDED ||
+            (phase == DeviceFirmwareOtaPhase.FAILED && exactRestoreFailure)
+
+        require(!restartRequired || restartRequiredPhase) {
+            "OTA restartRequired differs from its exact terminal recovery state."
+        }
+        require(!restartScheduled || restartRequired) {
+            "OTA restartScheduled requires restartRequired."
+        }
+        if (exactRestoreFailure) {
+            require(phase.isTerminal) { "OTA safe-mode restore failure must be terminal." }
+            require(restartRequired) { "OTA safe-mode restore failure requires a restart." }
+            require(!restartScheduled) {
+                "OTA safe-mode restore failure cannot claim that a restart is scheduled."
+            }
+            require(lastError.isNotBlank()) {
+                "OTA safe-mode restore failure requires a diagnostic."
+            }
+        }
     }
 
     private fun JSONObject.requireExactKeys(expected: Set<String>, label: String) {

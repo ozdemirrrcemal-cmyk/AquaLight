@@ -341,7 +341,7 @@
 
     <fragment
         android:id="@+id/deviceCoolingRootFragment"
-        android:name="com.aqua.aqualight.ui.tabs.devices.detail.cooling.DeviceCoolingRootFragment"
+        android:name="com.aqua.aqualight.ui.tabs.devices.detail.cooling.presentation.root.DeviceCoolingRootFragment"
         android:label="@string/device_family_cooling"
         tools:layout="@layout/fragment_device_cooling_root">
         <argument
@@ -388,7 +388,7 @@
 
     <fragment
         android:id="@+id/deviceCoolingSettingsFragment"
-        android:name="com.aqua.aqualight.ui.tabs.devices.detail.cooling.settings.DeviceCoolingSettingsFragment"
+        android:name="com.aqua.aqualight.ui.tabs.devices.detail.cooling.presentation.settings.DeviceCoolingSettingsFragment"
         android:label="@string/device_settings_title"
         tools:layout="@layout/fragment_device_family_settings">
         <argument

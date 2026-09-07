@@ -34,6 +34,7 @@ data class AquaDeviceCardColors(
     val primaryText: Color,
     val secondaryText: Color,
     val accent: Color,
+    val success: Color,
     val warning: Color,
     val danger: Color
 )
@@ -73,6 +74,7 @@ fun aquaDeviceCardColors(): AquaDeviceCardColors = AquaDeviceCardColors(
     primaryText = colorResource(R.color.aqua_card_text_primary),
     secondaryText = colorResource(R.color.aqua_card_text_secondary),
     accent = colorResource(R.color.aqua_card_state_active),
+    success = colorResource(R.color.aqua_card_state_success),
     warning = colorResource(R.color.aqua_card_state_warning),
     danger = colorResource(R.color.aqua_card_state_danger)
 )
@@ -129,9 +131,9 @@ fun AquaDeviceCardSurface(
     )
 }
 
-private const val CARD_CORNER_RADIUS_DP = 18
-private const val CONTENT_HORIZONTAL_PADDING_DP = 14
-private const val CONTENT_VERTICAL_PADDING_DP = 12
+private const val CARD_CORNER_RADIUS_DP = 14
+private const val CONTENT_HORIZONTAL_PADDING_DP = 12
+private const val CONTENT_VERTICAL_PADDING_DP = 10
 private const val OUTLINE_WIDTH_DP = 1
 private const val MARKER_SIZE_DP = 22
 private const val MARKER_CORNER_RADIUS_DP = 7

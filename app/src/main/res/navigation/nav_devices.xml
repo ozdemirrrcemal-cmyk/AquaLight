@@ -149,9 +149,7 @@
         android:name="com.aqua.aqualight.ui.tabs.devices.add.DeviceProvisioningProgressFragment"
         android:label="@string/device_provisioning_title"
         tools:layout="@layout/fragment_device_provisioning_progress">
-        <argument
-            android:name="sessionId"
-            app:argType="string" />
+        <argument android:name="sessionId" app:argType="string" />
     </fragment>
 
     <fragment
@@ -159,9 +157,7 @@
         android:name="com.aqua.aqualight.ui.tabs.devices.detail.light.DeviceLightRootFragment"
         android:label="@string/device_family_light"
         tools:layout="@layout/fragment_device_light_root">
-        <argument
-            android:name="deviceUid"
-            app:argType="string" />
+        <argument android:name="deviceUid" app:argType="string" />
         <action
             android:id="@+id/action_deviceLightRootFragment_to_deviceLightSettingsFragment"
             app:destination="@id/deviceLightSettingsFragment"
@@ -176,9 +172,7 @@
         android:name="com.aqua.aqualight.ui.tabs.devices.detail.dosing.root.DeviceDosingRootFragment"
         android:label="@string/device_family_dosing"
         tools:layout="@layout/fragment_device_dosing_root">
-        <argument
-            android:name="deviceUid"
-            app:argType="string" />
+        <argument android:name="deviceUid" app:argType="string" />
         <action
             android:id="@+id/action_deviceDosingRootFragment_to_deviceDosingSettingsFragment"
             app:destination="@id/deviceDosingSettingsFragment"
@@ -193,9 +187,7 @@
         android:name="com.aqua.aqualight.ui.tabs.devices.detail.timer.DeviceTimerRootFragment"
         android:label="@string/device_family_timer"
         tools:layout="@layout/fragment_device_timer_root">
-        <argument
-            android:name="deviceUid"
-            app:argType="string" />
+        <argument android:name="deviceUid" app:argType="string" />
         <action
             android:id="@+id/action_deviceTimerRootFragment_to_deviceTimerSettingsFragment"
             app:destination="@id/deviceTimerSettingsFragment"
@@ -207,12 +199,10 @@
 
     <fragment
         android:id="@+id/deviceCoolingRootFragment"
-        android:name="com.aqua.aqualight.ui.tabs.devices.detail.cooling.DeviceCoolingRootFragment"
+        android:name="com.aqua.aqualight.ui.tabs.devices.detail.cooling.presentation.root.DeviceCoolingRootFragment"
         android:label="@string/device_family_cooling"
         tools:layout="@layout/fragment_device_cooling_root">
-        <argument
-            android:name="deviceUid"
-            app:argType="string" />
+        <argument android:name="deviceUid" app:argType="string" />
         <action
             android:id="@+id/action_deviceCoolingRootFragment_to_deviceCoolingSettingsFragment"
             app:destination="@id/deviceCoolingSettingsFragment"
@@ -223,13 +213,56 @@
     </fragment>
 
     <fragment
+        android:id="@+id/deviceCoolingTemperatureHistoryFragment"
+        android:name="com.aqua.aqualight.ui.tabs.devices.detail.cooling.presentation.history.DeviceCoolingTemperatureHistoryFragment"
+        android:label="@string/device_cooling_history_title"
+        tools:layout="@layout/fragment_device_cooling_temperature_history">
+        <argument android:name="deviceUid" app:argType="string" />
+        <deepLink app:uri="aqualight://app/device/{deviceUid}/cooling/history" />
+    </fragment>
+
+    <fragment
+        android:id="@+id/deviceCoolingSystemStatusFragment"
+        android:name="com.aqua.aqualight.ui.tabs.devices.detail.cooling.presentation.status.DeviceCoolingSystemStatusFragment"
+        android:label="@string/device_cooling_system_status_title"
+        tools:layout="@layout/fragment_device_cooling_system_status">
+        <argument android:name="deviceUid" app:argType="string" />
+        <deepLink app:uri="aqualight://app/device/{deviceUid}/cooling/status" />
+    </fragment>
+
+    <fragment
+        android:id="@+id/deviceCoolingAutomaticSettingsFragment"
+        android:name="com.aqua.aqualight.ui.tabs.devices.detail.cooling.presentation.automatic.DeviceCoolingAutomaticSettingsFragment"
+        android:label="@string/device_cooling_automatic_settings_title"
+        tools:layout="@layout/fragment_device_cooling_mode_settings">
+        <argument android:name="deviceUid" app:argType="string" />
+        <deepLink app:uri="aqualight://app/device/{deviceUid}/cooling/automatic" />
+    </fragment>
+
+    <fragment
+        android:id="@+id/deviceCoolingManualSettingsFragment"
+        android:name="com.aqua.aqualight.ui.tabs.devices.detail.cooling.presentation.manual.DeviceCoolingManualSettingsFragment"
+        android:label="@string/device_cooling_manual_settings_title"
+        tools:layout="@layout/fragment_device_cooling_mode_settings">
+        <argument android:name="deviceUid" app:argType="string" />
+        <deepLink app:uri="aqualight://app/device/{deviceUid}/cooling/manual" />
+    </fragment>
+
+    <fragment
+        android:id="@+id/deviceCoolingProgramSettingsFragment"
+        android:name="com.aqua.aqualight.ui.tabs.devices.detail.cooling.presentation.program.DeviceCoolingProgramSettingsFragment"
+        android:label="@string/device_cooling_program_settings_title"
+        tools:layout="@layout/fragment_device_cooling_mode_settings">
+        <argument android:name="deviceUid" app:argType="string" />
+        <deepLink app:uri="aqualight://app/device/{deviceUid}/cooling/program" />
+    </fragment>
+
+    <fragment
         android:id="@+id/deviceLightSettingsFragment"
         android:name="com.aqua.aqualight.ui.tabs.devices.detail.light.settings.DeviceLightSettingsFragment"
         android:label="@string/device_settings_title"
         tools:layout="@layout/fragment_device_family_settings">
-        <argument
-            android:name="deviceUid"
-            app:argType="string" />
+        <argument android:name="deviceUid" app:argType="string" />
     </fragment>
 
     <fragment
@@ -237,9 +270,7 @@
         android:name="com.aqua.aqualight.ui.tabs.devices.detail.dosing.settings.DeviceDosingSettingsFragment"
         android:label="@string/device_settings_title"
         tools:layout="@layout/fragment_device_family_settings">
-        <argument
-            android:name="deviceUid"
-            app:argType="string" />
+        <argument android:name="deviceUid" app:argType="string" />
     </fragment>
 
     <fragment
@@ -247,19 +278,15 @@
         android:name="com.aqua.aqualight.ui.tabs.devices.detail.timer.settings.DeviceTimerSettingsFragment"
         android:label="@string/device_settings_title"
         tools:layout="@layout/fragment_device_family_settings">
-        <argument
-            android:name="deviceUid"
-            app:argType="string" />
+        <argument android:name="deviceUid" app:argType="string" />
     </fragment>
 
     <fragment
         android:id="@+id/deviceCoolingSettingsFragment"
-        android:name="com.aqua.aqualight.ui.tabs.devices.detail.cooling.settings.DeviceCoolingSettingsFragment"
+        android:name="com.aqua.aqualight.ui.tabs.devices.detail.cooling.presentation.settings.DeviceCoolingSettingsFragment"
         android:label="@string/device_settings_title"
         tools:layout="@layout/fragment_device_family_settings">
-        <argument
-            android:name="deviceUid"
-            app:argType="string" />
+        <argument android:name="deviceUid" app:argType="string" />
     </fragment>
 
     <fragment
@@ -267,11 +294,8 @@
         android:name="com.aqua.aqualight.ui.tabs.devices.detail.update.DeviceFirmwareUpdateFragment"
         android:label="@string/device_settings_firmware_update_title"
         tools:layout="@layout/fragment_device_firmware_update">
-        <argument
-            android:name="deviceUid"
-            app:argType="string" />
-        <deepLink
-            app:uri="aqualight://app/device/{deviceUid}/firmware-update" />
+        <argument android:name="deviceUid" app:argType="string" />
+        <deepLink app:uri="aqualight://app/device/{deviceUid}/firmware-update" />
     </fragment>
 
     <fragment
@@ -279,17 +303,8 @@
         android:name="com.aqua.aqualight.ui.tabs.devices.detail.UnsupportedDeviceFragment"
         android:label="@string/screen_title_unsupported_device"
         tools:layout="@layout/fragment_unsupported_device">
-        <argument
-            android:name="deviceTitle"
-            app:argType="string"
-            android:defaultValue="Device" />
-        <argument
-            android:name="message"
-            app:argType="string"
-            android:defaultValue="" />
-        <argument
-            android:name="deviceUid"
-            app:argType="string"
-            android:defaultValue="" />
+        <argument android:name="deviceTitle" app:argType="string" android:defaultValue="Device" />
+        <argument android:name="message" app:argType="string" android:defaultValue="" />
+        <argument android:name="deviceUid" app:argType="string" android:defaultValue="" />
     </fragment>
 </navigation>

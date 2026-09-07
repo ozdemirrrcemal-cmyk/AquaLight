@@ -2,7 +2,7 @@
 <resources>
     <!-- Main Tank Devices remove sheet base -->
     <color name="aqua_bottom_sheet_surface">@color/aqua_palette_hex_07131f</color>
-    <color name="aqua_bottom_sheet_surface_elevated">@color/aqua_palette_hex_101d2c</color>
+    <color name="aqua_bottom_sheet_surface_elevated">@color/aqua_palette_hex_061727</color>
     <color name="aqua_bottom_sheet_outline">@color/aqua_palette_hex_22354d</color>
     <color name="aqua_bottom_sheet_handle">@color/aqua_palette_hex_2b425a</color>
     <color name="aqua_bottom_sheet_sheet_border">@color/aqua_palette_hex_223a57</color>
