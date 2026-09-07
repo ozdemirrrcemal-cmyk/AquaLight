@@ -47,7 +47,7 @@ internal object DeviceCoolingCardSnapshotMapper {
                 controlReason = control.controlReason,
                 waterTemperatureC = control.tankTemperatureC,
                 actualFanPercent = appliedOutput,
-                targetFanPercent = control.manualFanPercent?.toDouble(),
+                targetFanPercent = control.targetFanPercent,
                 automaticRange = DeviceCoolingCardTemperatureRange(
                     startC = config.startTemperatureC,
                     fullSpeedC = config.fullSpeedTemperatureC

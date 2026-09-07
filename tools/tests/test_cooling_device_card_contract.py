@@ -29,6 +29,8 @@ class CoolingDeviceCardContractTest(unittest.TestCase):
         self.assertIn("runtime.states", operations)
         self.assertIn("DeviceCoolingCardSnapshotMapper.map(state)", operations)
         self.assertIn("fun map(state: DeviceCoolingRuntimeState)", mapper)
+        self.assertIn("targetFanPercent = control.targetFanPercent", mapper)
+        self.assertNotIn("targetFanPercent = control.manualFanPercent", mapper)
         for forbidden in ("System.currentTimeMillis", "LocalTime", "Calendar", "Timer("):
             self.assertNotIn(forbidden, mapper)
 

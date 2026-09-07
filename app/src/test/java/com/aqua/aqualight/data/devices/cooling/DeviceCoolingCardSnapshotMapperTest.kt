@@ -26,12 +26,15 @@ class DeviceCoolingCardSnapshotMapperTest {
             operatingState = DeviceCoolingV1OperatingState.PROGRAM,
             controlReason = "PROGRAM_SLOT_COOLING",
             activeProgramSlotIndex = 0,
-            fan = original.telemetry.fan.copy(outputPercent = 42.0)
+            fan = original.telemetry.fan.copy(
+                targetPercent = 63.25,
+                outputPercent = 42.0
+            )
         )
         val status = original.copy(
             config = original.config.copy(
                 controlMode = DeviceCoolingV1ControlMode.PROGRAM,
-                manualTargetPercent = 75.0
+                manualTargetPercent = 0.0
             ),
             program = original.program.copy(activeSlotIndex = 0, slotCount = 2),
             control = original.control.copy(
@@ -55,7 +58,7 @@ class DeviceCoolingCardSnapshotMapperTest {
         requireNotNull(summary)
         assertEquals(DeviceCoolingControlMode.PROGRAM, summary.mode)
         assertEquals(42.0, summary.actualFanPercent ?: -1.0, 0.0)
-        assertEquals(75.0, summary.targetFanPercent ?: -1.0, 0.0)
+        assertEquals(63.25, summary.targetFanPercent ?: -1.0, 0.0)
         assertEquals(1, summary.program?.activeSlotNumber)
         assertEquals(2, summary.program?.slotCount)
         assertEquals(480, summary.program?.activeSlot?.startMinutes)
