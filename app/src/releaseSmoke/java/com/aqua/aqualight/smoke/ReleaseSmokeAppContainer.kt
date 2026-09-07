@@ -43,6 +43,7 @@ import com.aqua.aqualight.data.devices.provisioning.DefaultProvisioningDiscovery
 import com.aqua.aqualight.data.devices.provisioning.DefaultProvisioningProgressOperations
 import com.aqua.aqualight.data.devices.remove.OwnerDeviceDataCleaner
 import com.aqua.aqualight.data.devices.repository.DevicesRepository
+import com.aqua.aqualight.data.devices.timer.DefaultDeviceTimerControlOperations
 import com.aqua.aqualight.data.notifications.NotificationPlatform
 import com.aqua.aqualight.data.recovery.DefaultLocalDataRecoveryOperations
 import com.aqua.aqualight.data.user.StartupAppearanceCache
@@ -133,6 +134,7 @@ private class ReleaseSmokeViewModelFactory(
     private val appContext = context.applicationContext
     private val notificationPreferences = NotificationPlatform.get(appContext).preferenceUseCase
     private val devicesRepository = DevicesRepository()
+    private val timerControlOperations = DefaultDeviceTimerControlOperations(devicesRepository)
     private val tankStore = AquariumTankDataStoreManager(appContext)
     private val careTaskStore = CareTaskDataStoreManager.create(appContext)
     private val assignmentRepository = TankDeviceAssignmentRepository(
@@ -262,7 +264,12 @@ private class ReleaseSmokeViewModelFactory(
                 controlOperations = DefaultDeviceCoolingControlOperations(devicesRepository)
             )
         modelClass.isAssignableFrom(DeviceTimerRootViewModel::class.java) ->
-            DeviceTimerRootViewModel(DefaultDeviceRootOperations(devicesRepository))
+            DeviceTimerRootViewModel(
+                operations = DefaultDeviceRootOperations(devicesRepository),
+                timerControlOperations = timerControlOperations,
+                controlSurfacePreparationOperations =
+                    ReleaseSmokeControlSurfacePreparationOperations
+            )
         modelClass.isAssignableFrom(DeviceRootOverviewViewModel::class.java) ->
             DeviceRootOverviewViewModel(DefaultDeviceRootOperations(devicesRepository))
         else -> null

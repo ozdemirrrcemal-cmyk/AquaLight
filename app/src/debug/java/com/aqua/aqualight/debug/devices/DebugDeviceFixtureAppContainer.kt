@@ -47,7 +47,7 @@ private class DebugDeviceFixtureViewModelFactory(
             DeviceLightRootViewModel::class.java ->
                 DeviceLightRootViewModel(rootOperations(requireGraph()))
             DeviceTimerRootViewModel::class.java ->
-                DeviceTimerRootViewModel(rootOperations(requireGraph()))
+                createTimerRootViewModel(requireGraph())
             DeviceRootOverviewViewModel::class.java ->
                 DeviceRootOverviewViewModel(rootOperations(requireGraph()))
             DeviceFamilySettingsViewModel::class.java ->
@@ -107,6 +107,13 @@ private class DebugDeviceFixtureViewModelFactory(
             rootOperations = rootOperations(graph),
             firmwareUpdateOperations = firmwareOperations(graph),
             manifestUrl = BuildConfig.AQL_OTA_MANIFEST_URL
+        )
+
+    private fun createTimerRootViewModel(graph: OwnerDependencyGraph): DeviceTimerRootViewModel =
+        DeviceTimerRootViewModel(
+            operations = rootOperations(graph),
+            timerControlOperations = graph.timerControlOperations,
+            controlSurfacePreparationOperations = graph.controlSurfacePreparationOperations
         )
 
     private fun rootOperations(graph: OwnerDependencyGraph) = DebugFixtureDeviceRootOperations(
