@@ -192,25 +192,6 @@ internal class ActiveOwnerDependencyGraphResolver(
         val ownerUidProvider = { dependencies.ownerUid }
         val aquariumTankStore = AquariumTankDataStoreManager(appContext)
         val careTaskStore = CareTaskDataStoreManager.create(appContext)
-        val archiveDataSources = UserDataArchiveDataSources(
-            aquariumStore = aquariumTankStore,
-            careTaskStore = careTaskStore,
-            assignmentRepository = dependencies.assignmentRepository
-        )
-        val mediaGateway = UserDataArchiveMediaGateway(appContext)
-        val snapshotCollector = UserDataArchiveSnapshotCollector(
-            ownerUid = dependencies.ownerUid,
-            dataSources = archiveDataSources,
-            preferences = userPreferencesManager,
-            mediaGateway = mediaGateway
-        )
-        val restorer = UserDataBackupRestorer(
-            context = appContext,
-            ownerUid = dependencies.ownerUid,
-            dataSources = archiveDataSources,
-            mediaGateway = mediaGateway,
-            reconcileCareReminders = notificationPreferenceUseCase::reconcileOwner
-        )
         val dosingOperations = createDosingOperations(dependencies)
         return OwnerDependencyGraph(
             ownerUid = dependencies.ownerUid,
@@ -221,14 +202,10 @@ internal class ActiveOwnerDependencyGraphResolver(
             assignmentRepository = dependencies.assignmentRepository,
             aquariumTankStore = aquariumTankStore,
             careTaskStore = careTaskStore,
-            userDataArchiveOperations = DefaultUserDataArchiveOperations(
-                sourceAppVersion = BuildConfig.VERSION_NAME,
-                snapshotCollector = snapshotCollector,
-                restorer = restorer,
-                runtime = UserDataArchiveRuntimeDependencies(
-                    staging = UserDataArchiveStaging(appContext),
-                    documents = AndroidUserDataDocumentOperations(appContext)
-                )
+            userDataArchiveOperations = createUserDataArchiveOperations(
+                dependencies = dependencies,
+                aquariumTankStore = aquariumTankStore,
+                careTaskStore = careTaskStore
             ),
             provisioningDraftOperations = DefaultProvisioningDraftOperations(
                 draftStore = AqlProvisioningDraftStore(
@@ -246,6 +223,39 @@ internal class ActiveOwnerDependencyGraphResolver(
             ),
             coolingCardOperations = createCoolingCardOperations(dependencies),
             dosingOperations = dosingOperations
+        )
+    }
+
+    private fun createUserDataArchiveOperations(
+        dependencies: ActiveOwnerDependencies,
+        aquariumTankStore: AquariumTankDataStoreManager,
+        careTaskStore: CareTaskDataStoreManager
+    ): UserDataArchiveOperations {
+        val archiveDataSources = UserDataArchiveDataSources(
+            aquariumStore = aquariumTankStore,
+            careTaskStore = careTaskStore,
+            assignmentRepository = dependencies.assignmentRepository
+        )
+        val mediaGateway = UserDataArchiveMediaGateway(appContext)
+        return DefaultUserDataArchiveOperations(
+            sourceAppVersion = BuildConfig.VERSION_NAME,
+            snapshotCollector = UserDataArchiveSnapshotCollector(
+                ownerUid = dependencies.ownerUid,
+                dataSources = archiveDataSources,
+                preferences = userPreferencesManager,
+                mediaGateway = mediaGateway
+            ),
+            restorer = UserDataBackupRestorer(
+                context = appContext,
+                ownerUid = dependencies.ownerUid,
+                dataSources = archiveDataSources,
+                mediaGateway = mediaGateway,
+                reconcileCareReminders = notificationPreferenceUseCase::reconcileOwner
+            ),
+            runtime = UserDataArchiveRuntimeDependencies(
+                staging = UserDataArchiveStaging(appContext),
+                documents = AndroidUserDataDocumentOperations(appContext)
+            )
         )
     }
 
