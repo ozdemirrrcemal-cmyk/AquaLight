@@ -3,6 +3,7 @@ package com.aqua.aqualight.data.devices.runtime.modules.timer
 internal object DeviceTimerCommandValidation {
     fun validateStatus(
         status: DeviceTimerStatus,
+        requestedChannelKey: String?,
         access: DeviceTimerRuntimeAccess
     ) {
         require(access.supportsApi) { "Standalone Timer API is not available." }
@@ -13,10 +14,13 @@ internal object DeviceTimerCommandValidation {
         require(status.runtime.supportsConfigApply)
         require(status.runtime.supportsChannelSet)
         require(status.runtime.supportsChannels)
-        require(status.runtime.supportsSchedules == access.supportsSchedules)
-        require(status.channels.all { channel ->
-            channel.editable.displayName == access.supportsChannelDisplayName
-        })
+        require(status.runtime.supportsSchedules)
+        if (requestedChannelKey == null) {
+            require(!status.channelScoped)
+        } else {
+            require(status.channelScoped)
+            require(status.selectedChannelKey == normalizeTimerChannelKey(requestedChannelKey))
+        }
     }
 
     fun validateConfigRequest(
@@ -32,8 +36,18 @@ internal object DeviceTimerCommandValidation {
             "Timer status must be loaded before applying Timer config."
         }
         require(status.supported && status.runtime.supportsConfigApply)
-        validateChannelRequests(payload.channels, status, access)
-        validateScheduleRequests(payload.schedules, status)
+        require(!status.lockLoop) { "Timer runtime is locked until device restart." }
+        require(payload.expectedRevision == status.revision) {
+            "Timer config expectedRevision differs from the authoritative status."
+        }
+        val channel = requireNotNull(
+            status.channels.singleOrNull { it.key == payload.normalizedChannelKey }
+        ) { "Unknown Timer channel key: ${payload.normalizedChannelKey}" }
+        if (payload.displayName != DeviceTimerDisplayNameUpdate.Omitted) {
+            require(access.supportsChannelDisplayName && channel.editable.displayName) {
+                "Timer channel displayName is fixed for ${payload.normalizedChannelKey}."
+            }
+        }
     }
 
     fun validateConfigResult(
@@ -44,11 +58,28 @@ internal object DeviceTimerCommandValidation {
     ) {
         require(result.saveRequested == payload.save)
         require(result.saved == payload.save)
-        require(result.appliedChannels == (payload.channels != null))
-        require(result.appliedSchedules == (payload.schedules != null))
-        validateReturnedChannels(payload.channels, result.config)
-        validateReturnedTimerSchedules(payload.schedules, result.config)
-        validateConfigSnapshot(result.config, currentStatus, access)
+        require(result.channelKey == payload.normalizedChannelKey)
+        require(result.appliedDisplayName ==
+            (payload.displayName != DeviceTimerDisplayNameUpdate.Omitted))
+        require(result.replacedSchedules == (payload.schedules != null))
+        require(result.revision == expectedRevision(payload.expectedRevision, result.changed))
+        val current = currentStatus?.channels?.singleOrNull {
+            it.key == payload.normalizedChannelKey
+        }
+        current?.let { require(it.sameTimerChannelIdentity(result.channel)) }
+        when (val update = payload.displayName) {
+            DeviceTimerDisplayNameUpdate.Omitted -> Unit
+            DeviceTimerDisplayNameUpdate.Clear -> require(
+                result.channel.displayName == result.channel.name
+            )
+            is DeviceTimerDisplayNameUpdate.Value -> require(
+                result.channel.displayName == update.normalizedDisplayName
+            )
+        }
+        payload.schedules?.let { replacement ->
+            require(result.channel.scheduleCount == replacement.size)
+        }
+        validateMutationChannel(result.channel, access)
     }
 
     fun validateChannelRequest(
@@ -63,9 +94,14 @@ internal object DeviceTimerCommandValidation {
             "Timer status must be loaded before changing channel state."
         }
         require(status.supported && status.runtime.supportsChannelSet)
+        require(!status.lockLoop) { "Timer runtime is locked until device restart." }
+        require(payload.expectedRevision == status.revision) {
+            "Timer channel expectedRevision differs from the authoritative status."
+        }
         require(status.channels.any { channel -> channel.key == payload.normalizedChannelKey }) {
             "Unknown Timer channel key: ${payload.normalizedChannelKey}"
         }
+        if (payload.durationMs != null) require(status.runtime.supportsTemporaryOverride)
     }
 
     fun validateChannelResult(
@@ -78,100 +114,26 @@ internal object DeviceTimerCommandValidation {
         require(result.saved == payload.save)
         require(result.channelKey == payload.normalizedChannelKey)
         require(result.regime == payload.regime)
-        require(result.channel.channel.key == payload.normalizedChannelKey)
-        require(result.channel.channel.regime == payload.regime)
-        validateChannelSnapshot(result, currentStatus, access)
+        require(result.durationMs == (payload.durationMs ?: 0L))
+        val revisionChanged = result.persistentChanged
+        require(result.revision == expectedRevision(payload.expectedRevision, revisionChanged))
+        val current = currentStatus?.channels?.singleOrNull {
+            it.key == payload.normalizedChannelKey
+        }
+        current?.let { require(it.sameTimerChannelIdentity(result.channel)) }
+        validateMutationChannel(result.channel, access)
     }
 
-    fun validateConfigSnapshot(
-        config: DeviceTimerConfigSnapshot,
-        currentStatus: DeviceTimerStatus?,
+    private fun validateMutationChannel(
+        channel: DeviceTimerChannelStatus,
         access: DeviceTimerRuntimeAccess
     ) {
-        require(access.supportsApi)
-        require(config.channels.size == access.channelCount) {
-            "Timer config channel count differs from authenticated product metadata."
-        }
-        if (!access.supportsSchedules) require(config.schedules.isEmpty())
-        if (!access.supportsChannelDisplayName) {
-            require(config.channels.all { channel -> channel.displayNameOverride == null })
-        }
-        currentStatus?.let { status ->
-            require(
-                config.channels.map(DeviceTimerChannelConfigSnapshot::channelKey) ==
-                    status.channels.map(DeviceTimerChannelStatus::key)
-            ) { "Timer config channel identity differs from current status." }
-        }
+        require(channel.listIndex in 0 until access.channelCount)
+        require(channel.editable.displayName == access.supportsChannelDisplayName)
     }
 
-    fun validateChannelSnapshot(
-        result: DeviceTimerChannelSetResult,
-        currentStatus: DeviceTimerStatus?,
-        access: DeviceTimerRuntimeAccess
-    ) {
-        require(access.supportsApi && access.supportsChannelState)
-        require(result.channel.listIndex in 0 until access.channelCount)
-        require(result.channel.channel.editable.displayName == access.supportsChannelDisplayName)
-        currentStatus?.let { status ->
-            val current = requireNotNull(status.channels.getOrNull(result.channel.listIndex))
-            require(current.sameTimerChannelIdentity(result.channel.channel)) {
-                "Timer channel mutation identity differs from current status."
-            }
-        }
-    }
-
-    private fun validateChannelRequests(
-        channels: List<DeviceTimerChannelConfig>?,
-        status: DeviceTimerStatus,
-        access: DeviceTimerRuntimeAccess
-    ) {
-        if (channels == null) return
-        require(status.runtime.supportsChannels)
-        val channelsByKey = status.channels.associateBy(DeviceTimerChannelStatus::key)
-        channels.forEach { requested ->
-            val channel = requireNotNull(channelsByKey[requested.normalizedChannelKey]) {
-                "Unknown Timer channel key: ${requested.normalizedChannelKey}"
-            }
-            if (requested.displayName != null) {
-                require(access.supportsChannelDisplayName && channel.editable.displayName) {
-                    "Timer channel displayName is fixed for ${requested.normalizedChannelKey}."
-                }
-            }
-        }
-    }
-
-    private fun validateScheduleRequests(
-        schedules: List<DeviceTimerScheduleConfig>?,
-        status: DeviceTimerStatus
-    ) {
-        if (schedules == null) return
-        require(status.runtime.supportsSchedules)
-        val channelKeys = status.channels.mapTo(linkedSetOf(), DeviceTimerChannelStatus::key)
-        schedules.forEach { schedule ->
-            require(schedule.normalizedChannelKey in channelKeys) {
-                "Unknown Timer schedule channel: ${schedule.normalizedChannelKey}"
-            }
-        }
-    }
-
-    private fun validateReturnedChannels(
-        requested: List<DeviceTimerChannelConfig>?,
-        config: DeviceTimerConfigSnapshot
-    ) {
-        if (requested == null) return
-        val returnedByKey = config.channels.associateBy(DeviceTimerChannelConfigSnapshot::channelKey)
-        requested.forEach { item ->
-            val returned = requireNotNull(returnedByKey[item.normalizedChannelKey]) {
-                "Firmware omitted requested Timer channel ${item.normalizedChannelKey}."
-            }
-            item.regime?.let { regime -> require(returned.regime == regime) }
-            if (item.displayName != null) {
-                val expectedOverride = item.normalizedDisplayName?.takeIf(String::isNotEmpty)
-                require(returned.displayNameOverride == expectedOverride) {
-                    "Firmware Timer displayName differs for ${item.normalizedChannelKey}."
-                }
-            }
-        }
-    }
-
+    private fun expectedRevision(current: Long, changed: Boolean): Long =
+        if (!changed) current
+        else if (current == DeviceTimerRuntimeContract.Limit.UINT32_MAX) 0L
+        else current + 1L
 }

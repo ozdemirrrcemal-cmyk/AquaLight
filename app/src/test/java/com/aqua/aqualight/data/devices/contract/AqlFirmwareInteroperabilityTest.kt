@@ -27,11 +27,12 @@ import com.aqua.aqualight.data.devices.runtime.modules.light.DeviceLightThermalM
 import com.aqua.aqualight.data.devices.runtime.modules.time.DeviceManualRtcPayload
 import com.aqua.aqualight.data.devices.runtime.modules.time.DevicePhoneSyncPayload
 import com.aqua.aqualight.data.devices.runtime.modules.time.DeviceTimeConfigApplyPayload
-import com.aqua.aqualight.data.devices.runtime.modules.timer.DeviceTimerChannelConfig
 import com.aqua.aqualight.data.devices.runtime.modules.timer.DeviceTimerChannelSetPayload
 import com.aqua.aqualight.data.devices.runtime.modules.timer.DeviceTimerConfigApplyPayload
+import com.aqua.aqualight.data.devices.runtime.modules.timer.DeviceTimerDisplayNameUpdate
 import com.aqua.aqualight.data.devices.runtime.modules.timer.DeviceTimerRegime
 import com.aqua.aqualight.data.devices.runtime.modules.timer.DeviceTimerScheduleConfig
+import com.aqua.aqualight.data.devices.runtime.modules.timer.DeviceTimerStatusGetPayload
 import java.security.MessageDigest
 import org.json.JSONArray
 import org.json.JSONObject
@@ -200,7 +201,12 @@ class AqlFirmwareInteroperabilityTest {
                 .getJSONObject(WEBSOCKET_FIXTURE)
                 .getBoolean("byteIdenticalWithFirmware")
         )
-        listOf(COOLING_CONTRACT_FIXTURE, COOLING_TELEMETRY_FIXTURE, LIGHT_THERMAL_FIXTURE)
+        listOf(
+            COOLING_CONTRACT_FIXTURE,
+            COOLING_TELEMETRY_FIXTURE,
+            LIGHT_THERMAL_FIXTURE,
+            TIMER_CONTRACT_FIXTURE
+        )
             .forEach { fixtureName ->
                 assertTrue(
                     fixtureSpecs
@@ -430,31 +436,30 @@ class AqlFirmwareInteroperabilityTest {
     }
 
     private fun timerSerializerFields(): Map<String, Set<String>> {
-        val channel = DeviceTimerChannelConfig(
-            channelKey = "relay-1",
-            displayName = "Filter",
-            regime = DeviceTimerRegime.AUTO
-        )
         val schedule = DeviceTimerScheduleConfig(
+            slotId = 1,
             enabled = true,
             name = "Day",
-            channelKey = "relay-1",
             weekdays = WEEKDAYS,
-            startTimeMs = 1_000L,
-            intervalOnMs = 1_000L,
-            intervalOffMs = 1_000L,
-            repeatCount = 1
+            startTimeMs = 43_200_000L,
+            endTimeMs = 46_800_000L
         )
 
         return linkedMapOf(
-            "DeviceTimerChannelConfig" to channel.toJson().keySetExact(),
+            "DeviceTimerStatusGetPayload" to
+                DeviceTimerStatusGetPayload("channel1").toJson().keySetExact(),
             "DeviceTimerChannelSetPayload" to
                 DeviceTimerChannelSetPayload(
-                    "relay-1",
-                    DeviceTimerRegime.AUTO
+                    channelKey = "channel1",
+                    expectedRevision = 7L,
+                    regime = DeviceTimerRegime.OFF,
+                    durationMs = 300_000L,
+                    save = false
                 ).toJson().keySetExact(),
             "DeviceTimerConfigApplyPayload" to DeviceTimerConfigApplyPayload(
-                channels = listOf(channel),
+                channelKey = "channel1",
+                expectedRevision = 7L,
+                displayName = DeviceTimerDisplayNameUpdate.Value("Filter"),
                 schedules = listOf(schedule)
             ).toJson().keySetExact(),
             "DeviceTimerScheduleConfig" to schedule.toJson().keySetExact()
@@ -518,9 +523,10 @@ class AqlFirmwareInteroperabilityTest {
         const val COOLING_CONTRACT_FIXTURE = "aql_cooling_contract_v1.json"
         const val COOLING_TELEMETRY_FIXTURE = "aql_cooling_telemetry_v1.json"
         const val LIGHT_THERMAL_FIXTURE = "aql_light_thermal_contract_v1.json"
+        const val TIMER_CONTRACT_FIXTURE = "aql_timer_contract_v1.json"
         const val PRODUCT_CATALOG_FIXTURE = "aql_product_catalog_v1.json"
         const val DOSING_PIN_FIXTURE = "aql_android_dosing_v1_pin.json"
-        const val FIRMWARE_COMMIT = "2e3688f266d7ed34a6773badafcd62af73cf4aac"
+        const val FIRMWARE_COMMIT = "90b6597216d0c697542d5dc12e26647625806d8f"
         const val DOSING_FIRMWARE_COMMIT = "fa147211749c2dcb2f56e15a617a00010e071984"
 
         val WEEKDAYS = listOf(true, false, false, false, false, false, false)

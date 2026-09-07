@@ -1,3 +1,5 @@
+@file:Suppress("MagicNumber")
+
 package com.aqua.aqualight.data.devices.runtime.modules.timer
 
 import com.aqua.aqualight.data.devices.model.DeviceUid
@@ -8,168 +10,168 @@ import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.Test
 
+@Suppress("TooManyFunctions")
 class DeviceTimerTypedEventReducerTest {
     @Test
-    fun `status event seeds one device Timer state`() {
-        val store = DeviceTimerRuntimeStateStore()
+    fun \`direct status change applies runtime delta without replacing config snapshot\`() {
+        val store = seededStore(DEVICE_A)
         val reducer = supportedReducer(store)
 
-        val result = reducer.apply(statusEvent(DEVICE_A, uptimeMs = 12_000L))
+        val result = reducer.apply(statusEvent(DEVICE_A, sequence = 12L))
         val state = store.states.value.getValue(DEVICE_A)
+        val channel = state.status?.channels?.first()
 
         assertEquals(DeviceTimerEventApplyResult.Applied, result)
-        assertEquals(12_000L, state.status?.uptimeMs)
-        assertEquals(listOf("Day Filter"), state.config?.schedules?.map { it.name })
+        assertEquals(12L, state.lastEventSequence)
+        assertEquals(DeviceTimerOperatingState.OFF, channel?.operatingState)
+        assertEquals(DeviceTimerRuntimeReason.TEMPORARY_OVERRIDE_OFF, channel?.runtimeReason)
+        assertEquals(DeviceTimerRegime.AUTO, channel?.regime)
         assertEquals(false, state.requiresStatusRefresh)
     }
 
     @Test
-    fun `older and duplicate status events are ignored`() {
-        val store = DeviceTimerRuntimeStateStore()
+    fun \`duplicate and older global event sequences are ignored\`() {
+        val store = seededStore(DEVICE_A)
         val reducer = supportedReducer(store)
-        reducer.apply(statusEvent(DEVICE_A, uptimeMs = 12_000L))
+        reducer.apply(statusEvent(DEVICE_A, sequence = 12L))
 
-        val older = reducer.apply(statusEvent(DEVICE_A, uptimeMs = 11_999L))
-        val duplicate = reducer.apply(statusEvent(DEVICE_A, uptimeMs = 12_000L))
+        val duplicate = reducer.apply(statusEvent(DEVICE_A, sequence = 12L))
+        val older = reducer.apply(statusEvent(DEVICE_A, sequence = 11L))
 
-        assertEquals(DeviceTimerEventApplyResult.Ignored, older)
         assertEquals(DeviceTimerEventApplyResult.Ignored, duplicate)
-        assertEquals(12_000L, store.states.value.getValue(DEVICE_A).status?.uptimeMs)
+        assertEquals(DeviceTimerEventApplyResult.Ignored, older)
+        assertEquals(12L, store.states.value.getValue(DEVICE_A).lastEventSequence)
     }
 
     @Test
-    fun `status freshness accepts firmware uptime wraparound`() {
-        val store = DeviceTimerRuntimeStateStore()
+    fun \`global event sequence gap requests scoped recovery\`() {
+        val store = seededStore(DEVICE_A)
         val reducer = supportedReducer(store)
-        reducer.apply(statusEvent(DEVICE_A, uptimeMs = TIMER_DEVICE_UPTIME_MAX_MS - 10L))
+        reducer.apply(statusEvent(DEVICE_A, sequence = 12L))
 
-        val result = reducer.apply(statusEvent(DEVICE_A, uptimeMs = 20L))
+        val result = reducer.apply(statusEvent(DEVICE_A, sequence = 14L))
 
-        assertEquals(DeviceTimerEventApplyResult.Applied, result)
-        assertEquals(20L, store.states.value.getValue(DEVICE_A).status?.uptimeMs)
+        assertEquals(DeviceTimerEventApplyResult.RefreshRequired("channel1"), result)
+        assertTrue(store.states.value.getValue(DEVICE_A).requiresStatusRefresh)
+        assertEquals(14L, store.states.value.getValue(DEVICE_A).lastEventSequence)
     }
 
     @Test
-    fun `config and channel command events reduce correlated mutation results`() {
-        val store = DeviceTimerRuntimeStateStore()
+    fun \`event revision mismatch requests scoped recovery\`() {
+        val store = seededStore(DEVICE_A)
         val reducer = supportedReducer(store)
-        reducer.apply(statusEvent(DEVICE_A))
 
-        val configResult = reducer.apply(configEvent(DEVICE_A))
-        val channelResult = reducer.apply(channelEvent(DEVICE_A, displayName = "Return Pump"))
-        val state = store.states.value.getValue(DEVICE_A)
+        val result = reducer.apply(
+            statusEvent(DEVICE_A, sequence = 12L, revision = 9L)
+        )
 
-        assertEquals(DeviceTimerEventApplyResult.Applied, configResult)
-        assertEquals(DeviceTimerEventApplyResult.Applied, channelResult)
-        assertEquals("Return Pump", state.config?.channels?.first()?.displayNameOverride)
-        assertEquals("Return Pump", state.status?.channels?.first()?.displayName)
-        assertEquals(DeviceTimerRegime.ON, state.config?.channels?.first()?.regime)
-        assertEquals(DeviceTimerRegime.ON, state.status?.channels?.first()?.regime)
-        assertTrue(state.requiresStatusRefresh)
+        assertEquals(DeviceTimerEventApplyResult.RefreshRequired("channel1"), result)
+        assertTrue(store.states.value.getValue(DEVICE_A).requiresStatusRefresh)
     }
 
     @Test
-    fun `same event sequence remains device isolated`() {
-        val store = DeviceTimerRuntimeStateStore()
+    fun \`event sequence wrap skips zero and remains ordered\`() {
+        val store = seededStore(DEVICE_A)
         val reducer = supportedReducer(store)
-        reducer.apply(statusEvent(DEVICE_A))
-        reducer.apply(statusEvent(DEVICE_B))
-        reducer.apply(channelEvent(DEVICE_A))
 
         assertEquals(
-            DeviceTimerRegime.ON,
-            store.states.value.getValue(DEVICE_A).status?.channels?.first()?.regime
+            DeviceTimerEventApplyResult.Applied,
+            reducer.apply(statusEvent(DEVICE_A, sequence = 4_294_967_295L))
         )
         assertEquals(
-            DeviceTimerRegime.AUTO,
-            store.states.value.getValue(DEVICE_B).status?.channels?.first()?.regime
+            DeviceTimerEventApplyResult.Applied,
+            reducer.apply(statusEvent(DEVICE_A, sequence = 1L))
         )
+        assertEquals(1L, store.states.value.getValue(DEVICE_A).lastEventSequence)
     }
 
     @Test
-    fun `wrong Timer command module is rejected as malformed`() {
+    fun \`same global sequence remains isolated by device\`() {
         val store = DeviceTimerRuntimeStateStore()
+        seed(store, DEVICE_A)
+        seed(store, DEVICE_B)
         val reducer = supportedReducer(store)
-        val event = DeviceRuntimeTypedEvent(
-            deviceUid = DEVICE_A,
-            generation = GENERATION,
-            messageId = "evt-invalid",
-            type = DeviceRuntimeTypedEvent.Type.TIMER_STATUS_CHANGED,
+
+        reducer.apply(statusEvent(DEVICE_A, sequence = 12L))
+
+        assertEquals(12L, store.states.value.getValue(DEVICE_A).lastEventSequence)
+        assertEquals(null, store.states.value.getValue(DEVICE_B).lastEventSequence)
+    }
+
+    @Test
+    fun \`command-result envelope is ignored because firmware event is direct\`() {
+        val store = seededStore(DEVICE_A)
+        val reducer = supportedReducer(store)
+        val event = statusEvent(DEVICE_A, 12L).copy(
             payload = DeviceRuntimeEventPayload.CommandResult(
-                commandId = "cmd-invalid",
-                commandModule = "dosing",
+                commandId = "cmd-1",
+                commandModule = DeviceTimerRuntimeContract.MODULE,
                 commandAction = DeviceTimerRuntimeContract.Action.CONFIG_APPLY,
                 sessionId = "session-1",
-                publishedAtMillis = 20_000L,
+                publishedAtMillis = 20_100L,
                 result = DeviceTimerRuntimeFixtures.configApply()
             )
         )
 
-        assertTrue(reducer.apply(event) is DeviceTimerEventApplyResult.Malformed)
+        assertEquals(DeviceTimerEventApplyResult.Ignored, reducer.apply(event))
     }
 
     @Test
-    fun `dosing product Timer event is ignored before parsing`() {
-        val store = DeviceTimerRuntimeStateStore()
-        val reducer = DeviceTimerTypedEventReducer(store) {
+    fun \`malformed direct event fails closed and unavailable Timer is ignored\`() {
+        val malformedStore = seededStore(DEVICE_A)
+        val malformed = statusEvent(DEVICE_A, 12L).copy(
+            payload = DeviceRuntimeEventPayload.Snapshot(
+                DeviceTimerRuntimeFixtures.statusChanged().put("unexpected", true)
+            )
+        )
+        val unavailableStore = DeviceTimerRuntimeStateStore()
+        val unavailableReducer = DeviceTimerTypedEventReducer(unavailableStore) {
             DeviceTimerRuntimeAccess.UNAVAILABLE
         }
-        val malformedPayload = DeviceTimerRuntimeFixtures.status().put("unexpected", true)
-        val event = statusEvent(DEVICE_A).copy(
-            payload = DeviceRuntimeEventPayload.Snapshot(malformedPayload)
-        )
 
-        assertEquals(DeviceTimerEventApplyResult.Ignored, reducer.apply(event))
-        assertTrue(store.states.value.isEmpty())
+        assertTrue(supportedReducer(malformedStore).apply(malformed) is
+            DeviceTimerEventApplyResult.Malformed)
+        assertEquals(
+            DeviceTimerEventApplyResult.Ignored,
+            unavailableReducer.apply(statusEvent(DEVICE_B, 12L))
+        )
+        assertTrue(unavailableStore.states.value.isEmpty())
     }
 
     private fun supportedReducer(
         store: DeviceTimerRuntimeStateStore
     ) = DeviceTimerTypedEventReducer(store) { SUPPORTED_ACCESS }
 
+    private fun seededStore(deviceUid: DeviceUid): DeviceTimerRuntimeStateStore =
+        DeviceTimerRuntimeStateStore().also { store -> seed(store, deviceUid) }
+
+    private fun seed(store: DeviceTimerRuntimeStateStore, deviceUid: DeviceUid) {
+        store.beginGeneration(deviceUid, GENERATION)
+        check(
+            store.recordStatus(
+                deviceUid,
+                GENERATION,
+                DeviceTimerStatusParser.parse(
+                    DeviceTimerRuntimeFixtures.globalStatus(revision = 8L)
+                )
+            )
+        )
+    }
+
     private fun statusEvent(
         deviceUid: DeviceUid,
-        uptimeMs: Long = 12_000L
+        sequence: Long,
+        revision: Long = 8L
     ) = DeviceRuntimeTypedEvent(
         deviceUid = deviceUid,
         generation = GENERATION,
-        messageId = "evt-status-${deviceUid.value}-$uptimeMs",
+        messageId = "evt-" + deviceUid.value + "-" + sequence,
         type = DeviceRuntimeTypedEvent.Type.TIMER_STATUS_CHANGED,
         payload = DeviceRuntimeEventPayload.Snapshot(
-            DeviceTimerRuntimeFixtures.status(uptimeMs = uptimeMs)
-        )
-    )
-
-    private fun configEvent(deviceUid: DeviceUid) = DeviceRuntimeTypedEvent(
-        deviceUid = deviceUid,
-        generation = GENERATION,
-        messageId = "evt-config-${deviceUid.value}",
-        type = DeviceRuntimeTypedEvent.Type.TIMER_STATUS_CHANGED,
-        payload = DeviceRuntimeEventPayload.CommandResult(
-            commandId = "cmd-config",
-            commandModule = DeviceTimerRuntimeContract.MODULE,
-            commandAction = DeviceTimerRuntimeContract.Action.CONFIG_APPLY,
-            sessionId = "session-1",
-            publishedAtMillis = 20_000L,
-            result = DeviceTimerRuntimeFixtures.configApply()
-        )
-    )
-
-    private fun channelEvent(
-        deviceUid: DeviceUid,
-        displayName: String = "Filter"
-    ) = DeviceRuntimeTypedEvent(
-        deviceUid = deviceUid,
-        generation = GENERATION,
-        messageId = "evt-channel-${deviceUid.value}",
-        type = DeviceRuntimeTypedEvent.Type.TIMER_STATUS_CHANGED,
-        payload = DeviceRuntimeEventPayload.CommandResult(
-            commandId = "cmd-channel",
-            commandModule = DeviceTimerRuntimeContract.MODULE,
-            commandAction = DeviceTimerRuntimeContract.Action.CHANNEL_SET,
-            sessionId = "session-1",
-            publishedAtMillis = 20_001L,
-            result = DeviceTimerRuntimeFixtures.channelSet(displayName = displayName)
+            DeviceTimerRuntimeFixtures.statusChanged(
+                sequence = sequence,
+                revision = revision
+            )
         )
     )
 

@@ -9,6 +9,30 @@ internal object DeviceTimerRegimeParser {
     ) { "Unknown firmware Timer regime: $value" }
 }
 
+internal object DeviceTimerOperatingStateParser {
+    fun parse(value: String): DeviceTimerOperatingState = requireNotNull(
+        DeviceTimerOperatingState.values().singleOrNull { state -> state.name == value }
+    ) { "Unknown firmware Timer operatingState: $value" }
+}
+
+internal object DeviceTimerNextTransitionTypeParser {
+    fun parse(value: String): DeviceTimerNextTransitionType = requireNotNull(
+        DeviceTimerNextTransitionType.values().singleOrNull { type -> type.wireValue == value }
+    ) { "Unknown firmware Timer nextTransitionType: $value" }
+}
+
+internal object DeviceTimerOutputHealthParser {
+    fun parse(value: String): DeviceTimerOutputHealth = requireNotNull(
+        DeviceTimerOutputHealth.values().singleOrNull { health -> health.wireValue == value }
+    ) { "Unknown firmware Timer outputHealth: $value" }
+}
+
+internal object DeviceTimerRuntimeReasonParser {
+    fun parse(value: String): DeviceTimerRuntimeReason = requireNotNull(
+        DeviceTimerRuntimeReason.values().singleOrNull { reason -> reason.wireValue == value }
+    ) { "Unknown firmware Timer runtimeReason: $value" }
+}
+
 internal object DeviceTimerRuntimeCapabilitiesParser {
     private val KEYS = setOf(
         "module",
@@ -17,7 +41,14 @@ internal object DeviceTimerRuntimeCapabilitiesParser {
         "supportsChannelSet",
         "supportsSchedules",
         "supportsChannels",
-        "event"
+        "supportsSpansMidnight",
+        "supportsTemporaryOverride",
+        "supportsChannelScopedStatus",
+        "supportsChannelScopedConfigApply",
+        "configApplyScope",
+        "event",
+        "internalHeapMinimumFreeBytes",
+        "internalHeapLargestFreeBlockBytes"
     )
 
     fun parse(data: JSONObject): DeviceTimerRuntimeCapabilities {
@@ -29,58 +60,69 @@ internal object DeviceTimerRuntimeCapabilitiesParser {
             supportsChannelSet = data.requireTimerBoolean("supportsChannelSet"),
             supportsSchedules = data.requireTimerBoolean("supportsSchedules"),
             supportsChannels = data.requireTimerBoolean("supportsChannels"),
-            event = data.requireTimerText("event")
-        ).also { runtime ->
-            require(runtime.module == DeviceTimerRuntimeContract.MODULE)
-            require(!runtime.readOnly)
-            require(runtime.supportsConfigApply)
-            require(runtime.supportsChannelSet)
-            require(runtime.supportsSchedules)
-            require(runtime.supportsChannels)
-            require(runtime.event == DeviceTimerRuntimeContract.STATUS_EVENT)
-        }
+            supportsSpansMidnight = data.requireTimerBoolean("supportsSpansMidnight"),
+            supportsTemporaryOverride = data.requireTimerBoolean("supportsTemporaryOverride"),
+            supportsChannelScopedStatus = data.requireTimerBoolean(
+                "supportsChannelScopedStatus"
+            ),
+            supportsChannelScopedConfigApply = data.requireTimerBoolean(
+                "supportsChannelScopedConfigApply"
+            ),
+            configApplyScope = data.requireTimerText("configApplyScope"),
+            event = data.requireTimerText("event"),
+            internalHeapMinimumFreeBytes = data.requireTimerLong(
+                "internalHeapMinimumFreeBytes",
+                TIMER_NON_NEGATIVE_LONG,
+                DeviceTimerRuntimeContract.Limit.UINT32_MAX
+            ),
+            internalHeapLargestFreeBlockBytes = data.requireTimerLong(
+                "internalHeapLargestFreeBlockBytes",
+                TIMER_NON_NEGATIVE_LONG,
+                DeviceTimerRuntimeContract.Limit.UINT32_MAX
+            )
+        ).also(::validate)
+    }
+
+    private fun validate(runtime: DeviceTimerRuntimeCapabilities) {
+        require(runtime.module == DeviceTimerRuntimeContract.MODULE)
+        require(!runtime.readOnly)
+        require(runtime.supportsConfigApply)
+        require(runtime.supportsChannelSet)
+        require(runtime.supportsSchedules)
+        require(runtime.supportsChannels)
+        require(runtime.supportsSpansMidnight)
+        require(runtime.supportsTemporaryOverride)
+        require(runtime.supportsChannelScopedStatus)
+        require(runtime.supportsChannelScopedConfigApply)
+        require(runtime.configApplyScope == DeviceTimerRuntimeContract.Literal.CONFIG_APPLY_SCOPE)
+        require(runtime.event == DeviceTimerRuntimeContract.STATUS_EVENT)
     }
 }
 
 internal object DeviceTimerChannelParser {
     private val EDITABLE_KEYS = setOf("hardware", "displayName", "hardwareCalibration")
-    private val STATUS_KEYS = setOf(
-        "index", "key", "name", "displayName", "profileManaged", "regime",
+    private val KEYS = setOf(
+        "index", "listIndex", "key", "name", "displayName", "profileManaged", "regime",
         "channelKind", "gpio", "ledcChannel", "group", "valueNow", "valueAuto",
         "valueManual", "manualTimeoutMs", "invert", "pwmResolutionBits",
-        "pwmFrequencyHz", "editable"
+        "pwmFrequencyHz", "outputHealth", "physicalFeedbackAvailable", "scheduleCount",
+        "operatingState", "activeSlotId", "activeSlotName", "nextTransitionType",
+        "nextTransitionAt", "runtimeReason", "clockReady", "temporaryOverrideActive",
+        "temporaryOverrideRemainingMs", "editable"
     )
-    private val MUTATION_KEYS = STATUS_KEYS + "listIndex"
     private val CHANNEL_KINDS = setOf(
         DeviceTimerRuntimeContract.Literal.CHANNEL_KIND_GPIO,
         DeviceTimerRuntimeContract.Literal.CHANNEL_KIND_DIGITAL,
         DeviceTimerRuntimeContract.Literal.CHANNEL_KIND_NONE
     )
 
-    fun parseStatus(data: JSONObject): DeviceTimerChannelStatus =
-        parse(data, STATUS_KEYS, "Timer status channel")
-
-    fun parseMutation(data: JSONObject): DeviceTimerChannelStatusSnapshot {
-        data.requireTimerKeys(MUTATION_KEYS, "Timer channel mutation snapshot")
-        return DeviceTimerChannelStatusSnapshot(
+    @Suppress("LongMethod")
+    fun parse(data: JSONObject): DeviceTimerChannelStatus {
+        data.requireTimerKeys(KEYS, "Timer channel status")
+        return DeviceTimerChannelStatus(
+            index = data.requireTimerInt("index", TIMER_MIN_INDEX),
             listIndex = data.requireTimerInt(
                 "listIndex",
-                TIMER_MIN_INDEX,
-                DeviceTimerRuntimeContract.Limit.MAX_CHANNELS - 1
-            ),
-            channel = parse(data, MUTATION_KEYS, "Timer channel mutation snapshot")
-        )
-    }
-
-    private fun parse(
-        data: JSONObject,
-        expectedKeys: Set<String>,
-        label: String
-    ): DeviceTimerChannelStatus {
-        data.requireTimerKeys(expectedKeys, label)
-        return DeviceTimerChannelStatus(
-            index = data.requireTimerInt(
-                "index",
                 TIMER_MIN_INDEX,
                 DeviceTimerRuntimeContract.Limit.MAX_CHANNELS - 1
             ),
@@ -115,11 +157,46 @@ internal object DeviceTimerChannelParser {
             manualTimeoutMs = data.requireTimerLong(
                 "manualTimeoutMs",
                 TIMER_NON_NEGATIVE_LONG,
-                TIMER_DEVICE_UPTIME_MAX_MS
+                DeviceTimerRuntimeContract.Limit.UINT32_MAX
             ),
             invert = data.requireTimerBoolean("invert"),
             pwmResolutionBits = data.requireTimerInt("pwmResolutionBits", minimum = 0),
             pwmFrequencyHz = data.requireTimerInt("pwmFrequencyHz", minimum = 0),
+            outputHealth = DeviceTimerOutputHealthParser.parse(
+                data.requireTimerText("outputHealth")
+            ),
+            physicalFeedbackAvailable = data.requireTimerBoolean("physicalFeedbackAvailable"),
+            scheduleCount = data.requireTimerInt(
+                "scheduleCount",
+                TIMER_MIN_COUNT,
+                DeviceTimerRuntimeContract.Limit.MAX_SCHEDULES_PER_CHANNEL
+            ),
+            operatingState = DeviceTimerOperatingStateParser.parse(
+                data.requireTimerText("operatingState")
+            ),
+            activeSlotId = data.requireNullableTimerInt(
+                "activeSlotId",
+                DeviceTimerRuntimeContract.Limit.SLOT_ID_MINIMUM,
+                DeviceTimerRuntimeContract.Limit.SLOT_ID_MAXIMUM
+            ),
+            activeSlotName = data.requireNullableTimerText("activeSlotName"),
+            nextTransitionType = DeviceTimerNextTransitionTypeParser.parse(
+                data.requireTimerText("nextTransitionType")
+            ),
+            nextTransitionAt = data.requireNullableTimerLong(
+                "nextTransitionAt",
+                minimum = TIMER_NON_NEGATIVE_LONG
+            ),
+            runtimeReason = DeviceTimerRuntimeReasonParser.parse(
+                data.requireTimerText("runtimeReason")
+            ),
+            clockReady = data.requireTimerBoolean("clockReady"),
+            temporaryOverrideActive = data.requireTimerBoolean("temporaryOverrideActive"),
+            temporaryOverrideRemainingMs = data.requireTimerLong(
+                "temporaryOverrideRemainingMs",
+                TIMER_NON_NEGATIVE_LONG,
+                DeviceTimerRuntimeContract.Limit.TEMPORARY_DURATION_MAXIMUM_MS
+            ),
             editable = parseEditable(data.requireTimerObject("editable"))
         ).also(::validate)
     }
@@ -138,35 +215,40 @@ internal object DeviceTimerChannelParser {
 
     private fun validate(channel: DeviceTimerChannelStatus) {
         require(channel.profileManaged)
+        require(channel.key == normalizeTimerChannelKey(channel.key))
+        require(channel.name.toByteArray(Charsets.UTF_8).size <=
+            DeviceTimerRuntimeContract.Limit.MAX_CHANNEL_DISPLAY_NAME_BYTES)
+        require(channel.displayName.toByteArray(Charsets.UTF_8).size <=
+            DeviceTimerRuntimeContract.Limit.MAX_CHANNEL_DISPLAY_NAME_BYTES)
         require(channel.channelKind in CHANNEL_KINDS)
-        if (channel.valueManual < TIMER_NORMALIZED_MIN) {
-            require(channel.manualTimeoutMs == TIMER_NON_NEGATIVE_LONG)
-        }
+        require(!channel.physicalFeedbackAvailable)
+        require((channel.activeSlotId == null) == (channel.activeSlotName == null))
+        require((channel.nextTransitionType == DeviceTimerNextTransitionType.NONE) ==
+            (channel.nextTransitionAt == null))
+        require(channel.temporaryOverrideActive ==
+            (channel.temporaryOverrideRemainingMs > 0L))
     }
 }
 
 internal object DeviceTimerScheduleParser {
     private val KEYS = setOf(
-        "index", "enabled", "runtimeEnabled", "name", "channelKey", "bound", "group",
-        "weekdays", "startTimeMs", "startTime", "intervalOnMs", "intervalOn",
-        "intervalOffMs", "intervalOff", "repeatCount", "pulseCountRuntime",
-        "pulseOffPending", "pulseRemainingMs"
+        "index", "slotId", "enabled", "name", "channelKey", "bound", "weekdays",
+        "startTimeMs", "startTime", "endTimeMs", "endTime", "spansMidnight"
     )
 
     fun parse(data: JSONObject): DeviceTimerScheduleStatus {
-        data.requireTimerKeys(KEYS, "Timer status schedule")
+        data.requireTimerKeys(KEYS, "Timer schedule status")
         return DeviceTimerScheduleStatus(
-            index = data.requireTimerInt(
-                "index",
-                TIMER_MIN_INDEX,
-                DeviceTimerRuntimeContract.Limit.MAX_SCHEDULES - 1
+            index = data.requireTimerInt("index", TIMER_MIN_INDEX),
+            slotId = data.requireTimerInt(
+                "slotId",
+                DeviceTimerRuntimeContract.Limit.SLOT_ID_MINIMUM,
+                DeviceTimerRuntimeContract.Limit.SLOT_ID_MAXIMUM
             ),
             enabled = data.requireTimerBoolean("enabled"),
-            runtimeEnabled = data.requireTimerBoolean("runtimeEnabled"),
             name = data.requireTimerText("name"),
             channelKey = data.requireTimerText("channelKey"),
             bound = data.requireTimerBoolean("bound"),
-            group = data.requireTimerInt("group", Byte.MIN_VALUE.toInt(), Byte.MAX_VALUE.toInt()),
             weekdays = parseWeekdays(data.requireTimerArray("weekdays")),
             startTimeMs = data.requireTimerLong(
                 "startTimeMs",
@@ -174,29 +256,13 @@ internal object DeviceTimerScheduleParser {
                 DeviceTimerRuntimeContract.Limit.LAST_MILLISECOND_OF_DAY
             ),
             startTime = data.requireTimerText("startTime"),
-            intervalOnMs = data.requireTimerLong(
-                "intervalOnMs",
+            endTimeMs = data.requireTimerLong(
+                "endTimeMs",
                 TIMER_NON_NEGATIVE_LONG,
-                TIMER_DEVICE_UPTIME_MAX_MS
+                DeviceTimerRuntimeContract.Limit.LAST_MILLISECOND_OF_DAY
             ),
-            intervalOn = data.requireTimerText("intervalOn"),
-            intervalOffMs = data.requireTimerLong(
-                "intervalOffMs",
-                TIMER_NON_NEGATIVE_LONG,
-                TIMER_DEVICE_UPTIME_MAX_MS
-            ),
-            intervalOff = data.requireTimerText("intervalOff"),
-            repeatCount = data.requireTimerInt("repeatCount", minimum = TIMER_MIN_COUNT),
-            pulseCountRuntime = data.requireTimerInt(
-                "pulseCountRuntime",
-                minimum = TIMER_UNAVAILABLE_INDEX
-            ),
-            pulseOffPending = data.requireTimerBoolean("pulseOffPending"),
-            pulseRemainingMs = data.requireTimerLong(
-                "pulseRemainingMs",
-                TIMER_NON_NEGATIVE_LONG,
-                TIMER_DEVICE_UPTIME_MAX_MS
-            )
+            endTime = data.requireTimerText("endTime"),
+            spansMidnight = data.requireTimerBoolean("spansMidnight")
         ).also(::validate)
     }
 
@@ -208,85 +274,16 @@ internal object DeviceTimerScheduleParser {
     }
 
     private fun validate(schedule: DeviceTimerScheduleStatus) {
+        require(schedule.channelKey == normalizeTimerChannelKey(schedule.channelKey))
+        require(schedule.bound)
+        require(schedule.name.toByteArray(Charsets.UTF_8).size <=
+            DeviceTimerRuntimeContract.Limit.MAX_SCHEDULE_NAME_BYTES)
+        require(!schedule.enabled || schedule.weekdays.any { selected -> selected })
+        require(isTimerScheduleBoundary(schedule.startTimeMs))
+        require(isTimerScheduleBoundary(schedule.endTimeMs))
+        require(schedule.startTimeMs != schedule.endTimeMs)
         require(schedule.startTime == timerTimeText(schedule.startTimeMs))
-        require(schedule.intervalOn == timerTimeText(schedule.intervalOnMs))
-        require(schedule.intervalOff == timerTimeText(schedule.intervalOffMs))
-        require(schedule.pulseOffPending == (schedule.pulseRemainingMs > 0L))
-        val expectedRuntimeEnabled = schedule.enabled &&
-            schedule.bound &&
-            schedule.weekdays.any { selected -> selected } &&
-            schedule.intervalOnMs > 0L &&
-            schedule.repeatCount > 0
-        require(schedule.runtimeEnabled == expectedRuntimeEnabled)
-    }
-}
-
-internal object DeviceTimerConfigChannelParser {
-    private val REQUIRED_KEYS = setOf("channelKey", "regime")
-    private val OPTIONAL_KEYS = setOf("displayName")
-
-    fun parse(data: JSONObject, listIndex: Int): DeviceTimerChannelConfigSnapshot {
-        data.requireTimerKeys(REQUIRED_KEYS, OPTIONAL_KEYS, "Timer config channel")
-        return DeviceTimerChannelConfigSnapshot(
-            listIndex = listIndex,
-            channelKey = data.requireTimerText("channelKey"),
-            displayNameOverride = data.optionalTimerText("displayName"),
-            regime = DeviceTimerRegimeParser.parse(data.requireTimerText("regime"))
-        )
-    }
-}
-
-internal object DeviceTimerConfigScheduleParser {
-    private val KEYS = setOf(
-        "enabled", "name", "channelKey", "weekdays", "startTimeMs", "intervalOnMs",
-        "intervalOffMs", "repeatCount", "amountMl"
-    )
-
-    fun parse(data: JSONObject, listIndex: Int): DeviceTimerScheduleConfigSnapshot {
-        data.requireTimerKeys(KEYS, "Timer config schedule")
-        val config = DeviceTimerScheduleConfig(
-            enabled = data.requireTimerBoolean("enabled"),
-            name = data.requireTimerText("name"),
-            channelKey = data.requireTimerText("channelKey"),
-            weekdays = parseWeekdays(data.requireTimerArray("weekdays")),
-            startTimeMs = data.requireTimerLong(
-                "startTimeMs",
-                TIMER_NON_NEGATIVE_LONG,
-                DeviceTimerRuntimeContract.Limit.LAST_MILLISECOND_OF_DAY
-            ),
-            intervalOnMs = data.requireTimerLong(
-                "intervalOnMs",
-                TIMER_NON_NEGATIVE_LONG,
-                TIMER_DEVICE_UPTIME_MAX_MS
-            ),
-            intervalOffMs = data.requireTimerLong(
-                "intervalOffMs",
-                TIMER_NON_NEGATIVE_LONG,
-                TIMER_DEVICE_UPTIME_MAX_MS
-            ),
-            repeatCount = data.requireTimerInt("repeatCount", minimum = TIMER_MIN_COUNT)
-        )
-        val amountMl = data.requireTimerDouble("amountMl")
-        require(timerValuesEquivalent(amountMl, TIMER_STANDALONE_AMOUNT_ML)) {
-            "Standalone Timer config must not expose a dosing amount."
-        }
-        return DeviceTimerScheduleConfigSnapshot(
-            listIndex = listIndex,
-            enabled = config.enabled,
-            name = config.normalizedName,
-            channelKey = config.normalizedChannelKey,
-            weekdays = config.weekdays.toList(),
-            startTimeMs = config.startTimeMs,
-            intervalOnMs = config.intervalOnMs,
-            intervalOffMs = config.intervalOffMs,
-            repeatCount = config.repeatCount
-        )
-    }
-
-    private fun parseWeekdays(data: JSONArray): List<Boolean> {
-        require(data.length() == TIMER_WEEKDAY_COUNT) {
-            "Timer weekdays must contain exactly $TIMER_WEEKDAY_COUNT booleans."
-        }
-        return List(data.length()) { index -> data.requireTimerBoolean(index) }
+        require(schedule.endTime == timerTimeText(schedule.endTimeMs))
+        require(schedule.spansMidnight == (schedule.endTimeMs < schedule.startTimeMs))
     }
 }

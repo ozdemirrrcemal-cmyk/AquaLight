@@ -5,10 +5,11 @@ from __future__ import annotations
 
 import cooling_v1_contract_guard as cooling_guard
 import firmware_interoperability_guard_core as guard
+import timer_v1_contract_guard as timer_guard
 
 
-guard.FIRMWARE_COMMIT = "2e3688f266d7ed34a6773badafcd62af73cf4aac"
-guard.COMMAND_NAMES_BLOB = "4a7b548008235c3cd3e07d760327a477bbf2c6d4"
+guard.FIRMWARE_COMMIT = "90b6597216d0c697542d5dc12e26647625806d8f"
+guard.COMMAND_NAMES_BLOB = "a4a05ae219e449b42de2654c38b55d65804c91b0"
 guard.EVENT_CONTRACT_BLOB = "5e87fd043c0efaa849ed3ba8e5be9ce6f2727e24"
 guard.REQUEST_CONTRACT_BLOBS = {
     "src/api/v1/commands/AqlDeviceCommands.hpp": "a78d6355555afea780fdb62809bc9107d7122698",
@@ -19,11 +20,11 @@ guard.REQUEST_CONTRACT_BLOBS = {
     "src/api/v1/commands/AqlLightTemperatureProtectionCommands.hpp": "e3f04116d2f6ae77e0a1adfd7112773a3e1d06fe",
     "src/api/v1/commands/AqlLightThermalCommands.hpp": "10f5e03237b16ad4bf0a26b64c2715e0985d094e",
     "src/api/v1/commands/AqlCoolingCommands.hpp": "4df542d5106fce2810e64559667685c1c2ecfd69",
-    "src/api/v1/commands/AqlTimerCommands.hpp": "5951757f9eeebf81fce647ba9e94b35fe01c13a5",
+    "src/api/v1/commands/AqlTimerCommands.hpp": "f01a46b6a4982879f57f0d57c19ff50ff9f709f0",
     "src/api/v1/commands/AqlDosingCommands.hpp": "34cfc3287485f6a46a73b47f061a5456cde9aa9d",
     "src/api/v1/commands/AqlDosingProgressCommands.hpp": "8700e785bdd2e747abea3b09eff97755e2addad0",
     "src/api/v1/commands/AqlFirmwareCommands.hpp": "8b1107d159ca3ff026754c8a06bd1e75fb608c37",
-    "src/modules/timer/AqlTimerService.hpp": "3b852245ccfe84ddb28d4bc664e8e125fd5f11ca",
+    "src/modules/timer/AqlTimerService.hpp": "f0b7a64487dec5a14d571966a14274223dc6c743",
     "src/security/AqlSecurityService.hpp": "484906dbdd833d6ad7505ae1755748d239fc0805",
 }
 
@@ -43,9 +44,23 @@ guard.EXPECTED_FIXTURES["aql_cooling_contract_v1.json"] = (
     True,
 )
 
+guard.EXPECTED_FIXTURES["aql_timer_contract_v1.json"] = (
+    "014704279570575925cc8b74650f3b1b14b73fde0c3452c6ed028b7de49111cc",
+    "541b2194001fed7abecdd61106d02c8c8a197c2f",
+    True,
+)
+guard.EXPECTED_FIXTURES["aql_timer_wire_v1_golden.json"] = (
+    "d3d43b8e0755751c1f5a291880954eb128fb570fe52e635042c7b0e884260315",
+    None,
+    False,
+)
+
 
 if __name__ == "__main__":
     interoperability_result = guard.main()
     if interoperability_result != 0:
         raise SystemExit(interoperability_result)
-    raise SystemExit(cooling_guard.main())
+    cooling_result = cooling_guard.main()
+    if cooling_result != 0:
+        raise SystemExit(cooling_result)
+    raise SystemExit(timer_guard.main())

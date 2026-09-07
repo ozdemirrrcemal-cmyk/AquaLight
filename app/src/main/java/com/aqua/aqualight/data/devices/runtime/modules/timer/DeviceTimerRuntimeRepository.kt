@@ -8,6 +8,7 @@ import com.aqua.aqualight.data.devices.runtime.modules.common.DeviceRuntimeJsonC
 import kotlinx.coroutines.flow.StateFlow
 import org.json.JSONObject
 
+@Suppress("TooManyFunctions")
 class DeviceTimerRuntimeRepository internal constructor(
     private val gateway: DeviceRuntimeCommandGateway,
     internal val stateStore: DeviceTimerRuntimeStateStore,
@@ -26,19 +27,26 @@ class DeviceTimerRuntimeRepository internal constructor(
     ) = stateStore.invalidate(deviceUid, generation)
 
     suspend fun requestStatus(
-        deviceUid: DeviceUid
+        deviceUid: DeviceUid,
+        channelKey: String? = null
     ): DeviceRuntimeCommandOutcome<DeviceTimerStatus> {
         val access = accessProvider(deviceUid)
         if (!access.supportsApi) {
             return timerUnsupported(deviceUid, DeviceTimerRuntimeContract.Action.STATUS_GET)
         }
+        val payload = DeviceTimerStatusGetPayload(channelKey)
         val outcome = gateway.execute(
             deviceUid,
             timerJsonCommand(
                 action = DeviceTimerRuntimeContract.Action.STATUS_GET,
+                dataFactory = payload::toJson,
                 parser = { data ->
                     DeviceTimerStatusParser.parse(data).also { status ->
-                        DeviceTimerCommandValidation.validateStatus(status, access)
+                        DeviceTimerCommandValidation.validateStatus(
+                            status,
+                            payload.normalizedChannelKey,
+                            access
+                        )
                     }
                 }
             )
@@ -57,13 +65,16 @@ class DeviceTimerRuntimeRepository internal constructor(
         if (configUnsupported(payload, access)) {
             return timerUnsupported(deviceUid, DeviceTimerRuntimeContract.Action.CONFIG_APPLY)
         }
-        val status = stateStore.currentAuthoritativeState(deviceUid)?.status
+        val baseline = when (val result = ensureGlobalStatus(deviceUid)) {
+            is TimerStatusBaseline.Ready -> result.status
+            is TimerStatusBaseline.Failed -> return result.outcome.asFailure()
+        }
         val outcome = gateway.execute(
             deviceUid,
             timerJsonCommand(
                 action = DeviceTimerRuntimeContract.Action.CONFIG_APPLY,
                 dataFactory = {
-                    DeviceTimerCommandValidation.validateConfigRequest(payload, status, access)
+                    DeviceTimerCommandValidation.validateConfigRequest(payload, baseline, access)
                     payload.toJson()
                 },
                 parser = { data ->
@@ -71,20 +82,21 @@ class DeviceTimerRuntimeRepository internal constructor(
                         DeviceTimerCommandValidation.validateConfigResult(
                             payload,
                             result,
-                            status,
+                            baseline,
                             access
                         )
                     }
                 }
             )
         )
-        if (
-            outcome is DeviceRuntimeCommandOutcome.Success &&
-            !stateStore.recordConfig(deviceUid, outcome.generation, outcome.value)
-        ) {
-            // A successful mutation must never patch a retained snapshot from another session.
-            // Re-establish firmware truth automatically on the current connection instead.
-            requestStatus(deviceUid)
+        if (outcome is DeviceRuntimeCommandOutcome.Success) {
+            stateStore.recordMutationChannel(
+                deviceUid,
+                outcome.generation,
+                outcome.value.channel,
+                outcome.value.revision
+            )
+            requestStatus(deviceUid, outcome.value.channelKey)
         }
         return outcome
     }
@@ -97,13 +109,16 @@ class DeviceTimerRuntimeRepository internal constructor(
         if (!access.supportsApi || !access.supportsChannelState) {
             return timerUnsupported(deviceUid, DeviceTimerRuntimeContract.Action.CHANNEL_SET)
         }
-        val status = stateStore.currentAuthoritativeState(deviceUid)?.status
+        val baseline = when (val result = ensureGlobalStatus(deviceUid)) {
+            is TimerStatusBaseline.Ready -> result.status
+            is TimerStatusBaseline.Failed -> return result.outcome.asFailure()
+        }
         val outcome = gateway.execute(
             deviceUid,
             timerJsonCommand(
                 action = DeviceTimerRuntimeContract.Action.CHANNEL_SET,
                 dataFactory = {
-                    DeviceTimerCommandValidation.validateChannelRequest(payload, status, access)
+                    DeviceTimerCommandValidation.validateChannelRequest(payload, baseline, access)
                     payload.toJson()
                 },
                 parser = { data ->
@@ -111,18 +126,21 @@ class DeviceTimerRuntimeRepository internal constructor(
                         DeviceTimerCommandValidation.validateChannelResult(
                             payload,
                             result,
-                            status,
+                            baseline,
                             access
                         )
                     }
                 }
             )
         )
-        if (
-            outcome is DeviceRuntimeCommandOutcome.Success &&
-            !stateStore.recordChannel(deviceUid, outcome.generation, outcome.value)
-        ) {
-            requestStatus(deviceUid)
+        if (outcome is DeviceRuntimeCommandOutcome.Success) {
+            stateStore.recordMutationChannel(
+                deviceUid,
+                outcome.generation,
+                outcome.value.channel,
+                outcome.value.revision
+            )
+            requestStatus(deviceUid, outcome.value.channelKey)
         }
         return outcome
     }
@@ -132,61 +150,140 @@ class DeviceTimerRuntimeRepository internal constructor(
         channelKey: String,
         regime: DeviceTimerRegime,
         save: Boolean = true
-    ): DeviceRuntimeCommandOutcome<DeviceTimerChannelSetResult> = setChannel(
-        deviceUid,
-        DeviceTimerChannelSetPayload(channelKey, regime, save)
-    )
+    ): DeviceRuntimeCommandOutcome<DeviceTimerChannelSetResult> = withGlobalStatus(
+        deviceUid
+    ) { status ->
+        setChannel(
+            deviceUid,
+            DeviceTimerChannelSetPayload(
+                channelKey = channelKey,
+                expectedRevision = status.revision,
+                regime = regime,
+                save = save
+            )
+        )
+    }
+
+    suspend fun setTemporaryOverride(
+        deviceUid: DeviceUid,
+        channelKey: String,
+        regime: DeviceTimerRegime,
+        durationMs: Long
+    ): DeviceRuntimeCommandOutcome<DeviceTimerChannelSetResult> = withGlobalStatus(
+        deviceUid
+    ) { status ->
+        setChannel(
+            deviceUid,
+            DeviceTimerChannelSetPayload(
+                channelKey = channelKey,
+                expectedRevision = status.revision,
+                regime = regime,
+                durationMs = durationMs,
+                save = false
+            )
+        )
+    }
 
     suspend fun setChannelDisplayName(
         deviceUid: DeviceUid,
         channelKey: String,
         displayName: String,
         save: Boolean = true
-    ): DeviceRuntimeCommandOutcome<DeviceTimerConfigApplyResult> = applyConfig(
-        deviceUid,
-        DeviceTimerConfigApplyPayload(
-            channels = listOf(DeviceTimerChannelConfig(channelKey, displayName = displayName)),
-            save = save
+    ): DeviceRuntimeCommandOutcome<DeviceTimerConfigApplyResult> = withGlobalStatus(
+        deviceUid
+    ) { status ->
+        applyConfig(
+            deviceUid,
+            DeviceTimerConfigApplyPayload(
+                channelKey = channelKey,
+                expectedRevision = status.revision,
+                displayName = DeviceTimerDisplayNameUpdate.Value(displayName),
+                save = save
+            )
         )
-    )
+    }
+
+    suspend fun clearChannelDisplayName(
+        deviceUid: DeviceUid,
+        channelKey: String,
+        save: Boolean = true
+    ): DeviceRuntimeCommandOutcome<DeviceTimerConfigApplyResult> = withGlobalStatus(
+        deviceUid
+    ) { status ->
+        applyConfig(
+            deviceUid,
+            DeviceTimerConfigApplyPayload(
+                channelKey = channelKey,
+                expectedRevision = status.revision,
+                displayName = DeviceTimerDisplayNameUpdate.Clear,
+                save = save
+            )
+        )
+    }
+
+    suspend fun replaceSchedules(
+        deviceUid: DeviceUid,
+        channelKey: String,
+        schedules: List<DeviceTimerScheduleConfig>,
+        save: Boolean = true
+    ): DeviceRuntimeCommandOutcome<DeviceTimerConfigApplyResult> = withGlobalStatus(
+        deviceUid
+    ) { status ->
+        applyConfig(
+            deviceUid,
+            DeviceTimerConfigApplyPayload(
+                channelKey = channelKey,
+                expectedRevision = status.revision,
+                schedules = schedules,
+                save = save
+            )
+        )
+    }
 
     suspend fun createSchedule(
         deviceUid: DeviceUid,
+        channelKey: String,
         schedule: DeviceTimerScheduleConfig,
         save: Boolean = true
     ): DeviceRuntimeCommandOutcome<DeviceTimerConfigApplyResult> = mutateSchedules(
-        deviceUid = deviceUid,
-        save = save
+        deviceUid,
+        channelKey,
+        save
     ) { current ->
-        require(current.size < DeviceTimerRuntimeContract.Limit.MAX_SCHEDULES) {
-            "Timer schedule capacity is full."
+        require(current.none { it.slotId == schedule.slotId }) {
+            "Timer slotId already exists for this channel: ${schedule.slotId}"
         }
         current + schedule
     }
 
     suspend fun updateSchedule(
         deviceUid: DeviceUid,
-        scheduleIndex: Int,
+        channelKey: String,
+        slotId: Int,
         schedule: DeviceTimerScheduleConfig,
         save: Boolean = true
     ): DeviceRuntimeCommandOutcome<DeviceTimerConfigApplyResult> = mutateSchedules(
-        deviceUid = deviceUid,
-        save = save
+        deviceUid,
+        channelKey,
+        save
     ) { current ->
-        require(scheduleIndex in current.indices) { "Unknown Timer schedule index: $scheduleIndex" }
-        current.toMutableList().apply { this[scheduleIndex] = schedule }.toList()
+        require(schedule.slotId == slotId) { "Timer schedule slotId is immutable." }
+        require(current.any { it.slotId == slotId }) { "Unknown Timer slotId: $slotId" }
+        current.map { existing -> if (existing.slotId == slotId) schedule else existing }
     }
 
     suspend fun deleteSchedule(
         deviceUid: DeviceUid,
-        scheduleIndex: Int,
+        channelKey: String,
+        slotId: Int,
         save: Boolean = true
     ): DeviceRuntimeCommandOutcome<DeviceTimerConfigApplyResult> = mutateSchedules(
-        deviceUid = deviceUid,
-        save = save
+        deviceUid,
+        channelKey,
+        save
     ) { current ->
-        require(scheduleIndex in current.indices) { "Unknown Timer schedule index: $scheduleIndex" }
-        current.filterIndexed { index, _ -> index != scheduleIndex }
+        require(current.any { it.slotId == slotId }) { "Unknown Timer slotId: $slotId" }
+        current.filterNot { it.slotId == slotId }
     }
 }
 
@@ -197,51 +294,81 @@ internal fun DeviceTimerRuntimeRepository.isAuthoritative(
 
 private suspend fun DeviceTimerRuntimeRepository.mutateSchedules(
     deviceUid: DeviceUid,
+    channelKey: String,
     save: Boolean,
     transform: (List<DeviceTimerScheduleConfig>) -> List<DeviceTimerScheduleConfig>
 ): DeviceRuntimeCommandOutcome<DeviceTimerConfigApplyResult> {
-    val baseline = when (val result = ensureConfigBaseline(deviceUid)) {
-        is TimerConfigBaseline.Ready -> result.config
-        is TimerConfigBaseline.Failed -> return result.outcome.asFailure()
+    val detail = when (val result = ensureChannelDetail(deviceUid, channelKey)) {
+        is TimerStatusBaseline.Ready -> result.status
+        is TimerStatusBaseline.Failed -> return result.outcome.asFailure()
     }
-    val current = baseline.schedules.map(DeviceTimerScheduleConfigSnapshot::toPayload)
+    val current = detail.schedules.map(DeviceTimerScheduleStatus::toPayload)
     return applyConfig(
         deviceUid,
         DeviceTimerConfigApplyPayload(
+            channelKey = channelKey,
+            expectedRevision = detail.revision,
             schedules = transform(current),
             save = save
         )
     )
 }
 
-private suspend fun DeviceTimerRuntimeRepository.ensureConfigBaseline(
+private suspend fun DeviceTimerRuntimeRepository.ensureGlobalStatus(
     deviceUid: DeviceUid
-): TimerConfigBaseline =
-    stateStore.currentAuthoritativeState(deviceUid)?.config?.let(TimerConfigBaseline::Ready)
-        ?: when (val status = requestStatus(deviceUid)) {
-            is DeviceRuntimeCommandOutcome.Success -> stateStore
-                .currentAuthoritativeState(deviceUid)
-                ?.config
-                ?.let(TimerConfigBaseline::Ready)
-                ?: TimerConfigBaseline.Failed(
-                    DeviceRuntimeCommandOutcome.Cancelled(
-                        deviceUid = deviceUid,
-                        module = status.module,
-                        action = status.action,
-                        messageId = status.messageId,
-                        generation = status.generation,
-                        reason = "Timer status completed outside the authoritative generation."
-                    )
-                )
-            else -> TimerConfigBaseline.Failed(status)
-        }
-
-private sealed interface TimerConfigBaseline {
-    data class Ready(val config: DeviceTimerConfigSnapshot) : TimerConfigBaseline
-    data class Failed(
-        val outcome: DeviceRuntimeCommandOutcome<*>
-    ) : TimerConfigBaseline
+): TimerStatusBaseline {
+    val current = stateStore.currentAuthoritativeState(deviceUid)?.status
+    if (current != null && !current.channelScoped) return TimerStatusBaseline.Ready(current)
+    return when (val outcome = requestStatus(deviceUid)) {
+        is DeviceRuntimeCommandOutcome.Success -> TimerStatusBaseline.Ready(outcome.value)
+        else -> TimerStatusBaseline.Failed(outcome)
+    }
 }
+
+@Suppress("ReturnCount")
+private suspend fun DeviceTimerRuntimeRepository.ensureChannelDetail(
+    deviceUid: DeviceUid,
+    channelKey: String
+): TimerStatusBaseline {
+    val normalizedChannelKey = normalizeTimerChannelKey(channelKey)
+    val global = when (val result = ensureGlobalStatus(deviceUid)) {
+        is TimerStatusBaseline.Ready -> result.status
+        is TimerStatusBaseline.Failed -> return result
+    }
+    val cached = stateStore.currentAuthoritativeState(deviceUid)
+        ?.channelDetails
+        ?.get(normalizedChannelKey)
+        ?.takeIf { detail -> detail.revision == global.revision }
+    if (cached != null) return TimerStatusBaseline.Ready(cached)
+    return when (val outcome = requestStatus(deviceUid, normalizedChannelKey)) {
+        is DeviceRuntimeCommandOutcome.Success -> TimerStatusBaseline.Ready(outcome.value)
+        else -> TimerStatusBaseline.Failed(outcome)
+    }
+}
+
+private suspend fun <T> DeviceTimerRuntimeRepository.withGlobalStatus(
+    deviceUid: DeviceUid,
+    block: suspend (DeviceTimerStatus) -> DeviceRuntimeCommandOutcome<T>
+): DeviceRuntimeCommandOutcome<T> = when (val baseline = ensureGlobalStatus(deviceUid)) {
+    is TimerStatusBaseline.Ready -> block(baseline.status)
+    is TimerStatusBaseline.Failed -> baseline.outcome.asFailure()
+}
+
+private sealed interface TimerStatusBaseline {
+    data class Ready(val status: DeviceTimerStatus) : TimerStatusBaseline
+    data class Failed(val outcome: DeviceRuntimeCommandOutcome<*>) : TimerStatusBaseline
+}
+
+private fun DeviceTimerScheduleStatus.toPayload(): DeviceTimerScheduleConfig =
+    DeviceTimerScheduleConfig(
+        slotId = slotId,
+        enabled = enabled,
+        name = name,
+        weekdays = weekdays,
+        startTimeMs = startTimeMs,
+        endTimeMs = endTimeMs,
+        spansMidnight = spansMidnight
+    )
 
 private fun configUnsupported(
     payload: DeviceTimerConfigApplyPayload,
@@ -249,7 +376,7 @@ private fun configUnsupported(
 ): Boolean = !access.supportsApi ||
     (payload.schedules != null && !access.supportsSchedules) ||
     (
-        payload.channels?.any { channel -> channel.displayName != null } == true &&
+        payload.displayName != DeviceTimerDisplayNameUpdate.Omitted &&
             !access.supportsChannelDisplayName
         )
 

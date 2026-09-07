@@ -1,0 +1,153 @@
+{
+  "schema": "aqualight.timer.v1",
+  "schemaVersion": 1,
+  "products": {
+    "relayPro2": {
+      "productKey": "TIMER_RELAY_PRO_2",
+      "channelCount": 2,
+      "maximumScheduleCount": 16
+    },
+    "relayPro4": {
+      "productKey": "TIMER_RELAY_PRO_4",
+      "channelCount": 4,
+      "maximumScheduleCount": 32
+    }
+  },
+  "identity": {
+    "slotKey": ["channelKey", "slotId"],
+    "slotIdMinimum": 1,
+    "slotIdMaximum": 8,
+    "maximumSchedulesPerChannel": 8
+  },
+  "commands": {
+    "timer.status.get": {
+      "globalRequestFields": [],
+      "channelRequestFields": ["channelKey"],
+      "globalSchedulesIncluded": false,
+      "channelSchedulesIncluded": true
+    },
+    "timer.config.apply": {
+      "scope": "CHANNEL_REPLACE",
+      "requestFields": [
+        "channelKey",
+        "expectedRevision",
+        "displayName",
+        "schedules",
+        "save"
+      ],
+      "requiredFields": ["channelKey", "expectedRevision"],
+      "requiresDisplayNameOrSchedules": true,
+      "scheduleFields": [
+        "slotId",
+        "enabled",
+        "name",
+        "weekdays",
+        "startTimeMs",
+        "endTimeMs",
+        "spansMidnight"
+      ],
+      "scheduleChannelKeyInheritedFromRequest": true,
+      "emptySchedulesDeletesOnlySelectedChannelSchedules": true,
+      "otherChannelsPreserved": true,
+      "revisionProtected": true,
+      "saveDefault": true
+    },
+    "timer.channel.set": {
+      "requestFields": [
+        "channelKey",
+        "expectedRevision",
+        "regime",
+        "durationMs",
+        "save"
+      ],
+      "persistentRegimes": ["Auto", "On", "Off"],
+      "temporaryRegimes": ["On", "Off"],
+      "temporaryDurationMinimumMs": 1,
+      "temporaryDurationMaximumMs": 86400000,
+      "temporarySaveRequired": false
+    }
+  },
+  "defaults": {
+    "channelNames": {
+      "channel1": "Channel 1",
+      "channel2": "Channel 2",
+      "channel3": "Channel 3",
+      "channel4": "Channel 4"
+    },
+    "emptyDisplayNameMeans": "CLEAR_OVERRIDE_AND_USE_DEFAULT"
+  },
+  "persistence": {
+    "path": "/config/timer.json",
+    "schema": "aql.config.timer.v1",
+    "serializedDisplayName": "EFFECTIVE_NON_EMPTY_NAME",
+    "temporaryOverridePersisted": false,
+    "roundTrip": "SAVE_RESTART_LOAD_MUST_SUCCEED",
+    "mutationLockScope": "APPLY_SAVE_OR_ROLLBACK",
+    "saveFailure": "RESTORE_PREVIOUS_RUNTIME_OUTPUT_AND_REVISION",
+    "rollbackFailure": "LOCK_TIMER_UNTIL_RESTART"
+  },
+  "runtime": {
+    "normalRuntimePhysicalOutputWriter": "AqlTimerService",
+    "normalRuntimePhysicalOutputWriterCount": 1,
+    "quiescedSafetyWriter": "AqlOtaSafeModeTransaction",
+    "overridePrecedence": [
+      "hardwareFault",
+      "temporaryOverride",
+      "persistentRegime",
+      "automaticSchedule"
+    ],
+    "activeSlotNameStorage": "FIXED_49_BYTE_BUFFER",
+    "relativeDelayAllowed": false,
+    "cadencePrimitive": "xTaskDelayUntil"
+  },
+  "time": {
+    "basis": "LOCAL_WALL_CLOCK",
+    "scheduleBoundaryWireUnit": "MILLISECONDS_FROM_LOCAL_MIDNIGHT",
+    "scheduleBoundaryUiPrecision": "HOUR_MINUTE",
+    "scheduleBoundaryGranularityMs": 60000,
+    "epochConversion": "POSIX_LOCALTIME_MKTIME",
+    "springForward": "NONEXISTENT_BOUNDARY_APPLIES_AT_FORWARD_TRANSITION",
+    "fallBack": "BOTH_WALL_CLOCK_OCCURRENCES_ARE_EVALUATED"
+  },
+  "events": {
+    "name": "timer.status.changed",
+    "shape": "DIRECT_CHANNEL_RUNTIME_CHANGE",
+    "sequenceScope": "GLOBAL_PUBLISH_ORDER",
+    "pendingPolicy": "LATEST_UNPUBLISHED_STATE_PER_CHANNEL",
+    "retryPolicy": "SAME_SEQUENCE_UNTIL_ACKNOWLEDGED",
+    "emittedFor": [
+      "automaticTransition",
+      "temporaryOverrideStartOrRenew",
+      "temporaryOverrideExpiry",
+      "persistentRegimeChange",
+      "channelConfigChange",
+      "clockReadinessChange",
+      "hardwareStateChange"
+    ],
+    "changeFields": [
+      "sequence",
+      "occurredAtMs",
+      "operatingState",
+      "activeSlotId",
+      "activeSlotName",
+      "nextTransitionType",
+      "nextTransitionAt",
+      "runtimeReason",
+      "clockReady",
+      "temporaryOverrideActive",
+      "temporaryOverrideRemainingMs"
+    ]
+  },
+  "transportBudget": {
+    "decodedDataMaximumBytes": 4096,
+    "encodedDataMaximumCharacters": 5464,
+    "jsonKeyMaximum": 128,
+    "maximumSchedulesPerMutation": 8,
+    "relayPro4FullConfigurationMutationCount": 4
+  },
+  "compatibility": {
+    "commandNamesChanged": false,
+    "schemaV2Introduced": false,
+    "migrationLayerIntroduced": false
+  }
+}

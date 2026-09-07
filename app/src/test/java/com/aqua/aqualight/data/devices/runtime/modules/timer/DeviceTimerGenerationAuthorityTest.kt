@@ -1,3 +1,5 @@
+@file:Suppress("MagicNumber")
+
 package com.aqua.aqualight.data.devices.runtime.modules.timer
 
 import com.aqua.aqualight.data.devices.model.DeviceUid
@@ -12,10 +14,10 @@ class DeviceTimerGenerationAuthorityTest {
     fun `reconnect retains presentation snapshot and accepts lower reboot uptime`() {
         val store = DeviceTimerRuntimeStateStore()
         val first = DeviceTimerStatusParser.parse(
-            DeviceTimerRuntimeFixtures.status(uptimeMs = 90_000L)
+            DeviceTimerRuntimeFixtures.globalStatus(uptimeMs = 90_000L)
         )
         val rebooted = DeviceTimerStatusParser.parse(
-            DeviceTimerRuntimeFixtures.status(uptimeMs = 1_000L)
+            DeviceTimerRuntimeFixtures.globalStatus(uptimeMs = 1_000L)
         )
 
         store.beginGeneration(DEVICE_UID, G1)
@@ -34,13 +36,13 @@ class DeviceTimerGenerationAuthorityTest {
     fun `late previous generation status cannot overwrite new authoritative Timer state`() {
         val store = DeviceTimerRuntimeStateStore()
         val oldSession = DeviceTimerStatusParser.parse(
-            DeviceTimerRuntimeFixtures.status(uptimeMs = 90_000L)
+            DeviceTimerRuntimeFixtures.globalStatus(uptimeMs = 90_000L)
         )
         val newSession = DeviceTimerStatusParser.parse(
-            DeviceTimerRuntimeFixtures.status(uptimeMs = 2_000L)
+            DeviceTimerRuntimeFixtures.globalStatus(uptimeMs = 2_000L)
         )
         val lateOldReply = DeviceTimerStatusParser.parse(
-            DeviceTimerRuntimeFixtures.status(uptimeMs = 95_000L)
+            DeviceTimerRuntimeFixtures.globalStatus(uptimeMs = 95_000L)
         )
 
         store.beginGeneration(DEVICE_UID, G1)
@@ -51,6 +53,22 @@ class DeviceTimerGenerationAuthorityTest {
         assertFalse(store.recordStatus(DEVICE_UID, G1, lateOldReply))
         assertEquals(2_000L, store.states.value.getValue(DEVICE_UID).status?.uptimeMs)
         assertTrue(store.isAuthoritative(DEVICE_UID, G2))
+    }
+
+    @Test
+    fun `same-millisecond older revision cannot roll back authoritative Timer state`() {
+        val store = DeviceTimerRuntimeStateStore()
+        val current = DeviceTimerStatusParser.parse(
+            DeviceTimerRuntimeFixtures.globalStatus(uptimeMs = 20_000L, revision = 8L)
+        )
+        val stale = DeviceTimerStatusParser.parse(
+            DeviceTimerRuntimeFixtures.globalStatus(uptimeMs = 20_000L, revision = 7L)
+        )
+
+        store.beginGeneration(DEVICE_UID, G1)
+        assertTrue(store.recordStatus(DEVICE_UID, G1, current))
+        assertFalse(store.recordStatus(DEVICE_UID, G1, stale))
+        assertEquals(8L, store.states.value.getValue(DEVICE_UID).status?.revision)
     }
 
     private companion object {

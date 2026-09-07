@@ -103,7 +103,7 @@ class DeviceRuntimeModuleProvider internal constructor(
         ),
         CommandBootstrapPort(
             domain = DeviceRuntimeDomain.TIMER,
-            request = timer::requestStatus,
+            request = { deviceUid -> timer.requestStatus(deviceUid) },
             isAuthoritative = { deviceUid, generation ->
                 timer.isTimerAuthoritative(deviceUid, generation)
             }
@@ -152,12 +152,13 @@ class DeviceRuntimeModuleProvider internal constructor(
         cooling.consume(event)
 
         val timerResult = timerEventReducer.apply(event)
-        if (
-            event.type == DeviceRuntimeTypedEvent.Type.TIMER_STATUS_CHANGED &&
-            timerResult == DeviceTimerEventApplyResult.Ignored &&
-            event.payload is DeviceRuntimeEventPayload.CommandResult
-        ) {
-            timer.requestStatus(event.deviceUid)
+        if (timerResult is DeviceTimerEventApplyResult.RefreshRequired) {
+            val currentStatus = timer.states.value[event.deviceUid]?.status
+            if (currentStatus == null || currentStatus.channelScoped) {
+                timer.requestStatus(event.deviceUid)
+            } else {
+                timer.requestStatus(event.deviceUid, timerResult.channelKey)
+            }
         }
     }
 
