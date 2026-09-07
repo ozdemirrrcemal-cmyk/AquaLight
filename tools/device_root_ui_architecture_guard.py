@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import re
 import sys
+import xml.etree.ElementTree as ET
 from pathlib import Path
 
 
@@ -57,6 +58,15 @@ MAIN_SOURCE_ROOT = Path("app/src/main/java")
 LAYOUT_ROOT = Path("app/src/main/res/layout")
 DOSING_LAYOUT = LAYOUT_ROOT / "fragment_device_dosing_root.xml"
 COOLING_LAYOUT = LAYOUT_ROOT / "fragment_device_cooling_root.xml"
+TIMER_FRAGMENT = Path(
+    "app/src/main/java/com/aqua/aqualight/ui/tabs/devices/detail/timer/"
+    "DeviceTimerRootFragment.kt"
+)
+TIMER_VIEW_MODEL = Path(
+    "app/src/main/java/com/aqua/aqualight/ui/tabs/devices/detail/timer/"
+    "DeviceTimerRootViewModel.kt"
+)
+TIMER_LAYOUT = LAYOUT_ROOT / "fragment_device_timer_root.xml"
 
 HARD_CODED_ANDROID_TEXT = re.compile(
     r'android:text="(?!@string/|@plurals/|@\{|\?)[^\"]+"'
@@ -200,6 +210,50 @@ def validate_layout_contract(
     return errors
 
 
+def validate_timer_empty_surface(
+    layout_source: str,
+    fragment_source: str,
+    view_model_source: str,
+) -> list[str]:
+    """Keep the Timer entry surface empty until real controls replace the old placeholders."""
+    errors: list[str] = []
+    try:
+        root = ET.fromstring(layout_source)
+    except ET.ParseError as error:
+        return [f"{TIMER_LAYOUT}: Timer root layout is invalid XML: {error}"]
+
+    if len(root) != 1 or not root[0].tag.endswith("include"):
+        errors.append(
+            f"{TIMER_LAYOUT}: Timer root body must remain empty; only the shared header is allowed"
+        )
+
+    for forbidden in (
+        "tvProductName",
+        "tvDeviceUid",
+        "tvConnectionStatus",
+        "tvIp",
+        "tvFirmware",
+        "tvModel",
+        "tvPrimaryCount",
+        "tvFeatures",
+        "tvPrimarySection",
+        "tvSecondarySection",
+    ):
+        if forbidden in layout_source or forbidden in fragment_source:
+            errors.append(
+                f"{TIMER_LAYOUT}: removed Timer overview data must not return: {forbidden}"
+            )
+
+    expected_state = re.compile(
+        r'data class DeviceTimerRootUiState\(\s*val title: String = ""\s*\)'
+    )
+    if not expected_state.search(view_model_source):
+        errors.append(
+            f"{TIMER_VIEW_MODEL}: Timer entry state must expose only the header title"
+        )
+    return errors
+
+
 def validate_cooling_feature_boundaries(repository_root: Path) -> list[str]:
     errors: list[str] = []
     cooling_root = repository_root / COOLING_UI_ROOT
@@ -294,6 +348,9 @@ def validate_repository(repository_root: Path = ROOT) -> list[str]:
     cooling_availability = _read(repository_root, COOLING_AVAILABILITY, errors)
     dosing_layout = _read(repository_root, DOSING_LAYOUT, errors)
     cooling_layout = _read(repository_root, COOLING_LAYOUT, errors)
+    timer_fragment = _read(repository_root, TIMER_FRAGMENT, errors)
+    timer_view_model = _read(repository_root, TIMER_VIEW_MODEL, errors)
+    timer_layout = _read(repository_root, TIMER_LAYOUT, errors)
 
     for token, reason in (
         (
@@ -449,6 +506,10 @@ def validate_repository(repository_root: Path = ROOT) -> list[str]:
             cooling_layout,
             background_owned_by_shell=True,
         )
+    )
+    errors.extend(validate_layout_contract(TIMER_LAYOUT, timer_layout))
+    errors.extend(
+        validate_timer_empty_surface(timer_layout, timer_fragment, timer_view_model)
     )
     errors.extend(validate_cooling_feature_boundaries(repository_root))
     return errors
