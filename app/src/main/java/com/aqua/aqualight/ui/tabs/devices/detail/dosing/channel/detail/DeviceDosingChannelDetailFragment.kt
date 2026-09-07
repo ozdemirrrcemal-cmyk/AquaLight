@@ -103,7 +103,13 @@ class DeviceDosingChannelDetailFragment :
                     .distinctUntilChanged()
                     .filter { routeRejected -> routeRejected }
                     .collect {
-                        navigateUpFromDetailIfCurrent()
+                        val navController = findNavController()
+                        if (
+                            navController.currentDestination?.id ==
+                            R.id.deviceDosingChannelDetailFragment
+                        ) {
+                            navController.navigateUp()
+                        }
                     }
             }
         }
@@ -150,13 +156,6 @@ class DeviceDosingChannelDetailFragment :
                     }
                 }
             }
-        }
-    }
-
-    private fun navigateUpFromDetailIfCurrent() {
-        val navController = findNavController()
-        if (navController.currentDestination?.id == R.id.deviceDosingChannelDetailFragment) {
-            navController.navigateUp()
         }
     }
 

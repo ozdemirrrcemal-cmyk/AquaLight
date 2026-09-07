@@ -11,6 +11,7 @@ import com.aqua.aqualight.application.devices.dosing.DeviceDosingProgramRevision
 import com.aqua.aqualight.application.devices.dosing.DeviceDosingManualOperations
 import com.aqua.aqualight.application.devices.dosing.DeviceDosingReservoirRevisionOperations
 import com.aqua.aqualight.application.devices.dosing.DeviceDosingReservoirSettings
+import com.aqua.aqualight.application.devices.dosing.DeviceDosingResetOperations
 import kotlinx.coroutines.flow.Flow
 
 /** Application channel boundary backed exclusively by the central v1 state adapter. */
@@ -19,6 +20,7 @@ internal class DeviceDosingV1ChannelOperationsAdapter(
 ) : DeviceDosingChannelOperations,
     DeviceDosingChannelReadOperations by DeviceDosingV1ChannelReadOperationsAdapter(adapter),
     DeviceDosingManualOperations by DeviceDosingV1ManualOperationsAdapter(adapter),
+    DeviceDosingResetOperations by DeviceDosingV1ResetOperationsAdapter(adapter),
     DeviceDosingProgramRevisionOperations,
     DeviceDosingReservoirRevisionOperations {
 
@@ -222,27 +224,6 @@ internal class DeviceDosingV1ChannelOperationsAdapter(
         channel = DeviceDosingV1ReservoirRefillResult::channel
     ).toChannelResult()
 
-    override suspend fun reset(
-        deviceUid: String,
-        slotId: String
-    ): DeviceDosingChannelOperationResult = adapter.mutationCoordinator.mutatePersisted(
-        deviceUid = deviceUid,
-        slotId = slotId,
-        mutation = DeviceDosingV1PersistedMutation(
-            execute = { uid, channelKey, revision, baseline ->
-                requireMutation(
-                    baseline.controls.resetSupported,
-                    DeviceDosingChannelRejection.NOT_EDITABLE
-                )
-                adapter.repositoryChannelReset(
-                    uid,
-                    DeviceDosingV1ChannelResetRequest(channelKey, revision)
-                )
-            },
-            channel = DeviceDosingV1SavedMutationResult::channel
-        )
-    ).toChannelResult()
-
 }
 
 private class DeviceDosingV1ChannelReadOperationsAdapter(
@@ -310,6 +291,31 @@ private class DeviceDosingV1ManualOperationsAdapter(
             adapter.repositoryDoseStop(uid, channelKey)
         },
         channel = DeviceDosingV1SimpleStopResult::channel
+    ).toChannelResult()
+}
+
+private class DeviceDosingV1ResetOperationsAdapter(
+    private val adapter: DeviceDosingV1StateAdapter
+) : DeviceDosingResetOperations {
+    override suspend fun reset(
+        deviceUid: String,
+        slotId: String
+    ): DeviceDosingChannelOperationResult = adapter.mutationCoordinator.mutatePersisted(
+        deviceUid = deviceUid,
+        slotId = slotId,
+        mutation = DeviceDosingV1PersistedMutation(
+            execute = { uid, channelKey, revision, baseline ->
+                requireMutation(
+                    baseline.controls.resetSupported,
+                    DeviceDosingChannelRejection.NOT_EDITABLE
+                )
+                adapter.repositoryChannelReset(
+                    uid,
+                    DeviceDosingV1ChannelResetRequest(channelKey, revision)
+                )
+            },
+            channel = DeviceDosingV1SavedMutationResult::channel
+        )
     ).toChannelResult()
 }
 

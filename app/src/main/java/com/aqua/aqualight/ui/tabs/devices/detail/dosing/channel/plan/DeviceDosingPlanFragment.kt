@@ -170,62 +170,8 @@ class DeviceDosingPlanFragment :
             )
         }
 
-        navController.navigate(scheduleDirection(mode, editorState, draft))
+        navController.navigate(scheduleDirection(mode, editorState, draft, args))
     }
-
-    private fun scheduleDirection(
-        mode: DosingPlanScheduleMode,
-        editorState: DeviceDosingPlanEditorState,
-        draft: DosingPlanDraft
-    ) = when (mode) {
-            DosingPlanScheduleMode.SINGLE -> DeviceDosingPlanFragmentDirections
-                .actionDeviceDosingPlanFragmentToDeviceDosingSingleScheduleFragment(
-                    deviceUid = args.deviceUid,
-                    slotId = args.slotId,
-                    pumpCount = args.pumpCount,
-                    channelNumber = args.channelNumber,
-                    dailyDoseMicroliters = draft.distributedDailyDoseMicroliters,
-                    startTimeMs = draft.singleDoseStartTimeMs
-                )
-            DosingPlanScheduleMode.HOURLY -> DeviceDosingPlanFragmentDirections
-                .actionDeviceDosingPlanFragmentToDeviceDosingHourlyScheduleFragment(
-                    deviceUid = args.deviceUid,
-                    slotId = args.slotId,
-                    pumpCount = args.pumpCount,
-                    channelNumber = args.channelNumber,
-                    dailyDoseMicroliters = draft.distributedDailyDoseMicroliters,
-                    minuteOfHour = draft.hourlyMinuteOfHour
-                )
-            DosingPlanScheduleMode.CUSTOM -> DeviceDosingPlanFragmentDirections
-                .actionDeviceDosingPlanFragmentToDeviceDosingCustomScheduleFragment(
-                    deviceUid = args.deviceUid,
-                    slotId = args.slotId,
-                    pumpCount = args.pumpCount,
-                    channelNumber = args.channelNumber,
-                    dailyDoseMicroliters = draft.distributedDailyDoseMicroliters,
-                    periodsDraft = DeviceDosingCustomScheduleContract.encodeDraft(
-                        periods = draft.customPeriods,
-                        maxEventsPerChannel = editorState.scheduling.maxEventsPerChannel,
-                        maxPeriodsPerChannel =
-                            editorState.scheduling.maxCustomPeriodsPerChannel
-                    ),
-                    maxEventsPerChannel = editorState.scheduling.maxEventsPerChannel,
-                    maxCustomPeriodsPerChannel =
-                        editorState.scheduling.maxCustomPeriodsPerChannel
-                )
-            DosingPlanScheduleMode.TIMER -> DeviceDosingPlanFragmentDirections
-                .actionDeviceDosingPlanFragmentToDeviceDosingTimerScheduleFragment(
-                    deviceUid = args.deviceUid,
-                    slotId = args.slotId,
-                    pumpCount = args.pumpCount,
-                    channelNumber = args.channelNumber,
-                    dosesDraft = DeviceDosingTimerScheduleContract.encodeDraft(
-                        doses = draft.timerDoses,
-                        maxEventsPerChannel = editorState.scheduling.maxEventsPerChannel
-                    ),
-                    maxEventsPerChannel = editorState.scheduling.maxEventsPerChannel
-                )
-        }
 
     private fun showDailyDoseEditor() {
         val editorState = viewModel.currentEditorState
@@ -319,6 +265,59 @@ class DeviceDosingPlanFragment :
         const val UNSAVED_CHANGES_REQUEST_KEY = "dosing_plan_unsaved_changes"
         const val ACTION_EXIT_WITHOUT_SAVING = "exit_dosing_plan_without_saving"
     }
+}
+
+private fun scheduleDirection(
+    mode: DosingPlanScheduleMode,
+    editorState: DeviceDosingPlanEditorState,
+    draft: DosingPlanDraft,
+    args: DeviceDosingPlanFragmentArgs
+) = when (mode) {
+    DosingPlanScheduleMode.SINGLE -> DeviceDosingPlanFragmentDirections
+        .actionDeviceDosingPlanFragmentToDeviceDosingSingleScheduleFragment(
+            deviceUid = args.deviceUid,
+            slotId = args.slotId,
+            pumpCount = args.pumpCount,
+            channelNumber = args.channelNumber,
+            dailyDoseMicroliters = draft.distributedDailyDoseMicroliters,
+            startTimeMs = draft.singleDoseStartTimeMs
+        )
+    DosingPlanScheduleMode.HOURLY -> DeviceDosingPlanFragmentDirections
+        .actionDeviceDosingPlanFragmentToDeviceDosingHourlyScheduleFragment(
+            deviceUid = args.deviceUid,
+            slotId = args.slotId,
+            pumpCount = args.pumpCount,
+            channelNumber = args.channelNumber,
+            dailyDoseMicroliters = draft.distributedDailyDoseMicroliters,
+            minuteOfHour = draft.hourlyMinuteOfHour
+        )
+    DosingPlanScheduleMode.CUSTOM -> DeviceDosingPlanFragmentDirections
+        .actionDeviceDosingPlanFragmentToDeviceDosingCustomScheduleFragment(
+            deviceUid = args.deviceUid,
+            slotId = args.slotId,
+            pumpCount = args.pumpCount,
+            channelNumber = args.channelNumber,
+            dailyDoseMicroliters = draft.distributedDailyDoseMicroliters,
+            periodsDraft = DeviceDosingCustomScheduleContract.encodeDraft(
+                periods = draft.customPeriods,
+                maxEventsPerChannel = editorState.scheduling.maxEventsPerChannel,
+                maxPeriodsPerChannel = editorState.scheduling.maxCustomPeriodsPerChannel
+            ),
+            maxEventsPerChannel = editorState.scheduling.maxEventsPerChannel,
+            maxCustomPeriodsPerChannel = editorState.scheduling.maxCustomPeriodsPerChannel
+        )
+    DosingPlanScheduleMode.TIMER -> DeviceDosingPlanFragmentDirections
+        .actionDeviceDosingPlanFragmentToDeviceDosingTimerScheduleFragment(
+            deviceUid = args.deviceUid,
+            slotId = args.slotId,
+            pumpCount = args.pumpCount,
+            channelNumber = args.channelNumber,
+            dosesDraft = DeviceDosingTimerScheduleContract.encodeDraft(
+                doses = draft.timerDoses,
+                maxEventsPerChannel = editorState.scheduling.maxEventsPerChannel
+            ),
+            maxEventsPerChannel = editorState.scheduling.maxEventsPerChannel
+        )
 }
 
 private fun validationMessage(issue: DosingPlanValidationIssue): Int = when (issue) {
