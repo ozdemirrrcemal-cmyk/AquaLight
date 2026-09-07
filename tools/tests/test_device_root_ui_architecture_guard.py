@@ -70,6 +70,22 @@ class DeviceRootUiArchitectureGuardTest(unittest.TestCase):
 
         self.assertTrue(any("duplicate surface" in error for error in errors), errors)
 
+    def test_timer_entry_surface_rejects_body_content(self) -> None:
+        layout = """<?xml version="1.0" encoding="utf-8"?>
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android">
+    <include android:id="@+id/appHeader" layout="@layout/layout_aqua_header" />
+    <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" />
+</FrameLayout>
+"""
+
+        errors = GUARD.validate_timer_empty_surface(
+            layout,
+            "class DeviceTimerRootFragment",
+            'data class DeviceTimerRootUiState(val title: String = "")',
+        )
+
+        self.assertTrue(any("body must remain empty" in error for error in errors), errors)
+
     def test_cooling_code_outside_presentation_root_is_rejected(self) -> None:
         with tempfile.TemporaryDirectory() as temporary_directory:
             repository_root = Path(temporary_directory)
