@@ -1,7 +1,6 @@
 package com.aqua.aqualight.ui.tabs.devices.detail.dosing.channel.detail
 
 import android.os.Bundle
-import android.text.InputType
 import android.text.format.DateFormat
 import android.view.View
 import androidx.compose.runtime.getValue
@@ -15,13 +14,9 @@ import androidx.lifecycle.repeatOnLifecycle
 import androidx.navigation.fragment.findNavController
 import androidx.navigation.fragment.navArgs
 import com.aqua.aqualight.R
-import com.aqua.aqualight.base.BaseActivity
 import com.aqua.aqualight.composition.requireAppContainer
-import com.aqua.aqualight.ui.common.bottomsheet.TextInputBottomSheet
-import com.aqua.aqualight.ui.common.dialog.ConfirmDialogFragment
 import com.aqua.aqualight.ui.common.loading.setFragmentGlobalLoading
 import com.aqua.aqualight.ui.tabs.devices.detail.dosing.channel.common.DeviceDosingChannelDestinationFragment
-import com.aqua.aqualight.utils.DialogType
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.flow.map
@@ -37,14 +32,14 @@ class DeviceDosingChannelDetailFragment :
     private val viewModel: DeviceDosingChannelDetailViewModel by viewModels {
         requireContext().requireAppContainer().defaultViewModelFactory
     }
+    private val dialogs by lazy { DeviceDosingChannelDetailDialogs(this, viewModel) }
 
     override val destinationTitle: String
         get() = getString(R.string.device_family_dosing)
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
-        setupManualDoseResult()
-        setupResetConfirmationResult()
+        dialogs.registerResultListeners(viewLifecycleOwner)
         observeOperationEvents()
         observeOperationLoading()
         observeAuthoritativeRoute()
@@ -92,8 +87,8 @@ class DeviceDosingChannelDetailFragment :
                         onMenuItemClick = ::openMenuItem,
                         onRecalibrateClick = ::openRecalibration,
                         onMissedDoseRecoveryChange = viewModel::setMissedDoseRecoveryEnabled,
-                        onManualDoseClick = ::handleManualDoseClick,
-                        onResetChannelClick = ::showResetChannelConfirmation
+                        onManualDoseClick = dialogs::handleManualDoseClick,
+                        onResetChannelClick = dialogs::showResetChannelConfirmation
                     )
                 )
             }
@@ -137,53 +132,21 @@ class DeviceDosingChannelDetailFragment :
         }
     }
 
-    private fun setupManualDoseResult() {
-        childFragmentManager.setFragmentResultListener(
-            MANUAL_DOSE_REQUEST_KEY,
-            viewLifecycleOwner
-        ) { _, result ->
-            if (result.getString(TextInputBottomSheet.RESULT_PAYLOAD_ID) != MANUAL_DOSE_PAYLOAD_ID) {
-                return@setFragmentResultListener
-            }
-            when (result.getString(TextInputBottomSheet.RESULT_KEY)) {
-                TextInputBottomSheet.RESULT_SAVED -> viewModel.startManualDose(
-                    result.getString(TextInputBottomSheet.RESULT_VALUE).orEmpty()
-                )
-                TextInputBottomSheet.RESULT_CANCELLED -> Unit
-            }
-        }
-    }
-
-    private fun setupResetConfirmationResult() {
-        childFragmentManager.setFragmentResultListener(
-            RESET_CONFIRM_REQUEST_KEY,
-            viewLifecycleOwner
-        ) { _, result ->
-            if (result.getString(ConfirmDialogFragment.RESULT_ACTION_ID) != ACTION_RESET_CHANNEL) {
-                return@setFragmentResultListener
-            }
-            when (result.getString(ConfirmDialogFragment.RESULT_KEY)) {
-                ConfirmDialogFragment.RESULT_CONFIRM -> viewModel.resetChannel()
-                ConfirmDialogFragment.RESULT_CANCEL -> Unit
-            }
-        }
-    }
-
     private fun observeOperationEvents() {
         viewLifecycleOwner.lifecycleScope.launch {
             viewLifecycleOwner.repeatOnLifecycle(Lifecycle.State.STARTED) {
                 viewModel.events.collect { event ->
                     when (event) {
                         DeviceDosingChannelDetailEvent.MissedDoseRecoverySaved ->
-                            showOperationMessage(R.string.device_dosing_detail_settings_saved)
+                            dialogs.showOperationMessage(R.string.device_dosing_detail_settings_saved)
                         DeviceDosingChannelDetailEvent.ManualDoseStarted ->
-                            showOperationMessage(R.string.device_dosing_detail_manual_started)
+                            dialogs.showOperationMessage(R.string.device_dosing_detail_manual_started)
                         DeviceDosingChannelDetailEvent.ManualDoseStopped ->
-                            showOperationMessage(R.string.device_dosing_detail_manual_stopped)
+                            dialogs.showOperationMessage(R.string.device_dosing_detail_manual_stopped)
                         DeviceDosingChannelDetailEvent.ChannelReset ->
-                            showOperationMessage(R.string.device_dosing_detail_channel_reset_done)
+                            dialogs.showOperationMessage(R.string.device_dosing_detail_channel_reset_done)
                         is DeviceDosingChannelDetailEvent.OperationFailed ->
-                            showOperationFailure(event.failure)
+                            dialogs.showOperationFailure(event.failure)
                     }
                 }
             }
@@ -240,89 +203,4 @@ class DeviceDosingChannelDetailFragment :
             Date(TimeUnit.SECONDS.toMillis(epochSeconds))
         )
 
-    private fun showManualDoseEditor() {
-        if (!viewModel.currentDraft().manualDoseEnabled) return
-        TextInputBottomSheet.show(
-            fragmentManager = childFragmentManager,
-            title = getString(R.string.device_dosing_detail_manual_title),
-            label = getString(R.string.device_dosing_detail_manual_amount),
-            hint = getString(R.string.device_dosing_detail_manual_amount_hint),
-            initialValue = "",
-            supportingText = getString(R.string.device_dosing_detail_manual_amount_description),
-            suffixText = getString(R.string.device_dosing_detail_ml_unit),
-            saveText = getString(R.string.device_dosing_detail_dispense_dose),
-            cancelText = getString(R.string.common_cancel),
-            required = true,
-            requiredMessage = getString(R.string.device_dosing_detail_manual_amount_required),
-            requestKey = MANUAL_DOSE_REQUEST_KEY,
-            payloadId = MANUAL_DOSE_PAYLOAD_ID,
-            inputType = InputType.TYPE_CLASS_NUMBER or InputType.TYPE_NUMBER_FLAG_DECIMAL,
-            requestFocus = true
-        )
-    }
-
-    private fun handleManualDoseClick() {
-        if (viewModel.currentDraft().manualDoseActive) {
-            viewModel.stopManualDose()
-        } else {
-            showManualDoseEditor()
-        }
-    }
-
-    private fun showOperationFailure(failure: DeviceDosingChannelDetailFailure) {
-        val messageRes = when (failure) {
-            DeviceDosingChannelDetailFailure.INVALID_INPUT ->
-                R.string.device_dosing_detail_error_invalid_input
-            DeviceDosingChannelDetailFailure.NOT_EDITABLE ->
-                R.string.device_dosing_detail_error_not_editable
-            DeviceDosingChannelDetailFailure.CALIBRATION_REQUIRED ->
-                R.string.device_dosing_detail_error_calibration_required
-            DeviceDosingChannelDetailFailure.BUSY -> R.string.device_dosing_detail_error_busy
-            DeviceDosingChannelDetailFailure.STATE_CHANGED ->
-                R.string.device_dosing_detail_error_state_changed
-            DeviceDosingChannelDetailFailure.OUTPUT_STOP_UNCONFIRMED ->
-                R.string.device_dosing_error_output_stop_unconfirmed
-            DeviceDosingChannelDetailFailure.SAFETY_BLOCKED ->
-                R.string.device_dosing_detail_error_safety_blocked
-            DeviceDosingChannelDetailFailure.UNAVAILABLE ->
-                R.string.device_dosing_detail_error_unavailable
-            DeviceDosingChannelDetailFailure.TRY_AGAIN ->
-                R.string.device_dosing_detail_operation_failed
-        }
-        showOperationMessage(messageRes, BaseActivity.SnackType.ERROR)
-    }
-
-    private fun showOperationMessage(
-        messageRes: Int,
-        type: BaseActivity.SnackType = BaseActivity.SnackType.SUCCESS
-    ) {
-        (activity as? BaseActivity)?.showSnackBar(getString(messageRes), type)
-    }
-
-    private fun showResetChannelConfirmation() {
-        ConfirmDialogFragment.show(
-            fragmentManager = childFragmentManager,
-            request = ConfirmDialogFragment.Request(
-                title = getString(R.string.device_dosing_detail_reset_warning_title),
-                message = getString(R.string.device_dosing_detail_reset_warning_description),
-                confirmText = getString(R.string.device_dosing_detail_reset_action),
-                cancelText = getString(R.string.cancel),
-                presentation = ConfirmDialogFragment.Presentation(
-                    type = DialogType.WARNING,
-                    destructive = true
-                ),
-                resultTarget = ConfirmDialogFragment.ResultTarget(
-                    requestKey = RESET_CONFIRM_REQUEST_KEY,
-                    actionId = ACTION_RESET_CHANNEL
-                )
-            )
-        )
-    }
-
-    private companion object {
-        const val MANUAL_DOSE_REQUEST_KEY = "dosing_manual_dose_input"
-        const val MANUAL_DOSE_PAYLOAD_ID = "manual_dose"
-        const val RESET_CONFIRM_REQUEST_KEY = "dosing_channel_reset_confirm"
-        const val ACTION_RESET_CHANNEL = "reset_dosing_channel"
-    }
 }

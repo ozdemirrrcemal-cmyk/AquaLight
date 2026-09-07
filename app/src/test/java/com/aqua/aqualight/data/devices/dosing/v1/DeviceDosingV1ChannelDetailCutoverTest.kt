@@ -337,7 +337,7 @@ class DeviceDosingV1ChannelDetailCutoverTest {
 
         fun enqueueProgramMutation(revision: Long, missedDoseRecoveryEnabled: Boolean) {
             val detail = channelDetail(revision, false, missedDoseRecoveryEnabled)
-            val parsed = DeviceDosingV1MutationParser.parseProgramApply(
+            val parsed = DeviceDosingV1SavedMutationParser.parseProgramApply(
                 DeviceDosingV1TestFixtures.savedMutation(DeviceDosingV1Contract.Literal.PROGRAM_APPLY)
                     .put("channel", detail)
             )
@@ -345,7 +345,7 @@ class DeviceDosingV1ChannelDetailCutoverTest {
         }
 
         fun enqueueResetMutation(revision: Long) {
-            val parsed = DeviceDosingV1MutationParser.parseChannelReset(
+            val parsed = DeviceDosingV1SavedMutationParser.parseChannelReset(
                 DeviceDosingV1TestFixtures.savedMutation(DeviceDosingV1Contract.Literal.CHANNEL_RESET)
                     .put("channel", channelDetail(revision, false, false))
             )

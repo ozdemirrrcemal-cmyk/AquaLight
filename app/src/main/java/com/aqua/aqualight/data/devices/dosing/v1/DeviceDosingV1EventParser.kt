@@ -67,33 +67,36 @@ object DeviceDosingV1EventParser {
     private fun parseMutationChannel(
         action: String,
         result: JSONObject
-    ): DeviceDosingV1ChannelDetail = when (action) {
-        DeviceDosingV1Contract.Action.CONFIG_APPLY ->
-            DeviceDosingV1MutationParser.parseConfigApply(result).channel
-        DeviceDosingV1Contract.Action.PROGRAM_APPLY ->
-            DeviceDosingV1MutationParser.parseProgramApply(result).channel
-        DeviceDosingV1Contract.Action.CHANNEL_RESET ->
-            DeviceDosingV1MutationParser.parseChannelReset(result).channel
-        DeviceDosingV1Contract.Action.PRIME_START ->
-            DeviceDosingV1MutationParser.parsePrimeStart(result).channel
-        DeviceDosingV1Contract.Action.PRIME_STOP ->
-            DeviceDosingV1MutationParser.parsePrimeStop(result).channel
-        DeviceDosingV1Contract.Action.CALIBRATION_START ->
-            DeviceDosingV1MutationParser.parseCalibrationStart(result).channel
-        DeviceDosingV1Contract.Action.CALIBRATION_FINISH ->
-            DeviceDosingV1MutationParser.parseCalibrationFinish(result).channel
-        DeviceDosingV1Contract.Action.CALIBRATION_CONFIRM ->
-            DeviceDosingV1MutationParser.parseCalibrationConfirm(result).channel
-        DeviceDosingV1Contract.Action.CALIBRATION_CANCEL ->
-            DeviceDosingV1MutationParser.parseCalibrationCancel(result).channel
-        DeviceDosingV1Contract.Action.DOSE_NOW ->
-            DeviceDosingV1MutationParser.parseDoseNow(result).channel
-        DeviceDosingV1Contract.Action.DOSE_STOP ->
-            DeviceDosingV1MutationParser.parseDoseStop(result).channel
-        DeviceDosingV1Contract.Action.RESERVOIR_REFILL ->
-            DeviceDosingV1MutationParser.parseReservoirRefill(result).channel
-        else -> error("Unsupported Dosing mutation action: " + action)
-    }
+    ): DeviceDosingV1ChannelDetail = mutationChannelParsers[action]?.invoke(result)
+        ?: error("Unsupported Dosing mutation action: $action")
+
+    private val mutationChannelParsers:
+        Map<String, (JSONObject) -> DeviceDosingV1ChannelDetail> = mapOf(
+            DeviceDosingV1Contract.Action.CONFIG_APPLY to
+                { data -> DeviceDosingV1SavedMutationParser.parseConfigApply(data).channel },
+            DeviceDosingV1Contract.Action.PROGRAM_APPLY to
+                { data -> DeviceDosingV1SavedMutationParser.parseProgramApply(data).channel },
+            DeviceDosingV1Contract.Action.CHANNEL_RESET to
+                { data -> DeviceDosingV1SavedMutationParser.parseChannelReset(data).channel },
+            DeviceDosingV1Contract.Action.PRIME_START to
+                { data -> DeviceDosingV1MutationParser.parsePrimeStart(data).channel },
+            DeviceDosingV1Contract.Action.PRIME_STOP to
+                { data -> DeviceDosingV1MutationParser.parsePrimeStop(data).channel },
+            DeviceDosingV1Contract.Action.CALIBRATION_START to
+                { data -> DeviceDosingV1MutationParser.parseCalibrationStart(data).channel },
+            DeviceDosingV1Contract.Action.CALIBRATION_FINISH to
+                { data -> DeviceDosingV1MutationParser.parseCalibrationFinish(data).channel },
+            DeviceDosingV1Contract.Action.CALIBRATION_CONFIRM to
+                { data -> DeviceDosingV1MutationParser.parseCalibrationConfirm(data).channel },
+            DeviceDosingV1Contract.Action.CALIBRATION_CANCEL to
+                { data -> DeviceDosingV1MutationParser.parseCalibrationCancel(data).channel },
+            DeviceDosingV1Contract.Action.DOSE_NOW to
+                { data -> DeviceDosingV1MutationParser.parseDoseNow(data).channel },
+            DeviceDosingV1Contract.Action.DOSE_STOP to
+                { data -> DeviceDosingV1MutationParser.parseDoseStop(data).channel },
+            DeviceDosingV1Contract.Action.RESERVOIR_REFILL to
+                { data -> DeviceDosingV1MutationParser.parseReservoirRefill(data).channel }
+        )
 
     private val MUTATION_ACTIONS = DeviceDosingV1Contract.Action.ALL - setOf(
         DeviceDosingV1Contract.Action.STATUS_GET,

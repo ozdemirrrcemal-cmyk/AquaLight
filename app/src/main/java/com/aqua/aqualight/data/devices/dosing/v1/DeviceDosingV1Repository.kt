@@ -6,164 +6,160 @@ import com.aqua.aqualight.data.devices.runtime.core.DeviceRuntimeCommandOutcome
 import com.aqua.aqualight.data.devices.runtime.modules.common.DeviceRuntimeJsonCommand
 import org.json.JSONObject
 
-/**
- * Complete firmware v1 command surface over the shared correlated device-runtime gateway.
- *
- * The repository performs transport serialization and strict response parsing only. It does not
- * derive occurrence progress, reservoir state, revisions, runtime reasons, or percentages.
- */
+/** Complete firmware v1 command surface, composed from cohesive stateless command groups. */
 class DeviceDosingV1Repository(
-    private val gateway: DeviceRuntimeCommandGateway
-) {
-    suspend fun requestGlobalStatus(
-        deviceUid: DeviceUid
-    ): DeviceRuntimeCommandOutcome<DeviceDosingV1GlobalStatus> = execute(
+    gateway: DeviceRuntimeCommandGateway
+) : DeviceDosingV1StatusCommands by DeviceDosingV1StatusRepository(gateway),
+    DeviceDosingV1ConfigurationCommands by DeviceDosingV1ConfigurationRepository(gateway),
+    DeviceDosingV1CalibrationCommands by DeviceDosingV1CalibrationRepository(gateway),
+    DeviceDosingV1RuntimeCommands by DeviceDosingV1RuntimeRepository(gateway)
+
+interface DeviceDosingV1StatusCommands {
+    suspend fun requestGlobalStatus(deviceUid: DeviceUid):
+        DeviceRuntimeCommandOutcome<DeviceDosingV1GlobalStatus>
+    suspend fun requestChannelStatus(deviceUid: DeviceUid, channelKey: DeviceDosingV1ChannelKey):
+        DeviceRuntimeCommandOutcome<DeviceDosingV1ChannelStatus>
+    suspend fun requestProgress(deviceUid: DeviceUid, channelKey: DeviceDosingV1ChannelKey):
+        DeviceRuntimeCommandOutcome<DeviceDosingV1ProgressStatus>
+}
+
+interface DeviceDosingV1ConfigurationCommands {
+    suspend fun applyConfig(deviceUid: DeviceUid, request: DeviceDosingV1ConfigApplyRequest):
+        DeviceRuntimeCommandOutcome<DeviceDosingV1SavedMutationResult>
+    suspend fun applyProgram(deviceUid: DeviceUid, request: DeviceDosingV1ProgramApplyRequest):
+        DeviceRuntimeCommandOutcome<DeviceDosingV1SavedMutationResult>
+    suspend fun resetChannel(deviceUid: DeviceUid, request: DeviceDosingV1ChannelResetRequest):
+        DeviceRuntimeCommandOutcome<DeviceDosingV1SavedMutationResult>
+}
+
+interface DeviceDosingV1CalibrationCommands {
+    suspend fun startPrime(deviceUid: DeviceUid, channelKey: DeviceDosingV1ChannelKey):
+        DeviceRuntimeCommandOutcome<DeviceDosingV1PrimeStartResult>
+    suspend fun stopPrime(deviceUid: DeviceUid, channelKey: DeviceDosingV1ChannelKey):
+        DeviceRuntimeCommandOutcome<DeviceDosingV1SimpleStopResult>
+    suspend fun startCalibration(deviceUid: DeviceUid, request: DeviceDosingV1CalibrationStartRequest):
+        DeviceRuntimeCommandOutcome<DeviceDosingV1CalibrationStartResult>
+    suspend fun finishCalibration(deviceUid: DeviceUid, request: DeviceDosingV1CalibrationFinishRequest):
+        DeviceRuntimeCommandOutcome<DeviceDosingV1CalibrationFinishResult>
+    suspend fun confirmCalibration(deviceUid: DeviceUid, request: DeviceDosingV1CalibrationConfirmRequest):
+        DeviceRuntimeCommandOutcome<DeviceDosingV1CalibrationConfirmResult>
+    suspend fun cancelCalibration(deviceUid: DeviceUid, channelKey: DeviceDosingV1ChannelKey):
+        DeviceRuntimeCommandOutcome<DeviceDosingV1CalibrationCancelResult>
+}
+
+interface DeviceDosingV1RuntimeCommands {
+    suspend fun doseNow(deviceUid: DeviceUid, request: DeviceDosingV1DoseNowRequest):
+        DeviceRuntimeCommandOutcome<DeviceDosingV1DoseNowResult>
+    suspend fun stopDose(deviceUid: DeviceUid, channelKey: DeviceDosingV1ChannelKey):
+        DeviceRuntimeCommandOutcome<DeviceDosingV1SimpleStopResult>
+    suspend fun refillReservoir(deviceUid: DeviceUid, channelKey: DeviceDosingV1ChannelKey):
+        DeviceRuntimeCommandOutcome<DeviceDosingV1ReservoirRefillResult>
+}
+
+private class DeviceDosingV1StatusRepository(gateway: DeviceRuntimeCommandGateway) :
+    DeviceDosingV1StatusCommands {
+    private val executor = DeviceDosingV1CommandExecutor(gateway)
+
+    override suspend fun requestGlobalStatus(deviceUid: DeviceUid) = executor.execute(
         deviceUid = deviceUid,
         action = DeviceDosingV1Contract.Action.STATUS_GET,
         parser = DeviceDosingV1StatusParser::parseGlobal
     )
 
-    suspend fun requestChannelStatus(
+    override suspend fun requestChannelStatus(
         deviceUid: DeviceUid,
         channelKey: DeviceDosingV1ChannelKey
-    ): DeviceRuntimeCommandOutcome<DeviceDosingV1ChannelStatus> = execute(
+    ) = executor.execute(
         deviceUid = deviceUid,
         action = DeviceDosingV1Contract.Action.STATUS_GET,
         dataFactory = { channelJson(channelKey) },
         parser = DeviceDosingV1StatusParser::parseChannel
     )
 
-    suspend fun requestProgress(
+    override suspend fun requestProgress(
         deviceUid: DeviceUid,
         channelKey: DeviceDosingV1ChannelKey
-    ): DeviceRuntimeCommandOutcome<DeviceDosingV1ProgressStatus> = execute(
+    ) = executor.execute(
         deviceUid = deviceUid,
         action = DeviceDosingV1Contract.Action.PROGRESS_GET,
         dataFactory = { channelJson(channelKey) },
         parser = DeviceDosingV1StatusParser::parseProgress
     )
+}
 
-    suspend fun applyConfig(
-        deviceUid: DeviceUid,
-        request: DeviceDosingV1ConfigApplyRequest
-    ): DeviceRuntimeCommandOutcome<DeviceDosingV1SavedMutationResult> = execute(
-        deviceUid = deviceUid,
-        action = DeviceDosingV1Contract.Action.CONFIG_APPLY,
-        dataFactory = request::toJson,
-        parser = DeviceDosingV1MutationParser::parseConfigApply
-    )
+private class DeviceDosingV1ConfigurationRepository(gateway: DeviceRuntimeCommandGateway) :
+    DeviceDosingV1ConfigurationCommands {
+    private val executor = DeviceDosingV1CommandExecutor(gateway)
 
-    suspend fun applyProgram(
-        deviceUid: DeviceUid,
-        request: DeviceDosingV1ProgramApplyRequest
-    ): DeviceRuntimeCommandOutcome<DeviceDosingV1SavedMutationResult> = execute(
-        deviceUid = deviceUid,
-        action = DeviceDosingV1Contract.Action.PROGRAM_APPLY,
-        dataFactory = request::toJson,
-        parser = DeviceDosingV1MutationParser::parseProgramApply
-    )
+    override suspend fun applyConfig(deviceUid: DeviceUid, request: DeviceDosingV1ConfigApplyRequest) =
+        executor.execute(deviceUid, DeviceDosingV1Contract.Action.CONFIG_APPLY,
+            request::toJson, DeviceDosingV1MutationParser::parseConfigApply)
 
-    suspend fun resetChannel(
-        deviceUid: DeviceUid,
-        request: DeviceDosingV1ChannelResetRequest
-    ): DeviceRuntimeCommandOutcome<DeviceDosingV1SavedMutationResult> = execute(
-        deviceUid = deviceUid,
-        action = DeviceDosingV1Contract.Action.CHANNEL_RESET,
-        dataFactory = request::toJson,
-        parser = DeviceDosingV1MutationParser::parseChannelReset
-    )
+    override suspend fun applyProgram(deviceUid: DeviceUid, request: DeviceDosingV1ProgramApplyRequest) =
+        executor.execute(deviceUid, DeviceDosingV1Contract.Action.PROGRAM_APPLY,
+            request::toJson, DeviceDosingV1MutationParser::parseProgramApply)
 
-    suspend fun startPrime(
-        deviceUid: DeviceUid,
-        channelKey: DeviceDosingV1ChannelKey
-    ): DeviceRuntimeCommandOutcome<DeviceDosingV1PrimeStartResult> = execute(
-        deviceUid = deviceUid,
-        action = DeviceDosingV1Contract.Action.PRIME_START,
-        dataFactory = { channelJson(channelKey) },
-        parser = DeviceDosingV1MutationParser::parsePrimeStart
-    )
+    override suspend fun resetChannel(deviceUid: DeviceUid, request: DeviceDosingV1ChannelResetRequest) =
+        executor.execute(deviceUid, DeviceDosingV1Contract.Action.CHANNEL_RESET,
+            request::toJson, DeviceDosingV1MutationParser::parseChannelReset)
+}
 
-    suspend fun stopPrime(
-        deviceUid: DeviceUid,
-        channelKey: DeviceDosingV1ChannelKey
-    ): DeviceRuntimeCommandOutcome<DeviceDosingV1SimpleStopResult> = execute(
-        deviceUid = deviceUid,
-        action = DeviceDosingV1Contract.Action.PRIME_STOP,
-        dataFactory = { channelJson(channelKey) },
-        parser = DeviceDosingV1MutationParser::parsePrimeStop
-    )
+private class DeviceDosingV1CalibrationRepository(gateway: DeviceRuntimeCommandGateway) :
+    DeviceDosingV1CalibrationCommands {
+    private val executor = DeviceDosingV1CommandExecutor(gateway)
 
-    suspend fun startCalibration(
+    override suspend fun startPrime(deviceUid: DeviceUid, channelKey: DeviceDosingV1ChannelKey) =
+        executor.execute(deviceUid, DeviceDosingV1Contract.Action.PRIME_START,
+            { channelJson(channelKey) }, DeviceDosingV1MutationParser::parsePrimeStart)
+
+    override suspend fun stopPrime(deviceUid: DeviceUid, channelKey: DeviceDosingV1ChannelKey) =
+        executor.execute(deviceUid, DeviceDosingV1Contract.Action.PRIME_STOP,
+            { channelJson(channelKey) }, DeviceDosingV1MutationParser::parsePrimeStop)
+
+    override suspend fun startCalibration(
         deviceUid: DeviceUid,
         request: DeviceDosingV1CalibrationStartRequest
-    ): DeviceRuntimeCommandOutcome<DeviceDosingV1CalibrationStartResult> = execute(
-        deviceUid = deviceUid,
-        action = DeviceDosingV1Contract.Action.CALIBRATION_START,
-        dataFactory = request::toJson,
-        parser = DeviceDosingV1MutationParser::parseCalibrationStart
-    )
+    ) = executor.execute(deviceUid, DeviceDosingV1Contract.Action.CALIBRATION_START,
+        request::toJson, DeviceDosingV1MutationParser::parseCalibrationStart)
 
-    suspend fun finishCalibration(
+    override suspend fun finishCalibration(
         deviceUid: DeviceUid,
         request: DeviceDosingV1CalibrationFinishRequest
-    ): DeviceRuntimeCommandOutcome<DeviceDosingV1CalibrationFinishResult> = execute(
-        deviceUid = deviceUid,
-        action = DeviceDosingV1Contract.Action.CALIBRATION_FINISH,
-        dataFactory = request::toJson,
-        parser = DeviceDosingV1MutationParser::parseCalibrationFinish
-    )
+    ) = executor.execute(deviceUid, DeviceDosingV1Contract.Action.CALIBRATION_FINISH,
+        request::toJson, DeviceDosingV1MutationParser::parseCalibrationFinish)
 
-    suspend fun confirmCalibration(
+    override suspend fun confirmCalibration(
         deviceUid: DeviceUid,
         request: DeviceDosingV1CalibrationConfirmRequest
-    ): DeviceRuntimeCommandOutcome<DeviceDosingV1CalibrationConfirmResult> = execute(
-        deviceUid = deviceUid,
-        action = DeviceDosingV1Contract.Action.CALIBRATION_CONFIRM,
-        dataFactory = request::toJson,
-        parser = DeviceDosingV1MutationParser::parseCalibrationConfirm
-    )
+    ) = executor.execute(deviceUid, DeviceDosingV1Contract.Action.CALIBRATION_CONFIRM,
+        request::toJson, DeviceDosingV1MutationParser::parseCalibrationConfirm)
 
-    suspend fun cancelCalibration(
-        deviceUid: DeviceUid,
-        channelKey: DeviceDosingV1ChannelKey
-    ): DeviceRuntimeCommandOutcome<DeviceDosingV1CalibrationCancelResult> = execute(
-        deviceUid = deviceUid,
-        action = DeviceDosingV1Contract.Action.CALIBRATION_CANCEL,
-        dataFactory = { channelJson(channelKey) },
-        parser = DeviceDosingV1MutationParser::parseCalibrationCancel
-    )
+    override suspend fun cancelCalibration(deviceUid: DeviceUid, channelKey: DeviceDosingV1ChannelKey) =
+        executor.execute(deviceUid, DeviceDosingV1Contract.Action.CALIBRATION_CANCEL,
+            { channelJson(channelKey) }, DeviceDosingV1MutationParser::parseCalibrationCancel)
+}
 
-    suspend fun doseNow(
-        deviceUid: DeviceUid,
-        request: DeviceDosingV1DoseNowRequest
-    ): DeviceRuntimeCommandOutcome<DeviceDosingV1DoseNowResult> = execute(
-        deviceUid = deviceUid,
-        action = DeviceDosingV1Contract.Action.DOSE_NOW,
-        dataFactory = request::toJson,
-        parser = DeviceDosingV1MutationParser::parseDoseNow
-    )
+private class DeviceDosingV1RuntimeRepository(gateway: DeviceRuntimeCommandGateway) :
+    DeviceDosingV1RuntimeCommands {
+    private val executor = DeviceDosingV1CommandExecutor(gateway)
 
-    suspend fun stopDose(
-        deviceUid: DeviceUid,
-        channelKey: DeviceDosingV1ChannelKey
-    ): DeviceRuntimeCommandOutcome<DeviceDosingV1SimpleStopResult> = execute(
-        deviceUid = deviceUid,
-        action = DeviceDosingV1Contract.Action.DOSE_STOP,
-        dataFactory = { channelJson(channelKey) },
-        parser = DeviceDosingV1MutationParser::parseDoseStop
-    )
+    override suspend fun doseNow(deviceUid: DeviceUid, request: DeviceDosingV1DoseNowRequest) =
+        executor.execute(deviceUid, DeviceDosingV1Contract.Action.DOSE_NOW,
+            request::toJson, DeviceDosingV1MutationParser::parseDoseNow)
 
-    suspend fun refillReservoir(
-        deviceUid: DeviceUid,
-        channelKey: DeviceDosingV1ChannelKey
-    ): DeviceRuntimeCommandOutcome<DeviceDosingV1ReservoirRefillResult> = execute(
-        deviceUid = deviceUid,
-        action = DeviceDosingV1Contract.Action.RESERVOIR_REFILL,
-        dataFactory = { channelJson(channelKey) },
-        parser = DeviceDosingV1MutationParser::parseReservoirRefill
-    )
+    override suspend fun stopDose(deviceUid: DeviceUid, channelKey: DeviceDosingV1ChannelKey) =
+        executor.execute(deviceUid, DeviceDosingV1Contract.Action.DOSE_STOP,
+            { channelJson(channelKey) }, DeviceDosingV1MutationParser::parseDoseStop)
 
-    private suspend fun <T> execute(
+    override suspend fun refillReservoir(deviceUid: DeviceUid, channelKey: DeviceDosingV1ChannelKey) =
+        executor.execute(deviceUid, DeviceDosingV1Contract.Action.RESERVOIR_REFILL,
+            { channelJson(channelKey) }, DeviceDosingV1MutationParser::parseReservoirRefill)
+}
+
+private class DeviceDosingV1CommandExecutor(
+    private val gateway: DeviceRuntimeCommandGateway
+) {
+    suspend fun <T> execute(
         deviceUid: DeviceUid,
         action: String,
         dataFactory: () -> JSONObject = ::JSONObject,

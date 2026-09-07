@@ -243,9 +243,9 @@ class DeviceDosingV1ContractTest {
             .put("program", JSONObject())
             .also { response -> response.remove("saved") }
 
-        assertTrue(DeviceDosingV1MutationParser.parseProgramApply(canonical).saved)
+        assertTrue(DeviceDosingV1SavedMutationParser.parseProgramApply(canonical).saved)
         assertThrows(IllegalArgumentException::class.java) {
-            DeviceDosingV1MutationParser.parseProgramApply(obsolete)
+            DeviceDosingV1SavedMutationParser.parseProgramApply(obsolete)
         }
     }
 

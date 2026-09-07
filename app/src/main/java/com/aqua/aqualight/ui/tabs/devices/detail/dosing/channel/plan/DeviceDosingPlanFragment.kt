@@ -170,7 +170,14 @@ class DeviceDosingPlanFragment :
             )
         }
 
-        val direction = when (mode) {
+        navController.navigate(scheduleDirection(mode, editorState, draft))
+    }
+
+    private fun scheduleDirection(
+        mode: DosingPlanScheduleMode,
+        editorState: DeviceDosingPlanEditorState,
+        draft: DosingPlanDraft
+    ) = when (mode) {
             DosingPlanScheduleMode.SINGLE -> DeviceDosingPlanFragmentDirections
                 .actionDeviceDosingPlanFragmentToDeviceDosingSingleScheduleFragment(
                     deviceUid = args.deviceUid,
@@ -219,7 +226,6 @@ class DeviceDosingPlanFragment :
                     maxEventsPerChannel = editorState.scheduling.maxEventsPerChannel
                 )
         }
-        navController.navigate(direction)
     }
 
     private fun showDailyDoseEditor() {

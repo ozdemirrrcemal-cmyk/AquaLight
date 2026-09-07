@@ -3,19 +3,22 @@ package com.aqua.aqualight.data.devices.dosing.v1
 import com.aqua.aqualight.application.devices.dosing.DeviceDosingChannelCommittedResult
 import com.aqua.aqualight.application.devices.dosing.DeviceDosingChannelOperationResult
 import com.aqua.aqualight.application.devices.dosing.DeviceDosingChannelOperations
+import com.aqua.aqualight.application.devices.dosing.DeviceDosingChannelReadOperations
 import com.aqua.aqualight.application.devices.dosing.DeviceDosingChannelRejection
 import com.aqua.aqualight.application.devices.dosing.DeviceDosingChannelSnapshot
 import com.aqua.aqualight.application.devices.dosing.DeviceDosingProgram
 import com.aqua.aqualight.application.devices.dosing.DeviceDosingProgramRevisionOperations
+import com.aqua.aqualight.application.devices.dosing.DeviceDosingManualOperations
 import com.aqua.aqualight.application.devices.dosing.DeviceDosingReservoirRevisionOperations
 import com.aqua.aqualight.application.devices.dosing.DeviceDosingReservoirSettings
-import com.aqua.aqualight.data.devices.runtime.core.DeviceRuntimeCommandOutcome
 import kotlinx.coroutines.flow.Flow
 
 /** Application channel boundary backed exclusively by the central v1 state adapter. */
 internal class DeviceDosingV1ChannelOperationsAdapter(
     private val adapter: DeviceDosingV1StateAdapter
 ) : DeviceDosingChannelOperations,
+    DeviceDosingChannelReadOperations by DeviceDosingV1ChannelReadOperationsAdapter(adapter),
+    DeviceDosingManualOperations by DeviceDosingV1ManualOperationsAdapter(adapter),
     DeviceDosingProgramRevisionOperations,
     DeviceDosingReservoirRevisionOperations {
 
@@ -24,26 +27,6 @@ internal class DeviceDosingV1ChannelOperationsAdapter(
             scope = adapter.reconciliationScope,
             execute = ::persistMissedDoseRecoveryEnabled
         )
-
-    override fun current(deviceUid: String, slotId: String): DeviceDosingChannelSnapshot? =
-        adapter.stateAccess.currentChannel(deviceUid, slotId)
-
-    override fun observe(
-        deviceUid: String,
-        slotId: String
-    ): Flow<DeviceDosingChannelSnapshot?> = adapter.stateAccess.observeChannel(deviceUid, slotId)
-
-    override fun observeAll(deviceUid: String): Flow<List<DeviceDosingChannelSnapshot>> =
-        adapter.stateAccess.observeAll(deviceUid)
-
-    override suspend fun refresh(
-        deviceUid: String,
-        slotId: String
-    ): DeviceDosingChannelOperationResult =
-        adapter.refreshCoordinator.refresh(deviceUid, slotId).toChannelResult()
-
-    override suspend fun refreshAll(deviceUid: String): Boolean =
-        adapter.refreshCoordinator.refreshAll(deviceUid)
 
     override suspend fun applyProgram(
         deviceUid: String,
@@ -101,7 +84,7 @@ internal class DeviceDosingV1ChannelOperationsAdapter(
                     effectiveProgram.isValidFor(baseline.scheduling),
                     DeviceDosingChannelRejection.INVALID_DRAFT
                 )
-                repositoryProgramApply(uid, channelKey, revision, effectiveProgram)
+                adapter.repositoryProgramApply(uid, channelKey, revision, effectiveProgram)
             },
             channel = DeviceDosingV1SavedMutationResult::channel
         )
@@ -144,7 +127,7 @@ internal class DeviceDosingV1ChannelOperationsAdapter(
                     updated.isValidFor(baseline.scheduling),
                     DeviceDosingChannelRejection.INVALID_DRAFT
                 )
-                repositoryProgramApply(uid, channelKey, revision, updated)
+                adapter.repositoryProgramApply(uid, channelKey, revision, updated)
             },
             channel = DeviceDosingV1SavedMutationResult::channel
         )
@@ -189,7 +172,7 @@ internal class DeviceDosingV1ChannelOperationsAdapter(
                     baseline.controls.reservoirEditable,
                     DeviceDosingChannelRejection.NOT_EDITABLE
                 )
-                repositoryConfigApply(
+                adapter.repositoryConfigApply(
                     uid,
                     DeviceDosingV1ConfigApplyRequest(
                         channelKey = channelKey,
@@ -234,11 +217,56 @@ internal class DeviceDosingV1ChannelOperationsAdapter(
                 baseline.controls.refillSupported && baseline.reservoir.trackingEnabled,
                 DeviceDosingChannelRejection.NOT_EDITABLE
             )
-            repositoryReservoirRefill(uid, channelKey)
+            adapter.repositoryReservoirRefill(uid, channelKey)
         },
         channel = DeviceDosingV1ReservoirRefillResult::channel
     ).toChannelResult()
 
+    override suspend fun reset(
+        deviceUid: String,
+        slotId: String
+    ): DeviceDosingChannelOperationResult = adapter.mutationCoordinator.mutatePersisted(
+        deviceUid = deviceUid,
+        slotId = slotId,
+        mutation = DeviceDosingV1PersistedMutation(
+            execute = { uid, channelKey, revision, baseline ->
+                requireMutation(
+                    baseline.controls.resetSupported,
+                    DeviceDosingChannelRejection.NOT_EDITABLE
+                )
+                adapter.repositoryChannelReset(
+                    uid,
+                    DeviceDosingV1ChannelResetRequest(channelKey, revision)
+                )
+            },
+            channel = DeviceDosingV1SavedMutationResult::channel
+        )
+    ).toChannelResult()
+
+}
+
+private class DeviceDosingV1ChannelReadOperationsAdapter(
+    private val adapter: DeviceDosingV1StateAdapter
+) : DeviceDosingChannelReadOperations {
+    override fun current(deviceUid: String, slotId: String): DeviceDosingChannelSnapshot? =
+        adapter.stateAccess.currentChannel(deviceUid, slotId)
+
+    override fun observe(deviceUid: String, slotId: String): Flow<DeviceDosingChannelSnapshot?> =
+        adapter.stateAccess.observeChannel(deviceUid, slotId)
+
+    override fun observeAll(deviceUid: String): Flow<List<DeviceDosingChannelSnapshot>> =
+        adapter.stateAccess.observeAll(deviceUid)
+
+    override suspend fun refresh(deviceUid: String, slotId: String) =
+        adapter.refreshCoordinator.refresh(deviceUid, slotId).toChannelResult()
+
+    override suspend fun refreshAll(deviceUid: String): Boolean =
+        adapter.refreshCoordinator.refreshAll(deviceUid)
+}
+
+private class DeviceDosingV1ManualOperationsAdapter(
+    private val adapter: DeviceDosingV1StateAdapter
+) : DeviceDosingManualOperations {
     override suspend fun doseNow(
         deviceUid: String,
         slotId: String,
@@ -257,7 +285,7 @@ internal class DeviceDosingV1ChannelOperationsAdapter(
                 baseline.scheduling.acceptsManualDose(amountMicroliters),
                 DeviceDosingChannelRejection.INVALID_DRAFT
             )
-            repositoryDoseNow(
+            adapter.repositoryDoseNow(
                 uid,
                 DeviceDosingV1DoseNowRequest(
                     channelKey = channelKey,
@@ -279,70 +307,10 @@ internal class DeviceDosingV1ChannelOperationsAdapter(
                 baseline.controls.stopDoseSupported,
                 DeviceDosingChannelRejection.NOT_EDITABLE
             )
-            repositoryDoseStop(uid, channelKey)
+            adapter.repositoryDoseStop(uid, channelKey)
         },
         channel = DeviceDosingV1SimpleStopResult::channel
     ).toChannelResult()
-
-    override suspend fun reset(
-        deviceUid: String,
-        slotId: String
-    ): DeviceDosingChannelOperationResult = adapter.mutationCoordinator.mutatePersisted(
-        deviceUid = deviceUid,
-        slotId = slotId,
-        mutation = DeviceDosingV1PersistedMutation(
-            execute = { uid, channelKey, revision, baseline ->
-                requireMutation(
-                    baseline.controls.resetSupported,
-                    DeviceDosingChannelRejection.NOT_EDITABLE
-                )
-                repositoryChannelReset(
-                    uid,
-                    DeviceDosingV1ChannelResetRequest(channelKey, revision)
-                )
-            },
-            channel = DeviceDosingV1SavedMutationResult::channel
-        )
-    ).toChannelResult()
-
-    private suspend fun repositoryProgramApply(
-        uid: com.aqua.aqualight.data.devices.model.DeviceUid,
-        channelKey: DeviceDosingV1ChannelKey,
-        revision: Long,
-        program: DeviceDosingProgram
-    ): DeviceRuntimeCommandOutcome<DeviceDosingV1SavedMutationResult> = adapter.repository.applyProgram(
-        uid,
-        DeviceDosingV1ProgramApplyRequest(
-            channelKey = channelKey,
-            expectedRevision = revision,
-            program = DeviceDosingV1ProgramSnapshotMapper.toWireProgram(program)
-        )
-    )
-
-    private suspend fun repositoryConfigApply(
-        uid: com.aqua.aqualight.data.devices.model.DeviceUid,
-        request: DeviceDosingV1ConfigApplyRequest
-    ) = adapter.repository.applyConfig(uid, request)
-
-    private suspend fun repositoryReservoirRefill(
-        uid: com.aqua.aqualight.data.devices.model.DeviceUid,
-        channelKey: DeviceDosingV1ChannelKey
-    ) = adapter.repository.refillReservoir(uid, channelKey)
-
-    private suspend fun repositoryDoseNow(
-        uid: com.aqua.aqualight.data.devices.model.DeviceUid,
-        request: DeviceDosingV1DoseNowRequest
-    ) = adapter.repository.doseNow(uid, request)
-
-    private suspend fun repositoryDoseStop(
-        uid: com.aqua.aqualight.data.devices.model.DeviceUid,
-        channelKey: DeviceDosingV1ChannelKey
-    ) = adapter.repository.stopDose(uid, channelKey)
-
-    private suspend fun repositoryChannelReset(
-        uid: com.aqua.aqualight.data.devices.model.DeviceUid,
-        request: DeviceDosingV1ChannelResetRequest
-    ) = adapter.repository.resetChannel(uid, request)
 }
 
 private fun DeviceDosingV1RefreshResult.toChannelResult(): DeviceDosingChannelOperationResult =
