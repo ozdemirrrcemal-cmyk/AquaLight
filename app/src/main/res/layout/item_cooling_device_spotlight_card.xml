@@ -52,7 +52,7 @@
 
             <TextView
                 android:id="@+id/tvDeviceName"
-                android:layout_width="0dp"
+                android:layout_width="@dimen/aqua_size_0"
                 android:layout_height="wrap_content"
                 android:layout_marginStart="@dimen/aqua_size_10"
                 android:layout_marginEnd="@dimen/aqua_size_6"
@@ -120,7 +120,7 @@
                 android:orientation="horizontal">
 
                 <LinearLayout
-                    android:layout_width="0dp"
+                    android:layout_width="@dimen/aqua_size_0"
                     android:layout_height="wrap_content"
                     android:layout_marginEnd="@dimen/aqua_size_8"
                     android:layout_weight="1"
@@ -133,7 +133,7 @@
                         android:layout_height="wrap_content"
                         app:cardBackgroundColor="@color/aqua_card_device_cooling_accent"
                         app:cardCornerRadius="@dimen/aqua_size_8"
-                        app:strokeWidth="0dp">
+                        app:strokeWidth="@dimen/aqua_size_0">
 
                         <TextView
                             android:id="@+id/tvCoolingMode"
@@ -142,7 +142,7 @@
                             android:includeFontPadding="false"
                             android:paddingHorizontal="@dimen/aqua_size_9"
                             android:paddingVertical="@dimen/aqua_size_3"
-                            android:textColor="@color/aqua_palette_hex_ffffff"
+                            android:textColor="@color/aqua_card_text_primary"
                             android:textSize="@dimen/aqua_text_size_body_small"
                             android:textStyle="bold"
                             tools:text="Program" />
@@ -178,7 +178,7 @@
                 <include
                     android:id="@+id/waterMetric"
                     layout="@layout/item_cooling_device_metric"
-                    android:layout_width="0dp"
+                    android:layout_width="@dimen/aqua_size_0"
                     android:layout_height="match_parent"
                     android:layout_marginEnd="@dimen/aqua_size_4"
                     android:layout_weight="1" />
@@ -186,7 +186,7 @@
                 <include
                     android:id="@+id/fanMetric"
                     layout="@layout/item_cooling_device_metric"
-                    android:layout_width="0dp"
+                    android:layout_width="@dimen/aqua_size_0"
                     android:layout_height="match_parent"
                     android:layout_marginHorizontal="@dimen/aqua_size_2"
                     android:layout_weight="1" />
@@ -194,7 +194,7 @@
                 <include
                     android:id="@+id/thirdMetric"
                     layout="@layout/item_cooling_device_metric"
-                    android:layout_width="0dp"
+                    android:layout_width="@dimen/aqua_size_0"
                     android:layout_height="match_parent"
                     android:layout_marginStart="@dimen/aqua_size_4"
                     android:layout_weight="1" />
