@@ -21,6 +21,7 @@ import com.aqua.aqualight.ui.common.devicepresence.DeviceMenuUnavailableMessageM
 import com.aqua.aqualight.ui.tabs.devices.route.DeviceRoute
 import com.aqua.aqualight.ui.tabs.devices.route.DeviceRouteResolver
 import java.util.concurrent.CancellationException
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.Flow
@@ -78,7 +79,13 @@ class TankDetailDevicesViewModel(
         val assignedDevices = assignmentOperations.assignedDevices(tankId)
             .onEach { devices ->
                 syncDosingObservers(devices)
-                syncCoolingObservers(devices)
+                syncCoolingObservers(
+                    devices = devices,
+                    operations = coolingCardOperations,
+                    observerJobs = coolingObserverJobs,
+                    cardStates = coolingCardStates,
+                    scope = viewModelScope
+                )
             }
         val interactionState = observeInteractionState(
             openingDeviceId = openingDeviceId,
@@ -265,42 +272,6 @@ class TankDetailDevicesViewModel(
         spotlightRotation.updateChannelCounts(dosingCardStates.value.toSpotlightChannelCounts())
     }
 
-    private fun syncCoolingObservers(devices: List<TankDeviceListItem>) {
-        val assignedCoolingDeviceIds = devices
-            .asSequence()
-            .filter { device -> device.family == OwnerDeviceFamily.COOLING }
-            .map(TankDeviceListItem::deviceUid)
-            .toSet()
-        val reachableCoolingDeviceIds = devices
-            .asSequence()
-            .filter { device ->
-                device.family == OwnerDeviceFamily.COOLING &&
-                    device.availability == OwnerDeviceAvailability.REACHABLE
-            }
-            .map(TankDeviceListItem::deviceUid)
-            .toSet()
-
-        (coolingObserverJobs.keys - reachableCoolingDeviceIds).forEach { deviceUid ->
-            coolingObserverJobs.remove(deviceUid)?.cancel()
-        }
-        val removedDeviceIds = coolingCardStates.value.keys - assignedCoolingDeviceIds
-        if (removedDeviceIds.isNotEmpty()) {
-            coolingCardStates.update { states -> states - removedDeviceIds }
-        }
-
-        coolingCardOperations?.let { operations ->
-            reachableCoolingDeviceIds
-                .filterNot(coolingObserverJobs::containsKey)
-                .forEach { deviceUid ->
-                    coolingObserverJobs[deviceUid] = viewModelScope.launch {
-                        operations.observe(deviceUid).collect { state ->
-                            coolingCardStates.update { states -> states + (deviceUid to state) }
-                        }
-                    }
-                }
-        }
-    }
-
     private fun abandonPendingNavigation(deviceUid: String) {
         val pending = pendingMenuOpen?.takeIf { ready ->
             ready.access.deviceUid == deviceUid
@@ -313,6 +284,48 @@ class TankDetailDevicesViewModel(
         if (openingDeviceId.value == deviceUid) {
             openingDeviceId.value = null
         }
+    }
+}
+
+private fun syncCoolingObservers(
+    devices: List<TankDeviceListItem>,
+    operations: DeviceCoolingCardOperations?,
+    observerJobs: MutableMap<String, Job>,
+    cardStates: MutableStateFlow<Map<String, DeviceCoolingCardState>>,
+    scope: CoroutineScope
+) {
+    val assignedCoolingDeviceIds = devices
+        .asSequence()
+        .filter { device -> device.family == OwnerDeviceFamily.COOLING }
+        .map(TankDeviceListItem::deviceUid)
+        .toSet()
+    val reachableCoolingDeviceIds = devices
+        .asSequence()
+        .filter { device ->
+            device.family == OwnerDeviceFamily.COOLING &&
+                device.availability == OwnerDeviceAvailability.REACHABLE
+        }
+        .map(TankDeviceListItem::deviceUid)
+        .toSet()
+
+    (observerJobs.keys - reachableCoolingDeviceIds).forEach { deviceUid ->
+        observerJobs.remove(deviceUid)?.cancel()
+    }
+    val removedDeviceIds = cardStates.value.keys - assignedCoolingDeviceIds
+    if (removedDeviceIds.isNotEmpty()) {
+        cardStates.update { states -> states - removedDeviceIds }
+    }
+
+    operations?.let { coolingOperations ->
+        reachableCoolingDeviceIds
+            .filterNot(observerJobs::containsKey)
+            .forEach { deviceUid ->
+                observerJobs[deviceUid] = scope.launch {
+                    coolingOperations.observe(deviceUid).collect { state ->
+                        cardStates.update { states -> states + (deviceUid to state) }
+                    }
+                }
+            }
     }
 }
 
