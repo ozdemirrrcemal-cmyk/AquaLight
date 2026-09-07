@@ -338,8 +338,8 @@ dependencies {
    	implementation "com.hbb20:ccp:2.7.3"
 
     // Image loading - Coil 3
-    implementation "io.coil-kt.coil3:coil-android:3.3.0"
-    implementation "io.coil-kt.coil3:coil-network-okhttp:3.3.0"
+    implementation "io.coil-kt.coil3:coil-android:3.6.1"
+    implementation "io.coil-kt.coil3:coil-network-okhttp:3.6.1"
 
     // Google Sign-In
     implementation "com.google.android.gms:play-services-auth:21.6.0"
