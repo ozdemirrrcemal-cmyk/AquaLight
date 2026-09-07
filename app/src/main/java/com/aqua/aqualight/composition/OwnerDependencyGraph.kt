@@ -244,12 +244,16 @@ internal class ActiveOwnerDependencyGraphResolver(
                 dependencies = dependencies,
                 dosingOperations = dosingOperations
             ),
-            coolingCardOperations = DefaultDeviceCoolingCardOperations(
-                dependencies.devicesRepository
-            ),
+            coolingCardOperations = createCoolingCardOperations(dependencies),
             dosingOperations = dosingOperations
         )
     }
+
+    private fun createCoolingCardOperations(
+        dependencies: ActiveOwnerDependencies
+    ): DeviceCoolingCardOperations = DefaultDeviceCoolingCardOperations(
+        dependencies.devicesRepository
+    )
 
     private fun createControlSurfacePreparationOperations(
         dependencies: ActiveOwnerDependencies,
